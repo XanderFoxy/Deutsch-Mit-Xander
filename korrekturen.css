@@ -8972,3 +8972,98 @@ body.lc-schreibt .tutor-reiter {
   opacity: 0.6;
 }
 .lc-sprachblase .lc-sprach-weg:hover { opacity: 1; color: #ff9184; }
+
+/* =================================================================
+   „DEINE SEITE IST ALT" — DIE EINZIGE MELDUNG, DIE EINE ALTE SEITE
+   SELBST BEMERKEN KANN
+   -----------------------------------------------------------------
+   GEMELDET: „Bei Emmi gibt es diesen Umschalter nicht zwischen den
+   zwei Plätzen und dem Klassenzimmer."
+
+   Der Knopf ist im Gerüst, für jede Person, ohne Bedingung — gemessen
+   in werkzeug/pruefe-ansichtknopf.js. Er fehlt nur dann, wenn das
+   Gerät noch eine ältere index.html im Zwischenspeicher hat. Diese
+   Leiste sagt genau das und bietet den Knopf an, der es behebt.
+
+   Sie sitzt UNTEN, nicht oben: oben liegt auf dem Telefon die
+   Kopfzeile, und eine Leiste, die dort hereinfährt, verdeckt sie.
+   Unten liegt sie über der Schreibzeile und ist trotzdem sofort zu
+   sehen — und mit dem ✕ ist sie wieder weg.
+   ================================================================= */
+.dma-neuestand {
+  position: fixed;
+  left: 12px; right: 12px; bottom: 12px;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(224, 150, 74, 0.55);
+  background: rgba(40, 30, 24, 0.97);
+  color: #f6ece0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  font-size: 0.82rem;
+  animation: dmaNeuestandRein 420ms cubic-bezier(.2, .9, .3, 1) both;
+}
+@keyframes dmaNeuestandRein {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.dma-neuestand-text { flex: 1 1 200px; line-height: 1.35; }
+.dma-neuestand-knopf {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font: inherit;
+  font-weight: 700;
+  background: #e0964a;
+  color: #241a12;
+  cursor: pointer;
+}
+.dma-neuestand-knopf:hover { background: #efa85c; }
+.dma-neuestand-zu {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  opacity: 0.65;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+.dma-neuestand-zu:hover { opacity: 1; }
+@media (max-width: 520px) {
+  .dma-neuestand { font-size: 0.78rem; padding: 9px 10px; }
+}
+
+/* =================================================================
+   AN WEN GEHT DAS BILD?
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „Mach es bitte ausserdem möglich, dass wir uns Bilder
+   flüstern können."
+
+   Die Zeile steht ganz oben im Bild-Wähler, VOR der Auswahl — denn
+   sie gilt für alles, was danach angetippt wird: Aufkleber, ein Bild
+   von früher, ein Foto, ein GIF. Steht dort ein Name, geht es
+   denselben Weg wie  /w Name … , nur mit einem Bild daran.
+   ================================================================= */
+.lc-sende-an {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+.lc-sende-an label {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+.lc-sende-an select {
+  flex: 1 1 auto;
+  min-width: 0;          /* sonst sprengt ein langer Name die Zeile */
+  margin: 0;
+}

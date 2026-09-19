@@ -960,7 +960,7 @@ window.LiveChat = (function () {
     var ich = meineKontoId();
     if (!z || !ich) return Promise.resolve([]);
     return z.from(TISCH)
-      .select("id,raum,autor,name,text,farbe,farbe_name,bild,an_id,an_name,quelle_id,erstellt")
+      .select("id,raum,autor,name,text,farbe,farbe_name,bild,bild_im_chat,an_id,an_name,quelle_id,erstellt")
       .not("an_id", "is", null)
       .or("an_id.eq." + ich + ",autor.eq." + ich)
       .order("erstellt", { ascending: false })
@@ -984,6 +984,14 @@ window.LiveChat = (function () {
             wen: eigen ? (r.an_name || "") : "",
             art: "fluester",
             bild: eigen ? zustand.ichBild : (r.bild || ""),
+            /* GEWUENSCHT: „Mach es bitte ausserdem moeglich, dass wir
+               uns Bilder fluestern koennen."
+               Ein gefluestertes Bild liegt in derselben Spalte wie
+               jedes andere Bild im Chat — es traegt nur zusaetzlich
+               eine Anschrift (an_id). Deshalb kommt es hier einfach
+               mit zurueck, und der Rest der Seite behandelt es wie
+               jedes Bild. */
+            bildImChat: r.bild_im_chat || "",
             farbe: r.farbe || "",
             farbeName: r.farbe_name || "",
             /* Aus welchem Raum es kam — aber nur, wenn es ein anderer
@@ -1000,7 +1008,7 @@ window.LiveChat = (function () {
      Nachreichen fuer den, der gerade nicht da war. Ohne Konto auf
      einer der beiden Seiten geht es nicht; dann bleibt es beim Zuruf
      von Geraet zu Geraet. */
-  function fluesternSichern(ziel, txt, kennung) {
+  function fluesternSichern(ziel, txt, kennung, bild) {
     var z = angemeldeterZugang();
     var ich = meineKontoId();
     var anKonto = ziel && (ziel.konto || kontoVon(ziel.id));
@@ -1012,7 +1020,9 @@ window.LiveChat = (function () {
         name: zustand.ichName || "Gast",
         bild: zustand.ichBild || "",
         text: String(txt || ""),
-        bild_im_chat: "",
+        /* Auch ein gefluestertes Bild wird nachgereicht — sonst waere
+           es weg, sobald die andere Seite den Raum wechselt. */
+        bild_im_chat: typeof bild === "string" ? bild.slice(0, 200000) : "",
         farbe: zustand.farbe || "",
         farbe_name: zustand.farbeName || "",
         art: "fluester",
@@ -3202,6 +3212,105 @@ window.LiveChat = (function () {
   /* =========================================================
      BETRETEN UND VERLASSEN
      ========================================================= */
+  /* =================================================================
+     DER GEMEINSAME VERLAUF WIRD NACHGEHOLT — NOTFALLS MEHRMALS
+     -----------------------------------------------------------------
+     GEMELDET, schon wieder: „Ich bin ins Klassenzimmer zurueck und hab
+     wieder einen alten Stand geladen bekommen, der nicht der aktuelle
+     Chat ist."
+
+     Der Grund ist unscheinbar und steht in angemeldeterZugang(): Ohne
+     fertige Anmeldung gibt es keinen Zugang zur Tabelle — dann liefert
+     serverLaden() eine LEERE Liste, ganz ohne Fehler. Genau das
+     passiert regelmaessig beim Betreten direkt nach dem Laden der
+     Seite: der Anmeldeschluessel wird in dem Moment erst wiederhergestellt.
+     Es blieb dann bei dem, was im Geraet lag — also beim alten Stand.
+     Sichtbar war davon nichts; es sah einfach nach einem stillen
+     Klassenzimmer aus.
+
+     Deshalb wird jetzt nicht mehr EINMAL geholt, sondern:
+       * beim Betreten,
+       * und danach noch drei Mal in groesser werdenden Abstaenden,
+         SOLANGE noch nichts vom Server gekommen ist,
+       * ausserdem immer dann, wenn die Seite wieder in den Vordergrund
+         kommt (dort holt man sich nach, was waehrenddessen geschrieben
+         wurde) — hoechstens alle 20 Sekunden.
+
+     Kommt am Ende gar nichts, wird das EINMAL gesagt statt verschwiegen.
+     Ein leerer Verlauf, den man fuer vollstaendig haelt, ist schlimmer
+     als eine ehrliche Meldung.
+     ================================================================= */
+  var verlaufVomServer = false;
+  var verlaufHolenZuletzt = 0;
+  var verlaufVersuche = 0;
+  var verlaufGeklagt = false;
+  var verlaufUhren = [];
+
+  function verlaufUhrenStoppen() {
+    verlaufUhren.forEach(function (u) { clearTimeout(u); });
+    verlaufUhren = [];
+  }
+
+  function verlaufFrischHolen(ersterAnlauf) {
+    if (zustand.lage !== "drin" && zustand.lage !== "verbindet") return Promise.resolve(false);
+    var raum = zustand.raum;
+    verlaufHolenZuletzt = Date.now();
+    if (ersterAnlauf) {
+      verlaufVomServer = false;
+      verlaufVersuche = 0;
+      verlaufUhrenStoppen();
+      /* Nachfassen, falls die Anmeldung noch nicht stand. Die Uhren
+         laufen nur weiter, solange nichts angekommen ist — siehe
+         unten. */
+      [2500, 8000, 20000].forEach(function (ms) {
+        verlaufUhren.push(setTimeout(function () {
+          if (verlaufVomServer) return;
+          if (zustand.raum !== raum) return;
+          verlaufFrischHolen(false);
+        }, ms));
+      });
+    }
+    verlaufVersuche += 1;
+    return serverLaden(raum).then(function (vomServer) {
+      if (zustand.raum !== raum) return false;
+      if (!vomServer.length) {
+        if (!ersterAnlauf && verlaufVersuche >= 4 && !verlaufVomServer && !verlaufGeklagt
+            && angemeldeterZugang()) {
+          verlaufGeklagt = true;
+          systemZeile("\u26a0\ufe0f Der gemeinsame Verlauf liess sich nicht laden \u2014 "
+            + "du siehst gerade nur, was auf diesem Ger\u00e4t liegt.");
+        }
+        return false;
+      }
+      verlaufVomServer = true;
+      vomServer.forEach(function (n) { n.eigen = n.von && n.von === zustand.ichId; });
+      zustand.nachrichten = verschmelzen(vomServer, zustand.nachrichten);
+      chatSichern();
+      melden();
+      /* Was vom Server kam, kann Bilder haben, die hier noch fehlen —
+         und was hier lag, kann Bilder haben, die der Server nicht
+         kennt. Beides zusammenfuehren, dann ist der Verlauf komplett. */
+      bilderNachreichen(zustand.nachrichten).then(function (etwas) {
+        if (etwas) melden();
+      });
+      return true;
+    }, function () { return false; });
+  }
+
+  /* Zurueck auf der Seite? Dann nachholen, was inzwischen geschrieben
+     wurde. Das ist genau der Augenblick, in dem er den alten Stand
+     gesehen hat: Klassenzimmer weg, Klassenzimmer wieder da. */
+  try {
+    if (typeof document !== "undefined" && document.addEventListener) {
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState !== "visible") return;
+        if (zustand.lage !== "drin") return;
+        if (Date.now() - verlaufHolenZuletzt < 20000) return;
+        verlaufFrischHolen(false);
+      });
+    }
+  } catch (e) {}
+
   function betreten(raumName, optionen) {
     var o = optionen || {};
     if (!moeglich()) {
@@ -3309,20 +3418,9 @@ window.LiveChat = (function () {
     });
     lagerAufraeumen();
     /* Den gemeinsamen Verlauf nachladen — er kommt gleich dazu, ohne
-       dass das Betreten darauf warten muss. */
-    serverLaden(zustand.raum).then(function (vomServer) {
-      if (!vomServer.length) return;
-      vomServer.forEach(function (n) { n.eigen = n.von && n.von === zustand.ichId; });
-      zustand.nachrichten = verschmelzen(vomServer, zustand.nachrichten);
-      chatSichern();
-      melden();
-      /* Was vom Server kam, kann Bilder haben, die hier noch fehlen —
-         und was hier lag, kann Bilder haben, die der Server nicht
-         kennt. Beides zusammenfuehren, dann ist der Verlauf komplett. */
-      bilderNachreichen(zustand.nachrichten).then(function (etwas) {
-        if (etwas) melden();
-      });
-    });
+       dass das Betreten darauf warten muss. Und dann noch ein paar
+       Mal, siehe verlaufFrischHolen(). */
+    verlaufFrischHolen(true);
 
     /* WICHTIG: die Kamera geht NICHT von selbst an.
        GEWÜNSCHT: „dass das nicht sofort zum Video springt — dass man
@@ -3531,6 +3629,7 @@ window.LiveChat = (function () {
        letzte Zeile kurz vor dem Hinausgehen, fehlte sie. Also noch
        einmal, bevor die Tuer zugeht. */
     try { chatSichern(); } catch (e) {}
+    verlaufUhrenStoppen();
     zustand.leute = {};
     zustand.gross = null;
     zustand.grosse = [];
@@ -5303,19 +5402,105 @@ window.LiveChat = (function () {
      Wortlaut. Bei einer Aufgabe in eigenen Worten geht das nicht
      (dort gibt es nichts zu vergleichen); da bleibt es bei der Marke
      vom Eintreffen. */
+  /* IST DAS DIE ERSTE ZEILE, DIE DIESE PERSON NACH DER AUFGABE
+     GESCHRIEBEN HAT?
+     -----------------------------------------------------------
+     Diese Frage laesst sich aus dem Verlauf beantworten, den die
+     Seite ohnehin mitfuehrt — und zwar JEDERZEIT, auch nach einem
+     Neuladen. Genau das ist der Unterschied zu einer Marke, die beim
+     Eintreffen gesetzt wird: die ist nach dem naechsten Laden weg.
+
+     Befehle zaehlen nicht (wer „/konfetti" schreibt, beantwortet
+     nichts), und die Aufgabenzeile selbst zaehlt auch nicht. */
+  function ersteZeileNachAufgabe(n) {
+    var ab = (offeneAufgabe.zeit || 0) - 1000;
+    var liste = zustand.nachrichten || [];
+    var frueheste = null;
+    for (var i = 0; i < liste.length; i++) {
+      var m = liste[i];
+      if (!m || m.von !== n.von) continue;
+      if ((m.zeit || 0) < ab) continue;
+      var a = m.art || "text";
+      if (a !== "text" && a !== "aktion") continue;
+      var t = String(m.text || "").trim();
+      if (!t || t.charAt(0) === "/") continue;
+      if (!frueheste || (m.zeit || 0) < (frueheste.zeit || 0)) frueheste = m;
+    }
+    /* Kennt der Verlauf die Zeile noch gar nicht (sie wird gerade erst
+       gezeichnet), dann ist sie es. Lieber ein Notenknopf zu viel als
+       einer zu wenig — er tut ja nichts von allein. */
+    if (!frueheste) return true;
+    if (String(frueheste.id || "") && String(frueheste.id) === String(n.id || "")) return true;
+    return (frueheste.zeit || 0) === (n.zeit || 0)
+        && String(frueheste.text || "") === String(n.text || "");
+  }
+
   function aufgabeBezug(n) {
     if (!offeneAufgabe || !n || n.eigen || !n.von) return null;
-    if (offeneAufgabe.typ === "frei") return null;
     if ((n.zeit || 0) < (offeneAufgabe.zeit || 0) - 1000) return null;
     var art = n.art || "text";
     if (art !== "text" && art !== "aktion") return null;
-    var text = String(n.text || "");
-    if (!text) return null;
+    var text = String(n.text || "").trim();
+    if (!text || text.charAt(0) === "/") return null;
+
+    /* =========================================================
+       EINE AUFGABE IN EIGENEN WORTEN BEKOMMT JETZT AUCH EINEN
+       NOTENKNOPF
+       ---------------------------------------------------------
+       GEMELDET, zum dritten Mal: „Ich kann, wenn sie eine Aufgabe
+       loest, immer noch nicht diesen Note-Button sehen, um sie zu
+       benoten. Das Ding muss erkennen, dass sie von der Aufgabe
+       kommt mit ihrer Antwort."
+
+       HIER stand der Grund, in einer einzigen Zeile:
+           if (offeneAufgabe.typ === "frei") return null;
+       Ausgerechnet die Aufgabe OHNE Musterloesung — also die, bei
+       der nur der Lehrer urteilen kann — war vom Notenknopf
+       ausgeschlossen. Sie bekam ihn nur im Augenblick des
+       Eintreffens (aufgabeVersuch setzt dort eine Marke an die
+       Nachricht); nach dem naechsten Neuladen kam die Zeile aus dem
+       Geraet oder vom Server zurueck, ohne Marke, ohne Knopf.
+
+       Jetzt wird auch das beim ZEICHNEN entschieden, aus dem
+       Verlauf: die erste Zeile, die diese Person nach der Aufgabe
+       geschrieben hat, ist ihre Antwort.
+       ========================================================= */
+    if (offeneAufgabe.typ === "frei") {
+      if (!ersteZeileNachAufgabe(n)) return null;
+      return { versuch: true, richtig: false, frei: true,
+               frage: offeneAufgabe.frage || "" };
+    }
+
     if (aufgabeGleich(text, offeneAufgabe.loesung)) {
       return { versuch: true, richtig: true, frage: offeneAufgabe.loesung };
     }
-    if (!siehtNachVersuchAus(text, offeneAufgabe)) return null;
-    return { versuch: true, richtig: false, frage: offeneAufgabe.loesung };
+    if (siehtNachVersuchAus(text, offeneAufgabe)) {
+      return { versuch: true, richtig: false, frage: offeneAufgabe.loesung };
+    }
+    /* Und selbst wenn die Antwort mit der Musterloesung nichts
+       gemeinsam hat: Es war die erste Zeile nach der Aufgabe, also
+       GEHOERT sie zur Frage — und genau darum ging es ihm („damit
+       ich weiss, diese Antwort gehoert zu der Frage, die sie
+       beantwortet hat"). Eine falsche Antwort ist eine Antwort und
+       darf benotet werden.
+       Angesagt wird sie deshalb nicht — das entscheidet weiterhin
+       aufgabeAntwort, sonst hiesse es bei jedem „hallo“ „noch nicht
+       richtig“. */
+    if (!ersteZeileNachAufgabe(n)) return null;
+    return { versuch: true, richtig: false, daneben: true,
+             frage: offeneAufgabe.loesung };
+  }
+
+  /* Welche Aufgabe steht gerade offen? Die Oberflaeche schreibt sie
+     an den Notenknopf, damit beim Benoten sichtbar ist, ZU WELCHER
+     FRAGE die Antwort gehoert. */
+  function offeneAufgabeInfo() {
+    if (!offeneAufgabe) return null;
+    return {
+      typ: offeneAufgabe.typ,
+      frage: offeneAufgabe.frage || offeneAufgabe.loesung || "",
+      zeit: offeneAufgabe.zeit || 0
+    };
   }
 
   function aufgabeAntwort(von, name, text) {
@@ -6981,6 +7166,66 @@ window.LiveChat = (function () {
     return String(Date.now()) + "-" + laufendeNummer + "-" + zustand.ichId;
   }
 
+  /* =========================================================
+     FLUESTERN — TEXT ODER BILD, IMMER DERSELBE WEG
+     ---------------------------------------------------------
+     GEWUENSCHT: „Mach es bitte ausserdem moeglich, dass wir uns
+     Bilder fluestern koennen."
+
+     Ein Bild zu fluestern ist dasselbe wie einen Satz zu fluestern —
+     nur haengt eben ein Bild daran. Damit das nicht an zwei Stellen
+     halb gebaut wird, geht beides durch diese eine Funktion:
+
+       1. die eigene Zeile (nur ich sehe sie, mit „an Emmi:“ davor),
+       2. die Tabelle (damit es ankommt, auch wenn die andere Seite
+          gerade den Raum wechselt oder gar nicht da ist),
+       3. der Zuruf von Geraet zu Geraet (damit es SOFORT da ist).
+
+     Die Kennung ist bei allen dreien dieselbe — sonst stuende die
+     Zeile beim Empfaenger doppelt, einmal live und einmal aus der
+     Tabelle.
+     ========================================================= */
+  function fluesternSenden(ziel, txt, bild) {
+    if (!ziel) return false;
+    var text = String(txt || "");
+    var daten = typeof bild === "string" ? bild : "";
+    if (!text && !daten) return systemZeile("Da war nichts zu fluestern.");
+    var beschriftung = "an " + ziel.name + ": " + (text || (daten ? "🖼️ Bild" : ""));
+    var n = eigeneZeile("fluester", beschriftung, ziel.id);
+    if (daten) {
+      n.bildImChat = daten;
+      bildGemerkt(daten);              // auch ein gefluestertes Bild kommt in „zuletzt benutzt“
+    }
+    fluesternSichern(ziel, text, n.id, daten);
+    /* An WEN es ging, steht damit auch an der Zeile — die Oberflaeche
+       bietet daran das Weiterfluestern an, ohne den Text zu zerlegen. */
+    n.wen = ziel.name;
+    postSenden(ziel.id, { art: "fluester", id: n.id, text: text,
+                          bildImChat: daten,
+                          raum: zustand.raum, zeit: n.zeit });
+    melden();
+    return true;
+  }
+
+  /* Ein Bild an EINE Person — von der Oberflaeche aus (Bildwaehler).
+     Der Name kommt so herein, wie er im Raum steht. */
+  function bildFluestern(name, quelle, text) {
+    var ziel = personNachName(name) || praesenzNachName(name);
+    if (!ziel) return systemZeile("„" + String(name) + "“ ist gerade nirgends zu finden.");
+    var daten = String(quelle || "");
+    if (!daten) return false;
+    return fluesternSenden(ziel, String(text || ""), daten);
+  }
+
+  /* Ein Foto aus einer Datei — erst kleinrechnen, dann fluestern.
+     Dieselbe Verkleinerung wie beim offenen Bild; ein Telefonfoto
+     unbearbeitet durch den Kanal zu schicken, geht nicht gut. */
+  function fotoFluestern(name, datei, text) {
+    return bildVerkleinern(datei).then(function (daten) {
+      return bildFluestern(name, daten, text);
+    });
+  }
+
   function eigeneZeile(art, text, an) {
     var n = {
       id: neueNachrichtId(),
@@ -7168,6 +7413,9 @@ window.LiveChat = (function () {
       nachrichtAnhaengen({
         id: n.id || neueNachrichtId(), von: n.von, name: n.vonName || "Jemand",
         text: String(n.text || "").slice(0, CHAT_LAENGE), art: "fluester",
+        /* Ein gefluestertes Bild kommt denselben Weg wie der Text —
+           nur eben an eine einzige Person. */
+        bildImChat: typeof n.bildImChat === "string" ? n.bildImChat.slice(0, 200000) : "",
         bild: n.vonBild || "", farbe: n.vonFarbe || "",
         woher: n.raum && n.raum !== zustand.raum ? raumKlartext(n.raum) : "",
         zeit: n.zeit || Date.now(), eigen: false
@@ -7328,18 +7576,7 @@ window.LiveChat = (function () {
       if (!t) return systemZeile("So geht es:  /w Nickname Dein Text");
       var ziel = personNachName(t[1]) || praesenzNachName(t[1]);
       if (!ziel) return systemZeile("„" + t[1] + "“ ist gerade nirgends zu finden.");
-      var txt = textAufbereiten(t[2]);
-      var n = eigeneZeile("fluester", "an " + ziel.name + ": " + txt, ziel.id);
-      /* Und einmal in die Tabelle, damit es ankommt, auch wenn die
-         andere Seite gerade geht (siehe fluesternSichern). */
-      fluesternSichern(ziel, txt, n.id);
-      /* An WEN es ging, steht damit auch an der Zeile — die Oberflaeche
-         bietet daran das Weiterfluestern an, ohne den Text zu zerlegen. */
-      n.wen = ziel.name;
-      postSenden(ziel.id, { art: "fluester", id: n.id, text: txt,
-                            raum: zustand.raum, zeit: n.zeit });
-      melden();
-      return true;
+      return fluesternSenden(ziel, textAufbereiten(t[2]), "");
     }
 
     /* ---- Räume ---- */
@@ -8762,6 +8999,13 @@ window.LiveChat = (function () {
       return zustand.geschlecht;
     },
     binLehrer: binLehrer,
+    /* Ein Bild aus einer beliebigen Quelle — Adresse, Datenadresse
+       oder Aufkleber-Marke. Die Oberflaeche braucht genau einen
+       Ausgang fuer alle vier Wege des Bild-Waehlers. */
+    bildSendenRoh: function (quelle, text) { return bildSenden(quelle, text); },
+    bildFluestern: bildFluestern,
+    fotoFluestern: fotoFluestern,
+    fluesternSenden: fluesternSenden,
     binBetreiber: binBetreiber,
     /* Wer gerade irgendwo auf der Seite offen hat — mit Raum, wenn
        er in einem sitzt. Fuer die Namensvorschlaege. */
@@ -8787,6 +9031,18 @@ window.LiveChat = (function () {
     /* Nur zum Nachpruefen: das Nachreichen des Fluesterns von aussen
        anstossen und ansehen, was dabei herauskommt. */
     pruefFluesternLaden: function () { return fluesternLaden(); },
+    pruefVerlaufFrisch: function (erster) { return verlaufFrischHolen(Boolean(erster)); },
+    /* Nur zum Nachmessen: jemanden in den Raum setzen, damit /w und
+       das Bild-Fluestern ein Ziel finden. */
+    pruefPersonSetzen: function (id, name, konto) {
+      personMerken(id, name, "");
+      if (konto && zustand.leute[id]) zustand.leute[id].konto = konto;
+      return Object.keys(zustand.leute);
+    },
+    pruefVerlaufStand: function () {
+      return { vomServer: verlaufVomServer, versuche: verlaufVersuche,
+               uhren: verlaufUhren.length, geklagt: verlaufGeklagt };
+    },
     pruefFluesternSichern: function (ziel, txt, kennung) { return fluesternSichern(ziel, txt, kennung); },
     /* Nur zum Nachpruefen: den Verlauf eines Raums ablegen und wieder
        hervorholen — genau die Wege, die das Verlassen und das
@@ -8811,6 +9067,7 @@ window.LiveChat = (function () {
        das beim Zeichnen — damit der Notenknopf auch nach einem
        Neuladen an der richtigen Zeile steht. */
     aufgabeBezug: aufgabeBezug,
+    offeneAufgabeInfo: offeneAufgabeInfo,
     /* Fuer die Pruefung, ob eine Aufgabe das Neuladen ueberlebt:
        merken, vergessen, zurueckholen — genau die Wege, die auch das
        Betreten geht. */

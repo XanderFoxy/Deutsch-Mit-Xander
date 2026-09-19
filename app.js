@@ -14543,6 +14543,39 @@
 
   function livechatHinein(raum, danach) {
     livechatTor(raum, (wahl) => {
+      /* =============================================================
+         ERST HINAUS, DANN HEREIN — UND SAGEN, WOHIN
+         -------------------------------------------------------------
+         GEMELDET: „Schau mal, wenn jemand den Raum in einen anderen
+         Raum verlaesst, ob da wirklich im Chat steht, dass derjenige
+         in den anderen Raum gegangen ist, oder ob da noch ,verlassen'
+         steht — es soll sichtbar sein, dass er in den anderen Raum
+         geht."
+
+         Hier lag es. Der Abschied MIT Ziel war laengst gebaut
+         (verlassen(wohin) schickt „tschuess" samt Zielraum, und die
+         anderen schreiben dann „… ist in den Raum ,Langeweile'
+         gegangen"). Nur benutzt hat ihn dieser Weg nicht: Ein Tipp
+         auf einen Raum in der Raumliste ging schnurstracks in
+         betreten() — ohne den alten Raum zu verlassen. Und betreten()
+         steigt aus, solange man noch „drin" ist. Es passierte also
+         entweder gar nichts, oder der alte Raum sah nur, dass jemand
+         verschwand.
+
+         Jetzt wird zuerst ordentlich hinausgegangen, mit dem Ziel im
+         Gepaeck — und erst dann hereingekommen. Wer schon im
+         richtigen Raum steht, bleibt einfach dort. */
+      try {
+        const jetzt = (window.LiveChat && LiveChat.lage) ? LiveChat.lage() : null;
+        if (jetzt && (jetzt.lage === "drin" || jetzt.lage === "verbindet")) {
+          if (jetzt.raum === raum) {
+            showToast("Du bist schon in diesem Raum.");
+            if (danach) danach();
+            return;
+          }
+          LiveChat.verlassen(raum);
+        }
+      } catch (e) {}
       LiveChat.betreten(raum, {
         name: livechatName(),
         konto: (Backend.currentUser() || {}).id || "",
@@ -15412,6 +15445,30 @@
     { name: "Ups",      wort: "ups peinlich" }
   ];
 
+  /* Wer ist gerade im Raum — ohne mich selbst. Daraus wird die Liste
+     „an wen fluestern?" im Bild-Waehler. */
+  function lcLeuteImRaum() {
+    try {
+      const l = (window.LiveChat && LiveChat.lage) ? LiveChat.lage() : null;
+      const raus = [];
+      ((l && l.plaetze) || []).forEach((p) => {
+        if (!p || p.leer || p.ich || !p.name) return;
+        if (raus.indexOf(p.name) < 0) raus.push(p.name);
+      });
+      /* Und alle, die IRGENDWO im Haus sind — geflüstert wird der
+         Person, nicht dem Raum. Genau so war es gewünscht: „egal ob
+         die Person in einem anderen Raum ist". */
+      const meinName = ((l && l.ichName) || "").toLowerCase();
+      ((window.LiveChat && LiveChat.praesenzListe) ? LiveChat.praesenzListe() : [])
+        .forEach((e) => {
+          if (!e || !e.name) return;
+          if (e.name.toLowerCase() === meinName) return;
+          if (raus.indexOf(e.name) < 0) raus.push(e.name);
+        });
+      return raus;
+    } catch (e) { return []; }
+  }
+
   function livechatSendeWaehler() {
     document.getElementById("lcSendeWaehler")?.remove();
     /* Der Schlüssel kann aus supabase-config.js kommen ODER hier im
@@ -15429,6 +15486,21 @@
     kasten.innerHTML = `
       <div class="lc-waehler" role="dialog" aria-modal="true" aria-label="Bild in den Chat schicken">
         <p class="eyebrow">IN DEN CHAT SCHICKEN</p>
+        <!-- GEWUENSCHT: „Mach es bitte ausserdem moeglich, dass wir uns
+             Bilder fluestern koennen."
+             Deshalb steht hier VOR der Auswahl, an wen es geht. Alles,
+             was danach angetippt wird — Aufkleber, ein Bild von
+             frueher, ein Foto, ein GIF — geht dann dorthin. Das ist
+             genau derselbe Griff wie beim Text: /w Name … , nur zum
+             Antippen. -->
+        <div class="lc-sende-an">
+          <label for="lcSendeAn">An:</label>
+          <select id="lcSendeAn" class="challenge-select">
+            <option value="">alle im Raum</option>
+            ${lcLeuteImRaum().map((nm) => `
+              <option value="${escapeHtml(nm)}">🤫 nur ${escapeHtml(nm)} — geflüstert</option>`).join("")}
+          </select>
+        </div>
         ${lcAufkleberReihe("lc-aufkleb")}
         ${letzte.length ? `
           <p class="eyebrow" style="margin-top:6px;">ZULETZT BENUTZT</p>
@@ -15503,12 +15575,37 @@
       const f = textFeld();
       if (f) { f.value = ""; const k = document.getElementById("lcSenden"); if (k) k.disabled = true; }
     };
-    const schicken = (adresse) => {
+    /* An wen geht das Bild? Leer heisst: an alle im Raum. Steht dort
+       ein Name, wird geflüstert — derselbe Weg wie  /w Name … , nur
+       mit einem Bild daran. */
+    const anWen = () => {
+      const w = kasten.querySelector("#lcSendeAn");
+      return w ? String(w.value || "").trim() : "";
+    };
+    /* EIN Ausgang für alle Wege (Aufkleber, zuletzt benutzt, GIF,
+       Foto). Vorher rief jeder Weg für sich LiveChat.gifSenden oder
+       fotoSenden — dann hätte das Flüstern an vier Stellen einzeln
+       eingebaut werden müssen, und eine davon hätte ich vergessen. */
+    const raus = (quelle) => {
       const f = textFeld();
-      const ok = LiveChat.gifSenden(adresse, f ? f.value.trim() : "");
-      if (!ok) { showToast("Das war keine Adresse — sie muss mit https:// anfangen."); return; }
+      const text = f ? f.value.trim() : "";
+      const wer = anWen();
+      const q = String(quelle || "");
+      let ok;
+      if (wer) ok = LiveChat.bildFluestern(wer, q, text);
+      else if (/^data:/.test(q)) ok = lcDatenBildSchicken(q, text);
+      else if (/^https?:/.test(q)) ok = LiveChat.gifSenden(q, text);
+      else ok = LiveChat.bildSendenRoh ? LiveChat.bildSendenRoh(q, text) : false;
+      if (!ok) return false;
       textLeeren();
       zu();
+      if (wer) showToast("🤫 Geflüstert — nur " + wer + " sieht das Bild.");
+      return true;
+    };
+    const schicken = (adresse) => {
+      if (!raus(adresse)) {
+        showToast("Das war keine Adresse — sie muss mit https:// anfangen.");
+      }
     };
 
     kasten.addEventListener("click", (e) => { if (e.target === kasten) zu(); });
@@ -15517,13 +15614,19 @@
     /* Ein Tipp auf einen Aufkleber schickt ihn sofort. */
     kasten.querySelectorAll("[data-lc-aufkleb]").forEach((b) => {
       b.addEventListener("click", () => {
+        /* Ein Aufkleber ist eine Marke („aufkleber:winken"), keine
+           Adresse — er geht deshalb seinen eigenen Weg, aber durch
+           dasselbe Tor: an alle oder geflüstert. */
         const f = textFeld();
-        if (!LiveChat.aufkleberSenden(b.dataset.lcAufkleb, f ? f.value.trim() : "")) {
-          showToast("Das Bild ging nicht.");
-          return;
-        }
+        const text = f ? f.value.trim() : "";
+        const wer = anWen();
+        const ok = wer
+          ? LiveChat.bildFluestern(wer, "aufkleber:" + String(b.dataset.lcAufkleb).toLowerCase(), text)
+          : LiveChat.aufkleberSenden(b.dataset.lcAufkleb, text);
+        if (!ok) { showToast("Das Bild ging nicht."); return; }
         textLeeren();
         zu();
+        if (wer) showToast("🤫 Geflüstert — nur " + wer + " sieht das Bild.");
       });
     });
 
@@ -15533,14 +15636,7 @@
       b.addEventListener("click", () => {
         const q = letzte[Number(b.dataset.lcLetzt)];
         if (!q) return;
-        const f = textFeld();
-        const text = f ? f.value.trim() : "";
-        const ok = /^data:/.test(q)
-          ? lcDatenBildSchicken(q, text)
-          : LiveChat.gifSenden(q, text);
-        if (!ok) { showToast("Das Bild ging nicht mehr."); return; }
-        textLeeren();
-        zu();
+        if (!raus(q)) showToast("Das Bild ging nicht mehr.");
       });
     });
     kasten.querySelector("#lcLetzteWeg")?.addEventListener("click", () => {
@@ -15574,10 +15670,14 @@
       fotoFeld.value = "";
       if (!datei) return;
       const f = textFeld();
+      const text = f ? f.value.trim() : "";
+      const wer = anWen();
       try {
-        await LiveChat.fotoSenden(datei, f ? f.value.trim() : "");
+        if (wer) await LiveChat.fotoFluestern(wer, datei, text);
+        else await LiveChat.fotoSenden(datei, text);
         textLeeren();
         zu();
+        if (wer) showToast("🤫 Geflüstert — nur " + wer + " sieht das Bild.");
       } catch (x) {
         showToast("📎 " + (x && x.message ? x.message : "Das Bild ging nicht."));
       }
@@ -54929,6 +55029,101 @@ An einem Morgen lief ein kleiner Fuchs los…
       Backend.updateExtraProfileField("seenAppVersion", APP_VERSION);
     });
   }
+
+  /* =================================================================
+     EINE ALTE FASSUNG MERKT VON ALLEIN NICHT, DASS SIE ALT IST
+     -----------------------------------------------------------------
+     GEMELDET: „Bei Emmi gibt es diesen Umschalter nicht zwischen den
+     zwei Plätzen und dem Klassenzimmer."
+
+     Nachgemessen: Der Knopf (#lcAnsicht) steht im Gerüst des
+     Klassenzimmers — ohne jede Bedingung, für jede Person, auf dem
+     Telefon wie am Rechner (werkzeug/pruefe-ansichtknopf.js misst
+     genau das). Er kann bei ihr also nicht fehlen, WEIL sie sie ist.
+     Er fehlt, weil ihr Gerät noch eine ältere Fassung der Seite im
+     Zwischenspeicher hat.
+
+     Und das konnte bisher niemand merken. Alle Stilblätter und
+     Programmdateien hängen an window.DMA_VERSION — die stehen also
+     immer frisch da. Die index.html selbst aber TRÄGT diese Nummer,
+     sie kann sich nicht selbst frisch halten. Bleibt sie im Browser
+     liegen, bleibt die ganze Seite auf dem alten Stand: alte Nummer,
+     alte Dateien, alles zusammenpassend alt. Von innen sieht das
+     völlig in Ordnung aus — es fehlen nur die neuen Sachen.
+
+     Deshalb fragt die Seite jetzt von sich aus nach: Sie holt die
+     index.html ausdrücklich AM ZWISCHENSPEICHER VORBEI und liest die
+     Nummer heraus. Ist draussen eine höhere Nummer, sagt sie es —
+     mit einem Knopf, der wirklich neu lädt.
+
+     Gefragt wird sparsam: einmal kurz nach dem Start, danach alle 20
+     Minuten und immer dann, wenn die Seite nach längerer Pause wieder
+     in den Vordergrund kommt. Das ist genau der Moment, in dem jemand
+     das Klassenzimmer öffnet.
+     ================================================================= */
+  const NEUE_FASSUNG_TAKT = 20 * 60 * 1000;
+  let neueFassungGesagt = false;
+  let neueFassungZuletzt = 0;
+
+  function neueFassungPruefen() {
+    if (neueFassungGesagt) return Promise.resolve(0);
+    neueFassungZuletzt = Date.now();
+    try {
+      return fetch("index.html?frisch=" + Date.now(), { cache: "no-store" })
+        .then((a) => (a && a.ok ? a.text() : ""))
+        .then((t) => {
+          const treffer = /DMA_VERSION\s*=\s*"(\d+)"/.exec(String(t || ""));
+          const draussen = treffer ? Number(treffer[1]) : 0;
+          const hier = Number(window.DMA_VERSION || 0);
+          if (!draussen || !hier || draussen <= hier) return 0;
+          neueFassungGesagt = true;
+          neueFassungZeigen(draussen);
+          return draussen;
+        })
+        .catch(() => 0);
+    } catch (e) { return Promise.resolve(0); }
+  }
+
+  /* Neu laden, und zwar WIRKLICH. Ein schlichtes location.reload()
+     darf dem Browser dieselbe alte Datei noch einmal geben — dann
+     hätte sich nichts geändert und die Meldung käme gleich wieder.
+     Mit einer neuen Adresse (ein zusätzlicher Anhang) muss er sie
+     holen. Alles andere an der Adresse bleibt unangetastet: ein
+     Einladungslink mit ?raum=… funktioniert danach genauso. */
+  function neueFassungLaden() {
+    try {
+      const u = new URL(location.href);
+      u.searchParams.set("frisch", String(Date.now()));
+      location.replace(u.toString());
+    } catch (e) { location.reload(); }
+  }
+
+  function neueFassungZeigen(nummer) {
+    if (document.getElementById("dmaNeueFassung")) return;
+    const bar = document.createElement("div");
+    bar.id = "dmaNeueFassung";
+    bar.className = "dma-neuestand";
+    bar.setAttribute("role", "status");
+    bar.innerHTML = `
+      <span class="dma-neuestand-text">✨ Es gibt eine neuere Fassung der Seite
+        (${nummer} statt ${escapeHtml(String(window.DMA_VERSION || "?"))}).
+        Dein Gerät zeigt noch die alte — deshalb fehlen dir neue Knöpfe.</span>
+      <button type="button" class="dma-neuestand-knopf" id="dmaNeueFassungLaden">Jetzt neu laden</button>
+      <button type="button" class="dma-neuestand-zu" id="dmaNeueFassungZu" aria-label="Später">✕</button>`;
+    document.body.appendChild(bar);
+    document.getElementById("dmaNeueFassungLaden")?.addEventListener("click", neueFassungLaden);
+    document.getElementById("dmaNeueFassungZu")?.addEventListener("click", () => bar.remove());
+  }
+
+  /* Kurz nach dem Start — aber nicht sofort, das Laden hat Wichtigeres
+     zu tun. Danach im Takt. */
+  setTimeout(neueFassungPruefen, 12000);
+  setInterval(neueFassungPruefen, NEUE_FASSUNG_TAKT);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    if (Date.now() - neueFassungZuletzt < 5 * 60 * 1000) return;
+    neueFassungPruefen();
+  });
 
   // Online-Status: alle 60s "zuletzt aktiv" aktualisieren, solange eingeloggt —
   // und im selben Takt den grünen Zähler in der Kopfzeile nachziehen.
