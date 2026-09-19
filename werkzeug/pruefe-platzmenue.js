@@ -91,18 +91,40 @@ const PAARE = [
       const schicht = document.querySelector(".lc-zp");
       if (!schicht) return { da: false };
       const platz = schicht.closest(".lc-platz");
-      const kreis = schicht.closest(".lc-kreis");
+      const kreis = platz ? platz.querySelector(".lc-kreis") : null;
       const sr = schicht.getBoundingClientRect();
       /* Gemessen wird am KREIS — das ist das Profilbild, und „in der
-         Groesse vom Profilbild" war die Ansage. */
-      const pr = kreis ? kreis.getBoundingClientRect() : null;
+         Groesse vom Profilbild" war die Ansage.
+
+         GEAENDERT, und zwar mit Absicht: die Schicht haengt seit
+         Fassung 345 nicht mehr IM Kreis, sondern am Platz. Der Kreis
+         traegt „overflow: hidden" (sonst waere das Bild nicht rund)
+         und schnitt alles ab, was darueber hinausragt — gemessen
+         blieben vom Hammer 64 %, vom Eimer 33 %, vom Wecker 52 % und
+         von der Regenwolke 21 % uebrig. Gemeldet war genau das: „ich
+         moechte, dass der Hammer und sowas sichtbar ist."
+
+         Die Frage ist deshalb jetzt eine andere, aber nicht die
+         leichtere: die Schicht muss DENSELBEN KASTEN haben wie das
+         Profilbild — gleich breit, gleich hoch, an derselben Stelle.
+         Der alte Fehler (334 px breiter als das Bild) faellt damit
+         weiterhin auf. */
+      /* GEMESSEN WIRD AM LAYOUT, NICHT AM GEMALTEN BILD.
+         getBoundingClientRect() rechnet jede Animation mit: waehrend
+         der Tritt laeuft, fliegt der Kreis gerade quer durchs Bild
+         und ist halb so gross. Zwei Anlaeufe lang sah es deshalb so
+         aus, als saesse die Schicht falsch — sie sass richtig, nur
+         der Kreis war unterwegs. offsetWidth und offsetTop kennen
+         keine transform und sagen, was wirklich gilt. */
       return {
         da: true,
         amPlatz: Boolean(platz),
         name: platz ? (platz.querySelector(".lc-platz-name") || {}).textContent : "",
         klassen: schicht.className,
-        imKreis: Boolean(kreis),
-        breiter: pr ? Math.round(sr.width - pr.width) : 999,
+        deckung: kreis ? Math.abs(schicht.offsetWidth - kreis.offsetWidth)
+                       + Math.abs(schicht.offsetHeight - kreis.offsetHeight)
+                       + Math.abs(schicht.offsetLeft - kreis.offsetLeft)
+                       + Math.abs(schicht.offsetTop - kreis.offsetTop) : 999,
         kinder: schicht.children.length
       };
     }, wirkung);
@@ -110,11 +132,75 @@ const PAARE = [
       d.da ? d.kinder + " Teile" : "nichts");
     pruefe(wirkung + " haengt am richtigen Platz", Boolean(d.amPlatz) && /Emmi/i.test(d.name || ""),
       (d.name || "-").trim());
-    pruefe(wirkung + " sitzt im Profilbild und ist nicht groesser",
-      Boolean(d.imKreis) && d.breiter <= 2,
-      d.imKreis ? d.breiter + " px breiter als das Bild" : "haengt nicht im Kreis");
+    pruefe(wirkung + " deckt genau das Profilbild ab",
+      d.deckung <= 4,
+      d.deckung + " px Abweichung (Breite, Hoehe, Lage zusammen)");
     pruefe(wirkung + " traegt ihre eigene Klasse", String(d.klassen || "").indexOf(klasse) >= 0,
       d.klassen || "-");
+  }
+
+  /* =========================================================
+     WIRD DAS, WAS GEZEICHNET WIRD, AUCH GESEHEN?
+     ---------------------------------------------------------
+     GEMELDET: „Ich moechte, dass der Hammer und sowas sichtbar
+     ist." Er WAR gezeichnet — nur abgeschnitten. Deshalb genuegt
+     es nicht, zu pruefen, dass ein Element da ist: es muss auch
+     durch keinen Vorfahren beschnitten werden. Die Sonde geht
+     dafuer den ganzen Weg nach oben und schneidet jeden Kasten
+     mit, der „overflow" ungleich visible hat — genau das, was der
+     Browser auch tut.
+     ========================================================= */
+  console.log("\nUND SIEHT MAN ES AUCH?\n");
+  for (const [w, sel, wie] of [["hammer", ".lc-zhammer-bild", "der Hammer"],
+                               ["eimer", ".lc-eimer-bild", "der Eimer"],
+                               ["wecker", ".lc-wecker-bild", "der Wecker"],
+                               ["regenwolke", ".lc-zwolke-bild", "die Wolke"],
+                               ["tritt", ".lc-tritt-schuh", "der Schuh"]]) {
+    const d = await pg.evaluate(async ({ w, s }) => {
+      document.querySelectorAll(".lc-zp").forEach((x) => x.remove());
+      window.DMA_PRUEFUNG.wirkung(w, "Emmi");
+      await new Promise((f) => setTimeout(f, 200));
+      const el = document.querySelector(s);
+      if (!el) return { fehlt: true };
+      const a = el.getBoundingClientRect();
+      let l = 0, t = 0, r = innerWidth, b = innerHeight, wer = "Fenster";
+      let p = el.parentElement;
+      while (p) {
+        const g = getComputedStyle(p);
+        if (g.overflow !== "visible") {
+          const k = p.getBoundingClientRect();
+          l = Math.max(l, k.left); t = Math.max(t, k.top);
+          r = Math.min(r, k.right); b = Math.min(b, k.bottom);
+          wer = String(p.className || p.tagName).split(/\s+/)[0];
+        }
+        p = p.parentElement;
+      }
+      const ix = Math.max(0, Math.min(a.right, r) - Math.max(a.left, l));
+      const iy = Math.max(0, Math.min(a.bottom, b) - Math.max(a.top, t));
+      const ganz = a.width * a.height;
+      return { sichtbar: ganz ? Math.round(ix * iy / ganz * 100) : -1, klipper: wer };
+    }, { w, s: sel });
+    pruefe(wie + " wird nicht abgeschnitten", !d.fehlt && d.sichtbar >= 99,
+      d.fehlt ? "gar nicht gezeichnet" : d.sichtbar + " % sichtbar (letzte Blende: " + d.klipper + ")");
+  }
+
+  /* Und die Gegenprobe: was INNEN bleiben soll, bleibt innen. */
+  for (const [w, sel, wie] of [["eimer", ".lc-wasserstand", "der Wasserstand"],
+                               ["reichtum", ".lc-geldstand", "der Geldhaufen"]]) {
+    const d = await pg.evaluate(async ({ w, s }) => {
+      document.querySelectorAll(".lc-zp").forEach((x) => x.remove());
+      window.DMA_PRUEFUNG.wirkung(w, "Emmi");
+      await new Promise((f) => setTimeout(f, 200));
+      const el = document.querySelector(s);
+      if (!el) return { fehlt: true };
+      const blende = el.closest(".lc-zp-blende");
+      return { blende: Boolean(blende),
+               rund: blende ? getComputedStyle(blende).borderRadius : "",
+               zu: blende ? getComputedStyle(blende).overflow : "" };
+    }, { w, s: sel });
+    pruefe(wie + " liegt in der runden Blende",
+      !d.fehlt && d.blende && d.zu === "hidden" && /50%/.test(d.rund),
+      d.fehlt ? "fehlt" : (d.blende ? d.zu + ", " + d.rund : "keine Blende"));
   }
 
   console.log("\nDER LANGE DRUCK\n");
@@ -131,13 +217,31 @@ const PAARE = [
       da: Boolean(k),
       knoepfe: k ? k.querySelectorAll(".lc-platzmenue-knopf").length : 0,
       kopf: k ? (k.querySelector(".lc-platzmenue-kopf") || {}).textContent : "",
-      imBild: r ? (r.left >= 0 && r.top >= 0 && r.right <= window.innerWidth + 1) : false
+      imBild: r ? (r.left >= 0 && r.top >= 0 && r.right <= window.innerWidth + 1) : false,
+      /* GEMELDET: „Beim Android muss man unten scrollen, um zum
+         Hammer zu kommen. In dem Moment, wo man scrollt, waehlt sich
+         das Menue wieder ab." Also wird genau das gemessen: muss man
+         rollen? scrollHeight ist, wie hoch der Inhalt WAERE,
+         clientHeight, wie viel Platz er hat. */
+      hoch: k ? k.scrollHeight : 0,
+      passt: k ? k.scrollHeight <= k.clientHeight + 1 : false,
+      /* Und der Hammer ist der letzte Knopf — er muss sichtbar sein,
+         ohne dass jemand rollt. */
+      hammerUnten: (() => {
+        if (!k || !r) return 999;
+        const b = k.querySelectorAll(".lc-platzmenue-knopf");
+        const h = b[b.length - 1];
+        return h ? Math.round(h.getBoundingClientRect().bottom - r.bottom) : 999;
+      })()
     };
   });
   pruefe("der lange Druck oeffnet das Menue", Boolean(menue.da), menue.fehlt || "");
   pruefe("es nennt die Person", /Emmi/i.test(menue.kopf || ""), (menue.kopf || "-").trim());
   pruefe("es hat alle Spielzeuge", menue.knoepfe >= 13, menue.knoepfe + " Knoepfe");
   pruefe("es steht ganz im Bild", Boolean(menue.imBild));
+  pruefe("man muss nicht rollen", Boolean(menue.passt), menue.hoch + " px Inhalt");
+  pruefe("der letzte Knopf (Hammer) ist ohne Rollen zu sehen", menue.hammerUnten <= 0,
+    menue.hammerUnten + " px unter dem Rand");
 
   const zu = await pg.evaluate(async () => {
     document.body.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));

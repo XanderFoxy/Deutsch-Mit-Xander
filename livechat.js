@@ -8334,6 +8334,31 @@ window.LiveChat = (function () {
     try { localStorage.removeItem(ZAEHLER_SCHLUESSEL); } catch (e) {}
   }
 
+  /* =========================================================
+     WEN DIE ZEILE MEINT — UND WIE MAN IHN NENNT
+     ---------------------------------------------------------
+     GEMELDET: „Wenn es mich selbst betrifft und ich mache eine
+     Animation, dann muss da stehen, dass er sich selbst ablegt,
+     und nicht der Fox in Klammern du."
+
+     Zwei Dinge liefen da zusammen. Der Name kam aus der
+     Beschriftung unter dem Platz, und die heisst bei einem
+     selbst „Name (du)" — das ist in app.js abgestellt. Und
+     selbst mit sauberem Namen stand dann „Xander haut mit dem
+     Hammer auf Xander", was niemand so sagt.
+
+     Hier steht deshalb nur noch, WIE der Getroffene in der Zeile
+     heisst: bei einem selbst „sich selbst", sonst sein Name. Was
+     MITFAEHRT (wen), bleibt in jedem Fall der echte Name — die
+     Animation muss den Platz ja finden. */
+  function zielWort(wem) {
+    if (!wem) return "";
+    var ich = String(zustand.ichName || "").trim().toLowerCase();
+    var da = String(wem.name || "").trim().toLowerCase();
+    if (wem.ich === true || (ich && da === ich)) return "sich selbst";
+    return wem.name;
+  }
+
   function befehlAusfuehren(roh) {
     /* „/me/" ist KEIN Befehl, sondern der alte Trick: der eigene Name
        mitten im Satz. Ein Befehl ist es nur, wenn KEIN Schrägstrich
@@ -8970,7 +8995,7 @@ window.LiveChat = (function () {
       var wemP = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       if (!wemP) return systemZeile("So geht es:  /" + art + " Nickname");
       var satzP = AM_PLATZ[art];
-      return anAlle("aktion", zustand.ichName + " " + satzP.satz + " " + wemP.name + "  " + satzP.emoji,
+      return anAlle("aktion", zustand.ichName + " " + satzP.satz + " " + zielWort(wemP) + "  " + satzP.emoji,
                     { wirkung: satzP.wirkung, wen: wemP.name });
     }
     /* Und die vier, die es fuer den Raum schon gibt: nur MIT Namen
@@ -8978,7 +9003,7 @@ window.LiveChat = (function () {
     if (AUCH_AM_PLATZ[art] && rest) {
       var wemQ = personNachName(rest) || praesenzNachName(rest) || { name: rest };
       var satzQ = AUCH_AM_PLATZ[art];
-      return anAlle("aktion", zustand.ichName + " " + satzQ.satz + " " + wemQ.name + "  " + satzQ.emoji,
+      return anAlle("aktion", zustand.ichName + " " + satzQ.satz + " " + zielWort(wemQ) + "  " + satzQ.emoji,
                     { wirkung: satzQ.wirkung, wen: wemQ.name });
     }
 

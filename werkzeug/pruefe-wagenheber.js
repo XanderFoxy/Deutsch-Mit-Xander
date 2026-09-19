@@ -146,9 +146,15 @@ const pruefe = (was, gut, zusatz) => {
       window.DMA_PRUEFUNG.wirkung(a, "Emmi");
       await new Promise((f) => setTimeout(f, 160));
       const sch = document.querySelector(".lc-zp");
-      /* Den Kreis nehmen, an dem die Schicht wirklich haengt — nicht
-         irgendeinen. Sonst misst man den Nachbarplatz. */
-      const kreis = sch ? sch.closest(".lc-kreis") : null;
+      /* Den Kreis nehmen, der zu DIESER Schicht gehoert — nicht
+         irgendeinen. Sonst misst man den Nachbarplatz.
+         Frueher stand hier closest(".lc-kreis"), weil die Schicht IM
+         Kreis hing. Seit Fassung 345 haengt sie am Platz: der Kreis
+         schnitt alles ab, was ueber das Profilbild hinausragt (vom
+         Hammer blieben 64 %, vom Eimer 33 %). Der Weg zum Kreis geht
+         deshalb jetzt ueber den Platz. */
+      const platz = sch ? sch.closest(".lc-platz") : null;
+      const kreis = platz ? platz.querySelector(".lc-kreis") : null;
       return { klassen: sch ? sch.className : "",
         bewegt: kreis ? getComputedStyle(kreis).animationName : "none" };
     }, art);

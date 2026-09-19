@@ -49,22 +49,32 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 344 — jeder Befehl in der Liste tut auch etwas",
+  stand: "Fassung 345 — nichts zoomt mehr, und der Hammer ist zu sehen",
 
   inArbeit: [
-    { seit: "2026-09-19T20:38",
+    { seit: "2026-09-19T21:43",
+      text: "Galgenmaennchen: Luecken Buchstabe fuer Buchstabe ausfuellen statt zwei Antworten anklicken" },
+    { seit: "2026-09-19T21:43",
       text: "Nachmessen, ob bei einem Gespraech wirklich ZWEI Geraete in turn_nutzung stehen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T20:38",
-      text: "Fuenf Befehle taten gar nichts: /route66, /lok2, /gglok2, /meteor2 und /schuss2 — Ziffern fehlten im Muster" },
-    { seit: "2026-09-19T20:38",
-      text: "/gift gibt wieder das kleine Geschenk und /farbe wieder die Schriftfarbe, wie die Hilfe es verspricht" },
-    { seit: "2026-09-19T20:38",
-      text: "Sechs Abkuerzungen, die ins Leere zeigten, sind raus — /wueste, /wasser, /stumm, /diagnose und zwei Doppelungen" },
-    { seit: "2026-09-19T20:38",
-      text: "Neue Sonde: alle 524 Schreibweisen werden einmal getippt, jede muss etwas tun" },
+    { seit: "2026-09-19T21:43",
+      text: "Das Bild zoomt nicht mehr von selbst herein: jedes Eingabefeld hat auf dem Telefon mindestens 16 px" },
+    { seit: "2026-09-19T21:43",
+      text: "Hammer, Eimer, Wecker und Wolke werden nicht mehr vom runden Bild abgeschnitten — vorher fehlte bis zu 79 %" },
+    { seit: "2026-09-19T21:43",
+      text: "Wassereimer: das Wasser laeuft wirklich aus und das Profilbild fuellt sich mit einem Wasserstand" },
+    { seit: "2026-09-19T21:43",
+      text: "Wecker: zwei Schellen oben, Kloeppel dazwischen, Fuesse unten — wie ein klassischer Wecker" },
+    { seit: "2026-09-19T21:43",
+      text: "Geld: die Muenzen sammeln sich wie im Geldspeicher" },
+    { seit: "2026-09-19T21:43",
+      text: "Alle Profil-Animationen laufen laenger und deutlicher" },
+    { seit: "2026-09-19T21:43",
+      text: "Platzmenue in drei Spalten: 345 statt 520 px, kein Rollen mehr noetig, der Hammer ist gleich sichtbar" },
+    { seit: "2026-09-19T21:43",
+      text: "Wer etwas mit sich selbst macht, liest jetzt „sich selbst“ statt seines Namens mit „(du)“ dahinter" },
   ],
 };

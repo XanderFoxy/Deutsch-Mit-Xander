@@ -9669,31 +9669,12 @@ body.lc-schreibt .tutor-reiter {
    Telefon sind die Plätze kleiner als auf dem Rechner, und ein fester
    Pixelwert sähe dort falsch aus.
    ===================================================================== */
-/* Die Schicht deckt GENAU das Quadrat des Profilbildes ab — der
-   Kreis ist das erste Kind des Platzes und so breit wie er, seine
-   Hoehe ist dieselbe (aspect-ratio 1/1). Darueber hinausragen darf
-   sie: ein Hammer kommt von ausserhalb des Bildes. Frueher hing sie
-   IM Kreis und wurde von dessen „overflow: hidden" abgeschnitten —
-   gemessen blieben vom Hammer 64 %, vom Eimer 33 %, vom Wecker 52 %
-   und von der Regenwolke 21 % uebrig. */
-.lc-platz { position: relative; }
 .lc-zp {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  aspect-ratio: 1 / 1;
+  inset: 0;
   pointer-events: none;
   overflow: visible;
   z-index: 6;
-}
-/* Und die runde Blende fuer alles, was im Bild bleiben muss. */
-.lc-zp-blende {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  overflow: hidden;
-  pointer-events: none;
 }
 
 /* --- Der Tritt: das Profilbild fliegt wie ein Ball ---------------- */
@@ -9777,90 +9758,35 @@ body.lc-schreibt .tutor-reiter {
 .lc-eimer-bild {
   position: absolute;
   left: 50%;
-  top: -48%;
-  width: 74%;
+  top: -34%;
+  width: 56%;
   transform-origin: 22% 80%;
-  animation: lcEimerKippt 2.6s cubic-bezier(.4, 0, .3, 1) both;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .32));
+  animation: lcEimerKippt 1.5s cubic-bezier(.4, 0, .3, 1) both;
 }
 @keyframes lcEimerKippt {
   0%   { opacity: 0; transform: translate(-50%, -30%) rotate(0); }
-  12%  { opacity: 1; transform: translate(-50%, 0) rotate(0); }
-  22%  { transform: translate(-50%, 0) rotate(118deg); }
-  74%  { transform: translate(-50%, 0) rotate(118deg); }
-  88%  { opacity: 1; transform: translate(-50%, 0) rotate(0); }
+  18%  { opacity: 1; transform: translate(-50%, 0) rotate(0); }
+  34%  { transform: translate(-50%, 0) rotate(118deg); }
+  70%  { transform: translate(-50%, 0) rotate(118deg); }
   100% { opacity: 0; transform: translate(-50%, -30%) rotate(0); }
 }
-/* Der Strahl: breiter als vorher, und er laeuft so lange, wie der
-   Eimer gekippt ist — nicht kuerzer. Am unteren Ende franst er aus,
-   dort trifft er ja auf das Wasser. */
 .lc-eimer-guss {
   position: absolute;
   left: 50%;
-  top: -6%;
-  width: 26%;
-  height: 78%;
+  top: 4%;
+  width: 34%;
+  height: 46%;
   transform: translateX(-50%);
-  border-radius: 0 0 46% 46%;
+  border-radius: 0 0 40% 40%;
   background: linear-gradient(to bottom,
-    rgba(168, 216, 247, .92) 0%, rgba(150, 205, 240, .78) 55%,
-    rgba(150, 205, 240, .18) 100%);
-  animation: lcGuss 1.9s ease-in-out 0.42s both;
+    rgba(150, 205, 240, .85), rgba(150, 205, 240, .15));
+  animation: lcGuss 1.3s ease-in-out 0.35s both;
 }
 @keyframes lcGuss {
   0%   { opacity: 0; transform: translateX(-50%) scaleY(0); transform-origin: top; }
-  16%  { opacity: 1; transform: translateX(-50%) scaleY(1); transform-origin: top; }
-  82%  { opacity: 1; transform: translateX(-50%) scaleY(1); transform-origin: top; }
-  100% { opacity: 0; transform: translateX(-50%) scaleY(.9); transform-origin: top; }
-}
-
-/* =========================================================
-   DER WASSERSTAND IM PROFILBILD
-   ---------------------------------------------------------
-   GEWUENSCHT: „dass das Profilbild sich ein bisschen fuellt
-   mit einem Wasserstand."
-
-   Der Pegel liegt in der runden Blende (.lc-zp-blende) und
-   endet deshalb genau am Bildrand. Er steigt, waehrend der
-   Eimer ausgiesst, steht einen Moment und laeuft dann ab.
-   Zwei Wellen mit verschiedenem Takt laufen auf der
-   Oberflaeche gegeneinander — eine allein sieht aus wie ein
-   Balken, zwei sehen aus wie Wasser.
-   ========================================================= */
-.lc-wasserstand {
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  bottom: 0;
-  height: 0;
-  background: linear-gradient(to bottom,
-    rgba(120, 190, 235, .78), rgba(58, 130, 190, .86));
-  animation: lcWasserSteigt 4.4s ease-in-out 0.5s both;
-}
-@keyframes lcWasserSteigt {
-  0%   { height: 0; }
-  30%  { height: 62%; }
-  66%  { height: 62%; }
-  100% { height: 0; }
-}
-.lc-wasserwelle {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -0.42em;
-  height: 0.84em;
-  border-radius: 50%;
-  background: rgba(150, 205, 240, .85);
-  animation: lcWasserWelle 1.7s ease-in-out infinite;
-}
-.lc-wasserwelle-2 {
-  background: rgba(190, 226, 248, .6);
-  animation-duration: 2.3s;
-  animation-direction: reverse;
-}
-@keyframes lcWasserWelle {
-  0%, 100% { transform: translateX(-8%) scaleY(1); }
-  50%      { transform: translateX(8%) scaleY(0.62); }
+  25%  { opacity: 1; transform: translateX(-50%) scaleY(1); transform-origin: top; }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
 }
 .lc-eimer-tropfen {
   position: absolute;
@@ -9893,58 +9819,22 @@ body.lc-schreibt .tutor-reiter {
 .lc-wecker-bild {
   position: absolute;
   left: 50%;
-  top: -44%;
-  width: 72%;
+  top: -26%;
+  width: 46%;
   transform: translateX(-50%);
-  animation: lcWeckerAuf 3.4s ease-out both;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
+  animation: lcWeckerAuf 2.6s ease-out both;
 }
 @keyframes lcWeckerAuf {
   0%   { opacity: 0; transform: translateX(-50%) scale(.5); }
-  8%   { opacity: 1; transform: translateX(-50%) scale(1.06); }
-  92%  { opacity: 1; transform: translateX(-50%) scale(1); }
+  10%  { opacity: 1; transform: translateX(-50%) scale(1.05); }
+  88%  { opacity: 1; transform: translateX(-50%) scale(1); }
   100% { opacity: 0; transform: translateX(-50%) scale(.9); }
 }
-/* DIE SCHELLEN UND DER KLOEPPEL.
-   Sie sitzen in eigenen <g>-Gruppen, weil eine CSS-Animation, die
-   „transform" setzt, das transform-ATTRIBUT desselben Elements
-   ersetzt — dieselbe Falle wie bei den klatschenden Haenden.
-   transform-box: fill-box heisst: der Drehpunkt liegt im eigenen
-   Kasten, nicht im Ursprung der ganzen Zeichnung.
-   Der Takt ist der des Geraeusches: drei Stoesse bei 0.00, 0.62 und
-   1.24 Sekunden, dazwischen Ruhe. */
-.lc-wecker-glocke {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation: lcSchelle 1.86s linear both;
-}
-.lc-wecker-l { animation-name: lcSchelleL; }
-.lc-wecker-r { animation-name: lcSchelleR; }
-@keyframes lcSchelleL {
-  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(0deg) translateY(0); }
-  4%, 37%, 71%   { transform: rotate(-13deg) translateY(-1.5px); }
-  12%, 45%, 79%  { transform: rotate(6deg) translateY(0); }
-}
-@keyframes lcSchelleR {
-  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(0deg) translateY(0); }
-  4%, 37%, 71%   { transform: rotate(13deg) translateY(-1.5px); }
-  12%, 45%, 79%  { transform: rotate(-6deg) translateY(0); }
-}
-@keyframes lcSchelle { to { transform: rotate(0deg); } }
-.lc-wecker-kloeppel {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation: lcKloeppel 1.86s linear both;
-}
-@keyframes lcKloeppel {
-  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(0deg); }
-  4%, 37%, 71%   { transform: rotate(-20deg); }
-  10%, 43%, 77%  { transform: rotate(20deg); }
-  16%, 49%, 83%  { transform: rotate(-10deg); }
-}
+.lc-wecker-glocke { animation: lcGlocke 0.1s linear 8 alternate; }
+@keyframes lcGlocke { to { transform: translateY(-1.5px) rotate(4deg); } }
 .lc-wecker-welle {
   position: absolute;
-  top: -30%;
+  top: -14%;
   width: 0.5em;
   height: 0.5em;
   border: 2px solid rgba(243, 212, 110, .85);
@@ -9965,7 +9855,7 @@ body.lc-schreibt .tutor-reiter {
   top: -30%;
   width: 78%;
   transform: translateX(-50%);
-  animation: lcZwolkeZieht 4s ease-out both;
+  animation: lcZwolkeZieht 3.2s ease-out both;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .3));
 }
 @keyframes lcZwolkeZieht {
@@ -10005,70 +9895,15 @@ body.lc-schreibt .tutor-reiter {
 .lc-zgeld-stueck,
 .lc-zzucker-stueck {
   position: absolute;
-  top: -30%;
+  top: -22%;
   font-style: normal;
-  font-size: 0.92em;
-  animation: lcZpRieselt 2.1s ease-in both;
+  font-size: 0.8em;
+  animation: lcZpRieselt 1.7s ease-in both;
 }
 @keyframes lcZpRieselt {
   0%   { opacity: 0; transform: translateY(0) rotate(0); }
-  14%  { opacity: 1; }
-  88%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(5em) rotate(var(--dreh, 180deg)); }
-}
-
-/* =========================================================
-   DER GELDSPEICHER IM PROFILBILD
-   ---------------------------------------------------------
-   GEWUENSCHT: „Auch mit dem Geld kann sich das Profilbild
-   ein bisschen anfuehlen wie im Geldspeicher."
-
-   Derselbe Bau wie beim Wasser: ein Stand, der in der runden
-   Blende steigt. Nur ist die Oberkante hier nicht glatt,
-   sondern krumm — ein Muenzhaufen liegt nie waagerecht —, und
-   darueber wandert ein Glanz, damit es nach Metall aussieht
-   und nicht nach gelber Farbe.
-   ========================================================= */
-.lc-geldstand {
-  position: absolute;
-  left: -8%;
-  right: -8%;
-  bottom: 0;
-  height: 0;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(255, 246, 200, .55) 0 12%, rgba(255, 246, 200, 0) 13%),
-    radial-gradient(circle at 62% 55%, rgba(255, 246, 200, .45) 0 10%, rgba(255, 246, 200, 0) 11%),
-    radial-gradient(circle at 84% 24%, rgba(255, 246, 200, .4) 0 9%, rgba(255, 246, 200, 0) 10%),
-    linear-gradient(to bottom, #f2c94c, #b8860b);
-  animation: lcGeldSteigt 3.6s ease-in-out 0.45s both;
-}
-@keyframes lcGeldSteigt {
-  0%   { height: 0; }
-  36%  { height: 54%; }
-  70%  { height: 54%; }
-  100% { height: 0; }
-}
-/* Die krumme Oberkante: zwei flache Ellipsen nebeneinander. */
-.lc-geldkante {
-  position: absolute;
-  left: -6%;
-  right: -6%;
-  top: -0.32em;
-  height: 0.64em;
-  border-radius: 50%;
-  background: #f2c94c;
-  box-shadow: 1.2em 0.1em 0 -0.06em #edc23f, -1.2em 0.14em 0 -0.08em #e8bd3a;
-}
-.lc-geldglanz {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg,
-    rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, .55) 50%, rgba(255, 255, 255, 0) 62%);
-  animation: lcGeldGlanz 1.8s ease-in-out infinite;
-}
-@keyframes lcGeldGlanz {
-  0%   { transform: translateX(-60%); }
-  100% { transform: translateX(60%); }
+  16%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(4.4em) rotate(var(--dreh, 180deg)); }
 }
 
 /* --- Der Hammer --------------------------------------------------- */
@@ -10081,40 +9916,28 @@ body.lc-schreibt .tutor-reiter {
   78%  { transform: scale(1.03, 0.97); }
   100% { transform: scale(1, 1); }
 }
-/* DER HAMMER — sichtbar, und er schlaegt zweimal.
-   GEWUENSCHT: „ich moechte, dass der Hammer und sowas sichtbar ist.
-   Die Animation duerfen ruhig ein kleines bisschen laenger gehen."
-   Er ragt ueber den Bildrand hinaus; dass das geht, ist der Umbau
-   an .lc-zp weiter oben. Zwei Schlaege statt einem, und zwischen
-   ihnen hebt er sich wieder — ein Hammer, der nur einmal zuckt,
-   sieht aus wie ein Fehler. */
 .lc-zhammer-bild {
   position: absolute;
-  left: 44%;
-  top: -56%;
-  width: 74%;
-  transform-origin: 50% 92%;
-  animation: lcHammerSchlag 2.4s cubic-bezier(.4, 0, .2, 1) both;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
+  left: 46%;
+  top: -34%;
+  width: 52%;
+  transform-origin: 50% 90%;
+  animation: lcHammerSchlag 0.8s cubic-bezier(.4, 0, .2, 1) both;
 }
 @keyframes lcHammerSchlag {
-  0%   { opacity: 0; transform: rotate(-72deg) translateY(-24%); }
-  10%  { opacity: 1; transform: rotate(-72deg) translateY(0); }
-  20%  { transform: rotate(10deg); }
-  26%  { transform: rotate(-14deg); }
-  38%  { transform: rotate(-64deg); }
-  48%  { transform: rotate(10deg); }
-  54%  { transform: rotate(-12deg); }
-  84%  { opacity: 1; transform: rotate(-58deg); }
-  100% { opacity: 0; transform: rotate(-72deg) translateY(-24%); }
+  0%   { opacity: 0; transform: rotate(-70deg) translateY(-20%); }
+  22%  { opacity: 1; transform: rotate(-70deg) translateY(0); }
+  40%  { transform: rotate(8deg); }
+  52%  { transform: rotate(-12deg); }
+  100% { opacity: 0; transform: rotate(-70deg) translateY(-20%); }
 }
 .lc-zhammer-knall {
   position: absolute;
   left: 50%;
-  top: 16%;
+  top: 20%;
   transform: translate(-50%, 0);
   font-weight: 900;
-  font-size: 0.95em;
+  font-size: 0.7em;
   color: #ff8a5b;
   text-shadow: 0 0 8px rgba(0, 0, 0, .45);
   animation: lcZpWort 0.9s ease-out 0.34s both;
@@ -10141,36 +9964,12 @@ body.lc-schreibt .tutor-reiter {
    dem Chat liegt — und ist mit dem Daumen zu treffen: jede Zeile ist
    mindestens 38 Pixel hoch.
    ===================================================================== */
-/* =========================================================
-   DAS PLATZMENUE PASST JETZT AUF EINEN BLICK
-   ---------------------------------------------------------
-   GEMELDET: „Beim Android muss man unten scrollen, um zum
-   Hammer zu kommen. In dem Moment, wo man scrollt, waehlt
-   sich das Menue wieder ab. Da haette ich gern ein bisschen
-   kompakter das Ganze, dass ich die Befehle schneller
-   ausfuehren kann."
-
-   Nachgerechnet: dreizehn Eintraege in EINER Spalte, jeder
-   38 px hoch, dazu die Ueberschrift — rund 520 px. Auf einem
-   Android-Bildschirm liegt das ueber den 62 vh, die das Menue
-   hoechstens hoch sein darf. Also Rollbalken, und der Griff
-   zum Rollen schloss das Menue.
-
-   Jetzt drei Spalten mit Kacheln: Zeichen oben, Wort darunter.
-   Dreizehn Eintraege werden fuenf Reihen a 62 px — rund 340 px
-   mit Ueberschrift. Es passt ohne Rollen, und der Hammer ist
-   sichtbar, ohne dass man ihn suchen muss.
-   ========================================================= */
 .lc-platzmenue {
   position: fixed;
   z-index: 9600;
-  width: 246px;
-  max-width: calc(100vw - 16px);
-  max-height: 72vh;
+  min-width: 168px;
+  max-height: 62vh;
   overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
   padding: 6px;
   border-radius: 14px;
   background: rgba(24, 28, 38, 0.97);
@@ -10186,8 +9985,7 @@ body.lc-schreibt .tutor-reiter {
   to   { opacity: 1; transform: scale(1); }
 }
 .lc-platzmenue-kopf {
-  grid-column: 1 / -1;
-  margin: 2px 8px 4px;
+  margin: 2px 8px 6px;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -10195,38 +9993,26 @@ body.lc-schreibt .tutor-reiter {
 }
 .lc-platzmenue-knopf {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
+  gap: 10px;
   width: 100%;
-  min-height: 58px;
-  padding: 6px 2px;
+  min-height: 38px;
+  padding: 6px 10px;
   border: 0;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
+  border-radius: 9px;
+  background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.68rem;
-  line-height: 1.15;
-  text-align: center;
+  font-size: 0.9rem;
+  text-align: left;
   cursor: pointer;
-}
-/* Ein Wort wie „Wassereimer" darf die Kachel nicht auseinander-
-   treiben — es bricht lieber um oder wird leise abgeschnitten. */
-.lc-platzmenue-wort {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .lc-platzmenue-knopf:hover,
 .lc-platzmenue-knopf:focus-visible {
   background: rgba(255, 255, 255, 0.12);
   outline: none;
 }
-.lc-platzmenue-zeichen { font-size: 1.35rem; line-height: 1.1; text-align: center; }
+.lc-platzmenue-zeichen { font-size: 1.1rem; width: 1.4em; text-align: center; }
 @media (prefers-reduced-motion: reduce) { .lc-platzmenue { animation: none; } }
 
 /* =====================================================================
@@ -10634,52 +10420,4 @@ body.lc-schreibt .tutor-reiter {
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-gehoben, .lc-gezogen { animation: none; }
-}
-
-/* =========================================================
-   DAS BILD ZIEHT SICH VON SELBST HERAN — UND BLEIBT SO
-   ---------------------------------------------------------
-   GEMELDET: „Man wählt irgendwas an und dann muss man immer
-   dieses Pinch machen mit den Fingern, damit man das Bild
-   wieder zusammenzieht, weil das plötzlich ein bisschen
-   aufgegangen ist. Das passiert auch bei den Animationen. Es
-   springt zwar an die Position, aber es zoomt so ein bisschen
-   rein."
-
-   Das ist weder Layout noch Animation, sondern eine feste
-   Regel des Browsers auf dem Telefon: Wer ein Feld antippt, in
-   das man schreiben kann und dessen Schrift KLEINER ALS 16
-   PIXEL ist, dem zieht Safari die ganze Seite heran, damit er
-   lesen kann, was er tippt. Zurueck zieht es sie nicht — das
-   muss man mit den Fingern machen. Chrome auf Android tut
-   dasselbe. Deshalb sass es auch „schon vor den Animationen"
-   und trifft jeden Bereich gleichermassen: es haengt am Feld,
-   nicht am Effekt.
-
-   NACHGEMESSEN, nicht vermutet: alle acht Eingabefelder, die
-   beim Laden im Dokument stehen, lagen darunter — zwischen
-   14.08 px (Gaestebuch) und 14.72 px (Anmeldung).
-
-   Auf Geraeten mit Finger-Bedienung bekommt deshalb jedes
-   Feld, in das man schreiben kann, mindestens 16 px.
-   max(16px, 1em) heisst: mindestens 16, sonst so gross wie der
-   Text ringsum — wo die Umgebung groesser ist, bleibt das Feld
-   auch groesser. Kaestchen, Schalter und Schieber sind
-   ausgenommen, die haben keine Schrift.
-
-   Warum „!important": eine Regel auf „input" allein verliert
-   gegen jede Regel mit Klasse, ganz gleich, wie spaet sie
-   kommt. Die Alternative waere, 40 einzelne Klassen
-   nachzuziehen und jede kuenftige zu vergessen. Hier ist die
-   Ausnahme richtig: es geht nicht um Aussehen, sondern darum,
-   dass der Browser nicht hineinzoomt.
-   ========================================================= */
-@media (pointer: coarse) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="submit"]):not([type="button"]),
-  textarea,
-  select,
-  [contenteditable="true"],
-  [contenteditable=""] {
-    font-size: max(16px, 1em) !important;
-  }
 }

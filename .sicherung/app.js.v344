@@ -21383,19 +21383,6 @@
         : `Platz ${p.nummer}, ${p.name} — antippen, um größer zu sehen`);
 
       name.textContent = p.leer ? "frei" : (p.ich ? p.name + " (du)" : p.name);
-      /* DER NAME UNTER DEM PLATZ IST EINE BESCHRIFTUNG, KEIN NAME.
-         -----------------------------------------------------------
-         GEMELDET: „Bei Xander Fox — also wenn es mich selbst
-         betrifft und ich mach eine Animation, dann muss da stehen,
-         dass er sich selbst ablegt, und nicht Fox in Klammern du."
-
-         Genau daher kam es: das Platzmenue las den Namen aus der
-         Beschriftung, und bei einem selbst steht dort „Name (du)".
-         Aus dem Knopf wurde also „/hammer Xander Fox (du)". Der
-         echte Name haengt jetzt am Platz selbst — die Beschriftung
-         darf beschriften, ohne dass ein Befehl sie mitliest. */
-      knopf.dataset.lcName = p.leer ? "" : (p.name || "");
-      knopf.dataset.lcIch = p.ich ? "1" : "";
 
       /* Das eigene Bild bleibt stumm — sonst hört man sich selbst
          mit Verzögerung, und das macht jedes Gespräch kaputt. */
@@ -23098,10 +23085,7 @@
     const eigen = platz.classList.contains("lc-platz-ich");
     const leer = platz.classList.contains("lc-platz-frei");
     const nameKnoten = platz.querySelector(".lc-platz-name");
-    /* Erst der echte Name vom Platz, die Beschriftung nur als
-       Rueckfall — und dann ohne das angehaengte „(du)". */
-    const beschriftung = nameKnoten ? nameKnoten.textContent.trim() : "";
-    const name = (platz.dataset.lcName || beschriftung.replace(/\s*\(du\)$/, "")).trim();
+    const name = nameKnoten ? nameKnoten.textContent.trim() : "";
     if (leer && !eigen) return false;
     if (!eigen && (!name || name === "frei")) return false;
 
@@ -23171,13 +23155,8 @@
     /* Zumachen: daneben tippen, Escape, oder wenn sich die Seite
        bewegt. Der Zuhörer haengt am Dokument und nimmt sich selbst
        wieder heraus — sonst sammeln sich mit jedem Menü neue an. */
-    /* GEMELDET: „In dem Moment, wo man scrollt, waehlt sich das Menue
-       wieder ab." Das Rollen IM Menue ist kein Griff daneben — nur
-       das Rollen der Seite darunter ist einer. Seit das Menue in drei
-       Spalten passt, muss ohnehin kaum noch jemand rollen; wer es
-       doch tut, verliert es nicht mehr. */
     const weg = (e) => {
-      if (e && e.target && kasten.contains(e.target)) return;
+      if (e && e.type === "pointerdown" && kasten.contains(e.target)) return;
       lcPlatzMenueZu();
       document.removeEventListener("pointerdown", weg, true);
       document.removeEventListener("keydown", taste, true);
@@ -25028,17 +25007,6 @@
      Schicht wegräumen, neue anhängen, nach der Zeit aufräumen. Jeder
      einzelne Effekt besteht dann nur noch aus seiner Zeichnung.
      ================================================================= */
-  /* Eine runde Blende in der Groesse des Profilbildes. Alles, was
-     darin liegt, endet am Rand des Bildes — fuer Dinge, die INNEN
-     passieren muessen: der Wasserstand im Bild, das Geld im
-     Geldspeicher. Die Schicht selbst darf weiterhin ueberstehen. */
-  function lcZpBlende(schicht) {
-    const b = document.createElement("span");
-    b.className = "lc-zp-blende";
-    schicht.appendChild(b);
-    return b;
-  }
-
   function lcAmPlatz(wen, klasse, bauen, dauer, ton) {
     const ziele = lcZielPlaetze(wen);
     if (!ziele.length) return false;
@@ -25049,31 +25017,15 @@
       schicht.className = "lc-zp " + klasse;
       schicht.setAttribute("aria-hidden", "true");
       bauen(schicht, platz);
-      /* AN DEN PLATZ, NICHT IN DEN KREIS — UND WARUM DAS VORHER
-         ANDERSHERUM WAR.
-         -----------------------------------------------------------
-         Erst hing die Schicht am Platz, und sie war 334 Pixel
-         breiter als das Bild: ein absolut gesetzter Kasten sucht
-         sich den naechsten positionierten Vorfahren, und .lc-platz
-         war gar nicht positioniert — also nahm er den halben Chat.
-         Die Notloesung war, sie in den Kreis zu haengen.
-
-         Damit war sie zwar richtig gross, aber ABGESCHNITTEN: der
-         Kreis traegt „overflow: hidden", sonst waere das Profilbild
-         nicht rund. GEMESSEN, was davon uebrig blieb — vom Hammer
-         64 %, vom Wassereimer 33 %, vom Wecker 52 %, von der
-         Regenwolke 21 %. Genau das war gemeldet: „ich moechte, dass
-         der Hammer und sowas sichtbar ist."
-
-         Jetzt ist die Ursache behoben statt umgangen: .lc-platz
-         traegt „position: relative", die Schicht liegt wieder am
-         Platz und deckt genau das Quadrat des Kreises ab (siehe
-         .lc-zp). Ueber den Rand darf sie hinausragen — ein Hammer,
-         der von oben kommt, kommt von ausserhalb des Bildes.
-
-         Was INNEN bleiben muss, bringt seine eigene runde Blende
-         mit (lcZpBlende) — der Wasserstand zum Beispiel. */
-      platz.appendChild(schicht);
+      /* AN DEN KREIS, NICHT AN DEN PLATZ.
+         Der Kreis IST das Profilbild — und er ist das einzige
+         Element hier, das „position: relative" traegt. Gemessen: an
+         den Platz gehaengt, war die Schicht 334 Pixel breiter als
+         das Bild, weil ein absolut gesetzter Kasten sich den
+         naechsten positionierten Vorfahren sucht, und das war der
+         halbe Chat. „In der Groesse vom Profilbild" heisst also
+         woertlich: im Kreis. */
+      (platz.querySelector(".lc-kreis") || platz).appendChild(schicht);
       setTimeout(() => schicht.remove(), dauer);
     }, i * 80));
     if (ton) lcTonZu(ton);
@@ -25114,7 +25066,7 @@
         st.style.animationDelay = (0.16 + t * 0.03).toFixed(2) + "s";
         schicht.appendChild(st);
       }
-    }, 3000, "tritt");
+    }, 2200, "tritt");
   }
 
   /* --- HERZEN AUF DAS PROFILBILD ---------------------------------- */
@@ -25130,64 +25082,37 @@
         h.style.animationDelay = (i * 0.11).toFixed(2) + "s";
         schicht.appendChild(h);
       }
-    }, 3200, "herz");
+    }, 2600, "herz");
   }
 
-  /* --- DER WASSEREIMER --------------------------------------------
-     GEWUENSCHT: „Bei dem Wassereimer, dass man richtig das Wasser
-     ausschuettet und das Profilbild sich ein bisschen fuellt mit
-     einem Wasserstand."
-
-     Also drei Dinge nacheinander, nicht mehr nur ein Guss:
-       1. Der Eimer kommt von oben und kippt.
-       2. Ein breiter Strahl laeuft heraus, dazu Spritzer.
-       3. Das Wasser SAMMELT SICH im Bild: ein Pegel steigt von
-          unten auf knapp zwei Drittel, mit einer Welle obendrauf,
-          steht einen Moment und laeuft dann langsam ab.
-     Der Pegel liegt in der runden Blende — er endet am Bildrand,
-     waehrend der Eimer darueber ruhig herausragen darf. */
+  /* --- DER WASSEREIMER -------------------------------------------- */
   function lcWassereimer(wen) {
     return lcAmPlatz(wen, "lc-eimer", (schicht) => {
-      const blende = lcZpBlende(schicht);
-      blende.innerHTML =
-        '<span class="lc-wasserstand">'
-        + '<i class="lc-wasserwelle"></i>'
-        + '<i class="lc-wasserwelle lc-wasserwelle-2"></i>'
-        + "</span>";
-      schicht.insertAdjacentHTML("beforeend",
+      schicht.innerHTML =
         '<svg class="lc-eimer-bild" viewBox="0 0 70 60">'
         + '<path d="M14 10 L56 10 L50 44 C49 50 45 52 35 52 C25 52 21 50 20 44 Z"'
         + ' fill="#7fb3d5" stroke="#3d6e92" stroke-width="2.5"/>'
         + '<ellipse cx="35" cy="10" rx="21" ry="6" fill="#a9cfe8" stroke="#3d6e92" stroke-width="2.5"/>'
         + '<path d="M16 12 C22 -2 48 -2 54 12" fill="none" stroke="#3d6e92" stroke-width="2.5"/>'
         + "</svg>"
-        + '<span class="lc-eimer-guss"></span>');
-      for (let i = 0; i < 22; i++) {
+        + '<span class="lc-eimer-guss"></span>';
+      for (let i = 0; i < 16; i++) {
         const t = document.createElement("i");
         t.className = "lc-eimer-tropfen";
-        t.style.left = (16 + Math.random() * 68).toFixed(0) + "%";
-        t.style.animationDelay = (0.5 + Math.random() * 1.1).toFixed(2) + "s";
-        t.style.setProperty("--fall", (40 + Math.random() * 34).toFixed(0) + "px");
+        t.style.left = (18 + Math.random() * 64).toFixed(0) + "%";
+        t.style.animationDelay = (0.45 + Math.random() * 0.7).toFixed(2) + "s";
+        t.style.setProperty("--fall", (34 + Math.random() * 26).toFixed(0) + "px");
         schicht.appendChild(t);
       }
-    }, 4600, "eimer");
+    }, 3000, "eimer");
   }
 
   /* --- DER WECKER -------------------------------------------------
-     GEWUENSCHT: „Bei dem Wecker, dass da wirklich dieses Bimmeln
-     links und rechts, diese Schellen links und rechts oben sind wie
-     bei einem traditionellen klassischen Wecker."
-
-     Also der Wecker, den jeder kennt: zwei Schellen oben, links und
-     rechts, ein Buegel dazwischen und der Kloeppel in der Mitte, der
-     zwischen ihnen hin und her schlaegt. Unten zwei Fuesse, damit er
-     steht. Die Schellen kippen nach aussen, der Kloeppel schlaegt —
-     alles im selben Takt wie das Geraeusch: drei Stoesse mit Pause,
-     0.00 / 0.62 / 1.24 Sekunden.
-
-     Und dazu scheppert das Profilbild selbst, wie beschrieben: „so
-     nach links und rechts, als wenn da gerade in so einem Impuls
-     drei oder vier Mal so ein Ring Ring Ring kommt." */
+     „So wie das Rattern vom alten klassischen Wecker, dass das
+     Profilbild so scheppert, so nach links und rechts, als wenn da
+     gerade in so einem Impuls drei oder vier Mal so ein Ring Ring
+     Ring kommt." Also KEIN gleichmaessiges Zittern: drei Stösse mit
+     Pause dazwischen, und die Glocken kippen im selben Takt. */
   function lcWecker(wen) {
     return lcAmPlatz(wen, "lc-wecker", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
@@ -25198,39 +25123,15 @@
         setTimeout(() => kreis.classList.remove("lc-scheppert"), 2600);
       }
       schicht.innerHTML =
-        '<svg class="lc-wecker-bild" viewBox="0 0 72 76">'
-        /* Fuesse zuerst, sie liegen hinter dem Gehaeuse */
-        + '<path d="M18 62 L10 74 L22 70 Z" fill="#9c7b1e"/>'
-        + '<path d="M54 62 L62 74 L50 70 Z" fill="#9c7b1e"/>'
-        /* Buegel von Schelle zu Schelle */
-        + '<path d="M17 20 C24 8 48 8 55 20" fill="none" stroke="#9c7b1e" stroke-width="3.5"'
-        + ' stroke-linecap="round"/>'
-        /* Die beiden Schellen — jede in einer eigenen Gruppe, damit die
-           CSS-Animation ihren transform setzen kann, ohne den des
-           Bildes zu ueberschreiben. */
-        + '<g class="lc-wecker-glocke lc-wecker-l">'
-        + '<circle cx="15" cy="17" r="11" fill="#f3d46e" stroke="#9c7b1e" stroke-width="3"/>'
-        + '<path d="M7 12 C9 7 15 5 20 7" fill="none" stroke="#fff6cf" stroke-width="2.6"'
-        + ' stroke-linecap="round" opacity=".85"/>'
-        + "</g>"
-        + '<g class="lc-wecker-glocke lc-wecker-r">'
-        + '<circle cx="57" cy="17" r="11" fill="#f3d46e" stroke="#9c7b1e" stroke-width="3"/>'
-        + '<path d="M49 12 C51 7 57 5 62 7" fill="none" stroke="#fff6cf" stroke-width="2.6"'
-        + ' stroke-linecap="round" opacity=".85"/>'
-        + "</g>"
-        /* Der Kloeppel in der Mitte */
-        + '<g class="lc-wecker-kloeppel">'
-        + '<rect x="33.5" y="10" width="5" height="16" rx="2.5" fill="#6e5714"/>'
-        + '<circle cx="36" cy="9" r="5" fill="#b9c1cf" stroke="#6e5714" stroke-width="2"/>'
-        + "</g>"
-        /* Gehaeuse und Zifferblatt */
-        + '<circle cx="36" cy="46" r="23" fill="#f3d46e" stroke="#9c7b1e" stroke-width="3.5"/>'
-        + '<circle cx="36" cy="46" r="17" fill="#fff8e1"/>'
-        + '<circle cx="36" cy="46" r="1.8" fill="#3a2f12"/>'
-        + '<path d="M36 34 V46" stroke="#3a2f12" stroke-width="3" stroke-linecap="round"/>'
-        + '<path d="M36 46 L45 51" stroke="#3a2f12" stroke-width="3" stroke-linecap="round"/>'
-        + '<path d="M36 32.5 V35 M49.5 46 H47 M36 59.5 V57 M22.5 46 H25"'
-        + ' stroke="#9c7b1e" stroke-width="2" stroke-linecap="round"/>'
+        '<svg class="lc-wecker-bild" viewBox="0 0 64 64">'
+        + '<circle cx="32" cy="36" r="20" fill="#f3d46e" stroke="#9c7b1e" stroke-width="3"/>'
+        + '<circle cx="32" cy="36" r="14" fill="#fff8e1"/>'
+        + '<path d="M32 26 V36 L39 41" stroke="#3a2f12" stroke-width="3"'
+        + ' stroke-linecap="round" fill="none"/>'
+        + '<path d="M14 18 C14 10 20 6 26 8" stroke="#9c7b1e" stroke-width="3" fill="none"/>'
+        + '<path d="M50 18 C50 10 44 6 38 8" stroke="#9c7b1e" stroke-width="3" fill="none"/>'
+        + '<ellipse class="lc-wecker-glocke lc-wecker-l" cx="15" cy="16" rx="8" ry="7" fill="#f3d46e" stroke="#9c7b1e" stroke-width="2.5"/>'
+        + '<ellipse class="lc-wecker-glocke lc-wecker-r" cx="49" cy="16" rx="8" ry="7" fill="#f3d46e" stroke="#9c7b1e" stroke-width="2.5"/>'
         + "</svg>";
       ["links", "rechts"].forEach((seite) => {
         for (let i = 0; i < 3; i++) {
@@ -25240,7 +25141,7 @@
           schicht.appendChild(w);
         }
       });
-    }, 3600, "wecker");
+    }, 2800, "wecker");
   }
 
   /* --- WOLKE, REGEN UND GEWITTER ÜBER EINER PERSON ---------------- */
@@ -25265,37 +25166,22 @@
         b.textContent = "\u26a1";
         schicht.appendChild(b);
       }
-    }, 4000, mitBlitz ? "donnerwolke" : "regenwolke");
+    }, 3200, mitBlitz ? "donnerwolke" : "regenwolke");
   }
 
-  /* --- REICHTUM: DER GELDSPEICHER ---------------------------------
-     GEWUENSCHT: „Auch mit dem Geld kann sich das Profilbild ein
-     bisschen anfuehlen wie im Geldspeicher."
-
-     Also nicht nur Muenzen, die vorbeifallen: sie SAMMELN sich. Ein
-     Haufen waechst von unten auf gut die Haelfte des Bildes, mit
-     einer krummen Oberkante, weil ein Muenzhaufen nicht gerade ist,
-     und mit Glanz, der darueber wandert. Darueber fallen weiter
-     Scheine und Muenzen ein; oben blitzt es golden.
-     Der Haufen liegt in der runden Blende und endet am Bildrand. */
+  /* --- REICHTUM: KLEINE MÜNZEN UND SCHEINE ------------------------ */
   function lcReichtum(wen) {
     return lcAmPlatz(wen, "lc-zgeld", (schicht) => {
-      const blende = lcZpBlende(schicht);
-      blende.innerHTML =
-        '<span class="lc-geldstand">'
-        + '<i class="lc-geldkante"></i>'
-        + '<i class="lc-geldglanz"></i>'
-        + "</span>";
-      for (let i = 0; i < 18; i++) {
+      for (let i = 0; i < 12; i++) {
         const m = document.createElement("i");
         m.className = "lc-zgeld-stueck";
-        m.textContent = i % 4 === 0 ? "\ud83d\udcb5" : (i % 4 === 1 ? "\ud83d\udcb0" : "\ud83e\ude99");
-        m.style.left = (8 + Math.random() * 84).toFixed(0) + "%";
+        m.textContent = i % 3 === 0 ? "\ud83d\udcb5" : "\ud83e\ude99";
+        m.style.left = (10 + Math.random() * 80).toFixed(0) + "%";
         m.style.setProperty("--dreh", (Math.random() * 720 - 360).toFixed(0) + "deg");
-        m.style.animationDelay = (i * 0.11).toFixed(2) + "s";
+        m.style.animationDelay = (i * 0.09).toFixed(2) + "s";
         schicht.appendChild(m);
       }
-    }, 3800, "reichtum");
+    }, 2800, "reichtum");
   }
 
   /* --- ZUCKER: BONBONS ÜBER EINER PERSON -------------------------- */
@@ -25310,7 +25196,7 @@
         b.style.animationDelay = (i * 0.1).toFixed(2) + "s";
         schicht.appendChild(b);
       }
-    }, 3400, "zucker");
+    }, 2800, "zucker");
   }
 
   /* --- DER HAMMER ------------------------------------------------- */
@@ -25330,15 +25216,15 @@
         + '<rect x="12" y="10" width="46" height="8" rx="4" fill="#b9c1cf"/>'
         + "</svg>"
         + '<span class="lc-zhammer-knall">BONK</span>';
-      for (let t = 0; t < 8; t++) {
+      for (let t = 0; t < 5; t++) {
         const st = document.createElement("i");
         st.className = "lc-zhammer-stern";
-        st.style.setProperty("--wo", (t * 45) + "deg");
-        st.style.animationDelay = (0.46 + t * 0.05).toFixed(2) + "s";
+        st.style.setProperty("--wo", (t * 72) + "deg");
+        st.style.animationDelay = (0.38 + t * 0.04).toFixed(2) + "s";
         st.textContent = t % 2 ? "\u2726" : "\u2727";
         schicht.appendChild(st);
       }
-    }, 3000, "hammer");
+    }, 2200, "hammer");
   }
 
   /* --- DER WAGENHEBER ---------------------------------------------
