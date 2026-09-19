@@ -20640,6 +20640,16 @@
                  Haken daneben schaltet dasselbe. Was der Ohr-Knopf
                  sonst noch konnte (langer Druck = Mitschrieb), sitzt
                  jetzt auf dem Halte-Zeichen. -->
+            <!-- Worauf antworte ich gerade? Das Band steht nur da, wenn
+                 man eine Aufgabe angetippt hat, und geht mit dem ✕
+                 wieder weg. Es ist der sichtbare Beweis, dass die
+                 nächste Nachricht zu DIESER Frage gehört. -->
+            <div class="lc-antwortband" id="lcAntwortBand" hidden>
+              <span class="lc-antwortband-wort">✍️ Antwort auf</span>
+              <span class="lc-antwortband-frage" id="lcAntwortBandFrage"></span>
+              <button type="button" class="lc-antwortband-weg" id="lcAntwortBandWeg"
+                      aria-label="Doch nicht darauf antworten">✕</button>
+            </div>
             <input type="text" class="lc-chat-feld" id="lcFeld" maxlength="${LiveChat.CHAT_LAENGE}"
                    placeholder="Schreib etwas …" aria-label="Nachricht schreiben"
                    autocomplete="off" autocorrect="off" spellcheck="false">
@@ -20714,6 +20724,17 @@
     try { lcTonZu("note"); } catch (e) {}
   }
 
+  /* Das Band über der Schreibzeile: worauf antworte ich gerade? */
+  function lcAntwortBandZeichnen() {
+    const band = document.getElementById("lcAntwortBand");
+    if (!band) return;
+    let a = null;
+    try { a = LiveChat.antwortAufLage ? LiveChat.antwortAufLage() : null; } catch (e) { a = null; }
+    band.hidden = !a;
+    const f = document.getElementById("lcAntwortBandFrage");
+    if (f) f.textContent = a ? ("„" + String(a.frage || "der Aufgabe").slice(0, 90) + "“") : "";
+  }
+
   function lcAufgabeZeichnen() {
     const kasten = document.getElementById("lcAufgabeLaeuft");
     if (!kasten) return;
@@ -20738,6 +20759,7 @@
   function livechatPlaetzeAuffrischen(l) {
     lcAnsichtZeichnen(l);
     lcAufgabeZeichnen();
+    lcAntwortBandZeichnen();
     l.plaetze.forEach((p) => {
       const knopf = document.querySelector(`[data-lc-platz="${p.nummer}"]`);
       if (!knopf) return;
@@ -24602,6 +24624,35 @@
          wegfällt, ist nur die Möglichkeit, dass er gar nicht da ist.
          ============================================================= */
       const gehoertZurAufgabe = Boolean(n.versuch || (bezug && bezug.versuch));
+      /* =============================================================
+         DIE AUFGABENZEILE LÄSST SICH ANTIPPEN
+         -------------------------------------------------------------
+         GEWÜNSCHT: „Es soll die Benotung für die Aufgabe sein, es soll
+         dazugehören, und das soll das System verstehen, dass diese
+         Antwort von der Aufgabe kommt."
+
+         Genau so versteht es das System: Wer auf die Aufgabe antwortet,
+         tippt sie an. Die nächste Nachricht trägt dann die Kennung
+         dieser Aufgabe mit sich — über die Leitung, im Gerät und im
+         Verlauf. Kein Raten mehr, und es gilt auch für eine Frage von
+         vor einer Stunde, zu der jemand hochscrollt. Genau ihr Weg.
+         ============================================================= */
+      if (art === "aufgabe") {
+        const antw = document.createElement("button");
+        antw.type = "button";
+        antw.className = "lc-drauf-antworten";
+        antw.textContent = "✍️ Darauf antworten";
+        antw.title = "Antippen — deine nächste Nachricht gehört dann zu dieser Aufgabe";
+        antw.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const frage = String(n.text || "").replace(/^[^:]*:\s*/, "");
+          LiveChat.antwortAufSetzen(n.id, frage, "");
+          lcAntwortBandZeichnen();
+          const f = document.getElementById("lcFeld");
+          if (f) f.focus();
+        });
+        z.appendChild(antw);
+      }
       const istAntwort = gehoertZurAufgabe;
       const antwortRichtig = Boolean(n.richtig || (bezug && bezug.richtig));
       const antwortFrage = n.aufgabeFrage || (bezug && bezug.frage) || "";
@@ -24613,25 +24664,34 @@
         || (() => { try { const a = LiveChat.offeneAufgabeInfo && LiveChat.offeneAufgabeInfo();
                           return (a && a.klasse) || ""; } catch (e) { return ""; } })();
       const antwortSpaet = Boolean(bezug && bezug.spaet);
-      const darfBenoten = Boolean(n.von && !n.eigen && art !== "system" && art !== "kommen"
-        && art !== "note" && LiveChat.binLehrer && LiveChat.binLehrer());
+      /* ZURÜCKGENOMMEN, und zwar auf seinen Einspruch hin:
+         „Jetzt steht die Note überall, das soll nicht so sein. Du
+         sollst nicht Trick 17 machen und einfach überall eine Benotung
+         dranmachen — es soll die Benotung für die Aufgabe sein, es
+         soll dazugehören, und das soll das System verstehen."
+
+         Er hat recht. Überall einen Knopf hinzusetzen hat die Frage
+         nicht gelöst, sondern übergangen. Der Knopf steht deshalb
+         wieder NUR an einer Antwort — nur weiss die Seite jetzt
+         wirklich, welche das ist, statt es zu raten: Die Antwort
+         trägt die Kennung ihrer Aufgabe selbst mit sich (siehe
+         „Darauf antworten"). */
+      const darfBenoten = Boolean(gehoertZurAufgabe && n.von && !n.eigen
+        && LiveChat.binLehrer && LiveChat.binLehrer());
       if (darfBenoten) {
         const stift = document.createElement("button");
         stift.type = "button";
-        stift.className = "lc-benoten" + (gehoertZurAufgabe ? "" : " lc-benoten-blass");
+        stift.className = "lc-benoten";
         /* GEMELDET: „Ich habe so einen kleinen Notizblock, ich weiss
            nicht, was du damit meinst — soll das ein Zeugnis
            darstellen? Ist das ueberhaupt die Mitschrift?"
            Nein, und das war mein Fehler: ein Klemmbrett sieht aus wie
            ein Notizblock, und niemand raet, dass dahinter die Zensur
            steckt. Jetzt steht es einfach da. */
-        stift.title = gehoertZurAufgabe
-          ? ("Note geben (1 bis 6) für die Antwort auf die Aufgabe"
-             + (antwortFrage ? " „" + antwortFrage + "“" : "")
-             + (antwortSpaet ? " (nachgereicht — sie hat hochgescrollt und noch einmal geantwortet)" : "")
-             + " — nur du als Lehrer siehst diesen Knopf")
-          : "Note geben (1 bis 6) — gerade läuft keine Aufgabe, "
-            + "du kannst trotzdem benoten. Nur du als Lehrer siehst diesen Knopf.";
+        stift.title = "Note geben (1 bis 6) für die Antwort auf die Aufgabe"
+          + (antwortFrage ? " „" + antwortFrage + "“" : "")
+          + (antwortSpaet ? " (nachgereicht)" : "")
+          + " — nur du als Lehrer siehst diesen Knopf";
         if (antwortSpaet) stift.classList.add("lc-benoten-spaet");
         stift.setAttribute("aria-label", "Note geben");
         stift.textContent = "Note";
@@ -25770,6 +25830,10 @@
         LiveChat.schreiben("/aufgabe");
         lcAufgabeZeichnen();
         showToast("✔️ Die Aufgabe ist beendet.");
+      });
+      area.querySelector("#lcAntwortBandWeg")?.addEventListener("click", () => {
+        LiveChat.antwortAufSetzen("");
+        lcAntwortBandZeichnen();
       });
       area.querySelector("#lcRaeume")?.addEventListener("click", () => livechatRaumFenster());
       const fotoFeld = area.querySelector("#lcFoto");

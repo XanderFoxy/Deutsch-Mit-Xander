@@ -9225,3 +9225,74 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-notenmeldung { animation: none; }
 }
+
+/* =================================================================
+   „DARAUF ANTWORTEN" — SO VERSTEHT DAS SYSTEM ES WIRKLICH
+   -----------------------------------------------------------------
+   GEMELDET: „Du sollst nicht Trick 17 machen und einfach überall eine
+   Benotung dranmachen, sondern es soll die Benotung für die Aufgabe
+   sein. Es soll dazugehören, und das soll das System verstehen, dass
+   diese Antwort von der Aufgabe kommt."
+
+   Viermal habe ich versucht, es zu ERRATEN — an der Uhrzeit, an der
+   Reihenfolge, an der Ähnlichkeit zur Lösung. Raten ist hier aber
+   grundsätzlich falsch: ob „Am Samstag war ich im Park" eine Antwort
+   auf „Schreib über dein Wochenende" ist, kann kein Programm sicher
+   entscheiden.
+
+   Jetzt sagt es die Antwort selbst: Wer die Aufgabenzeile antippt,
+   antwortet darauf, und die Nachricht trägt die Kennung der Aufgabe
+   mit sich. Das ist kein Erraten mehr, sondern eine Tatsache — und
+   sie gilt auch für eine Frage von vor einer Stunde, zu der jemand
+   hochscrollt. Genau ihr Weg.
+   ================================================================= */
+.lc-drauf-antworten {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 4px;
+  border: 1px solid rgba(224, 150, 74, 0.5);
+  background: rgba(224, 150, 74, 0.12);
+  color: inherit;
+  border-radius: 999px;
+  padding: 3px 11px;
+  font: inherit;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+.lc-drauf-antworten:hover { background: rgba(224, 150, 74, 0.26); }
+
+.lc-antwortband {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 5px;
+  padding: 4px 9px;
+  border-radius: 9px;
+  background: rgba(224, 150, 74, 0.14);
+  border: 1px solid rgba(224, 150, 74, 0.4);
+  font-size: 0.74rem;
+}
+.lc-antwortband[hidden] { display: none; }
+.lc-antwortband-wort { flex: 0 0 auto; font-weight: 700; }
+/* min-width: 0, sonst kann das Flex-Kind nicht schrumpfen und eine
+   lange Frage sprengt die Zeile. Denselben Fehler hatten wir schon
+   bei der Sprechblase und beim Aufgabenband. */
+.lc-antwortband-frage {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lc-antwortband-weg {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 0 3px;
+}
+.lc-antwortband-weg:hover { opacity: 1; }

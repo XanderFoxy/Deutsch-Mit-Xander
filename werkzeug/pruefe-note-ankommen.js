@@ -37,10 +37,14 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
   let fehler = 0;
   const ok = (b, was, zusatz) => { if (!b) fehler++; console.log("  " + (b ? "ok   " : "FEHL ") + was + (zusatz ? "   " + zusatz : "")); };
 
-  const bauen = async (lehrer, mitAufgabe) => pg.evaluate(([istLehrer, aufgabeLaeuft]) => {
+  /* Eine Zeile, die IHRE Aufgabe mitträgt (aufgabeId), und eine
+     gewöhnliche daneben. Genau daran entscheidet sich alles. */
+  const bauen = async (lehrer) => pg.evaluate((istLehrer) => {
+    LiveChat.pruefBetreiber(istLehrer);
     LiveChat.binLehrer = () => istLehrer;
     LiveChat.pruefAufgabeFrei("");
-    if (aufgabeLaeuft) LiveChat.pruefAufgabeFrei("Schreib drei Sätze über dein Wochenende");
+    LiveChat.pruefAufgabeFrei("Schreib drei Sätze über dein Wochenende");
+    const aufg = LiveChat.lage().nachrichten.filter((n) => n.art === "aufgabe").pop();
     document.querySelectorAll(".lc-chat").forEach((e) => e.remove());
     const chat = document.createElement("div");
     chat.className = "lc-chat";
@@ -48,34 +52,38 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     document.body.appendChild(chat);
     const t = Date.now() + 2000;
     window.DMA_PRUEFUNG.chatStand([
-      { id: "e1", von: "emmy", name: "Emmi", text: "Am Samstag war ich im Park.", art: "text", zeit: t },
+      { id: "a0", von: "ich", eigen: true, name: "Xander", art: "aufgabe",
+        text: "📝 Aufgabe: Schreib drei Sätze über dein Wochenende", zeit: t - 1000,
+        id2: aufg && aufg.id },
+      { id: "e1", von: "emmy", name: "Emmi", text: "Am Samstag war ich im Park.", art: "text",
+        zeit: t, aufgabeId: aufg ? aufg.id : "x",
+        aufgabeFrage: "Schreib drei Sätze über dein Wochenende" },
       { id: "e2", von: "emmy", name: "Emmi", text: "ach ja und hallo :)", art: "text", zeit: t + 1000 },
-      { id: "m1", von: "ich", eigen: true, name: "Xander", text: "Sehr gut!", art: "text", zeit: t + 2000 },
-      { id: "s1", von: "", name: "", text: "Emmi betritt den Raum.", art: "kommen", zeit: t + 3000 }
+      { id: "m1", von: "ich", eigen: true, name: "Xander", text: "Sehr gut!", art: "text", zeit: t + 2000 }
     ]);
     return [...document.querySelectorAll("#lcVerlauf .lc-zeile")].map((z) => ({
-      text: (z.querySelector(".lc-zeilentext") || z).textContent.slice(0, 30),
+      text: (z.querySelector(".lc-zeilentext") || z).textContent.slice(0, 34),
       knopf: Boolean(z.querySelector(".lc-benoten")),
-      blass: Boolean(z.querySelector(".lc-benoten-blass"))
+      antworten: Boolean(z.querySelector(".lc-drauf-antworten"))
     }));
-  }, [lehrer, mitAufgabe]);
+  }, lehrer);
 
-  console.log("\n  ALS LEHRER, AUFGABE LÄUFT");
-  const mit = await bauen(true, true);
-  ok(mit.filter((z) => z.knopf).length === 2, "an beiden Zeilen von Emmi steht ein Knopf",
-     mit.filter((z) => z.knopf).length + " von " + mit.length + " Zeilen");
-  ok(mit.filter((z) => z.knopf && z.blass).length === 0, "und keiner davon ist blass — sie gehören zur Aufgabe");
-
-  console.log("\n  ALS LEHRER, KEINE AUFGABE OFFEN");
-  const ohne = await bauen(true, false);
-  ok(ohne.filter((z) => z.knopf).length === 2, "der Knopf ist trotzdem da — er kann nicht mehr fehlen",
-     ohne.filter((z) => z.knopf).length + " Zeilen");
-  ok(ohne.filter((z) => z.knopf && z.blass).length === 2, "aber blass, weil gerade keine Aufgabe läuft");
+  console.log("\n  ALS LEHRER");
+  const mit = await bauen(true);
+  const mitKnopf = mit.filter((z) => z.knopf);
+  ok(mitKnopf.length === 1, "genau EINE Zeile hat den Notenknopf — die Antwort",
+     mitKnopf.length + " von " + mit.length + " Zeilen");
+  ok(mitKnopf.length === 1 && mitKnopf[0].text.indexOf("Am Samstag") >= 0,
+     "und zwar die richtige", mitKnopf[0] ? "„" + mitKnopf[0].text + "“" : "—");
+  ok(mit.filter((z) => z.antworten).length === 1,
+     "an der Aufgabenzeile steht „Darauf antworten“");
 
   console.log("\n  ALS TEILNEHMERIN");
-  const gast = await bauen(false, true);
-  ok(gast.filter((z) => z.knopf).length === 0, "sie sieht keinen einzigen Knopf",
+  const gast = await bauen(false);
+  ok(gast.filter((z) => z.knopf).length === 0, "sie sieht keinen Notenknopf",
      gast.filter((z) => z.knopf).length + " Knöpfe");
+  ok(gast.filter((z) => z.antworten).length === 1,
+     "aber „Darauf antworten“ sieht sie — das ist ja ihr Weg");
 
   console.log("\n  EINE FÜNF — DA GIBT ES KEINE PUNKTE, UND TROTZDEM MUSS SIE ES ERFAHREN");
   const weg = await pg.evaluate(async () => {

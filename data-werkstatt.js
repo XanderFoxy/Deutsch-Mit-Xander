@@ -49,28 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 23 — der Notenknopf kann nicht mehr fehlen (v314)",
+  stand: "Runde 24 — die Antwort sagt selbst, zu welcher Aufgabe sie gehört (v315)",
 
   inArbeit: [
-    { seit: "2026-09-19T01:39",
+    { seit: "2026-09-19T01:52",
       text: "Wenn mehr als acht kommen: Nur-Zuhören-Modus, kostet nichts" },
-    { seit: "2026-09-19T01:39",
+    { seit: "2026-09-19T01:52",
       text: "Cloudflare-API-Token fehlt noch für das Klassenzimmer-Relais" },
-    { seit: "2026-09-19T01:39",
+    { seit: "2026-09-19T01:52",
       text: "21 Tutor-Stücke warten noch auf deine Stimme" },
-    { seit: "2026-09-19T01:39",
+    { seit: "2026-09-19T01:52",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T01:39",
-      text: "Der Notenknopf steht für dich an JEDER fremden Zeile — kräftig bei einer Aufgabe, sonst blass" },
-    { seit: "2026-09-19T01:39",
-      text: "Die Note geht IMMER an die Person raus, auch bei einer 5 und 6, wo es keine Punkte gibt" },
-    { seit: "2026-09-19T01:39",
-      text: "Sie sieht die Note gross in der Mitte, und im Chat steht sie dauerhaft" },
-    { seit: "2026-09-19T01:39",
-      text: "Auch eine Sprachnachricht lässt sich benoten — für Aussprache" },
+    { seit: "2026-09-19T01:52",
+      text: "Trick 17 zurückgenommen: der Notenknopf steht wieder NUR an einer Antwort" },
+    { seit: "2026-09-19T01:52",
+      text: "Neu: Darauf antworten. Die Aufgabenzeile antippen — die nächste Nachricht gehört dann zu dieser Frage" },
+    { seit: "2026-09-19T01:52",
+      text: "Über der Schreibzeile steht, worauf man gerade antwortet" },
+    { seit: "2026-09-19T01:52",
+      text: "Das gilt auf jedem Gerät und auch, wenn die Aufgabe längst beendet ist" },
   ],
 };

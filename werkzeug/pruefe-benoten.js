@@ -51,19 +51,24 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     return window.DMA_PRUEFUNG.notenKnoepfe();
   }, [lehrer, mitAufgabe]);
 
-  /* GEÄNDERT in v314, und zwar mit Absicht:
-     GEMELDET, zum fünften Mal: „Die Benotung zeigt es immer noch nicht
-     an, das Mädchen ist schon am Verzweifeln."
-     Dreimal habe ich an der ERKENNUNG gebaut, dreimal lag noch eine
-     Bedingung dahinter. Also hängt der Knopf nicht mehr daran: Der
-     Lehrer sieht ihn an JEDER fremden Zeile — an den Zeilen zu einer
-     Aufgabe kräftig, sonst blass. Was hier früher „kein Knopf" hiess,
-     heisst deshalb jetzt „Knopf, aber blass".
-     Auch eine Sprachnachricht bekommt einen: eine gesprochene Antwort
-     ist eine Antwort, und für Aussprache gibt es eine eigene Klasse. */
+  /* WIEDER GEÄNDERT in v315, und zwar zurück auf seinen Einspruch:
+     „Jetzt steht die Note überall, das soll nicht so sein. Du sollst
+     nicht Trick 17 machen … es soll die Benotung für die Aufgabe sein,
+     und das soll das System verstehen, dass diese Antwort von der
+     Aufgabe kommt."
+
+     Er hat recht: Überall einen Knopf hinzusetzen hat die Frage nicht
+     gelöst, sondern übergangen. Der Knopf steht wieder nur an einer
+     Antwort — nur wird sie jetzt nicht mehr geraten: entweder sie
+     trägt die Kennung ihrer Aufgabe selbst mit sich („Darauf
+     antworten"), oder es ist ein Puzzle mit Musterlösung, mit der
+     sich vergleichen lässt.
+     „Der Hund läuft" ist ein Versuch am Satzpuzzle (versuch: true),
+     „Der Hund läuft über die Wiese" ohne Marke und ohne offene
+     Aufgabe dagegen eine ganz gewöhnliche Zeile. */
   const erwartet = {
-    "Der Hund läuft über die Wiese": true,    // fremde Zeile → Knopf (blass)
-    "Der Hund läuft": true,
+    "Der Hund läuft über die Wiese": false,
+    "Der Hund läuft": true,                   // trägt versuch: true
     "Sehr gut!": false                        // meine eigene Zeile — nie
   };
   let fehler = 0;
@@ -71,8 +76,8 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
   console.log("\n  ALS LEHRER, OHNE OFFENE AUFGABE");
   zeilen.forEach((z) => {
     const name = z.text || "(Sprachnachricht)";
-    /* Alles Fremde bekommt einen Knopf, die eigene Zeile nie. */
-    const soll = erwartet[z.text] !== undefined ? erwartet[z.text] : true;
+    /* Nur was zu einer Aufgabe gehört — alles andere nicht. */
+    const soll = erwartet[z.text] !== undefined ? erwartet[z.text] : false;
     const gut = z.note === soll;
     if (!gut) fehler++;
     console.log("  " + (gut ? "ok   " : "FEHL ") + (z.note ? "Notenknopf   " : "kein Knopf   ") + name);
@@ -87,7 +92,9 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
   const nachNeuladen = await lauf(true, true);
   console.log("\n  ALS LEHRER, AUFGABE LÄUFT (Zeilen ohne Marke, wie nach dem Neuladen)");
   nachNeuladen.forEach((z) => {
-    const soll = z.text !== "Sehr gut!";     // alles ausser meiner eigenen Zeile
+    /* Mit offener Aufgabe (Satzpuzzle „Der Hund läuft über die Wiese"):
+       die richtige Lösung und der erkennbare Versuch — mehr nicht. */
+    const soll = z.text === "Der Hund läuft über die Wiese" || z.text === "Der Hund läuft";
     const gut = z.note === soll;
     if (!gut) fehler++;
     console.log("  " + (gut ? "ok   " : "FEHL ") + (z.note ? "Notenknopf   " : "kein Knopf   ")

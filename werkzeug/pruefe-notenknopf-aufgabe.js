@@ -116,7 +116,22 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     const kb2 = LiveChat.aufgabeBezug(k2);
     raus.push(["Wortpuzzle — die Klasse", kb2 ? { frage: kb2.klasse || "(keine)" } : null]);
 
-    /* ---- 7. Vor der Aufgabe geschrieben ------------------------ */
+    /* ---- 7. DER NEUE, SICHERE WEG: sie tippt die Aufgabe an.
+              Die Nachricht trägt die Kennung selbst mit sich — dann
+              ist nichts mehr zu raten, und es gilt auch, wenn die
+              Aufgabe längst beendet ist. ------------------------- */
+    LiveChat.pruefAufgabeFrei("");
+    LiveChat.pruefAufgabeFrei("Beschreib dein Wochenende");
+    const aufg = LiveChat.lage().nachrichten.filter((x) => x.art === "aufgabe").pop();
+    const g1 = zeile("g1", "emmy", "Ich war im Park und habe gelesen.", Date.now() + 9000);
+    g1.aufgabeId = aufg ? aufg.id : "x";
+    g1.aufgabeFrage = "Beschreib dein Wochenende";
+    LiveChat.pruefVerlaufSetzen([g1]);
+    raus.push(["angetippt: die Antwort sagt selbst, wozu sie gehört", knopf(g1)]);
+    LiveChat.pruefAufgabeFrei("");
+    raus.push(["angetippt, und die Aufgabe ist längst beendet", knopf(g1)]);
+
+    /* ---- 8. Vor der Aufgabe geschrieben ------------------------ */
     const d1 = zeile("p1", "emmy", "guten Morgen", T0 - 120000);
     raus.push(["was VOR der Aufgabe stand", knopf(d1)]);
 
@@ -126,24 +141,41 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
 
   if (!erg) { console.log("  Testnaht fehlt — nur auf localhost."); await br.close(); srv.close(); process.exit(1); }
 
+  /* DIE REGEL HAT SICH GEÄNDERT, und zwar auf seinen Einspruch hin:
+     „Du sollst nicht Trick 17 machen und einfach überall eine Benotung
+     dranmachen. Es soll die Benotung für die Aufgabe sein, und das
+     soll das System verstehen, dass diese Antwort von der Aufgabe
+     kommt."
+
+     Geraten wird deshalb nicht mehr. Es gibt nur noch zwei Wege, auf
+     denen eine Zeile zur Antwort wird:
+       1. Sie sagt es selbst — jemand hat „Darauf antworten" angetippt,
+          und die Kennung der Aufgabe reist mit (aufgabeId). Das ist
+          sicher, gilt für jede Frage und auch noch morgen.
+       2. Ein Wort- oder Satzpuzzle: dort gibt es eine Musterlösung,
+          mit der sich wirklich VERGLEICHEN lässt.
+
+     Bei einer Aufgabe in eigenen Worten gibt es nichts zu vergleichen
+     — dort führt nur noch Weg 1 hin. Was hier früher „Notenknopf"
+     hiess, heisst deshalb jetzt „kein Notenknopf, ausser man tippt
+     die Aufgabe an". */
   const soll = {
-    "eigene Aufgabe — Emmis Antwort": true,
-    /* Eine Zeile nach der Aufgabe ist jetzt IMMER benotbar — genau
-       das war der gemeldete Fehler. Der Knopf tut ja nichts von
-       allein; er macht nur benotbar, was zur Frage gehört. */
-    "eigene Aufgabe — ihr Geplauder danach": true,
-    "eigene Aufgabe — Toms Antwort": true,
+    "eigene Aufgabe — Emmis Antwort": false,
+    "eigene Aufgabe — ihr Geplauder danach": false,
+    "eigene Aufgabe — Toms Antwort": false,
     "nach Neuladen, bevor die Aufgabe zurück ist": false,
-    "nach Neuladen, Aufgabe zurückgeholt": true,
-    "Wortpuzzle — ganz daneben, aber die erste Zeile": true,
+    "nach Neuladen, Aufgabe zurückgeholt": false,
+    "Wortpuzzle — ganz daneben, aber die erste Zeile": false,
     "Wortpuzzle — der zweite Versuch derselben Person": true,
     "ein Befehl gilt nicht als Antwort": false,
-    "die Zeile danach schon": true,
-    "eine Stunde später doch noch beantwortet": true,
-    "auch das Geplauder von vorhin ist benotbar": true,
+    "die Zeile danach schon": false,
+    "eine Stunde später doch noch beantwortet": false,
+    "auch das Geplauder von vorhin ist benotbar": false,
     "Satzpuzzle — die Klasse": true,
     "Wortpuzzle — die Klasse": true,
-    "was VOR der Aufgabe stand": false
+    "was VOR der Aufgabe stand": false,
+    "angetippt: die Antwort sagt selbst, wozu sie gehört": true,
+    "angetippt, und die Aufgabe ist längst beendet": true
   };
   let fehler = 0;
   console.log("");

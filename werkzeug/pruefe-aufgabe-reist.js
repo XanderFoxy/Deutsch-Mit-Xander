@@ -60,10 +60,24 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     LiveChat.pruefEmpfangen(Object.assign({}, raus1[0] || {}, { von: "xander-telefon" }));
     raus.nachher = LiveChat.offeneAufgabeInfo();
 
-    /* Steht jetzt ein Notenknopf an einer Antwort? */
-    const n = { id: "x1", von: "emmy", name: "Emmi", text: "Motorrad",
-                art: "text", zeit: Date.now() + 1000, eigen: false };
-    LiveChat.pruefVerlaufSetzen([n]);
+    /* Steht jetzt ein Notenknopf an einer Antwort?
+       ACHTUNG, und das ist eine ehrliche Folge davon, dass die LÖSUNG
+       nicht mitreist: Auf dem zweiten Gerät lässt sich nichts
+       vergleichen — geraten wird ja nicht mehr. Eine Zeile, die nur
+       zufällig nach der Aufgabe kam, bekommt deshalb hier KEINEN
+       Knopf, und das ist richtig so.
+       Was zählt, ist der andere Weg: Emmi hat „Darauf antworten"
+       angetippt, und ihre Nachricht trägt die Kennung der Aufgabe
+       selbst mit sich. Das funktioniert auf JEDEM Gerät, ohne Lösung
+       und ohne Raten. */
+    const blind = { id: "x0", von: "emmy", name: "Emmi", text: "Motorrad",
+                    art: "text", zeit: Date.now() + 1000, eigen: false };
+    const n = { id: "x1", von: "emmy", name: "Emmi", text: "Radfahr",
+                art: "text", zeit: Date.now() + 2000, eigen: false,
+                aufgabeId: (raus1[0] && raus1[0].zeileId) || "a1",
+                aufgabeFrage: "Wortpuzzle", aufgabeKlasse: "Rechtschreibung" };
+    LiveChat.pruefVerlaufSetzen([blind, n]);
+    raus.knopfGeraten = LiveChat.aufgabeBezug(blind) ? true : false;
     const b = LiveChat.aufgabeBezug(n);
     raus.knopf = b ? { klasse: b.klasse || "", frage: b.frage || "" } : null;
 
@@ -94,12 +108,17 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
   ok(!erg.vorher, "vorher weiss es von nichts");
   ok(Boolean(erg.nachher), "danach läuft die Aufgabe auch dort",
      erg.nachher ? erg.nachher.typ + (erg.nachher.klasse ? " → " + erg.nachher.klasse : "") : "—");
-  ok(Boolean(erg.knopf), "und an Emmis Antwort steht ein Notenknopf",
+  ok(!erg.knopfGeraten, "eine bloss zufällig passende Zeile bekommt KEINEN Knopf — geraten wird nicht");
+  ok(Boolean(erg.knopf), "an der angetippten Antwort steht er — auch ohne Lösung auf diesem Gerät",
      erg.knopf ? "Klasse: " + (erg.knopf.klasse || "(keine)") : "KEIN KNOPF");
 
   console.log("\n  UND WIEDER AUS");
   ok(!erg.nachSchluss, "beendet die andere Seite sie, ist sie auch hier weg");
-  ok(!erg.knopfDanach, "danach steht an keiner Zeile mehr ein Notenknopf");
+  /* Eine ANGETIPPTE Antwort gehört auch dann noch zu ihrer Frage, wenn
+     die Aufgabe beendet ist — sonst könnte man sie nachträglich nicht
+     mehr benoten, und genau das war sein Fall („die Frage ist eine
+     Stunde alt"). */
+  ok(Boolean(erg.knopfDanach), "die angetippte Antwort bleibt benotbar, auch nach dem Schluss");
 
   console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Die Aufgabe gehört jetzt dem Raum.") + "\n");
   await br.close(); srv.close();

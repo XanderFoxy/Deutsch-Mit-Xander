@@ -2583,6 +2583,7 @@ window.LiveChat = (function () {
         typ: String(n.typ || "frei"),
         loesung: "",
         frage: String(n.frage || "").slice(0, 300),
+        zeileId: String(n.zeileId || ""),
         teile: [], wer: {}, zeit: neuerZeitpunkt
       };
       aufgabeMerken();
@@ -2857,12 +2858,17 @@ window.LiveChat = (function () {
       nachrichtAnhaengen({
         /* Nur eine Antwort auf eine gestellte Aufgabe darf benotet
            werden — siehe aufgabeVersuch(). */
-        versuch: Boolean(versuch_ && versuch_.versuch),
+        versuch: Boolean(n.aufgabeId) || Boolean(versuch_ && versuch_.versuch),
         richtig: Boolean(versuch_ && versuch_.richtig),
         /* Bei einer Aufgabe in eigenen Worten gibt es kein „falsch" —
            die Zeile soll deshalb auch nicht so aussehen. */
         aufgabeFrei: Boolean(versuch_ && versuch_.frei),
-        aufgabeFrage: (versuch_ && versuch_.frage) || "",
+        /* HAT DIE ANTWORT SELBST GESAGT, ZU WELCHER AUFGABE SIE
+           GEHOERT? Dann ist nichts mehr zu raten — die Kennung reist
+           mit der Nachricht und gilt auch morgen noch. */
+        aufgabeId: String(n.aufgabeId || ""),
+        aufgabeKlasse: String(n.aufgabeKlasse || ""),
+        aufgabeFrage: String(n.aufgabeFrage || "") || (versuch_ && versuch_.frage) || "",
         id: n.id || String(Date.now()) + n.von,
         von: n.von, name: n.name || "Gast",
         text: String(n.text || "").slice(0, CHAT_LAENGE),
@@ -5272,12 +5278,21 @@ window.LiveChat = (function () {
     }
     if (teile.length > 24) return systemZeile("Das ist zu lang — höchstens 24 Teile.");
     var gemischt = mischen(teile);
-    offeneAufgabe = { typ: typ, loesung: text, frage: "", teile: teile, wer: {}, zeit: Date.now() };
-    aufgabeMerken();
-    aufgabeVerkuenden();
-    return anAlle("aufgabe", (typ === "satz"
+    offeneAufgabe = { typ: typ, loesung: text, frage: "", teile: teile, wer: {},
+                      zeit: Date.now(), zeileId: "" };
+    var zeile = anAlle("aufgabe", (typ === "satz"
         ? "🧩 Bring den Satz in Ordnung: "
         : "🔤 Bau das Wort richtig auf: ") + gemischt.join(" · "));
+    /* Die KENNUNG der Aufgabenzeile ist der Schluessel zu allem, was
+       danach kommt: Eine Antwort traegt sie mit sich, und damit weiss
+       die Seite ohne jedes Raten, zu welcher Frage sie gehoert. */
+    if (zeile && zeile.id) {
+      offeneAufgabe.zeileId = zeile.id;
+      zeile.aufgabeId = zeile.id;
+    }
+    aufgabeMerken();
+    aufgabeVerkuenden();
+    return true;
   }
 
   /* =========================================================
@@ -5316,10 +5331,15 @@ window.LiveChat = (function () {
         + "  — und  /aufgabe  ohne Text beendet sie wieder.");
     }
     offeneAufgabe = { typ: "frei", loesung: "", frage: text.slice(0, 300),
-                      teile: [], wer: {}, zeit: Date.now() };
+                      teile: [], wer: {}, zeit: Date.now(), zeileId: "" };
+    var zeileF = anAlle("aufgabe", "📝 Aufgabe: " + text);
+    if (zeileF && zeileF.id) {
+      offeneAufgabe.zeileId = zeileF.id;
+      zeileF.aufgabeId = zeileF.id;
+    }
     aufgabeMerken();
     aufgabeVerkuenden();
-    return anAlle("aufgabe", "📝 Aufgabe: " + text);
+    return true;
   }
 
   /* =================================================================
@@ -5350,12 +5370,54 @@ window.LiveChat = (function () {
      die Aufgabe gestellt hat; das ist der ehrliche Preis dafuer, dass
      niemand spicken kann.
      ================================================================= */
+  /* =================================================================
+     „DARAUF ANTWORTEN" — DAS SYSTEM RÄT NICHT MEHR, ES WEISS
+     -----------------------------------------------------------------
+     GEMELDET, und er hat vollkommen recht: „Du sollst nicht Trick 17
+     machen und einfach überall eine Benotung dranmachen. Es soll die
+     Benotung für die Aufgabe sein, es soll dazugehören, und das soll
+     das System verstehen, dass diese Antwort von der Aufgabe kommt."
+
+     Ich habe viermal versucht, es zu ERRATEN — an der Uhrzeit, an der
+     Reihenfolge, an der Ähnlichkeit zur Lösung. Raten ist hier aber
+     grundsätzlich falsch: Ob „Am Samstag war ich im Park" eine Antwort
+     auf „Schreib über dein Wochenende" ist, kann kein Programm sicher
+     entscheiden. Beim fünften Mal habe ich stattdessen überall einen
+     Knopf hingesetzt — das war noch schlechter, weil es die Frage
+     einfach übergangen hat.
+
+     Jetzt sagt es die Antwort selbst. Wer auf eine Aufgabenzeile tippt,
+     antwortet DARAUF: die Nachricht trägt die Kennung der Aufgabe mit
+     sich (aufgabeId), über die Leitung, im Gerät und im Verlauf. Damit
+     ist es kein Erraten mehr, sondern eine Tatsache — und sie gilt auch
+     noch morgen, und auch für eine Frage von vor einer Stunde, zu der
+     jemand hochscrollt. Genau das ist ihr Weg.
+
+     Das automatische Erkennen bleibt zusätzlich bestehen, aber nur
+     dort, wo es WIRKLICH sicher ist: beim Wort- und beim Satzpuzzle
+     gibt es eine Musterlösung, mit der sich vergleichen lässt.
+     ================================================================= */
+  var antwortAuf = null;    // { id, frage, klasse } — worauf ich gerade antworte
+
+  function antwortAufSetzen(aufgabeId, frage, klasse) {
+    if (!aufgabeId) { antwortAuf = null; melden(); return null; }
+    antwortAuf = { id: String(aufgabeId), frage: String(frage || ""),
+                   klasse: String(klasse || "") };
+    melden();
+    return antwortAuf;
+  }
+  function antwortAufLage() { return antwortAuf ? {
+    id: antwortAuf.id, frage: antwortAuf.frage, klasse: antwortAuf.klasse } : null; }
+
   function aufgabeVerkuenden(anId) {
     if (!offeneAufgabe) return;
     var paket = {
       art: "aufgabeAn",
       typ: offeneAufgabe.typ,
       frage: offeneAufgabe.frage || "",
+      /* Die Kennung der Aufgabenzeile reist mit — daran erkennt jedes
+         Geraet spaeter, welche Antwort zu welcher Frage gehoert. */
+      zeileId: offeneAufgabe.zeileId || "",
       zeit: offeneAufgabe.zeit || Date.now()
     };
     if (anId) paket.an = anId;
@@ -5584,7 +5646,26 @@ window.LiveChat = (function () {
   }
 
   function aufgabeBezug(n) {
-    if (!offeneAufgabe || !n || n.eigen || !n.von) return null;
+    if (!n || n.eigen || !n.von) return null;
+    /* =========================================================
+       HAT DIE ANTWORT SELBST GESAGT, WOZU SIE GEHOERT?
+       ---------------------------------------------------------
+       Dann ist die Frage beantwortet, und zwar endgueltig: keine
+       Uhrzeit, keine Reihenfolge, keine Aehnlichkeit. Das gilt auch
+       dann noch, wenn die Aufgabe laengst beendet ist — eine Antwort
+       von gestern gehoert immer noch zu ihrer Frage, und benoten darf
+       man sie auch noch.
+       ========================================================= */
+    if (n.aufgabeId) {
+      return { versuch: true, richtig: false, sicher: true,
+               klasse: n.aufgabeKlasse
+                 || (offeneAufgabe && offeneAufgabe.zeileId === n.aufgabeId
+                      ? aufgabeKlasse(offeneAufgabe.typ) : ""),
+               frage: n.aufgabeFrage
+                 || (offeneAufgabe && offeneAufgabe.zeileId === n.aufgabeId
+                      ? (offeneAufgabe.frage || offeneAufgabe.loesung) : "") };
+    }
+    if (!offeneAufgabe) return null;
     if ((n.zeit || 0) < (offeneAufgabe.zeit || 0) - 1000) return null;
     var art = n.art || "text";
     if (art !== "text" && art !== "aktion") return null;
@@ -5645,11 +5726,17 @@ window.LiveChat = (function () {
        ========================================================= */
     var zuerst = ersteZeileNachAufgabe(n);
 
-    if (offeneAufgabe.typ === "frei") {
-      return { versuch: true, richtig: false, frei: true, spaet: !zuerst,
-               klasse: aufgabeKlasse("frei"),
-               frage: offeneAufgabe.frage || "" };
-    }
+    /* NUR NOCH DAS SICHERE. Was die Nachricht selbst mitbringt, ist
+       oben schon entschieden (aufgabeId). Hier bleibt das, was sich
+       wirklich PRUEFEN laesst: ein Wort- oder Satzpuzzle hat eine
+       Musterloesung, mit der sich vergleichen laesst.
+
+       Bei einer Aufgabe in eigenen Worten gibt es nichts zu
+       vergleichen — und darum wird hier auch nicht mehr geraten. Wer
+       darauf antworten will, tippt die Aufgabenzeile an; dann weiss
+       die Seite es, statt es zu vermuten. */
+    if (offeneAufgabe.typ === "frei") return null;
+    if (!offeneAufgabe.loesung) return null;
 
     if (aufgabeGleich(text, offeneAufgabe.loesung)) {
       return { versuch: true, richtig: true, spaet: !zuerst,
@@ -5661,6 +5748,7 @@ window.LiveChat = (function () {
                klasse: aufgabeKlasse(offeneAufgabe.typ),
                frage: offeneAufgabe.loesung };
     }
+    return null;
     /* Und selbst wenn die Antwort mit der Musterloesung nichts
        gemeinsam hat: Es war die erste Zeile nach der Aufgabe, also
        GEHOERT sie zur Frage — und genau darum ging es ihm („damit
@@ -5670,9 +5758,6 @@ window.LiveChat = (function () {
        Angesagt wird sie deshalb nicht — das entscheidet weiterhin
        aufgabeAntwort, sonst hiesse es bei jedem „hallo“ „noch nicht
        richtig“. */
-    return { versuch: true, richtig: false, daneben: true, spaet: !zuerst,
-             klasse: aufgabeKlasse(offeneAufgabe.typ),
-             frage: offeneAufgabe.loesung };
   }
 
   /* Welche Aufgabe steht gerade offen? Die Oberflaeche schreibt sie
@@ -7520,7 +7605,11 @@ window.LiveChat = (function () {
     if (zusatz) Object.keys(zusatz).forEach(function (k) { post[k] = zusatz[k]; });
     senden(post);
     melden();
-    return true;
+    /* Die Zeile selbst zurueckgeben, nicht nur „true": Wer eine
+       Aufgabe stellt, braucht ihre Kennung (siehe aufgabeStellen).
+       Ein Objekt ist ebenso wahr wie true — alle anderen Aufrufer
+       merken davon nichts. */
+    return n;
   }
 
   /* =========================================================
@@ -8834,11 +8923,24 @@ window.LiveChat = (function () {
       zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
       geschlecht: zustand.geschlecht || ""
     };
+    /* Antworte ich gerade auf eine Aufgabe? Dann traegt die Nachricht
+       das mit sich — ueber die Leitung, im Geraet und im Verlauf. Das
+       ist der Unterschied zwischen Wissen und Raten. */
+    var bezugJetzt = antwortAuf;
+    if (bezugJetzt) {
+      n.aufgabeId = bezugJetzt.id;
+      n.aufgabeFrage = bezugJetzt.frage;
+      n.aufgabeKlasse = bezugJetzt.klasse;
+      n.versuch = true;
+      antwortAuf = null;
+    }
     nachrichtAnhaengen(n);
     serverSichern(n);
     senden({ art: "text", id: n.id, name: n.name, text: n.text, zeit: n.zeit,
              chatArt: n.art, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
-             sprechbild: zustand.sprechbild, geschlecht: zustand.geschlecht || "" });
+             sprechbild: zustand.sprechbild, geschlecht: zustand.geschlecht || "",
+             aufgabeId: n.aufgabeId || "", aufgabeFrage: n.aufgabeFrage || "",
+             aufgabeKlasse: n.aufgabeKlasse || "" });
     melden();
   }
 
@@ -9298,6 +9400,10 @@ window.LiveChat = (function () {
        steht in livechat.js, nicht in der Oberflaeche. */
     notenKlassen: function () { return NOTEN_KLASSEN.slice(); },
     aufgabeKlasse: aufgabeKlasse,
+    /* „Darauf antworten": die Oberflaeche sagt, auf welche Aufgabe
+       sich die naechste Nachricht bezieht. */
+    antwortAufSetzen: antwortAufSetzen,
+    antwortAufLage: antwortAufLage,
     /* Fuer die Pruefung, ob eine Aufgabe das Neuladen ueberlebt:
        merken, vergessen, zurueckholen — genau die Wege, die auch das
        Betreten geht. */
