@@ -29,8 +29,13 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForTimeout(2300);
 
-  const lauf = async (lehrer) => pg.evaluate((istLehrer) => {
+  const lauf = async (lehrer, mitAufgabe) => pg.evaluate(([istLehrer, aufgabeLaeuft]) => {
     LiveChat.binLehrer = () => istLehrer;
+    /* Eine Aufgabe stellen — und dann so tun, als sei die Seite
+       neu geladen worden: die Zeilen tragen KEINE Marke mehr, sie
+       kommen ja aus dem Geraet zurueck. */
+    LiveChat.pruefAufgabeFrei("");
+    if (aufgabeLaeuft) LiveChat.pruefAufgabeStellen("satz", "Der Hund läuft über die Wiese");
     document.querySelectorAll(".lc-chat").forEach((e) => e.remove());
     const chat = document.createElement("div");
     chat.className = "lc-chat";
@@ -44,7 +49,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
       { id: "d", von: "emmy", name: "Emmy", text: "", art: "text", zeit: t, sprach: "data:audio/webm;base64,AA" }
     ]);
     return window.DMA_PRUEFUNG.notenKnoepfe();
-  }, lehrer);
+  }, [lehrer, mitAufgabe]);
 
   const erwartet = {
     "Der Hund läuft über die Wiese": false,   // gewoehnlicher Satz, keine Aufgabe offen
@@ -52,8 +57,8 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     "Sehr gut!": false                        // meine eigene Zeile
   };
   let fehler = 0;
-  const zeilen = await lauf(true);
-  console.log("\n  ALS LEHRER");
+  const zeilen = await lauf(true, false);
+  console.log("\n  ALS LEHRER, OHNE OFFENE AUFGABE");
   zeilen.forEach((z) => {
     const name = z.text || "(Sprachnachricht)";
     const soll = erwartet[z.text];
@@ -66,7 +71,19 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
      Benotung noch hat. Die soll fuer die anderen gar nicht da sein."
      Also dasselbe noch einmal aus der Sicht von jemandem, der NICHT
      Lehrer ist — dort darf kein einziger Knopf stehen. */
-  const alsGast = await lauf(false);
+  /* UND DER EIGENTLICHE FALL: die Aufgabe laeuft, aber die Zeilen
+     kommen ohne Marke zurueck — so wie nach jedem Neuladen. */
+  const nachNeuladen = await lauf(true, true);
+  console.log("\n  ALS LEHRER, AUFGABE LÄUFT (Zeilen ohne Marke, wie nach dem Neuladen)");
+  nachNeuladen.forEach((z) => {
+    const soll = z.text === "Der Hund läuft über die Wiese" || z.text === "Der Hund läuft";
+    const gut = z.note === soll;
+    if (!gut) fehler++;
+    console.log("  " + (gut ? "ok   " : "FEHL ") + (z.note ? "Notenknopf   " : "kein Knopf   ")
+      + (z.text || "(Sprachnachricht)"));
+  });
+
+  const alsGast = await lauf(false, true);
   console.log("\n  ALS TEILNEHMER (nicht Lehrer)");
   const knoepfe = alsGast.filter((z) => z.note).length;
   if (knoepfe) fehler++;

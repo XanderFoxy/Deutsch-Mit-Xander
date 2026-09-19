@@ -5281,6 +5281,41 @@ window.LiveChat = (function () {
     return { versuch: true, richtig: false, frage: offeneAufgabe.loesung };
   }
 
+  /* GEHOERT DIESE ZEILE ZUR OFFENEN AUFGABE?
+     -----------------------------------------------------------
+     GEMELDET, zum wiederholten Mal: „Die Benotung steht immer noch
+     nicht nach der Antwort, die mit einem Spiel zusammenhaengt. Da
+     steht immer noch nicht der Knopf Note dabei."
+
+     Ich hatte das bisher NUR im Augenblick des Eintreffens
+     entschieden (siehe aufgabeVersuch) und das Ergebnis an die
+     Nachricht geheftet. Das haelt aber nur, solange die Seite steht:
+     nach einem Neuladen kommen die Zeilen aus dem Geraet und vom
+     Server zurueck — und dort steht diese Marke nicht. Dann war jede
+     Antwort wieder eine gewoehnliche Zeile, ohne Knopf. Genau das
+     hat er gesehen.
+
+     Deshalb laesst sich die Frage jetzt auch beim ZEICHNEN stellen:
+     gehoert diese Zeile zu der Aufgabe, die gerade offen ist? Das ist
+     eine reine Rechnung ohne Nebenwirkung — Zeitpunkt, Absender,
+     Wortlaut. Bei einer Aufgabe in eigenen Worten geht das nicht
+     (dort gibt es nichts zu vergleichen); da bleibt es bei der Marke
+     vom Eintreffen. */
+  function aufgabeBezug(n) {
+    if (!offeneAufgabe || !n || n.eigen || !n.von) return null;
+    if (offeneAufgabe.typ === "frei") return null;
+    if ((n.zeit || 0) < (offeneAufgabe.zeit || 0) - 1000) return null;
+    var art = n.art || "text";
+    if (art !== "text" && art !== "aktion") return null;
+    var text = String(n.text || "");
+    if (!text) return null;
+    if (aufgabeGleich(text, offeneAufgabe.loesung)) {
+      return { versuch: true, richtig: true, frage: offeneAufgabe.loesung };
+    }
+    if (!siehtNachVersuchAus(text, offeneAufgabe)) return null;
+    return { versuch: true, richtig: false, frage: offeneAufgabe.loesung };
+  }
+
   function aufgabeAntwort(von, name, text) {
     if (!offeneAufgabe || !von) return;
     /* Ohne Musterloesung gibt es nichts zu verkuenden — das Urteil
@@ -8673,6 +8708,10 @@ window.LiveChat = (function () {
     pruefAufgabeStellen: aufgabeStellen,
     pruefAufgabeFrei: aufgabeFreiStellen,
     pruefAufgabeVersuch: aufgabeVersuch,
+    /* Gehoert diese Zeile zur offenen Aufgabe? Die Oberflaeche fragt
+       das beim Zeichnen — damit der Notenknopf auch nach einem
+       Neuladen an der richtigen Zeile steht. */
+    aufgabeBezug: aufgabeBezug,
     /* Fuer die Pruefung, ob eine Aufgabe das Neuladen ueberlebt:
        merken, vergessen, zurueckholen — genau die Wege, die auch das
        Betreten geht. */

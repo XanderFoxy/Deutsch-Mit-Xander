@@ -21923,6 +21923,26 @@
       const befehl = LiveChat.befehlsliste().find((b) => b.w === wort || b.kurz === wort);
       if (!befehl) return zu();
 
+      /* GEWUENSCHT: „In dem Moment, wo ich /sprechbild geschrieben
+         habe, soll das System mir die verfuegbaren Sprechbilder
+         vorschlagen, und ich kann einfach eins anklicken — wie bei den
+         anderen Sachen auch, wo man den Namen auswaehlen kann."
+         Die Liste steht ohnehin schon in livechat.js; sie stand nur
+         nicht unter dem Schreibfeld. Jeder Vorschlag sagt dabei, WIE
+         es aussieht — „regenbogen" allein raet man nicht. */
+      if (wort === "sprechbild" || wort === "sprechen") {
+        const bilder = LiveChat.sprechbilder ? LiveChat.sprechbilder() : {};
+        const jetzt = LiveChat.sprechbild ? LiveChat.sprechbild() : "";
+        const passend = Object.keys(bilder)
+          .filter((k) => k.indexOf(rest.toLowerCase()) === 0);
+        if (!passend.length) return zu();
+        return zeigen(passend.map((k) => {
+          const c = chip(k + (k === jetzt ? "  \u2190 jetzt" : ""), bilder[k],
+            () => einsetzen("/sprechbild " + k, true));
+          c.dataset.gr = "aussehen";
+          return c;
+        }));
+      }
       if (wort === "ascii" || wort === "bild" || wort === "emoji") {
         const namen = wort === "ascii" ? LiveChat.asciiNamen() : LiveChat.emojibildNamen();
         const passend = namen.filter((n) => n.indexOf(rest.toLowerCase()) === 0);
@@ -21971,7 +21991,20 @@
         /* Und die Mitglieder, die gerade gar nicht da sind. Erst ab
            zwei Buchstaben — eine Suche nach „a" holte die halbe
            Seite und waere niemandem eine Hilfe. */
-        if (suchwort.length >= 2 && typeof Backend !== "undefined"
+        /* GEMELDET: „Ich moechte auch den Namen auswaehlen, wenn ich
+           einen Befehl mit Namen schreibe — beim Fluestern zum
+           Beispiel." Steht gerade niemand im Raum und ist auch sonst
+           niemand auf der Seite, blieb die Liste leer, und es sah aus,
+           als koenne man gar nicht waehlen. Dann wird ab dem ERSTEN
+           Buchstaben in den Mitgliedern gesucht — und solange nichts
+           da ist, steht wenigstens dabei, was zu tun ist. */
+        const niemandDa = !treffer.length;
+        if (niemandDa && !suchwort) {
+          zeigen([chip("\u2026 tipp den Anfang eines Namens",
+            "dann suche ich alle Mitglieder \u2014 auch die, die gerade nicht da sind",
+            () => {}, "lc-tipp-fern")]);
+        }
+        if (suchwort.length >= (niemandDa ? 1 : 2) && typeof Backend !== "undefined"
             && Backend.searchUsers && Backend.currentUser && Backend.currentUser()) {
           const wasIchSuche = wert;
           Backend.searchUsers(rest).then((leute) => {
@@ -24112,7 +24145,12 @@
                      /* Ob die Zeile als Antwort gilt, gehoert mit in die
                         Marke — sonst bekaeme eine Zeile, die erst spaeter
                         als Antwort erkannt wird, nie ihren Knopf. */
-                     n.versuch ? "A" : ""].join("\u0001");
+                     n.versuch ? "A" : "",
+                     /* Auch der nachtraeglich erkannte Bezug gehoert in
+                        die Marke — sonst behielte eine Zeile ihr altes
+                        Aussehen, obwohl gerade eine Aufgabe laeuft. */
+                     (() => { try { return LiveChat.aufgabeBezug && LiveChat.aufgabeBezug(n) ? "B" : ""; }
+                              catch (e) { return ""; } })()].join("\u0001");
       const schon = livechatGezeigt.get(n.id);
       if (schon === marke) return;
       livechatGezeigt.set(n.id, marke);
@@ -24162,7 +24200,18 @@
          „hallo" und „bis gleich". Ob eine Zeile eine Antwort ist,
          weiss livechat.js (aufgabeVersuch) und haengt es als Marke an
          die Nachricht; hier wird nur noch gefragt. */
-      if (n.versuch && n.von && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer()) {
+      /* Ob eine Zeile eine Antwort auf die offene Aufgabe ist, wird
+         NICHT nur beim Eintreffen entschieden (die Marke ueberlebt
+         kein Neuladen), sondern hier noch einmal gefragt — siehe
+         aufgabeBezug() in livechat.js. */
+      let bezug = null;
+      if (!n.versuch && n.von && !n.eigen) {
+        try { bezug = LiveChat.aufgabeBezug ? LiveChat.aufgabeBezug(n) : null; } catch (e) { bezug = null; }
+      }
+      const istAntwort = Boolean(n.versuch || (bezug && bezug.versuch));
+      const antwortRichtig = Boolean(n.richtig || (bezug && bezug.richtig));
+      const antwortFrage = n.aufgabeFrage || (bezug && bezug.frage) || "";
+      if (istAntwort && n.von && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer()) {
         const stift = document.createElement("button");
         stift.type = "button";
         stift.className = "lc-benoten";
@@ -24173,7 +24222,7 @@
            ein Notizblock, und niemand raet, dass dahinter die Zensur
            steckt. Jetzt steht es einfach da. */
         stift.title = "Note geben (1 bis 6) für die Antwort auf die Aufgabe"
-          + (n.aufgabeFrage ? " „" + n.aufgabeFrage + "“" : "")
+          + (antwortFrage ? " „" + antwortFrage + "“" : "")
           + " — nur du als Lehrer siehst diesen Knopf";
         stift.setAttribute("aria-label", "Note geben");
         stift.textContent = "Note";
@@ -24242,14 +24291,14 @@
       /* Und die Zeile SIEHT auch aus wie eine Antwort:
          „Ja, derjenige hat die Aufgabe gerade aus dem Aufgabenmodul
          heraus geloest beziehungsweise falsch geloest." */
-      if (n.versuch) {
-        z.classList.add("lc-versuch", n.richtig ? "lc-versuch-gut" : "lc-versuch-offen");
+      if (istAntwort) {
+        z.classList.add("lc-versuch", antwortRichtig ? "lc-versuch-gut" : "lc-versuch-offen");
         /* Eine Aufgabe in eigenen Worten hat keine Musterloesung —
            „noch nicht richtig" waere dort schlicht gelogen. */
         z.title = n.aufgabeFrei
-          ? "Antwort auf die Aufgabe" + (n.aufgabeFrage ? ": " + n.aufgabeFrage : "")
-          : n.richtig ? "Antwort auf die Aufgabe — richtig"
-                      : "Antwort auf die Aufgabe — noch nicht richtig";
+          ? "Antwort auf die Aufgabe" + (antwortFrage ? ": " + antwortFrage : "")
+          : antwortRichtig ? "Antwort auf die Aufgabe — richtig"
+                           : "Antwort auf die Aufgabe — noch nicht richtig";
       }
 
       if (art === "system" || art === "einladung") {

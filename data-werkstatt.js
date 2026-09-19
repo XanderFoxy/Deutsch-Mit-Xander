@@ -49,20 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 80 — Die Tonspur ist wieder da",
+  stand: "Runde 81 — Vorschläge beim Tippen, und die Note bleibt an der Antwort",
 
   inArbeit: [
-    { seit: "2026-09-18T23:53",
+    { seit: "2026-09-18T23:59",
       text: "Bühnenansicht: wer auf der Bühne sitzt, sieht nur die anderen dort" },
-    { seit: "2026-09-18T23:53",
+    { seit: "2026-09-18T23:59",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-18T23:53",
-      text: "Die kleine Wellenform in der Sprechblase war auf dem Telefon null Bildpunkte breit — sie gab als Erste nach, bis nichts mehr übrig war. Jetzt behält sie mindestens 24 px, die Striche sind schmaler und nach zehn ist Schluss" },
-    { seit: "2026-09-18T23:53",
-      text: "Wird die Zeile richtig eng (langer Name, schmales Display), bekommt die Blase eine eigene Reihe unter dem Namen — gemessen 34 px vorher, 126 px nachher, und das Herunterladen-Symbol bleibt drin" },
+    { seit: "2026-09-18T23:59",
+      text: "/sprechbild schlägt jetzt die verfügbaren Sprechbilder vor — anklicken statt raten, und jedes sagt, wie es aussieht" },
+    { seit: "2026-09-18T23:59",
+      text: "Namensvorschläge: ist gerade niemand da, wird schon ab dem ersten Buchstaben in allen Mitgliedern gesucht, statt eine leere Liste zu zeigen" },
+    { seit: "2026-09-18T23:59",
+      text: "GEFUNDEN: Der Notenknopf wurde nur im Augenblick des Eintreffens vergeben und an die Nachricht geheftet — nach jedem Neuladen kamen die Zeilen ohne diese Marke zurück, und der Knopf war weg. Jetzt wird beim Zeichnen gefragt, ob die Zeile zur offenen Aufgabe gehört" },
   ],
 };

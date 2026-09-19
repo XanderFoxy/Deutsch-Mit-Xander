@@ -67,6 +67,10 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     const beiW = sichtbar();
     tippen("/note ");
     const beiNote = sichtbar();
+    tippen("/sprechbild ");
+    const beiSprechbild = sichtbar();
+    tippen("/sprechbild reg");
+    const beiSprechbildReg = sichtbar();
 
     /* Und jetzt einen Befehl anheften: lang draufdrücken. */
     try { localStorage.removeItem("dma_lc_lieblinge"); } catch (e) {}
@@ -97,7 +101,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
         name: chipName
       };
     }
-    return { beiW, beiNote, angeheftet };
+    return { beiW, beiNote, beiSprechbild, beiSprechbildReg, angeheftet };
   });
 
   let fehler = 0;
@@ -114,6 +118,17 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
 
   console.log("\n  /note — DERSELBE WEG FÜR JEDEN BEFEHL MIT NAMEN");
   ok(erg.beiNote.map((c) => c.name).includes("Emmy"), "auch hier kommen die Namen");
+
+  console.log("\n  /sprechbild — DIE AUSWAHL KOMMT VON SELBST");
+  const sb = erg.beiSprechbild.map((c) => c.name.replace(/\s+\u2190.*$/, ""));
+  ok(sb.length >= 4, "die Sprechbilder stehen zur Auswahl", sb.join(", "));
+  ok(sb.includes("regenbogen"), "auch der Regenbogen");
+  ok(erg.beiSprechbild.every((c) => c.woher), "und jedes sagt, wie es aussieht",
+     "„" + (erg.beiSprechbild[0] || {}).woher + "“");
+  ok(erg.beiSprechbildReg.length === 1
+     && erg.beiSprechbildReg[0].name.indexOf("regenbogen") === 0,
+     "beim Weitertippen bleibt nur der passende übrig",
+     erg.beiSprechbildReg.map((c) => c.name).join(", "));
 
   console.log("\n  FAVORITEN ANHEFTEN (lang drücken)");
   const a = erg.angeheftet;
