@@ -151,6 +151,88 @@
     return v;
   }
 
+  /* =========================================================
+     DIE DRAMATIK — BEBEN, AUSSTRAHLUNG, STAUB
+     ---------------------------------------------------------
+     GEWÜNSCHT: „dass der Chat durch das Trampeln vibriert …
+     dass der Boden unter ihm bebt und Staub aufwirbelt … und so
+     eine Ausstrahlung, dass es mit dem Raum ineinander übergeht."
+
+     Alle drei folgen EINER gemessenen Zahl: der Heftigkeit des
+     Films an dieser Stelle (siehe werkzeug/stoesse-finden.js).
+     Sie steht als Kurve in der Beschreibung, steigt, wenn das
+     Tier näher kommt, und gipfelt beim Brüllen.
+
+     Warum nicht einfach im Takt wackeln: ein erfundener Takt
+     wackelt dann, wenn gerade nichts passiert, und das sieht
+     jeder sofort.
+
+     Der Staub entsteht HIER und nicht im Video: halbdurchsichtiger
+     Staub vor einem Greenscreen wird beim Freistellen matschig
+     und zieht einen grünen Schleier mit. Gezeichnet ist er sauber.
+     ========================================================= */
+  function kraftBei(kurve, t) {
+    if (!kurve || !kurve.length) return 0;
+    var a = 0, b = kurve.length - 1;
+    if (t <= kurve[0][0]) return kurve[0][1];
+    if (t >= kurve[b][0]) return kurve[b][1];
+    while (b - a > 1) { var m = (a + b) >> 1; if (kurve[m][0] <= t) a = m; else b = m; }
+    var f = (t - kurve[a][0]) / Math.max(0.001, kurve[b][0] - kurve[a][0]);
+    return kurve[a][1] + (kurve[b][1] - kurve[a][1]) * f;
+  }
+
+  function staubSchicht(s) {
+    var c = document.createElement("canvas");
+    c.style.cssText = "position:absolute;inset:0;width:100%;height:100%;";
+    s.appendChild(c);
+    var x = c.getContext("2d");
+    var koerner = [];
+    function groesse() {
+      c.width = Math.min(900, s.clientWidth || 400);
+      c.height = Math.min(1600, s.clientHeight || 800);
+    }
+    groesse();
+    window.addEventListener("resize", groesse);
+    return {
+      leinwand: c,
+      zeichnen: function (k) {
+        /* Neue Körner nur, wenn wirklich etwas los ist. */
+        var neu = Math.round(k * 5);
+        for (var i = 0; i < neu; i++) {
+          koerner.push({
+            x: c.width * (0.16 + Math.random() * 0.68),
+            y: c.height * (0.86 + Math.random() * 0.06),
+            vx: (Math.random() - 0.5) * 3.6 * (0.4 + k),
+            vy: -(0.4 + Math.random() * 1.6) * (0.4 + k),
+            r: 2 + Math.random() * 9 * (0.5 + k),
+            leben: 1,
+          });
+        }
+        x.clearRect(0, 0, c.width, c.height);
+        for (var j = koerner.length - 1; j >= 0; j--) {
+          var p = koerner[j];
+          p.x += p.vx; p.y += p.vy; p.vy += 0.045; p.r += 0.5;
+          p.leben -= 0.013;
+          if (p.leben <= 0) { koerner.splice(j, 1); continue; }
+          var g = x.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+          g.addColorStop(0, "rgba(206,178,138," + (0.19 * p.leben).toFixed(3) + ")");
+          g.addColorStop(1, "rgba(206,178,138,0)");
+          x.fillStyle = g;
+          x.beginPath(); x.arc(p.x, p.y, p.r, 0, 6.2832); x.fill();
+        }
+        /* Und ein flacher Dunst am Boden, solange es heftig ist. */
+        if (k > 0.05) {
+          var b = x.createRadialGradient(c.width / 2, c.height * 0.93, 0,
+                                         c.width / 2, c.height * 0.93, c.width * 0.55);
+          b.addColorStop(0, "rgba(206,184,148," + (0.22 * k).toFixed(3) + ")");
+          b.addColorStop(1, "rgba(206,184,148,0)");
+          x.fillStyle = b;
+          x.fillRect(0, c.height * 0.72, c.width, c.height * 0.28);
+        }
+      },
+    };
+  }
+
   function spielen(name, opt) {
     opt = opt || {};
     /* Wer wenig Bewegung möchte, bekommt das Standbild — nicht
@@ -169,6 +251,9 @@
 
       function weg() {
         if (LAEUFT === s) LAEUFT = null;
+        /* Der Körper darf auf keinen Fall verschoben stehen
+           bleiben — das wäre ein schiefer Bildschirm für immer. */
+        try { document.body.style.transform = ""; } catch (e) {}
         s.style.transition = "opacity .5s";
         s.style.opacity = "0";
         setTimeout(function () { try { s.remove(); } catch (e) {} }, 520);
@@ -184,6 +269,44 @@
       }
 
       var v = kannAlphaWebm() ? direkt(d, s, opt) : zusammensetzen(d, s, opt);
+
+      /* ---- Beben, Ausstrahlung, Staub ---- */
+      var bild = s.querySelector("video:not([style*=\"-9999\"])") || s.querySelector("canvas") || v;
+      var staub = (d.staerke && d.staerke.length) ? staubSchicht(s) : null;
+      var koerperVorher = document.body.style.transform || "";
+      var laeuftDramatik = Boolean(d.staerke && d.staerke.length);
+      function dramatik() {
+        if (!laeuftDramatik || !document.body.contains(s)) {
+          document.body.style.transform = koerperVorher;
+          return;
+        }
+        var t = v.currentTime || 0;
+        var k = kraftBei(d.staerke, t);
+        /* Das Beben. Zwei Schwingungen mit krummem Verhältnis —
+           eine einzelne Frequenz klänge wie ein Motor. */
+        var a1 = k * k * 7;
+        var dx = Math.sin(t * 61) * a1 + Math.sin(t * 37) * a1 * 0.6;
+        var dy = Math.cos(t * 53) * a1 * 0.8 + Math.sin(t * 89) * a1 * 0.4;
+        document.body.style.transform = k > 0.02
+          ? "translate3d(" + dx.toFixed(2) + "px," + dy.toFixed(2) + "px,0)"
+          : koerperVorher;
+        /* Die Ausstrahlung: ein warmer Schein um das Tier, der in
+           den Raum ausläuft. drop-shadow folgt der Durchsichtigkeit,
+           legt sich also um den Umriss und nicht um den Kasten. */
+        if (bild && bild.style) {
+          bild.style.filter = "drop-shadow(0 0 " + (8 + 46 * k).toFixed(1) + "px rgba(255,168,72,"
+            + (0.18 + 0.46 * k).toFixed(3) + ")) drop-shadow(0 2px "
+            + (4 + 14 * k).toFixed(1) + "px rgba(0,0,0,.45))";
+        }
+        if (staub) staub.zeichnen(k);
+        requestAnimationFrame(dramatik);
+      }
+      if (laeuftDramatik && !ruhig) requestAnimationFrame(dramatik);
+      var dramatikAus = function () {
+        laeuftDramatik = false;
+        document.body.style.transform = koerperVorher;
+      };
+      v.addEventListener("ended", dramatikAus);
       v.addEventListener("ended", weg);
       /* GEHT DAS VIDEO NICHT, DANN WENIGSTENS DAS STANDBILD.
          Vorher verschwand die Schicht einfach — und damit sah man

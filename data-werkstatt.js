@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 22 — /film legt die Animation über den Chat",
+  stand: "Runde 22 — der erste echte Film: /film trex",
 
   inArbeit: [
-    { seit: "2026-09-19T05:21",
-      text: "Es fehlt nur ein Video von dir — filme/LIESMICH.md, Prompts stehen im Chat" },
-    { seit: "2026-09-19T05:21",
+    { seit: "2026-09-19T05:45",
+      text: "Löwe und Eisenbahn — Prompts stehen im Chat" },
+    { seit: "2026-09-19T05:45",
       text: "21 Tutor-Stücke warten auf Alex' Stimme" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T05:21",
-      text: "Befehl /film: die Animation läuft bei allen im Raum" },
-    { seit: "2026-09-19T05:21",
-      text: "Abspieler mit zweitem Weg fürs iPhone — Safari kann kein WebM mit Alpha" },
-    { seit: "2026-09-19T05:21",
-      text: "Nachgemessen: beide Wege liefern dieselben Bildpunkte" },
-    { seit: "2026-09-19T05:21",
-      text: "Die Kette aus Grün wird Durchsichtigkeit" },
+    { seit: "2026-09-19T05:45",
+      text: "Dein T-Rex ist drin und läuft: /film trex" },
+    { seit: "2026-09-19T05:45",
+      text: "Der Chat bebt, glüht und staubt — gesteuert von der gemessenen Heftigkeit" },
+    { seit: "2026-09-19T05:45",
+      text: "11,6 MB auf 4,1 MB gebracht" },
+    { seit: "2026-09-19T05:45",
+      text: "Schlüsselfarbe wird gemessen, nicht geraten (deins war #11EA0C)" },
   ],
 };

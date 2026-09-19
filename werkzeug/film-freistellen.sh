@@ -43,20 +43,50 @@ mkdir -p "$ZIEL"
 
 # Die Schlüsselfarbe. „despill" nimmt den grünen Saum aus dem Fell —
 # ohne ihn hat jedes Haar einen giftgrünen Rand.
+# WELCHES GRÜN GENAU? NICHT RATEN — MESSEN.
+# Jede KI liefert einen anderen Grünton. Das erste Video von Grok
+# hatte #11ea0c, mein Standardwert war #00B140 — das sind über
+# vierzig Stufen Unterschied, und damit wäre der Rand fransig
+# geworden. Deshalb wird die Farbe aus der linken oberen Ecke des
+# ersten Bildes GELESEN. Wer es anders will, gibt sie als vierten
+# Wert mit (z. B. 0x11EA0C).
 if [ "$ART" = "schwarz" ]; then
   SCHLUESSEL="colorkey=0x000000:0.22:0.10"
   ENTFAERBEN=""
 else
-  SCHLUESSEL="chromakey=0x00B140:0.20:0.06"
+  FARBE="$4"
+  if [ -z "$FARBE" ]; then
+    ROH=$(mktemp)
+    "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
+      -vf "crop=8:8:4:4,scale=1:1" -frames:v 1 -f rawvideo -pix_fmt rgb24 "$ROH" 2>/dev/null || true
+    if [ -s "$ROH" ]; then
+      FARBE=$(od -An -tu1 -N3 "$ROH" | awk '{printf "0x%02X%02X%02X", $1, $2, $3}')
+      echo "     gemessene Hintergrundfarbe: $FARBE"
+    fi
+    rm -f "$ROH"
+  fi
+  [ -n "$FARBE" ] || FARBE="0x00B140"
+  SCHLUESSEL="chromakey=${FARBE}:0.22:0.08"
   ENTFAERBEN=",despill=type=green:mix=0.6:expand=0.3"
 fi
+# WIE GROSS? NICHT SO GROSS WIE DIE QUELLE.
+# Der erste echte Film kam mit 720x1280 herein und ergab 11,6 MB.
+# Das laedt auf einem Handy im Mobilfunk quaelend lange — und
+# ueber einem Chat wird das Bild ohnehin auf Bildschirmbreite
+# gezogen. 540 Punkte Breite sehen dort genauso aus und wiegen
+# einen Bruchteil. Andere Breite als fuenfter Wert.
+BREITE="${5:-540}"
+VERKLEINERN=""
+if [ "$BREITE" != "0" ]; then
+  VERKLEINERN="scale='min(${BREITE},iw)':-2:flags=lanczos,"
+fi
 # Kanten weich machen: sonst treppt der Umriss.
-KETTE="format=rgba,${SCHLUESSEL}${ENTFAERBEN},format=yuva420p"
+KETTE="${VERKLEINERN}format=rgba,${SCHLUESSEL}${ENTFAERBEN},format=yuva420p"
 
 echo "1/4  freistellen (${ART}) …"
 "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
   -vf "$KETTE" -c:v libvpx-vp9 -pix_fmt yuva420p -auto-alt-ref 0 \
-  -b:v 0 -crf 34 -row-mt 1 -an "$ZIEL/$NAME.webm"
+  -b:v 0 -crf 38 -row-mt 1 -deadline good -cpu-used 2 -an "$ZIEL/$NAME.webm"
 
 echo "2/4  Safari-Fassung (Bild und Maske nebeneinander) …"
 "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
@@ -64,13 +94,13 @@ echo "2/4  Safari-Fassung (Bild und Maske nebeneinander) …"
 [a]format=yuv420p[bild];\
 [b]alphaextract,format=yuv420p[maske];\
 [bild][maske]hstack=inputs=2,format=yuv420p" \
-  -c:v libx264 -preset slow -crf 24 -movflags +faststart -an "$ZIEL/$NAME-maske.mp4"
+  -c:v libx264 -preset slow -crf 28 -movflags +faststart -an "$ZIEL/$NAME-maske.mp4"
 
 echo "3/4  Vorschaubild …"
 "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
   -vf "${KETTE},scale=480:-2" -frames:v 1 -q:v 4 "$ZIEL/$NAME.jpg"
 
-echo "4/4  Maße festhalten …"
+echo "4/5  Maße festhalten …"
 # ffprobe liegt nicht überall daneben (ffmpeg-static bringt nur ffmpeg
 # mit). Beim ersten Lauf standen deshalb Nullen in der Datei, und die
 # Seite hätte die Größe raten müssen. ffmpeg selbst sagt es auch —
@@ -86,6 +116,11 @@ cat > "$ZIEL/$NAME.json" <<EOF
   "webm": "filme/$NAME.webm", "maske": "filme/$NAME-maske.mp4",
   "bild": "filme/$NAME.jpg", "art": "$ART" }
 EOF
+
+# Die Tritte aus der Tonspur lesen — damit der Chat GENAU dann
+# bebt, wenn der Fuss aufkommt, und nicht im Takt danebenwackelt.
+echo "5/5  Stösse aus der Tonspur lesen …"
+node "$WURZEL/werkzeug/stoesse-finden.js" "$QUELLE" "$ZIEL/$NAME.json" || true
 
 echo
 ls -la "$ZIEL/$NAME".* | awk '{printf "     %-34s %8.0f kB\n", $9, $5/1024}'
