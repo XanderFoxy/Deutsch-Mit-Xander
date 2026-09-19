@@ -185,8 +185,23 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("KEINE Punktzahl in der Antwort",
     !/\d\s*(von|\/)\s*\d/.test((antwort && antwort.paket && antwort.paket.text) || ""),
     (antwort && antwort.paket && antwort.paket.text) || "-");
-  pruefe("und auch keine Selbstbewertung darunter",
-    !/richtig/.test((antwort && antwort.hinweis) || ""), (antwort && antwort.hinweis) || "-");
+  /* GEAENDERT, und zwar auf Ansage: „Bei der Betonung gibt es noch
+     keine Bewertung, es gibt keine Benotung dort."
+
+     Hier stand vorher, dass UNTER der Tafel gar nichts bewertet
+     werden darf. Das kam aus dem frueheren Satz „da soll nicht eins
+     von eins stehen in der Punktzahl — da soll die Notenbewertung
+     daneben stehen", und ich hatte daraus beides gestrichen: die
+     Punktzahl UND die Note. Gemeint war nur die Punktzahl.
+
+     Also gilt jetzt beides zugleich: in der Zeile, die hinausgeht,
+     steht weiterhin keine Punktzahl (Pruefung darueber), und unter
+     der Tafel steht eine NOTE. Bei einem einzigen Wort ohne jeden
+     Zaehler — „1 von 1" war ja gerade das, was stoerte. */
+  const hinw = (antwort && antwort.hinweis) || "";
+  pruefe("unter der Tafel steht eine Note", /^Note [1-6] — /.test(hinw), hinw || "-");
+  pruefe("und bei einem Wort KEIN „eins von eins“",
+    !/\d\s*(von|\/)\s*\d/.test(hinw), hinw || "-");
 
   if (aufSeite.length) {
     console.log("\n  Fehler auf der Seite:");

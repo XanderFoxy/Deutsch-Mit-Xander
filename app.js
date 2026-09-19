@@ -15768,9 +15768,19 @@
         <input type="file" id="lcSendeFoto" accept="image/*" hidden>
         <p class="eyebrow" style="margin-top:12px;">GIFs VON GIPHY</p>
         <div class="lc-gif-fach" id="lcGifFach">
-          ${lcGifFavoriten().length ? `
-            <button type="button" class="lc-gif-thema lc-gif-fav"
-                    data-lc-gifthema="\u2605fav">★ Favoriten</button>` : ""}
+          <!-- GEMELDET: „Die Auswahl fuer die GIPHY-Bilder — da sind
+               meine Favoriten nicht."
+               Der Knopf stand hier nur, WENN beim Aufbauen des Faches
+               schon Favoriten bekannt waren. Sie kommen aber aus dem
+               Profil und damit aus dem Netz: wer das Fach gleich nach
+               dem Laden oeffnet — oder auf einem zweiten Geraet —,
+               hatte noch keine, und der Knopf fehlte ganz. Damit war
+               er auch spaeter weg, denn das Fach wird nur beim
+               Oeffnen gebaut.
+               Jetzt steht er immer da. Ist wirklich nichts angeheftet,
+               erklaert das Fach beim Antippen, wie man es tut. -->
+          <button type="button" class="lc-gif-thema lc-gif-fav"
+                  data-lc-gifthema="\u2605fav">★ Favoriten</button>
           ${LC_GIF_THEMEN.map((t, i) => `
             <button type="button" class="lc-gif-thema${i === 0 ? " ist-da" : ""}"
                     data-lc-gifthema="${escapeHtml(t.wort)}">${escapeHtml(t.name)}</button>`).join("")}
@@ -15846,10 +15856,23 @@
       if (wer) showToast("🤫 Geflüstert — nur " + wer + " sieht das Bild.");
       return true;
     };
+    /* GEMELDET: „Wenn man sich ein Bild aussucht und dann in dieses
+       Panel klickt, um sich das Bild auszusuchen, dann soll sich das
+       eigentlich wieder schliessen — aber es schliesst sich nicht."
+
+       Es schloss sich nur, wenn das Schicken GELANG (raus() ruft zu()
+       am Ende). Ging es daneben — kein Raum, keine Leitung —, blieb
+       das Fach offen, und darueber stand „Das war keine Adresse",
+       obwohl die Adresse voellig in Ordnung war. Wer ein Bild
+       antippt, hat gewaehlt: das Fach geht zu, und WARUM es nicht
+       hinausging, steht in der Meldung. */
     const schicken = (adresse) => {
-      if (!raus(adresse)) {
-        showToast("Das war keine Adresse — sie muss mit https:// anfangen.");
-      }
+      const q = String(adresse || "");
+      if (raus(q)) return;
+      zu();
+      showToast(/^(https?:|data:)/.test(q)
+        ? "Das Bild ging gerade nicht hinaus — bist du in einem Raum?"
+        : "Das war keine Adresse — sie muss mit https:// anfangen.");
     };
 
     kasten.addEventListener("click", (e) => { if (e.target === kasten) zu(); });
@@ -15988,17 +16011,26 @@
     const zeigen = async (wort, anhaengen) => {
       const ziel = kasten.querySelector("#lcSendeGifTreffer");
       if (!ziel) return;
-      if (gifLaedt) return;
-      if (!anhaengen) { gifWort = wort || ""; gifVersatz = 0; gifEnde = false; }
-      else if (gifEnde) return;
-      gifLaedt = true;
-      let gleichWeiter = false;
-      if (!anhaengen) ziel.innerHTML = '<p class="empty-note">lädt …</p>';
-      else ziel.insertAdjacentHTML("beforeend", '<p class="empty-note lc-gif-mehr" style="grid-column:1/-1;">lädt weiter …</p>');
-      /* DIE FAVORITEN KOMMEN NICHT VON GIPHY, SIE STEHEN IM PROFIL.
-         Deshalb gibt es hier gar keine Abfrage — und deshalb sind sie
-         auch da, wenn GIPHY gerade nicht antwortet. */
-      if (gifWort === "\u2605fav") {
+      /* =========================================================
+         DIE FAVORITEN GEHEN VOR — SIE BRAUCHEN KEIN NETZ
+         ---------------------------------------------------------
+         GEMELDET: „Die Auswahl fuer die GIPHY-Bilder — da sind
+         meine Favoriten nicht."
+
+         Zweite Ursache, und die stillere: gleich beim Oeffnen laeuft
+         eine Abfrage zu GIPHY („was ist gerade angesagt"). Solange
+         die laeuft, steht gifLaedt auf true — und hier stand die
+         Sperre GANZ OBEN, vor allem anderen. Ein Tipp auf
+         „★ Favoriten" fiel damit ins Leere, und zwar am
+         zuverlaessigsten dann, wenn GIPHY langsam ist oder gar nicht
+         antwortet: dann haengt die Abfrage, und der Knopf tut
+         minutenlang gar nichts.
+
+         Die Favoriten kommen aber aus dem Profil, nicht von GIPHY.
+         Sie stehen deshalb jetzt VOR der Sperre: sie werden gezeigt,
+         ganz gleich, was gerade im Netz unterwegs ist. */
+      if ((wort || "") === "\u2605fav" && !anhaengen) {
+        gifWort = "\u2605fav"; gifVersatz = 0; gifEnde = true;
         const l = lcGifFavoriten();
         ziel.innerHTML = "";
         if (!l.length) {
@@ -16008,10 +16040,23 @@
         } else {
           l.forEach((u) => ziel.appendChild(lcGifKachel(u, "Favorit")));
         }
-        gifEnde = true;
-        gifLaedt = false;
         return;
       }
+      if (gifLaedt) return;
+      if (!anhaengen) { gifWort = wort || ""; gifVersatz = 0; gifEnde = false; }
+      else if (gifEnde) return;
+      gifLaedt = true;
+      /* WER ZU SPAET KOMMT, SCHREIBT NICHTS MEHR.
+         Eine Abfrage zu GIPHY dauert; in der Zwischenzeit kann laengst
+         etwas anderes gewaehlt sein (die Favoriten zum Beispiel). Die
+         Antwort von vorhin darf das Fach dann nicht mehr ueberschreiben
+         — gemessen genau das: die Favoriten erschienen und wurden eine
+         Sekunde spaeter von einer GIPHY-Fehlermeldung verdraengt. */
+      const meinWort = gifWort;
+      const nochAktuell = () => gifWort === meinWort;
+      let gleichWeiter = false;
+      if (!anhaengen) ziel.innerHTML = '<p class="empty-note">lädt …</p>';
+      else ziel.insertAdjacentHTML("beforeend", '<p class="empty-note lc-gif-mehr" style="grid-column:1/-1;">lädt weiter …</p>');
       try {
         const adresse = gifWort
           ? "https://api.giphy.com/v1/gifs/search?api_key="
@@ -16023,6 +16068,7 @@
         if (!r.ok) throw new Error("giphy " + r.status);
         const j = await r.json();
         const liste = (j && j.data) || [];
+        if (!nochAktuell()) return;
         ziel.querySelectorAll(".lc-gif-mehr").forEach((e) => e.remove());
         if (!liste.length && !anhaengen) throw new Error("leer");
         if (liste.length < 24) gifEnde = true;
@@ -16040,6 +16086,7 @@
            und das Nachladen käme nie in Gang. */
         if (!gifEnde && ziel.scrollHeight <= ziel.clientHeight + 10) gleichWeiter = true;
       } catch (x) {
+        if (!nochAktuell()) return;
         ziel.querySelectorAll(".lc-gif-mehr").forEach((e) => e.remove());
         if (anhaengen) { gifEnde = true; return; }
         ziel.innerHTML = eigenerSchluessel
@@ -22369,7 +22416,30 @@
          dezent wie als Nachhall sein" — er traegt die gesprochene
          Stimme, er uebertoent sie nicht. Deshalb darf der Aufrufer
          eine eigene Lautstaerke nennen. */
-      const SPITZE = (typeof laut === "number" && laut >= 0 && laut <= 1) ? laut : 0.5;
+      /* =========================================================
+         LAUTER, SOLANGE DAS MIKROFON AN IST
+         ---------------------------------------------------------
+         GEMELDET: „Mit dem Sound ist es noch ein bisschen komisch —
+         manchmal, wenn man den Dinosaurier hat und man spricht,
+         dann duennt es den Sound aus."
+
+         Das ist nichts, was hier abgeschaltet wird: sobald ein
+         Mikrofon offen ist, schaltet das Telefon seine Tonausgabe in
+         den Gespraechsbetrieb um und macht alles andere leiser,
+         damit die Stimme durchkommt. Das macht das Geraet, nicht die
+         Seite — im Code gibt es keine Stelle, die einen Effektton
+         leiser dreht, wenn jemand spricht (nachgesehen: kein
+         einziges pause() und kein volume= haengt am Sprechen).
+
+         Was hier geht, ist dagegenzuhalten: solange ein Mikrofon
+         offen ist, laufen die Geraeusche lauter. Dann bleibt vom
+         gedaempften Ton noch genug uebrig. Ist das Mikrofon aus,
+         bleibt alles wie bisher — sonst waere es zu laut. */
+      const roh = (typeof laut === "number" && laut >= 0 && laut <= 1) ? laut : 0.5;
+      let mikroAn = false;
+      try { mikroAn = Boolean(window.LiveChat && LiveChat.lage && LiveChat.lage().tonAn); }
+      catch (e) { mikroAn = false; }
+      const SPITZE = mikroAn ? Math.min(1, roh * 1.7) : roh;
       a.volume = SPITZE;
       const plan = LC_TON_PLAN[wirkung || name];
       a.loop = Boolean(plan && plan.schleife);
@@ -26047,6 +26117,54 @@
     const hinweis = document.createElement("p");
     hinweis.className = "lc-betonung-hinweis";
 
+    /* =================================================================
+       DIE BENOTUNG
+       -----------------------------------------------------------------
+       GEMELDET: „Bei der Betonung gibt es noch keine Bewertung, es
+       gibt keine Benotung dort."
+
+       Das stimmte, und es sah lange so aus, als koennte es sie gar
+       nicht geben: die Aufgabe kennt nur den TEXT, nicht die richtige
+       Silbe. Sie steht aber im Woerterbuch — lcSilbenFuer gibt neben
+       den Silben auch idx zurueck, die Nummer der betonten. Genau die
+       wird beim Anzeigen kleingeschrieben, damit sie sich nicht
+       verraet („die sollen da, wo sie richtig betont werden, nicht
+       schon gross vorgeschrieben stehen"). Zum Vergleich ist sie also
+       da, nur eben unsichtbar.
+
+       Die Note steht UNTER der Tafel, nicht in der Zeile, die
+       hinausgeht — dort war ausdruecklich keine Punktzahl gewuenscht
+       („da soll nicht eins von eins stehen"). Der Notenstift des
+       Lehrers bleibt davon unberuehrt; er kann weiterhin eine eigene
+       Note geben.
+
+       Die Skala ist die deutsche Schulnote nach Anteil richtiger
+       Woerter: ab 100 % eine 1, ab 80 % eine 2, ab 60 % eine 3,
+       ab 45 % eine 4, ab 25 % eine 5, darunter eine 6. */
+    let getippt = 0, richtig = 0;
+    const NOTEN = [[100, 1], [80, 2], [60, 3], [45, 4], [25, 5], [0, 6]];
+    const noteJetzt = () => {
+      const anteil = getippt ? (richtig / getippt) * 100 : 0;
+      const n = (NOTEN.find(([grenze]) => anteil >= grenze) || [0, 6])[1];
+      return n;
+    };
+    const benoten = () => {
+      const n = noteJetzt();
+      const wort = ["", "sehr gut", "gut", "befriedigend", "ausreichend",
+                    "mangelhaft", "ungenügend"][n];
+      /* Bei EINEM Wort steht nur die Note da. „1 von 1" war
+         ausdruecklich unerwuenscht („da soll nicht eins von eins
+         stehen in der Punktzahl"), und bei einem einzigen Wort sagt
+         der Zaehler ohnehin nichts, was die Note nicht schon sagt.
+         Erst ab zwei Woertern kommt dazu, wie viele davon sassen. */
+      hinweis.textContent = getippt > 1
+        ? "Note " + n + " — " + wort + "   ·   " + richtig + " von " + getippt + " Wörtern"
+        : "Note " + n + " — " + wort;
+      hinweis.classList.toggle("lc-note-gut", n <= 2);
+      hinweis.classList.toggle("lc-note-mittel", n === 3 || n === 4);
+      hinweis.classList.toggle("lc-note-schlecht", n >= 5);
+    };
+
     woerter.forEach((wort) => {
       const gruppe = document.createElement("span");
       gruppe.className = "lc-betonung-wort";
@@ -26082,7 +26200,18 @@
              im ganzen Haus geschrieben. Ob sie stimmt, sagt hier
              niemand; das ist die Sache des Lehrers. */
           const antwort = stuecke.map((sb, j) => (j === i ? sb.toUpperCase() : sb.toLowerCase())).join("-");
-          hinweis.textContent = "Abgeschickt: " + antwort;
+          /* Erst zaehlen, dann benoten — und die richtige Silbe zeigen,
+             wenn daneben getippt wurde. Ohne sie waere die Note eine
+             Behauptung, aus der man nichts lernt. */
+          getippt++;
+          if (i === info.idx) {
+            richtig++;
+            b.classList.add("lc-silbe-richtig");
+          } else {
+            b.classList.add("lc-silbe-falsch");
+            if (knoepfe[info.idx]) knoepfe[info.idx].classList.add("lc-silbe-loesung");
+          }
+          benoten();
           try { LiveChat.schreiben("🔠 " + antwort); } catch (e) {}
         });
         knoepfe.push(b);

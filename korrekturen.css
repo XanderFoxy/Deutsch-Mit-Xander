@@ -10862,3 +10862,34 @@ body.lc-schreibt .tutor-reiter {
 .galgen-taste:hover:not(:disabled),
 .galgen-taste:focus-visible { background: rgba(127, 127, 127, 0.2); }
 .galgen-taste:disabled { opacity: 0.35; cursor: default; }
+
+/* =========================================================
+   DIE NOTE UNTER DER BETONUNGSTAFEL
+   ---------------------------------------------------------
+   GEMELDET: „Bei der Betonung gibt es noch keine Bewertung,
+   es gibt keine Benotung dort."
+
+   Die Note steht unter der Tafel, nicht in der Zeile, die
+   hinausgeht — dort war ausdruecklich keine Punktzahl
+   gewuenscht. Die angetippte Silbe faerbt sich, und wenn sie
+   falsch war, zeigt sich daneben die richtige: eine Note
+   ohne die Loesung ist eine Behauptung.
+   ========================================================= */
+.lc-betonung-hinweis.lc-note-gut { color: #59a35d; font-weight: 700; }
+.lc-betonung-hinweis.lc-note-mittel { color: #c68a2e; font-weight: 700; }
+.lc-betonung-hinweis.lc-note-schlecht { color: #c0553f; font-weight: 700; }
+.lc-betonung-silbe.lc-silbe-richtig {
+  background: rgba(89, 163, 93, 0.24);
+  border-color: #59a35d;
+  color: inherit;
+}
+.lc-betonung-silbe.lc-silbe-falsch {
+  background: rgba(192, 85, 63, 0.22);
+  border-color: #c0553f;
+  text-decoration: line-through;
+}
+.lc-betonung-silbe.lc-silbe-loesung {
+  background: rgba(89, 163, 93, 0.18);
+  border-color: #59a35d;
+  box-shadow: 0 0 0 2px rgba(89, 163, 93, 0.3);
+}
