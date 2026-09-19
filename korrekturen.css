@@ -9067,3 +9067,50 @@ body.lc-schreibt .tutor-reiter {
   min-width: 0;          /* sonst sprengt ein langer Name die Zeile */
   margin: 0;
 }
+
+/* =================================================================
+   WOFÜR DIE NOTE? DIE KLASSE STEHT ÜBER DEN ZAHLEN
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „Leg gleich auch einmal eine Klasse fest für diese Art
+   von Spiel. Wenn ich einen Satz schreibe und die Wörter in dem Satz
+   durcheinander sind, dann gib als Vorauswahl mal, für was ich die
+   Note gebe. Ist das Satzbau oder ist das Grammatik?"
+
+   Es heisst Satzbau. Die Knöpfe stehen in einer eigenen Zeile ÜBER
+   dem Textfeld und den Zahlen — zuerst wofür, dann wie gut. Bei einem
+   Satzpuzzle ist „Satzbau" schon angewählt, bei einem Wortpuzzle
+   „Rechtschreibung"; die Regel dafür steht in livechat.js.
+
+   Sie umbrechen (flex-wrap), denn auf dem Telefon passen sechs
+   Klassen niemals in eine Zeile — und ein waagerechtes Scrollen im
+   Chat war schon einmal gemeldet und soll nicht wiederkommen.
+   ================================================================= */
+.lc-notenklassen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1 1 100%;
+  margin-bottom: 2px;
+}
+.lc-notenklasse {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font: inherit;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lc-notenklasse:hover { background: rgba(224, 150, 74, 0.18); }
+.lc-notenklasse-an {
+  background: rgba(224, 150, 74, 0.32);
+  border-color: rgba(224, 150, 74, 0.8);
+  font-weight: 700;
+}
+/* Eine nachgereichte Antwort — sie hat hochgescrollt und die alte
+   Frage noch einmal beantwortet. Der Knopf sieht gleich aus, nur der
+   Rand sagt leise, dass es später kam. */
+.lc-benoten-spaet { border-style: dashed; }

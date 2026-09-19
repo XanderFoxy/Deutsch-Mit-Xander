@@ -83,6 +83,50 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
       + (z.text || "(Sprachnachricht)"));
   });
 
+  /* =================================================================
+     UND DIE VORAUSWAHL: WOFÜR WIRD BENOTET?
+     -----------------------------------------------------------------
+     GEWÜNSCHT: „Leg gleich auch einmal eine Klasse fest für diese Art
+     von Spiel … dann gib als Vorauswahl mal, für was ich die Note
+     gebe. Ist das Satzbau oder ist das Grammatik?"
+     Es heisst Satzbau. Hier wird gemessen, ob beim Satzpuzzle wirklich
+     Satzbau angewählt ist — und beim Wortpuzzle Rechtschreibung.
+     ================================================================= */
+  const klassen = await pg.evaluate(async () => {
+    const wahlAnsehen = (typ, loesung) => {
+      LiveChat.binLehrer = () => true;
+      LiveChat.pruefAufgabeFrei("");
+      LiveChat.pruefAufgabeStellen(typ, loesung);
+      document.querySelectorAll(".lc-chat").forEach((e) => e.remove());
+      const chat = document.createElement("div");
+      chat.className = "lc-chat";
+      chat.innerHTML = '<div class="lc-verlauf-huelle"><div class="lc-chat-verlauf" id="lcVerlauf"></div></div>';
+      document.body.appendChild(chat);
+      window.DMA_PRUEFUNG.chatStand([
+        { id: "z1", von: "emmy", name: "Emmy", text: loesung, art: "text", zeit: Date.now() }
+      ]);
+      const knopf = document.querySelector("#lcVerlauf .lc-benoten");
+      if (!knopf) return { fehlt: true };
+      knopf.click();
+      const chips = [...document.querySelectorAll("#lcVerlauf .lc-notenklasse")];
+      const an = chips.filter((c) => c.classList.contains("lc-notenklasse-an")).map((c) => c.textContent);
+      const feld = document.querySelector("#lcVerlauf .lc-notenfach");
+      return { chips: chips.map((c) => c.textContent), an: an, feld: feld ? feld.value : "" };
+    };
+    return { satz: wahlAnsehen("satz", "Der Hund läuft über die Wiese"),
+             wort: wahlAnsehen("wort", "Fahrrad") };
+  });
+  console.log("\n  WOFÜR DIE NOTE? (Vorauswahl)");
+  const pruefKlasse = (was, erg, soll) => {
+    const gut = !erg.fehlt && erg.an.length === 1 && erg.an[0] === soll && erg.feld === soll;
+    if (!gut) fehler++;
+    console.log("  " + (gut ? "ok   " : "FEHL ") + was + "   angewählt: "
+      + (erg.fehlt ? "KEIN NOTENKNOPF" : (erg.an.join(", ") || "(nichts)"))
+      + (erg.chips ? "   zur Auswahl: " + erg.chips.join(" · ") : ""));
+  };
+  pruefKlasse("Satzpuzzle  → Satzbau        ", klassen.satz, "Satzbau");
+  pruefKlasse("Wortpuzzle  → Rechtschreibung", klassen.wort, "Rechtschreibung");
+
   const alsGast = await lauf(false, true);
   console.log("\n  ALS TEILNEHMER (nicht Lehrer)");
   const knoepfe = alsGast.filter((z) => z.note).length;

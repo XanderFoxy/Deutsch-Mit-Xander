@@ -5271,7 +5271,56 @@ window.LiveChat = (function () {
      und der Notenknopf blieb weg. Genau das war gemeldet. Jetzt liegt
      sie im Geraet, beim Raum, und kommt beim Betreten zurueck. */
   function aufgabeSchluessel(raum) { return "dma_lc_aufgabe_" + (raum || "-"); }
-  var AUFGABE_FRIST = 12 * 60 * 60 * 1000;   // nach zwoelf Stunden ist sie alt
+  /* =========================================================
+     DIE REGEL: WOFUER WIRD EIGENTLICH BENOTET?
+     ---------------------------------------------------------
+     GEWUENSCHT: „Leg gleich auch einmal eine Klasse fest fuer
+     diese Art von Spiel. Wenn ich einen Satz schreibe und die
+     Woerter in dem Satz durcheinander sind, dann gib als
+     Vorauswahl, wofuer ich die Note gebe. Ist das Satzbau oder
+     ist das Grammatik? Wie nennt man das dann?"
+
+     Es heisst SATZBAU. Fachlich genauer: Wortstellung, und die
+     gehoert zur Syntax. „Grammatik" ist der Oberbegriff, unter
+     den auch Faelle, Zeiten und Endungen fallen — wer nur die
+     Reihenfolge der Woerter sortiert, uebt davon genau einen
+     Teil. Deshalb ist Satzbau die richtige Antwort und nicht
+     Grammatik: Grammatik waere nicht falsch, aber zu grob, und
+     eine Note soll ja sagen, WORIN jemand gut war.
+
+     Dieselbe Ueberlegung fuer das Wortpuzzle: Dort stehen die
+     BUCHSTABEN eines Wortes durcheinander. Wer sie ordnet, uebt
+     die Schreibung des Wortes — also Rechtschreibung.
+
+     Diese Zuordnung ist eine REGEL und steht deshalb an einer
+     Stelle, nicht verstreut in der Oberflaeche.
+     ========================================================= */
+  var NOTEN_KLASSEN = [
+    { wert: "Satzbau",        was: "Wortstellung — welches Wort steht wo im Satz" },
+    { wert: "Grammatik",      was: "Formen: Faelle, Zeiten, Endungen" },
+    { wert: "Wortschatz",     was: "das richtige Wort kennen und benutzen" },
+    { wert: "Rechtschreibung", was: "wie ein Wort geschrieben wird" },
+    { wert: "Aussprache",     was: "wie es klingt" },
+    { wert: "Verstehen",      was: "hat die Frage getroffen" }
+  ];
+
+  /* Welche Klasse schlaegt die Seite vor? Das haengt an der Art
+     der Aufgabe — und nur daran, damit es nachvollziehbar
+     bleibt. Bei einer Aufgabe in eigenen Worten schlaegt sie
+     nichts vor: dort weiss nur der Lehrer, worum es ging. */
+  var KLASSE_JE_AUFGABE = { satz: "Satzbau", wort: "Rechtschreibung", frei: "" };
+  function aufgabeKlasse(typ) {
+    return KLASSE_JE_AUFGABE[String(typ || "")] || "";
+  }
+
+  /* Eine Aufgabe bleibt drei Tage stehen. Zwoelf Stunden waren zu
+     knapp: GEMELDET wurde genau dieser Fall — „wir haben die Frage
+     vor einer Stunde gestellt, und sie scrollt immer wieder hoch
+     und beantwortet die alte Frage". Wer am Abend eine Aufgabe
+     stellt und am naechsten Nachmittag die Antworten durchsieht,
+     soll sie noch benoten koennen. Beendet wird sie ohnehin von
+     Hand, mit  /aufgabe  ohne Text. */
+  var AUFGABE_FRIST = 3 * 24 * 60 * 60 * 1000;
   function aufgabeMerken() {
     try {
       if (offeneAufgabe) {
@@ -5465,17 +5514,53 @@ window.LiveChat = (function () {
        Verlauf: die erste Zeile, die diese Person nach der Aufgabe
        geschrieben hat, ist ihre Antwort.
        ========================================================= */
+    /* =========================================================
+       EINE SPAETE ANTWORT IST AUCH EINE ANTWORT
+       ---------------------------------------------------------
+       GEMELDET, und diesmal mit dem entscheidenden Hinweis:
+       „Wir haben die Frage vor einer Stunde gestellt, und sie
+       scrollt immer wieder hoch und beantwortet diese alte Frage.
+       Aber der Notenknopf steht immer noch nicht dabei. Schau
+       mal, ob es bei veralteten Fragen auch noch geht oder ob es
+       da irgendeine Zeit-Klasse gibt."
+
+       Es gab sie, und sie war meine: ersteZeileNachAufgabe(). Ich
+       hatte gesagt „die ERSTE Zeile nach der Aufgabe ist die
+       Antwort" — das klang sauber und war in dem einen Fall
+       falsch, der bei ihm staendig vorkommt. Emmi schreibt nach
+       der Aufgabe noch etwas anderes („Moment", „bin gleich da"),
+       und eine Stunde spaeter scrollt sie hoch und loest sie
+       wirklich. Ihre echte Antwort war dann ihre fuenfte Zeile —
+       und bekam nach meiner Regel keinen Knopf.
+
+       Die Regel gilt deshalb nicht mehr. Solange eine Aufgabe
+       OFFEN steht, ist jede Zeile einer anderen Person danach
+       benotbar — egal wie spaet, egal die wievielte. Das ist
+       weiterhin nicht „global": ohne offene Aufgabe gibt es
+       keinen einzigen Knopf, Befehle zaehlen nicht, und die
+       eigenen Zeilen auch nicht.
+
+       „erste" bleibt nur noch als HINWEIS erhalten (spaet: true) —
+       damit die Oberflaeche sagen kann, dass es eine nachgereichte
+       Antwort ist. Entscheiden tut es nichts mehr.
+       ========================================================= */
+    var zuerst = ersteZeileNachAufgabe(n);
+
     if (offeneAufgabe.typ === "frei") {
-      if (!ersteZeileNachAufgabe(n)) return null;
-      return { versuch: true, richtig: false, frei: true,
+      return { versuch: true, richtig: false, frei: true, spaet: !zuerst,
+               klasse: aufgabeKlasse("frei"),
                frage: offeneAufgabe.frage || "" };
     }
 
     if (aufgabeGleich(text, offeneAufgabe.loesung)) {
-      return { versuch: true, richtig: true, frage: offeneAufgabe.loesung };
+      return { versuch: true, richtig: true, spaet: !zuerst,
+               klasse: aufgabeKlasse(offeneAufgabe.typ),
+               frage: offeneAufgabe.loesung };
     }
     if (siehtNachVersuchAus(text, offeneAufgabe)) {
-      return { versuch: true, richtig: false, frage: offeneAufgabe.loesung };
+      return { versuch: true, richtig: false, spaet: !zuerst,
+               klasse: aufgabeKlasse(offeneAufgabe.typ),
+               frage: offeneAufgabe.loesung };
     }
     /* Und selbst wenn die Antwort mit der Musterloesung nichts
        gemeinsam hat: Es war die erste Zeile nach der Aufgabe, also
@@ -5486,8 +5571,8 @@ window.LiveChat = (function () {
        Angesagt wird sie deshalb nicht — das entscheidet weiterhin
        aufgabeAntwort, sonst hiesse es bei jedem „hallo“ „noch nicht
        richtig“. */
-    if (!ersteZeileNachAufgabe(n)) return null;
-    return { versuch: true, richtig: false, daneben: true,
+    return { versuch: true, richtig: false, daneben: true, spaet: !zuerst,
+             klasse: aufgabeKlasse(offeneAufgabe.typ),
              frage: offeneAufgabe.loesung };
   }
 
@@ -5499,6 +5584,7 @@ window.LiveChat = (function () {
     return {
       typ: offeneAufgabe.typ,
       frage: offeneAufgabe.frage || offeneAufgabe.loesung || "",
+      klasse: aufgabeKlasse(offeneAufgabe.typ),
       zeit: offeneAufgabe.zeit || 0
     };
   }
@@ -9072,6 +9158,10 @@ window.LiveChat = (function () {
        Neuladen an der richtigen Zeile steht. */
     aufgabeBezug: aufgabeBezug,
     offeneAufgabeInfo: offeneAufgabeInfo,
+    /* Die Klassen, fuer die man eine Note geben kann — die Regel
+       steht in livechat.js, nicht in der Oberflaeche. */
+    notenKlassen: function () { return NOTEN_KLASSEN.slice(); },
+    aufgabeKlasse: aufgabeKlasse,
     /* Fuer die Pruefung, ob eine Aufgabe das Neuladen ueberlebt:
        merken, vergessen, zurueckholen — genau die Wege, die auch das
        Betreten geht. */

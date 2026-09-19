@@ -24499,6 +24499,14 @@
       const istAntwort = Boolean(n.versuch || (bezug && bezug.versuch));
       const antwortRichtig = Boolean(n.richtig || (bezug && bezug.richtig));
       const antwortFrage = n.aufgabeFrage || (bezug && bezug.frage) || "";
+      /* Wofür wird hier benotet? Die Regel steht in livechat.js
+         (KLASSE_JE_AUFGABE) — ein Satzpuzzle ist Satzbau, ein
+         Wortpuzzle Rechtschreibung. Bei einer Aufgabe in eigenen
+         Worten schlägt die Seite nichts vor; das weiss nur er. */
+      const antwortKlasse = (bezug && bezug.klasse)
+        || (() => { try { const a = LiveChat.offeneAufgabeInfo && LiveChat.offeneAufgabeInfo();
+                          return (a && a.klasse) || ""; } catch (e) { return ""; } })();
+      const antwortSpaet = Boolean(bezug && bezug.spaet);
       if (istAntwort && n.von && !n.eigen && LiveChat.binLehrer && LiveChat.binLehrer()) {
         const stift = document.createElement("button");
         stift.type = "button";
@@ -24511,7 +24519,9 @@
            steckt. Jetzt steht es einfach da. */
         stift.title = "Note geben (1 bis 6) für die Antwort auf die Aufgabe"
           + (antwortFrage ? " „" + antwortFrage + "“" : "")
+          + (antwortSpaet ? " (nachgereicht — sie hat hochgescrollt und noch einmal geantwortet)" : "")
           + " — nur du als Lehrer siehst diesen Knopf";
+        if (antwortSpaet) stift.classList.add("lc-benoten-spaet");
         stift.setAttribute("aria-label", "Note geben");
         stift.textContent = "Note";
         stift.addEventListener("click", (e) => {
@@ -24521,11 +24531,57 @@
           document.querySelectorAll(".lc-notenwahl").forEach((x) => x.remove());
           const wahl = document.createElement("span");
           wahl.className = "lc-notenwahl";
+          /* =====================================================
+             WOFÜR DIE NOTE? ERST DIE KLASSE, DANN DIE ZAHL
+             -----------------------------------------------------
+             GEWÜNSCHT: „Leg gleich auch einmal eine Klasse fest für
+             diese Art von Spiel … dann gib als Vorauswahl mal, für
+             was ich die Note gebe. Ist das Satzbau oder ist das
+             Grammatik?"
+
+             Es heisst Satzbau — Wortstellung, ein Teil der Syntax.
+             „Grammatik" wäre nicht falsch, aber zu grob; darunter
+             fallen auch Fälle, Zeiten und Endungen. Eine Note soll
+             ja sagen, WORIN jemand gut war.
+
+             Vorher stand hier ein leeres Textfeld „Fach, z. B.
+             Grammatik". Ein leeres Feld füllt im Unterricht
+             niemand aus — deshalb jetzt Knöpfe, mit der passenden
+             Klasse schon angewählt. Tippen geht weiterhin, für
+             alles, was nicht in der Liste steht.
+             ===================================================== */
+          const klassen = (window.LiveChat && LiveChat.notenKlassen)
+            ? LiveChat.notenKlassen() : [];
+          let gewaehlt = antwortKlasse;
           const fach = document.createElement("input");
           fach.type = "text";
           fach.className = "lc-notenfach";
-          fach.placeholder = "Fach, z. B. Grammatik";
+          fach.placeholder = "oder selbst schreiben";
           fach.maxLength = 30;
+          fach.value = gewaehlt;
+          if (klassen.length) {
+            const reihe = document.createElement("span");
+            reihe.className = "lc-notenklassen";
+            klassen.forEach((k) => {
+              const b = document.createElement("button");
+              b.type = "button";
+              b.className = "lc-notenklasse";
+              b.textContent = k.wert;
+              b.title = k.was;
+              if (k.wert === gewaehlt) b.classList.add("lc-notenklasse-an");
+              b.addEventListener("click", (ev) => {
+                ev.stopPropagation();
+                /* Noch einmal antippen nimmt die Klasse wieder weg —
+                   man soll auch ohne Zuordnung benoten können. */
+                gewaehlt = (gewaehlt === k.wert) ? "" : k.wert;
+                fach.value = gewaehlt;
+                reihe.querySelectorAll(".lc-notenklasse").forEach((x) =>
+                  x.classList.toggle("lc-notenklasse-an", x.textContent === gewaehlt));
+              });
+              reihe.appendChild(b);
+            });
+            wahl.appendChild(reihe);
+          }
           wahl.appendChild(fach);
           [1, 2, 3, 4, 5, 6].forEach((zahl) => {
             const b = document.createElement("button");

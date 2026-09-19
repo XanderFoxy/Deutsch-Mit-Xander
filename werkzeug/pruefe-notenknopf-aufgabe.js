@@ -88,7 +88,35 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     raus.push(["ein Befehl gilt nicht als Antwort", knopf(c1)]);
     raus.push(["die Zeile danach schon", knopf(c2)]);
 
-    /* ---- 5. Vor der Aufgabe geschrieben ------------------------ */
+    /* ---- 5. DER GEMELDETE FALL: die Frage ist eine Stunde alt,
+              sie hat zwischendurch geplaudert und scrollt jetzt hoch,
+              um sie doch noch zu beantworten. ------------------- */
+    LiveChat.pruefAufgabeFrei("");
+    LiveChat.pruefAufgabeFrei("Schreib drei Sätze über dein Wochenende");
+    const STUNDE = 60 * 60 * 1000;
+    const e1 = zeile("s1", "emmy", "Moment, ich bin gleich zurück", Date.now() + 5000);
+    const e2 = zeile("s2", "emmy", "ok", Date.now() + 60000);
+    const e3 = zeile("s3", "emmy", "Am Samstag war ich im Park. Es war schön. Danach habe ich gelesen.",
+                     Date.now() + STUNDE);
+    LiveChat.pruefVerlaufSetzen([e1, e2, e3]);
+    raus.push(["eine Stunde später doch noch beantwortet", knopf(e3)]);
+    raus.push(["auch das Geplauder von vorhin ist benotbar", knopf(e1)]);
+
+    /* ---- 6. Die Klasse: was schlägt die Seite vor? ------------- */
+    LiveChat.pruefAufgabeFrei("");
+    LiveChat.pruefAufgabeStellen("satz", "Der Hund läuft über die Wiese");
+    const k1 = zeile("k1", "emmy", "Der Hund über die Wiese läuft", Date.now() + 1000);
+    LiveChat.pruefVerlaufSetzen([k1]);
+    const kb = LiveChat.aufgabeBezug(k1);
+    raus.push(["Satzpuzzle — die Klasse", kb ? { frage: kb.klasse || "(keine)" } : null]);
+    LiveChat.pruefAufgabeFrei("");
+    LiveChat.pruefAufgabeStellen("wort", "Fahrrad");
+    const k2 = zeile("k2", "emmy", "Radfahr", Date.now() + 1000);
+    LiveChat.pruefVerlaufSetzen([k2]);
+    const kb2 = LiveChat.aufgabeBezug(k2);
+    raus.push(["Wortpuzzle — die Klasse", kb2 ? { frage: kb2.klasse || "(keine)" } : null]);
+
+    /* ---- 7. Vor der Aufgabe geschrieben ------------------------ */
     const d1 = zeile("p1", "emmy", "guten Morgen", T0 - 120000);
     raus.push(["was VOR der Aufgabe stand", knopf(d1)]);
 
@@ -100,7 +128,10 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
 
   const soll = {
     "eigene Aufgabe — Emmis Antwort": true,
-    "eigene Aufgabe — ihr Geplauder danach": false,
+    /* Eine Zeile nach der Aufgabe ist jetzt IMMER benotbar — genau
+       das war der gemeldete Fehler. Der Knopf tut ja nichts von
+       allein; er macht nur benotbar, was zur Frage gehört. */
+    "eigene Aufgabe — ihr Geplauder danach": true,
     "eigene Aufgabe — Toms Antwort": true,
     "nach Neuladen, bevor die Aufgabe zurück ist": false,
     "nach Neuladen, Aufgabe zurückgeholt": true,
@@ -108,6 +139,10 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
     "Wortpuzzle — der zweite Versuch derselben Person": true,
     "ein Befehl gilt nicht als Antwort": false,
     "die Zeile danach schon": true,
+    "eine Stunde später doch noch beantwortet": true,
+    "auch das Geplauder von vorhin ist benotbar": true,
+    "Satzpuzzle — die Klasse": true,
+    "Wortpuzzle — die Klasse": true,
     "was VOR der Aufgabe stand": false
   };
   let fehler = 0;
