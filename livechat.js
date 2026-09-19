@@ -823,22 +823,61 @@ window.LiveChat = (function () {
      so sehen die ANDEREN die Animation, die man sich selbst
      ausgesucht hat, und nicht jeder eine eigene.
      ========================================================= */
+  /* =================================================================
+     ELF SPRECHBILDER
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Ich brauche noch mehr fantastische Profilbildrahmen,
+     wenn man spricht. Diese Mikrofoneffekte — da brauche ich noch
+     richtig individuelle Sachen, die wirklich nach Animation aussehen.
+     Der Regenbogen muss viel bunter, dafuer klarer und farbiger werden,
+     viel mehr ausstrahlen wie ein schoener Regenbogen. Das mit dem
+     Magischen meine ich so: viele kleine Sterne oder Punkte funkeln in
+     verschiedenen Staerken, die das Profilbild umgeben und wie ein
+     optisches Glissando um das Profilbild herumtanzen … und dann
+     vielleicht noch eins, wo Noten rauskommen. Wenn ich zum Beispiel
+     Musik mag, koennte ich das einstellen, und dann sind um den
+     Profilkreis herum Noten angezeigt — und noch mehr Effekte, die
+     wirklich Spass machen."
+
+     Sechs sind neu, und sie sind etwas anderes als die fuenf alten:
+     die alten sind RAENDER (ein Ring, eine Farbe, ein Puls), die neuen
+     sind TEILCHEN — echte kleine Dinge, die um den Kreis tanzen. Dafuer
+     baut app.js beim Sprechen ein Feld mit ein paar Dutzend Elementen
+     in den Kreis und raeumt es wieder weg, wenn die Person still ist.
+     ================================================================= */
   var SPRECHBILDER = {
     ring:       "Grüner Ring — ruhig und deutlich",
     welle:      "Schallwellen — zwei Ringe laufen nach außen",
     puls:       "Herzschlag — der Kreis pocht",
-    regenbogen: "Regenbogen — der Rand wandert durch alle Farben",
+    regenbogen: "Regenbogen — alle Farben auf einmal, hell und klar",
     funkeln:    "Funkeln — Lichter wandern um den Kreis, er glimmt warm",
+    magie:      "Magie — viele Sternchen tanzen um dich herum",
+    noten:      "Noten — Musik steigt aus dem Bild auf",
+    herzen:     "Herzen — kleine Herzen steigen auf",
+    feuer:      "Feuer — Flammen züngeln am Rand",
+    strom:      "Strom — Blitze zucken um den Kreis",
+    blasen:     "Blasen — Seifenblasen steigen auf",
     aus:        "Nichts — kein Zeichen beim Sprechen"
   };
   var SPRECHBILD_SCHLUESSEL = "dma_livechat_sprechbild";
+  /* GEWUENSCHT: „Das soll mit meinem Profil auch abspeichern … sodass
+     man das auf einem anderen Gerät auch wiederfindet." Also nicht
+     mehr nur ins Geraet, sondern in dieselbe Ablage wie alle anderen
+     Klassenzimmer-Einstellungen (app.js, kzEinstellung). localStorage
+     bleibt daneben stehen: es ist sofort da und traegt auch den, der
+     gar nicht angemeldet ist. */
   function sprechbildMerken(x) {
     try {
       if (x && SPRECHBILDER[x]) localStorage.setItem(SPRECHBILD_SCHLUESSEL, x);
       else localStorage.removeItem(SPRECHBILD_SCHLUESSEL);
     } catch (e) {}
+    try { if (window.DMA_EINST) window.DMA_EINST.setzen("sprechbild", x || ""); } catch (e) {}
   }
   function gemerktesSprechbild() {
+    try {
+      var ausProfil = window.DMA_EINST ? window.DMA_EINST.holen("sprechbild", "") : "";
+      if (ausProfil && SPRECHBILDER[ausProfil]) return ausProfil;
+    } catch (e) {}
     try {
       var x = localStorage.getItem(SPRECHBILD_SCHLUESSEL) || "";
       return SPRECHBILDER[x] ? x : "ring";
@@ -7347,6 +7386,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "herz",    kurz: "",     nutzt: "/herz Name",          was: "Ein Herz schicken" },
     { gr: "reden", w: "drueck",  kurz: "hug",  nutzt: "/drueck Name",        was: "Drücken" },
     { gr: "raum", w: "tausch",   kurz: "platz",  nutzt: "/tausch Name",     was: "Platz tauschen" },
+    { gr: "raum", w: "heb",      kurz: "lasso",  nutzt: "/heb Name 3",      was: "Jemanden auf einen anderen Platz setzen — /heb Name zeigt, welche gehen" },
     { gr: "raum", w: "verbindung", kurz: "ton",  nutzt: "/verbindung",      was: "Warum hört man jemanden nicht?" },
     { gr: "reden", w: "leck",    kurz: "lecken", nutzt: "/leck Name",        was: "Abschlecken" },
     { gr: "reden", w: "box",     kurz: "boxen",  nutzt: "/box Name",         was: "Boxhandschuh" },
@@ -7494,6 +7534,7 @@ window.LiveChat = (function () {
     drueck: "\ud83e\udd17", tausch: "\ud83d\udd04", verbindung: "\ud83d\udd0c",
     leck: "\ud83d\ude1c", box: "\ud83e\udd4a", konfetti: "\ud83c\udf8a", ballon: "\ud83c\udf88",
     tritt: "\u26bd", wasser: "\ud83e\udea3", wecker: "\u23f0", hammer: "\ud83d\udd28",
+    heb: "\ud83e\ude9d",
     geschenk: "\ud83c\udf81", schnee: "\u2744\ufe0f", regen: "\ud83c\udf27\ufe0f",
     feuerwerk: "\ud83c\udf86", gewitter: "\u26c8\ufe0f", erdbeben: "\ud83c\udf0d",
     vulkan: "\ud83c\udf0b", schmetterling: "\ud83e\udd8b", voegel: "\ud83d\udc26",
@@ -7615,7 +7656,9 @@ window.LiveChat = (function () {
                 paint: "paintball", farbklecks: "paintball", klecks: "paintball",
                 ton: "verbindung", audio: "verbindung", leitung: "verbindung",
                 stumm: "verbindung", diagnose: "verbindung",
-                platz: "tausch", platzwechsel: "tausch", umsetzen: "tausch",
+                platz: "tausch", platzwechsel: "tausch",
+                umsetzen: "heb", lasso: "heb", wagenheber: "heb", heben: "heb",
+                ziehen: "heb", hieven: "heb",
                 sitzen: "tausch", setz: "tausch",
                 lecken: "leck", schlecken: "leck", ablecken: "leck",
                 boxen: "box", schlag: "box", faust: "box",
@@ -8712,6 +8755,99 @@ window.LiveChat = (function () {
       melden();
       return;
     }
+    /* =========================================================
+       DER WAGENHEBER UND DAS LASSO
+       ---------------------------------------------------------
+       GEWUENSCHT: „Mal so ein Wagenheber-Effekt, wenn jemand
+       unten ist … also man kann den anderen irgendwie auf einen
+       anderen Sitzplatz ziehen. Von unten nach oben waere es
+       dann so ein Heber, von rechts nach links waere so ein
+       Lasso, wo man den so zu sich zieht, dass er naeher
+       ransitzt. Und das System soll dann erkennen, welche
+       Plaetze hebelbar sind."
+
+       DIE EINE REGEL, DIE ER GENANNT HAT:
+       „Wenn ich auf Platz 1 bin, dann kann man den nicht vom
+        Platz 5 zu Platz 1 heben, sondern nur aus der Position,
+        wo man selber sich nicht befindet."
+       Also: auf den EIGENEN Platz kann niemand gehoben werden.
+       Alle anderen Plaetze gehen — ist dort jemand, tauschen
+       die beiden, ist er frei, rueckt der Gehobene hinueber.
+
+       Ohne Nummer sagt der Befehl, welche Plaetze in Frage
+       kommen. Raten muss niemand.
+       ========================================================= */
+    if (art === "heb") {
+      if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
+      var teileH = rest.trim().split(/\s+/).filter(Boolean);
+      var nummerH = 0;
+      if (teileH.length && /^\d+$/.test(teileH[teileH.length - 1])) {
+        nummerH = parseInt(teileH.pop(), 10);
+      }
+      var nameH = teileH.join(" ");
+      var plaetzeH = plaetzeBauen();
+      var meinerH = null, seinerH = null, zielH = null;
+      plaetzeH.forEach(function (pl) { if (pl.ich) meinerH = pl; });
+      if (!nameH) {
+        return systemZeile("So geht es:  /heb Nickname 3\n"
+          + "Damit setzt du jemanden auf einen anderen Platz. "
+          + "/heb Nickname  allein zeigt, welche Plaetze frei sind.");
+      }
+      var wenH = personNachName(nameH);
+      if (!wenH) return systemZeile("Ich finde niemanden mit dem Namen \u201e" + nameH + "\u201c im Raum.");
+      plaetzeH.forEach(function (pl) { if (pl.id === wenH.id) seinerH = pl; });
+      if (!seinerH) return systemZeile(wenH.name + " sitzt gerade auf keinem Platz.");
+
+      /* WELCHE PLAETZE GEHEN? Alle ausser dem eigenen und dem, auf
+         dem die Person schon sitzt. */
+      var belegtH = {};
+      plaetzeH.forEach(function (pl) { if (!pl.leer) belegtH[pl.nummer] = pl.name; });
+      var moeglichH = [];
+      for (var iH = 1; iH <= PLAETZE; iH++) {
+        if (meinerH && iH === meinerH.nummer) continue;
+        if (iH === seinerH.nummer) continue;
+        moeglichH.push(iH);
+      }
+      if (!nummerH) {
+        return systemZeile("\ud83e\ude9d " + wenH.name + " sitzt auf Platz " + seinerH.nummer + ".\n"
+          + "Diese Plaetze gehen:  "
+          + moeglichH.map(function (n) {
+              return n + (belegtH[n] ? " (" + belegtH[n] + " \u2014 tauscht dann)" : " (frei)");
+            }).join("   ")
+          + "\nSo geht es:  /heb " + wenH.name + " " + (moeglichH[0] || 1));
+      }
+      if (moeglichH.indexOf(nummerH) < 0) {
+        if (meinerH && nummerH === meinerH.nummer) {
+          return systemZeile("Auf deinen eigenen Platz kannst du niemanden heben — "
+            + "da sitzt du ja schon. Nimm einen anderen:  "
+            + moeglichH.join("  "));
+        }
+        return systemZeile("Platz " + nummerH + " gibt es hier nicht. Moeglich sind:  "
+          + moeglichH.join("  "));
+      }
+
+      /* Wer dort sitzt, bekommt den frei werdenden Platz. */
+      var dortH = null;
+      plaetzeH.forEach(function (pl) { if (pl.nummer === nummerH && !pl.leer) dortH = pl; });
+      sitzTausch[wenH.id] = nummerH - 1;
+      if (dortH) sitzTausch[dortH.id] = seinerH.nummer - 1;
+
+      /* Von unten nach oben ist ein Heber, zur Seite ein Lasso —
+         genau so, wie er es beschrieben hat. Die Reihe ergibt sich
+         aus der Nummer: vier Plaetze je Reihe. */
+      var reiheAlt = Math.ceil(seinerH.nummer / 4);
+      var reiheNeu = Math.ceil(nummerH / 4);
+      var wieH = reiheNeu < reiheAlt ? "heber" : "lasso";
+      var satzH = zustand.ichName + (wieH === "heber"
+        ? " hebt " + wenH.name + " auf Platz " + nummerH
+        : " zieht " + wenH.name + " mit dem Lasso auf Platz " + nummerH)
+        + (dortH ? " \u2014 " + dortH.name + " rutscht auf " + seinerH.nummer : "")
+        + "  " + (wieH === "heber" ? "\ud83e\ude9d" : "\ud83e\udd20");
+      senden({ art: "sitzplatz", ordnung: sitzTausch, text: satzH });
+      melden();
+      return anAlle("aktion", satzH, { wirkung: wieH, wen: wenH.name });
+    }
+
     if (art === "herz") {
       var wem = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       /* GEWUENSCHT: „Man kann auch die Herzen direkt an die Person
@@ -9887,7 +10023,7 @@ window.LiveChat = (function () {
          trotzdem, und genau das prueft effektetuer.js. */
       Object.keys(AM_PLATZ).forEach(function (k) { w.push(AM_PLATZ[k].wirkung); });
       Object.keys(AUCH_AM_PLATZ).forEach(function (k) { w.push(AUCH_AM_PLATZ[k].wirkung); });
-      w.push("zherz");
+      w.push("zherz", "heber", "lasso");
       return w;
     },
     /* Nur zum Nachpruefen: die Sitzordnung von aussen nachstellen und

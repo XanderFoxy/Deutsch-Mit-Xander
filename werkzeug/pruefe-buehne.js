@@ -90,12 +90,17 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
      "einer allein hat die Bühne für sich", erg.allein.breite + " px");
 
   console.log("\n  DIE SPRECH-EFFEKTE");
-  ok(erg.regenbogen.animation === "lcSprichtBogen", "Regenbogen läuft", erg.regenbogen.animation);
-  ok(erg.regenbogen.vorAnimation === "lcSprichtBogenRing",
-     "und trägt jetzt einen zweiten, mitwandernden Ring", erg.regenbogen.vorAnimation);
-  ok(parseFloat(erg.regenbogen.rand) > parseFloat(erg.ring.rand),
-     "sein Rand ist kräftiger als beim gewöhnlichen Ring",
-     erg.ring.rand + " → " + erg.regenbogen.rand);
+  /* NEU IN FASSUNG 340. GEMELDET: „Der Regenbogen muss viel bunter,
+     dafür klarer und farbiger werden, viel mehr ausstrahlen wie ein
+     schöner Regenbogen."
+     Vorher wanderte EINE Farbe durch den Rand (lcSprichtBogen) — zu
+     jedem Zeitpunkt war der Ring also einfarbig. Jetzt dreht sich ein
+     echter Farbkreis; die Namen heissen deshalb anders, und das ist
+     kein Fehler, sondern der Umbau. Wie bunt er wirklich ist, misst
+     pruefe-sprechbilder.js an den gerechneten Farben. */
+  ok(erg.regenbogen.animation === "lcBogenGlimmen", "Regenbogen läuft", erg.regenbogen.animation);
+  ok(erg.regenbogen.vorAnimation === "lcBogenDreht",
+     "und der Farbkreis dreht sich", erg.regenbogen.vorAnimation);
   ok(erg.funkeln.animation === "lcFunkelGlimmen", "Funkeln glimmt", erg.funkeln.animation);
   ok(erg.funkeln.nachAnimation === "lcFunkelDreh" && erg.funkeln.vorAnimation === "lcFunkelDreh",
      "und zwei Lichterkränze wandern gegenläufig");

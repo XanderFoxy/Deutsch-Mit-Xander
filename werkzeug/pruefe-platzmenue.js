@@ -46,6 +46,9 @@ const PAARE = [
   ["/bonbon Emmi",   "zucker",      "lc-zzucker"],
   ["/hammer Emmi",   "hammer",      "lc-zhammer"]
 ];
+/* Der Wagenheber und das Lasso gehen einen anderen Weg: sie AENDERN
+   die Sitzordnung und schicken die Animation nur nebenbei mit. Sie
+   werden deshalb weiter unten einzeln geprueft. */
 
 (async () => {
   const srv = http.createServer((q, a) => {
@@ -133,7 +136,7 @@ const PAARE = [
   });
   pruefe("der lange Druck oeffnet das Menue", Boolean(menue.da), menue.fehlt || "");
   pruefe("es nennt die Person", /Emmi/i.test(menue.kopf || ""), (menue.kopf || "-").trim());
-  pruefe("es hat alle Spielzeuge", menue.knoepfe >= 12, menue.knoepfe + " Knoepfe");
+  pruefe("es hat alle Spielzeuge", menue.knoepfe >= 13, menue.knoepfe + " Knoepfe");
   pruefe("es steht ganz im Bild", Boolean(menue.imBild));
 
   const zu = await pg.evaluate(async () => {

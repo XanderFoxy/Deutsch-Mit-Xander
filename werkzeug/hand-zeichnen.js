@@ -1,3 +1,16 @@
+#!/usr/bin/env node
+/* ÜBERHOLT — NICHT MEHR AUSFÜHREN.
+   Beide Hände entstehen seit Fassung 340 aus EINEM Werkzeug:
+   werkzeug/haende-zeichnen.js. Dort wird jede Hand als ein
+   einziger Umriss gezeichnet, statt aus Fläche, Fingern und
+   Daumen zusammengesetzt zu werden — das war der Grund, warum
+   sie „wie Holzhände" aussahen. Diese Datei steht nur noch da,
+   damit man nachlesen kann, wie es vorher gebaut war. Würde man
+   sie laufen lassen, überschriebe sie die neuen Zeichnungen. */
+if (require.main === module) {
+  console.error("Überholt. Nimm werkzeug/haende-zeichnen.js.");
+  process.exit(1);
+}
 /* ZEICHNET DIE KLATSCHENDEN HÄNDE NEU.
    GEMELDET: „Auch das Hände klatschen … das sieht nicht aus wie Hände,
    das sieht aus wie Handschuhe."

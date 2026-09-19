@@ -15445,6 +15445,83 @@
     { name: "Ups",      wort: "ups peinlich" }
   ];
 
+  /* =================================================================
+     GIPHY: FAVORITEN UND EIGENE SUCHEN — AM PROFIL, NICHT AM GERAET
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Die Favoriten, die man bei GIPHY macht, sollen sich
+     immer im Profil mitspeichern, sodass man das auf einem anderen
+     Gerät auch wiederfindet, auf dem Computer oder auf einem anderen
+     Telefon. Dann sollen auch die Suchen, die man gemacht hat, bei
+     GIPHY als Auswahl mit dabeistehen — also zum Beispiel, wenn ich
+     nach einem bestimmten Wort gesucht habe, soll das bei Lachen,
+     Daumen, Applaus, Herz, Tanzen, Katze, Hund, Party, Hallo,
+     Tschüss, Ups mit dabeistehen. Und die Favoriten, die ich oft
+     auswähle, das soll automatisch in den Favoriten von GIPHY sein."
+
+     Drei Listen, alle in derselben Profil-Ablage wie jede andere
+     Klassenzimmer-Einstellung:
+       gifFavoriten — Adressen, die man angeheftet hat ODER die man
+                      oft genommen hat;
+       gifZaehler   — wie oft eine Adresse genommen wurde. Ab dem
+                      ZWEITEN Mal wandert sie von selbst in die
+                      Favoriten. Einmal ist Zufall, zweimal ist
+                      Absicht — das ist die ganze Regel;
+       gifSuchen    — die letzten acht eigenen Suchwoerter, die als
+                      Knoepfe neben Lachen, Daumen und Applaus stehen.
+     ================================================================= */
+  const GIF_FAV_HOECHSTENS = 40;
+  const GIF_SUCHEN_HOECHSTENS = 8;
+
+  function lcGifFavoriten() {
+    const l = kzEinstellung("gifFavoriten", []);
+    return Array.isArray(l) ? l.filter((x) => typeof x === "string" && /^https?:/.test(x)) : [];
+  }
+  function lcGifFavorit(adresse) {
+    return lcGifFavoriten().indexOf(String(adresse)) >= 0;
+  }
+  function lcGifFavoritUmschalten(adresse) {
+    const a = String(adresse || "");
+    if (!/^https?:/.test(a)) return false;
+    let l = lcGifFavoriten();
+    const drin = l.indexOf(a) >= 0;
+    l = drin ? l.filter((x) => x !== a) : [a].concat(l).slice(0, GIF_FAV_HOECHSTENS);
+    kzEinstellungSetzen("gifFavoriten", l);
+    return !drin;
+  }
+  /* Mitzaehlen, was wirklich genommen wird — und ab dem zweiten Mal
+     anheften. */
+  function lcGifGenommen(adresse) {
+    const a = String(adresse || "");
+    if (!/^https?:/.test(a)) return;
+    const z = Object.assign({}, kzEinstellung("gifZaehler", {}));
+    z[a] = (z[a] || 0) + 1;
+    /* Die Liste nicht endlos wachsen lassen: nur die letzten 120
+       Adressen behalten, sonst steht irgendwann ein halbes Jahr
+       GIPHY im Profil. */
+    const schluessel = Object.keys(z);
+    if (schluessel.length > 120) {
+      schluessel.slice(0, schluessel.length - 120).forEach((k) => { delete z[k]; });
+    }
+    kzEinstellungSetzen("gifZaehler", z);
+    if (z[a] >= 2 && !lcGifFavorit(a)) {
+      const l = [a].concat(lcGifFavoriten()).slice(0, GIF_FAV_HOECHSTENS);
+      kzEinstellungSetzen("gifFavoriten", l);
+    }
+  }
+  function lcGifSuchen() {
+    const l = kzEinstellung("gifSuchen", []);
+    return Array.isArray(l) ? l.filter((x) => typeof x === "string" && x.length >= 2) : [];
+  }
+  function lcGifSucheMerken(wort) {
+    const w = String(wort || "").trim().toLowerCase();
+    if (w.length < 2) return;
+    /* Ein Wort, das schon als festes Thema dasteht, muss nicht
+       zusaetzlich als eigene Suche danebenstehen. */
+    if (LC_GIF_THEMEN.some((t) => t.wort.toLowerCase() === w)) return;
+    const l = [w].concat(lcGifSuchen().filter((x) => x !== w)).slice(0, GIF_SUCHEN_HOECHSTENS);
+    kzEinstellungSetzen("gifSuchen", l);
+  }
+
   /* Wer ist gerade im Raum — ohne mich selbst. Daraus wird die Liste
      „an wen fluestern?" im Bild-Waehler. */
   function lcLeuteImRaum() {
@@ -15536,9 +15613,21 @@
         <input type="file" id="lcSendeFoto" accept="image/*" hidden>
         <p class="eyebrow" style="margin-top:12px;">GIFs VON GIPHY</p>
         <div class="lc-gif-fach" id="lcGifFach">
+          ${lcGifFavoriten().length ? `
+            <button type="button" class="lc-gif-thema lc-gif-fav"
+                    data-lc-gifthema="\u2605fav">★ Favoriten</button>` : ""}
           ${LC_GIF_THEMEN.map((t, i) => `
             <button type="button" class="lc-gif-thema${i === 0 ? " ist-da" : ""}"
                     data-lc-gifthema="${escapeHtml(t.wort)}">${escapeHtml(t.name)}</button>`).join("")}
+          <!-- GEWUENSCHT: „Dann sollen auch die Suchen, die man gemacht
+               hat, bei GIPHY als Auswahl mit dabeistehen." Sie stehen
+               hinter den festen Themen und tragen dasselbe Aussehen —
+               nur etwas blasser, damit man sieht, dass sie von einem
+               selbst kommen. -->
+          ${lcGifSuchen().map((w) => `
+            <button type="button" class="lc-gif-thema lc-gif-meins"
+                    data-lc-gifthema="${escapeHtml(w)}"
+                    title="Deine Suche — lang drücken nimmt sie heraus">${escapeHtml(w)}</button>`).join("")}
         </div>
         <div class="lc-waehler-reihe">
           <input type="text" class="lc-chat-feld" id="lcSendeGifSuche" placeholder="Weitersuchen …">
@@ -15709,6 +15798,37 @@
        Versatz, jeweils 24 weitere, bis GIPHY nichts mehr hat. Das ist
        das, was man von einer Bibliothek erwartet.
        ----------------------------------------------------------------- */
+    /* EINE KACHEL — MIT STERN.
+       GEWUENSCHT: „Die Favoriten, die ich oft auswaehle, das soll
+       automatisch in den Favoriten sein." Beides geht: der Stern
+       heftet von Hand an, und wer dasselbe Bild zweimal nimmt, heftet
+       es ohne einen einzigen Griff an (siehe lcGifGenommen). */
+    const lcGifKachel = (url, titel) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-waehler-gif";
+      const i = document.createElement("img");
+      i.src = url;
+      i.alt = titel || "GIF";
+      i.loading = "lazy";
+      b.appendChild(i);
+      const stern = document.createElement("span");
+      stern.className = "lc-gif-stern" + (lcGifFavorit(url) ? " ist-fav" : "");
+      stern.textContent = lcGifFavorit(url) ? "\u2605" : "\u2606";
+      stern.title = "Anheften — steht dann unter „Favoriten\u201c, auch auf dem Rechner";
+      stern.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const an = lcGifFavoritUmschalten(url);
+        stern.textContent = an ? "\u2605" : "\u2606";
+        stern.classList.toggle("ist-fav", an);
+        showToast(an ? "\u2605 Angeheftet." : "Aus den Favoriten genommen.");
+      });
+      b.appendChild(stern);
+      b.addEventListener("click", () => { lcGifGenommen(url); schicken(url); });
+      return b;
+    };
+
     let gifWort = "", gifVersatz = 0, gifLaedt = false, gifEnde = false;
     const zeigen = async (wort, anhaengen) => {
       const ziel = kasten.querySelector("#lcSendeGifTreffer");
@@ -15720,6 +15840,23 @@
       let gleichWeiter = false;
       if (!anhaengen) ziel.innerHTML = '<p class="empty-note">lädt …</p>';
       else ziel.insertAdjacentHTML("beforeend", '<p class="empty-note lc-gif-mehr" style="grid-column:1/-1;">lädt weiter …</p>');
+      /* DIE FAVORITEN KOMMEN NICHT VON GIPHY, SIE STEHEN IM PROFIL.
+         Deshalb gibt es hier gar keine Abfrage — und deshalb sind sie
+         auch da, wenn GIPHY gerade nicht antwortet. */
+      if (gifWort === "\u2605fav") {
+        const l = lcGifFavoriten();
+        ziel.innerHTML = "";
+        if (!l.length) {
+          ziel.innerHTML = '<p class="empty-note" style="grid-column:1/-1;">'
+            + "Noch keine Favoriten. Tipp auf den Stern an einem Bild — "
+            + "oder nimm dasselbe Bild zweimal, dann heftet es sich von selbst an.</p>";
+        } else {
+          l.forEach((u) => ziel.appendChild(lcGifKachel(u, "Favorit")));
+        }
+        gifEnde = true;
+        gifLaedt = false;
+        return;
+      }
       try {
         const adresse = gifWort
           ? "https://api.giphy.com/v1/gifs/search?api_key="
@@ -15740,14 +15877,7 @@
           const adr = g.images && (g.images.fixed_width_small || g.images.fixed_width
                                    || g.images.preview_gif);
           if (!adr || !adr.url) return;
-          const b = document.createElement("button");
-          b.type = "button";
-          b.className = "lc-waehler-gif";
-          const i = document.createElement("img");
-          i.src = adr.url; i.alt = g.title || "GIF"; i.loading = "lazy";
-          b.appendChild(i);
-          b.addEventListener("click", () => schicken(adr.url));
-          ziel.appendChild(b);
+          ziel.appendChild(lcGifKachel(adr.url, g.title || "GIF"));
         });
         if (!ziel.children.length) throw new Error("keine Bilder");
         /* Hat der erste Schwung das Fach noch nicht gefüllt, kommt der
@@ -15794,6 +15924,9 @@
     const suchen = () => {
       const wort = kasten.querySelector("#lcSendeGifSuche")?.value.trim();
       kasten.querySelectorAll("[data-lc-gifthema]").forEach((b) => b.classList.remove("ist-da"));
+      /* Eine Suche, die man WIRKLICH abschickt, merkt sich die Seite —
+         nicht jeden Buchstaben, den man unterwegs tippt. */
+      lcGifSucheMerken(wort);
       zeigen(wort);
     };
     kasten.querySelectorAll("[data-lc-gifthema]").forEach((b) => {
@@ -15804,6 +15937,21 @@
         if (f) f.value = "";
         zeigen(b.dataset.lcGifthema);
       });
+      /* Eine eigene Suche laesst sich auch wieder herausnehmen —
+         langer Druck oder rechte Maustaste. Bei den festen Themen
+         gibt es dabei nichts zu tun. */
+      if (!b.classList.contains("lc-gif-meins")) return;
+      const raus = () => {
+        const w = b.dataset.lcGifthema;
+        kzEinstellungSetzen("gifSuchen", lcGifSuchen().filter((x) => x !== w));
+        b.remove();
+        showToast("„" + w + "\u201c ist aus deinen Suchen heraus.");
+      };
+      let uhr = 0;
+      b.addEventListener("pointerdown", () => { uhr = setTimeout(raus, 600); });
+      ["pointerup", "pointerleave", "pointercancel"].forEach((e) =>
+        b.addEventListener(e, () => clearTimeout(uhr)));
+      b.addEventListener("contextmenu", (e) => { e.preventDefault(); raus(); });
     });
     kasten.querySelector("#lcSendeGifSuchen")?.addEventListener("click", suchen);
     kasten.querySelector("#lcSendeGifSuche")?.addEventListener("keydown", (e) => {
@@ -15972,6 +16120,13 @@
      sonst haben wir in drei Runden wieder fünf Orte.
      ================================================================= */
   const KZ_EINST_SCHLUESSEL = "dma_kz_einstellungen";
+  /* livechat.js liegt in einer eigenen Datei und kommt an diese
+     Funktionen sonst nicht heran. Ueber dieses Fenster-Feld benutzt
+     es dieselbe Ablage — sonst merkt sich das Sprechbild wieder nur
+     das Geraet, und genau das soll nicht sein. */
+  setTimeout(() => {
+    window.DMA_EINST = { holen: kzEinstellung, setzen: kzEinstellungSetzen };
+  }, 0);
   let kzEinstCache = null;
   function kzEinstellungen() {
     if (!kzEinstCache) {
@@ -21047,6 +21202,76 @@
     }
   }
 
+  /* =================================================================
+     SPRECHBILDER AUS TEILCHEN
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Viele kleine Sternchen oder Punkte funkeln in
+     verschiedenen Stärken, die das Profilbild umgeben und wie ein
+     optisches Glissando um das Profilbild herumtanzen … und dann
+     vielleicht noch eins, wo Noten rauskommen."
+
+     Die fünf alten Sprechbilder kommen ohne ein einziges zusätzliches
+     Element aus — sie sind Ränder, gebaut aus ::before und ::after.
+     Für Teilchen reicht das nicht: zwei Pseudoelemente sind zwei
+     Dinge, „viele kleine" sind zwanzig. Deshalb baut diese Funktion
+     ein FELD in den Kreis, solange jemand spricht, und räumt es weg,
+     sobald er still ist.
+
+     „In verschiedenen Stärken" steht dabei wörtlich im Code: jedes
+     Teilchen bekommt seine eigene Größe, seine eigene Helligkeit und
+     seinen eigenen Takt. Gleich große Punkte im gleichen Takt sähen
+     nach Maschine aus, nicht nach Magie.
+     ================================================================= */
+  const LC_TEILCHENBILDER = {
+    magie:  { menge: 18, klasse: "lc-tmagie",
+              zeichen: ["\u2726", "\u2727", "\u00b7", "\u2734", "\u2735"] },
+    noten:  { menge: 9,  klasse: "lc-tnoten",
+              zeichen: ["\u266a", "\u266b", "\u266c", "\u2669"] },
+    herzen: { menge: 10, klasse: "lc-therzen",
+              zeichen: ["\u2665", "\u2764", "\ud83d\udc96"] },
+    feuer:  { menge: 12, klasse: "lc-tfeuer", zeichen: [""] },
+    strom:  { menge: 8,  klasse: "lc-tstrom", zeichen: [""] },
+    blasen: { menge: 11, klasse: "lc-tblasen", zeichen: [""] }
+  };
+
+  function lcSprechFeld(knopf, art) {
+    const kreis = knopf.querySelector(".lc-kreis");
+    if (!kreis) return;
+    const bau = LC_TEILCHENBILDER[art];
+    const alt = kreis.querySelector(".lc-sprechfeld");
+    /* Nichts neu bauen, was schon steht — sonst fangen die Teilchen
+       bei jedem Auffrischen des Raums von vorn an, und das sieht aus
+       wie Stottern. */
+    if (alt && alt.dataset.art === art) return;
+    if (alt) alt.remove();
+    if (!bau) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const feld = document.createElement("span");
+    feld.className = "lc-sprechfeld " + bau.klasse;
+    feld.dataset.art = art;
+    feld.setAttribute("aria-hidden", "true");
+    for (let i = 0; i < bau.menge; i++) {
+      const t = document.createElement("i");
+      t.className = "lc-teilchen";
+      const z = bau.zeichen[i % bau.zeichen.length];
+      if (z) t.textContent = z;
+      t.style.setProperty("--wo", (i * (360 / bau.menge) + Math.random() * 18 - 9).toFixed(1) + "deg");
+      t.style.setProperty("--weit", (48 + Math.random() * 16).toFixed(0) + "%");
+      t.style.setProperty("--gross", (0.5 + Math.random() * 0.9).toFixed(2));
+      t.style.setProperty("--hell", (0.45 + Math.random() * 0.55).toFixed(2));
+      t.style.setProperty("--links", (10 + Math.random() * 80).toFixed(0) + "%");
+      t.style.animationDuration = (1.5 + Math.random() * 2.2).toFixed(2) + "s";
+      t.style.animationDelay = (-Math.random() * 3).toFixed(2) + "s";
+      feld.appendChild(t);
+    }
+    kreis.appendChild(feld);
+  }
+
+  function lcSprechFeldWeg(knopf) {
+    const f = knopf.querySelector(".lc-sprechfeld");
+    if (f) f.remove();
+  }
+
   function livechatPlaetzeAuffrischen(l) {
     lcAnsichtZeichnen(l);
     lcAufgabeZeichnen();
@@ -21074,6 +21299,11 @@
          damit alle im Raum dieselbe sehen und nicht jeder eine
          andere. */
       knopf.dataset.sprechbild = p.leer ? "ring" : (p.sprechbild || "ring");
+      /* Die Sprechbilder aus Teilchen brauchen echte Elemente — sie
+         entstehen, solange jemand spricht, und verschwinden danach
+         wieder. Siehe lcSprechFeld weiter oben. */
+      if (!p.leer && p.spricht) lcSprechFeld(knopf, p.sprechbild || "ring");
+      else lcSprechFeldWeg(knopf);
       if (p.leer) knopf.title = "Freier Platz — antippen, um auf die Bühne zu gehen";
       knopf.tabIndex = p.leer ? -1 : 0;
       knopf.setAttribute("aria-label", p.leer
@@ -21713,20 +21943,38 @@
     aegypten:       { ton: "aegypten", dauer: 12000, schleife: true },
     herbst:         { ton: "herbst", dauer: 12000, schleife: true },
     schloss:        { ton: "schloss", dauer: 12000 },
-    ballon:         { ton: "ballon", dauer: 11500, schleife: true },
+    /* Luftballons steigen still. Das Geraeusch (2 Sekunden) gehoert
+       an den Anfang, wo sie losgelassen werden — 5,8-mal wiederholt
+       klang es wie eine Ballonfabrik. */
+    ballon:         { ton: "ballon", dauer: 11500 },
     gewitter:       { ton: "gewitter", dauer: 11000, schleife: true },
     ostern:         { ton: "ostern", dauer: 11000, schleife: true },
     seifenblasen:   { ton: "seifenblasen", dauer: 11000, schleife: true },
     blut:           { ton: "blut", dauer: 11000, schleife: true },
-    paintball:      { ton: "paintball", dauer: 11000, schleife: true },
+    /* GEMELDET: „Beim Paintball ist der Sound so lange — am Anfang
+       wird nur kurz geschossen, und du hast das geloopt. Bei manchen
+       Sachen passt dieser Loop einfach nicht, weil das im ersten
+       Moment schon zu Ende ist … suche nach solchen Sachen und aendere
+       das wieder, dass es wieder normal ist."
+
+       Nachgemessen: die Datei ist 2 Sekunden lang, der Plan stand auf
+       11 — das Geraeusch lief also FUENFEINHALBMAL, waehrend die
+       Kugeln nur einmal einschlagen und danach nur noch Farbe
+       herunterlaeuft. Herunterlaufende Farbe macht kein Geraeusch.
+       Jetzt einmal, und die Animation laeuft still zu Ende. */
+    paintball:      { ton: "paintball", dauer: 11000 },
     matrix:         { ton: "matrix", dauer: 10000, schleife: true },
     route66:        { ton: "route66", dauer: 10000, schleife: true },
     noten:          { ton: "noten", dauer: 10000, schleife: true },
     feuerwerk:      { ton: "feuerwerk", dauer: 9500, schleife: true },
     geld:           { ton: "geld", dauer: 9500, schleife: true },
     bonbon:         { ton: "bonbon", dauer: 9000, schleife: true },
-    augen:          { ton: "augen", dauer: 9000, schleife: true },
-    katze:          { ton: "katze", dauer: 9000, schleife: true },
+    /* Dasselbe: Augen, die auftauchen, sind ein Ereignis. Das
+       Geraeusch lief 2,2-mal. */
+    augen:          { ton: "augen", dauer: 9000 },
+    /* Ein Miauen 4,5-mal hintereinander klingt nach Tonband, nicht
+       nach Katze. Einmal, wenn sie an die Scheibe kommt. */
+    katze:          { ton: "katze", dauer: 9000 },
     schuss:         { ton: "schuss", dauer: 9000 },
     jalousie:       { ton: "jalousie", dauer: 9000 },
     armageddon:     { ton: "armageddon", dauer: 8600, schleife: true },
@@ -22779,6 +23027,17 @@
         lcNachDemSenden(zeile);
       });
     });
+    /* Nur bei einem FREMDEN Platz: jemanden woanders hinsetzen. Bei
+       sich selbst waere das /tausch, und den gibt es schon. Der Befehl
+       ohne Nummer zeigt erst einmal, welche Plaetze ueberhaupt gehen —
+       „das System soll dann erkennen, welche Plaetze hebelbar sind". */
+    if (!eigen) {
+      knopf("\ud83e\ude9d", "Woanders hinsetzen", () => {
+        const zeile = "/heb " + name;
+        try { LiveChat.schreiben(zeile); } catch (e) {}
+        lcNachDemSenden(zeile);
+      });
+    }
 
     document.body.appendChild(kasten);
 
@@ -24233,6 +24492,8 @@
     reichtum:   { zeichen: ["\ud83d\udcb8"], wie: 6, klasse: "umarmen" },
     zucker:     { zeichen: ["\ud83c\udf6c"], wie: 6, klasse: "umarmen" },
     hammer:     { zeichen: ["\ud83d\udd28"], wie: 5, klasse: "umarmen" },
+    heber:      { zeichen: ["\ud83e\ude9d"], wie: 5, klasse: "umarmen" },
+    lasso:      { zeichen: ["\ud83e\udd20"], wie: 5, klasse: "umarmen" },
     boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
   };
@@ -24436,9 +24697,89 @@
      Die Zunge fährt in einem BOGEN hoch, nicht gerade: so leckt man.
      Danach bleibt eine feuchte Spur stehen, und die Person schüttelt
      sich — ohne die Reaktion ist es nur eine Zunge im Bild. */
-  function lcLecken(wen) {
+  /* =================================================================
+     DIE CHAMAELEONZUNGE
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Der Leck-Befehl könnte deutlicher sein mit der Zunge,
+     das sieht man noch nicht so schön, da muss richtig schön
+     abgeleckt werden. Das muss richtig schön nass werden … Dann soll
+     in der Länge, wo jemand sitzt, für die Leck-Animation wie so eine
+     Chamäleonzunge sein: von meinem Profil ausgehend soll diese Zunge
+     ausgehen und soll die Leute überall erreichen."
+
+     Genau das ist der Unterschied zu vorher: die Zunge kam bisher am
+     Platz des ANDEREN aus dem Nichts. Jetzt schiesst sie aus MEINEM
+     Platz heraus, quer über die Sitzreihe, bis zu dem, den es trifft
+     — so weit, wie er eben weg sitzt. Ein Chamäleon zielt.
+
+     Gerechnet wird mit den echten Kästen: Mittelpunkt des eigenen
+     Platzes, Mittelpunkt des Ziels, daraus Länge und Winkel. Die
+     Zunge liegt in einer eigenen Schicht über der Sitzreihe (nicht im
+     Platz — sie soll ja darüber hinausreichen) und wird nach dem
+     Zurückschnellen wieder abgeräumt.
+
+     „Richtig schön nass" ist der zweite Teil: das Ziel bekommt einen
+     Glanzfilm, zwölf Tropfen und drei Rinnsale, die langsam
+     herunterlaufen. Das bleibt eine Sekunde länger stehen als die
+     Zunge — nass ist man ja noch, wenn der andere die Zunge schon
+     wieder eingezogen hat.
+     ================================================================= */
+  function lcZungeSchiessen(vonPlatz, zuPlatz) {
+    const karte = document.getElementById("livechatKarte");
+    const reihe = document.getElementById("lcPlaetze") || karte;
+    if (!reihe || !vonPlatz || !zuPlatz || vonPlatz === zuPlatz) return false;
+    const rr = reihe.getBoundingClientRect();
+    const a = vonPlatz.getBoundingClientRect();
+    const b = zuPlatz.getBoundingClientRect();
+    const ax = a.left + a.width / 2 - rr.left;
+    const ay = a.top + a.height * 0.42 - rr.top;
+    const bx = b.left + b.width / 2 - rr.left;
+    const by = b.top + b.height * 0.42 - rr.top;
+    const laenge = Math.hypot(bx - ax, by - ay);
+    if (!laenge) return false;
+    const winkel = (Math.atan2(by - ay, bx - ax) * 180) / Math.PI;
+
+    reihe.querySelectorAll(".lc-zunge").forEach((x) => x.remove());
+    const schicht = document.createElement("div");
+    schicht.className = "lc-zunge";
+    schicht.setAttribute("aria-hidden", "true");
+    schicht.style.left = ax + "px";
+    schicht.style.top = ay + "px";
+    schicht.style.setProperty("--laenge", Math.round(laenge) + "px");
+    schicht.style.transform = "rotate(" + winkel.toFixed(1) + "deg)";
+    schicht.innerHTML =
+      '<span class="lc-zunge-band"></span>'
+      + '<span class="lc-zunge-spitze"></span>';
+    /* Die Sitzreihe muss einen Bezugsrahmen haben, sonst liegt die
+       Zunge irgendwo. Sie bekommt ihn genau hier und nur, wenn sie
+       ihn noch nicht hat. */
+    if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
+    reihe.appendChild(schicht);
+    setTimeout(() => schicht.remove(), 1500);
+    return true;
+  }
+
+  function lcLecken(wen, von) {
     const ziele = lcZielPlaetze(wen);
     if (!ziele.length) return false;
+    /* Von welchem Platz geht die Zunge aus? Vom eigenen, wenn man
+       selbst leckt — sonst vom Platz dessen, der die Zeile
+       geschrieben hat. */
+    let quelle = null;
+    const karte = document.getElementById("livechatKarte");
+    if (karte) {
+      if (von) {
+        const suche = String(von).trim().toLowerCase();
+        quelle = [...karte.querySelectorAll(".lc-platz")].find((pl) => {
+          const nm = pl.querySelector(".lc-platz-name");
+          return nm && nm.textContent.trim().toLowerCase().indexOf(suche) === 0;
+        }) || null;
+      }
+      if (!quelle) quelle = karte.querySelector(".lc-platz-ich");
+      if (quelle && ziele.indexOf(quelle) >= 0) quelle = null;
+    }
+    if (quelle) lcZungeSchiessen(quelle, ziele[0]);
+
     ziele.forEach((platz, i) => setTimeout(() => {
       if (!platz.isConnected) return;
       platz.classList.remove("lc-wird-geleckt");
@@ -24459,19 +24800,33 @@
         + ' fill="none" opacity="0.55" stroke-linecap="round"/>'
         + '<path d="M52 34 C58 22 70 22 76 34 C70 28 58 28 52 34 Z" fill="#f7b2c4"/>'
         + "</svg>"
-        + '<span class="lc-leck-spur"></span>';
-      for (let t = 0; t < 5; t++) {
+        + '<span class="lc-leck-spur"></span>'
+        /* „Das muss richtig schön nass werden": ein Glanzfilm über
+           dem ganzen Bild, der aufzieht und langsam abtrocknet. */
+        + '<span class="lc-leck-nass"></span>';
+      for (let t = 0; t < 12; t++) {
         const tr = document.createElement("i");
         tr.className = "lc-leck-tropfen";
-        tr.style.left = (24 + t * 13 + Math.random() * 6).toFixed(0) + "%";
-        tr.style.animationDelay = (0.5 + t * 0.09).toFixed(2) + "s";
+        tr.style.left = (8 + Math.random() * 84).toFixed(0) + "%";
+        tr.style.setProperty("--fall", (18 + Math.random() * 34).toFixed(0) + "%");
+        tr.style.setProperty("--dick", (0.6 + Math.random() * 0.8).toFixed(2));
+        tr.style.animationDelay = (0.55 + Math.random() * 0.8).toFixed(2) + "s";
         schicht.appendChild(tr);
+      }
+      /* Drei Rinnsale, die wirklich herunterlaufen — Tropfen allein
+         sehen nach Regen aus, nicht nach nass. */
+      for (let t = 0; t < 3; t++) {
+        const r = document.createElement("i");
+        r.className = "lc-leck-rinnsal";
+        r.style.left = (22 + t * 26 + Math.random() * 8).toFixed(0) + "%";
+        r.style.animationDelay = (0.75 + t * 0.14).toFixed(2) + "s";
+        schicht.appendChild(r);
       }
       platz.appendChild(schicht);
       setTimeout(() => {
         schicht.remove();
         platz.classList.remove("lc-wird-geleckt");
-      }, 2600);
+      }, 3600);
     }, i * 90));
     lcTonZu("lecken");
     return true;
@@ -24771,6 +25126,49 @@
         schicht.appendChild(st);
       }
     }, 2200, "boxen");
+  }
+
+  /* --- DER WAGENHEBER ---------------------------------------------
+     „Mal so ein Wagenheber-Effekt, wenn jemand unten ist." Also von
+     UNTEN: der Heber faehrt unter dem Bild aus, das Bild geht hoch,
+     der Heber faehrt wieder ein. */
+  function lcHeber(wen) {
+    return lcAmPlatz(wen, "lc-heber", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-gehoben");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gehoben");
+        setTimeout(() => kreis.classList.remove("lc-gehoben"), 1800);
+      }
+      schicht.innerHTML =
+        '<svg class="lc-heber-bild" viewBox="0 0 60 60">'
+        + '<path d="M6 54 L54 54" stroke="#8b93a3" stroke-width="5" stroke-linecap="round"/>'
+        + '<path class="lc-heber-schere" d="M12 52 L30 30 L48 52 M20 41 L40 41"'
+        + ' stroke="#b9c1cf" stroke-width="5" fill="none" stroke-linecap="round"'
+        + ' stroke-linejoin="round"/>'
+        + '<rect x="20" y="20" width="20" height="7" rx="3" fill="#8b93a3"/>'
+        + "</svg>";
+    }, 2000, "tore");
+  }
+
+  /* --- DAS LASSO ---------------------------------------------------
+     „Von rechts nach links waere so ein Lasso, wo man den so zu sich
+     zieht, dass er naeher ransitzt." Die Schlinge kommt von der
+     Seite, legt sich um das Bild und zieht kurz an. */
+  function lcLasso(wen) {
+    return lcAmPlatz(wen, "lc-lasso", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-gezogen");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gezogen");
+        setTimeout(() => kreis.classList.remove("lc-gezogen"), 1800);
+      }
+      schicht.innerHTML =
+        '<span class="lc-lasso-schlinge"></span>'
+        + '<span class="lc-lasso-seil"></span>';
+    }, 2000, "boxen");
   }
 
   function lcBoxen(wen, von) {
@@ -25261,7 +25659,14 @@
     /* Die Umarmung ist der einzige Effekt, der jemanden MEINT. Sie
        braucht deshalb den Namen aus der Zeile — siehe lcUmarmung(). */
     if (art === "umarmen" && lcUmarmung(nachricht && (nachricht.wen || nachricht.an))) return;
-    if (art === "lecken" && lcLecken(nachricht && (nachricht.wen || nachricht.an))) return;
+    if (art === "lecken") {
+      const wenL = nachricht && (nachricht.wen || nachricht.an);
+      let vonL = (nachricht && nachricht.name) || "";
+      if (nachricht && nachricht.eigen) {
+        try { vonL = (LiveChat.lage() || {}).ichName || vonL; } catch (e) {}
+      }
+      if (lcLecken(wenL, vonL)) return;
+    }
     /* Die Animationen, die einem PLATZ gelten — alle nach demselben
        Muster: Name aus der Zeile, Zeichnung an den Platz. Trifft der
        Name niemanden (die Person ist gegangen), geben sie false
@@ -25277,6 +25682,8 @@
       if (art === "reichtum" && lcReichtum(wenZ)) return;
       if (art === "zucker" && lcZuckerregen(wenZ)) return;
       if (art === "hammer" && lcHammer(wenZ)) return;
+      if (art === "heber" && lcHeber(wenZ)) return;
+      if (art === "lasso" && lcLasso(wenZ)) return;
     }
     /* Beim Boxen zählt auch, WER geboxt hat — er bekommt den
        Rückschlag ab. Bei der eigenen Zeile steht der Name nicht dran
@@ -25569,6 +25976,20 @@
     /* Die beiden Bildfaecher — damit sich nachsehen laesst, ob die
        GIPHY-Bibliothek wirklich gefuellt aufgeht und nachlaedt. */
     haeufigHtml: function () { return lcHaeufigHtml(); },
+    /* Die GIPHY-Merkzettel — damit sich nachsehen laesst, dass
+       Favoriten und Suchen wirklich im Profil landen. */
+    gif: {
+      favoriten: () => lcGifFavoriten(),
+      umschalten: (u) => lcGifFavoritUmschalten(u),
+      genommen: (u) => lcGifGenommen(u),
+      suchen: () => lcGifSuchen(),
+      sucheMerken: (w) => lcGifSucheMerken(w),
+      leeren: () => {
+        kzEinstellungSetzen("gifFavoriten", []);
+        kzEinstellungSetzen("gifZaehler", {});
+        kzEinstellungSetzen("gifSuchen", []);
+      }
+    },
     tonSchluessel: function () { return LC_TON_SCHLUESSEL; },
     bildWaehler: function () { return livechatBildWaehler(); },
     sendeWaehler: function () { return livechatSendeWaehler(); },
@@ -56972,6 +57393,8 @@ An einem Morgen lief ein kleiner Fuchs los…
       /* Das Platzmenue und die Wirkung an einem Platz — ohne echten
          Raum und ohne echten langen Druck nachstellbar. */
       platzMenue: (platz) => lcPlatzMenue(platz),
+      sprechFeld: (knopf, art) => lcSprechFeld(knopf, art),
+      sprechFeldWeg: (knopf) => lcSprechFeldWeg(knopf),
       wirkung: (art, wen) => lcWirkung(art, null, { wen: wen, name: "Alex" }),
       /* Die Betreiber-Karte fuers Relais — damit sich pruefen laesst,
          dass sie sich ueberhaupt zeichnen laesst, ohne dass man sich

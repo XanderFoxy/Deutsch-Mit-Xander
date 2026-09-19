@@ -1,51 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
 <style>
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
-  .hand { animation: winken 0.9s ease-in-out infinite; transform-box: view-box; transform-origin: 50% 88%; }
+  .hand { animation: winken 0.9s ease-in-out infinite; transform-box: view-box; transform-origin: 54% 92%; }
   .str  { animation: strich 0.9s ease-in-out infinite; transform-box: view-box; transform-origin: 50% 50%; }
-  @keyframes winken { 0%,100%{transform:rotate(-16deg)} 50%{transform:rotate(16deg)} }
+  @keyframes winken { 0%,100%{transform:rotate(-15deg)} 50%{transform:rotate(15deg)} }
   @keyframes strich { 0%,100%{opacity:.15; transform:translateX(-4px)} 50%{opacity:.85; transform:translateX(3px)} }
 </style>
-<path d="M36 110 L66 110 Q69 118 68 120 L34 120 Q33 116 36 110 Z"
-    fill="#6aa6ee" stroke="rgba(40,70,110,.45)" stroke-width="2" stroke-linejoin="round"/>
+<path d="M36 104 L72 104 Q75 114 74 120 L34 120 Q33 112 36 104 Z" fill="#6aa6ee" stroke="rgba(40,70,110,.35)" stroke-width="1.6" stroke-linejoin="round"/>
 <g class="hand">
-  <path d="M40 96 L62 96 Q64 108 63 120 L39 120 Q38 108 40 96 Z"
-    fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/>
-  <path d="M34 72
-      Q25 68 18 72
-      Q11 77 13 84
-      Q16 91 24 89
-      Q32 86 36 79 Z"
-    fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/>
-  <path d="
-    M28 72
-    Q27 65 33 65
-    L72 65
-    Q77 66 76 75
-    Q75 86 70 96
-    Q65 104 53 104
-    L46 104
-    Q35 104 32 96
-    Q27 85 28 72 Z"
-  fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2.2" stroke-linejoin="round"/>
-  <path d="M33 76 Q29 86 33 99 Q37 103 42 102 Q37 90 38 78 Z"
-    fill="#d89a63" opacity=".45"/>
-  <path d="M33 71 Q30 75 29 80" stroke="rgba(120,70,30,.5)" stroke-width="1.2"
-    fill="none" opacity=".5" stroke-linecap="round"/>
-  <path d="M17 80 Q22 78 27 79" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none"
-    opacity=".45" stroke-linecap="round"/>
-  <g transform="rotate(-14 34 70)"><path d="M28.8 70 L29.9 44.1 A4.1 4.1 0 0 1 38.1 44.1 L39.2 70 Z" fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/><path d="M30.4 58 Q34 59.4 37.6 58" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/><path d="M31 49 Q34 50.4 37 49" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/></g>
-  <g transform="rotate(-5 46 70)"><path d="M40.6 70 L41.8 40.2 A4.2 4.2 0 0 1 50.2 40.2 L51.4 70 Z" fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/><path d="M42.2 56.4 Q46 57.8 49.8 56.4" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/><path d="M42.9 46.2 Q46 47.6 49.1 46.2" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/></g>
-  <g transform="rotate(4 58 70)"><path d="M52.9 70 L54 43 A4 4 0 0 1 62 43 L63.1 70 Z" fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/><path d="M54.4 57.6 Q58 59 61.6 57.6" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/><path d="M55 48.3 Q58 49.7 61 48.3" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/></g>
-  <g transform="rotate(14 69 70)"><path d="M64.6 70 L65.6 49.4 A3.4 3.4 0 0 1 72.4 49.4 L73.4 70 Z" fill="#f3b57b" stroke="rgba(120,70,30,.5)" stroke-width="2" stroke-linejoin="round"/><path d="M65.9 60.4 Q69 61.8 72.1 60.4" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/><path d="M66.4 53.2 Q69 54.6 71.6 53.2" stroke="rgba(120,70,30,.5)" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/></g>
-  
-  <path d="M35 78 Q43 88 46 101" stroke="rgba(120,70,30,.5)" stroke-width="1.2" fill="none" opacity=".35" stroke-linecap="round"/>
-  <path d="M33 80 Q48 84 72 80" stroke="rgba(120,70,30,.5)" stroke-width="1.1" fill="none" opacity=".28" stroke-linecap="round"/>
+  <defs><radialGradient id="hautw" cx="38%" cy="30%" r="78%"><stop offset="0" stop-color="#f6c79a"/><stop offset="0.62" stop-color="#f0b077"/><stop offset="1" stop-color="#d89a63"/></radialGradient></defs><path d="M34 112 Q31 98 30.38 84.49 L11.29 75.72 A6.02 6.02 0 0 1 15.8 64.56 L35.62 71.51 Q33.51 80.51 35.4 71.5 L29.61 45.88 A4.76 4.76 0 0 1 38.8 43.42 L46.6 68.5 Q46.31 77.42 46.01 70.42 L44.99 40.34 A4.92 4.92 0 0 1 54.81 39.65 L57.99 69.58 Q57.66 76.58 57.33 69.4 L61.21 42.34 A4.67 4.67 0 0 1 70.5 43.31 L68.67 70.6 Q68.44 78.54 68.22 71.54 L75.19 51.81 A4.1 4.1 0 0 1 83.03 54.21 L77.78 74.46 Q83.78 90.46 76 96 Q75 108 74 112 Z" fill="url(#hautw)" stroke="rgba(150,95,50,.42)" stroke-width="1.6" stroke-linejoin="round"/><path d="M38 80 Q32 92 37 106 Q43 110 49 107 Q42 94 44 82 Z" fill="#d89a63" opacity=".28"/>
+  <path d="M27.77 60.07 Q31.61 57.38 36.29 57.78" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M25.92 50.93 Q29.21 48.4 33.32 48.95" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M40.44 56.07 Q44.88 54.16 49.54 55.44" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M40.31 45.56 Q44.15 43.68 48.21 45" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M54.43 55.58 Q58.9 54.45 63.04 56.49" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M56 46.1 Q59.91 44.9 63.48 46.88" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M67.65 60.39 Q71.76 59.97 74.92 62.61" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M70.33 53.36 Q73.95 52.79 76.64 55.29" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M40 84 Q50 94 54 108" stroke="rgba(150,95,50,.30)" stroke-width="1.1" fill="none" opacity=".8" stroke-linecap="round"/>
+  <path d="M38 88 Q54 92 72 87" stroke="rgba(150,95,50,.30)" stroke-width="1.1" fill="none" opacity=".8" stroke-linecap="round"/>
+  <path d="M44 96 Q56 99 70 96" stroke="rgba(150,95,50,.30)" stroke-width="1.1" fill="none" opacity=".8" stroke-linecap="round"/>
 </g>
 <g class="str">
-  <path d="M14 30 Q20 24 26 30 M94 30 Q100 24 106 30" stroke="#f2b84b" stroke-width="3.4"
-    fill="none" stroke-linecap="round"/>
-  <path d="M10 44 Q17 37 24 44 M96 44 Q103 37 110 44" stroke="#f2b84b" stroke-width="3"
-    fill="none" stroke-linecap="round" opacity=".7"/>
+  <path d="M14 30 Q20 24 26 30 M94 30 Q100 24 106 30" stroke="#f2b84b" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+  <path d="M10 44 Q17 37 24 44 M96 44 Q103 37 110 44" stroke="#f2b84b" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>
 </g>
 </svg>
