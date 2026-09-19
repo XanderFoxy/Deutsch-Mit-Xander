@@ -694,8 +694,28 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 }
 .lc-eigenname { font-weight: 800; font-style: normal; }
 /* System: eine abgesetzte Zeile über die ganze Breite */
+/* =================================================================
+   UND DIE AUFGABE GEHÖRT GENAUSO DAZU
+   -----------------------------------------------------------------
+   GEMELDET: „Jetzt steht die Frage untereinander unter der Uhrzeit,
+   deswegen hast du alles total zerstört von dieser Frage. Die Frage
+   soll so sein, wie sie vorher war — rechts neben der Uhrzeit."
+
+   Hier lag es, und es ist mit blossem Auge nachzurechnen: Eine
+   gewöhnliche Chatzeile ist ein Gitter aus DREI Spalten — Uhrzeit |
+   Name | Inhalt. Eine Aufgabenzeile hat aber gar keinen Namen (sie
+   gehört dem Raum, nicht einer Person), also nur ZWEI Kinder. Damit
+   landete ihr Text in Spalte 2 — der Namensspalte, gemessene 80
+   Pixel breit. Jede Frage brach dort in fünf, sechs Zeilen um und
+   stand als schmaler Turm neben der Uhr. Genau das hat er gesehen.
+
+   System- und Einladungszeilen hatten dafür längst ihr eigenes
+   Zwei-Spalten-Gitter; die Aufgabe war vergessen worden. Jetzt steht
+   sie in derselben Regel: Uhrzeit, und daneben der ganze Rest.
+   ================================================================= */
 .lc-zeile-system,
-.lc-zeile-einladung {
+.lc-zeile-einladung,
+.lc-zeile-aufgabe {
   grid-template-columns: 2.6em 1fr;
   margin: 3px 0;
 }
@@ -9227,72 +9247,22 @@ body.lc-schreibt .tutor-reiter {
 }
 
 /* =================================================================
-   „DARAUF ANTWORTEN" — SO VERSTEHT DAS SYSTEM ES WIRKLICH
+   HIER STANDEN „DARAUF ANTWORTEN" UND DAS ANTWORT-BAND
    -----------------------------------------------------------------
-   GEMELDET: „Du sollst nicht Trick 17 machen und einfach überall eine
-   Benotung dranmachen, sondern es soll die Benotung für die Aufgabe
-   sein. Es soll dazugehören, und das soll das System verstehen, dass
-   diese Antwort von der Aufgabe kommt."
+   GEMELDET: „Das ,Darauf antworten' soll dort nicht stehen. Es soll
+   logisch sein in dem Moment, wo man das abschickt — das musst du in
+   der Klasse regeln und nicht die Leute auf den Knopf drücken lassen."
+   Und: „Jetzt steht die Frage untereinander unter der Uhrzeit."
 
-   Viermal habe ich versucht, es zu ERRATEN — an der Uhrzeit, an der
-   Reihenfolge, an der Ähnlichkeit zur Lösung. Raten ist hier aber
-   grundsätzlich falsch: ob „Am Samstag war ich im Park" eine Antwort
-   auf „Schreib über dein Wochenende" ist, kann kein Programm sicher
-   entscheiden.
+   Beides trifft zu. Der Knopf war ein VIERTES Kind in einer Chatzeile,
+   die ein Gitter aus drei Spalten ist (Uhrzeit | Name | Inhalt) — also
+   landete er zwangsläufig in einer neuen Zeile darunter und hat die
+   Aufgabenzeile auseinandergezogen. Denselben Fehler hatte ich beim
+   Notenknopf schon zweimal gemacht; der steht deshalb absolut
+   positioniert und nicht im Gitter.
 
-   Jetzt sagt es die Antwort selbst: Wer die Aufgabenzeile antippt,
-   antwortet darauf, und die Nachricht trägt die Kennung der Aufgabe
-   mit sich. Das ist kein Erraten mehr, sondern eine Tatsache — und
-   sie gilt auch für eine Frage von vor einer Stunde, zu der jemand
-   hochscrollt. Genau ihr Weg.
+   Beides ist ersatzlos weg. Die Zuordnung sitzt jetzt im Abschicken
+   selbst (schreiben() in livechat.js): Wer bei offener Aufgabe etwas
+   abschickt, antwortet damit auf sie. Kein Knopf, kein Band, keine
+   zusätzliche Zeile — und die Aufgabe sieht wieder aus wie vorher.
    ================================================================= */
-.lc-drauf-antworten {
-  grid-column: 1 / -1;
-  justify-self: start;
-  margin-top: 4px;
-  border: 1px solid rgba(224, 150, 74, 0.5);
-  background: rgba(224, 150, 74, 0.12);
-  color: inherit;
-  border-radius: 999px;
-  padding: 3px 11px;
-  font: inherit;
-  font-size: 0.74rem;
-  cursor: pointer;
-}
-.lc-drauf-antworten:hover { background: rgba(224, 150, 74, 0.26); }
-
-.lc-antwortband {
-  flex: 1 1 100%;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0 0 5px;
-  padding: 4px 9px;
-  border-radius: 9px;
-  background: rgba(224, 150, 74, 0.14);
-  border: 1px solid rgba(224, 150, 74, 0.4);
-  font-size: 0.74rem;
-}
-.lc-antwortband[hidden] { display: none; }
-.lc-antwortband-wort { flex: 0 0 auto; font-weight: 700; }
-/* min-width: 0, sonst kann das Flex-Kind nicht schrumpfen und eine
-   lange Frage sprengt die Zeile. Denselben Fehler hatten wir schon
-   bei der Sprechblase und beim Aufgabenband. */
-.lc-antwortband-frage {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.lc-antwortband-weg {
-  flex: 0 0 auto;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  opacity: 0.7;
-  cursor: pointer;
-  padding: 0 3px;
-}
-.lc-antwortband-weg:hover { opacity: 1; }

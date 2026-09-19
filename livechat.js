@@ -5371,43 +5371,22 @@ window.LiveChat = (function () {
      niemand spicken kann.
      ================================================================= */
   /* =================================================================
-     „DARAUF ANTWORTEN" — DAS SYSTEM RÄT NICHT MEHR, ES WEISS
+     WARUM HIER KEIN „ANTWORTEN"-KNOPF MEHR STEHT
      -----------------------------------------------------------------
-     GEMELDET, und er hat vollkommen recht: „Du sollst nicht Trick 17
-     machen und einfach überall eine Benotung dranmachen. Es soll die
-     Benotung für die Aufgabe sein, es soll dazugehören, und das soll
-     das System verstehen, dass diese Antwort von der Aufgabe kommt."
+     Es gab ihn kurz (v315), und er war falsch. GEMELDET: „Das ,Darauf
+     antworten' soll dort nicht stehen. Es soll logisch sein in dem
+     Moment, wo man das abschickt — das musst du in der Klasse regeln
+     und nicht die Leute auf den Knopf drücken lassen."
 
-     Ich habe viermal versucht, es zu ERRATEN — an der Uhrzeit, an der
-     Reihenfolge, an der Ähnlichkeit zur Lösung. Raten ist hier aber
-     grundsätzlich falsch: Ob „Am Samstag war ich im Park" eine Antwort
-     auf „Schreib über dein Wochenende" ist, kann kein Programm sicher
-     entscheiden. Beim fünften Mal habe ich stattdessen überall einen
-     Knopf hingesetzt — das war noch schlechter, weil es die Frage
-     einfach übergangen hat.
+     Er hat recht. Ein Kind, das eine Aufgabe löst, soll schreiben und
+     abschicken — und nicht vorher noch etwas anklicken müssen, das es
+     vergessen kann. Die Zuordnung gehört ins Programm, nicht in die
+     Hand der Lernenden.
 
-     Jetzt sagt es die Antwort selbst. Wer auf eine Aufgabenzeile tippt,
-     antwortet DARAUF: die Nachricht trägt die Kennung der Aufgabe mit
-     sich (aufgabeId), über die Leitung, im Gerät und im Verlauf. Damit
-     ist es kein Erraten mehr, sondern eine Tatsache — und sie gilt auch
-     noch morgen, und auch für eine Frage von vor einer Stunde, zu der
-     jemand hochscrollt. Genau das ist ihr Weg.
-
-     Das automatische Erkennen bleibt zusätzlich bestehen, aber nur
-     dort, wo es WIRKLICH sicher ist: beim Wort- und beim Satzpuzzle
-     gibt es eine Musterlösung, mit der sich vergleichen lässt.
+     Sie sitzt jetzt in schreiben(): Steht eine Aufgabe offen, trägt
+     jede abgeschickte Nachricht ihre Kennung mit sich. Dort ist auch
+     der ganze Grund dafür aufgeschrieben.
      ================================================================= */
-  var antwortAuf = null;    // { id, frage, klasse } — worauf ich gerade antworte
-
-  function antwortAufSetzen(aufgabeId, frage, klasse) {
-    if (!aufgabeId) { antwortAuf = null; melden(); return null; }
-    antwortAuf = { id: String(aufgabeId), frage: String(frage || ""),
-                   klasse: String(klasse || "") };
-    melden();
-    return antwortAuf;
-  }
-  function antwortAufLage() { return antwortAuf ? {
-    id: antwortAuf.id, frage: antwortAuf.frage, klasse: antwortAuf.klasse } : null; }
 
   function aufgabeVerkuenden(anId) {
     if (!offeneAufgabe) return;
@@ -8923,16 +8902,44 @@ window.LiveChat = (function () {
       zeit: Date.now(), eigen: true, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
       geschlecht: zustand.geschlecht || ""
     };
-    /* Antworte ich gerade auf eine Aufgabe? Dann traegt die Nachricht
-       das mit sich — ueber die Leitung, im Geraet und im Verlauf. Das
-       ist der Unterschied zwischen Wissen und Raten. */
-    var bezugJetzt = antwortAuf;
-    if (bezugJetzt) {
-      n.aufgabeId = bezugJetzt.id;
-      n.aufgabeFrage = bezugJetzt.frage;
-      n.aufgabeKlasse = bezugJetzt.klasse;
+    /* =========================================================
+       DIE REGEL SITZT IM ABSCHICKEN — NIEMAND MUSS EINEN KNOPF
+       DRUECKEN
+       ---------------------------------------------------------
+       GEMELDET: „Das ,Darauf antworten' soll dort nicht stehen. Es
+       soll logisch sein in dem Moment, wo man das abschickt — das
+       musst du in der Klasse regeln und nicht die Leute auf den Knopf
+       druecken lassen. Es soll auch so sein, dass mehrere Schueler auf
+       eine Frage antworten koennen, und wenn die ersten noch nicht
+       geantwortet haben, sollen die das immer machen koennen.
+       Antworten tut man mit dem Abschick-Knopf."
+
+       Genau so ist es jetzt: Steht eine Aufgabe offen, dann IST das,
+       was ich abschicke, eine Antwort darauf — und die Nachricht sagt
+       das selbst. Die Kennung der Aufgabe wird hier angehaengt, auf
+       dem Geraet des Absenders, im Augenblick des Abschickens. Sie
+       reist mit ueber die Leitung, liegt im Geraet und steht im
+       Verlauf.
+
+       Das ist der Unterschied zu allem, was ich vorher versucht habe:
+       Die EMPFANGENDE Seite muss nichts mehr erraten — nicht an der
+       Uhrzeit, nicht an der Reihenfolge, nicht an der Aehnlichkeit.
+       Sie liest es ab.
+
+       Und es gilt fuer jeden und beliebig oft: Zehn Schueler koennen
+       dieselbe Frage beantworten, und wer sich eine Stunde spaeter
+       doch noch traut, ist genauso dabei. Es gibt keine „erste
+       Antwort", die die anderen aussperrt.
+
+       Nur Befehle sind ausgenommen — die kommen hier gar nicht an
+       (befehlAusfuehren weiter oben faengt sie ab). Wer „/konfetti"
+       schreibt, beantwortet nichts.
+       ========================================================= */
+    if (offeneAufgabe) {
+      n.aufgabeId = offeneAufgabe.zeileId || ("a" + (offeneAufgabe.zeit || 0));
+      n.aufgabeFrage = offeneAufgabe.frage || offeneAufgabe.loesung || "";
+      n.aufgabeKlasse = aufgabeKlasse(offeneAufgabe.typ);
       n.versuch = true;
-      antwortAuf = null;
     }
     nachrichtAnhaengen(n);
     serverSichern(n);
@@ -9400,10 +9407,6 @@ window.LiveChat = (function () {
        steht in livechat.js, nicht in der Oberflaeche. */
     notenKlassen: function () { return NOTEN_KLASSEN.slice(); },
     aufgabeKlasse: aufgabeKlasse,
-    /* „Darauf antworten": die Oberflaeche sagt, auf welche Aufgabe
-       sich die naechste Nachricht bezieht. */
-    antwortAufSetzen: antwortAufSetzen,
-    antwortAufLage: antwortAufLage,
     /* Fuer die Pruefung, ob eine Aufgabe das Neuladen ueberlebt:
        merken, vergessen, zurueckholen — genau die Wege, die auch das
        Betreten geht. */

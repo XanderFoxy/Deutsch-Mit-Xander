@@ -75,15 +75,20 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
      mitKnopf.length + " von " + mit.length + " Zeilen");
   ok(mitKnopf.length === 1 && mitKnopf[0].text.indexOf("Am Samstag") >= 0,
      "und zwar die richtige", mitKnopf[0] ? "„" + mitKnopf[0].text + "“" : "—");
-  ok(mit.filter((z) => z.antworten).length === 1,
-     "an der Aufgabenzeile steht „Darauf antworten“");
+  /* Der Knopf „Darauf antworten" ist wieder weg — GEMELDET: „Das soll
+     dort nicht stehen. Es soll logisch sein in dem Moment, wo man das
+     abschickt." Er war ausserdem ein viertes Gitterkind und hat die
+     Aufgabenzeile unter die Uhrzeit gedrückt. Die Zuordnung sitzt
+     jetzt im Abschicken (schreiben() in livechat.js). */
+  ok(mit.filter((z) => z.antworten).length === 0,
+     "an der Aufgabenzeile steht KEIN Knopf mehr — die Regel sitzt im Abschicken");
 
   console.log("\n  ALS TEILNEHMERIN");
   const gast = await bauen(false);
   ok(gast.filter((z) => z.knopf).length === 0, "sie sieht keinen Notenknopf",
      gast.filter((z) => z.knopf).length + " Knöpfe");
-  ok(gast.filter((z) => z.antworten).length === 1,
-     "aber „Darauf antworten“ sieht sie — das ist ja ihr Weg");
+  ok(gast.filter((z) => z.antworten).length === 0,
+     "und bei ihr auch nicht — sie schreibt einfach und schickt ab");
 
   console.log("\n  EINE FÜNF — DA GIBT ES KEINE PUNKTE, UND TROTZDEM MUSS SIE ES ERFAHREN");
   const weg = await pg.evaluate(async () => {

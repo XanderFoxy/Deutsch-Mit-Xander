@@ -20640,16 +20640,6 @@
                  Haken daneben schaltet dasselbe. Was der Ohr-Knopf
                  sonst noch konnte (langer Druck = Mitschrieb), sitzt
                  jetzt auf dem Halte-Zeichen. -->
-            <!-- Worauf antworte ich gerade? Das Band steht nur da, wenn
-                 man eine Aufgabe angetippt hat, und geht mit dem ✕
-                 wieder weg. Es ist der sichtbare Beweis, dass die
-                 nächste Nachricht zu DIESER Frage gehört. -->
-            <div class="lc-antwortband" id="lcAntwortBand" hidden>
-              <span class="lc-antwortband-wort">✍️ Antwort auf</span>
-              <span class="lc-antwortband-frage" id="lcAntwortBandFrage"></span>
-              <button type="button" class="lc-antwortband-weg" id="lcAntwortBandWeg"
-                      aria-label="Doch nicht darauf antworten">✕</button>
-            </div>
             <input type="text" class="lc-chat-feld" id="lcFeld" maxlength="${LiveChat.CHAT_LAENGE}"
                    placeholder="Schreib etwas …" aria-label="Nachricht schreiben"
                    autocomplete="off" autocorrect="off" spellcheck="false">
@@ -20724,17 +20714,6 @@
     try { lcTonZu("note"); } catch (e) {}
   }
 
-  /* Das Band über der Schreibzeile: worauf antworte ich gerade? */
-  function lcAntwortBandZeichnen() {
-    const band = document.getElementById("lcAntwortBand");
-    if (!band) return;
-    let a = null;
-    try { a = LiveChat.antwortAufLage ? LiveChat.antwortAufLage() : null; } catch (e) { a = null; }
-    band.hidden = !a;
-    const f = document.getElementById("lcAntwortBandFrage");
-    if (f) f.textContent = a ? ("„" + String(a.frage || "der Aufgabe").slice(0, 90) + "“") : "";
-  }
-
   function lcAufgabeZeichnen() {
     const kasten = document.getElementById("lcAufgabeLaeuft");
     if (!kasten) return;
@@ -20759,7 +20738,6 @@
   function livechatPlaetzeAuffrischen(l) {
     lcAnsichtZeichnen(l);
     lcAufgabeZeichnen();
-    lcAntwortBandZeichnen();
     l.plaetze.forEach((p) => {
       const knopf = document.querySelector(`[data-lc-platz="${p.nummer}"]`);
       if (!knopf) return;
@@ -24624,35 +24602,33 @@
          wegfällt, ist nur die Möglichkeit, dass er gar nicht da ist.
          ============================================================= */
       const gehoertZurAufgabe = Boolean(n.versuch || (bezug && bezug.versuch));
-      /* =============================================================
-         DIE AUFGABENZEILE LÄSST SICH ANTIPPEN
-         -------------------------------------------------------------
-         GEWÜNSCHT: „Es soll die Benotung für die Aufgabe sein, es soll
-         dazugehören, und das soll das System verstehen, dass diese
-         Antwort von der Aufgabe kommt."
+      /* HIER STAND EIN KNOPF „✍️ Darauf antworten" — UND ER HAT ZWEI
+         DINGE KAPUTT GEMACHT.
 
-         Genau so versteht es das System: Wer auf die Aufgabe antwortet,
-         tippt sie an. Die nächste Nachricht trägt dann die Kennung
-         dieser Aufgabe mit sich — über die Leitung, im Gerät und im
-         Verlauf. Kein Raten mehr, und es gilt auch für eine Frage von
-         vor einer Stunde, zu der jemand hochscrollt. Genau ihr Weg.
-         ============================================================= */
-      if (art === "aufgabe") {
-        const antw = document.createElement("button");
-        antw.type = "button";
-        antw.className = "lc-drauf-antworten";
-        antw.textContent = "✍️ Darauf antworten";
-        antw.title = "Antippen — deine nächste Nachricht gehört dann zu dieser Aufgabe";
-        antw.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const frage = String(n.text || "").replace(/^[^:]*:\s*/, "");
-          LiveChat.antwortAufSetzen(n.id, frage, "");
-          lcAntwortBandZeichnen();
-          const f = document.getElementById("lcFeld");
-          if (f) f.focus();
-        });
-        z.appendChild(antw);
-      }
+         GEMELDET: „Das ,Darauf antworten' soll dort nicht stehen. Es
+         soll logisch sein in dem Moment, wo man das abschickt — das
+         musst du in der Klasse regeln und nicht die Leute auf den
+         Knopf drücken lassen."
+         Und: „Jetzt steht die Frage untereinander unter der Uhrzeit,
+         du hast alles total zerstört. Die Frage soll so sein, wie sie
+         vorher war — rechts neben der Uhrzeit."
+
+         Beides stimmt, und das Zweite ist mein alter Fehler, zum
+         dritten Mal: Eine Chatzeile ist ein GITTER mit drei Spalten
+         (Uhrzeit | Name | Inhalt). Ihre Kinder werden der Reihe nach
+         hineingesetzt. Mein Knopf war ein VIERTES Kind — und landete
+         damit zwangsläufig in einer neuen Gitterzeile, unter der
+         Uhrzeit. Genau das hat er gesehen. (Dasselbe ist mir beim
+         Notenknopf schon zweimal passiert; der steht deshalb absolut
+         positioniert und nicht im Gitter.)
+
+         Der Knopf ist weg, und zwar ersatzlos: Die Zuordnung sitzt
+         jetzt dort, wo sie hingehört — im Abschicken selbst (siehe
+         schreiben() in livechat.js). Wer bei offener Aufgabe etwas
+         abschickt, antwortet damit auf sie; die Nachricht trägt die
+         Kennung der Aufgabe mit sich. Niemand muss etwas anklicken,
+         beliebig viele können antworten, und die Aufgabenzeile sieht
+         wieder aus wie jede andere. */
       const istAntwort = gehoertZurAufgabe;
       const antwortRichtig = Boolean(n.richtig || (bezug && bezug.richtig));
       const antwortFrage = n.aufgabeFrage || (bezug && bezug.frage) || "";
@@ -25830,10 +25806,6 @@
         LiveChat.schreiben("/aufgabe");
         lcAufgabeZeichnen();
         showToast("✔️ Die Aufgabe ist beendet.");
-      });
-      area.querySelector("#lcAntwortBandWeg")?.addEventListener("click", () => {
-        LiveChat.antwortAufSetzen("");
-        lcAntwortBandZeichnen();
       });
       area.querySelector("#lcRaeume")?.addEventListener("click", () => livechatRaumFenster());
       const fotoFeld = area.querySelector("#lcFoto");
