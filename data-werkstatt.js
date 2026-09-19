@@ -49,22 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 84 — Schreien geht überall, der Tutor erklärt das Klassenzimmer neu",
+  stand: "Runde 19 — der Schrei erschreckt wirklich (v310)",
 
   inArbeit: [
-    { seit: "2026-09-19T00:23",
-      text: "21 Tutor-Stücke warten noch auf deine Stimme (sie laufen so lange nach Lesezeit)" },
-    { seit: "2026-09-19T00:23",
+    { seit: "2026-09-19T00:44",
+      text: "TikTok-Livestream: was dafür gebraucht wird (Antwort im Chat)" },
+    { seit: "2026-09-19T00:44",
+      text: "Cloudflare-API-Token fehlt noch für das Klassenzimmer-Relais" },
+    { seit: "2026-09-19T00:44",
+      text: "21 Tutor-Stücke warten noch auf deine Stimme" },
+    { seit: "2026-09-19T00:44",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T00:23",
-      text: "GEFUNDEN, warum du beim Schreien immer den alten Sound hörst: ohne DEUTSCHE Stimme wurde gar nicht gesprochen. Auf dem Telefon ist die Stimmenliste beim ersten Mal noch leer, und manche Geräte haben überhaupt keine deutsche Stimme — jetzt wird einmal auf die Liste gewartet und sonst mit der Standardstimme auf Deutsch geschrien, mit Echo" },
-    { seit: "2026-09-19T00:23",
-      text: "Der Tutor kann einen Unterbereich jetzt in mehreren Stücken erklären, nicht mehr nur in einem einzigen langen Text" },
-    { seit: "2026-09-19T00:23",
-      text: "Der Klassenzimmer-Text ist auf dem Stand von heute: Wortmeldungen hinter dem Tipp ins Leere, Flüstern das der Person folgt, /aufgabe mit Note an der Antwort, Bühnenansicht, hängende Leitung antippen" },
+    { seit: "2026-09-19T00:44",
+      text: "Föhngeräusch beim Schreien weg — die Stimme trägt jetzt allein" },
+    { seit: "2026-09-19T00:44",
+      text: "Hall: fünf Durchgänge statt drei, ohne Pause dazwischen, deutlich lauter" },
+    { seit: "2026-09-19T00:44",
+      text: "Schneller gesprochen statt gedehnt — es kommt plötzlich" },
+    { seit: "2026-09-19T00:44",
+      text: "Die Schallwelle geht als Ring vom Wort aus, in alle Richtungen" },
   ],
 };

@@ -22930,9 +22930,10 @@
     try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
   }
 
-  function lcSchreiNaechster() {
-    const s = lcSchreiKette.shift();
-    if (!s) return;
+  /* Ein Glied der Kette wirklich aussprechen. Getrennt vom Weiter-
+     schalten, weil beides frueher zusammenhing — und genau daran lag
+     der zaehe Klang (siehe lcSchreiNaechster gleich darunter). */
+  function lcSchreiSagen(s) {
     try {
       const a = new SpeechSynthesisUtterance(s.satz);
       /* Ohne eigene Stimme bleibt „voice" leer — dann nimmt der
@@ -22944,17 +22945,52 @@
       a.pitch = s.hoehe;
       a.rate = s.tempo;
       a.volume = s.laut;
-      /* Der naechste Hall erst, wenn der vorige ZU ENDE ist — plus
-         die Pause. Legte man alles auf einmal in die Warteschlange,
-         klebten die Wiederholungen aneinander: das klaenge nach
-         Stottern statt nach Echo. */
+      /* Steht fuer das naechste Glied eine Pause im Plan, wird sie
+         auch abgewartet — dafuer muss der vorige Ruf zu Ende sein.
+         Steht dort KEINE Pause, kommt das naechste Glied gar nicht
+         hier an: es liegt dann schon in der Warteschlange der
+         Sprachausgabe (siehe lcSchreiNaechster). */
       a.onend = () => {
         if (!lcSchreiKette.length) return;
+        if (!lcSchreiKette[0].pause) return;
         lcSchreiUhr = setTimeout(lcSchreiNaechster, lcSchreiKette[0].pause);
       };
       a.onerror = () => { lcSchreiKette = []; };
       window.speechSynthesis.speak(a);
-    } catch (e) { lcSchreiKette = []; }
+      return true;
+    } catch (e) { lcSchreiKette = []; return false; }
+  }
+
+  /* =================================================================
+     DER HALL KOMMT AM STUECK, NICHT IM SCHRITTTEMPO
+     -----------------------------------------------------------------
+     GEMELDET: „Das Hallo soll viel kuerzere Echozeiten haben, viel
+     oefter Echo und lauter. Man soll ploetzlich Schreck bekommen,
+     dass das ploetzlich ist, dass es wenigstens wie ein Schrei
+     wirkt."
+
+     Hier stand der Grund, warum es sich wie ein Ruf in einer Schlucht
+     anhoerte und nicht wie ein Schrei: Jede Wiederholung wurde erst
+     DANN in Auftrag gegeben, wenn die vorige fertig gemeldet hatte —
+     und danach kam noch eine Pause obendrauf. Zwischen zwei Rufen lag
+     damit immer die Meldung des Browsers plus 130 bis 210 ms.
+
+     Jetzt wandern alle Wiederholungen ohne Pause in EINEM Zug in die
+     Warteschlange der Sprachausgabe. Die arbeitet sie dann ohne
+     Zwischenraum ab — das ist das Dichteste, was diese Schnittstelle
+     kann. Uebereinander legen kann sie nach wie vor nichts; ein
+     echtes Hallenecho ist damit nicht zu haben, und das soll hier
+     ehrlich stehenbleiben. Dicht hintereinander, laut und schnell
+     ist aber genau das, was erschreckt.
+     ================================================================= */
+  function lcSchreiNaechster() {
+    while (lcSchreiKette.length) {
+      const s = lcSchreiKette.shift();
+      if (!lcSchreiSagen(s)) return;
+      /* Verlangt das naechste Glied eine Pause, uebernimmt „onend".
+         Sonst geht es sofort weiter — im selben Atemzug. */
+      if (!lcSchreiKette.length || lcSchreiKette[0].pause) return;
+    }
   }
 
   function lcSchreiSprechen(text, geschlecht, nochmal) {
@@ -23000,7 +23036,10 @@
           lcSchreiSprechen(satz, geschlecht, true);
         }, { once: true });
         try { window.speechSynthesis.getVoices(); } catch (e) {}
-        return false;
+        /* Nicht „false": false hiesse „hier kommt nichts mehr", und
+           der Aufrufer legte dann den alten Hall darunter. Es kommt
+           aber gleich etwas — deshalb „wartet". */
+        return "wartet";
       }
       /* Was noch laeuft, wird abgebrochen: zwei Schreie
          uebereinander sind kein Schrei, sondern Krach. */
@@ -23015,17 +23054,32 @@
       const frau = stimme ? LC_STIMME_FRAU.test(stimme.name || "")
                           : (will === "weiblich" || will === "w" || will === "\u2640");
       const hoehe = frau ? 0.70 : 0.35;
-      const tempo = frau ? 0.82 : 0.78;
-      const echos = satz.length <= 30 ? 2 : satz.length <= 70 ? 1 : 0;
+      /* GEWUENSCHT: „Man soll ploetzlich Schreck bekommen, dass das
+         ploetzlich ist." Ein gedehntes Wort erschreckt niemanden —
+         deshalb wird schnell gesprochen, nicht langsam. Vorher stand
+         hier 0.78/0.82, also LANGSAMER als normal; das klang nach
+         einer Ansage, nicht nach einem Ruf. */
+      const tempo = frau ? 1.22 : 1.14;
+      /* Und oefter: bei einem kurzen Ruf viermal Hall statt zweimal.
+         Ein langer Satz hallt weiterhin kaum — den viermal zu hoeren
+         waere eine Qual. */
+      const echos = satz.length <= 30 ? 4 : satz.length <= 70 ? 3 : 1;
       lcSchreiKette = [{ satz: satz, stimme: stimme, hoehe: hoehe, tempo: tempo, laut: 1, pause: 0 }];
-      const LAUT = [0.34, 0.14];
+      /* Lauter: der erste Hall lag bei 0.34 und war damit kaum noch
+         da. Jetzt traegt er fast so weit wie der Ruf selbst und
+         verliert sich erst danach. */
+      const LAUT = [0.82, 0.64, 0.46, 0.30];
       for (let i = 0; i < echos; i++) {
         lcSchreiKette.push({
           satz: satz, stimme: stimme,
-          hoehe: Math.max(0.1, hoehe * (i === 0 ? 0.92 : 0.85)),
-          tempo: Math.min(2, tempo * (i === 0 ? 1.08 : 1.16)),
-          laut: LAUT[i],
-          pause: i === 0 ? 130 : 210
+          /* Jede Wiederholung etwas heller und schneller — so faellt
+             der Hall nach hinten weg, statt sich zu wiederholen. */
+          hoehe: Math.min(2, Math.max(0.1, hoehe * (1 + 0.06 * (i + 1)))),
+          tempo: Math.min(2, tempo * (1 + 0.09 * (i + 1))),
+          laut: LAUT[i] != null ? LAUT[i] : 0.2,
+          /* KEINE Pause: alles geht in einem Zug in die Warteschlange
+             der Sprachausgabe (siehe lcSchreiNaechster). */
+          pause: 0
         });
       }
       lcSchreiNaechster();
@@ -23034,28 +23088,78 @@
   }
 
   let lcSchallLaeuft = 0;
-  function lcSchallStoss(text, geschlecht) {
+
+  /* =================================================================
+     WO IM RAUM DER SCHREI ENTSTEHT
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Der Schall soll von dem Wort zentriert ausgehen in
+     alle Richtungen und nicht nur nach oben."
+
+     Dafuer muss die CSS wissen, WO das Wort steht. Gemessen wird das
+     hier, in Prozent der Chatflaeche, und als zwei Groessen an die
+     Karte geschrieben; die Welle (.lc-schallt::after) haengt sich
+     daran. Ohne Zeile — etwa beim eigenen Ruf, der noch gar keine
+     Zeile hat — bleibt es bei der Schreibzeile unten.
+     ================================================================= */
+  function lcSchallMitte(karte, zeile) {
+    let x = 50, y = 84;
+    try {
+      const ziel = zeile && zeile.querySelector
+        ? (zeile.querySelector(".lc-zeilentext") || zeile) : zeile;
+      if (ziel && ziel.getBoundingClientRect) {
+        const k = karte.getBoundingClientRect();
+        const z = ziel.getBoundingClientRect();
+        if (k.width > 1 && k.height > 1 && (z.width > 0 || z.height > 0)) {
+          x = ((z.left + z.width / 2) - k.left) / k.width * 100;
+          y = ((z.top + z.height / 2) - k.top) / k.height * 100;
+          /* Steht die Zeile ausserhalb des sichtbaren Ausschnitts,
+             wuerde die Welle irgendwo im Nichts starten — dann lieber
+             an den Rand heranholen, als daneben. */
+          x = Math.max(0, Math.min(100, x));
+          y = Math.max(0, Math.min(100, y));
+        }
+      }
+    } catch (e) {}
+    karte.style.setProperty("--lc-schall-x", x.toFixed(1) + "%");
+    karte.style.setProperty("--lc-schall-y", y.toFixed(1) + "%");
+    return { x: x, y: y };
+  }
+
+  function lcSchallStoss(text, geschlecht, zeile) {
     const karte = document.getElementById("livechatKarte")
                || document.getElementById("livechatArea");
-    /* Erst die Stimme, dann der Hall darunter. Klappt die Stimme
-       nicht (kein Deutsch im Geraet, Ton aus), traegt der Hall
-       allein — man soll nie vor einem stummen Schrei sitzen.
+    /* =============================================================
+       DAS FOEHNGERAEUSCH IST WEG
+       -------------------------------------------------------------
+       GEMELDET: „Jetzt hoere ich die Stimme. Aber dieses komische
+       Foehngeraeusch ist noch im Hintergrund, was wie ein
+       Staubsauger klingt — das soll weggehen."
 
-       GEWUENSCHT: „Es soll auch dezent wie ein Nachhall sein."
-       Spricht die Stimme, tritt der Hall auf ein knappes Viertel
-       zurueck: er ist die HALLE, nicht der Schrei. Spricht sie
-       nicht, traegt er in voller Lautstaerke. */
+       Hier stand es: unter die gesprochene Stimme wurde IMMER noch
+       die alte Hall-Datei gelegt (leise, aber eben da). Genau die
+       klingt nach Foehn. Sie faellt jetzt weg, sobald wirklich
+       gesprochen wird — dann traegt die Stimme den Schrei ganz
+       allein.
+
+       Sie bleibt nur als Notnagel: Wenn ueberhaupt nicht gesprochen
+       werden kann (Ton aus, kein Sprachausgabe-Dienst im Geraet),
+       waere sonst gar nichts zu hoeren, und ein stummer Schrei ist
+       kein Schrei. Wartet die Stimmenliste noch (dann meldet
+       lcSchreiSprechen „wartet"), bleibt es ebenfalls still — die
+       Stimme kommt ja gleich nach.
+       ============================================================= */
     const gesprochen = lcSchreiSprechen(text, geschlecht);
-    lcGeraeusch("schrei", null, gesprochen ? 0.22 : 0.5);
+    if (!gesprochen) lcGeraeusch("schrei", null, 0.5);
     if (!karte) return;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    lcSchallMitte(karte, zeile);
     /* Mehrere Rufe kurz hintereinander sollen nicht uebereinander
        zappeln — der Stoss faengt dann einfach neu an. */
     clearTimeout(lcSchallLaeuft);
     karte.classList.remove("lc-schallt");
     void karte.offsetWidth;
     karte.classList.add("lc-schallt");
-    lcSchallLaeuft = setTimeout(() => karte.classList.remove("lc-schallt"), 2100);
+    lcSchallLaeuft = setTimeout(() => karte.classList.remove("lc-schallt"), 1200);
   }
 
   function lcRufNochmal(zeile) {
@@ -23064,7 +23168,7 @@
        weg, sonst hielte die CSS die Animation weiterhin an. */
     zeile.classList.remove("lc-alt");
     lcSchallStoss(zeile.querySelector(".lc-zeilentext")?.textContent || "",
-                  zeile.dataset.lcGeschlecht || "");
+                  zeile.dataset.lcGeschlecht || "", zeile);
     zeile.querySelectorAll(".lc-ruf-wort").forEach((w) => {
       const takt = w.style.getPropertyValue("--lc-ruf-takt") || "0s";
       w.style.animation = "none";
@@ -24909,7 +25013,7 @@
            und bleibt still. Angetippt kommt es wieder. */
         if (!alt && !livechatEffektGespielt.has(n.id)) {
           livechatEffektGespielt.add(n.id);
-          lcSchallStoss(n.text, n.geschlecht || "");
+          lcSchallStoss(n.text, n.geschlecht || "", z);
         }
       }
       if (eff) {
@@ -54907,7 +55011,12 @@ An einem Morgen lief ein kleiner Fuchs los…
        von aussen anstossen — so wie es jede Auffrischung tut. */
     window.__amEndeHalten = (v) => lcAmEndeHalten(v);
     window.__haeltUnten = () => lcHaeltUnten;
-    window.__schallStoss = (t, g) => lcSchallStoss(t, g);
+    window.__schallStoss = (t, g, z) => lcSchallStoss(t, g, z);
+    window.__schallMitte = (z) => {
+      const k = document.getElementById("livechatKarte")
+             || document.getElementById("livechatArea");
+      return k ? lcSchallMitte(k, z) : null;
+    };
     window.__schreiStimme = (g) => lcSchreiStimme(g);
     window.__schreiKette = () => lcSchreiKette.slice();
     window.__dmaTagesaufgabe = () => pickDailyTaskFresh();

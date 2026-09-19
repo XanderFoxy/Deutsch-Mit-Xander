@@ -99,11 +99,14 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     aus.push("  47 Zeichen  -> " + mittel.length + " Durchgänge");
     aus.push("  136 Zeichen -> " + lang.length + " Durchgänge");
 
-    /* Fällt das Echo wirklich ab? */
+    /* Fällt das Echo wirklich ab? Leiser wird es — HÖHER aber auch,
+       und das ist so gewollt: ein Hall verliert seine Tiefe zuerst.
+       Früher wurde er tiefer, das klang nach einem Monster statt nach
+       einem Nachhall. */
     const fallend = kurz.length > 1
-      && kurz.every((g, i) => i === 0 || (g.laut < kurz[i - 1].laut && g.hoehe < kurz[i - 1].hoehe));
+      && kurz.every((g, i) => i === 0 || (g.laut < kurz[i - 1].laut && g.hoehe > kurz[i - 1].hoehe));
     aus.push("");
-    aus.push("Wird jedes Echo leiser UND tiefer: " + (fallend ? "ja" : "NEIN"));
+    aus.push("Wird jedes Echo leiser und dabei heller: " + (fallend ? "ja" : "NEIN"));
     aus.push("Frauenstimme bleibt oberhalb der Männerstimme: "
       + ((frau[0] && kurz[0] && frau[0].hoehe > kurz[0].hoehe)
          ? "ja (" + frau[0].hoehe + " > " + kurz[0].hoehe + ")"
