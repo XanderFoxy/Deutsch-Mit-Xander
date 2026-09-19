@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 22 — der Tyrannosaurus bekommt sein Gebiss",
+  stand: "Runde 22 — die Kette für echte Film-Animationen steht",
 
   inArbeit: [
-    { seit: "2026-09-19T05:05",
-      text: "Echte Film-Animationen: brauche einen API-Schlüssel (Leonardo oder ElevenLabs aufladen)" },
-    { seit: "2026-09-19T05:05",
+    { seit: "2026-09-19T05:10",
+      text: "Es fehlt nur noch ein Video von dir — Anleitung in filme/LIESMICH.md" },
+    { seit: "2026-09-19T05:10",
       text: "21 Tutor-Stücke warten auf Alex' Stimme" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T05:05",
-      text: "Zähne gerichtet: beide Reihen waren an der Wurzel gespiegelt" },
-    { seit: "2026-09-19T05:05",
-      text: "Brauenwulst, tiefliegendes Auge, Schläfengrube, Kaumuskel" },
-    { seit: "2026-09-19T05:05",
-      text: "Der Rex vom 14.09. ist zurück — mit Schuppen und grossem Kopf" },
-    { seit: "2026-09-19T05:05",
-      text: "Seitliches Sitzen für alle 12 Figuren" },
+    { seit: "2026-09-19T05:10",
+      text: "Aus Grün wird Durchsichtigkeit: werkzeug/film-freistellen.sh" },
+    { seit: "2026-09-19T05:10",
+      text: "Safari-Fassung gleich mit — sonst sähen iPhones einen grünen Kasten" },
+    { seit: "2026-09-19T05:10",
+      text: "Nachgemessen im Browser: Ecken Alpha 0, Motiv Alpha 255, kein Grünstich" },
+    { seit: "2026-09-19T05:10",
+      text: "Tyrannosaurus: Zähne gerichtet, Brauenwulst, Kaumuskel" },
   ],
 };
