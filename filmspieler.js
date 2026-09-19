@@ -99,7 +99,7 @@
      Blob liegt fertig im Speicher; ab da kann nichts mehr
      dazwischenkommen. Beim zweiten Mal ist er schon da und der
      Film startet sofort. */
-  function datei(url) {
+  function datei(url, melden) {
     if (DATEIEN[url]) return Promise.resolve(DATEIEN[url]);
     return fetch(url, { cache: "force-cache" })
       .then(function (a) {
@@ -107,7 +107,24 @@
           var e = new Error("Der Film " + url + " ist nicht da (" + a.status + ").");
           e.grund = "fehlt"; throw e;
         }
-        return a.blob();
+        /* MIT BALKEN, NICHT NUR MIT RING.
+           Gewünscht: „wenn wir jetzt einen Ladebalken haben".
+           Der Körper wird stückweise gelesen; die Gesamtgrösse
+           steht im Kopf der Antwort. Fehlt sie (manche Server
+           schicken sie bei gzip nicht mit), bleibt der Balken
+           unbestimmt und der Ring dreht sich weiter. */
+        var ganz = Number(a.headers.get("content-length")) || 0;
+        if (!melden || !a.body || !a.body.getReader) return a.blob();
+        var leser = a.body.getReader();
+        var stuecke = [], hat = 0;
+        return (function weiter() {
+          return leser.read().then(function (r) {
+            if (r.done) return new Blob(stuecke);
+            stuecke.push(r.value); hat += r.value.length;
+            melden(ganz ? hat / ganz : -1);
+            return weiter();
+          });
+        })();
       })
       .then(function (b) {
         var u = URL.createObjectURL(b);
@@ -136,19 +153,33 @@
   /* Ein Ring, solange geholt wird. Ohne ihn sieht es aus, als
      wäre der Befehl ins Leere gegangen. */
   function warten(s) {
-    var w = document.createElement("i");
-    w.className = "dma-film-warten";
-    w.style.cssText = "width:42px;height:42px;border-radius:50%;"
-      + "border:3px solid rgba(255,255,255,.25);border-top-color:rgba(255,255,255,.9);"
-      + "animation:dmaFilmDreh .9s linear infinite;";
     if (!document.getElementById("dmaFilmStil")) {
       var st = document.createElement("style");
       st.id = "dmaFilmStil";
-      st.textContent = "@keyframes dmaFilmDreh{to{transform:rotate(360deg)}}";
+      st.textContent = "@keyframes dmaFilmDreh{to{transform:translateX(160%)}}";
       document.head.appendChild(st);
     }
-    s.appendChild(w);
-    return w;
+    var k = document.createElement("i");
+    k.className = "dma-film-warten";
+    k.style.cssText = "width:min(56vw,220px);height:5px;border-radius:99px;overflow:hidden;"
+      + "background:rgba(255,255,255,.18);box-shadow:0 1px 8px rgba(0,0,0,.35);";
+    var b = document.createElement("b");
+    b.style.cssText = "display:block;height:100%;width:60%;border-radius:99px;"
+      + "background:linear-gradient(90deg,#ffd76a,#f0a92b);transform:translateX(-100%);"
+      + "animation:dmaFilmDreh 1.1s ease-in-out infinite;";
+    k.appendChild(b);
+    s.appendChild(k);
+    return {
+      weg: function () { try { k.remove(); } catch (e) {} },
+      stand: function (teil) {
+        /* Sobald die Grösse bekannt ist, wandert der Balken nicht
+           mehr hin und her, sondern zeigt den echten Anteil. */
+        if (teil < 0) return;
+        b.style.animation = "none";
+        b.style.transform = "translateX(0)";
+        b.style.width = Math.max(3, Math.round(teil * 100)) + "%";
+      }
+    };
   }
 
   /* ---- Weg 1: das Video kann Durchsichtigkeit selbst ---- */
@@ -269,12 +300,31 @@
      soll, ohne irgendetwas zu verschieben.
      ========================================================= */
   var PROFILE = {
-    erde:   { staub: 1.0, funken: 0,   streifen: 0,   dampf: 0,   schein: 0.9, farbe: "255,168,72" },
-    glanz:  { staub: 0,   funken: 0.8, streifen: 0,   dampf: 0,   schein: 1.0, farbe: "255,190,96" },
-    wind:   { staub: 0,   funken: 0,   streifen: 1.0, dampf: 0,   schein: 0.5, farbe: "190,214,255" },
-    dampf:  { staub: 0,   funken: 0,   streifen: 0,   dampf: 1.0, schein: 0.6, farbe: "255,206,150" },
-    keiner: { staub: 0,   funken: 0,   streifen: 0,   dampf: 0,   schein: 0,   farbe: "255,255,255" }
+    /* rattern: wie stark der CHATVERLAUF mitgeht, und in welcher
+       Art. „stoss" folgt der gemessenen Heftigkeit (schwere
+       Schritte), „gleis" ist ein feines, gleichmässiges Zittern
+       wie über Schienenstösse — gewünscht: „dass beim Zug der
+       Chat ein bisschen ruckelt, als wenn man über Gleise
+       rattert". */
+    erde:   { staub: 1.0, funken: 0,   streifen: 0,   dampf: 0,   schein: 0.9, farbe: "255,168,72",  rattern: 1.0, art: "stoss" },
+    glanz:  { staub: 0,   funken: 0.8, streifen: 0,   dampf: 0,   schein: 1.0, farbe: "255,190,96",  rattern: 0,   art: "" },
+    wind:   { staub: 0,   funken: 0,   streifen: 1.0, dampf: 0,   schein: 0.5, farbe: "190,214,255", rattern: 0,   art: "" },
+    dampf:  { staub: 0,   funken: 0,   streifen: 0,   dampf: 1.0, schein: 0.6, farbe: "255,206,150", rattern: 0.5, art: "gleis" },
+    keiner: { staub: 0,   funken: 0,   streifen: 0,   dampf: 0,   schein: 0,   farbe: "255,255,255", rattern: 0,   art: "" }
   };
+
+  /* WAS DARF WACKELN — UND WAS AUF KEINEN FALL.
+     Nicht <body>: eine transform dort reisst jede Schicht mit
+     „position: fixed" von ihrem Platz, und genau das war der
+     gemeldete Sprung nach oben. Gewackelt wird nur der
+     CHATVERLAUF. Er ist ein eigener Kasten weit unter der
+     Filmschicht; was in ihm passiert, kann den Film nicht
+     verschieben. Gemessen in werkzeug/pruefe-film-platz.js. */
+  function rattelZiel() {
+    return document.getElementById("lcVerlauf")
+        || document.querySelector(".lc-chat-verlauf")
+        || null;
+  }
 
   function kraftBei(kurve, t) {
     if (!kurve || !kurve.length) return 0;
@@ -424,6 +474,14 @@
 
       function weg() {
         if (LAEUFT === s) LAEUFT = null;
+        /* Der Verlauf darf auf keinen Fall schief stehen bleiben. */
+        try {
+          var r = rattelZiel();
+          if (r && /translate3d/.test(r.style.transform || "")) {
+            r.style.transform = (r.style.transform || "").replace(/\s*translate3d\([^)]*\)/g, "");
+            r.style.willChange = "";
+          }
+        } catch (e) {}
         s.style.transition = "opacity .5s";
         s.style.opacity = "0";
         setTimeout(function () { try { s.remove(); } catch (e) {} }, 520);
@@ -441,9 +499,9 @@
       /* ERST HOLEN. Solange dreht sich ein Ring. */
       var alphaWeg = kannAlphaWebm();
       var url = alphaWeg ? d.webm : d.maske;
-      var ring = warten(s);
-      return datei(url).then(function (quelle) {
-        try { ring.remove(); } catch (e) {}
+      var balken = warten(s);
+      return datei(url, balken.stand).then(function (quelle) {
+        balken.weg();
         if (!document.body.contains(s)) return { art: "abgebrochen" };
 
         var profil = PROFILE[d.wirkung] || PROFILE.keiner;
@@ -459,12 +517,34 @@
 
         var teilchen = (profil.staub || profil.funken || profil.streifen || profil.dampf)
           ? teilchenSchicht(s, profil) : null;
-        var laeuftWirkung = Boolean(d.staerke && d.staerke.length) && (teilchen || schein);
+        var rattel = profil.rattern ? rattelZiel() : null;
+        var rattelVorher = rattel ? (rattel.style.transform || "") : "";
+        if (rattel) rattel.style.willChange = "transform";
+        var laeuftWirkung = Boolean(d.staerke && d.staerke.length) && (teilchen || schein || rattel);
+
+        function rattelAus() {
+          if (!rattel) return;
+          rattel.style.transform = rattelVorher;
+          rattel.style.willChange = "";
+        }
 
         function wirkung() {
-          if (!laeuftWirkung || !document.body.contains(s)) return;
+          if (!laeuftWirkung || !document.body.contains(s)) { rattelAus(); return; }
           var t = v.currentTime || 0;
           var k = kraftBei(d.staerke, t);
+          if (rattel) {
+            /* Zwei Schwingungen mit krummem Verhältnis — eine
+               einzelne Frequenz klänge wie ein Motor. Beim Zug
+               ist der Ausschlag klein und gleichmässig (Gleis),
+               beim T-Rex folgt er den Tritten (Stoss). */
+            var a1 = profil.art === "gleis"
+              ? (0.5 + k * 1.6) * profil.rattern
+              : k * k * 6 * profil.rattern;
+            var dx = Math.sin(t * 61) * a1 + Math.sin(t * 37) * a1 * 0.6;
+            var dy = Math.cos(t * 53) * a1 * 0.8 + Math.sin(t * 89) * a1 * 0.4;
+            rattel.style.transform = rattelVorher
+              + " translate3d(" + dx.toFixed(2) + "px," + dy.toFixed(2) + "px,0)";
+          }
           if (schein) schein.style.opacity = (0.08 + 0.55 * k * profil.schein).toFixed(3);
           if (teilchen) teilchen.zeichnen(k);
           /* SANFT AUFHOEREN. „dass das nicht abrupt aufhört." */
@@ -474,7 +554,7 @@
         }
         if (laeuftWirkung) requestAnimationFrame(wirkung);
 
-        v.addEventListener("ended", function () { laeuftWirkung = false; });
+        v.addEventListener("ended", function () { laeuftWirkung = false; rattelAus(); });
         v.addEventListener("ended", weg);
 
         /* GEHT DAS VIDEO NICHT, DANN WENIGSTENS DAS STANDBILD. */
@@ -510,7 +590,7 @@
         }
         return { art: alphaWeg ? "webm" : "maske", schicht: s, video: v, wirkung: d.wirkung || "keiner" };
       }).catch(function (e) {
-        try { ring.remove(); } catch (x) {}
+        try { balken.weg(); } catch (x) {}
         try { weg(); } catch (x) {}
         throw e;
       });

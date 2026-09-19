@@ -60,6 +60,15 @@ Wer doch einmal andere Werte braucht:
 AEHNLICH=0.20 WEICH=0.06 bash werkzeug/film-freistellen.sh ~/x.mp4 x gruen
 ```
 
+## Grösse: 400 Punkte breit, crf 46
+
+Gemessen am Löwen, dem schwersten der fünf: 540 Punkte/crf 38 = 5,7 MB,
+480/crf 40 = 4,1 MB, **400/crf 46 = 1,9 MB**. 400 Punkte entsprechen
+etwa der Breite eines Telefons — mehr sieht dort niemand. Alle fünf
+Filme zusammen wiegen jetzt 5,9 MB statt 15,5 MB; sie werden beim
+Betreten des Klassenzimmers im Hintergrund vorgeladen, einer nach dem
+anderen, und bei „Datensparen" oder im 2G-Netz gar nicht.
+
 ## Der Ton bleibt drin
 
 Bis Fassung 330 warf die Kette die Tonspur weg (`-an`), und im Chat lief
@@ -68,6 +77,13 @@ Opus im WebM, AAC im MP4 —, der Spieler spielt ihn, und der Jubel des
 gezeichneten Geschenks schweigt, sobald ein Film läuft. Erlaubt ein
 Telefon Ton erst nach einer Berührung, läuft der Film stumm weiter
 statt gar nicht; `/befund` sagt dann, dass es so war.
+
+**Gleich laut.** Gemeldet war „der Ton ist inkonsistent, am Anfang ist
+er da, dann wird er dünner". Gemessen stimmte das, und es lag an den
+Quellen: T-Rex −15,1 dB, Löwe −14,0, Lok −14,5, Adler und zweite Lok
+−19,5 — über fünf Stufen Unterschied zwischen zwei Geschenken.
+`loudnorm` (EBU R128, −16 LUFS) zieht das gerade; nachher liegen alle
+fünf zwischen −15,7 und −17,4 dB.
 
 ## Welcher Effekt zu welchem Film
 
@@ -82,12 +98,18 @@ gehört unter schwere Füsse und sonst nirgends:
 | `dampf` | Dampfmaschine (Lok) | aufsteigende Dampfwolken |
 | `keiner` | alles andere | nur der Film |
 
-**Gewackelt wird nirgends.** Das Beben lag als `transform` auf `<body>` —
+Beim T-Rex und bei der Lok geht zusätzlich der **Chatverlauf** leicht
+mit: beim Dino den Tritten folgend, bei der Lok als feines
+gleichmässiges Zittern wie über Schienenstösse. Verschoben wird dabei
+**nur der Verlaufskasten** — nie `<body>` und nie die Filmschicht.
+
+**Am Dokument wird nie gewackelt.** Das Beben lag als `transform` auf `<body>` —
 und sobald ein Vorfahr eine `transform` hat, gilt `position: fixed`
 nicht mehr gegenüber dem Bildschirm, sondern gegenüber diesem Vorfahren.
 Die Filmschicht sprang dadurch beim ersten Stoss nach oben und beim
-Nachlassen zurück. Gemessen wird das jetzt in
-`werkzeug/pruefe-film-platz.js`: 457 Messungen, Spanne 0 Punkte.
+Nachlassen zurück. Gemessen wird das jetzt in `werkzeug/pruefe-film-platz.js`: während die
+Lok läuft und der Chat rattert, 456 Messungen der Filmschicht, Spanne
+**0 Punkte** — bei 419 verschiedenen Lagen des Chatverlaufs.
 
 ## Warum zwei Videodateien
 

@@ -98,9 +98,12 @@ fi
 # Der erste echte Film kam mit 720x1280 herein und ergab 11,6 MB.
 # Das laedt auf einem Handy im Mobilfunk quaelend lange — und
 # ueber einem Chat wird das Bild ohnehin auf Bildschirmbreite
-# gezogen. 540 Punkte Breite sehen dort genauso aus und wiegen
-# einen Bruchteil. Andere Breite als fuenfter Wert.
-BREITE="${5:-480}"
+# gezogen. 400 Punkte Breite entsprechen etwa der Breite eines
+# Telefons; mehr sieht dort niemand. Gemessen am Loewen, dem
+# schwersten der fuenf: 540 Punkte/crf 38 = 5,7 MB, 480/crf 40 =
+# 4,1 MB, 400/crf 46 = rund 2,0 MB. Andere Breite als fuenfter
+# Wert, andere Guete ueber GUETE=…
+BREITE="${5:-400}"
 WIRKUNG="${6:-keiner}"
 VERKLEINERN=""
 if [ "$BREITE" != "0" ]; then
@@ -123,11 +126,23 @@ fi
 # Kanten weich machen: sonst treppt der Umriss.
 KETTE="${VERKLEINERN}format=rgba,${SCHLUESSEL}${ENTFAERBEN}${AUSLAUF},format=yuva420p"
 
+# GLEICH LAUT — GEMELDET: „Der Ton ist immer ein bisschen
+# inkonsistent, am Anfang scheint er da zu sein, dann wird er
+# schwaecher oder duenner."
+# Gemessen stimmt das, und es liegt an den Quellen: der T-Rex
+# kommt mit -15,1 dB mittlerer Lautheit herein, der Loewe mit
+# -14,0, die Lok mit -14,5, Adler und zweite Lok mit -19,5. Das
+# sind ueber fuenf Stufen Unterschied zwischen zwei Geschenken.
+# loudnorm rechnet jeden Film auf dieselbe Lautheit (EBU R128,
+# -16 LUFS) und haelt auch INNERHALB eines Films die Schwankung
+# klein. Die Spitze bleibt unter -1,5 dB, damit nichts zerrt.
+TONKETTE="loudnorm=I=-16:TP=-1.5:LRA=11"
+
 echo "1/4  freistellen (${ART}) …"
 "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \
   -vf "$KETTE" -c:v libvpx-vp9 -pix_fmt yuva420p -auto-alt-ref 0 \
-  -b:v 0 -crf "${GUETE:-40}" -row-mt 1 -deadline good -cpu-used 2 \
-  -c:a libopus -b:a 96k -ac 2 "$ZIEL/$NAME.webm"
+  -b:v 0 -crf "${GUETE:-46}" -row-mt 1 -deadline good -cpu-used 2 \
+  -af "$TONKETTE" -c:a libopus -b:a 72k -ac 2 "$ZIEL/$NAME.webm"
 
 # -map 0:a:0? ist kein Zierrat: sobald filter_complex im Spiel ist,
 # sucht ffmpeg sich KEINE Tonspur mehr von selbst — sie faellt
@@ -139,8 +154,8 @@ echo "2/4  Safari-Fassung (Bild und Maske nebeneinander) …"
 [a]format=yuv420p[bild];\
 [b]alphaextract,format=yuv420p[maske];\
 [bild][maske]hstack=inputs=2,format=yuv420p" \
-  -map 0:a:0? -c:v libx264 -preset slow -crf 30 -movflags +faststart \
-  -c:a aac -b:a 96k -ac 2 "$ZIEL/$NAME-maske.mp4"
+  -map 0:a:0? -c:v libx264 -preset slow -crf 32 -movflags +faststart \
+  -af "$TONKETTE" -c:a aac -b:a 80k -ac 2 "$ZIEL/$NAME-maske.mp4"
 
 echo "3/4  Vorschaubild …"
 "$FF" -y -hide_banner -loglevel error -i "$QUELLE" \

@@ -18947,6 +18947,35 @@
   function lcFilmDa(name) {
     return Boolean(lcFilmNamen && name && lcFilmNamen.indexOf(String(name)) >= 0);
   }
+  /* ALLE FILME SCHON HOLEN, WAEHREND MAN MIKROFON UND KAMERA
+     EINSTELLT.
+     GEWÜNSCHT: „Wenn man ins Klassenzimmer reingeht, kannst du alle
+     diese Dateien schon vorgeladen haben — wenn man sein Mikrofon
+     und Kamera einstellt, dass alles schon da ist."
+
+     Genau dann ist Zeit dafür: man tippt ohnehin ein paar Sekunden
+     an den Knöpfen herum. Geholt wird EINER NACH DEM ANDEREN, nicht
+     alle gleichzeitig — sonst nimmt das Vorladen der ersten
+     Sprachnachricht die Leitung weg. Und nicht bei „Datensparen"
+     und nicht im langsamen Netz: dort wäre es eine Zumutung, fünf
+     Filme ungefragt zu ziehen. Wer dann ein Geschenk schickt, holt
+     seinen Film eben in dem Moment — mit Balken. */
+  let lcFilmeVorgeladen = false;
+  function lcFilmeVorladen(namen) {
+    if (lcFilmeVorgeladen || !namen || !namen.length) return;
+    try {
+      const n = navigator.connection;
+      if (n && (n.saveData || /^(slow-2g|2g)$/.test(n.effectiveType || ""))) return;
+    } catch (e) {}
+    lcFilmeVorgeladen = true;
+    brDatei("filmspieler.js").then(() => {
+      if (!window.DMA_FILM || !window.DMA_FILM.vorladen) return;
+      namen.reduce((kette, name) =>
+        kette.then(() => window.DMA_FILM.vorladen(name)).catch(() => null),
+        Promise.resolve());
+    }).catch(() => {});
+  }
+
   function lcFilmSpielen(name, opt) {
     if (!name) return Promise.resolve(false);
     return lcFilmListeHolen().then((liste) => {
@@ -18973,6 +19002,7 @@
          den Fall ab, in dem der Jubel schon lief, bevor die Liste
          da war (allererstes Geschenk nach dem Laden). */
       lcGeraeuscheStoppen();
+      try { livechatAnSeinenPlatz(true); } catch (err) {}
       return window.DMA_FILM.spielen(name, opt || {}).then(() => { lcFilmGrund = ""; return true; })
         .catch((e) => { lcFilmGrund = String((e && e.message) || e); return false; });
     });
@@ -22769,7 +22799,7 @@
          ob ein Geschenk seinen Jubel spielen darf und ob es sich
          lohnt, den Abspieler nachzuladen. Wer sie erst dann holt,
          wenn das erste Geschenk kommt, hoert einmal beides. */
-      lcFilmListeHolen();
+      lcFilmListeHolen().then((namen) => lcFilmeVorladen(namen));
       if (LiveChat.beiFilm) {
         LiveChat.beiFilm((name, melden) => {
           lcFilmSpielen(name).then((lief) => {
@@ -24152,6 +24182,14 @@
     /* Konfetti gehört nicht ins Chatkästchen, sondern über die ganze
        Seite — sonst sieht man es kaum. */
     if (e.ganzeSeite) {
+      /* ERST DEN RAUM GERADERUECKEN, DANN DIE ANIMATION.
+         GEWÜNSCHT: „Weil zur Eingabe die Eingabe immer ein bisschen
+         nach oben springt — dass der Chat wieder in die Position
+         springt, wo er ursprünglich ist, damit man die Animation
+         schön geniessen kann und nicht erst hochscrollen muss."
+         Das ist dieselbe Rechnung wie beim Klick auf den Reiter,
+         also genau EINE Stelle, und sie rechnet absolut. */
+      try { livechatAnSeinenPlatz(true); } catch (err) {}
       /* Ein kurzer Ton dazu, wo er passt — nicht länger als eine
          knappe Sekunde, die Animation läuft weiter.
 

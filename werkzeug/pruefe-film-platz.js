@@ -68,7 +68,7 @@ const SOLL = { trex: "erde", loewe: "glanz", adler: "wind", lok: "dampf", lok2: 
   console.log("\nBLEIBT DER FILM AN SEINEM PLATZ?  (" + NAME + ")\n");
 
   await pg.evaluate((n) => {
-    window.__fp = { stellen: [], wartet: 0, zeit: 0, dauer: 0, stumm: null, schicht: 0 };
+    window.__fp = { stellen: [], chat: [], wartet: 0, zeit: 0, dauer: 0, stumm: null, schicht: 0 };
     return window.LiveChat.pruefBefehl("/film " + n);
   }, NAME);
 
@@ -97,6 +97,10 @@ const SOLL = { trex: "erde", loewe: "glanz", adler: "wind", lok: "dampf", lok2: 
       const rb = b ? b.getBoundingClientRect() : r;
       window.__fp.stellen.push([Math.round(r.top), Math.round(r.left),
                                 Math.round(rb.top), Math.round(rb.left)]);
+      /* Und rattert der Chatverlauf wirklich? Bei „dampf" soll er
+         die ganze Zeit leicht zittern — aber eben NUR er. */
+      const ch = document.getElementById("lcVerlauf");
+      if (ch) window.__fp.chat.push(ch.style.transform || "");
       window.__fp.zeit = (l.querySelector("video") || {}).currentTime || window.__fp.zeit;
       window.__fp.schicht = window.__fp.stellen.length;
       requestAnimationFrame(sieh);
@@ -121,6 +125,11 @@ const SOLL = { trex: "erde", loewe: "glanz", adler: "wind", lok: "dampf", lok2: 
   const koerper = await pg.evaluate(() => document.body.style.transform || "");
   pruefe("am Dokument haengt keine Verschiebung", koerper === "",
     koerper ? "body.transform = " + koerper : "leer");
+
+  const versch = m.chat.filter((t) => /translate3d/.test(t));
+  const eigen = new Set(versch).size;
+  pruefe("der Chatverlauf rattert dabei mit (und nur er)", eigen > 5,
+    versch.length + " von " + m.chat.length + " Messungen verschoben, " + eigen + " verschiedene Lagen");
 
   console.log("\nLAEUFT ER DURCH, UND MIT TON?\n");
   pruefe("kein einziger Aussetzer", m.wartet === 0, m.wartet + " Aussetzer");
