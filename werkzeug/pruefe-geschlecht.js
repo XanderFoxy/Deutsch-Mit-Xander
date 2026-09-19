@@ -31,6 +31,13 @@ const bauen = new Function("zustand", "fokusAn", "liveHalter",
   teil1 + "\n" +
   "var liveLaeuftGerade = null;\n" +
   "function liveLaeuft(w) { liveLaeuftGerade = w || null; }\n" +
+  /* darfSprechen() fragt inzwischen auch, ob die Leitung HAENGT
+     (liveHaengtFest) — das kam mit dem Wachhund fuer den gruenen
+     Balken dazu. Diese Sonde schneidet nur ein Stueck aus der Datei
+     heraus; die Funktion liegt ausserhalb davon. Hier steht sie
+     deshalb als Attrappe: „haengt nie". Sonst bricht die Sonde ab,
+     obwohl am Geschlecht nichts kaputt ist. */
+  "function liveHaengtFest() { return false; }\n" +
   teil2 + "\n" +
   "return { geschlechtMerken: geschlechtMerken, geschlechtVon: geschlechtVon," +
   " fuerwort: fuerwort, bisFertig: bisFertig, wennFertig: wennFertig," +

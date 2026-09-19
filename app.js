@@ -25275,7 +25275,12 @@
                eben entstanden ist. „Alt" heisst hier dasselbe wie bei
                den Animationen: was vor dem Betreten geschrieben wurde,
                ist Vergangenheit und bleibt still. */
-            const frisch = (n.zeit || 0) >= livechatEffekteAb - 1500;
+            /* DIESELBE FALLE WIE BEI DEN ANIMATIONEN — siehe dort:
+               Wird nach der Uhrzeit DES ABSENDERS gerechnet, gilt eine
+               Sprachnachricht von jemandem mit nachgehender Uhr als
+               Vergangenheit und bleibt stumm. Es zählt deshalb auch
+               hier, wann sie ANGEKOMMEN ist. */
+            const frisch = (n.angekommen || n.zeit || 0) >= livechatEffekteAb - 1500;
             /* WER SPIELT, SPIELT ALLEIN.
                Seit alle Sprachnachrichten durch die Warteschlange
                laufen (siehe livechat.js), darf die Chatzeile sie

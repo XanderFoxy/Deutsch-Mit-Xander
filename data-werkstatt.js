@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 29 — GEFUNDEN: Emmis nachgehende Uhr hat alle Animationen stummgeschaltet (v320)",
+  stand: "Runde 30 — dieselbe Falle an zwei weiteren Stellen (v321)",
 
   inArbeit: [
-    { seit: "2026-09-19T02:29",
+    { seit: "2026-09-19T02:43",
       text: "Cloudflare-API-Token fehlt noch für das Klassenzimmer-Relais" },
-    { seit: "2026-09-19T02:29",
+    { seit: "2026-09-19T02:43",
       text: "21 Tutor-Stücke warten noch auf deine Stimme" },
-    { seit: "2026-09-19T02:29",
+    { seit: "2026-09-19T02:43",
       text: "Sitzende Seitenansicht fürs Profil" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T02:29",
-      text: "Ob eine Zeile gerade eben ist, zählt jetzt nach der ANKUNFT — nicht nach der Uhr des Absenders" },
-    { seit: "2026-09-19T02:29",
-      text: "Damit kommen Boxen, Umarmen und Lecken von Emmi wieder an" },
-    { seit: "2026-09-19T02:29",
-      text: "Der Befund sagt jetzt auch, wie man eine Aufgabe stellt, wenn keine offen ist" },
+    { seit: "2026-09-19T02:43",
+      text: "Sprachnachrichten von jemandem mit nachgehender Uhr blieben stumm — jetzt zählt auch dort die Ankunft" },
+    { seit: "2026-09-19T02:43",
+      text: "Alle 46 Sonden laufen grün, zwei waren kaputt und sind repariert" },
+    { seit: "2026-09-19T02:43",
+      text: "Lehrer-Gedächtnis wieder zurückgenommen: der Rang gehört dem Konto, nicht einem Merker" },
   ],
 };

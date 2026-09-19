@@ -5070,30 +5070,30 @@ window.LiveChat = (function () {
      Jetzt wird im Augenblick der Frage nachgesehen, beim Konto
      selbst. Die Marke bleibt als Reserve stehen, falls das Konto
      gerade nicht antwortet. */
-  /* EINMAL LEHRER, IMMER LEHRER — jedenfalls in dieser Sitzung.
+  /* WARUM HIER KEIN „EINMAL LEHRER, IMMER LEHRER" STEHT
      -----------------------------------------------------------
-     Das Profil steht beim Betreten oft noch nicht: Backend lädt es
-     nach. Wer in dem Augenblick hereinkommt, ist für einen Moment
-     KEIN Betreiber — und wenn in genau diesem Moment eine Zeile
-     gezeichnet wird, fehlt an ihr der Notenknopf, und sie wird nie
-     wieder angefasst (die Zeilen merken sich, wie sie aussahen).
-     Das ist ein sehr guter Kandidat dafuer, warum der Knopf bei ihm
-     immer wieder ausblieb, obwohl im Pruefstand alles stimmte.
+     Ich hatte das kurz eingebaut (v318), um eine echte Lücke zu
+     schliessen: Beim Betreten ist das Profil oft noch nicht geladen,
+     und in diesem Moment ist man für einen Augenblick kein Betreiber.
 
-     Deshalb wird ein einmal erkannter Betreiber gemerkt. Nach unten
-     faellt niemand: das Gegenteil — jemanden versehentlich zum
-     Lehrer zu machen — kann daraus nicht entstehen, denn gemerkt
-     wird nur, was vorher wirklich „ja" war. */
-  var betreiberGewesen = false;
+     werkzeug/pruefe-betreiber.js hat es zu Recht rot gemacht: Wer sich
+     abmeldet, bliebe damit Lehrer bis zum Neuladen. Der Rang gehört
+     dem Konto, nicht einem Gedächtnis — genau deshalb gibt es diese
+     Sonde.
+
+     Die Lücke ist trotzdem zu: Nicht hier, sondern an der Stelle, an
+     der sie wirklich weh tat. Eine Chatzeile merkt sich, wie sie
+     aussah, und wird nur neu gebaut, wenn sich diese Marke ändert. In
+     der Marke steht jetzt AUCH, ob ich Lehrer bin (app.js). Wird der
+     Rang eine Sekunde später bekannt, ändert sich die Marke, und die
+     Zeile bekommt ihren Notenknopf nachgereicht. */
   function binBetreiber() {
-    if (betreiberGewesen) return true;
     var B = konto();
     try {
-      if (B && B.isOwner && B.isOwner()) { betreiberGewesen = true; return true; }
-      if (B && B.canModerate && B.canModerate()) { betreiberGewesen = true; return true; }
+      if (B && B.isOwner && B.isOwner()) return true;
+      if (B && B.canModerate && B.canModerate()) return true;
     } catch (e) {}
-    if (zustand.betreiber) { betreiberGewesen = true; return true; }
-    return false;
+    return Boolean(zustand.betreiber);
   }
   /* DIE ZWEITE URSACHE, und sie war ebenso meine:
      GEMELDET: „Ich werde nicht mehr als Lehrer erkannt in meinem
