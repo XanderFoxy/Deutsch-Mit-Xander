@@ -49,24 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 30 — dieselbe Falle an zwei weiteren Stellen (v321)",
+  stand: "Runde 22 — alle Sonden auf einmal",
 
   inArbeit: [
-    { seit: "2026-09-19T02:43",
-      text: "Cloudflare-API-Token fehlt noch für das Klassenzimmer-Relais" },
-    { seit: "2026-09-19T02:43",
-      text: "21 Tutor-Stücke warten noch auf deine Stimme" },
-    { seit: "2026-09-19T02:43",
+    { seit: "2026-09-19T02:56",
       text: "Sitzende Seitenansicht fürs Profil" },
+    { seit: "2026-09-19T02:56",
+      text: "21 Tutor-Stücke warten auf Alex' Stimme" },
+    { seit: "2026-09-19T02:56", nurBetreiber: true,
+      text: "Cloudflare-API-Token für das Klassenzimmer-Relais fehlt noch" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T02:43",
-      text: "Sprachnachrichten von jemandem mit nachgehender Uhr blieben stumm — jetzt zählt auch dort die Ankunft" },
-    { seit: "2026-09-19T02:43",
-      text: "Alle 46 Sonden laufen grün, zwei waren kaputt und sind repariert" },
-    { seit: "2026-09-19T02:43",
-      text: "Lehrer-Gedächtnis wieder zurückgenommen: der Rang gehört dem Konto, nicht einem Merker" },
+    { seit: "2026-09-19T02:56",
+      text: "Sammel-Durchlauf für alle 55 Sonden (werkzeug/alle-pruefen.sh)" },
+    { seit: "2026-09-19T02:56",
+      text: "Fehlalarm behoben: „FEHL“ steckte auch in „BEFEHL“" },
+    { seit: "2026-09-19T02:56",
+      text: "Rückgabewert wird jetzt wirklich von der Sonde gelesen, nicht von grep" },
+    { seit: "2026-09-19T02:56",
+      text: "Alle 55 Sonden laufen zusammen durch: 55 grün, 0 rot" },
   ],
 };
