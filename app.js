@@ -18910,6 +18910,28 @@
      schickt. Bis sie da ist, laeuft der Rest der Animation schon —
      die Strahlen und die Kiste brauchen sie nicht.
      ============================================================ */
+  /* =========================================================
+     DEN FILMSPIELER HOLEN — ERST WENN ER GEBRAUCHT WIRD
+     ---------------------------------------------------------
+     filmspieler.js ist klein, faehrt aber trotzdem nicht bei
+     jedem Seitenaufruf mit: die allermeisten Besuche kommen ganz
+     ohne Film aus. Geholt wird er beim ersten Mal, danach liegt
+     er da.
+     ========================================================= */
+  let lcFilmspielerDa = null;
+  function lcFilmSpielen(name, opt) {
+    if (!name) return Promise.resolve(false);
+    if (!lcFilmspielerDa) {
+      lcFilmspielerDa = window.DMA_FILM
+        ? Promise.resolve(true)
+        : brDatei("filmspieler.js").then(() => true).catch(() => false);
+    }
+    return lcFilmspielerDa.then((da) => {
+      if (!da || !window.DMA_FILM) return false;
+      return window.DMA_FILM.spielen(name, opt || {}).then(() => true).catch(() => false);
+    });
+  }
+
   let lcGgTiere = null;
   function lcGgLaden() {
     if (lcGgTiere) return Promise.resolve(lcGgTiere);
@@ -22643,6 +22665,16 @@
       /* /probe spielt eine Animation SOFORT auf dem eigenen Schirm —
          ohne Nachricht, ohne Netz. Damit lässt sich in einer Sekunde
          unterscheiden, ob das Zeichnen hakt oder der Weg dorthin. */
+      /* /film zeigt den Film ZUERST bei dem, der ihn schickt — damit
+         er sofort merkt, wenn es ihn gar nicht gibt, und die anderen
+         nicht auf eine leere Zeile schauen. Der Rueckgabewert sagt
+         dem Chat, ob es den Film ueberhaupt gibt. */
+      if (LiveChat.beiFilm) {
+        LiveChat.beiFilm((name) => {
+          lcFilmSpielen(name);
+          return true;
+        });
+      }
       if (LiveChat.beiEffekt) {
         LiveChat.beiEffekt((was, ichName) => {
           const name = String(was || "").toLowerCase();
@@ -25444,6 +25476,22 @@
       const alt = (n.angekommen || n.zeit || 0) < livechatEffekteAb - 1500;
       if (alt) z.classList.add("lc-alt");
 
+      /* =========================================================
+         EIN FILM AN DER ZEILE — DIE ECHTE ANIMATION
+         ---------------------------------------------------------
+         GEWUENSCHT: „Wie bei TikTok, wo ploetzlich ein Loewe
+         herumlaeuft … das liegt einfach nur ueber dem Chat."
+
+         Verschickt wird nur der Name. Die Datei holt sich jedes
+         Geraet selbst — und der Abspieler faehrt beim Start NICHT
+         mit, er wird erst geholt, wenn wirklich ein Film kommt.
+         Genau wie bei „alt" gilt: was vor dem Betreten geschrieben
+         wurde, laeuft nicht von selbst los. Sonst wuerde jeder, der
+         hereinkommt, von den Filmen der letzten Stunde erschlagen. */
+      if (n.film && !alt && !livechatEffektGespielt.has("film" + n.id)) {
+        livechatEffektGespielt.add("film" + n.id);
+        lcFilmSpielen(n.film);
+      }
       const eff = n.wirkung || (art === "fluester" ? "fluester" : "");
       if (art === "ruf" && !n.wirkung) {
         z.classList.add("lc-zeile-wirkt");

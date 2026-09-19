@@ -2875,6 +2875,7 @@ window.LiveChat = (function () {
         zeit: n.zeit || Date.now(), eigen: false, bild: n.bild || "",
         art: n.chatArt || "text",
         wirkung: n.wirkung || "",
+        film: n.film || "",
         /* WEN es trifft, muss mitkommen — sonst spielt die Umarmung
            beim Empfaenger auf allen Plaetzen statt auf dem richtigen. */
         wen: n.wen || "",
@@ -2939,7 +2940,8 @@ window.LiveChat = (function () {
            war genau diese eine Stelle uebersehen worden. */
         return { id: n.id, von: n.von, name: n.name, text: n.text, art: n.art || "text",
                  bild: n.bild || "", bildImChat: n.bildImChat || "", farbe: n.farbe || "",
-                 wirkung: n.wirkung || "", wen: n.wen || "", an: n.an || "", zeit: n.zeit };
+                 wirkung: n.wirkung || "", wen: n.wen || "", an: n.an || "",
+                 film: n.film || "", zeit: n.zeit };
       });
       /* Zu gross? Dann die Bilder herausnehmen, aeltester zuerst. */
       while (JSON.stringify(paket).length > VERLAUF_PAKET) {
@@ -7091,6 +7093,7 @@ window.LiveChat = (function () {
     { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note <Name> <1-6>", was: "Nur der Lehrer: eine Zensur von 1 bis 6 mit einem Wort dazu" },
     { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher <Name>", was: "Wer weitermacht, wenn der Lehrer den Raum verlässt" },
     { gr: "schule", w: "nachhoeren", kurz: "mitschrieb", nutzt: "/nachhören",  was: "Alles Gesprochene im Chat einblenden — zum Nachhören und Herunterladen" },
+    { gr: "spass",  w: "film",  kurz: "kino",       nutzt: "/film <Name>",   was: "Eine echte Film-Animation über den Chat legen — sie läuft bei allen im Raum" },
     { gr: "hilfe",  w: "diagnose", kurz: "befund", nutzt: "/diagnose",        was: "Was ist von hier aus erreichbar: Konto, Datenbank, Postfach, dein Rang" },
     { gr: "schule", w: "unterricht", kurz: "glocke", nutzt: "/unterricht [<Text>]", was: "Nur der Betreiber: die Einladung zum Unterricht in jedes Postfach, mit Link hierher" },
     { gr: "schule", w: "weg",        kurz: "zurueck",    nutzt: "/weg",         was: "Deine letzte Sprachnachricht zurückrufen — sie verschwindet bei allen" },
@@ -7663,6 +7666,10 @@ window.LiveChat = (function () {
   function anAlle(art, text, zusatz) {
     var n = eigeneZeile(art, text);
     if (zusatz && zusatz.wirkung) n.wirkung = zusatz.wirkung;
+    /* Der FILMNAME reist mit. Nur der Name — ein paar Zeichen; die
+       Datei holt sich jedes Geraet selbst. Faehrt er hier nicht mit,
+       sehen die anderen nur die Zeile und nie den Film. */
+    if (zusatz && zusatz.film) n.film = zusatz.film;
     /* WEN es angeht, steht an der Zeile selbst — nicht nur im Rundruf.
        Sonst sähe der Absender die Umarmung nicht, die er gerade
        verschickt hat: seine eigene Zeile entsteht nämlich hier und
@@ -8225,6 +8232,37 @@ window.LiveChat = (function () {
           + "Siehst du nichts, liegt es am Gerät (weniger Bewegung, alte Fassung), nicht am Chat."
         : "🧪 „" + was + "“ kenne ich nicht oder es gibt gerade keine Plätze. "
           + "Probier  /probe boxen  ,  /probe umarmen  oder  /probe lecken  — im Raum stehend.");
+    }
+    /* =========================================================
+       /film — DIE ECHTE ANIMATION UEBER DEN CHAT LEGEN
+       ---------------------------------------------------------
+       GEWUENSCHT: „Wie bei TikTok, wo ploetzlich ein Loewe
+       herumlaeuft … und ich moechte, dass die Leute sich solche
+       Animationen verdienen koennen."
+
+       Die Filme sind freigestellte Videos (siehe
+       filme/LIESMICH.md). Verschickt wird nur der NAME — ein paar
+       Zeichen. Jedes Geraet holt sich die Datei selbst, und zwar
+       erst dann, wenn sie wirklich gebraucht wird. Ein Video
+       durch den Chat zu schicken waere das Gegenteil: teuer,
+       langsam, und bei jedem noch einmal.
+       ========================================================= */
+    if (art === "film" || art === "kino") {
+      var fname = String(rest || "").trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+      if (!fname) {
+        return systemZeile("🎬 Welchen Film? Zum Beispiel  /film loewe  — die vorhandenen "
+          + "stehen im Ordner „filme“. Neue legt Alex dort ab.");
+      }
+      /* Erst auf dem eigenen Schirm zeigen, damit man sofort sieht,
+         ob es den Film ueberhaupt gibt — und dann erst allen. */
+      var lief = false;
+      try { lief = Boolean(zustand.filmRuf && zustand.filmRuf(fname, zustand.ichName)); } catch (e) {}
+      if (!lief) {
+        return systemZeile("🎬 Den Film „" + fname + "“ gibt es hier nicht. "
+          + "Er muss als filme/" + fname + ".webm vorliegen.");
+      }
+      return anAlle("aktion", zustand.ichName + " zeigt „" + fname + "“",
+                    { film: fname });
     }
     if (art === "box") {
       var wen4 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
@@ -9577,6 +9615,9 @@ window.LiveChat = (function () {
     /* Damit /probe die Animation direkt auslösen kann — die Bilder
        liegen in app.js, die Befehle hier. */
     beiEffekt: function (f) { zustand.effektRuf = f; },
+    /* Der Film kommt bei allen an — die Seite holt sich die Datei
+       selbst und spielt sie ab. */
+    beiFilm: function (f) { zustand.filmRuf = f; },
     beiEreignis: function (f) { zustand.ereignisRuf = f; },
     /* Nur fuer die Pruefung: die offene Aufgabe von aussen sehen. */
     pruefAufgabe: function () {

@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 22 — die Kette für echte Film-Animationen steht",
+  stand: "Runde 22 — /film legt die Animation über den Chat",
 
   inArbeit: [
-    { seit: "2026-09-19T05:10",
-      text: "Es fehlt nur noch ein Video von dir — Anleitung in filme/LIESMICH.md" },
-    { seit: "2026-09-19T05:10",
+    { seit: "2026-09-19T05:21",
+      text: "Es fehlt nur ein Video von dir — filme/LIESMICH.md, Prompts stehen im Chat" },
+    { seit: "2026-09-19T05:21",
       text: "21 Tutor-Stücke warten auf Alex' Stimme" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-19T05:10",
-      text: "Aus Grün wird Durchsichtigkeit: werkzeug/film-freistellen.sh" },
-    { seit: "2026-09-19T05:10",
-      text: "Safari-Fassung gleich mit — sonst sähen iPhones einen grünen Kasten" },
-    { seit: "2026-09-19T05:10",
-      text: "Nachgemessen im Browser: Ecken Alpha 0, Motiv Alpha 255, kein Grünstich" },
-    { seit: "2026-09-19T05:10",
-      text: "Tyrannosaurus: Zähne gerichtet, Brauenwulst, Kaumuskel" },
+    { seit: "2026-09-19T05:21",
+      text: "Befehl /film: die Animation läuft bei allen im Raum" },
+    { seit: "2026-09-19T05:21",
+      text: "Abspieler mit zweitem Weg fürs iPhone — Safari kann kein WebM mit Alpha" },
+    { seit: "2026-09-19T05:21",
+      text: "Nachgemessen: beide Wege liefern dieselben Bildpunkte" },
+    { seit: "2026-09-19T05:21",
+      text: "Die Kette aus Grün wird Durchsichtigkeit" },
   ],
 };
