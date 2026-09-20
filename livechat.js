@@ -942,6 +942,8 @@ window.LiveChat = (function () {
        Baustellenkran hat." Zwei weitere Reisen, gleiche Technik. */
     boot:     { wirkung: "boot",     satz: "schippert hin\u00fcber zu", emoji: "\u26f5" },
     kran:     { wirkung: "kran",     satz: "l\u00e4sst sich hin\u00fcberheben zu", emoji: "\ud83c\udfd7\ufe0f" },
+    /* GEWUENSCHT: „die Feuerreanimation am Rand des Profil rahmen." */
+    brennen:  { wirkung: "brennen",  satz: "setzt den Rahmen in Brand bei", emoji: "\ud83d\udd25" },
     huepfen:  { wirkung: "spielzug",   satz: "h\u00fcpft Platz f\u00fcr Platz zu", emoji: "\ud83c\udfb2" },
     /* GEWUENSCHT: „das Laufen von Nummer zu Nummer bis ans Ziel, wo
        man hin moechte … diese Springen-Animation wie auf dem
@@ -8742,6 +8744,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "laufen",  kurz: "",      nutzt: "/laufen 8",           was: "Feld f\u00fcr Feld zu Platz 8 laufen \u2014 geht auch mit /fahren 8" },
     { gr: "reden", w: "huepfen", kurz: "spielzug", nutzt: "/huepfen Name",     was: "Spielzug — dein Bild huepft Platz fuer Platz zu jemandem" },
     { gr: "reden", w: "katapult", kurz: "kata", nutzt: "/katapult Name",   was: "Katapult — der andere wird weggeschleudert" },
+    { gr: "reden", w: "brennen", kurz: "flammen", nutzt: "/brennen Name",
+      was: "Der Rahmen brennt \u2014 Flammen zuengeln am Rand des Profilbildes hoch" },
     { gr: "reden", w: "strohhalm", kurz: "halm", nutzt: "/strohhalm Name", was: "Strohhalm — der andere wird angesaugt" },
     { gr: "reden", w: "blubbern", kurz: "pusten", nutzt: "/blubbern Name", was: "Blubbern — in den Halm gepustet, das Bild blubbert" },
     { gr: "reden", w: "knuellen", kurz: "knuell", nutzt: "/knuellen Name", was: "Zerknüllen — das Bild knittert wie Papier und glaettet sich wieder" },

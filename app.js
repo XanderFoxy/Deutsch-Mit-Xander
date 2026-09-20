@@ -23713,6 +23713,9 @@
        Boot ... oder dass man einen Baustellenkran hat." */
     boot:           { ton: "boot",     dauer: 3000, laut: 0.45 },
     kran:           { ton: "kran",     dauer: 3000, laut: 0.45 },
+    /* Das Lagerfeuer-Geraeusch leiht sich der brennende Rahmen — es
+       liegt schon in ton/ und klingt nach echtem Holzfeuer. */
+    brennen:        { ton: "lagerfeuer", dauer: 4200, laut: 0.4 },
     kopfhoerer:     { ton: "noten",    dauer: 3200, laut: 0.45 },
     /* „das Fenster aufmachen soll auch nach Fenster oeffnen klingen." */
     luke:           { ton: "fensterauf", dauer: 3400, laut: 0.5 },
@@ -25147,6 +25150,7 @@
     /* GEWUENSCHT: „bei dem Strohhalm diese zwei Varianten" — saugen
        und blasen gehoeren zusammen und stehen deshalb unter einer
        Kachel, genau wie die Reisen und die Fenster. */
+    ["\ud83d\udd25", "Brennen", "brennen"],
     ["\ud83e\udd64", "Strohhalm", "strohhalm", false,
       [["\ud83e\udd64", "Saugen", "strohhalm"],
        ["\ud83e\uded7", "Blasen", "blubbern"]]],
@@ -27289,6 +27293,7 @@
     portal:   { zeichen: ["\ud83c\udf00"], wie: 4, klasse: "umarmen" },
     boot:     { zeichen: ["\u26f5"], wie: 4, klasse: "umarmen" },
     kran:     { zeichen: ["\ud83c\udfd7\ufe0f"], wie: 4, klasse: "umarmen" },
+    brennen:  { zeichen: ["\ud83d\udd25"], wie: 5, klasse: "umarmen" },
     halloween:{ ganzeSeite: true, wie: "halloween" },
     weihnachten:{ ganzeSeite: true, wie: "weihnachten" },
     geschenk:{ ganzeSeite: true, wie: "geschenk" },
@@ -30948,6 +30953,32 @@
   }
 
   /* --- DER STROHHALM ------------------------------------------------ */
+  /* --- DER RAHMEN BRENNT ---------------------------------------
+     GEWUENSCHT: „die Feuerreanimation am Rand des Profil rahmen" —
+     also nicht ein Lagerfeuer irgendwo im Raum, sondern Flammen,
+     die AM RAND des Profilbildes hochzuengeln. Das Bild selbst
+     bleibt frei; nur der Ring brennt, dazu ein warmer Schein und
+     ein paar aufsteigende Funken. */
+  function lcBrennen(wen) {
+    return lcAmPlatz(wen, "lc-brand", (schicht) => {
+      /* Zwoelf Zungen rund um den Rand — jede mit eigenem Takt,
+         sonst flackert alles im Gleichschritt und sieht gemalt aus. */
+      let zungen = "";
+      for (let i = 0; i < 12; i++) {
+        zungen += '<i class="lc-brand-zunge" style="--dreh:' + (i * 30)
+          + "deg;animation-delay:" + (i * 0.11).toFixed(2)
+          + "s;animation-duration:" + (0.62 + (i % 4) * 0.09).toFixed(2) + 's"></i>';
+      }
+      let funken = "";
+      for (let i = 0; i < 7; i++) {
+        funken += '<i class="lc-brand-funke" style="left:' + (12 + i * 12)
+          + "%;animation-delay:" + (0.2 + i * 0.32).toFixed(2) + 's"></i>';
+      }
+      schicht.innerHTML = '<i class="lc-brand-schein"></i>'
+        + '<span class="lc-brand-ring">' + zungen + "</span>" + funken;
+    }, 4200, "brennen");
+  }
+
   function lcStrohhalm(wen) {
     return lcAmPlatz(wen, "lc-strohhalm", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
@@ -33477,7 +33508,7 @@
     paintfleck: 1, ei: 1, fahren: 1, spielzug: 1, pacjagd: 1, stoerung: 1,
     aufessen: 1, lotto: 1, sanduhr: 1, katapult: 1, strohhalm: 1, blubbern: 1,
     knuell: 1, rollo: 1, lamellen: 1, peitsche: 1, gemeinsam: 1, schneekugel: 1,
-    flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1,
+    flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1, brennen: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
@@ -33574,6 +33605,7 @@
       if (art === "sanduhr" && lcSanduhrTausch(wenZ, (nachricht && nachricht.eigen)
             ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "katapult" && lcKatapult(wenZ)) return;
+      if (art === "brennen" && lcBrennen(wenZ)) return;
       if (art === "strohhalm" && lcStrohhalm(wenZ)) return;
       if (art === "blubbern" && lcBlubbern(wenZ)) return;
       if (art === "knuell" && lcZerknuellen(wenZ)) return;

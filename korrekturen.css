@@ -16010,6 +16010,88 @@ body.lc-schreibt .tutor-reiter {
   100% { opacity: 0; transform: translate(-50%, -50%) scale(.1) rotate(720deg); }
 }
 /* -----------------------------------------------------------------
+   DER RAHMEN BRENNT
+   GEWÜNSCHT: „die Feuerreanimation am Rand des Profil rahmen."
+   Nicht das Bild brennt, sondern sein Rand: zwölf Zungen rund um
+   den Kreis, jede mit eigenem Takt, dazu ein warmer Schein und
+   Funken, die hochsteigen. Der Weichzeichner nimmt der Zeichnung
+   die harte Kante — Feuer hat keine Umrisslinie.
+   ----------------------------------------------------------------- */
+.lc-brand { pointer-events: none; }
+/* Der Schein ist ein RING, keine Scheibe: innen liegt das Bild,
+   und das soll frei bleiben. */
+.lc-brand-schein {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255, 90, 0, 0) 0 38%,
+    rgba(255, 160, 40, .45) 47%,
+    rgba(255, 110, 10, .3) 58%,
+    rgba(255, 90, 0, 0) 72%);
+  animation: lcBrandScheinR34 .9s ease-in-out infinite alternate;
+}
+.lc-brand-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  filter: blur(.7px);
+}
+.lc-brand-zunge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 19%;
+  height: 78%;
+  margin: 0;
+  /* DER FUSS LIEGT IN DER MITTE, DIE FLAMME AM RAND.
+     Die Zunge dreht sich um ihren Fusspunkt (transform-origin
+     50% 100%), und der sitzt im Kreismittelpunkt — so zeigt jede
+     Zunge nach aussen. Gemalt wird aber erst ab 60 % ihrer Laenge:
+     das ist genau der Rand des Profilbildes. Alles darunter bliebe
+     sonst ueber dem Gesicht liegen, und gemeldet war „am Rand des
+     Profil rahmen", nicht mitten darin. */
+  transform-origin: 50% 100%;
+  transform: translate(-50%, -100%) rotate(var(--dreh, 0deg));
+  animation-name: lcBrandZungeR34;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+  animation-direction: alternate;
+  background: linear-gradient(to top,
+    rgba(255, 90, 0, 0) 0 54%,
+    rgba(255, 246, 200, .95) 62%,
+    rgba(255, 186, 52, .95) 74%,
+    rgba(244, 96, 18, .8) 88%,
+    rgba(190, 36, 0, 0) 100%);
+  border-radius: 48% 48% 40% 40% / 60% 60% 40% 40%;
+}
+.lc-brand-funke {
+  position: absolute;
+  bottom: 14%;
+  width: 5%;
+  height: 5%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff4c6, #ff9a2e 60%, rgba(255, 120, 0, 0) 75%);
+  animation: lcBrandFunkeR34 1.5s ease-out infinite;
+}
+@keyframes lcBrandScheinR34 {
+  from { opacity: .6; transform: scale(.96); }
+  to   { opacity: 1; transform: scale(1.05); }
+}
+@keyframes lcBrandZungeR34 {
+  from { transform: translate(-50%, -100%) rotate(var(--dreh, 0deg)) scaleY(.72) scaleX(1.05); opacity: .75; }
+  to   { transform: translate(-50%, -100%) rotate(var(--dreh, 0deg)) scaleY(1.12) scaleX(.9); opacity: 1; }
+}
+@keyframes lcBrandFunkeR34 {
+  0%   { opacity: 0; transform: translateY(0) scale(.5); }
+  18%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-190%) scale(.2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-brand { display: none; }
+}
+
+/* -----------------------------------------------------------------
    DAS BOOT UND DER BAUSTELLENKRAN
    GEWÜNSCHT: „eine Variante mit dem Flugzeug … und eine Variante
    vielleicht noch mit einem Boot … oder dass man einen
