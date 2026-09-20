@@ -484,14 +484,30 @@ const pruefe = (was, gut, zusatz) => {
 
   console.log("\nDIE REGENTROPFEN LAUFEN AN DER BILDKANTE HERUNTER\n");
   const regen = await pg.evaluate(async () => {
+    /* AUFRAEUMEN, SONST MISST MAN EINE LAUFENDE ANIMATION MIT.
+       Genau das ist passiert: der Zufallstest davor wirft ein Dutzend
+       Wirkungen auf Emmi, und einige davon vergroessern ihren Kreis
+       (der Katapultwurf, das Dribbeln, der Sog). Gemessen wurde dann
+       ein Bild von 100 statt 84 px, und die Tropfen sassen angeblich
+       66 bis 74 px von der Mitte statt 40. Sie sassen richtig — der
+       Massstab war falsch. */
     document.querySelectorAll(".lc-zp").forEach((x) => x.remove());
+    document.querySelectorAll(".lc-kreis").forEach((k) => {
+      k.className = "lc-kreis";
+      k.style.filter = "";
+      k.getAnimations().forEach((a) => a.cancel());
+    });
+    await new Promise((f) => setTimeout(f, 60));
     window.DMA_PRUEFUNG.wirkung("regenwolke", "Emmi");
     await new Promise((f) => setTimeout(f, 250));
     const s = document.querySelector(".lc-zwolke");
     if (!s) return { fehlt: true };
     const kanten = [...s.querySelectorAll(".lc-zwolke-kante")];
     const r = parseFloat(s.style.getPropertyValue("--r"));
-    const kreis = s.closest(".lc-platz").querySelector(".lc-kreis").getBoundingClientRect();
+    /* Und gemessen wird ab der Mitte der SCHICHT, nicht des Kreises:
+       die Schicht deckt denselben Kasten ab (das prueft
+       pruefe-platzmenue), traegt aber selbst keine Animation. */
+    const kreis = s.getBoundingClientRect();
     const mitte = { x: kreis.left + kreis.width / 2, y: kreis.top + kreis.height / 2 };
     /* Wie weit sitzt jeder Tropfen von der Bildmitte weg? Auf der
        Kante heisst: ungefaehr so weit wie der Radius. */
