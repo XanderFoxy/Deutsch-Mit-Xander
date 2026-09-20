@@ -46,8 +46,14 @@ window.DMA_TUTOR = {
          verstanden wird." Von links nach rechts durchgegangen — der
          Kalender, das Profil, die Tasse — und danach das, was
          darunter laeuft: Wetter, Uhrzeit, Newsticker. */
+      /* AUS EINEM STUECK WURDEN ZWEI, und zwar gemessen: das alte
+         ueber-03 war 34 Sekunden lang, und der Lippen-Synchron-Film
+         nimmt hoechstens 30. Der Schnitt liegt da, wo ohnehin ein
+         neuer Gedanke anfaengt — Kalender, dann Profilbild und Tasse. */
       { ton: "ueber-03", ziel: "",
-        text: "Ganz oben siehst du drei Sachen. Der Kalender links: dort löst du jeden Tag eine Aufgabe, und von da kommst du direkt zur Tagesgeschichte — dem bekanntesten Ereignis in Deutschland an genau diesem Datum, als Leseübung in jedem Sprachniveau und in vielen Sprachen. Das Profilbild daneben bringt dich in deinen Bereich. Und die Tasse rechts ist zum Kaffee ausgeben: wenn dir die Seite gefällt, kannst du mich damit unterstützen. Musst du nicht — es hilft mir aber, die laufenden Kosten zu tragen, zum Beispiel für den Livestream." },
+        text: "Ganz oben siehst du drei Sachen. Der Kalender links: dort löst du jeden Tag eine Aufgabe, und von da kommst du direkt zur Tagesgeschichte — dem bekanntesten Ereignis in Deutschland an genau diesem Datum, als Leseübung in jedem Sprachniveau und in vielen Sprachen." },
+      { ton: "ueber-03b", ziel: "",
+        text: "Das Profilbild daneben bringt dich in deinen Bereich. Und die Tasse rechts ist zum Kaffee ausgeben: wenn dir die Seite gefällt, kannst du mich damit unterstützen. Musst du nicht — es hilft mir aber, die laufenden Kosten zu tragen, zum Beispiel für den Livestream." },
       { ton: "ueber-04", ziel: "",
         text: "Darunter läuft das echte deutsche Wetter mit — animiert, je nach Tageszeit: Sonne, Regen, Schnee, Wolken, Gewitter, und nachts ein Sternenhimmel, wenn die Sicht frei ist. Daneben steht die deutsche Uhrzeit. Und der Newsticker zeigt, wer gerade was macht, welche Fortschritte die Leute machen, wer online ist, woher er kommt und wo er sich gerade befindet — ob im Klassenzimmer oder einfach auf der Seite." },
       { ton: "ueber-05", ziel: "",
