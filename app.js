@@ -22013,21 +22013,75 @@
 
   /* Welche Texte stehen zur Wahl? Nur die, die wirklich schon im
      Speicher liegen — nichts wird dafuer nachgeladen. */
-  function lcLesestoff() {
-    const aus = [];
-    try {
-      (SCHNEE_ENTRIES || []).forEach((e) => {
-        if (e && e.levels) aus.push({ id: e.id, name: e.name, levels: e.levels });
-      });
-    } catch (x) {}
-    /* Und die eigenen Beitraege, FALLS sie ohnehin schon geladen
-       sind (etwa weil man den Bereich vorher offen hatte). Geladen
-       wird dafuer nichts. */
-    try {
-      const b = (window.DMA_DATEN && window.DMA_DATEN.EIGENE_BEITRAEGE) || [];
-      b.forEach((e) => { if (e && e.levels) aus.push({ id: e.id, name: e.name, levels: e.levels }); });
-    } catch (x) {}
-    return aus;
+  /* =================================================================
+     DIE LESETEXTE STEHEN IN KATEGORIEN
+     -----------------------------------------------------------------
+     GEWUENSCHT, woertlich: „Dann moechte ich auch, dass ‚Es war einmal
+     in Deutschland' auch in den Texten zu finden ist. Du kannst das
+     auch nach Kategorien in dem Panel machen bei dem Lesen … und dass
+     man die Uebersicht in diesen Kategorien hat: Es war einmal in
+     Deutschland, eigene Beitraege, Dichter und Denker, Schnee von
+     gestern, Menschen Dinge Situationen."
+
+     Fuenf Kategorien, und sie kosten beim Laden NICHTS, solange man
+     sie nicht oeffnet:
+       · Dichter und Denker      — steht schon in app.js
+       · Schnee von gestern      — steht schon in app.js
+       · Menschen, Dinge …       — data-beitraege.js, erst auf Zuruf
+       · Es war einmal …         — kalender/MM.js, erst auf Zuruf und
+                                   immer nur EIN Monat
+       · Eigener Text            — was man selbst hineinschreibt
+     Das war seine Bedingung: „sofern dass das Laden nicht
+     verschlimmert". */
+  const LC_LESE_KATEGORIEN = [
+    ["schnee",   "\u2744\ufe0f", "Schnee von gestern"],
+    ["dichter",  "\u2712\ufe0f", "Dichter und Denker"],
+    ["menschen", "\ud83d\uddc2\ufe0f", "Menschen, Dinge, Situationen"],
+    ["damals",   "\ud83d\udcdc", "Es war einmal in Deutschland"],
+    ["eigen",    "\u270d\ufe0f", "Eigener Text"]
+  ];
+  /* Gibt ein Versprechen auf die Liste — je nach Kategorie muss erst
+     etwas nachgeladen werden. */
+  function lcLesestoff(kategorie) {
+    const kat = kategorie || "schnee";
+    const ausListe = (liste) => (liste || []).filter((e) => e && e.levels)
+      .map((e) => ({ id: e.id, name: e.name, levels: e.levels }));
+    if (kat === "schnee") {
+      try { return Promise.resolve(ausListe(SCHNEE_ENTRIES)); } catch (x) { return Promise.resolve([]); }
+    }
+    if (kat === "dichter") {
+      try { return Promise.resolve(ausListe(DICHTER_ENTRIES)); } catch (x) { return Promise.resolve([]); }
+    }
+    if (kat === "menschen") {
+      return beitraegeLaden().then(() =>
+        ausListe((window.DMA_DATEN && window.DMA_DATEN.EIGENE_BEITRAEGE) || []))
+        .catch(() => []);
+    }
+    if (kat === "damals") {
+      /* Nur der laufende Monat — ein Zwoelftel statt des ganzen
+         Jahres, genau wie im Kompass. */
+      const mm = String(new Date().getMonth() + 1).padStart(2, "0");
+      /* ACHTUNG: ExerciseData ist eine Konstante von data-exercises.js,
+         KEINE Eigenschaft von window — „window.ExerciseData" ist immer
+         undefined, und genau daran ist diese Kategorie beim ersten
+         Versuch leer geblieben. */
+      const holen = (typeof ExerciseData !== "undefined" && ExerciseData.ladeKalenderMonat)
+        ? ExerciseData.ladeKalenderMonat(mm) : Promise.resolve(false);
+      return holen.then(() => {
+        const tage = (window.DMA_DATEN && window.DMA_DATEN.GERMAN_HISTORY_TODAY) || {};
+        const titel = (typeof ExerciseData !== "undefined" && ExerciseData.HISTORY_TITLES) || {};
+        return Object.keys(tage).filter((md) => md.indexOf(mm + "-") === 0)
+          .sort()
+          .map((md) => {
+            const e = tage[md] || {};
+            const tag = md.slice(3) + "." + md.slice(0, 2) + ".";
+            return { id: "kal-" + md, levels: e.levels,
+                     name: tag + " " + (titel[md] || (e.year ? String(e.year) : "")) };
+          })
+          .filter((e) => e.levels);
+      }).catch(() => []);
+    }
+    return Promise.resolve([]);
   }
 
   /* Der Waehler: erst das Niveau, dann der Text. Zwei kurze Listen
@@ -22107,10 +22161,11 @@
 
   function lcLeseWaehler() {
     lcPlatzMenueZu();
-    const stoff = lcLesestoff();
-    if (!stoff.length) { showToast("Gerade sind keine Lesetexte geladen."); return false; }
     let niveau = "B1";
     try { niveau = kzEinstellung("leseniveau", "B1") || "B1"; } catch (e) {}
+    let kategorie = "schnee";
+    try { kategorie = kzEinstellung("lesekategorie", "schnee") || "schnee"; } catch (e) {}
+    let stoff = [];
 
     const kasten = document.createElement("div");
     kasten.id = "lcPlatzMenue";
@@ -22121,6 +22176,9 @@
     kopf.className = "lc-platzmenue-kopf";
     kasten.appendChild(kopf);
 
+    const katReihe = document.createElement("div");
+    katReihe.className = "lc-lese-kategorien";
+    kasten.appendChild(katReihe);
     const stufen = document.createElement("div");
     stufen.className = "lc-lese-stufen";
     kasten.appendChild(stufen);
@@ -22128,8 +22186,52 @@
     liste.className = "lc-lese-liste";
     kasten.appendChild(liste);
 
+    const katName = (k) => {
+      const e = LC_LESE_KATEGORIEN.find((x) => x[0] === k);
+      return e ? e[2] : "Lesen";
+    };
+    /* Einen Text hinausschicken — und auf Wunsch gleich als KONTEXTER,
+       also gemischt zum Sortieren. */
+    const schicken = (t, alsKontexter) => {
+      const zeilen = lcTextInZeilen(t.levels[niveau]);
+      if (!zeilen.length) { showToast("Der Text ist leer."); return; }
+      if (alsKontexter) {
+        /* GEWUENSCHT: „Diesen Kontext-Text brauche ich noch, dass die
+           Leute eine Reihenfolge in einer Geschichte logisch
+           zusammensetzen koennen. Den Kontextsortierer … KONTEXTER.
+           Also koennte man das Ding nennen."
+           Acht Saetze sind das Hoechste, was auf einem Telefon noch
+           zu ueberblicken ist — der Rest des Textes bleibt weg. */
+        const zeile = "/kontexter " + zeilen.slice(0, 8).join(" | ");
+        try { LiveChat.schreiben(zeile); } catch (x) {}
+        lcNachDemSenden(zeile);
+        return;
+      }
+      try {
+        LiveChat.leseTextSenden({ titel: t.name, niveau: niveau, zeilen: zeilen });
+      } catch (x) {}
+      lcNachDemSenden("");
+    };
+
     const zeichnen = () => {
-      kopf.textContent = "Lesen \u2014 Niveau " + niveau;
+      kopf.textContent = katName(kategorie) + " \u2014 " + niveau;
+      katReihe.innerHTML = "";
+      LC_LESE_KATEGORIEN.forEach(([k, zeichen, wort]) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "lc-lese-kat" + (k === kategorie ? " lc-lese-kat-an" : "");
+        b.title = wort;
+        b.innerHTML = '<span class="lc-lese-kat-zeichen"></span><span class="lc-lese-kat-wort"></span>';
+        b.firstChild.textContent = zeichen;
+        b.lastChild.textContent = wort;
+        b.addEventListener("click", (e) => {
+          e.preventDefault(); e.stopPropagation();
+          kategorie = k;
+          try { kzEinstellungSetzen("lesekategorie", k); } catch (x) {}
+          holenUndZeichnen();
+        });
+        katReihe.appendChild(b);
+      });
       stufen.innerHTML = "";
       LC_NIVEAUS.forEach((n) => {
         const b = document.createElement("button");
@@ -22145,8 +22247,45 @@
         stufen.appendChild(b);
       });
       liste.innerHTML = "";
+      /* Der eigene Text ist keine Liste, sondern ein Feld. */
+      if (kategorie === "eigen") {
+        const feld = document.createElement("textarea");
+        feld.className = "lc-lese-eigen";
+        feld.rows = 4;
+        feld.placeholder = "Deinen Text hier hineinschreiben \u2014 "
+          + "ein Satz je Zeile oder einfach am St\u00fcck.";
+        liste.appendChild(feld);
+        const machen = (alsKontexter) => {
+          const roh = feld.value.trim();
+          if (!roh) { showToast("Schreib zuerst einen Text hinein."); return; }
+          lcPlatzMenueZu();
+          schicken({ name: "Eigener Text", levels: { [niveau]: roh } }, alsKontexter);
+        };
+        [["\ud83d\udcd6  Als Lesetext schicken", false],
+         ["\ud83e\udde9  Als KONTEXTER schicken", true]].forEach(([wort, kx]) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "lc-lese-text";
+          b.textContent = wort;
+          b.addEventListener("click", (e) => {
+            e.preventDefault(); e.stopPropagation();
+            machen(kx);
+          });
+          liste.appendChild(b);
+        });
+        return;
+      }
+      if (!stoff.length) {
+        const p = document.createElement("p");
+        p.className = "lc-aufgabe-hinweis";
+        p.textContent = "Hier ist gerade nichts \u2014 einen Augenblick, oder eine andere Kategorie.";
+        liste.appendChild(p);
+        return;
+      }
       stoff.forEach((t) => {
         const hat = t.levels && t.levels[niveau];
+        const reihe = document.createElement("div");
+        reihe.className = "lc-lese-reihe";
         const b = document.createElement("button");
         b.type = "button";
         b.className = "lc-lese-text";
@@ -22155,17 +22294,36 @@
         b.addEventListener("click", (e) => {
           e.preventDefault(); e.stopPropagation();
           lcPlatzMenueZu();
-          const zeilen = lcTextInZeilen(t.levels[niveau]);
-          if (!zeilen.length) { showToast("Der Text ist leer."); return; }
-          try {
-            LiveChat.leseTextSenden({ titel: t.name, niveau: niveau, zeilen: zeilen });
-          } catch (x) {}
-          lcNachDemSenden("");
+          schicken(t, false);
         });
-        liste.appendChild(b);
+        reihe.appendChild(b);
+        /* Und derselbe Text als Sortieraufgabe — „der Kontextsortierer
+           … KONTEXTER". Ein zweiter Knopf, damit man nicht erst
+           irgendwo umschalten muss. */
+        const kx = document.createElement("button");
+        kx.type = "button";
+        kx.className = "lc-lese-kontexter";
+        kx.disabled = !hat;
+        kx.title = "Als KONTEXTER stellen \u2014 die S\u00e4tze kommen gemischt";
+        kx.textContent = "\ud83e\udde9";
+        kx.addEventListener("click", (e) => {
+          e.preventDefault(); e.stopPropagation();
+          lcPlatzMenueZu();
+          schicken(t, true);
+        });
+        reihe.appendChild(kx);
+        liste.appendChild(reihe);
       });
     };
-    zeichnen();
+    const holenUndZeichnen = () => {
+      zeichnen();
+      if (kategorie === "eigen") return;
+      lcLesestoff(kategorie).then((liste2) => {
+        stoff = liste2 || [];
+        zeichnen();
+      }).catch(() => { stoff = []; zeichnen(); });
+    };
+    holenUndZeichnen();
 
     document.body.appendChild(kasten);
     const feld = document.getElementById("lcFeld");
@@ -22183,6 +22341,46 @@
      ebenfalls tippen, aber nur fuer sich: dann wandert nur ihr
      eigener Lesefinger mit, ohne den Raum zu stoeren.
      ================================================================= */
+  /* WELCHE TAFEL GERADE FESTGEHALTEN WIRD.
+     GEWUENSCHT, woertlich: „Kannst du das so machen, dass, wenn jemand
+     diese Texte liest und auf seine Zeile klickt, dass der Text dann
+     immer im Fokus bleibt … die Zeile, wenn sie angewaehlt ist, die
+     soll immer den Text an Platz halten … und wenn man wieder die
+     Zeile anklickt, dass es die Aufgabe unter den bestehenden Chat
+     schiebt."
+
+     Zwei verschiedene Sachen, beide an derselben Geste:
+       1. Eine Zeile antippen haelt die Tafel FEST — sie klebt am
+          unteren Rand des Chats und laeuft nicht mehr weg, waehrend
+          andere schreiben.
+       2. DIESELBE Zeile noch einmal antippen schiebt die Tafel unter
+          die letzte Chatzeile — dorthin, wo man ohnehin hinsieht.
+     Festgehalten wird immer nur EINE Tafel; eine zweite loest die
+     erste ab. */
+  let lcLeseFest = "";
+  function lcLeseTafelNachziehen() {
+    if (!lcLeseFest) return false;
+    const tafel = document.querySelector('.lc-lesetafel[data-lese-id="' + lcLeseFest + '"]');
+    const verlauf = document.getElementById("lcVerlauf");
+    if (!tafel || !verlauf) return false;
+    tafel.classList.add("lc-lese-fest");
+    const zeile = tafel.closest(".lc-zeile") || tafel.parentElement;
+    if (zeile && zeile.parentElement === verlauf && verlauf.lastElementChild !== zeile) {
+      verlauf.appendChild(zeile);
+    }
+    return true;
+  }
+  function lcLeseFestSetzen(leseId) {
+    lcLeseFest = String(leseId || "");
+    document.querySelectorAll(".lc-lesetafel").forEach((t) => {
+      t.classList.toggle("lc-lese-fest", t.dataset.leseId === lcLeseFest);
+    });
+    return lcLeseTafelNachziehen();
+  }
+  window.DMA_PRUEF_LESESTOFF = lcLesestoff;
+  window.DMA_LESEFEST = { setzen: lcLeseFestSetzen, nachziehen: lcLeseTafelNachziehen,
+                          welche: () => lcLeseFest };
+
   function lcLeseTafel(n, z) {
     const t = document.createElement("span");
     t.className = "lc-zeilentext lc-lesetafel";
@@ -22198,6 +22396,26 @@
     titel.textContent = String(n.leseTitel || "Lesetext");
     kopf.appendChild(stufe);
     kopf.appendChild(titel);
+
+    /* DIE BETONUNG ZUM ANSCHALTEN.
+       GEWUENSCHT: „vielleicht auch mit der Option, die Betonung beim
+       Lesen anzuschalten."
+       Der Schalter gilt nur auf DIESEM Geraet — beim Lautlesen will
+       der eine die Hilfe und der andere nicht. Die geprueften
+       Betonungen stehen im Wortschatz; ist der noch nicht geladen,
+       wird er hier nachgeholt und danach noch einmal markiert. */
+    const betKnopf = document.createElement("button");
+    betKnopf.type = "button";
+    betKnopf.className = "lc-lese-schalter";
+    betKnopf.title = "Betonung anzeigen \u2014 nur bei dir";
+    kopf.appendChild(betKnopf);
+    /* Und der Fokus-Knopf daneben, fuer den, der lieber einen Knopf
+       drueckt, als eine Zeile zweimal anzutippen. */
+    const festKnopf = document.createElement("button");
+    festKnopf.type = "button";
+    festKnopf.className = "lc-lese-schalter";
+    festKnopf.title = "Den Text festhalten \u2014 er bleibt unten im Blick";
+    kopf.appendChild(festKnopf);
     t.appendChild(kopf);
 
     const darfFuehren = Boolean(n.eigen) || (() => {
@@ -22207,8 +22425,8 @@
     const hinweis = document.createElement("span");
     hinweis.className = "lc-aufgabe-hinweis";
     hinweis.textContent = darfFuehren
-      ? "Tippe eine Zeile an \u2014 sie leuchtet dann bei allen im Raum."
-      : "Die hervorgehobene Zeile ist die, die gerade gelesen wird.";
+      ? "Tippe eine Zeile an \u2014 sie leuchtet dann bei allen im Raum. Noch einmal: der Text rutscht unter den Chat."
+      : "Die hervorgehobene Zeile ist die, die gerade gelesen wird. Antippen h\u00e4lt den Text bei dir fest.";
     t.appendChild(hinweis);
 
     const liste = document.createElement("span");
@@ -22220,6 +22438,9 @@
       b.dataset.nr = String(i);
       b.textContent = satz;
       b.addEventListener("click", () => {
+        /* War diese Zeile schon dran, ist das der ZWEITE Tipp: dann
+           schiebt sich der Text unter den Chat. */
+        const schonHier = b.classList.contains("lc-lese-hier");
         if (darfFuehren) {
           try { LiveChat.leseZeileSetzen(n.id, i); } catch (e) {}
         } else {
@@ -22227,11 +22448,63 @@
                .forEach((x) => x.classList.remove("lc-lese-hier"));
           b.classList.add("lc-lese-hier");
         }
+        lcLeseFestSetzen(n.id);
+        if (schonHier) {
+          lcLeseTafelNachziehen();
+          try { t.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {}
+        }
       });
       liste.appendChild(b);
     });
     t.appendChild(liste);
     z.appendChild(t);
+
+    /* Die beiden Schalter koennen erst hier arbeiten — sie fassen die
+       Liste an, und die gibt es vorher noch nicht. */
+    const betZeichnen = () => {
+      const an = leseBetonungAn();
+      betKnopf.textContent = (an ? "\ud83d\udd20 " : "\ud83d\udd21 ") + "Betonung";
+      betKnopf.classList.toggle("lc-lese-schalter-an", an);
+      if (an) {
+        try {
+          /* Der Wortschatz wird sonst erst bei „Lernen"/„Wissen"
+             geholt. Hier wird er AUSDRUECKLICH angestossen — aber nur,
+             wenn jemand die Betonung wirklich einschaltet. Wer sie
+             nicht braucht, laedt auch nichts. */
+          if (typeof VocabData !== "undefined" && VocabData.ladeWoerter && VocabData.ladenLaeuft
+              && !VocabData.ladenLaeuft()
+              && !(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
+            VocabData.ladeWoerter();
+          }
+          if (wortschatzNachziehen(() => { try { applyStressToTree(liste); } catch (e) {} })) {
+            if (!(typeof VocabData !== "undefined" && VocabData.WORDS && VocabData.WORDS.length)) return;
+          }
+          applyStressToTree(liste);
+        } catch (e) {}
+      } else {
+        try { removeStressFromTree(liste); } catch (e) {}
+      }
+    };
+    betKnopf.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      setzeLeseBetonung(!leseBetonungAn());
+      betZeichnen();
+    });
+    const festZeichnen = () => {
+      const an = lcLeseFest === (n.id || "");
+      festKnopf.textContent = (an ? "\ud83d\udccc" : "\ud83d\udcce") + " Fokus";
+      festKnopf.classList.toggle("lc-lese-schalter-an", an);
+    };
+    festKnopf.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      lcLeseFestSetzen(lcLeseFest === (n.id || "") ? "" : (n.id || ""));
+      document.querySelectorAll(".lc-lesetafel").forEach(() => {});
+      festZeichnen();
+    });
+    betZeichnen();
+    festZeichnen();
+    if (lcLeseFest === (n.id || "")) t.classList.add("lc-lese-fest");
+
     /* Steht schon eine Zeile fest (man kommt spaeter dazu), gleich
        markieren. */
     try {
@@ -33810,6 +34083,11 @@
     livechatHintergrundAuffrischen(l);
     livechatChatAuffrischen(l);
     livechatGrossAuffrischen(l);
+    /* „Die Zeile, wenn sie angewaehlt ist, die soll immer den Text an
+       Platz halten" — also nach JEDEM Neuzeichnen die festgehaltene
+       Lesetafel wieder ans Ende schieben, dorthin, wo der Chat
+       gerade steht. */
+    try { lcLeseTafelNachziehen(); } catch (e) {}
   }
 
   /* ============================================================

@@ -93,6 +93,19 @@ const pruefe = (was, gut, zusatz) => {
   console.log("\nGEMESSEN: AUSWAHL, NIVEAU, ZEILEN, MARKE\n");
   const erg = await pg.evaluate(async () => {
     const auf = window.DMA_LESEWAHL();
+    /* NACHGEBESSERT IN RUNDE 24: der Waehler holt seine Liste jetzt
+       je Kategorie und damit als Versprechen — die Texte stehen also
+       einen Wimpernschlag spaeter da. Gewartet wird auf die Liste,
+       nicht auf eine feste Zeit. */
+    await new Promise((f) => {
+      let mal = 0;
+      const sehen = () => {
+        const k = document.getElementById("lcPlatzMenue");
+        if ((k && k.querySelectorAll(".lc-lese-text").length) || ++mal > 40) return f();
+        setTimeout(sehen, 50);
+      };
+      sehen();
+    });
     const kasten = document.getElementById("lcPlatzMenue");
     const stufen = kasten ? [...kasten.querySelectorAll(".lc-lese-stufe")].map((b) => b.textContent) : [];
     const texte = kasten ? kasten.querySelectorAll(".lc-lese-text").length : 0;

@@ -6172,8 +6172,22 @@ window.LiveChat = (function () {
     return a;
   }
 
-  function sortierAufgabeStellen(roh) {
+  /* „kontexter" ist derselbe Mechanismus mit einem anderen Namen und
+     einer anderen Ueberschrift.
+     GEWUENSCHT, woertlich: „Diesen Kontext-Text brauche ich noch, dass
+     die Leute eine Reihenfolge in einer Geschichte logisch
+     zusammensetzen koennen. Den Kontextsortierer … KONTEXTER. Also
+     koennte man das Ding nennen."
+     Zwei getrennte Maschinen dafuer zu bauen waere Unsinn: gemischt,
+     verteilt und geprueft wird genau gleich. */
+  function sortierAufgabeStellen(roh, alsKontexter) {
     var text = String(roh || "").trim();
+    if (!text && alsKontexter) {
+      return systemZeile("\ud83e\udde9 KONTEXTER: eine Geschichte, Satz f\u00fcr Satz.\n"
+        + "So geht es:  /kontexter Erst stand er auf. | Dann ass er. | Danach ging er los.\n"
+        + "Bequemer: das Buchzeichen \ud83d\udcd6 \u2192 Text w\u00e4hlen \u2192 auf das \ud83e\udde9 daneben tippen. "
+        + "Dann kommen die S\u00e4tze dieses Textes gemischt.");
+    }
     if (!text) {
       return systemZeile("So geht es:  /sortieren Erst stand er auf. | "
         + "Dann ass er. | Danach ging er zur Arbeit."
@@ -6197,10 +6211,15 @@ window.LiveChat = (function () {
     var loesung = saetze.map(function (_, richtig) {
       return gemischt.indexOf(richtig) + 1;
     }).join(" ");
-    offeneAufgabe = { typ: "sortieren", loesung: loesung, frage: "Bring die Saetze in die richtige Reihenfolge.",
+    var ueberschrift = alsKontexter
+      ? "KONTEXTER \u2014 bring die Geschichte in die richtige Reihenfolge."
+      : "Bring die Saetze in die richtige Reihenfolge.";
+    offeneAufgabe = { typ: "sortieren", loesung: loesung, frage: ueberschrift,
                       teile: gemischt.map(function (i) { return saetze[i]; }),
                       wer: {}, zeit: Date.now(), zeileId: "" };
-    var zeile = anAlle("aufgabe", "\ud83e\udde9 Bring die S\u00e4tze in die richtige Reihenfolge.",
+    var zeile = anAlle("aufgabe", "\ud83e\udde9 " + (alsKontexter
+        ? "KONTEXTER \u2014 bring die Geschichte in die richtige Reihenfolge."
+        : "Bring die S\u00e4tze in die richtige Reihenfolge."),
       { sortieren: offeneAufgabe.teile });
     if (zeile && zeile.id) {
       offeneAufgabe.zeileId = zeile.id;
@@ -8163,6 +8182,8 @@ window.LiveChat = (function () {
       was: "Einen Lesetext in den Chat holen \u2014 Niveau w\u00e4hlbar, Zeile f\u00fcr Zeile" },
     { gr: "lernen", w: "sortieren", kurz: "reihenfolge", nutzt: "/sortieren Satz 1 | Satz 2 | Satz 3",
       was: "Kontext\u00fcbung \u2014 die S\u00e4tze werden gemischt, wer sie richtig ordnet, bekommt es gesagt" },
+    { gr: "lernen", w: "kontexter", kurz: "kontext", nutzt: "/kontexter Satz | Satz | Satz",
+      was: "KONTEXTER \u2014 eine Geschichte in die richtige Reihenfolge bringen; aus jedem Lesetext mit einem Tipp" },
     { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation nur für dich zeigen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon Name", was: "Luftballons zum Geburtstag" },
@@ -10073,7 +10094,8 @@ window.LiveChat = (function () {
     if (art === "satz") return aufgabeStellen("satz", rest);
     if (art === "wort") return aufgabeStellen("wort", rest);
     if (art === "aufgabe" || art === "frage") return aufgabeFreiStellen(rest);
-    if (art === "sortieren" || art === "reihenfolge") return sortierAufgabeStellen(rest);
+    if (art === "sortieren" || art === "reihenfolge") return sortierAufgabeStellen(rest, false);
+    if (art === "kontexter" || art === "kontext") return sortierAufgabeStellen(rest, true);
     /* /lesen oeffnet den Waehler in der Oberflaeche — die Texte
        liegen dort (app.js), nicht hier. Ohne Oberflaeche (Sonde,
        Kopfrechner) sagt es wenigstens, was es tun wuerde. */

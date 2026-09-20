@@ -15256,3 +15256,95 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-musikband-note { animation: none; }
 }
+
+/* --- LESEN: KATEGORIEN, FOKUS UND BETONUNG ---------------------------
+   GEWUENSCHT: „Du kannst das auch nach Kategorien in dem Panel machen
+   bei dem Lesen … vielleicht auch mit der Option, die Betonung beim
+   Lesen anzuschalten … die Zeile, wenn sie angewaehlt ist, die soll
+   immer den Text an Platz halten." */
+.lc-lese-kategorien {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 2px 0 8px;
+}
+.lc-lese-kat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.74rem;
+  line-height: 1.15;
+  cursor: pointer;
+  text-align: left;
+}
+.lc-lese-kat-an {
+  background: rgba(240, 169, 43, 0.22);
+  border-color: rgba(240, 169, 43, 0.6);
+  font-weight: 600;
+}
+.lc-lese-kat-zeichen { font-size: 0.92rem; }
+/* Ein Text und daneben sein KONTEXTER-Knopf. */
+.lc-lese-reihe { display: flex; gap: 6px; align-items: stretch; }
+.lc-lese-reihe .lc-lese-text { flex: 1 1 auto; min-width: 0; }
+.lc-lese-kontexter {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  border-radius: 10px;
+  padding: 0 10px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.lc-lese-kontexter:disabled { opacity: 0.35; cursor: not-allowed; }
+.lc-lese-eigen {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  color: inherit;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+  resize: vertical;
+}
+/* Die beiden Schalter im Kopf der Lesetafel. */
+.lc-lese-schalter {
+  margin-left: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.07);
+  color: inherit;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lc-lese-schalter-an {
+  background: rgba(240, 169, 43, 0.24);
+  border-color: rgba(240, 169, 43, 0.6);
+  font-weight: 600;
+}
+/* DER FOKUS: die festgehaltene Tafel klebt am unteren Rand des
+   Chatfensters und laeuft nicht mehr weg, waehrend andere schreiben. */
+.lc-lesetafel.lc-lese-fest {
+  position: sticky;
+  bottom: 0;
+  z-index: 8;
+  display: block;
+  background: rgba(20, 17, 28, 0.94);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(240, 169, 43, 0.45);
+  border-radius: 12px;
+  padding: 8px 10px;
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.28);
+}
