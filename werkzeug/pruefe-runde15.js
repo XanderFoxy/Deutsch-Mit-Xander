@@ -151,6 +151,21 @@ const pruefe = (was, gut, zusatz) => {
   for (const [w, art, teil] of [["heber", "angel", ".lc-leine-haken"],
                                 ["lasso", "lasso", ".lc-leine-schlinge"]]) {
     const d = await pg.evaluate(async (w) => {
+      /* ZWEI PLAETZE FREI MACHEN — und das ist keine Bequemlichkeit,
+         sondern die neue Regel aus Fassung 358: „Ich kann da nur auf
+         den leeren Plätzen lang fahren … Wenn alles voll ist, kann ich
+         nicht losfahren." Auf der Pruefbuehne sitzt auf jedem Platz
+         jemand; ohne eine Luecke faehrt zu Recht niemand los, und die
+         Sonde hat genau das gemeldet („0 px, 0 Lauf"). Die Fahrlinie
+         selbst wird in pruefe-runde16 an einem ganzen Brett geprueft. */
+      [2, 3].forEach((n) => {
+        const pl = document.querySelector('.lc-platz[data-lc-platz="' + n + '"]');
+        if (pl) {
+          pl.classList.add("lc-platz-frei");
+          const nm = pl.querySelector(".lc-platz-name");
+          if (nm) nm.textContent = "frei";
+        }
+      });
       document.querySelectorAll(".lc-zp, .lc-leine").forEach((x) => x.remove());
       window.DMA_PRUEFUNG.wirkung(w, "Emmi");
       await new Promise((f) => setTimeout(f, 200));
