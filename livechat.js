@@ -10416,7 +10416,13 @@ window.LiveChat = (function () {
          trotzdem, und genau das prueft effektetuer.js. */
       Object.keys(AM_PLATZ).forEach(function (k) { w.push(AM_PLATZ[k].wirkung); });
       Object.keys(AUCH_AM_PLATZ).forEach(function (k) { w.push(AUCH_AM_PLATZ[k].wirkung); });
-      w.push("zherz", "heber", "lasso");
+      /* Und die drei, deren Tuer nicht in einer der Tabellen steht:
+         „zherz", „heber" und „lasso" haengen an /herz und /heb, und
+         „lotto" an „/zufall OHNE Namen" — dieselbe Tuer wie „zufall",
+         nur ohne Anhang. Eine Wirkung ohne Tuer ist toter Code, und
+         genau das prueft pruefe-effekttueren; diese vier haben eine,
+         sie steht nur nicht in einer Tabelle. */
+      w.push("zherz", "heber", "lasso", "lotto");
       return w;
     },
     /* Nur zum Nachpruefen: die Sitzordnung von aussen nachstellen und
