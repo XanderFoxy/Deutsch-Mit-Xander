@@ -63,9 +63,18 @@ const pruefe = (was, gut, zusatz) => {
     /if \(n\.art === "lesezeile"\)/.test(lc));
   pruefe("die Stelle wird gemerkt, fuer Spaeterkommende",
     /var leseStelle = \{\};/.test(lc) && /leseStelle\[String\(n\.leseId\)\]/.test(lc));
-  pruefe("Titel, Niveau und Zeilen reisen mit",
-    /n\.leseZeilen = zusatz\.leseZeilen/.test(lc)
-    && /leseZeilen: Array\.isArray\(n\.leseZeilen\)/.test(lc));
+  /* NACHGEBESSERT IN RUNDE 28: jedes Zusatzfeld stand frueher an drei
+     Stellen einzeln, und die zuletzt dazugekommene fehlte jedes Mal.
+     Jetzt gibt es EINE Liste (ZUSATZ_FELDER) und eine Uebernahme
+     (zusatzUebernehmen), die alle drei Stellen benutzen. */
+  pruefe("Titel, Niveau und Zeilen stehen in der einen Liste",
+    /var ZUSATZ_FELDER = \[/.test(lc)
+    && /"leseZeilen", "leseTitel", "leseNiveau"/.test(lc));
+  pruefe("und die Liste wird an allen drei Stellen genommen",
+    (lc.match(/zusatzUebernehmen\(/g) || []).length >= 4,
+    (lc.match(/zusatzUebernehmen\(/g) || []).length + " Stellen");
+  pruefe("die Zeilen werden dabei begrenzt",
+    /ZUSATZ_LISTEN = \{ sortieren: 8, leseZeilen: 40 \}/.test(lc));
 
   /* ---------- Im Browser ---------- */
   const srv = http.createServer((q, a) => {

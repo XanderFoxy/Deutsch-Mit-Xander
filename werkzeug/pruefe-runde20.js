@@ -81,11 +81,17 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("es gibt den Befehl", /w: "sortieren"/.test(lc));
   pruefe("sie mischt die Saetze", /function sortierAufgabeStellen/.test(lc)
     && /var gemischt = mischen\(reihenfolge\);/.test(lc));
+  /* NACHGEBESSERT IN RUNDE 28: die Zusatzfelder stehen jetzt in EINER
+     Liste (ZUSATZ_FELDER) — dass die LOESUNG nicht darin steht, ist
+     damit an genau einer Stelle nachzusehen statt an dreien. */
   pruefe("die Loesung reist NICHT mit",
-    !/zusatz\.loesung/.test(lc) && /if \(zusatz && zusatz\.sortieren\) n\.sortieren/.test(lc),
+    !/zusatz\.loesung/.test(lc)
+    && !/"loesung"/.test(lc.slice(lc.indexOf("var ZUSATZ_FELDER"),
+                                 lc.indexOf("var ZUSATZ_LISTEN"))),
     "nur die Mischung geht hinaus");
-  pruefe("der Empfang traegt sie weiter",
-    /sortieren: Array\.isArray\(n\.sortieren\)/.test(lc));
+  pruefe("die Mischung steht in der Liste und wird begrenzt",
+    /"sortieren", "leseZeilen"/.test(lc)
+    && /ZUSATZ_LISTEN = \{ sortieren: 8/.test(lc));
   pruefe("und es gibt eine Tafel dafuer", /function lcSortierTafel/.test(js));
 
   /* ---------- Im Browser ---------- */

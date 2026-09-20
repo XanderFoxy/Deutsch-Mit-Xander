@@ -55,19 +55,21 @@ const pruefe = (was, gut, zusatz) => {
     /teile: \["der", "die", "das"\]/.test(lc));
 
   console.log("\nDER LINK INS WOERTERBUCH\n");
-  pruefe("das Wort reist an der Zeile mit",
-    /wortLink: String\(n\.wortLink \|\| ""\)/.test(lc)
-    && /if \(zusatz && zusatz\.wortLink\) n\.wortLink = zusatz\.wortLink;/.test(lc));
+  /* NACHGEBESSERT IN RUNDE 28: alle Zusatzfelder stehen in EINER
+     Liste, damit keines mehr vergessen werden kann. */
+  pruefe("das Wort steht in der Liste der Zusatzfelder",
+    /var ZUSATZ_FELDER = \[/.test(lc) && /"wortLink"/.test(lc));
   pruefe("die Aufgabe zeigt einen Knopf dafuer",
     /lc-aufgabe-nachschlagen/.test(js) && /lc-aufgabe-nachschlagen/.test(css));
   pruefe("und er schlaegt wirklich nach",
     /function lcWortNachschlagen/.test(js) && /vocabSearch/.test(js));
 
   console.log("\nDAS AUFDECKEN SEHEN JETZT ALLE\n");
-  pruefe("„raten“ wird beim Empfang auch abgeholt",
-    /raten: String\(n\.raten \|\| ""\)/.test(lc));
-  pruefe("und steht auch im Verlaufspaket",
-    /raten: n\.raten \|\| ""/.test(lc));
+  pruefe("„raten“ und „dran“ stehen ebenfalls darin",
+    /"raten", "dran"/.test(lc));
+  pruefe("und die Uebernahme laeuft an allen drei Stellen",
+    (lc.match(/zusatzUebernehmen\(/g) || []).length >= 4,
+    (lc.match(/zusatzUebernehmen\(/g) || []).length + " Stellen");
 
   console.log("\nDAS RUNDENLAUFEN\n");
   pruefe("die Runde ist die Sitzreihe", /function rundeNamen/.test(lc)

@@ -22854,9 +22854,37 @@
          aufzurufen — der Name allein genuegt dafuer nicht. */
       knopf.dataset.lcId = p.leer ? "" : (p.id || "");
 
-      /* Das eigene Bild bleibt stumm — sonst hört man sich selbst
-         mit Verzögerung, und das macht jedes Gespräch kaputt. */
-      video.muted = Boolean(p.ich);
+      /* =========================================================
+         HIER KAM DIE STIMMDOPPELUNG HER — UND ZWAR JEDES MAL
+         ---------------------------------------------------------
+         GEMELDET, seit Wochen und zuletzt woertlich: „die
+         Stimmdoppelung ist wieder da … dieses doppelte Laden darf
+         nicht mehr da sein. Deswegen musst du eine Regel haben,
+         dass man sich selbst niemals doppelt hoeren kann … Mein
+         Account darf niemals doppelt senden. Ich darf mich niemals
+         hoeren. Ich darf immer nur die anderen Accounts hoeren."
+
+         GEFUNDEN, endlich, und es war nicht die Leitung:
+         DERSELBE STROM LIEF ZWEIMAL. Einmal ueber das <audio>, das
+         zu jeder Person am Seitenkoerper haengt (tonAnschliessen in
+         livechat.js — genau EINES je Konto), und ein zweites Mal
+         ueber DIESES <video> am Platz. Es stand auf
+         „muted = nur bei mir selbst", war bei allen anderen also
+         LAUT und spielte dieselbe Tonspur ein zweites Mal ab, mit
+         eigener Verzoegerung. Genau das hoert man als Doppelung.
+
+         Und es passt zu seiner Beobachtung „bei einer Fahrt hab ich
+         die Doppelung danach nicht mehr gehoert": waehrend einer
+         Bewegungsanimation wird die Sitzreihe neu gezeichnet, das
+         Video verliert kurz seinen Strom — und damit die zweite
+         Stimme.
+
+         DIE REGEL AB JETZT, und sie gilt ohne Ausnahme:
+         EIN BILD MACHT KEINEN TON. Jedes <video> im Klassenzimmer
+         ist stumm, bei allen, immer. Ton kommt ausschliesslich aus
+         den Tonelementen, und davon gibt es genau eines je Konto.
+         ========================================================= */
+      video.muted = true;
 
       const avatar = knopf.querySelector(`[data-lc-avatar="${p.nummer}"]`);
       const hatVideo = Boolean(p.strom && p.strom.getVideoTracks
@@ -22869,8 +22897,10 @@
         const spiel = video.play();
         if (spiel && spiel.catch) spiel.catch(() => {});
       } else {
-        /* Ton weiterlaufen lassen, auch wenn die Kamera aus ist —
-           das Element bleibt, nur unsichtbar.
+        /* Das Element bleibt haengen, nur unsichtbar — aber STUMM.
+           Frueher stand hier „Ton weiterlaufen lassen"; genau das war
+           die zweite Stimme. Der Ton laeuft ueber die Tonelemente
+           (eines je Konto) und nur dort.
            Ist die Kamera aus, steht hier das PROFILBILD, und erst
            wenn es keines gibt, der Anfangsbuchstabe. Genau so war
            es gewünscht: nicht sofort Video, sondern erst einmal
@@ -23984,8 +24014,17 @@
          encodeURI holt der Browser sie nicht. */
       lcMusikSpieler.src = "music/" + encodeURIComponent(datei);
       lcMusikLautstaerke();
+      /* GEMELDET: „die Musik ist noch nicht hoerbar bei dem anderen …
+         es muss bei ihm hoerbar sein."
+         Der Grund ist die Autoplay-Sperre des Browsers: ein Ton, den
+         nicht der Mensch selbst ausgeloest hat, wird abgelehnt — beim
+         ABSENDER lief sie deshalb, beim Empfaenger nicht. Dieselbe
+         Sperre kennt das Klassenzimmer beim Sprechen schon; dort wird
+         beim naechsten Tipp irgendwo auf der Seite nachgeholt. Genau
+         das passiert jetzt auch hier, und eine Zeile sagt, dass ein
+         Tipp genuegt. */
       const v = lcMusikSpieler.play();
-      if (v && v.catch) v.catch(() => {});
+      if (v && v.catch) v.catch(() => lcMusikNachholen(titel));
       lcMusikTakt = setInterval(lcMusikLautstaerke, 900);
       lcMusikSpieler.onended = () => lcMusikStoppen();
       lcMusikTitel = titel || datei;
@@ -24039,6 +24078,30 @@
     });
     karte.appendChild(band);
   }
+  /* WENN DER BROWSER DIE MUSIK VERWEIGERT.
+     Ein Tipp irgendwo auf der Seite ist eine echte Nutzergeste —
+     danach laesst jeder Browser sie zu. Der Horcher haengt sich
+     genau einmal an und raeumt sich selbst wieder ab. */
+  let lcMusikHorcht = false;
+  function lcMusikNachholen(titel) {
+    if (lcMusikHorcht || !lcMusikSpieler) return;
+    lcMusikHorcht = true;
+    const los = () => {
+      document.removeEventListener("pointerdown", los, true);
+      document.removeEventListener("keydown", los, true);
+      lcMusikHorcht = false;
+      if (!lcMusikSpieler || !lcMusikSpieler.src) return;
+      const v2 = lcMusikSpieler.play();
+      if (v2 && v2.catch) v2.catch(() => {});
+    };
+    document.addEventListener("pointerdown", los, true);
+    document.addEventListener("keydown", los, true);
+    try {
+      showToast("\ud83c\udfb5 " + (titel || "Musik") + " liegt bereit \u2014 "
+        + "tipp einmal irgendwo hin, dann geht sie los.");
+    } catch (e) {}
+  }
+
   /* Fuer alle anhalten und wieder weiterlaufen lassen. */
   function lcMusikPause(an) {
     if (!lcMusikSpieler) return false;
@@ -28675,22 +28738,29 @@
     kreis.style.setProperty("--zux", (dx / l * weit).toFixed(1) + "px");
     kreis.style.setProperty("--zuy", (dy / l * weit).toFixed(1) + "px");
   }
-  function lcNebenMichSetzen(platz) {
-    const karte = document.getElementById("livechatKarte");
-    const meiner = karte && karte.querySelector(".lc-platz-ich");
-    if (!meiner || !platz || meiner === platz) return;
-    const name = ((platz.querySelector(".lc-platz-name") || {}).textContent || "").trim();
-    if (!name || name === "frei") return;
-    const gitter = lcPlatzGitter();
-    const mein = gitter.find((p) => p.el === meiner);
-    if (!mein) return;
-    const naehe = (p) => Math.abs(p.reihe - mein.reihe) + Math.abs(p.spalte - mein.spalte);
-    const frei = gitter.filter((p) => p.frei).sort((x, y) => naehe(x) - naehe(y))[0];
-    if (!frei) return;
-    const zeile = "/heb " + name + " " + frei.nr;
-    try { LiveChat.schreiben(zeile); } catch (e) {}
-    lcNachDemSenden(zeile);
-  }
+  /* =================================================================
+     DIE ENDLOSSCHLEIFE — UND WARUM SIE ENTSTAND
+     -----------------------------------------------------------------
+     GEMELDET, woertlich: „Das mit dem Lasso und mit dem Haken
+     funktioniert noch nicht, denn sobald man das macht, wiederholt
+     sich das in einer Endlosschleife und hoert nicht auf, denjenigen
+     irgendwohin zu ziehen."
+
+     GEFUNDEN, und es ist ein Kreis, den ich selbst gebaut habe:
+       1. /heb (oder /lasso) setzt den Platz um und schickt die Zeile
+          mit der Wirkung „heber" an alle.
+       2. JEDES Geraet zeichnet daraufhin die Animation — lcHeber.
+       3. Die Animation rief am Ende lcNebenMichSetzen auf, und das
+          schickte WIEDER ein „/heb …" hinaus.
+       4. Damit ging Schritt 1 von vorn los, auf jedem Geraet einmal.
+     Das hoert nie auf und wird mit jeder Runde lauter.
+
+     Eine Animation darf NICHTS verschicken. Das Umsetzen erledigt der
+     Befehl — einmal, auf dem Geraet dessen, der ihn tippt (siehe
+     livechat.js, „/heb"). lcNebenMichSetzen ist damit ueberfluessig
+     und geloescht; wer das Ziel waehlen will, nimmt das Angelmenue
+     (lcHebenMenue), wer sofort zu sich ziehen will, das Lasso.
+     ================================================================= */
 
   function lcHeber(wen) {
     return lcAmPlatz(wen, "lc-heber", (schicht, platz) => {
@@ -28708,7 +28778,7 @@
           kreis.style.removeProperty("--zuy");
         }, 1800);
       }
-      if (leine) setTimeout(() => lcNebenMichSetzen(platz), 1500);
+      /* HIER STAND DIE SCHLEIFE — siehe lcNebenMichSetzen. */
       /* Ohne Leine (es gilt allen, oder ich sitze selbst nicht) bleibt
          der alte Heber als Rueckfall — sonst saehe man gar nichts. */
       schicht.innerHTML = leine ? "" :
@@ -28743,7 +28813,7 @@
           kreis.style.removeProperty("--zuy");
         }, 1800);
       }
-      if (leine) setTimeout(() => lcNebenMichSetzen(platz), 1500);
+      /* HIER STAND DIE SCHLEIFE — siehe lcNebenMichSetzen. */
       schicht.innerHTML = leine ? '<span class="lc-lasso-schlinge"></span>' :
         '<span class="lc-lasso-schlinge"></span>'
         + '<span class="lc-lasso-seil"></span>';
@@ -33606,7 +33676,10 @@
       kachel.innerHTML = `
         <div class="lc-gross-kasten">
           <div class="lc-gross-kreis">
-            <video autoplay playsinline ${p.ich ? "muted" : ""}
+            <!-- STUMM, IMMER: ein Bild macht keinen Ton. Sonst liefe
+                 dieselbe Stimme ein zweites Mal, hier sogar ein
+                 drittes — siehe die Begruendung bei den Plaetzen. -->
+            <video autoplay playsinline muted
                    style="${hatVideo ? "" : "display:none;"} ${p.ich ? "transform:scaleX(-1);" : ""}"></video>
             ${hatVideo ? "" : (emoji
               ? `<span class="lc-gross-emoji">${escapeHtml(emoji)}</span>`
@@ -33627,6 +33700,7 @@
       if (avatar && p.bild) avatar.setAttribute("src", lcBildQuelle(p.bild));
       const v = kachel.querySelector("video");
       if (v && p.strom) {
+        v.muted = true;                 /* siehe oben: ein Bild macht keinen Ton */
         v.srcObject = p.strom;
         const sp = v.play(); if (sp && sp.catch) sp.catch(() => {});
       }
@@ -33926,6 +34000,13 @@
         if (erg.selbst) {
           showToast("🔊 Dein eigenes Echo ist abgeklemmt — du hörst dich nie selbst. "
             + erg.wieder + " andere Stimme" + (erg.wieder === 1 ? "" : "n") + " stehen.");
+          return;
+        }
+        if (erg.leitungen) {
+          showToast("\ud83d\udd0a " + erg.leitungen + " Leitung"
+            + (erg.leitungen === 1 ? "" : "en") + " neu aufgebaut"
+            + (erg.doppelt ? ", " + erg.doppelt + " doppelte Spur angehalten" : "")
+            + " \u2014 du bleibst im Klassenzimmer, es l\u00e4dt nichts neu.");
           return;
         }
         showToast(erg.doppelt

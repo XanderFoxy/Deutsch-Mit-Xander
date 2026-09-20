@@ -112,10 +112,12 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("jede Datei im Musikordner steht auch in der Liste",
     fehlend.length === 0, ordner.length + " Dateien" + (fehlend.length ? ", fehlt: " + fehlend.join(", ") : ""));
   pruefe("/musik ist ein Befehl", /art === "musik"/.test(lc) && /w: "musik"/.test(lc));
-  pruefe("das Lied faehrt ueber den Kanal mit",
-    /lied: String\(n\.lied \|\| ""\)/.test(lc) && /lied: n\.lied \|\| ""/.test(lc));
-  pruefe("und auch an der eigenen Zeile",
-    /if \(zusatz && zusatz\.lied\) \{/.test(lc));
+  /* NACHGEBESSERT IN RUNDE 28: alle Zusatzfelder stehen in EINER
+     Liste — so kann keines mehr an einer der drei Stellen fehlen. */
+  pruefe("das Lied steht in der Liste der Zusatzfelder",
+    /var ZUSATZ_FELDER = \[/.test(lc) && /"lied", "liedTitel"/.test(lc));
+  pruefe("und die Liste gilt an allen drei Stellen",
+    (lc.match(/zusatzUebernehmen\(/g) || []).length >= 4);
   pruefe("Musik zeichnet nichts und springt nicht",
     /if \(art === "musik"\) \{\s*\n\s*lcMusikSpielen/.test(js)
     && !/musik:\s*\{ ganzeSeite: true/.test(js));

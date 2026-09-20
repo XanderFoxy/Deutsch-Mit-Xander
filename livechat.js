@@ -2711,8 +2711,63 @@ window.LiveChat = (function () {
      Stroeme werden auf eine Spur je Art zurueckgestutzt, der
      AudioContext geweckt, und dann wird alles neu angehaengt.
      Danach hoert man jeden genau einmal. */
+  /* DER KNOPF MUSS AUCH WIRKLICH ETWAS TUN.
+     -----------------------------------------------------------------
+     GEMELDET: „dieser Tonknopf bringt nix. Er hat keine Funktion, wenn
+     man das drueckt — die Doppelung auch nicht weg, das resettet sich
+     auch nicht. Dann soll an der Stelle das so aktualisieren, dass man
+     im Klassenzimmer bleibt, ohne dass man alles noch mal neu laden
+     muss."
+
+     Richtig: bis jetzt hat der Knopf nur die Tonelemente umgehaengt.
+     Sass die Doppelung in der LEITUNG (zwei Spuren in einer
+     Verbindung, eine haengende Bruecke), blieb sie. Jetzt reisst er
+     jede Bruecke ab und baut sie neu auf — ohne den Raum zu
+     verlassen, ohne Neuladen. Wer die kleinere Kennung hat, ruft an;
+     die Wache tut den Rest innerhalb weniger Sekunden. */
+  function verbindungenNeu() {
+    var wieviele = 0;
+    Object.keys(brueckeJe).forEach(function (id) {
+      brueckeAbbauen(id);
+      wieviele++;
+    });
+    /* Die Stroeme der anderen sind damit tot — weg damit, sonst
+       zeigt der Platz ein eingefrorenes Bild. */
+    Object.keys(zustand.leute || {}).forEach(function (id) {
+      var p = zustand.leute[id];
+      if (p) p.strom = null;
+    });
+    versuchJe = {};
+    melden();
+    /* Und sofort wieder anrufen, nicht erst beim naechsten Takt. */
+    Object.keys(zustand.leute || {}).forEach(function (id) {
+      if (id === zustand.ichId) return;
+      if (zustand.ichId >= id) return;      /* die kleinere Kennung ruft an */
+      try { anrufen(id); } catch (e) {}
+    });
+    return wieviele;
+  }
+
   function tonNeuAufbauen() {
+    /* ERST ZAEHLEN, DANN ABREISSEN.
+       verbindungenNeu() nimmt allen ihren Strom weg — wer danach
+       zaehlt, zaehlt Nullen. Deshalb wird hier zuerst nachgesehen,
+       was da ist (und ob ein eigenes Echo dabei war), und erst dann
+       neu aufgebaut. */
     var doppelt = tonSpurenAufraeumen();
+    var selbst = 0, wieder = 0;
+    Object.keys(zustand.leute || {}).forEach(function (id) {
+      var p = zustand.leute[id];
+      if (!p) return;
+      if (id === zustand.ichId) {
+        /* „Dass ich mich selber niemals hoeren kann" — auch nicht
+           nach dem Zuruecksetzen. */
+        if (p.strom || tonJe[id]) { tonSelbstSperren(id); selbst++; }
+        return;
+      }
+      if (p.strom) wieder++;
+    });
+    var neuAufgebaut = verbindungenNeu();
     /* Alle Elemente wirklich leeren — nicht nur umhaengen. Ein
        Element, das noch einen alten Strom haelt, spielt sonst
        weiter, auch wenn niemand mehr hinsieht. */
@@ -2732,21 +2787,18 @@ window.LiveChat = (function () {
     try {
       if (tonKontext && tonKontext.state === "suspended" && tonKontext.resume) tonKontext.resume();
     } catch (e) {}
-    /* Und jetzt jeden wieder genau einmal anschliessen. */
-    var wieder = 0;
-    var selbst = 0;
+    /* Und was noch einen Strom hat, gleich wieder anschliessen —
+       die frisch aufgebauten Leitungen melden sich von selbst. */
     Object.keys(zustand.leute || {}).forEach(function (id) {
       var p = zustand.leute[id];
       if (!p || !p.strom) return;
-      /* „Dass ich mich selber niemals hoeren kann" — auch nicht nach
-         dem Zuruecksetzen. */
-      if (id === zustand.ichId) { tonSelbstSperren(id); selbst++; return; }
+      if (id === zustand.ichId) { tonSelbstSperren(id); return; }
       tonAnschliessen(id, p.strom);
-      wieder++;
     });
     tonElementeAufraeumen();
     tonWacheZaehler.geheilt += doppelt;
-    return { doppelt: doppelt, wieder: wieder, selbst: selbst };
+    return { doppelt: doppelt, wieder: wieder, selbst: selbst,
+             leitungen: neuAufgebaut };
   }
 
   function tonWacheStarten() {
@@ -3673,7 +3725,7 @@ window.LiveChat = (function () {
         try { versuch_ = aufgabeVersuch(n.von, n.text); } catch (e) {}
         try { aufgabeAntwort(n.von, n.name || "Gast", n.text); } catch (e) {}
       }
-      nachrichtAnhaengen({
+      nachrichtAnhaengen(zusatzUebernehmen({
         /* Nur eine Antwort auf eine gestellte Aufgabe darf benotet
            werden — siehe aufgabeVersuch(). */
         versuch: Boolean(n.aufgabeId) || Boolean(versuch_ && versuch_.versuch),
@@ -3692,38 +3744,10 @@ window.LiveChat = (function () {
         text: String(n.text || "").slice(0, CHAT_LAENGE),
         zeit: n.zeit || Date.now(), eigen: false, bild: n.bild || "",
         art: n.chatArt || "text",
-        wirkung: n.wirkung || "",
-        film: n.film || "",
-        betonung: n.betonung || "",
-        /* Die gemischten Saetze der Sortieraufgabe. Ohne diese Zeile
-           kaeme die Aufgabe beim anderen als leere Ueberschrift an —
-           derselbe Fehler wie einst bei „wen". */
-        sortieren: Array.isArray(n.sortieren) ? n.sortieren.slice(0, 8) : null,
-        leseZeilen: Array.isArray(n.leseZeilen) ? n.leseZeilen.slice(0, 40) : null,
-        leseTitel: String(n.leseTitel || ""),
-        leseNiveau: String(n.leseNiveau || ""),
-        /* Das Lied faehrt mit — ohne diese zwei Zeilen kaeme beim
-           anderen „legt … auf" an und es bliebe still. Genau dieser
-           Fehler ist hier schon zweimal passiert (bei „wen" und bei
-           den gemischten Saetzen). */
-        lied: String(n.lied || ""),
-        liedTitel: String(n.liedTitel || ""),
-        wortLink: String(n.wortLink || ""),
-        /* DAS AUFDECKEN — UND DER GRUND, WARUM ES BEI DEN ANDEREN NIE
-           ANKAM.
-           GEMELDET: „Dann ist bei diesem Aufdeckspiel — sehen die
-           anderen das immer noch nicht."
-           GEFUNDEN: derselbe Fehler wie einst bei „wen" und bei den
-           gemischten Saetzen. Das Feld wurde beim Senden angehaengt
-           (siehe anAlle) und beim EMPFANG nicht wieder abgeholt. Der
-           Absender sah sein Rad, alle anderen eine leere
-           Ueberschrift. Eine Zeile — mehr war es nicht. */
-        raten: String(n.raten || ""),
-        dran: String(n.dran || ""),
-        /* WEN es trifft, muss mitkommen — sonst spielt die Umarmung
-           beim Empfaenger auf allen Plaetzen statt auf dem richtigen. */
-        wen: n.wen || "",
-        an: n.an || "",
+        /* ALLE Zusatzfelder kommen aus EINER Liste (ZUSATZ_FELDER,
+           siehe anAlle). Frueher stand hier je Feld eine Zeile, und
+           die zuletzt dazugekommene fehlte jedes Mal: so ging das
+           Aufdecken bei den anderen nie auf. */
         farbe: n.farbe || (zustand.leute[n.von] && zustand.leute[n.von].farbe) || "",
         farbeName: n.farbeName || (zustand.leute[n.von] && zustand.leute[n.von].farbeName) || "",
         bildImChat: typeof n.bildImChat === "string" ? n.bildImChat.slice(0, 200000) : "",
@@ -3733,7 +3757,7 @@ window.LiveChat = (function () {
         sprachSek: Number(n.sprachSek) || 0,
         sprachAb: Number(n.sprachAb) || 0,
         sprachDauer: Number(n.sprachDauer) || 0
-      });
+      }, n));
       melden();
       return;
     }
@@ -3782,16 +3806,14 @@ window.LiveChat = (function () {
            Beim Umbenennen von „an" auf „wen" (weil „an" eine Kennung
            ist und jedes fremde Geraet die Nachricht deshalb wegwarf)
            war genau diese eine Stelle uebersehen worden. */
-        return { id: n.id, von: n.von, name: n.name, text: n.text, art: n.art || "text",
-                 bild: n.bild || "", bildImChat: n.bildImChat || "", farbe: n.farbe || "",
-                 wirkung: n.wirkung || "", wen: n.wen || "", an: n.an || "",
-                 film: n.film || "", betonung: n.betonung || "",
-                 sortieren: n.sortieren || null,
-                 leseZeilen: n.leseZeilen || null, leseTitel: n.leseTitel || "",
-                 leseNiveau: n.leseNiveau || "",
-                 lied: n.lied || "", liedTitel: n.liedTitel || "",
-                 wortLink: n.wortLink || "",
-                 raten: n.raten || "", dran: n.dran || "", zeit: n.zeit };
+        /* Auch hier: ALLE Zusatzfelder aus EINER Liste. Fehlte eines,
+           sah ein Nachzuegler die Aufgabe nicht — „jede Aufgabe soll
+           auf beiden Seiten ueberall sichtbar sein". */
+        return zusatzUebernehmen({
+          id: n.id, von: n.von, name: n.name, text: n.text, art: n.art || "text",
+          bild: n.bild || "", bildImChat: n.bildImChat || "", farbe: n.farbe || "",
+          zeit: n.zeit
+        }, n);
       });
       /* Zu gross? Dann die Bilder herausnehmen, aeltester zuerst. */
       while (JSON.stringify(paket).length > VERLAUF_PAKET) {
@@ -9141,64 +9163,53 @@ window.LiveChat = (function () {
     return true;
   }
 
+  /* =================================================================
+     ALLE ZUSATZFELDER EINER ZEILE — AN EINER EINZIGEN STELLE
+     -----------------------------------------------------------------
+     GEMELDET, zuletzt woertlich: „ich glaube, die andere Seite sieht
+     noch nicht alles. Schau nach, dass die Effekte auf beiden Seiten
+     synchron sind. Die Aufgabe des Aufdeckens — jede Aufgabe soll auf
+     beiden Seiten ueberall sichtbar sein."
+
+     Er hat recht, und es ist IMMER derselbe Fehler gewesen: ein neues
+     Feld wird beim Senden angehaengt und an EINER der beiden
+     Empfangsstellen vergessen. So ist es „wen" ergangen, den
+     gemischten Saetzen, dem Lied — und zuletzt dem Aufdecken.
+
+     Damit ist jetzt Schluss. Es gibt EINE Liste, und alle drei Stellen
+     lesen sie:
+       1. anAlle  — die eigene Zeile,
+       2. empfangen — die Zeile der anderen,
+       3. das Verlaufspaket — fuer die, die spaeter dazukommen.
+     Ein neues Feld wird hier eingetragen und ist damit ueberall da. */
+  var ZUSATZ_FELDER = [
+    "wirkung", "wen", "an", "film", "betonung", "raten", "dran",
+    "sortieren", "leseZeilen", "leseTitel", "leseNiveau",
+    "lied", "liedTitel", "wortLink"
+  ];
+  /* Listen werden begrenzt — eine Zeile aus einer fremden Fassung
+     darf den Chat nicht sprengen. */
+  var ZUSATZ_LISTEN = { sortieren: 8, leseZeilen: 40 };
+  function zusatzUebernehmen(ziel, quelle) {
+    if (!ziel || !quelle) return ziel;
+    ZUSATZ_FELDER.forEach(function (f) {
+      var w = quelle[f];
+      if (w === undefined || w === null || w === "") return;
+      if (ZUSATZ_LISTEN[f]) {
+        if (Array.isArray(w)) ziel[f] = w.slice(0, ZUSATZ_LISTEN[f]);
+        return;
+      }
+      ziel[f] = typeof w === "string" ? w : String(w);
+    });
+    return ziel;
+  }
+
   function anAlle(art, text, zusatz) {
     var n = eigeneZeile(art, text);
-    if (zusatz && zusatz.wirkung) n.wirkung = zusatz.wirkung;
-    /* Der FILMNAME reist mit. Nur der Name — ein paar Zeichen; die
-       Datei holt sich jedes Geraet selbst. Faehrt er hier nicht mit,
-       sehen die anderen nur die Zeile und nie den Film. */
-    if (zusatz && zusatz.film) n.film = zusatz.film;
-    /* Der zu betonende TEXT reist mit — die Loesung nicht. Jedes
-       Geraet schlaegt sie selbst nach. */
-    if (zusatz && zusatz.betonung) n.betonung = zusatz.betonung;
-    /* Der gesuchte Satz fuers Glücksrad — siehe ratenStellen. */
-    if (zusatz && zusatz.raten) n.raten = zusatz.raten;
-    /* Die gemischten Saetze der Sortieraufgabe. Auch hier faehrt die
-       LOESUNG nicht mit — nur die Mischung, damit alle dieselbe
-       Reihenfolge vor sich haben. Geprueft wird beim Steller. */
-    if (zusatz && zusatz.sortieren) n.sortieren = zusatz.sortieren;
-    /* Der Lesetext: Titel, Niveau und die Zeilen. Auch das faehrt
-       mit — jedes Geraet muss dieselben Zeilen vor sich haben,
-       sonst zeigt die Zeilenmarke bei jedem woanders hin. */
-    if (zusatz && zusatz.leseZeilen) {
-      n.leseZeilen = zusatz.leseZeilen;
-      n.leseTitel = zusatz.leseTitel || "";
-      n.leseNiveau = zusatz.leseNiveau || "";
-    }
-    /* Das Lied gehoert auch an die EIGENE Zeile. Sie entsteht hier
-       lokal und nicht ueber den Empfang — ohne diese Zeile legt man
-       fuer alle auf und hoert als Einziger nichts. */
-    if (zusatz && zusatz.lied) {
-      n.lied = zusatz.lied;
-      n.liedTitel = zusatz.liedTitel || "";
-    }
-    /* Das Wort, das im Woerterbuch nachzuschlagen ist. „Dass man im
-       Chat sogar auf den Link im Woerterbuch zugreifen kann." */
-    if (zusatz && zusatz.wortLink) n.wortLink = zusatz.wortLink;
-    if (zusatz && zusatz.dran) n.dran = zusatz.dran;
-    /* WEN es angeht, steht an der Zeile selbst — nicht nur im Rundruf.
-       Sonst sähe der Absender die Umarmung nicht, die er gerade
-       verschickt hat: seine eigene Zeile entsteht nämlich hier und
-       nicht über den Empfang.
-
-       DER FEHLER, DEN ER GEMELDET HAT — und er ist hässlich:
-       „Auch die Animation, wo man jemanden umarmt: wenn ich sage
-        /drück Emmy, passiert nix. Oder /box Emmy, passiert auch nix."
-
-       Das Feld hiess frueher „an" — UND GENAU SO HEISST das Feld, mit
-       dem eine Nachricht an EINE BESTIMMTE KENNUNG adressiert wird.
-       In empfangen() steht seit jeher:
-            if (n.an && n.an !== zustand.ichId) return;
-       Eine Umarmung an „Emmy" trug also an = "Emmy" — und weil das
-       keine Kennung ist, die zu irgendjemandem passt, hat JEDES andere
-       Geraet die ganze Nachricht weggeworfen. Kein Text, keine
-       Animation, nichts. Nur der Absender sah etwas, weil seine Zeile
-       hier lokal entsteht.
-
-       Das Zielfeld heisst deshalb jetzt „wen". Es ist ein NAME, keine
-       Kennung, und es hat mit der Zustellung nichts zu tun. */
-    if (zusatz && zusatz.wen) n.wen = zusatz.wen;
-    if (zusatz && zusatz.an) n.an = zusatz.an;
+    /* ALLE Zusatzfelder auf einmal — die Liste steht oben bei
+       ZUSATZ_FELDER. Vorher stand hier fuer jedes Feld eine eigene
+       Zeile, und genau eine davon wurde jedes Mal vergessen. */
+    zusatzUebernehmen(n, zusatz);
     serverSichern({ id: n.id, name: n.name, bild: n.bild, text: text, art: art });
     var post = { art: "text", id: n.id, name: n.name, text: text, zeit: n.zeit,
                  bild: zustand.ichBild, chatArt: art, farbe: zustand.farbe, farbeName: zustand.farbeName,

@@ -147,8 +147,16 @@ const BRETT = (frei) => `
     && /\.lc-peitsche-seil \{[\s\S]*?width: var\(--laenge/.test(css));
   pruefe("Lasso und Angel ziehen zu MIR",
     /function lcZuMirZiehen/.test(js) && /@keyframes lcZuMirR18/.test(css));
+  /* NACHGEBESSERT IN RUNDE 28: das Umsetzen gehoert in den BEFEHL,
+     nicht in die Animation. Rief die Animation wieder „/heb" auf, lief
+     es im Kreis — „sobald man das macht, wiederholt sich das in einer
+     Endlosschleife". lcNebenMichSetzen ist deshalb geloescht. */
   pruefe("und setzen den anderen auch wirklich um",
-    /function lcNebenMichSetzen/.test(js) && /"\/heb " \+ name \+ " " \+ frei\.nr/.test(js));
+    /art === "heb"/.test(lc) && /sitzTausch\[wenH\.id\] = nummerH - 1;/.test(lc));
+  /* Der Name steht nur noch im Kommentar, der erklaert, was hier
+     schiefging — gerufen wird nichts mehr. */
+  pruefe("die Animation schickt dabei nichts mehr hinaus",
+    !/lcNebenMichSetzen\(/.test(js), "kein Kreis mehr");
   pruefe("Billard sucht das Loch in Stossrichtung",
     /k\.mit > 0\.35/.test(js), "Kosinus zur Stossrichtung");
   pruefe("Pac-Man beschneidet den Kreis nicht mehr",
@@ -217,7 +225,7 @@ const BRETT = (frei) => `
     JSON.parse(fs.readFileSync(path.join(WURZEL, "filme/raumschiff.json"), "utf8")).maskeUnsauber === true,
     "raumschiff.json");
   pruefe("die Fassung ist hochgezaehlt",
-    /window\.DMA_VERSION = "369"/.test(html));
+    /window\.DMA_VERSION = "370"/.test(html));
 
   /* ---------- Und jetzt im Browser ---------- */
   const srv = http.createServer((q, a) => {
