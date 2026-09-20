@@ -260,13 +260,58 @@ const PAARE = [
     platz.classList.add("lc-platz-ich");
     window.DMA_PRUEFUNG.platzMenue(platz);
     const k = document.getElementById("lcPlatzMenue");
-    const erster = k ? k.querySelector(".lc-platzmenue-wort") : null;
-    const wort = erster ? erster.textContent : "";
+    const woerter = k ? [...k.querySelectorAll(".lc-platzmenue-wort")].map((x) => x.textContent) : [];
     if (k) k.remove();
-    return wort;
+    return woerter;
   });
-  pruefe("auf dem eigenen Platz steht das Profilbild obenan",
-    /Profilbild/i.test(eigen), eigen || "-");
+  /* GEWACHSEN, auf Ansage: „Vielleicht kannst du es so machen, dass
+     wir die Mikrofon-Effekte auch in dem Menue haben auf unserem
+     Profilbild — dass das dann nur bei uns angezeigt wird." Auf dem
+     eigenen Platz stehen deshalb ZWEI Eintraege vorneweg, die es bei
+     fremden Plaetzen nicht gibt: das eigene Bild und das Sprechbild.
+     Die Kachel heisst jetzt „Anderes Bild" — „Anderes Profilbild"
+     brach in der schmalen Kachel um. */
+  pruefe("auf dem eigenen Platz steht das eigene Bild obenan",
+    /Bild/i.test(eigen[0] || ""), eigen[0] || "-");
+  pruefe("und gleich danach die Wahl des Sprechbildes",
+    /Sprechbild/i.test(eigen[1] || ""), eigen[1] || "-");
+
+  console.log("\nUND DIE WAHL DES SPRECHBILDES\n");
+  const sb = await pg.evaluate(async () => {
+    const platz = document.querySelector(".lc-platz");
+    platz.classList.add("lc-platz-ich");
+    window.DMA_PRUEFUNG.platzMenue(platz);
+    const k = document.getElementById("lcPlatzMenue");
+    /* Die Kachel „Sprechbild" antippen — dieselbe Wand klappt noch
+       einmal auf, diesmal mit den Bildern. */
+    const auf = [...k.querySelectorAll(".lc-platzmenue-knopf")]
+      .filter((b) => /Sprechbild/i.test(b.textContent))[0];
+    if (!auf) return { keinKnopf: true };
+    auf.click();
+    await new Promise((f) => setTimeout(f, 120));
+    const m = document.getElementById("lcPlatzMenue");
+    if (!m) return { keinMenue: true };
+    const knoepfe = [...m.querySelectorAll(".lc-platzmenue-knopf")];
+    const markiert = knoepfe.filter((b) => b.classList.contains("ist-da")).length;
+    /* Eines waehlen, das gerade NICHT gilt, und nachsehen, ob es
+       wirklich gesetzt wird. */
+    const anderes = knoepfe.filter((b) => !b.classList.contains("ist-da"))[0];
+    const wortVorher = anderes ? anderes.textContent.trim() : "";
+    if (anderes) anderes.click();
+    await new Promise((f) => setTimeout(f, 120));
+    return { kacheln: knoepfe.length, markiert: markiert,
+             kopf: (m.querySelector(".lc-platzmenue-kopf") || {}).textContent || "",
+             gewaehlt: window.LiveChat.sprechbild(),
+             wort: wortVorher,
+             zu: !document.getElementById("lcPlatzMenue") };
+  });
+  pruefe("das Sprechbild-Menue geht auf", !sb.keinKnopf && !sb.keinMenue,
+    sb.keinKnopf ? "keine Kachel" : (sb.keinMenue ? "kein Menue" : sb.kopf));
+  pruefe("es zeigt alle Sprechbilder", sb.kacheln === 14, sb.kacheln + " Kacheln");
+  pruefe("und markiert genau das, was gerade gilt", sb.markiert === 1,
+    sb.markiert + " markiert");
+  pruefe("ein Tipp setzt es wirklich", Boolean(sb.gewaehlt) && sb.zu === true,
+    "jetzt: " + sb.gewaehlt + (sb.zu ? " (Menue zu)" : " (Menue offen)"));
 
   if (aufSeite.length) {
     console.log("\n  Fehler auf der Seite:");

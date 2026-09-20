@@ -49,30 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 351 — die Sprechbilder der anderen kommen an, der Fokus gehoert dem Betreiber",
+  stand: "Fassung 352 — das Sprechbild steht jetzt im eigenen Platzmenue",
 
   inArbeit: [
-    { seit: "2026-09-20T00:09",
+    { seit: "2026-09-20T00:18",
       text: "Galgenmaennchen: reihum spielen und benoten" },
-    { seit: "2026-09-20T00:09",
-      text: "Sprechbild-Wahl ins Platzmenue, langer Druck soll nicht mehr gross aufziehen" },
-    { seit: "2026-09-20T00:09",
+    { seit: "2026-09-20T00:18",
       text: "Haken/Lasso: jemanden wirklich zu sich ziehen" },
-    { seit: "2026-09-20T00:09",
+    { seit: "2026-09-20T00:18",
       text: "Neue Effekte aus der Wunschliste (Bumerang, Schneeball, Pfeil und Bogen, Bowling, Strudel, DJ, Trommel …)" },
-    { seit: "2026-09-20T00:09",
+    { seit: "2026-09-20T00:18",
       text: "Nachmessen, ob bei einem Gespraech wirklich ZWEI Geraete in turn_nutzung stehen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-20T00:09",
-      text: "Man sieht endlich das Sprechbild der anderen — es ging an drei Stellen zugleich verloren" },
-    { seit: "2026-09-20T00:09",
-      text: "Den Fokus-Modus schaltet jetzt nur noch der Betreiber, nicht mehr jeder Haeuptling" },
-    { seit: "2026-09-20T00:09",
-      text: "Ein fremdes Geraet kann die Regel des Raums nicht mehr setzen" },
-    { seit: "2026-09-20T00:09",
-      text: "Automatisch: ist das Kontingent aufgebraucht, geht der Fokus an und bleibt an" },
+    { seit: "2026-09-20T00:18",
+      text: "Langer Druck auf das eigene Bild: „Sprechbild“ steht im Menue, mit allen vierzehn zur Wahl" },
+    { seit: "2026-09-20T00:18",
+      text: "Die gewaehlte Kachel ist markiert, ein Tipp setzt sie und speichert sie mit dem Profil" },
   ],
 };

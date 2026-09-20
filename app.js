@@ -23404,6 +23404,71 @@
     ["\ud83d\udd28", "Hammer",    "hammer"]
   ];
 
+  /* Die Zeichen zu den Sprechbildern — sie stehen hier und nicht in
+     livechat.js, weil sie zur Oberflaeche gehoeren und nicht zur
+     Sache. Fehlt eines, nimmt die Kachel den Punkt. */
+  const LC_SPRECHBILD_ZEICHEN = {
+    ring: "\ud83d\udfe2", welle: "\ud83c\udf0a", puls: "\ud83d\udc93",
+    regenbogen: "\ud83c\udf08", funkeln: "\u2728", magie: "\ud83e\ude84",
+    noten: "\ud83c\udfb5", herzen: "\u2764\ufe0f", feuer: "\ud83d\udd25",
+    strom: "\u26a1", blasen: "\ud83e\uded0", eis: "\u2744\ufe0f",
+    bluete: "\ud83c\udf38", aus: "\u2b55"
+  };
+
+  /* Die zweite Kachelwand: welches Bild soll um mein Profil laufen,
+     wenn ich spreche? Sie sieht aus wie das Platzmenue und liegt an
+     derselben Stelle — nur steht oben, worum es geht. */
+  function lcSprechbildMenue(platz) {
+    lcPlatzMenueZu();
+    let liste = {};
+    let jetzt = "ring";
+    try {
+      liste = (window.LiveChat && LiveChat.sprechbilder) ? LiveChat.sprechbilder() : {};
+      jetzt = (window.LiveChat && LiveChat.sprechbild) ? LiveChat.sprechbild() : "ring";
+    } catch (e) {}
+    const namen = Object.keys(liste);
+    if (!namen.length) return false;
+
+    const kasten = document.createElement("div");
+    kasten.id = "lcPlatzMenue";
+    kasten.className = "lc-platzmenue";
+    kasten.setAttribute("role", "menu");
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kopf.textContent = "Beim Sprechen";
+    kasten.appendChild(kopf);
+
+    namen.forEach((n) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-platzmenue-knopf" + (n === jetzt ? " ist-da" : "");
+      b.setAttribute("role", "menuitemradio");
+      b.setAttribute("aria-checked", n === jetzt ? "true" : "false");
+      b.innerHTML = '<span class="lc-platzmenue-zeichen">'
+        + (LC_SPRECHBILD_ZEICHEN[n] || "\u00b7") + "</span>"
+        + '<span class="lc-platzmenue-wort"></span>';
+      /* Nur das erste Wort der Beschreibung — „Regenbogen" statt
+         „Regenbogen — alle Farben auf einmal, hell und klar". Der
+         ganze Satz steht im Titel, fuer den, der hinsieht. */
+      b.querySelector(".lc-platzmenue-wort").textContent =
+        String(liste[n]).split(" — ")[0];
+      b.title = String(liste[n]);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        lcPlatzMenueZu();
+        try { LiveChat.sprechbildSetzen(n); } catch (x) {}
+        showToast("Beim Sprechen: " + String(liste[n]).split(" — ")[0]);
+      });
+      kasten.appendChild(b);
+    });
+
+    document.body.appendChild(kasten);
+    lcMenueStellen(kasten, platz);
+    lcMenueSchliessen(kasten);
+    return true;
+  }
+
   function lcPlatzMenueZu() {
     const m = document.getElementById("lcPlatzMenue");
     if (m) m.remove();
@@ -23449,7 +23514,21 @@
     };
 
     if (eigen) {
-      knopf("\ud83d\uddbc\ufe0f", "Anderes Profilbild", () => livechatBildWaehler());
+      knopf("\ud83d\uddbc\ufe0f", "Anderes Bild", () => livechatBildWaehler());
+      /* =========================================================
+         DAS SPRECHBILD STEHT JETZT IM MENUE
+         ---------------------------------------------------------
+         GEWUENSCHT: „Vielleicht kannst du es so machen, dass wir die
+         Mikrofon-Effekte auch in dem Menue haben auf unserem
+         Profilbild — dass das dann nur bei uns angezeigt wird."
+
+         Bisher ging das nur ueber /sprechbild, also ueber das
+         Tippen eines Befehls. Hier steht es da, wo man ohnehin
+         hinlangt: beim eigenen Bild, und nur dort. Angetippt
+         klappt dieselbe Kachelwand noch einmal auf, diesmal mit
+         den Sprechbildern; ein Tipp darauf setzt es sofort und
+         speichert es mit dem Profil. */
+      knopf("\ud83c\udf99\ufe0f", "Sprechbild", () => lcSprechbildMenue(platz));
     }
     LC_PLATZ_SPIELZEUG.forEach(([zeichen, wort, befehl]) => {
       knopf(zeichen, wort, () => {
@@ -23471,9 +23550,17 @@
     }
 
     document.body.appendChild(kasten);
+    lcMenueStellen(kasten, platz);
+    lcMenueSchliessen(kasten);
+    return true;
+  }
 
-    /* Wo hin? Neben den Platz, aber immer noch im Bild. Ein Menü, das
-       halb unter dem Bildschirmrand klebt, ist keins. */
+  /* WO HIN? Neben den Platz, aber immer noch im Bild. Ein Menue, das
+     halb unter dem Bildschirmrand klebt, ist keins.
+     Herausgeloest, weil es zwei Menues gibt: das Spielzeug am Platz
+     und die Wahl des Sprechbildes. Zweimal dasselbe zu schreiben
+     hiesse, es beim naechsten Mal an einer Stelle zu vergessen. */
+  function lcMenueStellen(kasten, platz) {
     const r = platz.getBoundingClientRect();
     const schirm = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
     const mb = kasten.getBoundingClientRect();
@@ -23483,15 +23570,14 @@
     if (oben + mb.height > schirm - 8) oben = Math.max(8, r.top - mb.height - 8);
     kasten.style.left = Math.round(links) + "px";
     kasten.style.top = Math.round(oben) + "px";
+  }
 
-    /* Zumachen: daneben tippen, Escape, oder wenn sich die Seite
-       bewegt. Der Zuhörer haengt am Dokument und nimmt sich selbst
-       wieder heraus — sonst sammeln sich mit jedem Menü neue an. */
-    /* GEMELDET: „In dem Moment, wo man scrollt, waehlt sich das Menue
-       wieder ab." Das Rollen IM Menue ist kein Griff daneben — nur
-       das Rollen der Seite darunter ist einer. Seit das Menue in drei
-       Spalten passt, muss ohnehin kaum noch jemand rollen; wer es
-       doch tut, verliert es nicht mehr. */
+  /* ZUMACHEN: daneben tippen, Escape, oder wenn sich die Seite
+     bewegt. Der Zuhoerer haengt am Dokument und nimmt sich selbst
+     wieder heraus — sonst sammeln sich mit jedem Menue neue an.
+     Das Rollen IM Menue ist kein Griff daneben, nur das Rollen der
+     Seite darunter ist einer. */
+  function lcMenueSchliessen(kasten) {
     const weg = (e) => {
       if (e && e.target && kasten.contains(e.target)) return;
       lcPlatzMenueZu();
@@ -23505,7 +23591,6 @@
       document.addEventListener("keydown", taste, true);
       window.addEventListener("scroll", weg, true);
     }, 0);
-    return true;
   }
 
   function lcPlatzMenueBinden(area) {
