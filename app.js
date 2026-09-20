@@ -22474,6 +22474,9 @@
     ei:             { ton: "eiknack",  dauer: 1200, laut: 0.6 },   /* das Knacken der Schale */
     fahren:         { ton: "fahren",   dauer: 2600, laut: 0.5 },   /* Motor und Bremse */
     spielzug:       { ton: "gummi",    dauer: 700,  laut: 0.5 },   /* ein Huepfer je Sprung */
+    pacjagd:        { ton: "pacman",   dauer: 3400, laut: 0.55 }, /* die Jagd ueber die Felder */
+    aufessen:       { ton: "keks",     dauer: 700,  laut: 0.5 },   /* ein Biss, kein Dauerkauen */
+    sanduhr:        { ton: "schwamm",  dauer: 3200, laut: 0.4 },   /* rieselnder Sand */
     /* Und der Rest der Wunschliste — „lasse keinen aus". */
     katapult:       { ton: "bonk",     dauer: 2600, laut: 0.65 },
     strohhalm:      { ton: "schlurf",  dauer: 3000, laut: 0.5 },
@@ -23580,7 +23583,11 @@
     ["\ud83c\udfc0", "Korb", "basketball"],
     ["\ud83c\udfbe", "Tennis",    "tennis"],
     ["\ud83c\udf6a", "Kekse",     "keks"],
-    ["\ud83c\udfb0", "Zufall",    "zufall"]
+    ["\ud83c\udfb0", "Zufall",    "zufall"],
+    /* „Das wäre die witzigste Animation." */
+    ["\ud83d\udc7e", "Pac-Man",  "pacman"],
+    ["\ud83c\udf6a", "Aufessen", "aufessen"],
+    ["\u231b",       "Sanduhr",  "sanduhr"]
   ];
 
   /* Die Zeichen zu den Sprechbildern — sie stehen hier und nicht in
@@ -23591,7 +23598,8 @@
     regenbogen: "\ud83c\udf08", funkeln: "\u2728", magie: "\ud83e\ude84",
     noten: "\ud83c\udfb5", herzen: "\u2764\ufe0f", feuer: "\ud83d\udd25",
     strom: "\u26a1", blasen: "\ud83e\uded0", eis: "\u2744\ufe0f",
-    bluete: "\ud83c\udf38", stoerung: "\ud83d\udcfa", aus: "\u2b55"
+    bluete: "\ud83c\udf38", stoerung: "\ud83d\udcfa",
+    blut: "\ud83e\ude78", spinnweb: "\ud83d\udd78\ufe0f", aus: "\u2b55"
   };
 
   /* Die zweite Kachelwand: welches Bild soll um mein Profil laufen,
@@ -25387,6 +25395,10 @@
     ei:         { zeichen: ["\ud83e\udd5a"], wie: 5, klasse: "umarmen" },
     fahren:     { zeichen: ["\ud83d\ude97"], wie: 5, klasse: "umarmen" },
     spielzug:   { zeichen: ["\ud83c\udfb2"], wie: 5, klasse: "umarmen" },
+    pacjagd:    { zeichen: ["\ud83d\udc7e"], wie: 6, klasse: "umarmen" },
+    aufessen:   { zeichen: ["\ud83c\udf6a"], wie: 6, klasse: "umarmen" },
+    lotto:      { zeichen: ["\ud83c\udfb0"], wie: 5, klasse: "umarmen" },
+    sanduhr:    { zeichen: ["\u231b"], wie: 6, klasse: "umarmen" },
     katapult:   { zeichen: ["\ud83e\ude83"], wie: 5, klasse: "umarmen" },
     strohhalm:  { zeichen: ["\ud83e\udd64"], wie: 5, klasse: "umarmen" },
     peitsche:   { zeichen: ["\ud83e\udea2"], wie: 5, klasse: "umarmen" },
@@ -26056,12 +26068,28 @@
       ["l", "r"].forEach((seite) => {
         const g = document.createElement("span");
         g.className = "lc-schelle lc-schelle-" + seite;
+        /* GEMELDET: „Das sind einfach nur zwei Kreise oben links und
+           rechts. Sie sollen von der Seitenansicht schräg an der
+           Rundung oben anliegen, so wie ein Wecker wirklich richtig
+           aussieht."
+           Eine Weckerschelle ist von der Seite keine Scheibe, sondern
+           eine KUPPEL mit einem Rand darunter und einem kurzen Hals,
+           mit dem sie am Gehaeuse sitzt. Genau so ist sie jetzt
+           gezeichnet: Halbkreis, Randleiste, Hals, dazu ein Glanz
+           oben links, damit man das Blech sieht. */
         g.innerHTML =
-          '<svg viewBox="0 0 40 40">'
-          + '<circle cx="20" cy="20" r="17" fill="#f3d46e" stroke="#9c7b1e" stroke-width="3"/>'
-          + '<path d="M8 13 C10 7 17 4 24 6" fill="none" stroke="#fff6cf" stroke-width="3.4"'
-          + ' stroke-linecap="round" opacity=".85"/>'
-          + '<circle cx="20" cy="20" r="5" fill="#9c7b1e" opacity=".5"/>'
+          '<svg viewBox="0 0 40 34">'
+          /* Der Hals, mit dem sie am Gehaeuse sitzt. */
+          + '<rect x="16" y="24" width="8" height="9" rx="2.4" fill="#8a6a15"/>'
+          /* Die Kuppel. */
+          + '<path d="M3 25 A17 17 0 0 1 37 25 Z" fill="#f3d46e" stroke="#9c7b1e"'
+          + ' stroke-width="2.6" stroke-linejoin="round"/>'
+          /* Die Randleiste unter der Kuppel — sie macht die Seitenansicht. */
+          + '<rect x="1.5" y="23.5" width="37" height="5.5" rx="2.6"'
+          + ' fill="#e0bd4e" stroke="#9c7b1e" stroke-width="2.4"/>'
+          /* Glanz auf dem Blech. */
+          + '<path d="M9 19 C10 11 16 7 22 6.6" fill="none" stroke="#fff6cf"'
+          + ' stroke-width="3.2" stroke-linecap="round" opacity=".85"/>'
           + "</svg>";
         schicht.appendChild(g);
       });
@@ -26740,113 +26768,364 @@
     }, 3800, "ei");
   }
 
-  /* --- LOSFAHREN -----------------------------------------------------
-     „das mit dem losfahren und mit den Spielzügen hast du auch
-     vergessen." Mein eigenes Bild rollt wie ein Rad zum Platz des
-     Genannten hinueber, bremst dort (das Bild nickt nach vorn), bleibt
-     einen Moment stehen und rollt zurueck. Gedreht wird genau so weit,
-     wie ein Rad dieses Durchmessers auf dieser Strecke abrollen
-     wuerde — deshalb sieht es nach Fahren aus und nicht nach Kreiseln.
+  /* =================================================================
+     DAS SPIELBRETT: ACHT PLAETZE, VIER JE REIHE
+     -----------------------------------------------------------------
+     GEMELDET: „wenn man den anderen erreichen will, dann muss man
+     halt so wie bei Pac-Man diese Linie fahren, die vorgegeben ist —
+     zum Beispiel: ich sitze auf der Eins und die Person sitzt auf der
+     Acht, dann fahre ich nach unten zur 5, 6, 7, 8, bis ich bei ihm
+     bin … Aber mit der Logik: wenn ich auf Platz 1 bin und auf Platz
+     8 will, dann sollen die Leute berücksichtigt werden, die da
+     sitzen, die muss ich dann umfahren. Ich kann da nur auf den
+     leeren Plätzen lang fahren zu der Position, wo ich hinkommen
+     will. Wenn alles voll ist, kann ich nicht losfahren."
+
+     Also kein Flug quer ueber die Reihe mehr, sondern ein Weg ueber
+     das Brett. Die Plaetze stehen in zwei Reihen zu vier; benachbart
+     ist, was direkt darueber, darunter, links oder rechts liegt.
+     Gesucht wird der KUERZESTE Weg (Breitensuche) — und zwar nur
+     ueber freie Felder. Findet sich keiner, faehrt niemand los, und
+     es wird auch gesagt, warum.
+     ================================================================= */
+  const LC_JE_REIHE = 4;
+
+  function lcPlatzGitter() {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return [];
+    return [...karte.querySelectorAll(".lc-platz")].map((el, i) => {
+      const nr = Number(el.dataset.lcPlatz || 0) || (i + 1);
+      const k = lcLayoutKasten(el);
+      return {
+        nr: nr,
+        el: el,
+        reihe: Math.floor((nr - 1) / LC_JE_REIHE),
+        spalte: (nr - 1) % LC_JE_REIHE,
+        frei: el.classList.contains("lc-platz-frei"),
+        ich: el.classList.contains("lc-platz-ich"),
+        name: ((el.querySelector(".lc-platz-name") || {}).textContent || "")
+                .replace(/\s*\(du\)$/, "").trim(),
+        x: k.left + k.width / 2,
+        y: k.top + k.height / 2
+      };
+    });
+  }
+
+  /* Die Breitensuche. „ueberBesetzte" ist der Unterschied zwischen
+     Fahren und Pac-Man: ein Auto kommt an einem besetzten Platz nicht
+     vorbei, Pac-Man frisst sich durch. Start und Ziel zaehlen nie als
+     Hindernis — auf dem einen sitze ich, auf dem anderen will ich hin. */
+  function lcWegSuchen(gitter, vonNr, zuNr, ueberBesetzte) {
+    const nach = {};
+    gitter.forEach((p) => { nach[p.nr] = p; });
+    if (!nach[vonNr] || !nach[zuNr]) return null;
+    if (vonNr === zuNr) return [nach[vonNr]];
+    const schlange = [[vonNr]];
+    const gesehen = { [vonNr]: true };
+    while (schlange.length) {
+      const weg = schlange.shift();
+      const hier = nach[weg[weg.length - 1]];
+      const nachbarn = gitter.filter((p) =>
+        (p.reihe === hier.reihe && Math.abs(p.spalte - hier.spalte) === 1) ||
+        (p.spalte === hier.spalte && Math.abs(p.reihe - hier.reihe) === 1));
+      for (const n of nachbarn) {
+        if (gesehen[n.nr]) continue;
+        if (n.nr === zuNr) return weg.concat([n.nr]).map((x) => nach[x]);
+        if (!ueberBesetzte && !n.frei) continue;
+        gesehen[n.nr] = true;
+        schlange.push(weg.concat([n.nr]));
+      }
+    }
+    return null;
+  }
+
+  /* Aus dem Weg werden Bewegungsbilder: von Platz zu Platz, in
+     Bildpunkten, relativ zum Startplatz. */
+  function lcWegPunkte(weg) {
+    const a = weg[0];
+    return weg.map((p) => ({ x: p.x - a.x, y: p.y - a.y, nr: p.nr }));
+  }
+
+  /* --- LOSFAHREN UND SPIELZUEGE ---------------------------------------
+     „wenn ich mit meinem Profilbild irgendwo hinfahren will … dann
+     könnte sich mein Profilbild so rollen, im Kreis drehen wie so ein
+     Rad … und dann könnte man so ein Fahrgeräusch hören … dann halte
+     ich neben ihm an und dann gibt es so ein Bremsgeräusch … und dann
+     könntest du vielleicht auch wie bei so einem Spielbrett machen,
+     dass man so Spielzüge macht … als wenn er so ein Springer ist in
+     so einem Spiel, und dann hört man immer bei dem Aufspringen auf
+     ein Feld dieses Jump-Geräusch."
 
      Bewegt wird der KREIS, nicht der Platz: der Sitz bleibt, wo er
      ist, sonst ruecken alle anderen nach. */
   function lcFahrt(wen, von, art) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return false;
-    const ziele = lcZielPlaetze(wen);
-    const zu = ziele.length === 1 ? ziele[0] : null;
-    if (!zu) return false;
-    const ab = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
-    if (!ab || ab === zu) return false;
-    const kreis = ab.querySelector(".lc-kreis");
+    const gitter = lcPlatzGitter();
+    if (!gitter.length) return false;
+    const abEl = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
+    const ab = gitter.find((p) => p.el === abEl);
+    if (!ab) return false;
+
+    /* WOHIN? Steht eine Nummer dahinter, ist es dieser Platz. Steht
+       ein Name da, ist es der naechste FREIE Platz neben ihm — „dann
+       halte ich neben ihm an". Auf seinen Platz kann ich nicht
+       fahren, da sitzt er ja. */
+    let zu = null;
+    const nummer = Number(String(wen || "").trim());
+    if (nummer && gitter.some((p) => p.nr === nummer)) {
+      zu = gitter.find((p) => p.nr === nummer);
+    } else {
+      const zielEl = lcPlatzMitNamen(wen);
+      const ziel = gitter.find((p) => p.el === zielEl);
+      if (!ziel) return false;
+      const naehe = (p) => Math.abs(p.reihe - ziel.reihe) + Math.abs(p.spalte - ziel.spalte);
+      zu = gitter.filter((p) => p.frei && p.nr !== ab.nr)
+                 .sort((a, b) => naehe(a) - naehe(b))[0] || null;
+      if (!zu) {
+        lcWegAbsage("Kein Platz frei neben " + ziel.name + " — da kommst du nicht hin.");
+        return true;
+      }
+    }
+    if (!zu || zu.nr === ab.nr) return false;
+    if (!zu.frei) {
+      lcWegAbsage("Platz " + zu.nr + " ist besetzt.");
+      return true;
+    }
+
+    const weg = lcWegSuchen(gitter, ab.nr, zu.nr, false);
+    if (!weg) {
+      /* „Wenn alles voll ist, kann ich nicht losfahren." */
+      lcWegAbsage("Kein Weg frei bis Platz " + zu.nr
+        + " — du müsstest über besetzte Plätze fahren.");
+      return true;
+    }
+    const kreis = ab.el.querySelector(".lc-kreis");
     if (!kreis) return false;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
-    const a = lcLayoutKasten(ab), b = lcLayoutKasten(zu);
-    /* Nicht ganz bis in die Mitte des anderen — sonst deckt man ihn
-       zu. Neun Zehntel des Weges reichen, man sieht beide. */
-    const dx = (b.left - a.left) * 0.9;
-    const dy = (b.top - a.top) * 0.9;
-    const weg = Math.hypot(dx, dy);
-    if (weg < 8) return false;
-    const durchmesser = kreis.offsetWidth || 64;
-    const dreh = (weg / (Math.PI * durchmesser)) * 360 * (dx < 0 ? -1 : 1);
-    /* Waehrend der Fahrt nach vorn: sonst faehrt man hinter den
-       Plaetzen entlang, an denen man vorbeikommt. */
-    /* Wird zweimal hintereinander gefahren, darf der zweite Lauf nicht
-       die „6" des ersten als Ausgangswert merken — sonst bleibt der
-       Platz fuer immer vorn. Deshalb nur merken, was NICHT von hier
-       kommt. */
-    const altZ = ab.style.zIndex === "6" ? "" : ab.style.zIndex;
-    ab.style.zIndex = "6";
-    const zurueck = () => { ab.style.zIndex = altZ; };
 
-    let bilder, dauer;
-    if (art === "spielzug") {
-      /* „Spielzüge": kein Rollen, sondern Huepfen — Platz fuer Platz,
-         wie eine Figur auf einem Spielbrett. Und „Platz fuer Platz"
-         heisst woertlich: die Zahl der Spruenge ist die Zahl der
-         Plaetze dazwischen, abgelesen an den Sitznummern. Nur wenn
-         die fehlen, wird sie aus der Entfernung geschaetzt. */
-      const nrA = parseInt(ab.dataset.lcPlatz || "0", 10);
-      const nrB = parseInt(zu.dataset.lcPlatz || "0", 10);
-      const spruenge = (nrA && nrB)
-        ? Math.max(1, Math.min(8, Math.abs(nrB - nrA)))
-        : Math.max(2, Math.min(6, Math.round(weg / (durchmesser * 0.9))));
-      bilder = [{ transform: "translate(0px, 0px)", offset: 0 }];
-      for (let i = 1; i <= spruenge; i++) {
-        const t = i / spruenge;
-        const x = dx * t, y = dy * t;
-        /* Der Scheitel des Sprungs liegt zwischen zwei Plaetzen. */
+    const punkte = lcWegPunkte(weg);
+    const durchmesser = kreis.offsetWidth || 64;
+    const altZ = ab.el.style.zIndex === "7" ? "" : ab.el.style.zIndex;
+    ab.el.style.zIndex = "7";
+    const zurueck = () => { ab.el.style.zIndex = altZ; };
+
+    const felder = punkte.length - 1;
+    const bilder = [];
+    let dreh = 0;
+    const jeFeld = art === "spielzug" ? 420 : 520;
+    const hin = felder * jeFeld;
+    const halt = 700;
+    const dauer = hin + halt + hin * 0.8;
+
+    const bei = (ms) => Math.min(1, ms / dauer);
+    punkte.forEach((p, i) => {
+      const vor = punkte[i - 1];
+      if (art === "spielzug") {
+        /* Ein Sprung je Feld: hoch dazwischen, platt beim Aufsetzen. */
+        if (vor) {
+          bilder.push({
+            transform: "translate(" + ((vor.x + p.x) / 2).toFixed(1) + "px, "
+              + ((vor.y + p.y) / 2 - durchmesser * 0.5).toFixed(1) + "px) scale(1.05)",
+            offset: bei((i - 0.5) * jeFeld)
+          });
+        }
         bilder.push({
-          transform: "translate(" + (x - dx / spruenge / 2).toFixed(1) + "px, "
-            + (y - dy / spruenge / 2 - durchmesser * 0.42).toFixed(1) + "px) scale(1.04)",
-          offset: (t - 0.5 / spruenge) * 0.5
+          transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1) + "px)"
+            + (vor ? " scale(.93, 1.07)" : ""),
+          offset: bei(i * jeFeld)
         });
+      } else {
+        /* Rollen: so weit, wie ein Rad dieses Durchmessers auf diesem
+           Stueck wirklich abrollen wuerde. */
+        if (vor) {
+          const stueck = Math.hypot(p.x - vor.x, p.y - vor.y);
+          dreh += (stueck / (Math.PI * durchmesser)) * 360 * (p.x < vor.x ? -1 : 1);
+        }
         bilder.push({
-          transform: "translate(" + x.toFixed(1) + "px, " + y.toFixed(1) + "px) scale(.94, 1.06)",
-          offset: t * 0.5
+          transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1) + "px) rotate("
+            + dreh.toFixed(1) + "deg)",
+          offset: bei(i * jeFeld)
         });
       }
-      bilder.push({ transform: "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px)", offset: 0.62 });
-      bilder.push({ transform: "translate(0px, 0px)", offset: 1 });
-      dauer = 300 + spruenge * 420;
-      /* Zu jedem Sprung ein Ton — einer allein waere kein Huepfen. */
-      for (let i = 0; i < spruenge; i++) {
-        setTimeout(() => lcTonZu("spielzug"), Math.round((i + 0.5) * (dauer * 0.5) / spruenge));
-      }
-    } else {
-      bilder = [
-        { transform: "translate(0px, 0px) rotate(0deg)", offset: 0 },
-        { transform: "translate(0px, 0px) rotate(" + (-dreh * 0.02).toFixed(1) + "deg)", offset: 0.06 },
-        { transform: "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px) rotate("
-          + dreh.toFixed(1) + "deg)", offset: 0.42 },
-        /* Bremsen: das Rad steht, das Bild nickt nach vorn und wippt. */
-        { transform: "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px) rotate("
-          + (dreh + (dx < 0 ? -9 : 9)).toFixed(1) + "deg)", offset: 0.48 },
-        { transform: "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px) rotate("
-          + (dreh + (dx < 0 ? 4 : -4)).toFixed(1) + "deg)", offset: 0.53 },
-        { transform: "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px) rotate("
-          + dreh.toFixed(1) + "deg)", offset: 0.58 },
-        { transform: "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px) rotate("
-          + dreh.toFixed(1) + "deg)", offset: 0.7 },
-        { transform: "translate(0px, 0px) rotate(0deg)", offset: 1 }
-      ];
-      dauer = 3200;
+    });
+    const ende = punkte[punkte.length - 1];
+    const endDreh = art === "spielzug" ? 0 : dreh;
+    const stell = (d, zusatz) => "translate(" + ende.x.toFixed(1) + "px, "
+      + ende.y.toFixed(1) + "px) rotate(" + d.toFixed(1) + "deg)" + (zusatz || "");
+    if (art !== "spielzug") {
+      /* Bremsen: das Rad steht, das Bild nickt nach vorn und wippt. */
+      bilder.push({ transform: stell(endDreh + (ende.x < 0 ? -9 : 9)), offset: bei(hin + 90) });
+      bilder.push({ transform: stell(endDreh + (ende.x < 0 ? 4 : -4)), offset: bei(hin + 200) });
     }
+    bilder.push({ transform: stell(endDreh), offset: bei(hin + halt) });
+    bilder.push({ transform: "translate(0px, 0px) rotate(0deg)", offset: 1 });
+
     try {
       const lauf = kreis.animate(bilder, { duration: dauer, easing: "ease-in-out", fill: "none" });
       lauf.onfinish = zurueck;
       lauf.oncancel = zurueck;
-    } catch (e) {
-      /* Kein Web-Animations-API? Dann wenigstens kein hängender
-         z-index — und der Chat sagt ja trotzdem, was passiert ist. */
-      zurueck();
-      return false;
-    }
+    } catch (e) { zurueck(); return false; }
     setTimeout(zurueck, dauer + 200);
-    /* Beim Spielzug klingt es schon je Sprung — ein Ton mehr waere
-       einer zu viel. Beim Fahren ist es der eine Motor. */
-    if (art !== "spielzug") lcTonZu("fahren");
+
+    if (art === "spielzug") {
+      /* „dann hört man immer bei dem Aufspringen auf ein Feld dieses
+         Jump-Geräusch" — einer je Feld, nicht einer fuer alles. */
+      for (let i = 1; i <= felder; i++) setTimeout(() => lcTonZu("spielzug"), i * jeFeld);
+    } else {
+      lcTonZu("fahren");
+    }
+    return true;
+  }
+
+  /* Eine Absage, die man auch sieht. Sie gehoert nicht in den Chat der
+     anderen — es ist meine Fahrt, die nicht geht. */
+  function lcWegAbsage(text) {
+    try { showToast("🚧 " + text); } catch (e) {}
+  }
+
+  /* =================================================================
+     PAC-MAN
+     -----------------------------------------------------------------
+     GEMELDET: „ich möchte aber jetzt ne Pac-Man Animation haben, dass
+     mein Profilbild sich zu diesem Pac-Man verwandelt und ich den
+     anderen auffressen kann, egal wo er sitzt. Ich kann ihn somit
+     aufsuchen, und er wandert dann über die Felder und frisst den
+     anderen auf. Und dann ist er praktisch von der Bühne runter, so
+     dass es wirklich so aussieht, als wenn ich ihn aufgegessen habe,
+     und er muss dann wieder klicken, um nach oben zu kommen."
+
+     Der Unterschied zum Fahren: Pac-Man haelt sich nicht an freie
+     Felder — er frisst sich durch, „egal wo er sitzt". Unterwegs
+     liegen Punkte auf der Linie, die er einsammelt; am Ziel klappt
+     das Maul zu, das fremde Bild verschwindet darin.
+
+     UND DAS WICHTIGSTE: wen es trifft, der geht wirklich von der
+     Buehne. Das entscheidet jedes Geraet fuer sich — nur das Geraet
+     dessen, der gefressen wurde, ruft buehneSetzen(false). Wieder
+     hinauf geht es mit einem Tipp auf einen freien Platz; das konnte
+     die Oberflaeche schon, es steht jetzt nur auch dabei.
+     ================================================================= */
+  /* ACHTUNG, NAMENSKOLLISION: lcPacman gibt es schon — das ist der
+     ganzseitige Achtziger-Effekt fuer den Raum. Zwei Funktionen mit
+     demselben Namen im selben Bereich: die zweite gewinnt, und
+     „/pacman" fuer den Raum waere still kaputtgegangen. Diese hier
+     heisst deshalb lcPacJagd. */
+  function lcPacJagd(wen, von) {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return false;
+    const gitter = lcPlatzGitter();
+    if (!gitter.length) return false;
+    const abEl = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
+    const zielEl = lcPlatzMitNamen(wen);
+    const ab = gitter.find((p) => p.el === abEl);
+    const zu = gitter.find((p) => p.el === zielEl);
+    if (!ab || !zu || ab.nr === zu.nr) return false;
+    const weg = lcWegSuchen(gitter, ab.nr, zu.nr, true);
+    if (!weg) return false;
+    const kreis = ab.el.querySelector(".lc-kreis");
+    const opfer = zu.el.querySelector(".lc-kreis");
+    if (!kreis || !opfer) return false;
+
+    const gefressen = () => {
+      /* Nur auf dem Geraet dessen, der gemeint ist. */
+      try {
+        const l = LiveChat.lage() || {};
+        if (String(l.ichName || "").trim().toLowerCase()
+            === String(wen || "").trim().toLowerCase()
+            && LiveChat.aufDerBuehne && LiveChat.aufDerBuehne()) {
+          LiveChat.buehneSetzen(false);
+          showToast("👾 Aufgefressen! Tippe auf einen freien Platz, "
+            + "um wieder hinaufzukommen.");
+        }
+      } catch (e) {}
+    };
+
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTimeout(gefressen, 400);
+      return true;
+    }
+
+    const punkte = lcWegPunkte(weg);
+    const felder = punkte.length - 1;
+    const jeFeld = 480;
+    const hin = felder * jeFeld;
+    const beissen = 900;
+    const dauer = hin + beissen + hin * 0.7;
+    const bei = (ms) => Math.min(1, ms / dauer);
+
+    /* Die Punkte auf der Linie — sie liegen in der Sitzreihe, damit
+       sie zwischen den Plaetzen zu sehen sind. */
+    const reihe = document.getElementById("lcPlaetze") || karte;
+    if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
+    const rk = lcLayoutKasten(reihe);
+    const krumen = [];
+    for (let i = 0; i < punkte.length - 1; i++) {
+      for (const t of [0.34, 0.68]) {
+        const px = weg[i].x + (weg[i + 1].x - weg[i].x) * t;
+        const py = weg[i].y + (weg[i + 1].y - weg[i].y) * t;
+        const k = document.createElement("i");
+        k.className = "lc-pac-krume";
+        k.style.left = (px - rk.left) + "px";
+        k.style.top = (py - rk.top) + "px";
+        /* Jeder Punkt verschwindet, wenn Pac-Man dort ankommt. */
+        k.style.animationDelay = ((i + t) * jeFeld / 1000).toFixed(2) + "s";
+        reihe.appendChild(k);
+        krumen.push(k);
+      }
+    }
+
+    /* Aus dem Profilbild wird Pac-Man: die Maske schneidet das Maul
+       heraus, und das Maul klappt. Das Bild bleibt darunter sichtbar —
+       „mein Profilbild verwandelt sich zu diesem Pac-Man". */
+    const altZ = ab.el.style.zIndex === "8" ? "" : ab.el.style.zIndex;
+    ab.el.style.zIndex = "8";
+    kreis.classList.add("lc-pacman");
+    /* Blickrichtung: dorthin, wo das naechste Feld liegt. */
+    const richtung = (i) => {
+      const a = punkte[i], b = punkte[i + 1] || punkte[i];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      if (!dx && !dy) return 0;
+      return Math.round(Math.atan2(dy, dx) / (Math.PI / 2)) * 90;
+    };
+
+    const bilder = [];
+    punkte.forEach((p, i) => {
+      bilder.push({
+        transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1) + "px) rotate("
+          + richtung(i) + "deg)",
+        offset: bei(i * jeFeld)
+      });
+    });
+    const e = punkte[punkte.length - 1];
+    const drehEnde = richtung(punkte.length - 1);
+    bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + e.y.toFixed(1)
+      + "px) rotate(" + drehEnde + "deg) scale(1.12)", offset: bei(hin + 220) });
+    bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + e.y.toFixed(1)
+      + "px) rotate(" + drehEnde + "deg) scale(1)", offset: bei(hin + beissen) });
+    bilder.push({ transform: "translate(0px, 0px) rotate(0deg)", offset: 1 });
+
+    const aufraeumen = () => {
+      ab.el.style.zIndex = altZ;
+      kreis.classList.remove("lc-pacman");
+      krumen.forEach((k) => k.remove());
+    };
+    try {
+      const lauf = kreis.animate(bilder, { duration: dauer, easing: "linear", fill: "none" });
+      lauf.onfinish = aufraeumen;
+      lauf.oncancel = aufraeumen;
+    } catch (err) { aufraeumen(); return false; }
+    setTimeout(aufraeumen, dauer + 200);
+
+    /* Das Opfer wird eingesogen, sobald Pac-Man da ist. */
+    setTimeout(() => {
+      opfer.classList.remove("lc-verschlungen");
+      void opfer.offsetWidth;
+      opfer.classList.add("lc-verschlungen");
+      setTimeout(() => opfer.classList.remove("lc-verschlungen"), 1400);
+    }, hin);
+    setTimeout(gefressen, hin + 900);
+    lcTonZu("pacjagd");
     return true;
   }
 
@@ -26964,6 +27243,11 @@
           + '<span class="lc-stoss-queue"></span>'
         : '<span class="lc-stoss-kugel lc-stoss-bowling">'
           + '<i></i><i></i><i></i></span>';
+      /* GEMELDET: „dass man mit seinem Profilbild gegen das andere
+         stoßen kann und dann fällt das in den Loch und verschwindet,
+         wie beim Bowling oder beim Kegeln." Also gehoert ein Loch
+         dazu, in das der Getroffene faellt. */
+      schicht.insertAdjacentHTML("afterbegin", '<span class="lc-stoss-loch"></span>');
       /* Und was umfaellt: drei Kegel beim Bowling, sonst nichts. */
       if (art !== "billard") {
         for (let i = 0; i < 3; i++) {
@@ -27073,9 +27357,20 @@
           setTimeout(() => kreis.classList.remove("lc-gedribbelt"), 3000);
         }
       }
+      /* GEMELDET, woertlich: „vielleicht kannst du auch den anderen so
+         zum Abschlag missbrauchen für ein Tennisspiel, dass man den so
+         nimmt, sein Profilbild so hoch wirft und mit so einem großen
+         Tennisschläger … dass er den dann weg schlägt."
+         Also KEIN eigener Ball mehr: das Profilbild selbst wird hoch-
+         geworfen und weggeschlagen (lc-getennist). */
+      if (art === "tennis" && kreis) {
+        kreis.classList.remove("lc-getennist");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-getennist");
+        setTimeout(() => kreis.classList.remove("lc-getennist"), 3000);
+      }
       schicht.innerHTML = art === "tennis"
-        ? '<span class="lc-tennisball"></span>'
-          + '<svg class="lc-tennisschlaeger" viewBox="0 0 50 90">'
+        ? '<svg class="lc-tennisschlaeger" viewBox="0 0 50 90">'
           + '<ellipse cx="25" cy="26" rx="20" ry="24" fill="none" stroke="#3f4654" stroke-width="5"/>'
           + '<ellipse cx="25" cy="26" rx="15" ry="19" fill="rgba(255,255,255,.22)"/>'
           + '<rect x="21" y="48" width="8" height="40" rx="4" fill="#5b6478"/>'
@@ -27120,6 +27415,272 @@
     /* Ueber lcWirkung, nicht direkt: so gilt jede Regel, die dort
        steht (Ton, Blende, Richtung), auch fuer den Zufall. */
     lcWirkung(w, null, nachricht);
+    return true;
+  }
+
+  /* =================================================================
+     DEN ANDEREN AUFESSEN — BISS FUER BISS
+     -----------------------------------------------------------------
+     GEMELDET: „bei den Effekten, die man noch auswählen kann, dass
+     man den anderen wie so ein Keks aufessen kann … dass man so Biss
+     für Biss den so anbeißt, und auf ist."
+
+     Ein Biss ist ein Stueck, das FEHLT — kein Fleck, der darueber
+     liegt. Deshalb wird hier wirklich am Umriss geschnitten: das Bild
+     bekommt ein Vieleck mit 36 Ecken als Beschnitt (das sieht rund
+     aus), und fuer jeden Biss werden die Ecken, die im Bissloch
+     liegen, auf dessen Rand gezogen. Das ergibt die eingekerbte Kante,
+     die ein angebissener Keks hat.
+
+     Die fuenf Stufen werden nacheinander gesetzt, nicht ineinander
+     ueberblendet: zwei Vielecke mit verschiedenen Ecken lassen sich
+     nicht ineinander rechnen, und ein Biss ist ohnehin kein weicher
+     Uebergang.
+     ================================================================= */
+  function lcBissUmriss(bisse) {
+    const ECKEN = 36, R = 50;
+    const punkte = [];
+    for (let i = 0; i < ECKEN; i++) {
+      const w = (i / ECKEN) * Math.PI * 2 - Math.PI / 2;
+      let x = 50 + Math.cos(w) * R, y = 50 + Math.sin(w) * R;
+      bisse.forEach((b) => {
+        const dx = x - b.x, dy = y - b.y;
+        const d = Math.hypot(dx, dy);
+        if (d < b.r) {
+          /* Die Ecke liegt im Bissloch — also auf dessen Rand
+             hinausschieben. Genau das macht die Kerbe. */
+          x = b.x + (dx / (d || 1)) * b.r;
+          y = b.y + (dy / (d || 1)) * b.r;
+        }
+      });
+      punkte.push(x.toFixed(1) + "% " + y.toFixed(1) + "%");
+    }
+    return "polygon(" + punkte.join(", ") + ")";
+  }
+
+  function lcAufessen(wen) {
+    return lcAmPlatz(wen, "lc-aufessen", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      /* Fuenf Bisse rundherum, im Uhrzeigersinn — so isst man einen
+         Keks auch wirklich: immer am Rand weiter. */
+      const stellen = [
+        { x: 96, y: 26, r: 30 }, { x: 88, y: 76, r: 32 },
+        { x: 40, y: 98, r: 34 }, { x: 4,  y: 56, r: 36 },
+        { x: 30, y: 8,  r: 40 }
+      ];
+      const blende = lcZpBlende(schicht);
+      if (kreis) {
+        const alt = kreis.style.clipPath || "";
+        stellen.forEach((_, i) => {
+          setTimeout(() => {
+            if (!kreis.isConnected) return;
+            kreis.style.clipPath = lcBissUmriss(stellen.slice(0, i + 1));
+            kreis.style.webkitClipPath = kreis.style.clipPath;
+            kreis.classList.remove("lc-angebissen");
+            void kreis.offsetWidth;
+            kreis.classList.add("lc-angebissen");
+            lcTonZu("aufessen");
+            /* Bei jedem Biss fallen Kruemel. */
+            for (let k = 0; k < 5; k++) {
+              const kr = document.createElement("i");
+              kr.className = "lc-krumel-stueck";
+              kr.style.left = (stellen[i].x + (Math.random() * 24 - 12)).toFixed(0) + "%";
+              kr.style.setProperty("--gross", (0.5 + Math.random() * 0.8).toFixed(2));
+              kr.style.setProperty("--kipp", (Math.random() * 360).toFixed(0) + "deg");
+              kr.style.animationDelay = (Math.random() * 0.2).toFixed(2) + "s";
+              blende.appendChild(kr);
+              setTimeout(() => kr.remove(), 1900);
+            }
+          }, 360 + i * 620);
+        });
+        setTimeout(() => {
+          kreis.style.clipPath = alt;
+          kreis.style.webkitClipPath = alt;
+          kreis.classList.remove("lc-angebissen");
+        }, 360 + stellen.length * 620 + 700);
+      }
+      /* Der Mund, der abbeisst — er kommt von rechts, wo der erste
+         Biss sitzt. */
+      schicht.insertAdjacentHTML("beforeend", '<span class="lc-aufess-mund"></span>');
+    }, 4400, "aufessen");
+  }
+
+  /* =================================================================
+     DER ZUFALLSMODUS — DAS LOTTO UM EINEN NEUEN PLATZ
+     -----------------------------------------------------------------
+     GEMELDET: „dann könnte man noch das eigene Profilbild so hin und
+     her fliegen lassen wie bei Lotto oder bei so einem Spiel, dass man
+     da so zufällig durch die Plätze springen lässt, bis es irgendwann
+     einen neuen Platz gefunden hat. Also Zufallsmodus praktisch."
+
+     Das ist etwas anderes als „irgendein Effekt": mein Bild springt
+     wirklich von Platz zu Platz, immer langsamer, und bleibt auf
+     einem FREIEN liegen — und setzt mich dann auch dorthin.
+     ================================================================= */
+  function lcLotto(von) {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return false;
+    const gitter = lcPlatzGitter();
+    const abEl = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
+    const ab = gitter.find((p) => p.el === abEl);
+    if (!ab) return false;
+    const frei = gitter.filter((p) => p.frei && p.nr !== ab.nr);
+    if (!frei.length) {
+      lcWegAbsage("Kein Platz frei — das Los hat nichts zu ziehen.");
+      return true;
+    }
+    const kreis = ab.el.querySelector(".lc-kreis");
+    if (!kreis) return false;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+
+    /* Zwoelf Spruenge, die letzten werden laenger — wie eine Trommel,
+       die auslaeuft. Das Ziel ist gezogen, bevor es losgeht; die
+       Spruenge davor sind das Zittern der Lostrommel. */
+    const ziel = frei[Math.floor(Math.random() * frei.length)];
+    const folge = [];
+    for (let i = 0; i < 11; i++) folge.push(gitter[Math.floor(Math.random() * gitter.length)]);
+    folge.push(ziel);
+    const dauern = folge.map((_, i) => 90 + i * 34);
+    const gesamt = dauern.reduce((a, b) => a + b, 0) + 500;
+
+    const altZ = ab.el.style.zIndex === "7" ? "" : ab.el.style.zIndex;
+    ab.el.style.zIndex = "7";
+    const bilder = [{ transform: "translate(0px, 0px)", offset: 0 }];
+    let t = 0;
+    folge.forEach((p, i) => {
+      t += dauern[i];
+      bilder.push({
+        transform: "translate(" + (p.x - ab.x).toFixed(1) + "px, "
+          + (p.y - ab.y).toFixed(1) + "px) scale(" + (i === folge.length - 1 ? 1 : 0.9) + ")",
+        offset: Math.min(1, t / gesamt)
+      });
+    });
+    bilder.push({ transform: "translate(" + (ziel.x - ab.x).toFixed(1) + "px, "
+      + (ziel.y - ab.y).toFixed(1) + "px) scale(1.1)", offset: Math.min(1, (t + 180) / gesamt) });
+    bilder.push({ transform: "translate(0px, 0px) scale(1)", offset: 1 });
+
+    const zurueck = () => { ab.el.style.zIndex = altZ; };
+    try {
+      const lauf = kreis.animate(bilder, { duration: gesamt, easing: "linear", fill: "none" });
+      lauf.onfinish = zurueck;
+      lauf.oncancel = zurueck;
+    } catch (e) { zurueck(); return false; }
+    setTimeout(zurueck, gesamt + 200);
+    folge.forEach((_, i) => setTimeout(() => lcTonZu("spielzug"),
+      dauern.slice(0, i + 1).reduce((a, b) => a + b, 0)));
+
+    /* Und am Ende sitzt man wirklich dort — aber nur auf dem eigenen
+       Geraet, sonst setzte jeder jeden um. */
+    if (ab.el.classList.contains("lc-platz-ich")) {
+      setTimeout(() => {
+        try {
+          const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(ziel.nr) : null;
+          if (erg && erg.ok) showToast("🎰 " + erg.text);
+        } catch (e) {}
+      }, t + 200);
+    }
+    return true;
+  }
+
+  /* =================================================================
+     DIE SANDUHR — ZWEI PLAETZE TAUSCHEN, INDEM MAN DURCHLAEUFT
+     -----------------------------------------------------------------
+     GEMELDET, woertlich: „auch, dass das Profilbild wie aus so einem
+     Sanduhr-Effekt sich aufbauen kann, indem man oben anfängt und das
+     dann so einfließen lässt … oder jemand ist unter einem, und wenn
+     man direkt übereinander ist, könnte man die Sanduhr so machen,
+     dass ich unten in ihn rein fließe und er sich oben mit mir
+     austauscht."
+
+     Genau diese Bedingung steht hier auch im Code: es geht nur, wenn
+     der andere DIREKT ueber oder unter mir sitzt — gleiche Spalte,
+     benachbarte Reihe. Sonst waere es keine Sanduhr, sondern ein
+     Sprung. Und am Ende wird wirklich getauscht, nicht nur so getan.
+     ================================================================= */
+  function lcSanduhrTausch(wen, von) {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return false;
+    const gitter = lcPlatzGitter();
+    const abEl = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
+    const zuEl = lcPlatzMitNamen(wen);
+    const ab = gitter.find((p) => p.el === abEl);
+    const zu = gitter.find((p) => p.el === zuEl);
+    if (!ab || !zu || ab.nr === zu.nr) return false;
+    if (ab.spalte !== zu.spalte || Math.abs(ab.reihe - zu.reihe) !== 1) {
+      /* ZWEI SANDUHREN IN EINEM SATZ — und beide stehen in seinem
+         Verlauf: „auch, dass das Profilbild wie aus so einem
+         Sanduhr-Effekt sich aufbauen kann, indem man oben anfängt und
+         das dann so einfließen lässt, und dann füllt sich das
+         allmählich … oder jemand ist unter einem, und wenn man direkt
+         übereinander ist, könnte man die Sanduhr so machen, dass ich
+         unten in ihn rein fließe und er sich oben mit mir austauscht."
+
+         Also keine Absage, wenn er woanders sitzt, sondern die andere
+         Sanduhr: sein Bild rieselt von oben wieder voll. */
+      const fremd = zu.el.querySelector(".lc-kreis");
+      if (fremd) {
+        fremd.classList.remove("lc-rieselt");
+        void fremd.offsetWidth;
+        fremd.classList.add("lc-rieselt");
+        setTimeout(() => fremd.classList.remove("lc-rieselt"), 3200);
+        lcTonZu("sanduhr");
+      }
+      return true;
+    }
+    const meiner = ab.el.querySelector(".lc-kreis");
+    const seiner = zu.el.querySelector(".lc-kreis");
+    if (!meiner || !seiner) return false;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+
+    const dy = zu.y - ab.y;
+    const DAUER = 3200;
+    /* Beide laufen durch die Engstelle in der Mitte: erst schmal
+       werden, dann durch, dann am anderen Ende wieder aufgehen. */
+    const durch = (weg, umgekehrt) => [
+      { transform: "translateY(0) scaleX(1) scaleY(1)", offset: 0 },
+      { transform: "translateY(0) scaleX(.9) scaleY(1.05)", offset: .12 },
+      { transform: "translateY(" + (weg * 0.42).toFixed(1) + "px) scaleX(.16) scaleY(.5)",
+        offset: .42 },
+      { transform: "translateY(" + (weg * 0.58).toFixed(1) + "px) scaleX(.16) scaleY(.5)",
+        offset: .5 },
+      { transform: "translateY(" + weg.toFixed(1) + "px) scaleX(1.05) scaleY(.95)", offset: .8 },
+      { transform: "translateY(" + weg.toFixed(1) + "px) scaleX(1) scaleY(1)", offset: .9 },
+      { transform: "translateY(" + weg.toFixed(1) + "px) scaleX(1) scaleY(1)", offset: 1 }
+    ];
+    const altA = ab.el.style.zIndex, altB = zu.el.style.zIndex;
+    ab.el.style.zIndex = "6";
+    zu.el.style.zIndex = "6";
+    const zurueck = () => { ab.el.style.zIndex = altA; zu.el.style.zIndex = altB; };
+    try {
+      meiner.animate(durch(dy, false), { duration: DAUER, easing: "cubic-bezier(.5,0,.5,1)", fill: "none" });
+      seiner.animate(durch(-dy, true), { duration: DAUER, easing: "cubic-bezier(.5,0,.5,1)", fill: "none" });
+    } catch (e) { zurueck(); return false; }
+    setTimeout(zurueck, DAUER + 200);
+
+    /* Das Glas selbst, zwischen den beiden Plaetzen. */
+    const reihe = document.getElementById("lcPlaetze") || karte;
+    if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
+    const rk = lcLayoutKasten(reihe);
+    const glas = document.createElement("span");
+    glas.className = "lc-sanduhr-glas";
+    glas.style.left = (ab.x - rk.left) + "px";
+    glas.style.top = ((ab.y + zu.y) / 2 - rk.top) + "px";
+    glas.style.height = Math.abs(dy) + "px";
+    reihe.appendChild(glas);
+    setTimeout(() => glas.remove(), DAUER);
+    lcTonZu("sanduhr");
+
+    /* Und wirklich tauschen — aber nur der, der es angestossen hat,
+       sonst tauschte jedes Geraet noch einmal zurueck. */
+    if (ab.el.classList.contains("lc-platz-ich")) {
+      const id = zu.el.dataset.lcId || "";
+      setTimeout(() => {
+        try {
+          if (id && LiveChat.platzTauschenMit) LiveChat.platzTauschenMit(id);
+          else if (LiveChat.platzNehmen) LiveChat.platzNehmen(zu.nr);
+        } catch (e) {}
+      }, DAUER - 400);
+    }
     return true;
   }
 
@@ -27756,6 +28317,11 @@
       if (art === "lasso" && lcLasso(wenZ)) return;
       if (art === "paintfleck" && lcPaintfleck(wenZ)) return;
       if (art === "ei" && lcEi(wenZ)) return;
+      if (art === "pacjagd" && lcPacJagd(wenZ, (nachricht && nachricht.eigen)
+            ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
+      if (art === "aufessen" && lcAufessen(wenZ)) return;
+      if (art === "sanduhr" && lcSanduhrTausch(wenZ, (nachricht && nachricht.eigen)
+            ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "katapult" && lcKatapult(wenZ)) return;
       if (art === "strohhalm" && lcStrohhalm(wenZ)) return;
       if (art === "peitsche" && lcPeitsche(wenZ)) return;
@@ -27774,6 +28340,14 @@
        Genannten — deshalb brauchen sie beide Namen. Bei der
        eigenen Zeile steht der Absender nicht dran (man ist ja
        selbst gemeint), dort kommt er aus der Lage. */
+    /* Das Lotto bewegt NUR den Absender — es hat gar kein Ziel. */
+    if (art === "lotto") {
+      let vonL = (nachricht && nachricht.name) || "";
+      if (nachricht && nachricht.eigen) {
+        try { vonL = (LiveChat.lage() || {}).ichName || vonL; } catch (e) {}
+      }
+      if (lcLotto(vonL)) return;
+    }
     if (art === "fahren" || art === "spielzug") {
       const wenF = nachricht && (nachricht.wen || nachricht.an);
       let vonF = (nachricht && nachricht.name) || "";
@@ -28136,6 +28710,13 @@
        Effekte sahen „leer" aus, obwohl sie im echten Chat laufen.
        Wer prüfen will, ob ein Effekt wirkt, muss ihm die Umgebung
        geben, die er im Betrieb hat. */
+    /* Die Wegsuche einzeln nachrechenbar — sonst laesst sich „nur
+       ueber freie Plaetze" nur am Ergebnis erahnen. Gibt die
+       Platznummern des Weges zurueck oder null. */
+    wegPruefen: function (vonNr, zuNr, ueberBesetzte) {
+      const weg = lcWegSuchen(lcPlatzGitter(), vonNr, zuNr, Boolean(ueberBesetzte));
+      return weg ? weg.map((p) => p.nr) : null;
+    },
     effektBuehne: function () {
       document.getElementById("lcPruefBuehne")?.remove();
       const b = document.createElement("div");

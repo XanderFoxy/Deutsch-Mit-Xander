@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =========================================================
-   DIE SPRECHBILDER — VIERZEHN STUECK, JEDES ANDERS
+   DIE SPRECHBILDER — SECHZEHN STUECK, JEDES ANDERS
    ---------------------------------------------------------
    GEWUENSCHT: „Ich brauche noch mehr fantastische
    Profilbildrahmen, wenn man spricht … Der Regenbogen muss
@@ -62,9 +62,13 @@ const TEILCHEN = ["magie", "noten", "herzen", "feuer", "strom", "blasen"];
      beeinflussen durch einen Klick sondern es ist ein Sprechbild-
      Effekt." Geprueft wird weiter, dass „aus" dabei ist und keines
      verloren geht. */
-  pruefe("es sind vierzehn Sprechbilder plus „aus“", liste.length === 15,
+  /* Und mit Fassung 358 sechzehn: „so Blut, was über das Profil
+     läuft, oder Spinnweben. Du musst gucken, ob das als
+     Sprecheffekt passt" — nachgesehen, es passt: beides ist ein
+     Zustand, kein Wurf. */
+  pruefe("es sind sechzehn Sprechbilder plus „aus“", liste.length === 17,
     liste.length + ": " + liste.join(", "));
-  ["eis", "bluete", "stoerung"].forEach((n) => pruefe("„" + n + "“ ist neu dabei", liste.indexOf(n) >= 0));
+  ["eis", "bluete", "stoerung", "blut", "spinnweb"].forEach((n) => pruefe("„" + n + "“ ist neu dabei", liste.indexOf(n) >= 0));
   TEILCHEN.forEach((t) => pruefe("„" + t + "“ steht dabei", liste.indexOf(t) >= 0));
 
   /* Eine Buehne mit einem sprechenden Platz bauen. */
@@ -154,6 +158,6 @@ const TEILCHEN = ["magie", "noten", "herzen", "feuer", "strom", "blasen"];
     aufSeite.slice(0, 5).forEach((f) => console.log("    " + f));
   }
   await br.close(); srv.close();
-  console.log("\n" + (fehler ? fehler + " Abweichung(en)" : "Vierzehn Sprechbilder, jedes mit eigenem Leben.") + "\n");
+  console.log("\n" + (fehler ? fehler + " Abweichung(en)" : "Sechzehn Sprechbilder, jedes mit eigenem Leben.") + "\n");
   process.exit(fehler ? 1 : 0);
 })();

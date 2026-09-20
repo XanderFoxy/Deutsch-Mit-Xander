@@ -859,7 +859,15 @@ window.LiveChat = (function () {
     ohrfeige:   { wirkung: "ohrfeige",   satz: "gibt eine Ohrfeige", emoji: "\ud83e\udef3" },
     basketball: { wirkung: "basketball", satz: "dribbelt auf dem Kopf von", emoji: "\ud83c\udfc0" },
     tennis:     { wirkung: "tennis",     satz: "spielt einen Ball zu", emoji: "\ud83c\udfbe" },
-    zufall:     { wirkung: "zufall",     satz: "l\u00e4sst den Zufall entscheiden bei", emoji: "\ud83c\udfb0" }
+    zufall:     { wirkung: "zufall",     satz: "l\u00e4sst den Zufall entscheiden bei", emoji: "\ud83c\udfb0" },
+    /* GEMELDET: „bei den Effekten, die man noch auswählen kann, dass
+       man den anderen wie so ein Keks aufessen kann … dass man so Biss
+       für Biss den so anbeißt, und auf ist." */
+    aufessen:   { wirkung: "aufessen",   satz: "isst Biss f\u00fcr Biss auf", emoji: "\ud83c\udf6a" },
+    /* GEMELDET: „jemand ist unter einem, und wenn man direkt
+       übereinander ist, könnte man die Sanduhr so machen, dass ich
+       unten in ihn rein fließe und er sich oben mit mir austauscht." */
+    sanduhr:    { wirkung: "sanduhr",    satz: "l\u00e4uft wie durch eine Sanduhr und tauscht den Platz mit", emoji: "\u231b" }
   };
   /* Und die vier, die es fuer den ganzen Raum schon gibt — mit Namen
      dahinter werden sie klein und gelten nur dieser Person. */
@@ -878,7 +886,15 @@ window.LiveChat = (function () {
     paintball: { wirkung: "paintfleck", satz: "trifft mit dem Paintball", emoji: "\ud83c\udfa8" },
     /* Kekse gab es fuer den Raum schon — mit Namen kruemeln sie auf
        genau ein Profilbild. */
-    keks:      { wirkung: "krumel",     satz: "kr\u00fcmelt Kekse auf", emoji: "\ud83c\udf6a" }
+    keks:      { wirkung: "krumel",     satz: "kr\u00fcmelt Kekse auf", emoji: "\ud83c\udf6a" },
+    /* GEMELDET: „ich möchte aber jetzt ne Pac-Man Animation haben, dass
+       mein Profilbild sich zu diesem Pac-Man verwandelt und ich den
+       anderen auffressen kann, egal wo er sitzt … Und dann ist er
+       praktisch von der Bühne runter … und er muss dann wieder klicken,
+       um nach oben zu kommen."
+       Den grossen Pac-Man fuer den Raum gab es schon. MIT einem Namen
+       wird daraus die Jagd ueber die Sitzfelder. */
+    pacman:    { wirkung: "pacjagd",    satz: "jagt als Pac-Man \u00fcber die Pl\u00e4tze und frisst", emoji: "\ud83d\udc7e" }
   };
 
   var SCHRIFTEN = {
@@ -973,6 +989,14 @@ window.LiveChat = (function () {
        Effekt." Also hierher umgezogen: solange die Person spricht,
        zerreisst ihr Bild wie bei schlechtem Empfang. */
     stoerung:   "Störung — das Bild zerreißt wie bei schlechtem Empfang",
+    /* GEMELDET: „und dann noch ein paar Halloweeneffekte und
+       Weihnachtseffekte — so Blut, was über das Profil läuft, oder
+       Spinnweben. Du musst gucken, ob das als Sprecheffekt passt oder
+       ob man andere damit beeinflusst, was da besser geeignet ist."
+       Nachgesehen: beides ist ein ZUSTAND, kein Wurf — es laeuft und
+       haengt, solange jemand spricht. Also Sprechbilder. */
+    blut:       "Blut — es läuft über das Bild, solange du sprichst",
+    spinnweb:   "Spinnweben — der Rahmen wächst zu, eine Spinne seilt sich ab",
     aus:        "Nichts — kein Zeichen beim Sprechen"
   };
   var SPRECHBILD_SCHLUESSEL = "dma_livechat_sprechbild";
@@ -7687,7 +7711,9 @@ window.LiveChat = (function () {
     { gr: "reden", w: "ohrfeige", kurz: "klatsch", nutzt: "/ohrfeige Name", was: "Ohrfeige — der Kopf fliegt zur Seite" },
     { gr: "reden", w: "basketball", kurz: "korb", nutzt: "/basketball Name", was: "Basketball — auf dem Kopf gedribbelt" },
     { gr: "reden", w: "tennis", kurz: "filz",  nutzt: "/tennis Name",      was: "Tennis — ein Ball wird zugespielt" },
-    { gr: "reden", w: "zufall", kurz: "wuerfel", nutzt: "/zufall Name",    was: "Zufall — irgendetwas davon passiert, man weiss nie was" },
+    { gr: "reden", w: "zufall", kurz: "wuerfel", nutzt: "/zufall [Name]",  was: "ohne Namen: das Los sucht dir einen neuen Platz — mit Namen: irgendein Effekt" },
+    { gr: "reden", w: "aufessen", kurz: "haps", nutzt: "/aufessen Name",  was: "den anderen Biss fuer Biss aufessen wie einen Keks" },
+    { gr: "reden", w: "sanduhr", kurz: "glas",  nutzt: "/sanduhr Name",   was: "Sanduhr — ihr lauft durch und tauscht die Plaetze (nur direkt uebereinander)" },
     { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation nur für dich zeigen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon Name", was: "Luftballons zum Geburtstag" },
@@ -7753,7 +7779,7 @@ window.LiveChat = (function () {
     { gr: "fahrzeuge", w: "raumschiff", kurz: "ufo", nutzt: "/raumschiff", was: "Film: das Raumschiff zieht am Ringplaneten vorbei (auch /ufo)" },
     { gr: "fahrzeuge", w: "uboot", kurz: "tiefsee", nutzt: "/uboot",      was: "Film: das U-Boot taucht ab, der Krake greift zu" },
     { gr: "feier", w: "kassette",  kurz: "tape",   nutzt: "/kassette",  was: "Achtziger: eine Musikkassette spult zurück, die Wickel drehen sich" },
-    { gr: "feier", w: "pacman",    kurz: "pac",    nutzt: "/pacman",    was: "Achtziger: Pac-Man frisst sich durch den Chat, drei Gespenster hinterher" },
+    { gr: "feier", w: "pacman",    kurz: "pac",    nutzt: "/pacman [Name]", was: "Achtziger: Pac-Man frisst sich durch den Chat — mit Namen jagt er ueber die Plaetze und frisst denjenigen von der Buehne" },
     { gr: "welt",  w: "vhs",       kurz: "video",  nutzt: "/vhs",       was: "Achtziger: das Bild verreisst wie bei einem alten Videoband" },
     { gr: "feier", w: "disko",     kurz: "kugel",  nutzt: "/disko",     was: "Achtziger: die Spiegelkugel dreht sich und wirft Lichtflecken" },
     { gr: "fahrzeuge", w: "pirat",  kurz: "schiff", nutzt: "/pirat",     was: "Ein Piratenschiff mit Totenkopfflagge" },
@@ -9290,6 +9316,19 @@ window.LiveChat = (function () {
          /geld Emmi, /bonbon Emmi. Ohne Namen bleibt alles, wie
          es war — niemand verliert einen Befehl.
        ========================================================= */
+    /* GEMELDET: „dann könnte man noch das eigene Profilbild so hin und
+       her fliegen lassen wie bei Lotto oder bei so einem Spiel, dass
+       man da so zufällig durch die Plätze springen lässt, bis es
+       irgendwann einen neuen Platz gefunden hat. Also Zufallsmodus
+       praktisch."
+       Das ist etwas anderes als „irgendein Effekt auf jemanden":
+       OHNE Namen zieht das Los einen neuen Platz fuer mich selbst,
+       MIT Namen bleibt es der Ueberraschungseffekt. */
+    if (art === "zufall" && !rest) {
+      return anAlle("aktion", zustand.ichName
+        + " l\u00e4sst das Los einen neuen Platz suchen  \ud83c\udfb0",
+        { wirkung: "lotto" });
+    }
     if (AM_PLATZ[art]) {
       var wemP = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       if (!wemP) return systemZeile("So geht es:  /" + art + " Nickname");

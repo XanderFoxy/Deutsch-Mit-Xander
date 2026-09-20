@@ -9968,27 +9968,52 @@ body.lc-schreibt .tutor-reiter {
    ihre Richtung, im Takt des Geraeusches: drei Stoesse bei
    0.00, 0.62 und 1.24 Sekunden.
    ========================================================= */
+/* GEMELDET: „Ich möchte, dass der Wecker seitlich Schellen hat, die
+   du gemacht hast. Das sind einfach nur zwei Kreise oben links und
+   rechts. Sie sollen von der Seitenansicht schräg an der Rundung oben
+   anliegen, so wie ein Wecker wirklich richtig aussieht."
+
+   Vorher sassen sie in den ECKEN des Quadrats (top: -16 %, left/right
+   -13 %) und standen fast senkrecht — deshalb sahen sie aus wie zwei
+   Kreise, die danebengelegt wurden. Ein echter Wecker traegt seine
+   Schellen auf der RUNDUNG, bei etwa zehn und zwei Uhr, und beide
+   sind nach aussen gekippt.
+
+   Gerechnet, nicht geschaetzt: die Mitte der Schelle liegt auf einem
+   Kreis mit 56 % Radius (also knapp ausserhalb des Bildrands) bei
+   45 Grad. Das ergibt
+       x = 50 % − 56 % · sin 45° = 10,4 %
+       y = 50 % − 56 % · cos 45° = 10,4 %
+   und weil die Schelle 36 % breit ist, muss ihre linke obere Ecke um
+   18 % zurueck: −7,6 %. Gekippt wird um dieselben 45 Grad, damit der
+   Buegel in der Verlaengerung des Radius steht und die Schelle
+   wirklich AN der Rundung anliegt statt auf ihr zu sitzen. */
 .lc-schelle {
   position: absolute;
-  width: 46%;
-  top: -16%;
+  width: 36%;
+  top: -7.6%;
   z-index: -1;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35));
-  transform-origin: 50% 82%;
+  /* Gedreht wird um den Punkt, mit dem die Schelle das Bild beruehrt:
+     unten innen, nicht in der Mitte. Sonst wackelt sie frei in der
+     Luft statt am Gehaeuse zu haengen. */
+  transform-origin: 70% 86%;
   animation: lcSchelleL 1.86s linear both;
 }
 .lc-schelle svg { display: block; width: 100%; height: auto; }
-.lc-schelle-l { left: -13%; }
-.lc-schelle-r { right: -13%; animation-name: lcSchelleR; }
+.lc-schelle-l { left: -7.6%; }
+.lc-schelle-r { right: -7.6%; transform-origin: 30% 86%; animation-name: lcSchelleR; }
+/* −45° ist die Ruhelage (an der Rundung anliegend), das Klingeln
+   schlaegt nur wenige Grad darum aus. */
 @keyframes lcSchelleL {
-  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(-12deg) translateY(0); }
-  4%, 37%, 71%   { transform: rotate(-30deg) translateY(-4%); }
-  12%, 45%, 79%  { transform: rotate(-2deg) translateY(0); }
+  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(-45deg); }
+  4%, 37%, 71%   { transform: rotate(-59deg) translateY(-3%); }
+  12%, 45%, 79%  { transform: rotate(-33deg); }
 }
 @keyframes lcSchelleR {
-  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(12deg) translateY(0); }
-  4%, 37%, 71%   { transform: rotate(30deg) translateY(-4%); }
-  12%, 45%, 79%  { transform: rotate(2deg) translateY(0); }
+  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(45deg); }
+  4%, 37%, 71%   { transform: rotate(59deg) translateY(-3%); }
+  12%, 45%, 79%  { transform: rotate(33deg); }
 }
 /* Das Zifferblatt: schwach ueber das Bild gelegt, beide Zeiger auf
    zwoelf. Es liegt in der runden Blende und endet am Bildrand. */
@@ -10282,8 +10307,8 @@ body.lc-schreibt .tutor-reiter {
      Woerter kurz gehalten („Eimer" statt „Wassereimer"), damit in
      einer 62 px schmalen Kachel nichts abgeschnitten wird. */
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 3px;
-  padding: 6px;
+  gap: 2px;
+  padding: 5px;
   border-radius: 14px;
   background: rgba(24, 28, 38, 0.97);
   color: #f2f4f8;
@@ -10299,8 +10324,8 @@ body.lc-schreibt .tutor-reiter {
 }
 .lc-platzmenue-kopf {
   grid-column: 1 / -1;
-  margin: 2px 8px 4px;
-  font-size: 0.72rem;
+  margin: 1px 8px 3px;
+  font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.6;
@@ -10316,15 +10341,19 @@ body.lc-schreibt .tutor-reiter {
   justify-content: center;
   gap: 2px;
   width: 100%;
-  min-height: 50px;
-  padding: 5px 1px;
+  /* NOCH EINMAL FLACHER, weil Pac-Man, Aufessen und die Sanduhr
+     dazugekommen sind: mit 39 Kacheln waren es 565 px und damit 12 px
+     zu viel — gemessen von pruefe-platzmenue. Jetzt sind es zehn
+     Reihen zu 46 px. */
+  min-height: 44px;
+  padding: 4px 1px;
   border: 0;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.06);
   color: inherit;
   font: inherit;
-  font-size: 0.62rem;
-  line-height: 1.1;
+  font-size: 0.6rem;
+  line-height: 1.05;
   text-align: center;
   cursor: pointer;
 }
@@ -10342,7 +10371,7 @@ body.lc-schreibt .tutor-reiter {
   background: rgba(255, 255, 255, 0.12);
   outline: none;
 }
-.lc-platzmenue-zeichen { font-size: 1.2rem; line-height: 1.05; text-align: center; }
+.lc-platzmenue-zeichen { font-size: 1.05rem; line-height: 1; text-align: center; }
 @media (prefers-reduced-motion: reduce) { .lc-platzmenue { animation: none; } }
 
 /* =====================================================================
@@ -12258,14 +12287,26 @@ body.lc-schreibt .tutor-reiter {
   12%  { opacity: 1; transform: translateY(-12%) scale(1); }
   100% { opacity: 0; transform: translateY(-900%) scale(.8); }
 }
-/* Und das Bild wird schmal gezogen, als ginge es in den Halm. */
+/* GEMELDET, woertlich: „dann noch, dass man jemanden so aussaugt —
+   zum Beispiel man geht mit nem Strohhalm an jemand ran, und dann geht
+   das Profilbild so weg, dass es nach unten immer weniger wird, als
+   wenn man die Person austrinkt."
+
+   Vorher wurde das Bild nur schmal gequetscht. Jetzt sinkt wirklich
+   der Pegel: clip-path schneidet von OBEN weg, wie in einem Glas, aus
+   dem getrunken wird — was bleibt, steht unten und wird weniger. Am
+   Ende laeuft es wieder voll, sonst waere die Person fuer immer weg. */
 .lc-gesaugt { animation: lcGesaugt 3s cubic-bezier(.4, 0, .5, 1) both; }
 @keyframes lcGesaugt {
-  0%, 16% { transform: scale(1, 1) translate(0, 0); }
-  36%     { transform: scale(.78, 1.16) translate(8%, -6%); }
-  52%     { transform: scale(.86, 1.08) translate(4%, -3%); }
-  68%     { transform: scale(.74, 1.2) translate(9%, -7%); }
-  86%,100%{ transform: scale(1, 1) translate(0, 0); }
+  0%, 16% { clip-path: inset(0 0 0 0); transform: scale(1, 1); }
+  30%     { clip-path: inset(18% 0 0 0); transform: scale(.98, 1); }
+  44%     { clip-path: inset(34% 0 0 0); transform: scale(.96, 1); }
+  58%     { clip-path: inset(56% 0 0 0); transform: scale(.94, 1); }
+  70%     { clip-path: inset(74% 0 0 0); transform: scale(.93, 1); }
+  /* Ein Schluck bleibt stehen — dann laeuft es wieder voll. */
+  78%     { clip-path: inset(74% 0 0 0); transform: scale(.93, 1); }
+  92%     { clip-path: inset(12% 0 0 0); transform: scale(1, 1); }
+  100%    { clip-path: inset(0 0 0 0); transform: scale(1, 1); }
 }
 
 /* --- DIE PEITSCHE ------------------------------------------------------ */
@@ -12399,13 +12440,37 @@ body.lc-schreibt .tutor-reiter {
   74%  { opacity: 1; transform: rotate(var(--kippt, 60deg)) translateY(0); }
   100% { opacity: 0; transform: rotate(var(--kippt, 60deg)) translateY(10%); }
 }
+/* Das Loch, in das der Getroffene faellt — „dann fällt das in den
+   Loch und verschwindet, wie beim Bowling oder beim Kegeln." Es liegt
+   HINTER dem Bild, sonst faellt niemand hinein, sondern davor. */
+.lc-stoss-loch {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 2%;
+  height: 26%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, #05070d 0 58%, rgba(5, 7, 13, .5) 78%, rgba(5, 7, 13, 0));
+  z-index: -1;
+  animation: lcStossLoch 2.4s ease-out both;
+}
+@keyframes lcStossLoch {
+  0%, 28% { opacity: 0; transform: scale(.4); }
+  36%     { opacity: 1; transform: scale(1); }
+  82%     { opacity: 1; transform: scale(1); }
+  100%    { opacity: 0; transform: scale(.7); }
+}
 .lc-weggestossen { animation: lcWeggestossen 2.4s cubic-bezier(.25, .9, .35, 1) both; }
 @keyframes lcWeggestossen {
-  0%, 30% { transform: translateX(0) rotate(0deg); }
-  38%     { transform: translateX(-16%) rotate(-10deg); }
-  52%     { transform: translateX(-9%) rotate(-5deg); }
-  70%     { transform: translateX(-3%) rotate(-1deg); }
-  88%,100%{ transform: translateX(0) rotate(0deg); }
+  0%, 30% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  38%     { transform: translate(-16%, 0) rotate(-10deg) scale(1); opacity: 1; }
+  /* Und hinein: er kippt, wird kleiner und ist weg. */
+  52%     { transform: translate(-8%, 22%) rotate(-22deg) scale(.7); opacity: 1; }
+  64%     { transform: translate(-2%, 46%) rotate(-40deg) scale(.28); opacity: .8; }
+  72%     { transform: translate(0, 56%) rotate(-52deg) scale(0); opacity: 0; }
+  84%     { transform: translate(0, 56%) rotate(-52deg) scale(0); opacity: 0; }
+  94%     { transform: translate(0, 0) rotate(0deg) scale(1.06); opacity: 1; }
+  100%    { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
 }
 
 /* --- DIE KOPFHOERER ---------------------------------------------------- */
@@ -12604,26 +12669,25 @@ body.lc-schreibt .tutor-reiter {
   77%     { transform: scale(1.05, .93); }
   84%,100%{ transform: scale(1, 1); }
 }
-.lc-tennisball {
-  position: absolute;
-  left: 46%;
-  top: 44%;
-  width: 18%;
-  height: 18%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, #e8ff6a, #c3e02b 60%, #9bb41c);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .7), 0 2px 4px rgba(0, 0, 0, .3);
-  animation: lcTennisFlug 3s cubic-bezier(.3, 0, .3, 1) both;
-}
-@keyframes lcTennisFlug {
-  0%   { opacity: 0; transform: translate(var(--wx, 260%), var(--wy, 0%)) scale(.5); }
-  8%   { opacity: 1; }
-  26%  { transform: translate(0, -30%) scale(1); }
-  34%  { transform: translate(0, 0) scale(1.1, .9); }
-  /* Und zurueck — „dass man sich den Ball zuspielt". */
-  58%  { transform: translate(calc(var(--wx, 260%) * .5), calc(var(--wy, 0%) * .5 - 30%)) scale(.9); }
-  76%  { transform: translate(0, 0) scale(1.06, .94); }
-  100% { opacity: 0; transform: translate(var(--wx, 260%), var(--wy, 0%)) scale(.6); }
+/* GEMELDET: „vielleicht kannst du auch den anderen so zum Abschlag
+   missbrauchen für ein Tennisspiel, dass man den so nimmt, sein
+   Profilbild so hoch wirft und mit so einem großen Tennisschläger …
+   dass er den dann weg schlägt."
+   Es gibt deshalb keinen eigenen Ball mehr — das PROFILBILD ist der
+   Ball: es wird hochgeworfen, im Scheitel getroffen und fliegt weg. */
+.lc-getennist { animation: lcGetennist 3s cubic-bezier(.3, 0, .3, 1) both; }
+@keyframes lcGetennist {
+  0%, 8%  { transform: translate(0, 0) rotate(0deg) scale(1); }
+  /* Hochgeworfen. */
+  24%     { transform: translate(-4%, -95%) rotate(-40deg) scale(.86); }
+  /* 30 % = 0,9 s: da trifft der Schlaeger. */
+  30%     { transform: translate(0, -80%) rotate(-10deg) scale(.94, .82); }
+  36%     { transform: translate(60%, -60%) rotate(120deg) scale(.7); }
+  48%     { transform: translate(190%, -20%) rotate(420deg) scale(.4); opacity: .85; }
+  56%     { transform: translate(280%, 30%) rotate(660deg) scale(.2); opacity: 0; }
+  74%     { transform: translate(-60%, -70%) rotate(-40deg) scale(.5); opacity: .9; }
+  88%     { transform: translate(0, 6%) rotate(0deg) scale(1.06); opacity: 1; }
+  100%    { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
 }
 .lc-tennisschlaeger {
   position: absolute;
@@ -12701,3 +12765,295 @@ body.lc-schreibt .tutor-reiter {
   .lc-geschleudert, .lc-gesaugt, .lc-gepeitscht, .lc-weggestossen,
   .lc-gescratcht, .lc-geohrfeigt, .lc-gedribbelt { animation: none; }
 }
+
+/* =====================================================================
+   PAC-MAN JAGT UEBER DIE PLAETZE
+   ---------------------------------------------------------------------
+   GEMELDET: „ich möchte aber jetzt ne Pac-Man Animation haben, dass
+   mein Profilbild sich zu diesem Pac-Man verwandelt und ich den
+   anderen auffressen kann, egal wo er sitzt … Und dann ist er
+   praktisch von der Bühne runter, so dass es wirklich so aussieht,
+   als wenn ich ihn aufgegessen habe."
+
+   Das Profilbild bleibt, was es ist — es bekommt nur die FORM von
+   Pac-Man: ein Kreis, aus dem ein Maul herausgeschnitten ist. Das
+   macht clip-path mit einem Polygon, dessen Spitze in der Mitte
+   liegt; zwischen zwei Keyframes klappt das Maul auf und zu. Dazu
+   ein gelber Schein am Rand, damit man sieht, dass es Pac-Man ist,
+   ohne dass das Gesicht verschwindet.
+
+   Der Weg selbst wird in app.js gerechnet (lcWegSuchen, Breiten-
+   suche ueber die Sitzfelder); hier steht nur, wie es aussieht.
+   ===================================================================== */
+.lc-kreis.lc-pacman {
+  border-color: #ffd93b !important;
+  box-shadow: 0 0 0 3px rgba(255, 217, 59, .75), 0 0 18px 6px rgba(255, 200, 40, .5);
+  animation: lcPacMaul .34s steps(1, end) infinite !important;
+}
+/* Auf und zu. Zwei Stufen reichen — Pac-Man hatte nie mehr. */
+@keyframes lcPacMaul {
+  0%, 49% {
+    -webkit-clip-path: polygon(100% 32%, 50% 50%, 100% 68%, 100% 100%, 0 100%, 0 0, 100% 0);
+    clip-path: polygon(100% 32%, 50% 50%, 100% 68%, 100% 100%, 0 100%, 0 0, 100% 0);
+  }
+  50%, 100% {
+    -webkit-clip-path: polygon(100% 4%, 50% 50%, 100% 96%, 100% 100%, 0 100%, 0 0, 100% 0);
+    clip-path: polygon(100% 4%, 50% 50%, 100% 96%, 100% 100%, 0 100%, 0 0, 100% 0);
+  }
+}
+/* Die Punkte auf der Linie. Jeder verschwindet genau dann, wenn
+   Pac-Man ueber sein Feld kommt — den Verzug setzt app.js. */
+.lc-pac-krume {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #fff6c2, #ffd93b 70%);
+  box-shadow: 0 0 6px rgba(255, 217, 59, .9);
+  pointer-events: none;
+  z-index: 0;
+  animation: lcPacKrume .3s linear both;
+}
+@keyframes lcPacKrume {
+  0%   { opacity: 1; transform: scale(1); }
+  70%  { opacity: 1; transform: scale(1.4); }
+  100% { opacity: 0; transform: scale(.2); }
+}
+/* Und wer gefressen wird, verschwindet im Maul: er wird klein,
+   dreht sich weg und ist fort. Danach ist er von der Buehne. */
+.lc-verschlungen { animation: lcVerschlungen 1.4s cubic-bezier(.5, 0, .7, 1) both; }
+@keyframes lcVerschlungen {
+  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+  22%  { transform: scale(1.12) rotate(-8deg); opacity: 1; }
+  60%  { transform: scale(.28) rotate(180deg); opacity: .7; }
+  100% { transform: scale(0) rotate(340deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-kreis.lc-pacman { animation: none !important; }
+  .lc-pac-krume { display: none; }
+  .lc-verschlungen { animation: none; }
+}
+
+/* =====================================================================
+   DEN ANDEREN AUFESSEN — BISS FUER BISS
+   ---------------------------------------------------------------------
+   GEMELDET: „bei den Effekten, die man noch auswählen kann, dass man
+   den anderen wie so ein Keks aufessen kann … dass man so Biss für
+   Biss den so anbeißt, und auf ist."
+
+   Der Umriss wird in app.js gerechnet (lcBissUmriss) und hier nur
+   angestossen: bei jedem Biss zuckt das Bild kurz zusammen.
+   ===================================================================== */
+.lc-angebissen { animation: lcAngebissen .34s cubic-bezier(.3, 0, .3, 1) both; }
+@keyframes lcAngebissen {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(.94) rotate(-2deg); }
+  62%  { transform: scale(1.03) rotate(1deg); }
+  100% { transform: scale(1); }
+}
+/* Der Mund, der abbeisst: er kommt von rechts heran, klappt zu und
+   geht wieder. Fuenfmal, einmal je Biss. */
+.lc-aufess-mund {
+  position: absolute;
+  right: -34%;
+  top: 22%;
+  width: 46%;
+  height: 46%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 40%, #f6c89a, #d99a63 70%, #b8783f);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .35);
+  -webkit-clip-path: polygon(0 30%, 55% 50%, 0 70%, 0 100%, 100% 100%, 100% 0, 0 0);
+  clip-path: polygon(0 30%, 55% 50%, 0 70%, 0 100%, 100% 100%, 100% 0, 0 0);
+  animation: lcAufessMund 4.4s cubic-bezier(.3, 0, .3, 1) both;
+}
+@keyframes lcAufessMund {
+  0%   { opacity: 0; transform: translateX(60%) scale(.7); }
+  6%   { opacity: 1; transform: translateX(0) scale(1); }
+  10%  { transform: translateX(-18%) scale(1.05); }
+  16%  { transform: translateX(0) scale(1); }
+  24%  { transform: translateX(-18%) scale(1.05); }
+  30%  { transform: translateX(0) scale(1); }
+  38%  { transform: translateX(-18%) scale(1.05); }
+  44%  { transform: translateX(0) scale(1); }
+  52%  { transform: translateX(-18%) scale(1.05); }
+  58%  { transform: translateX(0) scale(1); }
+  66%  { transform: translateX(-18%) scale(1.05); }
+  74%  { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(60%) scale(.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-aufessen { display: none; }
+  .lc-angebissen { animation: none; }
+}
+
+/* =====================================================================
+   ZWEI SPRECHBILDER FUER HALLOWEEN: BLUT UND SPINNWEBEN
+   ---------------------------------------------------------------------
+   GEMELDET: „und dann noch ein paar Halloweeneffekte und Weihnachts-
+   effekte — so Blut, was über das Profil läuft, oder Spinnweben. Du
+   musst gucken, ob das als Sprecheffekt passt oder ob man andere damit
+   beeinflusst, was da besser geeignet ist."
+
+   Nachgesehen und entschieden: beides ist ein Zustand, kein Wurf. Es
+   laeuft, solange jemand spricht — also Sprechbilder. Alles liegt im
+   Kreis (der traegt overflow: hidden), damit es am Bildrand endet.
+   ===================================================================== */
+.lc-platz-spricht[data-sprechbild="blut"] .lc-kreis {
+  border-color: #8e1420 !important;
+  box-shadow: 0 0 0 2px rgba(142, 20, 32, .7), 0 0 14px 4px rgba(120, 10, 20, .45);
+}
+/* Die Lache, die von oben herunterlaeuft — mit drei Nasen, die
+   unterschiedlich weit kommen. */
+.lc-platz-spricht[data-sprechbild="blut"] .lc-kreis::before {
+  content: "";
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  top: 0;
+  height: 30%;
+  border: 0 !important;
+  border-radius: 0 0 44% 56% / 0 0 46% 38%;
+  background: linear-gradient(to bottom, #6e0d16, #a3121f 55%, #c4172a);
+  box-shadow: 0 3px 6px rgba(80, 0, 8, .5);
+  animation: lcBlutLaeuft 3.6s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 3;
+}
+@keyframes lcBlutLaeuft {
+  0%   { height: 16%; }
+  100% { height: 34%; }
+}
+/* Ein Tropfen, der sich loest und herunterfaellt. */
+.lc-platz-spricht[data-sprechbild="blut"] .lc-kreis::after {
+  content: "";
+  position: absolute;
+  left: 58%;
+  top: 26%;
+  width: 9%;
+  height: 12%;
+  border: 0 !important;
+  border-radius: 50% 50% 55% 55% / 62% 62% 40% 40%;
+  background: #b4141f;
+  animation: lcBlutTropft 2.2s cubic-bezier(.4, 0, .8, 1) infinite;
+  pointer-events: none;
+  z-index: 4;
+}
+@keyframes lcBlutTropft {
+  0%   { opacity: 0; transform: translateY(0) scale(.6); }
+  18%  { opacity: 1; transform: translateY(20%) scale(1); }
+  100% { opacity: 0; transform: translateY(420%) scale(.8); }
+}
+/* --- Spinnweben ------------------------------------------------------ */
+.lc-platz-spricht[data-sprechbild="spinnweb"] .lc-kreis {
+  border-color: #cfd6e0 !important;
+  box-shadow: 0 0 0 2px rgba(200, 210, 225, .5);
+}
+/* Das Netz: Speichen und Ringe, aber nur in den oberen Ecken — ein
+   Netz spannt sich in die Ecke, nicht ueber das Gesicht. */
+.lc-platz-spricht[data-sprechbild="spinnweb"] .lc-kreis::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 0 !important;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 200deg at 4% 4%,
+      rgba(255,255,255,.55) 0 1deg, rgba(255,255,255,0) 1deg 14deg),
+    repeating-radial-gradient(circle at 4% 4%,
+      rgba(255,255,255,.45) 0 1px, rgba(255,255,255,0) 1px 13px),
+    repeating-conic-gradient(from 110deg at 96% 4%,
+      rgba(255,255,255,.55) 0 1deg, rgba(255,255,255,0) 1deg 14deg),
+    repeating-radial-gradient(circle at 96% 4%,
+      rgba(255,255,255,.45) 0 1px, rgba(255,255,255,0) 1px 13px);
+  opacity: .75;
+  animation: lcNetzZittert 4.2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 3;
+}
+@keyframes lcNetzZittert {
+  0%, 100% { opacity: .62; }
+  50%      { opacity: .86; }
+}
+/* Und die Spinne, die sich abseilt. */
+.lc-platz-spricht[data-sprechbild="spinnweb"] .lc-kreis::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 14%;
+  height: 14%;
+  margin-left: -7%;
+  border: 0 !important;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, #1b1d24 0 46%, rgba(27,29,36,0) 47%),
+    conic-gradient(from 0deg,
+      rgba(27,29,36,.95) 0 3deg, rgba(27,29,36,0) 3deg 42deg,
+      rgba(27,29,36,.95) 42deg 45deg, rgba(27,29,36,0) 45deg 90deg);
+  box-shadow: 0 -60px 0 -6.4px rgba(255, 255, 255, .5);
+  animation: lcSpinneSeilt 3.8s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 4;
+}
+@keyframes lcSpinneSeilt {
+  0%   { transform: translateY(-10%) scale(.9); }
+  100% { transform: translateY(150%) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-platz-spricht[data-sprechbild="blut"] .lc-kreis::before,
+  .lc-platz-spricht[data-sprechbild="blut"] .lc-kreis::after,
+  .lc-platz-spricht[data-sprechbild="spinnweb"] .lc-kreis::before,
+  .lc-platz-spricht[data-sprechbild="spinnweb"] .lc-kreis::after { animation: none; }
+}
+
+/* --- DAS GLAS DER SANDUHR --------------------------------------------
+   Es steht zwischen den beiden Plaetzen und zeigt die Engstelle, durch
+   die beide laufen: zwei Trichter, die sich in der Mitte treffen.
+   Hoehe und Lage setzt app.js aus dem Abstand der Plaetze.
+   -------------------------------------------------------------------- */
+.lc-sanduhr-glas {
+  position: absolute;
+  width: 44px;
+  margin-left: -22px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
+  background:
+    linear-gradient(to bottom right, rgba(255,255,255,.22) 0 50%, rgba(255,255,255,0) 50%),
+    linear-gradient(to bottom left,  rgba(255,255,255,.22) 0 50%, rgba(255,255,255,0) 50%);
+  -webkit-clip-path: polygon(0 0, 100% 0, 54% 50%, 100% 100%, 0 100%, 46% 50%);
+  clip-path: polygon(0 0, 100% 0, 54% 50%, 100% 100%, 0 100%, 46% 50%);
+  border-left: 2px solid rgba(255, 255, 255, .45);
+  border-right: 2px solid rgba(255, 255, 255, .45);
+  animation: lcSanduhrGlas 3.2s ease-in-out both;
+}
+@keyframes lcSanduhrGlas {
+  0%   { opacity: 0; transform: translateY(-50%) scaleY(.6); }
+  12%  { opacity: 1; transform: translateY(-50%) scaleY(1); }
+  84%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-50%) scaleY(.8); }
+}
+@media (prefers-reduced-motion: reduce) { .lc-sanduhr-glas { display: none; } }
+
+/* --- DIE ZWEITE SANDUHR: DAS BILD BAUT SICH AUF ----------------------
+   GEMELDET: „auch, dass das Profilbild wie aus so einem Sanduhr-Effekt
+   sich aufbauen kann, indem man oben anfängt und das dann so einfließen
+   lässt, und dann füllt sich das allmählich."
+
+   Das ist die Sanduhr fuer alle, die NICHT direkt ueber oder unter
+   einem sitzen: das Bild ist erst weg und rieselt von oben wieder
+   voll. Geschnitten wird von unten nach oben — umgekehrt zum
+   Strohhalm, bei dem der Pegel faellt.
+   -------------------------------------------------------------------- */
+.lc-rieselt { animation: lcRieselt 3.2s cubic-bezier(.45, 0, .55, 1) both; }
+@keyframes lcRieselt {
+  0%   { clip-path: inset(0 0 100% 0); opacity: .25; }
+  8%   { clip-path: inset(0 0 94% 0);  opacity: 1; }
+  30%  { clip-path: inset(0 0 72% 0); }
+  52%  { clip-path: inset(0 0 48% 0); }
+  74%  { clip-path: inset(0 0 24% 0); }
+  92%  { clip-path: inset(0 0 4% 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) { .lc-rieselt { animation: none; } }
