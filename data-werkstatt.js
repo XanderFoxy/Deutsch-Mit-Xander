@@ -49,24 +49,34 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 353 — jemanden zu sich ziehen geht jetzt mit einem Tipp",
+  stand: "Fassung 354 — sieben neue Sachen am Profilbild",
 
   inArbeit: [
-    { seit: "2026-09-20T00:31",
+    { seit: "2026-09-20T00:51",
       text: "Galgenmaennchen: reihum spielen und benoten" },
-    { seit: "2026-09-20T00:31",
-      text: "Neue Effekte aus der Wunschliste (Bumerang, Schneeball, Pfeil und Bogen, Bowling, Strudel, DJ, Trommel …)" },
-    { seit: "2026-09-20T00:31",
+    { seit: "2026-09-20T00:51",
+      text: "Weitere Effekte aus der Wunschliste (Bowling, DJ-Schallplatte, Ohrfeige, Kopfhoerer, Blut und Spinnweben)" },
+    { seit: "2026-09-20T00:51",
       text: "Nachmessen, ob bei einem Gespraech wirklich ZWEI Geraete in turn_nutzung stehen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-20T00:31",
-      text: "Langer Druck auf einen fremden Platz: „Umsetzen“ klappt die Plaetze als Kacheln auf" },
-    { seit: "2026-09-20T00:31",
-      text: "Ganz vorn steht „Zu mir“ — das sucht den freien Platz neben mir und zieht die Person dorthin" },
-    { seit: "2026-09-20T00:31",
-      text: "Ein Tipp genuegt; vorher musste man die Nummer von Hand in den Befehl tippen" },
+    { seit: "2026-09-20T00:51",
+      text: "Schneeball — er fliegt aus deiner Richtung heran, klatscht auf, und es bleibt Schnee liegen" },
+    { seit: "2026-09-20T00:51",
+      text: "Bumerang — er trifft am Kopf und kommt wirklich zu dir zurueck" },
+    { seit: "2026-09-20T00:51",
+      text: "Saugnapf-Pfeil — er saugt sich fest und wackelt aus" },
+    { seit: "2026-09-20T00:51",
+      text: "Schlagsahne-Haube mit Kirsche obendrauf" },
+    { seit: "2026-09-20T00:51",
+      text: "Strudel mit Namen: das Profilbild wird eingesogen und ist zwei Sekunden lang weg" },
+    { seit: "2026-09-20T00:51",
+      text: "Trommel — zwei Schlaegel im Wechsel, das Fell schwingt" },
+    { seit: "2026-09-20T00:51",
+      text: "Bildstoerung — das Bild zerreisst in Baendern wie bei schlechtem Empfang" },
+    { seit: "2026-09-20T00:51",
+      text: "Alle sieben stehen auch im Platzmenue, das jetzt zwanzig Kacheln hat" },
   ],
 };

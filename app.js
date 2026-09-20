@@ -22338,6 +22338,16 @@
        herunterlaeuft. Herunterlaufende Farbe macht kein Geraeusch.
        Jetzt einmal, und die Animation laeuft still zu Ende. */
     paintball:      { ton: "paintball", dauer: 11000 , laut: 0.62 },
+    /* Die sieben Neuen leihen sich Geraeusche, die es schon gibt —
+       ein eigenes aufzunehmen lohnt erst, wenn sie sich bewaehrt
+       haben. Welches passt, steht bei jedem dabei. */
+    schneeball:     { ton: "platsch",  dauer: 3600, laut: 0.55 },  /* weicher Aufschlag */
+    bumerang:       { ton: "bonk",     dauer: 3000, laut: 0.6 },   /* Holz am Kopf */
+    saugpfeil:      { ton: "platsch",  dauer: 3400, laut: 0.55 },  /* der Saugnapf ploppt */
+    sahne:          { ton: "platsch",  dauer: 3600, laut: 0.45 },  /* leise, es ist ja Sahne */
+    sog:            { ton: "regen",    dauer: 4600, laut: 0.4 },   /* Wasser, das zieht */
+    trommel:        { ton: "bonk",     dauer: 2800, laut: 0.7 },   /* der Schlag sitzt */
+    stoerung:       { ton: "gewitter", dauer: 3000, laut: 0.38 },  /* Rauschen */
     matrix:         { ton: "matrix", dauer: 10000, schleife: true , laut: 0.34 },
     route66:        { ton: "route66", dauer: 10000, schleife: true , laut: 0.36 },
     noten:          { ton: "noten", dauer: 10000, schleife: true },
@@ -23401,7 +23411,14 @@
     ["\u26c8\ufe0f", "Gewitter",  "gewitter"],
     ["\ud83d\udcb8", "Geldregen", "geld"],
     ["\ud83c\udf6c", "Bonbons",   "bonbon"],
-    ["\ud83d\udd28", "Hammer",    "hammer"]
+    ["\ud83d\udd28", "Hammer",    "hammer"],
+    ["\u2744\ufe0f", "Schneeball", "schnee"],
+    ["\ud83e\ude83", "Bumerang", "bumerang"],
+    ["\ud83c\udff9", "Pfeil",    "pfeil"],
+    ["\ud83c\udf66", "Sahne",    "sahne"],
+    ["\ud83c\udf00", "Strudel",  "strudel"],
+    ["\ud83e\udd41", "Trommel",  "trommel"],
+    ["\ud83d\udcfa", "St\u00f6rung", "stoerung"]
   ];
 
   /* Die Zeichen zu den Sprechbildern — sie stehen hier und nicht in
@@ -25127,6 +25144,18 @@
     hammer:     { zeichen: ["\ud83d\udd28"], wie: 5, klasse: "umarmen" },
     heber:      { zeichen: ["\ud83e\ude9d"], wie: 5, klasse: "umarmen" },
     lasso:      { zeichen: ["\ud83e\udd20"], wie: 5, klasse: "umarmen" },
+    /* Die sieben Neuen. Der Eintrag hier ist der RUECKFALL: trifft der
+       Name niemanden (die Person ist gegangen), rieselt wenigstens das
+       Zeichen durchs Bild, statt dass gar nichts passiert. Ohne diesen
+       Eintrag faellt lcWirkung ganz oben heraus und die Zeichnung
+       kaeme nie dazu — genau daran ist der erste Anlauf gescheitert. */
+    schneeball: { zeichen: ["\u2744\ufe0f"], wie: 6, klasse: "umarmen" },
+    bumerang:   { zeichen: ["\ud83e\ude83"], wie: 5, klasse: "umarmen" },
+    saugpfeil:  { zeichen: ["\ud83c\udff9"], wie: 5, klasse: "umarmen" },
+    sahne:      { zeichen: ["\ud83c\udf66"], wie: 6, klasse: "umarmen" },
+    sog:        { zeichen: ["\ud83c\udf00"], wie: 6, klasse: "umarmen" },
+    trommel:    { zeichen: ["\ud83e\udd41"], wie: 5, klasse: "umarmen" },
+    stoerung:   { zeichen: ["\ud83d\udcfa"], wie: 5, klasse: "umarmen" },
     boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
   };
@@ -25905,6 +25934,184 @@
     }, 3400, "zucker");
   }
 
+  /* =================================================================
+     SIEBEN NEUE SACHEN AM PROFILBILD
+     -----------------------------------------------------------------
+     Alle aus der Wunschliste, und alle auf demselben Weg wie die
+     bisherigen: lcAmPlatz haengt eine Schicht an den Platz, die
+     Schicht darf ueber den Bildrand hinausragen, und was INNEN
+     bleiben muss, bekommt die runde Blende.
+
+     Wo eine Richtung dazugehoert (Schneeball, Bumerang, Pfeil),
+     wird sie aus den beiden Sitzkaesten gerechnet — genau wie beim
+     Boxhandschuh: das Ding kommt von dort, wo der Werfende wirklich
+     sitzt, und nicht von einer festen Seite.
+     ================================================================= */
+
+  /* Die Richtung vom Werfenden zum Getroffenen, als Einheitsvektor.
+     Ohne Werfenden (es gilt allen) kommt es von schraeg oben links —
+     das sieht immer noch nach Wurf aus und nie nach Zufall. */
+  function lcWurfRichtung(platz) {
+    const karte = document.getElementById("livechatKarte");
+    const quelle = karte && karte.querySelector(".lc-platz-ich");
+    if (!quelle || quelle === platz) return { x: -0.74, y: -0.67 };
+    const a = quelle.getBoundingClientRect(), b = platz.getBoundingClientRect();
+    const dx = (a.left + a.width / 2) - (b.left + b.width / 2);
+    const dy = (a.top + a.height / 2) - (b.top + b.height / 2);
+    const l = Math.hypot(dx, dy);
+    if (l < 4) return { x: -0.74, y: -0.67 };
+    return { x: dx / l, y: dy / l };
+  }
+  function lcWurfSetzen(schicht, platz, weite) {
+    const r = lcWurfRichtung(platz);
+    schicht.style.setProperty("--wx", (r.x * (weite || 230)).toFixed(0) + "%");
+    schicht.style.setProperty("--wy", (r.y * (weite || 230)).toFixed(0) + "%");
+    schicht.style.setProperty("--wdreh", (Math.atan2(-r.y, -r.x) * 180 / Math.PI).toFixed(1) + "deg");
+    return r;
+  }
+
+  /* --- DER SCHNEEBALL --------------------------------------------- */
+  function lcSchneeball(wen) {
+    return lcAmPlatz(wen, "lc-schnee", (schicht, platz) => {
+      lcWurfSetzen(schicht, platz, 240);
+      const blende = lcZpBlende(schicht);
+      blende.innerHTML = '<span class="lc-schnee-haufen"></span>';
+      schicht.insertAdjacentHTML("beforeend", '<span class="lc-schnee-ball"></span>');
+      /* Der Aufschlag: Flocken stieben nach allen Seiten. */
+      for (let i = 0; i < 14; i++) {
+        const f = document.createElement("i");
+        f.className = "lc-schnee-flocke";
+        f.style.setProperty("--wo", (i * (360 / 14)) + "deg");
+        f.style.setProperty("--gross", (0.5 + Math.random() * 0.9).toFixed(2));
+        f.style.animationDelay = (0.44 + Math.random() * 0.12).toFixed(2) + "s";
+        schicht.appendChild(f);
+      }
+    }, 3600, "schneeball");
+  }
+
+  /* --- DER BUMERANG ------------------------------------------------ */
+  function lcBumerang(wen) {
+    return lcAmPlatz(wen, "lc-bumerang", (schicht, platz) => {
+      lcWurfSetzen(schicht, platz, 250);
+      schicht.innerHTML =
+        '<svg class="lc-bumerang-bild" viewBox="0 0 60 60">'
+        + '<path d="M8 50 C8 26 20 10 40 8 C34 18 30 26 30 32 '
+        + 'C30 38 34 44 44 50 C30 54 16 54 8 50 Z" fill="#b5762f" stroke="#7a4d18" stroke-width="2.5"'
+        + ' stroke-linejoin="round"/>'
+        + '<path d="M16 44 C16 30 24 20 34 16" stroke="#e0b externally" stroke-width="0" fill="none"/>'
+        + "</svg>"
+        + '<span class="lc-bumerang-treffer">TOCK</span>';
+    }, 3000, "bumerang");
+  }
+
+  /* --- DER SAUGNAPF-PFEIL ------------------------------------------ */
+  function lcSaugpfeil(wen) {
+    return lcAmPlatz(wen, "lc-pfeil", (schicht, platz) => {
+      lcWurfSetzen(schicht, platz, 260);
+      schicht.innerHTML =
+        '<svg class="lc-pfeil-bild" viewBox="0 0 90 26">'
+        /* Saugnapf vorn, Schaft, Federn hinten — von links nach rechts,
+           die Drehung stellt ihn in die Flugrichtung. */
+        + '<ellipse cx="9" cy="13" rx="8" ry="10" fill="#d94f4f" stroke="#8f2f2f" stroke-width="2"/>'
+        + '<rect x="15" y="10" width="54" height="6" rx="3" fill="#e8b86b" stroke="#a97f38" stroke-width="1.6"/>'
+        + '<path d="M68 4 L86 13 L68 22 Z" fill="#6fa8dc" stroke="#3f6f9f" stroke-width="1.6"'
+        + ' stroke-linejoin="round"/>'
+        + "</svg>"
+        + '<span class="lc-pfeil-platsch">PLOPP</span>';
+    }, 3400, "saugpfeil");
+  }
+
+  /* --- DIE SCHLAGSAHNE-HAUBE ---------------------------------------- */
+  function lcSahne(wen) {
+    return lcAmPlatz(wen, "lc-sahne", (schicht) => {
+      schicht.innerHTML =
+        '<span class="lc-sahne-haube">'
+        + '<i class="lc-sahne-ring lc-sahne-1"></i>'
+        + '<i class="lc-sahne-ring lc-sahne-2"></i>'
+        + '<i class="lc-sahne-ring lc-sahne-3"></i>'
+        + '<i class="lc-sahne-spitze"></i>'
+        + "</span>"
+        + '<span class="lc-sahne-kirsche"></span>';
+    }, 3600, "sahne");
+  }
+
+  /* --- DER SOG AM PLATZ ----------------------------------------------
+     ACHTUNG, NAMENSKOLLISION — und sie waere teuer geworden: „strudel"
+     gibt es schon, als ganzseitigen Effekt fuer den Raum (LC_EFFEKTE,
+     Klasse .lc-strudel, eigenes Geraeusch, 11 Sekunden). Der neue
+     zieht EIN Profilbild ein und heisst deshalb „sog". Der Befehl
+     /strudel mit einem Namen dahinter loest ihn aus — dasselbe Muster
+     wie bei Regen, Gewitter, Geld und Bonbons: ohne Namen gilt es dem
+     Raum, mit Namen einer Person. */
+  function lcSog(wen) {
+    return lcAmPlatz(wen, "lc-sog", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-gesogen");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gesogen");
+        /* „Das bleibt zwei Sekunden so, dass man sieht, wie das weg
+           ist" — die Klasse haelt das Bild so lange verschwunden. */
+        setTimeout(() => kreis.classList.remove("lc-gesogen"), 4200);
+      }
+      schicht.innerHTML = '<span class="lc-sog-wirbel"></span>'
+                        + '<span class="lc-sog-wirbel lc-sog-zwei"></span>';
+    }, 4600, "sog");
+  }
+
+  /* --- DIE TROMMEL -------------------------------------------------- */
+  function lcTrommel(wen) {
+    return lcAmPlatz(wen, "lc-trommel", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-getrommelt");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-getrommelt");
+        setTimeout(() => kreis.classList.remove("lc-getrommelt"), 2600);
+      }
+      /* Zwei Schlaegel, versetzt — einer allein waere kein Trommeln. */
+      ["a", "b"].forEach((seite) => {
+        schicht.insertAdjacentHTML("beforeend",
+          '<svg class="lc-trommel-stock lc-trommel-' + seite + '" viewBox="0 0 24 70">'
+          + '<rect x="9" y="12" width="6" height="56" rx="3" fill="#c79a5b"/>'
+          + '<ellipse cx="12" cy="11" rx="10" ry="11" fill="#e8d2ad" stroke="#a97f38" stroke-width="2"/>'
+          + "</svg>");
+      });
+      for (let i = 0; i < 3; i++) {
+        const w = document.createElement("i");
+        w.className = "lc-trommel-welle";
+        w.style.animationDelay = (i * 0.26).toFixed(2) + "s";
+        schicht.appendChild(w);
+      }
+    }, 2800, "trommel");
+  }
+
+  /* --- DIE BILDSTOERUNG --------------------------------------------- */
+  function lcStoerung(wen) {
+    return lcAmPlatz(wen, "lc-stoerung", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-gestoert");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gestoert");
+        setTimeout(() => kreis.classList.remove("lc-gestoert"), 3000);
+      }
+      const blende = lcZpBlende(schicht);
+      /* Sechs Baender, die waagerecht verrutschen — das ist es, was
+         ein zerrissenes Fernsehbild ausmacht. */
+      for (let i = 0; i < 6; i++) {
+        const b = document.createElement("i");
+        b.className = "lc-stoer-band";
+        b.style.top = (i * 16 + 2) + "%";
+        b.style.height = (6 + Math.random() * 9).toFixed(0) + "%";
+        b.style.animationDelay = (Math.random() * 0.5).toFixed(2) + "s";
+        b.style.animationDuration = (0.26 + Math.random() * 0.4).toFixed(2) + "s";
+        blende.appendChild(b);
+      }
+      blende.insertAdjacentHTML("beforeend", '<i class="lc-stoer-rauschen"></i>');
+    }, 3000, "stoerung");
+  }
+
   /* --- DER HAMMER ------------------------------------------------- */
   function lcHammer(wen) {
     return lcAmPlatz(wen, "lc-zhammer", (schicht, platz) => {
@@ -26604,6 +26811,13 @@
       if (art === "reichtum" && lcReichtum(wenZ)) return;
       if (art === "zucker" && lcZuckerregen(wenZ)) return;
       if (art === "hammer" && lcHammer(wenZ)) return;
+      if (art === "schneeball" && lcSchneeball(wenZ)) return;
+      if (art === "bumerang" && lcBumerang(wenZ)) return;
+      if (art === "saugpfeil" && lcSaugpfeil(wenZ)) return;
+      if (art === "sahne" && lcSahne(wenZ)) return;
+      if (art === "sog" && lcSog(wenZ)) return;
+      if (art === "trommel" && lcTrommel(wenZ)) return;
+      if (art === "stoerung" && lcStoerung(wenZ)) return;
       if (art === "heber" && lcHeber(wenZ)) return;
       if (art === "lasso" && lcLasso(wenZ)) return;
     }

@@ -36,6 +36,18 @@ const pruefe = (was, gut, zusatz) => {
 
 /* Befehl -> erwartete Wirkung -> Klasse, die am Platz haengen muss */
 const PAARE = [
+  /* Sieben neue Sachen aus der Wunschliste — Schneeball, Bumerang,
+     Saugnapf-Pfeil, Schlagsahne, Strudel, Trommel und Bildstoerung.
+     Sie gehen denselben Weg wie die vier davor und werden deshalb
+     genauso geprueft: schickt der Befehl die richtige Wirkung, haengt
+     die Zeichnung am richtigen Platz, deckt sie das Bild ab? */
+  ["/schnee Emmi",   "schneeball",  "lc-schnee"],
+  ["/bumerang Emmi", "bumerang",    "lc-bumerang"],
+  ["/pfeil Emmi",    "saugpfeil",   "lc-pfeil"],
+  ["/sahne Emmi",    "sahne",       "lc-sahne"],
+  ["/strudel Emmi",  "sog",         "lc-sog"],
+  ["/trommel Emmi",  "trommel",     "lc-trommel"],
+  ["/stoerung Emmi", "stoerung",    "lc-stoerung"],
   ["/tritt Emmi",    "tritt",       "lc-tritt"],
   ["/herz Emmi",     "zherz",       "lc-zherz"],
   ["/wasser Emmi",   "eimer",       "lc-eimer"],
@@ -241,7 +253,7 @@ const PAARE = [
   });
   pruefe("der lange Druck oeffnet das Menue", Boolean(menue.da), menue.fehlt || "");
   pruefe("es nennt die Person", /Emmi/i.test(menue.kopf || ""), (menue.kopf || "-").trim());
-  pruefe("es hat alle Spielzeuge", menue.knoepfe >= 13, menue.knoepfe + " Knoepfe");
+  pruefe("es hat alle Spielzeuge", menue.knoepfe >= 20, menue.knoepfe + " Knoepfe");
   pruefe("es steht ganz im Bild", Boolean(menue.imBild));
   pruefe("man muss nicht rollen", Boolean(menue.passt), menue.hoch + " px Inhalt");
   pruefe("der letzte Knopf (Hammer) ist ohne Rollen zu sehen", menue.hammerUnten <= 0,

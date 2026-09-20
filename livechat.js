@@ -799,7 +799,33 @@ window.LiveChat = (function () {
     tritt:  { wirkung: "tritt",   satz: "tritt gegen das Profilbild von", emoji: "\u26bd" },
     wasser: { wirkung: "eimer",   satz: "kippt einen Eimer Wasser \u00fcber", emoji: "\ud83e\udea3" },
     wecker: { wirkung: "wecker",  satz: "stellt den Wecker neben", emoji: "\u23f0" },
-    hammer: { wirkung: "hammer",  satz: "haut mit dem Hammer auf", emoji: "\ud83d\udd28" }
+    hammer: { wirkung: "hammer",  satz: "haut mit dem Hammer auf", emoji: "\ud83d\udd28" },
+    /* GEWUENSCHT, Stueck fuer Stueck aus der Wunschliste:
+       „Wir koennen uns auch Schneebaelle gegenseitig zuschiessen aufs
+        Profilbild, so dass derjenige eingeseift wird mit Schnee."
+       „Bei den Tritt- und Kick-Effekten kannst du noch einen Bumerang
+        machen, der denjenigen am Kopf trifft und dann wieder zu mir
+        zurueckkommt."
+       „Mach mal noch Pfeil und Bogen, aber mit so einem Saugnapf-Pfeil
+        — keiner, der wirklich wehtut."
+       „Man koennte jemanden mit Schlagsahne einspruehen auf seinen
+        Kopf, so dass da so eine Schlagsahne-Haube kommt."
+       „Einen Strudel, dass man so mit seinem Profilbild ertrinkt …
+        als wenn man in die andere Dimension gesaugt wird, und das
+        bleibt zwei Sekunden so, dass man sieht, wie das weg ist."
+       „Man koennte den anderen als Basstrommel verwenden und mit einem
+        Riesentrommelstock so einen Gong machen."
+       „Dann koenntest du noch einen Effekt machen, der so Stoerungen
+        macht, dass das Bild so zerrissen wird wie beim Fernseher bei
+        schlechtem Empfang."
+       Alle sieben gehen denselben Weg wie die vier darueber: eine
+       Zeile im Chat, eine Zeichnung am Platz, ein Geraeusch. */
+    schnee:   { wirkung: "schneeball", satz: "wirft einen Schneeball auf", emoji: "\u2744\ufe0f" },
+    bumerang: { wirkung: "bumerang",   satz: "wirft den Bumerang nach",    emoji: "\ud83e\ude83" },
+    pfeil:    { wirkung: "saugpfeil",  satz: "schiesst einen Saugnapf-Pfeil auf", emoji: "\ud83c\udff9" },
+    sahne:    { wirkung: "sahne",      satz: "spr\u00fcht Schlagsahne auf den Kopf von", emoji: "\ud83c\udf66" },
+    trommel:  { wirkung: "trommel",    satz: "trommelt auf dem Kopf von",   emoji: "\ud83e\udd41" },
+    stoerung: { wirkung: "stoerung",   satz: "st\u00f6rt den Empfang von",  emoji: "\ud83d\udcfa" }
   };
   /* Und die vier, die es fuer den ganzen Raum schon gibt — mit Namen
      dahinter werden sie klein und gelten nur dieser Person. */
@@ -807,7 +833,11 @@ window.LiveChat = (function () {
     regen:    { wirkung: "regenwolke",  satz: "l\u00e4sst eine Regenwolke ziehen \u00fcber", emoji: "\ud83c\udf27\ufe0f" },
     gewitter: { wirkung: "donnerwolke", satz: "l\u00e4sst ein Gewitter los \u00fcber", emoji: "\u26c8\ufe0f" },
     geld:     { wirkung: "reichtum",    satz: "l\u00e4sst Geld regnen auf", emoji: "\ud83d\udcb8" },
-    bonbon:   { wirkung: "zucker",      satz: "l\u00e4sst Bonbons regnen auf", emoji: "\ud83c\udf6c" }
+    bonbon:   { wirkung: "zucker",      satz: "l\u00e4sst Bonbons regnen auf", emoji: "\ud83c\udf6c" },
+    /* Den Strudel gibt es schon fuer den ganzen Raum. MIT Namen wird
+       daraus der kleine: er zieht genau ein Profilbild ein. Dieselbe
+       Regel wie bei Regen, Gewitter, Geld und Bonbons. */
+    strudel:  { wirkung: "sog",         satz: "zieht einen Strudel auf unter", emoji: "\ud83c\udf00" }
   };
 
   var SCHRIFTEN = {
@@ -7548,6 +7578,12 @@ window.LiveChat = (function () {
     { gr: "reden", w: "wasser",  kurz: "eimer",  nutzt: "/wasser Name",      was: "Einen Eimer Wasser darüber kippen" },
     { gr: "reden", w: "wecker",  kurz: "wecken", nutzt: "/wecker Name",      was: "Wecker — das Profilbild scheppert" },
     { gr: "reden", w: "hammer",  kurz: "bonk",   nutzt: "/hammer Name",      was: "Hammer auf den Kopf" },
+    { gr: "reden", w: "schnee",  kurz: "schneeball", nutzt: "/schnee Name",  was: "Schneeball — er klatscht ans Profilbild und es bleibt Schnee liegen" },
+    { gr: "reden", w: "bumerang", kurz: "boomerang", nutzt: "/bumerang Name", was: "Bumerang — er trifft am Kopf und kommt zu dir zurueck" },
+    { gr: "reden", w: "pfeil",   kurz: "bogen",  nutzt: "/pfeil Name",       was: "Saugnapf-Pfeil — er bleibt am Profilbild kleben" },
+    { gr: "reden", w: "sahne",   kurz: "schlagsahne", nutzt: "/sahne Name",  was: "Schlagsahne-Haube auf den Kopf" },
+    { gr: "reden", w: "trommel", kurz: "gong",   nutzt: "/trommel Name",     was: "Trommel — auf dem Kopf wird getrommelt" },
+    { gr: "reden", w: "stoerung", kurz: "tv",    nutzt: "/stoerung Name",    was: "Bildstoerung — schlechter Empfang, das Bild zerreisst" },
     { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation nur für dich zeigen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon Name", was: "Luftballons zum Geburtstag" },
@@ -7617,7 +7653,7 @@ window.LiveChat = (function () {
     { gr: "welt",  w: "vhs",       kurz: "video",  nutzt: "/vhs",       was: "Achtziger: das Bild verreisst wie bei einem alten Videoband" },
     { gr: "feier", w: "disko",     kurz: "kugel",  nutzt: "/disko",     was: "Achtziger: die Spiegelkugel dreht sich und wirft Lichtflecken" },
     { gr: "fahrzeuge", w: "pirat",  kurz: "schiff", nutzt: "/pirat",     was: "Ein Piratenschiff mit Totenkopfflagge" },
-    { gr: "welt", w: "strudel",    kurz: "sog",    nutzt: "/strudel",   was: "Der Chat wird in einen Strudel gezogen, die Schrift wird kleiner" },
+    { gr: "welt", w: "strudel",    kurz: "sog",    nutzt: "/strudel",   was: "Der Chat wird in einen Strudel gezogen — mit Namen dahinter zieht er nur dieses eine Profilbild ein" },
     { gr: "welt", w: "schwamm",    kurz: "wischen", nutzt: "/schwamm",  was: "Ein Schwamm wischt den Chat wie eine Tafel" },
     { gr: "welt", w: "schuss",     kurz: "ballern", nutzt: "/schuss",   was: "Schusslöcher schlagen in den Chat, und es läuft herunter" },
     { gr: "wetter", w: "wolken",    kurz: "wolke",  nutzt: "/wolken",    was: "Wolken ziehen über den Raum" },
