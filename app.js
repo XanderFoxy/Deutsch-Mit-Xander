@@ -21147,6 +21147,17 @@
                sind, die wirklich auf der Buehne sitzen, dafuer gross. -->
           <button type="button" class="lc-ansichtknopf" id="lcAnsicht"
                   title="Zwischen dem Klassenzimmer und dem Gegenüber wechseln">👥 Ansicht</button>
+          <!-- DER PANIK-KNOPF FUER DEN TON.
+               GEWUENSCHT: „oder du gibst den Leuten eine Art
+               Panic-Button, wo sie ihr Audio selber fixen können in
+               dem Moment, wenn es anfängt zu doppeln … so wie im
+               Musikprogramm, wenn das MIDI sich überlagert."
+               Er sitzt neben der Ansicht, weil man ihn genau dann
+               sucht, wenn man ohnehin oben hinschaut. Was er tut,
+               steht in livechat.js unter tonNeuAufbauen(). -->
+          <button type="button" class="lc-tonknopf" id="lcTonNeu"
+                  title="Ton zurücksetzen — wenn du jemanden doppelt hörst"
+                  aria-label="Ton zurücksetzen">🔊 Ton</button>
         </div>
 
         <!-- GEMELDET: „Der Titel ist in meiner Optik mit dem Fokus sehr
@@ -21724,6 +21735,96 @@
     strom:  { menge: 10, klasse: "lc-tstrom", rand: true, zeichen: [""] },
     blasen: { menge: 16, klasse: "lc-tblasen", zeichen: [""] }
   };
+
+  /* =================================================================
+     DIE SORTIERAUFGABE IM CHAT
+     -----------------------------------------------------------------
+     GEWUENSCHT: „dann moechte ich, dass die Leute diese Saetze
+     sortieren, damit die Geschichte von oben bis unten logisch Sinn
+     macht vom Ablauf, damit man Kontext ein bisschen trainieren kann."
+
+     Bedient wird es mit dem Finger und ohne Tippen: man tippt die
+     Saetze in der Reihenfolge an, in der sie stehen sollen. Jeder
+     bekommt dabei seine Nummer — man sieht also, was man gerade baut.
+     Noch einmal auf einen gewaehlten Satz tippen nimmt ihn wieder
+     heraus. „Fertig" schickt die Reihe als Antwort in den Chat, und
+     wer die Aufgabe gestellt hat, prueft sie auf seinem Geraet (die
+     Loesung reist bewusst nicht mit).
+     ================================================================= */
+  function lcSortierTafel(n, z) {
+    const t = document.createElement("span");
+    t.className = "lc-zeilentext lc-aufgabe";
+    const kopf = document.createElement("span");
+    kopf.className = "lc-aufgabe-frage";
+    kopf.textContent = String(n.text || "Bring die S\u00e4tze in die richtige Reihenfolge.");
+    t.appendChild(kopf);
+    const hinweis = document.createElement("span");
+    hinweis.className = "lc-aufgabe-hinweis";
+    hinweis.textContent = "Tippe die S\u00e4tze in der richtigen Reihenfolge an. "
+      + "Noch einmal tippen nimmt einen wieder heraus.";
+    t.appendChild(hinweis);
+
+    const liste = document.createElement("span");
+    liste.className = "lc-sortier";
+    const gewaehlt = [];
+    const knoepfe = [];
+    const nachziehen = () => {
+      knoepfe.forEach((b, i) => {
+        const stelle = gewaehlt.indexOf(i);
+        b.classList.toggle("lc-sortier-gewaehlt", stelle >= 0);
+        b.querySelector(".lc-sortier-nr").textContent = stelle >= 0 ? String(stelle + 1) : "\u00b7";
+      });
+    };
+    n.sortieren.forEach((satz, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-sortier-zeile";
+      const nr = document.createElement("span");
+      nr.className = "lc-sortier-nr";
+      nr.textContent = "\u00b7";
+      const txt = document.createElement("span");
+      txt.textContent = String(satz);
+      b.appendChild(nr);
+      b.appendChild(txt);
+      b.addEventListener("click", () => {
+        const wo = gewaehlt.indexOf(i);
+        if (wo >= 0) gewaehlt.splice(wo, 1);
+        else gewaehlt.push(i);
+        nachziehen();
+      });
+      knoepfe.push(b);
+      liste.appendChild(b);
+    });
+    t.appendChild(liste);
+
+    const reihe = document.createElement("span");
+    reihe.className = "lc-sortier-knoepfe";
+    const fertig = document.createElement("button");
+    fertig.type = "button";
+    fertig.className = "lc-aufgabe-los";
+    fertig.textContent = "\u2705 Fertig \u2014 abschicken";
+    fertig.addEventListener("click", () => {
+      if (gewaehlt.length !== knoepfe.length) {
+        showToast("Es fehlen noch " + (knoepfe.length - gewaehlt.length) + " S\u00e4tze.");
+        return;
+      }
+      /* Geschickt werden die Nummern der gemischten Liste in der
+         gewaehlten Reihenfolge — kurz genug fuers Telefon und
+         eindeutig genug zum Pruefen. */
+      const antwort = gewaehlt.map((x) => x + 1).join(" ");
+      try { LiveChat.schreiben(antwort); } catch (e) {}
+      lcNachDemSenden(antwort);
+    });
+    const zurueck = document.createElement("button");
+    zurueck.type = "button";
+    zurueck.className = "lc-aufgabe-los";
+    zurueck.textContent = "\u21ba Noch mal";
+    zurueck.addEventListener("click", () => { gewaehlt.length = 0; nachziehen(); });
+    reihe.appendChild(fertig);
+    reihe.appendChild(zurueck);
+    t.appendChild(reihe);
+    z.appendChild(t);
+  }
 
   function lcSprechFeld(knopf, art) {
     const kreis = knopf.querySelector(".lc-kreis");
@@ -31284,6 +31385,8 @@
         lcRatenTafel(n, z);
       } else if (art === "aufgabe" && n.betonung) {
         lcBetonungsTafel(n, z);
+      } else if (art === "aufgabe" && Array.isArray(n.sortieren) && n.sortieren.length > 1) {
+        lcSortierTafel(n, z);
       } else if (art === "aufgabe") {
         /* =========================================================
            DIE AUFGABE IM CHAT
@@ -31310,6 +31413,73 @@
           t.appendChild(e);
         }
         const teile = rest.split("·").map((x) => x.trim()).filter(Boolean);
+        /* =========================================================
+           EINE FREIE AUFGABE IST KEIN PUZZLE
+           ---------------------------------------------------------
+           GEMELDET: „Hast du auch das /aufgabe geloest? Also dass man
+           da nicht einfach nur einen Satz schreibt und dieser Satz
+           dann komplett anklickbar dasteht und eigentlich gar keine
+           Aufgabenfunktion hat, weil man gar nicht weiss, warum man
+           den anklickt und abschickt."
+
+           GEFUNDEN, und es ist genau hier: der Aufgabentext wird an
+           „·" in Teile zerlegt, und jedes Teil wird ein Knopf, der
+           sich an die Schreibzeile anhaengt. Das ist richtig fuer ein
+           WORTPUZZLE („Haus · ist · das") — aber eine freie Aufgabe
+           („Schreib einen Satz mit weil") hat gar kein „·". Dann gibt
+           es genau EIN Teil: den ganzen Satz. Und der stand als ein
+           grosser Knopf da, der sich selbst in die Zeile schrieb.
+           Man konnte also die Frage als Antwort abschicken — sinnlos,
+           genau wie er sagt.
+
+           Jetzt entscheidet die Zahl der Teile, was es ist:
+             · zwei oder mehr → Puzzle wie bisher,
+             · genau eins → eine FRAGE. Sie steht als Text da, nicht
+               als Knopf, darunter steht, was zu tun ist, und ein
+               Knopf setzt den Finger in die Schreibzeile. Und wer
+               die Aufgabe gestellt hat, sieht daneben, wie er sie
+               wieder beendet. */
+        if (teile.length < 2) {
+          const frage = document.createElement("span");
+          frage.className = "lc-aufgabe-frage";
+          frage.textContent = teile[0] || rest;
+          t.appendChild(frage);
+
+          const hinweis = document.createElement("span");
+          hinweis.className = "lc-aufgabe-hinweis";
+          hinweis.textContent = "Schreib deine Antwort unten in den Chat \u2014 "
+            + "die Lehrkraft kann sie dann benoten.";
+          t.appendChild(hinweis);
+
+          const reihe = document.createElement("span");
+          reihe.className = "lc-aufgabe-reihe";
+          const los = document.createElement("button");
+          los.type = "button";
+          los.className = "lc-aufgabe-los";
+          los.textContent = "\u270d\ufe0f Antworten";
+          los.addEventListener("click", () => {
+            const f = document.getElementById("lcFeld");
+            if (!f) return;
+            f.focus();
+            try { f.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {}
+          });
+          reihe.appendChild(los);
+          /* Nur wer die Aufgabe gestellt hat, kann sie beenden — und
+             nur der sieht den Knopf. */
+          if (n.eigen) {
+            const schluss = document.createElement("button");
+            schluss.type = "button";
+            schluss.className = "lc-aufgabe-los lc-aufgabe-schluss";
+            schluss.textContent = "\u2714\ufe0f Aufgabe beenden";
+            schluss.addEventListener("click", () => {
+              try { LiveChat.schreiben("/aufgabe"); } catch (e) {}
+              showToast("\u2714\ufe0f Die Aufgabe ist beendet.");
+            });
+            reihe.appendChild(schluss);
+          }
+          t.appendChild(reihe);
+          z.appendChild(t);
+        } else {
         /* Ein Wortpuzzle besteht aus einzelnen Buchstaben — daran
            erkennt man es, ohne dass es extra mitgeschickt werden
            muss. */
@@ -31348,6 +31518,7 @@
         });
         t.appendChild(weg);
         z.appendChild(t);
+        }
       } else if (art === "note") {
         const t = document.createElement("span");
         /* NICHT „lc-note" — so heisst die fliegende Musiknote der
@@ -32351,6 +32522,19 @@
         showToast(neu === "gegenueber"
           ? "👥 Gegenüber — du siehst nur noch, wer wirklich auf der Bühne sitzt, dafür gross."
           : "🪑 Klassenzimmer — alle acht Plätze, auch die freien.");
+      });
+      /* DER PANIK-KNOPF. Er sagt auch, was er gefunden hat — sonst
+         drueckt man ihn und weiss nicht, ob etwas passiert ist. */
+      area.querySelector("#lcTonNeu")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        let erg = null;
+        try { erg = LiveChat.tonNeuAufbauen ? LiveChat.tonNeuAufbauen() : null; } catch (x) {}
+        if (!erg) { showToast("Der Ton liess sich gerade nicht zurücksetzen."); return; }
+        showToast(erg.doppelt
+          ? "🔊 " + erg.doppelt + " doppelte Tonspur" + (erg.doppelt === 1 ? "" : "en")
+            + " angehalten — jetzt hörst du jeden einmal."
+          : "🔊 Ton neu aufgebaut (" + erg.wieder + " Stimmen). Es war nichts doppelt — "
+            + "hörst du trotzdem doppelt, ist noch ein zweites Fenster offen.");
       });
       /* Die Aufgabe beenden — dasselbe wie  /aufgabe  ohne Text, nur
          zum Antippen. Danach steht an keiner Zeile mehr ein

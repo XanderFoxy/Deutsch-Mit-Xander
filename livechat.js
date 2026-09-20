@@ -2252,7 +2252,33 @@ window.LiveChat = (function () {
       var p = zustand.leute[anderId];
       if (!p) return;
       if (!p.strom || !p.strom.addTrack) p.strom = new MediaStream();
+      /* =========================================================
+         HIER ENTSTAND DAS DOPPELTE HOEREN
+         ---------------------------------------------------------
+         GEMELDET: „Dann wurde mir oft gemeldet, dass nach einiger
+         Zeit die Leute sich irgendwie doppelt gehoert haben."
+
+         NACHGESEHEN, und die Stelle ist genau diese: geprueft wurde
+         nur, ob GENAU DIESE Spur (dieselbe id) schon im Strom liegt.
+         Kommt aber nach einem Netzwechsel, einem restartIce oder
+         einer neuen Aushandlung dieselbe Stimme als NEUE Spur
+         herein — neue id, gleicher Mensch —, war die Antwort „die
+         kenne ich noch nicht", und sie wurde ZUSAETZLICH angehaengt.
+         Die alte Spur war oft noch nicht beendet (readyState
+         „live"), also liefen beide, minimal versetzt. Das ist genau
+         das Doppelhoeren, und es passt auch dazu, dass es „nach
+         einiger Zeit" kommt: beim Betreten gibt es nur eine Spur,
+         die zweite entsteht erst beim ersten Wackler der Leitung.
+
+         Richtig ist: EIN Mensch hat EINE Tonspur und EINE Bildspur.
+         Kommt eine neue herein, ersetzt sie die alte — die alte wird
+         herausgenommen und angehalten. */
       try {
+        p.strom.getTracks().forEach(function (t) {
+          if (t.kind !== e.track.kind || t.id === e.track.id) return;
+          try { p.strom.removeTrack(t); } catch (x) {}
+          try { t.stop(); } catch (x) {}
+        });
         if (!p.strom.getTracks().some(function (t) { return t.id === e.track.id; })) {
           p.strom.addTrack(e.track);
         }
@@ -2364,6 +2390,12 @@ window.LiveChat = (function () {
   var tonJe = {};
   function tonAnschliessen(id, strom) {
     if (!strom || typeof document === "undefined") return;
+    /* Die Wache beginnt dort, wo es etwas zu bewachen gibt — beim
+       ersten Ton. Sie beim Betreten zu starten genuegt nicht: wer
+       den Raum ueber einen anderen Weg betritt (oder die Sonde, die
+       den Zustand direkt setzt), haette sonst keine. Zweimal
+       starten schadet nicht, tonWacheStarten steigt selbst aus. */
+    tonWacheStarten();
     var a = tonJe[id];
     if (!a) {
       /* Erst aus dem freigeschalteten Vorrat nehmen — ein Element, das
@@ -2406,6 +2438,157 @@ window.LiveChat = (function () {
      nachgeholt, und im Chat steht einmal eine Zeile, die sagt, was zu
      tun ist. Ein Tipp genuegt, weil danach eine echte Nutzergeste
      vorliegt — genau das verlangen die Browser. */
+  /* =================================================================
+     DIE TONWACHE UND DER PANIK-KNOPF
+     -----------------------------------------------------------------
+     GEWUENSCHT, woertlich: „Entweder du fixt es fuer die Zukunft
+     generell, dass so etwas nie wieder passieren kann, dass sich das
+     in dem Moment, wo so etwas passieren will, von selbst loest —
+     oder du gibst den Leuten eine Art Panic-Button, wo sie ihr Audio
+     selber fixen koennen in dem Moment, wenn es anfaengt zu doppeln
+     … so wie im Musikprogramm, wenn das MIDI sich ueberlagert, eine
+     Art Panic-Button, wo sich das zuruecksetzt."
+
+     Beides ist jetzt da, und beides macht dasselbe — nur einmal von
+     allein und einmal auf Knopfdruck.
+
+     WAS SCHIEFGEHEN KANN, und wogegen hier gewacht wird:
+       1. Zwei Tonspuren fuer EINEN Menschen (die Hauptursache, siehe
+          pc.ontrack). Die Wache behaelt die neueste und haelt die
+          anderen an.
+       2. Zwei <audio>-Elemente, die denselben Strom spielen — das
+          kann passieren, wenn jemand den Raum verlaesst und unter
+          neuer Kennung wiederkommt, waehrend das alte Element noch
+          haengt. Die Wache raeumt Elemente weg, zu denen es keinen
+          Menschen mehr gibt.
+       3. Ein Element, das eine Spur spielt, die es im Strom gar nicht
+          mehr gibt. Auch das wird abgeklemmt.
+
+     Die Wache laeuft alle vier Sekunden und tut NICHTS, solange
+     nichts zu tun ist — sie zaehlt nur. Erst wenn sie etwas findet,
+     greift sie ein. So merkt man im Normalfall gar nicht, dass es
+     sie gibt.
+     ================================================================= */
+  var tonWacheTakt = 0;
+  var tonWacheZaehler = { geheilt: 0, letzte: "" };
+
+  /* Behaelt je Mensch genau EINE lebende Tonspur und EINE Bildspur.
+     Gibt zurueck, wie viele Spuren angehalten werden mussten. */
+  function tonSpurenAufraeumen() {
+    var weg = 0;
+    Object.keys(zustand.leute || {}).forEach(function (id) {
+      var p = zustand.leute[id];
+      if (!p || !p.strom || !p.strom.getTracks) return;
+      ["audio", "video"].forEach(function (art) {
+        var spuren = p.strom.getTracks().filter(function (t) { return t.kind === art; });
+        /* Beendete Spuren sind ohnehin Ballast. */
+        spuren.forEach(function (t) {
+          if (t.readyState === "ended") {
+            try { p.strom.removeTrack(t); } catch (e) {}
+            weg++;
+          }
+        });
+        spuren = p.strom.getTracks().filter(function (t) { return t.kind === art; });
+        /* Bleiben mehrere, gewinnt die ZULETZT hinzugekommene — sie
+           ist die aus der juengsten Aushandlung. */
+        while (spuren.length > 1) {
+          var alt = spuren.shift();
+          try { p.strom.removeTrack(alt); } catch (e) {}
+          try { alt.stop(); } catch (e) {}
+          weg++;
+        }
+      });
+    });
+    return weg;
+  }
+
+  /* Raeumt Ton-Elemente weg, die zu niemandem mehr gehoeren, und
+     haengt die uebrigen an den richtigen Strom. */
+  function tonElementeAufraeumen() {
+    var weg = 0;
+    Object.keys(tonJe).forEach(function (id) {
+      var a = tonJe[id];
+      var p = zustand.leute[id];
+      if (!a) { delete tonJe[id]; return; }
+      if (!p || !p.strom) {
+        try { a.pause(); } catch (e) {}
+        try { a.srcObject = null; } catch (e) {}
+        try { a.remove(); } catch (e) {}
+        delete tonJe[id];
+        weg++;
+        return;
+      }
+      if (a.srcObject !== p.strom) {
+        try { a.srcObject = p.strom; } catch (e) {}
+        tonAbspielenVersuchen(a);
+        weg++;
+      }
+    });
+    return weg;
+  }
+
+  /* DER PANIK-KNOPF. Er setzt den ganzen Tonweg zurueck, ohne die
+     Verbindungen abzureissen: jedes Element wird abgeklemmt, die
+     Stroeme werden auf eine Spur je Art zurueckgestutzt, der
+     AudioContext geweckt, und dann wird alles neu angehaengt.
+     Danach hoert man jeden genau einmal. */
+  function tonNeuAufbauen() {
+    var doppelt = tonSpurenAufraeumen();
+    /* Alle Elemente wirklich leeren — nicht nur umhaengen. Ein
+       Element, das noch einen alten Strom haelt, spielt sonst
+       weiter, auch wenn niemand mehr hinsieht. */
+    Object.keys(tonJe).forEach(function (id) {
+      var a = tonJe[id];
+      if (!a) return;
+      try { a.pause(); } catch (e) {}
+      try { a.srcObject = null; } catch (e) {}
+    });
+    /* Auch der Vorrat wird geleert — dort kann eine Sprachnachricht
+       haengengeblieben sein. */
+    tonVorrat.forEach(function (a) {
+      try {
+        if (a.dataset && a.dataset.belegt) { a.pause(); a.src = ""; delete a.dataset.belegt; }
+      } catch (e) {}
+    });
+    try {
+      if (tonKontext && tonKontext.state === "suspended" && tonKontext.resume) tonKontext.resume();
+    } catch (e) {}
+    /* Und jetzt jeden wieder genau einmal anschliessen. */
+    var wieder = 0;
+    Object.keys(zustand.leute || {}).forEach(function (id) {
+      var p = zustand.leute[id];
+      if (!p || !p.strom) return;
+      tonAnschliessen(id, p.strom);
+      wieder++;
+    });
+    tonElementeAufraeumen();
+    tonWacheZaehler.geheilt += doppelt;
+    return { doppelt: doppelt, wieder: wieder };
+  }
+
+  function tonWacheStarten() {
+    if (tonWacheTakt) return;
+    tonWacheTakt = setInterval(function () {
+      if (zustand.lage !== "drin") return;
+      var doppelt = tonSpurenAufraeumen();
+      var schief = tonElementeAufraeumen();
+      if (doppelt || schief) {
+        tonWacheZaehler.geheilt += doppelt + schief;
+        tonWacheZaehler.letzte = new Date().toISOString();
+        /* Es wird NICHT in den Chat geschrieben. Der Sinn der Wache
+           ist, dass niemand etwas merkt; gemeldet wird es nur in der
+           Konsole und in /befund, damit man es nachlesen kann. */
+        try {
+          console.info("[Klassenzimmer] Tonwache: " + doppelt + " doppelte Spur(en), "
+            + schief + " Element(e) neu angehaengt.");
+        } catch (e) {}
+      }
+    }, 4000);
+  }
+  function tonWacheStoppen() {
+    if (tonWacheTakt) { clearInterval(tonWacheTakt); tonWacheTakt = 0; }
+  }
+
   var tonWartet = [];
   var tonHorcherDa = false;
   var tonHinweisGezeigt = false;
@@ -3308,6 +3491,10 @@ window.LiveChat = (function () {
         wirkung: n.wirkung || "",
         film: n.film || "",
         betonung: n.betonung || "",
+        /* Die gemischten Saetze der Sortieraufgabe. Ohne diese Zeile
+           kaeme die Aufgabe beim anderen als leere Ueberschrift an —
+           derselbe Fehler wie einst bei „wen". */
+        sortieren: Array.isArray(n.sortieren) ? n.sortieren.slice(0, 8) : null,
         /* WEN es trifft, muss mitkommen — sonst spielt die Umarmung
            beim Empfaenger auf allen Plaetzen statt auf dem richtigen. */
         wen: n.wen || "",
@@ -3373,7 +3560,8 @@ window.LiveChat = (function () {
         return { id: n.id, von: n.von, name: n.name, text: n.text, art: n.art || "text",
                  bild: n.bild || "", bildImChat: n.bildImChat || "", farbe: n.farbe || "",
                  wirkung: n.wirkung || "", wen: n.wen || "", an: n.an || "",
-                 film: n.film || "", betonung: n.betonung || "", zeit: n.zeit };
+                 film: n.film || "", betonung: n.betonung || "",
+                 sortieren: n.sortieren || null, zeit: n.zeit };
       });
       /* Zu gross? Dann die Bilder herausnehmen, aeltester zuerst. */
       while (JSON.stringify(paket).length > VERLAUF_PAKET) {
@@ -3969,9 +4157,27 @@ window.LiveChat = (function () {
         kanal.subscribe(function (stand) {
           if (stand === "SUBSCRIBED") {
             zustand.lage = "drin";
+            /* Die Tonwache laeuft, solange man im Raum ist — sie
+               haelt das doppelte Hoeren auf, bevor es auffaellt. */
+            tonWacheStarten();
+            /* GEMELDET: „Zum Beispiel sehe ich die Sprechbild-Animation
+               von den anderen nicht, wenn sie sprechen. Ich sehe immer
+               nur meine eigenen, und die anderen sehen auch nur ihre
+               eigenen — das ist nicht synchron."
+
+               NACHGESEHEN: die Angabe faehrt im Puls mit, also alle
+               sechs Sekunden. Solange faellt jeder Neue auf den
+               gruenen Standardring zurueck — und sechs Sekunden sind
+               genau die Zeitspanne, in der man hinschaut und sagt „da
+               ist nichts". In der BEGRUESSUNG fehlte sie dagegen ganz.
+               Jetzt faehrt sie schon dort mit, und zwar in beide
+               Richtungen (auch in der Antwort weiter unten). Damit
+               stimmt es vom ersten Herzschlag an. */
             senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
                      tonAn: zustand.tonAn, bildAn: zustand.bildAn,
                      seit: zustand.seit, buehne: zustand.buehne,
+                     sprechbild: zustand.sprechbild || "",
+                     spricht: Boolean(zustand.spricht),
                      geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
             /* Und alles, was waehrend der Funkstille geschrieben
                wurde, geht jetzt hinaus (siehe senden). */
@@ -4152,6 +4358,7 @@ window.LiveChat = (function () {
     zustand.gross = null;
     zustand.grosse = [];
     zustand.lage = "aus";
+    tonWacheStoppen();
     melden();
   }
 
@@ -5823,6 +6030,78 @@ window.LiveChat = (function () {
      bliebe jedes spaetere Wort eine Antwort, und genau das war ja
      nicht gewuenscht.
      ========================================================= */
+  /* =========================================================
+     DIE SORTIERAUFGABE — KONTEXT UEBEN
+     ---------------------------------------------------------
+     GEWUENSCHT, woertlich: „Dann moechte ich eine Kontextaufgabe,
+     wo ich vielleicht einen Text einbringe, der aus drei, vier
+     Saetzen besteht, die in der Reihenfolge eine kleine Geschichte
+     erzaehlen, und dann moechte ich, dass die Leute diese Saetze
+     sortieren, damit die Geschichte von oben bis unten logisch Sinn
+     macht vom Ablauf, damit man Kontext ein bisschen trainieren
+     kann."
+
+     So geht es:   /sortieren Erst stand er auf. | Dann ass er. |
+                   Danach ging er zur Arbeit.
+     Die Saetze werden GEMISCHT verschickt — aber die Loesung reist
+     NICHT mit. Sie bleibt beim Geraet dessen, der die Aufgabe
+     gestellt hat; sonst koennte jeder sie in der Konsole nachlesen.
+     Geprueft wird deshalb dort: die Antwort kommt als Reihe von
+     Nummern zurueck, und wer die Aufgabe gestellt hat, vergleicht
+     und meldet Richtig oder Falsch an alle.
+
+     Warum Nummern und nicht Text: die Saetze koennen lang sein, und
+     eine Antwort wie „2 3 1" laesst sich auf dem Telefon in drei
+     Tipps geben — genau dafuer sind die Knoepfe in der Oberflaeche.
+     ========================================================= */
+  function mischen(liste) {
+    var a = liste.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function sortierAufgabeStellen(roh) {
+    var text = String(roh || "").trim();
+    if (!text) {
+      return systemZeile("So geht es:  /sortieren Erst stand er auf. | "
+        + "Dann ass er. | Danach ging er zur Arbeit."
+        + "\nDie Saetze werden gemischt; wer sie in die richtige Reihenfolge "
+        + "bringt, bekommt es sofort gesagt.");
+    }
+    var saetze = text.split("|").map(function (x) { return x.trim(); })
+                     .filter(function (x) { return x.length > 0; });
+    if (saetze.length < 2) {
+      return systemZeile("Dafuer brauche ich mindestens zwei Saetze, getrennt "
+        + "mit einem senkrechten Strich:  /sortieren Satz eins | Satz zwei");
+    }
+    if (saetze.length > 8) saetze = saetze.slice(0, 8);
+    /* Gemischt wird EINMAL, hier — damit alle dieselbe Mischung
+       sehen. Wuerde jedes Geraet selbst mischen, redeten alle von
+       verschiedenen Nummern. */
+    var reihenfolge = saetze.map(function (_, i) { return i; });
+    var gemischt = mischen(reihenfolge);
+    /* Die Loesung ist: an welcher Stelle der gemischten Liste steht
+       der Satz, der urspruenglich an Stelle 0, 1, 2 … stand. */
+    var loesung = saetze.map(function (_, richtig) {
+      return gemischt.indexOf(richtig) + 1;
+    }).join(" ");
+    offeneAufgabe = { typ: "sortieren", loesung: loesung, frage: "Bring die Saetze in die richtige Reihenfolge.",
+                      teile: gemischt.map(function (i) { return saetze[i]; }),
+                      wer: {}, zeit: Date.now(), zeileId: "" };
+    var zeile = anAlle("aufgabe", "\ud83e\udde9 Bring die S\u00e4tze in die richtige Reihenfolge.",
+      { sortieren: offeneAufgabe.teile });
+    if (zeile && zeile.id) {
+      offeneAufgabe.zeileId = zeile.id;
+      zeile.aufgabeId = zeile.id;
+    }
+    aufgabeMerken();
+    aufgabeVerkuenden();
+    return true;
+  }
+
   function aufgabeFreiStellen(roh) {
     var text = String(roh || "").trim();
     if (!text) {
@@ -7766,6 +8045,9 @@ window.LiveChat = (function () {
     { gr: "reden", w: "bombe", kurz: "zisch", nutzt: "/bombe Name",     was: "Zeitbombe \u2014 3, 2, 1 und weg, nur Asche bleibt" },
     { gr: "reden", w: "streicheln", kurz: "lieb", nutzt: "/streicheln Name", was: "Streicheln \u2014 sanft, mit Herzchen" },
     { gr: "reden", w: "kuss", kurz: "bussi",  nutzt: "/kuss Name",      was: "Kuss \u2014 der Abdruck bleibt kurz stehen" },
+    { gr: "raum", w: "panik", kurz: "tonneu", nutzt: "/panik",          was: "Ton zur\u00fccksetzen, wenn du jemanden doppelt h\u00f6rst" },
+    { gr: "lernen", w: "sortieren", kurz: "reihenfolge", nutzt: "/sortieren Satz 1 | Satz 2 | Satz 3",
+      was: "Kontext\u00fcbung \u2014 die S\u00e4tze werden gemischt, wer sie richtig ordnet, bekommt es gesagt" },
     { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation nur für dich zeigen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon Name", was: "Luftballons zum Geburtstag" },
@@ -8465,6 +8747,10 @@ window.LiveChat = (function () {
     if (zusatz && zusatz.betonung) n.betonung = zusatz.betonung;
     /* Der gesuchte Satz fuers Glücksrad — siehe ratenStellen. */
     if (zusatz && zusatz.raten) n.raten = zusatz.raten;
+    /* Die gemischten Saetze der Sortieraufgabe. Auch hier faehrt die
+       LOESUNG nicht mit — nur die Mischung, damit alle dieselbe
+       Reihenfolge vor sich haben. Geprueft wird beim Steller. */
+    if (zusatz && zusatz.sortieren) n.sortieren = zusatz.sortieren;
     /* WEN es angeht, steht an der Zeile selbst — nicht nur im Rundruf.
        Sonst sähe der Absender die Umarmung nicht, die er gerade
        verschickt hat: seine eigene Zeile entsteht nämlich hier und
@@ -8799,6 +9085,26 @@ window.LiveChat = (function () {
     /* Ab hier steht fest, dass es wirklich ein Befehl ist — erst jetzt
        wird gezaehlt, damit Tippfehler die Favoriten nicht verstopfen. */
     zaehlerMerken(art);
+
+    /* ---- Der Panik-Knopf fuer den Ton ----
+       „oder du gibst den Leuten eine Art Panic-Button, wo sie ihr
+       Audio selber fixen koennen in dem Moment, wenn es anfaengt zu
+       doppeln." Der Befehl tut dasselbe wie der Knopf im
+       Klassenzimmer und meldet, was er gefunden hat. */
+    /* Er heisst /panik und nicht /ton: „/ton" ist seit langem ein
+       Kurzwort fuer /verbindung, und pruefe-jeder-befehl hat genau
+       das gemeldet — „kein Alias wird von einem Befehl verdeckt".
+       Ein neuer Befehl darf einem alten nicht die Bedeutung
+       wegnehmen; wer /ton tippt, soll weiter den Verbindungsbefund
+       bekommen. „Panik" ist ohnehin sein eigenes Wort dafuer. */
+    if (art === "panik") {
+      var erg = tonNeuAufbauen();
+      return systemZeile("\ud83d\udd0a Ton neu aufgebaut."
+        + (erg.doppelt ? " " + erg.doppelt + " doppelte Spur(en) angehalten." : "")
+        + " " + erg.wieder + " Stimme(n) wieder angeschlossen."
+        + (erg.doppelt ? "" : " Es war nichts doppelt \u2014 falls du trotzdem doppelt"
+            + " hoerst, liegt es an einem zweiten offenen Fenster oder Geraet."));
+    }
 
     /* ---- Reden ---- */
     if (art === "me") {
@@ -9528,6 +9834,7 @@ window.LiveChat = (function () {
     if (art === "satz") return aufgabeStellen("satz", rest);
     if (art === "wort") return aufgabeStellen("wort", rest);
     if (art === "aufgabe" || art === "frage") return aufgabeFreiStellen(rest);
+    if (art === "sortieren" || art === "reihenfolge") return sortierAufgabeStellen(rest);
     if (art === "betonung" || art === "beton") return betonungStellen(rest);
     if (art === "raten") return ratenStellen(rest);
 
@@ -10804,6 +11111,12 @@ window.LiveChat = (function () {
        Kachel schickte also eine Zeile, die als Vertipper abgewiesen
        wurde. Damit das nie wieder unbemerkt bleibt, kann die Sonde
        beides von aussen vergleichen. */
+    /* Der Panik-Knopf von aussen — die Oberflaeche haengt ihn an
+       einen Knopf im Klassenzimmer, /ton ruft dasselbe auf. */
+    tonNeuAufbauen: function () { tonWacheStarten(); return tonNeuAufbauen(); },
+    tonWacheStand: function () { return { geheilt: tonWacheZaehler.geheilt,
+                                          letzte: tonWacheZaehler.letzte,
+                                          laeuft: Boolean(tonWacheTakt) }; },
     pruefEffektWoerter: function () {
       var w = [];
       Object.keys(AM_PLATZ).forEach(function (k) { w.push(k); });

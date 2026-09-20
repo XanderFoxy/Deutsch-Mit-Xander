@@ -14874,3 +14874,115 @@ body.lc-schreibt .tutor-reiter {
   .lc-behutet, .lc-gesprengt, .lc-gestreichelt, .lc-gekuesst,
   .lc-gesogen { animation: none; }
 }
+
+/* --- DER PANIK-KNOPF FUER DEN TON ------------------------------------
+   GEWUENSCHT: „eine Art Panic-Button, wo sie ihr Audio selber fixen
+   koennen in dem Moment, wenn es anfaengt zu doppeln."
+   Er sieht aus wie der Ansichtsknopf daneben — er soll nicht
+   erschrecken, sondern einfach da sein, wenn man ihn braucht. */
+.lc-tonknopf {
+  flex: 0 0 auto;
+  margin-left: 6px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font: inherit;
+  font-size: 0.74rem;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.lc-tonknopf:hover,
+.lc-tonknopf:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+  outline: none;
+}
+
+/* =====================================================================
+   RUNDE 20 — DIE FREIE AUFGABE SIEHT AUS WIE EINE AUFGABE
+   ---------------------------------------------------------------------
+   GEMELDET: „dass man da nicht einfach nur einen Satz schreibt und
+   dieser Satz dann komplett anklickbar dasteht und eigentlich gar keine
+   Aufgabenfunktion hat, weil man gar nicht weiss, warum man den
+   anklickt und abschickt."
+   Die Frage ist jetzt Text, kein Knopf. Darunter steht, was zu tun ist,
+   und daneben liegt der Weg dorthin.
+   ===================================================================== */
+.lc-aufgabe-frage {
+  display: block;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 2px 0 6px;
+}
+.lc-aufgabe-hinweis {
+  display: block;
+  font-size: 0.82em;
+  opacity: 0.72;
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+.lc-aufgabe-reihe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lc-aufgabe-los {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  font: inherit;
+  font-size: 0.84em;
+  cursor: pointer;
+}
+.lc-aufgabe-los:hover,
+.lc-aufgabe-los:focus-visible { background: rgba(255, 255, 255, 0.2); outline: none; }
+.lc-aufgabe-schluss { opacity: 0.85; }
+
+/* --- DIE SORTIERAUFGABE ----------------------------------------------
+   GEWUENSCHT: „Dann moechte ich eine Kontextaufgabe, wo ich vielleicht
+   einen Text einbringe, der aus drei, vier Saetzen besteht, die in der
+   Reihenfolge eine kleine Geschichte erzaehlen, und dann moechte ich,
+   dass die Leute diese Saetze sortieren, damit die Geschichte von oben
+   bis unten logisch Sinn macht vom Ablauf, damit man Kontext ein
+   bisschen trainieren kann." */
+.lc-sortier {
+  display: block;
+  margin-top: 4px;
+}
+.lc-sortier-zeile {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  margin: 4px 0;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  color: inherit;
+  font: inherit;
+  font-size: 0.92em;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+.lc-sortier-zeile:hover,
+.lc-sortier-zeile:focus-visible { background: rgba(255, 255, 255, 0.14); outline: none; }
+.lc-sortier-nr {
+  flex: 0 0 auto;
+  min-width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  display: grid; place-items: center;
+  font-size: 0.78em;
+  font-weight: 800;
+}
+/* Was schon gewaehlt ist, bekommt seine Nummer in der Reihenfolge —
+   so sieht man den eigenen Vorschlag wachsen. */
+.lc-sortier-gewaehlt { background: rgba(120, 200, 140, 0.22); border-color: rgba(120, 200, 140, .5); }
+.lc-sortier-gewaehlt .lc-sortier-nr { background: rgba(120, 200, 140, .8); color: #10210f; }
+.lc-sortier-knoepfe { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
