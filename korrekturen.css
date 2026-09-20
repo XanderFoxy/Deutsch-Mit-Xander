@@ -11221,12 +11221,31 @@ body.lc-schreibt .tutor-reiter {
     radial-gradient(ellipse 22% 13% at 16% 84%, rgba(250,190,215,.95), rgba(250,190,215,0) 72%),
     radial-gradient(ellipse 13% 22% at 2% 50%,  rgba(248,170,205,.95), rgba(248,170,205,0) 72%),
     radial-gradient(ellipse 22% 13% at 16% 16%, rgba(250,190,215,.95), rgba(250,190,215,0) 72%);
-  animation: lcBlueteAuf 2.6s ease-in-out infinite;
+  /* GEMELDET: „Die Bluetenblaetter bei dem Animationseffekt von dem
+     Sprechbild wachsen noch nicht. Sie sollen wirklich beim Sprechen
+     wie echte rundliche Bluetenblaetter am Rand des Profilbildes
+     auftauchen, wie als wenn sich eine Blume entfaltet … das soll
+     richtig schoen aufbluehen, also nicht irgendwie innen drin oder
+     schwach."
+     Vorher wippte der ganze Kranz zwischen 82 % und 106 % — ein
+     Atmen, kein Aufbluehen. Jetzt waechst er EINMAL von der Mitte
+     nach aussen auf, dreht sich dabei ein Stueck (so entfalten sich
+     Blaetter wirklich) und bleibt dann offen stehen, solange
+     gesprochen wird. */
+  transform-origin: 50% 50%;
+  animation: lcBlueteAufR30 1.5s cubic-bezier(.22, 1.1, .36, 1) both,
+             lcBlueteAtmenR30 3.2s ease-in-out 1.5s infinite;
   pointer-events: none;
 }
-@keyframes lcBlueteAuf {
-  0%, 100% { transform: scale(0.82) rotate(0deg);  opacity: .55; }
-  45%      { transform: scale(1.06) rotate(9deg);  opacity: 1; }
+@keyframes lcBlueteAufR30 {
+  0%   { transform: scale(.18) rotate(-42deg); opacity: 0; }
+  30%  { transform: scale(.62) rotate(-18deg); opacity: .8; }
+  70%  { transform: scale(1.12) rotate(6deg);  opacity: 1; }
+  100% { transform: scale(1) rotate(0deg);     opacity: 1; }
+}
+@keyframes lcBlueteAtmenR30 {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50%      { transform: scale(1.07) rotate(4deg); opacity: .92; }
 }
 
 /* Die gewaehlte Kachel im Sprechbild-Menue — damit man sieht, was
@@ -13576,15 +13595,20 @@ body.lc-schreibt .tutor-reiter {
    Profilbild wie einen Ball werfen lassen, und er faellt dann durch
    eine andere Nummer durch nach unten."
    Der Ring liegt am Zielplatz und zeigt, wo der Korb ist. */
+/* GEMELDET: „den Korb beim Basketball kannst du ein bisschen groesser
+   machen, dass das realistisch aussieht, wenn der Ball geworfen wird
+   und im Korb landet." Aus 78 % Breite werden 104 % — der Ring ist
+   damit breiter als das Bild, und ein Ball, der hineinfaellt, passt
+   auch wirklich hindurch. */
 .lc-korb-ring {
   position: absolute;
   left: 50%;
-  top: 6%;
-  width: 78%;
-  height: 16%;
-  margin-left: -39%;
+  top: 2%;
+  width: 104%;
+  height: 22%;
+  margin-left: -52%;
   border-radius: 50%;
-  border: 4px solid #ff7a3d;
+  border: 5px solid #ff7a3d;
   box-shadow: 0 0 10px rgba(255, 122, 61, .6);
   pointer-events: none;
   z-index: 5;
@@ -14747,20 +14771,39 @@ body.lc-schreibt .tutor-reiter {
   100%    { opacity: 0; }
 }
 /* Und das Haeufchen Asche, das bleibt. */
+/* GEWÜNSCHT: „ein realistisches Häufchen Asche, nicht nur so ein
+   Hügel, wo man denkt, dass es ein Bildfehler ist — feinste kleine
+   Pünktchen, die sich dort sammeln und so diesen Staub ergeben, und
+   dann irgendwie von so einem Wind weggeblasen werden."
+   Der Kasten selbst ist jetzt nur noch der Boden, auf dem die
+   Pünktchen liegen — gezeichnet wird nichts mehr davon. */
 .lc-bombe-asche {
   position: absolute;
-  left: 50%; bottom: 6%;
-  width: 46%; height: 16%;
-  margin-left: -23%;
-  border-radius: 50% 50% 46% 54% / 100% 100% 8% 8%;
-  background: linear-gradient(#6a6258, #3b372f);
-  animation: lcAscheR19 4.6s ease-out both;
+  left: 50%; bottom: 4%;
+  width: 84%; height: 26%;
+  margin-left: -42%;
+  pointer-events: none;
 }
-@keyframes lcAscheR19 {
-  0%, 47% { opacity: 0; transform: scaleY(.2); }
-  56%     { opacity: 1; transform: scaleY(1); }
-  88%     { opacity: 1; }
-  100%    { opacity: 0; }
+.lc-asche-punkt {
+  position: absolute;
+  bottom: 0;
+  width: calc(1.6px * var(--gross, 1) + 0.6px);
+  height: calc(1.6px * var(--gross, 1) + 0.6px);
+  border-radius: 50%;
+  background: rgba(150, 142, 130, var(--hell, .7));
+  box-shadow: 0 0 1px rgba(60, 56, 50, .6);
+  opacity: 0;
+  animation: lcAschePunktR30 4.6s ease-out both;
+  animation-delay: var(--faellt, .2s);
+}
+@keyframes lcAschePunktR30 {
+  0%, 44%  { opacity: 0; transform: translate(0, -180%) scale(.6); }
+  /* Sie rieselt herunter und bleibt liegen. */
+  52%      { opacity: 1; transform: translate(0, calc(var(--liegt, 8%) * -1)) scale(1); }
+  78%      { opacity: 1; transform: translate(0, calc(var(--liegt, 8%) * -1)) scale(1); }
+  /* Und dann kommt der Wind. */
+  90%      { opacity: .7; transform: translate(calc(var(--weht, 60px) * .45), calc(var(--liegt, 8%) * -1.6)) scale(.9); }
+  100%     { opacity: 0; transform: translate(var(--weht, 60px), calc(var(--liegt, 8%) * -2.4)) scale(.7); }
 }
 .lc-gesprengt { animation: lcGesprengtR19 4.6s cubic-bezier(.3, 0, .4, 1) both; }
 @keyframes lcGesprengtR19 {
@@ -15748,4 +15791,214 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-tafel-zeiger.lc-tafel-blinkt { animation: none; }
   .lc-tafel-blatt { transition: none; }
+}
+
+/* =================================================================
+   BLUBBERN MIT DEM EIGENEN BILD
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „die Bläschen sind das Profilbild in vielen kleinen
+   Miniaturversionen, und das blubbert so aus dem eigentlichen
+   Profilbild raus … als wenn man das aufgeschäumt hätte."
+   ----------------------------------------------------------------- */
+.lc-blubber-ich {
+  position: absolute;
+  bottom: 22%;
+  margin-left: -0.5em;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .55),
+              inset .12em .12em .3em rgba(255, 255, 255, .5),
+              0 .06em .2em rgba(10, 20, 40, .25);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 4;
+  animation: lcBlubberIchR30 2.4s ease-out both;
+}
+/* Ohne Profilbild: der Anfangsbuchstabe in der Blase. */
+.lc-blubber-ich.lc-blubber-ohne {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 34% 30%, rgba(255,255,255,.9), rgba(150,200,255,.55) 60%, rgba(120,170,230,.35));
+  color: #123;
+  font-weight: 800;
+  font-size: .62em;
+}
+@keyframes lcBlubberIchR30 {
+  0%   { opacity: 0; transform: translate(0, 0) scale(.3); }
+  12%  { opacity: 1; transform: translate(0, -10%) scale(.7); }
+  55%  { opacity: 1; transform: translate(calc(var(--seit, 0px) * .5), -120%) scale(1); }
+  82%  { opacity: .95; transform: translate(var(--seit, 0px), -210%) scale(1.06); }
+  92%  { opacity: .7; transform: translate(var(--seit, 0px), -240%) scale(1.22); }
+  100% { opacity: 0; transform: translate(var(--seit, 0px), -250%) scale(.4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-blubber-ich { display: none; }
+}
+
+/* =================================================================
+   SCHIFFE VERSENKEN
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „jeder sucht sich einen Platz, versteckt sich … der
+   andere sieht in dem Moment beim Schiffe versenken die anderen
+   Leute, seine Mitspieler, nicht mehr."
+   Das Brett deckt die Sitzreihe ab — damit ist beides erledigt: der
+   Kasten bleibt gleich hoch, und die Mitspieler sind weg.
+   ----------------------------------------------------------------- */
+.lc-schiffe {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  gap: .22rem;
+  padding: .3rem;
+  border-radius: .7rem;
+  background: linear-gradient(180deg, #0b2a4a, #06172c 70%);
+  box-shadow: inset 0 0 1.2em rgba(0, 0, 0, .5);
+  color: #eaf4ff;
+}
+.lc-schiffe-kopf {
+  flex: 0 0 auto;
+  font-weight: 800;
+  font-size: .78rem;
+  text-align: center;
+  letter-spacing: .01em;
+}
+.lc-schiffe-felder {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .22rem;
+  min-height: 0;
+}
+.lc-schiffe-feld {
+  position: relative;
+  border: 1px solid rgba(160, 210, 255, .35);
+  border-radius: .4rem;
+  background: rgba(20, 70, 120, .55);
+  color: #dbeeff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  min-height: 1.6rem;
+}
+.lc-schiffe-feld:hover { background: rgba(30, 100, 160, .7); }
+.lc-schiffe-nr {
+  position: absolute;
+  top: .1rem;
+  left: .22rem;
+  font-size: .58rem;
+  opacity: .75;
+}
+.lc-schiffe-zeichen { font-size: 1.05rem; line-height: 1; }
+.lc-schiffe-meins   { background: rgba(30, 140, 90, .75); border-color: #7de8b4; }
+.lc-schiffe-treffer { background: rgba(170, 40, 40, .8);  border-color: #ffb0a0; }
+.lc-schiffe-daneben { background: rgba(12, 45, 80, .85);  opacity: .75; }
+.lc-schiffe-fuss {
+  flex: 0 0 auto;
+  font-size: .66rem;
+  text-align: center;
+  min-height: .9em;
+  opacity: .92;
+}
+/* Solange gespielt wird, bleiben die Plätze darunter stehen — man
+   sieht sie nur nicht: genau das ist der Sinn des Verstecks. */
+#livechatKarte.lc-schiffe-an .lc-plaetze > .lc-platz { visibility: hidden; }
+
+/* =================================================================
+   DREI ANDERE ARTEN, ZU EINEM PLATZ ZU KOMMEN
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „dass du das Profilbild in ein Flugzeug, also auf einen
+   Sitzplatz hinter so einer Fensterscheibe von dem Flugzeug packst …
+   und dann fliegt dieses Flugzeug auf den anderen Platz und setzt
+   diese Person da ab." · „als Bewegung Maulwurf … dann gräbt man
+   sich in die Erde rein und kommt an der anderen Stelle wieder raus."
+   · „ein multidimensionales Gate, dass man in diesem Gate
+   verschwindet und an einem anderen Platz wieder auftaucht."
+   ----------------------------------------------------------------- */
+.lc-flieger, .lc-maulwurf, .lc-tor-wirbel {
+  position: absolute;
+  pointer-events: none;
+  z-index: 8;
+}
+.lc-flieger {
+  width: calc(var(--gross, 64px) * 2.1);
+  height: calc(var(--gross, 64px) * 0.92);
+  transform: translate(-50%, -50%);
+}
+.lc-flieger-form { width: 100%; height: 100%; overflow: visible; }
+.lc-flieger-rumpf  { fill: #eef3fa; stroke: #b9c6d8; stroke-width: 1.4; }
+.lc-flieger-fluegel{ fill: #d7e2f0; }
+.lc-flieger-leit   { fill: #cdd9e8; }
+.lc-flieger-luke   { fill: #21374f; }
+/* Das Fenster mit seinem Bild dahinter — der ganze Sinn der Sache. */
+.lc-flieger-fenster {
+  position: absolute;
+  left: 61.5%;
+  top: 50%;
+  width: 30%;
+  height: 62%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 2px #21374f, inset 0 .1em .3em rgba(255, 255, 255, .45);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: .8em;
+  color: #eaf2ff;
+}
+/* Der Maulwurfshügel wandert unter der Sitzreihe entlang. */
+.lc-maulwurf {
+  width: calc(var(--gross, 58px) * 0.9);
+  height: calc(var(--gross, 58px) * 0.42);
+  transform: translate(-50%, -50%);
+}
+.lc-maulwurf-erde {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 42% 58% / 100% 100% 14% 14%;
+  background: radial-gradient(ellipse at 50% 20%, #7b5a3a, #4a3421 70%, #34240f);
+  box-shadow: 0 .1em .25em rgba(0, 0, 0, .35);
+}
+.lc-maulwurf-nase {
+  position: absolute;
+  left: 50%;
+  top: 8%;
+  width: 26%;
+  height: 46%;
+  margin-left: -13%;
+  border-radius: 50% 50% 40% 40%;
+  background: #2f2a26;
+  animation: lcMaulwurfNaseR30 .5s ease-in-out infinite alternate;
+}
+@keyframes lcMaulwurfNaseR30 {
+  from { transform: translateY(18%) scaleY(.7); }
+  to   { transform: translateY(-14%) scaleY(1); }
+}
+/* Das Tor: ein Wirbel, der aufgeht und wieder zufällt. */
+.lc-tor-wirbel {
+  width: var(--gross, 70px);
+  height: var(--gross, 70px);
+  margin: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background:
+    conic-gradient(from 0deg, rgba(120, 90, 255, .05), rgba(150, 120, 255, .85),
+                   rgba(80, 210, 255, .85), rgba(120, 90, 255, .05)),
+    radial-gradient(circle, rgba(10, 6, 30, .9) 0 34%, rgba(10, 6, 30, 0) 62%);
+  box-shadow: 0 0 1.2em rgba(130, 110, 255, .75);
+  animation: lcTorR30 1.6s ease-in-out both;
+}
+@keyframes lcTorR30 {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.1) rotate(0deg); }
+  22%  { opacity: 1; transform: translate(-50%, -50%) scale(1.06) rotate(180deg); }
+  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(540deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(.1) rotate(720deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-flieger, .lc-maulwurf, .lc-tor-wirbel { display: none; }
 }

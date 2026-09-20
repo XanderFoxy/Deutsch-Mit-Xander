@@ -6574,7 +6574,36 @@
         /* Hat jemand DIESEN Kasten ausdrücklich ausgeschaltet, bleibt
            er aus — auch wenn „Betonung überall anzeigen" an ist. Die
            ausdrückliche Handlung schlägt die allgemeine Einstellung. */
-        if (parent.closest(".betonung-aus")) return NodeFilter.FILTER_REJECT;
+        /* GEMELDET: „bei ‚Es war einmal in Deutschland' kollidiert der
+           Betonungsmodus: wenn man in der Sektion auf die Uebersetzung
+           geht und dort die Betonung anmacht und dann oben bei dem
+           deutschen Text wieder die Betonung anschalten will, dann geht
+           das nicht mehr anklicken. Da muss irgendwie eine Regel rein,
+           dass das immer an- und auszuschalten geht, da wo man gerade
+           ist."
+
+           GEFUNDEN: ein ausgeschalteter Kasten traegt „betonung-aus",
+           und diese Regel galt fuer ALLE Textknoten darunter — auch
+           fuer einen kleineren Kasten INNERHALB, den jemand danach
+           ausdruecklich angeschaltet hat. Der Klick sass, die Klasse
+           wurde gesetzt, und trotzdem kam kein Wort durch.
+
+           DIE REGEL LAUTET JETZT: „aus" gilt nur innerhalb des
+           Bereiches, den man gerade anschaltet — ein „aus" WEITER
+           OBEN wird von der ausdruecklichen Ansage hier unten
+           geschlagen. Damit geht es immer, da wo man gerade ist. */
+        const ausKasten = parent.closest(".betonung-aus");
+        if (ausKasten && ausKasten !== root && root.contains && root.contains(ausKasten)) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        /* „wenn es nicht anders geht, dann brauchst du die Uebersetzung
+           auch nicht als Betonungsregel beruecksichtigen, weil wichtig
+           ist der deutsche Text." Genau so: die Uebersetzungshilfe
+           bleibt unmarkiert — sie soll den Inhalt erklaeren, nicht die
+           deutsche Aussprache. */
+        if (parent.closest(".uebersetzung-hilfe, .uebersetzung-satz, .uebersetzung-woerter")) {
+          return NodeFilter.FILTER_REJECT;
+        }
         /* GEMELDET: „bei den Texten wird die Betonung nicht angezeigt."
            GEFUNDEN: die Zeilen der Lesetafel im Klassenzimmer sind
            KNOEPFE — man tippt sie an, damit sie bei allen leuchten.
@@ -23625,45 +23654,64 @@
     /* Die sieben Neuen leihen sich Geraeusche, die es schon gibt —
        ein eigenes aufzunehmen lohnt erst, wenn sie sich bewaehrt
        haben. Welches passt, steht bei jedem dabei. */
-    schneeball:     { ton: "platsch",  dauer: 3600, laut: 0.55 },  /* weicher Aufschlag */
+    /* „bei dem Schneeball koennte man auch ein realistischeres machen" —
+       eigenes Geraeusch (ElevenLabs): Flug, nasser Klatscher, rieselnder Rest. */
+    schneeball:     { ton: "schneeklatsch", dauer: 3600, laut: 0.55 },
     bumerang:       { ton: "bonk",     dauer: 3000, laut: 0.6 },   /* Holz am Kopf */
-    saugpfeil:      { ton: "gummi",    dauer: 3400, laut: 0.6 },   /* „dieses typische Geraeusch" — Gummi, kein Wasser */
-    sahne:          { ton: "spray",    dauer: 4200, laut: 0.5 },   /* das Zischen der Spruehdose */
+    /* „der Drill von dem Pfeil, den wir schiessen, das koennte alles
+       bisschen besser sein": Sehne, Flug, Saugnapf. */
+    saugpfeil:      { ton: "pfeilschuss", dauer: 3400, laut: 0.6 },
+    sahne:          { ton: "spruehsahne", dauer: 4200, laut: 0.5 }, /* Dose zischt, Sahne klatscht */
     sog:            { ton: "regen",    dauer: 4600, laut: 0.4 },   /* Wasser, das zieht */
     trommel:        { ton: "bonk",     dauer: 2800, laut: 0.7 },   /* der Schlag sitzt */
     /* Runde 15 — „das Paintball hast du auch noch vergessen", das Ei,
        das Losfahren und die Spielzuege. */
     paintfleck:     { ton: "paintball", dauer: 1600, laut: 0.55 }, /* ein Schuss, kein Dauerfeuer */
     ei:             { ton: "eiknack",  dauer: 1200, laut: 0.6 },   /* das Knacken der Schale */
-    fahren:         { ton: "fahren",   dauer: 2600, laut: 0.5 },   /* Motor und Bremse */
+    /* „Bei dem Fahren ein realistisches Fahrgeraeusch und dann kannst du,
+       wenn er ankommt, ein Quietschgeraeusch dazubringen. Vielleicht machst
+       du die zwei Sachen einzeln, dass das Quietschen erst ausgeloest wird,
+       wenn er da wirklich landet." — genau so: „fahrt" laeuft waehrend der
+       Fahrt, „bremse" kommt bei der Ankunft (siehe lcFahrtLauf). */
+    fahren:         { ton: "fahrt",    dauer: 2600, laut: 0.5 },
+    bremse:         { ton: "bremse",   dauer: 1600, laut: 0.55 },
     spielzug:       { ton: "gummi",    dauer: 700,  laut: 0.5 },   /* ein Huepfer je Sprung */
     pacjagd:        { ton: "pacman",   dauer: 3400, laut: 0.55 }, /* die Jagd ueber die Felder */
     stoerung:       { ton: "gewitter", dauer: 3000, laut: 0.38 },  /* Rauschen */
     aufessen:       { ton: "keks",     dauer: 700,  laut: 0.5 },   /* ein Biss, kein Dauerkauen */
     sanduhr:        { ton: "schwamm",  dauer: 3200, laut: 0.4 },   /* rieselnder Sand */
     /* Und der Rest der Wunschliste — „lasse keinen aus". */
-    katapult:       { ton: "bonk",     dauer: 2600, laut: 0.65 },
-    strohhalm:      { ton: "schlurf",  dauer: 3000, laut: 0.5 },
+    katapult:       { ton: "katapult", dauer: 2600, laut: 0.65 },
+    /* „wenn man jetzt das Getraenk austrinkt, dann koennte man ein
+       Schluerfen hoeren, also schoeneres Schluerfen." */
+    strohhalm:      { ton: "schlurfen", dauer: 3000, laut: 0.5 },
     /* GEWUENSCHT: „Vielleicht kannst du bei dem Strohhalm noch eine
        zweite Animation hinzufuegen, als wenn man in den Strohhalm
        reinblaest und das Getraenk so blubbern laesst." Derselbe Halm,
        andere Richtung — deshalb auch dasselbe Geraeusch, nur laenger,
        weil das Blubbern nicht aufhoert, solange man pustet. */
-    blubbern:       { ton: "schlurf",  dauer: 3600, laut: 0.5 },
+    /* „das Blubbern koennte auch ein schoeneres Blubbern sein." */
+    blubbern:       { ton: "blubbern", dauer: 3600, laut: 0.5 },
     /* Zerknuelltes Papier klingt wie Papier — „schwamm" ist das
        trockenste Geraeusch, das da ist. */
     knuell:         { ton: "schwamm",  dauer: 3400, laut: 0.5 },
-    rollo:          { ton: "jalousie", dauer: 3400, laut: 0.5 },
-    lamellen:       { ton: "jalousie", dauer: 3400, laut: 0.5 },
-    peitsche:       { ton: "peitsche", dauer: 2000, laut: 0.6 },
+    /* „das Rollo, dass man das so kurz runter und hoch schnipsen laesst." */
+    rollo:          { ton: "rollohoch", dauer: 3400, laut: 0.5 },
+    lamellen:       { ton: "jalousieauf", dauer: 3400, laut: 0.5 },
+    /* „bei der Peitsche selber kann einfach nur ein Peitschenknall sein." */
+    peitsche:       { ton: "peitschenknall", dauer: 2000, laut: 0.6 },
     bowling:        { ton: "glasbruch", dauer: 2400, laut: 0.5 },
     billard:        { ton: "bonk",     dauer: 2400, laut: 0.55 },
     gemeinsam:      { ton: "fahren",   dauer: 3400, laut: 0.5 },
     /* Kein eigenes Geraeusch: die Schneekugel leiht sich „schnee" —
        gemessen an data-geraeusche.js, dort liegt es. */
     schneekugel:    { ton: "schnee",   dauer: 3200, laut: 0.45 },
+    flug:           { ton: "flugzeug", dauer: 2800, laut: 0.45 },
+    maulwurf:       { ton: "maulwurf", dauer: 2400, laut: 0.5 },
+    portal:         { ton: "portal",   dauer: 2200, laut: 0.5 },
     kopfhoerer:     { ton: "noten",    dauer: 3200, laut: 0.45 },
-    luke:           { ton: "jalousie", dauer: 3400, laut: 0.5 },
+    /* „das Fenster aufmachen soll auch nach Fenster oeffnen klingen." */
+    luke:           { ton: "fensterauf", dauer: 3400, laut: 0.5 },
     platte:         { ton: "disko",    dauer: 3600, laut: 0.45 },
     ohrfeige:       { ton: "boxen",    dauer: 1800, laut: 0.6 },
     basketball:     { ton: "bonk",     dauer: 3000, laut: 0.5 },
@@ -23674,18 +23722,29 @@
     lichtaus:       { ton: "finsternis", dauer: 3800, laut: 0.45 }, /* das Summen beim Ausgehen */
     muenze:         { ton: "geld",     dauer: 4200, laut: 0.45 },  /* Metall auf dem Tisch */
     wischer:        { ton: "schwamm",  dauer: 4000, laut: 0.45 },  /* das Quietschen beim Wischen */
-    zwille:         { ton: "gummi",    dauer: 2600, laut: 0.6 },   /* das Gummiband schnellt */
+    zwille:         { ton: "zwille",   dauer: 2600, laut: 0.6 },   /* Gummiband, Schnalzen, Flug */
     pusterohr:      { ton: "platsch",  dauer: 4000, laut: 0.5 },   /* der nasse Klatscher */
     gluehbirne:     { ton: "kitt",     dauer: 4000, laut: 0.45 },  /* Glas in der Fassung */
     entbloessung:   { ton: "boing",    dauer: 3000, laut: 0.5 },   /* der Comic-Gag */
-    hut:            { ton: "kitt",     dauer: 3400, laut: 0.4 },   /* der Hut setzt auf */
+    /* „wenn man den Hut aufsetzt, dann koennte so ein YIHAAH wie bei den
+       Cowboys kommen, und vielleicht so ein Peitschenknall zur selben Zeit."
+       Vorher lag hier „kitt" — ein Motorgeraeusch: „da ist irgendwie so ein
+       Motorgeraeusch drin, als ein Auto faehrt, das macht keinen Sinn." */
+    hut:            { ton: "cowboy",   dauer: 3400, laut: 0.5 },
     ticken:         { ton: "wecker",   dauer: 260,  laut: 0.45 },  /* ein Tick je Zahl */
     bombe:          { ton: "schuss",   dauer: 2600, laut: 0.6 },   /* der Knall */
     streicheln:     { ton: "schwamm",  dauer: 3400, laut: 0.32 },  /* ganz leise */
-    kuss:           { ton: "platsch",  dauer: 3200, laut: 0.4 },
+    /* „das Knutschen — da koenntest du noch einen Sound machen, da haben wir
+       naemlich keinen. Da hoert man so ein Schussgeraeusch oder so." */
+    kuss:           { ton: "kussmund", dauer: 3200, laut: 0.5 },
     matrix:         { ton: "matrix", dauer: 10000, schleife: true , laut: 0.34 },
     route66:        { ton: "route66", dauer: 10000, schleife: true , laut: 0.36 },
-    noten:          { ton: "noten", dauer: 10000, schleife: true },
+    /* GEMELDET: „die Melodie, die bei den Noten spielt, die hast du auch
+       so oft geloopt … obwohl sie nach dem ersten Mal schon perfekt ist.
+       Die muss nicht dreimal gelaufen werden."
+       Nachgemessen: die Datei ist 4,01 s lang, der Plan stand auf 10 s
+       MIT Schleife — sie lief also zweieinhalbmal. Jetzt einmal. */
+    noten:          { ton: "noten", dauer: 4200 },
     feuerwerk:      { ton: "feuerwerk", dauer: 9500, schleife: true , laut: 0.46 },
     geld:           { ton: "geld", dauer: 9500, schleife: true , laut: 0.5 },
     bonbon:         { ton: "bonbon", dauer: 9000, schleife: true },
@@ -23763,7 +23822,9 @@
     donnerwolke:    { ton: "gewitter", dauer: 3200 , laut: 0.38 },
     reichtum:       { ton: "geld", dauer: 2800 },
     zucker:         { ton: "bonbon", dauer: 2800 },
-    heber:          { ton: "tore", dauer: 2000 },
+    /* „bei dem Angelhaken soll man, waehrend man angelt, auch realistisch
+       dieses Einholen der Angelschnur hoeren." */
+    heber:          { ton: "angelkurbel", dauer: 2400 },
     lasso:          { ton: "tritt", dauer: 2000 }
   };
 
@@ -24020,7 +24081,11 @@
     lcMusikTitel = "";
     document.getElementById("lcMusikBand")?.remove();
   }
-  function lcMusikSpielen(datei, titel) {
+  /* „ab" ist neu: /noten mit einem Liednamen spielt nicht das ganze
+     Stueck, sondern steigt beim Refrain ein (data-refrain.js) und
+     hoert nach einer halben Minute wieder auf. */
+  let lcMusikRefrainAus = 0;
+  function lcMusikSpielen(datei, titel, ab) {
     if (!datei) return false;
     if (!lcToeneAn()) return false;
     lcMusikStoppen();
@@ -24044,6 +24109,17 @@
          beim naechsten Tipp irgendwo auf der Seite nachgeholt. Genau
          das passiert jetzt auch hier, und eine Zeile sagt, dass ein
          Tipp genuegt. */
+      const sek = Number(ab) || 0;
+      if (sek > 0) {
+        const springen = () => {
+          try { lcMusikSpieler.currentTime = sek; } catch (e) {}
+        };
+        if (lcMusikSpieler.readyState >= 1) springen();
+        else lcMusikSpieler.addEventListener("loadedmetadata", springen, { once: true });
+        /* Nur der Refrain, nicht das ganze Lied. */
+        clearTimeout(lcMusikRefrainAus);
+        lcMusikRefrainAus = setTimeout(() => lcMusikStoppen(), 30000);
+      }
       const v = lcMusikSpieler.play();
       if (v && v.catch) v.catch(() => lcMusikNachholen(titel));
       lcMusikTakt = setInterval(lcMusikLautstaerke, 900);
@@ -24153,13 +24229,18 @@
   }
 
   function lcTonZu(was) {
-    /* Erst das echte Geräusch — gibt es keines, der gebaute Ton.
-       „was" ist der Name des Effekts; der Plan haengt daran. */
-    if (lcGeraeusch(was, was)) return;
-    /* Kein gleichnamiges Geraeusch? Dann sagt der Plan, welches
-       stellvertretend passt (die Pinguine leihen sich das Aquarium). */
+    /* DER PLAN HAT DAS ERSTE WORT — und das ist neu.
+       GEWUENSCHT: „viele Sounds stimmen einfach noch nicht … Behalte
+       gerne die alten Sounds im Hintergrund als Fallback, falls die
+       Audiosounds nicht funktionieren."
+       Vorher wurde IMMER zuerst die gleichnamige Datei genommen. Wer
+       fuer die Peitsche ein besseres Geraeusch dazulegt, kam damit
+       nie zum Zug: „peitsche.opus" lag ja schon da. Jetzt entscheidet
+       der Plan, und die alte gleichnamige Datei bleibt als Rueckfall
+       genau dort liegen, wo sie war. */
     const plan = LC_TON_PLAN[was];
-    if (plan && plan.ton && plan.ton !== was && lcGeraeusch(plan.ton, was)) return;
+    if (plan && plan.ton && lcGeraeusch(plan.ton, was)) return;
+    if (lcGeraeusch(was, was)) return;
     const f = LC_AUFKLEBER_TON[was] || LC_WIRKUNG_TON[was];
     if (f) f();
   }
@@ -25062,7 +25143,18 @@
     ["\ud83e\udea2", "Peitsche",  "peitsche"],
     ["\ud83c\udfb3", "Bowling",   "bowling"],
     ["\ud83c\udfb1", "Billard",   "billard"],
-    ["\ud83d\udeb2", "Zu zweit",  "gemeinsam"],
+    /* EIN SYMBOL, VIER ARTEN ZU REISEN.
+       GEWUENSCHT: „kannst du auch drei Versionen machen, dass, wenn man
+       ein entsprechendes Symbol klickt, man da so ein Untermenue hat …
+       So koennen wir das ganze Menue vielleicht ein bisschen
+       aufraeumen." Gemessen (pruefe-platzmenue): mit vier einzelnen
+       Kacheln reichte das Menue 7 px unter den Bildschirmrand. Jetzt
+       ist es eine. */
+    ["\ud83e\uddf3", "Reisen", "reisen", false,
+      [["\u2708\ufe0f", "Flugzeug", "flug"],
+       ["\ud83e\udda1", "Maulwurf", "maulwurf"],
+       ["\ud83c\udf00", "Tor", "portal"],
+       ["\ud83d\udeb2", "Zu zweit", "gemeinsam"]]],
     ["\ud83d\udd2e", "Schneekugel", "schneekugel"],
     ["\ud83c\udfa7", "H\u00f6rer", "kopfhoerer"],
     /* GEWUENSCHT: „Die Luke kannst du Fenster nennen." Und drei
@@ -27121,6 +27213,14 @@
     glasbruch: { ganzeSeite: true, wie: "glasbruch" },
     spinnen: { ganzeSeite: true, wie: "spinnen" },
     noten:   { ganzeSeite: true, wie: "noten" },
+    /* „/noten 3" — dieselbe Zeichnung wie /noten, nur klingt dazu der
+       Refrain des Liedes (siehe lcWirkung). Ohne diesen Eintrag waere
+       die Wirkung unbekannt und lcWirkung stiege gleich oben aus. */
+    notenlied: { ganzeSeite: true, wie: "noten" },
+    /* Die drei neuen Reisen — sie zeichnen selbst und regnen nichts. */
+    flug:     { zeichen: ["\u2708\ufe0f"], wie: 4, klasse: "umarmen" },
+    maulwurf: { zeichen: ["\ud83e\udda1"], wie: 4, klasse: "umarmen" },
+    portal:   { zeichen: ["\ud83c\udf00"], wie: 4, klasse: "umarmen" },
     halloween:{ ganzeSeite: true, wie: "halloween" },
     weihnachten:{ ganzeSeite: true, wie: "weihnachten" },
     geschenk:{ ganzeSeite: true, wie: "geschenk" },
@@ -29089,6 +29189,87 @@
       setTimeout(() => { lcTafelGroesseStellen(); lcTafelMalenNeu(); }, 80);
     }
   };
+  /* =================================================================
+     SCHIFFE VERSENKEN — DAS BRETT
+     -----------------------------------------------------------------
+     GEWUENSCHT: „jeder sucht sich einen Platz, versteckt sich, der
+     andere sieht aber in dem Moment beim Schiffe versenken die
+     anderen Leute, seine Mitspieler, nicht mehr … und dann ist jeder
+     nach der Reihe dran und versucht den Platz aufzudecken, wo er
+     denkt, dass jemand versteckt ist."
+
+     Das Brett legt sich deshalb GENAU UEBER die Sitzreihe — dieselbe
+     Bauart wie beim Whiteboard: als Kind von #lcPlaetze, absolut
+     gesetzt. Zwei Fliegen: der Kasten wird nicht hoeher, und die
+     Mitspieler sind waehrend des Spiels wirklich nicht zu sehen.
+     Wer wo steckt, weiss nur der Schiedsrichter (siehe livechat.js).
+     ================================================================= */
+  function lcSchiffeBrett() {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return null;
+    let brett = document.getElementById("lcSchiffe");
+    if (brett) return brett;
+    const plaetze = karte.querySelector("#lcPlaetze, .lc-plaetze");
+    if (!plaetze) return null;
+    brett = document.createElement("div");
+    brett.className = "lc-schiffe";
+    brett.id = "lcSchiffe";
+    brett.innerHTML = '<div class="lc-schiffe-kopf" id="lcSchiffeKopf"></div>'
+                    + '<div class="lc-schiffe-felder" id="lcSchiffeFelder"></div>'
+                    + '<div class="lc-schiffe-fuss" id="lcSchiffeFuss"></div>';
+    plaetze.appendChild(brett);
+    return brett;
+  }
+
+  window.DMA_SCHIFFE = function (stand) {
+    const karte = document.getElementById("livechatKarte");
+    if (!stand) {
+      document.getElementById("lcSchiffe")?.remove();
+      if (karte) karte.classList.remove("lc-schiffe-an");
+      return;
+    }
+    const brett = lcSchiffeBrett();
+    if (!brett || !karte) return;
+    karte.classList.add("lc-schiffe-an");
+    const kopf = brett.querySelector("#lcSchiffeKopf");
+    const felder = brett.querySelector("#lcSchiffeFelder");
+    const fuss = brett.querySelector("#lcSchiffeFuss");
+
+    const dranIch = stand.phase === "schiessen" && stand.dran === stand.ichBin;
+    kopf.textContent = stand.phase === "verstecken"
+      ? "🚢 Such dir ein Versteck — niemand sieht, wo du hingehst."
+      : (stand.phase === "aus" ? "🚢 Schiffe versenken"
+        : (dranIch ? "🎯 Du bist dran — wo steckt jemand?"
+          : "⏳ " + (stand.dranName || "Jemand") + " ist dran."));
+
+    felder.innerHTML = "";
+    const wieViele = stand.plaetze || 8;
+    for (let nr = 1; nr <= wieViele; nr++) {
+      const f = document.createElement("button");
+      f.type = "button";
+      f.className = "lc-schiffe-feld";
+      const was = stand.tafel && stand.tafel[nr];
+      if (was === "treffer") f.classList.add("lc-schiffe-treffer");
+      if (was === "daneben") f.classList.add("lc-schiffe-daneben");
+      if (stand.meins === nr) f.classList.add("lc-schiffe-meins");
+      f.innerHTML = '<span class="lc-schiffe-nr">' + nr + "</span>"
+        + '<span class="lc-schiffe-zeichen">'
+        + (was === "treffer" ? "💥" : was === "daneben" ? "🌊"
+           : (stand.meins === nr ? "🚢" : ""))
+        + "</span>";
+      f.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        try { LiveChat.schiffeWahl(nr); } catch (err) {}
+      });
+      felder.appendChild(f);
+    }
+    /* Wer schon versenkt ist, steht unten — sonst verliert man den
+       Ueberblick, wer noch mitspielt. */
+    const raus = (stand.raus || []).filter(Boolean);
+    fuss.textContent = (stand.text || "")
+      + (raus.length ? "   — versenkt: " + raus.join(", ") : "");
+  };
+
   /* Nur wer die Tafel aufgemacht hat, reicht sie nach — sonst schickten
      acht Geraete denselben Stand. */
   window.DMA_TAFEL_STAND = function () {
@@ -29395,7 +29576,9 @@
         + ' stroke-linejoin="round"/>'
         + '<rect x="20" y="20" width="20" height="7" rx="3" fill="#8b93a3"/>'
         + "</svg>";
-    }, 2000, "heber");
+      /* Die Kurbel laeuft 2,4 s — „waehrend man angelt" soll man sie ja
+         hoeren, also bleibt die Zeichnung so lange stehen. */
+    }, 2600, "heber");
   }
 
   /* --- DAS LASSO ---------------------------------------------------
@@ -29868,6 +30051,10 @@
       for (let i = 1; i <= felder; i++) setTimeout(() => lcTonZu("spielzug"), i * jeFeld);
     } else {
       lcTonZu("fahren");
+      /* GEWUENSCHT: „vielleicht machst du die zwei Sachen einzeln, dass
+         das Quietschgeraeusch erst ausgeloest wird, wenn er da wirklich
+         landet, wo er hinkommt." Genau dann — nicht vorher. */
+      setTimeout(() => lcTonZu("bremse"), Math.max(0, hin - 120));
     }
     /* UND DANN SITZT MAN AUCH WIRKLICH DORT.
        GEMELDET: „man soll auch einfach den Platz, den man anfahren
@@ -30029,6 +30216,7 @@
       try { laufA && laufA.cancel(); laufM && laufM.cancel(); } catch (e) {}
     }, dauer + 700);
     lcTonZu("fahren");
+    setTimeout(() => lcTonZu("bremse"), Math.max(0, hin - 120));
 
     /* Und dann sitzt auch jeder wirklich dort — jedes Geraet aber nur
        fuer sich selbst. */
@@ -30043,6 +30231,179 @@
     };
     nehmen(ab.el, ziel.nr);
     nehmen(mit.el, zielMit.nr);
+    return true;
+  }
+
+  /* =================================================================
+     DREI ANDERE ARTEN, ZU EINEM PLATZ ZU KOMMEN
+     -----------------------------------------------------------------
+     GEWUENSCHT: „vielleicht kriegst du das hin, dass du das Profilbild
+     in ein Flugzeug, also auf einen Sitzplatz hinter so einer
+     Fensterscheibe von dem Flugzeug packst … und dann fliegt dieses
+     Flugzeug auf den anderen Platz und setzt diese Person da ab."
+     · „Vielleicht koennte man noch als Bewegung Maulwurf machen …
+        dann graebt man sich naemlich in die Erde rein und kommt an der
+        anderen Stelle wieder raus."
+     · „alternativ koenntest du das auch noch als ein multidimensionales
+        Gate machen, dass man in diesem Gate verschwindet und an einem
+        anderen Platz wieder auftaucht."
+
+     Alle drei tun dasselbe wie /fahren — nur anders unterwegs. Deshalb
+     eine Funktion mit drei Abschnitten statt dreimal derselbe Rahmen.
+     ================================================================= */
+  function lcReise(wen, von, art) {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return false;
+    const gitter = lcPlatzGitter();
+    if (!gitter.length) return false;
+    const abEl = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
+    const ab = gitter.find((p) => p.el === abEl);
+    if (!ab) return false;
+
+    /* WOHIN? Genau wie beim Fahren: eine Nummer ist der Platz, ein Name
+       ist der naechste freie Platz neben ihm. */
+    let zu = null;
+    const nummer = Number(String(wen || "").trim());
+    if (nummer && gitter.some((p) => p.nr === nummer)) {
+      zu = gitter.find((p) => p.nr === nummer);
+    } else {
+      const zielEl = lcPlatzMitNamen(wen);
+      const ziel = gitter.find((p) => p.el === zielEl);
+      if (!ziel) return false;
+      const naehe = (p) => Math.abs(p.reihe - ziel.reihe) + Math.abs(p.spalte - ziel.spalte);
+      zu = gitter.filter((p) => p.frei && p.nr !== ab.nr).sort((a, b) => naehe(a) - naehe(b))[0] || null;
+      if (!zu) { lcWegAbsage("Kein Platz frei neben " + ziel.name + "."); return true; }
+    }
+    if (!zu || zu.nr === ab.nr) return false;
+    if (!zu.frei) { lcWegAbsage("Platz " + zu.nr + " ist besetzt."); return true; }
+    /* Fliegen, graben und das Tor brauchen KEINEN freien Weg — sie gehen
+       ueber alles hinweg, unter allem hindurch oder gar nicht erst durch
+       den Raum. Genau das ist ihr Reiz. */
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+
+    const kreis = ab.el.querySelector(".lc-kreis");
+    const reihe = document.getElementById("lcPlaetze") || karte;
+    if (!kreis) return false;
+    const rk = lcLayoutKasten(reihe);
+    const start = { x: ab.x - rk.left, y: ab.y - rk.top };
+    const ende = { x: zu.x - rk.left, y: zu.y - rk.top };
+    const d = kreis.offsetWidth || 64;
+    const bild = ab.el.querySelector(".lc-avatar");
+    const quelle = bild && bild.getAttribute("src") && bild.style.display !== "none"
+      ? bild.getAttribute("src") : "";
+
+    const hin = art === "flug" ? 2600 : (art === "maulwurf" ? 2200 : 1800);
+    const dauer = hin + 500;
+    const altZ = ab.el.style.zIndex;
+    ab.el.style.zIndex = "7";
+    lcPlatzUnterwegs(ab.el, true);
+    const weg = [];
+    const aufraeumen = () => {
+      ab.el.style.zIndex = altZ;
+      lcPlatzUnterwegs(ab.el, false);
+      weg.forEach((el) => el.remove());
+    };
+
+    /* Das eigene Bild ist unterwegs nicht am Platz — es sitzt ja im
+       Flugzeug, steckt in der Erde oder ist im Tor verschwunden. */
+    try {
+      kreis.animate([
+        { opacity: 1, transform: "scale(1)", offset: 0 },
+        { opacity: 0, transform: "scale(.2)", offset: 0.16 },
+        { opacity: 0, transform: "scale(.2)", offset: 0.92 },
+        { opacity: 1, transform: "scale(1)", offset: 1 }
+      ], { duration: dauer, easing: "ease-in-out", fill: "none" });
+    } catch (e) {}
+
+    const setzen = (el, x, y) => {
+      el.style.left = x.toFixed(1) + "px";
+      el.style.top = y.toFixed(1) + "px";
+    };
+
+    if (art === "flug") {
+      /* Das Flugzeug mit IHM hinter dem Fenster. */
+      const flieger = document.createElement("span");
+      flieger.className = "lc-flieger";
+      flieger.style.setProperty("--gross", d + "px");
+      flieger.innerHTML =
+        '<svg class="lc-flieger-form" viewBox="0 0 120 52" aria-hidden="true">'
+        + '<path class="lc-flieger-fluegel" d="M52 26 L38 6 L52 6 L74 24 Z"/>'
+        + '<path class="lc-flieger-rumpf" d="M8 30 Q16 18 44 16 L92 16 Q112 18 114 26'
+        + ' Q112 34 92 36 L30 36 Q12 36 8 30 Z"/>'
+        + '<path class="lc-flieger-leit" d="M14 28 L6 8 L18 8 L28 26 Z"/>'
+        + '<circle class="lc-flieger-luke" cx="74" cy="26" r="9"/>'
+        + "</svg>"
+        + '<span class="lc-flieger-fenster"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
+      reihe.appendChild(flieger);
+      weg.push(flieger);
+      setzen(flieger, start.x, start.y);
+      const hoch = Math.min(start.y, ende.y) - d * 0.9 - (rk.top * 0);
+      const mitte = { x: (start.x + ende.x) / 2, y: Math.max(6, hoch) };
+      const links = ende.x < start.x;
+      try {
+        flieger.animate([
+          { transform: "translate(-50%, -50%) scaleX(" + (links ? -1 : 1) + ") scale(.2)", opacity: 0, offset: 0 },
+          { transform: "translate(-50%, -50%) scaleX(" + (links ? -1 : 1) + ") scale(1)", opacity: 1, offset: 0.12 },
+          { transform: "translate(" + (mitte.x - start.x) + "px, " + (mitte.y - start.y)
+            + "px) translate(-50%, -50%) scaleX(" + (links ? -1 : 1) + ") scale(1)", opacity: 1, offset: 0.55 },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%) scaleX(" + (links ? -1 : 1) + ") scale(1)", opacity: 1,
+            offset: hin / dauer },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%) scaleX(" + (links ? -1 : 1) + ") scale(.2)", opacity: 0, offset: 1 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+      } catch (e) {}
+      lcTonZu("flugzeug");
+    } else if (art === "maulwurf") {
+      /* Der Erdhuegel wandert von Platz zu Platz. */
+      const huegel = document.createElement("span");
+      huegel.className = "lc-maulwurf";
+      huegel.innerHTML = '<i class="lc-maulwurf-erde"></i><i class="lc-maulwurf-nase"></i>';
+      reihe.appendChild(huegel);
+      weg.push(huegel);
+      setzen(huegel, start.x, start.y + d * 0.42);
+      try {
+        huegel.animate([
+          { transform: "translate(-50%, -50%) scale(.2)", opacity: 0, offset: 0 },
+          { transform: "translate(-50%, -50%) scale(1)", opacity: 1, offset: 0.14 },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%) scale(1)", opacity: 1, offset: hin / dauer },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%) scale(.2)", opacity: 0, offset: 1 }
+        ], { duration: dauer, easing: "linear", fill: "forwards" });
+      } catch (e) {}
+      lcTonZu("maulwurf");
+    } else {
+      /* Das Tor: eines hier, eines dort. */
+      [start, ende].forEach((wo, i) => {
+        const tor = document.createElement("span");
+        tor.className = "lc-tor-wirbel";
+        tor.style.setProperty("--gross", (d * 1.15) + "px");
+        tor.style.animationDelay = (i ? hin - 700 : 0) + "ms";
+        reihe.appendChild(tor);
+        weg.push(tor);
+        setzen(tor, wo.x, wo.y);
+      });
+      lcTonZu("portal");
+    }
+
+    setTimeout(aufraeumen, dauer + 400);
+    /* Und dann sitzt man auch wirklich dort — nur auf dem eigenen
+       Geraet, wie beim Fahren. */
+    if (ab.el.classList.contains("lc-platz-ich")) {
+      setTimeout(() => {
+        try {
+          const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(zu.nr) : null;
+          if (erg && erg.ok) {
+            renderLiveChat();
+            showToast((art === "flug" ? "✈️ " : art === "maulwurf" ? "🦡 " : "🌀 ")
+              + erg.text);
+          }
+        } catch (e) {}
+      }, hin + 120);
+    }
     return true;
   }
 
@@ -30322,6 +30683,23 @@
      (lcBlubbertR22); und vorn am Halm sitzt ein Backen-Puster, der
      sich aufblaeht. Sie werden immer mehr und immer groesser, wie
      wenn man laenger hineinpustet. */
+  /* =================================================================
+     BLUBBERN — DAS PROFILBILD SCHAEUMT AUF
+     -----------------------------------------------------------------
+     GEWUENSCHT: „bei dem Blubbern haette ich gern, dass das Profilbild
+     in vielen kleinen Blasen dargestellt ist. Also praktisch das
+     Profilbild — die Blaeschen sind das Profilbild in vielen kleinen
+     Miniaturversionen, und dass das so aus dem eigentlichen Profilbild
+     rausblubbert, dass diese Blasen mit dem Inhalt des Profilbilds
+     alle ueber das Profilbild aufsteigen, als wenn man das
+     aufgeschaeumt haette."
+
+     Jede Blase traegt deshalb DAS BILD des Getroffenen (das <img
+     class="lc-avatar"> im Kreis; hat er keines, seinen Anfangs-
+     buchstaben). Und sie steigen AUS dem Bild heraus nach oben — also
+     nicht in der runden Blende, die alles beschneidet, sondern in der
+     Schicht darueber.
+     ================================================================= */
   function lcBlubbern(wen) {
     return lcAmPlatz(wen, "lc-blubber", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
@@ -30331,22 +30709,45 @@
         kreis.classList.add("lc-blubbert");
         setTimeout(() => kreis.classList.remove("lc-blubbert"), 3600);
       }
-      /* Was im Getraenk passiert, bleibt im Getraenk. */
+      /* Woraus die Blasen gemacht sind: aus seinem Bild. */
+      const bild = platz.querySelector(".lc-avatar");
+      const quelle = bild && bild.getAttribute("src") && bild.style.display !== "none"
+        ? bild.getAttribute("src") : "";
+      const anfang = ((platz.querySelector(".lc-platz-name") || {}).textContent || "?")
+        .trim().charAt(0).toUpperCase();
+
+      /* Im Getraenk selbst blubbert es weiter — kleine helle Blaeschen,
+         die im Bild bleiben. */
       const blende = lcZpBlende(schicht);
-      let blasen = "";
-      for (let i = 0; i < 14; i++) {
-        /* Die Blasen kommen aus dem unteren Drittel — dort steckt das
-           Halmende — und werden nach hinten heraus groesser. */
-        const gr = (7 + (i % 5) * 3 + Math.floor(i / 7) * 4);
-        const x = 34 + ((i * 37) % 34);
-        blasen += '<i class="lc-blubber-blase" style="'
-          + "left:" + x + "%;"
+      let klein = "";
+      for (let i = 0; i < 12; i++) {
+        const gr = 6 + (i % 4) * 3;
+        klein += '<i class="lc-blubber-blase" style="'
+          + "left:" + (30 + ((i * 41) % 40)) + "%;"
           + "width:" + gr + "px;height:" + gr + "px;"
-          + "animation-delay:" + (0.12 + i * 0.19).toFixed(2) + "s;"
+          + "animation-delay:" + (0.1 + i * 0.21).toFixed(2) + "s;"
           + "animation-duration:" + (1.5 + (i % 4) * 0.22).toFixed(2) + "s"
           + '"></i>';
       }
-      blende.innerHTML = blasen;
+      blende.innerHTML = klein;
+
+      /* Und darueber die Bildblasen: sie steigen aus dem Bild heraus,
+         werden groesser, wackeln seitlich und zerplatzen oben. */
+      let gross = "";
+      for (let i = 0; i < 16; i++) {
+        const gr = 16 + (i % 5) * 7;
+        const seit = ((i * 53) % 70) - 35;
+        gross += '<span class="lc-blubber-ich' + (quelle ? "" : " lc-blubber-ohne") + '" style="'
+          + "left:" + (50 + seit * 0.5).toFixed(0) + "%;"
+          + "width:" + gr + "px;height:" + gr + "px;"
+          + (quelle ? "background-image:url(" + quelle.replace(/[()"']/g, "") + ");" : "")
+          + "--seit:" + seit + "px;"
+          + "animation-delay:" + (0.2 + i * 0.16).toFixed(2) + "s;"
+          + "animation-duration:" + (2 + (i % 3) * 0.35).toFixed(2) + "s"
+          + '">' + (quelle ? "" : anfang) + "</span>";
+      }
+      schicht.insertAdjacentHTML("beforeend", gross);
+
       /* Der Halm steckt von rechts oben im Getraenk, und vorn sitzen
          die Backen, die sich aufblaehen. */
       schicht.insertAdjacentHTML("beforeend",
@@ -31268,9 +31669,36 @@
         lcTonZu(z === 0 ? "bombe" : "ticken");
       }, 700 + i * 700));
       /* Die Zuendschnur laeuft am oberen Rand entlang und wird kuerzer. */
+      /* DAS HAEUFCHEN ASCHE.
+         GEWUENSCHT: „wenn die Bombe explodiert, haette ich gerne ein
+         realistisches Haeufchen Asche, nicht nur so einen Huegel, wo
+         man denkt, dass es ein Bildfehler ist — so eine richtig
+         geregelte Asche, die sich dort sammelt, feinste kleine
+         Puenktchen, die sich dort sammeln und so diesen Staub
+         ergeben, und dann irgendwie von so einem Wind weggeblasen
+         werden."
+         Also kein gezeichneter Huegel mehr, sondern 70 einzelne
+         Puenktchen: jedes faellt an seiner Stelle herunter, bleibt
+         als Haufen liegen und wird zum Schluss nach rechts
+         weggeweht. */
+      let asche = "";
+      for (let a = 0; a < 70; a++) {
+        /* Dicht in der Mitte, duenn zum Rand — so haeuft sich Staub. */
+        const mitte = (Math.random() + Math.random() + Math.random()) / 3;
+        const x = 12 + mitte * 76;
+        const hoch = Math.pow(1 - Math.abs(mitte - 0.5) * 2, 0.7);
+        asche += '<i class="lc-asche-punkt" style="'
+          + "left:" + x.toFixed(1) + "%;"
+          + "--liegt:" + (2 + hoch * 13).toFixed(1) + "%;"
+          + "--gross:" + (0.5 + Math.random() * 0.9).toFixed(2) + ";"
+          + "--weht:" + (30 + Math.random() * 90).toFixed(0) + "px;"
+          + "--faellt:" + (0.1 + Math.random() * 0.5).toFixed(2) + "s;"
+          + "--hell:" + (0.45 + Math.random() * 0.45).toFixed(2)
+          + '"></i>';
+      }
       schicht.insertAdjacentHTML("beforeend",
         '<span class="lc-bombe-schnur"><i></i></span>'
-        + '<span class="lc-bombe-asche"></span>');
+        + '<span class="lc-bombe-asche">' + asche + "</span>");
       for (let f = 0; f < 14; f++) {
         const sp = document.createElement("i");
         sp.className = "lc-bombe-splitter";
@@ -32616,6 +33044,7 @@
     paintfleck: 1, ei: 1, fahren: 1, spielzug: 1, pacjagd: 1, stoerung: 1,
     aufessen: 1, lotto: 1, sanduhr: 1, katapult: 1, strohhalm: 1, blubbern: 1,
     knuell: 1, rollo: 1, lamellen: 1, peitsche: 1, gemeinsam: 1, schneekugel: 1,
+    flug: 1, maulwurf: 1, portal: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
@@ -32635,6 +33064,15 @@
       return;
     }
     if (art === "musikaus") { lcMusikStoppen(); return; }
+    /* /noten MIT einem Lied: der Refrain klingt, und die Noten steigen
+       trotzdem auf — deshalb faellt es NICHT durch, sondern zeichnet
+       gleich hier weiter (kein return). */
+    if (art === "notenlied") {
+      lcMusikSpielen((nachricht && nachricht.lied) || "",
+                     (nachricht && nachricht.liedTitel) || "",
+                     (nachricht && nachricht.liedAb) || 0);
+      art = "noten";
+    }
     /* Das Whiteboard zeichnet auch nichts UEBER den Chat — es nimmt
        den Platz der Sitzreihe ein. Deshalb steht es wie die Musik
        ganz oben und faellt nicht in die Effektschleife. */
@@ -32759,6 +33197,15 @@
         try { vonL = (LiveChat.lage() || {}).ichName || vonL; } catch (e) {}
       }
       if (lcLotto(vonL)) return;
+    }
+    /* Fliegen, Graben und das Tor bewegen ebenfalls den Absender. */
+    if (art === "flug" || art === "maulwurf" || art === "portal") {
+      const wenR = nachricht && (nachricht.wen || nachricht.an);
+      let vonR = (nachricht && nachricht.name) || "";
+      if (nachricht && nachricht.eigen) {
+        try { vonR = (LiveChat.lage() || {}).ichName || vonR; } catch (e) {}
+      }
+      if (lcReise(wenR, vonR, art)) return;
     }
     if (art === "fahren" || art === "spielzug") {
       const wenF = nachricht && (nachricht.wen || nachricht.an);

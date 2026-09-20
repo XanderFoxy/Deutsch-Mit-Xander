@@ -928,6 +928,15 @@ window.LiveChat = (function () {
        kriege ich sein Profilbild an und sage dann Fahrrad oder so und
        dann fahren wir einfach weg." */
     gemeinsam: { wirkung: "gemeinsam", satz: "f\u00e4hrt gemeinsam los mit", emoji: "\ud83d\udeb2" },
+    /* GEWUENSCHT: „vielleicht kriegst du das hin, dass du das Profilbild
+       in ein Flugzeug packst … und dann fliegt dieses Flugzeug auf den
+       anderen Platz und setzt diese Person da ab." Dazu der Maulwurf
+       („dann graebt man sich in die Erde rein und kommt an der anderen
+       Stelle wieder raus") und das Tor („dass man in diesem Gate
+       verschwindet und an einem anderen Platz wieder auftaucht"). */
+    flug:     { wirkung: "flug",     satz: "fliegt hin\u00fcber zu", emoji: "\u2708\ufe0f" },
+    maulwurf: { wirkung: "maulwurf", satz: "gr\u00e4bt sich hin\u00fcber zu", emoji: "\ud83e\udda1" },
+    portal:   { wirkung: "portal",   satz: "geht durchs Tor zu", emoji: "\ud83c\udf00" },
     huepfen:  { wirkung: "spielzug",   satz: "h\u00fcpft Platz f\u00fcr Platz zu", emoji: "\ud83c\udfb2" },
     /* GEWUENSCHT: „das Laufen von Nummer zu Nummer bis ans Ziel, wo
        man hin moechte … diese Springen-Animation wie auf dem
@@ -3364,6 +3373,12 @@ window.LiveChat = (function () {
        Striche, Bilder, Zeiger und Blick gehen als eigene kleine
        Nachricht — sie gehoeren nicht in den Chatverlauf, sie sind
        kein Gespraech. Gezeichnet wird in app.js. */
+    /* Schiffe versenken: die Zuege gehen an alle, die Verstecke NICHT
+       (die gehen als persoenliche Post an den Schiedsrichter). */
+    if (n.art === "spiel") {
+      schiffeEmpfangen(n.spiel || {}, n.von);
+      return;
+    }
     if (n.art === "tafel") {
       try { if (window.DMA_TAFEL) window.DMA_TAFEL(n.tafel || {}, n.von, n.name || ""); } catch (e) {}
       return;
@@ -6582,10 +6597,42 @@ window.LiveChat = (function () {
      fuer sich zaehlen zu lassen, ginge schief: die Nachrichten
      treffen nicht ueberall in derselben Reihenfolge ein. Dasselbe
      Muster wie bei der Lesezeile, und das traegt seit Runde 21. */
+  /* =========================================================
+     DIE REIHENFOLGE — WER IST WANN DRAN
+     ---------------------------------------------------------
+     GEFRAGT: „es soll ja der Reihe nach zaehlen, wer als
+     naechstes dran ist. Und wenn jemand mit mir waehrend der Zeit
+     Plaetze tauscht … entweder ist dann waehrend des Spiels die
+     Regel, dass jeder auf seinem Platz ist … oder die Leute sind,
+     wie sie nacheinander in den Raum gekommen sind, sowieso in der
+     Reihenfolge gezaehlt."
+
+     GEWAEHLT: die ANKUNFT im Raum. Grund: sie ist die einzige
+     Ordnung, die sich nicht aendert, wenn zwei die Plaetze tauschen
+     oder jemand „auf der Buehne hin und her tanzt" — und jedes
+     Geraet kennt sie (jede Person traegt ihr „seit" mit sich).
+     Gleiche Zeit? Dann entscheidet die Kennung, damit es nie
+     unentschieden bleibt. Vorher war es die SITZREIHE: beim Tausch
+     sprang die Reihenfolge mitten im Spiel. */
+  function spielReihe() {
+    var liste = [];
+    if (zustand.lage === "drin") {
+      liste.push({ id: zustand.ichId, name: zustand.ichName || "Du",
+                   seit: zustand.seit || Date.now() });
+    }
+    Object.keys(zustand.leute).forEach(function (id) {
+      var p = zustand.leute[id];
+      if (!p || !p.id) return;
+      liste.push({ id: p.id, name: p.name || "Gast", seit: p.seit || 0 });
+    });
+    liste.sort(function (a, b) {
+      return (a.seit - b.seit) || (a.id < b.id ? -1 : (a.id > b.id ? 1 : 0));
+    });
+    return liste;
+  }
   function rundeNamen() {
     try {
-      return plaetzeBauen().filter(function (p) { return p && !p.leer && p.name; })
-        .map(function (p) { return { id: p.id, name: p.name }; });
+      return spielReihe().map(function (p) { return { id: p.id, name: p.name }; });
     } catch (e) { return []; }
   }
   function naechsterDran(nachId) {
@@ -6601,6 +6648,224 @@ window.LiveChat = (function () {
     senden({ art: "dran", zeileId: offeneAufgabe.zeileId || "", name: offeneAufgabe.dran });
     melden();
     return true;
+  }
+
+  /* =================================================================
+     SCHIFFE VERSENKEN
+     -----------------------------------------------------------------
+     GEWUENSCHT, woertlich: „dann moechte ich noch ein Schiffe
+     versenken spielen mit den Leuten … ihre Profilbilder sollen an
+     verschiedenen Plaetzen sein und dann ist jeder nach der Reihe
+     einmal dran und waehlt einen Platz aus, wo er denkt, dass eine
+     Person sitzt, und das duerfen die anderen natuerlich nicht sehen,
+     wo ich mich versteckt habe … der andere sieht in dem Moment beim
+     Schiffe versenken die anderen Leute, seine Mitspieler, nicht mehr
+     … Ich moechte, dass es auf allen Seiten wirklich sofort
+     funktioniert."
+
+     WIE DIE HEIMLICHKEIT WIRKLICH HAELT: Verstecke werden NICHT an
+     alle geschickt. Sie gehen als persoenliche Post an genau EIN
+     Geraet — das des Spielleiters (wer /versenken getippt hat). Er
+     ist der Schiedsrichter: nur er weiss alles, nur er entscheidet
+     Treffer oder daneben, und er sagt allen dasselbe Ergebnis. Damit
+     sieht kein Mitspieler das Versteck eines anderen, auch nicht, wer
+     ins eigene Geraet hineinschaut.
+
+     Die Reihenfolge ist die Ankunft im Raum (spielReihe) — sie bleibt
+     stehen, auch wenn mitten im Spiel jemand den Platz wechselt.
+     ================================================================= */
+  var schiffeSpiel = null;    /* nur beim Schiedsrichter: das ganze Wissen */
+  var schiffeStand = null;    /* auf JEDEM Geraet: was gezeichnet wird */
+
+  function schiffeZeichnen() {
+    try { if (window.DMA_SCHIFFE) window.DMA_SCHIFFE(schiffeStand); } catch (e) {}
+  }
+  function schiffeAnAlle(d) { senden({ art: "spiel", spiel: d }); }
+  function schiffeAnRichter(d) {
+    if (!schiffeStand || !schiffeStand.richter) return false;
+    if (schiffeStand.richter === zustand.ichId) { schiffeRichter(d, zustand.ichId, zustand.ichName); return true; }
+    postSenden(schiffeStand.richter, { art: "spielpost", spiel: d });
+    return true;
+  }
+
+  function schiffeStarten(roh) {
+    var rest = String(roh || "").trim().toLowerCase();
+    if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
+    if (/^(aus|stop|stopp|schluss|ende|fertig)$/.test(rest)) {
+      schiffeSpiel = null;
+      schiffeAnAlle({ t: "aus" });
+      schiffeStand = null;
+      schiffeZeichnen();
+      return systemZeile("🚢 Schiffe versenken ist beendet.");
+    }
+    var reihe = spielReihe();
+    if (reihe.length < 2) {
+      return systemZeile("Schiffe versenken geht ab ZWEI Leuten im Raum — "
+        + "gerade ist hier nur " + reihe.length + ".");
+    }
+    schiffeSpiel = {
+      reihe: reihe.map(function (m) { return { id: m.id, name: m.name }; }),
+      verstecke: {}, raus: {}, dran: 0
+    };
+    schiffeAnAlle({ t: "start", reihe: schiffeSpiel.reihe, plaetze: PLAETZE, richter: zustand.ichId });
+    /* Der Schiedsrichter spielt mit — also baut auch sein Geraet das
+       Brett auf, ueber denselben Weg wie bei allen anderen. */
+    schiffeEmpfangen({ t: "start", reihe: schiffeSpiel.reihe, plaetze: PLAETZE,
+                       richter: zustand.ichId }, zustand.ichId);
+    anAlle("aktion", zustand.ichName + " startet Schiffe versenken — "
+      + "jeder sucht sich ein Versteck  🚢");
+    return true;
+  }
+
+  /* ---- DER SCHIEDSRICHTER ---- */
+  function schiffeRichter(d, vonId, vonName) {
+    if (!schiffeSpiel || !d) return;
+    if (d.t === "versteck") {
+      var nr = Number(d.nr) || 0;
+      if (nr < 1 || nr > PLAETZE) return;
+      /* Zwei duerfen nicht im selben Loch stecken. */
+      var belegt = Object.keys(schiffeSpiel.verstecke).some(function (id) {
+        return id !== vonId && schiffeSpiel.verstecke[id] === nr;
+      });
+      if (belegt) {
+        if (vonId === zustand.ichId) systemZeile("Dort versteckt sich schon jemand — nimm ein anderes Feld.");
+        else postSenden(vonId, { art: "spielpost", spiel: { t: "belegt", nr: nr } });
+        return;
+      }
+      schiffeSpiel.verstecke[vonId] = nr;
+      var fehlen = schiffeSpiel.reihe.filter(function (m) { return !schiffeSpiel.verstecke[m.id]; });
+      schiffeAnAlle({ t: "wartet", fehlt: fehlen.length,
+                      namen: fehlen.map(function (m) { return m.name; }).join(", ") });
+      if (!fehlen.length) schiffeLos();
+      return;
+    }
+    if (d.t === "schuss") {
+      var dranM = schiffeSpiel.reihe[schiffeSpiel.dran % schiffeSpiel.reihe.length];
+      if (!dranM || dranM.id !== vonId) return;          /* nicht dran — nichts passiert */
+      schiffeSchuss(Number(d.nr) || 0, vonId, vonName || dranM.name);
+    }
+  }
+  function schiffeLos() {
+    if (!schiffeSpiel) return;
+    schiffeSpiel.dran = 0;
+    var m = schiffeSpiel.reihe[0];
+    schiffeAnAlle({ t: "los", dran: m.id, dranName: m.name,
+                    reihe: schiffeSpiel.reihe });
+  }
+  function schiffeWeiter() {
+    var n = schiffeSpiel.reihe.length;
+    for (var i = 1; i <= n; i++) {
+      var m = schiffeSpiel.reihe[(schiffeSpiel.dran + i) % n];
+      if (!schiffeSpiel.raus[m.id]) { schiffeSpiel.dran = (schiffeSpiel.dran + i) % n; return m; }
+    }
+    return null;
+  }
+  function schiffeSchuss(nr, vonId, vonName) {
+    if (!schiffeSpiel || nr < 1 || nr > PLAETZE) return;
+    var getroffenId = "", getroffenName = "";
+    Object.keys(schiffeSpiel.verstecke).forEach(function (id) {
+      if (id === vonId || schiffeSpiel.raus[id]) return;
+      if (schiffeSpiel.verstecke[id] === nr) {
+        getroffenId = id;
+        var m = schiffeSpiel.reihe.find(function (x) { return x.id === id; });
+        getroffenName = m ? m.name : "jemand";
+      }
+    });
+    if (getroffenId) schiffeSpiel.raus[getroffenId] = true;
+    var uebrig = schiffeSpiel.reihe.filter(function (m) { return !schiffeSpiel.raus[m.id]; });
+    if (uebrig.length <= 1) {
+      schiffeAnAlle({ t: "schuss", nr: nr, treffer: true, von: vonName, wen: getroffenName });
+      schiffeAnAlle({ t: "ende", sieger: uebrig.length ? uebrig[0].name : vonName });
+      schiffeSpiel = null;
+      return;
+    }
+    var naechst = schiffeWeiter();
+    schiffeAnAlle({ t: "schuss", nr: nr, treffer: Boolean(getroffenId), von: vonName,
+                    wen: getroffenName, dran: naechst ? naechst.id : "",
+                    dranName: naechst ? naechst.name : "" });
+  }
+
+  /* ---- AUF JEDEM GERAET ---- */
+  function schiffeEmpfangen(d, vonId) {
+    if (!d || !d.t) return;
+    if (d.t === "start") {
+      schiffeStand = { phase: "verstecken", richter: d.richter || vonId,
+                       plaetze: Number(d.plaetze) || PLAETZE,
+                       reihe: d.reihe || [], tafel: {}, meins: 0,
+                       dran: "", dranName: "", raus: [], text: "",
+                       ichBin: zustand.ichId };
+      schiffeZeichnen();
+      return;
+    }
+    if (!schiffeStand) return;
+    if (d.t === "aus") { schiffeStand = null; schiffeZeichnen(); return; }
+    if (d.t === "wartet") {
+      schiffeStand.text = d.fehlt
+        ? "Es fehlen noch " + d.fehlt + ": " + (d.namen || "")
+        : "Alle sind versteckt.";
+      schiffeZeichnen();
+      return;
+    }
+    if (d.t === "los") {
+      schiffeStand.phase = "schiessen";
+      schiffeStand.reihe = d.reihe || schiffeStand.reihe;
+      schiffeStand.dran = d.dran || "";
+      schiffeStand.dranName = d.dranName || "";
+      schiffeStand.text = "";
+      schiffeZeichnen();
+      return;
+    }
+    if (d.t === "schuss") {
+      schiffeStand.tafel[d.nr] = d.treffer ? "treffer" : "daneben";
+      schiffeStand.dran = d.dran || "";
+      schiffeStand.dranName = d.dranName || "";
+      if (d.treffer && d.wen) schiffeStand.raus.push(d.wen);
+      schiffeStand.text = d.treffer
+        ? (d.von + " trifft auf Platz " + d.nr + " — " + d.wen + " ist versenkt!")
+        : (d.von + " schießt auf Platz " + d.nr + " — daneben.");
+      /* Ist mein eigenes Versteck getroffen, steht es auch bei mir. */
+      schiffeZeichnen();
+      return;
+    }
+    if (d.t === "ende") {
+      schiffeStand.phase = "aus";
+      schiffeStand.text = "🏆 " + (d.sieger || "Niemand") + " gewinnt!";
+      schiffeZeichnen();
+      setTimeout(function () { schiffeStand = null; schiffeZeichnen(); }, 9000);
+      return;
+    }
+    if (d.t === "belegt") {
+      schiffeStand.text = "Dort versteckt sich schon jemand — nimm ein anderes Feld.";
+      schiffeStand.meins = 0;
+      schiffeZeichnen();
+    }
+  }
+
+  /* Ein Tipp aufs Brett — dasselbe Feld bedeutet je nach Abschnitt
+     etwas anderes: erst das eigene Versteck, dann der Schuss. */
+  function schiffeWahl(nr) {
+    nr = Number(nr) || 0;
+    if (!schiffeStand || nr < 1) return false;
+    if (schiffeStand.phase === "verstecken") {
+      schiffeStand.meins = nr;
+      schiffeStand.text = "Du versteckst dich auf Platz " + nr + ".";
+      schiffeZeichnen();
+      return schiffeAnRichter({ t: "versteck", nr: nr });
+    }
+    if (schiffeStand.phase === "schiessen") {
+      if (schiffeStand.dran !== zustand.ichId) {
+        schiffeStand.text = (schiffeStand.dranName || "Jemand anders") + " ist dran.";
+        schiffeZeichnen();
+        return false;
+      }
+      if (schiffeStand.tafel[nr]) {
+        schiffeStand.text = "Auf Platz " + nr + " wurde schon geschossen.";
+        schiffeZeichnen();
+        return false;
+      }
+      return schiffeAnRichter({ t: "schuss", nr: nr });
+    }
+    return false;
   }
 
   function ratenStellen(roh) {
@@ -8457,6 +8722,12 @@ window.LiveChat = (function () {
     { gr: "reden", w: "ei",       kurz: "ei",    nutzt: "/ei Name",          was: "Ei auf dem Kopf — es wird aufgeschlagen und laeuft herunter" },
     { gr: "reden", w: "stoerung", kurz: "tv",  nutzt: "/stoerung Name",    was: "Bildstoerung — schlechter Empfang, das Bild zerreisst" },
     { gr: "reden", w: "fahren",  kurz: "fahrt", nutzt: "/fahren Name",      was: "hinfahren \u2014 dein Bild rollt zum freien Platz daneben und bleibt dort" },
+    { gr: "reden", w: "flug", kurz: "fliegen", nutzt: "/flug 5",
+      was: "Flugzeug \u2014 dein Bild sitzt hinter dem Fenster und wird auf Platz 5 abgesetzt" },
+    { gr: "reden", w: "maulwurf", kurz: "graben", nutzt: "/maulwurf 5",
+      was: "Maulwurf \u2014 du gr\u00e4bst dich unter dem Raum hindurch und kommst auf Platz 5 wieder heraus" },
+    { gr: "reden", w: "portal", kurz: "gate", nutzt: "/portal 5",
+      was: "Tor \u2014 du verschwindest im Wirbel und tauchst auf Platz 5 wieder auf" },
     { gr: "reden", w: "gemeinsam", kurz: "zuzweit", nutzt: "/gemeinsam Name",
       was: "zu zweit losfahren \u2014 sein Bild h\u00e4ngt sich an deins und ihr rollt zusammen weg" },
     { gr: "reden", w: "laufen",  kurz: "",      nutzt: "/laufen 8",           was: "Feld f\u00fcr Feld zu Platz 8 laufen \u2014 geht auch mit /fahren 8" },
@@ -8472,6 +8743,8 @@ window.LiveChat = (function () {
       was: "Schneekugel — durchgeschüttelt, dann rieselt der Schnee über Häuschen und Tanne" },
     { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name 3", was: "Kopfhoerer — aufgesetzt; mit Liednummer hoert der andere das Lied" },
     { gr: "reden", w: "musik", kurz: "lied", nutzt: "/musik 3", was: "Musik fuer alle aus dem Musikordner — /musik zeigt die Liste, /musik aus haelt an" },
+    { gr: "schule", w: "versenken", kurz: "schiffe", nutzt: "/versenken",
+      was: "Schiffe versenken \u2014 jeder versteckt sich auf einem Platz, dann wird der Reihe nach geraten; /versenken aus beendet es" },
     { gr: "schule", w: "tafel", kurz: "whiteboard", nutzt: "/tafel",
       was: "Whiteboard für alle — Bild hineinladen, malen, zeigen, heranholen; /tafel aus macht es zu" },
     { gr: "reden", w: "fenster", kurz: "luke", nutzt: "/fenster Name",
@@ -8598,7 +8871,7 @@ window.LiveChat = (function () {
     { gr: "wetter", w: "wolken",    kurz: "wolke",  nutzt: "/wolken",    was: "Wolken ziehen über den Raum" },
     { gr: "welt", w: "glasbruch", kurz: "sprung", nutzt: "/glasbruch", was: "Das Display zerspringt — mit echten Rissen" },
     { gr: "tiere", w: "spinnen",   kurz: "spinne", nutzt: "/spinnen",   was: "Spinnen krabbeln über den Chat" },
-    { gr: "welt", w: "noten",     kurz: "melodie",nutzt: "/noten",     was: "Noten steigen auf und klingen dabei wirklich" },
+    { gr: "welt", w: "noten",     kurz: "melodie",nutzt: "/noten",     was: "Noten steigen auf und klingen dabei wirklich \u2014 /noten 3 spielt den Refrain von Lied 3" },
     { gr: "feier", w: "halloween", kurz: "",   nutzt: "/halloween",           was: "Fledermäuse, Geister und Kürbisse" },
     { gr: "feier", w: "weihnachten", kurz: "advent", nutzt: "/weihnachten",   was: "Schnee, Sterne und Geschenke" },
     { gr: "aussehen", w: "schrift", kurz: "font", nutzt: "/schrift 1-4",     was: "Schrift im Chat" },
@@ -9236,7 +9509,7 @@ window.LiveChat = (function () {
   var ZUSATZ_FELDER = [
     "wirkung", "wen", "an", "film", "betonung", "raten", "dran",
     "sortieren", "leseZeilen", "leseTitel", "leseNiveau",
-    "lied", "liedTitel", "wortLink", "los"
+    "lied", "liedTitel", "liedAb", "wortLink", "los"
   ];
   /* Listen werden begrenzt — eine Zeile aus einer fremden Fassung
      darf den Chat nicht sprengen. */
@@ -9340,6 +9613,14 @@ window.LiveChat = (function () {
        braucht ihn, nicht der ganze Raum noch einmal. */
     if (n.art === "tafel") {
       try { if (window.DMA_TAFEL) window.DMA_TAFEL(n.tafel || {}, n.von, n.vonName || ""); } catch (e) {}
+      return;
+    }
+    /* Das Versteck und der Schuss — nur fuer den Schiedsrichter
+       bestimmt. Sie stehen nirgendwo sonst, deshalb sieht auch
+       niemand sonst, wo sich wer versteckt hat. */
+    if (n.art === "spielpost") {
+      if ((n.spiel || {}).t === "belegt") schiffeEmpfangen(n.spiel, n.von);
+      else schiffeRichter(n.spiel || {}, n.von, n.vonName || "");
       return;
     }
     if (n.art === "note-fuer-dich") {
@@ -10231,6 +10512,17 @@ window.LiveChat = (function () {
        steht hinter dem Befehl eine NUMMER, kein Nickname. Ohne diese
        Abzweigung stuende im Chat „faehrt hinueber zu 8" — als hiesse
        jemand 8. */
+    /* Auch Flug, Maulwurf und Tor bekommen hinter dem Befehl eine
+       NUMMER — sonst stuende im Chat „fliegt hinueber zu 5", als hiesse
+       jemand 5. */
+    if ((art === "flug" || art === "maulwurf" || art === "portal")
+        && /^\s*\d+\s*$/.test(rest)) {
+      var satzR = { flug: [" fliegt zu Platz ", "\u2708\ufe0f"],
+                    maulwurf: [" gr\u00e4bt sich zu Platz ", "\ud83e\udda1"],
+                    portal: [" geht durchs Tor zu Platz ", "\ud83c\udf00"] }[art];
+      return anAlle("aktion", zustand.ichName + satzR[0] + rest.trim() + "  " + satzR[1],
+                    { wirkung: art, wen: rest.trim() });
+    }
     if ((art === "fahren" || art === "huepfen" || art === "laufen")
         && /^\s*\d+(\s*-\s*\d+)*\s*$/.test(rest)) {
       /* EINE KETTE STATT EINER ZAHL.
@@ -10274,6 +10566,31 @@ window.LiveChat = (function () {
       return anAlle("aktion", zustand.ichName + " " + satzQ.satz + " " + zielWort(wemQ) + "  " + satzQ.emoji,
                     { wirkung: satzQ.wirkung, wen: wemQ.name, los: Math.random().toFixed(4) });
     }
+
+    /* ---- NOTEN MIT EINEM MEINER LIEDER ----
+       GEWUENSCHT: „in Zukunft soll man auch die Moeglichkeit haben,
+       wenn man Noten spielt, dass man eins von meinen Liedern
+       auswaehlen kann und dann kommt halt der Refrain von einem Lied."
+       Wo der Refrain anfaengt, ist gemessen und steht in
+       data-refrain.js (werkzeug/refrain-messen.js). */
+    if (art === "noten" && String(rest || "").trim()) {
+      var wahlN = String(rest).trim();
+      var liedN = liedFinden(wahlN);
+      if (!liedN) {
+        return systemZeile("Das Lied liegt nicht im Musikordner:\n" + liederListe()
+          + "\n  /noten        nur die Melodie"
+          + "\n  /noten 3      der Refrain von Lied 3");
+      }
+      var abN = 0;
+      try { abN = Number((window.DMA_REFRAIN || {})[liedN.datei]) || 0; } catch (e) { abN = 0; }
+      return anAlle("aktion", zustand.ichName + " spielt den Refrain von \u201e"
+        + liedN.titel + "\u201c  \ud83c\udfb5",
+        { wirkung: "notenlied", lied: liedN.datei, liedTitel: liedN.titel,
+          liedAb: String(abN) });
+    }
+
+    /* ---- SCHIFFE VERSENKEN ---- */
+    if (art === "versenken" || art === "schiffe") return schiffeStarten(rest);
 
     /* ---- DAS WHITEBOARD ----
        GEWUENSCHT: „Ich moechte ein Whiteboard implementieren … dass
@@ -11425,6 +11742,10 @@ window.LiveChat = (function () {
     /* DAS WHITEBOARD — Striche, Bilder, Zeiger, Blick.
        Sie gehen an alle im Raum, aber NICHT in den Chatverlauf: ein
        Strich ist kein Satz. */
+    /* Schiffe versenken: ein Tipp aufs Brett. Was er bedeutet,
+       entscheidet der Abschnitt des Spiels — siehe schiffeWahl. */
+    schiffeWahl: function (nr) { return schiffeWahl(nr); },
+    schiffeStand: function () { return schiffeStand; },
     tafelSenden: function (d) {
       if (!d || typeof d !== "object") return false;
       senden({ art: "tafel", tafel: d });
@@ -11460,6 +11781,8 @@ window.LiveChat = (function () {
       /* Und das Whiteboard: „tafelauf" haengt an /tafel, „tafelzu" an
          /tafel aus — auch das eine eigene Abzweigung, keine Tabelle. */
       w.push("tafelauf", "tafelzu");
+      /* Und „notenlied": /noten MIT einem Liednamen. */
+      w.push("notenlied");
       return w;
     },
     /* Nur zum Nachpruefen: die Sitzordnung von aussen nachstellen und
