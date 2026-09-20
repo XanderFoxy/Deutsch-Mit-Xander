@@ -99,35 +99,6 @@
      Blob liegt fertig im Speicher; ab da kann nichts mehr
      dazwischenkommen. Beim zweiten Mal ist er schon da und der
      Film startet sofort. */
-  /* Kann diese Grafikkarte den Maskenweg? Einmal nachsehen und das
-     Ergebnis behalten — fuer jede Pruefung eine Leinwand anzulegen
-     waere teurer als der Film. */
-  var webglMerker = null;
-  function webglDa() {
-    if (webglMerker !== null) return webglMerker;
-    try {
-      var c = document.createElement("canvas");
-      webglMerker = Boolean(c.getContext("webgl") || c.getContext("experimental-webgl"));
-    } catch (e) { webglMerker = false; }
-    /* UND: kann dieser Browser die Maskendatei ueberhaupt abspielen?
-       Sie ist ein H.264-Film in einem mp4. Das kann fast jeder
-       Browser — aber eben nicht jeder: eine Chromium-Fassung ohne
-       die lizenzpflichtigen Verfahren kann es nicht, und dann liefe
-       gar kein Film mehr. Beim Umbau auf „den kleineren Film
-       nehmen" ist genau das passiert: die Pruefung meldete
-       „Fehler 4" (das Format wird nicht unterstuetzt) und ein
-       0x0-Bild. Ohne diese Frage waere der Umbau ein Rueckschritt
-       gewesen, kein Fortschritt. */
-    if (webglMerker) {
-      try {
-        var v = document.createElement("video");
-        var kann = v.canPlayType && v.canPlayType('video/mp4; codecs="avc1.42E01E"');
-        if (!kann) webglMerker = false;
-      } catch (e) { webglMerker = false; }
-    }
-    return webglMerker;
-  }
-
   function datei(url, melden) {
     if (DATEIEN[url]) return Promise.resolve(DATEIEN[url]);
     return fetch(url, { cache: "force-cache" })
@@ -632,49 +603,7 @@
       /* Ein Szenenfilm hat gar keine Maske — er wird ueberall gleich
          abgespielt. Ein „dunkel"-Film hat eine und geht denselben
          Weg wie ein freigestellter. */
-      /* =========================================================
-         DEN KLEINEREN FILM NEHMEN
-         ---------------------------------------------------------
-         GEMELDET: „Irgendwie scheint das Laden jetzt beeintraechtigt
-         zu sein. Der Chat kam mir vorhin so schwer vor, dass die
-         Animation mit dem Dino und andere Animationen erst mal mega
-         langsam liefen."
-
-         NACHGEMESSEN, alle Filme in filme/:
-           trex.webm  8452 KB   gegen trex-maske.mp4  3176 KB
-           loewe      1445 KB   gegen  906 KB
-           schlitten  2436 KB   gegen 1422 KB
-           raumschiff 1930 KB   gegen  717 KB
-           uboot      1420 KB   gegen  634 KB
-         In JEDEM Fall ist die Maskenfassung kleiner — zusammen
-         24,7 MB gegen 8,9 MB. Beide ergeben dasselbe Bild: die eine
-         bringt die Deckung im Film mit, die andere legt Farbe und
-         Maske nebeneinander und setzt sie in der Grafikkarte wieder
-         zusammen (zusammensetzen(), Weg 2). Der Film wird vor dem
-         Abspielen ganz geholt — deshalb ist die Dateigroesse genau
-         die Wartezeit.
-
-         Also wird jetzt der kleinere Weg bevorzugt, sooft die
-         Grafikkarte ihn kann. Nur wenn kein WebGL da ist, bleibt es
-         beim grossen Film mit eingebauter Deckung — sonst saehe man
-         gar nichts. Ein Szenenfilm hat ohnehin keine Maske.
-
-         EHRLICH DAZU: auch 3,2 MB sind auf einer langsamen Leitung
-         noch ein paar Sekunden. Die Filme kleiner zu rechnen hiesse,
-         sie neu zu kodieren, und das geht an die Bildqualitaet —
-         das steht als offener Punkt in der Werkstatt, nicht
-         heimlich hier. */
-      /* AUSNAHME, GEMESSEN: bei raumschiff hat die Maskendatei selbst
-         eine helle Ecke — die Sonde pruefe-film-durchsichtig misst
-         dort eine Deckung von 152 statt hoechstens 60, waehrend die
-         drei anderen Ecken sauber bei 0 liegen. Das ist ein Fehler in
-         DIESER Datei, nicht im Weg; solange sie nicht neu
-         freigestellt ist, laeuft dieser eine Film weiter ueber den
-         grossen webm-Film. Vermerkt ist das in filme/raumschiff.json
-         („maskeUnsauber"), damit man es dort sieht, wo die Datei
-         beschrieben ist, und nicht hier im Code suchen muss. */
-      var kannMaske = Boolean(d.maske) && !d.maskeUnsauber && webglDa();
-      var alphaWeg = d.art === "szene" ? true : (kannMaske ? false : kannAlphaWebm());
+      var alphaWeg = d.art === "szene" ? true : kannAlphaWebm();
       var url = alphaWeg ? d.webm : d.maske;
       var balken = warten(s);
       return datei(url, balken.stand).then(function (quelle) {
@@ -808,25 +737,14 @@
        langsamste ist. */
     vorladen: function (n) {
       return holen(n).then(function (d) {
-        /* Denselben Weg wie beim Abspielen — sonst laedt man den
-           grossen Film vor und holt dann doch den kleinen. */
-        var maskeGeht = Boolean(d.maske) && !d.maskeUnsauber && webglDa();
-        return datei((d.art === "szene" || !maskeGeht) && kannAlphaWebm() ? d.webm : d.maske);
+        return datei(kannAlphaWebm() ? d.webm : d.maske);
       }).catch(function () { return null; });
     },
     /* Für die Sonde: von aussen prüfbar, welcher Weg genommen würde. */
-    /* Fuer die Sonde: welcher Weg wird wirklich genommen? Seit der
-       kleinere Film bevorzugt wird, ist das nicht mehr dasselbe wie
-       kannAlphaWebm() — der Maskenweg gewinnt, sooft die
-       Grafikkarte ihn kann. „erzwinge" hebelt genau das aus. */
     pruefWeg: function (erzwinge) {
-      if (erzwinge === "maske") { kannAlphaWebm = function () { return false; };
-                                  webglDa = function () { return true; }; }
-      if (erzwinge === "webm")  { kannAlphaWebm = function () { return true; };
-                                  webglDa = function () { return false; }; }
-      return webglDa() ? false : kannAlphaWebm();
-    },
-    /* Und ob der Maskenweg ueberhaupt geht — er ist der kleinere. */
-    kannMaske: function () { return webglDa(); }
+      if (erzwinge === "maske") kannAlphaWebm = function () { return false; };
+      if (erzwinge === "webm") kannAlphaWebm = function () { return true; };
+      return kannAlphaWebm();
+    }
   };
 })();

@@ -163,12 +163,26 @@ const BRETT = (frei) => `
       pacman: meiner.classList.contains("lc-pacman"),
       laeuft: meiner.getAnimations().length,
       krumen: document.querySelectorAll(".lc-pac-krume").length,
-      maul: getComputedStyle(meiner).animationName,
+      /* NACHGEBESSERT IN RUNDE 18, und zwar weil die Sache selbst
+         sich geaendert hat, nicht weil die Messung stoerte:
+         GEMELDET war „der originale Kreis ist beschnitten und nicht
+         mehr rund. Das darf nicht passieren." Das Maul wurde bis
+         dahin mit clip-path AUS DEM KREIS geschnitten — genau das
+         war die Ursache. Jetzt liegt die Original-Figur ueber dem
+         Bild und das Maul klappt IN IHR. Gemessen wird deshalb die
+         Figur, nicht mehr der Kreis. */
+      maul: (() => {
+        const f = meiner.querySelector(".lc-pac-figur-maul");
+        return f ? getComputedStyle(f).animationName : "";
+      })(),
+      rund: getComputedStyle(meiner).borderRadius,
       opferSpaeter: (async () => 0)()
     };
   });
   pruefe("mein Bild wird zu Pac-Man", pac.pacman, "Klasse lc-pacman");
-  pruefe("das Maul klappt", /lcPacMaul/.test(pac.maul || ""), pac.maul || "-");
+  pruefe("das Maul klappt", /lcPacFigurMaulR18|lcPacFigurKlappR18/.test(pac.maul || ""),
+    pac.maul || "-");
+  pruefe("und der Kreis bleibt dabei rund", /50%/.test(pac.rund || ""), pac.rund || "-");
   pruefe("es wandert ueber die Felder", pac.laeuft > 0, pac.laeuft + " Lauf");
   pruefe("und auf der Linie liegen Punkte", pac.krumen >= 4, pac.krumen + " Punkte");
   /* Und das Wichtigste: wer gefressen wird, geht wirklich herunter. */
