@@ -366,6 +366,29 @@ window.LiveChat = (function () {
   /* Einmal je Betreten sagen, wenn es NICHT das eigene Relais ist.
      Nur auf diesem Geraet — es ist ein Befund, keine Nachricht. */
   function relaisMelden() {
+    /* DIE AUTOMATISCHE REGEL.
+       GEWUENSCHT: „Wir muessen ja sowieso die automatische Regel
+       haben — wenn das aufgebraucht ist, dass es dann blockiert und
+       wieder in den Fokus-Modus zurueckgeht, damit niemand das
+       Kontingent ueberschreiten kann."
+
+       Genau hier steht fest, dass es aufgebraucht ist: die Leitung
+       antwortet mit „budget-erschoepft" oder „tagesgrenze". Von da an
+       bleibt der Fokus-Modus an und laesst sich auch vom Betreiber
+       nicht mehr herausschalten (siehe fokusSetzen). Das ist keine
+       Strafe, sondern das Einzige, was in dem Augenblick noch
+       funktioniert: ohne Relais traegt die Leitung nur noch einen
+       Sprecher zugleich. */
+    if (relaisStand.grund === "budget-erschoepft" || relaisStand.grund === "tagesgrenze") {
+      if (!kontingentAus) {
+        kontingentAus = true;
+        zustand.fokus = true;
+        systemZeile("\ud83c\udf9a\ufe0f Das Gespraechs-Kontingent ist aufgebraucht — "
+          + "ab jetzt gilt der Fokus-Modus: es spricht immer nur einer. "
+          + "Geschrieben werden darf jederzeit.");
+        melden();
+      }
+    }
     if (relaisStand.quelle === "cloudflare") return;
     if (window.DMA_TURN && window.DMA_TURN.length) return;
     systemZeile("\u26a0\ufe0f Dieses Ger\u00e4t l\u00e4uft ohne eigenes Relais — "
@@ -520,7 +543,16 @@ window.LiveChat = (function () {
       wer.push({
         id: p.id, seit: p.seit || 0, name: p.name || "Gast", ich: false,
         strom: p.strom || null, tonAn: p.tonAn !== false, bildAn: p.bildAn === true,
-        bild: p.bild || "", spricht: Boolean(p.spricht)
+        bild: p.bild || "", spricht: Boolean(p.spricht),
+        /* HIER GING DIE WAHL VERLOREN.
+           Weiter unten steht „sprechbild: p.sprechbild || 'ring'" —
+           nur kam sie hier gar nicht erst mit. Diese Liste ist eine
+           KOPIE der Person, Feld fuer Feld, und das eine Feld fehlte.
+           Damit sah man bei allen anderen fuer immer den gruenen
+           Standardring, ganz gleich, was sie gewaehlt hatten und wie
+           oft ihr Geraet es schickte. Gemeldet als: „Ich sehe ihren
+           Effekt nicht. Sie sieht ihn selber, aber ich seh ihn nicht." */
+        sprechbild: p.sprechbild || ""
       });
     });
     /* Nach Ankunftszeit, bei Gleichstand nach der Kennung — damit die
@@ -2636,6 +2668,15 @@ window.LiveChat = (function () {
     /* Jedes Lebenszeichen zählt — auch eine Kerze oder ein Satz im
        Chat sagt: der ist noch da. */
     if (zustand.leute[n.von]) zustand.leute[n.von].gesehen = Date.now();
+    /* UND JEDES SAGT AUCH, WIE DIESER MENSCH BEIM SPRECHEN AUSSIEHT.
+       Die Wahl faehrt in der Chatzeile, im Puls und in der Begruessung
+       mit. Sie hier EINMAL zu lesen ist die einzige Fassung, die nicht
+       wieder auseinanderlaeuft: jede Abzweigung weiter unten haette
+       ihre eigene Zeile gebraucht, und genau eine davon (der Puls)
+       war vergessen. Ein Paket, das nichts dazu sagt, aendert nichts. */
+    if (zustand.leute[n.von] && typeof n.sprechbild === "string" && n.sprechbild) {
+      zustand.leute[n.von].sprechbild = n.sprechbild;
+    }
     /* Und jedes Paket sagt nebenbei, ob da eine Frau oder ein Mann
        sitzt — das Zeichen aus dem Profil reist mit. */
     geschlechtMerken(n.von, n.geschlecht);
@@ -2709,6 +2750,9 @@ window.LiveChat = (function () {
          als ein Hintergrund, der jemandem gehört, der längst weg ist. */
       senden({ art: "auch-da", an: n.von, name: zustand.ichName, tonAn: zustand.tonAn,
                bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
+               /* Damit ein Ankoemmling nicht sechs Sekunden lang bei
+                  allen den gruenen Standardring sieht. */
+               sprechbild: zustand.sprechbild || "",
                geschlecht: zustand.geschlecht || "", konto: kontoId || "",
                haeuptling: zustand.haeuptling, thema: zustand.thema,
                fokus: zustand.fokus,
@@ -2976,7 +3020,11 @@ window.LiveChat = (function () {
       return;
     }
     if (n.art === "fokus") {
-      var chef = zustand.leute[n.von] && zustand.leute[n.von].haeuptling;
+      /* Nur vom Betreiber. Ein Haeuptling ist noch kein Betreiber —
+         Haeuptling wird man schon, indem man einen Raum als Erster
+         betritt. Das Paket sagt es selbst; ein fremdes Geraet, das
+         hier schwindelt, wuerde eine Regel setzen, die Geld kostet. */
+      var chef = Boolean(n.betreiber) && zustand.leute[n.von];
       if (!chef) return;
       if (zustand.fokus === Boolean(n.fokus)) return;
       zustand.fokus = Boolean(n.fokus);
@@ -3210,6 +3258,12 @@ window.LiveChat = (function () {
   function personEintragen(n) {
     var p = zustand.leute[n.von];
     if (!p) return;
+    /* Das Sprechbild wird hier gelesen und nur hier — personEintragen
+       laeuft bei jedem Paket, das etwas ueber eine Person sagt (da,
+       auch-da, puls, zustand). Stuende es an vier Stellen einzeln,
+       waere eine davon frueher oder spaeter vergessen; genau so war
+       es bisher, und der Puls war die vergessene. */
+    if (typeof n.sprechbild === "string" && n.sprechbild) p.sprechbild = n.sprechbild;
     if (typeof n.seit === "number" && n.seit > 0) p.seit = n.seit;
     if (typeof n.buehne === "boolean") p.buehne = n.buehne;
     if (typeof n.spricht === "boolean") p.spricht = n.spricht;
@@ -3251,6 +3305,19 @@ window.LiveChat = (function () {
                /* Und wem das Konto gehoert: nur damit ein Fluestern in
                   der Tabelle eine Anschrift bekommt (siehe unten). */
                konto: kontoId || "",
+               /* GEMELDET: „Wenn jemand anders einen Effekt in seinem
+                  Sprechbild einstellt — zum Beispiel bei Emmi aus
+                  Aegypten —, ich sehe ihren Effekt nicht. Sie sieht
+                  ihn selber, aber ich seh ihn nicht."
+
+                  Genau daran lag es: das Sprechbild reiste nur in der
+                  Chatzeile und in der einen Meldung beim Umstellen mit.
+                  Wer spaeter hereinkam oder das eine Paket verpasste,
+                  sah bei allen anderen fuer immer den gruenen Ring.
+                  Jetzt faehrt es im Puls mit — alle sechs Sekunden,
+                  von jedem, an alle. Damit stimmt es spaetestens nach
+                  einem Atemzug ueberall. */
+               sprechbild: zustand.sprechbild || "",
                /* Damit Spaeterkommende dieselbe Sitzordnung sehen. */
                sitz: sitzTausch });
       var jetzt = Date.now(), weg = false;
@@ -6382,14 +6449,57 @@ window.LiveChat = (function () {
        schon — und zwar in zweierlei Hinsicht. */
     return zustand.fokus !== false;
   }
+  /* =========================================================
+     DEN FOKUS SCHALTET NUR DER BETREIBER
+     ---------------------------------------------------------
+     GEMELDET: „Der Fokus-Schalter ist an, aber trotzdem sprechen
+     wir frei. Emmi hat mir gerade gesagt, dass sie den
+     Fokus-Schalter auch hat. Er ist nicht fuer die anderen. Der
+     ist fuer mich, falls ich das Kontingent weiter nutzen
+     moechte, aber nicht fuer andere. Das ist nur fuer mich zur
+     Kontrolle — ist ja mein Geld."
+
+     Vorher durfte jeder Haeuptling schalten, und Haeuptling wird
+     man schon dadurch, dass man einen Raum als Erster betritt.
+     Emmi hatte den Schalter also voellig zu Recht — nur sollte
+     sie ihn gar nicht haben. Jetzt entscheidet allein
+     binLehrer(): der Betreiber. Alle anderen sehen, dass es ihn
+     gibt, koennen ihn aber nicht umlegen, und ein „fokus"-Paket
+     von ihnen wird verworfen (siehe empfangen()).
+
+     Die automatische Regel bleibt davon unberuehrt und ist die
+     eigentliche Sicherung: ist das Kontingent aufgebraucht,
+     geht der Raum von selbst in den Fokus-Modus zurueck und
+     laesst sich auch vom Betreiber nicht mehr herausschalten. */
   function darfFokusSchalten() {
-    return Boolean(binLehrer() || zustand.haeuptling);
+    return Boolean(binLehrer());
   }
+  /* WANN DER FOKUS ERZWUNGEN IST.
+     Der Raum hat ein Kontingent fuer die Gespraechsleitung (siehe
+     RELAIS.md). Ist es aufgebraucht, meldet die Leitung das, und von
+     da an bleibt der Fokus an — sonst redeten alle durcheinander in
+     eine Leitung, die es gar nicht mehr gibt. Die Marke setzt der
+     Teil, der die Leitung holt; hier wird sie nur gelesen. */
+  var kontingentAus = false;
+  function fokusErzwungen() { return Boolean(kontingentAus); }
+
   function fokusSetzen(an) {
     if (!darfFokusSchalten()) return fokusAn();
+    /* Ist das Kontingent aufgebraucht, bleibt der Fokus an — auch
+       fuer den Betreiber. Das ist die automatische Regel, und sie
+       steht ueber dem Schalter: „Wenn das aufgebraucht ist, dass es
+       dann blockiert und wieder in den Fokus-Modus zurueckgeht." */
+    if (!an && fokusErzwungen()) {
+      systemZeile("\ud83c\udf9a\ufe0f Das Gespraechs-Kontingent ist aufgebraucht — "
+        + "der Fokus-Modus bleibt an, bis es sich erneuert. "
+        + "Geschrieben werden darf jederzeit.");
+      zustand.fokus = true;
+      melden();
+      return fokusAn();
+    }
     zustand.fokus = Boolean(an);
     fokusMerken(zustand.raum, zustand.fokus);
-    senden({ art: "fokus", fokus: zustand.fokus });
+    senden({ art: "fokus", fokus: zustand.fokus, betreiber: true });
     melden();
     return fokusAn();
   }
@@ -10179,6 +10289,15 @@ window.LiveChat = (function () {
     haeufigsteBefehle: haeufigsteBefehle,
     befehlZaehlerLeeren: befehlZaehlerLeeren,
     pruefEmpfangen: function (n) { return empfangen(n); },
+    /* Einen Puls von Hand ausloesen — damit sich nachmessen laesst,
+       WAS er mitnimmt, ohne sechs Sekunden zu warten. */
+    pruefPuls: function () {
+      senden({ art: "puls", name: zustand.ichName, tonAn: zustand.tonAn,
+               bildAn: zustand.bildAn, bild: zustand.ichBild,
+               seit: zustand.seit, buehne: zustand.buehne, spricht: zustand.spricht,
+               geschlecht: zustand.geschlecht || "", konto: kontoId || "",
+               sprechbild: zustand.sprechbild || "", sitz: sitzTausch });
+    },
     pruefEmpfangenPost: function (n) { return postEmpfangen(n); },
     pruefPostAbfangen: function (f) { pruefPostHaken = typeof f === "function" ? f : null; },
     pruefPostEmpfangen: function (n) { return postEmpfangen(n); },
@@ -10427,6 +10546,16 @@ window.LiveChat = (function () {
        wird die eigene Funktion aufgerufen, nicht die exportierte.
        Genau daran ist eine Messung schon einmal vorbeigelaufen. */
     pruefBetreiber: function (ja) { zustand.betreiber = ja !== false; return zustand.betreiber; },
+    /* Damit sich nachmessen laesst, was passiert, wenn die Leitung
+       „aufgebraucht" meldet — ohne dass man erst ein Kontingent
+       leerfahren muss. Setzt nur den Grund und meldet ihn. */
+    pruefRelaisGrund: function (g) {
+      relaisStand.grund = String(g || "");
+      relaisStand.quelle = "stun";
+      relaisMelden();
+      return relaisStand.grund;
+    },
+    pruefHaeuptling: function (ja) { zustand.haeuptling = ja !== false; return zustand.haeuptling; },
     /* Nur zum Nachmessen: jemanden in den Raum setzen, damit /w und
        das Bild-Fluestern ein Ziel finden. */
     pruefPersonSetzen: function (id, name, konto) {
