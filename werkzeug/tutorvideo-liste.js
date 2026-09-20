@@ -18,7 +18,9 @@ const ORDNER = path.join(WURZEL, "tutor", "video");
 let namen = [];
 try {
   namen = fs.readdirSync(ORDNER).filter((f) => /\.webm$/i.test(f))
-    .map((f) => f.replace(/\.webm$/i, "")).sort();
+    .map((f) => f.replace(/\.webm$/i, ""))
+    /* „-maske.mp4" gehoert zum selben Stueck und ist kein eigenes. */
+    .filter((n) => !/-maske$/.test(n)).sort();
 } catch (e) { namen = []; }
 fs.writeFileSync(path.join(WURZEL, "data-tutorvideo.js"),
   "/* =========================================================\n"

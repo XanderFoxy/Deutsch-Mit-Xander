@@ -49,22 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 32 — der Tutor spricht wirklich",
+  stand: "Runde 34 — Stimme und zwei neue Reisen",
 
   inArbeit: [
-    { seit: "2026-09-20T21:59", nurBetreiber: true,
-      text: "Alle übrigen ~39 Tutorsätze: 0,53 Dollar für 3 Sekunden gemessen, rund 95 Dollar für alles. Sag mir, ob ich sie alle erzeugen soll oder nur die Hauptsektionen." },
-    { seit: "2026-09-20T21:59", nurBetreiber: true,
-      text: "Boot und Kran als weitere Reisen" },
-    { seit: "2026-09-20T21:59", nurBetreiber: true,
-      text: "Die Lupe, die die Eingabesymbole verdeckt — ich finde die Stelle nicht" },
+    { seit: "2026-09-20T22:58",
+      text: "Der animierte Tutor: Über mich zuerst, danach Lernen, Wissen, Profil" },
+    { seit: "2026-09-20T22:58", nurBetreiber: true,
+      text: "Video kostet rund 0,18 $ je Sekunde — Über mich sind 100 Sekunden" },
+    { seit: "2026-09-20T22:58",
+      text: "Feuerring fotorealistischer" },
+    { seit: "2026-09-20T22:58",
+      text: "Strohhalm: saugen und blasen unter einer Kachel" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-20T21:59",
-      text: "Der erste lippensynchrone Tutorfilm ist drin (Lernen · Dialoge): freigestellt, 518 kB, läuft über dem Standbild" },
-    { seit: "2026-09-20T21:59",
-      text: "Die Filme sind webm mit Alpha — der schwarze Hintergrund ist herausgerechnet; wo webm mit Alpha nicht geht (Safari), bleibt das Standbild stehen" },
+    { seit: "2026-09-20T22:58",
+      text: "Über mich wird jetzt vorgelesen — fünf Stücke in Alex' eigener Stimme" },
+    { seit: "2026-09-20T22:58",
+      text: "Willkommensgruß im Profil für alle, die noch kein Konto haben" },
+    { seit: "2026-09-20T22:58",
+      text: "Wissen: die zwei letzten stummen Stücke haben jetzt auch Ton" },
+    { seit: "2026-09-20T22:58",
+      text: "Boot und Baustellenkran als neue Reisen (/boot 5, /kran 5) — im Platzmenü unter Reisen 🧳" },
+    { seit: "2026-09-20T22:58",
+      text: "Eigene Geräusche für Boot und Kran" },
   ],
 };

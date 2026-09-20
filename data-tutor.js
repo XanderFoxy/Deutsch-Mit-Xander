@@ -142,6 +142,17 @@ window.DMA_TUTOR = {
 
   "view-profile": {
     stuecke: [
+      /* GEWUENSCHT: „Vielleicht auch fuer die Leute die neu sind bei
+         der Registration, dass wenn sie auf der Profil Sektion sind,
+         dass er sagt willkommen in deinem Profil ... hier kannst du
+         ein kostenlosen Account fuer Deutsch mit Alex erstellen, um
+         spannende Uebungen und Spiele zu spielen die Spass machen ...
+         dass die Seite komplett kostenlos ist und ich mich freue,
+         dass du dabei bist." Laeuft nur, solange niemand angemeldet
+         ist (wenn: "gast"). */
+      { ton: "prof-willkommen", ziel: "sub-account", wenn: "gast",
+        text: "Willkommen in deinem Profil! Hier kannst du dir einen kostenlosen Account für Deutsch mit Alex anlegen — und dann warten spannende Übungen und Spiele auf dich, die richtig Spaß machen. Die ganze Seite ist komplett kostenlos, du zahlst nirgendwo etwas. Ich freue mich sehr, dass du dabei bist.",
+        hilfe: "Ein Konto kostet nichts und du kannst sofort loslegen." },
       { ton: "prof-00", ziel: "sub-account",
         text: "Das ist dein Profil. Hier siehst du deinen Rang, deine Punkte und alles, was du schon geschafft hast." },
       { ton: "prof-01", ziel: "sub-album",

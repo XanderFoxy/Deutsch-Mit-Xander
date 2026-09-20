@@ -7161,15 +7161,14 @@ html.lc-dino-beben #livechatKarte { animation: lcDinoSchritt 0.62s ease-in-out 1
   70%  { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 66% 100%, 60% 44%, 50% 28%, 40% 45%, 34% 100%, 0% 100%); }
   100% { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 51% 100%, 51% 62%, 50% 58%, 49% 62%, 49% 100%, 0% 100%); }
 }
-.lc-lamellen {
-  animation: lcLamellenAuf 5.2s cubic-bezier(.25,.6,.3,1) both;
-}
-@keyframes lcLamellenAuf {
-  0%   { clip-path: polygon(0% 0%, 100% 0%, 100% 49.5%, 0% 49.5%, 0% 50.5%, 100% 50.5%, 100% 100%, 0% 100%, 0% 0%); }
-  35%  { clip-path: polygon(0% 0%, 100% 0%, 100% 34%, 0% 34%, 0% 66%, 100% 66%, 100% 100%, 0% 100%, 0% 0%); }
-  65%  { clip-path: polygon(0% 0%, 100% 0%, 100% 30%, 0% 30%, 0% 70%, 100% 70%, 100% 100%, 0% 100%, 0% 0%); }
-  100% { clip-path: polygon(0% 0%, 100% 0%, 100% 49.5%, 0% 49.5%, 0% 50.5%, 100% 50.5%, 100% 100%, 0% 100%, 0% 0%); }
-}
+/* GEMELDET: „die Jalousie soll durchgängig sein, nicht in der Mitte
+   mehr Lücke haben und die anderen Streifen sind weiter höher oder
+   weiter unten."
+   GEFUNDEN: genau hier wurde der Spalt gemacht — die ganze Schicht zog
+   in der MITTE einen clip-path auf, während die Lamellen daneben ihre
+   eigene Bewegung hatten. Zwei Bewegungen, die sich widersprachen.
+   Die Lamellen machen das jetzt allein und gleichmäßig. */
+.lc-lamellen { animation: none; }
 
 /* =========================================================
    DIE GROSSEN GESCHENKE — „wie TikTok das macht"
@@ -9556,12 +9555,21 @@ body.lc-schreibt .tutor-reiter {
   white-space: nowrap;
   gap: 2px;
 }
+/* GEMELDET: „diese Kacheln, die leer sind — zum Beispiel wenn ein Wort
+   komplett leer ist —, sollen nicht halb so groß sein, sondern die
+   selben Felder sein wie die anderen, die ausgefüllt sind. Sie sollen
+   die selben Dimensionen haben, auch wenn sie leer sind."
+   Deshalb steht hier jetzt eine FESTE Größe statt einer Mindestbreite:
+   jedes Feld ist gleich breit und gleich hoch, ob „W", „i" oder leer. */
 .lc-raten-feld {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.15em;
-  padding: 0.18em 0.1em;
+  width: 1.4em;
+  min-width: 1.4em;
+  height: 1.72em;
+  padding: 0;
+  overflow: hidden;
   border-radius: 5px;
   border-bottom: 2px solid rgba(255, 255, 255, 0.35);
   background: rgba(0, 0, 0, 0.22);
@@ -9611,7 +9619,7 @@ body.lc-schreibt .tutor-reiter {
    drei Reihen passen und nicht in sechs. */
 @media (max-width: 420px) {
   .lc-raten-taste { min-width: 1.7em; font-size: 0.84em; }
-  .lc-raten-feld { min-width: 1.05em; }
+  .lc-raten-feld { width: 1.25em; min-width: 1.25em; height: 1.6em; }
 }
 
 /* =====================================================================
@@ -15495,7 +15503,9 @@ body.lc-schreibt .tutor-reiter {
 .lc-lamelle {
   position: absolute;
   left: 0; right: 0;
-  height: 11%;
+  /* 10,6 % bei 10 % Abstand: die Lamellen überlappen leicht, damit
+     zwischen ihnen kein heller Strich stehen bleibt. */
+  height: 10.6%;
   transform-origin: 50% 0;
   background: linear-gradient(180deg, #e7ded0, #c9bda8);
   box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
@@ -15918,7 +15928,7 @@ body.lc-schreibt .tutor-reiter {
    · „ein multidimensionales Gate, dass man in diesem Gate
    verschwindet und an einem anderen Platz wieder auftaucht."
    ----------------------------------------------------------------- */
-.lc-flieger, .lc-maulwurf, .lc-tor-wirbel {
+.lc-flieger, .lc-maulwurf, .lc-tor-wirbel, .lc-boot, .lc-kran {
   position: absolute;
   pointer-events: none;
   z-index: 8;
@@ -15999,8 +16009,121 @@ body.lc-schreibt .tutor-reiter {
   70%  { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(540deg); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(.1) rotate(720deg); }
 }
+/* -----------------------------------------------------------------
+   DAS BOOT UND DER BAUSTELLENKRAN
+   GEWÜNSCHT: „eine Variante mit dem Flugzeug … und eine Variante
+   vielleicht noch mit einem Boot … oder dass man einen
+   Baustellenkran hat, der einen dann dahin hebt."
+   ----------------------------------------------------------------- */
+.lc-boot {
+  width: calc(var(--gross, 64px) * 2);
+  height: calc(var(--gross, 64px) * 1.15);
+  transform: translate(-50%, -50%);
+}
+.lc-boot-schaukel {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 88%;
+  animation: lcBootWiegeR34 1.9s ease-in-out infinite alternate;
+}
+.lc-boot-form { width: 100%; height: 100%; overflow: visible; }
+.lc-boot-rumpf    { fill: #8a4f2c; stroke: #5d3218; stroke-width: 1.4; }
+.lc-boot-streifen { fill: #e8d7bf; }
+.lc-boot-mast     { fill: #6b4224; }
+.lc-boot-segel    { fill: #f4f8ff; stroke: #c3d2e4; stroke-width: 1.2; }
+/* Das Bild sitzt im Boot — wie hinter dem Flugzeugfenster. */
+.lc-boot-fenster {
+  position: absolute;
+  left: 31%;
+  top: 50%;
+  width: 26%;
+  height: 45%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 2px #5d3218, inset 0 .1em .3em rgba(255, 255, 255, .4);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: .8em;
+  color: #fff4e6;
+}
+/* Die Kielwelle unter dem Rumpf. */
+.lc-boot-wasser {
+  position: absolute;
+  left: 50%;
+  bottom: 2%;
+  width: 86%;
+  height: 16%;
+  margin-left: -43%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, .8),
+              rgba(120, 190, 235, .55) 55%, rgba(120, 190, 235, 0) 78%);
+  animation: lcBootWelleR34 1.1s ease-in-out infinite alternate;
+}
+@keyframes lcBootWiegeR34 {
+  from { transform: rotate(-3.5deg) translateY(2%); }
+  to   { transform: rotate(3.5deg) translateY(-2%); }
+}
+@keyframes lcBootWelleR34 {
+  from { opacity: .55; transform: scaleX(.86); }
+  to   { opacity: 1; transform: scaleX(1.08); }
+}
+/* Der Kran: das Bild hängt am Seil und wird hinübergehoben. */
+.lc-kran {
+  width: calc(var(--gross, 64px) * 0.92);
+  height: calc(var(--gross, 64px) * 0.92);
+  transform: translate(-50%, -50%);
+}
+.lc-kran-seil {
+  position: absolute;
+  left: 50%;
+  bottom: 62%;
+  width: 3px;
+  height: var(--seil, 80px);
+  margin: 0;
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  background: linear-gradient(180deg, #6d7480, #454b55);
+  border-radius: 2px;
+}
+.lc-kran-buegel {
+  position: absolute;
+  left: 50%;
+  top: 2%;
+  width: 46%;
+  height: 26%;
+  margin-left: -23%;
+  border: 3px solid #b9832a;
+  border-bottom: none;
+  border-radius: 50% 50% 0 0 / 80% 80% 0 0;
+  background: transparent;
+}
+.lc-kran-last {
+  position: absolute;
+  left: 50%;
+  top: 24%;
+  width: 76%;
+  height: 76%;
+  transform: translateX(-50%);
+  transform-origin: 50% -20%;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 3px #b9832a, 0 .12em .3em rgba(0, 0, 0, .35);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #fff6e3;
+  animation: lcKranWiegeR34 1.6s ease-in-out infinite alternate;
+}
+@keyframes lcKranWiegeR34 {
+  from { transform: translateX(-50%) rotate(-4deg); }
+  to   { transform: translateX(-50%) rotate(4deg); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .lc-flieger, .lc-maulwurf, .lc-tor-wirbel { display: none; }
+  .lc-flieger, .lc-maulwurf, .lc-tor-wirbel, .lc-boot, .lc-kran { display: none; }
 }
 
 /* =================================================================
@@ -16049,3 +16172,119 @@ body.lc-schreibt .tutor-reiter {
 }
 /* Aufgezogen unterwegs: eine kurze Spur hinter dem Bild. */
 .lc-aufgezogen { filter: drop-shadow(-6px 0 6px rgba(120, 180, 255, .45)); }
+
+/* =================================================================
+   AUFDECKEN: ABSCHICKEN GEHT IMMER, ALTE RUNDEN NICHT MEHR
+   -----------------------------------------------------------------
+   GEMELDET: „Kann aber nichts abschicken, weil sich das nicht
+   abschicken lässt … und die andere Person kann sogar eine falsche
+   Antwort eintragen aus der Aufgabe heraus."
+   ----------------------------------------------------------------- */
+.lc-raten-eingabe {
+  display: block;
+  width: 100%;
+  margin: .5rem 0 .4rem;
+  padding: .42em .6em;
+  border-radius: .5rem;
+  border: 1px solid rgba(255, 255, 255, .22);
+  background: rgba(0, 0, 0, .28);
+  color: inherit;
+  font: inherit;
+}
+.lc-raten-eingabe:disabled { opacity: .55; }
+/* Eine Tafel aus einer alten Runde: sichtbar aus dem Spiel. */
+.lc-raten.lc-raten-vorbei { opacity: .62; filter: grayscale(.5); }
+.lc-raten.lc-raten-vorbei .lc-raten-dran { display: none !important; }
+
+/* =================================================================
+   DIE AUSSICHT BEI NACHT
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „es ist ja zum Beispiel nachts, dann zeigt es einen
+   schönen Nachthimmel. Und bei der Jalousie kannst du auch eine
+   andere Aussicht machen."
+   ----------------------------------------------------------------- */
+.lc-luke-aussicht.lc-aussicht-nacht {
+  background: linear-gradient(180deg, #0a1430 0%, #14264f 46%, #1d3358 72%, #223a5e 100%);
+}
+/* Aus der Sonne wird der Mond. */
+.lc-aussicht-nacht .lc-luke-sonne {
+  background: radial-gradient(circle at 38% 34%, #fdfbf0, #e8e2c6 62%, #cfc9ab);
+  box-shadow: 0 0 1.1em rgba(240, 236, 210, .65);
+}
+.lc-aussicht-nacht .lc-luke-huegel { filter: brightness(.42) saturate(.7); }
+.lc-aussicht-sterne { position: absolute; inset: 0; pointer-events: none; }
+.lc-aussicht-sterne b {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: .85;
+  animation: lcSternBlinkR33 var(--blink, 2s) ease-in-out infinite alternate;
+}
+@keyframes lcSternBlinkR33 {
+  from { opacity: .25; transform: scale(.7); }
+  to   { opacity: 1;   transform: scale(1.15); }
+}
+/* Die zweite Aussicht — hinter der Jalousie liegt eine andere
+   Blickrichtung: weiter, flacher, mit Meer statt Hügelkette. */
+.lc-luke-aussicht.lc-aussicht-anders .lc-luke-huegel {
+  border-radius: 46% 54% 0 0 / 100% 100% 0 0;
+  transform: scaleY(.62);
+}
+.lc-luke-aussicht.lc-aussicht-anders .lc-luke-huegel-2 { transform: scaleY(.44) translateX(-12%); }
+.lc-luke-aussicht.lc-aussicht-anders .lc-luke-sonne { left: 66%; top: 16%; }
+@media (prefers-reduced-motion: reduce) {
+  .lc-aussicht-sterne b { animation: none; }
+}
+
+/* =================================================================
+   WHITEBOARD — FEINER ZEIGER, ZWEI GRÖSSEN, WERKZEUGE ERREICHBAR
+   -----------------------------------------------------------------
+   GEMELDET: „der Pointer ist ein bisschen zu groß, vielleicht kann
+   man den fein einstellen und kleiner machen … wenn ich im Bild bin,
+   seh ich die Werkzeuge nicht mehr, wenn ich sie brauche — ich muss
+   eine Option haben, zu den Werkzeugen zurückzukommen … es kann ein
+   bisschen intuitiver eingebunden werden, so dass die Chat-Plätze
+   vielleicht noch bedienbar sind."
+   ----------------------------------------------------------------- */
+.lc-tafel-zeiger {
+  width: calc(2.2em * var(--zg, .6));
+  height: calc(2.2em * var(--zg, .6));
+  margin: calc(-1.1em * var(--zg, .6)) 0 0 calc(-1.1em * var(--zg, .6));
+  border-width: 2px;
+}
+/* Die Werkzeugleiste liegt ÜBER dem Blatt statt darunter: damit ist
+   sie auch dann da, wenn das Bild herangeholt ist. */
+.lc-tafel-leiste {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  background: rgba(10, 20, 36, .72);
+  border-top: 1px solid rgba(255, 255, 255, .14);
+  backdrop-filter: blur(3px);
+}
+.lc-tafel-leiste .lc-tafel-knopf { background: rgba(255, 255, 255, .92); }
+.lc-tafel-blatt { padding-bottom: 1.9rem; }
+/* Groß: die Tafel nimmt die ganze Sitzreihe. Klein (Standard): die
+   Plätze bleiben darunter sichtbar und bedienbar. */
+.lc-tafel.lc-tafel-voll { bottom: 0; }
+
+/* Die Maskenleinwand liegt genau dort, wo auch der Film liegt —
+   sichtbar wird immer nur eine von beiden. */
+.tutor-maske {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: min(46vh, 300px);
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .25s ease;
+  filter: drop-shadow(-6px 4px 12px rgba(0, 0, 0, .35));
+}
+.tutor-maske.tutor-video-da { opacity: 1; }
+.tutor-buehne:has(.tutor-maske.tutor-video-da) .tutor-figur { animation: none; }

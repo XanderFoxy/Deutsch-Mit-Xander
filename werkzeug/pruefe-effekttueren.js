@@ -89,6 +89,39 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css",
     console.log("  ✓ jedes Effektwort geht auch wirklich hinaus   "
       + (d.woerter || []).length + " Woerter");
   }
+  /* UND DIE ANDERE RICHTUNG — SIE HAT UNS RUNDE 30 GEKOSTET.
+     GEMELDET: „die Schneekugel geht auch noch gar nicht, und viele
+     der neuen Animationen funktionieren noch gar nicht. Sie sind
+     einfach nicht sichtbar."
+     GEFUNDEN: lcWirkung faengt mit „const e = LC_EFFEKTE[art]; if
+     (!e) return;" an. Eine Wirkung, die livechat.js verschickt, die
+     aber in DIESER Tabelle fehlt, wird stillschweigend verworfen —
+     Befehl, Satz, Ton und Zeichnung koennen laengst dastehen. Genau
+     so waren „gemeinsam" und „schneekugel" tot.
+     Deshalb wird ab jetzt auch das geprueft: jede verschickte
+     Wirkung MUSS in LC_EFFEKTE stehen. */
+  const lcQuelle = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
+  const jsQuelle = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
+  const verschickt = new Set();
+  (lcQuelle.match(/wirkung: "[a-zA-Z0-9]+"/g) || [])
+    .forEach((w) => verschickt.add(w.split('"')[1]));
+  (lcQuelle.match(/wirkung: art === "[a-z]+" \? "[a-z]+" : "[a-z]+"/g) || [])
+    .forEach((w) => (w.match(/"[a-z]+"/g) || [])
+      .forEach((x) => verschickt.add(x.replace(/"/g, ""))));
+  const tabAb = jsQuelle.indexOf("const LC_EFFEKTE = {");
+  const tabBis = jsQuelle.indexOf("\n  };", tabAb);
+  const inTabelle = new Set((jsQuelle.slice(tabAb, tabBis).match(/^\s{4}([a-zA-Z0-9_]+):/gm) || [])
+    .map((x) => x.trim().replace(":", "")));
+  const ohneTabelle = [...verschickt].filter((w) => !inTabelle.has(w)).sort();
+  if (ohneTabelle.length) {
+    console.log("\n❌ WIRD VERSCHICKT, STEHT ABER NICHT IN LC_EFFEKTE — ZEICHNET NICHTS ("
+      + ohneTabelle.length + "):");
+    ohneTabelle.forEach((w) => console.log("     " + w));
+  } else {
+    console.log("  ✓ jede verschickte Wirkung steht auch in LC_EFFEKTE   "
+      + verschickt.size + " Wirkungen");
+  }
+
   await br.close(); srv.close();
-  process.exit(ohneTuer.length || stumm.length ? 1 : 0);
+  process.exit(ohneTuer.length || stumm.length || ohneTabelle.length ? 1 : 0);
 })();

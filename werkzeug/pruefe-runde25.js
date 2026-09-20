@@ -72,8 +72,15 @@ const pruefe = (was, gut, zusatz) => {
     (lc.match(/zusatzUebernehmen\(/g) || []).length + " Stellen");
 
   console.log("\nDAS RUNDENLAUFEN\n");
-  pruefe("die Runde ist die Sitzreihe", /function rundeNamen/.test(lc)
-    && /plaetzeBauen\(\)\.filter/.test(lc));
+  /* NACHGEBESSERT IN RUNDE 30: die Runde war die SITZREIHE — und
+     GEFRAGT war: „wenn jemand mit mir waehrend der Zeit Plaetze
+     tauscht … oder die Leute sind, wie sie nacheinander in den Raum
+     gekommen sind, in der Reihenfolge gezaehlt." Jetzt ist es die
+     Ankunft im Raum (spielReihe), damit ein Platztausch die
+     Reihenfolge nicht mitten im Spiel umwirft. */
+  pruefe("die Runde steht fest und haengt nicht am Sitzplatz",
+    /function rundeNamen/.test(lc) && /function spielReihe\(\)/.test(lc)
+    && /return spielReihe\(\)\.map/.test(lc));
   pruefe("nach dem Stellen ist der Naechste dran",
     /dran: naechsterDran\(zustand\.ichId\)/.test(lc));
   pruefe("nach jedem Versuch rueckt sie weiter",

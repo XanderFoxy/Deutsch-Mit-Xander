@@ -937,6 +937,11 @@ window.LiveChat = (function () {
     flug:     { wirkung: "flug",     satz: "fliegt hin\u00fcber zu", emoji: "\u2708\ufe0f" },
     maulwurf: { wirkung: "maulwurf", satz: "gr\u00e4bt sich hin\u00fcber zu", emoji: "\ud83e\udda1" },
     portal:   { wirkung: "portal",   satz: "geht durchs Tor zu", emoji: "\ud83c\udf00" },
+    /* GEWUENSCHT: „eine Variante mit dem Flugzeug ... und eine
+       Variante vielleicht noch mit einem Boot ... oder dass man einen
+       Baustellenkran hat." Zwei weitere Reisen, gleiche Technik. */
+    boot:     { wirkung: "boot",     satz: "schippert hin\u00fcber zu", emoji: "\u26f5" },
+    kran:     { wirkung: "kran",     satz: "l\u00e4sst sich hin\u00fcberheben zu", emoji: "\ud83c\udfd7\ufe0f" },
     huepfen:  { wirkung: "spielzug",   satz: "h\u00fcpft Platz f\u00fcr Platz zu", emoji: "\ud83c\udfb2" },
     /* GEWUENSCHT: „das Laufen von Nummer zu Nummer bis ans Ziel, wo
        man hin moechte … diese Springen-Animation wie auf dem
@@ -8728,6 +8733,10 @@ window.LiveChat = (function () {
       was: "Maulwurf \u2014 du gr\u00e4bst dich unter dem Raum hindurch und kommst auf Platz 5 wieder heraus" },
     { gr: "reden", w: "portal", kurz: "gate", nutzt: "/portal 5",
       was: "Tor \u2014 du verschwindest im Wirbel und tauchst auf Platz 5 wieder auf" },
+    { gr: "reden", w: "boot", kurz: "segeln", nutzt: "/boot 5",
+      was: "Boot \u2014 dein Bild schippert \u00fcbers Wasser zu Platz 5" },
+    { gr: "reden", w: "kran", kurz: "baukran", nutzt: "/kran 5",
+      was: "Baustellenkran \u2014 dein Bild wird hochgehoben und auf Platz 5 abgesetzt" },
     { gr: "reden", w: "gemeinsam", kurz: "zuzweit", nutzt: "/gemeinsam Name",
       was: "zu zweit losfahren \u2014 sein Bild h\u00e4ngt sich an deins und ihr rollt zusammen weg" },
     { gr: "reden", w: "laufen",  kurz: "",      nutzt: "/laufen 8",           was: "Feld f\u00fcr Feld zu Platz 8 laufen \u2014 geht auch mit /fahren 8" },
@@ -10515,11 +10524,14 @@ window.LiveChat = (function () {
     /* Auch Flug, Maulwurf und Tor bekommen hinter dem Befehl eine
        NUMMER — sonst stuende im Chat „fliegt hinueber zu 5", als hiesse
        jemand 5. */
-    if ((art === "flug" || art === "maulwurf" || art === "portal")
+    if ((art === "flug" || art === "maulwurf" || art === "portal"
+         || art === "boot" || art === "kran")
         && /^\s*\d+\s*$/.test(rest)) {
       var satzR = { flug: [" fliegt zu Platz ", "\u2708\ufe0f"],
                     maulwurf: [" gr\u00e4bt sich zu Platz ", "\ud83e\udda1"],
-                    portal: [" geht durchs Tor zu Platz ", "\ud83c\udf00"] }[art];
+                    portal: [" geht durchs Tor zu Platz ", "\ud83c\udf00"],
+                    boot: [" schippert zu Platz ", "\u26f5"],
+                    kran: [" wird gehoben zu Platz ", "\ud83c\udfd7\ufe0f"] }[art];
       return anAlle("aktion", zustand.ichName + satzR[0] + rest.trim() + "  " + satzR[1],
                     { wirkung: art, wen: rest.trim() });
     }
@@ -11758,6 +11770,20 @@ window.LiveChat = (function () {
        Strich ist kein Satz. */
     /* Schiffe versenken: ein Tipp aufs Brett. Was er bedeutet,
        entscheidet der Abschnitt des Spiels — siehe schiffeWahl. */
+    /* WELCHE AUFGABE GERADE LAEUFT.
+       GEMELDET: „die andere Person kann sogar eine falsche Antwort
+       eintragen. Ich habe ‚Emmi ist cool' geschrieben und sie hat
+       ‚das ist cool' abgeschickt aus der Aufgabe heraus, was
+       eigentlich gar nicht moeglich sein sollte."
+       GEFUNDEN: im Verlauf stehen ALLE frueheren Aufdeck-Tafeln, und
+       jede war weiter bedienbar — mit ihrer alten Loesung. Damit die
+       Tafel weiss, ob sie noch die aktuelle ist, sagt es ihr diese
+       Auskunft. */
+    aufgabeStand: function () {
+      if (!offeneAufgabe) return { offen: false, zeileId: "", typ: "", dran: "" };
+      return { offen: true, zeileId: offeneAufgabe.zeileId || "",
+               typ: offeneAufgabe.typ || "", dran: offeneAufgabe.dran || "" };
+    },
     schiffeWahl: function (nr) { return schiffeWahl(nr); },
     schiffeStand: function () { return schiffeStand; },
     tafelSenden: function (d) {

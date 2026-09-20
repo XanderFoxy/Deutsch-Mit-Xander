@@ -23709,6 +23709,10 @@
     flug:           { ton: "flugzeug", dauer: 2800, laut: 0.45 },
     maulwurf:       { ton: "maulwurf", dauer: 2400, laut: 0.5 },
     portal:         { ton: "portal",   dauer: 2200, laut: 0.5 },
+    /* Die zwei neuen Reisen: „eine Variante vielleicht noch mit einem
+       Boot ... oder dass man einen Baustellenkran hat." */
+    boot:           { ton: "boot",     dauer: 3000, laut: 0.45 },
+    kran:           { ton: "kran",     dauer: 3000, laut: 0.45 },
     kopfhoerer:     { ton: "noten",    dauer: 3200, laut: 0.45 },
     /* „das Fenster aufmachen soll auch nach Fenster oeffnen klingen." */
     luke:           { ton: "fensterauf", dauer: 3400, laut: 0.5 },
@@ -25157,6 +25161,8 @@
       [["\u2708\ufe0f", "Flugzeug", "flug"],
        ["\ud83e\udda1", "Maulwurf", "maulwurf"],
        ["\ud83c\udf00", "Tor", "portal"],
+       ["\u26f5", "Boot", "boot"],
+       ["\ud83c\udfd7\ufe0f", "Kran", "kran"],
        ["\ud83d\udeb2", "Zu zweit", "gemeinsam"]]],
     ["\ud83d\udd2e", "Schneekugel", "schneekugel"],
     ["\ud83c\udfa7", "H\u00f6rer", "kopfhoerer"],
@@ -25897,6 +25903,17 @@
     };
     const weg = (e) => {
       if (e && e.target && kasten.contains(e.target)) return;
+      /* GEMELDET: „das Pendel mit dem Vorlesen funktioniert nicht.
+         Wenn ich nämlich eine andere Kategorie auswähle, lande ich
+         wieder im Chat und es wählt gar nichts aus."
+         GEFUNDEN: hier hing ein Zuhörer auf JEDES Rollen — und zwar
+         mit „capture", also auch auf das Rollen eines Kastens INNEN.
+         Der Chat rollt aber von selbst nach unten, sobald eine Zeile
+         ankommt oder eine Liste nachlädt. Dieses Rollen riss jedes
+         offene Menü mit sich, mitten im Aussuchen.
+         Ab jetzt macht nur das Rollen der SEITE zu. */
+      if (e && e.type === "scroll" && e.target && e.target !== document
+          && e.target !== document.documentElement && e.target !== document.body) return;
       abhaengen();
       lcMenueAufraeumen = null;
       lcPlatzMenueZu();
@@ -27249,10 +27266,25 @@
        Refrain des Liedes (siehe lcWirkung). Ohne diesen Eintrag waere
        die Wirkung unbekannt und lcWirkung stiege gleich oben aus. */
     notenlied: { ganzeSeite: true, wie: "noten" },
+    /* GEMELDET: „die Schneekugel geht auch noch gar nicht, und viele
+       der neuen Animationen funktionieren noch gar nicht. Sie sind
+       einfach nicht sichtbar und sie sind auch nicht auf beiden
+       Seiten sichtbar."
+       GEFUNDEN, und es war genau EINE Zeile: lcWirkung faengt mit
+         const e = LC_EFFEKTE[art]; if (!e) return;
+       an. Wer hier nicht steht, wird gar nicht erst gezeichnet — auch
+       wenn Befehl, Satz, Ton und Zeichenfunktion laengst da sind.
+       „gemeinsam" und „schneekugel" fehlten. Damit das nie wieder
+       passieren kann, prueft pruefe-effekttueren ab jetzt BEIDE
+       Richtungen (siehe dort). */
+    gemeinsam:   { zeichen: ["\ud83d\udeb2"], wie: 4, klasse: "umarmen" },
+    schneekugel: { zeichen: ["\ud83d\udd2e"], wie: 5, klasse: "umarmen" },
     /* Die drei neuen Reisen — sie zeichnen selbst und regnen nichts. */
     flug:     { zeichen: ["\u2708\ufe0f"], wie: 4, klasse: "umarmen" },
     maulwurf: { zeichen: ["\ud83e\udda1"], wie: 4, klasse: "umarmen" },
     portal:   { zeichen: ["\ud83c\udf00"], wie: 4, klasse: "umarmen" },
+    boot:     { zeichen: ["\u26f5"], wie: 4, klasse: "umarmen" },
+    kran:     { zeichen: ["\ud83c\udfd7\ufe0f"], wie: 4, klasse: "umarmen" },
     halloween:{ ganzeSeite: true, wie: "halloween" },
     weihnachten:{ ganzeSeite: true, wie: "weihnachten" },
     geschenk:{ ganzeSeite: true, wie: "geschenk" },
@@ -28914,6 +28946,11 @@
   let lcTafelBildDaten = "";      /* das geladene Bild, fuer Nachzuegler */
   let lcTafelBlick = { z: 1, x: 0.5, y: 0.5 };
   let lcTafelWerkzeug = "stift";
+  /* Strichstaerke und Zeigergroesse lassen sich einstellen —
+     „der Pointer ist ein bisschen zu gross, vielleicht kann man den
+     fein einstellen und kleiner machen." */
+  let lcTafelDicke = 0.005;
+  let lcTafelZeigerGross = 0.6;
   let lcTafelFarbe = LC_TAFEL_FARBEN[0];
   let lcTafelMein = false;        /* habe ICH sie aufgemacht? */
   let lcTafelZeigerAus = 0;
@@ -28952,6 +28989,8 @@
       + '<button type="button" class="lc-tafel-knopf" data-tafel="bild" title="Ein Bild hineinladen">🖼️</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="rein" title="Heranholen">➕</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="raus" title="Wieder kleiner">➖</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="fein" title="Strich und Zeiger feiner oder dicker">●</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="gross" title="Tafel groß oder klein — die Plätze bleiben bedienbar">⤢</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="leer" title="Alles wegwischen">🧽</button>'
       + '<button type="button" class="lc-tafel-knopf lc-tafel-zu" data-tafel="aus" title="Whiteboard zumachen">✕</button>'
       + '<input type="file" accept="image/*" id="lcTafelDatei" hidden>'
@@ -29013,6 +29052,31 @@
       lcTafelBlickSetzen({ z: z, x: lcTafelBlick.x, y: lcTafelBlick.y }, true);
       return;
     }
+    /* GEMELDET: „der Pointer ist ein bisschen zu gross. Vielleicht
+       kann man den fein einstellen und kleiner machen."
+       Ein Knopf, drei Stufen — fein, mittel, dick. Er stellt beides
+       zugleich: den Strich und den Zeiger. */
+    if (was === "fein") {
+      const stufen = [[0.003, 0.42], [0.005, 0.6], [0.009, 0.9]];
+      const jetzt = stufen.findIndex((x) => Math.abs(x[0] - lcTafelDicke) < 0.0005);
+      const naechste = stufen[(jetzt + 1 + stufen.length) % stufen.length];
+      lcTafelDicke = naechste[0];
+      lcTafelZeigerGross = naechste[1];
+      const k = document.querySelector('[data-tafel="fein"]');
+      if (k) k.textContent = lcTafelDicke < 0.004 ? "\u00b7" : (lcTafelDicke < 0.007 ? "\u25cf" : "\u2b24");
+      return;
+    }
+    /* „es kann ein bisschen intuitiver eingebunden werden, so dass die
+       Chat-Plaetze vielleicht noch bedienbar sind … aber dass wir
+       trotzdem den Platz sinnvoll ausnutzen fuers Whiteboard."
+       Deshalb zwei Groessen: gross deckt die ganze Sitzreihe ab,
+       klein laesst die Plaetze darunter frei. */
+    if (was === "gross") {
+      const t = document.getElementById("lcTafel");
+      if (t) t.classList.toggle("lc-tafel-voll");
+      setTimeout(() => { lcTafelGroesseStellen(); lcTafelMalenNeu(); }, 260);
+      return;
+    }
     if (was === "leer") {
       lcTafelZuege = [];
       lcTafelMalenNeu();
@@ -29056,10 +29120,27 @@
     g.lineCap = "round";
     g.lineJoin = "round";
     g.beginPath();
-    zug.p.forEach((pt, i) => {
-      const x = pt[0] * c.width, y = pt[1] * c.height;
-      if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
-    });
+    /* WEICHE KURVEN STATT ECKEN.
+       „Ich kann nicht fluessig malen. Ich male immer nur Strichlinien,
+       Krakellinien oder eckige Linien." Jeder Punkt ist jetzt nur noch
+       der Kontrollpunkt einer Kurve; gezeichnet wird bis zur MITTE
+       zwischen zwei Punkten. So laeuft der Strich rund, auch wenn die
+       Punkte weit auseinanderliegen. */
+    const px = (i) => zug.p[i][0] * c.width;
+    const py = (i) => zug.p[i][1] * c.height;
+    if (zug.p.length >= 3) {
+      g.moveTo(px(0), py(0));
+      for (let i = 1; i < zug.p.length - 1; i++) {
+        g.quadraticCurveTo(px(i), py(i), (px(i) + px(i + 1)) / 2, (py(i) + py(i + 1)) / 2);
+      }
+      g.quadraticCurveTo(px(zug.p.length - 2), py(zug.p.length - 2),
+                         px(zug.p.length - 1), py(zug.p.length - 1));
+    } else {
+      zug.p.forEach((pt, i) => {
+        const x = pt[0] * c.width, y = pt[1] * c.height;
+        if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      });
+    }
     if (zug.p.length === 1) {
       /* Ein einzelner Tipp ist ein Punkt, kein Strich. */
       g.lineTo(zug.p[0][0] * c.width + 0.1, zug.p[0][1] * c.height + 0.1);
@@ -29073,13 +29154,44 @@
     if (!c || c.dataset.lcBereit === "1") return;
     c.dataset.lcBereit = "1";
     let malt = false, punkte = [];
+    /* ZWEI FINGER SIND KEIN STIFT.
+       GEMELDET: „beim Whiteboard kann ich nicht mit meinen Fingern das
+       eingeladene Bild aufziehen." Also: ein Finger malt, ZWEI Finger
+       ziehen das Bild auf und schieben es. Dafuer muss man wissen,
+       welche Finger gerade aufliegen — deshalb dieses Verzeichnis. */
+    const finger = new Map();
+    let kneif = null;
+
     const stelle = (ev) => {
       const r = c.getBoundingClientRect();
       return [Math.min(1, Math.max(0, (ev.clientX - r.left) / (r.width || 1))),
               Math.min(1, Math.max(0, (ev.clientY - r.top) / (r.height || 1)))];
     };
+    const abstand = () => {
+      const f = [...finger.values()];
+      if (f.length < 2) return 0;
+      return Math.hypot(f[0].x - f[1].x, f[0].y - f[1].y);
+    };
+    const mitte = () => {
+      const f = [...finger.values()];
+      if (f.length < 2) return { x: 0.5, y: 0.5 };
+      const r = c.getBoundingClientRect();
+      return { x: ((f[0].x + f[1].x) / 2 - r.left) / (r.width || 1),
+               y: ((f[0].y + f[1].y) / 2 - r.top) / (r.height || 1) };
+    };
+
     c.addEventListener("pointerdown", (ev) => {
       ev.preventDefault();
+      finger.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (finger.size === 2) {
+        /* Der zweite Finger beendet den Strich und macht daraus ein
+           Aufziehen — sonst bliebe ein Krakel stehen. */
+        malt = false; punkte = [];
+        const m = mitte();
+        kneif = { abstand: abstand(), z: lcTafelBlick.z, x: m.x, y: m.y };
+        return;
+      }
+      if (finger.size > 2) return;
       if (lcTafelWerkzeug === "zeiger") {
         const p = stelle(ev);
         lcTafelZeigerSetzen(p[0], p[1]);
@@ -29090,23 +29202,44 @@
       punkte = [stelle(ev)];
       try { c.setPointerCapture(ev.pointerId); } catch (e) {}
     });
+
     c.addEventListener("pointermove", (ev) => {
+      if (finger.has(ev.pointerId)) finger.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (kneif && finger.size >= 2) {
+        const jetzt = abstand();
+        if (kneif.abstand > 4 && jetzt > 4) {
+          const z = Math.min(4, Math.max(1, kneif.z * (jetzt / kneif.abstand)));
+          const m = mitte();
+          lcTafelBlickSetzen({ z: z, x: m.x, y: m.y }, false);
+          lcTafelBlickTakt();
+        }
+        return;
+      }
       if (!malt) return;
       const p = stelle(ev);
       const vor = punkte[punkte.length - 1];
-      /* Zu dichte Punkte bringen nichts und blaehen die Nachricht auf. */
-      if (vor && Math.abs(p[0] - vor[0]) < 0.004 && Math.abs(p[1] - vor[1]) < 0.004) return;
+      /* GEMELDET: „ich kann nicht fluessig malen. Ich male immer nur
+         Strichlinien, Krakellinien oder eckige Linien."
+         GEFUNDEN: erst ab 0,4 % Abstand wurde ein Punkt genommen —
+         auf einem Telefon sind das mehrere Millimeter, und aus einer
+         runden Bewegung wurde ein Vieleck. Jetzt reicht ein Zehntel
+         davon, und gezeichnet wird mit weichen Kurven statt
+         geraden Stuecken (siehe lcTafelZugMalen). */
+      if (vor && Math.abs(p[0] - vor[0]) < 0.0006 && Math.abs(p[1] - vor[1]) < 0.0006) return;
       punkte.push(p);
-      if (punkte.length > 400) punkte = punkte.slice(-400);
+      if (punkte.length > 900) punkte = punkte.slice(-900);
       const g = c.getContext("2d");
-      lcTafelZugMalen(g, { p: punkte.slice(-2), f: lcTafelFarbe, d: 0.006 });
+      lcTafelZugMalen(g, { p: punkte.slice(-3), f: lcTafelFarbe, d: lcTafelDicke });
     });
-    const schluss = () => {
+
+    const schluss = (ev) => {
+      if (ev && ev.pointerId !== undefined) finger.delete(ev.pointerId);
+      if (finger.size < 2) kneif = null;
       if (!malt) return;
       malt = false;
       if (!punkte.length) return;
       const zug = { p: punkte.map((p) => [Number(p[0].toFixed(4)), Number(p[1].toFixed(4))]),
-                    f: lcTafelFarbe, d: 0.006 };
+                    f: lcTafelFarbe, d: lcTafelDicke };
       lcTafelZuege.push(zug);
       if (lcTafelZuege.length > 400) lcTafelZuege = lcTafelZuege.slice(-400);
       lcTafelSenden({ t: "strich", zug: zug });
@@ -29116,6 +29249,17 @@
     c.addEventListener("pointercancel", schluss);
     c.addEventListener("pointerleave", schluss);
     window.addEventListener("resize", () => lcTafelGroesseStellen());
+  }
+
+  /* Beim Aufziehen mit zwei Fingern soll die andere Seite mitkommen —
+     aber nicht bei jedem Bildpunkt eine Nachricht bekommen. Deshalb
+     geht der Blick erst hinaus, wenn die Finger einen Moment ruhen. */
+  let lcTafelBlickUhr = 0;
+  function lcTafelBlickTakt() {
+    clearTimeout(lcTafelBlickUhr);
+    lcTafelBlickUhr = setTimeout(() => {
+      lcTafelSenden({ t: "blick", z: lcTafelBlick.z, x: lcTafelBlick.x, y: lcTafelBlick.y });
+    }, 260);
   }
 
   /* --- ZEIGER, BLICK, BILD ------------------------------------------ */
@@ -29201,6 +29345,17 @@
      — deshalb steht hier kein Neuaufbau, sondern nur das Noetige. */
   window.DMA_TAFEL = function (d, von, name) {
     if (!d || typeof d !== "object") return;
+    /* GEMELDET: „auf der anderen Seite sieht man das manchmal nicht,
+       was ich aufs Whiteboard mache."
+       GEFUNDEN: ein Strich kam an, aber wenn die Tafel beim anderen
+       nicht offen stand, wurde er nur gemerkt und nicht gezeichnet.
+       Jetzt macht jeder Strich, jedes Bild und jeder Zeiger die Tafel
+       auf, wenn sie noch zu ist — wer malt, will ja gesehen werden. */
+    const karteAuf = document.getElementById("livechatKarte");
+    if (d.t !== "aus" && karteAuf && !karteAuf.classList.contains("lc-tafel-an")) {
+      lcTafelZeigen(true, "");
+      setTimeout(() => { lcTafelGroesseStellen(); lcTafelMalenNeu(); }, 60);
+    }
     if (d.t === "strich" && d.zug) {
       lcTafelZuege.push(d.zug);
       if (lcTafelZuege.length > 400) lcTafelZuege = lcTafelZuege.slice(-400);
@@ -30168,18 +30323,33 @@
        Ende absteigen und danebenstehen. */
     const weit = frei.map((p) => ({ p: p, l: Math.hypot(p.x - ab.x, p.y - ab.y) }))
                      .sort((a, b) => b.l - a.l).map((x) => x.p);
+    /* GEMELDET: „das mit dem Fahrrad losfahren ueber den ganzen
+       Bereich geht noch nicht."
+       Zwei Gruende hatte es. Der erste war der fehlende Eintrag in
+       LC_EFFEKTE (siehe dort). Der zweite stand hier: gesucht wurde
+       ein freies Platzpaar, zu dem ein Weg NUR UEBER FREIE PLAETZE
+       fuehrt. In einem vollen Raum gibt es den fast nie — dann kam
+       nur eine Absage. Zu zweit auf einem Rad rollt man aber an den
+       anderen vorbei, nicht durch sie hindurch: der Weg darf ueber
+       besetzte Plaetze gehen. Und liegt kein Paar nebeneinander,
+       tut es auch der naechste freie Platz in der Naehe. */
     let ziel = null, zielMit = null;
     for (const z of weit) {
       const n = frei.find((p) => p !== z
         && Math.abs(p.reihe - z.reihe) + Math.abs(p.spalte - z.spalte) === 1);
-      if (n && lcWegSuchen(gitter, ab.nr, z.nr, false)) { ziel = z; zielMit = n; break; }
+      if (n) { ziel = z; zielMit = n; break; }
     }
     if (!ziel) {
-      lcWegAbsage("Kein freies Platzpaar erreichbar — zu zweit kommt ihr da nicht hin.");
+      ziel = weit[0];
+      zielMit = frei.filter((p) => p !== ziel)
+        .sort((a, b) => Math.hypot(a.x - ziel.x, a.y - ziel.y)
+                      - Math.hypot(b.x - ziel.x, b.y - ziel.y))[0] || null;
+    }
+    if (!ziel || !zielMit) {
+      lcWegAbsage("Zu zweit braucht ihr zwei freie Pl\u00e4tze — so viele sind nicht frei.");
       return true;
     }
-    const weg = lcWegSuchen(gitter, ab.nr, ziel.nr, false);
-    if (!weg) return false;
+    const weg = lcWegSuchen(gitter, ab.nr, ziel.nr, true) || [ab, ziel];
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
 
     const kreisAb = ab.el.querySelector(".lc-kreis");
@@ -30336,7 +30506,9 @@
     const quelle = bild && bild.getAttribute("src") && bild.style.display !== "none"
       ? bild.getAttribute("src") : "";
 
-    const hin = art === "flug" ? 2600 : (art === "maulwurf" ? 2200 : 1800);
+    const hin = art === "flug" ? 2600
+      : (art === "maulwurf" ? 2200
+      : (art === "boot" ? 2800 : (art === "kran" ? 2800 : 1800)));
     const dauer = hin + 500;
     const altZ = ab.el.style.zIndex;
     ab.el.style.zIndex = "7";
@@ -30419,6 +30591,84 @@
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
       lcTonZu("maulwurf");
+    } else if (art === "boot") {
+      /* GEWUENSCHT: „eine Variante vielleicht noch mit einem Boot."
+         Das Bild sitzt im Segelboot und schippert ueber die Reihe;
+         die Kielwelle laeuft mit. */
+      const schiff = document.createElement("span");
+      schiff.className = "lc-boot";
+      schiff.style.setProperty("--gross", d + "px");
+      schiff.innerHTML =
+        '<i class="lc-boot-wasser"></i>'
+        + '<span class="lc-boot-schaukel">'
+        + '<svg class="lc-boot-form" viewBox="0 0 120 70" aria-hidden="true">'
+        + '<path class="lc-boot-mast" d="M57 8 L61 8 L61 48 L57 48 Z"/>'
+        + '<path class="lc-boot-segel" d="M63 11 L63 46 L99 46 Z"/>'
+        + '<path class="lc-boot-rumpf" d="M8 47 L112 47 L97 65 L23 65 Z"/>'
+        + '<path class="lc-boot-streifen" d="M11 52 L109 52 L106 56 L14 56 Z"/>'
+        + "</svg>"
+        + '<span class="lc-boot-fenster"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
+        + "</span>";
+      reihe.appendChild(schiff);
+      weg.push(schiff);
+      setzen(schiff, start.x, start.y);
+      const linksB = ende.x < start.x;
+      try {
+        schiff.animate([
+          { transform: "translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(.3)", opacity: 0, offset: 0 },
+          { transform: "translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(1)", opacity: 1, offset: 0.14 },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(1)", opacity: 1,
+            offset: hin / dauer },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(.3)", opacity: 0, offset: 1 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+      } catch (e) {}
+      lcTonZu("boot");
+    } else if (art === "kran") {
+      /* GEWUENSCHT: „oder dass man einen Baustellenkran hat, der
+         einen dann dahin hebt." Das Bild haengt am Seil: hoch,
+         hinueber, wieder herunter. Das Seil wird dabei kuerzer und
+         wieder laenger — sonst haenge es in der Luft. */
+      const kran = document.createElement("span");
+      kran.className = "lc-kran";
+      kran.style.setProperty("--gross", d + "px");
+      kran.innerHTML =
+        '<i class="lc-kran-seil"></i>'
+        + '<i class="lc-kran-buegel"></i>'
+        + '<span class="lc-kran-last"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
+      reihe.appendChild(kran);
+      weg.push(kran);
+      setzen(kran, start.x, start.y);
+      /* Das Seil reicht vom oberen Rand der Reihe bis zum Bild. */
+      const seilVoll = Math.max(24, start.y);
+      kran.style.setProperty("--seil", seilVoll.toFixed(1) + "px");
+      const hochK = Math.max(d * 0.55, Math.min(start.y, ende.y) - d * 0.8);
+      const anteil = (y) => (y / seilVoll).toFixed(3);
+      const seil = kran.querySelector(".lc-kran-seil");
+      try {
+        kran.animate([
+          { transform: "translate(-50%, -50%)", offset: 0 },
+          { transform: "translate(0px, " + (hochK - start.y) + "px) translate(-50%, -50%)", offset: 0.24 },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (hochK - start.y)
+            + "px) translate(-50%, -50%)", offset: hin / dauer },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%)", offset: 1 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+        if (seil) {
+          seil.animate([
+            { transform: "translateX(-50%) scaleY(1)", offset: 0 },
+            { transform: "translateX(-50%) scaleY(" + anteil(hochK) + ")", offset: 0.24 },
+            { transform: "translateX(-50%) scaleY(" + anteil(hochK) + ")", offset: hin / dauer },
+            { transform: "translateX(-50%) scaleY(" + anteil(ende.y) + ")", offset: 1 }
+          ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+        }
+      } catch (e) {}
+      lcTonZu("kran");
     } else {
       /* Das Tor: eines hier, eines dort. */
       [start, ende].forEach((wo, i) => {
@@ -30442,8 +30692,8 @@
           const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(zu.nr) : null;
           if (erg && erg.ok) {
             renderLiveChat();
-            showToast((art === "flug" ? "✈️ " : art === "maulwurf" ? "🦡 " : "🌀 ")
-              + erg.text);
+            showToast(({ flug: "✈️ ", maulwurf: "🦡 ", boot: "⛵ ",
+                         kran: "🏗️ " }[art] || "🌀 ") + erg.text);
           }
         } catch (e) {}
       }, hin + 120);
@@ -30972,12 +31222,9 @@
       const quelle = bild && bild.getAttribute("src") ? bild.getAttribute("src") : "";
       const blende = lcZpBlende(schicht);
       blende.innerHTML =
-        '<span class="lc-luke-aussicht">'
-        + '<i class="lc-luke-sonne"></i>'
-        + '<i class="lc-luke-huegel"></i>'
-        + '<i class="lc-luke-huegel lc-luke-huegel-2"></i>'
-        + '<i class="lc-luke-vogel"></i><i class="lc-luke-vogel lc-luke-vogel-2"></i>'
-        + "</span>"
+        /* Dieselbe Aussicht wie beim Rollo und bei der Jalousie —
+           „sie sollen denselben Hintergrund zeigen". */
+        lcAussichtHtml(false)
         + '<span class="lc-luke-fluegel lc-luke-links"></span>'
         + '<span class="lc-luke-fluegel lc-luke-rechts"></span>';
       if (quelle) {
@@ -31008,11 +31255,56 @@
        · Die Jalousie besteht aus einzelnen Lamellen, die sich erst
          kippen (dann sieht man streifenweise hindurch) und danach
          nach oben zusammenfahren. */
+  /* =================================================================
+     DIE AUSSICHT HINTER FENSTER, ROLLO UND JALOUSIE
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Das Rollo und die Jalousie sollen besser werden und
+     sie sollen denselben Hintergrund zeigen — oder vielleicht einen
+     alternativen Hintergrund beim Rollo, weil es ist ja zum Beispiel
+     nachts, dann zeigt es einen schoenen Nachthimmel. Und bei der
+     Jalousie kannst du auch eine andere Aussicht machen."
+
+     Also EINE Zeichnung fuer alle drei, damit hinter jedem Fenster
+     dieselbe Welt liegt — und sie richtet sich nach der Tageszeit:
+     tagsueber Sonne, Huegel und Voegel, nachts Mond, Sterne und
+     dunkle Huegel. Welche Tageszeit gerade gilt, weiss die Seite
+     schon (wetterIstNacht aus der Himmelsrechnung); nur wenn die
+     noch nicht gelaufen ist, entscheidet die Uhr.
+     ================================================================= */
+  function lcAussichtHtml(anders) {
+    let nacht = false;
+    try {
+      nacht = wetterIstNacht === true
+        || (typeof tageszeit === "function" && tageszeit() === "nacht");
+    } catch (e) {
+      const st = new Date().getHours();
+      nacht = st < 6 || st >= 21;
+    }
+    let sterne = "";
+    if (nacht) {
+      for (let i = 0; i < 26; i++) {
+        sterne += '<b style="left:' + (3 + ((i * 37) % 94)) + "%;top:"
+          + (4 + ((i * 53) % 58)) + "%;--blink:" + (1.6 + (i % 5) * 0.4).toFixed(1)
+          + 's"></b>';
+      }
+    }
+    return '<span class="lc-luke-aussicht' + (nacht ? " lc-aussicht-nacht" : "")
+      + (anders ? " lc-aussicht-anders" : "") + '">'
+      + '<i class="lc-luke-sonne"></i>'
+      + '<i class="lc-luke-huegel"></i>'
+      + '<i class="lc-luke-huegel lc-luke-huegel-2"></i>'
+      + (nacht ? '<span class="lc-aussicht-sterne">' + sterne + "</span>"
+               : '<i class="lc-luke-vogel"></i><i class="lc-luke-vogel lc-luke-vogel-2"></i>')
+      + "</span>";
+  }
+
   function lcRollo(wen) {
     return lcAmPlatz(wen, "lc-rollo", (schicht) => {
       const blende = lcZpBlende(schicht);
       blende.innerHTML =
-        '<span class="lc-rollo-bahn">'
+        /* Dahinter die Aussicht — tags Sonne, nachts Sternenhimmel. */
+        lcAussichtHtml(false)
+        + '<span class="lc-rollo-bahn">'
         + '<i class="lc-rollo-naht"></i><i class="lc-rollo-naht"></i>'
         + '<i class="lc-rollo-griff"></i>'
         + "</span>"
@@ -31025,13 +31317,23 @@
     return lcAmPlatz(wen, "lc-lamellen", (schicht) => {
       const blende = lcZpBlende(schicht);
       let bahnen = "";
-      /* Neun Lamellen fuellen den Kreis, ohne dass eine einzelne zu
-         schmal zum Sehen wird. */
-      for (let i = 0; i < 9; i++) {
-        bahnen += '<i class="lc-lamelle" style="top:' + (i * 11.2).toFixed(1)
-          + "%;animation-delay:" + (i * 0.055).toFixed(3) + 's"></i>';
+      /* GEMELDET: „die Jalousie soll durchgaengig sein, nicht in der
+         Mitte mehr Luecke haben und die anderen Streifen sind weiter
+         hoeher oder weiter unten."
+         GEFUNDEN: neun Lamellen zu 11,2 % deckten nur 100,8 % mit
+         einer 11-%-Hoehe — unten blieb ein Rest offen, und die
+         Schicht selbst hatte zusaetzlich eine Animation, die in der
+         MITTE einen Spalt aufzog (lcLamellenAuf). Jetzt sind es ZEHN
+         Lamellen zu genau 10 %, jede 10,6 % hoch (sie ueberlappen
+         also leicht), und der Spalt in der Mitte ist weg. */
+      for (let i = 0; i < 10; i++) {
+        bahnen += '<i class="lc-lamelle" style="top:' + (i * 10).toFixed(1)
+          + "%;animation-delay:" + (i * 0.05).toFixed(3) + 's"></i>';
       }
-      blende.innerHTML = bahnen + '<span class="lc-lamellen-schnur"></span>';
+      /* „und bei der Jalousie kannst du auch eine andere Aussicht
+         machen" — dieselbe Welt, andere Blickrichtung. */
+      blende.innerHTML = lcAussichtHtml(true) + bahnen
+        + '<span class="lc-lamellen-schnur"></span>';
       /* GEMESSEN (pruefe-tonschleifen): hier stand „jalousie" — der
          NAME DES GERAEUSCHS. Der letzte Wert ist aber der Name des
          EFFEKTS; aus ihm holt sich lcTonZu den Plan. So galt fuer die
@@ -32751,6 +33053,14 @@
     const takt = setInterval(() => {
       if (!kasten.isConnected) { clearInterval(takt); return; }
       dranZeigen();
+      /* Eine Tafel aus einer alten Runde sieht man auch an: sie ist
+         grau und laesst sich nicht mehr bedienen. */
+      try {
+        const alt = !istAktuell();
+        kasten.classList.toggle("lc-raten-vorbei", alt);
+        kasten.querySelectorAll(".lc-raten-taste, .lc-betonung-fertig, .lc-raten-eingabe")
+              .forEach((el) => { el.disabled = alt || el.dataset.fertig === "1"; });
+      } catch (e) {}
     }, 1500);
 
     const offen = lcRatenVorgabe(satz);
@@ -32822,25 +33132,89 @@
     });
     kasten.appendChild(tasten);
 
+    /* =================================================================
+       ABSCHICKEN — UND ZWAR WIRKLICH
+       -----------------------------------------------------------------
+       GEMELDET: „Eine Person faengt an, dann soll ich weitermachen.
+       Kann aber nichts abschicken, weil sich das nicht abschicken
+       laesst. Ich sehe es nicht in meinem Chat und die Antwort der
+       anderen logischerweise dann auch nicht in ihrem Chat … und die
+       andere Person kann sogar eine falsche Antwort eintragen … aus
+       der Aufgabe heraus, was eigentlich gar nicht moeglich sein
+       sollte."
+
+       DREI FEHLER, DREI AENDERUNGEN:
+       1. Der Knopf hat GAR NICHT geschickt, solange noch ein
+          Buchstabe fehlte — er hat nur einen Hinweis hingeschrieben.
+          Jetzt gibt es ein Feld: was man dort hineinschreibt, geht
+          hinaus. Steht nichts drin und ist alles aufgedeckt, geht
+          der aufgedeckte Satz hinaus wie bisher.
+       2. ALTE Tafeln im Verlauf blieben bedienbar — mit ihrer alten
+          Loesung. Genau daher kam „das ist cool". Jetzt ist nur die
+          Tafel der laufenden Runde bedienbar (LiveChat.aufgabeStand).
+       3. Wer nicht dran ist, schickt nicht. Das Aufdecken laeuft
+          reihum; wer tippen will, darf Buchstaben tippen, aber die
+          Loesung sagt der, der dran ist.
+       ================================================================= */
+    const meineId = String(n.id || "");
+    const standJetzt = () => {
+      try { return (LiveChat.aufgabeStand && LiveChat.aufgabeStand()) || { offen: false }; }
+      catch (e) { return { offen: true, zeileId: "", dran: "" }; }
+    };
+    const istAktuell = () => {
+      const st = standJetzt();
+      if (!st.offen) return false;
+      return !st.zeileId || !meineId || st.zeileId === meineId;
+    };
+    const binDran = () => {
+      let ich = "";
+      try { ich = (LiveChat.lage() || {}).ichName || ""; } catch (e) {}
+      let wer = "";
+      try { wer = (LiveChat.werIstDran && LiveChat.werIstDran()) || String(n.dran || ""); }
+      catch (e) { wer = String(n.dran || ""); }
+      if (!wer || !ich) return true;           /* ohne Runde darf jeder */
+      return wer.trim().toLowerCase() === ich.trim().toLowerCase();
+    };
+
+    const eingabe = document.createElement("input");
+    eingabe.type = "text";
+    eingabe.className = "lc-raten-eingabe";
+    eingabe.placeholder = "Deine Lösung …";
+    eingabe.maxLength = 120;
+    kasten.appendChild(eingabe);
+
     const sagen = document.createElement("button");
     sagen.type = "button";
     sagen.className = "btn btn-primary lc-betonung-fertig";
     sagen.textContent = "Lösung sagen";
-    sagen.addEventListener("click", () => {
+    const abschicken = () => {
       if (sagen.disabled) return;
+      if (!istAktuell()) {
+        hinweis.textContent = "Diese Runde ist vorbei — die neue Aufgabe steht weiter unten.";
+        return;
+      }
+      if (!binDran()) {
+        hinweis.textContent = "Gerade ist jemand anders dran. Buchstaben darfst du trotzdem antippen.";
+        return;
+      }
+      const getippt = eingabe.value.trim();
       const fehlt = nochZu();
-      if (fehlt) {
-        /* Noch nicht alles offen? Dann ist es ein Tipp ins Blaue —
-           erlaubt, aber es wird gesagt, was fehlt. Geschrieben wird
-           dann das, was man SIEHT; den Rest tippt man selbst dazu. */
-        hinweis.textContent = "Es fehlen noch " + fehlt + " Buchstaben. "
-          + "Schreib deine Lösung einfach unten in den Chat — sie zählt genauso.";
+      const loesung = getippt || (fehlt ? "" : satz);
+      if (!loesung) {
+        hinweis.textContent = "Schreib deine Lösung ins Feld — oder deck erst alle Buchstaben auf.";
+        eingabe.focus();
         return;
       }
       sagen.disabled = true;
+      eingabe.disabled = true;
       try {
-        LiveChat.schreiben("🎡 " + satz + (daneben ? "   (" + daneben + " daneben)" : "   (ohne Fehler)"));
+        LiveChat.schreiben("🎡 " + loesung
+          + (daneben ? "   (" + daneben + " daneben)" : (fehlt ? "" : "   (ohne Fehler)")));
       } catch (e) {}
+    };
+    sagen.addEventListener("click", abschicken);
+    eingabe.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); abschicken(); }
     });
     kasten.appendChild(sagen);
     kasten.appendChild(hinweis);
@@ -33088,7 +33462,7 @@
     paintfleck: 1, ei: 1, fahren: 1, spielzug: 1, pacjagd: 1, stoerung: 1,
     aufessen: 1, lotto: 1, sanduhr: 1, katapult: 1, strohhalm: 1, blubbern: 1,
     knuell: 1, rollo: 1, lamellen: 1, peitsche: 1, gemeinsam: 1, schneekugel: 1,
-    flug: 1, maulwurf: 1, portal: 1,
+    flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
@@ -33243,7 +33617,8 @@
       if (lcLotto(vonL)) return;
     }
     /* Fliegen, Graben und das Tor bewegen ebenfalls den Absender. */
-    if (art === "flug" || art === "maulwurf" || art === "portal") {
+    if (art === "flug" || art === "maulwurf" || art === "portal"
+        || art === "boot" || art === "kran") {
       const wenR = nachricht && (nachricht.wen || nachricht.an);
       let vonR = (nachricht && nachricht.name) || "";
       if (nachricht && nachricht.eigen) {
@@ -65923,7 +66298,19 @@ An einem Morgen lief ein kleiner Fuchs los…
            er wieder ausgeblendet und das Standbild ist noch da. Der
            Ton kommt weiter aus der Tonspur; der Film selbst ist
            stumm, damit nichts doppelt klingt. -->
-      <video class="tutor-video" id="tutorVideo" muted playsinline preload="none"></video>`;
+      <video class="tutor-video" id="tutorVideo" muted playsinline preload="none"></video>
+      <!-- DER MASKENWEG — FUER DAS IPHONE.
+           GEMELDET: „auf dem Android sieht man ihn freigestellt, auf
+           dem iPhone sieht man ihn mit einem schwarzen Hintergrund.
+           Kannst du das nicht machen wie bei dem Greenscreen, dass wir
+           das ausrechnen koennen, dass es ueberall gleich aussieht?"
+           GEFUNDEN: Safari spielt webm ab, aber OHNE Alphaspur — also
+           bleibt der schwarze Grund stehen. Genau dafuer gibt es im
+           Haus schon einen Weg: Bild und Maske nebeneinander in einer
+           mp4, wieder zusammengerechnet auf der Grafikkarte (so
+           laufen die Geschenkfilme, siehe filmspieler.js). Diese
+           Leinwand ist dieser Weg fuer den Tutor. -->
+      <canvas class="tutor-maske" id="tutorMaske"></canvas>`;
     document.body.appendChild(b);
     document.body.classList.add("tutor-offen");
     b.querySelector("#tutorZu").addEventListener("click", () => tutorSchliessen());
@@ -66068,6 +66455,21 @@ An einem Morgen lief ein kleiner Fuchs los…
       r.setAttribute("aria-label", "Alex erklärt dir diesen Bereich");
       r.textContent = "🎓";
       r.addEventListener("click", () => {
+        /* GEMELDET: „wenn man direkt auf Dialoge klickt, geht die
+           Animation nicht an. Die soll auch verlinkt sein, dass man
+           sich diesen Bereich vorlesen lassen kann."
+           GEFUNDEN: der Reiter rief IMMER den Hauptbereich — wer im
+           Unterbereich „Dialoge" stand, bekam die Ansage zum ganzen
+           Lernbereich oder gar nichts. Jetzt gilt: steht ein
+           Unterbereich offen und gibt es dafuer eine Ansage, wird
+           DIESE gerufen; sonst der Hauptbereich wie bisher. */
+        const pille = document.querySelector('.subnav-pill[aria-selected="true"]');
+        const sub = pille && pille.dataset ? pille.dataset.sub : "";
+        const texte = window.DMA_TUTOR || null;
+        if (sub && (!texte || texte[sub])) {
+          tutorBereichRufen(sub, true, true);
+          if (texte && texte[sub]) return;
+        }
         const jetzt = document.querySelector(".view[data-active=\"true\"]");
         tutorRufen(jetzt ? jetzt.id : "view-about", true);
       });
@@ -66135,13 +66537,104 @@ An einem Morgen lief ein kleiner Fuchs los…
     }
     return tutorFilmListe.has(ton);
   }
+  /* KANN DIESES GERAET WEBM MIT ALPHA?
+     filmspieler.js weiss es schon — er entscheidet dieselbe Frage
+     fuer die Geschenkfilme. Fehlt er, wird vorsichtig „nein"
+     angenommen: dann laeuft der Maskenweg, und der geht ueberall. */
+  function tutorAlphaGeht() {
+    try {
+      if (window.DMA_FILM && window.DMA_FILM.kannAlphaWebm) return Boolean(window.DMA_FILM.kannAlphaWebm());
+    } catch (e) {}
+    return false;
+  }
+  let tutorMaskeLauf = null;
+  /* Bild und Maske nebeneinander wieder zusammensetzen — dieselbe
+     Rechnung wie in filmspieler.js, nur klein und fuer diese eine
+     Figur. Links steht die Farbe, rechts die Deckung. */
+  function tutorMaskeStarten(ton) {
+    const c = document.getElementById("tutorMaske");
+    if (!c) return false;
+    tutorMaskeStoppen();
+    const gl = c.getContext("webgl", { premultipliedAlpha: true, alpha: true })
+      || c.getContext("experimental-webgl", { premultipliedAlpha: true, alpha: true });
+    if (!gl) return false;
+    const v = document.createElement("video");
+    v.muted = true; v.playsInline = true; v.setAttribute("playsinline", "");
+    v.crossOrigin = "anonymous";
+    v.src = "tutor/video/" + ton + "-maske.mp4?v=" + (window.DMA_VERSION || "1");
+    const ecke = "attribute vec2 p;varying vec2 t;void main(){t=vec2((p.x+1.0)/2.0,(1.0-p.y)/2.0);"
+      + "gl_Position=vec4(p,0.0,1.0);}";
+    const flaeche = "precision mediump float;varying vec2 t;uniform sampler2D b;"
+      + "void main(){vec3 c=texture2D(b,vec2(t.x*0.5,t.y)).rgb;"
+      + "float a=texture2D(b,vec2(t.x*0.5+0.5,t.y)).r;"
+      + "gl_FragColor=vec4(c*a,a);}";
+    const bauen = (art, q) => { const sh = gl.createShader(art); gl.shaderSource(sh, q); gl.compileShader(sh); return sh; };
+    const pr = gl.createProgram();
+    gl.attachShader(pr, bauen(gl.VERTEX_SHADER, ecke));
+    gl.attachShader(pr, bauen(gl.FRAGMENT_SHADER, flaeche));
+    gl.linkProgram(pr); gl.useProgram(pr);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const pl = gl.getAttribLocation(pr, "p");
+    gl.enableVertexAttribArray(pl);
+    gl.vertexAttribPointer(pl, 2, gl.FLOAT, false, 0, 0);
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.clearColor(0, 0, 0, 0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    let laeuft = true;
+    const bild = () => {
+      if (!laeuft) return;
+      if (v.readyState >= 2) {
+        if (c.width !== v.videoWidth / 2 && v.videoWidth) {
+          c.width = Math.round(v.videoWidth / 2); c.height = v.videoHeight;
+          gl.viewport(0, 0, c.width, c.height);
+        }
+        try {
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, v);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+          c.classList.add("tutor-video-da");
+        } catch (e) {}
+      }
+      requestAnimationFrame(bild);
+    };
+    v.onerror = () => tutorMaskeStoppen();
+    v.onended = () => tutorMaskeStoppen();
+    const lauf = v.play();
+    if (lauf && lauf.catch) lauf.catch(() => tutorMaskeStoppen());
+    requestAnimationFrame(bild);
+    tutorMaskeLauf = { video: v, halt: () => { laeuft = false; } };
+    return true;
+  }
+  function tutorMaskeStoppen() {
+    const c = document.getElementById("tutorMaske");
+    if (c) c.classList.remove("tutor-video-da");
+    if (!tutorMaskeLauf) return;
+    try { tutorMaskeLauf.halt(); tutorMaskeLauf.video.pause(); tutorMaskeLauf.video.src = ""; } catch (e) {}
+    tutorMaskeLauf = null;
+  }
+
   /* Den Film zum Stueck zeigen — oder eben nicht. Beides ist in
      Ordnung: das Standbild liegt darunter und bleibt sichtbar. */
   function tutorFilmSetzen(ton) {
     const v = document.getElementById("tutorVideo");
     if (!v) return;
     const aus = () => { v.classList.remove("tutor-video-da"); try { v.pause(); } catch (e) {} };
-    if (!tutorFilmDa(ton)) { aus(); v.removeAttribute("src"); return; }
+    if (!tutorFilmDa(ton)) { aus(); tutorMaskeStoppen(); v.removeAttribute("src"); return; }
+    /* Kein Alpha-webm (iPhone)? Dann der Maskenweg — er sieht ueberall
+       gleich aus. Klappt auch der nicht, bleibt das Standbild. */
+    if (!tutorAlphaGeht()) {
+      aus();
+      if (tutorMaskeStarten(ton)) return;
+    }
+    tutorMaskeStoppen();
     /* WEBM MIT ALPHA, nicht mp4.
        Der erzeugte Film hat einen schwarzen Hintergrund; der ist
        herausgerechnet (colorkey), und durchsichtig kann nur webm.
@@ -66159,6 +66652,25 @@ An einem Morgen lief ein kleiner Fuchs los…
     } else {
       v.classList.add("tutor-video-da");
     }
+  }
+
+  /* „Vielleicht auch fuer die Leute die neu sind bei der
+     Registration, dass wenn sie auf der Profil Sektion sind, dass er
+     sagt willkommen in deinem Profil" — manche Stuecke gelten nur
+     fuer Gaeste, andere nur fuer angemeldete Leute. wenn: "gast"
+     oder wenn: "konto"; ohne Feld gilt das Stueck fuer alle. */
+  function tutorStueckeFiltern(liste) {
+    if (!Array.isArray(liste)) return null;
+    let drin = false;
+    try { drin = Boolean(window.Backend && Backend.currentUser && Backend.currentUser()); }
+    catch (e) { drin = false; }
+    return liste.filter((st) => {
+      const w = st && st.wenn;
+      if (!w) return true;
+      if (w === "gast") return !drin;
+      if (w === "konto") return drin;
+      return true;
+    });
   }
 
   function tutorStueckSpielen() {
@@ -66330,7 +66842,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       if (meine === tutorAnfrage) tutorHoltGerade = false;
       if (!da || meine !== tutorAnfrage) return;
       const eintrag = (window.DMA_TUTOR || {})[bereich];
-      const stuecke = eintrag && eintrag.stuecke;
+      const stuecke = tutorStueckeFiltern(eintrag && eintrag.stuecke);
       if (!stuecke || !stuecke.length) return;
       /* Der Bereich kann inzwischen gewechselt haben — dann nicht mehr
          hereinplatzen. */
