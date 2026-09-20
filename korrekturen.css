@@ -10263,7 +10263,16 @@ body.lc-schreibt .tutor-reiter {
   max-height: 72vh;
   overflow-y: auto;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* GEMELDET: „Die Kacheln auf der linken Seite sind laenger als die
+     auf der rechten — rechts sind es gleich grosse Vierecke, links
+     unnoetig lange Rechtecke."
+     Das war „1fr": eine Spalte mit „1fr" darf nicht KLEINER werden
+     als ihr laengstes Wort. Ein Wort wie „Schneeball" hat die erste
+     Spalte damit breitgezogen und die beiden anderen zusammen-
+     gedrueckt. „minmax(0, 1fr)" nimmt dieses Recht weg: jetzt sind
+     alle drei Spalten wirklich gleich breit, und ein langes Wort
+     bricht um oder wird leise abgeschnitten. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
   padding: 6px;
   border-radius: 14px;
@@ -10288,6 +10297,10 @@ body.lc-schreibt .tutor-reiter {
   opacity: 0.6;
 }
 .lc-platzmenue-knopf {
+  /* Auch der Knopf selbst darf nicht auf seiner Mindestbreite
+     bestehen — sonst waere die Spalte wieder so breit wie sein
+     laengstes Wort. */
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;

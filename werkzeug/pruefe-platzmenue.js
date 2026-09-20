@@ -240,6 +240,17 @@ const PAARE = [
          rollen? scrollHeight ist, wie hoch der Inhalt WAERE,
          clientHeight, wie viel Platz er hat. */
       hoch: k ? k.scrollHeight : 0,
+      /* GEMELDET: „Wenn man bei jemand anderem aufs Profilbild klickt,
+         dann sind die Kacheln auf der linken Seite laenger als die auf
+         der rechten — rechts sind es gleich grosse Vierecke, links
+         unnoetig lange Rechtecke."
+         Gemessen wird deshalb die Spanne aller Kachelbreiten: sind sie
+         gleich breit, ist sie null. */
+      breiten: (() => {
+        if (!k) return [];
+        return [...k.querySelectorAll(".lc-platzmenue-knopf")]
+          .map((b) => Math.round(b.getBoundingClientRect().width));
+      })(),
       passt: k ? k.scrollHeight <= k.clientHeight + 1 : false,
       /* Und der Hammer ist der letzte Knopf — er muss sichtbar sein,
          ohne dass jemand rollt. */
@@ -256,6 +267,12 @@ const PAARE = [
   pruefe("es hat alle Spielzeuge", menue.knoepfe >= 20, menue.knoepfe + " Knoepfe");
   pruefe("es steht ganz im Bild", Boolean(menue.imBild));
   pruefe("man muss nicht rollen", Boolean(menue.passt), menue.hoch + " px Inhalt");
+  const spanne = (menue.breiten || []).length
+    ? Math.max.apply(null, menue.breiten) - Math.min.apply(null, menue.breiten) : -1;
+  pruefe("alle Kacheln sind gleich breit", spanne >= 0 && spanne <= 1,
+    spanne + " px Unterschied (" + (menue.breiten || []).length + " Kacheln, "
+    + Math.min.apply(null, menue.breiten || [0]) + "–"
+    + Math.max.apply(null, menue.breiten || [0]) + " px)");
   pruefe("der letzte Knopf (Hammer) ist ohne Rollen zu sehen", menue.hammerUnten <= 0,
     menue.hammerUnten + " px unter dem Rand");
 
@@ -285,8 +302,13 @@ const PAARE = [
      brach in der schmalen Kachel um. */
   pruefe("auf dem eigenen Platz steht das eigene Bild obenan",
     /Bild/i.test(eigen[0] || ""), eigen[0] || "-");
-  pruefe("und gleich danach die Wahl des Sprechbildes",
-    /Sprechbild/i.test(eigen[1] || ""), eigen[1] || "-");
+  /* Seit Fassung 355 steht dazwischen „Gross zeigen": ein kurzer Tipp
+     zieht das grosse Bild nicht mehr von selbst auf („das soll nicht
+     mehr aufgehen"), also muss es hier zu finden sein. */
+  pruefe("das grosse Bild ist im Menue zu finden",
+    eigen.some((w) => /Gro\u00df zeigen/i.test(w)), eigen.slice(0, 3).join(", "));
+  pruefe("und die Wahl des Sprechbildes steht auch da",
+    eigen.some((w) => /Sprechbild/i.test(w)), eigen.slice(0, 3).join(", "));
 
   console.log("\nUND DIE WAHL DES SPRECHBILDES\n");
   const sb = await pg.evaluate(async () => {

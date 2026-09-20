@@ -21663,6 +21663,9 @@
          darf beschriften, ohne dass ein Befehl sie mitliest. */
       knopf.dataset.lcName = p.leer ? "" : (p.name || "");
       knopf.dataset.lcIch = p.ich ? "1" : "";
+      /* Die Kennung dazu: das Menue braucht sie, um das grosse Bild
+         aufzurufen — der Name allein genuegt dafuer nicht. */
+      knopf.dataset.lcId = p.leer ? "" : (p.id || "");
 
       /* Das eigene Bild bleibt stumm — sonst hört man sich selbst
          mit Verzögerung, und das macht jedes Gespräch kaputt. */
@@ -23576,9 +23579,21 @@
         .sort((a, b) => naehe(a.nummer, meiner.nummer) - naehe(b.nummer, meiner.nummer))[0];
       const ziel = frei || irgend;
       if (ziel) {
-        kachel("\ud83e\uddf2", "Zu mir",
-          frei ? "Auf Platz " + ziel.nummer + ", gleich neben dir"
-               : "Platz " + ziel.nummer + " ist belegt — ihr tauscht dann",
+        /* WOMIT GEHOLT WIRD, HAENGT AN DER RICHTUNG — so war es von
+           Anfang an gemeint: „von unten nach oben waer es dann so ein
+           Heber, oder von rechts nach links waer so ein Lasso", und
+           dazu „du kannst auch alternativ noch eine Angel machen, wo
+           man den anderen so angeln kann."
+           Die Reihe hat vier Plaetze. Kommt die Person aus einer
+           TIEFEREN Reihe herauf, ist es die Angel; geht es zur Seite
+           oder hinunter, das Lasso. Dieselbe Rechnung wie in /heb, nur
+           hier schon sichtbar, bevor man tippt. */
+        const reihe = (n) => Math.floor((n - 1) / 4);
+        const hoch = reihe(ziel.nummer) < reihe(seiner.nummer);
+        kachel(hoch ? "\ud83e\ude9d" : "\ud83e\udd20", hoch ? "Angeln" : "Lasso",
+          (hoch ? "Mit der Angel heraufholen" : "Mit dem Lasso herueberziehen")
+          + " \u2014 auf Platz " + ziel.nummer
+          + (frei ? ", gleich neben dir" : "; dort sitzt jemand, ihr tauscht dann"),
           () => setzen(ziel.nummer));
       }
     }
@@ -23594,7 +23609,28 @@
     return true;
   }
 
+  /* =================================================================
+     DER ZUHOERER MUSS MIT DEM MENUE VERSCHWINDEN
+     -----------------------------------------------------------------
+     GEMELDET: „Man kann im Kurzauswahlmenue beim Sprechbild die
+     anderen zwar auswaehlen, aber sie werden nicht eingestellt."
+
+     Und so kam das: jedes Menue haengt beim Aufgehen einen Zuhoerer
+     ans Dokument, der es wieder zumacht, sobald jemand DANEBEN tippt.
+     Der nahm sich bisher erst heraus, wenn er einmal gefeuert hatte.
+     Oeffnet man aus einem Menue heraus das naechste — „Sprechbild",
+     „Umsetzen" —, blieb der ALTE Zuhoerer also liegen. Beim ersten
+     Fingerdruck auf eine Kachel des NEUEN Menues sah er einen Kasten,
+     der nicht seiner war, hielt das fuer „daneben getippt" und raeumte
+     das neue Menue weg — noch bevor aus dem Druck ein Klick werden
+     konnte. Der Griff ging ins Leere, und es sah aus, als taete die
+     Auswahl nichts.
+
+     Deshalb merkt sich lcMenueSchliessen seinen Zuhoerer, und
+     lcPlatzMenueZu nimmt ihn mit heraus. */
+  let lcMenueAufraeumen = null;
   function lcPlatzMenueZu() {
+    if (lcMenueAufraeumen) { try { lcMenueAufraeumen(); } catch (e) {} lcMenueAufraeumen = null; }
     const m = document.getElementById("lcPlatzMenue");
     if (m) m.remove();
   }
@@ -23640,6 +23676,12 @@
 
     if (eigen) {
       knopf("\ud83d\uddbc\ufe0f", "Anderes Bild", () => livechatBildWaehler());
+      /* Das grosse Bild geht seit Fassung 355 nicht mehr von selbst
+         auf, wenn man antippt („das soll nicht mehr aufgehen"). Wer es
+         sehen will, findet es hier. */
+      knopf("\ud83d\udd0d", "Gro\u00df zeigen", () => {
+        try { LiveChat.grossZeigen(platz.dataset.lcId || ""); } catch (e) {}
+      });
       /* =========================================================
          DAS SPRECHBILD STEHT JETZT IM MENUE
          ---------------------------------------------------------
@@ -23667,7 +23709,12 @@
        ohne Nummer zeigt erst einmal, welche Plaetze ueberhaupt gehen —
        „das System soll dann erkennen, welche Plaetze hebelbar sind". */
     if (!eigen) {
-      knopf("\ud83e\ude9d", "Umsetzen", () => lcHebenMenue(platz, name));
+      /* GEMELDET: „Ich glaub, weil dieses ‚Woanders hinsetzen' von der
+         Schrift her den Rahmen sprengt — das kannst du einfach ‚Holen'
+         nennen oder Haken oder Lasso." Also: Holen. Womit geholt wird,
+         steht dann an der Kachel: mit der Angel nach oben, mit dem
+         Lasso zur Seite. */
+      knopf("\ud83e\ude9d", "Holen", () => lcHebenMenue(platz, name));
     }
 
     document.body.appendChild(kasten);
@@ -23699,12 +23746,16 @@
      Das Rollen IM Menue ist kein Griff daneben, nur das Rollen der
      Seite darunter ist einer. */
   function lcMenueSchliessen(kasten) {
-    const weg = (e) => {
-      if (e && e.target && kasten.contains(e.target)) return;
-      lcPlatzMenueZu();
+    const abhaengen = () => {
       document.removeEventListener("pointerdown", weg, true);
       document.removeEventListener("keydown", taste, true);
       window.removeEventListener("scroll", weg, true);
+    };
+    const weg = (e) => {
+      if (e && e.target && kasten.contains(e.target)) return;
+      abhaengen();
+      lcMenueAufraeumen = null;
+      lcPlatzMenueZu();
     };
     const taste = (e) => { if (e.key === "Escape") weg(); };
     setTimeout(() => {
@@ -23712,6 +23763,9 @@
       document.addEventListener("keydown", taste, true);
       window.addEventListener("scroll", weg, true);
     }, 0);
+    /* Damit lcPlatzMenueZu() ihn mitnehmen kann, wenn aus diesem Menue
+       heraus das naechste aufgeht. */
+    lcMenueAufraeumen = abhaengen;
   }
 
   function lcPlatzMenueBinden(area) {
@@ -28746,20 +28800,35 @@
             return;
           }
 
-          /* Der eigene Platz bleibt, wie er war: ein Tipp zeigt dich
-             gross. */
-          if (p.ich) { LiveChat.grossZeigen(p.id); return; }
+          /* =========================================================
+             EIN TIPP ZIEHT NICHTS MEHR GROSS AUF
+             ---------------------------------------------------------
+             GEMELDET: „Beim Anklicken eines Profilbilds gehen die
+             anderen immer noch auf — das soll nicht mehr aufgehen …
+             das stoert immer ein bisschen."
+
+             Frueher war das die einzige Art, an das eigene Bild und
+             an die Sprech-Animation zu kommen. Seit Fassung 352
+             steht beides im Platzmenue (langer Druck), und das grosse
+             Bild war damit nur noch im Weg: ein Tipp daneben, und es
+             ging ungefragt auf.
+
+             Der eigene Platz tut auf einen kurzen Tipp jetzt nichts.
+             Wer sein Bild gross sehen will, haelt gedrueckt — dort
+             steht es weiterhin. */
+          if (p.ich) return;
 
           /* Und der Platz eines anderen: tauschen. */
           const erg = LiveChat.platzTauschenMit ? LiveChat.platzTauschenMit(p.id) : null;
           if (erg && erg.ok) {
             renderLiveChat();
-            showToast("🔄 " + erg.text + "  (lang drücken zeigt das Bild groß)");
+            showToast("🔄 " + erg.text + "  (lang drücken öffnet das Menü)");
             return;
           }
           /* Geht der Tausch nicht — etwa weil man noch nicht sitzt —,
-             dann wenigstens das, was vorher auch passiert waere. */
-          LiveChat.grossZeigen(p.id);
+             passiert nichts weiter. Frueher zog sich hier das grosse
+             Bild auf; genau das war gemeldet („das soll nicht mehr
+             aufgehen"). Es bleibt beim langen Druck. */
           if (erg && erg.warum) showToast(erg.warum);
         });
       });
