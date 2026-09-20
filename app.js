@@ -21496,6 +21496,102 @@
     try { lcTonZu("note"); } catch (e) {}
   }
 
+  /* Die Tafel unter der Aufgabe: oben die Zeile, die man baut, unten
+     die Teile, die noch daliegen. Sie wird nur dann neu gebaut, wenn
+     sich die Aufgabe wirklich geaendert hat — sonst faenge man bei
+     jedem Auffrischen des Raums von vorn an. */
+  function lcAufgabeTafel(a) {
+    const kasten = document.getElementById("lcAufgabeLaeuft");
+    if (!kasten) return;
+    const alt = kasten.querySelector(".lc-aufgabentafel");
+    const kennung = String(a.typ || "") + "|" + (a.teile || []).join("\u0001")
+                  + "|" + (a.zeit || 0);
+    if (alt && alt.dataset.kennung === kennung) return;
+    if (alt) alt.remove();
+    if (!(a.teile && a.teile.length)) return;
+
+    const tafel = document.createElement("div");
+    tafel.className = "lc-aufgabentafel";
+    tafel.dataset.kennung = kennung;
+    const wort = a.typ === "wort";
+
+    const zeile = document.createElement("div");
+    zeile.className = "lc-aufgabe-zeile" + (wort ? " lc-aufgabe-eng" : "");
+    const vorrat = document.createElement("div");
+    vorrat.className = "lc-aufgabe-vorrat" + (wort ? " lc-aufgabe-eng" : "");
+    const leer = document.createElement("p");
+    leer.className = "lc-aufgabe-leer";
+    leer.textContent = wort
+      ? "Tippe die Buchstaben der Reihe nach an."
+      : "Tippe die Wörter in der richtigen Reihenfolge an.";
+    zeile.appendChild(leer);
+
+    const schicken = () => {
+      const gesetzt = [...zeile.querySelectorAll(".lc-aufgabe-teil")]
+        .map((b) => b.dataset.teil);
+      const text = wort ? gesetzt.join("") : gesetzt.join(" ");
+      try { LiveChat.schreiben(text); } catch (e) {}
+      lcNachDemSenden(text);
+      /* Danach wieder von vorn: die Aufgabe bleibt offen, man darf es
+         noch einmal versuchen. Die Kacheln wandern zurueck. */
+      [...zeile.querySelectorAll(".lc-aufgabe-teil")].forEach((b) => vorrat.appendChild(b));
+      leer.hidden = false;
+      fertig.disabled = true;
+    };
+
+    const fertig = document.createElement("button");
+    fertig.type = "button";
+    fertig.className = "btn btn-coffee lc-aufgabe-fertig";
+    fertig.textContent = "Abschicken";
+    fertig.disabled = true;
+    fertig.addEventListener("click", schicken);
+
+    const nachsehen = () => {
+      const offen = vorrat.querySelectorAll(".lc-aufgabe-teil").length;
+      const drin = zeile.querySelectorAll(".lc-aufgabe-teil").length;
+      leer.hidden = drin > 0;
+      fertig.disabled = offen > 0 || drin === 0;
+    };
+
+    (a.teile || []).forEach((t, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-aufgabe-teil";
+      b.dataset.teil = t;
+      b.textContent = t;
+      b.addEventListener("click", () => {
+        /* In der Zeile heisst: wieder heraus. Im Vorrat heisst: hinein
+           — und zwar ans ENDE, denn die Reihenfolge ist ja die
+           Aufgabe. */
+        if (b.parentElement === zeile) vorrat.appendChild(b);
+        else zeile.appendChild(b);
+        nachsehen();
+      });
+      void i;
+      vorrat.appendChild(b);
+    });
+
+    const zurueck = document.createElement("button");
+    zurueck.type = "button";
+    zurueck.className = "btn btn-ghost lc-aufgabe-zurueck";
+    zurueck.textContent = "Nochmal";
+    zurueck.addEventListener("click", () => {
+      [...zeile.querySelectorAll(".lc-aufgabe-teil")].forEach((b) => vorrat.appendChild(b));
+      nachsehen();
+    });
+
+    const knoepfe = document.createElement("div");
+    knoepfe.className = "lc-aufgabe-knoepfe";
+    knoepfe.appendChild(zurueck);
+    knoepfe.appendChild(fertig);
+
+    tafel.appendChild(zeile);
+    tafel.appendChild(vorrat);
+    tafel.appendChild(knoepfe);
+    kasten.appendChild(tafel);
+    nachsehen();
+  }
+
   function lcAufgabeZeichnen() {
     const kasten = document.getElementById("lcAufgabeLaeuft");
     if (!kasten) return;
@@ -21507,9 +21603,31 @@
     if (txt) {
       txt.textContent = a.frage
         ? "„" + a.frage + "“"
-        : (a.typ === "satz" ? "Satzpuzzle" : a.typ === "wort" ? "Wortpuzzle" : "");
+        : (a.typ === "satz" ? "Bring den Satz in Ordnung"
+           : a.typ === "wort" ? "Bau das Wort auf" : "");
       txt.title = a.klasse ? "Eine Note dafür zählt als " + a.klasse : "";
     }
+    /* =================================================================
+       DIE AUFGABE ZUM ANTIPPEN
+       -----------------------------------------------------------------
+       GEMELDET: „Die Aufgabe hat keine Funktion. Man schreibt einen
+       ganzen Satz, und der ganze Satz ist eingerahmt, und es hat
+       ueberhaupt keine Funktion — man kann nur den Satz anklicken, und
+       das ist quasi die Loesung. Was soll das fuer eine Aufgabe sein?"
+
+       Voellig zu Recht. Hier stand bisher NUR der Satz. Die gemischten
+       Teile — beim Satzpuzzle die Woerter, beim Wortpuzzle die
+       Buchstaben — lagen in livechat.js und kamen nie heraus; bei den
+       anderen im Raum kamen sie nicht einmal an.
+
+       Jetzt liegen sie als Kacheln da: antippen setzt ein Teil in die
+       Zeile darueber, antippen in der Zeile nimmt es wieder heraus.
+       Sind alle gesetzt, geht die Antwort als gewoehnliche Chatzeile
+       hinaus — von da an gilt, was vorher auch galt: sie traegt die
+       Kennung der Aufgabe, bekommt den Notenstift und wird bewertet.
+       Es ist ein anderer WEG zur Antwort, keine andere Rechnung.
+       ================================================================= */
+    lcAufgabeTafel(a);
     const schluss = document.getElementById("lcAufgabeSchluss");
     if (schluss) {
       const darf = Boolean(window.LiveChat && LiveChat.binLehrer && LiveChat.binLehrer());
@@ -26508,7 +26626,7 @@
 
     const kopf = document.createElement("p");
     kopf.className = "lc-betonung-kopf";
-    kopf.textContent = "🎡 Glücksrad — welcher Satz ist das? Tippe Buchstaben an.";
+    kopf.textContent = "🔡 Aufdecken — welcher Satz ist das? Tippe Buchstaben an.";
     kasten.appendChild(kopf);
 
     const offen = lcRatenVorgabe(satz);
@@ -27163,6 +27281,9 @@
        nachsehen laesst und nicht geraten werden muss: jeden Effekt
        einzeln ausloesen und hinterher zaehlen, was im Dokument steht. */
     effektNamen: function () { return Object.keys(LC_EFFEKTE); },
+    /* Die Aufgabentafel von Hand zeichnen — sonst muesste die Sonde
+       den ganzen Raum aufbauen, nur um zu sehen, ob die Teile da sind. */
+    aufgabeZeichnen: function () { return lcAufgabeZeichnen(); },
     /* Wo die Karte LIEGT (ohne Animation) und wo sie gerade GEZEICHNET
        wird — damit sich nachmessen laesst, dass die Buehne dem
        Wackeln nicht folgt. */

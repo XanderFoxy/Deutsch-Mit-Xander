@@ -99,8 +99,26 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
 
   console.log("\n  DIE LÖSUNG BLEIBT HIER");
   const feld = erg.paket ? Object.keys(erg.paket).join(", ") : "";
-  ok(erg.paket && !("loesung" in erg.paket) && !("teile" in erg.paket),
-     "im Paket steht KEINE Lösung — niemand kann spicken", "Felder: " + feld);
+  /* GEAENDERT, und mit Absicht: „teile" faehrt jetzt mit — aber
+     GEMISCHT, nicht in der richtigen Reihenfolge.
+
+     Vorher stand hier, dass gar keine Teile im Paket sein duerfen.
+     Das war zu streng und hat genau das verhindert, was gemeldet
+     wurde: „Das wird bei anderen nicht angezeigt — die koennen
+     irgendwie auf Loesung klicken, aber es wird bei denen nicht
+     angezeigt, was das ist." Ohne die Teile bekommt der andere eine
+     Aufgabe, die er gar nicht anfassen kann.
+
+     Die Loesung selbst bleibt hier: „loesung" darf nicht im Paket
+     stehen, und die Teile duerfen nicht zufaellig schon richtig
+     sortiert sein. */
+  ok(erg.paket && !("loesung" in erg.paket),
+     "die Lösung selbst bleibt hier", "Felder: " + feld);
+  const teile = (erg.paket && erg.paket.teile) || [];
+  ok(teile.length > 0, "die gemischten Teile fahren mit — sonst gibt es nichts anzutippen",
+     teile.join(" · ") || "keine");
+  ok(teile.join("") !== "Fahrrad",
+     "und sie stehen NICHT in der richtigen Reihenfolge", teile.join(""));
   ok(erg.paket && JSON.stringify(erg.paket).indexOf("Fahrrad") < 0,
      "und das Wort selbst taucht nirgends darin auf");
 

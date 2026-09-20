@@ -11485,3 +11485,70 @@ body.lc-schreibt .tutor-reiter {
   .lc-sog, .lc-trommel, .lc-stoerung { display: none; }
   .lc-gesogen, .lc-getrommelt, .lc-gestoert { animation: none; }
 }
+
+/* =====================================================================
+   DIE AUFGABE ZUM ANTIPPEN
+   ---------------------------------------------------------------------
+   GEMELDET: „Die Aufgabe hat keine Funktion. Man schreibt einen ganzen
+   Satz, und der ganze Satz ist eingerahmt, und es hat ueberhaupt keine
+   Funktion — man kann nur den Satz anklicken."
+
+   Oben die Zeile, die man baut; darunter die Teile, die noch daliegen.
+   Die Zeile hat einen gestrichelten Rahmen, damit man sieht, dass dort
+   etwas hingehoert — und eine Mindesthoehe, damit sie nicht springt,
+   sobald das erste Wort hineinkommt.
+   ===================================================================== */
+.lc-aufgabentafel { margin-top: 8px; }
+.lc-aufgabe-zeile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  min-height: 2.6em;
+  padding: 6px 8px;
+  border: 2px dashed rgba(127, 127, 127, 0.4);
+  border-radius: 10px;
+  background: rgba(127, 127, 127, 0.05);
+}
+.lc-aufgabe-eng { gap: 3px; }
+.lc-aufgabe-leer {
+  margin: 0;
+  font-size: 0.78rem;
+  opacity: 0.6;
+}
+.lc-aufgabe-vorrat {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+.lc-aufgabe-teil {
+  padding: 5px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(127, 127, 127, 0.32);
+  background: rgba(127, 127, 127, 0.12);
+  color: inherit;
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.lc-aufgabe-eng .lc-aufgabe-teil {
+  min-width: 1.9em;
+  padding: 5px 4px;
+  text-align: center;
+  font-weight: 700;
+}
+.lc-aufgabe-zeile .lc-aufgabe-teil {
+  background: rgba(120, 190, 140, 0.24);
+  border-color: rgba(120, 190, 140, 0.55);
+}
+.lc-aufgabe-teil:hover,
+.lc-aufgabe-teil:focus-visible { background: rgba(127, 127, 127, 0.24); }
+.lc-aufgabe-knoepfe {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+.lc-aufgabe-fertig:disabled { opacity: 0.45; cursor: default; }

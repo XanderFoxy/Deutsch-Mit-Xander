@@ -2877,7 +2877,15 @@ window.LiveChat = (function () {
         loesung: "",
         frage: String(n.frage || "").slice(0, 300),
         zeileId: String(n.zeileId || ""),
-        teile: [], wer: {}, zeit: neuerZeitpunkt
+        /* „teile" ist die LOESUNG in der richtigen Reihenfolge und
+           bleibt hier leer — wer die Aufgabe bekommt, soll sie ja
+           nicht mitgeliefert kriegen. „teileGemischt" ist das, was
+           man antippt. */
+        teile: [],
+        teileGemischt: Array.isArray(n.teile)
+          ? n.teile.map(function (t) { return String(t).slice(0, 40); }).slice(0, 24)
+          : [],
+        wer: {}, zeit: neuerZeitpunkt
       };
       aufgabeMerken();
       melden();
@@ -5675,7 +5683,13 @@ window.LiveChat = (function () {
     }
     if (teile.length > 24) return systemZeile("Das ist zu lang — höchstens 24 Teile.");
     var gemischt = mischen(teile);
-    offeneAufgabe = { typ: typ, loesung: text, frage: "", teile: teile, wer: {},
+    /* Die gemischten Teile bleiben liegen — die Oberflaeche macht
+       daraus die Kacheln zum Antippen (siehe offeneAufgabeInfo). Sie
+       werden EINMAL gemischt und nicht bei jedem Zeichnen: sonst
+       sortierte sich die Aufgabe bei jedem Auffrischen des Raums neu,
+       und man faengt ewig von vorn an. */
+    offeneAufgabe = { typ: typ, loesung: text, frage: "", teile: teile,
+                      teileGemischt: gemischt, wer: {},
                       zeit: Date.now(), zeileId: "" };
     var zeile = anAlle("aufgabe", (typ === "satz"
         ? "🧩 Bring den Satz in Ordnung: "
@@ -5818,7 +5832,7 @@ window.LiveChat = (function () {
         offeneAufgabe = null;
         aufgabeMerken();
         senden({ art: "aufgabeAus" });
-        return systemZeile("✔️ Das Glücksrad ist beendet. Gesucht war: „" + altLoesung + "\u201c");
+        return systemZeile("✔️ Das Aufdecken ist beendet. Gesucht war: „" + altLoesung + "\u201c");
       }
       /* Ohne Text: eine Redewendung aus der Liste, zufaellig. */
       text = REDEWENDUNGEN[Math.floor(Math.random() * REDEWENDUNGEN.length)];
@@ -5827,7 +5841,7 @@ window.LiveChat = (function () {
     var buchstaben = (text.match(/\p{L}/gu) || []).length;
     if (buchstaben < 4) return systemZeile("Das sind zu wenige Buchstaben zum Raten.");
 
-    offeneAufgabe = { typ: "raten", loesung: text, frage: "Glücksrad", wer: {},
+    offeneAufgabe = { typ: "raten", loesung: text, frage: "Aufdecken", wer: {},
                       zeit: Date.now(), zeileId: "" };
     /* DIE LOESUNG FAEHRT HIER MIT — und das ist Absicht, kein
        Versehen. Anders als bei der Betonung kann kein Geraet den
@@ -5837,7 +5851,7 @@ window.LiveChat = (function () {
        Wer ins Geraet hineinsieht, findet ihn; fuer ein Ratespiel
        im Unterricht ist das der richtige Preis. Im sichtbaren Text
        der Zeile steht er nicht. */
-    var zeile = anAlle("aufgabe", "🎡 Glücksrad \u2014 welcher Satz ist das?", { raten: text });
+    var zeile = anAlle("aufgabe", "\ud83d\udd21 Aufdecken \u2014 welcher Satz ist das?", { raten: text });
     if (zeile && zeile.id) {
       offeneAufgabe.zeileId = zeile.id;
       zeile.aufgabeId = zeile.id;
@@ -5931,6 +5945,19 @@ window.LiveChat = (function () {
       /* Die Kennung der Aufgabenzeile reist mit — daran erkennt jedes
          Geraet spaeter, welche Antwort zu welcher Frage gehoert. */
       zeileId: offeneAufgabe.zeileId || "",
+      /* DIE TEILE MUESSEN MIT.
+         GEMELDET: „Das wird aber bei anderen nicht angezeigt — die
+         koennen irgendwie auf Loesung klicken, aber es wird bei denen
+         nicht angezeigt, was das ist."
+
+         Genau daran lag es: die Ansage trug nur Art und Frage. Die
+         gemischten Woerter (beim Satzpuzzle) beziehungsweise
+         Buchstaben (beim Wortpuzzle) blieben auf dem Geraet dessen
+         liegen, der die Aufgabe gestellt hat. Alle anderen bekamen
+         also eine Aufgabe ohne Teile — und damit nichts zum
+         Antippen. Sie reisen jetzt mit, in derselben Mischung fuer
+         alle: sonst haette jeder eine andere Reihenfolge vor sich. */
+      teile: (offeneAufgabe.teileGemischt || []).slice(0, 24),
       zeit: offeneAufgabe.zeit || Date.now()
     };
     if (anId) paket.an = anId;
@@ -6295,7 +6322,24 @@ window.LiveChat = (function () {
       typ: offeneAufgabe.typ,
       frage: offeneAufgabe.frage || offeneAufgabe.loesung || "",
       klasse: aufgabeKlasse(offeneAufgabe.typ),
-      zeit: offeneAufgabe.zeit || 0
+      zeit: offeneAufgabe.zeit || 0,
+      /* DIE TEILE ZUM ANTIPPEN.
+         GEMELDET: „Die Aufgabe hat keine Funktion. Man schreibt einen
+         ganzen Satz, und der ganze Satz ist eingerahmt, und es hat
+         ueberhaupt keine Funktion — man kann nur den Satz anklicken,
+         und das ist quasi die Loesung. Was soll das fuer eine Aufgabe
+         sein?"
+
+         Voellig zu Recht: die Oberflaeche bekam bisher nur den Satz
+         und hat ihn hingeschrieben. Die EINZELTEILE — beim Satzpuzzle
+         die Woerter, beim Wortpuzzle die Buchstaben — blieben hier
+         liegen. Jetzt reisen sie mit, gemischt, damit man sie
+         antippen und in die richtige Reihenfolge bringen kann.
+
+         Gemischt wird EINMAL beim Stellen der Aufgabe, nicht bei
+         jedem Zeichnen: sonst sortierte sich die Aufgabe bei jedem
+         Auffrischen des Raums neu, und man faengt ewig von vorn an. */
+      teile: (offeneAufgabe.teileGemischt || []).slice()
     };
   }
 
@@ -7671,7 +7715,7 @@ window.LiveChat = (function () {
     { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort Wort",    was: "Buchstaben durcheinander" },
     { gr: "schule", w: "aufgabe", kurz: "frage",     nutzt: "/aufgabe <Text>", was: "Eine Aufgabe in eigenen Worten — was die anderen danach schreiben, gilt als Antwort und kann benotet werden (/aufgabe ohne Text beendet sie)" },
     { gr: "schule", w: "betonung", kurz: "beton", nutzt: "/betonung <Wort oder Satz>", was: "Betonungsübung: die anderen tippen an, welche Silbe betont wird — die Silben kommen aus dem Wörterbuch, die Antwort lässt sich benoten (/betonung ohne Text beendet sie)" },
-    { gr: "schule", w: "raten", kurz: "gluecksrad", nutzt: "/raten Satz",     was: "Glücksrad: ein Satz mit verdeckten Buchstaben (/raten allein nimmt eine Redewendung, /raten liste zeigt alle)" },
+    { gr: "schule", w: "raten", kurz: "aufdecken", nutzt: "/raten Satz",     was: "Aufdecken: ein Satz mit verdeckten Buchstaben (/raten allein nimmt eine Redewendung, /raten liste zeigt alle)" },
     { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note Name 1-6", was: "Zensur (nur Lehrer)" },
     { gr: "schule", w: "klassensprecher", kurz: "sprecher", nutzt: "/klassensprecher Name", was: "Vertretung für den Lehrer" },
     { gr: "schule", w: "nachhoeren", kurz: "mitschrieb", nutzt: "/nachhören",  was: "Alles Gesprochene im Chat einblenden — zum Nachhören und Herunterladen" },

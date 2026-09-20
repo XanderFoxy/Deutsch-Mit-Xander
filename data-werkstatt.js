@@ -49,28 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 355 — das Sprechbild laesst sich wirklich einstellen",
+  stand: "Fassung 356 — die Aufgabe laesst sich endlich antippen",
 
   inArbeit: [
-    { seit: "2026-09-20T01:01",
-      text: "Galgenmaennchen: reihum spielen und benoten" },
-    { seit: "2026-09-20T01:01",
+    { seit: "2026-09-20T01:20",
+      text: "Galgenmaennchen/Aufdecken: reihum spielen und benoten" },
+    { seit: "2026-09-20T01:20",
       text: "Weitere Effekte aus der Wunschliste (Bowling, DJ-Schallplatte, Ohrfeige, Kopfhoerer, Blut und Spinnweben)" },
-    { seit: "2026-09-20T01:01",
+    { seit: "2026-09-20T01:20",
       text: "Nachmessen, ob bei einem Gespraech wirklich ZWEI Geraete in turn_nutzung stehen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-20T01:01",
-      text: "Das Sprechbild wird jetzt wirklich gesetzt — der alte Zuhoerer raeumte das neue Menue weg, bevor der Klick ankam" },
-    { seit: "2026-09-20T01:01",
-      text: "Alle Kacheln sind gleich breit: 0 px Unterschied statt langer Rechtecke links" },
-    { seit: "2026-09-20T01:01",
-      text: "Ein kurzer Tipp auf ein Profilbild zieht nichts mehr gross auf" },
-    { seit: "2026-09-20T01:01",
-      text: "Das grosse Bild steht jetzt im Menue unter „Gross zeigen“" },
-    { seit: "2026-09-20T01:01",
-      text: "„Woanders hinsetzen“ heisst jetzt „Holen“ — und die erste Kachel sagt, womit: Angeln nach oben, Lasso zur Seite" },
+    { seit: "2026-09-20T01:20",
+      text: "Satz- und Wortpuzzle haben jetzt Kacheln: antippen setzt ein Teil, nochmal antippen nimmt es heraus" },
+    { seit: "2026-09-20T01:20",
+      text: "Die gemischten Teile reisen mit — vorher bekamen die anderen eine Aufgabe ohne alles" },
+    { seit: "2026-09-20T01:20",
+      text: "Abschicken geht erst, wenn alle Teile gesetzt sind; danach liegen sie wieder bereit" },
+    { seit: "2026-09-20T01:20",
+      text: "Das Gluecksrad heisst jetzt „Aufdecken“" },
   ],
 };

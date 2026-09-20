@@ -177,6 +177,6 @@ const SATZ = "Der Apfel fällt nicht weit vom Stamm";
     aufSeite.slice(0, 5).forEach((f) => console.log("    " + f));
   }
   await br.close(); srv.close();
-  console.log("\n" + (fehler ? fehler + " Abweichung(en)" : "Das Glücksrad tut, was es soll.") + "\n");
+  console.log("\n" + (fehler ? fehler + " Abweichung(en)" : "Das Aufdecken tut, was es soll.") + "\n");
   process.exit(fehler ? 1 : 0);
 })();
