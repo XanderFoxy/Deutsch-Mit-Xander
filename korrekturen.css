@@ -15098,3 +15098,146 @@ body.lc-schreibt .tutor-reiter {
   font-size: 0.8em;
 }
 @media (prefers-reduced-motion: reduce) { .lc-lese-zeile { transition: none; } }
+
+/* --- HINTER DEM STRUDEL LIEGT DER LEERE PLATZ ------------------------
+   GEMELDET: „bei der Strudel-Animation ist es auch noch, dass der
+   Strudel weggeht und dahinter ist nicht wirklich der Platz mit der
+   Strichlinie."
+   Der gestrichelte Kreis sieht genauso aus wie ein freier Platz
+   (.lc-platz-frei .lc-kreis), er liegt aber nur in der Wirkungsschicht
+   und kommt erst, wenn das Bild eingezogen ist. Die Zeiten stehen im
+   selben Takt wie lcSogZiehtR19: fort ab 34 %, zurueck ab 78 %. */
+.lc-sog-leer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px dashed rgba(122, 115, 100, 0.45);
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  animation: lcSogLeerR22 4.2s linear both;
+}
+@keyframes lcSogLeerR22 {
+  0%, 31%   { opacity: 0; transform: scale(.86); }
+  36%       { opacity: 1; transform: scale(1); }
+  78%       { opacity: 1; transform: scale(1); }
+  88%, 100% { opacity: 0; transform: scale(1.04); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-sog-leer { animation: none; opacity: 0; }
+}
+
+/* --- DER ZWEITE STROHHALM: REINPUSTEN --------------------------------
+   GEWUENSCHT: „Vielleicht kannst du bei dem Strohhalm noch eine zweite
+   Animation hinzufuegen, als wenn man in den Strohhalm reinblaest und
+   das Getraenk so blubbern laesst."
+   Beim Ansaugen wird das Bild duenner (.lc-gesaugt), hier wird es
+   dicker — das ist der sichtbare Unterschied zwischen Saugen und
+   Pusten. Die Blasen liegen in der runden Blende, also IM Getraenk. */
+.lc-blubber-rohr {
+  position: absolute;
+  right: -6%;
+  top: -12%;
+  width: 11px;
+  height: 78%;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #ff7f8a 0%, #ff5f6d 55%, #e04a58 100%);
+  box-shadow: inset -3px 0 0 rgba(0, 0, 0, 0.14);
+  transform: rotate(19deg);
+  transform-origin: 50% 100%;
+  animation: lcBlubberHalmR22 3.6s ease-in-out both;
+}
+@keyframes lcBlubberHalmR22 {
+  0%   { transform: rotate(46deg) translateY(-26px); opacity: 0; }
+  12%  { transform: rotate(19deg) translateY(0); opacity: 1; }
+  20%, 86% { transform: rotate(19deg) translateY(0) scaleY(1); opacity: 1; }
+  100% { transform: rotate(46deg) translateY(-26px); opacity: 0; }
+}
+.lc-blubber-backen {
+  position: absolute;
+  right: -14%;
+  top: -24%;
+  width: 40px;
+  height: 34px;
+  transform-origin: 50% 80%;
+  animation: lcBlubberBackenR22 0.9s ease-in-out 0.25s 3 both;
+}
+@keyframes lcBlubberBackenR22 {
+  0%, 100% { transform: scale(1); }
+  40%      { transform: scale(1.22, 1.14); }
+}
+.lc-blubber-blase {
+  position: absolute;
+  bottom: 4%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%,
+    rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.34) 52%, rgba(255, 255, 255, 0.08) 72%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  opacity: 0;
+  animation-name: lcBlubberSteigtR22;
+  animation-timing-function: ease-in;
+  animation-iteration-count: 2;
+  animation-fill-mode: both;
+}
+@keyframes lcBlubberSteigtR22 {
+  0%   { transform: translate(-50%, 0) scale(.5); opacity: 0; }
+  14%  { opacity: .95; }
+  55%  { transform: translate(-50%, -54px) scale(1); opacity: .9; }
+  100% { transform: translate(-50%, -104px) scale(1.18); opacity: 0; }
+}
+/* Das Bild wird beim Pusten DICKER — beim Saugen wird es duenner. */
+.lc-kreis.lc-blubbert { animation: lcBlubbertR22 3.6s ease-in-out both; }
+@keyframes lcBlubbertR22 {
+  0%   { transform: scale(1); }
+  16%  { transform: scale(1.06, 1.02); }
+  30%  { transform: scale(1.01, 1.05); }
+  46%  { transform: scale(1.08, 1.03); }
+  62%  { transform: scale(1.02, 1.06); }
+  80%  { transform: scale(1.05, 1.02); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-blubber-blase, .lc-blubber-backen, .lc-blubber-rohr,
+  .lc-kreis.lc-blubbert { animation: none; }
+}
+
+/* --- DIE MUSIKBANDE IM CHAT ------------------------------------------
+   GEWUENSCHT: „dass ich, wenn nichts los ist im Chat, fuer alle ein
+   Lied abspielen kann aus der Playlist."
+   Wenn Musik laeuft, soll man SEHEN, was laeuft — sonst spielt etwas
+   und niemand weiss, woher. Ein Tipp macht sie auf dem eigenen Geraet
+   aus; fuer die anderen laeuft sie weiter. */
+.lc-musikband {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  z-index: 34;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 78%;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 999px;
+  background: rgba(24, 20, 34, 0.72);
+  backdrop-filter: blur(6px);
+  color: #f4efe6;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.lc-musikband-note {
+  display: inline-block;
+  animation: lcMusikNoteR22 1.6s ease-in-out infinite;
+}
+@keyframes lcMusikNoteR22 {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50%      { transform: translateY(-3px) rotate(8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-musikband-note { animation: none; }
+}

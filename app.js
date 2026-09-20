@@ -21155,6 +21155,11 @@
                Er sitzt neben der Ansicht, weil man ihn genau dann
                sucht, wenn man ohnehin oben hinschaut. Was er tut,
                steht in livechat.js unter tonNeuAufbauen(). -->
+          <!-- MUSIK FUER ALLE. „Wenn nichts los ist im Chat, ein Lied
+               fuer alle aus der Playlist." -->
+          <button type="button" class="lc-tonknopf" id="lcMusikKnopf"
+                  title="Ein Lied f\u00fcr alle aus dem Musikordner"
+                  aria-label="Musik f\u00fcr alle">\ud83c\udfb5</button>
           <button type="button" class="lc-tonknopf" id="lcTonNeu"
                   title="Ton zurücksetzen — wenn du jemanden doppelt hörst"
                   aria-label="Ton zurücksetzen">🔊 Ton</button>
@@ -21839,6 +21844,67 @@
 
   /* Der Waehler: erst das Niveau, dann der Text. Zwei kurze Listen
      sind auf dem Telefon besser als eine lange mit 42 Zeilen. */
+  /* =================================================================
+     DER MUSIKWAEHLER
+     -----------------------------------------------------------------
+     GEWUENSCHT: „dass ich, wenn nichts los ist im Chat, fuer alle ein
+     Lied abspielen kann aus der Playlist."
+     Dasselbe Menue wie beim Lesen, nur mit Liedern — und mit einer
+     Zeile zum Ausmachen ganz unten. Der Befehl /musik tut dasselbe;
+     wer lieber tippt, tippt. */
+  function lcMusikWaehler() {
+    lcPlatzMenueZu();
+    let lieder = [];
+    try { lieder = (LiveChat.lieder && LiveChat.lieder()) || []; } catch (e) { lieder = []; }
+    if (!lieder.length) { showToast("Im Musikordner liegt gerade nichts."); return false; }
+
+    const kasten = document.createElement("div");
+    kasten.id = "lcPlatzMenue";
+    kasten.className = "lc-platzmenue lc-lesewahl";
+    kasten.setAttribute("role", "menu");
+
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kopf.textContent = "Musik f\u00fcr alle";
+    kasten.appendChild(kopf);
+
+    const liste = document.createElement("div");
+    liste.className = "lc-lese-liste";
+    kasten.appendChild(liste);
+
+    lieder.forEach((l, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-lese-text";
+      b.textContent = "\ud83c\udfb5  " + l.titel;
+      b.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        lcPlatzMenueZu();
+        const zeile = "/musik " + (i + 1);
+        try { LiveChat.schreiben(zeile); } catch (x) {}
+        lcNachDemSenden(zeile);
+      });
+      liste.appendChild(b);
+    });
+    const aus = document.createElement("button");
+    aus.type = "button";
+    aus.className = "lc-lese-text";
+    aus.textContent = "\ud83d\udd07  Musik aus \u2014 f\u00fcr alle";
+    aus.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      lcPlatzMenueZu();
+      try { LiveChat.schreiben("/musik aus"); } catch (x) {}
+      lcNachDemSenden("/musik aus");
+    });
+    liste.appendChild(aus);
+
+    document.body.appendChild(kasten);
+    const feld = document.getElementById("lcFeld");
+    lcMenueStellen(kasten, feld || document.body);
+    lcMenueSchliessen(kasten);
+    return true;
+  }
+
   function lcLeseWaehler() {
     lcPlatzMenueZu();
     const stoff = lcLesestoff();
@@ -22925,6 +22991,12 @@
     /* Und der Rest der Wunschliste — „lasse keinen aus". */
     katapult:       { ton: "bonk",     dauer: 2600, laut: 0.65 },
     strohhalm:      { ton: "schlurf",  dauer: 3000, laut: 0.5 },
+    /* GEWUENSCHT: „Vielleicht kannst du bei dem Strohhalm noch eine
+       zweite Animation hinzufuegen, als wenn man in den Strohhalm
+       reinblaest und das Getraenk so blubbern laesst." Derselbe Halm,
+       andere Richtung — deshalb auch dasselbe Geraeusch, nur laenger,
+       weil das Blubbern nicht aufhoert, solange man pustet. */
+    blubbern:       { ton: "schlurf",  dauer: 3600, laut: 0.5 },
     peitsche:       { ton: "peitsche", dauer: 2000, laut: 0.6 },
     bowling:        { ton: "glasbruch", dauer: 2400, laut: 0.5 },
     billard:        { ton: "bonk",     dauer: 2400, laut: 0.55 },
@@ -23241,6 +23313,95 @@
       }
       return true;
     } catch (e) { return false; }
+  }
+
+  /* =================================================================
+     MUSIK FUER ALLE — UND EINS „AUF DIE OHREN"
+     -----------------------------------------------------------------
+     GEWUENSCHT, woertlich: „Vielleicht kannst du das noch machen, dass
+     ich, wenn nichts los ist im Chat, fuer alle ein Lied abspielen kann
+     aus der Playlist" — und zum Kopfhoerer-Effekt: „dass ich ein Lied
+     aussuchen kann und den Leuten dann dieses Lied auf die Ohren
+     setzen kann aus dem Musikordner."
+
+     Beides ist dasselbe Stueck Technik, nur mit verschiedenem Ziel:
+     /musik legt fuer ALLE auf, /kopfhoerer Name Lied setzt es EINEM
+     auf die Ohren — dann hoert es auch nur der eine, alle anderen
+     sehen die Kopfhoerer und lesen den Titel in der Zeile.
+
+     Die Lieder liegen im Ordner „music" und sind seine eigenen. Die
+     Liste steht in livechat.js (dort wird der Befehl gelesen), hier
+     wird nur abgespielt. Wer den Ton ausgestellt hat, hoert auch die
+     Musik nicht — ein ausgeschalteter Ton muss ausgeschaltet bleiben.
+
+     DUCKING: solange jemand redet, geht die Musik auf ein Viertel.
+     Genau wie bei den Geraeuschen — „damit dieser Ton nicht
+     dominiert". Nur laeuft ein Lied Minuten statt Sekunden, deshalb
+     wird hier waehrend des Spielens nachgeregelt und nicht einmal
+     beim Start. */
+  const LC_MUSIK_LAUT = 0.42;
+  let lcMusikSpieler = null;
+  let lcMusikTakt = 0;
+  let lcMusikTitel = "";
+  function lcMusikLautstaerke() {
+    if (!lcMusikSpieler) return;
+    let redet = false;
+    try { redet = Boolean(window.LiveChat && LiveChat.redetJemand && LiveChat.redetJemand()); }
+    catch (e) { redet = false; }
+    lcMusikSpieler.volume = redet ? LC_MUSIK_LAUT * 0.25 : LC_MUSIK_LAUT;
+  }
+  function lcMusikStoppen() {
+    if (lcMusikTakt) { clearInterval(lcMusikTakt); lcMusikTakt = 0; }
+    if (lcMusikSpieler) {
+      try { lcMusikSpieler.pause(); lcMusikSpieler.currentTime = 0; } catch (e) {}
+    }
+    lcMusikTitel = "";
+    document.getElementById("lcMusikBand")?.remove();
+  }
+  function lcMusikSpielen(datei, titel) {
+    if (!datei) return false;
+    if (!lcToeneAn()) return false;
+    lcMusikStoppen();
+    try {
+      if (!lcMusikSpieler) {
+        lcMusikSpieler = document.createElement("audio");
+        lcMusikSpieler.setAttribute("playsinline", "");
+        lcMusikSpieler.style.display = "none";
+        document.body.appendChild(lcMusikSpieler);
+      }
+      /* Die Dateinamen haben Leerzeichen und Klammern — ohne
+         encodeURI holt der Browser sie nicht. */
+      lcMusikSpieler.src = "music/" + encodeURIComponent(datei);
+      lcMusikLautstaerke();
+      const v = lcMusikSpieler.play();
+      if (v && v.catch) v.catch(() => {});
+      lcMusikTakt = setInterval(lcMusikLautstaerke, 900);
+      lcMusikSpieler.onended = () => lcMusikStoppen();
+      lcMusikTitel = titel || datei;
+      lcMusikBandZeigen(lcMusikTitel);
+      return true;
+    } catch (e) { return false; }
+  }
+  /* Eine schmale Bande im Chatkopf sagt, was laeuft — sonst spielt
+     Musik und niemand weiss, woher sie kommt. Ein Tipp darauf macht
+     sie auf DIESEM Geraet aus; fuer die anderen laeuft sie weiter. */
+  function lcMusikBandZeigen(titel) {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return;
+    document.getElementById("lcMusikBand")?.remove();
+    const b = document.createElement("button");
+    b.type = "button";
+    b.id = "lcMusikBand";
+    b.className = "lc-musikband";
+    b.title = "Antippen: bei dir leise";
+    b.innerHTML = '<span class="lc-musikband-note">\ud83c\udfb5</span><span></span>';
+    b.lastElementChild.textContent = titel;
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      lcMusikStoppen();
+      showToast("\ud83d\udd07 Die Musik ist bei dir aus — die anderen hören sie weiter.");
+    });
+    karte.appendChild(b);
   }
 
   /* ALLES VERSTUMMEN LASSEN.
@@ -24149,6 +24310,7 @@
        Reihenfolge, in der er sie genannt hat. */
     ["\ud83e\ude83", "Katapult",  "katapult"],
     ["\ud83e\udd64", "Halm", "strohhalm"],
+    ["\ud83e\uded7", "Blubbern", "blubbern"],
     ["\ud83e\udea2", "Peitsche",  "peitsche"],
     ["\ud83c\udfb3", "Bowling",   "bowling"],
     ["\ud83c\udfb1", "Billard",   "billard"],
@@ -24348,20 +24510,30 @@
         .sort((a, b) => naehe(a.nummer, meiner.nummer) - naehe(b.nummer, meiner.nummer))[0];
       const ziel = frei || irgend;
       if (ziel) {
-        /* WOMIT GEHOLT WIRD, HAENGT AN DER RICHTUNG — so war es von
-           Anfang an gemeint: „von unten nach oben waer es dann so ein
-           Heber, oder von rechts nach links waer so ein Lasso", und
-           dazu „du kannst auch alternativ noch eine Angel machen, wo
-           man den anderen so angeln kann."
-           Die Reihe hat vier Plaetze. Kommt die Person aus einer
-           TIEFEREN Reihe herauf, ist es die Angel; geht es zur Seite
-           oder hinunter, das Lasso. Dieselbe Rechnung wie in /heb, nur
-           hier schon sichtbar, bevor man tippt. */
-        const reihe = (n) => Math.floor((n - 1) / 4);
-        const hoch = reihe(ziel.nummer) < reihe(seiner.nummer);
-        kachel(hoch ? "\ud83e\ude9d" : "\ud83e\udd20", hoch ? "Angeln" : "Lasso",
-          (hoch ? "Mit der Angel heraufholen" : "Mit dem Lasso herueberziehen")
-          + " \u2014 auf Platz " + ziel.nummer
+        /* ZURUECKGENOMMEN — GEMELDET: „Dann funktioniert das mit dem
+           Angelhaken und mit dem Lasso nicht, egal was man waehlt. Es
+           springt immer zwischen Angeln und Lasso hin und her."
+
+           Er hat genau beschrieben, was hier passierte: die Kachel
+           hiess einmal „Angeln" und einmal „Lasso" — je nachdem, ob
+           der vorgeschlagene Platz ueber oder unter dem anderen lag.
+           Zwei Namen fuer denselben Knopf, und welcher gerade
+           dasteht, entschied nicht der Mensch, sondern die
+           Sitzordnung. Das ist keine Wahl, das ist ein Wackeln.
+
+           Jetzt sind es ZWEI verschiedene Werkzeuge mit klaren
+           Aufgaben, so wie er es beschreibt:
+             · Die ANGEL zieht jemanden dorthin, WO ICH WILL — sie
+               steht deshalb hier, ueber der Platzliste („mit dem
+               Angeln soll man ihn irgendwo hinziehen koennen").
+             · Das LASSO zieht ihn ZU MIR, neben mich — dafuer
+               braucht man gar keine Liste, deshalb steht es direkt
+               im Platzmenue („mit dem Lasso soll man ihn eigentlich
+               zu sich heranziehen, dass er neben einem sitzt").
+           Diese Kachel ist damit immer die Angel, und sie heisst
+           auch immer so. */
+        kachel("\ud83e\ude9d", "Angeln",
+          "Mit der Angel auf Platz " + ziel.nummer + " ziehen"
           + (frei ? ", gleich neben dir" : "; dort sitzt jemand, ihr tauscht dann"),
           () => setzen(ziel.nummer));
       }
@@ -24454,7 +24626,18 @@
      je nachdem, was man vorher gewaehlt hat.
      ================================================================= */
   let lcMalWeg = null;
-  function lcWegMalen(art) {
+  /* GEWUENSCHT, woertlich: „Zeichnen beschreibt den Weg, den man machen
+     moechte, in der naechsten Auswahl. Wenn man die Linie gezeichnet hat,
+     soll man bestimmen, ob fahren oder laufen … Da muesstest du auch kein
+     extra Menue machen. Dann machst du die Zeichnung mit dem Hinweis, dass
+     ich dann das Laufen- oder Fahr-Symbol anklicken muss, was ich ja
+     sowieso auch anklicke im normalen Zustand — also dass es am selben
+     Platz dort angeklickt werden muss."
+     Deshalb liegt der gemalte Weg hier zwischen den beiden Schritten:
+     erst malen, dann geht dasselbe Menue an derselben Stelle wieder auf
+     und dort steht nur noch Fahren oder Laufen. */
+  let lcGemalterWeg = null;
+  function lcWegMalen(art, zielPlatz) {
     const karte = document.getElementById("livechatKarte");
     const reihe = document.getElementById("lcPlaetze");
     if (!karte || !reihe) return false;
@@ -24472,7 +24655,7 @@
     feld.setAttribute("aria-hidden", "true");
     feld.innerHTML = '<svg class="lc-wegmal-linie" preserveAspectRatio="none">'
       + '<polyline fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      + '<p class="lc-wegmal-hinweis">Zieh den Weg \u2014 loslassen f\u00e4hrt ab</p>';
+      + '<p class="lc-wegmal-hinweis">' + (art ? 'Zieh den Weg \u2014 loslassen f\u00e4hrt ab' : 'Zieh den Weg \u2014 danach Fahren oder Laufen antippen') + '</p>';
     reihe.appendChild(feld);
     const linie = feld.querySelector("polyline");
     const rk = lcLayoutKasten(reihe);
@@ -24525,6 +24708,18 @@
       const nummern = weg.map((p) => p.nr);
       schliessen();
       if (nummern.length < 2) { lcWegAbsage("Kein Weg gezeichnet."); return; }
+      /* Ohne vorgewaehlte Art wird noch nichts gesendet: der Weg wird
+         gemerkt und dasselbe Menue geht an derselben Stelle wieder auf —
+         „was ich ja sowieso auch anklicke im normalen Zustand". */
+      if (!art) {
+        lcGemalterWeg = nummern;
+        const zurueck = zielPlatz && zielPlatz.isConnected ? zielPlatz
+          : document.querySelector('.lc-platz[data-lc-platz="' + nummern[nummern.length - 1] + '"]');
+        if (zurueck) { lcAnreiseMenue(zurueck); return; }
+        lcGemalterWeg = null;
+        lcWegAbsage("Der Platz ist weg.");
+        return;
+      }
       /* Der Weg geht an alle — sonst saehe nur ich, wie ich laufe.
          Die Nummern stehen als Kette im Befehl, damit jedes Geraet
          denselben Weg zeichnet und nicht seinen eigenen rechnet. */
@@ -24550,9 +24745,16 @@
     kasten.className = "lc-platzmenue";
     kasten.setAttribute("role", "menu");
 
+    /* Liegt schon eine gezeichnete Linie da, dann fragt dasselbe Menue
+       nur noch, WIE sie abgefahren wird. */
+    const gemalt = lcGemalterWeg && lcGemalterWeg.length > 1 ? lcGemalterWeg.slice() : null;
+    lcGemalterWeg = null;
+
     const kopf = document.createElement("p");
     kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = "Platz " + nr + " \u2014 wie hin?";
+    kopf.textContent = gemalt
+      ? "Dein Weg: " + gemalt.join("\u2013")
+      : "Platz " + nr + " \u2014 wie hin?";
     kasten.appendChild(kopf);
 
     const knopf = (zeichen, wort, tun) => {
@@ -24580,15 +24782,20 @@
        Fahren und Laufen gehen als Zeile an alle — sonst saehe nur
        ich selbst, wie ich ueber die Plaetze rolle. */
     const schicken = (befehl) => {
-      const zeile = "/" + befehl + " " + nr;
+      /* Mit gezeichneter Linie geht die ganze Kette hinaus, sonst nur
+         die Zielnummer — das Fahr- und das Lauf-Symbol bleiben dabei
+         an derselben Stelle im Menue. */
+      const zeile = "/" + befehl + " " + (gemalt ? gemalt.join("-") : nr);
       try { LiveChat.schreiben(zeile); } catch (e) {}
       lcNachDemSenden(zeile);
     };
     knopf("\ud83d\ude97", "Fahren", () => schicken("fahren"));
     knopf("\ud83d\udc63", "Laufen", () => schicken("laufen"));
-    /* Und der gemalte Weg — „wie bei einer Handy-Code-Freischaltung". */
-    knopf("\u270d\ufe0f", "Weg malen", () => lcWegMalen("spielzug"));
-    knopf("\ud83d\uddfa\ufe0f", "Route fahren", () => lcWegMalen("fahren"));
+    /* Und der gemalte Weg — „wie bei einer Handy-Code-Freischaltung".
+       EINE Zeile, nicht mehr zwei: „denn du hast naemlich die Route
+       fuer das Auto daneben noch ein zweites Mal." */
+    knopf("\u270d\ufe0f", gemalt ? "Neu zeichnen" : "Weg zeichnen",
+      () => lcWegMalen(null, platz));
 
     document.body.appendChild(kasten);
     lcMenueStellen(kasten, platz);
@@ -24695,7 +24902,15 @@
          nennen oder Haken oder Lasso." Also: Holen. Womit geholt wird,
          steht dann an der Kachel: mit der Angel nach oben, mit dem
          Lasso zur Seite. */
-      knopf("\ud83e\ude9d", "Holen", () => lcHebenMenue(platz, name));
+      /* Zwei Werkzeuge, zwei Knoepfe — siehe die Begruendung in
+         lcHebenMenue. Die Angel fragt, wohin; das Lasso zieht
+         sofort zu mir. */
+      knopf("\ud83e\ude9d", "Angeln", () => lcHebenMenue(platz, name));
+      knopf("\ud83e\udd20", "Lasso", () => {
+        const zeile = "/lasso " + name;
+        try { LiveChat.schreiben(zeile); } catch (e) {}
+        lcNachDemSenden(zeile);
+      });
     }
 
     document.body.appendChild(kasten);
@@ -26103,6 +26318,12 @@
        immer über neue Animationen." Vier neue — und zwar vier
        verschiedene BEWEGUNGSARTEN, nicht viermal dasselbe in anderer
        Farbe: auf, taumelnd herab, waagerecht hindurch, am Boden entlang. */
+    /* Musik ist kein Bild — sie bekommt deshalb KEIN „ganzeSeite":
+       der Chat soll beim Auflegen nicht springen und es soll auch
+       kein Film gesucht werden. Gespielt wird sie weiter oben in
+       lcWirkung, direkt und ohne Zeichnung. */
+    musik:    { zeichen: ["\ud83c\udfb5"], wie: "musik" },
+    musikaus: { zeichen: ["\ud83d\udd07"], wie: "musikaus" },
     seifenblasen: { ganzeSeite: true, wie: "seifenblasen" },
     herbst:  { ganzeSeite: true, wie: "herbst" },
     aquarium:{ ganzeSeite: true, wie: "aquarium" },
@@ -26216,6 +26437,7 @@
     sanduhr:    { zeichen: ["\u231b"], wie: 6, klasse: "umarmen" },
     katapult:   { zeichen: ["\ud83e\ude83"], wie: 5, klasse: "umarmen" },
     strohhalm:  { zeichen: ["\ud83e\udd64"], wie: 5, klasse: "umarmen" },
+    blubbern:   { zeichen: ["\ud83e\uded7"], wie: 5, klasse: "umarmen" },
     peitsche:   { zeichen: ["\ud83e\udea2"], wie: 5, klasse: "umarmen" },
     bowling:    { zeichen: ["\ud83c\udfb3"], wie: 5, klasse: "umarmen" },
     billard:    { zeichen: ["\ud83c\udfb1"], wie: 5, klasse: "umarmen" },
@@ -27435,6 +27657,17 @@
          Filter teilen und im selben Takt laufen. */
       const id = "lcSogFilter" + (++lcSogZaehler);
       const teile = [];
+      /* GEMELDET: „Bei der Strudel-Animation ist es auch noch, dass der
+         Strudel weggeht und dahinter ist nicht wirklich der Platz mit
+         der Strichlinie."
+         Stimmt: das Bild wird auf scale(0) eingezogen — und dann ist an
+         der Stelle GAR nichts, nicht einmal der leere Platz. Ein freier
+         Platz sieht aber so aus: gestrichelter Kreis (siehe
+         .lc-platz-frei .lc-kreis in livechat.css). Genau der liegt
+         jetzt in der Wirkungsschicht und wird sichtbar, solange das
+         Bild fort ist. Er liegt NUR in der Schicht und veraendert die
+         Sitzreihe nicht — sonst waere der Platz doppelt da. */
+      teile.push('<i class="lc-sog-leer"></i>');
       teile.push('<svg class="lc-sog-filter" width="0" height="0" aria-hidden="true" focusable="false">'
         + '<filter id="' + id + '" x="-35%" y="-35%" width="170%" height="170%"'
         + ' color-interpolation-filters="sRGB">'
@@ -28257,7 +28490,20 @@
       setTimeout(() => {
         try {
           const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(zu.nr) : null;
-          if (erg && erg.ok) showToast("\ud83d\ude97 " + erg.text);
+          /* GEMELDET: „man geht jetzt los, und die Nummer mit der
+             Strichlinie, dieser Kreis ist gar nicht mehr sichtbar.
+             Sie springt zwar nicht zurueck, aber sie ist gar nicht
+             mehr sichtbar."
+             GEFUNDEN: der Platz wurde genommen, aber die Sitzreihe
+             wurde nicht neu gezeichnet. Bis zum naechsten Herzschlag
+             stand dort also weder der alte noch der neue Zustand —
+             der alte Platz galt noch als besetzt (also keine
+             Strichlinie, keine Nummer), obwohl niemand mehr darauf
+             sass. Ein Neuzeichnen ist der ganze Unterschied. */
+          if (erg && erg.ok) {
+            renderLiveChat();
+            showToast("\ud83d\ude97 " + erg.text);
+          }
         } catch (e) {}
       }, hin + 140);
     }
@@ -28528,6 +28774,57 @@
     }, 3000, "strohhalm");
   }
 
+  /* --- UND DASSELBE ANDERSHERUM: REINPUSTEN -------------------------
+     GEWUENSCHT, woertlich: „Vielleicht kannst du bei dem Strohhalm
+     noch eine zweite Animation hinzufuegen, als wenn man in den
+     Strohhalm reinblaest und das Getraenk so blubbern laesst."
+
+     Der Unterschied zum Ansaugen ist die RICHTUNG — und man sieht sie
+     an drei Sachen: die Blasen steigen nicht IM Halm auf, sondern im
+     Getraenk, also IM Bild (deshalb die runde Blende, sonst haengen
+     sie ueber dem Rand); das Bild wird dicker statt duenner
+     (lcBlubbertR22); und vorn am Halm sitzt ein Backen-Puster, der
+     sich aufblaeht. Sie werden immer mehr und immer groesser, wie
+     wenn man laenger hineinpustet. */
+  function lcBlubbern(wen) {
+    return lcAmPlatz(wen, "lc-blubber", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-blubbert");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-blubbert");
+        setTimeout(() => kreis.classList.remove("lc-blubbert"), 3600);
+      }
+      /* Was im Getraenk passiert, bleibt im Getraenk. */
+      const blende = lcZpBlende(schicht);
+      let blasen = "";
+      for (let i = 0; i < 14; i++) {
+        /* Die Blasen kommen aus dem unteren Drittel — dort steckt das
+           Halmende — und werden nach hinten heraus groesser. */
+        const gr = (7 + (i % 5) * 3 + Math.floor(i / 7) * 4);
+        const x = 34 + ((i * 37) % 34);
+        blasen += '<i class="lc-blubber-blase" style="'
+          + "left:" + x + "%;"
+          + "width:" + gr + "px;height:" + gr + "px;"
+          + "animation-delay:" + (0.12 + i * 0.19).toFixed(2) + "s;"
+          + "animation-duration:" + (1.5 + (i % 4) * 0.22).toFixed(2) + "s"
+          + '"></i>';
+      }
+      blende.innerHTML = blasen;
+      /* Der Halm steckt von rechts oben im Getraenk, und vorn sitzen
+         die Backen, die sich aufblaehen. */
+      schicht.insertAdjacentHTML("beforeend",
+        '<span class="lc-blubber-rohr"></span>'
+        + '<svg class="lc-blubber-backen" viewBox="0 0 40 34" aria-hidden="true">'
+        + '<ellipse cx="20" cy="19" rx="15" ry="12" fill="#f3c9a0" stroke="#c98f5e" stroke-width="2"/>'
+        + '<path d="M11 24 Q20 30 29 24" fill="none" stroke="#c98f5e" stroke-width="2"'
+        + ' stroke-linecap="round"/>'
+        + '<circle cx="13" cy="15" r="1.8" fill="#6b4a2a"/>'
+        + '<circle cx="27" cy="15" r="1.8" fill="#6b4a2a"/>'
+        + "</svg>");
+    }, 3600, "blubbern");
+  }
+
   /* --- DIE PEITSCHE ------------------------------------------------- */
   function lcPeitsche(wen) {
     return lcAmPlatz(wen, "lc-peitsche", (schicht, platz) => {
@@ -28596,7 +28893,21 @@
   }
 
   /* --- DIE KOPFHOERER ------------------------------------------------ */
-  function lcKopfhoerer(wen) {
+  function lcKopfhoerer(wen, nachricht) {
+    /* GEWUENSCHT: „dass ich ein Lied aussuchen kann und den Leuten
+       dann dieses Lied auf die Ohren setzen kann aus dem Musikordner."
+       Auf die OHREN heisst: es hoert der, dem sie aufgesetzt werden —
+       nicht der ganze Raum. Alle anderen sehen die Kopfhoerer und
+       lesen den Titel in der Chatzeile. */
+    const lied = (nachricht && nachricht.lied) || "";
+    if (lied) {
+      let ich = "";
+      try { ich = (LiveChat.lage() || {}).ichName || ""; } catch (e) {}
+      const treffer = String(wen || "").trim().toLowerCase();
+      if (treffer && ich && treffer === ich.trim().toLowerCase()) {
+        lcMusikSpielen(lied, (nachricht && nachricht.liedTitel) || "");
+      }
+    }
     return lcAmPlatz(wen, "lc-kopfhoerer", (schicht) => {
       /* GEWUENSCHT: „Bei den Kopfhoerern kannst du versuchen, solche
          Apple AirPods Max zu machen — also diese Over-Ear-Kopfhoerer
@@ -29636,7 +29947,9 @@
       setTimeout(() => {
         try {
           const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(ziel.nr) : null;
-          if (erg && erg.ok) showToast("🎰 " + erg.text);
+          /* Auch hier neu zeichnen — sonst bleibt der alte Platz
+             scheinbar besetzt und ohne Nummer stehen. */
+          if (erg && erg.ok) { renderLiveChat(); showToast("🎰 " + erg.text); }
         } catch (e) {}
       }, t + 200);
     }
@@ -30485,7 +30798,7 @@
     reichtum: 1, zucker: 1, hammer: 1, heber: 1, lasso: 1,
     schneeball: 1, bumerang: 1, saugpfeil: 1, sahne: 1, sog: 1, trommel: 1,
     paintfleck: 1, ei: 1, fahren: 1, spielzug: 1, pacjagd: 1, stoerung: 1,
-    aufessen: 1, lotto: 1, sanduhr: 1, katapult: 1, strohhalm: 1, peitsche: 1,
+    aufessen: 1, lotto: 1, sanduhr: 1, katapult: 1, strohhalm: 1, blubbern: 1, peitsche: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
@@ -30495,6 +30808,16 @@
   function lcWirkung(art, anZeile, nachricht) {
     const e = LC_EFFEKTE[art];
     if (!e) return;
+    /* MUSIK ZUERST: sie zeichnet nichts, sie klingt nur. Wuerde sie
+       weiter unten landen, regnete zu jedem Lied ein Notenschauer
+       ueber den Chat — und genau das war bei den Platz-Effekten
+       schon einmal der Fehler. */
+    if (art === "musik") {
+      lcMusikSpielen((nachricht && nachricht.lied) || "",
+                     (nachricht && nachricht.liedTitel) || "");
+      return;
+    }
+    if (art === "musikaus") { lcMusikStoppen(); return; }
     /* Die Umarmung ist der einzige Effekt, der jemanden MEINT. Sie
        braucht deshalb den Namen aus der Zeile — siehe lcUmarmung(). */
     if (art === "umarmen" && lcUmarmung(nachricht && (nachricht.wen || nachricht.an))) return;
@@ -30539,10 +30862,11 @@
             ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "katapult" && lcKatapult(wenZ)) return;
       if (art === "strohhalm" && lcStrohhalm(wenZ)) return;
+      if (art === "blubbern" && lcBlubbern(wenZ)) return;
       if (art === "peitsche" && lcPeitsche(wenZ)) return;
       if (art === "bowling" && lcStoss(wenZ, "bowling")) return;
       if (art === "billard" && lcBillard(wenZ)) return;
-      if (art === "kopfhoerer" && lcKopfhoerer(wenZ)) return;
+      if (art === "kopfhoerer" && lcKopfhoerer(wenZ, nachricht)) return;
       if (art === "luke" && lcLuke(wenZ)) return;
       if (art === "platte" && lcPlatte(wenZ)) return;
       if (art === "ohrfeige" && lcOhrfeige(wenZ)) return;
@@ -32772,11 +33096,24 @@
         e.stopPropagation();
         lcLeseWaehler();
       });
+      area.querySelector("#lcMusikKnopf")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        lcMusikWaehler();
+      });
       area.querySelector("#lcTonNeu")?.addEventListener("click", (e) => {
         e.stopPropagation();
         let erg = null;
         try { erg = LiveChat.tonNeuAufbauen ? LiveChat.tonNeuAufbauen() : null; } catch (x) {}
         if (!erg) { showToast("Der Ton liess sich gerade nicht zurücksetzen."); return; }
+        /* GEWUENSCHT: „dass ich mich selber niemals hören kann …
+           vielleicht kannst du das in diesen Tonschalter mit einbauen."
+           Der Schalter sagt deshalb auch, ob er ein eigenes Echo
+           gefunden und abgeklemmt hat. */
+        if (erg.selbst) {
+          showToast("🔊 Dein eigenes Echo ist abgeklemmt — du hörst dich nie selbst. "
+            + erg.wieder + " andere Stimme" + (erg.wieder === 1 ? "" : "n") + " stehen.");
+          return;
+        }
         showToast(erg.doppelt
           ? "🔊 " + erg.doppelt + " doppelte Tonspur" + (erg.doppelt === 1 ? "" : "en")
             + " angehalten — jetzt hörst du jeden einmal."
@@ -62548,7 +62885,14 @@ An einem Morgen lief ein kleiner Fuchs los…
       /* „von" kam dazu, als Fahren und Spielzug dazukamen: bei denen
          bewegt sich der ABSENDER, nicht der Genannte — ohne seinen
          Namen liesse sich das gar nicht pruefen. */
-      wirkung: (art, wen, von) => lcWirkung(art, null, { wen: wen, name: von || "Alex" }),
+      /* „mehr" nimmt weitere Felder der Nachricht auf — zum Beispiel
+         das Lied beim Kopfhoerer. Ohne das liesse sich nicht messen,
+         ob die Musik wirklich am richtigen Ohr ankommt. */
+      wirkung: (art, wen, von, mehr) => lcWirkung(art, null,
+        Object.assign({ wen: wen, name: von || "Alex" }, mehr || {})),
+      musikStand: () => ({ titel: lcMusikTitel,
+                           laeuft: Boolean(lcMusikSpieler && !lcMusikSpieler.paused),
+                           quelle: lcMusikSpieler ? lcMusikSpieler.src : "" }),
       /* Die Betreiber-Karte fuers Relais — damit sich pruefen laesst,
          dass sie sich ueberhaupt zeichnen laesst, ohne dass man sich
          dafuer als Betreiber anmelden muss. */

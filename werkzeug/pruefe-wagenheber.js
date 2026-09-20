@@ -213,7 +213,13 @@ const pruefe = (was, gut, zusatz) => {
     window.DMA_PRUEFUNG.platzMenue(seiner);
     const k = document.getElementById("lcPlatzMenue");
     const um = k ? [...k.querySelectorAll(".lc-platzmenue-knopf")]
-      .filter((b) => /Holen/i.test(b.textContent))[0] : null;
+      /* NACHGEZOGEN IN RUNDE 22 — die Sache hat sich geaendert:
+         GEMELDET: „Es springt immer zwischen Angeln und Lasso hin und
+         her." Aus dem einen Knopf „Holen", der je nach Sitzordnung
+         mal so und mal so hiess, sind ZWEI Werkzeuge geworden:
+         „Angeln" fragt, wohin; „Lasso" zieht sofort zu mir. Gesucht
+         wird deshalb die Angel — sie ist die mit der Platzliste. */
+      .filter((b) => /Angeln/i.test(b.textContent))[0] : null;
     if (!um) return { keinKnopf: true };
     um.click();
     await new Promise((f) => setTimeout(f, 140));
@@ -227,10 +233,10 @@ const pruefe = (was, gut, zusatz) => {
        Wirkung; gesucht ist die Zeile. */
     const alle = [];
     window.LiveChat.pruefPost((p) => alle.push(p));
-    /* Die erste Kachel holt zu mir — sie heisst „Angeln" oder „Lasso",
-       je nachdem, aus welcher Richtung die Person kommt. */
+    /* Die erste Kachel im Angel-Menue schlaegt den naechsten freien
+       Platz vor; sie heisst jetzt immer „Angeln". */
     const zuMir = [...m.querySelectorAll(".lc-platzmenue-knopf")]
-      .filter((b) => /Angeln|Lasso/i.test(b.textContent))[0];
+      .filter((b) => /Angeln/i.test(b.textContent))[0];
     if (zuMir) zuMir.click();
     await new Promise((f) => setTimeout(f, 160));
     const mitWirkung = alle.filter((p) => p && /heber|lasso/.test(String(p.wirkung || "")))[0]
@@ -240,11 +246,11 @@ const pruefe = (was, gut, zusatz) => {
              wieviele: alle.length,
              zu: !document.getElementById("lcPlatzMenue") };
   });
-  pruefe("bei einem fremden Platz gibt es „Holen“",
+  pruefe("bei einem fremden Platz gibt es die Angel",
     !menue.keinKnopf && !menue.keinMenue,
     menue.keinKnopf ? "keine Kachel" : (menue.keinMenue ? "kein Menue" : menue.kopf));
-  pruefe("und ganz vorn steht das Holen — Angeln oder Lasso",
-    Array.isArray(menue.woerter) && /Angeln|Lasso/i.test(menue.woerter[0] || ""),
+  pruefe("und ganz vorn steht der vorgeschlagene Platz",
+    Array.isArray(menue.woerter) && /Angeln/i.test(menue.woerter[0] || ""),
     (menue.woerter || []).slice(0, 4).join(", "));
   pruefe("es stehen auch die einzelnen Plaetze zur Wahl",
     (menue.woerter || []).filter((w) => /^Platz \d+$/.test(w)).length >= 2,

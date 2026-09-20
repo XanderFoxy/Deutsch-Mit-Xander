@@ -862,6 +862,7 @@ window.LiveChat = (function () {
        ein Zufallsmodus. */
     katapult:   { wirkung: "katapult",   satz: "schleudert mit dem Katapult", emoji: "\ud83e\ude83" },
     strohhalm:  { wirkung: "strohhalm",  satz: "saugt mit dem Strohhalm an", emoji: "\ud83e\udd64" },
+    blubbern:   { wirkung: "blubbern",   satz: "pustet in den Strohhalm von", emoji: "\ud83e\uded7" },
     peitsche:   { wirkung: "peitsche",   satz: "peitscht aus", emoji: "\ud83e\udea2" },
     bowling:    { wirkung: "bowling",    satz: "r\u00e4umt mit der Bowlingkugel ab", emoji: "\ud83c\udfb3" },
     billard:    { wirkung: "billard",    satz: "st\u00f6sst mit dem Queue an", emoji: "\ud83c\udfb1" },
@@ -2387,8 +2388,82 @@ window.LiveChat = (function () {
      tun, und es lebt genau so lange wie die Leitung. Das Bild bleibt
      Sache der Oberfläche; der TON hört nie auf, nur weil man
      weiterblättert. */
+  /* =================================================================
+     DIE LIEDER AUS DEM MUSIKORDNER
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Vielleicht kannst du das noch machen, dass ich, wenn
+     nichts los ist im Chat, fuer alle ein Lied abspielen kann aus der
+     Playlist" — und „dass ich ein Lied aussuchen kann und den Leuten
+     dann dieses Lied auf die Ohren setzen kann aus dem Musikordner."
+
+     Es sind SEINE eigenen Stuecke; sie liegen als Dateien im Ordner
+     „music". Die Liste steht hier, weil hier der Befehl gelesen wird;
+     abgespielt wird in app.js (lcMusikSpielen). Der Dateiname geht
+     ueber den Kanal, nicht der Ton — jedes Geraet holt sich die Datei
+     selbst, sonst waere es ein Rundfunk und keine Webseite.
+
+     Kommt eine neue Datei in den Ordner, gehoert sie hier dazu. */
+  var LIEDER = [
+    { datei: "Du.mp3", titel: "Du" },
+    { datei: "Nah (2011).mp3", titel: "Nah (2011)" },
+    { datei: "Nur Mit Mir (Demo 1)-3.mp3", titel: "Nur mit mir (Demo)" },
+    { datei: "One Day In Rome - A Lovers Fairytale.mp3",
+      titel: "One Day In Rome — A Lovers Fairytale" },
+    { datei: "One Day In Rome - Ein Leben Lang.mp3",
+      titel: "One Day In Rome — Ein Leben lang" },
+    { datei: "promised-eden_mein-stiller-schmerz.mp3",
+      titel: "Promised Eden — Mein stiller Schmerz" }
+  ];
+  /* Eine Nummer, ein Stueck vom Titel oder ein Stueck vom Dateinamen —
+     alles drei findet dasselbe Lied. */
+  function liedFinden(text) {
+    var t = String(text || "").trim().toLowerCase();
+    if (!t) return null;
+    if (/^\d+$/.test(t)) return LIEDER[parseInt(t, 10) - 1] || null;
+    for (var i = 0; i < LIEDER.length; i++) {
+      var l = LIEDER[i];
+      if (l.titel.toLowerCase().indexOf(t) >= 0) return l;
+      if (l.datei.toLowerCase().indexOf(t) >= 0) return l;
+    }
+    return null;
+  }
+  function liederListe() {
+    return LIEDER.map(function (l, i) {
+      return "  /musik " + (i + 1) + "   " + l.titel;
+    }).join("\n");
+  }
+
   var tonJe = {};
+  /* =========================================================
+     MAN HOERT SICH NIE SELBER
+     ---------------------------------------------------------
+     GEWUENSCHT, woertlich: „Ich weiss ja nicht, wann die doppelte
+     Stimme kommt … dass man sich selber hoert von seiner Stimme,
+     dann kannst du das ja auch unterbinden … dass ich mich selber
+     niemals hoeren kann. Vielleicht kannst du das in diesen
+     Tonschalter mit einbauen."
+
+     Die eigene Kennung ist fest (eigeneId speichert sie im Geraet
+     oder leitet sie aus dem Konto ab). Ein zweites Fenster desselben
+     Menschen traegt deshalb DIESELBE Kennung — genau das ist die
+     „Chat-Leiche", die man als Echo seiner eigenen Stimme hoert.
+     Hier wird sie nicht angeschlossen, egal auf welchem Weg sie
+     hereinkommt, und ein Element, das schon an ihr haengt, wird
+     abgeklemmt. Ein Rueckgabewert sagt dem Panik-Knopf, ob er etwas
+     gefunden hat — sonst drueckt man und weiss nichts. */
+  function tonSelbstSperren(id) {
+    if (!id || !zustand || id !== zustand.ichId) return false;
+    var a = tonJe[id];
+    if (a) {
+      try { a.pause(); } catch (e) {}
+      try { a.srcObject = null; } catch (e) {}
+      try { a.remove(); } catch (e) {}
+      delete tonJe[id];
+    }
+    return true;
+  }
   function tonAnschliessen(id, strom) {
+    if (tonSelbstSperren(id)) return;
     if (!strom || typeof document === "undefined") return;
     /* Die Wache beginnt dort, wo es etwas zu bewachen gibt — beim
        ersten Ton. Sie beim Betreten zu starten genuegt nicht: wer
@@ -2483,6 +2558,7 @@ window.LiveChat = (function () {
     Object.keys(zustand.leute || {}).forEach(function (id) {
       var p = zustand.leute[id];
       if (!p || !p.strom || !p.strom.getTracks) return;
+      if (id === zustand.ichId) { if (tonJe[id]) { tonSelbstSperren(id); weg++; } return; }
       ["audio", "video"].forEach(function (art) {
         var spuren = p.strom.getTracks().filter(function (t) { return t.kind === art; });
         /* Beendete Spuren sind ohnehin Ballast. */
@@ -2514,6 +2590,9 @@ window.LiveChat = (function () {
       var a = tonJe[id];
       var p = zustand.leute[id];
       if (!a) { delete tonJe[id]; return; }
+      /* Die eigene Stimme faellt hier genauso heraus wie ein Element,
+         zu dem niemand mehr gehoert. */
+      if (id === zustand.ichId) { tonSelbstSperren(id); weg++; return; }
       if (!p || !p.strom) {
         try { a.pause(); } catch (e) {}
         try { a.srcObject = null; } catch (e) {}
@@ -2559,15 +2638,19 @@ window.LiveChat = (function () {
     } catch (e) {}
     /* Und jetzt jeden wieder genau einmal anschliessen. */
     var wieder = 0;
+    var selbst = 0;
     Object.keys(zustand.leute || {}).forEach(function (id) {
       var p = zustand.leute[id];
       if (!p || !p.strom) return;
+      /* „Dass ich mich selber niemals hoeren kann" — auch nicht nach
+         dem Zuruecksetzen. */
+      if (id === zustand.ichId) { tonSelbstSperren(id); selbst++; return; }
       tonAnschliessen(id, p.strom);
       wieder++;
     });
     tonElementeAufraeumen();
     tonWacheZaehler.geheilt += doppelt;
-    return { doppelt: doppelt, wieder: wieder };
+    return { doppelt: doppelt, wieder: wieder, selbst: selbst };
   }
 
   function tonWacheStarten() {
@@ -3512,6 +3595,12 @@ window.LiveChat = (function () {
         leseZeilen: Array.isArray(n.leseZeilen) ? n.leseZeilen.slice(0, 40) : null,
         leseTitel: String(n.leseTitel || ""),
         leseNiveau: String(n.leseNiveau || ""),
+        /* Das Lied faehrt mit — ohne diese zwei Zeilen kaeme beim
+           anderen „legt … auf" an und es bliebe still. Genau dieser
+           Fehler ist hier schon zweimal passiert (bei „wen" und bei
+           den gemischten Saetzen). */
+        lied: String(n.lied || ""),
+        liedTitel: String(n.liedTitel || ""),
         /* WEN es trifft, muss mitkommen — sonst spielt die Umarmung
            beim Empfaenger auf allen Plaetzen statt auf dem richtigen. */
         wen: n.wen || "",
@@ -3580,7 +3669,8 @@ window.LiveChat = (function () {
                  film: n.film || "", betonung: n.betonung || "",
                  sortieren: n.sortieren || null,
                  leseZeilen: n.leseZeilen || null, leseTitel: n.leseTitel || "",
-                 leseNiveau: n.leseNiveau || "", zeit: n.zeit };
+                 leseNiveau: n.leseNiveau || "",
+                 lied: n.lied || "", liedTitel: n.liedTitel || "", zeit: n.zeit };
       });
       /* Zu gross? Dann die Bilder herausnehmen, aeltester zuerst. */
       while (JSON.stringify(paket).length > VERLAUF_PAKET) {
@@ -8029,10 +8119,12 @@ window.LiveChat = (function () {
     { gr: "reden", w: "huepfen", kurz: "spielzug", nutzt: "/huepfen Name",     was: "Spielzug — dein Bild huepft Platz fuer Platz zu jemandem" },
     { gr: "reden", w: "katapult", kurz: "kata", nutzt: "/katapult Name",   was: "Katapult — der andere wird weggeschleudert" },
     { gr: "reden", w: "strohhalm", kurz: "halm", nutzt: "/strohhalm Name", was: "Strohhalm — der andere wird angesaugt" },
+    { gr: "reden", w: "blubbern", kurz: "pusten", nutzt: "/blubbern Name", was: "Blubbern — in den Halm gepustet, das Bild blubbert" },
     { gr: "reden", w: "peitsche", kurz: "snap", nutzt: "/peitsche Name",   was: "Auspeitschen — es schnalzt, die Strieme bleibt kurz" },
     { gr: "reden", w: "bowling", kurz: "kegel", nutzt: "/bowling Name",    was: "Bowling — die Kugel raeumt ab" },
     { gr: "reden", w: "billard", kurz: "queue", nutzt: "/billard Name",    was: "Billard — angestossen und weggerollt" },
-    { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name", was: "Kopfhoerer — aufgesetzt, Noten steigen auf" },
+    { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name 3", was: "Kopfhoerer — aufgesetzt; mit Liednummer hoert der andere das Lied" },
+    { gr: "reden", w: "musik", kurz: "lied", nutzt: "/musik 3", was: "Musik fuer alle aus dem Musikordner — /musik zeigt die Liste, /musik aus haelt an" },
     { gr: "reden", w: "luke", kurz: "fenster", nutzt: "/luke Name",        was: "Fensterluke — sie geht auf und wieder zu" },
     { gr: "reden", w: "platte", kurz: "dj",    nutzt: "/platte Name",      was: "DJ-Schallplatte — das Bild dreht sich unter der Nadel" },
     { gr: "reden", w: "ohrfeige", kurz: "klatsch", nutzt: "/ohrfeige Name", was: "Ohrfeige — der Kopf fliegt zur Seite" },
@@ -8065,6 +8157,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "streicheln", kurz: "lieb", nutzt: "/streicheln Name", was: "Streicheln \u2014 sanft, mit Herzchen" },
     { gr: "reden", w: "kuss", kurz: "bussi",  nutzt: "/kuss Name",      was: "Kuss \u2014 der Abdruck bleibt kurz stehen" },
     { gr: "raum", w: "panik", kurz: "tonneu", nutzt: "/panik",          was: "Ton zur\u00fccksetzen, wenn du jemanden doppelt h\u00f6rst" },
+    { gr: "reden", w: "lasso", kurz: "herzu", nutzt: "/lasso Name",
+      was: "Jemanden mit dem Lasso zu dir heranziehen \u2014 auf den freien Platz neben dir" },
     { gr: "lernen", w: "lesen", kurz: "text",  nutzt: "/lesen",
       was: "Einen Lesetext in den Chat holen \u2014 Niveau w\u00e4hlbar, Zeile f\u00fcr Zeile" },
     { gr: "lernen", w: "sortieren", kurz: "reihenfolge", nutzt: "/sortieren Satz 1 | Satz 2 | Satz 3",
@@ -8330,7 +8424,11 @@ window.LiveChat = (function () {
                 paint: "paintball", farbklecks: "paintball", klecks: "paintball",
                 ton: "verbindung", audio: "verbindung", leitung: "verbindung",
                 platz: "tausch", platzwechsel: "tausch",
-                umsetzen: "heb", lasso: "heb", wagenheber: "heb", heben: "heb",
+                /* „lasso" ist jetzt ein eigener Befehl (zu mir heranziehen)
+                   und darf deshalb NICHT mehr auf /heb zeigen —
+                   pruefe-jeder-befehl wuerde das sonst zu Recht als
+                   verdeckten Alias melden. */
+                umsetzen: "heb", wagenheber: "heb", heben: "heb",
                 ziehen: "heb", hieven: "heb",
                 sitzen: "tausch", setz: "tausch",
                 lecken: "leck", schlecken: "leck", ablecken: "leck",
@@ -8779,6 +8877,13 @@ window.LiveChat = (function () {
       n.leseZeilen = zusatz.leseZeilen;
       n.leseTitel = zusatz.leseTitel || "";
       n.leseNiveau = zusatz.leseNiveau || "";
+    }
+    /* Das Lied gehoert auch an die EIGENE Zeile. Sie entsteht hier
+       lokal und nicht ueber den Empfang — ohne diese Zeile legt man
+       fuer alle auf und hoert als Einziger nichts. */
+    if (zusatz && zusatz.lied) {
+      n.lied = zusatz.lied;
+      n.liedTitel = zusatz.liedTitel || "";
     }
     /* WEN es angeht, steht an der Zeile selbst — nicht nur im Rundruf.
        Sonst sähe der Absender die Umarmung nicht, die er gerade
@@ -9532,6 +9637,52 @@ window.LiveChat = (function () {
        Ohne Nummer sagt der Befehl, welche Plaetze in Frage
        kommen. Raten muss niemand.
        ========================================================= */
+    /* =========================================================
+       DAS LASSO ZIEHT ZU MIR — DIE ANGEL IRGENDWOHIN
+       ---------------------------------------------------------
+       GEMELDET: „Man soll in dem Moment jemanden zu sich ziehen
+       koennen oder an den Platz ziehen koennen, wo man ihn
+       hinziehen moechte. Ja, mit dem Angeln soll man ihn irgendwo
+       hinziehen koennen, und mit dem Lasso soll man ihn eigentlich
+       zu sich heranziehen, dass er neben einem sitzt oder am
+       naechsten Platz, wo er hin kann."
+
+       „/lasso" war bisher nur ein Kurzwort fuer „/heb" — und /heb
+       will eine Platznummer. Es gab also gar kein Werkzeug, das
+       von selbst zu MIR zieht. Jetzt gibt es eins: es sucht den
+       freien Platz, der meinem am naechsten liegt, und setzt ihn
+       dorthin. Ist keiner frei, sagt es das, statt jemanden
+       wegzutauschen — einen Menschen zu verschieben, um einen
+       anderen heranzuholen, hat niemand verlangt. */
+    if (art === "lasso") {
+      if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
+      var nameL = rest.trim();
+      if (!nameL) return systemZeile("So geht es:  /lasso Nickname \u2014 "
+        + "dann sitzt er gleich neben dir.");
+      var wenL = personNachName(nameL) || praesenzNachName(nameL);
+      if (!wenL) return systemZeile("Ich finde niemanden mit dem Namen \u201e" + nameL + "\u201c im Raum.");
+      var plaetzeL = plaetzeBauen();
+      var meinerL = null, seinerL = null;
+      plaetzeL.forEach(function (pl) {
+        if (pl.ich) meinerL = pl;
+        if (pl.id === wenL.id) seinerL = pl;
+      });
+      if (!meinerL) return systemZeile("Du sitzt noch nicht oben \u2014 das Lasso braucht einen Standpunkt.");
+      if (!seinerL) return systemZeile(wenL.name + " sitzt gerade auf keinem Platz.");
+      var naeheL = function (n) {
+        var r1 = Math.floor((n - 1) / 4), s1 = (n - 1) % 4;
+        var r2 = Math.floor((meinerL.nummer - 1) / 4), s2 = (meinerL.nummer - 1) % 4;
+        return Math.abs(r1 - r2) + Math.abs(s1 - s2);
+      };
+      var freiL = plaetzeL.filter(function (pl) { return pl.leer && pl.nummer !== meinerL.nummer; })
+                          .sort(function (a, b) { return naeheL(a.nummer) - naeheL(b.nummer); })[0];
+      if (!freiL) return systemZeile("Neben dir ist kein Platz frei \u2014 "
+        + "das Lasso hat nichts, woran es ziehen koennte.");
+      /* Und jetzt dasselbe wie /heb, nur mit dem selbst gefundenen
+         Platz — die Zeile darunter erledigt das Umsetzen. */
+      return befehlAusfuehren("/heb " + wenL.name + " " + freiL.nummer);
+    }
+
     if (art === "heb") {
       if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
       var teileH = rest.trim().split(/\s+/).filter(Boolean);
@@ -9755,6 +9906,53 @@ window.LiveChat = (function () {
       var satzQ = AUCH_AM_PLATZ[art];
       return anAlle("aktion", zustand.ichName + " " + satzQ.satz + " " + zielWort(wemQ) + "  " + satzQ.emoji,
                     { wirkung: satzQ.wirkung, wen: wemQ.name });
+    }
+
+    /* ---- MUSIK FUER ALLE ----
+       „Wenn nichts los ist im Chat, ein Lied fuer alle." Ohne Zusatz
+       zeigt der Befehl die Liste — man soll nicht raten muessen, was
+       im Ordner liegt. */
+    if (art === "musik") {
+      var wahlM = (rest || "").trim();
+      if (!wahlM || /^(liste|was|\?)$/i.test(wahlM)) {
+        return systemZeile("Musik f\u00fcr alle:\n" + liederListe()
+          + "\n  /musik aus   h\u00e4lt sie wieder an"
+          + "\n  /kopfh\u00f6rer Name 3   setzt Lied 3 nur EINEM auf die Ohren");
+      }
+      if (/^(aus|stop|stopp|halt|schluss)$/i.test(wahlM)) {
+        return anAlle("aktion", zustand.ichName + " macht die Musik aus  \ud83d\udd07",
+                      { wirkung: "musikaus" });
+      }
+      var liedM = liedFinden(wahlM);
+      if (!liedM) {
+        /* Nicht „kenne ich nicht" sagen: genau diese Formel steht fuer
+           einen UNBEKANNTEN BEFEHL, und pruefe-jeder-befehl liest sie
+           auch so. Ein Lied, das nicht im Ordner liegt, ist etwas
+           anderes. */
+        return systemZeile("\u201e" + wahlM + "\u201c liegt nicht im Musikordner.\n" + liederListe());
+      }
+      return anAlle("aktion", zustand.ichName + " legt \u201e" + liedM.titel + "\u201c auf  \ud83c\udfb5",
+                    { wirkung: "musik", lied: liedM.datei, liedTitel: liedM.titel });
+    }
+    /* ---- UND EINS AUF DIE OHREN ----
+       /kopfhoerer Name          nur die Kopfhoerer
+       /kopfhoerer Name 3        Kopfhoerer UND Lied 3 — gehoert wird es
+                                 nur von dem, dem sie aufgesetzt werden.
+       Diese Abzweigung muss VOR AM_PLATZ stehen: dort gilt der ganze
+       Rest als Name, und „Bea 3" heisst niemand. */
+    if (art === "kopfhoerer" && rest && /\s/.test(rest.trim())) {
+      var stkK = rest.trim().split(/\s+/);
+      var namK = stkK.shift();
+      var liedK = liedFinden(stkK.join(" "));
+      var wemK = personNachName(namK) || praesenzNachName(namK) || { name: namK };
+      if (!liedK) {
+        return systemZeile("\u201e" + stkK.join(" ") + "\u201c liegt nicht im Musikordner.\n"
+          + liederListe());
+      }
+      return anAlle("aktion", zustand.ichName + " setzt " + zielWort(wemK)
+                    + " Kopfh\u00f6rer auf \u2014 \u201e" + liedK.titel + "\u201c  \ud83c\udfa7",
+                    { wirkung: "kopfhoerer", wen: wemK.name,
+                      lied: liedK.datei, liedTitel: liedK.titel });
     }
 
     if (WETTER[art]) {
@@ -10846,6 +11044,10 @@ window.LiveChat = (function () {
          genau das prueft pruefe-effekttueren; diese vier haben eine,
          sie steht nur nicht in einer Tabelle. */
       w.push("zherz", "heber", "lasso", "lotto");
+      /* Und die Musik: „musik" haengt an /musik mit einem Lied, „musikaus"
+         an /musik aus. Beide haben eine Tuer, sie steht nur in einer
+         eigenen Abzweigung und nicht in einer Tabelle. */
+      w.push("musik", "musikaus");
       return w;
     },
     /* Nur zum Nachpruefen: die Sitzordnung von aussen nachstellen und
@@ -11191,6 +11393,10 @@ window.LiveChat = (function () {
       return typeof v === "number" ? v : -1;
     },
     tonNeuAufbauen: function () { tonWacheStarten(); return tonNeuAufbauen(); },
+    /* Die Lieder — app.js braucht sie fuer die Kachel und fuer den
+       Waehler, gelesen werden sie hier. */
+    lieder: function () { return LIEDER.map(function (l) {
+      return { datei: l.datei, titel: l.titel }; }); },
     tonWacheStand: function () { return { geheilt: tonWacheZaehler.geheilt,
                                           letzte: tonWacheZaehler.letzte,
                                           laeuft: Boolean(tonWacheTakt) }; },

@@ -104,11 +104,23 @@ const BRETT = (frei) => `
      GEMELDET: „In diesem Menue muss das Springen nicht drinstehen.
      Das ist dann Quatsch." Der kurze Tipp IST das Springen. Dafuer
      kann man den Weg jetzt malen. */
-  pruefe("es gibt ein Anreise-Menue mit vier Wegen, aber ohne Springen",
+  /* NOCHMAL NACHGEBESSERT IN RUNDE 22, weil die Sache sich wieder
+     geaendert hat. GEMELDET: „Da muesstest du auch kein extra Menue
+     machen. Dann machst du die Zeichnung mit dem Hinweis, dass ich dann
+     das Laufen- oder Fahr-Symbol anklicken muss." Es gibt deshalb nur
+     noch EINE Zeichnen-Zeile, und die Wahl faellt danach an derselben
+     Stelle. */
+  pruefe("es gibt ein Anreise-Menue ohne Springen und mit einer Zeichnen-Zeile",
     /function lcAnreiseMenue/.test(js)
     && !/knopf\("[^"]*", "Springen"/.test(js)
     && /"Fahren"/.test(js) && /"Laufen"/.test(js)
-    && /"Weg malen"/.test(js) && /"Route fahren"/.test(js));
+    && /gemalt \? "Neu zeichnen" : "Weg zeichnen"/.test(js)
+    && !/"Route fahren"/.test(js));
+  pruefe("die Zeichnung sendet noch nichts, sondern merkt sich den Weg",
+    /if \(!art\) \{\s*\n\s*lcGemalterWeg = nummern;/.test(js)
+    && /lcAnreiseMenue\(zurueck\)/.test(js));
+  pruefe("und Fahren\/Laufen nehmen dann die ganze Kette",
+    /gemalt \? gemalt\.join\("-"\) : nr/.test(js));
   pruefe("und /laufen ist ein echter Befehl",
     /laufen:\s*\{ wirkung: "spielzug"/.test(lc));
   pruefe("eine Nummer hinter dem Befehl wird als Platz gelesen",
@@ -205,7 +217,7 @@ const BRETT = (frei) => `
     JSON.parse(fs.readFileSync(path.join(WURZEL, "filme/raumschiff.json"), "utf8")).maskeUnsauber === true,
     "raumschiff.json");
   pruefe("die Fassung ist hochgezaehlt",
-    /window\.DMA_VERSION = "363"/.test(html));
+    /window\.DMA_VERSION = "364"/.test(html));
 
   /* ---------- Und jetzt im Browser ---------- */
   const srv = http.createServer((q, a) => {
