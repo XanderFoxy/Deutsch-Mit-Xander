@@ -205,7 +205,7 @@ const BRETT = (frei) => `
     JSON.parse(fs.readFileSync(path.join(WURZEL, "filme/raumschiff.json"), "utf8")).maskeUnsauber === true,
     "raumschiff.json");
   pruefe("die Fassung ist hochgezaehlt",
-    /window\.DMA_VERSION = "362"/.test(html));
+    /window\.DMA_VERSION = "363"/.test(html));
 
   /* ---------- Und jetzt im Browser ---------- */
   const srv = http.createServer((q, a) => {

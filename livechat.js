@@ -2469,6 +2469,10 @@ window.LiveChat = (function () {
      greift sie ein. So merkt man im Normalfall gar nicht, dass es
      sie gibt.
      ================================================================= */
+  /* Welche Zeile eines Lesetextes gerade dran ist. Der Schluessel
+     ist die Kennung der Chatzeile, in der der Text steht. */
+  var leseStelle = {};
+
   var tonWacheTakt = 0;
   var tonWacheZaehler = { geheilt: 0, letzte: "" };
 
@@ -3301,6 +3305,16 @@ window.LiveChat = (function () {
       }
       return;
     }
+    if (n.art === "lesezeile") {
+      /* Die Stelle merken (auch fuer den, der die Tafel erst spaeter
+         zeichnet) und sofort anzeigen. */
+      if (n.leseId && Number(n.nr) >= 0) {
+        leseStelle[String(n.leseId)] = Number(n.nr);
+        try { if (window.DMA_LESEZEILE) window.DMA_LESEZEILE(String(n.leseId), Number(n.nr)); }
+        catch (e) {}
+      }
+      return;
+    }
     if (n.art === "redet") {
       if (zustand.leute[n.von]) {
         zustand.leute[n.von].spricht = Boolean(n.spricht);
@@ -3495,6 +3509,9 @@ window.LiveChat = (function () {
            kaeme die Aufgabe beim anderen als leere Ueberschrift an —
            derselbe Fehler wie einst bei „wen". */
         sortieren: Array.isArray(n.sortieren) ? n.sortieren.slice(0, 8) : null,
+        leseZeilen: Array.isArray(n.leseZeilen) ? n.leseZeilen.slice(0, 40) : null,
+        leseTitel: String(n.leseTitel || ""),
+        leseNiveau: String(n.leseNiveau || ""),
         /* WEN es trifft, muss mitkommen — sonst spielt die Umarmung
            beim Empfaenger auf allen Plaetzen statt auf dem richtigen. */
         wen: n.wen || "",
@@ -3561,7 +3578,9 @@ window.LiveChat = (function () {
                  bild: n.bild || "", bildImChat: n.bildImChat || "", farbe: n.farbe || "",
                  wirkung: n.wirkung || "", wen: n.wen || "", an: n.an || "",
                  film: n.film || "", betonung: n.betonung || "",
-                 sortieren: n.sortieren || null, zeit: n.zeit };
+                 sortieren: n.sortieren || null,
+                 leseZeilen: n.leseZeilen || null, leseTitel: n.leseTitel || "",
+                 leseNiveau: n.leseNiveau || "", zeit: n.zeit };
       });
       /* Zu gross? Dann die Bilder herausnehmen, aeltester zuerst. */
       while (JSON.stringify(paket).length > VERLAUF_PAKET) {
@@ -8046,6 +8065,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "streicheln", kurz: "lieb", nutzt: "/streicheln Name", was: "Streicheln \u2014 sanft, mit Herzchen" },
     { gr: "reden", w: "kuss", kurz: "bussi",  nutzt: "/kuss Name",      was: "Kuss \u2014 der Abdruck bleibt kurz stehen" },
     { gr: "raum", w: "panik", kurz: "tonneu", nutzt: "/panik",          was: "Ton zur\u00fccksetzen, wenn du jemanden doppelt h\u00f6rst" },
+    { gr: "lernen", w: "lesen", kurz: "text",  nutzt: "/lesen",
+      was: "Einen Lesetext in den Chat holen \u2014 Niveau w\u00e4hlbar, Zeile f\u00fcr Zeile" },
     { gr: "lernen", w: "sortieren", kurz: "reihenfolge", nutzt: "/sortieren Satz 1 | Satz 2 | Satz 3",
       was: "Kontext\u00fcbung \u2014 die S\u00e4tze werden gemischt, wer sie richtig ordnet, bekommt es gesagt" },
     { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation nur für dich zeigen" },
@@ -8751,6 +8772,14 @@ window.LiveChat = (function () {
        LOESUNG nicht mit — nur die Mischung, damit alle dieselbe
        Reihenfolge vor sich haben. Geprueft wird beim Steller. */
     if (zusatz && zusatz.sortieren) n.sortieren = zusatz.sortieren;
+    /* Der Lesetext: Titel, Niveau und die Zeilen. Auch das faehrt
+       mit — jedes Geraet muss dieselben Zeilen vor sich haben,
+       sonst zeigt die Zeilenmarke bei jedem woanders hin. */
+    if (zusatz && zusatz.leseZeilen) {
+      n.leseZeilen = zusatz.leseZeilen;
+      n.leseTitel = zusatz.leseTitel || "";
+      n.leseNiveau = zusatz.leseNiveau || "";
+    }
     /* WEN es angeht, steht an der Zeile selbst — nicht nur im Rundruf.
        Sonst sähe der Absender die Umarmung nicht, die er gerade
        verschickt hat: seine eigene Zeile entsteht nämlich hier und
@@ -9835,6 +9864,16 @@ window.LiveChat = (function () {
     if (art === "wort") return aufgabeStellen("wort", rest);
     if (art === "aufgabe" || art === "frage") return aufgabeFreiStellen(rest);
     if (art === "sortieren" || art === "reihenfolge") return sortierAufgabeStellen(rest);
+    /* /lesen oeffnet den Waehler in der Oberflaeche — die Texte
+       liegen dort (app.js), nicht hier. Ohne Oberflaeche (Sonde,
+       Kopfrechner) sagt es wenigstens, was es tun wuerde. */
+    if (art === "lesen" || art === "text") {
+      var gingAuf = false;
+      try { gingAuf = Boolean(window.DMA_LESEWAHL && window.DMA_LESEWAHL()); } catch (e) {}
+      if (gingAuf) return true;
+      return systemZeile("\ud83d\udcd6 Lesen: tippe auf das Buchzeichen in der "
+        + "Befehlsleiste \u2014 dort waehlst du Niveau und Text.");
+    }
     if (art === "betonung" || art === "beton") return betonungStellen(rest);
     if (art === "raten") return ratenStellen(rest);
 
@@ -11113,6 +11152,44 @@ window.LiveChat = (function () {
        beides von aussen vergleichen. */
     /* Der Panik-Knopf von aussen — die Oberflaeche haengt ihn an
        einen Knopf im Klassenzimmer, /ton ruft dasselbe auf. */
+    /* =========================================================
+       LESEN IM CHAT
+       ---------------------------------------------------------
+       GEWUENSCHT: „dass man eine Auswahl hat im Chat, wo man
+       auswaehlt, welchen Text in welchem Niveau man lesen moechte
+       … und dass ich die Zeile highlighten kann, die sie lesen
+       sollen in dem Moment, und sie das auf ihrer Seite auch
+       sehen."
+
+       Der Text kommt als eine einzige Chatzeile mit einer Liste
+       von Saetzen darin. Welche Zeile gerade gelesen wird, ist
+       KEINE Chatzeile — das waere nach zehn Saetzen ein voller
+       Verlauf — sondern ein eigener kleiner Rundruf. Er wird
+       ausserdem gemerkt, damit ein Spaeterkommender die Stelle
+       sofort sieht. */
+    leseTextSenden: function (t) {
+      if (!t || !Array.isArray(t.zeilen) || !t.zeilen.length) return false;
+      var zeilen = t.zeilen.slice(0, 40).map(function (x) { return String(x).slice(0, 300); });
+      var zeile = anAlle("lesen", "\ud83d\udcd6 " + String(t.titel || "Lesetext"),
+        { leseTitel: String(t.titel || "Lesetext").slice(0, 120),
+          leseNiveau: String(t.niveau || "").slice(0, 4),
+          leseZeilen: zeilen });
+      if (zeile && zeile.id) leseStelle[zeile.id] = -1;
+      return true;
+    },
+    leseZeileSetzen: function (leseId, nr) {
+      var id = String(leseId || "");
+      var n = Number(nr);
+      if (!id || !(n >= 0)) return false;
+      leseStelle[id] = n;
+      senden({ art: "lesezeile", leseId: id, nr: n });
+      try { if (window.DMA_LESEZEILE) window.DMA_LESEZEILE(id, n); } catch (e) {}
+      return true;
+    },
+    leseZeile: function (leseId) {
+      var v = leseStelle[String(leseId || "")];
+      return typeof v === "number" ? v : -1;
+    },
     tonNeuAufbauen: function () { tonWacheStarten(); return tonNeuAufbauen(); },
     tonWacheStand: function () { return { geheilt: tonWacheZaehler.geheilt,
                                           letzte: tonWacheZaehler.letzte,

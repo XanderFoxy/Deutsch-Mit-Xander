@@ -21372,6 +21372,15 @@
             <button type="button" class="lc-chat-anhang" id="lcFotoKnopf"
                     title="Anhang: Foto vom Gerät, GIF, Aufkleber oder Sammelfuchs"
                     aria-label="Anhang wählen">📎</button>
+            <!-- GEWUENSCHT: „Kann man sich die Texte von der Seite in
+                 den Chat bringen? Also dass man eine Auswahl hat im
+                 Chat, wo man auswaehlt, welchen Text in welchem
+                 Niveau man lesen moechte."
+                 Hier ist der Weg dorthin. Die Texte liegen schon in
+                 der App — es wird nichts nachgeladen. -->
+            <button type="button" class="lc-chat-anhang" id="lcLeseKnopf"
+                    title="Lesetext holen — Niveau wählen, Zeile für Zeile lesen"
+                    aria-label="Lesetext wählen">📖</button>
             <!-- GEWUENSCHT: „Sprachnachrichten, die einfach direkt abspielen
                  wie die Sounds von den Animationen … so koennen wir einen
                  Pseudo-Livestream machen mit denen, die sich nicht mit mir
@@ -21751,6 +21760,238 @@
      wer die Aufgabe gestellt hat, prueft sie auf seinem Geraet (die
      Loesung reist bewusst nicht mit).
      ================================================================= */
+  /* =================================================================
+     LESEN IM CHAT — TEXT, NIVEAU UND EINE ZEILE, DIE ALLE SEHEN
+     -----------------------------------------------------------------
+     GEWUENSCHT, woertlich: „Kann man sich die Texte von der Seite —
+     es war einmal in Deutschland oder egal was man lesen moechte —
+     in den Chat bringen? Also dass man eine Auswahl hat im Chat, wo
+     man auswaehlt, welchen Text in welchem Niveau man lesen moechte,
+     und dass dort auch angegeben markiert steht C1 oder je nachdem,
+     welches Niveau man ausgewaehlt hat … Und koennte man das
+     zeilenweise gewissenhaft lesen, sodass die Leute nicht abgelenkt
+     sind, wenn sie den ganzen Text lesen — dass ich die Zeile
+     highlighten kann, die sie lesen sollen in dem Moment, und sie das
+     auf ihrer Seite auch sehen."
+
+     Drei Sachen, und alle drei stecken hier:
+
+     1. DIE AUSWAHL. Die Texte liegen schon in der App (SCHNEE_ENTRIES
+        — sieben Stueck, jeder in sechs Niveaus von A1 bis C2). Sie
+        werden also NICHT nachgeladen; die Ladezeit aendert sich um
+        keinen Byte. Das war seine Bedingung: „sofern dass das Laden
+        nicht verschlimmert".
+
+     2. DAS NIVEAU STEHT DABEI. Es reist als eigenes Feld mit und wird
+        als Abzeichen an die Tafel gezeichnet — man sieht also auf
+        einen Blick, was man da liest.
+
+     3. DIE ZEILE, DIE ALLE SEHEN. Der Text wird in Saetze zerlegt;
+        jeder Satz ist eine Zeile. Wer den Text gestellt hat, tippt
+        eine Zeile an — und dieselbe Zeile leuchtet bei ALLEN auf.
+        Das geht ueber einen eigenen Rundruf (lesezeile), nicht ueber
+        eine neue Chatzeile; sonst waere der Verlauf nach zehn
+        Zeilen voll.
+     ================================================================= */
+
+  /* Den Text in Zeilen schneiden. Ein Satz ist eine Zeile — daran
+     entlang liest man, und danach fragt er auch („zeilenweise
+     gewissenhaft lesen"). Sehr lange Saetze werden zusaetzlich am
+     Semikolon oder Gedankenstrich getrennt, damit keine Zeile
+     ueber den Bildschirm hinauslaeuft. */
+  function lcTextInZeilen(text) {
+    const roh = String(text || "").replace(/\s+/g, " ").trim();
+    if (!roh) return [];
+    const saetze = roh.match(/[^.!?]+[.!?]*/g) || [roh];
+    const aus = [];
+    saetze.forEach((satz) => {
+      const s2 = satz.trim();
+      if (!s2) return;
+      if (s2.length <= 150) { aus.push(s2); return; }
+      s2.split(/(?<=[;—–])\s+/).forEach((teil) => {
+        const t = teil.trim();
+        if (t) aus.push(t);
+      });
+    });
+    return aus.slice(0, 40);
+  }
+
+  const LC_NIVEAUS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+
+  /* Welche Texte stehen zur Wahl? Nur die, die wirklich schon im
+     Speicher liegen — nichts wird dafuer nachgeladen. */
+  function lcLesestoff() {
+    const aus = [];
+    try {
+      (SCHNEE_ENTRIES || []).forEach((e) => {
+        if (e && e.levels) aus.push({ id: e.id, name: e.name, levels: e.levels });
+      });
+    } catch (x) {}
+    /* Und die eigenen Beitraege, FALLS sie ohnehin schon geladen
+       sind (etwa weil man den Bereich vorher offen hatte). Geladen
+       wird dafuer nichts. */
+    try {
+      const b = (window.DMA_DATEN && window.DMA_DATEN.EIGENE_BEITRAEGE) || [];
+      b.forEach((e) => { if (e && e.levels) aus.push({ id: e.id, name: e.name, levels: e.levels }); });
+    } catch (x) {}
+    return aus;
+  }
+
+  /* Der Waehler: erst das Niveau, dann der Text. Zwei kurze Listen
+     sind auf dem Telefon besser als eine lange mit 42 Zeilen. */
+  function lcLeseWaehler() {
+    lcPlatzMenueZu();
+    const stoff = lcLesestoff();
+    if (!stoff.length) { showToast("Gerade sind keine Lesetexte geladen."); return false; }
+    let niveau = "B1";
+    try { niveau = kzEinstellung("leseniveau", "B1") || "B1"; } catch (e) {}
+
+    const kasten = document.createElement("div");
+    kasten.id = "lcPlatzMenue";
+    kasten.className = "lc-platzmenue lc-lesewahl";
+    kasten.setAttribute("role", "menu");
+
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kasten.appendChild(kopf);
+
+    const stufen = document.createElement("div");
+    stufen.className = "lc-lese-stufen";
+    kasten.appendChild(stufen);
+    const liste = document.createElement("div");
+    liste.className = "lc-lese-liste";
+    kasten.appendChild(liste);
+
+    const zeichnen = () => {
+      kopf.textContent = "Lesen \u2014 Niveau " + niveau;
+      stufen.innerHTML = "";
+      LC_NIVEAUS.forEach((n) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "lc-lese-stufe" + (n === niveau ? " lc-lese-stufe-an" : "");
+        b.textContent = n;
+        b.addEventListener("click", (e) => {
+          e.preventDefault(); e.stopPropagation();
+          niveau = n;
+          try { kzEinstellungSetzen("leseniveau", n); } catch (x) {}
+          zeichnen();
+        });
+        stufen.appendChild(b);
+      });
+      liste.innerHTML = "";
+      stoff.forEach((t) => {
+        const hat = t.levels && t.levels[niveau];
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "lc-lese-text";
+        b.disabled = !hat;
+        b.textContent = t.name + (hat ? "" : "  (nicht in " + niveau + ")");
+        b.addEventListener("click", (e) => {
+          e.preventDefault(); e.stopPropagation();
+          lcPlatzMenueZu();
+          const zeilen = lcTextInZeilen(t.levels[niveau]);
+          if (!zeilen.length) { showToast("Der Text ist leer."); return; }
+          try {
+            LiveChat.leseTextSenden({ titel: t.name, niveau: niveau, zeilen: zeilen });
+          } catch (x) {}
+          lcNachDemSenden("");
+        });
+        liste.appendChild(b);
+      });
+    };
+    zeichnen();
+
+    document.body.appendChild(kasten);
+    const feld = document.getElementById("lcFeld");
+    lcMenueStellen(kasten, feld || document.body);
+    lcMenueSchliessen(kasten);
+    return true;
+  }
+
+  /* =================================================================
+     DIE LESETAFEL IM CHAT
+     -----------------------------------------------------------------
+     Jede Zeile ist antippbar. Wer den Text gestellt hat (oder der
+     Haeuptling) setzt damit die Zeile, die gerade gelesen werden
+     soll — und sie leuchtet bei allen. Alle anderen koennen
+     ebenfalls tippen, aber nur fuer sich: dann wandert nur ihr
+     eigener Lesefinger mit, ohne den Raum zu stoeren.
+     ================================================================= */
+  function lcLeseTafel(n, z) {
+    const t = document.createElement("span");
+    t.className = "lc-zeilentext lc-lesetafel";
+    t.dataset.leseId = n.id || "";
+
+    const kopf = document.createElement("span");
+    kopf.className = "lc-lese-kopf";
+    const stufe = document.createElement("b");
+    stufe.className = "lc-lese-abzeichen";
+    stufe.textContent = String(n.leseNiveau || "");
+    const titel = document.createElement("span");
+    titel.className = "lc-lese-titel";
+    titel.textContent = String(n.leseTitel || "Lesetext");
+    kopf.appendChild(stufe);
+    kopf.appendChild(titel);
+    t.appendChild(kopf);
+
+    const darfFuehren = Boolean(n.eigen) || (() => {
+      try { return Boolean((LiveChat.lage() || {}).haeuptling); } catch (e) { return false; }
+    })();
+
+    const hinweis = document.createElement("span");
+    hinweis.className = "lc-aufgabe-hinweis";
+    hinweis.textContent = darfFuehren
+      ? "Tippe eine Zeile an \u2014 sie leuchtet dann bei allen im Raum."
+      : "Die hervorgehobene Zeile ist die, die gerade gelesen wird.";
+    t.appendChild(hinweis);
+
+    const liste = document.createElement("span");
+    liste.className = "lc-lese-zeilen";
+    (n.leseZeilen || []).forEach((satz, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-lese-zeile";
+      b.dataset.nr = String(i);
+      b.textContent = satz;
+      b.addEventListener("click", () => {
+        if (darfFuehren) {
+          try { LiveChat.leseZeileSetzen(n.id, i); } catch (e) {}
+        } else {
+          liste.querySelectorAll(".lc-lese-hier")
+               .forEach((x) => x.classList.remove("lc-lese-hier"));
+          b.classList.add("lc-lese-hier");
+        }
+      });
+      liste.appendChild(b);
+    });
+    t.appendChild(liste);
+    z.appendChild(t);
+    /* Steht schon eine Zeile fest (man kommt spaeter dazu), gleich
+       markieren. */
+    try {
+      const jetzt = LiveChat.leseZeile ? LiveChat.leseZeile(n.id) : -1;
+      if (jetzt >= 0) lcLeseZeileZeigen(n.id, jetzt);
+    } catch (e) {}
+  }
+
+  /* Die Markierung setzen — auf jedem Geraet dieselbe. */
+  function lcLeseZeileZeigen(leseId, nr) {
+    const tafel = document.querySelector('.lc-lesetafel[data-lese-id="' + leseId + '"]');
+    if (!tafel) return false;
+    tafel.querySelectorAll(".lc-lese-hier").forEach((x) => x.classList.remove("lc-lese-hier"));
+    const b = tafel.querySelector('.lc-lese-zeile[data-nr="' + nr + '"]');
+    if (!b) return false;
+    b.classList.add("lc-lese-hier");
+    /* Die Zeile soll auch zu SEHEN sein — sonst leuchtet sie
+       ausserhalb des Bildes. */
+    try { b.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {}
+    return true;
+  }
+  window.DMA_LESEZEILE = lcLeseZeileZeigen;
+  /* Damit /lesen aus livechat.js den Waehler oeffnen kann — die Texte
+     liegen hier, der Befehl dort. */
+  window.DMA_LESEWAHL = lcLeseWaehler;
+
   function lcSortierTafel(n, z) {
     const t = document.createElement("span");
     t.className = "lc-zeilentext lc-aufgabe";
@@ -31387,6 +31628,8 @@
         lcBetonungsTafel(n, z);
       } else if (art === "aufgabe" && Array.isArray(n.sortieren) && n.sortieren.length > 1) {
         lcSortierTafel(n, z);
+      } else if (art === "lesen" && Array.isArray(n.leseZeilen) && n.leseZeilen.length) {
+        lcLeseTafel(n, z);
       } else if (art === "aufgabe") {
         /* =========================================================
            DIE AUFGABE IM CHAT
@@ -32525,6 +32768,10 @@
       });
       /* DER PANIK-KNOPF. Er sagt auch, was er gefunden hat — sonst
          drueckt man ihn und weiss nicht, ob etwas passiert ist. */
+      area.querySelector("#lcLeseKnopf")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        lcLeseWaehler();
+      });
       area.querySelector("#lcTonNeu")?.addEventListener("click", (e) => {
         e.stopPropagation();
         let erg = null;

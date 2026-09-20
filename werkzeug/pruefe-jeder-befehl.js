@@ -131,12 +131,28 @@ function tabellen() {
       let raus = null;
       window.LiveChat.pruefPost((p) => { if (!raus) raus = p; });
       const vor = (window.LiveChat.pruefZeilen(999) || []).length;
+      /* NACHGEBESSERT IN RUNDE 21 — und zwar, weil die Messung zu eng
+         war, nicht weil sie stoerte:
+         „Tut etwas" hiess bisher nur zweierlei: es ging ein Rundruf
+         hinaus, ODER es kam eine Zeile in den Chat. Es gibt aber eine
+         dritte, voellig richtige Art: der Befehl OEFFNET EIN MENUE.
+         /lesen tut genau das — man waehlt darin Niveau und Text, und
+         eine Chatzeile waere dabei nur Laerm. Die Sonde hat das als
+         Blindgaenger gemeldet, obwohl der Befehl arbeitet. Jetzt
+         zaehlt auch ein aufgegangenes Menue als Wirkung. */
+      const menueVor = document.querySelectorAll("#lcPlatzMenue, .lc-waehler, dialog[open]").length;
       let kaputt = "";
       try { window.LiveChat.schreiben(zeile); } catch (e) { kaputt = String(e).slice(0, 100); }
+      const menueNach = document.querySelectorAll("#lcPlatzMenue, .lc-waehler, dialog[open]").length;
+      const menueAuf = menueNach > menueVor;
+      /* Wieder zumachen, sonst steht es dem naechsten Befehl im Weg. */
+      if (menueAuf) {
+        document.querySelectorAll("#lcPlatzMenue, .lc-waehler").forEach((x) => x.remove());
+      }
       const zz = window.LiveChat.pruefZeilen(999) || [];
       const letzte = String(zz[zz.length - 1] || "");
       if (kaputt) tot.push(zeile + " — bricht ab: " + kaputt);
-      else if (!raus && zz.length === vor) tot.push(zeile + " — tut gar nichts (" + b.was + ")");
+      else if (!raus && !menueAuf && zz.length === vor) tot.push(zeile + " — tut gar nichts (" + b.was + ")");
       else if (!raus && /kenne ich nicht/.test(letzte)) tot.push(zeile + " — gilt als unbekannt, steht aber in der Liste");
     });
     return { geprueft: probe.length, tot: tot };

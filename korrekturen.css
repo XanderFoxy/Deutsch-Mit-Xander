@@ -14986,3 +14986,115 @@ body.lc-schreibt .tutor-reiter {
 .lc-sortier-gewaehlt { background: rgba(120, 200, 140, 0.22); border-color: rgba(120, 200, 140, .5); }
 .lc-sortier-gewaehlt .lc-sortier-nr { background: rgba(120, 200, 140, .8); color: #10210f; }
 .lc-sortier-knoepfe { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+/* =====================================================================
+   RUNDE 21 — LESEN IM CHAT
+   ---------------------------------------------------------------------
+   GEWUENSCHT: „dass man eine Auswahl hat im Chat, wo man auswaehlt,
+   welchen Text in welchem Niveau man lesen moechte, und dass dort auch
+   angegeben markiert steht C1 oder je nachdem, welches Niveau man
+   ausgewaehlt hat … Und koennte man das zeilenweise gewissenhaft
+   lesen, sodass die Leute nicht abgelenkt sind, wenn sie den ganzen
+   Text lesen — dass ich die Zeile highlighten kann, die sie lesen
+   sollen in dem Moment, und sie das auf ihrer Seite auch sehen."
+   ===================================================================== */
+
+/* --- Der Waehler: erst das Niveau, dann der Text --------------------- */
+.lc-lesewahl {
+  width: 300px;
+  display: block;
+  padding: 10px;
+}
+.lc-lese-stufen {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 9px;
+}
+.lc-lese-stufe {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 6px 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  color: inherit;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.lc-lese-stufe-an {
+  background: var(--amber-400, #ffd166);
+  color: #23200f;
+  border-color: transparent;
+}
+.lc-lese-liste { display: block; max-height: 46vh; overflow-y: auto; }
+.lc-lese-text {
+  display: block;
+  width: 100%;
+  margin: 4px 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.lc-lese-text:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
+.lc-lese-text:disabled { opacity: 0.4; cursor: default; }
+
+/* --- Die Lesetafel im Chat ------------------------------------------- */
+.lc-lese-kopf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+/* „dass dort auch angegeben markiert steht C1" — das Abzeichen. */
+.lc-lese-abzeichen {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--amber-400, #ffd166);
+  color: #23200f;
+  font-size: 0.72em;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+.lc-lese-titel { font-weight: 700; line-height: 1.3; }
+.lc-lese-zeilen { display: block; margin-top: 4px; }
+/* Jede Zeile ist ein Satz — „zeilenweise gewissenhaft lesen". */
+.lc-lese-zeile {
+  display: block;
+  width: 100%;
+  margin: 2px 0;
+  padding: 6px 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.95em;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.lc-lese-zeile:hover { background: rgba(255, 255, 255, 0.07); }
+/* Und die Zeile, die gerade gelesen wird — bei allen dieselbe. */
+.lc-lese-hier {
+  background: rgba(255, 209, 102, 0.22);
+  border-color: rgba(255, 209, 102, 0.75);
+  font-weight: 600;
+}
+.lc-lese-hier::before {
+  content: "\25b6";
+  margin-right: 6px;
+  color: var(--amber-400, #ffd166);
+  font-size: 0.8em;
+}
+@media (prefers-reduced-motion: reduce) { .lc-lese-zeile { transition: none; } }
