@@ -89,5 +89,30 @@ Sie sagt jetzt auch, **woher** die Server kommen:
 * `(eigenes Relais, Cloudflare)` — alles richtig.
 * `(öffentliche) — Grund: kein-relais` — Schritt 3 fehlt noch.
 * `(öffentliche) — Grund: nicht-erreichbar` — Schritt 2 fehlt noch.
-* `(öffentliche) — Grund: tagesgrenze` — 60 Abrufe am Tag sind
-  aufgebraucht; morgen wieder frei.
+* `(öffentliche) — Grund: tagesgrenze` — die eingestellte Zahl an
+  Abrufen am Tag ist erreicht; morgen wieder frei.
+
+  **Das kostet nichts.** Bezahlt wird bei Cloudflare nach
+  übertragenen Gigabyte, nicht nach abgeholten Zugangsdaten. Die
+  Tagesgrenze ist nur eine Bremse gegen eine Schleife, die sich
+  festfrisst — die Bremse gegen die Rechnung ist `turn_budget_gb`.
+  Sie stand bis Fassung 369 fest auf 60 und war damit viel zu eng:
+  jedes Neuladen der Seite hat einen Abruf gekostet.
+
+  Seit Fassung 369:
+  * die Zugangsdaten liegen zwei Stunden im Gerät — ein Neuladen
+    kostet keinen Abruf mehr (`/leitung` sagt, woher sie kommen);
+  * die Grenze steht auf **1000** und lässt sich einstellen:
+
+    ```sql
+    insert into betreiber_geheimnisse (schluessel, wert)
+    values ('turn_tagesgrenze', '5000')
+    on conflict (schluessel) do update set wert = excluded.wert;
+    ```
+
+  Damit die neue Grenze gilt, muss die Funktion einmal neu
+  hochgeladen werden:
+
+    ```
+    supabase functions deploy klassenzimmer
+    ```

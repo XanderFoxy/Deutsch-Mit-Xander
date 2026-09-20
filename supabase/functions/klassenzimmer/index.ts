@@ -33,9 +33,11 @@
    WAS HIER GEPRUEFT WIRD
      1. Ist der Anfragende angemeldet? Ein Relais ist nichts,
         was Fremde benutzen sollen.
-     2. Hat er heute schon zu viel geholt? 60 Ausgaben am Tag
-        sind fuer einen Menschen reichlich und fuer ein
-        Schadprogramm zu wenig, um etwas anzurichten.
+     2. Hat er heute schon zu viel geholt? Die Tagesgrenze steht
+        auf 1000 (einstellbar in betreiber_geheimnisse unter
+        „turn_tagesgrenze"). Sie faengt eine Schleife ab, die sich
+        festfrisst — kosten tut ein Abruf nichts, bezahlt wird
+        nach Gigabyte. Dafuer steht das Monatsbudget davor.
      3. Beim Eintragen des Schluessels: ist er wirklich der
         Betreiber? Das wird an der Datenbank geprueft
         (profiles.is_owner), nicht an dem, was der Browser
@@ -49,9 +51,32 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 /* Wie oft darf sich eine Person am Tag Zugangsdaten holen?
-   Einmal je Betreten des Klassenzimmers reicht — 60 ist also
-   grosszuegig fuer einen Menschen. */
-const TAGESGRENZE = 60;
+   -----------------------------------------------------------
+   GEMELDET, woertlich: „Dieses Konto hat heute schon 60-mal
+   Zugangsdaten geholt … kann man nicht 100.000-mal Request
+   machen? … Ich moechte in Zukunft die Leute immer hoeren."
+
+   Er hat recht, und die Rechnung war von Anfang an schief. Die
+   Annahme „einmal je Betreten reicht" stimmt nur, solange
+   niemand die Seite neu laedt: die Zugangsdaten lagen im
+   Arbeitsspeicher und waren nach jedem Neuladen weg. Beim
+   Entwickeln, Ausprobieren und Umschalten zwischen Raeumen sind
+   60 an einem Nachmittag erreicht — und dann steht der Ton.
+
+   WICHTIG ZUM VERSTAENDNIS: dieser Zaehler kostet NICHTS. Bezahlt
+   wird bei Cloudflare nach uebertragenen Gigabyte, nicht nach
+   abgeholten Zugangsdaten. Die Tagesgrenze ist nur eine Bremse
+   gegen eine Schleife, die sich festfrisst. Die Bremse gegen die
+   RECHNUNG ist das Monatsbudget (turn_budget_gb) — und die steht
+   davor und bleibt.
+
+   Deshalb jetzt: 1000 statt 60, und einstellbar in
+   betreiber_geheimnisse unter „turn_tagesgrenze" — genau wie das
+   Budget. Dazu holt die Seite die Daten nur noch, wenn sie
+   wirklich abgelaufen sind (sie liegen zwei Stunden im Geraet,
+   siehe livechat.js). Beides zusammen macht aus 60 Abrufen am Tag
+   eine Handvoll. */
+const TAGESGRENZE_STANDARD = 1000;
 
 /* Wie lange gelten die ausgegebenen Zugangsdaten? Zwei Stunden:
    lang genug fuer eine Stunde Unterricht mit Pause, kurz genug,
@@ -129,14 +154,17 @@ async function geheimnisse() {
   const { data } = await dienst()
     .from("betreiber_geheimnisse")
     .select("schluessel, wert")
-    .in("schluessel", ["cf_turn_id", "cf_turn_token", "turn_budget_gb"]);
+    .in("schluessel", ["cf_turn_id", "cf_turn_token", "turn_budget_gb", "turn_tagesgrenze"]);
   const m: Record<string, string> = {};
   (data || []).forEach((z: { schluessel: string; wert: string }) => { m[z.schluessel] = z.wert; });
   const budget = Number(m["turn_budget_gb"]);
+  const tagesgrenze = Number(m["turn_tagesgrenze"]);
   return {
     kennung: m["cf_turn_id"] || "",
     token: m["cf_turn_token"] || "",
     budgetGb: Number.isFinite(budget) && budget > 0 ? budget : BUDGET_STANDARD_GB,
+    tagesgrenze: Number.isFinite(tagesgrenze) && tagesgrenze > 0
+      ? tagesgrenze : TAGESGRENZE_STANDARD,
   };
 }
 
@@ -210,7 +238,7 @@ Deno.serve(async (anfrage: Request) => {
      Gibt NIE einen Schluessel zurueck, nur ob einer da ist.
      ======================================================= */
   if (aktion === "stand") {
-    const { kennung, token: tok, budgetGb } = await geheimnisse();
+    const { kennung, token: tok, budgetGb, tagesgrenze } = await geheimnisse();
     const verbrauch = await monatsverbrauch();
     const { data: profil } = await sb.from("profiles").select("is_owner").eq("id", nutzer.id).maybeSingle();
     return json({
@@ -222,7 +250,7 @@ Deno.serve(async (anfrage: Request) => {
       kennungAnfang: kennung ? kennung.slice(0, 8) : "",
       betreiber: Boolean(profil?.is_owner),
       gueltigSekunden: GUELTIG_SEKUNDEN,
-      tagesgrenze: TAGESGRENZE,
+      tagesgrenze: tagesgrenze,
       /* Damit der Betreiber SIEHT, wie weit die Bremse steht.
          „hoechstens" ist woertlich zu nehmen: mehr kann es nicht
          geworden sein, weniger fast sicher. */
@@ -284,7 +312,7 @@ Deno.serve(async (anfrage: Request) => {
      ======================================================= */
   if (aktion !== "zugang") return json({ fehler: "unbekannte-aktion" }, 400);
 
-  const { kennung, token: tok, budgetGb } = await geheimnisse();
+  const { kennung, token: tok, budgetGb, tagesgrenze } = await geheimnisse();
   if (!kennung || !tok) return json({ fehler: "kein-relais" }, 503);
 
   /* DIE BREMSE. Sie steht VOR allem anderen: lieber kein Relais
@@ -305,7 +333,13 @@ Deno.serve(async (anfrage: Request) => {
   const { data: heute } = await sb.from("turn_nutzung")
     .select("anfragen").eq("user_id", nutzer.id).eq("tag", tag).maybeSingle();
   const bisher = heute?.anfragen || 0;
-  if (bisher >= TAGESGRENZE) return json({ fehler: "tagesgrenze" }, 429);
+  /* Die Grenze steht jetzt in betreiber_geheimnisse und ist auf
+     1000 voreingestellt — sie soll eine Schleife abfangen, nicht
+     einen Unterrichtstag. Wie viele es schon waren, steht in der
+     Absage: ohne diese Zahl raet man. */
+  if (bisher >= tagesgrenze) {
+    return json({ fehler: "tagesgrenze", grenze: tagesgrenze, heute: bisher }, 429);
+  }
 
   const ergebnis = await vonCloudflare(kennung, tok);
   if ("fehler" in ergebnis) return json(ergebnis, 502);

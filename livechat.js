@@ -279,10 +279,62 @@ window.LiveChat = (function () {
   /* Holt die Zugangsdaten — hoechstens einmal je anderthalb
      Stunden, denn sie gelten zwei. Wartet nie laenger als acht
      Sekunden; das Betreten darf daran nicht haengenbleiben. */
+  /* DIE ZUGANGSDATEN UEBERLEBEN DAS NEULADEN.
+     -----------------------------------------------------------------
+     GEMELDET: „Dieses Konto hat heute schon 60-mal Zugangsdaten
+     geholt … ich moechte in Zukunft die Leute immer hoeren."
+
+     DA LAG DER EIGENTLICHE FEHLER, und er war meiner: die Daten lagen
+     nur im Arbeitsspeicher. Jedes Neuladen der Seite hat neue geholt —
+     beim Entwickeln und Ausprobieren also dutzende am Tag, und nach
+     dem sechzigsten Mal sagte die Funktion 429 „tagesgrenze". Dann
+     gab es kein Relais mehr, der Ton blieb aus und der Raum ging in
+     den Fokus-Modus.
+
+     Die Daten gelten ZWEI STUNDEN. Sie gehoeren also ins Geraet, nicht
+     in den Arbeitsspeicher. Gespeichert wird nur, was ohnehin an jede
+     Verbindung geht: ein kurzlebiger Benutzername und ein kurzlebiges
+     Passwort fuers Relais. Der Cloudflare-Schluessel ist das NICHT —
+     der verlaesst Supabase nie und steht nirgends in dieser Datei.
+
+     Zehn Minuten vor Ablauf werden sie erneuert; so gibt es keine
+     Luecke mitten im Gespraech. */
+  var RELAIS_SCHLUESSEL = "dma_relais_v1";
+  var RELAIS_GILT_MS = 2 * 60 * 60 * 1000;      /* GUELTIG_SEKUNDEN in der Funktion */
+  var RELAIS_VORLAUF_MS = 10 * 60 * 1000;
+  function relaisAusGeraet() {
+    try {
+      var roh = localStorage.getItem(RELAIS_SCHLUESSEL);
+      if (!roh) return null;
+      var d = JSON.parse(roh);
+      if (!d || !d.server || !d.server.length || !d.geholt) return null;
+      if (Date.now() - d.geholt > RELAIS_GILT_MS - RELAIS_VORLAUF_MS) return null;
+      return d;
+    } catch (e) { return null; }
+  }
+  function relaisInsGeraet(server) {
+    try {
+      localStorage.setItem(RELAIS_SCHLUESSEL,
+        JSON.stringify({ server: server, geholt: Date.now() }));
+    } catch (e) {}
+  }
   function relaisHolen(neu) {
     if (window.DMA_TURN && window.DMA_TURN.length) {
       relaisStand.quelle = "eingetragen";
       return Promise.resolve(false);
+    }
+    /* Erst nachsehen, was noch gilt — das spart den Abruf. */
+    if (!neu && !relaisStand.server) {
+      var da = relaisAusGeraet();
+      if (da) {
+        relaisStand.server = da.server;
+        relaisStand.geholt = da.geholt;
+        relaisStand.quelle = "cloudflare";
+        relaisStand.grund = "";
+        relaisStand.ausGeraet = true;
+        VERMITTLER = da.server.concat(NOTVERMITTLER);
+        return Promise.resolve(true);
+      }
     }
     var alter = Date.now() - relaisStand.geholt;
     if (!neu && relaisStand.server && alter < 90 * 60 * 1000) return Promise.resolve(true);
@@ -299,6 +351,10 @@ window.LiveChat = (function () {
       relaisStand.geholt = Date.now();
       relaisStand.quelle = "cloudflare";
       relaisStand.grund = "";
+      relaisStand.ausGeraet = false;
+      /* Und ins Geraet, damit das naechste Neuladen keinen neuen
+         Abruf kostet. */
+      relaisInsGeraet(a.server);
       /* Die eigenen Server ZUERST, die oeffentlichen als Reserve
          dahinter — faellt Cloudflare aus, ist trotzdem noch ein
          Weg da. */
@@ -379,15 +435,36 @@ window.LiveChat = (function () {
        Strafe, sondern das Einzige, was in dem Augenblick noch
        funktioniert: ohne Relais traegt die Leitung nur noch einen
        Sprecher zugleich. */
-    if (relaisStand.grund === "budget-erschoepft" || relaisStand.grund === "tagesgrenze") {
+    /* NACHGEBESSERT — und zwar, weil ich hier zwei sehr verschiedene
+       Dinge in einen Topf geworfen hatte:
+
+       „budget-erschoepft" ist die Bremse gegen die RECHNUNG. Sie
+       gehoert dorthin, wo sie steht: dann gibt es kein Relais mehr,
+       und der Fokus-Modus bleibt an, bis das Budget sich erneuert.
+
+       „tagesgrenze" dagegen kostet NICHTS. Es ist nur ein Zaehler,
+       wie oft ein Konto heute Zugangsdaten geholt hat — und der stand
+       mit 60 viel zu eng (GEMELDET: „Dieses Konto hat heute schon
+       60-mal Zugangsdaten geholt … kann man nicht 100.000-mal Request
+       machen? Ich moechte in Zukunft die Leute immer hoeren."). Den
+       Raum deswegen in den Fokus-Modus zu sperren war schlicht
+       falsch. Ab jetzt sagt die Zeile nur, was los ist — geredet wird
+       weiter. */
+    if (relaisStand.grund === "budget-erschoepft") {
       if (!kontingentAus) {
         kontingentAus = true;
         zustand.fokus = true;
-        systemZeile("\ud83c\udf9a\ufe0f Das Gespraechs-Kontingent ist aufgebraucht — "
+        systemZeile("\ud83c\udf9a\ufe0f Das Monatsbudget fuers Relais ist aufgebraucht — "
           + "ab jetzt gilt der Fokus-Modus: es spricht immer nur einer. "
           + "Geschrieben werden darf jederzeit.");
         melden();
       }
+    }
+    if (relaisStand.grund === "tagesgrenze") {
+      systemZeile("\u2139\ufe0f Dieses Konto hat heute die eingestellte Zahl an "
+        + "Relais-Abrufen erreicht. Das kostet nichts und sperrt niemanden aus \u2014 "
+        + "gesprochen wird weiter, nur ohne eigenes Relais. "
+        + "Die Grenze steht in betreiber_geheimnisse unter \u201eturn_tagesgrenze\u201c.");
     }
     if (relaisStand.quelle === "cloudflare") return;
     if (window.DMA_TURN && window.DMA_TURN.length) return;
@@ -402,7 +479,14 @@ window.LiveChat = (function () {
       quelle: relaisStand.quelle,
       grund: relaisStand.grund,
       anzahl: relaisStand.server ? relaisStand.server.length : 0,
-      geholt: relaisStand.geholt
+      geholt: relaisStand.geholt,
+      /* Kommen die Zugangsdaten aus dem Geraet? Dann hat dieser
+         Besuch KEINEN Abruf gekostet — und genau das soll in
+         /leitung stehen, damit man die Tagesgrenze versteht. */
+      ausGeraet: Boolean(relaisStand.ausGeraet),
+      giltNochMinuten: relaisStand.geholt
+        ? Math.max(0, Math.round((RELAIS_GILT_MS - (Date.now() - relaisStand.geholt)) / 60000))
+        : 0
     };
   }
 
@@ -2163,6 +2247,18 @@ window.LiveChat = (function () {
       : " (oeffentliche)";
     zeilen.push("Relais eingetragen: " + relais + woher
       + (relaisStand.grund ? " — Grund: " + relaisStand.grund : ""));
+    /* WOHER DIE ZUGANGSDATEN KOMMEN — und ob dieser Besuch einen
+       Abruf gekostet hat. Genau daran haengt die Tagesgrenze:
+       „Dieses Konto hat heute schon 60-mal Zugangsdaten geholt."
+       Seit sie zwei Stunden im Geraet liegen, kostet ein Neuladen
+       keinen Abruf mehr. */
+    if (relaisStand.geholt) {
+      var lage_ = relaisLage();
+      zeilen.push("Zugangsdaten: " + (lage_.ausGeraet
+        ? "aus dem Geraet — dieser Besuch hat KEINEN Abruf gekostet"
+        : "frisch geholt")
+        + ", gelten noch " + lage_.giltNochMinuten + " Minuten.");
+    }
     /* WER SITZT AUF WELCHEM RELAIS? Das ist die Frage, an der es
        gehangen hat: einer hatte das eigene, die andere nur die
        oeffentlichen — und ueber ein symmetrisches NAT kommt darueber
@@ -7233,9 +7329,10 @@ window.LiveChat = (function () {
        steht ueber dem Schalter: „Wenn das aufgebraucht ist, dass es
        dann blockiert und wieder in den Fokus-Modus zurueckgeht." */
     if (!an && fokusErzwungen()) {
-      systemZeile("\ud83c\udf9a\ufe0f Das Gespraechs-Kontingent ist aufgebraucht — "
+      systemZeile("\ud83c\udf9a\ufe0f Das MONATSBUDGET fuers Relais ist aufgebraucht — "
         + "der Fokus-Modus bleibt an, bis es sich erneuert. "
-        + "Geschrieben werden darf jederzeit.");
+        + "Geschrieben werden darf jederzeit.\n   "
+        + "(Die Tagesgrenze ist etwas anderes und sperrt nichts.)");
       zustand.fokus = true;
       melden();
       return fokusAn();
