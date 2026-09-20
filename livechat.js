@@ -882,6 +882,11 @@ window.LiveChat = (function () {
     pusterohr:  { wirkung: "pusterohr",  satz: "trifft mit dem Pusterohr", emoji: "\ud83e\udd64" },
     gluehbirne: { wirkung: "gluehbirne", satz: "dreht wie eine Gl\u00fchbirne ein", emoji: "\ud83d\udca1" },
     entbloessung:{ wirkung: "entbloessung", satz: "zieht den BH herunter bei", emoji: "\ud83d\udc59" },
+    /* RUNDE 19 — der Hut, die Zeitbombe, und zwei zum Gutsein. */
+    hut:        { wirkung: "hut",        satz: "setzt einen Cowboyhut auf", emoji: "\ud83e\udd20" },
+    bombe:      { wirkung: "bombe",      satz: "z\u00fcndet eine Zeitbombe bei", emoji: "\ud83d\udca3" },
+    streicheln: { wirkung: "streicheln", satz: "streichelt", emoji: "\ud83e\udef6" },
+    kuss:       { wirkung: "kuss",       satz: "gibt einen Kuss", emoji: "\ud83d\udc8b" },
     /* GEMELDET: „bei den Effekten, die man noch auswählen kann, dass
        man den anderen wie so ein Keks aufessen kann … dass man so Biss
        für Biss den so anbeißt, und auf ist." */
@@ -7738,6 +7743,29 @@ window.LiveChat = (function () {
     { gr: "reden", w: "zufall", kurz: "wuerfel", nutzt: "/zufall [Name]",  was: "ohne Namen: das Los sucht dir einen neuen Platz — mit Namen: irgendein Effekt" },
     { gr: "reden", w: "aufessen", kurz: "haps", nutzt: "/aufessen Name",  was: "den anderen Biss fuer Biss aufessen wie einen Keks" },
     { gr: "reden", w: "sanduhr", kurz: "glas",  nutzt: "/sanduhr Name",   was: "Sanduhr — ihr lauft durch und tauscht die Plaetze (nur direkt uebereinander)" },
+    /* RUNDE 18, NACHGETRAGEN — und das war ein echter Fehler:
+       GEMELDET: „Das Licht aus an einem Profilbild geht noch nicht,
+       die Muenze geht noch nicht, der Wischer geht noch nicht … Da
+       kommt bei den genannten Effekten immer die Eingabe in das
+       Chat-Zeilen-Fenster und wartet auf irgendeinen Befehl."
+
+       GEFUNDEN: ein Befehl braucht ZWEI Eintraege — die Wirkung in
+       AM_PLATZ und eine Zeile HIER. befehlBekannt() liest nur diese
+       Liste; was hier fehlt, gilt als Vertipper und geht gar nicht
+       erst hinaus („die Zeile ist NICHT hinausgegangen"). Die sieben
+       Neuen standen nur in AM_PLATZ. Deshalb stehen sie jetzt auch
+       hier — und pruefe-effekttueren achtet ab sofort darauf. */
+    { gr: "reden", w: "licht", kurz: "aus",     nutzt: "/licht Name",     was: "Licht aus \u2014 es flackert, summt und wird dunkel" },
+    { gr: "reden", w: "muenze", kurz: "dreh",   nutzt: "/muenze Name",    was: "M\u00fcnze \u2014 das Bild kreiselt und faellt flach hin" },
+    { gr: "reden", w: "wischer", kurz: "wisch", nutzt: "/wischer Name",   was: "Scheibenwischer \u2014 erst dreckig, dann sauber gewischt" },
+    { gr: "reden", w: "zwille", kurz: "zwick",  nutzt: "/zwille Name",    was: "Zwille \u2014 mit dem Gummiband abgeschossen, das tut weh" },
+    { gr: "reden", w: "pusterohr", kurz: "puste", nutzt: "/pusterohr Name", was: "Pusterohr \u2014 die Papierkugel klatscht an die Wange" },
+    { gr: "reden", w: "gluehbirne", kurz: "birne", nutzt: "/gluehbirne Name", was: "Gl\u00fchbirne \u2014 eingedreht, bis es leuchtet" },
+    { gr: "reden", w: "entbloessung", kurz: "ups", nutzt: "/entbloessung Name", was: "Ups! \u2014 geht nur bei dem, der direkt neben dir sitzt" },
+    { gr: "reden", w: "hut", kurz: "cowboy",  nutzt: "/hut Name",       was: "Cowboyhut \u2014 er faellt von oben und sitzt schief" },
+    { gr: "reden", w: "bombe", kurz: "zisch", nutzt: "/bombe Name",     was: "Zeitbombe \u2014 3, 2, 1 und weg, nur Asche bleibt" },
+    { gr: "reden", w: "streicheln", kurz: "lieb", nutzt: "/streicheln Name", was: "Streicheln \u2014 sanft, mit Herzchen" },
+    { gr: "reden", w: "kuss", kurz: "bussi",  nutzt: "/kuss Name",      was: "Kuss \u2014 der Abdruck bleibt kurz stehen" },
     { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation nur für dich zeigen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon Name", was: "Luftballons zum Geburtstag" },
@@ -9359,12 +9387,24 @@ window.LiveChat = (function () {
        Abzweigung stuende im Chat „faehrt hinueber zu 8" — als hiesse
        jemand 8. */
     if ((art === "fahren" || art === "huepfen" || art === "laufen")
-        && /^\s*\d+\s*$/.test(rest)) {
-      var platzNr = parseInt(rest, 10);
+        && /^\s*\d+(\s*-\s*\d+)*\s*$/.test(rest)) {
+      /* EINE KETTE STATT EINER ZAHL.
+         Seit man den Weg mit dem Finger malen kann („wie bei einer
+         Handy-Code-Freischaltung das Muster definieren"), steht hinter
+         dem Befehl nicht mehr nur das Ziel, sondern der ganze Weg:
+         „/laufen 1-5-6-7-8". Die Kette faehrt unveraendert mit, damit
+         JEDES Geraet denselben Umweg zeichnet und nicht seinen eigenen
+         kuerzesten rechnet — sonst saehe der Absender etwas anderes
+         als alle anderen. */
+      var kette = rest.replace(/\s+/g, "");
+      var stationen = kette.split("-").map(function (x) { return parseInt(x, 10); });
+      var platzNr = stationen[stationen.length - 1];
+      var ueber = stationen.length > 2
+        ? " \u00fcber " + stationen.slice(1, -1).join(", ") : "";
       return anAlle("aktion", zustand.ichName
         + (art === "fahren" ? " f\u00e4hrt zu Platz " : " l\u00e4uft zu Platz ")
-        + platzNr + "  " + (art === "fahren" ? "\ud83d\ude97" : "\ud83d\udc63"),
-        { wirkung: art === "fahren" ? "fahren" : "spielzug", wen: String(platzNr) });
+        + platzNr + ueber + "  " + (art === "fahren" ? "\ud83d\ude97" : "\ud83d\udc63"),
+        { wirkung: art === "fahren" ? "fahren" : "spielzug", wen: kette });
     }
     if (AM_PLATZ[art]) {
       var wemP = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
@@ -10757,6 +10797,20 @@ window.LiveChat = (function () {
     pruefMuellFiltern: function (liste) { return altenMuellFiltern(liste); },
     /* Nur zum Nachpruefen: das Nachreichen des Fluesterns von aussen
        anstossen und ansehen, was dabei herauskommt. */
+    /* WELCHE BEFEHLSWOERTER ES GIBT — und ob jedes davon auch
+       WIRKLICH hinausgeht. Genau hier hat Runde 18 einen Fehler
+       versteckt: die sieben neuen Effekte standen in AM_PLATZ, aber
+       nicht in BEFEHLE, und befehlBekannt() liest nur BEFEHLE. Die
+       Kachel schickte also eine Zeile, die als Vertipper abgewiesen
+       wurde. Damit das nie wieder unbemerkt bleibt, kann die Sonde
+       beides von aussen vergleichen. */
+    pruefEffektWoerter: function () {
+      var w = [];
+      Object.keys(AM_PLATZ).forEach(function (k) { w.push(k); });
+      Object.keys(AUCH_AM_PLATZ).forEach(function (k) { if (w.indexOf(k) < 0) w.push(k); });
+      return w;
+    },
+    pruefBefehlBekannt: function (wort) { return befehlBekannt(wort); },
     pruefFluesternLaden: function () { return fluesternLaden(); },
     pruefVerlaufFrisch: function (erster) { return verlaufFrischHolen(Boolean(erster)); },
     /* Nur zum Nachmessen: so tun, als sei man drin. Ohne das laeuft

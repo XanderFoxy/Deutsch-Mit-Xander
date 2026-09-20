@@ -36,6 +36,17 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css",
   const d = await pg.evaluate(() => ({
     gezeichnet: window.DMA_PRUEF.effektNamen(),
     aufrufbar: window.LiveChat.effektBefehle(),
+    /* NEU NACH RUNDE 18: nicht nur „gibt es die Wirkung", sondern
+       auch „geht das Befehlswort ueberhaupt hinaus". Das eine stand
+       in AM_PLATZ, das andere in BEFEHLE — und weil nur das erste
+       geprueft wurde, sind sieben Effekte still liegengeblieben:
+       „Da kommt bei den genannten Effekten immer die Eingabe in das
+       Chat-Zeilen-Fenster und wartet auf irgendeinen Befehl." */
+    woerter: window.LiveChat.pruefEffektWoerter
+      ? window.LiveChat.pruefEffektWoerter().map(function (w) {
+          return { w: w, bekannt: window.LiveChat.pruefBefehlBekannt(w) };
+        })
+      : [],
     befehle: window.LiveChat.befehlsliste().map((b) => b.w),
   }));
   const ruf = new Set(d.aufrufbar), bef = new Set(d.befehle);
@@ -64,6 +75,20 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css",
   if (ohneBefehl.length) {
     console.log("\n⚠  kein eigener Befehl (ueber Kurzwort o. ae. erreichbar): " + ohneBefehl.join(", "));
   }
+  /* UND DAS HARTE KRITERIUM: geht das Wort ueberhaupt hinaus?
+     Ein Effekt, dessen Befehlswort befehlBekannt() nicht kennt,
+     wird als Vertipper abgewiesen — die Zeile geht NICHT hinaus,
+     und der Effekt ist damit tot, egal wie gut er gezeichnet ist.
+     Genau so sind in Fassung 360 sieben Effekte liegengeblieben. */
+  const stumm = (d.woerter || []).filter((x) => !x.bekannt).map((x) => x.w);
+  if (stumm.length) {
+    console.log("\n❌ BEFEHLSWORT WIRD ABGEWIESEN, DIE ZEILE GEHT NICHT HINAUS ("
+      + stumm.length + "):");
+    stumm.forEach((w) => console.log("     /" + w + "   fehlt in BEFEHLE"));
+  } else {
+    console.log("  ✓ jedes Effektwort geht auch wirklich hinaus   "
+      + (d.woerter || []).length + " Woerter");
+  }
   await br.close(); srv.close();
-  process.exit(ohneTuer.length ? 1 : 0);
+  process.exit(ohneTuer.length || stumm.length ? 1 : 0);
 })();

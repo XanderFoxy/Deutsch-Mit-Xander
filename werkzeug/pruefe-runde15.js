@@ -436,7 +436,12 @@ const pruefe = (was, gut, zusatz) => {
     ["/ohrfeige Emmi",   "ohrfeige",   "lc-ohrfeige"],
     ["/basketball Emmi", "basketball", "lc-basket"],
     ["/tennis Emmi",     "tennis",     "lc-tennis"],
-    ["/keks Emmi",       "krumel",     "lc-krumel"]
+    /* NACHGEZOGEN IN RUNDE 19, weil die Sache sich geaendert hat:
+       GEMELDET: „Dieser Keks-Effekt — das soll ein einzelner sein. Ich
+       glaube, du hast Kekse und Aufessen jeweils einmal, aber das,
+       was Aufessen macht, soll eigentlich der Keks-Effekt sein."
+       /keks zeichnet deshalb jetzt dieselbe Schicht wie /aufessen. */
+    ["/keks Emmi",       "krumel",     "lc-aufessen"]
   ];
   for (const [befehl, wirkung, klasse] of REST) {
     const d = await pg.evaluate(async ({ b, w, k }) => {

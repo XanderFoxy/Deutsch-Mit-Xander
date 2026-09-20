@@ -100,9 +100,15 @@ const BRETT = (frei) => `
     "„so wie es vorher auch war“");
   pruefe("er nimmt den Platz direkt",
     /LiveChat\.platzNehmen \? LiveChat\.platzNehmen\(nr\) : null;\s*\n\s*renderLiveChat\(\);/.test(js));
-  pruefe("es gibt ein Anreise-Menue mit drei Wegen",
+  /* NACHGEBESSERT IN RUNDE 19, weil die Sache sich geaendert hat:
+     GEMELDET: „In diesem Menue muss das Springen nicht drinstehen.
+     Das ist dann Quatsch." Der kurze Tipp IST das Springen. Dafuer
+     kann man den Weg jetzt malen. */
+  pruefe("es gibt ein Anreise-Menue mit vier Wegen, aber ohne Springen",
     /function lcAnreiseMenue/.test(js)
-    && /"Springen"/.test(js) && /"Fahren"/.test(js) && /"Laufen"/.test(js));
+    && !/knopf\("[^"]*", "Springen"/.test(js)
+    && /"Fahren"/.test(js) && /"Laufen"/.test(js)
+    && /"Weg malen"/.test(js) && /"Route fahren"/.test(js));
   pruefe("und /laufen ist ein echter Befehl",
     /laufen:\s*\{ wirkung: "spielzug"/.test(lc));
   pruefe("eine Nummer hinter dem Befehl wird als Platz gelesen",
@@ -199,7 +205,7 @@ const BRETT = (frei) => `
     JSON.parse(fs.readFileSync(path.join(WURZEL, "filme/raumschiff.json"), "utf8")).maskeUnsauber === true,
     "raumschiff.json");
   pruefe("die Fassung ist hochgezaehlt",
-    /window\.DMA_VERSION = "360"/.test(html));
+    /window\.DMA_VERSION = "361"/.test(html));
 
   /* ---------- Und jetzt im Browser ---------- */
   const srv = http.createServer((q, a) => {
@@ -219,26 +225,46 @@ const BRETT = (frei) => `
 
   console.log("\nGEMESSEN: DIE NUMMER BLEIBT STEHEN, WENN ICH WEGFAHRE\n");
   await pg.evaluate(BRETT([5, 6, 7, 8]));
+  /* NACHGEBESSERT IN RUNDE 19 — und zwar, weil die ALTE Messung seit
+     dieser Runde etwas Falsches misst, nicht weil sie stoerte:
+     GEMELDET war „diese kleine Eins auf dem Profilbild brauchst du
+     nicht im Profilbild stehen haben". Auf einem besetzten Platz ist
+     die Nummer jetzt also ausgeblendet (display: none), und ein
+     ausgeblendeter Kasten hat die Masse null. Der Vergleich
+     „vorher gegen nachher" haette damit immer einen Sprung von der
+     Nullecke zur echten Stelle gemeldet — 502 px gemessen, und
+     trotzdem hatte sich nichts bewegt.
+     Gemessen wird deshalb jetzt WAEHREND der Fahrt zweimal: die
+     Nummer muss sichtbar sein und zwischen den beiden Zeitpunkten
+     auf der Stelle stehen, waehrend das Bild weiterrollt. */
   const fahrt = await pg.evaluate(async () => {
     const meiner = document.querySelector(".lc-platz-ich");
     const nummer = meiner.querySelector(".lc-nummer");
     const kreis = meiner.querySelector(".lc-kreis");
-    const vorN = nummer.getBoundingClientRect();
-    const vorK = kreis.getBoundingClientRect();
     window.DMA_PRUEFUNG.wirkung("fahren", "8", "Alex");
-    await new Promise((f) => setTimeout(f, 900));
-    const nachN = nummer.getBoundingClientRect();
-    const nachK = kreis.getBoundingClientRect();
+    await new Promise((f) => setTimeout(f, 700));
+    const n1 = nummer.getBoundingClientRect();
+    const k1 = kreis.getBoundingClientRect();
+    const ring = getComputedStyle(meiner.querySelector(".lc-schild"), "::before").borderStyle;
+    await new Promise((f) => setTimeout(f, 700));
+    const n2 = nummer.getBoundingClientRect();
+    const k2 = kreis.getBoundingClientRect();
     return {
-      nummerWeg: Math.round(Math.hypot(nachN.left - vorN.left, nachN.top - vorN.top)),
-      kreisWeg: Math.round(Math.hypot(nachK.left - vorK.left, nachK.top - vorK.top)),
-      nummerImKreis: kreis.contains(nummer)
+      nummerWeg: Math.round(Math.hypot(n2.left - n1.left, n2.top - n1.top)),
+      nummerDa: Math.round(n1.width),
+      kreisWeg: Math.round(Math.hypot(k2.left - k1.left, k2.top - k1.top)),
+      nummerImKreis: kreis.contains(nummer),
+      ring: ring
     };
   });
   pruefe("die Nummer liegt nicht mehr im Kreis", fahrt.nummerImKreis === false);
-  pruefe("das Bild faehrt los", fahrt.kreisWeg > 20, fahrt.kreisWeg + " px");
-  pruefe("und die Nummer bleibt stehen", fahrt.nummerWeg <= 1,
+  pruefe("das Bild rollt weiter", fahrt.kreisWeg > 20, fahrt.kreisWeg + " px in 0,7 s");
+  pruefe("die Nummer ist waehrend der Fahrt zu sehen", fahrt.nummerDa > 0,
+    fahrt.nummerDa + " px breit");
+  pruefe("und sie bleibt dabei stehen", fahrt.nummerWeg <= 1,
     fahrt.nummerWeg + " px (das Bild: " + fahrt.kreisWeg + " px)");
+  pruefe("der verlassene Platz hat den gestrichelten Ring",
+    /dashed/.test(fahrt.ring || ""), fahrt.ring || "-");
 
   console.log("\nGEMESSEN: DIE FAHRT KOMMT AN UND FLIEGT NICHT ZURUECK\n");
   const ende = await pg.evaluate(() => {

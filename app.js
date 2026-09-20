@@ -17425,7 +17425,7 @@
         g.gain.setValueAtTime(0, t);
         g.gain.linearRampToValueAtTime(0.09, t + 0.015);
         g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
-        o.connect(g); g.connect(a.destination);
+        o.connect(g); g.connect(lcTonZiel(a));
         o.start(t); o.stop(t + 0.6);
       }), wann * 1000);
     }
@@ -22231,6 +22231,47 @@
 
   /* Ein einzelner Ton. „art" bestimmt die Klangfarbe: eine Glocke
      klingt nach Sinus, ein Miauen braucht eine gleitende Tonhöhe. */
+  /* =================================================================
+     AUCH DIE GERECHNETEN TOENE HABEN JETZT EINEN REGLER
+     -----------------------------------------------------------------
+     GEFRAGT: „Schau mal bitte nach, warum Schnee so extrem laut ist.
+     Ist das die Frequenz? Liegt es daran?"
+
+     NACHGESEHEN — und ja, es liegt daran, aber anders als gedacht:
+     die Datei ton/schnee.m4a ist mit -59 dB praktisch stumm, man
+     hoert sie gar nicht. Was man hoert, ist ein GERECHNETER Ton
+     (lcTonRegen): weisses Rauschen durch einen Bandpass, der von
+     3200 Hz auf 420 Hz faellt. Rauschen in diesem Bereich ist genau
+     das, was das Ohr am lautesten wahrnimmt — deshalb sticht es
+     heraus, obwohl die Zahl im Code klein aussieht.
+
+     Der eigentliche Fehler war aber, dass diese Toene direkt an den
+     Ausgang gingen: sie hatten WEDER den gemessenen Ausgleich der
+     Dateien NOCH das Ducking, wenn jemand spricht. Sie liefen also
+     immer auf voller Lautstaerke, auch mitten in einem Satz.
+
+     Jetzt gehen alle durch einen gemeinsamen Regler: ein Stueck
+     leiser, und leise, solange geredet wird — dieselbe Regel wie
+     bei den Dateien.
+     ================================================================= */
+  let lcTonRegler = null;
+  function lcTonZiel(a) {
+    if (!a) return null;
+    if (!lcTonRegler || lcTonRegler.context !== a) {
+      try {
+        lcTonRegler = a.createGain();
+        lcTonRegler.connect(lcTonZiel(a));
+      } catch (e) { return a.destination; }
+    }
+    let redet = false;
+    try { redet = Boolean(window.LiveChat && LiveChat.redetJemand && LiveChat.redetJemand()); }
+    catch (e) { redet = false; }
+    /* 0,5 ist rund 6 dB weniger — das bringt das Rauschen auf die
+       Hoehe der Dateien. 0,34 davon, solange jemand spricht. */
+    try { lcTonRegler.gain.value = redet ? 0.5 * 0.34 : 0.5; } catch (e) {}
+    return lcTonRegler;
+  }
+
   function lcTon(bau) {
     if (!lcToeneAn()) return;
     const a = lcTonAnlage();
@@ -22263,7 +22304,7 @@
         /* Hohe Teiltöne verklingen schneller als tiefe — genau daran
            erkennt das Ohr eine Glocke. */
         g.gain.exponentialRampToValueAtTime(0.0001, t + 1.5 - i * 0.42);
-        o.connect(g); g.connect(a.destination);
+        o.connect(g); g.connect(lcTonZiel(a));
         o.start(t); o.stop(t + 1.6);
       });
     });
@@ -22287,7 +22328,7 @@
       const v = a.createOscillator(), vg = a.createGain();
       v.frequency.value = 14; vg.gain.value = 26;
       v.connect(vg); vg.connect(o.frequency);
-      o.connect(g); g.connect(a.destination);
+      o.connect(g); g.connect(lcTonZiel(a));
       o.start(t); v.start(t); o.stop(t + 0.75); v.stop(t + 0.75);
     });
   }
@@ -22311,7 +22352,7 @@
       g.gain.setValueAtTime(0, t);
       g.gain.linearRampToValueAtTime(0.1, t + 0.09);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
-      q.connect(f); f.connect(g); g.connect(a.destination);
+      q.connect(f); f.connect(g); g.connect(lcTonZiel(a));
       q.start(t); q.stop(t + 0.92);
     });
   }
@@ -22332,7 +22373,7 @@
       const g = a.createGain();
       g.gain.setValueAtTime(0.1, t);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
-      q.connect(f); f.connect(g); g.connect(a.destination);
+      q.connect(f); f.connect(g); g.connect(lcTonZiel(a));
       q.start(t); q.stop(t + 0.36);
     });
   }
@@ -22348,7 +22389,7 @@
         g.gain.setValueAtTime(0, start);
         g.gain.linearRampToValueAtTime(0.11, start + 0.02);
         g.gain.exponentialRampToValueAtTime(0.0001, start + 0.42);
-        o.connect(g); g.connect(a.destination);
+        o.connect(g); g.connect(lcTonZiel(a));
         o.start(start); o.stop(start + 0.45);
       });
     });
@@ -22403,7 +22444,7 @@
         g.gain.setValueAtTime(0.0001, t);
         g.gain.exponentialRampToValueAtTime(0.085, t + 0.16);
         g.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
-        o.connect(g); g.connect(a.destination);
+        o.connect(g); g.connect(lcTonZiel(a));
         o.start(t); o.stop(t + 1);
       });
     });
@@ -22561,6 +22602,11 @@
     pusterohr:      { ton: "platsch",  dauer: 4000, laut: 0.5 },   /* der nasse Klatscher */
     gluehbirne:     { ton: "kitt",     dauer: 4000, laut: 0.45 },  /* Glas in der Fassung */
     entbloessung:   { ton: "boing",    dauer: 3000, laut: 0.5 },   /* der Comic-Gag */
+    hut:            { ton: "kitt",     dauer: 3400, laut: 0.4 },   /* der Hut setzt auf */
+    ticken:         { ton: "wecker",   dauer: 260,  laut: 0.45 },  /* ein Tick je Zahl */
+    bombe:          { ton: "schuss",   dauer: 2600, laut: 0.6 },   /* der Knall */
+    streicheln:     { ton: "schwamm",  dauer: 3400, laut: 0.32 },  /* ganz leise */
+    kuss:           { ton: "platsch",  dauer: 3200, laut: 0.4 },
     matrix:         { ton: "matrix", dauer: 10000, schleife: true , laut: 0.34 },
     route66:        { ton: "route66", dauer: 10000, schleife: true , laut: 0.36 },
     noten:          { ton: "noten", dauer: 10000, schleife: true },
@@ -23751,8 +23797,12 @@
        gefehlt haben. */
     ["\ud83c\udfa8", "Paint", "paintball"],
     ["\ud83e\udd5a", "Ei",        "ei"],
-    ["\ud83d\ude97", "Fahren", "fahren"],
-    ["\ud83c\udfb2", "H\u00fcpfen",  "huepfen"],
+    /* GEMELDET: „Im Prinzip kannst du Huepfen und Fahren in der
+       Symbolliste rausnehmen, weil das Fahren, was ich im Menue
+       auswaehle … ich finde das logischer, wenn man den Platz
+       anwaehlt und dann bestimmt, wie man da hinkommt."
+       Stimmt: beide brauchen ein ZIEL, und das waehlt man am Platz,
+       nicht an einer Kachel. Als Befehl gibt es sie weiter. */
     /* „lasse keinen aus" — der Rest der Wunschliste, in derselben
        Reihenfolge, in der er sie genannt hat. */
     ["\ud83e\ude83", "Katapult",  "katapult"],
@@ -23766,11 +23816,10 @@
     ["\ud83e\udef3", "Ohrfeige",  "ohrfeige"],
     ["\ud83c\udfc0", "Korb", "basketball"],
     ["\ud83c\udfbe", "Tennis",    "tennis"],
-    ["\ud83c\udf6a", "Kekse",     "keks"],
     ["\ud83c\udfb0", "Zufall",    "zufall", true],
     /* „Das wäre die witzigste Animation." */
     ["\ud83d\udc7e", "Pac-Man",  "pacman"],
-    ["\ud83c\udf6a", "Aufessen", "aufessen"],
+    ["\ud83c\udf6a", "Aufessen", "aufessen"],   /* der einzige Keks-Effekt */
     ["\u231b",       "Sanduhr",  "sanduhr"],
     /* „du kannst diese Störung aber trotzdem in den klickbaren
        Effekten drin lassen." */
@@ -23790,7 +23839,15 @@
     ["\ud83e\ude83", "Zwille",   "zwille"],
     ["\ud83e\udd64", "Pusten",   "pusterohr"],
     ["\ud83d\udca1", "Birne",    "gluehbirne"],
-    ["\ud83d\udc59", "Ups!",     "entbloessung"]
+    ["\ud83d\udc59", "Ups!",     "entbloessung"],
+    /* RUNDE 19: „Vielleicht kannst du noch auf das Profilbild einen
+       Cowboyhut setzen" · „so ein Countdown im Profilbild … und dann
+       einfach explodiert" · „Und fuer Liebe brauchen wir auch noch
+       irgendwie … dass man ihn streichelt … oder kuesst." */
+    ["\ud83e\udd20", "Hut",      "hut"],
+    ["\ud83d\udca3", "Bombe",    "bombe"],
+    ["\ud83e\udef6", "Streicheln", "streicheln"],
+    ["\ud83d\udc8b", "Kuss",     "kuss"]
   ];
 
   /* Die Zeichen zu den Sprechbildern — sie stehen hier und nicht in
@@ -24019,6 +24076,130 @@
      Fahren und Laufen gehen beide ueber lcFahrt und damit ueber die
      Wegsuche: nur ueber FREIE Felder, Besetzte werden umfahren.
      ================================================================= */
+  /* =================================================================
+     DEN WEG MIT DEM FINGER MALEN — WIE EIN ENTSPERRMUSTER
+     -----------------------------------------------------------------
+     GEWUENSCHT, woertlich: „Dann moechte ich, wenn man irgendwo
+     hinfaehrt oder hinlaeuft, dass man wie bei einer Handy-Code-
+     Freischaltung das Muster definieren kann, wie man da laeuft. Also
+     man kann die Felder auswaehlen, man kann das wie eine Linie
+     ziehen ueber die Felder, wie man zu seinem Ziel laufen will oder
+     wie weit man laufen will. Also dass man praktisch den Weg
+     unendlich zeichnen koennte, solange wie man laufen moechte. Man
+     kann den Weg mit einem Finger-Swipe beschreiben. Dazu muesste das
+     aber moeglich sein, dass die Webseite an der Stelle still bleibt,
+     damit sie nicht verrutscht und nach oben und unten scrollt."
+
+     Genau das steht hier, und die beiden Forderungen sind zwei
+     verschiedene Sachen:
+
+     1. DAS MALEN. Ein durchsichtiges Feld legt sich ueber die
+        Sitzreihe und faengt den Finger ab. Bei jeder Bewegung wird
+        gefragt, ueber welchem Platz er gerade steht
+        (elementFromPoint); ein NEUER Platz kommt an den Weg, wenn er
+        direkt an den letzten grenzt (ein Feld waagerecht oder
+        senkrecht — diagonal nicht, sonst fuehre man durch die Ecke)
+        und noch frei ist. Geht man zurueck, wird der letzte Schritt
+        wieder geloescht — auch das kennt man vom Entsperrmuster.
+
+     2. DASS DIE SEITE STILL BLEIBT. „touch-action: none" auf dem
+        Feld sagt dem Browser, dass er diese Geste NICHT als Rollen
+        auffassen soll. Das allein genuegt nicht auf jedem Geraet,
+        deshalb wird zusaetzlich jedes touchmove abgefangen, solange
+        gemalt wird. Beides zusammen haelt die Seite fest.
+
+     Losgelassen wird der Weg abgefahren — mit dem Auto oder zu Fuss,
+     je nachdem, was man vorher gewaehlt hat.
+     ================================================================= */
+  let lcMalWeg = null;
+  function lcWegMalen(art) {
+    const karte = document.getElementById("livechatKarte");
+    const reihe = document.getElementById("lcPlaetze");
+    if (!karte || !reihe) return false;
+    const meiner = karte.querySelector(".lc-platz-ich");
+    if (!meiner) { lcWegAbsage("Du sitzt noch nicht oben."); return false; }
+    if (lcMalWeg) return false;
+
+    const gitter = lcPlatzGitter();
+    const start = gitter.find((p) => p.el === meiner);
+    if (!start) return false;
+
+    if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
+    const feld = document.createElement("div");
+    feld.className = "lc-wegmal";
+    feld.setAttribute("aria-hidden", "true");
+    feld.innerHTML = '<svg class="lc-wegmal-linie" preserveAspectRatio="none">'
+      + '<polyline fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      + '<p class="lc-wegmal-hinweis">Zieh den Weg \u2014 loslassen f\u00e4hrt ab</p>';
+    reihe.appendChild(feld);
+    const linie = feld.querySelector("polyline");
+    const rk = lcLayoutKasten(reihe);
+
+    const weg = [start];
+    const malen = () => {
+      linie.setAttribute("points", weg.map((p) =>
+        (p.x - rk.left).toFixed(0) + "," + (p.y - rk.top).toFixed(0)).join(" "));
+      gitter.forEach((p) => p.el.classList.toggle("lc-platz-imweg", weg.indexOf(p) >= 0));
+    };
+    malen();
+
+    const platzUnter = (x, y) => {
+      feld.style.pointerEvents = "none";
+      const el = document.elementFromPoint(x, y);
+      feld.style.pointerEvents = "";
+      const pl = el && el.closest ? el.closest(".lc-platz") : null;
+      return pl ? gitter.find((p) => p.el === pl) : null;
+    };
+    const nachbar = (a, b) =>
+      Math.abs(a.reihe - b.reihe) + Math.abs(a.spalte - b.spalte) === 1;
+
+    const bewegen = (e) => {
+      const p = platzUnter(e.clientX, e.clientY);
+      if (!p) return;
+      const letzte = weg[weg.length - 1];
+      if (p === letzte) return;
+      /* Zurueck auf den vorletzten Platz heisst: diesen Schritt
+         wieder zuruecknehmen. */
+      if (weg.length > 1 && p === weg[weg.length - 2]) { weg.pop(); malen(); return; }
+      if (weg.indexOf(p) >= 0) return;             // kein Kreisel
+      if (!nachbar(letzte, p)) return;             // kein Sprung ueber Felder
+      if (!p.frei) return;                         // nicht durch Besetzte
+      weg.push(p);
+      malen();
+      lcTonZu("spielzug");
+    };
+    const halten = (e) => { if (lcMalWeg) e.preventDefault(); };
+    const schliessen = () => {
+      document.removeEventListener("pointermove", bewegen, true);
+      document.removeEventListener("pointerup", loslassen, true);
+      document.removeEventListener("pointercancel", abbrechen, true);
+      document.removeEventListener("touchmove", halten, { passive: false, capture: true });
+      gitter.forEach((p) => p.el.classList.remove("lc-platz-imweg"));
+      feld.remove();
+      lcMalWeg = null;
+    };
+    const abbrechen = () => schliessen();
+    const loslassen = () => {
+      const nummern = weg.map((p) => p.nr);
+      schliessen();
+      if (nummern.length < 2) { lcWegAbsage("Kein Weg gezeichnet."); return; }
+      /* Der Weg geht an alle — sonst saehe nur ich, wie ich laufe.
+         Die Nummern stehen als Kette im Befehl, damit jedes Geraet
+         denselben Weg zeichnet und nicht seinen eigenen rechnet. */
+      const zeile = "/" + (art === "spielzug" ? "laufen" : "fahren")
+        + " " + nummern.join("-");
+      try { LiveChat.schreiben(zeile); } catch (e) {}
+      lcNachDemSenden(zeile);
+    };
+
+    lcMalWeg = { schliessen: schliessen };
+    document.addEventListener("pointermove", bewegen, true);
+    document.addEventListener("pointerup", loslassen, true);
+    document.addEventListener("pointercancel", abbrechen, true);
+    document.addEventListener("touchmove", halten, { passive: false, capture: true });
+    return true;
+  }
+
   function lcAnreiseMenue(platz) {
     const nr = Number(platz.dataset.lcPlatz);
     if (!nr) return false;
@@ -24049,14 +24230,12 @@
       kasten.appendChild(b);
     };
 
-    /* Springen: das ist der gewoehnliche Tipp, ohne Animation. */
-    knopf("\ud83e\ude91", "Springen", () => {
-      const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(nr) : null;
-      renderLiveChat();
-      if (erg && erg.ok) showToast("\ud83e\ude91 " + erg.text);
-      else if (erg && erg.warum) showToast(erg.warum);
-    });
-    /* Fahren und Laufen gehen als Zeile an alle — sonst saehe nur
+    /* GEMELDET: „In diesem Menue muss, wie gesagt, das Springen nicht
+       drinstehen. Das ist dann Quatsch — das Springen kann man ja
+       selber machen." Stimmt: ein kurzer Tipp auf den Platz IST das
+       Springen. Es steht deshalb nicht mehr hier.
+
+       Fahren und Laufen gehen als Zeile an alle — sonst saehe nur
        ich selbst, wie ich ueber die Plaetze rolle. */
     const schicken = (befehl) => {
       const zeile = "/" + befehl + " " + nr;
@@ -24064,7 +24243,10 @@
       lcNachDemSenden(zeile);
     };
     knopf("\ud83d\ude97", "Fahren", () => schicken("fahren"));
-    knopf("\ud83d\udc63", "Laufen", () => schicken("huepfen"));
+    knopf("\ud83d\udc63", "Laufen", () => schicken("laufen"));
+    /* Und der gemalte Weg — „wie bei einer Handy-Code-Freischaltung". */
+    knopf("\u270d\ufe0f", "Weg malen", () => lcWegMalen("spielzug"));
+    knopf("\ud83d\uddfa\ufe0f", "Route fahren", () => lcWegMalen("fahren"));
 
     document.body.appendChild(kasten);
     lcMenueStellen(kasten, platz);
@@ -25709,6 +25891,10 @@
     pusterohr:  { zeichen: ["\ud83e\udd64"], wie: 5, klasse: "umarmen" },
     gluehbirne: { zeichen: ["\ud83d\udca1"], wie: 5, klasse: "umarmen" },
     entbloessung:{ zeichen: ["\ud83d\udc59"], wie: 5, klasse: "umarmen" },
+    hut:        { zeichen: ["\ud83e\udd20"], wie: 5, klasse: "umarmen" },
+    bombe:      { zeichen: ["\ud83d\udca3"], wie: 5, klasse: "umarmen" },
+    streicheln: { zeichen: ["\ud83e\udef6"], wie: 6, klasse: "herz" },
+    kuss:       { zeichen: ["\ud83d\udc8b"], wie: 6, klasse: "herz" },
     zufall:     { zeichen: ["\ud83c\udfb0"], wie: 5, klasse: "umarmen" },
     boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
     fluester:{ zeichen: ["\u00b7", "\u2219"], wie: 10, klasse: "fluester" }
@@ -26159,6 +26345,63 @@
     return b;
   }
 
+  /* =================================================================
+     DER TON KOMMT BEIM AUFSCHLAG, NICHT BEIM ABSCHICKEN
+     -----------------------------------------------------------------
+     GEMELDET: „Der Sound vom Auftreffen darf nicht vorher abspielen,
+     bevor der Pfeil nicht wirklich am Bild gelandet ist. Das gilt
+     auch fuer saemtliche Aufschlag-Animationen. Man hoert das Ei auch
+     vorher, bevor man es aufschlaegt; beim Katapult hoert man es auch
+     schon vorher, den Bumerang hoert man auch schon vorher … und das
+     ist auch beim Schneeball so, beim Geld so, und irgendwie bei
+     vielen Animationen."
+
+     Er hat recht, und die Ursache ist eine einzige Zeile: lcAmPlatz
+     hat den Ton immer SOFORT gespielt, waehrend die Zeichnung erst
+     anfaengt zu fliegen. Bei einem Pfeil, der 0,71 s braucht, hoert
+     man den Einschlag also 0,71 s zu frueh.
+
+     Die Zahlen unten sind nicht geraten, sondern aus den Keyframes
+     in korrekturen.css abgelesen: dort steht in Prozent, wann es
+     trifft, und die Gesamtdauer steht daneben. Beispiel Saugpfeil:
+     21 % von 3400 ms = 714 ms. Wo nichts steht, kommt der Ton wie
+     bisher sofort — das ist bei allem richtig, was nicht einschlaegt
+     (Kopfhoerer, Platte, Luke).
+     ================================================================= */
+  const LC_TREFFER = {
+    tritt: 180,        /* 0,18 s — „das ist der Anstoss" */
+    hammer: 430,
+    schneeball: 440,   /* die Flocken stieben ab 0,44 s */
+    bumerang: 884,     /* 34 % von 2,6 s */
+    saugpfeil: 714,    /* 21 % von 3,4 s */
+    ei: 520,
+    katapult: 676,     /* 26 % von 2,6 s, der Arm schnellt */
+    peitsche: 600,     /* 30 % von 2 s, da knallt es */
+    zwille: 1300,      /* 50 % von 2,6 s */
+    pusterohr: 1280,   /* 32 % von 4 s */
+    ohrfeige: 540,     /* 30 % von 1,8 s */
+    bowling: 760,
+    billard: 760,
+    tennis: 900,       /* der Schlag bei 30 % von 3 s */
+    basketball: 250,   /* der erste Aufprall beim Dribbeln */
+    trommel: 416,      /* 16 % von 2,6 s, der erste Schlag */
+    eimer: 676,        /* da setzt der Strahl ein */
+    sahne: 588,        /* 14 % von 4,2 s, da zischt die Dose */
+    reichtum: 400,
+    zucker: 400,
+    paintfleck: 340,   /* die Spritzer bei 0,34 s */
+    zherz: 200,
+    sog: 500,
+    stoerung: 120,
+    lichtaus: 646,     /* 17 % von 3,8 s — da klackt der Schalter */
+    gluehbirne: 2320,  /* 58 % von 4 s — da zuendet sie */
+    muenze: 3700,      /* wenn sie hinfaellt */
+    entbloessung: 660, /* 22 % von 3 s */
+    hut: 620,          /* wenn er aufsetzt */
+    bombe: 2100,       /* die Null, da platzt es */
+    kuss: 520,         /* wenn der Mund ankommt */
+    streicheln: 300
+  };
   function lcAmPlatz(wen, klasse, bauen, dauer, ton) {
     const ziele = lcZielPlaetze(wen);
     if (!ziele.length) return false;
@@ -26196,7 +26439,12 @@
       platz.appendChild(schicht);
       setTimeout(() => schicht.remove(), dauer);
     }, i * 80));
-    if (ton) lcTonZu(ton);
+    /* Und der Ton genau dann, wenn es trifft — siehe LC_TREFFER. */
+    if (ton) {
+      const wann = LC_TREFFER[ton] || 0;
+      if (wann > 0) setTimeout(() => lcTonZu(ton), wann);
+      else lcTonZu(ton);
+    }
     return true;
   }
 
@@ -26317,6 +26565,19 @@
            Wasser, waehrend sein Ursprung am Eimerrand klebt. Kein
            Schaetzen, kein Nachmessen: er kann gar nicht woanders
            herauskommen. */
+        /* GEMELDET: „Der Strahl des Wassers, da wo er ausgeschuettet
+           wird, ist an der oberen Kante vom Eimer, nicht an der
+           unteren Kante, wo er von der Physik realistisch rauskommen
+           wuerde."
+
+           NACHGERECHNET, mit den Zahlen aus dem Stilblatt: der Eimer
+           dreht um 118 Grad um den Punkt (22 %, 80 %) seines Kastens,
+           in viewBox-Einheiten also um (15,4 | 48). Die beiden Ecken
+           des Randes liegen bei (14 | 10) und (56 | 10). Nach der
+           Drehung landen sie bei (49,6 | 64,6) und (29,9 | 101,7) —
+           die ZWEITE liegt also 37 Einheiten tiefer. Sie ist die
+           Ausgusskante, nicht die erste. Der Strahl hing an der
+           falschen. Jetzt haengt er an (56 | 10). */
         + '<g class="lc-eimer-quelle">'
         /* GEMELDET: „ausserdem soll der Strahl des Wassers im
            Profilbild bleiben und nicht ausserhalb des Profilbilds."
@@ -26326,7 +26587,7 @@
            eine Einheit 1,085 Pixel. Auf 90 Einheiten gekuerzt endet
            er rund 25 Pixel ueber der Unterkante und damit sicher
            im runden Bild. */
-        + '<rect class="lc-eimer-strahl" x="7" y="9" width="14" height="90" rx="7"/>'
+        + '<rect class="lc-eimer-strahl" x="49" y="9" width="14" height="68" rx="7"/>'
         + "</g>"
         + "</svg>");
       for (let i = 0; i < 22; i++) {
@@ -26846,8 +27107,20 @@
         + '<animate attributeName="scale" dur="4.2s" fill="freeze"'
         + ' values="0;22;90;120;0;0;70;0" keyTimes="0;0.12;0.24;0.31;0.34;0.78;0.9;1"/>'
         + "</feDisplacementMap></filter></svg>");
-      teile.push('<span class="lc-sog-wirbel"></span>');
-      teile.push('<span class="lc-sog-wirbel lc-sog-zwei"></span>');
+      /* GEMELDET, jetzt zum dritten Mal: „Der Strudel hat immer noch
+         nicht die Original-Pixel in Verwendung, sondern da liegt
+         immer irgendein grafischer Strudel oben drueber. Das soll
+         wirklich nur aus den eigenen Pixeln strudeln."
+
+         Er hat recht, und ich habe es beim letzten Mal nur halb
+         gemacht: der Bildfilter war schon da, aber ZWEI gezeichnete
+         Wirbel lagen trotzdem darueber (.lc-sog-wirbel) — und die
+         sieht man natuerlich zuerst. Sie sind jetzt raus. Was
+         strudelt, ist ausschliesslich das Bild selbst: feTurbulence
+         wirft ein Rauschfeld aus, feDisplacementMap verschiebt damit
+         jeden einzelnen Bildpunkt. Dazu dreht sich das Bild um sich
+         selbst und wird zur Mitte hin eingezogen (lcSogZiehtR19) —
+         auch das passiert am Bild, nicht darueber. */
       schicht.innerHTML = teile.join("");
       if (kreis) {
         kreis.classList.remove("lc-gesogen");
@@ -27257,27 +27530,54 @@
          mit border-radius: 50 % saehe aus wie ein Aufkleber.
          Drei davon, jeder in seiner Farbe und leicht versetzt. */
       const rad = () => (34 + Math.random() * 32).toFixed(0) + "%";
-      farben.forEach((f, n) => {
+      /* GEMELDET: „Bei Paintball treffen die Farben nur an einer
+         Stelle auf — die sollen ueberall verteilt ins Bild treffen
+         und erst nach dem Auftreffen runterfliessen, so realistisch
+         von der Physik."
+
+         Vorher lagen alle Kleckse dicht an der Einschlagstelle. Jetzt
+         sind es SECHS, die ueber das ganze Bild verteilt sind: die
+         Mitten liegen auf einem Ring mit wechselndem Abstand zur
+         Bildmitte (18 bis 38 %), reihum um sechzig Grad versetzt und
+         zusaetzlich leicht verwuerfelt — so sieht Streuung aus, ein
+         gleichmaessiger Kranz saehe wieder nach Muster aus. Der
+         erste sitzt weiterhin dort, wo die Kugel eingeschlagen ist. */
+      const wieViele = 6;
+      for (let n = 0; n < wieViele; n++) {
         const klecks = document.createElement("span");
         klecks.className = "lc-paintfleck-klecks";
-        klecks.style.setProperty("--farbe", f);
-        klecks.style.setProperty("--versatz-x", (n === 0 ? 0 : (n === 1 ? -17 : 15)) + "%");
-        klecks.style.setProperty("--versatz-y", (n === 0 ? 0 : (n === 1 ? 13 : -11)) + "%");
-        klecks.style.setProperty("--gross", n === 0 ? "1" : "0.66");
-        klecks.style.animationDelay = (n * 0.16).toFixed(2) + "s";
+        klecks.style.setProperty("--farbe", farben[n % farben.length]);
+        if (n === 0) {
+          klecks.style.setProperty("--versatz-x", "0%");
+          klecks.style.setProperty("--versatz-y", "0%");
+          klecks.style.setProperty("--gross", "1");
+        } else {
+          const w = (n * 60 + Math.random() * 40 - 20) * Math.PI / 180;
+          const weit = 18 + Math.random() * 20;
+          klecks.style.setProperty("--versatz-x",
+            (Math.cos(w) * weit - r.x * 26).toFixed(1) + "%");
+          klecks.style.setProperty("--versatz-y",
+            (Math.sin(w) * weit - r.y * 26).toFixed(1) + "%");
+          klecks.style.setProperty("--gross", (0.45 + Math.random() * 0.45).toFixed(2));
+        }
+        klecks.style.animationDelay = (n * 0.07).toFixed(2) + "s";
         klecks.style.borderRadius = rad() + " " + rad() + " " + rad() + " " + rad()
           + " / " + rad() + " " + rad() + " " + rad() + " " + rad();
         blende.appendChild(klecks);
-      });
+      }
       /* Neun Schlieren, die von den Kleksen nach unten laufen — jede
          in der Farbe des Klecks, aus dem sie kommt. */
-      for (let i = 0; i < 9; i++) {
+      /* Und die Schlieren laufen von dort los, wo die Kleckse
+         sitzen — ueber die ganze Breite, nicht nur unter einer
+         Stelle. „erst nach dem Auftreffen runterfliessen." */
+      for (let i = 0; i < 12; i++) {
         const l = document.createElement("i");
         l.className = "lc-paintfleck-laeufer";
         l.style.setProperty("--farbe", farben[i % farben.length]);
-        l.style.setProperty("--seit", (i * 7 - 28) + "%");
-        l.style.setProperty("--weit", (18 + Math.random() * 26).toFixed(0) + "%");
-        l.style.animationDelay = (0.5 + Math.random() * 0.5).toFixed(2) + "s";
+        l.style.setProperty("--seit", (-38 + i * 7 + Math.random() * 5).toFixed(1) + "%");
+        l.style.setProperty("--hoch", (-30 + Math.random() * 46).toFixed(1) + "%");
+        l.style.setProperty("--weit", (16 + Math.random() * 34).toFixed(0) + "%");
+        l.style.animationDelay = (0.45 + Math.random() * 0.55).toFixed(2) + "s";
         blende.appendChild(l);
       }
       /* Und die Spritzer beim Aufprall — die duerfen nach aussen, und
@@ -27420,7 +27720,33 @@
 
      Bewegt wird der KREIS, nicht der Platz: der Sitz bleibt, wo er
      ist, sonst ruecken alle anderen nach. */
-  function lcFahrt(wen, von, art) {
+  /* =================================================================
+     DER VERLASSENE PLATZ SIEHT AUS WIE EIN FREIER PLATZ
+     -----------------------------------------------------------------
+     GEMELDET: „Allerdings ist das Feld optisch auch nicht mehr da —
+     da steht nur eine Eins in dem Moment. Also man laeuft oder faehrt
+     irgendwo hin, dann ist die ganze Zeit diese Eins … sie steht dann
+     leer, ohne dieses gestrichelte Linien-Kreis-Design mit der
+     grossen Eins drin, so wie sie normal nummeriert ist bei allen
+     anderen Plaetzen auch. Die ist weg in dem Moment, wo man den
+     Platz verlaesst. Es soll aber, so wie die anderen Plaetze auch
+     sind von der Eins bis zur Acht, wenn man den Platz 1 verlaesst,
+     das Layout konsistent bleiben und genauso die Eins noch da
+     stehen."
+
+     Der Grund: das Bild, das wegfaehrt, IST der Kreis dieses Platzes.
+     Solange es unterwegs ist, hat der Platz also gar keinen Kreis
+     mehr — weder einen vollen noch einen gestrichelten. Jetzt bekommt
+     er fuer diese Zeit die Klasse „lc-platz-unterwegs": die zeichnet
+     den gestrichelten Ring an seine Stelle und stellt die Nummer
+     gross in die Mitte, genau wie bei jedem freien Platz.
+     ================================================================= */
+  function lcPlatzUnterwegs(el, an) {
+    if (!el) return;
+    el.classList.toggle("lc-platz-unterwegs", Boolean(an));
+  }
+
+  function lcFahrt(wen, von, art, wegVorgabe) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return false;
     const gitter = lcPlatzGitter();
@@ -27428,6 +27754,20 @@
     const abEl = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
     const ab = gitter.find((p) => p.el === abEl);
     if (!ab) return false;
+    /* „wegVorgabe" ist der mit dem Finger gezeichnete Weg (siehe
+       lcWegMalen): eine Liste von Platznummern, die genau so
+       abgefahren wird, wie sie gemalt wurde — auch wenn sie einen
+       Umweg macht. „Also dass man praktisch den Weg unendlich
+       zeichnen koennte, solange wie man laufen moechte." Ohne
+       Vorgabe sucht die Breitensuche weiterhin den kuerzesten Weg. */
+    const gemalt = Array.isArray(wegVorgabe) && wegVorgabe.length > 1
+      ? wegVorgabe.map((nr) => gitter.find((p) => p.nr === nr)).filter(Boolean)
+      : null;
+    if (gemalt && gemalt.length > 1) {
+      const zuG = gemalt[gemalt.length - 1];
+      if (!zuG.frei) { lcWegAbsage("Platz " + zuG.nr + " ist besetzt."); return true; }
+      return lcFahrtLauf(ab, gemalt, art, zuG);
+    }
 
     /* WOHIN? Steht eine Nummer dahinter, ist es dieser Platz. Steht
        ein Name da, ist es der naechste FREIE Platz neben ihm — „dann
@@ -27462,6 +27802,14 @@
         + " — du müsstest über besetzte Plätze fahren.");
       return true;
     }
+    return lcFahrtLauf(ab, weg, art, zu);
+  }
+
+  /* Die Bewegung selbst — herausgeloest, weil es jetzt ZWEI Wege
+     gibt, die sie brauchen: den gerechneten (Breitensuche) und den
+     mit dem Finger gemalten. Zweimal dasselbe zu schreiben hiesse,
+     es beim naechsten Mal an einer Stelle zu vergessen. */
+  function lcFahrtLauf(ab, weg, art, zu) {
     const kreis = ab.el.querySelector(".lc-kreis");
     if (!kreis) return false;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
@@ -27470,7 +27818,10 @@
     const durchmesser = kreis.offsetWidth || 64;
     const altZ = ab.el.style.zIndex === "7" ? "" : ab.el.style.zIndex;
     ab.el.style.zIndex = "7";
-    const zurueck = () => { ab.el.style.zIndex = altZ; };
+    /* Der Platz, den ich verlasse, sieht ab sofort aus wie ein freier
+       Platz — gestrichelter Ring, grosse Nummer. */
+    lcPlatzUnterwegs(ab.el, true);
+    const zurueck = () => { ab.el.style.zIndex = altZ; lcPlatzUnterwegs(ab.el, false); };
 
     const felder = punkte.length - 1;
     const bilder = [];
@@ -27733,8 +28084,10 @@
       + "px) rotate(" + drehEnde + "deg) scale(1.14)", offset: bei(hin + beissen) });
     bilder.push({ transform: "translate(0px, 0px) rotate(0deg) scale(1)", offset: 1 });
 
+    lcPlatzUnterwegs(ab.el, true);
     const aufraeumen = () => {
       ab.el.style.zIndex = altZ;
+      lcPlatzUnterwegs(ab.el, false);
       kreis.classList.remove("lc-pacman");
       figur.remove();
       krumen.forEach((k) => k.remove());
@@ -27903,14 +28256,38 @@
   /* --- DIE KOPFHOERER ------------------------------------------------ */
   function lcKopfhoerer(wen) {
     return lcAmPlatz(wen, "lc-kopfhoerer", (schicht) => {
+      /* GEWUENSCHT: „Bei den Kopfhoerern kannst du versuchen, solche
+         Apple AirPods Max zu machen — also diese Over-Ear-Kopfhoerer
+         von Apple, dass sie so gestylt sind wie die von Apple."
+         Die Merkmale, an denen man sie erkennt, sind drei: ein
+         flaches Stoffnetz als Buegeldach statt eines runden Rohrs,
+         duenne Teleskopstaebe an den Seiten, und grosse, fast
+         quadratische Ohrmuscheln mit weichen Ecken und einem
+         abgesetzten Polsterrand. Genau die sind hier gezeichnet. */
       schicht.innerHTML =
-        '<svg class="lc-kopfhoerer-bild" viewBox="0 0 100 76">'
-        + '<path d="M12 52 V44 C12 22 30 6 50 6 C70 6 88 22 88 44 V52"'
-        + ' fill="none" stroke="#2f3542" stroke-width="8" stroke-linecap="round"/>'
-        + '<rect x="2" y="46" width="20" height="28" rx="9" fill="#39404f"/>'
-        + '<rect x="78" y="46" width="20" height="28" rx="9" fill="#39404f"/>'
-        + '<rect x="6" y="51" width="12" height="18" rx="6" fill="#6d7688"/>'
-        + '<rect x="82" y="51" width="12" height="18" rx="6" fill="#6d7688"/>'
+        '<svg class="lc-kopfhoerer-bild" viewBox="0 0 120 92">'
+        + '<defs><linearGradient id="apm1" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#cfd6e2"/><stop offset="1" stop-color="#96a0b2"/>'
+        + "</linearGradient>"
+        + '<linearGradient id="apm2" x1="0" y1="0" x2="1" y2="1">'
+        + '<stop offset="0" stop-color="#8e99ab"/><stop offset="1" stop-color="#5d6779"/>'
+        + "</linearGradient></defs>"
+        /* Das Stoffnetz als Dach — das auffaelligste Merkmal. */
+        + '<path d="M22 44 C22 16 44 4 60 4 C76 4 98 16 98 44"'
+        + ' fill="none" stroke="url(#apm1)" stroke-width="13" stroke-linecap="round"/>'
+        + '<path d="M22 44 C22 16 44 4 60 4 C76 4 98 16 98 44"'
+        + ' fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2"'
+        + ' stroke-dasharray="1.5 3" stroke-linecap="round"/>'
+        /* Die Teleskopstaebe. */
+        + '<rect x="17" y="34" width="6" height="22" rx="3" fill="#b6bfcd"/>'
+        + '<rect x="97" y="34" width="6" height="22" rx="3" fill="#b6bfcd"/>'
+        /* Und die Muscheln: fast quadratisch, weiche Ecken. */
+        + '<rect x="2" y="50" width="34" height="40" rx="14" fill="url(#apm2)"/>'
+        + '<rect x="84" y="50" width="34" height="40" rx="14" fill="url(#apm2)"/>'
+        + '<rect x="7" y="55" width="24" height="30" rx="11" fill="#39404f"/>'
+        + '<rect x="89" y="55" width="24" height="30" rx="11" fill="#39404f"/>'
+        /* Die Digital Crown oben rechts — daran erkennt man sie. */
+        + '<rect x="96" y="46" width="11" height="6" rx="3" fill="#aab3c2"/>'
         + "</svg>";
       /* Noten, die aus den Muscheln steigen — sonst sind es nur zwei
          schwarze Klumpen am Kopf. */
@@ -27927,11 +28304,61 @@
 
   /* --- DIE FENSTERLUKE ----------------------------------------------- */
   function lcLuke(wen) {
-    return lcAmPlatz(wen, "lc-luke", (schicht) => {
+    return lcAmPlatz(wen, "lc-luke", (schicht, platz) => {
+      /* GEMELDET: „Die Luke — ich glaube, das sollte das sein, was ich
+         als Fenster haben wollte: dass das Profilbild sich in der
+         Mitte teilt und nach aussen wie ein Fenster aufgeht, also dass
+         du wirklich die Seiten transformierst nach aussen hin, als
+         wenn sie offenbaren, was dahinter ist … Du musst dir aber
+         vorstellen, dass die linke Seite und die rechte Seite vom
+         Profilbild auf dieses Fenster draufgeklebt sind, und dass,
+         wenn man sie aufmacht, wie man realistisch ein Fenster
+         aufmacht, auch von der Perspektive das Bild so transformiert
+         wird, dass es realistisch aussieht, als wenn es zur Seite
+         aufgeht. Nicht nur, dass diese Bereiche duenner werden … und
+         dann soll dahinter eine schoene Aussicht sein."
+
+         Vorher waren es zwei Klappen, die auf- und zugingen — ohne
+         Bild darauf und ohne Aussicht dahinter. Jetzt sind es zwei
+         echte Fluegel:
+         · Auf jedem klebt die passende HAELFTE des Profilbildes. Das
+           geht, weil beide Fluegel dasselbe Bild als Hintergrund
+           tragen, nur in der doppelten Breite und um eine halbe
+           Breite versetzt — der linke zeigt damit die linke Haelfte,
+           der rechte die rechte.
+         · Gedreht wird um die AUSSENKANTE (transform-origin links
+           bzw. rechts) mit einer Perspektive davor. Dadurch wird der
+           Fluegel nicht schmaler, sondern schwenkt sichtbar in die
+           Tiefe — die Kante, die zu mir zeigt, wird groesser, die
+           andere kleiner. Genau das ist der Unterschied zwischen
+           „duenner werden" und „aufgehen".
+         · Dahinter liegt die Aussicht: Himmel, Sonne, Huegel. */
+      const kreis = platz.querySelector(".lc-kreis");
+      const bild = kreis && kreis.querySelector("img.lc-avatar");
+      const quelle = bild && bild.getAttribute("src") ? bild.getAttribute("src") : "";
       const blende = lcZpBlende(schicht);
-      blende.innerHTML = '<span class="lc-luke-fluegel lc-luke-oben"></span>'
-                       + '<span class="lc-luke-fluegel lc-luke-unten"></span>';
-    }, 3400, "luke");
+      blende.innerHTML =
+        '<span class="lc-luke-aussicht">'
+        + '<i class="lc-luke-sonne"></i>'
+        + '<i class="lc-luke-huegel"></i>'
+        + '<i class="lc-luke-huegel lc-luke-huegel-2"></i>'
+        + '<i class="lc-luke-vogel"></i><i class="lc-luke-vogel lc-luke-vogel-2"></i>'
+        + "</span>"
+        + '<span class="lc-luke-fluegel lc-luke-links"></span>'
+        + '<span class="lc-luke-fluegel lc-luke-rechts"></span>';
+      if (quelle) {
+        blende.querySelectorAll(".lc-luke-fluegel").forEach((f) => {
+          f.style.backgroundImage = "url(\"" + quelle.replace(/"/g, "%22") + "\")";
+        });
+      } else {
+        /* Ohne Profilbild (Kamera aus, nur der Anfangsbuchstabe)
+           bleiben die Fluegel einfarbig — sonst klebte ein leeres
+           Rechteck auf dem Fenster. */
+        blende.querySelectorAll(".lc-luke-fluegel").forEach((f) => {
+          f.style.background = "linear-gradient(140deg, #6f7c93, #48536a)";
+        });
+      }
+    }, 3600, "luke");
   }
 
   /* --- DIE SCHALLPLATTE ---------------------------------------------- */
@@ -28460,6 +28887,174 @@
     }, 3000, "entbloessung");
   }
 
+  /* =================================================================
+     VIER WEITERE — DREI ZUM AERGERN, EINER ZUM GUTSEIN
+     ================================================================= */
+
+  /* --- DER COWBOYHUT ---------------------------------------------------
+     GEWUENSCHT: „Vielleicht kannst du noch auf das Profilbild einen
+     Cowboyhut setzen."
+     Er faellt von oben herein, sitzt kurz schief und rutscht in die
+     Waagerechte — ein Hut, der einfach nur da ist, sieht aus wie ein
+     Aufkleber. */
+  function lcHut(wen) {
+    return lcAmPlatz(wen, "lc-hut", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-behutet");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-behutet");
+        setTimeout(() => kreis.classList.remove("lc-behutet"), 3400);
+      }
+      schicht.innerHTML =
+        '<svg class="lc-hut-bild" viewBox="0 0 140 76">'
+        + '<defs><linearGradient id="hut1" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#b5813f"/><stop offset="1" stop-color="#7a5322"/>'
+        + "</linearGradient></defs>"
+        /* Die Krempe — vorn und hinten hochgebogen, das macht den
+           Cowboyhut aus. */
+        + '<path d="M4 58 C4 46 30 40 70 40 C110 40 136 46 136 58'
+        + ' C136 68 110 74 70 74 C30 74 4 68 4 58 Z" fill="url(#hut1)"'
+        + ' stroke="#5e3c17" stroke-width="2.5"/>'
+        /* Die Krone mit der Laengsdelle. */
+        + '<path d="M36 46 C36 18 48 6 70 6 C92 6 104 18 104 46'
+        + ' C92 50 48 50 36 46 Z" fill="url(#hut1)" stroke="#5e3c17" stroke-width="2.5"/>'
+        + '<path d="M70 8 C64 20 64 34 66 46" fill="none" stroke="#5e3c17"'
+        + ' stroke-width="2.2" opacity=".7"/>'
+        /* Das Band. */
+        + '<path d="M36 42 C52 48 88 48 104 42 L104 34 C88 40 52 40 36 34 Z"'
+        + ' fill="#3f2a12"/>'
+        + '<circle cx="98" cy="38" r="4" fill="#e8c46a" stroke="#9c7b1e" stroke-width="1.6"/>'
+        + "</svg>";
+    }, 3400, "hut");
+  }
+
+  /* --- DIE ZEITBOMBE ---------------------------------------------------
+     GEWUENSCHT: „Man koennte auch noch irgendwie so einen Countdown im
+     Profilbild haben und so eine Zeitschaltuhr, also dass das so
+     runterlaeuft und dann einfach explodiert am Ende der abgelaufenen
+     Zeit, dass das Profilbild einfach explodiert und dann nichts mehr
+     dort ist — nur noch ein kleines Haeufchen Asche an dem Platz mit
+     der Nummer … als wenn das Profilbild als Bombe platzt. Irgendwie
+     das koennte man einmal digital als Zeitbombe machen oder mit
+     Zuendschnur, dass man jemand anderen anzuendet und explodieren
+     laesst."
+
+     Beides zusammen: eine Zuendschnur brennt am Bildrand ab, im Bild
+     laeuft die Zahl von 3 auf 0, dann platzt es — und was bleibt, ist
+     ein Aschehaeufchen auf dem Platz. Wen es trifft, den nimmt es von
+     der Buehne; er setzt sich mit einem Tipp wieder hin, genau wie
+     beim Aufessen. */
+  function lcBombe(wen) {
+    return lcAmPlatz(wen, "lc-bombe", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      const blende = lcZpBlende(schicht);
+      blende.innerHTML = '<span class="lc-bombe-zahl">3</span>'
+                       + '<span class="lc-bombe-blitz"></span>';
+      const zahl = blende.querySelector(".lc-bombe-zahl");
+      [2, 1, 0].forEach((z, i) => setTimeout(() => {
+        if (!zahl.isConnected) return;
+        zahl.textContent = z === 0 ? "\ud83d\udca5" : String(z);
+        zahl.classList.remove("lc-bombe-tick");
+        void zahl.offsetWidth;
+        zahl.classList.add("lc-bombe-tick");
+        lcTonZu(z === 0 ? "bombe" : "ticken");
+      }, 700 + i * 700));
+      /* Die Zuendschnur laeuft am oberen Rand entlang und wird kuerzer. */
+      schicht.insertAdjacentHTML("beforeend",
+        '<span class="lc-bombe-schnur"><i></i></span>'
+        + '<span class="lc-bombe-asche"></span>');
+      for (let f = 0; f < 14; f++) {
+        const sp = document.createElement("i");
+        sp.className = "lc-bombe-splitter";
+        sp.style.setProperty("--wo", (f * (360 / 14)) + "deg");
+        sp.style.setProperty("--gross", (0.6 + Math.random()).toFixed(2));
+        schicht.appendChild(sp);
+      }
+      if (kreis) {
+        kreis.classList.remove("lc-gesprengt");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gesprengt");
+        setTimeout(() => kreis.classList.remove("lc-gesprengt"), 4600);
+      }
+      /* Und wen es trifft, der ist von der Buehne — dieselbe Regel wie
+         beim Aufessen und beim Pac-Man. */
+      setTimeout(() => {
+        try {
+          const l = LiveChat.lage() || {};
+          if (String(l.ichName || "").trim().toLowerCase()
+              === String(wen || "").trim().toLowerCase()
+              && LiveChat.aufDerBuehne && LiveChat.aufDerBuehne()) {
+            LiveChat.buehneSetzen(false);
+            showToast("\ud83d\udca3 Hochgegangen! Tippe auf einen freien Platz, "
+              + "um wieder hinaufzukommen.");
+          }
+        } catch (e) {}
+      }, 3100);
+    }, 4600, "bombe");
+  }
+
+  /* --- STREICHELN ------------------------------------------------------
+     GEWUENSCHT: „Und fuer Liebe brauchen wir auch noch irgendwie —
+     also wenn man jemandem etwas Gutes tut, noch was anderes, nicht
+     nur die Umarmung, sondern vielleicht, dass man ihn streichelt,
+     anstatt dass man ihn schlaegt, oder kuesst."
+     Eine Hand faehrt zweimal sanft ueber das Bild, das Bild schmiegt
+     sich mit, und kleine Herzen steigen auf. */
+  function lcStreicheln(wen) {
+    return lcAmPlatz(wen, "lc-streichel", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-gestreichelt");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gestreichelt");
+        setTimeout(() => kreis.classList.remove("lc-gestreichelt"), 3400);
+      }
+      schicht.innerHTML =
+        '<svg class="lc-streichel-hand" viewBox="0 0 100 80">'
+        + '<path d="M14 66 C4 54 4 36 12 26 L20 36 L20 10 A6 6 0 0 1 32 10 L32 34'
+        + ' L36 6 A6 6 0 0 1 48 6 L48 34 L52 10 A6 6 0 0 1 64 10 L64 36'
+        + ' L70 18 A6 6 0 0 1 82 22 C82 48 72 68 58 76 Z"'
+        + ' fill="#f6c89a" stroke="#c9915e" stroke-width="2.6" stroke-linejoin="round"/>'
+        + "</svg>";
+      const blende = lcZpBlende(schicht);
+      for (let h = 0; h < 6; h++) {
+        const z = document.createElement("i");
+        z.className = "lc-streichel-herz";
+        z.style.left = (18 + Math.random() * 64).toFixed(0) + "%";
+        z.style.setProperty("--gross", (0.6 + Math.random() * 0.7).toFixed(2));
+        z.style.animationDelay = (0.5 + h * 0.34).toFixed(2) + "s";
+        blende.appendChild(z);
+      }
+    }, 3400, "streicheln");
+  }
+
+  /* --- DER KUSS --------------------------------------------------------
+     „… oder kuesst." Ein Mund kommt heran, drueckt sich auf das Bild
+     und hinterlaesst einen Abdruck, der langsam verblasst. */
+  function lcKuss(wen) {
+    return lcAmPlatz(wen, "lc-kuss", (schicht, platz) => {
+      const r = lcWurfSetzen(schicht, platz, 190);
+      schicht.style.setProperty("--px", (r.x * 26).toFixed(1) + "%");
+      schicht.style.setProperty("--py", (r.y * 26).toFixed(1) + "%");
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-gekuesst");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gekuesst");
+        setTimeout(() => kreis.classList.remove("lc-gekuesst"), 3200);
+      }
+      const mund = '<svg viewBox="0 0 60 40">'
+        + '<path d="M30 12 C24 2 10 2 6 12 C2 22 16 32 30 38'
+        + ' C44 32 58 22 54 12 C50 2 36 2 30 12 Z" fill="#d94f6a"/>'
+        + '<path d="M10 12 C18 8 26 10 30 14 C34 10 42 8 50 12"'
+        + ' fill="none" stroke="#a83350" stroke-width="2"/>'
+        + "</svg>";
+      schicht.innerHTML = '<span class="lc-kuss-mund">' + mund + "</span>";
+      lcZpBlende(schicht).innerHTML = '<span class="lc-kuss-abdruck">' + mund + "</span>";
+    }, 3200, "kuss");
+  }
+
   /* --- DER ZUFALLSMODUS ------------------------------------------------
      „Und einen Zufallsmodus, wo einfach irgendwas passiert." Er wuerfelt
      unter den Wirkungen, die einem PLATZ gelten — nicht unter allen,
@@ -28524,13 +29119,29 @@
   function lcAufessen(wen) {
     return lcAmPlatz(wen, "lc-aufessen", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
-      /* Fuenf Bisse rundherum, im Uhrzeigersinn — so isst man einen
-         Keks auch wirklich: immer am Rand weiter. */
-      const stellen = [
-        { x: 96, y: 26, r: 30 }, { x: 88, y: 76, r: 32 },
-        { x: 40, y: 98, r: 34 }, { x: 4,  y: 56, r: 36 },
-        { x: 30, y: 8,  r: 40 }
-      ];
+      /* GEMELDET: „Er soll die Bisse so machen, dass sie kreisrund,
+         halbkreisrund das Profilbild aufessen und immer mehr
+         reinbeissen in diesen halbkreisrunden, bis das Profilbild
+         weg ist."
+
+         Also nicht mehr fuenf gleich grosse Kerben am Rand, sondern
+         SIEBEN Bisse, die reihum um das Bild wandern (jeder rund 51
+         Grad weiter) und dabei immer tiefer greifen: der erste Radius
+         ist 30, der letzte 62. Weil jeder Biss ein Kreis ist, der aus
+         dem runden Bild ausgeschnitten wird, ist jede einzelne Kerbe
+         ein Halbkreis — und am Ende ist nichts mehr uebrig. Die
+         Mittelpunkte liegen auf einem Kreis mit Radius 62 um die
+         Bildmitte, also weit genug draussen, dass der Biss von aussen
+         kommt und nicht mitten aus dem Gesicht. */
+      const stellen = [];
+      for (let b = 0; b < 7; b++) {
+        const w = (-60 + b * 51.4) * Math.PI / 180;
+        stellen.push({
+          x: Number((50 + Math.cos(w) * 62).toFixed(1)),
+          y: Number((50 + Math.sin(w) * 62).toFixed(1)),
+          r: 30 + b * 5.4
+        });
+      }
       const blende = lcZpBlende(schicht);
       if (kreis) {
         const alt = kreis.style.clipPath || "";
@@ -28589,9 +29200,11 @@
           kreis.classList.remove("lc-aufgegessen");
         }, ende + 1100);
       }
-      /* Der Mund, der abbeisst — er kommt von rechts, wo der erste
-         Biss sitzt. */
-      schicht.insertAdjacentHTML("beforeend", '<span class="lc-aufess-mund"></span>');
+      /* GEMELDET: „Da soll kein Smiley das machen — er soll einfach
+         aus dem Nichts diese Bisse gemacht werden, bis derjenige auf
+         ist, und dann ist er auch weg."
+         Der gezeichnete Mund ist deshalb raus. Man sieht nur noch die
+         Kerben, die im Bild entstehen, und die Kruemel. */
     }, 4400, "aufessen");
   }
 
@@ -28645,17 +29258,33 @@
         offset: Math.min(1, t / gesamt)
       });
     });
+    /* GEMELDET: „Beim Zufall nimmt er die Zahl von dem Sitz auch
+       immer noch mit und laesst sie am Ende erst los … da ist es auch
+       so, dass der Kreis mit der Zahl wieder zurueckspringt."
+       Zweierlei: die Nummer liegt seit Fassung 360 ausserhalb des
+       Kreises und faehrt schon nicht mehr mit — aber das LOS endete
+       noch mit „translate(0,0)", sprang also sichtbar an den alten
+       Platz zurueck, obwohl der neue laengst genommen war. Jetzt
+       endet es DORT, wo es hingefallen ist. Und der alte Platz traegt
+       waehrenddessen den gestrichelten Ring mit seiner Nummer, damit
+       das Layout nicht aufreisst. */
     bilder.push({ transform: "translate(" + (ziel.x - ab.x).toFixed(1) + "px, "
-      + (ziel.y - ab.y).toFixed(1) + "px) scale(1.1)", offset: Math.min(1, (t + 180) / gesamt) });
-    bilder.push({ transform: "translate(0px, 0px) scale(1)", offset: 1 });
+      + (ziel.y - ab.y).toFixed(1) + "px) scale(1.1)", offset: Math.min(0.99, (t + 180) / gesamt) });
+    bilder.push({ transform: "translate(" + (ziel.x - ab.x).toFixed(1) + "px, "
+      + (ziel.y - ab.y).toFixed(1) + "px) scale(1)", offset: 1 });
 
-    const zurueck = () => { ab.el.style.zIndex = altZ; };
+    lcPlatzUnterwegs(ab.el, true);
+    let lauf = null;
+    const zurueck = () => {
+      ab.el.style.zIndex = altZ;
+      lcPlatzUnterwegs(ab.el, false);
+      try { lauf && lauf.cancel(); } catch (e) {}
+    };
     try {
-      const lauf = kreis.animate(bilder, { duration: gesamt, easing: "linear", fill: "none" });
-      lauf.onfinish = zurueck;
-      lauf.oncancel = zurueck;
+      lauf = kreis.animate(bilder, { duration: gesamt, easing: "linear", fill: "forwards" });
+      lauf.oncancel = () => { ab.el.style.zIndex = altZ; lcPlatzUnterwegs(ab.el, false); };
     } catch (e) { zurueck(); return false; }
-    setTimeout(zurueck, gesamt + 200);
+    setTimeout(zurueck, gesamt + 700);
     folge.forEach((_, i) => setTimeout(() => lcTonZu("spielzug"),
       dauern.slice(0, i + 1).reduce((a, b) => a + b, 0)));
 
@@ -28982,8 +29611,23 @@
            ihn so, dass die Faust nach vorn zeigt. */
         schicht.style.setProperty("--hx", (gerichtet.x * 230).toFixed(0) + "%");
         schicht.style.setProperty("--hy", (gerichtet.y * 230).toFixed(0) + "%");
+        /* DIE VIERTELDREHUNG, DIE GEFEHLT HAT.
+           GEMELDET, dreimal: „Das Boxen ist immer noch nicht
+           realistisch von der Seite — also die Handschuhe wirklich
+           nach vorne, seitlich, auf der Waagerechten jemanden
+           anboxen. Wenn ich nach rechts boxe, sollen die
+           Boxhandschuhe waagerecht ausgerichtet sein; wenn ich nach
+           unten boxe, eben anders, von oben nach unten gehen."
+
+           GEFUNDEN: atan2 gibt den Winkel gegen die WAAGERECHTE —
+           null heisst „nach rechts". Der Handschuh ist aber mit der
+           Faust NACH OBEN gezeichnet (die Manschette liegt unten).
+           Bei null Grad zeigte die Faust also nach oben, waehrend
+           der Schlag nach rechts ging. Es fehlten genau 90 Grad.
+           Jetzt zeigt die Faust immer dorthin, wohin geschlagen
+           wird: waagerecht zur Seite, senkrecht nach unten. */
         schicht.style.setProperty("--hdreh",
-          (Math.atan2(-gerichtet.y, -gerichtet.x) * 180 / Math.PI).toFixed(1) + "deg");
+          (Math.atan2(-gerichtet.y, -gerichtet.x) * 180 / Math.PI + 90).toFixed(1) + "deg");
         schicht.innerHTML = handschuh("z") + '<span class="lc-box-treffer"></span>';
         schicht.classList.add("lc-box-gerichtet");
       } else {
@@ -29503,7 +30147,7 @@
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
-    entbloessung: 1
+    entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, kuss: 1
   };
 
   function lcWirkung(art, anZeile, nachricht) {
@@ -29562,13 +30206,24 @@
       if (art === "ohrfeige" && lcOhrfeige(wenZ)) return;
       if (art === "basketball" && lcBall(wenZ, "basketball")) return;
       if (art === "tennis" && lcBall(wenZ, "tennis")) return;
-      if (art === "krumel" && lcKrumel(wenZ)) return;
+      /* GEMELDET: „Dieser Keks-Effekt — das soll ein einzelner sein.
+         Ich glaube, du hast Kekse und Aufessen jeweils einmal, aber
+         das, was Aufessen macht, soll eigentlich der Keks-Effekt
+         sein."
+         Also einer statt zwei: /keks Name macht jetzt dasselbe wie
+         /aufessen. lcKrumel bleibt als Rueckfall stehen, falls
+         jemand eine alte Zeile aus seinem Verlauf antippt. */
+      if (art === "krumel" && (lcAufessen(wenZ) || lcKrumel(wenZ))) return;
       if (art === "licht" && lcLichtAus(wenZ)) return;
       if (art === "muenze" && lcMuenze(wenZ)) return;
       if (art === "wischer" && lcWischer(wenZ)) return;
       if (art === "zwille" && lcZwille(wenZ)) return;
       if (art === "pusterohr" && lcPusterohr(wenZ)) return;
       if (art === "gluehbirne" && lcGluehbirne(wenZ)) return;
+      if (art === "hut" && lcHut(wenZ)) return;
+      if (art === "bombe" && lcBombe(wenZ)) return;
+      if (art === "streicheln" && lcStreicheln(wenZ)) return;
+      if (art === "kuss" && lcKuss(wenZ)) return;
       if (art === "entbloessung" && lcEntbloessung(wenZ, (nachricht && nachricht.eigen)
             ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "zufall" && lcZufall(wenZ, nachricht)) return;
@@ -29591,7 +30246,12 @@
       if (nachricht && nachricht.eigen) {
         try { vonF = (LiveChat.lage() || {}).ichName || vonF; } catch (e) {}
       }
-      if (lcFahrt(wenF, vonF, art)) return;
+      /* Steht dort eine KETTE („1-5-6-7-8"), ist das der gemalte
+         Weg — er wird genau so abgefahren, siehe lcWegMalen. */
+      const kette = /^\s*\d+(-\d+)+\s*$/.test(String(wenF || ""))
+        ? String(wenF).split("-").map((x) => parseInt(x, 10))
+        : null;
+      if (lcFahrt(kette ? kette[kette.length - 1] : wenF, vonF, art, kette)) return;
     }
     /* =========================================================
        HIER IST SCHLUSS FUER ALLES, WAS EINEM PLATZ GILT

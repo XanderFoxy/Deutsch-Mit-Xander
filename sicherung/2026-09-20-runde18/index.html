@@ -34,7 +34,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<script>window.DMA_VERSION = "361";</script>
+<script>window.DMA_VERSION = "360";</script>
 <script>
 /* Auch die Stilblätter hängen an der laufenden Fassung — sonst
    kommt das neue Javascript, aber das alte Aussehen dazu. Genau wie
@@ -766,44 +766,10 @@
        wirklich laeuft. */
     "data-geraeusche.js"
   ];
-  /* =================================================================
-     ALLE SKRIPTE MIT „defer" — DAS IST DER EIGENTLICHE HEBEL
-     -----------------------------------------------------------------
-     GEFRAGT: „Muss die App-JS sofort alles laden, oder kann man das
-     schlanker machen? Wie wuerde man das professionell umsetzen,
-     damit es schlanker sein wuerde?"
-
-     NACHGEMESSEN, mit gedrosselter Leitung (1,6 Mbit/s) und
-     vierfach gebremstem Rechner — also ungefaehr ein Telefon im
-     Mobilfunknetz:
-         erstes Bild   5,9 s
-         Seite fertig 39,4 s
-     Ein normales Skript HAELT DAS ZEICHNEN AN: der Browser liest
-     die Seite, stoesst auf ein Skript, laedt es, fuehrt es aus, und
-     erst danach liest er weiter. Bei 22 Dateien hintereinander wird
-     daraus eine Kette, in der fast nichts gleichzeitig passiert.
-
-     „defer" sagt: lade JETZT, aber fuehre erst aus, wenn die Seite
-     gelesen ist — und zwar in der Reihenfolge, in der die Dateien
-     hier stehen. Damit faellt die Kette weg: alle 22 werden
-     gleichzeitig geholt, die Seite ist sofort da, und die
-     Reihenfolge bleibt trotzdem erhalten (core vor app, backend vor
-     app). Genau deshalb steht hier nicht „async" — das wuerde die
-     Reihenfolge aufgeben, und dann faende app.js sein backend.js
-     nicht mehr.
-
-     Was „defer" NICHT tut: es laedt keine Datei weniger. Die 7,6 MB
-     bleiben 7,6 MB. Weniger zu laden hiesse, app.js und die
-     Datendateien aufzuteilen und nachzuladen, sobald ein Bereich
-     geoeffnet wird — dafuer gibt es hier schon das Werkzeug
-     (brDatei() in app.js laedt data-grossgeschenke.js und
-     filmspieler.js genau so). Das ist der naechste Schritt und
-     steht als offener Punkt in der Werkstatt; er will sorgfaeltig
-     gemacht werden, weil jede Datei wissen muss, wer auf sie
-     wartet. */
   dateien.forEach(function (d) {
     var name = Array.isArray(d) ? d[0] : d;
-    document.write('<scr' + 'ipt src="' + name + v + '" defer><\/scr' + 'ipt>');
+    var spaeter = Array.isArray(d) && d[1] ? " defer" : "";
+    document.write('<scr' + 'ipt src="' + name + v + '"' + spaeter + '><\/scr' + 'ipt>');
   });
 })();
 </script>
