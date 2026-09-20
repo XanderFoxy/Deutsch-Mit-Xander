@@ -76,7 +76,13 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("und jeder Ausschlag ist kleiner als der vorige", faellt, werte.join("° > ") + "°");
   pruefe("der Saugnapf drueckt sich platt", /\.lc-pfeil-napf\s*\{[^}]*transform-box:\s*fill-box/.test(css),
     "lc-pfeil-napf mit fill-box");
-  pruefe("und der Ton ist Gummi, kein Wasser", /saugpfeil:\s*\{ ton: "gummi"/.test(js));
+  /* GEAENDERT, und zwar auf seine Ansage hin: „viele Sounds stimmen
+     einfach noch nicht, der Drill von dem Pfeil." Der Saugpfeil
+     klingt seit Runde 33 nach einem echten Pfeilschuss, nicht mehr
+     nach Gummi. Geprueft wird deshalb der neue Ton — und dass es
+     immer noch kein Wasser ist. */
+  pruefe("und der Ton ist ein Pfeilschuss, kein Wasser",
+    /saugpfeil:\s*\{ ton: "pfeilschuss"/.test(js));
 
   console.log("\nDIE SAHNE KOMMT AUS DER DOSE — KIRSCHE ZULETZT\n");
   pruefe("es gibt eine Spruehdose", /lc-sahne-dose/.test(js) && /\.lc-sahne-dose/.test(css));

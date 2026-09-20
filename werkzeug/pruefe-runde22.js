@@ -98,7 +98,13 @@ const pruefe = (was, gut, zusatz) => {
 
   console.log("\nDER ZWEITE STROHHALM\n");
   pruefe("das Blubbern ist gezeichnet", /function lcBlubbern/.test(js));
-  pruefe("es steht als Kachel da", /"Blubbern", "blubbern"/.test(js));
+  /* GEAENDERT: „bei dem Strohhalm diese zwei Varianten" — Saugen und
+     Blasen stehen seit Runde 34 unter EINER Kachel „Strohhalm", so
+     wie die Reisen und die Fenster. Geprueft wird deshalb das
+     Untermenue, nicht mehr die einzelne Kachel. */
+  pruefe("es steht im Strohhalm-Untermenue",
+    /\["\\ud83e\\uded7", "Blasen", "blubbern"\]/.test(js)
+    && /"Strohhalm", "strohhalm", false/.test(js));
   pruefe("es ist ein Befehl", /blubbern:\s*\{ wirkung: "blubbern"/.test(lc));
   pruefe("es steht in der Hilfe", /w: "blubbern"/.test(lc));
   pruefe("und im Verteiler", /art === "blubbern" && lcBlubbern/.test(js));

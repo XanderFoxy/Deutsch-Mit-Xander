@@ -25144,8 +25144,12 @@
     /* „lasse keinen aus" — der Rest der Wunschliste, in derselben
        Reihenfolge, in der er sie genannt hat. */
     ["\ud83e\ude83", "Katapult",  "katapult"],
-    ["\ud83e\udd64", "Halm", "strohhalm"],
-    ["\ud83e\uded7", "Blubbern", "blubbern"],
+    /* GEWUENSCHT: „bei dem Strohhalm diese zwei Varianten" — saugen
+       und blasen gehoeren zusammen und stehen deshalb unter einer
+       Kachel, genau wie die Reisen und die Fenster. */
+    ["\ud83e\udd64", "Strohhalm", "strohhalm", false,
+      [["\ud83e\udd64", "Saugen", "strohhalm"],
+       ["\ud83e\uded7", "Blasen", "blubbern"]]],
     ["\ud83d\uddd2\ufe0f", "Knüllen", "knuell"],
     ["\ud83e\udea2", "Peitsche",  "peitsche"],
     ["\ud83c\udfb3", "Bowling",   "bowling"],
@@ -33156,14 +33160,25 @@
           reihum; wer tippen will, darf Buchstaben tippen, aber die
           Loesung sagt der, der dran ist.
        ================================================================= */
-    const meineId = String(n.id || "");
+    /* Die Kennung der Zeile, zu der diese Tafel gehoert. Sie steht
+       auch am Kasten, damit sich von aussen nachsehen laesst, welche
+       Tafel gerade welche Aufgabe meint — sonst ist „diese Runde ist
+       vorbei" nicht nachpruefbar. */
+    const meineId = String(n.aufgabeId || n.id || "");
+    kasten.dataset.aufgabeId = meineId;
     const standJetzt = () => {
       try { return (LiveChat.aufgabeStand && LiveChat.aufgabeStand()) || { offen: false }; }
       catch (e) { return { offen: true, zeileId: "", dran: "" }; }
     };
     const istAktuell = () => {
       const st = standJetzt();
-      if (!st.offen) return false;
+      /* NUR SPERREN, WENN ES NACHWEISLICH EINE NEUERE AUFGABE GIBT.
+         Gemeldet war: „Kann aber nichts abschicken, weil sich das
+         nicht abschicken lässt." Weiss dieses Geraet gar nichts von
+         einer offenen Aufgabe, dann ist die Tafel, die man vor sich
+         hat, die aktuelle — und man darf antworten. Gesperrt wird
+         erst, wenn eine ANDERE Aufgabe offen ist. */
+      if (!st.offen) return true;
       return !st.zeileId || !meineId || st.zeileId === meineId;
     };
     const binDran = () => {
@@ -66661,9 +66676,17 @@ An einem Morgen lief ein kleiner Fuchs los…
      oder wenn: "konto"; ohne Feld gilt das Stueck fuer alle. */
   function tutorStueckeFiltern(liste) {
     if (!Array.isArray(liste)) return null;
+    /* DAS BACKEND HEISST BACKEND — NICHT window.Backend.
+       backend.js beginnt mit „const Backend = …": ein const auf
+       oberster Ebene erzeugt einen globalen NAMEN, aber KEINE
+       Eigenschaft am Fenster. „window.Backend && …" ist deshalb
+       immer falsch, und der Gruss fuer Gaeste lief auch bei
+       Angemeldeten. Gemessen in werkzeug/pruefe-tutorstimme34.js. */
     let drin = false;
-    try { drin = Boolean(window.Backend && Backend.currentUser && Backend.currentUser()); }
-    catch (e) { drin = false; }
+    try {
+      drin = typeof Backend !== "undefined" && Backend && Backend.currentUser
+             ? Boolean(Backend.currentUser()) : false;
+    } catch (e) { drin = false; }
     return liste.filter((st) => {
       const w = st && st.wenn;
       if (!w) return true;

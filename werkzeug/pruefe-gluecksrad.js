@@ -77,8 +77,16 @@ const SATZ = "Der Apfel fällt nicht weit vom Stamm";
     chat.style.width = "360px";
     chat.innerHTML = '<div class="lc-verlauf-huelle"><div class="lc-chat-verlauf" id="lcVerlauf"></div></div>';
     document.body.appendChild(chat);
-    window.DMA_PRUEFUNG.chatStand([{ id: "r1", von: "x", name: "Alex", art: "aufgabe",
-      text: "🎡 Glücksrad — welcher Satz ist das?", raten: satz, zeit: Date.now() }]);
+    /* DIE TAFEL MUSS ZUR OFFENEN AUFGABE GEHOEREN.
+       Frueher stand hier eine ausgedachte Kennung ("r1"). Seit eine
+       Tafel nur noch antwortet, wenn sie die AKTUELLE Aufgabe meint
+       („Diese Runde ist vorbei"), misst das am falschen Fall vorbei:
+       die ausgedachte Zeile ist eine alte Runde. Deshalb wird hier
+       die Kennung der Aufgabe genommen, die gerade offen ist. */
+    const stand = window.LiveChat.aufgabeStand ? window.LiveChat.aufgabeStand() : {};
+    window.DMA_PRUEFUNG.chatStand([{ id: stand.zeileId || "r1", von: "x", name: "Alex",
+      art: "aufgabe", text: "🎡 Glücksrad — welcher Satz ist das?",
+      raten: satz, zeit: Date.now() }]);
   }, SATZ);
   await pg.waitForTimeout(800);
 
@@ -155,7 +163,10 @@ const SATZ = "Der Apfel fällt nicht weit vom Stamm";
     window.LiveChat.pruefPost((p) => { if (!raus) raus = p; });
     const knopf = k.querySelector(".lc-betonung-fertig");
     if (knopf) knopf.click();
-    return { paket: raus, offen: k.querySelectorAll(".lc-raten-feld:not(.offen)").length };
+    return { paket: raus, offen: k.querySelectorAll(".lc-raten-feld:not(.offen)").length,
+             vorbei: k.className,
+             hinweis: (k.querySelector(".lc-betonung-hinweis") || {}).textContent || "",
+             tafelId: k.dataset ? k.dataset.aufgabeId : "" };
   });
   pruefe("alle Felder lassen sich aufdecken", antwort.offen === 0, antwort.offen + " zu");
   pruefe("die Lösung geht als gewöhnliche Zeile hinaus", Boolean(antwort.paket),
