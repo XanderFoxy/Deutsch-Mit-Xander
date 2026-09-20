@@ -15216,8 +15216,8 @@ body.lc-schreibt .tutor-reiter {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  max-width: 78%;
-  padding: 6px 14px;
+  max-width: 86%;
+  padding: 5px 8px 5px 14px;
   border: 1px solid rgba(255, 255, 255, 0.26);
   border-radius: 999px;
   background: rgba(24, 20, 34, 0.72);
@@ -15226,10 +15226,25 @@ body.lc-schreibt .tutor-reiter {
   font-size: 0.82rem;
   line-height: 1.2;
   white-space: nowrap;
+  cursor: default;
+}
+/* Der Titel darf kuerzen, die Knoepfe nicht. */
+.lc-musikband-titel {
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 46vw;
+}
+.lc-musikband-knopf {
+  border: 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  font-size: 0.86rem;
+  line-height: 1;
+  padding: 5px 7px;
+  border-radius: 999px;
   cursor: pointer;
 }
+.lc-musikband-knopf:hover { background: rgba(255, 255, 255, 0.22); }
 .lc-musikband-note {
   display: inline-block;
   animation: lcMusikNoteR22 1.6s ease-in-out infinite;

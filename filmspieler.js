@@ -181,33 +181,39 @@
 
   /* Ein Ring, solange geholt wird. Ohne ihn sieht es aus, als
      wäre der Befehl ins Leere gegangen. */
-  function warten(s) {
-    if (!document.getElementById("dmaFilmStil")) {
-      var st = document.createElement("style");
-      st.id = "dmaFilmStil";
-      st.textContent = "@keyframes dmaFilmDreh{to{transform:translateX(160%)}}";
-      document.head.appendChild(st);
+  /* WAS MAN SIEHT, WAEHREND DER FILM NOCH LAEDT
+     -----------------------------------------------------------------
+     GEMELDET: „Die Tiere laden immer noch so lange … es soll auch
+     kein Ladebalken mitten im Chat sein."
+
+     Der Balken ist deshalb raus. An seiner Stelle steht das erste
+     Bild des Films selbst (filme/<name>.jpg, ein paar Dutzend
+     Kilobyte) — es ist sofort da und sieht aus, als haette der Film
+     schon angefangen, statt nach Warten auszusehen. Sobald die
+     Bewegtbilder da sind, wird es weggeblendet.
+
+     Der Fortschritt wird weiter GEMESSEN (stand), nur nicht mehr
+     gezeigt: die Sonde liest ihn, und ohne ihn wuesste niemand, ob
+     ueberhaupt etwas ankommt. */
+  function warten(s, d) {
+    var bild = null;
+    if (d && d.bild) {
+      try {
+        bild = document.createElement("img");
+        bild.src = d.bild;
+        bild.alt = "";
+        bild.className = "dma-film-standbild";
+        bild.style.cssText = "max-width:92vw;max-height:74vh;object-fit:contain;"
+          + "opacity:0;transition:opacity 320ms ease;filter:drop-shadow(0 10px 30px rgba(0,0,0,.45));";
+        bild.addEventListener("load", function () { bild.style.opacity = "1"; });
+        s.appendChild(bild);
+      } catch (e) { bild = null; }
     }
-    var k = document.createElement("i");
-    k.className = "dma-film-warten";
-    k.style.cssText = "width:min(56vw,220px);height:5px;border-radius:99px;overflow:hidden;"
-      + "background:rgba(255,255,255,.18);box-shadow:0 1px 8px rgba(0,0,0,.35);";
-    var b = document.createElement("b");
-    b.style.cssText = "display:block;height:100%;width:60%;border-radius:99px;"
-      + "background:linear-gradient(90deg,#ffd76a,#f0a92b);transform:translateX(-100%);"
-      + "animation:dmaFilmDreh 1.1s ease-in-out infinite;";
-    k.appendChild(b);
-    s.appendChild(k);
+    var letzterStand = 0;
     return {
-      weg: function () { try { k.remove(); } catch (e) {} },
-      stand: function (teil) {
-        /* Sobald die Grösse bekannt ist, wandert der Balken nicht
-           mehr hin und her, sondern zeigt den echten Anteil. */
-        if (teil < 0) return;
-        b.style.animation = "none";
-        b.style.transform = "translateX(0)";
-        b.style.width = Math.max(3, Math.round(teil * 100)) + "%";
-      }
+      weg: function () { try { if (bild) bild.remove(); } catch (e) {} },
+      stand: function (teil) { if (teil >= 0) letzterStand = teil; },
+      gemessen: function () { return letzterStand; }
     };
   }
 
@@ -676,7 +682,7 @@
       var kannMaske = Boolean(d.maske) && !d.maskeUnsauber && webglDa();
       var alphaWeg = d.art === "szene" ? true : (kannMaske ? false : kannAlphaWebm());
       var url = alphaWeg ? d.webm : d.maske;
-      var balken = warten(s);
+      var balken = warten(s, d);
       return datei(url, balken.stand).then(function (quelle) {
         balken.weg();
         if (!document.body.contains(s)) return { art: "abgebrochen" };
@@ -811,6 +817,9 @@
         /* Denselben Weg wie beim Abspielen — sonst laedt man den
            grossen Film vor und holt dann doch den kleinen. */
         var maskeGeht = Boolean(d.maske) && !d.maskeUnsauber && webglDa();
+        /* Das Standbild zuerst — es wiegt ein paar Dutzend Kilobyte
+           und ist das, was man im Zweifel zuerst sieht. */
+        try { if (d.bild) { var vb = new Image(); vb.src = d.bild; } } catch (e) {}
         return datei((d.art === "szene" || !maskeGeht) && kannAlphaWebm() ? d.webm : d.maske);
       }).catch(function () { return null; });
     },

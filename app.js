@@ -8249,8 +8249,29 @@
     if (!weatherOut) return;
     try {
       const ort = ortFuerLernraum();
+      /* FRISCH HEISST FRISCH.
+         GEMELDET: „Ich moechte auch, dass im Kopf, wenn man die Seite
+         aktualisiert, nicht ein altes Wetter angezeigt wird oder die
+         Wolken in den Sonnenstrahlen sind, sondern das aktuelle
+         reinkommt und nicht irgendwas, was vielleicht noch im Puffer
+         liegt. Wenn ich jetzt einen Sternenhimmel habe und ich
+         aktualisiere die Seite, soll ich auch den Sternenhimmel sehen."
+
+         Der Abruf hatte keine Ansage zum Zwischenspeicher — der
+         Browser durfte also die Antwort von vorhin wiederverwenden,
+         und beim Neuladen stand dann das Wetter von damals im Kopf.
+         „no-store" heisst: nicht aus dem Speicher nehmen und auch
+         nicht hineinlegen. Dazu die Uhrzeit als Anhaengsel, damit
+         auch ein Zwischenspeicher unterwegs keine alte Antwort
+         wiedergibt.
+         EHRLICH DAZU: welchen Zwischenspeicher-Kopf open-meteo genau
+         mitschickt, konnte ich von hier aus nicht messen — der Abruf
+         geht durch einen Filter, der die Seite sperrt. Gemessen ist
+         nur, dass jetzt keine alte Antwort mehr genommen WERDEN
+         DARF. */
       const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ort.breite}&longitude=${ort.laenge}`
-        + `&current=temperature_2m,weather_code&timezone=${encodeURIComponent(ort.zone)}`);
+        + `&current=temperature_2m,weather_code&timezone=${encodeURIComponent(ort.zone)}`
+        + `&_=${Date.now()}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Wetter nicht verfügbar");
       const data = await res.json();
       weatherOut.textContent = `${Math.round(data.current.temperature_2m)}°`;
@@ -8293,6 +8314,26 @@
   }
   updateWeather();
   setInterval(updateWeather, 15 * 60 * 1000);
+  /* UND WENN MAN ZURUECKKOMMT.
+     Ein Telefon legt die Seite schlafen, statt sie zu schliessen;
+     beim Zurueckkommen laeuft kein Takt, der das Wetter erneuert —
+     man sieht dann den Himmel von vorhin. Beides holt jetzt nach:
+     das Wiederauftauchen der Seite und die Wiederherstellung aus dem
+     Vor- und Zurueck-Speicher des Browsers. Erst die Uhr (davon
+     haengt Tag oder Nacht ab), dann das Wetter. */
+  let wetterZuletzt = Date.now();
+  const wetterFrischHolen = () => {
+    if (Date.now() - wetterZuletzt < 60000) return;
+    wetterZuletzt = Date.now();
+    try { updateClock(); } catch (e) {}
+    updateWeather();
+  };
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) wetterFrischHolen();
+  });
+  window.addEventListener("pageshow", (e) => {
+    if (e && e.persisted) { wetterZuletzt = 0; wetterFrischHolen(); }
+  });
   /* Ab jetzt kann ab und zu etwas durchs Bild fliegen — frühestens in
      elf Minuten, und nur bei Tageslicht ohne Niederschlag. */
   gastPlanen();
@@ -19558,6 +19599,7 @@
   let lcFilmListe = null;
   let lcFilmNamen = null;          // dasselbe, aber sofort abfragbar
   let lcFilmGroessen = null;
+  let lcFilmMaskenGroessen = null;
   function lcFilmListeHolen() {
     if (!lcFilmListe) {
       lcFilmListe = fetch("filme/liste.json", { cache: "no-cache" })
@@ -19567,7 +19609,11 @@
           /* Die Groesse jedes Films merken — danach entscheidet das
              Vorladen, was es sich auf dieser Leitung leisten kann. */
           lcFilmGroessen = {};
-          l.filme.forEach((f) => { lcFilmGroessen[f.name] = f.bytes || 0; });
+          lcFilmMaskenGroessen = {};
+          l.filme.forEach((f) => {
+            lcFilmGroessen[f.name] = f.bytes || 0;
+            lcFilmMaskenGroessen[f.name] = f.maskeBytes || 0;
+          });
           return l.filme.map((f) => f.name);
         })
         .then((n) => { lcFilmNamen = n; return n; })
@@ -19579,6 +19625,18 @@
      beantworten sein: der Geraeuschplan entscheidet in derselben
      Zeile, ob der Jubel losgeht. Deshalb wird die Liste beim
      Betreten des Klassenzimmers einmal geholt. */
+  /* Wie schwer ist DER WEG, DER WIRKLICH GENOMMEN WIRD? Fast immer
+     ist das die Maske — sie ist kleiner. Mit der webm-Zahl zu
+     rechnen hiess, den T-Rex mit 8,7 MB zu veranschlagen, obwohl
+     3,3 MB geholt werden. */
+  function lcFilmWiegt(name) {
+    let maske = false;
+    try { maske = Boolean(window.DMA_FILM && window.DMA_FILM.kannMaske && window.DMA_FILM.kannMaske()); }
+    catch (e) { maske = false; }
+    const m = (lcFilmMaskenGroessen && lcFilmMaskenGroessen[name]) || 0;
+    const w = (lcFilmGroessen && lcFilmGroessen[name]) || 0;
+    return (maske && m) ? m : (w || m);
+  }
   function lcFilmDa(name) {
     return Boolean(lcFilmNamen && name && lcFilmNamen.indexOf(String(name)) >= 0);
   }
@@ -19625,7 +19683,7 @@
       const n = navigator.connection;
       if (n && (n.type === "cellular" || /^(3g)$/.test(n.effectiveType || ""))) grenze = 4 * 1024 * 1024;
     } catch (e) {}
-    const wiegt = (name) => (lcFilmGroessen && lcFilmGroessen[name]) || 0;
+    const wiegt = lcFilmWiegt;
     namen = namen.slice()
       .filter((name) => wiegt(name) <= grenze)
       .sort((a, b) => wiegt(a) - wiegt(b));
@@ -19652,6 +19710,136 @@
       }).catch(() => {});
     });
   }
+
+  /* =================================================================
+     VORLADEN AUF ZURUF — BEVOR DER BEFEHL UEBERHAUPT ABGESCHICKT IST
+     -----------------------------------------------------------------
+     GEWUENSCHT, woertlich: „Man soll in dem Moment, wo man / schreibt,
+     bevor man ihn ueberhaupt absendet, sollen die Effekte sich schon
+     anfangen zu laden, ohne dass man das spuert — im Hintergrund soll
+     das passieren … /l laedt alle Inhalte mit L, damit das System
+     direkt drauf reagieren kann … in dem Moment, wo man die Sektion
+     Tiere anklickt, sollen alle Tiere von den Animationen schon
+     geladen sein, dass der Loewe sofort fluessig abspielt, ohne
+     haengen."
+
+     Das Vorladen beim Betreten (lcFilmeVorladen) wartet auf eine
+     Ruhepause und laeuft EINMAL. Das hier ist das Gegenstueck: es
+     laeuft jedes Mal, wenn man etwas tut, das verraet, was gleich
+     kommt — der Schraegstrich, der naechste Buchstabe, das Aufklappen
+     einer Sektion. Geholt wird trotzdem einer nach dem anderen, damit
+     die Leitung fuer die Stimmen frei bleibt; was schon da ist, wird
+     nicht noch einmal geholt (DMA_FILM haelt die Dateien).
+
+     WARUM DAS UEBERHAUPT HILFT: der Browser legt die Datei danach in
+     seinen Speicher. Der zweite Griff danach kostet nichts mehr —
+     genau das ist „der Loewe ist schon geladen, wenn ich ihn
+     anklicke". */
+  const lcFilmAngestossen = new Set();
+  let lcFilmKette = Promise.resolve();
+  function lcFilmeHolenJetzt(namen) {
+    if (!namen || !namen.length) return;
+    try {
+      const n = navigator.connection;
+      if (n && n.saveData) return;                 // Datensparen heisst: nein.
+    } catch (e) {}
+    const offen = namen.filter((x) => x && !lcFilmAngestossen.has(x));
+    if (!offen.length) return;
+    /* Die leichten zuerst — so ist am schnellsten etwas fertig. */
+    offen.sort((a, b) => lcFilmWiegt(a) - lcFilmWiegt(b));
+    offen.forEach((name) => {
+      lcFilmAngestossen.add(name);
+      lcFilmKette = lcFilmKette.then(() =>
+        brDatei("filmspieler.js")
+          .then(() => (window.DMA_FILM && window.DMA_FILM.vorladen)
+            ? window.DMA_FILM.vorladen(name) : null)
+          .catch(() => null));
+    });
+  }
+  /* Welcher Film haengt an diesem Befehlswort? Dieselbe Frage, die
+     der Verteiler beim Abspielen stellt — nur vorher. */
+  function lcFilmZuBefehl(wort) {
+    if (!wort) return "";
+    if (lcFilmDa(wort)) return wort;
+    const e = LC_EFFEKTE[wort];
+    if (e && e.tier && lcFilmDa(e.tier)) return e.tier;
+    return "";
+  }
+  /* Alles, was mit diesen Buchstaben anfaengt — Befehlswort ODER
+     Kurzwort. „/l" findet also auch den Loewen ueber „lion". */
+  function lcFilmeZuAnfang(anfang) {
+    let liste = [];
+    try { liste = (window.LiveChat && LiveChat.befehlsliste) ? LiveChat.befehlsliste() : []; }
+    catch (e) { liste = []; }
+    const a = String(anfang || "").toLowerCase();
+    const raus = [];
+    liste.forEach((b) => {
+      const passt = !a
+        || String(b.w || "").toLowerCase().indexOf(a) === 0
+        || String(b.kurz || "").toLowerCase().indexOf(a) === 0;
+      if (!passt) return;
+      const f = lcFilmZuBefehl(b.w);
+      if (f && raus.indexOf(f) < 0) raus.push(f);
+    });
+    return raus;
+  }
+  function lcFilmeZuGruppe(gruppe) {
+    let liste = [];
+    try { liste = (window.LiveChat && LiveChat.befehlsliste) ? LiveChat.befehlsliste() : []; }
+    catch (e) { liste = []; }
+    const raus = [];
+    liste.forEach((b) => {
+      if ((b.gr || "welt") !== gruppe) return;
+      const f = lcFilmZuBefehl(b.w);
+      if (f && raus.indexOf(f) < 0) raus.push(f);
+    });
+    return raus;
+  }
+  /* UND DIE GERAEUSCHE GLEICH MIT.
+     Ein Effekt besteht aus Zeichnung UND Ton; der Ton ist klein, aber
+     er wird erst beim ersten Mal geholt — und genau das hoert man als
+     Verzoegerung. Angelegt wird nur das Element, gespielt wird
+     nichts. */
+  function lcToeneZuAnfang(anfang, wieviel) {
+    let liste = [];
+    try { liste = (window.LiveChat && LiveChat.befehlsliste) ? LiveChat.befehlsliste() : []; }
+    catch (e) { liste = []; }
+    const a = String(anfang || "").toLowerCase();
+    let zahl = 0;
+    liste.some((b) => {
+      if (zahl >= (wieviel || 6)) return true;
+      const w = String(b.w || "").toLowerCase();
+      if (a && w.indexOf(a) !== 0) return false;
+      const plan = LC_TON_PLAN[w];
+      const ton = (plan && plan.ton) || w;
+      if (!lcGeraeuschDa(ton) || lcGeraeuschAblage[ton]) return false;
+      try {
+        const au = new Audio("ton/" + ton + lcGeraeuschArt() + "?v=" + (window.DMA_VERSION || "1"));
+        au.preload = "auto";
+        lcGeraeuschAblage[ton] = au;
+        zahl++;
+      } catch (e) {}
+      return false;
+    });
+    return zahl;
+  }
+  /* Der eine Griff, den die Eingabe und die Sektionen benutzen. */
+  let lcVorschauZuletzt = "";
+  function lcVorschauLaden(anfang) {
+    const a = String(anfang || "").toLowerCase().slice(0, 12);
+    if (a === lcVorschauZuletzt) return 0;
+    lcVorschauZuletzt = a;
+    /* Der Filmspieler selbst ist auch eine Datei — die gehoert als
+       erste geholt, sonst faengt das Laden erst beim Absenden an. */
+    brDatei("filmspieler.js").catch(() => {});
+    const filme = lcFilmeZuAnfang(a);
+    lcFilmeHolenJetzt(filme);
+    lcToeneZuAnfang(a, 6);
+    return filme.length;
+  }
+  window.DMA_VORSCHAU = { laden: lcVorschauLaden,
+                          gruppe: (g) => { const f = lcFilmeZuGruppe(g); lcFilmeHolenJetzt(f); return f; },
+                          stand: () => [...lcFilmAngestossen] };
 
   function lcFilmSpielen(name, opt) {
     if (!name) return Promise.resolve(false);
@@ -21096,7 +21284,7 @@
       if (!LC_BEFEHLSGRUPPEN.some(([x]) => x === k)) reihe.push([k, k]);
     });
     return reihe.map(([k, titel]) => `
-      <details class="lc-befehlsgruppe">
+      <details class="lc-befehlsgruppe" data-gr="${escapeHtml(k)}">
         <summary>${escapeHtml(titel)} <span class="lc-befehlszahl">${nach.get(k).length}</span></summary>
         <ul>${nach.get(k).map((b) => `<li><code>${escapeHtml(b.nutzt)}</code>${
           b.kurz ? ` <span class="lc-befehle-lang">(lang: /${escapeHtml(b.kurz)})</span>` : ""
@@ -21852,11 +22040,15 @@
      Dasselbe Menue wie beim Lesen, nur mit Liedern — und mit einer
      Zeile zum Ausmachen ganz unten. Der Befehl /musik tut dasselbe;
      wer lieber tippt, tippt. */
-  function lcMusikWaehler() {
+  function lcMusikWaehler(fuerWen) {
     lcPlatzMenueZu();
     let lieder = [];
     try { lieder = (LiveChat.lieder && LiveChat.lieder()) || []; } catch (e) { lieder = []; }
     if (!lieder.length) { showToast("Im Musikordner liegt gerade nichts."); return false; }
+    /* MIT NAMEN heisst: das Lied geht auf SEINE Ohren — er hoert es,
+       alle anderen sehen nur die Kopfhoerer. Ohne Namen legt man fuer
+       den ganzen Raum auf. */
+    const einer = String(fuerWen || "").trim();
 
     const kasten = document.createElement("div");
     kasten.id = "lcPlatzMenue";
@@ -21865,7 +22057,7 @@
 
     const kopf = document.createElement("p");
     kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = "Musik f\u00fcr alle";
+    kopf.textContent = einer ? "Nur f\u00fcr " + einer + " \u2014 welches Lied?" : "Musik f\u00fcr alle";
     kasten.appendChild(kopf);
 
     const liste = document.createElement("div");
@@ -21880,23 +22072,31 @@
       b.addEventListener("click", (e) => {
         e.preventDefault(); e.stopPropagation();
         lcPlatzMenueZu();
-        const zeile = "/musik " + (i + 1);
+        const zeile = einer ? "/kopfhoerer " + einer + " " + (i + 1) : "/musik " + (i + 1);
         try { LiveChat.schreiben(zeile); } catch (x) {}
         lcNachDemSenden(zeile);
       });
       liste.appendChild(b);
     });
-    const aus = document.createElement("button");
-    aus.type = "button";
-    aus.className = "lc-lese-text";
-    aus.textContent = "\ud83d\udd07  Musik aus \u2014 f\u00fcr alle";
-    aus.addEventListener("click", (e) => {
-      e.preventDefault(); e.stopPropagation();
-      lcPlatzMenueZu();
-      try { LiveChat.schreiben("/musik aus"); } catch (x) {}
-      lcNachDemSenden("/musik aus");
-    });
-    liste.appendChild(aus);
+    if (!einer) {
+      /* Die Transportzeilen gehoeren nur zur Musik fuer alle — ein
+         Lied auf EINEN Ohren haelt man am Band im Chat an. */
+      [["\u23f8\ufe0f  Pause \u2014 f\u00fcr alle", "/musik pause"],
+       ["\u25b6\ufe0f  Weiter \u2014 f\u00fcr alle", "/musik weiter"],
+       ["\ud83d\udd07  Musik aus \u2014 f\u00fcr alle", "/musik aus"]].forEach(([wort, zeile]) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "lc-lese-text";
+        b.textContent = wort;
+        b.addEventListener("click", (e) => {
+          e.preventDefault(); e.stopPropagation();
+          lcPlatzMenueZu();
+          try { LiveChat.schreiben(zeile); } catch (x) {}
+          lcNachDemSenden(zeile);
+        });
+        liste.appendChild(b);
+      });
+    }
 
     document.body.appendChild(kasten);
     const feld = document.getElementById("lcFeld");
@@ -23382,26 +23582,62 @@
       return true;
     } catch (e) { return false; }
   }
-  /* Eine schmale Bande im Chatkopf sagt, was laeuft — sonst spielt
-     Musik und niemand weiss, woher sie kommt. Ein Tipp darauf macht
-     sie auf DIESEM Geraet aus; fuer die anderen laeuft sie weiter. */
+  /* EINE KLEINE TRANSPORTLEISTE.
+     GEWUENSCHT: „Ich brauche fuer das Lied entweder eine Art kleine
+     Transportleiste oder auch einen Pause-Befehl irgendwo."
+     Beides ist jetzt da: die Leiste sitzt unten im Chat und sagt
+     auch, WAS laeuft — sonst spielt Musik und niemand weiss, woher.
+     Pause und Stopp gelten auf DIESEM Geraet; wer fuer alle
+     anhalten will, nimmt /musik pause oder /musik aus. */
   function lcMusikBandZeigen(titel) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return;
     document.getElementById("lcMusikBand")?.remove();
-    const b = document.createElement("button");
-    b.type = "button";
-    b.id = "lcMusikBand";
-    b.className = "lc-musikband";
-    b.title = "Antippen: bei dir leise";
-    b.innerHTML = '<span class="lc-musikband-note">\ud83c\udfb5</span><span></span>';
-    b.lastElementChild.textContent = titel;
-    b.addEventListener("click", (e) => {
+    const band = document.createElement("div");
+    band.id = "lcMusikBand";
+    band.className = "lc-musikband";
+    band.innerHTML = '<span class="lc-musikband-note">\ud83c\udfb5</span>'
+      + '<span class="lc-musikband-titel"></span>'
+      + '<button type="button" class="lc-musikband-knopf" data-tun="pause"'
+      + ' title="Pause \u2014 nur bei dir" aria-label="Pause">\u23f8\ufe0f</button>'
+      + '<button type="button" class="lc-musikband-knopf" data-tun="aus"'
+      + ' title="Bei dir ausmachen" aria-label="Aus">\ud83d\udd07</button>';
+    band.querySelector(".lc-musikband-titel").textContent = titel;
+    band.addEventListener("click", (e) => {
+      const k = e.target.closest ? e.target.closest(".lc-musikband-knopf") : null;
       e.stopPropagation();
-      lcMusikStoppen();
-      showToast("\ud83d\udd07 Die Musik ist bei dir aus — die anderen hören sie weiter.");
+      if (!k) return;
+      if (k.dataset.tun === "aus") {
+        lcMusikStoppen();
+        showToast("\ud83d\udd07 Die Musik ist bei dir aus \u2014 die anderen hören sie weiter.");
+        return;
+      }
+      /* Pause und weiter am selben Knopf — das Zeichen sagt, was der
+         naechste Tipp tut. */
+      if (!lcMusikSpieler) return;
+      if (lcMusikSpieler.paused) {
+        const v = lcMusikSpieler.play();
+        if (v && v.catch) v.catch(() => {});
+        k.textContent = "\u23f8\ufe0f";
+        k.title = "Pause \u2014 nur bei dir";
+      } else {
+        try { lcMusikSpieler.pause(); } catch (x) {}
+        k.textContent = "\u25b6\ufe0f";
+        k.title = "Weiter";
+      }
     });
-    karte.appendChild(b);
+    karte.appendChild(band);
+  }
+  /* Fuer alle anhalten und wieder weiterlaufen lassen. */
+  function lcMusikPause(an) {
+    if (!lcMusikSpieler) return false;
+    try {
+      if (an) lcMusikSpieler.pause();
+      else { const v = lcMusikSpieler.play(); if (v && v.catch) v.catch(() => {}); }
+    } catch (e) { return false; }
+    const k = document.querySelector("#lcMusikBand .lc-musikband-knopf[data-tun=\"pause\"]");
+    if (k) { k.textContent = an ? "\u25b6\ufe0f" : "\u23f8\ufe0f"; k.title = an ? "Weiter" : "Pause \u2014 nur bei dir"; }
+    return true;
   }
 
   /* ALLES VERSTUMMEN LASSEN.
@@ -23944,6 +24180,15 @@
       const wert = feld.value;
       if (wert.indexOf("/") !== 0) return zu();
       const bis = wert.indexOf(" ");
+      /* SCHON LADEN, WAEHREND ER NOCH TIPPT.
+         GEWUENSCHT: „Man soll in dem Moment, wo man / schreibt, bevor
+         man ihn ueberhaupt absendet, sollen die Effekte sich schon
+         anfangen zu laden, ohne dass man das spuert … /l laedt alle
+         Inhalte mit L."
+         Der Schraegstrich allein holt schon den Filmspieler, jeder
+         weitere Buchstabe grenzt ein. Es passiert im Hintergrund,
+         einer nach dem anderen — siehe lcVorschauLaden. */
+      try { lcVorschauLaden(wert.slice(1, bis < 0 ? undefined : bis)); } catch (e) {}
       /* --- Stufe 1: der Befehl selbst wird noch getippt ---
          =============================================================
          DAS PANEL, SOBALD MAN DEN SCHRAEGSTRICH TIPPT
@@ -24004,6 +24249,13 @@
           b.addEventListener("mousedown", (e) => {
             e.preventDefault();
             lcTippGruppe = (lcTippGruppe === schluessel) ? "" : schluessel;
+            /* DIE SEKTION IST DIE BESTE ANSAGE.
+               GEWUENSCHT: „In dem Moment, wo man die Sektion Tiere
+               anklickt, sollen alle Tiere von den Animationen schon
+               geladen sein, dass der Loewe sofort fluessig abspielt."
+               Wer „Tiere" antippt, will gleich ein Tier — also holen
+               wir jetzt ihre Filme, nicht erst beim Absenden. */
+            if (schluessel) { try { lcFilmeHolenJetzt(lcFilmeZuGruppe(schluessel)); } catch (x) {} }
             auffrischen();
           });
           return b;
@@ -24911,6 +25163,14 @@
         try { LiveChat.schreiben(zeile); } catch (e) {}
         lcNachDemSenden(zeile);
       });
+      /* ZWEIMAL KOPFHOERER — GENAU SO GEWUENSCHT:
+         „Wenn ich bei jemand anderem die Kopfhoerer aufsetzen soll,
+         einmal das normale, der normale Effekt kommen, und einmal
+         soll ich die Moeglichkeit haben, nur ihn alleine mein Lied
+         hoeren zu lassen, was ich selber aussuchen kann."
+         Die Kachel „Hoerer" weiter oben ist der normale Effekt; hier
+         steht der zweite Weg, und er fragt erst, welches Lied. */
+      knopf("\ud83c\udfb6", "Sein Lied", () => lcMusikWaehler(name));
     }
 
     document.body.appendChild(kasten);
@@ -26324,6 +26584,8 @@
        lcWirkung, direkt und ohne Zeichnung. */
     musik:    { zeichen: ["\ud83c\udfb5"], wie: "musik" },
     musikaus: { zeichen: ["\ud83d\udd07"], wie: "musikaus" },
+    musikpause: { zeichen: ["\u23f8\ufe0f"], wie: "musikpause" },
+    musikweiter: { zeichen: ["\u25b6\ufe0f"], wie: "musikweiter" },
     seifenblasen: { ganzeSeite: true, wie: "seifenblasen" },
     herbst:  { ganzeSeite: true, wie: "herbst" },
     aquarium:{ ganzeSeite: true, wie: "aquarium" },
@@ -30818,6 +31080,8 @@
       return;
     }
     if (art === "musikaus") { lcMusikStoppen(); return; }
+    if (art === "musikpause") { lcMusikPause(true); return; }
+    if (art === "musikweiter") { lcMusikPause(false); return; }
     /* Die Umarmung ist der einzige Effekt, der jemanden MEINT. Sie
        braucht deshalb den Namen aus der Zeile — siehe lcUmarmung(). */
     if (art === "umarmen" && lcUmarmung(nachricht && (nachricht.wen || nachricht.an))) return;
@@ -33096,6 +33360,15 @@
         e.stopPropagation();
         lcLeseWaehler();
       });
+      /* Aufgeklappte Sektion = gleich kommt etwas daraus. Der
+         toggle-Ruf steigt nicht von selbst auf, deshalb wird er in
+         der Fangphase abgeholt. */
+      area.addEventListener("toggle", (e) => {
+        const d = e.target;
+        if (!d || !d.classList || !d.classList.contains("lc-befehlsgruppe") || !d.open) return;
+        const g = d.dataset ? d.dataset.gr : "";
+        if (g) { try { lcFilmeHolenJetzt(lcFilmeZuGruppe(g)); } catch (x) {} }
+      }, true);
       area.querySelector("#lcMusikKnopf")?.addEventListener("click", (e) => {
         e.stopPropagation();
         lcMusikWaehler();

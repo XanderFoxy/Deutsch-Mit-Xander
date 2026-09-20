@@ -384,10 +384,17 @@ const filme = fs.readdirSync(pfad)
      die kleinen vorgeladen werden und die schweren erst, wenn man
      sie wirklich ruft. Die Zahl wird hier GEMESSEN, nicht gepflegt. */
   .map((d) => {
-    let bytes = 0;
+    let bytes = 0, maskeBytes = 0;
     try { bytes = fs.statSync(pfad + "/" + d.name + ".webm").size; } catch (e) {}
+    /* UND DIE GROESSE DES ANDEREN WEGES AUCH.
+       Geholt wird fast immer die MASKE (kleiner, sobald die
+       Grafikkarte WebGL kann) — die Entscheidung „darf ich das im
+       Mobilfunk vorladen" mit der webm-Groesse zu treffen war also
+       zu pessimistisch: der T-Rex wiegt als webm 8,7 MB, als Maske
+       3,3 MB. Gemessen werden jetzt beide. */
+    try { maskeBytes = fs.statSync(pfad + "/" + d.name + "-maske.mp4").size; } catch (e) {}
     return { name: d.name, sekunden: d.sekunden, bild: d.bild,
-             wirkung: d.wirkung || "keiner", bytes: bytes };
+             wirkung: d.wirkung || "keiner", bytes: bytes, maskeBytes: maskeBytes };
   })
   .sort((a, b) => a.name.localeCompare(b.name, "de"));
 fs.writeFileSync(pfad + "/liste.json", JSON.stringify({ filme: filme }, null, 1) + "\n");

@@ -9916,12 +9916,24 @@ window.LiveChat = (function () {
       var wahlM = (rest || "").trim();
       if (!wahlM || /^(liste|was|\?)$/i.test(wahlM)) {
         return systemZeile("Musik f\u00fcr alle:\n" + liederListe()
-          + "\n  /musik aus   h\u00e4lt sie wieder an"
+          + "\n  /musik pause   h\u00e4lt an   \u00b7   /musik weiter   l\u00e4uft weiter"
+          + "\n  /musik aus   macht Schluss"
           + "\n  /kopfh\u00f6rer Name 3   setzt Lied 3 nur EINEM auf die Ohren");
       }
       if (/^(aus|stop|stopp|halt|schluss)$/i.test(wahlM)) {
         return anAlle("aktion", zustand.ichName + " macht die Musik aus  \ud83d\udd07",
                       { wirkung: "musikaus" });
+      }
+      /* „Ich brauche fuer das Lied entweder eine Art kleine
+         Transportleiste oder auch einen Pause-Befehl irgendwo."
+         Die Leiste sitzt im Chat (app.js), der Befehl gilt fuer alle. */
+      if (/^(pause|stopp?kurz|halt mal)$/i.test(wahlM)) {
+        return anAlle("aktion", zustand.ichName + " h\u00e4lt die Musik an  \u23f8\ufe0f",
+                      { wirkung: "musikpause" });
+      }
+      if (/^(weiter|play|los)$/i.test(wahlM)) {
+        return anAlle("aktion", zustand.ichName + " l\u00e4sst die Musik weiterlaufen  \u25b6\ufe0f",
+                      { wirkung: "musikweiter" });
       }
       var liedM = liedFinden(wahlM);
       if (!liedM) {
@@ -11047,7 +11059,7 @@ window.LiveChat = (function () {
       /* Und die Musik: „musik" haengt an /musik mit einem Lied, „musikaus"
          an /musik aus. Beide haben eine Tuer, sie steht nur in einer
          eigenen Abzweigung und nicht in einer Tabelle. */
-      w.push("musik", "musikaus");
+      w.push("musik", "musikaus", "musikpause", "musikweiter");
       return w;
     },
     /* Nur zum Nachpruefen: die Sitzordnung von aussen nachstellen und

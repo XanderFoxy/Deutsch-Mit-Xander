@@ -5,56 +5,64 @@
    "sekunden": 7.61,
    "bild": "filme/adler.jpg",
    "wirkung": "wind",
-   "bytes": 391877
+   "bytes": 391877,
+   "maskeBytes": 264492
   },
   {
    "name": "katze",
    "sekunden": 10.11,
    "bild": "filme/katze.jpg",
    "wirkung": "glanz",
-   "bytes": 573423
+   "bytes": 573423,
+   "maskeBytes": 467116
   },
   {
    "name": "loewe",
    "sekunden": 15.04,
    "bild": "filme/loewe.jpg",
    "wirkung": "glanz",
-   "bytes": 1479462
+   "bytes": 1479462,
+   "maskeBytes": 927237
   },
   {
    "name": "lok2",
    "sekunden": 7.04,
    "bild": "filme/lok2.jpg",
    "wirkung": "dampf",
-   "bytes": 681710
+   "bytes": 681710,
+   "maskeBytes": 407599
   },
   {
    "name": "raumschiff",
    "sekunden": 15.11,
    "bild": "filme/raumschiff.jpg",
    "wirkung": "wind",
-   "bytes": 1976476
+   "bytes": 1976476,
+   "maskeBytes": 734667
   },
   {
    "name": "schlitten",
    "sekunden": 15.04,
    "bild": "filme/schlitten.jpg",
    "wirkung": "glanz",
-   "bytes": 2494582
+   "bytes": 2494582,
+   "maskeBytes": 1456535
   },
   {
    "name": "trex",
    "sekunden": 15.04,
    "bild": "filme/trex.jpg",
    "wirkung": "erde",
-   "bytes": 8655121
+   "bytes": 8655121,
+   "maskeBytes": 3252148
   },
   {
    "name": "uboot",
    "sekunden": 15.04,
    "bild": "filme/uboot.jpg",
    "wirkung": "dampf",
-   "bytes": 1453966
+   "bytes": 1453966,
+   "maskeBytes": 649569
   }
  ]
 }
