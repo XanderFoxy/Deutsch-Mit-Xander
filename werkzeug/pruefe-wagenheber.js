@@ -179,10 +179,23 @@ const pruefe = (was, gut, zusatz) => {
   const menue = await pg.evaluate(async () => {
     /* Die Buehne der Sonde zeichnet nur die BELEGTEN Plaetze. Im
        echten Raum stehen immer acht da, auch die freien — und genau
-       die braucht das Umsetzen. Drei kommen deshalb hier dazu. */
+       die braucht das Umsetzen. Drei kommen deshalb hier dazu.
+
+       NACHGEBESSERT: hier standen die Nummern 3, 4, 5. Seit die
+       Pruefbuehne fuenf Plaetze hat, sind das GENAU die Nummern von
+       Cem, Dana und Emmi — es gab jede Nummer doppelt, und die Wahl
+       der Zielplaetze fand deshalb nichts mehr („0 Plaetze"). Die
+       freien Plaetze bekommen jetzt die Nummern, die noch frei sind.
+       Zur Sicherheit wird das nicht geraten, sondern nachgesehen. */
     const reihe = document.querySelector("#lcPlaetze") || document.querySelector(".lc-plaetze");
     if (reihe && reihe.querySelectorAll(".lc-platz-frei").length === 0) {
-      [3, 4, 5].forEach((n) => {
+      const belegt = new Set([...reihe.querySelectorAll(".lc-platz")]
+        .map((b) => b.dataset.lcPlatz).filter(Boolean));
+      const frei = [];
+      for (let n = 1; n <= 8 && frei.length < 3; n++) {
+        if (!belegt.has(String(n))) frei.push(n);
+      }
+      frei.forEach((n) => {
         const f = document.createElement("button");
         f.type = "button";
         f.className = "lc-platz lc-platz-frei";

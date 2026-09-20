@@ -825,7 +825,41 @@ window.LiveChat = (function () {
     pfeil:    { wirkung: "saugpfeil",  satz: "schiesst einen Saugnapf-Pfeil auf", emoji: "\ud83c\udff9" },
     sahne:    { wirkung: "sahne",      satz: "spr\u00fcht Schlagsahne auf den Kopf von", emoji: "\ud83c\udf66" },
     trommel:  { wirkung: "trommel",    satz: "trommelt auf dem Kopf von",   emoji: "\ud83e\udd41" },
-    stoerung: { wirkung: "stoerung",   satz: "st\u00f6rt den Empfang von",  emoji: "\ud83d\udcfa" }
+    /* GEMELDET: „die Störung ist kein Effekt um das Profilbild zu
+       beeinflussen durch einen Klick sondern es ist ein Sprechbild-
+       Effekt." Sie steht deshalb nicht mehr hier, sondern unten bei
+       den SPRECHBILDERN. /stoerung gibt es als Befehl nicht mehr.
+
+       Dafuer die drei, die gefehlt haben:
+       „Mir ist übrigens grad noch eine eingefallen. Man kann ein Ei
+        auf dem Kopf von jemand anderem zuschlagen. Ja das muss immer
+        oben drüber dann passieren."
+       „das mit dem losfahren und mit den Spielzügen hast du auch
+        vergessen."
+       Fahren und Huepfen bewegen den ABSENDER zum Genannten hin —
+       der Satz sagt das auch so. */
+    ei:       { wirkung: "ei",         satz: "schl\u00e4gt ein Ei auf dem Kopf auf von", emoji: "\ud83e\udd5a" },
+    fahren:   { wirkung: "fahren",     satz: "f\u00e4hrt hin\u00fcber zu", emoji: "\ud83d\ude97" },
+    huepfen:  { wirkung: "spielzug",   satz: "h\u00fcpft Platz f\u00fcr Platz zu", emoji: "\ud83c\udfb2" },
+    /* GEMELDET: „Schau doch mal bitte in meinem Verlauf, von welchen
+       Effekten ich dir gesprochen habe und berücksichtige alle diese
+       Effekte und lasse keinen aus." Nachgelesen — das hier sind die,
+       die noch offen waren, mit seinen eigenen Worten im Kopf:
+       Katapult, Strohhalm, Auspeitschen, Bowling, Billard, Kopfhoerer,
+       Fensterluke, DJ-Schallplatte, Ohrfeige, Basketball, Tennis und
+       ein Zufallsmodus. */
+    katapult:   { wirkung: "katapult",   satz: "schleudert mit dem Katapult", emoji: "\ud83e\ude83" },
+    strohhalm:  { wirkung: "strohhalm",  satz: "saugt mit dem Strohhalm an", emoji: "\ud83e\udd64" },
+    peitsche:   { wirkung: "peitsche",   satz: "peitscht aus", emoji: "\ud83e\udea2" },
+    bowling:    { wirkung: "bowling",    satz: "r\u00e4umt mit der Bowlingkugel ab", emoji: "\ud83c\udfb3" },
+    billard:    { wirkung: "billard",    satz: "st\u00f6sst mit dem Queue an", emoji: "\ud83c\udfb1" },
+    kopfhoerer: { wirkung: "kopfhoerer", satz: "setzt Kopfh\u00f6rer auf", emoji: "\ud83c\udfa7" },
+    luke:       { wirkung: "luke",       satz: "\u00f6ffnet die Fensterluke vor", emoji: "\ud83e\ude9f" },
+    platte:     { wirkung: "platte",     satz: "legt eine Platte auf", emoji: "\ud83d\udcbf" },
+    ohrfeige:   { wirkung: "ohrfeige",   satz: "gibt eine Ohrfeige", emoji: "\ud83e\udef3" },
+    basketball: { wirkung: "basketball", satz: "dribbelt auf dem Kopf von", emoji: "\ud83c\udfc0" },
+    tennis:     { wirkung: "tennis",     satz: "spielt einen Ball zu", emoji: "\ud83c\udfbe" },
+    zufall:     { wirkung: "zufall",     satz: "l\u00e4sst den Zufall entscheiden bei", emoji: "\ud83c\udfb0" }
   };
   /* Und die vier, die es fuer den ganzen Raum schon gibt — mit Namen
      dahinter werden sie klein und gelten nur dieser Person. */
@@ -837,7 +871,14 @@ window.LiveChat = (function () {
     /* Den Strudel gibt es schon fuer den ganzen Raum. MIT Namen wird
        daraus der kleine: er zieht genau ein Profilbild ein. Dieselbe
        Regel wie bei Regen, Gewitter, Geld und Bonbons. */
-    strudel:  { wirkung: "sog",         satz: "zieht einen Strudel auf unter", emoji: "\ud83c\udf00" }
+    strudel:  { wirkung: "sog",         satz: "zieht einen Strudel auf unter", emoji: "\ud83c\udf00" },
+    /* GEMELDET: „das Paintball hast du auch noch vergessen." Den
+       grossen fuer den ganzen Raum gab es schon — mit einem Namen
+       dahinter wird daraus EIN Treffer auf EIN Profilbild. */
+    paintball: { wirkung: "paintfleck", satz: "trifft mit dem Paintball", emoji: "\ud83c\udfa8" },
+    /* Kekse gab es fuer den Raum schon — mit Namen kruemeln sie auf
+       genau ein Profilbild. */
+    keks:      { wirkung: "krumel",     satz: "kr\u00fcmelt Kekse auf", emoji: "\ud83c\udf6a" }
   };
 
   var SCHRIFTEN = {
@@ -927,6 +968,11 @@ window.LiveChat = (function () {
        soll sich eher am Rahmen orientieren." */
     eis:        "Eis — der Rand friert zu, Kristalle wachsen herein",
     bluete:     "Blüte — der Rahmen geht auf wie eine Blume",
+    /* GEMELDET: „die Störung ist kein Effekt um das Profilbild zu
+       beeinflussen durch einen Klick sondern es ist ein Sprechbild-
+       Effekt." Also hierher umgezogen: solange die Person spricht,
+       zerreisst ihr Bild wie bei schlechtem Empfang. */
+    stoerung:   "Störung — das Bild zerreißt wie bei schlechtem Empfang",
     aus:        "Nichts — kein Zeichen beim Sprechen"
   };
   var SPRECHBILD_SCHLUESSEL = "dma_livechat_sprechbild";
@@ -7627,7 +7673,21 @@ window.LiveChat = (function () {
     { gr: "reden", w: "pfeil",   kurz: "bogen",  nutzt: "/pfeil Name",       was: "Saugnapf-Pfeil — er bleibt am Profilbild kleben" },
     { gr: "reden", w: "sahne",   kurz: "schlagsahne", nutzt: "/sahne Name",  was: "Schlagsahne-Haube auf den Kopf" },
     { gr: "reden", w: "trommel", kurz: "gong",   nutzt: "/trommel Name",     was: "Trommel — auf dem Kopf wird getrommelt" },
-    { gr: "reden", w: "stoerung", kurz: "tv",    nutzt: "/stoerung Name",    was: "Bildstoerung — schlechter Empfang, das Bild zerreisst" },
+    { gr: "reden", w: "ei",       kurz: "ei",    nutzt: "/ei Name",          was: "Ei auf dem Kopf — es wird aufgeschlagen und laeuft herunter" },
+    { gr: "reden", w: "fahren",  kurz: "fahrt", nutzt: "/fahren Name",      was: "hinfahren — dein Bild rollt zu jemandem hinueber und wieder zurueck" },
+    { gr: "reden", w: "huepfen", kurz: "spielzug", nutzt: "/huepfen Name",     was: "Spielzug — dein Bild huepft Platz fuer Platz zu jemandem" },
+    { gr: "reden", w: "katapult", kurz: "kata", nutzt: "/katapult Name",   was: "Katapult — der andere wird weggeschleudert" },
+    { gr: "reden", w: "strohhalm", kurz: "halm", nutzt: "/strohhalm Name", was: "Strohhalm — der andere wird angesaugt" },
+    { gr: "reden", w: "peitsche", kurz: "snap", nutzt: "/peitsche Name",   was: "Auspeitschen — es schnalzt, die Strieme bleibt kurz" },
+    { gr: "reden", w: "bowling", kurz: "kegel", nutzt: "/bowling Name",    was: "Bowling — die Kugel raeumt ab" },
+    { gr: "reden", w: "billard", kurz: "queue", nutzt: "/billard Name",    was: "Billard — angestossen und weggerollt" },
+    { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name", was: "Kopfhoerer — aufgesetzt, Noten steigen auf" },
+    { gr: "reden", w: "luke", kurz: "fenster", nutzt: "/luke Name",        was: "Fensterluke — sie geht auf und wieder zu" },
+    { gr: "reden", w: "platte", kurz: "dj",    nutzt: "/platte Name",      was: "DJ-Schallplatte — das Bild dreht sich unter der Nadel" },
+    { gr: "reden", w: "ohrfeige", kurz: "klatsch", nutzt: "/ohrfeige Name", was: "Ohrfeige — der Kopf fliegt zur Seite" },
+    { gr: "reden", w: "basketball", kurz: "korb", nutzt: "/basketball Name", was: "Basketball — auf dem Kopf gedribbelt" },
+    { gr: "reden", w: "tennis", kurz: "filz",  nutzt: "/tennis Name",      was: "Tennis — ein Ball wird zugespielt" },
+    { gr: "reden", w: "zufall", kurz: "wuerfel", nutzt: "/zufall Name",    was: "Zufall — irgendetwas davon passiert, man weiss nie was" },
     { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation nur für dich zeigen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon Name", was: "Luftballons zum Geburtstag" },
@@ -7655,7 +7715,7 @@ window.LiveChat = (function () {
     { gr: "feier", w: "ostern",  kurz: "osterhase", nutzt: "/ostern",           was: "Ostereier, Hase und Frühling" },
     { gr: "welt", w: "augen",   kurz: "gucken", nutzt: "/augen",               was: "Neugierige Augen schauen dir zu" },
     { gr: "welt", w: "geld",      kurz: "cash",   nutzt: "/geld",      was: "Cash Horizon — Geldscheine regnen herunter" },
-    { gr: "welt", w: "keks",      kurz: "cookie", nutzt: "/keks",      was: "Ein Keks wird aufgegessen — mit Bissen und Krümeln" },
+    { gr: "welt", w: "keks",      kurz: "cookie", nutzt: "/keks [Name]", was: "Ein Keks wird aufgegessen — mit Namen krümelt er auf ein Profilbild" },
     { gr: "welt", w: "seifenblasen", kurz: "blasen", nutzt: "/seifenblasen", was: "Seifenblasen steigen auf und zerplatzen" },
     { gr: "welt", w: "herbst",    kurz: "laub",   nutzt: "/herbst",    was: "Buntes Herbstlaub taumelt herunter" },
     { gr: "welt", w: "aquarium",  kurz: "fische", nutzt: "/aquarium",  was: "Fische ziehen durchs Bild, Luftblasen steigen auf" },
@@ -7668,7 +7728,7 @@ window.LiveChat = (function () {
     { gr: "welt", w: "jalousie",  kurz: "rollo",  nutzt: "/jalousie",  was: "Die Jalousie kippt auf — dahinter eine andere Welt" },
     { gr: "welt", w: "handdurch", kurz: "zombie", nutzt: "/handdurch", was: "Eine Hand reisst von unten durch den Chat und greift nach dir" },
     { gr: "welt", w: "tore",      kurz: "riegel", nutzt: "/tore",      was: "Zwei Tore knallen zu und das Schloss legt sich vor" },
-    { gr: "welt", w: "paintball", kurz: "klecks", nutzt: "/paintball", was: "Farbkugeln schlagen ein, spritzen und laufen herunter" },
+    { gr: "welt", w: "paintball", kurz: "klecks", nutzt: "/paintball [Name]", was: "Farbkugeln schlagen ein — mit Namen trifft es genau ein Profilbild" },
     { gr: "tiere", w: "enten",     kurz: "ente",   nutzt: "/enten",     was: "Die Entenmama watschelt mit ihren Küken durchs Bild" },
     { gr: "tiere", w: "katze",     kurz: "kaetzchen", nutzt: "/katze",  was: "Film: das Katzenbaby tappt an die Scheibe" },
     { gr: "fahrzeuge", w: "route66", kurz: "highway", nutzt: "/route66", was: "Ein Wagen kommt über die Route 66 auf dich zu" },

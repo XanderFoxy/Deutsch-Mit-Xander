@@ -47,7 +47,14 @@ const PAARE = [
   ["/sahne Emmi",    "sahne",       "lc-sahne"],
   ["/strudel Emmi",  "sog",         "lc-sog"],
   ["/trommel Emmi",  "trommel",     "lc-trommel"],
-  ["/stoerung Emmi", "stoerung",    "lc-stoerung"],
+  /* GEAENDERT, und zwar auf seine Ansage hin: „die Störung ist kein
+     Effekt um das Profilbild zu beeinflussen durch einen Klick
+     sondern es ist ein Sprechbild-Effekt." /stoerung gibt es
+     deshalb nicht mehr; geprueft wird sie jetzt in
+     pruefe-runde15.js als Sprechbild. An ihrer Stelle stehen
+     hier die beiden, die neu dazugekommen sind. */
+  ["/paintball Emmi", "paintfleck", "lc-paintfleck"],
+  ["/ei Emmi",       "ei",          "lc-zei"],
   ["/tritt Emmi",    "tritt",       "lc-tritt"],
   ["/herz Emmi",     "zherz",       "lc-zherz"],
   ["/wasser Emmi",   "eimer",       "lc-eimer"],
@@ -221,7 +228,10 @@ const PAARE = [
 
   console.log("\nDER LANGE DRUCK\n");
   const menue = await pg.evaluate(async () => {
-    const platz = document.querySelector('.lc-platz[data-lc-platz="2"]');
+    /* Platz 5, nicht mehr Platz 2: die Pruefbuehne hat seit Fassung 357
+       fuenf Plaetze (Angel, Lasso, Fahren und Spielzug brauchen einen
+       eigenen und einen fremden Platz). Emmi sitzt jetzt hinten. */
+    const platz = document.querySelector('.lc-platz[data-lc-platz="5"]');
     if (!platz) return { fehlt: "kein Platz 2" };
     /* Den langen Druck nachstellen: das Menue direkt rufen, so wie es
        der Halte-Zeitgeber tut. */
@@ -252,8 +262,9 @@ const PAARE = [
           .map((b) => Math.round(b.getBoundingClientRect().width));
       })(),
       passt: k ? k.scrollHeight <= k.clientHeight + 1 : false,
-      /* Und der Hammer ist der letzte Knopf — er muss sichtbar sein,
-         ohne dass jemand rollt. */
+      /* Der LETZTE Knopf muss sichtbar sein, ohne dass jemand rollt —
+         frueher war das der Hammer, heute steht dort der Zufall. Auf
+         welchen es ankommt, ist egal: es ist immer der unterste. */
       hammerUnten: (() => {
         if (!k || !r) return 999;
         const b = k.querySelectorAll(".lc-platzmenue-knopf");
@@ -273,7 +284,7 @@ const PAARE = [
     spanne + " px Unterschied (" + (menue.breiten || []).length + " Kacheln, "
     + Math.min.apply(null, menue.breiten || [0]) + "–"
     + Math.max.apply(null, menue.breiten || [0]) + " px)");
-  pruefe("der letzte Knopf (Hammer) ist ohne Rollen zu sehen", menue.hammerUnten <= 0,
+  pruefe("der letzte Knopf ist ohne Rollen zu sehen", menue.hammerUnten <= 0,
     menue.hammerUnten + " px unter dem Rand");
 
   const zu = await pg.evaluate(async () => {
@@ -341,7 +352,10 @@ const PAARE = [
   });
   pruefe("das Sprechbild-Menue geht auf", !sb.keinKnopf && !sb.keinMenue,
     sb.keinKnopf ? "keine Kachel" : (sb.keinMenue ? "kein Menue" : sb.kopf));
-  pruefe("es zeigt alle Sprechbilder", sb.kacheln === 14, sb.kacheln + " Kacheln");
+  /* 15 statt 14: die Stoerung ist dazugekommen — „die Störung ist
+     kein Effekt um das Profilbild zu beeinflussen durch einen Klick
+     sondern es ist ein Sprechbild-Effekt." */
+  pruefe("es zeigt alle Sprechbilder", sb.kacheln === 15, sb.kacheln + " Kacheln");
   pruefe("und markiert genau das, was gerade gilt", sb.markiert === 1,
     sb.markiert + " markiert");
   pruefe("ein Tipp setzt es wirklich", Boolean(sb.gewaehlt) && sb.zu === true,
