@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 352 — das Sprechbild steht jetzt im eigenen Platzmenue",
+  stand: "Fassung 353 — jemanden zu sich ziehen geht jetzt mit einem Tipp",
 
   inArbeit: [
-    { seit: "2026-09-20T00:18",
+    { seit: "2026-09-20T00:31",
       text: "Galgenmaennchen: reihum spielen und benoten" },
-    { seit: "2026-09-20T00:18",
-      text: "Haken/Lasso: jemanden wirklich zu sich ziehen" },
-    { seit: "2026-09-20T00:18",
+    { seit: "2026-09-20T00:31",
       text: "Neue Effekte aus der Wunschliste (Bumerang, Schneeball, Pfeil und Bogen, Bowling, Strudel, DJ, Trommel …)" },
-    { seit: "2026-09-20T00:18",
+    { seit: "2026-09-20T00:31",
       text: "Nachmessen, ob bei einem Gespraech wirklich ZWEI Geraete in turn_nutzung stehen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-20T00:18",
-      text: "Langer Druck auf das eigene Bild: „Sprechbild“ steht im Menue, mit allen vierzehn zur Wahl" },
-    { seit: "2026-09-20T00:18",
-      text: "Die gewaehlte Kachel ist markiert, ein Tipp setzt sie und speichert sie mit dem Profil" },
+    { seit: "2026-09-20T00:31",
+      text: "Langer Druck auf einen fremden Platz: „Umsetzen“ klappt die Plaetze als Kacheln auf" },
+    { seit: "2026-09-20T00:31",
+      text: "Ganz vorn steht „Zu mir“ — das sucht den freien Platz neben mir und zieht die Person dorthin" },
+    { seit: "2026-09-20T00:31",
+      text: "Ein Tipp genuegt; vorher musste man die Nummer von Hand in den Befehl tippen" },
   ],
 };

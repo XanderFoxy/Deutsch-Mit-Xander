@@ -23469,6 +23469,114 @@
     return true;
   }
 
+  /* =================================================================
+     JEMANDEN UMSETZEN — UND VOR ALLEM: ZU SICH ZIEHEN
+     -----------------------------------------------------------------
+     GEMELDET: „Das mit dem Haken funktioniert auch noch nicht. Man
+     kann jemand nicht auf einen anderen Profilplatz neben sich ziehen
+     … das muss moeglich sein, den anderen dann zu sich heranzuziehen."
+
+     Moeglich WAR es: /heb Name 3. Nur zeigte der Menueknopf bloss die
+     Liste der Plaetze an — danach musste man den Befehl mit der
+     richtigen Nummer selbst tippen. Auf dem Telefon, mitten im
+     Gespraech, macht das niemand; es sah aus, als ginge es gar nicht.
+
+     Jetzt klappt dieselbe Kachelwand auf wie beim Sprechbild, mit den
+     Plaetzen, die gehen. Ein Tipp setzt um. Und ganz vorn steht „Zu
+     mir": das sucht den freien Platz, der meinem am naechsten liegt,
+     und zieht die Person dorthin — ist keiner frei, den naechsten
+     ueberhaupt, dann tauschen die beiden. Genau das war gemeint.
+     ================================================================= */
+  function lcHebenMenue(platz, name) {
+    lcPlatzMenueZu();
+    /* GELESEN WIRD, WAS AUF DEM BILDSCHIRM STEHT.
+       Erst stand hier die Sitzliste aus dem Modell — die ist die
+       Wahrheit ueber den Raum, aber sie kann leer sein (gerade
+       gewechselt, noch nicht verbunden), und dann ginge das Menue gar
+       nicht auf. Die Plaetze am Bildschirm sind das, worauf der
+       Finger zeigt; ihre Nummer steht am Platz selbst. */
+    const knoten = [...document.querySelectorAll("#lcPlaetze .lc-platz, .lc-plaetze .lc-platz")];
+    const plaetze = knoten.map((el, i) => ({
+      nummer: Number(el.dataset.lcPlatz || 0) || (i + 1),
+      name: (el.dataset.lcName
+             || ((el.querySelector(".lc-platz-name") || {}).textContent || "")
+                  .replace(/\s*\(du\)$/, "")).trim(),
+      leer: el.classList.contains("lc-platz-frei"),
+      ich: el.classList.contains("lc-platz-ich")
+    }));
+    if (!plaetze.length) return false;
+    const meiner = plaetze.filter((p) => p.ich)[0] || null;
+    const gesucht = String(name || "").trim().toLowerCase();
+    const seiner = plaetze.filter((p) => !p.leer
+      && String(p.name || "").trim().toLowerCase() === gesucht)[0] || null;
+    if (!seiner) return false;
+
+    /* Moeglich ist jeder Platz ausser dem eigenen und dem, auf dem die
+       Person schon sitzt — dieselbe Regel wie in /heb. */
+    const moeglich = plaetze.filter((p) =>
+      (!meiner || p.nummer !== meiner.nummer) && p.nummer !== seiner.nummer);
+    if (!moeglich.length) return false;
+
+    const setzen = (nummer) => {
+      const zeile = "/heb " + name + " " + nummer;
+      try { LiveChat.schreiben(zeile); } catch (e) {}
+      lcNachDemSenden(zeile);
+    };
+
+    const kasten = document.createElement("div");
+    kasten.id = "lcPlatzMenue";
+    kasten.className = "lc-platzmenue";
+    kasten.setAttribute("role", "menu");
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kopf.textContent = name + " umsetzen";
+    kasten.appendChild(kopf);
+
+    const kachel = (zeichen, wort, titel, tun) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-platzmenue-knopf";
+      b.setAttribute("role", "menuitem");
+      b.title = titel || "";
+      b.innerHTML = '<span class="lc-platzmenue-zeichen">' + zeichen + "</span>"
+                  + '<span class="lc-platzmenue-wort"></span>';
+      b.querySelector(".lc-platzmenue-wort").textContent = wort;
+      b.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        lcPlatzMenueZu();
+        tun();
+      });
+      kasten.appendChild(b);
+    };
+
+    if (meiner) {
+      /* Der naechste freie Platz zu meinem — und wenn keiner frei ist,
+         der naechste ueberhaupt (dann tauschen die beiden). */
+      const naehe = (a, b) => Math.abs(a - b);
+      const frei = moeglich.filter((p) => p.leer)
+        .sort((a, b) => naehe(a.nummer, meiner.nummer) - naehe(b.nummer, meiner.nummer))[0];
+      const irgend = moeglich.slice()
+        .sort((a, b) => naehe(a.nummer, meiner.nummer) - naehe(b.nummer, meiner.nummer))[0];
+      const ziel = frei || irgend;
+      if (ziel) {
+        kachel("\ud83e\uddf2", "Zu mir",
+          frei ? "Auf Platz " + ziel.nummer + ", gleich neben dir"
+               : "Platz " + ziel.nummer + " ist belegt — ihr tauscht dann",
+          () => setzen(ziel.nummer));
+      }
+    }
+    moeglich.forEach((p) => {
+      kachel(p.leer ? "\u2b55" : "\ud83d\udd01", "Platz " + p.nummer,
+        p.leer ? "Dieser Platz ist frei" : p.name + " sitzt dort — ihr tauscht dann",
+        () => setzen(p.nummer));
+    });
+
+    document.body.appendChild(kasten);
+    lcMenueStellen(kasten, platz);
+    lcMenueSchliessen(kasten);
+    return true;
+  }
+
   function lcPlatzMenueZu() {
     const m = document.getElementById("lcPlatzMenue");
     if (m) m.remove();
@@ -23542,11 +23650,7 @@
        ohne Nummer zeigt erst einmal, welche Plaetze ueberhaupt gehen —
        „das System soll dann erkennen, welche Plaetze hebelbar sind". */
     if (!eigen) {
-      knopf("\ud83e\ude9d", "Woanders hinsetzen", () => {
-        const zeile = "/heb " + name;
-        try { LiveChat.schreiben(zeile); } catch (e) {}
-        lcNachDemSenden(zeile);
-      });
+      knopf("\ud83e\ude9d", "Umsetzen", () => lcHebenMenue(platz, name));
     }
 
     document.body.appendChild(kasten);

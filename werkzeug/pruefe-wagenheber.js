@@ -162,6 +162,84 @@ const pruefe = (was, gut, zusatz) => {
     pruefe(art + " bewegt das Profilbild", d.bewegt !== "none", d.bewegt);
   }
 
+  /* =========================================================
+     UND DER WEG OHNE TIPPEN
+     ---------------------------------------------------------
+     GEMELDET: „Das mit dem Haken funktioniert auch noch nicht.
+     Man kann jemand nicht auf einen anderen Profilplatz neben
+     sich ziehen … das muss moeglich sein, den anderen dann zu
+     sich heranzuziehen."
+
+     Moeglich WAR es — nur zeigte der Menueknopf bloss die Liste
+     der Plaetze an, und die Nummer musste man danach selbst
+     tippen. Jetzt klappt eine Kachelwand auf, ein Tipp setzt um,
+     und ganz vorn steht „Zu mir". Genau das wird hier gemessen.
+     ========================================================= */
+  console.log("\nUMSETZEN OHNE TIPPEN\n");
+  const menue = await pg.evaluate(async () => {
+    /* Die Buehne der Sonde zeichnet nur die BELEGTEN Plaetze. Im
+       echten Raum stehen immer acht da, auch die freien — und genau
+       die braucht das Umsetzen. Drei kommen deshalb hier dazu. */
+    const reihe = document.querySelector("#lcPlaetze") || document.querySelector(".lc-plaetze");
+    if (reihe && reihe.querySelectorAll(".lc-platz-frei").length === 0) {
+      [3, 4, 5].forEach((n) => {
+        const f = document.createElement("button");
+        f.type = "button";
+        f.className = "lc-platz lc-platz-frei";
+        f.dataset.lcPlatz = String(n);
+        f.innerHTML = '<span class="lc-kreis"></span><span class="lc-platz-name">frei</span>';
+        reihe.appendChild(f);
+      });
+    }
+    const plaetze = [...document.querySelectorAll(".lc-platz")];
+    const meiner = plaetze[0], seiner = plaetze[1];
+    if (!meiner || !seiner) return { zuWenig: true };
+    if (!meiner.dataset.lcPlatz) meiner.dataset.lcPlatz = "1";
+    if (!seiner.dataset.lcPlatz) seiner.dataset.lcPlatz = "2";
+    meiner.classList.add("lc-platz-ich");
+    window.DMA_PRUEFUNG.platzMenue(seiner);
+    const k = document.getElementById("lcPlatzMenue");
+    const um = k ? [...k.querySelectorAll(".lc-platzmenue-knopf")]
+      .filter((b) => /Umsetzen/i.test(b.textContent))[0] : null;
+    if (!um) return { keinKnopf: true };
+    um.click();
+    await new Promise((f) => setTimeout(f, 140));
+    const m = document.getElementById("lcPlatzMenue");
+    if (!m) return { keinMenue: true };
+    const woerter = [...m.querySelectorAll(".lc-platzmenue-wort")].map((x) => x.textContent);
+    /* „Zu mir" antippen und nachsehen, WAS dabei hinausgeht. */
+    /* ALLE Pakete einsammeln, nicht nur das erste: beim Umsetzen gehen
+       zwei hinaus — die neue Sitzordnung und die Zeile mit der
+       Animation. Das erste ist die Sitzordnung und traegt keine
+       Wirkung; gesucht ist die Zeile. */
+    const alle = [];
+    window.LiveChat.pruefPost((p) => alle.push(p));
+    const zuMir = [...m.querySelectorAll(".lc-platzmenue-knopf")]
+      .filter((b) => /Zu mir/i.test(b.textContent))[0];
+    if (zuMir) zuMir.click();
+    await new Promise((f) => setTimeout(f, 160));
+    const mitWirkung = alle.filter((p) => p && /heber|lasso/.test(String(p.wirkung || "")))[0]
+                    || alle.filter((p) => /hebt|zieht/.test(String(p.text || "")))[0] || null;
+    return { woerter: woerter, kopf: (m.querySelector(".lc-platzmenue-kopf") || {}).textContent || "",
+             paket: mitWirkung ? { wirkung: mitWirkung.wirkung || "", text: String(mitWirkung.text || "") } : null,
+             wieviele: alle.length,
+             zu: !document.getElementById("lcPlatzMenue") };
+  });
+  pruefe("bei einem fremden Platz gibt es „Umsetzen“",
+    !menue.keinKnopf && !menue.keinMenue,
+    menue.keinKnopf ? "keine Kachel" : (menue.keinMenue ? "kein Menue" : menue.kopf));
+  pruefe("und ganz vorn steht „Zu mir“",
+    Array.isArray(menue.woerter) && /Zu mir/i.test(menue.woerter[0] || ""),
+    (menue.woerter || []).slice(0, 4).join(", "));
+  pruefe("es stehen auch die einzelnen Plaetze zur Wahl",
+    (menue.woerter || []).filter((w) => /^Platz \d+$/.test(w)).length >= 2,
+    (menue.woerter || []).filter((w) => /^Platz/.test(w)).length + " Plaetze");
+  pruefe("ein Tipp setzt wirklich um, ohne dass man tippt",
+    Boolean(menue.paket) && /hebt|zieht/.test(menue.paket.text),
+    menue.paket ? (menue.paket.wirkung || "ohne Wirkung") + " · " + menue.paket.text.slice(0, 60)
+                : "nichts abgefangen (" + menue.wieviele + " Pakete)");
+  pruefe("und das Menue geht danach zu", menue.zu === true, String(menue.zu));
+
   if (aufSeite.length) {
     console.log("\n  Fehler auf der Seite:");
     aufSeite.slice(0, 5).forEach((f) => console.log("    " + f));
