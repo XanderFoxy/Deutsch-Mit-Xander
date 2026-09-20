@@ -340,6 +340,56 @@ const pruefe = (was, gut, zusatz) => {
   for (const [befehl, wirkung, wann] of [["/fahren Emmi", "fahren", 3400],
                                          ["/huepfen Emmi", "spielzug", 2200]]) {
     const d = await pg.evaluate(async ({ b, w, wann }) => {
+      /* NACHGEBESSERT IN RUNDE 26 — und zwar, weil die Sonde seit
+         Runde 22 etwas anderes misst, nicht weil die Seite kaputt
+         waere:
+         Seit „wer ankommt, nimmt den Platz auch wirklich ein" nach
+         der Fahrt renderLiveChat() ruft, BAUT SICH DIE ECHTE
+         SITZREIHE AUF — und die traegt dieselbe Kennung
+         „livechatKarte" wie das Sondenbrett. getElementById nimmt
+         dann die erste im Dokument, also die echte, auf der niemand
+         sitzt: alle Plaetze frei, im Gegenueber-Modus ausgeblendet,
+         Breite null. Gemessen wurde daraufhin „0 px bewegt".
+         Ausserdem sitze ich nach dem Fahren schon NEBEN Emmi — der
+         Huepfer danach hat gar keinen Weg mehr.
+         Also: vor jedem Fall die echte Reihe leeren und das
+         Sondenbrett neu stellen. Dann ist die Kennung wieder
+         eindeutig und die Ausgangslage dieselbe. */
+      /* NACHGEBESSERT IN RUNDE 26 — zwei Sachen, und beide, weil sich
+         die SEITE geaendert hat, nicht die Sonde:
+
+         1. Seit Runde 22 nimmt man den Platz nach der Fahrt auch
+            sichtbar ein (renderLiveChat). Damit baut sich die ECHTE
+            Sitzreihe auf, und die traegt dieselbe Kennung
+            „livechatKarte" wie das Sondenbrett. getElementById nimmt
+            die erste im Dokument — also die echte, auf der niemand
+            sitzt. Der echten Karte wird deshalb die Kennung
+            abgenommen (nicht sie geloescht: die Seite arbeitet mit
+            ihren eigenen Verweisen weiter).
+         2. Eine Fahrt braucht ein FREIES Ziel — sie faehrt auf den
+            freien Platz neben dem Genannten. Nach der ersten Fahrt
+            sitze ich selbst dort, und der Huepfer danach haette gar
+            keinen Weg mehr. Also wird vor jedem Fall ein Nachbarplatz
+            von Emmi frei gemacht. Das ist keine Schoenrechnerei: ohne
+            freien Platz IST dort nichts zu holen, und genau das soll
+            hier nicht gemessen werden. */
+      document.querySelectorAll("#livechatKarte").forEach((k) => {
+        if (!k.closest("#lcPruefBuehne")) k.removeAttribute("id");
+      });
+      const brett = document.getElementById("livechatKarte");
+      const alle = [...brett.querySelectorAll(".lc-platz")];
+      const emmiNr = alle.findIndex((pl) => {
+        const nm = pl.querySelector(".lc-platz-name");
+        return nm && nm.textContent.trim() === "Emmi";
+      });
+      const nachbar = alle[emmiNr - 1] && !alle[emmiNr - 1].classList.contains("lc-platz-ich")
+        ? alle[emmiNr - 1] : alle[emmiNr + 1];
+      if (nachbar && !nachbar.classList.contains("lc-platz-ich")) {
+        nachbar.classList.add("lc-platz-frei");
+        const nm = nachbar.querySelector(".lc-platz-name");
+        if (nm) nm.textContent = "frei";
+      }
+      await new Promise((f) => setTimeout(f, 60));
       let paket = null;
       window.LiveChat.pruefPost((p) => { if (!paket) paket = p; });
       window.LiveChat.pruefBefehl(b);
@@ -515,6 +565,14 @@ const pruefe = (was, gut, zusatz) => {
       k.className = "lc-kreis";
       k.style.filter = "";
       k.getAnimations().forEach((a) => a.cancel());
+    });
+    await new Promise((f) => setTimeout(f, 60));
+    /* Dieselbe Sache wie oben: die echte Sitzreihe raeumen, damit
+       „livechatKarte" wieder eindeutig ist. */
+    /* Dieselbe Kennungssache wie oben: die echte Karte heisst seit
+       Runde 22 ebenfalls „livechatKarte". */
+    document.querySelectorAll("#livechatKarte").forEach((k) => {
+      if (!k.closest("#lcPruefBuehne")) k.removeAttribute("id");
     });
     await new Promise((f) => setTimeout(f, 60));
     window.DMA_PRUEFUNG.wirkung("regenwolke", "Emmi");

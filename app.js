@@ -27231,15 +27231,22 @@
     const g = "lcarm" + (++lcArmZaehler);
     const hgx = 46;   /* Handgelenk, im (ggf. gespiegelten) Raum */
 
+    /* GEMELDET: „Bei dem Druecken sind die Arme ein bisschen zu
+       duenn." Nachgemessen war er im Recht: an der Schulter waren es
+       10,6 von 120 Einheiten (knapp 9 % der Bildbreite), am Gelenk
+       7,8. Ein Oberarm ist im Verhaeltnis zum Kopf deutlich
+       kraeftiger. Jetzt 15 an der Schulter und 10,5 am Gelenk — rund
+       40 % mehr, und die Verjuengung von Schulter zu Handgelenk
+       bleibt erhalten, denn genau die macht einen Arm zum Arm. */
     const koerper =
-      "M " + x(0) + " 48 C " + x(12) + " 48.6 " + x(26) + " 54 " + x(37) + " 62"
-      + " C " + x(41) + " 65 " + x(44) + " 67.5 " + x(hgx) + " 68.6"
-      + " L " + x(hgx) + " 76.4 C " + x(42) + " 75.4 " + x(38) + " 72.6 " + x(33) + " 69"
-      + " C " + x(22) + " 61.5 " + x(11) + " 58.4 " + x(0) + " 58.6 Z";
+      "M " + x(0) + " 45.5 C " + x(12) + " 46.2 " + x(26) + " 52.4 " + x(37) + " 61"
+      + " C " + x(41) + " 64.2 " + x(44) + " 66.6 " + x(hgx) + " 67.5"
+      + " L " + x(hgx) + " 78 C " + x(42) + " 77 " + x(38) + " 74 " + x(33) + " 70.2"
+      + " C " + x(22) + " 62.4 " + x(11) + " 60.2 " + x(0) + " 60.5 Z";
 
     const aermel =
-      "M " + x(0) + " 47 C " + x(7) + " 47.2 " + x(13) + " 48.4 " + x(18) + " 50.6"
-      + " L " + x(14.8) + " 58.4 C " + x(10) + " 57 " + x(5) + " 56.6 " + x(0) + " 56.7 Z";
+      "M " + x(0) + " 44.4 C " + x(7) + " 44.6 " + x(13) + " 46 " + x(18) + " 48.6"
+      + " L " + x(14.8) + " 58.6 C " + x(10) + " 58.8 " + x(5) + " 58.5 " + x(0) + " 58.6 Z";
 
     return '<svg viewBox="0 0 120 120" class="lc-arm lc-arm-' + seite + '">'
       + '<defs>'
@@ -27253,8 +27260,10 @@
       + '</defs>'
       + '<path d="' + koerper + '" fill="url(#' + g + 'h)"/>'
       + '<path d="' + aermel + '" fill="url(#' + g + 's)"/>'
-      + '<g class="lc-hand" transform="translate(' + x(hgx) + ' 72.4) '
-      + (links ? "" : "scale(-1,1) ") + 'rotate(11)">'
+      /* Die Hand waechst mit — sonst sitzt an einem kraeftigen Arm
+         eine Kinderhand. */
+      + '<g class="lc-hand" transform="translate(' + x(hgx) + ' 72.7) '
+      + (links ? "" : "scale(-1,1) ") + 'rotate(11) scale(1.18)">'
       /* Handruecken */
       + '<path d="M -1 -4.6 q 10.6 -1.6 15.2 1.6 q 3.6 2.5 3 5.8'
       + ' q -0.8 4.2 -5.8 5.2 q -7 1.5 -12.4 0 z" fill="url(#' + g + 'h)"/>'
@@ -27701,15 +27710,41 @@
         kreis.classList.add("lc-ball");
         setTimeout(() => kreis.classList.remove("lc-ball"), 1900);
       }
+      /* GEMELDET: „Der Trittschuh sieht auch nicht nach einem Schuh
+         aus." Stimmt — es war eine dunkle Flaeche mit zwei Strichen
+         darauf. Ein Schuh von der Seite hat: eine SOHLE mit Profil,
+         eine Ferse, die hoeher ist als die Spitze, eine Zehenkappe,
+         einen Schnuersenkelbereich mit Oesen und einen gepolsterten
+         Rand oben. Genau das steht hier, und die Spitze zeigt nach
+         rechts — dorthin, wohin getreten wird. */
       schicht.innerHTML =
         '<svg class="lc-tritt-schuh" viewBox="0 0 100 60">'
-        + '<path d="M6 44 C6 32 14 26 26 26 L48 26 C58 26 66 20 74 20'
-        + ' C86 20 94 28 94 38 C94 46 88 50 78 50 L18 50 C10 50 6 48 6 44 Z"'
-        + ' fill="#2f3b52"/>'
-        + '<path d="M6 44 L94 40 L94 48 C94 52 90 54 84 54 L16 54 C9 54 6 50 6 44 Z"'
-        + ' fill="#8d99ad"/>'
-        + '<path d="M30 30 L44 30 M36 36 L50 36" stroke="#f2f4f8" stroke-width="3"'
-        + ' stroke-linecap="round" opacity=".7"/>'
+        /* Das Obermaterial: hinten hoch, vorn flach. */
+        + '<path d="M10 44 L10 22 C10 16 15 12 22 12 L31 12 C35 21 41 26 51 30'
+        + ' C66 36 81 41 91 45 L93 47 L12 47 Z" fill="#2f3b52"/>'
+        /* Die Zehenkappe, eine Spur heller. */
+        + '<path d="M66 37 C76 40 86 44 93 47 L70 47 Z" fill="#41506e"/>'
+        /* Der gepolsterte Rand oben an der Ferse. */
+        + '<path d="M10 22 C10 16 15 12 22 12 L31 12 L33 17 L14 19 Z" fill="#54627d"/>'
+        /* Die Schnuersenkel mit ihren Oesen. */
+        + [[22, 20], [28, 25], [34, 30]].map(function (p) {
+            return '<line x1="' + p[0] + '" y1="' + p[1] + '" x2="' + (p[0] + 13)
+                 + '" y2="' + (p[1] + 3) + '" stroke="#f2f4f8" stroke-width="2.6"'
+                 + ' stroke-linecap="round" opacity=".85"/>'
+                 + '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="1.5" fill="#c8d2e2"/>';
+          }).join("")
+        /* Der Streifen an der Seite — daran erkennt man einen
+           Sportschuh auf den ersten Blick. */
+        + '<path d="M24 41 C38 36 54 38 74 45" fill="none" stroke="#f2f4f8"'
+        + ' stroke-width="4" stroke-linecap="round" opacity=".9"/>'
+        /* Die Sohle, mit Absatz hinten und Profil darunter. */
+        + '<path d="M8 47 L94 47 C98 47 99 51 96 53 L12 53 C7 53 5 50 8 47 Z"'
+        + ' fill="#e8ecf3"/>'
+        + '<path d="M8 50 L96 50" stroke="#aab4c6" stroke-width="1.4"/>'
+        + [16, 26, 36, 46, 56, 66, 76, 86].map(function (x) {
+            return '<line x1="' + x + '" y1="50.6" x2="' + x + '" y2="53"'
+                 + ' stroke="#aab4c6" stroke-width="1.6"/>';
+          }).join("")
         + "</svg>"
         + '<span class="lc-tritt-wumms">WUMM</span>';
       for (let t = 0; t < 5; t++) {
@@ -28294,6 +28329,13 @@
         + "</svg>"
         + '<span class="lc-sahne-strahl"></span>'
         + '<span class="lc-sahne-kirsche"><i></i></span>';
+      /* GEWUENSCHT: „und wenn die Kirsche drauffaellt, koennte man
+         auch einen Sound machen."
+         GEMESSEN, wann sie aufkommt: lcKirscheFaellt setzt sie bei
+         66 % von 4,2 s auf — also nach 2,77 Sekunden. Genau dann,
+         und leise: eine Kirsche auf Sahne macht kein Geraeusch wie
+         ein Stein. */
+      setTimeout(() => { try { lcGeraeusch("platsch", "platsch", 0.22); } catch (e) {} }, 2770);
     }, 4200, "sahne");
   }
 
@@ -29830,25 +29872,52 @@
       }
       schicht.innerHTML = art === "tennis"
         ? '<svg class="lc-tennisschlaeger" viewBox="0 0 120 210">'
-          /* GEMELDET: „so soll der Tennisschläger eine relative Größe
-             zu diesem Kreis haben, der dann den Ball darstellt."
-             Ein echter Schlaegerkopf ist rund doppelt so breit wie ein
-             Tennisball — das Profilbild IST hier der Ball, also ist
-             der Kopf doppelt so breit wie das Profilbild. Deshalb
-             misst dieses Bild 120 mal 210 statt 50 mal 90. */
-          + '<ellipse cx="60" cy="58" rx="54" ry="52" fill="none" stroke="#2f3542" stroke-width="9"/>'
-          + '<ellipse cx="60" cy="58" rx="46" ry="44" fill="rgba(255,255,255,.18)"/>'
-          /* Die Bespannung — ohne sie ist es ein Ring. */
-          + [18, 34, 50, 66, 86, 102].map(function (x) {
-              return '<line x1="' + x + '" y1="20" x2="' + x + '" y2="96"'
-                   + ' stroke="rgba(255,255,255,.55)" stroke-width="2"/>';
+          /* GEMELDET: „Der Tennisschlaeger sieht aus wie so ein
+             elektrischer Fliegentoeter."
+             Er hatte recht, und der Grund war genau EINE Sache: die
+             Bespannung lief als volles Rechteck ueber das Bild
+             hinaus. Ein Fliegentoeter ist ein Gitter in einem Rahmen;
+             ein Schlaeger ist ein Gitter, das AM Rahmen endet.
+             Deshalb liegt die Bespannung jetzt in einer Blende
+             (clipPath) und hoert genau an der Ellipse auf. Dazu das,
+             woran man einen Tennisschlaeger sonst erkennt: ein Kopf,
+             der hoeher als breit ist, ein Herz aus zwei Streben
+             zwischen Kopf und Griff, und ein umwickelter Griff mit
+             Knauf.
+             Die Groesse bleibt: „so soll der Tennisschlaeger eine
+             relative Groesse zu diesem Kreis haben, der dann den Ball
+             darstellt" — der Kopf ist doppelt so breit wie das
+             Profilbild. */
+          + '<defs><clipPath id="lcTennisNetz">'
+          + '<ellipse cx="60" cy="60" rx="44" ry="52"/>'
+          + "</clipPath></defs>"
+          /* Das Herz: zwei Streben vom Kopf zum Griff. */
+          + '<path d="M30 96 C36 122 46 132 52 140 L68 140 C74 132 84 122 90 96"'
+          + ' fill="none" stroke="#2f3542" stroke-width="8" stroke-linecap="round"/>'
+          /* Die Bespannung — innerhalb der Blende, also nur im Kopf. */
+          + '<g clip-path="url(#lcTennisNetz)">'
+          + '<rect x="14" y="6" width="92" height="108" fill="rgba(255,255,255,.14)"/>'
+          + [20, 28, 36, 44, 52, 60, 68, 76, 84, 92, 100].map(function (x) {
+              return '<line x1="' + x + '" y1="4" x2="' + x + '" y2="116"'
+                   + ' stroke="rgba(255,255,255,.62)" stroke-width="1.6"/>';
             }).join("")
-          + [24, 40, 58, 76, 92].map(function (y) {
-              return '<line x1="12" y1="' + y + '" x2="108" y2="' + y + '"'
-                   + ' stroke="rgba(255,255,255,.55)" stroke-width="2"/>';
+          + [14, 22, 30, 38, 46, 54, 62, 70, 78, 86, 94, 102].map(function (y) {
+              return '<line x1="8" y1="' + y + '" x2="112" y2="' + y + '"'
+                   + ' stroke="rgba(255,255,255,.62)" stroke-width="1.6"/>';
             }).join("")
-          + '<rect x="50" y="104" width="20" height="96" rx="9" fill="#5b6478"/>'
-          + '<rect x="48" y="150" width="24" height="52" rx="10" fill="#2f3542"/>'
+          + "</g>"
+          /* Der Rahmen kommt UEBER die Bespannung — so sieht man, dass
+             die Saiten darin eingespannt sind. */
+          + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none" stroke="#2f3542" stroke-width="9"/>'
+          + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none"'
+          + ' stroke="rgba(255,255,255,.22)" stroke-width="2.5"/>'
+          /* Der Griff, umwickelt, mit Knauf. */
+          + '<rect x="51" y="136" width="18" height="66" rx="8" fill="#3c4356"/>'
+          + [146, 156, 166, 176, 186].map(function (y) {
+              return '<line x1="51" y1="' + y + '" x2="69" y2="' + (y - 6) + '"'
+                   + ' stroke="rgba(255,255,255,.2)" stroke-width="2"/>';
+            }).join("")
+          + '<rect x="47" y="196" width="26" height="10" rx="5" fill="#2f3542"/>'
           + "</svg>"
         /* DIE HAND — gross genug, dass ein Profilbild darunter ein
            Ball ist. Sie pumpt im Takt des Dribbelns. */
@@ -33571,6 +33640,20 @@
   }
 
   function renderLiveChat() {
+    /* STEHT EIN SONDENBRETT, GEHOERT DIE BUEHNE IHM.
+       -----------------------------------------------------------
+       Seit „wer ankommt, nimmt den Platz auch wirklich ein" (Runde
+       22) ruft die Fahrt am Ende renderLiveChat. In den Sonden baut
+       sich damit die ECHTE Sitzreihe auf — und die traegt dieselbe
+       Kennung „livechatKarte" wie das Sondenbrett. getElementById
+       nimmt dann die erste im Dokument, also die echte, auf der
+       niemand sitzt: gemessen wurden daraufhin lauter Nullen, in
+       pruefe-runde15 und pruefe-runde16 zusammen elf Stueck.
+
+       Im Betrieb gibt es dieses Brett nie — es entsteht nur durch
+       DMA_PRUEF.effektBuehne(). Diese eine Zeile haelt die Messung
+       sauber und aendert an der Seite selbst nichts. */
+    if (document.getElementById("lcPruefBuehne")) return;
     const area = document.getElementById("livechatArea");
     if (!area) return;
     if (!window.LiveChat) {
