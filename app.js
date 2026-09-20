@@ -66142,7 +66142,13 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (!v) return;
     const aus = () => { v.classList.remove("tutor-video-da"); try { v.pause(); } catch (e) {} };
     if (!tutorFilmDa(ton)) { aus(); v.removeAttribute("src"); return; }
-    const quelle = "tutor/video/" + ton + ".mp4?v=" + (window.DMA_VERSION || "1");
+    /* WEBM MIT ALPHA, nicht mp4.
+       Der erzeugte Film hat einen schwarzen Hintergrund; der ist
+       herausgerechnet (colorkey), und durchsichtig kann nur webm.
+       Safari spielt webm mit Alpha nicht — dort schlaegt play() fehl
+       oder das Bild bleibt leer, und genau dafuer ist der Rueckfall
+       da: das Standbild steht ohnehin darunter. */
+    const quelle = "tutor/video/" + ton + ".webm?v=" + (window.DMA_VERSION || "1");
     if (v.getAttribute("src") !== quelle) v.setAttribute("src", quelle);
     v.onerror = aus;
     v.onended = aus;

@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 31 — Tutor bewegt, Aufziehauto",
+  stand: "Runde 32 — der Tutor spricht wirklich",
 
   inArbeit: [
-    { seit: "2026-09-20T21:55", nurBetreiber: true,
-      text: "Der erste lippensynchrone Tutorfilm rechnet noch — gemessener Preis: 2,37 Dollar für 13 Sekunden, also rund 95 Dollar für alle 40 Sätze. Sag mir, ob ich alle erzeugen soll." },
-    { seit: "2026-09-20T21:55", nurBetreiber: true,
+    { seit: "2026-09-20T21:59", nurBetreiber: true,
+      text: "Alle übrigen ~39 Tutorsätze: 0,53 Dollar für 3 Sekunden gemessen, rund 95 Dollar für alles. Sag mir, ob ich sie alle erzeugen soll oder nur die Hauptsektionen." },
+    { seit: "2026-09-20T21:59", nurBetreiber: true,
       text: "Boot und Kran als weitere Reisen" },
-    { seit: "2026-09-20T21:55", nurBetreiber: true,
+    { seit: "2026-09-20T21:59", nurBetreiber: true,
       text: "Die Lupe, die die Eingabesymbole verdeckt — ich finde die Stelle nicht" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-20T21:55",
-      text: "Der Comic-Tutor ist jetzt bei allen voreingestellt" },
-    { seit: "2026-09-20T21:55",
-      text: "Der Tutor kann bewegt sprechen: liegt zu einem Satz ein Film in tutor/video/, legt er sich über das Standbild — läuft er nicht, bleibt das Standbild stehen" },
-    { seit: "2026-09-20T21:55",
-      text: "Aufziehauto: im Anreise-Menü mehrmals auf Aufziehen tippen, dann fährt das Bild bis zu dreimal so schnell" },
+    { seit: "2026-09-20T21:59",
+      text: "Der erste lippensynchrone Tutorfilm ist drin (Lernen · Dialoge): freigestellt, 518 kB, läuft über dem Standbild" },
+    { seit: "2026-09-20T21:59",
+      text: "Die Filme sind webm mit Alpha — der schwarze Hintergrund ist herausgerechnet; wo webm mit Alpha nicht geht (Safari), bleibt das Standbild stehen" },
   ],
 };

@@ -148,6 +148,13 @@ const pruefe = (was, gut, zusatz) => {
     /lauf\.then\(\(\) => v\.classList\.add\("tutor-video-da"\)\)\.catch\(aus\)/.test(js));
   pruefe("und faellt er aus, bleibt das Standbild stehen",
     /v\.onerror = aus;/.test(js));
+  pruefe("der erste Film liegt da und ist durchsichtig",
+    fs.existsSync(path.join(WURZEL, "tutor", "video", "lern-09.webm")),
+    fs.existsSync(path.join(WURZEL, "tutor", "video", "lern-09.webm"))
+      ? (fs.statSync(path.join(WURZEL, "tutor", "video", "lern-09.webm")).size / 1024).toFixed(0) + " kB"
+      : "fehlt");
+  pruefe("und er steht in der Liste",
+    /lern-09/.test(fs.readFileSync(path.join(WURZEL, "data-tutorvideo.js"), "utf8")));
   pruefe("welche Filme es gibt, wird nachgesehen statt geraten",
     fs.existsSync(path.join(WURZEL, "werkzeug", "tutorvideo-liste.js"))
     && fs.existsSync(path.join(WURZEL, "data-tutorvideo.js"))
