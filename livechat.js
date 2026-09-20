@@ -9509,7 +9509,7 @@ window.LiveChat = (function () {
   var ZUSATZ_FELDER = [
     "wirkung", "wen", "an", "film", "betonung", "raten", "dran",
     "sortieren", "leseZeilen", "leseTitel", "leseNiveau",
-    "lied", "liedTitel", "liedAb", "wortLink", "los"
+    "lied", "liedTitel", "liedAb", "wortLink", "los", "tempo"
   ];
   /* Listen werden begrenzt — eine Zeile aus einer fremden Fassung
      darf den Chat nicht sprengen. */
@@ -10524,7 +10524,7 @@ window.LiveChat = (function () {
                     { wirkung: art, wen: rest.trim() });
     }
     if ((art === "fahren" || art === "huepfen" || art === "laufen")
-        && /^\s*\d+(\s*-\s*\d+)*\s*$/.test(rest)) {
+        && /^\s*\d+(\s*-\s*\d+)*(\s*[x\u00d7]\d)?\s*$/i.test(rest)) {
       /* EINE KETTE STATT EINER ZAHL.
          Seit man den Weg mit dem Finger malen kann („wie bei einer
          Handy-Code-Freischaltung das Muster definieren"), steht hinter
@@ -10533,6 +10533,19 @@ window.LiveChat = (function () {
          JEDES Geraet denselben Umweg zeichnet und nicht seinen eigenen
          kuerzesten rechnet — sonst saehe der Absender etwas anderes
          als alle anderen. */
+      /* AUFGEZOGEN WIE EIN SPIELZEUGAUTO.
+         GEWUENSCHT: „vielleicht kannst du beim Fahren noch so ein
+         Aufziehauto machen … je nachdem wie oft man das betaetigt,
+         desto mehr Geschwindigkeit bekommt er … und dann faehrt er da
+         in Rennauto-Manier dahin."
+         Hinter dem Ziel steht dann ein „x3" — drei Umdrehungen. Es
+         faehrt als „tempo" mit, damit ALLE dieselbe Geschwindigkeit
+         sehen. */
+      var tempoF = 1;
+      rest = String(rest).replace(/\s*[x\u00d7](\d)\s*$/i, function (_, z) {
+        tempoF = Math.max(1, Math.min(5, parseInt(z, 10) || 1));
+        return "";
+      });
       var kette = rest.replace(/\s+/g, "");
       var stationen = kette.split("-").map(function (x) { return parseInt(x, 10); });
       var platzNr = stationen[stationen.length - 1];
@@ -10541,7 +10554,8 @@ window.LiveChat = (function () {
       return anAlle("aktion", zustand.ichName
         + (art === "fahren" ? " f\u00e4hrt zu Platz " : " l\u00e4uft zu Platz ")
         + platzNr + ueber + "  " + (art === "fahren" ? "\ud83d\ude97" : "\ud83d\udc63"),
-        { wirkung: art === "fahren" ? "fahren" : "spielzug", wen: kette });
+        { wirkung: art === "fahren" ? "fahren" : "spielzug", wen: kette,
+          tempo: String(tempoF) });
     }
     if (AM_PLATZ[art]) {
       var wemP = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;

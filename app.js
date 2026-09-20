@@ -24084,6 +24084,9 @@
   /* „ab" ist neu: /noten mit einem Liednamen spielt nicht das ganze
      Stueck, sondern steigt beim Refrain ein (data-refrain.js) und
      hoert nach einer halben Minute wieder auf. */
+  /* Wie oft das Aufziehauto aufgezogen wurde — eine Umdrehung ist das
+     gewohnte Tempo, fuenf sind Rennauto. */
+  let lcAufzieh = 1;
   let lcMusikRefrainAus = 0;
   function lcMusikSpielen(datei, titel, ab) {
     if (!datei) return false;
@@ -25639,7 +25642,11 @@
       : "Platz " + nr + " \u2014 wie hin?";
     kasten.appendChild(kopf);
 
-    const knopf = (zeichen, wort, tun) => {
+    /* „offenLassen" ist fuer das Aufziehen: man tippt mehrmals
+       hintereinander, und dazwischen darf das Menue nicht zufallen.
+       Zurueck kommt der Knopf selbst — sonst liesse sich seine
+       Aufschrift nicht mitzaehlen. */
+    const knopf = (zeichen, wort, tun, offenLassen) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "lc-platzmenue-knopf";
@@ -25650,10 +25657,11 @@
       b.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        lcPlatzMenueZu();
+        if (!offenLassen) lcPlatzMenueZu();
         tun();
       });
       kasten.appendChild(b);
+      return b;
     };
 
     /* GEMELDET: „In diesem Menue muss, wie gesagt, das Springen nicht
@@ -25667,10 +25675,34 @@
       /* Mit gezeichneter Linie geht die ganze Kette hinaus, sonst nur
          die Zielnummer — das Fahr- und das Lauf-Symbol bleiben dabei
          an derselben Stelle im Menue. */
-      const zeile = "/" + befehl + " " + (gemalt ? gemalt.join("-") : nr);
+      const zeile = "/" + befehl + " " + (gemalt ? gemalt.join("-") : nr)
+        + (lcAufzieh > 1 ? " x" + lcAufzieh : "");
+      lcAufzieh = 1;
       try { LiveChat.schreiben(zeile); } catch (e) {}
       lcNachDemSenden(zeile);
     };
+    /* DAS AUFZIEHEN.
+       GEWUENSCHT: „dass man den vom Profilbild so aufzieht wie so ein
+       Aufziehauto, das ist so nach links zieht, und dann hoert man
+       dieses Radgeraeusch, wie es halt aufzieht — und je nachdem wie
+       oft man das betaetigt, desto mehr Geschwindigkeit bekommt er,
+       und das kann man dann drei, vier, fuenf mal klicken."
+       Jeder Tipp zieht eine Umdrehung weiter auf; die Zahl steht am
+       Knopf und faehrt beim Losfahren als „x3" mit. */
+    lcAufzieh = 1;
+    const aufzieh = knopf("\ud83d\udd11", "Aufziehen", () => {
+      lcAufzieh = Math.min(5, lcAufzieh + 1);
+      lcTonZu("aufziehen");
+      const wort = aufzieh.querySelector(".lc-platzmenue-wort");
+      if (wort) wort.textContent = "Aufziehen \u00d7" + lcAufzieh;
+      const kreisA = platz.querySelector(".lc-kreis");
+      if (kreisA) {
+        kreisA.classList.remove("lc-zieht-auf");
+        void kreisA.offsetWidth;
+        kreisA.classList.add("lc-zieht-auf");
+        setTimeout(() => kreisA.classList.remove("lc-zieht-auf"), 700);
+      }
+    }, true);
     knopf("\ud83d\ude97", "Fahren", () => schicken("fahren"));
     knopf("\ud83d\udc63", "Laufen", () => schicken("laufen"));
     /* Und der gemalte Weg — „wie bei einer Handy-Code-Freischaltung".
@@ -29895,7 +29927,7 @@
     el.classList.toggle("lc-platz-unterwegs", Boolean(an));
   }
 
-  function lcFahrt(wen, von, art, wegVorgabe) {
+  function lcFahrt(wen, von, art, wegVorgabe, tempo) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return false;
     const gitter = lcPlatzGitter();
@@ -29915,7 +29947,7 @@
     if (gemalt && gemalt.length > 1) {
       const zuG = gemalt[gemalt.length - 1];
       if (!zuG.frei) { lcWegAbsage("Platz " + zuG.nr + " ist besetzt."); return true; }
-      return lcFahrtLauf(ab, gemalt, art, zuG);
+      return lcFahrtLauf(ab, gemalt, art, zuG, tempo);
     }
 
     /* WOHIN? Steht eine Nummer dahinter, ist es dieser Platz. Steht
@@ -29951,14 +29983,14 @@
         + " — du müsstest über besetzte Plätze fahren.");
       return true;
     }
-    return lcFahrtLauf(ab, weg, art, zu);
+    return lcFahrtLauf(ab, weg, art, zu, tempo);
   }
 
   /* Die Bewegung selbst — herausgeloest, weil es jetzt ZWEI Wege
      gibt, die sie brauchen: den gerechneten (Breitensuche) und den
      mit dem Finger gemalten. Zweimal dasselbe zu schreiben hiesse,
      es beim naechsten Mal an einer Stelle zu vergessen. */
-  function lcFahrtLauf(ab, weg, art, zu) {
+  function lcFahrtLauf(ab, weg, art, zu, tempo) {
     const kreis = ab.el.querySelector(".lc-kreis");
     if (!kreis) return false;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
@@ -29975,7 +30007,19 @@
     const felder = punkte.length - 1;
     const bilder = [];
     let dreh = 0;
-    const jeFeld = art === "spielzug" ? 420 : 520;
+    /* AUFGEZOGEN: „je nachdem wie oft man das betaetigt, desto mehr
+       Geschwindigkeit bekommt er … dann faehrt er in Rennauto-Manier
+       dahin." Eine Umdrehung ist das gewohnte Tempo, fuenf sind
+       dreimal so schnell — schneller waere nur noch ein Zucken. */
+    const zug = Math.max(1, Math.min(5, Number(tempo) || 1));
+    const schnell = 1 + (zug - 1) * 0.5;
+    const jeFeld = Math.round((art === "spielzug" ? 420 : 520) / schnell);
+    if (zug > 1) {
+      kreis.classList.remove("lc-aufgezogen");
+      void kreis.offsetWidth;
+      kreis.classList.add("lc-aufgezogen");
+      setTimeout(() => kreis.classList.remove("lc-aufgezogen"), 4000);
+    }
     const hin = felder * jeFeld;
     /* EINE FAHRT IST EIN WEG, KEIN AUSFLUG.
        GEMELDET: „Dann faehrt er dahin, und die Eins — mein Platz —
@@ -33218,7 +33262,8 @@
       const kette = /^\s*\d+(-\d+)+\s*$/.test(String(wenF || ""))
         ? String(wenF).split("-").map((x) => parseInt(x, 10))
         : null;
-      if (lcFahrt(kette ? kette[kette.length - 1] : wenF, vonF, art, kette)) return;
+      if (lcFahrt(kette ? kette[kette.length - 1] : wenF, vonF, art, kette,
+                  Number((nachricht && nachricht.tempo) || 1) || 1)) return;
     }
     /* =========================================================
        HIER IST SCHLUSS FUER ALLES, WAS EINEM PLATZ GILT
@@ -65825,8 +65870,11 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (!an) tutorSchliessen(true);
     tutorReiterPflegen();
   }
+  /* GEWUENSCHT: „ich moechte den Comic-Tutor — der soll bei allen
+     voreingestellt sein." Also ist „comic" die Voreinstellung; wer
+     ausdruecklich „foto" gewaehlt hat, behaelt sein Foto. */
   function tutorArt() {
-    try { return localStorage.getItem(TUTOR_ART) === "comic" ? "comic" : "foto"; } catch (e) { return "foto"; }
+    try { return localStorage.getItem(TUTOR_ART) === "foto" ? "foto" : "comic"; } catch (e) { return "comic"; }
   }
   function tutorArtSetzen(art) {
     try { localStorage.setItem(TUTOR_ART, art === "comic" ? "comic" : "foto"); } catch (e) {}
@@ -65861,7 +65909,21 @@ An einem Morgen lief ein kleiner Fuchs los…
           <button type="button" class="tutor-mini" id="tutorNie">Nicht mehr zeigen</button>
         </div>
       </div>
-      <img class="tutor-figur" id="tutorFigur" alt="Alex" />`;
+      <img class="tutor-figur" id="tutorFigur" alt="Alex" />
+      <!-- DIE BEWEGTE FASSUNG.
+           GEWUENSCHT: „ich moechte ihn animiert haben, dass er schoen
+           erklaert und dass es realistisch aussieht mit
+           Lippensynchronizitaet … Aber behalte trotzdem die
+           Standbild-Version als Fallback, falls die Animation nicht
+           greift."
+           Genau so gebaut: das Standbild steht IMMER da. Gibt es zu
+           einem Stueck einen Film (tutor/video/<ton>.mp4, verzeichnet
+           in data-tutorvideo.js), legt er sich darueber — und faellt
+           er aus (fehlt, laedt nicht, Browser spielt ihn nicht), wird
+           er wieder ausgeblendet und das Standbild ist noch da. Der
+           Ton kommt weiter aus der Tonspur; der Film selbst ist
+           stumm, damit nichts doppelt klingt. -->
+      <video class="tutor-video" id="tutorVideo" muted playsinline preload="none"></video>`;
     document.body.appendChild(b);
     document.body.classList.add("tutor-offen");
     b.querySelector("#tutorZu").addEventListener("click", () => tutorSchliessen());
@@ -66062,6 +66124,37 @@ An einem Morgen lief ein kleiner Fuchs los…
      bringen, Ton starten — und wenn der Ton zu Ende ist, das
      naechste. Fehlt die Tondatei, wird nach Lesezeit weitergegangen;
      ein stummer Tutor ist besser als ein haengender. */
+  /* Zu welchen Stuecken es einen Film gibt — geschrieben von
+     werkzeug/tutorvideo-liste.js aus dem Ordner tutor/video/. Steht
+     ein Name hier, liegt dort wirklich eine Datei. */
+  let tutorFilmListe = null;
+  function tutorFilmDa(ton) {
+    if (!ton) return false;
+    if (tutorFilmListe === null) {
+      tutorFilmListe = new Set(String(window.DMA_TUTORVIDEO || "").split("|").filter(Boolean));
+    }
+    return tutorFilmListe.has(ton);
+  }
+  /* Den Film zum Stueck zeigen — oder eben nicht. Beides ist in
+     Ordnung: das Standbild liegt darunter und bleibt sichtbar. */
+  function tutorFilmSetzen(ton) {
+    const v = document.getElementById("tutorVideo");
+    if (!v) return;
+    const aus = () => { v.classList.remove("tutor-video-da"); try { v.pause(); } catch (e) {} };
+    if (!tutorFilmDa(ton)) { aus(); v.removeAttribute("src"); return; }
+    const quelle = "tutor/video/" + ton + ".mp4?v=" + (window.DMA_VERSION || "1");
+    if (v.getAttribute("src") !== quelle) v.setAttribute("src", quelle);
+    v.onerror = aus;
+    v.onended = aus;
+    v.currentTime = 0;
+    const lauf = v.play();
+    if (lauf && lauf.then) {
+      lauf.then(() => v.classList.add("tutor-video-da")).catch(aus);
+    } else {
+      v.classList.add("tutor-video-da");
+    }
+  }
+
   function tutorStueckSpielen() {
     const l = tutorLauf;
     if (!l) return;
@@ -66069,6 +66162,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (!b) return;
     const st = l.stuecke[l.nr];
     if (!st) { tutorSchliessen(); return; }
+    tutorFilmSetzen(st.ton || "");
     b.dataset.ton = st.ton || "";
     b.dataset.ziel = st.ziel || "";
     b.querySelector("#tutorText").textContent = st.text || "";

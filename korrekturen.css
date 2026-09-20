@@ -16002,3 +16002,50 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-flieger, .lc-maulwurf, .lc-tor-wirbel { display: none; }
 }
+
+/* =================================================================
+   DER TUTOR, BEWEGT
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „ich möchte ihn animiert haben, dass er schön erklärt
+   und dass es realistisch aussieht mit Lippensynchronizität. Aber
+   behalte trotzdem die Standbild-Version als Fallback, falls die
+   Animation nicht greift."
+
+   Der Film liegt GENAU ÜBER dem Standbild und ist nur zu sehen,
+   wenn er auch wirklich läuft (Klasse tutor-video-da, gesetzt erst
+   nach play()). Fällt er aus, ist das Standbild unverändert da —
+   es wurde nie weggenommen.
+   ----------------------------------------------------------------- */
+.tutor-video {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: min(46vh, 300px);
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .25s ease;
+  filter: drop-shadow(-6px 4px 12px rgba(0, 0, 0, .35));
+}
+.tutor-video.tutor-video-da { opacity: 1; }
+/* Solange der Film läuft, wippt das Standbild nicht mit — sonst
+   liefen zwei Bewegungen gegeneinander. */
+.tutor-buehne:has(.tutor-video-da) .tutor-figur { animation: none; }
+
+/* =================================================================
+   DAS AUFZIEHAUTO
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „dass man das Profilbild so aufzieht wie so ein
+   Aufziehauto, das so nach links zieht, und dann hört man dieses
+   Radgeräusch … und dann fährt er da in Rennauto-Manier dahin."
+   ----------------------------------------------------------------- */
+.lc-zieht-auf { animation: lcZiehtAufR30 .65s cubic-bezier(.3, 0, .2, 1) both; }
+@keyframes lcZiehtAufR30 {
+  0%   { transform: translateX(0) rotate(0deg); }
+  45%  { transform: translateX(-14%) rotate(-16deg); }
+  70%  { transform: translateX(-9%) rotate(-10deg); }
+  100% { transform: translateX(0) rotate(0deg); }
+}
+/* Aufgezogen unterwegs: eine kurze Spur hinter dem Bild. */
+.lc-aufgezogen { filter: drop-shadow(-6px 0 6px rgba(120, 180, 255, .45)); }

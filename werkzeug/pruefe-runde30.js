@@ -139,6 +139,30 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("und die Uebersetzung wird nicht mehr mitmarkiert",
     /uebersetzung-hilfe, \.uebersetzung-satz/.test(js));
 
+  console.log("\nDER TUTOR\n");
+  pruefe("der Comic ist die Voreinstellung",
+    /localStorage\.getItem\(TUTOR_ART\) === "foto" \? "foto" : "comic"/.test(js));
+  pruefe("es gibt eine Filmschicht ueber dem Standbild",
+    /id="tutorVideo"/.test(js) && /\.tutor-video/.test(css));
+  pruefe("der Film kommt nur, wenn er wirklich laeuft",
+    /lauf\.then\(\(\) => v\.classList\.add\("tutor-video-da"\)\)\.catch\(aus\)/.test(js));
+  pruefe("und faellt er aus, bleibt das Standbild stehen",
+    /v\.onerror = aus;/.test(js));
+  pruefe("welche Filme es gibt, wird nachgesehen statt geraten",
+    fs.existsSync(path.join(WURZEL, "werkzeug", "tutorvideo-liste.js"))
+    && fs.existsSync(path.join(WURZEL, "data-tutorvideo.js"))
+    && /DMA_TUTORVIDEO/.test(js));
+
+  console.log("\nDAS AUFZIEHAUTO\n");
+  pruefe("jeder Tipp zieht eine Umdrehung weiter auf",
+    /lcAufzieh = Math\.min\(5, lcAufzieh \+ 1\)/.test(js));
+  pruefe("das Menue bleibt dabei offen", /\}, true\);/.test(js)
+    && /if \(!offenLassen\) lcPlatzMenueZu\(\);/.test(js));
+  pruefe("die Umdrehungen fahren mit der Zeile mit",
+    /tempo: String\(tempoF\)/.test(lc) && /"tempo"/.test(lc));
+  pruefe("und machen die Fahrt wirklich schneller",
+    /const schnell = 1 \+ \(zug - 1\) \* 0\.5;/.test(js));
+
   /* ---------- IM BROWSER ---------- */
   const srv = http.createServer((q, a) => {
     let p = decodeURIComponent(q.url.split("?")[0]);

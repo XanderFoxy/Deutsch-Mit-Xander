@@ -34,7 +34,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<script>window.DMA_VERSION = "372";</script>
+<script>window.DMA_VERSION = "373";</script>
 <script>
 /* Auch die Stilblätter hängen an der laufenden Fassung — sonst
    kommt das neue Javascript, aber das alte Aussehen dazu. Genau wie
@@ -768,7 +768,11 @@
     /* Wo in jedem Lied der Refrain anfaengt — gemessen von
        werkzeug/refrain-messen.js, eine Zeile Zahlen. /noten mit einem
        Liednamen springt dorthin. */
-    "data-refrain.js"
+    "data-refrain.js",
+    /* Zu welchen Tutor-Stuecken es einen Film gibt. Eine Zeile Text;
+       die Filme selbst holt der Browser erst, wenn der Tutor
+       wirklich spricht. */
+    "data-tutorvideo.js"
   ];
   /* =================================================================
      ALLE SKRIPTE MIT „defer" — DAS IST DER EIGENTLICHE HEBEL
