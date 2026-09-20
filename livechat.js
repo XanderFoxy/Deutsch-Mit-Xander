@@ -924,6 +924,10 @@ window.LiveChat = (function () {
        der Satz sagt das auch so. */
     ei:       { wirkung: "ei",         satz: "schl\u00e4gt ein Ei auf dem Kopf auf von", emoji: "\ud83e\udd5a" },
     fahren:   { wirkung: "fahren",     satz: "f\u00e4hrt hin\u00fcber zu", emoji: "\ud83d\ude97" },
+    /* GEWUENSCHT: „wenn ich mit jemandem gemeinsam fahren will, dann
+       kriege ich sein Profilbild an und sage dann Fahrrad oder so und
+       dann fahren wir einfach weg." */
+    gemeinsam: { wirkung: "gemeinsam", satz: "f\u00e4hrt gemeinsam los mit", emoji: "\ud83d\udeb2" },
     huepfen:  { wirkung: "spielzug",   satz: "h\u00fcpft Platz f\u00fcr Platz zu", emoji: "\ud83c\udfb2" },
     /* GEWUENSCHT: „das Laufen von Nummer zu Nummer bis ans Ziel, wo
        man hin moechte … diese Springen-Animation wie auf dem
@@ -947,11 +951,23 @@ window.LiveChat = (function () {
     katapult:   { wirkung: "katapult",   satz: "schleudert mit dem Katapult", emoji: "\ud83e\ude83" },
     strohhalm:  { wirkung: "strohhalm",  satz: "saugt mit dem Strohhalm an", emoji: "\ud83e\udd64" },
     blubbern:   { wirkung: "blubbern",   satz: "pustet in den Strohhalm von", emoji: "\ud83e\uded7" },
+    knuellen:   { wirkung: "knuell",     satz: "zerkn\u00fcllt wie ein Blatt Papier", emoji: "\ud83d\uddd2\ufe0f" },
     peitsche:   { wirkung: "peitsche",   satz: "peitscht aus", emoji: "\ud83e\udea2" },
     bowling:    { wirkung: "bowling",    satz: "r\u00e4umt mit der Bowlingkugel ab", emoji: "\ud83c\udfb3" },
     billard:    { wirkung: "billard",    satz: "st\u00f6sst mit dem Queue an", emoji: "\ud83c\udfb1" },
+    /* GEWUENSCHT: „Dann moechte ich noch einen Effekt haben, der
+       Schneekugel heisst: unten sind kleine Figuren, ein Baeumchen,
+       ein Haeuschen … erst schuettelt man das Profilbild durch, dann
+       fallen die Schneeflocken." */
+    schneekugel:{ wirkung: "schneekugel", satz: "sch\u00fcttelt die Schneekugel von", emoji: "\ud83d\udd2e" },
     kopfhoerer: { wirkung: "kopfhoerer", satz: "setzt Kopfh\u00f6rer auf", emoji: "\ud83c\udfa7" },
-    luke:       { wirkung: "luke",       satz: "\u00f6ffnet die Fensterluke vor", emoji: "\ud83e\ude9f" },
+    /* GEWUENSCHT: „Die Luke kannst du Fenster nennen." Der alte Name
+       bleibt als Deckname stehen, damit eine Zeile aus einem alten
+       Verlauf nicht ins Leere laeuft. */
+    fenster:    { wirkung: "luke",       satz: "\u00f6ffnet das Fenster vor", emoji: "\ud83e\ude9f" },
+    luke:       { wirkung: "luke",       satz: "\u00f6ffnet das Fenster vor", emoji: "\ud83e\ude9f" },
+    rollo:      { wirkung: "rollo",      satz: "zieht das Rollo hoch bei", emoji: "\ud83c\udf9a\ufe0f" },
+    lamellen:   { wirkung: "lamellen",   satz: "\u00f6ffnet die Jalousie bei", emoji: "\ud83e\udea7" },
     platte:     { wirkung: "platte",     satz: "legt eine Platte auf", emoji: "\ud83d\udcbf" },
     ohrfeige:   { wirkung: "ohrfeige",   satz: "gibt eine Ohrfeige", emoji: "\ud83e\udef3" },
     basketball: { wirkung: "basketball", satz: "dribbelt auf dem Kopf von", emoji: "\ud83c\udfc0" },
@@ -3324,9 +3340,32 @@ window.LiveChat = (function () {
          geschehen ist. */
       verlaufNachreichen(n.von);
       letzteStimmeNachreichen(n.von);
+      /* Und die Tafel, falls eine steht: „jede Aufgabe soll auf
+         beiden Seiten ueberall sichtbar sein" gilt hier genauso.
+         Nachreichen tut nur der, der sie aufgemacht hat — sonst
+         schicken acht Geraete denselben Stand (DMA_TAFEL_STAND gibt
+         bei allen anderen null zurueck). */
+      setTimeout(function () {
+        try {
+          var stand = window.DMA_TAFEL_STAND && window.DMA_TAFEL_STAND();
+          if (stand) postSenden(n.von, { art: "tafel", tafel: stand });
+        } catch (e) {}
+      }, 900);
       /* Wer die kleinere Kennung hat, ruft an. */
       if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
       melden();
+      return;
+    }
+    /* DAS WHITEBOARD.
+       GEWUENSCHT: „Ich moechte ein Whiteboard implementieren … man
+       kann in das Whiteboard Bilder einladen zum Lernen … und dann
+       kann ich an jeder Stelle im Bild eine Markierung zeichnen …
+       oder ein Pointer, dass die Markierung dort blinkt."
+       Striche, Bilder, Zeiger und Blick gehen als eigene kleine
+       Nachricht — sie gehoeren nicht in den Chatverlauf, sie sind
+       kein Gespraech. Gezeichnet wird in app.js. */
+    if (n.art === "tafel") {
+      try { if (window.DMA_TAFEL) window.DMA_TAFEL(n.tafel || {}, n.von, n.name || ""); } catch (e) {}
       return;
     }
     if (n.art === "auch-da") {
@@ -8418,17 +8457,29 @@ window.LiveChat = (function () {
     { gr: "reden", w: "ei",       kurz: "ei",    nutzt: "/ei Name",          was: "Ei auf dem Kopf — es wird aufgeschlagen und laeuft herunter" },
     { gr: "reden", w: "stoerung", kurz: "tv",  nutzt: "/stoerung Name",    was: "Bildstoerung — schlechter Empfang, das Bild zerreisst" },
     { gr: "reden", w: "fahren",  kurz: "fahrt", nutzt: "/fahren Name",      was: "hinfahren \u2014 dein Bild rollt zum freien Platz daneben und bleibt dort" },
+    { gr: "reden", w: "gemeinsam", kurz: "zuzweit", nutzt: "/gemeinsam Name",
+      was: "zu zweit losfahren \u2014 sein Bild h\u00e4ngt sich an deins und ihr rollt zusammen weg" },
     { gr: "reden", w: "laufen",  kurz: "",      nutzt: "/laufen 8",           was: "Feld f\u00fcr Feld zu Platz 8 laufen \u2014 geht auch mit /fahren 8" },
     { gr: "reden", w: "huepfen", kurz: "spielzug", nutzt: "/huepfen Name",     was: "Spielzug — dein Bild huepft Platz fuer Platz zu jemandem" },
     { gr: "reden", w: "katapult", kurz: "kata", nutzt: "/katapult Name",   was: "Katapult — der andere wird weggeschleudert" },
     { gr: "reden", w: "strohhalm", kurz: "halm", nutzt: "/strohhalm Name", was: "Strohhalm — der andere wird angesaugt" },
     { gr: "reden", w: "blubbern", kurz: "pusten", nutzt: "/blubbern Name", was: "Blubbern — in den Halm gepustet, das Bild blubbert" },
+    { gr: "reden", w: "knuellen", kurz: "knuell", nutzt: "/knuellen Name", was: "Zerknüllen — das Bild knittert wie Papier und glaettet sich wieder" },
     { gr: "reden", w: "peitsche", kurz: "snap", nutzt: "/peitsche Name",   was: "Auspeitschen — es schnalzt, die Strieme bleibt kurz" },
     { gr: "reden", w: "bowling", kurz: "kegel", nutzt: "/bowling Name",    was: "Bowling — die Kugel raeumt ab" },
     { gr: "reden", w: "billard", kurz: "queue", nutzt: "/billard Name",    was: "Billard — angestossen und weggerollt" },
+    { gr: "reden", w: "schneekugel", kurz: "glaskugel", nutzt: "/schneekugel Name",
+      was: "Schneekugel — durchgeschüttelt, dann rieselt der Schnee über Häuschen und Tanne" },
     { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name 3", was: "Kopfhoerer — aufgesetzt; mit Liednummer hoert der andere das Lied" },
     { gr: "reden", w: "musik", kurz: "lied", nutzt: "/musik 3", was: "Musik fuer alle aus dem Musikordner — /musik zeigt die Liste, /musik aus haelt an" },
-    { gr: "reden", w: "luke", kurz: "fenster", nutzt: "/luke Name",        was: "Fensterluke — sie geht auf und wieder zu" },
+    { gr: "schule", w: "tafel", kurz: "whiteboard", nutzt: "/tafel",
+      was: "Whiteboard für alle — Bild hineinladen, malen, zeigen, heranholen; /tafel aus macht es zu" },
+    { gr: "reden", w: "fenster", kurz: "luke", nutzt: "/fenster Name",
+      was: "Fenster \u2014 das Profilbild geht auf wie ein Fensterfluegel" },
+    { gr: "reden", w: "rollo", kurz: "jalousiehoch", nutzt: "/rollo Name",
+      was: "Rollo \u2014 die Bahn rollt nach oben auf" },
+    { gr: "reden", w: "lamellen", kurz: "jalousieauf", nutzt: "/lamellen Name",
+      was: "Jalousie \u2014 die Lamellen kippen und fahren hoch" },
     { gr: "reden", w: "platte", kurz: "dj",    nutzt: "/platte Name",      was: "DJ-Schallplatte — das Bild dreht sich unter der Nadel" },
     { gr: "reden", w: "ohrfeige", kurz: "klatsch", nutzt: "/ohrfeige Name", was: "Ohrfeige — der Kopf fliegt zur Seite" },
     { gr: "reden", w: "basketball", kurz: "korb", nutzt: "/basketball Name", was: "Basketball — auf dem Kopf gedribbelt" },
@@ -8509,7 +8560,7 @@ window.LiveChat = (function () {
     { gr: "welt", w: "schloss",   kurz: "hollow", nutzt: "/schloss",   was: "Das Tor geht auf, dahinter ein Schloss — und ein eiskalter Wind" },
     { gr: "fahrzeuge", w: "kitt",  kurz: "rider",  nutzt: "/kitt",      was: "Der schwarze Wagen mit dem roten Lauflicht" },
     { gr: "tiere", w: "dino",     kurz: "rex",    nutzt: "/dino",      was: "Gezeichnet: ein Tyrannosaurus kommt näher und brüllt" },
-    { gr: "welt", w: "jalousie",  kurz: "rollo",  nutzt: "/jalousie",  was: "Die Jalousie kippt auf — dahinter eine andere Welt" },
+    { gr: "welt", w: "jalousie",  kurz: "durchblick",  nutzt: "/jalousie",  was: "Die Jalousie kippt auf — dahinter eine andere Welt" },
     { gr: "welt", w: "handdurch", kurz: "zombie", nutzt: "/handdurch", was: "Eine Hand reisst von unten durch den Chat und greift nach dir" },
     { gr: "welt", w: "tore",      kurz: "riegel", nutzt: "/tore",      was: "Zwei Tore knallen zu und das Schloss legt sich vor" },
     { gr: "welt", w: "paintball", kurz: "klecks", nutzt: "/paintball [Name]", was: "Farbkugeln schlagen ein — mit Namen trifft es genau ein Profilbild" },
@@ -8727,7 +8778,7 @@ window.LiveChat = (function () {
                 hollow: "schloss", burg: "schloss", gruft: "schloss",
                 rider: "kitt", knightrider: "kitt", pontiac: "kitt", firebird: "kitt",
                 rex: "dino", saurier: "dino",
-                rollo: "jalousie", lamellen: "jalousie",
+                durchblick: "jalousie", kippfenster: "jalousie",
                 zombie: "handdurch", griff: "handdurch",
                 riegel: "tore", abschliessen: "tore", zusperren: "tore",
                 paint: "paintball", farbklecks: "paintball", klecks: "paintball",
@@ -8787,7 +8838,7 @@ window.LiveChat = (function () {
                 baer: "ggbaer", baerchen: "ggbaer", grizzly: "ggbaer",
                 schiff: "pirat", piraten: "pirat", segel: "pirat", totenkopf: "pirat",
                 sog: "strudel", wirbel: "strudel", ertrinken: "strudel", wirbeln: "strudel",
-                wischen: "schwamm", tafel: "schwamm", putzen: "schwamm",
+                wischen: "schwamm", tafelwischen: "schwamm", putzen: "schwamm",
                 ballern: "schuss", schuesse: "schuss", schiessen: "schuss",
                 schussloch: "schuss", knarre: "schuss",
                 wolke: "wolken", bewoelkt: "wolken",
@@ -9185,7 +9236,7 @@ window.LiveChat = (function () {
   var ZUSATZ_FELDER = [
     "wirkung", "wen", "an", "film", "betonung", "raten", "dran",
     "sortieren", "leseZeilen", "leseTitel", "leseNiveau",
-    "lied", "liedTitel", "wortLink"
+    "lied", "liedTitel", "wortLink", "los"
   ];
   /* Listen werden begrenzt — eine Zeile aus einer fremden Fassung
      darf den Chat nicht sprengen. */
@@ -9285,6 +9336,12 @@ window.LiveChat = (function () {
        Raum den ganzen Tag „Aufgaben" an sich selbst stellen. */
     /* Eine Note fuer MICH. Sie kommt immer, auch bei einer 5 und
        einer 6 — siehe noteGeben(). */
+    /* Der Tafelstand kommt als PERSOENLICHE Post — nur der Neue
+       braucht ihn, nicht der ganze Raum noch einmal. */
+    if (n.art === "tafel") {
+      try { if (window.DMA_TAFEL) window.DMA_TAFEL(n.tafel || {}, n.von, n.vonName || ""); } catch (e) {}
+      return;
+    }
     if (n.art === "note-fuer-dich") {
       var zahl = Math.round(Number(n.zahl) || 0);
       if (!(zahl >= 1 && zahl <= 6)) return;
@@ -10198,8 +10255,16 @@ window.LiveChat = (function () {
       var wemP = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       if (!wemP) return systemZeile("So geht es:  /" + art + " Nickname");
       var satzP = AM_PLATZ[art];
+      /* DAS LOS FAEHRT MIT.
+         „wenn mehr als zwei Leute teilnehmen, soll die eine Kugel, die
+         man anstoesst, die anderen beeinflussen und einer von denen
+         soll zufaellig in ein leerstehendes Loch fallen."
+         Wuerfelte jedes Geraet selbst, faellt bei mir ein anderer als
+         bei ihm. Also wird EINMAL gewuerfelt — hier, beim Absender —
+         und die Zahl reist als „los" mit der Zeile. Jeder kuenftige
+         Effekt mit Zufall kann sie ebenso benutzen. */
       return anAlle("aktion", zustand.ichName + " " + satzP.satz + " " + zielWort(wemP) + "  " + satzP.emoji,
-                    { wirkung: satzP.wirkung, wen: wemP.name });
+                    { wirkung: satzP.wirkung, wen: wemP.name, los: Math.random().toFixed(4) });
     }
     /* Und die vier, die es fuer den Raum schon gibt: nur MIT Namen
        wird daraus die kleine Fassung am Platz. */
@@ -10207,7 +10272,22 @@ window.LiveChat = (function () {
       var wemQ = personNachName(rest) || praesenzNachName(rest) || { name: rest };
       var satzQ = AUCH_AM_PLATZ[art];
       return anAlle("aktion", zustand.ichName + " " + satzQ.satz + " " + zielWort(wemQ) + "  " + satzQ.emoji,
-                    { wirkung: satzQ.wirkung, wen: wemQ.name });
+                    { wirkung: satzQ.wirkung, wen: wemQ.name, los: Math.random().toFixed(4) });
+    }
+
+    /* ---- DAS WHITEBOARD ----
+       GEWUENSCHT: „Ich moechte ein Whiteboard implementieren … dass
+       die Plaetze, die oben sind, nach unten wandern und das
+       Whiteboard nach oben."
+       Der Befehl macht es bei ALLEN auf — eine Tafel, auf die nur
+       einer schaut, ist keine. */
+    if (art === "tafel" || art === "whiteboard") {
+      var wunschT = (rest || "").trim().toLowerCase();
+      var zuT = /^(aus|zu|weg|stop|stopp|schluss|fertig)$/.test(wunschT);
+      return anAlle("aktion", zustand.ichName
+        + (zuT ? " macht das Whiteboard zu  \ud83e\uddd1\u200d\ud83c\udfeb"
+               : " macht das Whiteboard auf  \ud83e\uddd1\u200d\ud83c\udfeb"),
+        { wirkung: zuT ? "tafelzu" : "tafelauf" });
     }
 
     /* ---- MUSIK FUER ALLE ----
@@ -11342,6 +11422,18 @@ window.LiveChat = (function () {
        gezeichnet werden koennen — genau dieser Unterschied hat
        neunzehn Animationen monatelang unerreichbar gemacht.
        effektetuer.js haelt beide Listen gegeneinander. */
+    /* DAS WHITEBOARD — Striche, Bilder, Zeiger, Blick.
+       Sie gehen an alle im Raum, aber NICHT in den Chatverlauf: ein
+       Strich ist kein Satz. */
+    tafelSenden: function (d) {
+      if (!d || typeof d !== "object") return false;
+      senden({ art: "tafel", tafel: d });
+      return true;
+    },
+    /* Das Verkleinern liegt hier, weil hier auch die Bilder fuer den
+       Chat verkleinert werden — zweimal dieselbe Rechnung waere
+       zweimal dieselbe Wartung. */
+    bildKlein: function (datei, kante, hoechst) { return bildVerkleinern(datei, kante, hoechst); },
     effektBefehle: function () {
       /* Genannt ist hier die WIRKUNG, nicht das Befehlswort: „/leck"
          loest die Wirkung „lecken" aus, „/drueck" die Wirkung
@@ -11365,6 +11457,9 @@ window.LiveChat = (function () {
          an /musik aus. Beide haben eine Tuer, sie steht nur in einer
          eigenen Abzweigung und nicht in einer Tabelle. */
       w.push("musik", "musikaus", "musikpause", "musikweiter");
+      /* Und das Whiteboard: „tafelauf" haengt an /tafel, „tafelzu" an
+         /tafel aus — auch das eine eigene Abzweigung, keine Tabelle. */
+      w.push("tafelauf", "tafelzu");
       return w;
     },
     /* Nur zum Nachpruefen: die Sitzordnung von aussen nachstellen und

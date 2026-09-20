@@ -12797,11 +12797,15 @@ body.lc-schreibt .tutor-reiter {
   background: linear-gradient(140deg, #d9a765, #a9752f);
   animation: lcKrumelFaellt 1.8s cubic-bezier(.4, 0, .7, 1) both;
 }
+/* GEMELDET: „Beim Aufessen koennen mehr Kruemel fallen."
+   Mehr Kruemel duerfen nicht wie ein Vorhang fallen — deshalb driftet
+   jeder seitlich (--seit, von app.js gesetzt) und faellt damit auf
+   seiner eigenen Bahn. */
 @keyframes lcKrumelFaellt {
-  0%   { opacity: 0; transform: translateY(0) rotate(var(--kipp, 0deg)) scale(.6); }
-  12%  { opacity: 1; transform: translateY(20%) rotate(var(--kipp, 0deg)) scale(1); }
-  88%  { opacity: 1; transform: translateY(900%) rotate(calc(var(--kipp, 0deg) + 220deg)) scale(1); }
-  100% { opacity: 0; transform: translateY(1000%) rotate(calc(var(--kipp, 0deg) + 260deg)) scale(.9); }
+  0%   { opacity: 0; transform: translate(0, 0) rotate(var(--kipp, 0deg)) scale(.6); }
+  12%  { opacity: 1; transform: translate(calc(var(--seit, 0%) * .12), 20%) rotate(var(--kipp, 0deg)) scale(1); }
+  88%  { opacity: 1; transform: translate(var(--seit, 0%), 900%) rotate(calc(var(--kipp, 0deg) + 220deg)) scale(1); }
+  100% { opacity: 0; transform: translate(var(--seit, 0%), 1000%) rotate(calc(var(--kipp, 0deg) + 260deg)) scale(.9); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -15376,4 +15380,372 @@ body.lc-schreibt .tutor-reiter {
   opacity: 1;
   font-weight: 700;
   color: #ffd76a;
+}
+
+/* --- ZERKNUELLEN -----------------------------------------------------
+   GEWUENSCHT: „Bei dem Swirl-Effekt sieht es mehr so aus, als wenn du
+   ein Papier zerknuellst. Das koennen wir uns aber zu Nutze machen,
+   dass wir jemand anderen zuknuellen koennen."
+   Das Bild wird kleiner, dreht sich ein wenig hin und her und wird
+   wieder glatt — wie ein Blatt, das man zusammendrueckt und danach
+   auseinanderstreicht. */
+.lc-kreis.lc-geknuellt { animation: lcKnuellR29 3.4s cubic-bezier(.5, 0, .5, 1) both; }
+@keyframes lcKnuellR29 {
+  0%   { transform: scale(1) rotate(0deg); }
+  20%  { transform: scale(.88, .92) rotate(-6deg); }
+  40%  { transform: scale(.72, .8) rotate(7deg); }
+  55%  { transform: scale(.68, .76) rotate(-4deg); }
+  62%  { transform: scale(.7, .78) rotate(3deg); }
+  85%  { transform: scale(.94, .96) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-kreis.lc-geknuellt { animation: none; }
+}
+
+/* --- DAS ROLLO UND DIE JALOUSIE --------------------------------------
+   GEWUENSCHT: „Mach bei dem Fenster zwei Versionen: die eine, dass man
+   das Fenster aufmacht, und die andere, dass man das Rollo hoch macht
+   oder die Jalousie aufmacht."
+   Beide liegen IM Bild (runde Blende) und geben es wieder frei. */
+.lc-rollo-bahn {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 100%;
+  transform-origin: 50% 0;
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(255,255,255,.06) 0 9px, rgba(0,0,0,.05) 9px 18px),
+    linear-gradient(180deg, #d9c9a8, #c9b48d);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, .3);
+  animation: lcRolloHochR29 3.4s cubic-bezier(.45, 0, .35, 1) both;
+}
+@keyframes lcRolloHochR29 {
+  0%, 14%  { transform: scaleY(1); }
+  70%      { transform: scaleY(.06); }
+  86%      { transform: scaleY(.1); }
+  100%     { transform: scaleY(0); }
+}
+.lc-rollo-naht {
+  position: absolute; left: 0; right: 0;
+  height: 2px;
+  background: rgba(120, 96, 60, .35);
+}
+.lc-rollo-naht:nth-child(1) { top: 34%; }
+.lc-rollo-naht:nth-child(2) { top: 68%; }
+.lc-rollo-griff {
+  position: absolute;
+  left: 50%; bottom: 2%;
+  width: 26%; height: 5%;
+  margin-left: -13%;
+  border-radius: 999px;
+  background: #8b6f42;
+}
+.lc-rollo-welle {
+  position: absolute;
+  left: 4%; right: 4%; top: 0;
+  height: 7%;
+  border-radius: 0 0 8px 8px;
+  background: linear-gradient(180deg, #6b5a3c, #4a3f2a);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .4);
+}
+.lc-lamelle {
+  position: absolute;
+  left: 0; right: 0;
+  height: 11%;
+  transform-origin: 50% 0;
+  background: linear-gradient(180deg, #e7ded0, #c9bda8);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+  animation: lcLamelleR29 3.4s cubic-bezier(.4, 0, .3, 1) both;
+}
+@keyframes lcLamelleR29 {
+  0%, 12% { transform: rotateX(0deg) translateY(0); opacity: 1; }
+  /* Erst kippen — dann sieht man streifenweise hindurch. */
+  38%     { transform: rotateX(68deg) translateY(0); opacity: 1; }
+  /* Und dann nach oben zusammenfahren. */
+  78%     { transform: rotateX(78deg) translateY(-380%); opacity: 1; }
+  100%    { transform: rotateX(80deg) translateY(-460%); opacity: 0; }
+}
+.lc-lamellen-schnur {
+  position: absolute;
+  right: 12%; top: 0;
+  width: 2px; height: 46%;
+  background: rgba(255, 255, 255, .5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-rollo-bahn, .lc-lamelle { animation: none; opacity: 0; }
+}
+
+/* =================================================================
+   BILLARD MIT MEHREREN — DER PULK WIRD ANGESTOSSEN
+   -----------------------------------------------------------------
+   GEMELDET: „Beim Billard soll es so sein, dass zufällig einer von
+   allen teilnimmt: wenn mehr als zwei Leute teilnehmen, soll die eine
+   Kugel, die man anstößt, die anderen beeinflussen und einer von
+   denen soll zufällig in ein leerstehendes Loch fallen."
+
+   Der Ruck geht in die Richtung, aus der die Kugel kam — --ax/--ay
+   setzt lcAngestossen am Kreis, es ist der Einheitsvektor vom
+   Anstossenden zu dieser Kugel.
+   ----------------------------------------------------------------- */
+.lc-angestossen { animation: lcAngestossenR29 .9s cubic-bezier(.22, .9, .3, 1) both; }
+@keyframes lcAngestossenR29 {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  18%  { transform: translate(calc(var(--ax, 0) * 11%), calc(var(--ay, 0) * 11%)) rotate(7deg); }
+  46%  { transform: translate(calc(var(--ax, 0) * -4%), calc(var(--ay, 0) * -4%)) rotate(-5deg); }
+  72%  { transform: translate(calc(var(--ax, 0) * 2%), calc(var(--ay, 0) * 2%)) rotate(2deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-angestossen { animation: none; }
+}
+
+/* =================================================================
+   DIE SCHNEEKUGEL
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „Dann möchte ich noch einen Effekt haben, der
+   Schneekugel heißt: unten sind kleine Figuren, ein Bäumchen, ein
+   Häuschen … erst schüttelt man das Profilbild durch, dann fallen die
+   Schneeflocken und unten sind diese kleinen Häuser, aber das
+   Profilbild bleibt trotzdem noch im Hintergrund zu sehen."
+
+   Deshalb ist NICHTS hier deckend: die Landschaft steht im unteren
+   Drittel, der Schnee ist weiss und klein, das Glas ist ein Hauch.
+   Das Bild bleibt die ganze Zeit zu sehen.
+   ----------------------------------------------------------------- */
+.lc-geschuettelt { animation: lcSchuettelnR29 1s cubic-bezier(.36, .07, .19, .97) both; }
+@keyframes lcSchuettelnR29 {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  10%  { transform: translate(-9%, 2%) rotate(-7deg); }
+  22%  { transform: translate(8%, -3%) rotate(6deg); }
+  34%  { transform: translate(-7%, 3%) rotate(-5deg); }
+  46%  { transform: translate(6%, -2%) rotate(4deg); }
+  58%  { transform: translate(-4%, 2%) rotate(-3deg); }
+  70%  { transform: translate(3%, -1%) rotate(2deg); }
+  84%  { transform: translate(-1.5%, 1%) rotate(-1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+/* Die kleine Landschaft — sie steht unten und wächst nach dem
+   Schütteln aus dem Schnee heraus. */
+.lc-sk-land {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42%;
+  pointer-events: none;
+  z-index: 2;
+  animation: lcSkLandR29 7s ease-out both;
+}
+@keyframes lcSkLandR29 {
+  0%   { opacity: 0; transform: translateY(12%); }
+  16%  { opacity: 1; transform: translateY(0); }
+  88%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(6%); }
+}
+.lc-sk-wehe  { fill: #f2f7ff; opacity: .92; }
+.lc-sk-haus rect { fill: #b9603f; }
+.lc-sk-haus .lc-sk-dach  { fill: #f4f9ff; stroke: #cfd9e6; stroke-width: .6; }
+.lc-sk-haus .lc-sk-schlot { fill: #8f4930; }
+.lc-sk-haus .lc-sk-licht { fill: #ffd97a; }
+.lc-sk-haus .lc-sk-tuer  { fill: #6d3a25; }
+.lc-sk-tanne path { fill: #2f7a4b; }
+.lc-sk-tanne rect { fill: #6b452b; }
+.lc-sk-fern { opacity: .72; }
+
+/* Der Schnee. Jede Flocke hat ihre eigene Fallzeit, ihren eigenen
+   Seitenwind und ihre eigene Verzögerung — sonst fällt ein Gitter. */
+.lc-sk-schnee {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+.lc-sk-flocke {
+  position: absolute;
+  top: -12%;
+  width: .16em;
+  height: .16em;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0;
+  box-shadow: 0 0 .12em rgba(255, 255, 255, .8);
+  animation: lcSkFlockeR29 var(--fall, 4s) linear var(--spaet, 0s) infinite;
+}
+.lc-sk-flocke.lc-sk-gross { width: .26em; height: .26em; }
+@keyframes lcSkFlockeR29 {
+  0%   { opacity: 0; transform: translate(0, 0); }
+  8%   { opacity: var(--matt, .8); }
+  90%  { opacity: var(--matt, .8); }
+  100% { opacity: 0; transform: translate(var(--seit, 0), 130%); }
+}
+
+/* Das Glas: ein Lichtbogen oben links, mehr nicht — es darf das
+   Gesicht nicht zudecken. */
+.lc-sk-glas {
+  position: absolute;
+  inset: -2%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 4;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, .34) 0 9%, rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at 72% 78%, rgba(160, 200, 255, .16) 0 12%, rgba(160, 200, 255, 0) 36%);
+  box-shadow: inset 0 0 .5em rgba(255, 255, 255, .28);
+  animation: lcSkGlasR29 7s ease-out both;
+}
+@keyframes lcSkGlasR29 {
+  0%, 100% { opacity: 0; }
+  12%, 88% { opacity: 1; }
+}
+/* Der Sockel steht UNTER der Kugel und darf deshalb hinaus. */
+.lc-sk-sockel {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: -9%;
+  height: 12%;
+  border-radius: 12% 12% 28% 28% / 40% 40% 100% 100%;
+  background: linear-gradient(180deg, #8a5a33, #5a3a20 62%, #3e2814);
+  box-shadow: 0 .12em .3em rgba(0, 0, 0, .45);
+  z-index: 5;
+  animation: lcSkGlasR29 7s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-geschuettelt { animation: none; }
+  .lc-sk-flocke { display: none; }
+}
+
+/* =================================================================
+   DAS WHITEBOARD
+   -----------------------------------------------------------------
+   GEWÜNSCHT: „in dem Moment ändert sich der Fokus, sobald ich das
+   Whiteboard einschalte: die Plätze, die oben sind, wandern nach
+   unten und das Whiteboard nach oben … Ich möchte das Layout nicht
+   erweitern … vielleicht kannst du auch die Person oben lassen, die
+   Plätze, und das einfach nur mit dem Whiteboard verdecken, oder du
+   findest halt ne schlaue Strategie."
+
+   DIE STRATEGIE: der Kasten wird KEIN Stück höher. Die Tafel steht
+   dort, wo sonst die obere Hälfte der Sitzreihe ist, und die
+   Sitzreihe schrumpft darunter zu einem Streifen — die Leute bleiben
+   also sichtbar, nur klein. Nichts verschiebt sich unter dem Chat.
+   ----------------------------------------------------------------- */
+/* Die Tafel ist ein KIND der Sitzreihe und deckt deren obere zwei
+   Drittel ab. Dadurch kann der Kasten nicht einen Bildpunkt höher
+   werden — das ist der ganze Trick hinter „Ich möchte das Layout
+   nicht erweitern". Die Plätze rutschen in den Streifen darunter. */
+#lcPlaetze, .lc-plaetze { position: relative; }
+.lc-tafel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 30%;
+  z-index: 6;
+  border-radius: .7rem;
+  overflow: hidden;
+  background: #f7f9fc;
+  border: 1px solid rgba(15, 30, 55, .18);
+  box-shadow: inset 0 1px 3px rgba(10, 20, 40, .12), 0 .2em .6em rgba(8, 16, 32, .18);
+  display: flex;
+  flex-direction: column;
+}
+.lc-tafel[hidden] { display: none; }
+.lc-tafel-blatt {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(20, 40, 80, .05) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(rgba(20, 40, 80, .05) 1px, transparent 1px) 0 0 / 28px 28px,
+    #fdfefe;
+  transform: scale(var(--tz, 1));
+  transition: transform .28s ease;
+  touch-action: none;
+}
+.lc-tafel-bild {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.lc-tafel-stift {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+/* Der Zeiger: „ein Pointer, dass die Markierung dort blinkt." */
+.lc-tafel-zeiger {
+  position: absolute;
+  width: 2.2em;
+  height: 2.2em;
+  margin: -1.1em 0 0 -1.1em;
+  border-radius: 50%;
+  border: 3px solid #e2312a;
+  box-shadow: 0 0 .6em rgba(226, 49, 42, .6);
+  pointer-events: none;
+}
+.lc-tafel-zeiger.lc-tafel-blinkt { animation: lcTafelBlinktR29 1s ease-in-out infinite; }
+@keyframes lcTafelBlinktR29 {
+  0%, 100% { opacity: 1;  transform: scale(1); }
+  50%      { opacity: .25; transform: scale(1.35); }
+}
+.lc-tafel-leiste {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .22rem;
+  padding: .24rem .3rem;
+  background: rgba(14, 26, 48, .06);
+  border-top: 1px solid rgba(15, 30, 55, .12);
+}
+.lc-tafel-knopf {
+  border: 1px solid rgba(15, 30, 55, .2);
+  background: #fff;
+  border-radius: .45rem;
+  padding: .16rem .38rem;
+  font-size: .92rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.lc-tafel-knopf.lc-tafel-an { background: #1b6ef3; border-color: #1b6ef3; }
+.lc-tafel-zu { margin-left: auto; }
+.lc-tafel-farben { display: inline-flex; gap: .16rem; }
+.lc-tafel-farbe {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  border: 2px solid rgba(15, 30, 55, .25);
+  padding: 0;
+  cursor: pointer;
+}
+.lc-tafel-farbe.lc-tafel-an { border-color: #0f1e37; transform: scale(1.18); }
+
+/* UND DER FOKUSWECHSEL: steht die Tafel, wird die Sitzreihe zum
+   Streifen. Der Kasten bleibt gleich hoch. */
+/* Der Fokuswechsel: „die Plätze, die oben sind, wandern nach unten
+   und das Whiteboard nach oben." Die Sitzreihe behält ihren Platz im
+   Kasten (deshalb wird nichts länger), rückt aber als kleine Reihe an
+   den unteren Rand — die Leute bleiben also zu sehen. */
+#livechatKarte.lc-tafel-an .lc-plaetze > .lc-platz {
+  transform: scale(.42);
+  transform-origin: bottom center;
+  margin-bottom: -1%;
+}
+
+@media (max-width: 560px) {
+  .lc-tafel { height: clamp(130px, 30vh, 260px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-tafel-zeiger.lc-tafel-blinkt { animation: none; }
+  .lc-tafel-blatt { transition: none; }
 }

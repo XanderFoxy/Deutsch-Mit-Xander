@@ -48,6 +48,12 @@
    sagt nur, WOHIN der Ton gehen darf. Aufgezeichnet wird
    nichts.
    ========================================================= */
+/* STAND DER VEROEFFENTLICHUNG
+   Diese Datei ist am 20.09.2026 als Fassung 3 in Supabase
+   hochgeladen worden (Projekt rolcktiryrvjzbwuvobb). Die dort
+   liegende Fassung hat dieselbe Logik, Zeile fuer Zeile; nur die
+   langen Begruendungen sind dort gekuerzt. Wer hier etwas aendert,
+   laedt danach neu hoch:  supabase functions deploy klassenzimmer  */
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 /* Wie oft darf sich eine Person am Tag Zugangsdaten holen?

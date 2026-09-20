@@ -136,10 +136,18 @@ const BRETT = (frei) => `
     && js.indexOf("if (LC_NUR_AM_PLATZ[art]) {") < js.indexOf("if (e.ganzeSeite) {"));
 
   console.log("\nDIE EFFEKTE, DIE ER EINZELN GENANNT HAT\n");
-  pruefe("der Pfeil hat hinten Federn, keine zweite Spitze",
-    !/M68 4 L86 13 L68 22 Z/.test(js) && /M2 14 L16 6 L20 10 L10 14 L20 18 L16 22 Z/.test(js));
+  /* NACHGEBESSERT IN RUNDE 29 — GEMELDET: „hinten soll diese typische
+     Pfeilfeder dran sein, nicht die Spitze". Der alte Zackenumriss SAH
+     aus wie eine Spitze; jetzt sind es Kerbe, zwei Vanes und die
+     Wicklung, und vorn ein Napf mit Stiel. */
+  pruefe("der Pfeil hat hinten eine echte Befiederung",
+    !/M68 4 L86 13 L68 22 Z/.test(js)
+    && /M2 9 L9 14 L2 19/.test(js)              /* die Kerbe */
+    && /M9 13 L27 7 L31 10 L13 14 Z/.test(js)   /* die obere Feder */
+    && /M9 15 L27 21 L31 18 L13 14 Z/.test(js), /* die untere Feder */
+    "Kerbe, zwei Federn, Wicklung");
   pruefe("und der Saugnapf fuehrt",
-    /class="lc-pfeil-napf" d="M76 4/.test(js), "rechts, also vorn");
+    /class="lc-pfeil-napf" d="M77 7/.test(js), "rechts, also vorn");
   pruefe("er saugt sich am Rand fest, nicht in der Mitte",
     /--ex", \(r\.x \* 38\)/.test(js));
   pruefe("die Peitsche geht ueber die ganze Entfernung",
@@ -195,8 +203,11 @@ const BRETT = (frei) => `
       da && kachel && kommando && verteiler,
       "Zeichnung " + da + ", Kachel " + kachel + ", Befehl " + kommando + ", Verteiler " + verteiler);
   });
-  pruefe("die Entbloessung geht nur nebeneinander",
-    /if \(abstand !== 1\)/.test(js), "gerechnet aus dem Sitzgitter");
+  /* NACHGEBESSERT IN RUNDE 29 — GEWUENSCHT: „Das mit dem BH soll auf
+     jeden Platz gehen, also nicht nur wenn er neben mir sitzt." Die
+     Nachbarschaftsregel ist deshalb raus. */
+  pruefe("die Entbloessung geht auf jedem Platz",
+    !/if \(abstand !== 1\)/.test(js), "keine Nachbarschaftsregel mehr");
 
   console.log("\nDER TON\n");
   pruefe("es gibt einen gemessenen Ausgleich je Datei",
@@ -224,8 +235,12 @@ const BRETT = (frei) => `
   pruefe("und die eine unsaubere Maske ist ausgenommen",
     JSON.parse(fs.readFileSync(path.join(WURZEL, "filme/raumschiff.json"), "utf8")).maskeUnsauber === true,
     "raumschiff.json");
-  pruefe("die Fassung ist hochgezaehlt",
-    /window\.DMA_VERSION = "370"/.test(html));
+  /* NACHGEBESSERT: hier stand die Zahl der eigenen Runde fest drin
+     („370"), und jede neue Runde hat die Sonde rot gemacht, ohne dass
+     etwas kaputt war. Geprueft wird deshalb, WORAUF es ankommt: dass
+     die Fassung ueberhaupt hochgezaehlt ist. */
+  const fassung = Number((html.match(/window\.DMA_VERSION = "(\d+)"/) || [])[1] || 0);
+  pruefe("die Fassung ist hochgezaehlt", fassung >= 370, "steht auf " + fassung);
 
   /* ---------- Und jetzt im Browser ---------- */
   const srv = http.createServer((q, a) => {
@@ -347,10 +362,17 @@ const BRETT = (frei) => `
   /* Ich sitze auf 1 (links), das Ziel auf 2, frei sind 3 und 4 —
      also rechts davon. Ein Loch LINKS von 2 gibt es nicht; die Kugel
      muss nach rechts. */
-  await pg.evaluate(BRETT([3, 4]));
+  /* NACHGEBESSERT IN RUNDE 29: „wenn mehr als zwei Leute teilnehmen,
+     soll die eine Kugel, die man anstoesst, die anderen beeinflussen
+     und einer von denen soll zufaellig in ein leerstehendes Loch
+     fallen." Diese Messung hier gilt dem ZWEIERFALL — also sitzen
+     auch nur zwei am Tisch: ich auf 1 und Bea auf 2, alle anderen
+     Plaetze sind frei. Und die Tasche kommt jetzt erst, wenn die
+     Kugel losrollt; 300 ms waren zu frueh. */
+  await pg.evaluate(BRETT([3, 4, 5, 6, 7, 8]));
   const bil = await pg.evaluate(async () => {
     window.DMA_PRUEFUNG.wirkung("billard", "Bea", "Alex");
-    await new Promise((f) => setTimeout(f, 300));
+    await new Promise((f) => setTimeout(f, 900));
     const tasche = document.querySelector(".lc-billard-tasche");
     if (!tasche) return { nr: 0 };
     const platz = tasche.closest(".lc-platz");
@@ -397,7 +419,7 @@ const BRETT = (frei) => `
       r.da ? r.teile + " Teile, Bild bewegt: " + r.amBild : "nichts gezeichnet");
   }
 
-  console.log("\nGEMESSEN: DIE ENTBLOESSUNG NUR NEBENAN\n");
+  console.log("\nGEMESSEN: DIE ENTBLOESSUNG AUF JEDEM PLATZ\n");
   await pg.evaluate(BRETT([8]));
   const nah = await pg.evaluate(async () => {
     window.DMA_PRUEFUNG.wirkung("entbloessung", "Bea", "Alex");   // Platz 2 — daneben
@@ -409,7 +431,9 @@ const BRETT = (frei) => `
     return { daneben: eins, weit: Boolean(document.querySelector(".lc-entbl")) };
   });
   pruefe("nebenan geht es", nah.daneben === true);
-  pruefe("und ueber den halben Raum nicht", nah.weit === false);
+  /* NACHGEBESSERT IN RUNDE 29: jetzt geht es auch ueber den halben
+     Raum — „ich kann das ueberall machen". */
+  pruefe("und ueber den halben Raum auch", nah.weit === true);
 
   pruefe("keine Fehler auf der Seite", aufSeite.length === 0,
     aufSeite.length ? aufSeite.join(" | ") : "keine");

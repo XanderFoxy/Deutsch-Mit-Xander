@@ -6575,6 +6575,18 @@
            er aus — auch wenn „Betonung überall anzeigen" an ist. Die
            ausdrückliche Handlung schlägt die allgemeine Einstellung. */
         if (parent.closest(".betonung-aus")) return NodeFilter.FILTER_REJECT;
+        /* GEMELDET: „bei den Texten wird die Betonung nicht angezeigt."
+           GEFUNDEN: die Zeilen der Lesetafel im Klassenzimmer sind
+           KNOEPFE — man tippt sie an, damit sie bei allen leuchten.
+           Und „button" steht gleich darunter in der Liste der Stellen,
+           die nie markiert werden. Der Schalter tat also alles
+           richtig, es kam nur kein einziger Textknoten durch.
+           Der gelesene Text ist ausdruecklich erwuenscht und geht
+           deshalb VOR dieser Liste durch. */
+        if (parent.closest(".lc-lese-zeile")) {
+          return (node.nodeValue && node.nodeValue.trim())
+            ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        }
         /* Nur der gelesene Text, nicht die Umgebung. Überschriften,
            Schaltflächen, Reiter, Marken und Hinweiszeilen liest niemand
            vor — dort ist die Betonungsmarkierung nur Unruhe. Vorher
@@ -23638,9 +23650,18 @@
        andere Richtung — deshalb auch dasselbe Geraeusch, nur laenger,
        weil das Blubbern nicht aufhoert, solange man pustet. */
     blubbern:       { ton: "schlurf",  dauer: 3600, laut: 0.5 },
+    /* Zerknuelltes Papier klingt wie Papier — „schwamm" ist das
+       trockenste Geraeusch, das da ist. */
+    knuell:         { ton: "schwamm",  dauer: 3400, laut: 0.5 },
+    rollo:          { ton: "jalousie", dauer: 3400, laut: 0.5 },
+    lamellen:       { ton: "jalousie", dauer: 3400, laut: 0.5 },
     peitsche:       { ton: "peitsche", dauer: 2000, laut: 0.6 },
     bowling:        { ton: "glasbruch", dauer: 2400, laut: 0.5 },
     billard:        { ton: "bonk",     dauer: 2400, laut: 0.55 },
+    gemeinsam:      { ton: "fahren",   dauer: 3400, laut: 0.5 },
+    /* Kein eigenes Geraeusch: die Schneekugel leiht sich „schnee" —
+       gemessen an data-geraeusche.js, dort liegt es. */
+    schneekugel:    { ton: "schnee",   dauer: 3200, laut: 0.45 },
     kopfhoerer:     { ton: "noten",    dauer: 3200, laut: 0.45 },
     luke:           { ton: "jalousie", dauer: 3400, laut: 0.5 },
     platte:         { ton: "disko",    dauer: 3600, laut: 0.45 },
@@ -25037,11 +25058,19 @@
     ["\ud83e\ude83", "Katapult",  "katapult"],
     ["\ud83e\udd64", "Halm", "strohhalm"],
     ["\ud83e\uded7", "Blubbern", "blubbern"],
+    ["\ud83d\uddd2\ufe0f", "Knüllen", "knuell"],
     ["\ud83e\udea2", "Peitsche",  "peitsche"],
     ["\ud83c\udfb3", "Bowling",   "bowling"],
     ["\ud83c\udfb1", "Billard",   "billard"],
+    ["\ud83d\udeb2", "Zu zweit",  "gemeinsam"],
+    ["\ud83d\udd2e", "Schneekugel", "schneekugel"],
     ["\ud83c\udfa7", "H\u00f6rer", "kopfhoerer"],
-    ["\ud83e\ude9f", "Luke",      "luke"],
+    /* GEWUENSCHT: „Die Luke kannst du Fenster nennen." Und drei
+       Fassungen dahinter: Fenster, Rollo, Jalousie. */
+    ["\ud83e\ude9f", "Fenster", "fenster", false,
+      [["\ud83e\ude9f", "Fenster \u00f6ffnen", "fenster"],
+       ["\ud83c\udf9a\ufe0f", "Rollo hoch", "rollo"],
+       ["\ud83e\udea7", "Jalousie auf", "lamellen"]]],
     ["\ud83d\udcbf", "Platte",    "platte"],
     ["\ud83e\udef3", "Ohrfeige",  "ohrfeige"],
     ["\ud83c\udfc0", "Korb", "basketball"],
@@ -25164,6 +25193,41 @@
      und zieht die Person dorthin — ist keiner frei, den naechsten
      ueberhaupt, dann tauschen die beiden. Genau das war gemeint.
      ================================================================= */
+  /* Die aufgeklappte Kachelgruppe. Sie sieht aus wie das Platzmenue
+     und schickt dieselben Zeilen — nur eine Ebene tiefer. */
+  function lcUnterMenue(platz, name, titel, liste) {
+    lcPlatzMenueZu();
+    const kasten = document.createElement("div");
+    kasten.id = "lcPlatzMenue";
+    kasten.className = "lc-platzmenue";
+    kasten.setAttribute("role", "menu");
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kopf.textContent = titel;
+    kasten.appendChild(kopf);
+    liste.forEach(([zeichen, wort, befehl]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-platzmenue-knopf";
+      b.setAttribute("role", "menuitem");
+      b.innerHTML = '<span class="lc-platzmenue-zeichen">' + zeichen + "</span>"
+                  + '<span class="lc-platzmenue-wort"></span>';
+      b.querySelector(".lc-platzmenue-wort").textContent = wort;
+      b.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        lcPlatzMenueZu();
+        const zeile = "/" + befehl + (name ? " " + name : "");
+        try { LiveChat.schreiben(zeile); } catch (x) {}
+        lcNachDemSenden(zeile);
+      });
+      kasten.appendChild(b);
+    });
+    document.body.appendChild(kasten);
+    lcMenueStellen(kasten, platz);
+    lcMenueSchliessen(kasten);
+    return true;
+  }
+
   function lcHebenMenue(platz, name) {
     lcPlatzMenueZu();
     /* GELESEN WIRD, WAS AUF DEM BILDSCHIRM STEHT.
@@ -25606,7 +25670,19 @@
          speichert es mit dem Profil. */
       knopf("\ud83c\udf99\ufe0f", "Sprechbild", () => lcSprechbildMenue(platz));
     }
-    LC_PLATZ_SPIELZEUG.forEach(([zeichen, wort, befehl, ohneNamen]) => {
+    LC_PLATZ_SPIELZEUG.forEach(([zeichen, wort, befehl, ohneNamen, unter]) => {
+      /* EIN UNTERMENUE STATT DREI KACHELN.
+         GEWUENSCHT: „Mach bei dem Fenster zwei Versionen … kannst du
+         auch drei Versionen machen, dass, wenn man ein entsprechendes
+         Symbol klickt, man da so ein Untermenue hat und die Versionen
+         klicken kann. So koennen wir das ganze Menue vielleicht ein
+         bisschen aufraeumen."
+         Traegt eine Kachel eine Liste, klappt sie auf, statt sofort zu
+         senden — ein Weg, der fuer jede weitere Gruppe gilt. */
+      if (unter && unter.length) {
+        knopf(zeichen, wort, () => lcUnterMenue(platz, name, wort, unter));
+        return;
+      }
       knopf(zeichen, wort, () => {
         /* GEMELDET: „dieses Zufall-Ding soll einfach nur zwischen den
            Feldern hin und her springen und keinen Würfel fallen
@@ -27057,6 +27133,10 @@
        kein Film gesucht werden. Gespielt wird sie weiter oben in
        lcWirkung, direkt und ohne Zeichnung. */
     musik:    { zeichen: ["\ud83c\udfb5"], wie: "musik" },
+    /* Das Whiteboard ist wie die Musik kein Bilderregen: es steht in
+       der Tabelle nur, damit lcWirkung es ueberhaupt annimmt. */
+    tafelauf: { zeichen: ["\ud83e\uddd1\u200d\ud83c\udfeb"], wie: "tafelauf" },
+    tafelzu:  { zeichen: ["\ud83e\uddd1\u200d\ud83c\udfeb"], wie: "tafelzu" },
     musikaus: { zeichen: ["\ud83d\udd07"], wie: "musikaus" },
     musikpause: { zeichen: ["\u23f8\ufe0f"], wie: "musikpause" },
     musikweiter: { zeichen: ["\u25b6\ufe0f"], wie: "musikweiter" },
@@ -27174,6 +27254,9 @@
     katapult:   { zeichen: ["\ud83e\ude83"], wie: 5, klasse: "umarmen" },
     strohhalm:  { zeichen: ["\ud83e\udd64"], wie: 5, klasse: "umarmen" },
     blubbern:   { zeichen: ["\ud83e\uded7"], wie: 5, klasse: "umarmen" },
+    knuell:     { zeichen: ["\ud83d\uddd2\ufe0f"], wie: 5, klasse: "umarmen" },
+    rollo:      { zeichen: ["\ud83c\udf9a\ufe0f"], wie: 5, klasse: "umarmen" },
+    lamellen:   { zeichen: ["\ud83e\udea7"], wie: 5, klasse: "umarmen" },
     peitsche:   { zeichen: ["\ud83e\udea2"], wie: 5, klasse: "umarmen" },
     bowling:    { zeichen: ["\ud83c\udfb3"], wie: 5, klasse: "umarmen" },
     billard:    { zeichen: ["\ud83c\udfb1"], wie: 5, klasse: "umarmen" },
@@ -28194,9 +28277,16 @@
   /* Die Richtung vom Werfenden zum Getroffenen, als Einheitsvektor.
      Ohne Werfenden (es gilt allen) kommt es von schraeg oben links —
      das sieht immer noch nach Wurf aus und nie nach Zufall. */
+  /* Der Name dessen, der die gerade gezeichnete Wirkung geschickt hat.
+     Er wird im Verteiler gesetzt (siehe lcWirkung) und gilt genau so
+     lange, wie die Zeichnung aufgebaut wird. */
+  let lcWurfVon = "";
   function lcWurfRichtung(platz) {
     const karte = document.getElementById("livechatKarte");
-    const quelle = karte && karte.querySelector(".lc-platz-ich");
+    /* Erst der wirkliche Absender, dann — wenn er nicht (mehr) im Raum
+       sitzt — der eigene Platz wie frueher. */
+    const quelle = (lcWurfVon ? lcPlatzMitNamen(lcWurfVon) : null)
+      || (karte && karte.querySelector(".lc-platz-ich"));
     if (!quelle || quelle === platz) return { x: -0.74, y: -0.67 };
     const a = quelle.getBoundingClientRect(), b = platz.getBoundingClientRect();
     const dx = (a.left + a.width / 2) - (b.left + b.width / 2);
@@ -28331,19 +28421,45 @@
       schicht.style.setProperty("--ey", (r.y * 38).toFixed(1) + "%");
       schicht.innerHTML =
         '<svg class="lc-pfeil-bild" viewBox="0 0 100 28">'
-        /* Die Befiederung: drei Federn, schraeg nach hinten, wie an
-           einem echten Pfeil. Kein Dreieck mehr. */
-        + '<path d="M2 14 L16 6 L20 10 L10 14 L20 18 L16 22 Z" fill="#6fa8dc"'
-        + ' stroke="#3f6f9f" stroke-width="1.4" stroke-linejoin="round"/>'
-        + '<path d="M14 7 L26 5 L28 11 L18 12 Z" fill="#8fc0e8" stroke="#3f6f9f" stroke-width="1.2"/>'
-        + '<path d="M14 21 L26 23 L28 17 L18 16 Z" fill="#8fc0e8" stroke="#3f6f9f" stroke-width="1.2"/>'
+        /* GEMELDET, jetzt zum dritten Mal: „Dann ist der Pfeil immer
+           noch nicht richtig. Das, was auf das Bild aufkommt, soll der
+           Saugknopf sein; hinten soll diese typische Pfeilfeder dran
+           sein, nicht die Spitze — sondern wie ein Pfeil aussieht am
+           anderen Ende."
+
+           Und er hat wieder recht, auch wenn die Reihenfolge stimmte:
+           die „Feder" war ein Zackenumriss, und ein Zacken SIEHT aus
+           wie eine Pfeilspitze — egal, wie er gemeint ist. Eine echte
+           Befiederung besteht aus drei Teilen, und die sind jetzt
+           einzeln gezeichnet:
+             · die KERBE (Nock) ganz hinten, ein offenes V,
+             · zwei VANES, schraeg am Schaft liegend, mit gerader
+               Vorderkante und ausgeschnittener Hinterkante,
+             · und die Wicklung, die sie haelt.
+           Vorn sitzt ein Saugnapf, der auch wie einer aussieht: ein
+           Becher, der sich nach vorn oeffnet, mit Rand und Stiel. */
+        /* Die Kerbe ganz hinten — dort liegt die Sehne an. */
+        + '<path d="M2 9 L9 14 L2 19" fill="none" stroke="#6b7b8c"'
+        + ' stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
+        /* Die beiden Federn: vorn gerade, hinten ausgeschnitten. */
+        + '<path d="M9 13 L27 7 L31 10 L13 14 Z" fill="#8fc0e8"'
+        + ' stroke="#3f6f9f" stroke-width="1.1" stroke-linejoin="round"/>'
+        + '<path d="M9 15 L27 21 L31 18 L13 14 Z" fill="#6fa8dc"'
+        + ' stroke="#3f6f9f" stroke-width="1.1" stroke-linejoin="round"/>'
+        /* Die Wicklung, die die Federn haelt. */
+        + '<rect x="29" y="11" width="4" height="6" rx="1.5" fill="#3f6f9f"/>'
         /* Der Schaft. */
-        + '<rect x="20" y="11" width="58" height="6" rx="3" fill="#e8b86b"'
-        + ' stroke="#a97f38" stroke-width="1.6"/>'
-        /* Der Saugnapf ganz vorn — die Oeffnung zeigt nach rechts,
-           also genau auf das Bild zu. */
-        + '<path class="lc-pfeil-napf" d="M76 4 C90 4 97 9 97 14 C97 19 90 24 76 24 Z"'
-        + ' fill="#d94f4f" stroke="#8f2f2f" stroke-width="2" stroke-linejoin="round"/>'
+        + '<rect x="12" y="12.2" width="60" height="3.6" rx="1.8" fill="#e8b86b"'
+        + ' stroke="#a97f38" stroke-width="1.2"/>'
+        /* Der Stiel des Napfes. */
+        + '<rect x="70" y="11" width="8" height="6" rx="2" fill="#b33c3c"/>'
+        /* Und der Saugnapf: ein Becher, der sich nach RECHTS oeffnet —
+           also auf das Bild zu. Die Oeffnung ist die flache Kante
+           vorn, hinten laeuft er zum Stiel zusammen. */
+        + '<path class="lc-pfeil-napf" d="M77 7 C88 7 95 10 95 14 C95 18 88 21 77 21 Z"'
+        + ' fill="#d94f4f" stroke="#8f2f2f" stroke-width="1.8" stroke-linejoin="round"/>'
+        + '<path d="M95 8.5 C97 10.5 97 17.5 95 19.5" fill="none" stroke="#8f2f2f"'
+        + ' stroke-width="2.2" stroke-linecap="round"/>'
         + "</svg>"
         + '<span class="lc-pfeil-platsch">PLOPP</span>';
       /* Und der Drill: das getroffene Bild zittert mit dem Pfeil aus. */
@@ -28449,16 +28565,33 @@
       teile.push('<svg class="lc-sog-filter" width="0" height="0" aria-hidden="true" focusable="false">'
         + '<filter id="' + id + '" x="-35%" y="-35%" width="170%" height="170%"'
         + ' color-interpolation-filters="sRGB">'
-        + '<feTurbulence type="turbulence" numOctaves="2" seed="9"'
-        + ' baseFrequency="0.006 0.006" result="wirbel">'
+        /* GEMELDET: „Bei dem Swirl-Effekt sieht es mehr so aus, als
+           wenn du ein Papier zerknuellst … bei dem Swirl-Effekt muss
+           es wie ein Strudel sein."
+           Er hat recht, und der Unterschied steckt in zwei Zahlen:
+             · Die Ausschlagstaerke war viel zu gross (bis 120). Ein
+               so weit verschobener Bildpunkt hat mit seinem Nachbarn
+               nichts mehr zu tun — das ergibt Knitter, keinen Sog.
+               Jetzt hoechstens 26.
+             · Die Frequenz war in beiden Richtungen gleich. Ein
+               Strudel zieht aber in EINE Drehrichtung; deshalb steht
+               x jetzt deutlich hoeher als y (langgezogene Schlieren
+               statt Knautschfalten), und sie wandern waehrend der
+               Drehung.
+           Das Drehen und Einziehen selbst macht ohnehin das Bild
+           (lcSogZiehtR19) — dort ist jetzt mehr Drehung und weniger
+           Sprung. Es liegt weiterhin NICHTS obendrauf: „das soll
+           wirklich nur aus den eigenen Pixeln strudeln." */
+        + '<feTurbulence type="fractalNoise" numOctaves="3" seed="9"'
+        + ' baseFrequency="0.030 0.006" result="wirbel">'
         + '<animate attributeName="baseFrequency" dur="4.2s" fill="freeze"'
-        + ' values="0.004 0.004;0.022 0.010;0.055 0.018;0.055 0.018;0.030 0.012;0.004 0.004"'
+        + ' values="0.014 0.004;0.034 0.006;0.052 0.008;0.052 0.008;0.030 0.006;0.014 0.004"'
         + ' keyTimes="0;0.14;0.31;0.78;0.9;1"/>'
         + "</feTurbulence>"
         + '<feDisplacementMap in="SourceGraphic" in2="wirbel" scale="0"'
         + ' xChannelSelector="R" yChannelSelector="G">'
         + '<animate attributeName="scale" dur="4.2s" fill="freeze"'
-        + ' values="0;22;90;120;0;0;70;0" keyTimes="0;0.12;0.24;0.31;0.34;0.78;0.9;1"/>'
+        + ' values="0;8;20;26;0;0;16;0" keyTimes="0;0.12;0.24;0.31;0.34;0.78;0.9;1"/>'
         + "</feDisplacementMap></filter></svg>");
       /* GEMELDET, jetzt zum dritten Mal: „Der Strudel hat immer noch
          nicht die Original-Pixel in Verwendung, sondern da liegt
@@ -28491,6 +28624,479 @@
       }
     }, 4600, "sog");
   }
+
+  /* --- ZERKNUELLEN ---------------------------------------------------
+     GEWUENSCHT, woertlich: „Bei dem Swirl-Effekt sieht es mehr so aus,
+     als wenn du ein Papier zerknuellst. Das koennen wir uns aber zu
+     Nutze machen, dass wir jemand anderen zuknuellen koennen."
+     Genau das ist dieser Effekt: dieselbe Technik wie beim Strudel,
+     nur mit den ALTEN, viel zu grossen Werten — die sahen nach
+     zerknuelltem Papier aus, und hier ist das richtig. Dazu stauchen
+     sich die Kanten (lcKnuellR29), und am Ende glaettet es sich
+     wieder, als striche jemand das Blatt auseinander. */
+  let lcKnuellZaehler = 0;
+  function lcZerknuellen(wen) {
+    return lcAmPlatz(wen, "lc-knuell", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      const id = "lcKnuellFilter" + (++lcKnuellZaehler);
+      schicht.innerHTML =
+        '<svg class="lc-knuell-filter" width="0" height="0" aria-hidden="true" focusable="false">'
+        + '<filter id="' + id + '" x="-30%" y="-30%" width="160%" height="160%"'
+        + ' color-interpolation-filters="sRGB">'
+        /* Grobes, kantiges Rauschen — Papier knittert in Flaechen,
+           nicht in Wellen. Deshalb turbulence mit wenigen Oktaven
+           und hoher Frequenz. */
+        + '<feTurbulence type="turbulence" numOctaves="2" seed="4"'
+        + ' baseFrequency="0.05 0.05" result="knitter">'
+        + '<animate attributeName="baseFrequency" dur="3.4s" fill="freeze"'
+        + ' values="0.01 0.01;0.06 0.06;0.09 0.09;0.09 0.09;0.03 0.03;0.004 0.004"'
+        + ' keyTimes="0;0.2;0.4;0.62;0.85;1"/>'
+        + "</feTurbulence>"
+        + '<feDisplacementMap in="SourceGraphic" in2="knitter" scale="0"'
+        + ' xChannelSelector="R" yChannelSelector="G">'
+        + '<animate attributeName="scale" dur="3.4s" fill="freeze"'
+        + ' values="0;60;120;120;40;0" keyTimes="0;0.2;0.4;0.62;0.85;1"/>'
+        + "</feDisplacementMap></filter></svg>";
+      if (kreis) {
+        kreis.classList.remove("lc-geknuellt");
+        void kreis.offsetWidth;
+        kreis.style.filter = "url(#" + id + ")";
+        kreis.classList.add("lc-geknuellt");
+        setTimeout(() => {
+          kreis.classList.remove("lc-geknuellt");
+          kreis.style.filter = "";
+        }, 3400);
+      }
+    }, 3600, "knuell");
+  }
+
+  /* =================================================================
+     DIE SCHNEEKUGEL
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Dann moechte ich noch einen Effekt haben, der
+     Schneekugel heisst: unten sind kleine Figuren, ein Baeumchen, ein
+     Haeuschen … erst schuettelt man das Profilbild durch, dann fallen
+     die Schneeflocken und unten sind diese kleinen Haeuser, aber das
+     Profilbild bleibt trotzdem noch im Hintergrund zu sehen."
+
+     Drei Dinge also, in dieser Reihenfolge: schuetteln (1 s), dann
+     rieseln (6 s), und die Landschaft steht die ganze Zeit unten
+     drin. Alles INNEN — die Kugel ist das Profilbild selbst,
+     deshalb liegt es in lcZpBlende (das haelt es im runden
+     Ausschnitt). Nur der Sockel und der Glanz duerfen ueber den Rand
+     hinaus; und weil nichts das Bild zudeckt, bleibt es „trotzdem
+     noch im Hintergrund zu sehen".
+     ================================================================= */
+  function lcSchneekugel(wen) {
+    return lcAmPlatz(wen, "lc-schneekugel", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      const blende = lcZpBlende(schicht);
+      /* Die kleine Landschaft: zwei Haeuschen und zwei Tannen, alles
+         gezeichnet — kein Emoji, das auf jedem Geraet anders
+         aussieht. Sie steht auf einer Schneewehe. */
+      const land =
+        '<svg class="lc-sk-land" viewBox="0 0 100 34" preserveAspectRatio="none"'
+        + ' aria-hidden="true" focusable="false">'
+        + '<path class="lc-sk-wehe" d="M0 34 L0 22 Q14 15 27 20 Q42 26 58 18'
+        + ' Q74 10 88 19 Q95 23 100 21 L100 34 Z"/>'
+        /* Haus links: Wand, Dach, Fenster, Schornstein */
+        + '<g class="lc-sk-haus">'
+        + '<rect x="14" y="18" width="15" height="11" rx="1"/>'
+        + '<path class="lc-sk-dach" d="M11 19 L21.5 10 L32 19 Z"/>'
+        + '<rect class="lc-sk-schlot" x="26" y="11" width="3" height="5"/>'
+        + '<rect class="lc-sk-licht" x="18" y="21" width="4" height="4"/>'
+        + '<rect class="lc-sk-tuer" x="24" y="22" width="3.4" height="7"/>'
+        + "</g>"
+        /* Haus rechts, kleiner und weiter hinten */
+        + '<g class="lc-sk-haus lc-sk-fern">'
+        + '<rect x="70" y="20" width="11" height="9" rx="1"/>'
+        + '<path class="lc-sk-dach" d="M68 21 L75.5 14 L83 21 Z"/>'
+        + '<rect class="lc-sk-licht" x="73" y="23" width="3" height="3"/>'
+        + "</g>"
+        /* Zwei Tannen, je drei Kraenze und ein Stamm */
+        + '<g class="lc-sk-tanne">'
+        + '<rect x="45.2" y="24" width="1.6" height="5"/>'
+        + '<path d="M46 9 L51 17 L41 17 Z"/><path d="M46 14 L52.5 22 L39.5 22 Z"/>'
+        + '<path d="M46 18 L54 26 L38 26 Z"/>'
+        + "</g>"
+        + '<g class="lc-sk-tanne lc-sk-fern">'
+        + '<rect x="89.4" y="25" width="1.2" height="4"/>'
+        + '<path d="M90 15 L94 21 L86 21 Z"/><path d="M90 19 L95 26 L85 26 Z"/>'
+        + "</g>"
+        + "</svg>";
+      /* Die Flocken. Zwei Sorten: grosse vorn, kleine hinten —
+         sonst sieht es aus wie ein Gitter. */
+      let flocken = "";
+      for (let i = 0; i < 34; i++) {
+        const gross = i % 3 === 0;
+        flocken += '<i class="lc-sk-flocke' + (gross ? " lc-sk-gross" : "") + '"'
+          + ' style="left:' + (2 + Math.random() * 96).toFixed(1) + "%;"
+          + "--fall:" + (2.6 + Math.random() * 3.4).toFixed(2) + "s;"
+          + "--seit:" + (Math.random() * 26 - 13).toFixed(0) + "px;"
+          + "--spaet:" + (Math.random() * 2.2).toFixed(2) + "s;"
+          + "--matt:" + (0.45 + Math.random() * 0.55).toFixed(2) + '"></i>';
+      }
+      blende.innerHTML = land + '<span class="lc-sk-schnee">' + flocken + "</span>";
+      /* Glas und Sockel gehoeren nach AUSSEN — eine Kugel steht auf
+         etwas, und das Licht liegt auf ihr drauf. */
+      schicht.innerHTML = '<span class="lc-sk-glas"></span>'
+                        + '<span class="lc-sk-sockel"></span>';
+      if (kreis) {
+        kreis.classList.remove("lc-geschuettelt");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-geschuettelt");
+        setTimeout(() => kreis.classList.remove("lc-geschuettelt"), 1100);
+      }
+    }, 7200, "schneekugel");
+  }
+
+  /* =================================================================
+     DAS WHITEBOARD
+     -----------------------------------------------------------------
+     GEWUENSCHT: „Ich möchte ein Whiteboard implementieren, und zwar
+     so, dass in dem Moment sich der Fokus ändert, sobald ich das
+     Whiteboard einschalte, dass die Plätze, die oben sind, nach unten
+     wandern und das Whiteboard nach oben … Ich möchte das Layout
+     nicht erweitern … man kann in das Whiteboard Bilder einladen zum
+     Lernen … und dann kann ich an jeder Stelle im Bild eine
+     Markierung zeichnen … oder ein Pointer, dass die Markierung dort
+     blinkt … dass ich den Leuten das reinzoomen kann … vielleicht
+     kannst du auch die Person oben lassen, die Plätze, und das
+     einfach nur mit dem Whiteboard verdecken, oder du findest halt ne
+     schlaue Strategie."
+
+     DIE STRATEGIE: nichts wird laenger. Die Tafel legt sich dorthin,
+     wo die Sitzreihe steht, und die Sitzreihe schrumpft auf einen
+     schmalen Streifen darunter (Klasse lc-tafel-an am Kasten). Der
+     Kasten bleibt also genau so hoch wie vorher — „Layout nicht
+     erweitern" — und die Leute bleiben sichtbar, nur kleiner.
+
+     WAS UEBER DIE LEITUNG GEHT: jeder Strich, jedes Bild, jeder
+     Zeiger und jeder Blick (Zoom) als eigene kleine Nachricht
+     (art „tafel", siehe livechat.js). Die Punkte sind auf 0…1
+     gerechnet, nie in Bildpunkten — sonst laege der Strich auf einem
+     schmalen Telefon woanders als auf einem breiten Schirm.
+     ================================================================= */
+  const LC_TAFEL_FARBEN = ["#e2312a", "#1b6ef3", "#12a150", "#f5b301", "#1d2430", "#ffffff"];
+  let lcTafelZuege = [];          /* alle Striche, fuer Nachzuegler */
+  let lcTafelBildDaten = "";      /* das geladene Bild, fuer Nachzuegler */
+  let lcTafelBlick = { z: 1, x: 0.5, y: 0.5 };
+  let lcTafelWerkzeug = "stift";
+  let lcTafelFarbe = LC_TAFEL_FARBEN[0];
+  let lcTafelMein = false;        /* habe ICH sie aufgemacht? */
+  let lcTafelZeigerAus = 0;
+
+  function lcTafelKasten() { return document.getElementById("livechatKarte"); }
+
+  /* Die Tafel wird erst gebaut, wenn sie gebraucht wird — wer sie nie
+     benutzt, traegt auch keine Leinwand mit sich herum. */
+  function lcTafelBauen() {
+    const karte = lcTafelKasten();
+    if (!karte) return null;
+    let tafel = document.getElementById("lcTafel");
+    if (tafel) return tafel;
+    const plaetze = karte.querySelector("#lcPlaetze, .lc-plaetze");
+    if (!plaetze) return null;
+    tafel = document.createElement("div");
+    tafel.className = "lc-tafel";
+    tafel.id = "lcTafel";
+    /* SIE LEGT SICH IN DIE SITZREIHE HINEIN, nicht darueber und
+       nicht davor: als Kind von #lcPlaetze deckt sie genau deren
+       Flaeche ab (position: absolute, siehe korrekturen.css). Damit
+       kann der Kasten gar nicht hoeher werden — „Ich moechte das
+       Layout nicht erweitern" ist so nicht eine Absicht, sondern
+       eine Bauart. Die Plaetze schrumpfen darunter auf einen
+       Streifen und bleiben sichtbar. */
+    tafel.innerHTML =
+      '<div class="lc-tafel-blatt" id="lcTafelBlatt">'
+      + '<img class="lc-tafel-bild" id="lcTafelBild" alt="" hidden>'
+      + '<canvas class="lc-tafel-stift" id="lcTafelStift"></canvas>'
+      + '<span class="lc-tafel-zeiger" id="lcTafelZeiger" hidden></span>'
+      + "</div>"
+      + '<div class="lc-tafel-leiste">'
+      + '<button type="button" class="lc-tafel-knopf lc-tafel-an" data-tafel="stift" title="Zeichnen">✏️</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="zeiger" title="Zeigen — die Markierung blinkt">🔦</button>'
+      + '<span class="lc-tafel-farben" id="lcTafelFarben"></span>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="bild" title="Ein Bild hineinladen">🖼️</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="rein" title="Heranholen">➕</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="raus" title="Wieder kleiner">➖</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="leer" title="Alles wegwischen">🧽</button>'
+      + '<button type="button" class="lc-tafel-knopf lc-tafel-zu" data-tafel="aus" title="Whiteboard zumachen">✕</button>'
+      + '<input type="file" accept="image/*" id="lcTafelDatei" hidden>'
+      + "</div>";
+    plaetze.appendChild(tafel);
+
+    /* Die Farbtupfer */
+    const farben = tafel.querySelector("#lcTafelFarben");
+    LC_TAFEL_FARBEN.forEach((f) => {
+      const k = document.createElement("button");
+      k.type = "button";
+      k.className = "lc-tafel-farbe" + (f === lcTafelFarbe ? " lc-tafel-an" : "");
+      k.style.background = f;
+      k.dataset.farbe = f;
+      k.title = "Farbe";
+      k.addEventListener("click", () => {
+        lcTafelFarbe = f;
+        farben.querySelectorAll(".lc-tafel-farbe")
+              .forEach((x) => x.classList.toggle("lc-tafel-an", x.dataset.farbe === f));
+        lcTafelWerkzeugSetzen("stift");
+      });
+      farben.appendChild(k);
+    });
+
+    tafel.querySelectorAll("[data-tafel]").forEach((k) => {
+      k.addEventListener("click", () => lcTafelKnopf(k.dataset.tafel));
+    });
+    const datei = tafel.querySelector("#lcTafelDatei");
+    datei.addEventListener("change", () => {
+      const f = datei.files && datei.files[0];
+      datei.value = "";
+      if (f) lcTafelBildLaden(f);
+    });
+    lcTafelStiftEinhaengen();
+    return tafel;
+  }
+
+  function lcTafelWerkzeugSetzen(was) {
+    lcTafelWerkzeug = was;
+    const tafel = document.getElementById("lcTafel");
+    if (!tafel) return;
+    tafel.querySelectorAll('[data-tafel="stift"], [data-tafel="zeiger"]').forEach((k) => {
+      k.classList.toggle("lc-tafel-an", k.dataset.tafel === was);
+    });
+  }
+
+  function lcTafelKnopf(was) {
+    if (was === "stift" || was === "zeiger") return lcTafelWerkzeugSetzen(was);
+    if (was === "bild") {
+      const d = document.getElementById("lcTafelDatei");
+      if (d) d.click();
+      return;
+    }
+    if (was === "rein" || was === "raus") {
+      /* „dass ich den Leuten das reinzoomen kann" — der Blick gilt
+         fuer alle, sonst zeigt man auf etwas, das der andere gar
+         nicht vor sich hat. */
+      const z = Math.min(4, Math.max(1, lcTafelBlick.z * (was === "rein" ? 1.4 : 1 / 1.4)));
+      lcTafelBlickSetzen({ z: z, x: lcTafelBlick.x, y: lcTafelBlick.y }, true);
+      return;
+    }
+    if (was === "leer") {
+      lcTafelZuege = [];
+      lcTafelMalenNeu();
+      lcTafelSenden({ t: "leer" });
+      return;
+    }
+    if (was === "aus") {
+      try { LiveChat.schreiben("/tafel aus"); } catch (e) { lcTafelZeigen(false); }
+    }
+  }
+
+  /* --- DIE LEINWAND ------------------------------------------------- */
+  function lcTafelLeinwand() { return document.getElementById("lcTafelStift"); }
+
+  function lcTafelGroesseStellen() {
+    const c = lcTafelLeinwand();
+    if (!c) return;
+    const kasten = c.getBoundingClientRect();
+    const dp = Math.min(2, window.devicePixelRatio || 1);
+    const b = Math.max(1, Math.round(kasten.width * dp));
+    const h = Math.max(1, Math.round(kasten.height * dp));
+    if (c.width !== b || c.height !== h) { c.width = b; c.height = h; lcTafelMalenNeu(); }
+  }
+
+  /* Alle Striche noch einmal zeichnen — nach dem Drehen des Geraets,
+     nach dem Leeren, nach dem Nachreichen fuer einen Nachzuegler. */
+  function lcTafelMalenNeu() {
+    const c = lcTafelLeinwand();
+    if (!c) return;
+    const g = c.getContext("2d");
+    g.clearRect(0, 0, c.width, c.height);
+    lcTafelZuege.forEach((zug) => lcTafelZugMalen(g, zug));
+  }
+
+  function lcTafelZugMalen(g, zug) {
+    const c = lcTafelLeinwand();
+    if (!c || !zug || !zug.p || zug.p.length < 1) return;
+    g.save();
+    g.strokeStyle = zug.f || "#e2312a";
+    g.lineWidth = Math.max(1.5, (zug.d || 0.006) * c.width);
+    g.lineCap = "round";
+    g.lineJoin = "round";
+    g.beginPath();
+    zug.p.forEach((pt, i) => {
+      const x = pt[0] * c.width, y = pt[1] * c.height;
+      if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    });
+    if (zug.p.length === 1) {
+      /* Ein einzelner Tipp ist ein Punkt, kein Strich. */
+      g.lineTo(zug.p[0][0] * c.width + 0.1, zug.p[0][1] * c.height + 0.1);
+    }
+    g.stroke();
+    g.restore();
+  }
+
+  function lcTafelStiftEinhaengen() {
+    const c = lcTafelLeinwand();
+    if (!c || c.dataset.lcBereit === "1") return;
+    c.dataset.lcBereit = "1";
+    let malt = false, punkte = [];
+    const stelle = (ev) => {
+      const r = c.getBoundingClientRect();
+      return [Math.min(1, Math.max(0, (ev.clientX - r.left) / (r.width || 1))),
+              Math.min(1, Math.max(0, (ev.clientY - r.top) / (r.height || 1)))];
+    };
+    c.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault();
+      if (lcTafelWerkzeug === "zeiger") {
+        const p = stelle(ev);
+        lcTafelZeigerSetzen(p[0], p[1]);
+        lcTafelSenden({ t: "zeiger", x: p[0], y: p[1] });
+        return;
+      }
+      malt = true;
+      punkte = [stelle(ev)];
+      try { c.setPointerCapture(ev.pointerId); } catch (e) {}
+    });
+    c.addEventListener("pointermove", (ev) => {
+      if (!malt) return;
+      const p = stelle(ev);
+      const vor = punkte[punkte.length - 1];
+      /* Zu dichte Punkte bringen nichts und blaehen die Nachricht auf. */
+      if (vor && Math.abs(p[0] - vor[0]) < 0.004 && Math.abs(p[1] - vor[1]) < 0.004) return;
+      punkte.push(p);
+      if (punkte.length > 400) punkte = punkte.slice(-400);
+      const g = c.getContext("2d");
+      lcTafelZugMalen(g, { p: punkte.slice(-2), f: lcTafelFarbe, d: 0.006 });
+    });
+    const schluss = () => {
+      if (!malt) return;
+      malt = false;
+      if (!punkte.length) return;
+      const zug = { p: punkte.map((p) => [Number(p[0].toFixed(4)), Number(p[1].toFixed(4))]),
+                    f: lcTafelFarbe, d: 0.006 };
+      lcTafelZuege.push(zug);
+      if (lcTafelZuege.length > 400) lcTafelZuege = lcTafelZuege.slice(-400);
+      lcTafelSenden({ t: "strich", zug: zug });
+      punkte = [];
+    };
+    c.addEventListener("pointerup", schluss);
+    c.addEventListener("pointercancel", schluss);
+    c.addEventListener("pointerleave", schluss);
+    window.addEventListener("resize", () => lcTafelGroesseStellen());
+  }
+
+  /* --- ZEIGER, BLICK, BILD ------------------------------------------ */
+  function lcTafelZeigerSetzen(x, y) {
+    const z = document.getElementById("lcTafelZeiger");
+    if (!z) return;
+    z.hidden = false;
+    z.style.left = (x * 100).toFixed(2) + "%";
+    z.style.top = (y * 100).toFixed(2) + "%";
+    z.classList.remove("lc-tafel-blinkt");
+    void z.offsetWidth;
+    z.classList.add("lc-tafel-blinkt");
+    clearTimeout(lcTafelZeigerAus);
+    lcTafelZeigerAus = setTimeout(() => { z.hidden = true; }, 9000);
+  }
+
+  function lcTafelBlickSetzen(blick, senden) {
+    lcTafelBlick = { z: Math.min(4, Math.max(1, Number(blick.z) || 1)),
+                     x: Math.min(1, Math.max(0, Number(blick.x))) || 0.5,
+                     y: Math.min(1, Math.max(0, Number(blick.y))) || 0.5 };
+    const blatt = document.getElementById("lcTafelBlatt");
+    if (blatt) {
+      blatt.style.setProperty("--tz", lcTafelBlick.z.toFixed(3));
+      blatt.style.transformOrigin = (lcTafelBlick.x * 100).toFixed(1) + "% "
+                                  + (lcTafelBlick.y * 100).toFixed(1) + "%";
+    }
+    if (senden) lcTafelSenden({ t: "blick", z: lcTafelBlick.z, x: lcTafelBlick.x, y: lcTafelBlick.y });
+  }
+
+  function lcTafelBildSetzen(daten) {
+    lcTafelBildDaten = String(daten || "");
+    const b = document.getElementById("lcTafelBild");
+    if (!b) return;
+    if (!lcTafelBildDaten) { b.hidden = true; b.removeAttribute("src"); return; }
+    b.src = lcTafelBildDaten;
+    b.hidden = false;
+  }
+
+  function lcTafelBildLaden(datei) {
+    /* Dasselbe Verkleinern wie bei einem Bild im Chat — ein Foto aus
+       der Kamera hat 4 MB und passt durch keine Leitung. */
+    let p = null;
+    try { p = LiveChat.bildKlein ? LiveChat.bildKlein(datei, 1200, 220000) : null; } catch (e) { p = null; }
+    if (!p) { try { showToast("Dieses Gerät kann das Bild nicht verkleinern."); } catch (e) {} return; }
+    p.then((daten) => {
+      lcTafelBildSetzen(daten);
+      lcTafelSenden({ t: "bild", q: daten });
+    }).catch((err) => {
+      try { showToast("🚧 " + (err && err.message ? err.message : "Das Bild ging nicht.")); } catch (e) {}
+    });
+  }
+
+  function lcTafelSenden(d) {
+    try { if (LiveChat.tafelSenden) LiveChat.tafelSenden(d); } catch (e) {}
+  }
+
+  /* --- AUF UND ZU ---------------------------------------------------- */
+  function lcTafelZeigen(an, von) {
+    const karte = lcTafelKasten();
+    if (!karte) return false;
+    if (an) {
+      const tafel = lcTafelBauen();
+      if (!tafel) return false;
+      karte.classList.add("lc-tafel-an");
+      tafel.hidden = false;
+      /* Wer sie aufmacht, ist der, der Nachzueglern den Stand
+         nachreicht — siehe DMA_TAFEL_STAND. */
+      let ich = "";
+      try { ich = (LiveChat.lage() || {}).ichName || ""; } catch (e) {}
+      if (von && ich && String(von).trim().toLowerCase() === ich.trim().toLowerCase()) lcTafelMein = true;
+      setTimeout(() => { lcTafelGroesseStellen(); lcTafelMalenNeu(); }, 60);
+      setTimeout(() => lcTafelGroesseStellen(), 420);
+    } else {
+      karte.classList.remove("lc-tafel-an");
+      const tafel = document.getElementById("lcTafel");
+      if (tafel) tafel.hidden = true;
+      lcTafelMein = false;
+    }
+    return true;
+  }
+
+  /* Was von aussen hereinkommt. Die Nachricht ist klein und kommt oft
+     — deshalb steht hier kein Neuaufbau, sondern nur das Noetige. */
+  window.DMA_TAFEL = function (d, von, name) {
+    if (!d || typeof d !== "object") return;
+    if (d.t === "strich" && d.zug) {
+      lcTafelZuege.push(d.zug);
+      if (lcTafelZuege.length > 400) lcTafelZuege = lcTafelZuege.slice(-400);
+      const c = lcTafelLeinwand();
+      if (c) lcTafelZugMalen(c.getContext("2d"), d.zug);
+      return;
+    }
+    if (d.t === "zeiger") { lcTafelZeigerSetzen(Number(d.x) || 0, Number(d.y) || 0); return; }
+    if (d.t === "blick") { lcTafelBlickSetzen(d, false); return; }
+    if (d.t === "bild") { lcTafelBildSetzen(d.q || ""); return; }
+    if (d.t === "leer") { lcTafelZuege = []; lcTafelMalenNeu(); return; }
+    if (d.t === "stand") {
+      /* Der ganze Stand fuer einen, der gerade erst dazugekommen ist. */
+      lcTafelZeigen(true, "");
+      lcTafelBildSetzen(d.q || "");
+      lcTafelZuege = Array.isArray(d.zuege) ? d.zuege.slice(-400) : [];
+      if (d.blick) lcTafelBlickSetzen(d.blick, false);
+      setTimeout(() => { lcTafelGroesseStellen(); lcTafelMalenNeu(); }, 80);
+    }
+  };
+  /* Nur wer die Tafel aufgemacht hat, reicht sie nach — sonst schickten
+     acht Geraete denselben Stand. */
+  window.DMA_TAFEL_STAND = function () {
+    if (!lcTafelMein) return null;
+    const karte = lcTafelKasten();
+    if (!karte || !karte.classList.contains("lc-tafel-an")) return null;
+    return { t: "stand", q: lcTafelBildDaten, zuege: lcTafelZuege.slice(-400), blick: lcTafelBlick };
+  };
 
   /* --- DIE TROMMEL -------------------------------------------------- */
   function lcTrommel(wen) {
@@ -29295,6 +29901,151 @@
     return true;
   }
 
+  /* =================================================================
+     GEMEINSAM FAHREN — ZU ZWEIT AUF EINEM RAD
+     -----------------------------------------------------------------
+     GEWUENSCHT: „wenn ich mit jemandem gemeinsam fahren will, dann
+     kriege ich sein Profilbild an und sage dann Fahrrad oder so und
+     dann fahren wir einfach weg."
+
+     Also drei Abschnitte: sein Bild rollt zu mir heran und haengt
+     sich an (das „Ankuppeln"), dann rollen wir beide denselben Weg,
+     und am Ende sitzt jeder auf einem eigenen Platz — nebeneinander,
+     dort, wo wir angekommen sind.
+
+     Wer welchen Platz nimmt, entscheidet jedes Geraet nur fuer sich
+     selbst: der Fahrende nimmt das Ziel, der Mitfahrende den Platz
+     daneben. Sonst setzte ein Geraet den anderen um.
+     ================================================================= */
+  function lcGemeinsam(wen, von) {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return false;
+    const gitter = lcPlatzGitter();
+    if (!gitter.length) return false;
+    const ab = gitter.find((p) => p.el === (lcPlatzMitNamen(von)
+      || karte.querySelector(".lc-platz-ich")));
+    const mit = gitter.find((p) => p.el === lcPlatzMitNamen(wen));
+    if (!ab || !mit || ab === mit) return false;
+    const frei = gitter.filter((p) => p.frei);
+    if (frei.length < 2) {
+      lcWegAbsage("Zu zweit braucht ihr zwei freie Plätze — so viele sind nicht frei.");
+      return true;
+    }
+    /* „dann fahren wir einfach weg": das Ziel ist der freie Platz, der
+       am weitesten weg ist — eine Fahrt soll eine Fahrt sein. Er
+       braucht einen freien Nachbarn, sonst muss der Mitfahrende am
+       Ende absteigen und danebenstehen. */
+    const weit = frei.map((p) => ({ p: p, l: Math.hypot(p.x - ab.x, p.y - ab.y) }))
+                     .sort((a, b) => b.l - a.l).map((x) => x.p);
+    let ziel = null, zielMit = null;
+    for (const z of weit) {
+      const n = frei.find((p) => p !== z
+        && Math.abs(p.reihe - z.reihe) + Math.abs(p.spalte - z.spalte) === 1);
+      if (n && lcWegSuchen(gitter, ab.nr, z.nr, false)) { ziel = z; zielMit = n; break; }
+    }
+    if (!ziel) {
+      lcWegAbsage("Kein freies Platzpaar erreichbar — zu zweit kommt ihr da nicht hin.");
+      return true;
+    }
+    const weg = lcWegSuchen(gitter, ab.nr, ziel.nr, false);
+    if (!weg) return false;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
+
+    const kreisAb = ab.el.querySelector(".lc-kreis");
+    const kreisMit = mit.el.querySelector(".lc-kreis");
+    if (!kreisAb || !kreisMit) return false;
+    const punkte = lcWegPunkte(weg);
+    const d = kreisAb.offsetWidth || 64;
+    const felder = punkte.length - 1;
+    const ankuppeln = 760;                       /* er rollt zu mir */
+    const jeFeld = 520;
+    const hin = ankuppeln + felder * jeFeld;
+    const absteigen = 520;                       /* und wieder runter */
+    const dauer = hin + 260 + absteigen;
+    const bei = (ms) => Math.min(1, ms / dauer);
+
+    /* Die Sitzseite: der Mitfahrende haengt hinten dran, also
+       entgegen der ersten Fahrtrichtung. */
+    const erst = punkte[1] || { x: 1, y: 0 };
+    const rl = Math.hypot(erst.x, erst.y) || 1;
+    const hx = -(erst.x / rl) * d * 0.60, hy = -(erst.y / rl) * d * 0.60 - d * 0.10;
+
+    /* ---- DER FAHRENDE ---- */
+    const altZ = ab.el.style.zIndex, altZM = mit.el.style.zIndex;
+    ab.el.style.zIndex = "7"; mit.el.style.zIndex = "7";
+    lcPlatzUnterwegs(ab.el, true);
+    lcPlatzUnterwegs(mit.el, true);
+    let dreh = 0;
+    const bilderA = [{ transform: "translate(0px, 0px) rotate(0deg)", offset: 0 },
+                     { transform: "translate(0px, 0px) rotate(0deg)", offset: bei(ankuppeln) }];
+    punkte.forEach((p, i) => {
+      const vor = punkte[i - 1];
+      if (vor) {
+        const stueck = Math.hypot(p.x - vor.x, p.y - vor.y);
+        dreh += (stueck / (Math.PI * d)) * 360 * (p.x < vor.x ? -1 : 1);
+      }
+      bilderA.push({ transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1)
+        + "px) rotate(" + dreh.toFixed(1) + "deg)", offset: bei(ankuppeln + i * jeFeld) });
+    });
+    const eA = punkte[punkte.length - 1];
+    const stellA = (dd) => "translate(" + eA.x.toFixed(1) + "px, " + eA.y.toFixed(1)
+      + "px) rotate(" + dd.toFixed(1) + "deg)";
+    bilderA.push({ transform: stellA(dreh + (eA.x < 0 ? -9 : 9)), offset: bei(hin + 90) });
+    bilderA.push({ transform: stellA(dreh), offset: 1 });
+
+    /* ---- DER MITFAHRENDE ----
+       Alles relativ zu SEINEM Platz: erst herueber zu mir, dann
+       denselben Weg, dann auf den Platz neben mir. */
+    const zuMir = { x: ab.x - mit.x + hx, y: ab.y - mit.y + hy };
+    const bilderM = [
+      { transform: "translate(0px, 0px) rotate(0deg) scale(1)", offset: 0 },
+      { transform: "translate(" + zuMir.x.toFixed(1) + "px, " + zuMir.y.toFixed(1)
+        + "px) rotate(" + (zuMir.x < 0 ? -200 : 200) + "deg) scale(.84)", offset: bei(ankuppeln) }
+    ];
+    punkte.forEach((p, i) => {
+      bilderM.push({ transform: "translate(" + (zuMir.x + p.x).toFixed(1) + "px, "
+        + (zuMir.y + p.y).toFixed(1) + "px) rotate(" + (zuMir.x < 0 ? -200 : 200)
+        + "deg) scale(.84)", offset: bei(ankuppeln + i * jeFeld) });
+    });
+    const abst = { x: zielMit.x - mit.x, y: zielMit.y - mit.y };
+    bilderM.push({ transform: "translate(" + (zuMir.x + eA.x).toFixed(1) + "px, "
+      + (zuMir.y + eA.y).toFixed(1) + "px) rotate(" + (zuMir.x < 0 ? -200 : 200)
+      + "deg) scale(.84)", offset: bei(hin + 120) });
+    bilderM.push({ transform: "translate(" + abst.x.toFixed(1) + "px, " + abst.y.toFixed(1)
+      + "px) rotate(0deg) scale(1)", offset: 1 });
+
+    const zurueck = () => {
+      ab.el.style.zIndex = altZ; mit.el.style.zIndex = altZM;
+      lcPlatzUnterwegs(ab.el, false); lcPlatzUnterwegs(mit.el, false);
+    };
+    let laufA = null, laufM = null;
+    try {
+      laufA = kreisAb.animate(bilderA, { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+      laufM = kreisMit.animate(bilderM, { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+      laufA.oncancel = zurueck;
+    } catch (e) { zurueck(); return false; }
+    setTimeout(() => {
+      zurueck();
+      try { laufA && laufA.cancel(); laufM && laufM.cancel(); } catch (e) {}
+    }, dauer + 700);
+    lcTonZu("fahren");
+
+    /* Und dann sitzt auch jeder wirklich dort — jedes Geraet aber nur
+       fuer sich selbst. */
+    const nehmen = (platzEl, nr) => {
+      if (!platzEl.classList.contains("lc-platz-ich")) return;
+      setTimeout(() => {
+        try {
+          const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(nr) : null;
+          if (erg && erg.ok) { renderLiveChat(); showToast("🚲 " + erg.text); }
+        } catch (e) {}
+      }, dauer - 120);
+    };
+    nehmen(ab.el, ziel.nr);
+    nehmen(mit.el, zielMit.nr);
+    return true;
+  }
+
   /* Eine Absage, die man auch sieht. Sie gehoert nicht in den Chat der
      anderen — es ist meine Fahrt, die nicht geht. */
   function lcWegAbsage(text) {
@@ -29799,6 +30550,52 @@
     }, 3600, "luke");
   }
 
+  /* --- DAS ROLLO UND DIE JALOUSIE -------------------------------------
+     GEWUENSCHT: „Mach bei dem Fenster zwei Versionen: die eine, dass
+     man das Fenster aufmacht, und die andere, dass man das Rollo hoch
+     macht oder die Jalousie aufmacht. Kannst du auch drei Versionen
+     machen."
+
+     Das Fenster gab es schon (lcLuke, jetzt /fenster). Hier sind die
+     anderen beiden, und beide arbeiten IM Bild, nicht darueber:
+       · Das Rollo ist eine Bahn, die von oben herabhaengt und nach
+         oben aufrollt; die Welle oben bleibt sichtbar.
+       · Die Jalousie besteht aus einzelnen Lamellen, die sich erst
+         kippen (dann sieht man streifenweise hindurch) und danach
+         nach oben zusammenfahren. */
+  function lcRollo(wen) {
+    return lcAmPlatz(wen, "lc-rollo", (schicht) => {
+      const blende = lcZpBlende(schicht);
+      blende.innerHTML =
+        '<span class="lc-rollo-bahn">'
+        + '<i class="lc-rollo-naht"></i><i class="lc-rollo-naht"></i>'
+        + '<i class="lc-rollo-griff"></i>'
+        + "</span>"
+        + '<span class="lc-rollo-welle"></span>';
+      /* Auch hier der Effektname, nicht der Ton — „rollo" steht mit
+         3,4 Sekunden im Plan. */
+    }, 3400, "rollo");
+  }
+  function lcLamellen(wen) {
+    return lcAmPlatz(wen, "lc-lamellen", (schicht) => {
+      const blende = lcZpBlende(schicht);
+      let bahnen = "";
+      /* Neun Lamellen fuellen den Kreis, ohne dass eine einzelne zu
+         schmal zum Sehen wird. */
+      for (let i = 0; i < 9; i++) {
+        bahnen += '<i class="lc-lamelle" style="top:' + (i * 11.2).toFixed(1)
+          + "%;animation-delay:" + (i * 0.055).toFixed(3) + 's"></i>';
+      }
+      blende.innerHTML = bahnen + '<span class="lc-lamellen-schnur"></span>';
+      /* GEMESSEN (pruefe-tonschleifen): hier stand „jalousie" — der
+         NAME DES GERAEUSCHS. Der letzte Wert ist aber der Name des
+         EFFEKTS; aus ihm holt sich lcTonZu den Plan. So galt fuer die
+         Lamellen der Plan des Raum-Effekts /jalousie mit 9 Sekunden,
+         waehrend die Animation nach 3,4 zu Ende ist: der Ton lief
+         weiter, obwohl nichts mehr zu sehen war. */
+    }, 3400, "lamellen");
+  }
+
   /* --- DIE SCHALLPLATTE ---------------------------------------------- */
   function lcPlatte(wen) {
     return lcAmPlatz(wen, "lc-platte", (schicht, platz) => {
@@ -30167,13 +30964,40 @@
       blende.innerHTML = dreck;
       /* Und der Arm — er wischt um seinen Drehpunkt unten links,
          genau wie an einer Windschutzscheibe. */
+      /* GEMELDET: „Bei dem Scheibenwischer — der sieht nicht wie ein
+         Scheibenwischer aus. Das sieht wie ein Eiskratzer aus. Ich
+         moechte einen realistischen Scheibenwischer wie beim Auto
+         haben."
+         Er hat recht: ein Balken mit einem Klotz obendrauf ist ein
+         Kratzer. Ein Scheibenwischer besteht aus DREI Teilen, und
+         genau daran erkennt man ihn:
+           · dem ARM, der sich vom Drehpunkt nach oben verjuengt,
+           · dem BLATT, das daneben liegt und NICHT mit ihm
+             verschmilzt — zwischen beiden ist Luft,
+           · den KLAUEN, die beide verbinden, und der Feder am
+             Drehpunkt.
+         Dazu das Gummi als dunkler Streifen an der Scheibe. */
       schicht.insertAdjacentHTML("beforeend",
         '<svg class="lc-wischer-arm" viewBox="0 0 110 110">'
-        + '<circle cx="12" cy="98" r="7" fill="#3b4250"/>'
+        /* Der Drehpunkt mit seiner Mutter. */
+        + '<circle cx="12" cy="98" r="8" fill="#2b313c"/>'
+        + '<circle cx="12" cy="98" r="3.4" fill="#71798a"/>'
         + '<g class="lc-wischer-dreh">'
-        + '<rect x="9" y="22" width="6" height="76" rx="3" fill="#4d5566"/>'
-        + '<rect x="2" y="16" width="20" height="10" rx="4" fill="#2b313c"/>'
-        + '<rect x="0" y="14" width="24" height="5" rx="2.5" fill="#71798a"/>'
+        /* Der Arm: unten breit, oben schmal. */
+        + '<path d="M7 98 L17 98 L31 44 L25 41 Z" fill="#4d5566"'
+        + ' stroke="#2b313c" stroke-width="1.4" stroke-linejoin="round"/>'
+        /* Die Feder am Arm — sie druckt das Blatt an die Scheibe. */
+        + '<path d="M11 86 q5 -3 5 -7 q0 -4 -5 -7" fill="none" stroke="#71798a"'
+        + ' stroke-width="2"/>'
+        /* Die beiden Klauen. */
+        + '<rect x="21" y="38" width="12" height="4" rx="2" transform="rotate(-14 27 40)" fill="#3b4250"/>'
+        + '<rect x="14" y="16" width="12" height="4" rx="2" transform="rotate(-14 20 18)" fill="#3b4250"/>'
+        /* Das Blatt: ein eigener Koerper NEBEN dem Arm. */
+        + '<path d="M20 6 L28 8 L36 50 L28 48 Z" fill="#39404c"'
+        + ' stroke="#22272f" stroke-width="1.2" stroke-linejoin="round"/>'
+        /* Und das Gummi, das die Scheibe wirklich beruehrt. */
+        + '<path d="M22 6 L30 50" fill="none" stroke="#14171c" stroke-width="3"'
+        + ' stroke-linecap="round"/>'
         + "</g></svg>");
     }, 4000, "wischer");
   }
@@ -30310,20 +31134,14 @@
      geraten. Gezeichnet ist es als Comic: ein BH, der herunterrutscht,
      und zwei Kreise darunter. */
   function lcEntbloessung(wen, von) {
-    const karte = document.getElementById("livechatKarte");
-    if (!karte) return false;
-    const gitter = lcPlatzGitter();
-    const abEl = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
-    const zielEl = lcPlatzMitNamen(wen);
-    const ab = gitter.find((p) => p.el === abEl);
-    const zu = gitter.find((p) => p.el === zielEl);
-    if (!ab || !zu || ab.nr === zu.nr) return false;
-    const abstand = Math.abs(ab.reihe - zu.reihe) + Math.abs(ab.spalte - zu.spalte);
-    if (abstand !== 1) {
-      lcWegAbsage("Das geht nur direkt nebeneinander \u2014 "
-        + zu.name + " sitzt zu weit weg.");
-      return true;
-    }
+    /* GEMELDET: „Das mit dem BH soll auf jeden Platz gehen, also nicht
+       nur wenn er neben mir sitzt, sondern ich kann das ueberall
+       machen."
+       Die Nachbarschaftsregel ist damit raus. Sie stammte aus der
+       Ueberlegung, dass man nur erreichen kann, was in Armweite ist —
+       bei einem Hammer stimmt das, hier nicht: das hier ist ein
+       Comic-Gag und braucht keinen Arm. „von" wird trotzdem noch
+       entgegengenommen, damit alte Aufrufe nicht ins Leere laufen. */
     return lcAmPlatz(wen, "lc-entbl", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
@@ -30333,6 +31151,12 @@
         setTimeout(() => kreis.classList.remove("lc-erschrocken"), 3000);
       }
       const blende = lcZpBlende(schicht);
+      /* GEMELDET: „und es soll ein bisschen realistisch aussehen."
+         Ein BH ist kein Bogen aus zwei Halbkreisen: er hat zwei
+         geformte Koerbchen mit einer Naht, ein Mittelteil dazwischen,
+         zwei Traeger, die ueber die Schultern laufen, und einen
+         Spitzenrand. Genau das steht hier — und er faellt jetzt
+         herunter, statt zu verschwinden (siehe .lc-entbl-bh). */
       blende.innerHTML =
         '<span class="lc-entbl-comic">'
         + '<svg viewBox="0 0 100 100" width="100%" height="100%">'
@@ -30342,11 +31166,29 @@
         + '<circle cx="66" cy="56" r="5" fill="#d98f6a"/>'
         + "</svg></span>"
         + '<span class="lc-entbl-bh">'
-        + '<svg viewBox="0 0 100 40" width="100%" height="100%">'
-        + '<path d="M6 8 C6 30 22 36 34 36 C46 36 50 26 50 18 C50 26 54 36 66 36'
-        + ' C78 36 94 30 94 8" fill="#e46fa2" stroke="#b34d7c" stroke-width="3"'
-        + ' stroke-linejoin="round"/>'
-        + '<path d="M6 8 H94" stroke="#b34d7c" stroke-width="4" stroke-linecap="round"/>'
+        + '<svg viewBox="0 0 100 52" width="100%" height="100%">'
+        + '<defs><linearGradient id="lcBhR29" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#f18bb6"/><stop offset="1" stop-color="#cf5c8c"/>'
+        + "</linearGradient></defs>"
+        /* Die beiden Traeger, nach aussen oben. */
+        + '<path d="M16 16 C10 8 8 4 8 0 M84 16 C90 8 92 4 92 0" fill="none"'
+        + ' stroke="#cf5c8c" stroke-width="3.5" stroke-linecap="round"/>'
+        /* Das linke Koerbchen. */
+        + '<path d="M8 14 C8 34 20 44 32 44 C42 44 46 34 46 24 L46 14 Z"'
+        + ' fill="url(#lcBhR29)" stroke="#b34d7c" stroke-width="2.5" stroke-linejoin="round"/>'
+        /* Das rechte, gespiegelt. */
+        + '<path d="M92 14 C92 34 80 44 68 44 C58 44 54 34 54 24 L54 14 Z"'
+        + ' fill="url(#lcBhR29)" stroke="#b34d7c" stroke-width="2.5" stroke-linejoin="round"/>'
+        /* Das Mittelteil zwischen den Koerbchen. */
+        + '<rect x="46" y="14" width="8" height="12" rx="2" fill="#cf5c8c"/>'
+        /* Die Naehte — daran erkennt man ein Koerbchen. */
+        + '<path d="M14 18 C20 30 26 36 32 39 M86 18 C80 30 74 36 68 39"'
+        + ' fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.6"/>'
+        /* Der Spitzenrand oben. */
+        + '<path d="M8 14 H92" stroke="#b34d7c" stroke-width="3" stroke-linecap="round"/>'
+        + '<path d="M10 14 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0'
+        + ' q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0"'
+        + ' fill="none" stroke="#e79ec0" stroke-width="1.6"/>'
         + "</svg></span>";
       schicht.insertAdjacentHTML("beforeend", '<span class="lc-entbl-wort">UPS!</span>');
     }, 3000, "entbloessung");
@@ -30619,16 +31461,21 @@
             void kreis.offsetWidth;
             kreis.classList.add("lc-angebissen");
             lcTonZu("aufessen");
-            /* Bei jedem Biss fallen Kruemel. */
-            for (let k = 0; k < 5; k++) {
+            /* Bei jedem Biss fallen Kruemel.
+               GEMELDET: „Beim Aufessen koennen mehr Kruemel fallen."
+               Aus fuenf werden sechzehn, sie streuen doppelt so weit,
+               fallen etwas versetzt los und driften seitlich weg
+               (--seit) — ein Biss bricht nicht senkrecht. */
+            for (let k = 0; k < 16; k++) {
               const kr = document.createElement("i");
               kr.className = "lc-krumel-stueck";
-              kr.style.left = (stellen[i].x + (Math.random() * 24 - 12)).toFixed(0) + "%";
-              kr.style.setProperty("--gross", (0.5 + Math.random() * 0.8).toFixed(2));
+              kr.style.left = (stellen[i].x + (Math.random() * 48 - 24)).toFixed(0) + "%";
+              kr.style.setProperty("--gross", (0.4 + Math.random() * 0.95).toFixed(2));
               kr.style.setProperty("--kipp", (Math.random() * 360).toFixed(0) + "deg");
-              kr.style.animationDelay = (Math.random() * 0.2).toFixed(2) + "s";
+              kr.style.setProperty("--seit", (Math.random() * 160 - 80).toFixed(0) + "%");
+              kr.style.animationDelay = (Math.random() * 0.45).toFixed(2) + "s";
               blende.appendChild(kr);
-              setTimeout(() => kr.remove(), 1900);
+              setTimeout(() => kr.remove(), 2400);
             }
           }, 360 + i * 620);
         });
@@ -30885,13 +31732,149 @@
      verschwindet dort. Der Weg ist derselbe wie beim Fahren, nur
      rollt hier der andere.
      ================================================================= */
-  function lcBillard(wen, von) {
+  /* =================================================================
+     EINE KUGEL ROLLT — von Platz zu Platz, einmal geschrieben
+     -----------------------------------------------------------------
+     GEMELDET: „Beim Billard soll es so sein, dass zufaellig einer von
+     allen teilnimmt: wenn mehr als zwei Leute teilnehmen, soll die
+     eine Kugel, die man anstoesst, die anderen beeinflussen und einer
+     von denen soll zufaellig in ein leerstehendes Loch fallen."
+
+     Damit rollt jetzt mehr als eine Kugel: die angestossene in den
+     Pulk, und danach die getroffene ins Loch. Dasselbe Rollen dreimal
+     abzuschreiben waere der sichere Weg, es an zwei Stellen zu
+     vergessen — deshalb steht es hier EINMAL.
+       o.warten  Millisekunden, die die Kugel erst liegen bleibt
+       o.rein    true: sie faellt am Ende ins Loch und ist weg
+       o.halt    Bruchteil des letzten Feldes, vor dem sie stehen
+                 bleibt (0.58 = kurz vor der Beruehrung)
+     Zurueck kommt { dauer, ankunft } — „ankunft" ist der Augenblick
+     der Beruehrung, auf den der naechste Stoss wartet. */
+  function lcKugelLauf(gitter, startP, zielP, o) {
+    o = o || {};
+    const kreis = startP && startP.el && startP.el.querySelector(".lc-kreis");
+    if (!kreis || !zielP) return { dauer: 0, ankunft: 0 };
+    const weg = lcWegSuchen(gitter, startP.nr, zielP.nr, true) || [startP, zielP];
+    const punkte = lcWegPunkte(weg);
+    if (o.halt && punkte.length > 1) {
+      const le = punkte[punkte.length - 1], vo = punkte[punkte.length - 2];
+      punkte[punkte.length - 1] = { x: vo.x + (le.x - vo.x) * o.halt,
+                                    y: vo.y + (le.y - vo.y) * o.halt, nr: le.nr };
+    }
+    const durchmesser = kreis.offsetWidth || 64;
+    const warten = o.warten || 0;
+    const jeFeld = o.jeFeld || 300;
+    const rollen = Math.max(1, punkte.length - 1) * jeFeld;
+    const ankunft = warten + rollen;
+    const dauer = ankunft + (o.rein ? 1400 : 760);
+    const bei = (ms) => Math.min(1, ms / dauer);
+    let dreh = 0;
+    const bilder = [{ transform: "translate(0px, 0px) rotate(0deg)", offset: 0 },
+                    { transform: "translate(0px, 0px) rotate(0deg)", offset: bei(warten) }];
+    punkte.forEach((p, i) => {
+      const vor = punkte[i - 1];
+      if (vor) {
+        const stueck = Math.hypot(p.x - vor.x, p.y - vor.y);
+        dreh += (stueck / (Math.PI * durchmesser)) * 360 * (p.x < vor.x ? -1 : 1);
+      }
+      bilder.push({
+        transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1) + "px) rotate("
+          + dreh.toFixed(1) + "deg)",
+        offset: bei(warten + i * jeFeld)
+      });
+    });
+    const e = punkte[punkte.length - 1];
+    if (o.rein) {
+      /* Und hinein: kleiner werden, bis nichts mehr da ist. */
+      bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + (e.y + 6).toFixed(1)
+        + "px) rotate(" + (dreh + 40).toFixed(1) + "deg) scale(.45)", opacity: "1",
+        offset: bei(ankunft + 260) });
+      bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + (e.y + 10).toFixed(1)
+        + "px) rotate(" + (dreh + 90).toFixed(1) + "deg) scale(0)", opacity: "0",
+        offset: bei(ankunft + 460) });
+      bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + (e.y + 10).toFixed(1)
+        + "px) scale(0)", opacity: "0", offset: bei(ankunft + 1000) });
+    } else {
+      /* Nicht gefallen: sie prallt ab und rollt an ihren Platz zurueck. */
+      bilder.push({ transform: "translate(" + (e.x * .62).toFixed(1) + "px, "
+        + (e.y * .62).toFixed(1) + "px) rotate(" + (dreh * .62).toFixed(1) + "deg)",
+        offset: bei(ankunft + 420) });
+    }
+    bilder.push({ transform: "translate(0px, 0px) rotate(0deg) scale(1)", opacity: "1", offset: 1 });
+    const altZ = startP.el.style.zIndex;
+    startP.el.style.zIndex = "6";
+    try {
+      const lauf = kreis.animate(bilder, { duration: dauer, easing: "ease-in-out", fill: "none" });
+      lauf.onfinish = () => { startP.el.style.zIndex = altZ; };
+    } catch (err) { startP.el.style.zIndex = altZ; }
+    setTimeout(() => { startP.el.style.zIndex = altZ; }, dauer + 200);
+    return { dauer: dauer, ankunft: ankunft };
+  }
+
+  /* Die Tasche (das Loch) am Zielplatz zeigen — sie gehoert zum
+     Fallen, nicht zum Stoss, und kommt deshalb erst, wenn die Kugel
+     auch wirklich losrollt. */
+  function lcBillardTasche(platz, wann) {
+    setTimeout(() => {
+      const tasche = document.createElement("span");
+      tasche.className = "lc-billard-tasche";
+      platz.el.appendChild(tasche);
+      setTimeout(() => tasche.remove(), 3000);
+    }, Math.max(0, wann || 0));
+  }
+
+  /* Die Kugeln im Pulk werden nur angestossen: ein Ruck in
+     Stossrichtung, dann liegen sie wieder still. */
+  function lcAngestossen(platz, vonP, wann) {
+    const kreis = platz && platz.el && platz.el.querySelector(".lc-kreis");
+    if (!kreis) return;
+    const dx = platz.x - vonP.x, dy = platz.y - vonP.y;
+    const l = Math.hypot(dx, dy) || 1;
+    setTimeout(() => {
+      kreis.style.setProperty("--ax", (dx / l).toFixed(2));
+      kreis.style.setProperty("--ay", (dy / l).toFixed(2));
+      kreis.classList.remove("lc-angestossen");
+      void kreis.offsetWidth;
+      kreis.classList.add("lc-angestossen");
+      setTimeout(() => kreis.classList.remove("lc-angestossen"), 1000);
+    }, Math.max(0, wann || 0));
+  }
+
+  /* =================================================================
+     BILLARD — IN EIN ANDERES LOCH
+     -----------------------------------------------------------------
+     GEMELDET: „das Billard soll aber dann auf klassischem Weg, dass
+     dieses Profilbild in eins der anderen Plätze wie in ein Loch
+     verschwindet … also praktisch rollt es über die Plätze, das
+     Profilbild richtig in einen anderen Platz hinein, so als wenn das
+     so ein Loch ist … wie beim Billardtisch in dem Loch am
+     Billardtisch."
+
+     Also nicht mehr „faellt an Ort und Stelle um": das getroffene
+     Bild ROLLT ueber die Sitzfelder zu einem freien Platz und
+     verschwindet dort. Der Weg ist derselbe wie beim Fahren, nur
+     rollt hier der andere.
+
+     Und ab drei Leuten am Tisch wird daraus ein richtiger Stoss:
+     die angestossene Kugel rollt in den Pulk, die anderen werden
+     angestossen, und einer von ihnen faellt ins Loch. Wer das ist,
+     wuerfelt NICHT jedes Geraet fuer sich — die Zahl „los" faehrt mit
+     der Nachricht mit (ZUSATZ_FELDER in livechat.js), sonst saehe
+     jeder einen anderen verschwinden.
+     ================================================================= */
+  function lcBillard(wen, von, los) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return false;
     const gitter = lcPlatzGitter();
     const zielEl = lcPlatzMitNamen(wen);
     const zu = gitter.find((p) => p.el === zielEl);
     if (!zu) return false;
+    /* Wer hat gestossen? Der Name faehrt in der Nachricht mit. Frueher
+       wurde dafuer der EIGENE Platz genommen (lcWurfRichtung) — damit
+       zeigte der Stoss auf jedem Geraet in eine andere Richtung. */
+    const suche = String(von || "").trim().toLowerCase();
+    const stoss = suche
+      ? gitter.find((p) => p.name && p.name.toLowerCase() === suche) || null : null;
     /* =========================================================
        DAS LOCH LIEGT IN STOSSRICHTUNG — NICHT IRGENDWO
        ---------------------------------------------------------
@@ -30914,8 +31897,15 @@
        liegen. Unter denen das naechste. Liegt keins dort, wird
        der Getroffene nur weggestossen — eine Kugel, die
        rueckwaerts ins Loch faellt, gibt es nicht. */
-    const rq = lcWurfRichtung(zu.el);          /* zeigt zum Spieler */
-    const sx = -rq.x, sy = -rq.y;              /* also die Stossrichtung */
+    let sx, sy;
+    if (stoss && stoss !== zu) {
+      const dx = zu.x - stoss.x, dy = zu.y - stoss.y;
+      const l = Math.hypot(dx, dy) || 1;
+      sx = dx / l; sy = dy / l;
+    } else {
+      const rq = lcWurfRichtung(zu.el);        /* zeigt zum Spieler */
+      sx = -rq.x; sy = -rq.y;                  /* also die Stossrichtung */
+    }
     const kandidaten = gitter.filter((p) => p.frei).map((p) => {
       const dx = p.x - zu.x, dy = p.y - zu.y;
       const l = Math.hypot(dx, dy) || 1;
@@ -30931,11 +31921,40 @@
     const kreis = zu.el.querySelector(".lc-kreis");
     if (!kreis) return false;
 
+    /* ---- WER SITZT SONST NOCH AM TISCH? ----
+       Alle Besetzten ausser dem Stossenden und dem Angestossenen.
+       Ist die Liste leer, sind nur zwei da — dann bleibt alles beim
+       Alten und der Getroffene rollt selbst ins Loch. */
+    const andere = gitter.filter((p) => !p.frei && p !== zu && p !== stoss);
+    const zahl = Number(los);
+    const wurf = (zahl >= 0 && zahl < 1) ? zahl : Math.random();
+    const opfer = andere.length
+      ? andere[Math.min(andere.length - 1, Math.floor(wurf * andere.length))] : null;
+    /* Das Loch fuer den Gefallenen: das naechste freie ab SEINEM Platz
+       — nach dem Aufprall gibt es keine Stossrichtung mehr. */
+    let opferLoch = null;
+    if (opfer) {
+      const freie = gitter.filter((p) => p.frei)
+        .map((p) => ({ p: p, l: Math.hypot(p.x - opfer.x, p.y - opfer.y) }))
+        .sort((a, b) => a.l - b.l);
+      opferLoch = freie.length ? freie[0].p : null;
+    }
+
     /* Der Stoss kommt aus der Richtung des Spielers. */
     return lcAmPlatz(wen, "lc-billard", (schicht, platz) => {
       lcWurfSetzen(schicht, platz, 240);
       schicht.innerHTML = '<span class="lc-stoss-kugel lc-stoss-weiss"></span>'
                         + '<span class="lc-stoss-queue"></span>';
+      /* ---- DREI ODER MEHR: DER STOSS GEHT IN DEN PULK ---- */
+      if (opfer && opferLoch) {
+        const hin = lcKugelLauf(gitter, zu, opfer, { warten: 700, halt: .58 });
+        andere.forEach((p) => {
+          if (p !== opfer) lcAngestossen(p, zu, hin.ankunft + 40);
+        });
+        lcBillardTasche(opferLoch, hin.ankunft + 60);
+        lcKugelLauf(gitter, opfer, opferLoch, { warten: hin.ankunft + 80, rein: true });
+        return;
+      }
       if (!loch) {
         /* Kein Loch frei: dann wenigstens weggestossen. */
         kreis.classList.remove("lc-weggestossen");
@@ -30944,52 +31963,9 @@
         setTimeout(() => kreis.classList.remove("lc-weggestossen"), 2400);
         return;
       }
-      /* Das Loch am Zielplatz zeigen. */
-      const tasche = document.createElement("span");
-      tasche.className = "lc-billard-tasche";
-      loch.el.appendChild(tasche);
-      setTimeout(() => tasche.remove(), 3000);
-
-      const weg = lcWegSuchen(gitter, zu.nr, loch.nr, true) || [zu, loch];
-      const punkte = lcWegPunkte(weg);
-      const durchmesser = kreis.offsetWidth || 64;
-      let dreh = 0;
-      const jeFeld = 300;
-      const rollen = Math.max(1, punkte.length - 1) * jeFeld;
-      const dauer = 700 + rollen + 1400;
-      const bei = (ms) => Math.min(1, ms / dauer);
-      const bilder = [{ transform: "translate(0px, 0px) rotate(0deg)", offset: 0 },
-                      { transform: "translate(0px, 0px) rotate(0deg)", offset: bei(700) }];
-      punkte.forEach((p, i) => {
-        const vor = punkte[i - 1];
-        if (vor) {
-          const stueck = Math.hypot(p.x - vor.x, p.y - vor.y);
-          dreh += (stueck / (Math.PI * durchmesser)) * 360 * (p.x < vor.x ? -1 : 1);
-        }
-        bilder.push({
-          transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1) + "px) rotate("
-            + dreh.toFixed(1) + "deg)",
-          offset: bei(700 + i * jeFeld)
-        });
-      });
-      const e = punkte[punkte.length - 1];
-      /* Und hinein: kleiner werden, bis nichts mehr da ist. */
-      bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + (e.y + 6).toFixed(1)
-        + "px) rotate(" + (dreh + 40).toFixed(1) + "deg) scale(.45)", opacity: "1",
-        offset: bei(700 + rollen + 260) });
-      bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + (e.y + 10).toFixed(1)
-        + "px) rotate(" + (dreh + 90).toFixed(1) + "deg) scale(0)", opacity: "0",
-        offset: bei(700 + rollen + 460) });
-      bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + (e.y + 10).toFixed(1)
-        + "px) scale(0)", opacity: "0", offset: bei(700 + rollen + 1000) });
-      bilder.push({ transform: "translate(0px, 0px) rotate(0deg) scale(1)", opacity: "1", offset: 1 });
-      const altZ = zu.el.style.zIndex;
-      zu.el.style.zIndex = "6";
-      try {
-        const lauf = kreis.animate(bilder, { duration: dauer, easing: "ease-in-out", fill: "none" });
-        lauf.onfinish = () => { zu.el.style.zIndex = altZ; };
-      } catch (err) { zu.el.style.zIndex = altZ; }
-      setTimeout(() => { zu.el.style.zIndex = altZ; }, dauer + 200);
+      /* Zu zweit: der Getroffene rollt selbst ins Loch. */
+      lcBillardTasche(loch, 0);
+      lcKugelLauf(gitter, zu, loch, { warten: 700, rein: true });
     }, 2600, "billard");
   }
 
@@ -31638,7 +32614,8 @@
     reichtum: 1, zucker: 1, hammer: 1, heber: 1, lasso: 1,
     schneeball: 1, bumerang: 1, saugpfeil: 1, sahne: 1, sog: 1, trommel: 1,
     paintfleck: 1, ei: 1, fahren: 1, spielzug: 1, pacjagd: 1, stoerung: 1,
-    aufessen: 1, lotto: 1, sanduhr: 1, katapult: 1, strohhalm: 1, blubbern: 1, peitsche: 1,
+    aufessen: 1, lotto: 1, sanduhr: 1, katapult: 1, strohhalm: 1, blubbern: 1,
+    knuell: 1, rollo: 1, lamellen: 1, peitsche: 1, gemeinsam: 1, schneekugel: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
@@ -31658,6 +32635,16 @@
       return;
     }
     if (art === "musikaus") { lcMusikStoppen(); return; }
+    /* Das Whiteboard zeichnet auch nichts UEBER den Chat — es nimmt
+       den Platz der Sitzreihe ein. Deshalb steht es wie die Musik
+       ganz oben und faellt nicht in die Effektschleife. */
+    if (art === "tafelauf") {
+      lcTafelZeigen(true, (nachricht && nachricht.eigen)
+        ? (() => { try { return (LiveChat.lage() || {}).ichName || ""; } catch (e) { return ""; } })()
+        : ((nachricht && nachricht.name) || ""));
+      return;
+    }
+    if (art === "tafelzu") { lcTafelZeigen(false); return; }
     if (art === "musikpause") { lcMusikPause(true); return; }
     if (art === "musikweiter") { lcMusikPause(false); return; }
     /* Die Umarmung ist der einzige Effekt, der jemanden MEINT. Sie
@@ -31677,6 +32664,19 @@
        zurueck und es faellt auf die gewoehnliche Wirkung durch. */
     {
       const wenZ = nachricht && (nachricht.wen || nachricht.an);
+      /* WER WIRFT, STEHT IN DER ZEILE — NICHT VOR DEM GERAET.
+         GEMELDET: „Schau nach, dass die Effekte auf beiden Seiten
+         synchron sind."
+         GEFUNDEN: lcWurfRichtung nahm als Werfer IMMER den eigenen
+         Platz (.lc-platz-ich). Beim Absender stimmte das; bei allen
+         anderen flog derselbe Schneeball aus einer anderen Ecke, und
+         wer daneben sass, sah ihn sogar aus sich selbst herauskommen.
+         Der Absender steht in jeder Zeile — hier wird er einmal
+         gemerkt, und lcWurfRichtung nimmt ihn statt des eigenen
+         Platzes. */
+      lcWurfVon = (nachricht && nachricht.eigen)
+        ? (() => { try { return (LiveChat.lage() || {}).ichName || ""; } catch (e) { return ""; } })()
+        : ((nachricht && nachricht.name) || "");
       if (art === "tritt" && lcTritt(wenZ)) return;
       if (art === "zherz" && lcHerzenAufPlatz(wenZ)) return;
       if (art === "eimer" && lcWassereimer(wenZ)) return;
@@ -31705,9 +32705,21 @@
       if (art === "katapult" && lcKatapult(wenZ)) return;
       if (art === "strohhalm" && lcStrohhalm(wenZ)) return;
       if (art === "blubbern" && lcBlubbern(wenZ)) return;
+      if (art === "knuell" && lcZerknuellen(wenZ)) return;
+      if (art === "schneekugel" && lcSchneekugel(wenZ)) return;
+      if (art === "rollo" && lcRollo(wenZ)) return;
+      if (art === "lamellen" && lcLamellen(wenZ)) return;
       if (art === "peitsche" && lcPeitsche(wenZ)) return;
       if (art === "bowling" && lcStoss(wenZ, "bowling")) return;
-      if (art === "billard" && lcBillard(wenZ)) return;
+      /* GEWUENSCHT: „wenn ich mit jemandem gemeinsam fahren will, dann
+         kriege ich sein Profilbild an und sage dann Fahrrad oder so
+         und dann fahren wir einfach weg." — bewegt BEIDE, deshalb
+         braucht es wie beim Fahren auch den Absender. */
+      if (art === "gemeinsam" && lcGemeinsam(wenZ, (nachricht && nachricht.eigen)
+            ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
+      if (art === "billard" && lcBillard(wenZ, (nachricht && nachricht.eigen)
+            ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""),
+            nachricht && nachricht.los)) return;
       if (art === "kopfhoerer" && lcKopfhoerer(wenZ, nachricht)) return;
       if (art === "luke" && lcLuke(wenZ)) return;
       if (art === "platte" && lcPlatte(wenZ)) return;
@@ -32201,7 +33213,7 @@
       catch (e) { try { b.scrollIntoView(); } catch (x) {} }
       return true;
     },
-    effekt: function (name, wen) {
+    effekt: function (name, wen, zusatz) {
       /* NACHGEBESSERT, weil die Messung selbst zweimal gelogen hat:
          1. Die Umarmung, das Lecken und das Boxen haengen sich mit
             einer Verzoegerung an die Plaetze — wer sofort nachsieht,
@@ -32221,7 +33233,14 @@
         klassen: document.body.className + "|" + (karte ? karte.className : "")
       };
       const zeile = document.getElementById("lcPruefZeile");
-      try { lcWirkung(name, zeile || null, wen ? { wen: wen } : {}); }
+      /* „zusatz" kam in Runde 29 dazu: das Billard braucht das Los,
+         das mit der Nachricht mitfaehrt, sonst laesst sich gar nicht
+         messen, ob zwei Geraete denselben verschwinden lassen. */
+      const botschaft = wen ? { wen: wen } : {};
+      if (zusatz && typeof zusatz === "object") {
+        Object.keys(zusatz).forEach((k) => { botschaft[k] = zusatz[k]; });
+      }
+      try { lcWirkung(name, zeile || null, botschaft); }
       catch (e) { return { name, fehler: String(e && e.message || e) }; }
       return { name };
     },

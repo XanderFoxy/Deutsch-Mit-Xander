@@ -53,8 +53,8 @@
    "sekunden": 15.04,
    "bild": "filme/trex.jpg",
    "wirkung": "erde",
-   "bytes": 8655121,
-   "maskeBytes": 3252148
+   "bytes": 786432,
+   "maskeBytes": 748928
   },
   {
    "name": "uboot",

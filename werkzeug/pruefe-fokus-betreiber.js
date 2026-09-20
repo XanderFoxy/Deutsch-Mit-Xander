@@ -95,12 +95,17 @@ const pruefe = (was, gut, zusatz) => {
        deshalb in den letzten Zeilen, nicht nur in der letzten. */
     const z = window.LiveChat.pruefZeilen(8);
     return { nachMeldung: nachMeldung, jetzt: window.LiveChat.fokusAn(),
-             letzte: z.filter((t) => /Kontingent/.test(t)).join(" | ") };
+             letzte: z.filter((t) => /Monatsbudget|Kontingent/.test(t)).join(" | ") };
   });
   pruefe("der Fokus geht von selbst an", aus.nachMeldung === true, String(aus.nachMeldung));
   pruefe("und laesst sich auch vom Betreiber nicht ausschalten", aus.jetzt === true,
     String(aus.jetzt));
-  pruefe("und es steht dabei, warum", /Kontingent/.test(aus.letzte),
+  /* NACHGEBESSERT: gesucht wurde das Wort „Kontingent". Genau das
+     hiess frueher so und wurde in Runde 27 umbenannt — GEMELDET:
+     „Bei mir steht das Gespraechskontingent ist aufgebraucht", und
+     gemeint war das selbst gesetzte MONATSBUDGET. Der Text ist also
+     richtig, die Sonde war es nicht mehr. */
+  pruefe("und es steht dabei, warum", /Monatsbudget|Kontingent/.test(aus.letzte),
     String(aus.letzte).slice(0, 80));
 
   if (aufSeite.length) {
