@@ -9823,35 +9823,57 @@ body.lc-schreibt .tutor-reiter {
   animation: lcEimerKippt 2.6s cubic-bezier(.4, 0, .3, 1) both;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .32));
 }
+/* Beim Kippen rutscht der Eimer ein Stueck nach links: die Ausguss-
+   kante wandert beim Drehen nach rechts, und der Strahl soll mitten
+   auf dem Profilbild ankommen, nicht daneben. Gemessen am Bild: ohne
+   die Verschiebung traf er rund 40 px zu weit rechts. */
 @keyframes lcEimerKippt {
   0%   { opacity: 0; transform: translate(-50%, -30%) rotate(0); }
   12%  { opacity: 1; transform: translate(-50%, 0) rotate(0); }
-  22%  { transform: translate(-50%, 0) rotate(118deg); }
-  74%  { transform: translate(-50%, 0) rotate(118deg); }
+  22%  { transform: translate(-78%, 0) rotate(118deg); }
+  74%  { transform: translate(-78%, 0) rotate(118deg); }
   88%  { opacity: 1; transform: translate(-50%, 0) rotate(0); }
   100% { opacity: 0; transform: translate(-50%, -30%) rotate(0); }
 }
-/* Der Strahl: breiter als vorher, und er laeuft so lange, wie der
-   Eimer gekippt ist — nicht kuerzer. Am unteren Ende franst er aus,
-   dort trifft er ja auf das Wasser. */
-.lc-eimer-guss {
-  position: absolute;
-  left: 50%;
-  top: -42%;
-  width: 26%;
-  height: 112%;
-  transform: translateX(-50%);
-  border-radius: 0 0 46% 46%;
-  background: linear-gradient(to bottom,
-    rgba(168, 216, 247, .92) 0%, rgba(150, 205, 240, .78) 55%,
-    rgba(150, 205, 240, .18) 100%);
-  animation: lcGuss 1.9s ease-in-out 0.42s both;
+/* GEMELDET: „der Wasserstrahl passt nicht zum Wassereimer, kommt
+   nicht aus dem Wassereimer heraus. Das macht keinen Sinn."
+
+   Vorher war der Strahl ein eigenes Kaestchen in der Bildmitte
+   (.lc-eimer-guss), waehrend der Eimer sich um 118 Grad kippte — die
+   beiden wussten nichts voneinander. Jetzt steckt der Strahl IM
+   Eimer-SVG, an der Ausgusskante, und dreht sich GEGENLAEUFIG zum
+   Eimer. Damit bleibt er senkrecht (Wasser faellt nun einmal nach
+   unten), waehrend sein Ursprung am Eimerrand klebt. Er kann gar
+   nicht mehr woanders herauskommen.
+
+   „overflow: visible" muss sein, sonst schneidet das SVG den Strahl
+   an seinem Rahmen ab. */
+.lc-eimer-bild { overflow: visible; }
+.lc-eimer-quelle {
+  transform-box: view-box;
+  transform-origin: 14px 10px;      /* die Ausgusskante des Eimers */
+  animation: lcGussDreht 2.6s cubic-bezier(.4, 0, .3, 1) both;
 }
-@keyframes lcGuss {
-  0%   { opacity: 0; transform: translateX(-50%) scaleY(0); transform-origin: top; }
-  16%  { opacity: 1; transform: translateX(-50%) scaleY(1); transform-origin: top; }
-  82%  { opacity: 1; transform: translateX(-50%) scaleY(1); transform-origin: top; }
-  100% { opacity: 0; transform: translateX(-50%) scaleY(.9); transform-origin: top; }
+/* Exakt spiegelbildlich zu lcEimerKippt — dieselben Zeitpunkte,
+   dieselben Winkel mit umgekehrtem Vorzeichen. */
+@keyframes lcGussDreht {
+  0%, 12%   { transform: rotate(0deg); }
+  22%       { transform: rotate(-118deg); }
+  74%       { transform: rotate(-118deg); }
+  88%, 100% { transform: rotate(0deg); }
+}
+.lc-eimer-strahl {
+  fill: rgba(168, 216, 247, .9);
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: lcStrahlLaeuft 2.6s ease-in-out both;
+}
+@keyframes lcStrahlLaeuft {
+  0%, 20%  { opacity: 0; transform: scaleY(0); }
+  26%      { opacity: 1; transform: scaleY(1); }
+  70%      { opacity: 1; transform: scaleY(1); }
+  78%      { opacity: 0; transform: scaleY(.6); }
+  100%     { opacity: 0; transform: scaleY(0); }
 }
 
 /* =========================================================
@@ -11798,13 +11820,24 @@ body.lc-schreibt .tutor-reiter {
    lc-gehoben bzw. lc-gezogen. Mein eigener Platz ruehrt sich
    dabei nicht.
    ========================================================= */
+/* GEMELDET: „Das Lasso und der Haken sind nicht zu sehen."
+   Und er hatte recht — nachgemessen: die Leine lag mit z-index 0
+   HINTER den Plaetzen (die liegen auf 1). Wer auf Platz 1 sitzt und
+   nach Platz 5 wirft, wirft senkrecht nach unten; die Leine verlief
+   damit auf ihrer ganzen Laenge unter den beiden Profilbildern, und
+   zwischen den Reihen ist kaum ein Spalt. elementFromPoint in der
+   Mitte der Leine lieferte „lc-kreis" — sie war da, nur verdeckt.
+
+   Sie liegt jetzt VORN. Der alte Grund fuer „dahinter" war die
+   Zunge, die als breites rosa Band ueber alle Gesichter lief; eine
+   Angelschnur ist drei Pixel breit und verdeckt niemanden. */
 .lc-leine {
   position: absolute;
   height: 4px;
   margin-top: -2px;
   transform-origin: 0 50%;
   pointer-events: none;
-  z-index: 0;
+  z-index: 7;
 }
 /* Die Schnur der Angel: duenn, hell, straff. */
 .lc-leine-schnur {
@@ -11814,8 +11847,10 @@ body.lc-schreibt .tutor-reiter {
   height: 2px;
   width: var(--laenge, 80px);
   border-radius: 2px;
-  background: linear-gradient(to right, rgba(228, 234, 244, .55), #e4eaf4 30%, #ffffff);
-  box-shadow: 0 0 2px rgba(255, 255, 255, .8);
+  background: linear-gradient(to right, rgba(245, 250, 255, .8), #ffffff 30%, #ffffff);
+  /* Zwei Schatten: ein dunkler Saum, damit die helle Schnur auch auf
+     einem hellen Profilbild zu sehen ist, und ein Schein darum. */
+  box-shadow: 0 0 0 1px rgba(20, 30, 45, .55), 0 0 4px rgba(255, 255, 255, .9);
   transform-origin: 0 50%;
   animation: lcLeineAus 2s cubic-bezier(.25, .8, .3, 1) both;
 }
@@ -11834,13 +11869,15 @@ body.lc-schreibt .tutor-reiter {
   position: absolute;
   left: 0;
   top: 0;
-  height: 4px;
+  height: 5px;
   width: var(--laenge, 80px);
   border-radius: 3px;
+  /* Kraeftiger als beim ersten Anlauf: auf einem hellen Profilbild war
+     das helle Hanfseil kaum zu sehen. */
   background:
-    repeating-linear-gradient(115deg, rgba(120, 78, 30, .45) 0 3px, rgba(255, 255, 255, 0) 3px 7px),
-    linear-gradient(to bottom, #e6bd7c, #c68f42 60%, #9e6c2c);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .28);
+    repeating-linear-gradient(115deg, rgba(90, 55, 18, .55) 0 3px, rgba(255, 255, 255, 0) 3px 7px),
+    linear-gradient(to bottom, #d9a659, #b87a2e 60%, #7d5520);
+  box-shadow: 0 0 0 1px rgba(60, 35, 10, .5), 0 1px 3px rgba(0, 0, 0, .4);
   transform-origin: 0 50%;
   animation: lcLeineAus 2s cubic-bezier(.25, .8, .3, 1) both;
 }
@@ -11851,7 +11888,7 @@ body.lc-schreibt .tutor-reiter {
   width: 54px;
   height: 34px;
   margin: -17px 0 0 -14px;
-  border: 4px solid #c68f42;
+  border: 5px solid #b87a2e;
   border-radius: 50%;
   box-shadow: 0 1px 2px rgba(0, 0, 0, .25), inset 0 1px 2px rgba(255, 255, 255, .35);
   animation: lcSchlingeReise 2s cubic-bezier(.25, .8, .3, 1) both;
@@ -12689,23 +12726,32 @@ body.lc-schreibt .tutor-reiter {
   88%     { transform: translate(0, 6%) rotate(0deg) scale(1.06); opacity: 1; }
   100%    { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
 }
+/* GEMELDET: „so soll der Tennisschläger eine relative Größe zu
+   diesem Kreis haben, der dann den Ball darstellt, ja, den man hoch
+   wirft und mit dem Tennisschläger weg schlägt."
+   Der Kopf ist jetzt rund doppelt so breit wie das Profilbild — so
+   steht ein Schlaeger auch wirklich zu einem Ball. Er sitzt links
+   unten und schlaegt nach oben rechts, dorthin, wo der Ball im
+   Scheitel steht (siehe lcGetennist: Scheitel bei 24 %, Treffer bei
+   30 %). */
 .lc-tennisschlaeger {
   position: absolute;
-  left: -34%;
-  bottom: -30%;
-  width: 46%;
+  left: -66%;
+  bottom: -24%;
+  width: 112%;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .35));
   transform-origin: 50% 90%;
   animation: lcTennisSchlag 3s cubic-bezier(.3, 0, .3, 1) both;
 }
 @keyframes lcTennisSchlag {
-  0%   { opacity: 0; transform: rotate(-52deg) scale(.8); }
-  14%  { opacity: 1; transform: rotate(-30deg) scale(1); }
-  30%  { transform: rotate(24deg) scale(1); }
-  40%  { transform: rotate(-8deg) scale(1); }
-  70%  { transform: rotate(22deg) scale(1); }
-  84%  { opacity: 1; transform: rotate(-16deg) scale(1); }
-  100% { opacity: 0; transform: rotate(-52deg) scale(.85); }
+  0%   { opacity: 0; transform: rotate(-64deg) scale(.8); }
+  14%  { opacity: 1; transform: rotate(-46deg) scale(1); }
+  /* 30 % = 0,9 s: da trifft er den Ball, genau im Scheitel. */
+  30%  { transform: rotate(18deg) scale(1); }
+  38%  { transform: rotate(34deg) scale(1); }
+  52%  { transform: rotate(-20deg) scale(1); }
+  84%  { opacity: 1; transform: rotate(-40deg) scale(1); }
+  100% { opacity: 0; transform: rotate(-64deg) scale(.85); }
 }
 
 /* --- DIE KEKSKRUEMEL ------------------------------------------------------ */
@@ -12916,11 +12962,11 @@ body.lc-schreibt .tutor-reiter {
   border-radius: 0 0 44% 56% / 0 0 46% 38%;
   background: linear-gradient(to bottom, #6e0d16, #a3121f 55%, #c4172a);
   box-shadow: 0 3px 6px rgba(80, 0, 8, .5);
-  animation: lcBlutLaeuft 3.6s ease-in-out infinite alternate;
+  animation: lcBlutSpricht 3.6s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 3;
 }
-@keyframes lcBlutLaeuft {
+@keyframes lcBlutSpricht {
   0%   { height: 16%; }
   100% { height: 34%; }
 }
@@ -13057,3 +13103,95 @@ body.lc-schreibt .tutor-reiter {
   100% { clip-path: inset(0 0 0 0); }
 }
 @media (prefers-reduced-motion: reduce) { .lc-rieselt { animation: none; } }
+
+/* --- DIE BILDSTOERUNG ALS WURF — WIEDER DA ---------------------------
+   GEMELDET, nach dem Umbau zum Sprechbild: „du kannst diese Störung
+   aber trotzdem in den klickbaren Effekten drin lassen, die du vorhin
+   hattest … denn ich finde es trotzdem wichtig, den Empfang von
+   jemand anderem zu stören."
+   Also beides. Das hier ist die Zeichnung von Fassung 356, wieder
+   hergestellt — die Namen sind neu (lcStoerBandWurf statt
+   lcStoerBand), weil der Sprechbild-Effekt den alten Namen inzwischen
+   hat und bei doppelten Keyframe-Namen der letzte gewinnt.
+   -------------------------------------------------------------------- */
+.lc-stoer-band {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  background: rgba(255, 255, 255, 0.16);
+  mix-blend-mode: screen;
+  animation: lcStoerBandWurf 0.34s steps(2) infinite;
+}
+@keyframes lcStoerBandWurf {
+  0%   { transform: translateX(-9%); background: rgba(255, 120, 120, .2); }
+  50%  { transform: translateX(11%); background: rgba(120, 220, 255, .2); }
+  100% { transform: translateX(-6%); background: rgba(255, 255, 255, .16); }
+}
+.lc-stoer-rauschen {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.14) 0 1px, rgba(0,0,0,.14) 1px 2px);
+  opacity: .55;
+  animation: lcStoerRauschen 0.2s steps(2) infinite;
+}
+@keyframes lcStoerRauschen {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(2px); }
+}
+.lc-gestoert { animation: lcEmpfangWeg 3s steps(1) both; }
+@keyframes lcEmpfangWeg {
+  0%, 100% { filter: none; transform: translateX(0); }
+  8%   { filter: saturate(0.2) contrast(1.6); transform: translateX(-3px); }
+  14%  { filter: none; transform: translateX(2px); }
+  30%  { filter: saturate(0.1) brightness(1.3); transform: translateX(4px); }
+  36%  { filter: none; transform: translateX(-2px); }
+  58%  { filter: saturate(0.3) contrast(1.4); transform: translateX(-4px); }
+  64%  { filter: none; transform: translateX(0); }
+  82%  { filter: saturate(0.2); transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-stoerung { display: none; }
+  .lc-gestoert { animation: none; }
+}
+
+/* --- WAS NACH DEM LETZTEN BISS UEBRIG BLEIBT: NICHTS -----------------
+   GEMELDET: „bis er komplett aufgegessen ist, und dann ist er auch
+   wirklich verschwunden von der Bühne."
+   -------------------------------------------------------------------- */
+.lc-aufgegessen { animation: lcAufgegessen .7s cubic-bezier(.5, 0, .8, 1) both; }
+@keyframes lcAufgegessen {
+  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+  40%  { transform: scale(.5) rotate(-18deg); opacity: .8; }
+  100% { transform: scale(0) rotate(-40deg); opacity: 0; }
+}
+/* --- DAS LOCH AM ZIELPLATZ BEIM BILLARD ------------------------------
+   „dass dieses Profilbild in eins der anderen Plätze wie in ein Loch
+   verschwindet … wie beim Billardtisch in dem Loch am Billardtisch."
+   Die Tasche liegt AM ZIELPLATZ, nicht beim Getroffenen — dorthin
+   rollt er ja.
+   -------------------------------------------------------------------- */
+.lc-billard-tasche {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 8%;
+  height: 0;
+  padding-bottom: 84%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 44%, #04050a 0 62%, rgba(4, 5, 10, .55) 80%, rgba(4, 5, 10, 0));
+  box-shadow: inset 0 6px 10px rgba(0, 0, 0, .8);
+  pointer-events: none;
+  z-index: 2;
+  animation: lcBillardTasche 3s ease-out both;
+}
+@keyframes lcBillardTasche {
+  0%, 14% { opacity: 0; transform: scale(.5); }
+  24%     { opacity: 1; transform: scale(1); }
+  82%     { opacity: 1; transform: scale(1); }
+  100%    { opacity: 0; transform: scale(.7); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-aufgegessen { animation: none; }
+  .lc-billard-tasche { display: none; }
+}

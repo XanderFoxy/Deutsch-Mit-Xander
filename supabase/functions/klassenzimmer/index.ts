@@ -92,7 +92,15 @@ const GUELTIG_SEKUNDEN = 2 * 60 * 60;
    er laeuft ueber Supabase.
    ========================================================= */
 const MB_JE_AUSGABE = 72;
-const BUDGET_STANDARD_GB = 1;
+/* Xander: "ich weiss nicht ob du das Budget hoch setzen musst haben
+   wir wirklich 1000 GB wie viel brauchen wir denn im Monat?"
+   Cloudflare rechnet beim Relais nach uebertragenen Gigabyte ab und
+   gibt laut seiner eigenen Doku 1000 GB im Monat frei, bevor etwas
+   kostet. Ein GB reicht fuer rund vier Stunden Sprache — fuer eine
+   Runde mit 40 Mitgliedern viel zu knapp. 25 GB sind rund hundert
+   Stunden Relais im Monat und liegen immer noch weit unter dem
+   Freibetrag, kosten also nichts. */
+const BUDGET_STANDARD_GB = 25;
 
 const KOPF = {
   "Access-Control-Allow-Origin": "*",

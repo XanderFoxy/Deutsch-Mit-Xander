@@ -841,6 +841,12 @@ window.LiveChat = (function () {
     ei:       { wirkung: "ei",         satz: "schl\u00e4gt ein Ei auf dem Kopf auf von", emoji: "\ud83e\udd5a" },
     fahren:   { wirkung: "fahren",     satz: "f\u00e4hrt hin\u00fcber zu", emoji: "\ud83d\ude97" },
     huepfen:  { wirkung: "spielzug",   satz: "h\u00fcpft Platz f\u00fcr Platz zu", emoji: "\ud83c\udfb2" },
+    /* GEMELDET, nach dem Umbau zum Sprechbild: „du kannst diese
+       Störung aber trotzdem in den klickbaren Effekten drin lassen …
+       denn ich finde es trotzdem wichtig, den Empfang von jemand
+       anderem zu stören." Also beides: hier der Wurf, unten das
+       Sprechbild. */
+    stoerung: { wirkung: "stoerung",   satz: "st\u00f6rt den Empfang von",  emoji: "\ud83d\udcfa" },
     /* GEMELDET: „Schau doch mal bitte in meinem Verlauf, von welchen
        Effekten ich dir gesprochen habe und berücksichtige alle diese
        Effekte und lasse keinen aus." Nachgelesen — das hier sind die,
@@ -7698,6 +7704,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "sahne",   kurz: "schlagsahne", nutzt: "/sahne Name",  was: "Schlagsahne-Haube auf den Kopf" },
     { gr: "reden", w: "trommel", kurz: "gong",   nutzt: "/trommel Name",     was: "Trommel — auf dem Kopf wird getrommelt" },
     { gr: "reden", w: "ei",       kurz: "ei",    nutzt: "/ei Name",          was: "Ei auf dem Kopf — es wird aufgeschlagen und laeuft herunter" },
+    { gr: "reden", w: "stoerung", kurz: "tv",  nutzt: "/stoerung Name",    was: "Bildstoerung — schlechter Empfang, das Bild zerreisst" },
     { gr: "reden", w: "fahren",  kurz: "fahrt", nutzt: "/fahren Name",      was: "hinfahren — dein Bild rollt zu jemandem hinueber und wieder zurueck" },
     { gr: "reden", w: "huepfen", kurz: "spielzug", nutzt: "/huepfen Name",     was: "Spielzug — dein Bild huepft Platz fuer Platz zu jemandem" },
     { gr: "reden", w: "katapult", kurz: "kata", nutzt: "/katapult Name",   was: "Katapult — der andere wird weggeschleudert" },

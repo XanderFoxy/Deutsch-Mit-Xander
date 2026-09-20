@@ -92,11 +92,18 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("die Kirsche kommt ZULETZT, nach der Haube", kirscheAb >= 55,
     "sie ist bis " + kirscheAb + " % der Laufzeit unsichtbar");
 
-  console.log("\nDIE STOERUNG IST EIN SPRECHBILD, KEIN WURF\n");
-  pruefe("/stoerung gibt es als Befehl nicht mehr", lc.indexOf('nutzt: "/stoerung') < 0);
-  pruefe("sie steht nicht mehr in AM_PLATZ",
-    lc.slice(lc.indexOf("var AM_PLATZ"), lc.indexOf("var AUCH_AM_PLATZ")).indexOf("stoerung:") < 0);
-  pruefe("dafuer bei den Sprechbildern",
+  console.log("\nDIE STOERUNG IST BEIDES\n");
+  /* GEAENDERT, und zwar auf seine zweite Ansage hin. Erst: „die
+     Störung ist kein Effekt um das Profilbild zu beeinflussen durch
+     einen Klick sondern es ist ein Sprechbild-Effekt." Dann, nach dem
+     Umbau: „du kannst diese Störung aber trotzdem in den klickbaren
+     Effekten drin lassen … denn ich finde es trotzdem wichtig, den
+     Empfang von jemand anderem zu stören."
+     Also beides — und beides wird hier geprueft. */
+  pruefe("es gibt sie wieder als Wurf", lc.indexOf('nutzt: "/stoerung') >= 0);
+  pruefe("sie steht wieder in AM_PLATZ",
+    lc.slice(lc.indexOf("var AM_PLATZ"), lc.indexOf("var AUCH_AM_PLATZ")).indexOf("stoerung:") >= 0);
+  pruefe("und zugleich bei den Sprechbildern",
     /stoerung:\s*"St(ö|oe)rung/.test(lc.slice(lc.indexOf("var SPRECHBILDER"), lc.indexOf("var SPRECHBILD_SCHLUESSEL"))));
   pruefe("und das Stilblatt kennt sie beim Sprechen",
     /\[data-sprechbild="stoerung"\]/.test(css));
@@ -204,7 +211,14 @@ const pruefe = (was, gut, zusatz) => {
     pruefe(art + ": sie beginnt an MEINEM Platz", d.abstand <= 6, d.abstand + " px von meiner Bildmitte");
     pruefe(art + ": sie hoert am fremden Bildrand auf, nicht in der Mitte",
       d.laenge > 0 && d.laenge < d.weg, d.laenge + " px von " + d.weg + " px Weg");
-    pruefe(art + ": sie laeuft HINTER den Plaetzen durch", d.z === "0", "z-index " + d.z);
+    /* GEAENDERT, auf seine Meldung hin: „Das Lasso und der Haken sind
+       nicht zu sehen." Sie lagen mit z-index 0 hinter den Plaetzen,
+       und wer senkrecht nach unten wirft, dessen Leine verschwindet
+       damit vollstaendig unter den zwei Profilbildern. Sie liegt
+       jetzt vorn. Geprueft wird deshalb das Gegenteil von frueher:
+       sie muss ueber den Plaetzen liegen (die haben z-index 1). */
+    pruefe(art + ": sie liegt VOR den Plaetzen und ist zu sehen",
+      Number(d.z) > 1, "z-index " + d.z);
     pruefe(art + ": sie hat ihr eigenes Werkzeug (" + teil + ")",
       d.teile.indexOf(teil.slice(1)) >= 0, d.teile || "nichts");
     /* „Ich bleibe an meinem Platz. Ich kann nur die anderen von ihrer
