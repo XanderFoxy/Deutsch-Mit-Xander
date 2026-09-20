@@ -22377,6 +22377,144 @@
     });
     return lcLeseTafelNachziehen();
   }
+  /* =================================================================
+     DIE AUFGABE, DIE WIRKLICH EINE AUFGABE IST
+     -----------------------------------------------------------------
+     GEFRAGT, woertlich: „Und bei Aufgabe gibt's immer noch keinen
+     richtigen Sinn in der Aufgabe. Was ist deine Strategie fuer diese
+     Aufgabe?" — und dazu: „vielleicht sofern das moeglich ist auch
+     einige der Spiele, die fuer den Chat kompatibel sind, zum Beispiel
+     Artikel raten … dass man im Chat sogar auf den Link im Woerterbuch
+     zugreifen kann … Das Ganze soll dann natuerlich auch benotet
+     werden koennen."
+
+     DIE STRATEGIE, in einem Satz: eine Aufgabe im Chat ist nur dann
+     eine Aufgabe, wenn sie (1) aus dem Stoff kommt, der ohnehin auf
+     dieser Seite liegt, (2) sich SELBST pruefen kann, und (3) danach
+     eine Note bekommen kann. Alles andere ist eine Frage, die im Chat
+     verhallt.
+
+     Daraus folgen drei Sorten, und mehr braucht es nicht:
+       · /artikel   — der, die oder das? Das Wort kommt aus dem
+                      Woerterbuch, die Loesung steht dort auch. Drei
+                      Kacheln, ein Tipp, sofort geprueft.
+       · /begriff   — die Bedeutung steht da, das Wort ist gesucht.
+                      Ebenfalls aus dem Woerterbuch.
+       · /aufgabe   — in eigenen Worten, ohne Musterloesung; die Note
+                      gibt der Lehrer. (Das gab es schon; es ist der
+                      Rest, den keine Maschine pruefen kann.)
+     Die Uebungen zum Bauen (/satz, /wort), das Sortieren (/sortieren,
+     /kontexter) und das Aufdecken (/raten) stehen daneben — zusammen
+     ist das der ganze Unterricht, den ein Chat tragen kann.
+
+     Das Woerterbuch wird dafuer NICHT beim Start geladen. Es kommt
+     erst, wenn jemand die erste solche Aufgabe stellt. */
+  function lcWoerterbuchWoerter() {
+    try {
+      const alle = (typeof VocabData !== "undefined" && VocabData.WORDS) || [];
+      return alle;
+    } catch (e) { return []; }
+  }
+  function lcWoerterbuchHolen() {
+    try {
+      if (typeof VocabData === "undefined" || !VocabData.ladeWoerter) return Promise.resolve(false);
+      if (VocabData.woerterDa && VocabData.woerterDa()) return Promise.resolve(true);
+      return VocabData.ladeWoerter();
+    } catch (e) { return Promise.resolve(false); }
+  }
+  /* Ein Nomen mit seinem Artikel — „die Playlist" wird zu
+     { artikel: "die", nomen: "Playlist" }. */
+  function lcNomenZerlegen(eintrag) {
+    const w = String((eintrag && eintrag.word) || "").trim();
+    const m = w.match(/^(der|die|das)\s+(.+)$/i);
+    if (!m) return null;
+    return { artikel: m[1].toLowerCase(), nomen: m[2], voll: w,
+             bedeutung: String((eintrag && eintrag.de) || ""),
+             stufe: String((eintrag && eintrag.level) || "") };
+  }
+  window.DMA_WORTPROBE = {
+    /* Ist das Woerterbuch schon da? */
+    bereit: () => lcWoerterbuchWoerter().length > 0,
+    nachladen: () => lcWoerterbuchHolen(),
+    /* Ein Nomen zum Artikelraten. Mit Vorgabe wird genau dieses Wort
+       gesucht — „/artikel Fahrrad" soll auch gehen. */
+    artikel: (vorgabe) => {
+      const alle = lcWoerterbuchWoerter();
+      if (!alle.length) return null;
+      const such = String(vorgabe || "").trim().toLowerCase();
+      if (such) {
+        const t = alle.find((e) => {
+          const z = lcNomenZerlegen(e);
+          return z && (z.nomen.toLowerCase() === such || z.voll.toLowerCase() === such);
+        });
+        return t ? lcNomenZerlegen(t) : null;
+      }
+      /* Ohne Vorgabe: ein zufaelliges Nomen, das auch eine Bedeutung
+         mitbringt — ohne Bedeutung waere der Woerterbuch-Link leer. */
+      for (let i = 0; i < 60; i++) {
+        const z = lcNomenZerlegen(alle[Math.floor(Math.random() * alle.length)]);
+        if (z && z.bedeutung) return z;
+      }
+      return null;
+    },
+    /* Ein Wort, dessen BEDEUTUNG dasteht — gesucht ist das Wort. */
+    begriff: (vorgabe) => {
+      const alle = lcWoerterbuchWoerter();
+      if (!alle.length) return null;
+      const such = String(vorgabe || "").trim().toLowerCase();
+      const passt = (e) => {
+        const w = String((e && e.word) || "").replace(/^(der|die|das)\s+/i, "").trim();
+        return w && String(e.de || "").length > 8 && w.length > 2;
+      };
+      if (such) {
+        const t = alle.find((e) => String(e.word || "").toLowerCase().indexOf(such) >= 0 && passt(e));
+        if (!t) return null;
+        return { wort: String(t.word).replace(/^(der|die|das)\s+/i, "").trim(),
+                 voll: String(t.word), bedeutung: String(t.de || ""),
+                 stufe: String(t.level || "") };
+      }
+      for (let i = 0; i < 60; i++) {
+        const e = alle[Math.floor(Math.random() * alle.length)];
+        if (!passt(e)) continue;
+        return { wort: String(e.word).replace(/^(der|die|das)\s+/i, "").trim(),
+                 voll: String(e.word), bedeutung: String(e.de || ""),
+                 stufe: String(e.level || "") };
+      }
+      return null;
+    }
+  };
+  /* DER LINK INS WOERTERBUCH.
+     GEWUENSCHT: „dass man im Chat sogar auf den Link im Woerterbuch
+     zugreifen kann." Also: das Wort aus der Aufgabe antippen und man
+     steht im Woerterbuch bei genau diesem Wort. */
+  function lcWortNachschlagen(wort) {
+    const w = String(wort || "").trim();
+    if (!w) return false;
+    try {
+      /* Der Reiter heisst „.tape-tab[data-target=…]" — genau so steht
+         er in index.html. Ihn anzutippen ist besser, als activateTab
+         direkt zu rufen: dann laeuft auch alles mit, was am Klick
+         haengt (unter anderem das Nachladen des Wortschatzes). */
+      const reiter = document.querySelector('.tape-tab[data-target="view-learn"]');
+      if (reiter) reiter.click();
+      else if (typeof activateTab === "function") activateTab("view-learn");
+    } catch (e) {}
+    setTimeout(() => {
+      try {
+        const feld = document.getElementById("vocabSearch");
+        if (feld) {
+          feld.value = w;
+          feld.dispatchEvent(new Event("input", { bubbles: true }));
+          feld.scrollIntoView({ block: "center", behavior: "smooth" });
+        } else if (typeof renderVocab === "function") {
+          renderVocab(w);
+        }
+      } catch (e) {}
+    }, 260);
+    return true;
+  }
+  window.DMA_NACHSCHLAGEN = lcWortNachschlagen;
+
   window.DMA_PRUEF_LESESTOFF = lcLesestoff;
   window.DMA_LESEFEST = { setzen: lcLeseFestSetzen, nachziehen: lcLeseTafelNachziehen,
                           welche: () => lcLeseFest };
@@ -31000,6 +31138,34 @@
     kopf.textContent = "🔡 Aufdecken — welcher Satz ist das? Tippe Buchstaben an.";
     kasten.appendChild(kopf);
 
+    /* WER IST DRAN?
+       GEWUENSCHT: „und da soll, wie gesagt, das Runden laufen."
+       Die Runde ist die Sitzreihe; weitergezaehlt wird in livechat.js
+       (dranSetzen). Hier steht nur, wen es gerade trifft — und wer
+       selbst gemeint ist, liest seinen eigenen Namen. */
+    const dranZeile = document.createElement("p");
+    dranZeile.className = "lc-raten-dran";
+    const dranZeigen = () => {
+      let wer = "";
+      try { wer = (LiveChat.werIstDran && LiveChat.werIstDran()) || String(n.dran || ""); }
+      catch (e) { wer = String(n.dran || ""); }
+      if (!wer) { dranZeile.style.display = "none"; return; }
+      let ich = "";
+      try { ich = (LiveChat.lage() || {}).ichName || ""; } catch (e) {}
+      const binIch = ich && wer.toLowerCase() === ich.toLowerCase();
+      dranZeile.style.display = "";
+      dranZeile.textContent = binIch ? "\ud83d\udc49 Du bist dran." : "\ud83d\udc49 Dran ist: " + wer;
+      dranZeile.classList.toggle("lc-raten-dran-ich", Boolean(binIch));
+    };
+    dranZeigen();
+    kasten.appendChild(dranZeile);
+    /* Die Runde rueckt weiter, waehrend die Tafel schon steht —
+       deshalb wird sie nachgefragt, solange sie im Bild ist. */
+    const takt = setInterval(() => {
+      if (!kasten.isConnected) { clearInterval(takt); return; }
+      dranZeigen();
+    }, 1500);
+
     const offen = lcRatenVorgabe(satz);
     const felder = [];          // { zeichen, gross, knoten }
 
@@ -32622,6 +32788,25 @@
         });
         t.appendChild(weg);
         z.appendChild(t);
+        }
+        /* DER LINK INS WOERTERBUCH — GANZ UNTEN, NICHT MITTENDRIN.
+           GEWUENSCHT: „dass man im Chat sogar auf den Link im
+           Woerterbuch zugreifen kann."
+           Traegt die Aufgabe ein Wort (Artikelraten, gesuchter
+           Begriff), steht darunter ein Knopf, der genau dieses Wort
+           aufschlaegt. Er wird ZULETZT angehaengt — dazwischen saehe
+           er aus wie eine Antwortkachel. */
+        if (n.wortLink) {
+          const nach = document.createElement("button");
+          nach.type = "button";
+          nach.className = "lc-aufgabe-nachschlagen";
+          nach.textContent = "\ud83d\udcd6 " + n.wortLink + " im W\u00f6rterbuch";
+          nach.title = "Aufschlagen \u2014 der Chat bleibt, wie er ist";
+          nach.addEventListener("click", (e) => {
+            e.stopPropagation();
+            try { lcWortNachschlagen(n.wortLink); } catch (x) {}
+          });
+          t.appendChild(nach);
         }
       } else if (art === "note") {
         const t = document.createElement("span");

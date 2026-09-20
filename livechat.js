@@ -3252,8 +3252,19 @@ window.LiveChat = (function () {
         teileGemischt: Array.isArray(n.teile)
           ? n.teile.map(function (t) { return String(t).slice(0, 40); }).slice(0, 24)
           : [],
-        wer: {}, zeit: neuerZeitpunkt
+        wer: {}, zeit: neuerZeitpunkt,
+        /* Weitergezaehlt wird nur dort, wo die Aufgabe gestellt
+           wurde — siehe dranSetzen. */
+        vonMir: false, dran: String(n.dran || "")
       };
+      aufgabeMerken();
+      melden();
+      return;
+    }
+    /* Die Runde ist weitergerueckt. */
+    if (n.art === "dran") {
+      if (!offeneAufgabe) return;
+      offeneAufgabe.dran = String(n.name || "");
       aufgabeMerken();
       melden();
       return;
@@ -3601,6 +3612,18 @@ window.LiveChat = (function () {
            den gemischten Saetzen). */
         lied: String(n.lied || ""),
         liedTitel: String(n.liedTitel || ""),
+        wortLink: String(n.wortLink || ""),
+        /* DAS AUFDECKEN — UND DER GRUND, WARUM ES BEI DEN ANDEREN NIE
+           ANKAM.
+           GEMELDET: „Dann ist bei diesem Aufdeckspiel — sehen die
+           anderen das immer noch nicht."
+           GEFUNDEN: derselbe Fehler wie einst bei „wen" und bei den
+           gemischten Saetzen. Das Feld wurde beim Senden angehaengt
+           (siehe anAlle) und beim EMPFANG nicht wieder abgeholt. Der
+           Absender sah sein Rad, alle anderen eine leere
+           Ueberschrift. Eine Zeile — mehr war es nicht. */
+        raten: String(n.raten || ""),
+        dran: String(n.dran || ""),
         /* WEN es trifft, muss mitkommen — sonst spielt die Umarmung
            beim Empfaenger auf allen Plaetzen statt auf dem richtigen. */
         wen: n.wen || "",
@@ -3670,7 +3693,9 @@ window.LiveChat = (function () {
                  sortieren: n.sortieren || null,
                  leseZeilen: n.leseZeilen || null, leseTitel: n.leseTitel || "",
                  leseNiveau: n.leseNiveau || "",
-                 lied: n.lied || "", liedTitel: n.liedTitel || "", zeit: n.zeit };
+                 lied: n.lied || "", liedTitel: n.liedTitel || "",
+                 wortLink: n.wortLink || "",
+                 raten: n.raten || "", dran: n.dran || "", zeit: n.zeit };
       });
       /* Zu gross? Dann die Bilder herausnehmen, aeltester zuerst. */
       while (JSON.stringify(paket).length > VERLAUF_PAKET) {
@@ -6120,6 +6145,75 @@ window.LiveChat = (function () {
   }
 
   /* =========================================================
+     DIE AUFGABEN AUS DEM WOERTERBUCH
+     ---------------------------------------------------------
+     GEFRAGT: „Bei Aufgabe gibt's immer noch keinen richtigen Sinn in
+     der Aufgabe. Was ist deine Strategie fuer diese Aufgabe?" — und
+     gewuenscht: „einige der Spiele, die fuer den Chat kompatibel
+     sind, zum Beispiel Artikel raten … dass man im Chat sogar auf den
+     Link im Woerterbuch zugreifen kann … Das Ganze soll dann
+     natuerlich auch benotet werden koennen."
+
+     Die Strategie steht ausfuehrlich in app.js bei DMA_WORTPROBE. Kurz:
+     eine Aufgabe taugt nur, wenn sie aus dem eigenen Stoff kommt, sich
+     selbst pruefen kann und danach eine Note bekommen kann. Genau das
+     sind diese zwei — die Woerter kommen aus dem Woerterbuch, die
+     Loesung steht dort auch, geprueft wird sofort.
+
+     Das Woerterbuch liegt in app.js und wird erst geholt, wenn die
+     erste solche Aufgabe gestellt wird. Ist es noch unterwegs, sagt
+     die Zeile das und man versucht es gleich noch einmal. */
+  function wortAufgabeStellen(art, roh) {
+    var probe = null;
+    var wp = (typeof window !== "undefined") ? window.DMA_WORTPROBE : null;
+    if (!wp) {
+      return systemZeile("Das W\u00f6rterbuch ist auf diesem Ger\u00e4t nicht geladen.");
+    }
+    try { probe = (art === "artikel") ? wp.artikel(roh) : wp.begriff(roh); } catch (e) { probe = null; }
+    if (!probe) {
+      /* Noch nicht da? Dann anstossen und Bescheid sagen — ein stilles
+         Nichts waere das Schlimmste. */
+      var laeuft = false;
+      try { laeuft = Boolean(wp.nachladen && wp.nachladen()); } catch (e) {}
+      if (!wp.bereit || !wp.bereit()) {
+        return systemZeile("\ud83d\udcda Das W\u00f6rterbuch wird gerade geholt"
+          + (laeuft ? "" : "") + " \u2014 gleich noch einmal  /" + art + "  tippen.");
+      }
+      return systemZeile("Dazu finde ich im W\u00f6rterbuch nichts"
+        + (roh ? " zu \u201e" + String(roh).slice(0, 40) + "\u201c" : "") + ".");
+    }
+    if (art === "artikel") {
+      offeneAufgabe = { typ: "artikel", loesung: probe.artikel,
+                        frage: "Welcher Artikel geh\u00f6rt zu \u201e" + probe.nomen + "\u201c?",
+                        teile: ["der", "die", "das"],
+                        teileGemischt: ["der", "die", "das"],
+                        wer: {}, zeit: Date.now(), zeileId: "" };
+      /* Die Bedeutung steht dabei — dann ist es eine Uebung und kein
+         Gluecksspiel, und wer das Wort nicht kennt, lernt es hier. */
+      var zeileA = anAlle("aufgabe",
+        "\ud83d\udd24 Welcher Artikel geh\u00f6rt zu \u201e" + probe.nomen + "\u201c?"
+        + (probe.bedeutung ? "  (" + String(probe.bedeutung).slice(0, 90) + ")" : "")
+        + ": der \u00b7 die \u00b7 das",
+        { wortLink: probe.nomen });
+      if (zeileA && zeileA.id) { offeneAufgabe.zeileId = zeileA.id; zeileA.aufgabeId = zeileA.id; }
+      aufgabeMerken();
+      aufgabeVerkuenden();
+      return true;
+    }
+    offeneAufgabe = { typ: "begriff", loesung: probe.wort,
+                      frage: probe.bedeutung, teile: [], teileGemischt: [],
+                      wer: {}, zeit: Date.now(), zeileId: "" };
+    var zeileB = anAlle("aufgabe",
+      "\ud83d\udcd6 Welches Wort ist gemeint? " + probe.bedeutung
+      + (probe.stufe ? "  (" + probe.stufe + ")" : ""),
+      { wortLink: probe.wort });
+    if (zeileB && zeileB.id) { offeneAufgabe.zeileId = zeileB.id; zeileB.aufgabeId = zeileB.id; }
+    aufgabeMerken();
+    aufgabeVerkuenden();
+    return true;
+  }
+
+  /* =========================================================
      EINE AUFGABE IN EIGENEN WORTEN
      ---------------------------------------------------------
      GEWUENSCHT: „Ich moechte diese Benotung nicht global haben, nur
@@ -6316,6 +6410,42 @@ window.LiveChat = (function () {
     "Einem geschenkten Gaul schaut man nicht ins Maul"
   ];
 
+  /* =========================================================
+     DAS RUNDENLAUFEN
+     ---------------------------------------------------------
+     GEWUENSCHT: „und da soll, wie gesagt, das Runden laufen."
+     Die Runde ist die SITZREIHE — dieselbe Reihenfolge, die jeder
+     auf seinem Bildschirm sieht (plaetzeBauen sortiert nach
+     Ankunftszeit, auf jedem Geraet gleich). Wer die Aufgabe stellt,
+     ist nicht dran; es beginnt der Naechste im Kreis, und nach jedem
+     Versuch rueckt es weiter.
+
+     Weitergezaehlt wird auf dem Geraet dessen, der die Aufgabe
+     gestellt hat — und von dort als eigener Ruf an alle. Jedes Geraet
+     fuer sich zaehlen zu lassen, ginge schief: die Nachrichten
+     treffen nicht ueberall in derselben Reihenfolge ein. Dasselbe
+     Muster wie bei der Lesezeile, und das traegt seit Runde 21. */
+  function rundeNamen() {
+    try {
+      return plaetzeBauen().filter(function (p) { return p && !p.leer && p.name; })
+        .map(function (p) { return { id: p.id, name: p.name }; });
+    } catch (e) { return []; }
+  }
+  function naechsterDran(nachId) {
+    var reihe = rundeNamen();
+    if (!reihe.length) return "";
+    var i = reihe.findIndex(function (p) { return p.id === nachId; });
+    return reihe[(i + 1) % reihe.length].name;
+  }
+  function dranSetzen(name) {
+    if (!offeneAufgabe) return false;
+    offeneAufgabe.dran = String(name || "");
+    aufgabeMerken();
+    senden({ art: "dran", zeileId: offeneAufgabe.zeileId || "", name: offeneAufgabe.dran });
+    melden();
+    return true;
+  }
+
   function ratenStellen(roh) {
     var text = String(roh || "").trim();
     if (/^liste$/i.test(text)) {
@@ -6346,7 +6476,8 @@ window.LiveChat = (function () {
     if (buchstaben < 4) return systemZeile("Das sind zu wenige Buchstaben zum Raten.");
 
     offeneAufgabe = { typ: "raten", loesung: text, frage: "Aufdecken", wer: {},
-                      zeit: Date.now(), zeileId: "" };
+                      zeit: Date.now(), zeileId: "", vonMir: true,
+                      dran: naechsterDran(zustand.ichId) };
     /* DIE LOESUNG FAEHRT HIER MIT — und das ist Absicht, kein
        Versehen. Anders als bei der Betonung kann kein Geraet den
        Satz nachschlagen: er ist frei erfunden. Wer einen Buchstaben
@@ -6355,7 +6486,8 @@ window.LiveChat = (function () {
        Wer ins Geraet hineinsieht, findet ihn; fuer ein Ratespiel
        im Unterricht ist das der richtige Preis. Im sichtbaren Text
        der Zeile steht er nicht. */
-    var zeile = anAlle("aufgabe", "\ud83d\udd21 Aufdecken \u2014 welcher Satz ist das?", { raten: text });
+    var zeile = anAlle("aufgabe", "\ud83d\udd21 Aufdecken \u2014 welcher Satz ist das?",
+      { raten: text, dran: offeneAufgabe.dran });
     if (zeile && zeile.id) {
       offeneAufgabe.zeileId = zeile.id;
       zeile.aufgabeId = zeile.id;
@@ -6445,6 +6577,7 @@ window.LiveChat = (function () {
     var paket = {
       art: "aufgabeAn",
       typ: offeneAufgabe.typ,
+      dran: offeneAufgabe.dran || "",
       frage: offeneAufgabe.frage || "",
       /* Die Kennung der Aufgabenzeile reist mit — daran erkennt jedes
          Geraet spaeter, welche Antwort zu welcher Frage gehoert. */
@@ -6588,6 +6721,15 @@ window.LiveChat = (function () {
   function siehtNachVersuchAus(text, aufgabe) {
     var loesung = String(aufgabe.loesung || "");
     if (!loesung) return false;
+    /* Beim Artikel ist jede der drei Moeglichkeiten ein Versuch — das
+       steht schon in aufgabeVersuch. Beim gesuchten Wort ist eine
+       kurze Zeile (ein, zwei Woerter) ein Versuch; alles Laengere ist
+       Geplauder und bekommt keinen Notenknopf. */
+    if (aufgabe.typ === "artikel") return /^\s*(der|die|das)\b/i.test(String(text || ""));
+    if (aufgabe.typ === "begriff") {
+      var w = String(text || "").trim().split(/\s+/);
+      return w.length > 0 && w.length <= 3 && w[0].length > 1;
+    }
     if (aufgabe.typ === "wort") {
       var geschrieben = wortMenge(text);
       if (geschrieben.length !== 1) return false;
@@ -6617,6 +6759,14 @@ window.LiveChat = (function () {
 
   function aufgabeVersuch(von, text) {
     if (!offeneAufgabe || !von) return null;
+    /* Beim Aufdecken laeuft die Runde weiter, sobald jemand geraten
+       hat — und zwar nur auf dem Geraet, das die Aufgabe gestellt
+       hat. Von dort geht ein Ruf an alle. */
+    var rundeWeiter = function () {
+      if (offeneAufgabe && offeneAufgabe.typ === "raten" && offeneAufgabe.vonMir) {
+        try { dranSetzen(naechsterDran(von)); } catch (e) {}
+      }
+    };
     /* Eine Aufgabe in eigenen Worten hat keine Musterloesung. Dort ist
        die ERSTE Zeile nach der Aufgabe die Antwort — danach plaudert
        die Person wieder ganz normal, und es steht nicht an jeder
@@ -6627,6 +6777,21 @@ window.LiveChat = (function () {
       aufgabeMerken();
       return { versuch: true, richtig: false, frei: true,
                frage: offeneAufgabe.frage || "" };
+    }
+    /* Beim Artikel zaehlt das erste Wort: „das" ist richtig, „das
+       Fahrrad" auch — beides ist dieselbe Antwort, und die zweite
+       waere sogar die schoenere. */
+    if (offeneAufgabe.typ === "raten") rundeWeiter();
+    if (offeneAufgabe.typ === "artikel") {
+      var erstes = String(text || "").trim().split(/\s+/)[0] || "";
+      if (aufgabeGleich(erstes, offeneAufgabe.loesung)) {
+        return { versuch: true, richtig: true, frage: offeneAufgabe.loesung };
+      }
+      /* Drei Moeglichkeiten, eine davon ist getippt worden: das ist
+         immer ein Versuch, auch wenn er falsch ist. */
+      if (/^(der|die|das)$/i.test(erstes)) {
+        return { versuch: true, richtig: false, frage: offeneAufgabe.loesung };
+      }
     }
     if (aufgabeGleich(text, offeneAufgabe.loesung)) {
       return { versuch: true, richtig: true, frage: offeneAufgabe.loesung };
@@ -8184,6 +8349,10 @@ window.LiveChat = (function () {
       was: "Kontext\u00fcbung \u2014 die S\u00e4tze werden gemischt, wer sie richtig ordnet, bekommt es gesagt" },
     { gr: "lernen", w: "kontexter", kurz: "kontext", nutzt: "/kontexter Satz | Satz | Satz",
       was: "KONTEXTER \u2014 eine Geschichte in die richtige Reihenfolge bringen; aus jedem Lesetext mit einem Tipp" },
+    { gr: "lernen", w: "artikel", kurz: "derdiedas", nutzt: "/artikel",
+      was: "Der, die oder das? Ein Wort aus dem W\u00f6rterbuch \u2014 drei Kacheln, sofort gepr\u00fcft" },
+    { gr: "lernen", w: "begriff", kurz: "bedeutung", nutzt: "/begriff",
+      was: "Die Bedeutung steht da, das Wort ist gesucht \u2014 auch aus dem W\u00f6rterbuch" },
     { gr: "hilfe", w: "probe",   kurz: "test",   nutzt: "/probe boxen",      was: "Eine Animation nur für dich zeigen" },
     { gr: "feier", w: "konfetti", kurz: "party", nutzt: "/konfetti",          was: "Konfetti — fliegt durch den ganzen Raum, bei allen" },
     { gr: "feier", w: "ballon",  kurz: "geburtstag", nutzt: "/ballon Name", was: "Luftballons zum Geburtstag" },
@@ -8906,6 +9075,10 @@ window.LiveChat = (function () {
       n.lied = zusatz.lied;
       n.liedTitel = zusatz.liedTitel || "";
     }
+    /* Das Wort, das im Woerterbuch nachzuschlagen ist. „Dass man im
+       Chat sogar auf den Link im Woerterbuch zugreifen kann." */
+    if (zusatz && zusatz.wortLink) n.wortLink = zusatz.wortLink;
+    if (zusatz && zusatz.dran) n.dran = zusatz.dran;
     /* WEN es angeht, steht an der Zeile selbst — nicht nur im Rundruf.
        Sonst sähe der Absender die Umarmung nicht, die er gerade
        verschickt hat: seine eigene Zeile entsteht nämlich hier und
@@ -10096,6 +10269,8 @@ window.LiveChat = (function () {
     if (art === "aufgabe" || art === "frage") return aufgabeFreiStellen(rest);
     if (art === "sortieren" || art === "reihenfolge") return sortierAufgabeStellen(rest, false);
     if (art === "kontexter" || art === "kontext") return sortierAufgabeStellen(rest, true);
+    if (art === "artikel") return wortAufgabeStellen("artikel", rest);
+    if (art === "begriff" || art === "bedeutung") return wortAufgabeStellen("begriff", rest);
     /* /lesen oeffnet den Waehler in der Oberflaeche — die Texte
        liegen dort (app.js), nicht hier. Ohne Oberflaeche (Sonde,
        Kopfrechner) sagt es wenigstens, was es tun wuerde. */
@@ -11429,6 +11604,8 @@ window.LiveChat = (function () {
     tonNeuAufbauen: function () { tonWacheStarten(); return tonNeuAufbauen(); },
     /* Die Lieder — app.js braucht sie fuer die Kachel und fuer den
        Waehler, gelesen werden sie hier. */
+    /* Wer ist gerade dran? Die Oberflaeche schreibt es an die Tafel. */
+    werIstDran: function () { return (offeneAufgabe && offeneAufgabe.dran) || ""; },
     lieder: function () { return LIEDER.map(function (l) {
       return { datei: l.datei, titel: l.titel }; }); },
     tonWacheStand: function () { return { geheilt: tonWacheZaehler.geheilt,

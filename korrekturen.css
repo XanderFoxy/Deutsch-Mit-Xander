@@ -15348,3 +15348,32 @@ body.lc-schreibt .tutor-reiter {
   padding: 8px 10px;
   box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.28);
 }
+
+/* --- DER LINK INS WOERTERBUCH AN DER AUFGABE -------------------------
+   GEWUENSCHT: „dass man im Chat sogar auf den Link im Woerterbuch
+   zugreifen kann." */
+.lc-aufgabe-nachschlagen {
+  display: inline-block;
+  margin: 2px 0 6px;
+  border: 1px solid rgba(240, 169, 43, 0.5);
+  background: rgba(240, 169, 43, 0.16);
+  color: inherit;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+.lc-aufgabe-nachschlagen:hover { background: rgba(240, 169, 43, 0.28); }
+
+/* --- WER IST BEIM AUFDECKEN DRAN? ------------------------------------
+   GEWUENSCHT: „und da soll, wie gesagt, das Runden laufen." */
+.lc-raten-dran {
+  margin: 2px 0 8px;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+.lc-raten-dran-ich {
+  opacity: 1;
+  font-weight: 700;
+  color: #ffd76a;
+}
