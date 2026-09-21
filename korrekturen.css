@@ -21408,3 +21408,159 @@ body.lc-schreibt .tutor-reiter {
      nicht davor klebt. */
   z-index: 5;
 }
+
+/* === RUNDE 67: DAS TOR IST EINE STEHENDE WASSERWAND =================
+   GEWUENSCHT: „Tor als stehende Wasserwand mit Partikeln und Plasma."
+
+   Der alte Gate-Effekt war ein SOG: mehrere Scheiben, die sich
+   verschieden schnell drehten, dazu Staub, der hineingezogen wurde.
+   Eine stehende Wasserwand dreht sich aber nicht. Woran das Auge sie
+   erkennt, sind vier andere Sachen — und genau die stehen hier:
+     1. RINGE, die von der Mitte nach aussen laufen und dabei
+        flacher werden. Ohne sie ist es eine Scheibe, kein Wasser.
+     2. DER HELLE SAUM am Ring: dort haengt das Wasser an der
+        Fassung, das ist die Oberflaechenspannung.
+     3. EIN GLANZ, der langsam ueber die Flaeche wandert.
+     4. TROPFEN, die abspringen, und PLASMA, das am Rand zuckt.
+   Gedreht wird nur noch das Plasma. Wasser steht. */
+.lc-tor-wasserwand .lc-tor-sog,
+.lc-tor-wasserwand .lc-tor-kern,
+.lc-tor-wasserwand .lc-tor-horizont,
+.lc-tor-wasserwand .lc-tor-bogen,
+.lc-tor-wasserwand .lc-tor-staub { display: none; }
+
+/* Die Fassung: ein metallener Ring, in dem das Wasser haengt. */
+.lc-tor-ring {
+  position: absolute;
+  inset: -7%;
+  border-radius: 50%;
+  background: conic-gradient(from 210deg,
+    #7d94a8, #e8f2fa 12%, #8fa6b8 28%, #dfeaf4 44%,
+    #6f8698 60%, #e8f2fa 76%, #8aa1b3 90%, #7d94a8);
+  -webkit-mask: radial-gradient(circle, rgba(0,0,0,0) 0 71%, #000 74% 100%);
+          mask: radial-gradient(circle, rgba(0,0,0,0) 0 71%, #000 74% 100%);
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .45));
+}
+/* Die Wasserflaeche selbst. */
+.lc-tor-wasser {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  /* NACHGEMESSEN: hier stand ein heller Punkt bei 44 % / 38 % — ein
+     Glanzlicht, wie es eine KUGEL hat. Genau daran las das Auge eine
+     Kugel statt einer Flaeche (auf dem Foto bei 900 ms gesehen). Eine
+     stehende Wand wird von vorn beleuchtet: oben etwas heller als
+     unten, sonst gleichmaessig. */
+  background: linear-gradient(to bottom, #56b9e4 0%, #2f9ed4 46%, #1a6f9f 100%);
+  box-shadow: inset 0 0 14px rgba(20, 70, 110, .5);
+  overflow: hidden;
+}
+/* Der helle Saum, wo das Wasser am Ring haengt. */
+.lc-tor-saum {
+  position: absolute;
+  inset: 3%;
+  border-radius: 50%;
+  border: 2px solid rgba(206, 244, 255, .7);
+  /* Der Schein war so stark, dass er die Ringe ueberstrahlt hat. */
+  box-shadow: 0 0 6px rgba(150, 226, 255, .5),
+              inset 0 0 7px rgba(206, 244, 255, .3);
+  animation: lcTorSaumR67 2.4s ease-in-out infinite;
+}
+@keyframes lcTorSaumR67 {
+  0%, 100% { opacity: .75; }
+  50%      { opacity: 1; }
+}
+/* Die Ringe laufen von der Mitte nach aussen — das ist das Wasser. */
+.lc-tor-welle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10%;
+  height: 10%;
+  margin: -5% 0 0 -5%;
+  border-radius: 50%;
+  border: 3px solid rgba(228, 250, 255, .92);
+  box-shadow: 0 0 4px rgba(190, 240, 255, .6);
+  opacity: 0;
+  animation: lcTorWelleR67 1.9s cubic-bezier(.2, .65, .35, 1) infinite;
+}
+/* FUENF Ringe statt drei, und dichter hintereinander: gemessen lag
+   bei drei Ringen der vorderste zeitweise auf 0,18 Deckkraft — dann
+   ist die Flaeche fuer einen Moment glatt, und glattes Wasser sieht
+   aus wie Lack. */
+.lc-tor-welle-2 { animation-delay: -.38s; }
+.lc-tor-welle-3 { animation-delay: -.76s; }
+.lc-tor-welle-4 { animation-delay: -1.14s; }
+.lc-tor-welle-5 { animation-delay: -1.52s; }
+@keyframes lcTorWelleR67 {
+  0%   { opacity: 0;   transform: scale(.3); border-width: 3.5px; }
+  10%  { opacity: 1; }
+  60%  { opacity: .8;  border-width: 2px; }
+  /* Weiter aussen wird der Ring flacher — die Welle laeuft aus. */
+  100% { opacity: 0;   transform: scale(8.4); border-width: 1px; }
+}
+/* Der Glanz wandert langsam ueber die Flaeche. */
+.lc-tor-glanz {
+  position: absolute;
+  /* Er liegt jetzt IN der Wasserflaeche — die ist selbst schon rund
+     und beschnitten, also deckt er sie ganz ab. */
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(112deg,
+    rgba(255, 255, 255, 0) 38%, rgba(236, 251, 255, .26) 48%,
+    rgba(255, 255, 255, 0) 57%);
+  animation: lcTorGlanzR67 3.6s ease-in-out infinite;
+}
+@keyframes lcTorGlanzR67 {
+  /* Schmaler und blasser als im ersten Anlauf — er soll ueber das
+     Wasser streichen, nicht die Ringe zudecken. */
+  0%, 100% { transform: translate(-16%, 10%); opacity: .3; }
+  50%      { transform: translate(16%, -10%); opacity: .6; }
+}
+/* PLASMA: zwei helle Boegen, die am Rand entlangzucken. Das ist das
+   Einzige, was sich hier noch dreht. */
+.lc-tor-plasma {
+  position: absolute;
+  inset: 1%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    rgba(180, 240, 255, 0) 0 6%, rgba(226, 250, 255, .95) 9%,
+    rgba(120, 214, 255, .5) 13%, rgba(180, 240, 255, 0) 19% 100%);
+  -webkit-mask: radial-gradient(circle, rgba(0,0,0,0) 0 80%, #000 84% 100%);
+          mask: radial-gradient(circle, rgba(0,0,0,0) 0 80%, #000 84% 100%);
+  filter: blur(.4px) drop-shadow(0 0 6px rgba(170, 236, 255, .9));
+  animation: lcTorPlasmaR67 1.35s linear infinite;
+}
+.lc-tor-plasma-2 { animation-duration: 2.1s; animation-direction: reverse; opacity: .7; }
+@keyframes lcTorPlasmaR67 { to { transform: rotate(360deg); } }
+/* Die Tropfen springen ab und fallen zurueck. */
+.lc-tor-tropfen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7%;
+  height: 9%;
+  margin: -4.5% 0 0 -3.5%;
+  border-radius: 52% 48% 45% 55% / 62% 58% 42% 38%;
+  background: radial-gradient(circle at 38% 30%, #e6fbff, #7fd4f5 55%, #2f9ed4);
+  opacity: 0;
+  transform: rotate(var(--wo, 0deg));
+  animation: lcTorTropfenR67 1.25s cubic-bezier(.2, .7, .4, 1) infinite;
+}
+@keyframes lcTorTropfenR67 {
+  0%   { opacity: 0; transform: rotate(var(--wo, 0deg)) translateY(-40%) scale(.3); }
+  18%  { opacity: 1; transform: rotate(var(--wo, 0deg)) translateY(-78%)
+                                scale(var(--klein, .8)); }
+  /* Ganz aussen wird er wieder langsamer und faellt zurueck. */
+  72%  { opacity: .9; transform: rotate(var(--wo, 0deg))
+                                 translateY(calc(-1 * var(--weit, 120%)))
+                                 scale(calc(var(--klein, .8) * .7)); }
+  100% { opacity: 0; transform: rotate(var(--wo, 0deg))
+                                translateY(calc(-1 * var(--weit, 120%) + 14%))
+                                scale(calc(var(--klein, .8) * .5)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-tor-welle, .lc-tor-glanz, .lc-tor-plasma,
+  .lc-tor-tropfen, .lc-tor-saum { animation: none; }
+  .lc-tor-welle, .lc-tor-tropfen { opacity: 0; }
+}

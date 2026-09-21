@@ -9227,6 +9227,9 @@ window.LiveChat = (function () {
                 /* „ballon" NICHT — das ist schon der Ballon-Effekt. */
                 aufpumpen: "aufblasen", pumpe: "aufblasen",
                 zerplatzen: "aufblasen",
+                /* Er sagt „umarmen"; der Befehl hiess immer nur
+                   „/drueck". Beides fuehrt jetzt zum selben. */
+                umarmen: "drueck", umarmung: "drueck", knuddeln: "drueck",
                 mehrschwanz: "neunschwanz", katzenpeitsche: "neunschwanz",
                 peitschealle: "neunschwanz",
                 falke: "greifvogel", habicht: "greifvogel",
@@ -9925,6 +9928,30 @@ window.LiveChat = (function () {
      heisst: bei einem selbst „sich selbst", sonst sein Name. Was
      MITFAEHRT (wen), bleibt in jedem Fall der echte Name — die
      Animation muss den Platz ja finden. */
+  /* „tritt gegen das Profilbild von ALLE" — so stand es im ersten
+     Anlauf im Chat, und das ist schlicht falsch.
+
+     ABGEZAEHLT: es sind 33 Saetze in AM_PLATZ, und sie enden ganz
+     verschieden — auf eine Praeposition („… von", „… bei"), auf ein
+     Hauptwort („gibt einen Kuss", „schleudert mit dem Katapult"), auf
+     eine Vorsilbe („peitscht aus") oder auf ein blankes Verb
+     („streichelt"). Eine Regel, die einfach ein Wort anhaengt, kann
+     bei allen 33 gar nicht stimmen: „gibt einen Kuss ALLEN" ist so
+     schief wie „von ALLE".
+
+     Deshalb wird die Praeposition am Ende GEKAPPT und eine einzige
+     Wendung angehaengt, die hinter jedem der 33 Saetze aufgeht:
+       „tritt gegen das Profilbild — ALLE auf einmal"
+       „gibt einen Kuss — ALLE auf einmal"
+       „streichelt — ALLE auf einmal"
+     „aus", „hoch" und „ab" bleiben stehen: das sind Vorsilben des
+     Verbs, keine Praepositionen, und ohne sie fehlte dem Satz etwas. */
+  function alleSatz(satz) {
+    var t = String(satz || "").trim()
+      .replace(/\s+\b(von|bei|an|mit|zu|f\u00fcr|auf|in|\u00fcber|unter|hinter|neben|nach)\s*$/i, "");
+    return t + " \u2014 ALLE auf einmal";
+  }
+
   function zielWort(wem) {
     if (!wem) return "";
     var ich = String(zustand.ichName || "").trim().toLowerCase();
@@ -10249,9 +10276,18 @@ window.LiveChat = (function () {
        die anderen Geräte nur, DASS gedrückt wurde, aber nicht WEN —
        und könnten den richtigen Platz nicht in den Arm nehmen. */
     if (art === "drueck") {
-      var wen2 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
-      return anAlle("aktion", zustand.ichName + " drückt " + (wen2 ? wen2.name : "alle"),
-                    { wirkung: "umarmen", wen: wen2 ? wen2.name : "" });
+      /* RUNDE 67: „Effekte fuer ALLE gleichzeitig — umarmen, kuessen,
+         treten, Bombe." Die Umarmung ging bisher nur ueber den
+         RUECKFALL: ohne Namen fuhr ein leeres „wen" mit, und
+         lcZielPlaetze nahm dann alle, WEIL nichts passte. Jetzt steht
+         es ausdruecklich da — und „/drueck alle" sagt es auch. */
+      var allenD = /^(alle|allen|alles|allesamt|jeden|jedem|everyone|all)$/i
+        .test(String(rest || "").trim());
+      var wen2 = (rest && !allenD)
+        ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
+      return anAlle("aktion", zustand.ichName + " drückt "
+                    + (wen2 ? wen2.name : "ALLE  \ud83e\udd17\ud83e\udd17\ud83e\udd17"),
+                    { wirkung: "umarmen", wen: wen2 ? wen2.name : "*" });
     }
     /* GEWÜNSCHT: „eine Animation, wo jemand abgeleckt wird, so dass man
        nachher sagen kann: Alex leckt Amy ab" und „zwei Boxhandschuhe,
@@ -10721,9 +10757,28 @@ window.LiveChat = (function () {
        allein zeigt den Film. */
     if (art === "lok" && !rest) art = "zug";
     if (AM_PLATZ[art]) {
-      var wemP = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
-      if (!wemP) return systemZeile("So geht es:  /" + art + " Nickname");
+      /* RUNDE 67 — GEWUENSCHT: „Effekte fuer ALLE gleichzeitig —
+         umarmen, kuessen, treten, Bombe."
+         Zeichnen konnte das Klassenzimmer es laengst: lcZielPlaetze
+         gibt ALLE besetzten Plaetze zurueck, wenn kein Name passt.
+         Nur der Befehl liess es nicht zu — ohne Namen kam bloss „So
+         geht es: /tritt Nickname". Jetzt ist „alle" ein gueltiges
+         Ziel, und zwar ein ausdrueckliches: es faehrt als „*" mit,
+         damit es nicht an der Namenssuche haengt. Wer wirklich
+         „Alle" heisst, wird deshalb auch nicht versehentlich
+         alleine getroffen. */
+      var allenP = /^(alle|allen|alles|allesamt|jeden|jedem|everyone|all)$/i
+        .test(String(rest || "").trim());
+      var wemP = allenP ? { name: "*" }
+        : (rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null);
+      if (!wemP) return systemZeile("So geht es:  /" + art + " Nickname"
+        + "  \u2014 oder  /" + art + " alle");
       var satzP = AM_PLATZ[art];
+      if (allenP) {
+        return anAlle("aktion", zustand.ichName + " " + alleSatz(satzP.satz)
+                      + "  " + satzP.emoji + satzP.emoji + satzP.emoji,
+                      { wirkung: satzP.wirkung, wen: "*", los: Math.random().toFixed(4) });
+      }
       /* DAS LOS FAEHRT MIT.
          „wenn mehr als zwei Leute teilnehmen, soll die eine Kugel, die
          man anstoesst, die anderen beeinflussen und einer von denen
@@ -10738,8 +10793,18 @@ window.LiveChat = (function () {
     /* Und die vier, die es fuer den Raum schon gibt: nur MIT Namen
        wird daraus die kleine Fassung am Platz. */
     if (AUCH_AM_PLATZ[art] && rest) {
-      var wemQ = personNachName(rest) || praesenzNachName(rest) || { name: rest };
+      /* Auch hier gilt „alle" — sonst koennte man die Bombe zwar
+         jedem einzeln schicken, aber nicht dem ganzen Raum. */
+      var allenQ = /^(alle|allen|alles|allesamt|jeden|jedem|everyone|all)$/i
+        .test(String(rest).trim());
+      var wemQ = allenQ ? { name: "*" }
+        : (personNachName(rest) || praesenzNachName(rest) || { name: rest });
       var satzQ = AUCH_AM_PLATZ[art];
+      if (allenQ) {
+        return anAlle("aktion", zustand.ichName + " " + alleSatz(satzQ.satz)
+                      + "  " + satzQ.emoji + satzQ.emoji + satzQ.emoji,
+                      { wirkung: satzQ.wirkung, wen: "*", los: Math.random().toFixed(4) });
+      }
       return anAlle("aktion", zustand.ichName + " " + satzQ.satz + " " + zielWort(wemQ) + "  " + satzQ.emoji,
                     { wirkung: satzQ.wirkung, wen: wemQ.name, los: Math.random().toFixed(4) });
     }

@@ -28237,6 +28237,13 @@
          Kleinschreibung ist egal — wer „/drück emmy" tippt, meint
          Emmy. */
       const suche = String(wen).trim().toLowerCase();
+      /* RUNDE 67: „*" heisst ausdruecklich ALLE — genau wie in
+         lcZielPlaetze. Vorher kam eine Umarmung fuer den ganzen Raum
+         nur dadurch zustande, dass die Namenssuche danebenging. */
+      if (suche === "*") {
+        ziele = [...karte.querySelectorAll(".lc-platz")]
+          .filter((pl) => !pl.classList.contains("lc-platz-frei"));
+      }
       /* EINE PLATZNUMMER MEINT DEN PLATZ — wie ueberall sonst seit
          Runde 50. Ohne diese Zeile fand die Namenssuche zu „3" nichts,
          und weiter unten griff der Rueckfall „alle": aus einer
@@ -28257,13 +28264,21 @@
           return true;
         }
       }
-      ziele = [...karte.querySelectorAll(".lc-platz")].filter(
-        (pl) => lcNameVomPlatz(pl).toLowerCase() === suche);
-      /* Und wirklich nur EINER: zwei Plaetze mit derselben
-         Beschriftung (etwa waehrend eines Platztauschs) haben sonst
-         beide die Arme bekommen — „bei der Umarmung werden immer noch
-         beide Personen gleichzeitig umarmt". */
-      if (ziele.length > 1) ziele = [ziele[0]];
+      /* NACHGEMESSEN: „umarmen alle" traf 0 Plaetze, obwohl oben
+         schon alle eingesammelt waren. Der Grund stand genau hier —
+         die Namenssuche UEBERSCHRIEB die Liste, und zu „*" heisst
+         natuerlich niemand. Deshalb laeuft sie bei „*" gar nicht
+         erst an. */
+      if (suche !== "*") {
+        ziele = [...karte.querySelectorAll(".lc-platz")].filter(
+          (pl) => lcNameVomPlatz(pl).toLowerCase() === suche);
+        /* Und wirklich nur EINER: zwei Plaetze mit derselben
+           Beschriftung (etwa waehrend eines Platztauschs) haben sonst
+           beide die Arme bekommen — „bei der Umarmung werden immer
+           noch beide Personen gleichzeitig umarmt". Fuer „*" gilt das
+           ausdruecklich NICHT: da sollen ja alle drankommen. */
+        if (ziele.length > 1) ziele = [ziele[0]];
+      }
     }
     if (!ziele.length && !String(wen || "").trim()) {
       /* NIEMAND GENANNT: dann gilt es allen, die wirklich da sind.
@@ -28414,6 +28429,13 @@
     if (wen) {
       const suche = String(wen).trim().toLowerCase();
       const plaetze = [...karte.querySelectorAll(".lc-platz")];
+      /* RUNDE 67: „*" heisst ausdruecklich ALLE. Ohne diese Zeile
+         liefe es zwar auch ueber den Rueckfall ganz unten — aber nur,
+         WEIL kein Name passt. Ein Effekt, der alle treffen soll, darf
+         nicht davon abhaengen, dass die Namenssuche danebengeht. */
+      if (suche === "*") {
+        return plaetze.filter((pl) => !pl.classList.contains("lc-platz-frei"));
+      }
       const namen = (pl) => {
         const nm = pl.querySelector(".lc-platz-name");
         return nm ? nm.textContent.trim().toLowerCase() : "";
@@ -33225,18 +33247,50 @@
            Ereignishorizont am Rand, den Energiebogen darauf und dem
            Staub, den es ansaugt. Jede Schicht dreht anders schnell;
            genau daran erkennt das Auge Tiefe. */
+        /* RUNDE 67 — GEWUENSCHT: „Tor als stehende Wasserwand mit
+           Partikeln und Plasma."
+
+           Bisher war es ein SOG: Schichten, die sich drehen, mit
+           Staub, der hineingezogen wird. Eine stehende Wasserwand ist
+           etwas anderes — sie dreht sich gar nicht. Was sie ausmacht:
+             · RINGE, die von der Mitte nach aussen laufen. Das ist
+               das Erste, woran man Wasser erkennt; eine Flaeche ohne
+               Ringe ist eine Scheibe, kein Wasser.
+             · EIN HELLER RAND, wo das Wasser am Ring haengt — die
+               Oberflaechenspannung.
+             · EIN GLANZ, der ueber die Flaeche wandert.
+             · TROPFEN, die abspringen, und PLASMA, das am Rand
+               entlangzuckt.
+           Gedreht wird nur noch das Plasma — Wasser nicht. */
+        tor.classList.add("lc-tor-wasserwand");
         tor.innerHTML =
-          '<i class="lc-tor-sog"></i>'
-          + '<i class="lc-tor-sog lc-tor-sog2"></i>'
-          + '<i class="lc-tor-kern"></i>'
-          + '<i class="lc-tor-horizont"></i>'
-          + '<i class="lc-tor-bogen"></i>'
-          + '<i class="lc-tor-bogen lc-tor-bogen2"></i>';
-        for (let k = 0; k < 10; k++) {
+          '<i class="lc-tor-ring"></i>'
+          /* Ringe und Glanz liegen IN der Wasserflaeche, nicht daneben:
+             sie traegt „overflow: hidden", und nur so laufen die Wellen
+             am Rand aus, statt ueber die Fassung hinauszuwachsen
+             (auf dem Foto bei 900 ms gesehen). */
+          + '<i class="lc-tor-wasser">'
+          + '<i class="lc-tor-welle"></i>'
+          + '<i class="lc-tor-welle lc-tor-welle-2"></i>'
+          + '<i class="lc-tor-welle lc-tor-welle-3"></i>'
+          + '<i class="lc-tor-welle lc-tor-welle-4"></i>'
+          + '<i class="lc-tor-welle lc-tor-welle-5"></i>'
+          + '<i class="lc-tor-glanz"></i>'
+          + "</i>"
+          + '<i class="lc-tor-saum"></i>' 
+          + '<i class="lc-tor-plasma"></i>'
+          + '<i class="lc-tor-plasma lc-tor-plasma-2"></i>';
+        /* Die Tropfen springen ab — nicht gleichmaessig im Kreis und
+           nicht zufaellig, sondern aus k gerechnet: so sieht es auf
+           JEDEM Geraet gleich aus. Math.random stand hier vorher und
+           war genau deshalb falsch. */
+        for (let k = 0; k < 14; k++) {
           const st = document.createElement("b");
-          st.className = "lc-tor-staub";
-          st.style.setProperty("--wo", (k * 36 + Math.random() * 24) + "deg");
-          st.style.animationDelay = (Math.random() * 1.1).toFixed(2) + "s";
+          st.className = "lc-tor-tropfen";
+          st.style.setProperty("--wo", (k * 25.7 + (k % 3) * 9).toFixed(1) + "deg");
+          st.style.setProperty("--weit", (108 + ((k * 37) % 46)) + "%");
+          st.style.setProperty("--klein", (0.5 + ((k * 13) % 9) / 12).toFixed(2));
+          st.style.animationDelay = ((k * 97) % 1100) + "ms";
           tor.appendChild(st);
         }
         tor.style.animationDelay = (i ? hin - 700 : 0) + "ms";
