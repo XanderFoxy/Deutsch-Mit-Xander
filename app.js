@@ -27653,9 +27653,17 @@
         return nm && nm.textContent.trim().toLowerCase() === suche;
       });
     }
-    if (!ziele.length) {
-      /* Niemand genannt oder nicht gefunden: dann gilt es allen, die
-         wirklich da sind. Leere Plätze zu drücken wäre albern. */
+    if (!ziele.length && !String(wen || "").trim()) {
+      /* NIEMAND GENANNT: dann gilt es allen, die wirklich da sind.
+         Leere Plätze zu drücken wäre albern.
+         XANDER: „Okay wenn ich mich alleine umarme, dann wird eine
+         andere Person mit umarmt. Das ist auch nicht richtig."
+         Der Grund stand genau hier: wurde ein Name genannt, aber am
+         Tisch nicht gefunden (Schreibweise, Umlaut, gerade erst
+         gegangen), fiel die Funktion auf „alle" zurueck — und dann
+         wurden Fremde mitgedrueckt. Wer jemanden NENNT, meint auch
+         nur den; findet sich der nicht, passiert lieber nichts hier
+         und lcWirkung zeichnet seine Zeichen über der Zeile. */
       ziele = [...karte.querySelectorAll(".lc-platz")]
         .filter((pl) => !pl.classList.contains("lc-platz-frei"));
     }
@@ -27711,18 +27719,23 @@
        duenn." Nachgemessen war er im Recht: an der Schulter waren es
        10,6 von 120 Einheiten (knapp 9 % der Bildbreite), am Gelenk
        7,8. Ein Oberarm ist im Verhaeltnis zum Kopf deutlich
-       kraeftiger. Jetzt 15 an der Schulter und 10,5 am Gelenk — rund
-       40 % mehr, und die Verjuengung von Schulter zu Handgelenk
-       bleibt erhalten, denn genau die macht einen Arm zum Arm. */
+       kraeftiger. Danach waren es 15 an der Schulter und 10,5 am
+       Gelenk — und XANDER meldete erneut: „Und die Umarmung, die
+       sieht immer noch nicht realistisch aus. Da gibt's noch viel zu
+       duenne Arme." Also noch einmal kraeftiger: 21 an der Schulter,
+       14,5 am Gelenk. Das ist ein Sechstel der Bildbreite und
+       entspricht einem Oberarm neben einem Kopf. Die Verjuengung von
+       Schulter zu Handgelenk bleibt, denn genau die macht einen Arm
+       zum Arm. */
     const koerper =
-      "M " + x(0) + " 45.5 C " + x(12) + " 46.2 " + x(26) + " 52.4 " + x(37) + " 61"
-      + " C " + x(41) + " 64.2 " + x(44) + " 66.6 " + x(hgx) + " 67.5"
-      + " L " + x(hgx) + " 78 C " + x(42) + " 77 " + x(38) + " 74 " + x(33) + " 70.2"
-      + " C " + x(22) + " 62.4 " + x(11) + " 60.2 " + x(0) + " 60.5 Z";
+      "M " + x(0) + " 42.5 C " + x(12) + " 43.4 " + x(26) + " 50.5 " + x(37) + " 59.5"
+      + " C " + x(41) + " 62.8 " + x(44) + " 65.4 " + x(hgx) + " 66.5"
+      + " L " + x(hgx) + " 81 C " + x(42) + " 80 " + x(38) + " 76.6 " + x(33) + " 72.4"
+      + " C " + x(22) + " 63.8 " + x(11) + " 62.8 " + x(0) + " 63.5 Z";
 
     const aermel =
-      "M " + x(0) + " 44.4 C " + x(7) + " 44.6 " + x(13) + " 46 " + x(18) + " 48.6"
-      + " L " + x(14.8) + " 58.6 C " + x(10) + " 58.8 " + x(5) + " 58.5 " + x(0) + " 58.6 Z";
+      "M " + x(0) + " 41.2 C " + x(7) + " 41.5 " + x(13) + " 43.2 " + x(18) + " 46.4"
+      + " L " + x(14.8) + " 60.2 C " + x(10) + " 61.4 " + x(5) + " 61.2 " + x(0) + " 61.4 Z";
 
     return '<svg viewBox="0 0 120 120" class="lc-arm lc-arm-' + seite + '">'
       + '<defs>'
@@ -33048,10 +33061,35 @@
          Sanduhr: sein Bild rieselt von oben wieder voll. */
       const fremd = zu.el.querySelector(".lc-kreis");
       if (fremd) {
-        fremd.classList.remove("lc-rieselt");
+        /* XANDER: „bei der Sanduhr die funktioniert immer noch nicht
+           … es koennte realistischer sein, dass sich das Bild wirklich
+           so zerfliesst wie Sand."
+           Die alte Bewegung („lc-rieselt") schob eine GERADE Kante
+           ueber das Bild — das sieht aus wie ein Rollo. Jetzt rinnt es
+           mit einer koernigen Kante aus, die Koerner fallen sichtbar
+           herunter und sammeln sich unten zu einem Haufen. */
+        fremd.classList.remove("lc-zerrinnt");
         void fremd.offsetWidth;
-        fremd.classList.add("lc-rieselt");
-        setTimeout(() => fremd.classList.remove("lc-rieselt"), 3200);
+        fremd.classList.add("lc-zerrinnt");
+        const sand = document.createElement("span");
+        sand.className = "lc-sandwerk";
+        let inhalt = '<span class="lc-sandhaufen"></span>';
+        for (let i = 0; i < 22; i++) {
+          inhalt += '<i class="lc-sandkorn" style="--wo:' + (8 + ((i * 37) % 84))
+            + "%;--spaet:" + ((i % 11) * 0.13).toFixed(2) + "s;--lang:"
+            + (1.1 + ((i % 5) * 0.16)).toFixed(2) + 's"></i>';
+        }
+        sand.innerHTML = inhalt;
+        /* Der Sand gehoert INS Bild, darf aber NICHT in .lc-kreis:
+           dort liegt gerade die clip-path-Bewegung, und ein clip-path
+           schneidet auch die Kinder weg — der Haufen verschwaende
+           zusammen mit dem Bild. Deshalb eine eigene runde Schicht am
+           Platz, gleich gross wie das Bild. */
+        zu.el.appendChild(sand);
+        setTimeout(() => {
+          fremd.classList.remove("lc-zerrinnt");
+          sand.remove();
+        }, 3200);
         lcTonZu("sanduhr");
       }
       return true;

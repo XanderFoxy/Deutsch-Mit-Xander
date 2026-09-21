@@ -17218,3 +17218,95 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-birne-gewinde { animation: none; }
 }
+
+/* =================================================================
+   DIE SANDUHR — DAS BILD ZERRINNT WIE SAND
+   -----------------------------------------------------------------
+   XANDER: „bei der Sanduhr die funktioniert immer noch nicht … es
+   könnte realistischer sein, dass sich das Bild wirklich so zerfließt
+   wie Sand."
+
+   Vorher lief eine gerade waagerechte Kante über das Bild — das sieht
+   aus wie ein Rollo, nicht wie Sand. Sand hat eine UNRUHIGE
+   Oberfläche. Deshalb ist die Kante jetzt ein Vieleck mit dreizehn
+   Punkten, die jeder ein Stück versetzt liegen; beim Wandern behält
+   jeder Punkt seinen Versatz, und genau das ergibt die körnige
+   Sandlinie. Erst rinnt das Bild von oben nach unten aus, dann
+   füllt es sich von unten wieder auf.
+   ================================================================= */
+.lc-zerrinnt { animation: lcZerrinntR39 3.2s linear both; }
+@keyframes lcZerrinntR39 {
+  0%    { clip-path: polygon(0% 1.3%, 8.33% 0%, 16.67% 0.8%, 25% 2.4%, 33.33% 2.3%, 41.67% 0.1%, 50% 0.9%, 58.33% 0%, 66.67% 0.2%, 75% 0%, 83.33% 1.3%, 91.67% 0.7%, 100% 0%, 100% 100%, 0% 100%); }
+  6%    { clip-path: polygon(0% 5.3%, 8.33% 1.1%, 16.67% 4.8%, 25% 6.4%, 33.33% 6.3%, 41.67% 4.1%, 50% 4.9%, 58.33% 3.1%, 66.67% 4.2%, 75% 1.3%, 83.33% 5.3%, 91.67% 4.7%, 100% 2.5%, 100% 100%, 0% 100%); }
+  18%   { clip-path: polygon(0% 27.3%, 8.33% 23.1%, 16.67% 26.8%, 25% 28.4%, 33.33% 28.3%, 41.67% 26.1%, 50% 26.9%, 58.33% 25.1%, 66.67% 26.2%, 75% 23.3%, 83.33% 27.3%, 91.67% 26.7%, 100% 24.5%, 100% 100%, 0% 100%); }
+  32%   { clip-path: polygon(0% 55.3%, 8.33% 51.1%, 16.67% 54.8%, 25% 56.4%, 33.33% 56.3%, 41.67% 54.1%, 50% 54.9%, 58.33% 53.1%, 66.67% 54.2%, 75% 51.3%, 83.33% 55.3%, 91.67% 54.7%, 100% 52.5%, 100% 100%, 0% 100%); }
+  44%   { clip-path: polygon(0% 83.3%, 8.33% 79.1%, 16.67% 82.8%, 25% 84.4%, 33.33% 84.3%, 41.67% 82.1%, 50% 82.9%, 58.33% 81.1%, 66.67% 82.2%, 75% 79.3%, 83.33% 83.3%, 91.67% 82.7%, 100% 80.5%, 100% 100%, 0% 100%); }
+  52%   { clip-path: polygon(0% 100%, 8.33% 100%, 16.67% 100%, 25% 100%, 33.33% 100%, 41.67% 100%, 50% 100%, 58.33% 100%, 66.67% 100%, 75% 100%, 83.33% 100%, 91.67% 100%, 100% 100%, 100% 100%, 0% 100%); }
+  58%   { clip-path: polygon(0% 100%, 8.33% 100%, 16.67% 100%, 25% 100%, 33.33% 100%, 41.67% 100%, 50% 100%, 58.33% 100%, 66.67% 100%, 75% 100%, 83.33% 100%, 91.67% 100%, 100% 100%, 100% 100%, 0% 100%); }
+  66%   { clip-path: polygon(0% 83.3%, 8.33% 79.1%, 16.67% 82.8%, 25% 84.4%, 33.33% 84.3%, 41.67% 82.1%, 50% 82.9%, 58.33% 81.1%, 66.67% 82.2%, 75% 79.3%, 83.33% 83.3%, 91.67% 82.7%, 100% 80.5%, 100% 100%, 0% 100%); }
+  78%   { clip-path: polygon(0% 55.3%, 8.33% 51.1%, 16.67% 54.8%, 25% 56.4%, 33.33% 56.3%, 41.67% 54.1%, 50% 54.9%, 58.33% 53.1%, 66.67% 54.2%, 75% 51.3%, 83.33% 55.3%, 91.67% 54.7%, 100% 52.5%, 100% 100%, 0% 100%); }
+  90%   { clip-path: polygon(0% 27.3%, 8.33% 23.1%, 16.67% 26.8%, 25% 28.4%, 33.33% 28.3%, 41.67% 26.1%, 50% 26.9%, 58.33% 25.1%, 66.67% 26.2%, 75% 23.3%, 83.33% 27.3%, 91.67% 26.7%, 100% 24.5%, 100% 100%, 0% 100%); }
+  97%   { clip-path: polygon(0% 5.3%, 8.33% 1.1%, 16.67% 4.8%, 25% 6.4%, 33.33% 6.3%, 41.67% 4.1%, 50% 4.9%, 58.33% 3.1%, 66.67% 4.2%, 75% 1.3%, 83.33% 5.3%, 91.67% 4.7%, 100% 2.5%, 100% 100%, 0% 100%); }
+  100%  { clip-path: polygon(0% 1.3%, 8.33% 0%, 16.67% 0.8%, 25% 2.4%, 33.33% 2.3%, 41.67% 0.1%, 50% 0.9%, 58.33% 0%, 66.67% 0.2%, 75% 0%, 83.33% 1.3%, 91.67% 0.7%, 100% 0%, 100% 100%, 0% 100%); }
+}
+/* Die runde Schicht, in der Korn und Haufen liegen — gleich gross wie
+   das Profilbild und ebenso rund beschnitten. Sie liegt NEBEN dem
+   Bild im Platz, nicht darin: .lc-kreis trägt gerade die
+   clip-path-Bewegung, und ein clip-path schneidet auch die Kinder
+   weg. */
+.lc-sandwerk {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 100%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Die Körner, die dabei herunterfallen. */
+.lc-sandkorn {
+  position: absolute;
+  left: var(--wo, 50%);
+  /* Die Koerner fallen INNERHALB des Bildes los, nicht darueber —
+     sonst rieselt es sichtbar neben dem runden Rahmen herunter. */
+  top: 10%;
+  width: 3.2%;
+  height: 3.2%;
+  border-radius: 50%;
+  background: #d9bf7e;
+  box-shadow: 0 0 1px rgba(90, 70, 20, .5);
+  animation: lcSandkornR39 var(--lang, 1.4s) linear var(--spaet, 0s) infinite;
+}
+@keyframes lcSandkornR39 {
+  0%   { opacity: 0; transform: translateY(0) scale(.8); }
+  10%  { opacity: .95; }
+  85%  { opacity: .95; }
+  100% { opacity: 0; transform: translateY(620%) scale(1.1); }
+}
+/* Und der Haufen, der sich unten sammelt. */
+.lc-sandhaufen {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 86%;
+  height: 34%;
+  margin-left: -43%;
+  border-radius: 46% 46% 0 0 / 92% 92% 0 0;
+  background: linear-gradient(to bottom, #e4cb8c, #c9a85c 70%, #b08f45);
+  transform-origin: bottom center;
+  animation: lcSandhaufenR39 3.2s ease-in-out both;
+}
+@keyframes lcSandhaufenR39 {
+  0%   { transform: scaleY(0); opacity: 0; }
+  10%  { opacity: .95; }
+  52%  { transform: scaleY(1); opacity: .95; }
+  90%  { transform: scaleY(.04); opacity: .6; }
+  100% { transform: scaleY(0); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-zerrinnt, .lc-sandkorn, .lc-sandhaufen { animation: none; }
+}
