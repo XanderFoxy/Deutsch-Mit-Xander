@@ -62,8 +62,14 @@ pruefe("Zwille: die Kugel schlaegt bei 57,7 % ein",
   /57\.7%\s+\{ opacity: 1; transform: translate\(var\(--px/.test(css));
 pruefe("Zwille: das AUA erscheint mit dem Einschlag",
   /animation: lcZpWort \.9s ease-out 1\.5s both;/.test(css));
-pruefe("Bumerang: Schrei nach Geschlecht auf dem TOCK (860 ms)",
-  /lcStimmeZu\(platz, "schreimann", "schreifrau", 920, 0\.7\)/.test(js));
+/* RUNDE 73 NACHGEFUEHRT. XANDER: „Er muss erst mal auftreffen, man
+   muss das hoelzerne Geraeusch, und dann muss der Schrei kommen — und
+   nicht so getimet, dass der Schrei sofort zu hoeren ist. Das muss ja
+   erst mal weh tun." 60 ms Abstand hoert man als EINEN Laut; jetzt
+   sind es 200 (Holz 860, Schrei 1060). */
+pruefe("Bumerang: Schrei nach Geschlecht, 200 ms nach dem TOCK",
+  /lcTonSpaeter\("holzklopf", 860, 0\.78\)/.test(js)
+  && /lcStimmeZu\(platz, "schreimann", "schreifrau", 1060, 0\.7\)/.test(js));
 pruefe("Bumerang: und ein zweites Sausen fuer den Rueckflug",
   /lcTonSpaeter\("bumerang2", 1560, 0\.45\)/.test(js));
 pruefe("Anspucken: ein Ekellaut statt des kurzen au",
@@ -106,8 +112,14 @@ pruefe("Hammer: der Treffer bleibt, das Ausholen kommt dazu",
   /hammer:\s+\{ ton: "hammerbonk"/.test(js)
   && /lcTonSpaeter\("swoosh", 40, 0\.4\)/.test(js)
   && !fs.existsSync(path.join(WURZEL, "ton", "hammerschwung.opus")));
+/* RUNDE 73 NACHGEFUEHRT. XANDER: „Bei der Gluehbirne ist ein
+   zusaetzliches Auto-Quietsch-Geraeusch noch." NACHGEMESSEN: das kam
+   aus „birneschrauben" selbst — deren Energie liegt bei etwa 5000 Hz,
+   und so klingt eine Autobremse. „birnedrehen" ist selbst gebaut und
+   trocken. Worum es dieser Regel geht, bleibt dasselbe: kein
+   Quietschen an der Birne. */
 pruefe("Gluehbirne: Gewinde statt Quietschen",
-  /gluehbirne:\s+\{ ton: "birneschrauben"/.test(js));
+  /gluehbirne:\s+\{ ton: "birnedrehen"/.test(js));
 pruefe("Katapult: die Aufnahme, die im Plan stand, liegt endlich da",
   /katapult: 0,/.test(js) && da("katapult3"));
 /* RUNDE 72 NACHGEFUEHRT: der Einschlag liegt nicht bei 714 ms,
@@ -117,8 +129,15 @@ pruefe("Katapult: die Aufnahme, die im Plan stand, liegt endlich da",
    Abstaende zwischen den Schluesselbildern. Das Sausen faengt jetzt
    bei 545 ms an; seine Spitze liegt gemessen 75 ms spaeter, also
    bei 620 ms und damit unmittelbar VOR dem Einschlag. */
+/* RUNDE 73 NACHGEFUEHRT. XANDER: „Der Pfeil hat, wenn er schon
+   auftrifft, den Wind-Sound und danach erst den Ankommen-Sound."
+   GEMESSEN: „pfeilflug" ist 1,62 s lang und zieht eine Rauschfahne
+   weit hinter den Einschlag. Jetzt faengt es bei 400 ms an und wird
+   ueber einen eigenen Plan-Eintrag bei 260 ms abgeblendet — es ist
+   also zum Einschlag bei 656 ms fertig. */
 pruefe("Pfeil: das Sausen liegt vor dem Einschlag bei 656 ms",
-  /lcTonSpaeter\("pfeilflug", 545, 0\.55\)/.test(js)
+  /lcTonSpaeter\("pfeilflug", 400, 0\.55\)/.test(js)
+  && /pfeilflug:\s+\{ ton: "pfeilflug", dauer: 260/.test(js)
   && /saugpfeil: 656,/.test(js));
 pruefe("Greifvogel: Fluegelschlag unter dem Ruf",
   /lcTonSpaeter\("fluegelschlag", 340, 0\.55\)/.test(js));
@@ -165,8 +184,17 @@ pruefe("die doppelte Pusten-Kachel ist weg",
   !/"Pusten",\s+"pusterohr"/.test(js)
   && /"Spuckkugel", "pusterohr"/.test(js)
   && (js.match(/"pusterohr"/g) || []).length === 3);
+/* RUNDE 73 NACHGEFUEHRT: es schliesst jetzt AUCH der Leerraum IM
+   Kasten. XANDER, zum wiederholten Mal: „man soll in ein Leeres
+   klicken koennen und dann schliesst sich das Panel. Das soll bei
+   jeglichen schwebenden Panels moeglich sein." Der Tipp NEBEN den
+   Kasten schliesst weiterhin — das ist der Sinn dieser Regel. */
 pruefe("ein Tipp neben den Waehler macht ihn zu",
-  /const drin = e\.target && e\.target\.closest\s*\n?\s*&& e\.target\.closest\("\.lc-waehler"\);/.test(js));
+  /const drin = ziel && ziel\.closest && ziel\.closest\("\.lc-waehler"\);/.test(js)
+  && /offen\.forEach\(\(k\) => k\.remove\(\)\);/.test(js));
+pruefe("und der Leerraum IM Kasten jetzt auch",
+  /const LC_BEDIENBAR = /.test(js)
+  && /if \(ziel\.closest\(LC_BEDIENBAR\)\) return;/.test(js));
 
 console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 70 sitzt.\n");
 process.exit(fehler ? 1 : 0);

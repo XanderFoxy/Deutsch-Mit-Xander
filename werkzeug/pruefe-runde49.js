@@ -83,18 +83,37 @@ const pruefe = (was, gut, zusatz) => {
     const st = [...s.querySelectorAll(".lc-trommel-stock")];
     const cs = st[0] ? getComputedStyle(st[0]) : null;
     const kopf = st[0] ? st[0].querySelector("ellipse") : null;
+    /* RUNDE 73 — DIESE ZWEI ZEILEN WAREN DIE FALLE.
+       `getComputedStyle` gibt ein LEBENDES Objekt zurueck. Es wurde
+       hier geholt, aber erst nach dem Warten ausgelesen — und bis
+       dahin war die Schicht aus dem Dokument entfernt. Ein geloestes
+       Element liefert ueberall leere Zeichenketten zurueck, und genau
+       das stand in der Meldung: „Wiederholung: ". Die Animation war
+       nie kaputt, die Pruefung hat zu spaet hingesehen. Jetzt wird
+       SOFORT in einfache Zeichenketten kopiert. */
+    const animJetzt = cs ? cs.animationName : "";
+    const wdhJetzt = cs ? cs.animationIterationCount : "";
     const fruehSichtbar = st.map((x) => Number(getComputedStyle(x).opacity));
-    /* Und jetzt das Entscheidende: SPAETER noch einmal hinsehen.
-       Genau hier lag der Fehler — „animation-duration: .26s" mit
-       „both" liess die Stoecke nach 260 ms im letzten Schluesselbild
-       stehen, und das war „opacity: 0". */
-    await new Promise((f) => setTimeout(f, 1900));
+    /* Bei 1,0 s laeuft der Marschton noch — da MUESSEN die Stoecke
+       schlagen. Genau hier lag der alte Fehler: „animation-duration:
+       .26s" mit „both" liess sie nach 260 ms im letzten
+       Schluesselbild stehen, und das war „opacity: 0". */
+    await new Promise((f) => setTimeout(f, 700));
+    const mitten = [...document.querySelectorAll(".lc-trommel-marsch .lc-trommel-stock")]
+      .map((x) => Number(getComputedStyle(x).opacity));
+    /* RUNDE 73 — XANDER: „Bei der Trommel solltest du die Animation
+       verkuerzen, weil der Sound von der Trommel schon vorher
+       aufhoert." Seitdem raeumt app.js die Schicht nach 1600 ms ab.
+       Die alte Regel „nach 2,2 s IMMER NOCH da" verlangte also
+       genau das Gegenteil von dem, was er wollte — sie wird
+       umgedreht: nach 2,2 s darf NICHTS mehr stehen. */
+    await new Promise((f) => setTimeout(f, 1200));
     const spaet = [...document.querySelectorAll(".lc-trommel-marsch .lc-trommel-stock")]
       .map((x) => Number(getComputedStyle(x).opacity));
     return { da: true, anzahl: st.length, stick: st.every((x) => x.classList.contains("lc-trommel-stick")),
-             anim: cs ? cs.animationName : "", wdh: cs ? cs.animationIterationCount : "",
+             anim: animJetzt, wdh: wdhJetzt,
              kopfBreit: kopf ? Number(kopf.getAttribute("rx")) : 0,
-             frueh: fruehSichtbar, spaet: spaet };
+             frueh: fruehSichtbar, mitten: mitten, spaet: spaet };
   });
   pruefe("der Marsch zeichnet sich", marsch.da);
   pruefe("es sind ZWEI Stoecke", marsch.anzahl === 2, marsch.anzahl + " Stueck");
@@ -105,10 +124,13 @@ const pruefe = (was, gut, zusatz) => {
     marsch.wdh === "infinite", "Wiederholung: " + marsch.wdh);
   pruefe("sie sind am Anfang zu sehen",
     (marsch.frueh || []).every((o) => o > 0.5), (marsch.frueh || []).join(" / "));
+  pruefe("und nach 1,0 s — solange der Ton laeuft — immer noch",
+    (marsch.mitten || []).length === 2 && marsch.mitten.every((o) => o > 0.5),
+    (marsch.mitten || []).length + " Stoecke, Deckkraft " + (marsch.mitten || []).join(" / "));
   /* Gezaehlt wird nicht die Zahl (die Buehne kann mehrere Schichten
      tragen), sondern ob ueberhaupt noch welche da und sichtbar sind. */
-  pruefe("und nach 2,2 s IMMER NOCH — das war der Fehler",
-    (marsch.spaet || []).length >= 2 && marsch.spaet.every((o) => o > 0.5),
+  pruefe("und nach 2,2 s ist sie weg, wie der Ton",
+    (marsch.spaet || []).length === 0 || marsch.spaet.every((o) => o < 0.05),
     (marsch.spaet || []).length + " Stoecke, Deckkraft " + (marsch.spaet || []).join(" / "));
 
   console.log("\nDIE OHRFEIGE — KLATSCH UND SCHMERZ NACH GESCHLECHT\n");

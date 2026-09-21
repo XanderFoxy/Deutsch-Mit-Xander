@@ -24248,16 +24248,7 @@
     pfeilflug:      { ton: "pfeilflug", dauer: 260, laut: 0.55 },
     sahne:          { ton: "spruehsahne", dauer: 4200, laut: 0.5 }, /* Dose zischt, Sahne klatscht */
     /* „Bei dem Strudel koennte ein schoenes Strudelgeraeusch sein." */
-    /* RUNDE 73 — XANDER: „Der Strudel stottert, verschwindet frueh und
-       klingt wie ein Schalter."
-       NACHGEMESSEN: „sogwasser" war 1,00 s lang und schon nach 0,40 s
-       unter -47 dB — ueber einer 4,6-s-Animation ist das tatsaechlich
-       nur ein Klick. „strudelsog" ist 4,60 s lang und folgt der
-       Animation Marke fuer Marke: Sog bis 1,43 s, der Schluck genau
-       dann, wenn das Bild weg ist, Stille im leeren Abfluss bis
-       3,28 s, Sprudeln und das Platschen bei 4,16 s, wenn es
-       zurueckkommt. */
-    sog:            { ton: "strudelsog", dauer: 4600, laut: 0.55 },
+    sog:            { ton: "sogwasser", dauer: 4600, laut: 0.45 },
     /* „wie beim kleinen Trommler ... so ein richtiges Marschtrommel."
        Einmal antippen gibt den Paukenschlag, laenger halten die
        Marschtrommel — siehe lcTrommel. */
@@ -24598,11 +24589,7 @@
        kein Cowboyhut") — gemeint war offenbar das Gegenteil. Also
        wieder cowboy.opus, der Ruf von Runde 30 (2,0 s). cowboyhut.opus
        bleibt liegen, falls er es sich anders ueberlegt. */
-    /* RUNDE 73 — NACHGEMESSEN: „cowboy" ist 2,04 s lang, die Animation
-       lief 3,4 s. Ab 575 ms (LC_TREFFER.hut) gespielt war der Ton bei
-       2615 ms zu Ende und danach lief der Hut noch 785 ms stumm
-       weiter. Jetzt 2,8 s — Ton und Bild enden zusammen. */
-    hut:            { ton: "cowboy",    dauer: 2800, laut: 0.6 },
+    hut:            { ton: "cowboy",    dauer: 3400, laut: 0.6 },
     ticken:         { ton: "wecker",   dauer: 260,  laut: 0.45 },  /* ein Tick je Zahl */
     /* XANDER: „Bei der Bombe solltest du eine digitale Version haben
        und eine mit Zuendschnur, und die sollen realistische Sounds
@@ -29351,12 +29338,7 @@
        ganzen Drehung. Der Ton IST das Drehen — er gehoert an den
        Anfang, nicht ans Ende. */
     muenze: 0,
-    /* RUNDE 73: der Pfiff kam bei 660 ms, also GENAU beim Reissen —
-       beides zugleich, und der Pfiff uebertoente den Riss. Jetzt
-       980 ms: „pfiff2" ist von 0,40 bis 1,20 s laut, klingt also von
-       1380 bis 2180 ms — da faellt der BH schon, und bei 74 % der
-       Animation (2220 ms) ist er unten. Erst reissen, dann pfeifen. */
-    entbloessung: 980,
+    entbloessung: 660, /* 22 % von 3 s */
     /* RUNDE 72 — XANDER: „Der Cowboy Sound ist immer noch am Anfang
        abgeschnitten."
        NACHGEMESSEN, und er hat recht: „cowboy.opus" begann mit dem
@@ -31577,16 +31559,6 @@
          Ausholen davor. „swoosh" liegt seit Runde 15 im Ordner und
          ist kurz genug, um vor dem Bonk fertig zu sein. */
       lcTonSpaeter("swoosh", 40, 0.4);
-      /* RUNDE 73 — XANDER: „Beim Hammer brauchen wir noch den
-         Amboss-Aufprall."
-         Er hat recht: „hammerbonk" ist ein dumpfer Schlag auf etwas
-         Weiches und nach 0,6 s unter -39 dB — der metallische Klang,
-         den ein Hammer macht, wenn er auf Stahl trifft, fehlte ganz.
-         „hammerschlag" ist genau das: bei 0,0 s -10 dB und dann ein
-         Nachklingen bis 1,9 s. Beide liegen auf DEMSELBEN Augenblick
-         (300 ms, dort fliegen auch die Sterne), der Amboss nur
-         leiser — er soll unter dem Bonk klingen, nicht darueber. */
-      lcTonSpaeter("hammerschlag", 300, 0.45);
     }, 3000, "hammer");
   }
 
@@ -34461,52 +34433,10 @@
            0,85         umsetzen; danach uebernimmt der echte Platz
          Es gibt also keinen Augenblick, in dem beide Bilder stehen. */
       const taktR = (anteil) => Math.round(dauer * anteil);
-      /* RUNDE 73 — DIE ROEHRE, DRITTER ANLAUF. XANDER:
-         „die Roehre ist immer noch am alten Platz, waehrend der neue
-         schon erscheint, und hinterlaesst Rueckstaende ... die Roehre
-         hat Doppelungen und das Bild wird abgeschnitten, bevor es ganz
-         drin ist."
-
-         NACHGEMESSEN, mit dem Lineal am Bildschirm (420 px breit):
-         ein Platzbild ist 84 px gross, der Reihenabstand 109 px. Die
-         Roehre war 0,72 x 84 = 60,5 px hoch und sass 0,52 x 84 = 43,7
-         px unter der Bildmitte — sie reichte also von +13 px bis +74
-         px, und das Bild der naechsten Reihe faengt schon bei +67 px
-         an. Die Roehre STAND ALSO AUF DEM NACHBARN, sieben Pixel weit.
-         Das ist die „Doppelung": man sieht eine Roehre an einem Platz,
-         an dem gar niemand reist.
-
-         Und der Zuschnitt war von Hand gesetzt: bei 40 % Absinken
-         wurden 52 % weggeschnitten, bei 62 % gleich 100 %. Der Schnitt
-         lief dem Bild also davon — GENAU das ist „es wird
-         abgeschnitten, bevor es ganz drin ist".
-
-         Jetzt steht beides in EINER Rechnung. Der Mund der Roehre
-         liegt bei 62 % der Bildhoehe (von oben). Sinkt das Bild um den
-         Anteil v seiner eigenen Hoehe, liegen genau 38 % + v darunter
-         — und genau so viel nimmt der Zuschnitt weg, keinen Punkt
-         mehr. Auseinanderrechnen kann man das nicht mehr. */
-      const ROHR_HOCH = 0.62;   /* Hoehe der Roehre, Anteil des Bildes */
-      const ROHR_MUND = 0.38;   /* was der Rand schon im Stand verdeckt */
-      /* Mitte der Roehre: der Mund soll bei +0,12 Bildhoehen liegen,
-         die Roehre ist 0,62 hoch, also sitzt ihre Mitte 0,31 tiefer.
-         Unterkante damit bei +0,74 — die naechste Reihe faengt bei
-         +0,798 an, es bleiben knapp 5 px Luft. */
-      const ROHR_MITTE = 0.12 + ROHR_HOCH / 2;
-      /* Ein Schluesselbild, in dem Absinken und Zuschnitt aus
-         DERSELBEN Zahl kommen. */
-      const rohrBild = (v, vorne, zeit) => ({
-        transform: (vorne ? "translate(-50%, -50%) " : "")
-          + "translateY(" + (v * 100).toFixed(1) + "%)",
-        clipPath: "inset(0 0 "
-          + Math.min(100, (ROHR_MUND + v) * 100).toFixed(1) + "% 0)",
-        offset: zeit
-      });
       [start, ende].forEach((wo, i) => {
         const roehre = document.createElement("span");
         roehre.className = "lc-roehre" + (i ? " lc-roehre-raus" : " lc-roehre-rein");
         roehre.style.setProperty("--gross", d + "px");
-        roehre.style.height = (d * ROHR_HOCH).toFixed(1) + "px";
         /* Die Zeiten setzt jetzt das JavaScript unmittelbar, nicht
            mehr die CSS-Regel mit ihren eigenen Schluesselbildern:
            deren 55/70/88 % liessen sich auf diese Abschnitte nicht
@@ -34527,30 +34457,25 @@
         roehre.innerHTML = '<i class="lc-roehre-rand"></i><i class="lc-roehre-rohr"></i>';
         reihe.appendChild(roehre);
         weg.push(roehre);
-        setzen(roehre, wo.x, wo.y + d * ROHR_MITTE);
+        setzen(roehre, wo.x, wo.y + d * 0.52);
       });
-      /* Das Bild am STARTPLATZ: hinein, und dann bleibt es weg.
-         Der Zuschnitt setzt erst bei 0,075 ein — vorher steht die
-         Roehre noch gar nicht, und ein Bild, das in der Luft
-         abgeschnitten wird, ist genau der Fehler von vorher. */
+      /* Das Bild am STARTPLATZ: hinein, und dann bleibt es weg. */
       try {
         kreis.animate([
           { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0 },
-          { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0.075 },
-          rohrBild(0,     false, 0.08),
-          rohrBild(0.155, false, 0.125),
-          rohrBild(0.31,  false, 0.17),
-          rohrBild(0.465, false, 0.215),
-          rohrBild(0.62,  false, 0.26),
+          { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0.07 },
+          /* Es rutscht hinter den Roehrenrand — die Einstiegsroehre
+             liegt mit z-index 8 davor, deshalb verschwindet es IN ihr
+             und gleitet nicht darueber hinweg. */
+          { transform: "translateY(40%)", clipPath: "inset(0 0 52% 0)", offset: 0.17 },
+          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.26 },
           /* Und hier bleibt es. Kein Rest, der drueben mitliefe. */
-          rohrBild(0.62,  false, 0.95),
+          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.95 },
           { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 1 }
         ], { duration: dauer, easing: "linear", fill: "none" });
       } catch (e) {}
-      /* Das Bild an der ZIELROEHRE. Es ist bis 0,557 vollstaendig
-         weggeschnitten — das ist der Augenblick, in dem die zweite
-         Roehre oben steht (0,46 Verzoegerung + 0,22 ihrer eigenen
-         Spanne von 0,44). Erst dann steigt es heraus. */
+      /* Das Bild an der ZIELROEHRE. Es ist bis 0,55 vollstaendig
+         weggeschnitten — erst dann steigt es heraus. */
       const doppel = document.createElement("span");
       doppel.className = "lc-rohr-doppel";
       doppel.style.setProperty("--gross", d + "px");
@@ -34559,50 +34484,28 @@
       reihe.appendChild(doppel);
       weg.push(doppel);
       setzen(doppel, ende.x, ende.y);
-      /* RUNDE 73 — HIER LAG DIE ZWEITE DOPPELUNG.
-         Das Ausstiegsbild blendete erst bei 0,92 aus, der Platzwechsel
-         passiert aber schon bei (hin + 120) ms. Zwischen beiden stand
-         das echte Platzbild am Ziel UND das Ausstiegsbild darueber —
-         gemessen rund 157 ms lang zwei Bilder auf einem Platz. Jetzt
-         wird der Augenblick des Platzwechsels ausgerechnet, und das
-         Ausstiegsbild geht in DEMSELBEN Bild weg, in dem das echte
-         kommt. Uebergang ohne Blende: ein Ueberblenden waere wieder
-         eine Doppelung, nur eine durchsichtige. */
-      const schnittR = Math.min(0.98, (hin + 120) / dauer);
       try {
         doppel.animate([
-          rohrBild(0.62, true, 0),
-          rohrBild(0.62, true, 0.557),
-          rohrBild(0.465, true, 0.60),
-          rohrBild(0.31,  true, 0.645),
-          rohrBild(0.155, true, 0.69),
-          rohrBild(0,     true, 0.735),
-          /* Ganz draussen — und jetzt STEHT es, solange die Roehre
-             steht. Der Rand verdeckt seine unteren 38 %, also bleibt
-             auch der Zuschnitt bei 38 %: gaebe er frueher frei, waere
-             nichts zu sehen, gaebe er spaeter frei, waere das Bild
-             einen Augenblick lang halb abgeschnitten in der Luft. */
-          rohrBild(0,     true, 0.812),
-          /* Die Roehre faehrt ein (0,812 bis 0,90). NACHGERECHNET:
-             ihr Rand liegt bei (104 - 52k)/84 Bildhoehen, wenn k ihre
-             Streckung ist — er gibt das Bild also genau dann ganz
-             frei, wenn k = 20/52 = 0,385 ist, und das ist bei 0,866.
-             Bis dahin laeuft der Zuschnitt mit dem Rand mit. */
-          Object.assign(rohrBild(0, true, 0.866),
-            { clipPath: "inset(0 0 0% 0)" }),
-          { transform: "translate(-50%, -50%)", clipPath: "inset(0 0 0% 0)",
-            opacity: 1, offset: Math.max(0.87, schnittR - 0.004) },
-          { transform: "translate(-50%, -50%)", clipPath: "inset(0 0 0% 0)",
-            opacity: 0, offset: Math.max(0.875, schnittR) },
-          { transform: "translate(-50%, -50%)", clipPath: "inset(0 0 0% 0)",
-            opacity: 0, offset: 1 }
+          { transform: "translate(-50%, -50%) translateY(62%)",
+            clipPath: "inset(0 0 100% 0)", opacity: 1, offset: 0 },
+          { transform: "translate(-50%, -50%) translateY(62%)",
+            clipPath: "inset(0 0 100% 0)", opacity: 1, offset: 0.55 },
+          { transform: "translate(-50%, -50%) translateY(40%)",
+            clipPath: "inset(0 0 52% 0)", opacity: 1, offset: 0.66 },
+          { transform: "translate(-50%, -50%) translateY(0)",
+            clipPath: "inset(0 0 0% 0)", opacity: 1, offset: 0.80 },
+          /* Und uebergibt an den echten Platz, sobald umgesetzt ist. */
+          { transform: "translate(-50%, -50%) translateY(0)",
+            clipPath: "inset(0 0 0% 0)", opacity: 1, offset: 0.87 },
+          { transform: "translate(-50%, -50%) translateY(0)",
+            clipPath: "inset(0 0 0% 0)", opacity: 0, offset: 0.92 }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
       /* DIE TOENE SITZEN AN DEN BILDERN, nicht am Anfang der Reise:
-         der Sog beginnt, wenn das Bild einfaehrt (0,08), das
-         Ausspucken, wenn es heraussteigt (0,557). */
-      lcTonSpaeter("rohrsog", taktR(0.08), 0.7);
-      lcTonSpaeter("rohrspuck", taktR(0.557), 0.7);
+         der Sog beginnt, wenn das Bild einfaehrt (0,07), das
+         Ausspucken, wenn es heraussteigt (0,55). */
+      lcTonSpaeter("rohrsog", taktR(0.07), 0.7);
+      lcTonSpaeter("rohrspuck", taktR(0.55), 0.7);
     } else {
       /* Das Tor: eines hier, eines dort. */
       [start, ende].forEach((wo, i) => {
@@ -36749,24 +36652,7 @@
          in der Datei, gestartet bei 260 ms klingt er also von 710 bis
          1010 ms — genau waehrend die Gummis sich dehnen (26 % bis
          50 % von 2,6 s = 676 bis 1300 ms). */
-      /* RUNDE 73 — XANDER: „Bei der Zwille fehlt das Spannen des
-         Gummis, der Flug und der Aufprall."
-         NACHGEMESSEN, Datei fuer Datei:
-           · „gummizug" (1,76 s) hat seinen hoerbaren Teil bei
-             0,50-0,80 s. Bei 260 ms gestartet klang er von 760 bis
-             1060 ms — die Gummis dehnen sich aber von 676 bis
-             1300 ms. Jetzt 180 ms: 680 bis 980 ms, also VON ANFANG
-             der Dehnung an, und lauter (0,95 statt 0,8).
-           · Der Flug hatte gar keinen Ton. „swoosh" (1,00 s, laut
-             von 0,05 bis 0,25 s) liegt jetzt auf 1290 ms — das ist
-             der Augenblick, in dem das Gummi losschnellt.
-           · Der Aufprall hatte auch keinen. „spucktreffer" schlaegt
-             bei 0,05 s mit -11 dB zu; auf 1440 ms gelegt trifft er
-             bei 1490 ms auf, und der Schrei folgt bei 1560 ms.
-             Erst der Einschlag, dann der Schmerz — nie umgekehrt. */
-      lcTonSpaeter("gummizug", 180, 0.95);
-      lcTonSpaeter("swoosh", 1290, 0.55);
-      lcTonSpaeter("spucktreffer", 1440, 0.8);
+      lcTonSpaeter("gummizug", 260, 0.8);
       /* Und der Schmerz NACH dem Einschlag: der liegt bei 1500 ms. */
       lcStimmeZu(platz, "schreimann", "schreifrau", 1560, 0.72);
     }, 2600, "zwille");
@@ -36873,77 +36759,34 @@
       lcTonSpaeter("dunkelbrumm", 0, 0.5);
       try {
         const gitter = lcPlatzGitter();
+        const heimK = heim.getBoundingClientRect();
         let wieviel = 0;
-        /* RUNDE 73 — XANDER: „Die Augen duerfen beim Scrollen nicht
-           mitwandern, sie sollen nicht wie Katzenaugen aussehen, und
-           das Blinzeln soll man hoeren."
-
-           ERSTENS, DAS WANDERN. Die Augen standen in PROZENT der
-           Effektbuehne, einmal ausgerechnet. Die Buehne ist aber
-           `position: fixed` und wird jedes Bild neu auf den SICHTBAREN
-           Teil der Karte gesetzt (lcBuehneSetzen schneidet oben und
-           unten am Schirmrand ab). Beim Scrollen aendern sich also
-           ihre Hoehe und ihr oberer Rand — und dieselben Prozentwerte
-           landen an einer anderen Stelle. Die Augen wanderten von den
-           Gesichtern weg, genau wie gemeldet.
-           Jetzt merkt sich jedes Augenpaar SEINEN PLATZ, und ein
-           Bildtakt setzt es in PIXELN dorthin, wo der Platz gerade
-           wirklich steht. Damit bleibt es beim Scrollen auf dem
-           Gesicht — auch wenn die Sitzreihe zwischendurch neu
-           gezeichnet wird. */
-        const paare = [];
         (gitter || []).forEach((g) => {
           /* Nur besetzte Plaetze: ein leerer Stuhl hat keine Augen. */
           const el = g && g.el;
           if (!el || g.frei) return;
+          const hoch = lcBildVersatz(el);
           const paar = document.createElement("span");
           paar.className = "lc-dunkel-augen";
+          /* g.x/g.y liegen im selben Bezugssystem wie die Sitzreihe;
+             hier wird auf die Effektflaeche umgerechnet, weil die
+             Finsternis ueber der ganzen Buehne liegt. */
+          const k = el.getBoundingClientRect();
+          paar.style.left = ((k.left + k.width / 2 - heimK.left) / heimK.width * 100) + "%";
+          paar.style.top = ((k.top + k.height / 2 + hoch - heimK.top) / heimK.height * 100) + "%";
           paar.style.setProperty("--spaet", (620 + wieviel * 260) + "ms");
           paar.innerHTML = '<i class="lc-auge lc-auge-l"><b></b></i>'
                          + '<i class="lc-auge lc-auge-r"><b></b></i>';
           d.appendChild(paar);
-          paare.push({ el: el, paar: paar });
-          /* ZWEITENS, DAS BLINZELN. Der Ton lag bei 700 + i*260 ms —
-             das ist der Augenblick, in dem die Augen AUFGEHEN. Die
-             Lider schlagen aber bei 32 % und 68 % einer 4,4-s-
-             Animation, die selbst erst bei 620 + i*260 ms anfaengt:
-             also bei 2028 und bei 3612 ms. Der Tick kam damit 1,3 s
-             zu frueh, und deshalb hat Xander ihn nicht dem Blinzeln
-             zugeordnet. Jetzt liegt er auf BEIDEN Lidschlaegen und
-             ist lauter (0,75 statt 0,5). */
-          const anfang = 620 + wieviel * 260;
-          const laut = Math.max(0.4, 0.75 - wieviel * 0.06);
-          lcTonSpaeter("blinzeln", anfang + 1408, laut);
-          lcTonSpaeter("blinzeln", anfang + 2992, laut * 0.85);
+          /* Jedes Augenpaar blinzelt, wenn es aufgeht — leise, und
+             leiser, je spaeter es kommt, sonst wird es ein Teppich. */
+          lcTonSpaeter("blinzeln", 700 + wieviel * 260,
+                       Math.max(0.22, 0.5 - wieviel * 0.05));
           wieviel++;
         });
-        if (paare.length) {
-          const setzenA = () => {
-            const hk = heim.getBoundingClientRect();
-            paare.forEach((p) => {
-              if (!p.el.isConnected) { p.paar.style.opacity = "0"; return; }
-              const k = p.el.getBoundingClientRect();
-              const hoch = lcBildVersatz(p.el);
-              p.paar.style.left = (k.left + k.width / 2 - hk.left).toFixed(1) + "px";
-              p.paar.style.top = (k.top + k.height / 2 + hoch - hk.top).toFixed(1) + "px";
-            });
-          };
-          setzenA();
-          let takt = 0;
-          const takten = () => {
-            if (!d.isConnected) return;
-            setzenA();
-            takt = requestAnimationFrame(takten);
-          };
-          takt = requestAnimationFrame(takten);
-          d.addEventListener("dma-weg", () => cancelAnimationFrame(takt));
-        }
       } catch (e) {}
     }
-    setTimeout(() => {
-      try { d.dispatchEvent(new Event("dma-weg")); } catch (e) {}
-      d.remove();
-    }, dauerD);
+    setTimeout(() => d.remove(), dauerD);
   }
   /* RUNDE 72 — XANDER: „die Fassung ist immer noch nicht mit dem Glas
      verbunden und verschwindet ganz, wenn es dunkel wird."
@@ -37216,15 +37059,6 @@
         + ' fill="none" stroke="#e79ec0" stroke-width="1.6"/>'
         + "</svg></span>";
       schicht.insertAdjacentHTML("beforeend", '<span class="lc-entbl-wort">UPS!</span>');
-      /* RUNDE 73 — XANDER: „Beim BH fehlt das Reissen und der Pfiff."
-         Und davor schon: „Der Wolfspfiff klingt wie ein Quietschen,
-         ich haette da gern erst so ein Gummiband-Schnalzen."
-         Es gab bisher NUR den Pfiff, und der lag auch noch vor der
-         Bewegung. Jetzt zuerst „bhriss" — Stoff, der Faden fuer
-         Faden aufgeht, und bei 0,24 s der Schnalzer des Gummizugs —
-         genau bei 660 ms, wo der BH losrutscht. Der Pfiff kommt
-         danach (LC_TREFFER.entbloessung, siehe dort). */
-      lcTonSpaeter("bhriss", 620, 0.9);
     }, 3000, "entbloessung");
   }
 
@@ -37245,7 +37079,7 @@
         kreis.classList.remove("lc-behutet");
         void kreis.offsetWidth;
         kreis.classList.add("lc-behutet");
-        setTimeout(() => kreis.classList.remove("lc-behutet"), 2800);
+        setTimeout(() => kreis.classList.remove("lc-behutet"), 3400);
       }
       schicht.innerHTML =
         '<svg class="lc-hut-bild" viewBox="0 0 140 76">'
@@ -37326,44 +37160,8 @@
         + ' fill="rgba(255,240,206,.34)"/>'
         + '<path d="M40.6 60 C54 64 86 64 99.4 60 C86 67 54 67 40.6 60 Z"'
         + ' fill="rgba(40,24,6,.35)"/>'
-        + "</svg>"
-        /* RUNDE 73 — DIE HAND, DIE DEN HUT ZURECHTRUECKT.
-           XANDER: „Der Cowboyhut ist noch zu comichaft, ich haette
-           gern eine Hand, die ihn zurechtrueckt."
-           Sie greift von rechts an die Krempe, zieht sie bei 40 %
-           der Animation nach unten — dort kippt der Hut in seine
-           schraege Lage (lcHutR73) — und verschwindet wieder. Eine
-           Hand, die den Hut nur beruehrt, ohne dass sich etwas
-           aendert, waere Zierrat; hier tut sie wirklich etwas. */
-        + '<svg class="lc-hut-hand" viewBox="0 0 60 54" aria-hidden="true">'
-        /* Der Unterarm, aus dem Bild heraus — und am Ende eine
-           Hemdmanschette. Ohne sie endete der Arm in einer geraden
-           Kante mitten in der Luft, und das sah aus wie ein
-           abgeschnittener Arm statt wie einer, der von aussen
-           hereingreift. */
-        + '<path d="M56 13 L40 20 L42 34 L56 33 Z" fill="#c98f63"/>'
-        + '<path d="M60 10 L54 12.6 L54.8 33.6 L60 35 Z" fill="#8d5fa8"/>'
-        + '<path d="M54 12.6 L54.8 33.6" fill="none" stroke="#6d4685"'
-        + ' stroke-width="1.6"/>'
-        /* Der Handruecken. */
-        + '<path d="M44 16 C34 15 24 18 18 23 C13 27 12 32 16 35'
-        + ' C21 39 33 39 42 36 C46 34.6 47 30 46.4 25 Z" fill="#e0a87a"'
-        + ' stroke="#a9714a" stroke-width="1.4" stroke-linejoin="round"/>'
-        /* Daumen und drei Finger, die die Krempe fassen. */
-        + '<path d="M20 22 C15 21 10 23 8 26 C6.6 28.4 7.6 30.6 10.4 30.8'
-        + ' C14 31 18 29 20.4 26.6 Z" fill="#e6b184" stroke="#a9714a"'
-        + ' stroke-width="1.2" stroke-linejoin="round"/>'
-        + '<path d="M17 30 C12 31 8.6 33.4 8.4 36 C8.2 38.4 11 39.6 14.6 38.8'
-        + ' C18 38 21 36 22.6 33.6 Z" fill="#e6b184" stroke="#a9714a"'
-        + ' stroke-width="1.2" stroke-linejoin="round"/>'
-        + '<path d="M22 36 C18.6 37.6 16.4 39.8 16.8 41.8 C17.2 43.8 20 44.4 23 43.2'
-        + ' C26 42 28 40 28.8 38 Z" fill="#dfa87b" stroke="#a9714a"'
-        + ' stroke-width="1.2" stroke-linejoin="round"/>'
-        /* Zwei Linien fuer die Knoechel — ohne sie ist es ein Fleck. */
-        + '<path d="M26 22.6 C25 26 25 30 26.4 33.4 M33 21.6 C32 25.4 32 30 33.4 33.6"'
-        + ' fill="none" stroke="#b98054" stroke-width="1.1" opacity=".7"/>'
         + "</svg>";
-    }, 2800, "hut");
+    }, 3400, "hut");
   }
 
   /* --- DIE ZEITBOMBE ---------------------------------------------------

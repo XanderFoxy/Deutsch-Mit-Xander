@@ -14063,23 +14063,12 @@ body.lc-schreibt .tutor-reiter {
   background: radial-gradient(ellipse at 50% 50%, #fffdf2 0 42%, #e8e0c6 62%, rgba(255,250,230,0) 88%);
   box-shadow: 0 0 10px rgba(255, 248, 220, .5);
 }
-/* Die Pupille sucht: erst nach links, dann nach rechts.
-   RUNDE 73 — XANDER: „Die Augen sehen aus wie Katzenaugen."
-   Und genau das stand hier: `width: 34%; height: 62%` — die Pupille
-   war fast DOPPELT so hoch wie breit. Ein senkrechter Schlitz ist
-   das Kennzeichen eines Katzenauges; ein Mensch hat eine runde
-   Pupille. `aspect-ratio: 1` macht sie rund, egal wie breit das Auge
-   gerade ist. Waagerecht mittig haelt sie `translate` — das ist eine
-   eigene Eigenschaft und kommt der Animation in `transform` nicht in
-   die Quere. */
+/* Die Pupille sucht: erst nach links, dann nach rechts. */
 .lc-auge > b {
   position: absolute;
-  left: 50%; top: 17%;
-  height: 66%;
-  width: auto;
-  aspect-ratio: 1;
-  margin: 0;
-  translate: -50%;
+  left: 50%; top: 50%;
+  width: 34%; height: 62%;
+  margin: -31% 0 0 -17%;
   border-radius: 50%;
   background: #14120d;
   animation: lcPupilleSuchtR70 6.2s ease-in-out both;
@@ -14530,29 +14519,16 @@ body.lc-schreibt .tutor-reiter {
   position: absolute;
   left: 8%; top: 30%;
   width: 84%;
-  /* RUNDE 73 — NACHGERECHNET: hier stand `cubic-bezier(.4, 0, .3, 1)`
-     ueber die GANZE Animation. Im Kommentar stand „22 % = 0,66 s:
-     heruntergestreift", in Wirklichkeit rutschte der BH bei dieser
-     Kurve erst nach 786 ms los — der Pfiff bei 660 ms kam also
-     126 ms VOR der Bewegung. Jetzt linear: 22 % sind wirklich
-     660 ms, und das Fallen beschleunigt ueber die WERTE (18, 26, 18
-     Prozent Weg je Abschnitt). */
-  animation: lcEntblBhR73 3s linear both;
+  animation: lcEntblBhR18 3s cubic-bezier(.4, 0, .3, 1) both;
 }
 .lc-entbl-bh svg { width: 100%; height: auto; display: block; }
-@keyframes lcEntblBhR73 {
+@keyframes lcEntblBhR18 {
   0%   { opacity: 0; transform: translateY(-16%); }
   10%  { opacity: 1; transform: translateY(0); }
-  /* 22 % = 0,66 s: hier reisst es, hier liegt „bhriss". */
+  /* 22 % = 0,66 s: heruntergestreift. */
   22%  { opacity: 1; transform: translateY(0); }
-  /* Und dann faellt er — die Abstaende werden erst groesser (er wird
-     schneller), dann kleiner (der Stoff bremst sich am Bildrand). */
-  27%  { opacity: 1; transform: translateY(12%) rotate(-2deg); }
-  32%  { opacity: 1; transform: translateY(30%) rotate(-3deg); }
-  38%  { opacity: 1; transform: translateY(56%) rotate(-5deg); }
-  46%  { opacity: 1; transform: translateY(74%) rotate(-6deg); }
-  58%  { opacity: 1; transform: translateY(84%) rotate(-7deg); }
-  74%  { opacity: 1; transform: translateY(92%) rotate(-8deg); }
+  40%  { opacity: 1; transform: translateY(66%) rotate(-5deg); }
+  70%  { opacity: 1; transform: translateY(86%) rotate(-8deg); }
   100% { opacity: 0; transform: translateY(104%) rotate(-10deg); }
 }
 .lc-entbl-wort {
@@ -14937,17 +14913,7 @@ body.lc-schreibt .tutor-reiter {
    Mitte gezogen — dieselbe Bewegung, die der Filter den Pixeln gibt,
    nur eine Stufe groesser. Es kommt nichts mehr obendrauf. */
 .lc-sog-wirbel { display: none !important; }
-/* RUNDE 73 — XANDER: „Der Strudel stottert."
-   Und hier ist der Grund, zum sechsten Mal dieselbe Falle: eine Kurve
-   ueber die GANZE Animation staucht und streckt die Abstaende ZWISCHEN
-   den Schluesselbildern. Bei `cubic-bezier(.45, 0, .55, 1)` liegt
-   die Mitte der Bewegung nicht bei 50 % der Zeit — die Drehung
-   springt also an jedem Schluesselbild ihre Geschwindigkeit, und
-   genau das sieht man als Ruckeln.
-   Die Beschleunigung steht ohnehin schon in den WERTEN: die Drehung
-   legt zwischen den Bildern 5, 15, 40 und 60 Grad je Prozent zu. Mit
-   `linear` kommt sie jetzt auch so heraus. */
-.lc-kreis.lc-gesogen { animation: lcSogZiehtR19 4.2s linear both; }
+.lc-kreis.lc-gesogen { animation: lcSogZiehtR19 4.2s cubic-bezier(.45, 0, .55, 1) both; }
 @keyframes lcSogZiehtR19 {
   0%   { transform: rotate(0deg) scale(1); opacity: 1; }
   12%  { transform: rotate(60deg) scale(.97); opacity: 1; }
@@ -15058,107 +15024,32 @@ body.lc-schreibt .tutor-reiter {
    „Vielleicht kannst du noch auf das Profilbild einen Cowboyhut
    setzen." Er faellt von oben, setzt schief auf und rueckt sich
    zurecht — ein Hut, der einfach da ist, sieht aus wie ein Aufkleber. */
-/* =================================================================
-   RUNDE 73 — DER HUT SETZT AUF, WENN MAN IHN AUFSETZEN HOERT
-   -----------------------------------------------------------------
-   XANDER: „Der Cowboyhut und der Sound sind immer noch nicht
-   richtig" — und davor schon: „Der Hut wirkt zu comichaft, da soll
-   eine Hand sein, die ihn zurechtrueckt."
-
-   NACHGERECHNET, und das ist der ganze Fehler: ueber der Animation
-   lag `cubic-bezier(.3, 1.3, .4, 1)`. Eine Kurve ueber die GANZE
-   Animation verschiebt die Abstaende zwischen den Schluesselbildern.
-   Im Kommentar stand „18 % von 3,4 s = 620 ms — da setzt er auf, da
-   kommt auch der Ton". In Wirklichkeit war der Hut bei dieser Kurve
-   schon nach 145 ms unten, und der Ton kam bei 575 ms: der Hut sass
-   also eine halbe Sekunde, BEVOR man ihn aufsetzen hoerte. Danach
-   stand er 2,4 s bewegungslos herum — daher „wie ein Aufkleber".
-
-   Jetzt `linear`, die Federung steht in den WERTEN, und 24 % von
-   2,8 s sind wirklich 672 ms. Der Aufschlag liegt bei 575 ms
-   (LC_TREFFER.hut), die Hand rueckt ihn danach zurecht, und
-   „cowboy" (2,04 s) laeuft von 575 bis 2615 ms — die Animation
-   endet bei 2800 ms. Nichts mehr stumm, nichts mehr vorweg.
-   ================================================================= */
 .lc-hut-bild {
   position: absolute;
-  /* RUNDE 73 — NACHGEMESSEN am Bildschirm: bei top:-44 % lag die
-     Krempe zwischen -9 % und +18 % der Bildhoehe, also ganz oben auf
-     dem Scheitel — der Hut schwebte ueber dem Kopf statt auf ihm zu
-     sitzen. Bei -34 % liegt sie zwischen +1 % und +28 %, und das ist
-     die Hoehe, in der ein Hut wirklich aufliegt. */
-  left: 50%; top: -34%;
+  left: 50%; top: -44%;
   width: 118%;
   margin-left: -59%;
   transform-origin: 50% 90%;
   filter: drop-shadow(0 4px 7px rgba(0, 0, 0, .4));
-  animation: lcHutR73 2.8s linear both;
+  animation: lcHutR19 3.4s cubic-bezier(.3, 1.3, .4, 1) both;
 }
-@keyframes lcHutR73 {
-  /* Der Fall: die Abstaende werden groesser, er wird also schneller.
-     Genau so faellt etwas — nicht gleichmaessig. */
-  0%    { opacity: 0; transform: translateY(-110%) rotate(-24deg) scale(.82); }
-  4%    { opacity: 1; transform: translateY(-104%) rotate(-23deg) scale(.84); }
-  9%    { transform: translateY(-90%)  rotate(-21deg) scale(.87); }
-  13%   { transform: translateY(-72%)  rotate(-17deg) scale(.90); }
-  16.5% { transform: translateY(-52%)  rotate(-13deg) scale(.94); }
-  19%   { transform: translateY(-30%)  rotate(-8deg)  scale(.97); }
-  /* 20,5 % von 2,8 s = 575 ms: DER AUFSCHLAG. Genau hier liegt der
-     Ton (LC_TREFFER.hut = 575), und genau hier beruehrt die Krempe
-     zum ersten Mal den Kopf. */
-  20.5% { transform: translateY(0)     rotate(-4deg)  scale(1); }
-  /* Und die Federung: er drueckt sich ein, dann zwei Nachschlaege,
-     jeder kleiner. */
-  23%   { transform: translateY(7%)    rotate(6deg)  scale(1.05, .95); }
-  27%   { transform: translateY(-4%)   rotate(-6deg) scale(1, 1.02); }
-  31%   { transform: translateY(3%)    rotate(4deg)  scale(1.01, .99); }
-  35%   { transform: translateY(-1%)   rotate(-2deg) scale(1); }
-  /* 40 % = 1120 ms: die Hand hat ihn zurechtgerueckt, er sitzt
-     leicht schief ins Gesicht gezogen, wie ein Cowboy ihn traegt. */
-  40%   { transform: translateY(2%)    rotate(-4deg) scale(1); }
-  44%, 86% { opacity: 1; transform: translateY(2%) rotate(-4deg) scale(1); }
+@keyframes lcHutR19 {
+  0%   { opacity: 0; transform: translateY(-110%) rotate(-24deg) scale(.8); }
+  10%  { opacity: 1; }
+  /* 18 % von 3,4 s = 620 ms — da setzt er auf, da kommt auch der Ton. */
+  18%  { transform: translateY(6%) rotate(9deg) scale(1.04); }
+  26%  { transform: translateY(-2%) rotate(-5deg) scale(1); }
+  34%  { transform: translateY(0) rotate(3deg); }
+  44%, 88% { opacity: 1; transform: translateY(0) rotate(-2deg); }
   100% { opacity: 0; transform: translateY(-30%) rotate(-10deg) scale(.9); }
 }
-/* Der Kopf federt unter dem Aufschlag — und zwar GENAU dann, nicht
-   fruehr: 20,5 % ist derselbe Punkt wie oben. */
-.lc-behutet { animation: lcBehutetR73 2.8s linear both; }
-@keyframes lcBehutetR73 {
-  0%, 20.5% { transform: translateY(0) scale(1); }
-  24%       { transform: translateY(2%) scale(1.03, .96); }
-  28%       { transform: translateY(0) scale(.99, 1.01); }
-  32%       { transform: translateY(0) scale(1); }
-  100%      { transform: translateY(0) scale(1); }
+.lc-behutet { animation: lcBehutetR19 3.4s ease-out both; }
+@keyframes lcBehutetR19 {
+  0%, 16% { transform: translateY(0) scale(1); }
+  20%     { transform: translateY(2%) scale(1.02, .97); }
+  28%     { transform: translateY(0) scale(1); }
+  100%    { transform: translateY(0) scale(1); }
 }
-
-/* --- DIE HAND, DIE DEN HUT ZURECHTRUECKT ---------------------------
-   XANDER: „Der Cowboyhut ist noch zu comichaft, ich haette gern eine
-   Hand, die ihn zurechtrueckt."
-   Sie kommt von rechts ins Bild, fasst an die Krempe, zieht sie bei
-   40 % nach unten — dort steht in lcHutR73 die Schraeglage — und
-   geht wieder. Nichts davon ist zu sehen, bevor der Hut aufgesetzt
-   hat: eine Hand, die vor dem Hut da ist, waere Unsinn. */
-.lc-hut-hand {
-  position: absolute;
-  left: 50%; top: -18%;
-  width: 66%;
-  margin-left: -4%;
-  transform-origin: 90% 50%;
-  opacity: 0;
-  pointer-events: none;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
-  animation: lcHutHandR73 2.8s linear both;
-}
-@keyframes lcHutHandR73 {
-  0%, 26%  { opacity: 0; transform: translate(52%, -26%) rotate(16deg); }
-  30%      { opacity: 1; transform: translate(20%, -12%) rotate(9deg); }
-  34%      { opacity: 1; transform: translate(4%, -2%)   rotate(3deg); }
-  /* 40 % — hier zieht sie, und hier kippt der Hut. */
-  40%      { opacity: 1; transform: translate(0, 5%)     rotate(-3deg); }
-  46%      { opacity: 1; transform: translate(10%, 0)    rotate(2deg); }
-  54%      { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
-  100%     { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
-}
-@media (prefers-reduced-motion: reduce) { .lc-hut-hand { animation: none; opacity: 0; } }
 
 /* --- DIE ZEITBOMBE ---------------------------------------------------
    „so ein Countdown im Profilbild und so eine Zeitschaltuhr, dass das
@@ -22520,15 +22411,11 @@ body.lc-schreibt .tutor-reiter {
 /* DIE AUGEN AN DEN PLÄTZEN. Ihre Stelle rechnet app.js aus den
    gemessenen Sitzmitten aus (plus lcBildVersatz, damit sie auf dem
    BILD sitzen und nicht auf dem Namen darunter). */
-/* RUNDE 73: links/top setzt jetzt das JavaScript in PIXELN und in
-   jedem Bildtakt neu (siehe lcStromAus in app.js) — in Prozent
-   wanderten die Augen beim Scrollen von den Gesichtern weg, weil die
-   Effektbuehne ihre Hoehe aendert. Die Breite bleibt fest in Pixeln,
-   damit ein Augenpaar ueberall gleich gross ist. */
 .lc-dunkel-augen {
   position: absolute;
-  width: 46px;
-  height: 13px;
+  width: 13%;
+  height: 3.4%;
+  min-height: 10px;
   transform: translate(-50%, -50%);
   display: flex;
   justify-content: space-between;
@@ -22730,6 +22617,7 @@ body.lc-schreibt .tutor-reiter {
      zerläuft, nicht indem er sich auflöst. */
   96%     { opacity: .85; transform: translateX(var(--mitte, 0%)) translateY(104%) scale(1.06, .62); }
   100%    { opacity: 0; transform: translateX(var(--mitte, 0%)) translateY(105%) scale(1.18, .44); }
+}
 }
 /* Die Spur wächst mit — dieselben Zeitpunkte, damit sie nicht in
    der Luft endet. */

@@ -230,21 +230,33 @@ pruefe("die goldenen Teile sitzen OBEN auf dem Koerper",
   && /\.lc-lok-dom      \{ fill: #c8992e;/.test(cssK));
 
 console.log("\nDIE MUENZE DREHT DURCH, STATT ZU STOTTERN");
+/* ----------------------------------------------------------------
+   RUNDE 73 — DIESE FUENF REGELN HABEN AUF DEN FALSCHEN BLOCK GEZEIGT
+   ----------------------------------------------------------------
+   Sie suchten `lcMuenzeR18`. Diesen Block hat aber schon Runde 53
+   ueberschrieben und Runde 72 danach noch einmal. Die Regeln waren
+   also gruen, waehrend der Browser etwas voellig anderes abspielte —
+   genau deshalb hat Xander die Muenze dreimal hintereinander
+   beanstandet, obwohl hier jedesmal „ok" stand. Der tote Block ist
+   inzwischen geloescht; die Regeln zeigen jetzt auf das, was
+   wirklich laeuft: `lcMuenzeR72`, 5,4 s, linear.
+   ---------------------------------------------------------------- */
 pruefe("keine Kurve mehr ueber die ganze Animation",
-  /animation: lcMuenzeR18 4\.2s linear both;/.test(cssK)
-  && !/animation: lcMuenzeR18 4\.2s cubic-bezier/.test(cssK));
-pruefe("die Verzoegerung steht in den Werten, alle 8 Prozent ein Bild",
-  /8%   \{ transform: translateY\(1%\)   rotateX\(0deg\)  rotateY\(919deg\)/.test(cssK)
-  && /16%  \{ transform: translateY\(2%\)   rotateX\(0deg\)  rotateY\(1734deg\)/.test(cssK)
-  && /24%  \{ transform: translateY\(4%\)   rotateX\(0deg\)  rotateY\(2447deg\)/.test(cssK));
+  /animation: lcMuenzeR72 5\.4s linear both;/.test(cssK)
+  && !/animation: lcMuenzeR72 5\.4s cubic-bezier/.test(cssK));
+pruefe("die Verzoegerung steht in den Werten, die Abstaende werden kleiner",
+  /7\.4%  \{ transform: translateY\(0\.4%\)  rotateX\(0deg\)  rotateY\(855deg\)/.test(cssK)
+  && /14\.8% \{ transform: translateY\(1\.5%\)  rotateX\(0deg\)  rotateY\(1620deg\)/.test(cssK)
+  && /22\.2% \{ transform: translateY\(3%\)    rotateX\(2deg\)  rotateY\(2295deg\)/.test(cssK));
 pruefe("bei 74 Prozent steht sie, danach kippt sie nur noch",
-  /74%  \{ transform: translateY\(23%\)  rotateX\(72deg\) rotateY\(4500deg\)/.test(cssK));
+  /74%   \{ transform: translateY\(43%\)   rotateX\(66deg\) rotateY\(4500deg\)/.test(cssK));
 pruefe("und dann scheppert sie aus — jeder Ausschlag kleiner",
-  /84%  \{ transform: translateY\(27%\)  rotateX\(93deg\)/.test(cssK)
-  && /90%  \{ transform: translateY\(27%\)  rotateX\(92deg\)/.test(cssK)
-  && /96%  \{ transform: translateY\(27%\)  rotateX\(91deg\)/.test(cssK));
+  /88%   \{ transform: translateY\(57%\)   rotateX\(76deg\)/.test(cssK)
+  && /91%   \{ transform: translateY\(61%\)   rotateX\(87deg\)/.test(cssK)
+  && /94%   \{ transform: translateY\(59\.5%\) rotateX\(81deg\)/.test(cssK)
+  && /98%   \{ transform: translateY\(60\.4%\) rotateX\(84deg\)/.test(cssK));
 pruefe("auch der Schatten laeuft linear mit",
-  /animation: lcMuenzeSchattenR18 4\.2s linear both;/.test(cssK));
+  /animation: lcMuenzeSchattenR72 5\.4s linear both;/.test(cssK));
 
 console.log("\nDER STRUDEL HAT EINEN SWIRL — UND UNTERBRICHT NICHT MEHR");
 pruefe("zwei helle Sektoren laufen mit",

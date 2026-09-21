@@ -114,13 +114,22 @@ const pruefe = (was, gut, zusatz) => {
   const plan = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
   /* RUNDE 70 NACHGEZOGEN: „gluehbirne.opus" war ein Quietschen und
      klang nicht nach Einschrauben — XANDER: „der Sound ist nicht
-     realistisch". Jetzt „birneschrauben": Gewinde, Quietschen und
-     der kleine Klick, wenn sie sitzt. Die alte Datei bleibt liegen,
-     sie wird nur nicht mehr gewaehlt. */
-  pruefe("die Glühbirne klingt nach Einschrauben",
-    /gluehbirne:\s*\{ ton: "birneschrauben"/.test(plan));
+     realistisch". Danach hiess der Ton „birneschrauben".
+
+     RUNDE 73 — UND DER WAR ES DANN AUCH NICHT.
+     XANDER: „bei der Gluehbirne hoert man noch so ein zusaetzliches
+     Auto-Quietschen ... Pass bitte auf, dass diese Platzhalter
+     Geraeusche vom Auto quietschen oder Auto Motor nicht irgendwo
+     noch drin sind. Kontrolliere das bitte komplett."
+     NACHGEMESSEN: „birneschrauben" hatte seinen lautesten Anteil bei
+     rund 5056 Hz — das ist genau die Lage eines Reifenquietschens,
+     und genau das hat er gehoert. Jetzt „birnedrehen": trockenes
+     Gewinde, kein Pfeifen. Die alte Datei bleibt liegen, sie wird
+     nur nicht mehr gewaehlt. */
+  pruefe("die Glühbirne dreht trocken, ohne Auto-Quietschen",
+    /gluehbirne:\s*\{ ton: "birnedrehen"/.test(plan));
   pruefe("es gibt die Datei dazu",
-    fs.existsSync(path.join(WURZEL, "ton", "birneschrauben.opus")));
+    fs.existsSync(path.join(WURZEL, "ton", "birnedrehen.opus")));
 
   /* ---------- DIE SPRECHBILDER AUS DIESER RUNDE ---------- */
   console.log("\nBLUT, EIS, SPINNE UND DIE ALTE VHS-STÖRUNG\n");

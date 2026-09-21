@@ -116,11 +116,27 @@ console.log("\nDIE ROHRREISE — NACHEINANDER, NICHT GLEICHZEITIG");
    2,4 s heraus. Es gibt keinen Augenblick mit zwei Bildern. */
 pruefe("es gibt ein zweites Bild an der Zielroehre", /lc-rohr-doppel/.test(js)
   && /\.lc-rohr-doppel \{/.test(css));
-pruefe("am Startrohr verschwindet er GANZ und bleibt weg",
-  /clipPath: "inset\(0 0 100% 0\)", offset: 0\.26/.test(js)
-  && /clipPath: "inset\(0 0 100% 0\)", offset: 0\.95/.test(js));
+/* RUNDE 73 — DIE ZWEI REGELN SUCHTEN HANDGESCHRIEBENE ZAHLEN.
+   Genau die waren der Fehler: der Zuschnitt war von Hand gesetzt
+   (bei 40 % Absinken 52 % weg, bei 62 % gleich 100 %) und lief dem
+   Bild davon. XANDER: „das Bild wird abgeschnitten, bevor es ganz
+   drin ist." Jetzt kommen Absinken und Zuschnitt aus EINER Zeile —
+   `rohrBild(v)` — und genau das wird hier geprueft. Eine Regel auf
+   die alten Zahlen haette die Rechnung wieder auseinandergerissen. */
+pruefe("Absinken und Zuschnitt kommen aus derselben Rechnung",
+  /const rohrBild = \(v, vorne, zeit\) => \(\{/.test(js)
+  && /translateY\(" \+ \(v \* 100\)/.test(js)
+  && /\(ROHR_MUND \+ v\) \* 100/.test(js));
+pruefe("am Startrohr sinkt er bis ganz hinein und bleibt weg",
+  /rohrBild\(0\.62,  false, 0\.26\)/.test(js)
+  && /rohrBild\(0\.62,  false, 0\.95\)/.test(js));
 pruefe("und drueben taucht er erst danach auf — keine Ueberschneidung",
-  /clipPath: "inset\(0 0 100% 0\)", opacity: 1, offset: 0\.55/.test(js));
+  /rohrBild\(0\.62, true, 0\.557\)/.test(js));
+pruefe("die Roehre steht nicht mehr auf dem Nachbarplatz",
+  /const ROHR_HOCH = 0\.62;/.test(js)
+  && /const ROHR_MITTE = 0\.12 \+ ROHR_HOCH \/ 2;/.test(js));
+pruefe("und das Ausstiegsbild geht, wenn das echte kommt",
+  /const schnittR = Math\.min\(0\.98, \(hin \+ 120\) \/ dauer\);/.test(js));
 pruefe("die Zielroehre faehrt erst hoch, wenn die Startroehre unten ist",
   /const abR = i \? taktR\(0\.46\) : 0;/.test(js)
   && /const spanneR = i \? taktR\(0\.44\) : taktR\(0\.34\);/.test(js));

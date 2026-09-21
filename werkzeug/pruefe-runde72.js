@@ -77,19 +77,30 @@ pruefe("aber NICHT, was gerade arbeitet",
 console.log("\nDIE ROEHRE: ERST HINEIN, DANN HERAUS — NIE BEIDES");
 pruefe("die Zeiten haengen an der Reisedauer",
   /const taktR = \(anteil\) => Math\.round\(dauer \* anteil\);/.test(js));
-pruefe("das Startbild ist ab 26 % GANZ weg und bleibt weg",
-  /clipPath: "inset\(0 0 100% 0\)", offset: 0\.26/.test(js)
-  && /clipPath: "inset\(0 0 100% 0\)", offset: 0\.95/.test(js));
-pruefe("das Zielbild kommt erst ab 55 %",
-  /clipPath: "inset\(0 0 100% 0\)", opacity: 1, offset: 0\.55/.test(js));
+/* RUNDE 73 — DIESE ZWEI REGELN SUCHTEN HANDGESCHRIEBENE ZAHLEN, UND
+   GENAU DIE WAREN DER FEHLER. Der Zuschnitt war von Hand gesetzt und
+   lief dem Absinken davon (bei 40 % Absinken 52 % weggeschnitten).
+   XANDER: „das Bild wird abgeschnitten, bevor es ganz drin ist."
+   Jetzt kommen beide aus EINER Zeile, `rohrBild(v)`, und die Regeln
+   pruefen das — nicht mehr die alten Einzelwerte. */
+pruefe("das Startbild sinkt ganz hinein und bleibt weg",
+  /rohrBild\(0\.62,  false, 0\.26\)/.test(js)
+  && /rohrBild\(0\.62,  false, 0\.95\)/.test(js));
+pruefe("das Zielbild kommt erst, wenn die Zielroehre steht (55,7 %)",
+  /rohrBild\(0\.62, true, 0\.557\)/.test(js));
 pruefe("die Zielroehre faehrt erst ab 46 % hoch",
   /const abR = i \? taktR\(0\.46\) : 0;/.test(js));
 pruefe("der Sog hat drei Impulse — und es gibt ihn wirklich",
   ton("rohrsog") && ton("rohrspuck")
   && gelistet("rohrsog") && gelistet("rohrspuck"));
+/* RUNDE 73: die Marken haben sich um einen Hauch verschoben, weil
+   der Zuschnitt erst einsetzt, wenn die Roehre wirklich steht
+   (0,08 statt 0,07), und das Ausstiegsbild erst, wenn die zweite
+   Roehre oben ist (0,557 statt 0,55). Die Toene sind mitgewandert —
+   sie sollen ja am BILD haengen, nicht an einer runden Zahl. */
 pruefe("und er liegt am Einfahren, nicht am Reisebeginn",
-  /lcTonSpaeter\("rohrsog", taktR\(0\.07\), 0\.7\)/.test(js)
-  && /lcTonSpaeter\("rohrspuck", taktR\(0\.55\), 0\.7\)/.test(js));
+  /lcTonSpaeter\("rohrsog", taktR\(0\.08\), 0\.7\)/.test(js)
+  && /lcTonSpaeter\("rohrspuck", taktR\(0\.557\), 0\.7\)/.test(js));
 pruefe("der alte Brummton ist aus dem Plan",
   /rohr:\s+\{ still: true \}/.test(js));
 
@@ -148,9 +159,20 @@ pruefe("und darin gehen an den besetzten Plaetzen Augen auf",
   /paar\.className = "lc-dunkel-augen";/.test(js)
   && /if \(!el \|\| g\.frei\) return;/.test(js)
   && /\.lc-dunkel-augen \{/.test(css));
+/* RUNDE 73 — XANDER: „Die Augen duerfen beim Scrollen nicht
+   mitwandern." Gemessen wurde die Stelle vorher EINMAL und in
+   Prozent der Effektbuehne abgelegt; die Buehne aendert beim
+   Scrollen aber ihre Hoehe, also wanderten dieselben Prozente
+   woanders hin. Jetzt setzt ein Bildtakt sie in Pixeln neu — genau
+   darauf sieht diese Regel jetzt. */
 pruefe("ihre Stelle kommt aus den gemessenen Sitzmitten",
   /const gitter = lcPlatzGitter\(\);/.test(js)
-  && /const hoch = lcBildVersatz\(el\);/.test(js));
+  && /const hoch = lcBildVersatz\(p\.el\);/.test(js));
+pruefe("und sie wird in JEDEM Bild neu gesetzt, sonst wandert sie",
+  /takt = requestAnimationFrame\(takten\);/.test(js)
+  && /paare\.forEach\(\(p\) => \{/.test(js));
+pruefe("die Pupille ist rund, kein Katzenschlitz",
+  /aspect-ratio: 1;/.test(css) && !/width: 34%; height: 62%;/.test(css));
 pruefe("und sie blinzeln hoerbar", ton("blinzeln") && ton("dunkelbrumm")
   && gelistet("blinzeln") && gelistet("dunkelbrumm")
   && /lcTonSpaeter\("blinzeln",/.test(js));
@@ -177,8 +199,10 @@ pruefe("erst saust er — schon auf dem Hinweg", /bumerang: 250,/.test(js)
   && /bumerang:\s+\{ ton: "swoosh", dauer: 1100, laut: 0\.6 \}/.test(js));
 pruefe("dann klopft es hoelzern auf dem TOCK", ton("holzklopf") && gelistet("holzklopf")
   && /lcTonSpaeter\("holzklopf", 860, 0\.78\)/.test(js));
+/* RUNDE 73: 920 -> 1060. 60 ms hinter dem Klopfen hoert man als
+   EINEN Laut — „das muss ja erst mal weh tun". */
 pruefe("und dann tut es weh, nach Mann und Frau getrennt",
-  /lcStimmeZu\(platz, "schreimann", "schreifrau", 920, 0\.7\)/.test(js));
+  /lcStimmeZu\(platz, "schreimann", "schreifrau", 1060, 0\.7\)/.test(js));
 
 console.log("\nDIE MUENZE DREHT DURCH UND LEGT SICH HOERBAR HIN");
 /* Die Falle: in Runde 71 hatte ich „linear" am FALSCHEN Block
@@ -243,18 +267,31 @@ console.log("\nDIE UMARMUNG: DIE ARME KNICKEN NICHT MEHR NACH UNTEN");
    Zeichnung wie heute. Zurueckzuholen gab es also nichts — die Form
    war nie anders. Der Knick steckt in ihr: die Oberkante fiel von
    42,5 auf 66,5, also 24 Einheiten ueber die Armlaenge. */
-pruefe("der Arm kommt fast waagerecht herum",
-  /" 42\.5 C " \+ x\(13\) \+ " 42\.8 " \+ x\(25\) \+ " 45\.5 " \+ x\(34\) \+ " 49\.5"/.test(js)
-  && /x\(hgx\) \+ " 53\.2"/.test(js));
+/* RUNDE 73 NACHGEFUEHRT — und das ist meine zweite Korrektur an
+   derselben Stelle. In Runde 72 hatte ich nur die NEIGUNG verringert;
+   der Arm lief weiter als Bezier-Kurve und knickte in der Mitte
+   durch. XANDER: „du sollst da, wo die Arme anfangen, sollen sie in
+   eine FUEHRUNG gehen und nicht aus einer Kurve heraus nach unten
+   umarmen, sondern wirklich realistisch eine Linienfuehrung haben."
+   Jetzt sind Ober- und Unterkante STRECKEN (L-Befehle); rund ist nur
+   noch die Schulter und der Uebergang zum Handgelenk. */
+pruefe("der Arm ist eine gerade Fuehrung, keine Kurve",
+  /" L " \+ x\(38\) \+ " 51\.4"/.test(js)
+  && /" L " \+ x\(15\) \+ " 60\.8"/.test(js));
 pruefe("und die Dicke bleibt, wie sie war — 21 an der Schulter, 14,5 am Gelenk",
-  /x\(hgx\) \+ " 67\.7 C "/.test(js));
+  /x\(hgx\) \+ " 53\.6"/.test(js) && /x\(hgx\) \+ " 68\.1"/.test(js));
 pruefe("die Hand sitzt in der Mitte des neuen Handgelenks",
-  /x\(hgx\) \+ ' 60\.5\) '/.test(js));
+  /x\(hgx\) \+ ' 60\.9\) '/.test(js));
 
 console.log("\nDER PFEIL LANDET, WENN MAN IHN LANDEN SIEHT");
 pruefe("die Trefferzeit ist gemessen, nicht aus Prozenten geraten",
   /saugpfeil: 656,/.test(js));
-pruefe("das Sausen liegt davor", /lcTonSpaeter\("pfeilflug", 545, 0\.55\)/.test(js));
+/* RUNDE 73: 545 -> 400, und das Sausen wird bei 260 ms abgeblendet
+   (eigener Plan-Eintrag) — sonst zieht seine Rauschfahne ueber den
+   Einschlag hinweg. */
+pruefe("das Sausen liegt davor und ist zum Einschlag fertig",
+  /lcTonSpaeter\("pfeilflug", 400, 0\.55\)/.test(js)
+  && /pfeilflug:\s+\{ ton: "pfeilflug", dauer: 260/.test(js));
 pruefe("und das PLOPP auch", /animation: lcZpWort 0\.9s ease-out 0\.656s both;/.test(css));
 
 console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 72 sitzt.\n");

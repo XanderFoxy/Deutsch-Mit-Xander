@@ -129,5 +129,84 @@ pruefe("die Pendelbewegung steckt in den Werten, nicht in einer Kurve",
 pruefe("und die Person steigt am Ziel ab",
   /const last = liane\.querySelector\("\.lc-liane-last"\);/.test(js));
 
+console.log("\nZWEITER TEIL: WAS ER ZUM WIEDERHOLTEN MAL GEMELDET HAT");
+/* „Alles, was du mir in dem Update beschreibst, ist nirgendswo
+   sichtbar." Das war der wichtigste Punkt der ganzen Liste. */
+pruefe("die Seite merkt selbst, dass sie veraltet ist",
+  fs.existsSync(path.join(WURZEL, "fassung.json"))
+  && /fetch\("fassung\.json\?t=" \+ Date\.now\(\), \{ cache: "no-store" \}\)/
+       .test(fs.readFileSync(path.join(WURZEL, "index.html"), "utf8")));
+pruefe("und die beiden Zahlen koennen nicht auseinanderlaufen",
+  (() => {
+    const html = fs.readFileSync(path.join(WURZEL, "index.html"), "utf8");
+    const a = (html.match(/window\.DMA_VERSION = "(\d+)"/) || [])[1];
+    const b = JSON.parse(fs.readFileSync(path.join(WURZEL, "fassung.json"), "utf8")).fassung;
+    return a && b && String(a) === String(b);
+  })(),
+  "index.html und fassung.json");
+pruefe("es gibt ein Werkzeug, das beide gemeinsam setzt",
+  fs.existsSync(path.join(WURZEL, "werkzeug", "fassung-setzen.js")));
+
+pruefe("die Effekte fuer ALLE schicken wirklich das Wort „alle“",
+  /\["\\ud83d\\ude18", "K\\u00fcssen", "kuss", "alle"\]/.test(js)
+  && /\+ \(name \? " " \+ name : \(zusatz \? " " \+ zusatz : ""\)\)/.test(js));
+pruefe("schwebende Panels gehen auch im Leerraum zu",
+  /const LC_BEDIENBAR = /.test(js)
+  && /if \(ziel\.closest\(LC_BEDIENBAR\)\) return;/.test(js));
+pruefe("und sie bleiben auf dem Bildschirm",
+  /max-height: calc\(100dvh/.test(css));
+pruefe("die Birne dreht trocken statt zu quietschen",
+  ton("birnedrehen") && gelistet("birnedrehen")
+  && /gluehbirne:\s+\{ ton: "birnedrehen"/.test(js));
+pruefe("und sonst quietscht nur noch die Bremse beim Fahren",
+  (js.match(/lcTonSpaeter\("quietschen"/g) || []).length === 2
+  && !/lcTonZu\("quietschen"\)/.test(js));
+pruefe("das Geld faellt schneller",
+  /\(1\.9 \+ Math\.random\(\) \* 1\.4\)/.test(js)
+  && /\(1\.25 \+ Math\.random\(\) \* 0\.85\)/.test(js));
+pruefe("die Muenze wird beim Landen nicht mehr kleiner",
+  /rotateX\(86deg\) rotateY\(4500deg\) scale\(\.9\)/.test(css)
+  && !/rotateY\(4500deg\) scale\(\.55\)/.test(css));
+pruefe("die Trommel hoert auf, wenn der Ton aufhoert",
+  /\}, marsch \? 1600 : 1400, marsch \? "marsch" : "trommel"\);/.test(js)
+  && /lcStockAR73 1\.4s/.test(css));
+pruefe("der Arm der Umarmung ist eine gerade Fuehrung",
+  /" L " \+ x\(38\) \+ " 51\.4"/.test(js));
+pruefe("die Kopfhoerer klemmen am Bild statt daneben zu haengen",
+  /\.lc-kopfhoerer-bild \{[\s\S]{0,200}?width: 122%;/.test(css));
+
+
+console.log("\nTEIL 3 — ROEHRE, STRUDEL, HUT, ZWILLE, HAMMER\n");
+/* Alles hier ist vorher GEMESSEN worden, und die Messung steht im
+   Kommentar an der Stelle, an der der Wert im Programm steht. */
+pruefe("die Roehre steht nicht mehr auf dem Nachbarplatz",
+  /const ROHR_HOCH = 0\.62;/.test(js)
+  && /const ROHR_MITTE = 0\.12 \+ ROHR_HOCH \/ 2;/.test(js));
+pruefe("Absinken und Zuschnitt kommen aus einer Rechnung",
+  /const rohrBild = \(v, vorne, zeit\) =>/.test(js)
+  && /\(ROHR_MUND \+ v\) \* 100/.test(js));
+pruefe("und das Ausstiegsbild geht, wenn das echte kommt",
+  /const schnittR = Math\.min\(0\.98, \(hin \+ 120\) \/ dauer\);/.test(js));
+pruefe("der Strudel klingt 4,6 s lang, nicht wie ein Schalter",
+  ton("strudelsog") && gelistet("strudelsog")
+  && /sog:\s+\{ ton: "strudelsog", dauer: 4600/.test(js));
+pruefe("und er ruckelt nicht mehr — keine Kurve ueber die ganze Animation",
+  /\.lc-kreis\.lc-gesogen \{ animation: lcSogZiehtR19 4\.2s linear both; \}/.test(css));
+pruefe("der Hut setzt auf, wenn man ihn aufsetzen hoert",
+  /animation: lcHutR73 2\.8s linear both;/.test(css)
+  && /20\.5% \{ transform: translateY\(0\)/.test(css)
+  && /hut:            \{ ton: "cowboy",    dauer: 2800/.test(js));
+pruefe("und eine Hand rueckt ihn zurecht",
+  /lc-hut-hand/.test(js) && /@keyframes lcHutHandR73/.test(css));
+pruefe("die Zwille spannt, saust und schlaegt ein",
+  /lcTonSpaeter\("gummizug", 180, 0\.95\);/.test(js)
+  && /lcTonSpaeter\("swoosh", 1290, 0\.55\);/.test(js)
+  && /lcTonSpaeter\("spucktreffer", 1440, 0\.8\);/.test(js));
+pruefe("und der Schrei kommt NACH dem Einschlag",
+  js.indexOf('lcTonSpaeter("spucktreffer", 1440')
+    < js.indexOf('lcStimmeZu(platz, "schreimann", "schreifrau", 1560'));
+pruefe("der Hammer hat den Amboss-Klang",
+  /lcTonSpaeter\("hammerschlag", 300, 0\.45\);/.test(js));
+
 console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 73 sitzt.\n");
 process.exit(fehler ? 1 : 0);
