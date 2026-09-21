@@ -686,7 +686,14 @@ window.LiveChat = (function () {
         nummer: i + 1, id: p.id, name: p.name, ich: p.ich, strom: p.strom,
         tonAn: p.tonAn, bildAn: p.bildAn, bild: p.bild, spricht: p.spricht, leer: false,
         /* Welche Sprech-Animation DIESE Person fuer sich gewaehlt hat. */
-        sprechbild: p.ich ? (zustand.sprechbild || "ring") : (p.sprechbild || "ring")
+        sprechbild: p.ich ? (zustand.sprechbild || "ring") : (p.sprechbild || "ring"),
+        /* XANDER: „dann moechte ich abhaengig vom Geschlecht ... ein
+           Schmerzgeraeusch von der Frau." Damit die Ohrfeige weiss,
+           WEN sie trifft, faehrt das Geschlecht bis an den Platz mit.
+           Vorher stand es nur an der Chatzeile — ein Effekt am Platz
+           kam nie daran. */
+        geschlecht: p.ich ? (zustand.geschlecht || "")
+                          : (geschlechtVon(p.id) || p.geschlecht || "")
       } : { nummer: i + 1, id: "", name: "", ich: false, strom: null,
             bild: "", spricht: false, leer: true });
     }
@@ -957,6 +964,11 @@ window.LiveChat = (function () {
     /* XANDER: „wie bei Super Mario frueher diese Rohre … wo man sich
        so reinsetzt und dann irgendwo anders wieder rauskommt." */
     rohr:     { wirkung: "rohr",     satz: "rutscht durch die R\u00f6hre zu", emoji: "\ud83d\udfe2" },
+    /* XANDER: „ach so, ein Helikopter kannst du noch einbauen …
+       und vielleicht irgendwie ein Pferd, auf dem man da hin reiten
+       kann." */
+    heli:     { wirkung: "heli",     satz: "fliegt im Hubschrauber zu", emoji: "\ud83d\ude81" },
+    pferd:    { wirkung: "pferd",    satz: "reitet hin\u00fcber zu", emoji: "\ud83d\udc0e" },
     /* GEWUENSCHT: „die Feuerreanimation am Rand des Profil rahmen." */
     brennen:  { wirkung: "brennen",  satz: "setzt den Rahmen in Brand bei", emoji: "\ud83d\udd25" },
     /* XANDER: „Vielleicht kannst du auch noch so ne Animation fuer so
@@ -8770,6 +8782,10 @@ window.LiveChat = (function () {
       was: "Beamen \u2014 du loest dich auf und erscheinst auf Platz 5 wieder" },
     { gr: "reden", w: "rohr", kurz: "roehre", nutzt: "/rohr 5",
       was: "Wie bei Super Mario \u2014 rein in die gr\u00fcne R\u00f6hre, drueben wieder raus" },
+    { gr: "reden", w: "heli", kurz: "hubschrauber", nutzt: "/heli 5",
+      was: "Helikopter \u2014 der Rotor dreht, du sitzt in der Kanzel" },
+    { gr: "reden", w: "pferd", kurz: "reiten", nutzt: "/pferd 5",
+      was: "Pferd \u2014 du sitzt im Sattel und galoppierst hin\u00fcber" },
     { gr: "reden", w: "gemeinsam", kurz: "zuzweit", nutzt: "/gemeinsam Name",
       was: "zu zweit losfahren \u2014 sein Bild h\u00e4ngt sich an deins und ihr rollt zusammen weg" },
     { gr: "reden", w: "laufen",  kurz: "",      nutzt: "/laufen 8",           was: "Feld f\u00fcr Feld zu Platz 8 laufen \u2014 geht auch mit /fahren 8" },
@@ -10564,7 +10580,8 @@ window.LiveChat = (function () {
     if ((art === "flug" || art === "maulwurf" || art === "portal"
          || art === "boot" || art === "kran" || art === "dampfer"
          || art === "lok" || art === "liane" || art === "feder"
-         || art === "beamen" || art === "rohr")
+         || art === "beamen" || art === "rohr"
+         || art === "heli" || art === "pferd")
         && /^\s*\d+\s*$/.test(rest)) {
       var satzR = { flug: [" fliegt zu Platz ", "\u2708\ufe0f"],
                     maulwurf: [" gr\u00e4bt sich zu Platz ", "\ud83e\udda1"],
@@ -10576,7 +10593,9 @@ window.LiveChat = (function () {
                     liane: [" schwingt sich zu Platz ", "\ud83c\udf3f"],
                     feder: [" federt zu Platz ", "\ud83e\ude80"],
                     beamen: [" beamt sich zu Platz ", "\u2728"],
-                    rohr: [" rutscht durch die R\u00f6hre zu Platz ", "\ud83d\udfe2"] }[art];
+                    rohr: [" rutscht durch die R\u00f6hre zu Platz ", "\ud83d\udfe2"],
+                    heli: [" fliegt im Hubschrauber zu Platz ", "\ud83d\ude81"],
+                    pferd: [" reitet zu Platz ", "\ud83d\udc0e"] }[art];
       return anAlle("aktion", zustand.ichName + satzR[0] + rest.trim() + "  " + satzR[1],
                     { wirkung: art, wen: rest.trim() });
     }

@@ -17093,6 +17093,12 @@
     schicht.className = "lc-geld";
     schicht.setAttribute("aria-hidden", "true");
 
+    /* XANDER: „Bei dem Geld kannst du so ein Abkassiergeraeusch
+       machen." Die Kasse klingelt ZUERST — erst wird kassiert, dann
+       regnet es. Der Geldregen selbst liegt schon als Bett darunter
+       (LC_TON_PLAN.geld). */
+    lcTonSpaeter("kasse", 0, 0.8);
+
     /* Der Schriftzug — er gehört zum Namen der Sache. */
     const zug = document.createElement("span");
     zug.className = "lc-cash-zug";
@@ -21996,20 +22002,34 @@
      „rand: true" heisst, die Teilchen liegen auf der Kreisbahn um
      das Bild; bei den Herzen steht es nicht da. */
   const LC_TEILCHENBILDER = {
-    magie:  { menge: 26, klasse: "lc-tmagie", rand: true,
+    magie:  { menge: 26, klasse: "lc-tmagie", rand: true, band: [32.8, 37.2],
               zeichen: ["\u2726", "\u2727", "\u00b7", "\u2734", "\u2735"] },
     noten:  { menge: 14, klasse: "lc-tnoten", rand: true,
               zeichen: ["\u266a", "\u266b", "\u266c", "\u2669"] },
     herzen: { menge: 10, klasse: "lc-therzen",
               zeichen: ["\u2665", "\u2764", "\ud83d\udc96"] },
-    feuer:  { menge: 16, klasse: "lc-tfeuer", rand: true, zeichen: [""] },
+    /* XANDER: „bei den Flammen arbeite etwas filigraner am oberen
+       Rand, dass sie nicht vom Reifen wegfliegen, sondern auf dem
+       Reifen tanzen."
+       Das „Wegfliegen" kam aus der Streuung, und die war schlicht
+       falsch gerechnet. NACHGEMESSEN auf der Pruefbuehne: das Bild
+       ist 103 px breit, das Feld 148 px — das Feld ist also 1,437-mal
+       so gross, und der Bildrand liegt bei 50 % / 1,437 = 34,8 % der
+       Feldbreite vom Mittelpunkt. Gestreut wurde aber von 40 bis
+       48 %: die naechste Flamme sass 8 px, die aeusserste 20 px
+       NEBEN dem Reifen (gemessen: Radius 63 px bei Bildradius
+       51,5 px). Jetzt 33,4 bis 35,6 % — das ist der Reifen selbst.
+       Dazu mehr und schmalere Flammen: das ist das „filigraner". */
+    feuer:  { menge: 30, klasse: "lc-tfeuer", rand: true, band: [33.4, 35.6], zeichen: [""] },
     /* XANDER: „das funkeln ist kein funkeln … das muss nicht so
        Lineal sein, das kann so ein bisschen Partikel sein."
        Also echte Teilchen wie bei Magie und Noten, jedes mit eigener
        Stelle und eigenem Takt — nicht ein Muster, das sich dreht. */
-    funkeln:{ menge: 20, klasse: "lc-tfunkeln", rand: true,
+    funkeln:{ menge: 20, klasse: "lc-tfunkeln", rand: true, band: [32.8, 37.2],
               zeichen: ["\u2726", "\u2727", "\u00b7", "\u2728"] },
-    strom:  { menge: 10, klasse: "lc-tstrom", rand: true, zeichen: [""] },
+    /* Die Ladungen tanzen AUF dem Rahmen — ein schmales Band, sonst
+       schweben sie daneben. */
+    strom:  { menge: 14, klasse: "lc-tstrom", rand: true, band: [33.4, 35.6], zeichen: [""] },
     blasen: { menge: 16, klasse: "lc-tblasen", zeichen: [""] }
   };
 
@@ -22861,7 +22881,15 @@
          also bei 34,7 % vom Mittelpunkt. Wer aussen gehoert („rand"),
          sitzt bei 36 bis 46 % — knapp ausserhalb des Bildes. */
       const winkel = (i * (360 / bau.menge) + Math.random() * 18 - 9) * Math.PI / 180;
-      const radius = bau.rand ? 40 + Math.random() * 8 : 14 + Math.random() * 18;
+      /* XANDER: „bei den magischen und funkeln koennten die Symbole
+         oben nicht so aus dem Kreis weggehen, die sollen am Pfad des
+         Kreises entlang funktionieren."
+         Wer ein eigenes Band mitbringt, bekommt es; sonst gilt die
+         alte Spanne. Je schmaler das Band, desto klarer der Pfad. */
+      const band = bau.band || [33, 37];
+      const radius = bau.rand
+        ? band[0] + Math.random() * (band[1] - band[0])
+        : 14 + Math.random() * 18;
       t.style.setProperty("--wo", (winkel * 180 / Math.PI).toFixed(1) + "deg");
       t.style.setProperty("--links", (50 + Math.cos(winkel) * radius).toFixed(1) + "%");
       t.style.setProperty("--oben", (50 + Math.sin(winkel) * radius).toFixed(1) + "%");
@@ -22952,6 +22980,10 @@
          darf beschriften, ohne dass ein Befehl sie mitliest. */
       knopf.dataset.lcName = p.leer ? "" : (p.name || "");
       knopf.dataset.lcIch = p.ich ? "1" : "";
+      /* XANDER: „dann moechte ich abhaengig vom Geschlecht ... ein
+         Schmerzgeraeusch von der Frau." Die Ohrfeige und die Zwille
+         lesen es hier ab (lcGeschlechtVomPlatz). */
+      knopf.dataset.lcGeschlecht = p.leer ? "" : (p.geschlecht || "");
       /* Die Kennung dazu: das Menue braucht sie, um das grosse Bild
          aufzurufen — der Name allein genuegt dafuer nicht. */
       knopf.dataset.lcId = p.leer ? "" : (p.id || "");
@@ -23809,6 +23841,12 @@
        frueher diese Rohre machen … mit diesem typischen Geraeusch."
        Zwei Geraeusche, zwei Zeitpunkte: hinein und wieder heraus. */
     rohr:           { ton: "rohrrein", dauer: 2800, laut: 0.55 },
+    /* XANDER: „ach so, ein Helikopter kannst du noch einbauen zur
+       Bewegung mit realistisch rotierenden Rotorblaettern und
+       vielleicht irgendwie ein Pferd, auf dem man da hin reiten
+       kann." Beide mit eigenem Geraeusch. */
+    heli:           { ton: "helikopter", dauer: 3000, laut: 0.5 },
+    pferd:          { ton: "pferd",    dauer: 3000, laut: 0.55 },
     /* Das Lagerfeuer-Geraeusch leiht sich der brennende Rahmen — es
        liegt schon in ton/ und klingt nach echtem Holzfeuer. */
     brennen:        { ton: "lagerfeuer", dauer: 4200, laut: 0.4 },
@@ -23827,7 +23865,12 @@
     /* „Bei der Ohrfeige koennte dieses klatschen richtig zu hoeren
        sein und so ein richtig realistisches Schmerzgeraeusch von dem,
        der geschlagen wird." Beides steckt in der einen Datei. */
-    ohrfeige:       { ton: "ohrfeige", dauer: 2600, laut: 0.62 },
+    /* GEMELDET, zweimal hintereinander: „Die Ohrfeige hat immer noch
+       kein Klatschgeraeusch." Die alte Datei „ohrfeige" hatte den
+       Schlag nur angedeutet. Jetzt liegt ein eigener, harter Klatsch
+       darauf — und der Schmerzlaut kommt getrennt danach, passend
+       zum Geschlecht (siehe lcOhrfeige). */
+    ohrfeige:       { ton: "klatsch",  dauer: 2000, laut: 0.8 },
     /* „ein realistisches Tripelgeraeusch ... und dieses realistische
        Geraeusch, wenn der Ball in den Korb fliegt." Erst das Dribbeln,
        der Korb kommt am Ende (siehe lcBasketball). */
@@ -25915,7 +25958,9 @@
      ["\ud83e\ude80", "Sprungfeder", "feder"],
      ["\ud83c\udfd7\ufe0f", "Kran", "kran"],
      ["\u2728", "Beamen", "beamen"],
-     ["\ud83d\udfe2", "R\u00f6hre", "rohr"]].forEach(([zeichen, wort, befehl]) => {
+     ["\ud83d\udfe2", "R\u00f6hre", "rohr"],
+     ["\ud83d\ude81", "Helikopter", "heli"],
+     ["\ud83d\udc0e", "Pferd", "pferd"]].forEach(([zeichen, wort, befehl]) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "lc-anreise-knopf";
@@ -27536,6 +27581,8 @@
     feder:    { zeichen: ["\ud83e\ude80"], wie: 4, klasse: "umarmen" },
     beamen:   { zeichen: ["\u2728"], wie: 4, klasse: "umarmen" },
     rohr:     { zeichen: ["\ud83d\udfe2"], wie: 4, klasse: "umarmen" },
+    heli:     { zeichen: ["\ud83d\ude81"], wie: 4, klasse: "umarmen" },
+    pferd:    { zeichen: ["\ud83d\udc0e"], wie: 4, klasse: "umarmen" },
     marsch:   { zeichen: ["\ud83e\udd41"], wie: 5, klasse: "umarmen" },
     brennen:  { zeichen: ["\ud83d\udd25"], wie: 5, klasse: "umarmen" },
     zorro:    { zeichen: ["\u2694\ufe0f"], wie: 5, klasse: "umarmen" },
@@ -28194,6 +28241,27 @@
      bisher sofort — das ist bei allem richtig, was nicht einschlaegt
      (Kopfhoerer, Platte, Luke).
      ================================================================= */
+  /* WELCHER TON DIE ANKUNFT TRAEGT.
+     XANDER: „achte auch immer darauf, wenn wir irgendwo hinreisen,
+     dass es manchmal eine laengere Strecke sein kann und wir
+     vielleicht einen Ankommen-Sound haben muessen."
+
+     Stand frueher als Literal mitten in lcReise — und war damit nicht
+     messbar. GEMELDET war naemlich: „Der Kran hat noch am Ende ein
+     Motorengeraeusch, das soll nicht da sein." GEFUNDEN: der
+     Ankunftston des Krans hiess „kitt", und das IST das
+     Motorgeraeusch (derselbe Irrtum stand schon einmal in
+     LC_TON_PLAN). Drei Sekunden Dauerbrummen, angesetzt bei 2,54 s,
+     liefen weit ueber die Animation hinaus. Eine Last, die abgesetzt
+     wird, dumpft — sie brummt nicht: 0,7 s „bonk".
+
+     Wo das Fahrzeuggeraeusch die Ankunft schon traegt (Tor, Beamen,
+     Rohr, Maulwurf), steht hier bewusst nichts. */
+  const LC_ANKUNFT_TON = {
+    flug: "bremse", boot: "platsch", dampfer: "platsch", lok: "bremse",
+    kran: "bonk", liane: "bonk", feder: "bonk", heli: "bonk", pferd: "bonk"
+  };
+
   const LC_TREFFER = {
     tritt: 180,        /* 0,18 s — „das ist der Anstoss" */
     hammer: 430,
@@ -28205,7 +28273,11 @@
     peitsche: 600,     /* 30 % von 2 s, da knallt es */
     zwille: 1300,      /* 50 % von 2,6 s */
     pusterohr: 1280,   /* 32 % von 4 s */
-    ohrfeige: 540,     /* 30 % von 1,8 s */
+    /* 28 % von 2,6 s — GENAU dort sitzt die Hand am Gesicht
+       (siehe @keyframes lcOhrfeigeHand, Schluesselbild 28 %). Die
+       alten 540 ms stammten noch von der 1,8-s-Fassung und kamen
+       damit 190 ms zu frueh. */
+    ohrfeige: 730,
     bowling: 760,
     billard: 760,
     tennis: 900,       /* der Schlag bei 30 % von 3 s */
@@ -29795,17 +29867,33 @@
          Jetzt: Griff oben (dort ist die Hand, dort ist der Drehpunkt),
          Kopf UNTEN, und er kommt auf dem Fell auf, also mitten auf
          dem Bild. */
-      ["a", "b"].forEach((seite) => {
-        schicht.insertAdjacentHTML("beforeend",
-          '<svg class="lc-trommel-stock lc-trommel-' + seite + '" viewBox="0 0 24 70">'
-          /* Der Griff, von der Hand oben bis kurz vor den Kopf. */
-          + '<rect x="9" y="2" width="6" height="52" rx="3" fill="#c79a5b"/>'
-          /* Der Hals wird zum Kopf hin dicker — so sieht ein
-             Schlaegel aus. */
-          + '<path d="M9 48 L15 48 L17 56 L7 56 Z" fill="#d8b47f"/>'
-          /* Und der Kopf ganz unten, dem Fell zugewandt. */
-          + '<ellipse cx="12" cy="60" rx="10" ry="9" fill="#e8d2ad" stroke="#a97f38" stroke-width="2"/>'
-          + "</svg>");
+      /* EIN SCHLAEGEL FUER DIE PAUKE, ZWEI FEINE STICKS FUER DEN MARSCH.
+         GEMELDET, zuletzt woertlich: „Die Trommel hat immer noch keine
+         filigranen Trommelstoecke und sie sind auch nicht bis zum Ende
+         der Animation zu sehen ... Es soll nur ein Schlaegel sein bei
+         dem Paukenschlag und filigrane normale Drumsticks bei der
+         zweiten Einstellung fuer das Marschgeraeusch."
+
+         Beides war falsch: gezeichnet wurden IMMER zwei dicke
+         Filzschlaegel. Eine Pauke schlaegt man aber mit einem, und
+         eine Marschtrommel mit zwei duennen Holzsticks. */
+      const seiten = marsch ? ["a", "b"] : ["mitte"];
+      seiten.forEach((seite) => {
+        schicht.insertAdjacentHTML("beforeend", marsch
+          /* DER MARSCH-STICK: duennes Holz, ganz leicht konisch, mit
+             der kleinen olivenfoermigen Spitze eines echten Drumsticks
+             — 3 px breit auf 24 Einheiten Kasten, also haarfein. */
+          ? '<svg class="lc-trommel-stock lc-trommel-stick lc-trommel-' + seite + '" viewBox="0 0 24 70">'
+            + '<path d="M10.6 2 L13.4 2 L14.2 50 L9.8 50 Z" fill="#d9b585"/>'
+            + '<path d="M9.8 50 L14.2 50 L13.6 57 L10.4 57 Z" fill="#c79a5b"/>'
+            + '<ellipse cx="12" cy="60.5" rx="3.1" ry="4.2" fill="#e8d2ad" stroke="#a97f38" stroke-width="1"/>'
+            + "</svg>"
+          /* DER PAUKENSCHLAEGEL: ein Stiel, ein grosser Filzkopf. */
+          : '<svg class="lc-trommel-stock lc-trommel-' + seite + '" viewBox="0 0 24 70">'
+            + '<rect x="10" y="2" width="4" height="50" rx="2" fill="#c79a5b"/>'
+            + '<path d="M10 48 L14 48 L16 55 L8 55 Z" fill="#d8b47f"/>'
+            + '<ellipse cx="12" cy="61" rx="9" ry="8" fill="#e8d2ad" stroke="#a97f38" stroke-width="2"/>'
+            + "</svg>");
       });
       for (let i = 0; i < 3; i++) {
         const w = document.createElement("i");
@@ -30890,7 +30978,8 @@
 
     const hin = { flug: 2600, maulwurf: 2200, boot: 2800, kran: 2800,
                   dampfer: 3000, lok: 3200, liane: 2200, feder: 2400,
-                  beamen: 2600, rohr: 2800 }[art] || 1800;
+                  beamen: 2600, rohr: 2800, heli: 3000,
+                  pferd: 3000 }[art] || 1800;
     const dauer = hin + 500;
     const altZ = ab.el.style.zIndex;
     ab.el.style.zIndex = "7";
@@ -31252,6 +31341,72 @@
         glanz.remove();
       }, dauer + 200);
       lcTonZu("beamen");
+    } else if (art === "heli") {
+      /* XANDER: „ein Helikopter … mit realistisch rotierenden
+         Rotorblaettern."
+         Der Rotor ist kein Strich, der sich dreht — bei echter
+         Drehzahl sieht man eine SCHEIBE mit einem Schemen darin.
+         Deshalb zwei Lagen: eine blasse Scheibe und zwei Blaetter,
+         die sich schnell darin drehen. Das Bild sitzt in der Kanzel. */
+      const heli = document.createElement("span");
+      heli.className = "lc-heli";
+      heli.style.setProperty("--gross", d + "px");
+      heli.innerHTML =
+        '<span class="lc-heli-rotor"><i class="lc-heli-scheibe"></i>'
+        + '<i class="lc-heli-blatt"></i><i class="lc-heli-blatt lc-heli-blatt-2"></i></span>'
+        + '<svg class="lc-heli-form" viewBox="0 0 130 70" aria-hidden="true">'
+        + '<path class="lc-heli-rumpf" d="M10 44 Q12 22 42 20 L72 20 Q96 22 100 34'
+        + ' Q102 44 92 48 L28 48 Q12 48 10 44 Z"/>'
+        + '<path class="lc-heli-ausleger" d="M96 30 L126 28 L126 36 L98 40 Z"/>'
+        + '<path class="lc-heli-flosse" d="M120 28 L130 8 L124 8 L116 28 Z"/>'
+        + '<circle class="lc-heli-heck" cx="124" cy="32" r="7"/>'
+        + '<path class="lc-heli-kufe" d="M22 58 L96 58" stroke-width="4" stroke-linecap="round"/>'
+        + '<path class="lc-heli-strebe" d="M34 48 L34 58 M84 48 L84 58"'
+        + ' stroke-width="3.4" stroke-linecap="round"/>'
+        + '<path class="lc-heli-mast" d="M50 20 L54 12 L62 12 L58 20 Z"/>'
+        + "</svg>"
+        + '<span class="lc-heli-kanzel"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
+      reihe.appendChild(heli);
+      weg.push(heli);
+      setzen(heli, start.x, start.y);
+      lcReiseWaagerecht(heli, start, ende, dauer, hin);
+      lcTonZu("heli");
+    } else if (art === "pferd") {
+      /* „und vielleicht irgendwie ein Pferd, auf dem man da hin
+         reiten kann. Das muss aber dann auch realistisch sein, wie
+         man da drauf sitzt und reiten kann."
+         Also sitzt das Bild wirklich IM Sattel (hinter dem Widerrist,
+         vor der Kruppe), und die vier Beine laufen im Galopp — je
+         zwei im Gegentakt, dazu das Auf und Ab des Ruempfes. */
+      const pferd = document.createElement("span");
+      pferd.className = "lc-pferd";
+      pferd.style.setProperty("--gross", d + "px");
+      pferd.innerHTML =
+        '<span class="lc-pferd-huepf">'
+        + '<svg class="lc-pferd-form" viewBox="0 0 130 90" aria-hidden="true">'
+        + '<path class="lc-pferd-bein lc-pferd-b1" d="M34 58 L30 84" />'
+        + '<path class="lc-pferd-bein lc-pferd-b2" d="M96 58 L100 84" />'
+        + '<path class="lc-pferd-rumpf" d="M26 42 Q24 30 44 28 L88 28 Q106 30 106 44'
+        + ' Q106 58 88 58 L42 58 Q26 56 26 42 Z"/>'
+        + '<path class="lc-pferd-hals" d="M96 34 Q112 26 116 10 L126 12 Q122 32 104 44 Z"/>'
+        + '<path class="lc-pferd-kopf" d="M114 8 Q128 4 130 14 Q130 22 120 22 L112 18 Z"/>'
+        + '<path class="lc-pferd-maehne" d="M104 18 Q114 10 118 6 L112 4 Q100 12 98 24 Z"/>'
+        + '<path class="lc-pferd-schweif" d="M26 36 Q10 38 6 58 Q16 52 22 48 Z"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b3" d="M44 58 L40 84" />'
+        + '<path class="lc-pferd-bein lc-pferd-b4" d="M86 58 L90 84" />'
+        + '<path class="lc-pferd-sattel" d="M52 30 Q66 24 80 30 L80 36 Q66 32 52 36 Z"/>'
+        + "</svg>"
+        + '<span class="lc-pferd-reiter"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
+        + "</span>";
+      reihe.appendChild(pferd);
+      weg.push(pferd);
+      setzen(pferd, start.x, start.y);
+      lcReiseWaagerecht(pferd, start, ende, dauer, hin);
+      lcTonZu("pferd");
     } else if (art === "rohr") {
       /* XANDER: „An der Stelle kannst du auch noch wie bei Super Mario
          frueher diese Rohre machen, wo man sich so reinsetzt und dann
@@ -31306,9 +31461,7 @@
        Animation) — und zwar einer, der zum Fahrzeug passt. Wo das
        Fahrzeuggeraeusch die Ankunft schon traegt (Tor, Beamen, Rohr,
        Maulwurf), kommt keiner dazu. */
-    const ankunft = { flug: "bremse", boot: "platsch", dampfer: "platsch",
-                      lok: "bremse", kran: "kitt", liane: "bonk",
-                      feder: "bonk" }[art];
+    const ankunft = LC_ANKUNFT_TON[art];
     if (ankunft) lcTonSpaeter(ankunft, Math.max(0, hin - 260), 0.5);
 
     setTimeout(aufraeumen, dauer + 400);
@@ -31323,7 +31476,7 @@
             showToast(({ flug: "✈️ ", maulwurf: "🦡 ", boot: "⛵ ",
                          kran: "🏗️ ", dampfer: "🚢 ", lok: "🚂 ",
                          liane: "🌿 ", feder: "🪀 ", beamen: "✨ ",
-                         rohr: "🟢 "
+                         rohr: "🟢 ", heli: "🚁 ", pferd: "🐎 "
                        }[art] || "🌀 ") + erg.text);
           }
         } catch (e) {}
@@ -32233,6 +32386,19 @@
     }, 3600, "platte");
   }
 
+  /* --- WER SCHREIT? ---------------------------------------------------
+     GEWUENSCHT: „dann moechte ich abhaengig vom Geschlecht ... ein
+     Schmerzgeraeusch von der Frau."
+     Das Geschlecht haengt am Platz (data-lc-geschlecht, gesetzt in
+     livechatPlaetzeAuffrischen). Steht dort nichts — weil jemand es
+     nicht angegeben hat —, bleibt es bei der maennlichen Aufnahme;
+     Raten waere schlechter als eine feste Wahl. */
+  function lcSchmerzTon(platz) {
+    const g = String((platz && platz.dataset && platz.dataset.lcGeschlecht) || "")
+      .trim().toLowerCase();
+    return /^(w|f)/.test(g) ? "aufrau" : "aumann";
+  }
+
   /* --- DIE OHRFEIGE --------------------------------------------------- */
   function lcOhrfeige(wen) {
     return lcAmPlatz(wen, "lc-ohrfeige", (schicht, platz) => {
@@ -32258,6 +32424,12 @@
         + ' fill="#f6c89a" stroke="#c9915e" stroke-width="2" stroke-linejoin="round"/>'
         + "</svg>"
         + '<span class="lc-ohrfeige-klatsch">KLATSCH</span>';
+      /* XANDER: „dann moechte ich abhaengig vom Geschlecht ... ein
+         Schmerzgeraeusch von der Frau." Der Klatsch sitzt bei 730 ms
+         (LC_TREFFER), der Schmerzlaut kommt 200 ms spaeter — erst
+         trifft es, dann tut es weh. Welche Datei, entscheidet das
+         Geschlecht DES GETROFFENEN, nicht des Absenders. */
+      lcTonSpaeter(lcSchmerzTon(platz), 930, 0.7);
     }, 2600, "ohrfeige");
   }
 
@@ -32373,8 +32545,11 @@
           + '<ellipse cx="60" cy="60" rx="44" ry="52"/>'
           + "</clipPath></defs>"
           /* Das Herz: zwei Streben vom Kopf zum Griff. */
+          /* XANDER: „mach den Tennisschlaeger bitte rot mit schwarzem
+             Griff." Rahmen und Herz sind ab jetzt rot, Griff und Knauf
+             schwarz. */
           + '<path d="M30 96 C36 122 46 132 52 140 L68 140 C74 132 84 122 90 96"'
-          + ' fill="none" stroke="#2f3542" stroke-width="8" stroke-linecap="round"/>'
+          + ' fill="none" stroke="#d1232b" stroke-width="8" stroke-linecap="round"/>'
           /* Die Bespannung — innerhalb der Blende, also nur im Kopf. */
           + '<g clip-path="url(#lcTennisNetz)">'
           + '<rect x="14" y="6" width="92" height="108" fill="rgba(255,255,255,.14)"/>'
@@ -32389,16 +32564,18 @@
           + "</g>"
           /* Der Rahmen kommt UEBER die Bespannung — so sieht man, dass
              die Saiten darin eingespannt sind. */
-          + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none" stroke="#2f3542" stroke-width="9"/>'
+          + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none" stroke="#d1232b" stroke-width="9"/>'
+          + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none"'
+          + ' stroke="#8d1218" stroke-width="2" stroke-dasharray="0"/>'
           + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none"'
           + ' stroke="rgba(255,255,255,.22)" stroke-width="2.5"/>'
           /* Der Griff, umwickelt, mit Knauf. */
-          + '<rect x="51" y="136" width="18" height="66" rx="8" fill="#3c4356"/>'
+          + '<rect x="51" y="136" width="18" height="66" rx="8" fill="#16181d"/>'
           + [146, 156, 166, 176, 186].map(function (y) {
               return '<line x1="51" y1="' + y + '" x2="69" y2="' + (y - 6) + '"'
                    + ' stroke="rgba(255,255,255,.2)" stroke-width="2"/>';
             }).join("")
-          + '<rect x="47" y="196" width="26" height="10" rx="5" fill="#2f3542"/>'
+          + '<rect x="47" y="196" width="26" height="10" rx="5" fill="#0b0c0f"/>'
           + "</svg>"
         /* DIE HAND — gross genug, dass ein Profilbild darunter ein
            Ball ist. Sie pumpt im Takt des Dribbelns. */
@@ -32686,7 +32863,11 @@
          das Dehnen laeuft schon (LC_TON_PLAN), hier folgen das
          Schnalzen beim Loslassen und das AUA beim Aufprall. */
       lcTonSpaeter("zwille", 850, 0.6);
-      lcTonSpaeter("aufprallau", 1500, 0.6);
+      /* XANDER: „dann moechte ich abhaengig vom Geschlecht ... ein
+         Schmerzgeraeusch von der Frau." Dasselbe AUA wie bei der
+         Ohrfeige, nur spaeter — hier trifft die Kugel erst bei
+         1,5 s. */
+      lcTonSpaeter(lcSchmerzTon(platz), 1500, 0.65);
     }, 2600, "zwille");
   }
 
@@ -34436,7 +34617,8 @@
     aufessen: 1, lotto: 1, sanduhr: 1, katapult: 1, strohhalm: 1, blubbern: 1,
     knuell: 1, rollo: 1, lamellen: 1, peitsche: 1, gemeinsam: 1, schneekugel: 1,
     flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1, brennen: 1, zorro: 1,
-    dampfer: 1, lok: 1, liane: 1, feder: 1, beamen: 1, rohr: 1, marsch: 1,
+    dampfer: 1, lok: 1, liane: 1, feder: 1, beamen: 1, rohr: 1,
+    heli: 1, pferd: 1, marsch: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
@@ -34597,7 +34779,8 @@
     if (art === "flug" || art === "maulwurf" || art === "portal"
         || art === "boot" || art === "kran" || art === "dampfer"
         || art === "lok" || art === "liane" || art === "feder"
-        || art === "beamen" || art === "rohr") {
+        || art === "beamen" || art === "rohr"
+        || art === "heli" || art === "pferd") {
       const wenR = nachricht && (nachricht.wen || nachricht.an);
       let vonR = (nachricht && nachricht.name) || "";
       if (nachricht && nachricht.eigen) {
@@ -66740,6 +66923,12 @@ An einem Morgen lief ein kleiner Fuchs los…
       /* Der Tonplan und die Effektnamen — fuer die Pruefung, ob jede
          Animation einen Ton hat und ob er so lange laeuft wie sie. */
       tonPlan: () => JSON.parse(JSON.stringify(LC_TON_PLAN)),
+      /* Runde 49: wann ein Ton sitzt, welchen Laut das Geschlecht
+         waehlt und womit eine Reise ankommt — alles drei war gemeldet
+         und liess sich vorher nur von Hand nachsehen. */
+      treffer: () => JSON.parse(JSON.stringify(LC_TREFFER)),
+      ankunftsTon: () => JSON.parse(JSON.stringify(LC_ANKUNFT_TON)),
+      schmerzTon: (platz) => lcSchmerzTon(platz),
       effektNamen: () => Object.keys(LC_EFFEKTE).map((k) => LC_EFFEKTE[k].wie || k)
         .filter((x, i, a) => typeof x === "string" && a.indexOf(x) === i),
       tonStarten: (wie) => { lcToeneSetzen(true); lcTonZu(wie); },

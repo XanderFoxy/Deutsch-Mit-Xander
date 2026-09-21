@@ -13183,8 +13183,9 @@ body.lc-schreibt .tutor-reiter {
   0%   { background-size: 100% 10%, 11% 15%, 9% 13%, 12% 16%, 8% 11%, 10% 14%; }
   100% { background-size: 100% 32%, 11% 15%, 9% 13%, 12% 16%, 8% 11%, 10% 14%; }
 }
-  100% { background-size: 100% 34%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%; }
-}
+/* (Hier standen zwei verwaiste Zeilen aus einem frueheren Umbau —
+   ein Schluesselbild ohne @keyframes und eine schliessende Klammer
+   zu viel. Der Browser hat sie verworfen; jetzt sind sie weg.) */
 /* --- Spinnweben ------------------------------------------------------ */
 .lc-platz-spricht[data-sprechbild="spinnweb"] .lc-kreis {
   border-color: #cfd6e0 !important;
@@ -16503,11 +16504,25 @@ body.lc-schreibt .tutor-reiter {
 /* Die Reise-Reihe im Anreise-Menü: zehn kleine Symbole in zwei
    Zeilen statt zehn weiterer Menüzeilen — sonst wäre das Menü länger
    als der Bildschirm. */
+/* HIER LAG DER FEHLER, UND ER MACHTE DIE REISEN UNBENUTZBAR.
+   XANDER: „beim Android ist, wie ich wohin komme, immer noch kein
+   Helikopter dabei und das Dampfboot. Ich kann's auch gar nicht
+   bedienen, weil das Weg-Zeichnen diese Symbole blockiert."
+
+   Das Anreise-Menü ist ein .lc-platzmenue, und das ist ein RASTER
+   (seit Runde 43 mit sechs Spalten). Die Reihe mit den Reisen ist ein
+   Kind darin — und ein Kind belegt EINE Zelle, wenn man nichts anderes
+   sagt. Gemessen auf einem 360er-Schirm: die Reihe war 48 px breit,
+   jede Reise 18 px, und die letzten liefen über den Kasten hinaus,
+   dorthin, wo „Weg zeichnen" liegt. Es sah aus, als würde der Knopf
+   sie verdecken; in Wahrheit standen sie gar nicht erst im Kasten.
+   Mit „grid-column: 1 / -1" nimmt die Reihe die ganze Breite ein. */
 .lc-anreise-reihe {
+  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 2px;
-  padding: 3px 4px 4px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 3px;
+  padding: 4px 4px 5px;
   border-top: 1px solid rgba(255, 255, 255, .12);
   margin-top: 2px;
 }
@@ -16516,8 +16531,10 @@ body.lc-schreibt .tutor-reiter {
   border: 0;
   background: rgba(255, 255, 255, .06);
   border-radius: 7px;
+  /* Ein Ziel für den Daumen, kein Punkt: mindestens 38 px hoch. */
+  min-height: 38px;
   padding: 4px 0;
-  font-size: 15px;
+  font-size: 19px;
   line-height: 1.1;
   cursor: pointer;
   color: inherit;
@@ -17831,4 +17848,575 @@ body.lc-schreibt .tutor-reiter {
   .lc-abend-sonne, .lc-abend-wolke, .lc-abend-glitzer, .lc-abend-boot {
     animation: none;
   }
+}
+
+/* =================================================================
+   HELIKOPTER UND PFERD — ZWEI NEUE REISEN
+   -----------------------------------------------------------------
+   XANDER: „ach so, ein Helikopter kannst du noch einbauen zur
+   Bewegung mit realistisch rotierenden Rotorblättern und vielleicht
+   irgendwie ein Pferd, auf dem man da hin reiten kann. Das muss aber
+   dann auch realistisch sein, wie man da drauf sitzt und reiten
+   kann."
+   ================================================================= */
+.lc-heli {
+  position: absolute;
+  width: calc(var(--gross, 64px) * 2.1);
+  height: calc(var(--gross, 64px) * 1.25);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 8;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .45));
+}
+.lc-heli-form { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lc-heli-rumpf    { fill: #3b7dd8; }
+.lc-heli-ausleger { fill: #2f68b8; }
+.lc-heli-flosse   { fill: #2a5ca4; }
+.lc-heli-heck     { fill: #cfe0f6; opacity: .75; }
+.lc-heli-mast     { fill: #2a5ca4; }
+.lc-heli-kufe, .lc-heli-strebe { stroke: #24507f; fill: none; }
+/* Der Rotor: eine blasse Scheibe mit zwei Blättern darin. Bei echter
+   Drehzahl sieht ein Rotor genau so aus — als Scheibe mit Schemen,
+   nicht als zwei sauber erkennbare Striche. */
+.lc-heli-rotor {
+  position: absolute;
+  left: 42%;
+  top: 2%;
+  width: 78%;
+  height: 12%;
+  margin-left: -39%;
+}
+.lc-heli-scheibe {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%,
+    rgba(210, 225, 245, .32) 0 60%, rgba(210, 225, 245, .08) 82%, rgba(210,225,245,0) 100%);
+}
+.lc-heli-blatt {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 100%;
+  height: 12%;
+  margin-left: -50%;
+  border-radius: 999px;
+  background: rgba(40, 60, 90, .75);
+  animation: lcHeliRotorR49 .16s linear infinite;
+}
+.lc-heli-blatt-2 { animation-delay: -.08s; }
+@keyframes lcHeliRotorR49 {
+  from { transform: rotate(0deg)   scaleX(1); }
+  25%  { transform: rotate(90deg)  scaleX(.12); }
+  50%  { transform: rotate(180deg) scaleX(1); }
+  75%  { transform: rotate(270deg) scaleX(.12); }
+  to   { transform: rotate(360deg) scaleX(1); }
+}
+.lc-heli-kanzel {
+  position: absolute;
+  left: 30%;
+  top: 30%;
+  width: 30%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid #cfe0f6;
+  background-size: cover;
+  background-position: center;
+  background-color: #eaf1fb;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #24507f;
+}
+
+/* --- DAS PFERD ---------------------------------------------------- */
+.lc-pferd {
+  position: absolute;
+  width: calc(var(--gross, 64px) * 2);
+  height: calc(var(--gross, 64px) * 1.45);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 8;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .45));
+}
+/* Der Galopp: der ganze Körper hebt und senkt sich, die Beine laufen
+   im Gegentakt. Ohne dieses Auf und Ab sieht Reiten aus wie Rollen. */
+.lc-pferd-huepf {
+  position: absolute;
+  inset: 0;
+  animation: lcPferdHuepfR49 .42s ease-in-out infinite;
+}
+@keyframes lcPferdHuepfR49 {
+  0%, 100% { transform: translateY(0)    rotate(0deg); }
+  30%      { transform: translateY(-7%)  rotate(-2deg); }
+  60%      { transform: translateY(2%)   rotate(1.5deg); }
+}
+.lc-pferd-form { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lc-pferd-rumpf, .lc-pferd-hals, .lc-pferd-kopf { fill: #8a5a34; }
+.lc-pferd-maehne, .lc-pferd-schweif { fill: #3a2414; }
+.lc-pferd-sattel { fill: #4a2d18; }
+.lc-pferd-bein {
+  stroke: #7a4e2c;
+  stroke-width: 7;
+  stroke-linecap: round;
+  fill: none;
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  animation: lcPferdBeinR49 .42s ease-in-out infinite;
+}
+.lc-pferd-b2, .lc-pferd-b3 { animation-delay: -.21s; }
+@keyframes lcPferdBeinR49 {
+  0%, 100% { transform: rotate(-26deg); }
+  50%      { transform: rotate(24deg); }
+}
+.lc-pferd-reiter {
+  position: absolute;
+  left: 51%;
+  top: 6%;
+  width: 30%;
+  aspect-ratio: 1;
+  margin-left: -15%;
+  border-radius: 50%;
+  border: 2px solid #f6f1e7;
+  background-size: cover;
+  background-position: center;
+  background-color: #f6f1e7;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #4a2d18;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-heli, .lc-pferd { display: none; }
+}
+
+/* === RUNDE 49: DIE TROMMEL ===========================================
+   GEMELDET, woertlich: „Die Trommel hat immer noch keine filigranen
+   Trommelstoecke und sie sind auch nicht bis zum Ende der Animation zu
+   sehen bei dem Marschgeraeusch. Es soll nur ein Schlaegel sein bei dem
+   Paukenschlag und filigrane normale Drumsticks bei der zweiten
+   Einstellung fuer das Marschgeraeusch und die zweite Einstellung. Da
+   muss die Animation auch laenger zu sehen sein. Entsprechend der Dauer
+   der Animation."
+
+   DER FEHLER, den er gesehen hat, stand eine Zeile weiter oben:
+   „.lc-trommel-marsch .lc-trommel-stock { animation-duration: .26s }".
+   Die Animation lief also genau EINMAL 260 ms lang und blieb danach —
+   wegen „both" — in ihrem letzten Schluesselbild stehen, und das ist
+   „opacity: 0". Von 3000 ms Animation waren die Stoecke 260 ms zu
+   sehen. Jetzt laeuft der Wirbel durch, ohne Ausblenden, solange die
+   Schicht da ist. */
+.lc-trommel-marsch .lc-trommel-stick {
+  top: -40%;
+  width: 26%;
+  transform-origin: 50% 4%;
+  opacity: 1;
+  animation-duration: .3s !important;
+  animation-iteration-count: infinite !important;
+  animation-timing-function: ease-in-out !important;
+  animation-fill-mode: none !important;
+}
+.lc-trommel-marsch .lc-trommel-a {
+  left: 17%; right: auto;
+  animation-name: lcStickAR49 !important;
+}
+.lc-trommel-marsch .lc-trommel-b {
+  right: 17%; left: auto;
+  animation-name: lcStickBR49 !important;
+}
+/* Links unten, rechts oben — und im naechsten Takt umgekehrt. Das ist
+   der Wechselschlag einer Marschtrommel. */
+@keyframes lcStickAR49 {
+  0%, 100% { transform: rotate(-30deg); }
+  46%      { transform: rotate(-3deg); }
+}
+@keyframes lcStickBR49 {
+  0%, 100% { transform: rotate(3deg); }
+  46%      { transform: rotate(30deg); }
+}
+
+/* DER PAUKENSCHLAG: EIN Schlaegel, und der sitzt in der Mitte.
+   Der Treffer liegt bei 15 % von 2,8 s = 420 ms — genau dort, wo
+   LC_TREFFER.trommel den Ton legt (416 ms). */
+.lc-trommel .lc-trommel-mitte {
+  left: 50%;
+  right: auto;
+  margin-left: -13%;
+  top: -40%;
+  width: 26%;
+  transform-origin: 50% 4%;
+  animation: lcPaukeSchlagR49 2.8s cubic-bezier(.3, 0, .2, 1) both;
+}
+@keyframes lcPaukeSchlagR49 {
+  0%   { opacity: 0; transform: rotate(-40deg); }
+  6%   { opacity: 1; transform: rotate(-40deg); }
+  /* DER Schlag. */
+  15%  { transform: rotate(0deg); }
+  26%  { transform: rotate(-26deg); }
+  /* Und danach schwingt er nur noch aus — es ist EIN Schlag, kein
+     Wirbel. Sichtbar bleibt er bis zum Schluss. */
+  44%  { transform: rotate(-9deg); }
+  62%  { transform: rotate(-18deg); }
+  88%  { opacity: 1; transform: rotate(-13deg); }
+  100% { opacity: 0; transform: rotate(-30deg); }
+}
+
+/* === RUNDE 49: DER STROM — HAARFEIN, INNEN, UND AUF DEM REIFEN =======
+   XANDER, woertlich: „bei dem Strom sind diese Zacken nach aussen zu
+   viel. Ich meine innen drin sollen ganz filigrane, feine Blitzlinien
+   laufen. Du kannst gerne am Rand auch so ein bisschen Energie machen,
+   aber das soll nicht so extrem ausstrahlen in solchen Blitzlinien nach
+   aussen. Das soll eher so Ladungen sein, die auf dem Rahmen tanzen —
+   so ganz kleine, duenne, hauchduenne, haarfeine Stromladungslinien,
+   die sich wie Blitze durchziehen, die nie so ne Dicke haben wie du sie
+   hast. Das ist ein ganz feiner Pixel, aehnlich wie ein Spinnennetz von
+   der Feinheit."
+
+   DREI SACHEN WAREN FALSCH, und jede hatte ihre eigene Stelle:
+
+   1. Die Teilchen (.lc-tstrom) waren ausgewachsene Blitzkeile — 0,5 rem
+      breit, 1,15 rem hoch — und zeigten mit rotate(--wo + 90deg) nach
+      AUSSEN. Genau die „Zacken nach aussen".
+   2. Die Schicht am Platz (::after) war ein repeating-conic-gradient:
+      ein Kranz aus Strahlen, der vom Bild weg zeigte. Auch das strahlt
+      nach aussen.
+   3. Innen lief gar nichts — nur ein weicher Schein.
+
+   Jetzt: innen ein echtes Netz aus haarfeinen Linien (0,34 Einheiten
+   Strichbreite auf 100 Einheiten Kasten, bei 84 px Bild also rund
+   0,29 px — feiner geht es auf einem Bildschirm nicht), aussen nichts
+   mehr, und auf dem Reifen winzige Funken, die MIT dem Reifen laufen
+   statt von ihm weg. */
+
+/* 1. Die Zacken nach aussen sind weg. */
+.lc-platz-spricht[data-sprechbild="strom"]::after {
+  display: none !important;
+}
+
+/* 2. Das haarfeine Netz INNEN. Drei gezeichnete Bilder, die in
+      Stufen umgeschaltet werden — ein echter Lichtbogen steht auch
+      nie still, er springt. Weil .lc-kreis „overflow: hidden" traegt,
+      kann keine Linie nach draussen laufen; das ist hier kein
+      Hindernis, sondern genau die Vorgabe. */
+.lc-platz-spricht[data-sprechbild="strom"] .lc-kreis::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 0 !important;
+  background: none;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  /* KEIN „mix-blend-mode: screen": auf einem hellen Profilbild kann
+     screen nichts aufhellen, die Linien waeren dort unsichtbar. Jede
+     Linie bringt stattdessen ihren eigenen dunklen Saum und einen
+     weissen Kern mit — damit steht sie auf jedem Bild. */
+  pointer-events: none;
+  z-index: 2;
+  animation: lcStromNetzR49 .36s steps(1, end) infinite;
+}
+:root {
+  --lc-strom-0: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20d%3D%22M63.1%2C4.9%20L62.4%2C25.1%20L40.7%2C35.2%20L39.6%2C55.3%20L37.6%2C74.9%20L22.9%2C88.4%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M63.1%2C4.9%20L62.4%2C25.1%20L40.7%2C35.2%20L39.6%2C55.3%20L37.6%2C74.9%20L22.9%2C88.4%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M63.1%2C4.9%20L62.4%2C25.1%20L40.7%2C35.2%20L39.6%2C55.3%20L37.6%2C74.9%20L22.9%2C88.4%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M83.7%2C82.8%20L69.9%2C69.9%20L62.2%2C51.8%20L52.0%2C36.0%20L41.1%2C20.6%20L22.6%2C11.8%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M83.7%2C82.8%20L69.9%2C69.9%20L62.2%2C51.8%20L52.0%2C36.0%20L41.1%2C20.6%20L22.6%2C11.8%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M83.7%2C82.8%20L69.9%2C69.9%20L62.2%2C51.8%20L52.0%2C36.0%20L41.1%2C20.6%20L22.6%2C11.8%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M63.1%2C4.9%20L55.3%2C12.5%20L48.7%2C21.1%20L43.9%2C31.2%20L43.4%2C44.7%20L29.8%2C47.6%20L14.6%2C49.4%20L9.6%2C59.2%20L8.7%2C72.4%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M63.1%2C4.9%20L55.3%2C12.5%20L48.7%2C21.1%20L43.9%2C31.2%20L43.4%2C44.7%20L29.8%2C47.6%20L14.6%2C49.4%20L9.6%2C59.2%20L8.7%2C72.4%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M63.1%2C4.9%20L55.3%2C12.5%20L48.7%2C21.1%20L43.9%2C31.2%20L43.4%2C44.7%20L29.8%2C47.6%20L14.6%2C49.4%20L9.6%2C59.2%20L8.7%2C72.4%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M39.4%2C4.2%20L49.3%2C17.3%20L40.6%2C36.7%20L60.8%2C46.3%20L52.3%2C65.7%20L59.1%2C79.8%20L69.4%2C92.8%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M39.4%2C4.2%20L49.3%2C17.3%20L40.6%2C36.7%20L60.8%2C46.3%20L52.3%2C65.7%20L59.1%2C79.8%20L69.4%2C92.8%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M39.4%2C4.2%20L49.3%2C17.3%20L40.6%2C36.7%20L60.8%2C46.3%20L52.3%2C65.7%20L59.1%2C79.8%20L69.4%2C92.8%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M16.2%2C35.9%20L7.4%2C38.9%20L4.9%2C47.6%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M16.2%2C35.9%20L7.4%2C38.9%20L4.9%2C47.6%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M16.2%2C35.9%20L7.4%2C38.9%20L4.9%2C47.6%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M50.2%2C83.0%20L34.0%2C83.9%20L20.6%2C83.8%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M50.2%2C83.0%20L34.0%2C83.9%20L20.6%2C83.8%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M50.2%2C83.0%20L34.0%2C83.9%20L20.6%2C83.8%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M55.9%2C17.4%20L69.8%2C14.9%20L81.2%2C18.0%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M55.9%2C17.4%20L69.8%2C14.9%20L81.2%2C18.0%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M55.9%2C17.4%20L69.8%2C14.9%20L81.2%2C18.0%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M37.1%2C80.8%20L47.0%2C88.3%20L63.4%2C91.1%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M37.1%2C80.8%20L47.0%2C88.3%20L63.4%2C91.1%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M37.1%2C80.8%20L47.0%2C88.3%20L63.4%2C91.1%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M81.5%2C60.8%20L85.2%2C62.4%20L93.2%2C62.6%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M81.5%2C60.8%20L85.2%2C62.4%20L93.2%2C62.6%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M81.5%2C60.8%20L85.2%2C62.4%20L93.2%2C62.6%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3C%2Fsvg%3E");
+  --lc-strom-1: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20d%3D%22M96.0%2C59.8%20L78.3%2C54.5%20L70.3%2C32.0%20L53.7%2C25.0%20L29.2%2C32.1%20L17.6%2C16.0%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M96.0%2C59.8%20L78.3%2C54.5%20L70.3%2C32.0%20L53.7%2C25.0%20L29.2%2C32.1%20L17.6%2C16.0%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M96.0%2C59.8%20L78.3%2C54.5%20L70.3%2C32.0%20L53.7%2C25.0%20L29.2%2C32.1%20L17.6%2C16.0%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M30.5%2C92.8%20L24.1%2C79.1%20L44.5%2C68.7%20L42.7%2C55.6%20L36.6%2C41.9%20L33.9%2C28.7%20L30.9%2C15.5%20L41.3%2C3.8%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M30.5%2C92.8%20L24.1%2C79.1%20L44.5%2C68.7%20L42.7%2C55.6%20L36.6%2C41.9%20L33.9%2C28.7%20L30.9%2C15.5%20L41.3%2C3.8%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M30.5%2C92.8%20L24.1%2C79.1%20L44.5%2C68.7%20L42.7%2C55.6%20L36.6%2C41.9%20L33.9%2C28.7%20L30.9%2C15.5%20L41.3%2C3.8%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M21.7%2C87.5%20L28.1%2C69.2%20L33.3%2C50.1%20L43.1%2C34.1%20L69.5%2C29.1%20L73.8%2C9.5%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M21.7%2C87.5%20L28.1%2C69.2%20L33.3%2C50.1%20L43.1%2C34.1%20L69.5%2C29.1%20L73.8%2C9.5%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M21.7%2C87.5%20L28.1%2C69.2%20L33.3%2C50.1%20L43.1%2C34.1%20L69.5%2C29.1%20L73.8%2C9.5%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M86.5%2C20.4%20L69.0%2C25.0%20L50.4%2C27.2%20L38.5%2C45.7%20L19.5%2C46.6%20L3.2%2C54.2%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M86.5%2C20.4%20L69.0%2C25.0%20L50.4%2C27.2%20L38.5%2C45.7%20L19.5%2C46.6%20L3.2%2C54.2%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M86.5%2C20.4%20L69.0%2C25.0%20L50.4%2C27.2%20L38.5%2C45.7%20L19.5%2C46.6%20L3.2%2C54.2%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M62.2%2C86.1%20L42.2%2C80.7%20L16.0%2C80.8%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M62.2%2C86.1%20L42.2%2C80.7%20L16.0%2C80.8%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M62.2%2C86.1%20L42.2%2C80.7%20L16.0%2C80.8%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M52.8%2C9.0%20L72.8%2C20.6%20L91.0%2C35.2%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M52.8%2C9.0%20L72.8%2C20.6%20L91.0%2C35.2%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M52.8%2C9.0%20L72.8%2C20.6%20L91.0%2C35.2%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M22.2%2C37.5%20L27.2%2C20.8%20L34.2%2C11.0%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M22.2%2C37.5%20L27.2%2C20.8%20L34.2%2C11.0%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M22.2%2C37.5%20L27.2%2C20.8%20L34.2%2C11.0%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M27.1%2C66.0%20L19.6%2C69.6%20L14.8%2C78.0%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M27.1%2C66.0%20L19.6%2C69.6%20L14.8%2C78.0%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M27.1%2C66.0%20L19.6%2C69.6%20L14.8%2C78.0%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M82.3%2C34.0%20L72.6%2C21.7%20L69.3%2C12.3%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M82.3%2C34.0%20L72.6%2C21.7%20L69.3%2C12.3%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M82.3%2C34.0%20L72.6%2C21.7%20L69.3%2C12.3%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3C%2Fsvg%3E");
+  --lc-strom-2: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20d%3D%22M10.0%2C74.6%20L11.5%2C60.6%20L29.9%2C58.5%20L31.9%2C44.8%20L47.7%2C40.8%20L44.5%2C23.4%20L44.1%2C8.0%20L59.9%2C4.0%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M10.0%2C74.6%20L11.5%2C60.6%20L29.9%2C58.5%20L31.9%2C44.8%20L47.7%2C40.8%20L44.5%2C23.4%20L44.1%2C8.0%20L59.9%2C4.0%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M10.0%2C74.6%20L11.5%2C60.6%20L29.9%2C58.5%20L31.9%2C44.8%20L47.7%2C40.8%20L44.5%2C23.4%20L44.1%2C8.0%20L59.9%2C4.0%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M80.2%2C86.0%20L69.8%2C78.2%20L82.4%2C60.9%20L65.9%2C55.5%20L61.3%2C45.3%20L67.9%2C30.5%20L50.3%2C25.6%20L45.8%2C15.4%20L46.0%2C3.2%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M80.2%2C86.0%20L69.8%2C78.2%20L82.4%2C60.9%20L65.9%2C55.5%20L61.3%2C45.3%20L67.9%2C30.5%20L50.3%2C25.6%20L45.8%2C15.4%20L46.0%2C3.2%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M80.2%2C86.0%20L69.8%2C78.2%20L82.4%2C60.9%20L65.9%2C55.5%20L61.3%2C45.3%20L67.9%2C30.5%20L50.3%2C25.6%20L45.8%2C15.4%20L46.0%2C3.2%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M47.4%2C3.1%20L41.3%2C20.6%20L47.1%2C34.9%20L63.3%2C46.4%20L72.9%2C59.8%20L73.1%2C75.6%20L71.1%2C92.0%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M47.4%2C3.1%20L41.3%2C20.6%20L47.1%2C34.9%20L63.3%2C46.4%20L72.9%2C59.8%20L73.1%2C75.6%20L71.1%2C92.0%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M47.4%2C3.1%20L41.3%2C20.6%20L47.1%2C34.9%20L63.3%2C46.4%20L72.9%2C59.8%20L73.1%2C75.6%20L71.1%2C92.0%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M27.1%2C91.1%20L29.6%2C76.4%20L35.6%2C64.2%20L51.4%2C59.3%20L59.4%2C48.6%20L73.9%2C42.7%20L79.7%2C30.5%20L82.1%2C15.7%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M27.1%2C91.1%20L29.6%2C76.4%20L35.6%2C64.2%20L51.4%2C59.3%20L59.4%2C48.6%20L73.9%2C42.7%20L79.7%2C30.5%20L82.1%2C15.7%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M27.1%2C91.1%20L29.6%2C76.4%20L35.6%2C64.2%20L51.4%2C59.3%20L59.4%2C48.6%20L73.9%2C42.7%20L79.7%2C30.5%20L82.1%2C15.7%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M28.1%2C20.3%20L20.7%2C22.7%20L15.1%2C25.8%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M28.1%2C20.3%20L20.7%2C22.7%20L15.1%2C25.8%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M28.1%2C20.3%20L20.7%2C22.7%20L15.1%2C25.8%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M26.6%2C20.1%20L26.4%2C19.7%20L19.9%2C15.7%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M26.6%2C20.1%20L26.4%2C19.7%20L19.9%2C15.7%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M26.6%2C20.1%20L26.4%2C19.7%20L19.9%2C15.7%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M56.4%2C76.0%20L33.6%2C80.0%20L16.9%2C80.5%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M56.4%2C76.0%20L33.6%2C80.0%20L16.9%2C80.5%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M56.4%2C76.0%20L33.6%2C80.0%20L16.9%2C80.5%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M77.2%2C57.7%20L79.3%2C41.6%20L85.5%2C21.9%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M77.2%2C57.7%20L79.3%2C41.6%20L85.5%2C21.9%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M77.2%2C57.7%20L79.3%2C41.6%20L85.5%2C21.9%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3Cpath%20d%3D%22M36.9%2C75.8%20L33.7%2C78.0%20L25.9%2C83.2%22%20fill%3D%22none%22%20stroke%3D%22%230a1428%22%20stroke-width%3D%221.7%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.30%22%2F%3E%3Cpath%20d%3D%22M36.9%2C75.8%20L33.7%2C78.0%20L25.9%2C83.2%22%20fill%3D%22none%22%20stroke%3D%22%234fb0ff%22%20stroke-width%3D%221.0%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.45%22%2F%3E%3Cpath%20d%3D%22M36.9%2C75.8%20L33.7%2C78.0%20L25.9%2C83.2%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%220.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.95%22%2F%3E%3C%2Fsvg%3E");
+}
+@keyframes lcStromNetzR49 {
+  0%   { background-image: var(--lc-strom-0); opacity: .95; }
+  33%  { background-image: var(--lc-strom-1); opacity: .7; }
+  66%  { background-image: var(--lc-strom-2); opacity: 1; }
+  100% { background-image: var(--lc-strom-0); opacity: .8; }
+}
+
+/* 3. Die Ladungen auf dem Reifen: winzig, haarduenn und TANGENTIAL —
+      sie laufen am Rahmen entlang, nicht von ihm weg. Vorher:
+      0,5 rem × 1,15 rem mit rotate(--wo + 90deg). Jetzt rund 2 × 6 px
+      und rotate(--wo), also laengs zum Reifen. */
+.lc-tstrom .lc-teilchen {
+  /* „die nie so ne Dicke haben wie du sie hast ... ein ganz feiner
+     Pixel". NACHGEMESSEN: bei 0,10 rem war die breiteste Ladung 4 px
+     bei 42 px Bildradius — ein Zehntel. Mit 0,085 rem sind es 3 px. */
+  width: calc(0.085rem * var(--gross, 1) + 0.045rem);
+  height: calc(0.32rem * var(--gross, 1) + 0.12rem);
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0) 0%,
+    #f2fbff 30%,
+    #9fd8ff 68%,
+    rgba(160, 140, 255, 0) 100%);
+  clip-path: none;
+  border-radius: 999px;
+  filter: drop-shadow(0 0 2px rgba(180, 230, 255, .95));
+  animation-name: lcLadungR49;
+  animation-timing-function: steps(2, end);
+  animation-iteration-count: infinite;
+}
+/* Eine Ladung sitzt nie: sie springt ein Stueck weiter, blitzt auf und
+   ist wieder weg. Gedreht wird um --wo (laengs zum Reifen), versetzt
+   wird nur entlang derselben Achse. */
+@keyframes lcLadungR49 {
+  0%, 100% { opacity: 0;
+             transform: translate(-50%, -50%) rotate(var(--wo)) translateY(0) scaleY(.6); }
+  10%      { opacity: var(--hell, .95);
+             transform: translate(-50%, -50%) rotate(var(--wo)) translateY(-1.5px) scaleY(1.1); }
+  26%      { opacity: .25;
+             transform: translate(-50%, -50%) rotate(var(--wo)) translateY(1px) scaleY(.8); }
+  40%      { opacity: var(--hell, .9);
+             transform: translate(-50%, -50%) rotate(var(--wo)) translateY(2.5px) scaleY(1); }
+  58%      { opacity: 0;
+             transform: translate(-50%, -50%) rotate(var(--wo)) translateY(3.5px) scaleY(.7); }
+}
+
+/* === RUNDE 49: FLAMMEN, DIE AUF DEM REIFEN TANZEN ====================
+   XANDER: „bei den Flammen arbeite etwas filigraner am oberen Rand,
+   dass sie nicht vom Reifen wegfliegen, sondern auf dem Reifen tanzen."
+
+   Zwei Ursachen, beide behoben:
+   1. Die Streuung. Sie stand in app.js (Band 40–48 %); der Bildrand
+      liegt bei rund 43 %. Wer aussen sass, schwebte neben dem Reifen.
+      Das Band ist jetzt 42–45 %.
+   2. Die Form. Eine Flamme mit „border-radius" ist ein Tropfen mit
+      runder Kuppe — das sieht aus wie ein abgeloester Funke. Eine
+      echte Flamme laeuft nach oben SPITZ zu und schlaegt dabei zur
+      Seite. Die Spitze kommt aus einem clip-path, das Tanzen aus
+      einer Drehung um den FUSSPUNKT (transform-origin: 50% 100%) —
+      der Fuss bleibt damit auf dem Reifen stehen, egal wie weit die
+      Spitze ausschlaegt. */
+.lc-tfeuer .lc-teilchen {
+  /* Schmaler und hoeher als vorher (0,2/0,42 rem): filigran. */
+  /* NACHGEMESSEN und danach gekuerzt: bei 0,64 rem reichte die
+     groesste Flamme (--gross bis 1,8, dazu scaleY 1,3) bis 24 px an
+     die Bildmitte heran — der Bildradius ist 42 px. Damit stand sie
+     mitten im Gesicht, und das verbietet seine alte Regel: „es soll
+     niemals irgendwas im Kreis sein ausser den Blasen und bei dem
+     Eis." Mit 0,44 rem bleibt die Spitze bei 32 px, also am Rand. */
+  width: calc(0.15rem * var(--gross, 1) + 0.075rem);
+  height: calc(0.4rem * var(--gross, 1) + 0.16rem);
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 63% 21%, 56% 39%, 71% 61%, 65% 85%,
+                     50% 100%, 35% 85%, 29% 61%, 44% 39%, 37% 21%);
+  background: linear-gradient(to top,
+    #ff2d00 0%, #ff6a00 26%, #ffab00 54%, #ffe27a 80%, #fffbe8 100%);
+  filter: blur(0.2px) drop-shadow(0 0 2.5px rgba(255, 130, 20, .6));
+  animation-name: lcZuengeltR49;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+/* Der Fuss steht, die Spitze tanzt: nur Drehung und Hoehe aendern
+   sich, die Stelle nicht. */
+@keyframes lcZuengeltR49 {
+  0%   { transform: translate(-50%, -100%) rotate(-7deg) scale(.7, .6);
+         opacity: .5; }
+  28%  { transform: translate(-50%, -100%) rotate(4deg) scale(1, 1.22);
+         opacity: var(--hell, .95); }
+  52%  { transform: translate(-50%, -100%) rotate(-5deg) scale(.88, 1.05);
+         opacity: .88; }
+  76%  { transform: translate(-50%, -100%) rotate(6deg) scale(1.04, 1.3);
+         opacity: var(--hell, .95); }
+  100% { transform: translate(-50%, -100%) rotate(-2deg) scale(.66, .58);
+         opacity: .4; }
+}
+
+/* === RUNDE 49: MAGIE UND FUNKELN LAUFEN AUF DEM KREIS ================
+   XANDER: „bei den magischen und funkeln koennten die Symbole oben
+   nicht so aus dem Kreis weggehen, die sollen am Pfad des Kreises
+   entlang funktionieren."
+
+   GEFUNDEN: beide Animationen verschoben das Teilchen um einen FESTEN
+   Betrag — „translate(calc(-50% + .14em), calc(-50% - .2em))", also
+   immer nach rechts oben. Am oberen Bogen zeigt rechts-oben vom Kreis
+   WEG; genau das hat er gesehen.
+
+   Jetzt wird erst in die Tangente gedreht (--wo + 90deg), dann darauf
+   verschoben und anschliessend wieder ZURUECKGEDREHT — das Zeichen
+   steht dadurch aufrecht, wandert aber auf der Kreisbahn. */
+.lc-tmagie .lc-teilchen {
+  animation-name: lcGlissandoR49;
+}
+@keyframes lcGlissandoR49 {
+  0%   { transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg))
+                    translateY(0) rotate(calc(-1 * (var(--wo) + 90deg))) scale(.3);
+         opacity: 0; }
+  22%  { transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg))
+                    translateY(-2px) rotate(calc(-1 * (var(--wo) + 90deg)))
+                    scale(var(--gross, 1));
+         opacity: var(--hell, .9); }
+  64%  { transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg))
+                    translateY(-7px) rotate(calc(-1 * (var(--wo) + 90deg)))
+                    scale(calc(var(--gross, 1) * .82));
+         opacity: calc(var(--hell) * .72); }
+  100% { transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg))
+                    translateY(-12px) rotate(calc(-1 * (var(--wo) + 90deg)))
+                    scale(.28);
+         opacity: 0; }
+}
+.lc-tfunkeln .lc-teilchen {
+  animation-name: lcFunkeltR49;
+}
+@keyframes lcFunkeltR49 {
+  0%, 100% { transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg))
+                        translateY(0) rotate(calc(-1 * (var(--wo) + 90deg))) scale(.18);
+             opacity: 0; }
+  18%      { transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg))
+                        translateY(-1px) rotate(calc(-1 * (var(--wo) + 90deg)))
+                        scale(var(--gross, 1));
+             opacity: var(--hell, .95); }
+  48%      { transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg))
+                        translateY(-4.5px) rotate(calc(-1 * (var(--wo) + 90deg)))
+                        scale(calc(var(--gross, 1) * .7));
+             opacity: .6; }
+  74%      { transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg))
+                        translateY(-8px) rotate(calc(-1 * (var(--wo) + 90deg)))
+                        scale(.26);
+             opacity: 0; }
+}
+
+/* === RUNDE 49: DIE NOTEN NOCH DEUTLICHER =============================
+   XANDER, zum zweiten Mal: „Die Noten sollen bunter und deutlicher
+   sein."
+   Vorher: sechs Farben, aber blass gedeckt und mit einem dunklen
+   Schatten, der sie eher abdunkelte. Jetzt kraeftige Farben, ein
+   weisser Kern durch den Schriftrand, ein Glanz in der eigenen Farbe
+   und ein klarer Schlagschatten. Und sie werden groesser. */
+.lc-tnoten .lc-teilchen {
+  font-size: calc(0.78rem * var(--gross, 1) + 0.42rem);
+  /* KEIN „-webkit-text-stroke": Chromium malt den Rand UEBER die
+     Fuellung, nicht darunter — bei einer 14 px kleinen Note frisst
+     ein 0,9 px breiter weisser Rand fast die ganze Farbe weg. Genau
+     so sahen sie aus: blass. Die Kontur kommt deshalb aus vier
+     harten Schatten in Dunkel, die Farbe bleibt unberuehrt, und ein
+     Schein in der eigenen Farbe macht sie leuchtend. */
+  -webkit-text-stroke: 0;
+  text-shadow:
+    1px 0 0 rgba(18, 12, 4, .9), -1px 0 0 rgba(18, 12, 4, .9),
+    0 1px 0 rgba(18, 12, 4, .9), 0 -1px 0 rgba(18, 12, 4, .9),
+    0 0 9px currentColor, 0 0 18px currentColor;
+  filter: saturate(1.35);
+}
+.lc-tnoten .lc-teilchen:nth-child(6n + 1) { color: #ff3d78; }
+.lc-tnoten .lc-teilchen:nth-child(6n + 2) { color: #ffc400; }
+.lc-tnoten .lc-teilchen:nth-child(6n + 3) { color: #1fd47a; }
+.lc-tnoten .lc-teilchen:nth-child(6n + 4) { color: #2ea8ff; }
+.lc-tnoten .lc-teilchen:nth-child(6n + 5) { color: #a663ff; }
+.lc-tnoten .lc-teilchen:nth-child(6n + 6) { color: #ff7a1f; }
+
+
+/* === RUNDE 49: EISBLUMEN ============================================
+   XANDER: „bei den Eis, das sieht sehr cool aus, aber da fehlen die
+   Eisblumen."
+   Die Zapfen haengen bereits aussen am Ring (Runde 40). Eine Eisblume
+   ist etwas anderes: ein sechsstrahliger Raureif-Stern mit feinen
+   Nadeln, und er waechst AUF der kalten Flaeche, nicht daran herunter.
+   Deshalb liegt er im Kreis (der schneidet rund ab) und blueht von der
+   Kante her auf — sieben Stueck, verschieden gross und gedreht.
+
+   Gezeichnet mit einem einzigen <g id="ef"> und sieben <use>: sonst
+   waeren es 756 einzelne Pfade und die Datei 136 KB statt 3,8 KB —
+   nachgemessen, beide Fassungen. */
+.lc-platz-spricht[data-sprechbild="eis"] .lc-kreis::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 0 !important;
+  border-radius: 50%;
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3Cg%20id%3D%22ef%22%3E%3Cpath%20d%3D%22M0%2C0%20L0%2C-10.0%20M0%2C-3.4%20L2.3%2C-4.8%20M0%2C-3.4%20L-2.3%2C-4.8%20M0%2C-5.4%20L1.9%2C-6.6%20M0%2C-5.4%20L-1.9%2C-6.6%20M0%2C-7.2%20L1.5%2C-8.1%20M0%2C-7.2%20L-1.5%2C-8.1%20M0%2C-8.7%20L1.1%2C-9.4%20M0%2C-8.7%20L-1.1%2C-9.4%22%20transform%3D%22rotate%280%29%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20L0%2C-10.0%20M0%2C-3.4%20L2.3%2C-4.8%20M0%2C-3.4%20L-2.3%2C-4.8%20M0%2C-5.4%20L1.9%2C-6.6%20M0%2C-5.4%20L-1.9%2C-6.6%20M0%2C-7.2%20L1.5%2C-8.1%20M0%2C-7.2%20L-1.5%2C-8.1%20M0%2C-8.7%20L1.1%2C-9.4%20M0%2C-8.7%20L-1.1%2C-9.4%22%20transform%3D%22rotate%2860%29%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20L0%2C-10.0%20M0%2C-3.4%20L2.3%2C-4.8%20M0%2C-3.4%20L-2.3%2C-4.8%20M0%2C-5.4%20L1.9%2C-6.6%20M0%2C-5.4%20L-1.9%2C-6.6%20M0%2C-7.2%20L1.5%2C-8.1%20M0%2C-7.2%20L-1.5%2C-8.1%20M0%2C-8.7%20L1.1%2C-9.4%20M0%2C-8.7%20L-1.1%2C-9.4%22%20transform%3D%22rotate%28120%29%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20L0%2C-10.0%20M0%2C-3.4%20L2.3%2C-4.8%20M0%2C-3.4%20L-2.3%2C-4.8%20M0%2C-5.4%20L1.9%2C-6.6%20M0%2C-5.4%20L-1.9%2C-6.6%20M0%2C-7.2%20L1.5%2C-8.1%20M0%2C-7.2%20L-1.5%2C-8.1%20M0%2C-8.7%20L1.1%2C-9.4%20M0%2C-8.7%20L-1.1%2C-9.4%22%20transform%3D%22rotate%28180%29%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20L0%2C-10.0%20M0%2C-3.4%20L2.3%2C-4.8%20M0%2C-3.4%20L-2.3%2C-4.8%20M0%2C-5.4%20L1.9%2C-6.6%20M0%2C-5.4%20L-1.9%2C-6.6%20M0%2C-7.2%20L1.5%2C-8.1%20M0%2C-7.2%20L-1.5%2C-8.1%20M0%2C-8.7%20L1.1%2C-9.4%20M0%2C-8.7%20L-1.1%2C-9.4%22%20transform%3D%22rotate%28240%29%22%2F%3E%3Cpath%20d%3D%22M0%2C0%20L0%2C-10.0%20M0%2C-3.4%20L2.3%2C-4.8%20M0%2C-3.4%20L-2.3%2C-4.8%20M0%2C-5.4%20L1.9%2C-6.6%20M0%2C-5.4%20L-1.9%2C-6.6%20M0%2C-7.2%20L1.5%2C-8.1%20M0%2C-7.2%20L-1.5%2C-8.1%20M0%2C-8.7%20L1.1%2C-9.4%20M0%2C-8.7%20L-1.1%2C-9.4%22%20transform%3D%22rotate%28300%29%22%2F%3E%3C%2Fg%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%231d4c6b%22%20stroke-width%3D%221%22%20stroke-linecap%3D%22round%22%20opacity%3D%22.28%22%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2821.2%2032.0%29%20rotate%2818%29%20scale%281.50%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2842.5%2014.8%29%20rotate%2840%29%20scale%281.20%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2868.9%2023.0%29%20rotate%287%29%20scale%281.60%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2819.1%2066.4%29%20rotate%2825%29%20scale%281.30%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2845.3%2083.7%29%20rotate%2852%29%20scale%281.10%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2878.2%2060.3%29%20rotate%2812%29%20scale%280.90%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2881.0%2038.7%29%20rotate%2833%29%20scale%281.20%29%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23eaf8ff%22%20stroke-width%3D%22.45%22%20stroke-linecap%3D%22round%22%20opacity%3D%22.92%22%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2821.2%2032.0%29%20rotate%2818%29%20scale%281.50%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2842.5%2014.8%29%20rotate%2840%29%20scale%281.20%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2868.9%2023.0%29%20rotate%287%29%20scale%281.60%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2819.1%2066.4%29%20rotate%2825%29%20scale%281.30%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2845.3%2083.7%29%20rotate%2852%29%20scale%281.10%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2878.2%2060.3%29%20rotate%2812%29%20scale%280.90%29%22%2F%3E%3Cuse%20href%3D%22%23ef%22%20transform%3D%22translate%2881.0%2038.7%29%20rotate%2833%29%20scale%281.20%29%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") center/100% 100% no-repeat;
+  filter: drop-shadow(0 0 3px rgba(180, 235, 255, .55));
+  pointer-events: none;
+  z-index: 3;
+  /* Raureif waechst: erst nichts, dann die Nadeln, dann steht er. */
+  animation: lcEisblumeR49 5.2s ease-in-out infinite alternate;
+}
+@keyframes lcEisblumeR49 {
+  0%   { opacity: .25; transform: scale(.82) rotate(-3deg); }
+  55%  { opacity: .95; transform: scale(1) rotate(0deg); }
+  100% { opacity: .75; transform: scale(1.04) rotate(2deg); }
+}
+
+/* === RUNDE 49: MEHR BLUTSTROPFEN =====================================
+   XANDER: „bei dem Blut, das sieht gut aus soweit, da kann es aber
+   mehr Tropfen."
+   Vorher fuenf Lagen, jetzt neun. Jede Lage ist EIN Tropfen in einer
+   eigenen kleinen Kachel; die Kacheln muessen kleiner bleiben als das
+   Bild, sonst zeigt jede Prozentangabe in background-position auf
+   dieselbe Stelle (genau daran hing frueher ein einziger Tropfen
+   bewegungslos in der Mitte). */
+.lc-platz-spricht[data-sprechbild="blut"] .lc-kreis::after {
+  background-image:
+    linear-gradient(to top, #6e0d16 0 40%, #a3121f 70%, rgba(163, 18, 31, 0) 100%),
+    radial-gradient(ellipse at 50% 46%, #c4172a 0 54%, rgba(196,23,42,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #a3121f 0 54%, rgba(163,18,31,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #b4141f 0 54%, rgba(180,20,31,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #8e1420 0 54%, rgba(142,20,32,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #c4172a 0 54%, rgba(196,23,42,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #9c1019 0 54%, rgba(156,16,25,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #d01b30 0 54%, rgba(208,27,48,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #a3121f 0 54%, rgba(163,18,31,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #b4141f 0 54%, rgba(180,20,31,0) 62%);
+  background-size: 100% 26%,
+    11% 15%, 9% 13%, 12% 16%, 8% 11%, 10% 14%,
+    9% 12%, 11% 14%, 8% 12%, 10% 13%;
+  animation: lcBlutLaeuftR49 3.4s linear infinite,
+             lcBlutLacheR49 6s ease-in-out infinite alternate;
+}
+/* Neun Tropfen, neun Startzeiten: die Versatzwerte sind absichtlich
+   keine Vielfachen voneinander, sonst fallen sie im Gleichschritt. */
+@keyframes lcBlutLaeuftR49 {
+  0% {
+    background-position: 50% 100%,
+      18% 0%, 41% -22%, 60% -47%, 76% -71%, 31% -96%,
+      88% -14%, 8% -59%, 68% -84%, 50% -36%;
+  }
+  100% {
+    background-position: 50% 100%,
+      18% 132%, 41% 110%, 60% 85%, 76% 61%, 31% 36%,
+      88% 118%, 8% 73%, 68% 48%, 50% 96%;
+  }
+}
+@keyframes lcBlutLacheR49 {
+  0%   { background-size: 100% 10%,
+           11% 15%, 9% 13%, 12% 16%, 8% 11%, 10% 14%,
+           9% 12%, 11% 14%, 8% 12%, 10% 13%; }
+  100% { background-size: 100% 34%,
+           11% 15%, 9% 13%, 12% 16%, 8% 11%, 10% 14%,
+           9% 12%, 11% 14%, 8% 12%, 10% 13%; }
+}
+
+/* === RUNDE 49: DIE ALTE STÖRUNG IST WIEDER DA ========================
+   XANDER: „Mach bitte die alte Stoerung wieder rein bei dem
+   Sprechbild-Effekt."
+
+   NACHGESEHEN, warum sie fehlte — und sie fehlte nicht, man sah sie
+   nur nicht: die drei Baender lagen mit „mix-blend-mode: screen" und
+   16 bis 22 Prozent Deckkraft auf dem Bild. Screen kann nur AUFHELLEN.
+   Auf einem hellen Profilbild (das Standardbild ist cremeweiss) ist
+   dort nichts mehr aufzuhellen — die Baender verschwanden restlos.
+   Uebrig blieb das feine Rauschen, und genau das hat er gesehen:
+   „die alte Stoerung" fehlte.
+
+   Jetzt tragen die Baender ihre Farbe selbst, mit einem dunklen Saum
+   darunter. Damit stehen sie auf hellen wie auf dunklen Bildern —
+   und sie springen wieder seitlich, wie in Fassung 356. */
+.lc-platz-spricht[data-sprechbild="stoerung"] .lc-kreis::after {
+  background-image:
+    linear-gradient(rgba(12, 16, 24, .38), rgba(255, 255, 255, .82),
+                    rgba(255, 255, 255, .82), rgba(12, 16, 24, .38)),
+    linear-gradient(rgba(60, 0, 0, .3), rgba(255, 96, 96, .7),
+                    rgba(255, 96, 96, .7), rgba(60, 0, 0, .3)),
+    linear-gradient(rgba(0, 30, 50, .3), rgba(96, 216, 255, .7),
+                    rgba(96, 216, 255, .7), rgba(0, 30, 50, .3));
+  background-size: 150% 9%, 150% 6%, 150% 7.5%;
+  mix-blend-mode: normal;
+  opacity: .9;
+  animation: lcStoerBandR49 .3s steps(2) infinite;
+}
+@keyframes lcStoerBandR49 {
+  0%   { background-position: -14% 20%, 16% 57%, -6% 81%; }
+  50%  { background-position: 16% 25%, -14% 52%, 14% 75%; }
+  100% { background-position: -9% 18%, 9% 61%, -14% 84%; }
+}
+/* Das Rauschen darf dabei kraeftiger sein — es ist der Traeger der
+   ganzen Stoerung, nicht nur ein Hauch. */
+.lc-platz-spricht[data-sprechbild="stoerung"] .lc-kreis::before {
+  background: repeating-linear-gradient(0deg,
+    rgba(255, 255, 255, .22) 0 1px, rgba(0, 0, 0, .26) 1px 2px);
+  opacity: .85;
 }
