@@ -18822,16 +18822,25 @@ body.lc-schreibt .tutor-reiter {
 }
 /* Neun Tropfen, neun Startzeiten: die Versatzwerte sind absichtlich
    keine Vielfachen voneinander, sonst fallen sie im Gleichschritt. */
+/* RUNDE 73 — XANDER: „Das Blut darf nicht oben das Gesicht zudecken,
+   es soll zu den Seiten fliessen."
+   NACHGESEHEN an den Stellen: die neun Tropfen liefen bei 8, 18, 31,
+   41, 50, 60, 68, 76 und 88 Prozent der Bildbreite — vier davon
+   (41, 50, 60, 68) also mitten durchs Gesicht. Jetzt liegen alle
+   neun in den beiden Randstreifen (5 bis 24 % und 76 bis 95 %), und
+   sie wandern beim Fallen noch ein Stueck weiter nach aussen: ein
+   Tropfen folgt der Woelbung, er laeuft nicht senkrecht.
+   Die Lache unten bleibt, wo sie war. */
 @keyframes lcBlutLaeuftR49 {
   0% {
     background-position: 50% 100%,
-      18% 0%, 41% -22%, 60% -47%, 76% -71%, 31% -96%,
-      88% -14%, 8% -59%, 68% -84%, 50% -36%;
+      14% 0%, 9% -22%, 19% -47%, 5% -71%, 24% -96%,
+      86% -14%, 95% -59%, 81% -84%, 76% -36%;
   }
   100% {
     background-position: 50% 100%,
-      18% 132%, 41% 110%, 60% 85%, 76% 61%, 31% 36%,
-      88% 118%, 8% 73%, 68% 48%, 50% 96%;
+      9% 132%, 4% 110%, 14% 85%, 1% 61%, 20% 36%,
+      91% 118%, 99% 73%, 86% 48%, 80% 96%;
   }
 }
 @keyframes lcBlutLacheR49 {
@@ -19821,25 +19830,82 @@ body.lc-schreibt .tutor-reiter {
 }
 /* FÜNF SILHOUETTEN. Keine ist gespiegelt gleich — eine Flamme knickt
    immer irgendwohin, und zwei Flammen knicken nie gleich. */
+/* =================================================================
+   RUNDE 73 — DIE FLAMMEN SIND KEINE KERZEN MEHR
+   -----------------------------------------------------------------
+   XANDER: „Das Feuer-Sprechbild sieht immer noch aus wie Kerzen.
+   Ich will einen breiteren Bauch, eine Verbindung zum Rahmen, eine
+   Verjuengung und aufsteigende Partikel. Ich will da einen Premium
+   Effekt haben und kein Kindergarten."
+
+   NACHGESEHEN, Punkt fuer Punkt an den alten Umrissen:
+   · Der FUSS war ein PUNKT („50% 100%"). Eine Flamme, die den Reifen
+     nur in einem Punkt beruehrt, steht darauf wie eine Kerze auf
+     einem Leuchter — genau das ist die fehlende „Verbindung zum
+     Rahmen". Jetzt ist der Fuss 62 % der Flammenbreite breit und
+     sitzt auf dem Reifen auf.
+   · Der BAUCH lag bei 60 % Hoehe und war 44 % breit, darueber gab es
+     bei 38 % sogar eine Einschnuerung auf 10 % — also einen Hals.
+     Ein Feuer hat keinen Hals. Jetzt waechst die Breite von der
+     Spitze (5 %) stetig bis zum Bauch bei 82 % Hoehe (74 %) und
+     nimmt zum Fuss hin nur wenig wieder ab.
+   · Die VERJUENGUNG lief vorher in Zacken. Jetzt ist sie an neun
+     Stuetzstellen gerechnet, und jede Flamme hat ihre eigene
+     Neigung und ihr eigenes Wackeln — keine zwei sind gleich.
+   Die Umrisse sind mit dieser Rechnung erzeugt, nicht von Hand
+   gesetzt; die Zahlen stehen in werkzeug/ nicht extra, weil die
+   Rechnung hier im Kommentar steht: Breite an den Stuetzstellen
+   5, 13, 26, 40, 54, 66, 74, 72, 62 Prozent bei 0, 14, 30, 46, 60,
+   72, 82, 91, 100 Prozent Hoehe.
+   ================================================================= */
 .lc-tfeuer .lc-teilchen[data-v="0"] {
-  clip-path: polygon(50% 0%, 64% 20%, 55% 38%, 72% 60%, 64% 86%,
-                     50% 100%, 36% 86%, 28% 60%, 45% 38%, 36% 20%);
+  clip-path: polygon(59.5% 0%, 64.2% 14%, 71.5% 30%, 77.8% 46%, 82.5% 60%, 85.3% 72%, 86.0% 82%, 83.7% 91%, 78.9% 100%, 16.9% 100%, 11.7% 91%, 10.6% 82%, 13.8% 72%, 20.8% 60%, 30.7% 46%, 41.3% 30%, 50.0% 14%, 54.5% 0%);
 }
 .lc-tfeuer .lc-teilchen[data-v="1"] {
-  clip-path: polygon(42% 0%, 60% 16%, 48% 34%, 70% 52%, 58% 78%,
-                     50% 100%, 33% 82%, 30% 56%, 44% 36%, 31% 18%);
+  clip-path: polygon(46.5% 0%, 52.7% 14%, 60.5% 30%, 67.9% 46%, 75.1% 60%, 81.1% 72%, 85.0% 82%, 85.0% 91%, 81.7% 100%, 19.7% 100%, 13.0% 91%, 9.8% 82%, 10.7% 72%, 14.9% 60%, 22.2% 46%, 31.1% 30%, 38.7% 14%, 41.5% 0%);
 }
 .lc-tfeuer .lc-teilchen[data-v="2"] {
-  clip-path: polygon(58% 0%, 70% 24%, 54% 40%, 66% 66%, 60% 88%,
-                     48% 100%, 34% 84%, 32% 58%, 48% 40%, 40% 22%);
+  clip-path: polygon(64.9% 0%, 65.9% 14%, 70.3% 30%, 76.4% 46%, 82.8% 60%, 87.5% 72%, 89.3% 82%, 87.7% 91%, 82.9% 100%, 20.9% 100%, 15.7% 91%, 13.6% 82%, 14.9% 72%, 19.5% 60%, 27.8% 46%, 39.2% 30%, 51.5% 14%, 59.9% 0%);
 }
 .lc-tfeuer .lc-teilchen[data-v="3"] {
-  clip-path: polygon(50% 0%, 58% 14%, 66% 34%, 52% 48%, 68% 72%,
-                     56% 92%, 44% 100%, 30% 76%, 42% 52%, 34% 26%);
+  clip-path: polygon(49.8% 0%, 56.7% 14%, 64.8% 30%, 71.5% 46%, 77.1% 60%, 81.3% 72%, 83.9% 82%, 83.2% 91%, 79.7% 100%, 17.7% 100%, 11.2% 91%, 8.5% 82%, 10.4% 72%, 16.1% 60%, 25.1% 46%, 35.1% 30%, 42.6% 14%, 44.8% 0%);
 }
 .lc-tfeuer .lc-teilchen[data-v="4"] {
-  clip-path: polygon(46% 0%, 66% 22%, 50% 36%, 62% 58%, 68% 84%,
-                     52% 100%, 38% 88%, 26% 62%, 46% 42%, 33% 20%);
+  clip-path: polygon(56.6% 0%, 58.5% 14%, 64.8% 30%, 73.4% 46%, 82.0% 60%, 88.0% 72%, 90.5% 82%, 88.9% 91%, 83.5% 100%, 21.5% 100%, 16.9% 91%, 14.9% 82%, 16.0% 72%, 19.5% 60%, 25.6% 46%, 34.2% 30%, 44.2% 14%, 51.6% 0%);
+}
+/* Und sie sind breiter als vorher: 2,5 mal so hoch wie breit war
+   eine Nadel. Jetzt knapp zweimal — das ist eine Flamme. */
+.lc-tfeuer .lc-teilchen {
+  width: calc(0.30rem * var(--gross, 1) + 0.13rem);
+}
+/* DIE AUFSTEIGENDEN FUNKEN. Sie gab es bisher nur als Wunsch.
+   Acht Punkte in zwei Lagen, die verschieden schnell nach oben
+   wandern; weil sie als Hintergrund laufen, kosten sie kein
+   einziges zusaetzliches Element. */
+.lc-sprechfeld.lc-tfeuer::after {
+  content: "";
+  position: absolute;
+  inset: -14%;
+  border-radius: 50%;
+  pointer-events: none;
+  background-repeat: repeat;
+  background-size: 34% 62%, 47% 78%;
+  background-image:
+    radial-gradient(circle at 18% 86%, rgba(255, 214, 120, .95) 0 6%, rgba(255, 170, 40, 0) 34%),
+    radial-gradient(circle at 74% 62%, rgba(255, 186, 70, .85) 0 5%, rgba(255, 140, 20, 0) 30%);
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 46%, #000 62% 92%, transparent 100%);
+  mask: radial-gradient(circle closest-side, transparent 0 46%, #000 62% 92%, transparent 100%);
+  filter: blur(.4px) drop-shadow(0 0 3px rgba(255, 170, 50, .8));
+  animation: lcFunkenSteigenR73 2.6s linear infinite;
+}
+@keyframes lcFunkenSteigenR73 {
+  0%   { background-position: 0 100%, 0 100%; opacity: .25; }
+  18%  { opacity: .9; }
+  82%  { opacity: .55; }
+  100% { background-position: 8% -62%, -6% -156%; opacity: .2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-sprechfeld.lc-tfeuer::after { animation: none; opacity: 0; }
 }
 /* Und der Takt: vier Muster, damit nicht alle im Gleichschritt
    zuengeln. --neig ist die eigene Neigung jeder Flamme. */

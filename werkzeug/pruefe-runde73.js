@@ -244,5 +244,24 @@ pruefe("die Blesse ist ein schmaler Streifen",
 pruefe("und die Kruppe faellt ab, statt eine Wurst zu sein",
   /M40 44 Q40 33 56 31 L88 31/.test(js));
 
+
+console.log("\nTEIL 5 — DAS FEUER UND DAS BLUT\n");
+/* Die Flamme hatte als Fuss EINEN PUNKT („50% 100%") — deshalb stand
+   sie auf dem Reifen wie eine Kerze auf einem Leuchter. Jetzt ist der
+   Fuss breit, und die Breite waechst von der Spitze stetig bis zum
+   Bauch. Geprueft wird, dass KEIN Umriss mehr mit einem Punkt
+   aufsetzt und dass der Bauch unten sitzt. */
+pruefe("die Flamme sitzt mit breitem Fuss auf dem Reifen",
+  !/clip-path: polygon\(50% 0%, 64% 20%/.test(css)
+  && (css.match(/\.lc-tfeuer \.lc-teilchen\[data-v="\d"\] \{\s*\n\s*clip-path: polygon\(/g) || []).length === 5);
+pruefe("und sie ist breiter als die alte Nadel",
+  /width: calc\(0\.30rem \* var\(--gross, 1\) \+ 0\.13rem\);/.test(css));
+pruefe("Funken steigen auf",
+  /@keyframes lcFunkenSteigenR73/.test(css)
+  && /\.lc-sprechfeld\.lc-tfeuer::after \{/.test(css));
+pruefe("das Blut laeuft an den Seiten, nicht ueber das Gesicht",
+  /14% 0%, 9% -22%, 19% -47%, 5% -71%, 24% -96%/.test(css)
+  && !/18% 0%, 41% -22%, 60% -47%/.test(css));
+
 console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 73 sitzt.\n");
 process.exit(fehler ? 1 : 0);
