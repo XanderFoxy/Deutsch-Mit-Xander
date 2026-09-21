@@ -27934,6 +27934,18 @@
         const nm = pl.querySelector(".lc-platz-name");
         return nm ? nm.textContent.trim().toLowerCase() : "";
       };
+      /* EINE PLATZNUMMER IST AUCH EIN ZIEL.
+         Eine reine Zahl ist nie ein Name — „/zwille 3" meint den
+         dritten Platz. Vorher fand die Namenssuche dafuer nichts, und
+         dann griff weiter unten der Rueckfall „alle": EIN Wurf traf
+         den ganzen Raum. Genau das war gemeldet — „wenn man einen
+         Effekt auf jemand anderen anwendet, passiert es immer noch,
+         dass ..." — und es liess sich nur mit Namen umgehen. */
+      if (/^\d{1,2}$/.test(suche)) {
+        const nr = plaetze.filter((pl) => String(pl.dataset.lcPlatz || "") === suche
+                                          && !pl.classList.contains("lc-platz-frei"));
+        if (nr.length) return nr;
+      }
       /* Erst genau — das ist der Normalfall. */
       ziele = plaetze.filter((pl) => namen(pl) === suche);
       /* Dann nachsichtig: „/box Emmi", während sie auf ihrem Platz
@@ -28814,6 +28826,42 @@
     schicht.style.setProperty("--wy", (r.y * (weite || 230)).toFixed(0) + "%");
     schicht.style.setProperty("--wdreh", (Math.atan2(-r.y, -r.x) * 180 / Math.PI).toFixed(1) + "deg");
     return r;
+  }
+
+  /* --- WAS IN DER HAND BLEIBT, BLEIBT IN DER HAND --------------------
+     GEMELDET, zweimal: „bei der Zwille — die soll natuerlich bei mir
+     bleiben, wenn ich sie aufziehe" und „Das Blasrohr ist realistisch,
+     aber der Spuckball, der muss nach unten laufen."
+
+     Der Fehler war derselbe fuer beide: lcAmPlatz haengt ALLES an den
+     Platz des GETROFFENEN. Die Zwille wurde also beim Gegenueber
+     gezeichnet und flog von dort weg — als haette der andere sich
+     selbst beschossen. Ein Geraet, das man HAELT, gehoert aber an den
+     Platz dessen, der es haelt; nur das Geschoss reist.
+
+     Diese Schicht haengt deshalb am Platz des ABSENDERS und dreht
+     sich zum Ziel (--zieldreh). Gibt es den Absender nicht im Raum,
+     gibt es auch nichts zu halten — dann bleibt es beim Geschoss
+     allein, und das ist besser als eine Zwille im Nichts. */
+  function lcBeimSchuetzen(platz, klasse, html, dauer) {
+    const karte = document.getElementById("livechatKarte");
+    const quelle = (lcWurfVon ? lcPlatzMitNamen(lcWurfVon) : null)
+      || (karte && karte.querySelector(".lc-platz-ich"));
+    if (!quelle || quelle === platz) return null;
+    quelle.querySelectorAll("." + klasse.split(" ")[0]).forEach((x) => x.remove());
+    const schicht = document.createElement("div");
+    schicht.className = "lc-zp " + klasse;
+    schicht.setAttribute("aria-hidden", "true");
+    /* Wohin gezielt wird: der Winkel vom Schuetzen zum Ziel. */
+    const a = quelle.getBoundingClientRect(), b = platz.getBoundingClientRect();
+    const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
+    const dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+    schicht.style.setProperty("--zieldreh",
+      (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(1) + "deg");
+    schicht.innerHTML = html;
+    quelle.appendChild(schicht);
+    setTimeout(() => schicht.remove(), dauer);
+    return schicht;
   }
 
   /* --- DER SCHNEEBALL -----------------------------------------------
@@ -31201,8 +31249,19 @@
         + '<path class="lc-boot-rumpf" d="M8 47 L112 47 L97 65 L23 65 Z"/>'
         + '<path class="lc-boot-streifen" d="M11 52 L109 52 L106 56 L14 56 Z"/>'
         + "</svg>"
-        + '<i class="lc-dampfer-rad"><b></b><b></b><b></b><b></b></i>'
+        /* XANDER: „dieses eine Boot mit dem Dampfer, das kann so ein
+           klassischer Raddampfer sein wie bei Steamboat Willie."
+           Vier Speichen in einem Reifen sind ein Wagenrad, kein
+           Schaufelrad. Ein Schaufelrad hat SCHAUFELN — acht flache
+           Bretter am Umfang, die ins Wasser tauchen — und darueber
+           ein Radkasten. Dazu spritzt es, wo das Rad eintaucht. */
+        + '<i class="lc-dampfer-kasten"></i>'
+        + '<i class="lc-dampfer-rad">'
+        + '<b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b>'
+        + '<u></u></i>'
+        + '<i class="lc-dampfer-spritzer"></i>'
         + '<i class="lc-dampfer-rauch"></i>'
+        + '<i class="lc-dampfer-rauch lc-dampfer-rauch-2"></i>'
         + '<span class="lc-boot-fenster"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
@@ -31246,8 +31305,25 @@
       liane.style.setProperty("--gross", d + "px");
       const hochL = Math.max(10, Math.min(start.y, ende.y) - d * 1.1);
       liane.style.setProperty("--seil", Math.max(24, start.y - hochL).toFixed(1) + "px");
+      /* XANDER: „die Liane ist auch nicht realistisch."
+         Sie war es auch nicht: zwei kerzengerade Balken. Eine Liane
+         haengt DURCH, sie ist ungleich dick, sie hat Blaetter und sie
+         windet sich. Deshalb jetzt als gezeichnete Kurve statt als
+         zwei Rechtecke — und sie schwingt in sich, nicht nur mit dem
+         ganzen Element. */
       liane.innerHTML =
-        '<i class="lc-liane-seil"><b></b><b></b></i>'
+        '<svg class="lc-liane-seil" viewBox="0 0 24 100" preserveAspectRatio="none">'
+        /* Der Hauptstrang: eine S-Kurve, unten dicker als oben. */
+        + '<path class="lc-liane-strang" d="M12 0 C7 22 17 40 11 58 C6 74 13 88 12 100"'
+        + ' fill="none" stroke="#3f6b33" stroke-width="3.4" stroke-linecap="round"/>'
+        /* Der zweite, duennere Strang windet sich darum. */
+        + '<path class="lc-liane-strang2" d="M12 2 C17 20 8 38 14 56 C19 72 11 86 12 99"'
+        + ' fill="none" stroke="#6ba04c" stroke-width="1.8" stroke-linecap="round"/>'
+        /* Drei Blaetter, unterschiedlich gross und gedreht. */
+        + '<path class="lc-liane-blatt" d="M11 26 C3 22 2 14 10 12 C15 15 15 23 11 26 Z" fill="#4f8a3a"/>'
+        + '<path class="lc-liane-blatt" d="M13 52 C21 49 23 41 15 38 C10 42 9 49 13 52 Z" fill="#5f9c45"/>'
+        + '<path class="lc-liane-blatt" d="M12 78 C5 75 4 68 11 66 C16 69 16 76 12 78 Z" fill="#457c34"/>'
+        + "</svg>"
         + '<span class="lc-liane-last"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
@@ -32845,7 +32921,15 @@
           kreis.style.removeProperty("--ty");
         }, 2600);
       }
+      /* Beim Getroffenen bleibt nur, was ihn trifft. */
       schicht.innerHTML =
+        '<span class="lc-zwille-kugel"></span>'
+        + '<span class="lc-zwille-aua">AUA</span>';
+      /* XANDER: „bei der Zwille — die soll natuerlich bei mir bleiben,
+         wenn ich sie aufziehe." Also haengt sie am Platz des
+         Schuetzen, zielt dorthin, wo es hingeht, und schnellt dort
+         los. */
+      lcBeimSchuetzen(platz, "lc-zwille-halt",
         '<svg class="lc-zwille-bild" viewBox="0 0 70 90">'
         /* Die Gabel aus Holz. */
         + '<path d="M22 88 L22 52 L8 20 M48 88 L48 52 L62 20" fill="none" stroke="#8a5a28"'
@@ -32854,9 +32938,7 @@
         /* Das Gummi, das sich spannt und losschnellt. */
         + '<path class="lc-zwille-gummi" d="M8 20 L35 40 L62 20" fill="none"'
         + ' stroke="#3f3f46" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'
-        + "</svg>"
-        + '<span class="lc-zwille-kugel"></span>'
-        + '<span class="lc-zwille-aua">AUA</span>';
+        + "</svg>", 2600);
       /* „man hoert wirklich das quietschen von diesem dehnen
          Gummiband ... und derjenige, der getroffen wird ... macht dann
          auch so ein Au Geraeusch." Drei Toene, drei Zeitpunkte:
@@ -32897,9 +32979,15 @@
       const blende = lcZpBlende(schicht);
       blende.innerHTML = '<span class="lc-puste-spur"></span>'
                        + '<span class="lc-puste-kugel"></span>';
-      schicht.insertAdjacentHTML("beforeend",
-        '<span class="lc-puste-rohr"></span>'
-        + '<span class="lc-puste-flug"></span>');
+      /* Beim Getroffenen fliegt nur die Kugel ein. */
+      schicht.insertAdjacentHTML("beforeend", '<span class="lc-puste-flug"></span>');
+      /* XANDER: „Das Blasrohr ist realistisch, aber der Spuckball, der
+         muss nach unten laufen." Und: ein Rohr, durch das man pustet,
+         haelt man am MUND — es gehoert an den Platz des Pustenden,
+         nicht an den des Getroffenen. Dorthin wandert es jetzt, und
+         es zielt dahin, wo die Kugel hinfliegt. */
+      lcBeimSchuetzen(platz, "lc-puste-halt",
+        '<span class="lc-puste-rohr"></span>', 4000);
     }, 4000, "pusterohr");
   }
 
