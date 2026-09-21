@@ -22700,6 +22700,25 @@
       liste.appendChild(b);
     });
     t.appendChild(liste);
+
+    /* =================================================================
+       DIE BENOTUNG BEIM LESEN — JE ZEILE UND INSGESAMT
+       -----------------------------------------------------------------
+       GEWUENSCHT: „Denk auch dran, dass wir da Benotung machen
+       koennen" — und zuletzt genauer: je Zeile und als Gesamtnote.
+
+       WARUM NUR BEIM FUEHRENDEN: er ist es, der die Zeile aufruft, und
+       er ist der Lehrer. Bei allen anderen stuende ein Notenblock, den
+       sie gar nicht bedienen duerfen — LiveChat.noteGeben weist sie
+       ohnehin ab („Zensuren gibt nur der Lehrer").
+
+       WARUM DIE NOTEN HIER BLEIBEN: „Ich moechte diese Benotung nicht
+       global haben." Sie stehen deshalb NUR auf seinem Geraet, in
+       lcLeseNoten. Hinaus geht erst, was er ausdruecklich schickt —
+       die Gesamtnote an eine Person, ueber denselben Weg wie der
+       Notenstift. */
+    if (darfFuehren) t.appendChild(lcLeseNotenBlock(n.id || "", (n.leseZeilen || []).length, t));
+
     z.appendChild(t);
 
     /* Die beiden Schalter koennen erst hier arbeiten — sie fassen die
@@ -22756,6 +22775,143 @@
     } catch (e) {}
   }
 
+  /* Welche Note welche Zeile bekommen hat — je Text. Nur auf dem
+     Geraet dessen, der benotet: „Ich moechte diese Benotung nicht
+     global haben." */
+  const lcLeseNoten = {};
+  const LC_NOTENWORT = ["", "sehr gut", "gut", "befriedigend", "ausreichend",
+                        "mangelhaft", "ungenügend"];
+
+  function lcLeseNotenBlock(leseId, wieviele, tafel) {
+    const block = document.createElement("span");
+    block.className = "lc-lese-noten";
+    block.dataset.leseId = leseId;
+    block.innerHTML =
+      '<span class="lc-lese-noten-kopf">Benotung</span>'
+      + '<span class="lc-lese-noten-zeile" data-rolle="jetzt"></span>'
+      + '<span class="lc-lese-noten-liste" data-rolle="liste"></span>'
+      + '<span class="lc-lese-noten-gesamt" data-rolle="gesamt"></span>'
+      + '<span class="lc-lese-noten-senden" data-rolle="senden"></span>';
+    lcLeseNotenZeichnen(block, leseId, wieviele, tafel);
+    return block;
+  }
+
+  /* Die Gesamtnote ist der DURCHSCHNITT der vergebenen Zeilennoten,
+     kaufmaennisch gerundet — nicht der schlechteste Wert und nicht der
+     letzte. Wer drei Zeilen mit 1, 2 und 2 liest, hat eine 2. */
+  function lcLeseGesamt(leseId) {
+    const noten = lcLeseNoten[leseId] || {};
+    const werte = Object.keys(noten).map((k) => noten[k]).filter((x) => x >= 1 && x <= 6);
+    if (!werte.length) return 0;
+    return Math.round(werte.reduce((a, b) => a + b, 0) / werte.length);
+  }
+
+  function lcLeseNotenZeichnen(block, leseId, wieviele, tafel) {
+    if (!block) return;
+    const noten = lcLeseNoten[leseId] || (lcLeseNoten[leseId] = {});
+    const hier = tafel ? tafel.querySelector(".lc-lese-zeile.lc-lese-hier") : null;
+    const nr = hier ? Number(hier.dataset.nr) : -1;
+
+    /* 1. Die Knoepfe fuer die Zeile, die GERADE dran ist. */
+    const jetzt = block.querySelector('[data-rolle="jetzt"]');
+    jetzt.textContent = "";
+    if (nr < 0) {
+      const p = document.createElement("span");
+      p.className = "lc-lese-noten-hinweis";
+      p.textContent = "Tippe eine Zeile an — dann kannst du sie benoten.";
+      jetzt.appendChild(p);
+    } else {
+      const wort = document.createElement("span");
+      wort.className = "lc-lese-noten-hinweis";
+      wort.textContent = "Zeile " + (nr + 1) + ":";
+      jetzt.appendChild(wort);
+      for (let i = 1; i <= 6; i++) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "lc-lese-note" + (noten[nr] === i ? " lc-lese-note-an" : "");
+        b.textContent = String(i);
+        b.title = LC_NOTENWORT[i];
+        b.addEventListener("click", (e) => {
+          e.preventDefault(); e.stopPropagation();
+          /* Noch einmal dieselbe Note nimmt sie wieder weg — sonst
+             bliebe ein Vertipper fuer immer stehen. */
+          if (noten[nr] === i) delete noten[nr]; else noten[nr] = i;
+          lcLeseNotenZeichnen(block, leseId, wieviele, tafel);
+        });
+        jetzt.appendChild(b);
+      }
+    }
+
+    /* 2. Was schon benotet ist. */
+    const liste = block.querySelector('[data-rolle="liste"]');
+    liste.textContent = "";
+    const nummern = Object.keys(noten).map(Number).sort((a, b) => a - b);
+    nummern.forEach((k) => {
+      const s = document.createElement("button");
+      s.type = "button";
+      s.className = "lc-lese-notenmarke lc-note-" + noten[k];
+      s.textContent = (k + 1) + ": " + noten[k];
+      s.title = "Zeile " + (k + 1) + " — " + LC_NOTENWORT[noten[k]]
+        + ". Antippen springt zu dieser Zeile.";
+      s.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const z = tafel && tafel.querySelector('.lc-lese-zeile[data-nr="' + k + '"]');
+        if (z) z.click();
+      });
+      liste.appendChild(s);
+    });
+
+    /* 3. Die Gesamtnote. */
+    const gesamt = block.querySelector('[data-rolle="gesamt"]');
+    const g = lcLeseGesamt(leseId);
+    gesamt.textContent = g
+      ? "Gesamt: " + g + " — " + LC_NOTENWORT[g]
+        + "   ·   " + nummern.length + " von " + wieviele + " Zeilen benotet"
+      : "";
+    gesamt.classList.toggle("lc-note-gut", g > 0 && g <= 2);
+    gesamt.classList.toggle("lc-note-mittel", g === 3 || g === 4);
+    gesamt.classList.toggle("lc-note-schlecht", g >= 5);
+
+    /* 4. Und sie an jemanden schicken — ueber denselben Weg wie der
+          Notenstift, damit es EINEN Weg gibt und nicht zwei. */
+    const senden = block.querySelector('[data-rolle="senden"]');
+    senden.textContent = "";
+    if (!g) return;
+    let leute = [];
+    try {
+      leute = ((LiveChat.lage() || {}).plaetze || [])
+        .filter((p) => p && !p.leer && p.id && !p.ich);
+    } catch (e) {}
+    if (!leute.length) {
+      const p = document.createElement("span");
+      p.className = "lc-lese-noten-hinweis";
+      p.textContent = "Sobald jemand auf einem Platz sitzt, kannst du ihm die Note schicken.";
+      senden.appendChild(p);
+      return;
+    }
+    const wahl = document.createElement("select");
+    wahl.className = "lc-lese-notenwahl";
+    leute.forEach((p) => {
+      const o = document.createElement("option");
+      o.value = p.id;
+      o.textContent = p.name || ("Platz " + p.nummer);
+      wahl.appendChild(o);
+    });
+    senden.appendChild(wahl);
+    const weg = document.createElement("button");
+    weg.type = "button";
+    weg.className = "lc-lese-notensenden";
+    weg.textContent = "Note " + g + " schicken";
+    weg.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      try {
+        const r = LiveChat.noteGeben(wahl.value, g, "Lesen");
+        if (r && r.ok !== false) showToast("Note " + g + " ist raus.");
+      } catch (err) {}
+    });
+    senden.appendChild(weg);
+  }
+
   /* Die Markierung setzen — auf jedem Geraet dieselbe. */
   function lcLeseZeileZeigen(leseId, nr) {
     const tafel = document.querySelector('.lc-lesetafel[data-lese-id="' + leseId + '"]');
@@ -22764,6 +22920,13 @@
     const b = tafel.querySelector('.lc-lese-zeile[data-nr="' + nr + '"]');
     if (!b) return false;
     b.classList.add("lc-lese-hier");
+    /* Der Notenblock zeigt immer die Zeile, die GERADE dran ist —
+       sonst benotete man die vorige. */
+    const block = tafel.querySelector(".lc-lese-noten");
+    if (block) {
+      lcLeseNotenZeichnen(block, leseId,
+        tafel.querySelectorAll(".lc-lese-zeile").length, tafel);
+    }
     /* Die Zeile soll auch zu SEHEN sein — sonst leuchtet sie
        ausserhalb des Bildes. */
     try { b.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {}
@@ -29280,6 +29443,42 @@
         + '<animate attributeName="scale" dur="3.4s" fill="freeze"'
         + ' values="0;60;120;120;40;0" keyTimes="0;0.2;0.4;0.62;0.85;1"/>'
         + "</feDisplacementMap></filter></svg>";
+      /* XANDER: „Knuellen besser."
+         Das Verzerren allein reicht nicht: zerknuelltes Papier hat
+         KNICKE, und ein Knick ist eine Kante zwischen einer hellen
+         und einer dunklen Flaeche. Die Verzerrung schiebt nur Pixel
+         herum, sie macht kein Licht. Deshalb kommt eine Schicht aus
+         Facetten dazu — helle und dunkle Dreiecke, die auf dem
+         Hoehepunkt des Knuellens aufblitzen und beim Glattstreichen
+         wieder verschwinden. Sie liegt IM Kreis (lcZpBlende), damit
+         sie am Bildrand endet. */
+      const facetten = lcZpBlende(schicht);
+      facetten.classList.add("lc-knuell-knicke");
+      facetten.innerHTML =
+        '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
+        /* Die hellen Flaechen — wo das Papier dem Licht zugewandt ist. */
+        + '<g fill="#ffffff">'
+        + '<path d="M12 8 L44 2 L36 30 Z" opacity=".5"/>'
+        + '<path d="M58 6 L92 18 L64 34 Z" opacity=".38"/>'
+        + '<path d="M6 44 L30 36 L26 66 Z" opacity=".44"/>'
+        + '<path d="M70 44 L96 52 L72 74 Z" opacity=".34"/>'
+        + '<path d="M34 62 L62 54 L52 88 Z" opacity=".46"/>'
+        + "</g>"
+        /* Und die abgewandten. */
+        + '<g fill="#0b1220">'
+        + '<path d="M44 2 L58 6 L36 30 Z" opacity=".34"/>'
+        + '<path d="M36 30 L64 34 L30 36 Z" opacity=".3"/>'
+        + '<path d="M26 66 L34 62 L10 82 Z" opacity=".36"/>'
+        + '<path d="M62 54 L72 74 L52 88 Z" opacity=".32"/>'
+        + '<path d="M92 18 L96 52 L70 44 Z" opacity=".28"/>'
+        + "</g>"
+        /* Die Knicklinien selbst: haarfein, sonst sieht es gemalt aus. */
+        + '<g stroke="#0b1220" stroke-width=".7" fill="none" opacity=".45">'
+        + '<path d="M44 2 L36 30 L30 36 L26 66 L10 82"/>'
+        + '<path d="M58 6 L64 34 L70 44 L72 74 L52 88"/>'
+        + '<path d="M36 30 L64 34 M30 36 L70 44 M34 62 L62 54"/>'
+        + "</g>"
+        + "</svg>";
       if (kreis) {
         kreis.classList.remove("lc-geknuellt");
         void kreis.offsetWidth;
@@ -67181,6 +67380,9 @@ An einem Morgen lief ein kleiner Fuchs los…
          feststellen, DASS es nicht aufgeht, nicht warum. */
       hebenMenue: (platz, name) => lcHebenMenue(platz, name),
       sprechFeld: (knopf, art) => lcSprechFeld(knopf, art),
+      /* Runde 54: die Lesetafel einzeln aufrufbar — sonst liesse sich
+         die Benotung nur mit einer echten Nachricht pruefen. */
+      lesetafel: (n, z) => lcLeseTafel(n, z),
       sprechFeldWeg: (knopf) => lcSprechFeldWeg(knopf),
       /* „von" kam dazu, als Fahren und Spielzug dazukamen: bei denen
          bewegt sich der ABSENDER, nicht der Genannte — ohne seinen

@@ -18189,8 +18189,16 @@ body.lc-schreibt .tutor-reiter {
      mitten im Gesicht, und das verbietet seine alte Regel: „es soll
      niemals irgendwas im Kreis sein ausser den Blasen und bei dem
      Eis." Mit 0,44 rem bleibt die Spitze bei 32 px, also am Rand. */
-  width: calc(0.15rem * var(--gross, 1) + 0.075rem);
-  height: calc(0.4rem * var(--gross, 1) + 0.16rem);
+  /* Noch einmal gekuerzt, und diesmal mit Luft. Die Flamme ist
+     gewuerfelt gross (--gross bis 1,8) und wird in der Animation
+     noch einmal auf 1,3 gestreckt; dazu kippt sie um bis zu 7°, was
+     ihren Kasten zusaetzlich verschiebt. Bei 0,4 rem landete die
+     groesste damit genau auf der Grenze von 30 px — mal knapp
+     darueber, mal knapp darunter, je nach Wuerfel. Bei 0,33 rem
+     bleibt sie bei rund 34 px: vier Pixel Luft, und die Messung
+     wackelt nicht mehr. */
+  width: calc(0.14rem * var(--gross, 1) + 0.07rem);
+  height: calc(0.33rem * var(--gross, 1) + 0.14rem);
   border-radius: 0;
   clip-path: polygon(50% 0%, 63% 21%, 56% 39%, 71% 61%, 65% 85%,
                      50% 100%, 35% 85%, 29% 61%, 44% 39%, 37% 21%);
@@ -19062,3 +19070,192 @@ body.lc-schreibt .tutor-reiter {
   opacity: .35;
   cursor: default;
 }
+
+/* === RUNDE 54: DAS ZERKNÜLLEN ========================================
+   XANDER: „Knuellen besser."
+
+   Was fehlte, war das LICHT. Der Verzerrungsfilter (feDisplacementMap)
+   schiebt Pixel herum — er macht keine Knicke, denn ein Knick ist eine
+   KANTE zwischen einer hellen und einer dunklen Flaeche. Deshalb liegt
+   jetzt eine Facettenschicht darueber: helle und dunkle Dreiecke mit
+   haarfeinen Knicklinien, die auf dem Hoehepunkt aufblitzen und beim
+   Glattstreichen wieder verschwinden.
+
+   Und das Papier wird zur KUGEL: vorher schrumpfte es nur auf 0,68 und
+   blieb rund. Zerknuelltes Papier wird kleiner, unregelmaessig und
+   kippt dabei — deshalb jetzt bis 0,46 mit ungleichen Achsen. */
+.lc-knuell-knicke {
+  opacity: 0;
+  mix-blend-mode: overlay;
+  animation: lcKnuellKnickeR54 3.4s cubic-bezier(.5, 0, .5, 1) both;
+}
+.lc-knuell-knicke svg { width: 100%; height: 100%; display: block; }
+/* DIESELBEN Werte wie beim Bild (lcKnuellR54) — sonst liegen die
+   Knicke neben der Papierkugel statt darauf. Beim ersten Versuch
+   stand die Facettenschicht auf 0,88, waehrend das Bild schon auf
+   0,52 zusammengeknuellt war; die Knicke ragten dadurch weit ueber
+   die Kugel hinaus. */
+@keyframes lcKnuellKnickeR54 {
+  0%   { opacity: 0; transform: scale(1) rotate(0deg); }
+  20%  { opacity: .55; transform: scale(.84, .9) rotate(-7deg); }
+  40%  { opacity: 1; transform: scale(.52, .62) rotate(9deg); }
+  55%  { opacity: 1; transform: scale(.46, .58) rotate(-6deg); }
+  62%  { opacity: 1; transform: scale(.49, .6) rotate(4deg); }
+  78%  { opacity: .6; transform: scale(.82, .86) rotate(-2deg); }
+  92%  { opacity: .18; transform: scale(1.03, 1.01) rotate(1deg); }
+  100% { opacity: 0; transform: scale(1) rotate(0deg); }
+}
+.lc-kreis.lc-geknuellt { animation: lcKnuellR54 3.4s cubic-bezier(.5, 0, .5, 1) both; }
+@keyframes lcKnuellR54 {
+  0%   { transform: scale(1) rotate(0deg); }
+  20%  { transform: scale(.84, .9) rotate(-7deg); }
+  /* Die Kugel: klein, ungleich, verkantet. */
+  40%  { transform: scale(.52, .62) rotate(9deg); }
+  55%  { transform: scale(.46, .58) rotate(-6deg); }
+  62%  { transform: scale(.49, .6) rotate(4deg); }
+  /* Und jemand streicht es wieder glatt. */
+  78%  { transform: scale(.82, .86) rotate(-2deg); }
+  92%  { transform: scale(1.03, 1.01) rotate(1deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-kreis.lc-geknuellt, .lc-knuell-knicke { animation: none; }
+  .lc-knuell-knicke { display: none; }
+}
+
+/* === RUNDE 54: BENOTUNG BEIM LESEN ===================================
+   XANDER: „Denk auch dran, dass wir da Benotung machen koennen" —
+   je Zeile und als Gesamtnote.
+   Der Block steht NUR beim Fuehrenden; bei allen anderen waere es ein
+   Bedienfeld, das sie gar nicht benutzen duerfen. */
+.lc-lese-noten {
+  display: block;
+  margin-top: .5rem;
+  padding: .45rem .5rem;
+  border-radius: .55rem;
+  background: rgba(20, 40, 80, .06);
+  border: 1px solid rgba(20, 40, 80, .14);
+}
+.lc-lese-noten-kopf {
+  display: block;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  opacity: .62;
+  margin-bottom: .3rem;
+}
+.lc-lese-noten-zeile,
+.lc-lese-noten-liste,
+.lc-lese-noten-senden {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .28rem;
+}
+.lc-lese-noten-liste,
+.lc-lese-noten-senden { margin-top: .34rem; }
+.lc-lese-noten-hinweis {
+  font-size: .8rem;
+  opacity: .72;
+}
+/* Die sechs Noten: gross genug fuer den Finger (Android!), aber
+   schmal genug, dass alle sechs nebeneinander passen. */
+.lc-lese-note {
+  min-width: 1.85rem;
+  min-height: 1.85rem;
+  padding: 0 .2rem;
+  border: 1px solid rgba(20, 40, 80, .28);
+  border-radius: .42rem;
+  background: #fff;
+  font-weight: 800;
+  font-size: .92rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.lc-lese-note.lc-lese-note-an {
+  background: #1b6ef3;
+  border-color: #1b6ef3;
+  color: #fff;
+}
+.lc-lese-notenmarke {
+  border: 1px solid rgba(20, 40, 80, .2);
+  border-radius: .4rem;
+  padding: .1rem .34rem;
+  font-size: .78rem;
+  font-weight: 700;
+  background: #fff;
+  cursor: pointer;
+}
+.lc-lese-noten-gesamt {
+  display: block;
+  margin-top: .38rem;
+  font-weight: 800;
+  font-size: .86rem;
+}
+.lc-lese-noten-gesamt.lc-note-gut { color: #1d7a3a; }
+.lc-lese-noten-gesamt.lc-note-mittel { color: #9a6b12; }
+.lc-lese-noten-gesamt.lc-note-schlecht { color: #a3212d; }
+.lc-lese-notenwahl {
+  border: 1px solid rgba(20, 40, 80, .26);
+  border-radius: .42rem;
+  padding: .2rem .3rem;
+  font-size: .82rem;
+  max-width: 9rem;
+}
+.lc-lese-notensenden {
+  border: 1px solid #1b6ef3;
+  background: #1b6ef3;
+  color: #fff;
+  border-radius: .42rem;
+  padding: .24rem .55rem;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* === RUNDE 54: KEINE SENKRECHTEN ÜBERSCHRIFTEN MEHR ==================
+   GEMELDET: „bei den Texten laufen die Ueberschriften am Android
+   senkrecht."
+
+   GEFUNDEN, und es ist eine Eigenheit von Flexbox: ein Flex-Kind darf
+   von sich aus SCHRUMPFEN (flex-shrink ist 1). Die Kategorie- und
+   Niveau-Knoepfe stehen in einer Reihe mit „flex-wrap: wrap", hatten
+   aber weder „flex: 0 0 auto" noch „white-space: nowrap". Auf einem
+   schmalen Geraet wurde deshalb nicht umgebrochen, sondern jeder
+   Knopf zusammengedrueckt — bis sein Wort Buchstabe fuer Buchstabe
+   untereinander stand. Genau das hat er gesehen.
+
+   Zwei Zeilen beheben es: nicht schrumpfen, und das Wort nicht
+   umbrechen. Die Reihe bricht dann um, wie sie soll. */
+.lc-lese-kat,
+.lc-lese-stufe {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+/* NACHGEMESSEN bei 360 px, dem schmalsten verbreiteten Androidgeraet:
+   ohne Schrumpfen wurde der Niveauknopf 18 px breit und 32 px hoch —
+   „A1" passte zwar in eine Zeile, aber ein 18 px breiter Knopf ist
+   auf einem Telefon nicht zu treffen. Grund: „padding: 6px 0", also
+   gar kein Platz links und rechts. Jetzt mit Rand und Mindestbreite;
+   die Reihe bricht um, statt die Knoepfe zusammenzudruecken. */
+.lc-lese-stufen { flex-wrap: wrap; }
+.lc-lese-stufe {
+  padding: 7px 12px;
+  min-width: 2.9rem;
+  text-align: center;
+}
+.lc-lese-kat-wort,
+.lc-lese-kat-zeichen {
+  white-space: nowrap;
+}
+/* Die Textknoepfe duerfen schrumpfen — sie sind ganze Saetze und
+   sollen umbrechen. Aber niemals unter eine lesbare Breite, sonst
+   passiert ihnen dasselbe. */
+.lc-lese-text {
+  min-width: 8rem;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+/* Und die Ueberschrift des Waehlers steht immer waagerecht. */
+.lc-lese-liste .lc-lese-reihe { flex-wrap: nowrap; }
