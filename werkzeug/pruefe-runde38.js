@@ -112,14 +112,19 @@ const pruefe = (was, gut, zusatz) => {
     await new Promise((f) => setTimeout(f, 260));
     const h = document.querySelector(".lc-schelle-hammer");
     if (!h) return { da: false };
-    /* Wie weit schlaegt er aus? Zwei Messungen im Abstand eines
-       halben Schlages — ein Kloeppel, der sich nicht bewegt, ist
-       keiner. */
-    const a = h.getBoundingClientRect();
-    await new Promise((f) => setTimeout(f, 160));
-    const b = h.getBoundingClientRect();
+    /* Wie weit schlaegt er aus? ZWEI Messungen im Abstand eines
+       halben Schlages treffen nicht zuverlaessig die Umkehrpunkte —
+       je nach Bildtakt liegt eine davon mittendrin, und dann sieht
+       ein schwingender Kloeppel aus wie ein stehender. Deshalb ueber
+       einen ganzen Schlag hinweg messen und die Spanne nehmen. */
+    const orte = [];
+    for (let t = 0; t < 14; t++) {
+      await new Promise((f) => setTimeout(f, 50));
+      const r = h.getBoundingClientRect();
+      orte.push(r.left + r.width / 2);
+    }
     const buegel = document.querySelector(".lc-schelle-buegel").getBoundingClientRect();
-    return { da: true, weg: Math.abs((b.left + b.width / 2) - (a.left + a.width / 2)),
+    return { da: true, weg: Math.max.apply(null, orte) - Math.min.apply(null, orte),
              breite: buegel.width,
              ursprung: getComputedStyle(h).transformOrigin };
   }, await nachbar());

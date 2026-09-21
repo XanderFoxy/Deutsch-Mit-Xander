@@ -10627,6 +10627,31 @@ body.lc-schreibt .tutor-reiter {
   100% { opacity: 0; transform: translate(calc(-50% - 4px), -3.8em) scale(var(--gross, 1)); }
 }
 
+/* XANDER: „Die Blasen … sie könnt aber mehr im Profil rahmen
+   stattfinden."
+   Das Sprechfeld ist 144 % so gross wie das Bild — gut für Sterne,
+   die um den Rahmen laufen sollen, aber die Seifenblasen stiegen
+   damit weit über das Bild hinaus. Für sie deckt das Feld jetzt
+   genau das Bild ab, und sie steigen nur noch bis knapp unter den
+   oberen Rand. */
+.lc-sprechfeld[data-art="blasen"] {
+  left: 0;
+  right: 0;
+  top: 0;
+  padding-bottom: 100%;
+  overflow: hidden;
+}
+.lc-sprechfeld[data-art="blasen"] .lc-teilchen { bottom: 6%; }
+.lc-sprechfeld[data-art="blasen"] .lc-teilchen {
+  animation-name: lcBlasenAufR40;
+}
+@keyframes lcBlasenAufR40 {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(.4); }
+  16%  { opacity: var(--hell, .9); }
+  70%  { transform: translate(calc(-50% + 5px), -1.6em) scale(var(--gross, 1)); }
+  100% { opacity: 0; transform: translate(calc(-50% - 3px), -2.4em) scale(var(--gross, 1)); }
+}
+
 @media (prefers-reduced-motion: reduce) { .lc-sprechfeld { display: none; } }
 
 /* =====================================================================
@@ -12208,60 +12233,83 @@ body.lc-schreibt .tutor-reiter {
    overflow: hidden), damit die Baender rund abgeschnitten sind und
    nicht ueber den Platz laufen.
    -------------------------------------------------------------------- */
+/* XANDER: „Die alte Störung … schau mal in deinem Verlauf, die alte
+   VHS Störung, das war eine andere … dass du diese originale
+   Animation wieder findest."
+
+   Gefunden: sie steht noch im Haus, als Wurf-Effekt (.lc-stoer-band,
+   .lc-stoer-rauschen, .lc-gestoert — die Zeichnung aus Fassung 356).
+   Woran man sie erkennt und was die spätere Fassung anders machte:
+     · Sie SPRINGT (steps), sie gleitet nicht. Ein Videoband ruckelt
+       bildweise; die spätere Fassung ließ ein Band weich von oben
+       nach unten gleiten — das sieht aus wie ein Scanner.
+     · Die Bänder verschieben sich SEITLICH und wechseln dabei die
+       Farbe (rot / cyan / weiß), statt nur durchzulaufen.
+     · Das Bild selbst verliert ruckweise die Farbe und rutscht ein
+       paar Pixel zur Seite.
+   Genau das steht hier jetzt wieder, nur als Sprechbild (endlos,
+   solange jemand spricht) statt als einmaliger Wurf. */
 .lc-platz-spricht[data-sprechbild="stoerung"] .lc-kreis {
   border-color: #cfe0ef !important;
-  animation: lcStoerFlimmern .44s steps(2, end) infinite !important;
+  animation: lcStoerEmpfangR40 3s steps(1) infinite !important;
 }
-@keyframes lcStoerFlimmern {
-  0%, 100% { filter: none;
-             box-shadow: 0 0 0 2px rgba(180, 210, 235, .55); }
-  50%      { filter: contrast(1.25) saturate(1.45) hue-rotate(7deg);
-             box-shadow: -2px 0 0 0 rgba(255, 60, 90, .45), 2px 0 0 0 rgba(60, 200, 255, .45),
-                          0 0 12px 3px rgba(150, 190, 220, .4); }
+@keyframes lcStoerEmpfangR40 {
+  /* Dieselben Sprünge wie im Original, aber gedämpft: dort lag das
+     Rauschen NEBEN dem Bild, hier liegt es darin — und ein
+     „brightness(1.3)" auf dem Bild hätte die Rauschzeilen und die
+     Bänder gleich mit weissgewaschen. Nachgemessen auf der
+     Prüfbühne: bei 1.3 war der ganze Kreis weiss. */
+  0%, 100% { filter: none; transform: translateX(0); }
+  8%   { filter: saturate(.35) contrast(1.35); transform: translateX(-3px); }
+  14%  { filter: none; transform: translateX(2px); }
+  30%  { filter: saturate(.25) brightness(1.08); transform: translateX(4px); }
+  36%  { filter: none; transform: translateX(-2px); }
+  58%  { filter: saturate(.4) contrast(1.25); transform: translateX(-4px); }
+  64%  { filter: none; transform: translateX(0); }
+  82%  { filter: saturate(.3); transform: translateX(3px); }
 }
-/* Die Zeilen eines schlechten Empfangs — sie wandern nach oben. */
+/* Das feine Rauschen — es ruckt um zwei Pixel, es wandert nicht. */
 .lc-platz-spricht[data-sprechbild="stoerung"] .lc-kreis::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: 50%;
   border: 0 !important;
-  background: repeating-linear-gradient(to bottom,
-    rgba(255, 255, 255, .16) 0 1px, rgba(0, 0, 0, .2) 1px 3px);
-  mix-blend-mode: overlay;
-  animation: lcStoerZeilen 1.1s linear infinite;
+  background: repeating-linear-gradient(0deg,
+    rgba(255, 255, 255, .14) 0 1px, rgba(0, 0, 0, .14) 1px 2px);
+  opacity: .72;
+  animation: lcStoerRauschenR40 .2s steps(2) infinite;
   pointer-events: none;
   z-index: 3;
 }
-@keyframes lcStoerZeilen {
-  0%   { background-position: 0 0; }
-  100% { background-position: 0 -24px; }
+@keyframes lcStoerRauschenR40 {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(2px); }
 }
-/* Und das Band, das durchs Bild rutscht: dort ist das Bild zerrissen. */
+/* Und die Bänder: drei Streifen, die SEITLICH springen und dabei die
+   Farbe wechseln. Sie liegen als drei Lagen eines Hintergrundbildes
+   übereinander, damit ein einziges Element genügt. */
 .lc-platz-spricht[data-sprechbild="stoerung"] .lc-kreis::after {
   content: "";
   position: absolute;
-  left: -12%;
-  right: -12%;
-  height: 14%;
-  top: 0;
-  border-radius: 0;
+  inset: 0;
+  border-radius: 50%;
   border: 0 !important;
-  background: linear-gradient(to bottom,
-    rgba(255, 255, 255, .0), rgba(255, 255, 255, .5) 35%,
-    rgba(120, 210, 255, .35) 65%, rgba(255, 255, 255, 0));
+  background-repeat: no-repeat;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .16), rgba(255, 255, 255, .16)),
+    linear-gradient(rgba(255, 120, 120, .22), rgba(255, 120, 120, .22)),
+    linear-gradient(rgba(120, 220, 255, .22), rgba(120, 220, 255, .22));
+  background-size: 140% 11%, 140% 7%, 140% 9%;
   mix-blend-mode: screen;
-  animation: lcStoerBand 1.9s cubic-bezier(.4, 0, .7, 1) infinite;
+  animation: lcStoerBandR40 .34s steps(2) infinite;
   pointer-events: none;
   z-index: 4;
 }
-@keyframes lcStoerBand {
-  0%   { opacity: 0; transform: translateY(-40%) skewX(0deg); }
-  8%   { opacity: .9; transform: translateY(0%)  skewX(-9deg); }
-  34%  { opacity: .8; transform: translateY(180%) skewX(6deg); }
-  58%  { opacity: .9; transform: translateY(380%) skewX(-5deg); }
-  76%  { opacity: .7; transform: translateY(560%) skewX(8deg); }
-  92%, 100% { opacity: 0; transform: translateY(740%) skewX(0deg); }
+@keyframes lcStoerBandR40 {
+  0%   { background-position: -9% 22%, 11% 58%, -4% 80%; }
+  50%  { background-position: 11% 26%, -9% 54%, 9% 76%; }
+  100% { background-position: -6% 20%, 6% 60%, -9% 82%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -13019,25 +13067,57 @@ body.lc-schreibt .tutor-reiter {
   0%   { height: 16%; }
   100% { height: 34%; }
 }
-/* Ein Tropfen, der sich loest und herunterfaellt. */
+/* XANDER: „und bei dem Blut das können wir auch realistischer machen
+   das ist mehr runter tropft und dann unten auch sich bisschen
+   sammelt."
+   Vorher fiel EIN Tropfen, und unten sammelte sich nichts. Jetzt
+   fallen fünf — als fünf Lagen desselben Hintergrundbildes, deren
+   Positionen sich gemeinsam animieren lassen (ein Element kann nur
+   EINE Animation auf transform tragen, aber background-position ist
+   eine Liste, eine Angabe je Lage) — und unten wächst eine Lache. */
 .lc-platz-spricht[data-sprechbild="blut"] .lc-kreis::after {
   content: "";
   position: absolute;
-  left: 58%;
-  top: 26%;
-  width: 9%;
-  height: 12%;
+  inset: 0;
   border: 0 !important;
-  border-radius: 50% 50% 55% 55% / 62% 62% 40% 40%;
-  background: #b4141f;
-  animation: lcBlutTropft 2.2s cubic-bezier(.4, 0, .8, 1) infinite;
+  border-radius: 50%;
+  background-repeat: no-repeat;
+  background-image:
+    /* die Lache unten */
+    linear-gradient(to top, #6e0d16 0 40%, #a3121f 70%, rgba(163, 18, 31, 0) 100%),
+    /* fünf Tropfen — jeder in seiner eigenen, KLEINEN Kachel */
+    radial-gradient(ellipse at 50% 46%, #c4172a 0 54%, rgba(196,23,42,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #a3121f 0 54%, rgba(163,18,31,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #b4141f 0 54%, rgba(180,20,31,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #8e1420 0 54%, rgba(142,20,32,0) 62%),
+    radial-gradient(ellipse at 50% 46%, #c4172a 0 54%, rgba(196,23,42,0) 62%);
+  /* Die Kacheln MUESSEN kleiner sein als das Bild: bei „100 % 100 %"
+     bleibt kein Platz uebrig, und dann bedeutet jede Prozentangabe in
+     background-position dieselbe Stelle — genau daran hing vorher nur
+     ein einziger Tropfen bewegungslos in der Mitte. */
+  background-size: 100% 26%, 11% 15%, 9% 13%, 12% 16%, 8% 11%, 10% 14%;
+  animation: lcBlutLaeuftR40 3.4s linear infinite,
+             lcBlutLacheR40 6s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 4;
 }
-@keyframes lcBlutTropft {
-  0%   { opacity: 0; transform: translateY(0) scale(.6); }
-  18%  { opacity: 1; transform: translateY(20%) scale(1); }
-  100% { opacity: 0; transform: translateY(420%) scale(.8); }
+@keyframes lcBlutLaeuftR40 {
+  0% {
+    background-position:
+      50% 100%,
+      22% 0%, 44% -26%, 62% -52%, 78% -78%, 34% -104%;
+  }
+  100% {
+    background-position:
+      50% 100%,
+      22% 130%, 44% 104%, 62% 78%, 78% 52%, 34% 26%;
+  }
+}
+@keyframes lcBlutLacheR40 {
+  0%   { background-size: 100% 10%, 11% 15%, 9% 13%, 12% 16%, 8% 11%, 10% 14%; }
+  100% { background-size: 100% 32%, 11% 15%, 9% 13%, 12% 16%, 8% 11%, 10% 14%; }
+}
+  100% { background-size: 100% 34%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%; }
 }
 /* --- Spinnweben ------------------------------------------------------ */
 .lc-platz-spricht[data-sprechbild="spinnweb"] .lc-kreis {
@@ -13061,14 +13141,16 @@ body.lc-schreibt .tutor-reiter {
       rgba(255,255,255,.55) 0 1deg, rgba(255,255,255,0) 1deg 14deg),
     repeating-radial-gradient(circle at 96% 4%,
       rgba(255,255,255,.45) 0 1px, rgba(255,255,255,0) 1px 13px);
-  opacity: .75;
+  /* Das Netz war mit 0,75 auf hellen Bildern kaum zu sehen. */
+  opacity: .95;
+  filter: drop-shadow(0 0 1px rgba(40, 50, 70, .55));
   animation: lcNetzZittert 4.2s ease-in-out infinite;
   pointer-events: none;
   z-index: 3;
 }
 @keyframes lcNetzZittert {
-  0%, 100% { opacity: .62; }
-  50%      { opacity: .86; }
+  0%, 100% { opacity: .8; }
+  50%      { opacity: 1; }
 }
 /* Und die Spinne, die sich abseilt. */
 .lc-platz-spricht[data-sprechbild="spinnweb"] .lc-kreis::after {
@@ -13087,13 +13169,31 @@ body.lc-schreibt .tutor-reiter {
       rgba(27,29,36,.95) 0 3deg, rgba(27,29,36,0) 3deg 42deg,
       rgba(27,29,36,.95) 42deg 45deg, rgba(27,29,36,0) 45deg 90deg);
   box-shadow: 0 -60px 0 -6.4px rgba(255, 255, 255, .5);
-  animation: lcSpinneSeilt 3.8s ease-in-out infinite alternate;
+  /* XANDER: „bei den Spinnweben … je länger ich spreche am Stück,
+     dass die Spinne tiefer krabbelt."
+     Vorher pendelte sie alle 3,8 Sekunden hoch und runter — nach
+     einer Minute Reden hing sie genauso hoch wie nach zwei Sekunden.
+     Jetzt EINE lange Bewegung ohne Wiederholung: sie seilt sich in
+     26 Sekunden immer tiefer ab und bleibt unten (forwards). Die
+     Klasse hängt nur am Platz, solange jemand spricht — hört er auf,
+     fängt sie beim nächsten Mal wieder oben an. Genau das ist „je
+     länger am Stück". */
+  animation: lcSpinneSeilt 26s cubic-bezier(.2, .5, .6, 1) forwards;
   pointer-events: none;
   z-index: 4;
 }
 @keyframes lcSpinneSeilt {
-  0%   { transform: translateY(-10%) scale(.9); }
-  100% { transform: translateY(150%) scale(1); }
+  /* Sie krabbelt in Schüben, wie eine Spinne am Faden. */
+  0%   { transform: translateY(-14%) scale(.86); }
+  9%   { transform: translateY(34%)  scale(.9); }
+  14%  { transform: translateY(28%)  scale(.9); }
+  26%  { transform: translateY(96%)  scale(.94); }
+  32%  { transform: translateY(90%)  scale(.94); }
+  48%  { transform: translateY(168%) scale(.98); }
+  55%  { transform: translateY(162%) scale(.98); }
+  74%  { transform: translateY(252%) scale(1.02); }
+  80%  { transform: translateY(246%) scale(1.02); }
+  100% { transform: translateY(330%) scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-platz-spricht[data-sprechbild="blut"] .lc-kreis::before,
@@ -17309,4 +17409,23 @@ body.lc-schreibt .tutor-reiter {
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-zerrinnt, .lc-sandkorn, .lc-sandhaufen { animation: none; }
+}
+
+
+/* --- EIS: ECHTE EISZAPFEN AM RAND ---------------------------------
+   XANDER: „Das Eis könnte auch ein bisschen mehr Eiszapfen."
+   Die Kristalle am Rand wachsen INNEN (sie liegen an .lc-kreis, und
+   der schneidet ab). Zapfen hängen aber nach AUSSEN herunter —
+   deshalb liegen sie auf der freien Schicht am Platz, derselben, auf
+   der auch Blüte und Feuerring sitzen. Siebzehn Stück, verschieden
+   lang, an der unteren Hälfte des Rings. */
+.lc-platz-spricht[data-sprechbild="eis"]::after { display: block; }
+.lc-platz-spricht[data-sprechbild="eis"]::after {
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22ez%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%22.95%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23d6efff%22%20stop-opacity%3D%22.9%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%239fd6f5%22%20stop-opacity%3D%22.35%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M79.6%2C53.5%20L83.8%2C53.5%20L81.7%2C60.5%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M77.7%2C59.0%20L83.1%2C59.0%20L80.4%2C73.0%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M74.8%2C64.3%20L81.4%2C64.3%20L78.1%2C74.3%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M72.9%2C69.0%20L77.1%2C69.0%20L75.0%2C86.0%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M68.3%2C73.2%20L73.7%2C73.2%20L71.0%2C86.2%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M63.1%2C76.5%20L69.7%2C76.5%20L66.4%2C85.5%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M59.1%2C79.0%20L63.3%2C79.0%20L61.2%2C95.0%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M53.0%2C80.5%20L58.4%2C80.5%20L55.7%2C92.5%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M46.7%2C81.0%20L53.3%2C81.0%20L50.0%2C89.0%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M42.2%2C80.5%20L46.4%2C80.5%20L44.3%2C95.5%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M36.1%2C79.0%20L41.5%2C79.0%20L38.8%2C90.0%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M30.3%2C76.5%20L36.9%2C76.5%20L33.6%2C83.5%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M26.9%2C73.2%20L31.1%2C73.2%20L29.0%2C87.2%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M22.3%2C69.0%20L27.7%2C69.0%20L25.0%2C79.0%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M18.6%2C64.3%20L25.2%2C64.3%20L21.9%2C81.3%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M17.5%2C59.0%20L21.7%2C59.0%20L19.6%2C72.0%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3Cpath%20d%3D%22M15.6%2C53.5%20L21.0%2C53.5%20L18.3%2C62.5%20Z%22%20fill%3D%22url%28%23ez%29%22%20stroke%3D%22%23bfe6fb%22%20stroke-width%3D%22.4%22%2F%3E%3C%2Fsvg%3E") center/100% 100% no-repeat;
+  filter: drop-shadow(0 1px 2px rgba(60, 110, 150, .45));
+  animation: lcSfEisR40 3.2s ease-in-out infinite alternate;
+}
+@keyframes lcSfEisR40 {
+  from { transform: translateX(-50%) scale(1.5);  opacity: .85; }
+  to   { transform: translateX(-50%) scale(1.56); opacity: 1; }
 }

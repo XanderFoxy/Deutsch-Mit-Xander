@@ -111,8 +111,69 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("es gibt die Datei dazu",
     fs.existsSync(path.join(WURZEL, "ton", "gluehbirne.opus")));
 
+  /* ---------- DIE SPRECHBILDER AUS DIESER RUNDE ---------- */
+  console.log("\nBLUT, EIS, SPINNE UND DIE ALTE VHS-STÖRUNG\n");
+  const sb = await pg.evaluate(async () => {
+    const setzen = async (art) => {
+      document.querySelectorAll(".lc-platz").forEach((p) => {
+        p.classList.remove("lc-platz-spricht"); p.removeAttribute("data-sprechbild");
+      });
+      const pl = document.querySelectorAll(".lc-platz")[1];
+      pl.classList.add("lc-platz-spricht");
+      pl.setAttribute("data-sprechbild", art);
+      await new Promise((f) => setTimeout(f, 400));
+      return pl;
+    };
+    const erg = {};
+    let pl = await setzen("blut");
+    let k = pl.querySelector(".lc-kreis");
+    let cs = getComputedStyle(k, "::after");
+    erg.blut = { lagen: (cs.backgroundImage.match(/gradient/g) || []).length,
+                 ani: cs.animationName };
+    pl = await setzen("eis");
+    cs = getComputedStyle(pl, "::after");
+    erg.eis = { anzeige: cs.display, ani: cs.animationName,
+                svg: cs.backgroundImage.indexOf("svg") >= 0 };
+    pl = await setzen("spinnweb");
+    k = pl.querySelector(".lc-kreis");
+    cs = getComputedStyle(k, "::after");
+    erg.spinne = { wiederholung: cs.animationIterationCount, dauer: cs.animationDuration,
+                   richtung: cs.animationDirection };
+    pl = await setzen("stoerung");
+    k = pl.querySelector(".lc-kreis");
+    erg.stoerung = { bild: getComputedStyle(k).animationTimingFunction,
+                     rausch: getComputedStyle(k, "::before").animationTimingFunction,
+                     band: getComputedStyle(k, "::after").animationTimingFunction,
+                     lagen: (getComputedStyle(k, "::after").backgroundImage.match(/gradient/g) || []).length };
+    return erg;
+  });
+  /* XANDER: „das ist mehr runter tropft und dann unten auch sich
+     bisschen sammelt." Ein Tropfen und keine Lache waere eine Lage. */
+  pruefe("Blut: mehrere Tropfen plus die Lache unten",
+    sb.blut.lagen >= 6, sb.blut.lagen + " Lagen");
+  pruefe("Blut: beide Bewegungen laufen (Fallen und Sammeln)",
+    (sb.blut.ani || "").split(",").length === 2, String(sb.blut.ani));
+  pruefe("Eis: die Zapfen liegen auf der freien Schicht",
+    sb.eis.anzeige === "block" && sb.eis.svg === true, sb.eis.anzeige);
+  /* „je länger ich spreche am Stück, dass die Spinne tiefer krabbelt" —
+     das geht nur mit EINEM langen Durchlauf, nicht mit einer
+     Endlosschleife, die immer wieder nach oben zurückspringt. */
+  pruefe("Spinne: ein einziger langer Abstieg, keine Schleife",
+    sb.spinne.wiederholung === "1", sb.spinne.wiederholung + "×, " + sb.spinne.dauer);
+  pruefe("Spinne: und kein Hin und Her",
+    sb.spinne.richtung === "normal", String(sb.spinne.richtung));
+  /* Die ORIGINAL-VHS-Störung springt (steps), sie gleitet nicht. */
+  pruefe("Störung: das Bild springt, es gleitet nicht",
+    /steps/.test(sb.stoerung.bild), String(sb.stoerung.bild));
+  pruefe("Störung: das Rauschen springt ebenso",
+    /steps/.test(sb.stoerung.rausch), String(sb.stoerung.rausch));
+  pruefe("Störung: und die Bänder auch",
+    /steps/.test(sb.stoerung.band), String(sb.stoerung.band));
+  pruefe("Störung: drei Bänder in drei Farben",
+    sb.stoerung.lagen >= 3, sb.stoerung.lagen + " Lagen");
+
   await br.close(); srv.close();
   console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n"
-                     : "\nDie Sanduhr zerrinnt und die Glühbirne dreht sich ein.\n");
+                     : "\nSanduhr, Glühbirne und die vier Sprechbilder sitzen.\n");
   process.exit(fehler ? 1 : 0);
 })();
