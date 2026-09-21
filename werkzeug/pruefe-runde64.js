@@ -45,7 +45,18 @@ pruefe("unten wird staerker geschlossen als oben (Schuhe sind schwarz)",
   /unten_r=6/.test(werk) && /zu\[grenze:, :\] \|= tief\[grenze:, :\]/.test(werk));
 
 console.log("\nGREENSCREEN IST DER NORMALFALL\n");
-pruefe("das Werkzeug schluesselt auf Gruen", /chromakey=0x00b140/.test(bauen));
+/* RUNDE 65b NACHGETRAGEN: hier stand fest „chromakey=0x00b140" —
+   also genau die GERATENE Lehrbuchfarbe. Am wirklichen Rohfilm
+   gemessen ist der Hintergrund #05a940, und darauf schluesselt das
+   Werkzeug seitdem. Ein Pruefsatz, der einen geratenen Wert
+   festnagelt, haelt den Fehler fest statt ihn zu finden. Geprueft
+   wird jetzt, was zaehlt: dass ueberhaupt auf Gruen geschluesselt
+   wird — und dass die Toleranz nicht wieder bei 0,30 steht, bei der
+   von 228.960 Bildpunkten 8 uebrig blieben. */
+pruefe("das Werkzeug schluesselt auf Gruen",
+  /chromakey=0x0?5a940/.test(bauen) && !/chromakey=0x00b140/.test(bauen));
+pruefe("und nicht mehr mit der Toleranz, die die Figur mitnahm",
+  !/chromakey=[^"]*:0\.30:/.test(bauen));
 pruefe("mit Despill gegen den gruenen Saum", /despill=type=green/.test(bauen));
 pruefe("Schwarz bleibt nur als Rueckfall", /GRUND=schwarz|schwarz\|black/.test(bauen));
 pruefe("und die Nachbehandlung laeuft gleich mit",

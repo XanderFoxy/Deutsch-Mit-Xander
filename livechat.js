@@ -1046,6 +1046,9 @@ window.LiveChat = (function () {
     /* RUNDE 65 — XANDER: „dass man ein Profilbild noch ein bisschen
        aufblasen kann, dass man es total unter Druck setzt und es dann
        zerplatzt wie ein Luftballon." */
+    /* RUNDE 66 — XANDER: „eine mehrschwaenzige fuer alle auf einmal."
+       Sie nennt niemanden: sie trifft jeden, der dasitzt. */
+    neunschwanz: { wirkung: "neunschwanz", satz: "laesst die neunschwaenzige auf alle niedergehen", emoji: "\ud83e\udeac" },
     aufblasen:  { wirkung: "aufblasen",  satz: "blaeht das Bild auf, bis es platzt, von", emoji: "\ud83c\udf88" },
     /* GEMELDET: „bei den Effekten, die man noch auswählen kann, dass
        man den anderen wie so ein Keks aufessen kann … dass man so Biss
@@ -8875,6 +8878,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "lunte", kurz: "schnur", nutzt: "/lunte Name",    was: "Bombe mit Z\u00fcndschnur \u2014 sie brennt ab, dann knallt es" },
     { gr: "reden", w: "streicheln", kurz: "lieb", nutzt: "/streicheln Name", was: "Streicheln \u2014 sanft, mit Herzchen" },
     { gr: "reden", w: "kuss", kurz: "bussi",  nutzt: "/kuss Name",      was: "Kuss \u2014 der Abdruck bleibt kurz stehen" },
+    { gr: "reden", w: "neunschwanz", kurz: "neunschwaenzig", nutzt: "/neunschwanz",
+      was: "Neunschw\u00e4nzige \u2014 ein Griff, aus dem f\u00fcr JEDEN im Raum ein Schwanz l\u00e4uft, alle knallen zugleich" },
     { gr: "reden", w: "aufblasen", kurz: "prall", nutzt: "/aufblasen Name",
       was: "Aufblasen \u2014 f\u00fcnf Pumpenhube, das Gummi zittert, dann platzt es" },
     { gr: "raum", w: "panik", kurz: "tonneu", nutzt: "/panik",          was: "Ton zur\u00fccksetzen, wenn du jemanden doppelt h\u00f6rst" },
@@ -9222,6 +9227,8 @@ window.LiveChat = (function () {
                 /* „ballon" NICHT — das ist schon der Ballon-Effekt. */
                 aufpumpen: "aufblasen", pumpe: "aufblasen",
                 zerplatzen: "aufblasen",
+                mehrschwanz: "neunschwanz", katzenpeitsche: "neunschwanz",
+                peitschealle: "neunschwanz",
                 falke: "greifvogel", habicht: "greifvogel",
                 bussard: "greifvogel", geier: "greifvogel",
                 dreier: "turm", sprungturm: "turm", turmspringen: "turm",

@@ -24441,7 +24441,10 @@
     lasso:          { ton: "swoosh", dauer: 3400, laut: 0.5 },
     /* Das Pumpen laeuft von Anfang an, der Knall kommt spaeter eigens
        dazu (lcTonSpaeter unten) — ein Geraeusch kann nicht beides. */
-    aufblasen:      { ton: "aufblasen", dauer: 2600, laut: 0.6 }
+    aufblasen:      { ton: "aufblasen", dauer: 2600, laut: 0.6 },
+    /* Der Knall setzt lcNeunschwanz selbst auf 780 ms — hier steht
+       nur das Ausholen, damit man das Leder ueberhaupt hoert. */
+    neunschwanz:    { ton: "peitsche", dauer: 2600, laut: 0.5 }
   };
 
   /* =================================================================
@@ -28031,6 +28034,7 @@
        Zeichnung schon standen. */
     greifvogel: { zeichen: ["\ud83e\udd85"], wie: 4, klasse: "umarmen" },
     aufblasen:{ zeichen: ["\ud83c\udf88"], wie: 5, klasse: "umarmen" },
+    neunschwanz: { zeichen: ["\ud83e\udeac"], wie: 5, klasse: "umarmen" },
     turm:     { zeichen: ["\ud83c\udfca"], wie: 4, klasse: "umarmen" },
     marsch:   { zeichen: ["\ud83e\udd41"], wie: 5, klasse: "umarmen" },
     brennen:  { zeichen: ["\ud83d\udd25"], wie: 5, klasse: "umarmen" },
@@ -30969,7 +30973,8 @@
           + '" stroke-linecap="round" transform="translate(0,-'
           + (BREIT[i] / 4).toFixed(2) + ')"/>';
       }
-      schicht.innerHTML = '<span class="lc-peitsche-griff"></span>'
+      schicht.innerHTML = '<span class="lc-peitsche-griff">'
+        + lcPeitschenGriff() + '</span>'
         /* Die Ausholschlaufe: sie haengt links HINTER dem Griff und
            ist nur waehrend des Ausholens zu sehen. */
         + '<svg class="lc-peitsche-hol" viewBox="0 0 60 44" aria-hidden="true">'
@@ -33031,6 +33036,12 @@
         + '<i class="lc-heli-heckblatt"></i>'
         + '<i class="lc-heli-heckblatt lc-heli-heckblatt-2"></i></span>'
 
+        /* RUNDE 66: der Abwind. Ein Hubschrauber steht auf seiner
+           eigenen Luftsaeule — ohne sie schwebt er wie ein Aufkleber.
+           Drei Ringe, versetzt, die nach unten auseinanderlaufen. */
+        + '<i class="lc-heli-wind"></i>'
+        + '<i class="lc-heli-wind lc-heli-wind-2"></i>'
+        + '<i class="lc-heli-wind lc-heli-wind-3"></i>'
         + '<span class="lc-heli-kanzel"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
@@ -33128,22 +33139,77 @@
         const roehre = document.createElement("span");
         roehre.className = "lc-roehre" + (i ? " lc-roehre-raus" : " lc-roehre-rein");
         roehre.style.setProperty("--gross", d + "px");
-        roehre.style.animationDelay = (i ? hin - 1000 : 0) + "ms";
+        /* RUNDE 66: DIE ROEHREN MUESSEN SO LANGE STEHEN, WIE JEMAND
+           DARIN STECKT. Nachgesehen bei 1700 ms: die Startroehre war
+           schon wieder eingefahren (1,5 s Dauer), die Zielroehre kam
+           erst bei 1800 ms — der Reisende stieg also aus dem Nichts.
+           Jetzt haengen beide an denselben Schluesselbildern wie das
+           Bild: die Zielroehre kommt bei 28 % hoch (da faengt das
+           zweite Bild an zu steigen), und beide bleiben bis zum
+           Umsetzen stehen. */
+        roehre.style.animationDelay = (i ? Math.round(dauer * 0.20) : 0) + "ms";
+        roehre.style.animationDuration =
+          (i ? Math.round(dauer * 0.74) : Math.round(dauer * 0.86)) + "ms";
         roehre.innerHTML = '<i class="lc-roehre-rand"></i><i class="lc-roehre-rohr"></i>';
         reihe.appendChild(roehre);
         weg.push(roehre);
         setzen(roehre, wo.x, wo.y + d * 0.52);
       });
-      /* Das Bild rutscht senkrecht hinein und kommt drueben wieder
-         heraus — nicht schrumpfen, sondern versinken. */
+      /* RUNDE 66 — XANDER: „Rohrreise: der Reisende ist auf beiden
+         Seiten gleichzeitig zu sehen."
+         Bisher sah man nur das HINEIN: das Bild versank in der einen
+         Roehre, war dann weg und tauchte am Ende wieder am ALTEN Platz
+         auf. Das Herauskommen aus der zweiten Roehre — bei Mario der
+         halbe Witz — hat nie jemand gesehen.
+         Jetzt steigt an der Zielroehre ein zweites Bild heraus, und
+         zwar genau dann, wenn das erste unten ist. Zwei Bilder
+         gleichzeitig sind dabei kein Fehler, sondern der Punkt: man
+         sieht die Roehre von beiden Enden. */
       try {
         kreis.animate([
           { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0 },
           { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0.06 },
-          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.26 },
-          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.74 },
-          { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0.96 }
+          /* NACHGESEHEN bei 2100 ms: er war am Startrohr GANZ weg —
+             damit ist er eben nicht „auf beiden Seiten gleichzeitig zu
+             sehen", sondern nur drueben. Deshalb bleibt hier ein Rest
+             stehen: 12 % vom Scheitel schauen aus der Startroehre,
+             waehrend er drueben schon heraussteigt. Erst danach
+             verschwindet er ganz. */
+          { transform: "translateY(58%)", clipPath: "inset(0 0 88% 0)", offset: 0.30 },
+          { transform: "translateY(58%)", clipPath: "inset(0 0 88% 0)", offset: 0.70 },
+          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.78 },
+          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.9 },
+          { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 1 }
         ], { duration: dauer, easing: "ease-in-out", fill: "none" });
+      } catch (e) {}
+      /* Das zweite Bild an der Zielroehre. */
+      const doppel = document.createElement("span");
+      doppel.className = "lc-rohr-doppel";
+      doppel.style.setProperty("--gross", d + "px");
+      if (quelle) doppel.style.backgroundImage = "url(" + quelle.replace(/[()"\']/g, "") + ")";
+      else doppel.textContent = (ab.name || "?").charAt(0).toUpperCase();
+      reihe.appendChild(doppel);
+      weg.push(doppel);
+      setzen(doppel, ende.x, ende.y);
+      try {
+        doppel.animate([
+          { transform: "translate(-50%, -50%) translateY(62%)",
+            clipPath: "inset(0 0 100% 0)", opacity: 1, offset: 0 },
+          { transform: "translate(-50%, -50%) translateY(62%)",
+            clipPath: "inset(0 0 100% 0)", opacity: 1, offset: 0.28 },
+          /* Ab hier schauen BEIDE aus ihrer Roehre — das ist das
+             Bild, das gewuenscht war. */
+          { transform: "translate(-50%, -50%) translateY(58%)",
+            clipPath: "inset(0 0 88% 0)", opacity: 1, offset: 0.44 },
+          /* Er steigt heraus, waehrend der andere noch unten ist. */
+          { transform: "translate(-50%, -50%) translateY(0)",
+            clipPath: "inset(0 0 0% 0)", opacity: 1, offset: 0.84 },
+          /* Und uebergibt an den echten Platz, sobald umgesetzt ist. */
+          { transform: "translate(-50%, -50%) translateY(0)",
+            clipPath: "inset(0 0 0% 0)", opacity: 1, offset: 0.88 },
+          { transform: "translate(-50%, -50%) translateY(0)",
+            clipPath: "inset(0 0 0% 0)", opacity: 0, offset: 0.93 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       } catch (e) {}
       lcTonZu("rohr");
       lcTonSpaeter("rohrraus", Math.max(0, hin - 700), 0.55);
@@ -33844,6 +33910,174 @@
   }
 
   /* --- DIE PEITSCHE ------------------------------------------------- */
+  /* =================================================================
+     DER GRIFF — EINMAL GEZEICHNET, ZWEIMAL BENUTZT
+     -----------------------------------------------------------------
+     XANDER: „Peitsche: echter gewickelter Griff."
+     Bisher war der Griff ein Rechteck mit einem Farbverlauf und einem
+     schraegen Streifenmuster darueber — ein Muster ist aber keine
+     Wicklung. Ein echter Peitschengriff hat einen KNAUF hinten (damit
+     er nicht aus der Hand rutscht), einen konisch zulaufenden Koerper,
+     acht bis zehn schraeg herumgefuehrte Riemen mit sichtbaren Kanten,
+     und vorn eine ZWINGE, aus der das Seil kommt. Genau das steht hier
+     — und sowohl die einschwaenzige Peitsche als auch die
+     neunschwaenzige benutzen es. */
+  function lcPeitschenGriff() {
+    let riemen = "";
+    for (let i = 0; i < 9; i++) {
+      /* Schraeg herum, jeder Riemen um 2,45 Einheiten versetzt. Die
+         Kante links vom Riemen ist hell, rechts dunkel — daran sieht
+         man, dass es uebereinandergelegtes Leder ist und kein
+         aufgemaltes Muster. */
+      const x = 5.2 + i * 2.45;
+      riemen += '<path class="lc-griff-riemen" d="M' + x.toFixed(2)
+        + ' 2.4 L' + (x - 1.7).toFixed(2) + ' 11.6"/>';
+      riemen += '<path class="lc-griff-kante" d="M' + (x + 0.75).toFixed(2)
+        + ' 2.5 L' + (x - 0.95).toFixed(2) + ' 11.5"/>';
+    }
+    return '<svg class="lc-griff-bild" viewBox="0 0 34 14" aria-hidden="true">'
+      /* Der Knauf ganz hinten. */
+      + '<ellipse class="lc-griff-knauf" cx="3.2" cy="7" rx="3.2" ry="5.6"/>'
+      /* Der Koerper, nach vorn schlanker. */
+      + '<path class="lc-griff-koerper" d="M3 1.9 L26 3.2 Q28.6 7 26 10.8 L3 12.1 Q0.7 7 3 1.9 Z"/>'
+      + riemen
+      /* Die Zwinge, aus der das Seil kommt. */
+      + '<path class="lc-griff-zwinge" d="M25.8 3 L30.6 4.5 L30.6 9.5 L25.8 11 Z"/>'
+      /* Ein schmaler Glanz obendrauf — Leder spiegelt. */
+      + '<path class="lc-griff-glanz" d="M4.2 3.7 L25 4.7"/>'
+      + "</svg>";
+  }
+
+  /* =================================================================
+     DIE NEUNSCHWAENZIGE — FUER ALLE AUF EINMAL
+     -----------------------------------------------------------------
+     XANDER: „und eine mehrschwaenzige fuer alle auf einmal."
+
+     Die einschwaenzige Peitsche geht ueber lcLeineWerfen: EINE Leine
+     von mir zu EINEM Platz. Fuer alle auf einmal geht das nicht —
+     deshalb hier eine eigene Lage, in der EIN Griff liegt und aus
+     seiner Zwinge so viele Schwaenze laufen, wie Leute dasitzen.
+     Jeder Schwanz bekommt seinen GEMESSENEN Winkel und seine
+     GEMESSENE Laenge zu genau einem Platz; geraten wird nichts.
+     Sie knallen alle im selben Augenblick — bei 30 % von 2,6 s, also
+     bei 780 ms, genau wie die einschwaenzige. Deshalb klingt es auch
+     nur EINMAL und nicht einmal je Person.
+     ================================================================= */
+  function lcNeunschwanz(von) {
+    const karte = document.getElementById("livechatKarte");
+    const reihe = document.getElementById("lcPlaetze") || karte;
+    if (!karte || !reihe) return false;
+    const vonPlatz = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
+    if (!vonPlatz) return false;
+    const ziele = [...karte.querySelectorAll(".lc-platz")].filter(
+      (pl) => !pl.classList.contains("lc-platz-frei") && pl !== vonPlatz);
+    if (!ziele.length) return false;
+
+    const rr = reihe.getBoundingClientRect();
+    const a = vonPlatz.getBoundingClientRect();
+    const ax = a.left + a.width / 2 - rr.left;
+    const ay = a.top + a.height * 0.42 - rr.top;
+
+    reihe.querySelectorAll(".lc-nsz").forEach((x) => x.remove());
+    const lage = document.createElement("div");
+    lage.className = "lc-nsz";
+    lage.setAttribute("aria-hidden", "true");
+    lage.style.left = ax + "px";
+    lage.style.top = ay + "px";
+
+    /* Ein Schwanz: vier Abschnitte, nach aussen duenner, mit einem
+       Knoten an der Spitze — so sieht eine neunschwaenzige aus. */
+    /* Die Bahn in ANTEILEN der Laenge — sie wird gleich mit der
+       gemessenen Laenge gezeichnet, nicht nachtraeglich gestreckt.
+       Erster Anlauf war preserveAspectRatio="none": damit wurde ein
+       kurzer Schwanz duenn wie ein Haar (auf dem Foto am Schwanz zu
+       Emmi gesehen). Der naheliegende Ausweg,
+       vector-effect="non-scaling-stroke", zerreisst aber das
+       Ausrollen — stroke-dasharray rechnet dann nicht mehr in
+       pathLength, und uebrig blieben Striche mit Luecken. Also gar
+       nicht erst strecken. */
+    const BAHN = [[[0,10],[10,5],[20,13],[30,9]],
+                  [[30,9],[40,5],[50,14],[60,10]],
+                  [[60,10],[70,6],[80,13],[88,10]],
+                  [[88,10],[93,8],[96,11],[100,10]]];
+    const DICK = [4.6, 3.2, 2.0, 1.1];
+    let wieViele = 0;
+    ziele.forEach((zu) => {
+      const b = zu.getBoundingClientRect();
+      const bx = b.left + b.width / 2 - rr.left;
+      const by = b.top + b.height * 0.42 - rr.top;
+      const kreisB = zu.querySelector(".lc-kreis");
+      const radius = kreisB ? kreisB.getBoundingClientRect().width / 2 : b.width / 2;
+      const roh = Math.hypot(bx - ax, by - ay);
+      if (!roh) return;
+      /* Bis an den RAND des fremden Bildes — dort trifft die Spitze. */
+      const laenge = Math.max(24, roh - radius * 0.72);
+      const winkel = (Math.atan2(by - ay, bx - ax) * 180) / Math.PI;
+      const sch = document.createElement("span");
+      sch.className = "lc-nsz-schwanz";
+      sch.style.setProperty("--laenge", Math.round(laenge) + "px");
+      sch.style.transform = "rotate(" + winkel.toFixed(1) + "deg)";
+      /* NACHGESEHEN auf dem Foto bei 1100 ms: die Schwaenze zu den
+         Plaetzen derselben Reihe lagen fast deckungsgleich
+         uebereinander und sahen aus wie EIN dicker Riemen. Ein
+         Versatz in der ZEIT allein reicht dafuer nicht — sie muessen
+         verschieden geschwungen sein. Deshalb bekommt jeder Schwanz
+         eine eigene Wellenhoehe zwischen 0,55 und 1,75. Anfang und
+         Ende liegen trotzdem fest: die Bahn faengt auf y=10 an und
+         hoert auf y=10 auf, genau in der Mitte des Bildfeldes, und
+         genau darum wird skaliert. */
+      sch.style.setProperty("--spaet", (wieViele % 4) * 18 + "ms");
+      sch.style.setProperty("--welle", (0.55 + (wieViele % 5) * 0.3).toFixed(2));
+      /* Und die Richtung der Welle wechselt — sonst schwingen alle
+         nach derselben Seite. */
+      sch.style.setProperty("--seite", wieViele % 2 ? "-1" : "1");
+      const k = laenge / 100;
+      const px = (pt) => (pt[0] * k).toFixed(1) + " " + pt[1];
+      let welle = "";
+      for (let i = 0; i < 4; i++) {
+        const b = BAHN[i];
+        welle += '<path class="lc-nsz-strang lc-nsz-s' + (i + 1) + '" pathLength="100"'
+          + ' d="M' + px(b[0]) + " C" + px(b[1]) + " " + px(b[2]) + " " + px(b[3])
+          + '" fill="none" stroke-width="' + DICK[i] + '" stroke-linecap="round"/>';
+      }
+      /* preserveAspectRatio="none" zieht das Bildfeld auf die
+         gemessene Laenge — dabei wuerde auch die Strichstaerke
+         mitgezerrt, und ein kurzer Schwanz waere duenn wie ein Haar
+         (auf dem Foto am Schwanz zu Emmi gesehen). Genau dagegen
+         gibt es vector-effect="non-scaling-stroke": die Staerke bleibt
+         in Bildschirmpunkten stehen. */
+      sch.innerHTML = '<svg viewBox="0 0 ' + laenge.toFixed(0) + ' 20">'
+        + '<g class="lc-nsz-welle" style="transform-origin:' + (laenge / 2).toFixed(1)
+        + 'px 10px">' + welle
+        + '<circle class="lc-nsz-knoten" cx="' + (99 * k).toFixed(1) + '" cy="10" r="1.6"/>'
+        + "</g></svg>";
+      lage.appendChild(sch);
+      wieViele++;
+      /* Der Getroffene zuckt — dieselbe Klasse wie bei der einfachen
+         Peitsche, damit es sich nicht doppelt. */
+      const kreis = zu.querySelector(".lc-kreis");
+      if (kreis) {
+        setTimeout(() => {
+          if (!kreis.isConnected) return;
+          kreis.classList.remove("lc-gepeitscht");
+          void kreis.offsetWidth;
+          kreis.classList.add("lc-gepeitscht");
+          setTimeout(() => kreis.classList.remove("lc-gepeitscht"), 1400);
+        }, 780);
+      }
+    });
+    if (!wieViele) return false;
+    const griff = document.createElement("span");
+    griff.className = "lc-nsz-griff";
+    griff.innerHTML = lcPeitschenGriff();
+    lage.appendChild(griff);
+    reihe.appendChild(lage);
+    setTimeout(() => lage.remove(), 2800);
+    /* EINMAL knallen, nicht einmal je Person. */
+    lcTonSpaeter("peitschenknall", 780, 0.7);
+    return true;
+  }
+
   function lcPeitsche(wen) {
     return lcAmPlatz(wen, "lc-peitsche", (schicht, platz) => {
       /* GEMELDET: „Die Peitsche ist keine schoene Peitsche, sie ist
@@ -36930,6 +37164,7 @@
     flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1, brennen: 1, zorro: 1,
     dampfer: 1, lok: 1, liane: 1, feder: 1, beamen: 1, rohr: 1,
     heli: 1, pferd: 1, marsch: 1, greifvogel: 1, turm: 1, aufblasen: 1,
+    neunschwanz: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
@@ -37037,6 +37272,9 @@
       if (art === "rollo" && lcRollo(wenZ)) return;
       if (art === "lamellen" && lcLamellen(wenZ)) return;
       if (art === "peitsche" && lcPeitsche(wenZ)) return;
+      /* Die neunschwaenzige gilt ALLEN und braucht deshalb nicht den
+         Getroffenen, sondern den ABSENDER — wie das Fahren. */
+      if (art === "neunschwanz" && lcNeunschwanz(lcWurfVon)) return;
       if (art === "bowling" && lcStoss(wenZ, "bowling")) return;
       /* GEWUENSCHT: „wenn ich mit jemandem gemeinsam fahren will, dann
          kriege ich sein Profilbild an und sage dann Fahrrad oder so
