@@ -12655,7 +12655,10 @@ body.lc-schreibt .tutor-reiter {
   width: 62%;
   margin-left: -31%;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .4));
-  animation: lcOhrfeigeHand 1.8s cubic-bezier(.25, 0, .2, 1) both;
+  /* 2,6 s statt 1,8: der neue Ton bringt nach dem Klatschen noch den
+     Schmerzlaut mit, und kein Ton darf laenger sein als seine
+     Animation (siehe werkzeug/pruefe-tonschleifen.js). */
+  animation: lcOhrfeigeHand 2.6s cubic-bezier(.25, 0, .2, 1) both;
 }
 @keyframes lcOhrfeigeHand {
   0%   { opacity: 0; transform: translate(var(--wx, 180%), var(--wy, -30%)) rotate(-30deg) scale(.7); }
@@ -12677,7 +12680,7 @@ body.lc-schreibt .tutor-reiter {
   text-shadow: 0 0 8px rgba(0, 0, 0, .6);
   animation: lcZpWort 0.8s ease-out 0.5s both;
 }
-.lc-geohrfeigt { animation: lcGeohrfeigt 1.8s cubic-bezier(.3, 0, .3, 1) both; }
+.lc-geohrfeigt { animation: lcGeohrfeigt 2.6s cubic-bezier(.3, 0, .3, 1) both; }
 @keyframes lcGeohrfeigt {
   0%, 27% { transform: rotate(0deg) translateX(0); }
   32%     { transform: rotate(var(--ohrdreh, 14deg)) translateX(calc(var(--ohrdreh, 14deg) * .4)); }
@@ -14345,7 +14348,9 @@ body.lc-schreibt .tutor-reiter {
    Der Kopf fliegt jetzt fast doppelt so weit (--ohrdreh wird in app.js
    gesetzt), es bleibt ein roter Handabdruck stehen, und drei
    Schmerzblitze fahren weg. */
-.lc-geohrfeigt { animation: lcGeohrfeigtR18 1.8s cubic-bezier(.16, .9, .3, 1) both; }
+/* 2,6 s wie die Hand: der neue Ton bringt nach dem Klatschen noch den
+   Schmerzlaut, und der darf nicht laenger sein als die Animation. */
+.lc-geohrfeigt { animation: lcGeohrfeigtR18 2.6s cubic-bezier(.16, .9, .3, 1) both; }
 @keyframes lcGeohrfeigtR18 {
   0%, 26% { transform: rotate(0deg) translateX(0) scale(1); }
   /* Der Treffer: weiter, schneller, mit Stauchung. */
@@ -15606,6 +15611,79 @@ body.lc-schreibt .tutor-reiter {
 .lc-sk-tanne path { fill: #2f7a4b; }
 .lc-sk-tanne rect { fill: #6b452b; }
 .lc-sk-fern { opacity: .72; }
+
+/* -----------------------------------------------------------------
+   DIE AUSSICHT HINTER DER JALOUSIE: DIE STADT
+   GEWÜNSCHT: „bei der Jalousie noch keinen anderen Hintergrund. Mach
+   da bitte was passendes hin."
+   Dächer in zwei Tiefen, dazwischen erleuchtete Fenster, die ganz
+   langsam an- und ausgehen — und ein Mond darüber.
+   ----------------------------------------------------------------- */
+.lc-aussicht-stadt {
+  background: linear-gradient(180deg, #11203a 0%, #24304d 52%, #3a3f57 100%);
+}
+.lc-stadt-mond {
+  position: absolute;
+  right: 14%;
+  top: 10%;
+  width: 16%;
+  height: 16%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 34%, #fffdf2, #e6e2cc 68%, #cfcab0);
+  box-shadow: 0 0 .5em rgba(255, 252, 230, .5);
+}
+.lc-stadt-haus {
+  position: absolute;
+  bottom: 0;
+  background: linear-gradient(180deg, #1b2438, #141b2b);
+  border-top: 1px solid rgba(255, 255, 255, .06);
+  border-radius: 1px 1px 0 0;
+}
+.lc-stadt-fenster {
+  position: absolute;
+  width: 3.4%;
+  height: 4.6%;
+  background: #ffd98a;
+  box-shadow: 0 0 .18em rgba(255, 210, 120, .8);
+  animation: lcStadtFensterR35 var(--blink, 3s) steps(1, end) infinite;
+}
+@keyframes lcStadtFensterR35 {
+  0%, 62%  { opacity: 1; }
+  63%, 88% { opacity: .18; }
+  89%,100% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-stadt-fenster { animation: none; }
+}
+
+/* DIE DECKE, DIE WÄCHST.
+   GEWÜNSCHT: „dann soll der Schnee über die Häuser fallen und die
+   Häuser mit Schnee bedecken."
+   Sie liegt über der Landschaft und unter den Flocken und wächst von
+   unten her, solange es schneit. Der weiche Rand oben macht aus der
+   geraden Kante eine Schneedecke. */
+.lc-sk-decke {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 30% 60% at 22% 0%, #fff 0 60%, rgba(255,255,255,0) 72%),
+    radial-gradient(ellipse 26% 55% at 47% 4%, #fff 0 60%, rgba(255,255,255,0) 72%),
+    radial-gradient(ellipse 30% 60% at 76% 2%, #fff 0 60%, rgba(255,255,255,0) 72%),
+    linear-gradient(180deg, rgba(255,255,255,.92), #fff 42%);
+  border-radius: 40% 46% 0 0 / 34% 30% 0 0;
+  animation: lcSkDeckeR35 6.4s ease-in both;
+}
+@keyframes lcSkDeckeR35 {
+  0%   { height: 0; opacity: 0; }
+  12%  { opacity: .9; }
+  100% { height: 26%; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .lc-sk-decke { display: none; } }
 
 /* Der Schnee. Jede Flocke hat ihre eigene Fallzeit, ihren eigenen
    Seitenwind und ihre eigene Verzögerung — sonst fällt ein Gitter. */

@@ -23657,17 +23657,26 @@
     /* „bei dem Schneeball koennte man auch ein realistischeres machen" —
        eigenes Geraeusch (ElevenLabs): Flug, nasser Klatscher, rieselnder Rest. */
     schneeball:     { ton: "schneeklatsch", dauer: 3600, laut: 0.55 },
-    bumerang:       { ton: "bonk",     dauer: 3000, laut: 0.6 },   /* Holz am Kopf */
+    /* „da fehlt dieses SWOOSH Geraeusch, was er macht, wenn er los
+       fliegt und dann den Aufprall macht." Der Flug klingt jetzt nach
+       Flug; der Aufprall kommt aus lcBumerang zum richtigen Zeitpunkt. */
+    bumerang:       { ton: "swoosh",   dauer: 3000, laut: 0.6 },
     /* „der Drill von dem Pfeil, den wir schiessen, das koennte alles
        bisschen besser sein": Sehne, Flug, Saugnapf. */
     saugpfeil:      { ton: "pfeilschuss", dauer: 3400, laut: 0.6 },
     sahne:          { ton: "spruehsahne", dauer: 4200, laut: 0.5 }, /* Dose zischt, Sahne klatscht */
-    sog:            { ton: "regen",    dauer: 4600, laut: 0.4 },   /* Wasser, das zieht */
-    trommel:        { ton: "bonk",     dauer: 2800, laut: 0.7 },   /* der Schlag sitzt */
+    /* „Bei dem Strudel koennte ein schoenes Strudelgeraeusch sein." */
+    sog:            { ton: "sogwasser", dauer: 4600, laut: 0.45 },
+    /* „wie beim kleinen Trommler ... so ein richtiges Marschtrommel."
+       Einmal antippen gibt den Paukenschlag, laenger halten die
+       Marschtrommel — siehe lcTrommel. */
+    trommel:        { ton: "pauke",    dauer: 2800, laut: 0.7 },
     /* Runde 15 — „das Paintball hast du auch noch vergessen", das Ei,
        das Losfahren und die Spielzuege. */
     paintfleck:     { ton: "paintball", dauer: 1600, laut: 0.55 }, /* ein Schuss, kein Dauerfeuer */
-    ei:             { ton: "eiknack",  dauer: 1200, laut: 0.6 },   /* das Knacken der Schale */
+    /* „wenn man das Ei aufschlaegt, das kann auch realistischer
+       klingen und dann ... kann das so bisschen eklig klingen." */
+    ei:             { ton: "eiglibber", dauer: 3000, laut: 0.6 },
     /* „Bei dem Fahren ein realistisches Fahrgeraeusch und dann kannst du,
        wenn er ankommt, ein Quietschgeraeusch dazubringen. Vielleicht machst
        du die zwei Sachen einzeln, dass das Quietschen erst ausgeloest wird,
@@ -23679,7 +23688,8 @@
     pacjagd:        { ton: "pacman",   dauer: 3400, laut: 0.55 }, /* die Jagd ueber die Felder */
     stoerung:       { ton: "gewitter", dauer: 3000, laut: 0.38 },  /* Rauschen */
     aufessen:       { ton: "keks",     dauer: 700,  laut: 0.5 },   /* ein Biss, kein Dauerkauen */
-    sanduhr:        { ton: "schwamm",  dauer: 3200, laut: 0.4 },   /* rieselnder Sand */
+    /* „realistisches Sanduhrgeraeusch an der Stelle." */
+    sanduhr:        { ton: "sanduhr",  dauer: 3200, laut: 0.45 },
     /* Und der Rest der Wunschliste — „lasse keinen aus". */
     katapult:       { ton: "katapult", dauer: 2600, laut: 0.65 },
     /* „wenn man jetzt das Getraenk austrinkt, dann koennte man ein
@@ -23694,21 +23704,32 @@
     blubbern:       { ton: "blubbern", dauer: 3600, laut: 0.5 },
     /* Zerknuelltes Papier klingt wie Papier — „schwamm" ist das
        trockenste Geraeusch, das da ist. */
-    knuell:         { ton: "schwamm",  dauer: 3400, laut: 0.5 },
+    /* „bei den Knuell brauche ich noch ein realistischen Papier zur
+       Knuell Sound." */
+    knuell:         { ton: "knuellen", dauer: 3400, laut: 0.55 },
     /* „das Rollo, dass man das so kurz runter und hoch schnipsen laesst." */
     rollo:          { ton: "rollohoch", dauer: 3400, laut: 0.5 },
     lamellen:       { ton: "jalousieauf", dauer: 3400, laut: 0.5 },
     /* „bei der Peitsche selber kann einfach nur ein Peitschenknall sein." */
-    peitsche:       { ton: "peitschenknall", dauer: 2000, laut: 0.6 },
-    bowling:        { ton: "glasbruch", dauer: 2400, laut: 0.5 },
-    billard:        { ton: "bonk",     dauer: 2400, laut: 0.55 },
+    /* „bei der Peitsche realistische Peitschen Sound" — die Lasche
+       zischt erst, dann knallt die Spitze. */
+    peitsche:       { ton: "peitsche2", dauer: 2000, laut: 0.6 },
+    /* „Beim Bowling gibts auch ne besseren Sound weil den den du hast
+       ist der von der zerbrochenen Scheibe." */
+    bowling:        { ton: "bowling",  dauer: 4200, laut: 0.5 },
+    /* „das realistische Geraeusch vom Koe an die Kugel und wie das
+       dann klingt, wenn es einlocht" — der Stoss hier, das Einlochen
+       am Ende der Animation (siehe lcBillard). */
+    billard:        { ton: "billardstoss", dauer: 2400, laut: 0.55 },
     gemeinsam:      { ton: "fahren",   dauer: 3400, laut: 0.5 },
     /* Kein eigenes Geraeusch: die Schneekugel leiht sich „schnee" —
        gemessen an data-geraeusche.js, dort liegt es. */
     schneekugel:    { ton: "schnee",   dauer: 3200, laut: 0.45 },
     flug:           { ton: "flugzeug", dauer: 2800, laut: 0.45 },
     maulwurf:       { ton: "maulwurf", dauer: 2400, laut: 0.5 },
-    portal:         { ton: "portal",   dauer: 2200, laut: 0.5 },
+    /* „dann koennte da wirklich so ein realistischer Science-Fiction
+       Gate Sound kommen." */
+    portal:         { ton: "gate",     dauer: 2200, laut: 0.5 },
     /* Die zwei neuen Reisen: „eine Variante vielleicht noch mit einem
        Boot ... oder dass man einen Baustellenkran hat." */
     boot:           { ton: "boot",     dauer: 3000, laut: 0.45 },
@@ -23719,28 +23740,51 @@
     kopfhoerer:     { ton: "noten",    dauer: 3200, laut: 0.45 },
     /* „das Fenster aufmachen soll auch nach Fenster oeffnen klingen." */
     luke:           { ton: "fensterauf", dauer: 3400, laut: 0.5 },
-    platte:         { ton: "disko",    dauer: 3600, laut: 0.45 },
-    ohrfeige:       { ton: "boxen",    dauer: 1800, laut: 0.6 },
-    basketball:     { ton: "bonk",     dauer: 3000, laut: 0.5 },
-    tennis:         { ton: "bonk",     dauer: 3000, laut: 0.5 },
+    /* „Bei der Platte soll ein realistisches Scratch Geraeusch kommen." */
+    platte:         { ton: "scratch",  dauer: 3600, laut: 0.5 },
+    /* „Bei der Ohrfeige koennte dieses klatschen richtig zu hoeren
+       sein und so ein richtig realistisches Schmerzgeraeusch von dem,
+       der geschlagen wird." Beides steckt in der einen Datei. */
+    ohrfeige:       { ton: "ohrfeige", dauer: 2600, laut: 0.62 },
+    /* „ein realistisches Tripelgeraeusch ... und dieses realistische
+       Geraeusch, wenn der Ball in den Korb fliegt." Erst das Dribbeln,
+       der Korb kommt am Ende (siehe lcBasketball). */
+    basketball:     { ton: "dribbeln", dauer: 3000, laut: 0.5 },
+    /* „Dieser Tennisball dieses typische Tennisball Aufschlaggeraeusch." */
+    tennis:         { ton: "tennisschlag", dauer: 3000, laut: 0.5 },
     krumel:         { ton: "keks",     dauer: 3400, laut: 0.5 },
     /* Runde 18 — die Neuen leihen sich ebenfalls Geraeusche, die es
        schon gibt; welches passt, steht dabei. */
     lichtaus:       { ton: "finsternis", dauer: 3800, laut: 0.45 }, /* das Summen beim Ausgehen */
-    muenze:         { ton: "geld",     dauer: 4200, laut: 0.45 },  /* Metall auf dem Tisch */
-    wischer:        { ton: "schwamm",  dauer: 4000, laut: 0.45 },  /* das Quietschen beim Wischen */
+    /* „sie soll einfach drehen realistisch und sie soll am Boden
+       landen ... dieses Traeger soll bei der Muenze unbedingt auch da
+       sein." */
+    muenze:         { ton: "muenze",   dauer: 3400, laut: 0.5 },
+    /* „er kann quietschen beim Scheiben wischen. Da klingt eher wie
+       ein geschaerftes Messer aber nicht wie ein quietschen der
+       Scheibenwischer." */
+    wischer:        { ton: "wischer",  dauer: 4000, laut: 0.5 },
     zwille:         { ton: "zwille",   dauer: 2600, laut: 0.6 },   /* Gummiband, Schnalzen, Flug */
-    pusterohr:      { ton: "platsch",  dauer: 4000, laut: 0.5 },   /* der nasse Klatscher */
+    /* „dann hatten wir noch das Blasrohr, wo man diese kleinen Spuck
+       Kuegelchen schicken kann ... dann sollen die vielleicht auch so
+       ein Ekelgeraeusch von sich geben." */
+    pusterohr:      { ton: "spuckkugel", dauer: 4000, laut: 0.5 },
     gluehbirne:     { ton: "kitt",     dauer: 4000, laut: 0.45 },  /* Glas in der Fassung */
-    entbloessung:   { ton: "boing",    dauer: 3000, laut: 0.5 },   /* der Comic-Gag */
+    /* „vielleicht besser so ein pfeifen, wie man ne Frau auf der
+       Strasse nach pfeift." (ton/boing gab es ohnehin nie.) */
+    entbloessung:   { ton: "pfiff",    dauer: 3000, laut: 0.5 },
     /* „wenn man den Hut aufsetzt, dann koennte so ein YIHAAH wie bei den
        Cowboys kommen, und vielleicht so ein Peitschenknall zur selben Zeit."
        Vorher lag hier „kitt" — ein Motorgeraeusch: „da ist irgendwie so ein
        Motorgeraeusch drin, als ein Auto faehrt, das macht keinen Sinn." */
-    hut:            { ton: "cowboy",   dauer: 3400, laut: 0.5 },
+    /* „der Cowboy Sound mit der Peitsche irgendwie so angeschnitten zu
+       sein, weil man hoert am Anfang nicht dieses YIHAAH." Die neue
+       Aufnahme faengt ohne Stille an. */
+    hut:            { ton: "cowboy2",  dauer: 3400, laut: 0.5 },
     ticken:         { ton: "wecker",   dauer: 260,  laut: 0.45 },  /* ein Tick je Zahl */
     bombe:          { ton: "schuss",   dauer: 2600, laut: 0.6 },   /* der Knall */
-    streicheln:     { ton: "schwamm",  dauer: 3400, laut: 0.32 },  /* ganz leise */
+    /* „Bei dem streicheln moechte ich ein Katzen schnurren haben." */
+    streicheln:     { ton: "schnurren", dauer: 3400, laut: 0.4 },
     /* „das Knutschen — da koenntest du noch einen Sound machen, da haben wir
        naemlich keinen. Da hoert man so ein Schussgeraeusch oder so." */
     kuss:           { ton: "kussmund", dauer: 3200, laut: 0.5 },
@@ -23817,9 +23861,14 @@
        Animationen ueberein: der Wecker scheppert 2,4 Sekunden und
        klingelt genau dreimal, der Rest ist ein einzelner Schlag.
        ================================================================= */
-    wecker:         { ton: "wecker", dauer: 2600 , laut: 0.6 },
-    hammer:         { ton: "bonk", dauer: 2000 , laut: 0.72 },
-    tritt:          { ton: "tritt", dauer: 1400 , laut: 0.66 },
+    /* „das soll wirklich auch so ein stottern des klingeln sein nicht
+       ein digitales, sondern richtig wie diese alten, analogen Wecker." */
+    wecker:         { ton: "weckeranalog", dauer: 3200 , laut: 0.6 },
+    /* „Der Hammer auch" — ein satter Schlag statt des alten Bonk. */
+    hammer:         { ton: "hammerschlag", dauer: 2000 , laut: 0.72 },
+    /* „Bei dem Tritt vom Fussball. Kann auch ein realistisches Kick
+       Geraeusch rein." */
+    tritt:          { ton: "fussball", dauer: 1800 , laut: 0.66 },
     eimer:          { ton: "platsch", dauer: 2600 , laut: 0.58 },
     /* Die uebrigen Profilbild-Animationen leihen sich, was passt:
        Regen und Gewitter haben eigene Geraeusche, Geld und Bonbons
@@ -24253,6 +24302,23 @@
     if (lcGeraeusch(was, was)) return;
     const f = LC_AUFKLEBER_TON[was] || LC_WIRKUNG_TON[was];
     if (f) f();
+  }
+
+  /* --- EIN ZWEITER TON, ZUM RICHTIGEN ZEITPUNKT --------------------
+     GEWUENSCHT: „der Bremssound ist nicht synchron. Er muss etwas
+     vorher kommen — das muessen zwei getrennte Sounds sein. Wenn er
+     wirklich auf dem Platz landet, muss das quietschen schon kommen."
+     Und genauso beim Bumerang: „dass in dem Moment, wo der Bumerang
+     auf prallt, das SWOOSH Geraeusch auch zu Ende ist."
+
+     Deshalb gibt es jetzt einen zweiten Ton, der NICHT am Anfang
+     laeuft, sondern zu einem ausgerechneten Zeitpunkt. Wer die
+     Wegstrecke kennt, kann ihn genau dorthin legen. */
+  function lcTonSpaeter(name, nachMs, laut) {
+    const wann = Math.max(0, Number(nachMs) || 0);
+    setTimeout(() => {
+      try { lcGeraeusch(name, name, laut); } catch (e) {}
+    }, wann);
   }
 
   /* =================================================================
@@ -28560,6 +28626,11 @@
         + ' stroke-width="2" stroke-linecap="round" opacity=".7"/>'
         + "</svg>"
         + '<span class="lc-bumerang-treffer">TOCK</span>';
+      /* „dann musst du auch ausrechnen, dass in dem Moment, wo der
+         Bumerang auf prallt, das SWOOSH Geraeusch auch zu Ende ist."
+         Die Wurfanimation braucht 2,3 s bis zum Treffer — da liegt
+         der Aufprall, und das Swoosh davor ist dann durch. */
+      lcTonSpaeter("aufprallau", 2300, 0.55);
     }, 3000, "bumerang");
   }
 
@@ -28909,11 +28980,21 @@
           + "--spaet:" + (Math.random() * 2.2).toFixed(2) + "s;"
           + "--matt:" + (0.45 + Math.random() * 0.55).toFixed(2) + '"></i>';
       }
-      blende.innerHTML = land + '<span class="lc-sk-schnee">' + flocken + "</span>";
-      /* Glas und Sockel gehoeren nach AUSSEN — eine Kugel steht auf
-         etwas, und das Licht liegt auf ihr drauf. */
-      schicht.innerHTML = '<span class="lc-sk-glas"></span>'
-                        + '<span class="lc-sk-sockel"></span>';
+      blende.innerHTML = land + '<span class="lc-sk-schnee">' + flocken + "</span>"
+        /* „dann soll der Schnee ueber die Haeuser fallen und die
+           Haeuser mit Schnee bedecken." Die Decke waechst, waehrend
+           es schneit — sie liegt ueber der Landschaft, aber UNTER
+           den Flocken. */
+        + '<i class="lc-sk-decke"></i>';
+      /* HIER WAR DER FEHLER, UND ER WAR TOEDLICH:
+         „Die Schneekugel funktioniert noch gar nicht."
+         lcZpBlende haengt die Blende IN die Schicht. Danach stand
+         hier „schicht.innerHTML = ..." — und das loescht jedes Kind,
+         also die gerade gebaute Landschaft samt Flocken gleich wieder
+         mit. Sichtbar blieb nur Glas und Sockel. Jetzt wird
+         ANGEHAENGT statt ueberschrieben. */
+      schicht.insertAdjacentHTML("beforeend",
+        '<span class="lc-sk-glas"></span><span class="lc-sk-sockel"></span>');
       if (kreis) {
         kreis.classList.remove("lc-geschuettelt");
         void kreis.offsetWidth;
@@ -30259,10 +30340,14 @@
       for (let i = 1; i <= felder; i++) setTimeout(() => lcTonZu("spielzug"), i * jeFeld);
     } else {
       lcTonZu("fahren");
-      /* GEWUENSCHT: „vielleicht machst du die zwei Sachen einzeln, dass
-         das Quietschgeraeusch erst ausgeloest wird, wenn er da wirklich
-         landet, wo er hinkommt." Genau dann — nicht vorher. */
-      setTimeout(() => lcTonZu("bremse"), Math.max(0, hin - 120));
+      /* NACHGEBESSERT: „der Bremssound ist nicht synchron. Er muss
+         etwas vorher kommen — das muessen zwei getrennte Sounds sein.
+         Wenn er wirklich auf dem Platz landet, muss das quietschen
+         schon kommen."
+         Gemessen: ton/quietschen ist 1,0 s lang und endet mit dem
+         Stillstand. Es faengt deshalb 700 ms VOR der Ankunft an —
+         dann quietscht es beim Landen und nicht danach. */
+      lcTonSpaeter("quietschen", Math.max(0, hin - 700), 0.55);
     }
     /* UND DANN SITZT MAN AUCH WIRKLICH DORT.
        GEMELDET: „man soll auch einfach den Platz, den man anfahren
@@ -30439,7 +30524,8 @@
       try { laufA && laufA.cancel(); laufM && laufM.cancel(); } catch (e) {}
     }, dauer + 700);
     lcTonZu("fahren");
-    setTimeout(() => lcTonZu("bremse"), Math.max(0, hin - 120));
+    /* Auch hier: das Quietschen endet mit dem Stillstand, nicht danach. */
+    lcTonSpaeter("quietschen", Math.max(0, hin - 700), 0.55);
 
     /* Und dann sitzt auch jeder wirklich dort — jedes Geraet aber nur
        fuer sich selbst. */
@@ -30847,30 +30933,59 @@
       + ' d="M0 0 L10 -5.5 A11 11 0 1 0 10 5.5 Z"/>'
       + '<circle cx="1.5" cy="-5" r="1.3" fill="#2a2a2a"/></svg>';
     kreis.appendChild(figur);
-    /* Blickrichtung: dorthin, wo das naechste Feld liegt. */
+    /* BLICKRICHTUNG — UND WARUM SIE JETZT WOANDERS SITZT.
+       GEMELDET: „Der Pac-Man frisst noch nicht in die richtige
+       Richtung, denn manchmal ist eine Person rechts und er frisst
+       nach links ... sein Mund muss in die richtige Richtung kommen."
+
+       Zwei Fehler steckten darin:
+       1. Am LETZTEN Punkt gab es kein naechstes Feld mehr. dx und dy
+          waren null, die Funktion gab 0 zurueck — und genau im Moment
+          des Fressens drehte sich das Maul zurueck nach rechts, egal
+          woher er kam. Jetzt schaut der letzte Punkt zurueck auf den
+          vorletzten: die Richtung bleibt die, in der er gelaufen ist.
+       2. Gedreht wurde der ganze KREIS, also auch das Profilbild.
+          Nach links unterwegs stand das Gesicht dadurch auf dem Kopf.
+          Jetzt dreht sich nur die Pac-Man-Figur; das Bild bleibt, wie
+          es ist. */
     const richtung = (i) => {
-      const a = punkte[i], b = punkte[i + 1] || punkte[i];
-      const dx = b.x - a.x, dy = b.y - a.y;
+      const a = punkte[i];
+      const b = punkte[i + 1];
+      let dx, dy;
+      if (b) { dx = b.x - a.x; dy = b.y - a.y; }
+      else {
+        const vor = punkte[i - 1] || a;
+        dx = a.x - vor.x; dy = a.y - vor.y;
+      }
       if (!dx && !dy) return 0;
       return Math.round(Math.atan2(dy, dx) / (Math.PI / 2)) * 90;
     };
 
     const bilder = [];
+    const drehungen = [];
     punkte.forEach((p, i) => {
       bilder.push({
-        transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1) + "px) rotate("
-          + richtung(i) + "deg)",
+        transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1) + "px)",
         offset: bei(i * jeFeld)
       });
+      /* steps(1) in der Zeit: das Maul springt am Feld um, es dreht
+         sich nicht weich mit — so war Pac-Man immer. */
+      drehungen.push({ transform: "rotate(" + richtung(i) + "deg)", offset: bei(i * jeFeld) });
     });
     const e = punkte[punkte.length - 1];
     const drehEnde = richtung(punkte.length - 1);
     /* Satt: er wird dicker — aber rund, nicht kantig. */
     bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + e.y.toFixed(1)
-      + "px) rotate(" + drehEnde + "deg) scale(1.2)", offset: bei(hin + 320) });
+      + "px) scale(1.2)", offset: bei(hin + 320) });
     bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + e.y.toFixed(1)
-      + "px) rotate(" + drehEnde + "deg) scale(1.14)", offset: bei(hin + beissen) });
-    bilder.push({ transform: "translate(0px, 0px) rotate(0deg) scale(1)", offset: 1 });
+      + "px) scale(1.14)", offset: bei(hin + beissen) });
+    bilder.push({ transform: "translate(0px, 0px) scale(1)", offset: 1 });
+    drehungen.push({ transform: "rotate(" + drehEnde + "deg)", offset: bei(hin + beissen) });
+    drehungen.push({ transform: "rotate(" + drehEnde + "deg)", offset: 1 });
+    try {
+      const svg = figur.querySelector("svg");
+      if (svg) svg.animate(drehungen, { duration: dauer, easing: "linear", fill: "forwards" });
+    } catch (err) {}
 
     lcPlatzUnterwegs(ab.el, true);
     const aufraeumen = () => {
@@ -31306,15 +31421,58 @@
      schon (wetterIstNacht aus der Himmelsrechnung); nur wenn die
      noch nicht gelaufen ist, entscheidet die Uhr.
      ================================================================= */
-  function lcAussichtHtml(anders) {
-    let nacht = false;
-    try {
-      nacht = wetterIstNacht === true
-        || (typeof tageszeit === "function" && tageszeit() === "nacht");
-    } catch (e) {
-      const st = new Date().getHours();
-      nacht = st < 6 || st >= 21;
+  /* DREI FENSTER, DREI AUSSICHTEN — UND ALLE DREI SIEHT MAN AUCH.
+     GEMELDET: „Wenn man das Rollo hoch macht, sieht man noch keine
+     Sterne nach und bei der Jalousie noch keinen anderen Hintergrund."
+
+     Der Grund war nicht, dass nichts gezeichnet wurde — es wurde. Nur
+     haengte der Sternenhimmel an der ECHTEN Uhrzeit: tagsueber gab es
+     keine Sterne, und genau dann hat er hingesehen. Deshalb bekommt
+     jetzt jedes der drei Fenster seine eigene Aussicht, die immer
+     gleich aussieht:
+       "" (Fenster)   — Tag oder Nacht, je nach echter Uhrzeit
+       "nacht"        — immer Nachthimmel mit Mond und Sternen (Rollo)
+       "stadt"        — Dächer und beleuchtete Fenster (Jalousie)     */
+  function lcAussichtHtml(art) {
+    /* Alte Aufrufe gaben true/false fuer „andere Aussicht" — das
+       bleibt gueltig und heisst jetzt „stadt". */
+    if (art === true) art = "stadt";
+    if (art === false || art === undefined) art = "";
+
+    let nacht = art === "nacht";
+    if (!art) {
+      try {
+        nacht = wetterIstNacht === true
+          || (typeof tageszeit === "function" && tageszeit() === "nacht");
+      } catch (e) {
+        const st = new Date().getHours();
+        nacht = st < 6 || st >= 21;
+      }
     }
+
+    if (art === "stadt") {
+      /* Die Jalousie schaut auf die Stadt: Dächer in zwei Reihen,
+         dazwischen erleuchtete Fenster. */
+      let haeuser = "";
+      const breite = [15, 11, 18, 13, 16, 12, 15];
+      let x = 2;
+      breite.forEach((b, i) => {
+        const h = 26 + ((i * 17) % 28);
+        haeuser += '<i class="lc-stadt-haus" style="left:' + x + "%;width:" + b
+          + "%;height:" + h + '%"></i>';
+        for (let f = 0; f < 3; f++) {
+          if ((i + f) % 3 === 2) continue;
+          haeuser += '<i class="lc-stadt-fenster" style="left:'
+            + (x + 3 + f * (b / 3.4)).toFixed(1) + "%;bottom:"
+            + (6 + f * 7) + "%;--blink:" + (2.2 + ((i + f) % 4) * 0.6).toFixed(1)
+            + 's"></i>';
+        }
+        x += b + 1;
+      });
+      return '<span class="lc-luke-aussicht lc-aussicht-stadt">'
+        + '<i class="lc-stadt-mond"></i>' + haeuser + "</span>";
+    }
+
     let sterne = "";
     if (nacht) {
       for (let i = 0; i < 26; i++) {
@@ -31323,8 +31481,7 @@
           + 's"></b>';
       }
     }
-    return '<span class="lc-luke-aussicht' + (nacht ? " lc-aussicht-nacht" : "")
-      + (anders ? " lc-aussicht-anders" : "") + '">'
+    return '<span class="lc-luke-aussicht' + (nacht ? " lc-aussicht-nacht" : "") + '">'
       + '<i class="lc-luke-sonne"></i>'
       + '<i class="lc-luke-huegel"></i>'
       + '<i class="lc-luke-huegel lc-luke-huegel-2"></i>'
@@ -31337,8 +31494,11 @@
     return lcAmPlatz(wen, "lc-rollo", (schicht) => {
       const blende = lcZpBlende(schicht);
       blende.innerHTML =
-        /* Dahinter die Aussicht — tags Sonne, nachts Sternenhimmel. */
-        lcAussichtHtml(false)
+        /* „einen alternativen Hintergrund beim Rollo, weil es ist ja
+           zum Beispiel nachts dann zeigt es einen schoenen
+           Nachthimmel" — hier also IMMER der Nachthimmel, egal wie
+           spaet es wirklich ist. */
+        lcAussichtHtml("nacht")
         + '<span class="lc-rollo-bahn">'
         + '<i class="lc-rollo-naht"></i><i class="lc-rollo-naht"></i>'
         + '<i class="lc-rollo-griff"></i>'
@@ -31361,13 +31521,21 @@
          MITTE einen Spalt aufzog (lcLamellenAuf). Jetzt sind es ZEHN
          Lamellen zu genau 10 %, jede 10,6 % hoch (sie ueberlappen
          also leicht), und der Spalt in der Mitte ist weg. */
+      /* NACHGEMESSEN, UND DESHALB OHNE VERSATZ:
+         „achte darauf, dass die Jalousie gleichmaessig aufgeht, denn
+         sie darf in der Mitte keinen groesseren Abstand haben."
+         Der Versatz von 0,05 s je Lamelle war genau die Ursache:
+         gemessen waren die Luecken waehrend des Aufgehens oben 4,0 px
+         und unten -0,4 px. Laufen alle zur gleichen Zeit, bleibt der
+         Abstand ueberall derselbe — gemessen -0,5 px, also eine
+         gleichmaessige leichte Ueberlappung. */
       for (let i = 0; i < 10; i++) {
         bahnen += '<i class="lc-lamelle" style="top:' + (i * 10).toFixed(1)
-          + "%;animation-delay:" + (i * 0.05).toFixed(3) + 's"></i>';
+          + '%"></i>';
       }
       /* „und bei der Jalousie kannst du auch eine andere Aussicht
          machen" — dieselbe Welt, andere Blickrichtung. */
-      blende.innerHTML = lcAussichtHtml(true) + bahnen
+      blende.innerHTML = lcAussichtHtml("stadt") + bahnen
         + '<span class="lc-lamellen-schnur"></span>';
       /* GEMESSEN (pruefe-tonschleifen): hier stand „jalousie" — der
          NAME DES GERAEUSCHS. Der letzte Wert ist aber der Name des
@@ -31416,7 +31584,7 @@
         setTimeout(() => {
           kreis.classList.remove("lc-geohrfeigt");
           kreis.style.removeProperty("--ohrdreh");
-        }, 1800);
+        }, 2600);
       }
       schicht.innerHTML =
         '<svg class="lc-ohrfeige-hand" viewBox="0 0 60 60">'
@@ -31426,7 +31594,7 @@
         + ' fill="#f6c89a" stroke="#c9915e" stroke-width="2" stroke-linejoin="round"/>'
         + "</svg>"
         + '<span class="lc-ohrfeige-klatsch">KLATSCH</span>';
-    }, 1800, "ohrfeige");
+    }, 2600, "ohrfeige");
   }
 
   /* --- BASKETBALL UND TENNIS ------------------------------------------ */
@@ -31578,6 +31746,10 @@
           + '<path d="M26 44 L34 44 M42 40 L50 40 M60 44 L68 44" stroke="#c9915e"'
           + ' stroke-width="2.4" stroke-linecap="round" opacity=".7"/>'
           + "</svg>";
+      /* „dieses realistische Geraeusch, wenn der Ball in den Korb
+         fliegt und man das Metall wackeln hoert." Beim Tennis gibt es
+         keinen Korb — da bleibt es beim Aufschlag. */
+      if (art !== "tennis") lcTonSpaeter("korb", 3600, 0.55);
     }, art === "tennis" ? 3000 : 5200, art === "tennis" ? "tennis" : "basketball");
   }
 
@@ -31827,6 +31999,10 @@
         + "</svg>"
         + '<span class="lc-zwille-kugel"></span>'
         + '<span class="lc-zwille-aua">AUA</span>';
+      /* „man hoert wirklich das quietschen von diesem dehnen
+         Gummiband ... und derjenige, der getroffen wird ... macht dann
+         auch so ein Au Geraeusch." Zwei Toene, zwei Zeitpunkte. */
+      lcTonSpaeter("aufprallau", 1500, 0.6);
     }, 2600, "zwille");
   }
 
@@ -32775,6 +32951,11 @@
       /* Zu zweit: der Getroffene rollt selbst ins Loch. */
       lcBillardTasche(loch, 0);
       lcKugelLauf(gitter, zu, loch, { warten: 700, rein: true });
+      /* „aber das ein Lochgeraeusch musst du wahrscheinlich wieder
+         separat machen oder? Das ist halt auf jeden Fall der Laenge
+         entspricht." Der Stoss klingt am Anfang, das Einlochen dann,
+         wenn die Kugel wirklich verschwindet. */
+      lcTonSpaeter("billardloch", 2000, 0.55);
     }, 2600, "billard");
   }
 
