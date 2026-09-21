@@ -155,22 +155,43 @@ const pruefe = (was, gut, zusatz) => {
     (sb.blut.ani || "").split(",").length === 2, String(sb.blut.ani));
   pruefe("Eis: die Zapfen liegen auf der freien Schicht",
     sb.eis.anzeige === "block" && sb.eis.svg === true, sb.eis.anzeige);
-  /* „je länger ich spreche am Stück, dass die Spinne tiefer krabbelt" —
-     das geht nur mit EINEM langen Durchlauf, nicht mit einer
-     Endlosschleife, die immer wieder nach oben zurückspringt. */
-  pruefe("Spinne: ein einziger langer Abstieg, keine Schleife",
-    sb.spinne.wiederholung === "1", sb.spinne.wiederholung + "×, " + sb.spinne.dauer);
-  pruefe("Spinne: und kein Hin und Her",
-    sb.spinne.richtung === "normal", String(sb.spinne.richtung));
-  /* Die ORIGINAL-VHS-Störung springt (steps), sie gleitet nicht. */
+  /* HIER STAND EINE REGEL, DIE ICH MIR SELBST GEGEBEN HATTE — und
+     sie war falsch. „je laenger ich spreche am Stueck, dass die
+     Spinne tiefer krabbelt" hiess fuer mich: EIN langer Durchlauf,
+     keine Schleife. Genau daraus wurde aber der Fehler, den er
+     danach gemeldet hat: „Das Sprechen bricht die Animation einfach
+     irgendwann ab. Das soll nicht so sein." Nach 26 Sekunden war der
+     Durchlauf zu Ende und die Spinne hing bewegungslos da.
+     Richtig ist BEIDES: ein langer Abstieg — und danach etwas, das
+     weitergeht. Deshalb jetzt zwei Animationen: das Abseilen einmal,
+     und im Anschluss das Krabbeln ohne Ende.
+     „Sie krabbelt auch nicht auf ihrem Netz nach laengerem
+     Sprechen." */
+  const teile = String(sb.spinne.wiederholung).split(",").map((x) => x.trim());
+  pruefe("Spinne: der Abstieg laeuft genau einmal",
+    teile[0] === "1", teile.join(" / ") + " — " + sb.spinne.dauer);
+  pruefe("Spinne: danach krabbelt sie weiter, ohne Ende",
+    teile.length === 2 && teile[1] === "infinite", teile.join(" / "));
+  /* UND HIER STAND DIE ZWEITE SELBSTGEMACHTE REGEL. Sie beschrieb
+     die Fassung, die ich in Runde 41 gebaut hatte — nicht die, die
+     er wollte. XANDER, danach, woertlich: „Du hast die Stoerung
+     jetzt schon zum zweiten Mal geaendert. Ich habe niemals gesagt,
+     dass du die Stoerung im Sprechbild jemals aendern solltest. Die
+     erste Version, die du hattest, war perfekt."
+     Gemessen wird deshalb ab Runde 55 die Fassung 357: das BILD
+     springt (steps), die Zeilen WANDERN gleichmaessig (linear), und
+     EIN Band rutscht durchs Bild statt drei zu flackern. */
   pruefe("Störung: das Bild springt, es gleitet nicht",
     /steps/.test(sb.stoerung.bild), String(sb.stoerung.bild));
-  pruefe("Störung: das Rauschen springt ebenso",
-    /steps/.test(sb.stoerung.rausch), String(sb.stoerung.rausch));
-  pruefe("Störung: und die Bänder auch",
-    /steps/.test(sb.stoerung.band), String(sb.stoerung.band));
-  pruefe("Störung: drei Bänder in drei Farben",
-    sb.stoerung.lagen >= 3, sb.stoerung.lagen + " Lagen");
+  pruefe("Störung: die Empfangszeilen wandern gleichmäßig",
+    /linear/.test(sb.stoerung.rausch), String(sb.stoerung.rausch));
+  /* Das Band rutscht in einem Zug durchs Bild — ein Ruckeln waere
+     die Fassung aus Runde 41. */
+  pruefe("Störung: das Band rutscht durch, es ruckelt nicht",
+    /cubic-bezier|ease/.test(sb.stoerung.band) && !/steps/.test(sb.stoerung.band),
+    String(sb.stoerung.band));
+  pruefe("Störung: es ist EIN Band, nicht drei",
+    sb.stoerung.lagen === 1, sb.stoerung.lagen + " Lagen");
 
   await br.close(); srv.close();
   console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n"

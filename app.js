@@ -22006,8 +22006,14 @@
      „rand: true" heisst, die Teilchen liegen auf der Kreisbahn um
      das Bild; bei den Herzen steht es nicht da. */
   const LC_TEILCHENBILDER = {
-    magie:  { menge: 26, klasse: "lc-tmagie", rand: true, band: [32.8, 37.2],
-              zeichen: ["\u2726", "\u2727", "\u00b7", "\u2734", "\u2735"] },
+    /* XANDER: „bei der Magie selber kann es auch noch ein bisschen
+       filigran sein ... da kann noch ein bisschen feiner gearbeitet
+       werden, was wirklich magisch wirkt."
+       Mehr und kleiner: 38 statt 26, und feinere Zeichen dazwischen
+       (Haarstern, Punkt, Raute). */
+    magie:  { menge: 38, klasse: "lc-tmagie", rand: true, band: [33.2, 36.8],
+              zeichen: ["\u2726", "\u2727", "\u00b7", "\u2734", "\u2735",
+                        "\u22c6", "\u2219", "\u25ca", "\u02da", "\u2739"] },
     noten:  { menge: 14, klasse: "lc-tnoten", rand: true,
               zeichen: ["\u266a", "\u266b", "\u266c", "\u2669"] },
     herzen: { menge: 10, klasse: "lc-therzen",
@@ -22035,8 +22041,16 @@
        Lineal sein, das kann so ein bisschen Partikel sein."
        Also echte Teilchen wie bei Magie und Noten, jedes mit eigener
        Stelle und eigenem Takt — nicht ein Muster, das sich dreht. */
-    funkeln:{ menge: 20, klasse: "lc-tfunkeln", rand: true, band: [32.8, 37.2],
-              zeichen: ["\u2726", "\u2727", "\u00b7", "\u2728"] },
+    /* XANDER: „bei dem Funkeln kannst du bisschen mehr am Kreis
+       bleiben, besonders was das obere Funkeln betrifft, und du
+       kannst viel mehr Elemente da reinbringen, auch kleine Partikel,
+       verschiedene Formen, die vielleicht filigraner sind."
+       36 statt 20, acht verschiedene Zeichen von gross bis
+       haarfein — und ein schmaleres Band, damit auch oben nichts
+       abhebt. */
+    funkeln:{ menge: 36, klasse: "lc-tfunkeln", rand: true, band: [33.4, 36.6],
+              zeichen: ["\u2726", "\u2727", "\u00b7", "\u2728", "\u22c6",
+                        "\u2219", "\u02da", "\u205e"] },
     /* Die Ladungen tanzen AUF dem Rahmen — ein schmales Band, sonst
        schweben sie daneben. */
     strom:  { menge: 14, klasse: "lc-tstrom", rand: true, band: [33.4, 35.6], zeichen: [""] },
@@ -23079,8 +23093,41 @@
          Fuer sie (und NUR fuer sie) wird --links neu gewuerfelt; die
          Zeile stand vorher ohne Bedingung hier und hat damit jede
          berechnete Kreisbahn wieder ueberschrieben. */
-      if (art === "blasen" || art === "noten" || art === "herzen") {
+      if (art === "blasen" || art === "herzen") {
         t.style.setProperty("--links", (10 + Math.random() * 80).toFixed(0) + "%");
+      }
+      /* XANDER: „Die Noten koennen aber mehr innerhalb des Kreises
+         sein und nicht so sehr ausserhalb fliegen."
+         NACHGERECHNET: das Feld ist 1,44-mal so breit wie das Bild,
+         das Bild liegt also zwischen 15 und 85 Prozent der
+         Feldbreite. Gestreut wurde aber von 10 bis 90 — jede dritte
+         Note startete NEBEN dem Bild. Jetzt 24 bis 76 Prozent: das
+         ist mit Rand noch im Bild. */
+      if (art === "noten") {
+        t.style.setProperty("--links", (24 + Math.random() * 52).toFixed(0) + "%");
+      }
+      /* XANDER: „arbeite mal ein bisschen Atmosphaere und nicht mit
+         solchen geometrischen perfekten Formen, sondern natuerlichen
+         Feuerflammen ... verfluessigen, bisschen Variationen
+         reinbringen, nicht dass jede Flamme gleich und Copy and
+         Paste aussieht."
+
+         Bisher hatten alle dreissig Flammen DIESELBE Form (ein
+         clip-path in der Regel), dieselbe Farbe und dieselbe
+         Bewegung — nur die Groesse war gewuerfelt. Jetzt bekommt
+         jede: eine von fuenf Silhouetten (data-v), eine eigene
+         Glutfarbe (--glut dreht den Farbton), eine eigene Neigung
+         (--neig) und einen eigenen Takt. Dreissig Flammen, keine
+         zwei gleich. */
+      if (art === "feuer") {
+        t.dataset.v = String(Math.floor(Math.random() * 5));
+        t.style.setProperty("--glut", (Math.random() * 26 - 13).toFixed(0) + "deg");
+        t.style.setProperty("--neig", (Math.random() * 18 - 9).toFixed(1) + "deg");
+        t.style.setProperty("--schlank", (0.8 + Math.random() * 0.55).toFixed(2));
+      }
+      if (art === "funkeln" || art === "magie") {
+        t.dataset.v = String(Math.floor(Math.random() * 4));
+        t.style.setProperty("--glut", (Math.random() * 60 - 30).toFixed(0) + "deg");
       }
       t.style.animationDuration = (1.5 + Math.random() * 2.2).toFixed(2) + "s";
       t.style.animationDelay = (-Math.random() * 3).toFixed(2) + "s";

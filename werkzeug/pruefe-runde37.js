@@ -326,7 +326,27 @@ const TEILCHENBILDER = ["feuer", "funkeln", "magie"];
       const kreis = pl.querySelector(".lc-kreis").getBoundingClientRect();
       const mx = kreis.left + kreis.width / 2, my = kreis.top + kreis.height / 2;
       const teile = [...pl.querySelectorAll(".lc-teilchen")];
+      /* BEIM FEUER ZAEHLT DER FUSSPUNKT, NICHT DIE MITTE DES KASTENS.
+         XANDER: „Die soll richtig wie echtes Feuer an diesem
+         Feuerring sein." Eine Flamme steht MIT DEM FUSS auf dem
+         Reifen und leckt nach oben ueber das Bild — genau das ist
+         Feuer. Wer die Mitte ihres Kastens misst, misst die Mitte
+         der Flamme und haelt jede ordentliche Flamme fuer zu weit
+         innen; dann bleiben nur Streichhoelzer uebrig.
+         Der Fusspunkt steht in --links/--oben, in Prozent des
+         Feldes — daraus laesst er sich genau ausrechnen. */
+      const feld = pl.querySelector(".lc-sprechfeld");
+      const fk = feld ? feld.getBoundingClientRect() : null;
+      const fussPunkt = (t) => {
+        if (!fk) return null;
+        const l = parseFloat(getComputedStyle(t).getPropertyValue("--links"));
+        const o = parseFloat(getComputedStyle(t).getPropertyValue("--oben"));
+        if (!isFinite(l) || !isFinite(o)) return null;
+        return { x: fk.left + fk.width * l / 100, y: fk.top + fk.height * o / 100 };
+      };
       const abstand = teile.map((t) => {
+        const f = a === "feuer" ? fussPunkt(t) : null;
+        if (f) return Math.hypot(f.x - mx, f.y - my);
         const b = t.getBoundingClientRect();
         return Math.hypot(b.left + b.width / 2 - mx, b.top + b.height / 2 - my);
       });
@@ -338,8 +358,9 @@ const TEILCHENBILDER = ["feuer", "funkeln", "magie"];
     /* „drin" heisst: die Mitte des Teilchens liegt deutlich innerhalb
        des Bildes. Beim Feuer darf die Flamme ueber den Rand lecken,
        ihr Fusspunkt liegt aber draussen. */
-    pruefe(art + ": keines sitzt mitten im Bild",
-      d.naechster > d.r * 0.72,
+    pruefe(art + (art === "feuer" ? ": kein Fusspunkt sitzt mitten im Bild"
+                                    : ": keines sitzt mitten im Bild"),
+      d.naechster > d.r * (art === "feuer" ? 0.9 : 0.72),
       "nächstes " + Math.round(d.naechster) + " px, Bildradius " + Math.round(d.r) + " px");
     pruefe(art + ": sie liegen auf einem Ring, nicht gehäuft",
       (d.weitester - d.naechster) < d.r * 0.9,

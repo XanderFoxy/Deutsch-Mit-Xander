@@ -19259,3 +19259,392 @@ body.lc-schreibt .tutor-reiter {
 }
 /* Und die Ueberschrift des Waehlers steht immer waagerecht. */
 .lc-lese-liste .lc-lese-reihe { flex-wrap: nowrap; }
+
+/* === RUNDE 55: DIE STÖRUNG IST WIEDER DIE ALTE =======================
+   XANDER, deutlich: „Du hast die Stoerung jetzt schon zum zweiten Mal
+   geaendert. Ich habe niemals gesagt, dass du die Stoerung im
+   Sprechbild jemals aendern solltest. Die erste Version, die du
+   hattest, war perfekt ... Schau in deinem Verlauf, da siehst du den
+   Beweis dafuer."
+
+   NACHGESEHEN, und er hat in beiden Punkten recht:
+     · Fassung 357 (86aee6a) hat sie gebaut. DAS ist die Fassung, die
+       er meint.
+     · Runde 41 (22b3801) hat sie durch lcStoerEmpfangR40 ersetzt —
+       ungefragt, unter dem Titel „alte VHS".
+     · Runde 49 (e9e7f74) hat sie noch einmal geaendert, weil ich
+       „Mach bitte die alte Stoerung wieder rein" als „mach sie
+       sichtbarer" gelesen habe statt als „stell die alte wieder her".
+   Beide Aenderungen sind hiermit zurueckgenommen. Was hier steht, ist
+   Zeile fuer Zeile die Fassung 357. Sie wird nicht mehr angefasst.
+   -------------------------------------------------------------------- */
+.lc-platz-spricht[data-sprechbild="stoerung"] .lc-kreis {
+  border-color: #cfe0ef !important;
+  animation: lcStoerFlimmern .44s steps(2, end) infinite !important;
+}
+@keyframes lcStoerFlimmern {
+  0%, 100% { filter: none;
+             box-shadow: 0 0 0 2px rgba(180, 210, 235, .55); }
+  50%      { filter: contrast(1.25) saturate(1.45) hue-rotate(7deg);
+             box-shadow: -2px 0 0 0 rgba(255, 60, 90, .45), 2px 0 0 0 rgba(60, 200, 255, .45),
+                          0 0 12px 3px rgba(150, 190, 220, .4); }
+}
+/* Die Zeilen eines schlechten Empfangs — sie wandern nach oben. */
+.lc-platz-spricht[data-sprechbild="stoerung"] .lc-kreis::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 0 !important;
+  background: repeating-linear-gradient(to bottom,
+    rgba(255, 255, 255, .16) 0 1px, rgba(0, 0, 0, .2) 1px 3px);
+  mix-blend-mode: overlay;
+  opacity: 1;
+  animation: lcStoerZeilen 1.1s linear infinite;
+  pointer-events: none;
+  z-index: 3;
+}
+@keyframes lcStoerZeilen {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 -24px; }
+}
+/* Und das Band, das durchs Bild rutscht: dort ist das Bild zerrissen. */
+.lc-platz-spricht[data-sprechbild="stoerung"] .lc-kreis::after {
+  content: "";
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  height: 14%;
+  top: 0;
+  inset: auto;
+  width: auto;
+  border-radius: 0;
+  border: 0 !important;
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, .0), rgba(255, 255, 255, .5) 35%,
+    rgba(120, 210, 255, .35) 65%, rgba(255, 255, 255, 0));
+  background-size: auto;
+  mix-blend-mode: screen;
+  opacity: 1;
+  animation: lcStoerBandR55 1.9s cubic-bezier(.4, 0, .7, 1) infinite;
+  pointer-events: none;
+  z-index: 4;
+}
+/* Eigener Name nur, weil „lcStoerBand" seit Runde 15 dem WURF gehoert
+   (.lc-stoer-band) — bei doppelten Namen gewinnt der letzte, und dann
+   waere der Wurf kaputt. Die Werte sind die von Fassung 357. */
+@keyframes lcStoerBandR55 {
+  0%   { opacity: 0; transform: translateY(-40%) skewX(0deg); }
+  8%   { opacity: .9; transform: translateY(0%)  skewX(-9deg); }
+  34%  { opacity: .8; transform: translateY(180%) skewX(6deg); }
+  58%  { opacity: .9; transform: translateY(380%) skewX(-5deg); }
+  76%  { opacity: .7; transform: translateY(560%) skewX(8deg); }
+  92%, 100% { opacity: 0; transform: translateY(740%) skewX(0deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-platz-spricht[data-sprechbild="stoerung"] .lc-kreis,
+  .lc-platz-spricht[data-sprechbild="stoerung"] .lc-kreis::before,
+  .lc-platz-spricht[data-sprechbild="stoerung"] .lc-kreis::after { animation: none !important; }
+}
+
+/* === RUNDE 55: NATÜRLICHES FEUER STATT COPY AND PASTE ================
+   XANDER: „arbeite mal ein bisschen Atmosphaere und nicht mit solchen
+   geometrischen perfekten Formen, sondern natuerlichen Feuerflammen am
+   Pfad des Profilrahmens ... verfluessigen, bisschen Variationen
+   reinbringen, nicht dass jede Flamme gleich und Copy and Paste
+   aussieht. Die soll richtig wie echtes Feuer an diesem Feuerring
+   sein." Und: die filigranen von jetzt mit den frueheren verbinden.
+
+   Bisher hatten alle dreissig Flammen DIESELBE Silhouette, dieselbe
+   Farbe und dieselbe Bewegung — nur die Groesse war gewuerfelt. Fuenf
+   Silhouetten, eine eigene Glut und ein eigener Takt je Flamme machen
+   daraus ein Feuer. Dazu zwei Sachen, die es vorher gar nicht gab:
+   eine WEICHE Glutzone unter den Flammen (Feuer hat keine Umrisse)
+   und einzelne Funken, die aufsteigen. */
+.lc-tfeuer .lc-teilchen {
+  /* Etwas breiter und hoeher als die reine Nadel von Runde 54 — das
+     ist das „mit den vorherigen verbinden": die Filigranitaet bleibt,
+     aber es ist wieder eine Flamme und kein Strich. */
+  /* Richtig Feuer, nicht Streichhölzer: „Die soll richtig wie echtes
+     Feuer an diesem Feuerring sein." Die Flamme darf ueber den Rand
+     ins Bild lecken — der FUSSPUNKT steht auf dem Reifen, und das ist
+     es, was zaehlt (so misst es pruefe-runde37 seit Runde 55). */
+  width: calc(0.21rem * var(--gross, 1) + 0.1rem);
+  height: calc(0.54rem * var(--gross, 1) + 0.24rem);
+  filter: blur(0.35px) hue-rotate(var(--glut, 0deg))
+          drop-shadow(0 0 3px rgba(255, 140, 30, .7));
+  /* Kein starrer Verlauf mehr: der Kern ist heller als der Saum, und
+     wo der Saum ausläuft, wird er durchsichtig — so franst Feuer aus. */
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 84%, rgba(255,255,255,.85), rgba(255,255,255,0) 70%),
+    linear-gradient(to top,
+      rgba(255, 30, 0, .0) 0%, #ff2d00 8%, #ff6a00 30%,
+      #ffab00 56%, #ffe27a 80%, rgba(255, 251, 232, .35) 100%);
+}
+/* FÜNF SILHOUETTEN. Keine ist gespiegelt gleich — eine Flamme knickt
+   immer irgendwohin, und zwei Flammen knicken nie gleich. */
+.lc-tfeuer .lc-teilchen[data-v="0"] {
+  clip-path: polygon(50% 0%, 64% 20%, 55% 38%, 72% 60%, 64% 86%,
+                     50% 100%, 36% 86%, 28% 60%, 45% 38%, 36% 20%);
+}
+.lc-tfeuer .lc-teilchen[data-v="1"] {
+  clip-path: polygon(42% 0%, 60% 16%, 48% 34%, 70% 52%, 58% 78%,
+                     50% 100%, 33% 82%, 30% 56%, 44% 36%, 31% 18%);
+}
+.lc-tfeuer .lc-teilchen[data-v="2"] {
+  clip-path: polygon(58% 0%, 70% 24%, 54% 40%, 66% 66%, 60% 88%,
+                     48% 100%, 34% 84%, 32% 58%, 48% 40%, 40% 22%);
+}
+.lc-tfeuer .lc-teilchen[data-v="3"] {
+  clip-path: polygon(50% 0%, 58% 14%, 66% 34%, 52% 48%, 68% 72%,
+                     56% 92%, 44% 100%, 30% 76%, 42% 52%, 34% 26%);
+}
+.lc-tfeuer .lc-teilchen[data-v="4"] {
+  clip-path: polygon(46% 0%, 66% 22%, 50% 36%, 62% 58%, 68% 84%,
+                     52% 100%, 38% 88%, 26% 62%, 46% 42%, 33% 20%);
+}
+/* Und der Takt: vier Muster, damit nicht alle im Gleichschritt
+   zuengeln. --neig ist die eigene Neigung jeder Flamme. */
+.lc-tfeuer .lc-teilchen[data-v="0"],
+.lc-tfeuer .lc-teilchen[data-v="4"] { animation-name: lcZuengeltR55a; }
+.lc-tfeuer .lc-teilchen[data-v="1"] { animation-name: lcZuengeltR55b; }
+.lc-tfeuer .lc-teilchen[data-v="2"] { animation-name: lcZuengeltR55c; }
+.lc-tfeuer .lc-teilchen[data-v="3"] { animation-name: lcZuengeltR55d; }
+@keyframes lcZuengeltR55a {
+  0%   { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 6deg))
+                    scale(calc(var(--schlank, 1) * .72), .6); opacity: .45; }
+  26%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 5deg))
+                    scale(var(--schlank, 1), 1.22); opacity: var(--hell, .95); }
+  54%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 4deg))
+                    scale(calc(var(--schlank, 1) * .9), 1.02); opacity: .9; }
+  78%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 7deg))
+                    scale(calc(var(--schlank, 1) * 1.04), 1.3); opacity: var(--hell, .95); }
+  100% { transform: translate(-50%, -100%) rotate(var(--neig, 0deg))
+                    scale(calc(var(--schlank, 1) * .68), .56); opacity: .35; }
+}
+@keyframes lcZuengeltR55b {
+  0%   { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 8deg))
+                    scale(calc(var(--schlank, 1) * .66), .54); opacity: .4; }
+  33%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 7deg))
+                    scale(calc(var(--schlank, 1) * 1.02), 1.34); opacity: var(--hell, .95); }
+  61%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 3deg))
+                    scale(calc(var(--schlank, 1) * .84), .96); opacity: .8; }
+  86%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 5deg))
+                    scale(var(--schlank, 1), 1.16); opacity: var(--hell, .9); }
+  100% { transform: translate(-50%, -100%) rotate(var(--neig, 0deg))
+                    scale(calc(var(--schlank, 1) * .62), .5); opacity: .3; }
+}
+@keyframes lcZuengeltR55c {
+  0%   { transform: translate(-50%, -100%) rotate(var(--neig, 0deg))
+                    scale(calc(var(--schlank, 1) * .78), .66); opacity: .5; }
+  19%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 9deg))
+                    scale(calc(var(--schlank, 1) * 1.06), 1.28); opacity: var(--hell, .95); }
+  44%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 8deg))
+                    scale(calc(var(--schlank, 1) * .8), .88); opacity: .72; }
+  70%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 4deg))
+                    scale(var(--schlank, 1), 1.18); opacity: var(--hell, .92); }
+  100% { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 3deg))
+                    scale(calc(var(--schlank, 1) * .7), .58); opacity: .34; }
+}
+@keyframes lcZuengeltR55d {
+  0%   { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 9deg))
+                    scale(calc(var(--schlank, 1) * .6), .5); opacity: .38; }
+  30%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 6deg))
+                    scale(calc(var(--schlank, 1) * .94), 1.24); opacity: var(--hell, .95); }
+  50%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 2deg))
+                    scale(calc(var(--schlank, 1) * .86), 1.04); opacity: .86; }
+  74%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 9deg))
+                    scale(calc(var(--schlank, 1) * 1.08), 1.36); opacity: var(--hell, .95); }
+  100% { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 2deg))
+                    scale(calc(var(--schlank, 1) * .64), .52); opacity: .3; }
+}
+/* DIE GLUT UNTER DEN FLAMMEN. Feuer hat keinen Umriss — ohne diesen
+   weichen Ring sieht der Feuerkranz aus wie aufgeklebte Zacken. Er
+   liegt auf dem Feld, nicht am Bild, damit er ueber den Rand darf. */
+.lc-sprechfeld.lc-tfeuer::before {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side,
+    rgba(255, 90, 0, 0) 0 62%,
+    rgba(255, 150, 30, .42) 76%,
+    rgba(255, 90, 0, .26) 86%,
+    rgba(255, 60, 0, 0) 100%);
+  filter: blur(2.5px);
+  pointer-events: none;
+  animation: lcGlutR55 1.15s ease-in-out infinite alternate;
+}
+@keyframes lcGlutR55 {
+  from { opacity: .55; transform: scale(.985); }
+  to   { opacity: 1;   transform: scale(1.02); }
+}
+
+/* === RUNDE 55: DIE ÜBRIGEN SPRECHBILDER ==============================
+
+   1. DIE SPINNE HÖRT NICHT MEHR AUF
+   XANDER: „Die Spinne geht immer noch nicht tiefer und sie krabbelt
+   auch nicht auf ihrem Netz nach laengerem Sprechen. Das Sprechen
+   bricht die Animation einfach irgendwann ab. Das soll nicht so sein."
+
+   GEFUNDEN: die Abseil-Animation lief 26 s mit „forwards" — danach
+   war sie ZU ENDE und die Spinne hing bewegungslos da. Genau das ist
+   das „bricht einfach ab". Und tief kam sie auch nicht: 330 % ihrer
+   eigenen Hoehe (14 % des Bildes) sind 46 % der Bildhoehe, also
+   knapp unter die Mitte.
+   Jetzt: sie seilt sich bis 78 % ab, und danach uebernimmt eine
+   zweite Animation, die nie endet — sie krabbelt auf ihrem Netz hin
+   und her, solange gesprochen wird. */
+.lc-platz-spricht[data-sprechbild="spinnweb"] .lc-kreis::after {
+  animation: lcSpinneSeiltR55 26s cubic-bezier(.2, .5, .6, 1) forwards,
+             lcSpinneKrabbeltR55 6.5s 26s ease-in-out infinite;
+}
+@keyframes lcSpinneSeiltR55 {
+  0%   { transform: translateY(-14%) scale(.86); }
+  9%   { transform: translateY(40%)  scale(.9); }
+  14%  { transform: translateY(32%)  scale(.9); }
+  26%  { transform: translateY(130%) scale(.94); }
+  32%  { transform: translateY(120%) scale(.94); }
+  48%  { transform: translateY(250%) scale(.98); }
+  55%  { transform: translateY(240%) scale(.98); }
+  74%  { transform: translateY(400%) scale(1.04); }
+  80%  { transform: translateY(388%) scale(1.04); }
+  100% { transform: translateY(560%) scale(1.1); }
+}
+/* Unten angekommen krabbelt sie weiter — auf dem Netz, hin und her,
+   mit dem kleinen Auf und Ab einer Spinne am Faden. */
+@keyframes lcSpinneKrabbeltR55 {
+  0%   { transform: translateY(560%) translateX(0) scale(1.1); }
+  22%  { transform: translateY(540%) translateX(-34%) scale(1.08) rotate(-8deg); }
+  46%  { transform: translateY(585%) translateX(-12%) scale(1.12) rotate(4deg); }
+  68%  { transform: translateY(548%) translateX(30%) scale(1.08) rotate(9deg); }
+  86%  { transform: translateY(575%) translateX(10%) scale(1.11) rotate(-3deg); }
+  100% { transform: translateY(560%) translateX(0) scale(1.1); }
+}
+
+/* 2. DIE EISBLUMEN: STÄRKER, DEUTLICHER, FRÜHER
+   XANDER: „die Eisblumen im Eiseffekt koennen staerker sein und ein
+   bisschen deutlicher und eher kommen."
+   Vorher: 5,2 s bis zur vollen Bluete, Start bei 25 % Deckkraft.
+   Jetzt: nach 1,3 s stehen sie, und der Kern ist kraeftiger. */
+.lc-platz-spricht[data-sprechbild="eis"] .lc-kreis::before {
+  filter: drop-shadow(0 0 4px rgba(190, 240, 255, .8))
+          drop-shadow(0 0 1px rgba(255, 255, 255, .9));
+  animation: lcEisblumeR55 4.4s cubic-bezier(.2, .8, .3, 1) infinite alternate;
+}
+@keyframes lcEisblumeR55 {
+  0%   { opacity: .45; transform: scale(.88) rotate(-2deg); }
+  /* 30 % von 4,4 s = 1,3 s: da stehen sie schon. */
+  30%  { opacity: 1; transform: scale(1.01) rotate(0deg); }
+  70%  { opacity: .95; transform: scale(1.02) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1.05) rotate(2deg); }
+}
+
+/* 3. DER REGENBOGEN: WEICHER, GLÜHEND, WECHSELNDE FARBEN
+   XANDER: „der Regenbogen kann weicher sein und schoen gluehen,
+   schoen abwechselnd die Farben zeigen."
+   Vorher: ein hartes Band mit sieben Farben, das sich dreht. Jetzt
+   weicher Rand (der Verlauf laeuft am Rand aus statt abzuschneiden),
+   ein Glimmen darum — und die Farben WANDERN, weil sich der
+   Farbkranz schneller dreht als das Band. */
+.lc-platz-spricht[data-sprechbild="regenbogen"]::after {
+  background: conic-gradient(from 0deg,
+    #ff5a5a, #ff8a3d, #ffb347, #ffe66d, #b6ef6a, #7ddf64,
+    #4fd7c3, #5ac8fa, #6a8dff, #7a6bff, #b96bff, #d66bff, #ff6ba8, #ff5a5a);
+  -webkit-mask: radial-gradient(circle closest-side,
+    transparent 0 66%, rgba(0,0,0,.35) 70%, #000 76% 90%,
+    rgba(0,0,0,.45) 96%, transparent 100%);
+  mask: radial-gradient(circle closest-side,
+    transparent 0 66%, rgba(0,0,0,.35) 70%, #000 76% 90%,
+    rgba(0,0,0,.45) 96%, transparent 100%);
+  filter: blur(1.1px) saturate(1.45)
+          drop-shadow(0 0 7px rgba(255, 255, 255, .45))
+          drop-shadow(0 0 16px rgba(160, 200, 255, .3));
+  animation: lcSfRegenbogenR55 7.2s linear infinite;
+}
+/* Linear und langsamer: ein Regenbogen ruckelt nicht, er schimmert.
+   Die volle Umdrehung ist Absicht — so wandern die Farben stetig
+   durch, statt hin und her zu schaukeln. */
+@keyframes lcSfRegenbogenR55 {
+  0%   { transform: translateX(-50%) scale(1.46) rotate(0deg);   opacity: .9; }
+  25%  { transform: translateX(-50%) scale(1.53) rotate(90deg);  opacity: 1; }
+  50%  { transform: translateX(-50%) scale(1.46) rotate(180deg); opacity: .9; }
+  75%  { transform: translateX(-50%) scale(1.53) rotate(270deg); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1.46) rotate(360deg); opacity: .9; }
+}
+
+/* 4. DIE SCHALLWELLEN LASSEN KEINE LÜCKE MEHR
+   XANDER: „der Platz, den es hinterlaesst — diese kreisrunde Luecke,
+   die mindestens 5 mm Abstand hat, die kann noch nach Schallwellen
+   ziehen. Also das kann immer gefuellt bleiben."
+
+   GEFUNDEN: die Schicht ist so breit wie der PLATZ, das Bild ist
+   schmaler. Bei „scale(1)" fing der innerste Ring deshalb schon
+   ausserhalb des Bildrands an — dazwischen blieb nichts. Jetzt
+   beginnt er bei 0,88 (also am Bildrand), und zwischen den Ringen
+   liegt ein weicher Schleier, der mitwandert: die Luecke ist
+   gefuellt, nicht nur ueberbrueckt. */
+.lc-platz-spricht[data-sprechbild="welle"]::after {
+  animation: lcSfWelleR55 1.8s cubic-bezier(.2, .7, .4, 1) infinite;
+}
+@keyframes lcSfWelleR55 {
+  0%   { transform: translateX(-50%) scale(.88); opacity: .95; border-width: 3px;
+         box-shadow: 0 0 0 0 rgba(120, 220, 255, .55),
+                     0 0 0 0 rgba(120, 220, 255, .4),
+                     0 0 0 0 rgba(120, 220, 255, .26),
+                     inset 0 0 12px 4px rgba(120, 220, 255, .3); }
+  100% { transform: translateX(-50%) scale(1.95); opacity: 0; border-width: 1px;
+         box-shadow: 0 0 0 10px rgba(120, 220, 255, 0),
+                     0 0 0 21px rgba(120, 220, 255, 0),
+                     0 0 0 33px rgba(120, 220, 255, 0),
+                     inset 0 0 12px 4px rgba(120, 220, 255, 0); }
+}
+/* Und der Schleier dazwischen: er sitzt fest am Bildrand und atmet
+   im selben Takt — dadurch ist zwischen Bild und erstem Ring nie
+   nichts. Er liegt am Kreis, nicht am Platz, damit er genau dort
+   anfaengt, wo das Bild aufhoert. */
+.lc-platz-spricht[data-sprechbild="welle"] .lc-kreis::after {
+  content: "";
+  position: absolute;
+  inset: -14%;
+  border-radius: 50%;
+  border: 0 !important;
+  background: radial-gradient(circle closest-side,
+    rgba(120, 220, 255, 0) 0 66%,
+    rgba(120, 220, 255, .34) 80%,
+    rgba(120, 220, 255, .14) 92%,
+    rgba(120, 220, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 2;
+  animation: lcWelleSchleierR55 1.8s cubic-bezier(.2, .7, .4, 1) infinite;
+}
+@keyframes lcWelleSchleierR55 {
+  0%   { opacity: .9; transform: scale(.96); }
+  60%  { opacity: .5; transform: scale(1.06); }
+  100% { opacity: .9; transform: scale(.96); }
+}
+
+/* 5. DIE BLÜTE: FEINER, NÄHER AM RAHMEN, MIT LICHT
+   XANDER: „Die Bluete kann noch ein bisschen mehr Licht und
+   Schattierung haben und sich schoener entfalten im Aufbluehen, und
+   ein bisschen naeher am Profilrahmen — nicht so im Bild, nicht dass
+   das Foto so ueberdeckt wird."
+   Kleinerer Massstab (1,62 statt 2,0) heisst NAEHER am Rahmen; die
+   Blende haelt die Mitte frei, damit das Foto frei bleibt; und Licht
+   kommt aus zwei Schlagschatten statt aus einem. */
+.lc-platz-spricht[data-sprechbild="bluete"]::after {
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 40%, #000 47% 100%);
+  mask: radial-gradient(circle closest-side, transparent 0 40%, #000 47% 100%);
+  filter: drop-shadow(0 1px 1px rgba(120, 40, 80, .35))
+          drop-shadow(0 0 7px rgba(255, 210, 235, .55))
+          saturate(1.1);
+  animation: lcSfBlueteR55 5.4s cubic-bezier(.25, .8, .3, 1) infinite alternate;
+}
+/* Aufbluehen heisst: erst der Kern, dann die Blaetter — und leicht
+   gedreht, sonst sieht es aus, als wuerde nur etwas groesser. */
+@keyframes lcSfBlueteR55 {
+  0%   { transform: translateX(-50%) scale(1.12) rotate(-7deg); opacity: .55; }
+  35%  { transform: translateX(-50%) scale(1.5) rotate(-2deg); opacity: .95; }
+  70%  { transform: translateX(-50%) scale(1.62) rotate(2deg); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1.58) rotate(5deg); opacity: .96; }
+}
