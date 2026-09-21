@@ -237,6 +237,25 @@ pruefe("und die Flammen lodern in feinen Wellen",
   (css.match(/@keyframes lcZuengeltR55[abcd] \{/g) || []).length >= 8
   && /8%   \{ transform: translate\(-50%, -100%\)/.test(css));
 
+console.log("\nDER BILLARDQUEUE\n");
+/* NACHGEMESSEN im Browser (Feld 103 px, --wx -240 %, --wdreh 0 Grad),
+   Spitze des Queues und Mitte der Kugel vom linken Feldrand:
+     624 ms  Spitze  25,6   Kugelmitte -14,6  Radius 16,3
+     760 ms  Spitze  42,4   Kugelmitte   2,3
+   Die Spitze lag zu jedem Zeitpunkt RECHTS von der Kugel, also in
+   Fahrtrichtung VOR ihr — der Queue hat sie nie getroffen. Nach der
+   Aenderung gemessen: bei 624 ms Spitze -35,6, hinterer Rand der
+   Kugel -33,9 — Beruehrung auf 1,7 px genau; bei 860 ms liegt der
+   Queue 20 px HINTER der Kugel, sie zieht ihm also davon. */
+pruefe("der Queue dreht sich um die Bildmitte, nicht um sein Ende",
+  /\.lc-billard \.lc-stoss-queue \{[\s\S]{0,400}?left: 50%;/.test(css)
+  && /transform: rotate\(calc\(var\(--wdreh, 0deg\) \+ 180deg\)\)/.test(css));
+pruefe("und er steht hinter der Kugel, gerechnet aus der Strecke",
+  /--qfern: calc\(var\(--wlang, 240%\) \* 0\.2763 \+ 17\.7%\);/.test(css)
+  && /schicht\.style\.setProperty\("--wlang"/.test(js));
+pruefe("die Spitze sitzt vorn — der Verlauf ist umgedreht",
+  /#2f3542 0 6%, #d8c49a 6% 22%, #6b4a22 22% 100%/.test(css));
+
 console.log("\nDER MAULWURF\n");
 /* NACHGEMESSEN an maulwurf.opus: 1,00 s, Start bei -13 dB und von
    da an nur noch leiser — die Huellkurve eines SCHLAGS. „erdeauf"

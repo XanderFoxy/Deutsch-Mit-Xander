@@ -30083,6 +30083,13 @@
     const r = lcWurfRichtung(platz);
     schicht.style.setProperty("--wx", (r.x * (weite || 230)).toFixed(0) + "%");
     schicht.style.setProperty("--wy", (r.y * (weite || 230)).toFixed(0) + "%");
+    /* RUNDE 75 — DIE LAENGE DER STRECKE, getrennt von ihrer Richtung.
+       „r" ist ein Einheitsvektor, also ist die Laenge genau „weite".
+       Der Billardqueue braucht sie: er muss HINTER der Kugel stehen,
+       und wo die Kugel steht, haengt an dieser Laenge. Mit --wx und
+       --wy allein liesse sich das in CSS nicht rechnen (dort gibt es
+       keine Wurzel). */
+    schicht.style.setProperty("--wlang", (weite || 230) + "%");
     schicht.style.setProperty("--wdreh", (Math.atan2(-r.y, -r.x) * 180 / Math.PI).toFixed(1) + "deg");
     return r;
   }

@@ -24126,3 +24126,99 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-sobri { display: none; }
 }
+
+/* =================================================================
+   RUNDE 75 — DER QUEUE STEHT ENDLICH HINTER DER KUGEL
+   -----------------------------------------------------------------
+   XANDER: „wenn der Queue die Kugel anstösst, dann sieht das nicht so
+   aus, als ob er auf die Kugel trifft. Das sieht aus, als wenn er die
+   Kugel an mich ran schlägt … die Physik stimmt immer noch nicht mit
+   dem Abprallen."
+
+   NACHGEMESSEN im Browser (Feld 103 px, --wx -240 %, --wdreh 0°),
+   Spitze des Queues und Mitte der Kugel, beide vom linken Rand des
+   Feldes aus:
+
+       560 ms   Spitze   5,3     Kugelmitte -17,0   Radius 18,6
+       624 ms   Spitze  25,6     Kugelmitte -14,6   (der „Stoss")
+       760 ms   Spitze  42,4     Kugelmitte   2,3
+       860 ms   Spitze  42,4     Kugelmitte  17,0
+
+   Die Spitze lag zu JEDEM Zeitpunkt RECHTS von der Kugel, also in
+   Fahrtrichtung VOR ihr. Der Queue hat die Kugel nie getroffen; er
+   stand ihr im Weg und wurde von ihr überholt. Genau das sieht man
+   als „er schlägt sie an mich ran".
+
+   WOHER: `.lc-stoss-queue` hat `left: -70%`, `width: 96%` und
+   `transform-origin: 0 50%`, und die alten Keyframes schrieben
+   `translateX(…) rotate(var(--wdreh))` — erst schieben, dann drehen.
+   Damit dreht sich der Queue um sein eigenes linkes Ende, das 70 %
+   links neben dem Bild liegt. Auf der Achse, auf der die Kugel
+   rollt, liegt dieser Drehpunkt nicht. Für einen waagerechten Stoss
+   ging es noch knapp auf; sobald der Stoss schräg kam, zeigte der
+   Queue irgendwohin.
+
+   JETZT wird umgekehrt gerechnet:
+   · Der Drehpunkt liegt in der BILDMITTE — dort endet die Fahrt der
+     Kugel, und von dort aus zeigt `--wdreh + 180°` genau zurück zum
+     Stossenden. `rotate()` steht VOR `translateX()`, also schiebt
+     das Schieben den Queue auf der gedrehten Achse nach hinten.
+   · Die Spitze sitzt am vorderen Ende (der Verlauf ist umgedreht).
+   · Wie weit hinten der Queue steht, wird aus der Strecke gerechnet:
+
+       Kugelmitte (Abstand von der Bildmitte) = 0,34 · wlang · f
+       Kugelrand hinten                       = + 17
+       Spitze des Queues                      = 0,96 · X
+
+     Gleichgesetzt beim Stoss (f = 0,78):
+       X = (0,34 · 0,78 · wlang + 17) / 0,96 = 0,2763 · wlang + 17,7
+
+   Das steht unten als `--qfern`. Beim Stoss trifft die Spitze damit
+   GENAU den hinteren Rand der Kugel — nicht davor, nicht dahinter.
+   Der Durchzug geht nur 4 % weiter; die Kugel ist da schon schneller
+   als der Queue und zieht ihm davon, wie es sich gehört.
+   ================================================================= */
+.lc-billard .lc-stoss-queue {
+  left: 50%;
+  top: 47.5%;
+  width: 96%;
+  height: 5%;
+  transform-origin: 0 50%;
+  /* Umgedreht: die Lederspitze sitzt jetzt am vorderen (linken) Ende,
+     weil der Queue von der Bildmitte aus nach HINTEN zeigt. */
+  background: linear-gradient(to right,
+    #2f3542 0 6%, #d8c49a 6% 22%, #6b4a22 22% 100%);
+  --qfern: calc(var(--wlang, 240%) * 0.2763 + 17.7%);
+  animation: lcQueueR75 2.4s linear both;
+}
+@keyframes lcQueueR75 {
+  0%   { opacity: 0;
+         transform: rotate(calc(var(--wdreh, 0deg) + 180deg))
+                    translateX(calc(var(--qfern) + 8%)); }
+  8%   { opacity: 1;
+         transform: rotate(calc(var(--wdreh, 0deg) + 180deg))
+                    translateX(calc(var(--qfern) + 8%)); }
+  /* AUSHOLEN: langsam zurück. */
+  16%  { transform: rotate(calc(var(--wdreh, 0deg) + 180deg))
+                    translateX(calc(var(--qfern) + 14%)); }
+  20%  { transform: rotate(calc(var(--wdreh, 0deg) + 180deg))
+                    translateX(calc(var(--qfern) + 15%)); }
+  /* DER STOSS: die Abstände werden grösser, er wird also schneller. */
+  22%  { transform: rotate(calc(var(--wdreh, 0deg) + 180deg))
+                    translateX(calc(var(--qfern) + 11%)); }
+  24%  { transform: rotate(calc(var(--wdreh, 0deg) + 180deg))
+                    translateX(calc(var(--qfern) + 5%)); }
+  /* 26 % von 2,4 s = 624 ms: HIER trifft die Spitze den hinteren
+     Rand der Kugel. */
+  26%  { transform: rotate(calc(var(--wdreh, 0deg) + 180deg))
+                    translateX(var(--qfern)); }
+  /* DURCHZUG — kurz, und die Kugel ist längst schneller. */
+  30%  { transform: rotate(calc(var(--wdreh, 0deg) + 180deg))
+                    translateX(calc(var(--qfern) - 4%)); }
+  46%  { opacity: 1;
+         transform: rotate(calc(var(--wdreh, 0deg) + 180deg))
+                    translateX(calc(var(--qfern) - 4%)); }
+  62%, 100% { opacity: 0;
+         transform: rotate(calc(var(--wdreh, 0deg) + 180deg))
+                    translateX(calc(var(--qfern) - 2%)); }
+}
