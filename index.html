@@ -34,7 +34,57 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<script>window.DMA_VERSION = "420";</script>
+<script>window.DMA_VERSION = "421";</script>
+<script>
+/* =================================================================
+   DIE SEITE MERKT SELBST, DASS SIE VERALTET IST
+   -----------------------------------------------------------------
+   XANDER: „Ich weiss nicht, ob du die Adressen richtig aufgesetzt
+   hast. Alles, was du mir in dem Update beschreibst, ist nirgendswo
+   sichtbar … ich kriege in keinem Update irgendwie eine
+   grossartige Aenderung."
+
+   DAS WAR KEINE EINBILDUNG, UND ES LAG NICHT AN DEN ADRESSEN.
+   Jede Datei haengt an „?v=" + DMA_VERSION — das wirkt aber nur,
+   wenn die index.html SELBST neu geholt wird. Genau das tut ein
+   Browser nicht von sich aus: GitHub Pages schickt eigene
+   Cache-Kopfzeilen mit, und die drei <meta http-equiv=
+   "Cache-Control">-Zeilen weiter oben beachtet kein Browser fuer
+   das Dokument selbst — sie sind wirkungslos. Wer die Seite einmal
+   geladen hatte, bekam also weiter die ALTE index.html, mit der
+   alten Fassungsnummer und damit dem alten Javascript, dem alten
+   Aussehen und den alten Toenen. Im privaten Fenster ging es, weil
+   das nie einen Cache hat.
+
+   Hier steht deshalb die Gegenprobe: „fassung.json" ist winzig und
+   wird mit „cache: no-store" geholt — das umgeht jeden
+   Zwischenspeicher, auch den von GitHub Pages. Steht dort eine
+   andere Zahl als die geladene, holt sich die Seite EINMAL eine
+   frische Adresse (index.html?f=…) und ist damit auf dem Stand.
+   Der Merker in sessionStorage sorgt dafuer, dass daraus keine
+   Schleife wird, falls die Zahl einmal nicht stimmen sollte.
+   ================================================================= */
+(function () {
+  try {
+    var jetzt = String(window.DMA_VERSION || "");
+    fetch("fassung.json?t=" + Date.now(), { cache: "no-store" })
+      .then(function (a) { return a.ok ? a.json() : null; })
+      .then(function (d) {
+        if (!d || !d.fassung) return;
+        var neu = String(d.fassung);
+        if (neu === jetzt) return;
+        var merker = "dma-neu-geladen";
+        var schon = "";
+        try { schon = sessionStorage.getItem(merker) || ""; } catch (e) {}
+        if (schon === neu) return;          /* schon einmal versucht */
+        try { sessionStorage.setItem(merker, neu); } catch (e) {}
+        var adresse = location.pathname + "?f=" + encodeURIComponent(neu) + location.hash;
+        location.replace(adresse);
+      })
+      .catch(function () {});
+  } catch (e) {}
+})();
+</script>
 <script>
 /* Auch die Stilblätter hängen an der laufenden Fassung — sonst
    kommt das neue Javascript, aber das alte Aussehen dazu. Genau wie
