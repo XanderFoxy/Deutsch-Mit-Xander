@@ -292,7 +292,7 @@ const BRETT = (frei) => `
     /* Emmi sitzt auf 5 — direkt unter mir auf 1. Cem sitzt auf 3. */
     window.DMA_PRUEFUNG.wirkung("sanduhr", "Cem", "Alex");
     await new Promise((f) => setTimeout(f, 200));
-    const schraegKlasse = hole("Cem").querySelector(".lc-kreis").classList.contains("lc-rieselt");
+    const schraegKlasse = hole("Cem").querySelector(".lc-kreis").classList.contains("lc-zerrinnt");
     window.DMA_PRUEFUNG.wirkung("sanduhr", "Emmi", "Alex");
     await new Promise((f) => setTimeout(f, 200));
     return { schraegKlasse: schraegKlasse,
@@ -301,8 +301,12 @@ const BRETT = (frei) => `
   });
   /* Zwei Sanduhren, beide aus seinem Verlauf: wer schraeg sitzt,
      bekommt die andere — sein Bild rieselt von oben wieder voll. */
-  pruefe("wer schraeg sitzt, bekommt die rieselnde Sanduhr",
-    sand.schraegKlasse === true, "lc-rieselt");
+  /* NACHGEZOGEN: „bei der Sanduhr die funktioniert immer noch nicht
+     … es koennte realistischer sein, dass sich das Bild wirklich so
+     zerfliesst wie Sand." Seitdem heisst die Bewegung „lc-zerrinnt"
+     und hat eine koernige Kante; „lc-rieselt" war das alte Rollo. */
+  pruefe("wer schraeg sitzt, bekommt die rinnende Sanduhr",
+    sand.schraegKlasse === true, "lc-zerrinnt");
   pruefe("mit dem direkt darunter wird getauscht", sand.gerade > 0, sand.gerade + " Lauf");
   pruefe("und das Glas steht dazwischen", sand.glas === 1);
 

@@ -49,8 +49,11 @@ const PAARE = [
      traditionelle. Im Ordner heisst ihre Datei weiterhin „lok2" —
      der Befehl /lok zeigt auf sie. Die schwarze ist heraus, das
      spart 1,84 MB. */
-  ["lok",        "/lok",        "lok2"],
-  ["zug",        "/zug",        "lok2"],
+  /* NACHGEZOGEN (Runde 58): „/lok" ist seit Runde 57 die REISE — so
+     benutzt XANDER es auch („Die Lok faehrt auch falsch rum"). Der
+     Film heisst jetzt „/gglok", „/zug" zeigt als Deckname darauf. */
+  ["gglok",      "/gglok",      "lok2"],
+  ["gglok",      "/zug",        "lok2"],
   ["raumschiff", "/raumschiff", "raumschiff"],
   ["uboot",      "/uboot",      "uboot"],
   /* Diese beiden sind KEINE Geschenke, sondern seit jeher
@@ -164,7 +167,9 @@ const PAARE = [
     return wo;
   });
   [["trex", "tiere"], ["loewe", "tiere"], ["adler", "tiere"], ["katze", "tiere"],
-   ["lok", "fahrzeuge"], ["uboot", "fahrzeuge"],
+   /* „/lok" steht seit Runde 57 unter „reden" — es ist die Reise.
+      Der FILM heisst „/gglok" und steht unter „fahrzeuge". */
+   ["gglok", "fahrzeuge"], ["uboot", "fahrzeuge"],
    ["raumschiff", "fahrzeuge"], ["schlitten", "fahrzeuge"]].forEach(([w, gr]) => {
     pruefe("/" + w + " steht unter „" + gr + "\u201c", einsortiert[w] === gr,
       einsortiert[w] || "gar nicht in der Liste");

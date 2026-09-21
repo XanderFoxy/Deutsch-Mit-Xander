@@ -140,19 +140,27 @@ const BRETT = (frei) => `
      Pfeilfeder dran sein, nicht die Spitze". Der alte Zackenumriss SAH
      aus wie eine Spitze; jetzt sind es Kerbe, zwei Vanes und die
      Wicklung, und vorn ein Napf mit Stiel. */
+  /* NACHGEZOGEN IN RUNDE 58. Hier standen die genauen Pfadpunkte der
+     Fassung von Runde 29 — die Sonde pruefte also eine ZEICHNUNG, kein
+     Merkmal. XANDER hat sie erneut bemaengelt („wirklich an ein
+     realistischen Pfeil denken"), und die neue hat echte Federn mit
+     Aesten. Geprueft wird jetzt, was ein Pfeil HAT, nicht wie er
+     gezeichnet ist: Nocke hinten, zwei Fahnen mit Aesten, und
+     keine zweite Pfeilspitze. */
   pruefe("der Pfeil hat hinten eine echte Befiederung",
     !/M68 4 L86 13 L68 22 Z/.test(js)
-    && /M2 9 L9 14 L2 19/.test(js)              /* die Kerbe */
-    && /M9 13 L27 7 L31 10 L13 14 Z/.test(js)   /* die obere Feder */
-    && /M9 15 L27 21 L31 18 L13 14 Z/.test(js), /* die untere Feder */
-    "Kerbe, zwei Federn, Wicklung");
+    && /class="lc-pfeil-nocke"/.test(js)
+    && (js.match(/class="lc-pfeil-feder"/g) || []).length === 2
+    && /class="lc-pfeil-ast"/.test(js),
+    "Nocke, zwei Fahnen, Aeste");
   pruefe("und der Saugnapf fuehrt",
-    /class="lc-pfeil-napf" d="M77 7/.test(js), "rechts, also vorn");
+    /class="lc-pfeil-napf" d="M77 11/.test(js), "rechts, also vorn");
   pruefe("er saugt sich am Rand fest, nicht in der Mitte",
     /--ex", \(r\.x \* 38\)/.test(js));
+  /* Seit Runde 41 ist das Seil eine gezeichnete Welle, kein Balken. */
   pruefe("die Peitsche geht ueber die ganze Entfernung",
     /lcLeineWerfen\(platz, "peitsche"\)/.test(js)
-    && /\.lc-peitsche-seil \{[\s\S]*?width: var\(--laenge/.test(css));
+    && /\.lc-peitsche-welle \{[\s\S]*?width: var\(--laenge/.test(css));
   pruefe("Lasso und Angel ziehen zu MIR",
     /function lcZuMirZiehen/.test(js) && /@keyframes lcZuMirR18/.test(css));
   /* NACHGEBESSERT IN RUNDE 28: das Umsetzen gehoert in den BEFEHL,
@@ -175,8 +183,14 @@ const BRETT = (frei) => `
      gab; der Browsertest weiter unten misst ohnehin das Richtige. */
   pruefe("und ich werde zur Original-Figur",
     /figur\.className = "lc-pac-figur"/.test(js) && /lc-pac-figur-maul/.test(js));
-  pruefe("Paintball mischt mehrere Farben",
-    /const farben = mischen\(3\)/.test(js));
+  /* „mehrere" heisst mindestens drei — wie viele es genau sind, darf
+     sich aendern (es sind inzwischen sechs), ohne dass die Sonde rot
+     wird. Eine fest verdrahtete Zahl prueft die Fassung, nicht die
+     Sache. */
+  pruefe("Paintball mischt mehrere Farben", (() => {
+    const m = /const farben = mischen\((\d+)\)/.exec(js);
+    return Boolean(m) && Number(m[1]) >= 3;
+  })(), (/(const farben = mischen\((\d+)\))/.exec(js) || ["-"])[0]);
   pruefe("die Trommelschlaegel zeigen zur Trommel",
     /transform-origin: 50% 4%/.test(css), "Drehpunkt oben = die Hand");
   pruefe("die Weckerschellen sind verbunden",
@@ -385,10 +399,19 @@ const BRETT = (frei) => `
   await pg.evaluate(BRETT([8]));
   const peit = await pg.evaluate(async () => {
     window.DMA_PRUEFUNG.wirkung("peitsche", "Dana", "Alex");
-    await new Promise((f) => setTimeout(f, 300));
+    /* 900 ms: NACH dem Knall. Seit Runde 58 holt sie erst aus (bis
+       520 ms), und waehrend des Ausholens ist sie absichtlich kurz —
+       bei 300 ms haette man das Ausholen gemessen, nicht den Schlag. */
+    await new Promise((f) => setTimeout(f, 900));
     const leine = document.querySelector(".lc-leine-peitsche");
     if (!leine) return null;
-    const seil = leine.querySelector(".lc-peitsche-seil");
+    /* NACHGEZOGEN (Runde 58): das Seil war ein Balken (.lc-peitsche-seil)
+       und ist seit Runde 41 eine gezeichnete Welle. Hier brach die
+       Pruefung mit „getComputedStyle: parameter 1 is not of type
+       Element" ab — sie suchte ein Element, das es nicht mehr gibt. */
+    const seil = leine.querySelector(".lc-peitsche-welle")
+              || leine.querySelector(".lc-peitsche-seil");
+    if (!seil) return null;
     const ich = document.querySelector(".lc-platz-ich").getBoundingClientRect();
     const ziel = [...document.querySelectorAll(".lc-platz")]
       .find((p) => (p.querySelector(".lc-platz-name") || {}).textContent.trim() === "Dana")

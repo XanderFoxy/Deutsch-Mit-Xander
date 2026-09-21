@@ -103,7 +103,7 @@ const pruefe = (was, gut, zusatz) => {
      wie die Reisen und die Fenster. Geprueft wird deshalb das
      Untermenue, nicht mehr die einzelne Kachel. */
   pruefe("es steht im Strohhalm-Untermenue",
-    /\["\\ud83e\\uded7", "Blasen", "blubbern"\]/.test(js)
+    /\["\\ud83e\\uded7", "Blubbern", "blubbern"\]/.test(js)
     && /"Strohhalm", "strohhalm", false/.test(js));
   pruefe("es ist ein Befehl", /blubbern:\s*\{ wirkung: "blubbern"/.test(lc));
   pruefe("es steht in der Hilfe", /w: "blubbern"/.test(lc));

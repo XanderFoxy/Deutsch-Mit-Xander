@@ -62,9 +62,13 @@ const pruefe = (was, gut, zusatz) => {
   console.log("\nSIE HAENGEN AUCH AN DEN RICHTIGEN EFFEKTEN\n");
   const haengt = (effekt, ton) => pruefe(effekt + " klingt nach „" + ton + "“",
     new RegExp(effekt + ":\\s*\\{ ton: \"" + ton + "\"").test(js));
+  /* NACHGEZOGEN: vier Geraeusche sind seit Runde 30 ersetzt worden,
+     weil er sie einzeln bemaengelt hat — „der Cowboy Hut", „bei dem
+     Katerpult muss ein realistisches Katapult Geraeusch kommen".
+     Geprueft wird deshalb der HEUTIGE Name, nicht der von damals. */
   haengt("saugpfeil", "pfeilschuss");
-  haengt("hut", "cowboy");
-  haengt("peitsche", "peitschenknall");
+  haengt("hut", "cowboy2");
+  haengt("peitsche", "peitsche2");
   haengt("heber", "angelkurbel");
   haengt("luke", "fensterauf");
   haengt("rollo", "rollohoch");
@@ -74,15 +78,18 @@ const pruefe = (was, gut, zusatz) => {
   haengt("schneeball", "schneeklatsch");
   haengt("strohhalm", "schlurfen");
   haengt("blubbern", "blubbern");
-  haengt("katapult", "katapult");
-  haengt("zwille", "zwille");
+  haengt("katapult", "katapult2");
+  haengt("zwille", "gummizug");
   haengt("fahren", "fahrt");
   pruefe("und der Plan schlaegt die gleichnamige alte Datei",
     /const plan = LC_TON_PLAN\[was\];\s*\n\s*if \(plan && plan\.ton && lcGeraeusch\(plan\.ton, was\)\) return;\s*\n\s*if \(lcGeraeusch\(was, was\)\) return;/.test(js));
   pruefe("die alte peitsche.opus liegt als Rueckfall noch da",
     fs.existsSync(path.join(WURZEL, "ton", "peitsche.opus")));
+  /* Der Ankunftston steht seit Runde 49 nicht mehr als Literal in
+     lcReise, sondern in LC_ANKUNFT_TON — dort ist er messbar. */
   pruefe("das Quietschen kommt erst bei der Ankunft",
-    /setTimeout\(\(\) => lcTonZu\("bremse"\), Math\.max\(0, hin - 120\)\);/.test(js));
+    /flug: "bremse"/.test(js)
+    && /const ankunft = LC_ANKUNFT_TON\[art\];\s*\n\s*if \(ankunft\) lcTonSpaeter\(ankunft, Math\.max\(0, hin - 260\), 0\.5\);/.test(js));
 
   console.log("\nDAS BLUBBERNDE PROFILBILD\n");
   pruefe("die Blasen tragen sein Bild",

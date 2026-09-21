@@ -84,25 +84,31 @@ const pruefe = (was, gut, zusatz) => {
     await new Promise((f) => setTimeout(f, 500));
     const g = document.querySelector(".lc-birne-gewinde");
     const k = document.querySelector(".lc-eingedreht");
-    let dreht = 0;
+    /* NACHGEZOGEN (Runde 58). Hier stand vorher „der Winkel waechst im
+       Uhrzeigersinn" — gemessen an matrix(). Das war MEINE Regel, und
+       sie war falsch: eine Drehung in der Bildebene laesst das Bild
+       wie eine Schallplatte kreiseln. XANDER: „Die Birne dreht sich
+       immer noch nicht realistisch auf der waagerechten Achse … Die
+       Birne soll sich mit der Fassung von links nach rechts drehen."
+       Das ist eine Drehung um die SENKRECHTE Achse, und die erkennt
+       man daran, dass die Matrix dreidimensional ist, die Breite
+       schrumpft und die Schraeglage null bleibt. */
+    let raeumlich = false, breit = 1, schraeg = 0;
     if (k) {
-      const cs = getComputedStyle(k).transform;
-      const m = cs.match(/matrix\(([^)]+)\)/);
-      if (m) {
-        const z = m[1].split(",").map(Number);
-        dreht = Math.atan2(z[1], z[0]) * 180 / Math.PI;
-      }
+      const m = new DOMMatrixReadOnly(getComputedStyle(k).transform);
+      raeumlich = m.is2D === false;
+      breit = m.m11; schraeg = m.m12;
     }
-    return { gewinde: Boolean(g), dreht: dreht,
+    return { gewinde: Boolean(g), raeumlich: raeumlich, breit: breit, schraeg: schraeg,
              bewegt: g ? getComputedStyle(g).animationName : "" };
   });
   pruefe("das Gewinde ist gezeichnet", gb.gewinde === true);
   pruefe("und es bewegt sich mit hinein",
     Boolean(gb.bewegt) && gb.bewegt !== "none", String(gb.bewegt));
-  /* Rechtsherum eindrehen heisst: der Winkel waechst im Uhrzeigersinn.
-     Steht er bei 0, dreht gar nichts. */
-  pruefe("das Bild dreht sich beim Eindrehen", Math.abs(gb.dreht) > 1,
-    gb.dreht.toFixed(0) + "°");
+  pruefe("das Bild dreht raeumlich, nicht in der Bildebene", gb.raeumlich === true);
+  pruefe("und zwar um die senkrechte Achse — von links nach rechts",
+    Math.abs(gb.breit) < 0.999 && Math.abs(gb.schraeg) < 0.02,
+    "Breite " + gb.breit.toFixed(3) + ", Schraeglage " + gb.schraeg.toFixed(3));
 
   console.log("\nUND DER TON DAZU\n");
   const plan = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");

@@ -539,12 +539,17 @@ const pruefe = (was, gut, zusatz) => {
     window.LiveChat.pruefPost((p) => { if (!paket) paket = p; });
     window.LiveChat.pruefBefehl("/zufall Emmi");
     /* Zwoelf Wuerfe: kaeme immer dasselbe heraus, waere es kein
-       Zufall, sondern ein fester Effekt mit einem huebschen Namen. */
+       Zufall, sondern ein fester Effekt mit einem huebschen Namen.
+
+       NACHGEZOGEN: „Zufall kann er so sein wie bei so einer Gewinn
+       Slot Maschine." Seitdem rattert erst die Walze, und das Los
+       faellt erst nach 1150 ms — mit den alten 60 ms Wartezeit sah
+       die Pruefung nur die leere Buehne. */
     const gesehen = {};
     for (let i = 0; i < 12; i++) {
       document.querySelectorAll(".lc-zp").forEach((x) => x.remove());
       window.DMA_PRUEFUNG.wirkung("zufall", "Emmi");
-      await new Promise((f) => setTimeout(f, 60));
+      await new Promise((f) => setTimeout(f, 1400));
       document.querySelectorAll(".lc-zp").forEach((x) => {
         String(x.className).split(/\s+/).forEach((c) => { if (c !== "lc-zp") gesehen[c] = 1; });
       });

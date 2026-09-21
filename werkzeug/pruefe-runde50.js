@@ -142,7 +142,22 @@ const pruefe = (was, gut, zusatz) => {
       dampfer: Boolean(d),
       schaufeln: rad ? rad.querySelectorAll("b").length : 0,
       nabe: Boolean(rad && rad.querySelector("u")),
-      kasten: Boolean(d && d.querySelector(".lc-dampfer-kasten")),
+      /* Ein RADKASTEN gehoert zu einem SEITENraddampfer. Seit Runde 57
+         ist es ein Heckraddampfer vom Mississippi („recherchiere das
+         mal"), und der hat keinen — dafuer zwei Schornsteine, zwei
+         Decks und ein Steuerhaus. Genau danach wird jetzt gesucht. */
+      schlote: d ? d.querySelectorAll(".lc-dampfer-schlot rect").length : 0,
+      decks: d ? d.querySelectorAll(".lc-dampfer-haus").length : 0,
+      saeulen: d ? d.querySelectorAll(".lc-dampfer-saeule path").length : 0,
+      keinKasten: !(d && d.querySelector(".lc-dampfer-kasten")
+                    && getComputedStyle(d.querySelector(".lc-dampfer-kasten")).display !== "none"),
+      radLinks: (() => {
+        if (!rad || !d) return false;
+        const rb = rad.getBoundingClientRect(), db = d.getBoundingClientRect();
+        /* Heckrad heisst: hinten. Das Schiff schaut nach rechts, also
+           muss das Rad in der linken Haelfte liegen. */
+        return (rb.left + rb.width / 2) < (db.left + db.width * 0.35);
+      })(),
       gischt: Boolean(d && d.querySelector(".lc-dampfer-spritzer")),
       radDreht: rad ? getComputedStyle(rad).animationName : "-"
     };
@@ -161,7 +176,16 @@ const pruefe = (was, gut, zusatz) => {
   /* Vier Speichen sind ein Wagenrad. Ein Schaufelrad hat Schaufeln. */
   pruefe("sein Rad hat acht Schaufeln", reise.schaufeln === 8, reise.schaufeln + " Stueck");
   pruefe("es hat eine Nabe", reise.nabe);
-  pruefe("und einen Radkasten darueber", reise.kasten);
+  /* „so ein echtes geiles altes Schiff mit so einem Riesenrad zum
+     Antrieb des Ganzen ... ein klassischer traditioneller Raddampfer
+     auf dem Mississippi." */
+  pruefe("es hat zwei Schornsteine", reise.schlote === 2, reise.schlote + " Stueck");
+  pruefe("zwei Decks und ein Steuerhaus", reise.decks === 3, reise.decks + " Haeuser");
+  pruefe("und filigrane Saeulen am Deck", (reise.saeulen || 0) >= 10,
+    reise.saeulen + " Saeulen");
+  pruefe("das Rad sitzt am HECK, nicht an der Seite", reise.radLinks === true);
+  pruefe("und es hat keinen Radkasten mehr — der gehoert zum Seitenrad",
+    reise.keinKasten === true);
   pruefe("es spritzt, wo es eintaucht", reise.gischt);
   pruefe("und das Rad dreht sich", reise.radDreht !== "none" && reise.radDreht !== "-",
     reise.radDreht);

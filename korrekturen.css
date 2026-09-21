@@ -19704,3 +19704,520 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-lunte-schnur, .lc-lunte-funke { display: none; }
 }
+
+/* === RUNDE 57: DER RADDAMPFER VOM MISSISSIPPI ========================
+   XANDER: „Das Dampfboot muss viel filigraner ausgearbeitet werden ...
+   so ein echtes geiles altes Schiff mit so einem Riesenrad zum Antrieb
+   des Ganzen ... ein klassischer traditioneller Raddampfer auf dem
+   Mississippi — recherchiere das mal."
+
+   Die Zeichnung steht in app.js; hier stehen die Farben und das grosse
+   Rad. Ein Heckraddampfer ist LAENGER als hoch — deshalb ist der
+   Kasten jetzt 2,6-mal so breit wie das Profilbild statt zweimal. */
+.lc-dampfer { width: calc(var(--gross, 64px) * 2.6); }
+.lc-dampfer .lc-boot-rumpf {
+  fill: #f4efe2;
+  stroke: #8a7a5e;
+  stroke-width: 1.2;
+}
+.lc-dampfer .lc-boot-streifen { fill: #7d2c22; }
+.lc-dampfer-haus {
+  fill: #fbf7ee;
+  stroke: #b9a98c;
+  stroke-width: 1;
+}
+.lc-dampfer-dach { fill: #e6dcc6; }
+.lc-dampfer-fenster { fill: #3d5670; opacity: .85; }
+/* Die Saeulen und Gelaender sind das „filigran": haarfeine Linien,
+   keine Balken. Bei einem 166 px breiten Schiff sind 0,9 Einheiten
+   auf 200 Einheiten Kasten rund 0,75 px. */
+.lc-dampfer-saeule {
+  stroke: #c6b79a;
+  stroke-width: .9;
+  fill: none;
+}
+.lc-dampfer-gelaender {
+  stroke: #a8967a;
+  stroke-width: .8;
+  fill: none;
+}
+.lc-dampfer-schlot { fill: #23262b; }
+.lc-dampfer-ring   { fill: #c0392b; }
+.lc-dampfer-stock  { stroke: #8a7a5e; stroke-width: 1.4; fill: none; }
+.lc-dampfer-fahne  { fill: #c0392b; }
+/* DAS RIESENRAD AM HECK. Es sitzt hinten (links, weil das Schiff nach
+   rechts faehrt), ist hoeher als das Kesseldeck und taucht unten ins
+   Wasser — so sieht ein Heckrad aus. */
+.lc-dampfer .lc-dampfer-rad {
+  left: 1%;
+  bottom: 8%;
+  width: 21%;
+  height: 62%;
+  border-width: 2.5px;
+  border-color: #7d2c22;
+  z-index: 0;
+}
+.lc-dampfer .lc-dampfer-rad b {
+  background:
+    linear-gradient(180deg, #b8453a 0 15%, rgba(0,0,0,0) 15% 85%, #b8453a 85% 100%);
+}
+.lc-dampfer .lc-dampfer-rad b::after { background: rgba(125, 44, 34, .9); }
+.lc-dampfer .lc-dampfer-rad u { background: #7d2c22; }
+/* Der Radkasten von Runde 50 gehoert zu einem SEITENrad — ein
+   Heckraddampfer hat keinen. Er ist weg. */
+.lc-dampfer .lc-dampfer-kasten { display: none; }
+.lc-dampfer .lc-dampfer-spritzer {
+  left: 0;
+  bottom: 2%;
+  width: 24%;
+  height: 14%;
+}
+/* Das Bild sitzt im Kesseldeck, nicht mehr mittig im Rumpf.
+   KEIN „height: 0; padding-bottom" hier: das Fenster traegt
+   „transform: translate(-50%, -50%)", und minus fuenfzig Prozent von
+   einer Hoehe NULL sind null — es saesse einen halben Durchmesser zu
+   tief. Der Kasten ist 2,6 zu 1,15 breit, also ist 11 % der Breite
+   genauso viel wie 24,9 % der Hoehe: rund bleibt rund. */
+.lc-dampfer .lc-boot-fenster {
+  left: 51%;
+  top: 56%;
+  width: 11%;
+  height: 24.9%;
+  box-shadow: inset 0 0 0 2px #7d2c22, inset 0 .1em .3em rgba(255, 255, 255, .4);
+}
+
+/* === RUNDE 57: DAS PFERD =============================================
+   XANDER: „viel natuerlicher sein, mit dem richtigen Pferdekopf. Viel
+   echter. Und die Pferdehufe mit dem typischen Knickbein im Galopp."
+
+   Die Zeichnung steht in app.js. Hier steht, wie sie sich bewegt —
+   und das war der zweite Teil des Fehlers: alle vier Beine liefen
+   DIESELBE Animation mit nur zwei Startzeiten. Ein Galopp ist aber
+   kein Marschieren: die Hinterbeine schieben ZUSAMMEN ab, dann
+   strecken sich die Vorderbeine nach vorn, und dazwischen ist das
+   Pferd kurz ganz in der Luft. Deshalb hat jedes Bein jetzt seinen
+   eigenen Takt — und der Huf schwingt am Ende des Beins mit, sonst
+   sieht das Knickbein aus wie ein Knick im Draht. */
+.lc-pferd-form { overflow: visible; }
+.lc-pferd-rumpf, .lc-pferd-hals, .lc-pferd-kopf {
+  fill: #8a5a34;
+  stroke: #5d3a1c;
+  stroke-width: 1;
+}
+.lc-pferd-linie {
+  stroke: rgba(93, 58, 28, .4);
+  stroke-width: 1.4;
+  fill: none;
+}
+.lc-pferd-auge { fill: #1b1209; }
+.lc-pferd-nuester { stroke: #4a2d18; stroke-width: 1.2; fill: none; }
+.lc-pferd-ohr { fill: #7a4e2c; stroke: #5d3a1c; stroke-width: .8; }
+.lc-pferd-gurt { stroke: #3a2414; stroke-width: 2.2; fill: none; }
+/* Die ferne Seite liegt im Schatten — ohne das steht ein Pferd flach
+   da wie ein Scherenschnitt. */
+.lc-pferd-fern { opacity: .62; filter: brightness(.7); }
+.lc-pferd-bein {
+  stroke: #7a4e2c;
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+}
+.lc-pferd-huf {
+  stroke: #2a1c10;
+  stroke-width: 6.5;
+  stroke-linecap: round;
+  fill: none;
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+}
+/* Der Galopp: vier Beine, vier Takte, eine Runde in 0,46 s. */
+.lc-pferd-b1, .lc-pferd-h1 { animation: lcGaloppR57a .46s ease-in-out infinite; }
+.lc-pferd-b2, .lc-pferd-h2 { animation: lcGaloppR57b .46s ease-in-out infinite; }
+.lc-pferd-b3, .lc-pferd-h3 { animation: lcGaloppR57c .46s ease-in-out infinite; }
+.lc-pferd-b4, .lc-pferd-h4 { animation: lcGaloppR57d .46s ease-in-out infinite; }
+/* Hinterbein fern: schiebt ab, zieht nach. */
+@keyframes lcGaloppR57a {
+  0%   { transform: rotate(-34deg); }
+  35%  { transform: rotate(18deg); }
+  60%  { transform: rotate(26deg); }
+  100% { transform: rotate(-34deg); }
+}
+/* Vorderbein fern: greift nach vorn, faengt ab. */
+@keyframes lcGaloppR57b {
+  0%   { transform: rotate(24deg); }
+  30%  { transform: rotate(-22deg); }
+  65%  { transform: rotate(-30deg); }
+  100% { transform: rotate(24deg); }
+}
+/* Hinterbein nah — eine Achtelrunde versetzt zum fernen. */
+@keyframes lcGaloppR57c {
+  0%   { transform: rotate(-24deg); }
+  28%  { transform: rotate(22deg); }
+  55%  { transform: rotate(30deg); }
+  100% { transform: rotate(-24deg); }
+}
+/* Vorderbein nah. */
+@keyframes lcGaloppR57d {
+  0%   { transform: rotate(32deg); }
+  38%  { transform: rotate(-18deg); }
+  70%  { transform: rotate(-26deg); }
+  100% { transform: rotate(32deg); }
+}
+/* Der Sprung: im Galopp ist das Pferd zwischen zwei Takten ganz in
+   der Luft. Deshalb hebt der Rumpf zweimal je Runde. */
+.lc-pferd-huepf { animation-duration: .46s !important; }
+@media (prefers-reduced-motion: reduce) {
+  .lc-pferd-bein, .lc-pferd-huf { animation: none; }
+}
+/* Der Reiter sitzt IM SATTEL, nicht auf dem Widerrist. Der Sattel
+   liegt in der neuen Zeichnung bei x=66..94 von 150 (also 44 bis
+   63 %) und bei y=32 von 100. Mittig darueber sind das 53 % links;
+   mit 30 % Hoehe muss die Oberkante bei rund 10 % liegen, damit die
+   Unterkante auf dem Sattel aufsitzt. Vorher sass er bei 6 % und
+   damit auf dem Hals. */
+.lc-pferd-reiter {
+  left: 53%;
+  top: 11%;
+  width: 27%;
+  margin-left: -13.5%;
+}
+
+/* === RUNDE 57: DER HELIKOPTER UND DIE RICHTUNGEN =====================
+   XANDER: „der Helikopter sieht nicht echt wie ein Helikopter aus,
+   er fliegt auch in die falsche Richtung" und „Die Lok faehrt auch
+   falsch rum."
+
+   Die Richtung steht in app.js (LC_REISE_BLICK) — gespiegelt wurde
+   bisher unter der Annahme, jede Zeichnung schaue nach rechts; Lok und
+   Helikopter schauen aber nach links. Hier steht, was den Helikopter
+   zum Helikopter macht. */
+.lc-heli-glas {
+  fill: #bcd8f5;
+  stroke: #2a5ca4;
+  stroke-width: 1.2;
+  opacity: .92;
+}
+.lc-heli-tuer { stroke: rgba(20, 50, 95, .45); stroke-width: 1.2; fill: none; }
+.lc-heli-kopf { fill: #24507f; }
+/* DER HECKROTOR. Ohne ihn wuerde sich die Zelle drehen — er ist das
+   Merkmal, das einen Helikopter von allem anderen unterscheidet. Er
+   sitzt am Ende des Auslegers (x=120 von 130, y=32 von 70) und dreht
+   dreimal so schnell wie der Hauptrotor. */
+.lc-heli-heckrotor {
+  position: absolute;
+  left: 92.3%;
+  top: 45.7%;
+  width: 17%;
+  height: 0;
+  padding-bottom: 17%;
+  margin: -8.5% 0 0 -8.5%;
+}
+.lc-heli-heckscheibe {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(210, 225, 245, .3) 0 58%, rgba(210, 225, 245, .07) 84%, rgba(210,225,245,0) 100%);
+}
+.lc-heli-heckblatt {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 100%;
+  height: 8%;
+  margin-left: -50%;
+  border-radius: 999px;
+  background: rgba(30, 50, 80, .8);
+  transform-origin: 50% 50%;
+  animation: lcHeckrotorR57 .085s linear infinite;
+}
+.lc-heli-heckblatt-2 { animation-delay: -.042s; }
+@keyframes lcHeckrotorR57 { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .lc-heli-heckblatt { animation: none; }
+}
+
+/* =================================================================
+   RUNDE 58 — DIE PEITSCHE HOLT AUS
+   -----------------------------------------------------------------
+   XANDER: „Auch die Peitsche die kann richtig schön ausholen lang
+   sein mit einem verjüngen Ende. Ja das muss aber eher schwarzes
+   Leder sein."
+
+   Drei Änderungen, jede an seinem Satz entlang:
+   · AUSHOLEN. Die ganze Bewegung dauert jetzt 2,6 s statt 2 s. Die
+     ersten 20 % (0,52 s) liegt die Peitsche als Schlaufe HINTER der
+     Hand und zieht sich zurück, dann schnellt sie nach vorn. Alle
+     Prozentwerte der alten Bilder bleiben, wo sie waren — der Knall
+     sitzt weiterhin bei 30 %, das sind jetzt 780 ms.
+   · LANG UND VERJÜNGT. Der Drehpunkt liegt am GRIFF (0 50%), nicht
+     mehr in der Mitte — nur so sieht ein Ausholen nach Ausholen aus
+     und nicht nach Kippen. Die fünf Abschnitte rollen nacheinander
+     aus; die Spitze zuletzt.
+   · SCHWARZES LEDER. Die Farben stehen in app.js (der Strang wird
+     dort gezeichnet); hier bekommt der Griff seine, und der Schatten
+     wird dunkler — brauner Schatten unter schwarzem Leder sähe
+     falsch aus.
+   ================================================================= */
+.lc-peitsche-griff {
+  /* Schwarzes Leder mit Wicklung, nicht mehr das helle Holzbraun. */
+  background:
+    repeating-linear-gradient(115deg,
+      rgba(255, 255, 255, .10) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    linear-gradient(#2b2521, #0d0a08);
+}
+.lc-peitsche-welle {
+  /* Der Drehpunkt gehört in die Hand — sonst holt nicht die Peitsche
+     aus, sondern das Bild kippt. */
+  transform-origin: 0 50%;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .7));
+  animation: lcPeitscheHoltAusR58 2.6s cubic-bezier(.16, .9, .28, 1) both;
+}
+@keyframes lcPeitscheHoltAusR58 {
+  /* Ausholen: sie liegt zurückgezogen und kurz hinter der Hand. */
+  0%   { opacity: 0;  transform: rotate(-34deg) scaleX(.20) scaleY(1.5); }
+  8%   { opacity: 1;  transform: rotate(-44deg) scaleX(.26) scaleY(1.4); }
+  20%  { opacity: 1;  transform: rotate(-50deg) scaleX(.30) scaleY(1.35); }
+  /* Und jetzt nach vorn — in 0,26 s über die ganze Strecke. */
+  26%  { opacity: 1;  transform: rotate(-14deg) scaleX(.78) scaleY(.95); }
+  /* 30 % = 780 ms: die Spitze ist am fernen Ende, da knallt es. */
+  30%  { opacity: 1;  transform: rotate(0deg)   scaleX(1.03) scaleY(.7); }
+  40%  {              transform: rotate(4deg)   scaleX(.99) scaleY(1.05); }
+  56%  { opacity: .9; transform: rotate(-5deg)  scaleX(.9) scaleY(1.2); }
+  100% { opacity: 0;  transform: rotate(-16deg) scaleX(.3) scaleY(1.5); }
+}
+/* Die fünf Abschnitte rollen nacheinander aus; Glanz und Strang
+   teilen sich eine Klasse, damit beide gleich laufen. */
+.lc-pw { animation: lcPeitscheRolltR58 2.6s cubic-bezier(.16, .9, .28, 1) both; }
+.lc-pw1 { animation-delay: .00s; }
+.lc-pw2 { animation-delay: .05s; }
+.lc-pw3 { animation-delay: .10s; }
+.lc-pw4 { animation-delay: .15s; }
+.lc-pw5 { animation-delay: .20s; }
+@keyframes lcPeitscheRolltR58 {
+  /* Während des Ausholens ist erst ein Fünftel draussen … */
+  0%   { stroke-dashoffset: 100; }
+  20%  { stroke-dashoffset: 78; }
+  /* … dann ist sie mit dem Schlag ganz draussen. */
+  30%  { stroke-dashoffset: 0; }
+  62%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 100; }
+}
+.lc-pw-glanz { mix-blend-mode: screen; }
+/* Die Schlaufe hinter der Hand — nur beim Ausholen zu sehen. */
+.lc-peitsche-hol {
+  position: absolute;
+  left: -58px; top: -20px;
+  width: 62px; height: 44px;
+  overflow: visible;
+  transform-origin: 100% 50%;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6));
+  animation: lcPeitscheSchlaufeR58 2.6s cubic-bezier(.16, .9, .28, 1) both;
+}
+@keyframes lcPeitscheSchlaufeR58 {
+  0%   { opacity: 0; transform: rotate(-8deg) scale(.7); }
+  8%   { opacity: 1; transform: rotate(-16deg) scale(.95); }
+  20%  { opacity: 1; transform: rotate(-22deg) scale(1.05); }
+  /* Mit dem Schlag ist sie fort — sie ist ja nach vorn geschnellt. */
+  28%  { opacity: 0; transform: rotate(10deg) scale(.55); }
+  100% { opacity: 0; transform: rotate(10deg) scale(.55); }
+}
+/* Die drei Sachen, die zur selben Peitsche gehören, müssen mitwachsen
+   — sonst stehen Strieme und Knall noch, wenn die Peitsche schon
+   wieder fort ist (die Prozente stimmen, die Sekunden nicht). */
+.lc-peitsche-strieme { animation-duration: 2.6s; }
+.lc-peitsche-knall   { animation-duration: 2.6s; }
+.lc-gepeitscht       { animation-duration: 2.6s; }
+@media (prefers-reduced-motion: reduce) {
+  .lc-peitsche-hol { animation: none; opacity: 0; }
+}
+
+/* =================================================================
+   RUNDE 58 — DIE LIANE HÄNGT VON OBEN HERUNTER
+   -----------------------------------------------------------------
+   XANDER: „Die Liane kann länger sein und von oben drüber richtig
+   lang runter hängen."
+
+   Der Aufhängepunkt liegt jetzt OBERHALB der Platzreihe (app.js:
+   hochL = -d*0,7), das Seil reicht also vom oberen Rand bis zum Bild.
+   Hier fehlt dazu nur noch die Breite: das SVG war 16 px breit bei
+   einer viewBox von 24 Einheiten — mit preserveAspectRatio="none"
+   wurde jedes Blatt also auf zwei Drittel zusammengedrückt. 24 px
+   Breite heisst: eine Einheit ist genau ein Pixel, in BEIDE
+   Richtungen.
+   ================================================================= */
+.lc-liane-seil {
+  width: 24px;
+  margin-left: -12px;
+}
+
+/* =================================================================
+   RUNDE 58 — DIE BIRNE DREHT SICH UM DIE RICHTIGE ACHSE
+   -----------------------------------------------------------------
+   XANDER: „Die Birne dreht sich immer noch nicht realistisch auf der
+   waagerechten Achse … Die Birne soll sich mit der Fassung von links
+   nach rechts drehen … und dann vielleicht für einen kurzen Moment
+   auf der kompletten Bühne. Stromausfall ist durch das raus drehen."
+
+   WORAN ES LAG: `rotate(360deg)` dreht in der BILDEBENE — das Bild
+   kreiselt wie eine Schallplatte. Eine Glühbirne hängt aber in einer
+   Fassung über dem Kopf, und ihre Schraubachse steht SENKRECHT; von
+   vorn wandert die Vorderseite dabei von links nach rechts. Das ist
+   `rotateY`, und dafür braucht es eine Perspektive, sonst wird aus
+   der Drehung nur ein Zusammenquetschen.
+
+   Die Umdrehungen und die Helligkeitsstufen sind dieselben geblieben
+   — sie waren nie das Problem.
+   ================================================================= */
+.lc-eingedreht { animation: lcBirneEinR58 4s cubic-bezier(.2, .6, .2, 1) both; }
+@keyframes lcBirneEinR58 {
+  0%   { transform: perspective(520px) rotateY(0deg); filter: brightness(.7); }
+  /* Drei Umdrehungen, jede langsamer — so schraubt man ein. */
+  22%  { transform: perspective(520px) rotateY(360deg); filter: brightness(.72); }
+  40%  { transform: perspective(520px) rotateY(720deg); filter: brightness(.78); }
+  54%  { transform: perspective(520px) rotateY(1020deg); filter: brightness(.85); }
+  /* Kontakt: es zuckt und zündet. */
+  58%  { transform: perspective(520px) rotateY(1044deg) scale(1.02); filter: brightness(1.7); }
+  61%  { transform: perspective(520px) rotateY(1038deg); filter: brightness(.9); }
+  64%  { transform: perspective(520px) rotateY(1044deg) scale(1.01); filter: brightness(1.9); }
+  72%, 88% { transform: perspective(520px) rotateY(1044deg); filter: brightness(1.55); }
+  100% { transform: perspective(520px) rotateY(1044deg); filter: brightness(1.3); }
+}
+/* Sie bleibt an, bis jemand sie herausdreht — vorher erlosch sie nach
+   vier Sekunden von selbst, und dann war das Herausdrehen sinnlos. */
+.lc-birne-an {
+  filter: brightness(1.22);
+  box-shadow: 0 0 18px 4px rgba(255, 216, 130, .55),
+              inset 0 0 14px rgba(255, 236, 190, .4);
+}
+/* DAS HERAUSDREHEN: dieselbe Achse, andere Richtung — und das Licht
+   stirbt nicht sofort, sondern flackert noch einmal auf, wie es eine
+   Glühwendel tut, wenn der Kontakt abreisst. */
+.lc-ausgedreht {
+  animation: lcBirneRausR58 2.2s cubic-bezier(.3, .1, .4, 1) both;
+}
+@keyframes lcBirneRausR58 {
+  0%   { transform: perspective(520px) rotateY(0deg); filter: brightness(1.22); }
+  18%  { transform: perspective(520px) rotateY(-30deg); filter: brightness(1.5); }
+  40%  { transform: perspective(520px) rotateY(-330deg); filter: brightness(1.05); }
+  /* 62 % = 1364 ms: der Kontakt reisst ab — genau dann kommt der
+     Stromausfall (siehe lcGluehbirne). */
+  58%  { transform: perspective(520px) rotateY(-600deg); filter: brightness(1.6); }
+  62%  { transform: perspective(520px) rotateY(-648deg); filter: brightness(.32); }
+  66%  { transform: perspective(520px) rotateY(-684deg); filter: brightness(.9); }
+  74%  { transform: perspective(520px) rotateY(-720deg); filter: brightness(.28); }
+  100% { transform: perspective(520px) rotateY(-720deg); filter: brightness(1); }
+}
+/* DER STROMAUSFALL AUF DER GANZEN BÜHNE — „für einen kurzen Moment".
+   Kurz heisst hier 1,2 s, nicht die 6,4 s der grossen Finsternis:
+   es ist ein Flackern, kein Ereignis. */
+.lc-stromaus {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background: #05060a;
+  animation: lcStromAusR58 1.2s ease-out both;
+}
+@keyframes lcStromAusR58 {
+  0%   { opacity: 0; }
+  8%   { opacity: .94; }
+  18%  { opacity: .55; }
+  26%  { opacity: .96; }
+  70%  { opacity: .9; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-ausgedreht { animation: none; }
+  .lc-stromaus { display: none; }
+}
+
+/* =================================================================
+   RUNDE 58 — DER REGEN FÄLLT NACH UNTEN, NICHT SCHRÄG ZUR SEITE
+   -----------------------------------------------------------------
+   XANDER: „Bis auf die Regentropfen, die sollten feiner sein … Die
+   sollten richtig nach unten fallen und nicht immer so schräg von
+   oben links parallel verschoben fallen."
+
+   WORAN ES LAG: --w-drift und --w-neigung standen je EBENE. Alle
+   Tropfen einer Ebene bekamen denselben Versatz — bei Regen 20 px
+   nach rechts und 15 Grad Schräglage, bei Platzregen 26 px und
+   21 Grad. Das ist keine Regenfläche, das ist eine Tapete, die zur
+   Seite geschoben wird. Genau so beschreibt er es auch.
+
+   JETZT: app.js gibt jedem Tropfen ein eigenes Mass von -1 bis +1
+   (--w-eigen). Versatz und Neigung werden daraus gerechnet, also
+   wehen die einen ein wenig nach links, die anderen nach rechts —
+   im Mittel fällt es senkrecht. Und die Grundwerte sind viel
+   kleiner: aus 20 px werden ±3 px, aus 15 Grad ±3 Grad.
+
+   „Feiner" heisst hier schmaler: aus 1,4 px werden 0,95 px, beim
+   Nieseln aus 1 px sogar 0,7 px. Die Länge bleibt — sie macht das
+   Tempo sichtbar, und daran lag es nicht.
+   ================================================================= */
+#niederschlagSchicht .w-tropfen { --w-eigen: 0; }
+
+/* --- Nieseln: fein und praktisch senkrecht --- */
+.w-stark-nieseln .w-re1 .w-tropfen { width: .7px; --w-drift: calc(1.4px * var(--w-eigen, 0)); --w-neigung: calc(1.4deg * var(--w-eigen, 0)); }
+.w-stark-nieseln .w-re2 .w-tropfen { width: .6px; --w-drift: calc(1.1px * var(--w-eigen, 0)); --w-neigung: calc(1.1deg * var(--w-eigen, 0)); }
+.w-stark-nieseln .w-re3 .w-tropfen { width: .5px; --w-drift: calc(0.8px * var(--w-eigen, 0)); --w-neigung: calc(0.8deg * var(--w-eigen, 0)); }
+
+/* --- Regen: feine Striche, die herunterfallen --- */
+.w-stark-regen .w-re1 .w-tropfen { width: .95px; --w-drift: calc(3px * var(--w-eigen, 0)); --w-neigung: calc(3deg * var(--w-eigen, 0)); }
+.w-stark-regen .w-re2 .w-tropfen { width: .8px;  --w-drift: calc(2.4px * var(--w-eigen, 0)); --w-neigung: calc(2.4deg * var(--w-eigen, 0)); }
+.w-stark-regen .w-re3 .w-tropfen { width: .65px; --w-drift: calc(1.8px * var(--w-eigen, 0)); --w-neigung: calc(1.8deg * var(--w-eigen, 0)); }
+
+/* --- Platzregen: darf schräger sein, aber nicht alle gleich. Bei
+   einem Wolkenbruch weht es wirklich — „nicht IMMER so schräg". --- */
+.w-stark-platzregen .w-re1 .w-tropfen { width: 1.2px; --w-drift: calc(7px * var(--w-eigen, 0)); --w-neigung: calc(6deg * var(--w-eigen, 0)); }
+.w-stark-platzregen .w-re2 .w-tropfen { width: 1px;   --w-drift: calc(5.5px * var(--w-eigen, 0)); --w-neigung: calc(5deg * var(--w-eigen, 0)); }
+.w-stark-platzregen .w-re3 .w-tropfen { width: .85px; --w-drift: calc(4px * var(--w-eigen, 0)); --w-neigung: calc(4deg * var(--w-eigen, 0)); }
+
+/* Und der Grundfall (ohne erkannte Stärke) genauso. */
+.w-re1 .w-tropfen { width: 1px;   --w-drift: calc(3px * var(--w-eigen, 0)); --w-neigung: calc(3deg * var(--w-eigen, 0)); }
+.w-re2 .w-tropfen { width: .85px; --w-drift: calc(2.4px * var(--w-eigen, 0)); --w-neigung: calc(2.4deg * var(--w-eigen, 0)); }
+.w-re3 .w-tropfen { width: .7px;  --w-drift: calc(1.8px * var(--w-eigen, 0)); --w-neigung: calc(1.8deg * var(--w-eigen, 0)); }
+
+/* =================================================================
+   RUNDE 58 — KEINE SONNE MEHR AM NACHTHIMMEL
+   -----------------------------------------------------------------
+   XANDER: „außerdem ist, wenn der Nachthimmel da ist, manchmal noch
+   ne Sonne am Wolkensymbol zu sehen, obwohl wir es schon Nacht
+   haben."
+
+   WORAN ES LAG, und warum „manchmal": der Sonnenschein
+   (.w-schein) und die Strahlenbündel (.w-strahl) hängen an der SZENE
+   („klar", „wolkig"), nicht an der Tageszeit. Auf Nacht umgeschaltet
+   wird erst ab einer Dunkelheit von 0,62 — in der Dämmerung davor
+   ist der Streifen längst dunkelblau, die Szene aber noch „klar",
+   und dann steht die Sonne im Nachthimmel. Genau das „manchmal".
+
+   Jetzt entscheidet die TAGESZEIT darüber, nicht die Szene: in der
+   Dämmerung werden die Strahlen schwach und der Schein kühl, in der
+   Nacht sind die Strahlen ganz weg und aus dem warmen Schein wird
+   Mondlicht. Und weil der Riegel an „ist-nacht" UND „tz-nacht"
+   hängt, greift er auch dann, wenn die Szene noch nicht umgestellt
+   wurde.
+   ================================================================= */
+/* Dämmerung: die Sonne steht flach, die Strahlen sind schwach.
+   Das „!important" ist hier kein Holzhammer, sondern notwendig: die
+   Strahlen haben eine eigene Bewegung, die ihre Deckkraft setzt, und
+   eine Bewegung schlägt jede gewöhnliche Regel — gemessen blieben
+   sonst 0,50 statt 0,30. */
+.wetter-szene.tz-abend .w-strahl,
+.wetter-szene.tz-morgen .w-strahl { opacity: .3 !important; }
+/* Nacht: gar keine Sonnenstrahlen mehr. */
+.wetter-szene.ist-nacht .w-strahl,
+.wetter-szene.tz-nacht .w-strahl { display: none; }
+/* Und aus dem warmen Sonnenschein wird kühles Mondlicht. */
+.wetter-szene.ist-nacht .w-schein,
+.wetter-szene.tz-nacht .w-schein {
+  background: radial-gradient(closest-side,
+    rgba(196, 214, 255, .30) 0%,
+    rgba(150, 174, 230, .16) 44%,
+    rgba(120, 146, 208, .06) 68%,
+    transparent 84%);
+}

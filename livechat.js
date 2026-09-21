@@ -861,8 +861,7 @@ window.LiveChat = (function () {
     adler:       " l\u00e4sst den Adler steigen  \ud83e\udd85",
     /* Die Fahrzeuge. Gewuenscht: „baue das bitte mit ein in die
        Tiere und Fahrzeuge." */
-    lok:         " l\u00e4sst die Dampflok heranrollen  \ud83d\ude82",
-    zug:         " l\u00e4sst die Dampflok heranrollen  \ud83d\ude82",
+    gglok:       " l\u00e4sst die Dampflok heranrollen  \ud83d\ude82",
     /* Weltraum und Tiefsee. Diese beiden gibt es nur als Film —
        und zwar als „dunkle" Sorte: wo das Bild schwarz ist, ist
        es durchsichtig, und der Chat scheint hindurch. */
@@ -8924,7 +8923,15 @@ window.LiveChat = (function () {
     { gr: "tiere", w: "trex",      kurz: "dinosaurier", nutzt: "/trex",   was: "Film: der T-Rex bricht heran — der Boden bebt" },
     { gr: "tiere", w: "loewe",     kurz: "lion",   nutzt: "/loewe",       was: "Film: der Löwe kommt und brüllt" },
     { gr: "tiere", w: "adler",     kurz: "greif",  nutzt: "/adler",       was: "Film: der Adler zieht über den Chat" },
-    { gr: "fahrzeuge", w: "lok",   kurz: "dampflok", nutzt: "/lok",       was: "Film: die Dampflok kommt heran, der Chat rattert" },
+    /* RUNDE 58 — ZWEI BEFEHLE HIESSEN „lok", UND EINER GEWANN.
+       Seit die Lok auch eine REISE ist (Zeile „gr: reden, w: lok"),
+       stand derselbe Name zweimal in dieser Liste. Gefunden wird
+       immer der erste — also die Reise, und der grosse Lokfilm war
+       nicht mehr zu erreichen (gemessen: pruefe-film-geschenk,
+       „Zeit -1 s"). Der Film heisst deshalb jetzt „/gglok" wie die
+       anderen grossen Filme auch; „/lok" faehrt, so wie XANDER es
+       benutzt („Die Lok faehrt auch falsch rum"). */
+    { gr: "fahrzeuge", w: "gglok", kurz: "lokfilm", nutzt: "/gglok",     was: "Film: die Dampflok kommt heran, der Chat rattert (auch /zug)" },
     { gr: "fahrzeuge", w: "raumschiff", kurz: "ufo", nutzt: "/raumschiff", was: "Film: das Raumschiff zieht am Ringplaneten vorbei (auch /ufo)" },
     { gr: "fahrzeuge", w: "uboot", kurz: "tiefsee", nutzt: "/uboot",      was: "Film: das U-Boot taucht ab, der Krake greift zu" },
     { gr: "feier", w: "kassette",  kurz: "tape",   nutzt: "/kassette",  was: "Achtziger: eine Musikkassette spult zurück, die Wickel drehen sich" },
@@ -9019,7 +9026,7 @@ window.LiveChat = (function () {
     route66: "\ud83d\udee3\ufe0f", prunk: "\ud83d\udc8e", loewe: "\ud83e\udd81",
     trex: "\ud83e\udd95", ggelefant: "\ud83d\udc18", adler: "\ud83e\udd85",
     gghai: "\ud83e\udd88", ggbaer: "\ud83d\udc3b",
-    lok: "\ud83d\ude82",
+    gglok: "\ud83d\ude82",
     raumschiff: "\ud83d\ude80", uboot: "\ud83d\udea2", kassette: "\ud83d\udcfc",
     pacman: "\ud83d\udc7e", disko: "\ud83e\udea9", pirat: "\ud83c\udff4\u200d\u2620\ufe0f",
     strudel: "\ud83c\udf00", schwamm: "\ud83e\uddfd", schuss: "\ud83d\udca5",
@@ -9154,13 +9161,14 @@ window.LiveChat = (function () {
                 greif: "adler", ggadler: "adler",
                 hai: "gghai", haifisch: "gghai", weisshai: "gghai",
                 baer: "ggbaer", baerchen: "ggbaer",
-                lokomotive: "lok",
-                eisenbahn: "lok", bahn: "lok", gglok: "lok",
                 /* Es gibt nur noch EINE Lok (die bunte). Die alten
-                   Namen zeigen alle auf sie, damit keine Zeile von
-                   gestern ins Leere faellt. */
-                zug: "lok", schnellzug: "lok", lok2: "lok", gglok2: "lok",
-                dampfzug: "lok",
+                   Namen zeigen alle auf ihren FILM, damit keine Zeile
+                   von gestern ins Leere faellt — „/lok" selbst ist
+                   seit Runde 57 die Reise. */
+                lokomotive: "gglok",
+                eisenbahn: "gglok", bahn: "gglok",
+                zug: "gglok", schnellzug: "gglok", lok2: "gglok", gglok2: "gglok",
+                dampfzug: "gglok",
                 /* GEWUENSCHT: „das Spaceship kannst du als UFO als
                    Code gelten lassen." */
                 ufo: "raumschiff", spaceship: "raumschiff", rakete: "raumschiff",

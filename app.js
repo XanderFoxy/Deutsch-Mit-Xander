@@ -7639,7 +7639,20 @@
     return `<div class="w-ebene ${klasse}">` + wTeilchen(klasse, anzahl, (i) => {
       const links = wStreuBand(i, anzahl, saat, 100);
       const takt = wStreu(i, saat + 3, 1);   // 0 bis 1: wo im Ablauf dieses Teilchen steht
-      return `<i class="w-tropfen" style="left:${links}%; --w-takt:${takt};"></i>`;
+      /* RUNDE 58 — XANDER: „Die Regentropfen … sollten richtig nach
+         unten fallen und nicht immer so schraeg von oben links
+         parallel verschoben fallen."
+
+         Er hat den Fehler genau benannt: Versatz und Neigung standen
+         je Ebene im Stilblatt, also hatte JEDER Tropfen einer Ebene
+         denselben Wert. Damit rutschte nicht Regen herunter, sondern
+         eine ganze Flaeche schraeg zur Seite. Jetzt traegt jeder
+         Tropfen sein EIGENES Mass von -1 bis +1: die einen wehen ein
+         wenig nach links, die anderen nach rechts, im Mittel faellt
+         es senkrecht. Das Stilblatt rechnet Versatz und Neigung
+         damit aus (siehe „--w-eigen"). */
+      const eigen = (wStreu(i, saat + 7, 2) - 1).toFixed(2);
+      return `<i class="w-tropfen" style="left:${links}%; --w-takt:${takt}; --w-eigen:${eigen};"></i>`;
     }) + `</div>`;
   }
   /* Welche Tageszeit ist gerade? Das steht nicht in einer Tabelle mit
@@ -8065,10 +8078,15 @@
         break;
       case "nacht":
         /* Sternenhimmel, ab und zu eine Sternschnuppe — und der Mond in
-           der Phase, die heute wirklich am Himmel steht. */
+           der Phase, die heute wirklich am Himmel steht.
+           RUNDE 58: war es nachts „wolkig", verschwanden die Wolken
+           ganz — der Nachthimmel kannte sie nicht. Eine bewoelkte
+           Nacht hat aber Wolken; sie ziehen jetzt vor den Sternen
+           durch. */
         inhalt = wSternenhimmel()
           + `<i class="w-schnuppe w-sp1"></i><i class="w-schnuppe w-sp2"></i>`
-          + mondSvg(phase);
+          + mondSvg(phase)
+          + (wetterLage === "wolkig" ? wWolkenbaender(2) : "");
         break;
       default:
         inhalt = "";
@@ -24037,7 +24055,7 @@
     /* „bei der Peitsche selber kann einfach nur ein Peitschenknall sein." */
     /* „bei der Peitsche realistische Peitschen Sound" — die Lasche
        zischt erst, dann knallt die Spitze. */
-    peitsche:       { ton: "peitsche2", dauer: 2000, laut: 0.45 },  /* das Sausen; der Knall kommt aus lcPeitsche */
+    peitsche:       { ton: "peitsche2", dauer: 2600, laut: 0.45 },  /* das Sausen; der Knall kommt aus lcPeitsche */
     /* „Beim Bowling gibts auch ne besseren Sound weil den den du hast
        ist der von der zerbrochenen Scheibe." */
     bowling:        { ton: "bowling",  dauer: 4200, laut: 0.5 },
@@ -28577,7 +28595,7 @@
     saugpfeil: 714,    /* 21 % von 3,4 s */
     ei: 520,
     katapult: 676,     /* 26 % von 2,6 s, der Arm schnellt */
-    peitsche: 600,     /* 30 % von 2 s, da knallt es */
+    peitsche: 780,     /* 30 % von 2,6 s, da knallt es (Runde 58: mit Ausholen) */
     zwille: 1300,      /* 50 % von 2,6 s */
     pusterohr: 1280,   /* 32 % von 4 s */
     /* 28 % von 2,6 s — GENAU dort sitzt die Hand am Gesicht
@@ -29307,6 +29325,26 @@
          Kreisbahn, dieselbe Rechnung wie beim Schneeball). */
       schicht.style.setProperty("--ex", (r.x * 38).toFixed(1) + "%");
       schicht.style.setProperty("--ey", (r.y * 38).toFixed(1) + "%");
+      /* Die Aeste einer Feder: feine Striche, die vom Kiel schraeg
+         nach hinten aussen laufen. Ohne sie ist eine Fahne nur eine
+         Flaeche — mit ihnen sieht man, dass es eine Feder ist. */
+      const AST_X = [14, 17, 20, 23, 26, 29, 32];
+      /* Wie hoch die Fahne an dieser Stelle ist — abgelesen an der
+         Umrisslinie oben (M36 … C29 11.5, 22 8.2, 17 4.2 … 12.6 4.7).
+         Die Aeste duerfen nicht ueber den Umriss hinausragen, sonst
+         sieht die Feder ausgefranst statt gefiedert aus. */
+      const AST_H = [7.3, 7.9, 6.8, 5.5, 4.1, 2.7, 1.3];
+      const fahne = (hin) => {
+        let aus = "";
+        for (let k = 0; k < AST_X.length; k++) {
+          const y = hin < 0 ? 12.4 : 15.6;
+          aus += '<path d="M' + AST_X[k] + " " + y
+            + " L" + (AST_X[k] - 2.2).toFixed(1) + " "
+            + (y + hin * AST_H[k] * 0.92).toFixed(1) + '" class="lc-pfeil-ast" stroke="#9fb0c0"'
+            + ' stroke-width="0.5" stroke-linecap="round"/>';
+        }
+        return aus;
+      };
       schicht.innerHTML =
         '<svg class="lc-pfeil-bild" viewBox="0 0 100 28">'
         /* GEMELDET, jetzt zum dritten Mal: „Dann ist der Pfeil immer
@@ -29326,28 +29364,75 @@
              · und die Wicklung, die sie haelt.
            Vorn sitzt ein Saugnapf, der auch wie einer aussieht: ein
            Becher, der sich nach vorn oeffnet, mit Rand und Stiel. */
-        /* Die Kerbe ganz hinten — dort liegt die Sehne an. */
-        + '<path d="M2 9 L9 14 L2 19" fill="none" stroke="#6b7b8c"'
-        + ' stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
-        /* Die beiden Federn: vorn gerade, hinten ausgeschnitten. */
-        + '<path d="M9 13 L27 7 L31 10 L13 14 Z" fill="#8fc0e8"'
-        + ' stroke="#3f6f9f" stroke-width="1.1" stroke-linejoin="round"/>'
-        + '<path d="M9 15 L27 21 L31 18 L13 14 Z" fill="#6fa8dc"'
-        + ' stroke="#3f6f9f" stroke-width="1.1" stroke-linejoin="round"/>'
+        /* RUNDE 58 — XANDER, zum vierten Mal: „Bei dem Pfeil und Bogen
+           moechte ich, dass du wirklich an ein realistischen Pfeil
+           denkst, da hat man am Ende des Pfeiles eine Art Feder … und
+           da wo eigentlich die Spitze ist … einfach nur statt der
+           Spitze ein realistischer Saugnapf."
+
+           Die Reihenfolge stimmte schon (Feder hinten, Napf vorn) —
+           die ZEICHNUNG stimmte nicht. Die „Federn" waren zwei flache
+           blaue Vierecke: das ist eine Kunststoff-Vane vom
+           Sportbogen, keine Feder. Eine Feder hat einen Kiel, eine
+           gewoelbte Fahne und sichtbare Aeste; die sind jetzt
+           einzeln gezeichnet (je sieben feine Striche vom Kiel nach
+           aussen). Der Schaft war knallgelb mit braunem Rand — Holz
+           ist matt und hat eine Maserung. Und der Napf war ein
+           Halbkreis; ein Saugnapf ist ein Becher, der sich nach vorn
+           zu einem RUNDEN Rand oeffnet, und genau den sieht man von
+           der Seite als schmale Ellipse.
+
+           Aufbau von hinten nach vorn: Nocke, drei Federn (zwei in
+           voller Sicht, die dritte hochkant als schmaler Streifen),
+           Wicklung, Schaft, Stiel, Saugnapf. */
+        /* Die Nocke: das Kunststoffstueck, in dem die Sehne sitzt. */
+        + '<path class="lc-pfeil-nocke" d="M3 10 L9 12.4 L9 15.6 L3 18 Z" fill="#41505e"/>'
+        + '<path d="M3 11.6 L6.6 14 L3 16.4" fill="none" stroke="#141a20"'
+        + ' stroke-width="1.5" stroke-linejoin="round"/>'
+        /* Der Schaft zuerst — die Federn liegen DARAUF, nicht darunter.
+           Mattes Holz mit Maserung, kein Knallgelb. */
+        + '<rect class="lc-pfeil-schaft" x="9" y="12.4" width="63" height="3.2" rx="1.6" fill="#c69a63"/>'
+        + '<path d="M12 13.2 L70 13.2" stroke="#e3c396" stroke-width="0.7"/>'
+        + '<path d="M12 14.9 L70 14.9" stroke="#9c733f" stroke-width="0.6"/>'
+        /* Die obere Feder. Eine Befiederung sieht von der Seite aus
+           wie eine Haifischflosse, die nach HINTEN lehnt: vorn laeuft
+           sie flach aus, hinten steht sie hoch und ist gerade
+           abgeschnitten. Als Mandel (so war es eben noch) sieht sie
+           aus wie ein Blatt. */
+        + '<path class="lc-pfeil-feder" d="M36 12.4 C29 11.5 22 8.2 17 4.2 L12.6 4.7 L12.6 12.4 Z"'
+        + ' fill="#eef3f7" stroke="#8fa0b0" stroke-width="0.6" stroke-linejoin="round"/>'
+        + fahne(-1)
+        + '<path d="M12.6 12.2 L36 12.4" stroke="#76879a" stroke-width="0.8"/>'
+        /* Die untere Feder, spiegelbildlich. */
+        + '<path class="lc-pfeil-feder" d="M36 15.6 C29 16.5 22 19.8 17 23.8 L12.6 23.3 L12.6 15.6 Z"'
+        + ' fill="#dae3ec" stroke="#8fa0b0" stroke-width="0.6" stroke-linejoin="round"/>'
+        + fahne(1)
+        + '<path d="M12.6 15.8 L36 15.6" stroke="#76879a" stroke-width="0.8"/>'
+        /* Die dritte Feder steht hochkant zum Betrachter und ist
+           deshalb nur ein schmaler Streifen auf dem Schaft. Sie ist
+           die Leitfeder und darum farbig — so macht man es wirklich. */
+        + '<path d="M13.4 13.9 C21 12.9 29 13.3 34.6 14.0 '
+        + 'C29 14.7 21 15.1 13.4 14.1 Z" fill="#c0642e"/>'
         /* Die Wicklung, die die Federn haelt. */
-        + '<rect x="29" y="11" width="4" height="6" rx="1.5" fill="#3f6f9f"/>'
-        /* Der Schaft. */
-        + '<rect x="12" y="12.2" width="60" height="3.6" rx="1.8" fill="#e8b86b"'
-        + ' stroke="#a97f38" stroke-width="1.2"/>'
-        /* Der Stiel des Napfes. */
-        + '<rect x="70" y="11" width="8" height="6" rx="2" fill="#b33c3c"/>'
-        /* Und der Saugnapf: ein Becher, der sich nach RECHTS oeffnet —
-           also auf das Bild zu. Die Oeffnung ist die flache Kante
-           vorn, hinten laeuft er zum Stiel zusammen. */
-        + '<path class="lc-pfeil-napf" d="M77 7 C88 7 95 10 95 14 C95 18 88 21 77 21 Z"'
-        + ' fill="#d94f4f" stroke="#8f2f2f" stroke-width="1.8" stroke-linejoin="round"/>'
-        + '<path d="M95 8.5 C97 10.5 97 17.5 95 19.5" fill="none" stroke="#8f2f2f"'
-        + ' stroke-width="2.2" stroke-linecap="round"/>'
+        + '<rect x="34.4" y="11.6" width="3" height="4.8" rx="1.2" fill="#2f3b47"/>'
+        /* Der Stiel des Napfes, mit einer Kehle wie bei echten. */
+        + '<rect x="70" y="11.8" width="7" height="4.4" rx="1.6" fill="#8f2f2f"/>'
+        + '<rect x="73.4" y="12.6" width="1.6" height="2.8" rx="0.8" fill="#6d2121"/>'
+        /* DER SAUGNAPF. Ein Becher, der sich nach RECHTS oeffnet:
+           hinten eng am Stiel, vorn weit — und weil der Rand ein
+           KREIS ist, sieht man ihn von der Seite als schmale
+           Ellipse. Genau daran erkennt man einen Saugnapf. */
+        + '<path class="lc-pfeil-napf" d="M77 11 C82 11 86.5 7.4 91 4.2 '
+        + 'L91 23.8 C86.5 20.6 82 17 77 17 Z" fill="#c0392b"/>'
+        /* Die Innenseite ist dunkler — da faellt kein Licht hinein. */
+        + '<path d="M79.5 12.2 C83.5 12.2 87 9.6 90 7.2 L90 20.8 '
+        + 'C87 18.4 83.5 15.8 79.5 15.8 Z" fill="#8f2416" opacity=".55"/>'
+        /* Der Rand als Ellipse — der Kreis in der Seitenansicht. */
+        + '<ellipse class="lc-pfeil-rand" cx="91" cy="14" rx="2.6" ry="9.8" fill="#d94f3d"'
+        + ' stroke="#7b241c" stroke-width="1.1"/>'
+        /* Und ein Glanzstreifen auf dem Gummi. */
+        + '<path d="M80 9.6 C84 8.6 87 7 89.4 5.6" fill="none"'
+        + ' stroke="rgba(255,255,255,.4)" stroke-width="1.3" stroke-linecap="round"/>'
         + "</svg>"
         + '<span class="lc-pfeil-platsch">PLOPP</span>';
       /* Und der Drill: das getroffene Bild zittert mit dem Pfeil aus. */
@@ -30637,17 +30722,63 @@
          haarduenn an der Spitze (1,4), dazu die Franse ganz aussen.
          Sie rollen nacheinander aus (stroke-dashoffset), und genau
          wenn die Spitze ankommt, knallt es. */
+      /* RUNDE 58 — XANDER: „Auch die Peitsche die kann richtig schoen
+         ausholen lang sein mit einem verjuengen Ende. Ja das muss
+         aber eher schwarzes Leder sein."
+
+         Drei Dinge sind daran neu:
+         · AUSHOLEN. Vorher rollte sie vom ersten Bild an nach vorn
+           aus — das ist ein Schlag ohne Schwung. Jetzt liegt sie die
+           ersten 0,52 s als Schlaufe HINTER der Hand (lc-peitsche-hol,
+           links vom Griff, also im Minus-Bereich), und erst dann
+           schnellt sie nach vorn. Die Gesamtdauer geht dafuer von
+           2 s auf 2,6 s; der Knall bleibt bei 30 % und liegt damit
+           bei 780 ms statt 560.
+         · LANG UND VERJUENGT. Statt drei Abschnitten sind es jetzt
+           fuenf, und die Dicke faellt in gleichmaessigen Schritten
+           von 6,2 auf 0,8 — das ist die Verjuengung, die er meint.
+           Die Laenge selbst ist weiterhin der GEMESSENE Abstand
+           (--laenge), sie wird nicht geraten.
+         · SCHWARZES LEDER. Die alten Braun- und Sandtoene
+           (#6b4a22 … #e2c391) sind weg. Leder ist fast schwarz und
+           hat einen schmalen Glanz obendrauf — deshalb je Abschnitt
+           ein dunkler Strang und darueber ein haarduenner heller
+           Glanzstrich (lc-pw-glanz). */
+      const LEDER = ["#14100d", "#1c1713", "#241d18", "#2c2420", "#352c27"];
+      const BREIT = [6.2, 4.6, 3.1, 1.8, 0.9];
+      const BAHN  = ["M0,20 C9,7 19,9 30,16",
+                     "M30,16 C39,21 44,28 55,22",
+                     "M55,22 C64,17 70,12 78,18",
+                     "M78,18 C84,22 88,26 92,21",
+                     "M92,21 C95,18 97,21 100,20"];
+      let welle = "";
+      for (let i = 0; i < 5; i++) {
+        welle += '<path class="lc-pw lc-pw' + (i + 1) + '" pathLength="100" d="'
+          + BAHN[i] + '" fill="none" stroke="' + LEDER[i]
+          + '" stroke-width="' + BREIT[i] + '" stroke-linecap="round"/>';
+        /* Der Glanz liegt auf derselben Bahn, ist aber nur ein Drittel
+           so dick und sitzt leicht hoeher — so glaenzt Leder. */
+        welle += '<path class="lc-pw lc-pw-glanz lc-pw' + (i + 1) + '" pathLength="100" d="'
+          + BAHN[i] + '" fill="none" stroke="rgba(255,255,255,.22)"'
+          + ' stroke-width="' + (BREIT[i] / 3).toFixed(2)
+          + '" stroke-linecap="round" transform="translate(0,-'
+          + (BREIT[i] / 4).toFixed(2) + ')"/>';
+      }
       schicht.innerHTML = '<span class="lc-peitsche-griff"></span>'
+        /* Die Ausholschlaufe: sie haengt links HINTER dem Griff und
+           ist nur waehrend des Ausholens zu sehen. */
+        + '<svg class="lc-peitsche-hol" viewBox="0 0 60 44" aria-hidden="true">'
+        + '<path d="M58,22 C40,22 22,10 14,20 C6,30 22,40 32,30"'
+        + ' fill="none" stroke="#1b1612" stroke-width="4.4" stroke-linecap="round"/>'
+        + '<path d="M58,22 C40,22 22,10 14,20 C6,30 22,40 32,30"'
+        + ' fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.3"'
+        + ' stroke-linecap="round" transform="translate(0,-1.2)"/>'
+        + "</svg>"
         + '<svg class="lc-peitsche-welle" viewBox="0 0 100 40"'
         + ' preserveAspectRatio="none" aria-hidden="true">'
-        + '<path class="lc-pw lc-pw1" pathLength="100" d="M0,20 C10,6 22,8 40,17"'
-        + ' fill="none" stroke="#6b4a22" stroke-width="5.5" stroke-linecap="round"/>'
-        + '<path class="lc-pw lc-pw2" pathLength="100" d="M40,17 C52,23 58,31 72,22"'
-        + ' fill="none" stroke="#8a6330" stroke-width="3" stroke-linecap="round"/>'
-        + '<path class="lc-pw lc-pw3" pathLength="100" d="M72,22 C82,16 90,25 100,20"'
-        + ' fill="none" stroke="#c8a266" stroke-width="1.4" stroke-linecap="round"/>'
-        + '<path class="lc-pw lc-pw4" pathLength="100" d="M97,20 L100,16 M97,20 L100,24"'
-        + ' fill="none" stroke="#e2c391" stroke-width="1" stroke-linecap="round"/>'
+        + welle
+        + '<path class="lc-pw lc-pw5" pathLength="100" d="M97,20 L100,16 M97,20 L100,24"'
+        + ' fill="none" stroke="#332c28" stroke-width="0.8" stroke-linecap="round"/>'
         + "</svg>"
         + '<span class="lc-peitsche-knall">KNALL</span>';
     } else {
@@ -30656,7 +30787,9 @@
     }
     if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
     reihe.appendChild(schicht);
-    setTimeout(() => schicht.remove(), 2000);
+    /* Die Peitsche holt seit Runde 58 erst aus und braucht deshalb
+       2,6 s — Lasso und Angel bleiben bei 2 s. */
+    setTimeout(() => schicht.remove(), art === "peitsche" ? 2600 : 2000);
     return true;
   }
 
@@ -31779,6 +31912,150 @@
       const schiff = document.createElement("span");
       schiff.className = "lc-boot lc-dampfer";
       schiff.style.setProperty("--gross", d + "px");
+      /* XANDER: „Das Dampfboot muss viel filigraner ausgearbeitet
+         werden. Das soll richtig wie so ein Raddampfer sein, so ein
+         echtes geiles altes Schiff mit so einem Riesenrad zum Antrieb
+         des Ganzen, und nicht nur so ein kleines Boot mit einem
+         kleinen Antrieb. Das soll so ein klassischer traditioneller
+         Raddampfer sein, auf dem Mississippi — recherchiere das mal,
+         damit du weisst, wie sowas aussieht."
+
+         NACHGESEHEN, woran man einen Mississippi-Heckradampfer
+         erkennt, und jedes Stueck davon steht jetzt hier:
+           · ein flacher, langer Rumpf mit vorgezogenem Bug —
+             Flussschiffe haben kaum Tiefgang,
+           · ZWEI Decks uebereinander (Kesseldeck und Sturmdeck),
+             beide rundum mit feinen Gelaendern und Saeulen,
+           · das Steuerhaus als kleines Haeuschen ganz oben,
+           · zwei hohe schwarze Schornsteine mit gezackter Krone
+             nebeneinander — das markanteste Merkmal ueberhaupt,
+           · und das Schaufelrad am HECK, nicht an der Seite, und
+             hoeher als das Hauptdeck. Ein Heckrad ist so gross,
+             weil es langsam laeuft.
+         Der alte Rumpf war ein Trapez mit einem Rechteck darauf und
+         einem Raedchen davor — davon bleibt nichts. */
+      schiff.innerHTML =
+        '<i class="lc-boot-wasser"></i>'
+        + '<span class="lc-boot-schaukel">'
+        /* Das Schaufelrad liegt HINTER dem Rumpf — es ragt oben und
+           hinten heraus, taucht aber unten ins Wasser. */
+        + '<i class="lc-dampfer-rad">'
+        + '<b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b>'
+        + '<u></u></i>'
+        + '<i class="lc-dampfer-spritzer"></i>'
+        + '<svg class="lc-boot-form lc-dampfer-form" viewBox="0 0 200 110" aria-hidden="true">'
+        /* --- DIE SCHORNSTEINE, ganz hinten in der Tiefe --- */
+        + '<g class="lc-dampfer-schlot">'
+        + '<rect x="70" y="6" width="9" height="26" rx="1"/>'
+        + '<rect x="86" y="6" width="9" height="26" rx="1"/>'
+        /* Die gezackte Krone — daran erkennt man einen Raddampfer. */
+        + '<path d="M67 6 L82 6 L79.5 11 L69.5 11 Z"/>'
+        + '<path d="M83 6 L98 6 L95.5 11 L85.5 11 Z"/>'
+        + "</g>"
+        + '<path class="lc-dampfer-ring" d="M70 14 L79 14 L79 17 L70 17 Z"/>'
+        + '<path class="lc-dampfer-ring" d="M86 14 L95 14 L95 17 L86 17 Z"/>'
+        /* --- DAS STEUERHAUS --- */
+        + '<rect class="lc-dampfer-haus" x="104" y="16" width="34" height="16" rx="1.5"/>'
+        + '<path class="lc-dampfer-dach" d="M100 13 L142 13 L142 17 L100 17 Z"/>'
+        + '<rect class="lc-dampfer-fenster" x="108" y="20" width="8" height="7" rx="1"/>'
+        + '<rect class="lc-dampfer-fenster" x="119" y="20" width="8" height="7" rx="1"/>'
+        + '<rect class="lc-dampfer-fenster" x="130" y="20" width="5" height="7" rx="1"/>'
+        /* --- DAS STURMDECK (oben) --- */
+        + '<rect class="lc-dampfer-haus" x="52" y="32" width="112" height="18" rx="1.5"/>'
+        + '<path class="lc-dampfer-dach" d="M46 30 L170 30 L170 34 L46 34 Z"/>'
+        + [58, 70, 82, 94, 106, 118, 130, 142, 152].map(function (x) {
+            return '<rect class="lc-dampfer-fenster" x="' + x + '" y="36" width="7" height="9" rx="1"/>';
+          }).join("")
+        /* --- DAS KESSELDECK (unten), mit Saeulen und Gelaender --- */
+        + '<rect class="lc-dampfer-haus" x="40" y="52" width="132" height="20" rx="1.5"/>'
+        + '<path class="lc-dampfer-dach" d="M34 50 L178 50 L178 54 L34 54 Z"/>'
+        + '<g class="lc-dampfer-saeule">'
+        + [38, 50, 62, 74, 86, 98, 110, 122, 134, 146, 158, 170].map(function (x) {
+            return '<path d="M' + x + ' 54 L' + x + ' 72"/>';
+          }).join("")
+        + "</g>"
+        + '<g class="lc-dampfer-gelaender">'
+        + '<path d="M34 62 L178 62"/><path d="M46 42 L170 42"/>'
+        + "</g>"
+        /* --- DER RUMPF: flach, lang, mit vorgezogenem Bug --- */
+        + '<path class="lc-boot-rumpf" d="M26 72 L168 72 L188 78 L192 88'
+        + ' L34 88 Q24 88 22 80 Z"/>'
+        + '<path class="lc-boot-streifen" d="M23 82 L192 82 L192 86 L28 86 Z"/>'
+        /* --- FLAGGENSTOCK AM BUG --- */
+        + '<path class="lc-dampfer-stock" d="M186 78 L186 44"/>'
+        + '<path class="lc-dampfer-fahne" d="M186 44 L200 48 L186 53 Z"/>'
+        + "</svg>"
+        + '<i class="lc-dampfer-rauch"></i>'
+        + '<i class="lc-dampfer-rauch lc-dampfer-rauch-2"></i>'
+        + '<span class="lc-boot-fenster"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
+        + "</span>";
+      reihe.appendChild(schiff);
+      weg.push(schiff);
+      setzen(schiff, start.x, start.y);
+      const linksB = ende.x < start.x;
+      try {
+        schiff.animate([
+          { transform: "translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(.3)", opacity: 0, offset: 0 },
+          { transform: "translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(1)", opacity: 1, offset: 0.14 },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(1)", opacity: 1,
+            offset: hin / dauer },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(.3)", opacity: 0, offset: 1 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+      } catch (e) {}
+      lcTonZu("boot");
+    } else if (art === "kran") {
+      /* GEWUENSCHT: „oder dass man einen Baustellenkran hat, der
+         einen dann dahin hebt." Das Bild haengt am Seil: hoch,
+         hinueber, wieder herunter. Das Seil wird dabei kuerzer und
+         wieder laenger — sonst haenge es in der Luft. */
+      const kran = document.createElement("span");
+      kran.className = "lc-kran";
+      kran.style.setProperty("--gross", d + "px");
+      kran.innerHTML =
+        '<i class="lc-kran-seil"></i>'
+        + '<i class="lc-kran-buegel"></i>'
+        + '<span class="lc-kran-last"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
+      reihe.appendChild(kran);
+      weg.push(kran);
+      setzen(kran, start.x, start.y);
+      /* Das Seil reicht vom oberen Rand der Reihe bis zum Bild. */
+      const seilVoll = Math.max(24, start.y);
+      kran.style.setProperty("--seil", seilVoll.toFixed(1) + "px");
+      const hochK = Math.max(d * 0.55, Math.min(start.y, ende.y) - d * 0.8);
+      const anteil = (y) => (y / seilVoll).toFixed(3);
+      const seil = kran.querySelector(".lc-kran-seil");
+      try {
+        kran.animate([
+          { transform: "translate(-50%, -50%)", offset: 0 },
+          { transform: "translate(0px, " + (hochK - start.y) + "px) translate(-50%, -50%)", offset: 0.24 },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (hochK - start.y)
+            + "px) translate(-50%, -50%)", offset: hin / dauer },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%)", offset: 1 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+        if (seil) {
+          seil.animate([
+            { transform: "translateX(-50%) scaleY(1)", offset: 0 },
+            { transform: "translateX(-50%) scaleY(" + anteil(hochK) + ")", offset: 0.24 },
+            { transform: "translateX(-50%) scaleY(" + anteil(hochK) + ")", offset: hin / dauer },
+            { transform: "translateX(-50%) scaleY(" + anteil(ende.y) + ")", offset: 1 }
+          ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+        }
+      } catch (e) {}
+      lcTonZu("kran");
+    } else if (art === "dampfer") {
+      /* „Mach mal zusaetzlich zum Segelboot noch ein Dampfboot
+         vielleicht ein Raddampfer." Derselbe Rumpf wie das Segelboot,
+         aber mit Schaufelrad hinten und rauchendem Schornstein. */
+      const schiff = document.createElement("span");
+      schiff.className = "lc-boot lc-dampfer";
+      schiff.style.setProperty("--gross", d + "px");
       schiff.innerHTML =
         '<i class="lc-boot-wasser"></i>'
         + '<span class="lc-boot-schaukel">'
@@ -31808,7 +32085,7 @@
       reihe.appendChild(schiff);
       weg.push(schiff);
       setzen(schiff, start.x, start.y);
-      lcReiseWaagerecht(schiff, start, ende, dauer, hin);
+      lcReiseWaagerecht(schiff, start, ende, dauer, hin, "dampfer");
       lcTonZu("dampfer");
     } else if (art === "lok") {
       /* „und vielleicht noch ne Lokomotive, der dann irgendwie
@@ -31834,7 +32111,7 @@
       reihe.appendChild(lok);
       weg.push(lok);
       setzen(lok, start.x, start.y);
-      lcReiseWaagerecht(lok, start, ende, dauer, hin);
+      lcReiseWaagerecht(lok, start, ende, dauer, hin, "lok");
       lcTonZu("lok");
     } else if (art === "liane") {
       /* „eine Liane koennte auch noch mit drin sein" — man haengt
@@ -31842,26 +32119,82 @@
       const liane = document.createElement("span");
       liane.className = "lc-liane";
       liane.style.setProperty("--gross", d + "px");
-      const hochL = Math.max(10, Math.min(start.y, ende.y) - d * 1.1);
-      liane.style.setProperty("--seil", Math.max(24, start.y - hochL).toFixed(1) + "px");
+      /* RUNDE 58 — XANDER: „Die Liane kann laenger sein und von oben
+         drueber richtig lang runter haengen."
+         Vorher hing sie nur d*1,1 (also etwa eine Bildhoehe) ueber dem
+         hoeheren der beiden Plaetze — bei zwei Plaetzen nebeneinander
+         war das ein kurzer Stummel. Jetzt haengt sie von OBERHALB der
+         Platzreihe herunter: der Aufhaengepunkt liegt d*0,7 ueber der
+         Reihenkante (y = 0), das Seil reicht also immer vom oberen
+         Rand bis zum Bild. Bei einem Platz in der untersten Reihe
+         sind das gemessen ueber 200 px statt der alten 70. */
+      /* „von oben drueber": der Aufhaengepunkt ist die OBERKANTE der
+         Klassenzimmerkarte, nicht ein geratener Abstand. Gemessen
+         wird sie hier wirklich — dann haengt die Liane von ganz oben
+         herunter, egal wie hoch die Karte gerade ist. */
+      const kk = lcLayoutKasten(karte) || rk;
+      /* … aber MINDESTENS 1,6 Bildhoehen ueber der Reihe. Gemessen
+         auf der Pruefbuehne liegt die Kartenkante nur 56 px ueber
+         der Platzreihe — das ergaebe wieder einen Stummel. Es gilt
+         also, was HOEHER liegt. */
+      const hochL = Math.min((kk.top - rk.top) - d * 0.25, -d * 1.6);
+      const seilLang = Math.max(70, start.y - hochL);
+      liane.style.setProperty("--seil", seilLang.toFixed(1) + "px");
       /* XANDER: „die Liane ist auch nicht realistisch."
          Sie war es auch nicht: zwei kerzengerade Balken. Eine Liane
          haengt DURCH, sie ist ungleich dick, sie hat Blaetter und sie
          windet sich. Deshalb jetzt als gezeichnete Kurve statt als
          zwei Rechtecke — und sie schwingt in sich, nicht nur mit dem
          ganzen Element. */
+      /* WARUM DIE ZEICHNUNG JETZT GERECHNET WIRD, NICHT FEST STEHT:
+         das alte SVG hatte viewBox="0 0 24 100" mit
+         preserveAspectRatio="none". Bei 70 px Seil ging das noch; bei
+         220 px werden 100 Einheiten auf 220 px gezogen — die Blaetter
+         waeren dann dreimal so hoch wie breit, also Schlieren. Deshalb
+         hat die viewBox jetzt die ECHTE Pixelhoehe: eine Einheit ist
+         ein Pixel, und ein Blatt bleibt ein Blatt, egal wie lang sie
+         haengt. Aus demselben Grund wachsen die Blaetter in der ANZAHL
+         mit der Laenge und nicht in der Groesse. */
+      const H = Math.round(seilLang);
+      /* Die Schlangenlinie: alle 46 px ein Wendepunkt, abwechselnd
+         nach links und rechts — so windet sich eine Liane wirklich. */
+      const schlange = (x0, amp, phase) => {
+        let dd = "M" + x0.toFixed(1) + ",0";
+        const schritt = 46;
+        for (let y = 0; y < H; y += schritt) {
+          const h = Math.min(schritt, H - y);
+          const s1 = ((y / schritt) + phase) % 2 < 1 ? 1 : -1;
+          dd += " C" + (x0 + s1 * amp).toFixed(1) + "," + (y + h * 0.33).toFixed(1)
+             + " " + (x0 + s1 * amp).toFixed(1) + "," + (y + h * 0.67).toFixed(1)
+             + " " + x0.toFixed(1) + "," + (y + h).toFixed(1);
+        }
+        return dd;
+      };
+      /* Ein Blatt alle 44 px, abwechselnd links und rechts, immer
+         14 px gross — unabhaengig von der Laenge. */
+      let blaetter = "";
+      for (let y = 26, i = 0; y < H - 12; y += 34, i++) {
+        const li = i % 2 === 0;
+        const bx = 12 + (li ? -1 : 1) * 1.5;
+        const sp = li ? -1 : 1;
+        blaetter += '<path class="lc-liane-blatt" d="M' + bx + ' ' + y
+          + ' C' + (bx + sp * 9) + ' ' + (y - 4)
+          + ' ' + (bx + sp * 10) + ' ' + (y - 12)
+          + ' ' + (bx + sp * 2) + ' ' + (y - 14)
+          + ' C' + (bx - sp * 3) + ' ' + (y - 10)
+          + ' ' + (bx - sp * 3) + ' ' + (y - 3)
+          + ' ' + bx + ' ' + y + ' Z" fill="'
+          + ["#4f8a3a", "#5f9c45", "#457c34"][i % 3] + '"/>';
+      }
       liane.innerHTML =
-        '<svg class="lc-liane-seil" viewBox="0 0 24 100" preserveAspectRatio="none">'
-        /* Der Hauptstrang: eine S-Kurve, unten dicker als oben. */
-        + '<path class="lc-liane-strang" d="M12 0 C7 22 17 40 11 58 C6 74 13 88 12 100"'
+        '<svg class="lc-liane-seil" viewBox="0 0 24 ' + H + '" preserveAspectRatio="none">'
+        /* Der Hauptstrang. */
+        + '<path class="lc-liane-strang" d="' + schlange(12, 4.5, 0) + '"'
         + ' fill="none" stroke="#3f6b33" stroke-width="3.4" stroke-linecap="round"/>'
-        /* Der zweite, duennere Strang windet sich darum. */
-        + '<path class="lc-liane-strang2" d="M12 2 C17 20 8 38 14 56 C19 72 11 86 12 99"'
+        /* Der zweite, duennere Strang windet sich gegenlaeufig darum. */
+        + '<path class="lc-liane-strang2" d="' + schlange(12, 4.5, 1) + '"'
         + ' fill="none" stroke="#6ba04c" stroke-width="1.8" stroke-linecap="round"/>'
-        /* Drei Blaetter, unterschiedlich gross und gedreht. */
-        + '<path class="lc-liane-blatt" d="M11 26 C3 22 2 14 10 12 C15 15 15 23 11 26 Z" fill="#4f8a3a"/>'
-        + '<path class="lc-liane-blatt" d="M13 52 C21 49 23 41 15 38 C10 42 9 49 13 52 Z" fill="#5f9c45"/>'
-        + '<path class="lc-liane-blatt" d="M12 78 C5 75 4 68 11 66 C16 69 16 76 12 78 Z" fill="#457c34"/>'
+        + blaetter
         + "</svg>"
         + '<span class="lc-liane-last"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
@@ -31969,24 +32302,49 @@
       heli.innerHTML =
         '<span class="lc-heli-rotor"><i class="lc-heli-scheibe"></i>'
         + '<i class="lc-heli-blatt"></i><i class="lc-heli-blatt lc-heli-blatt-2"></i></span>'
+        /* XANDER: „der Helikopter sieht nicht echt wie ein Helikopter
+           aus." Was fehlte, waren die drei Sachen, an denen man einen
+           Helikopter ueberhaupt erkennt: die verglaste KANZEL vorn,
+           der HECKROTOR (ohne ihn wuerde sich die Zelle drehen) und
+           ein sichtbarer ROTORKOPF auf dem Mast. Dazu ein schlankerer
+           Ausleger — der alte war ein Keil, ein Heckausleger ist ein
+           duennes Rohr. */
         + '<svg class="lc-heli-form" viewBox="0 0 130 70" aria-hidden="true">'
-        + '<path class="lc-heli-rumpf" d="M10 44 Q12 22 42 20 L72 20 Q96 22 100 34'
-        + ' Q102 44 92 48 L28 48 Q12 48 10 44 Z"/>'
-        + '<path class="lc-heli-ausleger" d="M96 30 L126 28 L126 36 L98 40 Z"/>'
-        + '<path class="lc-heli-flosse" d="M120 28 L130 8 L124 8 L116 28 Z"/>'
-        + '<circle class="lc-heli-heck" cx="124" cy="32" r="7"/>'
-        + '<path class="lc-heli-kufe" d="M22 58 L96 58" stroke-width="4" stroke-linecap="round"/>'
-        + '<path class="lc-heli-strebe" d="M34 48 L34 58 M84 48 L84 58"'
-        + ' stroke-width="3.4" stroke-linecap="round"/>'
-        + '<path class="lc-heli-mast" d="M50 20 L54 12 L62 12 L58 20 Z"/>'
+        /* Der Heckausleger: duennes Rohr statt Keil. */
+        + '<path class="lc-heli-ausleger" d="M92 30 L120 30.5 L120 35.5 L92 38 Z"/>'
+        /* Die Seitenflosse und der waagerechte Stabilisator. */
+        + '<path class="lc-heli-flosse" d="M116 32 L126 10 L120 9 L110 31 Z"/>'
+        + '<path class="lc-heli-flosse" d="M108 30 L108 26 L120 26 L120 30 Z"/>'
+        /* Die Zelle: vorn rund, hinten schlank auslaufend. */
+        + '<path class="lc-heli-rumpf" d="M10 40 Q9 24 30 19 L66 19'
+        + ' Q90 21 95 32 Q97 40 88 45 L26 45 Q11 45 10 40 Z"/>'
+        /* DIE KANZEL — die grosse verglaste Front. */
+        + '<path class="lc-heli-glas" d="M11 39 Q10 25 30 21 L44 21'
+        + ' Q34 30 32 43 L20 43 Q12 43 11 39 Z"/>'
+        + '<path class="lc-heli-tuer" d="M46 22 L46 44 M66 21 L66 45"/>'
+        /* Der Rotorkopf auf dem Mast. */
+        + '<path class="lc-heli-mast" d="M50 19 L53 11 L61 11 L58 19 Z"/>'
+        + '<circle class="lc-heli-kopf" cx="57" cy="10" r="4.2"/>'
+        /* Die Kufen mit ihren Streben. */
+        + '<path class="lc-heli-kufe" d="M18 58 L92 58" stroke-width="3.6" stroke-linecap="round"/>'
+        + '<path class="lc-heli-strebe" d="M32 45 L28 58 M78 45 L84 58"'
+        + ' stroke-width="3" stroke-linecap="round"/>'
         + "</svg>"
+        /* DER HECKROTOR. Er dreht schneller als der Hauptrotor und
+           steht senkrecht — deshalb ein eigenes, rundes Element mit
+           zwei Blaettern darin. */
+        + '<span class="lc-heli-heckrotor">'
+        + '<i class="lc-heli-heckscheibe"></i>'
+        + '<i class="lc-heli-heckblatt"></i>'
+        + '<i class="lc-heli-heckblatt lc-heli-heckblatt-2"></i></span>'
+
         + '<span class="lc-heli-kanzel"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
       reihe.appendChild(heli);
       weg.push(heli);
       setzen(heli, start.x, start.y);
-      lcReiseWaagerecht(heli, start, ende, dauer, hin);
+      lcReiseWaagerecht(heli, start, ende, dauer, hin, "heli");
       lcTonZu("heli");
     } else if (art === "pferd") {
       /* „und vielleicht irgendwie ein Pferd, auf dem man da hin
@@ -32000,18 +32358,60 @@
       pferd.style.setProperty("--gross", d + "px");
       pferd.innerHTML =
         '<span class="lc-pferd-huepf">'
-        + '<svg class="lc-pferd-form" viewBox="0 0 130 90" aria-hidden="true">'
-        + '<path class="lc-pferd-bein lc-pferd-b1" d="M34 58 L30 84" />'
-        + '<path class="lc-pferd-bein lc-pferd-b2" d="M96 58 L100 84" />'
-        + '<path class="lc-pferd-rumpf" d="M26 42 Q24 30 44 28 L88 28 Q106 30 106 44'
-        + ' Q106 58 88 58 L42 58 Q26 56 26 42 Z"/>'
-        + '<path class="lc-pferd-hals" d="M96 34 Q112 26 116 10 L126 12 Q122 32 104 44 Z"/>'
-        + '<path class="lc-pferd-kopf" d="M114 8 Q128 4 130 14 Q130 22 120 22 L112 18 Z"/>'
-        + '<path class="lc-pferd-maehne" d="M104 18 Q114 10 118 6 L112 4 Q100 12 98 24 Z"/>'
-        + '<path class="lc-pferd-schweif" d="M26 36 Q10 38 6 58 Q16 52 22 48 Z"/>'
-        + '<path class="lc-pferd-bein lc-pferd-b3" d="M44 58 L40 84" />'
-        + '<path class="lc-pferd-bein lc-pferd-b4" d="M86 58 L90 84" />'
-        + '<path class="lc-pferd-sattel" d="M52 30 Q66 24 80 30 L80 36 Q66 32 52 36 Z"/>'
+        /* XANDER: „Das Pferd muss auch ein bisschen ausgearbeitet
+           werden, viel natuerlicher sein, mit dem richtigen
+           Pferdekopf. Viel echter. Und die Pferdehufe mit dem
+           typischen Knickbein im Galopp. Das muss richtig echt
+           dargestellt sein."
+
+           Was vorher dastand, war ein Rechteck mit vier GERADEN
+           Strichen als Beinen und einem eckigen Klotz als Kopf.
+           Ein Pferdebein ist aber nie gerade: es knickt zweimal —
+           vorne am Vorderfusswurzelgelenk, hinten am Sprunggelenk —
+           und laeuft in den Huf aus. Genau das steht jetzt in jedem
+           Bein: Schulter, Knick, Fessel, Huf, und der Huf als
+           eigener, dickerer Strich.
+           Der Kopf hat jetzt eine Ganasche, einen schmalen
+           Nasenruecken, ein Maul mit Nuestern und ein Ohr — daran
+           erkennt man ein Pferd, nicht an einem Viereck. */
+        + '<svg class="lc-pferd-form" viewBox="0 0 150 100" aria-hidden="true">'
+        /* --- DIE BEINE DER FERNEN SEITE (dunkler, sie liegen hinten) --- */
+        + '<g class="lc-pferd-fern">'
+        + '<path class="lc-pferd-bein lc-pferd-b1" d="M52 62 L47 74 L52 84 L50 92"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h1" d="M50 92 L56 93"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b2" d="M104 62 L110 73 L105 83 L108 92"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h2" d="M108 92 L114 93"/>'
+        + "</g>"
+        /* --- DER SCHWEIF, hinter der Kruppe --- */
+        + '<path class="lc-pferd-schweif" d="M40 44 Q20 44 12 62 Q10 72 16 78'
+        + ' Q16 66 24 58 Q32 50 42 50 Z"/>'
+        /* --- DER RUMPF: Brust vorn hoch, Kruppe hinten rund --- */
+        + '<path class="lc-pferd-rumpf" d="M38 48 Q36 34 56 31 L96 31'
+        + ' Q114 33 118 46 Q120 58 104 64 L56 64 Q38 62 38 48 Z"/>'
+        /* Die Schulter- und Flankenlinie — ohne sie ist es ein Sack. */
+        + '<path class="lc-pferd-linie" d="M60 33 Q56 48 60 62 M98 34 Q104 48 100 63"/>'
+        /* --- HALS UND KOPF --- */
+        + '<path class="lc-pferd-hals" d="M104 38 Q116 30 120 16 L132 18'
+        + ' Q128 36 112 48 Z"/>'
+        /* Der Kopf: Ganasche rund, Nasenruecken schmal, Maul stumpf. */
+        + '<path class="lc-pferd-kopf" d="M118 14 Q126 6 134 8 Q142 10 145 18'
+        + ' Q147 24 143 27 L136 28 Q128 28 124 24 Q118 20 118 14 Z"/>'
+        + '<circle class="lc-pferd-auge" cx="128" cy="15" r="1.7"/>'
+        + '<path class="lc-pferd-nuester" d="M141 22 Q143.5 21 144 23"/>'
+        /* Das Ohr — spitz, nach vorn gestellt. */
+        + '<path class="lc-pferd-ohr" d="M120 12 L122 3 L127 9 Z"/>'
+        /* Die Maehne laeuft am Halskamm entlang. */
+        + '<path class="lc-pferd-maehne" d="M120 16 Q116 6 122 2 L116 2'
+        + ' Q108 10 106 24 Q104 32 102 38 L110 36 Q112 24 120 16 Z"/>'
+        /* --- DIE BEINE DER NAHEN SEITE --- */
+        + '<path class="lc-pferd-bein lc-pferd-b3" d="M60 64 L54 76 L60 86 L57 94"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h3" d="M57 94 L64 95"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b4" d="M98 64 L105 75 L99 85 L103 94"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h4" d="M103 94 L110 95"/>'
+        /* --- SATTEL UND GURT --- */
+        + '<path class="lc-pferd-sattel" d="M66 32 Q80 25 94 32 L94 40'
+        + ' Q80 34 66 40 Z"/>'
+        + '<path class="lc-pferd-gurt" d="M76 34 L74 63 M88 34 L90 63"/>'
         + "</svg>"
         + '<span class="lc-pferd-reiter"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
@@ -32020,7 +32420,7 @@
       reihe.appendChild(pferd);
       weg.push(pferd);
       setzen(pferd, start.x, start.y);
-      lcReiseWaagerecht(pferd, start, ende, dauer, hin);
+      lcReiseWaagerecht(pferd, start, ende, dauer, hin, "pferd");
       lcTonZu("pferd");
     } else if (art === "rohr") {
       /* XANDER: „An der Stelle kannst du auch noch wie bei Super Mario
@@ -32122,9 +32522,34 @@
 
   /* Dampfer und Lok fahren waagerecht: hereinfahren, hinueberfahren,
      hinausfahren — und nach links gespiegelt, wenn es nach links geht. */
-  function lcReiseWaagerecht(el, start, ende, dauer, hin) {
+  /* WOHIN SCHAUT DIE ZEICHNUNG? — UND WARUM DAS ZWEI FAHRZEUGE
+     RUECKWAERTS FAHREN LIESS.
+     GEMELDET: „Der Helikopter ... fliegt in die falsche Richtung" und
+     „Die Lok faehrt auch falsch rum."
+
+     Gespiegelt wurde immer, wenn es nach LINKS ging — unter der
+     stillen Annahme, jede Zeichnung schaue nach rechts. Zwei tun das
+     nicht: die Lok hat ihren Schornstein bei x=30 und das Fuehrerhaus
+     bei x=84 (sie schaut nach LINKS), der Helikopter seine Kanzel bei
+     x=10 und den Heckausleger bei x=126 (ebenso). Beide fuhren damit
+     genau falsch herum: rueckwaerts nach rechts, vorwaerts nach links.
+
+     Deshalb sagt jetzt jedes Fahrzeug, wohin es von Haus aus schaut.
+     Gespiegelt wird erst daraus: nach rechts fahren heisst nach
+     rechts schauen, nach links fahren nach links. */
+  const LC_REISE_BLICK = {
+    flug: 1,      /* Nase bei x=117, Heck bei x=6 */
+    boot: 1,
+    dampfer: 1,   /* Schaufelrad am HECK, also links */
+    lok: -1,      /* Schornstein links, Fuehrerhaus rechts */
+    heli: -1,     /* Kanzel links, Heckausleger rechts */
+    pferd: 1      /* Kopf bei x=118 */
+  };
+
+  function lcReiseWaagerecht(el, start, ende, dauer, hin, art) {
     const links = ende.x < start.x;
-    const sp = " scaleX(" + (links ? -1 : 1) + ")";
+    const blick = LC_REISE_BLICK[art] || 1;
+    const sp = " scaleX(" + ((links ? -1 : 1) * blick) + ")";
     try {
       el.animate([
         { transform: "translate(-50%, -50%)" + sp + " scale(.3)", opacity: 0, offset: 0 },
@@ -32622,7 +33047,8 @@
         kreis.classList.remove("lc-gepeitscht");
         void kreis.offsetWidth;
         kreis.classList.add("lc-gepeitscht");
-        setTimeout(() => kreis.classList.remove("lc-gepeitscht"), 2000);
+        /* 2,6 s — so lange dauert die Peitsche seit dem Ausholen. */
+        setTimeout(() => kreis.classList.remove("lc-gepeitscht"), 2600);
       }
       /* Ohne Leine (ich sitze selbst nicht oben) bleibt das kleine
          Bild als Rueckfall — sonst saehe man gar nichts. */
@@ -32637,10 +33063,13 @@
          Eine Peitsche macht ZWEI Geraeusche: das Sausen beim Ausholen
          und den Knall, wenn die Spitze ankommt. „peitschenknall" lag
          dafuer schon im Ordner, wurde aber nie gespielt. Der Knall
-         liegt auf 560 ms — dort schlaegt die Spitze ein (die Strieme
-         wird bei 29 % von 2 s sichtbar, also bei 580 ms). */
-      lcTonSpaeter("peitschenknall", 560, 0.7);
-    }, 2000, "peitsche");
+         liegt auf 780 ms — dort schlaegt die Spitze ein (die Strieme
+         wird bei 29 % von 2,6 s sichtbar, also bei 754 ms).
+         NACHGEZOGEN in Runde 58: durch das Ausholen ist die ganze
+         Bewegung von 2 s auf 2,6 s gewachsen; die Prozente sind
+         dieselben geblieben, die Millisekunden nicht. */
+      lcTonSpaeter("peitschenknall", 780, 0.7);
+    }, 2600, "peitsche");
   }
 
   /* --- BOWLING UND BILLARD ------------------------------------------ */
@@ -32681,6 +33110,34 @@
   }
 
   /* --- DIE KOPFHOERER ------------------------------------------------ */
+  /* BIN ICH GEMEINT? — die Frage, an der die Musik haengt.
+     ABSICHTLICH NICHT lcZielPlaetze: das faellt auf ALLE zurueck,
+     wenn es niemanden findet. Bei einem Wurf ist das gewollt, bei
+     Musik waere es falsch — dann liefe sie bei jedem im Raum.
+     Hier wird deshalb streng geprueft, und nur gegen den EIGENEN
+     Platz: gegen seine Nummer und gegen seinen Namen. */
+  function lcMusikFuerMich(wen) {
+    const suche = String(wen || "").trim().toLowerCase();
+    if (!suche) return false;
+    try {
+      const karte = document.getElementById("livechatKarte");
+      const meinPlatz = karte && karte.querySelector(".lc-platz-ich");
+      if (meinPlatz) {
+        if (/^\d{1,2}$/.test(suche)) {
+          if (String(meinPlatz.dataset.lcPlatz || "") === suche) return true;
+        } else {
+          const nm = meinPlatz.querySelector(".lc-platz-name");
+          if (nm && nm.textContent.trim().toLowerCase() === suche) return true;
+        }
+      }
+    } catch (e) {}
+    /* Rueckfall, wenn gerade keine Buehne steht: der Namensvergleich
+       von frueher. */
+    let ich = "";
+    try { ich = (LiveChat.lage() || {}).ichName || ""; } catch (e) {}
+    return Boolean(ich && suche === ich.trim().toLowerCase());
+  }
+
   function lcKopfhoerer(wen, nachricht) {
     /* GEWUENSCHT: „dass ich ein Lied aussuchen kann und den Leuten
        dann dieses Lied auf die Ohren setzen kann aus dem Musikordner."
@@ -32689,10 +33146,23 @@
        lesen den Titel in der Chatzeile. */
     const lied = (nachricht && nachricht.lied) || "";
     if (lied) {
-      let ich = "";
-      try { ich = (LiveChat.lage() || {}).ichName || ""; } catch (e) {}
-      const treffer = String(wen || "").trim().toLowerCase();
-      if (treffer && ich && treffer === ich.trim().toLowerCase()) {
+      /* RUNDE 58 — XANDER: „der andere hoert immer noch nicht die
+         Musik, wenn ich sie ihm schicke."
+
+         Hier wurde nur der NAME verglichen: „bin ich gemeint?" hiess
+         „heisst der Empfaenger genau wie ich?". Das geht schief,
+         sobald der Absender eine PLATZNUMMER nimmt — „/hoerer 3
+         Lied". Dann steht in „wen" die Ziffer 3, die heisst niemand,
+         und auf keinem einzigen Geraet lief die Musik. Ueberall
+         sonst darf man Plaetze mit ihrer Nummer meinen
+         (lcZielPlaetze kann das seit Runde 50), nur hier nicht.
+
+         Jetzt wird nicht mehr der Name verglichen, sondern der
+         PLATZ: wer gemeint ist, wird genauso gesucht wie bei jedem
+         anderen Effekt — und wenn dieser Platz mein eigener ist
+         („lc-platz-ich"), laeuft die Musik. Damit gilt der Name
+         weiterhin, die Nummer jetzt auch. */
+      if (lcMusikFuerMich(wen)) {
         lcMusikSpielen(lied, (nachricht && nachricht.liedTitel) || "");
       }
     }
@@ -32735,22 +33205,57 @@
         + '<linearGradient id="apm2" x1="0" y1="0" x2="1" y2="1">'
         + '<stop offset="0" stop-color="#8e99ab"/><stop offset="1" stop-color="#5d6779"/>'
         + "</linearGradient></defs>"
-        /* Das Stoffnetz als Dach — das auffaelligste Merkmal. */
-        + '<path d="M22 44 C22 16 44 4 60 4 C76 4 98 16 98 44"'
-        + ' fill="none" stroke="url(#apm1)" stroke-width="13" stroke-linecap="round"/>'
-        + '<path d="M22 44 C22 16 44 4 60 4 C76 4 98 16 98 44"'
-        + ' fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2"'
-        + ' stroke-dasharray="1.5 3" stroke-linecap="round"/>'
-        /* Die Teleskopstaebe. */
-        + '<rect x="17" y="34" width="6" height="22" rx="3" fill="#b6bfcd"/>'
-        + '<rect x="97" y="34" width="6" height="22" rx="3" fill="#b6bfcd"/>'
-        /* Und die Muscheln: fast quadratisch, weiche Ecken. */
-        + '<rect x="2" y="50" width="34" height="40" rx="14" fill="url(#apm2)"/>'
-        + '<rect x="84" y="50" width="34" height="40" rx="14" fill="url(#apm2)"/>'
-        + '<rect x="7" y="55" width="24" height="30" rx="11" fill="#39404f"/>'
-        + '<rect x="89" y="55" width="24" height="30" rx="11" fill="#39404f"/>'
-        /* Die Digital Crown oben rechts — daran erkennt man sie. */
-        + '<rect x="96" y="46" width="11" height="6" rx="3" fill="#aab3c2"/>'
+        /* RUNDE 58 — XANDER: „Die Kopfhoerer, die die realistischen
+           AirPods Max sein sollten, sind viel zu globig. Schau dir die
+           originalen AirPods Max an."
+
+           Nachgesehen und nachgemessen. Woran es lag:
+           · Das Stoffdach war ein 13 px dicker Strich, der den ganzen
+             Bogen entlanglief — beim Original ist das Netz kurz und
+             FLACH und haengt UNTER einem duennen Stahlbuegel. Jetzt:
+             Buegel 4,6 px, Netz nur zwischen x 36 und 84.
+           · Die Teleskopstaebe waren 6 px dicke Kloetze von 22 px.
+             Beim Original sind es duenne, lange Staebe. Jetzt 3,4 px
+             breit.
+           · Die Muscheln waren 34 auf 40 px mit einem Radius von 14 —
+             das ist fast ein Quadrat, also ein Klotz. Beim Original
+             sind sie hochoval und schmaler als hoch: jetzt 27 auf 35.
+           · Die Digital Crown lag als Balken neben der Muschel. Sie
+             sitzt OBEN AUF der rechten Muschel, daneben die Taste
+             fuer die Geraeuschunterdrueckung. */
+        /* Der Stahlbuegel — duenn, nicht dick. */
+        + '<path d="M24 50 C24 20 40 9 60 9 C80 9 96 20 96 50"'
+        + ' fill="none" stroke="url(#apm1)" stroke-width="4.6"'
+        + ' stroke-linecap="round"/>'
+        /* Das Stoffnetz haengt DARUNTER und ist kurz und flach. */
+        + '<path d="M35 25.5 C44 16.5 76 16.5 85 25.5'
+        + ' C76 22.5 44 22.5 35 25.5 Z" fill="#c3cbd8"/>'
+        + '<path d="M36.5 23.8 C45 18.6 75 18.6 83.5 23.8"'
+        + ' fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.1"'
+        + ' stroke-dasharray="1 2.2" stroke-linecap="round"/>'
+        /* Die Teleskopstaebe: duenn und lang. */
+        + '<rect x="22.3" y="44" width="3.4" height="20" rx="1.7" fill="#b6bfcd"/>'
+        + '<rect x="94.3" y="44" width="3.4" height="20" rx="1.7" fill="#b6bfcd"/>'
+        /* Das Gelenk, an dem die Muschel haengt. */
+        + '<rect x="19.5" y="60" width="9" height="6" rx="3" fill="#9aa4b4"/>'
+        + '<rect x="91.5" y="60" width="9" height="6" rx="3" fill="#9aa4b4"/>'
+        /* Die Muscheln: hochoval, schmaler als hoch. */
+        + '<rect x="5" y="54" width="27" height="35" rx="12.5" fill="url(#apm2)"/>'
+        + '<rect x="88" y="54" width="27" height="35" rx="12.5" fill="url(#apm2)"/>'
+        /* Der schmale Glanzstreifen auf dem eloxierten Aluminium. */
+        + '<path d="M9 62 C8 70 8 76 10 82" fill="none"'
+        + ' stroke="rgba(255,255,255,.3)" stroke-width="1.6" stroke-linecap="round"/>'
+        + '<path d="M92 62 C91 70 91 76 93 82" fill="none"'
+        + ' stroke="rgba(255,255,255,.3)" stroke-width="1.6" stroke-linecap="round"/>'
+        /* Das Polster, abgesetzt und dunkel. */
+        + '<rect x="9.5" y="58.5" width="18" height="26" rx="9" fill="#39404f"/>'
+        + '<rect x="92.5" y="58.5" width="18" height="26" rx="9" fill="#39404f"/>'
+        /* Die Digital Crown sitzt OBEN AUF der rechten Muschel,
+           daneben die Taste fuer die Geraeuschunterdrueckung. */
+        + '<rect x="96" y="49.5" width="10" height="5" rx="2.5" fill="#aab3c2"/>'
+        + '<path d="M98 50.4 V53.6 M100 50.4 V53.6 M102 50.4 V53.6 M104 50.4 V53.6"'
+        + ' stroke="#7d8798" stroke-width="0.8"/>'
+        + '<rect x="108" y="50.4" width="5" height="3.4" rx="1.7" fill="#aab3c2"/>'
         + "</svg>";
       /* Noten, die aus den Muscheln steigen — sonst sind es nur zwei
          schwarze Klumpen am Kopf. */
@@ -33579,14 +34084,62 @@
      Das Bild dreht sich in die Fassung (drei Umdrehungen, jede
      langsamer, wie beim Einschrauben), zuckt beim ersten Kontakt und
      leuchtet dann. Es ist das Gegenstueck zu /licht. */
+  /* RUNDE 58 — DAS HERAUSDREHEN.
+     XANDER: „Die Birne soll sich mit der Fassung von links nach
+     rechts drehen … und dann vielleicht fuer einen kurzen Moment auf
+     der kompletten Buehne. Stromausfall ist durch das raus drehen."
+
+     Also bleibt die Birne nach dem Eindrehen AN (die Klasse
+     „lc-birne-an" haelt den warmen Schein), und ein zweites
+     „/birne" auf dieselbe Person dreht sie wieder HERAUS: das Bild
+     dreht zurueck, das Licht stirbt — und weil damit das Licht im
+     Raum ausgeht, wird die ganze Buehne fuer einen Moment dunkel.
+     Das ist der Stromausfall, den er meint; kein eigener Befehl,
+     sondern die Folge des Herausdrehens. */
+  function lcStromAus() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const heim = lcEffektHeim();
+    if (!heim) return;
+    document.getElementById("lcStromAus")?.remove();
+    const d = document.createElement("div");
+    d.id = "lcStromAus";
+    d.className = "lc-stromaus";
+    d.setAttribute("aria-hidden", "true");
+    heim.appendChild(d);
+    setTimeout(() => d.remove(), 1200);
+  }
   function lcGluehbirne(wen) {
+    /* Steckt sie schon drin? Dann wird jetzt herausgedreht. */
+    const drin = (() => {
+      try {
+        const pl = lcPlatzMitNamen(wen);
+        const k = pl && pl.querySelector(".lc-kreis");
+        return k && k.classList.contains("lc-birne-an") ? k : null;
+      } catch (e) { return null; }
+    })();
+    if (drin) {
+      drin.classList.remove("lc-birne-an");
+      drin.classList.remove("lc-ausgedreht");
+      void drin.offsetWidth;
+      drin.classList.add("lc-ausgedreht");
+      setTimeout(() => drin.classList.remove("lc-ausgedreht"), 2200);
+      /* Der Stromausfall kommt, wenn der Kontakt abreisst — das ist
+         bei 62 % von 2,2 s, also bei 1364 ms. */
+      setTimeout(lcStromAus, 1364);
+      lcTonZu("quietschen");
+      return true;
+    }
     return lcAmPlatz(wen, "lc-birne", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
         kreis.classList.remove("lc-eingedreht");
         void kreis.offsetWidth;
         kreis.classList.add("lc-eingedreht");
-        setTimeout(() => kreis.classList.remove("lc-eingedreht"), 4000);
+        setTimeout(() => {
+          kreis.classList.remove("lc-eingedreht");
+          /* Sie brennt weiter — bis jemand sie herausdreht. */
+          kreis.classList.add("lc-birne-an");
+        }, 4000);
       }
       /* Die Fassung sitzt oben auf dem Kopf — dort wird eingedreht.
          XANDER: „Das muss von links nach rechts mit der Fassung mit
@@ -33718,23 +34271,66 @@
       }
       schicht.innerHTML =
         '<svg class="lc-hut-bild" viewBox="0 0 140 76">'
+        /* RUNDE 58 — XANDER: „Der Cowboy Hut sieht aus wie ein
+           Abenteuerhut, so richtig wie ein Cowboyhut aussehen."
+
+           Er hatte recht, und man kann genau sagen, woran es lag:
+           · Die Krempe war eine FLACHE Ellipse — ein Teller. Ein
+             Cowboyhut ist daran zu erkennen, dass die Krempe an den
+             SEITEN steil hochgerollt ist und vorn und hinten
+             durchhaengt. Von vorn gesehen ist sie deshalb kein
+             Oval, sondern eine Sichel mit zwei hohen Spitzen.
+           · Die Krone war eine glatte Kuppel mit einer einzigen
+             Laengsdelle — das ist ein Fedora, also genau der
+             Abenteuerhut, den er nicht wollte. Ein Stetson hat die
+             „Cattleman"-Falte: eine Delle in der Mitte UND je eine
+             an den Seiten, also von vorn zwei hohe Grate mit einer
+             Senke dazwischen.
+           Beides ist jetzt so gezeichnet. */
         + '<defs><linearGradient id="hut1" x1="0" y1="0" x2="0" y2="1">'
-        + '<stop offset="0" stop-color="#b5813f"/><stop offset="1" stop-color="#7a5322"/>'
+        + '<stop offset="0" stop-color="#c08f4a"/><stop offset="1" stop-color="#7a5322"/>'
+        + '</linearGradient>'
+        + '<linearGradient id="hut2" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#6b4619"/><stop offset="1" stop-color="#a97b3c"/>'
         + "</linearGradient></defs>"
-        /* Die Krempe — vorn und hinten hochgebogen, das macht den
-           Cowboyhut aus. */
-        + '<path d="M4 58 C4 46 30 40 70 40 C110 40 136 46 136 58'
-        + ' C136 68 110 74 70 74 C30 74 4 68 4 58 Z" fill="url(#hut1)"'
-        + ' stroke="#5e3c17" stroke-width="2.5"/>'
-        /* Die Krone mit der Laengsdelle. */
-        + '<path d="M36 46 C36 18 48 6 70 6 C92 6 104 18 104 46'
-        + ' C92 50 48 50 36 46 Z" fill="url(#hut1)" stroke="#5e3c17" stroke-width="2.5"/>'
-        + '<path d="M70 8 C64 20 64 34 66 46" fill="none" stroke="#5e3c17"'
-        + ' stroke-width="2.2" opacity=".7"/>'
-        /* Das Band. */
-        + '<path d="M36 42 C52 48 88 48 104 42 L104 34 C88 40 52 40 36 34 Z"'
+        /* DIE KREMPE, an den Seiten hochgerollt: die Oberkante steigt
+           von der Mitte zu beiden Spitzen steil an, die Unterkante
+           haengt in der Mitte durch. */
+        + '<path class="lc-hut-krempe" d="M5 41 C24 60 50 66 70 66 C90 66 116 60 135 41'
+        + ' C124 58 100 74 70 74 C40 74 16 58 5 41 Z"'
+        + ' fill="url(#hut2)" stroke="#4e310f" stroke-width="2.2"'
+        + ' stroke-linejoin="round"/>'
+        /* Die Oberseite der Krempe ist heller als die Unterseite —
+           daran sieht man die Rollung. */
+        + '<path d="M5 41 C24 60 50 66 70 66 C90 66 116 60 135 41'
+        + ' C120 52 98 58 70 58 C42 58 20 52 5 41 Z" fill="url(#hut1)"/>'
+        /* DIE KRONE mit der Cattleman-Falte: links ein Grat, in der
+           Mitte die Senke, rechts wieder ein Grat. */
+        /* Die Grate sind RUND, nicht spitz — zwei Spitzen saehen aus
+           wie Ohren. Gemessen an einem Stetson ist die Falte etwa ein
+           Drittel der Kronenhoehe tief, nicht die Haelfte. */
+        + '<path class="lc-hut-krone" d="M40 60 C38 37 41 22 45.5 18.6'
+        + ' C48 17.2 50.8 18.2 52.8 21 C55 24 56.3 27 58 30'
+        + ' C61.5 26 65.5 24.5 70 24.5 C74.5 24.5 78.5 26 82 30'
+        + ' C83.7 27 85 24 87.2 21 C89.2 18.2 92 17.2 94.5 18.6'
+        + ' C99 22 102 37 100 60 C86 64 54 64 40 60 Z"'
+        + ' fill="url(#hut1)" stroke="#4e310f" stroke-width="2.2"'
+        + ' stroke-linejoin="round"/>'
+        /* Die drei Falten als Schattenlinien — ohne sie sieht die
+           Krone wieder glatt aus. */
+        + '<path d="M70 27 C69 35 69 45 70 56" fill="none" stroke="#5e3c17"'
+        + ' stroke-width="2" opacity=".55"/>'
+        + '<path d="M57 32 C56 40 56 48 57 57" fill="none" stroke="#5e3c17"'
+        + ' stroke-width="1.6" opacity=".4"/>'
+        + '<path d="M83 32 C84 40 84 48 83 57" fill="none" stroke="#5e3c17"'
+        + ' stroke-width="1.6" opacity=".4"/>'
+        /* DAS HUTBAND, am Kronenfuss und der Krempe folgend. */
+        + '<path d="M40.6 52 C54 57 86 57 99.4 52 L100 60 C86 64 54 64 40 60 Z"'
         + ' fill="#3f2a12"/>'
-        + '<circle cx="98" cy="38" r="4" fill="#e8c46a" stroke="#9c7b1e" stroke-width="1.6"/>'
+        /* Die Schnalle sitzt seitlich, nicht mittig — so traegt man es. */
+        + '<rect x="90" y="53.5" width="9" height="6" rx="1.4" fill="#d9c07a"'
+        + ' stroke="#8c6f1c" stroke-width="1.4"/>'
+        + '<rect x="93.2" y="55.4" width="2.6" height="2.4" rx="0.6" fill="#3f2a12"/>'
         + "</svg>";
     }, 3400, "hut");
   }
@@ -67638,6 +68234,10 @@ An einem Morgen lief ein kleiner Fuchs los…
          und liess sich vorher nur von Hand nachsehen. */
       treffer: () => JSON.parse(JSON.stringify(LC_TREFFER)),
       ankunftsTon: () => JSON.parse(JSON.stringify(LC_ANKUNFT_TON)),
+      /* „der andere hoert immer noch nicht die Musik, wenn ich sie ihm
+         schicke": ob die Musik bei mir laeuft, haengt allein an dieser
+         Frage. Also muss sie messbar sein. */
+      musikFuerMich: (wen) => lcMusikFuerMich(wen),
       schmerzTon: (platz) => lcSchmerzTon(platz),
       effektNamen: () => Object.keys(LC_EFFEKTE).map((k) => LC_EFFEKTE[k].wie || k)
         .filter((x, i, a) => typeof x === "string" && a.indexOf(x) === i),
