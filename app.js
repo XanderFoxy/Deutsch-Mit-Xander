@@ -30845,12 +30845,30 @@
       flieger.className = "lc-flieger";
       flieger.style.setProperty("--gross", d + "px");
       flieger.innerHTML =
+        /* XANDER: „Das Flugzeug sieht nicht so richtig wie ein
+           Flugzeug aus."
+           Was gefehlt hat, sind genau die Teile, an denen man ein
+           Flugzeug von der Seite erkennt: das ZWEITE Tragflaechenpaar
+           (das hintere, dunkler, weil es weiter weg ist), das
+           waagerechte Hoehenleitwerk am Heck, ein Triebwerk unter dem
+           Fluegel und eine Nase, die vorne spitz zulaeuft statt rund
+           abzuschliessen. Die sind jetzt alle da. */
         '<svg class="lc-flieger-form" viewBox="0 0 120 52" aria-hidden="true">'
+        /* Der hintere Fluegel — er liegt HINTER dem Rumpf, also zuerst. */
+        + '<path class="lc-flieger-fluegel lc-flieger-fluegel-fern"'
+        + ' d="M56 24 L44 40 L58 40 L78 26 Z"/>'
+        /* Das waagerechte Hoehenleitwerk am Heck. */
+        + '<path class="lc-flieger-fluegel lc-flieger-fluegel-fern"'
+        + ' d="M16 26 L6 20 L20 20 L30 26 Z"/>'
+        + '<path class="lc-flieger-rumpf" d="M8 30 Q16 18 44 16 L92 16'
+        + ' Q110 17 117 26 Q110 35 92 36 L30 36 Q12 36 8 30 Z"/>'
+        /* Die Seitenflosse. */
+        + '<path class="lc-flieger-leit" d="M14 28 L6 6 L18 6 L28 26 Z"/>'
+        /* Der vordere Fluegel. */
         + '<path class="lc-flieger-fluegel" d="M52 26 L38 6 L52 6 L74 24 Z"/>'
-        + '<path class="lc-flieger-rumpf" d="M8 30 Q16 18 44 16 L92 16 Q112 18 114 26'
-        + ' Q112 34 92 36 L30 36 Q12 36 8 30 Z"/>'
-        + '<path class="lc-flieger-leit" d="M14 28 L6 8 L18 8 L28 26 Z"/>'
-        + '<circle class="lc-flieger-luke" cx="74" cy="26" r="9"/>'
+        /* Das Triebwerk unter dem Fluegel. */
+        + '<rect class="lc-flieger-triebwerk" x="50" y="30" width="20" height="9" rx="4.5"/>'
+        + '<circle class="lc-flieger-luke" cx="84" cy="26" r="8"/>'
         + "</svg>"
         + '<span class="lc-flieger-fenster"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
@@ -31767,7 +31785,29 @@
         lcMusikSpielen(lied, (nachricht && nachricht.liedTitel) || "");
       }
     }
+    /* XANDER: „sollen die Kopfhoerer auch so lange auf der Person
+       bleiben, bis sie sie von selber abnimmt."
+       Vorher waren sie nach 3,2 Sekunden weg wie jeder andere Effekt.
+       Jetzt bleiben sie liegen — und ein zweites „Hoerer" auf
+       dieselbe Person nimmt sie wieder ab. Wer sie selbst traegt,
+       kann sie auch einfach antippen (siehe .lc-kopfhoerer im
+       Stylesheet). */
+    const schonAuf = (() => {
+      try {
+        const pl = lcPlatzMitNamen(wen);
+        return pl ? pl.querySelector(".lc-kopfhoerer") : null;
+      } catch (e) { return null; }
+    })();
+    if (schonAuf) { schonAuf.remove(); return true; }
+
     return lcAmPlatz(wen, "lc-kopfhoerer", (schicht) => {
+      /* Antippen nimmt sie ab — „bis sie sie von selber abnimmt". */
+      schicht.style.pointerEvents = "auto";
+      schicht.title = "Antippen: Kopfh\u00f6rer abnehmen";
+      schicht.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        schicht.remove();
+      });
       /* GEWUENSCHT: „Bei den Kopfhoerern kannst du versuchen, solche
          Apple AirPods Max zu machen — also diese Over-Ear-Kopfhoerer
          von Apple, dass sie so gestylt sind wie die von Apple."
@@ -31811,7 +31851,15 @@
         n.style.animationDelay = (0.3 + i * 0.4).toFixed(2) + "s";
         schicht.appendChild(n);
       });
-    }, 3200, "kopfhoerer");
+      /* Die Noten steigen nur am Anfang auf — sie gehoeren zum
+         Aufsetzen, nicht zum Tragen. */
+      setTimeout(() => {
+        schicht.querySelectorAll(".lc-kopfhoerer-note").forEach((x) => x.remove());
+      }, 3600);
+      /* Zehn Minuten: lang genug, dass niemand sie „von selbst"
+         verliert, kurz genug, dass ein vergessener Hoerer nicht ewig
+         am Platz klebt. */
+    }, 600000, "kopfhoerer");
   }
 
   /* --- DIE FENSTERLUKE ----------------------------------------------- */
@@ -32418,20 +32466,34 @@
         + '<circle cx="12" cy="98" r="8" fill="#2b313c"/>'
         + '<circle cx="12" cy="98" r="3.4" fill="#71798a"/>'
         + '<g class="lc-wischer-dreh">'
+        /* XANDER, zweimal gemeldet: „Der Scheibenwischer sieht immer
+           noch nicht wie ein Auto Scheibenwischer aus."
+           Nachgesehen, woran das liegt: die Teile waren zwar alle da
+           (Arm, Feder, Klauen, Blatt, Gummi), aber bei 84 px Bildbreite
+           kam jedes davon mit ein bis zwei Pixeln heraus — und alles
+           in demselben Dunkelgrau. Man SAH kein Blatt, man sah einen
+           Strich. Deshalb jetzt: der Arm deutlich kraeftiger, das
+           Blatt heller als der Arm (so trennen sich die beiden), das
+           Gummi als eigene dunkle Lippe darunter, und vier Klauen
+           statt zwei — daran erkennt man einen Wischer. */
         /* Der Arm: unten breit, oben schmal. */
-        + '<path d="M7 98 L17 98 L31 44 L25 41 Z" fill="#4d5566"'
-        + ' stroke="#2b313c" stroke-width="1.4" stroke-linejoin="round"/>'
+        + '<path d="M5 98 L19 98 L34 45 L26 41 Z" fill="#5a6376"'
+        + ' stroke="#262c36" stroke-width="2" stroke-linejoin="round"/>'
         /* Die Feder am Arm — sie druckt das Blatt an die Scheibe. */
-        + '<path d="M11 86 q5 -3 5 -7 q0 -4 -5 -7" fill="none" stroke="#71798a"'
-        + ' stroke-width="2"/>'
-        /* Die beiden Klauen. */
-        + '<rect x="21" y="38" width="12" height="4" rx="2" transform="rotate(-14 27 40)" fill="#3b4250"/>'
-        + '<rect x="14" y="16" width="12" height="4" rx="2" transform="rotate(-14 20 18)" fill="#3b4250"/>'
-        /* Das Blatt: ein eigener Koerper NEBEN dem Arm. */
-        + '<path d="M20 6 L28 8 L36 50 L28 48 Z" fill="#39404c"'
-        + ' stroke="#22272f" stroke-width="1.2" stroke-linejoin="round"/>'
+        + '<path d="M12 86 q7 -4 7 -9 q0 -5 -7 -9" fill="none" stroke="#8b94a6"'
+        + ' stroke-width="2.6"/>'
+        /* Der Buegel mit vier Klauen. */
+        + '<path d="M30 42 L22 12" fill="none" stroke="#3b4250" stroke-width="4"'
+        + ' stroke-linecap="round"/>'
+        + '<rect x="24" y="38" width="15" height="5" rx="2.5" transform="rotate(-14 31 40)" fill="#39404c"/>'
+        + '<rect x="19" y="27" width="15" height="5" rx="2.5" transform="rotate(-14 26 29)" fill="#39404c"/>'
+        + '<rect x="15" y="17" width="15" height="5" rx="2.5" transform="rotate(-14 22 19)" fill="#39404c"/>'
+        + '<rect x="11" y="7" width="15" height="5" rx="2.5" transform="rotate(-14 18 9)" fill="#39404c"/>'
+        /* Das Blatt: ein eigener, HELLERER Koerper neben dem Arm. */
+        + '<path d="M16 4 L26 7 L38 52 L28 49 Z" fill="#6d7686"'
+        + ' stroke="#262c36" stroke-width="1.6" stroke-linejoin="round"/>'
         /* Und das Gummi, das die Scheibe wirklich beruehrt. */
-        + '<path d="M22 6 L30 50" fill="none" stroke="#14171c" stroke-width="3"'
+        + '<path d="M19 4 L31 52" fill="none" stroke="#0f1216" stroke-width="4.4"'
         + ' stroke-linecap="round"/>'
         + "</g></svg>");
     }, 4000, "wischer");

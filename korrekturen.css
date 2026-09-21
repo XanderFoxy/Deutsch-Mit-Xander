@@ -16147,6 +16147,11 @@ body.lc-schreibt .tutor-reiter {
 .lc-flieger-rumpf  { fill: #eef3fa; stroke: #b9c6d8; stroke-width: 1.4; }
 .lc-flieger-fluegel{ fill: #d7e2f0; }
 .lc-flieger-leit   { fill: #cdd9e8; }
+/* Die abgewandte Seite liegt weiter weg und ist deshalb dunkler —
+   ohne diesen Unterschied verschmelzen vorderer und hinterer Flügel
+   zu einem Klecks. */
+.lc-flieger-fluegel-fern { fill: #9fb2ca; }
+.lc-flieger-triebwerk { fill: #b9c6d8; stroke: #8d9db4; stroke-width: 1.2; }
 .lc-flieger-luke   { fill: #21374f; }
 /* Das Fenster mit seinem Bild dahinter — der ganze Sinn der Sache. */
 .lc-flieger-fenster {

@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 43 — Lupe für jeden, „Alle“ im Platzmenü",
+  stand: "Runde 44 — Kopfhörer bleiben auf, Wischer und Flugzeug neu",
 
   inArbeit: [
-    { seit: "2026-09-21T01:07",
-      text: "Kopfhörer: aufgesetzt lassen, bis sie selbst abgenommen werden" },
-    { seit: "2026-09-21T01:07",
-      text: "Scheibenwischer und Flugzeug sehen noch nicht echt genug aus" },
-    { seit: "2026-09-21T01:07",
+    { seit: "2026-09-21T01:11",
       text: "Geld: realistischer, Star-Trek-Beameffekt weiter verfeinern" },
-    { seit: "2026-09-21T01:07", nurBetreiber: true,
+    { seit: "2026-09-21T01:11", nurBetreiber: true,
       text: "Das „Profilbild geht beim Antippen groß auf\" konnte ich nicht nachstellen — sag mir bitte, wo genau das passiert" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-21T01:07",
-      text: "Die Lupe steht jetzt in JEDEM Platzmenü, nicht nur im eigenen — damit kann man auch die anderen groß zeigen" },
-    { seit: "2026-09-21T01:07",
-      text: "Neue Kachel „Alle“: alle umarmen, alle küssen, alle treten, Bühne leeren" },
-    { seit: "2026-09-21T01:07",
-      text: "Das Platzmenü hat jetzt sechs Spalten statt fünf — sonst lag der letzte Knopf 7 px unter dem Bildschirmrand" },
+    { seit: "2026-09-21T01:11",
+      text: "Kopfhörer bleiben jetzt aufgesetzt — antippen nimmt sie ab, ein zweites „Hörer“ auf dieselbe Person auch" },
+    { seit: "2026-09-21T01:11",
+      text: "Die Noten steigen nur beim Aufsetzen auf, nicht die ganze Zeit" },
+    { seit: "2026-09-21T01:11",
+      text: "Scheibenwischer: kräftigerer Arm, helleres Blatt, vier Klauen und eine schwarze Gummilippe — vorher war alles gleich dunkel und 1–2 px dünn" },
+    { seit: "2026-09-21T01:11",
+      text: "Flugzeug: zweites Flügelpaar, Höhenleitwerk, Triebwerk und spitze Nase" },
   ],
 };
