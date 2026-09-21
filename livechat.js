@@ -3327,6 +3327,7 @@ window.LiveChat = (function () {
       }
       var neuDa = !zustand.leute[n.von];
       personMerken(n.von, n.name, n.bild);
+      ankunftUebernehmen(n.von, n.seit);
       if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
       if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
       personEintragen(n);
@@ -3956,6 +3957,30 @@ window.LiveChat = (function () {
     if (typeof n.spricht === "boolean") p.spricht = n.spricht;
   }
 
+  /* RUNDE 73: die gemeldete Ankunftszeit schlaegt die selbst
+     geratene — aber nur, wenn sie FRUEHER ist. So kann niemand sich
+     nach vorn schummeln, und der Fall, um den es geht (ich halte
+     jemanden faelschlich fuer juenger als mich), ist behoben.
+     Die Uhr der Gegenseite wird dabei mitgerechnet: uhrVersatz misst
+     bei jedem Paket, wie weit sie von der eigenen abweicht. */
+  function ankunftUebernehmen(id, gemeldet) {
+    if (typeof gemeldet !== "number" || !gemeldet) return;
+    var versatz = (typeof uhrVersatz[id] === "number") ? uhrVersatz[id] : 0;
+    var beiMir = gemeldet - versatz;
+    /* Unsinn abfangen: mehr als zwoelf Stunden daneben wird verworfen. */
+    if (Math.abs(Date.now() - beiMir) > 12 * 3600 * 1000) return;
+    var p = zustand.leute[id];
+    if (!p) return;
+    if (!p.seit || beiMir < p.seit) {
+      p.seit = beiMir;
+      /* Der Platz wird neu gerechnet — sonst behielte der Neue den
+         Platz, den er sich im ersten Augenblick genommen hat. */
+      if (platzJe[id] != null) delete platzJe[id];
+      if (platzJe[zustand.ichId] != null && sitzTausch[zustand.ichId] == null) {
+        delete platzJe[zustand.ichId];
+      }
+    }
+  }
   function personMerken(id, name, bild) {
     if (!zustand.leute[id]) {
       zustand.leute[id] = { id: id, name: name || "Gast", strom: null, seit: Date.now(),
@@ -4006,7 +4031,21 @@ window.LiveChat = (function () {
                   einem Atemzug ueberall. */
                sprechbild: zustand.sprechbild || "",
                /* Damit Spaeterkommende dieselbe Sitzordnung sehen. */
-               sitz: sitzTausch });
+               sitz: sitzTausch,
+               /* RUNDE 73 — XANDER: „Der Neuankoemmling soll auch den
+                  naechsten freien Platz bekommen. Und nicht auf dem
+                  ersten Platz landen."
+                  GEFUNDEN: die Sitzordnung wird nach der ANKUNFTSZEIT
+                  vergeben — aber jedes Geraet hat die Ankunftszeit der
+                  anderen selbst gesetzt, naemlich auf den Augenblick,
+                  in dem es sie ZUM ERSTEN MAL GESEHEN hat
+                  (personMerken: seit: Date.now()). Wer neu
+                  hereinkommt, sieht alle anderen also erst nach
+                  seinem eigenen Eintritt — und haelt sich damit fuer
+                  den Aeltesten. Ergebnis: Platz 1.
+                  Deshalb faehrt die eigene Ankunftszeit jetzt im Puls
+                  mit. Dann weiss jeder, wer wirklich zuerst da war. */
+               seit: zustand.seit || 0 });
       var jetzt = Date.now(), weg = false;
       Object.keys(zustand.leute).forEach(function (id) {
         if (jetzt - (zustand.leute[id].gesehen || 0) > VERFALL_MS) {

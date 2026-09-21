@@ -15129,6 +15129,17 @@
                 </div>`).join("")}
             </div>`;
         })()}
+        ${hier ? `
+          <p class="eyebrow" style="margin-top:14px;">JEMANDEN EINLADEN — AUCH WER GERADE NICHT DA IST</p>
+          <div class="lc-einladefeld">
+            <input type="text" id="lcEinladeSuche" class="vocab-search"
+                   placeholder="Namen eintippen …" autocomplete="off" />
+            <div id="lcEinladeTreffer" class="lc-einladetreffer"></div>
+            <p class="empty-note" style="font-size:0.7rem; margin:6px 0 0;">
+              Die Einladung landet im Postfach — sie kommt also auch an,
+              wenn die Person gerade nicht online ist.
+            </p>
+          </div>` : ""}
         <p class="empty-note" style="font-size:0.7rem; margin:10px 0 0;">
           Einen eigenen Raum machst du mit <code>/j Name</code> auf — gibt es ihn
           noch nicht, entsteht er in dem Augenblick.
@@ -15157,6 +15168,72 @@
           if (window.LiveChat && LiveChat.schreiben) LiveChat.schreiben("/i " + wen);
           showToast("✉️ Einladung an " + wen + " ist raus.");
         }));
+      /* =================================================================
+         RUNDE 73 — EINE EINLADUNG, DIE AUCH ANKOMMT, WENN NIEMAND DA IST
+         -----------------------------------------------------------------
+         XANDER: „Man kann die Einladung, wenn man jemanden einlädt,
+         nicht absenden … Wie gesagt möchte ich auch Leute einladen, die
+         gerade nicht online sind. Ich möchte Einladungen auf jeden Fall
+         abschicken können."
+
+         NACHGESEHEN, und er hat in beidem recht:
+         · „/i Name" (der Knopf oben) schickt eine Zeile in den RAUM, in
+           dem die Person gerade sitzt. Wer in keinem Raum sitzt, bekommt
+           also gar nichts — und wer offline ist, erst recht nicht.
+         · Der Briefumschlag in der Online-Klappe steht nur bei Leuten,
+           die GERADE online sind (onlineListe).
+         Damit gab es für jemanden, der nicht da ist, überhaupt keinen
+         Weg. Hier ist er: ein Suchfeld über alle Profile, und die
+         Einladung geht ins POSTFACH — das wartet, bis die Person das
+         nächste Mal hereinschaut. lcEinladungSchicken baut dafür schon
+         die [RAUM:…]-Marke, die im Postfach zu einem Knopf wird. */
+      const suchFeld = ziel.querySelector("#lcEinladeSuche");
+      const treffer = ziel.querySelector("#lcEinladeTreffer");
+      if (suchFeld && treffer) {
+        let uhr = null;
+        const zeigen = (liste) => {
+          if (!liste.length) {
+            treffer.innerHTML = '<p class="empty-note" style="font-size:0.74rem;">Niemanden gefunden.</p>';
+            return;
+          }
+          treffer.innerHTML = liste.map((u) => `
+            <button type="button" class="lc-einladezeile" data-lc-postfach="${escapeHtml(u.id)}"
+                    data-lc-postname="${escapeHtml(u.name || "")}">
+              <span class="lc-einladezeile-name">${escapeHtml(u.name || "")}</span>
+              <span class="lc-einladezeile-tat">✉️ einladen</span>
+            </button>`).join("");
+          treffer.querySelectorAll("[data-lc-postfach]").forEach((b) =>
+            b.addEventListener("click", async () => {
+              b.disabled = true;
+              const marke = b.querySelector(".lc-einladezeile-tat");
+              if (marke) marke.textContent = "… wird geschickt";
+              try {
+                await lcEinladungSchicken(b.dataset.lcPostfach, b.dataset.lcPostname);
+                if (marke) marke.textContent = "✅ ist raus";
+              } catch (e) {
+                b.disabled = false;
+                if (marke) marke.textContent = "✉️ einladen";
+                /* Der Grund steht wirklich da. „Geht nicht" ist keine
+                   Auskunft — genau daran ist es vorher gescheitert. */
+                showToast("⚠️ " + ((e && e.message) || "Die Einladung ging nicht raus."));
+              }
+            }));
+        };
+        suchFeld.addEventListener("input", () => {
+          const q = suchFeld.value.trim();
+          clearTimeout(uhr);
+          if (q.length < 2) { treffer.innerHTML = ""; return; }
+          /* Erst tippen lassen, dann suchen — sonst eine Abfrage je
+             Buchstabe. */
+          uhr = setTimeout(async () => {
+            try { zeigen(await Backend.searchUsers(q)); }
+            catch (e) {
+              treffer.innerHTML = '<p class="empty-note" style="font-size:0.74rem;">'
+                + escapeHtml((e && e.message) || "Die Suche ging gerade nicht.") + "</p>";
+            }
+          }, 260);
+        });
+      }
       ziel.querySelectorAll("[data-lc-hin]").forEach((b) =>
         b.addEventListener("click", () => {
           const wohin = b.dataset.lcHin;
@@ -32650,9 +32727,20 @@
            Fluegel und eine Nase, die vorne spitz zulaeuft statt rund
            abzuschliessen. Die sind jetzt alle da. */
         '<svg class="lc-flieger-form" viewBox="0 0 120 52" aria-hidden="true">'
-        /* Der hintere Fluegel — er liegt HINTER dem Rumpf, also zuerst. */
+        /* RUNDE 73 — XANDER: „Das Flugzeug ist nahezu perfekt bis auf
+           die Position der Fluegel. Der seitliche Fluegel ist nicht
+           so gut zu sehen beziehungsweise beide Fluegel sind nicht
+           gleichzeitig zu sehen."
+           NACHGESEHEN: der nahe Fluegel lief von y 26 nach OBEN auf
+           y 6, der ferne von y 24 nach UNTEN auf y 40. Einer zeigte
+           also nach oben, der andere nach unten — das ist kein
+           Flugzeug, das ist ein Kreuz. Ein Verkehrsflugzeug hat
+           TIEFDECKER-Fluegel: beide gehen nach hinten und unten weg,
+           der nahe tiefer und laenger, der ferne darueber ein Stueck
+           weit sichtbar. So sieht man beide auf einmal. */
+        /* Der ferne Fluegel — er liegt HINTER dem Rumpf, also zuerst. */
         + '<path class="lc-flieger-fluegel lc-flieger-fluegel-fern"'
-        + ' d="M56 24 L44 40 L58 40 L78 26 Z"/>'
+        + ' d="M62 28 L36 38 L52 40 L80 30 Z"/>'
         /* Das waagerechte Hoehenleitwerk am Heck. */
         + '<path class="lc-flieger-fluegel lc-flieger-fluegel-fern"'
         + ' d="M16 26 L6 20 L20 20 L30 26 Z"/>'
@@ -32660,10 +32748,10 @@
         + ' Q110 17 117 26 Q110 35 92 36 L30 36 Q12 36 8 30 Z"/>'
         /* Die Seitenflosse. */
         + '<path class="lc-flieger-leit" d="M14 28 L6 6 L18 6 L28 26 Z"/>'
-        /* Der vordere Fluegel. */
-        + '<path class="lc-flieger-fluegel" d="M52 26 L38 6 L52 6 L74 24 Z"/>'
-        /* Das Triebwerk unter dem Fluegel. */
-        + '<rect class="lc-flieger-triebwerk" x="50" y="30" width="20" height="9" rx="4.5"/>'
+        /* Der nahe Fluegel — tiefer und laenger als der ferne. */
+        + '<path class="lc-flieger-fluegel" d="M66 31 L30 46 L50 48 L86 33 Z"/>'
+        /* Das Triebwerk haengt UNTER dem nahen Fluegel. */
+        + '<rect class="lc-flieger-triebwerk" x="44" y="38" width="19" height="8" rx="4"/>'
         /* RUNDE 71 — XANDER: „beim Reisen hat das Flugzeug immer noch
            keine Details."
            Dazu kommen jetzt die Sachen, an denen man ein Verkehrs-
@@ -32677,7 +32765,7 @@
            · das FAHRWERK unter Nase und Fluegel.
            Die Zahlen sind aus der Rumpfkontur abgelesen: der Rumpf
            liegt zwischen y=16 und y=36, seine Mitte also auf 26. */
-        + '<rect class="lc-flieger-triebwerk lc-flieger-fern2" x="42" y="31.5" width="16" height="7" rx="3.5"/>'
+        + '<rect class="lc-flieger-triebwerk lc-flieger-fern2" x="41" y="32.5" width="15" height="6.5" rx="3.2"/>'
         + '<path class="lc-flieger-streifen" d="M14 29.4 L112 29.4"/>'
         + '<path class="lc-flieger-kabinenfenster" d="M28 24 h3 M35 24 h3 M42 24 h3'
         + ' M49 24 h3 M56 24 h3 M63 24 h3 M70 24 h3 M96 24 h3 M103 24 h3"/>'
@@ -32712,7 +32800,19 @@
             + "px) translate(-50%, -50%) scaleX(" + (links ? -1 : 1) + ") scale(.2)", opacity: 0, offset: 1 }
         ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       } catch (e) {}
-      lcTonZu("flugzeug");
+      /* RUNDE 73 — XANDER: „Der Sound ist noch nicht lang genug fuer
+         die Wegstrecke, je nach Platz was man sich aussucht … und es
+         klingt eher wie ein Rennauto als wie ein Flug."
+         GEFUNDEN, und es war ein Tippfehler mit Folgen: hier stand
+         lcTonZu("flugzeug"). Der Plan-Eintrag heisst aber „flug".
+         LC_TON_PLAN["flugzeug"] gibt es nicht — also fiel lcTonZu auf
+         die gleichnamige Datei zurueck, und das ist „flugzeug.opus"
+         mit 2,01 s. Der lange Flugton „flugzeuglang" (gemessen 7,13 s),
+         der im Plan steht, ist nie gelaufen. Das kurze Vorbeirauschen
+         ist genau das, was nach Rennauto klingt.
+         Jetzt ueber lcTonReise mit der WIRKLICHEN Flugzeit: je weiter
+         der Platz, desto laenger der Ton. */
+      lcTonReise("flug", hin);
     } else if (art === "greifvogel") {
       /* RUNDE 70 — XANDER: „Der Greifvogel hat keine realistische
          Sound Variation." Bisher gab es nur EINEN Ruf. Ein Greifvogel
@@ -33073,7 +33173,21 @@
         weg.push(l);
         return l;
       };
-      lochBauen(ab.el, 0, hin + 400);
+      const lochAb = lochBauen(ab.el, 0, hin + 400);
+      /* RUNDE 73 — XANDER: „Die Maulwurf-Nase ist noch zu sehen an dem
+         Platz, wo er die Position verlaesst. Da soll einfach nur die
+         Erdaufschuettung sich weiterbewegen, und dann soll er an der
+         richtigen Seite hochkommen."
+         Er hat recht, und es ist eine Frage der Logik, nicht der
+         Zeichnung: das Tier sitzt IM Loch, und das Loch bleibt am
+         Startplatz liegen (so war es gewuenscht — „ohne dass das Loch
+         mitgeht"). Nur gehoert der Maulwurf da nicht mehr hin, sobald
+         er los ist. Deshalb verschwindet das TIER aus dem Startloch,
+         wenn das Bild unten ist (22 % von dauer), und das Loch bleibt
+         als reines Erdloch stehen. */
+      setTimeout(() => {
+        lochAb.querySelector(".lc-maulwurf-tier")?.remove();
+      }, Math.round(dauer * 0.22));
 
       /* Die Spur. Die Anzahl richtet sich nach der Strecke, damit die
          Haufen bei zwei Plaetzen nicht auf einem Klumpen liegen und
@@ -33083,21 +33197,58 @@
          wie Perlen auf der Strecke. Ein Maulwurfsgang ist an der
          Oberflaeche ein durchgehender WALL, also muessen sich die
          Haufen ueberlappen. */
-      const wieViele = Math.max(7, Math.min(34, Math.round(weite / (d * 0.22))));
+      /* RUNDE 73 — XANDER: „Da soll der Streifen auch breiter sein …
+         die Erde soll realistisch das Design aufschuetten … und die
+         kleinen Huegel macht er an der Stelle von den Positionen,
+         dass das dort besonders dick ist, dass man sieht, da wird
+         Erde aufgeschuettet."
+         Also zwei Aenderungen an der Spur:
+         · Sie liegt DICHTER (Abstand 0,16 statt 0,22 Bildbreiten) und
+           jeder Haufen streut weiter zur Seite (0,05 statt 0,016) —
+           daraus wird ein Wall statt einer Linie.
+         · Wo die Spur einen PLATZ kreuzt, wird sie dicker. Dafuer
+           wird fuer jeden Haufen nachgesehen, wie nah der naechste
+           Sitzplatz liegt; je naeher, desto groesser der Haufen. Das
+           ist genau das „besonders dick an der Stelle von den
+           Positionen". */
+      const gitterM = lcPlatzGitter();
+      const einheitM = lcPlatzAbstand(document.getElementById("lcPlaetze")) || (d * 1.6);
+      const dickeBei = (x, y) => {
+        let naeh = 1e9;
+        (gitterM || []).forEach((g) => {
+          const e = Math.hypot(g.x - x, g.y - y);
+          if (e < naeh) naeh = e;
+        });
+        /* Direkt auf dem Platz: voller Aufschlag. Eine halbe Sitzweite
+           weiter: nichts mehr. */
+        const nah = Math.max(0, 1 - naeh / (einheitM * 0.5));
+        return 1 + nah * nah * 0.85;
+      };
+      const wieViele = Math.max(9, Math.min(46, Math.round(weite / (d * 0.16))));
       for (let i = 1; i < wieViele; i++) {
         const t = i / wieViele;
         const h = document.createElement("i");
         h.className = "lc-erdhaufen";
-        h.style.setProperty("--gross", d + "px");
         /* Leicht versetzt — eine Spur auf der Linie sieht aus wie mit
            dem Lineal gezogen, und so graebt kein Maulwurf. */
-        const quer = (((i * 37) % 11) - 5) * (d * 0.016);
-        setzen(h, start.x + (ende.x - start.x) * t + quer,
-                  start.y + (ende.y - start.y) * t + quer * 0.55);
+        const quer = (((i * 37) % 11) - 5) * (d * 0.05);
+        const hx = start.x + (ende.x - start.x) * t + quer;
+        const hy = start.y + (ende.y - start.y) * t + quer * 0.55;
+        h.style.setProperty("--gross", (d * dickeBei(hx, hy)).toFixed(1) + "px");
+        setzen(h, hx, hy);
         h.style.animationDelay = Math.round(200 + t * (hin - 620)) + "ms";
         h.style.setProperty("--dreh", Math.round(((i * 53) % 30) - 15) + "deg");
         reihe.appendChild(h);
         weg.push(h);
+      }
+      /* XANDER: „im Ton soll auch zu hoeren sein, dass dort lang
+         gegraben wird, waehrend der Wegstrecke."
+         „graben" ist selbst gebaut (gemessen 2,66 s: kurze Schuebe in
+         loser Erde, dazwischen das Rieseln der Kruemel). Es wird so
+         oft gelegt, wie die Fahrt dauert — leiser als der Einstieg,
+         denn er ist ja unter der Erde. */
+      for (let g = 0; g * 2400 < hin - 500; g++) {
+        lcTonSpaeter("graben", 320 + g * 2400, g ? 0.4 : 0.5);
       }
 
       lochBauen(zu.el, Math.max(0, hin - 560), 1200);
@@ -33109,13 +33260,30 @@
          die nicht heil: sie wird erdig, bricht auf und wackelt, so
          lange er unten arbeitet. Danach ist sie wieder wie vorher —
          kaputt machen soll er sie ja nicht. */
-      [ab.el, zu.el].forEach((pl, i) => {
-        if (!pl) return;
-        const an = Math.max(0, i ? hin - 700 : 0);
+      /* RUNDE 73: nicht mehr nur Start und Ziel, sondern JEDER Platz,
+         unter dem er durchmuss. XANDER: „dass die Strichlinie
+         unterbrochen wird und das bisschen kaputtgeht … dass die
+         Erde realistisch das Design aufschuettet, als wenn es dort
+         wirklich das Design umgraebt."
+         Welcher Platz auf dem Weg liegt, wird gerechnet: der Abstand
+         seiner Mitte zur Strecke. Liegt er naeher als eine halbe
+         Sitzweite, wird er aufgegraben — und zwar genau dann, wenn
+         der Maulwurf dort ist. */
+      const laengeM = Math.hypot(ende.x - start.x, ende.y - start.y) || 1;
+      const ex = (ende.x - start.x) / laengeM, ey = (ende.y - start.y) / laengeM;
+      (gitterM || []).forEach((g) => {
+        if (!g.el) return;
+        /* Wie weit laeuft man auf der Strecke, bis man ihm am
+           naechsten ist — und wie weit ist er dann noch weg? */
+        const proj = (g.x - start.x) * ex + (g.y - start.y) * ey;
+        if (proj < -einheitM * 0.4 || proj > laengeM + einheitM * 0.4) return;
+        const ab2 = Math.hypot(g.x - start.x - ex * proj, g.y - start.y - ey * proj);
+        if (ab2 > einheitM * 0.5) return;
+        const wann = Math.max(0, Math.round((Math.max(0, proj) / laengeM) * (hin - 500)));
         setTimeout(() => {
-          pl.classList.add("lc-platz-untergraben");
-          setTimeout(() => pl.classList.remove("lc-platz-untergraben"), 1900);
-        }, an);
+          g.el.classList.add("lc-platz-untergraben");
+          setTimeout(() => g.el.classList.remove("lc-platz-untergraben"), 1900);
+        }, wann);
       });
 
       /* Und das Bild: es sackt senkrecht ins eigene Loch … */
@@ -33502,6 +33670,33 @@
            ein dunkler (der Schatten darunter). Die MESSING-Teile —
            Baender, Dome, Pfeife, Handlaeufe — sitzen ausdruecklich
            OBEN auf dem Koerper, so wie er es beschreibt. */
+        /* RUNDE 73 — XANDER: „Die Lok kann noch mehr Tiefe haben im
+           Design … ein bisschen mehr, ich weiss nicht ob es Schatten
+           ist oder der Lack — das kann bisschen ins Schwarze gehen,
+           aber so dass man das noch gut erkennen kann."
+           Eine FLAECHE mit einer Farbe hat keine Tiefe, ganz gleich
+           wie dunkel sie ist. Deshalb bekommt der Kessel hier einen
+           echten Verlauf ueber seine Hoehe: oben der Lichtstreifen
+           des Lacks, in der Mitte das Grundschwarz, unten der
+           Schattenbauch. Das ist dasselbe Mittel wie beim
+           Helikopter — und es ist der Unterschied zwischen „schwarz"
+           und „schwarz lackiert". */
+        + '<defs>'
+        + '<linearGradient id="lokLack" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#454f5a"/>'
+        + '<stop offset="0.18" stop-color="#242b33"/>'
+        + '<stop offset="0.5" stop-color="#12161a"/>'
+        + '<stop offset="0.82" stop-color="#090c0f"/>'
+        + '<stop offset="1" stop-color="#030507"/></linearGradient>'
+        /* Und das Messing bekommt seinen eigenen Verlauf: Gold ist
+           oben hell und unten warm-dunkel, sonst wirkt es wie
+           gelbe Farbe. */
+        + '<linearGradient id="lokGold" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#ffe9a6"/>'
+        + '<stop offset="0.35" stop-color="#e7bb4e"/>'
+        + '<stop offset="0.72" stop-color="#b8892a"/>'
+        + '<stop offset="1" stop-color="#7d5d15"/></linearGradient>'
+        + "</defs>"
         + '<path class="lc-lok-kessel" d="M26 18 L88 18 L88 42 L26 42 Z"/>'
         + '<path class="lc-lok-glanz" d="M26 19.6 L88 19.6 L88 24.4 L26 24.4 Z"/>'
         + '<path class="lc-lok-schatten" d="M26 36.4 L88 36.4 L88 42 L26 42 Z"/>'
@@ -33683,53 +33878,105 @@
       reihe.appendChild(liane);
       weg.push(liane);
       setzen(liane, start.x, start.y);
-      const mitteL = { x: (start.x + ende.x) / 2, y: Math.max(8, Math.min(start.y, ende.y) - d * 0.45) };
+      /* RUNDE 73 — XANDER: „Die Liane trifft zwischendurch auf einem
+         anderen Platz auf, bevor sie landet."
+         GERECHNET: der Scheitel lag auf d*0,45 ueber dem hoeheren der
+         beiden Plaetze — also keine halbe Bildhoehe. Die Sitzreihe hat
+         aber ZWEI Reihen, und wer von der unteren in die obere
+         schwingt, streift auf dieser Hoehe die Plaetze dazwischen.
+         Der Scheitel liegt jetzt 0,85 Bildhoehen darueber. Am Bild
+         nachgesehen: bei 1,25 schwang der Reisende ganz aus der
+         Sitzflaeche heraus — das ist zu viel des Guten. 0,85 reicht,
+         um ueber die Oberkante der oberen Reihe zu kommen (die liegt
+         eine halbe Bildhoehe ueber deren Mitte), und er bleibt
+         sichtbar. */
+      const mitteL = { x: (start.x + ende.x) / 2,
+                       y: Math.max(8, Math.min(start.y, ende.y) - d * 0.85) };
       try {
-        /* RUNDE 71 — XANDER: „soll praktisch das Profilbild … ein
-           bisschen nach links schwingen um Anlauf zu bekommen … und
-           landet dann einfach mit einer weichen Ueberblendung."
-           Zwei Sachen fehlten:
-           · DER ANLAUF. Wer an einer Liane schwingt, geht erst ein
-             Stueck ZURUECK. Das sind hier 16 Prozent der Strecke, in
-             die Gegenrichtung des Ziels — also nach links, wenn es
-             nach rechts geht, und umgekehrt. Er sagt „nach links",
-             weil sein Ziel rechts lag; gerechnet wird die Richtung,
-             nicht die Seite.
-           · DAS LANDEN. Sie stand am Ziel still und wurde einfach
-             durchsichtig. Jetzt schwingt sie hinter dem Absprung
-             weiter und nach oben aus dem Bild — man laesst eine Liane
-             ja los, sie loest sich nicht auf.
-           „easing" bleibt hier bewusst weich: die Offsets sind
-           Bruchteile, keine gerechneten Millisekunden. */
+        /* RUNDE 73 — XANDER: „Die Liane scheint noch nicht so
+           realistisch zu schwingen, weil sie hin und her geht, als
+           wenn sie nach vorn und hinten schwingt. Sie soll einen
+           Anlauf haben von dem Platz, wo man herkommt, soll
+           zurueckschwingen, dann soll es nach vorn schwingen in einem
+           Zug — dann kann sie nicht waehrend der Bewegung wieder
+           zurueckschwingen. Sie soll praktisch eine Richtung und dann
+           landen."
+
+           ZWEI URSACHEN, beide behoben:
+           · Das Bild ritt bisher NACH der Ankunft noch weiter — es
+             schwang ueber das Ziel hinaus und nach oben aus dem Bild.
+             Von aussen sieht das aus wie ein zweites Hin und Her.
+             Jetzt landet die PERSON am Ziel und bleibt; nur das SEIL
+             schwingt danach leer weiter, so wie man eine Liane
+             loslaesst.
+           · Auf der Animation lag ein „ease-in-out" ueber die GANZE
+             Laenge. Diese Kurve dehnt die Abstaende ZWISCHEN den
+             Schluesselbildern — die Geschwindigkeit sprang also an
+             jedem Punkt, und gerade das liest das Auge als Zappeln.
+             Jetzt „linear", und die Pendelbewegung steckt in den
+             WERTEN: langsam an den beiden Umkehrpunkten, schnell
+             durch den tiefsten Teil — genau wie ein Pendel. */
         const dxL = ende.x - start.x, dyL = ende.y - start.y;
         const anlaufX = -dxL * 0.16, anlaufY = -Math.abs(dyL) * 0.16 - d * 0.10;
-        /* RUNDE 72: beim Loslassen schwingt sie nur noch 8 Prozent
-           ueber das Ziel hinaus statt 22 — „geht immer ein bisschen
-           ueber den Bildrand hinaus" meint genau das. */
-        const wegX = dxL + dxL * 0.08, wegY = dyL - d * 0.9;
+        const wegX = dxL + dxL * 0.30, wegY = dyL - d * 1.1;
+        const neig = dxL < 0 ? 1 : -1;
         const vorL = Math.max(0.06, (hin * 0.16) / dauer);
+        const zieL = hin / dauer;
+        /* Vier Punkte zwischen Anlauf und Ziel. Der Weg waechst
+           erst langsam, dann schnell, dann wieder langsam: die
+           Anteile 0,10 / 0,34 / 0,68 / 0,90 / 1 sind die Strecke,
+           nicht die Zeit. */
+        const bogen = (u) => {
+          /* Eine Parabel durch Anlauf, Scheitel und Ziel. */
+          const x = anlaufX + (dxL - anlaufX) * u;
+          const gerade = anlaufY + (dyL - anlaufY) * u;
+          const hoehe = (mitteL.y - start.y)
+            - ((anlaufY + (dyL - anlaufY) * 0.5));
+          return { x: x, y: gerade + hoehe * 4 * u * (1 - u) };
+        };
+        const punkt = (u, drehung) => {
+          const b = bogen(u);
+          return "translate(" + b.x.toFixed(1) + "px, " + b.y.toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehung.toFixed(0) + "deg)";
+        };
         liane.animate([
-          { transform: "translate(-50%, -50%) rotate(" + (dxL < 0 ? 14 : -14) + "deg)",
+          { transform: "translate(-50%, -50%) rotate(" + (neig * 14) + "deg)",
             opacity: 0, offset: 0 },
-          { transform: "translate(-50%, -50%) rotate(" + (dxL < 0 ? 14 : -14) + "deg)",
+          { transform: "translate(-50%, -50%) rotate(" + (neig * 14) + "deg)",
             opacity: 1, offset: 0.08 },
-          /* Anlauf: zurueck, und dabei staerker geneigt. */
+          /* Anlauf: EINMAL zurueck, und dabei staerker geneigt. */
           { transform: "translate(" + anlaufX.toFixed(1) + "px, " + anlaufY.toFixed(1)
-            + "px) translate(-50%, -50%) rotate(" + (dxL < 0 ? 26 : -26) + "deg)",
+            + "px) translate(-50%, -50%) rotate(" + (neig * 26) + "deg)",
             opacity: 1, offset: vorL },
-          { transform: "translate(" + (mitteL.x - start.x).toFixed(1) + "px, "
-            + (mitteL.y - start.y).toFixed(1)
-            + "px) translate(-50%, -50%) rotate(0deg)", opacity: 1,
-            offset: Math.min(0.62, vorL + (hin * 0.42) / dauer) },
-          /* Angekommen — und hier wird losgelassen. */
+          /* Und dann in EINEM Zug hinueber. */
+          { transform: punkt(0.10, neig * 21), opacity: 1,
+            offset: vorL + (zieL - vorL) * 0.22 },
+          { transform: punkt(0.34, neig * 11), opacity: 1,
+            offset: vorL + (zieL - vorL) * 0.42 },
+          { transform: punkt(0.68, neig * -8), opacity: 1,
+            offset: vorL + (zieL - vorL) * 0.66 },
+          { transform: punkt(0.90, neig * -14), opacity: 1,
+            offset: vorL + (zieL - vorL) * 0.86 },
+          /* Angekommen — hier wird losgelassen, und hier bleibt man. */
           { transform: "translate(" + dxL.toFixed(1) + "px, " + dyL.toFixed(1)
-            + "px) translate(-50%, -50%) rotate(" + (dxL < 0 ? -16 : 16) + "deg)",
-            opacity: 1, offset: hin / dauer },
-          /* Und sie schwingt weiter, nach oben aus dem Bild. */
+            + "px) translate(-50%, -50%) rotate(" + (neig * -16) + "deg)",
+            opacity: 1, offset: zieL },
+          /* Nur noch das leere Seil schwingt aus dem Bild. */
           { transform: "translate(" + wegX.toFixed(1) + "px, " + wegY.toFixed(1)
-            + "px) translate(-50%, -50%) rotate(" + (dxL < 0 ? -30 : 30) + "deg)",
+            + "px) translate(-50%, -50%) rotate(" + (neig * -34) + "deg)",
             opacity: 0, offset: 1 }
-        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+        ], { duration: dauer, easing: "linear", fill: "forwards" });
+        /* Die Person steigt am Ziel ab — sie faehrt nicht mit dem
+           Seil weiter. Genau das war das zweite Hin und Her. */
+        const last = liane.querySelector(".lc-liane-last");
+        if (last) {
+          last.animate([
+            { opacity: 1, offset: 0 },
+            { opacity: 1, offset: zieL },
+            { opacity: 0, offset: Math.min(1, zieL + 0.04) },
+            { opacity: 0, offset: 1 }
+          ], { duration: dauer, easing: "linear", fill: "forwards" });
+        }
       } catch (e) {}
       lcTonZu("liane");
     } else if (art === "feder") {
@@ -36478,17 +36725,59 @@
     lcTonSpaeter("birneplopp", 1364, 0.62);
     return true;
   }
-  /* Die eigene Kachel: herausdrehen, auch wenn gerade keine brennt —
-     dann ist es einfach das Licht im Raum, das ausgeht. */
-  function lcGluehbirneRaus(wen) {
-    try {
-      const pl = lcPlatzMitNamen(wen);
-      const k = pl && pl.querySelector(".lc-kreis");
-      if (k) return lcBirneHeraus(k);
-    } catch (e) {}
+  /* RUNDE 73 — XANDER: „Die Gluehbirne soll nur an MEINEM Platz
+     ausgemacht werden. … Das eine ist das In-die-Fassung-Drehen, dann
+     wird es besonders hell im Raum, so dass die Leute geblendet sind,
+     und wenn ich sie ausdrehe, ist alles dunkel und die Leute auf
+     ihren Plaetzen blinzeln nur noch."
+
+     Damit ist die Sache anders herum, als sie war: das Herausdrehen
+     ist KEIN Effekt, den man jemandem schickt, sondern der
+     Lichtschalter des Raumes, und er haengt an der Birne, die bei MIR
+     steckt. Deshalb sucht diese Kachel nicht mehr nach einem Namen,
+     sondern nach dem eigenen Platz.
+
+     Und weil er ausserdem gemeldet hat: „wenn ich die Gluehbirne bei
+     jemandem gemacht hab, bleibt der Schein auf seinem Positionsplatz
+     um sein Profilbild herum" — das Ausdrehen loescht jetzt JEDEN
+     brennenden Schein im Raum. Es geht ja das Licht aus, nicht nur
+     eine Birne. */
+  function lcMeinPlatz() {
+    const karte = document.getElementById("livechatKarte");
+    return (karte && karte.querySelector(".lc-platz-ich")) || null;
+  }
+  function lcGluehbirneRaus() {
+    /* Erst alles Brennende loeschen — auch bei den anderen. */
+    const karte = document.getElementById("livechatKarte");
+    if (karte) {
+      karte.querySelectorAll(".lc-birne-halt").forEach((x) => x.remove());
+      karte.querySelectorAll(".lc-kreis.lc-birne-an")
+        .forEach((k) => k.classList.remove("lc-birne-an"));
+    }
+    const meiner = lcMeinPlatz();
+    const k = meiner && meiner.querySelector(".lc-kreis");
+    if (k) {
+      k.classList.add("lc-birne-an");   /* damit das Herausdrehen etwas zu tun hat */
+      return lcBirneHeraus(k);
+    }
     lcTonSpaeter("birneplopp", 0, 0.62);
     lcStromAus(true);
     return true;
+  }
+  /* XANDER: „dann wird es besonders hell im Raum, so dass die Leute
+     geblendet sind." Das Gegenstueck zur Finsternis: ein kurzer,
+     greller Schein ueber der ganzen Buehne, wenn die Birne zuendet. */
+  function lcBlendung() {
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const heim = lcEffektHeim();
+    if (!heim) return;
+    document.getElementById("lcBlendung")?.remove();
+    const d = document.createElement("div");
+    d.id = "lcBlendung";
+    d.className = "lc-blendung";
+    d.setAttribute("aria-hidden", "true");
+    heim.appendChild(d);
+    setTimeout(() => d.remove(), 2200);
   }
   function lcGluehbirne(wen) {
     /* Steckt sie schon drin? Dann wird jetzt herausgedreht. */
@@ -36512,6 +36801,10 @@
           kreis.classList.add("lc-birne-an");
           /* … und die Fassung bleibt sichtbar an ihr haengen. */
           lcBirneFassungBleibt(platz);
+          /* RUNDE 73: „dann wird es besonders hell im Raum, so dass
+             die Leute geblendet sind." Das gilt fuer die Birne am
+             EIGENEN Platz — sie ist ja die Raumbeleuchtung. */
+          if (platz.classList.contains("lc-platz-ich")) lcBlendung();
         }, 4000);
       }
       /* Die Fassung sitzt oben auf dem Kopf — dort wird eingedreht.
@@ -38674,7 +38967,7 @@
       if (art === "zwille" && lcZwille(wenZ)) return;
       if (art === "pusterohr" && lcPusterohr(wenZ)) return;
       if (art === "gluehbirne" && lcGluehbirne(wenZ)) return;
-      if (art === "birneraus" && lcGluehbirneRaus(wenZ)) return;
+      if (art === "birneraus" && lcGluehbirneRaus()) return;
       if (art === "hut" && lcHut(wenZ)) return;
       if (art === "bombe" && lcBombe(wenZ, false)) return;
       if (art === "lunte" && lcBombe(wenZ, true)) return;

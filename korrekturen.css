@@ -22682,3 +22682,155 @@ body.lc-schreibt .tutor-reiter {
   90%     { height: 101%; opacity: .95; }
   100%    { height: 104%; opacity: 0; }
 }
+
+/* =================================================================
+   RUNDE 73 — EINE EINLADUNG, DIE AUCH OFFLINE ANKOMMT
+   -----------------------------------------------------------------
+   XANDER: „Ich möchte auch Leute einladen, die gerade nicht online
+   sind. Ich möchte Einladungen auf jeden Fall abschicken können."
+   ================================================================= */
+.lc-einladefeld { margin-top: 6px; }
+.lc-einladetreffer { margin-top: 6px; display: grid; gap: 4px; }
+.lc-einladezeile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid rgba(0, 0, 0, .1);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .55);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.lc-einladezeile:hover { background: rgba(255, 255, 255, .85); }
+.lc-einladezeile[disabled] { opacity: .7; cursor: default; }
+.lc-einladezeile-name { font-weight: 700; }
+.lc-einladezeile-tat { font-size: .76rem; opacity: .75; white-space: nowrap; }
+
+/* =================================================================
+   RUNDE 73 — DIE BLENDUNG: WENN DIE BIRNE ZÜNDET, WIRD ES GRELL
+   -----------------------------------------------------------------
+   XANDER: „Das eine ist das In-die-Fassung-Drehen, dann wird es
+   besonders hell im Raum, so dass die Leute geblendet sind, und wenn
+   ich sie ausdrehe, ist alles dunkel."
+
+   Das Gegenstück zu `.lc-stromaus-lang`. Kurz, weiss und mit einem
+   Nachglimmen — eine Glühbirne springt an und blendet, sie leuchtet
+   nicht einfach gleichmässig auf.
+   ================================================================= */
+.lc-blendung {
+  position: absolute;
+  inset: 0;
+  z-index: 41;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 42%,
+    rgba(255, 252, 235, 1), rgba(255, 246, 210, .92) 46%, rgba(255, 238, 180, .7));
+  animation: lcBlendungR73 2.2s ease-out both;
+}
+@keyframes lcBlendungR73 {
+  0%   { opacity: 0; }
+  /* Der Zündblitz — hart und sofort. */
+  5%   { opacity: .96; }
+  9%   { opacity: .55; }
+  /* Das zweite Zucken, wie es eine Glühwendel macht. */
+  13%  { opacity: .9; }
+  /* Und dann brennt sie ruhig weiter und blendet nach. */
+  34%  { opacity: .46; }
+  70%  { opacity: .2; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-blendung { display: none; }
+}
+
+/* =================================================================
+   RUNDE 73 — DAS HELIKOPTER-FENSTER BEKOMMT DIE FORM EINES
+   HELIKOPTER-FENSTERS
+   -----------------------------------------------------------------
+   XANDER: „Bei dem Helikopter ist das Fenster so eckig. Geh mal bitte
+   mit der Geometrie eines Helikopter-Fensters — das ist glaube ich
+   vorne schräg und hinten eher ein bisschen abgerundet in der Ecke.
+   Das soll realistisch aussehen, als wenn ich in diesem Helikopter
+   sitze."
+
+   Er hat sowohl die Form als auch die Richtung richtig beschrieben.
+   NACHGESEHEN an der Zeichnung: die Nase liegt links (x 10), der
+   Heckausleger rechts (x 78–120), und die Frontscheibe
+   (`.lc-heli-glas`) läuft von (11,39) nach (30,18) — sie rakt also
+   nach HINTEN, während sie steigt. Das Kabinenfenster dahinter muss
+   dieselbe Linie aufnehmen, sonst sieht es aus wie ein Aufkleber.
+
+   Deshalb hier kein `border-radius` mehr (das rundet alle vier Ecken
+   gleich), sondern ein `clip-path`: vorne eine gerade schräge Kante
+   in derselben Neigung wie die Frontscheibe, hinten zwei runde Ecken.
+   Die runden Ecken sind als Punktfolge ausgeschrieben — clip-path
+   kennt keine Radien.
+   ================================================================= */
+.lc-heli-kanzel {
+  /* Etwas breiter als hoch — ein Kabinenfenster ist ein Querformat.
+     Zu breit darf es nicht sein, sonst wird das Gesicht beschnitten. */
+  aspect-ratio: 1.06;
+  width: 21.5%;
+  border-radius: 0;
+  border: none;
+  /* Der Rahmen wird zum Schlagschatten nach innen — eine Kante
+     zeichnet clip-path nicht mit. */
+  box-shadow: inset 0 0 0 2px rgba(143, 166, 191, .95),
+              inset 0 3px 7px rgba(255, 255, 255, .3),
+              0 2px 5px rgba(0, 0, 0, .45);
+  clip-path: polygon(
+    /* die schräge Vorderkante — oben weiter hinten als unten */
+    21% 0%, 86% 0%,
+    /* hintere obere Ecke, rund */
+    93% 3%, 98% 12%, 100% 26%,
+    100% 72%,
+    /* hintere untere Ecke, rund */
+    98% 88%, 93% 97%, 86% 100%,
+    /* die Unterkante bis nach vorn */
+    7% 100%,
+    /* vordere untere Ecke, leicht gebrochen */
+    2% 96%, 0% 87%
+  );
+}
+
+/* =================================================================
+   RUNDE 73 — DER LACK BEKOMMT TIEFE, DAS MESSING WIRD GOLD
+   -----------------------------------------------------------------
+   XANDER: „Diese Kessel der Lok, die müssen Gold sein. Die Lok kann
+   noch mehr Tiefe haben im Design … das kann bisschen ins Schwarze
+   gehen, aber so dass man das noch gut erkennen kann. Das schöne
+   Design, was du gemacht hast, ist perfekt, aber das kann man noch
+   ein bisschen verfeinern."
+
+   Also nichts umbauen — verfeinern. Zwei Verläufe (in app.js als
+   <defs> definiert) treten an die Stelle der flachen Füllungen:
+   „lokLack" für alles Schwarze, „lokGold" für alles Messingne. Ein
+   Verlauf ist der ganze Unterschied zwischen einer schwarzen Fläche
+   und schwarzem Lack — und zwischen gelber Farbe und Gold.
+   ================================================================= */
+.lc-lok-kessel      { fill: url(#lokLack); stroke: #04060a; stroke-width: 1.4; }
+.lc-lok-rauchkammer { fill: url(#lokLack); stroke: #04060a; stroke-width: 1.2; }
+.lc-lok-haus        { fill: url(#lokLack); stroke: #04060a; stroke-width: 1.4; }
+.lc-lok-zylinder    { fill: url(#lokLack); stroke: #04060a; stroke-width: 1.2; }
+/* Der Schlot steht gegen den Himmel — er bleibt am dunkelsten, sonst
+   verschwindet seine Silhouette. */
+.lc-lok-schlot      { fill: #0a0d11; stroke: #04060a; stroke-width: 1; }
+/* GOLD: Dome, Bänder, Pfeife, Griffe, Handläufe, Stützen. */
+.lc-lok-dom       { fill: url(#lokGold); stroke: #6d5012; stroke-width: 1; }
+.lc-lok-pfeife    { fill: url(#lokGold); }
+.lc-lok-griff     { fill: url(#lokGold); }
+.lc-lok-stuetze   { fill: url(#lokGold); }
+.lc-lok-domfuss   { fill: #9c7318; }
+.lc-lok-domglanz  { fill: #fff3cd; opacity: .95; }
+/* Die Bänder um den Kessel sind das, was man von Weitem als Gold
+   erkennt — sie dürfen deshalb kräftiger sein als zuvor. */
+.lc-lok-band      { stroke: #e7bb4e; stroke-width: 2.4; fill: none; opacity: 1; }
+.lc-lok-handlauf  { stroke: #f0cf7a; stroke-width: 1.2; }
+/* Und der alte Lichtstreifen darf jetzt zarter sein — die Tiefe
+   kommt aus dem Verlauf, nicht mehr aus einem aufgelegten Balken. */
+.lc-lok-glanz     { fill: #4d5865; opacity: .45; }
+.lc-lok-schatten  { fill: #020406; opacity: .6; }

@@ -60,12 +60,23 @@ pruefe("sie haengt wieder lang von oben herunter",
   /const hochL = Math\.min\(\(kk\.top - rk\.top\) - d \* 0\.25, -d \* 1\.6\);/.test(js));
 pruefe("der Anlauf geht GEGEN die Richtung des Ziels",
   /const anlaufX = -dxL \* 0\.16/.test(js));
-pruefe("und er kommt vor dem Schwung",
+/* RUNDE 73 NACHGEFUEHRT. Beide Regeln beschrieben noch den Aufbau
+   von Runde 71, und der ist ersetzt. XANDER: „Die Liane scheint noch
+   nicht so realistisch zu schwingen, weil sie hin und her geht …
+   Sie soll praktisch eine Richtung und dann landen." Der Scheitel
+   wird jetzt gerechnet (bogen/punkt), statt EINEN Mittelpunkt
+   anzusteuern — die Zeichenkette mit „rotate(0deg)" gibt es deshalb
+   nicht mehr. Und der Ausschwung gehoert jetzt dem leeren SEIL; die
+   Person steigt am Ziel ab (lc-liane-last blendet bei zieL ab). */
+pruefe("und der Anlauf kommt vor dem Schwung",
   js.indexOf("opacity: 1, offset: vorL") > 0
   && js.indexOf("opacity: 1, offset: vorL")
-     < js.indexOf('+ "px) translate(-50%, -50%) rotate(0deg)", opacity: 1,'));
+     < js.indexOf("transform: punkt(0.10"));
 pruefe("gelandet wird nicht mit einer Ueberblendung auf der Stelle",
-  /const wegX = dxL \+ dxL \* 0\.08, wegY = dyL - d \* 0\.9;/.test(js));
+  /const wegX = dxL \+ dxL \* 0\.30, wegY = dyL - d \* 1\.1;/.test(js));
+pruefe("und die Person faehrt danach nicht mit dem Seil weiter",
+  /const last = liane\.querySelector\("\.lc-liane-last"\);/.test(js)
+  && /\{ opacity: 0, offset: Math\.min\(1, zieL \+ 0\.04\) \}/.test(js));
 
 console.log("\nDER 3-METER-TURM BLEIBT STEHEN");
 pruefe("er blendet erst NACH dem Einschlag aus (2730 ms)",
