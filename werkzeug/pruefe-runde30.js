@@ -67,7 +67,12 @@ const pruefe = (was, gut, zusatz) => {
      Katerpult muss ein realistisches Katapult Geraeusch kommen".
      Geprueft wird deshalb der HEUTIGE Name, nicht der von damals. */
   haengt("saugpfeil", "pfeilschuss");
-  haengt("hut", "cowboyhut");
+  /* RUNDE 64 ZURUECKGEDREHT, auf Ansage: „und das urspruengliche
+     Geraeusch vom Cowboy zurueckholst." In Runde 59 war der Ruf gegen
+     ein reines Hutgeraeusch getauscht worden — gemeint war offenbar
+     das Gegenteil. Also wieder cowboy.opus, der Ruf von Runde 30.
+     cowboyhut.opus bleibt liegen, falls er es sich anders ueberlegt. */
+  haengt("hut", "cowboy");
   haengt("peitsche", "peitschehieb");
   haengt("heber", "angelkurbel");
   haengt("luke", "fensterauf");

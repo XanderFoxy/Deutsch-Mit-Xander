@@ -94,6 +94,64 @@ def maske(bild, r=3, kern=2, unten_r=6, ab=0.70):
     return ndimage.binary_fill_holes(zu)
 
 
+def farbe_nachwachsen(bild, maske, echt, runden=14):
+    """Wo Farbe FEHLT, laesst sie aus der Nachbarschaft nachwachsen.
+
+    GEWUENSCHT: „Ist es moeglich, dass du die Silhouette am Umriss
+    berechnest und da, wo die Loecher im Koerper sind, dass du sie
+    fuellen kannst — vielleicht mit einem weichen Verlauf, der zu den
+    Pixeln in dieser Umgebung passt?"
+
+    Genau das passiert hier, und es ist noetig: gemessen an einem
+    Einzelbild haben die weggeschluessenten Stellen eine mittlere
+    Helligkeit von 11 — sie sind schwarz. Sie nur undurchsichtig zu
+    machen heisst also, ein schwarzes Pflaster aufzukleben. In den
+    Schuhen faellt das nicht auf, in der Hose und auf der Haut schon.
+
+    DIE FALLE, und sie ist der Grund fuer „echt": die schwarzen
+    COMICLINIEN sind auch weggeschluessent worden, und dort ist
+    Schwarz die RICHTIGE Farbe. Wuerde man sie mittfuellen, waere die
+    Zeichnung weg. Linien sind aber duenn: jeder Linienpunkt liegt
+    hoechstens zwei Pixel von echter Farbe entfernt. Nachgefuellt wird
+    deshalb nur, was WEITER als zwei Pixel von echter Farbe weg liegt —
+    das sind die Loecher, nie die Linien.
+    """
+    fehlt = maske & ~echt
+    if not fehlt.any():
+        return bild
+    abstand = ndimage.distance_transform_edt(~echt)
+    fuellen = maske & (abstand > 2.0)
+    if not fuellen.any():
+        return bild
+    rgb = bild[:, :, :3].astype(np.float32)
+    bekannt = (echt | (maske & ~fuellen)).astype(np.float32)
+    werte = rgb * bekannt[:, :, None]
+    kern = np.ones((3, 3), np.float32)
+    for _ in range(runden):
+        offen = fuellen & (bekannt < 0.5)
+        if not offen.any():
+            break
+        summe = np.dstack([ndimage.convolve(werte[:, :, k], kern, mode="nearest")
+                           for k in range(3)])
+        anzahl = ndimage.convolve(bekannt, kern, mode="nearest")
+        neu = offen & (anzahl > 0)
+        if not neu.any():
+            break
+        for k in range(3):
+            werte[:, :, k][neu] = summe[:, :, k][neu] / anzahl[neu]
+        bekannt[neu] = 1.0
+    """Und zum Schluss weich machen — eine Fuellung mit harter Kante
+       sieht aus wie ein Pflaster, ein Verlauf nicht."""
+    weich = np.dstack([ndimage.gaussian_filter(werte[:, :, k], 1.6) for k in range(3)])
+    rand = ndimage.binary_dilation(fuellen, structure=np.ones((5, 5))) & maske
+    misch = ndimage.gaussian_filter(rand.astype(np.float32), 1.2)[:, :, None]
+    aus = bild.copy()
+    gemalt = np.clip(werte * (1 - misch * 0.55) + weich * (misch * 0.55), 0, 255)
+    setz = fuellen | (rand & ~echt)
+    aus[:, :, :3][setz] = gemalt[setz].astype(np.uint8)
+    return aus
+
+
 def lesen(pfad):
     """Einzelbilder als RGBA aus dem webm — Alpha nur mit -c:v vor -i."""
     p = subprocess.Popen(
@@ -162,6 +220,10 @@ def saeubern(name, ziel):
         stdin=subprocess.PIPE)
     for bild in lesen(quelle):
         m = maske(bild)
+        # Erst die Farbe nachwachsen lassen, DANN den Alphakanal setzen —
+        # sonst faerbt man Pixel, die gleich wieder durchsichtig werden.
+        echt = bild[:, :, 3] > 40
+        bild = farbe_nachwachsen(bild, m, echt)
         weich = ndimage.gaussian_filter(m.astype(np.float32), 0.8)
         alpha = np.clip((weich - 0.38) / 0.28, 0, 1)
         neu = bild.copy()

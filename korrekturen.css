@@ -13846,6 +13846,41 @@ body.lc-schreibt .tutor-reiter {
   74%  { opacity: 1; }
   100% { opacity: 0; transform: scale(.9); }
 }
+/* RUNDE 64 — DER RING WACKELT, SOLANGE ES RATTERT.
+   GEWUENSCHT: „dass der Ball so im Metallgeruest herumrattert, bevor
+   er runterfaellt."
+   Ein Ring, der dabei stillsteht, verraet sofort, dass nichts daran
+   stoesst. Er zittert also mit — kurz und hart, mit abnehmendem
+   Ausschlag, so wie ein Stahlring es tut. Anfang und Dauer kommen aus
+   app.js, damit Bild und Ton auf derselben Millisekunde sitzen. */
+.lc-korb-ring.lc-korb-rattert::before {
+  content: "";
+  position: absolute;
+  inset: -6%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 170, 110, .45);
+  animation: lcKorbBebenR64 var(--rattern, 760ms) cubic-bezier(.3,.8,.4,1) var(--anschlag, 620ms) both;
+}
+.lc-korb-ring.lc-korb-rattert {
+  animation: lcKorbRingR18 1.9s ease-out both,
+             lcKorbZittertR64 var(--rattern, 760ms) linear var(--anschlag, 620ms) both;
+}
+@keyframes lcKorbZittertR64 {
+  0%   { border-color: #ffb27d; }
+  6%   { border-color: #fff0d8; }
+  100% { border-color: #ff7a3d; }
+}
+@keyframes lcKorbBebenR64 {
+  0%   { opacity: .9; transform: translateX(0) scaleX(1); }
+  14%  { opacity: .8; transform: translateX(3.5%) scaleX(1.05); }
+  32%  { opacity: .65; transform: translateX(-2.4%) scaleX(.97); }
+  52%  { opacity: .5; transform: translateX(1.4%) scaleX(1.03); }
+  72%  { opacity: .32; transform: translateX(-.8%) scaleX(.99); }
+  100% { opacity: 0; transform: translateX(0) scaleX(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-korb-ring.lc-korb-rattert::before { animation: none; opacity: 0; }
+}
 /* DIE HAND, DIE DRIBBELT.
    GEMELDET: „Ich moechte, dass der Basketball die Person ist und nicht
    ein Basketball ueber der Person dribbelt, sondern dass ich mit einer

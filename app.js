@@ -24292,7 +24292,13 @@
        Aufnahme faengt ohne Stille an. */
     /* „Vom Sound: der Hut ist immer noch kein Cowboyhut." Jetzt mit
        Filzaufschlag, Lederrauschen und einem Sporenklingeln. */
-    hut:            { ton: "cowboyhut", dauer: 3400, laut: 0.55 },
+    /* GEMELDET: „und das urspruengliche Geraeusch vom Cowboy
+       zurueckholst." In Runde 59 war der Ruf gegen ein reines
+       Hutgeraeusch getauscht worden („vom Sound der Hut ist immer noch
+       kein Cowboyhut") — gemeint war offenbar das Gegenteil. Also
+       wieder cowboy.opus, der Ruf von Runde 30 (2,0 s). cowboyhut.opus
+       bleibt liegen, falls er es sich anders ueberlegt. */
+    hut:            { ton: "cowboy",    dauer: 3400, laut: 0.6 },
     ticken:         { ton: "wecker",   dauer: 260,  laut: 0.45 },  /* ein Tick je Zahl */
     /* XANDER: „Bei der Bombe solltest du eine digitale Version haben
        und eine mit Zuendschnur, und die sollen realistische Sounds
@@ -34018,8 +34024,18 @@
       .sort((a, b) => Math.hypot(a.x - hier.x, a.y - hier.y)
                     - Math.hypot(b.x - hier.x, b.y - hier.y))[0];
     const dx = korb.x - hier.x, dy = korb.y - hier.y;
-    const flug = 620, fall = 420;
-    const dauer = ab + flug + fall + 300;
+    /* RUNDE 64 — GEWUENSCHT: „endlich den perfekten Basketballkorb-
+       Sound, inklusive der realistischen Animation in dem Korb, dass
+       der Ball so im Metallgeruest herumrattert und bevor er
+       runterfaellt, so wie man das realistisch kennt."
+       Vorher fiel der Ball glatt durch: Flug, dann fallen, fertig.
+       Ein echter Wurf, der den Ring trifft, RATTERT: der Ball springt
+       drei-, viermal zwischen Ring und Brett hin und her, die
+       Ausschlaege werden jedes Mal kleiner, und erst dann faellt er
+       durchs Netz. Genau das ist die Phase „rattern" — sie liegt
+       zwischen Flug und Fall, und der Ton liegt auf ihrem Anfang. */
+    const flug = 620, rattern = 760, fall = 420;
+    const dauer = ab + flug + rattern + fall + 300;
     const bei = (ms) => Math.min(1, ms / dauer);
     const ring = document.createElement("span");
     ring.className = "lc-korb-ring";
@@ -34036,15 +34052,38 @@
           offset: bei(ab + flug * 0.55) },
         { transform: "translate(" + dx.toFixed(1) + "px, " + (dy - 14).toFixed(1)
             + "px) scale(.72) rotate(330deg)", offset: bei(ab + flug) },
+        /* DAS RATTERN IM RING. Vier Ausschlaege, jeder kleiner als der
+           vorige (18, -12, 7, -4 px seitlich), und dazwischen springt
+           er jedes Mal ein Stueck hoch — ein Ball, der nur hin und her
+           wackelt, sieht aus wie ein Pendel, nicht wie ein Ball. */
+        { transform: "translate(" + (dx + 18).toFixed(1) + "px, " + (dy - 6).toFixed(1)
+            + "px) scale(.7) rotate(352deg)", offset: bei(ab + flug + rattern * 0.16) },
+        { transform: "translate(" + (dx - 12).toFixed(1) + "px, " + (dy - 15).toFixed(1)
+            + "px) scale(.7) rotate(372deg)", offset: bei(ab + flug + rattern * 0.36) },
+        { transform: "translate(" + (dx + 7).toFixed(1) + "px, " + (dy - 5).toFixed(1)
+            + "px) scale(.7) rotate(388deg)", offset: bei(ab + flug + rattern * 0.56) },
+        { transform: "translate(" + (dx - 4).toFixed(1) + "px, " + (dy - 11).toFixed(1)
+            + "px) scale(.7) rotate(400deg)", offset: bei(ab + flug + rattern * 0.76) },
+        { transform: "translate(" + dx.toFixed(1) + "px, " + (dy - 3).toFixed(1)
+            + "px) scale(.7) rotate(408deg)", offset: bei(ab + flug + rattern) },
         /* Und durch den Korb hindurch nach unten. */
         { transform: "translate(" + dx.toFixed(1) + "px, " + (dy + 26).toFixed(1)
-            + "px) scale(.4) rotate(400deg)", opacity: "1", offset: bei(ab + flug + fall * 0.6) },
+            + "px) scale(.4) rotate(440deg)", opacity: "1",
+          offset: bei(ab + flug + rattern + fall * 0.6) },
         { transform: "translate(" + dx.toFixed(1) + "px, " + (dy + 44).toFixed(1)
-            + "px) scale(.15) rotate(430deg)", opacity: "0", offset: bei(ab + flug + fall) },
+            + "px) scale(.15) rotate(470deg)", opacity: "0",
+          offset: bei(ab + flug + rattern + fall) },
         { transform: "translate(0px, 0px) scale(1)", opacity: "1", offset: 1 }
       ], { duration: dauer, easing: "ease-in-out", fill: "none" });
       void lauf;
     } catch (e) { return 0; }
+    /* Der Ring wackelt mit, solange es rattert — ein Ring, der beim
+       Rattern stillsteht, verraet, dass nichts daran stoesst. */
+    ring.style.setProperty("--rattern", rattern + "ms");
+    ring.style.setProperty("--anschlag", (ab + flug) + "ms");
+    ring.classList.add("lc-korb-rattert");
+    /* Und der Ton genau dort, wo der Ball den Ring trifft. */
+    lcTonSpaeter("korbrattern", ab + flug, 0.7);
     return dauer;
   }
 
@@ -34161,8 +34200,18 @@
          wie wenn ein Basketball in so einen Korb reinscheppert und
          dadurch geht, und man hoert das Geruest mit der Halterung,
          wo der Korb festigt ist, mit Scheppern."
-         Genau danach ist „korbscheppern" aufgenommen. */
-      if (art !== "tennis") lcTonSpaeter("korbscheppern", 3600, 0.68);
+         Genau danach war „korbscheppern" aufgenommen.
+
+         RUNDE 64 — GEWUENSCHT: „endlich den perfekten
+         Basketballkorb-Sound, inklusive der realistischen Animation
+         in dem Korb, dass der Ball so im Metallgeruest herumrattert
+         und bevor er runterfaellt."
+         Der Ton stand hier auf festen 3600 ms — also auf gut Glueck,
+         unabhaengig davon, wann der Ball den Ring wirklich trifft.
+         Jetzt loest ihn lcKorbwurf genau im Moment des Anschlags aus
+         („korbrattern": Ring, vier Scheppertreffer, Netz, Aufprall auf
+         dem Hallenboden). Deshalb steht hier nichts mehr; zwei Toene
+         uebereinander waere schlimmer als einer zur falschen Zeit. */
     }, art === "tennis" ? 3000 : 5200, art === "tennis" ? "tennis" : "basketball");
   }
 
@@ -34785,6 +34834,23 @@
         + '<rect x="90" y="53.5" width="9" height="6" rx="1.4" fill="#d9c07a"'
         + ' stroke="#8c6f1c" stroke-width="1.4"/>'
         + '<rect x="93.2" y="55.4" width="2.6" height="2.4" rx="0.6" fill="#3f2a12"/>'
+        /* RUNDE 64 — „und auch den Cowboyhut wieder ein bisschen
+           besser gestaltest."
+           Drei Sachen, die ein echter Filzhut hat und die hier
+           fehlten:
+           · die STEPPNAHT dicht am Krempenrand — sie laeuft parallel
+             zur Kante und macht aus der Flaeche ein Stueck Filz,
+           · ein weiches Licht auf der Krone, damit sie gewoelbt
+             aussieht und nicht wie ausgeschnitten,
+           · und der Schatten unter der Krempe, der zeigt, dass sie
+             ueber dem Kopf steht. */
+        + '<path d="M9.5 42.8 C27 59 51 63.2 70 63.2 C89 63.2 113 59 130.5 42.8"'
+        + ' fill="none" stroke="rgba(255,236,196,.55)" stroke-width="1.1"'
+        + ' stroke-dasharray="3 3.2" stroke-linecap="round"/>'
+        + '<path d="M46 24 C52 19.5 62 18.6 70 21.4 C62.5 21.6 54 23.6 48.8 28.4 Z"'
+        + ' fill="rgba(255,240,206,.34)"/>'
+        + '<path d="M40.6 60 C54 64 86 64 99.4 60 C86 67 54 67 40.6 60 Z"'
+        + ' fill="rgba(40,24,6,.35)"/>'
         + "</svg>";
     }, 3400, "hut");
   }
