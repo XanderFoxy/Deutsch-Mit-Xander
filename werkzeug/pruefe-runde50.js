@@ -149,14 +149,20 @@ const pruefe = (was, gut, zusatz) => {
       schlote: d ? d.querySelectorAll(".lc-dampfer-schlot rect").length : 0,
       decks: d ? d.querySelectorAll(".lc-dampfer-haus").length : 0,
       saeulen: d ? d.querySelectorAll(".lc-dampfer-saeule path").length : 0,
-      keinKasten: !(d && d.querySelector(".lc-dampfer-kasten")
+      /* RUNDE 60 UMGEDREHT, auf Ansage: „bei dem Raddampfer vom
+         Mississippi, da muss in der Mitte so ein grosses Rad sein,
+         wie das klassisch ist, nicht hinten." Es gab beides — das
+         Heckrad war die spaetere, billigere Bauart fuer enge
+         Nebenfluesse, das klassische Bild ist der Seitenraddampfer.
+         Also wird jetzt genau das Gegenteil von frueher gemessen:
+         der Radkasten MUSS da sein, und das Rad MUSS mittschiffs
+         liegen. */
+      kastenDa: Boolean(d && d.querySelector(".lc-dampfer-kasten")
                     && getComputedStyle(d.querySelector(".lc-dampfer-kasten")).display !== "none"),
-      radLinks: (() => {
-        if (!rad || !d) return false;
+      radMitte: (() => {
+        if (!rad || !d) return 99;
         const rb = rad.getBoundingClientRect(), db = d.getBoundingClientRect();
-        /* Heckrad heisst: hinten. Das Schiff schaut nach rechts, also
-           muss das Rad in der linken Haelfte liegen. */
-        return (rb.left + rb.width / 2) < (db.left + db.width * 0.35);
+        return ((rb.left + rb.width / 2) - (db.left + db.width / 2)) / db.width;
       })(),
       gischt: Boolean(d && d.querySelector(".lc-dampfer-spritzer")),
       radDreht: rad ? getComputedStyle(rad).animationName : "-"
@@ -183,9 +189,11 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("zwei Decks und ein Steuerhaus", reise.decks === 3, reise.decks + " Haeuser");
   pruefe("und filigrane Saeulen am Deck", (reise.saeulen || 0) >= 10,
     reise.saeulen + " Saeulen");
-  pruefe("das Rad sitzt am HECK, nicht an der Seite", reise.radLinks === true);
-  pruefe("und es hat keinen Radkasten mehr — der gehoert zum Seitenrad",
-    reise.keinKasten === true);
+  pruefe("das Rad sitzt MITTSCHIFFS, so wie beim Seitenraddampfer",
+    Math.abs(reise.radMitte) <= 0.06,
+    "um " + (reise.radMitte * 100).toFixed(1) + " % versetzt");
+  pruefe("und es hat wieder seinen Radkasten — der gehoert zum Seitenrad",
+    reise.kastenDa === true);
   pruefe("es spritzt, wo es eintaucht", reise.gischt);
   pruefe("und das Rad dreht sich", reise.radDreht !== "none" && reise.radDreht !== "-",
     reise.radDreht);

@@ -51,9 +51,14 @@ const PAARE = [
      spart 1,84 MB. */
   /* NACHGEZOGEN (Runde 58): „/lok" ist seit Runde 57 die REISE — so
      benutzt XANDER es auch („Die Lok faehrt auch falsch rum"). Der
-     Film heisst jetzt „/gglok", „/zug" zeigt als Deckname darauf. */
-  ["gglok",      "/gglok",      "lok2"],
-  ["gglok",      "/zug",        "lok2"],
+     Film hiess in Runde 58 „/gglok" — und das war falsch: „gglok" ist
+     einer der ALTEN Namen, die nur noch dastehen, damit eine Zeile von
+     einem Geraet mit der alten Fassung nicht ins Leere faellt; einen
+     Befehl dazu darf es bewusst nicht geben (pruefe-effekttueren hat
+     genau das gemeldet). Seit Runde 60 heisst der Film „/zug", und die
+     alten Schreibweisen leiten dorthin. */
+  ["zug",        "/zug",        "lok2"],
+  ["zug",        "/gglok",      "lok2"],
   ["raumschiff", "/raumschiff", "raumschiff"],
   ["uboot",      "/uboot",      "uboot"],
   /* Diese beiden sind KEINE Geschenke, sondern seit jeher
@@ -168,8 +173,8 @@ const PAARE = [
   });
   [["trex", "tiere"], ["loewe", "tiere"], ["adler", "tiere"], ["katze", "tiere"],
    /* „/lok" steht seit Runde 57 unter „reden" — es ist die Reise.
-      Der FILM heisst „/gglok" und steht unter „fahrzeuge". */
-   ["gglok", "fahrzeuge"], ["uboot", "fahrzeuge"],
+      Der FILM heisst seit Runde 60 „/zug" und steht unter „fahrzeuge". */
+   ["zug", "fahrzeuge"], ["uboot", "fahrzeuge"],
    ["raumschiff", "fahrzeuge"], ["schlitten", "fahrzeuge"]].forEach(([w, gr]) => {
     pruefe("/" + w + " steht unter „" + gr + "\u201c", einsortiert[w] === gr,
       einsortiert[w] || "gar nicht in der Liste");

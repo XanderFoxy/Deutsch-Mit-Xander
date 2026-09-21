@@ -20384,3 +20384,100 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-boot-paddel, .lc-boot-platsch { animation: none; }
 }
+
+/* === RUNDE 61: DER STRUDEL IST EIN WIRBEL GEWORDEN ===================
+   GEMELDET: „der Strudel-Animationseffekt sieht immer noch nicht gut
+   aus."
+
+   DER GRUND WAR GRUNDSÄTZLICH: da lagen fünf RINGE übereinander, die
+   sich drehten. Ein Ring ist rotationssymmetrisch — ein Kreis, der
+   sich dreht, sieht aus wie ein Kreis, der steht. Zu sehen war nur der
+   helle Punkt am border-top, der im Kreis herumlief. Deshalb wirkte
+   nie ein Sog, egal wie schnell es drehte.
+
+   Jetzt sind es logarithmische SPIRALARME (gerechnet in app.js:
+   r(t) = r0 · e^(k·t), so wie ein echter Wirbel), in zwei Lagen mit
+   verschiedener Größe und Geschwindigkeit — das gibt Tiefe —, dazu ein
+   dunkler Schlund in der Mitte und Schaumflocken, die auf einer
+   Spirale nach innen laufen und darin verschwinden.
+   Die alten Ringregeln bleiben stehen; sie greifen nur nicht mehr,
+   weil keine <u> mehr erzeugt werden.
+   ===================================================================== */
+.lc-strudel-trichter {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 74vmin;
+  height: 74vmin;
+  margin: -37vmin 0 0 -37vmin;
+  /* Flach gesehen wäre es eine Zielscheibe. Ein Trichter entsteht
+     erst, wenn man schräg hineinsieht. */
+  transform: rotateX(62deg);
+  transform-style: preserve-3d;
+}
+.lc-strudel-bild {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* Die Arme: innen fast durchsichtig, nach außen kräftiger — so sieht
+   es aus, als zöge es das Wasser in der Mitte zusammen. */
+.lc-strudel-arm {
+  fill: rgba(150, 214, 255, .26);
+  stroke: rgba(205, 240, 255, .38);
+  stroke-width: .45;
+}
+.lc-strudel-arme {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: lcStrudelDrehtR61 3.2s linear infinite;
+}
+/* Dieselbe Richtung, nur schneller — ein Wirbel dreht sich nicht in
+   sich selbst entgegengesetzt. Der Unterschied macht die Tiefe. */
+.lc-strudel-arme-2 {
+  animation-duration: 1.9s;
+  opacity: .62;
+}
+@keyframes lcStrudelDrehtR61 {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+/* Der Schlund atmet leicht — sonst steht mitten im Sog ein starrer
+   schwarzer Punkt. */
+.lc-strudel-schlund {
+  fill: #02070d;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: lcSchlundR61 2.6s ease-in-out infinite alternate;
+}
+@keyframes lcSchlundR61 {
+  from { transform: scale(.82); }
+  to   { transform: scale(1.22); }
+}
+/* Die Schaumflocken laufen auf einer Spirale nach innen und werden
+   dabei kleiner — das ist das Stück, an dem man SIEHT, dass es zieht. */
+.lc-strudel-schaum {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1.15vmin;
+  height: 1.15vmin;
+  margin: -.575vmin 0 0 -.575vmin;
+  border-radius: 50%;
+  background: rgba(226, 246, 255, .92);
+  box-shadow: 0 0 .6vmin rgba(180, 230, 255, .8);
+  opacity: 0;
+  animation-name: lcSchaumR61;
+  animation-timing-function: cubic-bezier(.5, 0, .82, .45);
+  animation-iteration-count: infinite;
+}
+@keyframes lcSchaumR61 {
+  0%   { opacity: 0;   transform: rotate(var(--dreh, 0deg)) translateX(35vmin) scale(1); }
+  10%  { opacity: .95; }
+  82%  { opacity: .7; }
+  100% { opacity: 0;   transform: rotate(calc(var(--dreh, 0deg) + 540deg)) translateX(2vmin) scale(.25); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-strudel-arme, .lc-strudel-schaum, .lc-strudel-schlund { animation: none; }
+}

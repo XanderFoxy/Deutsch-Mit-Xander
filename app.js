@@ -19269,13 +19269,79 @@
     schicht.id = "lcStrudel";
     schicht.className = "lc-strudel";
     schicht.setAttribute("aria-hidden", "true");
-    /* Fünf Ringe, die sich verschieden schnell drehen — daraus wird
-       für das Auge ein Sog. Ein einzelner Kreis dreht sich nur. */
-    for (let i = 0; i < 5; i++) {
-      const r = document.createElement("u");
-      r.style.setProperty("--ring", String(i));
-      schicht.appendChild(r);
+    /* RUNDE 61 NEU GEBAUT.
+       GEMELDET: „der Strudel-Animationseffekt sieht immer noch nicht
+       gut aus."
+
+       DER GRUND, und er ist grundsaetzlich: hier lagen fuenf RINGE
+       uebereinander, die sich drehten. Ein Ring ist aber
+       rotationssymmetrisch — ein Kreis, der sich dreht, sieht aus wie
+       ein Kreis, der steht. Zu sehen war nur der helle Punkt am
+       border-top, der im Kreis herumlief. Deshalb wirkte nie ein Sog.
+
+       Ein Strudel braucht SPIRALARME. Die hier sind logarithmisch
+       gerechnet, so wie ein echter Wirbel: r(t) = r0 * e^(k*t). Sie
+       werden nach aussen breiter (innen zieht es zusammen), es gibt
+       sie in zwei Lagen mit verschiedener Groesse und Geschwindigkeit
+       — daraus entsteht Tiefe —, in der Mitte ist ein dunkler Schlund,
+       und Schaumflocken laufen auf einer Spirale nach innen und
+       verschwinden darin. */
+    const ARME = 7, STUECK = 130, UMDR = 1.72;
+    const bogen = UMDR * Math.PI * 2;
+    const k = Math.log(46 / 3.4) / bogen;
+    /* Ein Arm ist kein Strich, sondern ein BAND: aussen herum und
+       innen wieder zurueck. Nur so kann er sich verjuengen — eine
+       Strichbreite laesst sich in SVG nicht entlang des Weges
+       aendern. */
+    function band(phase, breite) {
+      let hin = "";
+      const zurueck = [];
+      for (let i = 0; i <= STUECK; i++) {
+        const t = (i / STUECK) * bogen;
+        const r = 3.4 * Math.exp(k * t);
+        const w = breite * (0.16 + 0.84 * (r / 46));
+        const a = t + phase;
+        hin += (i ? "L" : "M") + (50 + (r + w) * Math.cos(a)).toFixed(2)
+             + " " + (50 + (r + w) * Math.sin(a)).toFixed(2) + " ";
+        zurueck.push((50 + (r - w) * Math.cos(a)).toFixed(2)
+                     + " " + (50 + (r - w) * Math.sin(a)).toFixed(2));
+      }
+      zurueck.reverse();
+      return hin + "L" + zurueck.join(" L") + " Z";
     }
+    let arme = "";
+    for (let i = 0; i < ARME; i++) {
+      /* Schmaler als der erste Versuch: bei 2,7 liefen die sieben Arme
+         aussen fast ineinander und es sah aus wie eine Wolke. Bei 2,15
+         bleibt zwischen ihnen Wasser stehen, und man sieht die
+         einzelnen Straehnen. */
+      arme += '<path class="lc-strudel-arm" d="' + band(i * 2 * Math.PI / ARME, 2.15) + '"/>';
+    }
+    let schaum = "";
+    for (let i = 0; i < 16; i++) {
+      schaum += '<i class="lc-strudel-schaum" style="--dreh:'
+        + Math.round(i * 360 / 16) + "deg;animation-delay:"
+        + (i * 0.21).toFixed(2) + "s;animation-duration:"
+        + (3.1 + (i % 4) * 0.32).toFixed(2) + 's"></i>';
+    }
+    schicht.innerHTML =
+      '<span class="lc-strudel-trichter">'
+      + '<svg class="lc-strudel-bild" viewBox="0 0 100 100" aria-hidden="true">'
+      + '<defs><radialGradient id="lcStrudelSchlund">'
+      + '<stop offset="0" stop-color="#02070d"/>'
+      + '<stop offset=".5" stop-color="#07223a" stop-opacity=".92"/>'
+      + '<stop offset="1" stop-color="#0d3352" stop-opacity="0"/>'
+      + "</radialGradient></defs>"
+      + '<circle cx="50" cy="50" r="49" fill="url(#lcStrudelSchlund)"/>'
+      /* Die aeussere Lage, gross und langsam. */
+      + '<g class="lc-strudel-arme">' + arme + "</g>"
+      /* Die innere Lage: derselbe Wirbel, kleiner und schneller. Die
+         Skalierung steht im Attribut, nicht im Stil — sonst wuerde die
+         Drehung sie ueberschreiben. */
+      + '<g transform="translate(50 50) scale(.56) translate(-50 -50)">'
+      + '<g class="lc-strudel-arme lc-strudel-arme-2">' + arme + "</g></g>"
+      + '<circle class="lc-strudel-schlund" cx="50" cy="50" r="7.5"/>'
+      + "</svg>" + schaum + "</span>";
     lcEffektHeim().appendChild(schicht);
     /* Und der Chat selbst wird hineingezogen: er dreht sich, wird
        kleiner und kommt wieder hoch. Der Text schrumpft mit — genau
@@ -32987,15 +33053,71 @@
         kreis.classList.add("lc-geschleudert");
         setTimeout(() => kreis.classList.remove("lc-geschleudert"), 2600);
       }
+      /* RUNDE 60 NEU GEZEICHNET.
+         GEMELDET: „der Katapult sieht auch nicht schoen animiert aus."
+         Vorher war es ein Trapez mit zwei Kreisen und einem geraden
+         Balken — daran ist nichts, woran das Auge erkennt, dass es ein
+         Katapult ist. Jetzt steht da ein Onager, so wie man ihn kennt:
+           · zwei Grundschwellen und zwei Speichenraeder,
+           · ein A-Bock aus zwei Streben, die sich an der Achse treffen,
+           · das Torsionsbuendel AN der Achse — das ist der Antrieb
+             eines Onagers, kein Gegengewicht,
+           · der Prellbalken mit Lederpolster, an dem der Arm anschlaegt
+             (ohne ihn wuerde der Arm einfach durchdrehen),
+           · und der Wurfarm mit Bindung und Schale.
+         WICHTIG FUER DIE DREHUNG: der Arm dreht um
+         „transform-box: fill-box; transform-origin: 50% 100%", also um
+         die UNTERE MITTE seines eigenen Kastens. Deshalb liegt in der
+         Gruppe nichts unterhalb der Achse, und ihr Kasten ist
+         x 27,6 bis 40,4 und y 5 bis 38 — die untere Mitte ist damit
+         genau (34|38), und das ist die Achse. */
       schicht.innerHTML =
         '<svg class="lc-katapult-bild" viewBox="0 0 80 60">'
-        + '<path d="M8 52 L60 52 L44 30 L20 30 Z" fill="#8a5a28" stroke="#5e3c17" stroke-width="2.5"'
-        + ' stroke-linejoin="round"/>'
-        + '<circle cx="20" cy="54" r="5" fill="#5e3c17"/><circle cx="52" cy="54" r="5" fill="#5e3c17"/>'
+        /* --- Grundschwelle --- */
+        + '<path d="M5 45.4 h62 a2.2 2.2 0 0 1 0 4.4 h-62 a2.2 2.2 0 0 1 0 -4.4 Z"'
+        + ' fill="#7a4e22" stroke="#4e3114" stroke-width="1.5"/>'
+        /* --- Raeder mit Speichen --- */
+        + [17, 55].map(function (x) {
+            /* Die Raeder stehen UNTER der Schwelle und ragen unten
+               heraus — vorher lagen sie dahinter und man sah nur ihre
+               Oberkante. Gemessen am Bild: Schwelle 45,4 bis 49,8,
+               Radmitte 52,6, Radius 6 — das Rad steht also frei. */
+            return '<g><circle cx="' + x + '" cy="52.6" r="6" fill="#6b4520"'
+              + ' stroke="#40280f" stroke-width="1.7"/>'
+              + '<path d="M' + (x - 6) + ' 52.6 h12 M' + x + ' 46.6 v12'
+              + ' M' + (x - 4.2) + ' 48.4 l8.4 8.4 M' + (x - 4.2) + ' 56.8 l8.4 -8.4"'
+              + ' stroke="#40280f" stroke-width="1.15"/>'
+              + '<circle cx="' + x + '" cy="52.6" r="1.7" fill="#40280f"/></g>';
+          }).join("")
+        /* --- A-Bock: zwei Streben zur Achse --- */
+        + '<path d="M17 45.8 L30.6 35 L35.4 35 L22 45.8 Z" fill="#8a5a28"'
+        + ' stroke="#5e3c17" stroke-width="1.6" stroke-linejoin="round"/>'
+        + '<path d="M53 45.8 L39.4 35 L34.6 35 L48 45.8 Z" fill="#8a5a28"'
+        + ' stroke="#5e3c17" stroke-width="1.6" stroke-linejoin="round"/>'
+        /* --- Querriegel zwischen den Streben --- */
+        + '<path d="M22.5 41.2 h25 v3.2 h-25 Z" fill="#7a4e22"'
+        + ' stroke="#4e3114" stroke-width="1.1"/>'
+        /* --- DER WURFARM --- */
         + '<g class="lc-katapult-arm">'
-        + '<rect x="30" y="4" width="7" height="34" rx="3" fill="#a9702f"/>'
-        + '<path d="M22 4 C22 -2 45 -2 45 4 C45 10 22 10 22 4 Z" fill="#6b4a22"/>'
-        + "</g></svg>";
+        + '<path d="M31.6 38 L36.4 38 L35.3 12 L32.7 12 Z" fill="#a9702f"'
+        + ' stroke="#6b4a22" stroke-width="1.4" stroke-linejoin="round"/>'
+        + '<path d="M31.3 29.4 h5.6 v2.2 h-5.6 Z" fill="#6b4a22"/>'
+        + '<path d="M27.6 12.6 C27.6 5.2 40.4 5.2 40.4 12.6'
+        + ' C40.4 17 27.6 17 27.6 12.6 Z" fill="#6b4a22"/>'
+        + '<path d="M29.5 12 C29.5 7.8 38.5 7.8 38.5 12'
+        + ' C38.5 15 29.5 15 29.5 12 Z" fill="#8a6134"/>'
+        + "</g>"
+        /* --- Das Torsionsbuendel an der Achse, ueber dem Arm --- */
+        + '<circle cx="34" cy="38" r="4.8" fill="#c9a86a" stroke="#6b4a22"'
+        + ' stroke-width="1.4"/>'
+        + '<path d="M30.6 35.2 L37.4 40.8 M30.6 40.8 L37.4 35.2 M34 33.4 V42.6"'
+        + ' stroke="#6b4a22" stroke-width="1"/>'
+        /* --- Prellbalken mit Polster: da schlaegt der Arm an --- */
+        + '<path d="M12 46.4 L23 27.5" stroke="#5e3c17" stroke-width="3.6"'
+        + ' stroke-linecap="round"/>'
+        + '<rect x="19.4" y="23.6" width="10.4" height="5.8" rx="2.9"'
+        + ' fill="#9a6a3a" stroke="#5e3c17" stroke-width="1.4"/>'
+        + "</svg>";
     }, 2600, "katapult");
   }
 
