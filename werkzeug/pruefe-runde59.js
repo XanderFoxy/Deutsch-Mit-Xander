@@ -79,22 +79,41 @@ const pruefe = (was, gut, zusatz) => {
 
   console.log("\nDIE ZWILLE: DEHNEN, SCHUSS, SCHREI — IN DIESER REIHENFOLGE\n");
   const zw = await mit("zwille", 2400);
-  const dehn = wann(zw, "gummizug"), schuss = wann(zw, "zwille3");
+  /* RUNDE 70 NACHGEZOGEN, und die alte Regel hielt einen Fehler fest:
+     sie prueft, dass „zwille3" NACH dem Gummi kommt — das tat es auch
+     (1150 ms). Nur liegt der EINSCHLAG in dieser Aufnahme erst bei
+     1,50 s, er erklang also bei 2650 ms, nach dem Ende der Animation
+     (2600 ms), und der Schrei bei 1480 ms lag 1170 ms davor. Genau
+     das hat er gemeldet: „bei der Zwille kommt der Schmerz Sound
+     immer noch vorher." Jetzt traegt EINE Aufnahme alles, und
+     geprueft wird, was wirklich zaehlt: Gummi zuerst, Schrei zuletzt,
+     und der Schrei erst nach dem Einschlag bei 1500 ms. */
+  const dehn = wann(zw, "gummiband");
   const schrei = Math.max(wann(zw, "schreimann"), wann(zw, "schreifrau"));
-  pruefe("das Gummi dehnt sich von Anfang an", dehn >= 0 && dehn <= 60, dehn + " ms");
-  pruefe("dann kommt der Schuss", schuss > dehn, schuss + " ms");
-  pruefe("und ERST DANN der Schrei", schrei > schuss, schrei + " ms");
+  pruefe("das Gummi dehnt sich, bevor die Gummis auf dem Bild ziehen",
+    dehn >= 0 && dehn <= 400, dehn + " ms");
+  pruefe("und ERST DANN der Schrei", schrei > dehn, schrei + " ms");
+  pruefe("der Schrei liegt hinter dem Einschlag (1500 ms)",
+    schrei >= 1500, schrei + " ms");
 
   console.log("\nDIE MUENZE KLINGT BEIM DREHEN, NICHT DANACH\n");
   const mu = await mit("muenze", 900);
-  pruefe("der Ton faengt mit der Drehung an", wann(mu, "muenze") >= 0 && wann(mu, "muenze") <= 60,
-    wann(mu, "muenze") + " ms (vorher: 3700)");
+  /* RUNDE 70: „muenze.opus" war 2 s gleichmaessig laut, ohne Verlauf
+     — XANDER: „die Muenze dreht sich so stottern." „muenze2" dreht,
+     eiert und bleibt liegen. Der Zeitpunkt bleibt derselbe. */
+  pruefe("der Ton faengt mit der Drehung an", wann(mu, "muenze2") >= 0 && wann(mu, "muenze2") <= 60,
+    wann(mu, "muenze2") + " ms (vorher: 3700)");
 
   console.log("\nDER HAMMER TRIFFT UND KLINGT ZUR GLEICHEN ZEIT\n");
   const ha = await mit("hammer", 900);
   pruefe("der Hammer hat einen eigenen Ton", wann(ha, "hammerbonk") >= 0);
   pruefe("und er liegt auf dem Aufschlag bei 300 ms",
     Math.abs(wann(ha, "hammerbonk") - 300) <= 40, wann(ha, "hammerbonk") + " ms");
+  /* RUNDE 70 — XANDER: „Schau dass der Animation Sound vom Hammer
+     auch zu Bewegung passt." Der Treffer sass; das Ausholen fehlte. */
+  pruefe("und davor holt er hoerbar aus",
+    wann(ha, "swoosh") >= 0 && wann(ha, "swoosh") < wann(ha, "hammerbonk"),
+    wann(ha, "swoosh") + " ms");
 
   console.log("\nDIE KASSE KLINGELT, BEVOR DAS GELD FAELLT\n");
   const ge = await mit("geld", 1600);
@@ -104,9 +123,24 @@ const pruefe = (was, gut, zusatz) => {
     (wann(ge, "geld") - wann(ge, "kasse")) + " ms spaeter");
 
   console.log("\nLICHT AUS: EINE GEIGE, KEIN ORCHESTER\n");
-  const li = await mit("licht", 1200);
-  pruefe("die Horrorgeige klingt", wann(li, "horrorgeige") >= 0, wann(li, "horrorgeige") + " ms");
-  pruefe("und die alte Datei nicht mehr", wann(li, "horror") < 0);
+  /* RUNDE 70: das Fenster musste groesser werden — die vier
+     Geigenstiche kommen erst, wenn es dunkel geworden ist
+     (1780 ms), und bei 1200 ms war die Messung schon vorbei. */
+  const li = await mit("licht", 2200);
+  /* RUNDE 70 NACHGEZOGEN: „horrorgeige" war GEMESSEN ein 2 s
+     DURCHGEHENDER Ton — die vier Stiche, die er verlangt hatte,
+     waren darin gar nicht zu erkennen. XANDER jetzt: „Der
+     Lichtschalter war ganz zuerst in unserer alten Fassung.
+     Perfekt … zu dieser allerersten Fassung solltest du nur einen
+     Staccato Geigenton hinzufuegen. Kein zupfen … was vier mal kurz
+     hintereinander kommt in diesen Horrorfilm." Also: das KLACKEN
+     des Schalters traegt wieder, und „geigenstich" bringt die vier
+     Stiche (geschnitten, Spitzen bei 0,00/0,30/0,60/0,90 s). */
+  pruefe("der Schalter klackt", wann(li, "lichtschalter") >= 0,
+    wann(li, "lichtschalter") + " ms");
+  pruefe("und die vier Geigenstiche kommen danach",
+    wann(li, "geigenstich") > wann(li, "lichtschalter"),
+    wann(li, "geigenstich") + " ms");
 
   console.log("\nDIE SPRUNGFEDER KLINGT BEI JEDEM AUFSETZEN\n");
   await pg.evaluate(() => {
@@ -138,7 +172,11 @@ const pruefe = (was, gut, zusatz) => {
     await new Promise((f) => setTimeout(f, 1200));
     return window.__toene.map((x) => ({ n: x.n, t: Math.round(x.t - t0) }));
   });
-  pruefe("der Tarzan-Ruf kommt", wann(ta, "tarzan") >= 0, wann(ta, "tarzan") + " ms");
+  /* RUNDE 70 — XANDER: „der Sound auch da klingt nicht nach Tarzan
+     … und er koennte von Frauen und Mann auch verschieden sein." */
+  pruefe("der Tarzan-Ruf kommt, und zwar nach Mann oder Frau",
+    Math.max(wann(ta, "tarzanmann"), wann(ta, "tarzanfrau")) >= 0,
+    Math.max(wann(ta, "tarzanmann"), wann(ta, "tarzanfrau")) + " ms");
 
   console.log("\nUND AM ENDE EINER REISE KEIN FALSCHES GERAEUSCH MEHR\n");
   const ank = await pg.evaluate(() => window.DMA_PRUEFUNG.ankunftsTon());

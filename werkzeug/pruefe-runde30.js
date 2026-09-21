@@ -79,12 +79,25 @@ const pruefe = (was, gut, zusatz) => {
   haengt("rollo", "rollohoch");
   haengt("lamellen", "jalousieauf");
   haengt("sahne", "spruehsahne");
-  haengt("kuss", "kussmund");
+  /* RUNDE 70 ZURUECKGEZOGEN: „kuss" haengt an KEINER Datei mehr.
+     XANDER: „Vielleicht kannst du beim Sound auch zwischen Mann und
+     Frau … unterscheiden also … maennlicher Kuss oder weiblicher
+     Kuss." Ein fester Plan-Ton kann das nicht, deshalb legt lcKuss
+     ihn selbst auf und der Plan haelt sich still. Haette diese Regel
+     hier unveraendert weitergegolten, wuerde sie genau den Zustand
+     festhalten, den er bemaengelt hat. */
+  pruefe("kuss klingt nach Mann oder Frau, nicht nach einer Datei fuer alle",
+    /kuss:\s*\{ still: true/.test(js)
+    && /lcStimmeZu\(meiner, "kussmann", "kussfrau", 520, 0\.62\)/.test(js));
   haengt("schneeball", "schneeklatsch");
   haengt("strohhalm", "schlurfen");
   haengt("blubbern", "blubbern");
   haengt("katapult", "katapult3");
-  haengt("zwille", "gummizug");
+  /* RUNDE 70 NACHGEZOGEN: „gummizug" war ab 1,05 s still — als Bett
+     fuer 2,6 s taugte sie nicht, und ein Gummiband war kaum zu
+     hoeren. XANDER: „man hoert gar kein realistisches Gummiband."
+     Jetzt traegt „gummiband" Dehnen UND Schnalzen. */
+  haengt("zwille", "gummiband");
   haengt("fahren", "fahrt");
   /* NACHGEZOGEN IN RUNDE 59: zwischen diesen beiden Zeilen steht
      jetzt der Fall „der Plan faengt spaeter an" (plan.spaet) — noetig,

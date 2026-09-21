@@ -112,10 +112,15 @@ const pruefe = (was, gut, zusatz) => {
 
   console.log("\nUND DER TON DAZU\n");
   const plan = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
-  pruefe("die Glühbirne nimmt ihr EIGENES Quietschgeräusch",
-    /gluehbirne:\s*\{\s*ton:\s*"gluehbirne"/.test(plan));
+  /* RUNDE 70 NACHGEZOGEN: „gluehbirne.opus" war ein Quietschen und
+     klang nicht nach Einschrauben — XANDER: „der Sound ist nicht
+     realistisch". Jetzt „birneschrauben": Gewinde, Quietschen und
+     der kleine Klick, wenn sie sitzt. Die alte Datei bleibt liegen,
+     sie wird nur nicht mehr gewaehlt. */
+  pruefe("die Glühbirne klingt nach Einschrauben",
+    /gluehbirne:\s*\{ ton: "birneschrauben"/.test(plan));
   pruefe("es gibt die Datei dazu",
-    fs.existsSync(path.join(WURZEL, "ton", "gluehbirne.opus")));
+    fs.existsSync(path.join(WURZEL, "ton", "birneschrauben.opus")));
 
   /* ---------- DIE SPRECHBILDER AUS DIESER RUNDE ---------- */
   console.log("\nBLUT, EIS, SPINNE UND DIE ALTE VHS-STÖRUNG\n");

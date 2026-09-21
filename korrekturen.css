@@ -13930,21 +13930,34 @@ body.lc-schreibt .tutor-reiter {
    und dann geht bei ihm das Licht aus, in so einem Stottern,
    Elektrizitaetsabfall, und das so, dass es summt beim Ausgehen, wie
    wenn eine alte Gluehbirne gerade summt oder platzt." */
-.lc-verdunkelt { animation: lcVerdunkeltR18 3.8s linear both; }
+/* =================================================================
+   RUNDE 70 — DIE DUNKELHEIT HÄLT, UND DARIN SUCHEN AUGEN
+   -----------------------------------------------------------------
+   XANDER: „da muss die Animation dann auch die Dunkelheit ein
+   bisschen halten. Vielleicht kannst du dann auch noch in der
+   Dunkelheit zu suchen der Augen machen, wo man nur die Augen sieht."
+
+   Alles läuft jetzt 6,2 s statt 3,8 s. Damit das Flackern nicht
+   langsamer wird, sind alle Prozente auf dieselben MILLISEKUNDEN
+   umgerechnet (alt% · 3,8 / 6,2): der Schalter klackt weiter bei
+   646 ms, das Stottern läuft weiter von 646 bis 1748 ms. Nur die
+   Dunkelheit danach hält länger — bis 88 % = 5456 ms statt 3192 ms.
+   ================================================================= */
+.lc-verdunkelt { animation: lcVerdunkeltR18 6.2s linear both; }
 @keyframes lcVerdunkeltR18 {
-  0%, 17%  { filter: brightness(1); }
-  /* Drei Anlaeufe, jeder schwaecher — das ist das Stottern. */
-  19%      { filter: brightness(.12); }
-  21%      { filter: brightness(1.15); }
-  24%      { filter: brightness(.1); }
-  27%      { filter: brightness(.9); }
-  30%      { filter: brightness(.08); }
-  33%      { filter: brightness(.55); }
-  36%      { filter: brightness(.06); }
-  40%      { filter: brightness(.3); }
-  46%      { filter: brightness(.05); }
-  84%      { filter: brightness(.05); }
-  100%     { filter: brightness(1); }
+  0%, 10.4% { filter: brightness(1); }
+  /* Drei Anläufe, jeder schwächer — das ist das Stottern. */
+  11.6%     { filter: brightness(.12); }
+  12.9%     { filter: brightness(1.15); }
+  14.7%     { filter: brightness(.1); }
+  16.5%     { filter: brightness(.9); }
+  18.4%     { filter: brightness(.08); }
+  20.2%     { filter: brightness(.55); }
+  22.1%     { filter: brightness(.06); }
+  24.5%     { filter: brightness(.3); }
+  28.2%     { filter: brightness(.05); }
+  88%       { filter: brightness(.05); }
+  100%      { filter: brightness(1); }
 }
 .lc-schalter {
   position: absolute;
@@ -13953,24 +13966,26 @@ body.lc-schreibt .tutor-reiter {
   width: 34%;
   margin-left: -17%;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .45));
-  animation: lcSchalterR18 3.8s ease-out both;
+  animation: lcSchalterR18 6.2s ease-out both;
 }
 @keyframes lcSchalterR18 {
-  0%   { opacity: 0; transform: translateY(-46%) scale(.8); }
-  10%  { opacity: 1; transform: translateY(0) scale(1); }
-  82%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-20%) scale(.9); }
+  0%    { opacity: 0; transform: translateY(-46%) scale(.8); }
+  6.1%  { opacity: 1; transform: translateY(0) scale(1); }
+  /* Der Schalter bleibt stehen, solange es dunkel ist — er ist ja
+     der Grund dafür. */
+  88%   { opacity: 1; transform: translateY(0) scale(1); }
+  100%  { opacity: 0; transform: translateY(-20%) scale(.9); }
 }
 .lc-schalter-wippe {
   transform-box: fill-box;
   transform-origin: 50% 100%;
-  animation: lcWippeR18 3.8s steps(1, end) both;
+  animation: lcWippeR18 6.2s steps(1, end) both;
 }
 @keyframes lcWippeR18 {
-  0%, 16%  { transform: translateY(0); }
-  17%,100% { transform: translateY(46%); }
+  0%, 9.8%   { transform: translateY(0); }
+  10.4%,100% { transform: translateY(46%); }
 }
-/* Der nachgluehende Faden — das „Summen" zum Sehen. */
+/* Der nachglühende Faden — das „Summen" zum Sehen. */
 .lc-lichtaus-faden {
   position: absolute;
   left: 50%; top: 50%;
@@ -13978,29 +13993,86 @@ body.lc-schreibt .tutor-reiter {
   margin: -2% 0 0 -17%;
   border-radius: 999px;
   background: linear-gradient(to right, transparent, #ffb347 30%, #fff1c2 50%, #ffb347 70%, transparent);
-  animation: lcFadenR18 3.8s ease-out both;
+  animation: lcFadenR18 6.2s ease-out both;
 }
 @keyframes lcFadenR18 {
-  0%, 17% { opacity: 0; }
-  20%     { opacity: .9; }
-  46%     { opacity: .75; }
-  66%     { opacity: 0; }
-  100%    { opacity: 0; }
+  0%, 10.4% { opacity: 0; }
+  12.3%     { opacity: .9; }
+  28.2%     { opacity: .75; }
+  40.5%     { opacity: 0; }
+  100%      { opacity: 0; }
 }
 .lc-lichtaus-nacht {
   position: absolute;
   inset: 0;
   background: radial-gradient(circle at 50% 44%, rgba(0,0,0,.2), rgba(0,0,0,.86) 78%);
-  animation: lcNachtR18 3.8s linear both;
+  animation: lcNachtR18 6.2s linear both;
 }
 @keyframes lcNachtR18 {
-  0%, 17% { opacity: 0; }
-  19%     { opacity: .8; }
-  21%     { opacity: 0; }
-  46%     { opacity: 1; }
-  84%     { opacity: 1; }
-  100%    { opacity: 0; }
+  0%, 10.4% { opacity: 0; }
+  11.6%     { opacity: .8; }
+  12.9%     { opacity: 0; }
+  28.2%     { opacity: 1; }
+  88%       { opacity: 1; }
+  100%      { opacity: 0; }
 }
+/* -----------------------------------------------------------------
+   DIE AUGEN IN DER DUNKELHEIT
+   Sie gehen auf, wenn es dunkel geworden ist (28,2 % = 1748 ms),
+   sehen nach links, nach rechts, blinzeln einmal und sind wieder
+   weg, bevor das Licht angeht. Mehr ist nicht zu sehen — nur die
+   Augen, wie er es beschreibt.
+   ----------------------------------------------------------------- */
+.lc-lichtaus-augen {
+  position: absolute;
+  left: 50%; top: 46%;
+  width: 54%; height: 12%;
+  margin-left: -27%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  animation: lcAugenDaR70 6.2s linear both;
+}
+@keyframes lcAugenDaR70 {
+  0%, 30%  { opacity: 0; }
+  36%      { opacity: 1; }
+  /* Einmal blinzeln, mitten im Suchen. */
+  58%      { opacity: 1; }
+  59.5%    { opacity: 0; }
+  61%      { opacity: 1; }
+  82%      { opacity: 1; }
+  88%, 100%{ opacity: 0; }
+}
+.lc-auge {
+  position: relative;
+  width: 38%;
+  height: 100%;
+  border-radius: 50% / 60%;
+  background: radial-gradient(ellipse at 50% 50%, #fffdf2 0 42%, #e8e0c6 62%, rgba(255,250,230,0) 88%);
+  box-shadow: 0 0 10px rgba(255, 248, 220, .5);
+}
+/* Die Pupille sucht: erst nach links, dann nach rechts. */
+.lc-auge > b {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 34%; height: 62%;
+  margin: -31% 0 0 -17%;
+  border-radius: 50%;
+  background: #14120d;
+  animation: lcPupilleSuchtR70 6.2s ease-in-out both;
+}
+@keyframes lcPupilleSuchtR70 {
+  0%, 36% { transform: translateX(0); }
+  46%     { transform: translateX(-55%); }
+  56%     { transform: translateX(-55%); }
+  68%     { transform: translateX(60%); }
+  78%     { transform: translateX(60%); }
+  88%,100%{ transform: translateX(0); }
+}
+/* Das rechte Auge ist eine Spur kleiner — zwei gleich grosse Kreise
+   sähen nach Aufkleber aus, nicht nach einem Gesicht im Dunkeln. */
+.lc-auge-r { width: 35%; }
 .lc-lichtaus-summen {
   position: absolute;
   left: 50%; top: 12%;
@@ -14010,15 +14082,15 @@ body.lc-schreibt .tutor-reiter {
   letter-spacing: .08em;
   color: #cfe3ff;
   text-shadow: 0 0 8px rgba(0, 0, 0, .8);
-  animation: lcSummenR18 3.8s ease-out both;
+  animation: lcSummenR18 6.2s ease-out both;
 }
 @keyframes lcSummenR18 {
-  0%, 17% { opacity: 0; transform: translateX(-50%) scale(.8); }
-  22%     { opacity: 1; transform: translateX(-52%) scale(1.06); }
-  28%     { opacity: .9; transform: translateX(-48%) scale(1); }
-  34%     { opacity: 1; transform: translateX(-52%) scale(1.04); }
-  56%     { opacity: .5; }
-  100%    { opacity: 0; }
+  0%, 10.4% { opacity: 0; transform: translateX(-50%) scale(.8); }
+  13.5%     { opacity: 1; transform: translateX(-52%) scale(1.06); }
+  17.2%     { opacity: .9; transform: translateX(-48%) scale(1); }
+  20.8%     { opacity: 1; transform: translateX(-52%) scale(1.04); }
+  34.3%     { opacity: .5; }
+  46%, 100% { opacity: 0; }
 }
 
 /* --- DIE MUENZE ------------------------------------------------------
@@ -14170,13 +14242,15 @@ body.lc-schreibt .tutor-reiter {
          transform: translate(calc(var(--wx, 240%) * .55), calc(var(--wy, 0%) * .55))
                     rotate(var(--wdreh, 0deg)) scale(.9); }
   /* Sie bleibt draussen stehen und spannt — geschossen wird, nicht
-     geworfen. */
-  26%, 40% { opacity: 1;
+     geworfen.
+     RUNDE 70: das Halten reicht jetzt bis 50 % (1,30 s), der Rueckstoss
+     kommt bei 54 % (1,40 s). Grund steht unten bei der Kugel. */
+  26%, 50% { opacity: 1;
          transform: translate(calc(var(--wx, 240%) * .42), calc(var(--wy, 0%) * .42))
                     rotate(var(--wdreh, 0deg)) scale(1); }
-  46%  { transform: translate(calc(var(--wx, 240%) * .48), calc(var(--wy, 0%) * .48))
+  54%  { transform: translate(calc(var(--wx, 240%) * .48), calc(var(--wy, 0%) * .48))
                     rotate(var(--wdreh, 0deg)) scale(1.04); }
-  78%  { opacity: 1; }
+  82%  { opacity: 1; }
   100% { opacity: 0;
          transform: translate(var(--wx, 240%), var(--wy, 0%)) rotate(var(--wdreh, 0deg)) scale(.6); }
 }
@@ -14187,12 +14261,15 @@ body.lc-schreibt .tutor-reiter {
   animation: lcZwilleGummiR18 2.6s cubic-bezier(.2, 0, .1, 1) both;
 }
 @keyframes lcZwilleGummiR18 {
-  0%, 22% { transform: scaleY(1); }
-  38%     { transform: scaleY(2.6); }
-  /* 42 % = 1,09 s: losgelassen. */
-  42%     { transform: scaleY(.7); }
-  48%     { transform: scaleY(1.3); }
-  56%,100%{ transform: scaleY(1); }
+  /* RUNDE 70: das Dehnen laeuft jetzt von 26 % (0,68 s) bis 50 %
+     (1,30 s) — genau die Spanne, in der in „zwille3" die beiden
+     Gummi-Knarzer liegen (gemessen bei 0,00–0,35 s und 0,60–0,85 s). */
+  0%, 26% { transform: scaleY(1); }
+  50%     { transform: scaleY(2.6); }
+  /* 53 % = 1,38 s: losgelassen. */
+  53%     { transform: scaleY(.7); }
+  58%     { transform: scaleY(1.3); }
+  66%,100%{ transform: scaleY(1); }
 }
 .lc-zwille-kugel {
   position: absolute;
@@ -14204,14 +14281,35 @@ body.lc-schreibt .tutor-reiter {
   box-shadow: 0 2px 4px rgba(0, 0, 0, .5);
   animation: lcZwilleKugelR18 2.6s cubic-bezier(.2, .4, .2, 1) both;
 }
+/* =================================================================
+   RUNDE 70 — DER SCHMERZ KOMMT NACH DEM EINSCHLAG, NICHT DAVOR
+   -----------------------------------------------------------------
+   XANDER: „bei der Zwille kommt der Schmerz Sound immer noch vorher
+   und man hört gar kein realistisches Gummiband."
+
+   GEMESSEN (RMS-Verlauf der Dateien, 0,15-s-Fenster):
+   · „zwille3.opus" trägt den ganzen Ablauf. Der EINSCHLAG ist die
+     lauteste Stelle der Aufnahme und liegt bei 1,50 s (−7,2 dB);
+     davor liegen zwei Gummi-Knarzer (0,00–0,35 s und 0,60–0,85 s).
+   · Gestartet wurde die Datei aber erst bei 1150 ms — der Einschlag
+     erklang also in Wirklichkeit bei 2650 ms, nach dem Ende der
+     Animation (2600 ms). Der Schrei lag bei 1480 ms, also 1170 ms
+     VOR dem Einschlag. Genau das hört er.
+   · „gummizug.opus" ist ab 1,05 s tot; hörbar ist nur die Spanne
+     0,45–0,75 s.
+
+   Deshalb läuft „zwille3" jetzt von 0 ms, und die Bilder ziehen zu
+   ihrer Aufnahme: Einschlag bei 57,7 % von 2,6 s = 1500 ms.
+   ================================================================= */
 @keyframes lcZwilleKugelR18 {
-  0%, 40% { opacity: 0;
+  0%, 52% { opacity: 0;
             transform: translate(calc(var(--wx, 240%) * .42), calc(var(--wy, 0%) * .42)) scale(.8); }
-  41%     { opacity: 1; }
-  /* 50 % = 1,3 s: der Einschlag, genau auf dem Rand. */
-  50%     { opacity: 1; transform: translate(var(--px, 0%), var(--py, 0%)) scale(1.1); }
-  58%     { opacity: .8; transform: translate(var(--px, 0%), var(--py, 0%)) scale(.7); }
-  66%,100%{ opacity: 0; transform: translate(var(--px, 0%), var(--py, 0%)) scale(.4); }
+  53%     { opacity: 1; }
+  /* 57,7 % = 1,50 s: der Einschlag, genau auf dem Rand — und genau
+     dort, wo die Aufnahme ihre lauteste Stelle hat. */
+  57.7%   { opacity: 1; transform: translate(var(--px, 0%), var(--py, 0%)) scale(1.1); }
+  65%     { opacity: .8; transform: translate(var(--px, 0%), var(--py, 0%)) scale(.7); }
+  73%,100%{ opacity: 0; transform: translate(var(--px, 0%), var(--py, 0%)) scale(.4); }
 }
 .lc-zwille-aua {
   position: absolute;
@@ -14221,16 +14319,17 @@ body.lc-schreibt .tutor-reiter {
   font-size: 0.86em;
   color: #ff8d6b;
   text-shadow: 0 0 8px rgba(0, 0, 0, .65);
-  animation: lcZpWort .9s ease-out 1.3s both;
+  /* RUNDE 70: das AUA erscheint mit dem Einschlag, nicht davor. */
+  animation: lcZpWort .9s ease-out 1.5s both;
 }
 /* „wo man merkt, er wurde da getroffen, und tat ihm vielleicht weh" */
 .lc-getroffen { animation: lcGetroffenR18 2.6s cubic-bezier(.3, 0, .3, 1) both; }
 @keyframes lcGetroffenR18 {
-  0%, 48% { transform: translate(0, 0) scale(1); }
-  51%     { transform: translate(var(--tx, 0%), var(--ty, 0%)) scale(1.06, .94); }
-  56%     { transform: translate(calc(var(--tx, 0%) * -.5), calc(var(--ty, 0%) * -.5)) scale(.96, 1.05); }
-  62%     { transform: translate(calc(var(--tx, 0%) * .3), calc(var(--ty, 0%) * .3)) scale(1.02, .98); }
-  70%     { transform: translate(0, 0) scale(1); }
+  0%, 56% { transform: translate(0, 0) scale(1); }
+  59%     { transform: translate(var(--tx, 0%), var(--ty, 0%)) scale(1.06, .94); }
+  64%     { transform: translate(calc(var(--tx, 0%) * -.5), calc(var(--ty, 0%) * -.5)) scale(.96, 1.05); }
+  70%     { transform: translate(calc(var(--tx, 0%) * .3), calc(var(--ty, 0%) * .3)) scale(1.02, .98); }
+  78%     { transform: translate(0, 0) scale(1); }
   100%    { transform: translate(0, 0) scale(1); }
 }
 
@@ -21659,4 +21758,35 @@ body.lc-schreibt .tutor-reiter {
   color: #fff;
   background: rgba(140, 30, 30, .85);
   cursor: pointer;
+}
+
+/* =================================================================
+   RUNDE 70 — DIE PEITSCHE SIEHT ÜBERALL GLEICH AUS
+   -----------------------------------------------------------------
+   XANDER: „die Peitsche wirkt so, als wenn sie in der
+   Einzelanimation also wenn man sich selber schlägt, noch die alte
+   Variante hat schau dass das überall gleich ist."
+
+   Warum sie dort anders aussah: die schwarze Lederpeitsche wird von
+   lcLeineWerfen gezeichnet, und die steigt sofort aus, wenn Start-
+   und Zielplatz derselbe sind (vonPlatz === zuPlatz) — also genau
+   dann, wenn man sich selbst schlägt. Übrig blieb der alte braune
+   Rückfall.
+
+   Jetzt zeichnet lcPeitsche dieselben Teile (Griff, Ausholschlaufe,
+   Lederwelle, KNALL) und hängt sie an diesen Anker. Er liegt links
+   oben auf dem eigenen Bild; die Länge kommt aus der GEMESSENEN
+   Breite des eigenen Kreises, nicht aus einer geratenen Zahl.
+   ================================================================= */
+.lc-peitsche-selbst {
+  position: absolute;
+  left: 6%;
+  top: 30%;
+  width: 0;
+  height: 0;
+  /* Leicht schräg nach unten — so trifft sie das Bild und liegt
+     nicht waagerecht davor. */
+  transform: rotate(17deg);
+  pointer-events: none;
+  z-index: 8;
 }
