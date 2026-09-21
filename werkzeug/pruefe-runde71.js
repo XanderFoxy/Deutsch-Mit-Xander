@@ -148,5 +148,43 @@ pruefe("die Strichlinie wird aufgegraben",
 pruefe("und der Platz sackt kurz ein",
   /@keyframes lcPlatzSacktR71/.test(cssK));
 
+console.log("\nDIE BOMBE HAT ZWEI FASSUNGEN ZUM AUSWAEHLEN");
+pruefe("beide stehen unter EINER Kachel",
+  /\["\\ud83d\\udca3", "Bombe",    "bombe", false,/.test(js)
+  && /"Zeitz\\u00fcnder", "bombe"/.test(js)
+  && /"Lunte",       "lunte"/.test(js));
+pruefe("die Zuendschnur prasselt von Anfang an",
+  /lcTonSpaeter\("lunte", 0, 0\.6\)/.test(js));
+pruefe("das Piepsen kommt nur kurz vor der Null",
+  /lcTonSpaeter\("bombedigital2", 1500, 0\.55\)/.test(js)
+  && !/bombe:\s+\{ ton: "bombedigital2"/.test(js));
+pruefe("und am Ende knallt eine echte Explosion",
+  /bombe:\s+\{ ton: "explosion2", dauer: 2600, laut: 0\.72 \}/.test(js));
+pruefe("die Asche liegt breiter",
+  /const mitte = Math\.max\(0, Math\.min\(1, 0\.5 \+ \(glocke - 0\.5\) \* 1\.9\)\);/.test(js)
+  && /const x = 2 \+ mitte \* 96;/.test(js));
+
+console.log("\nDIE KOPFHOERER SIND FLACH");
+pruefe("die Muschel ist 20 statt 30 Einheiten breit",
+  /const BR = 20;/.test(js));
+pruefe("die rechte sitzt weiter aussen",
+  /lcApmMuschel\(128, true\)/.test(js)
+  && !/lcApmMuschel\(118, true\)/.test(js));
+pruefe("und Buegel, Gelenke und Krone stehen ueber ihren Mitten",
+  /d="M10 58 C10 22 38 8 74 8 C110 8 138 22 138 58"/.test(js)
+  && /<rect x="8\.4" y="50"/.test(js)
+  && /<rect x="136\.4" y="50"/.test(js));
+
+console.log("\nDIE LOK IST SCHWARZ MIT MESSING");
+pruefe("das Blaugrau ist weg",
+  /\.lc-lok-kessel   \{ fill: #14181c;/.test(cssK)
+  && !/\.lc-lok-kessel   \{ fill: #2f4a63;/.test(cssK));
+pruefe("Licht oben, Schatten unten",
+  /lc-lok-glanz/.test(js) && /lc-lok-schatten/.test(js)
+  && /\.lc-lok-glanz    \{ fill: #39424c;/.test(cssK));
+pruefe("die goldenen Teile sitzen OBEN auf dem Koerper",
+  /lc-lok-handlauf/.test(js) && /lc-lok-domfuss/.test(js)
+  && /\.lc-lok-dom      \{ fill: #c8992e;/.test(cssK));
+
 console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 71 sitzt.\n");
 process.exit(fehler ? 1 : 0);

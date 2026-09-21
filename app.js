@@ -24392,8 +24392,22 @@
        eine Zuendschnur ab. */
     /* „Die soll nicht wie ein Wecker klingeln." Die neue Aufnahme
        ist rein elektronisch, ohne Glocke. */
-    bombe:          { ton: "bombedigital2", dauer: 4600, laut: 0.62 },
-        lunte:          { ton: "bombezunder2", dauer: 4600, laut: 0.62 },
+    /* RUNDE 71 — XANDER: „das soll wirklich so ein prasseln
+       abbrennen sein und am Ende … soll ne Explosion kommen …
+       Dieses Piepsen kannst du anteilig kurz vor der Explosion bei
+       der digitalen Zeitschaltuhr machen."
+       Bisher lief „bombedigital2" — das Piepsen — ueber die ganze
+       Wirkung. Jetzt traegt der Plan die EXPLOSION, und weil
+       lcAmPlatz den Planton um LC_TREFFER.bombe (2100 ms)
+       verzoegert, knallt sie genau auf der Null. Das Piepsen und
+       das Prasseln legt lcBombe selbst auf — je nach Fassung. */
+    bombe:          { ton: "explosion2", dauer: 2600, laut: 0.72 },
+    /* RUNDE 71: die Zuendschnur prasselt bis zur Null (2100 ms) und
+       hoert dann auf — danach knallt es ja. Die Aufnahme selbst ist
+       7 s lang; was davon zu hoeren ist, sagt diese Dauer. Gespielt
+       wird sie von lcBombe (lcTonSpaeter), das „ton" hier greift nur,
+       wenn jemand „/lunte" ohne Bombe ausloest. */
+    lunte:          { ton: "lunte", dauer: 2400, laut: 0.6 },
     /* „Bei dem streicheln moechte ich ein Katzen schnurren haben." */
     streicheln:     { ton: "schnurren", dauer: 3400, laut: 0.4 },
     /* „das Knutschen — da koenntest du noch einen Sound machen, da haben wir
@@ -26002,7 +26016,15 @@
        einfach explodiert" · „Und fuer Liebe brauchen wir auch noch
        irgendwie … dass man ihn streichelt … oder kuesst." */
     ["\ud83e\udd20", "Hut",      "hut"],
-    ["\ud83d\udca3", "Bombe",    "bombe"],
+    /* RUNDE 71 — XANDER: „Die Bombe hast du auch noch nicht gemacht
+       die sollte zwei Versionen zum auswaehlen haben einmal ne
+       digitale Zeitbombe und einmal eine mit Lunte."
+       Beide gab es als BEFEHL laengst (/bombe und /lunte), aber die
+       Kachel kannte nur die digitale — auswaehlen konnte man also
+       nichts. Jetzt stehen beide darunter, wie beim Strohhalm. */
+    ["\ud83d\udca3", "Bombe",    "bombe", false,
+      [["\u23f1\ufe0f", "Zeitz\u00fcnder", "bombe"],
+       ["\ud83e\uddf5", "Lunte",       "lunte"]]],
     ["\ud83e\udef6", "Streicheln", "streicheln"],
     ["\ud83d\udc8b", "Kuss",     "kuss"]
   ];
@@ -33202,8 +33224,25 @@
         /* Rahmen und Laufblech. */
         + '<path class="lc-lok-fahrwerk" d="M8 42 L115 42 L115 49 L8 49 Z"/>'
         /* Kessel mit drei Baendern. */
+        /* RUNDE 71 — XANDER: „Mir fehlen da ein bisschen diese
+           goldenen Teile oben auf dem Lok Koerper … die Farbe kann
+           man auch ein bisschen verbessern … mehr tiefer … ins
+           Schwarze … mit Licht und Schatten."
+           Der Kessel war blaugrau (#2f4a63). Jetzt ist er fast
+           schwarz, und darauf liegen zwei eigene Flaechen: oben ein
+           heller Streifen (das Licht auf dem runden Kessel), unten
+           ein dunkler (der Schatten darunter). Die MESSING-Teile —
+           Baender, Dome, Pfeife, Handlaeufe — sitzen ausdruecklich
+           OBEN auf dem Koerper, so wie er es beschreibt. */
         + '<path class="lc-lok-kessel" d="M26 18 L88 18 L88 42 L26 42 Z"/>'
+        + '<path class="lc-lok-glanz" d="M26 19.6 L88 19.6 L88 24.4 L26 24.4 Z"/>'
+        + '<path class="lc-lok-schatten" d="M26 36.4 L88 36.4 L88 42 L26 42 Z"/>'
         + '<path class="lc-lok-band" d="M44 18 V42 M60 18 V42 M76 18 V42"/>'
+        /* Die Handlaeufe aus Messing, laengs ueber dem Kessel. */
+        + '<path class="lc-lok-handlauf" d="M29 21.2 H86 M29 27 H86"/>'
+        + '<circle class="lc-lok-stuetze" cx="44" cy="21.2" r="1.2"/>'
+        + '<circle class="lc-lok-stuetze" cx="60" cy="21.2" r="1.2"/>'
+        + '<circle class="lc-lok-stuetze" cx="76" cy="21.2" r="1.2"/>'
         /* Rauchkammer: rund, mit Tuerkreuz und Griff. */
         + '<circle class="lc-lok-rauchkammer" cx="26" cy="30" r="12"/>'
         + '<circle class="lc-lok-tuer" cx="24" cy="30" r="8.4"/>'
@@ -33213,7 +33252,12 @@
         + '<path class="lc-lok-schlot" d="M34 19 L34 11 L30 11 L30 6 L46 6 L46 11 L42 11 L42 19 Z"/>'
         /* Dampfdom und Sanddom. */
         + '<path class="lc-lok-dom" d="M50 18 Q50 8 58 8 Q66 8 66 18 Z"/>'
+        + '<path class="lc-lok-domglanz" d="M52.4 15 Q52.4 10 55.6 9.6 Q54 12 54.2 15 Z"/>'
         + '<path class="lc-lok-dom" d="M72 18 Q72 12 77 12 Q82 12 82 18 Z"/>'
+        + '<path class="lc-lok-domglanz" d="M73.8 16 Q73.8 12.8 75.8 12.5 Q74.8 14 74.9 16 Z"/>'
+        /* Der Messingring, auf dem der Dampfdom sitzt. */
+        + '<rect class="lc-lok-domfuss" x="48.6" y="16.4" width="18.8" height="2.4" rx="1.2"/>'
+        + '<rect class="lc-lok-domfuss" x="70.8" y="16.4" width="12.4" height="2.4" rx="1.2"/>'
         + '<rect class="lc-lok-pfeife" x="85" y="11" width="3.2" height="8" rx="1.6"/>'
         /* Laterne mit Linse. */
         + '<rect class="lc-lok-lampe" x="17" y="8" width="12" height="10" rx="1.6"/>'
@@ -34843,25 +34887,39 @@
   /* EINE MUSCHEL VON DER SEITE. „links" sagt, auf welcher Seite der
      Kopf steht: das Polster ist nur als schmaler Rand ZUM KOPF HIN
      zu sehen, nicht als schwarzes Loch in der Mitte. */
+  /* RUNDE 71 — XANDER: „Die Kopfhoerer von Apple sind fast richtig.
+     Die duerfen nach aussen nicht so klobig sein. Eher flach."
+     GERECHNET: die Muschel war 30 von 148 Einheiten breit, also
+     20 % der Zeichnung — und weil die Zeichnung 152 % der Bildbreite
+     misst, waren das 30 % des Profilbilds JE SEITE. Von der Seite
+     gesehen ist eine AirPods-Max-Muschel aber flach: sie ist hoch
+     und schmal, nicht rund. Jetzt 20 von 148 (13,5 %), Hoehe
+     unveraendert 36 — aus einem fast quadratischen Klotz wird eine
+     flache Platte.
+     Alles, was daran haengt, wandert mit: die rechte Muschel sitzt
+     jetzt bei x=128 statt 118, die Gelenke und Teleskopstaebe
+     stehen ueber ihren Mitten (10 und 138), und der Buegel spannt
+     sich zwischen denselben beiden Punkten. */
   function lcApmMuschel(x, rechts) {
-    const kopf = rechts ? x : x + 30;          /* wo der Kopf liegt */
-    const rand = rechts ? x + 1.6 : x + 26.4;  /* dort sitzt das Polster */
+    const BR = 20;                              /* Breite der Muschel */
+    const rand = rechts ? x + 1.4 : x + BR - 1.4;  /* dort sitzt das Polster */
+    const innen = rechts ? 3 : -3;              /* das Polster woelbt sich zum Kopf */
     return '<g>'
       /* Die eloxierte Aussenplatte — flach, hochoval, weiche Ecken. */
-      + '<rect x="' + x + '" y="66" width="30" height="36" rx="13.5"'
+      + '<rect x="' + x + '" y="66" width="' + BR + '" height="36" rx="9.5"'
       + ' fill="url(#apmL)" transform="translate(0,-10)"/>'
       /* Die feine Kante, die die Platte vom Gehaeuse absetzt. */
-      + '<rect x="' + (x + 2.6) + '" y="58.6" width="24.8" height="30.8" rx="11.4"'
+      + '<rect x="' + (x + 2.1) + '" y="58.6" width="' + (BR - 4.2) + '" height="30.8" rx="7.6"'
       + ' fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.1"/>'
       /* Der Glanz: ein schmaler Streifen, kein Ring. */
-      + '<path d="M' + (x + 7) + ' 64 C' + (x + 5.4) + ' 72 ' + (x + 5.4)
-      + ' 80 ' + (x + 7.6) + ' 86" fill="none" stroke="rgba(255,255,255,.45)"'
-      + ' stroke-width="1.8" stroke-linecap="round"/>'
+      + '<path d="M' + (x + 5.2) + ' 64 C' + (x + 4.1) + ' 72 ' + (x + 4.1)
+      + ' 80 ' + (x + 5.6) + ' 86" fill="none" stroke="rgba(255,255,255,.45)"'
+      + ' stroke-width="1.6" stroke-linecap="round"/>'
       /* Und das Polster: ein schmaler dunkler Rand ZUM KOPF hin —
          mehr sieht man von der Seite nicht. */
-      + '<path d="M' + rand + ' 60 C' + (kopf > x + 15 ? rand + 3 : rand - 3)
-      + ' 68 ' + (kopf > x + 15 ? rand + 3 : rand - 3) + ' 80 '
-      + rand + ' 88" fill="none" stroke="#3c4a5a" stroke-width="3.4"'
+      + '<path d="M' + rand + ' 60 C' + (rand + innen)
+      + ' 68 ' + (rand + innen) + ' 80 '
+      + rand + ' 88" fill="none" stroke="#3c4a5a" stroke-width="3"'
       + ' stroke-linecap="round"/>'
       + "</g>";
   }
@@ -34966,7 +35024,7 @@
         + '<stop offset="0" stop-color="#c2d4e4"/><stop offset="1" stop-color="#7f9cb8"/>'
         + "</linearGradient></defs>"
         /* DER STAHLBUEGEL — duenn, und er spannt sich ueber den Kopf. */
-        + '<path d="M17 58 C17 22 40 8 74 8 C108 8 131 22 131 58"'
+        + '<path d="M10 58 C10 22 38 8 74 8 C110 8 138 22 138 58"'
         + ' fill="none" stroke="url(#apmS)" stroke-width="4.2"'
         + ' stroke-linecap="round"/>'
         /* DIE BRUECKE: nur oben, aus Stoffnetz, und sie haengt UNTER
@@ -34977,19 +35035,19 @@
         + ' fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1"'
         + ' stroke-dasharray="1 2" stroke-linecap="round"/>'
         /* DIE TELESKOPSTAEBE — ganz duenn und lang. */
-        + '<rect x="15.4" y="50" width="3.2" height="16" rx="1.6" fill="#b6c6d6"/>'
-        + '<rect x="129.4" y="50" width="3.2" height="16" rx="1.6" fill="#b6c6d6"/>'
+        + '<rect x="8.4" y="50" width="3.2" height="16" rx="1.6" fill="#b6c6d6"/>'
+        + '<rect x="136.4" y="50" width="3.2" height="16" rx="1.6" fill="#b6c6d6"/>'
         /* Das Gelenk, an dem die Muschel haengt. */
-        + '<rect x="12" y="62" width="10" height="5.5" rx="2.7" fill="#9db0c2"/>'
-        + '<rect x="126" y="62" width="10" height="5.5" rx="2.7" fill="#9db0c2"/>'
+        + '<rect x="5.5" y="62" width="9" height="5.5" rx="2.7" fill="#9db0c2"/>'
+        + '<rect x="133.5" y="62" width="9" height="5.5" rx="2.7" fill="#9db0c2"/>'
         + lcApmMuschel(0, false)
-        + lcApmMuschel(118, true)
+        + lcApmMuschel(128, true)
         /* Die Digital Crown sitzt OBEN AUF der rechten Muschel,
            daneben die Taste fuer die Geraeuschunterdrueckung. */
-        + '<rect x="126" y="58" width="11" height="5" rx="2.5" fill="#c3d2e0"/>'
-        + '<path d="M128.4 58.9 V62.1 M130.6 58.9 V62.1 M132.8 58.9 V62.1'
-        + ' M135 58.9 V62.1" stroke="#8098ad" stroke-width="0.8"/>'
-        + '<rect x="139" y="58.8" width="5" height="3.4" rx="1.7" fill="#c3d2e0"/>'
+        + '<rect x="130" y="56.4" width="10" height="4.6" rx="2.3" fill="#c3d2e0"/>'
+        + '<path d="M132.2 57.2 V60.2 M134.2 57.2 V60.2 M136.2 57.2 V60.2'
+        + ' M138.2 57.2 V60.2" stroke="#8098ad" stroke-width="0.8"/>'
+        + '<rect x="141.6" y="57" width="4.4" height="3.2" rx="1.6" fill="#c3d2e0"/>'
         + "</svg>";
       /* Noten, die aus den Muscheln steigen — sonst sind es nur zwei
          schwarze Klumpen am Kopf. */
@@ -36262,7 +36320,10 @@
           '<span class="lc-lunte-schnur"><i></i></span>'
           + '<span class="lc-lunte-funke"></span>'
           + '<span class="lc-bombe-blitz"></span>';
-        setTimeout(() => { try { lcTonZu("lunte"); } catch (e) {} }, 0);
+        /* RUNDE 71: die Zuendschnur prasselt von Anfang an —
+           XANDER: „das soll wirklich so ein prasseln abbrennen
+           sein." Kein Piepsen; das gehoert zur digitalen Fassung. */
+        lcTonSpaeter("lunte", 0, 0.6);
       } else {
         blende.innerHTML = '<span class="lc-bombe-zahl">3</span>'
                          + '<span class="lc-bombe-blitz"></span>';
@@ -36275,6 +36336,12 @@
           zahl.classList.add("lc-bombe-tick");
           if (z !== 0) lcTonZu("ticken");
         }, 700 + i * 700));
+        /* RUNDE 71: „Dieses Piepsen kannst du anteilig kurz vor der
+           Explosion bei der digitalen Zeitschaltuhr machen."
+           Also nicht mehr ueber die ganzen 4,6 s, sondern die letzten
+           600 ms vor der Null (2100 ms) — dort wird eine
+           Zeitschaltuhr hektisch. */
+        lcTonSpaeter("bombedigital2", 1500, 0.55);
       }
       /* Die Zuendschnur laeuft am oberen Rand entlang und wird kuerzer. */
       /* DAS HAEUFCHEN ASCHE.
@@ -36292,8 +36359,23 @@
       let asche = "";
       for (let a = 0; a < 70; a++) {
         /* Dicht in der Mitte, duenn zum Rand — so haeuft sich Staub. */
-        const mitte = (Math.random() + Math.random() + Math.random()) / 3;
-        const x = 12 + mitte * 76;
+        /* RUNDE 71 — XANDER: „Ausserdem ist die Asche die
+           hinterlaesst noch viel zu schmal."
+           Sie lag zwischen 12 und 88 Prozent der Breite, also auf
+           76 Prozent. Jetzt 2 bis 98 — der Haufen ist damit ein
+           Viertel breiter und laeuft ueber den Bildrand hinaus, so
+           wie Asche das tut. */
+        /* NACHGEMESSEN am Bild: die Grenzen zu erweitern hat fast
+           nichts gebracht, weil die VERTEILUNG das Problem war. Die
+           Summe dreier Zufallszahlen haeuft sich stark um die Mitte
+           (Glockenkurve) — fast alle Puenktchen lagen deshalb im
+           mittleren Drittel, egal wie weit die Grenzen standen.
+           Jetzt wird die Glocke um das 1,9fache gedehnt und an den
+           Raendern beschnitten: der Haufen bleibt in der Mitte am
+           dichtesten, reicht aber wirklich von Rand zu Rand. */
+        const glocke = (Math.random() + Math.random() + Math.random()) / 3;
+        const mitte = Math.max(0, Math.min(1, 0.5 + (glocke - 0.5) * 1.9));
+        const x = 2 + mitte * 96;
         const hoch = Math.pow(1 - Math.abs(mitte - 0.5) * 2, 0.7);
         asche += '<i class="lc-asche-punkt" style="'
           + "left:" + x.toFixed(1) + "%;"

@@ -16788,22 +16788,28 @@ body.lc-schreibt .tutor-reiter {
    die Lok wirklich gezeichnet, und zwar KOMPLETT im SVG: Speichen,
    Gegengewicht und Kuppelstange lassen sich mit einem CSS-Kreis
    (border + border-radius) gar nicht darstellen. */
-.lc-lok-kessel   { fill: #2f4a63; stroke: #16242f; stroke-width: 1.4; }
-.lc-lok-haus     { fill: #35546f; stroke: #16242f; stroke-width: 1.4; }
-.lc-lok-dach     { fill: #22384a; stroke: #16242f; stroke-width: 1.2; }
-.lc-lok-schlot   { fill: #1e2f3d; stroke: #16242f; stroke-width: 1; }
-.lc-lok-dom      { fill: #3b5d79; stroke: #16242f; stroke-width: 1; }
+/* RUNDE 71 — XANDER: „die Farbe kann man auch ein bisschen
+   verbessern übrigens auch bei der Lok … mehr tiefer … ins
+   Schwarze … mit Licht und Schatten." Eine Dampflok ist schwarz;
+   was an ihr glänzt, ist Messing. Hier stehen deshalb die neuen
+   Werte an derselben Stelle — nicht als Überschreibung weiter
+   unten, sonst behauptet eine Prüfung Grünes über Blaues. */
+.lc-lok-kessel   { fill: #14181c; stroke: #070a0c; stroke-width: 1.4; }
+.lc-lok-haus     { fill: #1a1f25; stroke: #070a0c; stroke-width: 1.4; }
+.lc-lok-dach     { fill: #0c1014; stroke: #070a0c; stroke-width: 1.2; }
+.lc-lok-schlot   { fill: #0e1216; stroke: #070a0c; stroke-width: 1; }
+.lc-lok-dom      { fill: #c8992e; stroke: #7d5d15; stroke-width: 1; }
 .lc-lok-pfeife   { fill: #d8a53a; }
 .lc-lok-fahrwerk { fill: #3d3d3d; }
 .lc-lok-bohle    { fill: #8a1e1e; }
 .lc-lok-puffer   { fill: #4a4a4a; stroke: #2a2a2a; stroke-width: 1; }
-.lc-lok-zylinder { fill: #2a4356; stroke: #16242f; stroke-width: 1.2; }
-.lc-lok-rauchkammer { fill: #1e2f3d; stroke: #16242f; stroke-width: 1.2; }
-.lc-lok-tuer     { fill: #27394a; stroke: #16242f; stroke-width: 1; }
-.lc-lok-kreuz    { stroke: #5d768c; stroke-width: 1.3; fill: none; stroke-linecap: round; }
+.lc-lok-zylinder { fill: #171c21; stroke: #070a0c; stroke-width: 1.2; }
+.lc-lok-rauchkammer { fill: #101418; stroke: #070a0c; stroke-width: 1.2; }
+.lc-lok-tuer     { fill: #171c21; stroke: #070a0c; stroke-width: 1; }
+.lc-lok-kreuz    { stroke: #8d7a3e; stroke-width: 1.3; fill: none; stroke-linecap: round; }
 .lc-lok-griff    { fill: #d8a53a; }
-.lc-lok-band     { stroke: #d8a53a; stroke-width: 1.2; fill: none; opacity: .85; }
-.lc-lok-lampe    { fill: #40607c; stroke: #16242f; stroke-width: 1.1; }
+.lc-lok-band     { stroke: #d8a53a; stroke-width: 2; fill: none; opacity: 1; }
+.lc-lok-lampe    { fill: #1d2228; stroke: #070a0c; stroke-width: 1.1; }
 /* Die Linse leuchtet — sonst ist es nur ein gelber Punkt. */
 .lc-lok-linse    { fill: #ffe9a8; filter: drop-shadow(0 0 3px rgba(255, 226, 150, .9)); }
 /* Die Raeder: Reifen rot wie bei der klassischen Lok, Speichen hell,
@@ -22268,3 +22274,31 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-platz-untergraben, .lc-platz-untergraben .lc-kreis { animation: none; }
 }
+
+/* =================================================================
+   RUNDE 71 — DIE LOK WIRD SCHWARZ UND BEKOMMT IHR MESSING
+   -----------------------------------------------------------------
+   XANDER: „Mir fehlen da ein bisschen diese goldenen Teile oben auf
+   dem Lok Körper … die Farbe kann man auch ein bisschen verbessern
+   übrigens auch bei der Lok … mehr tiefer … ins Schwarze … mit
+   Licht und Schatten."
+
+   Der Kessel war ein Blaugrau (#2f4a63) — eine Dampflok ist aber
+   schwarz, und was an ihr glänzt, ist MESSING. Beides steht jetzt
+   hier: der Körper fast schwarz mit einem hellen Streifen oben und
+   einem dunklen unten (die Flächen dafür stehen in app.js), und
+   Bänder, Domsockel, Handläufe, Pfeife und Griff in Messing.
+   ================================================================= */
+.lc-lok-glanz    { fill: #39424c; opacity: .85; }
+.lc-lok-schatten { fill: #05070a; opacity: .75; }
+/* Und jetzt das Messing — oben auf dem Körper, wie er es beschreibt. */
+.lc-lok-domglanz { fill: #f3dd93; opacity: .9; }
+.lc-lok-domfuss  { fill: #a87c1d; }
+.lc-lok-handlauf {
+  stroke: #e0b455;
+  stroke-width: 1.1;
+  fill: none;
+  stroke-linecap: round;
+  opacity: .95;
+}
+.lc-lok-stuetze  { fill: #b98c22; }
