@@ -67,8 +67,8 @@ const pruefe = (was, gut, zusatz) => {
      Katerpult muss ein realistisches Katapult Geraeusch kommen".
      Geprueft wird deshalb der HEUTIGE Name, nicht der von damals. */
   haengt("saugpfeil", "pfeilschuss");
-  haengt("hut", "cowboy2");
-  haengt("peitsche", "peitsche2");
+  haengt("hut", "cowboyhut");
+  haengt("peitsche", "peitschehieb");
   haengt("heber", "angelkurbel");
   haengt("luke", "fensterauf");
   haengt("rollo", "rollohoch");
@@ -78,18 +78,31 @@ const pruefe = (was, gut, zusatz) => {
   haengt("schneeball", "schneeklatsch");
   haengt("strohhalm", "schlurfen");
   haengt("blubbern", "blubbern");
-  haengt("katapult", "katapult2");
+  haengt("katapult", "katapult3");
   haengt("zwille", "gummizug");
   haengt("fahren", "fahrt");
+  /* NACHGEZOGEN IN RUNDE 59: zwischen diesen beiden Zeilen steht
+     jetzt der Fall „der Plan faengt spaeter an" (plan.spaet) — noetig,
+     damit die Registerkasse nicht im Geldregen untergeht. Die Regel
+     selbst ist dieselbe geblieben: der PLAN entscheidet, die
+     gleichnamige alte Datei ist nur der Rueckfall. */
   pruefe("und der Plan schlaegt die gleichnamige alte Datei",
-    /const plan = LC_TON_PLAN\[was\];\s*\n\s*if \(plan && plan\.ton && lcGeraeusch\(plan\.ton, was\)\) return;\s*\n\s*if \(lcGeraeusch\(was, was\)\) return;/.test(js));
+    /const plan = LC_TON_PLAN\[was\];/.test(js)
+    && /if \(plan && plan\.ton && lcGeraeusch\(plan\.ton, was\)\) return;/.test(js)
+    && /if \(lcGeraeusch\(was, was\)\) return;/.test(js)
+    && js.indexOf("if (plan && plan.ton && lcGeraeusch(plan.ton, was)) return;")
+       < js.indexOf("if (lcGeraeusch(was, was)) return;"));
   pruefe("die alte peitsche.opus liegt als Rueckfall noch da",
     fs.existsSync(path.join(WURZEL, "ton", "peitsche.opus")));
-  /* Der Ankunftston steht seit Runde 49 nicht mehr als Literal in
-     lcReise, sondern in LC_ANKUNFT_TON — dort ist er messbar. */
-  pruefe("das Quietschen kommt erst bei der Ankunft",
-    /flug: "bremse"/.test(js)
-    && /const ankunft = LC_ANKUNFT_TON\[art\];\s*\n\s*if \(ankunft\) lcTonSpaeter\(ankunft, Math\.max\(0, hin - 260\), 0\.5\);/.test(js));
+  /* NACHGEZOGEN IN RUNDE 59. Hier stand „das Quietschen kommt erst
+     bei der Ankunft" — und genau das wollte XANDER nicht mehr: „Das
+     Flugzeug braucht kein Bremsgeraeusch … das kannst du ueberhaupt
+     bei allen Sachen rausnehmen, wo es gar nicht reingehoert."
+     Geprueft wird jetzt, dass der Ankunftston noch zum richtigen
+     Zeitpunkt kaeme — aber nur noch dort steht, wo er hingehoert. */
+  pruefe("ein Ankunftston kaeme immer noch zur Ankunft",
+    /const ankunft = LC_ANKUNFT_TON\[art\];\s*\n\s*if \(ankunft\) lcTonSpaeter\(ankunft, Math\.max\(0, hin - 260\), 0\.5\);/.test(js));
+  pruefe("aber das Flugzeug bremst nicht mehr", !/flug: "bremse"/.test(js));
 
   console.log("\nDAS BLUBBERNDE PROFILBILD\n");
   pruefe("die Blasen tragen sein Bild",

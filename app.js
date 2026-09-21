@@ -17115,7 +17115,7 @@
        machen." Die Kasse klingelt ZUERST — erst wird kassiert, dann
        regnet es. Der Geldregen selbst liegt schon als Bett darunter
        (LC_TON_PLAN.geld). */
-    lcTonSpaeter("kasse", 0, 0.8);
+    lcTonSpaeter("kasse", 0, 1.0);
 
     /* Der Schriftzug — er gehört zum Namen der Sache. */
     const zug = document.createElement("span");
@@ -24033,7 +24033,9 @@
     /* „Bei dem Katapult muss ein realistisches Katapultgeraeusch
        kommen." Die alte Datei war eine Sekunde lang und klang nach
        Klack; jetzt Seil, Holz, Ausloeser und Schwung. */
-    katapult:       { ton: "katapult2", dauer: 2600, laut: 0.65 },
+    /* „Der Katapult hat immer noch kein realistisches Soundeffekt."
+       Neu: Winde, Ausloeser, Anschlag am Querbalken. */
+    katapult:       { ton: "katapult3", dauer: 2600, laut: 0.65 },
     /* „wenn man jetzt das Getraenk austrinkt, dann koennte man ein
        Schluerfen hoeren, also schoeneres Schluerfen." */
     strohhalm:      { ton: "schlurfen", dauer: 3000, laut: 0.5 },
@@ -24055,14 +24057,17 @@
     /* „bei der Peitsche selber kann einfach nur ein Peitschenknall sein." */
     /* „bei der Peitsche realistische Peitschen Sound" — die Lasche
        zischt erst, dann knallt die Spitze. */
-    peitsche:       { ton: "peitsche2", dauer: 2600, laut: 0.45 },  /* das Sausen; der Knall kommt aus lcPeitsche */
+    /* „Der Peitschen-Sound hat so ein Schleifgeraeusch. Das soll
+       nicht so sein. Es soll ein richtig realistischer Peitschenhieb
+       sein." */
+    peitsche:       { ton: "peitschehieb", dauer: 2600, laut: 0.55 },
     /* „Beim Bowling gibts auch ne besseren Sound weil den den du hast
        ist der von der zerbrochenen Scheibe." */
     bowling:        { ton: "bowling",  dauer: 4200, laut: 0.5 },
     /* „das realistische Geraeusch vom Koe an die Kugel und wie das
        dann klingt, wenn es einlocht" — der Stoss hier, das Einlochen
        am Ende der Animation (siehe lcBillard). */
-    billard:        { ton: "billardstoss", dauer: 2400, laut: 0.55 },
+    billard:        { ton: "billardkoe", dauer: 2400, laut: 0.55 },
     gemeinsam:      { ton: "fahren",   dauer: 3400, laut: 0.5 },
     /* Kein eigenes Geraeusch: die Schneekugel leiht sich „schnee" —
        gemessen an data-geraeusche.js, dort liegt es. */
@@ -24077,18 +24082,30 @@
     /* Das Schuetteln zuerst — das Rieseln kommt danach aus
        lcSchneekugel, weil die Animation 7 s dauert. */
     schneekugel:    { ton: "kugelschuetteln", dauer: 2000, laut: 0.62 },
-    flug:           { ton: "flugzeug", dauer: 2800, laut: 0.45 },
+    /* „Nur ein realistisch langes Geraeusch fuer den Flug, den es
+       hinter sich legt … er soll die Zeit klingen wie die Strecke,
+       die auch optisch zurueckgelegt wird." */
+    flug:           { ton: "flugzeuglang", dauer: 2800, laut: 0.5 },
     maulwurf:       { ton: "maulwurf", dauer: 2400, laut: 0.5 },
     /* „dann koennte da wirklich so ein realistischer Science-Fiction
        Gate Sound kommen." */
-    portal:         { ton: "gate",     dauer: 2200, laut: 0.5 },
+    /* „Das Tor … eher wirklich so ein magisches Tor, wie als wenn das
+       so eine stehende Wasserwand ist." Auch der Ton ist jetzt
+       Wasser und Plasma, keine Maschine. */
+    portal:         { ton: "torportal", dauer: 2200, laut: 0.55 },
     /* Die zwei neuen Reisen: „eine Variante vielleicht noch mit einem
        Boot ... oder dass man einen Baustellenkran hat." */
     boot:           { ton: "boot",     dauer: 3000, laut: 0.45 },
     kran:           { ton: "kran",     dauer: 3000, laut: 0.45 },
     dampfer:        { ton: "dampfer",  dauer: 3400, laut: 0.45 },
-    lok:            { ton: "lok",      dauer: 3600, laut: 0.45 },
-    liane:          { ton: "swoosh",   dauer: 2600, laut: 0.5 },
+    /* „Die hat ein Quietschgeraeusch." Die neue Aufnahme hat keines:
+       Pfiff, Stampfen, Schienenstoesse — ueber die ganze Strecke. */
+    lok:            { ton: "loklang",  dauer: 3600, laut: 0.5 },
+    /* XANDER: „Bei dem Lianengeraeusch soll so ein typisches
+       Tarzan-Gejaule sein, so wie man das kennt, diesen typischen
+       Tarzan-Ruf." Das Sausen bleibt als Bett darunter, der Ruf
+       kommt aus lcReise. */
+    liane:          { ton: "swoosh",   dauer: 2600, laut: 0.4 },
     feder:          { ton: "feder",    dauer: 2800, laut: 0.5 },
     beamen:         { ton: "beamen",   dauer: 3000, laut: 0.5 },
     /* XANDER: „An der Stelle kannst du auch noch wie bei Super Mario
@@ -24099,7 +24116,10 @@
        gesaugt hat ... Das waren so drei Impulse."
        Genau so neu aufgenommen: drei steigende Impulse mit Hall, dann
        der Sog. */
-    rohr:           { ton: "rohrpuls", dauer: 2800, laut: 0.6 },
+    /* „Das war so ein pulsierendes dreimal Reinsaugen … so wie das
+       damals bei Mario war." Nachgebaut als 8-Bit-Warp-Pipe mit drei
+       absteigenden Impulsen. */
+    rohr:           { ton: "mariorohr", dauer: 2800, laut: 0.65 },
     /* XANDER: „ach so, ein Helikopter kannst du noch einbauen zur
        Bewegung mit realistisch rotierenden Rotorblaettern und
        vielleicht irgendwie ein Pferd, auf dem man da hin reiten
@@ -24133,7 +24153,9 @@
     /* „ein realistisches Tripelgeraeusch ... und dieses realistische
        Geraeusch, wenn der Ball in den Korb fliegt." Erst das Dribbeln,
        der Korb kommt am Ende (siehe lcBasketball). */
-    basketball:     { ton: "dribbeln", dauer: 3000, laut: 0.5 },
+    /* „Man hoert gar nicht das Dribbeln." Jetzt fuenf Aufsetzer auf
+       flachem Hallenboden; das Scheppern im Korb kommt aus lcKorb. */
+    basketball:     { ton: "basketdribbeln", dauer: 3000, laut: 0.55 },
     /* „Dieser Tennisball dieses typische Tennisball Aufschlaggeraeusch." */
     /* XANDER: „Der Tennis-Sound muss verfeinert werden. Erst wird der
        Ball nach oben geworfen, dann hoert man diesen Luftzug, und dann
@@ -24152,7 +24174,13 @@
        Der Plan zeigte auf „finsternis" — ein Summen. Das Klacken des
        Schalters bleibt (LC_TREFFER.lichtaus = 646 ms), die Geige
        kommt darauf. */
-    lichtaus:       { ton: "horror", dauer: 3800, laut: 0.5 },
+    /* XANDER: „Ich will das alte Lichtschalter-Geraeusch wieder da,
+       das soll nur so ein extrem hoch toenendes Geigenquietschen sein
+       wie im Horrorfilm — also ein und dieselbe Note viermal gespielt,
+       so wie man das aus dem Horrorfilm kennt. Kein Orchester, das
+       hab ich niemals gesagt." Genau danach ist „horrorgeige"
+       aufgenommen: EINE Geige, EINE Note, viermal. */
+    lichtaus:       { ton: "horrorgeige", dauer: 3800, laut: 0.55 },
     /* „sie soll einfach drehen realistisch und sie soll am Boden
        landen ... dieses Traeger soll bei der Muenze unbedingt auch da
        sein." */
@@ -24166,7 +24194,15 @@
        und derjenige, der getroffen wird … macht dann auch so ein Au
        Geraeusch." Drei Geraeusche, drei Zeitpunkte: das Dehnen sofort,
        das Schnalzen beim Loslassen, das AUA beim Treffer. */
-    zwille:         { ton: "gummizug", dauer: 2600, laut: 0.55 },  /* Gummiband dehnt sich */
+    /* XANDER: „Die Zwille klingt auch nicht wie ein gedehntes
+       Gummiband und danach ein Schuss."
+       GEMESSEN: in der neuen Aufnahme („zwille3") liegt der lauteste
+       Punkt schon bei 0,1 s — sie faengt mit dem Schuss an. Als
+       einziger Ton waere sie also wieder falsch herum. Deshalb zwei
+       Toene in der richtigen Reihenfolge: das DEHNEN („gummizug",
+       1,76 s) laeuft ab 0 ms, der SCHUSS („zwille3") kommt bei
+       1150 ms — kurz bevor die Kugel bei 1300 ms ankommt. */
+    zwille:         { ton: "gummizug", dauer: 2600, laut: 0.55 },
     /* „dann hatten wir noch das Blasrohr, wo man diese kleinen Spuck
        Kuegelchen schicken kann ... dann sollen die vielleicht auch so
        ein Ekelgeraeusch von sich geben." */
@@ -24178,7 +24214,9 @@
     gluehbirne:     { ton: "gluehbirne", dauer: 4000, laut: 0.5 },
     /* „vielleicht besser so ein pfeifen, wie man ne Frau auf der
        Strasse nach pfeift." (ton/boing gab es ohnehin nie.) */
-    entbloessung:   { ton: "pfiff",    dauer: 3000, laut: 0.5 },
+    /* „Das Pfeifen soll nur dieses typische Nachpfeifen sein. Am
+       Anfang ist irgendso ein Ding, was da gar nicht hingehoert." */
+    entbloessung:   { ton: "pfiff2",   dauer: 3000, laut: 0.5 },
     /* „wenn man den Hut aufsetzt, dann koennte so ein YIHAAH wie bei den
        Cowboys kommen, und vielleicht so ein Peitschenknall zur selben Zeit."
        Vorher lag hier „kitt" — ein Motorgeraeusch: „da ist irgendwie so ein
@@ -24186,7 +24224,9 @@
     /* „der Cowboy Sound mit der Peitsche irgendwie so angeschnitten zu
        sein, weil man hoert am Anfang nicht dieses YIHAAH." Die neue
        Aufnahme faengt ohne Stille an. */
-    hut:            { ton: "cowboy2",  dauer: 3400, laut: 0.5 },
+    /* „Vom Sound: der Hut ist immer noch kein Cowboyhut." Jetzt mit
+       Filzaufschlag, Lederrauschen und einem Sporenklingeln. */
+    hut:            { ton: "cowboyhut", dauer: 3400, laut: 0.55 },
     ticken:         { ton: "wecker",   dauer: 260,  laut: 0.45 },  /* ein Tick je Zahl */
     /* XANDER: „Bei der Bombe solltest du eine digitale Version haben
        und eine mit Zuendschnur, und die sollen realistische Sounds
@@ -24196,13 +24236,19 @@
     /* Welche Bombe welchen Ton bekommt, entscheidet ihr BILD: /bombe
        zaehlt Ziffern herunter — das ist die digitale. /lunte brennt
        eine Zuendschnur ab. */
-    bombe:          { ton: "bombedigital", dauer: 4600, laut: 0.62 },
-    lunte:          { ton: "bombezunder", dauer: 4600, laut: 0.62 },
+    /* „Die soll nicht wie ein Wecker klingeln." Die neue Aufnahme
+       ist rein elektronisch, ohne Glocke. */
+    bombe:          { ton: "bombedigital2", dauer: 4600, laut: 0.62 },
+        lunte:          { ton: "bombezunder2", dauer: 4600, laut: 0.62 },
     /* „Bei dem streicheln moechte ich ein Katzen schnurren haben." */
     streicheln:     { ton: "schnurren", dauer: 3400, laut: 0.4 },
     /* „das Knutschen — da koenntest du noch einen Sound machen, da haben wir
        naemlich keinen. Da hoert man so ein Schussgeraeusch oder so." */
     kuss:           { ton: "kussmund", dauer: 3200, laut: 0.5 },
+    /* XANDER: „Die Herzen haben auch keinen eigenen Sound." Sie
+       hatten bisher nur einen synthetischen Dreiklang (lcTonFroh).
+       Jetzt zwei Herzschlaege und ein Harfenglissando. */
+    herz:           { ton: "herzton",  dauer: 3000, laut: 0.5 },
     matrix:         { ton: "matrix", dauer: 10000, schleife: true , laut: 0.34 },
     route66:        { ton: "route66", dauer: 10000, schleife: true , laut: 0.36 },
     /* GEMELDET: „die Melodie, die bei den Noten spielt, die hast du auch
@@ -24212,7 +24258,9 @@
        MIT Schleife — sie lief also zweieinhalbmal. Jetzt einmal. */
     noten:          { ton: "noten", dauer: 4200 },
     feuerwerk:      { ton: "feuerwerk", dauer: 9500, schleife: true , laut: 0.46 },
-    geld:           { ton: "geld", dauer: 9500, schleife: true , laut: 0.5 },
+    /* Erst klingelt die Kasse (lcGeldregen, 0 ms), 900 ms spaeter
+       faellt das Geld — sonst hoert man die Kasse nicht. */
+    geld:           { ton: "geld", dauer: 9500, schleife: true , laut: 0.5, spaet: 900 },
     bonbon:         { ton: "bonbon", dauer: 9000, schleife: true },
     /* Dasselbe: Augen, die auftauchen, sind ein Ereignis. Das
        Geraeusch lief 2,2-mal. */
@@ -24246,7 +24294,10 @@
        wie bei einem Strudel."
        Neue Aufnahme: 5 s echtes Sogwasser, nahtlos geschnitten, damit
        die Schleife nicht klickt. */
-    strudel:        { ton: "strudel2", dauer: 11000, schleife: true },
+    /* „Der Soundeffekt dazu ist ueberhaupt nicht passend, das klingt,
+       als wenn man die Toilette runtergespuelt wird." Neu als
+       Meeresstrudel aufgenommen, ausdruecklich ohne Abfluss. */
+    strudel:        { ton: "strudel3", dauer: 11000, schleife: true },
     schwamm:        { ton: "schwamm", dauer: 7000 },
     falten:         { ton: "falten", dauer: 6000 },
     boxen:          { ton: "boxen", dauer: 3400 , laut: 0.66 },
@@ -24260,7 +24311,10 @@
     gghai:          { ton: "jubel", dauer: 8200 },
     ggbaer:         { ton: "jubel", dauer: 8200 },
     regen:          { ton: "regen", dauer: 12000, schleife: true },
-    schnee:         { ton: "schnee", dauer: 12000, schleife: true },
+    /* GEFUNDEN: „schnee.opus" war 4 Sekunden VOLLSTAENDIG still —
+       eine tote Datei, gemessen mit werkzeug/ton-vorlauf-kappen.sh.
+       Neu aufgenommen als „schneefall". */
+    schnee:         { ton: "schneefall", dauer: 12000, schleife: true },
     orkan:          { ton: "orkan", dauer: 11000, schleife: true },
     erdbeben:       { ton: "erdbeben", dauer: 9000, schleife: true },
     halloween:      { ton: "halloween", dauer: 11000 },
@@ -24285,14 +24339,20 @@
        ein digitales, sondern richtig wie diese alten, analogen Wecker." */
     wecker:         { ton: "weckeranalog", dauer: 3200 , laut: 0.6 },
     /* „Der Hammer auch" — ein satter Schlag statt des alten Bonk. */
-    hammer:         { ton: "hammerschlag", dauer: 2000 , laut: 0.72 },
+    /* „Der Hammer hat immer noch keinen eigenen Sound." Doch — nur
+       war es ein dumpfer Schlag ohne Kontur. Jetzt Sausen, BONK und
+       ein kurzes Nachwackeln. */
+    hammer:         { ton: "hammerbonk", dauer: 2000 , laut: 0.75 },
     /* „Bei dem Tritt vom Fussball. Kann auch ein realistisches Kick
        Geraeusch rein." */
     tritt:          { ton: "fussball", dauer: 1800 , laut: 0.66 },
     /* „Das Wassergeraeusch, was von dem Eimer ins Profilbild
        geschuettet wird, koennen wir auch noch mal ueberarbeiten."
        Jetzt: Schwappen, Klatschen auf der Haut, Nachtropfen. */
-    eimer:          { ton: "eimerwasser", dauer: 2600 , laut: 0.62 },
+    /* „Bei dem Wassereimer-Geraeusch kannst du dieses typische
+       Blubbern machen, was es macht, wenn man das Wasser einmal
+       allmaehlich langsam fuellt." */
+    eimer:          { ton: "eimerfuellen", dauer: 4000 , laut: 0.62 },
     /* Die uebrigen Profilbild-Animationen leihen sich, was passt:
        Regen und Gewitter haben eigene Geraeusche, Geld und Bonbons
        auch. Nur die Herzen bleiben still — ein Herz macht kein
@@ -24721,6 +24781,19 @@
        der Plan, und die alte gleichnamige Datei bleibt als Rueckfall
        genau dort liegen, wo sie war. */
     const plan = LC_TON_PLAN[was];
+    /* RUNDE 59 — EIN BETT DARF DAS EREIGNIS NICHT UEBERTOENEN.
+       XANDER: „Das Geld hat immer noch kein Registerkassenklingeln."
+       Gemessen (werkzeug/pruefe-tonlage.js): die Kasse LIEF — sie
+       startete bei 10 ms, gleichzeitig mit dem 9,5 s langen
+       Geldregen-Bett bei 1 ms. Zwei Toene zugleich, und der leise
+       verschwindet im lauten. Deshalb kann ein Plan jetzt sagen, dass
+       er SPAETER anfaengt: die Kasse klingelt allein, dann faellt das
+       Geld. Dasselbe Mittel hilft ueberall dort, wo ein langes Bett
+       ueber einem kurzen Ereignis liegt. */
+    if (plan && plan.ton && plan.spaet > 0) {
+      setTimeout(() => { try { lcGeraeusch(plan.ton, was); } catch (e) {} }, plan.spaet);
+      return;
+    }
     if (plan && plan.ton && lcGeraeusch(plan.ton, was)) return;
     if (lcGeraeusch(was, was)) return;
     const f = LC_AUFKLEBER_TON[was] || LC_WIRKUNG_TON[was];
@@ -28086,7 +28159,10 @@
         if (nr.length) {
           lcUmarmungAnPlatz(nr[0], 0);
           lcTonZu("umarmen");
-          lcTonSpaeter("wohlig", 700, 0.55);
+          /* RUNDE 59 — XANDER: „Das Umarmungsgeraeusch soll nach Mann
+             und Frau unterschieden werden, je nach Geschlecht, das
+             man auf dem Profil eingestellt hat." */
+          lcStimmeZu(nr[0], "wohligmann", "wohligfrau", 700, 0.6);
           return true;
         }
       }
@@ -28123,8 +28199,12 @@
        man hoert, wie sich jemand wohlfuehlt, wenn er gedrueckt wird,
        dass da Liebe im Spiel ist."
        Der Seufzer kommt NACH dem Zufassen, nicht davor — erst die
-       Arme, dann das Wohlfuehlen. */
-    lcTonSpaeter("wohlig", 700, 0.55);
+       Arme, dann das Wohlfuehlen.
+       RUNDE 59: „Das Umarmungsgeraeusch soll nach Mann und Frau
+       unterschieden werden, je nach Geschlecht, das man auf dem
+       Profil eingestellt hat." Gemeint ist der UMARMTE — von dem
+       hoert man ja den Seufzer. */
+    lcStimmeZu(ziele && ziele[0], "wohligmann", "wohligfrau", 700, 0.6);
     return true;
   }
 
@@ -28582,21 +28662,41 @@
 
      Wo das Fahrzeuggeraeusch die Ankunft schon traegt (Tor, Beamen,
      Rohr, Maulwurf), steht hier bewusst nichts. */
+  /* RUNDE 59 — XANDER: „Beim Raddampfer, wenn er ankommt, da kommt
+     wieder so ein komisches Peitsch-Geraeusch, was ueberhaupt nicht
+     dazu passt. Genauso beim normalen Segelboot kommt am Ende auch
+     dieses schleifende Peitsch-Geraeusch. Das kannst du ueberhaupt
+     bei allen Sachen rausnehmen, wo es gar nicht reingehoert."
+     Und: „Das Flugzeug braucht kein Bremsgeraeusch." Und zur Lok:
+     „die hat ein Quietschgeraeusch."
+
+     Das „Peitschen" war „platsch" — ein kurzes Wasser-Schlagen, das
+     an einem 3,4 s langen Schiff wie ein Schleifer klingt. Und
+     „bremse" gehoert an ein Auto, nicht an ein Flugzeug und nicht an
+     eine Dampflok.
+
+     Deshalb steht hier jetzt nur noch, was WIRKLICH zum Fahrzeug
+     gehoert: der Kran setzt eine Last ab (bonk), die Liane, die Feder
+     und das Pferd landen. Wer ein eigenes Fahrgeraeusch hat, das die
+     ganze Strecke traegt — Flugzeug, Boot, Dampfer, Lok, Tor, Beamen,
+     Rohr, Maulwurf —, bekommt am Ende gar nichts mehr dazu. */
   const LC_ANKUNFT_TON = {
-    flug: "bremse", boot: "platsch", dampfer: "platsch", lok: "bremse",
     kran: "bonk", liane: "bonk", feder: "bonk", heli: "bonk", pferd: "bonk"
   };
 
   const LC_TREFFER = {
     tritt: 180,        /* 0,18 s — „das ist der Anstoss" */
-    hammer: 430,
+    /* 300 ms — genau dort fliegen die Sterne (lcHammerSchlag, 0,30 s).
+       Die alten 430 ms lagen 130 ms hinter dem Bild. */
+    hammer: 300,
     schneeball: 440,   /* die Flocken stieben ab 0,44 s */
     bumerang: 884,     /* 34 % von 2,6 s */
     saugpfeil: 714,    /* 21 % von 3,4 s */
     ei: 520,
     katapult: 676,     /* 26 % von 2,6 s, der Arm schnellt */
     peitsche: 780,     /* 30 % von 2,6 s, da knallt es (Runde 58: mit Ausholen) */
-    zwille: 1300,      /* 50 % von 2,6 s */
+    /* Das Dehnen faengt SOFORT an — es ist das erste, was passiert. */
+    zwille: 0,
     pusterohr: 1280,   /* 32 % von 4 s */
     /* 28 % von 2,6 s — GENAU dort sitzt die Hand am Gesicht
        (siehe @keyframes lcOhrfeigeHand, Schluesselbild 28 %). Die
@@ -28618,7 +28718,13 @@
     stoerung: 120,
     lichtaus: 646,     /* 17 % von 3,8 s — da klackt der Schalter */
     gluehbirne: 2320,  /* 58 % von 4 s — da zuendet sie */
-    muenze: 3700,      /* wenn sie hinfaellt */
+    /* RUNDE 59 — XANDER: „Der Sound von der Muenze faengt erst
+       danach an, nachdem die Muenze schon fertig gedreht ist. Das
+       macht ueberhaupt keinen Sinn."
+       Er hat recht, und hier stand es: 3700 ms, also nach der
+       ganzen Drehung. Der Ton IST das Drehen — er gehoert an den
+       Anfang, nicht ans Ende. */
+    muenze: 0,
     entbloessung: 660, /* 22 % von 3 s */
     hut: 620,          /* wenn er aufsetzt */
     bombe: 2100,       /* die Null, da platzt es */
@@ -29248,6 +29354,13 @@
         t.style.animationDelay = (1.5 + i * 0.55).toFixed(2) + "s";
         schicht.appendChild(t);
       }
+      /* XANDER: „Beim Aufprall des Schneeballs kann auch jeweils ein
+         maennlicher oder weiblicher Sound sein, der so ein bisschen
+         dumpf ist, als wenn man grad auf die Backe was geschossen
+         bekommen haette — so wie OGH."
+         Der Schneeball trifft bei 440 ms (LC_TREFFER.schneeball);
+         das Grunzen liegt 40 ms danach, also praktisch im Aufprall. */
+      lcStimmeZu(platz, "schneemann", "schneefrau", 480, 0.68);
     }, 3600, "schneeball");
   }
 
@@ -29710,7 +29823,10 @@
          (LC_TON_PLAN.schneekugel), und sobald die Flocken fallen —
          nach 1,1 s — setzt das Glissando ein. Es ist 7 s lang und
          deckt damit das ganze Rieseln ab. */
-      lcTonSpaeter("schneeglissando", 1100, 0.5);
+      /* XANDER: „Bei der Schneekugel kann die Musik weihnachtlicher
+         sein, ein bisschen festlicher — zwar auch das Glissando, aber
+         ein bisschen mehr Atmosphaere, die zu Weihnachten passt." */
+      lcTonSpaeter("schneeglissando2", 1100, 0.55);
       const kreis = platz.querySelector(".lc-kreis");
       const blende = lcZpBlende(schicht);
       /* Die kleine Landschaft: zwei Haeuschen und zwei Tannen, alles
@@ -31096,6 +31212,12 @@
         schicht.appendChild(sp);
       }
       schicht.insertAdjacentHTML("beforeend", '<span class="lc-paintfleck-kugel"></span>');
+      /* XANDER: „Nachdem das Paintball getroffen hat, kann man das
+         Slurp-Geraeusch hoeren, wie die Farbe runterlaeuft — nicht von
+         dem Menschen, sondern was die Farbe fuer ein Geraeusch machen
+         koennte, wenn sie so runterlaeuft."
+         Der Klecks sitzt bei 340 ms; das Laufen beginnt danach. */
+      lcTonSpaeter("farbelaeuft", 820, 0.6);
     }, 3600, "paintfleck");
   }
 
@@ -32114,6 +32236,9 @@
       lcReiseWaagerecht(lok, start, ende, dauer, hin, "lok");
       lcTonZu("lok");
     } else if (art === "liane") {
+      /* Der Tarzan-Ruf setzt kurz nach dem Abstossen ein und traegt
+         ueber den ganzen Schwung. */
+      lcTonSpaeter("tarzan", 260, 0.75);
       /* „eine Liane koennte auch noch mit drin sein" — man haengt
          daran und schwingt im Bogen hinueber. */
       const liane = document.createElement("span");
@@ -32247,7 +32372,15 @@
         + (ende.y - start.y) + "px) translate(-50%, -50%)", opacity: 0, offset: 1 });
       try { fed.animate(spruenge, { duration: dauer, easing: "linear", fill: "forwards" }); }
       catch (e) {}
-      lcTonZu("feder");
+      /* RUNDE 59 — XANDER: „Der Sound der Sprungfeder muss fuer jedes
+         Feld, auf das die Sprungfeder huepft, immer wieder dieses
+         Sprungfedergeraeusch haben und nicht nur einmal."
+         Die Feder setzt bei den GERADEN Schritten auf (0, 2, 4, 6 —
+         dazwischen liegt jeweils der Bogen). Genau dort klingt sie
+         jetzt, viermal statt einmal. */
+      for (let i = 0; i <= 6; i += 2) {
+        lcTonSpaeter("feder", Math.round((i / 6) * hin), i === 0 ? 0.5 : 0.42);
+      }
     } else if (art === "beamen") {
       /* „Das muss wirklich wie bei Star Trek und ein schoener
          Beameffekt sein." Zwei Saeulen: eine loest sich hier auf, die
@@ -33138,6 +33271,32 @@
     return Boolean(ich && suche === ich.trim().toLowerCase());
   }
 
+  /* EINE MUSCHEL VON DER SEITE. „links" sagt, auf welcher Seite der
+     Kopf steht: das Polster ist nur als schmaler Rand ZUM KOPF HIN
+     zu sehen, nicht als schwarzes Loch in der Mitte. */
+  function lcApmMuschel(x, rechts) {
+    const kopf = rechts ? x : x + 30;          /* wo der Kopf liegt */
+    const rand = rechts ? x + 1.6 : x + 26.4;  /* dort sitzt das Polster */
+    return '<g>'
+      /* Die eloxierte Aussenplatte — flach, hochoval, weiche Ecken. */
+      + '<rect x="' + x + '" y="66" width="30" height="36" rx="13.5"'
+      + ' fill="url(#apmL)" transform="translate(0,-10)"/>'
+      /* Die feine Kante, die die Platte vom Gehaeuse absetzt. */
+      + '<rect x="' + (x + 2.6) + '" y="58.6" width="24.8" height="30.8" rx="11.4"'
+      + ' fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.1"/>'
+      /* Der Glanz: ein schmaler Streifen, kein Ring. */
+      + '<path d="M' + (x + 7) + ' 64 C' + (x + 5.4) + ' 72 ' + (x + 5.4)
+      + ' 80 ' + (x + 7.6) + ' 86" fill="none" stroke="rgba(255,255,255,.45)"'
+      + ' stroke-width="1.8" stroke-linecap="round"/>'
+      /* Und das Polster: ein schmaler dunkler Rand ZUM KOPF hin —
+         mehr sieht man von der Seite nicht. */
+      + '<path d="M' + rand + ' 60 C' + (kopf > x + 15 ? rand + 3 : rand - 3)
+      + ' 68 ' + (kopf > x + 15 ? rand + 3 : rand - 3) + ' 80 '
+      + rand + ' 88" fill="none" stroke="#3c4a5a" stroke-width="3.4"'
+      + ' stroke-linecap="round"/>'
+      + "</g>";
+  }
+
   function lcKopfhoerer(wen, nachricht) {
     /* GEWUENSCHT: „dass ich ein Lied aussuchen kann und den Leuten
        dann dieses Lied auf die Ohren setzen kann aus dem Musikordner."
@@ -33197,65 +33356,71 @@
          duenne Teleskopstaebe an den Seiten, und grosse, fast
          quadratische Ohrmuscheln mit weichen Ecken und einem
          abgesetzten Polsterrand. Genau die sind hier gezeichnet. */
-      schicht.innerHTML =
-        '<svg class="lc-kopfhoerer-bild" viewBox="0 0 120 92">'
-        + '<defs><linearGradient id="apm1" x1="0" y1="0" x2="0" y2="1">'
-        + '<stop offset="0" stop-color="#cfd6e2"/><stop offset="1" stop-color="#96a0b2"/>'
-        + "</linearGradient>"
-        + '<linearGradient id="apm2" x1="0" y1="0" x2="1" y2="1">'
-        + '<stop offset="0" stop-color="#8e99ab"/><stop offset="1" stop-color="#5d6779"/>'
-        + "</linearGradient></defs>"
-        /* RUNDE 58 — XANDER: „Die Kopfhoerer, die die realistischen
-           AirPods Max sein sollten, sind viel zu globig. Schau dir die
-           originalen AirPods Max an."
+      /* RUNDE 59 — XANDER hat die AirPods Max sehr genau beschrieben:
+         „Die Kopfhoerer, die du gestaltest, sollten nicht bei den
+         Ohrteilen nach vorne offen sein, sondern die schwarzen
+         Kreisausschnitte, die du da hast, die sollen auf den Ohren
+         sein — also muss das von der Seite zu sehen sein. Das muss
+         also etwas duenner sein, dass man so einen kleinen Teil von
+         dem Luftpolster noch sieht, als ganz duennen Rand, und das
+         andere ist dieses metallic-blaue Over-Ear-Ding mit dem
+         Schaumstoff. Und die sind seitlich und nicht nach vorn, dass
+         man in die Hoermuschel gucken kann. Ausserdem sind die
+         Over-Ear-Teile viel zu sehr im Bild — die sollen ausserhalb
+         vom Profilbild liegen, so dass diese Dehnung zu spueren ist.
+         Die sind auch ein bisschen flacher. Die Metallbuegel sind
+         ganz duenn, und oben ist einfach nur diese Bruecke wie bei
+         den AirPods Max im Original."
 
-           Nachgesehen und nachgemessen. Woran es lag:
-           · Das Stoffdach war ein 13 px dicker Strich, der den ganzen
-             Bogen entlanglief — beim Original ist das Netz kurz und
-             FLACH und haengt UNTER einem duennen Stahlbuegel. Jetzt:
-             Buegel 4,6 px, Netz nur zwischen x 36 und 84.
-           · Die Teleskopstaebe waren 6 px dicke Kloetze von 22 px.
-             Beim Original sind es duenne, lange Staebe. Jetzt 3,4 px
-             breit.
-           · Die Muscheln waren 34 auf 40 px mit einem Radius von 14 —
-             das ist fast ein Quadrat, also ein Klotz. Beim Original
-             sind sie hochoval und schmaler als hoch: jetzt 27 auf 35.
-           · Die Digital Crown lag als Balken neben der Muschel. Sie
-             sitzt OBEN AUF der rechten Muschel, daneben die Taste
-             fuer die Geraeuschunterdrueckung. */
-        /* Der Stahlbuegel — duenn, nicht dick. */
-        + '<path d="M24 50 C24 20 40 9 60 9 C80 9 96 20 96 50"'
-        + ' fill="none" stroke="url(#apm1)" stroke-width="4.6"'
+         Daraus folgt jede einzelne Zahl hier:
+         · Die viewBox ist von 120 auf 148 Einheiten breit geworden,
+           und die Muscheln sitzen ganz aussen (x 0-30 und 118-148).
+           Mit 152 % Breite (Stylesheet) liegen sie damit LINKS und
+           RECHTS NEBEN dem Bild, nicht darauf.
+         · Keine schwarze Flaeche mehr in der Mitte der Muschel — das
+           war der Blick IN die Hoermuschel. Von der Seite sieht man
+           die eloxierte Aussenplatte; vom Polster ist nur ein
+           schmaler dunkler Rand an der Kopfseite zu sehen.
+         · Flacher: 30 auf 36 statt 27 auf 35, dafuer mit einem
+           ruhigen Verlauf statt eines dicken Rings.
+         · Der Buegel ist ein 3,4 px duenner Stahlbogen, und OBEN
+           haengt nur die Bruecke aus Stoffnetz darunter. */
+      schicht.innerHTML =
+        '<svg class="lc-kopfhoerer-bild" viewBox="0 0 148 92">'
+        + '<defs>'
+        /* Das eloxierte Himmelblau der Aussenplatte, von oben hell
+           nach unten dunkel — so faellt Licht auf Aluminium. */
+        + '<linearGradient id="apmL" x1="0" y1="0" x2="0.3" y2="1">'
+        + '<stop offset="0" stop-color="#cfe0ef"/><stop offset=".45" stop-color="#9dbdd8"/>'
+        + '<stop offset="1" stop-color="#6d90b0"/></linearGradient>'
+        + '<linearGradient id="apmS" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#c2d4e4"/><stop offset="1" stop-color="#7f9cb8"/>'
+        + "</linearGradient></defs>"
+        /* DER STAHLBUEGEL — duenn, und er spannt sich ueber den Kopf. */
+        + '<path d="M17 58 C17 22 40 8 74 8 C108 8 131 22 131 58"'
+        + ' fill="none" stroke="url(#apmS)" stroke-width="4.2"'
         + ' stroke-linecap="round"/>'
-        /* Das Stoffnetz haengt DARUNTER und ist kurz und flach. */
-        + '<path d="M35 25.5 C44 16.5 76 16.5 85 25.5'
-        + ' C76 22.5 44 22.5 35 25.5 Z" fill="#c3cbd8"/>'
-        + '<path d="M36.5 23.8 C45 18.6 75 18.6 83.5 23.8"'
-        + ' fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.1"'
-        + ' stroke-dasharray="1 2.2" stroke-linecap="round"/>'
-        /* Die Teleskopstaebe: duenn und lang. */
-        + '<rect x="22.3" y="44" width="3.4" height="20" rx="1.7" fill="#b6bfcd"/>'
-        + '<rect x="94.3" y="44" width="3.4" height="20" rx="1.7" fill="#b6bfcd"/>'
+        /* DIE BRUECKE: nur oben, aus Stoffnetz, und sie haengt UNTER
+           dem Buegel — genau wie beim Original. */
+        + '<path d="M46 24.5 C56 14.5 92 14.5 102 24.5'
+        + ' C92 20.5 56 20.5 46 24.5 Z" fill="#aebfd0"/>'
+        + '<path d="M48 22.6 C57.5 16.4 90.5 16.4 100 22.6"'
+        + ' fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1"'
+        + ' stroke-dasharray="1 2" stroke-linecap="round"/>'
+        /* DIE TELESKOPSTAEBE — ganz duenn und lang. */
+        + '<rect x="15.4" y="50" width="3.2" height="16" rx="1.6" fill="#b6c6d6"/>'
+        + '<rect x="129.4" y="50" width="3.2" height="16" rx="1.6" fill="#b6c6d6"/>'
         /* Das Gelenk, an dem die Muschel haengt. */
-        + '<rect x="19.5" y="60" width="9" height="6" rx="3" fill="#9aa4b4"/>'
-        + '<rect x="91.5" y="60" width="9" height="6" rx="3" fill="#9aa4b4"/>'
-        /* Die Muscheln: hochoval, schmaler als hoch. */
-        + '<rect x="5" y="54" width="27" height="35" rx="12.5" fill="url(#apm2)"/>'
-        + '<rect x="88" y="54" width="27" height="35" rx="12.5" fill="url(#apm2)"/>'
-        /* Der schmale Glanzstreifen auf dem eloxierten Aluminium. */
-        + '<path d="M9 62 C8 70 8 76 10 82" fill="none"'
-        + ' stroke="rgba(255,255,255,.3)" stroke-width="1.6" stroke-linecap="round"/>'
-        + '<path d="M92 62 C91 70 91 76 93 82" fill="none"'
-        + ' stroke="rgba(255,255,255,.3)" stroke-width="1.6" stroke-linecap="round"/>'
-        /* Das Polster, abgesetzt und dunkel. */
-        + '<rect x="9.5" y="58.5" width="18" height="26" rx="9" fill="#39404f"/>'
-        + '<rect x="92.5" y="58.5" width="18" height="26" rx="9" fill="#39404f"/>'
+        + '<rect x="12" y="62" width="10" height="5.5" rx="2.7" fill="#9db0c2"/>'
+        + '<rect x="126" y="62" width="10" height="5.5" rx="2.7" fill="#9db0c2"/>'
+        + lcApmMuschel(0, false)
+        + lcApmMuschel(118, true)
         /* Die Digital Crown sitzt OBEN AUF der rechten Muschel,
            daneben die Taste fuer die Geraeuschunterdrueckung. */
-        + '<rect x="96" y="49.5" width="10" height="5" rx="2.5" fill="#aab3c2"/>'
-        + '<path d="M98 50.4 V53.6 M100 50.4 V53.6 M102 50.4 V53.6 M104 50.4 V53.6"'
-        + ' stroke="#7d8798" stroke-width="0.8"/>'
-        + '<rect x="108" y="50.4" width="5" height="3.4" rx="1.7" fill="#aab3c2"/>'
+        + '<rect x="126" y="58" width="11" height="5" rx="2.5" fill="#c3d2e0"/>'
+        + '<path d="M128.4 58.9 V62.1 M130.6 58.9 V62.1 M132.8 58.9 V62.1'
+        + ' M135 58.9 V62.1" stroke="#8098ad" stroke-width="0.8"/>'
+        + '<rect x="139" y="58.8" width="5" height="3.4" rx="1.7" fill="#c3d2e0"/>'
         + "</svg>";
       /* Noten, die aus den Muscheln steigen — sonst sind es nur zwei
          schwarze Klumpen am Kopf. */
@@ -33555,6 +33720,20 @@
       .trim().toLowerCase();
     return /^(w|f)/.test(g) ? "aufrau" : "aumann";
   }
+  /* RUNDE 59 — EINE STIMME OBENDRAUF, DER EFFEKT BLEIBT, WIE ER IST.
+     XANDER: „Vielleicht machst du dann einen Sound, der gleichzeitig
+     parallel kommt, damit wir den eigentlichen Soundeffekt nicht
+     veraendern — dass nur das Schreien noch dazu addiert wird, von
+     entweder Mann oder Frau."
+     Genau das macht diese Zeile: sie legt eine Stimme DARUEBER, zum
+     gewuenschten Zeitpunkt, und ruehrt den Effektton nicht an. Welche
+     Stimme, entscheidet das Geschlecht DES GETROFFENEN — das steht am
+     Platz (data-lc-geschlecht, siehe livechat.js: plaetzeBauen). */
+  function lcStimmeZu(platz, mann, frau, wann, laut) {
+    const g = String((platz && platz.dataset && platz.dataset.lcGeschlecht) || "")
+      .trim().toLowerCase();
+    lcTonSpaeter(/^(w|f)/.test(g) ? frau : mann, wann, laut);
+  }
 
   /* --- DIE OHRFEIGE --------------------------------------------------- */
   function lcOhrfeige(wen) {
@@ -33582,11 +33761,18 @@
         + "</svg>"
         + '<span class="lc-ohrfeige-klatsch">KLATSCH</span>';
       /* XANDER: „dann moechte ich abhaengig vom Geschlecht ... ein
-         Schmerzgeraeusch von der Frau." Der Klatsch sitzt bei 730 ms
-         (LC_TREFFER), der Schmerzlaut kommt 200 ms spaeter — erst
-         trifft es, dann tut es weh. Welche Datei, entscheidet das
+         Schmerzgeraeusch von der Frau."
+         RUNDE 59 — XANDER: „Das Schmerzgeraeusch nach dem
+         Ohrfeigen-Klatschgeraeusch kommt viel zu spaet. Das muss in
+         dem Moment, wenn es aufprallt, schon weh tun und hoerbar
+         sein." GEMESSEN: „ohrfeige.opus" hatte 0,25 s stummen
+         Vorlauf und „aumann.opus" 0,54 s — aus 200 ms Abstand im
+         Code wurden damit fast 500 ms im Ohr. Beide Dateien sind
+         jetzt vorn gekappt (werkzeug/ton-vorlauf-kappen.sh), und
+         der Abstand betraegt nur noch 60 ms: der Schmerz liegt
+         praktisch IM Schlag. Welche Datei, entscheidet das
          Geschlecht DES GETROFFENEN, nicht des Absenders. */
-      lcTonSpaeter(lcSchmerzTon(platz), 930, 0.7);
+      lcTonSpaeter(lcSchmerzTon(platz), 790, 0.75);
     }, 2600, "ohrfeige");
   }
 
@@ -33752,7 +33938,13 @@
          Metall zu hoeren ist, wie das klingt, wenn der Ball so
          zirkuliert in diesem Gestell."
          Genau das ist „korbrand": Ring, Scheppern, Netz, Aufprall. */
-      if (art !== "tennis") lcTonSpaeter("korbrand", 3600, 0.6);
+      /* XANDER hat den gewuenschten Klang selbst beschrieben: „Das
+         soll realistisches Kreisen, ein schepperndes Ertoenen sein,
+         wie wenn ein Basketball in so einen Korb reinscheppert und
+         dadurch geht, und man hoert das Geruest mit der Halterung,
+         wo der Korb festigt ist, mit Scheppern."
+         Genau danach ist „korbscheppern" aufgenommen. */
+      if (art !== "tennis") lcTonSpaeter("korbscheppern", 3600, 0.68);
     }, art === "tennis" ? 3000 : 5200, art === "tennis" ? "tennis" : "basketball");
   }
 
@@ -34030,12 +34222,28 @@
          auch so ein Au Geraeusch." Drei Toene, drei Zeitpunkte:
          das Dehnen laeuft schon (LC_TON_PLAN), hier folgen das
          Schnalzen beim Loslassen und das AUA beim Aufprall. */
-      lcTonSpaeter("zwille", 850, 0.6);
-      /* XANDER: „dann moechte ich abhaengig vom Geschlecht ... ein
-         Schmerzgeraeusch von der Frau." Dasselbe AUA wie bei der
-         Ohrfeige, nur spaeter — hier trifft die Kugel erst bei
-         1,5 s. */
-      lcTonSpaeter(lcSchmerzTon(platz), 1500, 0.65);
+      /* RUNDE 59 — XANDER: „Die Zwille klingt auch nicht wie ein
+         gedehntes Gummiband und danach ein Schuss." Und: „Bei der
+         Zwille hoert man vorher schon das Schmerzgeraeusch, bevor
+         die Zwille ueberhaupt los schiesst."
+
+         GEMESSEN (werkzeug/pruefe-tonlage.js und
+         werkzeug/ton-vorlauf-kappen.sh): die Datei „zwille.opus"
+         war ueber 1,5 s lang STILL, bevor ueberhaupt etwas zu
+         hoeren war. Der Schnalzer, hier auf 850 ms gelegt, klang
+         also in Wirklichkeit erst bei 2400 ms — lange nach dem
+         Schmerzlaut bei 1500. Im Code stand nichts Falsches, in
+         der Datei schon.
+
+         Jetzt traegt EINE Aufnahme den ganzen Ablauf (Dehnen,
+         Schnalzen, Sausen) von Anfang an, und der Schmerz kommt
+         genau dann, wenn die Kugel ankommt. */
+      /* Ein Schuss tut mehr weh als eine Ohrfeige: hier der kraeftige
+         Schrei, dort das kurze „au". Beides nach Geschlecht. */
+      /* Der Schuss, dann der Treffer, dann der Schrei — in dieser
+         Reihenfolge, und keine Sekunde anders herum. */
+      lcTonSpaeter("zwille3", 1150, 0.62);
+      lcStimmeZu(platz, "schreimann", "schreifrau", 1480, 0.72);
     }, 2600, "zwille");
   }
 
@@ -34074,6 +34282,13 @@
          es zielt dahin, wo die Kugel hinfliegt. */
       lcBeimSchuetzen(platz, "lc-puste-halt",
         '<span class="lc-puste-rohr"></span>', 4000);
+      /* XANDER: „Das Geraeusch, was der Mensch macht, wenn er den
+         Spuckball empfaengt, klingt total bescheuert — das klingt gar
+         nicht natuerlich beim Aufprall."
+         Der Treffer liegt bei 1280 ms (LC_TREFFER.pusterohr): dort
+         jetzt ein nasses Klatschen, danach das kurze „au". */
+      lcTonSpaeter("spucktreffer", 1280, 0.7);
+      lcStimmeZu(platz, "aumann", "aufrau", 1400, 0.55);
     }, 4000, "pusterohr");
   }
 

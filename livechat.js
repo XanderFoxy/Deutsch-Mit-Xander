@@ -10646,6 +10646,15 @@ window.LiveChat = (function () {
         { wirkung: art === "fahren" ? "fahren" : "spielzug", wen: kette,
           tempo: String(tempoF) });
     }
+    /* RUNDE 59 — XANDER: „Uebrigens ist unser Film-Lok auch gar nicht
+       mehr da. Ich habe sie im Code versucht zu suchen, sie ist nicht
+       mehr da."
+       Sie war da, aber nicht mehr unter „/lok": seit die Lok auch eine
+       REISE ist, verlangt „/lok" einen Namen und antwortet sonst nur
+       mit „So geht es: /lok Nickname". Jetzt gilt beides, und zwar so,
+       wie man es erwartet: „/lok Emmi" faehrt sie hinueber, „/lok"
+       allein zeigt den Film. */
+    if (art === "lok" && !rest) art = "gglok";
     if (AM_PLATZ[art]) {
       var wemP = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       if (!wemP) return systemZeile("So geht es:  /" + art + " Nickname");
