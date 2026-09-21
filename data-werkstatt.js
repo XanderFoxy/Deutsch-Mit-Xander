@@ -49,18 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 46 — der Transporter",
+  stand: "Runde 47 — Großbild-Fehler gefunden, Sprechbilder am Rand",
 
   inArbeit: [
-    { seit: "2026-09-21T01:15", nurBetreiber: true,
-      text: "Das „Profilbild geht beim Antippen groß auf\" konnte ich nicht nachstellen — sag mir bitte, wo genau das passiert" },
+    { seit: "2026-09-21T01:27",
+      text: "Fenster/Jalousie-Kulissen, Schneekugel, Raddampfer, Liane, Helikopter, Pferd" },
+    { seit: "2026-09-21T01:27",
+      text: "Whiteboard: Werkzeuge ausblenden, Rückschritt, Speichern, Pointer" },
+    { seit: "2026-09-21T01:27",
+      text: "Tutor-Video mit Greenscreen statt Alphakanal" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-21T01:15",
-      text: "Beamen: das Bild selbst löst sich jetzt in senkrechte Lichtbänder auf, wird gleissend hell und zieht nach oben weg — drüben setzt es sich rückwärts wieder zusammen" },
-    { seit: "2026-09-21T01:15",
-      text: "Die Säule hat eine senkrechte Struktur und einen hellen Deckel oben, statt eine glatte Nebelfläche zu sein" },
+    { seit: "2026-09-21T01:27",
+      text: "GEFUNDEN: auf jedem Platz lagen ZWEI Uhren für den langen Druck — 480 ms öffnete das Menü, 620 ms zog das Bild groß. Wer das Menü aufmacht, löste immer beides aus. Die zweite Uhr ist weg, groß zeigen macht nur noch die Lupe" },
+    { seit: "2026-09-21T01:27",
+      text: "GEFUNDEN: alle Sprech-Teilchen sassen seit jeher übereinander in der Bildmitte — Prozente im transform messen die Breite des TEILCHENS (5 px), nicht des Feldes. Der Platz steht jetzt in left/top" },
+    { seit: "2026-09-21T01:27",
+      text: "Feuer: echte Flammen, die überall nach OBEN schlagen und auf dem Ring sitzen — nichts mehr in der Mitte" },
+    { seit: "2026-09-21T01:27",
+      text: "Funkeln und Magie sind jetzt Partikel am Rand statt eines Musters, das sich dreht" },
+    { seit: "2026-09-21T01:27",
+      text: "Blütenblätter kleiner, Schallwellen senden drei Ringe, Herzschlag glüht warm rot, Noten sind bunt und deutlicher" },
+    { seit: "2026-09-21T01:27",
+      text: "Umarmung: Namen werden über den gespeicherten Namen gefunden, nicht über die Beschriftung mit du-Zusatz" },
   ],
 };

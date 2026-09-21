@@ -3318,6 +3318,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   48%      { transform: scale(1.08, .9)   skewX(5deg);  opacity: .78; }
   74%      { transform: scale(.95, 1.06)  skewX(-3deg); opacity: .96; }
 }
+
 @keyframes lcZuengeltA {
   0%, 100% { transform: scale(1.04, .94)  skewX(4deg);  opacity: .84; }
   30%      { transform: scale(.88, 1.2)   skewX(-8deg); opacity: 1; }
@@ -10487,21 +10488,30 @@ body.lc-schreibt .tutor-reiter {
    der Kreis schneidet ab, was ueber das Profilbild hinausragt, und
    genau dort sollen die Sterne ja tanzen. Es deckt das Quadrat des
    Bildes ab und darf darueber hinaus. */
+/* ZWEITE FALLE IM SELBEN FELD: die Höhe stand auf 0 und wurde nur
+   über „padding-bottom: 144 %" aufgespannt. Prozente in „top" zählen
+   aber die HÖHE — und 50 % von 0 sind 0. Alle Teilchen klebten damit
+   an der Oberkante, sobald sie über top gesetzt wurden. Mit
+   aspect-ratio hat das Feld eine echte Höhe. */
 .lc-sprechfeld {
   position: absolute;
   left: -22%;
   right: -22%;
   top: -22%;
-  height: 0;
-  padding-bottom: 144%;
+  aspect-ratio: 1;
   border-radius: 50%;
   pointer-events: none;
   z-index: 4;
 }
+/* Der Platz eines Teilchens steht in left/top — dort zählen Prozente
+   das FELD. Im transform zählten sie die Breite des Teilchens selbst,
+   und ein Funke ist fünf Pixel breit: „80 %" waren vier Pixel, und
+   alle Teilchen sassen übereinander in der Bildmitte. Das transform
+   trägt jetzt nur noch Bewegung und Grösse. */
 .lc-teilchen {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  left: var(--links, 50%);
+  top: var(--oben, 50%);
   font-style: normal;
   line-height: 1;
   will-change: transform, opacity;
@@ -10522,21 +10532,16 @@ body.lc-schreibt .tutor-reiter {
   animation-direction: alternate;
 }
 @keyframes lcGlissando {
-  0% {
-    transform: rotate(var(--wo)) translateX(var(--weit)) rotate(calc(-1 * var(--wo))) scale(0.5);
-    opacity: calc(var(--hell) * 0.35);
-  }
-  50% {
-    transform: rotate(calc(var(--wo) + 44deg)) translateX(calc(var(--weit) + 6%))
-               rotate(calc(-1 * var(--wo) - 44deg)) scale(var(--gross, 1));
-    opacity: var(--hell);
-  }
-  100% {
-    transform: rotate(calc(var(--wo) + 88deg)) translateX(var(--weit))
-               rotate(calc(-1 * var(--wo) - 88deg)) scale(0.6);
-    opacity: calc(var(--hell) * 0.4);
-  }
+  0%   { transform: translate(-50%, -50%) scale(.35) rotate(0deg); opacity: 0; }
+  20%  { transform: translate(-50%, -50%) scale(var(--gross, 1)) rotate(40deg);
+         opacity: var(--hell, .9); }
+  62%  { transform: translate(calc(-50% + .14em), calc(-50% - .18em))
+                    scale(calc(var(--gross, 1) * .8)) rotate(120deg);
+         opacity: calc(var(--hell) * .7); }
+  100% { transform: translate(calc(-50% + .24em), calc(-50% - .34em)) scale(.3)
+                    rotate(190deg); opacity: 0; }
 }
+
 
 /* --- Noten: Musik steigt auf ------------------------------------- */
 .lc-tnoten .lc-teilchen,
@@ -10549,7 +10554,24 @@ body.lc-schreibt .tutor-reiter {
   animation-timing-function: ease-out;
   animation-iteration-count: infinite;
 }
-.lc-tnoten .lc-teilchen { color: #ffe9a8; text-shadow: 0 0 6px rgba(0, 0, 0, .35); }
+/* XANDER: „die Noten kannst du bisschen deutlicher und bunter
+   machen."
+   Vorher waren alle blass gelb und gleich gross. Jetzt bekommt jede
+   Note ihre eigene Farbe aus einer festen Reihe (nth-child, damit es
+   ohne zusätzliches JavaScript geht), sie sind grösser und tragen
+   einen dunklen Rand, damit sie auf jedem Bild stehen. */
+.lc-tnoten .lc-teilchen {
+  font-size: calc(0.62rem * var(--gross, 1) + 0.34rem);
+  color: #ffe9a8;
+  -webkit-text-stroke: .6px rgba(35, 25, 10, .5);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .55), 0 0 8px currentColor;
+}
+.lc-tnoten .lc-teilchen:nth-child(6n + 1) { color: #ff8fb1; }
+.lc-tnoten .lc-teilchen:nth-child(6n + 2) { color: #ffd45e; }
+.lc-tnoten .lc-teilchen:nth-child(6n + 3) { color: #79dca0; }
+.lc-tnoten .lc-teilchen:nth-child(6n + 4) { color: #7fc4f5; }
+.lc-tnoten .lc-teilchen:nth-child(6n + 5) { color: #c79bf7; }
+.lc-tnoten .lc-teilchen:nth-child(6n + 6) { color: #ffa96b; }
 .lc-therzen .lc-teilchen { color: #ff7a9c; text-shadow: 0 0 6px rgba(0, 0, 0, .3); }
 @keyframes lcSteigtAuf {
   0%   { opacity: 0; transform: translate(-50%, 0) scale(.5) rotate(-8deg); }
@@ -10559,21 +10581,65 @@ body.lc-schreibt .tutor-reiter {
 }
 
 /* --- Feuer: Flammen züngeln am Rand ------------------------------ */
+/* --- FEUER: ECHTE FLAMMEN, DIE NACH OBEN SCHLAGEN ----------------
+   XANDER: „bei dem Feuer bei dem Sprach Effekt realistische Flammen
+   wie bei einem Feuerring, nicht so als Blume, sondern realistisches
+   Feuer … in der Mitte soll kein Feuer sein, nur am Rand soll das
+   richtig flackern … wie diese kleinen Fake-Lagerfeuer, wo die
+   Stoffwimpel nach oben lodern. Und die müssen von der Physik auch an
+   so einem brennenden Reifen nach oben — die können nicht nach unten
+   flammen."
+
+   Genau das war der Fehler: die Zunge wurde mit „rotate(--wo)" auf
+   die Kreisbahn gedreht und BEHIELT diese Drehung. Unten am Ring
+   stand sie damit auf dem Kopf. Jetzt wird nach dem Versetzen um
+   denselben Winkel ZURÜCKGEDREHT — dann steht jede Flamme aufrecht,
+   egal wo auf dem Ring sie sitzt. Der Drehpunkt liegt unten (die
+   Flamme sitzt auf dem Ring und züngelt nach oben), und sie ist
+   schmaler und kleiner als vorher: „die dürfen auch nicht so extrem
+   gross sein". */
 .lc-tfeuer .lc-teilchen {
-  width: calc(0.3rem * var(--gross, 1) + 0.2rem);
-  height: calc(0.7rem * var(--gross, 1) + 0.3rem);
-  border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%;
-  background: linear-gradient(to top, #ff3d00, #ffb300 62%, #fff0a8);
-  filter: blur(0.5px);
-  animation-name: lcZuengelt;
+  width: calc(0.2rem * var(--gross, 1) + 0.1rem);
+  height: calc(0.42rem * var(--gross, 1) + 0.18rem);
+  border-radius: 50% 50% 46% 46% / 72% 72% 28% 28%;
+  background: linear-gradient(to top, #ff2d00, #ff7a00 34%, #ffc400 68%, #fff3b0);
+  transform-origin: 50% 100%;
+  filter: blur(0.35px) drop-shadow(0 0 3px rgba(255, 140, 20, .55));
+  animation-name: lcZuengeltSprichtR47;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
 }
-@keyframes lcZuengelt {
-  0%   { transform: rotate(var(--wo)) translateX(var(--weit)) scale(.5, .7); opacity: .3; }
-  40%  { transform: rotate(var(--wo)) translateX(var(--weit)) scale(1, 1.25); opacity: var(--hell, .9); }
-  100% { transform: rotate(var(--wo)) translateX(calc(var(--weit) + 4%)) scale(.4, .5); opacity: 0; }
+/* EIGENER NAME, und das ist kein Schoenheitsfehler: „lcZuengelt"
+   gehoert dem Lagerfeuer. Zwei Keyframe-Bloecke gleichen Namens —
+   der letzte gewinnt, und dann flackert das Lagerfeuer nach den
+   Regeln der Sprechflamme. */
+@keyframes lcZuengeltSprichtR47 {
+  0%   { transform: translate(-50%, -100%) scale(.62, .55) skewX(3deg); opacity: .45; }
+  35%  { transform: translate(-50%, -100%) scale(1, 1.3) skewX(-5deg);
+         opacity: var(--hell, .95); }
+  68%  { transform: translate(-50%, -100%) scale(.84, .98) skewX(6deg); opacity: .85; }
+  100% { transform: translate(-50%, -100%) scale(.55, .5) skewX(0deg); opacity: .3; }
 }
+
+/* --- FUNKELN: Teilchen, kein Muster ------------------------------- */
+.lc-tfunkeln .lc-teilchen {
+  font-size: calc(0.42rem * var(--gross, 1) + 0.22rem);
+  color: #ffffff;
+  text-shadow: 0 0 5px rgba(255, 250, 210, .95), 0 0 11px rgba(255, 220, 120, .55);
+  animation-name: lcFunkeltR47;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+@keyframes lcFunkeltR47 {
+  0%, 100% { transform: translate(-50%, -50%) scale(.2) rotate(0deg); opacity: 0; }
+  18%      { transform: translate(-50%, -50%) scale(var(--gross, 1)) rotate(25deg);
+             opacity: var(--hell, .95); }
+  46%      { transform: translate(calc(-50% + .08em), calc(-50% - .1em))
+                        scale(calc(var(--gross, 1) * .7)) rotate(60deg); opacity: .55; }
+  70%      { transform: translate(calc(-50% + .14em), calc(-50% - .2em))
+                        scale(.3) rotate(95deg); opacity: 0; }
+}
+
 
 /* --- Strom: Blitze zucken ---------------------------------------- */
 /* Ein Blitz ist kein Strich und kein Kreuz: er knickt. Die Form
@@ -10595,14 +10661,14 @@ body.lc-schreibt .tutor-reiter {
 /* Ein Blitz steht nie lange: er ist dreiviertel der Zeit gar nicht da
    und blitzt dann zweimal kurz auf — einmal kurz, einmal laenger. */
 @keyframes lcZuckt {
-  0%, 71%, 100% { opacity: 0;
-                  transform: rotate(var(--wo)) translateX(var(--weit)) rotate(90deg) scale(.5); }
-  73%           { opacity: 1;
-                  transform: rotate(var(--wo)) translateX(var(--weit)) rotate(90deg) scale(1.15); }
-  77%           { opacity: 0;
-                  transform: rotate(var(--wo)) translateX(var(--weit)) rotate(90deg) scale(.8); }
-  80%, 88%      { opacity: 1;
-                  transform: rotate(var(--wo)) translateX(var(--weit)) rotate(90deg) scale(1); }
+  0%, 100%     { opacity: 0;
+                 transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg)) scale(.5); }
+  8%           { opacity: var(--hell, .95);
+                 transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg)) scale(1.15); }
+  20%          { opacity: .35;
+                 transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg)) scale(.8); }
+  32%          { opacity: var(--hell, .95);
+                 transform: translate(-50%, -50%) rotate(calc(var(--wo) + 90deg)) scale(1); }
 }
 
 /* --- Blasen: Seifenblasen steigen auf ---------------------------- */
@@ -16892,10 +16958,12 @@ body.lc-schreibt .tutor-reiter {
 }
 /* Ohne passenden Effekt bleibt die Schicht leer. */
 .lc-platz-spricht::after { display: none; }
+/* Feuer, Funkeln und Magie liegen seit Runde 47 als echte TEILCHEN
+   vor (siehe .lc-tfeuer / .lc-tfunkeln / .lc-tmagie). Zwei Schichten
+   übereinander gaben den Blumen-Eindruck, den XANDER gemeldet hat:
+   „realistische Flammen wie bei einem Feuerring, nicht so als Blume".
+   Deshalb steht hier nur noch, was es sonst nirgends gibt. */
 .lc-platz-spricht[data-sprechbild="bluete"]::after,
-.lc-platz-spricht[data-sprechbild="feuer"]::after,
-.lc-platz-spricht[data-sprechbild="funkeln"]::after,
-.lc-platz-spricht[data-sprechbild="magie"]::after,
 .lc-platz-spricht[data-sprechbild="regenbogen"]::after,
 .lc-platz-spricht[data-sprechbild="welle"]::after,
 .lc-platz-spricht[data-sprechbild="strom"]::after { display: block; }
@@ -16916,11 +16984,15 @@ body.lc-schreibt .tutor-reiter {
 @keyframes lcSfBlueteR35 {
   0%   { transform: translateX(-50%) scale(.9) rotate(-45deg); opacity: 0; }
   40%  { opacity: .9; }
-  100% { transform: translateX(-50%) scale(1.8) rotate(0deg); opacity: 1; }
+  /* XANDER: „Die Blütenblätter von der Blume kannst du etwas kleiner
+     machen, die sind riesig, die dürfen nicht so extrem gross sein."
+     Faktor 1.8 hiess: die Blüte war fast doppelt so breit wie das
+     Bild und lag über den Nachbarplätzen. Jetzt 1.42. */
+  100% { transform: translateX(-50%) scale(1.42) rotate(0deg); opacity: 1; }
 }
 @keyframes lcSfBlueteAtmenR35 {
-  0%, 100% { transform: translateX(-50%) scale(1.8) rotate(0deg); }
-  50%      { transform: translateX(-50%) scale(1.88) rotate(6deg); }
+  0%, 100% { transform: translateX(-50%) scale(1.42) rotate(0deg); }
+  50%      { transform: translateX(-50%) scale(1.5) rotate(6deg); }
 }
 
 /* --- FEUER: ein Feuerring wie im Zirkus, außen am Rand -------------
@@ -17014,14 +17086,24 @@ body.lc-schreibt .tutor-reiter {
 }
 
 /* --- SCHALLWELLEN: groß und weit, wie ein Echo --------------------- */
+/* XANDER: „bei den Schallwellen kannst du mehr Ringe raussenden,
+   nicht nur einen."
+   Ein Element kann nur EINEN Rand haben — mehrere Ringe gehen aber
+   über box-shadow: jeder Schatten mit wachsendem Radius ist ein
+   weiterer Ring. Drei laufen gleichzeitig nach aussen, versetzt. */
 .lc-platz-spricht[data-sprechbild="welle"]::after {
   border: 2px solid rgba(120, 220, 255, .85);
-  box-shadow: 0 0 .5em rgba(120, 220, 255, .5);
-  animation: lcSfWelleR35 1.6s cubic-bezier(.2, .7, .4, 1) infinite;
+  animation: lcSfWelleR35 1.8s cubic-bezier(.2, .7, .4, 1) infinite;
 }
 @keyframes lcSfWelleR35 {
-  0%   { transform: translateX(-50%) scale(1); opacity: .9; border-width: 3px; }
-  100% { transform: translateX(-50%) scale(2.1); opacity: 0; border-width: 1px; }
+  0%   { transform: translateX(-50%) scale(1); opacity: .95; border-width: 3px;
+         box-shadow: 0 0 0 0 rgba(120, 220, 255, .55),
+                     0 0 0 0 rgba(120, 220, 255, .38),
+                     0 0 0 0 rgba(120, 220, 255, .22); }
+  100% { transform: translateX(-50%) scale(1.9); opacity: 0; border-width: 1px;
+         box-shadow: 0 0 0 9px rgba(120, 220, 255, 0),
+                     0 0 0 19px rgba(120, 220, 255, 0),
+                     0 0 0 30px rgba(120, 220, 255, 0); }
 }
 
 /* --- STROM: ganz feine Verästelungen bis zum Rand ------------------ */
@@ -17057,13 +17139,31 @@ body.lc-schreibt .tutor-reiter {
   border-color: #ff4d5e !important;
   animation: lcSfPulsR35 1.15s cubic-bezier(.3, 0, .2, 1) infinite !important;
 }
+/* XANDER: „bei dem Herzschlag kannst du ein schöneres rotes Glühen
+   machen, das würde sehr viel schöner aussehen."
+   Vorher war es EIN harter Ring, der aufging und verschwand. Jetzt
+   liegt ein warmes, weiches Glühen darunter, das mit dem Schlag
+   heller wird (der zweite, breite Schatten ohne Rand), und darüber
+   der Ring, der hinausläuft. Zwei Schläge, dann Ruhe — „lub-dub". */
 @keyframes lcSfPulsR35 {
-  0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(255, 77, 94, .55); }
-  12%  { transform: scale(1.09); box-shadow: 0 0 0 5px rgba(255, 77, 94, .28); }
-  22%  { transform: scale(1.01); box-shadow: 0 0 0 7px rgba(255, 77, 94, .12); }
-  34%  { transform: scale(1.06); box-shadow: 0 0 0 9px rgba(255, 77, 94, .1); }
-  48%  { transform: scale(1);    box-shadow: 0 0 0 12px rgba(255, 77, 94, 0); }
-  100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(255, 77, 94, 0); }
+  0%   { transform: scale(1);
+         box-shadow: 0 0 0 0 rgba(255, 77, 94, .55),
+                     0 0 10px 2px rgba(255, 60, 80, .3); }
+  12%  { transform: scale(1.09);
+         box-shadow: 0 0 0 5px rgba(255, 77, 94, .3),
+                     0 0 26px 8px rgba(255, 50, 70, .62); }
+  22%  { transform: scale(1.01);
+         box-shadow: 0 0 0 7px rgba(255, 77, 94, .14),
+                     0 0 18px 5px rgba(255, 60, 80, .4); }
+  34%  { transform: scale(1.06);
+         box-shadow: 0 0 0 9px rgba(255, 77, 94, .12),
+                     0 0 30px 10px rgba(255, 40, 62, .55); }
+  48%  { transform: scale(1);
+         box-shadow: 0 0 0 12px rgba(255, 77, 94, 0),
+                     0 0 16px 4px rgba(255, 60, 80, .3); }
+  100% { transform: scale(1);
+         box-shadow: 0 0 0 0 rgba(255, 77, 94, 0),
+                     0 0 10px 2px rgba(255, 60, 80, .26); }
 }
 
 @media (prefers-reduced-motion: reduce) {

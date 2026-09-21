@@ -22002,7 +22002,13 @@
               zeichen: ["\u266a", "\u266b", "\u266c", "\u2669"] },
     herzen: { menge: 10, klasse: "lc-therzen",
               zeichen: ["\u2665", "\u2764", "\ud83d\udc96"] },
-    feuer:  { menge: 12, klasse: "lc-tfeuer", rand: true, zeichen: [""] },
+    feuer:  { menge: 16, klasse: "lc-tfeuer", rand: true, zeichen: [""] },
+    /* XANDER: „das funkeln ist kein funkeln … das muss nicht so
+       Lineal sein, das kann so ein bisschen Partikel sein."
+       Also echte Teilchen wie bei Magie und Noten, jedes mit eigener
+       Stelle und eigenem Takt — nicht ein Muster, das sich dreht. */
+    funkeln:{ menge: 20, klasse: "lc-tfunkeln", rand: true,
+              zeichen: ["\u2726", "\u2727", "\u00b7", "\u2728"] },
     strom:  { menge: 10, klasse: "lc-tstrom", rand: true, zeichen: [""] },
     blasen: { menge: 16, klasse: "lc-tblasen", zeichen: [""] }
   };
@@ -22837,8 +22843,28 @@
       t.className = "lc-teilchen";
       const z = bau.zeichen[i % bau.zeichen.length];
       if (z) t.textContent = z;
-      t.style.setProperty("--wo", (i * (360 / bau.menge) + Math.random() * 18 - 9).toFixed(1) + "deg");
-      t.style.setProperty("--weit", (48 + Math.random() * 16).toFixed(0) + "%");
+      /* HIER LAG DER FEHLER, UND ER ERKLAERT SEHR VIEL AUF EINMAL.
+         XANDER: „es soll niemals irgendwas im Kreis sein ausser den
+         Blasen und bei dem Eis", „in der Mitte soll kein Feuer sein",
+         „bei Magie da sind die in der Mitte".
+
+         Die Teilchen wurden mit „rotate(--wo) translateX(--weit)" auf
+         ihre Kreisbahn gesetzt. Prozente in einem translateX zaehlen
+         aber die Breite des TEILCHENS — und ein Funke ist fuenf Pixel
+         breit. „80 %" waren damit vier Pixel, nicht vier Fuenftel des
+         Feldes: ALLE Teilchen sassen uebereinander in der Bildmitte,
+         seit es sie gibt.
+
+         Der Platz steht deshalb jetzt in left/top, und dort zaehlen
+         Prozente das FELD. Gerechnet wird in Prozent der Feldbreite:
+         das Feld ist 144 % so gross wie das Bild, der Bildrand liegt
+         also bei 34,7 % vom Mittelpunkt. Wer aussen gehoert („rand"),
+         sitzt bei 36 bis 46 % — knapp ausserhalb des Bildes. */
+      const winkel = (i * (360 / bau.menge) + Math.random() * 18 - 9) * Math.PI / 180;
+      const radius = bau.rand ? 40 + Math.random() * 8 : 14 + Math.random() * 18;
+      t.style.setProperty("--wo", (winkel * 180 / Math.PI).toFixed(1) + "deg");
+      t.style.setProperty("--links", (50 + Math.cos(winkel) * radius).toFixed(1) + "%");
+      t.style.setProperty("--oben", (50 + Math.sin(winkel) * radius).toFixed(1) + "%");
       /* Deutlicher als vorher: groesser und heller. Die Blasen bekommen
          die groesste Spanne — „unterschiedliche Groessen" war
          ausdruecklich gewuenscht, und eine Seifenblase, die so gross
@@ -22847,7 +22873,14 @@
       const spanne = art === "blasen" ? 1.7 : 1.1;
       t.style.setProperty("--gross", (0.7 + Math.random() * spanne).toFixed(2));
       t.style.setProperty("--hell", (0.62 + Math.random() * 0.38).toFixed(2));
-      t.style.setProperty("--links", (10 + Math.random() * 80).toFixed(0) + "%");
+      /* Blasen, Noten und Herzen steigen von unten auf — die stehen
+         nicht auf einer Kreisbahn, sondern verteilt ueber die Breite.
+         Fuer sie (und NUR fuer sie) wird --links neu gewuerfelt; die
+         Zeile stand vorher ohne Bedingung hier und hat damit jede
+         berechnete Kreisbahn wieder ueberschrieben. */
+      if (art === "blasen" || art === "noten" || art === "herzen") {
+        t.style.setProperty("--links", (10 + Math.random() * 80).toFixed(0) + "%");
+      }
       t.style.animationDuration = (1.5 + Math.random() * 2.2).toFixed(2) + "s";
       t.style.animationDelay = (-Math.random() * 3).toFixed(2) + "s";
       feld.appendChild(t);
@@ -27698,10 +27731,13 @@
          Kleinschreibung ist egal — wer „/drück emmy" tippt, meint
          Emmy. */
       const suche = String(wen).trim().toLowerCase();
-      ziele = [...karte.querySelectorAll(".lc-platz")].filter((pl) => {
-        const nm = pl.querySelector(".lc-platz-name");
-        return nm && nm.textContent.trim().toLowerCase() === suche;
-      });
+      ziele = [...karte.querySelectorAll(".lc-platz")].filter(
+        (pl) => lcNameVomPlatz(pl).toLowerCase() === suche);
+      /* Und wirklich nur EINER: zwei Plaetze mit derselben
+         Beschriftung (etwa waehrend eines Platztauschs) haben sonst
+         beide die Arme bekommen — „bei der Umarmung werden immer noch
+         beide Personen gleichzeitig umarmt". */
+      if (ziele.length > 1) ziele = [ziele[0]];
     }
     if (!ziele.length && !String(wen || "").trim()) {
       /* NIEMAND GENANNT: dann gilt es allen, die wirklich da sind.
@@ -30100,15 +30136,32 @@
   /* Den Platz einer Person finden — streng, ohne Rueckfall auf „alle".
      lcZielPlaetze gibt bei einem unbekannten Namen ALLE Plaetze
      zurueck; beim Fahren waere das ein Unfall (alle fahren los). */
+  /* DER NAME EINES PLATZES — und zwar der ECHTE.
+     XANDER: „Okay wenn ich mich alleine umarme, dann wird eine andere
+     Person mit umarmt" und „bei der Umarmung werden immer noch beide
+     Personen gleichzeitig umarmt."
+     Der Grund steckte in der Beschriftung: der eigene Platz traegt
+     „Alex (du)", die Nachricht aber den Namen „Alex". Der Vergleich
+     mit der Beschriftung schlug damit auf dem EIGENEN Platz immer
+     fehl — und was dann passierte, haengt am jeweiligen Effekt:
+     mancher traf niemanden, mancher fiel auf „alle" zurueck. Deshalb
+     zaehlt jetzt zuerst der gespeicherte Name (data-lc-name), und die
+     Beschriftung nur als Rueckfall, ohne das angehaengte „(du)". */
+  function lcNameVomPlatz(pl) {
+    if (!pl) return "";
+    const echt = (pl.dataset && pl.dataset.lcName) ? pl.dataset.lcName : "";
+    if (echt) return echt.trim();
+    const nm = pl.querySelector(".lc-platz-name");
+    return nm ? nm.textContent.replace(/\s*\(du\)\s*$/i, "").trim() : "";
+  }
+
   function lcPlatzMitNamen(name) {
     const karte = document.getElementById("livechatKarte");
     if (!karte || !name) return null;
     const suche = String(name).trim().toLowerCase();
     if (!suche) return null;
-    return [...karte.querySelectorAll(".lc-platz")].find((pl) => {
-      const nm = pl.querySelector(".lc-platz-name");
-      return nm && nm.textContent.trim().toLowerCase() === suche;
-    }) || null;
+    return [...karte.querySelectorAll(".lc-platz")].find(
+      (pl) => lcNameVomPlatz(pl).toLowerCase() === suche) || null;
   }
 
   /* --- DER PAINTBALL AUF EIN PROFILBILD -----------------------------
@@ -36607,25 +36660,23 @@
          Druck weiter — und der eigene Platz macht es weiterhin mit
          einem Tipp. Ein Hinweis sagt das beim ersten Mal, sonst
          sucht man es. */
+      /* HIER LAG DER FEHLER, UND ER WAR HANDFEST.
+         XANDER, mehrfach gemeldet: „wenn man einen Effekt auf jemand
+         anderen anwendet, passiert es immer noch, dass er im Grossbild
+         angezeigt wird. Das soll nicht so sein."
+
+         Nachgesehen: auf JEDEM Platz lagen ZWEI Uhren fuer den langen
+         Druck. Die eine (lcPlatzMenueBinden, 480 ms) oeffnet das
+         Platzmenue, die andere (hier, 620 ms) zog das Bild gross. Wer
+         das Menue aufmacht, um einen Effekt zu waehlen, haelt den
+         Finger laenger als 620 ms — und loeste damit IMMER beides aus.
+         Genau das hat er gesehen.
+
+         Die zweite Uhr ist deshalb weg. Gross zeigen macht jetzt nur
+         noch die Lupe im Menue — „man soll die anderen gross zeigen
+         koennen und dafuer die Lupe haben". */
       area.querySelectorAll("[data-lc-platz]").forEach((k) => {
-        let langGesehen = false;
-        let grossUhr = null;
-        const grossMachen = (id) => {
-          langGesehen = true;
-          LiveChat.grossZeigen(id);
-        };
-        k.addEventListener("pointerdown", () => {
-          langGesehen = false;
-          const nr = Number(k.dataset.lcPlatz);
-          const p = LiveChat.lage().plaetze.find((x) => x.nummer === nr);
-          if (!p || p.leer || p.ich) return;      // eigener Platz: siehe unten
-          clearTimeout(grossUhr);
-          grossUhr = setTimeout(() => grossMachen(p.id), 620);
-        });
-        ["pointerup", "pointerleave", "pointercancel"].forEach((e) =>
-          k.addEventListener(e, () => clearTimeout(grossUhr)));
         k.addEventListener("click", () => {
-          if (langGesehen) { langGesehen = false; return; }
           const nr = Number(k.dataset.lcPlatz);
           const p = LiveChat.lage().plaetze.find((x) => x.nummer === nr);
 

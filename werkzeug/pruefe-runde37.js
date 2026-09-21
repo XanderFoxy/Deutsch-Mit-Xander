@@ -37,7 +37,11 @@ const pruefe = (was, gut, zusatz) => {
   console.log((gut ? "  ok   " : "  FEHL ") + was + (zusatz ? "   " + zusatz : ""));
 };
 
-const SPRECHBILDER = ["bluete", "feuer", "funkeln", "magie", "regenbogen", "welle", "strom"];
+/* Feuer, Funkeln und Magie liegen seit Runde 47 als echte TEILCHEN
+   vor (lcSprechFeld), nicht mehr als Farbschicht — sie werden weiter
+   unten mit einer eigenen Messung geprueft. */
+const SPRECHBILDER = ["bluete", "regenbogen", "welle", "strom"];
+const TEILCHENBILDER = ["feuer", "funkeln", "magie"];
 
 (async () => {
   const srv = http.createServer((q, a) => {
@@ -230,6 +234,50 @@ const SPRECHBILDER = ["bluete", "feuer", "funkeln", "magie", "regenbogen", "well
       Boolean(d.animation) && d.animation !== "none", d.animation);
     pruefe(art + ": sie wächst über den Bildrand hinaus",
       d.gross > 1.15, "Faktor " + d.gross.toFixed(2) + " bei " + d.bild + " px Bild");
+  }
+
+  /* ---------- 7. Die Teilchen liegen AUSSERHALB des Bildes ----- */
+  console.log("\nFEUER, FUNKELN UND MAGIE — TEILCHEN AM RAND\n");
+  /* XANDER: „es soll niemals irgendwas im Kreis sein ausser den
+     Blasen und bei dem Eis", „in der Mitte soll kein Feuer sein",
+     „bei Magie da sind die in der Mitte".
+     Die Teilchen wurden mit „translateX(--weit)" auf ihre Kreisbahn
+     gesetzt — Prozente zaehlen dort aber die Breite des TEILCHENS,
+     und ein Funke ist fuenf Pixel breit. Alle sassen uebereinander in
+     der Bildmitte. Gemessen wird deshalb der echte Abstand jedes
+     Teilchens von der Bildmitte. */
+  for (const art of TEILCHENBILDER) {
+    const d = await pg.evaluate(async (a) => {
+      document.querySelectorAll(".lc-platz").forEach((p) => {
+        p.classList.remove("lc-platz-spricht"); p.removeAttribute("data-sprechbild");
+        const f = p.querySelector(".lc-sprechfeld"); if (f) f.remove();
+      });
+      const pl = document.querySelectorAll(".lc-platz")[1];
+      pl.classList.add("lc-platz-spricht");
+      pl.setAttribute("data-sprechbild", a);
+      window.DMA_PRUEFUNG.sprechFeld(pl, a);
+      await new Promise((f) => setTimeout(f, 300));
+      const kreis = pl.querySelector(".lc-kreis").getBoundingClientRect();
+      const mx = kreis.left + kreis.width / 2, my = kreis.top + kreis.height / 2;
+      const teile = [...pl.querySelectorAll(".lc-teilchen")];
+      const abstand = teile.map((t) => {
+        const b = t.getBoundingClientRect();
+        return Math.hypot(b.left + b.width / 2 - mx, b.top + b.height / 2 - my);
+      });
+      return { anzahl: teile.length, r: kreis.width / 2,
+               naechster: abstand.length ? Math.min.apply(null, abstand) : 0,
+               weitester: abstand.length ? Math.max.apply(null, abstand) : 0 };
+    }, art);
+    pruefe(art + ": es gibt Teilchen", d.anzahl >= 10, d.anzahl + " Stück");
+    /* „drin" heisst: die Mitte des Teilchens liegt deutlich innerhalb
+       des Bildes. Beim Feuer darf die Flamme ueber den Rand lecken,
+       ihr Fusspunkt liegt aber draussen. */
+    pruefe(art + ": keines sitzt mitten im Bild",
+      d.naechster > d.r * 0.72,
+      "nächstes " + Math.round(d.naechster) + " px, Bildradius " + Math.round(d.r) + " px");
+    pruefe(art + ": sie liegen auf einem Ring, nicht gehäuft",
+      (d.weitester - d.naechster) < d.r * 0.9,
+      "Spanne " + Math.round(d.weitester - d.naechster) + " px");
   }
 
   await br.close(); srv.close();
