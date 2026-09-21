@@ -23237,3 +23237,293 @@ body.lc-schreibt .tutor-reiter {
 .lc-bowling .lc-kegel-1 { animation-delay: 0s; }
 .lc-bowling .lc-kegel-2 { animation-delay: .05s; }
 .lc-bowling .lc-kegel-3 { animation-delay: .1s; }
+
+/* =================================================================
+   RUNDE 74 — DIE KOPFHÖRER LIEGEN AUF DEM KREIS
+   -----------------------------------------------------------------
+   XANDER: „Denk daran, dass du die Bügel mit der Kreisrundung
+   mitfährst … Die können auch noch ein bisschen enger reingehen,
+   dass jemand, der rechts oder links von mir sitzt, nicht mit meinem
+   Design korreliert."
+
+   NACHGERECHNET am Bildschirm: ein Platzbild ist 84 px breit, der
+   Abstand zweier Plätze 91 px — zwischen zwei Bildern liegen also
+   genau 7 px. Bei 122 % ragte die Zeichnung 9,25 px je Seite heraus,
+   zwei Nachbarn hätten sich um 11,5 px überlappt. Bei 112 % sind es
+   5,04 px je Seite; die Muschel selbst steht nur 3,1 px über den
+   Bildrand. Zwei Nachbarn berühren sich gerade eben.
+
+   Die Zeichnung ist jetzt QUADRATISCH (viewBox 160 × 160) und liegt
+   mittig über dem Bild — nur so lässt sich der Bügel als echter
+   Kreisbogen um dieselbe Mitte legen. Bei 112 % Breite und quadrat-
+   ischem Kasten steht der obere Rand 6 % über dem Bild.
+   ================================================================= */
+.lc-kopfhoerer-bild {
+  width: 112%;
+  margin-left: -56%;
+  top: -6%;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .34));
+}
+
+/* =================================================================
+   RUNDE 74 — DIE LIANE HÄNGT AN EINEM FESTEN PUNKT
+   -----------------------------------------------------------------
+   XANDER: „Die Liane hat immer noch keinen Mittelpunkt in der
+   Bildmitte auf der X-Achse … es gibt gar keinen richtig
+   realistischen, physikalischen Schwung."
+
+   Die alte Form war für eine VERSCHIEBUNG gebaut: das Element war
+   der Reisende, das Seil ragte nach oben heraus, und der Drehpunkt
+   lag mit `transform-origin: 50% calc(-1 * var(--seil))` irgendwo
+   über dem Startplatz — also wanderte er mit.
+
+   Jetzt ist das Element DAS SEIL selbst: es steht mit seinem oberen
+   Ende auf dem Anker (`transform-origin: 50% 0`), seine Höhe ist die
+   Seillänge, und der Reisende hängt an seinem unteren Ende. Damit
+   ist eine Drehung um den Anker wirklich ein Pendel — mehr braucht
+   es nicht, und alles andere wäre wieder ein Tanz.
+   ================================================================= */
+.lc-liane.lc-liane-pendel {
+  width: calc(var(--gross, 64px) * 0.9);
+  height: var(--seil, 120px);
+  margin: 0;
+  transform-origin: 50% 0;
+  transform: translate(-50%, 0);
+  overflow: visible;
+}
+.lc-liane.lc-liane-pendel .lc-liane-seil {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: auto;
+  width: 24px;
+  margin-left: -12px;
+  height: 100%;
+  /* Das Wiegen in sich ist raus: es kam ZUSÄTZLICH zum Schwung und
+     war genau das „Tanzen". Ein Seil, das am Pendel hängt, wiegt
+     nicht noch einmal für sich. */
+  animation: none !important;
+}
+.lc-liane.lc-liane-pendel .lc-liane-last {
+  position: absolute;
+  inset: auto;
+  left: 50%;
+  top: 100%;
+  width: calc(var(--gross, 64px) * 0.78);
+  height: calc(var(--gross, 64px) * 0.78);
+  /* GEMESSEN: bei -32 % sass die Bildmitte 12 px UNTER dem Seilende,
+     und der Reisende kam dadurch 14 px zu tief am Platz an. Bei
+     -50 % liegt sie genau auf dem Seilende — dort, wo eine Hand am
+     Seil waere. */
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+}
+
+/* RUNDE 74 — der Rahmen zwischen Frontscheibe und Kinnscheibe. */
+.lc-heli-saeule {
+  fill: none;
+  stroke: #b7c6d8;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+/* =================================================================
+   RUNDE 74 — DIE KANZEL IST DEUTLICH ABGESCHRÄGT
+   -----------------------------------------------------------------
+   XANDER: „Das Helikopterfenster ist immer noch nicht abgeschrägt
+   vorne. Das ist keine schräge Scheibe."
+
+   NACHGERECHNET an dem, was seit Runde 73 dastand: die Vorderkante
+   lief von 21 % oben auf 0 % unten — bei einem 21,5 % breiten
+   Fenster auf einem 100 px grossen Bild sind das 4,5 px Versatz auf
+   21 px Höhe, also 12 Grad aus der Senkrechten. Das sieht man nicht.
+   Die Frontscheibe daneben ist mit 47 Grad geneigt; das Kabinen-
+   fenster muss dieselbe Linie aufnehmen, sonst wirkt es aufgeklebt.
+   Jetzt läuft die Kante von 44 % oben auf 0 % unten — 9,5 px auf
+   21 px, also 24 Grad, und zusammen mit der Neigung des Rumpfes
+   liest das Auge sie als dieselbe Schräge wie die Frontscheibe.
+   Damit das Gesicht dabei nicht beschnitten wird, ist das Fenster
+   von 21,5 auf 24 % gewachsen.
+   ================================================================= */
+.lc-heli-kanzel {
+  width: 24%;
+  aspect-ratio: 1.02;
+  clip-path: polygon(
+    /* die schräge Vorderkante — oben deutlich weiter hinten */
+    44% 0%, 86% 0%,
+    /* hintere obere Ecke, rund */
+    93% 3%, 98% 12%, 100% 26%,
+    100% 72%,
+    /* hintere untere Ecke, rund */
+    98% 88%, 93% 97%, 86% 100%,
+    /* die Unterkante bis nach ganz vorn */
+    5% 100%,
+    /* vordere untere Ecke, leicht gebrochen */
+    1% 95%, 0% 86%
+  );
+}
+
+
+/* =================================================================
+   RUNDE 74 — DIE AUFSCHÜTTUNG VON OBEN, NICHT VON DER SEITE
+   -----------------------------------------------------------------
+   XANDER: „Die Aufschüttung geht nicht von der Draufsicht, sondern
+   sie ist immer noch unterhalb seitlich, und es ist keine richtige
+   Aufschüttung. Das sind nur kleine Klumpen und keine Klumpen in
+   verschiedener Größe, die wirklich nach Erdaufschüttung aussehen …
+   von oben zu sehen, als wenn man mit einem Flugzeug darauf guckt.
+   Also müssen es viele kleine kreisartige Krümel sein."
+
+   NACHGESEHEN an dem, was dastand — und er hat in jedem Punkt recht:
+   · `width: .42` zu `height: .23` ist ein Verhältnis von 1,8 : 1,
+     also ein liegendes Oval. Von oben ist ein Maulwurfshügel aber
+     rund.
+   · `border-radius: 50% 50% 46% 54% / 82% 84% 20% 18%` ist oben
+     rund und unten flach — genau die Silhouette eines Hügels VON
+     DER SEITE.
+   · `box-shadow: 0 1px 2px` wirft einen Schatten nach UNTEN. Von
+     oben gibt es keinen Schlagschatten, nur einen weichen Saum.
+   · Ein einziger Verlauf ergibt einen Klumpen. Krümel sind viele
+     kleine Kreise in verschiedenen Größen.
+
+   Jetzt: rund (0,40 zu 0,36, also fast 1 : 1), neun Krümel von 7 bis
+   19 % Radius in fünf Braunstufen, ein weicher Saum ringsum statt
+   eines Schattens nach unten — und jeder Haufen bekommt in app.js
+   seine eigene Größe.
+   ================================================================= */
+.lc-erdhaufen {
+  width: calc(var(--gross, 64px) * .40);
+  height: calc(var(--gross, 64px) * .36);
+  margin: calc(var(--gross, 64px) * -.18) 0 0 calc(var(--gross, 64px) * -.20);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 31% 52%, #6a4a2c 0 18%, rgba(0,0,0,0) 21%),
+    radial-gradient(circle at 47% 78%, #9a744b 0 8%, rgba(0,0,0,0) 11%),
+    radial-gradient(circle at 30% 37%, #6a4a2c 0 15%, rgba(0,0,0,0) 18%),
+    radial-gradient(circle at 82% 31%, #6a4a2c 0 9%, rgba(0,0,0,0) 12%),
+    radial-gradient(circle at 45% 68%, #6a4a2c 0 13%, rgba(0,0,0,0) 16%),
+    radial-gradient(circle at 73% 51%, #9a744b 0 11%, rgba(0,0,0,0) 14%),
+    radial-gradient(circle at 56% 35%, #6a4a2c 0 9%, rgba(0,0,0,0) 12%),
+    radial-gradient(circle at 19% 43%, #6a4a2c 0 12%, rgba(0,0,0,0) 15%),
+    radial-gradient(circle at 84% 32%, #9a744b 0 8%, rgba(0,0,0,0) 11%),
+    radial-gradient(circle closest-side, rgba(106, 74, 44, .9) 0 44%,
+                    rgba(92, 64, 38, .62) 68%, rgba(78, 55, 32, .24) 86%,
+                    rgba(70, 49, 28, 0) 100%);
+  /* Kein Schlagschatten — von oben sieht man keinen, und auf dem
+     hellen Untergrund wurde daraus ein heller Ring um jeden Haufen.
+     Die Kante macht jetzt der Verlauf selbst: er läuft weich aus. */
+  box-shadow: none;
+  filter: none;
+}
+
+/* =================================================================
+   RUNDE 74 — DIE ANGEL HAT IHRE EIGENE BEWEGUNG
+   -----------------------------------------------------------------
+   XANDER: „Der Angelhaken funktioniert immer noch nicht unabhängig
+   vom Lasso … mit dem Angelhaken soll ich jeden Menschen an eine
+   x-beliebige Stelle hin angeln können, und mit dem Lasso soll ich
+   den einfach nur zu mir ranziehen."
+
+   Beide benutzten dieselbe Klasse `.lc-gehoben`, und die zieht seit
+   Runde 51 zu MIR (lcZuMirR51). Damit war die Angel auch dann ein
+   Lasso, wenn der Befehl sie richtig ausgewählt hatte. Die Angel
+   bekommt deshalb hier ihre eigene Klasse — und ihre eigene Physik:
+   erst anheben (ein Fisch kommt aus dem Wasser), dann hinüber zum
+   gewählten Platz schwenken, dort absetzen.
+   ================================================================= */
+.lc-geangelt {
+  animation: lcGeangeltR74 2.4s linear both;
+}
+@keyframes lcGeangeltR74 {
+  /* Solange der Haken fliegt, rührt sich nichts. */
+  0%, 30% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  /* 34 % = 816 ms: der Haken sitzt, die Schnur strafft sich. */
+  34%  { transform: translate(0, -3%) scale(1.02) rotate(1.5deg); }
+  /* ANHEBEN — senkrecht, wie an einer Angel. */
+  42%  { transform: translate(calc(var(--angelx, 0px) * .08), calc(var(--angely, 0px) * .06 - 14%))
+                    scale(.98) rotate(-3deg); }
+  /* HINÜBERSCHWENKEN: die Abstände werden erst größer, dann wieder
+     kleiner — ein Gewicht an einer Schnur wird nicht gleichmäßig
+     getragen, es schwingt. */
+  52%  { transform: translate(calc(var(--angelx, 0px) * .30), calc(var(--angely, 0px) * .26 - 15%))
+                    scale(.96) rotate(-6deg); }
+  62%  { transform: translate(calc(var(--angelx, 0px) * .62), calc(var(--angely, 0px) * .56 - 13%))
+                    scale(.95) rotate(-4deg); }
+  72%  { transform: translate(calc(var(--angelx, 0px) * .86), calc(var(--angely, 0px) * .82 - 9%))
+                    scale(.96) rotate(2deg); }
+  /* ABSETZEN. */
+  82%  { transform: translate(var(--angelx, 0px), calc(var(--angely, 0px) - 3%))
+                    scale(.99) rotate(4deg); }
+  88%  { transform: translate(var(--angelx, 0px), var(--angely, 0px))
+                    scale(1.02, .97) rotate(0deg); }
+  100% { transform: translate(var(--angelx, 0px), var(--angely, 0px))
+                    scale(1) rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) { .lc-geangelt { animation: none; } }
+
+/* =================================================================
+   RUNDE 74 — DER QUEUE STÖSST, ER ZIEHT NICHT
+   -----------------------------------------------------------------
+   XANDER: „Wenn der Queue die Kugel anstösst, dann sieht das nicht so
+   aus, als ob er auf die Kugel trifft. Das sieht aus, als wenn er die
+   Kugel an mich ran schlägt."
+
+   ZWEI URSACHEN, und beide sind nachrechenbar:
+   · Über `lcQueue` lag `cubic-bezier(.3, 0, .25, 1)` für die GANZE
+     Animation. Der Stoss stand bei 26 %, lag damit aber wirklich bei
+     22 % der Zeit — und der Rückzug bei 34 % schon bei 26 %. Stoss
+     und Rückzug rückten so dicht zusammen, dass man den Stoss kaum
+     sah, den Rückzug aber schon.
+   · Der Queue ging nach dem Stoss von +18 % auf -4 % und dann auf
+     -40 % zurück — WÄHREND die Kugel noch am Bild lag. Genau das
+     liest das Auge als Ziehen.
+   · Und die weisse Kugel rollte nach dem Treffer wieder zum Spieler
+     zurück (lcStossRollt bringt sie auf var(--wx) zurück). Eine
+     Spielkugel rollt nach dem Stoss weiter oder bleibt liegen; zum
+     Queue zurück rollt sie nie.
+
+   Jetzt: `linear`, der Stoss bei 26 % (= 624 ms von 2,4 s) und ein
+   DURCHZUG danach — der Queue bleibt vorn stehen und wird dort
+   ausgeblendet. Die Kugel rollt an, trifft und bleibt liegen.
+   ================================================================= */
+.lc-billard .lc-stoss-queue {
+  animation: lcQueueR74 2.4s linear both;
+}
+@keyframes lcQueueR74 {
+  0%   { opacity: 0; transform: translateX(-34%) rotate(var(--wdreh, 0deg)); }
+  8%   { opacity: 1; transform: translateX(-26%) rotate(var(--wdreh, 0deg)); }
+  /* AUSHOLEN: langsam zurück. */
+  16%  { transform: translateX(-38%) rotate(var(--wdreh, 0deg)); }
+  20%  { transform: translateX(-40%) rotate(var(--wdreh, 0deg)); }
+  /* DER STOSS: die Abstände werden grösser, er wird also schneller. */
+  22%  { transform: translateX(-30%) rotate(var(--wdreh, 0deg)); }
+  24%  { transform: translateX(-12%) rotate(var(--wdreh, 0deg)); }
+  /* 26 % von 2,4 s = 624 ms: HIER trifft er die Kugel. */
+  26%  { transform: translateX(10%)  rotate(var(--wdreh, 0deg)); }
+  /* DURCHZUG — ein Queue bleibt nach dem Stoss vorn, er springt
+     nicht zurück. */
+  30%  { transform: translateX(16%)  rotate(var(--wdreh, 0deg)); }
+  46%  { opacity: 1; transform: translateX(16%) rotate(var(--wdreh, 0deg)); }
+  62%, 100% { opacity: 0; transform: translateX(14%) rotate(var(--wdreh, 0deg)); }
+}
+/* Und die Kugel: sie rollt an, trifft bei 26 % und bleibt liegen —
+   sie rollt nicht zum Spieler zurück. */
+.lc-billard .lc-stoss-kugel {
+  animation: lcBillardKugelR74 2.4s linear both;
+}
+@keyframes lcBillardKugelR74 {
+  0%   { opacity: 0; transform: translate(var(--wx, 240%), var(--wy, 0%)) scale(.7) rotate(0deg); }
+  6%   { opacity: 1; transform: translate(calc(var(--wx, 240%) * .96), calc(var(--wy, 0%) * .96)) scale(.72) rotate(30deg); }
+  /* Sie liegt still, bis der Queue sie trifft. */
+  24%  { opacity: 1; transform: translate(calc(var(--wx, 240%) * .82), calc(var(--wy, 0%) * .82)) scale(.78) rotate(60deg); }
+  /* 26 % — der Stoss. Ab hier wird sie schnell. */
+  26%  { transform: translate(calc(var(--wx, 240%) * .78), calc(var(--wy, 0%) * .78)) scale(.8) rotate(96deg); }
+  32%  { transform: translate(calc(var(--wx, 240%) * .54), calc(var(--wy, 0%) * .54)) scale(.86) rotate(250deg); }
+  38%  { transform: translate(calc(var(--wx, 240%) * .28), calc(var(--wy, 0%) * .28)) scale(.93) rotate(420deg); }
+  /* 44 % = 1056 ms: sie liegt am Bild an. */
+  44%  { transform: translate(0, 0) scale(1) rotate(560deg); }
+  /* Durchzug: ein kleines Stück weiter, dann steht sie. */
+  50%  { transform: translate(-6%, 0) scale(1) rotate(608deg); }
+  56%, 88% { opacity: 1; transform: translate(-8%, 0) scale(1) rotate(620deg); }
+  100% { opacity: 0; transform: translate(-8%, 0) scale(1) rotate(620deg); }
+}

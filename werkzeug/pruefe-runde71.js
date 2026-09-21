@@ -58,22 +58,25 @@ console.log("\nDIE LIANE HOLT ANLAUF UND BLEIBT IM BILD");
    geworden"). Geprueft wird jetzt, dass sie wieder lang haengt. */
 pruefe("sie haengt wieder lang von oben herunter",
   /const hochL = Math\.min\(\(kk\.top - rk\.top\) - d \* 0\.25, -d \* 1\.6\);/.test(js));
-pruefe("der Anlauf geht GEGEN die Richtung des Ziels",
-  /const anlaufX = -dxL \* 0\.16/.test(js));
-/* RUNDE 73 NACHGEFUEHRT. Beide Regeln beschrieben noch den Aufbau
-   von Runde 71, und der ist ersetzt. XANDER: „Die Liane scheint noch
-   nicht so realistisch zu schwingen, weil sie hin und her geht …
-   Sie soll praktisch eine Richtung und dann landen." Der Scheitel
-   wird jetzt gerechnet (bogen/punkt), statt EINEN Mittelpunkt
-   anzusteuern — die Zeichenkette mit „rotate(0deg)" gibt es deshalb
-   nicht mehr. Und der Ausschwung gehoert jetzt dem leeren SEIL; die
-   Person steigt am Ziel ab (lc-liane-last blendet bei zieL ab). */
-pruefe("und der Anlauf kommt vor dem Schwung",
-  js.indexOf("opacity: 1, offset: vorL") > 0
-  && js.indexOf("opacity: 1, offset: vorL")
-     < js.indexOf("transform: punkt(0.10"));
-pruefe("gelandet wird nicht mit einer Ueberblendung auf der Stelle",
-  /const wegX = dxL \+ dxL \* 0\.30, wegY = dyL - d \* 1\.1;/.test(js));
+/* RUNDE 74 — DIESE DREI REGELN BESCHRIEBEN DEN AUFBAU, DEN XANDER
+   VERWORFEN HAT.
+   „Die Liane ist totaler Quatsch, sie hat immer noch keinen
+   Mittelpunkt in der Bildmitte auf der X-Achse, und sie schwingt
+   nicht mit einem Ruecklauf … sie tanzt immer herum. Es gibt gar
+   keinen richtigen realistischen, physikalischen Schwung."
+   Sie pinnten eine VERSCHIEBUNG entlang einer Parabel fest (anlaufX,
+   punkt(0.10), wegX) — und genau die ist das Problem: wenn sich das
+   ganze Gebilde verschiebt, wandert der Aufhaengepunkt mit, und ein
+   Seil mit wanderndem Ende ist kein Pendel. Jetzt haengt das Seil an
+   einem festen Anker ueber der Mitte, und bewegt wird nur der
+   Winkel. Die Regeln pruefen jetzt das. */
+pruefe("der Anker liegt fest in der Mitte zwischen beiden Plaetzen",
+  /const ankerX = \(start\.x \+ ende\.x\) \/ 2;/.test(js)
+  && !/const anlaufX = -dxL \* 0\.16/.test(js));
+pruefe("und der Anlauf geht GEGEN die Richtung des Ziels",
+  /const wA = w0 \+ \(w0 - w1\) \* 0\.30;/.test(js));
+pruefe("gelandet wird am Zielwinkel, nicht mit einer Ueberblendung",
+  /bild\(w1 \+ \(w1 - mitteW\) \* 0\.55, L1,/.test(js));
 pruefe("und die Person faehrt danach nicht mit dem Seil weiter",
   /const last = liane\.querySelector\("\.lc-liane-last"\);/.test(js)
   && /\{ opacity: 0, offset: Math\.min\(1, zieL \+ 0\.04\) \}/.test(js));
@@ -216,15 +219,23 @@ pruefe("und sie liegt UNTER dem Bild, also ueber dem Namen",
   && /\.lc-bombe-asche \{[\s\S]{0,300}?overflow: hidden;/.test(css));
 
 console.log("\nDIE KOPFHOERER SIND FLACH");
-pruefe("die Muschel ist 20 statt 30 Einheiten breit",
-  /const BR = 20;/.test(js));
-pruefe("die rechte sitzt weiter aussen",
-  /lcApmMuschel\(128, true\)/.test(js)
-  && !/lcApmMuschel\(118, true\)/.test(js));
-pruefe("und Buegel, Gelenke und Krone stehen ueber ihren Mitten",
-  /d="M10 58 C10 22 38 8 74 8 C110 8 138 22 138 58"/.test(js)
-  && /<rect x="8\.4" y="50"/.test(js)
-  && /<rect x="136\.4" y="50"/.test(js));
+/* RUNDE 74 — DIE KOPFHOERER LIEGEN JETZT AUF DEM KREIS.
+   XANDER: „Denk daran, dass du die Buegel mit der Kreisrundung
+   mitfaehrst … das aber kreisrund am Verlauf des Profilbildes
+   auslegen. Die koennen auch noch ein bisschen enger reingehen."
+   Die drei Regeln pinnten feste Pixelstellen fest (BR = 20,
+   lcApmMuschel(128), ein Buegel als Bezierkurve) — also genau das,
+   was er geaendert haben wollte. Jetzt haengt alles am Kreis: die
+   Muschel bekommt ihre Mitte gerechnet, der Buegel ist ein echter
+   Kreisbogen. */
+pruefe("die Muschel ist schmaler geworden — 18 statt 20 Einheiten",
+  /const BR = 18, HO = 40;/.test(js));
+pruefe("sie bekommt ihre Stelle gerechnet, nicht als feste Zahl",
+  /function lcApmMuschel\(cx, cy, rechts\)/.test(js)
+  && !/lcApmMuschel\(128, true\)/.test(js));
+pruefe("und der Buegel ist ein Kreisbogen um dieselbe Mitte",
+  (js.match(/A 73\.5 73\.5 0 0 [01] /g) || []).length >= 2
+  && !/d="M10 58 C10 22 38 8 74 8 C110 8 138 22 138 58"/.test(js));
 
 console.log("\nDIE LOK IST SCHWARZ MIT MESSING");
 pruefe("das Blaugrau ist weg",

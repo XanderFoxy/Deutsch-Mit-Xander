@@ -171,7 +171,11 @@ const pruefe = (was, gut, zusatz) => {
     const t0 = performance.now();
     window.DMA_PRUEFUNG.wirkung("feder", "6", "Alex");
     await new Promise((f) => setTimeout(f, 3200));
-    return window.__toene.filter((x) => x.n === "feder").map((x) => Math.round(x.t - t0));
+    /* RUNDE 74: der Ton heisst jetzt „federboing". XANDER:
+       „Irgendwie ist das nicht dieses typische Comicgeraeusch."
+       „feder.opus" war 3,00 s lang und fiel gleichmaessig ab — ein
+       Federklingeln, kein Boing. */
+    return window.__toene.filter((x) => x.n === "federboing").map((x) => Math.round(x.t - t0));
   });
   /* „Der Sound muss fuer jedes Feld, auf das sie huepft, immer wieder
      dieses Sprungfedergeraeusch haben und nicht nur einmal."
@@ -189,12 +193,21 @@ const pruefe = (was, gut, zusatz) => {
      Die eigentliche Zusicherung ist deshalb jetzt eine andere: die
      Aufsetzer muessen GLEICHMAESSIG verteilt sein, denn nur dann
      liegen sie auf den Feldern. */
-  pruefe("sie federt mehrfach, nicht einmal", fe.length >= 3,
+  /* RUNDE 74 — UND NOCH EINMAL NACH UNTEN, AUS DEMSELBEN GRUND.
+     XANDER: „Bei der Sprungfeder fehlt mir die Kongruenz zu den
+     Plaetzen, dass immer dann das Geraeusch kommt, wenn man auf
+     einen Platz trifft." Mit `Math.max(2, plaetzeR)` machte sie beim
+     Sprung auf den NACHBARPLATZ zwei Spruenge, und der erste setzte
+     mitten zwischen zwei Plaetzen auf. Jetzt ist die Zahl der
+     Spruenge gleich der Zahl der ueberquerten Plaetze — bei dieser
+     Sonde (ein Platz weit) sind das ZWEI Toene: einer beim Abstossen,
+     einer beim Aufsetzen auf dem Ziel. Das ist die richtige Zahl. */
+  pruefe("sie federt auf jedem Platz, nicht nur einmal", fe.length >= 2,
     fe.length + " Aufsetzer bei " + fe.join(", ") + " ms");
   const abstaende = fe.slice(1).map((t, i) => t - fe[i]);
   const mittel = abstaende.reduce((a, b) => a + b, 0) / (abstaende.length || 1);
   pruefe("und die Aufsetzer liegen gleichmaessig — also auf den Feldern",
-    abstaende.length >= 2 && abstaende.every((a) => Math.abs(a - mittel) <= mittel * 0.25),
+    abstaende.length >= 1 && abstaende.every((a) => Math.abs(a - mittel) <= mittel * 0.25),
     "Abstaende " + abstaende.join(", ") + " ms (Mittel " + Math.round(mittel) + ")");
 
   console.log("\nDIE LIANE RUFT WIE TARZAN\n");
@@ -265,9 +278,22 @@ const pruefe = (was, gut, zusatz) => {
   });
   pruefe("es gibt zwei Muscheln", kh && kh.muscheln === 2, kh ? kh.muscheln + "" : "-");
   if (kh && kh.muscheln === 2) {
-    pruefe("die linke liegt groesstenteils NEBEN dem Bild",
-      kh.linksDraussen >= 55, kh.linksDraussen + " % draussen");
-    pruefe("die rechte auch", kh.rechtsDraussen >= 55, kh.rechtsDraussen + " % draussen");
+    /* RUNDE 74 — DIESE ZWEI REGELN HAT ER SELBST WIDERRUFEN.
+       XANDER: „Die koennen auch noch ein bisschen enger reingehen,
+       dass jemand, der auf der rechten Seite sitzt oder links von
+       mir, nicht mit meinem Design korreliert und seinen
+       Kopfhoerern, falls er im selben Moment Kopfhoerer aufsetzt."
+       NACHGERECHNET: ein Platzbild ist 84 px breit, der Abstand
+       zweier Plaetze 91 px — dazwischen liegen 7 px. Eine Muschel,
+       die zu 55 % neben dem Bild liegt, ragt bei 18 px Breite rund
+       10 px hinaus und landet damit auf dem Nachbarn. Jetzt steht
+       sie nur noch 3,1 px ueber den Bildrand.
+       Die Regel verlangt deshalb das Gegenteil von vorher: die
+       Muschel muss ueberwiegend AUF dem Bild liegen und darf
+       hoechstens ein Drittel ihrer Breite heraussehen. */
+    pruefe("die linke steht nur wenig ueber den Bildrand",
+      kh.linksDraussen <= 34, kh.linksDraussen + " % draussen");
+    pruefe("die rechte auch", kh.rechtsDraussen <= 34, kh.rechtsDraussen + " % draussen");
     pruefe("und man guckt nicht mehr in die Hoermuschel hinein", kh.keinLoch);
   }
 

@@ -610,6 +610,12 @@ window.LiveChat = (function () {
      und sie faehrt im Puls mit — damit auch der, der spaeter
      dazukommt, dieselbe Sitzordnung sieht. */
   var sitzTausch = {};
+  /* RUNDE 74 — welches Werkzeug gerade umsetzt: die Angel (/heb) oder
+     das Lasso (/lasso). Das Lasso ruft /heb auf, damit das Umsetzen
+     nur an EINER Stelle steht; ohne diese Merkung koennte /heb nicht
+     wissen, welche Animation dazugehoert, und hat sie bisher aus der
+     Sitzreihe geraten. Genau das hat Xander gemeldet. */
+  var lassoZieht = false;
 
   function plaetzeBauen() {
     var wer = [];
@@ -10538,7 +10544,19 @@ window.LiveChat = (function () {
         + "das Lasso hat nichts, woran es ziehen koennte.");
       /* Und jetzt dasselbe wie /heb, nur mit dem selbst gefundenen
          Platz — die Zeile darunter erledigt das Umsetzen. */
-      return befehlAusfuehren("/heb " + wenL.name + " " + freiL.nummer);
+      /* RUNDE 74 — HIER WIRD DAS WERKZEUG GEMERKT.
+         XANDER: „Der Angelhaken funktioniert immer noch nicht
+         unabhaengig vom Lasso. Manchmal, wenn ich jemanden in der
+         naechsten Naehe habe, wandelt sich der Angelhaken ploetzlich
+         zum Lasso."
+         Das Lasso ruft /heb auf, damit das Umsetzen nur an EINER
+         Stelle steht. Welche ANIMATION dabei laeuft, hat /heb aber
+         aus der Sitzreihe abgeleitet — und damit hing sie am Ziel,
+         nicht am Werkzeug. Jetzt sagt das Lasso selbst an, dass es
+         das Lasso ist. */
+      lassoZieht = true;
+      try { return befehlAusfuehren("/heb " + wenL.name + " " + freiL.nummer); }
+      finally { lassoZieht = false; }
     }
 
     if (art === "heb") {
@@ -10596,12 +10614,19 @@ window.LiveChat = (function () {
       sitzTausch[wenH.id] = nummerH - 1;
       if (dortH) sitzTausch[dortH.id] = seinerH.nummer - 1;
 
-      /* Von unten nach oben ist ein Heber, zur Seite ein Lasso —
-         genau so, wie er es beschrieben hat. Die Reihe ergibt sich
-         aus der Nummer: vier Plaetze je Reihe. */
-      var reiheAlt = Math.ceil(seinerH.nummer / 4);
-      var reiheNeu = Math.ceil(nummerH / 4);
-      var wieH = reiheNeu < reiheAlt ? "heber" : "lasso";
+      /* RUNDE 74 — DAS WERKZEUG ENTSCHEIDET, NICHT DIE REIHE.
+         XANDER: „Das sollen zwei unterschiedliche Dinge sein. Mit dem
+         Angelhaken soll ich jeden Menschen an eine x-beliebige Stelle
+         hin angeln koennen, und mit dem Lasso soll ich ihn einfach nur
+         zu mir ranziehen."
+
+         HIER STAND DER FEHLER, und er war genau eine Zeile:
+             var wieH = reiheNeu < reiheAlt ? "heber" : "lasso";
+         Damit wurde aus /heb ein LASSO, sobald das Ziel in derselben
+         oder einer tieferen Reihe lag — also immer dann, wenn jemand
+         „in der naechsten Naehe" sass. Jetzt gilt: /heb ist die Angel,
+         /lasso ist das Lasso. Punkt. */
+      var wieH = lassoZieht ? "lasso" : "heber";
       var satzH = zustand.ichName + (wieH === "heber"
         ? " hebt " + wenH.name + " auf Platz " + nummerH
         : " zieht " + wenH.name + " mit dem Lasso auf Platz " + nummerH)
@@ -10609,7 +10634,10 @@ window.LiveChat = (function () {
         + "  " + (wieH === "heber" ? "\ud83e\ude9d" : "\ud83e\udd20");
       senden({ art: "sitzplatz", ordnung: sitzTausch, text: satzH });
       melden();
-      return anAlle("aktion", satzH, { wirkung: wieH, wen: wenH.name });
+      /* Und die Angel braucht das ZIEL: sie zieht dorthin, nicht zu
+         mir. Ohne diese Zahl koennte die Animation gar nicht wissen,
+         wohin sie angeln soll. */
+      return anAlle("aktion", satzH, { wirkung: wieH, wen: wenH.name, ziel: nummerH });
     }
 
     if (art === "herz") {

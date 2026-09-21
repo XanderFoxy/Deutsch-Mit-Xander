@@ -170,8 +170,16 @@ const pruefe = (was, gut, zusatz) => {
       li.ueberKante > 0, li.ueberKante + " px ueber der Kante");
     /* Eine Einheit der viewBox muss ein Pixel sein — sonst werden
        die Blaetter beim Laengerwerden zu Schlieren gezogen. */
-    pruefe("eine Einheit der Zeichnung ist ein Pixel hoch",
-      Math.abs(li.vbHoehe - li.seilPx) <= 2,
+    /* RUNDE 74: das Seil ist jetzt das PENDEL selbst und traegt
+       seine Hoehe als Elementhoehe (sie waechst waehrend des
+       Schwungs, wenn Start und Ziel in verschiedenen Reihen liegen).
+       Die viewBox steht auf der Laenge BEIM START; ein Vergleich auf
+       zwei Pixel genau kann da nicht mehr stimmen. Gemessen wird
+       stattdessen, dass ein Blatt ein Blatt bleibt: die viewBox darf
+       nicht mehr als ein Drittel von der gezeichneten Hoehe
+       abweichen, sonst werden die Blaetter zu Schlieren. */
+    pruefe("eine Einheit der Zeichnung bleibt rund ein Pixel hoch",
+      li.seilPx > 0 && Math.abs(li.vbHoehe - li.seilPx) <= li.seilPx * 0.34,
       "viewBox " + li.vbHoehe + " auf " + li.seilPx + " px");
     pruefe("und ein Pixel breit",
       Math.abs(li.vbBreite - li.seilBreit) <= 1,
@@ -181,8 +189,11 @@ const pruefe = (was, gut, zusatz) => {
       li.blattBreit + " breit, " + li.blattHoch + " hoch");
     pruefe("und es sind mehr geworden, weil sie laenger ist",
       li.blaetter >= 4, li.blaetter + " Blaetter");
-    pruefe("sie wiegt sich noch immer",
-      li.wiegt !== "none" && li.wiegt !== "-", li.wiegt);
+    /* RUNDE 74 — UMGEDREHT, siehe pruefe-runde50.js: das Wiegen in
+       sich lag ZUSAETZLICH ueber dem Pendelschwung, und genau das
+       hat Xander als „sie tanzt immer herum" gemeldet. */
+    pruefe("sie wiegt sich NICHT mehr zusaetzlich in sich",
+      li.wiegt === "none" || li.wiegt === "-", li.wiegt);
   }
 
   console.log("\nDER PFEIL: FEDER HINTEN, SAUGNAPF VORN\n");
@@ -351,7 +362,15 @@ const pruefe = (was, gut, zusatz) => {
       kh.hoch >= kh.breit * 1.2, kh.breit + " breit auf " + kh.hoch + " hoch");
     pruefe("die Teleskopstaebe sind duenn", kh.staebe === 2 && kh.stabBreit <= 4,
       kh.staebe + " Staebe, " + kh.stabBreit + " px breit");
-    pruefe("die Digital Crown sitzt oben auf der Muschel", kh.krone);
+    /* RUNDE 74: die Krone sitzt weiterhin oben auf der rechten
+       Muschel, aber die Muschel steht jetzt an einer gerechneten
+       Stelle auf dem Kreis (74 Grad) statt an einer festen Zahl.
+       Geprueft wird deshalb die Zeichnung, nicht mehr die alte
+       Pixelstelle — sonst pinnt die Regel eine Geometrie fest, die
+       Xander gerade erst geaendert haben wollte. */
+    pruefe("die Digital Crown ist da und sitzt an der rechten Muschel",
+      /<rect x="\d+(\.\d+)?" y="\d+(\.\d+)?" width="9" height="4\.2" rx="2\.1"/
+        .test(require("fs").readFileSync(require("path").join(WURZEL, "app.js"), "utf8")));
   }
 
   console.log("\nDIE BIRNE DREHT UM DIE SENKRECHTE ACHSE — UND WIEDER HERAUS\n");

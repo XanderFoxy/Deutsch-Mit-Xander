@@ -103,20 +103,38 @@ pruefe("die Spur ist dichter und breiter",
   && /\(d \* 0\.05\)/.test(js));
 pruefe("und an den Plaetzen liegt sie dicker",
   /const dickeBei = \(x, y\) =>/.test(js)
-  && /h\.style\.setProperty\("--gross", \(d \* dickeBei\(hx, hy\)\)/.test(js));
+  /* RUNDE 74: jeder Haufen bekommt zusaetzlich seine eigene Groesse.
+     XANDER: „keine Klumpen in verschiedener Groesse, die wirklich
+     nach Erdaufschuettung aussehen." */
+  && /h\.style\.setProperty\("--gross", \(d \* dickeBei\(hx, hy\) \* eigen\)/.test(js));
 pruefe("jeder Platz auf dem Weg wird aufgegraben, nicht nur Start und Ziel",
   /const proj = \(g\.x - start\.x\) \* ex \+ \(g\.y - start\.y\) \* ey;/.test(js));
 pruefe("und man hoert ihn die ganze Strecke graben",
   ton("graben") && gelistet("graben")
-  && /lcTonSpaeter\("graben", 320 \+ g \* 2400/.test(js));
+  /* RUNDE 74: das Graben bekommt eine Grenze — XANDER: „Das
+     Maulwurf-Grabgeraeusch klingt noch nach, waehrend der Maulwurf
+     schon fertig mit Graben ist." Gemessen lief es bis zu 1,33 s
+     ueber die Ankunft hinaus, weil die Datei 2,66 s lang ist. */
+  && /lcTonSpaeter\("graben", abG, g \? 0\.4 : 0\.5,/.test(js));
 
 console.log("\nDIE LIANE SCHWINGT IN EINE RICHTUNG");
-pruefe("der Bogen geht ueber die Sitzreihe hinweg",
-  /Math\.min\(start\.y, ende\.y\) - d \* 0\.85/.test(js));
+/* RUNDE 74 — DIE LIANE IST JETZT EIN PENDEL.
+   XANDER: „Die Liane ist totaler Quatsch, sie hat immer noch keinen
+   Mittelpunkt in der Bildmitte auf der X-Achse … sie tanzt immer
+   herum." Die alte Regel pinnte den Scheitel einer PARABEL fest —
+   also die Verschiebung, die er verworfen hat. Ein Seil, dessen
+   oberes Ende mitwandert, ist kein Pendel. */
+pruefe("der Anker liegt in der Mitte zwischen beiden Bildern",
+  /const ankerX = \(start\.x \+ ende\.x\) \/ 2;/.test(js)
+  && /const ankerY = Math\.min\(8, Math\.min\(startY, endeY\) - d \* 1\.7\);/.test(js));
 /* Die Falle, die uns beim Turm, bei der Muenze und beim Pfeil schon
    erwischt hat: eine cubic-bezier UEBER die ganze Animation dehnt
    die Abstaende ZWISCHEN den Schluesselbildern. Hier wird deshalb
    ausdruecklich geprueft, dass im Lianen-Zweig „linear" steht. */
+/* RUNDE 74: `bogen(u)` war die Parabel, an der entlang verschoben
+   wurde — die gibt es nicht mehr. Die Pendelbewegung steckt jetzt im
+   WINKEL, und zwar als Kosinuswelle: eine Schaukel steht an den
+   Umkehrpunkten still und ist unten am schnellsten. */
 pruefe("die Pendelbewegung steckt in den Werten, nicht in einer Kurve",
   (() => {
     const a = js.indexOf('art === "liane"');
@@ -124,7 +142,7 @@ pruefe("die Pendelbewegung steckt in den Werten, nicht in einer Kurve",
     const teil = js.slice(a, b);
     return /easing: "linear", fill: "forwards"/.test(teil)
         && !/easing: "ease-in-out"/.test(teil)
-        && /const bogen = \(u\) =>/.test(teil);
+        && /mitteW \+ weiteW \* Math\.cos\(Math\.PI \* u\)/.test(teil);
   })());
 pruefe("und die Person steigt am Ziel ab",
   /const last = liane\.querySelector\("\.lc-liane-last"\);/.test(js));

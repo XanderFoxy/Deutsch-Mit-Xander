@@ -200,7 +200,16 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("die Liane haengt", reise.liane);
   pruefe("sie ist gezeichnet, nicht aus Balken", reise.seilGezeichnet);
   pruefe("sie traegt Blaetter", reise.blaetter >= 3, reise.blaetter + " Stueck");
-  pruefe("und sie wiegt sich", reise.seilWiegt !== "none" && reise.seilWiegt !== "-",
+  /* RUNDE 74 — UMGEDREHT, UND ZWAR AUF SEINEN WUNSCH.
+     XANDER: „Die Liane ist totaler Quatsch … sie tanzt immer herum.
+     Es gibt gar keinen richtig realistischen, physikalischen
+     Schwung."
+     Das Wiegen IN SICH (lcLianeWiegtR50) kam ZUSAETZLICH zum Schwung
+     des ganzen Pendels — zwei Bewegungen uebereinander, und genau das
+     ist das Tanzen. Ein Seil, das am Pendel haengt, wiegt nicht noch
+     einmal fuer sich. Die Regel verlangt jetzt das Gegenteil. */
+  pruefe("und sie wiegt sich NICHT mehr in sich — das war das Tanzen",
+    reise.seilWiegt === "none" || reise.seilWiegt === "-",
     reise.seilWiegt);
 
   await br.close(); srv.close();

@@ -24421,15 +24421,7 @@
        Bewegung mit realistisch rotierenden Rotorblaettern und
        vielleicht irgendwie ein Pferd, auf dem man da hin reiten
        kann." Beide mit eigenem Geraeusch. */
-    /* RUNDE 74 — XANDER: „Der Helikopter-Sound klingt nicht
-       durchgaengig bis zum Landen."
-       NACHGEMESSEN: „helikopter" ist 2,00 s lang. Der Flug dauert je
-       nach Strecke 2,16 bis 3,84 s — bis zu 1,84 s davon war still.
-       Ein Rotor hoert aber nicht mitten im Flug auf. Jetzt laeuft die
-       Aufnahme in der Schleife, und der Plan deckelt bei 4,4 s: das
-       ist die laengste Reise (3,84 s) plus die halbe Sekunde
-       Ausklang, die lcReise ohnehin anhaengt. */
-    heli:           { ton: "helikopter", dauer: 4400, schleife: true, laut: 0.5 },
+    heli:           { ton: "helikopter", dauer: 3000, laut: 0.5 },
     pferd:          { ton: "pferd",    dauer: 3000, laut: 0.55 },
     /* Das Lagerfeuer-Geraeusch leiht sich der brennende Rahmen — es
        liegt schon in ton/ und klingt nach echtem Holzfeuer. */
@@ -25271,47 +25263,10 @@
      Deshalb gibt es jetzt einen zweiten Ton, der NICHT am Anfang
      laeuft, sondern zu einem ausgerechneten Zeitpunkt. Wer die
      Wegstrecke kennt, kann ihn genau dorthin legen. */
-  /* RUNDE 74 — EINE GRENZE FUER TOENE OHNE EIGENEN PLAN.
-     XANDER: „Das Maulwurf-Grabgeraeusch klingt noch nach, waehrend
-     der Maulwurf schon fertig mit Graben ist."
-     Er hat recht, und der Grund war eine Luecke: `lcGeraeusch`
-     deckelt einen Ton nur, wenn im Tonplan ein `dauer` steht. Wer
-     `lcTonSpaeter` benutzt, hat oft gar keinen Planeintrag — dann
-     lief die Datei ihre volle Laenge, ganz gleich, wie lang die
-     Animation war. Beim Graben waren das gemessen bis zu 1,33 s
-     ueber die Ankunft hinaus.
-     Jetzt darf jeder Aufruf sagen, wie lange sein Ton hoechstens
-     klingen soll. Ausgeblendet wird ueber eine halbe Sekunde —
-     genauso wie im Plan, denn ein hart abgeschnittener Ton klingt
-     kaputt. */
-  function lcTonSpaeter(name, nachMs, laut, hoechstens) {
+  function lcTonSpaeter(name, nachMs, laut) {
     const wann = Math.max(0, Number(nachMs) || 0);
     setTimeout(() => {
-      try {
-        if (!lcGeraeusch(name, name, laut)) return;
-        const bis = Number(hoechstens);
-        if (!(bis > 0)) return;
-        const a = lcGeraeuschAblage[name];
-        if (!a) return;
-        if (a.__lcStop) { clearTimeout(a.__lcStop); a.__lcStop = 0; }
-        if (a.__lcBlende) { clearInterval(a.__lcBlende); a.__lcBlende = 0; }
-        const SPITZE = a.volume;
-        const BLENDE = Math.min(500, Math.max(120, bis * 0.4));
-        a.__lcStop = setTimeout(() => {
-          const schritt = 40;
-          let rest = BLENDE;
-          a.__lcBlende = setInterval(() => {
-            rest -= schritt;
-            a.volume = Math.max(0, SPITZE * (rest / BLENDE));
-            if (rest <= 0) {
-              clearInterval(a.__lcBlende); a.__lcBlende = 0;
-              try { a.pause(); a.currentTime = 0; } catch (e) {}
-              a.loop = false;
-              a.volume = SPITZE;
-            }
-          }, schritt);
-        }, Math.max(0, bis - BLENDE));
-      } catch (e) {}
+      try { lcGeraeusch(name, name, laut); } catch (e) {}
     }, wann);
   }
 
@@ -31867,51 +31822,22 @@
      (lcHebenMenue), wer sofort zu sich ziehen will, das Lasso.
      ================================================================= */
 
-  /* RUNDE 74 — DIE ANGEL ZIEHT ZUM GEWAEHLTEN PLATZ, NICHT ZU MIR.
-     XANDER: „Der Angelhaken funktioniert immer noch nicht unabhaengig
-     vom Lasso … Mit dem Angelhaken soll ich jeden Menschen an eine
-     x-beliebige Stelle hin angeln koennen. Und mit dem Lasso soll ich
-     den einfach nur zu mir ranziehen. Das sind zwei unterschiedliche
-     Werkzeuge."
-
-     ZWEI URSACHEN, beide hier und in livechat.js behoben:
-     · In livechat.js stand `wieH = reiheNeu < reiheAlt ? "heber" :
-       "lasso"` — die ANIMATION haengt damit am Ziel statt am
-       Werkzeug. Sass jemand in derselben Reihe, wurde aus der Angel
-       ein Lasso. Jetzt entscheidet der Befehl.
-     · Und hier rief die Angel `lcZuMirZiehen` auf und setzte
-       `lc-gehoben` — genau die Bewegung des Lassos (lcZuMirR51 zieht
-       zu MIR). Jetzt zieht sie zu dem Platz, den der Befehl nennt:
-       die Nummer kommt in der Nachricht mit. */
-  function lcHeber(wen, nachricht) {
-    const zielNr = Number(nachricht && nachricht.ziel) || 0;
+  function lcHeber(wen) {
     return lcAmPlatz(wen, "lc-heber", (schicht, platz) => {
       /* Die Schnur kommt von MEINEM Platz — siehe lcLeineWerfen. */
       const leine = lcLeineWerfen(platz, "angel");
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
-        /* Wohin wird geangelt? Der Weg wird GEMESSEN, vom Bild des
-           Geangelten zum Bild des Zielplatzes. Ohne Zielangabe hebt
-           die Angel nur an — nach oben, wie ein Wagenheber. */
-        let zx = 0, zy = -Math.round(kreis.offsetWidth * 0.34);
-        const zielEl = zielNr
-          ? document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + zielNr + '"]')
-          : null;
-        if (zielEl) {
-          const a = platz.getBoundingClientRect();
-          const b = zielEl.getBoundingClientRect();
-          zx = Math.round((b.left + b.width / 2) - (a.left + a.width / 2));
-          zy = Math.round((b.top + b.height / 2) - (a.top + a.height / 2));
-        }
-        kreis.style.setProperty("--angelx", zx + "px");
-        kreis.style.setProperty("--angely", zy + "px");
-        kreis.classList.remove("lc-geangelt");
+        lcZuMirZiehen(platz, kreis);
+        kreis.classList.remove("lc-gehoben");
         void kreis.offsetWidth;
-        kreis.classList.add("lc-geangelt");
+        kreis.classList.add("lc-gehoben");
+        /* Wie beim Lasso: erst muss der Haken greifen, dann wird
+           gezogen (lcZuMirR51). */
         setTimeout(() => {
-          kreis.classList.remove("lc-geangelt");
-          kreis.style.removeProperty("--angelx");
-          kreis.style.removeProperty("--angely");
+          kreis.classList.remove("lc-gehoben");
+          kreis.style.removeProperty("--zux");
+          kreis.style.removeProperty("--zuy");
         }, 2400);
       }
       /* HIER STAND DIE SCHLEIFE — siehe lcNebenMichSetzen. */
@@ -33501,14 +33427,7 @@
         const quer = (((i * 37) % 11) - 5) * (d * 0.05);
         const hx = start.x + (ende.x - start.x) * t + quer;
         const hy = start.y + (ende.y - start.y) * t + quer * 0.55;
-        /* RUNDE 74 — XANDER: „keine Klumpen in verschiedener Groesse,
-           die wirklich nach Erdaufschuettung aussehen."
-           Bisher hatten alle Haufen genau dieselbe Groesse, nur an
-           den Plaetzen wurden sie dicker. Jetzt schwankt jeder um
-           bis zu 30 Prozent — aus i gerechnet, nicht gewuerfelt,
-           damit es auf jedem Geraet gleich aussieht. */
-        const eigen = 0.74 + ((i * 29) % 17) / 28;
-        h.style.setProperty("--gross", (d * dickeBei(hx, hy) * eigen).toFixed(1) + "px");
+        h.style.setProperty("--gross", (d * dickeBei(hx, hy)).toFixed(1) + "px");
         setzen(h, hx, hy);
         h.style.animationDelay = Math.round(200 + t * (hin - 620)) + "ms";
         h.style.setProperty("--dreh", Math.round(((i * 53) % 30) - 15) + "deg");
@@ -33521,19 +33440,8 @@
          loser Erde, dazwischen das Rieseln der Kruemel). Es wird so
          oft gelegt, wie die Fahrt dauert — leiser als der Einstieg,
          denn er ist ja unter der Erde. */
-      /* RUNDE 74 — und jeder Schub hoert auf, wenn der Maulwurf
-         ankommt. XANDER: „Das Maulwurf-Grabgeraeusch klingt noch
-         nach, waehrend der Maulwurf schon fertig mit Graben ist."
-         NACHGERECHNET: „graben" ist 2,66 s lang. Bei einer Reise
-         ueber einen Platz (hin = 2200 ms) fing der erste Schub bei
-         320 ms an und lief bis 2980 ms — also 780 ms, nachdem der
-         Maulwurf schon oben war. Ueber vier Plaetze waren es 1330 ms.
-         Jetzt bekommt jeder Schub eine Grenze: er blendet spaetestens
-         beim Auftauchen aus. */
       for (let g = 0; g * 2400 < hin - 500; g++) {
-        const abG = 320 + g * 2400;
-        lcTonSpaeter("graben", abG, g ? 0.4 : 0.5,
-                     Math.max(400, (hin - 120) - abG));
+        lcTonSpaeter("graben", 320 + g * 2400, g ? 0.4 : 0.5);
       }
 
       lochBauen(zu.el, Math.max(0, hin - 560), 1200);
@@ -34172,111 +34080,97 @@
         + '<span class="lc-liane-last"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
-      liane.classList.add("lc-liane-pendel");
       reihe.appendChild(liane);
       weg.push(liane);
-      /* =================================================================
-         RUNDE 74 — DIE LIANE IST JETZT EIN PENDEL, KEIN TANZ
-         -----------------------------------------------------------------
-         XANDER: „Die Liane ist totaler Quatsch, sie hat immer noch
-         keinen Mittelpunkt in der Bildmitte auf der X-Achse, und sie
-         schwingt nicht mit einem Ruecklauf, also mit einem Anlauf und
-         dann linear aus diesem Ankerpunkt der Mitte nach rechts
-         beziehungsweise wieder zurueck nach links. Sie tanzt immer
-         herum. Es gibt gar keinen richtigen realistischen,
-         physikalischen Schwung."
-
-         ER HAT RECHT, UND DER GRUND STAND IM PROGRAMM, NICHT IM
-         GESCHMACK: die Animation hat das GANZE Gebilde — Seil samt
-         Reisendem — an einer Parabel entlang VERSCHOBEN. Damit wandert
-         der Aufhaengepunkt mit; ein Seil, dessen oberes Ende mitlaeuft,
-         ist kein Pendel, sondern ein Tanz. Deshalb war auch nie ein
-         Mittelpunkt zu sehen: der „Anker" sass ueber dem Startplatz und
-         zog mit.
-
-         Jetzt haengt das Seil an EINEM festen Punkt, und der liegt
-         genau ueber der Mitte zwischen Start und Ziel. Bewegt wird nur
-         noch der WINKEL. Die Stelle des Reisenden folgt daraus:
-             x = ankerX + L * sin(t)
-             y = ankerY + L * cos(t)
-         Der Winkel selbst folgt dem Pendelgesetz. Eine Schaukel steht
-         an den beiden Umkehrpunkten still und ist unten am schnellsten;
-         das ist genau eine Kosinuswelle:
-             t(u) = mitte + weite * cos(PI * u)
-         Mit „linear" als Zeitkurve kommt diese Bewegung auch wirklich
-         heraus — eine Kurve ueber der ganzen Animation wuerde sie
-         wieder verbiegen.
-
-         Der ANLAUF ist derselbe Gedanke: erst schwingt er um 30 % des
-         Weges nach HINTEN (ueber den Startwinkel hinaus), und von dort
-         geht es in EINEM Zug durch bis zum Ziel. Kein Hin und Her.
-
-         Das Seil wird dabei laenger oder kuerzer, wenn Start und Ziel
-         in verschiedenen Reihen liegen — anders geht es nicht, beide
-         Plaetze liegen dann nicht auf demselben Kreis um den Anker.
-         Das ist sogar das Echte daran: Tarzan rutscht an der Liane.
-         ================================================================= */
-      const versatzL = lcBildVersatz(ab.el);
-      const versatzZ = lcBildVersatz(zu.el);
-      /* Der Anker: waagerecht GENAU in der Mitte zwischen den beiden
-         Bildern, senkrecht ueber der hoeheren der beiden Reihen. */
-      const ankerX = (start.x + ende.x) / 2;
-      const startY = start.y + versatzL, endeY = ende.y + versatzZ;
-      const ankerY = Math.min(8, Math.min(startY, endeY) - d * 1.7);
-      const dxA = start.x - ankerX, dyA = startY - ankerY;
-      const dxB = ende.x - ankerX,  dyB = endeY - ankerY;
-      const L0 = Math.hypot(dxA, dyA), L1 = Math.hypot(dxB, dyB);
-      const w0 = Math.atan2(dxA, dyA);     /* Winkel am Start */
-      const w1 = Math.atan2(dxB, dyB);     /* Winkel am Ziel  */
-      /* Der Anlauf geht 30 % des Weges in die GEGENrichtung. */
-      const wA = w0 + (w0 - w1) * 0.30;
-      liane.style.setProperty("--seil", Math.max(40, L0).toFixed(1) + "px");
-      liane.style.height = Math.max(40, L0).toFixed(1) + "px";
-      setzen(liane, ankerX, ankerY);
+      setzen(liane, start.x, start.y);
+      /* RUNDE 73 — XANDER: „Die Liane trifft zwischendurch auf einem
+         anderen Platz auf, bevor sie landet."
+         GERECHNET: der Scheitel lag auf d*0,45 ueber dem hoeheren der
+         beiden Plaetze — also keine halbe Bildhoehe. Die Sitzreihe hat
+         aber ZWEI Reihen, und wer von der unteren in die obere
+         schwingt, streift auf dieser Hoehe die Plaetze dazwischen.
+         Der Scheitel liegt jetzt 0,85 Bildhoehen darueber. Am Bild
+         nachgesehen: bei 1,25 schwang der Reisende ganz aus der
+         Sitzflaeche heraus — das ist zu viel des Guten. 0,85 reicht,
+         um ueber die Oberkante der oberen Reihe zu kommen (die liegt
+         eine halbe Bildhoehe ueber deren Mitte), und er bleibt
+         sichtbar. */
+      const mitteL = { x: (start.x + ende.x) / 2,
+                       y: Math.max(8, Math.min(start.y, ende.y) - d * 0.85) };
       try {
-        /* VORZEICHEN, und es ist kein Schoenheitsfehler: `rotate(+x)`
-           dreht im Uhrzeigersinn, und auf einem Bildschirm zeigt die
-           y-Achse nach UNTEN. Ein Seil, das nach unten haengt, schwenkt
-           dabei nach LINKS. Nachgerechnet an der Matrix: der Punkt
-           (0|L) landet bei (-sin(x)*L | cos(x)*L). Wer den Reisenden
-           um dx nach rechts haben will, braucht also den NEGATIVEN
-           Winkel. Ohne dieses Minus schwang die Liane spiegelverkehrt
-           — gemessen: der Reisende startete bei x = 180 statt bei
-           x = 64, also 116 px auf der falschen Seite. */
-        const grad = (r) => (-r * 180 / Math.PI);
-        const vorL = Math.max(0.06, (hin * 0.20) / dauer);
+        /* RUNDE 73 — XANDER: „Die Liane scheint noch nicht so
+           realistisch zu schwingen, weil sie hin und her geht, als
+           wenn sie nach vorn und hinten schwingt. Sie soll einen
+           Anlauf haben von dem Platz, wo man herkommt, soll
+           zurueckschwingen, dann soll es nach vorn schwingen in einem
+           Zug — dann kann sie nicht waehrend der Bewegung wieder
+           zurueckschwingen. Sie soll praktisch eine Richtung und dann
+           landen."
+
+           ZWEI URSACHEN, beide behoben:
+           · Das Bild ritt bisher NACH der Ankunft noch weiter — es
+             schwang ueber das Ziel hinaus und nach oben aus dem Bild.
+             Von aussen sieht das aus wie ein zweites Hin und Her.
+             Jetzt landet die PERSON am Ziel und bleibt; nur das SEIL
+             schwingt danach leer weiter, so wie man eine Liane
+             loslaesst.
+           · Auf der Animation lag ein „ease-in-out" ueber die GANZE
+             Laenge. Diese Kurve dehnt die Abstaende ZWISCHEN den
+             Schluesselbildern — die Geschwindigkeit sprang also an
+             jedem Punkt, und gerade das liest das Auge als Zappeln.
+             Jetzt „linear", und die Pendelbewegung steckt in den
+             WERTEN: langsam an den beiden Umkehrpunkten, schnell
+             durch den tiefsten Teil — genau wie ein Pendel. */
+        const dxL = ende.x - start.x, dyL = ende.y - start.y;
+        const anlaufX = -dxL * 0.16, anlaufY = -Math.abs(dyL) * 0.16 - d * 0.10;
+        const wegX = dxL + dxL * 0.30, wegY = dyL - d * 1.1;
+        const neig = dxL < 0 ? 1 : -1;
+        const vorL = Math.max(0.06, (hin * 0.16) / dauer);
         const zieL = hin / dauer;
-        /* Ein Schluesselbild aus Winkel und Seillaenge. */
-        const bild = (w, lg, zeit, sicht) => ({
-          transform: "translate(-50%, 0) rotate(" + grad(w).toFixed(2) + "deg)",
-          height: lg.toFixed(1) + "px",
-          opacity: sicht === undefined ? 1 : sicht,
-          offset: Math.max(0, Math.min(1, zeit))
-        });
-        const bilder = [
-          bild(w0, L0, 0, 0),
-          bild(w0, L0, 0.05, 1)
-        ];
-        /* Der Anlauf: zurueck, und dabei langsamer werdend — am
-           Umkehrpunkt steht er einen Augenblick still. */
-        for (let i = 1; i <= 3; i++) {
-          const u = i / 3;
-          const w = w0 + (wA - w0) * Math.sin(u * Math.PI / 2);
-          bilder.push(bild(w, L0, 0.05 + (vorL - 0.05) * u));
-        }
-        /* Und der Schwung: acht Zwischenbilder aus dem Pendelgesetz. */
-        const mitteW = (wA + w1) / 2, weiteW = (wA - w1) / 2;
-        for (let i = 1; i <= 8; i++) {
-          const u = i / 8;
-          const w = mitteW + weiteW * Math.cos(Math.PI * u);
-          const lg = L0 + (L1 - L0) * u;
-          bilder.push(bild(w, lg, vorL + (zieL - vorL) * u));
-        }
-        /* Losgelassen — das leere Seil schwingt noch ein Stueck
-           weiter und geht dann. */
-        bilder.push(bild(w1 + (w1 - mitteW) * 0.55, L1, Math.min(1, zieL + 0.22), 0.9));
-        bilder.push(bild(w1 + (w1 - mitteW) * 0.20, L1, 1, 0));
-        liane.animate(bilder, { duration: dauer, easing: "linear", fill: "forwards" });
+        /* Vier Punkte zwischen Anlauf und Ziel. Der Weg waechst
+           erst langsam, dann schnell, dann wieder langsam: die
+           Anteile 0,10 / 0,34 / 0,68 / 0,90 / 1 sind die Strecke,
+           nicht die Zeit. */
+        const bogen = (u) => {
+          /* Eine Parabel durch Anlauf, Scheitel und Ziel. */
+          const x = anlaufX + (dxL - anlaufX) * u;
+          const gerade = anlaufY + (dyL - anlaufY) * u;
+          const hoehe = (mitteL.y - start.y)
+            - ((anlaufY + (dyL - anlaufY) * 0.5));
+          return { x: x, y: gerade + hoehe * 4 * u * (1 - u) };
+        };
+        const punkt = (u, drehung) => {
+          const b = bogen(u);
+          return "translate(" + b.x.toFixed(1) + "px, " + b.y.toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehung.toFixed(0) + "deg)";
+        };
+        liane.animate([
+          { transform: "translate(-50%, -50%) rotate(" + (neig * 14) + "deg)",
+            opacity: 0, offset: 0 },
+          { transform: "translate(-50%, -50%) rotate(" + (neig * 14) + "deg)",
+            opacity: 1, offset: 0.08 },
+          /* Anlauf: EINMAL zurueck, und dabei staerker geneigt. */
+          { transform: "translate(" + anlaufX.toFixed(1) + "px, " + anlaufY.toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + (neig * 26) + "deg)",
+            opacity: 1, offset: vorL },
+          /* Und dann in EINEM Zug hinueber. */
+          { transform: punkt(0.10, neig * 21), opacity: 1,
+            offset: vorL + (zieL - vorL) * 0.22 },
+          { transform: punkt(0.34, neig * 11), opacity: 1,
+            offset: vorL + (zieL - vorL) * 0.42 },
+          { transform: punkt(0.68, neig * -8), opacity: 1,
+            offset: vorL + (zieL - vorL) * 0.66 },
+          { transform: punkt(0.90, neig * -14), opacity: 1,
+            offset: vorL + (zieL - vorL) * 0.86 },
+          /* Angekommen — hier wird losgelassen, und hier bleibt man. */
+          { transform: "translate(" + dxL.toFixed(1) + "px, " + dyL.toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + (neig * -16) + "deg)",
+            opacity: 1, offset: zieL },
+          /* Nur noch das leere Seil schwingt aus dem Bild. */
+          { transform: "translate(" + wegX.toFixed(1) + "px, " + wegY.toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + (neig * -34) + "deg)",
+            opacity: 0, offset: 1 }
+        ], { duration: dauer, easing: "linear", fill: "forwards" });
         /* Die Person steigt am Ziel ab — sie faehrt nicht mit dem
            Seil weiter. Genau das war das zweite Hin und Her. */
         const last = liane.querySelector(".lc-liane-last");
@@ -34314,16 +34208,7 @@
          ein Sprung je ueberquertem Platz (plaetzeR ist oben aus der
          gemessenen Sitzweite gerechnet). Damit setzt sie auf jedem
          Feld auf, und dort klingt sie auch. */
-      /* RUNDE 74 — XANDER: „Bei der Sprungfeder fehlt mir die
-         Kongruenz zu den Plaetzen, dass immer dann das Geraeusch
-         kommt, wenn man auf einen Platz trifft."
-         NACHGERECHNET: mit `Math.max(2, plaetzeR)` machte die Feder
-         beim Sprung auf den NACHBARPLATZ (plaetzeR = 1) trotzdem
-         zwei Spruenge — der erste setzte also mitten zwischen zwei
-         Plaetzen auf, und genau dort klang sie. Jetzt ist die Zahl
-         der Spruenge gleich der Zahl der ueberquerten Plaetze: jeder
-         Aufsetzer liegt auf einem Platz, keiner daneben. */
-      const federSpruenge = Math.max(1, plaetzeR);
+      const federSpruenge = Math.max(2, plaetzeR);
       const federSchritte = federSpruenge * 2;
       const spruenge = [];
       for (let i = 0; i <= federSchritte; i++) {
@@ -34363,22 +34248,9 @@
          Die Feder setzt bei den GERADEN Schritten auf (0, 2, 4, 6 —
          dazwischen liegt jeweils der Bogen). Genau dort klingt sie
          jetzt, viermal statt einmal. */
-      /* RUNDE 74 — UND DAS GERAEUSCH IST JETZT EIN BOING.
-         XANDER: „Irgendwie ist das nicht dieses typische
-         Comicgeraeusch, was man erwarten wuerde."
-         NACHGEMESSEN: „feder.opus" ist 3,00 s lang und faellt von
-         -13 dB gleichmaessig auf -40 dB — ein langes Federklingeln.
-         Bei einem Sprung alle 700 ms lagen also vier davon
-         uebereinander, und keiner war je zu Ende. „federboing" ist
-         0,46 s lang: ein Ton, dessen Hoehe von 540 auf 165 Hz
-         gleitet und dabei mit 21 Hz wackelt — genau das, was ein
-         Comic-Boing ausmacht. Er bekommt zusaetzlich eine Grenze in
-         Hoehe des Abstands zum naechsten Aufsetzer, damit sich zwei
-         Spruenge nie ueberlagern. */
-      const abstandF = Math.max(240, Math.round(hin / Math.max(1, federSpruenge)));
       for (let i = 0; i <= federSchritte; i += 2) {
-        lcTonSpaeter("federboing", Math.round((i / federSchritte) * hin),
-                     i === 0 ? 0.62 : 0.5, abstandF);
+        lcTonSpaeter("feder", Math.round((i / federSchritte) * hin),
+                     i === 0 ? 0.5 : 0.42);
       }
     } else if (art === "beamen") {
       /* „Das muss wirklich wie bei Star Trek und ein schoener
@@ -34470,27 +34342,9 @@
         /* SCHATTEN: der Bauch liegt im Dunkeln. */
         + '<path class="lc-heli-schatten" d="M12 41 Q26 48 50 48 L74 48'
         + ' Q82 44 83 37 Q70 44 46 44 Q24 44 12 41 Z"/>'
-        /* DIE KANZEL — RUNDE 74.
-           XANDER: „Das Helikopterfenster ist immer noch nicht
-           abgeschrägt vorne. Das ist keine schräge Scheibe."
-           NACHGESEHEN an dem, was hier stand: der Umriss lief von
-           (11|39) mit einem Bogen nach (30|18), dann nach (42|18)
-           und mit einem zweiten Bogen bis (30|45) hinunter — das
-           ergab einen Klumpen, der vorn UND unten rund war. Eine
-           Hubschrauberkanzel besteht aber aus ZWEI geraden Scheiben:
-           der stark nach hinten geneigten Frontscheibe und der
-           Kinnscheibe darunter, mit einem Rahmen dazwischen.
-           Die Nase liegt links (x = 10), also neigt sich die Front
-           nach RECHTS oben: von (11,5|41) auf (33|17,5). Das sind
-           23,5 Einheiten hoch auf 21,5 nach hinten — eine Neigung
-           von 47 Grad, genau die Lage einer echten Frontscheibe. */
-        + '<path class="lc-heli-glas" d="M11.5 41 L33 17.5 L44 17.5 L24 43 Z"/>'
-        /* Die Kinnscheibe: klein, flach, unter der Front. */
-        + '<path class="lc-heli-glas" d="M10.8 40.6 Q9.2 46.4 14.4 47.6'
-        + ' L22.6 47.6 L24 43 Z"/>'
-        /* Der Rahmen zwischen den beiden Scheiben und die A-Saeule
-           an der Vorderkante — ohne sie sieht es aus wie ein Loch. */
-        + '<path class="lc-heli-saeule" d="M11.5 41 L33 17.5 M24 43 L11.5 41"/>'
+        /* DIE KANZEL — die grosse verglaste Front. */
+        + '<path class="lc-heli-glas" d="M11 39 Q9.5 23 30 18 L42 18'
+        + ' Q32 29 30 45 L20 45 Q12 44 11 39 Z"/>'
         + '<path class="lc-heli-tuer" d="M46 18.5 L46 47 M62 17 L62 48"/>'
         /* Der Rotorkopf auf dem Mast. */
         + '<path class="lc-heli-mast" d="M50 16 L53 8 L61 8 L58 16 Z"/>'
@@ -34705,28 +34559,6 @@
          Unterkante damit bei +0,74 — die naechste Reihe faengt bei
          +0,798 an, es bleiben knapp 5 px Luft. */
       const ROHR_MITTE = 0.12 + ROHR_HOCH / 2;
-      /* RUNDE 74 — HIER STAND DER GANZE FEHLER, UND ER WAR EINE ZAHL.
-         XANDER: „Kurz bevor es reingeht, wird es unten abgeschnitten,
-         obwohl es noch gar nicht ganz verschwunden ist … und wenn es
-         rauskommt, dann gibt es einen Doppelungseffekt und es kommt
-         nicht sauber raus."
-
-         NACHGEMESSEN im Browser: das Platzbild ist 102,5 px gross,
-         seine Mitte liegt bei y = 210,75; der Roehrenrand stand bei
-         y = 232,3. Das sind 21,55 px unter der Bildmitte — gerechnet
-         hatte ich aber mit 0,12 x 102,5 = 12,3 px. Die Differenz von
-         9,25 px ist genau der Streifen, den Xander sieht.
-
-         GRUND: `wo.y` ist die Mitte des ganzen PLATZES, und zu dem
-         gehoert der Name unter dem Bild. Die Bildmitte liegt 9,25 px
-         HOEHER. Turm, Springer und Becken rechnen diesen Versatz
-         seit Runde 72 mit (lcBildVersatz), die Roehre nicht — sie
-         sass also 9,25 px zu tief, waehrend der Zuschnitt schon bei
-         der richtigen Stelle schnitt.
-         Dasselbe galt fuer das Ausstiegsbild am Ziel: es stieg
-         9,25 px zu tief heraus und sprang beim Platzwechsel auf die
-         richtige Hoehe — DAS ist die Doppelung. */
-      const versatzR = lcBildVersatz(ab.el);
       /* Ein Schluesselbild, in dem Absinken und Zuschnitt aus
          DERSELBEN Zahl kommen. */
       const rohrBild = (v, vorne, zeit) => ({
@@ -34761,7 +34593,7 @@
         roehre.innerHTML = '<i class="lc-roehre-rand"></i><i class="lc-roehre-rohr"></i>';
         reihe.appendChild(roehre);
         weg.push(roehre);
-        setzen(roehre, wo.x, wo.y + versatzR + d * ROHR_MITTE);
+        setzen(roehre, wo.x, wo.y + d * ROHR_MITTE);
       });
       /* Das Bild am STARTPLATZ: hinein, und dann bleibt es weg.
          Der Zuschnitt setzt erst bei 0,075 ein — vorher steht die
@@ -34792,9 +34624,7 @@
       else doppel.textContent = (ab.name || "?").charAt(0).toUpperCase();
       reihe.appendChild(doppel);
       weg.push(doppel);
-      /* Und das Ausstiegsbild steht dort, wo das echte Platzbild
-         steht — nicht in der Mitte des ganzen Platzes. */
-      setzen(doppel, ende.x, ende.y + lcBildVersatz(zu.el));
+      setzen(doppel, ende.x, ende.y);
       /* RUNDE 73 — HIER LAG DIE ZWEITE DOPPELUNG.
          Das Ausstiegsbild blendete erst bei 0,92 aus, der Platzwechsel
          passiert aber schon bei (hin + 120) ms. Zwischen beiden stand
@@ -35384,14 +35214,9 @@
       const a = (i / 9) * Math.PI * 2 + 0.4;
       const x = 50 + (42 + (i % 3) * 4) * Math.cos(a);
       const y = 34 + (27 + (i % 3) * 3) * Math.sin(a);
-      /* RUNDE 74 — XANDER: „viele kleine kreisartige Kruemel … von
-         oben zu sehen." Die Krumen waren mit rx 2,1-3,8 und ry
-         1,5-2,4 LIEGENDE Ellipsen, also von der Seite gesehen.
-         Jetzt sind sie rund (rx = ry) und in der Groesse gestreut —
-         von 1,6 bis 4,0. */
-      const rK = 1.6 + ((i * 7) % 5) * 0.6;
-      krumen += '<circle class="lc-maulwurf-krume" cx="' + x.toFixed(1)
-        + '" cy="' + y.toFixed(1) + '" r="' + rK.toFixed(1) + '"/>';
+      krumen += '<ellipse class="lc-maulwurf-krume" cx="' + x.toFixed(1)
+        + '" cy="' + y.toFixed(1) + '" rx="' + (2.1 + (i % 4) * 0.55).toFixed(1)
+        + '" ry="' + (1.5 + (i % 3) * 0.45).toFixed(1) + '"/>';
     }
     /* DER MAULWURF SELBST, von oben: der dunkle Kopf schaut aus dem
        Ausgang, davor die rosa Ruesselnase mit den zwei Nasenloechern
@@ -35953,59 +35778,26 @@
      jetzt bei x=128 statt 118, die Gelenke und Teleskopstaebe
      stehen ueber ihren Mitten (10 und 138), und der Buegel spannt
      sich zwischen denselben beiden Punkten. */
-  /* RUNDE 74 — DIE MUSCHEL RUECKT ENGER AN DEN KOPF.
-     XANDER: „Die Hoerer sind schon ziemlich cool. Die koennen auch
-     noch ein bisschen enger reingehen, dass jemand, der auf der
-     rechten Seite sitzt oder links von mir, nicht mit meinem Design
-     korreliert und seinen Kopfhoerern, falls er im selben Moment
-     Kopfhoerer aufsetzt."
-
-     NACHGERECHNET am Bildschirm: ein Platzbild ist 84 px breit, der
-     Abstand zweier Plaetze 91 px — zwischen zwei Bildern liegen also
-     genau 7 px, bis zur Mitte dieser Luecke 3,5 px. Bei 122 % Breite
-     ragte die Zeichnung 9,25 px je Seite heraus: zwei Nachbarn mit
-     Kopfhoerern haetten sich um 11,5 px ueberlappt. Jetzt 112 % —
-     5,04 px je Seite, und die Muschel selbst steht nur 3,1 px ueber
-     den Bildrand hinaus. Zwei Nachbarn beruehren sich gerade eben,
-     sie ueberdecken sich nie.
-
-     Die Muschel bekommt ihre Stelle jetzt aus DEM KREIS, nicht aus
-     einer festen Zahl: das Bild ist ein Kreis um (80|80) mit Radius
-     71,4 Einheiten, die Muschel haengt am Buegelende bei 74 Grad. */
-  function lcApmMuschel(cx, cy, rechts) {
-    const BR = 18, HO = 40;
-    const x = cx - BR / 2, y = cy - HO / 2;
-    /* Das Polster liegt ZUM KOPF hin — also auf der Innenseite. */
-    const rand = rechts ? x + 1.5 : x + BR - 1.5;
-    const innen = rechts ? 2.6 : -2.6;
+  function lcApmMuschel(x, rechts) {
+    const BR = 20;                              /* Breite der Muschel */
+    const rand = rechts ? x + 1.4 : x + BR - 1.4;  /* dort sitzt das Polster */
+    const innen = rechts ? 3 : -3;              /* das Polster woelbt sich zum Kopf */
     return '<g>'
-      /* Der Teleskopstab, der aus dem Buegel in die Muschel laeuft. */
-      + '<rect x="' + (cx - 1.5).toFixed(1) + '" y="' + (y - 11).toFixed(1)
-      + '" width="3" height="15" rx="1.5" fill="url(#apmStahl)"/>'
-      /* Das Gelenk. */
-      + '<rect x="' + (cx - 4.4).toFixed(1) + '" y="' + (y - 1.5).toFixed(1)
-      + '" width="8.8" height="5.2" rx="2.6" fill="#9db0c2"/>'
       /* Die eloxierte Aussenplatte — flach, hochoval, weiche Ecken. */
-      + '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + BR
-      + '" height="' + HO + '" rx="8.6" fill="url(#apmL)"/>'
+      + '<rect x="' + x + '" y="66" width="' + BR + '" height="36" rx="9.5"'
+      + ' fill="url(#apmL)" transform="translate(0,-10)"/>'
       /* Die feine Kante, die die Platte vom Gehaeuse absetzt. */
-      + '<rect x="' + (x + 2).toFixed(1) + '" y="' + (y + 2.2).toFixed(1)
-      + '" width="' + (BR - 4) + '" height="' + (HO - 4.4) + '" rx="6.8"'
-      + ' fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1"/>'
+      + '<rect x="' + (x + 2.1) + '" y="58.6" width="' + (BR - 4.2) + '" height="30.8" rx="7.6"'
+      + ' fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.1"/>'
       /* Der Glanz: ein schmaler Streifen, kein Ring. */
-      + '<path d="M' + (x + 4.6).toFixed(1) + ' ' + (y + 6).toFixed(1)
-      + ' C' + (x + 3.6).toFixed(1) + ' ' + (y + 15).toFixed(1) + ' '
-      + (x + 3.6).toFixed(1) + ' ' + (y + 25).toFixed(1) + ' '
-      + (x + 5).toFixed(1) + ' ' + (y + 34).toFixed(1) + '"'
-      + ' fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1.4"'
-      + ' stroke-linecap="round"/>'
+      + '<path d="M' + (x + 5.2) + ' 64 C' + (x + 4.1) + ' 72 ' + (x + 4.1)
+      + ' 80 ' + (x + 5.6) + ' 86" fill="none" stroke="rgba(255,255,255,.45)"'
+      + ' stroke-width="1.6" stroke-linecap="round"/>'
       /* Und das Polster: ein schmaler dunkler Rand ZUM KOPF hin —
          mehr sieht man von der Seite nicht. */
-      + '<path d="M' + rand.toFixed(1) + ' ' + (y + 3).toFixed(1)
-      + ' C' + (rand + innen).toFixed(1) + ' ' + (y + 12).toFixed(1) + ' '
-      + (rand + innen).toFixed(1) + ' ' + (y + 28).toFixed(1) + ' '
-      + rand.toFixed(1) + ' ' + (y + 37).toFixed(1) + '"'
-      + ' fill="none" stroke="#3c4a5a" stroke-width="2.6"'
+      + '<path d="M' + rand + ' 60 C' + (rand + innen)
+      + ' 68 ' + (rand + innen) + ' 80 '
+      + rand + ' 88" fill="none" stroke="#3c4a5a" stroke-width="3"'
       + ' stroke-linecap="round"/>'
       + "</g>";
   }
@@ -36098,82 +35890,42 @@
            ruhigen Verlauf statt eines dicken Rings.
          · Der Buegel ist ein 3,4 px duenner Stahlbogen, und OBEN
            haengt nur die Bruecke aus Stoffnetz darunter. */
-      /* RUNDE 74 — DER BUEGEL LAEUFT AUF DEM KREIS, DIE BRUECKE IST
-         EIN PFLASTER MIT ZWEI TROPFEN.
-         XANDER: „Denk daran, dass du die Buegel mit der Kreisrundung
-         mitfaehrst und dass oben dieser Zwischenhalt wie eine kleine
-         Bruecke deutlich ist. Die Buegel sind dabei ein bisschen
-         filigraner, die gucken aus diesem oberen Teil raus, die sind
-         silbrig, also metallic, und oben ist diese kleine blaue
-         Bruecke, aus der das rauskommt an der Seite — wie als wenn du
-         so einen Tropfen links und rechts von dem Pflaster hast, und
-         daraus kommt dieser Metallbuegel. Das aber kreisrund am
-         Verlauf des Profilbildes an der Kreisform auslegen."
-
-         GERECHNET, nicht geschaetzt. Die Zeichnung ist jetzt QUADRAT
-         (viewBox 160 mal 160) und liegt mittig ueber dem Bild; bei
-         112 Prozent Breite bildet sich das Profilbild damit als Kreis
-         um (80|80) mit Radius 71,4 Einheiten ab. Alles haengt an
-         diesem Kreis:
-           · Der Buegel ist ein echter KREISBOGEN mit Radius 73,5 —
-             also 2,1 Einheiten (1,2 px) ausserhalb des Bildrandes.
-             Er laeuft von 20 bis 74 Grad, von der Bruecke bis zur
-             Muschel, und er ist duenner als vorher (3,4 statt 4,2).
-           · Die Bruecke sitzt oben zwischen -19 und +19 Grad, als
-             Ringstueck zwischen Radius 69,4 und 77,6 — ein Pflaster,
-             das sich an den Kreis anlegt.
-           · An ihren beiden Enden sitzt je ein Tropfen, und genau
-             dort faengt der silberne Buegel an.
-           · Die Muscheln haengen an den Buegelenden bei 74 Grad. */
       schicht.innerHTML =
-        '<svg class="lc-kopfhoerer-bild" viewBox="0 0 160 160">'
+        '<svg class="lc-kopfhoerer-bild" viewBox="0 0 148 92">'
         + '<defs>'
         /* Das eloxierte Himmelblau der Aussenplatte, von oben hell
            nach unten dunkel — so faellt Licht auf Aluminium. */
         + '<linearGradient id="apmL" x1="0" y1="0" x2="0.3" y2="1">'
         + '<stop offset="0" stop-color="#cfe0ef"/><stop offset=".45" stop-color="#9dbdd8"/>'
         + '<stop offset="1" stop-color="#6d90b0"/></linearGradient>'
-        /* Der Buegel ist METALL, nicht lackiert: ein Verlauf quer
-           ueber den Draht mit einem hellen Grat in der Mitte. */
-        + '<linearGradient id="apmStahl" x1="0" y1="0" x2="1" y2="0.25">'
-        + '<stop offset="0" stop-color="#8b9aa8"/><stop offset=".34" stop-color="#eef3f8"/>'
-        + '<stop offset=".62" stop-color="#b9c6d2"/><stop offset="1" stop-color="#7c8b99"/>'
-        + "</linearGradient>"
-        /* Die Bruecke: das kraeftige Blau, das Xander meint. */
-        + '<linearGradient id="apmBlau" x1="0" y1="0" x2="0" y2="1">'
-        + '<stop offset="0" stop-color="#7fb4e8"/><stop offset=".55" stop-color="#4b8ccd"/>'
-        + '<stop offset="1" stop-color="#2f6ba6"/></linearGradient>'
-        + "</defs>"
-        /* DIE BEIDEN BUEGEL — Kreisboegen auf dem Profilbild. */
-        + '<path d="M 105.14 10.93 A 73.5 73.5 0 0 1 150.65 59.74"'
-        + ' fill="none" stroke="url(#apmStahl)" stroke-width="3.4"'
+        + '<linearGradient id="apmS" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#c2d4e4"/><stop offset="1" stop-color="#7f9cb8"/>'
+        + "</linearGradient></defs>"
+        /* DER STAHLBUEGEL — duenn, und er spannt sich ueber den Kopf. */
+        + '<path d="M10 58 C10 22 38 8 74 8 C110 8 138 22 138 58"'
+        + ' fill="none" stroke="url(#apmS)" stroke-width="4.2"'
         + ' stroke-linecap="round"/>'
-        + '<path d="M 54.86 10.93 A 73.5 73.5 0 0 0 9.35 59.74"'
-        + ' fill="none" stroke="url(#apmStahl)" stroke-width="3.4"'
-        + ' stroke-linecap="round"/>'
-        /* DIE BRUECKE: ein Pflaster, das sich an den Kreis anlegt. */
-        + '<path d="M 54.74 6.63 A 77.6 77.6 0 0 1 105.26 6.63'
-        + ' L 102.59 14.38 A 69.4 69.4 0 0 0 57.41 14.38 Z"'
-        + ' fill="url(#apmBlau)" stroke="#2a5f95" stroke-width="1"'
-        + ' stroke-linejoin="round"/>'
-        /* Die Naht auf dem Pflaster — ohne sie ist es ein blauer Klotz. */
-        + '<path d="M 61.6 8.84 A 73.5 73.5 0 0 1 98.4 8.84"'
-        + ' fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".9"'
-        + ' stroke-dasharray="2 2.6" stroke-linecap="round"/>'
-        /* DIE ZWEI TROPFEN an den Enden der Bruecke — aus ihnen
-           kommt der Buegel heraus. */
-        + '<ellipse cx="103.93" cy="10.5" rx="5.4" ry="4.2"'
-        + ' transform="rotate(19 103.93 10.5)"'
-        + ' fill="url(#apmBlau)" stroke="#2a5f95" stroke-width=".9"/>'
-        + '<ellipse cx="56.07" cy="10.5" rx="5.4" ry="4.2"'
-        + ' transform="rotate(-19 56.07 10.5)"'
-        + ' fill="url(#apmBlau)" stroke="#2a5f95" stroke-width=".9"/>'
-        + lcApmMuschel(11.75, 77.74, false)
-        + lcApmMuschel(148.25, 77.74, true)
-        /* Die Digital Crown sitzt OBEN AUF der rechten Muschel. */
-        + '<rect x="152.85" y="64.74" width="9" height="4.2" rx="2.1" fill="#c3d2e0"/>'
-        + '<path d="M154.65 65.54 V68.34 M156.65 65.54 V68.34'
-        + ' M158.65 65.54 V68.34" stroke="#8098ad" stroke-width="0.7"/>'
+        /* DIE BRUECKE: nur oben, aus Stoffnetz, und sie haengt UNTER
+           dem Buegel — genau wie beim Original. */
+        + '<path d="M46 24.5 C56 14.5 92 14.5 102 24.5'
+        + ' C92 20.5 56 20.5 46 24.5 Z" fill="#aebfd0"/>'
+        + '<path d="M48 22.6 C57.5 16.4 90.5 16.4 100 22.6"'
+        + ' fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1"'
+        + ' stroke-dasharray="1 2" stroke-linecap="round"/>'
+        /* DIE TELESKOPSTAEBE — ganz duenn und lang. */
+        + '<rect x="8.4" y="50" width="3.2" height="16" rx="1.6" fill="#b6c6d6"/>'
+        + '<rect x="136.4" y="50" width="3.2" height="16" rx="1.6" fill="#b6c6d6"/>'
+        /* Das Gelenk, an dem die Muschel haengt. */
+        + '<rect x="5.5" y="62" width="9" height="5.5" rx="2.7" fill="#9db0c2"/>'
+        + '<rect x="133.5" y="62" width="9" height="5.5" rx="2.7" fill="#9db0c2"/>'
+        + lcApmMuschel(0, false)
+        + lcApmMuschel(128, true)
+        /* Die Digital Crown sitzt OBEN AUF der rechten Muschel,
+           daneben die Taste fuer die Geraeuschunterdrueckung. */
+        + '<rect x="130" y="56.4" width="10" height="4.6" rx="2.3" fill="#c3d2e0"/>'
+        + '<path d="M132.2 57.2 V60.2 M134.2 57.2 V60.2 M136.2 57.2 V60.2'
+        + ' M138.2 57.2 V60.2" stroke="#8098ad" stroke-width="0.8"/>'
+        + '<rect x="141.6" y="57" width="4.4" height="3.2" rx="1.6" fill="#c3d2e0"/>'
         + "</svg>";
       /* Noten, die aus den Muscheln steigen — sonst sind es nur zwei
          schwarze Klumpen am Kopf. */
@@ -39571,7 +39323,7 @@
       if (art === "sahne" && lcSahne(wenZ)) return;
       if (art === "sog" && lcSog(wenZ)) return;
       if (art === "trommel" && lcTrommel(wenZ)) return;
-      if (art === "heber" && lcHeber(wenZ, nachricht)) return;
+      if (art === "heber" && lcHeber(wenZ)) return;
       if (art === "lasso" && lcLasso(wenZ)) return;
       if (art === "aufblasen" && lcAufblasen(wenZ)) return;
       if (art === "paintfleck" && lcPaintfleck(wenZ)) return;

@@ -56,8 +56,15 @@ pruefe("das zweite Blatt liegt eine halbe Umdrehung dahinter",
    Browser: Glas 104…156 px, Fenster 110…152 px. */
 pruefe("das Profilbild sitzt in der Kanzel, nicht mitten im Rumpf",
   /\.lc-heli-kanzel \{\s*\n\s*left: 19\.8%;[\s\S]{0,160}?width: 19\.5%;/.test(css));
-pruefe("und die verglaste Front steht im Bild wirklich dort",
-  /lc-heli-glas" d="M11 39 Q9\.5 23 30 18 L42 18/.test(js));
+/* RUNDE 74 — XANDER: „Das Helikopterfenster ist immer noch nicht
+   abgeschraegt vorne. Das ist keine schraege Scheibe."
+   Der alte Umriss lief mit zwei Boegen von (11|39) ueber (30|18) und
+   (42|18) bis (30|45) — vorn UND unten rund, also ein Klumpen. Eine
+   Hubschrauberkanzel besteht aus zwei GERADEN Scheiben: der um 47
+   Grad geneigten Frontscheibe und der Kinnscheibe darunter. */
+pruefe("und die verglaste Front ist eine gerade, geneigte Scheibe",
+  /lc-heli-glas" d="M11\.5 41 L33 17\.5 L44 17\.5 L24 43 Z"/.test(js)
+  && /M10\.8 40\.6 Q9\.2 46\.4 14\.4 47\.6/.test(js));
 pruefe("er steht auf seinem eigenen Abwind", /lc-heli-wind/.test(js) && /lcHeliWindR66/.test(css));
 
 console.log("\nDER GEWICKELTE GRIFF");

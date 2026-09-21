@@ -244,8 +244,15 @@ pruefe("die Spur waechst mit", /lcSchneeRinneR72/.test(css)
 pruefe("und er bekommt die Zeit dafuer", /\}, 4600, "schneeball"\);/.test(js));
 
 console.log("\nDIE SPRUNGFEDER TRIFFT DIE FELDER");
-pruefe("die Zahl der Spruenge haengt an der Strecke",
-  /const federSpruenge = Math\.max\(2, plaetzeR\);/.test(js)
+/* RUNDE 74 — XANDER: „Bei der Sprungfeder fehlt mir die Kongruenz zu
+   den Plaetzen, dass immer dann das Geraeusch kommt, wenn man auf
+   einen Platz trifft."
+   Mit `Math.max(2, plaetzeR)` machte die Feder beim Sprung auf den
+   NACHBARPLATZ trotzdem zwei Spruenge — der erste setzte mitten
+   zwischen zwei Plaetzen auf. Jetzt ist die Zahl der Spruenge gleich
+   der Zahl der ueberquerten Plaetze. */
+pruefe("die Zahl der Spruenge ist die Zahl der Plaetze",
+  /const federSpruenge = Math\.max\(1, plaetzeR\);/.test(js)
   && /const federSchritte = federSpruenge \* 2;/.test(js));
 pruefe("und der Ton liegt auf jedem Aufsetzen",
   /for \(let i = 0; i <= federSchritte; i \+= 2\)/.test(js));
