@@ -72,7 +72,13 @@ const pruefe = (was, gut, zusatz) => {
              dauer: Math.round(dauer),
              schlinge: Boolean(ziel && ziel.querySelector(".lc-lasso-schlinge")) };
   });
-  pruefe("der Zug hat eigene Schluesselbilder", zug.anim === "lcZuMirR51", zug.anim);
+  /* RUNDE 71 NACHGEZOGEN: der Zug heisst seit Runde 65 „lcZuMirR65"
+     — dort ist das Lasso neu gebaut worden („Das Lasso schlingt sich
+     immer noch nicht um das Opfer an seinem Platz"). Gemeint ist
+     dasselbe: der Gezogene hat eigene Schluesselbilder und haengt
+     nicht am allgemeinen Umarmungsbild. Deshalb steht hier jetzt der
+     heutige Name, nicht der von damals. */
+  pruefe("der Zug hat eigene Schluesselbilder", zug.anim === "lcZuMirR65", zug.anim);
   pruefe("die Schlinge liegt am Bild", zug.schlinge);
   /* Die fliegende Schlinge landet bei 640 ms, sie sitzt bei 910 ms.
      Vorher riss der Zug schon bei 0 ms an. */
@@ -101,27 +107,43 @@ const pruefe = (was, gut, zusatz) => {
     const t = document.querySelector(".lc-tor-wirbel");
     if (!t) return { da: false };
     const teil = (k) => t.querySelector("." + k);
-    const drehungen = ["lc-tor-sog", "lc-tor-sog2", "lc-tor-bogen", "lc-tor-bogen2"]
-      .map((k) => { const e = teil(k); return e ? getComputedStyle(e).animationDuration : ""; })
-      .filter(Boolean);
+    /* RUNDE 71 NACHGEZOGEN. Diese Pruefung stammt aus Runde 51, als
+       das Tor noch ein SOG war: Wirbel, Kern, Ereignishorizont,
+       Energiebogen, angesaugter Staub. In Runde 67 hat XANDER
+       ausdruecklich etwas anderes bestellt („Tor als stehende
+       Wasserwand"), und in Runde 71 noch einmal etwas anderes
+       („schwarz mit Spiegeleffekten so ganz langsam"). Die alten
+       Teile sind deshalb abgeschaltet, und seit Runde 67 stand diese
+       Pruefung auf Rot — sie hielt einen Zustand fest, den er selbst
+       abbestellt hat.
+       Geprueft wird jetzt, was das Tor HEUTE ausmacht, und zwar
+       genauso streng: Fassung, Flaeche, Wellen, drei durchsichtige
+       Schichten, und dass keine zwei davon gleich schnell laufen. */
+    const schichten = [...t.querySelectorAll(".lc-tor-schicht")]
+      .map((e) => getComputedStyle(e).animationDuration);
     return { da: true,
-             sog: Boolean(teil("lc-tor-sog")), kern: Boolean(teil("lc-tor-kern")),
-             horizont: Boolean(teil("lc-tor-horizont")), bogen: Boolean(teil("lc-tor-bogen")),
-             staub: t.querySelectorAll(".lc-tor-staub").length,
-             drehungen: drehungen,
-             verschieden: new Set(drehungen).size };
+             ring: Boolean(teil("lc-tor-ring")),
+             wasser: Boolean(teil("lc-tor-wasser")),
+             saum: Boolean(teil("lc-tor-saum")),
+             spiegel: Boolean(teil("lc-tor-spiegel")),
+             wellen: t.querySelectorAll(".lc-tor-welle").length,
+             tropfen: t.querySelectorAll(".lc-tor-tropfen").length,
+             schichten: schichten,
+             verschieden: new Set(schichten).size };
   });
   pruefe("das Portal reisst auf", tor.da);
-  pruefe("es hat einen Sog", Boolean(tor.sog));
-  pruefe("einen Kern", Boolean(tor.kern));
-  pruefe("einen Ereignishorizont", Boolean(tor.horizont));
-  pruefe("Energiebogen", Boolean(tor.bogen));
-  pruefe("und es saugt Staub an", (tor.staub || 0) >= 8, tor.staub + " Koerner");
+  pruefe("es hat eine Fassung", Boolean(tor.ring));
+  pruefe("eine Flaeche", Boolean(tor.wasser));
+  pruefe("einen Saum", Boolean(tor.saum));
+  pruefe("einen Spiegel", Boolean(tor.spiegel));
+  pruefe("Wellen, die darueber laufen", (tor.wellen || 0) === 5, tor.wellen + " Ringe");
+  pruefe("und Tropfen", (tor.tropfen || 0) >= 8, tor.tropfen + " Tropfen");
   /* Tiefe entsteht dadurch, dass die Schichten VERSCHIEDEN schnell
      laufen. Laufen sie gleich schnell, ist es wieder eine Scheibe. */
-  pruefe("keine zwei Schichten drehen gleich schnell",
-    tor.verschieden === (tor.drehungen || []).length,
-    (tor.drehungen || []).join(" / "));
+  pruefe("drei durchsichtige Schichten", (tor.schichten || []).length === 3);
+  pruefe("keine zwei Schichten laufen gleich schnell",
+    tor.verschieden === (tor.schichten || []).length,
+    (tor.schichten || []).join(" / "));
 
   await br.close(); srv.close();
   console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n"

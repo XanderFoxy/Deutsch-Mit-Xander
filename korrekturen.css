@@ -22146,3 +22146,125 @@ body.lc-schreibt .tutor-reiter {
    schwebte der Rotor zweieinhalb Einheiten über seinem Mast. Die
    Prüfung aus Runde 66 hat genau das gemeldet. */
 .lc-heli-rotor { top: 10.71%; }
+
+/* RUNDE 71, NACHGEZOGEN: der Reiter sass in der Luft über dem Pony.
+   Der Rumpf ist um 8 von 100 Einheiten nach unten gewandert (kurze
+   Beine, siehe app.js), der Sattel mit ihm — der Reiter stand aber
+   noch auf 11 %. Gemessen am Bild schwebte er eine halbe Bildhöhe
+   über dem Sattel. Jetzt 19 %, und der Sattel liegt bei x 66…94 von
+   150, also bei 53 % — das stimmte schon. */
+.lc-pferd-reiter { top: 19%; }
+
+/* =================================================================
+   RUNDE 71 — DAS FLUGZEUG BEKOMMT DETAILS, DAS BILD WIRD EIN FENSTER
+   -----------------------------------------------------------------
+   XANDER: „beim Reisen hat das Flugzeug immer noch keine Details.
+   Das Profilbild ist auch viel zu gross auf dem Flugzeug, das soll
+   ein Fenster sein."
+
+   GERECHNET: der Rumpf liegt in der Zeichnung zwischen y=16 und
+   y=36 von 52 — er ist also 38 % der Bildhöhe hoch. Das Fenster war
+   62 % hoch und 30 % breit; es war damit GRÖSSER als der Rumpf, in
+   dem es sitzen sollte. Jetzt ist es genauso gross wie sein
+   Lukenring (r=6,6 von 120 Breite): 11 % breit und 25,4 % hoch.
+   ================================================================= */
+.lc-flieger-fenster {
+  left: 70%;
+  top: 50%;
+  width: 11%;
+  height: 25.4%;
+  box-shadow: inset 0 0 0 1.6px #21374f, inset 0 .08em .2em rgba(255, 255, 255, .5);
+  font-size: .5em;
+}
+.lc-flieger-streifen {
+  stroke: #d24d4d;
+  stroke-width: 1.6;
+  fill: none;
+  opacity: .85;
+}
+.lc-flieger-kabinenfenster {
+  stroke: #2b4967;
+  stroke-width: 3;
+  stroke-linecap: round;
+  fill: none;
+  opacity: .8;
+}
+.lc-flieger-cockpit { fill: #2b4967; opacity: .9; }
+.lc-flieger-tuer {
+  stroke: rgba(40, 70, 100, .35);
+  stroke-width: 1;
+  fill: none;
+}
+.lc-flieger-fahrwerk {
+  stroke: #4a5a6a;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  fill: none;
+}
+.lc-flieger-rad { fill: #23303c; }
+/* Das ferne Triebwerk liegt weiter weg — also dunkler, wie der ferne
+   Flügel auch. */
+.lc-flieger-fern2 { opacity: .55; }
+
+/* =================================================================
+   RUNDE 71 — DER MAULWURF FÜLLT DEN PLATZ UND GRÄBT DIE LINIE AUF
+   -----------------------------------------------------------------
+   XANDER: „beim Maulwurfshügel. Das kann mehr Platz füllend sein …
+   die Strichlinie auch ein bisschen mit aufgraben und dazwischen die
+   Dreckspuren ein bisschen breiter … das kann auch das Layout von
+   den Plätzen ein bisschen zerstören."
+
+   Drei Zahlen ändern sich, und jede ist nachgerechnet:
+   · DAS LOCH war genau so breit wie das Profilbild (100 %). Jetzt
+     128 % — es greift also über den Bildrand hinaus in den Platz
+     hinein, so wie ein echter Auswurf das täte.
+   · DIE HÄUFCHEN waren 27 % einer Bildbreite breit und 15 % hoch.
+     Jetzt 42 % und 23 % — der Wall zwischen den Plätzen ist damit
+     gut anderthalbmal so breit.
+   · DIE GESTRICHELTE LINIE des freien Platzes bleibt nicht heil:
+     solange der Maulwurf darunter arbeitet, wird sie erdbraun,
+     bricht in unterschiedlich lange Stücke auf und wackelt. Danach
+     ist sie wieder wie vorher — zerstört wird nichts auf Dauer.
+   ================================================================= */
+.lc-grabloch {
+  width: 128%;
+  margin-left: 0;
+  top: -14%;
+}
+.lc-erdhaufen {
+  width: calc(var(--gross, 64px) * .42);
+  height: calc(var(--gross, 64px) * .23);
+  margin: calc(var(--gross, 64px) * -.115) 0 0 calc(var(--gross, 64px) * -.21);
+}
+/* Die aufgegrabene Strichlinie. Sie sitzt auf dem Kreis des freien
+   Platzes, deshalb wird dort gearbeitet und nicht am ganzen Platz. */
+.lc-platz-untergraben .lc-kreis {
+  border-color: #7a5735 !important;
+  border-style: dashed !important;
+  animation: lcLinieAufgegrabenR71 1.9s ease-in-out both;
+}
+@keyframes lcLinieAufgegrabenR71 {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  /* Es ruckelt, als schöbe sich von unten etwas dagegen. */
+  14%  { transform: translate(1.5%, -1.5%) rotate(-1.2deg); }
+  26%  { transform: translate(-1.8%, 1%) rotate(1.4deg); }
+  40%  { transform: translate(1.2%, 1.6%) rotate(-.9deg); }
+  56%  { transform: translate(-1%, -1.2%) rotate(1deg); }
+  72%  { transform: translate(.6%, .8%) rotate(-.5deg); }
+  88%  { transform: translate(-.3%, -.4%) rotate(.3deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+/* Und der ganze Platz sackt ein Stück — „das kann auch das Layout
+   von den Plätzen ein bisschen zerstören." Ein Stück, nicht mehr:
+   wer danach tippen will, muss den Platz noch treffen. */
+.lc-platz-untergraben {
+  animation: lcPlatzSacktR71 1.9s ease-in-out both;
+}
+@keyframes lcPlatzSacktR71 {
+  0%, 100% { transform: translateY(0); }
+  30%      { transform: translateY(2.5%); }
+  60%      { transform: translateY(1.2%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-platz-untergraben, .lc-platz-untergraben .lc-kreis { animation: none; }
+}

@@ -32397,7 +32397,31 @@
         + '<path class="lc-flieger-fluegel" d="M52 26 L38 6 L52 6 L74 24 Z"/>'
         /* Das Triebwerk unter dem Fluegel. */
         + '<rect class="lc-flieger-triebwerk" x="50" y="30" width="20" height="9" rx="4.5"/>'
-        + '<circle class="lc-flieger-luke" cx="84" cy="26" r="8"/>'
+        /* RUNDE 71 — XANDER: „beim Reisen hat das Flugzeug immer noch
+           keine Details."
+           Dazu kommen jetzt die Sachen, an denen man ein Verkehrs-
+           flugzeug von der Seite wirklich erkennt:
+           · eine REIHE KLEINER KABINENFENSTER laengs des Rumpfs,
+           · das COCKPITFENSTER vorn, schraeg wie eine Windschutz-
+             scheibe,
+           · zwei TUERLINIEN (vorn und hinten),
+           · der ZIERSTREIFEN, der den Rumpf der Laenge nach teilt,
+           · ein zweites, dunkleres Triebwerk am fernen Fluegel,
+           · das FAHRWERK unter Nase und Fluegel.
+           Die Zahlen sind aus der Rumpfkontur abgelesen: der Rumpf
+           liegt zwischen y=16 und y=36, seine Mitte also auf 26. */
+        + '<rect class="lc-flieger-triebwerk lc-flieger-fern2" x="42" y="31.5" width="16" height="7" rx="3.5"/>'
+        + '<path class="lc-flieger-streifen" d="M14 29.4 L112 29.4"/>'
+        + '<path class="lc-flieger-kabinenfenster" d="M28 24 h3 M35 24 h3 M42 24 h3'
+        + ' M49 24 h3 M56 24 h3 M63 24 h3 M70 24 h3 M96 24 h3 M103 24 h3"/>'
+        + '<path class="lc-flieger-cockpit" d="M104 21 Q111 22 114.5 25.4 L107 25.4 Z"/>'
+        + '<path class="lc-flieger-tuer" d="M92 17 L92 35 M34 18 L34 35"/>'
+        + '<path class="lc-flieger-fahrwerk" d="M100 36 L100 41 M58 38.5 L58 42"/>'
+        + '<circle class="lc-flieger-rad" cx="100" cy="42" r="2"/>'
+        + '<circle class="lc-flieger-rad" cx="58" cy="43" r="2.2"/>'
+        /* Das Fenster, hinter dem er sitzt — eines von vielen, nicht
+           der halbe Rumpf. */
+        + '<circle class="lc-flieger-luke" cx="84" cy="26" r="6.6"/>'
         + "</svg>"
         + '<span class="lc-flieger-fenster"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
@@ -32799,6 +32823,22 @@
       }
 
       lochBauen(zu.el, Math.max(0, hin - 560), 1200);
+      /* RUNDE 71 — XANDER: „die Strichlinie auch ein bisschen mit
+         aufgraben … das kann auch das Layout von den Plaetzen ein
+         bisschen zerstoeren."
+         Der freie Platz ist an seiner gestrichelten Linie zu
+         erkennen. Wenn ein Maulwurf sich dort heraufgraebt, bleibt
+         die nicht heil: sie wird erdig, bricht auf und wackelt, so
+         lange er unten arbeitet. Danach ist sie wieder wie vorher —
+         kaputt machen soll er sie ja nicht. */
+      [ab.el, zu.el].forEach((pl, i) => {
+        if (!pl) return;
+        const an = Math.max(0, i ? hin - 700 : 0);
+        setTimeout(() => {
+          pl.classList.add("lc-platz-untergraben");
+          setTimeout(() => pl.classList.remove("lc-platz-untergraben"), 1900);
+        }, an);
+      });
 
       /* Und das Bild: es sackt senkrecht ins eigene Loch … */
       try {
@@ -33561,44 +33601,61 @@
            Der Kopf hat jetzt eine Ganasche, einen schmalen
            Nasenruecken, ein Maul mit Nuestern und ein Ohr — daran
            erkennt man ein Pferd, nicht an einem Viereck. */
+        /* RUNDE 71 — XANDER: „das Pferd. Wenn du's hinbekommst, koennen
+           wir das vielleicht sogar niedlicher machen … ponyartig."
+           Was ein Pony von einem Pferd unterscheidet, ist kein Stil,
+           sondern das Verhaeltnis — und das ist zu rechnen:
+           · KURZE BEINE. Der Rumpf lag bei y 31…64, die Hufe bei 93:
+             die Beine waren 29 Einheiten lang, also fast so lang wie
+             der Rumpf hoch ist. Jetzt liegt der Rumpf bei 39…74, die
+             Hufe bleiben bei 94 — 20 statt 29.
+           · RUNDER RUMPF. 35 statt 33 hoch bei gleicher Laenge; das
+             Pony ist gedrungen, nicht schlank.
+           · KURZER, DICKER HALS und ein GROESSERER KOPF. Beim Pferd
+             war der Kopf 27 Einheiten lang bei 33 Rumpfhoehe; jetzt
+             30 bei 35 — und er sitzt tiefer, nicht hoch aufgerichtet.
+           · VIEL MAEHNE UND SCHWEIF. Das ist das Erste, was man an
+             einem Pony sieht. */
         + '<svg class="lc-pferd-form" viewBox="0 0 150 100" aria-hidden="true">'
         /* --- DIE BEINE DER FERNEN SEITE (dunkler, sie liegen hinten) --- */
         + '<g class="lc-pferd-fern">'
-        + '<path class="lc-pferd-bein lc-pferd-b1" d="M52 62 L47 74 L52 84 L50 92"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h1" d="M50 92 L56 93"/>'
-        + '<path class="lc-pferd-bein lc-pferd-b2" d="M104 62 L110 73 L105 83 L108 92"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h2" d="M108 92 L114 93"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b1" d="M54 72 L50 80 L54 87 L52 92"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h1" d="M52 92 L58 93"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b2" d="M102 72 L107 80 L103 87 L106 92"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h2" d="M106 92 L112 93"/>'
         + "</g>"
-        /* --- DER SCHWEIF, hinter der Kruppe --- */
-        + '<path class="lc-pferd-schweif" d="M40 44 Q20 44 12 62 Q10 72 16 78'
-        + ' Q16 66 24 58 Q32 50 42 50 Z"/>'
-        /* --- DER RUMPF: Brust vorn hoch, Kruppe hinten rund --- */
-        + '<path class="lc-pferd-rumpf" d="M38 48 Q36 34 56 31 L96 31'
-        + ' Q114 33 118 46 Q120 58 104 64 L56 64 Q38 62 38 48 Z"/>'
+        /* --- DER SCHWEIF: dick, tief angesetzt, fast bis zum Boden --- */
+        + '<path class="lc-pferd-schweif" d="M42 52 Q20 52 12 72 Q9 84 16 90'
+        + ' Q15 76 23 66 Q31 56 44 58 Z"/>'
+        /* --- DER RUMPF: tief, rund, gedrungen --- */
+        + '<path class="lc-pferd-rumpf" d="M40 56 Q38 42 58 39 L94 39'
+        + ' Q112 41 116 54 Q118 68 102 74 L56 74 Q40 72 40 56 Z"/>'
         /* Die Schulter- und Flankenlinie — ohne sie ist es ein Sack. */
-        + '<path class="lc-pferd-linie" d="M60 33 Q56 48 60 62 M98 34 Q104 48 100 63"/>'
-        /* --- HALS UND KOPF --- */
-        + '<path class="lc-pferd-hals" d="M104 38 Q116 30 120 16 L132 18'
-        + ' Q128 36 112 48 Z"/>'
-        /* Der Kopf: Ganasche rund, Nasenruecken schmal, Maul stumpf. */
-        + '<path class="lc-pferd-kopf" d="M118 14 Q126 6 134 8 Q142 10 145 18'
-        + ' Q147 24 143 27 L136 28 Q128 28 124 24 Q118 20 118 14 Z"/>'
-        + '<circle class="lc-pferd-auge" cx="128" cy="15" r="1.7"/>'
-        + '<path class="lc-pferd-nuester" d="M141 22 Q143.5 21 144 23"/>'
-        /* Das Ohr — spitz, nach vorn gestellt. */
-        + '<path class="lc-pferd-ohr" d="M120 12 L122 3 L127 9 Z"/>'
-        /* Die Maehne laeuft am Halskamm entlang. */
-        + '<path class="lc-pferd-maehne" d="M120 16 Q116 6 122 2 L116 2'
-        + ' Q108 10 106 24 Q104 32 102 38 L110 36 Q112 24 120 16 Z"/>'
+        + '<path class="lc-pferd-linie" d="M60 41 Q56 56 60 72 M98 42 Q104 56 100 73"/>'
+        /* --- HALS UND KOPF: kurz, dick, tief getragen --- */
+        + '<path class="lc-pferd-hals" d="M102 46 Q113 40 117 28 L130 30'
+        + ' Q127 46 112 56 Z"/>'
+        /* Der Kopf: runde Backe, kurzes Maul — das macht es niedlich. */
+        + '<path class="lc-pferd-kopf" d="M114 26 Q121 15 132 16 Q143 18 146 28'
+        + ' Q148 36 142 39 L134 40 Q123 40 118 35 Q113 31 114 26 Z"/>'
+        + '<circle class="lc-pferd-auge" cx="127" cy="25" r="2.4"/>'
+        + '<path class="lc-pferd-nuester" d="M142 33 Q145 32 145.6 34.4"/>'
+        /* Das Ohr — kurz und rundlich, nicht spitz wie beim Grosspferd. */
+        + '<path class="lc-pferd-ohr" d="M117 24 Q117 14 122 12 Q125 17 124 23 Z"/>'
+        /* Die Maehne: dick, ueber den Kamm gelegt, mit Stirnschopf. */
+        + '<path class="lc-pferd-maehne" d="M117 28 Q112 16 119 10 Q122 16 122 22'
+        + ' Q125 13 130 12 Q127 20 126 26 L118 30 Z"/>'
+        + '<path class="lc-pferd-maehne" d="M116 29 Q106 22 100 34 Q96 44 94 52'
+        + ' L104 49 Q106 38 116 29 Z"/>'
         /* --- DIE BEINE DER NAHEN SEITE --- */
-        + '<path class="lc-pferd-bein lc-pferd-b3" d="M60 64 L54 76 L60 86 L57 94"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h3" d="M57 94 L64 95"/>'
-        + '<path class="lc-pferd-bein lc-pferd-b4" d="M98 64 L105 75 L99 85 L103 94"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h4" d="M103 94 L110 95"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b3" d="M62 74 L57 82 L62 89 L59 94"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h3" d="M59 94 L66 95"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b4" d="M96 74 L102 82 L97 89 L101 94"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h4" d="M101 94 L108 95"/>'
         /* --- SATTEL UND GURT --- */
-        + '<path class="lc-pferd-sattel" d="M66 32 Q80 25 94 32 L94 40'
-        + ' Q80 34 66 40 Z"/>'
-        + '<path class="lc-pferd-gurt" d="M76 34 L74 63 M88 34 L90 63"/>'
+        + '<path class="lc-pferd-sattel" d="M66 40 Q80 33 94 40 L94 48'
+        + ' Q80 42 66 48 Z"/>'
+        + '<path class="lc-pferd-gurt" d="M76 42 L74 72 M88 42 L90 72"/>'
         + "</svg>"
         + '<span class="lc-pferd-reiter"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")

@@ -108,5 +108,45 @@ pruefe("und das Bild sitzt als Fenster in der Kanzel, nicht als Kreis davor",
 /* NACHGEMESSEN im Browser: Glas 104…156 px, Fenster 110…152 px —
    das Fenster liegt wirklich im Glas. */
 
+console.log("\nDAS PFERD IST EIN PONY GEWORDEN");
+pruefe("kurze Beine: Rumpf tiefer, Hufe gleich",
+  /d="M40 56 Q38 42 58 39 L94 39/.test(js)
+  && /d="M62 74 L57 82 L62 89 L59 94"/.test(js)
+  && !/d="M60 64 L54 76 L60 86 L57 94"/.test(js));
+pruefe("kurzer, dicker Hals und groesserer Kopf",
+  /lc-pferd-hals" d="M102 46 Q113 40 117 28 L130 30/.test(js)
+  && /lc-pferd-kopf" d="M114 26 Q121 15 132 16 Q143 18 146 28/.test(js));
+pruefe("runde Ohren statt spitzer",
+  /lc-pferd-ohr" d="M117 24 Q117 14 122 12 Q125 17 124 23 Z"/.test(js));
+pruefe("dicke Maehne — zwei Teile statt einem",
+  (js.match(/class="lc-pferd-maehne"/g) || []).length === 2);
+pruefe("und der Reiter sitzt im Sattel, nicht darueber",
+  /\.lc-pferd-reiter \{ top: 19%; \}/.test(cssK));
+
+console.log("\nDAS FLUGZEUG HAT DETAILS UND EIN FENSTER");
+pruefe("eine Reihe Kabinenfenster",
+  /lc-flieger-kabinenfenster/.test(js) && /\.lc-flieger-kabinenfenster \{/.test(cssK));
+pruefe("Cockpitscheibe, Tueren, Zierstreifen",
+  /lc-flieger-cockpit/.test(js) && /lc-flieger-tuer/.test(js)
+  && /lc-flieger-streifen/.test(js));
+pruefe("Fahrwerk mit Raedern",
+  /lc-flieger-fahrwerk/.test(js)
+  && (js.match(/class="lc-flieger-rad"/g) || []).length === 2);
+pruefe("und das Bild ist kleiner als der Rumpf",
+  /\.lc-flieger-fenster \{\s*\n\s*left: 70%;[\s\S]{0,200}?height: 25\.4%;/.test(css));
+/* GERECHNET: der Rumpf ist 38 % der Bildhoehe hoch (y 16…36 von 52).
+   Das Fenster war 62 % hoch — groesser als der Rumpf. */
+
+console.log("\nDER MAULWURF FUELLT DEN PLATZ");
+pruefe("das Loch greift ueber den Bildrand",
+  /\.lc-grabloch \{\s*\n\s*width: 128%;/.test(cssK));
+pruefe("die Spur ist breiter",
+  /\.lc-erdhaufen \{\s*\n\s*width: calc\(var\(--gross, 64px\) \* \.42\);/.test(cssK));
+pruefe("die Strichlinie wird aufgegraben",
+  /lc-platz-untergraben/.test(js)
+  && /@keyframes lcLinieAufgegrabenR71/.test(cssK));
+pruefe("und der Platz sackt kurz ein",
+  /@keyframes lcPlatzSacktR71/.test(cssK));
+
 console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 71 sitzt.\n");
 process.exit(fehler ? 1 : 0);
