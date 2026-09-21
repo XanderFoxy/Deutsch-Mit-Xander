@@ -18816,8 +18816,12 @@
      Die Treffer kommen NACHEINANDER, nicht alle auf einmal: sonst ist
      es ein Muster und kein Beschuss.
      ----------------------------------------------------------------- */
+  /* XANDER hat die Farben selbst aufgezaehlt: „gruen, rot, blau,
+     gelb, braun, lila, blau, rot." BRAUN fehlte in der Palette —
+     jetzt ist es drin, und damit ist jede Farbe, die er genannt hat,
+     auch wirklich zu haben. */
   const LC_PAINT = ["#e03e3e", "#f2a03d", "#f5d93c", "#5fbf5f", "#3f8fd8",
-                    "#8b5fd8", "#e85fa8", "#2fc4bd"];
+                    "#8b5fd8", "#e85fa8", "#2fc4bd", "#8a5a2e"];
 
   function lcPaintball() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -27789,6 +27793,22 @@
          Kleinschreibung ist egal — wer „/drück emmy" tippt, meint
          Emmy. */
       const suche = String(wen).trim().toLowerCase();
+      /* EINE PLATZNUMMER MEINT DEN PLATZ — wie ueberall sonst seit
+         Runde 50. Ohne diese Zeile fand die Namenssuche zu „3" nichts,
+         und weiter unten griff der Rueckfall „alle": aus einer
+         Umarmung fuer einen wurde eine fuer den ganzen Raum. Genau
+         das meldet er ja: „bei der Umarmung werden immer noch beide
+         Personen gleichzeitig umarmt." */
+      if (/^\d{1,2}$/.test(suche)) {
+        const nr = [...karte.querySelectorAll(".lc-platz")].filter(
+          (pl) => String(pl.dataset.lcPlatz || "") === suche
+                  && !pl.classList.contains("lc-platz-frei"));
+        if (nr.length) {
+          lcUmarmungAnPlatz(nr[0], 0);
+          lcTonZu("umarmen");
+          return true;
+        }
+      }
       ziele = [...karte.querySelectorAll(".lc-platz")].filter(
         (pl) => lcNameVomPlatz(pl).toLowerCase() === suche);
       /* Und wirklich nur EINER: zwei Plaetze mit derselben
@@ -29392,6 +29412,14 @@
      ================================================================= */
   const LC_TAFEL_FARBEN = ["#e2312a", "#1b6ef3", "#12a150", "#f5b301", "#1d2430", "#ffffff"];
   let lcTafelZuege = [];          /* alle Striche, fuer Nachzuegler */
+  /* XANDER: „bei dem Whiteboard moechte ich die Werkzeuge ausblenden
+     koennen und vielleicht eine Rueckschritt- und Fortschritt-
+     Funktion."
+     Der Wiederhol-Stapel: was zurueckgenommen wurde, liegt hier und
+     kann wieder vorgeholt werden. Ein neuer Strich wirft ihn weg —
+     so macht es jedes Zeichenprogramm, und alles andere waere
+     verwirrend. */
+  let lcTafelVorrat = [];
   let lcTafelBildDaten = "";      /* das geladene Bild, fuer Nachzuegler */
   let lcTafelBlick = { z: 1, x: 0.5, y: 0.5 };
   let lcTafelWerkzeug = "stift";
@@ -29440,10 +29468,20 @@
       + '<button type="button" class="lc-tafel-knopf" data-tafel="raus" title="Wieder kleiner">➖</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="fein" title="Strich und Zeiger feiner oder dicker">●</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="gross" title="Tafel groß oder klein — die Plätze bleiben bedienbar">⤢</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="zurueck" title="Einen Strich zurück">↶</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="vor" title="Wieder vor">↷</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="sichern" title="Als Bild sichern">⬇️</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="leer" title="Alles wegwischen">🧽</button>'
       + '<button type="button" class="lc-tafel-knopf lc-tafel-zu" data-tafel="aus" title="Whiteboard zumachen">✕</button>'
       + '<input type="file" accept="image/*" id="lcTafelDatei" hidden>'
-      + "</div>";
+      + "</div>"
+      /* DER GRIFF ZUM AUSBLENDEN.
+         XANDER: „bei dem Whiteboard moechte ich die Werkzeuge
+         ausblenden koennen."
+         Er liegt AUSSERHALB der Leiste — sonst verschwaende er
+         zusammen mit ihr, und man kaeme nie wieder heran. */
+      + '<button type="button" class="lc-tafel-griff" id="lcTafelGriff"'
+      + ' title="Werkzeuge ein- oder ausblenden" aria-label="Werkzeuge ein- oder ausblenden">⌄</button>';
     plaetze.appendChild(tafel);
 
     /* Die Farbtupfer */
@@ -29473,8 +29511,30 @@
       datei.value = "";
       if (f) lcTafelBildLaden(f);
     });
+    const griff = tafel.querySelector("#lcTafelGriff");
+    if (griff) griff.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const aus = tafel.classList.toggle("lc-tafel-ohne-werkzeug");
+      griff.textContent = aus ? "\u2303" : "\u2304";
+      griff.title = aus ? "Werkzeuge einblenden" : "Werkzeuge ausblenden";
+      /* Die Leinwand ist jetzt hoeher oder niedriger — ohne neues
+         Ausmessen waere das Gemalte verzerrt. */
+      setTimeout(() => { lcTafelGroesseStellen(); lcTafelMalenNeu(); }, 240);
+    });
     lcTafelStiftEinhaengen();
+    lcTafelSchritteStellen();
     return tafel;
+  }
+
+  /* Zurueck und Vor duerfen nur leuchten, wenn es auch etwas zu holen
+     gibt — ein Knopf, der nichts tut, ist ein kaputter Knopf. */
+  function lcTafelSchritteStellen() {
+    const tafel = document.getElementById("lcTafel");
+    if (!tafel) return;
+    const z = tafel.querySelector('[data-tafel="zurueck"]');
+    const v = tafel.querySelector('[data-tafel="vor"]');
+    if (z) z.disabled = !lcTafelZuege.length;
+    if (v) v.disabled = !lcTafelVorrat.length;
   }
 
   function lcTafelWerkzeugSetzen(was) {
@@ -29526,15 +29586,105 @@
       setTimeout(() => { lcTafelGroesseStellen(); lcTafelMalenNeu(); }, 260);
       return;
     }
+    /* RUECKSCHRITT UND FORTSCHRITT.
+       XANDER: „vielleicht eine Rueckschritt- und Fortschritt-
+       Funktion."
+       Eine Tafel ist gemeinsam: nimmt einer einen Strich zurueck,
+       muss er bei ALLEN verschwinden. Deshalb geht nicht der ganze
+       Stand hinaus (400 Striche bei jedem Klick), sondern nur die
+       Nachricht „einen zurueck" bzw. der eine Strich, der wieder
+       dazukommt. */
+    if (was === "zurueck") {
+      if (!lcTafelZuege.length) return;
+      lcTafelVorrat.push(lcTafelZuege.pop());
+      if (lcTafelVorrat.length > 60) lcTafelVorrat = lcTafelVorrat.slice(-60);
+      lcTafelMalenNeu();
+      lcTafelSchritteStellen();
+      lcTafelSenden({ t: "zurueck" });
+      return;
+    }
+    if (was === "vor") {
+      if (!lcTafelVorrat.length) return;
+      const zug = lcTafelVorrat.pop();
+      lcTafelZuege.push(zug);
+      if (lcTafelZuege.length > 400) lcTafelZuege = lcTafelZuege.slice(-400);
+      lcTafelMalenNeu();
+      lcTafelSchritteStellen();
+      lcTafelSenden({ t: "vor", zug: zug });
+      return;
+    }
+    /* BILDER SICHERN.
+       XANDER: „bei dem Whiteboard ... Bilder sichern."
+       Gesichert wird, was man SIEHT: das hineingeladene Bild und das
+       Gemalte darueber, in einer Datei. Deshalb wird beides in eine
+       neue Leinwand gemalt — die Bildschirm-Leinwand allein traegt
+       nur die Striche, das Bild liegt als <img> darunter. */
+    if (was === "sichern") { lcTafelSichern(); return; }
     if (was === "leer") {
       lcTafelZuege = [];
+      lcTafelVorrat = [];
       lcTafelMalenNeu();
+      lcTafelSchritteStellen();
       lcTafelSenden({ t: "leer" });
       return;
     }
     if (was === "aus") {
       try { LiveChat.schreiben("/tafel aus"); } catch (e) { lcTafelZeigen(false); }
     }
+  }
+
+  /* --- DAS BILD SICHERN ----------------------------------------------
+     XANDER: „bei dem Whiteboard ... Bilder sichern."
+
+     Gesichert wird, was man SIEHT — und das sind zwei Schichten: das
+     hineingeladene Bild liegt als <img> unter der Leinwand, gemalt
+     wird darauf. Die Bildschirm-Leinwand allein traegt also nur die
+     Striche; wer sie herunterlaedt, bekommt Striche auf Nichts.
+     Deshalb wird hier eine dritte Leinwand gebaut, beides
+     hineingemalt und die heruntergeladen.
+
+     „object-fit: contain" muss dabei nachgerechnet werden: das Bild
+     wird so gross wie moeglich gezeigt, ohne sein Seitenverhaeltnis
+     zu aendern, und sitzt mittig. Wer das nicht nachrechnet, bekommt
+     ein verzerrtes Bild unter geraden Strichen. */
+  function lcTafelSichern() {
+    const c = lcTafelLeinwand();
+    if (!c) return;
+    const bild = document.getElementById("lcTafelBild");
+    const aus = document.createElement("canvas");
+    aus.width = c.width;
+    aus.height = c.height;
+    const g = aus.getContext("2d");
+    /* Ein weisses Blatt — ohne das waere der Hintergrund durchsichtig
+       und in jedem Bildbetrachter schwarz. */
+    g.fillStyle = "#ffffff";
+    g.fillRect(0, 0, aus.width, aus.height);
+    if (bild && !bild.hidden && bild.naturalWidth && bild.naturalHeight) {
+      /* contain: der kleinere der beiden Massstaebe gilt. */
+      const m = Math.min(aus.width / bild.naturalWidth, aus.height / bild.naturalHeight);
+      const bw = bild.naturalWidth * m, bh = bild.naturalHeight * m;
+      g.drawImage(bild, (aus.width - bw) / 2, (aus.height - bh) / 2, bw, bh);
+    }
+    g.drawImage(c, 0, 0);
+    let url = "";
+    try { url = aus.toDataURL("image/png"); } catch (e) {
+      /* Ein Bild von einer fremden Adresse macht die Leinwand
+         „unrein" — dann geht das Sichern nicht, und das sagt man
+         besser, statt still nichts zu tun. */
+      try { showToast("Dieses Bild darf nicht gesichert werden."); } catch (x) {}
+      return;
+    }
+    const a = document.createElement("a");
+    const jetzt = new Date();
+    const zwei = (n) => String(n).padStart(2, "0");
+    a.download = "whiteboard-" + jetzt.getFullYear() + zwei(jetzt.getMonth() + 1)
+      + zwei(jetzt.getDate()) + "-" + zwei(jetzt.getHours()) + zwei(jetzt.getMinutes())
+      + ".png";
+    a.href = url;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => a.remove(), 0);
+    try { showToast("Whiteboard gesichert."); } catch (e) {}
   }
 
   /* --- DIE LEINWAND ------------------------------------------------- */
@@ -29691,6 +29841,10 @@
                     f: lcTafelFarbe, d: lcTafelDicke };
       lcTafelZuege.push(zug);
       if (lcTafelZuege.length > 400) lcTafelZuege = lcTafelZuege.slice(-400);
+      /* Ein neuer Strich wirft den Wiederhol-Stapel weg — so macht es
+         jedes Zeichenprogramm, und alles andere waere verwirrend. */
+      lcTafelVorrat = [];
+      lcTafelSchritteStellen();
       lcTafelSenden({ t: "strich", zug: zug });
       punkte = [];
     };
@@ -29808,14 +29962,37 @@
     if (d.t === "strich" && d.zug) {
       lcTafelZuege.push(d.zug);
       if (lcTafelZuege.length > 400) lcTafelZuege = lcTafelZuege.slice(-400);
+      lcTafelVorrat = [];
+      lcTafelSchritteStellen();
       const c = lcTafelLeinwand();
       if (c) lcTafelZugMalen(c.getContext("2d"), d.zug);
+      return;
+    }
+    /* Zurueck und Vor von jemand anderem: dieselbe Tafel, dieselbe
+       Bewegung. Neu gemalt wird ganz — einen Strich kann man nicht
+       „wegmalen". */
+    if (d.t === "zurueck") {
+      if (lcTafelZuege.length) lcTafelVorrat.push(lcTafelZuege.pop());
+      if (lcTafelVorrat.length > 60) lcTafelVorrat = lcTafelVorrat.slice(-60);
+      lcTafelMalenNeu();
+      lcTafelSchritteStellen();
+      return;
+    }
+    if (d.t === "vor" && d.zug) {
+      lcTafelZuege.push(d.zug);
+      if (lcTafelZuege.length > 400) lcTafelZuege = lcTafelZuege.slice(-400);
+      if (lcTafelVorrat.length) lcTafelVorrat.pop();
+      lcTafelMalenNeu();
+      lcTafelSchritteStellen();
       return;
     }
     if (d.t === "zeiger") { lcTafelZeigerSetzen(Number(d.x) || 0, Number(d.y) || 0); return; }
     if (d.t === "blick") { lcTafelBlickSetzen(d, false); return; }
     if (d.t === "bild") { lcTafelBildSetzen(d.q || ""); return; }
-    if (d.t === "leer") { lcTafelZuege = []; lcTafelMalenNeu(); return; }
+    if (d.t === "leer") {
+      lcTafelZuege = []; lcTafelVorrat = [];
+      lcTafelMalenNeu(); lcTafelSchritteStellen(); return;
+    }
     if (d.t === "stand") {
       /* Der ganze Stand fuer einen, der gerade erst dazugekommen ist. */
       lcTafelZeigen(true, "");
@@ -30377,7 +30554,12 @@
         while (raus.length < n) raus.push(LC_PAINT[raus.length % LC_PAINT.length]);
         return raus;
       };
-      const farben = mischen(3);
+      /* SECHS statt drei. GEMELDET: „es soll halt das ganze Sprenkel
+         mit gruen, rot, blau, gelb, braun, lila, blau, rot."
+         Bei drei Farben auf acht Kleckse kam jede Farbe zweimal bis
+         dreimal vor — das sah nach drei Salven aus, nicht nach einem
+         Sprenkel. Bei sechs hat fast jeder Klecks seine eigene. */
+      const farben = mischen(6);
       schicht.style.setProperty("--px", (r.x * 26).toFixed(1) + "%");
       schicht.style.setProperty("--py", (r.y * 26).toFixed(1) + "%");
       schicht.style.setProperty("--farbe", farben[0]);

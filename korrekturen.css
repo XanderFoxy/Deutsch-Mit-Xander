@@ -18959,3 +18959,106 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-pac-krume-platz { display: none; }
 }
+
+/* === RUNDE 53: DIE MÜNZE LANDET AUF DEM NAMEN ========================
+   XANDER: „die Muenze soll am Boden landen" — und zuletzt genauer:
+   sie soll auf dem NAMEN liegen bleiben.
+
+   NACHGEMESSEN auf der Pruefbuehne: das Bild ist 103 px hoch, die
+   Mitte der Namenszeile liegt 63 px unter der Bildmitte — also bei
+   61,2 % der Bildhoehe. Die alte Animation hoerte bei 27 % auf, und
+   das ist noch mitten im unteren Bildviertel: sie blieb IM Bild
+   liegen. Jetzt faellt sie bis 61 % und liegt damit genau auf dem
+   Namen. Der Platz schneidet nicht ab (overflow: visible, gemessen),
+   sie darf also dorthin.
+
+   Flach UND kleiner: eine Muenze, die liegt, ist eine duenne Ellipse
+   (rotateX 86°), und sie soll den Namen nicht zudecken — deshalb
+   schrumpft sie beim Fallen auf 0,55. */
+.lc-gedreht {
+  animation: lcMuenzeR53 4.2s cubic-bezier(.16, .5, .2, 1) both;
+}
+@keyframes lcMuenzeR53 {
+  0%   { transform: translateY(0) rotateX(0deg) rotateY(0deg) scale(1); }
+  /* Schnell — sieben Umdrehungen in der ersten Sekunde. */
+  24%  { transform: translateY(4%) rotateX(0deg) rotateY(2520deg) scale(.98); }
+  /* Langsamer, und sie faengt an zu eiern. */
+  48%  { transform: translateY(18%) rotateX(14deg) rotateY(3600deg) scale(.9); }
+  66%  { transform: translateY(34%) rotateX(38deg) rotateY(4140deg) scale(.8); }
+  78%  { transform: translateY(48%) rotateX(62deg) rotateY(4410deg) scale(.68); }
+  /* Aufschlag auf dem Namen — und sie huepft noch einmal kurz. */
+  86%  { transform: translateY(61%) rotateX(80deg) rotateY(4500deg) scale(.56); }
+  89%  { transform: translateY(57%) rotateX(74deg) rotateY(4500deg) scale(.58); }
+  92%  { transform: translateY(61%) rotateX(86deg) rotateY(4500deg) scale(.55); }
+  94%  { transform: translateY(59.5%) rotateX(82deg) rotateY(4500deg) scale(.56); }
+  96%, 100% { transform: translateY(61%) rotateX(86deg) rotateY(4500deg) scale(.55); }
+}
+/* DER SCHATTEN MUSS MIT — UND ER KONNTE ES NICHT.
+   Er lag auf „top: 82 %" und wurde mit „translateY(22%)" bewegt.
+   Prozente in translateY zaehlen aber die HOEHE DES SCHATTENS selbst,
+   und der ist 14 % des Feldes hoch, also 14 px: aus „22 %" wurden
+   3 px. Er blieb praktisch stehen, waehrend die Muenze fiel. Jetzt
+   wandert er ueber „top" — dort zaehlen Prozente das Feld. */
+.lc-muenze-schatten {
+  animation: lcMuenzeSchattenR53 4.2s cubic-bezier(.16, .5, .2, 1) both;
+}
+@keyframes lcMuenzeSchattenR53 {
+  0%   { opacity: .22; top: 60%; transform: none; width: 26%; margin-left: -13%; }
+  48%  { opacity: .3;  top: 76%; width: 38%; margin-left: -19%; }
+  78%  { opacity: .4;  top: 94%; width: 46%; margin-left: -23%; }
+  /* 104 % = der Schattenmittelpunkt liegt auf 110 % der Feldhoehe,
+     also dort, wo die Muenze zu liegen kommt. */
+  86%, 100% { opacity: .5; top: 104%; width: 52%; margin-left: -26%; }
+}
+
+/* === RUNDE 53: DAS WHITEBOARD ========================================
+   XANDER: „bei dem Whiteboard moechte ich die Werkzeuge ausblenden
+   koennen und vielleicht eine Rueckschritt- und Fortschritt-Funktion
+   ... Bilder sichern."
+
+   Die Leiste liegt ÜBER dem Blatt (sonst waere sie beim Heranholen
+   verdeckt) und das Blatt haelt 1,9 rem Platz dafuer frei. Beim
+   Ausblenden muss deshalb BEIDES weg: die Leiste UND der freie Platz
+   — sonst bleibt ein leerer Streifen stehen, und gewonnen waere
+   nichts. */
+.lc-tafel-ohne-werkzeug .lc-tafel-leiste {
+  transform: translateY(105%);
+  opacity: 0;
+  pointer-events: none;
+}
+.lc-tafel-leiste {
+  transition: transform .22s ease, opacity .22s ease;
+}
+.lc-tafel-ohne-werkzeug .lc-tafel-blatt {
+  padding-bottom: 0;
+}
+/* DER GRIFF. Er liegt ausserhalb der Leiste — sonst verschwaende er
+   mit ihr, und man kaeme nie wieder heran. Klein, halbdurchsichtig
+   und am rechten Rand: er soll nicht im Weg sein. */
+.lc-tafel-griff {
+  position: absolute;
+  right: .3rem;
+  bottom: 2.1rem;
+  z-index: 4;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(15, 30, 55, .25);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .9);
+  color: #1b2740;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(8, 16, 32, .25);
+  transition: bottom .22s ease;
+}
+.lc-tafel-ohne-werkzeug .lc-tafel-griff { bottom: .3rem; }
+/* Zurueck und Vor: abgeblendet, wenn es nichts zu holen gibt. Ein
+   Knopf, der nichts tut, ist ein kaputter Knopf. */
+.lc-tafel-knopf[disabled] {
+  opacity: .35;
+  cursor: default;
+}

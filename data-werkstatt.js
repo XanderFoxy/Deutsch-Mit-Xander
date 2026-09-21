@@ -49,30 +49,32 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 52 - Bowling im Takt, Pac-Man-Punkte",
+  stand: "Runde 53 - Muenze, Whiteboard, Paintball",
 
   inArbeit: [
-    { seit: "2026-09-21T02:27",
-      text: "Muenze landet auf dem Namen, Knuellen besser, Paintball mehr Farben, Umarmung schoener" },
-    { seit: "2026-09-21T02:27",
-      text: "Whiteboard: Werkzeuge ausblenden, Rueckschritt und Fortschritt, Bilder sichern" },
-    { seit: "2026-09-21T02:27",
+    { seit: "2026-09-21T02:35",
       text: "Texte: Ueberschriften am Android, Kategorieauswahl, Benotung je Zeile" },
-    { seit: "2026-09-21T02:27", nurBetreiber: true,
+    { seit: "2026-09-21T02:35",
+      text: "Knuellen realistischer" },
+    { seit: "2026-09-21T02:35", nurBetreiber: true,
       text: "Angel zeigt angeblich manchmal das Lassozeichen - nicht nachstellbar gewesen" },
-    { seit: "2026-09-21T02:27", nurBetreiber: true,
+    { seit: "2026-09-21T02:35", nurBetreiber: true,
       text: "Tutorvideo mit Greenscreen neu aufnehmen - Alphakanal frisst das Schwarz aus" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-21T02:27",
-      text: "Bowling: die Kegel stehen schon, bevor geworfen wird, und fallen im Moment des Einschlags" },
-    { seit: "2026-09-21T02:27",
-      text: "Der Ball kommt aus der wirklichen Entfernung - aus zwei Plaetzen Abstand rollt er weiter her als aus einem" },
-    { seit: "2026-09-21T02:27",
-      text: "Pac-Man: auf jedem Platz liegt jetzt ein gelber Punkt, gross genug fuer helle Profilbilder" },
-    { seit: "2026-09-21T02:27",
-      text: "Die Flammen stehen mit dem Fuss auf dem Reifen statt davor" },
+    { seit: "2026-09-21T02:35",
+      text: "Die Muenze faellt bis auf die Namenszeile und liegt dort flach - gemessen: 0 px daneben" },
+    { seit: "2026-09-21T02:35",
+      text: "Whiteboard: Rueckschritt und Fortschritt, gemeinsam fuer alle im Raum" },
+    { seit: "2026-09-21T02:35",
+      text: "Whiteboard: Werkzeuge ausblenden per Griff - das Blatt nimmt den frei gewordenen Platz" },
+    { seit: "2026-09-21T02:35",
+      text: "Whiteboard: Bild sichern (Blatt und Striche in einer Datei)" },
+    { seit: "2026-09-21T02:35",
+      text: "Paintball: sechs Farben je Treffer statt drei, und Braun ist dazugekommen" },
+    { seit: "2026-09-21T02:35",
+      text: "Eine Platznummer meint auch bei der Umarmung genau einen Platz" },
   ],
 };
