@@ -27222,22 +27222,6 @@
          Die Kachel „Hoerer" weiter oben ist der normale Effekt; hier
          steht der zweite Weg, und er fragt erst, welches Lied. */
       knopf("\ud83c\udfb6", "Sein Lied", () => lcMusikWaehler(name));
-      /* RUNDE 78 — XANDER: „dass man in dem Reisemenue jemand
-         anderen als Ziel nehmen kann, bei dem Frisbee … und er
-         taucht an meinem Platz wieder auf, und vielleicht auch noch
-         ne Variante fuer die Roehre."
-         Beides ist ein Tausch, und beide Befehle koennen ihn seit
-         Runde 78. Hier steht der Weg dorthin: die Kachel schickt
-         „/frisbee <seine Nummer>" bzw. „/rohr <seine Nummer>" —
-         lcReise erkennt am besetzten Platz, dass getauscht wird. */
-      const nrTausch = Number(platz.dataset.lcPlatz || 0) || 0;
-      if (nrTausch) {
-        knopf("\ud83d\udd01", "Tauschen", () => lcUnterMenue(platz, String(nrTausch),
-          "Tauschen mit " + name, [
-            ["\ud83e\udd4f", "Frisbee", "frisbee"],
-            ["\ud83d\udfe2", "R\u00f6hre",  "rohr"]
-          ]));
-      }
     }
 
     document.body.appendChild(kasten);
@@ -33327,22 +33311,7 @@
      Alle drei tun dasselbe wie /fahren — nur anders unterwegs. Deshalb
      eine Funktion mit drei Abschnitten statt dreimal derselbe Rahmen.
      ================================================================= */
-  /* =================================================================
-     RUNDE 78 — JEMAND ANDEREN ALS ZIEL NEHMEN
-     -----------------------------------------------------------------
-     XANDER: „Der Frisbee ist Mega cool. Vielleicht kannst du es auch
-     moeglich machen, dass man jemand anderen auch wegwerfen kann …
-     dass man in dem Reisemenue jemand anderen als Ziel nehmen kann,
-     bei dem Frisbee … und er taucht an meinem Platz wieder auf, und
-     vielleicht auch noch ne Variante fuer die Roehre."
-
-     Das ist ein TAUSCH: ich fliege zu ihm, er kommt an meinen Platz.
-     Der Sitzwechsel selbst kann das laengst — LiveChat.platzNehmen
-     ruft bei einem besetzten Ziel von sich aus platzTauschenMit auf.
-     Es fehlten nur zwei Dinge: lcReise hat besetzte Ziele vorher
-     rundweg abgelehnt, und es flog nur EIN Bild. Beides steht jetzt
-     hier; „tausch" schaltet es ein. */
-  function lcReise(wen, von, art, tausch) {
+  function lcReise(wen, von, art) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return false;
     const gitter = lcPlatzGitter();
@@ -33366,19 +33335,7 @@
       if (!zu) { lcWegAbsage("Kein Platz frei neben " + ziel.name + "."); return true; }
     }
     if (!zu || zu.nr === ab.nr) return false;
-    /* Ein besetzter Platz ist nur beim TAUSCH erlaubt, und auch dann
-       nur mit den beiden Reisen, die Xander dafuer genannt hat. Bei
-       allen anderen bliebe sonst einer von beiden in der Luft. */
-    const tauschbar = tausch && (art === "frisbee" || art === "rohr");
-    if (!zu.frei && !tauschbar) {
-      lcWegAbsage("Platz " + zu.nr + " ist besetzt.");
-      return true;
-    }
-    if (tauschbar && zu.frei) {
-      /* Auf einem leeren Platz gibt es nichts zu tauschen — dann ist
-         es die gewoehnliche Reise. */
-      tausch = false;
-    }
+    if (!zu.frei) { lcWegAbsage("Platz " + zu.nr + " ist besetzt."); return true; }
     /* Fliegen, graben und das Tor brauchen KEINEN freien Weg — sie gehen
        ueber alles hinweg, unter allem hindurch oder gar nicht erst durch
        den Raum. Genau das ist ihr Reiz. */
@@ -35444,105 +35401,6 @@
             opacity: 0, offset: 1 }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
-      /* =============================================================
-         RUNDE 78 — DIE ROEHRE IN BEIDE RICHTUNGEN
-         -------------------------------------------------------------
-         XANDER: „vielleicht auch noch ne Variante fuer die Roehre."
-         Beim Tausch faehrt der andere seinen Weg zur selben Zeit,
-         nur andersherum: sein Bild sinkt in die Roehre an SEINEM
-         Platz und steigt aus der Roehre an MEINEM wieder heraus.
-         Gebraucht wird dafuer nichts Neues — beide Roehren stehen
-         ohnehin schon (die Schleife weiter oben baut sie an beiden
-         Plaetzen). Es fehlten nur die beiden Bilder.
-         Dieselben Schluesselbilder wie oben, nur an den anderen
-         Plaetzen: so sinken und steigen beide im Gleichtakt, und
-         die Roehren passen zu dem, was in ihnen passiert. */
-      if (tausch) {
-        /* ZUERST DIE FEHLENDEN ROEHREN.
-           Die Schleife weiter oben baut GENAU ZWEI: eine am Start
-           mit der Einstiegszeit (0 bis 0,34) und eine am Ziel mit
-           der Ausstiegszeit (0,46 bis 0,90). Fuer eine Reise in eine
-           Richtung reicht das. Beim Tausch fahren aber beide in
-           beide Richtungen, also braucht JEDER Platz beide Zeiten:
-           · am Ziel eine Roehre zum Einsteigen (der andere sinkt
-             dort bei 0,08 bis 0,26 ein),
-           · am Start eine zum Aussteigen (er kommt dort bei 0,557
-             bis 0,735 heraus).
-           Ohne sie sinkt und steigt jemand in der blanken Luft —
-           auf dem Bildschirmfoto bei 2700 ms genau so gesehen. */
-        [[ende, 0], [start, 1]].forEach(([wo, spaet]) => {
-          const extra = document.createElement("span");
-          extra.className = "lc-roehre" + (spaet ? " lc-roehre-raus" : " lc-roehre-rein");
-          extra.style.setProperty("--gross", d + "px");
-          extra.style.height = (d * ROHR_HOCH).toFixed(1) + "px";
-          extra.style.animation = "none";
-          try {
-            extra.animate([
-              { transform: "translate(-50%, -50%) scaleY(0)", offset: 0 },
-              { transform: "translate(-50%, -50%) scaleY(1.06)", offset: 0.15 },
-              { transform: "translate(-50%, -50%) scaleY(1)", offset: 0.22 },
-              { transform: "translate(-50%, -50%) scaleY(1)", offset: 0.80 },
-              { transform: "translate(-50%, -50%) scaleY(0)", offset: 1 }
-            ], { duration: spaet ? taktR(0.44) : taktR(0.34),
-                 delay: spaet ? taktR(0.46) : 0, easing: "linear", fill: "both" });
-          } catch (e) {}
-          extra.innerHTML = '<i class="lc-roehre-rand"></i><i class="lc-roehre-rohr"></i>';
-          reihe.appendChild(extra);
-          weg.push(extra);
-          setzen(extra, wo.x, wo.y + versatzR + d * ROHR_MITTE);
-        });
-        const kreisZuR = zu.el.querySelector(".lc-kreis");
-        const bildZuR = zu.el.querySelector(".lc-avatar");
-        const quelleZuR = bildZuR && bildZuR.getAttribute("src")
-          && bildZuR.style.display !== "none" ? bildZuR.getAttribute("src") : "";
-        try {
-          if (kreisZuR) {
-            kreisZuR.animate([
-              { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0 },
-              { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0.075 },
-              rohrBild(0,     false, 0.08),
-              rohrBild(0.155, false, 0.125),
-              rohrBild(0.31,  false, 0.17),
-              rohrBild(0.465, false, 0.215),
-              rohrBild(0.62,  false, 0.26),
-              rohrBild(0.62,  false, 0.95),
-              { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 1 }
-            ], { duration: dauer, easing: "linear", fill: "none" });
-          }
-        } catch (e) {}
-        const gegenDoppel = document.createElement("span");
-        gegenDoppel.className = "lc-rohr-doppel";
-        gegenDoppel.style.setProperty("--gross", d + "px");
-        if (quelleZuR) {
-          gegenDoppel.style.backgroundImage = "url(" + quelleZuR.replace(/[()"\']/g, "") + ")";
-        } else {
-          gegenDoppel.textContent = (zu.name || "?").charAt(0).toUpperCase();
-        }
-        reihe.appendChild(gegenDoppel);
-        weg.push(gegenDoppel);
-        /* An MEINEM Platz, auf der Hoehe des Bildes — nicht in der
-           Mitte des ganzen Platzes. */
-        setzen(gegenDoppel, start.x, start.y + versatzR);
-        try {
-          gegenDoppel.animate([
-            rohrBild(0.62, true, 0),
-            rohrBild(0.62, true, 0.557),
-            rohrBild(0.465, true, 0.60),
-            rohrBild(0.31,  true, 0.645),
-            rohrBild(0.155, true, 0.69),
-            rohrBild(0,     true, 0.735),
-            rohrBild(0,     true, 0.812),
-            Object.assign(rohrBild(0, true, 0.866),
-              { clipPath: "inset(0 0 0% 0)" }),
-            { transform: "translate(-50%, -50%)", clipPath: "inset(0 0 0% 0)",
-              opacity: 1, offset: Math.max(0.87, schnittR - 0.004) },
-            { transform: "translate(-50%, -50%)", clipPath: "inset(0 0 0% 0)",
-              opacity: 0, offset: Math.max(0.875, schnittR) },
-            { transform: "translate(-50%, -50%)", clipPath: "inset(0 0 0% 0)",
-              opacity: 0, offset: 1 }
-          ], { duration: dauer, easing: "linear", fill: "forwards" });
-        } catch (e) {}
-      }
       /* DIE TOENE SITZEN AN DEN BILDERN, nicht am Anfang der Reise:
          der Sog beginnt, wenn das Bild einfaehrt (0,08), das
          Ausspucken, wenn es heraussteigt (0,557). */
@@ -36313,85 +36171,6 @@
           { opacity: 1, offset: 1 }
         ], { duration: dauer, easing: "linear", fill: "none" });
       } catch (e) {}
-      /* =============================================================
-         RUNDE 78 — DIE GEGENSCHEIBE
-         -------------------------------------------------------------
-         Beim Tausch fliegt AUCH der andere, und zwar den umgekehrten
-         Weg. Zwei Dinge sind dabei wichtig:
-         · Sie fliegt den Bogen nach der ANDEREN Seite (hoch statt
-           tief, also +bogen statt -bogen). Zwei Scheiben auf
-           demselben Bogen wuerden einander durchdringen; so weichen
-           sie einander aus, wie zwei Frisbees es auch taeten.
-         · Sie startet 120 ms spaeter. Gleichzeitig abgeworfen saehe
-           es nach einer Maschine aus, nicht nach zwei Leuten.
-         Ihre Drehzahl ist dieselbe — dieselbe Strecke, dieselbe
-         Scheibe. ============================================== */
-      if (tausch) {
-        const bildZu = zu.el.querySelector(".lc-avatar");
-        const quelleZu = bildZu && bildZu.getAttribute("src")
-          && bildZu.style.display !== "none" ? bildZu.getAttribute("src") : "";
-        const kreisZu = zu.el.querySelector(".lc-kreis");
-        const gegen = document.createElement("span");
-        gegen.className = "lc-frisbee lc-frisbee-gegen";
-        gegen.style.setProperty("--gross", d + "px");
-        gegen.innerHTML =
-          '<i class="lc-frisbee-rand"></i>'
-          + '<i class="lc-frisbee-bild"' + (quelleZu
-              ? ' style="background-image:url(' + quelleZu.replace(/[()"']/g, "") + ')"' : "")
-            + ">" + (quelleZu ? "" : (zu.name || "?").charAt(0).toUpperCase()) + "</i>"
-          + '<i class="lc-frisbee-glanz"></i>';
-        reihe.appendChild(gegen);
-        weg.push(gegen);
-        setzen(gegen, ende.x, endeYF);
-        try {
-          const tAnG = hin / dauer;
-          const dxG = start.x - ende.x, dyG = startYF - endeYF;
-          const bogenG = Math.min(d * 1.6, Math.hypot(dxG, dyG) * 0.25 + d * 0.3);
-          const drehungenG = Math.max(4, Math.round(Math.hypot(dxG, dyG) / d * 1.6));
-          const rahmenG = [];
-          const SCHRITTE_G = 16;
-          for (let i = 0; i <= SCHRITTE_G; i++) {
-            const f = i / SCHRITTE_G;
-            /* PLUS bogenG: dieser Bogen geht nach unten, der andere
-               nach oben — daran gehen die beiden aneinander vorbei. */
-            const hoch = bogenG * Math.sin(Math.PI * f) * 0.72;
-            const neig = 16 - 26 * f;
-            rahmenG.push({
-              transform: "translate(calc(-50% + " + (dxG * f).toFixed(1) + "px), calc(-50% + "
-                + (dyG * f + hoch).toFixed(1) + "px))"
-                + " rotate(" + neig.toFixed(1) + "deg)"
-                + " scaleY(" + (0.34 + 0.66 * Math.pow(Math.max(0, (f - 0.86) / 0.14), 2)).toFixed(3) + ")",
-              opacity: 1,
-              offset: Math.max(0, Math.min(1, 0.14 * tAnG + (tAnG - 0.14 * tAnG) * f))
-            });
-          }
-          rahmenG.unshift({
-            transform: "translate(-50%, -50%) rotate(16deg) scaleY(.34)",
-            opacity: 0, offset: 0
-          });
-          rahmenG.push({
-            transform: "translate(calc(-50% + " + dxG.toFixed(1) + "px), calc(-50% + "
-              + dyG.toFixed(1) + "px)) rotate(0deg) scaleY(1)",
-            opacity: 0, offset: Math.min(1, tAnG + 0.02)
-          });
-          rahmenG.push({ opacity: 0, offset: 1 });
-          gegen.animate(rahmenG, { duration: dauer, easing: "linear", fill: "both" });
-          gegen.querySelector(".lc-frisbee-bild").animate([
-            { transform: "rotate(0deg)", offset: 0 },
-            { transform: "rotate(" + (-drehungenG * 360) + "deg)", offset: tAnG },
-            { transform: "rotate(" + (-drehungenG * 360) + "deg)", offset: 1 }
-          ], { duration: dauer, easing: "linear", fill: "both" });
-          if (kreisZu) {
-            kreisZu.animate([
-              { opacity: 1, offset: 0 },
-              { opacity: 0, offset: 0.13 * tAnG },
-              { opacity: 0, offset: tAnG - 0.01 },
-              { opacity: 1, offset: tAnG },
-              { opacity: 1, offset: 1 }
-            ], { duration: dauer, easing: "linear", fill: "none" });
-          }
-        } catch (e) {}
-      }
       /* „mit den passenden Geraeuschen dazu": der Wurf ist ein
          Zischen („swoosh", 1,01 s), das Ankommen ein Klatschen
          (LC_ANKUNFT_TON.frisbee). */
@@ -41524,10 +41303,7 @@
       if (nachricht && nachricht.eigen) {
         try { vonR = (LiveChat.lage() || {}).ichName || vonR; } catch (e) {}
       }
-      /* RUNDE 78 — „tausch" reist mit der Nachricht, damit JEDES
-         Geraet dieselben zwei Bilder fliegen sieht. Stuende es nur
-         beim Absender, saehen die anderen nur eine halbe Reise. */
-      if (lcReise(wenR, vonR, art, Boolean(nachricht && nachricht.tausch))) return;
+      if (lcReise(wenR, vonR, art)) return;
     }
     if (art === "fahren" || art === "spielzug") {
       const wenF = nachricht && (nachricht.wen || nachricht.an);

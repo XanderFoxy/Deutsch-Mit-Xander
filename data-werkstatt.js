@@ -49,34 +49,32 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 431 — Runde 77: zwei neue Effekte",
+  stand: "Fassung 432 — Tauschen mit Frisbee und Roehre",
 
   inArbeit: [
-    { seit: "2026-09-21T21:09",
-      text: "Frisbee und Roehre auf eine PERSON werfen (Platztausch mit Trefferton)." },
-    { seit: "2026-09-21T21:09",
+    { seit: "2026-09-21T22:22",
       text: "Sprungbrett: jemanden als Absprung benutzen und zu einem gezeichneten Ziel springen." },
-    { seit: "2026-09-21T21:09",
+    { seit: "2026-09-21T22:22",
       text: "Pac-Man mit gezeichnetem Weg, Mund in Laufrichtung, Rueckweg ueber die Plaetze." },
-    { seit: "2026-09-21T21:09",
+    { seit: "2026-09-21T22:22",
       text: "Hammer mit Zufall und zerspringendem Glas; Katapult groesser; Sanduhr realistischer." },
-    { seit: "2026-09-21T21:09",
+    { seit: "2026-09-21T22:22",
       text: "Musik teilen (YouTube-Links) und der Kopfhoerer-Schnipsel aus dem Profil." },
-    { seit: "2026-09-21T21:09",
+    { seit: "2026-09-21T22:22",
       text: "Anziehen: Jacke, Schuhe, Hut als Bausteine, als Avatar speicherbar." },
-    { seit: "2026-09-21T21:09",
+    { seit: "2026-09-21T22:22",
       text: "Telefon mit echtem Audio nur zwischen zwei Leuten." },
-    { seit: "2026-09-21T21:09",
+    { seit: "2026-09-21T22:22",
       text: "Aufblasen bis zum Platzen, Froschsprung, Salve auf mehrere, Feuerreifen, Zylinder mit Kaninchen." },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-21T21:09",
-      text: "Der Vogel fliegt ueber den Kopf und trifft von oben. Was liegen bleibt, laeuft ein Stueck herunter. Befehl: /vogelkot Name" },
-    { seit: "2026-09-21T21:09",
-      text: "Anspucken: die Rotze zieht danach in drei Faeden verschiedener Laenge herunter. Befehl: /spucken Name" },
-    { seit: "2026-09-21T21:09",
-      text: "Zwei neue Toene dazu, beide selbst gebaut: vogelkot (Pfeifen im Fall, dann der Aufschlag) und rotze (Hochziehen, ptt, nasser Aufschlag, Faden)." },
+    { seit: "2026-09-21T22:22",
+      text: "Im Platzmenue eines besetzten Platzes steht jetzt „Tauschen\" — mit Frisbee oder Roehre. Ich fliege zu ihm, er kommt an meinen Platz." },
+    { seit: "2026-09-21T22:22",
+      text: "Bei der Frisbee fliegen zwei Scheiben, jede auf ihrem eigenen Bogen — sonst wuerden sie einander durchdringen." },
+    { seit: "2026-09-21T22:22",
+      text: "Bei der Roehre steht an jedem der beiden Plaetze jetzt eine Roehre zum Einsteigen UND eine zum Aussteigen." },
   ],
 };

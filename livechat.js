@@ -10869,6 +10869,35 @@ window.LiveChat = (function () {
                     gotteshand: [" wird von einer riesigen Hand gesetzt auf Platz ", "\ud83e\udd1a"],
                     pranke: [" wird von der Gorillapranke gesetzt auf Platz ", "\ud83e\udd8d"],
                     frisbee: [" fliegt als Frisbee zu Platz ", "\ud83e\udd4f"] }[art];
+      /* =========================================================
+         RUNDE 78 — EIN BESETZTER PLATZ IST EIN TAUSCH
+         ---------------------------------------------------------
+         XANDER: „dass man in dem Reisemenue jemand anderen als Ziel
+         nehmen kann, bei dem Frisbee … und er taucht an meinem Platz
+         wieder auf, und vielleicht auch noch ne Variante fuer die
+         Roehre."
+
+         Der Sitzwechsel selbst konnte das schon: platzNehmen ruft
+         bei einem besetzten Ziel platzTauschenMit auf. Gefehlt hat
+         nur, dass die ANIMATION es weiss — sonst fliegt nur einer.
+         „tausch: 1" faehrt deshalb mit der Nachricht, damit jedes
+         Geraet beide Bilder fliegen sieht und nicht nur der
+         Absender. Es gilt fuer Frisbee und Roehre; bei allen
+         anderen Reisen bliebe einer von beiden in der Luft. */
+      var tauschR = 0;
+      if (art === "frisbee" || art === "rohr") {
+        var zielR = null;
+        plaetzeBauen().forEach(function (pl) {
+          if (pl.nummer === parseInt(rest.trim(), 10)) zielR = pl;
+        });
+        if (zielR && !zielR.leer && zielR.id !== zustand.ichId) tauschR = 1;
+      }
+      if (tauschR) {
+        return anAlle("aktion",
+          zustand.ichName + " tauscht den Platz mit " + zielR.name
+          + (art === "frisbee" ? "  \ud83e\udd4f" : "  \ud83d\udfe2"),
+          { wirkung: art, wen: rest.trim(), tausch: 1 });
+      }
       return anAlle("aktion", zustand.ichName + satzR[0] + rest.trim() + "  " + satzR[1],
                     { wirkung: art, wen: rest.trim() });
     }

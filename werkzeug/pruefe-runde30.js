@@ -150,7 +150,15 @@ const pruefe = (was, gut, zusatz) => {
   console.log("\nDREI ANDERE ARTEN, ZU EINEM PLATZ ZU KOMMEN\n");
   pruefe("Flug, Maulwurf und Tor sind Befehle",
     /w: "flug"/.test(lc) && /w: "maulwurf"/.test(lc) && /w: "portal"/.test(lc));
-  pruefe("sie bewegen den Absender", /if \(lcReise\(wenR, vonR, art\)\) return;/.test(js));
+  /* RUNDE 78 NACHGEFUEHRT: lcReise hat einen vierten Wert bekommen.
+     XANDER: „dass man in dem Reisemenue jemand anderen als Ziel
+     nehmen kann, bei dem Frisbee … und er taucht an meinem Platz
+     wieder auf." Das ist ein Tausch, und ob getauscht wird, muss mit
+     der Nachricht reisen — sonst saehen die anderen nur eine halbe
+     Reise. Die Regel selbst bleibt, was sie war: der Aufruf bewegt
+     den ABSENDER (vonR), nicht den Genannten. */
+  pruefe("sie bewegen den Absender",
+    /if \(lcReise\(wenR, vonR, art, Boolean\(nachricht && nachricht\.tausch\)\)\) return;/.test(js));
   pruefe("im Flugzeugfenster sitzt sein Bild",
     /lc-flieger-fenster/.test(js) && /lc-flieger-fenster/.test(css));
   /* RUNDE 63 NACHGEFUEHRT: „das soll man von oben, von der
