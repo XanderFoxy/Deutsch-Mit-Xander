@@ -49,34 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 41 — die restlichen Sprechbilder",
+  stand: "Runde 42 — Peitsche, Fahrradspeichen, Ankommen-Geräusche",
 
   inArbeit: [
-    { seit: "2026-09-21T00:59",
-      text: "Peitsche: Wellenform, die zur Spitze dünn ausläuft" },
-    { seit: "2026-09-21T00:59",
+    { seit: "2026-09-21T01:03",
       text: "Kopfhörer: Lied auswählen, aufgesetzt lassen" },
-    { seit: "2026-09-21T00:59",
+    { seit: "2026-09-21T01:03",
       text: "Lupe fürs Großzeigen, „alle“-Einträge im Platzmenü" },
-    { seit: "2026-09-21T00:59",
+    { seit: "2026-09-21T01:03",
       text: "Scheibenwischer und Flugzeug sehen noch nicht echt genug aus" },
-    { seit: "2026-09-21T00:59",
-      text: "Ankommen-Geräusch für lange Strecken, Fahrrad-Speichen beim gemeinsamen Fahren" },
-    { seit: "2026-09-21T00:59", nurBetreiber: true,
-      text: "Die VHS-Störung ist über die berechneten Werte geprüft, nicht an einem echten Foto — die Prüfbühne hat nur eine leere helle Scheibe" },
+    { seit: "2026-09-21T01:03",
+      text: "Geld: realistischer, Star-Trek-Beameffekt weiter verfeinern" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-21T00:59",
-      text: "Blut: fünf Tropfen laufen herunter und sammeln sich unten zu einer Lache" },
-    { seit: "2026-09-21T00:59",
-      text: "Eis: siebzehn echte Eiszapfen hängen jetzt außen am Rand" },
-    { seit: "2026-09-21T00:59",
-      text: "Spinne: ein einziger langer Abstieg über 26 Sekunden — je länger du am Stück sprichst, desto tiefer krabbelt sie; das Netz ist deutlich sichtbarer" },
-    { seit: "2026-09-21T00:59",
-      text: "Störung: die ORIGINAL-VHS-Störung ist zurück — sie springt (steps) statt zu gleiten, die Bänder wechseln seitlich die Farbe" },
-    { seit: "2026-09-21T00:59",
-      text: "Blasen: sie bleiben jetzt im Profilrahmen, statt weit darüber hinauszusteigen" },
+    { seit: "2026-09-21T01:03",
+      text: "Peitsche: das Seil ist jetzt eine Welle, die zur Spitze hin dünn ausläuft und eine Franse hat — sie rollt aus und knallt am fernen Ende" },
+    { seit: "2026-09-21T01:03",
+      text: "Peitsche: der Knall ist ein eigenes Geräusch beim Auftreffen, das Sausen läuft leiser darunter" },
+    { seit: "2026-09-21T01:03",
+      text: "Gemeinsam fahren: beide Bilder haben jetzt Nabe, Speichen und Felge — man sieht die Räder sich drehen" },
+    { seit: "2026-09-21T01:03",
+      text: "Reisen: Flugzeug, Boot, Raddampfer, Lok, Kran, Liane und Feder haben ein Ankommen-Geräusch genau am Ziel" },
   ],
 };

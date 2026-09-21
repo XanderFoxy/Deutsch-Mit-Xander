@@ -17429,3 +17429,89 @@ body.lc-schreibt .tutor-reiter {
   from { transform: translateX(-50%) scale(1.5);  opacity: .85; }
   to   { transform: translateX(-50%) scale(1.56); opacity: 1; }
 }
+
+/* --- SPEICHEN BEIM GEMEINSAMEN FAHREN -----------------------------
+   XANDER: „das gemeinsam fahren … was wie ein Fahrrad sein soll, dann
+   kannst du auch die Speichen bisschen einblenden."
+   Die Bilder drehen sich beim Fahren bereits wie Räder; ohne Speichen
+   sieht man das kaum. Sie liegen IM Bild (der Kreis schneidet rund
+   ab) und drehen sich damit von selbst mit — sie brauchen keine
+   eigene Drehung, nur ein Ein- und Ausblenden. */
+.lc-speichen {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+  background:
+    /* die Nabe */
+    radial-gradient(circle closest-side at 50% 50%, #2f333a 0 8%, rgba(47,51,58,0) 9%),
+    /* der Felgenring — „closest-side", sonst misst der Verlauf bis zur
+       ECKE und der Ring läge weit innen statt am Rand */
+    radial-gradient(circle closest-side at 50% 50%, rgba(0,0,0,0) 0 87%,
+      rgba(45, 49, 56, .8) 89% 97%, rgba(0,0,0,0) 99%),
+    /* sechzehn Speichen. Dunkel, nicht hell: helle Speichen auf einem
+       hellen Profilbild sieht man nicht — nachgemessen auf der
+       Prüfbühne, dort war nur die Nabe zu erkennen. */
+    repeating-conic-gradient(from 0deg at 50% 50%,
+      rgba(55, 60, 70, .75) 0deg 1.2deg,
+      rgba(55, 60, 70, 0) 1.2deg 22.5deg);
+  animation-name: lcSpeichenR41;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: both;
+}
+@keyframes lcSpeichenR41 {
+  0%       { opacity: 0; }
+  12%, 82% { opacity: .85; }
+  100%     { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .lc-speichen { display: none; } }
+
+/* --- DIE PEITSCHE ALS WELLE ---------------------------------------
+   XANDER: „bei der Peitsche … auch die realistische Peitschen
+   Animation."
+   Vorher war das Seil ein gerader Balken gleicher Dicke über die
+   ganze Strecke. Eine Peitsche ist eine Welle, die zur Spitze hin
+   dünner wird und dort knallt. Drei Abschnitte auf einer gemeinsamen
+   Wellenlinie, jeder dünner als der vorige; sie rollen nacheinander
+   aus (stroke-dashoffset), und die Franse ganz aussen kommt zuletzt —
+   genau dann knallt es. */
+.lc-peitsche-welle {
+  position: absolute;
+  left: 8px;
+  top: -14px;
+  width: var(--laenge, 80px);
+  height: 28px;
+  overflow: visible;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .55));
+  animation: lcPeitscheWelleR41 2s cubic-bezier(.2, .9, .3, 1) both;
+}
+@keyframes lcPeitscheWelleR41 {
+  0%   { opacity: 0; transform: scaleY(1.5) rotate(-13deg); }
+  14%  { opacity: 1; transform: scaleY(1.2) rotate(-7deg); }
+  /* 30 % = 0,6 s: da ist die Spitze am fernen Ende. */
+  30%  { opacity: 1; transform: scaleY(.75) rotate(0deg); }
+  40%  { transform: scaleY(1.05) rotate(4deg); }
+  56%  { opacity: .9; transform: scaleY(1.2) rotate(-5deg); }
+  100% { opacity: 0; transform: scaleY(1.5) rotate(-12deg); }
+}
+/* pathLength="100" macht die Striche unabhängig von der echten
+   Pfadlänge: 100 heisst immer „ganz eingerollt", 0 „ganz ausgerollt". */
+.lc-pw {
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: 100;
+  animation: lcPeitscheRolltR41 2s cubic-bezier(.2, .9, .3, 1) both;
+}
+.lc-pw1 { animation-delay: 0s; }
+.lc-pw2 { animation-delay: .1s; }
+.lc-pw3 { animation-delay: .2s; }
+.lc-pw4 { animation-delay: .3s; }
+@keyframes lcPeitscheRolltR41 {
+  0%   { stroke-dashoffset: 100; }
+  26%  { stroke-dashoffset: 0; }
+  60%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 100; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-peitsche-welle { animation: none; opacity: 0; }
+}

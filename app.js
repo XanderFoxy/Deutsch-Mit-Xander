@@ -23718,7 +23718,7 @@
     /* „bei der Peitsche selber kann einfach nur ein Peitschenknall sein." */
     /* „bei der Peitsche realistische Peitschen Sound" — die Lasche
        zischt erst, dann knallt die Spitze. */
-    peitsche:       { ton: "peitsche2", dauer: 2000, laut: 0.6 },
+    peitsche:       { ton: "peitsche2", dauer: 2000, laut: 0.45 },  /* das Sausen; der Knall kommt aus lcPeitsche */
     /* „Beim Bowling gibts auch ne besseren Sound weil den den du hast
        ist der von der zerbrochenen Scheibe." */
     bowling:        { ton: "bowling",  dauer: 4200, laut: 0.5 },
@@ -29877,8 +29877,27 @@
          Seil laeuft nach aussen duenner zu und knallt am fernen Ende.
          Die Laenge ist --laenge, also genau der Abstand — sie wird
          nicht geraten. */
+      /* XANDER: „bei der Peitsche … auch die realistische Peitschen
+         Animation."
+         Das Seil war ein GERADER Balken mit gleichbleibender Dicke —
+         eine Peitsche ist aber eine WELLE, die zur Spitze hin immer
+         duenner wird. Deshalb jetzt drei Abschnitte auf einer
+         gemeinsamen Wellenlinie: dick am Griff (5,5), mittel (3),
+         haarduenn an der Spitze (1,4), dazu die Franse ganz aussen.
+         Sie rollen nacheinander aus (stroke-dashoffset), und genau
+         wenn die Spitze ankommt, knallt es. */
       schicht.innerHTML = '<span class="lc-peitsche-griff"></span>'
-        + '<span class="lc-peitsche-seil"></span>'
+        + '<svg class="lc-peitsche-welle" viewBox="0 0 100 40"'
+        + ' preserveAspectRatio="none" aria-hidden="true">'
+        + '<path class="lc-pw lc-pw1" pathLength="100" d="M0,20 C10,6 22,8 40,17"'
+        + ' fill="none" stroke="#6b4a22" stroke-width="5.5" stroke-linecap="round"/>'
+        + '<path class="lc-pw lc-pw2" pathLength="100" d="M40,17 C52,23 58,31 72,22"'
+        + ' fill="none" stroke="#8a6330" stroke-width="3" stroke-linecap="round"/>'
+        + '<path class="lc-pw lc-pw3" pathLength="100" d="M72,22 C82,16 90,25 100,20"'
+        + ' fill="none" stroke="#c8a266" stroke-width="1.4" stroke-linecap="round"/>'
+        + '<path class="lc-pw lc-pw4" pathLength="100" d="M97,20 L100,16 M97,20 L100,24"'
+        + ' fill="none" stroke="#e2c391" stroke-width="1" stroke-linecap="round"/>'
+        + "</svg>"
         + '<span class="lc-peitsche-knall">KNALL</span>';
     } else {
       schicht.innerHTML = '<span class="lc-leine-seil"></span>'
@@ -30668,6 +30687,21 @@
       zurueck();
       try { laufA && laufA.cancel(); laufM && laufM.cancel(); } catch (e) {}
     }, dauer + 700);
+    /* XANDER: „das gemeinsam fahren … was wie ein Fahrrad sein soll,
+       dann kannst du auch die Speichen bisschen einblenden."
+       Die beiden Bilder drehen sich beim Fahren schon wie Raeder —
+       aber ohne Speichen sieht man die Drehung kaum. Die Speichen
+       liegen IM Bild (der Kreis schneidet rund ab) und drehen sich
+       deshalb von selbst mit. */
+    const speichen = [];
+    [kreisAb, kreisMit].forEach((k) => {
+      const sp = document.createElement("span");
+      sp.className = "lc-speichen";
+      sp.style.animationDuration = (dauer / 1000).toFixed(2) + "s";
+      k.appendChild(sp);
+      speichen.push(sp);
+    });
+    setTimeout(() => speichen.forEach((x) => x.remove()), dauer + 700);
     lcTonZu("fahren");
     /* Auch hier: das Quietschen endet mit dem Stillstand, nicht danach. */
     lcTonSpaeter("quietschen", Math.max(0, hin - 700), 0.55);
@@ -31116,6 +31150,19 @@
       });
       lcTonZu("portal");
     }
+
+    /* XANDER: „achte auch immer darauf, wenn wir irgendwo hinreisen,
+       dass es manchmal eine laengere Strecke sein kann und wir
+       vielleicht einen Ankommen Sound haben muessen."
+       Also ein kurzer Ankunftston GENAU dann, wenn die Reise ihr Ziel
+       erreicht (bei „hin" Millisekunden, nicht am Ende der ganzen
+       Animation) — und zwar einer, der zum Fahrzeug passt. Wo das
+       Fahrzeuggeraeusch die Ankunft schon traegt (Tor, Beamen, Rohr,
+       Maulwurf), kommt keiner dazu. */
+    const ankunft = { flug: "bremse", boot: "platsch", dampfer: "platsch",
+                      lok: "bremse", kran: "kitt", liane: "bonk",
+                      feder: "bonk" }[art];
+    if (ankunft) lcTonSpaeter(ankunft, Math.max(0, hin - 260), 0.5);
 
     setTimeout(aufraeumen, dauer + 400);
     /* Und dann sitzt man auch wirklich dort — nur auf dem eigenen
@@ -31637,6 +31684,13 @@
         + '<rect x="0" y="2" width="16" height="7" rx="3.5" fill="#3f2a12"/>'
         + "</svg>";
       lcZpBlende(schicht).innerHTML = '<span class="lc-peitsche-strieme"></span>';
+      /* XANDER: „bei der Peitsche realistische Peitschen Sound."
+         Eine Peitsche macht ZWEI Geraeusche: das Sausen beim Ausholen
+         und den Knall, wenn die Spitze ankommt. „peitschenknall" lag
+         dafuer schon im Ordner, wurde aber nie gespielt. Der Knall
+         liegt auf 560 ms — dort schlaegt die Spitze ein (die Strieme
+         wird bei 29 % von 2 s sichtbar, also bei 580 ms). */
+      lcTonSpaeter("peitschenknall", 560, 0.7);
     }, 2000, "peitsche");
   }
 
