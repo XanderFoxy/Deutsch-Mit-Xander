@@ -19365,7 +19365,18 @@
       + '<g transform="translate(50 50) scale(.56) translate(-50 -50)">'
       + '<g class="lc-strudel-arme lc-strudel-arme-2">' + arme + "</g></g>"
       + '<circle class="lc-strudel-schlund" cx="50" cy="50" r="7.5"/>'
-      + "</svg>" + schaum + "</span>";
+      + "</svg>"
+      /* RUNDE 71 — XANDER: „hat ueberhaupt keinen Swirl."
+         GEFUNDEN, und es ist Geometrie: die Arme sind ACHTZAEHLIG
+         symmetrisch. Dreht man ein achtzaehlig symmetrisches Muster,
+         sieht es nach 45 Grad wieder genauso aus wie vorher — das
+         Auge findet nichts, woran es die Drehung festmachen koennte.
+         Deshalb liegt jetzt EIN heller Sektor darueber, der mitlaeuft:
+         ein Kreisausschnitt, der genau EINMAL im Kreis steht und
+         deshalb unuebersehbar wandert. Das ist der Swirl. */
+      + '<i class="lc-strudel-wirbel"></i>'
+      + '<i class="lc-strudel-wirbel lc-strudel-wirbel-2"></i>'
+      + schaum + "</span>";
     lcEffektHeim().appendChild(schicht);
     /* Und der Chat selbst wird hineingezogen: er dreht sich, wird
        kleiner und kommt wieder hoch. Der Text schrumpft mit — genau

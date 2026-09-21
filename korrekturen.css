@@ -6678,8 +6678,16 @@ html.lc-dino-beben #livechatKarte { animation: lcDinoSchritt 0.62s ease-in-out 1
 }
 /* Und der Chat wird hineingezogen. Er kommt wieder hoch — ein Effekt,
    der die Oberflaeche dauerhaft verstellt, waere ein Fehler. */
-.lc-saugt { animation: lcStrudelSaugt 6s cubic-bezier(.4,0,.5,1) both; }
-.lc-ertrinkt { animation: lcStrudelSchrift 6s ease-in-out both; }
+/* RUNDE 71 — XANDER: „Ausserdem unterbricht es, bis es weggeht."
+   Er hat recht, und es war zu viel des Guten: die Karte drehte sich
+   eine GANZE Umdrehung und schrumpfte auf die Hälfte. Sechs Sekunden
+   lang war das Klassenzimmer damit weder zu lesen noch zu treffen —
+   das ist keine Animation mehr, das ist eine Unterbrechung.
+   Jetzt neigt sie sich nur noch um 26 Grad und geht auf 86 Prozent,
+   und das in 4,2 s. Der Sog bleibt dramatisch; der Raum bleibt
+   benutzbar. */
+.lc-saugt { animation: lcStrudelSaugt 4.2s cubic-bezier(.4,0,.5,1) both; }
+.lc-ertrinkt { animation: lcStrudelSchrift 4.2s ease-in-out both; }
 /* Flache Ringe sind ein Zielscheibenmuster. Ein Trichter entsteht
    erst, wenn man SCHRAEG hineinsieht — darum die Kippung um die
    x-Achse, und in der Mitte wird es dunkel wie in einem Sog. */
@@ -6689,13 +6697,13 @@ html.lc-dino-beben #livechatKarte { animation: lcDinoSchritt 0.62s ease-in-out 1
 }
 @keyframes lcStrudelSaugt {
   0%   { transform: rotate(0) scale(1); }
-  45%  { transform: rotate(160deg) scale(.55); }
-  60%  { transform: rotate(250deg) scale(.5); }
-  100% { transform: rotate(360deg) scale(1); }
+  45%  { transform: rotate(16deg) scale(.9); }
+  60%  { transform: rotate(26deg) scale(.86); }
+  100% { transform: rotate(0deg) scale(1); }
 }
 @keyframes lcStrudelSchrift {
   0%   { font-size: 1em; opacity: 1; }
-  50%  { font-size: .55em; opacity: .55; }
+  50%  { font-size: .86em; opacity: .8; }
   100% { font-size: 1em; opacity: 1; }
 }
 
@@ -14104,29 +14112,49 @@ body.lc-schreibt .tutor-reiter {
 .lc-muenze { perspective: 520px; }
 .lc-gedreht {
   transform-style: preserve-3d;
-  animation: lcMuenzeR18 4.2s cubic-bezier(.16, .5, .2, 1) both;
+  /* RUNDE 71 — XANDER: „die Münze dreht sich so stottern anstatt
+     dass sie sich kontinuierlich dreht und dann runterfällt und sich
+     langsam scheppernd sammelt und dann irgendwann zum liegen
+     kommt."
+     GEFUNDEN, und es ist dieselbe Falle wie beim Sprungturm in
+     Runde 65: hier stand „cubic-bezier(.16,.5,.2,1)" für die GANZE
+     Animation. Eine Kurve über die ganze Animation dehnt und staucht
+     die Abstände ZWISCHEN den Schlüsselbildern — zwischen 24 % und
+     48 % lagen 1080 Grad, zwischen 48 % und 66 % nur 540, und die
+     Kurve verschob beides noch einmal. An jeder Bildgrenze sprang
+     die Drehzahl. Das ist das Stottern.
+     Jetzt „linear", und die Verzögerung steht in den WERTEN: die
+     Drehung folgt der Formel einer gleichmässig gebremsten Drehung
+     (θ = θ_ende · (2v − v²), v = u/0,74), alle 8 Prozent ein Bild.
+     Sie kommt damit bei 74 % zum Stehen, kippt bis 80 % um und
+     scheppert die letzten 20 Prozent aus. */
+  animation: lcMuenzeR18 4.2s linear both;
 }
-/* XANDER: „die Münze soll einfach drehen realistisch und sie soll am
-   Boden landen und nicht in der Mitte vom Bild."
-   Vorher drehte sie sich auf der Stelle und blieb dort liegen, wo sie
-   losgedreht hatte — in der Bildmitte. Jetzt sinkt sie während des
-   Trudelns nach unten (translateY) und kommt am unteren Rand zu
-   liegen, wie eine Münze, die auf den Tisch fällt. Das Eiern kurz
-   vor dem Hinfallen bleibt: DAS ist das Realistische an einer
-   auslaufenden Münze, nicht ein Glanzstreifen. */
 @keyframes lcMuenzeR18 {
-  0%   { transform: translateY(0) rotateX(0deg) rotateY(0deg) scale(1); }
-  /* Schnell — sieben Umdrehungen in der ersten Sekunde. */
-  24%  { transform: translateY(2%) rotateX(0deg) rotateY(2520deg) scale(1); }
-  /* Langsamer, und sie faengt an zu eiern. */
-  48%  { transform: translateY(8%) rotateX(14deg) rotateY(3600deg) scale(.99); }
-  66%  { transform: translateY(15%) rotateX(38deg) rotateY(4140deg) scale(.97); }
-  78%  { transform: translateY(21%) rotateX(62deg) rotateY(4410deg) scale(.95); }
-  /* Und faellt hin: flach, auf dem Ruecken, ganz unten. */
-  88%  { transform: translateY(26%) rotateX(80deg) rotateY(4500deg) scale(.93); }
-  92%  { transform: translateY(27%) rotateX(86deg) rotateY(4500deg) scale(.93); }
-  94%  { transform: translateY(26%) rotateX(82deg) rotateY(4500deg) scale(.93); }
-  96%, 100% { transform: translateY(27%) rotateX(84deg) rotateY(4500deg) scale(.93); }
+  /* Die Drehung: gleichmässig gebremst, kein Sprung dazwischen. */
+  0%   { transform: translateY(0)    rotateX(0deg)  rotateY(0deg)    scale(1); }
+  8%   { transform: translateY(1%)   rotateX(0deg)  rotateY(919deg)  scale(1); }
+  16%  { transform: translateY(2%)   rotateX(0deg)  rotateY(1734deg) scale(1); }
+  24%  { transform: translateY(4%)   rotateX(0deg)  rotateY(2447deg) scale(1); }
+  32%  { transform: translateY(6%)   rotateX(2deg)  rotateY(3050deg) scale(.995); }
+  40%  { transform: translateY(8%)   rotateX(5deg)  rotateY(3551deg) scale(.99); }
+  /* Ab hier fängt sie an zu eiern — sie verliert den Stand. */
+  48%  { transform: translateY(11%)  rotateX(12deg) rotateY(3944deg) scale(.985); }
+  56%  { transform: translateY(14%)  rotateX(26deg) rotateY(4234deg) scale(.975); }
+  64%  { transform: translateY(18%)  rotateX(46deg) rotateY(4418deg) scale(.965); }
+  70%  { transform: translateY(21%)  rotateX(62deg) rotateY(4486deg) scale(.955); }
+  /* 74 % — die Drehung ist zu Ende, jetzt kippt sie nur noch. */
+  74%  { transform: translateY(23%)  rotateX(72deg) rotateY(4500deg) scale(.95); }
+  80%  { transform: translateY(25%)  rotateX(84deg) rotateY(4500deg) scale(.94); }
+  /* Und das Scheppern: sie schlägt auf, hebt sich noch dreimal kurz
+     an und liegt dann. Jeder Ausschlag kleiner als der vorige. */
+  84%  { transform: translateY(27%)  rotateX(93deg) rotateY(4500deg) scale(.93); }
+  87%  { transform: translateY(26.4%) rotateX(84deg) rotateY(4500deg) scale(.932); }
+  90%  { transform: translateY(27%)  rotateX(92deg) rotateY(4500deg) scale(.93); }
+  93%  { transform: translateY(26.7%) rotateX(87deg) rotateY(4500deg) scale(.931); }
+  96%  { transform: translateY(27%)  rotateX(91deg) rotateY(4500deg) scale(.93); }
+  98%  { transform: translateY(26.9%) rotateX(89.2deg) rotateY(4500deg) scale(.93); }
+  100% { transform: translateY(27%)  rotateX(90deg) rotateY(4500deg) scale(.93); }
 }
 .lc-muenze-schatten {
   position: absolute;
@@ -14135,13 +14163,17 @@ body.lc-schreibt .tutor-reiter {
   margin-left: -35%;
   border-radius: 50%;
   background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.45), transparent 72%);
-  animation: lcMuenzeSchattenR18 4.2s cubic-bezier(.16, .5, .2, 1) both;
+  /* Derselbe Grund wie oben: keine Kurve über die ganze Animation,
+     sonst läuft der Schatten der Münze davon. */
+  animation: lcMuenzeSchattenR18 4.2s linear both;
 }
 @keyframes lcMuenzeSchattenR18 {
-  0%   { opacity: .25; transform: translateY(0) scaleX(.35); }
-  48%  { opacity: .3;  transform: translateY(6%) scaleX(.5); }
-  88%  { opacity: .45; transform: translateY(22%) scaleX(1); }
-  100% { opacity: .45; transform: translateY(23%) scaleX(1.04); }
+  0%   { opacity: .25; transform: translateY(0)   scaleX(.35); }
+  40%  { opacity: .28; transform: translateY(4%)  scaleX(.44); }
+  64%  { opacity: .34; transform: translateY(12%) scaleX(.66); }
+  80%  { opacity: .42; transform: translateY(20%) scaleX(.92); }
+  84%  { opacity: .46; transform: translateY(23%) scaleX(1); }
+  100% { opacity: .45; transform: translateY(23%) scaleX(1.02); }
 }
 /* Der Glanzstreifen (.lc-muenze-funkeln) ist weg — XANDER: „Bei der
    Münze sollen diese Bewegungeffekte weg". Er huschte neunmal über
@@ -22302,3 +22334,56 @@ body.lc-schreibt .tutor-reiter {
   opacity: .95;
 }
 .lc-lok-stuetze  { fill: #b98c22; }
+
+/* =================================================================
+   RUNDE 71 — DER STRUDEL BEKOMMT SEINEN SWIRL
+   -----------------------------------------------------------------
+   XANDER: „Der Strudel ist immer noch nicht realistisch … und hat
+   überhaupt keinen Swirl."
+
+   GEFUNDEN, und es ist Geometrie, kein Geschmack: die Spiralarme
+   sind ACHTZÄHLIG symmetrisch. Dreht man ein achtzähliges Muster um
+   45 Grad, sieht es wieder aus wie vorher — das Auge hat nichts,
+   woran es die Drehung festmachen könnte. Sie DREHTE sich die ganze
+   Zeit (3,2 s und 1,9 s), man konnte es nur nicht sehen.
+
+   Deshalb liegen jetzt zwei helle Sektoren darüber, die mitlaufen:
+   ein Kreisausschnitt steht genau EINMAL im Kreis, also ist seine
+   Wanderung unübersehbar. Der äussere läuft in 2,4 s, der innere in
+   1,45 s — dass innen schneller gedreht wird als aussen, ist genau
+   das, was einen Wirbel ausmacht.
+   ================================================================= */
+.lc-strudel-wirbel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 74vmin;
+  height: 74vmin;
+  margin: -37vmin 0 0 -37vmin;
+  border-radius: 50%;
+  pointer-events: none;
+  background: conic-gradient(from 0deg,
+    rgba(214, 244, 255, 0) 0deg,
+    rgba(214, 244, 255, .30) 26deg,
+    rgba(160, 222, 255, .16) 62deg,
+    rgba(214, 244, 255, 0) 120deg,
+    rgba(214, 244, 255, 0) 360deg);
+  /* Innen soll nichts leuchten — dort ist der Schlund. */
+  -webkit-mask: radial-gradient(circle, rgba(0,0,0,0) 0 16%, #000 34% 92%, rgba(0,0,0,0) 100%);
+          mask: radial-gradient(circle, rgba(0,0,0,0) 0 16%, #000 34% 92%, rgba(0,0,0,0) 100%);
+  animation: lcStrudelWirbelR71 2.4s linear infinite;
+}
+.lc-strudel-wirbel-2 {
+  width: 41vmin;
+  height: 41vmin;
+  margin: -20.5vmin 0 0 -20.5vmin;
+  animation-duration: 1.45s;
+  opacity: .8;
+}
+@keyframes lcStrudelWirbelR71 {
+  from { transform: rotateX(62deg) rotate(0deg); }
+  to   { transform: rotateX(62deg) rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-strudel-wirbel { animation: none; opacity: 0; }
+}

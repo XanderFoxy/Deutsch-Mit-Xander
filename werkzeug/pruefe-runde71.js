@@ -186,5 +186,37 @@ pruefe("die goldenen Teile sitzen OBEN auf dem Koerper",
   /lc-lok-handlauf/.test(js) && /lc-lok-domfuss/.test(js)
   && /\.lc-lok-dom      \{ fill: #c8992e;/.test(cssK));
 
+console.log("\nDIE MUENZE DREHT DURCH, STATT ZU STOTTERN");
+pruefe("keine Kurve mehr ueber die ganze Animation",
+  /animation: lcMuenzeR18 4\.2s linear both;/.test(cssK)
+  && !/animation: lcMuenzeR18 4\.2s cubic-bezier/.test(cssK));
+pruefe("die Verzoegerung steht in den Werten, alle 8 Prozent ein Bild",
+  /8%   \{ transform: translateY\(1%\)   rotateX\(0deg\)  rotateY\(919deg\)/.test(cssK)
+  && /16%  \{ transform: translateY\(2%\)   rotateX\(0deg\)  rotateY\(1734deg\)/.test(cssK)
+  && /24%  \{ transform: translateY\(4%\)   rotateX\(0deg\)  rotateY\(2447deg\)/.test(cssK));
+pruefe("bei 74 Prozent steht sie, danach kippt sie nur noch",
+  /74%  \{ transform: translateY\(23%\)  rotateX\(72deg\) rotateY\(4500deg\)/.test(cssK));
+pruefe("und dann scheppert sie aus — jeder Ausschlag kleiner",
+  /84%  \{ transform: translateY\(27%\)  rotateX\(93deg\)/.test(cssK)
+  && /90%  \{ transform: translateY\(27%\)  rotateX\(92deg\)/.test(cssK)
+  && /96%  \{ transform: translateY\(27%\)  rotateX\(91deg\)/.test(cssK));
+pruefe("auch der Schatten laeuft linear mit",
+  /animation: lcMuenzeSchattenR18 4\.2s linear both;/.test(cssK));
+
+console.log("\nDER STRUDEL HAT EINEN SWIRL — UND UNTERBRICHT NICHT MEHR");
+pruefe("zwei helle Sektoren laufen mit",
+  (js.match(/class="lc-strudel-wirbel/g) || []).length === 2
+  && /@keyframes lcStrudelWirbelR71/.test(cssK));
+pruefe("innen dreht es schneller als aussen",
+  /\.lc-strudel-wirbel \{[\s\S]{0,700}?animation: lcStrudelWirbelR71 2\.4s linear infinite;/.test(cssK)
+  && /\.lc-strudel-wirbel-2 \{[\s\S]{0,200}?animation-duration: 1\.45s;/.test(cssK));
+pruefe("der Schlund bleibt frei — der Sektor liegt nur auf dem Ring",
+  /mask: radial-gradient\(circle, rgba\(0,0,0,0\) 0 16%, #000 34% 92%/.test(cssK));
+pruefe("die Karte dreht sich nicht mehr einmal ganz herum",
+  /45%  \{ transform: rotate\(16deg\) scale\(\.9\); \}/.test(cssK)
+  && !/transform: rotate\(360deg\) scale\(1\); \}/.test(cssK));
+pruefe("und der Sog dauert 4,2 s statt 6",
+  /\.lc-saugt \{ animation: lcStrudelSaugt 4\.2s/.test(cssK));
+
 console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 71 sitzt.\n");
 process.exit(fehler ? 1 : 0);
