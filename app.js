@@ -23676,8 +23676,12 @@
        das Losfahren und die Spielzuege. */
     paintfleck:     { ton: "paintball", dauer: 1600, laut: 0.55 }, /* ein Schuss, kein Dauerfeuer */
     /* „wenn man das Ei aufschlaegt, das kann auch realistischer
-       klingen und dann ... kann das so bisschen eklig klingen." */
-    ei:             { ton: "eiglibber", dauer: 3000, laut: 0.6 },
+       klingen und dann ... kann das so bisschen eklig klingen."
+       Das sind ZWEI Dinge nacheinander: erst knackt die Schale
+       (0,36 s), dann laeuft das Eiweiss heraus. Deshalb liegt jetzt
+       das Knacken am Anfang und das Glibbern kommt aus lcEi, sobald
+       die Schale auseinandergeht. */
+    ei:             { ton: "eiknack",   dauer: 500,  laut: 0.7 },
     /* „Bei dem Fahren ein realistisches Fahrgeraeusch und dann kannst du,
        wenn er ankommt, ein Quietschgeraeusch dazubringen. Vielleicht machst
        du die zwei Sachen einzeln, dass das Quietschen erst ausgeloest wird,
@@ -23740,9 +23744,20 @@
     liane:          { ton: "swoosh",   dauer: 2600, laut: 0.5 },
     feder:          { ton: "feder",    dauer: 2800, laut: 0.5 },
     beamen:         { ton: "beamen",   dauer: 3000, laut: 0.5 },
+    /* XANDER: „An der Stelle kannst du auch noch wie bei Super Mario
+       frueher diese Rohre machen … mit diesem typischen Geraeusch."
+       Zwei Geraeusche, zwei Zeitpunkte: hinein und wieder heraus. */
+    rohr:           { ton: "rohrrein", dauer: 2800, laut: 0.55 },
     /* Das Lagerfeuer-Geraeusch leiht sich der brennende Rahmen — es
        liegt schon in ton/ und klingt nach echtem Holzfeuer. */
     brennen:        { ton: "lagerfeuer", dauer: 4200, laut: 0.4 },
+    /* XANDER: „Vielleicht kannst du auch noch so ne Animation fuer so
+       ne Zorro Schlitzen machen." Drei Hiebe, drei Zischer — der
+       zweite und dritte kommen aus lcZorro zum richtigen Zeitpunkt. */
+    zorro:          { ton: "zorro",      dauer: 2600, laut: 0.6 },
+    /* „und Zufall kann er so sein wie bei so einer Gewinn Slot
+       Maschine" — erst rattert die Walze, dann faellt das Los. */
+    zufall:         { ton: "slot",       dauer: 2000, laut: 0.5 },
     kopfhoerer:     { ton: "noten",    dauer: 3200, laut: 0.45 },
     /* „das Fenster aufmachen soll auch nach Fenster oeffnen klingen." */
     luke:           { ton: "fensterauf", dauer: 3400, laut: 0.5 },
@@ -23770,7 +23785,12 @@
        ein geschaerftes Messer aber nicht wie ein quietschen der
        Scheibenwischer." */
     wischer:        { ton: "wischer",  dauer: 4000, laut: 0.5 },
-    zwille:         { ton: "zwille",   dauer: 2600, laut: 0.6 },   /* Gummiband, Schnalzen, Flug */
+    /* XANDER: „Das muss realistischer aussehen, dass man richtig
+       dieses Gummiband dehnt und man hoert wirklich das quietschen …
+       und derjenige, der getroffen wird … macht dann auch so ein Au
+       Geraeusch." Drei Geraeusche, drei Zeitpunkte: das Dehnen sofort,
+       das Schnalzen beim Loslassen, das AUA beim Treffer. */
+    zwille:         { ton: "gummizug", dauer: 2600, laut: 0.55 },  /* Gummiband dehnt sich */
     /* „dann hatten wir noch das Blasrohr, wo man diese kleinen Spuck
        Kuegelchen schicken kann ... dann sollen die vielleicht auch so
        ein Ekelgeraeusch von sich geben." */
@@ -25232,6 +25252,7 @@
        „Pusten" hatte davor eine eigene Kachel mit demselben Zeichen
        wie der Halm — die ist weg. */
     ["\ud83d\udd25", "Brennen", "brennen"],
+    ["\u2694\ufe0f", "Zorro", "zorro"],
     ["\ud83e\udd64", "Getr\u00e4nk", "strohhalm", false,
       [["\ud83e\udd64", "Schl\u00fcrfen", "strohhalm"],
        ["\ud83e\uded7", "Blubbern", "blubbern"],
@@ -25823,7 +25844,8 @@
      ["\ud83c\udf3f", "Liane", "liane"],
      ["\ud83e\ude80", "Sprungfeder", "feder"],
      ["\ud83c\udfd7\ufe0f", "Kran", "kran"],
-     ["\u2728", "Beamen", "beamen"]].forEach(([zeichen, wort, befehl]) => {
+     ["\u2728", "Beamen", "beamen"],
+     ["\ud83d\udfe2", "R\u00f6hre", "rohr"]].forEach(([zeichen, wort, befehl]) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "lc-anreise-knopf";
@@ -27421,8 +27443,10 @@
     liane:    { zeichen: ["\ud83c\udf3f"], wie: 4, klasse: "umarmen" },
     feder:    { zeichen: ["\ud83e\ude80"], wie: 4, klasse: "umarmen" },
     beamen:   { zeichen: ["\u2728"], wie: 4, klasse: "umarmen" },
+    rohr:     { zeichen: ["\ud83d\udfe2"], wie: 4, klasse: "umarmen" },
     marsch:   { zeichen: ["\ud83e\udd41"], wie: 5, klasse: "umarmen" },
     brennen:  { zeichen: ["\ud83d\udd25"], wie: 5, klasse: "umarmen" },
+    zorro:    { zeichen: ["\u2694\ufe0f"], wie: 5, klasse: "umarmen" },
     halloween:{ ganzeSeite: true, wie: "halloween" },
     weihnachten:{ ganzeSeite: true, wie: "weihnachten" },
     geschenk:{ ganzeSeite: true, wie: "geschenk" },
@@ -30129,6 +30153,9 @@
         + '<path d="M38 2 L28 10 L36 16 L24 22 L32 28 L20 30 L20 2 Z"'
         + ' fill="#fdf3e0" stroke="#d9c7a6" stroke-width="2" stroke-linejoin="round"/>'
         + "</svg>");
+      /* Das Knacken laeuft schon (LC_TON_PLAN), das Glibbern kommt
+         erst, wenn die Schale wirklich auseinandergeht. */
+      lcTonSpaeter("eiglibber", 450, 0.55);
     }, 3800, "ei");
   }
 
@@ -30679,7 +30706,7 @@
 
     const hin = { flug: 2600, maulwurf: 2200, boot: 2800, kran: 2800,
                   dampfer: 3000, lok: 3200, liane: 2200, feder: 2400,
-                  beamen: 2600 }[art] || 1800;
+                  beamen: 2600, rohr: 2800 }[art] || 1800;
     const dauer = hin + 500;
     const altZ = ab.el.style.zIndex;
     ab.el.style.zIndex = "7";
@@ -30692,15 +30719,22 @@
     };
 
     /* Das eigene Bild ist unterwegs nicht am Platz — es sitzt ja im
-       Flugzeug, steckt in der Erde oder ist im Tor verschwunden. */
-    try {
-      kreis.animate([
-        { opacity: 1, transform: "scale(1)", offset: 0 },
-        { opacity: 0, transform: "scale(.2)", offset: 0.16 },
-        { opacity: 0, transform: "scale(.2)", offset: 0.92 },
-        { opacity: 1, transform: "scale(1)", offset: 1 }
-      ], { duration: dauer, easing: "ease-in-out", fill: "none" });
-    } catch (e) {}
+       Flugzeug, steckt in der Erde oder ist im Tor verschwunden.
+       XANDER: „Der Maulwurf verschwindet nicht in seinem eigenen Loch.
+       Man soll sich durch sein eigenes Profilbild graben." Beim
+       Maulwurf und bei der Roehre schrumpft das Bild deshalb NICHT
+       weg, sondern versinkt senkrecht — die beiden bringen ihre
+       eigene Bewegung weiter unten mit. */
+    if (art !== "maulwurf" && art !== "rohr") {
+      try {
+        kreis.animate([
+          { opacity: 1, transform: "scale(1)", offset: 0 },
+          { opacity: 0, transform: "scale(.2)", offset: 0.16 },
+          { opacity: 0, transform: "scale(.2)", offset: 0.92 },
+          { opacity: 1, transform: "scale(1)", offset: 1 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "none" });
+      } catch (e) {}
+    }
 
     const setzen = (el, x, y) => {
       el.style.left = x.toFixed(1) + "px";
@@ -30744,6 +30778,26 @@
       } catch (e) {}
       lcTonZu("flugzeug");
     } else if (art === "maulwurf") {
+      /* XANDER: „Der Maulwurf verschwindet nicht in seinem eigenen
+         Loch. Man soll sich durch sein eigenes Profilbild graben."
+         Also wird das Loch dorthin gelegt, wo das Bild steht — und
+         das Bild sackt senkrecht hinein, statt in der Luft zu
+         schrumpfen. Erst wenn es unten ist, wandert der Huegel los. */
+      const loch = document.createElement("span");
+      loch.className = "lc-grabloch";
+      loch.style.setProperty("--gross", d + "px");
+      reihe.appendChild(loch);
+      weg.push(loch);
+      setzen(loch, start.x, start.y + d * 0.34);
+      try {
+        kreis.animate([
+          { transform: "translateY(0) rotate(0deg)", clipPath: "inset(0 0 0% 0)", offset: 0 },
+          { transform: "translateY(4%) rotate(-3deg)", clipPath: "inset(0 0 0% 0)", offset: 0.05 },
+          { transform: "translateY(70%) rotate(4deg)", clipPath: "inset(0 0 100% 0)", offset: 0.22 },
+          { transform: "translateY(70%) rotate(0deg)", clipPath: "inset(0 0 100% 0)", offset: 0.8 },
+          { transform: "translateY(0) rotate(0deg)", clipPath: "inset(0 0 0% 0)", offset: 0.98 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "none" });
+      } catch (e) {}
       /* Der Erdhuegel wandert von Platz zu Platz. */
       const huegel = document.createElement("span");
       huegel.className = "lc-maulwurf";
@@ -30975,6 +31029,38 @@
         setzen(saeule, wo.x, wo.y);
       });
       lcTonZu("beamen");
+    } else if (art === "rohr") {
+      /* XANDER: „An der Stelle kannst du auch noch wie bei Super Mario
+         frueher diese Rohre machen, wo man sich so reinsetzt und dann
+         irgendwo anders wieder rauskommt, mit diesem typischen
+         Geraeusch."
+         Zwei gruene Roehren: aus der einen rutscht man hinein, aus der
+         anderen kommt man wieder heraus. Zwischendurch ist man weg —
+         genau wie bei Mario. Die Roehre steht UNTER dem Platz, das
+         Bild faehrt senkrecht hinein. */
+      [start, ende].forEach((wo, i) => {
+        const roehre = document.createElement("span");
+        roehre.className = "lc-roehre" + (i ? " lc-roehre-raus" : " lc-roehre-rein");
+        roehre.style.setProperty("--gross", d + "px");
+        roehre.style.animationDelay = (i ? hin - 1000 : 0) + "ms";
+        roehre.innerHTML = '<i class="lc-roehre-rand"></i><i class="lc-roehre-rohr"></i>';
+        reihe.appendChild(roehre);
+        weg.push(roehre);
+        setzen(roehre, wo.x, wo.y + d * 0.52);
+      });
+      /* Das Bild rutscht senkrecht hinein und kommt drueben wieder
+         heraus — nicht schrumpfen, sondern versinken. */
+      try {
+        kreis.animate([
+          { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0 },
+          { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0.06 },
+          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.26 },
+          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.74 },
+          { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0.96 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "none" });
+      } catch (e) {}
+      lcTonZu("rohr");
+      lcTonSpaeter("rohrraus", Math.max(0, hin - 700), 0.55);
     } else {
       /* Das Tor: eines hier, eines dort. */
       [start, ende].forEach((wo, i) => {
@@ -31000,7 +31086,8 @@
             renderLiveChat();
             showToast(({ flug: "✈️ ", maulwurf: "🦡 ", boot: "⛵ ",
                          kran: "🏗️ ", dampfer: "🚢 ", lok: "🚂 ",
-                         liane: "🌿 ", feder: "🪀 ", beamen: "✨ "
+                         liane: "🌿 ", feder: "🪀 ", beamen: "✨ ",
+                         rohr: "🟢 "
                        }[art] || "🌀 ") + erg.text);
           }
         } catch (e) {}
@@ -31322,6 +31409,46 @@
       schicht.innerHTML = '<i class="lc-brand-schein"></i>'
         + '<span class="lc-brand-ring">' + zungen + "</span>" + funken;
     }, 4200, "brennen");
+  }
+
+  /* --- DAS Z VON ZORRO --------------------------------------------------
+     XANDER: „Vielleicht kannst du auch noch so ne Animation fuer so ne
+     Zorro Schlitzen machen."
+     Drei Hiebe in der Reihenfolge, in der Zorro sein Z zieht: oben
+     quer, dann die Schraege von rechts oben nach links unten, dann
+     unten quer. Jeder Hieb blitzt erst hell auf (die Klinge) und
+     bleibt dann als dunkler Schnitt stehen; die Klinge selbst fegt
+     sichtbar durchs Bild. Am Ende verblasst alles. */
+  function lcZorro(wen) {
+    return lcAmPlatz(wen, "lc-zorro", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-geschlitzt");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-geschlitzt");
+        setTimeout(() => kreis.classList.remove("lc-geschlitzt"), 2600);
+      }
+      /* Die Schnitte gehoeren INS Bild, also in die Blende — die wird
+         mit dem Bild zusammen rund beschnitten. */
+      const blende = lcZpBlende(schicht);
+      blende.innerHTML = '<span class="lc-zorro-schnitt lc-zorro-s1"></span>'
+                       + '<span class="lc-zorro-schnitt lc-zorro-s2"></span>'
+                       + '<span class="lc-zorro-schnitt lc-zorro-s3"></span>';
+      /* Die Klinge darf ueber den Rand hinausfegen, sie liegt also
+         AUSSERHALB der Blende. insertAdjacentHTML, nicht innerHTML —
+         sonst waere die Blende gleich wieder weg. */
+      schicht.insertAdjacentHTML("beforeend",
+        '<svg class="lc-zorro-degen" viewBox="0 0 120 12">'
+        + '<path d="M18 6 L112 6" stroke="#dfe6ef" stroke-width="3" stroke-linecap="round"/>'
+        + '<path d="M18 6 L112 6" stroke="#ffffff" stroke-width="1" stroke-linecap="round"/>'
+        + '<rect x="14" y="1" width="4" height="10" rx="1.5" fill="#c9a227"/>'
+        + '<rect x="2" y="4" width="12" height="4" rx="2" fill="#2b2b33"/>'
+        + "</svg>");
+      /* Drei Hiebe, drei Zischer: der erste laeuft ueber LC_TON_PLAN,
+         die anderen beiden genau dann, wenn die Klinge ansetzt. */
+      lcTonSpaeter("zorro", 340, 0.6);
+      lcTonSpaeter("zorro", 680, 0.6);
+    }, 2600, "zorro");
   }
 
   function lcStrohhalm(wen) {
@@ -32231,7 +32358,10 @@
         + '<span class="lc-zwille-aua">AUA</span>';
       /* „man hoert wirklich das quietschen von diesem dehnen
          Gummiband ... und derjenige, der getroffen wird ... macht dann
-         auch so ein Au Geraeusch." Zwei Toene, zwei Zeitpunkte. */
+         auch so ein Au Geraeusch." Drei Toene, drei Zeitpunkte:
+         das Dehnen laeuft schon (LC_TON_PLAN), hier folgen das
+         Schnalzen beim Loslassen und das AUA beim Aufprall. */
+      lcTonSpaeter("zwille", 850, 0.6);
       lcTonSpaeter("aufprallau", 1500, 0.6);
     }, 2600, "zwille");
   }
@@ -32592,9 +32722,14 @@
   ];
   function lcZufall(wen, nachricht) {
     const w = LC_ZUFALL_WIRKUNGEN[Math.floor(Math.random() * LC_ZUFALL_WIRKUNGEN.length)];
+    /* XANDER: „und Zufall kann er so sein wie bei so einer Gewinn Slot
+       Maschine." Also rattert erst die Walze (LC_TON_PLAN: „slot"),
+       und erst wenn sie stehenbleibt, faellt das Los — sonst laufen
+       Walze und gezogener Effekt gleichzeitig und man hoert Matsch. */
+    lcTonZu("zufall");
     /* Ueber lcWirkung, nicht direkt: so gilt jede Regel, die dort
        steht (Ton, Blende, Richtung), auch fuer den Zufall. */
-    lcWirkung(w, null, nachricht);
+    setTimeout(() => { try { lcWirkung(w, null, nachricht); } catch (e) {} }, 1150);
     return true;
   }
 
@@ -33919,8 +34054,8 @@
     paintfleck: 1, ei: 1, fahren: 1, spielzug: 1, pacjagd: 1, stoerung: 1,
     aufessen: 1, lotto: 1, sanduhr: 1, katapult: 1, strohhalm: 1, blubbern: 1,
     knuell: 1, rollo: 1, lamellen: 1, peitsche: 1, gemeinsam: 1, schneekugel: 1,
-    flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1, brennen: 1,
-    dampfer: 1, lok: 1, liane: 1, feder: 1, beamen: 1, marsch: 1,
+    flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1, brennen: 1, zorro: 1,
+    dampfer: 1, lok: 1, liane: 1, feder: 1, beamen: 1, rohr: 1, marsch: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
@@ -34019,6 +34154,7 @@
       if (art === "katapult" && lcKatapult(wenZ)) return;
       if (art === "marsch" && lcTrommel(wenZ, true)) return;
       if (art === "brennen" && lcBrennen(wenZ)) return;
+      if (art === "zorro" && lcZorro(wenZ)) return;
       if (art === "strohhalm" && lcStrohhalm(wenZ)) return;
       if (art === "blubbern" && lcBlubbern(wenZ)) return;
       if (art === "knuell" && lcZerknuellen(wenZ)) return;
@@ -34080,7 +34216,7 @@
     if (art === "flug" || art === "maulwurf" || art === "portal"
         || art === "boot" || art === "kran" || art === "dampfer"
         || art === "lok" || art === "liane" || art === "feder"
-        || art === "beamen") {
+        || art === "beamen" || art === "rohr") {
       const wenR = nachricht && (nachricht.wen || nachricht.an);
       let vonR = (nachricht && nachricht.name) || "";
       if (nachricht && nachricht.eigen) {

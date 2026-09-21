@@ -16714,3 +16714,423 @@ body.lc-schreibt .tutor-reiter {
 }
 .tutor-maske.tutor-video-da { opacity: 1; }
 .tutor-buehne:has(.tutor-maske.tutor-video-da) .tutor-figur { animation: none; }
+
+/* =================================================================
+   DIE SPRECHBILDER SPIELEN JETZT AUSSERHALB DES KREISES
+   -----------------------------------------------------------------
+   GEMELDET, und zwar für fast jeden dieser Effekte:
+     „die Blütenblätter … sollen außen am Profil sein … das soll sich
+      richtig schön mit einer schönen Animation nach außen öffnen"
+     „das Feuer … es brennt nicht außen am Ring, sondern innen
+      irgendwie … die sollen außen am Ring sein wie ein Feuerring im
+      Zirkus"
+     „bei Magie da sind die in der Mitte — die können auch am Rand
+      sein, die sollen das Bild nicht verdecken in der Mitte"
+     „Der Regenbogen … er ist mir zu sehr innen"
+     „Die Schallwellen … das kann aus meinem Profilbild viel größer
+      dimensioniert raus funken … und nicht nur an mein Profilbild
+      kleben"
+     „bei Strom … die sind bis zum Rand gelaufen, nicht nur innerhalb"
+     „das funkeln ist kein funkeln. Das ist nur ein glühen. Das waren
+      wirklich so kleine Elemente wie kleine Sterne, die blinken um
+      den ganzen Profilrahmen"
+
+   EINE URSACHE FÜR ALLE: diese Effekte hingen an .lc-kreis::after und
+   ::before — und .lc-kreis trägt „overflow: hidden" (gemessen), damit
+   das Profilbild rund bleibt. Alles, was über den Rand hinausragte,
+   wurde also abgeschnitten. Übrig blieb genau das, was er beschreibt:
+   ein bisschen was INNEN.
+
+   Deshalb gibt es jetzt eine zweite Schicht, die NICHT beschnitten
+   wird: .lc-platz-spricht::after liegt am Platz (der ist „position:
+   relative; overflow: visible" — gemessen) und deckt das Quadrat des
+   Profilbildes ab. Von dort darf jeder Effekt nach außen wachsen.
+   ================================================================= */
+.lc-platz-spricht::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 100%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 3;
+}
+/* Ohne passenden Effekt bleibt die Schicht leer. */
+.lc-platz-spricht::after { display: none; }
+.lc-platz-spricht[data-sprechbild="bluete"]::after,
+.lc-platz-spricht[data-sprechbild="feuer"]::after,
+.lc-platz-spricht[data-sprechbild="funkeln"]::after,
+.lc-platz-spricht[data-sprechbild="magie"]::after,
+.lc-platz-spricht[data-sprechbild="regenbogen"]::after,
+.lc-platz-spricht[data-sprechbild="welle"]::after,
+.lc-platz-spricht[data-sprechbild="strom"]::after { display: block; }
+
+/* --- BLÜTE: acht Blätter wachsen nach außen auf --------------------
+   XANDER: „das mit den Blumen mit der Blumenblüte noch nicht so
+   richtig das soll nach außen wachsen … sie sollen EXTRUDIEREN".
+   Deshalb jetzt echte Blattformen als SVG statt weicher Farbflecken,
+   und die Schicht wächst auf Faktor 2 — bei diesem Faktor liegt der
+   Bildrand bei Radius 25, die Blätter also vollständig draußen. */
+.lc-platz-spricht[data-sprechbild="bluete"] .lc-kreis::after { display: none !important; }
+.lc-platz-spricht[data-sprechbild="bluete"]::after {
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22bl0%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%220%22%20y2%3D%220%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23e888b4%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23f9aed0%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffe2ef%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22bl1%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%220%22%20y2%3D%220%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ef9ac2%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23ffc2dd%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23fff2f8%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cg%20transform%3D%22rotate%280%2050%2050%29%22%3E%3Cpath%20d%3D%22M50%2C25.5%20C37%2C21%2034%2C10%2050%2C1.5%20C66%2C10%2063%2C21%2050%2C25.5%20Z%22%20fill%3D%22url%28%23bl0%29%22%20stroke%3D%22%23e58ab4%22%20stroke-width%3D%22.7%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%2845%2050%2050%29%22%3E%3Cpath%20d%3D%22M50%2C25.5%20C37%2C21%2034%2C10%2050%2C1.5%20C66%2C10%2063%2C21%2050%2C25.5%20Z%22%20fill%3D%22url%28%23bl1%29%22%20stroke%3D%22%23e58ab4%22%20stroke-width%3D%22.7%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%2890%2050%2050%29%22%3E%3Cpath%20d%3D%22M50%2C25.5%20C37%2C21%2034%2C10%2050%2C1.5%20C66%2C10%2063%2C21%2050%2C25.5%20Z%22%20fill%3D%22url%28%23bl0%29%22%20stroke%3D%22%23e58ab4%22%20stroke-width%3D%22.7%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28135%2050%2050%29%22%3E%3Cpath%20d%3D%22M50%2C25.5%20C37%2C21%2034%2C10%2050%2C1.5%20C66%2C10%2063%2C21%2050%2C25.5%20Z%22%20fill%3D%22url%28%23bl1%29%22%20stroke%3D%22%23e58ab4%22%20stroke-width%3D%22.7%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28180%2050%2050%29%22%3E%3Cpath%20d%3D%22M50%2C25.5%20C37%2C21%2034%2C10%2050%2C1.5%20C66%2C10%2063%2C21%2050%2C25.5%20Z%22%20fill%3D%22url%28%23bl0%29%22%20stroke%3D%22%23e58ab4%22%20stroke-width%3D%22.7%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28225%2050%2050%29%22%3E%3Cpath%20d%3D%22M50%2C25.5%20C37%2C21%2034%2C10%2050%2C1.5%20C66%2C10%2063%2C21%2050%2C25.5%20Z%22%20fill%3D%22url%28%23bl1%29%22%20stroke%3D%22%23e58ab4%22%20stroke-width%3D%22.7%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28270%2050%2050%29%22%3E%3Cpath%20d%3D%22M50%2C25.5%20C37%2C21%2034%2C10%2050%2C1.5%20C66%2C10%2063%2C21%2050%2C25.5%20Z%22%20fill%3D%22url%28%23bl0%29%22%20stroke%3D%22%23e58ab4%22%20stroke-width%3D%22.7%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28315%2050%2050%29%22%3E%3Cpath%20d%3D%22M50%2C25.5%20C37%2C21%2034%2C10%2050%2C1.5%20C66%2C10%2063%2C21%2050%2C25.5%20Z%22%20fill%3D%22url%28%23bl1%29%22%20stroke%3D%22%23e58ab4%22%20stroke-width%3D%22.7%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") center/100% 100% no-repeat;
+  filter: drop-shadow(0 1px 2px rgba(120, 40, 80, .28));
+  animation: lcSfBlueteR35 1.6s cubic-bezier(.22, 1.1, .36, 1) both,
+             lcSfBlueteAtmenR35 3.4s ease-in-out 1.6s infinite;
+}
+@keyframes lcSfBlueteR35 {
+  0%   { transform: translateX(-50%) scale(.9) rotate(-45deg); opacity: 0; }
+  40%  { opacity: .9; }
+  100% { transform: translateX(-50%) scale(1.8) rotate(0deg); opacity: 1; }
+}
+@keyframes lcSfBlueteAtmenR35 {
+  0%, 100% { transform: translateX(-50%) scale(1.8) rotate(0deg); }
+  50%      { transform: translateX(-50%) scale(1.88) rotate(6deg); }
+}
+
+/* --- FEUER: ein Feuerring wie im Zirkus, außen am Rand -------------
+   XANDER: „es brennt nicht außen am Ring, sondern innen irgendwie …
+   Die sollen außen am Ring sein wie ein Feuerring im Zirkus."
+   Zwölf echte Flammenzungen als SVG, Spitze nach außen; bei Faktor
+   1.75 liegt der Bildrand bei Radius 28.6, der Flammenfuß bei 30. */
+.lc-platz-spricht[data-sprechbild="feuer"]::after {
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22fl%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%220%22%20y2%3D%220%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ff7a00%22%20stop-opacity%3D%22.95%22%2F%3E%3Cstop%20offset%3D%22.45%22%20stop-color%3D%22%23ff9e1f%22%20stop-opacity%3D%22.9%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffd24a%22%20stop-opacity%3D%220%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22fk%22%20x1%3D%220%22%20y1%3D%221%22%20x2%3D%220%22%20y2%3D%220%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23fff6c8%22%20stop-opacity%3D%22.95%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ffe066%22%20stop-opacity%3D%220%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cg%20transform%3D%22rotate%280%2050%2050%29%20translate%2850%2030%29%20scale%281%201.0%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%2830%2050%2050%29%20translate%2850%2030%29%20scale%281%200.82%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%2860%2050%2050%29%20translate%2850%2030%29%20scale%281%201.0%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%2890%2050%2050%29%20translate%2850%2030%29%20scale%281%200.82%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28120%2050%2050%29%20translate%2850%2030%29%20scale%281%201.0%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28150%2050%2050%29%20translate%2850%2030%29%20scale%281%200.82%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28180%2050%2050%29%20translate%2850%2030%29%20scale%281%201.0%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28210%2050%2050%29%20translate%2850%2030%29%20scale%281%200.82%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28240%2050%2050%29%20translate%2850%2030%29%20scale%281%201.0%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28270%2050%2050%29%20translate%2850%2030%29%20scale%281%200.82%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28300%2050%2050%29%20translate%2850%2030%29%20scale%281%201.0%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22rotate%28330%2050%2050%29%20translate%2850%2030%29%20scale%281%200.82%29%20translate%28-50%20-30%29%22%3E%3Cpath%20d%3D%22M50%2C30%20C39%2C26%2038%2C15%2050%2C1%20C62%2C15%2061%2C26%2050%2C30%20Z%22%20fill%3D%22url%28%23fl%29%22%2F%3E%3Cpath%20d%3D%22M50%2C29%20C44%2C26%2043.5%2C19%2050%2C9%20C56.5%2C19%2056%2C26%2050%2C29%20Z%22%20fill%3D%22url%28%23fk%29%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") center/100% 100% no-repeat;
+  filter: drop-shadow(0 0 5px rgba(255, 140, 30, .6));
+  animation: lcSfFeuerR35 .42s ease-in-out infinite alternate;
+}
+@keyframes lcSfFeuerR35 {
+  from { transform: translateX(-50%) scale(1.66) rotate(-3deg); opacity: .85; }
+  to   { transform: translateX(-50%) scale(1.78) rotate(3deg);  opacity: 1; }
+}
+
+/* --- FUNKELN: kleine Sterne, die blinken — kein Glühen -------------
+   XANDER: „das funkeln ist kein funkeln. Das ist nur ein glühen."
+   Also Vierstrahl-Sterne als SVG, hart an- und ausgeschaltet
+   (steps), damit es blitzt statt zu leuchten. */
+.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis::before { display: none !important; }
+.lc-platz-spricht[data-sprechbild="funkeln"]::after {
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20d%3D%22M87.71675376237025%2C49.431035049395604%20C88.54875376237024%2C53.799035049395606%2088.54875376237024%2C53.799035049395606%2092.91675376237025%2C54.63103504939561%20C88.54875376237024%2C55.46303504939561%2088.54875376237024%2C55.46303504939561%2087.71675376237025%2C59.83103504939561%20C86.88475376237025%2C55.46303504939561%2086.88475376237025%2C55.46303504939561%2082.51675376237024%2C54.63103504939561%20C86.88475376237025%2C53.799035049395606%2086.88475376237025%2C53.799035049395606%2087.71675376237025%2C49.431035049395604%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3Cpath%20d%3D%22M86.73723346217547%2C74.28349106499422%20C87.28123346217546%2C77.13949106499423%2087.28123346217546%2C77.13949106499423%2090.13723346217547%2C77.68349106499423%20C87.28123346217546%2C78.22749106499423%2087.28123346217546%2C78.22749106499423%2086.73723346217547%2C81.08349106499423%20C86.19323346217547%2C78.22749106499423%2086.19323346217547%2C78.22749106499423%2083.33723346217546%2C77.68349106499423%20C86.19323346217547%2C77.13949106499423%2086.19323346217547%2C77.13949106499423%2086.73723346217547%2C74.28349106499422%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3Cpath%20d%3D%22M64.8477828825924%2C81.57918443119273%20C65.3917828825924%2C84.43518443119274%2065.3917828825924%2C84.43518443119274%2068.2477828825924%2C84.97918443119273%20C65.3917828825924%2C85.52318443119273%2065.3917828825924%2C85.52318443119273%2064.8477828825924%2C88.37918443119274%20C64.3037828825924%2C85.52318443119273%2064.3037828825924%2C85.52318443119273%2061.4477828825924%2C84.97918443119273%20C64.3037828825924%2C84.43518443119274%2064.3037828825924%2C84.43518443119274%2064.8477828825924%2C81.57918443119273%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3Cpath%20d%3D%22M44.39401020336322%2C90.45712297550081%20C45.226010203363224%2C94.82512297550082%2045.226010203363224%2C94.82512297550082%2049.594010203363226%2C95.65712297550081%20C45.226010203363224%2C96.4891229755008%2045.226010203363224%2C96.4891229755008%2044.39401020336322%2C100.85712297550081%20C43.56201020336322%2C96.4891229755008%2043.56201020336322%2C96.4891229755008%2039.19401020336322%2C95.65712297550081%20C43.56201020336322%2C94.82512297550082%2043.56201020336322%2C94.82512297550082%2044.39401020336322%2C90.45712297550081%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3Cpath%20d%3D%22M27.131029120222163%2C76.94814938179712%20C27.675029120222163%2C79.80414938179713%2027.675029120222163%2C79.80414938179713%2030.53102912022216%2C80.34814938179713%20C27.675029120222163%2C80.89214938179713%2027.675029120222163%2C80.89214938179713%2027.131029120222163%2C83.74814938179713%20C26.587029120222162%2C80.89214938179713%2026.587029120222162%2C80.89214938179713%2023.731029120222164%2C80.34814938179713%20C26.587029120222162%2C79.80414938179713%2026.587029120222162%2C79.80414938179713%2027.131029120222163%2C76.94814938179712%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3Cpath%20d%3D%22M7.656776741187741%2C64.57363191050659%20C8.200776741187742%2C67.4296319105066%208.200776741187742%2C67.4296319105066%2011.056776741187742%2C67.9736319105066%20C8.200776741187742%2C68.5176319105066%208.200776741187742%2C68.5176319105066%207.656776741187741%2C71.3736319105066%20C7.112776741187741%2C68.5176319105066%207.112776741187741%2C68.5176319105066%204.256776741187741%2C67.9736319105066%20C7.112776741187741%2C67.4296319105066%207.112776741187741%2C67.4296319105066%207.656776741187741%2C64.57363191050659%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3Cpath%20d%3D%22M12.283246237629761%2C40.1689649506044%20C13.115246237629762%2C44.5369649506044%2013.115246237629762%2C44.5369649506044%2017.48324623762976%2C45.3689649506044%20C13.115246237629762%2C46.2009649506044%2013.115246237629762%2C46.2009649506044%2012.283246237629761%2C50.5689649506044%20C11.45124623762976%2C46.2009649506044%2011.45124623762976%2C46.2009649506044%207.083246237629761%2C45.3689649506044%20C11.45124623762976%2C44.5369649506044%2011.45124623762976%2C44.5369649506044%2012.283246237629761%2C40.1689649506044%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3Cpath%20d%3D%22M13.262766537824533%2C18.916508935005776%20C13.806766537824533%2C21.772508935005774%2013.806766537824533%2C21.772508935005774%2016.66276653782453%2C22.316508935005775%20C13.806766537824533%2C22.860508935005775%2013.806766537824533%2C22.860508935005775%2013.262766537824533%2C25.716508935005773%20C12.718766537824532%2C22.860508935005775%2012.718766537824532%2C22.860508935005775%209.862766537824532%2C22.316508935005775%20C12.718766537824532%2C21.772508935005774%2012.718766537824532%2C21.772508935005774%2013.262766537824533%2C18.916508935005776%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3Cpath%20d%3D%22M35.152217117407595%2C11.620815568807272%20C35.69621711740759%2C14.476815568807272%2035.69621711740759%2C14.476815568807272%2038.552217117407594%2C15.020815568807272%20C35.69621711740759%2C15.564815568807273%2035.69621711740759%2C15.564815568807273%2035.152217117407595%2C18.42081556880727%20C34.6082171174076%2C15.564815568807273%2034.6082171174076%2C15.564815568807273%2031.752217117407596%2C15.020815568807272%20C34.6082171174076%2C14.476815568807272%2034.6082171174076%2C14.476815568807272%2035.152217117407595%2C11.620815568807272%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3Cpath%20d%3D%22M55.60598979663679%2C-0.8571229755008121%20C56.43798979663679%2C3.5108770244991883%2056.43798979663679%2C3.5108770244991883%2060.805989796636794%2C4.342877024499188%20C56.43798979663679%2C5.174877024499188%2056.43798979663679%2C5.174877024499188%2055.60598979663679%2C9.542877024499187%20C54.77398979663679%2C5.174877024499188%2054.77398979663679%2C5.174877024499188%2050.40598979663679%2C4.342877024499188%20C54.77398979663679%2C3.5108770244991883%2054.77398979663679%2C3.5108770244991883%2055.60598979663679%2C-0.8571229755008121%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3Cpath%20d%3D%22M72.86897087977782%2C16.251850618202866%20C73.41297087977782%2C19.107850618202864%2073.41297087977782%2C19.107850618202864%2076.26897087977783%2C19.651850618202864%20C73.41297087977782%2C20.195850618202865%2073.41297087977782%2C20.195850618202865%2072.86897087977782%2C23.051850618202863%20C72.32497087977782%2C20.195850618202865%2072.32497087977782%2C20.195850618202865%2069.46897087977781%2C19.651850618202864%20C72.32497087977782%2C19.107850618202864%2072.32497087977782%2C19.107850618202864%2072.86897087977782%2C16.251850618202866%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3Cpath%20d%3D%22M92.34322325881226%2C28.626368089493404%20C92.88722325881226%2C31.482368089493402%2092.88722325881226%2C31.482368089493402%2095.74322325881226%2C32.0263680894934%20C92.88722325881226%2C32.5703680894934%2092.88722325881226%2C32.5703680894934%2092.34322325881226%2C35.4263680894934%20C91.79922325881226%2C32.5703680894934%2091.79922325881226%2C32.5703680894934%2088.94322325881225%2C32.0263680894934%20C91.79922325881226%2C31.482368089493402%2091.79922325881226%2C31.482368089493402%2092.34322325881226%2C28.626368089493404%20Z%22%20fill%3D%22%23fffbe6%22%2F%3E%3C%2Fsvg%3E") center/100% 100% no-repeat;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 210, .95));
+  animation: lcSfFunkelnR35 1.5s steps(1, end) infinite;
+}
+@keyframes lcSfFunkelnR35 {
+  0%   { transform: translateX(-50%) scale(1.6) rotate(0deg);  opacity: 1; }
+  25%  { transform: translateX(-50%) scale(1.7) rotate(9deg);  opacity: .3; }
+  50%  { transform: translateX(-50%) scale(1.64) rotate(18deg); opacity: 1; }
+  75%  { transform: translateX(-50%) scale(1.74) rotate(27deg); opacity: .4; }
+  100% { transform: translateX(-50%) scale(1.6) rotate(36deg); opacity: 1; }
+}
+
+/* --- MAGIE: Sternchen am RAND, nie über dem Gesicht ---------------- */
+.lc-platz-spricht[data-sprechbild="magie"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="magie"] .lc-kreis::before { display: none !important; }
+/* XANDER: „Der der magische Effekt gefällt mir noch gar nicht, weil er
+   total ausdruckslos ist." Der Ring war grün wie beim Standardbild —
+   zu lila Sternen gehört ein lila Schimmer. */
+.lc-platz-spricht[data-sprechbild="magie"] .lc-kreis {
+  box-shadow: 0 0 0 3px rgba(160, 90, 245, .9), 0 0 14px 2px rgba(180, 110, 255, .55) !important;
+  animation: lcSfMagieRingR35 2.2s ease-in-out infinite !important;
+}
+@keyframes lcSfMagieRingR35 {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(160, 90, 245, .9), 0 0 12px 1px rgba(180, 110, 255, .45); }
+  50%      { box-shadow: 0 0 0 4px rgba(198, 130, 255, 1), 0 0 20px 4px rgba(190, 120, 255, .75); }
+}
+.lc-platz-spricht[data-sprechbild="magie"]::after {
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22mg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23f0d4ff%22%2F%3E%3Cstop%20offset%3D%22.5%22%20stop-color%3D%22%23c17cff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238a3ff0%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M89.0%2C45.4%20C89.736%2C49.264%2089.736%2C49.264%2093.6%2C50.0%20C89.736%2C50.736%2089.736%2C50.736%2089.0%2C54.6%20C88.264%2C50.736%2088.264%2C50.736%2084.4%2C50.0%20C88.264%2C49.264%2088.264%2C49.264%2089.0%2C45.4%20Z%22%20fill%3D%22url%28%23mg%29%22%2F%3E%3Cpath%20d%3D%22M84.47199994035401%2C75.72544243589427%20C84.98399994035401%2C78.41344243589427%2084.98399994035401%2C78.41344243589427%2087.67199994035401%2C78.92544243589427%20C84.98399994035401%2C79.43744243589427%2084.98399994035401%2C79.43744243589427%2084.47199994035401%2C82.12544243589427%20C83.95999994035401%2C79.43744243589427%2083.95999994035401%2C79.43744243589427%2081.27199994035401%2C78.92544243589427%20C83.95999994035401%2C78.41344243589427%2083.95999994035401%2C78.41344243589427%2084.47199994035401%2C75.72544243589427%20Z%22%20fill%3D%22url%28%23mg%29%22%2F%3E%3Cpath%20d%3D%22M56.772278929010284%2C83.80750236747612%20C57.50827892901028%2C87.67150236747611%2057.50827892901028%2C87.67150236747611%2061.372278929010285%2C88.40750236747611%20C57.50827892901028%2C89.14350236747612%2057.50827892901028%2C89.14350236747612%2056.772278929010284%2C93.0075023674761%20C56.03627892901029%2C89.14350236747612%2056.03627892901029%2C89.14350236747612%2052.17227892901028%2C88.40750236747611%20C56.03627892901029%2C87.67150236747611%2056.03627892901029%2C87.67150236747611%2056.772278929010284%2C83.80750236747612%20Z%22%20fill%3D%22url%28%23mg%29%22%2F%3E%3Cpath%20d%3D%22M27.50000000000001%2C85.77114317029974%20C28.01200000000001%2C88.45914317029974%2028.01200000000001%2C88.45914317029974%2030.70000000000001%2C88.97114317029974%20C28.01200000000001%2C89.48314317029974%2028.01200000000001%2C89.48314317029974%2027.50000000000001%2C92.17114317029974%20C26.98800000000001%2C89.48314317029974%2026.98800000000001%2C89.48314317029974%2024.30000000000001%2C88.97114317029974%20C26.98800000000001%2C88.45914317029974%2026.98800000000001%2C88.45914317029974%2027.50000000000001%2C85.77114317029974%20Z%22%20fill%3D%22url%28%23mg%29%22%2F%3E%3Cpath%20d%3D%22M13.351987789349579%2C58.73878558970109%20C14.08798778934958%2C62.60278558970109%2014.08798778934958%2C62.60278558970109%2017.95198778934958%2C63.33878558970109%20C14.08798778934958%2C64.0747855897011%2014.08798778934958%2C64.0747855897011%2013.351987789349579%2C67.93878558970108%20C12.615987789349578%2C64.0747855897011%2012.615987789349578%2C64.0747855897011%208.75198778934958%2C63.33878558970109%20C12.615987789349578%2C62.60278558970109%2012.615987789349578%2C62.60278558970109%2013.351987789349579%2C58.73878558970109%20Z%22%20fill%3D%22url%28%23mg%29%22%2F%3E%3Cpath%20d%3D%22M7.7138320646341185%2C31.40909355034491%20C8.225832064634119%2C34.09709355034491%208.225832064634119%2C34.09709355034491%2010.913832064634118%2C34.60909355034491%20C8.225832064634119%2C35.12109355034491%208.225832064634119%2C35.12109355034491%207.7138320646341185%2C37.80909355034491%20C7.201832064634118%2C35.12109355034491%207.201832064634118%2C35.12109355034491%204.513832064634118%2C34.60909355034491%20C7.201832064634118%2C34.09709355034491%207.201832064634118%2C34.09709355034491%207.7138320646341185%2C31.40909355034491%20Z%22%20fill%3D%22url%28%23mg%29%22%2F%3E%3Cpath%20d%3D%22M30.499999999999982%2C11.625009252406906%20C31.235999999999983%2C15.489009252406905%2031.235999999999983%2C15.489009252406905%2035.09999999999998%2C16.225009252406906%20C31.235999999999983%2C16.961009252406907%2031.235999999999983%2C16.961009252406907%2030.499999999999982%2C20.825009252406907%20C29.76399999999998%2C16.961009252406907%2029.76399999999998%2C16.961009252406907%2025.899999999999984%2C16.225009252406906%20C29.76399999999998%2C15.489009252406905%2029.76399999999998%2C15.489009252406905%2030.499999999999982%2C11.625009252406906%20Z%22%20fill%3D%22url%28%23mg%29%22%2F%3E%3Cpath%20d%3D%22M57.81416799501185%2C2.483651114450633%20C58.32616799501185%2C5.171651114450633%2058.32616799501185%2C5.171651114450633%2061.01416799501185%2C5.683651114450633%20C58.32616799501185%2C6.195651114450634%2058.32616799501185%2C6.195651114450634%2057.81416799501185%2C8.883651114450632%20C57.30216799501185%2C6.195651114450634%2057.30216799501185%2C6.195651114450634%2054.61416799501185%2C5.683651114450633%20C57.30216799501185%2C5.171651114450633%2057.30216799501185%2C5.171651114450633%2057.81416799501185%2C2.483651114450633%20Z%22%20fill%3D%22url%28%23mg%29%22%2F%3E%3Cpath%20d%3D%22M79.87573328164014%2C20.331283222224954%20C80.61173328164014%2C24.195283222224955%2080.61173328164014%2C24.195283222224955%2084.47573328164013%2C24.931283222224955%20C80.61173328164014%2C25.667283222224956%2080.61173328164014%2C25.667283222224956%2079.87573328164014%2C29.531283222224957%20C79.13973328164013%2C25.667283222224956%2079.13973328164013%2C25.667283222224956%2075.27573328164014%2C24.931283222224955%20C79.13973328164013%2C24.195283222224955%2079.13973328164013%2C24.195283222224955%2079.87573328164014%2C20.331283222224954%20Z%22%20fill%3D%22url%28%23mg%29%22%2F%3E%3C%2Fsvg%3E") center/100% 100% no-repeat;
+  filter: drop-shadow(0 0 4px rgba(170, 90, 255, .8));
+  animation: lcSfMagieR35 5.5s linear infinite;
+}
+@keyframes lcSfMagieR35 {
+  0%   { transform: translateX(-50%) scale(1.62) rotate(0deg); }
+  50%  { transform: translateX(-50%) scale(1.74) rotate(180deg); }
+  100% { transform: translateX(-50%) scale(1.62) rotate(360deg); }
+}
+
+/* --- REGENBOGEN: ein Farbring AUSSEN um das Bild ------------------- */
+.lc-platz-spricht[data-sprechbild="regenbogen"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="regenbogen"] .lc-kreis::before { display: none !important; }
+.lc-platz-spricht[data-sprechbild="regenbogen"]::after {
+  background: conic-gradient(#ff5a5a, #ffb347, #ffe66d, #7ddf64,
+                             #5ac8fa, #7a6bff, #d66bff, #ff5a5a);
+  /* XANDER: „Der Regenbogen kann schöner sein weil er soll auch
+     EXTRUDIEREN und er ist mir zu sehr innen." Bei Faktor 1.5 liegt
+     der Bildrand bei 67 % des Radius — das Band beginnt erst bei
+     70 % und liegt damit vollständig draußen. */
+  /* „circle" allein misst bis zur ECKE (farthest-corner): 71 % davon
+     sind schon 50 % der Breite, also genau der Rand — dort blieb nur
+     ein haarduenner Strich uebrig. Mit „closest-side" zaehlt die
+     halbe Breite, dann liegt das Band wirklich dort, wo es soll. */
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 69%, #000 73% 96%, transparent 100%);
+  mask: radial-gradient(circle closest-side, transparent 0 69%, #000 73% 96%, transparent 100%);
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, .35)) saturate(1.25);
+  /* Drehen und Hinauswachsen muessen in EINER Animation stehen: zwei
+     getrennte Animationen auf transform ueberschreiben einander, und
+     die Einzel-Eigenschaft „rotate" dreht die schon verschobene
+     Schicht um ihren Kasten — dann eiert der Ring aus dem Bild. */
+  animation: lcSfRegenbogenR35 4.8s ease-in-out infinite;
+}
+@keyframes lcSfRegenbogenR35 {
+  0%   { transform: translateX(-50%) scale(1.42) rotate(0deg);   opacity: .88; }
+  25%  { transform: translateX(-50%) scale(1.6)  rotate(90deg);  opacity: 1; }
+  50%  { transform: translateX(-50%) scale(1.42) rotate(180deg); opacity: .88; }
+  75%  { transform: translateX(-50%) scale(1.6)  rotate(270deg); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1.42) rotate(360deg); opacity: .88; }
+}
+
+/* --- SCHALLWELLEN: groß und weit, wie ein Echo --------------------- */
+.lc-platz-spricht[data-sprechbild="welle"]::after {
+  border: 2px solid rgba(120, 220, 255, .85);
+  box-shadow: 0 0 .5em rgba(120, 220, 255, .5);
+  animation: lcSfWelleR35 1.6s cubic-bezier(.2, .7, .4, 1) infinite;
+}
+@keyframes lcSfWelleR35 {
+  0%   { transform: translateX(-50%) scale(1); opacity: .9; border-width: 3px; }
+  100% { transform: translateX(-50%) scale(2.1); opacity: 0; border-width: 1px; }
+}
+
+/* --- STROM: ganz feine Verästelungen bis zum Rand ------------------ */
+.lc-platz-spricht[data-sprechbild="strom"]::after {
+  background: repeating-conic-gradient(
+    rgba(150, 225, 255, 0) 0deg 3.1deg,
+    rgba(180, 235, 255, .95) 3.1deg 3.5deg,
+    rgba(150, 225, 255, 0) 3.5deg 7deg);
+  /* XANDER: „solche ganz feinen Verästelungen … die haben wirklich die
+     Leitung gesucht nach außen … bis zum Rand sind die gelaufen."
+     Mit „closest-side" gemessen beginnt das Geflecht knapp hinter dem
+     Bildrand (bei Faktor 1.55 liegt der bei 65 %) und laeuft nach
+     draussen aus — vorher lag alles komplett unter dem Bild. */
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 60%, #000 67%, rgba(0,0,0,.35) 90%, transparent 100%);
+  mask: radial-gradient(circle closest-side, transparent 0 60%, #000 67%, rgba(0,0,0,.35) 90%, transparent 100%);
+  filter: blur(.3px);
+  animation: lcSfStromR35 .42s steps(3, end) infinite;
+}
+@keyframes lcSfStromR35 {
+  0%   { transform: translateX(-50%) scale(1.55) rotate(0deg); opacity: .95; }
+  33%  { transform: translateX(-50%) scale(1.62) rotate(11deg); opacity: .6; }
+  66%  { transform: translateX(-50%) scale(1.58) rotate(-7deg); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1.55) rotate(4deg); opacity: .8; }
+}
+
+/* --- HERZSCHLAG: rot, und im Takt eines Herzens -------------------- */
+/* GEMELDET: „Der Herzschlag kann realistischer sein … und dann auch
+   passend zum Herzschlag, die Farbe rot und nicht grün. Das macht
+   überhaupt keinen Sinn, und das pulsiert viel zu wackelig und nicht
+   wie ein Herzschlag pulsiert."
+   Ein Herz schlägt zweimal kurz („lub-dub") und ruht dann. */
+.lc-platz-spricht[data-sprechbild="puls"] .lc-kreis {
+  border-color: #ff4d5e !important;
+  animation: lcSfPulsR35 1.15s cubic-bezier(.3, 0, .2, 1) infinite !important;
+}
+@keyframes lcSfPulsR35 {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(255, 77, 94, .55); }
+  12%  { transform: scale(1.09); box-shadow: 0 0 0 5px rgba(255, 77, 94, .28); }
+  22%  { transform: scale(1.01); box-shadow: 0 0 0 7px rgba(255, 77, 94, .12); }
+  34%  { transform: scale(1.06); box-shadow: 0 0 0 9px rgba(255, 77, 94, .1); }
+  48%  { transform: scale(1);    box-shadow: 0 0 0 12px rgba(255, 77, 94, 0); }
+  100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(255, 77, 94, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lc-platz-spricht::after { animation: none !important; }
+}
+
+/* =================================================================
+   ZORRO — DREI HIEBE, EIN Z
+   -----------------------------------------------------------------
+   XANDER: „Vielleicht kannst du auch noch so ne Animation für so ne
+   Zorro Schlitzen machen."
+
+   Drei Schnitte in der Reihenfolge, in der Zorro sein Z zieht: oben
+   quer, die Schräge von rechts oben nach links unten, unten quer.
+   Jeder wischt von links nach rechts auf (transform-origin: left),
+   blitzt hell auf wie die Klinge und bleibt dann als dunkler Schnitt
+   mit hellem Rand stehen. Die Klinge selbst fegt darüber hinweg und
+   darf über den Bildrand hinausragen — sie liegt deshalb NICHT in
+   der Blende (die wird rund beschnitten), sondern in der Schicht.
+   ================================================================= */
+.lc-zorro-schnitt {
+  position: absolute;
+  left: 8%;
+  width: 84%;
+  height: 5.5%;
+  border-radius: 3px;
+  transform-origin: left center;
+  background: linear-gradient(to bottom,
+    rgba(255, 255, 255, .95) 0 28%,
+    rgba(40, 18, 24, .92) 28% 72%,
+    rgba(255, 255, 255, .55) 72% 100%);
+  box-shadow: 0 0 6px rgba(255, 255, 255, .8);
+  opacity: 0;
+  animation-duration: 2.6s;
+  animation-timing-function: cubic-bezier(.1, .9, .3, 1);
+  animation-fill-mode: both;
+}
+.lc-zorro-s1 { top: 25%; transform: rotate(-4deg) scaleX(0); animation-delay: 0s; }
+/* Die Schraege eines Z laeuft von RECHTS OBEN nach LINKS UNTEN. Sie
+   haengt deshalb an ihrem rechten Ende und waechst nach links unten —
+   mit dem linken Ende als Anker liefe sie andersherum und es stuende
+   ein S im Bild. */
+.lc-zorro-s2 { top: 28%; left: 6%; width: 88%; animation-delay: .34s;
+               transform-origin: right center;
+               transform: rotate(-31deg) scaleX(0); }
+.lc-zorro-s3 { top: 70%; transform: rotate(-4deg) scaleX(0); animation-delay: .68s; }
+/* Jeder Schnitt braucht eigene Schlüsselbilder: Drehung und Breite
+   stehen beide im transform, und zwei Animationen auf derselben
+   Eigenschaft überschreiben einander — der Winkel muss also in jedem
+   Schlüsselbild mitgeschrieben werden. */
+.lc-zorro-s1 { animation-name: lcZorroS1; }
+.lc-zorro-s2 { animation-name: lcZorroS2; }
+.lc-zorro-s3 { animation-name: lcZorroS3; }
+@keyframes lcZorroS1 {
+  0%   { opacity: 0; transform: rotate(-4deg) scaleX(0); }
+  1%   { opacity: 1; }
+  7%   { opacity: 1; transform: rotate(-4deg) scaleX(1); }
+  80%  { opacity: .9;  transform: rotate(-4deg) scaleX(1); }
+  100% { opacity: 0;   transform: rotate(-4deg) scaleX(1); }
+}
+@keyframes lcZorroS2 {
+  0%   { opacity: 0; transform: rotate(-31deg) scaleX(0); }
+  1%   { opacity: 1; }
+  7%   { opacity: 1; transform: rotate(-31deg) scaleX(1); }
+  80%  { opacity: .9;  transform: rotate(-31deg) scaleX(1); }
+  100% { opacity: 0;   transform: rotate(-31deg) scaleX(1); }
+}
+@keyframes lcZorroS3 {
+  0%   { opacity: 0; transform: rotate(-4deg) scaleX(0); }
+  1%   { opacity: 1; }
+  7%   { opacity: 1; transform: rotate(-4deg) scaleX(1); }
+  80%  { opacity: .9;  transform: rotate(-4deg) scaleX(1); }
+  100% { opacity: 0;   transform: rotate(-4deg) scaleX(1); }
+}
+
+/* Die Klinge fegt dreimal durch — einmal je Hieb. */
+.lc-zorro-degen {
+  position: absolute;
+  left: -28%;
+  top: 22%;
+  width: 156%;
+  height: auto;
+  pointer-events: none;
+  z-index: 4;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .5));
+  animation: lcZorroDegen 2.6s linear both;
+}
+@keyframes lcZorroDegen {
+  0%   { opacity: 0; transform: translateX(-70%) rotate(-4deg); }
+  2%   { opacity: 1; }
+  9%   { opacity: 1; transform: translateX(30%) rotate(-4deg); }
+  11%  { opacity: 0; transform: translateX(30%) rotate(-4deg); }
+  13%  { opacity: 0; transform: translateX(-70%) rotate(-31deg) translateY(-90%); }
+  15%  { opacity: 1; }
+  22%  { opacity: 1; transform: translateX(30%) rotate(-31deg) translateY(-90%); }
+  24%  { opacity: 0; transform: translateX(30%) rotate(-31deg) translateY(-90%); }
+  26%  { opacity: 0; transform: translateX(-70%) rotate(-4deg) translateY(190%); }
+  28%  { opacity: 1; }
+  35%  { opacity: 1; transform: translateX(30%) rotate(-4deg) translateY(190%); }
+  38%, 100% { opacity: 0; transform: translateX(30%) rotate(-4deg) translateY(190%); }
+}
+
+/* Das Bild zuckt bei jedem Hieb — dreimal, dann steht es wieder. */
+.lc-geschlitzt { animation: lcGeschlitzt 2.6s ease-out both; }
+@keyframes lcGeschlitzt {
+  0%, 4%   { transform: translateX(0) rotate(0deg); }
+  8%       { transform: translateX(3%) rotate(2deg); }
+  12%      { transform: translateX(-1.5%) rotate(-1deg); }
+  17%, 20% { transform: translateX(0) rotate(0deg); }
+  24%      { transform: translateX(-3%) rotate(-2deg); }
+  28%      { transform: translateX(1.5%) rotate(1deg); }
+  33%, 36% { transform: translateX(0) rotate(0deg); }
+  40%      { transform: translateX(3%) rotate(2deg); }
+  44%      { transform: translateX(-1.5%) rotate(-1deg); }
+  50%, 100%{ transform: translateX(0) rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-zorro-degen, .lc-geschlitzt { animation: none; }
+}
+
+/* =================================================================
+   DIE GRÜNE RÖHRE — WIE BEI SUPER MARIO
+   -----------------------------------------------------------------
+   XANDER: „An der Stelle kannst du auch noch wie bei Super Mario
+   früher diese Rohre machen, wo man sich so reinsetzt und dann
+   irgendwo anders wieder rauskommt, mit diesem typischen Geräusch."
+
+   Zwei Röhren: die erste fährt am Startplatz hoch, das Bild rutscht
+   hinein; die zweite fährt am Zielplatz hoch, das Bild kommt heraus.
+   Der Rand ist breiter als das Rohr — das ist die Form, an der man
+   eine Mario-Röhre erkennt.
+   ================================================================= */
+.lc-roehre {
+  position: absolute;
+  width: var(--gross, 64px);
+  height: calc(var(--gross, 64px) * .72);
+  transform: translate(-50%, -50%) scaleY(0);
+  transform-origin: bottom center;
+  pointer-events: none;
+  z-index: 4;
+  animation: lcRoehreHoch 1.6s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+.lc-roehre-rand {
+  position: absolute;
+  left: -6%;
+  top: 0;
+  width: 112%;
+  height: 34%;
+  border-radius: 6px;
+  background: linear-gradient(to right,
+    #1f7a1f 0 12%, #5ed45e 12% 26%, #33ad33 26% 62%, #1d6f1d 62% 88%, #145214 88% 100%);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .35), 0 1px 2px rgba(0, 0, 0, .4);
+}
+.lc-roehre-rohr {
+  position: absolute;
+  left: 8%;
+  top: 30%;
+  width: 84%;
+  height: 70%;
+  background: linear-gradient(to right,
+    #1a6b1a 0 12%, #56c956 12% 26%, #2fa22f 26% 62%, #196119 62% 88%, #114711 88% 100%);
+}
+@keyframes lcRoehreHoch {
+  0%   { transform: translate(-50%, -50%) scaleY(0); }
+  55%  { transform: translate(-50%, -50%) scaleY(1.06); }
+  70%  { transform: translate(-50%, -50%) scaleY(1); }
+  88%  { transform: translate(-50%, -50%) scaleY(1); }
+  100% { transform: translate(-50%, -50%) scaleY(0); }
+}
+/* Die Röhre am Start bleibt stehen, solange man einsteigt; die am
+   Ziel kommt erst kurz vor der Ankunft hoch (Verzögerung aus dem
+   JavaScript). */
+.lc-roehre-rein { animation-duration: 1.5s; }
+.lc-roehre-raus { animation-duration: 1.6s; }
+
+/* --- DAS GRABLOCH IM EIGENEN BILD --------------------------------
+   XANDER: „Der Maulwurf verschwindet nicht in seinem eigenen Loch.
+   Man soll sich durch sein eigenes Profilbild graben."
+   Also liegt das Loch da, wo das Bild steht — und das Bild sackt
+   hinein statt in der Luft zu schrumpfen. */
+.lc-grabloch {
+  position: absolute;
+  width: calc(var(--gross, 64px) * .86);
+  height: calc(var(--gross, 64px) * .34);
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+  background: radial-gradient(ellipse at 50% 42%,
+    #1b1206 0 48%, #3a2a12 62%, #5a4420 78%, rgba(90, 68, 32, 0) 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, .45);
+  animation: lcGrablochAuf 2.7s ease-in-out both;
+}
+@keyframes lcGrablochAuf {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  8%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  80%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-roehre, .lc-grabloch { animation: none; opacity: 0; }
+}

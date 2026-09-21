@@ -954,8 +954,14 @@ window.LiveChat = (function () {
     liane:    { wirkung: "liane",    satz: "schwingt sich hin\u00fcber zu", emoji: "\ud83c\udf3f" },
     feder:    { wirkung: "feder",    satz: "federt hin\u00fcber zu", emoji: "\ud83e\ude80" },
     beamen:   { wirkung: "beamen",   satz: "beamt sich zu", emoji: "\u2728" },
+    /* XANDER: „wie bei Super Mario frueher diese Rohre … wo man sich
+       so reinsetzt und dann irgendwo anders wieder rauskommt." */
+    rohr:     { wirkung: "rohr",     satz: "rutscht durch die R\u00f6hre zu", emoji: "\ud83d\udfe2" },
     /* GEWUENSCHT: „die Feuerreanimation am Rand des Profil rahmen." */
     brennen:  { wirkung: "brennen",  satz: "setzt den Rahmen in Brand bei", emoji: "\ud83d\udd25" },
+    /* XANDER: „Vielleicht kannst du auch noch so ne Animation fuer so
+       ne Zorro Schlitzen machen." */
+    zorro:    { wirkung: "zorro",    satz: "schlitzt ein Z ins Bild von", emoji: "\u2694\ufe0f" },
     huepfen:  { wirkung: "spielzug",   satz: "h\u00fcpft Platz f\u00fcr Platz zu", emoji: "\ud83c\udfb2" },
     /* GEWUENSCHT: „das Laufen von Nummer zu Nummer bis ans Ziel, wo
        man hin moechte … diese Springen-Animation wie auf dem
@@ -8762,6 +8768,8 @@ window.LiveChat = (function () {
       was: "Sprungfeder \u2014 du federst zu Platz 5" },
     { gr: "reden", w: "beamen", kurz: "beam", nutzt: "/beamen 5",
       was: "Beamen \u2014 du loest dich auf und erscheinst auf Platz 5 wieder" },
+    { gr: "reden", w: "rohr", kurz: "roehre", nutzt: "/rohr 5",
+      was: "Wie bei Super Mario \u2014 rein in die gr\u00fcne R\u00f6hre, drueben wieder raus" },
     { gr: "reden", w: "gemeinsam", kurz: "zuzweit", nutzt: "/gemeinsam Name",
       was: "zu zweit losfahren \u2014 sein Bild h\u00e4ngt sich an deins und ihr rollt zusammen weg" },
     { gr: "reden", w: "laufen",  kurz: "",      nutzt: "/laufen 8",           was: "Feld f\u00fcr Feld zu Platz 8 laufen \u2014 geht auch mit /fahren 8" },
@@ -8769,6 +8777,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "katapult", kurz: "kata", nutzt: "/katapult Name",   was: "Katapult — der andere wird weggeschleudert" },
     { gr: "reden", w: "brennen", kurz: "flammen", nutzt: "/brennen Name",
       was: "Der Rahmen brennt \u2014 Flammen zuengeln am Rand des Profilbildes hoch" },
+    { gr: "reden", w: "zorro", kurz: "schlitzen", nutzt: "/zorro Name",
+      was: "Zorro \u2014 drei Hiebe schlitzen ein Z ins Profilbild" },
     { gr: "reden", w: "strohhalm", kurz: "halm", nutzt: "/strohhalm Name", was: "Strohhalm — der andere wird angesaugt" },
     { gr: "reden", w: "blubbern", kurz: "pusten", nutzt: "/blubbern Name", was: "Blubbern — in den Halm gepustet, das Bild blubbert" },
     { gr: "reden", w: "knuellen", kurz: "knuell", nutzt: "/knuellen Name", was: "Zerknüllen — das Bild knittert wie Papier und glaettet sich wieder" },
@@ -10554,7 +10564,7 @@ window.LiveChat = (function () {
     if ((art === "flug" || art === "maulwurf" || art === "portal"
          || art === "boot" || art === "kran" || art === "dampfer"
          || art === "lok" || art === "liane" || art === "feder"
-         || art === "beamen")
+         || art === "beamen" || art === "rohr")
         && /^\s*\d+\s*$/.test(rest)) {
       var satzR = { flug: [" fliegt zu Platz ", "\u2708\ufe0f"],
                     maulwurf: [" gr\u00e4bt sich zu Platz ", "\ud83e\udda1"],
@@ -10565,7 +10575,8 @@ window.LiveChat = (function () {
                     lok: [" dampft zu Platz ", "\ud83d\ude82"],
                     liane: [" schwingt sich zu Platz ", "\ud83c\udf3f"],
                     feder: [" federt zu Platz ", "\ud83e\ude80"],
-                    beamen: [" beamt sich zu Platz ", "\u2728"] }[art];
+                    beamen: [" beamt sich zu Platz ", "\u2728"],
+                    rohr: [" rutscht durch die R\u00f6hre zu Platz ", "\ud83d\udfe2"] }[art];
       return anAlle("aktion", zustand.ichName + satzR[0] + rest.trim() + "  " + satzR[1],
                     { wirkung: art, wen: rest.trim() });
     }
