@@ -121,10 +121,20 @@ pruefe("sie setzt langsamer ab, als sie anhebt",
   && /handBei\(1, 1, hochH \* 0\.10, -1, 0\.97 \* tAnH, 1\)/.test(js));
 pruefe("und das Bild haengt der Hand nach",
   /lastBei\(0\.10, 0\.10, hochH \* 1\.02, -6, 0\.46 \* tAnH, 1\)/.test(js));
+/* RUNDE 77 NACHGEFUEHRT — XANDER: „das Herauszupfgeraeusch
+   realistischer sein und das Aufsatzgeraeusch auch realistischer."
+   Bis dahin standen hier zwei geliehene Toene: „birneplopp" (eine
+   Gluehbirne aus der Fassung — trocken, Glas in Metall) und „bonk"
+   (ein Comic-Schlag ohne Nachlauf). Jetzt zwei eigene:
+   „zupfraus" (1,00 s; gemessen Dehnen 0 bis 0,24 s, Schnalzer bei
+   0,25 s, Spitze -2,7 dB) und „aufsetzen" (0,60 s; gemessen Aufsatz
+   bei 0,087 s, Spitze -3,0 dB, Mittel -24,3 dB).
+   Die Frisbee behaelt „bonk": eine gefangene Scheibe klatscht. */
 pruefe("es ploppt beim Zupfen und setzt hoerbar auf",
-  ton("birneplopp") && gelistet("birneplopp")
-  && /lcTonSpaeter\("birneplopp", Math\.round\(hin \* 0\.29\), 0\.75\)/.test(js)
-  && /gotteshand: "bonk", pranke: "bonk", frisbee: "bonk"/.test(js));
+  ton("zupfraus") && gelistet("zupfraus")
+  && ton("aufsetzen") && gelistet("aufsetzen")
+  && /lcTonSpaeter\("zupfraus", Math\.round\(hin \* 0\.29\), 0\.8\)/.test(js)
+  && /gotteshand: "aufsetzen", pranke: "aufsetzen", frisbee: "bonk"/.test(js));
 
 console.log("\nDIE FRISBEE\n");
 pruefe("es gibt den Befehl", /frisbee:  \{ wirkung: "frisbee"/.test(lc));
@@ -156,12 +166,24 @@ console.log("\nDER COWBOY-RUF\n");
    -24 -29 -46 -75 -92 -92 -57 -14 dB. Ein gleichmaessiges Rauschen
    und bei 1,4 s ein Knall — kein Ruf. Der neue ist 3,01 s lang und
    von 0,00 s an laut (-17 -19 -31 -16 -15 -15 -16 …). */
-pruefe("der Ton ist neu und laenger als zwei Sekunden",
-  ton("cowboy")
-  && fs.statSync(path.join(WURZEL, "ton", "cowboy.opus")).size > 8000,
+/* RUNDE 77 NACHGEFUEHRT — XANDER: „der Cowboy Sound kann noch ein
+   bisschen besser."
+   Die alte Regel mass die DATEIGROESSE (ueber 8000 Byte) als Beleg
+   dafuer, dass der Ton laenger als zwei Sekunden ist. Das war schon
+   damals ein Umweg, und jetzt fuehrt er in die Irre: der neue Ruf ist
+   ein einzelnes „Yee-haw" von 1,86 s (gemessen: „Yee" 0,00 bis
+   0,33 s, Atempause bis 0,48 s, „haw" bis 1,75 s) und damit 6290
+   Byte gross. Kuerzer ist hier BESSER — der alte Ton war 3,01 s,
+   und in der zweiten Haelfte passierte nichts mehr.
+   Gemessen wird deshalb jetzt, was die Regel eigentlich meinte:
+   dass es den Ton gibt, dass er in der Liste steht, und dass die
+   Animation zu seiner Laenge passt (3000 ms). */
+pruefe("der Cowboy-Ruf ist da und die Animation passt zu seiner Laenge",
+  ton("cowboy") && gelistet("cowboy")
+  && /hut:            \{ ton: "cowboy",    dauer: 3000/.test(js),
   fs.statSync(path.join(WURZEL, "ton", "cowboy.opus")).size + " Byte");
 pruefe("er faengt am Anfang der Animation an, nicht auf dem Aufschlag",
-  /hut: 120,/.test(js) && /hut:            \{ ton: "cowboy",    dauer: 4200/.test(js));
+  /hut: 120,/.test(js) && /hut:            \{ ton: "cowboy",    dauer: 3000/.test(js));
 /* RUNDE 76 — XANDER: „Die Hand soll vorher gar nicht zu sehen sein"
    und „sie soll nach den Geraeuschen kommen". Der Ton ist bei
    3130 ms zu Ende, die Hand kommt bei 79 % von 4,2 s = 3318 ms. */
@@ -229,8 +251,15 @@ console.log("\nDAS FEUER\n");
    bei einem Bildradius von 42,00 px. */
 pruefe("das Sprechfeld sitzt konzentrisch auf dem Bild",
   /top: 0;\n  margin-top: -22%;/.test(cssOhne));
+/* RUNDE 77 NACHGEFUEHRT — XANDER: „Kannst du da noch versuchen,
+   dass die Flammen vielleicht noch ein bisschen weiter runter sind?"
+   Der Bildrand liegt bei 34,73 % vom Mittelpunkt. Das Band stand auf
+   34,0 bis 35,6 % — Mitte 34,8 %, also genau auf dem Reifen. Jetzt
+   33,2 bis 34,8 %, Mitte 34,0 %: das sind 0,73 Prozentpunkte
+   INNERHALB des Randes, knapp 0,9 px. Die Fuesse sitzen damit
+   im Bild und die Flamme steht auf dem Reifen, statt daneben. */
 pruefe("und die Flammen stehen auf dem Ring",
-  /band: \[34\.0, 35\.6\]/.test(js));
+  /band: \[33\.2, 34\.8\]/.test(js));
 /* Erst wurden die Funken kleiner gemacht — sie blieben trotzdem als
    weiche Punkte NEBEN dem Reifen stehen. Die Maske liess ein Band von
    40 bis 59 px stehen, der Bildradius ist aber 42 px. Also ganz weg. */

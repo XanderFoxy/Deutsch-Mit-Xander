@@ -229,11 +229,16 @@ pruefe("und er ruckelt nicht mehr — keine Kurve ueber die ganze Animation",
    20,5 % — dieselben 575 ms. */
 /* RUNDE 76 — 4,2 s statt 3,4 s, damit die Hand NACH dem Ton kommt
    (XANDER: „die Hand … soll nach den Geraeuschen kommen"). Der
-   Aufschlag liegt damit bei 13,7 % — dieselben 575 ms. */
+   Aufschlag liegt damit bei 13,7 % — dieselben 575 ms.
+   RUNDE 77 — jetzt 3 s, weil der neue Cowboy-Ruf 1,86 s dauert statt
+   3,13 s. Die 13,7 % bleiben stehen: sie sind jetzt 411 ms statt
+   575 ms. Das ist richtig so, denn der Hut faellt gegen den Ruf, und
+   der Ruf faengt frueher an zu tragen — bei 0,33 s ist das erste
+   „Yee" schon vorbei. */
 pruefe("der Hut setzt auf, wenn man ihn aufsetzen hoert",
-  /animation: lcHutR76 4\.2s linear both;/.test(css)
+  /animation: lcHutR76 3s linear both;/.test(css)
   && /13\.7% \{ transform: translateY\(0\)/.test(css)
-  && /hut:            \{ ton: "cowboy",    dauer: 4200/.test(js));
+  && /hut:            \{ ton: "cowboy",    dauer: 3000/.test(js));
 /* RUNDE 75 — XANDER: „die Hand, die ihn zurechtrueckt, das soll am
    Schluss kommen." Sie kommt jetzt bei 72 % und zieht bei 81 %; vorher
    war sie bei 26 % da und bei 54 % schon wieder weg. */

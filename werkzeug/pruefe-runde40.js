@@ -190,8 +190,24 @@ const pruefe = (was, gut, zusatz) => {
   const teile = String(sb.spinne.wiederholung).split(",").map((x) => x.trim());
   pruefe("Spinne: der Abstieg laeuft genau einmal",
     teile[0] === "1", teile.join(" / ") + " — " + sb.spinne.dauer);
+  /* RUNDE 77 NACHGEFUEHRT — jetzt sind es DREI Animationen, nicht
+     zwei. XANDER: „bei der Spinnwebe macht die Spinne auch keine
+     Sache, die ich beschrieben habe, dass sie runtergeht und dann
+     uebers Netz krabbelt. Das sehe ich jetzt hier noch nicht."
+     Der Grund war die Dauer: das Abseilen lief 26 SEKUNDEN, das
+     Krabbeln fing erst danach an — wer zwei Saetze sagt, sieht es
+     nie. Jetzt haengt sie nach 2,8 s an der Nabe.
+     Sein aelterer Wunsch („je laenger ich am Stueck spreche, desto
+     tiefer") bleibt trotzdem: dafuer sinkt sie ueber 30 s zusaetzlich
+     auf der Eigenschaft „top". Das ist die dritte Animation, und sie
+     laeuft genau einmal. Zwei Animationen auf VERSCHIEDENEN
+     Eigenschaften stoeren einander nicht — auf derselben haette die
+     spaetere die fruehere verdraengt.
+     Gemessen wird also: der Abstieg einmal, das Krabbeln ohne Ende,
+     das Absinken einmal. */
   pruefe("Spinne: danach krabbelt sie weiter, ohne Ende",
-    teile.length === 2 && teile[1] === "infinite", teile.join(" / "));
+    teile.length === 3 && teile[1] === "infinite" && teile[2] === "1",
+    teile.join(" / "));
   /* UND HIER STAND DIE ZWEITE SELBSTGEMACHTE REGEL. Sie beschrieb
      die Fassung, die ich in Runde 41 gebaut hatte — nicht die, die
      er wollte. XANDER, danach, woertlich: „Du hast die Stoerung

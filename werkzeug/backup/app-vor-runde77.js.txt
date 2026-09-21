@@ -24739,20 +24739,7 @@
        (gemessen -17 -19 -31 -16 -15 -15 -16 -22 …, lautester Punkt
        schon bei 0,3 s), danach von 1,9 bis 2,9 s der Peitschenknall.
        Laenge 3,01 s, deshalb dauert die Animation jetzt 3400 ms. */
-    /* RUNDE 77 — XANDER: „der Cowboy Sound kann noch ein bisschen
-       besser." Der neue Schrei ist ein einzelnes „Yee-haw" und
-       dauert 1,86 s statt 3,13 s (gemessen: „Yee" 0,00 bis 0,33 s,
-       die Atempause 0,33 bis 0,48 s, „haw" 0,48 bis 1,75 s).
-       Damit muss die ganze Choreografie mit: in Runde 76 kam die
-       Hand bei 79 % von 4,2 s, also bei 3318 ms — das war „nach den
-       Geraeuschen", weil der alte Ton bis 3130 ms lief. Bei 4,2 s
-       laege jetzt zwischen Schrei und Hand 1,46 s tote Zeit.
-       3000 ms statt 4200: die Hand kommt bei denselben 79 % nun bei
-       2370 ms, also 510 ms nach dem Schrei. Die Regel „die Hand
-       kommt nach den Geraeuschen" gilt weiter, nur ohne die Luecke.
-       Die Schluesselbilder in korrekturen.css stehen in Prozent und
-       rechnen sich damit von selbst um. */
-    hut:            { ton: "cowboy",    dauer: 3000, laut: 0.6 },
+    hut:            { ton: "cowboy",    dauer: 4200, laut: 0.6 },
     /* RUNDE 75 — die Sonnenbrille. Kein neuer Ton noetig: „swoosh"
        (1,01 s) ist das Wischen, mit dem sie aufs Gesicht rutscht,
        und das „bling" setzt den Glanz auf das Glas — es kommt
@@ -25033,9 +25020,6 @@
     schlitten: 1.62,        /* -25.2 dB mittel, Spitze -9.3 dB */
     schloss: 1.17,          /* -22.4 dB mittel, Spitze -5.9 dB */
     schlurf: 1.60,          /* -25.1 dB mittel, Spitze -7.5 dB */
-    /* RUNDE 77 — neu gebaut, hier die gemessenen Werte. */
-    aufsetzen: 1.46,        /* -24.3 dB mittel, Spitze -3.0 dB */
-    zupfraus: 0.72,         /* -16.3 dB mittel, Spitze -2.7 dB */
     schmetterling: 0.44,    /* -13.9 dB mittel, Spitze -0.9 dB */
     schnee: 3.16,           /* -59.0 dB mittel, Spitze -46.8 dB */
     schrei: 0.42,           /* -13.4 dB mittel, Spitze -3.8 dB */
@@ -27005,22 +26989,18 @@
      ["\u2728", "Beamen", "beamen"],
      ["\ud83d\udfe2", "R\u00f6hre", "rohr"],
      ["\ud83d\ude81", "Helikopter", "heli"],
-     /* RUNDE 75 — die vier neuen Reisen.
-        RUNDE 77 — XANDER: „das mit der Hand und der Gorilla Hand,
-        das kann unter einem Menue sein."
-        Also EINE Kachel „Hand", und darunter stehen die beiden zur
-        Wahl — genau wie bei der Birne und der Bombe. Die Befehle
-        /gotteshand und /pranke bleiben unveraendert. */
+     /* RUNDE 75 — die vier neuen Reisen. Die Hand gibt es zweimal:
+        „Vielleicht kann man sich die Hand auch aussuchen in der
+        Auswahl" — Gotteshand oder Gorillapranke. */
      ["\ud83d\udef8", "UFO", "untertasse"],
      ["\ud83d\udc31", "Katze", "mieze"],
-     ["\ud83e\udd1a", "Hand", "gotteshand",
-      [["\ud83e\udd1a", "Gotteshand", "gotteshand"],
-       ["\ud83e\udd8d", "Gorillapranke", "pranke"]]],
+     ["\ud83e\udd1a", "Gotteshand", "gotteshand"],
+     ["\ud83e\udd8d", "Gorillapranke", "pranke"],
      ["\ud83e\udd4f", "Frisbee", "frisbee"],
      ["\ud83d\udc0e", "Pferd", "pferd"],
      /* RUNDE 65: der Greifvogel und der Drei-Meter-Turm. */
      ["\ud83e\udd85", "Greifvogel", "greifvogel"],
-     ["\ud83c\udfca", "3-Meter-Turm", "turm"]].forEach(([zeichen, wort, befehl, unter]) => {
+     ["\ud83c\udfca", "3-Meter-Turm", "turm"]].forEach(([zeichen, wort, befehl]) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "lc-anreise-knopf";
@@ -27031,13 +27011,6 @@
       b.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        /* Traegt die Kachel eine Liste, klappt sie auf, statt zu
-           senden. lcUnterMenue haengt das zweite Wort an den Befehl —
-           hier ist das die PLATZNUMMER, nicht ein Name. */
-        if (unter && unter.length) {
-          lcUnterMenue(platz, String(nr), wort, unter);
-          return;
-        }
         lcPlatzMenueZu();
         const zeile = "/" + befehl + " " + nr;
         try { LiveChat.schreiben(zeile); } catch (err) {}
@@ -29521,15 +29494,7 @@
        gefangen wird, klatscht. Das UFO nicht — sein Strahl traegt
        die Ankunft selbst, genau wie beim Beamen. Die Katze auch
        nicht: der Ball rollt aus, er schlaegt nicht auf. */
-    /* RUNDE 77 — XANDER: „das Herauszupfgeraeusch realistischer sein
-       und das Aufsatzgeraeusch auch realistischer."
-       „bonk" ist ein Comic-Schlag: EIN harter Anschlag ohne Nachlauf.
-       Eine Hand, die etwas ABSETZT, macht aber einen weichen, dumpfen
-       Aufsatz mit einem kurzen Nachknarren. Genau das ist jetzt
-       „aufsetzen" (0,60 s, gemessen: Spitze -3,0 dB, Mittel -24,3 dB,
-       der Aufsatz selbst bei 0,087 s). Frisbee behaelt „bonk" — eine
-       gefangene Scheibe KLATSCHT wirklich. */
-    gotteshand: "aufsetzen", pranke: "aufsetzen", frisbee: "bonk"
+    gotteshand: "bonk", pranke: "bonk", frisbee: "bonk"
   };
 
   const LC_TREFFER = {
@@ -33812,41 +33777,10 @@
            Positionen". */
       const gitterM = lcPlatzGitter();
       const einheitM = lcPlatzAbstand(document.getElementById("lcPlaetze")) || (d * 1.6);
-      /* =============================================================
-         RUNDE 77 — DER WALL LIEF UNTER DEN BILDERN DURCH
-         -------------------------------------------------------------
-         XANDER: „die Erdaufschuettung geht nicht schoen mittig durch
-         alle Profilbilder durch."
-
-         GEFUNDEN, und es ist derselbe Fehler wie frueher bei der
-         Roehre und beim Hut: „start" und „ende" sind die Mitten der
-         PLATZKAESTEN (lcPlatzGitter rechnet mit dem Layout-Kasten),
-         und zu einem Platzkasten gehoert der Name UNTER dem Bild.
-         Die Kastenmitte liegt deshalb tiefer als die Bildmitte —
-         genau um lcBildVersatz. Der Wall lief also unterhalb der
-         Bilder vorbei, statt durch sie hindurch.
-         Jetzt wird der Versatz mitgefuehrt: an beiden Enden gemessen
-         und dazwischen linear ueberblendet (die Plaetze koennen
-         verschieden hohe Namen haben, dann ist auch ihr Versatz
-         verschieden). Und „dickeBei" vergleicht ebenfalls mit den
-         BILDmitten — sonst sucht es den dicken Punkt an einer
-         Stelle, an der gar kein Bild liegt.
-
-         NACHGEMESSEN auf der Pruefbuehne (Weg von Platz 2 nach
-         Platz 4, beide in derselben Reihe, Bildmitten 175|277 und
-         396|277, Bildradius 51 px). Abstand jedes Haufens von der
-         Geraden durch die beiden Bildmitten:
-           vorher:  -1,3  -17,4  -3,4  -11,7  -19,4  (Mittel -10,6)
-           nachher:  7,9   -8,4   5,6   -2,7  -10,4  (Mittel  -1,6)
-         Vorher lagen ALLE fuenf auf derselben Seite — der Wall lief
-         unter den Bildern entlang. Jetzt streuen sie um die Linie,
-         und was uebrig bleibt, ist die gewollte Unruhe („quer"). */
-      const versatzM0 = lcBildVersatz(ab.el);
-      const versatzM1 = lcBildVersatz(zu.el);
       const dickeBei = (x, y) => {
         let naeh = 1e9;
         (gitterM || []).forEach((g) => {
-          const e = Math.hypot(g.x - x, (g.y + lcBildVersatz(g.el)) - y);
+          const e = Math.hypot(g.x - x, g.y - y);
           if (e < naeh) naeh = e;
         });
         /* Direkt auf dem Platz: voller Aufschlag. Eine halbe Sitzweite
@@ -33873,9 +33807,7 @@
            Wall sonst 1,4 Bildbreiten breit und lag neben der Spur. */
         const quer = (((i * 37) % 11) - 5) * (d * 0.035);
         const hx = start.x + (ende.x - start.x) * t + quer;
-        const hy = start.y + (ende.y - start.y) * t
-                 + (versatzM0 + (versatzM1 - versatzM0) * t)
-                 + quer * 0.55;
+        const hy = start.y + (ende.y - start.y) * t + quer * 0.55;
         /* RUNDE 74 — XANDER: „keine Klumpen in verschiedener Groesse,
            die wirklich nach Erdaufschuettung aussehen."
            Bisher hatten alle Haufen genau dieselbe Groesse, nur an
@@ -35838,58 +35770,6 @@
           handBei(1, 1, -d * 4.2, 3, 1, 0)
         ], { duration: dauer, easing: "linear", fill: "both" });
 
-        /* =========================================================
-           RUNDE 77 — DIE HAND GREIFT WIRKLICH ZU
-           ---------------------------------------------------------
-           XANDER: „das greift noch nicht richtig die Hand zu, eine
-           richtige Greif-Dynamik."
-           Er hat recht: bisher fuhr die Hand als EIN starres Bild
-           herunter, packte zu und hob an — die Finger standen dabei
-           die ganze Zeit gerade ausgestreckt. Eine Hand, die etwas
-           umfasst, sieht aber anders aus: die Finger knicken am
-           Knoechel ab und legen sich VOR das Objekt. Von vorn
-           gesehen werden sie dabei kuerzer (Verkuerzung), nicht
-           laenger, und sie drehen sich leicht zur Handmitte.
-           Deshalb: transform-origin am Knoechel (oben), scaleY von
-           1 auf 0,58 und ein kleiner Winkel je Finger — aussen mehr
-           als innen, sonst sieht es aus wie ein Rechen, der
-           zuklappt. Sie schliessen sich beim Zupacken (19 bis 27 %
-           der Hinzeit), bleiben geschlossen, solange getragen wird,
-           und oeffnen sich erst beim Loslassen wieder.
-           ========================================================= */
-        const greifWinkel = [-6, -2, 3, 8];
-        const greifZu = 0.27 * tAnH;
-        const greifAuf = Math.min(0.999, tAnH + (1 - tAnH) * 0.3);
-        hand.querySelectorAll(".lc-rhand-finger").forEach((fi, k) => {
-          const w = greifWinkel[k] === undefined ? 0 : greifWinkel[k];
-          fi.animate([
-            { transform: "scaleY(1) rotate(0deg)", offset: 0 },
-            { transform: "scaleY(1) rotate(0deg)", offset: 0.19 * tAnH },
-            { transform: "scaleY(.86) rotate(" + (w * 0.4).toFixed(1) + "deg)",
-              offset: 0.23 * tAnH },
-            { transform: "scaleY(.58) rotate(" + w + "deg)", offset: greifZu },
-            { transform: "scaleY(.58) rotate(" + w + "deg)", offset: tAnH },
-            { transform: "scaleY(1) rotate(0deg)", offset: greifAuf },
-            { transform: "scaleY(1) rotate(0deg)", offset: 1 }
-          ], { duration: dauer, easing: "linear", fill: "both" });
-        });
-        /* Der Daumen kommt von der anderen Seite dagegen — ohne ihn
-           waere es kein Griff, sondern ein Haken. Er wird nicht
-           kuerzer, er dreht sich zur Handflaeche hin; NEGATIV, weil
-           seine Spitze links unten liegt und nach rechts soll. */
-        const daumen = hand.querySelector(".lc-rhand-daumen");
-        if (daumen) {
-          daumen.animate([
-            { transform: "rotate(0deg)", offset: 0 },
-            { transform: "rotate(0deg)", offset: 0.19 * tAnH },
-            { transform: "rotate(-9deg)", offset: 0.23 * tAnH },
-            { transform: "rotate(-24deg)", offset: greifZu },
-            { transform: "rotate(-24deg)", offset: tAnH },
-            { transform: "rotate(0deg)", offset: greifAuf },
-            { transform: "rotate(0deg)", offset: 1 }
-          ], { duration: dauer, easing: "linear", fill: "both" });
-        }
-
         /* DAS BILD IN DER HAND. Es haengt der Hand ein wenig
            nach — das ist die Traegheit, die er meint. */
         const lastBei = (fx, fy, hoch, dreh, zeit, sicht) => ({
@@ -35929,18 +35809,12 @@
           { opacity: 1, offset: 1 }
         ], { duration: dauer, easing: "linear", fill: "none" });
       } catch (e) {}
-      /* „so ein Plopp-Geraeusch, als wenn ich da rausgezupft wurde".
-         RUNDE 77 — XANDER: „das Herauszupfgeraeusch realistischer".
-         Bisher lag hier „birneplopp": eine Gluehbirne, die aus der
-         Fassung springt. Das ist ein TROCKENER Plopp — Glas in
-         Metall. Herausgezupft wird hier aber etwas, das festsitzt,
-         und das gibt erst ein Dehnen und dann einen saugenden
-         Schnalzer. „zupfraus" (1,00 s, gemessen: das Dehnen von
-         0,00 bis 0,24 s, der Schnalzer bei 0,25 s mit Spitze
-         -2,7 dB, danach ein nasser Nachlauf bis 0,9 s).
-         Es liegt auf dem Ruck bei 29 % der Hinzeit; das
-         Aufsatzgeraeusch am Ziel steht in LC_ANKUNFT_TON. */
-      lcTonSpaeter("zupfraus", Math.round(hin * 0.29), 0.8);
+      /* „so ein Plopp-Geraeusch, als wenn ich da rausgezupft wurde":
+         „birneplopp" ist genau das — eine Gluehbirne, die aus ihrer
+         Fassung springt (0,62 s). Es liegt auf dem Ruck bei 29 % der
+         Hinzeit. Das „Aufsatzgeraeusch" am Ziel steht in
+         LC_ANKUNFT_TON. */
+      lcTonSpaeter("birneplopp", Math.round(hin * 0.29), 0.75);
     } else if (art === "frisbee") {
       /* =============================================================
          RUNDE 75 — DIE FRISBEE
@@ -38611,39 +38485,10 @@
       + '<rect x="8" y="10" width="44" height="8" rx="3" fill="#8b93a3"/>'
       /* Das Gewinde laeuft bis y = 44 — bis an das Glas. */
       + '<rect x="13" y="17" width="34" height="27" rx="3" fill="#8b93a3"/>'
-      /* RUNDE 77 — XANDER: „Wenn sich die Birne dreht, dann sieht es
-         immer aus, als wenn sich die Glasbirne unter der Fassung
-         dreht und die Fassung nicht mit dreht."
-         Er hat recht, und der Grund ist ein Denkfehler von mir: der
-         SCHAFT mit dem Gewinde gehoert zur BIRNE, nicht zur Decke.
-         An der Decke haengt nur der dunkle Deckel oben mit seinem
-         Kragen. Der Schaft muss sich also mitdrehen.
-         Ein Zylinder sieht allerdings gleich aus, egal wie weit man
-         ihn um seine eigene Achse dreht — eine rotateY-Drehung waere
-         unsichtbar. Sichtbar wird sie nur an seiner Oberflaeche.
-         Deshalb laeuft jetzt ein Lichtband ueber den Schaft, genau
-         im Takt der drei Umdrehungen des Glases: fuenf Baender im
-         Abstand der Schaftbreite (34), damit von links immer das
-         naechste nachrueckt, wenn rechts eines verschwindet — und
-         alles auf den Schaft beschnitten. */
-      + '<defs><clipPath id="bschaft">'
-      + '<rect x="13" y="17" width="34" height="27" rx="3"/></clipPath>'
-      + '<linearGradient id="bglanz" x1="0" y1="0" x2="1" y2="0">'
-      + '<stop offset="0" stop-color="#ffffff" stop-opacity="0"/>'
-      + '<stop offset=".5" stop-color="#ffffff" stop-opacity=".75"/>'
-      + '<stop offset="1" stop-color="#ffffff" stop-opacity="0"/>'
-      + "</linearGradient></defs>"
       + '<g class="lc-birne-gewinde">'
       + '<path d="M13 21 H47 M13 28 H47 M14 35 H46 M15 42 H45" stroke="#e2e7ef"'
       + ' stroke-width="3.4" stroke-linecap="round"/>'
       + "</g>"
-      + '<g clip-path="url(#bschaft)"><g class="lc-birne-schaftlicht">'
-      + '<rect x="-98" y="17" width="12" height="27" fill="url(#bglanz)"/>'
-      + '<rect x="-64" y="17" width="12" height="27" fill="url(#bglanz)"/>'
-      + '<rect x="-30" y="17" width="12" height="27" fill="url(#bglanz)"/>'
-      + '<rect x="4" y="17" width="12" height="27" fill="url(#bglanz)"/>'
-      + '<rect x="38" y="17" width="12" height="27" fill="url(#bglanz)"/>'
-      + "</g></g>"
       /* Der Schatten, den die Fassung auf das Glas wirft: daran sieht
          das Auge, dass die beiden einander beruehren. */
       + '<rect x="13" y="39" width="34" height="5" fill="rgba(0,0,0,.28)"/>'
@@ -39013,7 +38858,7 @@
         kreis.classList.remove("lc-behutet");
         void kreis.offsetWidth;
         kreis.classList.add("lc-behutet");
-        setTimeout(() => kreis.classList.remove("lc-behutet"), 3000);
+        setTimeout(() => kreis.classList.remove("lc-behutet"), 4200);
       }
       schicht.innerHTML =
         '<svg class="lc-hut-bild" viewBox="0 0 140 76">'
@@ -39163,7 +39008,7 @@
         + '<path d="M26 22.6 C25 26 25 30 26.4 33.4 M33 21.6 C32 25.4 32 30 33.4 33.6"'
         + ' fill="none" stroke="#b98054" stroke-width="1.1" opacity=".7"/>'
         + "</svg>";
-    }, 3000, "hut");
+    }, 4200, "hut");
   }
 
   /* --- DIE ZEITBOMBE ---------------------------------------------------

@@ -97,9 +97,15 @@ pruefe("die Birne ist eine Kachel mit zwei Eintraegen",
   && /\["\\ud83d\\udd0c", "Birne raus", "birneraus"\]\]\],/.test(js));
 
 console.log("\nDER COWBOYHUT\n");
-pruefe("die Animation dauert 4,2 s — Platz fuer die Hand nach dem Ton",
-  /animation: lcHutR76 4\.2s linear both;/.test(css)
-  && /hut:            \{ ton: "cowboy",    dauer: 4200/.test(js));
+pruefe("die Animation dauert 3 s — Platz fuer die Hand nach dem Ton",
+  /animation: lcHutR76 3s linear both;/.test(css)
+  /* RUNDE 77 NACHGEFUEHRT: aus 4200 sind 3000 ms geworden.
+     XANDER: „der Cowboy Sound kann noch ein bisschen besser." Der
+     neue Schrei dauert 1,86 s statt 3,13 s. Die Regel selbst bleibt,
+     was sie war — „die Hand kommt nach den Geraeuschen" —, nur die
+     Zahl dahinter ist eine andere: 79 % von 3 s sind 2370 ms, der
+     Ton endet bei 1860 ms. */
+  && /hut:            \{ ton: "cowboy",    dauer: 3000/.test(js));
 pruefe("die Hand ist bis 76 % gar nicht zu sehen",
   /0%, 76%  \{ opacity: 0; transform: translate\(52%, -26%\)/.test(css));
 /* Die Krempe lief an beiden Seiten in einen PUNKT aus; ein Filzhut hat
