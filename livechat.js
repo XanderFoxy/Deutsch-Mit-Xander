@@ -1032,6 +1032,10 @@ window.LiveChat = (function () {
     /* RUNDE 19 — der Hut, die Zeitbombe, und zwei zum Gutsein. */
     hut:        { wirkung: "hut",        satz: "setzt einen Cowboyhut auf", emoji: "\ud83e\udd20" },
     bombe:      { wirkung: "bombe",      satz: "z\u00fcndet eine Zeitbombe bei", emoji: "\ud83d\udca3" },
+    /* XANDER: „Bei der Bombe solltest du eine digitale Version haben
+       und eine mit Zuendschnur." /bombe zaehlt Ziffern, /lunte brennt
+       eine Schnur ab — zwei Befehle, zwei Geraeusche. */
+    lunte:      { wirkung: "lunte",      satz: "z\u00fcndet eine Lunte bei", emoji: "\ud83e\udde8" },
     streicheln: { wirkung: "streicheln", satz: "streichelt", emoji: "\ud83e\udef6" },
     kuss:       { wirkung: "kuss",       satz: "gibt einen Kuss", emoji: "\ud83d\udc8b" },
     /* GEMELDET: „bei den Effekten, die man noch auswählen kann, dass
@@ -8843,6 +8847,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "entbloessung", kurz: "ups", nutzt: "/entbloessung Name", was: "Ups! \u2014 geht nur bei dem, der direkt neben dir sitzt" },
     { gr: "reden", w: "hut", kurz: "cowboy",  nutzt: "/hut Name",       was: "Cowboyhut \u2014 er faellt von oben und sitzt schief" },
     { gr: "reden", w: "bombe", kurz: "zisch", nutzt: "/bombe Name",     was: "Zeitbombe \u2014 3, 2, 1 und weg, nur Asche bleibt" },
+    { gr: "reden", w: "lunte", kurz: "schnur", nutzt: "/lunte Name",    was: "Bombe mit Z\u00fcndschnur \u2014 sie brennt ab, dann knallt es" },
     { gr: "reden", w: "streicheln", kurz: "lieb", nutzt: "/streicheln Name", was: "Streicheln \u2014 sanft, mit Herzchen" },
     { gr: "reden", w: "kuss", kurz: "bussi",  nutzt: "/kuss Name",      was: "Kuss \u2014 der Abdruck bleibt kurz stehen" },
     { gr: "raum", w: "panik", kurz: "tonneu", nutzt: "/panik",          was: "Ton zur\u00fccksetzen, wenn du jemanden doppelt h\u00f6rst" },

@@ -23973,7 +23973,10 @@
     /* „da fehlt dieses SWOOSH Geraeusch, was er macht, wenn er los
        fliegt und dann den Aufprall macht." Der Flug klingt jetzt nach
        Flug; der Aufprall kommt aus lcBumerang zum richtigen Zeitpunkt. */
-    bumerang:       { ton: "swoosh",   dauer: 3000, laut: 0.6 },
+    /* „Den Bumerang-Sound kannst du ueberarbeiten." Vorher ein
+       allgemeines Swoosh; jetzt das rhythmische Flattern eines
+       drehenden Holzbumerangs. */
+    bumerang:       { ton: "bumerang2", dauer: 3000, laut: 0.6 },
     /* „der Drill von dem Pfeil, den wir schiessen, das koennte alles
        bisschen besser sein": Sehne, Flug, Saugnapf. */
     saugpfeil:      { ton: "pfeilschuss", dauer: 3400, laut: 0.6 },
@@ -24009,7 +24012,10 @@
     /* „realistisches Sanduhrgeraeusch an der Stelle." */
     sanduhr:        { ton: "sanduhr",  dauer: 3200, laut: 0.45 },
     /* Und der Rest der Wunschliste — „lasse keinen aus". */
-    katapult:       { ton: "katapult", dauer: 2600, laut: 0.65 },
+    /* „Bei dem Katapult muss ein realistisches Katapultgeraeusch
+       kommen." Die alte Datei war eine Sekunde lang und klang nach
+       Klack; jetzt Seil, Holz, Ausloeser und Schwung. */
+    katapult:       { ton: "katapult2", dauer: 2600, laut: 0.65 },
     /* „wenn man jetzt das Getraenk austrinkt, dann koennte man ein
        Schluerfen hoeren, also schoeneres Schluerfen." */
     strohhalm:      { ton: "schlurfen", dauer: 3000, laut: 0.5 },
@@ -24042,7 +24048,17 @@
     gemeinsam:      { ton: "fahren",   dauer: 3400, laut: 0.5 },
     /* Kein eigenes Geraeusch: die Schneekugel leiht sich „schnee" —
        gemessen an data-geraeusche.js, dort liegt es. */
-    schneekugel:    { ton: "schnee",   dauer: 3200, laut: 0.45 },
+    /* XANDER: „Die Schneekugel hat noch keinen Sound ... mit
+       Schuetteln, und wenn die Schneeflocken fallen, soll
+       weihnachtliches, glissandomaessiges Rieseln kommen."
+       Die Datei „schneekugel" lag seit Runde 29 im Ordner und wurde
+       nie gespielt — der Plan zeigte auf „schnee", also auf den
+       Schneefall im Raum. Jetzt klingt sie, und weil die Animation
+       7 s dauert, laeuft das Rieseln (schnee) danach weiter (siehe
+       lcSchneekugel). */
+    /* Das Schuetteln zuerst — das Rieseln kommt danach aus
+       lcSchneekugel, weil die Animation 7 s dauert. */
+    schneekugel:    { ton: "kugelschuetteln", dauer: 2000, laut: 0.62 },
     flug:           { ton: "flugzeug", dauer: 2800, laut: 0.45 },
     maulwurf:       { ton: "maulwurf", dauer: 2400, laut: 0.5 },
     /* „dann koennte da wirklich so ein realistischer Science-Fiction
@@ -24060,7 +24076,12 @@
     /* XANDER: „An der Stelle kannst du auch noch wie bei Super Mario
        frueher diese Rohre machen … mit diesem typischen Geraeusch."
        Zwei Geraeusche, zwei Zeitpunkte: hinein und wieder heraus. */
-    rohr:           { ton: "rohrrein", dauer: 2800, laut: 0.55 },
+    /* XANDER: „Der Sound bei der Rohrreise, das war so ein
+       pulsierendes Chiptune-Geraeusch, das mit viel Hall in die Roehre
+       gesaugt hat ... Das waren so drei Impulse."
+       Genau so neu aufgenommen: drei steigende Impulse mit Hall, dann
+       der Sog. */
+    rohr:           { ton: "rohrpuls", dauer: 2800, laut: 0.6 },
     /* XANDER: „ach so, ein Helikopter kannst du noch einbauen zur
        Bewegung mit realistisch rotierenden Rotorblaettern und
        vielleicht irgendwie ein Pferd, auf dem man da hin reiten
@@ -24096,11 +24117,24 @@
        der Korb kommt am Ende (siehe lcBasketball). */
     basketball:     { ton: "dribbeln", dauer: 3000, laut: 0.5 },
     /* „Dieser Tennisball dieses typische Tennisball Aufschlaggeraeusch." */
-    tennis:         { ton: "tennisschlag", dauer: 3000, laut: 0.5 },
+    /* XANDER: „Der Tennis-Sound muss verfeinert werden. Erst wird der
+       Ball nach oben geworfen, dann hoert man diesen Luftzug, und dann
+       kommt dieser typische Schlagsound."
+       Genau so aufgenommen: Wurf, Luft, Schlag — eine Datei, ein
+       Ablauf. */
+    tennis:         { ton: "tennisaufschlag", dauer: 3000, laut: 0.58 },
     krumel:         { ton: "keks",     dauer: 3400, laut: 0.5 },
     /* Runde 18 — die Neuen leihen sich ebenfalls Geraeusche, die es
        schon gibt; welches passt, steht dabei. */
-    lichtaus:       { ton: "finsternis", dauer: 3800, laut: 0.45 }, /* das Summen beim Ausgehen */
+    /* XANDER: „Bei Licht aus hoere ich immer noch nicht dieses
+       hochklingende Geigengeraeusch, was man aus einem Gruselfilm
+       kennt ... dass man so ein bisschen Angst in der Dunkelheit
+       bekommt."
+       „horror" lag seit Runde 21 im Ordner und wurde nie gespielt.
+       Der Plan zeigte auf „finsternis" — ein Summen. Das Klacken des
+       Schalters bleibt (LC_TREFFER.lichtaus = 646 ms), die Geige
+       kommt darauf. */
+    lichtaus:       { ton: "horror", dauer: 3800, laut: 0.5 },
     /* „sie soll einfach drehen realistisch und sie soll am Boden
        landen ... dieses Traeger soll bei der Muenze unbedingt auch da
        sein." */
@@ -24136,7 +24170,16 @@
        Aufnahme faengt ohne Stille an. */
     hut:            { ton: "cowboy2",  dauer: 3400, laut: 0.5 },
     ticken:         { ton: "wecker",   dauer: 260,  laut: 0.45 },  /* ein Tick je Zahl */
-    bombe:          { ton: "schuss",   dauer: 2600, laut: 0.6 },   /* der Knall */
+    /* XANDER: „Bei der Bombe solltest du eine digitale Version haben
+       und eine mit Zuendschnur, und die sollen realistische Sounds
+       haben."
+       /bombe ist die mit der Zuendschnur — zischen, knistern, Knall.
+       Die digitale steht als eigener Eintrag darunter. */
+    /* Welche Bombe welchen Ton bekommt, entscheidet ihr BILD: /bombe
+       zaehlt Ziffern herunter — das ist die digitale. /lunte brennt
+       eine Zuendschnur ab. */
+    bombe:          { ton: "bombedigital", dauer: 4600, laut: 0.62 },
+    lunte:          { ton: "bombezunder", dauer: 4600, laut: 0.62 },
     /* „Bei dem streicheln moechte ich ein Katzen schnurren haben." */
     streicheln:     { ton: "schnurren", dauer: 3400, laut: 0.4 },
     /* „das Knutschen — da koenntest du noch einen Sound machen, da haben wir
@@ -24180,7 +24223,12 @@
     /* Die letzten, die bisher ohne Ton waren. Die Aufkleber (Herz,
        Lachen, Fluestern) behalten ihren gebauten Ton — sie sind kurz
        und ein echtes Geraeusch waere dort zu viel. */
-    strudel:        { ton: "strudel", dauer: 11000, schleife: true },
+    /* XANDER: „Die Animation vom Strudel muss unbedingt ueberarbeitet
+       werden, und der Sound soll viel geiler sein, viel realistischer
+       wie bei einem Strudel."
+       Neue Aufnahme: 5 s echtes Sogwasser, nahtlos geschnitten, damit
+       die Schleife nicht klickt. */
+    strudel:        { ton: "strudel2", dauer: 11000, schleife: true },
     schwamm:        { ton: "schwamm", dauer: 7000 },
     falten:         { ton: "falten", dauer: 6000 },
     boxen:          { ton: "boxen", dauer: 3400 , laut: 0.66 },
@@ -24223,7 +24271,10 @@
     /* „Bei dem Tritt vom Fussball. Kann auch ein realistisches Kick
        Geraeusch rein." */
     tritt:          { ton: "fussball", dauer: 1800 , laut: 0.66 },
-    eimer:          { ton: "platsch", dauer: 2600 , laut: 0.58 },
+    /* „Das Wassergeraeusch, was von dem Eimer ins Profilbild
+       geschuettet wird, koennen wir auch noch mal ueberarbeiten."
+       Jetzt: Schwappen, Klatschen auf der Haut, Nachtropfen. */
+    eimer:          { ton: "eimerwasser", dauer: 2600 , laut: 0.62 },
     /* Die uebrigen Profilbild-Animationen leihen sich, was passt:
        Regen und Gewitter haben eigene Geraeusche, Geld und Bonbons
        auch. Nur die Herzen bleiben still — ein Herz macht kein
@@ -27961,6 +28012,7 @@
     entbloessung:{ zeichen: ["\ud83d\udc59"], wie: 5, klasse: "umarmen" },
     hut:        { zeichen: ["\ud83e\udd20"], wie: 5, klasse: "umarmen" },
     bombe:      { zeichen: ["\ud83d\udca3"], wie: 5, klasse: "umarmen" },
+    lunte:      { zeichen: ["\ud83e\udde8"], wie: 5, klasse: "umarmen" },
     streicheln: { zeichen: ["\ud83e\udef6"], wie: 6, klasse: "herz" },
     kuss:       { zeichen: ["\ud83d\udc8b"], wie: 6, klasse: "herz" },
     zufall:     { zeichen: ["\ud83c\udfb0"], wie: 5, klasse: "umarmen" },
@@ -28016,6 +28068,7 @@
         if (nr.length) {
           lcUmarmungAnPlatz(nr[0], 0);
           lcTonZu("umarmen");
+          lcTonSpaeter("wohlig", 700, 0.55);
           return true;
         }
       }
@@ -28048,6 +28101,12 @@
     if (!ziele.length) return false;
     ziele.forEach((pl, i) => lcUmarmungAnPlatz(pl, i * 90));
     lcTonZu("umarmen");
+    /* XANDER: „Das Drueckgeraeusch kann so einen Sound bekommen, wo
+       man hoert, wie sich jemand wohlfuehlt, wenn er gedrueckt wird,
+       dass da Liebe im Spiel ist."
+       Der Seufzer kommt NACH dem Zufassen, nicht davor — erst die
+       Arme, dann das Wohlfuehlen. */
+    lcTonSpaeter("wohlig", 700, 0.55);
     return true;
   }
 
@@ -29558,6 +29617,15 @@
      ================================================================= */
   function lcSchneekugel(wen) {
     return lcAmPlatz(wen, "lc-schneekugel", (schicht, platz) => {
+      /* XANDER: „Die Schneekugel soll auch einen realistischen Sound
+         haben, mit Schuetteln, und wenn die Schneeflocken fallen,
+         soll weihnachtliches, glissandomaessiges Rieseln kommen ...
+         und das kann auch ein bisschen laenger anhalten."
+         Zwei Toene in Folge: geschuettelt wird in der ersten Sekunde
+         (LC_TON_PLAN.schneekugel), und sobald die Flocken fallen —
+         nach 1,1 s — setzt das Glissando ein. Es ist 7 s lang und
+         deckt damit das ganze Rieseln ab. */
+      lcTonSpaeter("schneeglissando", 1100, 0.5);
       const kreis = platz.querySelector(".lc-kreis");
       const blende = lcZpBlende(schicht);
       /* Die kleine Landschaft: zwei Haeuschen und zwei Tannen, alles
@@ -33174,7 +33242,12 @@
       /* „dieses realistische Geraeusch, wenn der Ball in den Korb
          fliegt und man das Metall wackeln hoert." Beim Tennis gibt es
          keinen Korb — da bleibt es beim Aufschlag. */
-      if (art !== "tennis") lcTonSpaeter("korb", 3600, 0.55);
+      /* XANDER: „bei dem Basketball kann ein besserer Sound hin,
+         gerade wenn er durch den Korb faellt und dieses wackelnde
+         Metall zu hoeren ist, wie das klingt, wenn der Ball so
+         zirkuliert in diesem Gestell."
+         Genau das ist „korbrand": Ring, Scheppern, Netz, Aufprall. */
+      if (art !== "tennis") lcTonSpaeter("korbrand", 3600, 0.6);
     }, art === "tennis" ? 3000 : 5200, art === "tennis" ? "tennis" : "basketball");
   }
 
@@ -33682,21 +33755,38 @@
      ein Aschehaeufchen auf dem Platz. Wen es trifft, den nimmt es von
      der Buehne; er setzt sich mit einem Tipp wieder hin, genau wie
      beim Aufessen. */
-  function lcBombe(wen) {
-    return lcAmPlatz(wen, "lc-bombe", (schicht, platz) => {
+  /* XANDER: „Bei der Bombe solltest du eine digitale Version haben und
+     eine mit Zuendschnur, und die sollen realistische Sounds haben."
+     Dieselbe Explosion, zwei Zuender: /bombe zaehlt Ziffern herunter,
+     /lunte brennt eine Schnur ab. Der Ton haengt am Zuender, nicht an
+     der Bombe — sonst piepte die Lunte. */
+  function lcBombe(wen, lunte) {
+    return lcAmPlatz(wen, lunte ? "lc-bombe lc-bombe-lunte" : "lc-bombe", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       const blende = lcZpBlende(schicht);
-      blende.innerHTML = '<span class="lc-bombe-zahl">3</span>'
-                       + '<span class="lc-bombe-blitz"></span>';
-      const zahl = blende.querySelector(".lc-bombe-zahl");
-      [2, 1, 0].forEach((z, i) => setTimeout(() => {
-        if (!zahl.isConnected) return;
-        zahl.textContent = z === 0 ? "\ud83d\udca5" : String(z);
-        zahl.classList.remove("lc-bombe-tick");
-        void zahl.offsetWidth;
-        zahl.classList.add("lc-bombe-tick");
-        lcTonZu(z === 0 ? "bombe" : "ticken");
-      }, 700 + i * 700));
+      if (lunte) {
+        /* DIE ZUENDSCHNUR. Sie liegt am oberen Rand, brennt von aussen
+           nach innen ab und wird dabei wirklich kuerzer — deshalb ein
+           eigenes Element fuer die Schnur und eines fuer den Funken,
+           der an ihrem Ende sitzt. */
+        blende.innerHTML =
+          '<span class="lc-lunte-schnur"><i></i></span>'
+          + '<span class="lc-lunte-funke"></span>'
+          + '<span class="lc-bombe-blitz"></span>';
+        setTimeout(() => { try { lcTonZu("lunte"); } catch (e) {} }, 0);
+      } else {
+        blende.innerHTML = '<span class="lc-bombe-zahl">3</span>'
+                         + '<span class="lc-bombe-blitz"></span>';
+        const zahl = blende.querySelector(".lc-bombe-zahl");
+        [2, 1, 0].forEach((z, i) => setTimeout(() => {
+          if (!zahl.isConnected) return;
+          zahl.textContent = z === 0 ? "\ud83d\udca5" : String(z);
+          zahl.classList.remove("lc-bombe-tick");
+          void zahl.offsetWidth;
+          zahl.classList.add("lc-bombe-tick");
+          if (z !== 0) lcTonZu("ticken");
+        }, 700 + i * 700));
+      }
       /* Die Zuendschnur laeuft am oberen Rand entlang und wird kuerzer. */
       /* DAS HAEUFCHEN ASCHE.
          GEWUENSCHT: „wenn die Bombe explodiert, haette ich gerne ein
@@ -33808,11 +33898,31 @@
         kreis.classList.add("lc-gekuesst");
         setTimeout(() => kreis.classList.remove("lc-gekuesst"), 3200);
       }
+      /* XANDER, dreimal gemeldet: „Der Kuss hat immer noch keinen
+         Mund in der Animation."
+         Und er hatte recht — was da gezeichnet war, WAR ein Herz:
+         „M30 12 C24 2 10 2 6 12 ... C50 2 36 2 30 12 Z" ist die
+         klassische Herzkontur mit zwei Boegen oben und einer Spitze
+         unten. Nur die Farbe liess es nach Mund klingen.
+         Ein Mund besteht aus ZWEI Lippen mit einer Teilung
+         dazwischen, und die Oberlippe hat in der Mitte den
+         Amorbogen — die kleine Einkerbung. Genau das steht jetzt
+         hier: Oberlippe mit Bogen, Unterlippe voller, eine dunkle
+         Teilungslinie und ein Glanzpunkt. */
       const mund = '<svg viewBox="0 0 60 40">'
-        + '<path d="M30 12 C24 2 10 2 6 12 C2 22 16 32 30 38'
-        + ' C44 32 58 22 54 12 C50 2 36 2 30 12 Z" fill="#d94f6a"/>'
-        + '<path d="M10 12 C18 8 26 10 30 14 C34 10 42 8 50 12"'
-        + ' fill="none" stroke="#a83350" stroke-width="2"/>'
+        /* Die Unterlippe zuerst — sie liegt hinten. */
+        + '<path d="M4 20 C14 23 22 24.5 30 24.5 C38 24.5 46 23 56 20'
+        + ' C50 32 41 37 30 37 C19 37 10 32 4 20 Z" fill="#d94f6a"/>'
+        /* Die Oberlippe mit dem Amorbogen in der Mitte. */
+        + '<path d="M4 20 C8 10 16 7.5 22 12.5 C25.5 15 27.5 15 30 11.5'
+        + ' C32.5 15 34.5 15 38 12.5 C44 7.5 52 10 56 20'
+        + ' C46 17 38 15.8 30 15.8 C22 15.8 14 17 4 20 Z" fill="#c8425c"/>'
+        /* Die Teilung — ohne sie sind es nicht zwei Lippen. */
+        + '<path d="M4 20 C14 22.4 22 23.6 30 23.6 C38 23.6 46 22.4 56 20"'
+        + ' fill="none" stroke="#8e2840" stroke-width="1.8" stroke-linecap="round"/>'
+        /* Und der Glanz auf der Unterlippe. */
+        + '<path d="M18 28.5 C22 31 27 32 32 31.4" fill="none"'
+        + ' stroke="rgba(255,255,255,.55)" stroke-width="2.4" stroke-linecap="round"/>'
         + "</svg>";
       schicht.innerHTML = '<span class="lc-kuss-mund">' + mund + "</span>";
       lcZpBlende(schicht).innerHTML = '<span class="lc-kuss-abdruck">' + mund + "</span>";
@@ -35215,7 +35325,7 @@
     flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1, brennen: 1, zorro: 1,
     dampfer: 1, lok: 1, liane: 1, feder: 1, beamen: 1, rohr: 1,
     heli: 1, pferd: 1, marsch: 1,
-    bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1,
+    bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
     entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, kuss: 1
@@ -35352,7 +35462,8 @@
       if (art === "pusterohr" && lcPusterohr(wenZ)) return;
       if (art === "gluehbirne" && lcGluehbirne(wenZ)) return;
       if (art === "hut" && lcHut(wenZ)) return;
-      if (art === "bombe" && lcBombe(wenZ)) return;
+      if (art === "bombe" && lcBombe(wenZ, false)) return;
+      if (art === "lunte" && lcBombe(wenZ, true)) return;
       if (art === "streicheln" && lcStreicheln(wenZ)) return;
       if (art === "kuss" && lcKuss(wenZ)) return;
       if (art === "entbloessung" && lcEntbloessung(wenZ, (nachricht && nachricht.eigen)

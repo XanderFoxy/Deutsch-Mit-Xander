@@ -19648,3 +19648,59 @@ body.lc-schreibt .tutor-reiter {
   70%  { transform: translateX(-50%) scale(1.62) rotate(2deg); opacity: 1; }
   100% { transform: translateX(-50%) scale(1.58) rotate(5deg); opacity: .96; }
 }
+
+/* === RUNDE 56: DIE BOMBE MIT ZÜNDSCHNUR ==============================
+   XANDER: „Bei der Bombe solltest du eine digitale Version haben und
+   eine mit Zuendschnur, und die sollen realistische Sounds haben."
+   /bombe zaehlt Ziffern herunter (die digitale), /lunte brennt eine
+   Schnur ab. Die Schnur wird wirklich KUERZER — deshalb ein eigenes
+   Element dafuer und eines fuer den Funken an ihrem Ende. */
+.lc-lunte-schnur {
+  position: absolute;
+  left: 12%;
+  top: 14%;
+  width: 66%;
+  height: 4%;
+  overflow: hidden;
+}
+.lc-lunte-schnur i {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: repeating-linear-gradient(90deg,
+    #4a3a28 0 5px, #6b5540 5px 9px);
+  transform-origin: 0 50%;
+  /* Sie brennt von rechts nach links ab: der Funke laeuft auf die
+     Bombe zu, die Schnur wird dabei kuerzer. */
+  animation: lcLunteBrenntR56 2.1s linear forwards;
+}
+@keyframes lcLunteBrenntR56 {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+.lc-lunte-funke {
+  position: absolute;
+  top: 12%;
+  left: 78%;
+  width: 11%;
+  height: 11%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff9d0 0 26%, #ffb03a 52%, rgba(255,90,0,0) 78%);
+  filter: drop-shadow(0 0 5px rgba(255, 150, 40, .95));
+  animation: lcLunteFunkeR56 2.1s linear forwards,
+             lcLunteZuckR56 .14s steps(2) infinite;
+}
+/* Er wandert mit dem Ende der Schnur mit: 66 % Breite ab 12 % links,
+   also von 78 % bis 12 %. */
+@keyframes lcLunteFunkeR56 {
+  from { left: 78%; opacity: 1; }
+  90%  { opacity: 1; }
+  to   { left: 12%; opacity: 0; }
+}
+@keyframes lcLunteZuckR56 {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.35); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-lunte-schnur, .lc-lunte-funke { display: none; }
+}
