@@ -17027,37 +17027,62 @@
      schnell und drehen sich um die Hochachse (deshalb werden sie
      zwischendurch zu einem Strich).
      ================================================================= */
+  /* XANDER: „Das Geld sieht absolut nicht realistisch aus."
+     Er hatte recht, und es lag an der Zeichnung: ein einfarbiges
+     Rechteck mit einer hellen Ellipse und einer Zahl darin. So sieht
+     kein Geldschein aus. Woran man einen Euroschein erkennt, sind
+     fuenf Dinge — und die sind jetzt alle da:
+       · ein Farbverlauf statt einer Flaeche (Papier ist nicht flach),
+       · das Hologrammfenster als silbriger Streifen rechts,
+       · das Bogenfenster links (die Architektur auf den Scheinen),
+       · der Wert ZWEIMAL, oben links und unten rechts,
+       · feine Guillochen-Linien ueber die ganze Flaeche.
+     Und die Farben stimmen jetzt mit den echten Scheinen ueberein
+     (20 blau, 50 orange, 100 gruen, 500 lila) — vorher war die 50
+     gruen und die 100 orange. */
+  let lcScheinZaehler = 0;
   function lcScheinSvg(farbe, wert) {
     const svg = document.createElementNS(NS_SVG, "svg");
     svg.setAttribute("viewBox", "0 0 90 42");
-    const r = document.createElementNS(NS_SVG, "rect");
-    r.setAttribute("x", 1); r.setAttribute("y", 1);
-    r.setAttribute("width", 88); r.setAttribute("height", 40);
-    r.setAttribute("rx", 3); r.setAttribute("fill", farbe);
-    r.setAttribute("stroke", "rgba(20,50,30,.45)");
-    r.setAttribute("stroke-width", 1.6);
-    svg.appendChild(r);
-    const ring = document.createElementNS(NS_SVG, "ellipse");
-    ring.setAttribute("cx", 45); ring.setAttribute("cy", 21);
-    ring.setAttribute("rx", 15); ring.setAttribute("ry", 13);
-    ring.setAttribute("fill", "rgba(255,255,255,.3)");
-    svg.appendChild(ring);
-    const t = document.createElementNS(NS_SVG, "text");
-    t.setAttribute("x", 45); t.setAttribute("y", 27);
-    t.setAttribute("text-anchor", "middle");
-    t.setAttribute("font-size", "16");
-    t.setAttribute("font-family", "system-ui, sans-serif");
-    t.setAttribute("font-weight", "700");
-    t.setAttribute("fill", "rgba(20,60,35,.8)");
-    t.textContent = wert;
-    svg.appendChild(t);
-    /* Die Zierlinien am Rand — ohne sie ist es ein farbiges Kärtchen. */
-    const z = document.createElementNS(NS_SVG, "path");
-    z.setAttribute("d", "M6 6 h14 M6 36 h14 M70 6 h14 M70 36 h14 M6 10 v22 M84 10 v22");
-    z.setAttribute("stroke", "rgba(20,60,35,.35)");
-    z.setAttribute("stroke-width", 1.4);
-    z.setAttribute("fill", "none");
-    svg.appendChild(z);
+    const g = "sch" + (++lcScheinZaehler);
+    svg.innerHTML =
+      "<defs>"
+      + '<linearGradient id="' + g + 'p" x1="0" y1="0" x2="1" y2="1">'
+      + '<stop offset="0" stop-color="#ffffff" stop-opacity=".55"/>'
+      + '<stop offset=".45" stop-color="#ffffff" stop-opacity="0"/>'
+      + '<stop offset="1" stop-color="#000000" stop-opacity=".18"/></linearGradient>'
+      + '<linearGradient id="' + g + 'h" x1="0" y1="0" x2="1" y2="0">'
+      + '<stop offset="0" stop-color="#e9edf2"/><stop offset=".4" stop-color="#ffffff"/>'
+      + '<stop offset=".6" stop-color="#cfd6e0"/><stop offset="1" stop-color="#eef2f7"/>'
+      + "</linearGradient></defs>"
+      /* Das Papier. */
+      + '<rect x="1" y="1" width="88" height="40" rx="2.5" fill="' + farbe + '"/>'
+      /* Die Guillochen — feine Linien, die ueber die ganze Flaeche laufen. */
+      + '<path d="M1 8 H89 M1 14 H89 M1 20 H89 M1 26 H89 M1 32 H89"'
+      + ' stroke="rgba(0,0,0,.10)" stroke-width=".7" fill="none"/>'
+      + '<path d="M10 1 V41 M26 1 V41 M42 1 V41 M58 1 V41 M74 1 V41"'
+      + ' stroke="rgba(0,0,0,.07)" stroke-width=".7" fill="none"/>'
+      /* Das Bogenfenster links — die Architektur auf den Euroscheinen. */
+      + '<path d="M9 34 V20 a7 7 0 0 1 14 0 V34 Z" fill="rgba(255,255,255,.42)"'
+      + ' stroke="rgba(0,0,0,.28)" stroke-width="1"/>'
+      + '<path d="M16 34 V22" stroke="rgba(0,0,0,.2)" stroke-width=".8"/>'
+      /* Das Hologrammfenster rechts. */
+      + '<rect x="72" y="5" width="12" height="32" rx="1.6" fill="url(#' + g + 'h)"'
+      + ' stroke="rgba(0,0,0,.22)" stroke-width=".8"/>'
+      + '<circle cx="78" cy="14" r="3.4" fill="rgba(255,255,255,.85)"'
+      + ' stroke="rgba(0,0,0,.18)" stroke-width=".6"/>'
+      /* Der Wert, zweimal. */
+      + '<text x="7" y="13" font-size="10" font-family="system-ui, sans-serif"'
+      + ' font-weight="800" fill="rgba(25,35,30,.85)">' + wert + "</text>"
+      + '<text x="66" y="38" font-size="9" font-family="system-ui, sans-serif"'
+      + ' font-weight="800" text-anchor="end" fill="rgba(25,35,30,.75)">' + wert + "</text>"
+      + '<text x="45" y="12" font-size="5.6" font-family="system-ui, sans-serif"'
+      + ' font-weight="700" letter-spacing="1.4" text-anchor="middle"'
+      + ' fill="rgba(25,35,30,.55)">EURO</text>'
+      /* Der Rand und der Papierglanz ganz oben. */
+      + '<rect x="1" y="1" width="88" height="40" rx="2.5" fill="url(#' + g + 'p)"/>'
+      + '<rect x="1" y="1" width="88" height="40" rx="2.5" fill="none"'
+      + ' stroke="rgba(20,50,30,.45)" stroke-width="1.4"/>';
     return svg;
   }
   function lcGeldregen() {
@@ -17074,8 +17099,11 @@
     zug.textContent = "CASH HORIZON";
     schicht.appendChild(zug);
 
-    const SCHEINE = [["#a8d5a2", "50"], ["#c9b7e8", "500"],
-                     ["#f2c98a", "100"], ["#9fc9e8", "20"]];
+    /* Die echten Euro-Farben: 20 blau, 50 orange, 100 gruen,
+       500 lila. Vorher war die 50 gruen und die 100 orange — wer die
+       Scheine kennt, sieht so etwas sofort. */
+    const SCHEINE = [["#f2ae63", "50"], ["#b9a3dd", "500"],
+                     ["#93c894", "100"], ["#8cbde4", "20"]];
     const wieviel = window.innerWidth < 560 ? 26 : 46;
     for (let i = 0; i < wieviel; i++) {
       const g = document.createElement("div");

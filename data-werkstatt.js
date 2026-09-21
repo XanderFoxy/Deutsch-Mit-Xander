@@ -49,24 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 44 — Kopfhörer bleiben auf, Wischer und Flugzeug neu",
+  stand: "Runde 45 — die Geldscheine",
 
   inArbeit: [
-    { seit: "2026-09-21T01:11",
-      text: "Geld: realistischer, Star-Trek-Beameffekt weiter verfeinern" },
-    { seit: "2026-09-21T01:11", nurBetreiber: true,
+    { seit: "2026-09-21T01:13",
+      text: "Star-Trek-Beameffekt weiter verfeinern" },
+    { seit: "2026-09-21T01:13", nurBetreiber: true,
       text: "Das „Profilbild geht beim Antippen groß auf\" konnte ich nicht nachstellen — sag mir bitte, wo genau das passiert" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-21T01:11",
-      text: "Kopfhörer bleiben jetzt aufgesetzt — antippen nimmt sie ab, ein zweites „Hörer“ auf dieselbe Person auch" },
-    { seit: "2026-09-21T01:11",
-      text: "Die Noten steigen nur beim Aufsetzen auf, nicht die ganze Zeit" },
-    { seit: "2026-09-21T01:11",
-      text: "Scheibenwischer: kräftigerer Arm, helleres Blatt, vier Klauen und eine schwarze Gummilippe — vorher war alles gleich dunkel und 1–2 px dünn" },
-    { seit: "2026-09-21T01:11",
-      text: "Flugzeug: zweites Flügelpaar, Höhenleitwerk, Triebwerk und spitze Nase" },
+    { seit: "2026-09-21T01:13",
+      text: "Geldscheine: Farbverlauf, Bogenfenster, Hologrammstreifen, Wert zweimal, EURO-Schriftzug und Guillochen-Linien" },
+    { seit: "2026-09-21T01:13",
+      text: "Und die Farben stimmen jetzt: 20 blau, 50 orange, 100 grün, 500 lila — vorher war die 50 grün und die 100 orange" },
   ],
 };
