@@ -30206,11 +30206,13 @@
         kreis.classList.remove("lc-gehoben");
         void kreis.offsetWidth;
         kreis.classList.add("lc-gehoben");
+        /* Wie beim Lasso: erst muss der Haken greifen, dann wird
+           gezogen (lcZuMirR51). */
         setTimeout(() => {
           kreis.classList.remove("lc-gehoben");
           kreis.style.removeProperty("--zux");
           kreis.style.removeProperty("--zuy");
-        }, 1800);
+        }, 2400);
       }
       /* HIER STAND DIE SCHLEIFE — siehe lcNebenMichSetzen. */
       /* Ohne Leine (es gilt allen, oder ich sitze selbst nicht) bleibt
@@ -30243,17 +30245,25 @@
         kreis.classList.remove("lc-gezogen");
         void kreis.offsetWidth;
         kreis.classList.add("lc-gezogen");
+        /* GEMELDET: „bei dem Lasso sieht es nicht so aus, als wenn man
+           den anderen ran zieht." Und er hatte recht — es war eine
+           Frage der ZEIT, nicht der Zeichnung: der Zug begann bei
+           0 ms, die Schlinge landete aber erst bei 640 ms und sass
+           erst bei 920 ms. Der andere rutschte also los, BEVOR das
+           Seil ihn hatte. Jetzt haelt der Zug die erste Sekunde
+           still (siehe lcZuMirR51) — deshalb dauert er laenger und
+           die Klasse bleibt entsprechend laenger stehen. */
         setTimeout(() => {
           kreis.classList.remove("lc-gezogen");
           kreis.style.removeProperty("--zux");
           kreis.style.removeProperty("--zuy");
-        }, 1800);
+        }, 2400);
       }
       /* HIER STAND DIE SCHLEIFE — siehe lcNebenMichSetzen. */
       schicht.innerHTML = leine ? '<span class="lc-lasso-schlinge"></span>' :
         '<span class="lc-lasso-schlinge"></span>'
         + '<span class="lc-lasso-seil"></span>';
-    }, 2000, "lasso");
+    }, 2600, "lasso");
   }
 
   /* =================================================================
@@ -31521,6 +31531,26 @@
         const tor = document.createElement("span");
         tor.className = "lc-tor-wirbel";
         tor.style.setProperty("--gross", (d * 1.15) + "px");
+        /* XANDER: „der Gate-Effekt ist noch nicht realistisch."
+           War er auch nicht: EINE sich drehende Farbscheibe. Ein
+           Portal besteht aus Schichten — dem Sog innen, dem hellen
+           Ereignishorizont am Rand, den Energiebogen darauf und dem
+           Staub, den es ansaugt. Jede Schicht dreht anders schnell;
+           genau daran erkennt das Auge Tiefe. */
+        tor.innerHTML =
+          '<i class="lc-tor-sog"></i>'
+          + '<i class="lc-tor-sog lc-tor-sog2"></i>'
+          + '<i class="lc-tor-kern"></i>'
+          + '<i class="lc-tor-horizont"></i>'
+          + '<i class="lc-tor-bogen"></i>'
+          + '<i class="lc-tor-bogen lc-tor-bogen2"></i>';
+        for (let k = 0; k < 10; k++) {
+          const st = document.createElement("b");
+          st.className = "lc-tor-staub";
+          st.style.setProperty("--wo", (k * 36 + Math.random() * 24) + "deg");
+          st.style.animationDelay = (Math.random() * 1.1).toFixed(2) + "s";
+          tor.appendChild(st);
+        }
         tor.style.animationDelay = (i ? hin - 700 : 0) + "ms";
         reihe.appendChild(tor);
         weg.push(tor);
