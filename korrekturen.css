@@ -21576,3 +21576,87 @@ body.lc-schreibt .tutor-reiter {
   .lc-tor-tropfen, .lc-tor-saum { animation: none; }
   .lc-tor-welle, .lc-tor-tropfen { opacity: 0; }
 }
+
+/* === RUNDE 69: DIE MAPPE DES WHITEBOARDS ============================
+   GEWUENSCHT: „Whiteboard neu denken, alles ins Profil speichern statt
+   lokal."
+
+   „Sichern" lud bisher eine PNG-Datei herunter. Die liegt dann auf
+   genau EINEM Geraet — auf dem Telefon ist sie weg, und wer den
+   Rechner wechselt, faengt von vorn an. Jetzt liegt die Tafel am
+   Konto, und hier sieht man, was da liegt. */
+.lc-tafel-mappe {
+  position: absolute;
+  inset: 6% 5%;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(22, 28, 38, .96);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .5);
+  overflow: auto;
+}
+.lc-mappe-leer {
+  margin: 0;
+  color: #cfe0f6;
+  font-size: .95rem;
+  line-height: 1.5;
+}
+.lc-mappe-reihe {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.lc-mappe-blatt {
+  position: relative;
+  margin: 0;
+  padding: 6px;
+  border-radius: 10px;
+  background: #101620;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lc-mappe-blatt img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+}
+.lc-mappe-blatt figcaption {
+  color: #cfe0f6;
+  font-size: .76rem;
+  line-height: 1.25;
+  /* Der Name ist ein Datum mit Uhrzeit — er darf umbrechen, aber die
+     Kachel nicht sprengen. */
+  overflow-wrap: anywhere;
+}
+.lc-mappe-holen,
+.lc-mappe-zu {
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 700;
+  color: #0d1420;
+  background: #7fd4f5;
+  cursor: pointer;
+}
+.lc-mappe-zu { align-self: flex-start; background: #8fa6b8; }
+.lc-mappe-weg {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  border: 0;
+  border-radius: 6px;
+  padding: 3px 5px;
+  font-size: .8rem;
+  line-height: 1;
+  color: #fff;
+  background: rgba(140, 30, 30, .85);
+  cursor: pointer;
+}

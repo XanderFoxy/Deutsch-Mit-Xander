@@ -30100,7 +30100,11 @@
       + '<button type="button" class="lc-tafel-knopf" data-tafel="gross" title="Tafel groß oder klein — die Plätze bleiben bedienbar">⤢</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="zurueck" title="Einen Strich zurück">↶</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="vor" title="Wieder vor">↷</button>'
-      + '<button type="button" class="lc-tafel-knopf" data-tafel="sichern" title="Als Bild sichern">⬇️</button>'
+      /* RUNDE 69: ins Profil sichern steht VOR dem Herunterladen —
+         das ist jetzt der Normalfall, der andere die Ausnahme. */
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="profil" title="Ins Profil sichern — auf jedem Gerät da">💾</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="mappe" title="Meine gesicherten Tafeln">📂</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="sichern" title="Als Bild herunterladen">⬇️</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="leer" title="Alles wegwischen">🧽</button>'
       + '<button type="button" class="lc-tafel-knopf lc-tafel-zu" data-tafel="aus" title="Whiteboard zumachen">✕</button>'
       + '<input type="file" accept="image/*" id="lcTafelDatei" hidden>'
@@ -30250,6 +30254,8 @@
        neue Leinwand gemalt — die Bildschirm-Leinwand allein traegt
        nur die Striche, das Bild liegt als <img> darunter. */
     if (was === "sichern") { lcTafelSichern(); return; }
+    if (was === "profil") { lcTafelInsProfil(); return; }
+    if (was === "mappe") { lcTafelMappe(); return; }
     if (was === "leer") {
       lcTafelZuege = [];
       lcTafelVorrat = [];
@@ -30277,9 +30283,16 @@
      wird so gross wie moeglich gezeigt, ohne sein Seitenverhaeltnis
      zu aendern, und sitzt mittig. Wer das nicht nachrechnet, bekommt
      ein verzerrtes Bild unter geraden Strichen. */
-  function lcTafelSichern() {
+  /* RUNDE 69 — GEWUENSCHT: „Whiteboard neu denken, alles ins Profil
+     speichern statt lokal."
+
+     Das Bild bauen ist bei beiden Wegen dasselbe — Blatt, Hintergrund,
+     Striche —, deshalb steht es jetzt EINMAL hier statt zweimal.
+     Zurueck kommt eine Datenadresse, oder "" wenn die Leinwand durch
+     ein fremdes Bild unrein geworden ist. */
+  function lcTafelBildBauen() {
     const c = lcTafelLeinwand();
-    if (!c) return;
+    if (!c) return null;
     const bild = document.getElementById("lcTafelBild");
     const aus = document.createElement("canvas");
     aus.width = c.width;
@@ -30296,14 +30309,62 @@
       g.drawImage(bild, (aus.width - bw) / 2, (aus.height - bh) / 2, bw, bh);
     }
     g.drawImage(c, 0, 0);
-    let url = "";
-    try { url = aus.toDataURL("image/png"); } catch (e) {
+    try {
+      return { url: aus.toDataURL("image/png"), breite: aus.width, hoehe: aus.height };
+    } catch (e) {
       /* Ein Bild von einer fremden Adresse macht die Leinwand
          „unrein" — dann geht das Sichern nicht, und das sagt man
          besser, statt still nichts zu tun. */
       try { showToast("Dieses Bild darf nicht gesichert werden."); } catch (x) {}
-      return;
+      return null;
     }
+  }
+
+  /* INS PROFIL. Damit liegt die Tafel am Konto und ist auf jedem
+     Geraet da — genau das war der Wunsch. Wer nicht angemeldet ist,
+     bekommt den alten Weg angeboten statt einer Fehlermeldung: eine
+     Zeichnung soll man nicht verlieren, nur weil man nicht angemeldet
+     ist. */
+  async function lcTafelInsProfil() {
+    const b = lcTafelBildBauen();
+    if (!b) return;
+    /* PNG von einer Tafel ist gross. GEMESSEN an einer vollen
+       Leinwand: rund 300 KB als Datenadresse. Ueber 900 KB wird
+       verkleinert — eine Textspalte ist kein Bilderspeicher, und
+       eine Tafel muss man lesen koennen, nicht vergroessern. */
+    let url = b.url;
+    if (url.length > 900000) {
+      const klein = document.createElement("canvas");
+      const m = Math.sqrt(900000 / url.length);
+      klein.width = Math.max(320, Math.round(b.breite * m));
+      klein.height = Math.max(200, Math.round(b.hoehe * m));
+      const kg = klein.getContext("2d");
+      kg.fillStyle = "#ffffff";
+      kg.fillRect(0, 0, klein.width, klein.height);
+      const hilf = new Image();
+      await new Promise((fertig) => { hilf.onload = fertig; hilf.onerror = fertig; hilf.src = b.url; });
+      kg.drawImage(hilf, 0, 0, klein.width, klein.height);
+      try { url = klein.toDataURL("image/png"); } catch (e) {}
+    }
+    const wie = "Tafel vom " + new Date().toLocaleDateString("de-DE")
+      + " " + new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    try {
+      await Backend.saveWhiteboard(url, wie, b.breite, b.hoehe);
+      try { showToast("Im Profil gesichert — auf jedem Gerät da."); } catch (e) {}
+    } catch (e) {
+      /* Nicht angemeldet, oder die Leitung ist weg. Dann wenigstens
+         herunterladen, statt die Zeichnung verlieren zu lassen. */
+      try { showToast((e && e.message) || "Konnte nicht ins Profil."); } catch (x) {}
+      lcTafelSichern();
+    }
+  }
+
+  function lcTafelSichern() {
+    const c = lcTafelLeinwand();
+    if (!c) return;
+    const b = lcTafelBildBauen();
+    if (!b) return;
+    const url = b.url;
     const a = document.createElement("a");
     const jetzt = new Date();
     const zwei = (n) => String(n).padStart(2, "0");
@@ -30318,6 +30379,58 @@
   }
 
   /* --- DIE LEINWAND ------------------------------------------------- */
+  /* DIE MAPPE — was im Profil liegt.
+     Ohne sie waere das Sichern ein Fass ohne Boden: man legt etwas ab
+     und kommt nie wieder heran. Jede Tafel laesst sich ansehen,
+     zurueckholen oder wegwerfen. */
+  async function lcTafelMappe() {
+    let tafeln = [];
+    try { tafeln = await Backend.getMyWhiteboards(); } catch (e) { tafeln = []; }
+    const alt = document.getElementById("lcTafelMappe");
+    if (alt) alt.remove();
+    const kasten = document.createElement("div");
+    kasten.id = "lcTafelMappe";
+    kasten.className = "lc-tafel-mappe";
+    if (!tafeln.length) {
+      kasten.innerHTML = '<p class="lc-mappe-leer">Hier ist noch nichts.'
+        + " Mit \ud83d\udcbe legst du eine Tafel ins Profil \u2014 dann liegt sie"
+        + " auf jedem Ger\u00e4t bereit.</p>"
+        + '<button type="button" class="lc-mappe-zu">Schlie\u00dfen</button>';
+    } else {
+      kasten.innerHTML = '<div class="lc-mappe-reihe">'
+        + tafeln.map((t) => '<figure class="lc-mappe-blatt" data-id="'
+            + escapeHtml(String(t.id || "")) + '">'
+            + '<img alt="" src="' + escapeHtml(String(t.bild || "")) + '">'
+            + "<figcaption>" + escapeHtml(String(t.name || "Tafel")) + "</figcaption>"
+            + '<button type="button" class="lc-mappe-holen">Zur\u00fcckholen</button>'
+            + '<button type="button" class="lc-mappe-weg" title="Wegwerfen">\ud83d\uddd1\ufe0f</button>'
+            + "</figure>").join("")
+        + "</div>"
+        + '<button type="button" class="lc-mappe-zu">Schlie\u00dfen</button>';
+    }
+    const karte = lcTafelKasten();
+    (karte || document.body).appendChild(kasten);
+    kasten.addEventListener("click", async (e) => {
+      if (e.target.closest(".lc-mappe-zu")) { kasten.remove(); return; }
+      const blatt = e.target.closest(".lc-mappe-blatt");
+      if (!blatt) return;
+      if (e.target.closest(".lc-mappe-weg")) {
+        try { await Backend.deleteMyWhiteboard(blatt.dataset.id); blatt.remove(); } catch (x) {}
+        return;
+      }
+      if (e.target.closest(".lc-mappe-holen")) {
+        const bild = blatt.querySelector("img");
+        /* Zurueckgeholt wird sie als HINTERGRUND, nicht als Striche:
+           die einzelnen Zuege stecken im Bild nicht mehr drin, und so
+           zu tun, als koennte man sie wieder einzeln zuruecknehmen,
+           waere gelogen. Darueber kann man weitermalen. */
+        if (bild) lcTafelBildSetzen(bild.getAttribute("src"));
+        kasten.remove();
+        try { showToast("Tafel zur\u00fcckgeholt \u2014 du kannst dar\u00fcber weitermalen."); } catch (x) {}
+      }
+    });
+  }
+
   function lcTafelLeinwand() { return document.getElementById("lcTafelStift"); }
 
   function lcTafelGroesseStellen() {

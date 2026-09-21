@@ -977,6 +977,64 @@ const Backend = (function () {
     return (demo.profileNotes || []).filter((n) => n.profile_owner_id === profileOwnerId).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }
 
+  /* =========================================================
+     DAS WHITEBOARD GEHOERT INS PROFIL
+     ---------------------------------------------------------
+     GEWUENSCHT: „Whiteboard neu denken, alles ins Profil
+     speichern statt lokal."
+
+     Bisher lud „Sichern" eine PNG-Datei herunter. Die liegt dann
+     auf genau EINEM Geraet — auf dem Telefon ist sie weg, und wer
+     den Rechner wechselt, faengt von vorn an. Jetzt liegt die
+     Tafel am Konto und ist ueberall da.
+
+     Die Tabelle traegt Zeilenschutz: jeder sieht nur seine
+     eigenen Tafeln (siehe Migration whiteboards_ins_profil).
+     ========================================================= */
+  async function saveWhiteboard(bild, name, breite, hoehe) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (!bild) throw new Error("Da ist nichts zu sichern.");
+    const zeile = {
+      owner_id: demo.user.id,
+      name: String(name || "Whiteboard").slice(0, 80),
+      bild: bild,
+      breite: breite || null,
+      hoehe: hoehe || null,
+      created_at: new Date().toISOString(),
+    };
+    if (client) {
+      const { data, error } = await client.from("whiteboards").insert(zeile).select().single();
+      if (error) throw new Error(friendlyDbError(error.message));
+      return data;
+    }
+    demo.whiteboards = demo.whiteboards || [];
+    zeile.id = Core.uid();
+    demo.whiteboards.unshift(zeile);
+    return zeile;
+  }
+  async function getMyWhiteboards() {
+    if (!demo.user) return [];
+    if (client) {
+      const { data, error } = await client.from("whiteboards").select("*")
+        .eq("owner_id", demo.user.id)
+        .order("created_at", { ascending: false }).limit(40);
+      if (!error && data) return data;
+      return [];
+    }
+    return (demo.whiteboards || []).filter((w) => w.owner_id === demo.user.id);
+  }
+  async function deleteMyWhiteboard(id) {
+    if (!demo.user) throw new Error("Bitte zuerst anmelden.");
+    if (client) {
+      const { error } = await client.from("whiteboards").delete()
+        .eq("id", id).eq("owner_id", demo.user.id);
+      if (error) throw new Error(friendlyDbError(error.message));
+      return;
+    }
+    demo.whiteboards = (demo.whiteboards || [])
+      .filter((w) => !(w.id === id && w.owner_id === demo.user.id));
+  }
+
   async function getBugReports() {
     if (!isAdmin()) return [];
     if (client) {
@@ -4036,6 +4094,7 @@ const Backend = (function () {
     getSiteContent, setSiteContent, siteContentVergessen, meldeWortluecken, getWortluecken, clearWortluecken, getFeatureFlags, setFeatureFlag, isFeatureOn, isFeatureOnDefaultTrue, isBetaTester, getRawFeatureFlag, getRawFeatureFlagValue,
     betaListeFuerSpiel, istBetaFuerSpiel, setBetaFuerSpiel, istBetaFuerIrgendeinSpiel,
     recordProfileVisit, getProfileVisitors, addProfileNote, getProfileNotes, deleteMyProfileNote,
+    saveWhiteboard, getMyWhiteboards, deleteMyWhiteboard,
     getBugReports, resolveBugReport,
     notifyPracticing,
     saveThemePreference,
