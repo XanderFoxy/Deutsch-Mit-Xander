@@ -16808,9 +16808,19 @@ body.lc-schreibt .tutor-reiter {
   filter: drop-shadow(-6px 4px 12px rgba(0, 0, 0, .35));
 }
 .tutor-video.tutor-video-da { opacity: 1; }
-/* Solange der Film läuft, wippt das Standbild nicht mit — sonst
-   liefen zwei Bewegungen gegeneinander. */
-.tutor-buehne:has(.tutor-video-da) .tutor-figur { animation: none; }
+/* GEMELDET: „der Originalavatar klebt immer noch hinter mir. Das
+   sieht aus, als wenn zwei übereinander gesetzt sind."
+   Genau so war es auch: hier wurde das Standbild nur ANGEHALTEN, nicht
+   versteckt. Überall, wo der Film durchsichtig ist — zwischen den
+   Beinen, am Rand, in jeder Lücke —, stand das Standbild dahinter und
+   zeigte eine andere Haltung. Das sah aus wie ein Geisterbein und wie
+   eine schlechte Freistellung, war aber keine.
+   Jetzt ist das Standbild weg, solange der Film WIRKLICH läuft — die
+   Klasse tutor-video-da wird erst nach einem geglückten play() gesetzt.
+   Fällt der Film aus, ist sie nicht da, und das Standbild steht wieder
+   sichtbar darunter. Der Rückfall bleibt also erhalten. */
+.tutor-buehne:has(.tutor-video-da) .tutor-figur,
+.tutor-buehne.tutor-film-laeuft .tutor-figur { visibility: hidden; animation: none; }
 
 /* =================================================================
    DAS AUFZIEHAUTO
@@ -16943,7 +16953,9 @@ body.lc-schreibt .tutor-reiter {
   filter: drop-shadow(-6px 4px 12px rgba(0, 0, 0, .35));
 }
 .tutor-maske.tutor-video-da { opacity: 1; }
-.tutor-buehne:has(.tutor-maske.tutor-video-da) .tutor-figur { animation: none; }
+/* Dasselbe für den Maskenweg (iPhone): das Standbild darf nicht
+   dahinter stehenbleiben. */
+.tutor-buehne:has(.tutor-maske.tutor-video-da) .tutor-figur { visibility: hidden; animation: none; }
 
 /* =================================================================
    DIE SPRECHBILDER SPIELEN JETZT AUSSERHALB DES KREISES

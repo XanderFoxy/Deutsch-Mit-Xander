@@ -69436,6 +69436,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           gl.clear(gl.COLOR_BUFFER_BIT);
           gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
           c.classList.add("tutor-video-da");
+          tutorFilmLaeuft(true);
         } catch (e) {}
       }
       requestAnimationFrame(bild);
@@ -69451,9 +69452,29 @@ An einem Morgen lief ein kleiner Fuchs los…
   function tutorMaskeStoppen() {
     const c = document.getElementById("tutorMaske");
     if (c) c.classList.remove("tutor-video-da");
+    /* Auch hier: das Standbild muss wieder sichtbar werden, sonst
+       stuende der Tutor gar nicht mehr da. */
+    const b = document.querySelector(".tutor-buehne");
+    if (b && !b.querySelector(".tutor-video.tutor-video-da")) {
+      b.classList.remove("tutor-film-laeuft");
+    }
     if (!tutorMaskeLauf) return;
     try { tutorMaskeLauf.halt(); tutorMaskeLauf.video.pause(); tutorMaskeLauf.video.src = ""; } catch (e) {}
     tutorMaskeLauf = null;
+  }
+
+  /* GEMELDET: „der Originalavatar klebt immer noch hinter mir. Das
+     sieht aus, als wenn zwei uebereinander gesetzt sind."
+     Das Standbild wurde beim Film nur angehalten, nicht versteckt —
+     ueberall, wo der Film durchsichtig ist, stand es dahinter und
+     zeigte eine andere Haltung.
+     Die CSS-Regel dafuer haengt an „:has()". Das kann nicht jeder
+     Browser, und wo es fehlt, faellt die Regel still aus. Deshalb
+     setzt der Tutor die Klasse zusaetzlich selbst — ein Rueckfall,
+     der nichts kostet. */
+  function tutorFilmLaeuft(ja) {
+    const b = document.querySelector(".tutor-buehne");
+    if (b) b.classList.toggle("tutor-film-laeuft", Boolean(ja));
   }
 
   /* Den Film zum Stueck zeigen — oder eben nicht. Beides ist in
@@ -69461,7 +69482,11 @@ An einem Morgen lief ein kleiner Fuchs los…
   function tutorFilmSetzen(ton) {
     const v = document.getElementById("tutorVideo");
     if (!v) return;
-    const aus = () => { v.classList.remove("tutor-video-da"); try { v.pause(); } catch (e) {} };
+    const aus = () => {
+      v.classList.remove("tutor-video-da");
+      tutorFilmLaeuft(false);
+      try { v.pause(); } catch (e) {}
+    };
     if (!tutorFilmDa(ton)) { aus(); tutorMaskeStoppen(); v.removeAttribute("src"); return; }
     /* GEMELDET: „der Avatar soll von der Groessen-Dimension genauso
        gross wie der alte sein, meiner ist jetzt fast doppelt so gross.
@@ -69499,9 +69524,13 @@ An einem Morgen lief ein kleiner Fuchs los…
     v.currentTime = 0;
     const lauf = v.play();
     if (lauf && lauf.then) {
-      lauf.then(() => v.classList.add("tutor-video-da")).catch(aus);
+      lauf.then(() => {
+        v.classList.add("tutor-video-da");
+        tutorFilmLaeuft(true);
+      }).catch(aus);
     } else {
       v.classList.add("tutor-video-da");
+      tutorFilmLaeuft(true);
     }
   }
 

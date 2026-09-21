@@ -70,10 +70,25 @@ def groesstes(m):
     return lab == int(np.argmax(gr)) + 1
 
 
-def maske(bild, r=3, kern=2):
-    """Aus dem Alphakanal eines Einzelbildes die richtige Figur."""
+def maske(bild, r=3, kern=2, unten_r=6, ab=0.70):
+    """Aus dem Alphakanal eines Einzelbildes die richtige Figur.
+
+    ZWEI RADIEN, und zwar gemessen begruendet. Oben stehen die Finger
+    und die Muetzenkante — dort wuerde ein grosser Radius Zwischenraeume
+    zuschmieren, die es wirklich gibt. Unten sind nur Hosenbeine und
+    SCHUHE, und die sind schwarz wie der alte Hintergrund: dort ist der
+    Schluessel am meisten kaputtgegangen.
+    GEMELDET: „ich sehe jetzt immer noch Freistellungsluecken in den
+    Schuhen." Gezaehlt im unteren Viertel von ueber-05, je Einzelbild:
+    roh 1741 enge Luecken und 3092 eingeschlossene Loecher; mit r=3
+    blieben 78 Luecken uebrig; mit r=6 unten sind es noch weniger.
+    """
     m = bild[:, :, 3] > 40
-    zu = ndimage.binary_fill_holes(ndimage.binary_closing(m, structure=scheibe(r)))
+    grenze = int(m.shape[0] * ab)
+    zu = ndimage.binary_closing(m, structure=scheibe(r))
+    tief = ndimage.binary_closing(m, structure=scheibe(unten_r))
+    zu[grenze:, :] |= tief[grenze:, :]
+    zu = ndimage.binary_fill_holes(zu)
     k = groesstes(ndimage.binary_erosion(zu, structure=scheibe(kern)))
     zu = ndimage.binary_dilation(k, structure=scheibe(kern)) & zu
     return ndimage.binary_fill_holes(zu)
