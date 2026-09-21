@@ -66,8 +66,19 @@ const pruefe = (was, gut, zusatz) => {
              breit: kb.width };
   });
   const weg = Math.abs(muenze.muenzeMitteY - muenze.nameMitteY);
-  pruefe("sie liegt auf der Namenszeile",
-    weg < 12, Math.round(weg) + " px neben der Namensmitte");
+  /* RUNDE 76 — DIESE REGEL HAT XANDER SELBST UMGEDREHT.
+     Sie hielt fest, dass die Muenze GENAU auf der Namenszeile liegen
+     bleibt — das war in Runde 53 die Absicht.
+     XANDER in Runde 76: „Die Muenze dreht sich fast schon perfekt.
+     Sie soll aber etwas hoeher landen, nicht den Namen verdecken, auf
+     dem sie landet, sondern flach aufliegen."
+     Also wird jetzt das Gegenteil gemessen: sie muss DEUTLICH ueber
+     der Namensmitte liegen. Gemessen nach der Aenderung: 18 px. Die
+     Grenze steht bei 10 px, damit die Regel auch dann noch greift,
+     wenn die Namenszeile einmal eine andere Schriftgroesse bekommt. */
+  pruefe("sie liegt ueber dem Namen, nicht darauf",
+    weg > 10 && muenze.muenzeMitteY < muenze.nameMitteY,
+    Math.round(weg) + " px ueber der Namensmitte");
   /* Eine liegende Muenze ist eine duenne Ellipse, kein Kreis. */
   pruefe("und sie liegt flach, sie steht nicht",
     muenze.hoch < muenze.breit * 0.4,

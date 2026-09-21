@@ -23447,7 +23447,17 @@
         ? `Platz ${p.nummer}, frei`
         : `Platz ${p.nummer}, ${p.name} — antippen, um größer zu sehen`);
 
-      name.textContent = p.leer ? "frei" : (p.ich ? p.name + " (du)" : p.name);
+      /* RUNDE 76 — XANDER: „das ‚du‘ in Klammern kannst du auch
+         generell rausnehmen, weil ich weiss, wer ich bin … ich glaub,
+         das beeintraechtigt immer das Design, das soll auch niemals
+         irgendwie das Design beeintraechtigen, dass sich nichts
+         verschiebt, wenn ich wandere."
+         Er hat in beidem recht: der Zusatz sagt ihm nichts Neues, und
+         er macht die Beschriftung laenger als bei allen anderen —
+         der eigene Platz war damit immer der breiteste. Wer man
+         selbst ist, zeigt der orange Ring um das eigene Bild
+         (.lc-platz-ich), und der kostet keine einzige Stelle Breite. */
+      name.textContent = p.leer ? "frei" : p.name;
       /* DER NAME UNTER DEM PLATZ IST EINE BESCHRIFTUNG, KEIN NAME.
          -----------------------------------------------------------
          GEMELDET: „Bei Xander Fox — also wenn es mich selbst
@@ -24682,7 +24692,7 @@
        (gemessen -17 -19 -31 -16 -15 -15 -16 -22 …, lautester Punkt
        schon bei 0,3 s), danach von 1,9 bis 2,9 s der Peitschenknall.
        Laenge 3,01 s, deshalb dauert die Animation jetzt 3400 ms. */
-    hut:            { ton: "cowboy",    dauer: 3400, laut: 0.6 },
+    hut:            { ton: "cowboy",    dauer: 4200, laut: 0.6 },
     /* RUNDE 75 — die Sonnenbrille. Kein neuer Ton noetig: „swoosh"
        (1,01 s) ist das Wischen, mit dem sie aufs Gesicht rutscht,
        und das „bling" setzt den Glanz auf das Glas — es kommt
@@ -26357,10 +26367,18 @@
        weg — war sie aber nicht: hier stand sie ein zweites Mal, mit
        demselben Zeichen wie der Strohhalm. Als BEFEHL bleibt
        „/pusterohr" natuerlich; nur die doppelte Kachel ist fort. */
-    ["\ud83d\udca1", "Birne",    "gluehbirne"],
     /* RUNDE 72 — XANDER: „Die zwei Gluehbirnen-Animationen sollten
-       zwei einzelne Kacheln sein." */
-    ["\ud83d\udd0c", "Birne raus", "birneraus"],
+       zwei einzelne Kacheln sein."
+       RUNDE 76 — und jetzt wieder andersherum: „die Birne hat diese
+       zwei Kacheln, Birne an und Birne raus — das ist beides in der
+       Birne drin, wenn man drauf klickt, dass man das auswaehlen
+       kann. Entweder oder."
+       Also EINE Kachel mit zwei Eintraegen darunter, genau wie bei
+       der Bombe und beim Fenster. Beide Befehle (/gluehbirne und
+       /birneraus) bleiben unveraendert. */
+    ["\ud83d\udca1", "Birne", "gluehbirne", false,
+      [["\ud83d\udca1", "Birne an",  "gluehbirne"],
+       ["\ud83d\udd0c", "Birne raus", "birneraus"]]],
     ["\ud83d\udc59", "Ups!",     "entbloessung"],
     /* RUNDE 19: „Vielleicht kannst du noch auf das Profilbild einen
        Cowboyhut setzen" · „so ein Countdown im Profilbild … und dann
@@ -30162,6 +30180,38 @@
          in Prozent seiner EIGENEN Breite, und die ist 46 % der
          Blende. Der Umrechnungsfaktor ist also 100/46 = 2,174. */
       schicht.style.setProperty("--mitte", (-r.x * 38 * 2.174).toFixed(1) + "%");
+      /* =============================================================
+         RUNDE 76 — DIE SPUR LAEUFT DAHIN, WO DER KLECKS HINLAEUFT
+         -------------------------------------------------------------
+         XANDER: „Der Schneeball hat ne Schleifspur, die nach unten
+         geht, waehrend der Schneeball nach rechts runter[rutscht]."
+
+         Er hat recht, und es sind zwei Fehler auf einmal:
+         · DIE RICHTUNG. Der Klecks rutscht schraeg (nach unten UND
+           zur Bildmitte hin, siehe --mitte), die Rinne wuchs aber
+           nur in der HOEHE — also senkrecht. Ab dem ersten Stueck
+           liefen die beiden auseinander.
+         · DIE LAENGE. Die Rinne wuchs auf 104 % der Bildhoehe, der
+           Klecks rutscht aber nur 105 % seiner EIGENEN Hoehe, und
+           die ist 40 % der Blende — also 42 %. Die Spur war damit
+           zweieinhalbmal so lang wie der Weg, den der Klecks
+           zuruecklegt, und endete weit unter ihm im Leeren.
+
+         GERECHNET, beides in Prozent der Blende:
+             dx = -r.x * 38      (der Weg zur Mitte)
+             dy = 105 % * 40 % = 42   (der Weg nach unten)
+         Daraus der Winkel gegen die Senkrechte und die Laenge:
+             --spurdreh = atan2(dx, dy)
+             --spurlang = Wurzel(dx² + dy²)
+         Die Rinne wird um ihren OBEREN Punkt gedreht (der liegt am
+         Auftreffpunkt und bleibt dort) und waechst auf genau diese
+         Laenge. Damit liegt ihr unteres Ende immer genau da, wo der
+         Klecks gerade ist. */
+      const spurX = -r.x * 38, spurY = 42;
+      schicht.style.setProperty("--spurdreh",
+        (Math.atan2(spurX, spurY) * 180 / Math.PI).toFixed(1) + "deg");
+      schicht.style.setProperty("--spurlang",
+        Math.hypot(spurX, spurY).toFixed(1) + "%");
       const blende = lcZpBlende(schicht);
       /* Der Klecks und die Rinne bleiben INNEN — sie gehoeren aufs
          Bild. Nur der fliegende Ball und die stiebenden Flocken
@@ -36390,7 +36440,27 @@
         blasen += '<i class="lc-stroh-blase" style="animation-delay:'
           + (0.3 + i * 0.28).toFixed(2) + 's"></i>';
       }
-      schicht.innerHTML = '<span class="lc-stroh-rohr">' + blasen + "</span>";
+      /* =============================================================
+         RUNDE 76 — DER HALM KOMMT VON DER SEITE, AUF DER ICH SITZE
+         -------------------------------------------------------------
+         XANDER: „wenn ich jemandem sein Getraenk aufblasen will, dann
+         sollen die Leute, die rechts von mir sitzen, von LINKS mit
+         dem Strohhalm aufgeblasen werden, weil ich bin ja auf der
+         linken Seite. Deswegen macht es keinen Sinn, wenn der
+         Strohhalm auf der rechten Seite zu sehen ist. Auch das
+         Austrinken kommt von der linken Seite dann."
+
+         Der Halm hing fest an `right: -30%` — er kam IMMER von
+         rechts, egal wo der Werfende sass. lcWurfRichtung liefert den
+         Einheitsvektor vom Getroffenen ZUM Handelnden; ist sein x
+         negativ, sitzt er links, und dann wird der Halm gespiegelt.
+         Gespiegelt wird nicht der Halm selbst (er traegt eigene
+         Drehungen und eine Animation, die dabei durcheinanderkaeme),
+         sondern eine Huelle um ihn: `.lc-halm-seite`. */
+      const rS = lcWurfRichtung(platz);
+      if (rS && rS.x < 0) schicht.classList.add("lc-halm-links");
+      schicht.innerHTML = '<span class="lc-halm-seite">'
+        + '<span class="lc-stroh-rohr">' + blasen + "</span></span>";
     }, 3000, "strohhalm");
   }
 
@@ -36479,8 +36549,27 @@
          einem Mund, das ueber dem Profilbild lag. Gemeint war, dass
          SEIN Bild blubbert, nicht dass ein zweites Gesicht davor
          steht. Der Halm bleibt, das Gesicht ist weg. */
+      /* =============================================================
+         RUNDE 76 — DER HALM KOMMT VON DER SEITE, AUF DER ICH SITZE
+         -------------------------------------------------------------
+         XANDER: „wenn ich jemandem sein Getraenk aufblasen will, dann
+         sollen die Leute, die rechts von mir sitzen, von LINKS mit
+         dem Strohhalm aufgeblasen werden, weil ich bin ja auf der
+         linken Seite. Deswegen macht es keinen Sinn, wenn der
+         Strohhalm auf der rechten Seite zu sehen ist. Auch das
+         Austrinken kommt von der linken Seite dann."
+
+         Der Halm hing fest an `right: -30%` — er kam IMMER von
+         rechts, egal wo der Werfende sass. lcWurfRichtung liefert den
+         Einheitsvektor vom Getroffenen ZUM Handelnden; ist sein x
+         negativ, sitzt er links, und dann wird der Halm gespiegelt.
+         Gespiegelt wird nicht der Halm selbst (er traegt eigene
+         Drehungen und eine Animation, die dabei durcheinanderkaeme),
+         sondern eine Huelle um ihn: `.lc-halm-seite`. */
+      const rB = lcWurfRichtung(platz);
+      if (rB && rB.x < 0) schicht.classList.add("lc-halm-links");
       schicht.insertAdjacentHTML("beforeend",
-        '<span class="lc-blubber-rohr"></span>');
+        '<span class="lc-halm-seite"><span class="lc-blubber-rohr"></span></span>');
     }, 3600, "blubbern");
   }
 
@@ -36766,15 +36855,48 @@
       /* „der Ball rollt von meinem Platz los" — also die wirkliche
          Entfernung, nicht die feste 240. */
       lcWurfSetzen(schicht, platz, lcWurfWeite(platz, 240));
+      /* =============================================================
+         RUNDE 76 — DER GETROFFENE FLIEGT IN DIE STOSSRICHTUNG
+         -------------------------------------------------------------
+         XANDER: „achte auch darauf, wo ich hin schiesse, dass die
+         Richtung immer stimmt … und wie der andere aus der Richtung
+         heraus beeinflusst wird."
+
+         `lcWeggestossen` schob den Getroffenen mit einem festen
+         `translate(-16%, 0)` — also IMMER nach links, egal aus
+         welcher Richtung gestossen wurde. Jetzt steht die Richtung
+         als Zahl am PLATZ: lcWurfRichtung zeigt vom Getroffenen zum
+         Stossenden, die Stossrichtung ist also das Negative davon.
+         Sie muss am Platz stehen und nicht an der Effektschicht,
+         weil `.lc-kreis` ein Kind des Platzes ist und CSS-Variablen
+         nur nach unten vererbt werden — von einem Geschwisterkind
+         sieht er nichts. */
+      const rSt = lcWurfRichtung(platz);
+      platz.style.setProperty("--stossx", (-(rSt ? rSt.x : 1)).toFixed(3));
+      platz.style.setProperty("--stossy", (-(rSt ? rSt.y : 0)).toFixed(3));
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
         /* Beim Billard rollt die Kugel ueber das Feld (siehe
            lcBillard); hier bleibt nur das Kegeln, und dort faellt die
            Kugel ja auch nicht quer durch die Bahn. */
-        kreis.classList.remove("lc-weggestossen");
+        /* RUNDE 76 — XANDER: „Das Bild fliegt schon um, bevor der
+           Bowling-Effekt mit der Animation ueberhaupt sichtbar wird.
+           Das macht keinen Sinn."
+           NACHGERECHNET: „lcWeggestossen" setzt sich bei 30 % von
+           2,4 s in Bewegung, also bei 720 ms. Die Bowlingkugel
+           trifft aber erst bei 58 % = 1392 ms (lcBowlingRolltR73,
+           dort steht es sogar dran). Der Getroffene flog also
+           672 ms vor dem Einschlag los.
+           Beim Billard trifft die Kugel bei 44 % (lcBillardKugelR74)
+           — eine gemeinsame Kurve kann also gar nicht fuer beide
+           stimmen. Deshalb bekommt das Bowling eine eigene Klasse
+           mit eigenen Zeiten; das Billard behaelt seine. */
+        const stossKlasse = art === "billard"
+          ? "lc-weggestossen" : "lc-weggestossen-kegel";
+        kreis.classList.remove("lc-weggestossen", "lc-weggestossen-kegel");
         void kreis.offsetWidth;
-        kreis.classList.add("lc-weggestossen");
-        setTimeout(() => kreis.classList.remove("lc-weggestossen"), 2400);
+        kreis.classList.add(stossKlasse);
+        setTimeout(() => kreis.classList.remove(stossKlasse), 2400);
       }
       schicht.innerHTML = art === "billard"
         ? '<span class="lc-stoss-kugel lc-stoss-weiss"></span>'
@@ -38030,7 +38152,16 @@
          nicht natuerlich beim Aufprall."
          Der Treffer liegt bei 1280 ms (LC_TREFFER.pusterohr): dort
          jetzt ein nasses Klatschen, danach das kurze „au". */
-      lcTonSpaeter("spucktreffer", 1280, 0.7);
+      /* RUNDE 76 — XANDER: „den Spuckball kannst du an sich so
+         lassen … aber da brauchst du nicht zwei Ekelgeraeusche haben,
+         das sollst du nur den Maenner- und den Frauenekel haben."
+         HIER LAG DAS ZWEITE: „spucktreffer" ist ein nasses Klatschen
+         und klingt eben auch nach Ekel — zusammen mit dem Ekellaut
+         340 ms spaeter waren es zwei. Der Einschlag steckt ohnehin
+         schon im Planton („spuckkugel", 4 s, die Kugel fliegt und
+         trifft). Beim ZWILLE bleibt „spucktreffer" stehen: dort ist
+         er der Aufprall eines Geschosses und kein Ekel.
+         lcTonSpaeter("spucktreffer", 1280, 0.7);  <- entfaellt */
       /* RUNDE 70 — XANDER: „ich glaub das Ekelgeraeusch von dem Mann
          kommt ein bisschen frueh, und das ist noch dieses alte
          komische Uni identifizierbar Geraeusch drin."
@@ -38136,7 +38267,38 @@
           wieviel++;
         });
         if (paare.length) {
+          /* =========================================================
+             RUNDE 76 — DIE AUGEN SPRINGEN BEIM SCROLLEN NICHT MEHR
+             ---------------------------------------------------------
+             XANDER: „wenn man in dem Dunkeln die Seite nach oben
+             scrollt, dann springen die Augen. Sie sind zwar am Platz,
+             aber sie springen kurz mit und positionieren sich dann
+             wieder ein."
+
+             Er beschreibt genau einen Bildtakt Verzug, und der hat
+             einen Grund: seit Runde 73 werden die Augen in jedem
+             Bildtakt neu gesetzt — aber RELATIV ZUR BUEHNE
+             (`- hk.left`, `- hk.top`). Die Buehne ist selbst
+             `position: fixed` und wird in ihrem EIGENEN Bildtakt auf
+             den sichtbaren Teil der Karte nachgezogen. Laeuft der
+             spaeter, sind die Augen fuer einen Takt um genau das
+             verschoben, was die Buehne gerade gewandert ist — und
+             das sieht man als Springen.
+
+             `position: fixed` waere die naheliegende Loesung und ist
+             hier trotzdem falsch: die Buehne traegt
+             `transform: translateZ(0)` und `contain: paint`, und
+             damit haengt jedes `fixed` in ihr AN IHR und nicht am
+             Bildschirm — gewonnen waere nichts.
+
+             Was hilft, ist die Reihenfolge: die Buehne wird in
+             UNSEREM Bildtakt zuerst nachgezogen (lcBuehneSetzen) und
+             erst danach werden die Augen gesetzt. Damit lesen beide
+             im selben Takt denselben Stand, und der Versatz kann gar
+             nicht mehr entstehen. lcBuehneSetzen rechnet nur und
+             schreibt vier Zahlen — das kostet nichts. */
           const setzenA = () => {
+            try { lcBuehneSetzen(); } catch (e) {}
             const hk = heim.getBoundingClientRect();
             paare.forEach((p) => {
               if (!p.el.isConnected) { p.paar.style.opacity = "0"; return; }
@@ -38216,9 +38378,17 @@
     void kreis.offsetWidth;
     kreis.classList.add("lc-ausgedreht");
     setTimeout(() => kreis.classList.remove("lc-ausgedreht"), 2200);
-    /* Die Fassung geht mit heraus — aber erst, wenn der Kontakt
-       abgerissen ist, nicht schon beim ersten Dreh. */
+    /* RUNDE 76 — XANDER: „und wenn man es dunkel macht, soll die
+       Fassung auch zu sehen sein."
+       Beim HERAUSDREHEN gehoert sie dazu — man dreht ja aus einer
+       Fassung heraus. Bisher war sie nur dann da, wenn vorher jemand
+       eingedreht hatte (lcBirneFassungBleibt); seit Runde 76 bleibt
+       sie nach dem Eindrehen nicht mehr haengen, und damit waere beim
+       Ausdrehen gar keine mehr da. Also wird sie hier fuer die Dauer
+       des Herausdrehens gesetzt — und geht mit heraus, aber erst,
+       wenn der Kontakt abgerissen ist, nicht schon beim ersten Dreh. */
     const platz = kreis.closest(".lc-platz");
+    if (platz && !platz.querySelector(".lc-birne-halt")) lcBirneFassungBleibt(platz);
     setTimeout(() => platz?.querySelector(".lc-birne-halt")?.remove(), 1500);
     /* Der Stromausfall kommt, wenn der Kontakt abreisst — das ist
        bei 62 % von 2,2 s, also bei 1364 ms. Und er haelt jetzt an,
@@ -38302,8 +38472,17 @@
           kreis.classList.remove("lc-eingedreht");
           /* Sie brennt weiter — bis jemand sie herausdreht. */
           kreis.classList.add("lc-birne-an");
-          /* … und die Fassung bleibt sichtbar an ihr haengen. */
-          lcBirneFassungBleibt(platz);
+          /* RUNDE 76 — HIER STAND lcBirneFassungBleibt(platz), und
+             genau das wollte Xander nicht:
+             „sie soll am Ende auch nicht auf der Glühbirne bleiben.
+             Also wenn es leuchtet und man kriegt das Profilbild
+             wieder an, soll sich das resetten und die Fassung soll
+             auch wieder verschwinden."
+             Die Fassung gehoert zum EINDREHEN. Sobald die Birne
+             brennt, ist das Eindrehen vorbei — der Schein bleibt
+             (lc-birne-an), die Fassung geht. Weil sie in der Schicht
+             von lcAmPlatz liegt, verschwindet sie mit ihr von
+             selbst; es ist also nichts mehr zu tun. */
           /* RUNDE 73: „dann wird es besonders hell im Raum, so dass
              die Leute geblendet sind." Das gilt fuer die Birne am
              EIGENEN Platz — sie ist ja die Raumbeleuchtung. */
@@ -38540,7 +38719,7 @@
         kreis.classList.remove("lc-behutet");
         void kreis.offsetWidth;
         kreis.classList.add("lc-behutet");
-        setTimeout(() => kreis.classList.remove("lc-behutet"), 3400);
+        setTimeout(() => kreis.classList.remove("lc-behutet"), 4200);
       }
       schicht.innerHTML =
         '<svg class="lc-hut-bild" viewBox="0 0 140 76">'
@@ -38569,14 +38748,29 @@
         /* DIE KREMPE, an den Seiten hochgerollt: die Oberkante steigt
            von der Mitte zu beiden Spitzen steil an, die Unterkante
            haengt in der Mitte durch. */
-        + '<path class="lc-hut-krempe" d="M5 41 C24 60 50 66 70 66 C90 66 116 60 135 41'
-        + ' C124 58 100 74 70 74 C40 74 16 58 5 41 Z"'
+        /* RUNDE 76 — XANDER: „Der Hut vom Cowboy sieht auch noch
+           nicht realistisch aus."
+           NACHGESEHEN an dem, was hier stand: die Krempe lief an
+           beiden Seiten in einen PUNKT aus (Ober- und Unterkante
+           trafen sich bei x = 5 bzw. 135). Ein Filzhut hat aber
+           ueberall dieselbe Dicke — auch an der Spitze. Von vorn
+           sieht man dort die KANTE des Filzes, und die ist rund.
+           Jetzt laeuft die Unterkante nicht mehr in die Oberkante
+           hinein, sondern beide werden an den Spitzen mit einem
+           eigenen Bogen verbunden: 7 Einheiten dick, so dick wie in
+           der Mitte. Dazu sind die Spitzen hoeher gezogen (38 statt
+           41) und die Krempe haengt in der Mitte tiefer durch — das
+           ist die starke Rollung, an der man einen Cowboyhut von
+           vorn erkennt. */
+        + '<path class="lc-hut-krempe" d="M8 38 C26 58 50 64 70 64'
+        + ' C90 64 114 58 132 38 C136 41 137 45 134 48'
+        + ' C116 68 98 74 70 74 C42 74 24 68 6 48 C3 45 4 41 8 38 Z"'
         + ' fill="url(#hut2)" stroke="#4e310f" stroke-width="2.2"'
         + ' stroke-linejoin="round"/>'
         /* Die Oberseite der Krempe ist heller als die Unterseite —
            daran sieht man die Rollung. */
-        + '<path d="M5 41 C24 60 50 66 70 66 C90 66 116 60 135 41'
-        + ' C120 52 98 58 70 58 C42 58 20 52 5 41 Z" fill="url(#hut1)"/>'
+        + '<path d="M8 38 C26 58 50 64 70 64 C90 64 114 58 132 38'
+        + ' C118 52 98 58 70 58 C42 58 22 52 8 38 Z" fill="url(#hut1)"/>'
         /* DIE KRONE mit der Cattleman-Falte: links ein Grat, in der
            Mitte die Senke, rechts wieder ein Grat. */
         /* Die Grate sind RUND, nicht spitz — zwei Spitzen saehen aus
@@ -38628,7 +38822,7 @@
              aussieht und nicht wie ausgeschnitten,
            · und der Schatten unter der Krempe, der zeigt, dass sie
              ueber dem Kopf steht. */
-        + '<path d="M9.5 42.8 C27 59 51 63.2 70 63.2 C89 63.2 113 59 130.5 42.8"'
+        + '<path d="M12.5 41.5 C29 57 51 61.6 70 61.6 C89 61.6 111 57 127.5 41.5"'
         + ' fill="none" stroke="rgba(255,236,196,.55)" stroke-width="1.1"'
         + ' stroke-dasharray="3 3.2" stroke-linecap="round"/>'
         + '<path d="M47 20 C52 15.2 60 14.2 66 16.4 C59 17.8 52 20.8 49 25.8 Z"'
@@ -38675,7 +38869,7 @@
         + '<path d="M26 22.6 C25 26 25 30 26.4 33.4 M33 21.6 C32 25.4 32 30 33.4 33.6"'
         + ' fill="none" stroke="#b98054" stroke-width="1.1" opacity=".7"/>'
         + "</svg>";
-    }, 3400, "hut");
+    }, 4200, "hut");
   }
 
   /* --- DIE ZEITBOMBE ---------------------------------------------------
@@ -39668,6 +39862,25 @@
     /* Der Stoss kommt aus der Richtung des Spielers. */
     return lcAmPlatz(wen, "lc-billard", (schicht, platz) => {
       lcWurfSetzen(schicht, platz, 240);
+      /* =============================================================
+         RUNDE 76 — DER GETROFFENE FLIEGT IN DIE STOSSRICHTUNG
+         -------------------------------------------------------------
+         XANDER: „achte auch darauf, wo ich hin schiesse, dass die
+         Richtung immer stimmt … und wie der andere aus der Richtung
+         heraus beeinflusst wird."
+
+         `lcWeggestossen` schob den Getroffenen mit einem festen
+         `translate(-16%, 0)` — also IMMER nach links, egal aus
+         welcher Richtung gestossen wurde. Jetzt steht die Richtung
+         als Zahl am PLATZ: lcWurfRichtung zeigt vom Getroffenen zum
+         Stossenden, die Stossrichtung ist also das Negative davon.
+         Sie muss am Platz stehen und nicht an der Effektschicht,
+         weil `.lc-kreis` ein Kind des Platzes ist und CSS-Variablen
+         nur nach unten vererbt werden — von einem Geschwisterkind
+         sieht er nichts. */
+      const rSt2 = lcWurfRichtung(platz);
+      platz.style.setProperty("--stossx", (-(rSt2 ? rSt2.x : 1)).toFixed(3));
+      platz.style.setProperty("--stossy", (-(rSt2 ? rSt2.y : 0)).toFixed(3));
       schicht.innerHTML = '<span class="lc-stoss-kugel lc-stoss-weiss"></span>'
                         + '<span class="lc-stoss-queue"></span>';
       /* ---- DREI ODER MEHR: DER STOSS GEHT IN DEN PULK ---- */

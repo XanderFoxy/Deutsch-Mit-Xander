@@ -191,8 +191,13 @@ pruefe("und sonst quietscht nur noch die Bremse beim Fahren",
 pruefe("das Geld faellt schneller",
   /\(1\.9 \+ Math\.random\(\) \* 1\.4\)/.test(js)
   && /\(1\.25 \+ Math\.random\(\) \* 0\.85\)/.test(js));
+/* RUNDE 76 — der Kippwinkel ist jetzt 74 statt 86 Grad. XANDER:
+   „sie soll etwas hoeher landen, nicht den Namen verdecken, sondern
+   flach aufliegen." Bei 86 Grad war von ihr gar nichts mehr zu sehen
+   (nachgesehen: nur noch der Schatten), bei 74 liegt sie als flache
+   Ellipse da. Kleiner wird sie weiterhin nicht. */
 pruefe("die Muenze wird beim Landen nicht mehr kleiner",
-  /rotateX\(86deg\) rotateY\(4500deg\) scale\(\.9\)/.test(css)
+  /rotateX\(74deg\) rotateY\(4500deg\) scale\(\.9\)/.test(css)
   && !/rotateY\(4500deg\) scale\(\.55\)/.test(css));
 pruefe("die Trommel hoert auf, wenn der Ton aufhoert",
   /\}, marsch \? 1600 : 1400, marsch \? "marsch" : "trommel"\);/.test(js)
@@ -222,17 +227,20 @@ pruefe("und er ruckelt nicht mehr — keine Kurve ueber die ganze Animation",
 /* RUNDE 75 — die Animation dauert 3,4 s statt 2,8 s, weil der neue
    Ruf 3,01 s lang ist. Der Aufschlag liegt damit bei 16,9 % statt
    20,5 % — dieselben 575 ms. */
+/* RUNDE 76 — 4,2 s statt 3,4 s, damit die Hand NACH dem Ton kommt
+   (XANDER: „die Hand … soll nach den Geraeuschen kommen"). Der
+   Aufschlag liegt damit bei 13,7 % — dieselben 575 ms. */
 pruefe("der Hut setzt auf, wenn man ihn aufsetzen hoert",
-  /animation: lcHutR75 3\.4s linear both;/.test(css)
-  && /16\.9% \{ transform: translateY\(0\)/.test(css)
-  && /hut:            \{ ton: "cowboy",    dauer: 3400/.test(js));
+  /animation: lcHutR76 4\.2s linear both;/.test(css)
+  && /13\.7% \{ transform: translateY\(0\)/.test(css)
+  && /hut:            \{ ton: "cowboy",    dauer: 4200/.test(js));
 /* RUNDE 75 — XANDER: „die Hand, die ihn zurechtrueckt, das soll am
    Schluss kommen." Sie kommt jetzt bei 72 % und zieht bei 81 %; vorher
    war sie bei 26 % da und bei 54 % schon wieder weg. */
 pruefe("und eine Hand rueckt ihn ganz zum Schluss zurecht",
-  /lc-hut-hand/.test(js) && /@keyframes lcHutHandR75/.test(css)
-  && /0%, 72%  \{ opacity: 0;/.test(css)
-  && /81%      \{ opacity: 1;/.test(css));
+  /lc-hut-hand/.test(js) && /@keyframes lcHutHandR76/.test(css)
+  && /0%, 76%  \{ opacity: 0;/.test(css)
+  && /79%      \{ opacity: 1;/.test(css));
 pruefe("die Zwille spannt, saust und schlaegt ein",
   /lcTonSpaeter\("gummizug", 180, 0\.95\);/.test(js)
   && /lcTonSpaeter\("swoosh", 1290, 0\.55\);/.test(js)

@@ -10665,8 +10665,41 @@ window.LiveChat = (function () {
         : " zieht " + wenH.name + " mit dem Lasso auf Platz " + nummerH)
         + (dortH ? " \u2014 " + dortH.name + " rutscht auf " + seinerH.nummer : "")
         + "  " + (wieH === "heber" ? "\ud83e\ude9d" : "\ud83e\udd20");
-      senden({ art: "sitzplatz", ordnung: sitzTausch, text: satzH });
-      melden();
+      /* =================================================================
+         RUNDE 76 — ERST DIE ANIMATION, DANN DER PLATZWECHSEL
+         -----------------------------------------------------------------
+         XANDER: „Beim Lasso: erst soll derjenige mit dem Lasso gefangen
+         werden, dann soll er von dieser Position herangezogen werden. Er
+         soll nicht einfach von der Position, wo er ist, zu mir springen
+         und dann zu das Lasso fest — so soll das nicht sein … Genauso
+         bei dem Angeln. Die Animation kommt immer erst dann, wenn
+         derjenige schon auf dem Platz sitzt. Das ist nicht mehr witzig,
+         dann macht es keinen Spass."
+
+         ER HAT RECHT, UND DIE URSACHE STAND GENAU HIER: die neue
+         Sitzordnung ging ZUERST hinaus, die Animation danach. Jedes
+         Geraet hat also erst die Sitzreihe neu gezeichnet — die Person
+         SITZT dann schon auf dem Zielplatz — und liess erst danach das
+         Lasso fliegen. Was man sieht, ist genau das, was er
+         beschreibt: springen, dann fesseln.
+
+         Jetzt umgekehrt. Die Animation geht zuerst hinaus, und der
+         Platzwechsel kommt erst, wenn sie ihr Ziel erreicht hat:
+           · Lasso (lcZuMirR51, 2,4 s): der Ruck ist bei 74 % = 1776 ms
+             vorbei, danach steht er auf meiner Seite. 2300 ms.
+           · Angel (lcGeangeltR74, 2,4 s): abgesetzt bei 88 % = 2112 ms.
+             2250 ms.
+         Die Zeiten stehen hier und in korrekturen.css an derselben
+         Stelle; wer eine aendert, muss die andere mitaendern. */
+      var raumH = zustand.raum;
+      var schickenH = function () {
+        try {
+          if (zustand.raum !== raumH) return;
+          senden({ art: "sitzplatz", ordnung: sitzTausch, text: satzH });
+          melden();
+        } catch (e) {}
+      };
+      setTimeout(schickenH, wieH === "lasso" ? 2300 : 2250);
       /* Und die Angel braucht das ZIEL: sie zieht dorthin, nicht zu
          mir. Ohne diese Zahl koennte die Animation gar nicht wissen,
          wohin sie angeln soll. */

@@ -224,8 +224,11 @@ pruefe("und der tote R18-Block gibt den Ton nicht mehr an",
   css.lastIndexOf(".lc-gedreht { animation: lcMuenzeR72") > css.lastIndexOf("animation: lcMuenzeR53"));
 pruefe("die Bremsung steckt in den Werten",
   /rotateY\(855deg\)/.test(css) && /rotateY\(4455deg\)/.test(css));
+/* RUNDE 76 — der Aufschlag liegt zeitlich unveraendert bei 85 %; nur
+   die Fallhoehe ist kleiner, weil die Muenze nicht mehr auf dem
+   Namen landen soll (61 % war genau die Mitte der Namenszeile). */
 pruefe("der Aufschlag liegt auf der gemessenen Stelle im Ton",
-  /85%   \{ transform: translateY\(61%\)/.test(css));
+  /85%   \{ transform: translateY\(44%\)/.test(css));
 pruefe("und die Animation dauert so lange wie die Aufnahme",
   /\}, 5400, "muenze"\);/.test(js));
 
@@ -251,8 +254,14 @@ pruefe("und blendet erst dort aus, nicht unterwegs",
 pruefe("und er rutscht dabei zur Mitte, nicht an die Kante",
   /schicht\.style\.setProperty\("--mitte", \(-r\.x \* 38 \* 2\.174\)/.test(js)
   && /translateX\(calc\(var\(--mitte, 0%\) \* \.42\)\)/.test(css));
-pruefe("die Spur waechst mit", /lcSchneeRinneR72/.test(css)
-  && /height: 101%/.test(css));
+/* RUNDE 76 — die Spur waechst weiter mit, aber nicht mehr auf eine
+   feste Hoehe: sie folgt jetzt dem Weg des Kleckses (--spurlang) und
+   zeigt in seine Richtung (--spurdreh). XANDER: „Der Schneeball hat
+   ne Schleifspur, die nach unten geht, waehrend der Schneeball nach
+   rechts runter[rutscht]." Die alten 101 % waren ausserdem
+   zweieinhalbmal so lang wie sein Weg. */
+pruefe("die Spur waechst mit", /lcSchneeRinneR76/.test(css)
+  && /90%     \{ height: var\(--spurlang, 42%\); opacity: \.95; \}/.test(css));
 pruefe("und er bekommt die Zeit dafuer", /\}, 4600, "schneeball"\);/.test(js));
 
 console.log("\nDIE SPRUNGFEDER TRIFFT DIE FELDER");

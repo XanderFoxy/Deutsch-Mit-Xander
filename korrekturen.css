@@ -11495,12 +11495,18 @@ body.lc-schreibt .tutor-reiter {
   position: absolute;
   left: calc(50% + var(--px, 0%));
   top: calc(50% + var(--py, 0%));
-  width: 15%;
-  margin-left: -7.5%;
+  width: 18%;
+  margin-left: -9%;
   height: 0;
   border-radius: 0 0 50% 50% / 0 0 30% 30%;
+  /* RUNDE 76 — die Spur lief nach unten hin auf DURCHSICHTIG aus und
+     war damit auf dem hellen Bild schon nach dem ersten Drittel nicht
+     mehr zu sehen; uebrig blieb ein kleiner Keil am Auftreffpunkt.
+     Jetzt bleibt sie bis zum Ende deckend und wird erst ganz unten
+     etwas duenner — dort, wo der Klecks sie gerade erst gezogen hat. */
   background: linear-gradient(to bottom,
-    rgba(255,255,255,.95), rgba(226,240,251,.85) 70%, rgba(226,240,251,0));
+    rgba(255,255,255,.96), rgba(226,240,251,.92) 82%, rgba(214,233,248,.7));
+  box-shadow: 0 0 3px rgba(150, 185, 215, .35);
   animation: lcSchneeRinne 3.6s cubic-bezier(.45, 0, .55, 1) both;
 }
 /* Die Rinne ist die SCHMIERE, die der rutschende Klecks hinter sich
@@ -11541,19 +11547,54 @@ body.lc-schreibt .tutor-reiter {
   top: 26%;
   width: 40%;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
-  animation: lcBumerangFlug 2.6s cubic-bezier(.35, 0, .25, 1) both;
+  /* RUNDE 76 — kein cubic-bezier mehr: die Beschleunigung steckt in
+     den Werten, damit der Rueckflug wirklich dort ankommt, wo er
+     ankommen soll. */
+  animation: lcBumerangFlug 2.6s linear both;
 }
-/* Hin, treffen, und WIEDER ZURUECK — das ist ja der ganze Witz. */
+/* Hin, treffen, und WIEDER ZURUECK — das ist ja der ganze Witz.
+   =================================================================
+   RUNDE 76 — ER FLIEGT JETZT WIRKLICH BIS ZU MIR
+   -----------------------------------------------------------------
+   XANDER: „Der Bumerang soll auch richtig zu mir zurueckfliegen und
+   nicht nur auf dem halben Weg."
+
+   NACHGESEHEN, und er hat recht: bei 70 % war er erst bei 55 % des
+   Rueckwegs, und die letzten 45 % lagen in den letzten 30 % der
+   Zeit — WAEHREND er ausblendete (`opacity: 0` steht am Ende
+   derselben Strecke). Sichtbar war er damit ungefaehr bis zur
+   Haelfte; den Rest hat nie jemand gesehen.
+
+   Jetzt kommt er bei 90 % ANGEKOMMEN an und ist dort noch voll zu
+   sehen; ausgeblendet wird erst in den letzten 10 %, wenn er schon
+   bei mir liegt. Der Rueckweg ist ausserdem gleichmaessig verteilt
+   (0,22 / 0,50 / 0,78 / 1,00) und wird nach hinten langsamer — ein
+   Bumerang kommt nicht mit Vollgas an, er trudelt aus.
+   ================================================================= */
 @keyframes lcBumerangFlug {
   0%   { opacity: 0; transform: translate(var(--wx, 220%), var(--wy, 0%)) rotate(0deg) scale(.5); }
-  12%  { opacity: 1; }
+  8%   { opacity: 1;
+         transform: translate(calc(var(--wx, 220%) * .78), calc(var(--wy, 0%) * .78))
+                    rotate(220deg) scale(.62); }
+  18%  { transform: translate(calc(var(--wx, 220%) * .50), calc(var(--wy, 0%) * .50))
+                    rotate(470deg) scale(.78); }
+  26%  { transform: translate(calc(var(--wx, 220%) * .22), calc(var(--wy, 0%) * .22))
+                    rotate(700deg) scale(.95); }
+  /* 34 % = 884 ms: der Treffer. */
   34%  { transform: translate(0, 0) rotate(900deg) scale(1.1); }
   40%  { transform: translate(6%, 6%) rotate(1020deg) scale(1); }
-  70%  { opacity: 1;
-         transform: translate(calc(var(--wx, 220%) * .55), calc(var(--wy, 0%) * .55))
-                    rotate(1700deg) scale(.8); }
+  /* Und zurueck — dieselben Stuetzstellen rueckwaerts. */
+  50%  { transform: translate(calc(var(--wx, 220%) * .22), calc(var(--wy, 0%) * .22))
+                    rotate(1240deg) scale(.95); }
+  62%  { transform: translate(calc(var(--wx, 220%) * .50), calc(var(--wy, 0%) * .50))
+                    rotate(1500deg) scale(.85); }
+  76%  { transform: translate(calc(var(--wx, 220%) * .78), calc(var(--wy, 0%) * .78))
+                    rotate(1780deg) scale(.72); }
+  /* 90 % = 2340 ms: ANGEKOMMEN, und noch voll zu sehen. */
+  90%  { opacity: 1;
+         transform: translate(var(--wx, 220%), var(--wy, 0%)) rotate(2060deg) scale(.6); }
   100% { opacity: 0;
-         transform: translate(var(--wx, 220%), var(--wy, 0%)) rotate(2200deg) scale(.5); }
+         transform: translate(var(--wx, 220%), var(--wy, 0%)) rotate(2140deg) scale(.56); }
 }
 .lc-bumerang-treffer {
   position: absolute;
@@ -12808,8 +12849,31 @@ body.lc-schreibt .tutor-reiter {
 }
 .lc-platte-arm {
   position: absolute;
-  right: -34%;
-  top: -12%;
+  /* =================================================================
+     RUNDE 76 — DIE NADEL LIEGT JETZT AUF DER PLATTE
+     -----------------------------------------------------------------
+     XANDER: „Der Tonarm von dem Plattenspieler sitzt nicht richtig
+     auf dem Plattenspieler drauf."
+
+     NACHGERECHNET aus den alten Werten (right -34 %, top -12 %,
+     width 62 %, viewBox 70 x 60, also Hoehe 53 % der Bildbreite):
+       linke Kante des Arms  = 100 - 34 - 62 = 72 %
+       Nadelspitze im Bild   = x 17/70, y 20/60
+       also im Profilbild    = x 72 + 15,1 = 87 %   y -12 + 17,6 = 6 %
+     Der Punkt (87 % | 6 %) liegt in der oberen rechten ECKE — dort
+     ist gar keine Platte mehr: der Bildkreis reicht auf Hoehe 6 %
+     nur von 30 bis 70 % Breite. Die Nadel schwebte also neben der
+     Platte in der Luft.
+
+     Soll-Punkt ist die aeussere Rille, hier (78 % | 32 %). Daraus
+     rueckwaerts:
+       linke Kante = 78 - 15,1 = 62,9 %  ->  right: -24,9 %
+       obere Kante = 32 - 17,6 = 14,4 %  ->  top: 14,4 %
+     Der Drehpunkt (88 % | 16 % des Arms) liegt damit bei
+     (117,5 % | 22,9 %) — also ausserhalb des Bildes rechts, genau
+     dort, wo bei einem Plattenspieler das Armlager sitzt. */
+  right: -24.9%;
+  top: 14.4%;
   width: 62%;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .4));
   transform-origin: 88% 16%;
@@ -12822,22 +12886,22 @@ body.lc-schreibt .tutor-reiter {
   animation: lcPlatteArm 3.6s linear both;
 }
 @keyframes lcPlatteArm {
-  /* RUNDE 75 — XANDER: „Der Plattenteller ist immer noch nicht von
-     seiner Drehanimation an der Stelle, wo der Sound auch das Drehen
-     hoerbar macht. Er muss frueher drehen, weil der Sound auch
-     frueher diesen Klang macht."
+  /* RUNDE 75/76 — XANDER: „Der Plattenteller ist immer noch nicht
+     von seiner Drehanimation an der Stelle, wo der Sound auch das
+     Drehen hoerbar macht."
      NACHGEMESSEN: ton/scratch.opus ist 1,01 s lang und von 0,00 bis
-     0,90 s durchgehend gleich laut (-20 -18 -19 -20 -19 -18 -19 -20
-     -19 dB). Es wird ohne Verzoegerung gespielt (platte steht nicht
-     in LC_TREFFER). Das Kratzen ist also von Anfang an zu hoeren.
-     Die Nadel setzte aber erst bei 26 % = 936 ms auf. Jetzt bei
-     4 % = 144 ms: erst die Nadel, dann sofort das Kratzen. */
-  0%   { opacity: 0; transform: rotate(16deg); }
-  2%   { opacity: 1; transform: rotate(5deg); }
+     0,90 s durchgehend gleich laut. Es wird ohne Verzoegerung
+     gespielt. Die Nadel setzte aber erst bei 26 % = 936 ms auf.
+     Jetzt bei 4 % = 144 ms.
+     Die Winkel sind in Runde 76 groesser geworden, weil der Arm
+     jetzt weiter innen sitzt: bei 26 Grad steht die Nadel deutlich
+     ueber der Platte, bei 0 Grad liegt sie in der aeusseren Rille. */
+  0%   { opacity: 0; transform: rotate(26deg); }
+  2%   { opacity: 1; transform: rotate(14deg); }
   4%   { transform: rotate(0deg); }
   80%  { opacity: 1; transform: rotate(-4deg); }
-  92%  { opacity: 1; transform: rotate(9deg); }
-  100% { opacity: 0; transform: rotate(30deg); }
+  92%  { opacity: 1; transform: rotate(12deg); }
+  100% { opacity: 0; transform: rotate(34deg); }
 }
 /* Und das Bild dreht sich — der Scratch liegt jetzt da, wo man ihn
    auch HOERT. */
@@ -14524,13 +14588,21 @@ body.lc-schreibt .tutor-reiter {
   width: 46%;
   margin-left: -23%;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .4));
-  animation: lcBirneFassungR18 4s ease-out both;
+  /* RUNDE 76 — XANDER: „bei der Glühbirne soll die Fassung nicht
+     erst obendrauf gestellt werden, also in einer Bewegungsanimation
+     von oben nach unten."
+     Er hat recht, und zwar auch sachlich: eine Fassung hängt an der
+     Decke, sie kommt nicht angeflogen. Bewegt wird die BIRNE, die
+     hineingedreht wird — nicht die Fassung. Sie ist deshalb von
+     Anfang an da und blendet nur noch auf; am Ende verschwindet sie
+     wieder (siehe lcGluehbirne: sie bleibt nicht mehr hängen). */
+  animation: lcBirneFassungR76 4s linear both;
 }
-@keyframes lcBirneFassungR18 {
-  0%   { opacity: 0; transform: translateY(-40%); }
-  10%  { opacity: 1; transform: translateY(0); }
-  88%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-16%); }
+@keyframes lcBirneFassungR76 {
+  0%   { opacity: 0; transform: none; }
+  4%   { opacity: 1; transform: none; }
+  90%  { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
 }
 .lc-birne-schein {
   position: absolute;
@@ -15162,65 +15234,53 @@ body.lc-schreibt .tutor-reiter {
   /* RUNDE 75 — 3,4 s statt 2,8 s. Der Ruf ist neu und 3,01 s lang
      (siehe ton/cowboy.opus); bei 2,8 s waere er 200 ms laenger als
      sein Bild gewesen. */
-  animation: lcHutR75 3.4s linear both;
+  animation: lcHutR76 4.2s linear both;
 }
-@keyframes lcHutR75 {
-  /* RUNDE 75 — ALLES AUF 3,4 s UMGERECHNET, UND DIE HAND KOMMT ZUM
-     SCHLUSS.
-     XANDER: „der Cowboy Hut sieht auch noch nicht gut aus, die Hand,
-     die ihn zurechtrueckt, das soll am Schluss kommen."
-     Bisher rueckte die Hand bei 40 % der Animation zurecht und war
-     bei 54 % schon wieder weg — danach passierte 1,3 s lang nichts
-     mehr. Jetzt faellt der Hut, sitzt eine Weile GERADE, und erst
-     ganz am Ende kommt die Hand und zieht ihn in die schiefe
-     Cowboylage. Das ist auch die Reihenfolge im neuen Ton: der Ruf
-     von 0,12 bis 1,82 s, der Peitschenknall von 2,02 bis 2,92 s —
-     der Knall faellt jetzt genau auf das Zurechtruecken.
-     Der Fall: die Abstaende werden groesser, er wird also schneller.
-     Genau so faellt etwas — nicht gleichmaessig. */
+@keyframes lcHutR76 {
+  /* RUNDE 76 — 4,2 s statt 3,4 s, UND DIE HAND KOMMT NACH DEM TON.
+     XANDER: „die Hand beim Cowboyhut, die soll nach den Geräuschen
+     kommen. Also er zieht den Hut an im Position noch mal als
+     zusätzliches Gimmick. Die Hand soll vorher gar nicht zu sehen
+     sein."
+     NACHGERECHNET: der Ton (ton/cowboy.opus, 3,01 s) startet bei
+     120 ms, der Peitschenknall liegt darin bei 1,9 bis 2,9 s, der
+     Ton ist also bei 3130 ms zu Ende. Bei 3,4 s Animation blieben
+     danach nur 270 ms — zu wenig für ein Gimmick. Mit 4,2 s bleibt
+     eine ganze Sekunde: die Hand kommt bei 79 % = 3318 ms, also
+     nach dem letzten Ton, zieht bei 85,7 % und ist bei 96 % weg.
+     Vorher ist sie nicht zu sehen (opacity 0 bis 76 %).
+     Der Fall: die Abstände werden größer, er wird also schneller. */
   0%    { opacity: 0; transform: translateY(-110%) rotate(-24deg) scale(.82); }
-  3.3%  { opacity: 1; transform: translateY(-104%) rotate(-23deg) scale(.84); }
-  7.4%  { transform: translateY(-90%)  rotate(-21deg) scale(.87); }
-  10.7% { transform: translateY(-72%)  rotate(-17deg) scale(.90); }
-  13.6% { transform: translateY(-52%)  rotate(-13deg) scale(.94); }
-  15.6% { transform: translateY(-30%)  rotate(-8deg)  scale(.97); }
-  /* 16,9 % von 3,4 s = 575 ms: DER AUFSCHLAG. Genau hier beruehrt
-     die Krempe zum ersten Mal den Kopf. */
-  16.9% { transform: translateY(0)     rotate(-4deg)  scale(1); }
-  /* Und die Federung: er drueckt sich ein, dann zwei Nachschlaege,
-     jeder kleiner. */
-  19%   { transform: translateY(7%)    rotate(6deg)  scale(1.05, .95); }
-  22.3% { transform: translateY(-4%)   rotate(-6deg) scale(1, 1.02); }
-  25.6% { transform: translateY(3%)    rotate(4deg)  scale(1.01, .99); }
-  28.8% { transform: translateY(-1%)   rotate(-2deg) scale(1); }
+  2.7%  { opacity: 1; transform: translateY(-104%) rotate(-23deg) scale(.84); }
+  6%    { transform: translateY(-90%)  rotate(-21deg) scale(.87); }
+  8.7%  { transform: translateY(-72%)  rotate(-17deg) scale(.90); }
+  11%   { transform: translateY(-52%)  rotate(-13deg) scale(.94); }
+  12.6% { transform: translateY(-30%)  rotate(-8deg)  scale(.97); }
+  /* 13,7 % von 4,2 s = 575 ms: DER AUFSCHLAG. */
+  13.7% { transform: translateY(0)     rotate(-4deg)  scale(1); }
+  /* Und die Federung: er drückt sich ein, dann zwei Nachschläge. */
+  15.4% { transform: translateY(7%)    rotate(6deg)  scale(1.05, .95); }
+  18%   { transform: translateY(-4%)   rotate(-6deg) scale(1, 1.02); }
+  20.7% { transform: translateY(3%)    rotate(4deg)  scale(1.01, .99); }
+  23.3% { transform: translateY(-1%)   rotate(-2deg) scale(1); }
   /* Von hier an sitzt er GERADE — die Hand hat ihn noch nicht
-     angefasst. */
-  31%, 76% { opacity: 1; transform: translateY(1%) rotate(-1deg) scale(1); }
-  /* 81 % = 2754 ms: die Hand zieht die Krempe herunter. Ab hier
-     sitzt er schief ins Gesicht gezogen, wie ein Cowboy ihn traegt. */
-  81%   { transform: translateY(3%)    rotate(-8deg) scale(1); }
-  84%   { transform: translateY(2%)    rotate(-6deg) scale(1); }
-  88%, 94% { opacity: 1; transform: translateY(2%) rotate(-7deg) scale(1); }
+     angefasst, und sie ist auch noch gar nicht da. */
+  25%, 82% { opacity: 1; transform: translateY(1%) rotate(-1deg) scale(1); }
+  /* 85,7 % = 3600 ms: die Hand zieht die Krempe herunter. */
+  85.7% { transform: translateY(3%)    rotate(-8deg) scale(1); }
+  88%   { transform: translateY(2%)    rotate(-6deg) scale(1); }
+  91%, 96% { opacity: 1; transform: translateY(2%) rotate(-7deg) scale(1); }
   100%  { opacity: 0; transform: translateY(-30%) rotate(-12deg) scale(.9); }
 }
-/* Der Kopf federt unter dem Aufschlag — und zwar GENAU dann, nicht
-   frueher: 16,9 % ist derselbe Punkt wie oben. */
-.lc-behutet { animation: lcBehutetR75 3.4s linear both; }
-@keyframes lcBehutetR75 {
-  0%, 16.9% { transform: translateY(0) scale(1); }
-  19.8%     { transform: translateY(2%) scale(1.03, .96); }
-  23%       { transform: translateY(0) scale(.99, 1.01); }
-  26.4%     { transform: translateY(0) scale(1); }
+/* Der Kopf federt unter dem Aufschlag — 13,7 % ist derselbe Punkt. */
+.lc-behutet { animation: lcBehutetR76 4.2s linear both; }
+@keyframes lcBehutetR76 {
+  0%, 13.7% { transform: translateY(0) scale(1); }
+  16%       { transform: translateY(2%) scale(1.03, .96); }
+  18.6%     { transform: translateY(0) scale(.99, 1.01); }
+  21.4%     { transform: translateY(0) scale(1); }
   100%      { transform: translateY(0) scale(1); }
 }
-
-/* --- DIE HAND, DIE DEN HUT ZURECHTRUECKT ---------------------------
-   XANDER: „Der Cowboyhut ist noch zu comichaft, ich haette gern eine
-   Hand, die ihn zurechtrueckt."
-   Sie kommt von rechts ins Bild, fasst an die Krempe, zieht sie bei
-   81 % nach unten — dort steht in lcHutR75 die Schraeglage — und
-   geht wieder. RUNDE 75: sie kommt jetzt erst zum SCHLUSS, weil
-   Xander es so wollte. Vorher sitzt der Hut gerade. */
 .lc-hut-hand {
   position: absolute;
   left: 50%; top: -18%;
@@ -15230,19 +15290,19 @@ body.lc-schreibt .tutor-reiter {
   opacity: 0;
   pointer-events: none;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
-  animation: lcHutHandR75 3.4s linear both;
+  animation: lcHutHandR76 4.2s linear both;
 }
-@keyframes lcHutHandR75 {
-  /* RUNDE 75 — XANDER: „die Hand, die ihn zurechtrueckt, das soll am
-     Schluss kommen." Also erst bei 72 % = 2448 ms sichtbar. */
-  0%, 72%  { opacity: 0; transform: translate(52%, -26%) rotate(16deg); }
-  75%      { opacity: 1; transform: translate(20%, -12%) rotate(9deg); }
-  78%      { opacity: 1; transform: translate(4%, -2%)   rotate(3deg); }
-  /* 81 % = 2754 ms — hier zieht sie, und hier kippt der Hut. Und
-     hier liegt auch der Peitschenknall im Ton. */
-  81%      { opacity: 1; transform: translate(0, 6%)     rotate(-5deg); }
-  85%      { opacity: 1; transform: translate(9%, 1%)    rotate(1deg); }
-  93%      { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
+@keyframes lcHutHandR76 {
+  /* RUNDE 76 — XANDER: „Die Hand soll vorher gar nicht zu sehen
+     sein" und „sie soll nach den Geräuschen kommen". Der Ton ist bei
+     3130 ms zu Ende; 79 % von 4,2 s sind 3318 ms. */
+  0%, 76%  { opacity: 0; transform: translate(52%, -26%) rotate(16deg); }
+  79%      { opacity: 1; transform: translate(20%, -12%) rotate(9deg); }
+  82%      { opacity: 1; transform: translate(4%, -2%)   rotate(3deg); }
+  /* 85,7 % = 3600 ms — hier zieht sie, und hier kippt der Hut. */
+  85.7%    { opacity: 1; transform: translate(0, 6%)     rotate(-5deg); }
+  89%      { opacity: 1; transform: translate(9%, 1%)    rotate(1deg); }
+  96%      { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
   100%     { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
 }
 @media (prefers-reduced-motion: reduce) { .lc-hut-hand { animation: none; opacity: 0; } }
@@ -22805,40 +22865,67 @@ body.lc-schreibt .tutor-reiter {
    — der Rest ist die Perspektive, die eine flach liegende Münze
    ohnehin schmaler macht.
    ================================================================= */
+/* =================================================================
+   RUNDE 76 — DIE MUENZE LANDET HOEHER UND LIEGT FLACH
+   -----------------------------------------------------------------
+   XANDER: „Die Muenze dreht sich fast schon perfekt. Sie soll aber
+   etwas hoeher landen, nicht den Namen verdecken, auf dem sie
+   landet, sondern flach aufliegen."
+
+   NACHGESEHEN: sie fiel bis `translateY(61%)`, und das ist genau die
+   Mitte der Namenszeile — der Kommentar von Runde 53 sagt es selbst:
+   „sie faellt bis 61 % der Bildhoehe, denn dort liegt die Mitte der
+   Namenszeile." Damals war das Absicht, jetzt stoert es ihn.
+
+   Alle Fallwerte sind deshalb mit 44/61 = 0,7213 nach oben geholt —
+   das verschiebt die ganze Bewegung gleichmaessig, ohne ihren
+   Verlauf zu aendern (Drehung, Kippen und Ausscheppern liegen auf
+   denselben Zeitpunkten wie vorher). Sie kommt jetzt auf der unteren
+   Kante des Profilbildes zu liegen, ueber dem Namen.
+   „Flach aufliegen" heisst hier 74 Grad, nicht 86. NACHGESEHEN am
+   Bildschirm: bei 86 Grad ist von der Muenze fast nichts mehr zu
+   sehen — eine Flaeche ohne Dicke, von der Seite angesehen, ist ein
+   Strich; auf dem Bild blieb nur ihr Schatten uebrig. Bei 74 Grad
+   liegt sie als flache Ellipse da, so wie eine Muenze auf einem
+   Tisch aussieht, auf den man von schraeg oben schaut.
+   ================================================================= */
 .lc-gedreht { animation: lcMuenzeR72 5.4s linear both; }
 @keyframes lcMuenzeR72 {
   0%    { transform: translateY(0)     rotateX(0deg)  rotateY(0deg)    scale(1); }
-  7.4%  { transform: translateY(0.4%)  rotateX(0deg)  rotateY(855deg)  scale(1); }
-  14.8% { transform: translateY(1.5%)  rotateX(0deg)  rotateY(1620deg) scale(.99); }
-  22.2% { transform: translateY(3%)    rotateX(2deg)  rotateY(2295deg) scale(.98); }
-  29.6% { transform: translateY(5.5%)  rotateX(5deg)  rotateY(2880deg) scale(.96); }
-  37%   { transform: translateY(9%)    rotateX(10deg) rotateY(3375deg) scale(.99); }
-  44.4% { transform: translateY(13.5%) rotateX(17deg) rotateY(3780deg) scale(.98); }
-  51.8% { transform: translateY(19%)   rotateX(26deg) rotateY(4095deg) scale(.97); }
-  59.2% { transform: translateY(26%)   rotateX(38deg) rotateY(4320deg) scale(.96); }
-  66.6% { transform: translateY(34%)   rotateX(52deg) rotateY(4455deg) scale(.95); }
+  7.4%  { transform: translateY(0.29%)  rotateX(0deg)  rotateY(855deg)  scale(1); }
+  14.8% { transform: translateY(1.08%)  rotateX(0deg)  rotateY(1620deg) scale(.99); }
+  22.2% { transform: translateY(2.16%)    rotateX(2deg)  rotateY(2295deg) scale(.98); }
+  29.6% { transform: translateY(3.97%)  rotateX(5deg)  rotateY(2880deg) scale(.96); }
+  37%   { transform: translateY(6.49%)    rotateX(10deg) rotateY(3375deg) scale(.99); }
+  44.4% { transform: translateY(9.74%) rotateX(17deg) rotateY(3780deg) scale(.98); }
+  51.8% { transform: translateY(13.7%)   rotateX(26deg) rotateY(4095deg) scale(.97); }
+  59.2% { transform: translateY(18.75%)   rotateX(38deg) rotateY(4320deg) scale(.96); }
+  66.6% { transform: translateY(24.52%)   rotateX(52deg) rotateY(4455deg) scale(.95); }
   /* 74 % = 4,0 s — die Drehung ist zu Ende, sie kippt nur noch. */
-  74%   { transform: translateY(43%)   rotateX(66deg) rotateY(4500deg) scale(.93); }
+  74%   { transform: translateY(31.02%)   rotateX(66deg) rotateY(4500deg) scale(.93); }
   /* 80 % = 4,32 s — die stille Stelle in der Aufnahme. */
-  80%   { transform: translateY(54%)   rotateX(80deg) rotateY(4500deg) scale(.91); }
-  /* 85 % = 4,59 s — DER AUFSCHLAG auf dem Namen. */
-  85%   { transform: translateY(61%)   rotateX(88deg) rotateY(4500deg) scale(.9); }
+  80%   { transform: translateY(38.95%)   rotateX(71deg) rotateY(4500deg) scale(.91); }
+  /* 85 % = 4,59 s — DER AUFSCHLAG, jetzt ueber dem Namen. */
+  85%   { transform: translateY(44%)   rotateX(74deg) rotateY(4500deg) scale(.9); }
   /* Und das Ausscheppern: drei Ausschlaege, jeder kleiner. */
-  88%   { transform: translateY(57%)   rotateX(76deg) rotateY(4500deg) scale(.91); }
-  91%   { transform: translateY(61%)   rotateX(87deg) rotateY(4500deg) scale(.9); }
-  94%   { transform: translateY(59.5%) rotateX(81deg) rotateY(4500deg) scale(.905); }
-  96%   { transform: translateY(61%)   rotateX(86deg) rotateY(4500deg) scale(.9); }
-  98%   { transform: translateY(60.4%) rotateX(84deg) rotateY(4500deg) scale(.902); }
-  100%  { transform: translateY(61%)   rotateX(86deg) rotateY(4500deg) scale(.9); }
+  88%   { transform: translateY(41.11%)   rotateX(64deg) rotateY(4500deg) scale(.91); }
+  91%   { transform: translateY(44%)   rotateX(74deg) rotateY(4500deg) scale(.9); }
+  94%   { transform: translateY(42.92%) rotateX(69deg) rotateY(4500deg) scale(.905); }
+  96%   { transform: translateY(44%)   rotateX(74deg) rotateY(4500deg) scale(.9); }
+  98%   { transform: translateY(43.57%) rotateX(72deg) rotateY(4500deg) scale(.902); }
+  100%  { transform: translateY(44%)   rotateX(74deg) rotateY(4500deg) scale(.9); }
 }
 /* Der Schatten laeuft auf denselben Zeitpunkten — sonst laeuft er
    der Muenze davon. Auch er linear, aus demselben Grund. */
 .lc-muenze-schatten { animation: lcMuenzeSchattenR72 5.4s linear both; }
 @keyframes lcMuenzeSchattenR72 {
+  /* RUNDE 76 — mit der Muenze nach oben geholt: sie landet nicht
+     mehr auf dem Namen, also darf auch ihr Schatten nicht dort
+     liegen. 104 % war unter dem Bild, 88 % ist die untere Kante. */
   0%    { opacity: .22; top: 60%; transform: none; width: 26%; margin-left: -13%; }
-  44.4% { opacity: .3;  top: 76%; width: 38%; margin-left: -19%; }
-  74%   { opacity: .4;  top: 94%; width: 46%; margin-left: -23%; }
-  85%, 100% { opacity: .5; top: 104%; width: 52%; margin-left: -26%; }
+  44.4% { opacity: .3;  top: 71%; width: 38%; margin-left: -19%; }
+  74%   { opacity: .4;  top: 81%; width: 46%; margin-left: -23%; }
+  85%, 100% { opacity: .5; top: 88%; width: 52%; margin-left: -26%; }
 }
 
 /* =================================================================
@@ -22885,20 +22972,30 @@ body.lc-schreibt .tutor-reiter {
   100%    { opacity: 0; transform: translateX(var(--mitte, 0%)) translateY(105%) scale(1.18, .44); }
 }
 /* Die Spur wächst mit — dieselben Zeitpunkte, damit sie nicht in
-   der Luft endet. */
-.lc-schnee-rinne { animation: lcSchneeRinneR72 4.6s linear both; }
-@keyframes lcSchneeRinneR72 {
-  0%, 13% { height: 0;   opacity: 0; }
-  17%     { height: 3%;  opacity: 1; }
-  25%     { height: 4%;  opacity: 1; }
-  32%     { height: 6%;  opacity: 1; }
-  40%     { height: 11%; opacity: 1; }
-  48%     { height: 20%; opacity: 1; }
-  57%     { height: 34%; opacity: 1; }
-  67%     { height: 53%; opacity: 1; }
-  78%     { height: 77%; opacity: 1; }
-  90%     { height: 101%; opacity: .95; }
-  100%    { height: 104%; opacity: 0; }
+   der Luft endet.
+   RUNDE 76: und sie zeigt jetzt in die Richtung, in die der Klecks
+   wirklich rutscht (--spurdreh), und wird genau so lang wie sein Weg
+   (--spurlang). Beides steht in app.js ausgerechnet, siehe dort.
+   Gedreht wird um den OBEREN Punkt: der liegt am Auftreffpunkt und
+   darf sich nicht bewegen. Die Höhen sind Anteile von --spurlang —
+   dieselben Anteile, die auch der Klecks in seinem Weg hat. */
+.lc-schnee-rinne {
+  transform-origin: 50% 0;
+  transform: rotate(var(--spurdreh, 0deg));
+  animation: lcSchneeRinneR76 4.6s linear both;
+}
+@keyframes lcSchneeRinneR76 {
+  0%, 13% { height: 0; opacity: 0; }
+  17%     { height: calc(var(--spurlang, 42%) * .02); opacity: 1; }
+  25%     { height: calc(var(--spurlang, 42%) * .03); opacity: 1; }
+  32%     { height: calc(var(--spurlang, 42%) * .07); opacity: 1; }
+  40%     { height: calc(var(--spurlang, 42%) * .14); opacity: 1; }
+  48%     { height: calc(var(--spurlang, 42%) * .24); opacity: 1; }
+  57%     { height: calc(var(--spurlang, 42%) * .40); opacity: 1; }
+  67%     { height: calc(var(--spurlang, 42%) * .58); opacity: 1; }
+  78%     { height: calc(var(--spurlang, 42%) * .78); opacity: 1; }
+  90%     { height: var(--spurlang, 42%); opacity: .95; }
+  100%    { height: var(--spurlang, 42%); opacity: 0; }
 }
 
 /* =================================================================
@@ -24221,4 +24318,126 @@ body.lc-schreibt .tutor-reiter {
   62%, 100% { opacity: 0;
          transform: rotate(calc(var(--wdreh, 0deg) + 180deg))
                     translateX(calc(var(--qfern) - 2%)); }
+}
+
+/* =================================================================
+   RUNDE 76 — BEIM BOWLING FLIEGT ER ERST, WENN DIE KUGEL DA IST
+   -----------------------------------------------------------------
+   XANDER: „Das Bild fliegt schon um, bevor der Bowling-Effekt mit
+   der Animation überhaupt sichtbar wird. Das macht keinen Sinn,
+   verbessere das bitte."
+
+   NACHGERECHNET: `lcWeggestossen` setzt sich bei 30 % von 2,4 s in
+   Bewegung, also bei 720 ms. Die Bowlingkugel trifft aber erst bei
+   58 % = 1392 ms — das steht in `lcBowlingRolltR73` sogar
+   ausdrücklich dran. Der Getroffene flog also 672 ms vor dem
+   Einschlag los.
+
+   Die alte Kurve bleibt, wo sie hingehört: beim BILLARD trifft die
+   Kugel bei 44 % (lcBillardKugelR74), dort passt sie. Das Bowling
+   bekommt hier seine eigene — mit demselben Verlauf, nur um den
+   Einschlag herum aufgebaut: bis 58 % rührt sich nichts, dann der
+   Stoss, das Kippen und das Verschwinden im Loch, und am Ende ist
+   er wieder da.
+   ================================================================= */
+.lc-weggestossen-kegel { animation: lcWeggestossenKegelR76 2.4s linear both; }
+@keyframes lcWeggestossenKegelR76 {
+  /* 58 % von 2,4 s = 1392 ms: DER EINSCHLAG — keine Sekunde früher. */
+  0%, 58% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  64%     { transform: translate(-16%, 0) rotate(-10deg) scale(1); opacity: 1; }
+  /* Und hinein: er kippt, wird kleiner und ist weg. */
+  74%     { transform: translate(-8%, 22%) rotate(-22deg) scale(.7); opacity: 1; }
+  82%     { transform: translate(-2%, 46%) rotate(-40deg) scale(.28); opacity: .8; }
+  88%     { transform: translate(0, 56%) rotate(-52deg) scale(0); opacity: 0; }
+  94%     { transform: translate(0, 56%) rotate(-52deg) scale(0); opacity: 0; }
+  97%     { transform: translate(0, 0) rotate(0deg) scale(1.06); opacity: 1; }
+  100%    { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-weggestossen-kegel { animation: none; }
+}
+
+/* =================================================================
+   RUNDE 76 — DER STROHHALM KOMMT VON DER RICHTIGEN SEITE
+   -----------------------------------------------------------------
+   XANDER: „wenn ich jemandem sein Getränk aufblasen will, dann sollen
+   die Leute, die rechts von mir sitzen, von LINKS mit dem Strohhalm
+   aufgeblasen werden, weil ich bin ja auf der linken Seite … auch das
+   Austrinken kommt von der linken Seite dann. Und denke dran, dass
+   der Strohhalm auch im Glas ist wie beim Austrinken und dass er auch
+   dieselbe Farbe wie beim Austrinken hat."
+
+   `.lc-halm-seite` ist eine Hülle, die genau über der Schicht liegt.
+   Sitzt der Handelnde links, wird SIE gespiegelt — nicht der Halm.
+   Das ist wichtig: der Halm trägt eigene Drehungen (`rotate(28deg)`)
+   und eine Animation, die ihn hereinschiebt; spiegelte man ihn
+   selbst, käme beides durcheinander.
+
+   Und die FARBE: der Blubber-Halm war einfarbig rot, der Saug-Halm
+   rot-weiss geringelt. „dieselbe Farbe wie beim Austrinken" heisst
+   also: beide geringelt.
+   ================================================================= */
+.lc-halm-seite {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.lc-halm-links .lc-halm-seite { transform: scaleX(-1); }
+.lc-blubber-rohr {
+  background: repeating-linear-gradient(to bottom,
+    #ff5f7a 0 10%, #ffffff 10% 20%);
+  box-shadow: inset -2px 0 3px rgba(0, 0, 0, .18), 0 2px 4px rgba(0, 0, 0, .25);
+}
+
+/* =================================================================
+   RUNDE 76 — GESTOSSEN WIRD IN DIE RICHTUNG, AUS DER GESTOSSEN WURDE
+   -----------------------------------------------------------------
+   XANDER: „achte auch darauf, wo ich hin schiesse, dass die Richtung
+   immer stimmt von dem Ball, wie der Kö auf dem Ball trifft und wie
+   der andere aus der Richtung heraus beeinflusst wird."
+
+   Beide Kurven schoben den Getroffenen mit einem festen
+   `translate(-16%, 0)` — also IMMER nach links, egal aus welcher
+   Richtung die Kugel kam. Jetzt steht die Stossrichtung als
+   `--stossx` / `--stossy` am Platz (gesetzt in app.js, siehe dort);
+   die Werte sind Zahlen zwischen -1 und 1, also lässt sich damit in
+   calc() rechnen. Auch das Kippen folgt ihr: wer nach rechts
+   gestossen wird, kippt nach rechts.
+   Die Standardwerte (-1 | 0) sind genau das, was vorher fest
+   dastand — ohne Angabe bleibt es also beim Alten.
+   ================================================================= */
+.lc-weggestossen { animation: lcWeggestossenR76 2.4s linear both; }
+@keyframes lcWeggestossenR76 {
+  0%, 30% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  /* 30 % von 2,4 s = 720 ms: beim Billard liegt die Kugel bei 44 %
+     am Bild an (lcBillardKugelR74) — der Anstoss beginnt davor. */
+  38%     { transform: translate(calc(var(--stossx, -1) * 16%), calc(var(--stossy, 0) * 16%))
+                       rotate(calc(var(--stossx, -1) * 10deg)) scale(1); opacity: 1; }
+  /* Und hinein: er kippt, wird kleiner und ist weg. */
+  52%     { transform: translate(calc(var(--stossx, -1) * 8%), calc(var(--stossy, 0) * 8% + 22%))
+                       rotate(calc(var(--stossx, -1) * 22deg)) scale(.7); opacity: 1; }
+  64%     { transform: translate(calc(var(--stossx, -1) * 2%), calc(var(--stossy, 0) * 2% + 46%))
+                       rotate(calc(var(--stossx, -1) * 40deg)) scale(.28); opacity: .8; }
+  72%     { transform: translate(0, 56%) rotate(calc(var(--stossx, -1) * 52deg)) scale(0); opacity: 0; }
+  84%     { transform: translate(0, 56%) rotate(calc(var(--stossx, -1) * 52deg)) scale(0); opacity: 0; }
+  94%     { transform: translate(0, 0) rotate(0deg) scale(1.06); opacity: 1; }
+  100%    { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+}
+.lc-weggestossen-kegel { animation: lcWeggestossenKegelR76b 2.4s linear both; }
+@keyframes lcWeggestossenKegelR76b {
+  /* 58 % von 2,4 s = 1392 ms: DER EINSCHLAG — keine Sekunde früher. */
+  0%, 58% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  64%     { transform: translate(calc(var(--stossx, -1) * 16%), calc(var(--stossy, 0) * 16%))
+                       rotate(calc(var(--stossx, -1) * 10deg)) scale(1); opacity: 1; }
+  74%     { transform: translate(calc(var(--stossx, -1) * 8%), calc(var(--stossy, 0) * 8% + 22%))
+                       rotate(calc(var(--stossx, -1) * 22deg)) scale(.7); opacity: 1; }
+  82%     { transform: translate(calc(var(--stossx, -1) * 2%), calc(var(--stossy, 0) * 2% + 46%))
+                       rotate(calc(var(--stossx, -1) * 40deg)) scale(.28); opacity: .8; }
+  88%     { transform: translate(0, 56%) rotate(calc(var(--stossx, -1) * 52deg)) scale(0); opacity: 0; }
+  94%     { transform: translate(0, 56%) rotate(calc(var(--stossx, -1) * 52deg)) scale(0); opacity: 0; }
+  97%     { transform: translate(0, 0) rotate(0deg) scale(1.06); opacity: 1; }
+  100%    { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-weggestossen, .lc-weggestossen-kegel { animation: none; }
 }

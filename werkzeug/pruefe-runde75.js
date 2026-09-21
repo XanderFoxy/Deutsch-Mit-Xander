@@ -161,10 +161,13 @@ pruefe("der Ton ist neu und laenger als zwei Sekunden",
   && fs.statSync(path.join(WURZEL, "ton", "cowboy.opus")).size > 8000,
   fs.statSync(path.join(WURZEL, "ton", "cowboy.opus")).size + " Byte");
 pruefe("er faengt am Anfang der Animation an, nicht auf dem Aufschlag",
-  /hut: 120,/.test(js) && /hut:            \{ ton: "cowboy",    dauer: 3400/.test(js));
-pruefe("die Hand rueckt den Hut erst zum Schluss zurecht",
-  /@keyframes lcHutHandR75/.test(css)
-  && /0%, 72%  \{ opacity: 0;/.test(css));
+  /hut: 120,/.test(js) && /hut:            \{ ton: "cowboy",    dauer: 4200/.test(js));
+/* RUNDE 76 — XANDER: „Die Hand soll vorher gar nicht zu sehen sein"
+   und „sie soll nach den Geraeuschen kommen". Der Ton ist bei
+   3130 ms zu Ende, die Hand kommt bei 79 % von 4,2 s = 3318 ms. */
+pruefe("die Hand kommt erst NACH dem Ton",
+  /@keyframes lcHutHandR76/.test(css)
+  && /0%, 76%  \{ opacity: 0;/.test(css));
 /* NACHGESEHEN an der alten Zeichnung: die Mitte der Krone lag bei
    y = 24,5 und damit HOEHER als die Schultern daneben (y = 30) — von
    vorn also drei Buckel. Eine Cattleman-Falte hat in der Mitte eine
@@ -173,7 +176,7 @@ pruefe("die Krone hat eine Delle in der Mitte, keinen dritten Buckel",
   /C62\.5 32 66 33\.6 70 33\.6 C74 33\.6 77\.5 32 80\.5 28\.4/.test(js)
   && !/C61\.5 26 65\.5 24\.5 70 24\.5/.test(js));
 pruefe("und der Hut sitzt bis dahin gerade",
-  /31%, 76% \{ opacity: 1; transform: translateY\(1%\) rotate\(-1deg\)/.test(css));
+  /25%, 82% \{ opacity: 1; transform: translateY\(1%\) rotate\(-1deg\)/.test(css));
 
 console.log("\nDER PLATTENTELLER\n");
 /* NACHGEMESSEN: scratch.opus ist 1,01 s lang und von 0,00 bis

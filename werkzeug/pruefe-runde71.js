@@ -263,17 +263,26 @@ console.log("\nDIE MUENZE DREHT DURCH, STATT ZU STOTTERN");
 pruefe("keine Kurve mehr ueber die ganze Animation",
   /animation: lcMuenzeR72 5\.4s linear both;/.test(cssK)
   && !/animation: lcMuenzeR72 5\.4s cubic-bezier/.test(cssK));
+/* RUNDE 76 — DIE FALLHOEHEN SIND ALLE UM 44/61 = 0,7213 KLEINER.
+   XANDER: „Die Muenze … soll etwas hoeher landen, nicht den Namen
+   verdecken, auf dem sie landet, sondern flach aufliegen."
+   Der VERLAUF ist derselbe geblieben — dieselben Zeitpunkte, dieselbe
+   gleichmaessig gebremste Drehung, dasselbe Ausscheppern; nur der Weg
+   nach unten ist kuerzer, damit sie ueber dem Namen liegen bleibt.
+   Und die Kippwinkel sind flacher (74 statt 86 Grad): bei 86 Grad war
+   von ihr nichts mehr zu sehen, weil eine Flaeche ohne Dicke von der
+   Seite ein Strich ist. */
 pruefe("die Verzoegerung steht in den Werten, die Abstaende werden kleiner",
-  /7\.4%  \{ transform: translateY\(0\.4%\)  rotateX\(0deg\)  rotateY\(855deg\)/.test(cssK)
-  && /14\.8% \{ transform: translateY\(1\.5%\)  rotateX\(0deg\)  rotateY\(1620deg\)/.test(cssK)
-  && /22\.2% \{ transform: translateY\(3%\)    rotateX\(2deg\)  rotateY\(2295deg\)/.test(cssK));
+  /7\.4%  \{ transform: translateY\(0\.29%\)  rotateX\(0deg\)  rotateY\(855deg\)/.test(cssK)
+  && /14\.8% \{ transform: translateY\(1\.08%\)  rotateX\(0deg\)  rotateY\(1620deg\)/.test(cssK)
+  && /22\.2% \{ transform: translateY\(2\.16%\)    rotateX\(2deg\)  rotateY\(2295deg\)/.test(cssK));
 pruefe("bei 74 Prozent steht sie, danach kippt sie nur noch",
-  /74%   \{ transform: translateY\(43%\)   rotateX\(66deg\) rotateY\(4500deg\)/.test(cssK));
+  /74%   \{ transform: translateY\(31\.02%\)   rotateX\(66deg\) rotateY\(4500deg\)/.test(cssK));
 pruefe("und dann scheppert sie aus — jeder Ausschlag kleiner",
-  /88%   \{ transform: translateY\(57%\)   rotateX\(76deg\)/.test(cssK)
-  && /91%   \{ transform: translateY\(61%\)   rotateX\(87deg\)/.test(cssK)
-  && /94%   \{ transform: translateY\(59\.5%\) rotateX\(81deg\)/.test(cssK)
-  && /98%   \{ transform: translateY\(60\.4%\) rotateX\(84deg\)/.test(cssK));
+  /88%   \{ transform: translateY\(41\.11%\)   rotateX\(64deg\)/.test(cssK)
+  && /91%   \{ transform: translateY\(44%\)   rotateX\(74deg\)/.test(cssK)
+  && /94%   \{ transform: translateY\(42\.92%\) rotateX\(69deg\)/.test(cssK)
+  && /98%   \{ transform: translateY\(43\.57%\) rotateX\(72deg\)/.test(cssK));
 pruefe("auch der Schatten laeuft linear mit",
   /animation: lcMuenzeSchattenR72 5\.4s linear both;/.test(cssK));
 
