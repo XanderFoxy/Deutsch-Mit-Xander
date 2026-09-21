@@ -909,6 +909,7 @@ window.LiveChat = (function () {
     pfeil:    { wirkung: "saugpfeil",  satz: "schiesst einen Saugnapf-Pfeil auf", emoji: "\ud83c\udff9" },
     sahne:    { wirkung: "sahne",      satz: "spr\u00fcht Schlagsahne auf den Kopf von", emoji: "\ud83c\udf66" },
     trommel:  { wirkung: "trommel",    satz: "trommelt auf dem Kopf von",   emoji: "\ud83e\udd41" },
+    marsch:   { wirkung: "marsch",     satz: "schl\u00e4gt einen Marschwirbel f\u00fcr", emoji: "\ud83e\udd41" },
     /* GEMELDET: „die Störung ist kein Effekt um das Profilbild zu
        beeinflussen durch einen Klick sondern es ist ein Sprechbild-
        Effekt." Sie steht deshalb nicht mehr hier, sondern unten bei
@@ -942,6 +943,17 @@ window.LiveChat = (function () {
        Baustellenkran hat." Zwei weitere Reisen, gleiche Technik. */
     boot:     { wirkung: "boot",     satz: "schippert hin\u00fcber zu", emoji: "\u26f5" },
     kran:     { wirkung: "kran",     satz: "l\u00e4sst sich hin\u00fcberheben zu", emoji: "\ud83c\udfd7\ufe0f" },
+    /* GEWUENSCHT: „Mach mal zusaetzlich zum Segelboot noch ein
+       Dampfboot vielleicht ein Raddampfer ... und vielleicht noch ne
+       Lokomotive ... eine Liane koennte auch noch mit drin sein ...
+       Vielleicht kannst du als Bewegung noch was mit einer Feder
+       machen ... wenn du das beamen mit hinzufuegst, dann muss es auch
+       Mega realistisch wie bei Star Trek sein." */
+    dampfer:  { wirkung: "dampfer",  satz: "tuckert hin\u00fcber zu", emoji: "\ud83d\udea2" },
+    lok:      { wirkung: "lok",      satz: "dampft hin\u00fcber zu", emoji: "\ud83d\ude82" },
+    liane:    { wirkung: "liane",    satz: "schwingt sich hin\u00fcber zu", emoji: "\ud83c\udf3f" },
+    feder:    { wirkung: "feder",    satz: "federt hin\u00fcber zu", emoji: "\ud83e\ude80" },
+    beamen:   { wirkung: "beamen",   satz: "beamt sich zu", emoji: "\u2728" },
     /* GEWUENSCHT: „die Feuerreanimation am Rand des Profil rahmen." */
     brennen:  { wirkung: "brennen",  satz: "setzt den Rahmen in Brand bei", emoji: "\ud83d\udd25" },
     huepfen:  { wirkung: "spielzug",   satz: "h\u00fcpft Platz f\u00fcr Platz zu", emoji: "\ud83c\udfb2" },
@@ -8726,6 +8738,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "pfeil",   kurz: "bogen",  nutzt: "/pfeil Name",       was: "Saugnapf-Pfeil — er bleibt am Profilbild kleben" },
     { gr: "reden", w: "sahne",   kurz: "schlagsahne", nutzt: "/sahne Name",  was: "Schlagsahne-Haube auf den Kopf" },
     { gr: "reden", w: "trommel", kurz: "gong",   nutzt: "/trommel Name",     was: "Trommel — auf dem Kopf wird getrommelt" },
+    { gr: "reden", w: "marsch", kurz: "marschtrommel", nutzt: "/marsch Name",      was: "Marschtrommel \u2014 ein schneller Wirbel statt eines Schlags" },
     { gr: "reden", w: "ei",       kurz: "ei",    nutzt: "/ei Name",          was: "Ei auf dem Kopf — es wird aufgeschlagen und laeuft herunter" },
     { gr: "reden", w: "stoerung", kurz: "tv",  nutzt: "/stoerung Name",    was: "Bildstoerung — schlechter Empfang, das Bild zerreisst" },
     { gr: "reden", w: "fahren",  kurz: "fahrt", nutzt: "/fahren Name",      was: "hinfahren \u2014 dein Bild rollt zum freien Platz daneben und bleibt dort" },
@@ -8739,6 +8752,16 @@ window.LiveChat = (function () {
       was: "Boot \u2014 dein Bild schippert \u00fcbers Wasser zu Platz 5" },
     { gr: "reden", w: "kran", kurz: "baukran", nutzt: "/kran 5",
       was: "Baustellenkran \u2014 dein Bild wird hochgehoben und auf Platz 5 abgesetzt" },
+    { gr: "reden", w: "dampfer", kurz: "raddampfer", nutzt: "/dampfer 5",
+      was: "Raddampfer \u2014 mit Schaufelrad und Dampfpfeife zu Platz 5" },
+    { gr: "reden", w: "lok", kurz: "dampflok", nutzt: "/lok 5",
+      was: "Dampflok \u2014 sie schnauft mit dir hinueber zu Platz 5" },
+    { gr: "reden", w: "liane", kurz: "schwingen", nutzt: "/liane 5",
+      was: "Liane \u2014 du schwingst dich wie Tarzan zu Platz 5" },
+    { gr: "reden", w: "feder", kurz: "sprungfeder", nutzt: "/feder 5",
+      was: "Sprungfeder \u2014 du federst zu Platz 5" },
+    { gr: "reden", w: "beamen", kurz: "beam", nutzt: "/beamen 5",
+      was: "Beamen \u2014 du loest dich auf und erscheinst auf Platz 5 wieder" },
     { gr: "reden", w: "gemeinsam", kurz: "zuzweit", nutzt: "/gemeinsam Name",
       was: "zu zweit losfahren \u2014 sein Bild h\u00e4ngt sich an deins und ihr rollt zusammen weg" },
     { gr: "reden", w: "laufen",  kurz: "",      nutzt: "/laufen 8",           was: "Feld f\u00fcr Feld zu Platz 8 laufen \u2014 geht auch mit /fahren 8" },
@@ -10529,13 +10552,20 @@ window.LiveChat = (function () {
        NUMMER — sonst stuende im Chat „fliegt hinueber zu 5", als hiesse
        jemand 5. */
     if ((art === "flug" || art === "maulwurf" || art === "portal"
-         || art === "boot" || art === "kran")
+         || art === "boot" || art === "kran" || art === "dampfer"
+         || art === "lok" || art === "liane" || art === "feder"
+         || art === "beamen")
         && /^\s*\d+\s*$/.test(rest)) {
       var satzR = { flug: [" fliegt zu Platz ", "\u2708\ufe0f"],
                     maulwurf: [" gr\u00e4bt sich zu Platz ", "\ud83e\udda1"],
                     portal: [" geht durchs Tor zu Platz ", "\ud83c\udf00"],
                     boot: [" schippert zu Platz ", "\u26f5"],
-                    kran: [" wird gehoben zu Platz ", "\ud83c\udfd7\ufe0f"] }[art];
+                    kran: [" wird gehoben zu Platz ", "\ud83c\udfd7\ufe0f"],
+                    dampfer: [" tuckert zu Platz ", "\ud83d\udea2"],
+                    lok: [" dampft zu Platz ", "\ud83d\ude82"],
+                    liane: [" schwingt sich zu Platz ", "\ud83c\udf3f"],
+                    feder: [" federt zu Platz ", "\ud83e\ude80"],
+                    beamen: [" beamt sich zu Platz ", "\u2728"] }[art];
       return anAlle("aktion", zustand.ichName + satzR[0] + rest.trim() + "  " + satzR[1],
                     { wirkung: art, wen: rest.trim() });
     }

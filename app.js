@@ -23671,6 +23671,7 @@
        Einmal antippen gibt den Paukenschlag, laenger halten die
        Marschtrommel — siehe lcTrommel. */
     trommel:        { ton: "pauke",    dauer: 2800, laut: 0.7 },
+    marsch:         { ton: "marschtrommel", dauer: 3000, laut: 0.6 },
     /* Runde 15 — „das Paintball hast du auch noch vergessen", das Ei,
        das Losfahren und die Spielzuege. */
     paintfleck:     { ton: "paintball", dauer: 1600, laut: 0.55 }, /* ein Schuss, kein Dauerfeuer */
@@ -23734,6 +23735,11 @@
        Boot ... oder dass man einen Baustellenkran hat." */
     boot:           { ton: "boot",     dauer: 3000, laut: 0.45 },
     kran:           { ton: "kran",     dauer: 3000, laut: 0.45 },
+    dampfer:        { ton: "dampfer",  dauer: 3400, laut: 0.45 },
+    lok:            { ton: "lok",      dauer: 3600, laut: 0.45 },
+    liane:          { ton: "swoosh",   dauer: 2600, laut: 0.5 },
+    feder:          { ton: "feder",    dauer: 2800, laut: 0.5 },
+    beamen:         { ton: "beamen",   dauer: 3000, laut: 0.5 },
     /* Das Lagerfeuer-Geraeusch leiht sich der brennende Rahmen — es
        liegt schon in ton/ und klingt nach echtem Holzfeuer. */
     brennen:        { ton: "lagerfeuer", dauer: 4200, laut: 0.4 },
@@ -25196,7 +25202,12 @@
     ["\ud83c\udff9", "Pfeil",    "pfeil"],
     ["\ud83c\udf66", "Sahne",    "sahne"],
     ["\ud83c\udf00", "Strudel",  "strudel"],
-    ["\ud83e\udd41", "Trommel",  "trommel"],
+    /* „Da kannst du vielleicht zwei Versionen von der Trommel
+       haben ... einmal den Paukenschlag und einmal das Trommeln, was
+       so wie eine Marschtrommel ist." */
+    ["\ud83e\udd41", "Trommel", "trommel", false,
+      [["\ud83e\udd41", "Paukenschlag", "trommel"],
+       ["\ud83e\udd41", "Marschtrommel", "marsch"]]],
     /* Die Stoerung steht hier NICHT mehr: „die Störung ist kein Effekt
        um das Profilbild zu beeinflussen durch einen Klick sondern es
        ist ein Sprechbild-Effekt." Sie ist jetzt eines der Bilder im
@@ -25213,13 +25224,18 @@
     /* „lasse keinen aus" — der Rest der Wunschliste, in derselben
        Reihenfolge, in der er sie genannt hat. */
     ["\ud83e\ude83", "Katapult",  "katapult"],
-    /* GEWUENSCHT: „bei dem Strohhalm diese zwei Varianten" — saugen
-       und blasen gehoeren zusammen und stehen deshalb unter einer
-       Kachel, genau wie die Reisen und die Fenster. */
+    /* GEWUENSCHT: „das schluerfen und das blubbern kannst du unter
+       Getraenk machen ... und dann hatten wir noch das Blasrohr, wo
+       man diese kleinen Spuck Kuegelchen schicken kann. Das kannst du
+       vielleicht bei Strohhalm mit einbauen."
+       Alles, was mit dem Halm geht, steht jetzt unter EINER Kachel.
+       „Pusten" hatte davor eine eigene Kachel mit demselben Zeichen
+       wie der Halm — die ist weg. */
     ["\ud83d\udd25", "Brennen", "brennen"],
-    ["\ud83e\udd64", "Strohhalm", "strohhalm", false,
-      [["\ud83e\udd64", "Saugen", "strohhalm"],
-       ["\ud83e\uded7", "Blasen", "blubbern"]]],
+    ["\ud83e\udd64", "Getr\u00e4nk", "strohhalm", false,
+      [["\ud83e\udd64", "Schl\u00fcrfen", "strohhalm"],
+       ["\ud83e\uded7", "Blubbern", "blubbern"],
+       ["\ud83d\udca6", "Spucken", "pusterohr"]]],
     ["\ud83d\uddd2\ufe0f", "Knüllen", "knuell"],
     ["\ud83e\udea2", "Peitsche",  "peitsche"],
     ["\ud83c\udfb3", "Bowling",   "bowling"],
@@ -25785,6 +25801,47 @@
     }, true);
     knopf("\ud83d\ude97", "Fahren", () => schicken("fahren"));
     knopf("\ud83d\udc63", "Laufen", () => schicken("laufen"));
+    /* ALLE REISEN GEHOEREN HIERHER.
+       GEWUENSCHT: „die Reisen sollen mit bei dem Fahren drin sein.
+       Also wir haben ja, wenn wir auf einen anderen Platz klicken,
+       kommt ja das Menue mit dem Auto und dem Laufen? Da soll dann
+       das Schiff und die anderen Reisemoeglichkeiten drin sein. Zum
+       Beispiel der Maulwurf, das Gate, eine Liane koennte auch noch
+       mit drin sein und der Kran."
+       Als EINE Reihe kleiner Symbole, nicht als zehn weitere Zeilen —
+       sonst waere das Menue laenger als der Bildschirm. Ein
+       gezeichneter Weg gilt fuer Fahren und Laufen; die Reisen gehen
+       immer direkt zur Nummer. */
+    const reihe = document.createElement("div");
+    reihe.className = "lc-anreise-reihe";
+    [["\u2708\ufe0f", "Flugzeug", "flug"],
+     ["\u26f5", "Segelboot", "boot"],
+     ["\ud83d\udea2", "Raddampfer", "dampfer"],
+     ["\ud83d\ude82", "Dampflok", "lok"],
+     ["\ud83e\udda1", "Maulwurf", "maulwurf"],
+     ["\ud83c\udf00", "Tor", "portal"],
+     ["\ud83c\udf3f", "Liane", "liane"],
+     ["\ud83e\ude80", "Sprungfeder", "feder"],
+     ["\ud83c\udfd7\ufe0f", "Kran", "kran"],
+     ["\u2728", "Beamen", "beamen"]].forEach(([zeichen, wort, befehl]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-anreise-knopf";
+      b.setAttribute("role", "menuitem");
+      b.title = wort;
+      b.setAttribute("aria-label", wort);
+      b.textContent = zeichen;
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        lcPlatzMenueZu();
+        const zeile = "/" + befehl + " " + nr;
+        try { LiveChat.schreiben(zeile); } catch (err) {}
+        lcNachDemSenden(zeile);
+      });
+      reihe.appendChild(b);
+    });
+    kasten.appendChild(reihe);
     /* Und der gemalte Weg — „wie bei einer Handy-Code-Freischaltung".
        EINE Zeile, nicht mehr zwei: „denn du hast naemlich die Route
        fuer das Auto daneben noch ein zweites Mal." */
@@ -27359,6 +27416,12 @@
     portal:   { zeichen: ["\ud83c\udf00"], wie: 4, klasse: "umarmen" },
     boot:     { zeichen: ["\u26f5"], wie: 4, klasse: "umarmen" },
     kran:     { zeichen: ["\ud83c\udfd7\ufe0f"], wie: 4, klasse: "umarmen" },
+    dampfer:  { zeichen: ["\ud83d\udea2"], wie: 4, klasse: "umarmen" },
+    lok:      { zeichen: ["\ud83d\ude82"], wie: 4, klasse: "umarmen" },
+    liane:    { zeichen: ["\ud83c\udf3f"], wie: 4, klasse: "umarmen" },
+    feder:    { zeichen: ["\ud83e\ude80"], wie: 4, klasse: "umarmen" },
+    beamen:   { zeichen: ["\u2728"], wie: 4, klasse: "umarmen" },
+    marsch:   { zeichen: ["\ud83e\udd41"], wie: 5, klasse: "umarmen" },
     brennen:  { zeichen: ["\ud83d\udd25"], wie: 5, klasse: "umarmen" },
     halloween:{ ganzeSeite: true, wie: "halloween" },
     weihnachten:{ ganzeSeite: true, wie: "weihnachten" },
@@ -28758,7 +28821,11 @@
          66 % von 4,2 s auf — also nach 2,77 Sekunden. Genau dann,
          und leise: eine Kirsche auf Sahne macht kein Geraeusch wie
          ein Stein. */
-      setTimeout(() => { try { lcGeraeusch("platsch", "platsch", 0.22); } catch (e) {} }, 2770);
+      /* NACHGEBESSERT: „wenn die Kirsche aufgesetzt wird, dann kommt
+         so ein komisches Gewittergeraeusch ... da muss dann so ne Art
+         bling kommen, also wie in einem Comic." ton/platsch war das
+         Falsche — jetzt das Comic-Bling. */
+      lcTonSpaeter("bling", 2770, 0.4);
     }, 4200, "sahne");
   }
 
@@ -29557,8 +29624,17 @@
   };
 
   /* --- DIE TROMMEL -------------------------------------------------- */
-  function lcTrommel(wen) {
-    return lcAmPlatz(wen, "lc-trommel", (schicht, platz) => {
+  /* ZWEI TROMMELN.
+     GEWUENSCHT: „Bei der Trommel kannst du wie beim kleinen Trommler
+     auch so ein richtiges Marschtrommel machen ... Da kannst du
+     vielleicht zwei Versionen von der Trommel haben ... dann sieht man
+     einmal den Paukenschlag und einmal das Trommeln, was so wie eine
+     Marschtrommel ist."
+     Derselbe Aufbau, zwei Takte: der Paukenschlag ist EIN satter
+     Schlag, der Marsch ein schneller Wirbel. */
+  function lcTrommel(wen, marsch) {
+    return lcAmPlatz(wen, marsch ? "lc-trommel lc-trommel-marsch" : "lc-trommel",
+      (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
         kreis.classList.remove("lc-getrommelt");
@@ -29598,7 +29674,7 @@
         w.style.animationDelay = (i * 0.26).toFixed(2) + "s";
         schicht.appendChild(w);
       }
-    }, 2800, "trommel");
+    }, marsch ? 3000 : 2800, marsch ? "marsch" : "trommel");
   }
 
   /* --- DIE BILDSTOERUNG — BEIDES ---------------------------------------
@@ -30601,9 +30677,9 @@
     const quelle = bild && bild.getAttribute("src") && bild.style.display !== "none"
       ? bild.getAttribute("src") : "";
 
-    const hin = art === "flug" ? 2600
-      : (art === "maulwurf" ? 2200
-      : (art === "boot" ? 2800 : (art === "kran" ? 2800 : 1800)));
+    const hin = { flug: 2600, maulwurf: 2200, boot: 2800, kran: 2800,
+                  dampfer: 3000, lok: 3200, liane: 2200, feder: 2400,
+                  beamen: 2600 }[art] || 1800;
     const dauer = hin + 500;
     const altZ = ab.el.style.zIndex;
     ab.el.style.zIndex = "7";
@@ -30764,6 +30840,141 @@
         }
       } catch (e) {}
       lcTonZu("kran");
+    } else if (art === "dampfer") {
+      /* „Mach mal zusaetzlich zum Segelboot noch ein Dampfboot
+         vielleicht ein Raddampfer." Derselbe Rumpf wie das Segelboot,
+         aber mit Schaufelrad hinten und rauchendem Schornstein. */
+      const schiff = document.createElement("span");
+      schiff.className = "lc-boot lc-dampfer";
+      schiff.style.setProperty("--gross", d + "px");
+      schiff.innerHTML =
+        '<i class="lc-boot-wasser"></i>'
+        + '<span class="lc-boot-schaukel">'
+        + '<svg class="lc-boot-form" viewBox="0 0 120 70" aria-hidden="true">'
+        + '<path class="lc-dampfer-schlot" d="M56 16 L68 16 L68 47 L56 47 Z"/>'
+        + '<path class="lc-dampfer-ring" d="M56 20 L68 20 L68 25 L56 25 Z"/>'
+        + '<path class="lc-boot-rumpf" d="M8 47 L112 47 L97 65 L23 65 Z"/>'
+        + '<path class="lc-boot-streifen" d="M11 52 L109 52 L106 56 L14 56 Z"/>'
+        + "</svg>"
+        + '<i class="lc-dampfer-rad"><b></b><b></b><b></b><b></b></i>'
+        + '<i class="lc-dampfer-rauch"></i>'
+        + '<span class="lc-boot-fenster"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
+        + "</span>";
+      reihe.appendChild(schiff);
+      weg.push(schiff);
+      setzen(schiff, start.x, start.y);
+      lcReiseWaagerecht(schiff, start, ende, dauer, hin);
+      lcTonZu("dampfer");
+    } else if (art === "lok") {
+      /* „und vielleicht noch ne Lokomotive, der dann irgendwie
+         laengere Strecken faehrt ... und dann vielleicht auch
+         unterwegs so tuut macht." */
+      const lok = document.createElement("span");
+      lok.className = "lc-lok";
+      lok.style.setProperty("--gross", d + "px");
+      lok.innerHTML =
+        '<svg class="lc-lok-form" viewBox="0 0 120 60" aria-hidden="true">'
+        + '<path class="lc-lok-kessel" d="M22 24 Q22 18 30 18 L82 18 Q90 18 90 24 L90 42 L22 42 Z"/>'
+        + '<path class="lc-lok-haus" d="M84 10 L108 10 L108 42 L84 42 Z"/>'
+        + '<path class="lc-lok-schlot" d="M30 6 L42 6 L44 18 L28 18 Z"/>'
+        + '<path class="lc-lok-fahrwerk" d="M16 42 L112 42 L112 48 L16 48 Z"/>'
+        + "</svg>"
+        + '<i class="lc-lok-rad lc-lok-rad-1"></i>'
+        + '<i class="lc-lok-rad lc-lok-rad-2"></i>'
+        + '<i class="lc-lok-rad lc-lok-rad-3"></i>'
+        + '<i class="lc-lok-rauch"></i><i class="lc-lok-rauch lc-lok-rauch-2"></i>'
+        + '<span class="lc-lok-fenster"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
+      reihe.appendChild(lok);
+      weg.push(lok);
+      setzen(lok, start.x, start.y);
+      lcReiseWaagerecht(lok, start, ende, dauer, hin);
+      lcTonZu("lok");
+    } else if (art === "liane") {
+      /* „eine Liane koennte auch noch mit drin sein" — man haengt
+         daran und schwingt im Bogen hinueber. */
+      const liane = document.createElement("span");
+      liane.className = "lc-liane";
+      liane.style.setProperty("--gross", d + "px");
+      const hochL = Math.max(10, Math.min(start.y, ende.y) - d * 1.1);
+      liane.style.setProperty("--seil", Math.max(24, start.y - hochL).toFixed(1) + "px");
+      liane.innerHTML =
+        '<i class="lc-liane-seil"><b></b><b></b></i>'
+        + '<span class="lc-liane-last"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
+      reihe.appendChild(liane);
+      weg.push(liane);
+      setzen(liane, start.x, start.y);
+      const mitteL = { x: (start.x + ende.x) / 2, y: Math.max(8, Math.min(start.y, ende.y) - d * 0.45) };
+      try {
+        liane.animate([
+          { transform: "translate(-50%, -50%) rotate(-16deg)", opacity: 0, offset: 0 },
+          { transform: "translate(-50%, -50%) rotate(-16deg)", opacity: 1, offset: 0.1 },
+          { transform: "translate(" + (mitteL.x - start.x) + "px, " + (mitteL.y - start.y)
+            + "px) translate(-50%, -50%) rotate(0deg)", opacity: 1, offset: 0.5 },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%) rotate(16deg)", opacity: 1, offset: hin / dauer },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%) rotate(16deg)", opacity: 0, offset: 1 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+      } catch (e) {}
+      lcTonZu("liane");
+    } else if (art === "feder") {
+      /* „Vielleicht kannst du als Bewegung noch was mit einer Feder
+         machen, dass man die auf so einer Feder dahin federt." */
+      const fed = document.createElement("span");
+      fed.className = "lc-feder";
+      fed.style.setProperty("--gross", d + "px");
+      fed.innerHTML =
+        '<i class="lc-feder-spirale"><b></b><b></b><b></b><b></b></i>'
+        + '<span class="lc-feder-last"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
+      reihe.appendChild(fed);
+      weg.push(fed);
+      setzen(fed, start.x, start.y);
+      /* Drei Spruenge, jeder flacher als der vorige. */
+      const spruenge = [];
+      for (let i = 0; i <= 6; i++) {
+        const t = i / 6;
+        const x = start.x + (ende.x - start.x) * t;
+        const bogen = (i % 2 ? 1 : 0) * d * (0.8 - t * 0.35);
+        const y = start.y + (ende.y - start.y) * t - bogen;
+        spruenge.push({
+          transform: "translate(" + (x - start.x).toFixed(1) + "px, " + (y - start.y).toFixed(1)
+            + "px) translate(-50%, -50%)",
+          offset: Math.min(1, (t * hin) / dauer)
+        });
+      }
+      spruenge.push({ transform: "translate(" + (ende.x - start.x) + "px, "
+        + (ende.y - start.y) + "px) translate(-50%, -50%)", opacity: 0, offset: 1 });
+      try { fed.animate(spruenge, { duration: dauer, easing: "linear", fill: "forwards" }); }
+      catch (e) {}
+      lcTonZu("feder");
+    } else if (art === "beamen") {
+      /* „Das muss wirklich wie bei Star Trek und ein schoener
+         Beameffekt sein." Zwei Saeulen: eine loest sich hier auf, die
+         andere setzt sich drueben wieder zusammen. */
+      [start, ende].forEach((wo, i) => {
+        const saeule = document.createElement("span");
+        saeule.className = "lc-beam" + (i ? " lc-beam-an" : " lc-beam-ab");
+        saeule.style.setProperty("--gross", (d * 1.1) + "px");
+        saeule.style.animationDelay = (i ? hin - 900 : 0) + "ms";
+        let funken = "";
+        for (let f = 0; f < 14; f++) {
+          funken += '<b style="left:' + (6 + ((f * 29) % 88)) + "%;--spaet:"
+            + ((f % 7) * 0.09).toFixed(2) + "s;--hoch:" + (40 + ((f * 17) % 50)) + '%"></b>';
+        }
+        saeule.innerHTML = '<i class="lc-beam-saeule"></i>' + funken;
+        reihe.appendChild(saeule);
+        weg.push(saeule);
+        setzen(saeule, wo.x, wo.y);
+      });
+      lcTonZu("beamen");
     } else {
       /* Das Tor: eines hier, eines dort. */
       [start, ende].forEach((wo, i) => {
@@ -30788,12 +30999,31 @@
           if (erg && erg.ok) {
             renderLiveChat();
             showToast(({ flug: "✈️ ", maulwurf: "🦡 ", boot: "⛵ ",
-                         kran: "🏗️ " }[art] || "🌀 ") + erg.text);
+                         kran: "🏗️ ", dampfer: "🚢 ", lok: "🚂 ",
+                         liane: "🌿 ", feder: "🪀 ", beamen: "✨ "
+                       }[art] || "🌀 ") + erg.text);
           }
         } catch (e) {}
       }, hin + 120);
     }
     return true;
+  }
+
+  /* Dampfer und Lok fahren waagerecht: hereinfahren, hinueberfahren,
+     hinausfahren — und nach links gespiegelt, wenn es nach links geht. */
+  function lcReiseWaagerecht(el, start, ende, dauer, hin) {
+    const links = ende.x < start.x;
+    const sp = " scaleX(" + (links ? -1 : 1) + ")";
+    try {
+      el.animate([
+        { transform: "translate(-50%, -50%)" + sp + " scale(.3)", opacity: 0, offset: 0 },
+        { transform: "translate(-50%, -50%)" + sp + " scale(1)", opacity: 1, offset: 0.14 },
+        { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+          + "px) translate(-50%, -50%)" + sp + " scale(1)", opacity: 1, offset: hin / dauer },
+        { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+          + "px) translate(-50%, -50%)" + sp + " scale(.3)", opacity: 0, offset: 1 }
+      ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+    } catch (e) {}
   }
 
   /* Eine Absage, die man auch sieht. Sie gehoert nicht in den Chat der
@@ -33690,6 +33920,7 @@
     aufessen: 1, lotto: 1, sanduhr: 1, katapult: 1, strohhalm: 1, blubbern: 1,
     knuell: 1, rollo: 1, lamellen: 1, peitsche: 1, gemeinsam: 1, schneekugel: 1,
     flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1, brennen: 1,
+    dampfer: 1, lok: 1, liane: 1, feder: 1, beamen: 1, marsch: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
@@ -33786,6 +34017,7 @@
       if (art === "sanduhr" && lcSanduhrTausch(wenZ, (nachricht && nachricht.eigen)
             ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "katapult" && lcKatapult(wenZ)) return;
+      if (art === "marsch" && lcTrommel(wenZ, true)) return;
       if (art === "brennen" && lcBrennen(wenZ)) return;
       if (art === "strohhalm" && lcStrohhalm(wenZ)) return;
       if (art === "blubbern" && lcBlubbern(wenZ)) return;
@@ -33846,7 +34078,9 @@
     }
     /* Fliegen, Graben und das Tor bewegen ebenfalls den Absender. */
     if (art === "flug" || art === "maulwurf" || art === "portal"
-        || art === "boot" || art === "kran") {
+        || art === "boot" || art === "kran" || art === "dampfer"
+        || art === "lok" || art === "liane" || art === "feder"
+        || art === "beamen") {
       const wenR = nachricht && (nachricht.wen || nachricht.an);
       let vonR = (nachricht && nachricht.name) || "";
       if (nachricht && nachricht.eigen) {
@@ -65891,6 +66125,10 @@ An einem Morgen lief ein kleiner Fuchs los…
       /* Das Platzmenue und die Wirkung an einem Platz — ohne echten
          Raum und ohne echten langen Druck nachstellbar. */
       platzMenue: (platz) => lcPlatzMenue(platz),
+      /* Das Anreise-Menue (langer Druck auf einen FREIEN Platz) —
+         damit sich nachsehen laesst, dass die Reisen wirklich
+         darinstehen: „die Reisen sollen mit bei dem Fahren drin sein." */
+      anreiseMenue: (platz) => lcAnreiseMenue(platz),
       /* Das Umsetz-Menue einzeln aufrufbar — sonst laesst sich nur
          feststellen, DASS es nicht aufgeht, nicht warum. */
       hebenMenue: (platz, name) => lcHebenMenue(platz, name),
