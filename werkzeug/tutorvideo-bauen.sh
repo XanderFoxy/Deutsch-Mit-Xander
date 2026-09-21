@@ -37,6 +37,13 @@
 # Deshalb ist Gruen hier der Normalfall; Schwarz bleibt nur als
 # Rueckfall fuer die alten Rohfilme stehen.
 #
+# DRITTE FALLE, RUNDE 65: „format=rgba" VOR dem Schluessel.
+#   chromakey rechnet in YUV. Steht davor ein format=rgba, schiebt
+#   ffmpeg eine Umrechnung dazwischen, und der Schluessel trifft
+#   danach nicht mehr das, was er treffen soll — gemessen blieben von
+#   228.960 Bildpunkten ganze 8 deckend uebrig. Ohne das format=rgba
+#   bekommt chromakey das Bild so, wie es damit umgehen kann.
+#
 # ZWEI FALLEN, beide schon einmal zugeschnappt:
 #   1. ffmpeg liest die Alphaspur eines VP9-Films NUR mit
 #      „-c:v libvpx-vp9" VOR dem -i. Ohne das kommt eine
@@ -68,7 +75,20 @@ case "$GRUND" in
     # „blend" weich, damit die Kante nicht ausfranst — und danach
     # DESPILL: der gruene Schimmer, der sich auf Haare und Schultern
     # legt, wird herausgerechnet, sonst hat Alex einen gruenen Saum.
-    SCHLUESSEL="chromakey=0x00b140:0.30:0.10"
+    # RUNDE 65 — ZWEI ZAHLEN, DIE HIER FALSCH STANDEN, UND BEIDE
+    # WAREN GERATEN. Dieser Zweig war nie gelaufen: die vorhandenen
+    # Filme kamen alle ueber „schwarz" herein.
+    #   · DIE FARBE. Hier stand das Lehrbuch-Gruen 0x00b140. Am
+    #     wirklichen Rohfilm GEMESSEN (Mittel der vier Bildecken):
+    #     #05a940. Nah dran, aber eben nicht dasselbe.
+    #   · DIE TOLERANZ. 0,30 ist bei chromakey kein „etwas
+    #     grosszuegig", sondern viel zu viel: gemessen blieben davon
+    #     8 deckende Pixel von 228.960 uebrig — der Schluessel hat die
+    #     ganze Figur mitgenommen. Durchgemessen von 0,02 bis 0,16:
+    #     bei 0,14 ist die Figur 628 Pixel hoch, also genau die
+    #     erwarteten 98 % der Bildhoehe; darunter bleibt ein gruener
+    #     Saum stehen (bei 0,02 sind es 636, das ganze Bild).
+    SCHLUESSEL="chromakey=0x05a940:0.14:0.05"
     DESPILL=",despill=type=green:mix=0.5:expand=0"
     ;;
   schwarz|black)
@@ -79,14 +99,14 @@ case "$GRUND" in
     DESPILL=""
     ;;
   *)
-    SCHLUESSEL="chromakey=$GRUND:0.30:0.10"
+    SCHLUESSEL="chromakey=$GRUND:0.14:0.05"
     DESPILL=",despill=type=green:mix=0.5:expand=0"
     ;;
 esac
 echo "Hintergrund: $GRUND  ->  $SCHLUESSEL$DESPILL"
 
 "$FF" -hide_banner -loglevel error -y -i "$ROH" \
-  -vf "scale=360:636,format=rgba,${SCHLUESSEL}${DESPILL},format=yuva420p" \
+  -vf "scale=360:636,${SCHLUESSEL}${DESPILL},format=yuva420p" \
   -c:v libvpx-vp9 -pix_fmt yuva420p -auto-alt-ref 0 -b:v 0 -crf 32 -an \
   "$ZIEL/$NAME.webm"
 
