@@ -25934,14 +25934,23 @@
       kasten.appendChild(b);
     };
 
+    /* DIE LUPE GILT FUER JEDEN, NICHT NUR FUER MICH.
+       XANDER: „wenn man manchmal auf den anderen klickt, geht wie
+       frueher noch das Profilbild gross — das soll nur dann sein, wenn
+       man auf die Lupe klickt. Die ist uebrigens gar nicht mehr da im
+       Menue … man soll die anderen gross zeigen koennen und dafuer die
+       Lupe haben."
+       Sie WAR da — aber nur im Menue des eigenen Platzes, und bei
+       einem fremden stand sie nie. Jetzt steht sie oben in jedem
+       Menue, und nur sie macht gross. */
+    /* Auf dem EIGENEN Platz steht das eigene Bild obenan — daran
+       greift man zuerst. Bei einem fremden gibt es nichts zu wechseln,
+       dort steht die Lupe an erster Stelle. */
+    if (eigen) knopf("\ud83d\uddbc\ufe0f", "Anderes Bild", () => livechatBildWaehler());
+    knopf("\ud83d\udd0d", "Gro\u00df zeigen", () => {
+      try { LiveChat.grossZeigen(platz.dataset.lcId || ""); } catch (e) {}
+    });
     if (eigen) {
-      knopf("\ud83d\uddbc\ufe0f", "Anderes Bild", () => livechatBildWaehler());
-      /* Das grosse Bild geht seit Fassung 355 nicht mehr von selbst
-         auf, wenn man antippt („das soll nicht mehr aufgehen"). Wer es
-         sehen will, findet es hier. */
-      knopf("\ud83d\udd0d", "Gro\u00df zeigen", () => {
-        try { LiveChat.grossZeigen(platz.dataset.lcId || ""); } catch (e) {}
-      });
       /* =========================================================
          DAS SPRECHBILD STEHT JETZT IM MENUE
          ---------------------------------------------------------
@@ -25981,6 +25990,19 @@
         lcNachDemSenden(zeile);
       });
     });
+    /* ALLE AUF EINMAL.
+       XANDER: „dass ich aus dem Auswaehlen Menue … vielleicht alle
+       umarmt schon drinnen hab in dem Auswahl Kontextmenue und bei
+       den anderen Sachen alle ab knutschen … alle treten … bei dem
+       explodieren, dass man die Buehne komplett leerraeumen kann."
+       Vier Befehle, die ohne Namen ohnehin fuer alle gelten — hier
+       stehen sie mit einem Wort davor, damit man sie auch findet. */
+    knopf("\ud83d\udc65", "Alle", () => lcUnterMenue(platz, "", "Alle", [
+      ["\ud83e\udd17", "Umarmen", "drueck", true],
+      ["\ud83d\ude18", "K\u00fcssen", "kuss", true],
+      ["\ud83e\uddb6", "Treten", "tritt", true],
+      ["\ud83d\udca5", "B\u00fchne leeren", "bombe", true]
+    ]));
     /* Nur bei einem FREMDEN Platz: jemanden woanders hinsetzen. Bei
        sich selbst waere das /tausch, und den gibt es schon. Der Befehl
        ohne Nummer zeigt erst einmal, welche Plaetze ueberhaupt gehen —

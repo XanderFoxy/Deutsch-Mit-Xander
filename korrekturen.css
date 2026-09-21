@@ -14505,9 +14505,16 @@ body.lc-schreibt .tutor-reiter {
    10 px Rand minus 8 px Fugen sind 274 px auf fuenf Spalten, also
    knapp 55 px je Kachel — dieselbe Breite wie vorher bei vier
    Spalten auf 272 px. Es wird also nicht enger, nur kuerzer. */
+/* SECHS SPALTEN STATT FÜNF.
+   Mit der Lupe für jeden Platz und der Kachel „Alle" sind es 57
+   Kacheln; bei fünf Spalten waren das zwölf Reihen und 558 px — der
+   letzte Knopf lag damit 7 px unter dem Bildschirmrand (nachgemessen
+   von pruefe-platzmenue). Bei sechs Spalten sind es zehn Reihen, und
+   alles ist ohne Rollen zu sehen. Die Breite wächst nur um 38 px und
+   bleibt damit auch auf einem 360er-Bildschirm im Bild. */
 .lc-platzmenue {
-  width: 292px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: min(330px, calc(100vw - 20px));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 .lc-platzmenue-knopf { min-height: 42px; }
 

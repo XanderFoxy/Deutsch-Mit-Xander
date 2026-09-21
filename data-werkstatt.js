@@ -49,28 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 42 — Peitsche, Fahrradspeichen, Ankommen-Geräusche",
+  stand: "Runde 43 — Lupe für jeden, „Alle“ im Platzmenü",
 
   inArbeit: [
-    { seit: "2026-09-21T01:03",
-      text: "Kopfhörer: Lied auswählen, aufgesetzt lassen" },
-    { seit: "2026-09-21T01:03",
-      text: "Lupe fürs Großzeigen, „alle“-Einträge im Platzmenü" },
-    { seit: "2026-09-21T01:03",
+    { seit: "2026-09-21T01:07",
+      text: "Kopfhörer: aufgesetzt lassen, bis sie selbst abgenommen werden" },
+    { seit: "2026-09-21T01:07",
       text: "Scheibenwischer und Flugzeug sehen noch nicht echt genug aus" },
-    { seit: "2026-09-21T01:03",
+    { seit: "2026-09-21T01:07",
       text: "Geld: realistischer, Star-Trek-Beameffekt weiter verfeinern" },
+    { seit: "2026-09-21T01:07", nurBetreiber: true,
+      text: "Das „Profilbild geht beim Antippen groß auf\" konnte ich nicht nachstellen — sag mir bitte, wo genau das passiert" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-21T01:03",
-      text: "Peitsche: das Seil ist jetzt eine Welle, die zur Spitze hin dünn ausläuft und eine Franse hat — sie rollt aus und knallt am fernen Ende" },
-    { seit: "2026-09-21T01:03",
-      text: "Peitsche: der Knall ist ein eigenes Geräusch beim Auftreffen, das Sausen läuft leiser darunter" },
-    { seit: "2026-09-21T01:03",
-      text: "Gemeinsam fahren: beide Bilder haben jetzt Nabe, Speichen und Felge — man sieht die Räder sich drehen" },
-    { seit: "2026-09-21T01:03",
-      text: "Reisen: Flugzeug, Boot, Raddampfer, Lok, Kran, Liane und Feder haben ein Ankommen-Geräusch genau am Ziel" },
+    { seit: "2026-09-21T01:07",
+      text: "Die Lupe steht jetzt in JEDEM Platzmenü, nicht nur im eigenen — damit kann man auch die anderen groß zeigen" },
+    { seit: "2026-09-21T01:07",
+      text: "Neue Kachel „Alle“: alle umarmen, alle küssen, alle treten, Bühne leeren" },
+    { seit: "2026-09-21T01:07",
+      text: "Das Platzmenü hat jetzt sechs Spalten statt fünf — sonst lag der letzte Knopf 7 px unter dem Bildschirmrand" },
   ],
 };
