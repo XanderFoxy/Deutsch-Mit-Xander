@@ -17527,3 +17527,95 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-peitsche-welle { animation: none; opacity: 0; }
 }
+
+/* =================================================================
+   DER TRANSPORTER — WIE BEI STAR TREK
+   -----------------------------------------------------------------
+   XANDER: „Das muss wirklich wie bei Star Trek und ein schöner
+   Beameffekt sein."
+
+   Was einen Transporter ausmacht, ist nicht die Säule über der
+   Person, sondern dass die Person SELBST sich in senkrechte
+   Lichtbänder auflöst. Vorher schrumpfte das Bild einfach weg wie
+   bei jeder anderen Reise, und die Säule stand daneben.
+   Jetzt drei Dinge zusammen:
+     · das Bild wird gleissend hell und entsättigt (der Körper
+       verliert seine Farbe, bevor er geht),
+     · senkrechte Bänder laufen darüber (.lc-beam-glanz) — das ist
+       die Struktur, an der man den Transporter erkennt,
+     · und es verschwindet nach OBEN, nicht in die Mitte.
+   Drüben läuft dieselbe Bewegung rückwärts.
+   ================================================================= */
+.lc-gebeamt {
+  animation: lcGebeamtR45 var(--beamzeit, 3100ms) cubic-bezier(.4, 0, .6, 1) both;
+}
+@keyframes lcGebeamtR45 {
+  0%   { opacity: 1; filter: none; transform: translateY(0) scaleY(1); }
+  8%   { opacity: 1; filter: brightness(1.7) saturate(.45) contrast(.9); }
+  /* Es zerfällt: die Farbe ist weg, das Bild zieht sich nach oben. */
+  20%  { opacity: .55; filter: brightness(2.4) saturate(.1);
+         transform: translateY(-8%) scaleY(1.08); }
+  30%, 70% { opacity: 0; filter: brightness(2.6) saturate(0);
+             transform: translateY(-14%) scaleY(1.14); }
+  /* Und drüben wieder zusammen. */
+  82%  { opacity: .55; filter: brightness(2.2) saturate(.2);
+         transform: translateY(-6%) scaleY(1.06); }
+  94%  { opacity: 1; filter: brightness(1.3) saturate(.8);
+         transform: translateY(0) scaleY(1); }
+  100% { opacity: 1; filter: none; transform: translateY(0) scaleY(1); }
+}
+/* Die senkrechten Lichtbänder ÜBER dem Bild. */
+.lc-beam-glanz {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 5;
+  background: repeating-linear-gradient(90deg,
+    rgba(235, 252, 255, .95) 0 2.5%,
+    rgba(120, 220, 255, .35) 2.5% 5%,
+    rgba(235, 252, 255, 0) 5% 8%);
+  mix-blend-mode: screen;
+  animation: lcBeamGlanzR45 var(--beamzeit, 3100ms) cubic-bezier(.4, 0, .6, 1) both;
+}
+@keyframes lcBeamGlanzR45 {
+  0%       { opacity: 0; transform: scaleY(.2); }
+  10%      { opacity: 1; transform: scaleY(1); }
+  30%, 70% { opacity: 1; transform: scaleY(1.12); }
+  90%      { opacity: 1; transform: scaleY(1); }
+  100%     { opacity: 0; transform: scaleY(.2); }
+}
+/* Der helle Deckel oben auf der Säule — dort setzt der Strahl an. */
+.lc-beam-kappe {
+  position: absolute;
+  left: 8%;
+  top: 0;
+  width: 84%;
+  height: 7%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%,
+    #ffffff 0 30%, rgba(190, 245, 255, .8) 60%, rgba(150, 230, 255, 0) 100%);
+  filter: blur(.4px);
+  animation: lcBeamKappeR45 .42s ease-in-out infinite alternate;
+}
+@keyframes lcBeamKappeR45 {
+  from { opacity: .7; transform: scaleX(.88); }
+  to   { opacity: 1;  transform: scaleX(1.06); }
+}
+/* Und die Säule bekommt ihre senkrechte Struktur — eine glatte
+   Fläche sieht aus wie Nebel, nicht wie ein Strahl. */
+.lc-beam-saeule {
+  background-image:
+    repeating-linear-gradient(90deg,
+      rgba(255, 255, 255, .28) 0 1.5%,
+      rgba(255, 255, 255, 0) 1.5% 4.5%),
+    linear-gradient(180deg,
+      rgba(180, 240, 255, 0) 0%,
+      rgba(170, 235, 255, .65) 30%,
+      rgba(120, 210, 255, .5) 70%,
+      rgba(120, 210, 255, 0) 100%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-gebeamt, .lc-beam-glanz, .lc-beam-kappe { animation: none; }
+  .lc-beam-glanz { display: none; }
+}

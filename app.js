@@ -30851,7 +30851,7 @@
        Maulwurf und bei der Roehre schrumpft das Bild deshalb NICHT
        weg, sondern versinkt senkrecht — die beiden bringen ihre
        eigene Bewegung weiter unten mit. */
-    if (art !== "maulwurf" && art !== "rohr") {
+    if (art !== "maulwurf" && art !== "rohr" && art !== "beamen") {
       try {
         kreis.animate([
           { opacity: 1, transform: "scale(1)", offset: 0 },
@@ -31167,11 +31167,32 @@
           funken += '<b style="left:' + (6 + ((f * 29) % 88)) + "%;--spaet:"
             + ((f % 7) * 0.09).toFixed(2) + "s;--hoch:" + (40 + ((f * 17) % 50)) + '%"></b>';
         }
-        saeule.innerHTML = '<i class="lc-beam-saeule"></i>' + funken;
+        saeule.innerHTML = '<i class="lc-beam-saeule"></i><i class="lc-beam-kappe"></i>' + funken;
         reihe.appendChild(saeule);
         weg.push(saeule);
         setzen(saeule, wo.x, wo.y);
       });
+      /* XANDER: „Das muss wirklich wie bei Star Trek und ein schoener
+         Beameffekt sein."
+         Was einen Transporter ausmacht, ist nicht die Saeule ueber der
+         Person — es ist, dass die Person SELBST sich in Lichtstreifen
+         aufloest. Deshalb bekommt das Bild hier eine eigene Bewegung:
+         es wird gleissend hell, zerfaellt in senkrechte Baender und
+         ist dann weg; drueben setzt es sich in derselben Reihenfolge
+         rueckwaerts wieder zusammen. */
+      kreis.classList.remove("lc-gebeamt");
+      void kreis.offsetWidth;
+      kreis.style.setProperty("--beamzeit", dauer + "ms");
+      kreis.classList.add("lc-gebeamt");
+      const glanz = document.createElement("span");
+      glanz.className = "lc-beam-glanz";
+      glanz.style.setProperty("--beamzeit", dauer + "ms");
+      kreis.appendChild(glanz);
+      setTimeout(() => {
+        kreis.classList.remove("lc-gebeamt");
+        kreis.style.removeProperty("--beamzeit");
+        glanz.remove();
+      }, dauer + 200);
       lcTonZu("beamen");
     } else if (art === "rohr") {
       /* XANDER: „An der Stelle kannst du auch noch wie bei Super Mario

@@ -49,20 +49,18 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 45 — die Geldscheine",
+  stand: "Runde 46 — der Transporter",
 
   inArbeit: [
-    { seit: "2026-09-21T01:13",
-      text: "Star-Trek-Beameffekt weiter verfeinern" },
-    { seit: "2026-09-21T01:13", nurBetreiber: true,
+    { seit: "2026-09-21T01:15", nurBetreiber: true,
       text: "Das „Profilbild geht beim Antippen groß auf\" konnte ich nicht nachstellen — sag mir bitte, wo genau das passiert" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-21T01:13",
-      text: "Geldscheine: Farbverlauf, Bogenfenster, Hologrammstreifen, Wert zweimal, EURO-Schriftzug und Guillochen-Linien" },
-    { seit: "2026-09-21T01:13",
-      text: "Und die Farben stimmen jetzt: 20 blau, 50 orange, 100 grün, 500 lila — vorher war die 50 grün und die 100 orange" },
+    { seit: "2026-09-21T01:15",
+      text: "Beamen: das Bild selbst löst sich jetzt in senkrechte Lichtbänder auf, wird gleissend hell und zieht nach oben weg — drüben setzt es sich rückwärts wieder zusammen" },
+    { seit: "2026-09-21T01:15",
+      text: "Die Säule hat eine senkrechte Struktur und einen hellen Deckel oben, statt eine glatte Nebelfläche zu sein" },
   ],
 };
