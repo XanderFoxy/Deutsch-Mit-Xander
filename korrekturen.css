@@ -21509,15 +21509,19 @@ body.lc-schreibt .tutor-reiter {
   background-size: cover;
   background-position: center;
   background-color: #efe8dc;
-  box-shadow: 0 0 0 3px #57a83c, 0 4px 10px rgba(0, 0, 0, .3);
+  /* RUNDE 71 — XANDER: „hat das Profilbild auch diesen filigranen
+     duennen Rand." Das war dieser gruene 3-px-Ring; das echte Bild
+     am Platz traegt so etwas nicht. Nur der Schatten bleibt. */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .35);
   display: grid;
   place-items: center;
   font-weight: 800;
   color: #2f4a2a;
   pointer-events: none;
-  /* Unter der Roehre, damit er wirklich aus ihr heraussteigt und
-     nicht davor klebt. */
-  z-index: 5;
+  /* RUNDE 71: hier stand „z-index: 5" mit dem Kommentar „unter der
+     Roehre" — die Roehre hat aber 4, das Bild lag also DAVOR. Jetzt
+     3, und damit wirklich dahinter. */
+  z-index: 3;
 }
 
 /* === RUNDE 67: DAS TOR IST EINE STEHENDE WASSERWAND =================
@@ -22065,3 +22069,80 @@ body.lc-schreibt .tutor-reiter {
   0%   { background-position: 115% -15%, 50% 50%, 50% 50%; }
   100% { background-position: -15% 115%, 50% 50%, 50% 50%; }
 }
+
+/* =================================================================
+   RUNDE 71 — DIE ROHRREISE GEHT WIRKLICH INS ROHR
+   -----------------------------------------------------------------
+   XANDER: „Rohrreise ist sehr eigenartig … das Profilbild
+   [verschwindet] nicht wirklich im Rohr … und wenn man wieder
+   rauskommt … hat das Profilbild auch diesen filigranen dünnen
+   Rand."
+
+   Beides war eine Frage der Reihenfolge, nicht der Bewegung:
+   · Der reisende Platz bekommt für die Dauer der Reise z-index 7
+     (app.js), die Röhre hatte 4. Das Bild lag also VOR der Röhre und
+     glitt über sie hinweg, statt hinter ihr zu verschwinden. Die
+     EINSTIEGSRÖHRE steht jetzt mit 8 davor — nur sie, denn nur dort
+     wird verschluckt.
+   · Am Ziel war es umgekehrt: das zweite Bild hatte 5, die Röhre 4
+     — im Kommentar stand „unter der Röhre", im Wert stand darüber.
+     Jetzt liegt es mit 3 wirklich dahinter und steigt heraus.
+   · Der dünne Rand war ein grüner 3-px-Ring (box-shadow), den das
+     echte Profilbild am Platz gar nicht trägt. Er ist weg; der
+     Schatten bleibt, damit das Bild nicht flach auf der Röhre klebt.
+   ================================================================= */
+.lc-roehre-rein { z-index: 8; }
+.lc-roehre-raus { z-index: 4; }
+
+/* =================================================================
+   RUNDE 71 — DER HELIKOPTER WIRD DUNKEL, KURZ UND BEKOMMT EIN FENSTER
+   -----------------------------------------------------------------
+   XANDER: „der Helikopter kann nicht so länglich sein vom Körper …
+   die Farbe kann man auch ein bisschen verbessern … mehr tiefer …
+   ins Schwarze … mit Licht und Schatten."
+
+   Die Form steht in app.js (gerechnet: von 3,3 : 1 auf 2,3 : 1).
+   Hier die Farbe: das helle Blau (#3b7dd8) war ein Spielzeug. Jetzt
+   ein tiefes, fast schwarzes Blaugrau, dazu ZWEI eigene Flächen —
+   ein heller Streifen oben und ein dunkler Bauch unten. Genau daran
+   liest das Auge eine gewölbte Zelle statt eines Aufklebers.
+   ================================================================= */
+.lc-heli-rumpf    { fill: #1c2029; }
+.lc-heli-licht    { fill: #40495a; }
+.lc-heli-schatten { fill: #0c0e13; }
+.lc-heli-ausleger { fill: #171a22; }
+.lc-heli-flosse   { fill: #22262f; }
+.lc-heli-mast     { fill: #2b313c; }
+.lc-heli-kopf     { fill: #454d5c; }
+.lc-heli-kufe, .lc-heli-strebe { stroke: #3a414e; fill: none; }
+.lc-heli-glas {
+  fill: #6f8ba8;
+  fill-opacity: .55;
+  stroke: #99adc4;
+  stroke-width: 1.1;
+}
+.lc-heli-tuer { stroke: rgba(180, 196, 216, .3); stroke-width: 1.2; fill: none; }
+/* Das Profilbild sitzt als FENSTER in der Kanzel — nicht als runder
+   Aufkleber davor. Ein Hubschrauberfenster ist hochkant und hat
+   abgerundete Ecken, keinen Kreis. Die Mitte der Kanzel liegt nach
+   der neuen Zeichnung bei x 25,5 von 130 (19,6 %) und y 31,5 von 70
+   (45 %). */
+.lc-heli-kanzel {
+  left: 19.8%;
+  top: 45%;
+  width: 19.5%;
+  aspect-ratio: .82;
+  border-radius: 34% 34% 26% 26% / 30% 30% 22% 22%;
+  border: 2px solid #8fa6bf;
+  background-color: #c9d8e8;
+  box-shadow: inset 0 2px 6px rgba(255, 255, 255, .35),
+              0 2px 5px rgba(0, 0, 0, .5);
+  color: #1c2029;
+}
+
+/* RUNDE 71, NACHGEZOGEN: der Rotor sass auf dem alten Mastkopf.
+   Der stand bei y=10 von 70 (14,29 %); die Zelle ist jetzt höher und
+   der Kopf sitzt bei y=7,5 — das sind 10,71 %. Ohne diese Zeile
+   schwebte der Rotor zweieinhalb Einheiten über seinem Mast. Die
+   Prüfung aus Runde 66 hat genau das gemeldet. */
+.lc-heli-rotor { top: 10.71%; }

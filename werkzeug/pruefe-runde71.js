@@ -64,5 +64,49 @@ pruefe("und er kommt vor dem Schwung",
 pruefe("gelandet wird nicht mit einer Ueberblendung auf der Stelle",
   /const wegX = dxL \+ dxL \* 0\.22, wegY = dyL - d \* 0\.9;/.test(js));
 
-console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 71, erster Teil, sitzt.\n");
+console.log("\nDER 3-METER-TURM BLEIBT STEHEN");
+pruefe("er blendet erst NACH dem Einschlag aus (2730 ms)",
+  /offset: t\(2900\) \}/.test(js) && /offset: t\(3300\) \}/.test(js)
+  && !/scaleY\(1\)", offset: t\(1500\) \}/.test(js));
+pruefe("das Brett ist laenger — 48 statt 39 Einheiten",
+  /d="M11 22 L59 22 L59 27 L11 27 Z"/.test(js));
+pruefe("und die Leiter steht weiter hinten",
+  /d="M14 119 V28 M28 119 V28"/.test(js));
+pruefe("das Brett federt beim Anlauf",
+  /brett\.animate\(\[/.test(js) && /rotate\(-4\.6deg\)", offset: t\(1420\)/.test(js));
+
+console.log("\nDIE ROHRREISE GEHT INS ROHR");
+pruefe("die Einstiegsroehre steht VOR dem reisenden Platz",
+  /\.lc-roehre-rein \{ z-index: 8; \}/.test(cssK));
+pruefe("und das zweite Bild steigt HINTER der Zielroehre heraus",
+  /\.lc-roehre-raus \{ z-index: 4; \}/.test(cssK)
+  && /\.lc-rohr-doppel \{[\s\S]{0,420}?z-index: 3;/.test(cssK));
+pruefe("der duenne gruene Ring ist weg",
+  !/box-shadow: 0 0 0 3px #57a83c/.test(cssK));
+
+console.log("\nDER GREIFVOGEL KRALLT WIRKLICH ZU");
+pruefe("die Beine stehen fast senkrecht statt gespreizt",
+  /d="M81 46 L80 56 M89 46 L90 56"/.test(js)
+  && !/d="M79 46 L76 55 M91 46 L94 55"/.test(js));
+pruefe("die Faenge sind eine eigene Gruppe",
+  /<g class="lc-greif-faenge">/.test(js));
+pruefe("und sie packen beim Aufnehmen zu",
+  /faenge\.animate\(\[/.test(js)
+  && /transform: "scaleX\(\.72\) scaleY\(\.86\)", offset: 0\.16/.test(js));
+
+console.log("\nDER HELIKOPTER IST KURZ UND DUNKEL");
+pruefe("die Zelle ist kuerzer und hoeher (2,3 statt 3,3 zu 1)",
+  /d="M10 40 Q8 21 30 16 L60 16/.test(js));
+pruefe("Licht oben, Schatten unten",
+  /lc-heli-licht/.test(js) && /lc-heli-schatten/.test(js)
+  && /\.lc-heli-licht    \{ fill: #40495a; \}/.test(cssK)
+  && /\.lc-heli-schatten \{ fill: #0c0e13; \}/.test(cssK));
+pruefe("das Spielzeugblau ist weg",
+  /\.lc-heli-rumpf    \{ fill: #1c2029; \}/.test(cssK));
+pruefe("und das Bild sitzt als Fenster in der Kanzel, nicht als Kreis davor",
+  /\.lc-heli-kanzel \{[\s\S]{0,260}?border-radius: 34% 34% 26% 26%/.test(cssK));
+/* NACHGEMESSEN im Browser: Glas 104…156 px, Fenster 110…152 px —
+   das Fenster liegt wirklich im Glas. */
+
+console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 71 sitzt.\n");
 process.exit(fehler ? 1 : 0);

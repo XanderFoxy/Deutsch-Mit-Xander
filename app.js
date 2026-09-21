@@ -32489,12 +32489,26 @@
         + '<circle class="lc-greif-pupille" cx="120.8" cy="26" r="1.2"/>'
         + '<path class="lc-greif-schnabel" d="M127 24.5 L134.6 26.4 C135.6 29.6 133 32.2 129.6 31.3'
         + ' C131.4 28.8 130.4 26.4 127 24.5 Z"/>'
-        /* Die Faenge: zwei Beine, je drei Zehen mit Krallen. */
-        + '<path class="lc-greif-bein" d="M79 46 L76 55 M91 46 L94 55"/>'
-        + '<path class="lc-greif-kralle" d="M76 55 C73 56.5 71.5 59 72 62'
-        + ' M76 55 C76 58 75.4 60.5 74 62.6 M76 55 C79 56.5 80.5 59 80 62"/>'
-        + '<path class="lc-greif-kralle" d="M94 55 C91 56.5 89.5 59 90 62'
-        + ' M94 55 C94 58 94.6 60.5 96 62.6 M94 55 C97 56.5 98.5 59 98 62"/>'
+        /* Die Faenge: zwei Beine, je drei Zehen mit Krallen.
+           RUNDE 71 — XANDER: „seine Beine auch nicht so komisch
+           comicmaessig auseinander."
+           GERECHNET: die Beine liefen von x=79 auf 76 und von x=91
+           auf 94 — sie spreizten sich also nach UNTEN auseinander,
+           das ist die Haltung eines Comic-Vogels beim Landen. Ein
+           Greifvogel, der Beute traegt, haelt die Faenge dicht
+           beieinander und fast senkrecht. Jetzt 81→80 und 89→90:
+           der Abstand unten schrumpft von 18 auf 10 Einheiten.
+           Die Krallen liegen in einer eigenen Gruppe, damit sie in
+           dem Moment zugreifen koennen, in dem sie das Bild
+           aufnehmen — „dass seine Krallen in dem Moment, wo sie das
+           Profilbild aufnehmen zu krallen." */
+        + '<path class="lc-greif-bein" d="M81 46 L80 56 M89 46 L90 56"/>'
+        + '<g class="lc-greif-faenge">'
+        + '<path class="lc-greif-kralle" d="M80 56 C77.4 57.4 76.2 59.6 76.8 62.2'
+        + ' M80 56 C80 58.8 79.5 61 78.3 62.8 M80 56 C82.6 57.4 83.8 59.6 83.2 62.2"/>'
+        + '<path class="lc-greif-kralle" d="M90 56 C87.4 57.4 86.2 59.6 86.8 62.2'
+        + ' M90 56 C90 58.8 90.5 61 91.7 62.8 M90 56 C92.6 57.4 93.8 59.6 93.2 62.2"/>'
+        + "</g>"
         + "</g>"
         /* Der NAHE Fluegel liegt vor dem Koerper. */
         + '<g class="lc-greif-fluegel lc-greif-fluegel-nah"'
@@ -32525,6 +32539,29 @@
             + "px) translate(-50%, -50%)" + spG + " scale(.3)", opacity: 0, offset: 1 }
         ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       } catch (e) {}
+      /* RUNDE 71: die Krallen greifen zu, wenn sie das Bild aufnehmen
+         — das ist bei 12 % der Reise, dort ist der Vogel voll da und
+         nimmt seine Beute auf. Sie oeffnen sich wieder, wenn er
+         loslaesst (bei „hin"). */
+      try {
+        const faenge = greif.querySelector(".lc-greif-faenge");
+        if (faenge) {
+          faenge.style.transformBox = "fill-box";
+          faenge.style.transformOrigin = "50% 0%";
+          faenge.animate([
+            { transform: "scaleX(1.35) scaleY(1)", offset: 0 },
+            { transform: "scaleX(1.35) scaleY(1)", offset: 0.09 },
+            /* ZUGEPACKT: die Zehen ziehen sich zusammen und krallen
+               sich kuerzer und enger um das Bild. */
+            { transform: "scaleX(.72) scaleY(.86)", offset: 0.16 },
+            { transform: "scaleX(.78) scaleY(.9)", offset: 0.22 },
+            { transform: "scaleX(.78) scaleY(.9)", offset: Math.max(0.3, (hin - 120) / dauer) },
+            /* Und wieder auf, wenn er absetzt. */
+            { transform: "scaleX(1.3) scaleY(1)", offset: Math.min(1, hin / dauer) },
+            { transform: "scaleX(1.3) scaleY(1)", offset: 1 }
+          ], { duration: dauer, easing: "linear", fill: "forwards" });
+        }
+      } catch (e) {}
       /* „mit entsprechendem Sound": ein Schrei, dann die Schlaege —
          genau die Reihenfolge, in der das Geraeusch aufgenommen ist. */
       lcTonZu("greifvogel");
@@ -32553,19 +32590,29 @@
       turm.style.setProperty("--gross", d + "px");
       turm.style.setProperty("--blick", linksT ? "-1" : "1");
       let sprossen = "";
+      /* RUNDE 71 — XANDER: „Das Sprungbrett vom 3 m Turm wirkt
+         irgendwie ein bisschen kurz."
+         Gerechnet: die Leiter stand bei x=23…37, das Brett lief von
+         20 bis 59 — es ragte also nur 22 von 60 Einheiten ueber die
+         Leiter hinaus. Die Leiter steht jetzt weiter hinten
+         (x=14…28), und das Brett laeuft von 11 bis 59: 48 statt 39
+         Einheiten lang, und der Ueberhang waechst von 22 auf 31.
+         Die viewBox bleibt 60 breit — wuerde sie mitwachsen, wuerde
+         alles andere duenner gezogen. */
       for (let y = 112; y >= 34; y -= 9.5) {
-        sprossen += "M23 " + y.toFixed(1) + " H37 ";
+        sprossen += "M14 " + y.toFixed(1) + " H28 ";
       }
       turm.innerHTML =
         '<svg class="lc-turm-form" viewBox="0 0 60 120" aria-hidden="true">'
         /* Die beiden Holme der Leiter. */
-        + '<path class="lc-turm-holm" d="M23 119 V28 M37 119 V28"/>'
+        + '<path class="lc-turm-holm" d="M14 119 V28 M28 119 V28"/>'
         + '<path class="lc-turm-sprosse" d="' + sprossen.trim() + '"/>'
-        /* Das Brett ragt in die Richtung, in die gesprungen wird. */
-        + '<path class="lc-turm-brett" d="M20 22 L59 22 L59 27 L20 27 Z"/>'
-        + '<path class="lc-turm-stuetze" d="M30 27 L42 27 L36 34 Z"/>'
+        /* Das Brett ragt in die Richtung, in die gesprungen wird —
+           und es federt, wenn jemand darauf Anlauf nimmt. */
+        + '<path class="lc-turm-brett" d="M11 22 L59 22 L59 27 L11 27 Z"/>'
+        + '<path class="lc-turm-stuetze" d="M21 27 L33 27 L27 34 Z"/>'
         /* Das Gelaender am Aufstieg. */
-        + '<path class="lc-turm-gelaender" d="M17 46 V24 Q17 18 23 18 L30 18"/>'
+        + '<path class="lc-turm-gelaender" d="M8 46 V24 Q8 18 14 18 L21 18"/>'
         + "</svg>";
       reihe.appendChild(turm);
       weg.push(turm);
@@ -32643,16 +32690,42 @@
             + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(1)", offset: 1 }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
-      /* Der Turm verschwindet, sobald der Springer weg ist — er gehoert
-         zum Absprung, nicht zur Landung. */
+      /* RUNDE 71 — XANDER: „in der Zeit, wo er springt, darf sich der
+         Sprungturm nicht ausblenden."
+         GERECHNET, und er hat genau richtig hingesehen: der
+         Absprung liegt bei 1420 ms, der Einschlag bei 2730 ms — der
+         Turm blendete zwischen 1500 und 1900 ms aus, also mitten im
+         Flug. Jetzt steht er, bis das Wasser spritzt, und geht erst
+         danach (2900–3300 ms). */
       try {
         turm.animate([
           { opacity: 0, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(.2)", offset: 0 },
           { opacity: 1, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(1)", offset: t(260) },
-          { opacity: 1, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(1)", offset: t(1500) },
-          { opacity: 0, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(1)", offset: t(1900) },
+          { opacity: 1, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(1)", offset: t(2900) },
+          { opacity: 0, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(1)", offset: t(3300) },
           { opacity: 0, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(1)", offset: 1 }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
+      } catch (e) {}
+      /* Und das Brett federt, waehrend jemand darauf Anlauf nimmt
+         (1080–1420 ms) — XANDER: „das Brett muss wackeln." Es biegt
+         sich nach unten und schnellt beim Absprung zurueck. */
+      try {
+        const brett = turm.querySelector(".lc-turm-brett");
+        if (brett) {
+          brett.style.transformBox = "fill-box";
+          brett.style.transformOrigin = "0% 50%";
+          brett.animate([
+            { transform: "rotate(0deg)", offset: 0 },
+            { transform: "rotate(0deg)", offset: t(1040) },
+            { transform: "rotate(3.2deg)", offset: t(1240) },
+            { transform: "rotate(-4.6deg)", offset: t(1420) },
+            { transform: "rotate(2.4deg)", offset: t(1560) },
+            { transform: "rotate(-1.2deg)", offset: t(1700) },
+            { transform: "rotate(0.5deg)", offset: t(1840) },
+            { transform: "rotate(0deg)", offset: t(2000) },
+            { transform: "rotate(0deg)", offset: 1 }
+          ], { duration: dauer, easing: "linear", fill: "forwards" });
+        }
       } catch (e) {}
       /* Das Brett federt beim Anlauf — das ist das, was man hoert. */
       /* RUNDE 70 — XANDER: „ich brauche ein realistisches Stufen
@@ -33398,24 +33471,44 @@
            Ausleger — der alte war ein Keil, ein Heckausleger ist ein
            duennes Rohr. */
         + '<svg class="lc-heli-form" viewBox="0 0 130 70" aria-hidden="true">'
+        /* RUNDE 71 — XANDER: „der Helikopter kann nicht so laenglich
+           sein vom Koerper … die Farbe kann man auch ein bisschen
+           verbessern … mehr tiefer … ins Schwarze … mit Licht und
+           Schatten."
+           GERECHNET: die Zelle lief von x=10 bis 95 bei einer Hoehe
+           von 19 bis 45 — 85 lang, 26 hoch, Verhaeltnis 3,3 : 1. Das
+           ist laenglich. Jetzt 10 bis 82 bei 16 bis 48: 72 lang,
+           32 hoch, Verhaeltnis 2,3 : 1 — kuerzer und oben dicker.
+           Der Ausleger faengt dafuer frueher an (78 statt 92) und
+           bleibt genauso lang, damit der Heckrotor an seinem
+           gemessenen Platz bleibt.
+           Licht und Schatten kommen aus zwei zusaetzlichen Flaechen:
+           ein heller Streifen auf der Oberseite, ein dunkler Bauch
+           darunter. Die Farben selbst stehen in korrekturen.css. */
         /* Der Heckausleger: duennes Rohr statt Keil. */
-        + '<path class="lc-heli-ausleger" d="M92 30 L120 30.5 L120 35.5 L92 38 Z"/>'
+        + '<path class="lc-heli-ausleger" d="M78 31 L120 30.5 L120 35.5 L78 39 Z"/>'
         /* Die Seitenflosse und der waagerechte Stabilisator. */
         + '<path class="lc-heli-flosse" d="M116 32 L126 10 L120 9 L110 31 Z"/>'
         + '<path class="lc-heli-flosse" d="M108 30 L108 26 L120 26 L120 30 Z"/>'
-        /* Die Zelle: vorn rund, hinten schlank auslaufend. */
-        + '<path class="lc-heli-rumpf" d="M10 40 Q9 24 30 19 L66 19'
-        + ' Q90 21 95 32 Q97 40 88 45 L26 45 Q11 45 10 40 Z"/>'
+        /* Die Zelle: vorn rund und hoch, hinten kurz auslaufend. */
+        + '<path class="lc-heli-rumpf" d="M10 40 Q8 21 30 16 L60 16'
+        + ' Q78 19 82 31 Q84 41 74 48 L26 48 Q11 47 10 40 Z"/>'
+        /* LICHT: ein heller Streifen auf der Oberseite. */
+        + '<path class="lc-heli-licht" d="M14 27 Q15 19 31 17 L59 17'
+        + ' Q72 19.5 77 27 Q60 22 38 22 Q22 22 14 27 Z"/>'
+        /* SCHATTEN: der Bauch liegt im Dunkeln. */
+        + '<path class="lc-heli-schatten" d="M12 41 Q26 48 50 48 L74 48'
+        + ' Q82 44 83 37 Q70 44 46 44 Q24 44 12 41 Z"/>'
         /* DIE KANZEL — die grosse verglaste Front. */
-        + '<path class="lc-heli-glas" d="M11 39 Q10 25 30 21 L44 21'
-        + ' Q34 30 32 43 L20 43 Q12 43 11 39 Z"/>'
-        + '<path class="lc-heli-tuer" d="M46 22 L46 44 M66 21 L66 45"/>'
+        + '<path class="lc-heli-glas" d="M11 39 Q9.5 23 30 18 L42 18'
+        + ' Q32 29 30 45 L20 45 Q12 44 11 39 Z"/>'
+        + '<path class="lc-heli-tuer" d="M46 18.5 L46 47 M62 17 L62 48"/>'
         /* Der Rotorkopf auf dem Mast. */
-        + '<path class="lc-heli-mast" d="M50 19 L53 11 L61 11 L58 19 Z"/>'
-        + '<circle class="lc-heli-kopf" cx="57" cy="10" r="4.2"/>'
+        + '<path class="lc-heli-mast" d="M50 16 L53 8 L61 8 L58 16 Z"/>'
+        + '<circle class="lc-heli-kopf" cx="57" cy="7.5" r="4.2"/>'
         /* Die Kufen mit ihren Streben. */
-        + '<path class="lc-heli-kufe" d="M18 58 L92 58" stroke-width="3.6" stroke-linecap="round"/>'
-        + '<path class="lc-heli-strebe" d="M32 45 L28 58 M78 45 L84 58"'
+        + '<path class="lc-heli-kufe" d="M16 60 L86 60" stroke-width="3.6" stroke-linecap="round"/>'
+        + '<path class="lc-heli-strebe" d="M32 48 L27 60 M72 48 L78 60"'
         + ' stroke-width="3" stroke-linecap="round"/>'
         + "</svg>"
         /* DER HECKROTOR. Er dreht schneller als der Hauptrotor und

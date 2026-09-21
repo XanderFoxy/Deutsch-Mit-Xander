@@ -33,10 +33,17 @@ const nszRoh = js.slice(js.indexOf("function lcNeunschwanz("),
 const nsz = nszRoh.replace(/\/\*[\s\S]*?\*\//g, "");
 
 console.log("\nDER HELIKOPTER");
+/* RUNDE 71 NACHGEZOGEN: die Zelle ist hoeher geworden (XANDER: „der
+   Helikopter kann nicht so laenglich sein vom Koerper"), und damit
+   ist der Mastkopf von y=10 auf y=7,5 gewandert — das sind 10,71 %
+   statt 14,29 % von 70. Diese Pruefung hat den Fehler gemeldet,
+   BEVOR er auffiel; deshalb steht hier jetzt der neue Wert und nicht
+   weniger streng als vorher. */
 pruefe("der Rotor sitzt auf dem Mast, nicht daneben",
-  /\.lc-heli-rotor \{[\s\S]{0,260}?left: 43\.85%;[\s\S]{0,120}?top: 14\.29%;/.test(css));
+  /\.lc-heli-rotor \{[\s\S]{0,260}?left: 43\.85%;/.test(css)
+  && /\.lc-heli-rotor \{ top: 10\.71%; \}/.test(css));
 pruefe("und der Mastkopf steht im Bild wirklich dort",
-  /<circle class="lc-heli-kopf" cx="57" cy="10"/.test(js));
+  /<circle class="lc-heli-kopf" cx="57" cy="7\.5"/.test(js));
 pruefe("er dreht nicht mehr wie ein Flugzeugpropeller",
   /@keyframes lcHeliBlattR66/.test(css)
   && !/@keyframes lcHeliBlattR66[\s\S]{0,600}?rotate\(/.test(css));
@@ -44,10 +51,13 @@ pruefe("stattdessen wandert das Blatt nach hinten und kommt vorn heraus",
   /lcHeliBlattR66[\s\S]{0,600}?translateY\(20%\) scaleX\(1\)[\s\S]{0,300}?scaleX\(\.08\)/.test(css));
 pruefe("das zweite Blatt liegt eine halbe Umdrehung dahinter",
   /\.lc-heli-blatt-2 \{ animation-delay: -\.09s; \}/.test(css));
+/* RUNDE 71: die Kanzel ist mitgewandert — Glas jetzt x 9,5…42
+   (Mitte 19,2 %), das Fenster steht auf 19,8 %. Nachgemessen im
+   Browser: Glas 104…156 px, Fenster 110…152 px. */
 pruefe("das Profilbild sitzt in der Kanzel, nicht mitten im Rumpf",
-  /\.lc-heli-kanzel \{[\s\S]{0,400}?left: 21\.2%;[\s\S]{0,120}?width: 21%;/.test(css));
+  /\.lc-heli-kanzel \{\s*\n\s*left: 19\.8%;[\s\S]{0,160}?width: 19\.5%;/.test(css));
 pruefe("und die verglaste Front steht im Bild wirklich dort",
-  /lc-heli-glas" d="M11 39 Q10 25 30 21 L44 21/.test(js));
+  /lc-heli-glas" d="M11 39 Q9\.5 23 30 18 L42 18/.test(js));
 pruefe("er steht auf seinem eigenen Abwind", /lc-heli-wind/.test(js) && /lcHeliWindR66/.test(css));
 
 console.log("\nDER GEWICKELTE GRIFF");
