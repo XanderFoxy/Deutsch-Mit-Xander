@@ -15790,12 +15790,24 @@ body.lc-schreibt .tutor-reiter {
    setzt lcAngestossen am Kreis, es ist der Einheitsvektor vom
    Anstossenden zu dieser Kugel.
    ----------------------------------------------------------------- */
+/* RUNDE 68: --wucht kommt dazu. Vorher sprang jede angestossene
+   Kugel genau 11 % weit — die hinterste genauso wie die, die direkt
+   daneben lag. Wie viel Stoss wirklich ankommt, rechnet lcAngestossen
+   aus Abstand und Winkel aus; hier wird er nur noch angewendet. Auch
+   die Drehung haengt daran: eine Kugel, die kaum etwas abbekommt,
+   dreht sich auch kaum. */
 .lc-angestossen { animation: lcAngestossenR29 .9s cubic-bezier(.22, .9, .3, 1) both; }
 @keyframes lcAngestossenR29 {
   0%   { transform: translate(0, 0) rotate(0deg); }
-  18%  { transform: translate(calc(var(--ax, 0) * 11%), calc(var(--ay, 0) * 11%)) rotate(7deg); }
-  46%  { transform: translate(calc(var(--ax, 0) * -4%), calc(var(--ay, 0) * -4%)) rotate(-5deg); }
-  72%  { transform: translate(calc(var(--ax, 0) * 2%), calc(var(--ay, 0) * 2%)) rotate(2deg); }
+  18%  { transform: translate(calc(var(--ax, 0) * var(--wucht, 1) * 13%),
+                              calc(var(--ay, 0) * var(--wucht, 1) * 13%))
+                    rotate(calc(var(--wucht, 1) * 8deg)); }
+  46%  { transform: translate(calc(var(--ax, 0) * var(--wucht, 1) * -4.5%),
+                              calc(var(--ay, 0) * var(--wucht, 1) * -4.5%))
+                    rotate(calc(var(--wucht, 1) * -6deg)); }
+  72%  { transform: translate(calc(var(--ax, 0) * var(--wucht, 1) * 2.2%),
+                              calc(var(--ay, 0) * var(--wucht, 1) * 2.2%))
+                    rotate(calc(var(--wucht, 1) * 2.4deg)); }
   100% { transform: translate(0, 0) rotate(0deg); }
 }
 @media (prefers-reduced-motion: reduce) {

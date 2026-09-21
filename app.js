@@ -36315,19 +36315,73 @@
 
   /* Die Kugeln im Pulk werden nur angestossen: ein Ruck in
      Stossrichtung, dann liegen sie wieder still. */
-  function lcAngestossen(platz, vonP, wann) {
+  /* RUNDE 68 — PRALLPHYSIK.
+     GEWUENSCHT: „wenn mehr als zwei Leute teilnehmen, soll die eine
+     Kugel, die man anstoesst, die anderen beeinflussen."
+
+     Die RICHTUNG stimmte schon: jede Kugel wich vom Aufprall weg. Was
+     fehlte, war die WUCHT — jede sprang gleich weit, die hinterste
+     genauso wie die, die daneben lag. Zwei Dinge entscheiden beim
+     Billard darueber, wie viel Stoss ankommt:
+       · WIE NAH. Der Stoss faellt mit dem Abstand ab. Gerechnet wird
+         mit 1 / (1 + (Abstand / Platzabstand)^2) — bei einem Platz
+         Abstand bleibt die Haelfte, bei zweien ein Fuenftel.
+       · WIE SCHRAEG. Ein voller Treffer gibt alles weiter, ein
+         Streifschuss fast nichts. Das ist der Kosinus zwischen der
+         Stossrichtung und der Richtung zur Kugel. Wer HINTER dem
+         Aufprall liegt, bekommt gar nichts ab — eine Kugel schiebt
+         nichts rueckwaerts.
+     Unter 8 % bleibt die Kugel ganz liegen; ein Zucken, das man kaum
+     sieht, sieht nach Fehler aus, nicht nach Physik. */
+  function lcAngestossen(platz, vonP, wann, stossX, stossY, einheit) {
     const kreis = platz && platz.el && platz.el.querySelector(".lc-kreis");
-    if (!kreis) return;
+    if (!kreis) return 0;
     const dx = platz.x - vonP.x, dy = platz.y - vonP.y;
     const l = Math.hypot(dx, dy) || 1;
+    let wucht = 1;
+    if (stossX !== undefined && einheit) {
+      const mit = (dx / l) * stossX + (dy / l) * stossY;
+      const naehe = 1 / (1 + Math.pow(l / einheit, 2));
+      /* NACHGEMESSEN, und der erste Anlauf war zu streng: mit
+         Math.max(0, mit) bekam alles HINTER dem Aufprall glatt null,
+         und bei drei von drei durchgespielten Geometrien ruehrte sich
+         gar keine Kugel mehr. So ist Billard nicht — beim Anstoss
+         spritzt der Pulk in alle Richtungen, nach hinten nur
+         schwaecher. Deshalb ein Sockel: wer hinten liegt, bekommt
+         noch 35 Prozent, wer in der Stossrichtung liegt, alles. */
+      const gerichtet = 0.35 + 0.65 * Math.max(0, mit);
+      /* Ein voller Treffer aus einem Platz Abstand ergaebe 0,5 —
+         darauf wird bezogen, damit der Normalfall bei 1 landet. */
+      wucht = Math.min(1, gerichtet * naehe / 0.5);
+      if (wucht < 0.08) return 0;
+    }
     setTimeout(() => {
       kreis.style.setProperty("--ax", (dx / l).toFixed(2));
       kreis.style.setProperty("--ay", (dy / l).toFixed(2));
+      kreis.style.setProperty("--wucht", wucht.toFixed(2));
       kreis.classList.remove("lc-angestossen");
       void kreis.offsetWidth;
       kreis.classList.add("lc-angestossen");
-      setTimeout(() => kreis.classList.remove("lc-angestossen"), 1000);
+      setTimeout(() => {
+        kreis.classList.remove("lc-angestossen");
+        kreis.style.removeProperty("--wucht");
+      }, 1000);
     }, Math.max(0, wann || 0));
+    return wucht;
+  }
+
+  /* Der Abstand zwischen zwei benachbarten Plaetzen — die Einheit, in
+     der oben gerechnet wird. Er wird GEMESSEN, nicht angenommen: das
+     Gitter sieht auf dem Telefon anders aus als am Rechner. */
+  function lcPlatzAbstand(gitter) {
+    let klein = Infinity;
+    for (let i = 0; i < gitter.length; i++) {
+      for (let j = i + 1; j < gitter.length; j++) {
+        const d = Math.hypot(gitter[i].x - gitter[j].x, gitter[i].y - gitter[j].y);
+        if (d > 1 && d < klein) klein = d;
+      }
+    }
+    return klein === Infinity ? 80 : klein;
   }
 
   /* =================================================================
@@ -36437,10 +36491,23 @@
        — nach dem Aufprall gibt es keine Stossrichtung mehr. */
     let opferLoch = null;
     if (opfer) {
-      const freie = gitter.filter((p) => p.frei)
-        .map((p) => ({ p: p, l: Math.hypot(p.x - opfer.x, p.y - opfer.y) }))
-        .sort((a, b) => a.l - b.l);
-      opferLoch = freie.length ? freie[0].p : null;
+      /* RUNDE 68: auch hier gilt, was fuer die erste Kugel laengst
+         gilt — sie faellt in das Loch, das in ihrer FLUGRICHTUNG
+         liegt. Vorher war es einfach das naechste ueberhaupt, also
+         auch das hinter ihr, und eine Kugel, die rueckwaerts ins Loch
+         faellt, gibt es nicht. */
+      const ox = opfer.x - zu.x, oy = opfer.y - zu.y;
+      const ol = Math.hypot(ox, oy) || 1;
+      const freie = gitter.filter((p) => p.frei).map((p) => {
+        const dx = p.x - opfer.x, dy = p.y - opfer.y;
+        const l = Math.hypot(dx, dy) || 1;
+        return { p: p, l: l, mit: (dx / l) * (ox / ol) + (dy / l) * (oy / ol) };
+      });
+      const vorwaerts = freie.filter((k) => k.mit > 0.35)
+        .sort((a, b) => (b.mit - a.mit) || (a.l - b.l));
+      const irgendwo = freie.slice().sort((a, b) => a.l - b.l);
+      opferLoch = vorwaerts.length ? vorwaerts[0].p
+        : (irgendwo.length ? irgendwo[0].p : null);
     }
 
     /* Der Stoss kommt aus der Richtung des Spielers. */
@@ -36451,8 +36518,35 @@
       /* ---- DREI ODER MEHR: DER STOSS GEHT IN DEN PULK ---- */
       if (opfer && opferLoch) {
         const hin = lcKugelLauf(gitter, zu, opfer, { warten: 700, halt: .58 });
+        /* Die Richtung, in der die Kugel in den Pulk faehrt — daran
+           haengt, wer wie viel abbekommt. */
+        const px = opfer.x - zu.x, py = opfer.y - zu.y;
+        const pl = Math.hypot(px, py) || 1;
+        const einheit = lcPlatzAbstand(gitter);
         andere.forEach((p) => {
-          if (p !== opfer) lcAngestossen(p, zu, hin.ankunft + 40);
+          if (p !== opfer) lcAngestossen(p, opfer, hin.ankunft + 40, px / pl, py / pl, einheit);
+        });
+        /* WER IM WEG LIEGT, WIRD UNTERWEGS GETROFFEN.
+           Bisher rollte die Kugel durch jeden hindurch, der zwischen
+           ihr und dem Opfer sass, und der merkte nichts davon. Eine
+           Kugel geht aber nicht durch eine andere hindurch. Deshalb
+           wird fuer jeden der senkrechte Abstand zur Strecke
+           gerechnet: liegt er naeher als 0,62 Platzabstaende daran,
+           wird er GENAU DANN angestossen, wenn die Kugel an ihm
+           vorbeikommt — und zwar quer zur Bahn, so wie es ein
+           Streifschuss tut. */
+        andere.forEach((p) => {
+          if (p === opfer) return;
+          const t = ((p.x - zu.x) * px + (p.y - zu.y) * py) / (pl * pl);
+          if (t <= 0.05 || t >= 0.95) return;
+          const fx = zu.x + px * t, fy = zu.y + py * t;
+          const quer = Math.hypot(p.x - fx, p.y - fy);
+          if (quer > einheit * 0.62) return;
+          /* Je naeher an der Bahn, desto mehr Stoss. Und zur Seite
+             gedrueckt wird er von der Bahn weg. */
+          const seite = Math.hypot(p.x - fx, p.y - fy) || 1;
+          const sx2 = (p.x - fx) / seite, sy2 = (p.y - fy) / seite;
+          lcAngestossen(p, { x: fx, y: fy }, hin.ankunft * t + 40, sx2, sy2, einheit);
         });
         lcBillardTasche(opferLoch, hin.ankunft + 60);
         lcKugelLauf(gitter, opfer, opferLoch, { warten: hin.ankunft + 80, rein: true });
