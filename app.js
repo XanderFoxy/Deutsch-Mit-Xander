@@ -28400,16 +28400,23 @@
          sitzt in seiner Mitte. Der Buegel geht ZUERST hinein, damit
          die Schellen darueber liegen und er dahinter verschwindet. */
       schicht.insertAdjacentHTML("beforeend",
-        '<span class="lc-schelle-buegel"><svg viewBox="0 0 120 40">'
+        '<span class="lc-schelle-buegel"><svg viewBox="0 0 120 50">'
         + '<path d="M8 34 C8 6 112 6 112 34" fill="none" stroke="#c9a638"'
         + ' stroke-width="7" stroke-linecap="round"/>'
         + '<path d="M8 34 C8 9 112 9 112 34" fill="none" stroke="#f3d46e"'
         + ' stroke-width="3" stroke-linecap="round"/>'
-        /* Das Haemmerchen in der Mitte, das zwischen den Schellen
-           hin und her schlaegt. */
+        /* XANDER: „bei den Wecker musst du diesen Kloeppel da zwischen
+           den zwei schallkuppeln hin und her schlaegt."
+           Vorher war das Haemmerchen ein 20 Einheiten kurzer Stift, der
+           um sein UNTERES Ende kippte — der Kopf bewegte sich dabei um
+           neun Pixel und blieb oben am Buegel kleben. Ein Kloeppel
+           haengt aber OBEN am Buegel und schwingt mit seinem Kopf nach
+           unten aussen zu den Schellen. Genau so herum jetzt: Drehpunkt
+           oben in der Mitte des Buegels, der Kopf unten, und der
+           Ausschlag reicht bis unter die Schellen. */
         + '<g class="lc-schelle-hammer">'
-        + '<rect x="57" y="10" width="6" height="20" rx="3" fill="#a98a22"/>'
-        + '<circle cx="60" cy="9" r="6" fill="#f3d46e" stroke="#9c7b1e" stroke-width="2"/>'
+        + '<rect x="57.5" y="11" width="5" height="29" rx="2.5" fill="#a98a22"/>'
+        + '<circle cx="60" cy="41" r="6.5" fill="#f3d46e" stroke="#9c7b1e" stroke-width="2"/>'
         + "</g></svg></span>");
 
       /* Und die Schellen — halb hinter dem Bild, wie Ohren. */
@@ -30068,25 +30075,43 @@
          zusaetzlich leicht verwuerfelt — so sieht Streuung aus, ein
          gleichmaessiger Kranz saehe wieder nach Muster aus. Der
          erste sitzt weiterhin dort, wo die Kugel eingeschlagen ist. */
-      const wieViele = 6;
+      /* XANDER, erneut gemeldet: „Bei dem Paintball sind die
+         Farbklecksen immer nur auf einer Stelle die sollen ueber das
+         ganze Bild … und dann runter fliessen."
+
+         Nachgesehen, woran es lag: der erste Klecks stand auf Faktor
+         1 und war damit fast so gross wie das Bild — die fuenf
+         anderen lagen zwar verteilt, verschwanden aber unter ihm.
+         Deshalb ist jetzt KEINER mehr uebergross; alle acht liegen
+         auf einem Kranz, der das ganze Bild abdeckt (Abstand 8 bis
+         40 % von der Mitte), und nur der erste sitzt weiterhin dort,
+         wo die Kugel eingeschlagen ist. */
+      const wieViele = 8;
       for (let n = 0; n < wieViele; n++) {
         const klecks = document.createElement("span");
         klecks.className = "lc-paintfleck-klecks";
         klecks.style.setProperty("--farbe", farben[n % farben.length]);
+        /* Der Platz steht jetzt in PROZENT DES BILDES (--platz-x/y),
+           nicht mehr als transform-Verschiebung. Grund: Prozente in
+           einem transform zaehlen die Breite des KLECKSES (58 % des
+           Bildes), nicht die des Bildes — 30 % waren damit in
+           Wahrheit nur 17 % des Bildes, und die Streuung schrumpfte
+           auf ein Drittel zusammen. In left/top zaehlt das Bild. */
         if (n === 0) {
-          klecks.style.setProperty("--versatz-x", "0%");
-          klecks.style.setProperty("--versatz-y", "0%");
-          klecks.style.setProperty("--gross", "1");
+          klecks.style.setProperty("--platz-x", (50 + r.x * 26).toFixed(1) + "%");
+          klecks.style.setProperty("--platz-y", (50 + r.y * 26).toFixed(1) + "%");
+          /* Klein genug, dass man die Person noch erkennt — acht
+             Kleckse in voller Groesse waeren ein Farbeimer, kein
+             Paintball. */
+          klecks.style.setProperty("--gross", "0.42");
         } else {
-          const w = (n * 60 + Math.random() * 40 - 20) * Math.PI / 180;
-          const weit = 18 + Math.random() * 20;
-          klecks.style.setProperty("--versatz-x",
-            (Math.cos(w) * weit - r.x * 26).toFixed(1) + "%");
-          klecks.style.setProperty("--versatz-y",
-            (Math.sin(w) * weit - r.y * 26).toFixed(1) + "%");
-          klecks.style.setProperty("--gross", (0.45 + Math.random() * 0.45).toFixed(2));
+          const w = (n * (360 / (wieViele - 1)) + Math.random() * 30 - 15) * Math.PI / 180;
+          const weit = 12 + ((n * 13) % 30);
+          klecks.style.setProperty("--platz-x", (50 + Math.cos(w) * weit).toFixed(1) + "%");
+          klecks.style.setProperty("--platz-y", (50 + Math.sin(w) * weit).toFixed(1) + "%");
+          klecks.style.setProperty("--gross", (0.22 + Math.random() * 0.22).toFixed(2));
         }
-        klecks.style.animationDelay = (n * 0.07).toFixed(2) + "s";
+        klecks.style.animationDelay = (n * 0.06).toFixed(2) + "s";
         klecks.style.borderRadius = rad() + " " + rad() + " " + rad() + " " + rad()
           + " / " + rad() + " " + rad() + " " + rad() + " " + rad();
         blende.appendChild(klecks);
@@ -32237,10 +32262,13 @@
         kreis.classList.add("lc-gedreht");
         setTimeout(() => kreis.classList.remove("lc-gedreht"), 4200);
       }
-      /* Der Schatten auf dem Tisch wird laenger, wenn sie kippt —
-         daran sieht man, dass sie wirklich hinfaellt. */
-      schicht.innerHTML = '<span class="lc-muenze-schatten"></span>'
-                        + '<span class="lc-muenze-funkeln"></span>';
+      /* XANDER: „Bei der Muenze sollen diese Bewegungeffekte weg und
+         die Muenze soll einfach drehen realistisch und sie soll am
+         Boden landen und nicht in der Mitte vom Bild."
+         Der Glanzstreifen, der neunmal ueber das Bild huschte, ist
+         damit weg. Was bleibt, ist der Schatten — an dem sieht man,
+         dass sie wirklich faellt und nicht in der Luft steht. */
+      schicht.innerHTML = '<span class="lc-muenze-schatten"></span>';
     }, 4200, "muenze");
   }
 

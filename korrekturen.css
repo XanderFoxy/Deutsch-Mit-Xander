@@ -12002,10 +12002,25 @@ body.lc-schreibt .tutor-reiter {
   box-shadow: inset 0 -4px 8px rgba(0, 0, 0, .2);
   animation: lcPaintfleckKlecks 3.6s ease-out both;
 }
+/* XANDER, zum zweiten Mal gemeldet: „Bei dem Paintball sind die
+   Farbklecksen immer nur auf einer Stelle die sollen über das ganze
+   Bild."
+
+   DIE URSACHE: die Kleckse bekamen ihre Streuung über
+   „transform: translate(--versatz-x, --versatz-y)" — aber DIESE
+   Animation setzt ebenfalls transform, und eine laufende Animation
+   schlägt jede Regel im Stylesheet. Die Streuung wurde also in dem
+   Moment überschrieben, in dem der Klecks auftauchte; alle acht
+   landeten übereinander. Jetzt steht die Verschiebung IN den
+   Schlüsselbildern, und damit wirkt sie auch. */
+/* Die Grösse muss ebenfalls IN die Schlüsselbilder: eine laufende
+   Animation schlägt die Regel im Stylesheet, und „transform:
+   scale(var(--gross))" wäre sonst wirkungslos — alle Kleckse kämen
+   gleich gross heraus, egal was --gross sagt. */
 @keyframes lcPaintfleckKlecks {
-  0%, 9% { opacity: 0; transform: scale(.15); }
-  13%    { opacity: .95; transform: scale(1.15); }
-  19%    { transform: scale(1); }
+  0%, 9% { opacity: 0; transform: scale(calc(var(--gross, 1) * .15)); }
+  13%    { opacity: .95; transform: scale(calc(var(--gross, 1) * 1.15)); }
+  19%    { transform: scale(var(--gross, 1)); }
   88%    { opacity: .95; }
   100%   { opacity: 0; }
 }
@@ -13458,14 +13473,16 @@ body.lc-schreibt .tutor-reiter {
   86%  { opacity: 1; }
   100% { opacity: 0; transform: translateY(14%) scale(.9); }
 }
+/* Der Klöppel hängt OBEN am Bügel und schlägt nach unten aussen aus —
+   deshalb liegt der Drehpunkt am oberen Ende (50 % 0 %), nicht unten. */
 .lc-schelle-hammer {
   transform-box: fill-box;
-  transform-origin: 50% 100%;
+  transform-origin: 50% 0%;
   animation: lcHammerSchlaegtR18 .16s ease-in-out .18s 12 alternate both;
 }
 @keyframes lcHammerSchlaegtR18 {
-  from { transform: rotate(-26deg); }
-  to   { transform: rotate(26deg); }
+  from { transform: rotate(-62deg); }
+  to   { transform: rotate(62deg); }
 }
 
 /* --- ZU MIR HER: LASSO UND ANGEL --------------------------------------
@@ -13539,9 +13556,13 @@ body.lc-schreibt .tutor-reiter {
    Schicht erben. */
 .lc-paintfleck .lc-paintfleck-klecks {
   background: var(--farbe, #6bd66b);
-  transform: translate(calc(var(--px, 0%) + var(--versatz-x, 0%)),
-                       calc(var(--py, 0%) + var(--versatz-y, 0%)))
-             scale(var(--gross, 1));
+  /* Der Platz kommt aus left/top (--platz-x/y, Prozent des BILDES);
+     das transform trägt nur noch die Grösse. Sonst überschriebe die
+     laufende Animation die Streuung — genau daran lag es, dass alle
+     Kleckse übereinander landeten. */
+  left: var(--platz-x, 50%);
+  top: var(--platz-y, 50%);
+  transform: scale(var(--gross, 1));
 }
 .lc-paintfleck .lc-paintfleck-laeufer { background: var(--farbe, #6bd66b); }
 .lc-paintfleck .lc-paintfleck-spritzer { background: var(--farbe, #6bd66b); }
@@ -13796,19 +13817,27 @@ body.lc-schreibt .tutor-reiter {
   transform-style: preserve-3d;
   animation: lcMuenzeR18 4.2s cubic-bezier(.16, .5, .2, 1) both;
 }
+/* XANDER: „die Münze soll einfach drehen realistisch und sie soll am
+   Boden landen und nicht in der Mitte vom Bild."
+   Vorher drehte sie sich auf der Stelle und blieb dort liegen, wo sie
+   losgedreht hatte — in der Bildmitte. Jetzt sinkt sie während des
+   Trudelns nach unten (translateY) und kommt am unteren Rand zu
+   liegen, wie eine Münze, die auf den Tisch fällt. Das Eiern kurz
+   vor dem Hinfallen bleibt: DAS ist das Realistische an einer
+   auslaufenden Münze, nicht ein Glanzstreifen. */
 @keyframes lcMuenzeR18 {
-  0%   { transform: rotateX(0deg) rotateY(0deg) scale(1); }
+  0%   { transform: translateY(0) rotateX(0deg) rotateY(0deg) scale(1); }
   /* Schnell — sieben Umdrehungen in der ersten Sekunde. */
-  24%  { transform: rotateX(0deg) rotateY(2520deg) scale(1); }
+  24%  { transform: translateY(2%) rotateX(0deg) rotateY(2520deg) scale(1); }
   /* Langsamer, und sie faengt an zu eiern. */
-  48%  { transform: rotateX(14deg) rotateY(3600deg) scale(.99); }
-  66%  { transform: rotateX(38deg) rotateY(4140deg) scale(.97); }
-  78%  { transform: rotateX(62deg) rotateY(4410deg) scale(.95); }
-  /* Und faellt hin: flach, auf dem Ruecken. */
-  88%  { transform: rotateX(80deg) rotateY(4500deg) scale(.93); }
-  92%  { transform: rotateX(86deg) rotateY(4500deg) scale(.93); }
-  94%  { transform: rotateX(82deg) rotateY(4500deg) scale(.93); }
-  96%, 100% { transform: rotateX(84deg) rotateY(4500deg) scale(.93); }
+  48%  { transform: translateY(8%) rotateX(14deg) rotateY(3600deg) scale(.99); }
+  66%  { transform: translateY(15%) rotateX(38deg) rotateY(4140deg) scale(.97); }
+  78%  { transform: translateY(21%) rotateX(62deg) rotateY(4410deg) scale(.95); }
+  /* Und faellt hin: flach, auf dem Ruecken, ganz unten. */
+  88%  { transform: translateY(26%) rotateX(80deg) rotateY(4500deg) scale(.93); }
+  92%  { transform: translateY(27%) rotateX(86deg) rotateY(4500deg) scale(.93); }
+  94%  { transform: translateY(26%) rotateX(82deg) rotateY(4500deg) scale(.93); }
+  96%, 100% { transform: translateY(27%) rotateX(84deg) rotateY(4500deg) scale(.93); }
 }
 .lc-muenze-schatten {
   position: absolute;
@@ -13820,23 +13849,14 @@ body.lc-schreibt .tutor-reiter {
   animation: lcMuenzeSchattenR18 4.2s cubic-bezier(.16, .5, .2, 1) both;
 }
 @keyframes lcMuenzeSchattenR18 {
-  0%   { opacity: .25; transform: scaleX(.35); }
-  48%  { opacity: .3;  transform: scaleX(.5); }
-  88%  { opacity: .45; transform: scaleX(1); }
-  100% { opacity: .45; transform: scaleX(1.04); }
+  0%   { opacity: .25; transform: translateY(0) scaleX(.35); }
+  48%  { opacity: .3;  transform: translateY(6%) scaleX(.5); }
+  88%  { opacity: .45; transform: translateY(22%) scaleX(1); }
+  100% { opacity: .45; transform: translateY(23%) scaleX(1.04); }
 }
-.lc-muenze-funkeln {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.75) 48%, transparent 58%);
-  animation: lcMuenzeFunkelnR18 .34s linear 0s 9 both;
-}
-@keyframes lcMuenzeFunkelnR18 {
-  0%   { opacity: 0; transform: translateX(-120%); }
-  40%  { opacity: .9; }
-  100% { opacity: 0; transform: translateX(120%); }
-}
+/* Der Glanzstreifen (.lc-muenze-funkeln) ist weg — XANDER: „Bei der
+   Münze sollen diese Bewegungeffekte weg". Er huschte neunmal über
+   das Bild und sah nach Effekt aus, nicht nach Münze. */
 
 /* --- DER SCHEIBENWISCHER ---------------------------------------------
    GEWUENSCHT: „das Profilbild ist ploetzlich verdreckt und man wischt
