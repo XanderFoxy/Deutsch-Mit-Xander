@@ -11432,12 +11432,22 @@ body.lc-schreibt .tutor-reiter {
   box-shadow: inset 0 -3px 6px rgba(150, 180, 210, .35);
   animation: lcSchneeKlecks 3.6s ease-out both;
 }
+/* RUNDE 63 — GEMELDET: „die Spur kann besser animiert nach unten
+   rutschen." Vorher sackte der Klecks in der ganzen Zeit um ganze
+   zehn Prozent — das sieht man nicht, das KLEBT. Jetzt bleibt er
+   kurz stehen, loest sich und rutscht dann wirklich: 58 % der
+   Bildhoehe, also fast das halbe Profilbild, und dabei wird er
+   schmaler und laenger, wie nasser Schnee es tut. */
 @keyframes lcSchneeKlecks {
   0%, 12% { opacity: 0; transform: scale(.2); }
   16%     { opacity: 1; transform: scale(1.12); }
   22%     { transform: scale(1); }
-  86%     { opacity: 1; transform: scale(1) translateY(6%); }
-  100%    { opacity: 0; transform: scale(.96) translateY(10%); }
+  /* Haftet kurz — erst dann gibt die Schwerkraft nach. */
+  32%     { transform: scale(1) translateY(1%); }
+  44%     { transform: scale(.99, 1.06) translateY(11%); }
+  64%     { transform: scale(.94, 1.04) translateY(29%); }
+  86%     { opacity: .92; transform: scale(.84, .95) translateY(46%); }
+  100%    { opacity: 0; transform: scale(.68, .8) translateY(60%); }
 }
 /* Und was herunterlaeuft: eine schmale Spur, die vom Klecks aus nach
    unten waechst. Sie liegt in der runden Blende, laeuft also genau
@@ -11454,12 +11464,17 @@ body.lc-schreibt .tutor-reiter {
     rgba(255,255,255,.95), rgba(226,240,251,.85) 70%, rgba(226,240,251,0));
   animation: lcSchneeRinne 3.6s cubic-bezier(.45, 0, .55, 1) both;
 }
+/* Die Rinne ist die SCHMIERE, die der rutschende Klecks hinter sich
+   laesst — sie muss also mitwachsen, sonst haengt der Klecks unten
+   und die Spur endet in der Luft. Dieselben Zeitpunkte wie oben. */
 @keyframes lcSchneeRinne {
   0%, 17% { height: 0;   opacity: 0; }
-  22%     { height: 6%;  opacity: 1; }
-  62%     { height: 40%; opacity: 1; }
-  86%     { height: 52%; opacity: .9; }
-  100%    { height: 56%; opacity: 0; }
+  22%     { height: 4%;  opacity: 1; }
+  32%     { height: 6%;  opacity: 1; }
+  44%     { height: 18%; opacity: 1; }
+  64%     { height: 38%; opacity: 1; }
+  86%     { height: 56%; opacity: .9; }
+  100%    { height: 70%; opacity: 0; }
 }
 /* Drei Klumpen loesen sich und fallen VOR dem Bild herunter. */
 .lc-schnee-tropfen {
@@ -16253,33 +16268,51 @@ body.lc-schreibt .tutor-reiter {
   font-size: .8em;
   color: #eaf2ff;
 }
-/* Der Maulwurfshügel wandert unter der Sitzreihe entlang. */
+/* Der Maulwurfshügel wandert unter der Sitzreihe entlang.
+   RUNDE 63: VON OBEN statt von der Seite. Gemeldet: „das soll man von
+   oben, von der Draufsicht." Deshalb ist der Hügel jetzt breiter als
+   hoch und besteht aus vier ineinanderliegenden, gewobbelten Rändern:
+   Saum, Kranz, Trichter, Loch — von hell außen nach schwarz innen.
+   Die alte Regel .lc-maulwurf-erde ist weg; sie zeichnete die Kuppel
+   von der Seite, und die gibt es nicht mehr. */
 .lc-maulwurf {
-  width: calc(var(--gross, 58px) * 0.9);
-  height: calc(var(--gross, 58px) * 0.42);
+  width: calc(var(--gross, 58px) * 1.02);
+  height: calc(var(--gross, 58px) * 0.69);
   transform: translate(-50%, -50%);
 }
-.lc-maulwurf-erde {
+.lc-maulwurf-bild {
   position: absolute;
   inset: 0;
-  border-radius: 50% 50% 42% 58% / 100% 100% 14% 14%;
-  background: radial-gradient(ellipse at 50% 20%, #7b5a3a, #4a3421 70%, #34240f);
-  box-shadow: 0 .1em .25em rgba(0, 0, 0, .35);
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 .08em .18em rgba(0, 0, 0, .4));
 }
-.lc-maulwurf-nase {
-  position: absolute;
-  left: 50%;
-  top: 8%;
-  width: 26%;
-  height: 46%;
-  margin-left: -13%;
-  border-radius: 50% 50% 40% 40%;
-  background: #2f2a26;
+/* Von außen nach innen dunkler — so sieht frisch ausgeworfene Erde
+   aus, wenn man von oben in den Ausgang schaut. */
+.lc-maulwurf-saum      { fill: #8a6640; }
+.lc-maulwurf-kranz     { fill: #6a4a2c; }
+.lc-maulwurf-trichter  { fill: #46311c; }
+.lc-maulwurf-loch      { fill: #1b1208; }
+.lc-maulwurf-krume     { fill: #7a5735; }
+/* DER MAULWURF SELBST. Von oben sieht man den dunklen Kopf im
+   Ausgang und davor die rosa Rüsselnase mit zwei Nasenlöchern —
+   Augen hat er praktisch keine, das ist bei ihm ja gerade der Witz.
+   Er schiebt sich schnuppernd vor und wieder zurück. */
+.lc-maulwurf-tier {
+  transform-box: fill-box;
+  transform-origin: 50% 90%;
   animation: lcMaulwurfNaseR30 .5s ease-in-out infinite alternate;
 }
+.lc-maulwurf-kopf      { fill: #2d2723; }
+.lc-maulwurf-ruessel   { fill: #d59a94; stroke: #8d5f5a; stroke-width: .7; }
+.lc-maulwurf-nasenloch { fill: #40201e; }
+.lc-maulwurf-tasthaar  { stroke: rgba(228, 214, 206, .75); stroke-width: .7;
+                         stroke-linecap: round; fill: none; }
 @keyframes lcMaulwurfNaseR30 {
-  from { transform: translateY(18%) scaleY(.7); }
-  to   { transform: translateY(-14%) scaleY(1); }
+  from { transform: translateY(14%) scale(.86); }
+  to   { transform: translateY(-6%) scale(1); }
 }
 /* Das Tor: ein Wirbel, der aufgeht und wieder zufällt. */
 .lc-tor-wirbel {

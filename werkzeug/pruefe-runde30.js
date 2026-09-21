@@ -135,7 +135,16 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("sie bewegen den Absender", /if \(lcReise\(wenR, vonR, art\)\) return;/.test(js));
   pruefe("im Flugzeugfenster sitzt sein Bild",
     /lc-flieger-fenster/.test(js) && /lc-flieger-fenster/.test(css));
-  pruefe("hinter dem Maulwurf liegt ein Erdhuegel", /lc-maulwurf-erde/.test(css));
+  /* RUNDE 63 NACHGEFUEHRT: „das soll man von oben, von der
+     Draufsicht." Die Kuppel von der Seite (.lc-maulwurf-erde) gibt es
+     nicht mehr; von oben ist es ein Kranz aus loser Erde mit dem
+     Ausgang in der Mitte. Geprueft wird jetzt der Kranz. */
+  pruefe("der Maulwurfshuegel ist von oben gezeichnet",
+    /lc-maulwurf-kranz/.test(css) && /lc-maulwurf-loch/.test(css)
+    /* Auf die REGEL pruefen, nicht auf das Wort: im Kommentar
+       darueber steht der alte Name absichtlich noch, damit man
+       nachlesen kann, was sich geaendert hat. */
+    && !/\.lc-maulwurf-erde\s*\{/.test(css));
   pruefe("und das Tor wirbelt", /lcTorR30/.test(css));
   pruefe("mit einer Nummer steht auch die Nummer im Chat",
     /gr\\u00e4bt sich zu Platz /.test(lc) || /gräbt sich zu Platz /.test(lc));
@@ -164,8 +173,13 @@ const pruefe = (was, gut, zusatz) => {
     /localStorage\.getItem\(TUTOR_ART\) === "foto" \? "foto" : "comic"/.test(js));
   pruefe("es gibt eine Filmschicht ueber dem Standbild",
     /id="tutorVideo"/.test(js) && /\.tutor-video/.test(css));
+  /* RUNDE 62 NACHGEFUEHRT: in dem then() steht jetzt noch eine zweite
+     Zeile — tutorFilmLaeuft(true), damit das Standbild verschwindet
+     („der Originalavatar klebt immer noch hinter mir"). Geprueft wird
+     weiterhin das Entscheidende: die Klasse kommt erst nach einem
+     GEGLUECKTEN play(), und ein Fehlschlag faellt auf aus(). */
   pruefe("der Film kommt nur, wenn er wirklich laeuft",
-    /lauf\.then\(\(\) => v\.classList\.add\("tutor-video-da"\)\)\.catch\(aus\)/.test(js));
+    /lauf\.then\(\(\) => \{[\s\S]{0,160}?v\.classList\.add\("tutor-video-da"\);[\s\S]{0,160}?\}\)\.catch\(aus\)/.test(js));
   pruefe("und faellt er aus, bleibt das Standbild stehen",
     /v\.onerror = aus;/.test(js));
   pruefe("der erste Film liegt da und ist durchsichtig",

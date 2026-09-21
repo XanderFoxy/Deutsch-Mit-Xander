@@ -31997,10 +31997,22 @@
           { transform: "translateY(0) rotate(0deg)", clipPath: "inset(0 0 0% 0)", offset: 0.98 }
         ], { duration: dauer, easing: "ease-in-out", fill: "none" });
       } catch (e) {}
-      /* Der Erdhuegel wandert von Platz zu Platz. */
+      /* Der Erdhuegel wandert von Platz zu Platz.
+
+         RUNDE 63 NEU GEZEICHNET.
+         GEMELDET: „der gegrabene Maulwurfshuegel sieht auch nicht
+         realistisch aus … das soll man von oben, von der Draufsicht."
+         Vorher war es eine Kuppel von der SEITE — ein Halbkreis mit
+         einer Nase davor. Von oben sieht ein frischer Maulwurfshuegel
+         aber ganz anders aus: ein unregelmaessiger Kranz aus loser
+         Erde, in der Mitte der offene Ausgang, davor ein paar
+         Krumen, die beim Graben herausgefallen sind.
+         Der Rand ist deshalb nicht rund gezeichnet, sondern gewobbelt
+         gerechnet — eine Kreislinie sieht immer nach Zeichnung aus,
+         nie nach Erde. */
       const huegel = document.createElement("span");
       huegel.className = "lc-maulwurf";
-      huegel.innerHTML = '<i class="lc-maulwurf-erde"></i><i class="lc-maulwurf-nase"></i>';
+      huegel.innerHTML = lcMaulwurfVonOben();
       reihe.appendChild(huegel);
       weg.push(huegel);
       setzen(huegel, start.x, start.y + d * 0.42);
@@ -33121,6 +33133,72 @@
     }, 2600, "katapult");
   }
 
+  /* ------------------------------------------------------------------
+     DER MAULWURFSHUEGEL VON OBEN
+     GEMELDET: „das soll man von oben, von der Draufsicht."
+     Ein frischer Huegel ist von oben ein Kranz aus loser Erde mit dem
+     offenen Ausgang in der Mitte. Rund gezeichnet sieht das nach
+     Teller aus; deshalb wird der Rand gewobbelt gerechnet: zwei
+     ueberlagerte Sinuswellen auf dem Radius, wie bei den Wolken und
+     den Blitzen auch.
+     ------------------------------------------------------------------ */
+  function lcMaulwurfVonOben() {
+    /* Eine Kette aus Geraden sieht aus wie ein Zahnrad — im ersten
+       Versuch genau so. Deshalb laeuft der Weg als WEICHE Kurve:
+       jeder Punkt wird zum Stuetzpunkt, und der Weg geht durch die
+       Mitten dazwischen. Das ist der uebliche Kniff fuer ein rundes
+       Vieleck und kostet nichts. */
+    const kranz = (rx, ry, staerke, saat) => {
+      const N = 22, pkt = [];
+      for (let i = 0; i < N; i++) {
+        const a = (i / N) * Math.PI * 2;
+        const w = 1 + staerke * (Math.sin(i * 2.3 + saat) * 0.62
+                                 + Math.sin(i * 4.7 + saat * 1.7) * 0.38);
+        pkt.push([50 + rx * w * Math.cos(a), 34 + ry * w * Math.sin(a)]);
+      }
+      const mitte = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      const z = (v) => v[0].toFixed(1) + " " + v[1].toFixed(1);
+      let d = "M" + z(mitte(pkt[0], pkt[1]));
+      for (let i = 1; i <= N; i++) {
+        const p1 = pkt[i % N], p2 = pkt[(i + 1) % N];
+        d += " Q" + z(p1) + " " + z(mitte(p1, p2));
+      }
+      return d + " Z";
+    };
+    /* Die Krumen liegen AUSSEN am Kranz, dort wo die Erde herunterrollt. */
+    let krumen = "";
+    for (let i = 0; i < 9; i++) {
+      const a = (i / 9) * Math.PI * 2 + 0.4;
+      const x = 50 + (42 + (i % 3) * 4) * Math.cos(a);
+      const y = 34 + (27 + (i % 3) * 3) * Math.sin(a);
+      krumen += '<ellipse class="lc-maulwurf-krume" cx="' + x.toFixed(1)
+        + '" cy="' + y.toFixed(1) + '" rx="' + (2.1 + (i % 4) * 0.55).toFixed(1)
+        + '" ry="' + (1.5 + (i % 3) * 0.45).toFixed(1) + '"/>';
+    }
+    /* DER MAULWURF SELBST, von oben: der dunkle Kopf schaut aus dem
+       Ausgang, davor die rosa Ruesselnase mit den zwei Nasenloechern
+       und ein paar Tasthaaren. Von oben sieht man genau das — Augen
+       hat er praktisch keine, das ist bei ihm ja gerade der Witz. */
+    const tier =
+      '<g class="lc-maulwurf-tier">'
+      + '<ellipse class="lc-maulwurf-kopf" cx="50" cy="35.5" rx="11" ry="7.6"/>'
+      + '<path class="lc-maulwurf-ruessel" d="M50 27.4 C54.4 27.4 56.4 30.2 56.4 32.4'
+      + ' C56.4 34.6 54.4 36 50 36 C45.6 36 43.6 34.6 43.6 32.4'
+      + ' C43.6 30.2 45.6 27.4 50 27.4 Z"/>'
+      + '<circle class="lc-maulwurf-nasenloch" cx="47.6" cy="31" r="1.25"/>'
+      + '<circle class="lc-maulwurf-nasenloch" cx="52.4" cy="31" r="1.25"/>'
+      + '<path class="lc-maulwurf-tasthaar" d="M43.2 31.4 L37.6 29.4'
+      + ' M43.4 33.4 L37.8 33.6 M56.8 31.4 L62.4 29.4 M56.6 33.4 L62.2 33.6"/>'
+      + "</g>";
+    return '<svg class="lc-maulwurf-bild" viewBox="0 0 100 68" aria-hidden="true">'
+      + '<path class="lc-maulwurf-saum" d="' + kranz(40, 26, 0.13, 1.1) + '"/>'
+      + '<path class="lc-maulwurf-kranz" d="' + kranz(33, 21, 0.12, 2.7) + '"/>'
+      + '<path class="lc-maulwurf-trichter" d="' + kranz(20, 13, 0.14, 4.2) + '"/>'
+      + '<path class="lc-maulwurf-loch" d="' + kranz(13, 8.4, 0.1, 5.9) + '"/>'
+      + krumen + tier
+      + "</svg>";
+  }
+
   /* --- DER STROHHALM ------------------------------------------------ */
   /* --- DER RAHMEN BRENNT ---------------------------------------
      GEWUENSCHT: „die Feuerreanimation am Rand des Profil rahmen" —
@@ -33897,7 +33975,7 @@
         + '<path d="M18 54 C10 46 8 34 12 26 L16 30 L16 12 A4 4 0 0 1 24 12 L24 26'
         + ' L26 8 A4 4 0 0 1 34 8 L34 26 L36 12 A4 4 0 0 1 44 12 L44 28'
         + ' L48 20 A4 4 0 0 1 54 24 C54 40 48 52 40 56 Z"'
-        + ' fill="#f6c89a" stroke="#c9915e" stroke-width="2" stroke-linejoin="round"/>'
+        + ' fill="#e9bda6" stroke="#bf9280" stroke-width="2" stroke-linejoin="round"/>'
         + "</svg>"
         + '<span class="lc-ohrfeige-klatsch">KLATSCH</span>';
       /* XANDER: „dann moechte ich abhaengig vom Geschlecht ... ein
@@ -34066,7 +34144,7 @@
           + '<path d="M18 74 C6 60 6 40 14 28 L22 38 L22 8 A7 7 0 0 1 36 8 L36 34'
           + ' L40 4 A7 7 0 0 1 54 4 L54 34 L58 8 A7 7 0 0 1 72 8 L72 36'
           + ' L78 16 A7 7 0 0 1 92 20 C92 50 82 72 66 84 Z"'
-          + ' fill="#f6c89a" stroke="#c9915e" stroke-width="3" stroke-linejoin="round"/>'
+          + ' fill="#e9bda6" stroke="#bf9280" stroke-width="3" stroke-linejoin="round"/>'
           + '<path d="M26 44 L34 44 M42 40 L50 40 M60 44 L68 44" stroke="#c9915e"'
           + ' stroke-width="2.4" stroke-linecap="round" opacity=".7"/>'
           + "</svg>";
@@ -34570,11 +34648,32 @@
          herunter, statt zu verschwinden (siehe .lc-entbl-bh). */
       blende.innerHTML =
         '<span class="lc-entbl-comic">'
+        /* GEMELDET: „die Brueste bei dem Obst sind immer noch nicht
+           hautfarben, sie sind immer noch gelb."
+           Er hat recht, und man kann es ausrechnen: #f6c89a hat in
+           HSL eine Saettigung von 84 % bei einem Farbton von 30 Grad.
+           Eine so satte Orangefarbe liest das Auge als Plastik oder
+           Marzipan, nicht als Haut. Echte helle Haut liegt bei 20 bis
+           26 Grad Farbton und 35 bis 60 % Saettigung.
+           Neu: #e9bda6 — 21 Grad, 60 % Saettigung, 78 % Helligkeit.
+           Dazu ein Verlauf statt einer flachen Flaeche und ein
+           weiches Licht oben links, sonst sieht auch die richtige
+           Farbe wie ein Aufkleber aus.
+           Dieselbe Farbe bekommen auch die drei HAENDE (Ohrfeige,
+           Basketball, Streicheln) — sonst haette eine Hand eine
+           andere Haut als der Rest, und das faellt sofort auf. */
         + '<svg viewBox="0 0 100 100" width="100%" height="100%">'
-        + '<circle cx="34" cy="56" r="16" fill="#f6c89a" stroke="#c9915e" stroke-width="2.5"/>'
-        + '<circle cx="66" cy="56" r="16" fill="#f6c89a" stroke="#c9915e" stroke-width="2.5"/>'
-        + '<circle cx="34" cy="56" r="5" fill="#d98f6a"/>'
-        + '<circle cx="66" cy="56" r="5" fill="#d98f6a"/>'
+        + '<defs><radialGradient id="lcHautR63" cx="38%" cy="32%" r="72%">'
+        + '<stop offset="0" stop-color="#f4d3c1"/>'
+        + '<stop offset="55%" stop-color="#e9bda6"/>'
+        + '<stop offset="100%" stop-color="#d6a68d"/>'
+        + "</radialGradient></defs>"
+        + '<circle cx="34" cy="56" r="16" fill="url(#lcHautR63)" stroke="#bf9280" stroke-width="2.2"/>'
+        + '<circle cx="66" cy="56" r="16" fill="url(#lcHautR63)" stroke="#bf9280" stroke-width="2.2"/>'
+        + '<circle cx="34" cy="56" r="5" fill="#c08a7c"/>'
+        + '<circle cx="66" cy="56" r="5" fill="#c08a7c"/>'
+        + '<circle cx="34" cy="56" r="2.1" fill="#a97064"/>'
+        + '<circle cx="66" cy="56" r="2.1" fill="#a97064"/>'
         + "</svg></span>"
         + '<span class="lc-entbl-bh">'
         + '<svg viewBox="0 0 100 52" width="100%" height="100%">'
@@ -34820,7 +34919,7 @@
         + '<path d="M14 66 C4 54 4 36 12 26 L20 36 L20 10 A6 6 0 0 1 32 10 L32 34'
         + ' L36 6 A6 6 0 0 1 48 6 L48 34 L52 10 A6 6 0 0 1 64 10 L64 36'
         + ' L70 18 A6 6 0 0 1 82 22 C82 48 72 68 58 76 Z"'
-        + ' fill="#f6c89a" stroke="#c9915e" stroke-width="2.6" stroke-linejoin="round"/>'
+        + ' fill="#e9bda6" stroke="#bf9280" stroke-width="2.6" stroke-linejoin="round"/>'
         + "</svg>";
       const blende = lcZpBlende(schicht);
       for (let h = 0; h < 6; h++) {
@@ -35153,6 +35252,47 @@
      benachbarte Reihe. Sonst waere es keine Sanduhr, sondern ein
      Sprung. Und am Ende wird wirklich getauscht, nicht nur so getan.
      ================================================================= */
+  /* ------------------------------------------------------------------
+     EIN PROFILBILD ZERRINNT WIE SAND
+     XANDER: „bei der Sanduhr — die funktioniert immer noch nicht … es
+     koennte realistischer sein, dass sich das Bild wirklich so
+     zerfliesst wie Sand." Und: „Die Sanduhr soll AUCH im einzelnen
+     Profilbild den Effekt haben, dass das Profilbild von oben nach
+     unten durchlaeuft."
+     Die alte Bewegung („lc-rieselt") schob eine GERADE Kante ueber das
+     Bild — das sieht aus wie ein Rollo. Hier rinnt es mit einer
+     koernigen Kante aus, die Koerner fallen sichtbar herunter und
+     sammeln sich unten zu einem Haufen.
+     ------------------------------------------------------------------ */
+  function lcSandZerrinnen(platzEl) {
+    if (!platzEl) return false;
+    const bild = platzEl.querySelector(".lc-kreis");
+    if (!bild) return false;
+    bild.classList.remove("lc-zerrinnt");
+    void bild.offsetWidth;
+    bild.classList.add("lc-zerrinnt");
+    const sand = document.createElement("span");
+    sand.className = "lc-sandwerk";
+    let inhalt = '<span class="lc-sandhaufen"></span>';
+    for (let i = 0; i < 22; i++) {
+      inhalt += '<i class="lc-sandkorn" style="--wo:' + (8 + ((i * 37) % 84))
+        + "%;--spaet:" + ((i % 11) * 0.13).toFixed(2) + "s;--lang:"
+        + (1.1 + ((i % 5) * 0.16)).toFixed(2) + 's"></i>';
+    }
+    sand.innerHTML = inhalt;
+    /* Der Sand gehoert INS Bild, darf aber NICHT in .lc-kreis: dort
+       liegt gerade die clip-path-Bewegung, und ein clip-path schneidet
+       auch die Kinder weg — der Haufen verschwaende zusammen mit dem
+       Bild. Deshalb eine eigene runde Schicht am Platz, gleich gross
+       wie das Bild. */
+    platzEl.appendChild(sand);
+    setTimeout(() => {
+      bild.classList.remove("lc-zerrinnt");
+      sand.remove();
+    }, 3200);
+    return true;
+  }
+
   function lcSanduhrTausch(wen, von) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return false;
@@ -35161,7 +35301,28 @@
     const zuEl = lcPlatzMitNamen(wen);
     const ab = gitter.find((p) => p.el === abEl);
     const zu = gitter.find((p) => p.el === zuEl);
-    if (!ab || !zu || ab.nr === zu.nr) return false;
+    /* GEMELDET: „Die Sanduhr soll auch im einzelnen Profilbild den
+       Effekt haben, dass das Profilbild von oben nach unten
+       durchlaeuft."
+       Vorher war das Zerrinnen nur der ERSATZ, wenn die beiden nicht
+       uebereinandersassen — und es passierte gar nichts, wenn der
+       Absender nicht zu finden war, wenn man niemanden genannt hat
+       oder wenn „alle" gemeint waren: die Funktion stieg mit false
+       aus, und der Befehl lief ins Leere.
+       Jetzt ist das Zerrinnen der Normalfall. Nur wenn zwei wirklich
+       direkt uebereinandersitzen, laeuft der Tausch durch die
+       Engstelle — das ist ja der Sonderfall, den er sich gewuenscht
+       hat („wenn man direkt uebereinander ist"). Gesucht wird ueber
+       lcZielPlaetze, damit auch eine Platznummer und „alle" gehen. */
+    const zerrinnenFuer = (plaetze) => {
+      let getan = 0;
+      plaetze.forEach((pl) => { if (lcSandZerrinnen(pl)) getan++; });
+      if (getan) lcTonZu("sanduhr");
+      return getan > 0;
+    };
+    if (!ab || !zu || ab.nr === zu.nr) {
+      return zerrinnenFuer(lcZielPlaetze(wen));
+    }
     if (ab.spalte !== zu.spalte || Math.abs(ab.reihe - zu.reihe) !== 1) {
       /* ZWEI SANDUHREN IN EINEM SATZ — und beide stehen in seinem
          Verlauf: „auch, dass das Profilbild wie aus so einem
@@ -35173,40 +35334,7 @@
 
          Also keine Absage, wenn er woanders sitzt, sondern die andere
          Sanduhr: sein Bild rieselt von oben wieder voll. */
-      const fremd = zu.el.querySelector(".lc-kreis");
-      if (fremd) {
-        /* XANDER: „bei der Sanduhr die funktioniert immer noch nicht
-           … es koennte realistischer sein, dass sich das Bild wirklich
-           so zerfliesst wie Sand."
-           Die alte Bewegung („lc-rieselt") schob eine GERADE Kante
-           ueber das Bild — das sieht aus wie ein Rollo. Jetzt rinnt es
-           mit einer koernigen Kante aus, die Koerner fallen sichtbar
-           herunter und sammeln sich unten zu einem Haufen. */
-        fremd.classList.remove("lc-zerrinnt");
-        void fremd.offsetWidth;
-        fremd.classList.add("lc-zerrinnt");
-        const sand = document.createElement("span");
-        sand.className = "lc-sandwerk";
-        let inhalt = '<span class="lc-sandhaufen"></span>';
-        for (let i = 0; i < 22; i++) {
-          inhalt += '<i class="lc-sandkorn" style="--wo:' + (8 + ((i * 37) % 84))
-            + "%;--spaet:" + ((i % 11) * 0.13).toFixed(2) + "s;--lang:"
-            + (1.1 + ((i % 5) * 0.16)).toFixed(2) + 's"></i>';
-        }
-        sand.innerHTML = inhalt;
-        /* Der Sand gehoert INS Bild, darf aber NICHT in .lc-kreis:
-           dort liegt gerade die clip-path-Bewegung, und ein clip-path
-           schneidet auch die Kinder weg — der Haufen verschwaende
-           zusammen mit dem Bild. Deshalb eine eigene runde Schicht am
-           Platz, gleich gross wie das Bild. */
-        zu.el.appendChild(sand);
-        setTimeout(() => {
-          fremd.classList.remove("lc-zerrinnt");
-          sand.remove();
-        }, 3200);
-        lcTonZu("sanduhr");
-      }
-      return true;
+      return zerrinnenFuer([zu.el]);
     }
     const meiner = ab.el.querySelector(".lc-kreis");
     const seiner = zu.el.querySelector(".lc-kreis");
