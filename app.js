@@ -24436,7 +24436,12 @@
     /* „bei dem Angelhaken soll man, waehrend man angelt, auch realistisch
        dieses Einholen der Angelschnur hoeren." */
     heber:          { ton: "angelkurbel", dauer: 2400 },
-    lasso:          { ton: "tritt", dauer: 2000 }
+    /* RUNDE 65: hier stand „tritt" — der Tritt-Sound fuer einen
+       Lassowurf. Ein geschwungenes Seil zischt, es tritt nicht. */
+    lasso:          { ton: "swoosh", dauer: 3400, laut: 0.5 },
+    /* Das Pumpen laeuft von Anfang an, der Knall kommt spaeter eigens
+       dazu (lcTonSpaeter unten) — ein Geraeusch kann nicht beides. */
+    aufblasen:      { ton: "aufblasen", dauer: 2600, laut: 0.6 }
   };
 
   /* =================================================================
@@ -26394,7 +26399,10 @@
      ["\u2728", "Beamen", "beamen"],
      ["\ud83d\udfe2", "R\u00f6hre", "rohr"],
      ["\ud83d\ude81", "Helikopter", "heli"],
-     ["\ud83d\udc0e", "Pferd", "pferd"]].forEach(([zeichen, wort, befehl]) => {
+     ["\ud83d\udc0e", "Pferd", "pferd"],
+     /* RUNDE 65: der Greifvogel und der Drei-Meter-Turm. */
+     ["\ud83e\udd85", "Greifvogel", "greifvogel"],
+     ["\ud83c\udfca", "3-Meter-Turm", "turm"]].forEach(([zeichen, wort, befehl]) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "lc-anreise-knopf";
@@ -28017,6 +28025,13 @@
     rohr:     { zeichen: ["\ud83d\udfe2"], wie: 4, klasse: "umarmen" },
     heli:     { zeichen: ["\ud83d\ude81"], wie: 4, klasse: "umarmen" },
     pferd:    { zeichen: ["\ud83d\udc0e"], wie: 4, klasse: "umarmen" },
+    /* RUNDE 65: Greifvogel und Drei-Meter-Turm. Ohne Eintrag HIER
+       steigt lcWirkung gleich in der ersten Zeile aus — gemessen:
+       die Reise lief gar nicht an, obwohl Befehl, Verteiler und
+       Zeichnung schon standen. */
+    greifvogel: { zeichen: ["\ud83e\udd85"], wie: 4, klasse: "umarmen" },
+    aufblasen:{ zeichen: ["\ud83c\udf88"], wie: 5, klasse: "umarmen" },
+    turm:     { zeichen: ["\ud83c\udfca"], wie: 4, klasse: "umarmen" },
     marsch:   { zeichen: ["\ud83e\udd41"], wie: 5, klasse: "umarmen" },
     brennen:  { zeichen: ["\ud83d\udd25"], wie: 5, klasse: "umarmen" },
     zorro:    { zeichen: ["\u2694\ufe0f"], wie: 5, klasse: "umarmen" },
@@ -28801,7 +28816,9 @@
     hut: 620,          /* wenn er aufsetzt */
     bombe: 2100,       /* die Null, da platzt es */
     kuss: 520,         /* wenn der Mund ankommt */
-    streicheln: 300
+    streicheln: 300,
+    /* Der erste Pumpenhub ist sofort da. */
+    aufblasen: 0
   };
   function lcAmPlatz(wen, klasse, bauen, dauer, ton) {
     const ziele = lcZielPlaetze(wen);
@@ -30977,7 +30994,11 @@
     reihe.appendChild(schicht);
     /* Die Peitsche holt seit Runde 58 erst aus und braucht deshalb
        2,6 s — Lasso und Angel bleiben bei 2 s. */
-    setTimeout(() => schicht.remove(), art === "peitsche" ? 2600 : 2000);
+    /* RUNDE 65: das Lassoseil bleibt 3,4 s — so lange dauern die
+       drei Zuege. Vorher war es nach 2 s weg, und der andere flog die
+       letzte Sekunde ohne Seil heran. */
+    setTimeout(() => schicht.remove(),
+      art === "peitsche" ? 2600 : art === "lasso" ? 3600 : 2000);
     return true;
   }
 
@@ -31005,9 +31026,9 @@
   function lcZuMirZiehen(platz, kreis) {
     const karte = document.getElementById("livechatKarte");
     const meiner = karte && karte.querySelector(".lc-platz-ich");
-    if (!meiner || !kreis || meiner === platz) return;
+    if (!meiner || !kreis || meiner === platz) return null;
     const a = lcLayoutKasten(meiner), b = lcLayoutKasten(platz);
-    if (!a || !b) return;
+    if (!a || !b) return null;
     const dx = (a.left + a.width / 2) - (b.left + b.width / 2);
     const dy = (a.top + a.height / 2) - (b.top + b.height / 2);
     const l = Math.hypot(dx, dy) || 1;
@@ -31016,6 +31037,13 @@
     const weit = Math.min(l * 0.25, b.width * 0.5);
     kreis.style.setProperty("--zux", (dx / l * weit).toFixed(1) + "px");
     kreis.style.setProperty("--zuy", (dy / l * weit).toFixed(1) + "px");
+    /* RUNDE 65: die Schlinge am Bild und das Seil brauchen DIESELBEN
+       Zahlen — sonst bleibt die Schlinge stehen, waehrend das Bild
+       unter ihr weggezogen wird. Genau das war gemeldet. Deshalb gibt
+       die Funktion die gemessenen Werte jetzt heraus, statt sie nur
+       an den Kreis zu schreiben. */
+    return { dx: dx, dy: dy, laenge: l, weit: weit,
+             zux: dx / l * weit, zuy: dy / l * weit };
   }
   /* =================================================================
      DIE ENDLOSSCHLEIFE — UND WARUM SIE ENTSTAND
@@ -31083,32 +31111,124 @@
     return lcAmPlatz(wen, "lc-lasso", (schicht, platz) => {
       const leine = lcLeineWerfen(platz, "lasso");
       const kreis = platz.querySelector(".lc-kreis");
+      /* RUNDE 65 — XANDER, woertlich: „Das Lasso schlingt sich immer
+         noch nicht um das Opfer an seinem Platz, sondern taucht erst
+         auf, wenn derjenige neben dir ist. Also zu spaet von der
+         Animation, was ueberhaupt keinen Sinn macht. Man soll jemanden
+         fesseln, mit dem Lasso im Wurf … und dann zieht man den
+         anderen Stueck fuer Stueck mit kraeftigen Zuegen heran."
+
+         NACHGEMESSEN, mit einem Foto der Sitzreihe bei 300/600/900/
+         1200 ms: die Schlinge lag bei 900 ms auf x = 266, der Kreis
+         aber auf x = 234. Sie BLIEB am Platz stehen, waehrend das Bild
+         unter ihr weggezogen wurde — deshalb sah es so aus, als gehoere
+         sie gar nicht zu ihm. Jetzt bekommt sie dieselben --zux/--zuy
+         wie der Kreis und wandert mit: wer gefesselt ist, bleibt
+         gefesselt. */
+      const zug = kreis ? lcZuMirZiehen(platz, kreis) : null;
+      if (zug) {
+        schicht.style.setProperty("--zux", zug.zux.toFixed(1) + "px");
+        schicht.style.setProperty("--zuy", zug.zuy.toFixed(1) + "px");
+        /* Der Knoten sitzt an der Seite, aus der das Seil kommt —
+           also auf MEINER Seite, nicht irgendwo. */
+        schicht.style.setProperty("--knoten", zug.dx > 0 ? "93%" : "7%");
+        /* Wie viel kuerzer wird das Seil, waehrend er herankommt?
+           Nicht geschaetzt: die Strecke, die er zurueckliegt (zug.weit),
+           geteilt durch die Seillaenge, die lcLeineWerfen gemessen hat. */
+        const seil = document.querySelector(".lc-leine-lasso");
+        if (seil) {
+          const lang = parseFloat(seil.style.getPropertyValue("--laenge")) || 0;
+          if (lang > 0) {
+            seil.style.setProperty("--zugteil",
+              Math.max(0, Math.min(0.85, zug.weit / lang)).toFixed(3));
+          }
+        }
+      }
       if (kreis) {
-        /* „aber ich moechte, dass man andere zu sich zieht" — die
-           Richtung zeigt auf MEINEN Platz, siehe lcZuMirZiehen. */
-        lcZuMirZiehen(platz, kreis);
         kreis.classList.remove("lc-gezogen");
         void kreis.offsetWidth;
         kreis.classList.add("lc-gezogen");
-        /* GEMELDET: „bei dem Lasso sieht es nicht so aus, als wenn man
-           den anderen ran zieht." Und er hatte recht — es war eine
-           Frage der ZEIT, nicht der Zeichnung: der Zug begann bei
-           0 ms, die Schlinge landete aber erst bei 640 ms und sass
-           erst bei 920 ms. Der andere rutschte also los, BEVOR das
-           Seil ihn hatte. Jetzt haelt der Zug die erste Sekunde
-           still (siehe lcZuMirR51) — deshalb dauert er laenger und
-           die Klasse bleibt entsprechend laenger stehen. */
+        /* Drei Zuege mit Pausen dazwischen (lcZuMirR65) brauchen
+           3,4 s — so lange bleibt die Klasse stehen. */
         setTimeout(() => {
           kreis.classList.remove("lc-gezogen");
           kreis.style.removeProperty("--zux");
           kreis.style.removeProperty("--zuy");
-        }, 2400);
+        }, 3400);
       }
-      /* HIER STAND DIE SCHLEIFE — siehe lcNebenMichSetzen. */
-      schicht.innerHTML = leine ? '<span class="lc-lasso-schlinge"></span>' :
-        '<span class="lc-lasso-schlinge"></span>'
-        + '<span class="lc-lasso-seil"></span>';
-    }, 2600, "lasso");
+      /* „mit dem strammen Seil … das ist so festgezurrt" — das Seil
+         KNARZT, wenn es sich strafft. Kein Ton, kein Klang: trockenes
+         Fasergeraeusch. Die Zeitpunkte sind aus den Schluesselbildern
+         abgelesen, nicht geraten: 26 % von 3,4 s = 884 ms (zugezogen),
+         74 % = 2516 ms (der letzte, kraeftigste Zug). */
+      lcTonSpaeter("seilstramm", 700, 0.72);
+      lcTonSpaeter("seilstramm", 2380, 0.44);
+      /* Ohne Leine (es gilt allen, oder ich sitze selbst nicht) bleibt
+         der kurze Seilstummel am Bild als Rueckfall — sonst kaeme die
+         Schlinge aus dem Nichts. */
+      /* EIN RING IN PERSPEKTIVE HAT EINE FERNE UND EINE NAHE HAELFTE.
+         Erster Versuch war, die ferne Haelfte wirklich HINTER das Bild
+         zu legen (eigene Lage mit z-index 0 vor dem Kreis im Baum).
+         Technisch ging das — nur sieht man sie dann gar nicht mehr:
+         die Ellipse ist 104 % breit und 58 % hoch, ihre obere Kappe
+         liegt damit KOMPLETT innerhalb der Scheibe und verschwindet
+         hinter einem undurchsichtigen Profilbild. Uebrig blieb eine
+         Sichel, kein Ring — nachgesehen auf dem Foto bei 900 ms.
+         Also so, wie Zeichner es machen: beide Haelften liegen vorn,
+         die ferne aber duenner und dunkler. Das ist die Perspektive,
+         die man sehen kann. */
+      schicht.innerHTML =
+        '<span class="lc-lasso-schlinge lc-lasso-fern"></span>'
+        + '<span class="lc-lasso-schlinge lc-lasso-nah">'
+        + '<b class="lc-lasso-knoten"></b></span>'
+        + (leine ? "" : '<span class="lc-lasso-seil"></span>');
+    }, 3600, "lasso");
+  }
+
+  /* --- AUFBLASEN UND PLATZEN ---------------------------------------
+     RUNDE 65 — XANDER: „Ach so, und dann moechte ich, dass man ein
+     Profilbild noch ein bisschen aufblasen kann, dass man es total
+     unter Druck setzt und es dann zerplatzt wie ein Luftballon."
+
+     Ein Luftballon waechst nicht gleichmaessig — er waechst in
+     STOESSEN, einer je Pumpenhub, und zwischen den Stoessen zieht sich
+     das Gummi ein wenig zurueck. Genau so ist lcBlaehtR65 gebaut:
+     fuenf Hube auf 1,12 / 1,26 / 1,40 / 1,52 / 1,62, dazwischen je ein
+     kleines Zurueckfedern. Beim letzten Hub zittert es, weil das Gummi
+     am Ende ist — und dann platzt es.
+     Die Fetzen fliegen NICHT gleichmaessig im Kreis: ein Ballon reisst
+     an einer Stelle auf, deshalb haben die zwoelf Fetzen verschiedene
+     Laengen und verschiedene Drehungen. */
+  function lcAufblasen(wen) {
+    return lcAmPlatz(wen, "lc-pumpe", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-aufgeblasen");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-aufgeblasen");
+        setTimeout(() => kreis.classList.remove("lc-aufgeblasen"), 3200);
+      }
+      let fetzen = "";
+      for (let i = 0; i < 12; i++) {
+        /* Verschiedene Weiten und Drehungen — ein Riss ist nie
+           symmetrisch. Die Zahlen kommen aus i, nicht aus Math.random:
+           so sieht es auf JEDEM Geraet gleich aus. */
+        const weit = 120 + ((i * 47) % 90);
+        const dreh = ((i * 137) % 360) - 180;
+        fetzen += '<b class="lc-fetzen" style="--wo:' + (i * 30)
+          + "deg;--weit:" + weit + "%;--dreh:" + dreh
+          + "deg;--spaet:" + ((i * 13) % 70) + 'ms"></b>';
+      }
+      /* Der Knall haengt am Schluesselbild, nicht an einer geratenen
+         Zahl: lcBlaehtR65 platzt bei 71 % von 3,2 s = 2272 ms. */
+      lcTonSpaeter("platzen", 2272, 0.85);
+      schicht.innerHTML =
+        /* Die Spannungslichter auf dem gedehnten Gummi. */
+        '<i class="lc-blaeh-glanz"></i>'
+        /* Der Knall selbst: ein kurzer weisser Stern. */
+        + '<i class="lc-knall"></i>'
+        + fetzen;
+    }, 3400, "aufblasen");
   }
 
   /* =================================================================
@@ -31893,7 +32013,7 @@
     const hin = { flug: 2600, maulwurf: 2200, boot: 2800, kran: 2800,
                   dampfer: 3000, lok: 3200, liane: 2200, feder: 2400,
                   beamen: 2600, rohr: 2800, heli: 3000,
-                  pferd: 3000 }[art] || 1800;
+                  pferd: 3000, greifvogel: 3000, turm: 3400 }[art] || 1800;
     const dauer = hin + 500;
     const altZ = ab.el.style.zIndex;
     ab.el.style.zIndex = "7";
@@ -31982,56 +32102,324 @@
         ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       } catch (e) {}
       lcTonZu("flugzeug");
+    } else if (art === "greifvogel") {
+      /* RUNDE 65 — XANDER: „Vielleicht schaffst du es noch, einen
+         realistischen Vogel zu bauen, so ein Greifvogel, der unser
+         Profilbild mitnimmt und mit dem wir reisen — der von unserem
+         Ursprungsplatz zum Zielplatz traegt, aber der realistische
+         Fluegelschlaege macht, realistisch wie ein Vogel aussieht,
+         mit entsprechendem Sound."
+
+         Drei Dinge machen den Unterschied zu einem Vogel-Symbol:
+         · DER SCHLAG IST NICHT GLEICHMAESSIG. Ein Greifvogel schlaegt
+           kraeftig nach unten und hebt den Fluegel langsam und
+           angewinkelt wieder an. Im Takt sind das 30 % Abschlag und
+           70 % Aufschlag (lcGreifSchlagR65) — nicht 50 zu 50.
+         · ER STEIGT MIT JEDEM SCHLAG. Der Koerper hebt sich genau
+           dann, wenn der Fluegel unten ist (lcGreifHebtR65), sonst
+           schwebt er wie ein Aufkleber.
+         · ZWEI FLUEGEL, NICHT EINER. Der ferne liegt hinter dem
+           Koerper, ist dunkler und laeuft dem nahen um 40 ms voraus —
+           daher sieht man ueberhaupt, dass es ein Koerper im Raum ist.
+         Das Bild haengt in den Faengen, nicht auf dem Ruecken: so
+         traegt ein Greifvogel Beute. */
+      const greif = document.createElement("span");
+      greif.className = "lc-greif";
+      greif.style.setProperty("--gross", d + "px");
+      /* Ein Fluegel, einmal beschrieben, zweimal gezeichnet. Die
+         Schwungfedern sind die Zacken an der Hinterkante — daran
+         erkennt man einen Greifvogel im Flug. */
+      const flg = "M70 30 C58 12 36 0 10 4 C18 12 22 18 24 24"
+        + " C30 22 34 24 36 29 C42 26 46 28 48 32"
+        + " C54 30 60 32 63 36 C67 35 69 33 70 30 Z";
+      /* NACHGESEHEN auf dem Foto bei 1800 ms: beide Fluegel lagen
+         uebereinander und ergaben EINEN braunen Klumpen. Ein Fluegel,
+         der weiter weg ist, ist aber KUERZER zu sehen — er ist
+         verkuerzt. Deshalb derselbe Umriss, um 0,78 zur Schulter hin
+         geschrumpft. So schaut er hinter dem nahen hervor, statt ihn
+         zu verdoppeln. */
+      const flgFern = "M70 30 C60.6 16 43.5 6.6 23.2 9.7 C29.4 16 32.6 20.6 34.1 25.3"
+        + " C38.8 23.8 41.9 25.3 43.5 29.2 C48.2 26.9 51.3 28.4 52.8 31.6"
+        + " C57.5 30 62.2 31.6 64.5 34.7 C67.7 33.9 69.2 32.3 70 30 Z";
+      greif.innerHTML =
+        '<svg class="lc-greif-form" viewBox="0 0 140 111" aria-hidden="true">'
+        /* Der FERNE Fluegel liegt hinter dem Koerper. */
+        + '<g class="lc-greif-fluegel lc-greif-fluegel-fern"'
+        + ' style="transform-origin:70px 30px"><path d="' + flgFern + '"/></g>'
+        + '<g class="lc-greif-koerper">'
+        /* Schwanz: gefaechert, mit drei Federkerben. */
+        + '<path class="lc-greif-schwanz" d="M62 34 L14 26 L12 34 L16 42 L62 42 Z"/>'
+        + '<path class="lc-greif-kerbe" d="M14 28 L30 33 M13 36 L30 36 M16 41 L30 39"/>'
+        /* Rumpf: vorn breit, hinten schlank. */
+        + '<path class="lc-greif-rumpf" d="M58 24 C74 18 96 18 110 24'
+        + ' C120 28 122 36 112 41 C96 48 74 48 60 42 C54 39 54 27 58 24 Z"/>'
+        /* Brustgefieder — feine Striche, kein Muster aus der Dose. */
+        + '<path class="lc-greif-feder" d="M70 40 l4-5 M78 42 l4-5 M86 42 l4-5'
+        + ' M94 41 l4-5 M74 33 l4-4 M84 33 l4-4 M94 33 l4-4"/>'
+        /* Kopf mit Nackenkapuze, Auge und Hakenschnabel. */
+        + '<path class="lc-greif-kopf" d="M106 20 C116 18 126 22 128 28'
+        + ' C129 34 122 39 112 38 C104 37 100 31 101 26 C102 22 103 21 106 20 Z"/>'
+        + '<circle class="lc-greif-auge" cx="120" cy="26" r="2.6"/>'
+        + '<circle class="lc-greif-pupille" cx="120.8" cy="26" r="1.2"/>'
+        + '<path class="lc-greif-schnabel" d="M127 24.5 L134.6 26.4 C135.6 29.6 133 32.2 129.6 31.3'
+        + ' C131.4 28.8 130.4 26.4 127 24.5 Z"/>'
+        /* Die Faenge: zwei Beine, je drei Zehen mit Krallen. */
+        + '<path class="lc-greif-bein" d="M79 46 L76 55 M91 46 L94 55"/>'
+        + '<path class="lc-greif-kralle" d="M76 55 C73 56.5 71.5 59 72 62'
+        + ' M76 55 C76 58 75.4 60.5 74 62.6 M76 55 C79 56.5 80.5 59 80 62"/>'
+        + '<path class="lc-greif-kralle" d="M94 55 C91 56.5 89.5 59 90 62'
+        + ' M94 55 C94 58 94.6 60.5 96 62.6 M94 55 C97 56.5 98.5 59 98 62"/>'
+        + "</g>"
+        /* Der NAHE Fluegel liegt vor dem Koerper. */
+        + '<g class="lc-greif-fluegel lc-greif-fluegel-nah"'
+        + ' style="transform-origin:70px 30px"><path d="' + flg + '"/></g>'
+        + "</svg>"
+        + '<span class="lc-greif-beute"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
+      reihe.appendChild(greif);
+      weg.push(greif);
+      setzen(greif, start.x, start.y);
+      /* Der Bogen: hoch ueber die Reihe, wie ein Vogel, der Hoehe
+         gewinnt und am Ziel wieder herunterstoesst. */
+      const hochG = Math.min(start.y, ende.y) - d * 1.15;
+      const mitteG = { x: (start.x + ende.x) / 2, y: Math.max(6, hochG) };
+      const linksG = ende.x < start.x;
+      const spG = " scaleX(" + (linksG ? -1 : 1) + ")";
+      try {
+        greif.animate([
+          { transform: "translate(-50%, -50%)" + spG + " scale(.3)", opacity: 0, offset: 0 },
+          { transform: "translate(-50%, -50%)" + spG + " scale(1)", opacity: 1, offset: 0.12 },
+          { transform: "translate(" + (mitteG.x - start.x) + "px, " + (mitteG.y - start.y)
+            + "px) translate(-50%, -50%)" + spG + " scale(1)", opacity: 1, offset: 0.54 },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%)" + spG + " scale(1)", opacity: 1,
+            offset: hin / dauer },
+          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%)" + spG + " scale(.3)", opacity: 0, offset: 1 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+      } catch (e) {}
+      /* „mit entsprechendem Sound": ein Schrei, dann die Schlaege —
+         genau die Reihenfolge, in der das Geraeusch aufgenommen ist. */
+      lcTonZu("greifvogel");
+    } else if (art === "turm") {
+      /* RUNDE 65 — XANDER: „Vielleicht kannst du noch einen 3-Meter-Turm
+         machen, dass man von seiner Position aus die Leiter hochkrabbelt
+         mit seinem Profilbild auf den 3-Meter-Turm, und dann zwei Plaetze
+         weiter oder drei Plaetze weiter … man kann ja mit Anlauf springen
+         … und dann wirklich mit einem Platschgeraeusch, aber erst wenn
+         derjenige ankommt im Wasser auf dem neuen Platz, dann so ein
+         bisschen kurz untertaucht und wieder hochkommt wie ein Gummiboot
+         oder Gummireifen."
+
+         Vier Abschnitte, und die Zeiten stehen hier, damit man sie
+         nachrechnen kann (Gesamtdauer 3,9 s):
+           0,12 –  0,90 s  die Leiter hoch, Sprosse fuer Sprosse
+           0,90 –  1,32 s  Anlauf auf dem Brett, das Brett federt
+           1,32 –  2,73 s  der Sprung: Bogen mit einer ganzen Drehung
+           2,73 s          EINSCHLAG — hier und nur hier platscht es
+           2,73 –  3,90 s  untertauchen, auftauchen, ausschaukeln
+         Das Platschen haengt am Einschlag, nicht an der Gesamtdauer:
+         genau das war der Wunsch. */
+      const linksT = ende.x < start.x;
+      const turm = document.createElement("span");
+      turm.className = "lc-turm";
+      turm.style.setProperty("--gross", d + "px");
+      turm.style.setProperty("--blick", linksT ? "-1" : "1");
+      let sprossen = "";
+      for (let y = 112; y >= 34; y -= 9.5) {
+        sprossen += "M23 " + y.toFixed(1) + " H37 ";
+      }
+      turm.innerHTML =
+        '<svg class="lc-turm-form" viewBox="0 0 60 120" aria-hidden="true">'
+        /* Die beiden Holme der Leiter. */
+        + '<path class="lc-turm-holm" d="M23 119 V28 M37 119 V28"/>'
+        + '<path class="lc-turm-sprosse" d="' + sprossen.trim() + '"/>'
+        /* Das Brett ragt in die Richtung, in die gesprungen wird. */
+        + '<path class="lc-turm-brett" d="M20 22 L59 22 L59 27 L20 27 Z"/>'
+        + '<path class="lc-turm-stuetze" d="M30 27 L42 27 L36 34 Z"/>'
+        /* Das Gelaender am Aufstieg. */
+        + '<path class="lc-turm-gelaender" d="M17 46 V24 Q17 18 23 18 L30 18"/>'
+        + "</svg>";
+      reihe.appendChild(turm);
+      weg.push(turm);
+      setzen(turm, start.x, start.y);
+      /* Das Wasser am Zielplatz: eine runde Flaeche genau im Kreis des
+         Profilbilds — dieselbe Ueberlegung wie beim Maulwurfsloch. */
+      const becken = document.createElement("span");
+      becken.className = "lc-becken";
+      becken.style.setProperty("--gross", d + "px");
+      let tropfen = "";
+      for (let i = 0; i < 10; i++) {
+        tropfen += '<b class="lc-becken-tropfen" style="--wo:'
+          + (i * 36) + "deg;--spaet:" + (i * 18) + 'ms"></b>';
+      }
+      becken.innerHTML = '<i class="lc-becken-wasser"></i>'
+        + '<i class="lc-becken-ring"></i><i class="lc-becken-ring lc-becken-ring-2"></i>'
+        + tropfen;
+      reihe.appendChild(becken);
+      weg.push(becken);
+      setzen(becken, ende.x, ende.y);
+      /* Der Springer: das eigene Bild. */
+      const springer = document.createElement("span");
+      springer.className = "lc-turm-springer";
+      springer.style.setProperty("--gross", d + "px");
+      if (quelle) springer.style.backgroundImage = "url(" + quelle.replace(/[()"\']/g, "") + ")";
+      else springer.textContent = (ab.name || "?").charAt(0).toUpperCase();
+      reihe.appendChild(springer);
+      weg.push(springer);
+      setzen(springer, start.x, start.y);
+      const hochT = d * 1.62;              /* Brettkante ueber dem Platz */
+      const anlauf = (linksT ? -1 : 1) * d * 0.34;
+      const dxT = ende.x - start.x, dyT = ende.y - start.y;
+      const drehT = (linksT ? -1 : 1) * 360;
+      const t = (ms) => ms / dauer;
+      try {
+        springer.animate([
+          { transform: "translate(0, 0) translate(-50%, -50%) scale(1)", opacity: 1, offset: 0 },
+          /* Die Leiter hoch — in vier Absaetzen, damit es nach Klettern
+             aussieht und nicht nach Fahrstuhl. */
+          { transform: "translate(0, " + (-hochT * 0.26).toFixed(1)
+            + "px) translate(-50%, -50%) scale(.94)", opacity: 1, offset: t(320) },
+          { transform: "translate(0, " + (-hochT * 0.54).toFixed(1)
+            + "px) translate(-50%, -50%) scale(.9)", opacity: 1, offset: t(520) },
+          { transform: "translate(0, " + (-hochT * 0.80).toFixed(1)
+            + "px) translate(-50%, -50%) scale(.86)", opacity: 1, offset: t(720) },
+          { transform: "translate(0, " + (-hochT).toFixed(1)
+            + "px) translate(-50%, -50%) scale(.84)", opacity: 1, offset: t(900) },
+          /* Anlauf auf dem Brett. */
+          { transform: "translate(" + (anlauf * 0.6).toFixed(1) + "px, " + (-hochT).toFixed(1)
+            + "px) translate(-50%, -50%) scale(.84)", opacity: 1, offset: t(1080) },
+          { transform: "translate(" + anlauf.toFixed(1) + "px, " + (-hochT + d * 0.08).toFixed(1)
+            + "px) translate(-50%, -50%) scale(.8)", opacity: 1, offset: t(1240) },
+          /* Absprung. */
+          { transform: "translate(" + anlauf.toFixed(1) + "px, " + (-hochT - d * 0.35).toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + (drehT * 0.1).toFixed(0)
+            + "deg) scale(.84)", opacity: 1, offset: t(1420) },
+          /* Scheitel des Bogens, eine ganze Drehung unterwegs. */
+          { transform: "translate(" + (dxT * 0.5).toFixed(1) + "px, "
+            + (dyT * 0.4 - hochT - d * 0.55).toFixed(1) + "px) translate(-50%, -50%) rotate("
+            + (drehT * 0.5).toFixed(0) + "deg) scale(.88)", opacity: 1, offset: t(2000) },
+          /* EINSCHLAG bei 2,73 s. */
+          { transform: "translate(" + dxT.toFixed(1) + "px, " + dyT.toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(.96)", opacity: 1, offset: t(2730) },
+          /* Untertauchen … */
+          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT + d * 0.3).toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(.74)",
+            opacity: 0.5, offset: t(3000) },
+          /* … und wieder hoch wie ein Gummireifen. */
+          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT - d * 0.14).toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(1.06)",
+            opacity: 1, offset: t(3300) },
+          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT + d * 0.05).toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(.98)", opacity: 1, offset: t(3560) },
+          { transform: "translate(" + dxT.toFixed(1) + "px, " + dyT.toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(1)", offset: 1 }
+        ], { duration: dauer, easing: "linear", fill: "forwards" });
+      } catch (e) {}
+      /* Der Turm verschwindet, sobald der Springer weg ist — er gehoert
+         zum Absprung, nicht zur Landung. */
+      try {
+        turm.animate([
+          { opacity: 0, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(.2)", offset: 0 },
+          { opacity: 1, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(1)", offset: t(260) },
+          { opacity: 1, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(1)", offset: t(1500) },
+          { opacity: 0, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(1)", offset: t(1900) },
+          { opacity: 0, transform: "translate(-50%, -80%) scaleX(var(--blick, 1)) scaleY(1)", offset: 1 }
+        ], { duration: dauer, easing: "linear", fill: "forwards" });
+      } catch (e) {}
+      /* Das Brett federt beim Anlauf — das ist das, was man hoert. */
+      lcTonSpaeter("sprungbrett", 1000, 0.55);
+      /* „aber erst wenn derjenige ankommt im Wasser auf dem neuen
+         Platz": genau bei 2730 ms, dem Einschlag. */
+      lcTonSpaeter("platsch", 2730, 0.8);
+      becken.style.setProperty("--einschlag", "2730ms");
     } else if (art === "maulwurf") {
-      /* XANDER: „Der Maulwurf verschwindet nicht in seinem eigenen
-         Loch. Man soll sich durch sein eigenes Profilbild graben."
-         Also wird das Loch dorthin gelegt, wo das Bild steht — und
-         das Bild sackt senkrecht hinein, statt in der Luft zu
-         schrumpfen. Erst wenn es unten ist, wandert der Huegel los. */
-      const loch = document.createElement("span");
-      loch.className = "lc-grabloch";
-      loch.style.setProperty("--gross", d + "px");
-      reihe.appendChild(loch);
-      weg.push(loch);
-      setzen(loch, start.x, start.y + d * 0.34);
+      /* RUNDE 65 — GEMELDET: „der Maulwurfshuegel ist uebrigens nicht
+         von oben. Er soll auf dem Platz in demselben kreisrunden
+         Format wie mein Profilbild, an derselben Stelle positioniert
+         sein — dass zum Beispiel auf Platz 1 der Maulwurfshuegel
+         wirklich aus dem Kreis rund gegraben wird. Und dann richtig in
+         die naechsten Plaetze sich durchgraebt, dass die Erde
+         zwischendurch aufgeschuettet wird, dann sieht man einfach nur
+         die Haeufchen, wo aufgeschuettete Erde wie eine Spur lang
+         zieht bis zum naechsten Kreis, wo man auftaucht … ohne dass
+         das Loch mitgeht, sondern nur die aufgeschuettete Erde einen
+         Streifen zieht."
+
+         Damit sind es DREI Stuecke statt einem wandernden Huegel:
+           1. das runde Loch IM EIGENEN BILDKREIS. Es haengt am Platz,
+              nicht an der Reihe — nur so sitzt es genau dort, wo das
+              Profilbild sitzt, und ist genauso rund und genauso gross.
+              Es bleibt liegen; es wandert nicht mit.
+           2. die SPUR: kleine Erdhaufen, die sich einer nach dem
+              anderen zum Ziel schieben. Genau das sieht man von einem
+              Maulwurf an der Oberflaeche — den Gang sieht man nie.
+           3. das runde Loch am Ziel, das kurz vor der Ankunft aufgeht,
+              und aus dem das Bild wieder heraussteigt. */
+      const lochBauen = (platzEl, spaet, lang) => {
+        const l = document.createElement("span");
+        l.className = "lc-grabloch";
+        l.innerHTML = lcMaulwurfVonOben();
+        l.style.animationDelay = Math.round(spaet) + "ms";
+        l.style.animationDuration = Math.round(lang) + "ms";
+        platzEl.appendChild(l);
+        weg.push(l);
+        return l;
+      };
+      lochBauen(ab.el, 0, hin + 400);
+
+      /* Die Spur. Die Anzahl richtet sich nach der Strecke, damit die
+         Haufen bei zwei Plaetzen nicht auf einem Klumpen liegen und
+         bei sechs nicht wie Perlen an einer Schnur. */
+      const weite = Math.hypot(ende.x - start.x, ende.y - start.y);
+      /* Dichter als beim ersten Versuch: bei 0,38 lagen drei Haufen
+         wie Perlen auf der Strecke. Ein Maulwurfsgang ist an der
+         Oberflaeche ein durchgehender WALL, also muessen sich die
+         Haufen ueberlappen. */
+      const wieViele = Math.max(7, Math.min(34, Math.round(weite / (d * 0.22))));
+      for (let i = 1; i < wieViele; i++) {
+        const t = i / wieViele;
+        const h = document.createElement("i");
+        h.className = "lc-erdhaufen";
+        h.style.setProperty("--gross", d + "px");
+        /* Leicht versetzt — eine Spur auf der Linie sieht aus wie mit
+           dem Lineal gezogen, und so graebt kein Maulwurf. */
+        const quer = (((i * 37) % 11) - 5) * (d * 0.016);
+        setzen(h, start.x + (ende.x - start.x) * t + quer,
+                  start.y + (ende.y - start.y) * t + quer * 0.55);
+        h.style.animationDelay = Math.round(200 + t * (hin - 620)) + "ms";
+        h.style.setProperty("--dreh", Math.round(((i * 53) % 30) - 15) + "deg");
+        reihe.appendChild(h);
+        weg.push(h);
+      }
+
+      lochBauen(zu.el, Math.max(0, hin - 560), 1200);
+
+      /* Und das Bild: es sackt senkrecht ins eigene Loch … */
       try {
         kreis.animate([
           { transform: "translateY(0) rotate(0deg)", clipPath: "inset(0 0 0% 0)", offset: 0 },
           { transform: "translateY(4%) rotate(-3deg)", clipPath: "inset(0 0 0% 0)", offset: 0.05 },
           { transform: "translateY(70%) rotate(4deg)", clipPath: "inset(0 0 100% 0)", offset: 0.22 },
-          { transform: "translateY(70%) rotate(0deg)", clipPath: "inset(0 0 100% 0)", offset: 0.8 },
-          { transform: "translateY(0) rotate(0deg)", clipPath: "inset(0 0 0% 0)", offset: 0.98 }
+          { transform: "translateY(70%) rotate(0deg)", clipPath: "inset(0 0 100% 0)", offset: 0.86 },
+          { transform: "translateY(0) rotate(0deg)", clipPath: "inset(0 0 0% 0)", offset: 0.99 }
         ], { duration: dauer, easing: "ease-in-out", fill: "none" });
       } catch (e) {}
-      /* Der Erdhuegel wandert von Platz zu Platz.
 
-         RUNDE 63 NEU GEZEICHNET.
-         GEMELDET: „der gegrabene Maulwurfshuegel sieht auch nicht
-         realistisch aus … das soll man von oben, von der Draufsicht."
-         Vorher war es eine Kuppel von der SEITE — ein Halbkreis mit
-         einer Nase davor. Von oben sieht ein frischer Maulwurfshuegel
-         aber ganz anders aus: ein unregelmaessiger Kranz aus loser
-         Erde, in der Mitte der offene Ausgang, davor ein paar
-         Krumen, die beim Graben herausgefallen sind.
-         Der Rand ist deshalb nicht rund gezeichnet, sondern gewobbelt
-         gerechnet — eine Kreislinie sieht immer nach Zeichnung aus,
-         nie nach Erde. */
-      const huegel = document.createElement("span");
-      huegel.className = "lc-maulwurf";
-      huegel.innerHTML = lcMaulwurfVonOben();
-      reihe.appendChild(huegel);
-      weg.push(huegel);
-      setzen(huegel, start.x, start.y + d * 0.42);
-      try {
-        huegel.animate([
-          { transform: "translate(-50%, -50%) scale(.2)", opacity: 0, offset: 0 },
-          { transform: "translate(-50%, -50%) scale(1)", opacity: 1, offset: 0.14 },
-          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
-            + "px) translate(-50%, -50%) scale(1)", opacity: 1, offset: hin / dauer },
-          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
-            + "px) translate(-50%, -50%) scale(.2)", opacity: 0, offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "forwards" });
-      } catch (e) {}
+      /* … und am ZIEL steigt es wieder heraus. Ohne das waere die
+         Spur eine Spur ins Nichts. */
+      const auftauch = document.createElement("span");
+      auftauch.className = "lc-maulwurf-auftauch";
+      auftauch.style.animationDelay = Math.max(0, hin - 420) + "ms";
+      if (quelle) {
+        auftauch.style.backgroundImage =
+          "url(" + quelle.replace(/[()"']/g, "") + ")";
+      } else {
+        auftauch.textContent = (ab.name || "?").charAt(0).toUpperCase();
+      }
+      zu.el.appendChild(auftauch);
+      weg.push(auftauch);
       lcTonZu("maulwurf");
     } else if (art === "boot") {
       /* GEWUENSCHT: „eine Variante vielleicht noch mit einem Boot."
@@ -32318,17 +32706,87 @@
       const lok = document.createElement("span");
       lok.className = "lc-lok";
       lok.style.setProperty("--gross", d + "px");
+      /* RUNDE 65 — XANDER: „Im Uebrigen ist unsere Lokomotive noch
+         nicht detailliert. Sie soll so schoen sein wie unsere
+         urspruengliche Lok."
+         Er hat recht: die Reiselok bestand aus VIER Flaechen (Kessel,
+         Haus, Schlot, Fahrwerk) und drei schwarzen Kreisen als
+         Raeder — nachgezaehlt im alten Code. Das ist ein Umriss, keine
+         Dampflok. Jetzt hat sie, was eine Dampflok wirklich hat:
+         Pufferbohle mit zwei Puffern, runde Rauchkammer mit
+         Tuerkreuz und Griff, Laterne mit Linse, Schlot mit Krempe,
+         Dampfdom und Sanddom, drei Kesselbaender, Pfeife, Zylinder,
+         Fuehrerhaus mit gewoelbtem Dach — und Raeder mit Speichen,
+         Gegengewicht und einer Kuppelstange, die sich mitdreht.
+         Gezeichnet wird alles IM SVG, nicht mehr als CSS-Kreise:
+         Speichen und Stange gehen in einem Kreis aus Rand und
+         Hintergrund nicht. */
+      /* Ein Rad: Reifen, Nabe, acht Speichen, Gegengewicht.
+         r ist der Radius in den 120x60 Einheiten des Bildes. */
+      const lokRad = (nr, cx, cy, r) => {
+        let sp = "";
+        for (let i = 0; i < 8; i++) {
+          const w = (i * Math.PI) / 4;
+          sp += '<path class="lc-lok-speiche" d="M' + cx.toFixed(1) + " " + cy.toFixed(1)
+            + " L" + (cx + Math.cos(w) * (r - 1.6)).toFixed(1) + " "
+            + (cy + Math.sin(w) * (r - 1.6)).toFixed(1) + '"/>';
+        }
+        return '<g class="lc-lok-rad lc-lok-rad-' + nr + '"'
+          + ' style="transform-origin:' + cx + 'px ' + cy + 'px">'
+          + '<circle class="lc-lok-reifen" cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>'
+          + sp
+          /* Das Gegengewicht sitzt dem Kurbelzapfen gegenueber — es
+             gleicht ihn aus, deshalb heisst es so. */
+          + '<path class="lc-lok-gewicht" d="M' + cx + " " + cy
+          + " m-" + (r * 0.72).toFixed(1) + ",0 a" + (r * 0.72).toFixed(1) + ","
+          + (r * 0.72).toFixed(1) + " 0 0,1 " + (r * 1.44).toFixed(1) + ',0 Z"/>'
+          + '<circle class="lc-lok-nabe" cx="' + cx + '" cy="' + cy + '" r="' + (r * 0.24).toFixed(1) + '"/>'
+          /* Der Kurbelzapfen: an ihm haengt die Kuppelstange. */
+          + '<circle class="lc-lok-zapfen" cx="' + cx + '" cy="' + (cy + r * 0.55).toFixed(1)
+          + '" r="1.5"/>'
+          + "</g>";
+      };
       lok.innerHTML =
         '<svg class="lc-lok-form" viewBox="0 0 120 60" aria-hidden="true">'
-        + '<path class="lc-lok-kessel" d="M22 24 Q22 18 30 18 L82 18 Q90 18 90 24 L90 42 L22 42 Z"/>'
-        + '<path class="lc-lok-haus" d="M84 10 L108 10 L108 42 L84 42 Z"/>'
-        + '<path class="lc-lok-schlot" d="M30 6 L42 6 L44 18 L28 18 Z"/>'
-        + '<path class="lc-lok-fahrwerk" d="M16 42 L112 42 L112 48 L16 48 Z"/>'
+        /* Pufferbohle mit zwei Puffern — vorn, wo es stoesst. */
+        + '<rect class="lc-lok-bohle" x="3" y="35" width="7" height="17" rx="1.5"/>'
+        + '<circle class="lc-lok-puffer" cx="4.5" cy="38.5" r="2.4"/>'
+        + '<circle class="lc-lok-puffer" cx="4.5" cy="48.5" r="2.4"/>'
+        /* Rahmen und Laufblech. */
+        + '<path class="lc-lok-fahrwerk" d="M8 42 L115 42 L115 49 L8 49 Z"/>'
+        /* Kessel mit drei Baendern. */
+        + '<path class="lc-lok-kessel" d="M26 18 L88 18 L88 42 L26 42 Z"/>'
+        + '<path class="lc-lok-band" d="M44 18 V42 M60 18 V42 M76 18 V42"/>'
+        /* Rauchkammer: rund, mit Tuerkreuz und Griff. */
+        + '<circle class="lc-lok-rauchkammer" cx="26" cy="30" r="12"/>'
+        + '<circle class="lc-lok-tuer" cx="24" cy="30" r="8.4"/>'
+        + '<path class="lc-lok-kreuz" d="M16 30 H32 M24 22 V38"/>'
+        + '<circle class="lc-lok-griff" cx="24" cy="30" r="1.9"/>'
+        /* Schlot mit Krempe. */
+        + '<path class="lc-lok-schlot" d="M34 19 L34 11 L30 11 L30 6 L46 6 L46 11 L42 11 L42 19 Z"/>'
+        /* Dampfdom und Sanddom. */
+        + '<path class="lc-lok-dom" d="M50 18 Q50 8 58 8 Q66 8 66 18 Z"/>'
+        + '<path class="lc-lok-dom" d="M72 18 Q72 12 77 12 Q82 12 82 18 Z"/>'
+        + '<rect class="lc-lok-pfeife" x="85" y="11" width="3.2" height="8" rx="1.6"/>'
+        /* Laterne mit Linse. */
+        + '<rect class="lc-lok-lampe" x="17" y="8" width="12" height="10" rx="1.6"/>'
+        + '<circle class="lc-lok-linse" cx="23" cy="13" r="3.2"/>'
+        /* Zylinder, aus dem die Kolbenstange kommt. */
+        + '<rect class="lc-lok-zylinder" x="32" y="33" width="17" height="11" rx="2.4"/>'
+        /* Fuehrerhaus mit gewoelbtem Dach. */
+        + '<path class="lc-lok-haus" d="M90 12 L112 12 L112 42 L90 42 Z"/>'
+        + '<path class="lc-lok-dach" d="M86 9 Q101 4 116 9 L116 13 Q101 8 86 13 Z"/>'
+        /* Raeder: vorn ein Laufrad, dahinter zwei Treibraeder. */
+        + lokRad(1, 22, 47, 6)
+        + lokRad(2, 58, 45, 11)
+        + lokRad(3, 86, 45, 11)
+        /* Die Kuppelstange verbindet die beiden Treibraeder. Sie
+           DREHT sich nicht — sie wandert im Kreis, genau wie bei
+           einer echten Lok. */
+        + '<rect class="lc-lok-kuppel" x="56" y="49.3" width="30" height="3.4" rx="1.7"/>'
         + "</svg>"
-        + '<i class="lc-lok-rad lc-lok-rad-1"></i>'
-        + '<i class="lc-lok-rad lc-lok-rad-2"></i>'
-        + '<i class="lc-lok-rad lc-lok-rad-3"></i>'
         + '<i class="lc-lok-rauch"></i><i class="lc-lok-rauch lc-lok-rauch-2"></i>'
+        + '<i class="lc-lok-rauch lc-lok-rauch-3"></i>'
         + '<span class="lc-lok-fenster"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
@@ -32746,7 +33204,8 @@
             showToast(({ flug: "✈️ ", maulwurf: "🦡 ", boot: "⛵ ",
                          kran: "🏗️ ", dampfer: "🚢 ", lok: "🚂 ",
                          liane: "🌿 ", feder: "🪀 ", beamen: "✨ ",
-                         rohr: "🟢 ", heli: "🚁 ", pferd: "🐎 "
+                         rohr: "🟢 ", heli: "🚁 ", pferd: "🐎 ",
+                         greifvogel: "🦅 ", turm: "🏊 "
                        }[art] || "🌀 ") + erg.text);
           }
         } catch (e) {}
@@ -32778,7 +33237,8 @@
     dampfer: 1,   /* Schaufelrad am HECK, also links */
     lok: -1,      /* Schornstein links, Fuehrerhaus rechts */
     heli: -1,     /* Kanzel links, Heckausleger rechts */
-    pferd: 1      /* Kopf bei x=118 */
+    pferd: 1,     /* Kopf bei x=118 */
+    greifvogel: 1 /* Schnabel bei x=132 */
   };
 
   function lcReiseWaagerecht(el, start, ende, dauer, hin, art) {
@@ -36469,7 +36929,7 @@
     knuell: 1, rollo: 1, lamellen: 1, peitsche: 1, gemeinsam: 1, schneekugel: 1,
     flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1, brennen: 1, zorro: 1,
     dampfer: 1, lok: 1, liane: 1, feder: 1, beamen: 1, rohr: 1,
-    heli: 1, pferd: 1, marsch: 1,
+    heli: 1, pferd: 1, marsch: 1, greifvogel: 1, turm: 1, aufblasen: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
@@ -36557,6 +37017,7 @@
       if (art === "trommel" && lcTrommel(wenZ)) return;
       if (art === "heber" && lcHeber(wenZ)) return;
       if (art === "lasso" && lcLasso(wenZ)) return;
+      if (art === "aufblasen" && lcAufblasen(wenZ)) return;
       if (art === "paintfleck" && lcPaintfleck(wenZ)) return;
       if (art === "ei" && lcEi(wenZ)) return;
       if (art === "pacjagd" && lcPacJagd(wenZ, (nachricht && nachricht.eigen)
@@ -36632,7 +37093,8 @@
         || art === "boot" || art === "kran" || art === "dampfer"
         || art === "lok" || art === "liane" || art === "feder"
         || art === "beamen" || art === "rohr"
-        || art === "heli" || art === "pferd") {
+        || art === "heli" || art === "pferd"
+        || art === "greifvogel" || art === "turm") {
       const wenR = nachricht && (nachricht.wen || nachricht.an);
       let vonR = (nachricht && nachricht.name) || "";
       if (nachricht && nachricht.eigen) {

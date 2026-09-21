@@ -16671,38 +16671,79 @@ body.lc-schreibt .tutor-reiter {
   transform: translate(-50%, -50%);
 }
 .lc-lok-form { width: 100%; height: 100%; overflow: visible; }
-.lc-lok-kessel   { fill: #2f4a63; stroke: #1d3040; stroke-width: 1.4; }
-.lc-lok-haus     { fill: #35546f; stroke: #1d3040; stroke-width: 1.4; }
-.lc-lok-schlot   { fill: #263a4c; }
-.lc-lok-fahrwerk { fill: #4a4a4a; }
-.lc-lok-rad {
-  position: absolute;
-  bottom: 6%;
-  width: 14%;
-  height: 22%;
-  border: 2px solid #8a1e1e;
-  border-radius: 50%;
-  background: #2a2a2a;
-  animation: lcLokRadR35 .45s linear infinite;
+/* RUNDE 65 — XANDER: „Im Uebrigen ist unsere Lokomotive noch nicht
+   detailliert. Sie soll so schoen sein wie unsere urspruengliche Lok."
+   Vorher waren es vier Flaechen und drei schwarze Kreise. Jetzt ist
+   die Lok wirklich gezeichnet, und zwar KOMPLETT im SVG: Speichen,
+   Gegengewicht und Kuppelstange lassen sich mit einem CSS-Kreis
+   (border + border-radius) gar nicht darstellen. */
+.lc-lok-kessel   { fill: #2f4a63; stroke: #16242f; stroke-width: 1.4; }
+.lc-lok-haus     { fill: #35546f; stroke: #16242f; stroke-width: 1.4; }
+.lc-lok-dach     { fill: #22384a; stroke: #16242f; stroke-width: 1.2; }
+.lc-lok-schlot   { fill: #1e2f3d; stroke: #16242f; stroke-width: 1; }
+.lc-lok-dom      { fill: #3b5d79; stroke: #16242f; stroke-width: 1; }
+.lc-lok-pfeife   { fill: #d8a53a; }
+.lc-lok-fahrwerk { fill: #3d3d3d; }
+.lc-lok-bohle    { fill: #8a1e1e; }
+.lc-lok-puffer   { fill: #4a4a4a; stroke: #2a2a2a; stroke-width: 1; }
+.lc-lok-zylinder { fill: #2a4356; stroke: #16242f; stroke-width: 1.2; }
+.lc-lok-rauchkammer { fill: #1e2f3d; stroke: #16242f; stroke-width: 1.2; }
+.lc-lok-tuer     { fill: #27394a; stroke: #16242f; stroke-width: 1; }
+.lc-lok-kreuz    { stroke: #5d768c; stroke-width: 1.3; fill: none; stroke-linecap: round; }
+.lc-lok-griff    { fill: #d8a53a; }
+.lc-lok-band     { stroke: #d8a53a; stroke-width: 1.2; fill: none; opacity: .85; }
+.lc-lok-lampe    { fill: #40607c; stroke: #16242f; stroke-width: 1.1; }
+/* Die Linse leuchtet — sonst ist es nur ein gelber Punkt. */
+.lc-lok-linse    { fill: #ffe9a8; filter: drop-shadow(0 0 3px rgba(255, 226, 150, .9)); }
+/* Die Raeder: Reifen rot wie bei der klassischen Lok, Speichen hell,
+   Gegengewicht dunkel. Sie drehen sich um ihre EIGENE Mitte — die
+   steht als transform-origin direkt am Element, weil sie bei jedem
+   Rad woanders liegt. */
+.lc-lok-rad { animation: lcLokRadR65 .45s linear infinite; }
+.lc-lok-reifen  { fill: #232323; stroke: #8a1e1e; stroke-width: 2.4; }
+.lc-lok-speiche { stroke: #6f7d8a; stroke-width: 1.3; stroke-linecap: round; }
+.lc-lok-gewicht { fill: #3a3a3a; }
+.lc-lok-nabe    { fill: #8a1e1e; }
+.lc-lok-zapfen  { fill: #c9ccd2; }
+/* Die Kuppelstange dreht sich NICHT — sie wandert im Kreis. Genau das
+   tut sie bei einer echten Lok auch: beide Enden haengen an
+   Kurbelzapfen, die sich gleich drehen, also bleibt die Stange
+   waagerecht und beschreibt einen Kreis mit dem Kurbelradius
+   (hier 6 Einheiten, 0,55 mal Radteller 11). */
+.lc-lok-kuppel {
+  fill: #b7bcc4;
+  stroke: #6f7d8a;
+  stroke-width: .8;
+  animation: lcLokKuppelR65 .45s linear infinite;
 }
-.lc-lok-rad-1 { left: 16%; }
-.lc-lok-rad-2 { left: 44%; }
-.lc-lok-rad-3 { left: 72%; }
+@keyframes lcLokRadR65 { to { transform: rotate(360deg); } }
+@keyframes lcLokKuppelR65 {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(6px, -6px); }
+  50%  { transform: translate(0, -12px); }
+  75%  { transform: translate(-6px, -6px); }
+  100% { transform: translate(0, 0); }
+}
 .lc-lok-rauch {
   position: absolute;
-  left: 28%;
+  left: 30%;
   top: 0;
-  width: 14%;
-  height: 14%;
+  width: 13%;
+  height: 13%;
   border-radius: 50%;
   background: rgba(235, 235, 235, .8);
   animation: lcLokRauchR35 1.2s ease-out infinite;
 }
-.lc-lok-rauch-2 { animation-delay: .6s; }
+.lc-lok-rauch-2 { animation-delay: .4s; }
+.lc-lok-rauch-3 { animation-delay: .8s; }
 .lc-lok-fenster {
   position: absolute;
-  left: 80%;
-  top: 36%;
+  /* Mitten ins Fuehrerhaus: das reicht im Bild von x 90 bis 112 und
+     von y 12 bis 42 — die Mitte liegt damit bei 84 % / 45 %. Vorher
+     stand das Bild auf 80 % / 36 % und ragte links aus dem Haus
+     heraus. */
+  left: 84%;
+  top: 45%;
   width: 17%;
   height: 34%;
   transform: translate(-50%, -50%);
@@ -17451,32 +17492,110 @@ body.lc-schreibt .tutor-reiter {
 .lc-roehre-rein { animation-duration: 1.5s; }
 .lc-roehre-raus { animation-duration: 1.6s; }
 
-/* --- DAS GRABLOCH IM EIGENEN BILD --------------------------------
+/* --- DAS GRABLOCH IM EIGENEN BILDKREIS ----------------------------
    XANDER: „Der Maulwurf verschwindet nicht in seinem eigenen Loch.
    Man soll sich durch sein eigenes Profilbild graben."
-   Also liegt das Loch da, wo das Bild steht — und das Bild sackt
-   hinein statt in der Luft zu schrumpfen. */
+   Und RUNDE 65: „Er soll auf dem Platz in demselben kreisrunden
+   Format wie mein Profilbild, an derselben Stelle positioniert sein —
+   dass zum Beispiel auf Platz 1 der Maulwurfshügel wirklich aus dem
+   Kreis rund gegraben wird."
+
+   Deshalb hängt das Loch jetzt AM PLATZ, nicht an der Sitzreihe, und
+   misst 100 % der Platzbreite bei aspect-ratio 1 — also genau der
+   Kreis, in dem sonst das Profilbild steht. Vorher war es eine flache
+   Ellipse von 86 % Breite und 34 % Höhe, die an der Reihe hing und
+   ein Stück unter dem Bild saß; das war der Grund, warum es nicht
+   „im Kreis" lag. Das ist derselbe Weg, den schon die Sanduhr geht
+   (.lc-sandwerk). */
 .lc-grabloch {
   position: absolute;
-  width: calc(var(--gross, 64px) * .86);
-  height: calc(var(--gross, 64px) * .34);
-  transform: translate(-50%, -50%) scale(0);
+  left: 50%;
+  top: 0;
+  width: 100%;
+  aspect-ratio: 1;
+  transform: translateX(-50%) scale(0);
   border-radius: 50%;
+  overflow: hidden;
   pointer-events: none;
   z-index: 2;
-  background: radial-gradient(ellipse at 50% 42%,
-    #1b1206 0 48%, #3a2a12 62%, #5a4420 78%, rgba(90, 68, 32, 0) 100%);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, .45);
   animation: lcGrablochAuf 2.7s ease-in-out both;
 }
-@keyframes lcGrablochAuf {
-  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-  8%   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  80%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+/* Die Zeichnung von oben füllt den Kreis aus. */
+.lc-grabloch .lc-maulwurf-bild {
+  position: absolute;
+  inset: -6% -2%;
+  width: 104%;
+  height: 112%;
 }
+@keyframes lcGrablochAuf {
+  0%   { transform: translateX(-50%) scale(0); opacity: 0; }
+  8%   { transform: translateX(-50%) scale(1); opacity: 1; }
+  86%  { transform: translateX(-50%) scale(1); opacity: 1; }
+  100% { transform: translateX(-50%) scale(.2); opacity: 0; }
+}
+
+/* --- DIE SPUR AUS AUFGESCHÜTTETER ERDE ----------------------------
+   „dann sieht man einfach nur die Häufchen, wo aufgeschüttete Erde
+   wie eine Spur lang zieht bis zum nächsten Kreis, wo man auftaucht
+   … ohne dass das Loch mitgeht."
+   Genau so: das Loch bleibt liegen, und was wandert, ist die
+   Aufschüttung. Jedes Häufchen poppt einzeln hoch (der Gang wird ja
+   Stück für Stück gegraben) und bleibt dann liegen. */
+.lc-erdhaufen {
+  position: absolute;
+  width: calc(var(--gross, 64px) * .27);
+  height: calc(var(--gross, 64px) * .15);
+  margin: calc(var(--gross, 64px) * -.075) 0 0 calc(var(--gross, 64px) * -.135);
+  border-radius: 50% 50% 46% 54% / 82% 84% 20% 18%;
+  background: radial-gradient(ellipse at 44% 26%, #8a6640, #6a4a2c 62%, #46311c);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .34);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transform: rotate(var(--dreh, 0deg)) scale(.2);
+  animation: lcErdhaufenR65 .42s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+@keyframes lcErdhaufenR65 {
+  0%   { opacity: 0; transform: rotate(var(--dreh, 0deg)) scale(.15) translateY(18%); }
+  55%  { opacity: 1; transform: rotate(var(--dreh, 0deg)) scale(1.12) translateY(-6%); }
+  100% { opacity: 1; transform: rotate(var(--dreh, 0deg)) scale(1) translateY(0); }
+}
+
+/* --- UND AM ZIEL STEIGT ER WIEDER HERAUS --------------------------
+   „bis zum nächsten Kreis, wo man auftaucht." Ohne das wäre die Spur
+   eine Spur ins Nichts. */
+.lc-maulwurf-auftauch {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 78%;
+  aspect-ratio: 1;
+  margin-left: -39%;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 2px #5d3218, 0 2px 6px rgba(0, 0, 0, .4);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #fff4e6;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  animation: lcAuftauchR65 .9s cubic-bezier(.2, 1.3, .35, 1) both;
+}
+@keyframes lcAuftauchR65 {
+  0%   { opacity: 0; transform: translateY(46%) scale(.35); }
+  40%  { opacity: 1; transform: translateY(6%) scale(1.06); }
+  60%  { transform: translateY(0) scale(1); }
+  88%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .lc-roehre, .lc-grabloch { animation: none; opacity: 0; }
+  .lc-roehre, .lc-grabloch, .lc-erdhaufen, .lc-maulwurf-auftauch {
+    animation: none; opacity: 0;
+  }
 }
 
 /* =================================================================
@@ -20560,4 +20679,511 @@ body.lc-schreibt .tutor-reiter {
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-strudel-arme, .lc-strudel-schaum, .lc-strudel-schlund { animation: none; }
+}
+
+/* === RUNDE 65: DAS LASSO FESSELT AM PLATZ, DANN ZIEHT ES IN DREI ZUEGEN
+   =====================================================================
+   XANDER, woertlich: „Das Lasso schlingt sich immer noch nicht um das
+   Opfer an seinem Platz, sondern taucht erst auf, wenn derjenige neben
+   dir ist. Also zu spaet von der Animation, was ueberhaupt keinen Sinn
+   macht. Man soll jemanden fesseln, mit dem Lasso im Wurf und soll ihn
+   dann mit dem strammen Seil … und das ist so festgezurrt und dann
+   zieht man den anderen Stueck fuer Stueck mit kraeftigen Zuegen
+   heran."
+
+   NACHGEMESSEN, mit einem Foto der Sitzreihe bei 300/600/900/1200 ms:
+     · Bei 900 ms lag die Schlinge auf x = 266, der Kreis aber auf
+       x = 234. Sie BLIEB stehen, waehrend das Bild unter ihr
+       weggezogen wurde. Erst am Ende, wenn der Kreis zurueckkommt,
+       passten beide wieder zusammen — genau das, was er beschreibt.
+     · Sie war 107 x 62 Pixel: breiter als der Kreis und nur halb so
+       hoch. Ein flaches Oval NEBEN dem Gesicht, keine Fessel darum.
+
+   Vier Dinge sind deshalb neu:
+     1. Die Schlinge bekommt dieselben --zux/--zuy wie der Kreis und
+        WANDERT MIT. Wer gefesselt ist, bleibt gefesselt.
+     2. Sie legt sich um den Kreis — 104 % breit, 58 % hoch, mittig —
+        und zieht sich sichtbar zu: von 1,55 auf 1,0.
+     3. Gezogen wird in DREI Zuegen mit Pausen dazwischen, nicht in
+        einem Rutsch: 46 %, 76 %, 100 % der Strecke.
+     4. Das Seil von meiner Hand bleibt die ganze Zeit STRAFF und wird
+        nur kuerzer, wie es sich gehoert. Um wie viel, ist nicht
+        geraten: --zugteil ist der gemessene Anteil, den der andere
+        naeher kommt (lcZuMirZiehen).
+   Die Gesamtdauer geht dafuer von 2,6 s auf 3,4 s. */
+.lc-lasso {
+  /* Ohne eigene Werte bleibt alles stehen — das ist der Fall
+     „gilt allen", in dem es kein Ziel und keine Richtung gibt. */
+  --zux: 0px;
+  --zuy: 0px;
+}
+.lc-lasso-schlinge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* Um den Kreis herum, nicht daneben: etwas breiter als er, und mit
+     58 % Hoehe flach genug, dass man das Seil von schraeg oben sieht. */
+  width: 104%;
+  height: 58%;
+  margin: -29% 0 0 -52%;
+  border: 4px solid #b87a2e;
+  border-radius: 50%;
+  /* Hanfseil: der dunkle Saum hebt es auch von einem hellen
+     Profilbild ab, der helle Innenrand macht es rund. */
+  box-shadow: 0 0 0 1px rgba(60, 35, 10, .5), 0 2px 4px rgba(0, 0, 0, .35),
+              inset 0 1px 2px rgba(255, 255, 255, .35);
+  opacity: 0;
+  animation: lcSchlingeUmR65 3.4s cubic-bezier(.25, .8, .3, 1) both;
+}
+/* Der Knoten: dort, wo mein Seil ankommt (--knoten wird gemessen). */
+.lc-lasso-knoten {
+  position: absolute;
+  left: var(--knoten, 93%);
+  top: 50%;
+  width: 15%;
+  height: 46%;
+  margin: -23% 0 0 -7.5%;
+  border-radius: 46% 46% 50% 50% / 40% 40% 60% 60%;
+  background: linear-gradient(to bottom, #e0ae62, #b87a2e 55%, #7d5520);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+}
+@keyframes lcSchlingeUmR65 {
+  /* Sie kommt aus MEINER Richtung geflogen. --zux/--zuy zeigen vom
+     anderen zu mir, also ist ein Vielfaches davon der Anflugpunkt —
+     die Richtung wird damit gemessen, nicht geraten. */
+  0%   { opacity: 0;
+         transform: translate(calc(var(--zux, 0px) * 2.4), calc(var(--zuy, 0px) * 2.4 - 55%))
+                    rotate(-58deg) scale(1.8); }
+  5%   { opacity: .95; }
+  /* 14 % = 476 ms: sie haengt ueber ihm. */
+  14%  { opacity: 1; transform: translate(0, -16%) rotate(-18deg) scale(1.55); }
+  /* 20 % = 680 ms: sie faellt ueber ihn. */
+  20%  { opacity: 1; transform: translate(0, 0) rotate(-10deg) scale(1.2); }
+  /* 26 % = 884 ms: zugezogen. Ab hier zieht lcZuMirR65. */
+  26%  { opacity: 1; transform: translate(0, 0) rotate(-4.5deg) scale(1); }
+  /* ERSTER ZUG */
+  34%  { transform: translate(calc(var(--zux, 0px) * .46), calc(var(--zuy, 0px) * .46)) rotate(-12deg) scale(.95); }
+  40%  { transform: translate(calc(var(--zux, 0px) * .40), calc(var(--zuy, 0px) * .40)) rotate(-3deg) scale(.99); }
+  46%  { transform: translate(calc(var(--zux, 0px) * .43), calc(var(--zuy, 0px) * .43)) rotate(-7deg) scale(1); }
+  /* ZWEITER ZUG */
+  54%  { transform: translate(calc(var(--zux, 0px) * .76), calc(var(--zuy, 0px) * .76)) rotate(-12deg) scale(.95); }
+  60%  { transform: translate(calc(var(--zux, 0px) * .70), calc(var(--zuy, 0px) * .70)) rotate(-3deg) scale(.99); }
+  66%  { transform: translate(calc(var(--zux, 0px) * .73), calc(var(--zuy, 0px) * .73)) rotate(-7deg) scale(1); }
+  /* DRITTER ZUG — der kraeftigste */
+  74%  { transform: translate(var(--zux, 0px), var(--zuy, 0px)) rotate(-13deg) scale(.94); }
+  80%  { transform: translate(calc(var(--zux, 0px) * .92), calc(var(--zuy, 0px) * .92)) rotate(-2deg) scale(.99); }
+  86%  { opacity: 1; transform: translate(calc(var(--zux, 0px) * .95), calc(var(--zuy, 0px) * .95)) rotate(-6deg) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--zux, 0px) * .95), calc(var(--zuy, 0px) * .95)) rotate(-6deg) scale(1); }
+}
+/* Das Bild selbst. Dieselben Wegmarken wie die Schlinge — nur so
+   bleiben Seil und Gefesselter beieinander. */
+.lc-gezogen {
+  animation: lcZuMirR65 3.4s cubic-bezier(.25, .8, .3, 1) both;
+}
+@keyframes lcZuMirR65 {
+  /* Solange die Schlinge fliegt, ruehrt sich nichts. */
+  0%, 20% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  /* 26 % = 884 ms: das Seil sitzt und strafft sich. Ein kleiner Ruck,
+     mehr noch nicht — man zieht erst, wenn man ihn hat. */
+  26%  { transform: translate(calc(var(--zux, 0px) * .05), calc(var(--zuy, 0px) * .05)) scale(1.02) rotate(1.5deg); }
+  /* ERSTER ZUG */
+  34%  { transform: translate(calc(var(--zux, 0px) * .46), calc(var(--zuy, 0px) * .46)) scale(.95) rotate(-6deg); }
+  40%  { transform: translate(calc(var(--zux, 0px) * .40), calc(var(--zuy, 0px) * .40)) scale(.99) rotate(3deg); }
+  46%  { transform: translate(calc(var(--zux, 0px) * .43), calc(var(--zuy, 0px) * .43)) scale(1) rotate(-1deg); }
+  /* ZWEITER ZUG */
+  54%  { transform: translate(calc(var(--zux, 0px) * .76), calc(var(--zuy, 0px) * .76)) scale(.95) rotate(-6deg); }
+  60%  { transform: translate(calc(var(--zux, 0px) * .70), calc(var(--zuy, 0px) * .70)) scale(.99) rotate(3deg); }
+  66%  { transform: translate(calc(var(--zux, 0px) * .73), calc(var(--zuy, 0px) * .73)) scale(1) rotate(-1deg); }
+  /* DRITTER ZUG */
+  74%  { transform: translate(var(--zux, 0px), var(--zuy, 0px)) scale(.94) rotate(-7deg); }
+  80%  { transform: translate(calc(var(--zux, 0px) * .92), calc(var(--zuy, 0px) * .92)) scale(.99) rotate(4deg); }
+  86%, 100% { transform: translate(calc(var(--zux, 0px) * .95), calc(var(--zuy, 0px) * .95)) scale(1) rotate(0deg); }
+}
+/* DAS SEIL VON MEINER HAND BLEIBT STRAFF.
+   Vorher lief es mit lcLeineAus in 2 s aus und wieder ein — es hing
+   also durch, waehrend gezogen wurde. Jetzt ist es ab 14 % auf voller
+   Laenge und wird danach nur noch KUERZER, genau um den Anteil, den
+   der andere naeher kommt (--zugteil, gemessen in lcZuMirZiehen). */
+.lc-leine-lasso .lc-leine-seil {
+  animation: lcLassoSeilR65 3.4s cubic-bezier(.25, .8, .3, 1) both;
+}
+@keyframes lcLassoSeilR65 {
+  0%   { transform: scaleX(.02); opacity: 0; }
+  5%   { opacity: 1; }
+  14%  { transform: scaleX(1.03); }
+  20%  { transform: scaleX(1); }
+  26%  { transform: scaleX(1); }
+  34%  { transform: scaleX(calc(1 - var(--zugteil, .25) * .46)); }
+  40%  { transform: scaleX(calc(1 - var(--zugteil, .25) * .40)); }
+  46%  { transform: scaleX(calc(1 - var(--zugteil, .25) * .43)); }
+  54%  { transform: scaleX(calc(1 - var(--zugteil, .25) * .76)); }
+  60%  { transform: scaleX(calc(1 - var(--zugteil, .25) * .70)); }
+  66%  { transform: scaleX(calc(1 - var(--zugteil, .25) * .73)); }
+  74%  { transform: scaleX(calc(1 - var(--zugteil, .25) * 1)); }
+  80%  { transform: scaleX(calc(1 - var(--zugteil, .25) * .92)); }
+  86%  { opacity: 1; transform: scaleX(calc(1 - var(--zugteil, .25) * .95)); }
+  100% { opacity: 0; transform: scaleX(calc(1 - var(--zugteil, .25) * .95)); }
+}
+/* Die fliegende Schlinge uebergibt bei 17 % an die Schlinge am Bild.
+   Zwei Schlingen gleichzeitig waeren eine zu viel — das galt schon
+   in Runde 51, nur lagen die Zeiten damals 2,6 s auseinander. */
+.lc-leine-lasso .lc-leine-schlinge {
+  animation: lcSchlingeFliegtR65 3.4s cubic-bezier(.25, .8, .3, 1) both;
+}
+@keyframes lcSchlingeFliegtR65 {
+  0%   { transform: translateX(calc(-1 * var(--laenge, 80px))) rotate(0) scale(.45); opacity: 0; }
+  5%   { opacity: 1; }
+  9%   { transform: translateX(calc(-.45 * var(--laenge, 80px))) rotate(240deg) scale(.85); opacity: 1; }
+  /* 14 % = 476 ms: am Ziel — genau dann haengt die andere Schlinge
+     ueber ihm. */
+  14%  { transform: translateX(4px) rotate(400deg) scale(1.2); opacity: 1; }
+  17%  { transform: translateX(0) rotate(396deg) scale(1.05); opacity: 0; }
+  100% { transform: translateX(0) rotate(396deg) scale(1.05); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-lasso-schlinge, .lc-gezogen,
+  .lc-leine-lasso .lc-leine-seil,
+  .lc-leine-lasso .lc-leine-schlinge { animation: none; }
+  .lc-lasso-schlinge { opacity: 1; transform: rotate(-6deg) scale(1); }
+}
+/* DIE FERNE UND DIE NAHE HAELFTE DES RINGS.
+   Ein Ring, den man schraeg sieht, laeuft hinten herum — und was
+   weiter weg ist, sieht duenner und dunkler aus. Genau zwei Lagen im
+   selben Takt: oben die ferne (3 px, dunkles Hanf), unten die nahe
+   (4,5 px, helles Hanf, mit dem Knoten). Zwei Prozent Ueberlappung,
+   damit dazwischen keine Haarlinie aufblitzt.
+   NICHT hinter das Bild gelegt: die obere Kappe liegt komplett
+   innerhalb der Scheibe und waere hinter einem undurchsichtigen
+   Profilbild unsichtbar — uebrig bliebe eine Sichel statt eines
+   Rings (nachgesehen auf dem Foto bei 900 ms). */
+.lc-lasso-fern {
+  border-width: 3px;
+  border-color: #8a5a20;
+  box-shadow: none;
+  /* NACHGESEHEN: bei 62 % klaffte zwischen den Haelften eine Luecke
+     von 38 % bis 60 % — der Ring war an beiden Seiten offen. Der
+     Schnitt gehoert genau auf die breiteste Stelle, also auf 50 %,
+     mit zwei Prozent Ueberlappung. */
+  clip-path: inset(-40% -40% 49% -40%);
+}
+.lc-lasso-nah {
+  border-width: 4.5px;
+  clip-path: inset(48% -40% -40% -40%);
+}
+/* Der Knoten sitzt dort, wo mein Seil ankommt, und muss GANZ in der
+   nahen Haelfte liegen — sonst schneidet ihn die Kante bei 48 % in
+   zwei Stuecke. Er reicht deshalb von 49 % bis 79 %. */
+.lc-lasso-knoten { top: 64%; height: 30%; margin-top: -15%; }
+
+/* === RUNDE 65: DER GREIFVOGEL ========================================
+   XANDER: „Vielleicht schaffst du es noch, einen realistischen Vogel zu
+   bauen, so ein Greifvogel, der unser Profilbild mitnimmt und mit dem
+   wir reisen … aber der realistische Fluegelschlaege macht, realistisch
+   wie ein Vogel aussieht, mit entsprechendem Sound."
+
+   Was einen Fluegelschlag echt macht, ist NICHT die Bewegung an sich,
+   sondern ihre Ungleichheit: der Abschlag ist kurz und kraeftig (er
+   traegt), der Aufschlag lang und angewinkelt (er kostet nur Kraft).
+   Im Takt sind das 30 % zu 70 %. Dazu hebt sich der Koerper genau dann,
+   wenn der Fluegel unten ist — sonst schwebt der Vogel wie ein
+   Aufkleber ueber dem Bild. */
+.lc-greif {
+  position: absolute;
+  pointer-events: none;
+  z-index: 8;
+  /* NACHGEMESSEN: mit 2,4 Bildbreiten deckte der Vogel drei Plaetze
+     auf einmal zu. 2,05 zu 1,62 ist dasselbe Seitenverhaeltnis wie
+     das Bild (140 zu 111), nur eine Stufe kleiner. */
+  width: calc(var(--gross, 64px) * 2.05);
+  height: calc(var(--gross, 64px) * 1.62);
+  transform: translate(-50%, -50%);
+}
+.lc-greif-form { width: 100%; height: 100%; overflow: visible; }
+.lc-greif-rumpf   { fill: #6b4f33; stroke: #3d2b18; stroke-width: 1.4; }
+.lc-greif-kopf    { fill: #d9cbb4; stroke: #3d2b18; stroke-width: 1.3; }
+.lc-greif-schwanz { fill: #5a412a; stroke: #3d2b18; stroke-width: 1.2; }
+.lc-greif-kerbe   { stroke: #3d2b18; stroke-width: 1; fill: none; opacity: .7; }
+.lc-greif-feder   { stroke: #46331f; stroke-width: 1.4; fill: none; stroke-linecap: round; opacity: .75; }
+.lc-greif-auge    { fill: #f4d35e; stroke: #3d2b18; stroke-width: .9; }
+.lc-greif-pupille { fill: #12100c; }
+.lc-greif-schnabel{ fill: #4a4034; stroke: #2a231a; stroke-width: .8; }
+.lc-greif-bein    { stroke: #d8a53a; stroke-width: 2.8; fill: none; stroke-linecap: round; }
+.lc-greif-kralle  { stroke: #d8a53a; stroke-width: 1.9; fill: none; stroke-linecap: round; }
+.lc-greif-fluegel path { fill: #6b4f33; stroke: #3d2b18; stroke-width: 1.3; }
+/* Der ferne Fluegel ist dunkler und laeuft 40 ms voraus — daran sieht
+   das Auge, dass hier ein Koerper im Raum ist und keine Flaeche. */
+.lc-greif-fluegel-fern path { fill: #4a3522; stroke: #2a1d10; }
+.lc-greif-fluegel-fern { animation: lcGreifSchlagR65 .52s ease-in-out infinite -.04s; }
+.lc-greif-fluegel-nah  { animation: lcGreifSchlagR65 .52s ease-in-out infinite; }
+.lc-greif-koerper      { animation: lcGreifHebtR65 .52s ease-in-out infinite; }
+@keyframes lcGreifSchlagR65 {
+  /* Oben, Fluegel gestreckt. */
+  0%   { transform: rotate(-36deg) scaleY(1); }
+  /* ABSCHLAG: kurz und kraeftig — 30 % des Takts fuer den ganzen Weg. */
+  20%  { transform: rotate(18deg) scaleY(.95); }
+  30%  { transform: rotate(36deg) scaleY(.9); }
+  /* AUFSCHLAG: lang und angewinkelt, deshalb schmaler (scaleY). */
+  56%  { transform: rotate(6deg) scaleY(.7); }
+  80%  { transform: rotate(-22deg) scaleY(.84); }
+  100% { transform: rotate(-36deg) scaleY(1); }
+}
+@keyframes lcGreifHebtR65 {
+  /* Der Auftrieb kommt beim Abschlag — also steigt der Koerper bei
+     30 %, nicht gleichmaessig. */
+  0%   { transform: translateY(2.5px); }
+  30%  { transform: translateY(-3.5px); }
+  60%  { transform: translateY(-1px); }
+  100% { transform: translateY(2.5px); }
+}
+/* Die Beute haengt in den Faengen und pendelt leicht nach. */
+.lc-greif-beute {
+  position: absolute;
+  left: 53%;
+  /* NACHGEMESSEN: bei 70 % lag die Scheibe UEBER den Krallen und
+     verdeckte sie ganz. Bei 76 % endet sie knapp unter ihnen — dann
+     sieht man, dass der Vogel sie wirklich haelt. */
+  top: 76%;
+  width: 37%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  /* Ohne Profilbild bleibt sonst ein durchsichtiger Ring uebrig, in
+     dem der Anfangsbuchstabe kaum zu sehen ist. */
+  background-color: #6b4f33;
+  box-shadow: 0 0 0 3px #d8a53a, 0 4px 10px rgba(0, 0, 0, .35);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: .9em;
+  color: #fff6e0;
+  animation: lcGreifPendeltR65 1.04s ease-in-out infinite;
+}
+@keyframes lcGreifPendeltR65 {
+  0%, 100% { transform: translate(-50%, -50%) rotate(-4deg); }
+  50%      { transform: translate(-50%, -50%) rotate(4deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-greif-fluegel, .lc-greif-koerper, .lc-greif-beute { animation: none; }
+}
+
+/* === RUNDE 65: DER DREI-METER-TURM ===================================
+   XANDER: „dass man von seiner Position aus die Leiter hochkrabbelt mit
+   seinem Profilbild auf den 3-Meter-Turm und dann zwei Plaetze weiter
+   … man kann ja mit Anlauf springen … und dann wirklich mit einem
+   Platschgeraeusch, aber erst wenn derjenige ankommt im Wasser auf dem
+   neuen Platz, dann so bisschen kurz untertaucht und wieder hochkommt
+   wie ein Gummiboot oder Gummireifen." */
+.lc-turm {
+  position: absolute;
+  pointer-events: none;
+  z-index: 7;
+  width: calc(var(--gross, 64px) * 0.95);
+  height: calc(var(--gross, 64px) * 2.15);
+  /* Der Fuss der Leiter steht auf dem Platz, nicht in der Luft. */
+  transform: translate(-50%, -80%) scaleX(var(--blick, 1));
+}
+.lc-turm-form { width: 100%; height: 100%; overflow: visible; }
+.lc-turm-holm      { stroke: #9aa6b4; stroke-width: 4; stroke-linecap: round; fill: none; }
+.lc-turm-sprosse   { stroke: #c3ccd7; stroke-width: 3; stroke-linecap: round; fill: none; }
+.lc-turm-brett     { fill: #e8eef5; stroke: #8b98a7; stroke-width: 1.4; }
+.lc-turm-stuetze   { fill: #8b98a7; }
+.lc-turm-gelaender { stroke: #9aa6b4; stroke-width: 3.2; fill: none; stroke-linecap: round; }
+.lc-turm-springer {
+  position: absolute;
+  pointer-events: none;
+  z-index: 9;
+  width: calc(var(--gross, 64px) * 0.86);
+  height: calc(var(--gross, 64px) * 0.86);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-color: #dfe7f0;
+  box-shadow: 0 0 0 3px #4aa3d8, 0 4px 10px rgba(0, 0, 0, .3);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #1f3b52;
+}
+/* Das Wasser liegt GENAU im Kreis des Profilbilds — dieselbe
+   Ueberlegung wie beim Maulwurfsloch in dieser Runde. */
+.lc-becken {
+  position: absolute;
+  pointer-events: none;
+  z-index: 6;
+  width: var(--gross, 64px);
+  height: var(--gross, 64px);
+  transform: translate(-50%, -50%);
+}
+.lc-becken-wasser {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 34%, #7fd0f2, #2d8fc4 58%, #1a5c86);
+  box-shadow: inset 0 -6px 12px rgba(10, 50, 80, .45);
+  opacity: 0;
+  animation: lcBeckenAufR65 3.9s ease-out both;
+}
+/* Zwei Ringe, die beim Einschlag nach aussen laufen. */
+.lc-becken-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30%;
+  height: 30%;
+  margin: -15% 0 0 -15%;
+  border: 3px solid rgba(255, 255, 255, .85);
+  border-radius: 50%;
+  opacity: 0;
+  animation: lcBeckenRingR65 .9s ease-out both;
+  animation-delay: var(--einschlag, 2730ms);
+}
+.lc-becken-ring-2 { animation-delay: calc(var(--einschlag, 2730ms) + 140ms); }
+.lc-becken-tropfen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9%;
+  height: 9%;
+  margin: -4.5% 0 0 -4.5%;
+  border-radius: 50% 50% 55% 45%;
+  background: rgba(190, 232, 250, .95);
+  opacity: 0;
+  transform: rotate(var(--wo, 0deg));
+  animation: lcBeckenTropfenR65 .8s cubic-bezier(.2, .7, .4, 1) both;
+  animation-delay: calc(var(--einschlag, 2730ms) + var(--spaet, 0ms));
+}
+@keyframes lcBeckenAufR65 {
+  0%   { opacity: 0; }
+  /* Das Wasser ist schon da, bevor er springt — sonst entstuende es
+     erst unter ihm, und das sieht nach Zauberei aus. */
+  10%  { opacity: .9; }
+  92%  { opacity: .9; }
+  100% { opacity: 0; }
+}
+@keyframes lcBeckenRingR65 {
+  0%   { opacity: .95; transform: scale(.3); }
+  100% { opacity: 0; transform: scale(3.3); }
+}
+@keyframes lcBeckenTropfenR65 {
+  0%   { opacity: 0; transform: rotate(var(--wo, 0deg)) translateY(0) scale(.4); }
+  18%  { opacity: 1; transform: rotate(var(--wo, 0deg)) translateY(-120%) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--wo, 0deg)) translateY(-260%) scale(.5); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-becken-wasser, .lc-becken-ring, .lc-becken-tropfen { animation: none; opacity: 0; }
+}
+
+/* === RUNDE 65: AUFBLASEN UND PLATZEN =================================
+   XANDER: „Ach so, und dann moechte ich, dass man ein Profilbild noch
+   ein bisschen aufblasen kann, dass man es total unter Druck setzt und
+   es dann zerplatzt wie ein Luftballon."
+
+   Ein Ballon waechst in STOESSEN, einer je Pumpenhub, und federt
+   dazwischen ein Stueck zurueck — gleichmaessiges Wachsen sieht nach
+   Zoom aus, nicht nach Pumpe. Fuenf Hube, dann zittert das Gummi, dann
+   reisst es. Geplatzt wird bei 71 % von 3,2 s = 2272 ms; genau dort
+   haengt auch der Knall (lcTonSpaeter in lcAufblasen). */
+.lc-kreis.lc-aufgeblasen {
+  animation: lcBlaehtR65 3.2s linear both;
+  z-index: 3;
+}
+@keyframes lcBlaehtR65 {
+  0%   { transform: scale(1); }
+  /* Fuenf Hube — nach jedem federt das Gummi ein wenig zurueck. */
+  8%   { transform: scale(1.12) scaleX(1.05); }
+  13%  { transform: scale(1.08); }
+  20%  { transform: scale(1.26) scaleY(1.05); }
+  25%  { transform: scale(1.21); }
+  32%  { transform: scale(1.40) scaleX(1.04); }
+  37%  { transform: scale(1.35); }
+  44%  { transform: scale(1.52) scaleY(1.04); }
+  49%  { transform: scale(1.47); }
+  56%  { transform: scale(1.62); }
+  /* Jetzt ist das Gummi am Ende — es zittert. */
+  60%  { transform: scale(1.63) rotate(1.4deg); }
+  63%  { transform: scale(1.61) rotate(-1.6deg); }
+  66%  { transform: scale(1.65) rotate(1.2deg); }
+  69%  { transform: scale(1.62) rotate(-1deg); }
+  /* 71 % = 2272 ms: es platzt. */
+  70.9% { transform: scale(1.72); opacity: 1; }
+  71%  { transform: scale(1.9); opacity: 0; }
+  88%  { transform: scale(.2); opacity: 0; }
+  94%  { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+/* Das Spannungslicht auf dem gedehnten Gummi: es wandert und wird
+   heller, je praller es wird. */
+.lc-blaeh-glanz {
+  position: absolute;
+  left: 30%;
+  top: 22%;
+  width: 26%;
+  height: 18%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 40% 35%, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+  animation: lcGlanzR65 3.2s linear both;
+}
+@keyframes lcGlanzR65 {
+  0%   { opacity: 0; transform: scale(.6); }
+  30%  { opacity: .5; transform: scale(1.1) translate(-6%, -8%); }
+  66%  { opacity: .95; transform: scale(1.5) translate(-12%, -14%); }
+  70.9% { opacity: .95; }
+  71%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+/* Der Knall: ein kurzer weisser Stern genau im Moment des Risses. */
+.lc-knall {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150%;
+  height: 150%;
+  margin: -75% 0 0 -75%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .95) 0 18%, rgba(255, 244, 214, .5) 34%, rgba(255, 255, 255, 0) 62%);
+  opacity: 0;
+  animation: lcKnallR65 .34s ease-out both;
+  animation-delay: 2272ms;
+}
+@keyframes lcKnallR65 {
+  0%   { opacity: 0; transform: scale(.25); }
+  22%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+/* Die Fetzen: verschieden weit, verschieden gedreht. Ein Ballon
+   reisst an EINER Stelle auf, nicht sternfoermig ueberall gleich. */
+.lc-fetzen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 13%;
+  height: 22%;
+  margin: -11% 0 0 -6.5%;
+  border-radius: 62% 38% 46% 54% / 40% 56% 44% 60%;
+  background: linear-gradient(140deg, #ffd6df, #e8899f 55%, #b85570);
+  opacity: 0;
+  transform: rotate(var(--wo, 0deg));
+  animation: lcFetzenR65 .8s cubic-bezier(.15, .8, .35, 1) both;
+  animation-delay: calc(2272ms + var(--spaet, 0ms));
+}
+@keyframes lcFetzenR65 {
+  0%   { opacity: 0; transform: rotate(var(--wo, 0deg)) translateY(0) rotate(0) scale(.5); }
+  12%  { opacity: 1; transform: rotate(var(--wo, 0deg)) translateY(-40%) rotate(calc(var(--dreh, 0deg) * .3)) scale(1); }
+  100% { opacity: 0;
+         transform: rotate(var(--wo, 0deg)) translateY(calc(-1 * var(--weit, 140%)))
+                    rotate(var(--dreh, 0deg)) scale(.4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-kreis.lc-aufgeblasen, .lc-blaeh-glanz, .lc-knall, .lc-fetzen { animation: none; }
+  .lc-blaeh-glanz, .lc-knall, .lc-fetzen { opacity: 0; }
+}
+/* Das Wasser im Becken ist eine FLAECHE von oben, keine Kugel — der
+   Lichtpunkt sass zu weit oben und machte daraus eine Murmel. */
+.lc-becken-wasser {
+  background: radial-gradient(circle at 50% 46%, #86d4f4, #3396c9 60%, #1f6892);
+  box-shadow: inset 0 0 14px rgba(255, 255, 255, .28);
 }

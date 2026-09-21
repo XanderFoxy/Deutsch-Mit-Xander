@@ -968,6 +968,12 @@ window.LiveChat = (function () {
        kann." */
     heli:     { wirkung: "heli",     satz: "fliegt im Hubschrauber zu", emoji: "\ud83d\ude81" },
     pferd:    { wirkung: "pferd",    satz: "reitet hin\u00fcber zu", emoji: "\ud83d\udc0e" },
+    /* RUNDE 65 — XANDER: „Vielleicht schaffst du es noch, einen
+       realistischen Vogel zu bauen, so ein Greifvogel, der unser
+       Profilbild mitnimmt … Vielleicht kannst du noch einen 3-Meter-Turm
+       machen, dass man von seiner Position aus die Leiter hochkrabbelt." */
+    greifvogel: { wirkung: "greifvogel", satz: "wird vom Greifvogel getragen zu", emoji: "\ud83e\udd85" },
+    turm:     { wirkung: "turm",     satz: "springt vom Dreier zu", emoji: "\ud83c\udfca" },
     /* GEWUENSCHT: „die Feuerreanimation am Rand des Profil rahmen." */
     brennen:  { wirkung: "brennen",  satz: "setzt den Rahmen in Brand bei", emoji: "\ud83d\udd25" },
     /* XANDER: „Vielleicht kannst du auch noch so ne Animation fuer so
@@ -1037,6 +1043,10 @@ window.LiveChat = (function () {
     lunte:      { wirkung: "lunte",      satz: "z\u00fcndet eine Lunte bei", emoji: "\ud83e\udde8" },
     streicheln: { wirkung: "streicheln", satz: "streichelt", emoji: "\ud83e\udef6" },
     kuss:       { wirkung: "kuss",       satz: "gibt einen Kuss", emoji: "\ud83d\udc8b" },
+    /* RUNDE 65 — XANDER: „dass man ein Profilbild noch ein bisschen
+       aufblasen kann, dass man es total unter Druck setzt und es dann
+       zerplatzt wie ein Luftballon." */
+    aufblasen:  { wirkung: "aufblasen",  satz: "blaeht das Bild auf, bis es platzt, von", emoji: "\ud83c\udf88" },
     /* GEMELDET: „bei den Effekten, die man noch auswählen kann, dass
        man den anderen wie so ein Keks aufessen kann … dass man so Biss
        für Biss den so anbeißt, und auf ist." */
@@ -8775,8 +8785,24 @@ window.LiveChat = (function () {
       was: "Baustellenkran \u2014 dein Bild wird hochgehoben und auf Platz 5 abgesetzt" },
     { gr: "reden", w: "dampfer", kurz: "raddampfer", nutzt: "/dampfer 5",
       was: "Raddampfer \u2014 Seitenrad mittschiffs und Dampfpfeife, zu Platz 5" },
-    { gr: "reden", w: "lok", kurz: "dampflok", nutzt: "/lok 5",
-      was: "Dampflok \u2014 sie schnauft mit dir hinueber zu Platz 5" },
+    /* RUNDE 65 — XANDER: „ich moechte, dass unsere urspruengliche Lok
+       auch an seiner urspruenglichen Adresse zu finden ist, naemlich
+       unter /LOK, nicht anders."
+       NACHGESEHEN: sie IST dort, seit Runde 59 — „/lok" ohne Namen
+       zeigt den Film (siehe weiter unten, „art === 'lok' && !rest").
+       Nur stand es nirgends: in der Befehlsliste hiess es allein
+       „/lok 5". Wer den Film sucht, findet ihn so natuerlich nicht.
+       Jetzt steht beides da. */
+    { gr: "reden", w: "lok", kurz: "dampflok", nutzt: "/lok",
+      was: "Dampflok \u2014 /lok allein zeigt den Film, /lok 5 faehrt dich zu Platz 5" },
+    /* Das Wort heisst „greifvogel", nicht „greif": „greif" ist seit
+       jeher die Kurzform von /adler (dem Adler-FILM). Ein neuer Befehl
+       darf keinen bestehenden verdecken — genau das faengt
+       pruefe-jeder-befehl ab, und genau das ist hier passiert. */
+    { gr: "reden", w: "greifvogel", kurz: "faenge", nutzt: "/greifvogel 5",
+      was: "Greifvogel \u2014 er packt dein Bild in die F\u00e4nge und traegt es zu Platz 5" },
+    { gr: "reden", w: "turm", kurz: "dreimeterturm", nutzt: "/turm 5",
+      was: "3-Meter-Turm \u2014 Leiter hoch, Anlauf, Sprung, Platsch auf Platz 5" },
     { gr: "reden", w: "liane", kurz: "schwingen", nutzt: "/liane 5",
       was: "Liane \u2014 du schwingst dich wie Tarzan zu Platz 5" },
     { gr: "reden", w: "feder", kurz: "sprungfeder", nutzt: "/feder 5",
@@ -8849,6 +8875,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "lunte", kurz: "schnur", nutzt: "/lunte Name",    was: "Bombe mit Z\u00fcndschnur \u2014 sie brennt ab, dann knallt es" },
     { gr: "reden", w: "streicheln", kurz: "lieb", nutzt: "/streicheln Name", was: "Streicheln \u2014 sanft, mit Herzchen" },
     { gr: "reden", w: "kuss", kurz: "bussi",  nutzt: "/kuss Name",      was: "Kuss \u2014 der Abdruck bleibt kurz stehen" },
+    { gr: "reden", w: "aufblasen", kurz: "prall", nutzt: "/aufblasen Name",
+      was: "Aufblasen \u2014 f\u00fcnf Pumpenhube, das Gummi zittert, dann platzt es" },
     { gr: "raum", w: "panik", kurz: "tonneu", nutzt: "/panik",          was: "Ton zur\u00fccksetzen, wenn du jemanden doppelt h\u00f6rst" },
     { gr: "reden", w: "lasso", kurz: "herzu", nutzt: "/lasso Name",
       was: "Jemanden mit dem Lasso zu dir heranziehen \u2014 auf den freien Platz neben dir" },
@@ -9188,6 +9216,16 @@ window.LiveChat = (function () {
                 gglok: "zug", gglok2: "zug",
                 /* GEWUENSCHT: „das Spaceship kannst du als UFO als
                    Code gelten lassen." */
+                /* RUNDE 65: die naheliegenden Namen fuer die beiden
+                   neuen Reisen. „adler" NICHT — das ist die Kurzform
+                   des Adler-Films (/ggadler). */
+                /* „ballon" NICHT — das ist schon der Ballon-Effekt. */
+                aufpumpen: "aufblasen", pumpe: "aufblasen",
+                zerplatzen: "aufblasen",
+                falke: "greifvogel", habicht: "greifvogel",
+                bussard: "greifvogel", geier: "greifvogel",
+                dreier: "turm", sprungturm: "turm", turmspringen: "turm",
+                dreimeterturm: "turm", kopfsprung: "turm",
                 ufo: "raumschiff", spaceship: "raumschiff", rakete: "raumschiff",
                 weltraum: "raumschiff", enterprise: "raumschiff",
                 ggraumschiff: "raumschiff",
@@ -10611,7 +10649,8 @@ window.LiveChat = (function () {
          || art === "boot" || art === "kran" || art === "dampfer"
          || art === "lok" || art === "liane" || art === "feder"
          || art === "beamen" || art === "rohr"
-         || art === "heli" || art === "pferd")
+         || art === "heli" || art === "pferd"
+         || art === "greifvogel" || art === "turm")
         && /^\s*\d+\s*$/.test(rest)) {
       var satzR = { flug: [" fliegt zu Platz ", "\u2708\ufe0f"],
                     maulwurf: [" gr\u00e4bt sich zu Platz ", "\ud83e\udda1"],
@@ -10625,7 +10664,9 @@ window.LiveChat = (function () {
                     beamen: [" beamt sich zu Platz ", "\u2728"],
                     rohr: [" rutscht durch die R\u00f6hre zu Platz ", "\ud83d\udfe2"],
                     heli: [" fliegt im Hubschrauber zu Platz ", "\ud83d\ude81"],
-                    pferd: [" reitet zu Platz ", "\ud83d\udc0e"] }[art];
+                    pferd: [" reitet zu Platz ", "\ud83d\udc0e"],
+                    greifvogel: [" wird vom Greifvogel zu Platz ", "\ud83e\udd85"],
+                    turm: [" springt vom Dreier zu Platz ", "\ud83c\udfca"] }[art];
       return anAlle("aktion", zustand.ichName + satzR[0] + rest.trim() + "  " + satzR[1],
                     { wirkung: art, wen: rest.trim() });
     }
