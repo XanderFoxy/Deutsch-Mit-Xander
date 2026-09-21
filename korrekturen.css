@@ -15871,10 +15871,16 @@ body.lc-schreibt .tutor-reiter {
   border-radius: 40% 46% 0 0 / 34% 30% 0 0;
   animation: lcSkDeckeR35 6.4s ease-in both;
 }
+/* XANDER: „die Häuser sollen nicht im Schnee komplett vergraben
+   sein."
+   Die Decke wuchs auf 26 % der Bildhöhe — das Häuschen links ist in
+   der Landschaft nur 11 von 34 Einheiten hoch und stand damit bis
+   zum Dach im Schnee. Jetzt wächst sie auf 13 %: der Schnee liegt
+   auf dem Boden und an den Wänden, die Häuser bleiben sichtbar. */
 @keyframes lcSkDeckeR35 {
   0%   { height: 0; opacity: 0; }
   12%  { opacity: .9; }
-  100% { height: 26%; opacity: 1; }
+  100% { height: 13%; opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) { .lc-sk-decke { display: none; } }
 
@@ -15887,23 +15893,32 @@ body.lc-schreibt .tutor-reiter {
   pointer-events: none;
   z-index: 3;
 }
+/* XANDER: „Die Schneekugel ist noch nicht realistisch, da fällt kein
+   Schnee."
+   Er hatte recht, und es war derselbe Rechenfehler wie bei den
+   Sprech-Teilchen: die Flocke fiel um „130 %" — und Prozente in
+   translateY zählen die HÖHE DER FLOCKE. Eine Flocke ist zwei Pixel
+   hoch, sie fiel also drei Pixel weit und blieb praktisch stehen.
+   Jetzt läuft der Fall über „top": dort zählen Prozente die Höhe des
+   BILDES, und die Flocke fällt wirklich von oben bis unten durch. */
 .lc-sk-flocke {
   position: absolute;
   top: -12%;
-  width: .16em;
-  height: .16em;
+  width: 3.2%;
+  aspect-ratio: 1;
   border-radius: 50%;
   background: #fff;
   opacity: 0;
-  box-shadow: 0 0 .12em rgba(255, 255, 255, .8);
+  box-shadow: 0 0 3px rgba(255, 255, 255, .85);
   animation: lcSkFlockeR29 var(--fall, 4s) linear var(--spaet, 0s) infinite;
 }
-.lc-sk-flocke.lc-sk-gross { width: .26em; height: .26em; }
+.lc-sk-flocke.lc-sk-gross { width: 5%; }
 @keyframes lcSkFlockeR29 {
-  0%   { opacity: 0; transform: translate(0, 0); }
+  0%   { opacity: 0;                 top: -12%; transform: translateX(0); }
   8%   { opacity: var(--matt, .8); }
-  90%  { opacity: var(--matt, .8); }
-  100% { opacity: 0; transform: translate(var(--seit, 0), 130%); }
+  88%  { opacity: var(--matt, .8); }
+  100% { opacity: 0;                 top: 104%;
+         transform: translateX(var(--seit, 0)); }
 }
 
 /* Das Glas: ein Lichtbogen oben links, mehr nicht — es darf das
@@ -17718,4 +17733,102 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-gebeamt, .lc-beam-glanz, .lc-beam-kappe { animation: none; }
   .lc-beam-glanz { display: none; }
+}
+
+/* =================================================================
+   DIE ABENDKULISSE HINTER DER JALOUSIE
+   -----------------------------------------------------------------
+   XANDER: „bei der Jalousie musst du kein Nachtbild machen, dort
+   kannst du mal ein bisschen experimentieren mit einem Sonnenuntergang
+   oder ein ganz anderer Ort. Das kann aber auch am Tag sein oder so
+   zwischen Tag und Nacht."
+   Also: tiefstehende Sonne über dem Meer, Lichtstrasse auf dem
+   Wasser, ein kleines Boot am Horizont. Drei Kulissen, drei Stimmun-
+   gen — Fenster hell, Jalousie Abend, Rollo Nacht.
+   ================================================================= */
+.lc-aussicht-abend {
+  background: linear-gradient(to bottom,
+    #2c3f73 0%, #6d5590 22%, #c96f77 46%, #f2a35e 62%, #ffd08a 72%);
+}
+.lc-abend-sonne {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 34%;
+  aspect-ratio: 1;
+  margin-left: -17%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 44%,
+    #fff3c4 0 34%, #ffd166 58%, #ff9a4d 80%, rgba(255, 154, 77, 0) 100%);
+  box-shadow: 0 0 22px 8px rgba(255, 170, 90, .55);
+  animation: lcAbendSonneR48 9s ease-in-out infinite alternate;
+}
+@keyframes lcAbendSonneR48 {
+  from { transform: translateY(0);   opacity: .95; }
+  to   { transform: translateY(4%);  opacity: 1; }
+}
+.lc-abend-wolke {
+  position: absolute;
+  height: 5%;
+  border-radius: 999px;
+  background: linear-gradient(to right,
+    rgba(255, 190, 150, 0), rgba(255, 205, 165, .85) 30%,
+    rgba(235, 150, 140, .8) 70%, rgba(255, 190, 150, 0));
+  animation: lcAbendWolkeR48 22s linear infinite;
+}
+@keyframes lcAbendWolkeR48 {
+  from { transform: translateX(-12%); }
+  to   { transform: translateX(14%); }
+}
+/* Das Meer beginnt am Horizont und wird nach unten dunkler. */
+.lc-abend-meer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 60%;
+  bottom: 0;
+  background: linear-gradient(to bottom, #b4643c 0%, #7a4a6a 38%, #33325e 100%);
+}
+/* Die Lichtstrasse: waagerechte Streifen, die leicht atmen. */
+.lc-abend-glitzer {
+  position: absolute;
+  left: 50%;
+  height: 1.6%;
+  margin-left: calc(var(--breit, 0%) * -0.5);
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: rgba(255, 216, 150, .85);
+  animation: lcAbendGlitzerR48 2.6s ease-in-out var(--spaet, 0s) infinite alternate;
+}
+@keyframes lcAbendGlitzerR48 {
+  from { opacity: .35; transform: translateX(-52%) scaleX(.86); }
+  to   { opacity: .95; transform: translateX(-48%) scaleX(1.04); }
+}
+.lc-abend-boot {
+  position: absolute;
+  left: 24%;
+  top: 57%;
+  width: 9%;
+  height: 5%;
+  background: #2b2540;
+  clip-path: polygon(0% 70%, 100% 70%, 84% 100%, 12% 100%, 0% 70%);
+  animation: lcAbendBootR48 7s ease-in-out infinite alternate;
+}
+.lc-abend-boot::before {
+  content: "";
+  position: absolute;
+  left: 44%;
+  bottom: 30%;
+  width: 10%;
+  height: 180%;
+  background: #2b2540;
+}
+@keyframes lcAbendBootR48 {
+  from { transform: translate(0, 0) rotate(-2deg); }
+  to   { transform: translate(24%, 2%) rotate(2deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-abend-sonne, .lc-abend-wolke, .lc-abend-glitzer, .lc-abend-boot {
+    animation: none;
+  }
 }

@@ -25318,10 +25318,15 @@
        wie der Halm — die ist weg. */
     ["\ud83d\udd25", "Brennen", "brennen"],
     ["\u2694\ufe0f", "Zorro", "zorro"],
-    ["\ud83e\udd64", "Getr\u00e4nk", "strohhalm", false,
+    /* XANDER: „die Spuck Kugel soll mit als Element unter dem
+       Strohhalm sein. Also einmal das Saugen, das Blasen und die
+       Spuckkugel, dass wir die Uebersicht behalten."
+       Genau die drei stehen hier — die Kachel heisst jetzt auch so,
+       damit man sie findet. */
+    ["\ud83e\udd64", "Strohhalm", "strohhalm", false,
       [["\ud83e\udd64", "Schl\u00fcrfen", "strohhalm"],
        ["\ud83e\uded7", "Blubbern", "blubbern"],
-       ["\ud83d\udca6", "Spucken", "pusterohr"]]],
+       ["\ud83d\udca6", "Spuckkugel", "pusterohr"]]],
     ["\ud83d\uddd2\ufe0f", "Knüllen", "knuell"],
     ["\ud83e\udea2", "Peitsche",  "peitsche"],
     ["\ud83c\udfb3", "Bowling",   "bowling"],
@@ -31782,15 +31787,14 @@
 
       /* Der Halm steckt von rechts oben im Getraenk, und vorn sitzen
          die Backen, die sich aufblaehen. */
+      /* XANDER: „bei den Blubb-Blasen ist immer noch der Smiley, der
+         soll doch nicht sein."
+         Das waren die „Backen" — ein Gesicht mit zwei Augen und
+         einem Mund, das ueber dem Profilbild lag. Gemeint war, dass
+         SEIN Bild blubbert, nicht dass ein zweites Gesicht davor
+         steht. Der Halm bleibt, das Gesicht ist weg. */
       schicht.insertAdjacentHTML("beforeend",
-        '<span class="lc-blubber-rohr"></span>'
-        + '<svg class="lc-blubber-backen" viewBox="0 0 40 34" aria-hidden="true">'
-        + '<ellipse cx="20" cy="19" rx="15" ry="12" fill="#f3c9a0" stroke="#c98f5e" stroke-width="2"/>'
-        + '<path d="M11 24 Q20 30 29 24" fill="none" stroke="#c98f5e" stroke-width="2"'
-        + ' stroke-linecap="round"/>'
-        + '<circle cx="13" cy="15" r="1.8" fill="#6b4a2a"/>'
-        + '<circle cx="27" cy="15" r="1.8" fill="#6b4a2a"/>'
-        + "</svg>");
+        '<span class="lc-blubber-rohr"></span>');
     }, 3600, "blubbern");
   }
 
@@ -32061,21 +32065,53 @@
        "" (Fenster)   — Tag oder Nacht, je nach echter Uhrzeit
        "nacht"        — immer Nachthimmel mit Mond und Sternen (Rollo)
        "stadt"        — Dächer und beleuchtete Fenster (Jalousie)     */
+  /* =================================================================
+     DREI FENSTER, DREI KULISSEN — UND JEDE BLEIBT, WIE SIE IST
+     -----------------------------------------------------------------
+     XANDER, zweimal und sehr deutlich: „Bei der Fenster-Animation soll
+     das geöffnete Fenster die Landschaft zeigen, die es vorher gezeigt
+     hat. Das solltest du nicht verändern. Du solltest nur bei dem
+     Rollo die Nacht zeigen und bei der Jalousie ein ganz anderes Bild.
+     Das erste Bild war super süß, das soll so bleiben … das alte Bild,
+     was im Sonnenlicht war, mit der schönen grünen Landschaft … das
+     war perfekt mit den Vögeln."
+
+     Also fest zugeteilt, nicht mehr nach der Uhrzeit geraten:
+       Fenster   → Tag: Sonne, grüne Hügel, zwei Vögel (das Original)
+       Rollo     → Nacht mit Sternen
+       Jalousie  → Abend: tiefstehende Sonne über dem Meer
+
+     Dass das Fenster sich vorher nach der Uhr richtete, war der Grund,
+     warum er abends plötzlich Sterne sah, wo Vögel sein sollten.
+     ================================================================= */
   function lcAussichtHtml(art) {
     /* Alte Aufrufe gaben true/false fuer „andere Aussicht" — das
        bleibt gueltig und heisst jetzt „stadt". */
     if (art === true) art = "stadt";
-    if (art === false || art === undefined) art = "";
+    if (art === false || art === undefined) art = "tag";
 
-    let nacht = art === "nacht";
-    if (!art) {
-      try {
-        nacht = wetterIstNacht === true
-          || (typeof tageszeit === "function" && tageszeit() === "nacht");
-      } catch (e) {
-        const st = new Date().getHours();
-        nacht = st < 6 || st >= 21;
+    const nacht = art === "nacht";
+
+    if (art === "abend") {
+      /* Die Jalousie schaut auf den Abend: eine tiefstehende Sonne
+         ueber dem Meer, mit der Lichtstrasse darunter. Kein Nachtbild
+         — „dort musst du kein Nachtbild machen, dort kannst du mal
+         ein bisschen experimentieren mit einem Sonnenuntergang." */
+      let wolken = "";
+      [[6, 16, 26], [52, 11, 20], [30, 22, 16], [70, 26, 22]].forEach(([x, y, b]) => {
+        wolken += '<i class="lc-abend-wolke" style="left:' + x + "%;top:" + y
+          + "%;width:" + b + '%"></i>';
+      });
+      let glitzer = "";
+      for (let i = 0; i < 7; i++) {
+        glitzer += '<i class="lc-abend-glitzer" style="top:' + (62 + i * 5)
+          + "%;width:" + (34 - i * 3) + "%;--spaet:" + (i * 0.28).toFixed(2) + 's"></i>';
       }
+      return '<span class="lc-luke-aussicht lc-aussicht-abend">'
+        + '<i class="lc-abend-sonne"></i>' + wolken
+        + '<i class="lc-abend-meer"></i>' + glitzer
+        + '<i class="lc-abend-boot"></i>'
+        + "</span>";
     }
 
     if (art === "stadt") {
@@ -32163,7 +32199,7 @@
       }
       /* „und bei der Jalousie kannst du auch eine andere Aussicht
          machen" — dieselbe Welt, andere Blickrichtung. */
-      blende.innerHTML = lcAussichtHtml("stadt") + bahnen
+      blende.innerHTML = lcAussichtHtml("abend") + bahnen
         + '<span class="lc-lamellen-schnur"></span>';
       /* GEMESSEN (pruefe-tonschleifen): hier stand „jalousie" — der
          NAME DES GERAEUSCHS. Der letzte Wert ist aber der Name des
