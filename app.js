@@ -22020,7 +22020,13 @@
        NEBEN dem Reifen (gemessen: Radius 63 px bei Bildradius
        51,5 px). Jetzt 33,4 bis 35,6 % — das ist der Reifen selbst.
        Dazu mehr und schmalere Flammen: das ist das „filigraner". */
-    feuer:  { menge: 30, klasse: "lc-tfeuer", rand: true, band: [33.4, 35.6], zeichen: [""] },
+    /* NACHGEMESSEN und noch einmal nachgezogen: bei 33,4 % sass der
+       Fusspunkt der Flamme 1,4 Prozentpunkte INNERHALB des Bildrands
+       (der liegt bei 34,8 %), und die groesste Flamme reichte damit
+       bis 29 px an die Mitte — knapp unter die Grenze von 30 px, die
+       seine Regel „im Kreis darf nichts sein" zieht. Jetzt 34,4 bis
+       36,4 %: der Fuss steht auf dem Reifen, nicht davor. */
+    feuer:  { menge: 30, klasse: "lc-tfeuer", rand: true, band: [34.4, 36.4], zeichen: [""] },
     /* XANDER: „das funkeln ist kein funkeln … das muss nicht so
        Lineal sein, das kann so ein bisschen Partikel sein."
        Also echte Teilchen wie bei Magie und Noten, jedes mit eigener
@@ -28820,6 +28826,33 @@
     if (l < 4) return { x: -0.74, y: -0.67 };
     return { x: dx / l, y: dy / l };
   }
+  /* WIE WEIT IST ES WIRKLICH?
+     GEMELDET: „Das Bowling ist schlecht getimet" — und dazu gehoert,
+     dass „der Ball von meinem Platz losrollen" soll. Bisher stand die
+     Wurfweite als feste Zahl in jedem Effekt (230, 240, 250 Prozent
+     der Bildbreite). Das war immer gleich weit, egal ob der andere
+     nebenan oder am anderen Ende der Reihe sitzt.
+
+     Hier wird sie gemessen: der Abstand der beiden Sitzkaesten, in
+     Prozent der Bildbreite. Sitzt der andere zwei Plaetze weiter,
+     kommt der Ball auch von zwei Plaetzen weiter. Die Grenzen sind
+     Absicht — ohne Absender (es gilt allen) bleibt es beim alten
+     Wert, und weiter als neun Bildbreiten waere die Kugel vor dem
+     Start schon ausserhalb des Fensters. */
+  function lcWurfWeite(platz, ersatz) {
+    const karte = document.getElementById("livechatKarte");
+    const quelle = (lcWurfVon ? lcPlatzMitNamen(lcWurfVon) : null)
+      || (karte && karte.querySelector(".lc-platz-ich"));
+    if (!quelle || quelle === platz) return ersatz || 240;
+    const a = quelle.getBoundingClientRect(), b = platz.getBoundingClientRect();
+    const d = Math.hypot((a.left + a.width / 2) - (b.left + b.width / 2),
+                         (a.top + a.height / 2) - (b.top + b.height / 2));
+    const kreis = platz.querySelector(".lc-kreis");
+    const breit = (kreis ? kreis.getBoundingClientRect().width : b.width) || 1;
+    if (!d) return ersatz || 240;
+    return Math.max(120, Math.min(900, (d / breit) * 100));
+  }
+
   function lcWurfSetzen(schicht, platz, weite) {
     const r = lcWurfRichtung(platz);
     schicht.style.setProperty("--wx", (r.x * (weite || 230)).toFixed(0) + "%");
@@ -31690,6 +31723,21 @@
     if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
     const rk = lcLayoutKasten(reihe);
     const krumen = [];
+    /* XANDER: „gelbe Punkte auf den Plaetzen."
+       Vorher lagen die Punkte NUR zwischen den Plaetzen (bei 34 und
+       68 Prozent der Strecke) — auf den Sitzen selbst lag keiner. Bei
+       Pac-Man liegt aber auf JEDEM Feld einer, auch auf dem, auf dem
+       man steht. Deshalb bekommt jeder Wegpunkt seinen eigenen, und
+       er verschwindet genau dann, wenn Pac-Man dort ankommt. */
+    for (let i = 0; i < weg.length; i++) {
+      const k = document.createElement("i");
+      k.className = "lc-pac-krume lc-pac-krume-platz";
+      k.style.left = (weg[i].x - rk.left) + "px";
+      k.style.top = (weg[i].y - rk.top) + "px";
+      k.style.animationDelay = (i * jeFeld / 1000).toFixed(2) + "s";
+      reihe.appendChild(k);
+      krumen.push(k);
+    }
     for (let i = 0; i < punkte.length - 1; i++) {
       for (const t of [0.34, 0.68]) {
         const px = weg[i].x + (weg[i + 1].x - weg[i].x) * t;
@@ -32102,7 +32150,9 @@
   /* --- BOWLING UND BILLARD ------------------------------------------ */
   function lcStoss(wen, art) {
     return lcAmPlatz(wen, art === "billard" ? "lc-billard" : "lc-bowling", (schicht, platz) => {
-      lcWurfSetzen(schicht, platz, 240);
+      /* „der Ball rollt von meinem Platz los" — also die wirkliche
+         Entfernung, nicht die feste 240. */
+      lcWurfSetzen(schicht, platz, lcWurfWeite(platz, 240));
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
         /* Beim Billard rollt die Kugel ueber das Feld (siehe

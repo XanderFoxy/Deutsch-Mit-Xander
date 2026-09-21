@@ -18891,3 +18891,71 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-gezogen, .lc-gehoben { animation: none; }
 }
+
+/* === RUNDE 52: DAS BOWLING STIMMT JETZT IM TAKT ======================
+   XANDER: „Das Bowling ist schlecht getimet."
+
+   NACHGERECHNET an den bestehenden Werten, und er hat genau richtig
+   hingesehen:
+     · Die Kugel trifft bei 32 % von 2,4 s = 768 ms (das passt auch zu
+       LC_TREFFER.bowling = 760).
+     · Die Kegel hatten „animation-delay: .78s" und wurden in ihrer
+       eigenen Animation erst bei 6 % sichtbar — also bei 924 ms —
+       und kippten bei 30 %, also bei 1500 ms.
+   Die Kegel standen damit noch gar nicht da, als die Kugel schon
+   durch war, und fielen dreiviertel Sekunden SPAETER um. Ein Kegel
+   steht, BEVOR geworfen wird, und faellt IM Moment des Einschlags.
+   Jetzt: von Anfang an sichtbar, und sie kippen bei 32, 34 und 37 %
+   — also 768, 816 und 888 ms. */
+.lc-kegel {
+  animation: lcKegelFaelltR52 2.4s cubic-bezier(.3, 0, .4, 1) both;
+}
+.lc-kegel-1 { animation-delay: 0s; --kippt: -74deg; }
+.lc-kegel-2 { animation-delay: 0s; --kippt:  18deg; }
+.lc-kegel-3 { animation-delay: 0s; --kippt:  82deg; }
+/* Drei Kegel, drei Zeitpunkte — deshalb drei Schluesselbild-Saetze
+   statt einer Verzoegerung: eine Verzoegerung wuerde auch das
+   Aufstellen verschieben, und aufgestellt wird gleichzeitig. */
+@keyframes lcKegelFaelltR52 {
+  /* Sie stehen, bevor geworfen wird. */
+  0%, 30% { opacity: 1; transform: rotate(0deg) translateY(0); }
+  /* 32 % = 768 ms: der Einschlag. */
+  32%  { transform: rotate(calc(var(--kippt, 60deg) * .35)) translateY(0); }
+  44%  { transform: rotate(var(--kippt, 60deg)) translateY(0); }
+  80%  { opacity: 1; transform: rotate(var(--kippt, 60deg)) translateY(0); }
+  100% { opacity: 0; transform: rotate(var(--kippt, 60deg)) translateY(10%); }
+}
+.lc-kegel-2 { animation-name: lcKegelFaelltR52b; }
+.lc-kegel-3 { animation-name: lcKegelFaelltR52c; }
+@keyframes lcKegelFaelltR52b {
+  0%, 32% { opacity: 1; transform: rotate(0deg) translateY(0); }
+  34%  { transform: rotate(calc(var(--kippt, 60deg) * .35)) translateY(0); }
+  47%  { transform: rotate(var(--kippt, 60deg)) translateY(0); }
+  80%  { opacity: 1; transform: rotate(var(--kippt, 60deg)) translateY(0); }
+  100% { opacity: 0; transform: rotate(var(--kippt, 60deg)) translateY(10%); }
+}
+@keyframes lcKegelFaelltR52c {
+  0%, 35% { opacity: 1; transform: rotate(0deg) translateY(0); }
+  37%  { transform: rotate(calc(var(--kippt, 60deg) * .35)) translateY(0); }
+  51%  { transform: rotate(var(--kippt, 60deg)) translateY(0); }
+  80%  { opacity: 1; transform: rotate(var(--kippt, 60deg)) translateY(0); }
+  100% { opacity: 0; transform: rotate(var(--kippt, 60deg)) translateY(10%); }
+}
+
+/* === RUNDE 52: DIE PUNKTE AUF DEN PLÄTZEN ============================
+   XANDER: „gelbe Punkte auf den Plaetzen."
+   Die Punkte ZWISCHEN den Sitzen gab es schon. Auf dem Sitz selbst
+   lag keiner — bei Pac-Man liegt aber auf jedem Feld einer. Der auf
+   dem Platz ist groesser und liegt ueber dem Bild, sonst sieht man
+   ihn auf einem hellen Profilbild nicht. */
+.lc-pac-krume-platz {
+  width: 13px;
+  height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+  z-index: 7;
+  box-shadow: 0 0 9px rgba(255, 217, 59, .95),
+              0 0 0 2px rgba(60, 40, 0, .45);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-pac-krume-platz { display: none; }
+}
