@@ -21790,3 +21790,278 @@ body.lc-schreibt .tutor-reiter {
   pointer-events: none;
   z-index: 8;
 }
+
+/* =================================================================
+   RUNDE 71 — DAS TOR IST SCHWARZ UND SPIEGELT, NICHT BLAU
+   -----------------------------------------------------------------
+   XANDER: „Wenn man das Portal anwendet, dann sitzt das nicht mittig
+   auf einem Platz und es fehlen transparente [Schichten] … Das ist
+   mir auch zu blau das ist meistens eher so dunkel und … schwarz mit
+   Spiegeleffekten so ganz langsam."
+
+   Vier Sachen sind daran neu, und alle vier stehen wörtlich in dem
+   Satz:
+   · SCHWARZ. Das Wasserblau (#56b9e4 … #1a6f9f) ist weg. Übrig
+     bleibt ein fast schwarzer Spiegel mit einem kalten Rest Violett —
+     so sieht eine Fläche aus, die Licht zurückwirft statt selbst zu
+     leuchten.
+   · SPIEGEL. Ein schmaler, harter Streifen wandert ganz langsam
+     darüber. Ein Spiegel hat KEINEN weichen Schimmer, sondern eine
+     Kante — daran erkennt man ihn.
+   · TRANSPARENTE SCHICHTEN. Drei durchsichtige Scheiben übereinander,
+     jede mit eigener Geschwindigkeit und eigener Richtung. Eine
+     einzelne Fläche bleibt eine Scheibe; erst mehrere, die sich
+     gegeneinander bewegen, haben Tiefe.
+   · GANZ LANGSAM. Alles, was vorher in ein bis zwei Sekunden lief,
+     braucht jetzt vier bis zehn. Die Ringe von 1,9 s auf 4,2 s, der
+     Glanz von 3,6 s auf 9 s, das Plasma von 1,35 s auf 6 s.
+
+   Die MITTE ist kein CSS-Fall — sie wird in app.js gemessen
+   (lcBildVersatz), weil der Platz höher ist als sein Bild.
+   ================================================================= */
+/* Die Fassung: dunkles Metall statt Chrom. */
+.lc-tor-wasserwand .lc-tor-ring {
+  background: conic-gradient(from 210deg,
+    #1a1c22, #4b5260 12%, #23262e 28%, #40464f 44%,
+    #16181d 60%, #4b5260 76%, #22252c 90%, #1a1c22);
+  filter: drop-shadow(0 2px 7px rgba(0, 0, 0, .7));
+}
+/* Die Fläche: fast schwarz, oben eine Spur heller — so steht eine
+   Wand im Licht. */
+.lc-tor-wasserwand .lc-tor-wasser {
+  background:
+    radial-gradient(ellipse at 50% 22%, rgba(88, 74, 132, .28), rgba(0, 0, 0, 0) 62%),
+    linear-gradient(to bottom, #15131f 0%, #0a0910 52%, #050409 100%);
+  box-shadow: inset 0 0 22px rgba(0, 0, 0, .9),
+              inset 0 3px 10px rgba(150, 135, 200, .12);
+}
+/* Der Saum glimmt nur noch, er leuchtet nicht. */
+.lc-tor-wasserwand .lc-tor-saum {
+  border-color: rgba(168, 156, 210, .3);
+  box-shadow: 0 0 8px rgba(96, 84, 140, .35),
+              inset 0 0 10px rgba(0, 0, 0, .7);
+  animation-duration: 5.6s;
+}
+/* Die Ringe bleiben — aber als dunkle Wellen mit einer feinen hellen
+   Kante, und sie brauchen mehr als doppelt so lange. */
+.lc-tor-wasserwand .lc-tor-welle {
+  border-color: rgba(186, 176, 224, .32);
+  box-shadow: 0 0 6px rgba(0, 0, 0, .6),
+              inset 0 0 4px rgba(0, 0, 0, .5);
+  animation-duration: 4.2s;
+}
+.lc-tor-wasserwand .lc-tor-welle-2 { animation-delay: -.84s; }
+.lc-tor-wasserwand .lc-tor-welle-3 { animation-delay: -1.68s; }
+.lc-tor-wasserwand .lc-tor-welle-4 { animation-delay: -2.52s; }
+.lc-tor-wasserwand .lc-tor-welle-5 { animation-delay: -3.36s; }
+/* Der alte weiche Glanz wird zum harten Spiegelstreifen. */
+.lc-tor-wasserwand .lc-tor-glanz {
+  background: linear-gradient(112deg,
+    rgba(255, 255, 255, 0) 44%,
+    rgba(226, 220, 255, .16) 49%,
+    rgba(255, 255, 255, .34) 50.5%,
+    rgba(226, 220, 255, .12) 52%,
+    rgba(255, 255, 255, 0) 58%);
+  animation-duration: 9s;
+}
+/* Das Plasma zuckt nicht mehr, es zieht — und in Violett, nicht in
+   Türkis. */
+.lc-tor-wasserwand .lc-tor-plasma {
+  background: conic-gradient(from 0deg,
+    rgba(120, 100, 190, 0) 0 8%, rgba(198, 186, 255, .55) 11%,
+    rgba(120, 100, 190, .26) 16%, rgba(120, 100, 190, 0) 24% 100%);
+  filter: blur(.6px) drop-shadow(0 0 7px rgba(140, 120, 210, .55));
+  animation-duration: 6s;
+}
+.lc-tor-wasserwand .lc-tor-plasma-2 {
+  animation-duration: 9.5s;
+  opacity: .55;
+}
+/* Die Tropfen sind dunkel und fangen nur einen Lichtpunkt. */
+.lc-tor-wasserwand .lc-tor-tropfen {
+  background: radial-gradient(circle at 36% 28%, #cfc6f0 0 14%, #3b3452 58%, #120f1c);
+  animation-duration: 3.4s;
+}
+/* -----------------------------------------------------------------
+   DIE DREI DURCHSICHTIGEN SCHICHTEN
+   Jede ist fast unsichtbar; erst dass sie verschieden schnell und in
+   verschiedene Richtungen wandern, macht daraus Tiefe.
+   ----------------------------------------------------------------- */
+.lc-tor-schicht {
+  position: absolute;
+  inset: 5%;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(150, 132, 210, .16), rgba(0, 0, 0, 0) 58%),
+    radial-gradient(ellipse at 74% 66%, rgba(96, 120, 180, .13), rgba(0, 0, 0, 0) 55%);
+  mix-blend-mode: screen;
+  animation: lcTorSchichtR71 11s ease-in-out infinite;
+}
+.lc-tor-schicht-2 {
+  animation-duration: 15s;
+  animation-direction: reverse;
+  opacity: .8;
+}
+.lc-tor-schicht-3 {
+  animation-duration: 19s;
+  animation-delay: -6s;
+  opacity: .6;
+}
+@keyframes lcTorSchichtR71 {
+  0%, 100% { transform: translate(-6%, 4%) scale(1.06) rotate(0deg); }
+  50%      { transform: translate(6%, -4%) scale(.96) rotate(180deg); }
+}
+/* Der Spiegel selbst: ein einzelner harter Streifen, der einmal in
+   sieben Sekunden durchs Bild zieht. Mehr braucht es nicht — genau
+   das unterscheidet einen Spiegel von einer leuchtenden Fläche. */
+.lc-tor-spiegel {
+  position: absolute;
+  inset: 5%;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(74deg,
+    rgba(255, 255, 255, 0) 46%,
+    rgba(240, 238, 255, .30) 49.4%,
+    rgba(255, 255, 255, .52) 50%,
+    rgba(240, 238, 255, .24) 50.8%,
+    rgba(255, 255, 255, 0) 54%);
+  opacity: 0;
+  animation: lcTorSpiegelR71 7s cubic-bezier(.45, 0, .55, 1) infinite;
+}
+@keyframes lcTorSpiegelR71 {
+  0%      { opacity: 0;   transform: translate(-64%, 34%); }
+  16%     { opacity: .85; }
+  52%     { opacity: .85; }
+  70%     { opacity: 0;   transform: translate(64%, -34%); }
+  100%    { opacity: 0;   transform: translate(64%, -34%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-tor-schicht, .lc-tor-spiegel { animation: none; opacity: 0; }
+}
+
+/* -----------------------------------------------------------------
+   RUNDE 71, ZWEITER ANLAUF — NACHGEMESSEN AM BILD
+   Der erste Versuch war richtig dunkel, aber er war NUR dunkel: auf
+   dem Foto bei 700 ms und bei 960 ms war weder der Spiegelstreifen
+   noch die Fassung zu erkennen — ein schwarzes Loch, kein Spiegel.
+   Drei Sachen ändern das:
+   · Das Tor steht jetzt 3,4 s statt 1,6 s offen (die Reisezeit dazu
+     in app.js). In 1,6 s kann ein Streifen, der „ganz langsam"
+     durchzieht, gar nicht durchziehen.
+   · Der Spiegelstreifen braucht 2,6 s statt 7 s — er zieht damit
+     GENAU EINMAL durch, solange das Tor offen ist.
+   · Die Fassung wird heller, sonst verschwindet sie im Schwarz.
+   ----------------------------------------------------------------- */
+.lc-tor-wasserwand { animation-duration: 3.4s; }
+.lc-tor-wasserwand .lc-tor-ring {
+  background: conic-gradient(from 210deg,
+    #2b2f38, #8d95a5 12%, #3a3f4a 28%, #767e8c 44%,
+    #24272e 60%, #99a1b0 76%, #3c414b 90%, #2b2f38);
+  box-shadow: 0 0 10px rgba(0, 0, 0, .8);
+}
+/* Ein feiner heller Saum innen am Ring — daran sieht man, dass da
+   eine Fläche hängt und kein Loch ist. */
+.lc-tor-wasserwand .lc-tor-saum {
+  border-color: rgba(196, 188, 236, .42);
+  box-shadow: 0 0 10px rgba(120, 106, 176, .45),
+              inset 0 0 12px rgba(0, 0, 0, .65);
+}
+.lc-tor-wasserwand .lc-tor-spiegel { animation-duration: 2.6s; }
+/* Die Schichten dürfen ein wenig mehr zeigen — bei .16 waren sie auf
+   dem Foto nicht von reinem Schwarz zu unterscheiden. */
+.lc-tor-wasserwand .lc-tor-schicht {
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(164, 146, 226, .30), rgba(0, 0, 0, 0) 58%),
+    radial-gradient(ellipse at 74% 66%, rgba(108, 134, 198, .24), rgba(0, 0, 0, 0) 55%);
+  animation-duration: 7s;
+}
+.lc-tor-wasserwand .lc-tor-schicht-2 { animation-duration: 9s; }
+.lc-tor-wasserwand .lc-tor-schicht-3 { animation-duration: 11s; }
+/* Und die Ringe eine Spur sichtbarer — sie sind die Spiegelung, die
+   über die Fläche läuft. */
+.lc-tor-wasserwand .lc-tor-welle {
+  border-color: rgba(198, 190, 240, .46);
+  animation-duration: 3.4s;
+}
+.lc-tor-wasserwand .lc-tor-welle-2 { animation-delay: -.68s; }
+.lc-tor-wasserwand .lc-tor-welle-3 { animation-delay: -1.36s; }
+.lc-tor-wasserwand .lc-tor-welle-4 { animation-delay: -2.04s; }
+.lc-tor-wasserwand .lc-tor-welle-5 { animation-delay: -2.72s; }
+
+/* -----------------------------------------------------------------
+   RUNDE 71, DRITTER ANLAUF — AM HELLIGKEITSBILD NACHGEMESSEN
+   Der Spiegelstreifen war im Bild überhaupt nicht zu finden: über die
+   ganze Torfläche lagen die Helligkeiten zwischen 12 und 36 von 255.
+   GRUND, und es war Rechnen, kein Geschmack: der helle Kern des
+   Streifens lag zwischen 49,4 % und 50,8 % des Verlaufs — das sind
+   1,4 % von 96 px, also KNAPP ZWEI PIXEL. So etwas sieht man nicht,
+   egal wie hell es ist.
+   Der Streifen ist deshalb jetzt gut zehnmal so breit, und die Fläche
+   darunter ist von fast Schwarz auf ein dunkles Grau gehoben: ein
+   Spiegel muss etwas zurückwerfen, sonst ist er ein Loch.
+   ----------------------------------------------------------------- */
+.lc-tor-wasserwand .lc-tor-wasser {
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(126, 110, 180, .34), rgba(0, 0, 0, 0) 66%),
+    linear-gradient(to bottom, #2a2739 0%, #1a1826 48%, #0d0c14 100%);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, .75),
+              inset 0 4px 14px rgba(170, 156, 220, .16);
+}
+.lc-tor-wasserwand .lc-tor-spiegel {
+  background: linear-gradient(74deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(226, 222, 255, .18) 40%,
+    rgba(244, 242, 255, .62) 48%,
+    rgba(255, 255, 255, .80) 50%,
+    rgba(244, 242, 255, .58) 52%,
+    rgba(226, 222, 255, .16) 60%,
+    rgba(255, 255, 255, 0) 70%);
+}
+/* Und ein zweiter, viel schwächerer Streifen dicht daneben — so
+   spiegelt Glas wirklich: eine starke und eine schwache Kante. */
+.lc-tor-wasserwand .lc-tor-glanz {
+  background: linear-gradient(74deg,
+    rgba(255, 255, 255, 0) 34%,
+    rgba(210, 206, 240, .14) 46%,
+    rgba(232, 230, 255, .30) 50%,
+    rgba(210, 206, 240, .12) 54%,
+    rgba(255, 255, 255, 0) 66%);
+  animation-duration: 3.4s;
+}
+
+/* -----------------------------------------------------------------
+   RUNDE 71, VIERTER ANLAUF — DER SPIEGEL GEHÖRT AUF DIE FLÄCHE
+   Als eigene Schicht über dem Tor war der Streifen im Bild nicht
+   nachzuweisen: selbst mit einem VOLLFLÄCHIGEN weissen Hintergrund
+   (rgba(255,255,255,.8), Deckkraft .85, gemessen) blieb die hellste
+   Stelle innerhalb des Tors bei 39 von 255. Warum die Schicht nicht
+   durchschlägt, habe ich nicht herausgefunden — also wird sie nicht
+   weiter behauptet, sondern anders gebaut:
+   Der Spiegel ist jetzt eine WEITERE HINTERGRUNDLAGE der Wasser-
+   fläche selbst. Von der weiss ich aus derselben Messung, dass sie
+   zeichnet (ihr Verlauf ist im Bild zu sehen), und eine wandernde
+   background-position braucht kein eigenes Element.
+   ----------------------------------------------------------------- */
+.lc-tor-wasserwand .lc-tor-wasser {
+  background-image:
+    linear-gradient(74deg,
+      rgba(255, 255, 255, 0) 34%,
+      rgba(232, 228, 255, .22) 43%,
+      rgba(248, 246, 255, .70) 49%,
+      rgba(255, 255, 255, .88) 50%,
+      rgba(248, 246, 255, .66) 51%,
+      rgba(232, 228, 255, .20) 57%,
+      rgba(255, 255, 255, 0) 66%),
+    radial-gradient(ellipse at 50% 20%, rgba(126, 110, 180, .34), rgba(0, 0, 0, 0) 66%),
+    linear-gradient(to bottom, #2a2739 0%, #1a1826 48%, #0d0c14 100%);
+  background-size: 260% 260%, 100% 100%, 100% 100%;
+  background-repeat: no-repeat;
+  animation: lcTorSpiegelFlaecheR71 3.4s cubic-bezier(.45, 0, .55, 1) both;
+}
+@keyframes lcTorSpiegelFlaecheR71 {
+  0%   { background-position: 115% -15%, 50% 50%, 50% 50%; }
+  100% { background-position: -15% 115%, 50% 50%, 50% 50%; }
+}

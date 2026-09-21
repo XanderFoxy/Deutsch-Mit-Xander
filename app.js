@@ -31758,6 +31758,18 @@
      ================================================================= */
   const LC_JE_REIHE = 4;
 
+  /* RUNDE 71: wie weit liegt die Mitte des BILDES ueber der Mitte
+     des PLATZES? Der Platz ist hoeher als sein Bild, weil der Name
+     darunter steht — wer etwas „mittig auf den Platz" legt, legt es
+     sonst auf den Namen. */
+  function lcBildVersatz(platzEl) {
+    const kreis = platzEl && platzEl.querySelector(".lc-kreis");
+    if (!kreis) return 0;
+    const k = lcLayoutKasten(kreis), p = lcLayoutKasten(platzEl);
+    if (!k.height || !p.height) return 0;
+    return (k.top + k.height / 2) - (p.top + p.height / 2);
+  }
+
   function lcPlatzGitter() {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return [];
@@ -32307,9 +32319,13 @@
        einem Platz bleibt alles wie bisher, bei vier Plaetzen dauert
        sie das 1,84fache. Ueber vier hinaus waechst sie nicht weiter
        — sonst wartet man ewig. */
+    /* RUNDE 71: das Tor stand nicht in dieser Liste und bekam
+       deshalb die 1800 ms fuer alles Uebrige. XANDER wollte es aber
+       „so ganz langsam" — und in 1,8 s ist ein Spiegel, der einmal
+       durchs Bild zieht, gar nicht zu sehen. Jetzt 3,4 s. */
     const grund = { flug: 2600, maulwurf: 2200, boot: 2800, kran: 2800,
                   dampfer: 3000, lok: 3200, liane: 2200, feder: 2400,
-                  beamen: 2600, rohr: 2800, heli: 3000,
+                  beamen: 2600, rohr: 2800, heli: 3000, portal: 3400,
                   pferd: 3000, greifvogel: 3000, turm: 3400 }[art] || 1800;
     const einheitR = lcPlatzAbstand(document.getElementById("lcPlaetze")) || 0;
     const streckeR = Math.hypot(ende.x - start.x, ende.y - start.y);
@@ -33145,7 +33161,15 @@
          auf der Pruefbuehne liegt die Kartenkante nur 56 px ueber
          der Platzreihe — das ergaebe wieder einen Stummel. Es gilt
          also, was HOEHER liegt. */
-      const hochL = Math.min((kk.top - rk.top) - d * 0.25, -d * 1.6);
+      /* RUNDE 71 — XANDER: „geht die Liane immer ein bisschen ueber
+         den Bildrand hinaus."
+         Und zwar genau hier: der Aufhaengepunkt lag d*0,25 OBERHALB
+         der Kartenkante — also absichtlich ausserhalb. Jetzt haengt
+         sie von der Kante selbst (4 px darunter, damit der Knoten
+         nicht auf dem Rand klebt), und tiefer als 3,2 Bildhoehen
+         ueber der Reihe faengt sie gar nicht erst an. */
+      const kanteL = (kk.top - rk.top) + 4;
+      const hochL = Math.max(kanteL, -d * 3.2);
       const seilLang = Math.max(70, start.y - hochL);
       liane.style.setProperty("--seil", seilLang.toFixed(1) + "px");
       /* XANDER: „die Liane ist auch nicht realistisch."
@@ -33212,15 +33236,47 @@
       setzen(liane, start.x, start.y);
       const mitteL = { x: (start.x + ende.x) / 2, y: Math.max(8, Math.min(start.y, ende.y) - d * 0.45) };
       try {
+        /* RUNDE 71 — XANDER: „soll praktisch das Profilbild … ein
+           bisschen nach links schwingen um Anlauf zu bekommen … und
+           landet dann einfach mit einer weichen Ueberblendung."
+           Zwei Sachen fehlten:
+           · DER ANLAUF. Wer an einer Liane schwingt, geht erst ein
+             Stueck ZURUECK. Das sind hier 16 Prozent der Strecke, in
+             die Gegenrichtung des Ziels — also nach links, wenn es
+             nach rechts geht, und umgekehrt. Er sagt „nach links",
+             weil sein Ziel rechts lag; gerechnet wird die Richtung,
+             nicht die Seite.
+           · DAS LANDEN. Sie stand am Ziel still und wurde einfach
+             durchsichtig. Jetzt schwingt sie hinter dem Absprung
+             weiter und nach oben aus dem Bild — man laesst eine Liane
+             ja los, sie loest sich nicht auf.
+           „easing" bleibt hier bewusst weich: die Offsets sind
+           Bruchteile, keine gerechneten Millisekunden. */
+        const dxL = ende.x - start.x, dyL = ende.y - start.y;
+        const anlaufX = -dxL * 0.16, anlaufY = -Math.abs(dyL) * 0.16 - d * 0.10;
+        const wegX = dxL + dxL * 0.22, wegY = dyL - d * 0.9;
+        const vorL = Math.max(0.06, (hin * 0.16) / dauer);
         liane.animate([
-          { transform: "translate(-50%, -50%) rotate(-16deg)", opacity: 0, offset: 0 },
-          { transform: "translate(-50%, -50%) rotate(-16deg)", opacity: 1, offset: 0.1 },
-          { transform: "translate(" + (mitteL.x - start.x) + "px, " + (mitteL.y - start.y)
-            + "px) translate(-50%, -50%) rotate(0deg)", opacity: 1, offset: 0.5 },
-          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
-            + "px) translate(-50%, -50%) rotate(16deg)", opacity: 1, offset: hin / dauer },
-          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
-            + "px) translate(-50%, -50%) rotate(16deg)", opacity: 0, offset: 1 }
+          { transform: "translate(-50%, -50%) rotate(" + (dxL < 0 ? 14 : -14) + "deg)",
+            opacity: 0, offset: 0 },
+          { transform: "translate(-50%, -50%) rotate(" + (dxL < 0 ? 14 : -14) + "deg)",
+            opacity: 1, offset: 0.08 },
+          /* Anlauf: zurueck, und dabei staerker geneigt. */
+          { transform: "translate(" + anlaufX.toFixed(1) + "px, " + anlaufY.toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + (dxL < 0 ? 26 : -26) + "deg)",
+            opacity: 1, offset: vorL },
+          { transform: "translate(" + (mitteL.x - start.x).toFixed(1) + "px, "
+            + (mitteL.y - start.y).toFixed(1)
+            + "px) translate(-50%, -50%) rotate(0deg)", opacity: 1,
+            offset: Math.min(0.62, vorL + (hin * 0.42) / dauer) },
+          /* Angekommen — und hier wird losgelassen. */
+          { transform: "translate(" + dxL.toFixed(1) + "px, " + dyL.toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + (dxL < 0 ? -16 : 16) + "deg)",
+            opacity: 1, offset: hin / dauer },
+          /* Und sie schwingt weiter, nach oben aus dem Bild. */
+          { transform: "translate(" + wegX.toFixed(1) + "px, " + wegY.toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + (dxL < 0 ? -30 : 30) + "deg)",
+            opacity: 0, offset: 1 }
         ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       } catch (e) {}
       lcTonZu("liane");
@@ -33248,9 +33304,25 @@
         spruenge.push({
           transform: "translate(" + (x - start.x).toFixed(1) + "px, " + (y - start.y).toFixed(1)
             + "px) translate(-50%, -50%)",
+          /* RUNDE 71 — XANDER: „Bei der Feder … ist sie immer so
+             ausgeblendet von der Transparenz."
+             Er hat genau hingesehen. Der Grund ist eine Falle der
+             Web-Animations: steht eine Eigenschaft NUR im letzten
+             Bild, dann rechnet der Browser sie vom Ausgangswert an
+             ueber die GANZE Animation hoch. „opacity: 0" stand nur
+             ganz am Ende — also verblasste die Feder vom ersten
+             Sprung an gleichmaessig bis auf null. Dieselbe Falle war
+             schon einmal beim Sprungturm zu sehen.
+             Deshalb traegt jedes Bild jetzt „opacity: 1", und
+             verschwunden wird erst ganz zum Schluss. */
+          opacity: 1,
           offset: Math.min(1, (t * hin) / dauer)
         });
       }
+      /* Angekommen — und noch voll da. */
+      spruenge.push({ transform: "translate(" + (ende.x - start.x) + "px, "
+        + (ende.y - start.y) + "px) translate(-50%, -50%)", opacity: 1,
+        offset: Math.min(0.97, (hin + 180) / dauer) });
       spruenge.push({ transform: "translate(" + (ende.x - start.x) + "px, "
         + (ende.y - start.y) + "px) translate(-50%, -50%)", opacity: 0, offset: 1 });
       try { fed.animate(spruenge, { duration: dauer, easing: "linear", fill: "forwards" }); }
@@ -33573,9 +33645,19 @@
           + '<i class="lc-tor-welle lc-tor-welle-5"></i>'
           + '<i class="lc-tor-glanz"></i>'
           + "</i>"
-          + '<i class="lc-tor-saum"></i>' 
+          + '<i class="lc-tor-saum"></i>'
           + '<i class="lc-tor-plasma"></i>'
-          + '<i class="lc-tor-plasma lc-tor-plasma-2"></i>';
+          + '<i class="lc-tor-plasma lc-tor-plasma-2"></i>'
+          /* RUNDE 71 — XANDER: „es fehlen transparente Schichten …
+             Das ist mir auch zu blau das ist meistens eher so dunkel
+             und … schwarz mit Spiegeleffekten so ganz langsam."
+             Drei durchsichtige Scheiben uebereinander, jede mit ihrem
+             eigenen, sehr langsamen Gang. Genau daran sieht das Auge
+             Tiefe — eine einzelne Flaeche bleibt eine Scheibe. */
+          + '<i class="lc-tor-schicht"></i>'
+          + '<i class="lc-tor-schicht lc-tor-schicht-2"></i>'
+          + '<i class="lc-tor-schicht lc-tor-schicht-3"></i>'
+          + '<i class="lc-tor-spiegel"></i>';
         /* Die Tropfen springen ab — nicht gleichmaessig im Kreis und
            nicht zufaellig, sondern aus k gerechnet: so sieht es auf
            JEDEM Geraet gleich aus. Math.random stand hier vorher und
@@ -33592,7 +33674,14 @@
         tor.style.animationDelay = (i ? hin - 700 : 0) + "ms";
         reihe.appendChild(tor);
         weg.push(tor);
-        setzen(tor, wo.x, wo.y);
+        /* RUNDE 71 — XANDER: „Wenn man das Portal anwendet, dann
+           sitzt das nicht mittig auf einem Platz."
+           GEFUNDEN: lcPlatzGitter gibt die Mitte des GANZEN Platzes
+           zurueck — und dazu gehoert der NAME unter dem Bild. Das Tor
+           sass deshalb um den halben Namen zu tief. Der Versatz wird
+           gemessen, nicht geschaetzt: Mitte des Bildes minus Mitte
+           des Platzes. */
+        setzen(tor, wo.x, wo.y + lcBildVersatz(ab.el));
       });
       lcTonZu("portal");
     }
