@@ -130,8 +130,36 @@ const pruefe = (was, gut, zusatz) => {
     wk.da && wk.weg > wk.breite * 0.15,
     wk.da ? Math.round(wk.weg) + " px Ausschlag bei " + Math.round(wk.breite) + " px Bügel" : "-");
 
+  /* ---------- BILLARD ---------- */
+  console.log("\nDIE BILLARDKUGEL ROLLT ÜBER DAS FELD\n");
+  /* XANDER: „die Person immer in ihrem eigenen Platz verschwindet.
+     Sie soll ein bisschen durch das Feld rollen, an den Ecken so
+     abprallen." Auf der Prüfbühne ist JEDER Platz besetzt — das ist
+     genau der Fall, in dem vorher der Rückfall „weggestossen" griff
+     und das Bild auf der Stelle versank. Gemessen wird deshalb der
+     zurückgelegte Weg über die Zeit. */
+  const bi = await pg.evaluate(async (name) => {
+    document.querySelectorAll(".lc-billard").forEach((x) => x.remove());
+    const platz = document.querySelectorAll(".lc-platz")[1];
+    const kreis = platz.querySelector(".lc-kreis");
+    const heim = kreis.getBoundingClientRect().left;
+    window.DMA_PRUEFUNG.wirkung("billard", name);
+    const weg = [];
+    for (let t = 0; t < 32; t++) {
+      await new Promise((f) => setTimeout(f, 110));
+      weg.push(kreis.getBoundingClientRect().left - heim);
+    }
+    return { breit: kreis.getBoundingClientRect().width,
+             links: Math.min.apply(null, weg), rechts: Math.max.apply(null, weg) };
+  }, await nachbar());
+  pruefe("die Kugel rollt weit über den eigenen Platz hinaus",
+    bi.rechts > bi.breit * 1.2, Math.round(bi.rechts) + " px nach rechts bei "
+      + Math.round(bi.breit) + " px Bild");
+  pruefe("… und prallt ab, kommt also auch zurück",
+    bi.links < -bi.breit * 1.0, Math.round(bi.links) + " px nach links");
+
   await br.close(); srv.close();
   console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n"
-                     : "\nPaintball, Münze und Weckerklöppel sitzen.\n");
+                     : "\nPaintball, Münze, Weckerklöppel und Billard sitzen.\n");
   process.exit(fehler ? 1 : 0);
 })();

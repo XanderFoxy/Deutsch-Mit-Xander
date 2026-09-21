@@ -17154,3 +17154,67 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-roehre, .lc-grabloch { animation: none; opacity: 0; }
 }
+
+/* =================================================================
+   BILLARD — DIE KUGEL ROLLT ÜBER DAS FELD UND PRALLT AB
+   -----------------------------------------------------------------
+   XANDER: „außerdem funktioniert das ja temporär nicht richtig, weil
+   die Person immer in ihrem eigenen Platz verschwindet. Sie soll ein
+   bisschen durch das Feld rollen, an den Ecken so abprallen."
+
+   Vorher rückte das Bild 16 % zur Seite und kippte dann am eigenen
+   Platz ins Loch — es verließ seinen Platz nie. Jetzt läuft es quer
+   über die Sitzreihe, prallt zweimal an einer Bande ab (dabei kehrt
+   sich die Drehrichtung um, wie bei einer echten Kugel) und rollt
+   dann erst ins Loch. Die Prozente beziehen sich auf die Breite des
+   Bildes, ein Ausschlag von 190 % sind also fast zwei Plätze weit.
+   ================================================================= */
+.lc-gerollt {
+  animation: lcGerolltR38 3.6s cubic-bezier(.32, .06, .5, 1) both;
+}
+@keyframes lcGerolltR38 {
+  /* Der Queue holt aus — bis dahin liegt die Kugel still. */
+  0%, 22%  { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  /* Der Stoß: nach rechts bis an die Bande. */
+  38%      { transform: translate(190%, -6%) rotate(320deg) scale(1); opacity: 1; }
+  /* Abprall — zurück nach links, langsamer. */
+  56%      { transform: translate(-150%, 4%) rotate(-30deg) scale(1); opacity: 1; }
+  /* Zweiter Abprall, jetzt deutlich müder. */
+  70%      { transform: translate(72%, -2%) rotate(210deg) scale(1); opacity: 1; }
+  /* Und dann erst ins Loch: sie kippt hinein und wird kleiner. */
+  80%      { transform: translate(30%, 30%) rotate(260deg) scale(.62); opacity: 1; }
+  87%      { transform: translate(6%, 54%) rotate(300deg) scale(.2); opacity: .8; }
+  90%, 94% { transform: translate(0, 58%) rotate(310deg) scale(0); opacity: 0; }
+  /* Und sie kommt zurück auf ihren Platz — niemand bleibt im Loch. */
+  98%      { transform: translate(0, 0) rotate(0deg) scale(1.06); opacity: 1; }
+  100%     { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-gerollt { animation: none; }
+}
+
+/* --- DAS GEWINDE DREHT MIT ----------------------------------------
+   XANDER: „wenn man die Glühbirne dreht, dann soll sie sich natürlich
+   von links nach rechts rum drehen … Das muss von links nach rechts
+   mit der Fassung mit drehen."
+   Der Halter bleibt stehen (er hängt ja an der Decke), das Gewinde
+   dreht dieselben drei Umdrehungen wie das Bild darunter — nur gespie-
+   gelt in der Breite, weil ein Gewinde sich in der Aufsicht nicht
+   dreht, sondern wandert. Deshalb hier eine eigene Bewegung: die
+   Rillen laufen nach unten, wie beim Einschrauben. */
+.lc-birne-gewinde {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  animation: lcBirneGewindeR38 4s cubic-bezier(.2, .6, .2, 1) both;
+}
+@keyframes lcBirneGewindeR38 {
+  0%   { transform: translateY(-14%) scaleY(.7); }
+  22%  { transform: translateY(-9%)  scaleY(.8); }
+  40%  { transform: translateY(-5%)  scaleY(.88); }
+  54%  { transform: translateY(-2%)  scaleY(.96); }
+  /* Festgezogen — ab hier sitzt sie. */
+  58%, 100% { transform: translateY(0) scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-birne-gewinde { animation: none; }
+}

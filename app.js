@@ -23795,7 +23795,11 @@
        Kuegelchen schicken kann ... dann sollen die vielleicht auch so
        ein Ekelgeraeusch von sich geben." */
     pusterohr:      { ton: "spuckkugel", dauer: 4000, laut: 0.5 },
-    gluehbirne:     { ton: "kitt",     dauer: 4000, laut: 0.45 },  /* Glas in der Fassung */
+    /* XANDER: „da hoert man auch dieses realistische Quietschegeraeusch
+       beim drehen." Dafuer liegt „gluehbirne.opus" schon im Ordner —
+       aber der Plan zeigte auf „kitt", und der Plan hat das erste
+       Wort, also kam das eigene Geraeusch nie zum Zug. */
+    gluehbirne:     { ton: "gluehbirne", dauer: 4000, laut: 0.5 },
     /* „vielleicht besser so ein pfeifen, wie man ne Frau auf der
        Strasse nach pfeift." (ton/boing gab es ohnehin nie.) */
     entbloessung:   { ton: "pfiff",    dauer: 3000, laut: 0.5 },
@@ -31629,6 +31633,9 @@
       lcWurfSetzen(schicht, platz, 240);
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
+        /* Beim Billard rollt die Kugel ueber das Feld (siehe
+           lcBillard); hier bleibt nur das Kegeln, und dort faellt die
+           Kugel ja auch nicht quer durch die Bahn. */
         kreis.classList.remove("lc-weggestossen");
         void kreis.offsetWidth;
         kreis.classList.add("lc-weggestossen");
@@ -32442,14 +32449,25 @@
         kreis.classList.add("lc-eingedreht");
         setTimeout(() => kreis.classList.remove("lc-eingedreht"), 4000);
       }
-      /* Die Fassung sitzt oben auf dem Kopf — dort wird eingedreht. */
+      /* Die Fassung sitzt oben auf dem Kopf — dort wird eingedreht.
+         XANDER: „Das muss von links nach rechts mit der Fassung mit
+         drehen." Also sind es jetzt ZWEI Teile: der Halter bleibt
+         stehen (er haengt ja an der Decke), und das GEWINDE dreht
+         sich mit dem Bild mit — sonst sieht man dem Bild gar nicht
+         an, dass es eingeschraubt wird. */
       schicht.innerHTML =
         '<svg class="lc-birne-fassung" viewBox="0 0 60 44">'
         + '<rect x="12" y="2" width="36" height="10" rx="3" fill="#57606f"/>'
         + '<rect x="8" y="10" width="44" height="8" rx="3" fill="#8b93a3"/>'
-        + '<path d="M12 18 H48 M12 25 H48 M14 32 H46" stroke="#b9c1cf"'
-        + ' stroke-width="4" stroke-linecap="round"/>'
-        + "</svg>";
+        + '<g class="lc-birne-gewinde">'
+        + '<rect x="13" y="18" width="34" height="20" rx="3" fill="#8b93a3"/>'
+        + '<path d="M13 21 H47 M13 28 H47 M15 35 H45" stroke="#e2e7ef"'
+        + ' stroke-width="3.4" stroke-linecap="round"/>'
+        + "</g></svg>";
+      /* Der zweite Quietscher kommt genau dann, wenn sie in den
+         Kontakt einrastet — ein Gewinde quietscht beim Festziehen
+         noch einmal. */
+      lcTonSpaeter("quietschen", 2100, 0.45);
       const blende = lcZpBlende(schicht);
       blende.innerHTML = '<span class="lc-birne-schein"></span>'
                        + '<span class="lc-birne-wendel"></span>';
@@ -33295,7 +33313,20 @@
        Richtung" — enger waere bei acht Plaetzen fast nie erfuellt. */
     const vorn = kandidaten.filter((k) => k.mit > 0.35)
                            .sort((a, b) => (b.mit - a.mit) || (a.laenge - b.laenge));
-    const loch = vorn.length ? vorn[0].p : null;
+    /* XANDER: „die Person immer in ihrem eigenen Platz verschwindet.
+       Sie soll ein bisschen durch das Feld rollen, an den Ecken so
+       abprallen."
+       Nachgesehen, woran das lag: liegt KEIN freies Loch in
+       Stossrichtung (bei wenigen Leuten am Tisch ist das der
+       Normalfall), fiel der Getroffene in den Rueckfall „weggestossen"
+       — und der schiebt ihn nur 16 % zur Seite und laesst ihn am
+       eigenen Platz verschwinden. Genau das hat er gesehen.
+       Jetzt gilt: ist vorn nichts frei, nimmt die Kugel das naechste
+       freie Loch in IRGENDEINER Richtung — sie prallt eben ab. Erst
+       wenn gar kein Platz frei ist, greift der Rueckfall, und der
+       rollt dann wenigstens ueber das Feld statt auf der Stelle. */
+    const egalWo = kandidaten.slice().sort((a, b) => a.laenge - b.laenge);
+    const loch = vorn.length ? vorn[0].p : (egalWo.length ? egalWo[0].p : null);
     const kreis = zu.el.querySelector(".lc-kreis");
     if (!kreis) return false;
 
@@ -33334,11 +33365,19 @@
         return;
       }
       if (!loch) {
-        /* Kein Loch frei: dann wenigstens weggestossen. */
-        kreis.classList.remove("lc-weggestossen");
+        /* Gar kein Platz frei — dann rollt sie wenigstens ueber das
+           Feld und prallt an den Banden ab, statt auf der Stelle zu
+           kippen. „Sie soll ein bisschen durch das Feld rollen, an
+           den Ecken so abprallen." */
+        const altZ = platz.style.zIndex;
+        platz.style.zIndex = "8";
+        kreis.classList.remove("lc-gerollt");
         void kreis.offsetWidth;
-        kreis.classList.add("lc-weggestossen");
-        setTimeout(() => kreis.classList.remove("lc-weggestossen"), 2400);
+        kreis.classList.add("lc-gerollt");
+        setTimeout(() => {
+          kreis.classList.remove("lc-gerollt");
+          platz.style.zIndex = altZ;
+        }, 3600);
         return;
       }
       /* Zu zweit: der Getroffene rollt selbst ins Loch. */
