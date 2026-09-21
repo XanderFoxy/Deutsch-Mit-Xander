@@ -24324,7 +24324,16 @@
        „bowling.opus" rollte 1,6 s bei -38 dB, also kaum hoerbar.
        Die neue Aufnahme hat das tiefe Rollen und danach das Krachen
        der Kegel. */
-    bowling:        { ton: "bowling2", dauer: 6000, laut: 0.55 },
+    /* RUNDE 73 — XANDER: „Der Bowling-Sound hat so ein
+       Regal-Einsturz-Geraeusch und ist nicht synchron."
+       NACHGEMESSEN: „bowling2" ist 6,0 s lang, die Animation 2,4 s.
+       Bei 3,0 bis 3,4 s liegt ein zweiter, langer Scheppersatz — das
+       ist das Regal, und es klang 1,4 s nach dem Ende der Animation.
+       Jetzt deckelt der Plan bei 2,4 s, und der Ton faengt bei 0 an
+       (LC_TREFFER.bowling): 0 bis 1,4 s ist das Rollen, bei 1,4 s der
+       Schlag — genau dort, wo die Kugel jetzt ankommt (58 % von
+       2,4 s = 1392 ms). */
+    bowling:        { ton: "bowling2", dauer: 2400, laut: 0.6 },
     /* „das realistische Geraeusch vom Koe an die Kugel und wie das
        dann klingt, wenn es einlocht" — der Stoss hier, das Einlochen
        am Ende der Animation (siehe lcBillard). */
@@ -29269,8 +29278,18 @@
      und das Pferd landen. Wer ein eigenes Fahrgeraeusch hat, das die
      ganze Strecke traegt — Flugzeug, Boot, Dampfer, Lok, Tor, Beamen,
      Rohr, Maulwurf —, bekommt am Ende gar nichts mehr dazu. */
+  /* RUNDE 73 — XANDER: „Die Landung vom Helikopter klingt wie ein
+     Trommelschlag."
+     Sie tat es auch, und hier stand der Grund: der Hubschrauber
+     bekam „bonk" — EINEN dumpfen Schlag, 0,70 s, bei 0,0 s -13 dB
+     und danach nur noch Abfall. Genau so klingt eine Trommel.
+     Ein Hubschrauber setzt auf ZWEI Kufen auf, und nicht gleich-
+     zeitig: „helilanden" (selbst gebaut, also lizenzfrei) hat die
+     erste Kufe bei 0,00 s, die zweite bei 0,09 s, darauf das
+     Nachklingen der Streben und darunter den auslaufenden Rotor,
+     dessen Schlag langsamer wird. */
   const LC_ANKUNFT_TON = {
-    kran: "bonk", liane: "bonk", feder: "bonk", heli: "bonk", pferd: "bonk"
+    kran: "bonk", liane: "bonk", feder: "bonk", heli: "helilanden", pferd: "bonk"
   };
 
   const LC_TREFFER = {
@@ -29312,7 +29331,10 @@
        alten 540 ms stammten noch von der 1,8-s-Fassung und kamen
        damit 190 ms zu frueh. */
     ohrfeige: 730,
-    bowling: 760,
+    /* RUNDE 73: 0 statt 760. Die Datei bringt ihr eigenes Rollen
+       mit (0 bis 1,4 s, -24 dB); wer sie spaeter startet, schneidet
+       genau das weg und laesst den Schlag zu spaet kommen. */
+    bowling: 0,
     billard: 760,
     /* RUNDE 72 — NACHGERECHNET, und es war wieder die Kurve ueber die
        ganze Animation: auf lcGetennist und lcTennisSchlag liegt ein
@@ -33002,23 +33024,38 @@
       /* Ein Fluegel, einmal beschrieben, zweimal gezeichnet. Die
          Schwungfedern sind die Zacken an der Hinterkante — daran
          erkennt man einen Greifvogel im Flug. */
-      const flg = "M70 30 C58 12 36 0 10 4 C18 12 22 18 24 24"
-        + " C30 22 34 24 36 29 C42 26 46 28 48 32"
-        + " C54 30 60 32 63 36 C67 35 69 33 70 30 Z";
+      /* RUNDE 73 — XANDER: „Bei dem Vogel sehen die Fluegel so aus,
+         als waeren sie am Hintern angewachsen."
+         NACHGEMESSEN an der Zeichnung: der Rumpf laeuft von x=58
+         (Schwanzansatz) bis x=122 (Halsansatz), der Schnabel sitzt
+         bei x=134 — der Vogel schaut also nach RECHTS. Die
+         Fluegelwurzel stand bei x=70. Das sind 12 von 64 Einheiten
+         vom Schwanzende her, also im hinteren Fuenftel: die Fluegel
+         SASSEN wirklich am Hinterteil.
+         Bei einem Vogel sitzt die Schulter dicht hinter dem Hals,
+         etwa ein Drittel von vorn — hier x=96. Der ganze Umriss ist
+         deshalb um 26 Einheiten nach vorn und 2 nach oben gerueckt;
+         die Form selbst bleibt Strich fuer Strich dieselbe, damit
+         die Schwungfedern nicht verlorengehen. Der Drehpunkt wandert
+         mit (siehe transform-origin weiter unten), sonst schlaegt
+         der Fluegel um einen Punkt, an dem er gar nicht haengt. */
+      const flg = "M96 28 C84 10 62 -2 36 2 C44 10 48 16 50 22"
+        + " C56 20 60 22 62 27 C68 24 72 26 74 30"
+        + " C80 28 86 30 89 34 C93 33 95 31 96 28 Z";
       /* NACHGESEHEN auf dem Foto bei 1800 ms: beide Fluegel lagen
          uebereinander und ergaben EINEN braunen Klumpen. Ein Fluegel,
          der weiter weg ist, ist aber KUERZER zu sehen — er ist
          verkuerzt. Deshalb derselbe Umriss, um 0,78 zur Schulter hin
          geschrumpft. So schaut er hinter dem nahen hervor, statt ihn
          zu verdoppeln. */
-      const flgFern = "M70 30 C60.6 16 43.5 6.6 23.2 9.7 C29.4 16 32.6 20.6 34.1 25.3"
-        + " C38.8 23.8 41.9 25.3 43.5 29.2 C48.2 26.9 51.3 28.4 52.8 31.6"
-        + " C57.5 30 62.2 31.6 64.5 34.7 C67.7 33.9 69.2 32.3 70 30 Z";
+      const flgFern = "M96 28 C86.6 14 69.5 4.6 49.2 7.7 C55.4 14 58.6 18.6 60.1 23.3"
+        + " C64.8 21.8 67.9 23.3 69.5 27.2 C74.2 24.9 77.3 26.4 78.8 29.6"
+        + " C83.5 28 88.2 29.6 90.5 32.7 C93.7 31.9 95.2 30.3 96 28 Z";
       greif.innerHTML =
         '<svg class="lc-greif-form" viewBox="0 0 140 111" aria-hidden="true">'
         /* Der FERNE Fluegel liegt hinter dem Koerper. */
         + '<g class="lc-greif-fluegel lc-greif-fluegel-fern"'
-        + ' style="transform-origin:70px 30px"><path d="' + flgFern + '"/></g>'
+        + ' style="transform-origin:96px 28px"><path d="' + flgFern + '"/></g>'
         + '<g class="lc-greif-koerper">'
         /* Schwanz: gefaechert, mit drei Federkerben. */
         + '<path class="lc-greif-schwanz" d="M62 34 L14 26 L12 34 L16 42 L62 42 Z"/>'
@@ -33059,7 +33096,7 @@
         + "</g>"
         /* Der NAHE Fluegel liegt vor dem Koerper. */
         + '<g class="lc-greif-fluegel lc-greif-fluegel-nah"'
-        + ' style="transform-origin:70px 30px"><path d="' + flg + '"/></g>'
+        + ' style="transform-origin:96px 28px"><path d="' + flg + '"/></g>'
         + "</svg>"
         + '<span class="lc-greif-beute"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
@@ -33710,6 +33747,18 @@
          Ende, 2,45 s). Es kommt beim ABLEGEN — dort pfeift ein
          Dampfer, nicht mittendrin. */
       lcTonSpaeter("dampferpfiff", 180, 0.55);
+      /* RUNDE 73 — XANDER fragt nach: „Hast du bei dem Raddampfer
+         schon das typische Extra gemacht? Vielleicht so eine
+         Dixie-Melodie."
+         Ja, die Pfeife — aber eine Melodie fehlte. Zum Mississippi-
+         Raddampfer gehoert die CALLIOPE, eine Orgel, die mit Dampf
+         gespielt wird: harte Pfeifen, kraeftiges Vibrato und immer
+         ein Zischen dabei. „dampferdixie" ist genau das, selbst
+         gebaut (also lizenzfrei) und ein eigener, munterer Lauf in
+         G-Dur, kein fremdes Stueck: 3,30 s, ab 520 ms — also NACH
+         der Pfeife, die bei 180 ms anfaengt und 2,45 s dauert,
+         leiser als die Maschine, weil sie darunter weiterlaeuft. */
+      lcTonSpaeter("dampferdixie", 520, 0.40);
     } else if (art === "kran") {
       /* GEWUENSCHT: „oder dass man einen Baustellenkran hat, der
          einen dann dahin hebt." Das Bild haengt am Seil: hoch,
@@ -34381,8 +34430,17 @@
         + '<path class="lc-pferd-schweif" d="M40 44 Q20 44 12 62 Q10 72 16 78'
         + ' Q16 66 24 58 Q32 50 42 50 Z"/>'
         /* --- DER RUMPF: Brust vorn hoch, Kruppe hinten rund --- */
-        + '<path class="lc-pferd-rumpf" d="M38 48 Q36 34 54 31 L88 31'
-        + ' Q104 33 108 46 Q110 58 96 64 L56 64 Q38 62 38 48 Z"/>'
+        /* RUNDE 73 — XANDER: „und das Hinterteil soll nicht so
+           wurstig sein."
+           GEMESSEN: die Kruppe (links, denn der Kopf steht rechts)
+           lief von x=38 bis x=56 als EIN runder Bogen mit gleichem
+           Radius oben wie unten — daher der Wurstzipfel. Bei einem
+           Pferd faellt die Kruppe von oben schraeg nach hinten ab,
+           und darunter zieht sich die Hinterhand ein. Jetzt genau
+           das: oben ein flacher Abfall (38|44 statt 38|48), unten
+           eine Einziehung bei 46|60. Der Rest bleibt unangetastet. */
+        + '<path class="lc-pferd-rumpf" d="M40 44 Q40 33 56 31 L88 31'
+        + ' Q104 33 108 46 Q110 58 96 64 L58 64 Q46 62 41 55 Q38 50 40 44 Z"/>'
         /* Die Schulter- und Flankenlinie — ohne sie ist es ein Sack. */
         + '<path class="lc-pferd-linie" d="M58 33 Q54 48 58 62 M90 34 Q96 48 92 63"/>'
         /* --- HALS UND KOPF --- */
@@ -34405,8 +34463,16 @@
            die vorher fehlten: die Nuesternfalte, ein Lidstrich ueber
            dem Auge, die Backenlinie (Ganasche) und eine helle
            Blesse ueber dem Nasenruecken. */
-        + '<path class="lc-pferd-blesse" d="M118 11 Q125 9 131 13 Q133 17 132 22'
-        + ' Q127 17 119 14 Z"/>'
+        /* RUNDE 73 — XANDER: „Bei dem Pferd soll die Blesse an der
+           Nase duenner sein."
+           GEMESSEN: sie war an der breitesten Stelle gut 6 Einheiten
+           breit, bei einem Nasenruecken von rund 9 — also zwei
+           Drittel des Gesichts. Eine Blesse ist ein SCHMALER Streifen
+           ueber dem Nasenbein, rund ein Drittel davon. Jetzt 2,4
+           Einheiten, und sie laeuft nach unten spitz aus, wie eine
+           echte Blesse es tut. */
+        + '<path class="lc-pferd-blesse" d="M119.4 11.4 Q124 10.2 128.4 12.8'
+        + ' Q130.6 16.4 130.2 20.6 Q129 17.6 126.6 15.6 Q123.2 13.4 120 13 Z"/>'
         + '<path class="lc-pferd-zug" d="M112 19 Q117 22 124 23 M128 24 Q131 25 133 24'
         + ' M115 12.5 Q118 10.6 121.6 11"/>'
         /* --- DIE BEINE DER NAHEN SEITE --- */
@@ -34666,7 +34732,13 @@
           const st = document.createElement("b");
           st.className = "lc-tor-tropfen";
           st.style.setProperty("--wo", (k * 25.7 + (k % 3) * 9).toFixed(1) + "deg");
-          st.style.setProperty("--weit", (108 + ((k * 37) % 46)) + "%");
+          /* RUNDE 73 — NACHGEMESSEN: „--weit" steht in einem
+             `transform`, und Prozente beziehen sich dort auf die
+             EIGENE Hoehe des Tropfens. Die ist 9 % von 116 px, also
+             10 px — bei 108 % flog er ganze 11 px weit und blieb
+             mitten im Tor haengen. Bis an den Rand sind es 58 px,
+             also rund 580 %. */
+          st.style.setProperty("--weit", (480 + ((k * 37) % 46) * 5) + "%");
           st.style.setProperty("--klein", (0.5 + ((k * 13) % 9) / 12).toFixed(2));
           st.style.animationDelay = ((k * 97) % 1100) + "ms";
           tor.appendChild(st);
@@ -36547,7 +36619,16 @@
         + '</span>');
       /* Und die vier Geigenstiche, genau wenn es dunkel ist
          (1748 ms = 28,2 % von 6,2 s). */
-      lcTonSpaeter("geigenstich", 1780, 0.62);
+      /* RUNDE 73 — XANDER: „Die Geigen-Horror-Sache soll langsamer
+         sein, wie ein Streichquartett."
+         NACHGEMESSEN: „geigenstich" setzt vier Stiche in 1,10 s,
+         also alle 0,30 s — das ist ein Hacken, kein Quartett.
+         „geigenquartett" ist dieselbe Aufnahme auf 55 % Tempo, dazu
+         zwei tiefere Lagen (eine Quinte und eine Oktave darunter,
+         beide in der Laenge zurueckgerechnet): vier Stiche in 4,11 s,
+         also alle 1,1 s, und mit Unterstimmen. Bei 1780 ms gestartet
+         endet er bei 5890 ms — die Animation laeuft 6200 ms. */
+      lcTonSpaeter("geigenquartett", 1780, 0.62);
     }, 6200, "lichtaus");
   }
 

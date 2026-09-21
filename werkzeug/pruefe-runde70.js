@@ -102,8 +102,17 @@ pruefe("Strudel: eine Aufnahme, die durchdreht",
   /strudel:\s+\{ ton: "strudel4", dauer: 11000, schleife: true, laut: 0\.55 \}/.test(js));
 pruefe("Muenze: drehen, eiern, liegenbleiben",
   /muenze:\s+\{ ton: "muenze2",\s+dauer: 5500, laut: 0\.55 \}/.test(js));
-pruefe("Bowling: Rollen und Kegel",
-  /bowling:\s+\{ ton: "bowling2", dauer: 6000, laut: 0\.55 \}/.test(js));
+/* RUNDE 73 — XANDER: „Der Bowling-Sound hat so ein
+   Regal-Einsturz-Geraeusch und ist nicht synchron."
+   NACHGEMESSEN: die Datei ist 6,0 s lang, die Animation 2,4 s, und
+   bei 3,0 bis 3,4 s liegt ein zweiter, langer Scheppersatz — das
+   Regal. Es klang 1,4 s nachdem alles vorbei war. Der Plan deckelt
+   jetzt bei 2,4 s, und der Ton faengt bei 0 an (LC_TREFFER), damit
+   das Rollen (0 bis 1,4 s) mitlaeuft und der Schlag bei 1,4 s
+   genau auf den Treffer faellt. */
+pruefe("Bowling: Rollen und Kegel, aber kein Regal mehr",
+  /bowling:\s+\{ ton: "bowling2", dauer: 2400, laut: 0\.6 \}/.test(js)
+  && /bowling: 0,/.test(js));
 /* EHRLICH GEBLIEBEN: die Aufnahme mit Schwung UND Treffer hatte
    GEMESSEN nur den Treffer (Spitze bei 80 ms, davor nichts). Sie ist
    geloescht. Der Treffer bleibt „hammerbonk" auf 300 ms, das Ausholen
@@ -147,8 +156,13 @@ pruefe("Turm: die Leiter ist zu hoeren",
 console.log("\nDER LICHTSCHALTER");
 pruefe("der Plan traegt wieder das Klacken",
   /lichtaus:\s+\{ ton: "lichtschalter", dauer: 6200, laut: 0\.7 \}/.test(js));
-pruefe("die vier Geigenstiche kommen in der Dunkelheit",
-  /lcTonSpaeter\("geigenstich", 1780, 0\.62\)/.test(js));
+/* RUNDE 73 — XANDER: „Die Geigen-Horror-Sache soll langsamer sein,
+   wie ein Streichquartett." GEMESSEN: „geigenstich" setzt vier
+   Stiche in 1,10 s, also alle 0,30 s. „geigenquartett" ist dieselbe
+   Aufnahme auf 55 % Tempo mit zwei tieferen Lagen: vier Stiche in
+   4,11 s, also alle 1,1 s. */
+pruefe("die vier Geigenstiche kommen langsam in der Dunkelheit",
+  /lcTonSpaeter\("geigenquartett", 1780, 0\.62\)/.test(js));
 pruefe("die Wirkung dauert 6,2 s", /\}, 6200, "lichtaus"\);/.test(js));
 pruefe("und die Dunkelheit haelt bis 88 %",
   /88%\s+\{ filter: brightness\(\.05\); \}/.test(css)

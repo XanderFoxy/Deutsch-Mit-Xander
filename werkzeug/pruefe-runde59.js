@@ -147,9 +147,14 @@ const pruefe = (was, gut, zusatz) => {
      Stiche (geschnitten, Spitzen bei 0,00/0,30/0,60/0,90 s). */
   pruefe("der Schalter klackt", wann(li, "lichtschalter") >= 0,
     wann(li, "lichtschalter") + " ms");
+  /* RUNDE 73 — XANDER: „Die Geigen-Horror-Sache soll langsamer sein,
+     wie ein Streichquartett." Gemessen setzte „geigenstich" vier
+     Stiche in 1,10 s, also alle 0,30 s — ein Hacken. „geigenquartett"
+     ist dieselbe Aufnahme auf 55 % Tempo mit zwei tieferen Lagen:
+     vier Stiche in 4,11 s. */
   pruefe("und die vier Geigenstiche kommen danach",
-    wann(li, "geigenstich") > wann(li, "lichtschalter"),
-    wann(li, "geigenstich") + " ms");
+    wann(li, "geigenquartett") > wann(li, "lichtschalter"),
+    wann(li, "geigenquartett") + " ms");
 
   console.log("\nDIE SPRUNGFEDER KLINGT BEI JEDEM AUFSETZEN\n");
   await pg.evaluate(() => {

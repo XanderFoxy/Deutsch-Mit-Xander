@@ -60,7 +60,13 @@ const pruefe = (was, gut, zusatz) => {
     const a = winkel();
     await new Promise((f) => setTimeout(f, 300));   /* 600 ms */
     const b = winkel();
-    await new Promise((f) => setTimeout(f, 500));   /* 1100 ms */
+    /* RUNDE 73: der Kegel kippt jetzt bei 1392 ms, nicht mehr bei
+       768 ms. XANDER: „Der Bowling-Sound ist nicht synchron" —
+       nachgerechnet kippte der Kegel wegen einer Kurve ueber die
+       ganze Animation erst 850 ms NACH dem Ball. Jetzt treffen
+       beide bei 58 % von 2,4 s zusammen, und der Ton hat seinen
+       Schlag bei 1,4 s. Also wird bei 1700 ms nachgesehen. */
+    await new Promise((f) => setTimeout(f, 1100));  /* 1700 ms */
     const c = winkel();
     const kugel = ziel.querySelector(".lc-stoss-bowling");
     return { a: a, b: b, c: c,
@@ -72,9 +78,9 @@ const pruefe = (was, gut, zusatz) => {
     kegel.a && kegel.a.sicht > 0.9, kegel.a ? "Deckkraft " + kegel.a.sicht : "nicht da");
   pruefe("und sie stehen noch aufrecht",
     kegel.b && kegel.b.dreh < 5, kegel.b ? kegel.b.dreh.toFixed(1) + "° bei 600 ms" : "-");
-  /* Die Kugel trifft bei 768 ms. */
-  pruefe("bei 1100 ms sind sie umgefallen — nach dem Einschlag",
-    kegel.c && kegel.c.dreh > 30, kegel.c ? kegel.c.dreh.toFixed(1) + "° bei 1100 ms" : "-");
+  /* Die Kugel trifft jetzt bei 1392 ms (58 % von 2,4 s). */
+  pruefe("bei 1700 ms sind sie umgefallen — nach dem Einschlag",
+    kegel.c && kegel.c.dreh > 30, kegel.c ? kegel.c.dreh.toFixed(1) + "° bei 1700 ms" : "-");
 
   console.log("\nUND DER BALL KOMMT VON MEINEM PLATZ\n");
   const weiten = await pg.evaluate(async () => {

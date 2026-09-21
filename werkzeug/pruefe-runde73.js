@@ -208,5 +208,41 @@ pruefe("und der Schrei kommt NACH dem Einschlag",
 pruefe("der Hammer hat den Amboss-Klang",
   /lcTonSpaeter\("hammerschlag", 300, 0\.45\);/.test(js));
 
+
+console.log("\nTEIL 4 — TOR, BOWLING, HELI, DAMPFER, GEIGEN, VOGEL, PFERD\n");
+pruefe("das Tor hat keine Nudelholz-Ringe mehr",
+  /\.lc-tor-wasserwand \.lc-tor-welle \{ display: none; \}/.test(css));
+pruefe("und dafuer einen Trichter, der Tiefe macht",
+  /@keyframes lcTorTrichterR73/.test(css));
+pruefe("die Kruemel oben links sind weg — die Tropfen stehen am Rand",
+  /\.lc-tor-wirbel \.lc-tor-tropfen \{[\s\S]{0,120}?left: 50%;/.test(css)
+  && /\(480 \+ \(\(k \* 37\) % 46\) \* 5\)/.test(js));
+pruefe("die Bowlingkugel trifft, wenn es im Ton kracht",
+  /@keyframes lcBowlingRolltR73/.test(css)
+  && /58%  \{ transform: translate\(0, 0\) scale\(1\) rotate\(520deg\); \}/.test(css)
+  && /bowling: 0,/.test(js));
+pruefe("und der Kegel kippt danach, nicht 850 ms spaeter",
+  /@keyframes lcBowlingKegelR73/.test(css)
+  && /58%  \{ opacity: 1; transform: rotate\(0deg\) translateY\(0\); \}/.test(css));
+pruefe("das Regal stuerzt nicht mehr ein — der Ton ist gedeckelt",
+  /bowling:        \{ ton: "bowling2", dauer: 2400/.test(js));
+pruefe("der Helikopter landet nicht mehr wie eine Trommel",
+  ton("helilanden") && gelistet("helilanden")
+  && /heli: "helilanden"/.test(js));
+pruefe("der Raddampfer hat seine Dampforgel",
+  ton("dampferdixie") && gelistet("dampferdixie")
+  && /lcTonSpaeter\("dampferdixie", 520, 0\.40\);/.test(js));
+pruefe("die Geigen spielen langsam wie ein Quartett",
+  ton("geigenquartett") && gelistet("geigenquartett")
+  && /lcTonSpaeter\("geigenquartett", 1780, 0\.62\);/.test(js));
+pruefe("die Fluegel sitzen an der Schulter, nicht am Hinterteil",
+  /const flg = "M96 28/.test(js)
+  && /transform-origin:96px 28px/.test(js)
+  && !/transform-origin:70px 30px/.test(js));
+pruefe("die Blesse ist ein schmaler Streifen",
+  /M119\.4 11\.4 Q124 10\.2 128\.4 12\.8/.test(js));
+pruefe("und die Kruppe faellt ab, statt eine Wurst zu sein",
+  /M40 44 Q40 33 56 31 L88 31/.test(js));
+
 console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 73 sitzt.\n");
 process.exit(fehler ? 1 : 0);

@@ -23031,3 +23031,143 @@ body.lc-schreibt .tutor-reiter {
   100% { opacity: 0; transform: rotate(34deg); }
 }
 .lc-trommel .lc-trommel-welle { animation-duration: 1.4s; }
+
+/* =================================================================
+   RUNDE 73 — DAS TOR: KEINE NUDELHOLZ-ROLLE, KEINE KRÜMEL
+   -----------------------------------------------------------------
+   XANDER: „Das Tor hat immer noch diese Tapetenrolle … es fehlt der
+   realistische Spiegel und die Tiefe … und oben links ist noch so
+   ein Krümel."
+
+   ZWEI FEHLER, beide nachgemessen, keiner Geschmackssache.
+
+   1. DIE KRÜMEL. Gemessen am Bildschirm: das Tor ist 116 × 116 px,
+      seine Mitte liegt bei (0|0) — und ALLE VIERZEHN Tropfen standen
+      zwischen (-50|-51) und (-66|-68), also in einem Häufchen von
+      16 × 17 px in der linken oberen ECKE. Genau das ist der Krümel.
+      GRUND: `.lc-tor-wirbel > b` setzt `inset: 0`, und diese Regel
+      ist mit (0,1,1) stärker als `.lc-tor-tropfen` mit (0,1,0) —
+      `left: 50%; top: 50%` kam also nie an, und die Tropfen klebten
+      auf 0|0. Hier steht die Regel mit zwei Klassen, damit sie
+      gewinnt.
+      Dazu: `--weit` wird in einem `transform` an der EIGENEN Höhe
+      gemessen. Die ist 9 % von 116 px, also 10 px — bei 108 % flog
+      ein Tropfen ganze 11 px weit. Bis an den Rand sind es 58 px,
+      also braucht er rund 580 %.
+
+   2. DIE ROLLE. Fünf harte Ringe mit 3 px weisser Kante, die aus der
+      Mitte nach aussen laufen — von vorn gesehen sind das
+      konzentrische Streifen, und genau so sieht ein zusammen-
+      gerolltes Nudelholz aus. Wasserringe ergeben in einer
+      STEHENDEN Fläche ohnehin keinen Sinn; sie sind weg.
+      Was bleibt, ist das, was Xander wollte: ein schwarzer Spiegel
+      mit Tiefe. Die Tiefe kommt aus einem Trichter (innen dunkler
+      als aussen, und die Dunkelheit wandert), der Spiegel aus dem
+      Streifen, der einmal durchzieht.
+   ================================================================= */
+.lc-tor-wasserwand .lc-tor-welle { display: none; }
+.lc-tor-wirbel .lc-tor-tropfen {
+  left: 50%;
+  top: 50%;
+  right: auto;
+  bottom: auto;
+}
+/* Der Trichter: innen fast schwarz, zum Rand hin heller. Er atmet
+   ganz langsam — daran sieht das Auge, dass da etwas dahinter ist
+   und nicht nur eine Scheibe. */
+.lc-tor-wasserwand .lc-tor-wasser::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 54%,
+      rgba(0, 0, 0, .96) 0 12%,
+      rgba(4, 3, 10, .82) 26%,
+      rgba(10, 8, 22, .46) 44%,
+      rgba(20, 16, 40, .12) 66%,
+      rgba(0, 0, 0, 0) 84%);
+  animation: lcTorTrichterR73 5.2s ease-in-out infinite;
+}
+@keyframes lcTorTrichterR73 {
+  0%, 100% { transform: scale(1)    translate(0, 0); }
+  34%      { transform: scale(.86)  translate(2.5%, -2%); }
+  67%      { transform: scale(1.09) translate(-2%, 2.5%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-tor-wasserwand .lc-tor-wasser::after { animation: none; }
+}
+
+/* =================================================================
+   RUNDE 73 — BOWLING: DER KNALL FÄLLT AUF DEN KEGEL
+   -----------------------------------------------------------------
+   XANDER: „Der Bowling-Sound hat so ein Regal-Einsturz-Geräusch und
+   ist nicht synchron."
+
+   DREI MESSUNGEN, und alle drei geben ihm recht.
+
+   1. Über `.lc-stoss-kugel` lag `cubic-bezier(.3, 0, .25, 1)` für die
+      GANZE Animation. Im Kommentar steht „32 % = 0,77 s: da trifft
+      sie" — nachgerechnet trifft sie bei dieser Kurve schon nach
+      605 ms.
+   2. Über `.lc-kegel` lag `cubic-bezier(.3, 0, .4, 1)` plus 0,78 s
+      Verzögerung. Der Kegel kippt damit bei 1455 ms — also 850 ms
+      NACH dem Ball. Man sieht die Kugel treffen, und erst eine
+      knappe Sekunde später fällt etwas um.
+   3. Die Tondatei „bowling2" ist 6,0 s lang, die Animation 2,4 s.
+      Bei 3,0 bis 3,4 s liegt ein zweiter, langer Scheppersatz — das
+      ist das Regal, das einstürzt, und es klang 1,4 s nachdem alles
+      vorbei war. Der Plan deckelt jetzt bei 2,4 s.
+
+   Jetzt läuft alles linear auf EINER Zeitachse von 2,4 s:
+     0,00 - 1,39 s  die Kugel rollt (im Ton das Rollen, -24 dB)
+     1,39 s         SIE TRIFFT — im Ton der Schlag bei 1,4 s, -9 dB
+     1,39 - 1,58 s  die Kegel kippen
+     1,58 - 2,40 s  sie liegen, der Ton scheppert aus
+   ================================================================= */
+.lc-bowling .lc-stoss-kugel { animation: lcBowlingRolltR73 2.4s linear both; }
+@keyframes lcBowlingRolltR73 {
+  0%   { opacity: 0; transform: translate(var(--wx, 240%), var(--wy, 0%)) scale(.6) rotate(0deg); }
+  6%   { opacity: 1; transform: translate(calc(var(--wx, 240%) * .94), calc(var(--wy, 0%) * .94)) scale(.63) rotate(46deg); }
+  /* Die Abstände werden kleiner: die Kugel wird langsamer, je näher
+     sie kommt. Das steht jetzt in den WERTEN, nicht in einer Kurve. */
+  16%  { transform: translate(calc(var(--wx, 240%) * .78), calc(var(--wy, 0%) * .78)) scale(.7)  rotate(150deg); }
+  28%  { transform: translate(calc(var(--wx, 240%) * .58), calc(var(--wy, 0%) * .58)) scale(.78) rotate(270deg); }
+  40%  { transform: translate(calc(var(--wx, 240%) * .40), calc(var(--wy, 0%) * .40)) scale(.86) rotate(370deg); }
+  50%  { transform: translate(calc(var(--wx, 240%) * .24), calc(var(--wy, 0%) * .24)) scale(.93) rotate(450deg); }
+  /* 58 % von 2,4 s = 1392 ms: DER TREFFER. */
+  58%  { transform: translate(0, 0) scale(1) rotate(520deg); }
+  62%  { transform: translate(-8%, 0) scale(1) rotate(548deg); }
+  /* Und sie rollt weiter durch, langsamer werdend. */
+  74%  { opacity: 1; transform: translate(calc(var(--wx, 240%) * .34), calc(var(--wy, 0%) * .34)) scale(.9)  rotate(760deg); }
+  88%  { opacity: 1; transform: translate(calc(var(--wx, 240%) * .72), calc(var(--wy, 0%) * .72)) scale(.74) rotate(980deg); }
+  100% { opacity: 0; transform: translate(var(--wx, 240%), var(--wy, 0%)) scale(.6) rotate(1120deg); }
+}
+/* Die Kegel stehen von Anfang an da — sonst poppen sie im Weg der
+   Kugel auf — und kippen GENAU dann, wenn sie getroffen werden. */
+.lc-bowling .lc-kegel {
+  animation: lcBowlingKegelR73 2.4s linear both;
+  animation-delay: 0s;
+}
+@keyframes lcBowlingKegelR73 {
+  0%   { opacity: 0; transform: rotate(0deg) translateY(20%); }
+  5%   { opacity: 1; transform: rotate(0deg) translateY(0); }
+  /* Stehen, bis die Kugel da ist. */
+  58%  { opacity: 1; transform: rotate(0deg) translateY(0); }
+  /* Anstossen, dann umfallen — das Kippen wird schneller, wie es
+     die Schwerkraft macht. */
+  60%  { transform: rotate(calc(var(--kippt, 60deg) * .18)) translateY(0); }
+  63%  { transform: rotate(calc(var(--kippt, 60deg) * .52)) translateY(0); }
+  66%  { transform: rotate(var(--kippt, 60deg)) translateY(0); }
+  /* Ein kleiner Nachschlag auf dem Boden. */
+  69%  { transform: rotate(calc(var(--kippt, 60deg) * .92)) translateY(0); }
+  72%  { transform: rotate(var(--kippt, 60deg)) translateY(0); }
+  88%  { opacity: 1; transform: rotate(var(--kippt, 60deg)) translateY(0); }
+  100% { opacity: 0; transform: rotate(var(--kippt, 60deg)) translateY(10%); }
+}
+/* Die drei Kegel kippen kurz nacheinander — aber in Millisekunden,
+   die zur Kugel passen, nicht in einer halben Sekunde. */
+.lc-bowling .lc-kegel-1 { animation-delay: 0s; }
+.lc-bowling .lc-kegel-2 { animation-delay: .05s; }
+.lc-bowling .lc-kegel-3 { animation-delay: .1s; }

@@ -129,8 +129,16 @@ console.log("\nDAS PFERD IST EIN PONY GEWORDEN");
    ganz so lang gestreckt haben." Das Pony ist weg, das Pferd aus
    Runde 65 ist zurueck — nur kuerzer im Rumpf und mit ein paar
    Zuegen im Gesicht. Es liegt zusaetzlich im Backup. */
-pruefe("das alte Pferd ist zurueck, nur der Rumpf ist kuerzer",
-  /lc-pferd-rumpf" d="M38 48 Q36 34 54 31 L88 31/.test(js)
+/* RUNDE 73 — XANDER: „Beim Pferd soll das Hinterteil nicht so
+   wurstig sein." GEMESSEN: die Kruppe lief von x=38 bis x=56 als EIN
+   runder Bogen mit gleichem Radius oben wie unten — daher der
+   Wurstzipfel. Jetzt faellt sie von oben schraeg ab (38|48 wird
+   40|44) und zieht sich unten ein (Zusatzpunkt 41|55). Alles
+   andere am Pferd aus Runde 65 bleibt Strich fuer Strich stehen;
+   die Regel prueft das an den Hinterbeinen mit. */
+pruefe("das alte Pferd ist zurueck, Rumpf kuerzer und Kruppe schraeg",
+  /lc-pferd-rumpf" d="M40 44 Q40 33 56 31 L88 31/.test(js)
+  && /Q46 62 41 55 Q38 50 40 44 Z/.test(js)
   && /d="M60 64 L54 76 L60 86 L57 94"/.test(js)
   && !/d="M40 56 Q38 42 58 39 L94 39/.test(js));
 pruefe("Hals und Kopf sind um dieselben 10 Einheiten mitgerueckt",
