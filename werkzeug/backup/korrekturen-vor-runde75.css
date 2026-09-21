@@ -10505,31 +10505,7 @@ body.lc-schreibt .tutor-reiter {
   position: absolute;
   left: -22%;
   right: -22%;
-  /* RUNDE 75 — DAS FELD SASS 3,84 PIXEL ZU HOCH, UND DAS IST DER
-     GRUND FUER XANDERS „setz den ein bisschen runter".
-     -----------------------------------------------------------------
-     XANDER: „der Feuereffekt ist noch nicht bündig am Profilrahmen,
-     setz den ein bisschen runter, dass er wirklich am Ring die
-     Flammen macht."
-
-     NACHGEMESSEN im Browser (werkzeug, 420 x 760):
-       Bild 84 px, Feld 120,94 px (also 144 %, das stimmt),
-       Feldmitte zur Bildmitte:  x = 0,00 px   y = -3,84 px.
-     Der Kreis, auf dem die Flammen sitzen, lag also fast vier Pixel
-     ÜBER dem Kreis des Profilbildes — genau so weit, wie Xander ihn
-     „runter" haben wollte.
-
-     WOHER: `top: -22%` zählt die HÖHE des Platzes, und zur Höhe
-     gehört der Name unter dem Bild. Gemessen ist der Platz 101,4 px
-     hoch, aber nur 84 px breit; 22 % davon sind 22,31 statt 18,48 px
-     — die Differenz von 3,84 px ist genau der Versatz.
-
-     `margin-top` rechnet dagegen IMMER in der BREITE des umgebenden
-     Kastens, auch nach oben. `top: 0` plus `margin-top: -22%` ergibt
-     deshalb dieselben 18,48 px, die auch links und rechts gelten —
-     und das Feld sitzt konzentrisch auf dem Bild. */
-  top: 0;
-  margin-top: -22%;
+  top: -22%;
   aspect-ratio: 1;
   border-radius: 50%;
   pointer-events: none;
@@ -10736,13 +10712,6 @@ body.lc-schreibt .tutor-reiter {
   left: 0;
   right: 0;
   top: 0;
-  /* RUNDE 75 — die Blasen steigen im BILD auf, nicht im Feld
-     drumherum; deshalb setzt dieser Block das Feld genau auf das
-     Bild. Seit das Grundfeld mit `margin-top: -22%` auf die Bildmitte
-     gerueckt wird (siehe .lc-sprechfeld), muss dieser Rand hier
-     ausdruecklich wieder auf null — sonst sitzen die Blasen 18,5 px
-     zu hoch. */
-  margin-top: 0;
   padding-bottom: 100%;
   overflow: hidden;
 }
@@ -12813,60 +12782,24 @@ body.lc-schreibt .tutor-reiter {
   width: 62%;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .4));
   transform-origin: 88% 16%;
-  /* RUNDE 75 — kein cubic-bezier mehr ueber die GANZE Animation.
-     Eine Kurve ueber alles staucht die Abstaende ZWISCHEN den
-     Zeitmarken: „14 %" waeren dann nicht 14 % der Zeit. Weil der
-     Nadelaufsetzpunkt hier auf die Millisekunde zum Ton passen
-     muss, laeuft die Zeit linear und die Beschleunigung steckt in
-     den Werten. */
-  animation: lcPlatteArm 3.6s linear both;
+  animation: lcPlatteArm 3.6s cubic-bezier(.3, .8, .3, 1) both;
 }
 @keyframes lcPlatteArm {
-  /* RUNDE 75 — XANDER: „Der Plattenteller ist immer noch nicht von
-     seiner Drehanimation an der Stelle, wo der Sound auch das Drehen
-     hoerbar macht. Er muss frueher drehen, weil der Sound auch
-     frueher diesen Klang macht."
-     NACHGEMESSEN: ton/scratch.opus ist 1,01 s lang und von 0,00 bis
-     0,90 s durchgehend gleich laut (-20 -18 -19 -20 -19 -18 -19 -20
-     -19 dB). Es wird ohne Verzoegerung gespielt (platte steht nicht
-     in LC_TREFFER). Das Kratzen ist also von Anfang an zu hoeren.
-     Die Nadel setzte aber erst bei 26 % = 936 ms auf. Jetzt bei
-     4 % = 144 ms: erst die Nadel, dann sofort das Kratzen. */
-  0%   { opacity: 0; transform: rotate(16deg); }
-  2%   { opacity: 1; transform: rotate(5deg); }
-  4%   { transform: rotate(0deg); }
+  0%   { opacity: 0; transform: rotate(34deg); }
+  14%  { opacity: 1; transform: rotate(6deg); }
+  26%  { transform: rotate(0deg); }
   80%  { opacity: 1; transform: rotate(-4deg); }
-  92%  { opacity: 1; transform: rotate(9deg); }
   100% { opacity: 0; transform: rotate(30deg); }
 }
-/* Und das Bild dreht sich — der Scratch liegt jetzt da, wo man ihn
-   auch HOERT. */
+/* Und das Bild dreht sich — mit einem Scratch mittendrin. */
 .lc-gescratcht { animation: lcGescratcht 3.6s linear both; }
 @keyframes lcGescratcht {
-  /* RUNDE 75 — der Scratch lag bei 30 bis 48 % der 3,6 s, also von
-     1080 bis 1728 ms. Der Ton ist da aber schon 700 ms vorbei. Das
-     ist genau das, was Xander hoert: das Bild kratzt, wenn nichts
-     mehr kratzt.
-     Jetzt liegt das Vor und Zurueck in 0 bis 28 % = 0 bis 1008 ms —
-     also genau ueber der Laenge von scratch.opus (1,01 s). Danach
-     laeuft die Platte frei aus. */
   0%   { transform: rotate(0deg); }
-  /* Anschub */
-  4%   { transform: rotate(118deg); }
-  /* zurueckgerissen */
-  9%   { transform: rotate(38deg); }
-  14%  { transform: rotate(172deg); }
-  19%  { transform: rotate(84deg); }
-  24%  { transform: rotate(214deg); }
-  /* 28 % = 1008 ms: hier endet der Ton, hier endet das Kratzen */
-  28%  { transform: rotate(148deg); }
-  /* Ab hier laeuft sie durch. Die Werte werden nach hinten immer
-     enger — die Platte laeuft aus, ohne dass eine Kurve ueber die
-     ganze Animation die Zeiten verschiebt. */
-  46%  { transform: rotate(520deg); }
-  64%  { transform: rotate(790deg); }
-  82%  { transform: rotate(965deg); }
-  100% { transform: rotate(1040deg); }
+  30%  { transform: rotate(320deg); }
+  36%  { transform: rotate(250deg); }
+  42%  { transform: rotate(340deg); }
+  48%  { transform: rotate(280deg); }
+  100% { transform: rotate(1080deg); }
 }
 
 /* --- DIE OHRFEIGE -------------------------------------------------------- */
@@ -15159,58 +15092,41 @@ body.lc-schreibt .tutor-reiter {
   margin-left: -59%;
   transform-origin: 50% 90%;
   filter: drop-shadow(0 4px 7px rgba(0, 0, 0, .4));
-  /* RUNDE 75 — 3,4 s statt 2,8 s. Der Ruf ist neu und 3,01 s lang
-     (siehe ton/cowboy.opus); bei 2,8 s waere er 200 ms laenger als
-     sein Bild gewesen. */
-  animation: lcHutR75 3.4s linear both;
+  animation: lcHutR73 2.8s linear both;
 }
-@keyframes lcHutR75 {
-  /* RUNDE 75 — ALLES AUF 3,4 s UMGERECHNET, UND DIE HAND KOMMT ZUM
-     SCHLUSS.
-     XANDER: „der Cowboy Hut sieht auch noch nicht gut aus, die Hand,
-     die ihn zurechtrueckt, das soll am Schluss kommen."
-     Bisher rueckte die Hand bei 40 % der Animation zurecht und war
-     bei 54 % schon wieder weg — danach passierte 1,3 s lang nichts
-     mehr. Jetzt faellt der Hut, sitzt eine Weile GERADE, und erst
-     ganz am Ende kommt die Hand und zieht ihn in die schiefe
-     Cowboylage. Das ist auch die Reihenfolge im neuen Ton: der Ruf
-     von 0,12 bis 1,82 s, der Peitschenknall von 2,02 bis 2,92 s —
-     der Knall faellt jetzt genau auf das Zurechtruecken.
-     Der Fall: die Abstaende werden groesser, er wird also schneller.
+@keyframes lcHutR73 {
+  /* Der Fall: die Abstaende werden groesser, er wird also schneller.
      Genau so faellt etwas — nicht gleichmaessig. */
   0%    { opacity: 0; transform: translateY(-110%) rotate(-24deg) scale(.82); }
-  3.3%  { opacity: 1; transform: translateY(-104%) rotate(-23deg) scale(.84); }
-  7.4%  { transform: translateY(-90%)  rotate(-21deg) scale(.87); }
-  10.7% { transform: translateY(-72%)  rotate(-17deg) scale(.90); }
-  13.6% { transform: translateY(-52%)  rotate(-13deg) scale(.94); }
-  15.6% { transform: translateY(-30%)  rotate(-8deg)  scale(.97); }
-  /* 16,9 % von 3,4 s = 575 ms: DER AUFSCHLAG. Genau hier beruehrt
-     die Krempe zum ersten Mal den Kopf. */
-  16.9% { transform: translateY(0)     rotate(-4deg)  scale(1); }
+  4%    { opacity: 1; transform: translateY(-104%) rotate(-23deg) scale(.84); }
+  9%    { transform: translateY(-90%)  rotate(-21deg) scale(.87); }
+  13%   { transform: translateY(-72%)  rotate(-17deg) scale(.90); }
+  16.5% { transform: translateY(-52%)  rotate(-13deg) scale(.94); }
+  19%   { transform: translateY(-30%)  rotate(-8deg)  scale(.97); }
+  /* 20,5 % von 2,8 s = 575 ms: DER AUFSCHLAG. Genau hier liegt der
+     Ton (LC_TREFFER.hut = 575), und genau hier beruehrt die Krempe
+     zum ersten Mal den Kopf. */
+  20.5% { transform: translateY(0)     rotate(-4deg)  scale(1); }
   /* Und die Federung: er drueckt sich ein, dann zwei Nachschlaege,
      jeder kleiner. */
-  19%   { transform: translateY(7%)    rotate(6deg)  scale(1.05, .95); }
-  22.3% { transform: translateY(-4%)   rotate(-6deg) scale(1, 1.02); }
-  25.6% { transform: translateY(3%)    rotate(4deg)  scale(1.01, .99); }
-  28.8% { transform: translateY(-1%)   rotate(-2deg) scale(1); }
-  /* Von hier an sitzt er GERADE — die Hand hat ihn noch nicht
-     angefasst. */
-  31%, 76% { opacity: 1; transform: translateY(1%) rotate(-1deg) scale(1); }
-  /* 81 % = 2754 ms: die Hand zieht die Krempe herunter. Ab hier
-     sitzt er schief ins Gesicht gezogen, wie ein Cowboy ihn traegt. */
-  81%   { transform: translateY(3%)    rotate(-8deg) scale(1); }
-  84%   { transform: translateY(2%)    rotate(-6deg) scale(1); }
-  88%, 94% { opacity: 1; transform: translateY(2%) rotate(-7deg) scale(1); }
-  100%  { opacity: 0; transform: translateY(-30%) rotate(-12deg) scale(.9); }
+  23%   { transform: translateY(7%)    rotate(6deg)  scale(1.05, .95); }
+  27%   { transform: translateY(-4%)   rotate(-6deg) scale(1, 1.02); }
+  31%   { transform: translateY(3%)    rotate(4deg)  scale(1.01, .99); }
+  35%   { transform: translateY(-1%)   rotate(-2deg) scale(1); }
+  /* 40 % = 1120 ms: die Hand hat ihn zurechtgerueckt, er sitzt
+     leicht schief ins Gesicht gezogen, wie ein Cowboy ihn traegt. */
+  40%   { transform: translateY(2%)    rotate(-4deg) scale(1); }
+  44%, 86% { opacity: 1; transform: translateY(2%) rotate(-4deg) scale(1); }
+  100% { opacity: 0; transform: translateY(-30%) rotate(-10deg) scale(.9); }
 }
 /* Der Kopf federt unter dem Aufschlag — und zwar GENAU dann, nicht
-   frueher: 16,9 % ist derselbe Punkt wie oben. */
-.lc-behutet { animation: lcBehutetR75 3.4s linear both; }
-@keyframes lcBehutetR75 {
-  0%, 16.9% { transform: translateY(0) scale(1); }
-  19.8%     { transform: translateY(2%) scale(1.03, .96); }
-  23%       { transform: translateY(0) scale(.99, 1.01); }
-  26.4%     { transform: translateY(0) scale(1); }
+   fruehr: 20,5 % ist derselbe Punkt wie oben. */
+.lc-behutet { animation: lcBehutetR73 2.8s linear both; }
+@keyframes lcBehutetR73 {
+  0%, 20.5% { transform: translateY(0) scale(1); }
+  24%       { transform: translateY(2%) scale(1.03, .96); }
+  28%       { transform: translateY(0) scale(.99, 1.01); }
+  32%       { transform: translateY(0) scale(1); }
   100%      { transform: translateY(0) scale(1); }
 }
 
@@ -15218,9 +15134,9 @@ body.lc-schreibt .tutor-reiter {
    XANDER: „Der Cowboyhut ist noch zu comichaft, ich haette gern eine
    Hand, die ihn zurechtrueckt."
    Sie kommt von rechts ins Bild, fasst an die Krempe, zieht sie bei
-   81 % nach unten — dort steht in lcHutR75 die Schraeglage — und
-   geht wieder. RUNDE 75: sie kommt jetzt erst zum SCHLUSS, weil
-   Xander es so wollte. Vorher sitzt der Hut gerade. */
+   40 % nach unten — dort steht in lcHutR73 die Schraeglage — und
+   geht wieder. Nichts davon ist zu sehen, bevor der Hut aufgesetzt
+   hat: eine Hand, die vor dem Hut da ist, waere Unsinn. */
 .lc-hut-hand {
   position: absolute;
   left: 50%; top: -18%;
@@ -15230,19 +15146,16 @@ body.lc-schreibt .tutor-reiter {
   opacity: 0;
   pointer-events: none;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
-  animation: lcHutHandR75 3.4s linear both;
+  animation: lcHutHandR73 2.8s linear both;
 }
-@keyframes lcHutHandR75 {
-  /* RUNDE 75 — XANDER: „die Hand, die ihn zurechtrueckt, das soll am
-     Schluss kommen." Also erst bei 72 % = 2448 ms sichtbar. */
-  0%, 72%  { opacity: 0; transform: translate(52%, -26%) rotate(16deg); }
-  75%      { opacity: 1; transform: translate(20%, -12%) rotate(9deg); }
-  78%      { opacity: 1; transform: translate(4%, -2%)   rotate(3deg); }
-  /* 81 % = 2754 ms — hier zieht sie, und hier kippt der Hut. Und
-     hier liegt auch der Peitschenknall im Ton. */
-  81%      { opacity: 1; transform: translate(0, 6%)     rotate(-5deg); }
-  85%      { opacity: 1; transform: translate(9%, 1%)    rotate(1deg); }
-  93%      { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
+@keyframes lcHutHandR73 {
+  0%, 26%  { opacity: 0; transform: translate(52%, -26%) rotate(16deg); }
+  30%      { opacity: 1; transform: translate(20%, -12%) rotate(9deg); }
+  34%      { opacity: 1; transform: translate(4%, -2%)   rotate(3deg); }
+  /* 40 % — hier zieht sie, und hier kippt der Hut. */
+  40%      { opacity: 1; transform: translate(0, 5%)     rotate(-3deg); }
+  46%      { opacity: 1; transform: translate(10%, 0)    rotate(2deg); }
+  54%      { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
   100%     { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
 }
 @media (prefers-reduced-motion: reduce) { .lc-hut-hand { animation: none; opacity: 0; } }
@@ -23432,58 +23345,21 @@ body.lc-schreibt .tutor-reiter {
    Damit das Gesicht dabei nicht beschnitten wird, ist das Fenster
    von 21,5 auf 24 % gewachsen.
    ================================================================= */
-/* =================================================================
-   RUNDE 75 — DIE KANZEL WIRD OBEN KREISRUND ABGESCHNITTEN
-   -----------------------------------------------------------------
-   XANDER: „schau mal, dass das bei dem Helikopter oben kreisrund
-   abschneidet. Da war noch ne Ecke. Du hast es jetzt zu trapezmässig
-   gemacht, das kannst du auch noch ein kleines bisschen kleiner
-   machen insgesamt, und oben soll diese Ecke von dem Trapez, wo das
-   so schräg oben verjüngt, das soll ein bisschen abgerundet sein …
-   links ist so dieses abgerundete Eck vom Fenster und rechts ist
-   wirklich vom unteren Eckpunkt zum oberen kreisrund in der Form vom
-   Helikopter."
-
-   NACHGESEHEN an dem, was hier stand: `44% 0%, 86% 0%` ist eine
-   GERADE Oberkante, und bei 44 % 0 % stösst sie im spitzen Winkel
-   auf die schräge Vorderkante — genau die Ecke, die er meint. Auch
-   rechts lief die Kante bei `100% 26%` bis `100% 72%` schnurgerade
-   senkrecht, war also kein Kreis.
-
-   Jetzt:
-   · Die ganze rechte Seite UND das Dach sind EIN Kreisbogen. Er
-     läuft um den Mittelpunkt (46 % | 56 %) mit dem Radius 48 % —
-     nachgerechnet, jeder Punkt unten liegt auf diesem Kreis. Von
-     der unteren rechten Ecke bis über das Dach, ohne eine einzige
-     Ecke, „in der Form vom Helikopter".
-   · Der Übergang vom Dach in die schräge Vorderkante (bei 31 % |
-     10 %) ist mit zwei Zwischenpunkten ausgerundet — das ist „diese
-     Ecke von dem Trapez", die abgerundet sein soll.
-   · Links läuft die Kante in einem weichen Bogen herunter statt als
-     Gerade — „dieses abgerundete Eck vom Fenster".
-   · 22 % statt 24 % breit: „ein kleines bisschen kleiner insgesamt".
-   ================================================================= */
 .lc-heli-kanzel {
-  width: 22%;
+  width: 24%;
   aspect-ratio: 1.02;
   clip-path: polygon(
-    /* VON DER UNTEREN RECHTEN ECKE ÜBER DAS DACH — EIN EINZIGER
-       KREISBOGEN. Mittelpunkt (48 | 56,5), Radius 51, abgetastet
-       von -50,7 bis 115 Grad. Nachgerechnet: der weiteste Punkt
-       liegt bei 99 % (48 + 51), der höchste bei 5,5 % (56,5 - 51) —
-       der Bogen bleibt also innerhalb des Bildes. */
-    80.3% 96%, 88.8% 87.1%, 94.9% 76.5%, 98.3% 64.7%, 98.8% 52.5%,
-    96.4% 40.5%, 91.2% 29.4%, 83.5% 19.9%, 73.7% 12.5%, 62.5% 7.6%,
-    50.4% 5.6%, 38.2% 6.5%, 26.4% 10.3%,
-    /* DIE AUSRUNDUNG in die schräge Vorderkante — hier sass die
-       Ecke, die Xander noch gesehen hat. */
-    22% 14.2%, 18% 19%,
-    /* die linke Kante als weicher Bogen nach unten — kein Knick */
-    13.5% 26.5%, 9.5% 35%, 6% 45%, 3.5% 56%, 1.8% 67%, 0.8% 76%,
-    /* die untere linke Ecke, rund */
-    1.5% 86%, 4.5% 93%, 9% 97.5%, 15% 100%,
-    /* die Unterkante bis zurück an den Anfang des Bogens */
-    74% 100%, 78% 98.5%
+    /* die schräge Vorderkante — oben deutlich weiter hinten */
+    44% 0%, 86% 0%,
+    /* hintere obere Ecke, rund */
+    93% 3%, 98% 12%, 100% 26%,
+    100% 72%,
+    /* hintere untere Ecke, rund */
+    98% 88%, 93% 97%, 86% 100%,
+    /* die Unterkante bis nach ganz vorn */
+    5% 100%,
+    /* vordere untere Ecke, leicht gebrochen */
+    1% 95%, 0% 86%
   );
 }
 
@@ -23515,26 +23391,10 @@ body.lc-schreibt .tutor-reiter {
    eines Schattens nach unten — und jeder Haufen bekommt in app.js
    seine eigene Größe.
    ================================================================= */
-/* =================================================================
-   RUNDE 75 — DIE HAUFEN SIND SO BREIT WIE EIN PROFILPLATZ
-   -----------------------------------------------------------------
-   XANDER: „Die Erde soll viel breiter aufgeschuettet werden. Also
-   das soll von der Breite so ein Profil Platz einnehmen … Genauso
-   breit sollen die Haufen sein ueber die Profilbilder hinweg."
-
-   Gemessen: `--gross` ist in app.js die Bildbreite d (84 px) mal
-   zwei Faktoren. Bei Faktor .40 war ein Haufen also rund 34 px
-   breit — ein Drittel Bild. Jetzt .92: ein Haufen nimmt die Breite
-   eines Profilbildes ein. Damit die dicken Stellen an den Plaetzen
-   nicht ueber zwei Bilder wachsen, sind in app.js zugleich die
-   beiden Zuschlaege enger gefasst (siehe dort).
-   Die Raender bleiben die Haelfte der Masse, sonst sitzt der Haufen
-   nicht mehr mittig auf seiner Stelle.
-   ================================================================= */
 .lc-erdhaufen {
-  width: calc(var(--gross, 64px) * .92);
-  height: calc(var(--gross, 64px) * .82);
-  margin: calc(var(--gross, 64px) * -.41) 0 0 calc(var(--gross, 64px) * -.46);
+  width: calc(var(--gross, 64px) * .40);
+  height: calc(var(--gross, 64px) * .36);
+  margin: calc(var(--gross, 64px) * -.18) 0 0 calc(var(--gross, 64px) * -.20);
   border-radius: 50%;
   background:
     radial-gradient(circle at 31% 52%, #6a4a2c 0 18%, rgba(0,0,0,0) 21%),
@@ -23666,463 +23526,4 @@ body.lc-schreibt .tutor-reiter {
   50%  { transform: translate(-6%, 0) scale(1) rotate(608deg); }
   56%, 88% { opacity: 1; transform: translate(-8%, 0) scale(1) rotate(620deg); }
   100% { opacity: 0; transform: translate(-8%, 0) scale(1) rotate(620deg); }
-}
-
-
-/* =================================================================
-   RUNDE 75 — DAS FEUER LODERT, UND DIE BLASEN AUSSEN SIND WEG
-   -----------------------------------------------------------------
-   XANDER: „der Feuereffekt ist noch nicht bündig am Profilrahmen,
-   setz den ein bisschen runter, dass er wirklich am Ring die Flammen
-   macht. Die Flammen kannst du noch ein bisschen von der Physik ein
-   bisschen mehr lodern lassen, so in Wellen bewegen, dass sie so
-   bisschen zittrig nach oben gehen, ja aber ganz filigran ganz
-   sensibel — und dann hat er Aussenffekte, die da gar nicht
-   hingehören … Stimmt irgendwas mit der Margin nicht, weil da so
-   grosse Rauchblasen kommen oder Feuerblasen, die dort nicht
-   hingehören."
-
-   DREI SACHEN, UND DIE DRITTE IST DIE WICHTIGSTE:
-
-   1. DIE BLASEN. Sie kommen aus `.lc-sprechfeld.lc-tfeuer::after`.
-      NACHGERECHNET: die Kachel ist 34 % x 62 % des Feldes, bei einem
-      Feld von 130 px also 44 x 80 px. In einem `radial-gradient(
-      circle …)` zählt ein Prozentwert am Farbhalt vom Radius zur
-      am weitesten entfernten Ecke — hier rund 78 px. Der Farbhalt
-      bei 34 % war damit ein 26 PIXEL breiter Hof um einen 4,7 px
-      grossen Funken. Das ist die „Rauchblase". Und weil `inset:
-      -14%` das Feld nach aussen aufzieht, lagen diese Höfe auch noch
-      ausserhalb des Reifens — genau das „stimmt irgendwas mit der
-      Margin nicht". Jetzt: `inset: -3%`, und die Höfe sind auf 9 %
-      und 8 % zusammengezogen. Aus Blasen werden Funken.
-   2. DER SITZ. Das Band lief von 34,4 bis 36,4 % vom Mittelpunkt,
-      der Bildrand liegt bei 34,7 %. Der Fusspunkt lag im Mittel
-      also 0,7 Prozentpunkte NEBEN dem Reifen. Jetzt 33,9 bis
-      35,5 % — Mitte 34,7 %, das ist der Reifen selbst (in app.js,
-      siehe dort).
-   3. DAS LODERN. Die vier Takte hatten fünf Stützstellen und liefen
-      damit in langen, ruhigen Bögen. Jetzt dreizehn, und über die
-      Bögen ist eine feine Welle gelegt: 1,5 Grad Drehung mit sechs
-      Schwingungen je Durchlauf und 4,5 % Höhe mit acht. Das ist das
-      Zittern — klein genug, dass es filigran bleibt.
-   ================================================================= */
-.lc-sprechfeld.lc-tfeuer::after {
-  /* NACHGESEHEN am Bildschirm, nachdem die Funken kleiner gemacht
-     waren: sie blieben trotzdem zu sehen — als weiche orange Punkte
-     RINGS UM den Reifen, in der leeren Flaeche daneben. Und genau
-     das ist es, was Xander meldet: „dann hat er Aussenffekte, die da
-     gar nicht hingehoeren … da kommen so grosse Rauchblasen oder
-     Feuerblasen, die dort nicht hingehoeren."
-     Der Grund ist die Maske: sie laesst ein Band von 62 bis 92 % der
-     halben Feldbreite stehen, also 40 bis 59 px — der Bildradius ist
-     aber nur 42 px. Zwei Drittel dieses Bandes liegen damit
-     ausserhalb des Reifens, und dort haben sie nichts zu suchen.
-     Deshalb sind sie ganz weg. Was bleibt, ist das, was er wollte:
-     die Flammen auf dem Ring und die weiche Glut darunter
-     (.lc-sprechfeld.lc-tfeuer::before).
-     Die Regeln von Runde 73 stehen hier weiter, damit man sieht, was
-     sie waren — `content: none` schaltet die Schicht ab, ohne dass
-     etwas geloescht werden muss. */
-  content: none;
-}
-
-@keyframes lcZuengeltR55a {
-  0%   { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 6.00deg))
-        scale(calc(var(--schlank, 1) * 0.720), 0.600); opacity: .45; }
-  8%   { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 2.43deg))
-        scale(calc(var(--schlank, 1) * 0.817), 0.763); opacity: .60; }
-  17%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 1.38deg))
-        scale(calc(var(--schlank, 1) * 0.887), 1.040); opacity: .78; }
-  26%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 4.45deg))
-        scale(calc(var(--schlank, 1) * 1.021), 1.246); opacity: var(--hell, .95); }
-  34%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 2.80deg))
-        scale(calc(var(--schlank, 1) * 0.951), 1.111); opacity: var(--hell, .95); }
-  42%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 0.33deg))
-        scale(calc(var(--schlank, 1) * 0.955), 1.144); opacity: var(--hell, .95); }
-  50%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 2.71deg))
-        scale(calc(var(--schlank, 1) * 0.914), 1.049); opacity: var(--hell, .95); }
-  58%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 1.98deg))
-        scale(calc(var(--schlank, 1) * 0.911), 1.030); opacity: var(--hell, .95); }
-  66%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 1.13deg))
-        scale(calc(var(--schlank, 1) * 0.990), 1.211); opacity: var(--hell, .95); }
-  74%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 5.72deg))
-        scale(calc(var(--schlank, 1) * 0.995), 1.226); opacity: var(--hell, .95); }
-  82%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 5.00deg))
-        scale(calc(var(--schlank, 1) * 0.987), 1.146); opacity: .84; }
-  91%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 3.24deg))
-        scale(calc(var(--schlank, 1) * 0.822), 0.901); opacity: .60; }
-  100% { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 0.00deg))
-        scale(calc(var(--schlank, 1) * 0.680), 0.560); opacity: .35; }
-}
-@keyframes lcZuengeltR55b {
-  0%   { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 9.49deg))
-        scale(calc(var(--schlank, 1) * 0.673), 0.560); opacity: .40; }
-  8%   { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 2.86deg))
-        scale(calc(var(--schlank, 1) * 0.739), 0.732); opacity: .53; }
-  17%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 1.72deg))
-        scale(calc(var(--schlank, 1) * 0.850), 0.911); opacity: .68; }
-  26%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 5.13deg))
-        scale(calc(var(--schlank, 1) * 0.945), 1.192); opacity: .83; }
-  34%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 5.25deg))
-        scale(calc(var(--schlank, 1) * 0.999), 1.352); opacity: var(--hell, .95); }
-  42%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 5.24deg))
-        scale(calc(var(--schlank, 1) * 0.983), 1.165); opacity: var(--hell, .95); }
-  50%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 0.56deg))
-        scale(calc(var(--schlank, 1) * 0.892), 1.149); opacity: .86; }
-  58%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 0.43deg))
-        scale(calc(var(--schlank, 1) * 0.869), 0.998); opacity: .82; }
-  66%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 2.89deg))
-        scale(calc(var(--schlank, 1) * 0.873), 0.967); opacity: .83; }
-  74%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 2.61deg))
-        scale(calc(var(--schlank, 1) * 0.910), 1.111); opacity: .88; }
-  82%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 2.32deg))
-        scale(calc(var(--schlank, 1) * 0.995), 1.101); opacity: var(--hell, .95); }
-  91%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 4.70deg))
-        scale(calc(var(--schlank, 1) * 0.845), 0.894); opacity: .72; }
-  100% { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 1.49deg))
-        scale(calc(var(--schlank, 1) * 0.633), 0.518); opacity: .30; }
-}
-@keyframes lcZuengeltR55c {
-  0%   { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 0.06deg))
-        scale(calc(var(--schlank, 1) * 0.794), 0.637); opacity: .50; }
-  8%   { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 3.54deg))
-        scale(calc(var(--schlank, 1) * 0.878), 0.962); opacity: .69; }
-  17%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 7.93deg))
-        scale(calc(var(--schlank, 1) * 1.052), 1.215); opacity: var(--hell, .95); }
-  26%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 4.73deg))
-        scale(calc(var(--schlank, 1) * 0.970), 1.116); opacity: .89; }
-  34%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 1.51deg))
-        scale(calc(var(--schlank, 1) * 0.910), 1.076); opacity: .81; }
-  42%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 6.51deg))
-        scale(calc(var(--schlank, 1) * 0.827), 0.912); opacity: .74; }
-  50%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 5.17deg))
-        scale(calc(var(--schlank, 1) * 0.831), 0.916); opacity: .77; }
-  58%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 1.79deg))
-        scale(calc(var(--schlank, 1) * 0.928), 1.087); opacity: .84; }
-  66%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 2.59deg))
-        scale(calc(var(--schlank, 1) * 0.952), 1.110); opacity: var(--hell, .95); }
-  74%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 2.46deg))
-        scale(calc(var(--schlank, 1) * 0.966), 1.081); opacity: .87; }
-  82%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 1.98deg))
-        scale(calc(var(--schlank, 1) * 0.887), 0.980); opacity: .71; }
-  91%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 1.33deg))
-        scale(calc(var(--schlank, 1) * 0.779), 0.744); opacity: .52; }
-  100% { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 2.94deg))
-        scale(calc(var(--schlank, 1) * 0.713), 0.560); opacity: .34; }
-}
-@keyframes lcZuengeltR55d {
-  0%   { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 10.49deg))
-        scale(calc(var(--schlank, 1) * 0.599), 0.493); opacity: .38; }
-  8%   { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 3.54deg))
-        scale(calc(var(--schlank, 1) * 0.683), 0.680); opacity: .53; }
-  17%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 2.00deg))
-        scale(calc(var(--schlank, 1) * 0.806), 0.958); opacity: .70; }
-  26%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 5.45deg))
-        scale(calc(var(--schlank, 1) * 0.876), 1.152); opacity: .87; }
-  34%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 2.91deg))
-        scale(calc(var(--schlank, 1) * 0.944), 1.152); opacity: var(--hell, .95); }
-  42%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 2.70deg))
-        scale(calc(var(--schlank, 1) * 0.879), 1.167); opacity: .90; }
-  50%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) - 3.49deg))
-        scale(calc(var(--schlank, 1) * 0.861), 1.026); opacity: .86; }
-  58%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 3.12deg))
-        scale(calc(var(--schlank, 1) * 0.944), 1.119); opacity: .89; }
-  66%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 3.93deg))
-        scale(calc(var(--schlank, 1) * 0.986), 1.309); opacity: var(--hell, .95); }
-  74%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 10.32deg))
-        scale(calc(var(--schlank, 1) * 1.103), 1.316); opacity: var(--hell, .95); }
-  82%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 5.62deg))
-        scale(calc(var(--schlank, 1) * 0.931), 1.098); opacity: .75; }
-  91%  { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 5.82deg))
-        scale(calc(var(--schlank, 1) * 0.799), 0.847); opacity: .53; }
-  100% { transform: translate(-50%, -100%) rotate(calc(var(--neig, 0deg) + 0.51deg))
-        scale(calc(var(--schlank, 1) * 0.639), 0.513); opacity: .30; }
-}
-
-/* =================================================================
-   RUNDE 75 — VIER NEUE REISEN
-   -----------------------------------------------------------------
-   XANDER: „Ich möchte noch eine Bewegungsanimation mit einem UFO …
-   und eine Katze soll noch dabei sein, die mit meinem Profilbild
-   spielt wie mit einem Wollknäuel … dann irgendeine überdimensionale
-   Hand soll mich anfassen und auf einen anderen Platz setzen … und
-   dann noch Frisbee … beide von den Animationen ohne Rückstände,
-   ohne Design-Beeinflussung und realistisch."
-
-   „OHNE RÜCKSTÄNDE" steht hier nicht als Vorsatz, sondern als Regel:
-   jedes dieser Elemente liegt in der SITZREIHE (position: absolute
-   gegen #lcPlaetze), nicht im Platz. Der Platz selbst bekommt keine
-   einzige Eigenschaft und keine Klasse — er kann deshalb auch nichts
-   behalten. Alle vier stehen in `weg` und werden von aufraeumen()
-   entfernt; das Profilbild wird nur mit einer Animation ohne `fill`
-   ausgeblendet, sein Stil steht danach unverändert da.
-   ================================================================= */
-
-/* --- DAS UFO ------------------------------------------------------ */
-.lc-ufo {
-  position: absolute;
-  z-index: 9;
-  /* 1,7 statt 2,3 Bildbreiten — bei 2,3 ragte die Untertasse ueber
-     den linken Rand des Klassenzimmers hinaus (nachgesehen). */
-  width: calc(var(--gross, 64px) * 1.7);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-.lc-ufo-form {
-  display: block;
-  width: 100%;
-  height: auto;
-  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45))
-          drop-shadow(0 0 14px rgba(120, 220, 255, .45));
-}
-/* Die Lampen laufen nacheinander an — ein UFO blinkt, es leuchtet
-   nicht gleichmäßig. */
-.lc-ufo-lampe {
-  fill: #ffe9a8;
-  animation: lcUfoLampeR75 1.1s linear infinite;
-}
-@keyframes lcUfoLampeR75 {
-  0%   { fill: #ffe9a8; opacity: .45; }
-  22%  { fill: #fff8dc; opacity: 1; }
-  48%  { fill: #8fd6ff; opacity: .9; }
-  100% { fill: #ffe9a8; opacity: .45; }
-}
-/* DER STRAHL. Er hängt unter der Untertasse, wird nach unten breiter
-   und hat einen hellen Kern — das ist der „eigene Beameffekt in
-   diesem Strahl, den das UFO auf mich schickt".
-   Er wächst von OBEN nach unten (transform-origin: top), sonst
-   käme er aus dem Boden statt aus dem Schiff. */
-.lc-ufo-strahl {
-  position: absolute;
-  left: 50%;
-  top: 58%;
-  width: calc(var(--gross, 64px) * 1.15);
-  /* So lang, dass der Strahl von der Unterseite der Untertasse bis
-     auf das Bild hinunterreicht: die Untertasse schwebt 1,45
-     Bildbreiten hoch, ihre Unterkante liegt 0,33 darunter — bleiben
-     1,12, dazu eine halbe Bildhoehe Ueberstand. */
-  height: calc(var(--gross, 64px) * 1.7);
-  transform-origin: 50% 0;
-  transform: translateX(-50%);
-  pointer-events: none;
-  clip-path: polygon(38% 0%, 62% 0%, 100% 100%, 0% 100%);
-  background:
-    linear-gradient(to bottom,
-      rgba(180, 245, 255, .85) 0%, rgba(130, 220, 255, .5) 44%,
-      rgba(110, 200, 255, .22) 78%, rgba(110, 200, 255, 0) 100%),
-    repeating-linear-gradient(to bottom,
-      rgba(255, 255, 255, .22) 0 3px, rgba(255, 255, 255, 0) 3px 9px);
-  filter: blur(.6px);
-  animation: lcUfoStrahlR75 .9s linear infinite;
-}
-/* Die Streifen im Strahl wandern nach unten — daran sieht man, dass
-   er arbeitet. */
-@keyframes lcUfoStrahlR75 {
-  0%   { background-position: 0 0, 0 0; }
-  100% { background-position: 0 0, 0 9px; }
-}
-.lc-ufo-last {
-  position: absolute;
-  z-index: 10;
-  width: var(--gross, 64px);
-  height: var(--gross, 64px);
-  border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  background-color: #2b3a4a;
-  color: #eaf6ff;
-  font: 700 calc(var(--gross, 64px) * .42) / var(--gross, 64px) system-ui, sans-serif;
-  text-align: center;
-  pointer-events: none;
-  box-shadow: 0 0 0 2px rgba(180, 245, 255, .8),
-              0 0 16px 4px rgba(120, 220, 255, .6);
-  will-change: transform, opacity;
-}
-
-/* --- DIE KATZE ---------------------------------------------------- */
-.lc-katze {
-  position: absolute;
-  z-index: 9;
-  width: calc(var(--gross, 64px) * 1.25);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-.lc-katze-form {
-  display: block;
-  width: 100%;
-  height: auto;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .4));
-}
-/* Eine Katze, die auf etwas lauert, macht grosse Augen: die Pupille
-   wird breiter und wieder schmal. */
-.lc-katze-pupille { animation: lcKatzAugeR75 2.3s ease-in-out infinite; }
-@keyframes lcKatzAugeR75 {
-  0%, 60%, 100% { transform: scaleX(1); }
-  74%           { transform: scaleX(2.6); }
-}
-.lc-katze-schwanz {
-  transform-origin: 26px 70px;
-  animation: lcKatzSchwanzR75 1.5s ease-in-out infinite;
-}
-@keyframes lcKatzSchwanzR75 {
-  0%, 100% { transform: rotate(-7deg); }
-  50%      { transform: rotate(9deg); }
-}
-.lc-katze-ball {
-  position: absolute;
-  z-index: 8;
-  width: var(--gross, 64px);
-  height: var(--gross, 64px);
-  border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  background-color: #6b5a4a;
-  color: #fff;
-  font: 700 calc(var(--gross, 64px) * .42) / var(--gross, 64px) system-ui, sans-serif;
-  text-align: center;
-  pointer-events: none;
-  /* Ein Wollknäuel hat einen Faden — der Ring ausserhalb macht aus
-     dem Bild einen Ball, ohne das Bild selbst anzufassen. */
-  box-shadow: 0 0 0 3px rgba(214, 168, 120, .9),
-              0 4px 7px rgba(0, 0, 0, .35);
-  will-change: transform, opacity;
-}
-
-/* --- DIE ÜBERDIMENSIONALE HAND ------------------------------------ */
-.lc-riesenhand {
-  position: absolute;
-  z-index: 11;
-  width: calc(var(--gross, 64px) * 1.5);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-.lc-riesenhand-form {
-  display: block;
-  width: 100%;
-  height: auto;
-  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .45));
-}
-/* Die Gotteshand leuchtet von oben — die Gorillapranke nicht. */
-.lc-riesenhand:not(.lc-riesenhand-affe) .lc-riesenhand-form {
-  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .35))
-          drop-shadow(0 -6px 16px rgba(255, 244, 200, .7));
-}
-.lc-riesenhand-last {
-  position: absolute;
-  z-index: 10;
-  width: var(--gross, 64px);
-  height: var(--gross, 64px);
-  border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  background-color: #3a3a3a;
-  color: #fff;
-  font: 700 calc(var(--gross, 64px) * .42) / var(--gross, 64px) system-ui, sans-serif;
-  text-align: center;
-  pointer-events: none;
-  box-shadow: 0 6px 10px rgba(0, 0, 0, .4);
-  will-change: transform, opacity;
-}
-
-/* --- DIE FRISBEE -------------------------------------------------- */
-.lc-frisbee {
-  position: absolute;
-  z-index: 9;
-  width: var(--gross, 64px);
-  height: var(--gross, 64px);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  will-change: transform, opacity;
-}
-/* DREI LAGEN, UND JEDE HAT EINEN GRUND:
-   · der RAND ist der Wulst der Scheibe — ohne ihn ist es ein Bild,
-     keine Frisbee;
-   · das BILD dreht sich (die Drehung sitzt hier, nicht aussen, sonst
-     verrechnet sie sich mit der Neigung der Scheibe);
-   · der GLANZ liegt fest und wandert deshalb scheinbar über die
-     drehende Fläche — genau so glänzt Kunststoff. */
-.lc-frisbee-rand,
-.lc-frisbee-bild,
-.lc-frisbee-glanz {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-}
-.lc-frisbee-rand {
-  box-shadow: 0 0 0 3px #e2452f, 0 0 0 5px rgba(120, 22, 12, .85),
-              0 5px 9px rgba(0, 0, 0, .4);
-}
-.lc-frisbee-bild {
-  background-size: cover;
-  background-position: center;
-  background-color: #2f2f2f;
-  color: #fff;
-  font: 700 calc(var(--gross, 64px) * .42) / var(--gross, 64px) system-ui, sans-serif;
-  text-align: center;
-  overflow: hidden;
-  will-change: transform;
-}
-.lc-frisbee-glanz {
-  background: linear-gradient(118deg,
-    rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, .42) 46%,
-    rgba(255, 255, 255, .1) 56%, rgba(255, 255, 255, 0) 70%);
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lc-ufo, .lc-ufo-last, .lc-katze, .lc-katze-ball,
-  .lc-riesenhand, .lc-riesenhand-last, .lc-frisbee { display: none; }
-}
-
-/* --- DIE SONNENBRILLE (RUNDE 75) ----------------------------------
-   XANDER: „es soll noch ein Profileffekt geben, wo man sich ne
-   Sonnenbrille aufsetzt und cool zu sein."
-
-   Sie sitzt auf Augenhöhe: bei einem runden Profilbild liegen die
-   Augen auf etwa 38 % der Höhe, nicht in der Mitte. `top: 26%` plus
-   die halbe Brillenhöhe trifft genau dorthin.
-   Die Zeiten: 0–18 % hereinschieben (von der Seite, nicht von oben —
-   so setzt man eine Brille auf), 18–26 % das kurze Zurechtrücken auf
-   der Nase, 52–74 % der Lichtstreifen über die Gläser, ab 88 % geht
-   sie wieder ab. Der Ton „bling" liegt bei 1350 ms, also auf 52 %
-   von 2,6 s — genau am Anfang des Streifens. */
-.lc-sobri-bild {
-  position: absolute;
-  left: 50%;
-  top: 26%;
-  width: 86%;
-  margin-left: -43%;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .45));
-  animation: lcSobriR75 2.6s linear both;
-}
-@keyframes lcSobriR75 {
-  /* Von rechts hereingeschoben. Die Abstände werden kleiner — sie
-     wird langsamer, je näher sie dem Gesicht kommt. */
-  0%   { opacity: 0; transform: translate(96%, -22%) rotate(14deg) scale(1.1); }
-  6%   { opacity: 1; transform: translate(62%, -14%) rotate(10deg) scale(1.07); }
-  11%  { transform: translate(34%, -7%) rotate(6deg) scale(1.04); }
-  15%  { transform: translate(14%, -2%) rotate(3deg) scale(1.01); }
-  18%  { transform: translate(2%, 0) rotate(1deg) scale(1); }
-  /* Das Zurechtrücken: ein kurzer Schub nach unten auf die Nase. */
-  22%  { transform: translate(0, 4%) rotate(0deg) scale(1); }
-  26%, 88% { opacity: 1; transform: translate(0, 2%) rotate(0deg) scale(1); }
-  /* Und wieder ab — nach oben auf die Stirn, wie man es macht. */
-  94%  { opacity: 1; transform: translate(0, -26%) rotate(-3deg) scale(.98); }
-  100% { opacity: 0; transform: translate(0, -46%) rotate(-6deg) scale(.94); }
-}
-/* DER GLANZ. Er läuft von links nach rechts über beide Gläser — und
-   zwar erst, wenn die Brille wirklich sitzt (ab 52 %). */
-.lc-sobri-blitz { animation: lcSobriBlitzR75 2.6s linear both; }
-@keyframes lcSobriBlitzR75 {
-  0%, 52%  { transform: translateX(0) skewX(-14deg); opacity: 0; }
-  55%      { opacity: .85; }
-  70%      { opacity: .85; }
-  74%      { transform: translateX(196px) skewX(-14deg); opacity: 0; }
-  100%     { transform: translateX(196px) skewX(-14deg); opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lc-sobri { display: none; }
 }

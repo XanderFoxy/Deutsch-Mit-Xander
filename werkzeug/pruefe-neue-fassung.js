@@ -86,14 +86,32 @@ const HIER = Number((/DMA_VERSION = "(\d+)"/.exec(
   /* Und der Knopf muss wirklich neu laden — mit einer neuen Adresse,
      sonst gäbe der Browser dieselbe alte Datei noch einmer heraus. */
   if (leiste && leiste.knopf) {
+    /* RUNDE 75 — GEMESSEN WIRD DIE FAHRT, NICHT DAS ZIEL.
+       -----------------------------------------------------------------
+       Hier stand vorher `pg.url()` NACH dem Klick, und das ging nicht
+       auf. Der Grund liegt an dieser Sonde selbst und nicht an der
+       Seite: sie gibt auf „index.html?frisch=…" eine HÖHERE
+       Fassungsnummer heraus (HIER + 7), „fassung.json" behält aber die
+       alte. Die frisch geladene Seite vergleicht beide — das ist der
+       Wächter ganz oben in index.html — findet sie verschieden und
+       holt sich pflichtgemäss „?f=<fassung.json>". Damit ist „frisch"
+       wieder aus der Adresse verschwunden, BEVOR hier nachgesehen
+       wurde. Im Netz kann das nicht passieren: dort werden index.html
+       und fassung.json zusammen hochgezählt.
+       Nachgesehen wird deshalb, womit der Knopf die Seite WIRKLICH
+       angefordert hat. */
+    const geholt = [];
+    pg.on("request", (r) => {
+      if (r.resourceType() === "document") geholt.push(r.url());
+    });
     await Promise.all([
       pg.waitForNavigation({ timeout: 8000 }).catch(() => null),
       pg.click("#dmaNeueFassungLaden")
     ]);
     await pg.waitForTimeout(600);
-    const adresse = pg.url();
-    ok(/frisch=\d+/.test(adresse), "der Knopf lädt mit einer frischen Adresse neu",
-       adresse.replace(/^http:\/\/[^/]+/, ""));
+    const mitFrisch = geholt.filter((u) => /frisch=\d+/.test(u));
+    ok(mitFrisch.length >= 1, "der Knopf lädt mit einer frischen Adresse neu",
+       (mitFrisch[0] || geholt[0] || "gar nichts geholt").replace(/^http:\/\/[^/]+/, ""));
   }
 
   console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Eine alte Seite merkt jetzt, dass sie alt ist.") + "\n");

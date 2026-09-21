@@ -98,9 +98,18 @@ pruefe("und Dome, Pfeife und Griffe sind Gold",
 console.log("\nDER MAULWURF");
 pruefe("am Startplatz bleibt keine Nase stehen",
   /lochAb\.querySelector\("\.lc-maulwurf-tier"\)\?\.remove\(\)/.test(js));
-pruefe("die Spur ist dichter und breiter",
-  /Math\.round\(weite \/ \(d \* 0\.16\)\)/.test(js)
-  && /\(d \* 0\.05\)/.test(js));
+/* RUNDE 75 — die Zahlen haben sich geaendert, der Sinn nicht.
+   XANDER: „Die Erde soll viel breiter aufgeschuettet werden. Also das
+   soll von der Breite so ein Profilplatz einnehmen."
+   Die Haufen sind jetzt fast eine ganze Bildbreite gross (0,92 statt
+   0,40). Bei einem Abstand von 0,16 Bildbreiten laegen damit sechs
+   uebereinander — deshalb 0,34. Sie ueberlappen sich immer noch zu
+   zwei Dritteln, der Wall bleibt also geschlossen. Und die Streuung
+   zur Seite ist kleiner (0,035 statt 0,05), weil breite Haufen sonst
+   einen 1,4 Bildbreiten breiten Streifen ergeben. */
+pruefe("die Spur bleibt ein geschlossener Wall",
+  /Math\.round\(weite \/ \(d \* 0\.34\)\)/.test(js)
+  && /\(d \* 0\.035\)/.test(js));
 pruefe("und an den Plaetzen liegt sie dicker",
   /const dickeBei = \(x, y\) =>/.test(js)
   /* RUNDE 74: jeder Haufen bekommt zusaetzlich seine eigene Groesse.
@@ -210,12 +219,20 @@ pruefe("der Strudel klingt 4,6 s lang, nicht wie ein Schalter",
   && /sog:\s+\{ ton: "strudelsog", dauer: 4600/.test(js));
 pruefe("und er ruckelt nicht mehr — keine Kurve ueber die ganze Animation",
   /\.lc-kreis\.lc-gesogen \{ animation: lcSogZiehtR19 4\.2s linear both; \}/.test(css));
+/* RUNDE 75 — die Animation dauert 3,4 s statt 2,8 s, weil der neue
+   Ruf 3,01 s lang ist. Der Aufschlag liegt damit bei 16,9 % statt
+   20,5 % — dieselben 575 ms. */
 pruefe("der Hut setzt auf, wenn man ihn aufsetzen hoert",
-  /animation: lcHutR73 2\.8s linear both;/.test(css)
-  && /20\.5% \{ transform: translateY\(0\)/.test(css)
-  && /hut:            \{ ton: "cowboy",    dauer: 2800/.test(js));
-pruefe("und eine Hand rueckt ihn zurecht",
-  /lc-hut-hand/.test(js) && /@keyframes lcHutHandR73/.test(css));
+  /animation: lcHutR75 3\.4s linear both;/.test(css)
+  && /16\.9% \{ transform: translateY\(0\)/.test(css)
+  && /hut:            \{ ton: "cowboy",    dauer: 3400/.test(js));
+/* RUNDE 75 — XANDER: „die Hand, die ihn zurechtrueckt, das soll am
+   Schluss kommen." Sie kommt jetzt bei 72 % und zieht bei 81 %; vorher
+   war sie bei 26 % da und bei 54 % schon wieder weg. */
+pruefe("und eine Hand rueckt ihn ganz zum Schluss zurecht",
+  /lc-hut-hand/.test(js) && /@keyframes lcHutHandR75/.test(css)
+  && /0%, 72%  \{ opacity: 0;/.test(css)
+  && /81%      \{ opacity: 1;/.test(css));
 pruefe("die Zwille spannt, saust und schlaegt ein",
   /lcTonSpaeter\("gummizug", 180, 0\.95\);/.test(js)
   && /lcTonSpaeter\("swoosh", 1290, 0\.55\);/.test(js)
@@ -247,9 +264,15 @@ pruefe("das Regal stuerzt nicht mehr ein — der Ton ist gedeckelt",
 pruefe("der Helikopter landet nicht mehr wie eine Trommel",
   ton("helilanden") && gelistet("helilanden")
   && /heli: "helilanden"/.test(js));
-pruefe("der Raddampfer hat seine Dampforgel",
+/* RUNDE 75 — aus der Dampforgel ist eine BAND geworden.
+   XANDER: „die Dixie-Melodie koennte noch ein bisschen typischer sein,
+   wie so ne Dixie-Band spielt, mit Banjo und diesen Brush-Drums."
+   Eine Calliope ist ein Instrument, keine Band. Jetzt Banjo, Tuba,
+   Trompete und Besen — und lauter (0,52), weil der Dampfer
+   „imposanter" sein soll. */
+pruefe("der Raddampfer hat seine Dixie-Band",
   ton("dampferdixie") && gelistet("dampferdixie")
-  && /lcTonSpaeter\("dampferdixie", 520, 0\.40\);/.test(js));
+  && /lcTonSpaeter\("dampferdixie", 520, 0\.52,/.test(js));
 pruefe("die Geigen spielen langsam wie ein Quartett",
   ton("geigenquartett") && gelistet("geigenquartett")
   && /lcTonSpaeter\("geigenquartett", 1780, 0\.62\);/.test(js));

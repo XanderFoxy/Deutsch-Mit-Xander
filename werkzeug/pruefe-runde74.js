@@ -69,8 +69,16 @@ pruefe("die Frontscheibe ist eine gerade, geneigte Flaeche",
   /d="M11\.5 41 L33 17\.5 L44 17\.5 L24 43 Z"/.test(js));
 pruefe("darunter sitzt die Kinnscheibe",
   /M10\.8 40\.6 Q9\.2 46\.4 14\.4 47\.6/.test(js));
-pruefe("und das Kabinenfenster nimmt dieselbe Schraege auf",
-  /44% 0%, 86% 0%,/.test(css));
+/* RUNDE 75 — XANDER: „schau mal, dass das bei dem Helikopter oben
+   kreisrund abschneidet. Da war noch ne Ecke … rechts ist wirklich vom
+   unteren Eckpunkt zum oberen kreisrund in der Form vom Helikopter."
+   „44% 0%, 86% 0%" war eine GERADE Oberkante mit einer spitzen Ecke
+   bei 44 % — genau die Ecke, die er gesehen hat. Dach und rechte
+   Seite sind jetzt EIN Kreisbogen um (48 | 56,5) mit r = 51. */
+pruefe("das Kabinenfenster schneidet oben kreisrund ab",
+  /80\.3% 96%, 88\.8% 87\.1%, 94\.9% 76\.5%/.test(css)
+  && /50\.4% 5\.6%, 38\.2% 6\.5%, 26\.4% 10\.3%/.test(css)
+  && !/44% 0%, 86% 0%,/.test(css));
 
 console.log("\nDIE LIANE IST EIN PENDEL\n");
 pruefe("der Anker liegt in der Mitte zwischen beiden Plaetzen",
@@ -88,8 +96,12 @@ console.log("\nDER MAULWURF\n");
 pruefe("das Grabgeraeusch hoert auf, wenn er ankommt",
   /lcTonSpaeter\("graben", abG, g \? 0\.4 : 0\.5,/.test(js)
   && /function lcTonSpaeter\(name, nachMs, laut, hoechstens\)/.test(js));
-pruefe("die Aufschuettung ist rund, nicht seitlich",
-  /\.lc-erdhaufen \{\s*\n\s*width: calc\(var\(--gross, 64px\) \* \.40\);/.test(css)
+/* RUNDE 75 — rund ist sie geblieben, aber viel breiter.
+   XANDER: „Genauso breit sollen die Haufen sein ueber die
+   Profilbilder hinweg." 0,92 statt 0,40 — ein Haufen nimmt jetzt die
+   Breite eines Profilbildes ein. */
+pruefe("die Aufschuettung ist rund und so breit wie ein Profilbild",
+  /\.lc-erdhaufen \{\s*\n\s*width: calc\(var\(--gross, 64px\) \* \.92\);/.test(css)
   && /border-radius: 50%;/.test(css));
 pruefe("und sie besteht aus vielen Kruemeln verschiedener Groesse",
   (css.match(/radial-gradient\(circle at \d+% \d+%, #[0-9a-f]{6} 0 \d+%/g) || []).length >= 9);

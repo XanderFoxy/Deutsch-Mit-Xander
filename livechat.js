@@ -973,6 +973,24 @@ window.LiveChat = (function () {
        und vielleicht irgendwie ein Pferd, auf dem man da hin reiten
        kann." */
     heli:     { wirkung: "heli",     satz: "fliegt im Hubschrauber zu", emoji: "\ud83d\ude81" },
+    /* RUNDE 75 — XANDER: „Ich moechte noch eine Bewegungsanimation
+       mit einem UFO … und eine Katze soll noch dabei sein, die mit
+       meinem Profilbild spielt wie mit einem Wollknaeuel … dann
+       irgendeine ueberdimensionale Hand … als wenn das Gotteshand
+       ist oder die Hand von dem Gorilla. Vielleicht kann man sich
+       die Hand auch aussuchen … und dann noch Frisbee." */
+    /* DIE NAMEN: „/ufo" ist seit langem ein Alias fuer den Film
+       /raumschiff, „/katze" ist der Film mit dem Katzenbaby und
+       „hand" ist im Netz schon die MELDUNG im Unterricht
+       (senden({ art: "hand" })). Drei Namen, die belegt sind —
+       deshalb heissen die neuen Reisen /untertasse, /mieze und
+       /gotteshand. Die Kacheln im Menue heissen weiter UFO, Katze
+       und Gotteshand. */
+    untertasse: { wirkung: "untertasse", satz: "wird vom UFO gebeamt zu", emoji: "\ud83d\udef8" },
+    mieze:    { wirkung: "mieze",    satz: "wird von der Katze gespielt zu", emoji: "\ud83d\udc31" },
+    gotteshand: { wirkung: "gotteshand", satz: "wird von einer riesigen Hand gesetzt zu", emoji: "\ud83e\udd1a" },
+    pranke:   { wirkung: "pranke",   satz: "wird von der Gorillapranke gesetzt zu", emoji: "\ud83e\udd8d" },
+    frisbee:  { wirkung: "frisbee",  satz: "fliegt als Frisbee zu", emoji: "\ud83e\udd4f" },
     pferd:    { wirkung: "pferd",    satz: "reitet hin\u00fcber zu", emoji: "\ud83d\udc0e" },
     /* RUNDE 65 — XANDER: „Vielleicht schaffst du es noch, einen
        realistischen Vogel zu bauen, so ein Greifvogel, der unser
@@ -1047,6 +1065,9 @@ window.LiveChat = (function () {
     entbloessung:{ wirkung: "entbloessung", satz: "zieht den BH herunter bei", emoji: "\ud83d\udc59" },
     /* RUNDE 19 — der Hut, die Zeitbombe, und zwei zum Gutsein. */
     hut:        { wirkung: "hut",        satz: "setzt einen Cowboyhut auf", emoji: "\ud83e\udd20" },
+    /* RUNDE 75 — XANDER: „es soll noch ein Profileffekt geben, wo
+       man sich ne Sonnenbrille aufsetzt und cool zu sein." */
+    sonnenbrille: { wirkung: "sonnenbrille", satz: "setzt die Sonnenbrille auf bei", emoji: "\ud83d\udd76\ufe0f" },
     bombe:      { wirkung: "bombe",      satz: "z\u00fcndet eine Zeitbombe bei", emoji: "\ud83d\udca3" },
     /* XANDER: „Bei der Bombe solltest du eine digitale Version haben
        und eine mit Zuendschnur." /bombe zaehlt Ziffern, /lunte brennt
@@ -8866,6 +8887,16 @@ window.LiveChat = (function () {
       was: "Wie bei Super Mario \u2014 rein in die gr\u00fcne R\u00f6hre, drueben wieder raus" },
     { gr: "reden", w: "heli", kurz: "hubschrauber", nutzt: "/heli 5",
       was: "Helikopter \u2014 der Rotor dreht, du sitzt in der Kanzel" },
+    { gr: "reden", w: "untertasse", kurz: "", nutzt: "/untertasse 5",
+      was: "UFO \u2014 der Strahl hebt dich hoch, die Untertasse fliegt zu Platz 5" },
+    { gr: "reden", w: "mieze", kurz: "", nutzt: "/mieze 5",
+      was: "Katze \u2014 sie spielt dein Bild wie ein Wollkn\u00e4uel bis Platz 5" },
+    { gr: "reden", w: "gotteshand", kurz: "", nutzt: "/gotteshand 5",
+      was: "eine riesige Hand hebt dich heraus und setzt dich auf Platz 5" },
+    { gr: "reden", w: "pranke", kurz: "", nutzt: "/pranke 5",
+      was: "dieselbe Bewegung, aber mit der Pranke eines Gorillas" },
+    { gr: "reden", w: "frisbee", kurz: "", nutzt: "/frisbee 5",
+      was: "Frisbee \u2014 dein Bild fliegt sich drehend zu Platz 5" },
     { gr: "reden", w: "pferd", kurz: "reiten", nutzt: "/pferd 5",
       was: "Pferd \u2014 du sitzt im Sattel und galoppierst hin\u00fcber" },
     { gr: "reden", w: "gemeinsam", kurz: "zuzweit", nutzt: "/gemeinsam Name",
@@ -8925,6 +8956,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "birneraus", kurz: "dunkel", nutzt: "/birneraus Name", was: "Gl\u00fchbirne heraus \u2014 es wird dunkel, nur Augen bleiben" },
     { gr: "reden", w: "entbloessung", kurz: "ups", nutzt: "/entbloessung Name", was: "Ups! \u2014 geht nur bei dem, der direkt neben dir sitzt" },
     { gr: "reden", w: "hut", kurz: "cowboy",  nutzt: "/hut Name",       was: "Cowboyhut \u2014 er faellt von oben und sitzt schief" },
+    { gr: "reden", w: "sonnenbrille", kurz: "", nutzt: "/sonnenbrille Name",
+      was: "Sonnenbrille \u2014 sie schiebt sich aufs Gesicht, dann blitzt das Glas" },
     { gr: "reden", w: "bombe", kurz: "zisch", nutzt: "/bombe Name",     was: "Zeitbombe \u2014 3, 2, 1 und weg, nur Asche bleibt" },
     { gr: "reden", w: "lunte", kurz: "schnur", nutzt: "/lunte Name",    was: "Bombe mit Z\u00fcndschnur \u2014 sie brennt ab, dann knallt es" },
     { gr: "reden", w: "streicheln", kurz: "lieb", nutzt: "/streicheln Name", was: "Streicheln \u2014 sanft, mit Herzchen" },
@@ -10766,7 +10799,10 @@ window.LiveChat = (function () {
          || art === "lok" || art === "liane" || art === "feder"
          || art === "beamen" || art === "rohr"
          || art === "heli" || art === "pferd"
-         || art === "greifvogel" || art === "turm")
+         || art === "greifvogel" || art === "turm"
+         /* RUNDE 75 */
+         || art === "untertasse" || art === "mieze" || art === "frisbee"
+         || art === "gotteshand" || art === "pranke")
         && /^\s*\d+\s*$/.test(rest)) {
       var satzR = { flug: [" fliegt zu Platz ", "\u2708\ufe0f"],
                     maulwurf: [" gr\u00e4bt sich zu Platz ", "\ud83e\udda1"],
@@ -10782,7 +10818,12 @@ window.LiveChat = (function () {
                     heli: [" fliegt im Hubschrauber zu Platz ", "\ud83d\ude81"],
                     pferd: [" reitet zu Platz ", "\ud83d\udc0e"],
                     greifvogel: [" wird vom Greifvogel zu Platz ", "\ud83e\udd85"],
-                    turm: [" springt vom Dreier zu Platz ", "\ud83c\udfca"] }[art];
+                    turm: [" springt vom Dreier zu Platz ", "\ud83c\udfca"],
+                    untertasse: [" wird vom UFO gebeamt zu Platz ", "\ud83d\udef8"],
+                    mieze: [" wird von der Katze gespielt zu Platz ", "\ud83d\udc31"],
+                    gotteshand: [" wird von einer riesigen Hand gesetzt auf Platz ", "\ud83e\udd1a"],
+                    pranke: [" wird von der Gorillapranke gesetzt auf Platz ", "\ud83e\udd8d"],
+                    frisbee: [" fliegt als Frisbee zu Platz ", "\ud83e\udd4f"] }[art];
       return anAlle("aktion", zustand.ichName + satzR[0] + rest.trim() + "  " + satzR[1],
                     { wirkung: art, wen: rest.trim() });
     }

@@ -120,9 +120,21 @@ pruefe("der Zufall ist ein Spielautomat", ton("slot2") && gelistet("slot2")
 pruefe("und das Los faellt erst, wenn die Walzen stehen",
   /\}, 2400\);/.test(js));
 
-console.log("\nDER COWBOY FAENGT NICHT MEHR MITTEN IN DER WELLE AN");
-pruefe("die Trefferzeit ist um den Vorlauf nach vorn geholt",
-  /hut: 575,/.test(js));
+/* RUNDE 75 — DIESE REGEL IST UEBERHOLT, UND ZWAR VON XANDER SELBST.
+   Sie hielt fest, dass der Ton 45 ms frueher startet, weil in Runde 72
+   ein Vorlauf in die Datei gekommen war: 620 - 45 = 575 ms.
+   XANDER in Runde 75: „Der Cowboy Sound ist immer noch abgeschnitten
+   … man hoert diesen typischen Ruf ueberhaupt nicht." NACHGEMESSEN am
+   damaligen cowboy.opus: -21 -25 -18 -15 -15 -17 -19 -24 -29 -46 -75
+   -92 -92 -57 -14 dB — ein gleichmaessiges Rauschen und bei 1,4 s ein
+   Knall. Es war kein Ruf darin. Der Vorlauf half also nichts, weil
+   gar nichts zum Vorlaufen da war.
+   Jetzt ist der Ton neu (ein echtes „Yee-haw", 3,01 s, sofort laut)
+   und beginnt bei 120 ms, also am ANFANG der Animation statt auf dem
+   Aufschlag. Gemessen wird deshalb das Neue. */
+console.log("\nDER COWBOY-RUF FAENGT SOFORT AN");
+pruefe("der Ruf liegt am Anfang der Animation, nicht auf dem Aufschlag",
+  /hut: 120,/.test(js));
 
 console.log("\nDIE GLUEHBIRNE");
 pruefe("zwei Kacheln statt einer", /\["\\ud83d\\udd0c", "Birne raus", "birneraus"\]/.test(js)
@@ -263,9 +275,11 @@ pruefe("die Lok stampft beim Anfahren", ton("lokstampf") && gelistet("lokstampf"
 pruefe("und die Raeder gehen ueber die Schienenstoesse",
   ton("lokschiene") && gelistet("lokschiene")
   && /lcTonSpaeter\("lokschiene", Math\.round\(hin \* 0\.2\), 0\.42\)/.test(js));
+/* RUNDE 75 — lauter, weil XANDER den Dampfer „imposanter" wollte:
+   0,75 statt 0,55. */
 pruefe("der Raddampfer pfeift beim Ablegen",
   ton("dampferpfiff") && gelistet("dampferpfiff")
-  && /lcTonSpaeter\("dampferpfiff", 180, 0\.55\)/.test(js));
+  && /lcTonSpaeter\("dampferpfiff", 180, 0\.75\)/.test(js));
 
 console.log("\nDIE UMARMUNG: DIE ARME KNICKEN NICHT MEHR NACH UNTEN");
 /* XANDER wollte „die erste Version zurueck, die von damals, als die

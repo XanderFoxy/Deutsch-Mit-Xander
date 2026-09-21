@@ -22283,21 +22283,7 @@
        bis 29 px an die Mitte — knapp unter die Grenze von 30 px, die
        seine Regel „im Kreis darf nichts sein" zieht. Jetzt 34,4 bis
        36,4 %: der Fuss steht auf dem Reifen, nicht davor. */
-    /* RUNDE 75 — XANDER: „der Feuereffekt ist noch nicht buendig am
-       Profilrahmen, setz den ein bisschen runter, dass er wirklich
-       am Ring die Flammen macht."
-       Der Hauptgrund lag nicht hier, sondern im Feld selbst: es sass
-       3,84 px zu hoch (siehe .lc-sprechfeld in korrekturen.css,
-       nachgemessen). Das ist behoben.
-       Dazu das Band: der Bildrand liegt bei 34,73 % vom Mittelpunkt
-       (Bild 84 px, Feld 120,94 px). Das Band lief von 34,4 bis
-       36,4 %, im Mittel also 0,7 Prozentpunkte NEBEN dem Reifen.
-       Jetzt 34,0 bis 35,6 % — Mitte 34,8 %, das ist der Reifen. Nach
-       der Korrektur GEMESSEN: die Fusspunkte liegen 41,24 bis
-       42,98 px von der Bildmitte, der Bildradius ist 42,00 px. Sie
-       stehen also wirklich auf dem Ring, je zur Haelfte innen und
-       aussen. */
-    feuer:  { menge: 30, klasse: "lc-tfeuer", rand: true, band: [34.0, 35.6], zeichen: [""] },
+    feuer:  { menge: 30, klasse: "lc-tfeuer", rand: true, band: [34.4, 36.4], zeichen: [""] },
     /* XANDER: „das funkeln ist kein funkeln … das muss nicht so
        Lineal sein, das kann so ein bisschen Partikel sein."
        Also echte Teilchen wie bei Magie und Noten, jedes mit eigener
@@ -24370,20 +24356,7 @@
        hinter sich legt … er soll die Zeit klingen wie die Strecke,
        die auch optisch zurueckgelegt wird." */
     flug:           { ton: "flugzeuglang", dauer: 2800, laut: 0.5 },
-    /* RUNDE 75 — XANDER: „Das Maulwurfgeraeusch wurde immer noch
-       nicht angepasst. Das klingt wie ein klopfen als wenn jemand
-       irgendwo auf dem Brett klopft aber nicht wegen Graben."
-       Gemessen an ton/maulwurf.opus: 1,00 s lang, es faengt bei
-       0,00 s mit -13 dB an und wird von da an nur noch leiser
-       (-13 -19 -24 -28 -33 ...). Das ist die Huellkurve eines
-       SCHLAGS — laut am Anfang, danach Ausklang. Genau so klingt
-       ein Klopfen, und deshalb hat Xander recht.
-       „erdeauf" ist neu gebaut und macht es umgekehrt: das Rauschen
-       SCHWILLT AN (gemessen -51 -37 -29 -24 -21 -17 -16, der
-       lauteste Punkt liegt bei 0,34 der Laenge), danach rieseln die
-       Kruemel nach. Erde, die aufbricht, statt Holz, das getroffen
-       wird. */
-    maulwurf:       { ton: "erdeauf", dauer: 2400, laut: 0.55 },
+    maulwurf:       { ton: "maulwurf", dauer: 2400, laut: 0.5 },
     /* „dann koennte da wirklich so ein realistischer Science-Fiction
        Gate Sound kommen." */
     /* „Das Tor … eher wirklich so ein magisches Tor, wie als wenn das
@@ -24457,23 +24430,6 @@
        ist die laengste Reise (3,84 s) plus die halbe Sekunde
        Ausklang, die lcReise ohnehin anhaengt. */
     heli:           { ton: "helikopter", dauer: 4400, schleife: true, laut: 0.5 },
-    /* RUNDE 75 — DIE VIER NEUEN REISEN.
-       XANDER wollte ein UFO mit eigenem Beamstrahl, eine Katze, die
-       mit dem Profilbild spielt, eine ueberdimensionale Hand und
-       eine Frisbee. Die Toene dafuer liegen schon im Haus, es
-       braucht keine neuen:
-       · „beamen" (5,01 s) ist genau der Strahl, den das UFO schickt.
-         Es laeuft in Schleife, weil das UFO zweimal strahlt — beim
-         Aufnehmen und beim Absetzen.
-       · „katze" (1,88 s) ist das Miauen. Es kommt beim Auftauchen,
-         und lcReise legt auf halber Strecke ein zweites nach.
-       · Die Hand hat KEINEN eigenen Dauerton — sie ist still. Was
-         man hoert, ist das Zupfen („birneplopp") und das Absetzen
-         (LC_ANKUNFT_TON.hand). Deshalb steht sie hier nicht.
-       · „swoosh" (1,01 s) ist das Zischen der Frisbee. */
-    untertasse:     { ton: "beamen",     dauer: 4200, schleife: true, laut: 0.45 },
-    mieze:          { ton: "katze",      dauer: 1900, laut: 0.5 },
-    frisbee:        { ton: "swoosh",     dauer: 1100, laut: 0.6 },
     pferd:          { ton: "pferd",    dauer: 3000, laut: 0.55 },
     /* Das Lagerfeuer-Geraeusch leiht sich der brennende Rahmen — es
        liegt schon in ton/ und klingt nach echtem Holzfeuer. */
@@ -24643,17 +24599,7 @@
        Strasse nach pfeift." (ton/boing gab es ohnehin nie.) */
     /* „Das Pfeifen soll nur dieses typische Nachpfeifen sein. Am
        Anfang ist irgendso ein Ding, was da gar nicht hingehoert." */
-    /* RUNDE 75 — XANDER: „bei der BH Animation ist das Pfeifen
-       scheinbar im Hintergrund noch zu hoeren, aber erst sollte der
-       Effekt den BH weg reissen vom Sound her und dann kommt dieses
-       doppelte Pfeifen, wie wenn man nach pfeift … das soll aber
-       nach dem Runterreissen kommen und das kann auch kuerzer sein."
-       Bisher war der PFIFF der Planton und lief schon, waehrend der
-       Riss noch als Zusatzton dazukam — zwei Toene, die sich
-       ueberlagert haben. Jetzt ist der RISS der Planton (er gehoert
-       zur Bewegung), und der Pfiff kommt als Zusatzton danach.
-       So kann keiner mehr vor dem anderen liegen. */
-    entbloessung:   { ton: "bhriss",   dauer: 3000, laut: 0.95 },
+    entbloessung:   { ton: "pfiff2",   dauer: 3000, laut: 0.5 },
     /* „wenn man den Hut aufsetzt, dann koennte so ein YIHAAH wie bei den
        Cowboys kommen, und vielleicht so ein Peitschenknall zur selben Zeit."
        Vorher lag hier „kitt" — ein Motorgeraeusch: „da ist irgendwie so ein
@@ -24669,26 +24615,11 @@
        kein Cowboyhut") — gemeint war offenbar das Gegenteil. Also
        wieder cowboy.opus, der Ruf von Runde 30 (2,0 s). cowboyhut.opus
        bleibt liegen, falls er es sich anders ueberlegt. */
-    /* RUNDE 75 — DER RUF IST NEU.
-       XANDER: „Der Cowboy Sound ist immer noch abgeschnitten, dann
-       ueberlege, ob du einen neuen Sound machst oder du laesst den
-       ersten wirklich direkt anfangen, denn man hoert diesen
-       typischen Ruf ueberhaupt nicht."
-       NACHGEMESSEN am alten cowboy.opus (2,05 s): -21 -25 -18 -15
-       -15 -17 -19 -24 -29 -46 -75 -92 -92 -57 -14 … Es war ueberhaupt
-       kein Ruf darin — ein gleichmaessiges Rauschen und bei 1,4 s
-       ein Knall. Deshalb hoerte er den Ruf nicht: er war nicht da.
-       Der neue ist ein echtes „Yee-haw" und faengt SOFORT laut an
-       (gemessen -17 -19 -31 -16 -15 -15 -16 -22 …, lautester Punkt
-       schon bei 0,3 s), danach von 1,9 bis 2,9 s der Peitschenknall.
-       Laenge 3,01 s, deshalb dauert die Animation jetzt 3400 ms. */
-    hut:            { ton: "cowboy",    dauer: 3400, laut: 0.6 },
-    /* RUNDE 75 — die Sonnenbrille. Kein neuer Ton noetig: „swoosh"
-       (1,01 s) ist das Wischen, mit dem sie aufs Gesicht rutscht,
-       und das „bling" setzt den Glanz auf das Glas — es kommt
-       spaeter, genau wenn der Lichtstreifen ueber die Glaeser
-       laeuft (siehe lcSonnenbrille). */
-    sonnenbrille:   { ton: "swoosh",    dauer: 2600, laut: 0.55 },
+    /* RUNDE 73 — NACHGEMESSEN: „cowboy" ist 2,04 s lang, die Animation
+       lief 3,4 s. Ab 575 ms (LC_TREFFER.hut) gespielt war der Ton bei
+       2615 ms zu Ende und danach lief der Hut noch 785 ms stumm
+       weiter. Jetzt 2,8 s — Ton und Bild enden zusammen. */
+    hut:            { ton: "cowboy",    dauer: 2800, laut: 0.6 },
     ticken:         { ton: "wecker",   dauer: 260,  laut: 0.45 },  /* ein Tick je Zahl */
     /* XANDER: „Bei der Bombe solltest du eine digitale Version haben
        und eine mit Zuendschnur, und die sollen realistische Sounds
@@ -26367,9 +26298,6 @@
        einfach explodiert" · „Und fuer Liebe brauchen wir auch noch
        irgendwie … dass man ihn streichelt … oder kuesst." */
     ["\ud83e\udd20", "Hut",      "hut"],
-    /* RUNDE 75 — XANDER: „es soll noch ein Profileffekt geben, wo
-       man sich ne Sonnenbrille aufsetzt und cool zu sein." */
-    ["\ud83d\udd76\ufe0f", "Sonnenbrille", "sonnenbrille"],
     /* RUNDE 71 — XANDER: „Die Bombe hast du auch noch nicht gemacht
        die sollte zwei Versionen zum auswaehlen haben einmal ne
        digitale Zeitbombe und einmal eine mit Lunte."
@@ -26924,14 +26852,6 @@
      ["\u2728", "Beamen", "beamen"],
      ["\ud83d\udfe2", "R\u00f6hre", "rohr"],
      ["\ud83d\ude81", "Helikopter", "heli"],
-     /* RUNDE 75 — die vier neuen Reisen. Die Hand gibt es zweimal:
-        „Vielleicht kann man sich die Hand auch aussuchen in der
-        Auswahl" — Gotteshand oder Gorillapranke. */
-     ["\ud83d\udef8", "UFO", "untertasse"],
-     ["\ud83d\udc31", "Katze", "mieze"],
-     ["\ud83e\udd1a", "Gotteshand", "gotteshand"],
-     ["\ud83e\udd8d", "Gorillapranke", "pranke"],
-     ["\ud83e\udd4f", "Frisbee", "frisbee"],
      ["\ud83d\udc0e", "Pferd", "pferd"],
      /* RUNDE 65: der Greifvogel und der Drei-Meter-Turm. */
      ["\ud83e\udd85", "Greifvogel", "greifvogel"],
@@ -28581,13 +28501,6 @@
     beamen:   { zeichen: ["\u2728"], wie: 4, klasse: "umarmen" },
     rohr:     { zeichen: ["\ud83d\udfe2"], wie: 4, klasse: "umarmen" },
     heli:     { zeichen: ["\ud83d\ude81"], wie: 4, klasse: "umarmen" },
-    /* RUNDE 75 — ohne Eintrag HIER steigt lcWirkung gleich in der
-       ersten Zeile aus; das ist in Runde 65 schon einmal passiert. */
-    untertasse:{ zeichen: ["\ud83d\udef8"], wie: 4, klasse: "umarmen" },
-    mieze:    { zeichen: ["\ud83d\udc31"], wie: 4, klasse: "umarmen" },
-    gotteshand:{ zeichen: ["\ud83e\udd1a"], wie: 4, klasse: "umarmen" },
-    pranke:   { zeichen: ["\ud83e\udd8d"], wie: 4, klasse: "umarmen" },
-    frisbee:  { zeichen: ["\ud83e\udd4f"], wie: 4, klasse: "umarmen" },
     pferd:    { zeichen: ["\ud83d\udc0e"], wie: 4, klasse: "umarmen" },
     /* RUNDE 65: Greifvogel und Drei-Meter-Turm. Ohne Eintrag HIER
        steigt lcWirkung gleich in der ersten Zeile aus — gemessen:
@@ -28754,7 +28667,6 @@
     gluehbirne: { zeichen: ["\ud83d\udca1"], wie: 5, klasse: "umarmen" },
     birneraus:  { zeichen: ["\ud83d\udd0c"], wie: 5, klasse: "umarmen" },
     entbloessung:{ zeichen: ["\ud83d\udc59"], wie: 5, klasse: "umarmen" },
-    sonnenbrille:{ zeichen: ["\ud83d\udd76\ufe0f"], wie: 5, klasse: "umarmen" },
     hut:        { zeichen: ["\ud83e\udd20"], wie: 5, klasse: "umarmen" },
     bombe:      { zeichen: ["\ud83d\udca3"], wie: 5, klasse: "umarmen" },
     lunte:      { zeichen: ["\ud83e\udde8"], wie: 5, klasse: "umarmen" },
@@ -29422,14 +29334,7 @@
      Nachklingen der Streben und darunter den auslaufenden Rotor,
      dessen Schlag langsamer wird. */
   const LC_ANKUNFT_TON = {
-    kran: "bonk", liane: "bonk", feder: "bonk", heli: "helilanden", pferd: "bonk",
-    /* RUNDE 75 — XANDER zur Riesenhand: „und dann wieder so ein
-       Aufsatzgeraeusch irgendwo, wo ich wieder ankomme." Das ist
-       „bonk". Die Frisbee bekommt es ebenfalls: eine Scheibe, die
-       gefangen wird, klatscht. Das UFO nicht — sein Strahl traegt
-       die Ankunft selbst, genau wie beim Beamen. Die Katze auch
-       nicht: der Ball rollt aus, er schlaegt nicht auf. */
-    gotteshand: "bonk", pranke: "bonk", frisbee: "bonk"
+    kran: "bonk", liane: "bonk", feder: "bonk", heli: "helilanden", pferd: "bonk"
   };
 
   const LC_TREFFER = {
@@ -29513,13 +29418,12 @@
        ganzen Drehung. Der Ton IST das Drehen — er gehoert an den
        Anfang, nicht ans Ende. */
     muenze: 0,
-    /* RUNDE 75: hier steht jetzt der RISS, nicht mehr der Pfiff
-       (siehe LC_TON_PLAN.entbloessung). 620 ms ist der Punkt, an dem
-       der BH losrutscht — gemessen an der Animation, die bei 786 ms
-       zu rutschen beginnt, und „bhriss" ist bei 0,2 bis 0,3 s am
-       lautesten (-33 -28 -16 -32 -57 dB), trifft also mit 620 ms
-       genau auf den Rutsch. */
-    entbloessung: 620,
+    /* RUNDE 73: der Pfiff kam bei 660 ms, also GENAU beim Reissen —
+       beides zugleich, und der Pfiff uebertoente den Riss. Jetzt
+       980 ms: „pfiff2" ist von 0,40 bis 1,20 s laut, klingt also von
+       1380 bis 2180 ms — da faellt der BH schon, und bei 74 % der
+       Animation (2220 ms) ist er unten. Erst reissen, dann pfeifen. */
+    entbloessung: 980,
     /* RUNDE 72 — XANDER: „Der Cowboy Sound ist immer noch am Anfang
        abgeschnitten."
        NACHGEMESSEN, und er hat recht: „cowboy.opus" begann mit dem
@@ -29530,14 +29434,7 @@
        45 ms Vorlauf und eine 30-ms-Blende; sie beginnen gemessen bei
        0. Weil der laute Punkt damit 45 ms spaeter IN der Datei
        liegt, faengt sie 45 ms frueher an: 620 - 45 = 575. */
-    /* RUNDE 75 — 120 statt 575 ms. Der alte Ton hatte seinen lauten
-       Punkt bei 0,3 s, also musste er frueh starten, damit der
-       Aufschlag passte. Der neue faengt mit dem RUF an, und der
-       gehoert an den Anfang der Animation — nicht auf den Aufschlag.
-       Der Peitschenknall liegt in der Datei bei 1,9 bis 2,9 s und
-       faellt damit auf 2020 bis 3020 ms, also genau auf das
-       Zurechtruecken durch die Hand (81 % von 3400 = 2754 ms). */
-    hut: 120,          /* der Ruf, sofort */
+    hut: 575,          /* wenn er aufsetzt */
     bombe: 2100,       /* die Null, da platzt es */
     kuss: 520,         /* wenn der Mund ankommt */
     streicheln: 300,
@@ -33018,15 +32915,10 @@
        deshalb die 1800 ms fuer alles Uebrige. XANDER wollte es aber
        „so ganz langsam" — und in 1,8 s ist ein Spiegel, der einmal
        durchs Bild zieht, gar nicht zu sehen. Jetzt 3,4 s. */
-    /* RUNDE 75 — die vier Neuen. Das UFO braucht am laengsten: es
-       muss herunterkommen, strahlen, fliegen, wieder strahlen und
-       weg. Die Frisbee ist die kuerzeste — ein Wurf ist schnell. */
     const grund = { flug: 2600, maulwurf: 2200, boot: 2800, kran: 2800,
                   dampfer: 3000, lok: 3200, liane: 2200, feder: 2400,
                   beamen: 2600, rohr: 2800, heli: 3000, portal: 3400,
-                  pferd: 3000, greifvogel: 3000, turm: 3400,
-                  untertasse: 4000, mieze: 3200, gotteshand: 3400, pranke: 3400,
-                  frisbee: 2000 }[art] || 1800;
+                  pferd: 3000, greifvogel: 3000, turm: 3400 }[art] || 1800;
     const einheitR = lcPlatzAbstand(document.getElementById("lcPlaetze")) || 0;
     const streckeR = Math.hypot(ende.x - start.x, ende.y - start.y);
     const plaetzeR = einheitR ? Math.max(1, Math.min(4, Math.round(streckeR / einheitR))) : 1;
@@ -33056,13 +32948,7 @@
        Maulwurf und bei der Roehre schrumpft das Bild deshalb NICHT
        weg, sondern versinkt senkrecht — die beiden bringen ihre
        eigene Bewegung weiter unten mit. */
-    /* RUNDE 75 — UFO, Katze, Riesenhand und Frisbee blenden das
-       Bild am Platz SELBST aus, und zwar genau dann, wenn es
-       abgeholt wird. Die allgemeine Blende hier wuerde es schon bei
-       16 % wegnehmen — dann griffe die Hand ins Leere. */
-    if (art !== "maulwurf" && art !== "rohr" && art !== "beamen"
-        && art !== "untertasse" && art !== "mieze" && art !== "frisbee"
-        && art !== "gotteshand" && art !== "pranke") {
+    if (art !== "maulwurf" && art !== "rohr" && art !== "beamen") {
       try {
         kreis.animate([
           { opacity: 1, transform: "scale(1)", offset: 0 },
@@ -33603,26 +33489,16 @@
         /* Direkt auf dem Platz: voller Aufschlag. Eine halbe Sitzweite
            weiter: nichts mehr. */
         const nah = Math.max(0, 1 - naeh / (einheitM * 0.5));
-        /* RUNDE 75 — der Zuschlag ist kleiner (0,22 statt 0,85),
-           weil der Haufen selbst jetzt eine ganze Bildbreite misst.
-           Sonst waere ein Haufen am Platz 1,85 Bilder breit. */
-        return 1 + nah * nah * 0.22;
+        return 1 + nah * nah * 0.85;
       };
-      /* RUNDE 75 — Abstand 0,34 statt 0,16 Bildbreiten. Die Haufen
-         sind jetzt fast eine ganze Bildbreite gross, bei 0,16 lagen
-         also sechs uebereinander. Bei 0,34 ueberlappen sie noch
-         immer zu zwei Dritteln — der Wall bleibt geschlossen, es
-         sind aber weniger als halb so viele Teile im Bild. */
-      const wieViele = Math.max(6, Math.min(26, Math.round(weite / (d * 0.34))));
+      const wieViele = Math.max(9, Math.min(46, Math.round(weite / (d * 0.16))));
       for (let i = 1; i < wieViele; i++) {
         const t = i / wieViele;
         const h = document.createElement("i");
         h.className = "lc-erdhaufen";
         /* Leicht versetzt — eine Spur auf der Linie sieht aus wie mit
            dem Lineal gezogen, und so graebt kein Maulwurf. */
-        /* RUNDE 75 — 0,035 statt 0,05: bei breiteren Haufen war der
-           Wall sonst 1,4 Bildbreiten breit und lag neben der Spur. */
-        const quer = (((i * 37) % 11) - 5) * (d * 0.035);
+        const quer = (((i * 37) % 11) - 5) * (d * 0.05);
         const hx = start.x + (ende.x - start.x) * t + quer;
         const hy = start.y + (ende.y - start.y) * t + quer * 0.55;
         /* RUNDE 74 — XANDER: „keine Klumpen in verschiedener Groesse,
@@ -33631,12 +33507,7 @@
            den Plaetzen wurden sie dicker. Jetzt schwankt jeder um
            bis zu 30 Prozent — aus i gerechnet, nicht gewuerfelt,
            damit es auf jedem Geraet gleich aussieht. */
-        /* RUNDE 75 — enger gefasst (0,88 bis 1,12 statt 0,74 bis
-           1,31): die Schwankung bleibt sichtbar, aber kein Haufen
-           faellt mehr unter eine Bildbreite. Groesster Haufen jetzt
-           0,92 * 1,22 * 1,12 = 1,26 Bildbreiten, kleinster
-           0,92 * 0,88 = 0,81. */
-        const eigen = 0.88 + ((i * 29) % 17) / 68;
+        const eigen = 0.74 + ((i * 29) % 17) / 28;
         h.style.setProperty("--gross", (d * dickeBei(hx, hy) * eigen).toFixed(1) + "px");
         setzen(h, hx, hy);
         h.style.animationDelay = Math.round(200 + t * (hin - 620)) + "ms";
@@ -33967,24 +33838,7 @@
          einer Dampfpfeife, mit Vibrato und einem Dampfablassen am
          Ende, 2,45 s). Es kommt beim ABLEGEN — dort pfeift ein
          Dampfer, nicht mittendrin. */
-      /* RUNDE 75 — DAS LEIERN IST WEG, UND DIE PFEIFE IST GROESSER.
-         XANDER: „der Mississippi-Raddampfer kommt mir noch nicht
-         imposant genug vor … aber da ist noch dieses Leiern der
-         Hupen."
-         GEFUNDEN: die alte Pfeife war aus ZWEI dicht beieinander
-         liegenden Toenen gebaut (436 und 519 Hz) und hatte dazu
-         Vibrato. Zwei nahe Toene erzeugen eine SCHWEBUNG, und die
-         hoert man als Leiern — er hat also genau die Ursache
-         beschrieben.
-         Die neue Pfeife ist ein f-Moll-Dreiklang aus drei weit
-         auseinander liegenden Pfeifen (174,6 / 207,7 / 261,6 Hz),
-         ohne Vibrato und ohne Verstimmung; nur am Ende faellt der
-         Dampfdruck und mit ihm die Tonhoehe. NACHGEMESSEN: der Pegel
-         steht 1,7 s lang unbeweglich bei -16 dB (-25 -17 -16 -16 -16
-         … -16 -19 -22 -25) — eine Schwebung waere hier als Wellen im
-         Pegel zu sehen. Es ist keine da.
-         Und lauter: 0,75 statt 0,55 — das ist das „imposanter". */
-      lcTonSpaeter("dampferpfiff", 180, 0.75);
+      lcTonSpaeter("dampferpfiff", 180, 0.55);
       /* RUNDE 73 — XANDER fragt nach: „Hast du bei dem Raddampfer
          schon das typische Extra gemacht? Vielleicht so eine
          Dixie-Melodie."
@@ -33996,30 +33850,7 @@
          G-Dur, kein fremdes Stueck: 3,30 s, ab 520 ms — also NACH
          der Pfeife, die bei 180 ms anfaengt und 2,45 s dauert,
          leiser als die Maschine, weil sie darunter weiterlaeuft. */
-      /* RUNDE 75 — JETZT IST ES WIRKLICH EINE DIXIE-BAND.
-         XANDER: „die Dixie-Melodie koennte noch ein bisschen
-         typischer sein, wie so ne Dixie-Band spielt, mit Banjo und
-         diesen Brush-Drums."
-         Die alte Fassung war eine CALLIOPE — eine Dampforgel, also
-         ein Instrument, nicht eine Band. Jetzt vier Stimmen, weil
-         eine Dixie-Band genau daraus besteht:
-           · BANJO auf jedem Achtel, die Nachschlaege lauter (das
-             „chunk"). Es ist mit Karplus-Strong gebaut, also aus der
-             Physik einer gezupften Saite, nicht aus einem Nachbau
-             ihres Klangs.
-           · TUBA auf 1 und 3 — der Umpa-Bass.
-           · TROMPETE mit der Melodie, vier Takte in G-Dur, selbst
-             geschrieben (also lizenzfrei).
-           · BRUSH-DRUMS: ein Besen ist Rauschen, dessen Lautstaerke
-             sich WEICH aufbaut. Ein Stock waere ein Knall — genau
-             daran erkennt man den Unterschied.
-         200 Schlaege in der Minute, 3,61 s. NACHGEMESSEN wiederholt
-         sich das Muster alle 0,6 s (-14 -16 -18 -18 -21 -21 …), und
-         0,6 s sind genau zwei Schlaege: der Umpa steht.
-         Lauter als vorher (0,52 statt 0,40) und immer kuerzer als
-         die Animation, damit nach der Ankunft nichts weiterspielt. */
-      lcTonSpaeter("dampferdixie", 520, 0.52,
-                   Math.max(1200, dauer - 700));
+      lcTonSpaeter("dampferdixie", 520, 0.40);
     } else if (art === "kran") {
       /* GEWUENSCHT: „oder dass man einen Baustellenkran hat, der
          einen dann dahin hebt." Das Bild haengt am Seil: hoch,
@@ -35008,717 +34839,6 @@
          Ausspucken, wenn es heraussteigt (0,557). */
       lcTonSpaeter("rohrsog", taktR(0.08), 0.7);
       lcTonSpaeter("rohrspuck", taktR(0.557), 0.7);
-    } else if (art === "untertasse") {
-      /* =============================================================
-         RUNDE 75 — DAS UFO
-         -------------------------------------------------------------
-         XANDER: „Ich moechte noch eine Bewegungsanimation mit einem
-         UFO, also so ein typisches Untertassen-UFO, was mich rein
-         beamt von meinem Platz, ohne dass da Rueckstaende sind und
-         ohne dass das Bild wieder haengen bleibt, ohne dass es den
-         Profilplatz beeinflusst, und dass es auf die Nummer fliegt,
-         wo ich hin moechte, und mich dort wieder materialisiert …
-         der Beameffekt soll dann auch ein eigener sein in diesem
-         Strahl, den das UFO auf mich schickt."
-
-         VIER PUNKTE, VIER ANTWORTEN:
-         · „ohne Rueckstaende": alles, was hier entsteht, kommt in
-           `weg` und wird von `aufraeumen()` entfernt — Untertasse,
-           Strahl und die mitreisende Kopie des Bildes.
-         · „ohne dass das Bild wieder haengen bleibt": das Bild am
-           Platz wird NICHT umgeschaltet, sondern bekommt eine
-           Animation mit `fill: "none"`. Danach steht sein Stil
-           wieder genau so da wie vorher — es gibt nichts, was
-           haengen bleiben koennte.
-         · „ohne dass es den Profilplatz beeinflusst": die Untertasse
-           haengt an der Sitzreihe (`reihe`), nicht am Platz. Der
-           Platz selbst bekommt kein einziges Attribut.
-         · „auf die Nummer fliegt, wo ich hin moechte": das macht
-           lcReise schon fuer alle Reisen — `zu` ist der gewaehlte
-           Platz.
-         ============================================================= */
-      const versatzU = lcBildVersatz(ab.el);
-      const versatzZ = lcBildVersatz(zu.el);
-      const startY = start.y + versatzU;
-      const endeY = ende.y + versatzZ;
-      /* Die Untertasse haengt IMMER dieselbe Hoehe ueber dem Bild,
-         sonst steht der Strahl schief.
-         NACHGESEHEN am Bildschirm (Bild 84 px): bei 1,55 Bildbreiten
-         stand die Untertasse 130 px ueber dem Platz und damit weit
-         ueber der Karte des Klassenzimmers; bei 2,3 Bildbreiten
-         Spannweite ragte sie zudem 32 px ueber den linken Rand
-         hinaus. XANDER: „ohne Design-Inkonsistenzen." Jetzt 1,15
-         Bildbreiten hoch und 1,7 breit — sie schwebt sichtbar ueber
-         dem Platz, bleibt aber am Klassenzimmer. */
-      const schweb = d * 1.45;
-      const ufo = document.createElement("span");
-      ufo.className = "lc-ufo";
-      ufo.style.setProperty("--gross", d + "px");
-      ufo.innerHTML =
-        '<i class="lc-ufo-strahl"></i>'
-        + '<svg class="lc-ufo-form" viewBox="0 0 160 62" aria-hidden="true">'
-        + '<defs>'
-        + '<linearGradient id="lcUfoRumpf" x1="0" y1="0" x2="0" y2="1">'
-        + '<stop offset="0" stop-color="#d8e6f2"/><stop offset=".45" stop-color="#8fa8bd"/>'
-        + '<stop offset="1" stop-color="#4a5f74"/></linearGradient>'
-        + '<linearGradient id="lcUfoKuppel" x1="0" y1="0" x2="0" y2="1">'
-        + '<stop offset="0" stop-color="rgba(190,246,255,.95)"/>'
-        + '<stop offset="1" stop-color="rgba(60,150,190,.55)"/></linearGradient>'
-        + '</defs>'
-        /* Die KUPPEL zuerst — sie liegt hinter dem Rumpf, sonst
-           schwebt sie darueber wie ein Deckel. */
-        + '<path class="lc-ufo-kuppel" d="M54 32 C56 9 104 9 106 32 Z"'
-        + ' fill="url(#lcUfoKuppel)" stroke="#3d6d87" stroke-width="1.6"/>'
-        /* Ein Lichtreflex auf dem Glas — ohne ihn ist die Kuppel
-           eine Scheibe, keine Kugel. */
-        + '<path d="M63 28 C64 15 76 12 84 13 C74 16 68 21 67 29 Z"'
-        + ' fill="rgba(255,255,255,.55)"/>'
-        /* Der RUMPF: eine flache Linse, oben schmaler als unten. */
-        + '<ellipse cx="80" cy="34" rx="78" ry="11" fill="url(#lcUfoRumpf)"/>'
-        /* Die Unterseite liegt im Schatten und ist kleiner — daran
-           sieht man, dass man von schraeg unten hinsieht. */
-        + '<ellipse cx="80" cy="40" rx="56" ry="9" fill="#38495c"/>'
-        + '<ellipse cx="80" cy="41.5" rx="30" ry="5.4" fill="#22303f"/>'
-        /* Der helle Grat auf der Oberkante. */
-        + '<path d="M8 32 C26 25 134 25 152 32" fill="none"'
-        + ' stroke="rgba(255,255,255,.55)" stroke-width="1.8"/>'
-        /* DIE LAMPEN am Rand — sieben, und sie blinken nacheinander. */
-        + (function () {
-            let l = "";
-            for (let i = 0; i < 7; i++) {
-              const x = 26 + i * 18;
-              l += '<circle class="lc-ufo-lampe" cx="' + x + '" cy="38.6" r="4.2"'
-                 + ' style="animation-delay:' + (i * 120) + 'ms"/>';
-            }
-            return l;
-          })()
-        + "</svg>";
-      reihe.appendChild(ufo);
-      weg.push(ufo);
-      setzen(ufo, start.x, startY - schweb);
-
-      /* Die Kopie des Bildes, die im Strahl mitreist. */
-      const ufoLast = document.createElement("span");
-      ufoLast.className = "lc-ufo-last";
-      ufoLast.style.setProperty("--gross", d + "px");
-      if (quelle) {
-        ufoLast.style.backgroundImage = "url(" + quelle.replace(/[()"']/g, "") + ")";
-      } else {
-        ufoLast.textContent = (ab.name || "?").charAt(0).toUpperCase();
-      }
-      reihe.appendChild(ufoLast);
-      weg.push(ufoLast);
-      setzen(ufoLast, start.x, startY);
-
-      /* DIE ZEITEN. Alles in Bruchteilen von `dauer`, damit die
-         Ankunft bei genau `hin` liegt — dort sitzt auch der
-         Ankunftston. */
-      const tAn = hin / dauer;
-      const T = (f) => Math.max(0, Math.min(1, f * tAn));
-      /* Kein cubic-bezier ueber die ganze Animation: eine Kurve
-         ueber alles wuerde die Abstaende ZWISCHEN den Marken
-         stauchen, und dann laege der Strahl nicht mehr auf dem
-         Bild. Die Beschleunigung steckt deshalb in den Werten. */
-      try {
-        ufo.animate([
-          { transform: "translate(-50%, -50%) translateY(-260%)", opacity: 0, offset: 0 },
-          { transform: "translate(-50%, -50%) translateY(-150%)", opacity: 1, offset: T(0.06) },
-          { transform: "translate(-50%, -50%) translateY(-40%)",  opacity: 1, offset: T(0.11) },
-          { transform: "translate(-50%, -50%) translateY(0)",     opacity: 1, offset: T(0.16) },
-          /* Ueber dem Start stehen, waehrend der Strahl arbeitet */
-          { transform: "translate(-50%, -50%) translateY(2%)",    opacity: 1, offset: T(0.30) },
-          { transform: "translate(-50%, -50%) translateY(0)",     opacity: 1, offset: T(0.42) },
-          /* Hinueber — erst langsam anziehen, dann wieder bremsen */
-          { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.08).toFixed(1) + "px), -50%)"
-                       + " translateY(-4%)", opacity: 1, offset: T(0.50) },
-          { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.50).toFixed(1) + "px), calc(-50% + "
-                       + ((endeY - startY) * 0.50).toFixed(1) + "px)) translateY(-7%)", opacity: 1, offset: T(0.62) },
-          { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.92).toFixed(1) + "px), calc(-50% + "
-                       + ((endeY - startY) * 0.92).toFixed(1) + "px)) translateY(-4%)", opacity: 1, offset: T(0.72) },
-          { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
-                       + (endeY - startY).toFixed(1) + "px)) translateY(0)", opacity: 1, offset: T(0.78) },
-          { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
-                       + (endeY - startY).toFixed(1) + "px)) translateY(0)", opacity: 1, offset: T(1) },
-          /* Und weg nach oben */
-          { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
-                       + (endeY - startY).toFixed(1) + "px)) translateY(-120%)", opacity: .7, offset: Math.min(1, T(1) + (1 - T(1)) * 0.6) },
-          { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
-                       + (endeY - startY).toFixed(1) + "px)) translateY(-300%)", opacity: 0, offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "both" });
-
-        /* DER STRAHL. Er ist an, waehrend das Bild steigt und
-           waehrend es sinkt — und nur dann. */
-        ufo.querySelector(".lc-ufo-strahl").animate([
-          { opacity: 0, transform: "translateX(-50%) scaleY(.1)", offset: 0 },
-          { opacity: 0, transform: "translateX(-50%) scaleY(.1)", offset: T(0.17) },
-          { opacity: .9, transform: "translateX(-50%) scaleY(1)", offset: T(0.23) },
-          { opacity: .85, transform: "translateX(-50%) scaleY(1)", offset: T(0.38) },
-          { opacity: 0, transform: "translateX(-50%) scaleY(.1)", offset: T(0.44) },
-          { opacity: 0, transform: "translateX(-50%) scaleY(.1)", offset: T(0.76) },
-          { opacity: .9, transform: "translateX(-50%) scaleY(1)", offset: T(0.82) },
-          { opacity: .85, transform: "translateX(-50%) scaleY(1)", offset: T(0.98) },
-          { opacity: 0, transform: "translateX(-50%) scaleY(.1)", offset: Math.min(1, T(1.04)) },
-          { opacity: 0, transform: "translateX(-50%) scaleY(.1)", offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "both" });
-
-        /* DAS BILD IM STRAHL. Es steigt, faehrt mit und sinkt — und
-           es dreht sich dabei ganz leicht, wie etwas, das
-           schwerelos haengt. */
-        /* NACHGESEHEN am Bildschirm: bei -(schweb - 0,18 d) endete
-           das Bild 12 px unter der Mitte der Untertasse und lag
-           damit MITTEN in ihr. Die Untertasse ist 0,33 Bildbreiten
-           halbhoch; das Bild muss also mindestens 0,33 + eine halbe
-           Bildhoehe darunter haengen. Mit 0,90 bleibt ein sichtbarer
-           Abstand, und angehoben wird es um 0,55 Bildbreiten. */
-        const hoch = -(schweb - d * 0.90);
-        ufoLast.animate([
-          { transform: "translate(-50%, -50%) scale(.2)", opacity: 0, offset: 0 },
-          { transform: "translate(-50%, -50%) scale(.2)", opacity: 0, offset: T(0.21) },
-          /* auftauchen und steigen — erst langsam, dann schneller */
-          { transform: "translate(-50%, -50%) translateY(0) scale(1) rotate(0deg)", opacity: 1, offset: T(0.24) },
-          { transform: "translate(-50%, -50%) translateY(" + (hoch * 0.18).toFixed(1) + "px) scale(.97) rotate(-5deg)", opacity: 1, offset: T(0.28) },
-          { transform: "translate(-50%, -50%) translateY(" + (hoch * 0.55).toFixed(1) + "px) scale(.9) rotate(6deg)", opacity: 1, offset: T(0.33) },
-          { transform: "translate(-50%, -50%) translateY(" + hoch.toFixed(1) + "px) scale(.82) rotate(-3deg)", opacity: 1, offset: T(0.40) },
-          /* mitreisen, genau unter der Untertasse */
-          { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.08).toFixed(1) + "px), -50%) translateY("
-                       + (hoch * 1.04).toFixed(1) + "px) scale(.8) rotate(4deg)", opacity: 1, offset: T(0.50) },
-          { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.50).toFixed(1) + "px), calc(-50% + "
-                       + ((endeY - startY) * 0.50).toFixed(1) + "px)) translateY(" + (hoch * 1.07).toFixed(1)
-                       + "px) scale(.78) rotate(-4deg)", opacity: 1, offset: T(0.62) },
-          { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.92).toFixed(1) + "px), calc(-50% + "
-                       + ((endeY - startY) * 0.92).toFixed(1) + "px)) translateY(" + (hoch * 1.04).toFixed(1)
-                       + "px) scale(.8) rotate(3deg)", opacity: 1, offset: T(0.72) },
-          { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
-                       + (endeY - startY).toFixed(1) + "px)) translateY(" + hoch.toFixed(1)
-                       + "px) scale(.82) rotate(0deg)", opacity: 1, offset: T(0.80) },
-          /* und wieder herunter, langsamer werdend */
-          { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
-                       + (endeY - startY).toFixed(1) + "px)) translateY(" + (hoch * 0.52).toFixed(1)
-                       + "px) scale(.9) rotate(-4deg)", opacity: 1, offset: T(0.88) },
-          { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
-                       + (endeY - startY).toFixed(1) + "px)) translateY(" + (hoch * 0.16).toFixed(1)
-                       + "px) scale(.97) rotate(2deg)", opacity: 1, offset: T(0.95) },
-          { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
-                       + (endeY - startY).toFixed(1) + "px)) translateY(0) scale(1) rotate(0deg)", opacity: 1, offset: T(1) },
-          /* Das Bild am Platz ist ab hier wieder da — die Kopie
-             verschwindet in einem Wimpernschlag, damit nichts
-             doppelt steht. */
-          { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
-                       + (endeY - startY).toFixed(1) + "px)) translateY(0) scale(1)", opacity: 0, offset: Math.min(1, T(1) + 0.02) },
-          { opacity: 0, offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "both" });
-
-        /* Und das Bild AM PLATZ: es ist genau so lange weg, wie die
-           Kopie unterwegs ist. `fill: "none"` — danach steht der
-           Stil wieder unveraendert da. */
-        kreis.animate([
-          { opacity: 1, offset: 0 },
-          { opacity: 1, offset: T(0.23) },
-          { opacity: 0, offset: T(0.25) },
-          { opacity: 0, offset: T(0.99) },
-          { opacity: 1, offset: T(1) },
-          { opacity: 1, offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "none" });
-      } catch (e) {}
-      lcTonZu("untertasse");
-    } else if (art === "mieze") {
-      /* =============================================================
-         RUNDE 75 — DIE KATZE MIT DEM WOLLKNAEUEL
-         -------------------------------------------------------------
-         XANDER: „und eine Katze soll noch dabei sein, die mit meinem
-         Profilbild spielt wie mit einem Wollknaeuel. Die soll
-         ploetzlich auftauchen und den Ball, also mein Profilbild, bis
-         zu dem Platz spielen, wo ich ihn haben moechte. Die kann
-         zwischendurch auch miau machen."
-
-         Eine Katze spielt nicht gleichmaessig: sie schlaegt zu, der
-         Ball rollt ein Stueck und wird langsamer, sie springt hinterher
-         und schlaegt wieder. Deshalb wird die Strecke in SCHLAEGE
-         geteilt — so viele, wie Plaetze dazwischen liegen, mindestens
-         zwei. Jeder Schlag ist ein eigener Abschnitt, und in jedem
-         wird der Ball langsamer (die Werte ruecken enger zusammen).
-         ============================================================= */
-      const versatzK = lcBildVersatz(ab.el);
-      const versatzKZ = lcBildVersatz(zu.el);
-      const startYK = start.y + versatzK;
-      const endeYK = ende.y + versatzKZ;
-      const schlaege = Math.max(2, Math.min(4, plaetzeR));
-      const katze = document.createElement("span");
-      katze.className = "lc-katze";
-      katze.style.setProperty("--gross", d + "px");
-      katze.innerHTML =
-        '<svg class="lc-katze-form" viewBox="0 0 120 92" aria-hidden="true">'
-        + '<defs><linearGradient id="lcKatzFell" x1="0" y1="0" x2="0" y2="1">'
-        + '<stop offset="0" stop-color="#8c8279"/><stop offset=".55" stop-color="#6d6259"/>'
-        + '<stop offset="1" stop-color="#4c443d"/></linearGradient></defs>'
-        /* Der SCHWANZ liegt hinter dem Koerper — deshalb zuerst. */
-        + '<path class="lc-katze-schwanz" d="M26 70 C6 68 2 50 12 40 C17 35 24 36 25 42"'
-        + ' fill="none" stroke="url(#lcKatzFell)" stroke-width="9" stroke-linecap="round"/>'
-        /* Der KOERPER: eine sitzende Katze ist von der Seite ein
-           Tropfen — hinten breit, vorn schmal. */
-        + '<path d="M30 78 C22 60 28 40 46 34 C62 29 78 36 82 52 C86 66 80 78 72 80 Z"'
-        + ' fill="url(#lcKatzFell)"/>'
-        /* Die VORDERPFOTEN — eine steht, eine holt aus. */
-        + '<path class="lc-katze-pfote" d="M74 66 C82 64 92 70 94 78 C95 82 90 84 86 82'
-        + ' C80 79 74 73 74 66 Z" fill="#9a8f85"/>'
-        + '<path d="M62 74 C68 72 74 76 75 80 L60 80 Z" fill="#7d7268"/>'
-        /* Der KOPF. */
-        + '<circle cx="86" cy="36" r="17" fill="url(#lcKatzFell)"/>'
-        /* Die OHREN — spitz, mit heller Innenflaeche. */
-        + '<path d="M72 26 L70 8 L84 20 Z" fill="#6d6259"/>'
-        + '<path d="M73.5 24 L72.5 14 L80 21 Z" fill="#c69a9a"/>'
-        + '<path d="M96 20 L106 6 L104 25 Z" fill="#6d6259"/>'
-        + '<path d="M97.5 21 L103 12 L102 23 Z" fill="#c69a9a"/>'
-        /* Die AUGEN mit senkrechter Pupille — daran erkennt man eine
-           Katze sofort. */
-        + '<ellipse cx="81" cy="34" rx="5" ry="6" fill="#d8e36a"/>'
-        + '<ellipse cx="95" cy="34" rx="5" ry="6" fill="#d8e36a"/>'
-        + '<ellipse class="lc-katze-pupille" cx="81" cy="34" rx="1.5" ry="5.4" fill="#231d18"/>'
-        + '<ellipse class="lc-katze-pupille" cx="95" cy="34" rx="1.5" ry="5.4" fill="#231d18"/>'
-        /* Nase, Maul und Schnurrhaare. */
-        + '<path d="M86 43 L82.4 39.6 L89.6 39.6 Z" fill="#c07c86"/>'
-        + '<path d="M86 43 L86 46 M86 46 C83 48.6 80 47.4 79 45.4'
-        + ' M86 46 C89 48.6 92 47.4 93 45.4" fill="none" stroke="#2b2420"'
-        + ' stroke-width="1.5" stroke-linecap="round"/>'
-        + '<path d="M78 41 L64 38 M78 44 L65 45 M94 41 L108 38 M94 44 L107 45"'
-        + ' fill="none" stroke="rgba(255,255,255,.72)" stroke-width="1.2"'
-        + ' stroke-linecap="round"/>'
-        /* Die Streifen auf dem Ruecken. */
-        + '<path d="M44 38 C46 44 46 50 44 56 M54 34 C56 41 56 48 54 55'
-        + ' M64 33 C66 40 66 47 64 54" fill="none" stroke="rgba(40,34,29,.4)"'
-        + ' stroke-width="3" stroke-linecap="round"/>'
-        + "</svg>";
-      reihe.appendChild(katze);
-      weg.push(katze);
-      setzen(katze, start.x, startYK);
-
-      /* Der „Ball" — die Kopie des Profilbildes, die gerollt wird. */
-      const ball = document.createElement("span");
-      ball.className = "lc-katze-ball";
-      ball.style.setProperty("--gross", d + "px");
-      if (quelle) {
-        ball.style.backgroundImage = "url(" + quelle.replace(/[()"']/g, "") + ")";
-      } else {
-        ball.textContent = (ab.name || "?").charAt(0).toUpperCase();
-      }
-      reihe.appendChild(ball);
-      weg.push(ball);
-      setzen(ball, start.x, startYK);
-
-      try {
-        const tAnK = hin / dauer;
-        const dxK = ende.x - start.x, dyK = endeYK - startYK;
-        const links = dxK < 0;
-        /* Die Katze schaut in die Richtung, in die sie spielt. Ihre
-           Zeichnung schaut nach RECHTS (Kopf bei x=86, Schwanz bei
-           x=12), also wird nur nach links gespiegelt. */
-        const sp = links ? " scaleX(-1)" : "";
-        /* ERST AUFTAUCHEN („die soll ploetzlich auftauchen"): sie
-           springt von unten ins Bild. */
-        const katzRahmen = [
-          { transform: "translate(-50%, -50%) translate(" + (links ? 46 : -46) + "%, 150%)" + sp,
-            opacity: 0, offset: 0 },
-          { transform: "translate(-50%, -50%) translate(" + (links ? 40 : -40) + "%, 24%)" + sp,
-            opacity: 1, offset: 0.06 * tAnK },
-          { transform: "translate(-50%, -50%) translate(" + (links ? 34 : -34) + "%, 46%)" + sp,
-            opacity: 1, offset: 0.10 * tAnK }
-        ];
-        const ballRahmen = [
-          { transform: "translate(-50%, -50%) rotate(0deg)", opacity: 0, offset: 0 },
-          { transform: "translate(-50%, -50%) rotate(0deg)", opacity: 1, offset: 0.07 * tAnK }
-        ];
-        /* JEDER SCHLAG. Der Ball legt in jedem Schlag ein Stueck
-           zurueck, und die Stuecke werden KUERZER — so laeuft etwas
-           aus, das einmal angestossen wurde. Die Summe ist immer
-           genau 1, damit er am Ende auf dem Platz liegt. */
-        let summe = 0;
-        const stuecke = [];
-        for (let k = 0; k < schlaege; k++) stuecke.push(Math.pow(0.82, k));
-        stuecke.forEach((v) => { summe += v; });
-        let gelegt = 0;
-        const anfang = 0.10 * tAnK;
-        const spanne = (tAnK - anfang);
-        for (let k = 0; k < schlaege; k++) {
-          const t0 = anfang + spanne * (k / schlaege);
-          const t1 = anfang + spanne * ((k + 1) / schlaege);
-          const vorher = gelegt / summe;
-          gelegt += stuecke[k];
-          const nachher = gelegt / summe;
-          const bei = (f) => ({
-            x: dxK * (vorher + (nachher - vorher) * f),
-            y: dyK * (vorher + (nachher - vorher) * f)
-          });
-          /* DIE KATZE holt aus, schlaegt und springt hinterher. */
-          const vorPos = bei(0);
-          katzRahmen.push({
-            transform: "translate(calc(-50% + " + vorPos.x.toFixed(1) + "px), calc(-50% + "
-              + vorPos.y.toFixed(1) + "px)) translate(" + (links ? 40 : -40) + "%, 40%) rotate("
-              + (links ? 7 : -7) + "deg)" + sp,
-            opacity: 1, offset: t0 + (t1 - t0) * 0.10
-          });
-          katzRahmen.push({
-            transform: "translate(calc(-50% + " + vorPos.x.toFixed(1) + "px), calc(-50% + "
-              + vorPos.y.toFixed(1) + "px)) translate(" + (links ? 24 : -24) + "%, 46%) rotate("
-              + (links ? -6 : 6) + "deg)" + sp,
-            opacity: 1, offset: t0 + (t1 - t0) * 0.20
-          });
-          const nachPos = bei(1);
-          katzRahmen.push({
-            transform: "translate(calc(-50% + " + (nachPos.x - dxK * 0.06).toFixed(1) + "px), calc(-50% + "
-              + (nachPos.y - dyK * 0.06).toFixed(1) + "px)) translate(" + (links ? 44 : -44)
-              + "%, -6%) rotate(0deg)" + sp,
-            opacity: 1, offset: t0 + (t1 - t0) * 0.58
-          });
-          katzRahmen.push({
-            transform: "translate(calc(-50% + " + (nachPos.x - dxK * 0.02).toFixed(1) + "px), calc(-50% + "
-              + (nachPos.y - dyK * 0.02).toFixed(1) + "px)) translate(" + (links ? 40 : -40)
-              + "%, 44%) rotate(0deg)" + sp,
-            opacity: 1, offset: t1
-          });
-          /* DER BALL rollt — und wird langsamer: die Wegstuecke
-             zwischen den Marken werden kleiner. Gedreht wird so
-             weit, wie er rollt (ein Ball rutscht nicht). */
-          [[0.22, 0.00], [0.34, 0.34], [0.48, 0.62], [0.66, 0.83],
-           [0.84, 0.95], [1.00, 1.00]].forEach(([tf, wf]) => {
-            const pos = bei(wf);
-            const weit = Math.hypot(pos.x, pos.y) + Math.hypot(dxK, dyK) * (vorher);
-            ballRahmen.push({
-              transform: "translate(calc(-50% + " + pos.x.toFixed(1) + "px), calc(-50% + "
-                + pos.y.toFixed(1) + "px)) rotate(" + ((links ? -1 : 1) * weit * 360 / (Math.PI * d)).toFixed(1)
-                + "deg)",
-              opacity: 1, offset: Math.min(1, t0 + (t1 - t0) * tf)
-            });
-          });
-        }
-        /* Und weg: die Katze geht wieder, der Ball wird unsichtbar,
-           sobald das echte Bild wieder am Platz steht. */
-        katzRahmen.push({
-          transform: "translate(calc(-50% + " + dxK.toFixed(1) + "px), calc(-50% + "
-            + dyK.toFixed(1) + "px)) translate(" + (links ? 54 : -54) + "%, 60%)" + sp,
-          opacity: 1, offset: Math.min(1, tAnK + (1 - tAnK) * 0.45)
-        });
-        katzRahmen.push({
-          transform: "translate(calc(-50% + " + dxK.toFixed(1) + "px), calc(-50% + "
-            + dyK.toFixed(1) + "px)) translate(" + (links ? 70 : -70) + "%, 170%)" + sp,
-          opacity: 0, offset: 1
-        });
-        ballRahmen.push({
-          transform: "translate(calc(-50% + " + dxK.toFixed(1) + "px), calc(-50% + "
-            + dyK.toFixed(1) + "px)) rotate(0deg)", opacity: 1, offset: tAnK
-        });
-        ballRahmen.push({
-          transform: "translate(calc(-50% + " + dxK.toFixed(1) + "px), calc(-50% + "
-            + dyK.toFixed(1) + "px)) rotate(0deg)", opacity: 0, offset: Math.min(1, tAnK + 0.02)
-        });
-        ballRahmen.push({ opacity: 0, offset: 1 });
-        katze.animate(katzRahmen, { duration: dauer, easing: "linear", fill: "both" });
-        ball.animate(ballRahmen, { duration: dauer, easing: "linear", fill: "both" });
-        kreis.animate([
-          { opacity: 1, offset: 0 },
-          { opacity: 1, offset: 0.06 * tAnK },
-          { opacity: 0, offset: 0.08 * tAnK },
-          { opacity: 0, offset: tAnK - 0.01 },
-          { opacity: 1, offset: tAnK },
-          { opacity: 1, offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "none" });
-      } catch (e) {}
-      /* „Die kann zwischendurch auch miau machen." Einmal beim
-         Auftauchen und einmal auf halber Strecke — nicht oefter,
-         sonst wird aus dem Spiel ein Geschrei. */
-      lcTonZu("mieze");
-      lcTonSpaeter("katze", Math.round(hin * 0.55), 0.42);
-    } else if (art === "gotteshand" || art === "pranke") {
-      /* =============================================================
-         RUNDE 75 — DIE UEBERDIMENSIONALE HAND
-         -------------------------------------------------------------
-         XANDER: „Dann irgendeine ueberdimensionale Hand soll mein
-         Profilbild, also mich, auch anfassen und mich auf einen
-         anderen Platz setzen, als wenn das Gotteshand ist oder die
-         Hand von dem Gorilla … Vielleicht kann man sich die Hand auch
-         aussuchen in der Auswahl. Das soll aber realistisch von der
-         Physik sein. Die nimmt mich von meinem Platz weg und dann
-         gibt's vielleicht so ein Plopp-Geraeusch, als wenn ich da
-         rausgezupft wurde … und dann wieder so ein Aufsatzgeraeusch
-         irgendwo, wo ich wieder ankomme."
-
-         ZUR AUSWAHL: zwei Befehle, /hand (Gotteshand) und /pranke
-         (Gorilla). Dieselbe Bewegung, zwei Zeichnungen.
-         ZUR PHYSIK: eine Hand, die etwas traegt, bewegt sich nicht
-         gleichmaessig. Sie beschleunigt beim Anheben, traegt ruhig
-         und setzt LANGSAMER ab, als sie angehoben hat — Absetzen ist
-         der vorsichtige Teil. Und das Bild haengt beim Tragen ein
-         wenig nach: es schwingt der Hand hinterher.
-         ============================================================= */
-      const gorilla = art === "pranke";
-      const versatzH = lcBildVersatz(ab.el);
-      const versatzHZ = lcBildVersatz(zu.el);
-      const startYH = start.y + versatzH;
-      const endeYH = ende.y + versatzHZ;
-      const hand = document.createElement("span");
-      hand.className = "lc-riesenhand" + (gorilla ? " lc-riesenhand-affe" : "");
-      hand.style.setProperty("--gross", d + "px");
-      const haut = gorilla ? "#3a322c" : "#e8b489";
-      const kante = gorilla ? "#221c18" : "#b47a52";
-      const innen = gorilla ? "#5c4f45" : "#f3cfae";
-      hand.innerHTML =
-        '<svg class="lc-riesenhand-form" viewBox="0 0 120 150" aria-hidden="true">'
-        + '<defs><linearGradient id="lcHandFarbe' + (gorilla ? "G" : "M") + '" x1="0" y1="0" x2="0" y2="1">'
-        + '<stop offset="0" stop-color="' + innen + '"/>'
-        + '<stop offset="1" stop-color="' + haut + '"/></linearGradient></defs>'
-        /* Der ARM kommt von oben aus dem Bild heraus — ohne ihn
-           schwebt eine abgetrennte Hand im Raum. */
-        + '<path d="M34 0 L86 0 L82 44 L38 44 Z" fill="url(#lcHandFarbe'
-        + (gorilla ? "G" : "M") + ')"/>'
-        /* Beim Gorilla ist der Arm behaart — kurze Striche am Rand. */
-        + (gorilla
-            ? '<path d="M36 8 L28 4 M36 18 L27 15 M37 28 L28 26 M84 8 L92 4'
-              + ' M84 18 L93 15 M83 28 L92 26" fill="none" stroke="#2a231e"'
-              + ' stroke-width="3" stroke-linecap="round"/>'
-            : "")
-        /* Der HANDRUECKEN. */
-        + '<path d="M30 40 C26 56 26 74 32 88 C38 102 56 110 72 106'
-        + ' C88 102 94 86 92 68 C90 52 86 44 82 40 Z"'
-        + ' fill="url(#lcHandFarbe' + (gorilla ? "G" : "M") + ')" stroke="' + kante
-        + '" stroke-width="2" stroke-linejoin="round"/>'
-        /* VIER FINGER, die sich um das Bild legen. Sie sind
-           unterschiedlich lang — gleich lange Finger sehen aus wie
-           ein Rechen.
-           Sie heissen „lc-rhand-finger" und nicht „lc-hand-finger":
-           den Namen hat seit langem die klatschende Hand, und dort
-           haengt eine Dauerschleife dran (lcHandKrallt, siehe
-           korrekturen.css). Die Riesenhand soll nicht krallen. */
-        + '<path class="lc-rhand-finger" d="M34 84 C30 100 32 118 40 128'
-        + ' C46 135 56 134 58 126 C60 116 54 100 50 86 Z"'
-        + ' fill="' + haut + '" stroke="' + kante + '" stroke-width="2"'
-        + ' stroke-linejoin="round"/>'
-        + '<path class="lc-rhand-finger" d="M50 88 C48 106 50 126 58 136'
-        + ' C64 143 74 142 76 133 C78 122 72 104 68 88 Z"'
-        + ' fill="' + innen + '" stroke="' + kante + '" stroke-width="2"'
-        + ' stroke-linejoin="round"/>'
-        + '<path class="lc-rhand-finger" d="M68 88 C68 104 70 122 78 131'
-        + ' C84 137 92 136 94 128 C96 118 90 102 86 86 Z"'
-        + ' fill="' + haut + '" stroke="' + kante + '" stroke-width="2"'
-        + ' stroke-linejoin="round"/>'
-        + '<path class="lc-rhand-finger" d="M85 82 C88 96 92 110 99 117'
-        + ' C104 122 111 120 112 113 C113 104 106 90 100 78 Z"'
-        + ' fill="' + innen + '" stroke="' + kante + '" stroke-width="2"'
-        + ' stroke-linejoin="round"/>'
-        /* DER DAUMEN steht ab — daran erkennt man eine Hand, die
-           greift, und nicht eine Pfote, die draufschlaegt. */
-        + '<path class="lc-rhand-daumen" d="M30 62 C18 62 8 72 6 84'
-        + ' C4 94 12 100 20 96 C28 92 34 80 34 70 Z"'
-        + ' fill="' + innen + '" stroke="' + kante + '" stroke-width="2"'
-        + ' stroke-linejoin="round"/>'
-        /* Die Knoechel als weiche Schatten. */
-        + '<path d="M38 82 C44 78 52 78 58 82 M60 84 C66 80 74 80 80 84"'
-        + ' fill="none" stroke="rgba(0,0,0,.18)" stroke-width="3"'
-        + ' stroke-linecap="round"/>'
-        + "</svg>";
-      reihe.appendChild(hand);
-      weg.push(hand);
-      setzen(hand, start.x, startYH);
-
-      const handLast = document.createElement("span");
-      handLast.className = "lc-riesenhand-last";
-      handLast.style.setProperty("--gross", d + "px");
-      if (quelle) {
-        handLast.style.backgroundImage = "url(" + quelle.replace(/[()"']/g, "") + ")";
-      } else {
-        handLast.textContent = (ab.name || "?").charAt(0).toUpperCase();
-      }
-      reihe.appendChild(handLast);
-      weg.push(handLast);
-      setzen(handLast, start.x, startYH);
-
-      try {
-        const tAnH = hin / dauer;
-        const dxH = ende.x - start.x, dyH = endeYH - startYH;
-        const hochH = -d * 1.25;
-        /* Die Hand haelt das Bild an seiner Oberkante — der
-           Greifpunkt liegt eine halbe Bildhoehe ueber der Mitte. */
-        const griff = -d * 0.62;
-        const handBei = (fx, fy, hoch, dreh, zeit, sicht) => ({
-          transform: "translate(calc(-50% + " + (dxH * fx).toFixed(1) + "px), calc(-50% + "
-            + (dyH * fy).toFixed(1) + "px)) translateY(" + (griff + hoch).toFixed(1)
-            + "px) rotate(" + dreh + "deg)",
-          opacity: sicht === undefined ? 1 : sicht,
-          offset: Math.max(0, Math.min(1, zeit))
-        });
-        hand.animate([
-          /* HERUNTER — sie faellt nicht, sie senkt sich, wird aber
-             schneller: die Abstaende werden groesser. */
-          handBei(0, 0, -d * 4.2, 0, 0, 0),
-          handBei(0, 0, -d * 3.4, 0, 0.04 * tAnH, 1),
-          handBei(0, 0, -d * 2.2, -2, 0.09 * tAnH, 1),
-          handBei(0, 0, -d * 0.9, -3, 0.14 * tAnH, 1),
-          /* ZUGREIFEN: sie hält kurz an, bevor sie zupackt. */
-          handBei(0, 0, 0, -3, 0.19 * tAnH, 1),
-          handBei(0, 0, d * 0.06, -3, 0.24 * tAnH, 1),
-          /* HERAUSZUPFEN — hier sitzt das Plopp. Ruckartig: das
-             groesste Stueck Weg in der kuerzesten Zeit. */
-          handBei(0, 0, -d * 0.30, -5, 0.29 * tAnH, 1),
-          handBei(0, 0, hochH, -4, 0.36 * tAnH, 1),
-          /* TRAGEN — ruhig, leicht wiegend. */
-          handBei(0.14, 0.14, hochH * 1.04, 3, 0.46 * tAnH, 1),
-          handBei(0.46, 0.46, hochH * 1.08, -3, 0.58 * tAnH, 1),
-          handBei(0.78, 0.78, hochH * 1.04, 3, 0.70 * tAnH, 1),
-          handBei(1, 1, hochH, 0, 0.78 * tAnH, 1),
-          /* ABSETZEN — langsamer als das Anheben. Die Abstaende
-             werden nach unten hin KLEINER. */
-          handBei(1, 1, hochH * 0.62, -2, 0.85 * tAnH, 1),
-          handBei(1, 1, hochH * 0.30, -2, 0.92 * tAnH, 1),
-          handBei(1, 1, hochH * 0.10, -1, 0.97 * tAnH, 1),
-          handBei(1, 1, 0, 0, tAnH, 1),
-          /* LOSLASSEN und wieder hinauf. */
-          handBei(1, 1, -d * 1.4, 2, tAnH + (1 - tAnH) * 0.45, 1),
-          handBei(1, 1, -d * 4.2, 3, 1, 0)
-        ], { duration: dauer, easing: "linear", fill: "both" });
-
-        /* DAS BILD IN DER HAND. Es haengt der Hand ein wenig
-           nach — das ist die Traegheit, die er meint. */
-        const lastBei = (fx, fy, hoch, dreh, zeit, sicht) => ({
-          transform: "translate(calc(-50% + " + (dxH * fx).toFixed(1) + "px), calc(-50% + "
-            + (dyH * fy).toFixed(1) + "px)) translateY(" + hoch.toFixed(1)
-            + "px) rotate(" + dreh + "deg)",
-          opacity: sicht === undefined ? 1 : sicht,
-          offset: Math.max(0, Math.min(1, zeit))
-        });
-        handLast.animate([
-          lastBei(0, 0, 0, 0, 0, 0),
-          lastBei(0, 0, 0, 0, 0.23 * tAnH, 0),
-          lastBei(0, 0, 0, 0, 0.24 * tAnH, 1),
-          lastBei(0, 0, d * 0.05, 0, 0.27 * tAnH, 1),
-          lastBei(0, 0, -d * 0.24, 2, 0.30 * tAnH, 1),
-          lastBei(0, 0, hochH * 0.92, 5, 0.37 * tAnH, 1),
-          /* nachhaengen: das Bild ist immer ein Stueck HINTER der
-             Hand, und es pendelt dabei aus. */
-          lastBei(0.10, 0.10, hochH * 1.02, -6, 0.46 * tAnH, 1),
-          lastBei(0.42, 0.42, hochH * 1.06, 5, 0.58 * tAnH, 1),
-          lastBei(0.75, 0.75, hochH * 1.02, -4, 0.70 * tAnH, 1),
-          lastBei(1, 1, hochH, 2, 0.78 * tAnH, 1),
-          lastBei(1, 1, hochH * 0.62, -1, 0.85 * tAnH, 1),
-          lastBei(1, 1, hochH * 0.30, 1, 0.92 * tAnH, 1),
-          lastBei(1, 1, hochH * 0.10, 0, 0.97 * tAnH, 1),
-          lastBei(1, 1, 0, 0, tAnH, 1),
-          lastBei(1, 1, 0, 0, Math.min(1, tAnH + 0.02), 0),
-          { opacity: 0, offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "both" });
-
-        kreis.animate([
-          { opacity: 1, offset: 0 },
-          { opacity: 1, offset: 0.23 * tAnH },
-          { opacity: 0, offset: 0.245 * tAnH },
-          { opacity: 0, offset: tAnH - 0.01 },
-          { opacity: 1, offset: tAnH },
-          { opacity: 1, offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "none" });
-      } catch (e) {}
-      /* „so ein Plopp-Geraeusch, als wenn ich da rausgezupft wurde":
-         „birneplopp" ist genau das — eine Gluehbirne, die aus ihrer
-         Fassung springt (0,62 s). Es liegt auf dem Ruck bei 29 % der
-         Hinzeit. Das „Aufsatzgeraeusch" am Ziel steht in
-         LC_ANKUNFT_TON. */
-      lcTonSpaeter("birneplopp", Math.round(hin * 0.29), 0.75);
-    } else if (art === "frisbee") {
-      /* =============================================================
-         RUNDE 75 — DIE FRISBEE
-         -------------------------------------------------------------
-         XANDER: „und dann noch Frisbee, eine Animation, die Frisbee
-         macht mit meinem Profilbild, dass ich dorthin geworfen werde
-         wie ne Frisbee-Scheibe, die sich wirklich so drehend
-         animiert, und mit den passenden Geraeuschen dazu … ohne
-         Rueckstaende, ohne Design-Beeinflussung und realistisch."
-
-         WAS EINE FRISBEE AUSMACHT (und was hier deshalb drinsteht):
-         · Sie liegt FLACH in der Luft — von der Seite sieht man eine
-           Scheibe, nicht einen Ball. Deshalb wird das Bild in der
-           Hoehe gestaucht (scaleY .34) und leicht gekippt.
-         · Sie dreht sich um ihre eigene Achse, und zwar SCHNELL und
-           GLEICHMAESSIG — eine Frisbee wird nicht langsamer, solange
-           sie fliegt. Deshalb dreht sie linear durch.
-         · Sie fliegt in einem flachen BOGEN und kippt dabei: beim
-           Abwurf zur Wurfhand geneigt, in der Mitte waagerecht, beim
-           Ankommen wieder leicht gekippt.
-         ============================================================= */
-      const versatzF = lcBildVersatz(ab.el);
-      const versatzFZ = lcBildVersatz(zu.el);
-      const startYF = start.y + versatzF;
-      const endeYF = ende.y + versatzFZ;
-      const scheibe = document.createElement("span");
-      scheibe.className = "lc-frisbee";
-      scheibe.style.setProperty("--gross", d + "px");
-      scheibe.innerHTML =
-        '<i class="lc-frisbee-rand"></i>'
-        + '<i class="lc-frisbee-bild"' + (quelle
-            ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
-          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</i>"
-        + '<i class="lc-frisbee-glanz"></i>';
-      reihe.appendChild(scheibe);
-      weg.push(scheibe);
-      setzen(scheibe, start.x, startYF);
-
-      try {
-        const tAnF = hin / dauer;
-        const dxF = ende.x - start.x, dyF = endeYF - startYF;
-        /* Der Bogen: die Frisbee steigt erst und faellt dann wieder
-           auf die Hoehe des Zielplatzes. Die Hoehe ist ein Viertel
-           der Strecke — flach, wie ein echter Wurf. */
-        const bogen = Math.min(d * 1.6, Math.hypot(dxF, dyF) * 0.25 + d * 0.3);
-        /* Die Drehzahl: so viele volle Drehungen, wie die Scheibe
-           Bilddurchmesser weit fliegt, mindestens vier. Damit dreht
-           eine lange Strecke auch wirklich laenger. */
-        const drehungen = Math.max(4, Math.round(Math.hypot(dxF, dyF) / d * 1.6));
-        const rahmen = [];
-        const SCHRITTE = 16;
-        for (let i = 0; i <= SCHRITTE; i++) {
-          const f = i / SCHRITTE;
-          /* Waagerecht gleichmaessig — eine geworfene Scheibe wird
-             durch die Luft kaum gebremst. */
-          const hoch = -bogen * Math.sin(Math.PI * f);
-          /* Die Neigung: -16 Grad beim Abwurf, 0 in der Mitte,
-             +10 beim Ankommen. */
-          const neig = -16 + 26 * f;
-          rahmen.push({
-            transform: "translate(calc(-50% + " + (dxF * f).toFixed(1) + "px), calc(-50% + "
-              + (dyF * f + hoch).toFixed(1) + "px))"
-              + " rotate(" + neig.toFixed(1) + "deg)"
-              + " scaleY(" + (0.34 + 0.66 * Math.pow(Math.max(0, (f - 0.86) / 0.14), 2)).toFixed(3) + ")",
-            opacity: 1,
-            offset: Math.max(0, Math.min(1, 0.06 * tAnF + (tAnF - 0.06 * tAnF) * f))
-          });
-        }
-        rahmen.unshift({
-          transform: "translate(-50%, -50%) rotate(-16deg) scaleY(.34)",
-          opacity: 0, offset: 0
-        });
-        rahmen.push({
-          transform: "translate(calc(-50% + " + dxF.toFixed(1) + "px), calc(-50% + "
-            + dyF.toFixed(1) + "px)) rotate(0deg) scaleY(1)",
-          opacity: 0, offset: Math.min(1, tAnF + 0.02)
-        });
-        rahmen.push({ opacity: 0, offset: 1 });
-        scheibe.animate(rahmen, { duration: dauer, easing: "linear", fill: "both" });
-        /* Die Drehung liegt auf der INNEREN Lage. Zwei Drehungen in
-           einem `transform` wuerden sich gegenseitig verrechnen —
-           die Neigung der Scheibe und ihr Kreiseln sind zwei
-           verschiedene Achsen. */
-        scheibe.querySelector(".lc-frisbee-bild").animate([
-          { transform: "rotate(0deg)", offset: 0 },
-          { transform: "rotate(" + (drehungen * 360) + "deg)", offset: tAnF },
-          { transform: "rotate(" + (drehungen * 360) + "deg)", offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "both" });
-        kreis.animate([
-          { opacity: 1, offset: 0 },
-          { opacity: 0, offset: 0.05 * tAnF },
-          { opacity: 0, offset: tAnF - 0.01 },
-          { opacity: 1, offset: tAnF },
-          { opacity: 1, offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "none" });
-      } catch (e) {}
-      /* „mit den passenden Geraeuschen dazu": der Wurf ist ein
-         Zischen („swoosh", 1,01 s), das Ankommen ein Klatschen
-         (LC_ANKUNFT_TON.frisbee). */
-      lcTonZu("frisbee");
     } else {
       /* Das Tor: eines hier, eines dort. */
       [start, ende].forEach((wo, i) => {
@@ -35832,9 +34952,7 @@
                          kran: "🏗️ ", dampfer: "🚢 ", lok: "🚂 ",
                          liane: "🌿 ", feder: "🪀 ", beamen: "✨ ",
                          rohr: "🟢 ", heli: "🚁 ", pferd: "🐎 ",
-                         greifvogel: "🦅 ", turm: "🏊 ",
-                         untertasse: "🛸 ", mieze: "🐱 ", gotteshand: "🤚 ",
-                         pranke: "🦍 ", frisbee: "🥏 "
+                         greifvogel: "🦅 ", turm: "🏊 "
                        }[art] || "🌀 ") + erg.text);
           }
         } catch (e) {}
@@ -38427,22 +37545,15 @@
         + ' fill="none" stroke="#e79ec0" stroke-width="1.6"/>'
         + "</svg></span>";
       schicht.insertAdjacentHTML("beforeend", '<span class="lc-entbl-wort">UPS!</span>');
-      /* RUNDE 75 — DER PFIFF KOMMT DANACH, UND ER IST KUERZER.
-         XANDER: „erst sollte der Effekt den BH weg reissen vom Sound
-         her und dann kommt dieses doppelte Pfeifen … Ja, dass der
-         erste kurz kommt, der zweite etwas laenger."
-         NACHGEMESSEN an ton/pfiff2.opus (2,01 s): -19 -22 -60 -79 |
-         -24 -18 -19 -18 -17 -17 -16 -16 | -24 -35 -40 -47 -65 …
-         Also genau das, was er beschreibt: ein KURZER Pfiff von 0,00
-         bis 0,20 s, dann Stille, dann ein LANGER von 0,40 bis
-         1,20 s. Die Reihenfolge stimmt schon in der Datei.
-         Der Riss (Planton) ist bei 620 + 630 = 1250 ms vorbei.
-         Deshalb faengt der Pfiff bei 1320 ms an — danach, nicht
-         darunter. Und er wird nach 1450 ms ausgeblendet („das kann
-         auch kuerzer sein"): der lange Pfiff ist dann durch, nur der
-         Nachhall faellt weg. Ende bei 2770 ms, die Animation laeuft
-         3000 ms — es bleibt nichts stehen. */
-      lcTonSpaeter("pfiff2", 1320, 0.6, 1450);
+      /* RUNDE 73 — XANDER: „Beim BH fehlt das Reissen und der Pfiff."
+         Und davor schon: „Der Wolfspfiff klingt wie ein Quietschen,
+         ich haette da gern erst so ein Gummiband-Schnalzen."
+         Es gab bisher NUR den Pfiff, und der lag auch noch vor der
+         Bewegung. Jetzt zuerst „bhriss" — Stoff, der Faden fuer
+         Faden aufgeht, und bei 0,24 s der Schnalzer des Gummizugs —
+         genau bei 660 ms, wo der BH losrutscht. Der Pfiff kommt
+         danach (LC_TREFFER.entbloessung, siehe dort). */
+      lcTonSpaeter("bhriss", 620, 0.9);
     }, 3000, "entbloessung");
   }
 
@@ -38456,76 +37567,6 @@
      Er faellt von oben herein, sitzt kurz schief und rutscht in die
      Waagerechte — ein Hut, der einfach nur da ist, sieht aus wie ein
      Aufkleber. */
-  /* =================================================================
-     RUNDE 75 — DIE SONNENBRILLE
-     -----------------------------------------------------------------
-     XANDER: „es soll noch ein Profileffekt geben, wo man sich ne
-     Sonnenbrille aufsetzt und cool zu sein."
-
-     WAS EINE SONNENBRILLE COOL MACHT — und was deshalb hier drin
-     steht: sie kommt NICHT von oben heruntergefallen wie der Hut.
-     Sie kommt von der Seite ins Bild, wird mit einer kleinen
-     Bewegung auf die Nase geschoben, und DANN laeuft ein
-     Lichtstreifen ueber die Glaeser. Genau in dieser Reihenfolge —
-     der Glanz zuerst waere ein Glanz auf nichts.
-     ================================================================= */
-  function lcSonnenbrille(wen) {
-    return lcAmPlatz(wen, "lc-sobri", (schicht) => {
-      schicht.innerHTML =
-        '<svg class="lc-sobri-bild" viewBox="0 0 140 54" aria-hidden="true">'
-        + '<defs>'
-        + '<linearGradient id="lcSobriGlas" x1="0" y1="0" x2="0" y2="1">'
-        + '<stop offset="0" stop-color="#3d4a5c"/>'
-        + '<stop offset=".5" stop-color="#1b2430"/>'
-        + '<stop offset="1" stop-color="#0d1218"/></linearGradient>'
-        + '<linearGradient id="lcSobriRahmen" x1="0" y1="0" x2="0" y2="1">'
-        + '<stop offset="0" stop-color="#5a6270"/>'
-        + '<stop offset=".4" stop-color="#2b3038"/>'
-        + '<stop offset="1" stop-color="#14171c"/></linearGradient>'
-        + "</defs>"
-        /* DIE BUEGEL zuerst — sie liegen hinter den Glaesern. Sie
-           laufen nach hinten und leicht nach unten, so wie ein
-           Buegel ueber dem Ohr sitzt. */
-        + '<path d="M6 20 L1 15 L1 22 L6 25 Z" fill="#14171c"/>'
-        + '<path d="M134 20 L139 15 L139 22 L134 25 Z" fill="#14171c"/>'
-        /* DIE GLAESER. Eine Pilotenbrille ist oben breit und laeuft
-           nach unten aussen spitz zu — das ist die Form, an der man
-           sie erkennt. */
-        + '<path class="lc-sobri-glas" d="M8 14 L62 14 L60 34 C58 44 44 48 32 46'
-        + ' C18 44 10 34 8 22 Z" fill="url(#lcSobriGlas)"'
-        + ' stroke="url(#lcSobriRahmen)" stroke-width="3.4"'
-        + ' stroke-linejoin="round"/>'
-        + '<path class="lc-sobri-glas" d="M132 14 L78 14 L80 34 C82 44 96 48 108 46'
-        + ' C122 44 130 34 132 22 Z" fill="url(#lcSobriGlas)"'
-        + ' stroke="url(#lcSobriRahmen)" stroke-width="3.4"'
-        + ' stroke-linejoin="round"/>'
-        /* DER STEG zwischen den Glaesern — eine Doppelbruecke, wie
-           bei einer Fliegerbrille. */
-        + '<path d="M62 17 C68 14 72 14 78 17" fill="none"'
-        + ' stroke="url(#lcSobriRahmen)" stroke-width="3.2"'
-        + ' stroke-linecap="round"/>'
-        + '<path d="M62 24 C68 21 72 21 78 24" fill="none"'
-        + ' stroke="url(#lcSobriRahmen)" stroke-width="2.4"'
-        + ' stroke-linecap="round"/>'
-        /* Die obere Kante des Rahmens ist heller — dort faellt das
-           Licht auf das Metall. */
-        + '<path d="M8 14 L62 14 M78 14 L132 14" fill="none"'
-        + ' stroke="rgba(255,255,255,.4)" stroke-width="1.6"'
-        + ' stroke-linecap="round"/>'
-        /* ZWEI feste Reflexe im Glas — eine Brille ohne Spiegelung
-           ist ein schwarzes Loch. */
-        + '<path d="M16 19 L30 19 L20 33 L12 27 Z" fill="rgba(255,255,255,.18)"/>'
-        + '<path d="M86 19 L100 19 L90 33 L82 27 Z" fill="rgba(255,255,255,.18)"/>'
-        /* UND DER WANDERNDE GLANZ, der spaeter darueberlaeuft. */
-        + '<rect class="lc-sobri-blitz" x="-30" y="6" width="16" height="44"'
-        + ' rx="5" fill="rgba(255,255,255,.75)"/>'
-        + "</svg>";
-      /* „bling" sitzt auf dem Glanz: der Streifen laeuft bei 52 bis
-         74 % der 2,6 s ueber die Glaeser, also ab 1350 ms. */
-      lcTonSpaeter("bling", 1350, 0.5);
-    }, 2600, "sonnenbrille");
-  }
-
   function lcHut(wen) {
     return lcAmPlatz(wen, "lc-hut", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
@@ -38533,7 +37574,7 @@
         kreis.classList.remove("lc-behutet");
         void kreis.offsetWidth;
         kreis.classList.add("lc-behutet");
-        setTimeout(() => kreis.classList.remove("lc-behutet"), 3400);
+        setTimeout(() => kreis.classList.remove("lc-behutet"), 2800);
       }
       schicht.innerHTML =
         '<svg class="lc-hut-bild" viewBox="0 0 140 76">'
@@ -38575,34 +37616,20 @@
         /* Die Grate sind RUND, nicht spitz — zwei Spitzen saehen aus
            wie Ohren. Gemessen an einem Stetson ist die Falte etwa ein
            Drittel der Kronenhoehe tief, nicht die Haelfte. */
-        /* RUNDE 75 — XANDER: „der Cowboyhut sieht auch noch nicht
-           gut aus."
-           NACHGESEHEN an dem, was hier stand: die Mitte der Krone lag
-           bei y = 24,5 und damit HOEHER als die Schultern daneben
-           (y = 30). Von vorn ergab das DREI Buckel — links ein Grat,
-           in der Mitte ein zweiter, rechts der dritte. Eine
-           Cattleman-Falte ist aber genau umgekehrt: in der Mitte eine
-           DELLE, die tiefer liegt als alles daneben, und links und
-           rechts je ein Grat. Jetzt liegt die Mitte bei y = 33,6, die
-           Schultern bei 28,4 und die Grate bei 14 — die Delle ist
-           damit der tiefste Punkt der Oberkante.
-           Und die Krone ist hoeher: die Grate standen bei 18,6, jetzt
-           bei 14. Ein Stetson hat eine hohe Krone; bei einer flachen
-           sieht er aus wie ein Hut zum Wandern. */
-        + '<path class="lc-hut-krone" d="M40 60 C38 36 41 19 46 14'
-        + ' C49 11.6 52.5 13 54.5 16.6 C56.5 20.2 58 25 59.5 28.4'
-        + ' C62.5 32 66 33.6 70 33.6 C74 33.6 77.5 32 80.5 28.4'
-        + ' C82 25 83.5 20.2 85.5 16.6 C87.5 13 91 11.6 94 14'
-        + ' C99 19 102 36 100 60 C86 64 54 64 40 60 Z"'
+        + '<path class="lc-hut-krone" d="M40 60 C38 37 41 22 45.5 18.6'
+        + ' C48 17.2 50.8 18.2 52.8 21 C55 24 56.3 27 58 30'
+        + ' C61.5 26 65.5 24.5 70 24.5 C74.5 24.5 78.5 26 82 30'
+        + ' C83.7 27 85 24 87.2 21 C89.2 18.2 92 17.2 94.5 18.6'
+        + ' C99 22 102 37 100 60 C86 64 54 64 40 60 Z"'
         + ' fill="url(#hut1)" stroke="#4e310f" stroke-width="2.2"'
         + ' stroke-linejoin="round"/>'
         /* Die drei Falten als Schattenlinien — ohne sie sieht die
            Krone wieder glatt aus. */
-        + '<path d="M70 34 C69 41 69 49 70 56" fill="none" stroke="#5e3c17"'
-        + ' stroke-width="2.2" opacity=".6"/>'
-        + '<path d="M55 27 C54 36 54 47 55 56" fill="none" stroke="#5e3c17"'
+        + '<path d="M70 27 C69 35 69 45 70 56" fill="none" stroke="#5e3c17"'
+        + ' stroke-width="2" opacity=".55"/>'
+        + '<path d="M57 32 C56 40 56 48 57 57" fill="none" stroke="#5e3c17"'
         + ' stroke-width="1.6" opacity=".4"/>'
-        + '<path d="M85 27 C86 36 86 47 85 56" fill="none" stroke="#5e3c17"'
+        + '<path d="M83 32 C84 40 84 48 83 57" fill="none" stroke="#5e3c17"'
         + ' stroke-width="1.6" opacity=".4"/>'
         /* DAS HUTBAND, am Kronenfuss und der Krempe folgend. */
         + '<path d="M40.6 52 C54 57 86 57 99.4 52 L100 60 C86 64 54 64 40 60 Z"'
@@ -38624,7 +37651,7 @@
         + '<path d="M9.5 42.8 C27 59 51 63.2 70 63.2 C89 63.2 113 59 130.5 42.8"'
         + ' fill="none" stroke="rgba(255,236,196,.55)" stroke-width="1.1"'
         + ' stroke-dasharray="3 3.2" stroke-linecap="round"/>'
-        + '<path d="M47 20 C52 15.2 60 14.2 66 16.4 C59 17.8 52 20.8 49 25.8 Z"'
+        + '<path d="M46 24 C52 19.5 62 18.6 70 21.4 C62.5 21.6 54 23.6 48.8 28.4 Z"'
         + ' fill="rgba(255,240,206,.34)"/>'
         + '<path d="M40.6 60 C54 64 86 64 99.4 60 C86 67 54 67 40.6 60 Z"'
         + ' fill="rgba(40,24,6,.35)"/>'
@@ -38632,12 +37659,9 @@
         /* RUNDE 73 — DIE HAND, DIE DEN HUT ZURECHTRUECKT.
            XANDER: „Der Cowboyhut ist noch zu comichaft, ich haette
            gern eine Hand, die ihn zurechtrueckt."
-           RUNDE 75 — XANDER: „die Hand, die ihn zurechtrueckt, das
-           soll am Schluss kommen."
-           Sie greift jetzt erst bei 81 % der Animation (2754 ms) von
-           rechts an die Krempe, zieht sie nach unten — dort kippt
-           der Hut in seine schraege Lage (lcHutR75) — und
-           verschwindet wieder. Davor sitzt er gerade. Eine
+           Sie greift von rechts an die Krempe, zieht sie bei 40 %
+           der Animation nach unten — dort kippt der Hut in seine
+           schraege Lage (lcHutR73) — und verschwindet wieder. Eine
            Hand, die den Hut nur beruehrt, ohne dass sich etwas
            aendert, waere Zierrat; hier tut sie wirklich etwas. */
         + '<svg class="lc-hut-hand" viewBox="0 0 60 54" aria-hidden="true">'
@@ -38668,7 +37692,7 @@
         + '<path d="M26 22.6 C25 26 25 30 26.4 33.4 M33 21.6 C32 25.4 32 30 33.4 33.6"'
         + ' fill="none" stroke="#b98054" stroke-width="1.1" opacity=".7"/>'
         + "</svg>";
-    }, 3400, "hut");
+    }, 2800, "hut");
   }
 
   /* --- DIE ZEITBOMBE ---------------------------------------------------
@@ -40460,7 +39484,6 @@
     flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1, brennen: 1, zorro: 1,
     dampfer: 1, lok: 1, liane: 1, feder: 1, beamen: 1, rohr: 1,
     heli: 1, pferd: 1, marsch: 1, greifvogel: 1, turm: 1, aufblasen: 1,
-    untertasse: 1, mieze: 1, gotteshand: 1, pranke: 1, frisbee: 1, sonnenbrille: 1,
     neunschwanz: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
@@ -40605,7 +39628,6 @@
       if (art === "gluehbirne" && lcGluehbirne(wenZ)) return;
       if (art === "birneraus" && lcGluehbirneRaus()) return;
       if (art === "hut" && lcHut(wenZ)) return;
-      if (art === "sonnenbrille" && lcSonnenbrille(wenZ)) return;
       if (art === "bombe" && lcBombe(wenZ, false)) return;
       if (art === "lunte" && lcBombe(wenZ, true)) return;
       if (art === "streicheln" && lcStreicheln(wenZ)) return;
@@ -40632,10 +39654,7 @@
         || art === "lok" || art === "liane" || art === "feder"
         || art === "beamen" || art === "rohr"
         || art === "heli" || art === "pferd"
-        || art === "greifvogel" || art === "turm"
-        /* RUNDE 75 */
-        || art === "untertasse" || art === "mieze" || art === "frisbee"
-        || art === "gotteshand" || art === "pranke") {
+        || art === "greifvogel" || art === "turm") {
       const wenR = nachricht && (nachricht.wen || nachricht.an);
       let vonR = (nachricht && nachricht.name) || "";
       if (nachricht && nachricht.eigen) {

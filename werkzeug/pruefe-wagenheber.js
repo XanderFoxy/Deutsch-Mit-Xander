@@ -108,17 +108,34 @@ const pruefe = (was, gut, zusatz) => {
   /* ACHTUNG: der Befehl schickt ZWEI Pakete — erst die neue
      Sitzordnung, dann die Zeile mit der Animation. Wer nur das erste
      nimmt, findet nie eine Wirkung und haelt es fuer kaputt. */
-  const schicken = (n) => pg.evaluate((z) => {
+  const schicken = (n, befehl) => pg.evaluate(([z, b]) => {
     const alle = [];
     window.LiveChat.pruefPost((p) => alle.push(p));
-    window.LiveChat.pruefBefehl("/heb Emmi " + z);
+    window.LiveChat.pruefBefehl((b || "/heb") + " Emmi " + z);
     return alle.find((p) => p && p.wirkung) || alle[alle.length - 1] || null;
-  }, n);
+  }, [n, befehl]);
 
+  /* RUNDE 75 — HIER STAND DIE ALTE REGEL, UND SIE IST ÜBERHOLT.
+     ------------------------------------------------------------------
+     Bis Runde 73 entschied die SITZREIHE, ob aus „/heb" ein Heber oder
+     ein Lasso wurde: nach oben heben, in derselben Reihe oder tiefer
+     zu sich ziehen. Diese Sonde hat genau das festgeschrieben.
+
+     XANDER in Runde 74: „Der Angelhaken funktioniert immer noch nicht
+     unabhängig vom Lasso … Das sollen zwei unterschiedliche Dinge
+     sein. Mit dem Angelhaken soll ich jeden Menschen an eine
+     x-beliebige Stelle hin angeln können, und mit dem Lasso soll ich
+     den einfach nur zu mir ranziehen."
+
+     Damit darf die Sitzreihe gar nichts mehr entscheiden. „/heb" ist
+     IMMER der Heber (die Angel, an einen beliebigen Platz), „/lasso"
+     ist IMMER das Lasso (zu mir). Genau das wird jetzt gemessen — und
+     zwar an beiden Zielen, dem höheren und dem tieferen, damit die
+     Unabhängigkeit von der Reihe wirklich belegt ist. */
   const zielHoch = suchZiel(true);
   if (zielHoch) {
     const hoch = await schicken(zielHoch);
-    pruefe("nach oben ist es ein HEBER",
+    pruefe("nach oben ist „/heb\u201c ein HEBER",
       Boolean(hoch) && hoch.wirkung === "heber",
       "Platz " + ihrPlatz + " \u2192 " + zielHoch + ": "
         + (hoch ? (hoch.wirkung || "-") : "nichts abgefangen"));
@@ -132,9 +149,21 @@ const pruefe = (was, gut, zusatz) => {
   }
   const zielQuer = suchZiel(false);
   const quer = await schicken(zielQuer);
-  pruefe("in derselben Reihe oder tiefer ist es ein LASSO",
-    Boolean(quer) && quer.wirkung === "lasso",
+  pruefe("und in derselben Reihe oder tiefer AUCH — die Reihe entscheidet nichts mehr",
+    Boolean(quer) && quer.wirkung === "heber",
     "Platz \u2192 " + zielQuer + ": " + (quer ? (quer.wirkung || "-") : "nichts abgefangen"));
+  /* Und die Gegenprobe: „/lasso" ist immer ein Lasso. Es bekommt
+     KEINE Platznummer — es zieht ja zu mir, das Ziel steht damit
+     schon fest. Genau darin liegt der Unterschied zur Angel. */
+  const lasso = await pg.evaluate(() => {
+    const alle = [];
+    window.LiveChat.pruefPost((p) => alle.push(p));
+    window.LiveChat.pruefBefehl("/lasso Emmi");
+    return alle.find((p) => p && p.wirkung) || alle[alle.length - 1] || null;
+  });
+  pruefe("„/lasso\u201c bleibt ein LASSO und zieht zu mir",
+    Boolean(lasso) && lasso.wirkung === "lasso",
+    lasso ? (lasso.wirkung || "-") : "nichts abgefangen");
   pruefe("die neue Sitzordnung geht hinaus", Boolean(quer && /Platz/.test(String(quer.text || ""))),
     quer ? String(quer.text || "") : "-");
 

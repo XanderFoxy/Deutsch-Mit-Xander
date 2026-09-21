@@ -54,16 +54,54 @@ const pruefe = (was, gut, zusatz) => {
     console.log("\n" + welcher.toUpperCase() + "\n");
     pruefe("geht auf", (await oeffnen(welcher)) === 1);
 
-    const innen = await pg.evaluate(() => {
+    /* RUNDE 75 — DIESE REGEL HAT XANDER SELBST GEAENDERT.
+       ----------------------------------------------------------------
+       Hier stand: „ein Tipp INNEN schliesst nicht". Das galt bis
+       Runde 72.
+       XANDER in Runde 73: „Man kann das Panel immer noch nicht
+       schliessen beim Klicken in den Leerraum … man soll in ein Leeres
+       klicken koennen und dann schliesst sich das Panel. Das soll bei
+       jeglichen schwebenden Panels, die erzeugt werden, moeglich
+       sein."
+       Seitdem gilt auch der LEERE Teil im Kasten als „daneben". Nur
+       was man bedienen kann — ein Knopf, eine Kachel, ein Feld, eine
+       Zeile mit Text — nimmt den Tipp fuer sich in Anspruch.
+       Gemessen wird deshalb beides: ein Tipp auf etwas Bedienbares
+       schliesst NICHT, ein Tipp in den Leerraum schliesst DOCH.
+       (Und die Sonde greift nicht mehr blind auf das Panel zu — sie
+       ist vorher daran abgestuerzt, weil es schon zu war.) */
+    const aufKnopf = await pg.evaluate(() => {
       const k = document.querySelector(".lc-waehler-hinter");
+      if (!k) return { fehlt: true };
+      const knopf = k.querySelector("button, .lc-waehler-knopf, .lc-bildkachel, .lc-kachel, input");
+      if (!knopf) return { keinKnopf: true };
+      knopf.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+      return { offen: document.querySelectorAll(".lc-waehler-hinter").length };
+    });
+    if (aufKnopf.fehlt || aufKnopf.keinKnopf) {
+      console.log("  --   kein bedienbares Teil im Kasten gefunden — hier nicht pruefbar");
+    } else {
+      pruefe("ein Tipp auf etwas BEDIENBARES schliesst nicht",
+        aufKnopf.offen === 1, aufKnopf.offen + " noch offen");
+    }
+
+    if ((await pg.evaluate(() => document.querySelectorAll(".lc-waehler-hinter").length)) !== 1) {
+      await oeffnen(welcher);
+    }
+    const leerInnen = await pg.evaluate(() => {
+      const k = document.querySelector(".lc-waehler-hinter");
+      if (!k) return -1;
       const drin = k.querySelector(".lc-waehler") || k.firstElementChild;
       drin.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
       return document.querySelectorAll(".lc-waehler-hinter").length;
     });
-    pruefe("ein Tipp INNEN schliesst nicht", innen === 1, innen + " noch offen");
+    pruefe("ein Tipp in den LEERRAUM im Kasten schliesst",
+      leerInnen === 0, leerInnen + " noch offen");
 
+    await oeffnen(welcher);
     const daneben = await pg.evaluate(() => {
       const k = document.querySelector(".lc-waehler-hinter");
+      if (!k) return -1;
       k.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
       return document.querySelectorAll(".lc-waehler-hinter").length;
     });
