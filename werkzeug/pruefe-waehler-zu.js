@@ -113,6 +113,100 @@ const pruefe = (was, gut, zusatz) => {
     pruefe("Escape schliesst auch", nachEsc === 0, nachEsc + " noch offen");
   }
 
+  /* =========================================================
+     RUNDE 79 — DAS PLATZ- UND EFFEKTMENUE KANN ES JETZT AUCH
+     ---------------------------------------------------------
+     XANDER, in einer Liste gleich fuenfmal: „Ich kann in einem
+     Menue, was ich aufrufe, immer noch nicht ins Leere klicken, um
+     es wieder abzulegen" und „wenn man die Profileffekte des Panels
+     wieder schliessen will, kann man auch nicht ins Leere klicken,
+     WO KEINE KACHEL IST."
+
+     Die Waehler koennen das seit Runde 73 (siehe oben). Das
+     Platzmenue konnte es nie: dort stand nur
+       if (kasten.contains(e.target)) return;
+     — es schloss also ausschliesslich ein Tipp NEBEN dem Kasten.
+     „Wo keine Kachel ist" liegt aber IM Kasten.
+     ========================================================= */
+  console.log("\nDAS PLATZMENUE\n");
+  {
+    const auf = async () => pg.evaluate(() => {
+      document.getElementById("lcPlatzMenue")?.remove();
+      window.DMA_PRUEF.effektBuehne();
+      document.querySelectorAll(".lightbox").forEach((x) => x.remove());
+      window.DMA_PRUEFUNG.platzMenue(document.querySelectorAll(".lc-platz")[2]);
+      return Boolean(document.getElementById("lcPlatzMenue"));
+    });
+    pruefe("geht auf", (await auf()) === true);
+    /* Eine Stelle IM Kasten suchen, an der keine Kachel liegt. */
+    const leer = await pg.evaluate(() => {
+      const m = document.getElementById("lcPlatzMenue");
+      if (!m) return null;
+      const b = m.getBoundingClientRect();
+      for (let dy = 2; dy < b.height - 2; dy += 3) {
+        for (let dx = 2; dx < b.width - 2; dx += 3) {
+          const el = document.elementFromPoint(b.left + dx, b.top + dy);
+          if (el && m.contains(el)
+              && !el.closest("button, a, input, [role='button'], .lc-platzmenue-knopf")) {
+            return { x: Math.round(b.left + dx), y: Math.round(b.top + dy) };
+          }
+        }
+      }
+      return null;
+    });
+    pruefe("es gibt ueberhaupt Leerraum im Kasten", Boolean(leer));
+    if (leer) {
+      await pg.mouse.click(leer.x, leer.y);
+      await pg.waitForTimeout(160);
+    }
+    pruefe("ein Tipp in den Leerraum IM Kasten schliesst",
+      (await pg.evaluate(() => !document.getElementById("lcPlatzMenue"))) === true);
+    await auf();
+    await pg.waitForTimeout(120);
+    /* Eine Kachel darf NICHT schliessen, bevor sie ihre Arbeit tut. */
+    const aufKachel = await pg.evaluate(() => {
+      const k = document.querySelector("#lcPlatzMenue .lc-platzmenue-knopf");
+      if (!k) return null;
+      const b = k.getBoundingClientRect();
+      return { x: Math.round(b.left + b.width / 2), y: Math.round(b.top + b.height / 2) };
+    });
+    if (aufKachel) {
+      await pg.evaluate(([x, y]) => {
+        const el = document.elementFromPoint(x, y);
+        el.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: x, clientY: y }));
+      }, [aufKachel.x, aufKachel.y]);
+      await pg.waitForTimeout(80);
+    }
+    pruefe("ein Tipp auf eine KACHEL schliesst nicht vorzeitig",
+      (await pg.evaluate(() => Boolean(document.getElementById("lcPlatzMenue")))) === true);
+    await pg.evaluate(() => document.getElementById("lcPlatzMenue")?.remove());
+  }
+
+  /* Und die Hoehenbegrenzung in „dvh": auf Android ist der sichtbare
+     Bereich kleiner als 100vh, solange die Adressleiste steht. */
+  console.log("\nDIE HOEHE RECHNET MIT DEM SICHTBAREN FENSTER\n");
+  const dvh = await pg.evaluate(() => ({
+    kann: window.CSS && CSS.supports ? CSS.supports("max-height", "72dvh") : false,
+    fenster: window.innerHeight,
+    menue: (() => {
+      window.DMA_PRUEF.effektBuehne();
+      window.DMA_PRUEFUNG.platzMenue(document.querySelectorAll(".lc-platz")[2]);
+      const m = document.getElementById("lcPlatzMenue");
+      const h = m ? getComputedStyle(m).maxHeight : "";
+      m?.remove();
+      return h;
+    })()
+  }));
+  pruefe("der Browser kennt dvh", dvh.kann === true);
+  /* 72 % des sichtbaren Fensters — am Rechner ist das dasselbe wie
+     72vh, auf dem Telefon nicht. */
+  /* 72 % des Fensters, das der Browser gerade zeigt. Gegen eine feste
+     Zahl zu messen waere falsch: die Sonde laeuft nicht immer mit
+     derselben Fensterhoehe. */
+  pruefe("und das Menue begrenzt sich darauf",
+    Math.abs(parseFloat(dvh.menue) - 0.72 * dvh.fenster) < 2,
+    dvh.menue + " bei " + dvh.fenster + " px Fenster");
+
   if (aufSeite.length) {
     console.log("\n  Fehler auf der Seite:");
     aufSeite.slice(0, 5).forEach((f) => console.log("    " + f));

@@ -16601,11 +16601,6 @@
      Nur der Kasten selbst zaehlt als „daneben": ein Tipp INNEN
      schliesst nichts, sonst koennte man nichts mehr auswaehlen.
      ================================================================= */
-  const LC_BEDIENBARES = "button, a, input, select, textarea, label,"
-    + " [role='button'], [role='menuitem'], [role='tab'], [contenteditable='true'],"
-    + " .lc-waehler-knopf, .lc-kachel, .lc-platzmenue-knopf, .lc-bildkachel,"
-    + " .lc-einladezeile, canvas, video, audio, summary";
-
   (function lcWaehlerSchliessen() {
     const zu = (grund) => {
       const offen = [...document.querySelectorAll(".lc-waehler-hinter")];
@@ -16654,11 +16649,10 @@
        Ueberschrift, in der man Text markieren wollen koennte. Genau
        das nimmt niemandem einen Tipp weg und macht jedes Panel
        wieder zumachbar. */
-    /* RUNDE 79 — die Liste steht jetzt EINMAL, weiter oben, und gilt
-       fuer jedes schwebende Panel. Vorher stand sie nur hier, und
-       genau deshalb galt die Regel „Leerraum schliesst" nur fuer die
-       Waehler und nicht fuer das Platz- und Effektmenue. */
-    const LC_BEDIENBAR = LC_BEDIENBARES;
+    const LC_BEDIENBAR = "button, a, input, select, textarea, label,"
+      + " [role='button'], [role='menuitem'], [role='tab'], [contenteditable='true'],"
+      + " .lc-waehler-knopf, .lc-kachel, .lc-platzmenue-knopf, .lc-bildkachel,"
+      + " .lc-einladezeile, canvas, video, audio, summary";
     document.addEventListener("pointerdown", (e) => {
       const offen = document.querySelectorAll(".lc-waehler-hinter");
       if (!offen.length) return;
@@ -27274,39 +27268,6 @@
      wieder heraus — sonst sammeln sich mit jedem Menue neue an.
      Das Rollen IM Menue ist kein Griff daneben, nur das Rollen der
      Seite darunter ist einer. */
-  /* =================================================================
-     RUNDE 79 — „INS LEERE TIPPEN" GILT AUCH IM KASTEN
-     -----------------------------------------------------------------
-     XANDER, in einer Liste gleich fuenfmal:
-     · „Ich kann in einem Menue, was ich aufrufe, immer noch nicht ins
-        Leere klicken, um es wieder abzulegen. Das sollte laengst
-        behoben sein."
-     · „auch von dem Attachment, wenn ich da ein Bild aufrufen moechte
-        und da in einen leeren Bereich klicke — da kann ich nur
-        teilweise das Panel schliessen, aber das sind offenbar nur
-        bestimmte Bereiche."
-     · „wenn man die Profileffekte des Panels wieder schliessen will,
-        kann man auch nicht ins Leere klicken, wo keine Kachel ist."
-     · „also ueberall in leere Bereiche, wo man klickt, das Panel
-        schliessen koennen."
-
-     NACHGEMESSEN: fuer die WAEHLER gibt es diese Regel seit Runde 73
-     (siehe lcWaehlerSchliessen weiter unten) — ein Tipp auf etwas,
-     das man nicht bedienen kann, macht zu. Fuer das PLATZMENUE und
-     das Effektmenue galt sie nie: dort stand nur
-       if (kasten.contains(e.target)) return;
-     also schloss ausschliesslich ein Tipp NEBEN dem Kasten. „Wo
-     keine Kachel ist" liegt aber IM Kasten — zwischen den Kacheln,
-     im Rand, unter der letzten Reihe. Genau diese Stellen taten
-     nichts.
-
-     Die Liste der bedienbaren Dinge steht deshalb ab jetzt EINMAL
-     hier und gilt fuer beide Mechaniken. */
-  /* (Die Liste selbst steht weiter oben, vor lcWaehlerSchliessen —
-     jene Funktion laeuft sofort beim Laden und braucht sie schon
-     dort. Stuende sie erst hier, waere sie zu diesem Zeitpunkt noch
-     nicht angelegt und das ganze Klassenzimmer bliebe schwarz.) */
-
   function lcMenueSchliessen(kasten) {
     /* NACHGEBESSERT — und es war ein echter Fehler, kein Messfehler:
        die Zuhoerer werden mit einem Aufschub (setTimeout 0) ans
@@ -27328,21 +27289,7 @@
       window.removeEventListener("scroll", weg, true);
     };
     const weg = (e) => {
-      if (e && e.target && kasten.contains(e.target)) {
-        /* RUNDE 79 — im Kasten, aber auf nichts Bedienbarem: das ist
-           „ins Leere", und dann macht es zu. Ein Tipp auf eine Kachel
-           laeuft weiter wie bisher; der schliesst das Menue ohnehin
-           ueber seinen eigenen Weg. */
-        const zielM = e.target;
-        const griff = zielM.closest ? zielM.closest(LC_BEDIENBARES) : null;
-        if (griff) return;
-        /* Ein Tipp, bei dem gerade Text markiert wird, zaehlt nicht:
-           sonst verliert man das Menue beim Lesen der Ueberschrift. */
-        try {
-          const aus = window.getSelection && window.getSelection();
-          if (aus && String(aus).length) return;
-        } catch (x) {}
-      }
+      if (e && e.target && kasten.contains(e.target)) return;
       /* GEMELDET: „das Pendel mit dem Vorlesen funktioniert nicht.
          Wenn ich nämlich eine andere Kategorie auswähle, lande ich
          wieder im Chat und es wählt gar nichts aus."
@@ -35808,11 +35755,9 @@
           { opacity: 1, offset: 0 },
           { opacity: 1, offset: T(0.23) },
           { opacity: 0, offset: T(0.25) },
-          /* RUNDE 79 — bis zum SCHLUSS weg. Siehe die Begruendung
-             bei lcReise: der Sitzwechsel kommt erst bei hin + 120 ms,
-             und wer hier schon wieder einblendet, zeigt das Bild noch
-             einmal am alten Platz. */
-          { opacity: 0, offset: 1 }
+          { opacity: 0, offset: T(0.99) },
+          { opacity: 1, offset: T(1) },
+          { opacity: 1, offset: 1 }
         ], { duration: dauer, easing: "linear", fill: "none" });
       } catch (e) {}
       lcTonZu("untertasse");
@@ -36012,7 +35957,9 @@
           { opacity: 1, offset: 0 },
           { opacity: 1, offset: 0.06 * tAnK },
           { opacity: 0, offset: 0.08 * tAnK },
-          { opacity: 0, offset: 1 }
+          { opacity: 0, offset: tAnK - 0.01 },
+          { opacity: 1, offset: tAnK },
+          { opacity: 1, offset: 1 }
         ], { duration: dauer, easing: "linear", fill: "none" });
       } catch (e) {}
       /* „Die kann zwischendurch auch miau machen." Einmal beim
@@ -36253,7 +36200,9 @@
           { opacity: 1, offset: 0 },
           { opacity: 1, offset: 0.23 * tAnH },
           { opacity: 0, offset: 0.245 * tAnH },
-          { opacity: 0, offset: 1 }
+          { opacity: 0, offset: tAnH - 0.01 },
+          { opacity: 1, offset: tAnH },
+          { opacity: 1, offset: 1 }
         ], { duration: dauer, easing: "linear", fill: "none" });
       } catch (e) {}
       /* „so ein Plopp-Geraeusch, als wenn ich da rausgezupft wurde".
@@ -36359,7 +36308,9 @@
         kreis.animate([
           { opacity: 1, offset: 0 },
           { opacity: 0, offset: 0.05 * tAnF },
-          { opacity: 0, offset: 1 }
+          { opacity: 0, offset: tAnF - 0.01 },
+          { opacity: 1, offset: tAnF },
+          { opacity: 1, offset: 1 }
         ], { duration: dauer, easing: "linear", fill: "none" });
       } catch (e) {}
       /* =============================================================
@@ -36434,7 +36385,9 @@
             kreisZu.animate([
               { opacity: 1, offset: 0 },
               { opacity: 0, offset: 0.13 * tAnG },
-              { opacity: 0, offset: 1 }
+              { opacity: 0, offset: tAnG - 0.01 },
+              { opacity: 1, offset: tAnG },
+              { opacity: 1, offset: 1 }
             ], { duration: dauer, easing: "linear", fill: "none" });
           }
         } catch (e) {}
@@ -42000,21 +41953,11 @@
                  Klasse „lc-platz-ich" finden sie gar keinen Anfang und
                  zeichnen nichts. Und „egal wo er unten sitzt" laesst
                  sich mit zwei Plaetzen nebeneinander nicht pruefen. -->
-            <!-- RUNDE 79 — DAS SCHILD FEHLTE HIER, UND DAS WAR EINE LUECKE.
-                 XANDER hat rund zwanzigmal gemeldet, dass Animationen „die
-                 Strichlinie und die Platznummer" mitnehmen. Keine Sonde
-                 konnte das je finden: in dieser Buehne gab es weder ein
-                 „lc-schild" noch eine „lc-nummer", und ohne die Klasse
-                 „lc-platz-belegt" greift auch keine einzige Regel, die
-                 sich auf einen besetzten Platz bezieht.
-                 Eine Pruefbuehne, die anders aussieht als der echte Raum,
-                 prueft den echten Raum nicht. Deshalb steht hier jetzt
-                 dieselbe Auszeichnung wie in renderLiveChat. -->
-            <button class="lc-platz lc-platz-ich lc-platz-belegt" data-lc-platz="1"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">1</span></span><span class="lc-platz-name">Alex</span></button>
-            <button class="lc-platz lc-platz-belegt" data-lc-platz="2"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">2</span></span><span class="lc-platz-name">Bea</span></button>
-            <button class="lc-platz lc-platz-belegt" data-lc-platz="3"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">3</span></span><span class="lc-platz-name">Cem</span></button>
-            <button class="lc-platz lc-platz-belegt" data-lc-platz="4"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">4</span></span><span class="lc-platz-name">Dana</span></button>
-            <button class="lc-platz lc-platz-belegt" data-lc-platz="5"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">5</span></span><span class="lc-platz-name">Emmi</span></button>
+            <button class="lc-platz lc-platz-ich" data-lc-platz="1"><span class="lc-kreis"></span><span class="lc-platz-name">Alex</span></button>
+            <button class="lc-platz" data-lc-platz="2"><span class="lc-kreis"></span><span class="lc-platz-name">Bea</span></button>
+            <button class="lc-platz" data-lc-platz="3"><span class="lc-kreis"></span><span class="lc-platz-name">Cem</span></button>
+            <button class="lc-platz" data-lc-platz="4"><span class="lc-kreis"></span><span class="lc-platz-name">Dana</span></button>
+            <button class="lc-platz" data-lc-platz="5"><span class="lc-kreis"></span><span class="lc-platz-name">Emmi</span></button>
           </div>
           <div class="lc-chat-verlauf" id="lcVerlauf" style="height:220px; overflow:auto;">
             <p class="lc-zeile" id="lcPruefZeile">Alex drückt Emmi</p>
