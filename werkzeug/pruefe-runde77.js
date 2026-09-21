@@ -63,6 +63,7 @@ const pruefe = (was, gut, zusatz) => {
 const ohneK = (t) => t.replace(/\/\*[\s\S]*?\*\//g, "");
 const js = ohneK(fs.readFileSync(path.join(WURZEL, "app.js"), "utf8"));
 const css = fs.readFileSync(path.join(WURZEL, "korrekturen.css"), "utf8");
+const lcjs = ohneK(fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8"));
 const cssOhne = ohneK(css);
 /* Die SVG-Zeichnungen stehen als data:-URI im CSS, und dort ist
    alles prozentkodiert („M50%2C17" statt „M50,17"). Wer nach einem
@@ -228,6 +229,49 @@ pruefe("eine haengende Platznummer raeumt sich nach 12 s selbst weg",
 pruefe("die Flammen sitzen tiefer und werfen Funken nach oben",
   /band: \[33\.2, 34\.8\]/.test(js)
   && /@keyframes lcFunkeAufR77/.test(css));
+
+console.log("\nDER VOGEL UND DAS ANSPUCKEN — ZWEI NEUE EFFEKTE\n");
+/* Ohne Eintrag in LC_EFFEKTE faellt lcWirkung gleich am Anfang
+   heraus („const e = LC_EFFEKTE[art]; if (!e) return;"). Genau daran
+   ist der erste Versuch gescheitert: die Funktion war da, der Befehl
+   war da, und es passierte trotzdem nichts. */
+pruefe("beide stehen in LC_EFFEKTE, sonst passiert nichts",
+  /vogelkot:   \{ zeichen: \["\\ud83d\\udc26"\], wie: 5, klasse: "umarmen" \},/.test(js)
+  && /spucken:    \{ zeichen: \["\\ud83e\\udd7a"\], wie: 5, klasse: "umarmen" \},/.test(js));
+pruefe("und beide werden auch angeschlossen",
+  /if \(art === "vogelkot" && lcVogelKot\(wenZ\)\) return;/.test(js)
+  && /if \(art === "spucken" && lcSpucken\(wenZ\)\) return;/.test(js));
+pruefe("jeder hat seine Kachel und seinen Befehl",
+  /\["\\ud83d\\udc26", "Vogel",    "vogelkot"\],/.test(js)
+  && /\["\\ud83e\\udd7a", "Spucken",  "spucken"\],/.test(js)
+  && /vogelkot:   \{ wirkung: "vogelkot"/.test(lcjs)
+  && /spucken:    \{ wirkung: "spucken"/.test(lcjs));
+pruefe("die Toene sind da und stehen in der Liste",
+  ton("vogelkot") && gelistet("vogelkot") && ton("rotze") && gelistet("rotze"));
+/* Der Aufschlag liegt im Ton nicht am Anfang: bei „vogelkot" nach
+   300 ms, bei „rotze" nach 620 ms. Sichtbar schlaegt es bei 1750 bzw.
+   1250 ms auf — also muss der Ton 1450 bzw. 630 ms nach dem Start
+   anfangen, sonst hoert man den Klecks, bevor er da ist. */
+pruefe("und sie liegen so, dass Ton und Bild zusammenfallen",
+  /vogelkot: 1450,/.test(js) && /spucken: 630,/.test(js));
+pruefe("der Vogel fliegt ueber dem Bild, nicht darin",
+  /\.lc-vogelkot-vogel \{[\s\S]{0,200}?top: -46%;/.test(css));
+pruefe("und der Tropfen faellt erst, wenn er ueber dem Kopf ist",
+  /0%, 46%  \{ opacity: 0; transform: translateY\(0\) scaleY\(1\); \}/.test(css));
+pruefe("was liegen bleibt, laeuft ein Stueck herunter",
+  /@keyframes lcVogelNaseR77/.test(css)
+  && /100%    \{ opacity: 1; height: 30%; \}/.test(css));
+pruefe("die Rotze zieht in drei Faeden verschiedener Laenge",
+  /\[\[0, 62, 7\], \[-13, 40, 5\.4\], \[11, 27, 4\.2\]\]/.test(js));
+/* Zaeher Schleim rutscht, bleibt haengen, rutscht weiter. Ein
+   gleichmaessiges Wachsen saehe nach Wasser aus. */
+pruefe("und sie laeuft in Stufen, nicht gleichmaessig",
+  /26%  \{ height: calc\(var\(--lang, 40%\) \* \.22\); \}/.test(css)
+  && /68%  \{ height: calc\(var\(--lang, 40%\) \* \.68\); \}/.test(css));
+/* Die Fadendicke stand in em — dann haengt sie an der Schriftgroesse
+   und nicht am Bild. */
+pruefe("die Fadendicke zaehlt das Bild, nicht die Schrift",
+  /width: var\(--breit, 6%\);/.test(css));
 
 console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 77 sitzt.\n");
 process.exit(fehler ? 1 : 0);

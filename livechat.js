@@ -1056,6 +1056,12 @@ window.LiveChat = (function () {
     wischer:    { wirkung: "wischer",    satz: "putzt mit dem Scheibenwischer", emoji: "\ud83e\uddfd" },
     zwille:     { wirkung: "zwille",     satz: "schiesst mit der Zwille auf", emoji: "\ud83e\ude83" },
     pusterohr:  { wirkung: "pusterohr",  satz: "trifft mit dem Pusterohr", emoji: "\ud83e\udd64" },
+    /* RUNDE 77 — die beiden neuen Effekte. XANDER: „Den Vogel, der
+       den anderen auf dem Kopf scheisst, hast du auch noch nicht"
+       und „vielleicht kann man auch noch jemanden anspucken, dann
+       soll es so ein bisschen die Rotze drauf bekommen." */
+    vogelkot:   { wirkung: "vogelkot",   satz: "schickt einen Vogel \u00fcber", emoji: "\ud83d\udc26" },
+    spucken:    { wirkung: "spucken",    satz: "spuckt nach", emoji: "\ud83e\udd7a" },
     gluehbirne: { wirkung: "gluehbirne", satz: "dreht wie eine Gl\u00fchbirne ein", emoji: "\ud83d\udca1" },
     /* RUNDE 72 — XANDER: „Die zwei Gluehbirnen-Animationen sollten
        zwei einzelne Kacheln sein." Bisher war es EIN Befehl, der beim
@@ -8952,6 +8958,12 @@ window.LiveChat = (function () {
     { gr: "reden", w: "wischer", kurz: "wisch", nutzt: "/wischer Name",   was: "Scheibenwischer \u2014 erst dreckig, dann sauber gewischt" },
     { gr: "reden", w: "zwille", kurz: "zwick",  nutzt: "/zwille Name",    was: "Zwille \u2014 mit dem Gummiband abgeschossen, das tut weh" },
     { gr: "reden", w: "pusterohr", kurz: "puste", nutzt: "/pusterohr Name", was: "Pusterohr \u2014 die Papierkugel klatscht an die Wange" },
+    /* Die Kurzform heisst NICHT „vogel": „/vogel" ist seit langem der
+   Alias fuer „/voegel", den Zugvogel-Effekt fuer den ganzen Raum.
+   Ein Alias, der einen bestehenden Befehl verdeckt, waere ein
+   stiller Fehler — die Sonde pruefe-jeder-befehl faengt genau das. */
+{ gr: "reden", w: "vogelkot", kurz: "kot", nutzt: "/vogelkot Name", was: "Vogel \u2014 er fliegt dar\u00fcber und trifft von oben" },
+    { gr: "reden", w: "spucken", kurz: "spuck", nutzt: "/spucken Name", was: "Anspucken \u2014 die Rotze l\u00e4uft danach herunter" },
     { gr: "reden", w: "gluehbirne", kurz: "birne", nutzt: "/gluehbirne Name", was: "Gl\u00fchbirne \u2014 eingedreht, bis es leuchtet" },
     { gr: "reden", w: "birneraus", kurz: "dunkel", nutzt: "/birneraus Name", was: "Gl\u00fchbirne heraus \u2014 es wird dunkel, nur Augen bleiben" },
     { gr: "reden", w: "entbloessung", kurz: "ups", nutzt: "/entbloessung Name", was: "Ups! \u2014 geht nur bei dem, der direkt neben dir sitzt" },

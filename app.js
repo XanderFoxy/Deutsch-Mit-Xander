@@ -24327,6 +24327,12 @@
     /* Runde 15 — „das Paintball hast du auch noch vergessen", das Ei,
        das Losfahren und die Spielzuege. */
     paintfleck:     { ton: "paintball", dauer: 1600, laut: 0.55 }, /* ein Schuss, kein Dauerfeuer */
+    /* RUNDE 77 — die beiden neuen Effekte. Beide Toene sind selbst
+       gebaut, also lizenzfrei, und beide haben ihren Aufschlag NICHT
+       am Anfang: „vogelkot" bei 0,30 s, „rotze" bei 0,62 s. Genau
+       um diese Zeit werden sie vorgezogen (siehe LC_TREFFER). */
+    vogelkot:       { ton: "vogelkot", dauer: 3400, laut: 0.75 },
+    spucken:        { ton: "rotze",    dauer: 2600, laut: 0.8 },
     /* „wenn man das Ei aufschlaegt, das kann auch realistischer
        klingen und dann ... kann das so bisschen eklig klingen."
        Das sind ZWEI Dinge nacheinander: erst knackt die Schale
@@ -25035,6 +25041,8 @@
     schlurf: 1.60,          /* -25.1 dB mittel, Spitze -7.5 dB */
     /* RUNDE 77 — neu gebaut, hier die gemessenen Werte. */
     aufsetzen: 1.46,        /* -24.3 dB mittel, Spitze -3.0 dB */
+    vogelkot: 1.32,         /* -23.6 dB mittel, Spitze -6.1 dB */
+    rotze: 1.90,            /* -26.7 dB mittel, Spitze -6.1 dB */
     zupfraus: 0.72,         /* -16.3 dB mittel, Spitze -2.7 dB */
     schmetterling: 0.44,    /* -13.9 dB mittel, Spitze -0.9 dB */
     schnee: 3.16,           /* -59.0 dB mittel, Spitze -46.8 dB */
@@ -26448,6 +26456,12 @@
        einfach explodiert" · „Und fuer Liebe brauchen wir auch noch
        irgendwie … dass man ihn streichelt … oder kuesst." */
     ["\ud83e\udd20", "Hut",      "hut"],
+    /* RUNDE 77 — XANDER: „Den Vogel, der den anderen auf dem Kopf
+       scheisst, hast du auch noch nicht" und „vielleicht kann man
+       auch noch jemanden anspucken, dann soll es so ein bisschen
+       die Rotze drauf bekommen." */
+    ["\ud83d\udc26", "Vogel",    "vogelkot"],
+    ["\ud83e\udd7a", "Spucken",  "spucken"],
     /* RUNDE 75 — XANDER: „es soll noch ein Profileffekt geben, wo
        man sich ne Sonnenbrille aufsetzt und cool zu sein." */
     ["\ud83d\udd76\ufe0f", "Sonnenbrille", "sonnenbrille"],
@@ -28843,6 +28857,11 @@
     wischer:    { zeichen: ["\ud83e\uddfd"], wie: 5, klasse: "umarmen" },
     zwille:     { zeichen: ["\ud83e\ude83"], wie: 5, klasse: "umarmen" },
     pusterohr:  { zeichen: ["\ud83e\udd64"], wie: 5, klasse: "umarmen" },
+    /* RUNDE 77 — ohne einen Eintrag hier faellt lcWirkung gleich am
+       Anfang heraus („const e = LC_EFFEKTE[art]; if (!e) return;"),
+       und der Effekt passiert nie. */
+    vogelkot:   { zeichen: ["\ud83d\udc26"], wie: 5, klasse: "umarmen" },
+    spucken:    { zeichen: ["\ud83e\udd7a"], wie: 5, klasse: "umarmen" },
     gluehbirne: { zeichen: ["\ud83d\udca1"], wie: 5, klasse: "umarmen" },
     birneraus:  { zeichen: ["\ud83d\udd0c"], wie: 5, klasse: "umarmen" },
     entbloessung:{ zeichen: ["\ud83d\udc59"], wie: 5, klasse: "umarmen" },
@@ -29533,6 +29552,15 @@
   };
 
   const LC_TREFFER = {
+    /* RUNDE 77 — der Vogel ist bei 46 % seiner Flugzeit ueber dem
+       Kopf; der Tropfen braucht von dort 450 ms nach unten, der
+       Aufschlag liegt also bei 1750 ms. Im Ton liegt er bei 300 ms,
+       deshalb faengt der Ton bei 1450 ms an. */
+    vogelkot: 1450,
+    /* Und beim Spucken: der sichtbare Aufschlag liegt bei 1250 ms,
+       im Ton bei 620 ms — also Start bei 630 ms. Dann faellt das
+       Hochziehen im Rachen noch vor den Wurf, wie es soll. */
+    spucken: 630,
     tritt: 180,        /* 0,18 s — „das ist der Anstoss" */
     /* 300 ms — genau dort fliegen die Sterne (lcHammerSchlag, 0,30 s).
        Die alten 430 ms lagen 130 ms hinter dem Bild. */
@@ -32396,6 +32424,112 @@
      der Richtung, in der der Schuetze sitzt, zerplatzt auf dem Bild
      und laeuft in Schlieren herunter. Die Farbe wird gewuerfelt — aus
      derselben Palette wie der grosse Effekt. */
+  /* --- DER VOGEL, DER AUF DEN KOPF MACHT ----------------------------
+     XANDER (Runde 76): „man soll einen kleineren Vogel noch haben,
+     der ueber eine andere Person fliegt."
+     XANDER (Runde 77): „Den Vogel, der den anderen auf dem Kopf
+     scheisst, hast du auch noch nicht."
+
+     Drei Teile, und jeder steht fuer sich:
+     · DER VOGEL fliegt OBERHALB des Bildes quer durch — von links
+       nach rechts, wenn der Werfer links sitzt, sonst andersherum.
+       Er schlaegt dabei mit den Fluegeln; die Frequenz ist nicht
+       gleichmaessig, sonst sieht es nach Uhrwerk aus.
+     · DER TROPFEN faellt erst, wenn der Vogel WIRKLICH ueber dem
+       Kopf ist (bei 46 % der Flugzeit, also in der Mitte). Er faellt
+       beschleunigt: die Abstaende werden nach unten groesser.
+     · DER KLECKS bleibt oben auf dem Kopf liegen und laeuft ein
+       Stueck herunter. Er liegt in der Blende, damit er am Bildrand
+       endet und nicht ueber den Nachbarn haengt.
+
+     Der Ton „vogelkot" ist selbst gebaut (0,86 s): ein Pfeifen, das
+     im Fallen von 1900 auf 620 Hz abfaellt, dann bei 0,30 s der
+     Aufschlag (Anstiegszeit 3 ms — ein Platschen, kein Knall) und
+     drei kleiner werdende Spritzer. Er wird deshalb 300 ms VOR dem
+     sichtbaren Aufschlag gelegt (siehe LC_TREFFER.vogelkot). */
+  function lcVogelKot(wen) {
+    return lcAmPlatz(wen, "lc-vogelkot", (schicht, platz) => {
+      /* Von welcher Seite? Vom Werfer her — ein Vogel kommt nicht aus
+         dem Nichts. lcWurfRichtung zeigt vom Opfer ZUM Werfer, also
+         ist -x die Richtung, in die der Vogel fliegt. */
+      const r = lcWurfRichtung(platz);
+      if (r.x > 0) schicht.classList.add("lc-vogelkot-links");
+      schicht.insertAdjacentHTML("beforeend",
+        '<span class="lc-vogelkot-vogel">'
+        + '<svg viewBox="0 0 60 40" aria-hidden="true">'
+        /* Der Koerper. */
+        + '<path d="M18 22 C18 16 24 12 32 12 C40 12 46 16 47 21'
+        + ' C48 25 44 29 36 29 C26 29 18 27 18 22 Z" fill="#54585f"/>'
+        /* Der Kopf mit dem Schnabel. */
+        + '<circle cx="45" cy="17" r="6.4" fill="#61656d"/>'
+        + '<path d="M50 16 L58 18 L50 20 Z" fill="#e0a13c"/>'
+        + '<circle cx="47" cy="15.4" r="1.3" fill="#1b1d22"/>'
+        /* Der Schwanz. */
+        + '<path d="M18 22 L4 16 L8 23 L4 29 Z" fill="#484c53"/>'
+        /* Die beiden Fluegel — sie bekommen in der CSS ihren Schlag. */
+        + '<path class="lc-vogelkot-fluegel lc-vogelkot-fluegel-o"'
+        + ' d="M30 19 C24 8 30 2 38 4 C42 5 42 12 38 18 Z" fill="#6c717a"/>'
+        + '<path class="lc-vogelkot-fluegel lc-vogelkot-fluegel-u"'
+        + ' d="M30 23 C24 32 30 38 38 36 C42 35 42 28 38 22 Z" fill="#3f434a"/>'
+        + "</svg></span>"
+        + '<span class="lc-vogelkot-tropfen"></span>');
+      /* Der Klecks liegt IM Bild — die Blende schneidet ihn rund ab. */
+      const blende = lcZpBlende(schicht);
+      blende.innerHTML = '<span class="lc-vogelkot-klecks"></span>'
+                       + '<span class="lc-vogelkot-nase"></span>';
+      /* Und der kurze Ekellaut, wenn begriffen ist, was da liegt. */
+      lcStimmeZu(platz, "ekelmann", "ekelfrau", 2050, 0.55);
+    }, 3400, "vogelkot");
+  }
+
+  /* --- ANSPUCKEN, UND DIE ROTZE LAEUFT HERUNTER ---------------------
+     XANDER: „vielleicht kann man auch noch jemanden anspucken, dann
+     soll es so ein bisschen die Rotze drauf bekommen."
+
+     Das ist ausdruecklich NICHT das Pusterohr: dort fliegt eine
+     Papierkugel durch ein Rohr, hier spuckt ein Mensch. Deshalb
+     sitzt beim Spucker kein Rohr am Mund, sondern nur der kurze
+     Ausholer, und beim Getroffenen bleibt etwas liegen, das ZIEHT —
+     ein Faden, der langsam herunterlaeuft, nicht ein Klecks, der
+     einfach da ist.
+
+     Der Ton „rotze" ist selbst gebaut (1,35 s): das Hochziehen im
+     Rachen von 0,00 bis 0,34 s (Rauschen um 380 Hz mit einem
+     Rasseln von 24 Hz — genau das Rasseln macht den Laut
+     erkennbar), dann Luftholen, bei 0,46 s das kurze „ptt", bei
+     0,62 s der nasse Aufschlag und danach das Ziehen des Fadens.
+     Der Aufschlag im Ton liegt also 620 ms nach seinem Beginn, und
+     genau so weit vorher wird er gelegt (LC_TREFFER.spucken). */
+  function lcSpucken(wen) {
+    return lcAmPlatz(wen, "lc-spucke", (schicht, platz) => {
+      const r = lcWurfSetzen(schicht, platz, 240);
+      schicht.insertAdjacentHTML("beforeend", '<span class="lc-spucke-flug"></span>');
+      /* Beim Spucker: der Ausholer am Mund. */
+      lcBeimSchuetzen(platz, "lc-spucke-halt",
+        '<span class="lc-spucke-mund"></span>', 2600);
+      /* Und beim Getroffenen die Rotze, im Bild und am Bildrand
+         abgeschnitten. Drei Faeden verschiedener Laenge: einer laeuft
+         weit, zwei bleiben haengen — so zieht Schleim wirklich. */
+      const blende = lcZpBlende(schicht);
+      let fadenHtml = '<span class="lc-spucke-klecks"'
+        + ' style="--platz-x:' + (50 + r.x * 18).toFixed(1) + '%;'
+        + ' --platz-y:' + (50 + r.y * 18).toFixed(1) + '%"></span>';
+      /* Die Breite steht in PROZENT DES BILDES, nicht in em: sonst
+         haengt die Dicke des Fadens an der Schriftgroesse, und auf
+         einem kleinen Bildschirm waere der Faden so dick wie der
+         halbe Kopf. */
+      [[0, 62, 7], [-13, 40, 5.4], [11, 27, 4.2]].forEach(([quer, lang, breit], i) => {
+        fadenHtml += '<span class="lc-spucke-faden"'
+          + ' style="--platz-x:' + (50 + r.x * 18 + quer).toFixed(1) + '%;'
+          + ' --platz-y:' + (50 + r.y * 18).toFixed(1) + '%;'
+          + ' --lang:' + lang + '%; --breit:' + breit + '%;'
+          + ' animation-delay:' + (1280 + i * 190) + 'ms"></span>';
+      });
+      blende.innerHTML = fadenHtml;
+      lcStimmeZu(platz, "ekelmann", "ekelfrau", 1820, 0.6);
+    }, 2600, "spucken");
+  }
+
   function lcPaintfleck(wen) {
     return lcAmPlatz(wen, "lc-paintfleck", (schicht, platz) => {
       const r = lcWurfSetzen(schicht, platz, 250);
@@ -40990,6 +41124,7 @@
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
+    vogelkot: 1, spucken: 1,
     birneraus: 1,
     entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, kuss: 1
   };
@@ -41127,6 +41262,8 @@
       if (art === "wischer" && lcWischer(wenZ)) return;
       if (art === "zwille" && lcZwille(wenZ)) return;
       if (art === "pusterohr" && lcPusterohr(wenZ)) return;
+      if (art === "vogelkot" && lcVogelKot(wenZ)) return;
+      if (art === "spucken" && lcSpucken(wenZ)) return;
       if (art === "gluehbirne" && lcGluehbirne(wenZ)) return;
       if (art === "birneraus" && lcGluehbirneRaus()) return;
       if (art === "hut" && lcHut(wenZ)) return;

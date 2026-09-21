@@ -24827,3 +24827,271 @@ body.lc-schreibt .tutor-reiter {
   transform-box: fill-box;
   transform-origin: 50% 0%;
 }
+
+/* =====================================================================
+   RUNDE 77 — DER VOGEL, DER AUF DEN KOPF MACHT
+   ---------------------------------------------------------------------
+   XANDER (Runde 76): „man soll einen kleineren Vogel noch haben, der
+   ueber eine andere Person fliegt."
+   XANDER (Runde 77): „Den Vogel, der den anderen auf dem Kopf
+   scheisst, hast du auch noch nicht."
+
+   Der Vogel fliegt OBERHALB des Bildes durch (top: -46 %), damit er
+   nichts verdeckt. Er kommt von der Seite des Werfers: steht der
+   links, traegt die Schicht „lc-vogelkot-links" und die Richtung
+   dreht sich um. Bei 46 % der Flugzeit ist er ueber dem Kopf — und
+   genau dort faengt der Tropfen an zu fallen.
+   ===================================================================== */
+.lc-vogelkot-vogel {
+  position: absolute;
+  left: 50%;
+  top: -46%;
+  width: 46%;
+  aspect-ratio: 60 / 40;
+  margin-left: -23%;
+  pointer-events: none;
+  z-index: 6;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3));
+  animation: lcVogelFlugR77 3.4s linear both;
+}
+.lc-vogelkot-vogel svg { width: 100%; height: 100%; display: block; }
+/* Von rechts nach links ist derselbe Flug, nur gespiegelt. */
+.lc-vogelkot-links .lc-vogelkot-vogel { animation-name: lcVogelFlugLinksR77; }
+@keyframes lcVogelFlugR77 {
+  0%   { opacity: 0; transform: translateX(-190%) translateY(14%) rotate(-4deg); }
+  6%   { opacity: 1; }
+  /* 46 % von 3,4 s = 1564 ms: genau ueber dem Kopf. Dort steigt er
+     kurz, wie ein Vogel, der sich erleichtert. */
+  40%  { opacity: 1; transform: translateX(-24%) translateY(2%)  rotate(-1deg); }
+  46%  { opacity: 1; transform: translateX(0)    translateY(-6%) rotate(2deg); }
+  54%  { opacity: 1; transform: translateX(28%)  translateY(-2%) rotate(1deg); }
+  88%  { opacity: 1; transform: translateX(160%) translateY(10%) rotate(-3deg); }
+  100% { opacity: 0; transform: translateX(210%) translateY(16%) rotate(-4deg); }
+}
+@keyframes lcVogelFlugLinksR77 {
+  0%   { opacity: 0; transform: translateX(190%) scaleX(-1) translateY(14%) rotate(4deg); }
+  6%   { opacity: 1; }
+  40%  { opacity: 1; transform: translateX(24%)  scaleX(-1) translateY(2%)  rotate(1deg); }
+  46%  { opacity: 1; transform: translateX(0)    scaleX(-1) translateY(-6%) rotate(-2deg); }
+  54%  { opacity: 1; transform: translateX(-28%) scaleX(-1) translateY(-2%) rotate(-1deg); }
+  88%  { opacity: 1; transform: translateX(-160%) scaleX(-1) translateY(10%) rotate(3deg); }
+  100% { opacity: 0; transform: translateX(-210%) scaleX(-1) translateY(16%) rotate(4deg); }
+}
+/* Die Fluegel. Sie schlagen NICHT gleichmaessig: der Abschlag geht
+   schneller als der Aufschlag, sonst sieht es aus wie ein Uhrwerk. */
+.lc-vogelkot-fluegel { transform-box: fill-box; transform-origin: 8% 50%; }
+.lc-vogelkot-fluegel-o { animation: lcVogelFluegelOR77 .34s ease-in-out infinite; }
+.lc-vogelkot-fluegel-u { animation: lcVogelFluegelUR77 .34s ease-in-out infinite; }
+@keyframes lcVogelFluegelOR77 {
+  0%   { transform: rotate(-26deg) scaleY(.92); }
+  /* Der Abschlag: 30 % der Zeit fuer die ganze Strecke. */
+  30%  { transform: rotate(24deg) scaleY(1.08); }
+  100% { transform: rotate(-26deg) scaleY(.92); }
+}
+@keyframes lcVogelFluegelUR77 {
+  0%   { transform: rotate(22deg) scaleY(.94); }
+  30%  { transform: rotate(-20deg) scaleY(1.06); }
+  100% { transform: rotate(22deg) scaleY(.94); }
+}
+/* Der Tropfen faellt beschleunigt: die Abstaende werden nach unten
+   groesser, weil etwas, das faellt, schneller wird. */
+.lc-vogelkot-tropfen {
+  position: absolute;
+  left: 50%;
+  top: -34%;
+  width: 7%;
+  height: 9%;
+  margin-left: -3.5%;
+  border-radius: 50% 50% 46% 54% / 62% 62% 38% 38%;
+  background: linear-gradient(to bottom, #ffffff, #f2f0e6 62%, #ded9c4);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .22);
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  animation: lcVogelTropfenR77 3.4s linear both;
+}
+@keyframes lcVogelTropfenR77 {
+  0%, 46%  { opacity: 0; transform: translateY(0) scaleY(1); }
+  47%      { opacity: 1; transform: translateY(2%) scaleY(1); }
+  /* 46 bis 51,5 % von 3,4 s sind 1564 bis 1750 ms — die 450 ms Fall
+     aus lcVogelKot. Die Strecke waechst dabei von 8 auf 34 Prozent
+     je Schritt: das ist die Beschleunigung. */
+  49%      { opacity: 1; transform: translateY(26%) scaleY(1.1); }
+  50.5%    { opacity: 1; transform: translateY(72%) scaleY(1.25); }
+  51.4%    { opacity: 1; transform: translateY(116%) scaleY(1.35); }
+  51.5%    { opacity: 0; transform: translateY(120%) scaleY(.6); }
+  100%     { opacity: 0; transform: translateY(120%) scaleY(.6); }
+}
+/* Und was liegen bleibt. Der Klecks sitzt oben auf dem Kopf und
+   laeuft ein Stueck herunter — er deckt das Gesicht nicht zu. */
+.lc-vogelkot-klecks {
+  position: absolute;
+  left: 50%;
+  top: 2%;
+  width: 34%;
+  height: 15%;
+  margin-left: -17%;
+  border-radius: 48% 52% 44% 56% / 70% 66% 34% 30%;
+  background: radial-gradient(ellipse at 44% 32%, #ffffff 0 42%, #f4f1e4 66%, #dcd6bf);
+  box-shadow: 0 1px 3px rgba(80, 76, 58, .35);
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: 50% 0;
+  animation: lcVogelKleckR77 3.4s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+@keyframes lcVogelKleckR77 {
+  0%, 51.4% { opacity: 0; transform: scale(.2, .1); }
+  53%       { opacity: 1; transform: scale(1.16, 1.3); }
+  57%       { opacity: 1; transform: scale(1, 1); }
+  100%      { opacity: 1; transform: scale(1, 1); }
+}
+/* Eine Nase, die langsam weiterlaeuft. */
+.lc-vogelkot-nase {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  width: 9%;
+  margin-left: -4.5%;
+  height: 0;
+  border-radius: 0 0 60% 60% / 0 0 80% 80%;
+  background: linear-gradient(to bottom, #f6f3e7, #e6e1cc);
+  pointer-events: none;
+  opacity: 0;
+  animation: lcVogelNaseR77 3.4s ease-in both;
+}
+@keyframes lcVogelNaseR77 {
+  0%, 54% { opacity: 0; height: 0; }
+  56%     { opacity: 1; height: 3%; }
+  100%    { opacity: 1; height: 30%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-vogelkot-vogel, .lc-vogelkot-tropfen, .lc-vogelkot-klecks,
+  .lc-vogelkot-nase, .lc-vogelkot-fluegel { animation: none; opacity: 0; }
+}
+
+/* =====================================================================
+   RUNDE 77 — ANSPUCKEN, UND DIE ROTZE LÄUFT HERUNTER
+   ---------------------------------------------------------------------
+   XANDER: „vielleicht kann man auch noch jemanden anspucken, dann
+   soll es so ein bisschen die Rotze drauf bekommen."
+
+   Das Geschoss fliegt aus der Richtung des Spuckers (--wx/--wy aus
+   lcWurfSetzen) und trifft bei 48 % von 2,6 s, also bei 1250 ms —
+   dort, wo auch der Aufschlag im Ton liegt (siehe LC_TREFFER).
+   Danach zieht die Rotze: drei Faeden verschiedener Laenge, jeder
+   mit eigener Verzoegerung. Zaeher Schleim laeuft nicht gleichmaessig,
+   er bleibt haengen und rutscht dann ein Stueck weiter — deshalb
+   haben die Faeden drei Stufen statt eines geraden Wachsens.
+   ===================================================================== */
+.lc-spucke-flug {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 9%; height: 7.5%;
+  margin: -3.75% 0 0 -4.5%;
+  border-radius: 56% 44% 52% 48% / 52% 48% 52% 48%;
+  background: radial-gradient(circle at 34% 30%,
+    rgba(255, 255, 255, .95), #dfe9cf 55%, #b9cb96);
+  box-shadow: 0 1px 2px rgba(60, 80, 30, .3);
+  pointer-events: none;
+  z-index: 5;
+  animation: lcSpuckeFlugR77 2.6s cubic-bezier(.25, .5, .3, 1) both;
+}
+@keyframes lcSpuckeFlugR77 {
+  /* 18 % = 470 ms: das ist das „ptt" im Ton. Vorher ist nichts zu
+     sehen — da wird im Rachen hochgezogen. */
+  0%, 17% { opacity: 0;
+            transform: translate(var(--wx, 240%), var(--wy, 0%)) scale(.55); }
+  18%     { opacity: 1;
+            transform: translate(var(--wx, 240%), var(--wy, 0%)) scale(.6); }
+  /* Im Flug zieht der Batzen sich in die Laenge. */
+  34%     { opacity: 1;
+            transform: translate(calc(var(--wx, 240%) * .5), calc(var(--wy, 0%) * .5 - 14%))
+                       scale(1.15, .8) rotate(-12deg); }
+  48%     { opacity: 1; transform: translate(0, 0) scale(1.3, 1.1); }
+  /* Und beim Aufschlag platscht er flach. */
+  52%     { opacity: .9; transform: translate(0, 0) scale(1.7, .5); }
+  58%     { opacity: 0;  transform: translate(0, 4%) scale(1.9, .3); }
+  100%    { opacity: 0;  transform: translate(0, 4%) scale(1.9, .3); }
+}
+/* Beim Spucker: der Mund holt aus und stoesst vor. Kein Rohr — das
+   ist der Unterschied zum Pusterohr. */
+.lc-spucke-mund {
+  position: absolute;
+  left: 50%; top: 58%;
+  width: 26%; height: 15%;
+  margin: -7.5% 0 0 -13%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 34%, #8d3c3c 0 44%, #5d2424 74%, #3d1616);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .45);
+  transform-origin: 50% 50%;
+  pointer-events: none;
+  animation: lcSpuckeMundR77 2.6s ease-in-out both;
+}
+@keyframes lcSpuckeMundR77 {
+  /* Ausholen: 0 bis 17 % — genau die Zeit des Hochziehens im Ton. */
+  0%   { opacity: 0; transform: scale(.5, .5); }
+  6%   { opacity: 1; transform: scale(.7, .8); }
+  14%  { opacity: 1; transform: scale(.72, 1.15); }
+  /* Der Stoss. */
+  18%  { opacity: 1; transform: scale(1.25, .55); }
+  26%  { opacity: 1; transform: scale(.8, .8); }
+  60%  { opacity: .7; transform: scale(.6, .6); }
+  100% { opacity: 0; transform: scale(.5, .5); }
+}
+/* Was liegen bleibt: der Batzen und die Faeden, die daraus ziehen. */
+.lc-spucke-klecks {
+  position: absolute;
+  left: var(--platz-x, 50%);
+  top: var(--platz-y, 50%);
+  width: 21%;
+  height: 16%;
+  margin: -8% 0 0 -10.5%;
+  /* Kein Kreis: ein Batzen, der aufgeschlagen ist, ist auf einer
+     Seite breiter als auf der anderen. */
+  border-radius: 58% 42% 44% 56% / 62% 54% 46% 38%;
+  background: radial-gradient(ellipse at 40% 30%,
+    rgba(255, 255, 255, .92) 0 30%, rgba(214, 231, 190, .9) 60%,
+    rgba(168, 193, 132, .85));
+  box-shadow: 0 1px 3px rgba(60, 80, 30, .3);
+  pointer-events: none;
+  opacity: 0;
+  animation: lcSpuckeKleckR77 2.6s cubic-bezier(.2, 1.5, .4, 1) both;
+}
+@keyframes lcSpuckeKleckR77 {
+  0%, 47% { opacity: 0; transform: scale(.2); }
+  50%     { opacity: 1; transform: scale(1.22, .8); }
+  56%     { opacity: 1; transform: scale(1); }
+  100%    { opacity: .95; transform: scale(1); }
+}
+/* Die Faeden. Sie wachsen in Stufen — zaeher Schleim rutscht, bleibt
+   haengen, rutscht weiter. Ein gleichmaessiges Wachsen saehe nach
+   Wasser aus, nicht nach Rotze. */
+.lc-spucke-faden {
+  position: absolute;
+  left: var(--platz-x, 50%);
+  top: var(--platz-y, 50%);
+  width: var(--breit, 6%);
+  margin-left: calc(var(--breit, 6%) / -2);
+  height: 0;
+  border-radius: 0 0 55% 55% / 0 0 70% 70%;
+  background: linear-gradient(to bottom,
+    rgba(214, 231, 190, .92), rgba(186, 209, 152, .88) 60%,
+    rgba(206, 226, 176, .95));
+  pointer-events: none;
+  opacity: 0;
+  animation: lcSpuckeFadenR77 1.3s ease-out both;
+}
+@keyframes lcSpuckeFadenR77 {
+  0%   { opacity: 0; height: 0; }
+  8%   { opacity: 1; height: calc(var(--lang, 40%) * .18); }
+  /* Haengenbleiben. */
+  26%  { height: calc(var(--lang, 40%) * .22); }
+  52%  { height: calc(var(--lang, 40%) * .62); }
+  /* Und noch einmal. */
+  68%  { height: calc(var(--lang, 40%) * .68); }
+  100% { opacity: 1; height: var(--lang, 40%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-spucke-flug, .lc-spucke-mund, .lc-spucke-klecks,
+  .lc-spucke-faden { animation: none; opacity: 0; }
+}
