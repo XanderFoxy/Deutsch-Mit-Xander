@@ -31965,6 +31965,31 @@
         + '<path class="lc-boot-rumpf" d="M8 47 L112 47 L97 65 L23 65 Z"/>'
         + '<path class="lc-boot-streifen" d="M11 52 L109 52 L106 56 L14 56 Z"/>'
         + "</svg>"
+        /* GEWUENSCHT: „Ich will bei dem Segelboot, dass ich
+           zusaetzlich paddle."
+           Also ein echtes Stechpaddel: Griffknauf oben, ein langer
+           Schaft, unten das Blatt. Es haengt an den Haenden — der
+           Drehpunkt liegt oben, nicht in der Mitte — und es zieht
+           durchs Wasser, hebt aus, faehrt zurueck. Da, wo das Blatt
+           eintaucht, platscht es. */
+        + '<i class="lc-boot-paddel">'
+        + '<svg viewBox="0 0 28 104" aria-hidden="true">'
+        + '<path class="lc-paddel-knauf" d="M8.6 0 h10.8 a3 3 0 0 1 0 6 h-10.8 a3 3 0 0 1 0 -6 Z"/>'
+        + '<path class="lc-paddel-stiel" d="M12.2 5 h3.6 v61 h-3.6 Z"/>'
+        /* Ein Paddelblatt ist BREIT und flach — das erste war so
+           schmal, dass es wie eine Feder aussah. Jetzt nimmt es
+           84 % der Breite ein und reicht bis ganz unten, damit es
+           unter dem Rumpf ins Wasser taucht und nicht im Boot
+           steckenbleibt. */
+        /* Gemessen mit getBBox: mit den ersten Stuetzpunkten war das
+           Blatt nur 19,6 von 28 Einheiten breit — eine Bezierkurve
+           erreicht ihre Stuetzpunkte ja nicht. Also weiter nach
+           aussen gesetzt, bis es wirklich ein Paddelblatt ist. */
+        + '<path class="lc-paddel-blatt" d="M14 64 C1.4 68 0.2 85 6 96'
+        + ' C8 101.5 20 101.5 22 96 C27.8 85 26.6 68 14 64 Z"/>'
+        + '<path class="lc-paddel-grat" d="M14 67 V97"/>'
+        + "</svg></i>"
+        + '<i class="lc-boot-platsch"></i>'
         + '<span class="lc-boot-fenster"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
@@ -32042,7 +32067,24 @@
          Raddampfer sein, auf dem Mississippi — recherchiere das mal,
          damit du weisst, wie sowas aussieht."
 
-         NACHGESEHEN, woran man einen Mississippi-Heckradampfer
+         RUNDE 60 — XANDER: „bei dem Raddampfer vom Mississippi, da
+         muss in der Mitte so ein grosses Rad sein, wie das klassisch
+         ist, nicht hinten. Ich weiss gar nicht, ob hinten auch so ein
+         Schaufelrad war, aber in der Mitte ist normalerweise eins."
+         Er hat recht, und die Antwort auf seine Frage ist: BEIDES gab
+         es. Der Heckraddampfer („sternwheeler") kam spaeter und war
+         die billigere Bauart fuer enge, flache Nebenfluesse. Das
+         klassische Bild vom Mississippi — und das, was jeder im Kopf
+         hat — ist der SEITENRADDAMPFER („sidewheeler"): zwei grosse
+         Raeder mittschiffs, jedes in einem halbrunden Radkasten, auf
+         dem der Schiffsname steht. Von der Seite sieht man genau
+         eines davon.
+         Also wandert das Rad aus dem Heck in die Mitte, bekommt
+         seinen Radkasten zurueck (den es seit Runde 50 gab und der
+         seit Runde 59 auf display:none stand) und spritzt dort, wo
+         es wirklich eintaucht.
+
+         NACHGESEHEN, woran man einen Mississippi-Raddampfer
          erkennt, und jedes Stueck davon steht jetzt hier:
            · ein flacher, langer Rumpf mit vorgezogenem Bug —
              Flussschiffe haben kaum Tiefgang,
@@ -32051,16 +32093,18 @@
            · das Steuerhaus als kleines Haeuschen ganz oben,
            · zwei hohe schwarze Schornsteine mit gezackter Krone
              nebeneinander — das markanteste Merkmal ueberhaupt,
-           · und das Schaufelrad am HECK, nicht an der Seite, und
-             hoeher als das Hauptdeck. Ein Heckrad ist so gross,
-             weil es langsam laeuft.
+           · und das Schaufelrad MITTSCHIFFS an der Seite, halb
+             verdeckt vom Radkasten. Unten schauen die Schaufeln
+             heraus und tauchen ins Wasser — mehr sieht man von
+             einem Seitenrad auch in Wirklichkeit nicht.
          Der alte Rumpf war ein Trapez mit einem Rechteck darauf und
          einem Raedchen davor — davon bleibt nichts. */
       schiff.innerHTML =
         '<i class="lc-boot-wasser"></i>'
         + '<span class="lc-boot-schaukel">'
-        /* Das Schaufelrad liegt HINTER dem Rumpf — es ragt oben und
-           hinten heraus, taucht aber unten ins Wasser. */
+        /* Das Schaufelrad liegt MITTSCHIFFS und VOR dem Rumpf — beim
+           Seitenrad sieht man es ja von aussen. Der Radkasten kommt
+           erst nach dem Rumpf, damit er darueber liegt. */
         + '<i class="lc-dampfer-rad">'
         + '<b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b>'
         + '<u></u></i>'
@@ -32107,6 +32151,10 @@
         + '<path class="lc-dampfer-stock" d="M186 78 L186 44"/>'
         + '<path class="lc-dampfer-fahne" d="M186 44 L200 48 L186 53 Z"/>'
         + "</svg>"
+        /* DER RADKASTEN — das halbrunde Haus ueber dem Seitenrad, mit
+           dem Namensschild darauf. Ohne ihn sieht ein Seitenrad aus
+           wie ein Muehlrad, das jemand ans Schiff geschraubt hat. */
+        + '<i class="lc-dampfer-kasten"><b></b></i>'
         + '<i class="lc-dampfer-rauch"></i>'
         + '<i class="lc-dampfer-rauch lc-dampfer-rauch-2"></i>'
         + '<span class="lc-boot-fenster"' + (quelle
@@ -32171,44 +32219,14 @@
         }
       } catch (e) {}
       lcTonZu("kran");
-    } else if (art === "dampfer") {
-      /* „Mach mal zusaetzlich zum Segelboot noch ein Dampfboot
-         vielleicht ein Raddampfer." Derselbe Rumpf wie das Segelboot,
-         aber mit Schaufelrad hinten und rauchendem Schornstein. */
-      const schiff = document.createElement("span");
-      schiff.className = "lc-boot lc-dampfer";
-      schiff.style.setProperty("--gross", d + "px");
-      schiff.innerHTML =
-        '<i class="lc-boot-wasser"></i>'
-        + '<span class="lc-boot-schaukel">'
-        + '<svg class="lc-boot-form" viewBox="0 0 120 70" aria-hidden="true">'
-        + '<path class="lc-dampfer-schlot" d="M56 16 L68 16 L68 47 L56 47 Z"/>'
-        + '<path class="lc-dampfer-ring" d="M56 20 L68 20 L68 25 L56 25 Z"/>'
-        + '<path class="lc-boot-rumpf" d="M8 47 L112 47 L97 65 L23 65 Z"/>'
-        + '<path class="lc-boot-streifen" d="M11 52 L109 52 L106 56 L14 56 Z"/>'
-        + "</svg>"
-        /* XANDER: „dieses eine Boot mit dem Dampfer, das kann so ein
-           klassischer Raddampfer sein wie bei Steamboat Willie."
-           Vier Speichen in einem Reifen sind ein Wagenrad, kein
-           Schaufelrad. Ein Schaufelrad hat SCHAUFELN — acht flache
-           Bretter am Umfang, die ins Wasser tauchen — und darueber
-           ein Radkasten. Dazu spritzt es, wo das Rad eintaucht. */
-        + '<i class="lc-dampfer-kasten"></i>'
-        + '<i class="lc-dampfer-rad">'
-        + '<b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b>'
-        + '<u></u></i>'
-        + '<i class="lc-dampfer-spritzer"></i>'
-        + '<i class="lc-dampfer-rauch"></i>'
-        + '<i class="lc-dampfer-rauch lc-dampfer-rauch-2"></i>'
-        + '<span class="lc-boot-fenster"' + (quelle
-            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
-          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
-        + "</span>";
-      reihe.appendChild(schiff);
-      weg.push(schiff);
-      setzen(schiff, start.x, start.y);
-      lcReiseWaagerecht(schiff, start, ende, dauer, hin, "dampfer");
-      lcTonZu("dampfer");
+    /* HIER STAND EIN ZWEITER „dampfer"-ZWEIG — und er ist nie
+       gelaufen. In derselben Kette steht weiter oben schon einer,
+       und die erste passende Bedingung gewinnt. Was hier gezeichnet
+       wurde (ein Segelbootrumpf mit einem Schornstein drauf), hat
+       also seit Runde 50 niemand gesehen; gepflegt habe ich es
+       trotzdem weiter. Beim Umbau auf das Seitenrad ist es
+       aufgefallen — weg damit, damit nicht wieder jemand die falsche
+       Stelle aendert. Die gueltige Zeichnung steht oben. */
     } else if (art === "lok") {
       /* „und vielleicht noch ne Lokomotive, der dann irgendwie
          laengere Strecken faehrt ... und dann vielleicht auch
@@ -69323,6 +69341,22 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (!v) return;
     const aus = () => { v.classList.remove("tutor-video-da"); try { v.pause(); } catch (e) {} };
     if (!tutorFilmDa(ton)) { aus(); tutorMaskeStoppen(); v.removeAttribute("src"); return; }
+    /* GEMELDET: „der Avatar soll von der Groessen-Dimension genauso
+       gross wie der alte sein, meiner ist jetzt fast doppelt so gross.
+       Ich weiss nicht, wie das passieren konnte."
+       NACHGEMESSEN, bei gleicher Anzeigehoehe von 300 px:
+         Standbild Comic  Figur 294,2 px   Kopf 69,8 px breit
+         Film             Figur 294,2 px   Kopf 69,8 px breit  (jetzt
+                          gleichgezogen, siehe werkzeug/tutorfilm-saeubern.py)
+         Standbild FOTO   Figur 294,8 px   Kopf 46,2 px breit
+       Der Film ist aus dem COMIC gezeichnet. Ueber dem Foto ist sein
+       Kopf deshalb das 1,55-fache — und genau das ist das „fast
+       doppelt so gross". Mit keiner Streckung ist das zu retten: wer
+       den Kopf passend macht, macht den Koerper falsch.
+       Also: der Film laeuft nur ueber dem Comic. Wer das Foto
+       eingestellt hat, behaelt sein Foto — Text und Stimme laufen
+       unveraendert weiter. */
+    if (tutorArt() !== "comic") { aus(); tutorMaskeStoppen(); v.removeAttribute("src"); return; }
     /* Kein Alpha-webm (iPhone)? Dann der Maskenweg — er sieht ueberall
        gleich aus. Klappt auch der nicht, bleibt das Standbild. */
     if (!tutorAlphaGeht()) {

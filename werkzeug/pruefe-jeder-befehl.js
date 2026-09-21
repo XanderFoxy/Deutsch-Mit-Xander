@@ -172,8 +172,16 @@ function tabellen() {
      hier auffaellt. */
   /* /lok2 und /gglok2 hiessen frueher „zug" — seit Fassung 349 gibt
      es nur noch EINE Lok (die bunte, traditionelle), und alle alten
-     Namen zeigen auf sie. Die schwarze ist heraus, das spart 1,84 MB. */
-  for (const [wort, soll] of [["route66", "route66"], ["lok2", "lok"], ["gglok2", "lok"],
+     Namen zeigen auf sie. Die schwarze ist heraus, das spart 1,84 MB.
+
+     RUNDE 60 NACHGEFUEHRT: sie heissen wieder „zug". In Runde 58 war
+     der Lokfilm auf „gglok" umgetauft worden, und das war ein alter
+     Name, den es als Befehl bewusst nicht geben darf — dadurch war
+     die Wirkung „zug" gezeichnet, aber nicht mehr aufrufbar
+     (gemessen: pruefe-effekttueren). Jetzt heisst der Film „/zug",
+     und alle alten Schreibweisen zeigen darauf. Es ist derselbe Film:
+     „lok" und „zug" tragen beide tier „lok2". */
+  for (const [wort, soll] of [["route66", "route66"], ["lok2", "zug"], ["gglok2", "zug"],
                               ["meteor2", "armageddon"], ["schuss2", "tritt"]]) {
     const r = await pg.evaluate((w) => {
       let raus = null;

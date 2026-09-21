@@ -38,15 +38,27 @@ const TUTOR = global.window.DMA_TUTOR;
 
 console.log("\nZU JEDEM TEXT EINE STIMME\n");
 let stumm = [], gezaehlt = 0;
+/* RUNDE 60. Ein Stueck OHNE Tonnamen ist kein Fehler mehr, sondern
+   Absicht: „Pass auf, dass der Tutor nicht so viel erzaehlt … ich bin
+   Musiker und deutscher Muttersprache." Zwei Saetze in „Ueber mich"
+   sind neu geschrieben, und die alte Aufnahme sagt noch den alten
+   Text. Sie laufen lieber stumm nach Lesezeit, als dass Alex' Mund
+   etwas anderes sagt als die Sprechblase. Die alten Dateien liegen
+   unter tutor/alt/ und warten auf die Neuaufnahme.
+   Geprueft wird deshalb: zu jedem GENANNTEN Ton gehoert eine Datei.
+   Wie viele Stuecke gerade stumm sind, steht als Hinweis daneben. */
+let absichtlichStumm = 0;
 for (const bereich in TUTOR) {
   TUTOR[bereich].stuecke.forEach((st) => {
     gezaehlt++;
+    if (!st.ton) { absichtlichStumm++; return; }
     const o = fs.existsSync(path.join(WURZEL, "tutor", st.ton + ".opus"));
     const m = fs.existsSync(path.join(WURZEL, "tutor", st.ton + ".m4a"));
     if (!o || !m) stumm.push(bereich + "/" + st.ton + (o ? "" : " ohne opus") + (m ? "" : " ohne m4a"));
   });
 }
-pruefe("kein Stueck ist stumm", stumm.length === 0,
+console.log("  (" + absichtlichStumm + " Stueck(e) warten bewusst auf eine Neuaufnahme)");
+pruefe("zu jedem genannten Ton liegt die Datei da", stumm.length === 0,
   stumm.length ? stumm.join(", ") : gezaehlt + " Stuecke, alle mit Ton");
 
 console.log("\nDER GRUSS FUER DIE, DIE NOCH KEIN KONTO HABEN\n");

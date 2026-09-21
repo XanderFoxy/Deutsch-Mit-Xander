@@ -208,9 +208,14 @@ const pruefe = (was, gut, zusatz) => {
     window.LiveChat.pruefPost(null);
     return paket ? { w: paket.wirkung, t: String(paket.text || "") } : null;
   });
-  /* „Uebrigens ist unser Film-Lok auch gar nicht mehr da." */
+  /* „Uebrigens ist unser Film-Lok auch gar nicht mehr da."
+     RUNDE 60 NACHGEFUEHRT: der Film hiess hier „gglok" — und genau
+     das war der Fehler. „gglok" ist einer der alten Namen, die es
+     als BEFEHL bewusst nicht geben darf; dadurch war die Wirkung
+     „zug" gezeichnet, aber nicht mehr erreichbar (pruefe-effekttueren
+     hat es gemeldet). Der Film heisst jetzt „/zug". */
   pruefe("„/lok" + "“ ohne Namen zeigt wieder den Film",
-    lk && lk.w === "gglok", lk ? lk.w : "nichts");
+    lk && lk.w === "zug", lk ? lk.w : "nichts");
 
   console.log("\nUND DIE STOERUNG IST NOCH IMMER DIE ALLERERSTE\n");
   /* XANDER: „Schau bitte auch, dass wir die erste Stoerung als

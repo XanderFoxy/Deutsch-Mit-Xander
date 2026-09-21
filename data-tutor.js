@@ -37,25 +37,58 @@
 window.DMA_TUTOR = {
   "view-about": {
     stuecke: [
-      { ton: "ueber-01b", ziel: "",
-        text: "Schön, dass du da bist! Ich bin Alex — Musiker und Deutsch-Helfer. Lehrer nenne ich mich nicht; ich helfe dir einfach beim Deutschlernen." },
+      /* GEMELDET: „Pass auf, dass der Tutor nicht so viel erzaehlt. Du
+         brauchst nicht sagen Musiker und Deutsch-Helfer und dann noch
+         mal erklaeren, warum du dich nicht Lehrer nennst … wenn du
+         sagst Deutsch-Helfer, dann impliziert das ja schon, dass du
+         den Leuten in Deutsch hilfst. Du musst nicht doppelt gemoppelt
+         sagen. Ausserdem bin ich Musiker und deutscher Muttersprache.
+         Das ist was die Leute interessiert."
+         Aus drei Saetzen sind zwei geworden, und der Widerspruch
+         („Helfer, aber kein Lehrer") ist weg.
+         ACHTUNG, EHRLICH: die alte Aufnahme sagt noch den alten Satz.
+         Deshalb steht hier KEIN Ton — sonst liefe Alex' Mund zu einem
+         anderen Text als dem, der danebensteht. Aufnahme und Film
+         liegen unter tutor/alt/ und tutor/video/alt/ und warten auf
+         die Neuaufnahme; bis dahin laeuft das Stueck nach Lesezeit. */
+      { ton: "", ziel: "",
+        text: "Schön, dass du da bist! Ich bin Alex — Musiker und deutscher Muttersprachler. Ich helfe dir gerne mit Deutsch." },
       { ton: "ueber-02b", ziel: "",
         text: "Diese Seite baue ich in meiner Freizeit, weil ich glaube, dass man eine Sprache nicht mit trockenem Frontalunterricht lernt, sondern mit kurzen Übungen, die Spaß machen." },
-      /* GEWUENSCHT: „Bei Hallo, ich bin Alex kannst du auch erklaeren,
-         was die Sachen im Head bedeuten, damit das dort schon
-         verstanden wird." Von links nach rechts durchgegangen — der
-         Kalender, das Profil, die Tasse — und danach das, was
-         darunter laeuft: Wetter, Uhrzeit, Newsticker. */
-      /* AUS EINEM STUECK WURDEN ZWEI, und zwar gemessen: das alte
-         ueber-03 war 34 Sekunden lang, und der Lippen-Synchron-Film
-         nimmt hoechstens 30. Der Schnitt liegt da, wo ohnehin ein
-         neuer Gedanke anfaengt — Kalender, dann Profilbild und Tasse. */
-      { ton: "ueber-03", ziel: "",
-        text: "Ganz oben siehst du drei Sachen. Der Kalender links: dort löst du jeden Tag eine Aufgabe, und von da kommst du direkt zur Tagesgeschichte — dem bekanntesten Ereignis in Deutschland an genau diesem Datum, als Leseübung in jedem Sprachniveau und in vielen Sprachen." },
+      /* GEMELDET: „der Kalender ist eher in der Mitte, nicht links — ja,
+         in der Mitte, oder als erstes ist der Kalender, dann kommt das
+         Profil, dann die Kaffeetasse."
+         NACHGESEHEN in index.html: in den header-actions steht wirklich
+         zuerst #calendarPageBtn, dann #loginBtn, dann der Kaffee-Link.
+         „Der Kalender links" war also schlicht falsch. Jetzt steht die
+         Reihenfolge da, die die Seite auch hat — und nur noch der
+         Kalender wird hier erklaert; Profil und Tasse kommen im
+         naechsten Stueck, sonst stuende beides doppelt.
+         Auch hier: neuer Text, also kein alter Ton. */
+      { ton: "", ziel: "",
+        text: "Oben stehen drei Knöpfe: der Kalender, dein Profilbild, die Kaffeetasse. Im Kalender löst du jeden Tag eine Aufgabe und kommst von da zur Tagesgeschichte — eine Leseübung in jedem Niveau und in vielen Sprachen." },
       { ton: "ueber-03b", ziel: "",
         text: "Das Profilbild daneben bringt dich in deinen Bereich. Und die Tasse rechts ist zum Kaffee ausgeben: wenn dir die Seite gefällt, kannst du mich damit unterstützen. Musst du nicht — es hilft mir aber, die laufenden Kosten zu tragen, zum Beispiel für den Livestream." },
+      /* „darunter ist links das Wetter-Symbol und rechts die Uhrzeit
+         aus Deutschland und dann das, was du gesagt hast mit der
+         Wetter-Animation und dann die Erklaerung mit den Betonungen" —
+         in seiner Aufzaehlung kommt der Newsticker nicht mehr vor.
+         Rausgeworfen wird er trotzdem nicht: er ist in EINER Aufnahme
+         mit dem Wetter drin, und das ist Alex' eigene Stimme.
+         Also GETEILT statt weggeworfen. Wo geteilt wird, ist nicht
+         geschaetzt, sondern nachgeschlagen: die Aufnahme wurde bei
+         14,535 s abgeschnitten und transkribiert, und der Text hoert
+         genau auf „…Daneben steht die deutsche Uhrzeit" auf. Der
+         Schnitt liegt deshalb bei 14,75 s — mitten in der gemessenen
+         Sprechpause von 14,535 bis 14,963 s. Aus 26,6 s wurden 14,8 s
+         und 11,7 s; kein Wort ist verloren. */
       { ton: "ueber-04", ziel: "",
-        text: "Darunter läuft das echte deutsche Wetter mit — animiert, je nach Tageszeit: Sonne, Regen, Schnee, Wolken, Gewitter, und nachts ein Sternenhimmel, wenn die Sicht frei ist. Daneben steht die deutsche Uhrzeit. Und der Newsticker zeigt, wer gerade was macht, welche Fortschritte die Leute machen, wer online ist, woher er kommt und wo er sich gerade befindet — ob im Klassenzimmer oder einfach auf der Seite." },
+        text: "Darunter läuft das echte deutsche Wetter mit — animiert, je nach Tageszeit: Sonne, Regen, Schnee, Wolken, Gewitter, und nachts ein Sternenhimmel, wenn die Sicht frei ist. Daneben steht die deutsche Uhrzeit." },
+      { ton: "ueber-04b", ziel: "",
+        text: "Und der Newsticker zeigt, wer gerade was macht, welche Fortschritte die Leute machen, wer online ist, woher er kommt und wo er sich gerade befindet — ob im Klassenzimmer oder einfach auf der Seite." },
+      /* „und dann die Erklaerung mit den Betonungen und dass die
+         Weiterleitungen zu YouTube und TikTok demjenigen meine Musik
+         zeigen" — steht so in der Aufnahme, bleibt unveraendert. */
       { ton: "ueber-05", ziel: "",
         text: "Noch ein Tipp, der leicht übersehen wird: Klick in einen geschriebenen Text hinein, dann wird dir die Betonung angezeigt. Ein Punkt unter dem Vokal heißt kurz, ein Strich heißt lang. So liest du es gleich richtig und gewöhnst dir keine Aussprachefehler an. Und wenn dich meine Musik interessiert — die Links zu YouTube und TikTok stehen hier auch." },
     ],

@@ -20244,3 +20244,143 @@ body.lc-schreibt .tutor-reiter {
      Muscheln vor dem Bild schweben statt darauf zu kleben. */
   filter: drop-shadow(0 4px 7px rgba(0, 0, 0, .45));
 }
+
+/* === RUNDE 60: PADDELN UND DAS SEITENRAD =============================
+   XANDER: „Ich will bei dem Segelboot, dass ich zusätzlich paddle. Und
+   bei dem Raddampfer vom Mississippi: da muss in der Mitte so ein
+   großes Rad sein, wie das klassisch ist, nicht hinten. Ich weiß gar
+   nicht, ob hinten auch so ein Schaufelrad war, aber in der Mitte ist
+   normalerweise eins."
+
+   Zur Frage, weil sie berechtigt ist: es gab beides. Das Heckrad
+   („sternwheeler") war die spätere, billigere Bauart für enge und
+   flache Nebenflüsse. Das klassische Mississippi-Bild ist der
+   SEITENRADDAMPFER — zwei große Räder mittschiffs, jedes in einem
+   halbrunden Radkasten mit dem Schiffsnamen darauf. Von der Seite
+   sieht man eines davon. Genau das steht jetzt da.
+   ===================================================================== */
+
+/* --- DAS PADDEL AM SEGELBOOT ----------------------------------------
+   Der Drehpunkt liegt OBEN, bei den Händen — ein Paddel, das sich um
+   seine Mitte dreht, sieht aus wie ein Propeller. */
+.lc-boot-paddel {
+  position: absolute;
+  /* Ausgemessen am Boot (248 auf 143 px): der Bordrand liegt bei
+     33 % Hoehe, der Rumpfboden bei 7 %. Der Drehpunkt sitzt bei den
+     Haenden (42 % von oben), und 60 % Laenge reichen damit bis
+     unter den Rumpf — sonst steckt das Blatt im Boot statt im
+     Wasser, und genau so sah es beim ersten Versuch aus. */
+  left: 44%;
+  top: 42%;
+  width: 14%;
+  height: 60%;
+  margin-left: -7%;
+  transform-origin: 50% 4%;
+  animation: lcPaddelR60 1.15s ease-in-out infinite;
+  z-index: 3;
+}
+.lc-boot-paddel svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.lc-paddel-knauf { fill: #6b4224; }
+.lc-paddel-stiel { fill: #b58351; }
+.lc-paddel-blatt { fill: #d9b784; stroke: #6b4224; stroke-width: 1.5; }
+.lc-paddel-grat  { stroke: rgba(107, 66, 36, .55); stroke-width: 1.2; fill: none; }
+/* Ziehen, ausheben, zurückführen — und nicht in gleichmäßigem Tempo:
+   der Zug ist kurz und kräftig, das Zurückführen länger. */
+/* Und zwar in der RICHTIGEN Richtung: das Boot faehrt mit dem Bug
+   nach rechts, also taucht das Blatt vorn ein und wird nach hinten
+   durchgezogen. Andersherum wuerde er ruedwaerts paddeln. */
+@keyframes lcPaddelR60 {
+  0%   { transform: rotate(18deg); }    /* vorn eintauchen */
+  34%  { transform: rotate(-14deg); }   /* durchziehen */
+  48%  { transform: rotate(-32deg); }   /* ausheben */
+  76%  { transform: rotate(14deg); }    /* ueber Wasser zurueck */
+  100% { transform: rotate(18deg); }
+}
+/* Und der Platscher da, wo das Blatt eintaucht. */
+.lc-boot-platsch {
+  position: absolute;
+  left: 41%;
+  bottom: 1%;
+  width: 26%;
+  height: 14%;
+  margin-left: -13%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 60%, rgba(255,255,255,.9),
+              rgba(150, 205, 240, .6) 52%, rgba(150, 205, 240, 0) 76%);
+  opacity: 0;
+  animation: lcPlatschR60 1.15s ease-out infinite;
+  z-index: 2;
+}
+/* Der Platscher haengt am Zug, nicht am Zufall: er blitzt auf, wenn
+   das Blatt eintaucht, und ist weg, bevor es wieder aushebt. */
+@keyframes lcPlatschR60 {
+  0%      { opacity: .9; transform: scale(.75); }
+  20%     { opacity: .75; transform: scale(1.12); }
+  46%     { opacity: 0; transform: scale(1.35); }
+  100%    { opacity: 0; transform: scale(.75); }
+}
+
+/* --- DAS SEITENRAD MITTSCHIFFS --------------------------------------
+   Es lag bei „left: 1%" — also ganz hinten. Jetzt liegt es in der
+   Mitte und VOR dem Rumpf, denn ein Seitenrad sieht man von außen.
+   Diese Regeln stehen nach dem Block aus Runde 59 und heben ihn auf. */
+.lc-dampfer .lc-dampfer-rad {
+  /* Ausgemessen am gezeichneten Schiff (172 auf 76 px): der Rumpf
+     endet bei 18 % Hoehe — dort ist die Wasserlinie. Tiefer darf das
+     Rad nicht, sonst haengt es unter dem Kiel. Oben reicht es bis
+     58 %, also ueber das Kesseldeck hinaus; so gross ist ein
+     Seitenrad wirklich. Breite = Hoehe in Pixeln, sonst wird aus
+     dem Rad ein Ei: 40 % von 76 px sind 30,4 px, und 30,4 von
+     172 px sind 17,7 %. */
+  left: 41.2%;
+  bottom: 20%;
+  width: 17.7%;
+  height: 40%;
+  border-width: 2.5px;
+  border-color: #7d2c22;
+  z-index: 4;
+}
+/* Der Radkasten war seit Runde 59 auf display:none — er gehört zum
+   Seitenrad, und genau das ist es jetzt wieder. Er deckt die obere
+   Hälfte ab; unten schauen die Schaufeln heraus. */
+.lc-dampfer .lc-dampfer-kasten {
+  display: block;
+  position: absolute;
+  /* Gemessen: das Rad ist mit seinem 2,5-px-Rand 28 px breit, der
+     Kasten war 27 — er deckte es also NICHT ganz ab. Und er reichte
+     5 px unter die Radachse, verdeckte also mehr als die Haelfte.
+     Beides nachgestellt. */
+  left: 38%;
+  bottom: 36%;
+  width: 24%;
+  height: 28%;
+  border-radius: 999px 999px 2px 2px;
+  background: linear-gradient(180deg, #f6ead4 0 62%, #e3cda6 100%);
+  box-shadow: inset 0 -2px 0 rgba(125, 44, 34, .5),
+              0 1px 3px rgba(0, 0, 0, .28);
+  border: 2px solid #7d2c22;
+  border-bottom: 0;
+  z-index: 5;
+}
+/* Das Namensschild auf dem Radkasten — ein roter Balken, so wie die
+   Schiffe ihren Namen dort stehen hatten. */
+.lc-dampfer .lc-dampfer-kasten b {
+  position: absolute;
+  left: 12%;
+  top: 46%;
+  width: 76%;
+  height: 17%;
+  border-radius: 1px;
+  background: #b8453a;
+  box-shadow: 0 0 0 1px rgba(255, 240, 220, .55);
+}
+/* Die Gischt steht jetzt unter dem Rad, nicht mehr am Heck. */
+.lc-dampfer .lc-dampfer-spritzer {
+  left: 40%;
+  bottom: 8%;
+  width: 20%;
+  height: 13%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-boot-paddel, .lc-boot-platsch { animation: none; }
+}

@@ -302,8 +302,14 @@ const pruefe = (was, gut, zusatz) => {
     const muschel = [...sv.querySelectorAll("rect")].sort((a, b) =>
       (Number(b.getAttribute("width")) * Number(b.getAttribute("height")))
       - (Number(a.getAttribute("width")) * Number(a.getAttribute("height"))))[0];
+    /* RUNDE 60 NACHGEFUEHRT. Die Staebe sind noch da, sie sind nur
+       kuerzer geworden: in Runde 59 sind die Muscheln aus dem Bild
+       heraus nach aussen gewandert („die Over-Ear-Teile sind viel zu
+       sehr im Bild"), und damit ist der Stab von 18 auf 16 px
+       geschrumpft. Die Sonde suchte weiter nach >= 18 und fand
+       nichts — gemessen falsch, nicht gebaut falsch. */
     const staebe = [...sv.querySelectorAll("rect")].filter((r) =>
-      Number(r.getAttribute("height")) >= 18 && Number(r.getAttribute("width")) < 6);
+      Number(r.getAttribute("height")) >= 14 && Number(r.getAttribute("width")) < 6);
     return { buegel: buegel ? Number(buegel.getAttribute("stroke-width")) : 99,
              breit: muschel ? Number(muschel.getAttribute("width")) : 0,
              hoch: muschel ? Number(muschel.getAttribute("height")) : 0,
@@ -312,8 +318,13 @@ const pruefe = (was, gut, zusatz) => {
              /* Die Digital Crown mit ihren Rillen — daran erkennt man
                 sie, und sie muss OBEN auf der Muschel sitzen. */
              krone: (() => {
+               /* Auch das ist nachgefuehrt: die Krone ist beim Umbau
+                  von 10 auf 11 px breit geworden, und 10 auf 5,5
+                  trifft jetzt das GELENK. Deshalb wird sie ueber
+                  ihre eigene Groesse gesucht, nicht ueber die des
+                  Nachbarn. */
                const k = [...sv.querySelectorAll("rect")].find((r) =>
-                 Number(r.getAttribute("width")) === 10 && Number(r.getAttribute("height")) === 5);
+                 Number(r.getAttribute("width")) === 11 && Number(r.getAttribute("height")) === 5);
                return k && muschel
                  ? Number(k.getAttribute("y")) < Number(muschel.getAttribute("y")) : false;
              })() };
