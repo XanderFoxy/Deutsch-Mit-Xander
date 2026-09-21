@@ -51,10 +51,13 @@ pruefe("und verschwunden wird erst nach der Ankunft",
   /offset: Math\.min\(0\.97, \(hin \+ 180\) \/ dauer\)/.test(js));
 
 console.log("\nDIE LIANE HOLT ANLAUF UND BLEIBT IM BILD");
-pruefe("sie haengt von der Kartenkante, nicht darueber",
-  /const kanteL = \(kk\.top - rk\.top\) \+ 4;/.test(js)
-  && /const hochL = Math\.max\(kanteL, -d \* 3\.2\);/.test(js)
-  && !/Math\.min\(\(kk\.top - rk\.top\) - d \* 0\.25/.test(js));
+/* RUNDE 72 ZURUECKGENOMMEN: diese Regel hielt meinen eigenen
+   Fehlgriff fest. „ueber den Bildrand hinaus" meinte den Rand des
+   Profilbilds beim Landen, nicht die Kartenkante — die Liane wurde
+   durch meine Aenderung zum Stummel („die Liane ist schlimmer
+   geworden"). Geprueft wird jetzt, dass sie wieder lang haengt. */
+pruefe("sie haengt wieder lang von oben herunter",
+  /const hochL = Math\.min\(\(kk\.top - rk\.top\) - d \* 0\.25, -d \* 1\.6\);/.test(js));
 pruefe("der Anlauf geht GEGEN die Richtung des Ziels",
   /const anlaufX = -dxL \* 0\.16/.test(js));
 pruefe("und er kommt vor dem Schwung",
@@ -62,7 +65,7 @@ pruefe("und er kommt vor dem Schwung",
   && js.indexOf("opacity: 1, offset: vorL")
      < js.indexOf('+ "px) translate(-50%, -50%) rotate(0deg)", opacity: 1,'));
 pruefe("gelandet wird nicht mit einer Ueberblendung auf der Stelle",
-  /const wegX = dxL \+ dxL \* 0\.22, wegY = dyL - d \* 0\.9;/.test(js));
+  /const wegX = dxL \+ dxL \* 0\.08, wegY = dyL - d \* 0\.9;/.test(js));
 
 console.log("\nDER 3-METER-TURM BLEIBT STEHEN");
 pruefe("er blendet erst NACH dem Einschlag aus (2730 ms)",
@@ -109,19 +112,25 @@ pruefe("und das Bild sitzt als Fenster in der Kanzel, nicht als Kreis davor",
    das Fenster liegt wirklich im Glas. */
 
 console.log("\nDAS PFERD IST EIN PONY GEWORDEN");
-pruefe("kurze Beine: Rumpf tiefer, Hufe gleich",
-  /d="M40 56 Q38 42 58 39 L94 39/.test(js)
-  && /d="M62 74 L57 82 L62 89 L59 94"/.test(js)
-  && !/d="M60 64 L54 76 L60 86 L57 94"/.test(js));
-pruefe("kurzer, dicker Hals und groesserer Kopf",
-  /lc-pferd-hals" d="M102 46 Q113 40 117 28 L130 30/.test(js)
-  && /lc-pferd-kopf" d="M114 26 Q121 15 132 16 Q143 18 146 28/.test(js));
-pruefe("runde Ohren statt spitzer",
-  /lc-pferd-ohr" d="M117 24 Q117 14 122 12 Q125 17 124 23 Z"/.test(js));
-pruefe("dicke Maehne — zwei Teile statt einem",
-  (js.match(/class="lc-pferd-maehne"/g) || []).length === 2);
-pruefe("und der Reiter sitzt im Sattel, nicht darueber",
-  /\.lc-pferd-reiter \{ top: 19%; \}/.test(cssK));
+/* RUNDE 72 ZURUECKGENOMMEN. XANDER: „ich glaub das Pferd, was du
+   gestaltet hast, sieht noch haesslicher aus als das vorherige. ich
+   wollte bei unserem vorherigen Pferd lediglich den Koerper nicht
+   ganz so lang gestreckt haben." Das Pony ist weg, das Pferd aus
+   Runde 65 ist zurueck — nur kuerzer im Rumpf und mit ein paar
+   Zuegen im Gesicht. Es liegt zusaetzlich im Backup. */
+pruefe("das alte Pferd ist zurueck, nur der Rumpf ist kuerzer",
+  /lc-pferd-rumpf" d="M38 48 Q36 34 54 31 L88 31/.test(js)
+  && /d="M60 64 L54 76 L60 86 L57 94"/.test(js)
+  && !/d="M40 56 Q38 42 58 39 L94 39/.test(js));
+pruefe("Hals und Kopf sind um dieselben 10 Einheiten mitgerueckt",
+  /lc-pferd-hals" d="M94 38 Q106 30 110 16 L122 18/.test(js)
+  && /lc-pferd-kopf" d="M108 14 Q116 6 124 8 Q132 10 135 18/.test(js));
+pruefe("im Gesicht ein paar Zuege mehr",
+  /lc-pferd-blesse/.test(js) && /lc-pferd-zug/.test(js));
+pruefe("das vorherige Pferd liegt im Backup",
+  fs.existsSync(path.join(WURZEL, "werkzeug", "backup", "pferd-vor-runde71.txt")));
+pruefe("und der Reiter sitzt wieder, wo er in Runde 65 sass",
+  /\.lc-pferd-reiter \{ top: 11%; \}/.test(cssK));
 
 console.log("\nDAS FLUGZEUG HAT DETAILS UND EIN FENSTER");
 pruefe("eine Reihe Kabinenfenster",
@@ -155,14 +164,37 @@ pruefe("beide stehen unter EINER Kachel",
   && /"Lunte",       "lunte"/.test(js));
 pruefe("die Zuendschnur prasselt von Anfang an",
   /lcTonSpaeter\("lunte", 0, 0\.6\)/.test(js));
+/* RUNDE 72 NACHGEFUEHRT — und zwar, weil die Regel zwar gestimmt hat,
+   aber am falschen Ort gemessen wurde. XANDER: „der lange Piepton ist
+   immer noch da, immer noch ohne Explosionsknall, und dauert viel zu
+   lang." NACHGEMESSEN: „bombedigital2" ist 5,03 s lang und piept
+   durchgehend bei -15 bis -25 dB; bei 1500 ms gestartet lief es bis
+   6,5 s, bei 4,6 s Animation. Und weil lcTonSpaeter ohne Plan-Eintrag
+   keine Dauer kennt, wurde auch nichts abgeschnitten. Der Knall lag
+   genau darunter. Jetzt piept „bombehektik" (gemessen 0,57 s, acht
+   Piepse) von 1530 bis 2100 ms und ist zur Null fertig. */
 pruefe("das Piepsen kommt nur kurz vor der Null",
-  /lcTonSpaeter\("bombedigital2", 1500, 0\.55\)/.test(js)
-  && !/bombe:\s+\{ ton: "bombedigital2"/.test(js));
+  /lcTonSpaeter\("bombehektik", 1530, 0\.6\)/.test(js)
+  && !/bombe:\s+\{ ton: "bombedigital2"/.test(js)
+  && !/lcTonSpaeter\("bombedigital2"/.test(js));
 pruefe("und am Ende knallt eine echte Explosion",
-  /bombe:\s+\{ ton: "explosion2", dauer: 2600, laut: 0\.72 \}/.test(js));
-pruefe("die Asche liegt breiter",
-  /const mitte = Math\.max\(0, Math\.min\(1, 0\.5 \+ \(glocke - 0\.5\) \* 1\.9\)\);/.test(js)
-  && /const x = 2 \+ mitte \* 96;/.test(js));
+  /bombe:\s+\{ ton: "explosion2", dauer: 2600, laut: 0\.9 \}/.test(js));
+/* RUNDE 72: der Countdown war stumm — die Datei „ticken", die
+   lcTonZu("ticken") rief, lag ueberhaupt nicht im Ordner. */
+pruefe("und der Countdown tickt ueberhaupt",
+  /lcTonSpaeter\("ticken", 0, 0\.62\)/.test(js)
+  && fs.existsSync(path.join(WURZEL, "ton", "ticken.opus")));
+/* RUNDE 72 — XANDER: „die Staubwolke sollte unten ueber dem Namen
+   gelassen werden, auf einer Seite gehaeuft und flacher, wie eine
+   Endmoraene." Die alte Regel verlangte eine SYMMETRISCH gedehnte
+   Glocke; jetzt ist sie ausdruecklich schief. */
+pruefe("die Asche liegt breiter und auf einer Seite gehaeuft",
+  /const GIPFEL = 0\.34;/.test(js)
+  && /const seite = glocke < 0\.5 \? \(glocke - 0\.5\) \* 1\.1 : \(glocke - 0\.5\) \* 3\.0;/.test(js)
+  && /const x = 1 \+ mitte \* 98;/.test(js));
+pruefe("und sie liegt UNTER dem Bild, also ueber dem Namen",
+  /\.lc-bombe-asche \{[\s\S]{0,240}?bottom: -19%;/.test(css)
+  && /\.lc-bombe-asche \{[\s\S]{0,300}?overflow: hidden;/.test(css));
 
 console.log("\nDIE KOPFHOERER SIND FLACH");
 pruefe("die Muschel ist 20 statt 30 Einheiten breit",

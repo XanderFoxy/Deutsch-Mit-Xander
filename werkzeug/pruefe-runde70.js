@@ -80,8 +80,16 @@ pruefe("und der Plan mischt sich beim Kuss nicht mehr ein",
   && /if \(plan && plan\.still\) return;/.test(js));
 
 console.log("\nWAS ABGESCHNITTEN ODER UEBERTOENT WURDE");
+/* RUNDE 72 NACHGEFUEHRT. Der Plan zeigt jetzt auf „slot2" und laeuft
+   4200 ms statt 2800. XANDER: „Der Zufall braucht ein Slotmaschinen-
+   oder Flipper-Klingeln, und man muss die Entscheidung der Walzen
+   hoeren." Gemessen hatte „slot" zwei Ausbrueche und danach zwei
+   Sekunden Rauschteppich — keine Walzen, kein Einrasten, kein
+   Klingeln. Worum es dieser Regel eigentlich geht, bleibt aber
+   gleich: die Aufnahme darf nicht mitten im Klingeln abgeschnitten
+   werden. „slot2" ist 4,14 s lang, die Dauer 4200 deckt sie ganz. */
 pruefe("Zufall: die Slotmaschine wird nicht mehr im Gewinn abgeblendet",
-  /zufall:\s+\{ ton: "slot",\s+dauer: 2800, laut: 0\.6 \}/.test(js));
+  /zufall:\s+\{ ton: "slot2",\s+dauer: 4200, laut: 0\.68 \}/.test(js));
 pruefe("Geld: die Kasse klingelt fertig, bevor es regnet",
   /geld:\s+\{ ton: "geld", dauer: 9500, schleife: true , laut: 0\.5, spaet: 1300 \}/.test(js));
 pruefe("Strudel: eine Aufnahme, die durchdreht",
@@ -102,8 +110,16 @@ pruefe("Gluehbirne: Gewinde statt Quietschen",
   /gluehbirne:\s+\{ ton: "birneschrauben"/.test(js));
 pruefe("Katapult: die Aufnahme, die im Plan stand, liegt endlich da",
   /katapult: 0,/.test(js) && da("katapult3"));
-pruefe("Pfeil: das Sausen liegt vor dem Einschlag bei 714 ms",
-  /lcTonSpaeter\("pfeilflug", 500, 0\.55\)/.test(js));
+/* RUNDE 72 NACHGEFUEHRT: der Einschlag liegt nicht bei 714 ms,
+   sondern gemessen bei 656 ms (Bild fuer Bild im Browser verfolgt).
+   Die 714 kamen aus „21 % von 3,4 s" — aber auf der Animation liegt
+   eine cubic-bezier ueber die ganze Laenge, und die dehnt die
+   Abstaende zwischen den Schluesselbildern. Das Sausen faengt jetzt
+   bei 545 ms an; seine Spitze liegt gemessen 75 ms spaeter, also
+   bei 620 ms und damit unmittelbar VOR dem Einschlag. */
+pruefe("Pfeil: das Sausen liegt vor dem Einschlag bei 656 ms",
+  /lcTonSpaeter\("pfeilflug", 545, 0\.55\)/.test(js)
+  && /saugpfeil: 656,/.test(js));
 pruefe("Greifvogel: Fluegelschlag unter dem Ruf",
   /lcTonSpaeter\("fluegelschlag", 340, 0\.55\)/.test(js));
 pruefe("Turm: die Leiter ist zu hoeren",

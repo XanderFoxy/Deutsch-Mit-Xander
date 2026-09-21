@@ -17139,7 +17139,20 @@
        machen." Die Kasse klingelt ZUERST — erst wird kassiert, dann
        regnet es. Der Geldregen selbst liegt schon als Bett darunter
        (LC_TON_PLAN.geld). */
-    lcTonSpaeter("kasse", 0, 1.0);
+    /* RUNDE 72 — XANDER: „Das Geld braucht ein Registrierkassen-
+       Geraeusch BEVOR die Muenzen fallen — immer noch nicht hoerbar."
+       Die REIHENFOLGE stimmte schon (Kasse bei 0 ms, Geldbett erst
+       bei 1300 ms). Es lag an der Datei: „kasse.opus" hat das
+       Klingeln bei -23 dB und ihren lautesten Punkt erst bei 0,9 s
+       in der Schublade. Gegen einen Geldregen, der kurz darauf
+       einsetzt, kommt das nicht an.
+       „kasse2" ist selbst gebaut, klingelt ZWEIMAL gleich am Anfang
+       (2100 und 2640 Hz mit unharmonischen Teiltoenen — daran
+       erkennt das Ohr Metall statt Pfeifton), faehrt die Schublade
+       bei 0,36 s aus und ist bei 1,1 s fertig. Gemessen: -12 dB am
+       Anfang statt -23 dB, also elf Dezibel lauter, und alles
+       vorbei, bevor das Geld faellt. */
+    lcTonSpaeter("kasse2", 0, 1.0);
 
     /* Der Schriftzug — er gehört zum Namen der Sache. */
     const zug = document.createElement("span");
@@ -24088,14 +24101,22 @@
        haben. Welches passt, steht bei jedem dabei. */
     /* „bei dem Schneeball koennte man auch ein realistischeres machen" —
        eigenes Geraeusch (ElevenLabs): Flug, nasser Klatscher, rieselnder Rest. */
-    schneeball:     { ton: "schneeklatsch", dauer: 3600, laut: 0.55 },
+    schneeball:     { ton: "schneeklatsch", dauer: 4600, laut: 0.55 },
     /* „da fehlt dieses SWOOSH Geraeusch, was er macht, wenn er los
        fliegt und dann den Aufprall macht." Der Flug klingt jetzt nach
        Flug; der Aufprall kommt aus lcBumerang zum richtigen Zeitpunkt. */
     /* „Den Bumerang-Sound kannst du ueberarbeiten." Vorher ein
        allgemeines Swoosh; jetzt das rhythmische Flattern eines
        drehenden Holzbumerangs. */
-    bumerang:       { ton: "bumerang2", dauer: 3000, laut: 0.6 },
+    /* RUNDE 72 — XANDER: „Beim Bumerang fehlt mir der Weg hin —
+       erst der Swoosh, dann das hoelzerne Klopfen, dann der Schmerz,
+       nach Mann und Frau unterschieden."
+       NACHGERECHNET: der Plan-Ton fing bei 884 ms an (LC_TREFFER),
+       und der TOCK liegt bei 860 ms. Das Sausen setzte also GENAU
+       beim Aufprall ein — der Hinweg war stumm. Jetzt saust es
+       ab 250 ms (Spitze der Datei bei 0,15 s, also bei 400 ms,
+       mitten im Flug) und ist zum Treffer verklungen. */
+    bumerang:       { ton: "swoosh", dauer: 1100, laut: 0.6 },
     /* „der Drill von dem Pfeil, den wir schiessen, das koennte alles
        bisschen besser sein": Sehne, Flug, Saugnapf. */
     saugpfeil:      { ton: "pfeilschuss", dauer: 3400, laut: 0.6 },
@@ -24239,7 +24260,19 @@
     /* „Das war so ein pulsierendes dreimal Reinsaugen … so wie das
        damals bei Mario war." Nachgebaut als 8-Bit-Warp-Pipe mit drei
        absteigenden Impulsen. */
-    rohr:           { ton: "mariorohr", dauer: 2800, laut: 0.65 },
+    /* RUNDE 72 — XANDER: „Und das Rohrgeraeusch ist immer noch nicht
+       so wie damals. Du sagst Chip und man hoert ueberhaupt nichts
+       davon. Das war so ein pulsierendes dreimal reinsaugen und
+       dreimal auswirken wieder … mit viel Hall."
+       NACHGEMESSEN: „mariorohr" war 3 s ein gleichmaessiger Brummton
+       (-15 dB von 0 bis 1,83 s, danach Ausklang) — kein einziger
+       Impuls darin. Jetzt liegen zwei selbst gebaute Toene da:
+       „rohrsog" (drei fallende Impulse bei 0,00 / 0,155 / 0,310 s)
+       und „rohrspuck" (dieselben drei steigend). Beide mit vier
+       Rueckwuerfen Hall. Gelegt werden sie im Reisezweig, damit sie
+       genau dann klingen, wenn das Bild einfaehrt und wieder
+       heraussteigt — nicht pauschal am Anfang. */
+    rohr:           { still: true },
     /* XANDER: „ach so, ein Helikopter kannst du noch einbauen zur
        Bewegung mit realistisch rotierenden Rotorblaettern und
        vielleicht irgendwie ein Pferd, auf dem man da hin reiten
@@ -24261,7 +24294,22 @@
        0,0–0,5 s und den Gewinn bei 1,4–2,0 s. Die Ausblende setzt
        bei dauer-500 ein, bei dauer 2000 also schon bei 1500 ms:
        der Gewinn wurde genau beim Einsetzen weggedreht. */
-    zufall:         { ton: "slot",       dauer: 2800, laut: 0.6 },
+    /* RUNDE 72 — XANDER: „Bringe bitte den Zufall nicht mit dem Geld
+       durcheinander. … Der Zufall braucht ein Slotmaschinen- oder
+       Flipper-Klingeln, und man muss die Entscheidung der Walzen
+       hoeren, in einer Spielhallen-Atmosphaere."
+       NACHGEMESSEN: „slot.opus" hatte zwei Ausbrueche (0–0,5 s und
+       1,4–2,0 s) und danach 2 s Rauschteppich bei -29 dB — keine
+       Walzen, kein Einrasten, kein Klingeln. „slot2" ist selbst
+       gebaut und hat die Teile, die eine Spielhalle ausmachen:
+         0,00–0,33 s  der Hebel wird heruntergerissen
+         0,34–1,62 s  die Walzen laufen (Ticks, die langsamer werden)
+         1,66 / 1,96 / 2,26 s  die drei Walzen rasten EINZELN ein
+         2,44–3,15 s  das Gewinnklingeln, aufsteigend, mit zwei
+                      tiefen Flipper-Bumpern darunter
+       Gemessen liegt das Klingeln bei -13 dB, die Walzen bei -26 dB:
+       man hoert beides, und das Klingeln steht oben drauf. */
+    zufall:         { ton: "slot2",      dauer: 4200, laut: 0.68 },
     kopfhoerer:     { ton: "noten",    dauer: 3200, laut: 0.45 },
     /* „das Fenster aufmachen soll auch nach Fenster oeffnen klingen." */
     luke:           { ton: "fensterauf", dauer: 3400, laut: 0.5 },
@@ -24288,7 +24336,19 @@
        kommt dieser typische Schlagsound."
        Genau so aufgenommen: Wurf, Luft, Schlag — eine Datei, ein
        Ablauf. */
-    tennis:         { ton: "tennisaufschlag", dauer: 3000, laut: 0.58 },
+    /* RUNDE 72 — XANDER: „Beim Tennis fehlt immer noch ein richtiger
+       Sound: den Ball hochschlagen, ihn treffen, und das
+       mittelfrequente Flop am Boden."
+       Es gab genau EINEN Ton („tennisaufschlag", ein Ausbruch in den
+       ersten 0,15 s) fuer drei Ereignisse. Jetzt drei eigene, alle
+       selbst gebaut:
+         „tenniswurf"    0,13 s  weiches Ploppen — der Aufwurf
+         „tennistreffer" 0,34 s  die Saiten, hart und hell
+         „tennisflop"    0,42 s  der Boden, tief und dumpf
+       Der Plan traegt den TREFFER, weil das der Hauptschlag ist;
+       Aufwurf und Boden liegen in lcBall an ihren gemessenen
+       Zeitpunkten. */
+    tennis:         { ton: "tennistreffer", dauer: 900, laut: 0.7 },
     krumel:         { ton: "keks",     dauer: 3400, laut: 0.5 },
     /* Runde 18 — die Neuen leihen sich ebenfalls Geraeusche, die es
        schon gibt; welches passt, steht dabei. */
@@ -24412,7 +24472,10 @@
        lcAmPlatz den Planton um LC_TREFFER.bombe (2100 ms)
        verzoegert, knallt sie genau auf der Null. Das Piepsen und
        das Prasseln legt lcBombe selbst auf — je nach Fassung. */
-    bombe:          { ton: "explosion2", dauer: 2600, laut: 0.72 },
+    /* RUNDE 72: lauter gestellt (0,72 -> 0,9). Der Knall lag unter
+       dem Piepton und war deshalb nicht zu hoeren; der Piepton ist
+       jetzt weg, und der Knall darf der lauteste Punkt sein. */
+    bombe:          { ton: "explosion2", dauer: 2600, laut: 0.9 },
     /* RUNDE 71: die Zuendschnur prasselt bis zur Null (2100 ms) und
        hoert dann auf — danach knallt es ja. Die Aufnahme selbst ist
        7 s lang; was davon zu hoeren ist, sagt diese Dauer. Gespielt
@@ -26021,6 +26084,9 @@
        demselben Zeichen wie der Strohhalm. Als BEFEHL bleibt
        „/pusterohr" natuerlich; nur die doppelte Kachel ist fort. */
     ["\ud83d\udca1", "Birne",    "gluehbirne"],
+    /* RUNDE 72 — XANDER: „Die zwei Gluehbirnen-Animationen sollten
+       zwei einzelne Kacheln sein." */
+    ["\ud83d\udd0c", "Birne raus", "birneraus"],
     ["\ud83d\udc59", "Ups!",     "entbloessung"],
     /* RUNDE 19: „Vielleicht kannst du noch auf das Profilbild einen
        Cowboyhut setzen" · „so ein Countdown im Profilbild … und dann
@@ -27083,15 +27149,39 @@
        unterscheiden koennen. Und es wird nichts geschaetzt:
        die Markierung steht genau so lange, wie die Aufnahme
        laeuft, und wird vom Ende des Tons wieder abgenommen. */
+    /* RUNDE 72 — XANDER: „Wenn ich mein Profil verlasse, ist dieser
+       Schein immer noch um die Strichlinie 1 … und wenn ich einen
+       anderen Platz aussuche, ist der Schein immer noch auf der 1 da,
+       wo ich hergekommen bin. Schau mal was das ist."
+
+       GEFUNDEN, und es ist kein Staub von der Bombe, sondern genau
+       dieser Sprechring: die Marke wurde ueber die PLATZNUMMER
+       gesetzt und ueber die Platznummer wieder abgenommen. Wer
+       zwischendurch umzieht, hat beim Abnehmen aber eine ANDERE
+       Nummer — abgenommen wurde also vom neuen Platz, und auf dem
+       alten blieb der Ring stehen. Genau das beschreibt er.
+
+       Zwei Sachen dagegen:
+       · Beim Abnehmen wird nicht mehr gesucht, sondern GENAU DAS
+         ELEMENT genommen, das vorher markiert wurde.
+       · Und vor jedem Setzen wird ohnehin jede alte Marke im Raum
+         entfernt — zwei Sprechringe gleichzeitig hat es nie geben
+         duerfen, und ein vergessener kann so nicht ueberleben. */
+    let stimmeMarke = null;
     const platzMarkieren = (an) => {
       try {
+        document.querySelectorAll(".lc-platz-stimme").forEach((x) => {
+          if (!an || x !== stimmeMarke) x.classList.remove("lc-platz-stimme");
+        });
+        if (!an) { stimmeMarke = null; return; }
         const l = LiveChat.lage();
         const p = (l.plaetze || []).find((x) => !x.leer && x.id === w.von);
-        if (!p) return;
+        if (!p) { stimmeMarke = null; return; }
         const knopf = document.querySelector(`[data-lc-platz="${p.nummer}"]`);
         if (knopf) {
           knopf.dataset.sprechbild = p.sprechbild || "ring";
-          knopf.classList.toggle("lc-platz-stimme", Boolean(an));
+          knopf.classList.add("lc-platz-stimme");
+          stimmeMarke = knopf;
         }
       } catch (e) {}
     };
@@ -28355,6 +28445,7 @@
     zwille:     { zeichen: ["\ud83e\ude83"], wie: 5, klasse: "umarmen" },
     pusterohr:  { zeichen: ["\ud83e\udd64"], wie: 5, klasse: "umarmen" },
     gluehbirne: { zeichen: ["\ud83d\udca1"], wie: 5, klasse: "umarmen" },
+    birneraus:  { zeichen: ["\ud83d\udd0c"], wie: 5, klasse: "umarmen" },
     entbloessung:{ zeichen: ["\ud83d\udc59"], wie: 5, klasse: "umarmen" },
     hut:        { zeichen: ["\ud83e\udd20"], wie: 5, klasse: "umarmen" },
     bombe:      { zeichen: ["\ud83d\udca3"], wie: 5, klasse: "umarmen" },
@@ -28528,15 +28619,37 @@
        entspricht einem Oberarm neben einem Kopf. Die Verjuengung von
        Schulter zu Handgelenk bleibt, denn genau die macht einen Arm
        zum Arm. */
+    /* RUNDE 72 — XANDER: „Bei der Umarmung … die Arme knicken nach
+       unten, als wenn die Arme gebrochen sind."
+
+       NACHGESEHEN IM VERLAUF, bevor ich etwas aendere: er wuenscht
+       sich „die erste Version zurueck, die von damals, als die
+       Maenner- und Frauenstimmen kamen". Die kamen in Runde 59
+       (2fa8b1e). Dort steht GENAU DIESE Zeichnung — Zeichen fuer
+       Zeichen dieselbe. Es gibt also nichts zurueckzuholen; was ihn
+       stoert, steckt in der Form selbst, und die ist nie anders
+       gewesen.
+
+       UND ER HAT RECHT. Nachgerechnet an den alten Zahlen: die
+       Oberkante lief von 42,5 auf 66,5, die Unterkante von 63,5 auf
+       81 — der Arm fiel also ueber seine Laenge um 24 Einheiten ab
+       und endete tief unter der Schulter. So haengt kein Arm, der
+       jemanden umarmt; so haengt ein gebrochener.
+
+       Jetzt kommt er beinahe waagerecht herum und hebt sich am Ende
+       sogar leicht, wie es ein Arm tut, der sich um eine Brust legt:
+       Oberkante 42,5 -> 53,2 (statt 66,5), Unterkante 63,5 -> 67,7.
+       Die Dicke bleibt, wie sie war — sie war nie das Problem:
+       21 Einheiten an der Schulter, 14,5 am Handgelenk. */
     const koerper =
-      "M " + x(0) + " 42.5 C " + x(12) + " 43.4 " + x(26) + " 50.5 " + x(37) + " 59.5"
-      + " C " + x(41) + " 62.8 " + x(44) + " 65.4 " + x(hgx) + " 66.5"
-      + " L " + x(hgx) + " 81 C " + x(42) + " 80 " + x(38) + " 76.6 " + x(33) + " 72.4"
-      + " C " + x(22) + " 63.8 " + x(11) + " 62.8 " + x(0) + " 63.5 Z";
+      "M " + x(0) + " 42.5 C " + x(13) + " 42.8 " + x(25) + " 45.5 " + x(34) + " 49.5"
+      + " C " + x(40) + " 52.2 " + x(45) + " 53.6 " + x(hgx) + " 53.2"
+      + " L " + x(hgx) + " 67.7 C " + x(45) + " 68.4 " + x(40) + " 68 " + x(34) + " 66.5"
+      + " C " + x(25) + " 62 " + x(13) + " 63.4 " + x(0) + " 63.5 Z";
 
     const aermel =
-      "M " + x(0) + " 41.2 C " + x(7) + " 41.5 " + x(13) + " 43.2 " + x(18) + " 46.4"
-      + " L " + x(14.8) + " 60.2 C " + x(10) + " 61.4 " + x(5) + " 61.2 " + x(0) + " 61.4 Z";
+      "M " + x(0) + " 41.2 C " + x(7) + " 41.4 " + x(13) + " 42.4 " + x(18) + " 44.2"
+      + " L " + x(16.2) + " 58.8 C " + x(10) + " 61 " + x(5) + " 61.2 " + x(0) + " 61.4 Z";
 
     return '<svg viewBox="0 0 120 120" class="lc-arm lc-arm-' + seite + '">'
       + '<defs>'
@@ -28552,7 +28665,9 @@
       + '<path d="' + aermel + '" fill="url(#' + g + 's)"/>'
       /* Die Hand waechst mit — sonst sitzt an einem kraeftigen Arm
          eine Kinderhand. */
-      + '<g class="lc-hand" transform="translate(' + x(hgx) + ' 72.7) '
+      /* RUNDE 72: die Hand sitzt in der Mitte des Handgelenks, und
+         das liegt jetzt bei (53,2 + 67,7) / 2 = 60,5 statt 72,7. */
+      + '<g class="lc-hand" transform="translate(' + x(hgx) + ' 60.5) '
       + (links ? "" : "scale(-1,1) ") + 'rotate(11) scale(1.18)">'
       /* Handruecken */
       + '<path d="M -1 -4.6 q 10.6 -1.6 15.2 1.6 q 3.6 2.5 3 5.8'
@@ -28967,8 +29082,22 @@
        Die alten 430 ms lagen 130 ms hinter dem Bild. */
     hammer: 300,
     schneeball: 440,   /* die Flocken stieben ab 0,44 s */
-    bumerang: 884,     /* 34 % von 2,6 s */
-    saugpfeil: 714,    /* 21 % von 3,4 s */
+    bumerang: 250,     /* der Hinweg: sausen, bevor es klopft */
+    /* RUNDE 72 — XANDER: „Der Landesound faellt nicht mit der
+       visuellen Landung zusammen."
+       NACHGEMESSEN im Browser (Bild fuer Bild verfolgt): der Pfeil
+       erreicht seine Zielstelle bei 656 ms, nicht bei 714 ms. Der
+       Grund ist die Falle, die uns schon beim Turm und bei der
+       Muenze erwischt hat: auf der Animation liegt ein
+       cubic-bezier(.3,0,.2,1) UEBER DIE GANZE LAENGE. Der dehnt und
+       staucht die Abstaende ZWISCHEN den Schluesselbildern — „21 %"
+       heisst dann eben nicht 21 % der Zeit. Nachgerechnet gibt die
+       Kurve fuer den Fortschritt 0,21 die Zeit 0,1947; mal 3400 ms
+       sind das 662 ms, und gemessen wurden 656. Die Aufnahme
+       „pfeilschuss" beginnt GEMESSEN direkt mit dem Einschlag
+       (-28 dB im ersten Fenster), also steht hier die reine
+       Trefferzeit. */
+    saugpfeil: 656,
     ei: 520,
     /* RUNDE 70: „katapult3" stand hier schon im Plan, die DATEI gab
        es aber gar nicht — das Katapult war stumm. Jetzt liegt sie da,
@@ -28988,7 +29117,14 @@
     ohrfeige: 730,
     bowling: 760,
     billard: 760,
-    tennis: 900,       /* der Schlag bei 30 % von 3 s */
+    /* RUNDE 72 — NACHGERECHNET, und es war wieder die Kurve ueber die
+       ganze Animation: auf lcGetennist und lcTennisSchlag liegt ein
+       cubic-bezier(.3,0,.3,1). Der dehnt die Abstaende ZWISCHEN den
+       Schluesselbildern, „30 %" sind also nicht 30 % der Zeit. Fuer
+       den Fortschritt 0,30 gibt die Kurve die Zeit 0,2561 — mal
+       3000 ms sind das 768 ms. Der Schlagton kam also 132 ms zu
+       spaet. */
+    tennis: 768,
     basketball: 250,   /* der erste Aufprall beim Dribbeln */
     trommel: 416,      /* 16 % von 2,6 s, der erste Schlag */
     eimer: 676,        /* da setzt der Strahl ein */
@@ -29000,7 +29136,14 @@
     sog: 500,
     stoerung: 120,
     lichtaus: 646,     /* 10,4 % von 6,2 s — da klackt der Schalter */
-    gluehbirne: 2320,  /* 58 % von 4 s — da zuendet sie */
+    /* RUNDE 72: hier standen 2320 ms („58 % von 4 s — da zuendet
+       sie"). Das war richtig, solange der Plan einen ZUEND-Ton
+       nannte. Seit Runde 70 heisst er „birneschrauben" und ist das
+       SCHRAUBEN selbst (gemessen 3,2 s) — das faengt bei 0 an und
+       endet beim Festziehen. Er setzte also erst ein, als schon
+       fertig geschraubt war. Das Zuenden liegt jetzt eigens bei
+       2320 ms („birneplopp", siehe lcGluehbirne). */
+    gluehbirne: 0,
     /* RUNDE 59 — XANDER: „Der Sound von der Muenze faengt erst
        danach an, nachdem die Muenze schon fertig gedreht ist. Das
        macht ueberhaupt keinen Sinn."
@@ -29009,7 +29152,17 @@
        Anfang, nicht ans Ende. */
     muenze: 0,
     entbloessung: 660, /* 22 % von 3 s */
-    hut: 620,          /* wenn er aufsetzt */
+    /* RUNDE 72 — XANDER: „Der Cowboy Sound ist immer noch am Anfang
+       abgeschnitten."
+       NACHGEMESSEN, und er hat recht: „cowboy.opus" begann mit dem
+       Abtastwert -2120 und hatte in den ersten 5 ms schon eine
+       Spitze von 9558 — die Welle fing mitten drin an. Ursache war
+       der Filter „silenceremove" beim Erzeugen, der den Anlauf
+       weggeschnitten hat. Alle drei Cowboy-Dateien haben jetzt
+       45 ms Vorlauf und eine 30-ms-Blende; sie beginnen gemessen bei
+       0. Weil der laute Punkt damit 45 ms spaeter IN der Datei
+       liegt, faengt sie 45 ms frueher an: 620 - 45 = 575. */
+    hut: 575,          /* wenn er aufsetzt */
     bombe: 2100,       /* die Null, da platzt es */
     kuss: 520,         /* wenn der Mund ankommt */
     streicheln: 300,
@@ -29613,6 +29766,20 @@
       const py = (r.y * 38).toFixed(1) + "%";
       schicht.style.setProperty("--px", px);
       schicht.style.setProperty("--py", py);
+      /* RUNDE 72 — XANDER: „Der Schneeball soll realistischer
+         herunterrutschen und mehr Strecke zurueckleg[en] — die
+         Animation wirkt mittendrin abgebrochen."
+         Beim Nachsehen am Bild (4000 ms) fiel noch etwas anderes auf:
+         der Klecks klatscht seitlich an (r.x * 38 %) und rutscht dann
+         SENKRECHT nach unten — also an der Stelle, wo der Bildkreis
+         schon wegkrummt. Die runde Blende schneidet ihn dort an einer
+         harten Kante ab. Nasser Schnee rutscht aber zum tiefsten
+         Punkt, also zur Mitte hin.
+         Deshalb hier der Weg zur Mitte, ausgerechnet statt geraten:
+         --px zaehlt in Prozent der BLENDE, translateX im Klecks aber
+         in Prozent seiner EIGENEN Breite, und die ist 46 % der
+         Blende. Der Umrechnungsfaktor ist also 100/46 = 2,174. */
+      schicht.style.setProperty("--mitte", (-r.x * 38 * 2.174).toFixed(1) + "%");
       const blende = lcZpBlende(schicht);
       /* Der Klecks und die Rinne bleiben INNEN — sie gehoeren aufs
          Bild. Nur der fliegende Ball und die stiebenden Flocken
@@ -29646,7 +29813,10 @@
          Der Schneeball trifft bei 440 ms (LC_TREFFER.schneeball);
          das Grunzen liegt 40 ms danach, also praktisch im Aufprall. */
       lcStimmeZu(platz, "schneemann", "schneefrau", 480, 0.68);
-    }, 3600, "schneeball");
+      /* RUNDE 72: 3600 -> 4600. Der Klecks rutscht jetzt bis unter den
+         Bildrand statt auf halber Strecke zu verschwinden; dafuer
+         braucht er eine Sekunde mehr. */
+    }, 4600, "schneeball");
   }
 
   /* --- DER BUMERANG ------------------------------------------------ */
@@ -29700,6 +29870,12 @@
          ueberall sonst: Schrei nach Geschlecht, direkt auf dem TOCK.
          Und der liegt GEMESSEN bei 860 ms (.lc-bumerang-treffer hat
          0.86s Verzoegerung), nicht bei 2300. */
+      /* RUNDE 72: das hoelzerne Klopfen auf dem TOCK. Es gab hier
+         gar keinen Aufschlag — nur Sausen und Schrei. „holzklopf"
+         ist selbst gebaut (0,28 s: ein kurzer Anschlag und zwei
+         unharmonische Holz-Eigentoene bei 414 und 1247 Hz; harmonisch
+         klaenge es nach Xylofon statt nach Holz). */
+      lcTonSpaeter("holzklopf", 860, 0.78);
       lcStimmeZu(platz, "schreimann", "schreifrau", 920, 0.7);
       /* XANDER: „der Sound vom Bumerang … nicht effektiv genug."
          GEMESSEN: „bumerang2.opus" ist nach 0,6 s verklungen — bei
@@ -29868,7 +30044,10 @@
          Aufnahme hat ihr Sausen in den ersten 0,2 s; bei 500 ms
          gestartet zischt es also von 500 bis 700 ms — unmittelbar
          vor dem Einschlag bei 714 ms. */
-      lcTonSpaeter("pfeilflug", 500, 0.55);
+      /* RUNDE 72: 500 -> 545. Das Sausen hat seine Spitze gemessen
+         bei 0,075 s; so liegt sie bei 620 ms, also unmittelbar vor
+         dem Einschlag bei 656 ms statt darueber. */
+      lcTonSpaeter("pfeilflug", 545, 0.55);
     }, 3400, "saugpfeil");
   }
 
@@ -31803,6 +31982,54 @@
     return (k.top + k.height / 2) - (p.top + p.height / 2);
   }
 
+  /* RUNDE 72 — XANDER: „das beamen hinterlaesst immer noch den
+     Rueckstand" und „wenn ich einen anderen Platz aussuche, ist der
+     Schein immer noch auf der 1 da, wo ich hergekommen bin."
+
+     Das Muster dahinter ist immer dasselbe: eine Wirkung setzt eine
+     Klasse oder haengt ein Element an den Kreis eines Platzes und
+     raeumt es spaeter per setTimeout wieder ab. Wird die Sitzreihe
+     dazwischen neu gezeichnet — und das passiert beim Umsetzen
+     IMMER —, dann raeumt der Timer an einem Element auf, das gar
+     nicht mehr im Bild haengt. Was im Bild haengt, behaelt seinen
+     Rueckstand.
+
+     Deshalb hier eine Stelle, die alle solchen Reste kennt und
+     wegnimmt. Sie laeuft vor jeder Reise und nach jeder Reise. Die
+     Liste ist ausdruecklich kurz und enthaelt NUR Dinge, die
+     voruebergehend sind — nichts, was jemand behalten soll (etwa
+     die Kopfhoerer, die zehn Minuten liegen bleiben duerfen). */
+  const LC_RESTE = ["lc-platz-stimme", "lc-gebeamt", "lc-platz-untergraben",
+                    "lc-verdunkelt", "lc-gepeitscht", "lc-getroffen",
+                    "lc-gepfeilt", "lc-gekuesst", "lc-gedreht",
+                    "lc-gestreichelt", "lc-gewischt", "lc-bepustet"];
+  /* RUNDE 72 — EIN VERSUCH, DEN ICH ZURUECKGENOMMEN HABE.
+     Ich hatte hier zusaetzlich „lc-gesprengt", „lc-eingedreht" und
+     „lc-ausgedreht" eingetragen, damit auch von Bombe und Gluehbirne
+     nichts haengen bleibt. GEMESSEN (pruefe-runde58.js): danach drehte
+     sich die Birne gar nicht mehr — m34 = 0, Breite 1,000. Der Grund
+     ist einleuchtend, sobald man ihn sieht: diese drei Klassen TRAGEN
+     die Animation, und sie laufen vier bis fuenf Sekunden. Laeuft in
+     der Zeit irgendwo eine Reise an, nimmt lcPlaetzeSaeubern sie
+     mitten in der Bewegung wieder ab. Aufraeumen darf nur, was
+     wirklich ein Rest ist — nicht, was gerade arbeitet. Der gelbe
+     Staubrand am Nachbarplatz ist stattdessen dort behoben, wo er
+     entstand: das Aschenband hat jetzt „overflow: hidden" und der
+     Wind traegt nur noch wenige Pixel weit. */
+  function lcPlaetzeSaeubern() {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return 0;
+    let weg = 0;
+    LC_RESTE.forEach((k) => {
+      karte.querySelectorAll("." + k).forEach((el) => { el.classList.remove(k); weg++; });
+    });
+    karte.querySelectorAll(".lc-beam-glanz").forEach((el) => { el.remove(); weg++; });
+    karte.querySelectorAll("[style*='--beamzeit']").forEach((el) => {
+      el.style.removeProperty("--beamzeit"); weg++;
+    });
+    return weg;
+  }
+
   function lcPlatzGitter() {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return [];
@@ -32333,6 +32560,9 @@
     const kreis = ab.el.querySelector(".lc-kreis");
     const reihe = document.getElementById("lcPlaetze") || karte;
     if (!kreis) return false;
+    /* RUNDE 72: bevor etwas Neues anfaengt, wird weggeraeumt, was von
+       vorher liegengeblieben ist. */
+    lcPlaetzeSaeubern();
     const rk = lcLayoutKasten(reihe);
     const start = { x: ab.x - rk.left, y: ab.y - rk.top };
     const ende = { x: zu.x - rk.left, y: zu.y - rk.top };
@@ -32376,6 +32606,10 @@
       ab.el.style.zIndex = altZ;
       lcPlatzUnterwegs(ab.el, false);
       weg.forEach((el) => el.remove());
+      /* Und nach der Reise ebenso — hier faengt der Fall ab, dass die
+         Sitzreihe zwischendurch neu gezeichnet wurde und ein Timer
+         an einem abgehaengten Element aufgeraeumt hat. */
+      lcPlaetzeSaeubern();
     };
 
     /* Das eigene Bild ist unterwegs nicht am Platz — es sitzt ja im
@@ -32673,7 +32907,18 @@
         + "</svg>";
       reihe.appendChild(turm);
       weg.push(turm);
-      setzen(turm, start.x, start.y);
+      /* RUNDE 72 — XANDER: „Das Wasser von dem Schwimmbecken, in das
+         man rein springt vom 3 m Turm, ist noch nicht buendig mit dem
+         Profil Platz. Schau bitte ueberall nach solchen
+         Inkonsistenzen, dass die Sachen wirklich buendig sind."
+         Dieselbe Ursache wie beim Tor in Runde 71: lcPlatzGitter gibt
+         die Mitte des GANZEN Platzes zurueck, und dazu gehoert der
+         NAME unter dem Bild. Alles, was „mittig auf den Platz" gelegt
+         wird, sitzt deshalb um den halben Namen zu tief. Gemessen
+         statt geschaetzt — und zwar fuer Turm, Springer UND Becken
+         gleich, sonst stimmt die Landung nicht mehr. */
+      const versatzT = lcBildVersatz(ab.el);
+      setzen(turm, start.x, start.y + versatzT);
       /* Das Wasser am Zielplatz: eine runde Flaeche genau im Kreis des
          Profilbilds — dieselbe Ueberlegung wie beim Maulwurfsloch. */
       const becken = document.createElement("span");
@@ -32689,7 +32934,7 @@
         + tropfen;
       reihe.appendChild(becken);
       weg.push(becken);
-      setzen(becken, ende.x, ende.y);
+      setzen(becken, ende.x, ende.y + versatzT);
       /* Der Springer: das eigene Bild. */
       const springer = document.createElement("span");
       springer.className = "lc-turm-springer";
@@ -32698,7 +32943,7 @@
       else springer.textContent = (ab.name || "?").charAt(0).toUpperCase();
       reihe.appendChild(springer);
       weg.push(springer);
-      setzen(springer, start.x, start.y);
+      setzen(springer, start.x, start.y + versatzT);
       const hochT = d * 1.62;              /* Brettkante ueber dem Platz */
       const anlauf = (linksT ? -1 : 1) * d * 0.34;
       const dxT = ende.x - start.x, dyT = ende.y - start.y;
@@ -33129,6 +33374,18 @@
          klang wie ein Segelboot, obwohl er seinen eigenen Eintrag
          im Tonplan laengst hatte. */
       lcTonReise("dampfer", dauer);
+      /* RUNDE 72 — XANDER: „Der Raddampfer braucht ein typisches
+         Dampfer-Extra — eine Glocke, eine Pfeife, ein Dampfablassen
+         oder das Rattern der Schaufeln."
+         NACHGEMESSEN: „raddampfer.m4a" ist ein gleichmaessiges
+         Maschinenrauschen zwischen -17 und -24 dB ueber neun
+         Sekunden — kein einziges Ereignis darin. Deshalb ein eigenes
+         Stueck: „dampferpfiff" ist selbst gebaut (zwei leicht
+         verstimmte Toene bei 436 und 519 Hz, daher das Schwebende
+         einer Dampfpfeife, mit Vibrato und einem Dampfablassen am
+         Ende, 2,45 s). Es kommt beim ABLEGEN — dort pfeift ein
+         Dampfer, nicht mittendrin. */
+      lcTonSpaeter("dampferpfiff", 180, 0.55);
     } else if (art === "kran") {
       /* GEWUENSCHT: „oder dass man einen Baustellenkran hat, der
          einen dann dahin hebt." Das Bild haengt am Seil: hoch,
@@ -33297,6 +33554,24 @@
       setzen(lok, start.x, start.y);
       lcReiseWaagerecht(lok, start, ende, dauer, hin, "lok");
       lcTonZu("lok");
+      /* RUNDE 72 — XANDER: „Der Lokomotive fehlt das Stampfen beim
+         Anfahren und das Schienen-/Radgeraeusch. Entweder fehlt es in
+         der Laenge oder es setzt zu spaet ein oder es kommt zu
+         schwach."
+         NACHGEMESSEN: „loklang.m4a" ist 9 s lang, davon die ersten
+         2,8 s bei -17 dB und der Rest bei -24 dB. Es ist EIN
+         durchgehendes Rauschen — weder ein Stampfen noch ein
+         Schienenstoss ist darin zu finden. Beides gibt es jetzt als
+         eigene Stuecke:
+         · „lokstampf" — sieben Dampfstoesse, deren Abstand von
+           460 auf 200 ms schrumpft: genau das hoert man beim
+           Anfahren. Er beginnt bei 0.
+         · „lokschiene" — die Raeder ueber die Stoesse, immer zwei
+           Schlaege dicht hintereinander, alle 380 ms. Er setzt ein,
+           wenn die Lok wirklich rollt (bei einem Fuenftel der
+           Fahrzeit), und ist leiser als das Stampfen. */
+      lcTonSpaeter("lokstampf", 0, 0.6);
+      lcTonSpaeter("lokschiene", Math.round(hin * 0.2), 0.42);
     } else if (art === "liane") {
       /* Der Tarzan-Ruf setzt kurz nach dem Abstossen ein und traegt
          ueber den ganzen Schwung.
@@ -33329,15 +33604,21 @@
          auf der Pruefbuehne liegt die Kartenkante nur 56 px ueber
          der Platzreihe — das ergaebe wieder einen Stummel. Es gilt
          also, was HOEHER liegt. */
-      /* RUNDE 71 — XANDER: „geht die Liane immer ein bisschen ueber
-         den Bildrand hinaus."
-         Und zwar genau hier: der Aufhaengepunkt lag d*0,25 OBERHALB
-         der Kartenkante — also absichtlich ausserhalb. Jetzt haengt
-         sie von der Kante selbst (4 px darunter, damit der Knoten
-         nicht auf dem Rand klebt), und tiefer als 3,2 Bildhoehen
-         ueber der Reihe faengt sie gar nicht erst an. */
-      const kanteL = (kk.top - rk.top) + 4;
-      const hochL = Math.max(kanteL, -d * 3.2);
+      /* RUNDE 72 — ZURUECKGENOMMEN. XANDER: „die Liane ist schlimmer
+         geworden."
+         Er hat recht, und der Fehler war meine Auslegung: „geht die
+         Liane immer ein bisschen ueber den Bildrand hinaus und
+         landet dann einfach mit einer weichen Ueberblendung" — beide
+         Haelften des Satzes reden vom LANDEN, also vom Rand des
+         PROFILBILDS, nicht von der Kartenkante. Ich habe daraufhin
+         den Aufhaengepunkt heruntergezogen, und damit wurde aus der
+         langen Liane ein Stummel. Genau das war in Runde 58 schon
+         einmal bemaengelt worden („Die Liane kann laenger sein und
+         von oben drueber richtig lang runter haengen").
+         Also steht hier wieder die Rechnung aus Runde 58. Was vom
+         Runde-71-Umbau bleibt, ist das, was er wirklich wollte: der
+         Anlauf und das Ausschwingen statt der Ueberblendung. */
+      const hochL = Math.min((kk.top - rk.top) - d * 0.25, -d * 1.6);
       const seilLang = Math.max(70, start.y - hochL);
       liane.style.setProperty("--seil", seilLang.toFixed(1) + "px");
       /* XANDER: „die Liane ist auch nicht realistisch."
@@ -33422,7 +33703,10 @@
            Bruchteile, keine gerechneten Millisekunden. */
         const dxL = ende.x - start.x, dyL = ende.y - start.y;
         const anlaufX = -dxL * 0.16, anlaufY = -Math.abs(dyL) * 0.16 - d * 0.10;
-        const wegX = dxL + dxL * 0.22, wegY = dyL - d * 0.9;
+        /* RUNDE 72: beim Loslassen schwingt sie nur noch 8 Prozent
+           ueber das Ziel hinaus statt 22 — „geht immer ein bisschen
+           ueber den Bildrand hinaus" meint genau das. */
+        const wegX = dxL + dxL * 0.08, wegY = dyL - d * 0.9;
         const vorL = Math.max(0.06, (hin * 0.16) / dauer);
         liane.animate([
           { transform: "translate(-50%, -50%) rotate(" + (dxL < 0 ? 14 : -14) + "deg)",
@@ -33462,10 +33746,21 @@
       reihe.appendChild(fed);
       weg.push(fed);
       setzen(fed, start.x, start.y);
-      /* Drei Spruenge, jeder flacher als der vorige. */
+      /* RUNDE 72 — XANDER: „Der Sound der Sprungfeder ist nicht an die
+         Position gebunden, auf die sie springt."
+         Stimmt, und der Grund lag eine Ebene tiefer: die Feder machte
+         IMMER genau drei Spruenge, ganz gleich, ob sie einen Platz
+         weit huepft oder vier. Der Ton lag dann zwar auf ihren
+         Aufsetzern — aber die Aufsetzer lagen nicht auf den Plaetzen.
+         Jetzt richtet sich die Zahl der Spruenge nach der Strecke:
+         ein Sprung je ueberquertem Platz (plaetzeR ist oben aus der
+         gemessenen Sitzweite gerechnet). Damit setzt sie auf jedem
+         Feld auf, und dort klingt sie auch. */
+      const federSpruenge = Math.max(2, plaetzeR);
+      const federSchritte = federSpruenge * 2;
       const spruenge = [];
-      for (let i = 0; i <= 6; i++) {
-        const t = i / 6;
+      for (let i = 0; i <= federSchritte; i++) {
+        const t = i / federSchritte;
         const x = start.x + (ende.x - start.x) * t;
         const bogen = (i % 2 ? 1 : 0) * d * (0.8 - t * 0.35);
         const y = start.y + (ende.y - start.y) * t - bogen;
@@ -33501,8 +33796,9 @@
          Die Feder setzt bei den GERADEN Schritten auf (0, 2, 4, 6 —
          dazwischen liegt jeweils der Bogen). Genau dort klingt sie
          jetzt, viermal statt einmal. */
-      for (let i = 0; i <= 6; i += 2) {
-        lcTonSpaeter("feder", Math.round((i / 6) * hin), i === 0 ? 0.5 : 0.42);
+      for (let i = 0; i <= federSchritte; i += 2) {
+        lcTonSpaeter("feder", Math.round((i / federSchritte) * hin),
+                     i === 0 ? 0.5 : 0.42);
       }
     } else if (art === "beamen") {
       /* „Das muss wirklich wie bei Star Trek und ein schoener
@@ -33656,61 +33952,69 @@
            Der Kopf hat jetzt eine Ganasche, einen schmalen
            Nasenruecken, ein Maul mit Nuestern und ein Ohr — daran
            erkennt man ein Pferd, nicht an einem Viereck. */
-        /* RUNDE 71 — XANDER: „das Pferd. Wenn du's hinbekommst, koennen
-           wir das vielleicht sogar niedlicher machen … ponyartig."
-           Was ein Pony von einem Pferd unterscheidet, ist kein Stil,
-           sondern das Verhaeltnis — und das ist zu rechnen:
-           · KURZE BEINE. Der Rumpf lag bei y 31…64, die Hufe bei 93:
-             die Beine waren 29 Einheiten lang, also fast so lang wie
-             der Rumpf hoch ist. Jetzt liegt der Rumpf bei 39…74, die
-             Hufe bleiben bei 94 — 20 statt 29.
-           · RUNDER RUMPF. 35 statt 33 hoch bei gleicher Laenge; das
-             Pony ist gedrungen, nicht schlank.
-           · KURZER, DICKER HALS und ein GROESSERER KOPF. Beim Pferd
-             war der Kopf 27 Einheiten lang bei 33 Rumpfhoehe; jetzt
-             30 bei 35 — und er sitzt tiefer, nicht hoch aufgerichtet.
-           · VIEL MAEHNE UND SCHWEIF. Das ist das Erste, was man an
-             einem Pony sieht. */
+        /* RUNDE 72 — ZURUECKGEHOLT. XANDER: „ich glaub das Pferd, was
+           du gestaltet hast, sieht noch haesslicher aus als das
+           vorherige. ich wollte bei unserem vorherigen Pferd lediglich
+           den Koerper nicht ganz so lang gestreckt haben. Ansonsten
+           sah das schon ziemlich cool aus."
+           Also steht hier wieder das Pferd aus Runde 65, Strich fuer
+           Strich — es liegt zusaetzlich in werkzeug/backup/
+           pferd-vor-runde71.txt, damit es nie wieder verloren geht.
+           GEAENDERT wurde nur das eine, was er wollte: der Rumpf lief
+           von x=38 bis 118 (80 lang) bei 33 Hoehe, also 2,4 : 1.
+           Jetzt 38 bis 108 — 70 lang, 2,1 : 1. Hals, Kopf und die
+           Hinterbeine ruecken um dieselben 10 Einheiten mit, sonst
+           haenge der Kopf in der Luft. Dazu ein paar Zuege im
+           Gesicht, mehr nicht. */
         + '<svg class="lc-pferd-form" viewBox="0 0 150 100" aria-hidden="true">'
         /* --- DIE BEINE DER FERNEN SEITE (dunkler, sie liegen hinten) --- */
         + '<g class="lc-pferd-fern">'
-        + '<path class="lc-pferd-bein lc-pferd-b1" d="M54 72 L50 80 L54 87 L52 92"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h1" d="M52 92 L58 93"/>'
-        + '<path class="lc-pferd-bein lc-pferd-b2" d="M102 72 L107 80 L103 87 L106 92"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h2" d="M106 92 L112 93"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b1" d="M52 62 L47 74 L52 84 L50 92"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h1" d="M50 92 L56 93"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b2" d="M96 62 L102 73 L97 83 L100 92"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h2" d="M100 92 L106 93"/>'
         + "</g>"
-        /* --- DER SCHWEIF: dick, tief angesetzt, fast bis zum Boden --- */
-        + '<path class="lc-pferd-schweif" d="M42 52 Q20 52 12 72 Q9 84 16 90'
-        + ' Q15 76 23 66 Q31 56 44 58 Z"/>'
-        /* --- DER RUMPF: tief, rund, gedrungen --- */
-        + '<path class="lc-pferd-rumpf" d="M40 56 Q38 42 58 39 L94 39'
-        + ' Q112 41 116 54 Q118 68 102 74 L56 74 Q40 72 40 56 Z"/>'
+        /* --- DER SCHWEIF, hinter der Kruppe --- */
+        + '<path class="lc-pferd-schweif" d="M40 44 Q20 44 12 62 Q10 72 16 78'
+        + ' Q16 66 24 58 Q32 50 42 50 Z"/>'
+        /* --- DER RUMPF: Brust vorn hoch, Kruppe hinten rund --- */
+        + '<path class="lc-pferd-rumpf" d="M38 48 Q36 34 54 31 L88 31'
+        + ' Q104 33 108 46 Q110 58 96 64 L56 64 Q38 62 38 48 Z"/>'
         /* Die Schulter- und Flankenlinie — ohne sie ist es ein Sack. */
-        + '<path class="lc-pferd-linie" d="M60 41 Q56 56 60 72 M98 42 Q104 56 100 73"/>'
-        /* --- HALS UND KOPF: kurz, dick, tief getragen --- */
-        + '<path class="lc-pferd-hals" d="M102 46 Q113 40 117 28 L130 30'
-        + ' Q127 46 112 56 Z"/>'
-        /* Der Kopf: runde Backe, kurzes Maul — das macht es niedlich. */
-        + '<path class="lc-pferd-kopf" d="M114 26 Q121 15 132 16 Q143 18 146 28'
-        + ' Q148 36 142 39 L134 40 Q123 40 118 35 Q113 31 114 26 Z"/>'
-        + '<circle class="lc-pferd-auge" cx="127" cy="25" r="2.4"/>'
-        + '<path class="lc-pferd-nuester" d="M142 33 Q145 32 145.6 34.4"/>'
-        /* Das Ohr — kurz und rundlich, nicht spitz wie beim Grosspferd. */
-        + '<path class="lc-pferd-ohr" d="M117 24 Q117 14 122 12 Q125 17 124 23 Z"/>'
-        /* Die Maehne: dick, ueber den Kamm gelegt, mit Stirnschopf. */
-        + '<path class="lc-pferd-maehne" d="M117 28 Q112 16 119 10 Q122 16 122 22'
-        + ' Q125 13 130 12 Q127 20 126 26 L118 30 Z"/>'
-        + '<path class="lc-pferd-maehne" d="M116 29 Q106 22 100 34 Q96 44 94 52'
-        + ' L104 49 Q106 38 116 29 Z"/>'
+        + '<path class="lc-pferd-linie" d="M58 33 Q54 48 58 62 M90 34 Q96 48 92 63"/>'
+        /* --- HALS UND KOPF --- */
+        + '<path class="lc-pferd-hals" d="M94 38 Q106 30 110 16 L122 18'
+        + ' Q118 36 102 48 Z"/>'
+        /* Der Kopf: Ganasche rund, Nasenruecken schmal, Maul stumpf. */
+        + '<path class="lc-pferd-kopf" d="M108 14 Q116 6 124 8 Q132 10 135 18'
+        + ' Q137 24 133 27 L126 28 Q118 28 114 24 Q108 20 108 14 Z"/>'
+        + '<circle class="lc-pferd-auge" cx="118" cy="15" r="2"/>'
+        + '<path class="lc-pferd-nuester" d="M131 22 Q133.5 21 134 23"/>'
+        /* Das Ohr — spitz, nach vorn gestellt. */
+        + '<path class="lc-pferd-ohr" d="M110 12 L112 3 L117 9 Z"/>'
+        /* Die Maehne laeuft am Halskamm entlang. */
+        + '<path class="lc-pferd-maehne" d="M110 16 Q106 6 112 2 L106 2'
+        + ' Q98 10 96 24 Q94 32 92 38 L100 36 Q102 24 110 16 Z"/>'
+        /* RUNDE 72 — XANDER: „Da kannst du maximal bei dem vorherigen
+           Pferd noch was mit dem Gesicht machen, dass das noch ein
+           bisschen Details hat."
+           Also ein paar Zuege, die ein Pferdegesicht ausmachen und
+           die vorher fehlten: die Nuesternfalte, ein Lidstrich ueber
+           dem Auge, die Backenlinie (Ganasche) und eine helle
+           Blesse ueber dem Nasenruecken. */
+        + '<path class="lc-pferd-blesse" d="M118 11 Q125 9 131 13 Q133 17 132 22'
+        + ' Q127 17 119 14 Z"/>'
+        + '<path class="lc-pferd-zug" d="M112 19 Q117 22 124 23 M128 24 Q131 25 133 24'
+        + ' M115 12.5 Q118 10.6 121.6 11"/>'
         /* --- DIE BEINE DER NAHEN SEITE --- */
-        + '<path class="lc-pferd-bein lc-pferd-b3" d="M62 74 L57 82 L62 89 L59 94"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h3" d="M59 94 L66 95"/>'
-        + '<path class="lc-pferd-bein lc-pferd-b4" d="M96 74 L102 82 L97 89 L101 94"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h4" d="M101 94 L108 95"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b3" d="M60 64 L54 76 L60 86 L57 94"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h3" d="M57 94 L64 95"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b4" d="M90 64 L97 75 L91 85 L95 94"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h4" d="M95 94 L102 95"/>'
         /* --- SATTEL UND GURT --- */
-        + '<path class="lc-pferd-sattel" d="M66 40 Q80 33 94 40 L94 48'
-        + ' Q80 42 66 48 Z"/>'
-        + '<path class="lc-pferd-gurt" d="M76 42 L74 72 M88 42 L90 72"/>'
+        + '<path class="lc-pferd-sattel" d="M66 32 Q80 25 94 32 L94 40'
+        + ' Q80 34 66 40 Z"/>'
+        + '<path class="lc-pferd-gurt" d="M76 34 L74 63 M88 34 L90 63"/>'
         + "</svg>"
         + '<span class="lc-pferd-reiter"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
@@ -33726,58 +34030,77 @@
          frueher diese Rohre machen, wo man sich so reinsetzt und dann
          irgendwo anders wieder rauskommt, mit diesem typischen
          Geraeusch."
-         Zwei gruene Roehren: aus der einen rutscht man hinein, aus der
-         anderen kommt man wieder heraus. Zwischendurch ist man weg —
-         genau wie bei Mario. Die Roehre steht UNTER dem Platz, das
-         Bild faehrt senkrecht hinein. */
+
+         RUNDE 72 — „und die Roehre ist immer noch nicht repariert.
+         Schau bitte im Verlauf was ich dir gesagt hab wie das sein
+         muss."
+         NACHGELESEN, woertlich: „Nachdem man denjenigen wieder
+         ausspuckt, spuckt es ihn auf beiden Seiten gleichzeitig aus,
+         an seinem Startpunkt und an seinem Endpunkt … Zusaetzlich:
+         das Bild auf der anderen Seite klingt zwar ab, aber es soll
+         ueberhaupt nicht auf beiden Seiten auftauchen."
+
+         DAS WAR MEIN FEHLER AUS RUNDE 66. Ich hatte seinen Satz „der
+         Reisende ist auf beiden Seiten gleichzeitig zu sehen" als
+         WUNSCH gelesen und die Ueberschneidung extra eingebaut — er
+         hat sie als FEHLER gemeldet. Gemessen: das Startbild stand
+         von 30 % bis 70 % sichtbar in der Roehre, das Zielbild stieg
+         ab 28 % heraus. Von 28 % bis 70 % waren beide da.
+
+         Jetzt laeuft es streng nacheinander, und die Zeiten stehen
+         hier, damit man sie nachrechnen kann (Anteile von dauer):
+           0,00 – 0,07  die Startroehre faehrt hoch
+           0,07 – 0,26  das Bild rutscht hinein und ist dann GANZ weg
+           0,26 – 0,34  die Startroehre faehrt wieder ein
+           0,34 – 0,46  niemand ist zu sehen — die Fahrt im Rohr
+           0,46 – 0,55  die Zielroehre faehrt hoch
+           0,55 – 0,80  das Bild steigt heraus
+           0,85         umsetzen; danach uebernimmt der echte Platz
+         Es gibt also keinen Augenblick, in dem beide Bilder stehen. */
+      const taktR = (anteil) => Math.round(dauer * anteil);
       [start, ende].forEach((wo, i) => {
         const roehre = document.createElement("span");
         roehre.className = "lc-roehre" + (i ? " lc-roehre-raus" : " lc-roehre-rein");
         roehre.style.setProperty("--gross", d + "px");
-        /* RUNDE 66: DIE ROEHREN MUESSEN SO LANGE STEHEN, WIE JEMAND
-           DARIN STECKT. Nachgesehen bei 1700 ms: die Startroehre war
-           schon wieder eingefahren (1,5 s Dauer), die Zielroehre kam
-           erst bei 1800 ms — der Reisende stieg also aus dem Nichts.
-           Jetzt haengen beide an denselben Schluesselbildern wie das
-           Bild: die Zielroehre kommt bei 28 % hoch (da faengt das
-           zweite Bild an zu steigen), und beide bleiben bis zum
-           Umsetzen stehen. */
-        roehre.style.animationDelay = (i ? Math.round(dauer * 0.20) : 0) + "ms";
-        roehre.style.animationDuration =
-          (i ? Math.round(dauer * 0.74) : Math.round(dauer * 0.86)) + "ms";
+        /* Die Zeiten setzt jetzt das JavaScript unmittelbar, nicht
+           mehr die CSS-Regel mit ihren eigenen Schluesselbildern:
+           deren 55/70/88 % liessen sich auf diese Abschnitte nicht
+           abbilden, ohne dass die Roehre entweder zu frueh oder zu
+           spaet stand. */
+        roehre.style.animation = "none";
+        const abR = i ? taktR(0.46) : 0;
+        const spanneR = i ? taktR(0.44) : taktR(0.34);
+        try {
+          roehre.animate([
+            { transform: "translate(-50%, -50%) scaleY(0)", offset: 0 },
+            { transform: "translate(-50%, -50%) scaleY(1.06)", offset: 0.15 },
+            { transform: "translate(-50%, -50%) scaleY(1)", offset: 0.22 },
+            { transform: "translate(-50%, -50%) scaleY(1)", offset: 0.80 },
+            { transform: "translate(-50%, -50%) scaleY(0)", offset: 1 }
+          ], { duration: spanneR, delay: abR, easing: "linear", fill: "both" });
+        } catch (e) {}
         roehre.innerHTML = '<i class="lc-roehre-rand"></i><i class="lc-roehre-rohr"></i>';
         reihe.appendChild(roehre);
         weg.push(roehre);
         setzen(roehre, wo.x, wo.y + d * 0.52);
       });
-      /* RUNDE 66 — XANDER: „Rohrreise: der Reisende ist auf beiden
-         Seiten gleichzeitig zu sehen."
-         Bisher sah man nur das HINEIN: das Bild versank in der einen
-         Roehre, war dann weg und tauchte am Ende wieder am ALTEN Platz
-         auf. Das Herauskommen aus der zweiten Roehre — bei Mario der
-         halbe Witz — hat nie jemand gesehen.
-         Jetzt steigt an der Zielroehre ein zweites Bild heraus, und
-         zwar genau dann, wenn das erste unten ist. Zwei Bilder
-         gleichzeitig sind dabei kein Fehler, sondern der Punkt: man
-         sieht die Roehre von beiden Enden. */
+      /* Das Bild am STARTPLATZ: hinein, und dann bleibt es weg. */
       try {
         kreis.animate([
           { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0 },
-          { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0.06 },
-          /* NACHGESEHEN bei 2100 ms: er war am Startrohr GANZ weg —
-             damit ist er eben nicht „auf beiden Seiten gleichzeitig zu
-             sehen", sondern nur drueben. Deshalb bleibt hier ein Rest
-             stehen: 12 % vom Scheitel schauen aus der Startroehre,
-             waehrend er drueben schon heraussteigt. Erst danach
-             verschwindet er ganz. */
-          { transform: "translateY(58%)", clipPath: "inset(0 0 88% 0)", offset: 0.30 },
-          { transform: "translateY(58%)", clipPath: "inset(0 0 88% 0)", offset: 0.70 },
-          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.78 },
-          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.9 },
+          { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 0.07 },
+          /* Es rutscht hinter den Roehrenrand — die Einstiegsroehre
+             liegt mit z-index 8 davor, deshalb verschwindet es IN ihr
+             und gleitet nicht darueber hinweg. */
+          { transform: "translateY(40%)", clipPath: "inset(0 0 52% 0)", offset: 0.17 },
+          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.26 },
+          /* Und hier bleibt es. Kein Rest, der drueben mitliefe. */
+          { transform: "translateY(62%)", clipPath: "inset(0 0 100% 0)", offset: 0.95 },
           { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 1 }
-        ], { duration: dauer, easing: "ease-in-out", fill: "none" });
+        ], { duration: dauer, easing: "linear", fill: "none" });
       } catch (e) {}
-      /* Das zweite Bild an der Zielroehre. */
+      /* Das Bild an der ZIELROEHRE. Es ist bis 0,55 vollstaendig
+         weggeschnitten — erst dann steigt es heraus. */
       const doppel = document.createElement("span");
       doppel.className = "lc-rohr-doppel";
       doppel.style.setProperty("--gross", d + "px");
@@ -33791,23 +34114,23 @@
           { transform: "translate(-50%, -50%) translateY(62%)",
             clipPath: "inset(0 0 100% 0)", opacity: 1, offset: 0 },
           { transform: "translate(-50%, -50%) translateY(62%)",
-            clipPath: "inset(0 0 100% 0)", opacity: 1, offset: 0.28 },
-          /* Ab hier schauen BEIDE aus ihrer Roehre — das ist das
-             Bild, das gewuenscht war. */
-          { transform: "translate(-50%, -50%) translateY(58%)",
-            clipPath: "inset(0 0 88% 0)", opacity: 1, offset: 0.44 },
-          /* Er steigt heraus, waehrend der andere noch unten ist. */
+            clipPath: "inset(0 0 100% 0)", opacity: 1, offset: 0.55 },
+          { transform: "translate(-50%, -50%) translateY(40%)",
+            clipPath: "inset(0 0 52% 0)", opacity: 1, offset: 0.66 },
           { transform: "translate(-50%, -50%) translateY(0)",
-            clipPath: "inset(0 0 0% 0)", opacity: 1, offset: 0.84 },
+            clipPath: "inset(0 0 0% 0)", opacity: 1, offset: 0.80 },
           /* Und uebergibt an den echten Platz, sobald umgesetzt ist. */
           { transform: "translate(-50%, -50%) translateY(0)",
-            clipPath: "inset(0 0 0% 0)", opacity: 1, offset: 0.88 },
+            clipPath: "inset(0 0 0% 0)", opacity: 1, offset: 0.87 },
           { transform: "translate(-50%, -50%) translateY(0)",
-            clipPath: "inset(0 0 0% 0)", opacity: 0, offset: 0.93 }
-        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+            clipPath: "inset(0 0 0% 0)", opacity: 0, offset: 0.92 }
+        ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
-      lcTonZu("rohr");
-      lcTonSpaeter("rohrraus", Math.max(0, hin - 700), 0.55);
+      /* DIE TOENE SITZEN AN DEN BILDERN, nicht am Anfang der Reise:
+         der Sog beginnt, wenn das Bild einfaehrt (0,07), das
+         Ausspucken, wenn es heraussteigt (0,55). */
+      lcTonSpaeter("rohrsog", taktR(0.07), 0.7);
+      lcTonSpaeter("rohrspuck", taktR(0.55), 0.7);
     } else {
       /* Das Tor: eines hier, eines dort. */
       [start, ende].forEach((wo, i) => {
@@ -35536,6 +35859,15 @@
         void kreis.offsetWidth;
         kreis.classList.add("lc-getennist");
         setTimeout(() => kreis.classList.remove("lc-getennist"), 3000);
+        /* RUNDE 72: die beiden anderen Ereignisse. Beide Zeiten sind
+           mit derselben Rechnung aus der Kurve geholt wie der
+           Treffer oben:
+             8 %  (Abwurf)  -> 0,136 * 3000 =  408 ms
+            88 %  (Aufkommen) -> 0,634 * 3000 = 1903 ms
+           XANDER: „und nur beim Ankommen klingen" — genau deshalb
+           liegt das Flop dort und nicht beim Abschicken. */
+        lcTonSpaeter("tenniswurf", 408, 0.45);
+        lcTonSpaeter("tennisflop", 1903, 0.6);
       }
       schicht.innerHTML = art === "tennis"
         ? '<svg class="lc-tennisschlaeger" viewBox="0 0 120 210">'
@@ -35769,7 +36101,10 @@
         kreis.classList.remove("lc-gedreht");
         void kreis.offsetWidth;
         kreis.classList.add("lc-gedreht");
-        setTimeout(() => kreis.classList.remove("lc-gedreht"), 4200);
+        /* RUNDE 72: 4200 -> 5400. Der Aufschlag im Ton liegt gemessen
+           bei 4,59 s, das Ausscheppern bis 5,3 s — bei 4,2 s war das
+           Bild schon fertig, bevor die Muenze hoerbar auflag. */
+        setTimeout(() => kreis.classList.remove("lc-gedreht"), 5400);
       }
       /* XANDER: „Bei der Muenze sollen diese Bewegungeffekte weg und
          die Muenze soll einfach drehen realistisch und sie soll am
@@ -35778,7 +36113,7 @@
          damit weg. Was bleibt, ist der Schatten — an dem sieht man,
          dass sie wirklich faellt und nicht in der Luft steht. */
       schicht.innerHTML = '<span class="lc-muenze-schatten"></span>';
-    }, 4200, "muenze");
+    }, 5400, "muenze");
   }
 
   /* --- DER SCHEIBENWISCHER --------------------------------------------
@@ -36020,17 +36355,140 @@
      Raum ausgeht, wird die ganze Buehne fuer einen Moment dunkel.
      Das ist der Stromausfall, den er meint; kein eigener Befehl,
      sondern die Folge des Herausdrehens. */
-  function lcStromAus() {
+  /* RUNDE 72 — XANDER: „Die Dunkelheit soll noch ein bisschen
+     nachwirken, und dann sollen — wie bei der Augen-Animation — an
+     den Plaetzen der Leute, die da sind, Augen auftauchen und
+     blinzeln, mit passenden lizenzfreien Geraeuschen."
+
+     Zwei Dinge daran sind neu und beide sind gemessen, nicht geraten:
+     · Die Dunkelheit haelt jetzt 5,6 s statt 1,2 s.
+     · Die Augen stehen NICHT irgendwo, sondern an den Plaetzen der
+       Anwesenden: lcPlatzGitter gibt deren Mitten zurueck, und
+       lcBildVersatz hebt sie vom Namen auf das Bild. Freie Plaetze
+       bekommen keine Augen — dort sitzt ja niemand.
+     Die Toene sind selbst gebaut (also lizenzfrei): „dunkelbrumm"
+     als Raumton und „blinzeln" als weiches Doppel-Tick. */
+  const LC_DUNKEL_DAUER = 5600;
+  function lcStromAus(mitAugen) {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const heim = lcEffektHeim();
     if (!heim) return;
     document.getElementById("lcStromAus")?.remove();
     const d = document.createElement("div");
     d.id = "lcStromAus";
-    d.className = "lc-stromaus";
+    d.className = "lc-stromaus" + (mitAugen ? " lc-stromaus-lang" : "");
     d.setAttribute("aria-hidden", "true");
     heim.appendChild(d);
-    setTimeout(() => d.remove(), 1200);
+    const dauerD = mitAugen ? LC_DUNKEL_DAUER : 1200;
+    if (mitAugen) {
+      lcTonSpaeter("dunkelbrumm", 0, 0.5);
+      try {
+        const gitter = lcPlatzGitter();
+        const heimK = heim.getBoundingClientRect();
+        let wieviel = 0;
+        (gitter || []).forEach((g) => {
+          /* Nur besetzte Plaetze: ein leerer Stuhl hat keine Augen. */
+          const el = g && g.el;
+          if (!el || g.frei) return;
+          const hoch = lcBildVersatz(el);
+          const paar = document.createElement("span");
+          paar.className = "lc-dunkel-augen";
+          /* g.x/g.y liegen im selben Bezugssystem wie die Sitzreihe;
+             hier wird auf die Effektflaeche umgerechnet, weil die
+             Finsternis ueber der ganzen Buehne liegt. */
+          const k = el.getBoundingClientRect();
+          paar.style.left = ((k.left + k.width / 2 - heimK.left) / heimK.width * 100) + "%";
+          paar.style.top = ((k.top + k.height / 2 + hoch - heimK.top) / heimK.height * 100) + "%";
+          paar.style.setProperty("--spaet", (620 + wieviel * 260) + "ms");
+          paar.innerHTML = '<i class="lc-auge lc-auge-l"><b></b></i>'
+                         + '<i class="lc-auge lc-auge-r"><b></b></i>';
+          d.appendChild(paar);
+          /* Jedes Augenpaar blinzelt, wenn es aufgeht — leise, und
+             leiser, je spaeter es kommt, sonst wird es ein Teppich. */
+          lcTonSpaeter("blinzeln", 700 + wieviel * 260,
+                       Math.max(0.22, 0.5 - wieviel * 0.05));
+          wieviel++;
+        });
+      } catch (e) {}
+    }
+    setTimeout(() => d.remove(), dauerD);
+  }
+  /* RUNDE 72 — XANDER: „die Fassung ist immer noch nicht mit dem Glas
+     verbunden und verschwindet ganz, wenn es dunkel wird."
+
+     BEIDES NACHGERECHNET, und beides stimmt:
+     · Das Gewinde stand auf translateY(-14%) scaleY(.7) und war
+       damit am Anfang rund ein Fuenftel der Fassungshoehe zu kurz UND
+       nach oben gerueckt — zwischen Gewinde und Glas klaffte eine
+       Luecke, bis es bei 58 % festgezogen war. Jetzt reicht das
+       Gewinde IMMER bis an den unteren Rand der Zeichnung (y = 44,
+       das ist genau die Oberkante des Bildes); gedreht wird nur noch
+       das, was sich beim Einschrauben wirklich bewegt: die Rillen.
+     · Die Fassung hing an der Effektschicht, und die wird nach vier
+       Sekunden abgeraeumt. Deshalb haengt sie jetzt, sobald die Birne
+       brennt, als eigenes Stueck am Platz — und geht erst weg, wenn
+       herausgedreht wird. */
+  function lcBirneFassungSvg(zusatz) {
+    return '<svg class="lc-birne-fassung' + (zusatz || "") + '" viewBox="0 0 60 44">'
+      + '<rect x="12" y="2" width="36" height="10" rx="3" fill="#57606f"/>'
+      + '<rect x="8" y="10" width="44" height="8" rx="3" fill="#8b93a3"/>'
+      /* Das Gewinde laeuft bis y = 44 — bis an das Glas. */
+      + '<rect x="13" y="17" width="34" height="27" rx="3" fill="#8b93a3"/>'
+      + '<g class="lc-birne-gewinde">'
+      + '<path d="M13 21 H47 M13 28 H47 M14 35 H46 M15 42 H45" stroke="#e2e7ef"'
+      + ' stroke-width="3.4" stroke-linecap="round"/>'
+      + "</g>"
+      /* Der Schatten, den die Fassung auf das Glas wirft: daran sieht
+         das Auge, dass die beiden einander beruehren. */
+      + '<rect x="13" y="39" width="34" height="5" fill="rgba(0,0,0,.28)"/>'
+      + "</svg>";
+  }
+  /* Die Fassung, die bleibt, solange die Birne brennt. */
+  function lcBirneFassungBleibt(platz) {
+    if (!platz) return;
+    platz.querySelector(".lc-birne-halt")?.remove();
+    const halt = document.createElement("span");
+    /* „lc-zp" ist der Kasten, der GENAU das Quadrat des Bildkreises
+       abdeckt (siehe lcAmPlatz). Ohne ihn rechnen die Prozente der
+       Fassung gegen den ganzen Platz — und der ist um den Namen
+       hoeher als sein Bild. Genau daran sah man die Luecke. */
+    halt.className = "lc-zp lc-birne-halt";
+    halt.setAttribute("aria-hidden", "true");
+    halt.innerHTML = lcBirneFassungSvg(" lc-birne-fassung-bleibt");
+    platz.appendChild(halt);
+  }
+  /* DAS HERAUSDREHEN — jetzt ein eigener Ablauf, weil es eine eigene
+     Kachel ist. */
+  function lcBirneHeraus(kreis) {
+    if (!kreis) return false;
+    kreis.classList.remove("lc-birne-an");
+    kreis.classList.remove("lc-ausgedreht");
+    void kreis.offsetWidth;
+    kreis.classList.add("lc-ausgedreht");
+    setTimeout(() => kreis.classList.remove("lc-ausgedreht"), 2200);
+    /* Die Fassung geht mit heraus — aber erst, wenn der Kontakt
+       abgerissen ist, nicht schon beim ersten Dreh. */
+    const platz = kreis.closest(".lc-platz");
+    setTimeout(() => platz?.querySelector(".lc-birne-halt")?.remove(), 1500);
+    /* Der Stromausfall kommt, wenn der Kontakt abreisst — das ist
+       bei 62 % von 2,2 s, also bei 1364 ms. Und er haelt jetzt an,
+       mit den Augen an den Plaetzen. */
+    setTimeout(() => lcStromAus(true), 1364);
+    lcTonSpaeter("birneschrauben", 0, 0.55);
+    lcTonSpaeter("birneplopp", 1364, 0.62);
+    return true;
+  }
+  /* Die eigene Kachel: herausdrehen, auch wenn gerade keine brennt —
+     dann ist es einfach das Licht im Raum, das ausgeht. */
+  function lcGluehbirneRaus(wen) {
+    try {
+      const pl = lcPlatzMitNamen(wen);
+      const k = pl && pl.querySelector(".lc-kreis");
+      if (k) return lcBirneHeraus(k);
+    } catch (e) {}
+    lcTonSpaeter("birneplopp", 0, 0.62);
+    lcStromAus(true);
+    return true;
   }
   function lcGluehbirne(wen) {
     /* Steckt sie schon drin? Dann wird jetzt herausgedreht. */
@@ -36041,18 +36499,7 @@
         return k && k.classList.contains("lc-birne-an") ? k : null;
       } catch (e) { return null; }
     })();
-    if (drin) {
-      drin.classList.remove("lc-birne-an");
-      drin.classList.remove("lc-ausgedreht");
-      void drin.offsetWidth;
-      drin.classList.add("lc-ausgedreht");
-      setTimeout(() => drin.classList.remove("lc-ausgedreht"), 2200);
-      /* Der Stromausfall kommt, wenn der Kontakt abreisst — das ist
-         bei 62 % von 2,2 s, also bei 1364 ms. */
-      setTimeout(lcStromAus, 1364);
-      lcTonZu("quietschen");
-      return true;
-    }
+    if (drin) return lcBirneHeraus(drin);
     return lcAmPlatz(wen, "lc-birne", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
@@ -36063,6 +36510,8 @@
           kreis.classList.remove("lc-eingedreht");
           /* Sie brennt weiter — bis jemand sie herausdreht. */
           kreis.classList.add("lc-birne-an");
+          /* … und die Fassung bleibt sichtbar an ihr haengen. */
+          lcBirneFassungBleibt(platz);
         }, 4000);
       }
       /* Die Fassung sitzt oben auf dem Kopf — dort wird eingedreht.
@@ -36071,19 +36520,16 @@
          stehen (er haengt ja an der Decke), und das GEWINDE dreht
          sich mit dem Bild mit — sonst sieht man dem Bild gar nicht
          an, dass es eingeschraubt wird. */
-      schicht.innerHTML =
-        '<svg class="lc-birne-fassung" viewBox="0 0 60 44">'
-        + '<rect x="12" y="2" width="36" height="10" rx="3" fill="#57606f"/>'
-        + '<rect x="8" y="10" width="44" height="8" rx="3" fill="#8b93a3"/>'
-        + '<g class="lc-birne-gewinde">'
-        + '<rect x="13" y="18" width="34" height="20" rx="3" fill="#8b93a3"/>'
-        + '<path d="M13 21 H47 M13 28 H47 M15 35 H45" stroke="#e2e7ef"'
-        + ' stroke-width="3.4" stroke-linecap="round"/>'
-        + "</g></svg>";
-      /* Der zweite Quietscher kommt genau dann, wenn sie in den
-         Kontakt einrastet — ein Gewinde quietscht beim Festziehen
-         noch einmal. */
-      lcTonSpaeter("quietschen", 2100, 0.45);
+      schicht.innerHTML = lcBirneFassungSvg("");
+      /* RUNDE 72 — XANDER: „Beim Drehen der Gluehbirne kommt ein
+         Auto-Quietschen."
+         Er hat recht: hier stand zweimal lcTonZu/lcTonSpaeter mit
+         „quietschen" — und genau diese Datei ist ein Bremsen-
+         quietschen. Das Schraubgeraeusch liegt ohnehin schon im Plan
+         („birneschrauben", 3,2 s) und laeuft ueber lcAmPlatz. Statt
+         des zweiten Quietschers kommt jetzt das Einrasten in den
+         Kontakt, wenn sie zuendet: 58 % von 4 s = 2320 ms. */
+      lcTonSpaeter("birneplopp", 2320, 0.5);
       const blende = lcZpBlende(schicht);
       blende.innerHTML = '<span class="lc-birne-schein"></span>'
                        + '<span class="lc-birne-wendel"></span>';
@@ -36345,14 +36791,29 @@
           zahl.classList.remove("lc-bombe-tick");
           void zahl.offsetWidth;
           zahl.classList.add("lc-bombe-tick");
-          if (z !== 0) lcTonZu("ticken");
+          /* RUNDE 72: hier stand lcTonZu("ticken") — und die Datei
+             „ticken" gab es ueberhaupt nicht im Ordner. Der Countdown
+             war deshalb stumm. Sie ist jetzt da (0,10 s, ein
+             trockener Piep) und wird direkt gelegt, weil „ticken"
+             kein Plan-Eintrag ist. */
+          if (z !== 0) lcTonSpaeter("ticken", 0, 0.62);
         }, 700 + i * 700));
-        /* RUNDE 71: „Dieses Piepsen kannst du anteilig kurz vor der
-           Explosion bei der digitalen Zeitschaltuhr machen."
-           Also nicht mehr ueber die ganzen 4,6 s, sondern die letzten
-           600 ms vor der Null (2100 ms) — dort wird eine
-           Zeitschaltuhr hektisch. */
-        lcTonSpaeter("bombedigital2", 1500, 0.55);
+        /* RUNDE 72 — XANDER: „der lange Piepton ist immer noch da,
+           immer noch ohne Explosionsknall, und dauert viel zu lang."
+           NACHGEMESSEN, und das erklaert beides auf einmal:
+           · „bombedigital2" ist 5,03 s lang und piept durchgehend
+             bei -15 bis -25 dB. Gestartet bei 1500 ms lief es also
+             bis 6,5 s — die Animation dauert 4,6 s.
+           · Es wurde ueber lcTonSpaeter gelegt, und dafuer gibt es
+             keinen Plan-Eintrag; ohne Plan gibt es auch kein
+             „dauer", also wurde nichts abgeschnitten.
+           · Der Knall von „explosion2" liegt gemessen bei 0,0–0,6 s
+             und faengt bei 2100 ms an — er lag also GENAU unter dem
+             lautesten Teil des Pieptons und war nicht zu hoeren.
+           Jetzt piept „bombehektik" (selbst gebaut, gemessen 0,57 s,
+           acht Piepse, jeder etwas hoeher) von 1530 bis 2100 ms und
+           ist zur Null fertig. Danach steht der Knall allein. */
+        lcTonSpaeter("bombehektik", 1530, 0.6);
       }
       /* Die Zuendschnur laeuft am oberen Rand entlang und wird kuerzer. */
       /* DAS HAEUFCHEN ASCHE.
@@ -36384,15 +36845,42 @@
            Jetzt wird die Glocke um das 1,9fache gedehnt und an den
            Raendern beschnitten: der Haufen bleibt in der Mitte am
            dichtesten, reicht aber wirklich von Rand zu Rand. */
+        /* RUNDE 72 — XANDER: „die Staubwolke sollte unten ueber dem
+           Namen gelassen werden, auf einer Seite gehaeuft und
+           flacher, wie eine Endmoraene."
+           Eine Endmoraene ist genau das: ein Wall, der auf der einen
+           Seite steil ansteigt und auf der anderen lang ausflacht —
+           und nicht hoch, sondern breit. Deshalb hier drei
+           Aenderungen, und jede hat ihren Grund:
+           · Der Gipfel liegt bei 34 % der Breite, nicht in der Mitte
+             („auf einer Seite gehaeuft").
+           · Rechts davon laeuft der Wall dreimal so weit aus wie
+             links — das ist die flache Seite.
+           · Die Hoehe ist von hoechstens 15 % auf hoechstens 7 %
+             halbiert („flacher"). */
         const glocke = (Math.random() + Math.random() + Math.random()) / 3;
-        const mitte = Math.max(0, Math.min(1, 0.5 + (glocke - 0.5) * 1.9));
-        const x = 2 + mitte * 96;
-        const hoch = Math.pow(1 - Math.abs(mitte - 0.5) * 2, 0.7);
+        const GIPFEL = 0.34;
+        /* Die Glocke wird zur einen Seite gestaucht, zur anderen
+           gedehnt — daraus entsteht die schiefe Form. */
+        const seite = glocke < 0.5 ? (glocke - 0.5) * 1.1 : (glocke - 0.5) * 3.0;
+        const mitte = Math.max(0, Math.min(1, GIPFEL + seite));
+        const x = 1 + mitte * 98;
+        /* Der Abstand zum Gipfel entscheidet ueber die Hoehe — links
+           faellt der Wall schnell ab, rechts langsam. */
+        const abstand = mitte < GIPFEL
+          ? (GIPFEL - mitte) / GIPFEL
+          : (mitte - GIPFEL) / (1 - GIPFEL) * 0.62;
+        const hoch = Math.pow(Math.max(0, 1 - abstand), 1.5);
         asche += '<i class="lc-asche-punkt" style="'
           + "left:" + x.toFixed(1) + "%;"
-          + "--liegt:" + (2 + hoch * 13).toFixed(1) + "%;"
+          + "--liegt:" + (1 + hoch * 6).toFixed(1) + "%;"
           + "--gross:" + (0.5 + Math.random() * 0.9).toFixed(2) + ";"
-          + "--weht:" + (30 + Math.random() * 90).toFixed(0) + "px;"
+          /* Der Wind traegt nur noch ein paar Pixel weit: der Staub
+             soll LIEGEN BLEIBEN, nicht auf den Nachbarplatz wehen.
+             Gemessen lag er vorher bis zu 120 px weiter rechts — das
+             ist ueber der gestrichelten Linie des freien Platzes, und
+             genau das war der Rueckstand, den er dort gesehen hat. */
+          + "--weht:" + (4 + Math.random() * 10).toFixed(0) + "px;"
           + "--faellt:" + (0.1 + Math.random() * 0.5).toFixed(2) + "s;"
           + "--hell:" + (0.45 + Math.random() * 0.45).toFixed(2)
           + '"></i>';
@@ -36536,13 +37024,18 @@
   function lcZufall(wen, nachricht) {
     const w = LC_ZUFALL_WIRKUNGEN[Math.floor(Math.random() * LC_ZUFALL_WIRKUNGEN.length)];
     /* XANDER: „und Zufall kann er so sein wie bei so einer Gewinn Slot
-       Maschine." Also rattert erst die Walze (LC_TON_PLAN: „slot"),
+       Maschine." Also rattert erst die Walze (LC_TON_PLAN: „zufall"),
        und erst wenn sie stehenbleibt, faellt das Los — sonst laufen
        Walze und gezogener Effekt gleichzeitig und man hoert Matsch. */
     lcTonZu("zufall");
-    /* Ueber lcWirkung, nicht direkt: so gilt jede Regel, die dort
-       steht (Ton, Blende, Richtung), auch fuer den Zufall. */
-    setTimeout(() => { try { lcWirkung(w, null, nachricht); } catch (e) {} }, 1150);
+    /* RUNDE 72 — XANDER: „man muss die Entscheidung der Walzen
+       hoeren." Die drei Walzen von „slot2" rasten gemessen bei
+       1,66 / 1,96 / 2,26 s ein, das Gewinnklingeln setzt bei 2,44 s
+       an. Das Los fiel bisher bei 1150 ms — also mitten im Lauf,
+       bevor ueberhaupt die erste Walze stand. Jetzt faellt es bei
+       2400 ms: erst stehen alle drei, dann kommt das Los mit dem
+       Klingeln zusammen. */
+    setTimeout(() => { try { lcWirkung(w, null, nachricht); } catch (e) {} }, 2400);
     return true;
   }
 
@@ -38043,6 +38536,7 @@
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
+    birneraus: 1,
     entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, kuss: 1
   };
 
@@ -38180,6 +38674,7 @@
       if (art === "zwille" && lcZwille(wenZ)) return;
       if (art === "pusterohr" && lcPusterohr(wenZ)) return;
       if (art === "gluehbirne" && lcGluehbirne(wenZ)) return;
+      if (art === "birneraus" && lcGluehbirneRaus(wenZ)) return;
       if (art === "hut" && lcHut(wenZ)) return;
       if (art === "bombe" && lcBombe(wenZ, false)) return;
       if (art === "lunte" && lcBombe(wenZ, true)) return;

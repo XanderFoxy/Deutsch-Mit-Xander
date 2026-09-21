@@ -146,8 +146,15 @@ const pruefe = (was, gut, zusatz) => {
     const ank = window.DMA_PRUEFUNG.ankunftsTon ? window.DMA_PRUEFUNG.ankunftsTon() : {};
     return { zufall: (plan.zufall || {}).ton, geld: (plan.geld || {}).ton, kran: ank.kran };
   });
+  /* RUNDE 72 NACHGEFUEHRT: der Plan zeigt nicht mehr auf „slot",
+     sondern auf „slot2". XANDER: „Der Zufall braucht ein
+     Slotmaschinen- oder Flipper-Klingeln, und man muss die
+     Entscheidung der Walzen hoeren." Gemessen hatte „slot" weder
+     Walzen noch Einrasten noch Klingeln; „slot2" hat alle drei
+     (Hebel 0–0,33 s, Walzen 0,34–1,62 s, Einrasten 1,66 / 1,96 /
+     2,26 s, Klingeln ab 2,44 s). Deshalb gelten hier beide Namen. */
   pruefe("der Zufall rattert wie eine Slotmaschine",
-    rest.zufall === "slot", "Plan: " + rest.zufall);
+    rest.zufall === "slot" || rest.zufall === "slot2", "Plan: " + rest.zufall);
   pruefe("der Kran brummt am Ende NICHT mehr",
     rest.kran && rest.kran !== "kitt", "Ankunft: " + rest.kran);
 

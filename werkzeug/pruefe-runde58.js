@@ -323,8 +323,19 @@ const pruefe = (was, gut, zusatz) => {
                   trifft jetzt das GELENK. Deshalb wird sie ueber
                   ihre eigene Groesse gesucht, nicht ueber die des
                   Nachbarn. */
-               const k = [...sv.querySelectorAll("rect")].find((r) =>
-                 Number(r.getAttribute("width")) === 11 && Number(r.getAttribute("height")) === 5);
+               /* RUNDE 72 NACHGEFUEHRT: beim Umbau auf die AirPods-Max-
+                  Form (Runde 71) ist die Krone von 11 x 5 auf 10 x 4,6
+                  geschrumpft. Die Sonde suchte weiter nach den alten
+                  Massen und fand gar nichts — gemessen falsch, nicht
+                  gebaut falsch: die Krone liegt bei y = 56,4 und die
+                  Muschel bei y = 66, sie sitzt also sehr wohl oben.
+                  Jetzt wird in einem Bereich gesucht statt auf den
+                  Zehntelpunkt. */
+               const k = [...sv.querySelectorAll("rect")].find((r) => {
+                 const b = Number(r.getAttribute("width")),
+                       h = Number(r.getAttribute("height"));
+                 return b >= 9 && b <= 12 && h >= 4 && h <= 6;
+               });
                return k && muschel
                  ? Number(k.getAttribute("y")) < Number(muschel.getAttribute("y")) : false;
              })() };

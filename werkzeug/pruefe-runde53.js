@@ -44,8 +44,17 @@ const pruefe = (was, gut, zusatz) => {
   const muenze = await pg.evaluate(async () => {
     document.querySelectorAll(".lc-muenze").forEach((x) => x.remove());
     window.DMA_PRUEFUNG.wirkung("muenze", "3", "Alex");
-    /* Erst ganz am Ende nachsehen — vorher trudelt sie noch. */
-    await new Promise((f) => setTimeout(f, 4100));
+    /* Erst ganz am Ende nachsehen — vorher trudelt sie noch.
+       RUNDE 72 NACHGEFUEHRT: die Muenze laeuft jetzt 5,4 s statt 4,2 s,
+       weil ihr Aufschlag im Ton gemessen bei 4,59 s liegt und das
+       Ausscheppern bis 5,3 s geht (siehe lcMuenzeR72). Bei 4100 ms
+       war sie noch in der Luft — gemessen 39 px neben der
+       Namensmitte. Das war die Sonde, nicht die Animation.
+       5600 ms waeren allerdings schon ZU spaet: bei 5400 ms nimmt
+       lcMuenze die Klasse wieder ab, und dann steht das Bild wieder
+       aufrecht an seinem Platz (gemessen 103 x 103 px). Deshalb
+       5300 ms — das letzte Bild, in dem sie noch liegt. */
+    await new Promise((f) => setTimeout(f, 5300));
     const pl = document.querySelectorAll(".lc-platz")[2];
     const k = pl.querySelector(".lc-kreis");
     const n = pl.querySelector(".lc-platz-name");

@@ -1,0 +1,38 @@
+        + '<svg class="lc-pferd-form" viewBox="0 0 150 100" aria-hidden="true">'
+        /* --- DIE BEINE DER FERNEN SEITE (dunkler, sie liegen hinten) --- */
+        + '<g class="lc-pferd-fern">'
+        + '<path class="lc-pferd-bein lc-pferd-b1" d="M52 62 L47 74 L52 84 L50 92"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h1" d="M50 92 L56 93"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b2" d="M104 62 L110 73 L105 83 L108 92"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h2" d="M108 92 L114 93"/>'
+        + "</g>"
+        /* --- DER SCHWEIF, hinter der Kruppe --- */
+        + '<path class="lc-pferd-schweif" d="M40 44 Q20 44 12 62 Q10 72 16 78'
+        + ' Q16 66 24 58 Q32 50 42 50 Z"/>'
+        /* --- DER RUMPF: Brust vorn hoch, Kruppe hinten rund --- */
+        + '<path class="lc-pferd-rumpf" d="M38 48 Q36 34 56 31 L96 31'
+        + ' Q114 33 118 46 Q120 58 104 64 L56 64 Q38 62 38 48 Z"/>'
+        /* Die Schulter- und Flankenlinie — ohne sie ist es ein Sack. */
+        + '<path class="lc-pferd-linie" d="M60 33 Q56 48 60 62 M98 34 Q104 48 100 63"/>'
+        /* --- HALS UND KOPF --- */
+        + '<path class="lc-pferd-hals" d="M104 38 Q116 30 120 16 L132 18'
+        + ' Q128 36 112 48 Z"/>'
+        /* Der Kopf: Ganasche rund, Nasenruecken schmal, Maul stumpf. */
+        + '<path class="lc-pferd-kopf" d="M118 14 Q126 6 134 8 Q142 10 145 18'
+        + ' Q147 24 143 27 L136 28 Q128 28 124 24 Q118 20 118 14 Z"/>'
+        + '<circle class="lc-pferd-auge" cx="128" cy="15" r="1.7"/>'
+        + '<path class="lc-pferd-nuester" d="M141 22 Q143.5 21 144 23"/>'
+        /* Das Ohr — spitz, nach vorn gestellt. */
+        + '<path class="lc-pferd-ohr" d="M120 12 L122 3 L127 9 Z"/>'
+        /* Die Maehne laeuft am Halskamm entlang. */
+        + '<path class="lc-pferd-maehne" d="M120 16 Q116 6 122 2 L116 2'
+        + ' Q108 10 106 24 Q104 32 102 38 L110 36 Q112 24 120 16 Z"/>'
+        /* --- DIE BEINE DER NAHEN SEITE --- */
+        + '<path class="lc-pferd-bein lc-pferd-b3" d="M60 64 L54 76 L60 86 L57 94"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h3" d="M57 94 L64 95"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b4" d="M98 64 L105 75 L99 85 L103 94"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h4" d="M103 94 L110 95"/>'
+        /* --- SATTEL UND GURT --- */
+        + '<path class="lc-pferd-sattel" d="M66 32 Q80 25 94 32 L94 40'
+        + ' Q80 34 66 40 Z"/>'
+        + '<path class="lc-pferd-gurt" d="M76 34 L74 63 M88 34 L90 63"/>'

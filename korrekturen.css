@@ -11597,7 +11597,10 @@ body.lc-schreibt .tutor-reiter {
   font-size: 0.82em;
   color: #ffe08a;
   text-shadow: 0 0 8px rgba(0, 0, 0, .55);
-  animation: lcZpWort 0.9s ease-out 0.7s both;
+  /* RUNDE 72: 0,7 s -> 0,656 s. Der Pfeil erreicht seine Zielstelle
+     gemessen bei 656 ms (siehe LC_TREFFER.saugpfeil) — das PLOPP
+     stand 44 ms daneben. */
+  animation: lcZpWort 0.9s ease-out 0.656s both;
 }
 
 /* --- DIE SCHLAGSAHNE AUS DER SPRUEHDOSE ------------------------------
@@ -22185,13 +22188,18 @@ body.lc-schreibt .tutor-reiter {
    Prüfung aus Runde 66 hat genau das gemeldet. */
 .lc-heli-rotor { top: 10.71%; }
 
-/* RUNDE 71, NACHGEZOGEN: der Reiter sass in der Luft über dem Pony.
-   Der Rumpf ist um 8 von 100 Einheiten nach unten gewandert (kurze
-   Beine, siehe app.js), der Sattel mit ihm — der Reiter stand aber
-   noch auf 11 %. Gemessen am Bild schwebte er eine halbe Bildhöhe
-   über dem Sattel. Jetzt 19 %, und der Sattel liegt bei x 66…94 von
-   150, also bei 53 % — das stimmte schon. */
-.lc-pferd-reiter { top: 19%; }
+/* RUNDE 72 — das Pferd ist zurückgeholt (siehe app.js), also steht
+   der Reiter wieder dort, wo er in Runde 65 sass: top 11 %. Die
+   19 % aus Runde 71 gehörten zum Pony, das er nicht wollte. */
+.lc-pferd-reiter { top: 11%; }
+/* Die neuen Gesichtszüge — mehr war nicht gewünscht. */
+.lc-pferd-blesse { fill: rgba(255, 250, 240, .30); }
+.lc-pferd-zug {
+  stroke: rgba(40, 24, 10, .38);
+  stroke-width: 1.1;
+  fill: none;
+  stroke-linecap: round;
+}
 
 /* =================================================================
    RUNDE 71 — DAS FLUGZEUG BEKOMMT DETAILS, DAS BILD WIRD EIN FENSTER
@@ -22386,4 +22394,291 @@ body.lc-schreibt .tutor-reiter {
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-strudel-wirbel { animation: none; opacity: 0; }
+}
+
+/* =================================================================
+   RUNDE 72 — DIE GLÜHBIRNE: FASSUNG AM GLAS, UND DIE DUNKELHEIT
+   BLEIBT, BIS DIE AUGEN AUFGEHEN
+   -----------------------------------------------------------------
+   XANDER: „die Fassung ist immer noch nicht mit dem Glas verbunden
+   und verschwindet ganz, wenn es dunkel wird … Die Dunkelheit soll
+   noch ein bisschen nachwirken, und dann sollen — wie bei der
+   Augen-Animation — an den Plätzen der Leute, die da sind, Augen
+   auftauchen und blinzeln."
+
+   NACHGERECHNET: das Gewinde stand auf `translateY(-14%) scaleY(.7)`.
+   Bei einer Gewindehöhe von 20 Einheiten sind das 6 Einheiten zu
+   kurz und 2,8 nach oben — zusammen 8,8 von 44, also ein Fünftel der
+   ganzen Fassung, das zwischen Fassung und Glas fehlte. Jetzt reicht
+   das Gewinde im SVG bis y = 44 (die Oberkante des Bildes), und
+   bewegt wird nur noch, was sich beim Einschrauben wirklich bewegt:
+   die Rillen laufen nach unten.
+   ================================================================= */
+.lc-birne-gewinde {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: lcBirneRillenR72 4s cubic-bezier(.2, .6, .2, 1) both;
+}
+@keyframes lcBirneRillenR72 {
+  /* Drei Umdrehungen: die Rillen wandern dreimal um eine Teilung
+     weiter — dieselben drei Umdrehungen wie das Bild darunter. */
+  0%   { transform: translateY(-21%); }
+  22%  { transform: translateY(-14%); }
+  40%  { transform: translateY(-7.5%); }
+  54%  { transform: translateY(-2.5%); }
+  /* Festgezogen — ab hier sitzt sie. */
+  58%, 100% { transform: translateY(0); }
+}
+/* Die Fassung bleibt bis zum Schluss stehen: sie übergibt an das
+   Stück, das dauerhaft am Platz hängt (lcBirneFassungBleibt), und
+   eine Blende dazwischen wäre ein sichtbares Loch. */
+@keyframes lcBirneFassungR18 {
+  0%   { opacity: 0; transform: translateY(-40%); }
+  10%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+/* DIE FASSUNG, DIE BLEIBT, solange die Birne brennt. */
+.lc-birne-halt { pointer-events: none; z-index: 3; }
+.lc-birne-fassung-bleibt {
+  position: absolute;
+  left: 50%; top: -34%;
+  width: 46%;
+  margin-left: -23%;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .4));
+  animation: none;
+  opacity: 1;
+}
+
+/* DIE DUNKELHEIT HÄLT AN — 5,6 s statt 1,2 s, und sie bleibt dunkel,
+   statt zwischendurch aufzuklaren. */
+.lc-stromaus-lang { animation: lcStromAusLangR72 5.6s ease-out both; }
+@keyframes lcStromAusLangR72 {
+  0%   { opacity: 0; }
+  4%   { opacity: .96; }
+  9%   { opacity: .6; }
+  13%  { opacity: .97; }
+  /* Und hier bleibt es dunkel — das ist das „Nachwirken". */
+  88%  { opacity: .95; }
+  100% { opacity: 0; }
+}
+/* DIE AUGEN AN DEN PLÄTZEN. Ihre Stelle rechnet app.js aus den
+   gemessenen Sitzmitten aus (plus lcBildVersatz, damit sie auf dem
+   BILD sitzen und nicht auf dem Namen darunter). */
+.lc-dunkel-augen {
+  position: absolute;
+  width: 13%;
+  height: 3.4%;
+  min-height: 10px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  opacity: 0;
+  animation: lcDunkelAugenR72 4.4s linear var(--spaet, 620ms) both;
+}
+@keyframes lcDunkelAugenR72 {
+  0%    { opacity: 0; }
+  6%    { opacity: 1; }
+  /* Zweimal blinzeln — einmal wäre ein Zucken, dreimal ein Flackern. */
+  30%   { opacity: 1; }
+  32%   { opacity: 0; }
+  34%   { opacity: 1; }
+  66%   { opacity: 1; }
+  68%   { opacity: 0; }
+  70%   { opacity: 1; }
+  88%   { opacity: 1; }
+  100%  { opacity: 0; }
+}
+/* Die Pupillen suchen — aber im Takt DIESER Augen, nicht im Takt der
+   Lichtaus-Animation, die 6,2 s lang ist. */
+.lc-dunkel-augen .lc-auge > b {
+  animation: lcDunkelPupilleR72 4.4s ease-in-out var(--spaet, 620ms) both;
+}
+@keyframes lcDunkelPupilleR72 {
+  0%, 12% { transform: translateX(0); }
+  28%     { transform: translateX(-52%); }
+  44%     { transform: translateX(-52%); }
+  60%     { transform: translateX(56%); }
+  76%     { transform: translateX(56%); }
+  90%,100%{ transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-dunkel-augen, .lc-stromaus-lang { display: none; }
+}
+
+/* =================================================================
+   RUNDE 72 — DIE ASCHE BLEIBT UNTEN ÜBER DEM NAMEN LIEGEN
+   -----------------------------------------------------------------
+   XANDER: „die Staubwolke sollte unten über dem Namen gelassen
+   werden, auf einer Seite gehäuft und flacher, wie eine Endmoräne …
+   und es ist Staubrückstand am Platzrahmen an der gestrichelten
+   Linie, der irgendwie gelb ist."
+
+   NACHGESEHEN am Bild bei 4400 ms: der Haufen lag am UNTEREN RAND
+   DES BILDES (bottom: 4 % der Bildfläche), nicht über dem Namen, und
+   er wehte bis zu 120 px nach rechts — auf dem Foto reichte er bis
+   über den gestrichelten Rahmen des freien Platzes daneben. Das war
+   der Rückstand.
+
+   Jetzt liegt das Band UNTER dem Bild, also über dem Namen, es ist
+   nur noch halb so hoch, und der Wind trägt die Körnchen nur noch
+   wenige Pixel weit, statt sie zum Nachbarn zu wehen.
+   ================================================================= */
+.lc-bombe-asche {
+  left: 50%;
+  bottom: -19%;
+  width: 96%;
+  height: 16%;
+  margin-left: -48%;
+  /* Nichts darf über dieses Band hinauslaufen — das ist die
+     Zusicherung, dass am Nachbarplatz nichts liegen bleibt. */
+  overflow: hidden;
+}
+@keyframes lcAschePunktR30 {
+  0%, 44%  { opacity: 0; transform: translate(0, -180%) scale(.6); }
+  /* Sie rieselt herunter und bleibt liegen. */
+  52%      { opacity: 1; transform: translate(0, calc(var(--liegt, 8%) * -1)) scale(1); }
+  /* Und dann bleibt sie auch liegen: nur ein leichtes Setzen zur
+     Seite, kein Wegwehen mehr. */
+  88%      { opacity: 1; transform: translate(calc(var(--weht, 8px) * .5), calc(var(--liegt, 8%) * -1)) scale(1); }
+  100%     { opacity: .92; transform: translate(var(--weht, 8px), calc(var(--liegt, 8%) * -1)) scale(.96); }
+}
+
+/* =================================================================
+   RUNDE 72 — DIE MÜNZE: DAS AUSPENDELN MUSS MAN HÖREN,
+   UND DAS RUCKELN KAM VON DER KURVE
+   -----------------------------------------------------------------
+   XANDER: „Die Münze soll durchgehend drehen, schneller drehen, wenn
+   sie flacher wird, und das Absetzen muss realistisch hörbar sein."
+
+   ZWEI URSACHEN, und die erste war ein Fehler von mir:
+
+   1. In Runde 71 habe ich die Münze auf `linear` gestellt — aber am
+      FALSCHEN Block. Aktiv war `lcMuenzeR53` (Runde 53, weiter
+      unten in dieser Datei), nicht `lcMuenzeR18`; der R18-Block ist
+      seitdem toter Code. Die echte Animation lief also weiterhin mit
+      `cubic-bezier(.16,.5,.2,1)` ÜBER DIE GANZE LÄNGE. So eine Kurve
+      dehnt und staucht die Abstände ZWISCHEN den Schlüsselbildern:
+      die Bremsung steckt damit zweimal drin — einmal in der Kurve,
+      einmal in den Werten —, und an jedem Schlüsselbild springt die
+      Winkelgeschwindigkeit. Genau das sieht man als Ruckeln. Hier
+      steht deshalb `linear`, und gebremst wird nur noch über die
+      WERTE: rotateY folgt θ(u) = 4500° · (2u − u²), also in gleichen
+      Zeitschritten 0 / 855 / 1620 / 2295 / 2880 / 3375 / 3780 /
+      4095 / 4320 / 4455 / 4500 — jeder Schritt kleiner als der
+      vorige, ohne Sprung.
+
+   2. Das Hörbare war eine Zeitrechnung. GEMESSEN an „muenze2.m4a"
+      (5,50 s):
+        0,0 – 4,1 s   das Rasseln, immer lauter (-28 dB → -12 dB)
+        4,3 – 4,5 s   STILL — sie ist in der Luft und kippt
+        4,6 – 4,7 s   der AUFSCHLAG (-17 dB)
+        4,7 – 5,3 s   das Ausscheppern
+      Die Animation lief 4,2 s. Der Aufschlag ertönte 400 ms NACH dem
+      Bild, das Ausscheppern hat nie jemand gesehen. Jetzt dauert sie
+      5,4 s: Drehung zu Ende bei 74 % (4,0 s, dort ist das Rasseln am
+      lautesten), Kippen bei 80 % (4,32 s, die stille Stelle),
+      AUFSCHLAG bei 85 % (4,59 s), Ausscheppern bis 98 % (5,29 s).
+
+   Die GEOMETRIE bleibt die aus Runde 53 — sie war richtig und ist
+   nachgemessen: sie fällt bis 61 % der Bildhöhe (dort liegt die
+   Mitte der Namenszeile) und schrumpft dabei auf 0,55, damit sie den
+   Namen nicht zudeckt.
+   ================================================================= */
+.lc-gedreht { animation: lcMuenzeR72 5.4s linear both; }
+@keyframes lcMuenzeR72 {
+  0%    { transform: translateY(0)     rotateX(0deg)  rotateY(0deg)    scale(1); }
+  7.4%  { transform: translateY(0.4%)  rotateX(0deg)  rotateY(855deg)  scale(1); }
+  14.8% { transform: translateY(1.5%)  rotateX(0deg)  rotateY(1620deg) scale(.99); }
+  22.2% { transform: translateY(3%)    rotateX(2deg)  rotateY(2295deg) scale(.98); }
+  29.6% { transform: translateY(5.5%)  rotateX(5deg)  rotateY(2880deg) scale(.96); }
+  37%   { transform: translateY(9%)    rotateX(10deg) rotateY(3375deg) scale(.93); }
+  44.4% { transform: translateY(13.5%) rotateX(17deg) rotateY(3780deg) scale(.9); }
+  51.8% { transform: translateY(19%)   rotateX(26deg) rotateY(4095deg) scale(.86); }
+  59.2% { transform: translateY(26%)   rotateX(38deg) rotateY(4320deg) scale(.8); }
+  66.6% { transform: translateY(34%)   rotateX(52deg) rotateY(4455deg) scale(.72); }
+  /* 74 % = 4,0 s — die Drehung ist zu Ende, sie kippt nur noch. */
+  74%   { transform: translateY(43%)   rotateX(66deg) rotateY(4500deg) scale(.64); }
+  /* 80 % = 4,32 s — die stille Stelle in der Aufnahme. */
+  80%   { transform: translateY(54%)   rotateX(80deg) rotateY(4500deg) scale(.58); }
+  /* 85 % = 4,59 s — DER AUFSCHLAG auf dem Namen. */
+  85%   { transform: translateY(61%)   rotateX(88deg) rotateY(4500deg) scale(.55); }
+  /* Und das Ausscheppern: drei Ausschlaege, jeder kleiner. */
+  88%   { transform: translateY(57%)   rotateX(76deg) rotateY(4500deg) scale(.57); }
+  91%   { transform: translateY(61%)   rotateX(87deg) rotateY(4500deg) scale(.55); }
+  94%   { transform: translateY(59.5%) rotateX(81deg) rotateY(4500deg) scale(.56); }
+  96%   { transform: translateY(61%)   rotateX(86deg) rotateY(4500deg) scale(.55); }
+  98%   { transform: translateY(60.4%) rotateX(84deg) rotateY(4500deg) scale(.555); }
+  100%  { transform: translateY(61%)   rotateX(86deg) rotateY(4500deg) scale(.55); }
+}
+/* Der Schatten laeuft auf denselben Zeitpunkten — sonst laeuft er
+   der Muenze davon. Auch er linear, aus demselben Grund. */
+.lc-muenze-schatten { animation: lcMuenzeSchattenR72 5.4s linear both; }
+@keyframes lcMuenzeSchattenR72 {
+  0%    { opacity: .22; top: 60%; transform: none; width: 26%; margin-left: -13%; }
+  44.4% { opacity: .3;  top: 76%; width: 38%; margin-left: -19%; }
+  74%   { opacity: .4;  top: 94%; width: 46%; margin-left: -23%; }
+  85%, 100% { opacity: .5; top: 104%; width: 52%; margin-left: -26%; }
+}
+
+/* =================================================================
+   RUNDE 72 — DER SCHNEEBALL RUTSCHT ZU ENDE
+   -----------------------------------------------------------------
+   XANDER: „Der Schneeball soll realistischer herunterrutschen und
+   mehr Strecke zurücklegen — die Animation wirkt mittendrin
+   abgebrochen."
+
+   NACHGESEHEN, und genau das tat sie: der Klecks war bei 86 % erst
+   bei 46 % der Bildhöhe und blendete auf dem Weg nach unten aus
+   (`opacity: 0` bei 100 %, während er noch bei 60 % unterwegs war).
+   Er verschwand also MITTEN in der Bewegung — das ist das
+   Abgebrochene.
+
+   Jetzt rutscht er bis 104 % (also über die Unterkante des Bildes
+   hinaus, wo nasser Schnee eben hinfällt), und er blendet erst aus,
+   wenn er dort ANGEKOMMEN ist. Ausserdem liegt keine Kurve mehr über
+   der ganzen Animation: `linear` plus die Beschleunigung in den
+   WERTEN — sonst springt die Geschwindigkeit an jedem
+   Schlüsselbild, und genau das sah man als Ruckeln.
+   ================================================================= */
+.lc-schnee-klecks { animation: lcSchneeKlecksR72 4.6s linear both; }
+@keyframes lcSchneeKlecksR72 {
+  0%, 9%  { opacity: 0; transform: translateX(0) scale(.2); }
+  12%     { opacity: 1; transform: translateX(0) scale(1.12); }
+  17%     { transform: translateX(0) scale(1); }
+  /* Haftet kurz — erst dann gibt die Schwerkraft nach. */
+  25%     { transform: translateX(0) translateY(1%) scale(1); }
+  /* Und rutscht los: die Abstände werden grösser, er wird also
+     schneller. Dabei wandert er zur Mitte hin — nasser Schnee
+     rutscht zum tiefsten Punkt, und nur so bleibt er im runden
+     Bild, statt an der Kante abgeschnitten zu werden. */
+  32%     { transform: translateX(calc(var(--mitte, 0%) * .06)) translateY(3%)  scale(1, 1.02); }
+  40%     { transform: translateX(calc(var(--mitte, 0%) * .14)) translateY(8%)  scale(.99, 1.05); }
+  48%     { transform: translateX(calc(var(--mitte, 0%) * .26)) translateY(17%) scale(.98, 1.08); }
+  57%     { transform: translateX(calc(var(--mitte, 0%) * .42)) translateY(31%) scale(.95, 1.1); }
+  67%     { transform: translateX(calc(var(--mitte, 0%) * .6))  translateY(50%) scale(.92, 1.08); }
+  78%     { transform: translateX(calc(var(--mitte, 0%) * .78)) translateY(74%) scale(.88, 1.04); }
+  90%     { opacity: 1; transform: translateX(var(--mitte, 0%)) translateY(98%) scale(.82, .98); }
+  /* Unten angekommen — ERST HIER geht er weg, und zwar indem er
+     zerläuft, nicht indem er sich auflöst. */
+  96%     { opacity: .85; transform: translateX(var(--mitte, 0%)) translateY(104%) scale(1.06, .62); }
+  100%    { opacity: 0; transform: translateX(var(--mitte, 0%)) translateY(105%) scale(1.18, .44); }
+}
+}
+/* Die Spur wächst mit — dieselben Zeitpunkte, damit sie nicht in
+   der Luft endet. */
+.lc-schnee-rinne { animation: lcSchneeRinneR72 4.6s linear both; }
+@keyframes lcSchneeRinneR72 {
+  0%, 13% { height: 0;   opacity: 0; }
+  17%     { height: 3%;  opacity: 1; }
+  25%     { height: 4%;  opacity: 1; }
+  32%     { height: 6%;  opacity: 1; }
+  40%     { height: 11%; opacity: 1; }
+  48%     { height: 20%; opacity: 1; }
+  57%     { height: 34%; opacity: 1; }
+  67%     { height: 53%; opacity: 1; }
+  78%     { height: 77%; opacity: 1; }
+  90%     { height: 101%; opacity: .95; }
+  100%    { height: 104%; opacity: 0; }
 }

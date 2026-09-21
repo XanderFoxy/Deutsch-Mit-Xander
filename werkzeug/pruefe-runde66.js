@@ -100,16 +100,33 @@ pruefe("und die einschwaenzige knallt weiterhin zur selben Zeit",
 pruefe("sie steht in den Tabellen", /neunschwanz: \{ zeichen/.test(js)
   && /neunschwanz: 1,/.test(js));
 
-console.log("\nDIE ROHRREISE — AUF BEIDEN SEITEN");
+console.log("\nDIE ROHRREISE — NACHEINANDER, NICHT GLEICHZEITIG");
+/* RUNDE 72 — DIESE DREI REGELN HIELTEN EINEN FEHLER VON MIR FEST.
+   In Runde 66 hatte ich Xanders Satz „der Reisende ist auf beiden
+   Seiten gleichzeitig zu sehen" als WUNSCH gelesen und die
+   Ueberschneidung eigens eingebaut — samt dieser Sonde, die sie
+   festschreibt. Nachgelesen im Verlauf sagt er woertlich das
+   Gegenteil: „Nachdem man denjenigen wieder ausspuckt, spuckt es
+   ihn auf beiden Seiten gleichzeitig aus … Zusaetzlich: das Bild auf
+   der anderen Seite klingt zwar ab, aber es soll UEBERHAUPT NICHT
+   auf beiden Seiten auftauchen." Es war eine Fehlermeldung.
+   Die Regeln sagen jetzt das Gegenteil, und sie sind gemessen:
+   das Startbild ist ab 1,2 s ganz weg (clipPath 100 %), die
+   Zielroehre kommt erst ab 1,8 s hoch, das Zielbild steigt ab
+   2,4 s heraus. Es gibt keinen Augenblick mit zwei Bildern. */
 pruefe("es gibt ein zweites Bild an der Zielroehre", /lc-rohr-doppel/.test(js)
   && /\.lc-rohr-doppel \{/.test(css));
-pruefe("am Startrohr bleibt ein Rest stehen statt ganz zu verschwinden",
-  /clipPath: "inset\(0 0 88% 0\)", offset: 0\.30/.test(js));
-pruefe("und drueben schaut er ab 44 % heraus — die beiden ueberlappen sich",
-  /clipPath: "inset\(0 0 88% 0\)", opacity: 1, offset: 0\.44/.test(js));
-pruefe("beide Roehren stehen so lange, wie jemand darin steckt",
-  /roehre\.style\.animationDuration =/.test(js)
-  && /Math\.round\(dauer \* 0\.20\)/.test(js));
+pruefe("am Startrohr verschwindet er GANZ und bleibt weg",
+  /clipPath: "inset\(0 0 100% 0\)", offset: 0\.26/.test(js)
+  && /clipPath: "inset\(0 0 100% 0\)", offset: 0\.95/.test(js));
+pruefe("und drueben taucht er erst danach auf — keine Ueberschneidung",
+  /clipPath: "inset\(0 0 100% 0\)", opacity: 1, offset: 0\.55/.test(js));
+pruefe("die Zielroehre faehrt erst hoch, wenn die Startroehre unten ist",
+  /const abR = i \? taktR\(0\.46\) : 0;/.test(js)
+  && /const spanneR = i \? taktR\(0\.44\) : taktR\(0\.34\);/.test(js));
+pruefe("und die Roehren haengen an gerechneten Zeiten, nicht an einer festen Dauer",
+  /roehre\.style\.animation = "none";/.test(js)
+  && /const taktR = \(anteil\) => Math\.round\(dauer \* anteil\);/.test(js));
 pruefe("die feste Dauer im Stilblatt ist weg",
   !/\.lc-roehre-rein \{ animation-duration: 1\.5s; \}/.test(css));
 

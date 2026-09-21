@@ -91,7 +91,14 @@ const pruefe = (was, gut, zusatz) => {
     const kreis = platz.querySelector(".lc-kreis");
     const vorher = kreis.getBoundingClientRect();
     window.DMA_PRUEFUNG.wirkung("muenze", name);
-    await new Promise((f) => setTimeout(f, 4000));
+    /* RUNDE 72 NACHGEFUEHRT: die Muenze laeuft jetzt 5,4 s statt 4,2 s
+       — der Aufschlag liegt im Ton gemessen bei 4,59 s und das
+       Ausscheppern geht bis 5,3 s (siehe lcMuenzeR72). Bei 4000 ms
+       war sie noch in der Luft und stand mit 30 von 84 px schraeg;
+       das war die Sonde, nicht die Animation. 5300 ms ist das letzte
+       Bild, in dem sie noch liegt — bei 5400 nimmt lcMuenze die
+       Klasse ab und das Bild steht wieder aufrecht. */
+    await new Promise((f) => setTimeout(f, 5300));
     const nachher = kreis.getBoundingClientRect();
     return { gefallen: nachher.top + nachher.height / 2 - (vorher.top + vorher.height / 2),
              hoch: nachher.height, bild: vorher.height,

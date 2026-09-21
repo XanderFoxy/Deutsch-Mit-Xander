@@ -117,10 +117,19 @@ const pruefe = (was, gut, zusatz) => {
 
   console.log("\nDIE KASSE KLINGELT, BEVOR DAS GELD FAELLT\n");
   const ge = await mit("geld", 1600);
-  pruefe("die Registerkasse klingelt", wann(ge, "kasse") >= 0, wann(ge, "kasse") + " ms");
+  /* RUNDE 72 NACHGEFUEHRT: die Datei heisst jetzt „kasse2".
+     XANDER: „Das Geld braucht ein Registrierkassen-Geraeusch bevor
+     die Muenzen fallen — immer noch nicht hoerbar." Die REIHENFOLGE
+     stimmte (diese Sonde hat das ja gemessen), aber „kasse.opus"
+     klingelte nur mit -23 dB und hatte ihren lautesten Punkt erst
+     bei 0,9 s in der Schublade. „kasse2" ist selbst gebaut,
+     klingelt mit -12 dB und ist bei 1,1 s fertig. */
+  const kasseTon = wann(ge, "kasse2") >= 0 ? "kasse2" : "kasse";
+  pruefe("die Registerkasse klingelt", wann(ge, kasseTon) >= 0,
+    kasseTon + " bei " + wann(ge, kasseTon) + " ms");
   pruefe("und das Geldbett kommt erst danach",
-    wann(ge, "geld") - wann(ge, "kasse") >= 600,
-    (wann(ge, "geld") - wann(ge, "kasse")) + " ms spaeter");
+    wann(ge, "geld") - wann(ge, kasseTon) >= 600,
+    (wann(ge, "geld") - wann(ge, kasseTon)) + " ms spaeter");
 
   console.log("\nLICHT AUS: EINE GEIGE, KEIN ORCHESTER\n");
   /* RUNDE 70: das Fenster musste groesser werden — die vier
@@ -160,9 +169,28 @@ const pruefe = (was, gut, zusatz) => {
     return window.__toene.filter((x) => x.n === "feder").map((x) => Math.round(x.t - t0));
   });
   /* „Der Sound muss fuer jedes Feld, auf das sie huepft, immer wieder
-     dieses Sprungfedergeraeusch haben und nicht nur einmal." */
-  pruefe("sie federt mehrfach, nicht einmal", fe.length >= 4,
+     dieses Sprungfedergeraeusch haben und nicht nur einmal."
+
+     RUNDE 72 NACHGEFUEHRT — und zwar bewusst nach UNTEN, mit Grund.
+     XANDER: „Der Sound der Sprungfeder ist nicht an die Position
+     gebunden, auf die sie springt." Die Feder machte bis dahin IMMER
+     genau drei Spruenge, ganz gleich wie weit die Reise ging; die
+     vier Toene lagen also zwar auf ihren Aufsetzern, aber die
+     Aufsetzer lagen nicht auf den Plaetzen. Jetzt richtet sich die
+     Zahl nach der Strecke: ein Sprung je ueberquertem Platz,
+     mindestens zwei. Bei der kurzen Reise dieser Sonde (ein Platz
+     weit) sind das drei Toene statt vier — das ist die richtige
+     Zahl, nicht ein Verlust.
+     Die eigentliche Zusicherung ist deshalb jetzt eine andere: die
+     Aufsetzer muessen GLEICHMAESSIG verteilt sein, denn nur dann
+     liegen sie auf den Feldern. */
+  pruefe("sie federt mehrfach, nicht einmal", fe.length >= 3,
     fe.length + " Aufsetzer bei " + fe.join(", ") + " ms");
+  const abstaende = fe.slice(1).map((t, i) => t - fe[i]);
+  const mittel = abstaende.reduce((a, b) => a + b, 0) / (abstaende.length || 1);
+  pruefe("und die Aufsetzer liegen gleichmaessig — also auf den Feldern",
+    abstaende.length >= 2 && abstaende.every((a) => Math.abs(a - mittel) <= mittel * 0.25),
+    "Abstaende " + abstaende.join(", ") + " ms (Mittel " + Math.round(mittel) + ")");
 
   console.log("\nDIE LIANE RUFT WIE TARZAN\n");
   const ta = await pg.evaluate(async () => {

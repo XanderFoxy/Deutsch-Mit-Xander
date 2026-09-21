@@ -1033,6 +1033,11 @@ window.LiveChat = (function () {
     zwille:     { wirkung: "zwille",     satz: "schiesst mit der Zwille auf", emoji: "\ud83e\ude83" },
     pusterohr:  { wirkung: "pusterohr",  satz: "trifft mit dem Pusterohr", emoji: "\ud83e\udd64" },
     gluehbirne: { wirkung: "gluehbirne", satz: "dreht wie eine Gl\u00fchbirne ein", emoji: "\ud83d\udca1" },
+    /* RUNDE 72 — XANDER: „Die zwei Gluehbirnen-Animationen sollten
+       zwei einzelne Kacheln sein." Bisher war es EIN Befehl, der beim
+       zweiten Mal das Gegenteil tat — das sieht man einer Kachel
+       nicht an. Jetzt gibt es das Herausdrehen als eigene Sache. */
+    birneraus:  { wirkung: "birneraus",  satz: "dreht die Gl\u00fchbirne heraus bei", emoji: "\ud83d\udd0c" },
     entbloessung:{ wirkung: "entbloessung", satz: "zieht den BH herunter bei", emoji: "\ud83d\udc59" },
     /* RUNDE 19 — der Hut, die Zeitbombe, und zwei zum Gutsein. */
     hut:        { wirkung: "hut",        satz: "setzt einen Cowboyhut auf", emoji: "\ud83e\udd20" },
@@ -8872,6 +8877,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "zwille", kurz: "zwick",  nutzt: "/zwille Name",    was: "Zwille \u2014 mit dem Gummiband abgeschossen, das tut weh" },
     { gr: "reden", w: "pusterohr", kurz: "puste", nutzt: "/pusterohr Name", was: "Pusterohr \u2014 die Papierkugel klatscht an die Wange" },
     { gr: "reden", w: "gluehbirne", kurz: "birne", nutzt: "/gluehbirne Name", was: "Gl\u00fchbirne \u2014 eingedreht, bis es leuchtet" },
+    { gr: "reden", w: "birneraus", kurz: "dunkel", nutzt: "/birneraus Name", was: "Gl\u00fchbirne heraus \u2014 es wird dunkel, nur Augen bleiben" },
     { gr: "reden", w: "entbloessung", kurz: "ups", nutzt: "/entbloessung Name", was: "Ups! \u2014 geht nur bei dem, der direkt neben dir sitzt" },
     { gr: "reden", w: "hut", kurz: "cowboy",  nutzt: "/hut Name",       was: "Cowboyhut \u2014 er faellt von oben und sitzt schief" },
     { gr: "reden", w: "bombe", kurz: "zisch", nutzt: "/bombe Name",     was: "Zeitbombe \u2014 3, 2, 1 und weg, nur Asche bleibt" },
