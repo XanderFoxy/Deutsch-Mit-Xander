@@ -43134,19 +43134,11 @@
            schaukelt dabei nur leicht, wie ein Ballon an einer Schnur,
            und treibt zur Seite aus dem Bild. */
       ].concat(helium ? [
-        /* RUNDE 89 — nachgemessen und nachgebessert. Er hat BEIDES
-           gesagt: „er fliegt dann von der Buehne hoch UND ODER fliegt
-           halt zur Seite weg." Hochgestiegen ist er schon vorher
-           (232 % seiner Bildhoehe), zur Seite getrieben ist er aber
-           nur 34 % — das sieht man kaum. Jetzt zieht ihn die Luft
-           beim Steigen immer weiter hinaus, bis er seitlich oben aus
-           dem Bild ist. Das Schaukeln bleibt: ein Heliumballon an
-           einer Schnur pendelt, er schiesst nicht. */
-        { offset: 0.52, transform: wo(8, -34, 1.97, 3), easing: "ease-in-out" },
-        { offset: 0.58, transform: wo(-2, -76, 1.95, -4), easing: "ease-in-out" },
-        { offset: 0.64, transform: wo(26, -124, 1.93, 5), easing: "ease-in-out" },
-        { offset: 0.70, transform: wo(52, -178, 1.9, -3), easing: "ease-in-out" },
-        { offset: 0.76, transform: wo(104, -236, 1.88, 6), easing: "ease-in" }
+        { offset: 0.52, transform: wo(6, -34, 1.97, 3), easing: "ease-in-out" },
+        { offset: 0.58, transform: wo(-10, -76, 1.95, -4), easing: "ease-in-out" },
+        { offset: 0.64, transform: wo(14, -124, 1.93, 5), easing: "ease-in-out" },
+        { offset: 0.70, transform: wo(-6, -176, 1.9, -3), easing: "ease-in-out" },
+        { offset: 0.76, transform: wo(34, -232, 1.88, 6), easing: "ease-in" }
       ] : [
         { offset: 0.52, transform: wo(-86, -54, 1.62, -70), easing: "ease-out" },
         { offset: 0.58, transform: wo(64, -96, 1.34, 110), easing: "ease-in-out" },

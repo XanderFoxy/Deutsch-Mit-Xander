@@ -124,14 +124,8 @@ const pruefe = (was, gut, zusatz) => {
     /var ZUSATZ_FELDER = \[/.test(lc) && /"lied", "liedTitel"/.test(lc));
   pruefe("und die Liste gilt an allen drei Stellen",
     (lc.match(/zusatzUebernehmen\(/g) || []).length >= 4);
-  /* NACHGEBESSERT IN RUNDE 89: die Regel las frueher wortwoertlich
-     „geschweifte Klammer, Zeilenumbruch, lcMusikSpielen". Seit
-     Runde 88 steht dazwischen der Grund — XANDER: „die
-     Songabschnitte, die ich festlege … sollen fuer alle hoerbar
-     werden." Geprueft wird deshalb die SACHE: der Musikzweig ruft
-     den Spieler und baut keine ganze Seite. */
   pruefe("Musik zeichnet nichts und springt nicht",
-    /if \(art === "musik"\) \{[\s\S]{0,600}?lcMusikSpielen\(/.test(js)
+    /if \(art === "musik"\) \{\s*\n\s*lcMusikSpielen/.test(js)
     && !/musik:\s*\{ ganzeSeite: true/.test(js));
 
   /* ---------- Und jetzt im Browser ---------- */

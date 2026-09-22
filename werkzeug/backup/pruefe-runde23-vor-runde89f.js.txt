@@ -87,17 +87,11 @@ const pruefe = (was, gut, zusatz) => {
      nur schicken will oder mit Audio-Ausschnitt." Zwischen Liedwahl
      und Senden steht jetzt eine Frage (lcAusschnittWahl), und erst
      die schickt — ganz oder als Ausschnitt. */
-  /* NACHGEBESSERT IN RUNDE 89: frueher wurde nur bei EINEM gefragt
-     („if (einer) { … return; }"). XANDER hat das spaeter erweitert:
-     „die Songabschnitte, die ich festlege … sollen fuer alle hoerbar
-     werden." Seit Runde 88 geht deshalb JEDE Liedwahl durch dieselbe
-     Frage — ob fuer einen oder fuer den ganzen Raum. */
   pruefe("nach der Liedwahl wird gefragt: ganzes Lied oder Ausschnitt?",
-    /lcAusschnittWahl\(einer, i \+ 1, l\.titel\);/.test(js)
+    /if \(einer\) \{ lcAusschnittWahl\(einer, i \+ 1, l\.titel\); return; \}/.test(js)
     && /function lcAusschnittWahl/.test(js));
   pruefe("und beides schickt den Kopfhoerer mit Lied",
-    /"\/kopfhoerer " \+ einer \+ " " \+ nr \+ \(zusatz \? " " \+ zusatz : ""\)/.test(js)
-    && /"\/musik " \+ nr \+ \(zusatz \? " " \+ zusatz : ""\)/.test(js));
+    /"\/kopfhoerer " \+ fuerWen \+ " " \+ nr \+ \(zusatz \? " " \+ zusatz : ""\)/.test(js));
   pruefe("die Leiste hat Pause und Aus",
     /data-tun="pause"/.test(js) && /data-tun="aus"/.test(js));
   pruefe("es gibt auch einen Befehl dafuer",

@@ -400,21 +400,10 @@ const sage = (gut, text, dazu) => {
     kopf: (document.querySelector("#lcPlatzMenue .lc-platzmenue-kopf") || {}).textContent,
     knoepfe: [...document.querySelectorAll("#lcPlatzMenue .lc-lese-text")]
       .map((x) => x.textContent.trim()),
-    felder: document.querySelectorAll("#lcPlatzMenue .lc-ausschnitt input").length,
-    ab: Boolean(document.querySelector("#lcPlatzMenue .lc-ausschnitt-ab")),
-    bis: Boolean(document.querySelector("#lcPlatzMenue .lc-ausschnitt-bis")),
-    name: Boolean(document.querySelector("#lcPlatzMenue .lc-stelle-name"))
+    felder: document.querySelectorAll("#lcPlatzMenue .lc-ausschnitt input").length
   }));
-  /* NACHGEBESSERT IN RUNDE 89: die Regel verlangte frueher den Kopf
-     „ganz oder ein Stueck" und GENAU zwei Felder. XANDER hat danach
-     mehr gewollt: „Man soll die Moeglichkeit haben, einen Teilbereich
-     des Liedes festzusetzen und zu benennen wie einen Button, den man
-     dann daraus generiert." Seit Runde 88 steht deshalb ein drittes
-     Feld da — der NAME des Abschnitts. Geprueft wird jetzt: die Frage
-     nach dem Teil, die beiden Zeitfelder und das Namensfeld. */
-  sage(/welcher Teil/.test(frage3.kopf || "") && frage3.felder === 3
-    && frage3.ab && frage3.bis && frage3.name,
-    "und danach: ganzes Lied oder Ausschnitt, mit zwei Zeitfeldern und einem Namensfeld",
+  sage(/ganz oder ein St\u00fcck/.test(frage3.kopf || "") && frage3.felder === 2,
+    "und danach: ganzes Lied oder Ausschnitt, mit zwei Feldern fuer die Zeit",
     (frage3.kopf || "") + " \u2014 " + frage3.felder + " Felder");
   await pg.evaluate(() => {
     document.querySelector(".lc-ausschnitt-ab").value = "1:20";

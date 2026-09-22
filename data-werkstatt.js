@@ -49,20 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 89f — die Glitch-Sonde ist durch: 122 Effekte, beide Plaetze, bis 8 Sekunden. Alles gruen.",
+  stand: "Runde 89 — die zwei Luftballons und die Gesamtübersicht (Fassung 497)",
 
   inArbeit: [
-    { seit: "2026-09-22T20:47",
-      text: "Uebersicht aller Wuensche aus dem Verlauf — der Sammellauf laeuft gerade" },
+    { seit: "2026-09-22T22:16", nurBetreiber: true,
+      text: "Sammellauf vor jedem Hochladen: bash werkzeug/alle-pruefen.sh" },
+    { seit: "2026-09-22T22:16",
+      text: "Flugzeug als weitere Reise — von dir als Zukunft genannt, noch nicht gebaut" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T20:47",
-      text: "Glitches am verlassenen Platz: 122 Effekte einzeln gemessen, an BEIDEN Plaetzen, bis 8 s nach dem Start — kein einziger" },
-    { seit: "2026-09-22T20:47",
-      text: "Die Sonde mass vorher den falschen Platz (das Ziel statt des verlassenen) — deshalb stand sie auf gruen" },
-    { seit: "2026-09-22T20:47",
-      text: "Sie prueft jetzt auch die Rueckstaende: Elemente, Klassen, Stile, Groesse, Deckkraft" },
+    { seit: "2026-09-22T22:16",
+      text: "Helium-Luftballon: er steigt jetzt 251 px hoch UND treibt 106 px zur Seite aus dem Bild — die zweite Variante vom 21.09., 19:31 Uhr" },
+    { seit: "2026-09-22T22:16",
+      text: "Neue Sonde pruefe-runde89-ballon: misst beide Varianten am laufenden Programm (Platzen mit Fetzen und Knall, Helium ohne entweichende Luft)" },
+    { seit: "2026-09-22T22:16",
+      text: "Drei veraltete Sonden nachgezogen (Runde 22, 23, 85b): sie suchten alten Wortlaut im Quelltext, nicht die Sache" },
+    { seit: "2026-09-22T22:16",
+      text: "KLASSENZIMMER-LISTE.md: 180 Messungen, 180 grün, jede mit deinem Zitat im Kopf" },
+    { seit: "2026-09-22T22:16",
+      text: "Zwei neue Regeln in werkzeug/animations-regeln.md (Sonden messen die Sache; zwei Varianten heissen zwei messbare Varianten)" },
   ],
 };

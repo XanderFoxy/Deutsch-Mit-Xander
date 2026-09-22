@@ -136,49 +136,6 @@ So waren `/kopfhoerer Name Lied` (470 Zeilen zu spät) und
 
 **Sonde:** `werkzeug/pruefe-befehlsreihenfolge.js`
 
-## 10. Eine Sonde misst die Sache, nicht den Wortlaut
-
-Drei Sonden standen in Runde 89 auf ROT, obwohl im Klassenzimmer alles
-richtig lief. Sie suchten im Quelltext nach einem *Wortlaut*:
-
-* `pruefe-runde22` verlangte `if (art === "musik") {` **direkt gefolgt von**
-  `lcMusikSpielen` — dazwischen stand seit Runde 88 die Begruendung als
-  Kommentar.
-* `pruefe-runde23` verlangte `if (einer) { lcAusschnittWahl(...); return; }` —
-  seit Runde 88 geht **jede** Liedwahl durch diese Frage, auch die fuer den
-  ganzen Raum, also ohne `if (einer)`.
-* `pruefe-runde85b` verlangte **genau zwei** Eingabefelder — seit Runde 88
-  steht daneben das Namensfeld, aus dem ein eigener Abschnitts-Knopf wird.
-
-In allen drei Faellen war der Wunsch erfuellt und die *Regel* veraltet.
-Eine rote Sonde, die nichts meldet, was kaputt ist, macht die naechste rote
-Sonde wertlos — dann schaut niemand mehr hin.
-
-**Also:** eine Sonde prueft, was der Benutzer merkt (was am Platz steht, was
-hinausgeht, was zu hoeren ist). Muss sie doch in den Quelltext schauen, dann
-so weit gefasst, dass ein Kommentar oder eine umgestellte Zeile sie nicht
-umwirft. Und wenn ein spaeterer Wunsch die Regel ueberholt, wird die **Regel
-nachgezogen** — mit dem neuen Zitat als Begruendung im Kopf der Sonde, nicht
-mit einem stillen Loeschen.
-
-**Sonden:** `werkzeug/pruefe-runde22.js`, `pruefe-runde23.js`,
-`pruefe-runde85b.js` — jede traegt den Grund der Nachbesserung im Kommentar.
-
-## 11. Zwei Varianten heissen zwei messbare Varianten
-
-Der Luftballon ist das Beispiel: „da sollen auch zwei Animationen sein, ein,
-dass man ihn aufblasen kann, bis er platzt, und ein, dass man ihn einfach nur
-aufblasen kann wie ein Helium Luftballon und er fliegt dann von der Buehne
-hoch und oder fliegt halt zur Seite weg" (21.09.2026, 19:31 Uhr).
-
-Dass beide *Befehle* existieren, sagt noch nichts darueber, ob man sie
-auseinanderhalten kann. Gemessen wird deshalb der Unterschied selbst:
-das Platzen an den Fetzen und am Knall, das Helium am Steigen (ueber 150 px
-ueber den eigenen Platz), am seitlichen Abtreiben und daran, dass **keine**
-Luft entweicht.
-
-**Sonde:** `werkzeug/pruefe-runde89-ballon.js`
-
 ---
 
 ## Vor jedem Hochladen

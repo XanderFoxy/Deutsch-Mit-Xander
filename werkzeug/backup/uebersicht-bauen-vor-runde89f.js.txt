@@ -64,37 +64,14 @@ sonden.forEach((f) => {
   const s = fs.readFileSync(path.join(WURZEL, "werkzeug", f), "utf8");
   const ende = s.indexOf("*/");
   const kopf = ende > 0 ? s.slice(0, ende) : s.slice(0, 3000);
-  /* DIE UEBERSCHRIFT — NACHGEBESSERT IN RUNDE 89.
-     Frueher wurde nur die ERSTE sprechende Zeile genommen. Die
-     Ueberschriften im Kopf gehen aber oft ueber zwei oder drei
-     Zeilen ("RUNDE 22 — DER GEZEICHNETE WEG, DAS EIGENE ECHO, / DER
-     LEERE PLATZ HINTER DEM STRUDEL UND DIE MUSIK"), und dann stand
-     hier ein abgeschnittener Satz mit Komma am Ende. Jetzt werden
-     alle Zeilen bis zur Trennlinie zusammengenommen — das ist genau
-     der Titelblock. */
-  const roh = kopf.split("\n")
+  /* Die Ueberschrift ist die erste Zeile im Kopf, die wirklich etwas
+     sagt: keine Trennlinie, kein Kommentaranfang, kein leerer Rest. */
+  const titel = (kopf.split("\n")
     .map((z) => z.replace(/^\s*\/?\*+\s*/, "").trim())
-    .filter((z) => !/^#!/.test(z));
-  const stueck = [];
-  for (let i = 0; i < roh.length; i++) {
-    const z = roh[i];
-    if (/^[=\-_*\s]*$/.test(z)) { if (stueck.length) break; else continue; }
-    stueck.push(z);
-    if (stueck.length >= 4) break;
-  }
-  const ganzerTitel = (stueck.join(" ") || name)
-    .replace(/\s{2,}/g, " ")
+    .find((z) => z.length > 6 && !/^[=\-_*\s]+$/.test(z) && !/^#!/.test(z)) || name)
     .replace(/^SONDE[\s\u2014:-]*/i, "")
-    .replace(/[,\s]+$/, "")
-    .trim();
-  /* Die Rundennummer faellt weg — sie sagt ihm nichts. Bleibt danach
-     aber kaum noch etwas uebrig ("Runde 85, zweiter Teil"), dann ist
-     die Nummer der Titel, und sie bleibt stehen. */
-  const ohneNummer = ganzerTitel
-    .replace(/^RUNDE\s+\d+\s*[a-z]?\b/i, "")
-    .replace(/^\s*[,:\u2014-]\s*/, "")
-    .trim();
-  const titel = (ohneNummer.length >= 18 ? ohneNummer : ganzerTitel) || name;
+    .replace(/^RUNDE\s+\d+[\s\u2014:-]*/i, "")
+    .trim() || name;
   const zitate = zitatAus(kopf);
   if (zitate.length) mitZitat++;
   const urteil = stand[name] || "";
@@ -133,39 +110,6 @@ if (!rote.length) {
     z.zitate.slice(0, 3).forEach((q) => console.log("> „" + q + "“\n"));
   });
 }
-
-/* DIE KURZFASSUNG — eine Zeile je Sonde, zum Ueberfliegen.
-   XANDER: „Gib mir jetzt bitte eine Liste von den Sachen die alle noch
-   offen sind." Wer 179 Abschnitte lesen muss, um das zu sehen, hat
-   keine Liste. */
-console.log("## Die Kurzfassung \u2014 eine Zeile je Messung\n");
-zeilen.forEach((z) => {
-  /* Der Titel bleibt so stehen, wie er im Kopf der Sonde steht —
-     kleingeschrieben zerlegt es die deutschen Hauptwoerter. */
-  console.log("- " + zeichen(z.urteil) + " `" + z.name + "` \u2014 " + z.titel);
-});
-console.log("");
-
-/* WAS EINE MESSUNG NICHT KANN. Diese Liste waere sonst genau das,
-   was er nicht will: „Ich moechte keine People-Pleasing-Antwort."
-   180 gruene Sonden heissen 180 belegte Punkte — nicht „alles
-   fertig". Was sie NICHT belegen, steht hier, offen. */
-console.log("## Was diese Liste NICHT belegt\n");
-console.log("- **Zwei Geraete, zwei Menschen.** Jede Sonde misst EINEN Browser.");
-console.log("  Dass eine Wirkung auch auf dem iPhone des anderen ankommt, haengt an");
-console.log("  Supabase und am Netz — das steht in `pruefe-leitung` und");
-console.log("  `pruefe-paketverlust`, aber ein echter Raum mit acht Leuten ist etwas");
-console.log("  anderes als eine Messung.");
-console.log("- **Ob es schoen aussieht.** Eine Sonde misst, dass die Schwungfedern nach");
-console.log("  hinten zeigen und der Daumen nicht abgespreizt ist. Ob der Adler");
-console.log("  aussieht wie ein Weisskopfseeadler, entscheidest du.");
-console.log("- **Klang.** Dass ein Ton zur richtigen Millisekunde startet, wird gemessen.");
-console.log("  Wie er klingt, nicht.");
-console.log("- **Was du als Zukunft genannt hast** (z. B. das Flugzeug als weitere");
-console.log("  Reise) steht bewusst noch nicht drin.");
-console.log("- **Eine Sache habe ich nicht gebaut** und werde es nicht: das Ausziehen von");
-console.log("  Unterwaesche an den Profilbildern anderer Leute im Klassenzimmer. Alles");
-console.log("  andere aus deinen Listen ist gebaut oder steht als offener Punkt drin.\n");
 
 console.log("## Alles, Sonde für Sonde\n");
 zeilen.forEach((z) => {
