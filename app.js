@@ -23801,11 +23801,19 @@
       const haupt = l.raum === LiveChat.HAUPTRAUM;
       const rang = l.haeuptling ? " · du bist Häuptling ★" : "";
       const zu = l.abgeschlossen ? " · 🔒 abgeschlossen" : "";
+      /* RUNDE 86 — XANDER: „Vielleicht koennen wir das oben etwas
+         aufraeumen. Ich weiss, dass ich als erster da bin … Das muss
+         nicht unbedingt da stehen."
+         Hier stand bei einem einzigen Gast ein ganzer Satz („Du bist
+         als Erste:r da — die anderen finden dich hier von selbst."),
+         der auf dem Telefon zwei Zeilen brauchte. Er sagt nichts, was
+         man nicht sieht. Jetzt steht ueberall dieselbe kurze Zeile,
+         und die kostet eine Zeile weniger — genau der Platz, den die
+         Ueberschrift und die Eingabezeile auf kleinen Geraeten
+         brauchen. */
       unter.textContent = l.lage === "verbindet"
         ? "verbindet …"
-        : da === 1 ? (haupt ? "Du bist als Erste:r da — die anderen finden dich hier von selbst."
-                            : "Du bist als Erste:r da — teile den Link.")
-        : `${da} von ${LiveChat.PLAETZE} Plätzen besetzt${haupt ? " · Hauptraum" : ""}${rang}${zu}`;
+        : `${da} von ${LiveChat.PLAETZE} Plätzen${haupt ? " · Hauptraum" : ""}${rang}${zu}`;
     }
     if (link && l.link && link.value !== l.link) link.value = l.link;
 
@@ -24039,7 +24047,25 @@
       if (ziel < hoechstens) ziel = hoechstens;
     }
     const max = Math.max(0, document.documentElement.scrollHeight - schirm);
-    return Math.max(0, Math.min(Math.round(ziel), max));
+    let fertig = Math.max(0, Math.min(Math.round(ziel), max));
+    /* RUNDE 86 — XANDER: „dass die Browserzeile oben ausgeblendet ist
+       in dem Moment, wenn das Klassenzimmer in seiner Position
+       geoeffnet ist, aber nicht so, dass sie komplett gesperrt ist."
+
+       WAS EIN BROWSER WIRKLICH TUT: die Adresszeile klappt weg,
+       sobald die Seite nach unten gerollt wird, und sie kommt
+       zurueck, wenn man nach oben rollt. Sie laesst sich nicht
+       befehlen — man kann ihr nur nicht im Weg stehen. Zwei Dinge
+       standen im Weg:
+         1. Ganz oben (Stand 0) zeigt jeder Browser die volle Zeile.
+            Deshalb wird nie auf 0 gefahren, wenn es auch eine Zeile
+            tiefer geht.
+         2. Ohne Platz nach unten kann gar nicht gerollt werden — den
+            schafft jetzt „lc-luft-unten" in korrekturen.css.
+       Gesperrt wird nichts: eine Wischbewegung nach oben holt die
+       Zeile jederzeit zurueck. */
+    if (fertig === 0 && max > 2) fertig = 2;
+    return fertig;
   }
 
   function livechatInsBild(sanft) {
@@ -41043,6 +41069,43 @@
      Dass das Fenster sich vorher nach der Uhr richtete, war der Grund,
      warum er abends plötzlich Sterne sah, wo Vögel sein sollten.
      ================================================================= */
+  /* =================================================================
+     DIE VOEGEL AM FENSTER SCHLAGEN MIT DEN FLUEGELN
+     -----------------------------------------------------------------
+     XANDER (Runde 86): „Die Voegel sind auch noch nicht animiert, wenn
+     man das Fenster aufmacht."
+
+     NACHGESEHEN, und er hat recht: ein Vogel war ein Bogen aus
+     „border-top" (.lc-luke-vogel), der von links nach rechts
+     geschoben wurde. Daran kann sich nichts bewegen — ein Bogen hat
+     keine Fluegel.
+
+     Jetzt ist es derselbe Vogel wie am Himmel ueber der Seite
+     (lcVogelSvg): Leib, zwei Schwingen in eigenen Gruppen, und die
+     Schwingen laufen auf lcSchwingt — vier Schlaege, dann gleiten.
+     Drei Voegel, jeder mit eigener Groesse, Hoehe, Geschwindigkeit
+     und eigenem Takt: fliegen alle gleich, ist es ein Muster und
+     kein Schwarm. */
+  function lcAussichtVoegel() {
+    const schwinge = (d, seite) =>
+      '<g class="lc-schwinge lc-schwinge-' + seite + '">'
+      + '<path d="' + d + '" fill="currentColor"/></g>';
+    const vogel =
+      '<svg viewBox="0 0 100 60" class="lc-vogel-svg">'
+      + schwinge("M50 30 C 38 22, 20 16, 4 20 C 16 28, 30 32, 50 34 Z", "links")
+      + schwinge("M50 30 C 62 22, 80 16, 96 20 C 84 28, 70 32, 50 34 Z", "rechts")
+      + '<path d="M50 18 C 54 22, 55 34, 52 46 L50 52 L48 46 C 45 34, 46 22, 50 18 Z"'
+      + ' fill="currentColor"/></svg>';
+    /* Groesse in Prozent der Fensterbreite, Hoehe, Startverzug,
+       Flugdauer und Schlagtakt — fuer jeden Vogel anders. */
+    return [[16, 26, 0.2, 3.4, 1.9], [11, 17, 0.9, 4.2, 2.4], [8, 34, 1.7, 5.0, 2.1]]
+      .map(([gr, oben, spaet, lang, takt]) =>
+        '<span class="lc-aussicht-vogel" style="width:' + gr + "%;top:" + oben
+        + "%;animation-duration:" + lang + "s;animation-delay:" + spaet
+        + "s;--schlag:" + takt + 's">' + vogel + "</span>")
+      .join("");
+  }
+
   function lcAussichtHtml(art) {
     /* Alte Aufrufe gaben true/false fuer „andere Aussicht" — das
        bleibt gueltig und heisst jetzt „stadt". */
@@ -41098,10 +41161,54 @@
 
     let sterne = "";
     if (nacht) {
-      for (let i = 0; i < 26; i++) {
-        sterne += '<b style="left:' + (3 + ((i * 37) % 94)) + "%;top:"
-          + (4 + ((i * 53) % 58)) + "%;--blink:" + (1.6 + (i % 5) * 0.4).toFixed(1)
-          + 's"></b>';
+      /* =============================================================
+         RUNDE 86 — XANDER: „Die Sterne sind noch nicht realistisch.
+         Sie liegen immer noch linear wie zeilenweise da."
+
+         ER HAT RECHT, UND DER GRUND STAND IN EINER ZEILE: die Orte
+         kamen aus „(i * 37) % 94" und „(i * 53) % 58". Ein Rest aus
+         einer Multiplikation ist kein Zufall, sondern ein Gitter —
+         weil 37 und 94 fast im Verhaeltnis 2:5 stehen, springt jeder
+         Stern um denselben Betrag weiter, und das Auge sieht
+         schraege Reihen. Genau das hat er gesehen.
+
+         EIN NACHTHIMMEL SIEHT ANDERS AUS, und zwar aus drei Gruenden:
+           1. Die Sterne stehen in GRUPPEN, nicht im gleichen Abstand.
+              Deshalb ein gestoertes Gitter: jede Zelle bekommt einen
+              Stern, aber an einer verwuerfelten Stelle IN der Zelle —
+              so entstehen Luecken und Nester, wie am Himmel.
+           2. Sie sind verschieden HELL und verschieden GROSS. Ein
+              Himmel aus 26 gleich hellen Punkten sieht nach Tapete
+              aus; in Wirklichkeit sind die meisten schwach und nur
+              wenige hell.
+           3. Sie blinken in verschiedenen Takten, und die hellsten
+              bekommen ein Kreuz aus Licht.
+         Gewuerfelt wird mit einer FESTEN Zahlenfolge (dieselbe auf
+         jedem Geraet) — sonst saehe jeder einen anderen Himmel. */
+      let saat = 20250922;
+      const zuf = () => {
+        saat = (saat * 1103515245 + 12345) % 2147483648;
+        return saat / 2147483648;
+      };
+      const SPALTEN = 6, REIHEN = 5;
+      for (let r = 0; r < REIHEN; r++) {
+        for (let c = 0; c < SPALTEN; c++) {
+          /* Nicht jede Zelle bekommt einen Stern — die Luecken sind
+             es, die den Himmel ungleichmaessig machen. */
+          if (zuf() < 0.18) continue;
+          const x = (c + 0.12 + zuf() * 0.76) * (96 / SPALTEN) + 2;
+          const y = (r + 0.12 + zuf() * 0.76) * (60 / REIHEN) + 3;
+          const w = zuf();
+          /* Die meisten schwach, wenige hell: w hoch 3 macht aus einer
+             gleichverteilten Zahl eine, die selten gross wird. */
+          const hell = 0.3 + 0.7 * w * w * w;
+          const gross = (1.1 + 2.2 * w * w * w).toFixed(1);
+          sterne += '<b style="left:' + x.toFixed(1) + "%;top:" + y.toFixed(1)
+            + "%;width:" + gross + "px;height:" + gross + "px;--hell:"
+            + hell.toFixed(2) + ";--blink:" + (1.4 + zuf() * 3.2).toFixed(1)
+            + "s;animation-delay:-" + (zuf() * 3).toFixed(1) + 's"'
+            + (hell > 0.85 ? ' class="lc-stern-hell"' : "") + "></b>";
+        }
       }
     }
     return '<span class="lc-luke-aussicht' + (nacht ? " lc-aussicht-nacht" : "") + '">'
@@ -41121,24 +41228,53 @@
                  + '<u class="lc-sternschnuppe" style="--oben:34%;--links:44%;--spaet:1.9s"></u>'
                  + '<u class="lc-sternschnuppe" style="--oben:9%;--links:58%;--spaet:3.2s"></u>'
                  + "</span>"
-               : '<i class="lc-luke-vogel"></i><i class="lc-luke-vogel lc-luke-vogel-2"></i>')
+               : lcAussichtVoegel())
       + "</span>";
   }
 
   function lcRollo(wen) {
-    return lcAmPlatz(wen, "lc-rollo", (schicht) => {
+    return lcAmPlatz(wen, "lc-rollo", (schicht, platz) => {
       const blende = lcZpBlende(schicht);
+      /* =============================================================
+         RUNDE 86 — XANDER: „das Profilbild wird immer noch von oben
+         nach unten zusammengequetscht, wenn man das Rollo hoch macht."
+
+         SO WAR ES GEBAUT: die Bahn war ein Rechteck, das mit
+         „scaleY" von 1 auf 0 gefahren wurde. Was auf einer Flaeche
+         klebt, die man in der Hoehe staucht, wird mitgestaucht —
+         genau das hat er gesehen.
+
+         SO IST ES JETZT: die Bahn behaelt ihre Hoehe und wird
+         BESCHNITTEN (clip-path), und das Tuch mit dem Profilbild
+         faehrt um denselben Betrag nach oben. Damit wandert das Bild
+         mit dem Rollo hinauf und verschwindet oben in der Welle —
+         wie bei einem echten Rollo mit Aufdruck. Gestaucht wird
+         nichts, denn keine Groesse aendert sich.
+         ============================================================= */
+      const bild = platz && platz.querySelector(".lc-avatar");
+      const quelle = bild && bild.getAttribute("src") && bild.style.display !== "none"
+        ? bild.getAttribute("src") : "";
       blende.innerHTML =
         /* „einen alternativen Hintergrund beim Rollo, weil es ist ja
            zum Beispiel nachts dann zeigt es einen schoenen
            Nachthimmel" — hier also IMMER der Nachthimmel, egal wie
            spaet es wirklich ist. */
         lcAussichtHtml("nacht")
-        + '<span class="lc-rollo-bahn">'
+        + '<span class="lc-rollo-bahn"><i class="lc-rollo-tuch">'
         + '<i class="lc-rollo-naht"></i><i class="lc-rollo-naht"></i>'
         + '<i class="lc-rollo-griff"></i>'
-        + "</span>"
+        + "</i></span>"
         + '<span class="lc-rollo-welle"></span>';
+      if (quelle) {
+        const tuch = blende.querySelector(".lc-rollo-tuch");
+        /* Das Bild liegt AUF dem Tuch, in seiner eigenen Groesse —
+           es wird nur verschoben, nie gestaucht. */
+        tuch.style.backgroundImage =
+          "linear-gradient(180deg, rgba(60,44,20,.22), rgba(60,44,20,.10)), url(\""
+          + quelle.replace(/"/g, "%22") + "\")";
+        tuch.style.backgroundSize = "100% 100%, cover";
+        tuch.style.backgroundPosition = "center, center";
+      }
       /* Auch hier der Effektname, nicht der Ton — „rollo" steht mit
          3,4 Sekunden im Plan. */
     }, 3400, "rollo");
@@ -41676,11 +41812,26 @@
          Die Dunkelheit haelt jetzt bis 88 % von 6,2 s (5456 ms statt
          3192 ms), und darin suchen zwei Augen: sie gehen auf, sehen
          nach links, nach rechts, blinzeln und sind wieder weg. */
-      blende.insertAdjacentHTML("beforeend",
-        '<span class="lc-lichtaus-augen">'
-        + '<i class="lc-auge lc-auge-l"><b></b></i>'
-        + '<i class="lc-auge lc-auge-r"><b></b></i>'
-        + '</span>');
+      /* RUNDE 86 — XANDER: „Ich hatte vorhin auch Comic Augen gesagt
+         beim Licht ausschalten."
+         Er hat recht, und es war eine halbe Sache: im Dunkeln standen
+         zwei weisse Punkte mit einem schwarzen Kern (.lc-auge) — das
+         sind Lichter, keine Augen. Die Comic-Augen gibt es seit Runde
+         14 schon (lcAugenPaar, der Raum-Effekt /augen): Augapfel mit
+         Rand, wandernde Pupille mit Glanzpunkt und ein Lid, das
+         blinzelt. Genau die stehen jetzt auch hier im Dunkeln — und
+         sie gucken und blinzeln von selbst, weil die Pupillen- und
+         Lid-Takte an den Zeichnungen haengen. */
+      const augenKasten = document.createElement("span");
+      augenKasten.className = "lc-lichtaus-augen lc-lichtaus-comic";
+      const augenPaar = document.createElement("span");
+      augenPaar.className = "lc-augenpaar lc-augen-im-dunkeln";
+      /* Der Takt des Blicks: langsamer als im Raum-Effekt — wer im
+         Dunkeln sucht, reisst die Augen nicht hin und her. */
+      augenPaar.style.setProperty("--lc-au-takt", "3.6s");
+      augenPaar.appendChild(lcAugenPaar());
+      augenKasten.appendChild(augenPaar);
+      blende.appendChild(augenKasten);
       /* Und die vier Geigenstiche, genau wenn es dunkel ist
          (1748 ms = 28,2 % von 6,2 s). */
       /* RUNDE 73 — XANDER: „Die Geigen-Horror-Sache soll langsamer

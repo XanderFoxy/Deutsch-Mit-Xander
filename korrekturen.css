@@ -5666,7 +5666,37 @@ body.lc-ich-spreche .lc-chat-kopf { animation: lcSprichtPuls 1.4s ease-in-out in
   /* Der Kopf trägt nur noch, was er tragen muss. */
   .lc-kopf { padding: 2px 0; }
   .lc-kopf-titel { font-size: 0.98rem; }
+
+  /* RUNDE 86 — XANDER: „Vielleicht können wir das oben etwas
+     aufräumen … dann können wir nämlich das so machen, dass es auch
+     auf Kleingeräten oben die Überschrift zu sehen ist und unten
+     zumindest noch die Chat-Eingabezeile."
+     Auf einem kleinen Schirm zählt jede Zeile. Der Titel und die
+     Zeile darunter stehen deshalb NEBENEINANDER statt untereinander,
+     und die Zeile darunter ist kleiner — zusammen rund 18 Pixel
+     weniger Kopf, und genau die fehlten unten der Eingabezeile. */
+  .lc-kopf-links { align-items: center; gap: 6px; }
+  .lc-kopf-links br { display: none; }
+  .lc-kopf-titel { margin-right: 6px; }
+  .lc-kopf-unter {
+    font-size: 0.68rem;
+    opacity: .62;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
+
+/* RUNDE 86 — XANDER: „dass die Browserzeile oben ausgeblendet ist in
+   dem Moment, wenn das Klassenzimmer in seiner Position geöffnet ist,
+   aber nicht so, dass sie komplett gesperrt ist."
+   Eine Adresszeile klappt weg, sobald die Seite nach unten gerollt
+   wird — dazu muss es überhaupt etwas zu rollen geben. Unter dem
+   Klassenzimmer war auf grossen Schirmen Schluss, und ohne Rollweg
+   bleibt die Zeile stehen. Diese Luft ist der Rollweg; sie ist leer,
+   deshalb sieht man sie nicht, und gesperrt wird nichts: eine
+   Wischbewegung nach oben holt die Zeile jederzeit zurück. */
+#sub-livechat[data-active="true"] { padding-bottom: 56px; }
 
 /* --- Die Einladung klappt sich weg -------------------------
    Sichtbar ist eine Zeile; das Feld kommt erst, wenn man es
@@ -14612,6 +14642,29 @@ body.lc-schreibt .tutor-reiter {
   pointer-events: none;
   animation: lcAugenDaR70 6.2s linear both;
 }
+/* RUNDE 86 — XANDER: „Ich hatte vorhin auch Comic Augen gesagt beim
+   Licht ausschalten."
+   Jetzt stehen dort dieselben Comic-Augen wie beim Raum-Effekt. Sie
+   brauchen anderen Platz als die zwei alten Punkte: mittig, halb so
+   breit wie das Bild, und ohne das Ein- und Ausblenden des
+   Raum-Effekts — hier macht das der Kasten darum (lcAugenDaR70). */
+.lc-lichtaus-comic {
+  top: 36%;
+  width: 62%;
+  height: 28%;
+  margin-left: -31%;
+  display: block;
+}
+.lc-augenpaar.lc-augen-im-dunkeln {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+  /* Nur das Wackeln bleibt — das Auf- und Zugehen steuert der Kasten. */
+  animation: lcAugenWackelt 2.4s ease-in-out infinite;
+  /* Im Dunkeln leuchten Augen ein wenig. */
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, .35));
+}
+.lc-augen-im-dunkeln .lc-augen-svg { width: 100%; }
 @keyframes lcAugenDaR70 {
   0%, 30%  { opacity: 0; }
   36%      { opacity: 1; }
@@ -16544,23 +16597,41 @@ body.lc-schreibt .tutor-reiter {
    das Fenster aufmacht, und die andere, dass man das Rollo hoch macht
    oder die Jalousie aufmacht."
    Beide liegen IM Bild (runde Blende) und geben es wieder frei. */
+/* RUNDE 86 — XANDER: „das Profilbild wird immer noch von oben nach
+   unten zusammengequetscht, wenn man das Rollo hoch macht."
+   Vorher fuhr die Bahn mit scaleY von 1 auf 0 — alles, was darauf
+   liegt, wird dabei mitgestaucht. Jetzt behaelt die Bahn ihre Hoehe
+   und wird BESCHNITTEN, und das Tuch faehrt um denselben Betrag nach
+   oben. Beide Zahlenreihen muessen deshalb gleich bleiben. */
 .lc-rollo-bahn {
   position: absolute;
   left: 0; right: 0; top: 0;
   height: 100%;
-  transform-origin: 50% 0;
+  overflow: hidden;
+  animation: lcRolloBahnR86 3.4s cubic-bezier(.45, 0, .35, 1) both;
+}
+.lc-rollo-tuch {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 100%;
   background:
     repeating-linear-gradient(180deg,
       rgba(255,255,255,.06) 0 9px, rgba(0,0,0,.05) 9px 18px),
     linear-gradient(180deg, #d9c9a8, #c9b48d);
   box-shadow: 0 6px 12px rgba(0, 0, 0, .3);
-  animation: lcRolloHochR29 3.4s cubic-bezier(.45, 0, .35, 1) both;
+  animation: lcRolloTuchR86 3.4s cubic-bezier(.45, 0, .35, 1) both;
 }
-@keyframes lcRolloHochR29 {
-  0%, 14%  { transform: scaleY(1); }
-  70%      { transform: scaleY(.06); }
-  86%      { transform: scaleY(.1); }
-  100%     { transform: scaleY(0); }
+@keyframes lcRolloBahnR86 {
+  0%, 14%  { clip-path: inset(0 0 0 0); }
+  70%      { clip-path: inset(0 0 94% 0); }
+  86%      { clip-path: inset(0 0 90% 0); }
+  100%     { clip-path: inset(0 0 100% 0); }
+}
+@keyframes lcRolloTuchR86 {
+  0%, 14%  { transform: translateY(0); }
+  70%      { transform: translateY(-94%); }
+  86%      { transform: translateY(-90%); }
+  100%     { transform: translateY(-100%); }
 }
 .lc-rollo-naht {
   position: absolute; left: 0; right: 0;
@@ -16596,13 +16667,21 @@ body.lc-schreibt .tutor-reiter {
   box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
   animation: lcLamelleR29 3.4s cubic-bezier(.4, 0, .3, 1) both;
 }
+/* RUNDE 86 — XANDER: „die Jalousie, die am Ende geoeffnet bleiben
+   sollte, ohne dass sie sich vorher ausblenden."
+   GEFUNDEN: die letzte Stuetzstelle hatte „opacity: 0" — die Lamellen
+   loesten sich also zum Schluss in Luft auf, statt oben
+   zusammengefahren stehen zu bleiben. Jetzt fahren sie bis 70 % nach
+   oben und BLEIBEN dort, sichtbar, bis der Effekt zu Ende ist: man
+   sieht die ganze Zeit, dass die Jalousie offen ist. */
 @keyframes lcLamelleR29 {
   0%, 12% { transform: rotateX(0deg) translateY(0); opacity: 1; }
   /* Erst kippen — dann sieht man streifenweise hindurch. */
   38%     { transform: rotateX(68deg) translateY(0); opacity: 1; }
-  /* Und dann nach oben zusammenfahren. */
-  78%     { transform: rotateX(78deg) translateY(-380%); opacity: 1; }
-  100%    { transform: rotateX(80deg) translateY(-460%); opacity: 0; }
+  /* Und dann nach oben zusammenfahren … */
+  70%     { transform: rotateX(78deg) translateY(-430%); opacity: 1; }
+  /* … und oben bleiben. Kein Ausblenden mehr. */
+  100%    { transform: rotateX(78deg) translateY(-440%); opacity: 1; }
 }
 .lc-lamellen-schnur {
   position: absolute;
@@ -17859,18 +17938,84 @@ body.lc-schreibt .tutor-reiter {
 }
 .lc-aussicht-nacht .lc-luke-huegel { filter: brightness(.42) saturate(.7); }
 .lc-aussicht-sterne { position: absolute; inset: 0; pointer-events: none; }
+/* RUNDE 86 — XANDER: „Die Sterne sind noch nicht realistisch. Sie
+   liegen immer noch linear wie zeilenweise da."
+   Die Orte kommen jetzt aus einem gestoerten Gitter (siehe
+   lcAussichtHtml), und Groesse und Helligkeit stehen an jedem Stern
+   selbst — ein Himmel aus lauter gleichen Punkten sieht aus wie
+   Tapete, nicht wie eine Nacht. */
 .lc-aussicht-sterne b {
   position: absolute;
   width: 2px;
   height: 2px;
   border-radius: 50%;
   background: #fff;
-  opacity: .85;
+  opacity: var(--hell, .85);
   animation: lcSternBlinkR33 var(--blink, 2s) ease-in-out infinite alternate;
 }
+/* Die hellsten bekommen ein Kreuz aus Licht — das ist es, woran man
+   im Bild einen hellen Stern von einem Staubkorn unterscheidet. */
+.lc-aussicht-sterne b.lc-stern-hell {
+  box-shadow: 0 0 4px 1px rgba(255, 255, 255, .55);
+}
+.lc-aussicht-sterne b.lc-stern-hell::before,
+.lc-aussicht-sterne b.lc-stern-hell::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.75),
+              rgba(255,255,255,0));
+}
+.lc-aussicht-sterne b.lc-stern-hell::before {
+  width: 11px; height: 1px; margin: 0 0 0 -5.5px;
+}
+.lc-aussicht-sterne b.lc-stern-hell::after {
+  width: 1px; height: 11px; margin: -5.5px 0 0 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.75),
+              rgba(255,255,255,0));
+}
 @keyframes lcSternBlinkR33 {
-  from { opacity: .25; transform: scale(.7); }
-  to   { opacity: 1;   transform: scale(1.15); }
+  from { opacity: calc(var(--hell, .85) * .38); transform: scale(.72); }
+  to   { opacity: var(--hell, .85);             transform: scale(1.12); }
+}
+/* =====================================================================
+   DIE VOEGEL AM FENSTER — MIT ECHTEM FLUEGELSCHLAG
+   ---------------------------------------------------------------------
+   XANDER (Runde 86): „Die Voegel sind auch noch nicht animiert, wenn
+   man das Fenster aufmacht."
+   Vorher war ein Vogel ein Bogen aus border-top, der verschoben wurde.
+   Jetzt ist es derselbe Vogel wie am Himmel ueber der Seite, und seine
+   Schwingen laufen auf lcSchwingt (vier Schlaege, dann gleiten).
+   ===================================================================== */
+.lc-aussicht-vogel {
+  position: absolute;
+  left: 0;
+  color: rgba(34, 52, 74, .82);
+  animation-name: lcAussichtVogelR86;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+  animation-iteration-count: 1;
+}
+.lc-aussicht-vogel svg { display: block; width: 100%; height: auto; overflow: visible; }
+.lc-aussicht-vogel .lc-schwinge {
+  transform-origin: 50% 30%;
+  animation: lcSchwingt var(--schlag, 2.2s) ease-in-out infinite;
+}
+/* Die rechte Schwinge liegt einen Hauch versetzt — zwei Fluegel, die
+   auf den Millimeter gleich schlagen, sehen mechanisch aus. */
+.lc-aussicht-vogel .lc-schwinge-rechts { animation-delay: .04s; }
+@keyframes lcAussichtVogelR86 {
+  0%   { opacity: 0; transform: translate(-24%, 0) scale(.9); }
+  10%  { opacity: .95; }
+  /* Er faehrt auf der Luft: er sackt ab und faengt sich wieder. */
+  34%  { transform: translate(28%, 5%) scale(1); }
+  62%  { transform: translate(64%, -4%) scale(1.04); }
+  86%  { opacity: .95; transform: translate(96%, 3%) scale(1); }
+  100% { opacity: 0; transform: translate(124%, -2%) scale(.94); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-aussicht-vogel, .lc-aussicht-vogel .lc-schwinge { animation: none; }
 }
 /* Die zweite Aussicht — hinter der Jalousie liegt eine andere
    Blickrichtung: weiter, flacher, mit Meer statt Hügelkette. */
