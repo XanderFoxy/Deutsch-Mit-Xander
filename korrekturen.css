@@ -14930,6 +14930,7 @@ code, pre {
   margin-left: -31%;
   display: block;
 }
+.lc-dunkel-augen .lc-augen-im-dunkeln { position: absolute; inset: 0; }
 .lc-augenpaar.lc-augen-im-dunkeln {
   position: absolute;
   inset: 0;
@@ -23832,10 +23833,13 @@ code, pre {
    wanderten die Augen beim Scrollen von den Gesichtern weg, weil die
    Effektbuehne ihre Hoehe aendert. Die Breite bleibt fest in Pixeln,
    damit ein Augenpaar ueberall gleich gross ist. */
+/* RUNDE 87 — XANDER: „Von den Comic Augen habe ich gesprochen bei
+   Birne aus." Die Augen im Dunkeln sind jetzt die Comic-Augen und
+   brauchen deshalb mehr Platz als die zwei Punkte von frueher. */
 .lc-dunkel-augen {
   position: absolute;
-  width: 46px;
-  height: 13px;
+  width: 62px;
+  height: 36px;
   transform: translate(-50%, -50%);
   display: flex;
   justify-content: space-between;
@@ -27810,6 +27814,19 @@ code, pre {
      — ein Hammer soll auf die Krone schlagen, nicht darunter. */
   z-index: 5;
 }
+/* RUNDE 87 — XANDER: „Es fehlen noch Minirock, nackte Beine,
+   Lederhosen, Schuhe … und die Tierfuesse."
+   Was zum KOERPER gehoert, haengt unter dem Bild: die Schicht faengt
+   an seiner Unterkante an, ist so breit wie das Bild und 92 % so
+   hoch. Sie liegt UNTER dem Kreis (z-index 4), damit das Gesicht
+   vorn bleibt und die Beine dahinter herauskommen. */
+.lc-kleid.lc-kleid-unten {
+  top: 62%;
+  aspect-ratio: auto;
+  height: 92%;
+  z-index: 4;
+}
+.lc-kleid.lc-kleid-unten > svg { height: 100%; }
 .lc-kleid > svg {
   width: 100%;
   height: 100%;

@@ -25837,7 +25837,124 @@
       + '<ellipse cx="30" cy="48" rx="9" ry="6.5" fill="#f7f3e3"/>'
       + '<ellipse cx="70" cy="48" rx="9" ry="6.5" fill="#f7f3e3"/>'
       + '<path d="M10 44 L2 40 M90 44 L98 40" stroke="#3f2a70" stroke-width="2.6"'
-      + ' stroke-linecap="round"/>' }
+      + ' stroke-linecap="round"/>' },
+
+    /* =================================================================
+       RUNDE 87 — WAS UNTER DEM BILD HAENGT
+       -----------------------------------------------------------------
+       XANDER: „Es fehlen noch Minirock, es fehlen noch nackte Beine,
+       Lederhosen, Schuhe fehlen noch irgendwie und ein Kleid fuer die
+       Frau, BH, Tanga oder so, und es fehlen noch die Tierfuesse: so
+       Kraehenfuesse, Froschschenkel, Pferdehufe oder Entenfuesse."
+
+       Diese Stuecke sitzen nicht AUF dem Bild, sondern DARUNTER — sie
+       gehoeren zum Koerper, nicht zum Kopf. Sie tragen deshalb
+       „unten: true"; das Stilblatt haengt sie unter den Kreis
+       (.lc-kleid-unten). Alle teilen dieselbe Grundfigur: zwei Beine
+       aus der Bildmitte nach unten, damit Rock, Hose und Fuesse
+       zusammenpassen und nicht jedes Stueck seine eigene Anatomie
+       mitbringt. */
+    beine: { wort: "nackte Beine", zeichen: "\ud83e\uddb5", unten: true, bild:
+      /* Zwei Beine, leicht auseinander, mit Waden und Fuessen. */
+      '<path d="M38 2 q-3 22 -2 40 q1 12 -3 22 q-1 5 4 5 q6 0 7 -5'
+      + ' q3 -16 4 -30 q1 -14 0 -32 Z" fill="#eec0a8" stroke="#c99a84" stroke-width="2"/>'
+      + '<path d="M62 2 q3 22 2 40 q-1 12 3 22 q1 5 -4 5 q-6 0 -7 -5'
+      + ' q-3 -16 -4 -30 q-1 -14 0 -32 Z" fill="#eec0a8" stroke="#c99a84" stroke-width="2"/>'
+      + '<path d="M33 69 q-9 2 -9 6 q0 4 9 4 h12 q4 0 4 -4 q0 -4 -5 -6 Z"'
+      + ' fill="#f6d3bd" stroke="#c99a84" stroke-width="1.8"/>'
+      + '<path d="M67 69 q9 2 9 6 q0 4 -9 4 h-12 q-4 0 -4 -4 q0 -4 5 -6 Z"'
+      + ' fill="#f6d3bd" stroke="#c99a84" stroke-width="1.8"/>' },
+    minirock: { wort: "Minirock", zeichen: "\ud83d\udc57", unten: true, bild:
+      '<path d="M38 2 q-3 22 -2 40 q1 12 -3 22 q-1 5 4 5 q6 0 7 -5'
+      + ' q3 -16 4 -30 q1 -14 0 -32 Z" fill="#eec0a8" stroke="#c99a84" stroke-width="2"/>'
+      + '<path d="M62 2 q3 22 2 40 q-1 12 3 22 q1 5 -4 5 q-6 0 -7 -5'
+      + ' q-3 -16 -4 -30 q-1 -14 0 -32 Z" fill="#eec0a8" stroke="#c99a84" stroke-width="2"/>'
+      /* Der Rock: oben schmal, unten weit, mit Falten. */
+      + '<path d="M32 0 h36 l10 30 q-28 8 -56 0 Z" fill="#c8384a"'
+      + ' stroke="#8e2333" stroke-width="2.2" stroke-linejoin="round"/>'
+      + '<path d="M44 2 l-4 28 M56 2 l4 28" stroke="#a82c3d" stroke-width="1.6"/>' },
+    lederhose: { wort: "Lederhose", zeichen: "\ud83e\udd7f", unten: true, bild:
+      '<path d="M30 0 h40 q5 0 5 6 l-3 26 q-1 6 -8 6 h-6 q-5 0 -6 -6 l-2 -12'
+      + ' l-2 12 q-1 6 -6 6 h-6 q-7 0 -8 -6 l-3 -26 q0 -6 5 -6 Z"'
+      + ' fill="#7a4e22" stroke="#4e3114" stroke-width="2.2" stroke-linejoin="round"/>'
+      /* Die Traeger und die Stickerei — daran erkennt man sie. */
+      + '<path d="M34 0 v-14 M66 0 v-14" stroke="#7a4e22" stroke-width="5"'
+      + ' stroke-linecap="round"/>'
+      + '<path d="M44 -8 h12" stroke="#7a4e22" stroke-width="4"/>'
+      + '<path d="M50 6 q-6 6 0 12 q6 -6 0 -12 Z" fill="#c9a86a"/>'
+      + '<path d="M36 40 q-4 6 -2 10 q1 4 6 4 h8 q4 0 4 -4 q0 -5 -4 -10 Z"'
+      + ' fill="#eec0a8" stroke="#c99a84" stroke-width="1.8"/>'
+      + '<path d="M64 40 q4 6 2 10 q-1 4 -6 4 h-8 q-4 0 -4 -4 q0 -5 4 -10 Z"'
+      + ' fill="#eec0a8" stroke="#c99a84" stroke-width="1.8"/>' },
+    kleid: { wort: "Kleid", zeichen: "\ud83d\udc57", unten: true, bild:
+      '<path d="M34 -6 q16 -6 32 0 l4 14 l14 36 q-34 10 -68 0 l14 -36 Z"'
+      + ' fill="#6b4fb0" stroke="#3f2a70" stroke-width="2.2" stroke-linejoin="round"/>'
+      + '<path d="M40 8 q10 4 20 0" stroke="#3f2a70" stroke-width="1.8" fill="none"/>'
+      + '<path d="M40 46 q-2 16 -3 24 q-1 5 4 5 q6 0 7 -5 l1 -22"'
+      + ' fill="#eec0a8" stroke="#c99a84" stroke-width="2"/>'
+      + '<path d="M60 46 q2 16 3 24 q1 5 -4 5 q-6 0 -7 -5 l-1 -22"'
+      + ' fill="#eec0a8" stroke="#c99a84" stroke-width="2"/>' },
+    bh: { wort: "BH", zeichen: "\ud83d\udc59", unten: true, bild:
+      '<path d="M26 4 q10 -8 20 0 q-2 12 -10 12 q-8 0 -10 -12 Z" fill="#d98aa8"'
+      + ' stroke="#a85f7c" stroke-width="2"/>'
+      + '<path d="M54 4 q10 -8 20 0 q-2 12 -10 12 q-8 0 -10 -12 Z" fill="#d98aa8"'
+      + ' stroke="#a85f7c" stroke-width="2"/>'
+      + '<path d="M46 6 h8 M22 6 h-10 M78 6 h10" stroke="#a85f7c" stroke-width="2.4"'
+      + ' stroke-linecap="round"/>' },
+    tanga: { wort: "Tanga", zeichen: "\ud83e\ude72", unten: true, bild:
+      '<path d="M32 4 h36 q0 16 -18 26 q-18 -10 -18 -26 Z" fill="#d94f6a"'
+      + ' stroke="#9d3c4f" stroke-width="2" stroke-linejoin="round"/>'
+      + '<path d="M30 4 h-6 M70 4 h6" stroke="#9d3c4f" stroke-width="3"'
+      + ' stroke-linecap="round"/>' },
+    schuhe: { wort: "Schuhe", zeichen: "\ud83d\udc5e", unten: true, bild:
+      '<path d="M38 2 q-3 20 -2 36 q1 10 -3 18 h14 q3 -14 4 -26 q1 -14 0 -28 Z"'
+      + ' fill="#eec0a8" stroke="#c99a84" stroke-width="2"/>'
+      + '<path d="M62 2 q3 20 2 36 q-1 10 3 18 h-14 q-3 -14 -4 -26 q-1 -14 0 -28 Z"'
+      + ' fill="#eec0a8" stroke="#c99a84" stroke-width="2"/>'
+      + '<path d="M30 56 h20 q4 0 4 5 q0 5 -6 5 h-22 q-4 0 -4 -5 q0 -5 8 -5 Z"'
+      + ' fill="#2c2f38" stroke="#14161c" stroke-width="2"/>'
+      + '<path d="M70 56 h-20 q-4 0 -4 5 q0 5 6 5 h22 q4 0 4 -5 q0 -5 -8 -5 Z"'
+      + ' fill="#2c2f38" stroke="#14161c" stroke-width="2"/>' },
+    kraehenfuesse: { wort: "Krähenfüße", zeichen: "\ud83e\udd85", unten: true, bild:
+      '<path d="M42 0 v34 M58 0 v34" stroke="#d8a03c" stroke-width="5"'
+      + ' stroke-linecap="round"/>'
+      + '<path d="M42 34 l-12 12 M42 34 l0 15 M42 34 l12 12" stroke="#d8a03c"'
+      + ' stroke-width="4" stroke-linecap="round"/>'
+      + '<path d="M58 34 l-12 12 M58 34 l0 15 M58 34 l12 12" stroke="#d8a03c"'
+      + ' stroke-width="4" stroke-linecap="round"/>'
+      + '<path d="M30 46 l-4 4 M54 46 l4 4 M46 46 l-4 4 M70 46 l4 4"'
+      + ' stroke="#4a3312" stroke-width="2.6" stroke-linecap="round"/>' },
+    froschschenkel: { wort: "Froschschenkel", zeichen: "\ud83d\udc38", unten: true, bild:
+      '<path d="M40 0 q-16 6 -18 20 q-2 12 10 16 q10 3 14 -6 q3 -8 0 -16 Z"'
+      + ' fill="#67b862" stroke="#3c7a3a" stroke-width="2.2"/>'
+      + '<path d="M60 0 q16 6 18 20 q2 12 -10 16 q-10 3 -14 -6 q-3 -8 0 -16 Z"'
+      + ' fill="#67b862" stroke="#3c7a3a" stroke-width="2.2"/>'
+      + '<path d="M32 36 q-12 4 -14 10 q-1 4 4 4 h16 q4 0 4 -4 q0 -6 -6 -10 Z"'
+      + ' fill="#54a050" stroke="#3c7a3a" stroke-width="2"/>'
+      + '<path d="M68 36 q12 4 14 10 q1 4 -4 4 h-16 q-4 0 -4 -4 q0 -6 6 -10 Z"'
+      + ' fill="#54a050" stroke="#3c7a3a" stroke-width="2"/>' },
+    pferdehufe: { wort: "Pferdehufe", zeichen: "\ud83d\udc0e", unten: true, bild:
+      '<path d="M38 0 q-4 18 -2 30 q1 8 -2 14 h12 q2 -12 3 -22 q1 -12 0 -22 Z"'
+      + ' fill="#8a5a33" stroke="#4e3114" stroke-width="2"/>'
+      + '<path d="M62 0 q4 18 2 30 q-1 8 2 14 h-12 q-2 -12 -3 -22 q-1 -12 0 -22 Z"'
+      + ' fill="#8a5a33" stroke="#4e3114" stroke-width="2"/>'
+      + '<path d="M32 44 h18 q3 0 3 5 q0 6 -5 6 h-14 q-5 0 -5 -6 q0 -5 3 -5 Z"'
+      + ' fill="#2f2620" stroke="#171310" stroke-width="2"/>'
+      + '<path d="M68 44 h-18 q-3 0 -3 5 q0 6 5 6 h14 q5 0 5 -6 q0 -5 -3 -5 Z"'
+      + ' fill="#2f2620" stroke="#171310" stroke-width="2"/>'
+      /* Die Fesselbehaarung — ohne sie sind es zwei Stiefel. */
+      + '<path d="M34 40 q6 4 12 0 M66 40 q-6 4 -12 0" stroke="#6b4520"'
+      + ' stroke-width="3" fill="none" stroke-linecap="round"/>' },
+    entenfuesse: { wort: "Entenfüße", zeichen: "\ud83e\udd86", unten: true, bild:
+      '<path d="M42 0 v30 M58 0 v30" stroke="#e8a63a" stroke-width="5"'
+      + ' stroke-linecap="round"/>'
+      /* Die Schwimmhaut: ein Faecher mit drei Zehen. */
+      + '<path d="M42 30 l-14 16 q-2 4 3 4 h22 q5 0 3 -4 Z" fill="#f2b84b"'
+      + ' stroke="#b8802a" stroke-width="2" stroke-linejoin="round"/>'
+      + '<path d="M58 30 l14 16 q2 4 -3 4 h-22 q-5 0 -3 -4 Z" fill="#f2b84b"'
+      + ' stroke="#b8802a" stroke-width="2" stroke-linejoin="round"/>'
+      + '<path d="M42 32 l-7 16 M42 32 l7 16 M58 32 l7 16 M58 32 l-7 16"'
+      + ' stroke="#b8802a" stroke-width="1.6"/>' }
   };
   /* Wer was traegt — nach NAMEN, nicht nach Platznummer. */
   const lcKleiderliste = {};
@@ -25849,7 +25966,15 @@
     schicht.className = "lc-kleid";
     schicht.setAttribute("aria-hidden", "true");
     schicht.dataset.lcKleid = was;
-    schicht.innerHTML = '<svg viewBox="0 0 100 100">' + stueck.bild + "</svg>";
+    /* RUNDE 87: was zum Koerper gehoert, haengt UNTER dem Bild — und
+       darf ueber den Kasten hinausragen, deshalb ein eigener
+       Ausschnitt (viewBox mit Rand) und eine eigene Klasse. */
+    if (stueck.unten) {
+      schicht.classList.add("lc-kleid-unten");
+      schicht.innerHTML = '<svg viewBox="0 -20 100 110">' + stueck.bild + "</svg>";
+    } else {
+      schicht.innerHTML = '<svg viewBox="0 0 100 100">' + stueck.bild + "</svg>";
+    }
     platzEl.appendChild(schicht);
     return true;
   }
@@ -27347,6 +27472,15 @@
        ["\ud83c\udfd7\ufe0f", "Kran", "kran"],
        ["\ud83d\udeb2", "Zu zweit", "gemeinsam"]]],
     ["\ud83d\udd2e", "Schneekugel", "schneekugel"],
+    /* RUNDE 87 — XANDER: „Man soll das auch auf sich selbst anwenden
+       koennen, deswegen soll es in den allgemeinen Profilbild-Effekten
+       auch drin sein." Und die zwei Varianten von damals stehen
+       nebeneinander: aufpumpen und wegfliegen — oder aufblasen, bis
+       es platzt. */
+    ["\ud83c\udf88", "Ballon", "ballonpumpe", false,
+      [["\ud83c\udf88", "Aufpumpen", "ballonpumpe"],
+       ["\ud83c\udf88", "Helium \u2014 fliegt weg", "ballonpumpe", "helium"],
+       ["\ud83d\udca5", "Bis es platzt", "aufblasen"]]],
     /* RUNDE 85 — XANDER: „Wenn ich den Kopfhoerer einmal druecke, dass
        ich die Option angezeigt bekomme, ob ich ihn nur schicken will
        oder mit Audio-Ausschnitt."
@@ -32110,8 +32244,22 @@
          steht rechts bei 58 %, ihre Mitte also bei 71 % — gespiegelt
          bei 29 %, das ist links 16 %), der Strahl geht mit, und die
          Zeichnung wird umgedreht. */
+      /* RUNDE 87 — XANDER: „Die Spruehsahnedose, so wie sie vorher war,
+         wieder machen. Ich habe niemals gesagt, dass du sie aendern
+         sollst … du kannst ja, wenn jemand auf der rechten Seite
+         sitzt, dass ich sie von links anspruehe, dann spiegelst du
+         einfach die Version, die wir schon hatten."
+
+         MEIN FEHLER, und er steckte in einer Zeile: lcWurfRichtung
+         liefert OHNE Absender einen Ersatzwert (x = -0,74), und der
+         ist negativ. Damit galt „der Spruehende sitzt links" auch
+         dann, wenn ich mich selbst besprueche — und die Dose stand
+         auf der falschen Seite. Jetzt wird nur gespiegelt, wenn es
+         WIRKLICH einen anderen Absender gibt und der links sitzt;
+         sonst bleibt alles so, wie es war. */
+      const quelleS = lcWurfVon ? lcPlatzMitNamen(lcWurfVon) : null;
       const rs = lcWurfRichtung(platz);
-      const vonLinks = rs.x < 0;
+      const vonLinks = Boolean(quelleS) && quelleS !== platz && rs.x < 0;
       if (vonLinks) {
         schicht.style.setProperty("--sdose", "-34%");
         schicht.style.setProperty("--sstrahl", "-28%");
@@ -40182,7 +40330,18 @@
      bekommen GENAU DIESELBEN Stuetzstellen wie das Bild — sonst
      schwimmt der Knoten neben dem Ballon her.
      ================================================================= */
-  function lcLuftballon(wen) {
+  /* RUNDE 87 — XANDER hat im Verlauf ZWEI Varianten genannt
+     (21.09., 19:31): „da sollen auch zwei Animationen sein: eins,
+     dass man ihn aufblasen kann, bis er platzt, und eins, dass man
+     ihn einfach nur aufblasen kann wie ein Helium-Luftballon, und er
+     fliegt dann von der Buehne hoch und/oder fliegt halt zur Seite
+     weg."
+     Die erste gibt es als /aufblasen seit Runde 65. Die zweite ist
+     „helium": nach dem dritten Hub steigt er auf, schaukelt, treibt
+     zur Seite und geht oben aus dem Bild — und kommt danach wieder
+     herunter, damit der Platz nicht leer bleibt. */
+  function lcLuftballon(wen, art) {
+    const helium = String(art || "").toLowerCase() === "helium";
     return lcAmPlatz(wen, "lc-ballon", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       if (!kreis) return;
@@ -40246,18 +40405,29 @@
         /* Er haelt die Luft und zittert. */
         { offset: 0.41, transform: wo(1.5, -8, 1.97, 2), easing: "ease-in-out" },
         { offset: 0.45, transform: wo(-1.5, -6, 1.93, -2), easing: "ease-in-out" },
-        /* Losgelassen: Zickzack, und dabei wird er kleiner. */
+        /* Losgelassen. ZICKZACK: die Luft faehrt heraus und stoesst
+           ihn hin und her. HELIUM: er bleibt prall und STEIGT — er
+           schaukelt dabei nur leicht, wie ein Ballon an einer Schnur,
+           und treibt zur Seite aus dem Bild. */
+      ].concat(helium ? [
+        { offset: 0.52, transform: wo(6, -34, 1.97, 3), easing: "ease-in-out" },
+        { offset: 0.58, transform: wo(-10, -76, 1.95, -4), easing: "ease-in-out" },
+        { offset: 0.64, transform: wo(14, -124, 1.93, 5), easing: "ease-in-out" },
+        { offset: 0.70, transform: wo(-6, -176, 1.9, -3), easing: "ease-in-out" },
+        { offset: 0.76, transform: wo(34, -232, 1.88, 6), easing: "ease-in" }
+      ] : [
         { offset: 0.52, transform: wo(-86, -54, 1.62, -70), easing: "ease-out" },
         { offset: 0.58, transform: wo(64, -96, 1.34, 110), easing: "ease-in-out" },
         { offset: 0.64, transform: wo(-52, -128, 1.12, -160), easing: "ease-in-out" },
         { offset: 0.70, transform: wo(78, -74, 0.92, 200), easing: "ease-in-out" },
-        { offset: 0.76, transform: wo(-24, -110, 0.76, -240), easing: "ease-in-out" },
+        { offset: 0.76, transform: wo(-24, -110, 0.76, -240), easing: "ease-in-out" }
+      ]).concat([
         /* Und herunter auf den eigenen Platz. */
-        { offset: 0.86, transform: wo(0, 10, 1.06, -360), easing: "ease-in" },
-        { offset: 0.91, transform: wo(0, -4, 0.96, -360), easing: "ease-out" },
-        { offset: 0.96, transform: wo(0, 2, 1.02, -360), easing: "ease-in-out" },
-        { offset: 1,    transform: wo(0, 0, 1, -360) }
-      ];
+        { offset: 0.86, transform: wo(0, 10, 1.06, helium ? 0 : -360), easing: "ease-in" },
+        { offset: 0.91, transform: wo(0, -4, 0.96, helium ? 0 : -360), easing: "ease-out" },
+        { offset: 0.96, transform: wo(0, 2, 1.02, helium ? 0 : -360), easing: "ease-in-out" },
+        { offset: 1,    transform: wo(0, 0, 1, helium ? 0 : -360) }
+      ]);
       const takt = { duration: 4200, easing: "linear", fill: "none" };
       kreis.animate(bahn, takt);
       /* Knoten und Glanzlicht laufen auf denselben Stuetzstellen —
@@ -40267,8 +40437,10 @@
       /* --- UND DIE TOENE ------------------------------------------ */
       /* Drei Huebe, jeder genau dort, wo das Bild springt. */
       [0.10, 0.20, 0.30].forEach((t) => lcTonSpaeter("pumpe", Math.round(t * 4200), 0.5));
-      /* Und das Entweichen genau beim Loslassen (46 %). */
-      lcTonSpaeter("luftraus", Math.round(0.46 * 4200), 0.6);
+      /* Und das Entweichen genau beim Loslassen (46 %) — aber nur
+         beim Zickzack. Ein Heliumballon verliert keine Luft, der
+         steigt einfach. */
+      if (!helium) lcTonSpaeter("luftraus", Math.round(0.46 * 4200), 0.6);
     }, 4200, "luftballon");
   }
 
@@ -42155,26 +42327,17 @@
          Die Dunkelheit haelt jetzt bis 88 % von 6,2 s (5456 ms statt
          3192 ms), und darin suchen zwei Augen: sie gehen auf, sehen
          nach links, nach rechts, blinzeln und sind wieder weg. */
-      /* RUNDE 86 — XANDER: „Ich hatte vorhin auch Comic Augen gesagt
-         beim Licht ausschalten."
-         Er hat recht, und es war eine halbe Sache: im Dunkeln standen
-         zwei weisse Punkte mit einem schwarzen Kern (.lc-auge) — das
-         sind Lichter, keine Augen. Die Comic-Augen gibt es seit Runde
-         14 schon (lcAugenPaar, der Raum-Effekt /augen): Augapfel mit
-         Rand, wandernde Pupille mit Glanzpunkt und ein Lid, das
-         blinzelt. Genau die stehen jetzt auch hier im Dunkeln — und
-         sie gucken und blinzeln von selbst, weil die Pupillen- und
-         Lid-Takte an den Zeichnungen haengen. */
-      const augenKasten = document.createElement("span");
-      augenKasten.className = "lc-lichtaus-augen lc-lichtaus-comic";
-      const augenPaar = document.createElement("span");
-      augenPaar.className = "lc-augenpaar lc-augen-im-dunkeln";
-      /* Der Takt des Blicks: langsamer als im Raum-Effekt — wer im
-         Dunkeln sucht, reisst die Augen nicht hin und her. */
-      augenPaar.style.setProperty("--lc-au-takt", "3.6s");
-      augenPaar.appendChild(lcAugenPaar());
-      augenKasten.appendChild(augenPaar);
-      blende.appendChild(augenKasten);
+      /* RUNDE 87 — ZURUECKGENOMMEN. XANDER: „Mache die alten Augen,
+         die bei Licht aus waren, wieder hin. Von den Comic Augen habe
+         ich gesprochen bei Birne aus, nicht bei Licht aus."
+         Also wieder die zwei suchenden Augen von Runde 70 — die
+         Comic-Augen stehen jetzt dort, wo er sie haben wollte: beim
+         Herausdrehen der Birne (lcBirneHeraus). */
+      blende.insertAdjacentHTML("beforeend",
+        '<span class="lc-lichtaus-augen">'
+        + '<i class="lc-auge lc-auge-l"><b></b></i>'
+        + '<i class="lc-auge lc-auge-r"><b></b></i>'
+        + "</span>");
       /* Und die vier Geigenstiche, genau wenn es dunkel ist
          (1748 ms = 28,2 % von 6,2 s). */
       /* RUNDE 73 — XANDER: „Die Geigen-Horror-Sache soll langsamer
@@ -42585,8 +42748,18 @@
           const paar = document.createElement("span");
           paar.className = "lc-dunkel-augen";
           paar.style.setProperty("--spaet", (620 + wieviel * 260) + "ms");
-          paar.innerHTML = '<i class="lc-auge lc-auge-l"><b></b></i>'
-                         + '<i class="lc-auge lc-auge-r"><b></b></i>';
+          /* RUNDE 87 — XANDER: „Von den Comic Augen habe ich gesprochen
+             bei Birne aus, nicht bei Licht aus."
+             Hier ist Birne aus: die Birne ist herausgedreht, der Raum
+             liegt im Dunkeln, und auf den Plaetzen blinzeln die
+             Comic-Augen (Augapfel, wandernde Pupille mit Glanzpunkt,
+             Lid). Bei /licht stehen wieder die alten zwei Punkte. */
+          const comic = document.createElement("span");
+          comic.className = "lc-augenpaar lc-augen-im-dunkeln";
+          comic.style.setProperty("--lc-au-takt",
+            (3.0 + (wieviel % 3) * 0.5).toFixed(1) + "s");
+          comic.appendChild(lcAugenPaar());
+          paar.appendChild(comic);
           d.appendChild(paar);
           paare.push({ el: el, paar: paar });
           /* ZWEITENS, DAS BLINZELN. Der Ton lag bei 700 + i*260 ms —
@@ -45387,7 +45560,8 @@
       if (art === "sanduhr" && lcSanduhrTausch(wenZ, (nachricht && nachricht.eigen)
             ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "katapult" && lcKatapult(wenZ)) return;
-      if (art === "luftballon" && lcLuftballon(wenZ)) return;
+      if (art === "luftballon"
+          && lcLuftballon(wenZ, (nachricht && nachricht.stueck) || "")) return;
       if (art === "marsch" && lcTrommel(wenZ, true)) return;
       if (art === "gong" && lcGong(wenZ)) return;
       if (art === "bongo" && lcBongo(wenZ)) return;
@@ -69615,7 +69789,21 @@
     // ============================================================
     const histBatchKey = (ExerciseData.historyBatchKey && ExerciseData.historyBatchKey()) || null;
     const histNeuKeys = (ExerciseData.historyPending && ExerciseData.historyPending()) || [];
-    const histBatchFreigegeben = !histBatchKey || Backend.isFeatureOn(histBatchKey);
+    /* RUNDE 87 — XANDER: „bei ,Es war einmal in Deutschland', obwohl
+       wir alle Eintraege schon geprueft hatten, bis heute keine
+       freigeschalten" und „ich moechte exakt das selbe Update Panel
+       wieder da haben … mit dem Haekchen, dass das Update
+       eingeschaltet war."
+
+       HIER WAR DER FEHLER: isFeatureOn gibt false zurueck, solange in
+       der Merkmal-Tabelle NICHTS steht — „nie gesetzt" und
+       „ausdruecklich aus" waren dasselbe. Deshalb blieb die Sammlung
+       fuer alle anderen leer, obwohl niemand sie je gesperrt hatte.
+       isFeatureOnDefaultTrue unterscheidet die beiden Faelle: nie
+       gesetzt heisst SICHTBAR, und erst ein ausdrueckliches Aus
+       nimmt die Freigabe zurueck. Der Schalter bleibt, wo er war. */
+    const histBatchFreigegeben = !histBatchKey
+      || Backend.isFeatureOnDefaultTrue(histBatchKey);
     const histDarfNeuesSehen = Boolean(Backend.canModerate && Backend.canModerate());
     const histIstNeu = (key) => histNeuKeys.indexOf(key) !== -1;
     // Ein noch nicht freigegebener Tag gilt für normale Nutzer:innen als nicht vorhanden.
@@ -69715,7 +69903,7 @@
         <p class="empty-note" style="margin:-6px 0 12px; color:#4FA88E; font-weight:700;">
           ✅ Alle ${histNeuKeys.length} Tage sind freigegeben — jede und jeder sieht sie.
         </p>` : ""}
-      ${histBatchKey && histNeuKeys.length && histDarfNeuesSehen ? inlineFeatureFlagToggleHtml(histBatchKey, false) : ""}
+      ${histBatchKey && histNeuKeys.length && histDarfNeuesSehen ? inlineFeatureFlagToggleHtml(histBatchKey, true) : ""}
       ${todayHistory ? `
         <div class="question-card" id="kompass-geschichte-heute" style="margin-bottom:16px; scroll-margin-top:16px;">
           <p class="eyebrow">… vor ${now.getFullYear() - todayHistory.year} Jahren (${todayHistory.year})${todayHistoryIstNeu ? ` <span style="background:var(--coral-400,#E8825F); color:#fff; border-radius:99px; padding:2px 8px; font-size:0.65rem; letter-spacing:0.5px;">NEU · noch nicht freigegeben</span>` : ""}</p>

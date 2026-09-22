@@ -49,18 +49,34 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 455 — Runde 85 und 86 sind abgearbeitet, alle Sonden gruen",
+  stand: "Fassung 456 — zurueckgenommen, was ich falsch geaendert hatte; Anziehen und Ballon",
 
   inArbeit: [
-    { seit: "2026-09-22T12:39",
-      text: "Nichts offen — beide Listen sind fertig" },
+    { seit: "2026-09-22T12:48",
+      text: "Pac-Man bleibt am Ziel, Maulwurf bricht die Plaetze auf, Lok mit Kurven und Draufsicht" },
+    { seit: "2026-09-22T12:48",
+      text: "Haende, Adler, Pferd, Frosch, Zauberer realistisch ausarbeiten" },
+    { seit: "2026-09-22T12:48",
+      text: "Kopfhoerer-Musik fuer mich selbst hoerbar" },
+    { seit: "2026-09-22T12:48",
+      text: "Katapult-Richtung, Ei, Wecker, Kuss-Ton, Bongo, Billard, Cowboyhut" },
+    { seit: "2026-09-22T12:48",
+      text: "Adresszeile, Panels, Schwimmbecken, Schiffe versenken, Mario-Modus" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T12:39",
-      text: "Die Sonde fuer die Augen rechnet jetzt mit ihrem eigenen Wackeln (3 px) statt es als Sprung zu zaehlen" },
-    { seit: "2026-09-22T12:39",
-      text: "Alle 144 Sonden laufen durch" },
+    { seit: "2026-09-22T12:48",
+      text: "Sprühsahne steht wieder auf ihrer alten Seite" },
+    { seit: "2026-09-22T12:48",
+      text: "Alte Augen bei Licht aus, Comic-Augen bei Birne raus" },
+    { seit: "2026-09-22T12:48",
+      text: "Das Update-Panel im Kalender ist zurueck — Freigabe gilt als erteilt, Haekchen abwaehlbar" },
+    { seit: "2026-09-22T12:48",
+      text: "Sich selbst anziehen geht: /anziehen krone ohne Namen gilt mir selbst" },
+    { seit: "2026-09-22T12:48",
+      text: "Elf neue Kleidungsstuecke: Minirock, Kleid, Lederhose, Schuhe, nackte Beine, BH, Tanga, Kraehenfuesse, Froschschenkel, Pferdehufe, Entenfuesse" },
+    { seit: "2026-09-22T12:48",
+      text: "Luftballon in zwei Varianten wie damals genannt: platzen (/aufblasen) und Helium (/ballonpumpe Name helium), beide im Platzmenue" },
   ],
 };

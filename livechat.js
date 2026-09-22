@@ -11277,10 +11277,32 @@ window.LiveChat = (function () {
          /anziehen Bea aus        nimmt es wieder ab
        Ohne Angabe zeigt er, was es gibt; raten soll niemand. */
     if (art === "anziehen" || art === "ausziehen") {
+      /* RUNDE 87 — XANDER: „Es fehlen noch Minirock, es fehlen noch
+         nackte Beine, Lederhosen, Schuhe … und ein Kleid fuer die
+         Frau, BH, Tanga … und es fehlen noch die Tierfuesse: so
+         Kraehenfuesse, Froschschenkel, Pferdehufe oder Entenfuesse."
+         Dazu das Zeichen, das in der Chatzeile mitlaeuft: „dann
+         kannst du auch als Referenz ne Krone unten in den Chat
+         schreiben." */
       var STUECKE = { krone: "die Krone", brille: "die Brille",
                       sonnenbrille: "die Sonnenbrille",
                       schnurrbart: "den Schnurrbart",
-                      muetze: "die Wollm\u00fctze", maske: "die Maske" };
+                      muetze: "die Wollm\u00fctze", maske: "die Maske",
+                      beine: "nackte Beine", minirock: "einen Minirock",
+                      lederhose: "eine Lederhose", kleid: "ein Kleid",
+                      bh: "einen BH", tanga: "einen Tanga",
+                      schuhe: "Schuhe", kraehenfuesse: "Kr\u00e4henf\u00fc\u00dfe",
+                      froschschenkel: "Froschschenkel",
+                      pferdehufe: "Pferdehufe", entenfuesse: "Entenf\u00fc\u00dfe" };
+      var STUECK_ZEICHEN = { krone: "\ud83d\udc51", brille: "\ud83d\udc53",
+                      sonnenbrille: "\ud83d\udd76\ufe0f", schnurrbart: "\ud83e\udd78",
+                      muetze: "\ud83e\udde2", maske: "\ud83c\udfad",
+                      beine: "\ud83e\uddb5", minirock: "\ud83d\udc57",
+                      lederhose: "\ud83e\udd7f", kleid: "\ud83d\udc57",
+                      bh: "\ud83d\udc59", tanga: "\ud83e\ude72",
+                      schuhe: "\ud83d\udc5e", kraehenfuesse: "\ud83e\udd85",
+                      froschschenkel: "\ud83d\udc38", pferdehufe: "\ud83d\udc0e",
+                      entenfuesse: "\ud83e\udd86" };
       var teileA = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
       if (art === "ausziehen") teileA.push("aus");
       if (!teileA.length) {
@@ -11294,18 +11316,28 @@ window.LiveChat = (function () {
       var abA = /^(aus|ab|weg|nichts|nackt)$/.test(stueckA);
       if (!abA && !STUECKE[stueckA]) {
         return systemZeile("\u201e" + teileA[teileA.length - 1] + "\u201c gibt es nicht.\n"
-          + "Es gibt: krone, brille, sonnenbrille, schnurrbart, muetze, maske \u2014 "
-          + "oder aus.");
+          + "Es gibt: " + Object.keys(STUECKE).join(", ") + " \u2014 oder aus.");
       }
       teileA.pop();
       var namenA = teileA.join(" ").trim();
+      /* RUNDE 87 — XANDER: „Ich kann mich immer noch nicht selber
+         anziehen und ausziehen."
+         HIER WAR DER GRUND: ohne Namen kam nur „Wem denn?". Wer
+         niemanden nennt, meint sich selbst — genau wie bei /me. */
+      if (!namenA) namenA = zustand.ichName || "";
       if (!namenA) {
         return systemZeile("Wem denn?  So geht es:  /anziehen Nickname " + stueckA);
       }
       var wemA = personNachName(namenA) || praesenzNachName(namenA) || { name: namenA };
+      /* Sich selbst zieht man an, jemand anderem zieht man etwas an. */
+      var selbstA = wemA.name === zustand.ichName;
+      var zeichenA = STUECK_ZEICHEN[stueckA] || "\ud83d\udc52";
       return anAlle("aktion", zustand.ichName
-        + (abA ? " zieht " + wemA.name + " alles wieder aus  \ud83e\uddfa"
-               : " setzt " + wemA.name + " " + STUECKE[stueckA] + " auf  \ud83d\udc52"),
+        + (abA ? (selbstA ? " zieht sich alles wieder aus  \ud83e\uddfa"
+                          : " zieht " + wemA.name + " alles wieder aus  \ud83e\uddfa")
+               : (selbstA ? " zieht sich " + STUECKE[stueckA] + " an  " + zeichenA
+                          : " zieht " + wemA.name + " " + STUECKE[stueckA]
+                            + " an  " + zeichenA)),
         { wirkung: "anziehen", wen: wemA.name, stueck: abA ? "aus" : stueckA });
     }
     /* ---- MUSIK TEILEN MIT YOUTUBE ----
@@ -11355,6 +11387,32 @@ window.LiveChat = (function () {
         { wirkung: "ytmusik", lied: kennungY, liedTitel: titelY,
           ab: String(abY) });
     }
+    /* ---- DER BALLON: AUFPUMPEN ODER HELIUM ----
+       RUNDE 87 — XANDER (21.09., 19:31): „da sollen auch zwei
+       Animationen sein: eins, dass man ihn aufblasen kann, bis er
+       platzt, und eins, dass man ihn einfach nur aufblasen kann wie
+       ein Helium-Luftballon, und er fliegt dann von der Buehne hoch."
+       Das Platzen ist /aufblasen. Hier steht das Aufpumpen, und das
+       Wort „helium" dahinter waehlt die zweite Variante. */
+    if (art === "ballonpumpe") {
+      var teileB = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
+      var artB = "";
+      if (teileB.length && /^(helium|schweben|hoch|weg)$/i.test(teileB[teileB.length - 1])) {
+        artB = "helium";
+        teileB.pop();
+      }
+      var namenB = teileB.join(" ").trim();
+      if (!namenB) {
+        return systemZeile("So geht es:  /ballonpumpe Nickname"
+          + "  \u2014 oder  /ballonpumpe Nickname helium");
+      }
+      var wemB = personNachName(namenB) || praesenzNachName(namenB) || { name: namenB };
+      return anAlle("aktion", zustand.ichName + " pumpt " + wemB.name
+        + (artB ? " zum Heliumballon auf \u2014 und er steigt davon" : " auf wie einen Luftballon")
+        + "  \ud83c\udf88",
+        { wirkung: "luftballon", wen: wemB.name, stueck: artB });
+    }
+
     /* ---- UND EINS AUF DIE OHREN ----
        /kopfhoerer Name          nur die Kopfhoerer
        /kopfhoerer Name 3        Kopfhoerer UND Lied 3 — gehoert wird es
