@@ -13155,6 +13155,40 @@ code, pre {
   .lc-lift { display: none; }
 }
 
+/* RUNDE 85 — DIE ZWEI FELDER FUER DEN AUSSCHNITT
+   „Wenn ich den Kopfhoerer einmal druecke, dass ich die Option
+   angezeigt bekomme, ob ich ihn nur schicken will oder mit
+   Audio-Ausschnitt." Die beiden Felder stehen nebeneinander, sind
+   gross genug fuer einen Finger und zeigen an ihrem Platzhalter, wie
+   die Zeit geschrieben wird. */
+.lc-ausschnitt {
+  display: flex;
+  gap: 8px;
+  padding: 6px 8px 2px;
+}
+.lc-ausschnitt label {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  opacity: .8;
+}
+.lc-ausschnitt input {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(128, 128, 128, .38);
+  background: rgba(255, 255, 255, .06);
+  color: inherit;
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: center;
+}
+.lc-ausschnitt-los { font-weight: 700; }
+
 /* --- DER STROHHALM ---------------------------------------------------- */
 .lc-stroh-rohr {
   position: absolute;

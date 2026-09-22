@@ -49,20 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 452 — Fahrstuhl, keine Textmarkierung, Es war einmal in Deutschland ist frei",
+  stand: "Fassung 453 — der Kopfhoerer fragt erst: nur schicken oder mit Ausschnitt",
 
   inArbeit: [
-    { seit: "2026-09-22T11:55",
-      text: "Kopfhoerer: Lied und Ausschnitt waehlen, im Profil merken" },
+    { seit: "2026-09-22T12:00",
+      text: "Nichts mehr aus Runde 85 und 86 — die Listen sind abgearbeitet" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T11:55",
-      text: "Neue Reise /fahrstuhl: die Tueren gehen zu, die Anzeige zaehlt die Plaetze ab, es klingelt, am Ziel gehen sie auf — ohne Rueckstaende" },
-    { seit: "2026-09-22T11:55",
-      text: "Keine Textmarkierung mehr auf Knoepfen, Links, Reitern und Ueberschriften; lesbarer Text bleibt markierbar" },
-    { seit: "2026-09-22T11:55",
-      text: "„Es war einmal in Deutschland\": die 315 wartenden Tage sind freigegeben — alle 366 Tage sind fuer alle sichtbar" },
+    { seit: "2026-09-22T12:00",
+      text: "Ein Druck auf den Kopfhoerer fragt jetzt: nur aufsetzen oder mit Lied?" },
+    { seit: "2026-09-22T12:00",
+      text: "Nach der Liedwahl kommt die Frage: ganzes Lied oder Ausschnitt — mit zwei Feldern fuer ab und bis" },
+    { seit: "2026-09-22T12:00",
+      text: "Der zuletzt gewaehlte Ausschnitt wird je Lied gemerkt und beim naechsten Mal vorgeschlagen" },
+    { seit: "2026-09-22T12:00",
+      text: "Das gilt auch fuer den eigenen Platz: man kann sich selbst ein Lied auf die Ohren legen" },
   ],
 };

@@ -22631,6 +22631,125 @@
      Dasselbe Menue wie beim Lesen, nur mit Liedern — und mit einer
      Zeile zum Ausmachen ganz unten. Der Befehl /musik tut dasselbe;
      wer lieber tippt, tippt. */
+  /* =================================================================
+     DER KOPFHOERER FRAGT ERST
+     -----------------------------------------------------------------
+     XANDER (Runde 85): „ich moechte, dass ich das Lied bequem
+     einstellen kann, was ich jemandem inklusive mir selbst auch auf
+     den Kopfhoerer lege … Wenn ich den Kopfhoerer einmal druecke,
+     dass ich die Option angezeigt bekomme, ob ich ihn nur schicken
+     will oder mit Audio-Ausschnitt."
+
+     Bisher schickte die Kachel sofort die blanken Kopfhoerer, und ein
+     Lied gab es nur ueber eine zweite Kachel („Sein Lied") oder ueber
+     einen getippten Befehl mit Zeitangabe — bequem ist das nicht.
+     Jetzt fragt sie in drei Schritten, und jeder Schritt ist eine
+     eigene Entscheidung:
+       1. nur aufsetzen oder mit Lied?
+       2. welches Lied? (lcMusikWaehler, die Liste gibt es schon)
+       3. ganzes Lied oder Ausschnitt? (lcAusschnittWahl)
+     Der zuletzt gewaehlte Ausschnitt wird je Lied gemerkt, damit man
+     ihn nicht jedes Mal neu eintippen muss.
+     ================================================================= */
+  function lcHoererMenue(platz, name) {
+    return lcUnterMenue(platz, name, "Kopfh\u00f6rer f\u00fcr " + (name || "alle"), [
+      ["\ud83c\udfa7", "Nur aufsetzen", "kopfhoerer"],
+      ["\ud83c\udfb5", "Mit Lied \u2026", "*lied"]
+    ]);
+  }
+
+  /* Merkt sich, welcher Ausschnitt zuletzt zu einem Lied gehoert hat —
+     im Geraet, nicht im Raum: es ist eine Einstellung, keine
+     Nachricht. */
+  function lcAusschnittMerken(nr, ab, bis) {
+    try {
+      const alles = JSON.parse(localStorage.getItem("dma_lied_ausschnitt") || "{}");
+      alles[String(nr)] = { ab: ab, bis: bis };
+      localStorage.setItem("dma_lied_ausschnitt", JSON.stringify(alles));
+    } catch (e) {}
+  }
+  function lcAusschnittHolen(nr) {
+    try {
+      const alles = JSON.parse(localStorage.getItem("dma_lied_ausschnitt") || "{}");
+      return alles[String(nr)] || null;
+    } catch (e) { return null; }
+  }
+  /* Sekunden hin und her: „1:20" liest sich besser als „80". */
+  function lcZeitText(sek) {
+    const s2 = Math.max(0, Math.round(Number(sek) || 0));
+    return Math.floor(s2 / 60) + ":" + String(s2 % 60).padStart(2, "0");
+  }
+  function lcZeitLesen(text) {
+    const t = String(text || "").trim();
+    if (!t) return 0;
+    const m = /^(\d{1,3}):([0-5]\d)$/.exec(t);
+    if (m) return Number(m[1]) * 60 + Number(m[2]);
+    return /^\d{1,4}$/.test(t) ? Number(t) : -1;
+  }
+
+  /* Schritt 3: ganzes Lied oder Ausschnitt? */
+  function lcAusschnittWahl(fuerWen, nr, titel) {
+    lcPlatzMenueZu();
+    const kasten = document.createElement("div");
+    kasten.id = "lcPlatzMenue";
+    kasten.className = "lc-platzmenue lc-lesewahl";
+    kasten.setAttribute("role", "menu");
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kopf.textContent = "\u201e" + titel + "\u201c \u2014 ganz oder ein St\u00fcck?";
+    kasten.appendChild(kopf);
+
+    const schicken = (zusatz) => {
+      lcPlatzMenueZu();
+      const zeile = "/kopfhoerer " + fuerWen + " " + nr + (zusatz ? " " + zusatz : "");
+      try { LiveChat.schreiben(zeile); } catch (x) {}
+      lcNachDemSenden(zeile);
+    };
+
+    const ganz = document.createElement("button");
+    ganz.type = "button";
+    ganz.className = "lc-lese-text";
+    ganz.textContent = "\u25b6\ufe0f  Ganzes Lied";
+    ganz.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      schicken("");
+    });
+    kasten.appendChild(ganz);
+
+    /* Der Ausschnitt: zwei Felder und ein Knopf. Vorbelegt mit dem,
+       was zuletzt fuer dieses Lied galt. */
+    const alt = lcAusschnittHolen(nr) || { ab: 0, bis: 0 };
+    const reihe = document.createElement("div");
+    reihe.className = "lc-ausschnitt";
+    reihe.innerHTML =
+      '<label>ab <input type="text" class="lc-ausschnitt-ab" inputmode="numeric"'
+      + ' placeholder="0:00" value="' + (alt.ab ? lcZeitText(alt.ab) : "") + '"></label>'
+      + '<label>bis <input type="text" class="lc-ausschnitt-bis" inputmode="numeric"'
+      + ' placeholder="Ende" value="' + (alt.bis ? lcZeitText(alt.bis) : "") + '"></label>';
+    const los = document.createElement("button");
+    los.type = "button";
+    los.className = "lc-lese-text lc-ausschnitt-los";
+    los.textContent = "\u2702\ufe0f  Diesen Ausschnitt aufsetzen";
+    los.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const ab = lcZeitLesen(reihe.querySelector(".lc-ausschnitt-ab").value);
+      const bis = lcZeitLesen(reihe.querySelector(".lc-ausschnitt-bis").value);
+      if (ab < 0 || bis < 0) { showToast("Zeit bitte als 1:20 oder als Sekunden."); return; }
+      if (bis && bis <= ab) { showToast("Das Ende muss nach dem Anfang liegen."); return; }
+      lcAusschnittMerken(nr, ab, bis);
+      schicken(lcZeitText(ab) + (bis ? "-" + lcZeitText(bis) : ""));
+    });
+    kasten.appendChild(reihe);
+    kasten.appendChild(los);
+
+    document.body.appendChild(kasten);
+    const platzEl = lcPlatzMitNamen(fuerWen)
+      || document.querySelector("#lcPlaetze .lc-platz-ich");
+    if (platzEl) lcMenueStellen(kasten, platzEl);
+    lcMenueSchliessen(kasten);
+    return true;
+  }
+
   function lcMusikWaehler(fuerWen) {
     lcPlatzMenueZu();
     let lieder = [];
@@ -22662,8 +22781,13 @@
       b.textContent = "\ud83c\udfb5  " + l.titel;
       b.addEventListener("click", (e) => {
         e.preventDefault(); e.stopPropagation();
+        /* RUNDE 85: gilt das Lied EINEM, wird noch gefragt, ob es ganz
+           laufen soll oder nur ein Stueck — „ob ich ihn nur schicken
+           will oder mit Audio-Ausschnitt". Fuer den ganzen Raum bleibt
+           es beim einen Griff. */
+        if (einer) { lcAusschnittWahl(einer, i + 1, l.titel); return; }
         lcPlatzMenueZu();
-        const zeile = einer ? "/kopfhoerer " + einer + " " + (i + 1) : "/musik " + (i + 1);
+        const zeile = "/musik " + (i + 1);
         try { LiveChat.schreiben(zeile); } catch (x) {}
         lcNachDemSenden(zeile);
       });
@@ -27223,7 +27347,12 @@
        ["\ud83c\udfd7\ufe0f", "Kran", "kran"],
        ["\ud83d\udeb2", "Zu zweit", "gemeinsam"]]],
     ["\ud83d\udd2e", "Schneekugel", "schneekugel"],
-    ["\ud83c\udfa7", "H\u00f6rer", "kopfhoerer"],
+    /* RUNDE 85 — XANDER: „Wenn ich den Kopfhoerer einmal druecke, dass
+       ich die Option angezeigt bekomme, ob ich ihn nur schicken will
+       oder mit Audio-Ausschnitt."
+       Die Kachel traegt deshalb „*hoerer": sie schickt nicht sofort,
+       sondern fragt (siehe lcHoererMenue). */
+    ["\ud83c\udfa7", "H\u00f6rer", "*hoerer"],
     /* GEWUENSCHT: „Die Luke kannst du Fenster nennen." Und drei
        Fassungen dahinter: Fenster, Rollo, Jalousie. */
     ["\ud83e\ude9f", "Fenster", "fenster", false,
@@ -27555,6 +27684,8 @@
            Zusatz. Gesendet wird dann erst beim Loslassen, mit der
            ganzen Kette. */
         if (befehl === "*weg") { lcWegMalen(zusatz, platz); return; }
+        /* RUNDE 85 — „Mit Lied …" fragt weiter, statt zu schicken. */
+        if (befehl === "*lied") { lcMusikWaehler(name); return; }
         /* RUNDE 76 — Name UND Zusatz: das Anzieh-Modul braucht beide
            („/anziehen Bea krone"). Die Kacheln unter „Alle" haben
            keinen Namen, dort bleibt es beim Zusatz allein. */
@@ -28157,6 +28288,11 @@
          senden — ein Weg, der fuer jede weitere Gruppe gilt. */
       if (unter && unter.length) {
         knopf(zeichen, wort, () => lcUnterMenue(platz, name, wort, unter));
+        return;
+      }
+      /* RUNDE 85 — eine Kachel darf auch FRAGEN statt zu schicken. */
+      if (befehl === "*hoerer") {
+        knopf(zeichen, wort, () => lcHoererMenue(platz, name));
         return;
       }
       knopf(zeichen, wort, () => {

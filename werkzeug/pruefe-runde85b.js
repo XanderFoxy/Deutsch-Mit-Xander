@@ -316,6 +316,76 @@ const sage = (gut, text, dazu) => {
     "danach bleibt nichts stehen",
     liftReste.kabinen + " Kabinen, " + liftReste.unterwegs + " Plaetze unterwegs");
 
+  /* =================================================================
+     8. DER KOPFHOERER FRAGT ERST
+     ================================================================= */
+  console.log("\nDer Kopfhoerer");
+  await buehne();
+  await pg.evaluate(() => {
+    /* Der Musikordner ist hier leer — also zwei Lieder unterschieben
+       und mitschreiben, was gesendet wird. */
+    window.__gesendet = [];
+    window.LiveChat = window.LiveChat || {};
+    window.LiveChat.schreiben = function (z) { window.__gesendet.push(z); };
+    window.LiveChat.lieder = function () {
+      return [{ datei: "a.mp3", titel: "Erstes Lied" },
+              { datei: "b.mp3", titel: "Zweites Lied" }];
+    };
+    try { localStorage.removeItem("dma_lied_ausschnitt"); } catch (e) {}
+    window.DMA_PRUEFUNG.platzMenue(document.querySelectorAll(".lc-platz")[1]);
+  });
+  await pg.waitForTimeout(250);
+  const tippen = (teil) => pg.evaluate((t) => {
+    const k = [...document.querySelectorAll("#lcPlatzMenue button")]
+      .find((b) => b.textContent.indexOf(t) >= 0);
+    if (k) k.click();
+    return !!k;
+  }, teil);
+  await tippen("H\u00f6rer");
+  await pg.waitForTimeout(250);
+  const frage1 = await pg.evaluate(() => ({
+    kopf: (document.querySelector("#lcPlatzMenue .lc-platzmenue-kopf") || {}).textContent,
+    knoepfe: [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-wort")]
+      .map((x) => x.textContent)
+  }));
+  sage(frage1.knoepfe.length === 2
+    && /Nur aufsetzen/.test(frage1.knoepfe.join(" "))
+    && /Mit Lied/.test(frage1.knoepfe.join(" ")),
+    "ein Druck auf den Kopfhoerer fragt: nur schicken oder mit Lied?",
+    frage1.knoepfe.join(" / "));
+  await tippen("Mit Lied");
+  await pg.waitForTimeout(250);
+  const lieder = await pg.evaluate(() =>
+    [...document.querySelectorAll("#lcPlatzMenue .lc-lese-text")].map((x) => x.textContent.trim()));
+  sage(lieder.length === 2 && /Erstes Lied/.test(lieder.join(" ")),
+    "dann steht die Liste aus dem Musikordner da", lieder.join(" / "));
+  await tippen("Zweites Lied");
+  await pg.waitForTimeout(250);
+  const frage3 = await pg.evaluate(() => ({
+    kopf: (document.querySelector("#lcPlatzMenue .lc-platzmenue-kopf") || {}).textContent,
+    knoepfe: [...document.querySelectorAll("#lcPlatzMenue .lc-lese-text")]
+      .map((x) => x.textContent.trim()),
+    felder: document.querySelectorAll("#lcPlatzMenue .lc-ausschnitt input").length
+  }));
+  sage(/ganz oder ein St\u00fcck/.test(frage3.kopf || "") && frage3.felder === 2,
+    "und danach: ganzes Lied oder Ausschnitt, mit zwei Feldern fuer die Zeit",
+    (frage3.kopf || "") + " \u2014 " + frage3.felder + " Felder");
+  await pg.evaluate(() => {
+    document.querySelector(".lc-ausschnitt-ab").value = "1:20";
+    document.querySelector(".lc-ausschnitt-bis").value = "1:50";
+    document.querySelector(".lc-ausschnitt-los").click();
+  });
+  await pg.waitForTimeout(250);
+  const raus = await pg.evaluate(() => ({
+    gesendet: window.__gesendet,
+    gemerkt: localStorage.getItem("dma_lied_ausschnitt")
+  }));
+  sage(raus.gesendet.length === 1 && raus.gesendet[0] === "/kopfhoerer Bea 2 1:20-1:50",
+    "der Ausschnitt geht genau so hinaus, wie er eingestellt wurde",
+    raus.gesendet.join(" | "));
+  sage(/"2":\{"ab":80,"bis":110\}/.test(raus.gemerkt || ""),
+    "und er wird fuer das naechste Mal gemerkt", raus.gemerkt || "nichts gemerkt");
+
   await br.close(); srv.close();
   console.log(fehler ? "\n" + fehler + " Regel(n) nicht erfuellt" : "\nAlles in Ordnung");
   process.exit(fehler ? 1 : 0);

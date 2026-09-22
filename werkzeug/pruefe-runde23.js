@@ -80,8 +80,18 @@ const pruefe = (was, gut, zusatz) => {
 
   console.log("\nZWEIMAL KOPFHOERER UND EINE TRANSPORTLEISTE\n");
   pruefe("am fremden Platz steht „Sein Lied“", /knopf\("\\ud83c\\udfb6", "Sein Lied"/.test(js));
-  pruefe("und es schickt den Kopfhoerer MIT Lied",
-    /"\/kopfhoerer " \+ einer \+ " " \+ \(i \+ 1\)/.test(js));
+  /* ACHTUNG, HIER STAND FRUEHER: „und es schickt den Kopfhoerer MIT
+     Lied" — also SOFORT, sobald man ein Lied antippt. Genau das hat
+     Xander in Runde 85 zurueckgenommen: „Wenn ich den Kopfhoerer
+     einmal druecke, dass ich die Option angezeigt bekomme, ob ich ihn
+     nur schicken will oder mit Audio-Ausschnitt." Zwischen Liedwahl
+     und Senden steht jetzt eine Frage (lcAusschnittWahl), und erst
+     die schickt — ganz oder als Ausschnitt. */
+  pruefe("nach der Liedwahl wird gefragt: ganzes Lied oder Ausschnitt?",
+    /if \(einer\) \{ lcAusschnittWahl\(einer, i \+ 1, l\.titel\); return; \}/.test(js)
+    && /function lcAusschnittWahl/.test(js));
+  pruefe("und beides schickt den Kopfhoerer mit Lied",
+    /"\/kopfhoerer " \+ fuerWen \+ " " \+ nr \+ \(zusatz \? " " \+ zusatz : ""\)/.test(js));
   pruefe("die Leiste hat Pause und Aus",
     /data-tun="pause"/.test(js) && /data-tun="aus"/.test(js));
   pruefe("es gibt auch einen Befehl dafuer",
