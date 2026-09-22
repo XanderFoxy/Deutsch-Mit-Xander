@@ -11887,20 +11887,14 @@ body.lc-schreibt .tutor-reiter {
      eine ganze Bildhoehe ueber dem Kopf und hatte mit der Haube
      sichtbar nichts mehr zu tun. Die Haube beginnt bei -36 % und ist
      62 % hoch; die Tuelle muss also knapp darueber sitzen. */
-  /* RUNDE 86 — XANDER: „das kommt dann von links, von rechts, wo man
-     links sitzt … genauso solltest du das machen auch bei dem
-     Wurfgeschoss." Die Sahnedose kam bisher IMMER von rechts. Jetzt
-     sagt --sdose, auf welcher Seite der Spruehende sitzt (gesetzt in
-     lcSahne): 8 % ist rechts, -34 % ist links — beides gemessen, damit
-     die Dose gespiegelt genauso weit von der Mitte steht. */
-  left: calc(50% + var(--sdose, 8%));
+  left: 58%;
   top: -56%;
   width: 26%;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
   animation: lcSahneDose 4.2s cubic-bezier(.3, .8, .3, 1) both;
 }
 @keyframes lcSahneDose {
-  0%   { opacity: 0; transform: translate(var(--sanflug, 90%), -60%) rotate(0deg) scale(.7); }
+  0%   { opacity: 0; transform: translate(90%, -60%) rotate(0deg) scale(.7); }
   10%  { opacity: 1; }
   14%  { transform: translate(0, 0) rotate(-24deg) scale(1); }
   22%  { transform: translate(-2%, 2%) rotate(-30deg) scale(1); }
@@ -11913,26 +11907,24 @@ body.lc-schreibt .tutor-reiter {
    solange gespruht wird. */
 .lc-sahne-strahl {
   position: absolute;
-  /* Der Strahl gehoert zur Tuelle und wandert deshalb mit (siehe
-     --sdose oben): 6 % rechts, -28 % links. */
-  left: calc(50% + var(--sstrahl, 6%));
+  left: 56%;
   top: -34%;
   width: 22%;
   height: 26%;
   border-radius: 60% 40% 50% 50%;
   background: linear-gradient(230deg, rgba(255,255,255,.95), rgba(255,255,255,.25));
   filter: blur(1px);
-  transform-origin: var(--sdrehpunkt, 90%) 10%;
+  transform-origin: 90% 10%;
   animation: lcSahneStrahl 4.2s linear both;
 }
 @keyframes lcSahneStrahl {
-  0%, 13%  { opacity: 0; transform: scale(.2) rotate(calc(var(--sseite, 1) * -18deg)); }
-  16%      { opacity: .95; transform: scale(1) rotate(calc(var(--sseite, 1) * -22deg)); }
-  24%      { opacity: .7;  transform: scale(.92) rotate(calc(var(--sseite, 1) * -15deg)); }
-  32%      { opacity: .95; transform: scale(1.04) rotate(calc(var(--sseite, 1) * -24deg)); }
-  42%      { opacity: .75; transform: scale(.95) rotate(calc(var(--sseite, 1) * -16deg)); }
-  50%      { opacity: .9;  transform: scale(1) rotate(calc(var(--sseite, 1) * -22deg)); }
-  54%, 100%{ opacity: 0;   transform: scale(.4) rotate(calc(var(--sseite, 1) * -10deg)); }
+  0%, 13%  { opacity: 0; transform: scale(.2) rotate(-18deg); }
+  16%      { opacity: .95; transform: scale(1) rotate(-22deg); }
+  24%      { opacity: .7;  transform: scale(.92) rotate(-15deg); }
+  32%      { opacity: .95; transform: scale(1.04) rotate(-24deg); }
+  42%      { opacity: .75; transform: scale(.95) rotate(-16deg); }
+  50%      { opacity: .9;  transform: scale(1) rotate(-22deg); }
+  54%, 100%{ opacity: 0;   transform: scale(.4) rotate(-10deg); }
 }
 .lc-sahne-haube {
   position: absolute;
@@ -12720,19 +12712,12 @@ body.lc-schreibt .tutor-reiter {
    ist als ein Bild. Ein Belagerungsgeraet, das kleiner ist als der
    Kopf, den es trifft, sieht nach Spielzeug aus. Es liegt 2,6 s
    darueber und ist dann wieder weg. */
-/* RUNDE 86 — XANDER: „der Katapult nimmt das Profilbild immer noch
-   nicht als Ladung auf … das kommt dann von links, von rechts, wo man
-   links sitzt."
-   Deshalb steht das Geraet nicht mehr mittig, sondern so, dass seine
-   SCHALE auf dem Bild liegt: --kataseite verschiebt es um 41,4 % einer
-   Bildbreite auf die Seite, auf der der Werfende sitzt (gerechnet in
-   lcKatapult). Ohne die Verschiebung griffe der Arm ins Leere. */
 .lc-katapult-bild {
   position: absolute;
   left: 50%;
   bottom: -30%;
   width: 164%;
-  margin-left: calc(-82% + var(--kataseite, 0%));
+  margin-left: -82%;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
   animation: lcKatapultDa 2.6s ease-out both;
 }
@@ -12765,123 +12750,6 @@ body.lc-schreibt .tutor-reiter {
   70%     { transform: translate(-20%, -80%) rotate(-360deg) scale(.6); opacity: .8; }
   86%     { transform: translate(0, 8%) rotate(-380deg) scale(1.06); opacity: 1; }
   100%    { transform: translate(0, 0) rotate(-360deg) scale(1); }
-}
-
-/* DIE LADUNG: eine Kopie des Profilbildes, die wirklich in der Schale
-   liegt und mit dem Arm wegfliegt. Sie muss eine Kopie sein — das echte
-   Bild liegt unter der Effektschicht und koennte nie vor dem Katapult
-   erscheinen. Solange sie fliegt, ist der Platz leer (lc-kata-leer). */
-.lc-kata-last {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: #d8dee9 center/cover no-repeat;
-  box-shadow: 0 2px 7px rgba(12, 22, 44, .38);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font: 700 46% / 1 system-ui, sans-serif;
-  color: #46526b;
-  z-index: 9;
-  pointer-events: none;
-}
-.lc-kata-leer { opacity: 0; }
-
-/* =====================================================================
-   DER LUFTBALLON — JEMANDEN AUFBLASEN
-   ---------------------------------------------------------------------
-   XANDER (Runde 86): „dass man jemand aufblasen kann wie ne
-   Luftballon."
-   Die Bewegung steht in app.js (lcLuftballon), weil sie aus Zahlen
-   besteht, die zur Seite des Aufblasenden passen muessen. Hier steht
-   nur, wie die Teile aussehen und wo sie liegen.
-   ===================================================================== */
-.lc-ballon-pumpe {
-  position: absolute;
-  /* Die Pumpe steht neben dem Bild, auf der Seite des Aufblasenden. */
-  left: -46%;
-  bottom: -18%;
-  width: 46%;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
-  animation: lcBallonPumpeR86 4.2s ease-out both;
-}
-.lc-ballon-rechts .lc-ballon-pumpe {
-  left: auto;
-  right: -46%;
-  transform: scaleX(-1);
-}
-.lc-ballon-pumpe svg { width: 100%; display: block; }
-@keyframes lcBallonPumpeR86 {
-  0%   { opacity: 0; }
-  5%   { opacity: 1; }
-  /* Bei 36 % loest sich der Schlauch und die Pumpe geht weg. */
-  36%  { opacity: 1; }
-  42%  { opacity: 0; }
-  100% { opacity: 0; }
-}
-/* Der Griff geht bei jedem Hub herunter — dieselben Zeitpunkte wie
-   die drei Spruenge des Bildes (10 %, 20 %, 30 %). */
-.lc-ballon-griff {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation: lcBallonGriffR86 4.2s linear both;
-}
-@keyframes lcBallonGriffR86 {
-  0%, 6%   { transform: translateY(0); }
-  10%      { transform: translateY(34%); }
-  15%      { transform: translateY(0); }
-  20%      { transform: translateY(34%); }
-  25%      { transform: translateY(0); }
-  30%      { transform: translateY(34%); }
-  36%, 100%{ transform: translateY(0); }
-}
-/* Der Schlauch haengt am Bild und laesst bei 36 % los. */
-.lc-ballon-schlauch { animation: lcBallonSchlauchR86 4.2s linear both; }
-@keyframes lcBallonSchlauchR86 {
-  0%, 36%  { opacity: 1; }
-  40%, 100%{ opacity: 0; }
-}
-/* Knoten und Glanzlicht: sie liegen auf dem Bild und machen jede
-   Bewegung mit (dieselben Stuetzstellen, siehe app.js). */
-.lc-ballon-huelle {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 8;
-}
-.lc-ballon-glanz {
-  position: absolute;
-  left: 22%;
-  top: 16%;
-  width: 26%;
-  height: 20%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 40%, rgba(255,255,255,.85),
-              rgba(255,255,255,.12) 70%, rgba(255,255,255,0) 100%);
-  opacity: 0;
-  animation: lcBallonGlanzR86 4.2s linear both;
-}
-@keyframes lcBallonGlanzR86 {
-  0%, 8%   { opacity: 0; }
-  14%      { opacity: .9; }
-  84%      { opacity: .9; }
-  92%, 100%{ opacity: 0; }
-}
-.lc-ballon-knoten {
-  position: absolute;
-  left: 50%;
-  bottom: -9%;
-  width: 20%;
-  margin-left: -10%;
-  opacity: 0;
-  animation: lcBallonGlanzR86 4.2s linear both;
-}
-@media (prefers-reduced-motion: reduce) {
-  .lc-ballon-griff, .lc-ballon-glanz, .lc-ballon-knoten { animation: none; }
-  .lc-ballon-glanz, .lc-ballon-knoten { opacity: .9; }
 }
 
 /* --- DER STROHHALM ---------------------------------------------------- */
@@ -26941,114 +26809,6 @@ body.lc-schreibt .tutor-reiter {
   .lc-hriss { stroke-dashoffset: 0; }
   .lc-hriss-kern { opacity: .9; }
   .lc-hglas-blitz { opacity: 0; }
-}
-
-/* =====================================================================
-   DER HAMMER IN FUENF STUFEN — DER SCHADEN BLEIBT LIEGEN
-   ---------------------------------------------------------------------
-   XANDER (Runde 86): „Wenn man einmal schlaegt, passiert noch nix.
-   Beim zweiten Mal hoert man schon so ein erstes Knack, beim dritten
-   Mal platzt dann die Scheibe und beim vierten Mal splittert alles
-   raus. Wenn man noch ein fuenftes Mal drauf schlaegt, demoliert man
-   das Profilbild immer mehr."
-
-   Eine Steigerung braucht etwas, das BLEIBT. Die Effektschicht (.lc-zp)
-   wird nach drei Sekunden weggeraeumt — deshalb liegt der Schaden in
-   einer eigenen Schicht am Platz. Sie hat dieselbe Geometrie wie die
-   Effektschicht (quadratisch, oben buendig) und dieselbe runde Blende
-   wie lc-zp-blende, damit die Risse IM Bild bleiben und nicht darueber
-   hinausragen.
-   ===================================================================== */
-.lc-hschaden {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 7;
-}
-.lc-hschaden-glas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-/* Nach 22 Sekunden ohne Schlag heilt das Bild — es blendet aus,
-   springt nicht weg. */
-.lc-hschaden-weg { animation: lcHHeilenR86 .6s ease-in both; }
-@keyframes lcHHeilenR86 {
-  from { opacity: 1; }
-  to   { opacity: 0; }
-}
-/* Stufe 2: ein Knack ist feiner als ein Bruch. */
-.lc-hriss-fein { stroke-width: .9; opacity: .88; }
-/* Stufe 4: wo eine Scherbe herausgefallen ist, sieht man durch das
-   Bild hindurch ins Dunkle — mit einer hellen Bruchkante. */
-.lc-hloch {
-  fill: rgba(9, 15, 28, .86);
-  stroke: rgba(255, 255, 255, .85);
-  stroke-width: 1;
-  stroke-linejoin: round;
-  opacity: 0;
-  animation: lcHLochR86 .34s ease-out both;
-}
-@keyframes lcHLochR86 {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-/* Stufe 5 und hoeher: jetzt fehlen Stuecke vom BILD, nicht mehr nur
-   von der Scheibe. Deshalb groesser, dunkler und mit rauer Kante. */
-.lc-hstueck {
-  fill: rgba(6, 10, 20, .93);
-  stroke: rgba(226, 236, 255, .55);
-  stroke-width: 1.1;
-  stroke-linejoin: miter;
-  opacity: 0;
-  animation: lcHStueckR86 .34s ease-out both;
-}
-@keyframes lcHStueckR86 {
-  from { opacity: 0; transform: scale(.7); }
-  to   { opacity: 1; transform: scale(1); }
-}
-/* Und das, was vom Bild uebrig ist, sieht mitgenommen aus. */
-.lc-platz-demoliert .lc-kreis {
-  filter: grayscale(.4) contrast(1.16) brightness(.88);
-}
-/* Alles aus einer frueheren Stufe steht still: es ist ja schon
-   passiert — nur der neue Schaden bewegt sich. */
-.lc-hstill {
-  animation: none !important;
-  stroke-dashoffset: 0 !important;
-  opacity: 1 !important;
-  transform: none !important;
-}
-.lc-hriss-ring.lc-hstill { opacity: .78 !important; }
-/* Die Scherben, die wegfliegen. Sie gehoeren NICHT in die Blende —
-   sie sollen ueber den Bildrand hinaus. */
-.lc-hscherbe {
-  position: absolute;
-  width: 9%;
-  height: 9%;
-  background: linear-gradient(135deg, rgba(255, 255, 255, .95),
-              rgba(178, 208, 255, .5));
-  clip-path: polygon(0% 0%, 100% 30%, 32% 100%);
-  filter: drop-shadow(0 1px 1.4px rgba(14, 26, 52, .55));
-  opacity: 0;
-  animation: lcHScherbeR86 .66s cubic-bezier(.18, .62, .48, 1) both;
-}
-@keyframes lcHScherbeR86 {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(.35) rotate(0deg); }
-  16%  { opacity: 1; }
-  100% { opacity: 0;
-         transform: translate(calc(-50% + var(--wx, 40%)), calc(-50% + var(--wy, -20%)))
-                    scale(1) rotate(var(--dreh, 180deg)); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lc-hloch, .lc-hstueck { animation: none; opacity: 1; }
-  .lc-hscherbe { animation: none; opacity: 0; }
 }
 
 /* =====================================================================

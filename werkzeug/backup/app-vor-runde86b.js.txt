@@ -29678,9 +29678,6 @@
     telefon:  { zeichen: ["\u260e\ufe0f"], wie: 4, klasse: "umarmen" },
     /* RUNDE 86 — die Spruehdose. */
     spray:    { zeichen: ["\ud83c\udfa8"], wie: 4, klasse: "umarmen" },
-    /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
-       ne Luftballon." */
-    luftballon: { zeichen: ["\ud83c\udf88"], wie: 4, klasse: "umarmen" },
     anziehen: { zeichen: ["\ud83d\udc52"], wie: 4, klasse: "umarmen" },
     ytmusik:  { zeichen: ["\u25b6\ufe0f"], wie: 3, klasse: "umarmen" },
     ytaus:    { zeichen: ["\u23f9\ufe0f"], wie: 3, klasse: "umarmen" },
@@ -31892,26 +31889,7 @@
      Das Geraeusch ist entsprechend kein Platschen mehr, sondern das
      Zischen einer Dose (ton/spray). */
   function lcSahne(wen) {
-    return lcAmPlatz(wen, "lc-sahne", (schicht, platz) => {
-      /* RUNDE 86 — XANDER: „das kommt dann von links, von rechts, wo
-         man links sitzt … genauso solltest du das machen auch bei dem
-         Wurfgeschoss."
-         Die Sahnedose kam bisher immer von rechts. „r" zeigt vom
-         Getroffenen zum Spruehenden: x > 0 heisst, er sitzt rechts.
-         Sitzt er links, wandert die Dose auf die linke Seite (die
-         Zahlen sind gespiegelt gerechnet: die Dose ist 26 % breit und
-         steht rechts bei 58 %, ihre Mitte also bei 71 % — gespiegelt
-         bei 29 %, das ist links 16 %), der Strahl geht mit, und die
-         Zeichnung wird umgedreht. */
-      const rs = lcWurfRichtung(platz);
-      const vonLinks = rs.x < 0;
-      if (vonLinks) {
-        schicht.style.setProperty("--sdose", "-34%");
-        schicht.style.setProperty("--sstrahl", "-28%");
-        schicht.style.setProperty("--sanflug", "-90%");
-        schicht.style.setProperty("--sdrehpunkt", "10%");
-        schicht.style.setProperty("--sseite", "-1");
-      }
+    return lcAmPlatz(wen, "lc-sahne", (schicht) => {
       schicht.innerHTML =
         '<span class="lc-sahne-haube">'
         + '<i class="lc-sahne-ring lc-sahne-1"></i>'
@@ -31920,7 +31898,6 @@
         + '<i class="lc-sahne-spitze"></i>'
         + "</span>"
         + '<svg class="lc-sahne-dose" viewBox="0 0 34 64">'
-        + (vonLinks ? '<g transform="translate(34,0) scale(-1,1)">' : "<g>")
         /* Die Dose: Rumpf, Banderole, Kappe, Tuelle. */
         + '<rect x="5" y="12" width="24" height="48" rx="6" fill="#e8ecf2"'
         + ' stroke="#9aa3b1" stroke-width="2"/>'
@@ -31929,7 +31906,7 @@
         + '<rect x="11" y="4" width="12" height="9" rx="2" fill="#b9c1cf"'
         + ' stroke="#8b93a3" stroke-width="1.6"/>'
         + '<rect x="20" y="1" width="11" height="5" rx="2.5" fill="#8b93a3"/>'
-        + "</g></svg>"
+        + "</svg>"
         + '<span class="lc-sahne-strahl"></span>'
         + '<span class="lc-sahne-kirsche"><i></i></span>';
       /* GEWUENSCHT: „und wenn die Kirsche drauffaellt, koennte man
@@ -33286,248 +33263,26 @@
   }
 
   /* --- DER HAMMER ------------------------------------------------- */
-  /* =================================================================
-     DER HAMMER — FUENF STUFEN STATT ZUFALL
-     -----------------------------------------------------------------
-     XANDER (Runde 86): „Bei dem Hammer moechte ich den Zufallsmodus
-     raus haben. Wenn man einmal schlaegt, passiert noch nix. Beim
-     zweiten Mal hoert man schon so ein erstes Knack. Beim dritten Mal
-     platzt dann die Scheibe und beim vierten Mal splittert alles
-     raus. Wenn man noch ein fuenftes Mal drauf schlaegt, demoliert
-     man das Profilbild immer mehr."
-
-     Vorher entschied ein Los, ob die Scheibe zerspringt — beim ersten
-     Schlag konnte also schon alles kaputt sein und beim zehnten immer
-     noch nichts. Jetzt ist es eine Treppe, und jeder Schlag steht auf
-     der Stufe darueber:
-
-       1  nichts geht kaputt — nur der Schlag und die Sterne
-       2  das erste Knack: zwei feine Risse laufen durch die Scheibe
-       3  die Scheibe platzt: Risse sternfoermig, Ringe dazwischen
-       4  es splittert heraus: Scherben fliegen weg, Loecher bleiben
-       5+ das Bild selbst wird demoliert — mit jedem Schlag mehr
-
-     DER SCHADEN BLEIBT LIEGEN, sonst waere es keine Steigerung: er
-     steht in einer eigenen Schicht am Platz, nicht in der Effekt-
-     schicht, die nach drei Sekunden verschwindet. Nach 22 Sekunden
-     ohne Schlag heilt das Bild wieder — sonst bliebe es fuer immer
-     kaputt.
-
-     WARUM OHNE ZUFALL AUCH BEI DER FORM: die Risse kommen aus dem
-     NAMEN des Getroffenen. Derselbe Name ergibt dieselbe Zahlenfolge,
-     also sieht jeder im Raum genau dasselbe Bild — ohne dass
-     irgendetwas mitgeschickt werden muss. Und bei jedem Schlag wird
-     die ganze Treppe neu gezeichnet (Stufe 2 bis jetzt), damit der
-     Schaden auch dann stimmt, wenn der Platz zwischendurch neu
-     aufgebaut wurde; nur das Neue bewegt sich, das Alte steht still.
-     ================================================================= */
-  const LC_HAMMER_SCHADEN = {};          /* Name -> { stufe, uhr } */
-  const LC_HAMMER_HEILT = 22000;         /* so lange bleibt der Schaden */
-  const LC_HAMMER_HOECHSTE = 9;          /* darueber wird es nicht mehr schlimmer */
-
-  /* Aus einem Namen eine feste Zahl machen (FNV-1a) — damit jeder
-     dasselbe sieht, ohne dass etwas mitgeschickt wird. */
-  function lcHammerSaat(text) {
-    let s = 2166136261;
-    const t = String(text || "?");
-    for (let i = 0; i < t.length; i++) {
-      s ^= t.charCodeAt(i);
-      s = Math.imul(s, 16777619);
-    }
-    return Math.abs(s) % 2147483647 || 1;
-  }
-
-  /* Eine Zahlenfolge, die immer gleich anfaengt (Lehmer/Park-Miller). */
-  function lcHammerZufall(saat) {
-    let s = saat % 2147483647;
-    if (s <= 0) s += 2147483646;
-    return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
-  }
-
-  /* Wer sitzt hier? Der gespeicherte Name zaehlt zuerst, die
-     Beschriftung nur als Rueckfall — und die Platznummer, wenn gar
-     nichts da ist. */
-  function lcHammerWer(platz) {
-    const d = (platz && platz.dataset && platz.dataset.lcName) || "";
-    if (d) return d.trim();
-    const b = ((platz && platz.querySelector(".lc-platz-name")) || {}).textContent || "";
-    return b.replace(/\s*\(du\)$/, "").trim()
-      || ("platz" + ((platz && platz.dataset && platz.dataset.lcPlatz) || "?"));
-  }
-
-  /* Die Schicht, in der der Schaden LIEGEN BLEIBT. */
-  function lcHammerSchicht(platz) {
-    let s = platz.querySelector(".lc-hschaden");
-    if (!s) {
-      s = document.createElement("span");
-      s.className = "lc-hschaden";
-      platz.appendChild(s);
-    }
-    return s;
-  }
-
-  /* Den Schaden wieder wegnehmen — das Bild heilt. */
-  function lcHammerHeilen(name) {
-    const eintrag = LC_HAMMER_SCHADEN[name];
-    if (eintrag && eintrag.uhr) clearTimeout(eintrag.uhr);
-    delete LC_HAMMER_SCHADEN[name];
-    const karte = document.getElementById("livechatKarte");
-    if (!karte) return;
-    karte.querySelectorAll(".lc-platz").forEach((pl) => {
-      if (lcHammerWer(pl) !== name) return;
-      pl.classList.remove("lc-platz-demoliert");
-      const s = pl.querySelector(".lc-hschaden");
-      if (!s) return;
-      s.classList.add("lc-hschaden-weg");
-      setTimeout(() => { if (s.parentNode) s.parentNode.removeChild(s); }, 620);
-    });
-  }
-
-  /* Die ganze Treppe zeichnen: Stufe 2 bis „stufe". Alles, was aus
-     einer aelteren Stufe stammt, steht still (lc-hstill) — nur das
-     Neue bewegt sich. */
-  function lcHammerZeichnen(platz, name, stufe) {
-    const schicht = lcHammerSchicht(platz);
-    schicht.innerHTML = "";
-    if (stufe < 2) return;
-    const grund = lcHammerSaat(name);
-    const svg = document.createElementNS(NS_SVG, "svg");
-    svg.setAttribute("class", "lc-hschaden-glas");
-    svg.setAttribute("viewBox", "0 0 100 100");
-    svg.setAttribute("preserveAspectRatio", "none");
-    schicht.appendChild(svg);
-    /* Der Einschlagpunkt: dort, wo der Hammerkopf auftrifft — in der
-       Mitte, etwas oberhalb. Er haengt am Namen, nicht am Zufall. */
-    const zEin = lcHammerZufall(grund);
-    const mx = 44 + zEin() * 12, my = 38 + zEin() * 10;
-    const dazu = (el, alt, verzug) => {
-      if (alt) el.classList.add("lc-hstill");
-      else if (verzug != null) el.style.animationDelay = verzug.toFixed(3) + "s";
-      svg.appendChild(el);
-    };
-    const pfad = (d, klasse) => {
-      const p = document.createElementNS(NS_SVG, "path");
-      p.setAttribute("d", d);
-      p.setAttribute("class", klasse);
-      return p;
-    };
-    const riss = (zuf, laenge, teile, streu) => {
-      const w = zuf() * Math.PI * 2;
-      const punkte = ["M" + mx.toFixed(1) + " " + my.toFixed(1)];
-      for (let k = 1; k <= teile; k++) {
-        const lang = (k / teile) * laenge;
-        punkte.push("L" + (mx + Math.cos(w) * lang + (zuf() - 0.5) * streu).toFixed(1)
-                  + " " + (my + Math.sin(w) * lang + (zuf() - 0.5) * streu).toFixed(1));
-      }
-      return punkte.join(" ");
-    };
-
-    /* STUFE 2 — das erste Knack: zwei feine Risse. */
-    const z2 = lcHammerZufall(grund + 211);
-    for (let i = 0; i < 2; i++) {
-      dazu(pfad(riss(z2, 24 + z2() * 12, 2, 4), "lc-hriss lc-hriss-fein"),
-        stufe > 2, 0.30 + i * 0.09);
-    }
-
-    /* STUFE 3 — die Scheibe platzt. */
-    if (stufe >= 3) {
-      const z3 = lcHammerZufall(grund + 733);
-      const STRAHLEN = 11;
-      const enden = [];
-      for (let i = 0; i < STRAHLEN; i++) {
-        const w = ((360 / STRAHLEN) * i + (z3() - 0.5) * 18) * Math.PI / 180;
-        enden.push(w);
-        const punkte = ["M" + mx.toFixed(1) + " " + my.toFixed(1)];
-        for (let k = 1; k <= 3; k++) {
-          const lang = (k / 3) * (46 + z3() * 34);
-          punkte.push("L" + (mx + Math.cos(w) * lang + (z3() - 0.5) * 5).toFixed(1)
-                    + " " + (my + Math.sin(w) * lang + (z3() - 0.5) * 5).toFixed(1));
-        }
-        dazu(pfad(punkte.join(" "), "lc-hriss"), stufe > 3, 0.30 + i * 0.012);
-      }
-      [0.3, 0.56].forEach((anteil, r2) => {
-        const d = [];
-        enden.forEach((w, i) => {
-          const lang = anteil * (48 + (i % 3) * 12);
-          d.push((i ? "L" : "M") + (mx + Math.cos(w) * lang).toFixed(1)
-               + " " + (my + Math.sin(w) * lang).toFixed(1));
-        });
-        d.push("Z");
-        dazu(pfad(d.join(" "), "lc-hriss lc-hriss-ring"), stufe > 3, 0.34 + r2 * 0.05);
-      });
-      const kern = document.createElementNS(NS_SVG, "circle");
-      kern.setAttribute("cx", mx.toFixed(1));
-      kern.setAttribute("cy", my.toFixed(1));
-      kern.setAttribute("r", "2.4");
-      kern.setAttribute("class", "lc-hriss-kern");
-      dazu(kern, stufe > 3, 0.30);
-    }
-
-    /* STUFE 4 — es splittert heraus: dort, wo Scherben weggeflogen
-       sind, bleibt ein Loch. */
-    if (stufe >= 4) {
-      const z4 = lcHammerZufall(grund + 1291);
-      for (let i = 0; i < 7; i++) {
-        const w = (i / 7) * Math.PI * 2 + z4() * 0.6;
-        const weit = 9 + z4() * 17;
-        const cx = mx + Math.cos(w) * weit, cy = my + Math.sin(w) * weit;
-        const ecken = 4 + Math.floor(z4() * 3);
-        const d = [];
-        for (let k = 0; k < ecken; k++) {
-          const a = (k / ecken) * Math.PI * 2 + z4() * 0.5;
-          const r = 3.4 + z4() * 5.2;
-          d.push((k ? "L" : "M") + (cx + Math.cos(a) * r).toFixed(1)
-               + " " + (cy + Math.sin(a) * r).toFixed(1));
-        }
-        d.push("Z");
-        dazu(pfad(d.join(" "), "lc-hloch"), stufe > 4, 0.34 + i * 0.03);
-      }
-    }
-
-    /* STUFE 5 UND HOEHER — jetzt geht das BILD kaputt, nicht mehr nur
-       die Scheibe davor: mit jedem weiteren Schlag werden mehr Stuecke
-       herausgerissen. */
-    if (stufe >= 5) {
-      platz.classList.add("lc-platz-demoliert");
-      const bis = Math.min(stufe, LC_HAMMER_HOECHSTE);
-      for (let s = 5; s <= bis; s++) {
-        const zs = lcHammerZufall(grund + s * 3571);
-        const stuecke = 2 + (s - 5);
-        for (let i = 0; i < stuecke; i++) {
-          /* Die Stuecke brechen vom Rand herein — so sieht es aus, als
-             fehle ein Teil des Bildes, nicht als liege ein Fleck darauf. */
-          const w = zs() * Math.PI * 2;
-          const rand = 34 + zs() * 22;
-          const cx = 50 + Math.cos(w) * rand, cy = 50 + Math.sin(w) * rand;
-          const ecken = 5 + Math.floor(zs() * 4);
-          const d = [];
-          for (let k = 0; k < ecken; k++) {
-            const a = (k / ecken) * Math.PI * 2;
-            const r = 8 + zs() * 12;
-            d.push((k ? "L" : "M") + (cx + Math.cos(a) * r).toFixed(1)
-                 + " " + (cy + Math.sin(a) * r).toFixed(1));
-          }
-          d.push("Z");
-          dazu(pfad(d.join(" "), "lc-hstueck"), s < stufe, 0.30 + i * 0.05);
-        }
-      }
-    }
-  }
-
   function lcHammer(wen, los) {
-    /* „los" faehrt noch mit, weil aeltere Fassungen es mitschicken —
-       gebraucht wird es nicht mehr: der Zufall ist raus. */
-    void los;
+    /* =================================================================
+       RUNDE 76 — HAMMER MIT ZUFALL UND GLASBRUCH
+       -----------------------------------------------------------------
+       XANDER: „Hammer mit Zufall und Glasbruch."
+       Bisher endete jeder Schlag gleich: acht Sterne, immer dieselben.
+       Jetzt entscheidet das LOS, ob es bei den Sternen bleibt oder ob
+       die Scheibe ueber dem Bild zerspringt.
+       Das Los wuerfelt der Absender EINMAL und schickt es mit der
+       Nachricht (livechat.js legt „los" an jede Wirkung am Platz) —
+       sonst saehe jeder etwas anderes. Auch die Form der Risse kommt
+       aus dem Los und nicht aus Math.random: dieselbe Zahl, dasselbe
+       Bild, auf jedem Geraet.
+       Faehrt ausnahmsweise kein Los mit (eine aeltere Fassung am
+       anderen Ende), wird hier gewuerfelt — dann stimmt wenigstens das
+       eigene Bild. */
+    const zahl = Number(los);
+    const wurf = (zahl >= 0 && zahl <= 1) ? zahl : Math.random();
+    const glas = wurf < 0.45;
     return lcAmPlatz(wen, "lc-zhammer", (schicht, platz) => {
-      const name = lcHammerWer(platz);
-      const alt = LC_HAMMER_SCHADEN[name];
-      const stufe = Math.min((alt ? alt.stufe : 0) + 1, 99);
-      if (alt && alt.uhr) clearTimeout(alt.uhr);
-      LC_HAMMER_SCHADEN[name] = {
-        stufe: stufe,
-        uhr: setTimeout(() => lcHammerHeilen(name), LC_HAMMER_HEILT)
-      };
-
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
         kreis.classList.remove("lc-gestaucht");
@@ -33542,47 +33297,93 @@
         + '<rect x="12" y="10" width="46" height="8" rx="4" fill="#b9c1cf"/>'
         + "</svg>"
         + '<span class="lc-zhammer-knall">BONK</span>';
-
       /* GEMELDET: „Der Hammer scheint mehrmals auf den Kopf zu schlagen,
          man hoert aber nur einen Klang. Es reicht, wenn er einmal
          schlaegt, dass er synchron mit dem Klang ist."
          Also ein Schlag — und die Sterne fliegen genau dann, wenn er
-         auftrifft (0.30 s, siehe lcHammerSchlag in korrekturen.css).
-         Die Sterne gibt es beim ERSTEN Schlag, denn da „passiert noch
-         nix": es tut weh, aber nichts geht kaputt. */
-      if (stufe === 1) {
+         auftrifft (0.30 s, siehe lcHammerSchlag in korrekturen.css). */
+      if (!glas) {
         for (let t = 0; t < 8; t++) {
           const st = document.createElement("i");
           st.className = "lc-zhammer-stern";
           st.style.setProperty("--wo", (t * 45) + "deg");
           st.style.animationDelay = (0.30 + t * 0.04).toFixed(2) + "s";
-          st.textContent = t % 2 ? "✦" : "✧";
+          st.textContent = t % 2 ? "\u2726" : "\u2727";
           schicht.appendChild(st);
         }
       } else {
-        lcHammerZeichnen(platz, name, stufe);
-      }
-
-      /* Ab Stufe 4 fliegen Scherben WEG vom Bild — die gehoeren in die
-         Effektschicht, denn sie sind vorbei, sobald sie gelandet sind. */
-      if (stufe >= 4) {
-        const zf = lcHammerZufall(lcHammerSaat(name) + stufe * 97);
-        const wieViele = Math.min(6 + (stufe - 4) * 3, 18);
-        for (let i = 0; i < wieViele; i++) {
-          const w = zf() * Math.PI * 2;
-          const weit = 46 + zf() * 52;
-          const sp = document.createElement("i");
-          sp.className = "lc-hscherbe";
-          sp.style.left = (40 + zf() * 20).toFixed(1) + "%";
-          sp.style.top = (34 + zf() * 20).toFixed(1) + "%";
-          sp.style.setProperty("--wx", (Math.cos(w) * weit).toFixed(1) + "%");
-          sp.style.setProperty("--wy", (Math.sin(w) * weit - 12).toFixed(1) + "%");
-          sp.style.setProperty("--dreh", Math.round(zf() * 720 - 360) + "deg");
-          sp.style.animationDelay = (0.32 + i * 0.018).toFixed(3) + "s";
-          schicht.appendChild(sp);
+        /* DER GLASBRUCH. Er sitzt IM Bild — deshalb die runde Blende,
+           dieselbe, mit der auch Wasserstand und Eis im Kreis bleiben.
+           Der Einschlag liegt dort, wo der Hammerkopf auftrifft: in
+           der Mitte, etwas oberhalb (der Kopf steht im Bild bei y 10
+           bis 30 von 70, seine Unterkante also bei 43 % der Hoehe).
+           Gezeichnet wird wie beim grossen Display-Bruch: Strahlen
+           vom Einschlag nach aussen, Ringe dazwischen, ein
+           zersplitterter Kern. Nur kleiner, und ohne Erdbeben — es
+           zerspringt ja ein Bild und nicht der Bildschirm. */
+        const blende = lcZpBlende(schicht);
+        blende.classList.add("lc-hglas");
+        /* Aus dem Los eine Zahlenfolge machen, die auf jedem Geraet
+           dieselbe ist. */
+        let saat = Math.floor(wurf * 1e6) + 7;
+        const zuf = () => {
+          saat = (saat * 1103515245 + 12345) % 2147483648;
+          return saat / 2147483648;
+        };
+        const mx = 44 + zuf() * 12, my = 38 + zuf() * 10;
+        const svg = document.createElementNS(NS_SVG, "svg");
+        svg.setAttribute("class", "lc-hglas-svg");
+        svg.setAttribute("viewBox", "0 0 100 100");
+        svg.setAttribute("preserveAspectRatio", "none");
+        const STRAHLEN = 11;
+        const enden = [];
+        for (let i = 0; i < STRAHLEN; i++) {
+          const w = ((360 / STRAHLEN) * i + (zuf() - 0.5) * 18) * Math.PI / 180;
+          const punkte = ["M" + mx.toFixed(1) + " " + my.toFixed(1)];
+          const schritte = 3;
+          for (let k = 1; k <= schritte; k++) {
+            const lang = (k / schritte) * (46 + zuf() * 34);
+            punkte.push("L" + (mx + Math.cos(w) * lang + (zuf() - 0.5) * 5).toFixed(1)
+                      + " " + (my + Math.sin(w) * lang + (zuf() - 0.5) * 5).toFixed(1));
+          }
+          enden.push(w);
+          const pf = document.createElementNS(NS_SVG, "path");
+          pf.setAttribute("d", punkte.join(" "));
+          pf.setAttribute("class", "lc-hriss");
+          pf.style.animationDelay = (0.30 + i * 0.012).toFixed(3) + "s";
+          svg.appendChild(pf);
         }
+        [0.3, 0.56].forEach((anteil, r2) => {
+          const d = [];
+          enden.forEach((w, i) => {
+            const lang = anteil * (48 + (i % 3) * 12);
+            d.push((i ? "L" : "M") + (mx + Math.cos(w) * lang).toFixed(1)
+                 + " " + (my + Math.sin(w) * lang).toFixed(1));
+          });
+          d.push("Z");
+          const pf = document.createElementNS(NS_SVG, "path");
+          pf.setAttribute("d", d.join(" "));
+          pf.setAttribute("class", "lc-hriss lc-hriss-ring");
+          pf.style.animationDelay = (0.34 + r2 * 0.05).toFixed(3) + "s";
+          svg.appendChild(pf);
+        });
+        const kern = document.createElementNS(NS_SVG, "circle");
+        kern.setAttribute("cx", mx.toFixed(1));
+        kern.setAttribute("cy", my.toFixed(1));
+        kern.setAttribute("r", "2.4");
+        kern.setAttribute("class", "lc-hriss-kern");
+        svg.appendChild(kern);
+        blende.appendChild(svg);
+        /* Der weisse Schlag im Augenblick des Bruchs. */
+        const blitz = document.createElement("b");
+        blitz.className = "lc-hglas-blitz";
+        blitz.style.left = mx.toFixed(1) + "%";
+        blitz.style.top = my.toFixed(1) + "%";
+        blende.appendChild(blitz);
+        /* Und der Ton genau dort, wo der Hammer auftrifft (0,30 s) —
+           nicht beim Abschicken. */
+        lcTonSpaeter("glasbruch", 300, 0.5);
       }
-
       /* RUNDE 70 — XANDER: „Schau dass der Animation Sound vom Hammer
          auch zu Bewegung passt." Der Treffer sass schon richtig
          (300 ms, dort fliegen die Sterne); was fehlte, war das
@@ -33599,16 +33400,6 @@
          (300 ms, dort fliegen auch die Sterne), der Amboss nur
          leiser — er soll unter dem Bonk klingen, nicht darueber. */
       lcTonSpaeter("hammerschlag", 300, 0.45);
-      /* Und darueber das, was die Stufe hoerbar macht. */
-      if (stufe === 2) lcTonSpaeter("knack", 300, 0.55);
-      else if (stufe === 3) lcTonSpaeter("glasbruch", 300, 0.5);
-      else if (stufe === 4) {
-        lcTonSpaeter("glasbruch", 300, 0.35);
-        lcTonSpaeter("splitter", 380, 0.6);
-      } else if (stufe >= 5) {
-        lcTonSpaeter("knack", 300, 0.4);
-        lcTonSpaeter("splitter", 360, 0.5);
-      }
     }, 3000, "hammer");
   }
 
@@ -39677,52 +39468,17 @@
      runde Blende, und die Richtung kommt aus den Sitzkaesten.
      ================================================================= */
 
-  /* --- DAS KATAPULT -------------------------------------------------
-     RUNDE 86 — XANDER: „der Katapult nimmt das Profilbild immer noch
-     nicht als Ladung auf. Mache das mal bitte noch. Das kommt dann von
-     links, von rechts, wo man links sitzt."
-
-     Er hat zweimal recht gehabt. Vorher stand das Katapult MITTIG
-     ueber dem Platz und das Profilbild machte seine eigene Animation
-     (lc-geschleudert): es flog nach links oben weg, egal wo das
-     Katapult stand und egal, wo der Werfende sass. Zwischen Arm und
-     Bild gab es keinen Zusammenhang — nichts wurde aufgenommen.
-
-     WIE DER ONAGER WIRKLICH STEHT. Das Bild ist ein Onager: der
-     Prellbalken (das Polster, an dem der Arm anschlaegt) sitzt LINKS,
-     der Arm wird also nach rechts unten gespannt und schnellt nach
-     links oben. Die Schale steht im gespannten Zustand rechts von der
-     Achse — und GENAU DORT muss das Profilbild liegen, sonst nimmt er
-     nichts auf. Gerechnet:
-       · Der Arm dreht um (34|38) im viewBox 80x60, die Schale liegt
-         27 Einheiten darueber.
-       · Gespannt (76 Grad) steht sie bei (60,2|31,5), also bei
-         75,3 % der Geraetebreite.
-       · Das Geraet ist 164 % einer Bildbreite breit. Damit die Schale
-         auf der Bildmitte liegt, muss seine linke Kante 73,4 % einer
-         Bildbreite links davon stehen — das sind 41,4 % weiter links
-         als bisher. Deshalb --kataseite.
-       · Beim Loslassen (-18 Grad) steht die Schale bei (25,7|12,3),
-         also 0,71 Bildbreiten links und 0,18 darueber. Dort verlaesst
-         die Ladung die Schale — nicht irgendwo.
-
-     UND DIE SEITE. Sitzt der Werfende rechts, wird das ganze Geraet
-     gespiegelt (ein <g> mit scale(-1,1) im SVG, nicht in CSS — die
-     Animation braucht die Transformation fuer sich). Dann steht es
-     rechts und wirft nach rechts oben.
-
-     DIE LADUNG ist eine Kopie des Profilbildes in der Effektschicht;
-     das echte Bild wird so lange unsichtbar. Anders geht es nicht: das
-     echte Bild liegt UNTER der Effektschicht, es kann nicht in der
-     Schale liegen und vom Katapult verdeckt werden zugleich. */
+  /* --- DAS KATAPULT ------------------------------------------------- */
   function lcKatapult(wen) {
     return lcAmPlatz(wen, "lc-katapult", (schicht, platz) => {
-      const r = lcWurfSetzen(schicht, platz, 230);
-      /* „r" zeigt vom Getroffenen zum Werfenden: x > 0 heisst, er
-         sitzt rechts. Dann steht das Katapult rechts. */
-      const vonRechts = r.x > 0;
-      schicht.style.setProperty("--kataseite", (vonRechts ? 41.4 : -41.4) + "%");
+      lcWurfSetzen(schicht, platz, 230);
       const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-geschleudert");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-geschleudert");
+        setTimeout(() => kreis.classList.remove("lc-geschleudert"), 2600);
+      }
       /* RUNDE 60 NEU GEZEICHNET.
          GEMELDET: „der Katapult sieht auch nicht schoen animiert aus."
          Vorher war es ein Trapez mit zwei Kreisen und einem geraden
@@ -39743,9 +39499,6 @@
          genau (34|38), und das ist die Achse. */
       schicht.innerHTML =
         '<svg class="lc-katapult-bild" viewBox="0 0 80 60">'
-        /* Sitzt der Werfende rechts, steht das ganze Geraet
-           spiegelverkehrt — dann wirft es nach rechts. */
-        + (vonRechts ? '<g transform="translate(80,0) scale(-1,1)">' : "<g>")
         /* --- Grundschwelle --- */
         + '<path d="M5 45.4 h62 a2.2 2.2 0 0 1 0 4.4 h-62 a2.2 2.2 0 0 1 0 -4.4 Z"'
         + ' fill="#7a4e22" stroke="#4e3114" stroke-width="1.5"/>'
@@ -39775,12 +39528,10 @@
         + '<path d="M31.6 38 L36.4 38 L35.3 12 L32.7 12 Z" fill="#a9702f"'
         + ' stroke="#6b4a22" stroke-width="1.4" stroke-linejoin="round"/>'
         + '<path d="M31.3 29.4 h5.6 v2.2 h-5.6 Z" fill="#6b4a22"/>'
-        /* RUNDE 86: die Schale ist groesser als frueher — sie soll ein
-           ganzes Profilbild tragen und nicht einen Kieselstein. */
-        + '<path d="M24.6 12.2 C24.6 3.4 43.4 3.4 43.4 12.2'
-        + ' C43.4 18.6 24.6 18.6 24.6 12.2 Z" fill="#6b4a22"/>'
-        + '<path d="M27 11.4 C27 5.2 41 5.2 41 11.4'
-        + ' C41 16 27 16 27 11.4 Z" fill="#8a6134"/>'
+        + '<path d="M27.6 12.6 C27.6 5.2 40.4 5.2 40.4 12.6'
+        + ' C40.4 17 27.6 17 27.6 12.6 Z" fill="#6b4a22"/>'
+        + '<path d="M29.5 12 C29.5 7.8 38.5 7.8 38.5 12'
+        + ' C38.5 15 29.5 15 29.5 12 Z" fill="#8a6134"/>'
         + "</g>"
         /* --- Das Torsionsbuendel an der Achse, ueber dem Arm --- */
         + '<circle cx="34" cy="38" r="4.8" fill="#c9a86a" stroke="#6b4a22"'
@@ -39792,186 +39543,8 @@
         + ' stroke-linecap="round"/>'
         + '<rect x="19.4" y="23.6" width="10.4" height="5.8" rx="2.9"'
         + ' fill="#9a6a3a" stroke="#5e3c17" stroke-width="1.4"/>'
-        + "</g></svg>";
-
-      /* ---- DIE LADUNG: DAS PROFILBILD LIEGT IN DER SCHALE ----------
-         Alle Wege in Bildbreiten, damit es auf jedem Geraet gleich
-         aussieht. Die Zahlen stammen aus der Rechnung oben; „seite"
-         dreht sie um, wenn das Geraet gespiegelt steht. */
-      if (!kreis) return;
-      const bild = platz.querySelector(".lc-avatar");
-      const quelle = bild && bild.getAttribute("src") && bild.style.display !== "none"
-        ? bild.getAttribute("src") : "";
-      const last = document.createElement("span");
-      last.className = "lc-kata-last";
-      if (quelle) last.style.backgroundImage = "url(" + quelle.replace(/[()"']/g, "") + ")";
-      else last.textContent = (lcHammerWer(platz) || "?").charAt(0).toUpperCase();
-      schicht.appendChild(last);
-      const seite = vonRechts ? -1 : 1;
-      const wo = (x, y, gr, dreh) => "translate(" + (x * seite * 100).toFixed(1) + "%, "
-        + (y * 100).toFixed(1) + "%) scale(" + gr.toFixed(2) + ") rotate("
-        + (dreh * seite).toFixed(0) + "deg)";
-      last.animate([
-        /* 0–12 %: das echte Bild liegt noch da, die Kopie wartet. */
-        { offset: 0,    opacity: 0, transform: wo(0, 0, 1, 0) },
-        { offset: 0.11, opacity: 0, transform: wo(0, 0, 1, 0) },
-        /* 12 %: der Arm ist heruntergezogen, die Schale liegt auf dem
-           Bild — jetzt uebernimmt die Kopie. */
-        { offset: 0.12, opacity: 1, transform: wo(0, 0, 1, 0) },
-        /* Sie FAELLT in die Schale. Die liegt nicht auf Bildmitte: das
-           Geraet steht 30 % tiefer als das Bild, seine Achse also bei
-           0,849 Bildbreiten und die gespannte Schale bei 0,716 — das
-           sind 0,216 Bildbreiten UNTER der Bildmitte. Genau so weit
-           sinkt die Ladung, und sie wird kleiner, weil sie in die
-           Schale passen muss. Daran sieht man, dass sie aufgenommen
-           wird und nicht nur daliegt. */
-        { offset: 0.17, opacity: 1, transform: wo(0, 0.075, 0.78, -7), easing: "ease-in" },
-        /* Ein kurzes Nachwippen: so sieht ein Gewicht aus, das in eine
-           Schale faellt — ohne das liegt es nur da. */
-        { offset: 0.20, opacity: 1, transform: wo(0, 0.045, 0.8, -5), easing: "ease-out" },
-        { offset: 0.22, opacity: 1, transform: wo(0, 0.062, 0.79, -6) },
-        /* 26 %: losgelassen — dort, wo die Schale beim Abwurf steht
-           (Winkel -18 Grad, also 0,71 Bildbreiten zur Seite und 0,18
-           ueber der Bildmitte). GEMESSEN, wann der Arm wirklich
-           loslaesst: bei 560 ms steht er noch auf +76 Grad, bei 620 ms
-           schon auf -22,6 — die Feder (cubic-bezier mit 1.4)
-           ueberholt die Marke. Deshalb 24,5 % und nicht 26 %, sonst
-           bliebe die Ladung einen Wimpernschlag in der Luft stehen,
-           waehrend der Arm schon weg ist. */
-        { offset: 0.245, opacity: 1, transform: wo(-0.707, -0.178, 0.78, -60), easing: "ease-out" },
-        { offset: 0.34, opacity: 1, transform: wo(-1.25, -0.82, 0.62, -190) },
-        { offset: 0.46, opacity: 0, transform: wo(-2.05, -1.55, 0.34, -380) },
-        /* Und dann faellt sie wieder herunter — von oben auf den
-           eigenen Platz, nicht aus der Wurfrichtung. */
-        { offset: 0.60, opacity: 0, transform: wo(0, -1.7, 0.42, -520) },
-        { offset: 0.62, opacity: 1, transform: wo(0, -1.6, 0.46, -540) },
-        { offset: 0.78, opacity: 1, transform: wo(0, 0.07, 1.07, -700), easing: "ease-in" },
-        { offset: 0.84, opacity: 1, transform: wo(0, 0, 1, -720), easing: "ease-out" },
-        { offset: 1,    opacity: 1, transform: wo(0, 0, 1, -720) }
-      ], { duration: 2600, easing: "linear", fill: "forwards" });
-      /* Solange die Kopie fliegt, ist der Platz leer. */
-      setTimeout(() => kreis.classList.add("lc-kata-leer"), 300);
-      setTimeout(() => kreis.classList.remove("lc-kata-leer"), 2200);
-      setTimeout(() => { if (last.parentNode) last.parentNode.removeChild(last); }, 2560);
+        + "</svg>";
     }, 2600, "katapult");
-  }
-
-  /* =================================================================
-     DER LUFTBALLON — JEMANDEN AUFBLASEN
-     -----------------------------------------------------------------
-     XANDER (Runde 86): „Ach so und das mit dem Luftballon hast du auch
-     noch nicht gemacht, dass man jemand aufblasen kann wie ne
-     Luftballon."
-
-     Er hat recht, es stand seit Runde 75 in der Liste. So geht es:
-
-       0,00–0,06  die Pumpe steht da, auf der Seite, auf der der
-                  Aufblasende sitzt (wie bei Katapult und Sahnedose),
-                  und ihr Schlauch haengt am Bild.
-       0,10 / 0,20 / 0,30   drei Pumpenhuebe. Bei jedem wird das Bild
-                  groesser (1,30 · 1,62 · 1,95) und wippt nach — Gummi
-                  gibt nach und schwingt zurueck, es springt nicht.
-       0,36       der Schlauch loest sich, die Pumpe geht weg.
-       0,38–0,45  der Ballon schwebt und zittert: er haelt die Luft.
-       0,46       losgelassen. Die Luft faehrt heraus (ton/luftraus),
-                  und er schiesst im Zickzack ueber das Feld, wird
-                  dabei kleiner — so fliegt ein losgelassener Ballon:
-                  nicht geradeaus, sondern dorthin, wohin ihn die
-                  ausstroemende Luft gerade stoesst.
-       0,78–0,90  er faellt zurueck auf seinen Platz und wippt aus.
-
-     DER KNOTEN UND DAS GLANZLICHT liegen in der Effektschicht und
-     bekommen GENAU DIESELBEN Stuetzstellen wie das Bild — sonst
-     schwimmt der Knoten neben dem Ballon her.
-     ================================================================= */
-  function lcLuftballon(wen) {
-    return lcAmPlatz(wen, "lc-ballon", (schicht, platz) => {
-      const kreis = platz.querySelector(".lc-kreis");
-      if (!kreis) return;
-      const r = lcWurfRichtung(platz);
-      const vonRechts = r.x > 0;
-      if (vonRechts) schicht.classList.add("lc-ballon-rechts");
-
-      /* --- DIE PUMPE mit Schlauch --------------------------------- */
-      const pumpe = document.createElement("span");
-      pumpe.className = "lc-ballon-pumpe";
-      pumpe.innerHTML =
-        '<svg viewBox="0 0 60 70">'
-        /* Der Schlauch: vom Stutzen hinauf zum Bild. */
-        + '<path class="lc-ballon-schlauch" d="M46 44 C58 40 62 22 52 12"'
-        + ' fill="none" stroke="#3f4654" stroke-width="5"'
-        + ' stroke-linecap="round"/>'
-        /* Der Zylinder … */
-        + '<rect x="12" y="34" width="30" height="30" rx="4" fill="#59617a"'
-        + ' stroke="#333a4a" stroke-width="2"/>'
-        /* … der Fuss … */
-        + '<path d="M6 64 h48 a3 3 0 0 1 0 6 H6 a3 3 0 0 1 0 -6 Z" fill="#333a4a"/>'
-        /* … der Griff, der sich bewegt … */
-        + '<g class="lc-ballon-griff">'
-        + '<rect x="24" y="8" width="6" height="30" rx="3" fill="#8b93a3"/>'
-        + '<rect x="12" y="2" width="30" height="8" rx="4" fill="#d9534f"'
-        + ' stroke="#9d3c39" stroke-width="1.6"/>'
-        + "</g>"
-        /* … und der Stutzen zum Schlauch. */
-        + '<rect x="40" y="40" width="8" height="8" rx="2" fill="#333a4a"/>'
-        + "</svg>";
-      schicht.appendChild(pumpe);
-
-      /* --- KNOTEN UND GLANZLICHT ---------------------------------- */
-      const huelle = document.createElement("span");
-      huelle.className = "lc-ballon-huelle";
-      huelle.innerHTML =
-        '<i class="lc-ballon-glanz"></i>'
-        + '<svg class="lc-ballon-knoten" viewBox="0 0 20 16">'
-        + '<path d="M10 0 L17 14 Q10 10 3 14 Z" fill="#c9ccd6"'
-        + ' stroke="#9aa1b1" stroke-width="1.2" stroke-linejoin="round"/>'
-        + "</svg>";
-      schicht.appendChild(huelle);
-
-      /* --- DIE BEWEGUNG ------------------------------------------- */
-      const seite = vonRechts ? -1 : 1;
-      const wo = (x, y, gr, dreh) => "translate(" + (x * seite).toFixed(1) + "%, "
-        + y.toFixed(1) + "%) scale(" + gr.toFixed(2) + ")"
-        + (dreh ? " rotate(" + (dreh * seite).toFixed(0) + "deg)" : "");
-      const bahn = [
-        { offset: 0,    transform: wo(0, 0, 1, 0) },
-        { offset: 0.09, transform: wo(0, 0, 1, 0) },
-        /* Erster Hub. Gummi gibt nach: erst zu weit, dann zurueck. */
-        { offset: 0.13, transform: wo(0, -2, 1.38, 0), easing: "ease-out" },
-        { offset: 0.17, transform: wo(0, -1, 1.30, 0), easing: "ease-in-out" },
-        /* Zweiter Hub. */
-        { offset: 0.23, transform: wo(0, -4, 1.70, 0), easing: "ease-out" },
-        { offset: 0.27, transform: wo(0, -3, 1.62, 0), easing: "ease-in-out" },
-        /* Dritter Hub. */
-        { offset: 0.33, transform: wo(0, -7, 2.04, 0), easing: "ease-out" },
-        { offset: 0.37, transform: wo(0, -6, 1.95, 0), easing: "ease-in-out" },
-        /* Er haelt die Luft und zittert. */
-        { offset: 0.41, transform: wo(1.5, -8, 1.97, 2), easing: "ease-in-out" },
-        { offset: 0.45, transform: wo(-1.5, -6, 1.93, -2), easing: "ease-in-out" },
-        /* Losgelassen: Zickzack, und dabei wird er kleiner. */
-        { offset: 0.52, transform: wo(-86, -54, 1.62, -70), easing: "ease-out" },
-        { offset: 0.58, transform: wo(64, -96, 1.34, 110), easing: "ease-in-out" },
-        { offset: 0.64, transform: wo(-52, -128, 1.12, -160), easing: "ease-in-out" },
-        { offset: 0.70, transform: wo(78, -74, 0.92, 200), easing: "ease-in-out" },
-        { offset: 0.76, transform: wo(-24, -110, 0.76, -240), easing: "ease-in-out" },
-        /* Und herunter auf den eigenen Platz. */
-        { offset: 0.86, transform: wo(0, 10, 1.06, -360), easing: "ease-in" },
-        { offset: 0.91, transform: wo(0, -4, 0.96, -360), easing: "ease-out" },
-        { offset: 0.96, transform: wo(0, 2, 1.02, -360), easing: "ease-in-out" },
-        { offset: 1,    transform: wo(0, 0, 1, -360) }
-      ];
-      const takt = { duration: 4200, easing: "linear", fill: "none" };
-      kreis.animate(bahn, takt);
-      /* Knoten und Glanzlicht laufen auf denselben Stuetzstellen —
-         sonst schwimmen sie neben dem Ballon her. */
-      huelle.animate(bahn, { duration: 4200, easing: "linear", fill: "forwards" });
-
-      /* --- UND DIE TOENE ------------------------------------------ */
-      /* Drei Huebe, jeder genau dort, wo das Bild springt. */
-      [0.10, 0.20, 0.30].forEach((t) => lcTonSpaeter("pumpe", Math.round(t * 4200), 0.5));
-      /* Und das Entweichen genau beim Loslassen (46 %). */
-      lcTonSpaeter("luftraus", Math.round(0.46 * 4200), 0.6);
-    }, 4200, "luftballon");
   }
 
   /* ------------------------------------------------------------------
@@ -44770,9 +44343,8 @@
        EINEM Platz, sie duerfen nicht ueber den ganzen Raum regnen.
        „frosch" und „zylinder" sind Reisen und stehen schon oben. */
     telefon: 1, anziehen: 1, frosch: 1, zylinder: 1,
-    /* RUNDE 86 — die Spruehdose gilt genau EINEM Platz, und der
-       Luftballon blaest genau EINEN auf. */
-    spray: 1, luftballon: 1
+    /* RUNDE 86 — die Spruehdose gilt genau EINEM Platz. */
+    spray: 1
   };
 
   function lcWirkung(art, anZeile, nachricht) {
@@ -44893,7 +44465,6 @@
       if (art === "sanduhr" && lcSanduhrTausch(wenZ, (nachricht && nachricht.eigen)
             ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "katapult" && lcKatapult(wenZ)) return;
-      if (art === "luftballon" && lcLuftballon(wenZ)) return;
       if (art === "marsch" && lcTrommel(wenZ, true)) return;
       if (art === "gong" && lcGong(wenZ)) return;
       if (art === "bongo" && lcBongo(wenZ)) return;
