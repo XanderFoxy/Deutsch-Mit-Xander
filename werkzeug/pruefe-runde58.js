@@ -391,10 +391,20 @@ const pruefe = (was, gut, zusatz) => {
     /* Nach vier Sekunden muss sie AN bleiben. */
     await new Promise((f) => setTimeout(f, 4000));
     const bleibtAn = k.classList.contains("lc-birne-an");
-    /* Und jetzt herausdrehen. */
+    /* RUNDE 85 — XANDER: „es kann nicht sein, wenn man Birne anmacht,
+       dass beim zweiten Betaetigen von Birne an die Birne ausgeht."
+       Der zweite Druck laesst sie also AN — vorher drehte er sie
+       heraus. Herausgedreht wird mit dem eigenen Befehl. */
     window.DMA_PRUEFUNG.wirkung("gluehbirne", "Cem", "Alex");
+    await new Promise((f) => setTimeout(f, 600));
+    const zweiterDruck = k.classList.contains("lc-birne-an");
+    /* Und jetzt herausdrehen — mit /birneraus. Das Herausdrehen
+       geschieht am EIGENEN Platz (lcGluehbirneRaus), bei allen
+       anderen geht das Licht einfach aus. */
+    const meiner = document.querySelector(".lc-platz-ich .lc-kreis");
+    window.DMA_PRUEFUNG.wirkung("birneraus", "", "Alex");
     await new Promise((f) => setTimeout(f, 300));
-    const raus = getComputedStyle(k).animationName;
+    const raus = meiner ? getComputedStyle(meiner).animationName : "kein eigener Platz";
     /* Der Stromausfall kommt bei 1364 ms. */
     await new Promise((f) => setTimeout(f, 1200));
     const dunkel = document.getElementById("lcStromAus");
@@ -413,6 +423,7 @@ const pruefe = (was, gut, zusatz) => {
       : false;
     await new Promise((f) => setTimeout(f, 1400));
     return { einDreh: einDreh, bleibtAn: bleibtAn, raus: raus,
+             zweiterDruck: zweiterDruck,
              dunkelDa: Boolean(dunkel), deck: Number(deck.toFixed(2)), voll: voll,
              nochAn: k.classList.contains("lc-birne-an") };
   });
@@ -425,7 +436,10 @@ const pruefe = (was, gut, zusatz) => {
     Math.abs(bi.einDreh.m11) < 0.999 && Math.abs(bi.einDreh.m12) < 0.02,
     "Breite " + bi.einDreh.m11.toFixed(3) + ", Schraeglage " + bi.einDreh.m12.toFixed(3));
   pruefe("sie bleibt an, statt nach vier Sekunden zu erloeschen", bi.bleibtAn);
-  pruefe("ein zweites Mal dreht sie wieder heraus", bi.raus === "lcBirneRausR58", bi.raus);
+  /* ACHTUNG, HIER STAND FRUEHER: „ein zweites Mal dreht sie wieder
+     heraus." Genau das hat Xander in Runde 85 zurueckgenommen. */
+  pruefe("ein zweites Mal „Birne an\u201c laesst sie an", bi.zweiterDruck);
+  pruefe("herausgedreht wird mit /birneraus", bi.raus === "lcBirneRausR58", bi.raus);
   pruefe("dabei faellt der Strom auf der ganzen Buehne aus",
     bi.dunkelDa && bi.deck > 0.5, "Deckkraft " + bi.deck);
   pruefe("und zwar wirklich auf der ganzen SEITE", bi.voll);

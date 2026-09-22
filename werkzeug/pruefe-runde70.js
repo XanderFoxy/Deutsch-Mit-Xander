@@ -48,7 +48,12 @@ pruefe("die Strecke wird in Plaetzen gemessen",
   && /const plaetzeR = einheitR \?/.test(js));
 pruefe("und die Fahrzeit haengt daran",
   /Math\.round\(grund \* \(0\.72 \+ 0\.28 \* plaetzeR\)\)/.test(js));
-pruefe("das Beamen bleibt ein Sprung", /art === "beamen" \? grund/.test(js));
+/* RUNDE 85: der Fahrstuhl steht jetzt neben dem Beamen — auch er
+   braucht immer dieselbe Zeit, weil Tuer und Glocke am Geraet haengen
+   und nicht an der Entfernung. Gemessen wird deshalb der Sinn (beide
+   nehmen „grund" unveraendert), nicht mehr der Wortlaut. */
+pruefe("das Beamen bleibt ein Sprung — und der Fahrstuhl auch",
+  /\(art === "beamen" \|\| art === "fahrstuhl"\) \? grund/.test(js));
 pruefe("der Ton laeuft genau so lange wie die Fahrt",
   /function lcTonReise\(was, ms\)/.test(js)
   && /plan\.dauer = Math\.max\(600, Math\.round\(ms\)\)/.test(js));

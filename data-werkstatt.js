@@ -49,22 +49,18 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 453 — der Kopfhoerer fragt erst: nur schicken oder mit Ausschnitt",
+  stand: "Fassung 454 — alle Sonden wieder gruen",
 
   inArbeit: [
-    { seit: "2026-09-22T12:00",
-      text: "Nichts mehr aus Runde 85 und 86 — die Listen sind abgearbeitet" },
+    { seit: "2026-09-22T12:20",
+      text: "Nichts mehr aus Runde 85 und 86 — beide Listen sind abgearbeitet" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T12:00",
-      text: "Ein Druck auf den Kopfhoerer fragt jetzt: nur aufsetzen oder mit Lied?" },
-    { seit: "2026-09-22T12:00",
-      text: "Nach der Liedwahl kommt die Frage: ganzes Lied oder Ausschnitt — mit zwei Feldern fuer ab und bis" },
-    { seit: "2026-09-22T12:00",
-      text: "Der zuletzt gewaehlte Ausschnitt wird je Lied gemerkt und beim naechsten Mal vorgeschlagen" },
-    { seit: "2026-09-22T12:00",
-      text: "Das gilt auch fuer den eigenen Platz: man kann sich selbst ein Lied auf die Ohren legen" },
+    { seit: "2026-09-22T12:20",
+      text: "Drei Sonden auf die zurueckgenommenen Entscheidungen umgeschrieben: Birne (zweiter Druck), Beamen/Fahrstuhl, Zaubertrick" },
+    { seit: "2026-09-22T12:20",
+      text: "Alle 144 Sonden laufen durch" },
   ],
 };

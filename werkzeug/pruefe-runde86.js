@@ -124,8 +124,10 @@ const sage = (gut, text, dazu) => {
   sage(/art === "spray"\)/.test(lc) && /wirkung: "spray"/.test(lc),
     "/spray gibt es, mit Gesicht und mit Bild");
   const js = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
-  sage(/const grund = \{ frosch: 2400, zylinder: 3400,/.test(js),
-    "der Zaubertrick hat mehr Zeit bekommen");
+  /* Die Tabelle hat in Runde 85 den Fahrstuhl davor bekommen —
+     gemessen wird der Zylinder, nicht die Reihenfolge. */
+  sage(/zylinder: 3400,/.test(js),
+    "der Zaubertrick hat mehr Zeit bekommen (3,4 s)");
   sage(/easing: "linear", fill: "forwards" \}\);/.test(js)
     && /ein „easing" in den OPTIONEN verbiegt/.test(js),
     "und seine Zeitachse ist linear, damit jeder Abschnitt seine Zeit behaelt");
