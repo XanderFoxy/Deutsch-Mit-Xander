@@ -22505,13 +22505,19 @@ code, pre {
 }
 .lc-greif-form { width: 100%; height: 100%; overflow: visible; }
 .lc-greif-rumpf   { fill: #6b4f33; stroke: #3d2b18; stroke-width: 1.4; }
-.lc-greif-kopf    { fill: #d9cbb4; stroke: #3d2b18; stroke-width: 1.3; }
-.lc-greif-schwanz { fill: #5a412a; stroke: #3d2b18; stroke-width: 1.2; }
+/* RUNDE 87 — der Kopf ist jetzt der eines WEISSKOPFSEEADLERS und
+   nicht mehr beige. */
+.lc-greif-kopf    { fill: #f5f1e6; stroke: #3d2b18; stroke-width: 1.2; }
+/* Der alte Schwanz als Flaeche — er wird nicht mehr gezeichnet, die
+   Regel bleibt nur fuer aeltere Chatzeilen stehen. */
+.lc-greif-schwanz { fill: #f2eee2; stroke: #b3a891; stroke-width: 1.1; }
 .lc-greif-kerbe   { stroke: #3d2b18; stroke-width: 1; fill: none; opacity: .7; }
 .lc-greif-feder   { stroke: #46331f; stroke-width: 1.4; fill: none; stroke-linecap: round; opacity: .75; }
 .lc-greif-auge    { fill: #f4d35e; stroke: #3d2b18; stroke-width: .9; }
 .lc-greif-pupille { fill: #12100c; }
-.lc-greif-schnabel{ fill: #4a4034; stroke: #2a231a; stroke-width: .8; }
+/* Und der Schnabel ist gelb, nicht grau — das ist das Zeichen des
+   Weisskopfseeadlers. */
+.lc-greif-schnabel{ fill: #eec13e; stroke: #9a7512; stroke-width: .8; }
 .lc-greif-bein    { stroke: #d8a53a; stroke-width: 2.8; fill: none; stroke-linecap: round; }
 .lc-greif-kralle  { stroke: #d8a53a; stroke-width: 1.9; fill: none; stroke-linecap: round; }
 .lc-greif-fluegel path { fill: #6b4f33; stroke: #3d2b18; stroke-width: 1.3; }
@@ -22526,8 +22532,74 @@ code, pre {
    die Federn als Federn sieht, brauchen sie eigene Farben: die
    Schwingen etwas dunkler als der Fittich (so heben sie sich
    voneinander ab), die Deckfedern nur als Striche. */
+/* =====================================================================
+   RUNDE 87 — DIE SCHWINGE IN SIEBEN LAGEN
+   ---------------------------------------------------------------------
+   XANDER: „Die Adlerschwingen mit den Seitenfedern und den Rueckfedern,
+   die nach hinten zeigen, in mehreren Lagen … Auch den Kopf ausarbeiten
+   … fange mit dem mikroskopisch kleinsten feinsten Detail an."
+
+   Gezeichnet wird das in app.js; hier steht nur, WIE die Lagen
+   aussehen. Und das ist der Punkt: sie duerfen nicht alle gleich
+   aussehen, sonst sind sieben Lagen dasselbe wie eine. Ein Vogel wird
+   von aussen nach innen HELLER, weil die Deckfedern kuerzer sind und
+   mehr Licht bekommen:
+       Handschwingen   #4a3420  die dunkelsten, ganz aussen
+       Armschwingen    #553c25
+       Handdecken      #5e442a
+       Grosse Decken   #684d30
+       Mittlere Decken #6f5336
+       Kleine Decken   nur als Strich
+       Daumenfittich   #513a23  (er liegt vorn und wirft Schatten)
+   Die Raender sind je eine Spur dunkler als die Flaeche — so trennen
+   sich die Federn voneinander, ohne dass ein schwarzes Gitter
+   entsteht.
+   ===================================================================== */
 .lc-greif-arm      { fill: #6b4f33; stroke: #3d2b18; stroke-width: 1.2; }
-.lc-greif-schwinge { fill: #5c4229; stroke: #2f2114; stroke-width: 1; }
+.lc-greif-schwinge { fill: #4a3420; stroke: #241a0f; stroke-width: .9; }
+.lc-greif-armschwinge { fill: #553c25; stroke: #2a1d11; stroke-width: .85; }
+.lc-greif-handdecke   { fill: #5e442a; stroke: #31220f; stroke-width: .8; }
+.lc-greif-grossdecke  { fill: #684d30; stroke: #382713; stroke-width: .75; }
+.lc-greif-mitteldecke { fill: #6f5336; stroke: #3d2b18; stroke-width: .7; }
+.lc-greif-alula       { fill: #513a23; stroke: #281b0e; stroke-width: .8; }
+.lc-greif-kleindecke  { fill: none; stroke: #47331d; stroke-width: .9;
+                        stroke-linecap: round; opacity: .8; }
+/* Der Kiel: der feine Strich in jeder Feder. Er ist das
+   „mikroskopisch kleinste Detail", von dem er spricht — ohne ihn
+   sind die Federn Blaetter. Sehr durchsichtig, sonst frisst er die
+   Flaeche auf. */
+.lc-greif-kiel { fill: none; stroke: #241a0e; stroke-width: .45;
+                 stroke-linecap: round; opacity: .45; }
+/* Der ferne Fluegel ist derselbe Bau, nur im Schatten. */
+.lc-greif-fluegel-fern .lc-greif-schwinge     { fill: #33240f; stroke: #180f05; }
+.lc-greif-fluegel-fern .lc-greif-armschwinge  { fill: #3b2a16; stroke: #1c1208; }
+.lc-greif-fluegel-fern .lc-greif-handdecke    { fill: #422f1a; stroke: #1f1409; }
+.lc-greif-fluegel-fern .lc-greif-grossdecke   { fill: #48341d; stroke: #241709; }
+.lc-greif-fluegel-fern .lc-greif-mitteldecke  { fill: #4e3921; stroke: #281a0b; }
+.lc-greif-fluegel-fern .lc-greif-alula        { fill: #382713; stroke: #1a1006; }
+.lc-greif-fluegel-fern .lc-greif-kleindecke   { stroke: #2c1e0c; }
+.lc-greif-fluegel-fern .lc-greif-kiel         { opacity: .3; }
+/* --- DER KOPF DES WEISSKOPFSEEADLERS -------------------------------
+   Weiss ist hier nicht Weiss: ein Federkleid hat nie reines #fff,
+   sonst sieht es nach Papier aus. #f5f1e6 ist gebrochen, und die
+   Kontur gibt ihm die Form zurueck. */
+.lc-greif-nackenzacken { fill: #f0ebde; stroke: #3d2b18; stroke-width: .8;
+                         stroke-linejoin: round; }
+.lc-greif-kopffeder    { stroke: #c9bda3; stroke-width: .8; fill: none;
+                         stroke-linecap: round; opacity: .9; }
+.lc-greif-schwanzdecke { fill: #5a412a; stroke: #3d2b18; stroke-width: 1; }
+.lc-greif-steuer       { fill: #f2eee2; stroke: #8d8270; stroke-width: .95; }
+.lc-greif-wachs        { fill: #e9bb3c; stroke: #a07d14; stroke-width: .7; }
+.lc-greif-nasloch      { fill: #7d5f10; }
+.lc-greif-schnabel-unten { fill: #d9a929; stroke: #9a7512; stroke-width: .7; }
+.lc-greif-schneide     { fill: none; stroke: #8a6a10; stroke-width: .6;
+                         stroke-linecap: round; opacity: .8; }
+.lc-greif-braue        { fill: none; stroke: #4a3a1c; stroke-width: 2.1;
+                         stroke-linecap: round; }
+.lc-greif-glanz        { fill: #fffdf4; opacity: .85; }
+.lc-greif-hose         { fill: #6b4f33; stroke: #3d2b18; stroke-width: 1; }
+.lc-greif-schuppe      { stroke: #a87c22; stroke-width: .7; fill: none;
+                         stroke-linecap: round; opacity: .7; }
 .lc-greif-decke    { fill: none; stroke: #4a3520; stroke-width: 1.1;
                      stroke-linecap: round; opacity: .6; }
 .lc-greif-fluegel-fern .lc-greif-arm      { fill: #4a3522; stroke: #2a1d10; }

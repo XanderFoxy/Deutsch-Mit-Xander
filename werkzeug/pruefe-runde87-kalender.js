@@ -52,7 +52,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
 
   const erg = await pg.evaluate(() => {
     const area = document.getElementById("kompassArea");
-    const schalter = area.querySelector('.inline-feature-flag-toggle[data-flag-key]');
+    const schalter = area.querySelector('.inline-feature-flag-toggle[data-flag-key="history_paket_01"]');
     const beitrag = area.querySelector('#kompass-geschichte-heute') || area.querySelector('.question-card');
     const ueberschrift = area.querySelector('#kompass-geschichte');
     const box = (el) => el ? el.getBoundingClientRect() : null;
@@ -64,7 +64,27 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
       ySchalter: schalter ? Math.round(box(schalter).top) : null,
       yBeitrag: beitrag ? Math.round(box(beitrag).top) : null,
       yUeberschrift: ueberschrift ? Math.round(box(ueberschrift).top) : null,
-      htmlAusschnitt: area.innerHTML.length
+      htmlAusschnitt: area.innerHTML.length,
+      /* RUNDE 87 — XANDER: „Das Update Panel ist jetzt ploetzlich bei
+         Dichter und Denker." Auf dieser Seite stehen VIER gleich
+         aussehende Schalter. Deshalb wird jetzt mitgezaehlt, welcher
+         wo steht — sonst prueft man am Ende den falschen. */
+      alleSchalter: [...area.querySelectorAll(".inline-feature-flag-toggle")].map((t) => {
+        const h = [...area.querySelectorAll("h3")];
+        let letzte = "(keine)";
+        h.forEach((x) => {
+          if (x.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING) letzte = x.textContent.trim();
+        });
+        return { flag: t.dataset.flagKey, unter: letzte,
+                 y: Math.round(t.getBoundingClientRect().top + window.scrollY) };
+      }),
+      /* Und die Reihenfolge, die er ausdruecklich verlangt hat:
+         „an der Stelle wo es stand, ueber dem Beitrag". */
+      yStand: (() => {
+        const p = [...area.querySelectorAll(".empty-note")]
+          .find((x) => /Zuletzt aktualisiert|von 366 Tagen/.test(x.textContent));
+        return p ? Math.round(p.getBoundingClientRect().top + window.scrollY) : null;
+      })()
     };
   });
 
@@ -74,7 +94,14 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     ["Häkchen ist gesetzt (nie gesperrt = freigegeben)", erg.hakenGesetzt === true],
     ["Beitrag des Tages ist da", erg.beitragDa === true],
     ["Schalter steht ÜBER dem Beitrag", erg.ySchalter !== null && erg.yBeitrag !== null && erg.ySchalter < erg.yBeitrag],
-    ["Schalter steht UNTER der Überschrift", erg.ySchalter !== null && erg.yUeberschrift !== null && erg.ySchalter > erg.yUeberschrift]
+    ["Schalter steht UNTER der Überschrift", erg.ySchalter !== null && erg.yUeberschrift !== null && erg.ySchalter > erg.yUeberschrift],
+    ["Schalter steht VOR der Standzeile — also ganz oben im Abschnitt",
+      erg.ySchalter !== null && erg.yStand !== null && erg.ySchalter < erg.yStand],
+    ["Der Kalender-Schalter gehört zu ,Es war einmal in Deutschland' und nicht zu Dichter & Denker",
+      (erg.alleSchalter.find((t) => t.flag === "history_paket_01") || {}).unter
+        === "📜 Es war einmal in Deutschland …"],
+    ["Er ist der OBERSTE der vier Schalter auf der Seite",
+      erg.alleSchalter.length > 0 && erg.alleSchalter[0].flag === "history_paket_01"]
   ];
   console.log(JSON.stringify(erg, null, 1));
   let rot = 0;

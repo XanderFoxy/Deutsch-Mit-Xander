@@ -36096,224 +36096,94 @@
          Blatt um ihre eigene Mittellinie. Ein ferner Fluegel ist
          verkuerzt zu sehen — derselbe Bau, zur Schulter hin
          geschrumpft (k). */
-      /* =============================================================
-         RUNDE 87 — DER ADLER, NEU GEZEICHNET
-         -------------------------------------------------------------
-         XANDER: „inklusive der Adlerschwingen … Die Adlerschwingen
-         mit den Seitenfedern und den Rueckfedern, die nach hinten
-         zeigen, in mehreren Lagen … Auch den Kopf ausarbeiten …
-         fange mit dem mikroskopisch kleinsten feinsten Detail an."
-
-         WAS VORHER DA WAR: EINE Lage. Sieben Handschwingen an einer
-         glatten Armflaeche und drei Striche als Andeutung von
-         Deckfedern. Das ist ein Fluegel-ZEICHEN, keine Schwinge.
-
-         EIN VOGELFLUEGEL HAT SIEBEN LAGEN, und jede sitzt woanders.
-         Von hinten (Hinterkante) nach vorn (Vorderkante):
-           1. HANDSCHWINGEN (Primaries) — die langen aussen, an der
-              Hand. Sie tragen den Schub und stehen im Flug
-              faecherfoermig auseinander; die Luecken dazwischen sind
-              das, woran das Auge einen Greifvogel erkennt.
-           2. ARMSCHWINGEN (Secondaries) — die „Seitenfedern", die er
-              meint: kuerzer, am Unterarm, sie bilden die Hinterkante
-              des inneren Fluegels und zeigen nach HINTEN.
-           3. HANDDECKEN — kurze Federn ueber den Wurzeln der
-              Handschwingen.
-           4. GROSSE ARMDECKEN — eine Reihe ueber den Wurzeln der
-              Armschwingen.
-           5. MITTLERE ARMDECKEN — eine kuerzere Reihe darueber.
-           6. KLEINE DECKEN — die schuppenartigen Federchen an der
-              Vorderkante.
-           7. DAUMENFITTICH (Alula) — die drei kleinen Federn am Knick
-              der Vorderkante, am „Daumen".
-         Alle sieben stehen jetzt da, jede als gerechnete Federform um
-         ihre eigene Mittellinie, mit Kiel. Zusammen sind das 40
-         Federn je Fluegel statt sieben.
-
-         DER KOPF ist ein Weisskopfseeadler, und daran hat jedes
-         Stueck einen Namen: der weisse Kopf mit den Nackenfedern
-         (Hackles), die als Zacken in das Braun des Rumpfes greifen —
-         eine glatte Grenze gibt es dort nicht. Der gelbe Hakenschnabel
-         mit der Wachshaut an der Wurzel und dem Nasenloch darin. Das
-         gelbe Auge mit der dunklen Pupille. Und darueber der
-         Ueberaugenwulst, der Knochenwulst, der dem Adler seinen
-         finsteren Blick gibt — ohne ihn sieht jeder Greifvogel
-         freundlich aus.
-         ============================================================= */
       const SCHULTER = { x: 96, y: 28 };
       const zuSchulter = (x, y, k) => ({
         x: SCHULTER.x + (x - SCHULTER.x) * k,
         y: SCHULTER.y + (y - SCHULTER.y) * k
       });
-      /* EINE FEDER. Sie ist ein schmales Blatt um ihre Mittellinie:
-         an der Wurzel schmal, in der Mitte am breitesten, zur Spitze
-         hin wieder schmal und leicht gerundet. „bauch" sagt, wo die
-         breiteste Stelle liegt — bei einer Schwungfeder weiter vorn
-         als bei einer Deckfeder. */
-      const greifFeder = (P, bx, by, tx, ty, br, bauch) => {
-        const dx = tx - bx, dy = ty - by;
-        const lang = Math.hypot(dx, dy) || 1;
-        const nx = -dy / lang, ny = dx / lang;   /* quer zur Feder */
-        const b = (bauch === undefined) ? 0.45 : bauch;
-        const mx = bx + dx * b, my = by + dy * b;
-        return "M" + P(bx, by)
-          + " C" + P(mx + nx * br, my + ny * br)
-          + " "  + P(tx + nx * br * 0.42, ty + ny * br * 0.42)
-          + " "  + P(tx, ty)
-          + " C" + P(tx - nx * br * 0.34, ty - ny * br * 0.34)
-          + " "  + P(mx - nx * br * 0.8, my - ny * br * 0.8)
-          + " "  + P(bx - nx * 0.45, by - ny * 0.45) + " Z";
-      };
-      /* Der Kiel — der Strich in der Mitte. Er laeuft nicht bis zur
-         Spitze; die letzten Prozente sind nur noch Fahne. */
-      const greifKiel = (P, bx, by, tx, ty) =>
-        "M" + P(bx, by) + " L" + P(bx + (tx - bx) * 0.9, by + (ty - by) * 0.9);
-      /* Eine ganze Reihe gleichartiger Federn. „n" Stueck, die
-         Wurzeln wandern von w0 nach w1, die Spitzen von s0 nach s1,
-         und die Breite laeuft von br0 nach br1. */
-      const greifReihe = (P, n, w0, w1, s0, s1, br0, br1, bauch) => {
-        const federn = [], kiele = [];
-        for (let f = 0; f < n; f++) {
-          const t = n > 1 ? f / (n - 1) : 0;
-          const bx = w0[0] + (w1[0] - w0[0]) * t;
-          const by = w0[1] + (w1[1] - w0[1]) * t;
-          const tx = s0[0] + (s1[0] - s0[0]) * t;
-          const ty = s0[1] + (s1[1] - s0[1]) * t;
-          federn.push(greifFeder(P, bx, by, tx, ty, br0 + (br1 - br0) * t, bauch));
-          kiele.push(greifKiel(P, bx, by, tx, ty));
-        }
-        return { federn: federn, kiele: kiele };
-      };
       const greifFluegel = (k) => {
         const P = (x, y) => {
           const q = zuSchulter(x, y, k);
           return q.x.toFixed(1) + " " + q.y.toFixed(1);
         };
-        /* 1. HANDSCHWINGEN. Wurzel an der Handwurzel (x = 63 bis 59),
-           Spitze weit hinten und unten — daher die Sichelform. Die
-           aeussere ist die laengste und schmalste. */
-        const hand = greifReihe(P, 8, [63, 7], [59, 26], [15, 3], [42, 34], 2.7, 2.1, 0.5);
-        /* 2. ARMSCHWINGEN — seine „Seitenfedern". Sie sitzen am
-           Unterarm zwischen Handwurzel und Schulter und bilden die
-           Hinterkante des inneren Fluegels. Nach innen werden sie
-           kuerzer: von 21 Einheiten an der Hand auf 14 am Koerper. */
-        const arm = greifReihe(P, 9, [66, 11], [93, 26], [55, 29], [88, 39], 2.3, 1.9, 0.5);
-        /* 3. HANDDECKEN — ueber den Wurzeln der Handschwingen. */
-        const handDecken = greifReihe(P, 5, [64, 8], [62, 19], [52, 10], [51, 24], 1.7, 1.5, 0.42);
-        /* 4. GROSSE ARMDECKEN. */
-        const grossDecken = greifReihe(P, 8, [70, 8], [95, 23], [63, 17], [90, 31], 1.8, 1.5, 0.42);
-        /* 5. MITTLERE ARMDECKEN — kuerzer, darueber. */
-        const mittelDecken = greifReihe(P, 7, [74, 6.5], [96, 20], [69, 12], [92, 26], 1.5, 1.3, 0.4);
-        /* 7. DAUMENFITTICH: drei kleine Federn am Knick. */
-        const alula = greifReihe(P, 3, [66, 7], [64, 9.5], [56, 2], [54, 5], 1.3, 1.2, 0.45);
-        /* Die Armflaeche, auf der die Deckenreihen liegen. Sie ist
-           schmaler als frueher: die Armschwingen sollen darunter
-           hervorschauen, sonst sieht man die Hinterkante nicht. */
-        const flaeche = "M" + P(96, 28) + " C" + P(90, 17) + " " + P(78, 9)
-          + " " + P(63, 7) + " C" + P(60, 10) + " " + P(59, 14)
-          + " " + P(60, 18) + " C" + P(70, 21) + " " + P(82, 25)
-          + " " + P(90, 29) + " C" + P(93, 30) + " " + P(95, 30)
+        /* Der Armfittich: vorn (oben) glatt gewoelbt, hinten (unten)
+           eine ruhige Kante — hier hat ein Vogel keine Zacken, hier
+           liegen die Deckfedern. */
+        const arm = "M" + P(96, 28) + " C" + P(90, 15) + " " + P(78, 7)
+          + " " + P(62, 6) + " C" + P(58, 12) + " " + P(57, 20)
+          + " " + P(59, 27) + " C" + P(68, 25) + " " + P(80, 27)
+          + " " + P(88, 31) + " C" + P(92, 32) + " " + P(95, 31)
           + " " + P(96, 28) + " Z";
-        /* 6. KLEINE DECKEN: die Vorderkante ist nicht glatt, dort
-           liegen schuppenartige Federchen. Sechs flache Boegen. */
-        let klein = "";
-        for (let f = 0; f < 6; f++) {
-          const t = f / 5;
-          const ax = 68 + 25 * t, ay = 7.5 + 14 * t;
-          const bx2 = 72.6 + 25 * t, by2 = 10.2 + 14 * t;
-          klein += "M" + P(ax, ay) + " Q" + P(ax + 1.4, ay + 3.4) + " " + P(bx2, by2) + " ";
+        /* Die Handschwingen. */
+        const federn = [];
+        /* RUNDE 85 — XANDER: „dann hat der Adler noch keine
+           realistischen Schwingen … Die Federn gehen doch eher nach
+           hinten."
+           NACHGEMESSEN an der Zeichnung: die Spitzen lagen zwischen
+           x = 33 und x = 52, die Wurzeln zwischen x = 58 und x = 63 —
+           die Federn standen also nur 6 bis 25 Einheiten vor der
+           Handwurzel und dabei fast senkrecht nach oben. So sieht ein
+           Fluegel im Ruderschlag aus, nicht im Flug. Ein Greifvogel
+           traegt die Hand ZURUECK: die Schwungfedern zeigen nach
+           hinten (zum Schwanz, also zu kleinem x) und faechern dabei
+           nach unten auf. Jetzt liegen die Spitzen zwischen x = 16
+           und x = 42 und reichen bis y = 34 — der Fluegel bekommt
+           damit die Sichelform, an der man einen Greifvogel erkennt. */
+        for (let f = 0; f < 7; f++) {
+          const t = f / 6;
+          const bx = 62 - t * 4,  by = 8 + t * 18;   /* Wurzel */
+          const tx = 16 + t * 26, ty = 4 + t * 30;   /* Spitze */
+          const dx = tx - bx, dy = ty - by;
+          const lang = Math.hypot(dx, dy) || 1;
+          const nx = -dy / lang, ny = dx / lang;     /* quer zur Feder */
+          /* Die aeusseren Federn sind die laengsten und schmalsten. */
+          const br = 2.5 - t * 0.55;
+          const mx = bx + dx * 0.55, my = by + dy * 0.55;
+          federn.push("M" + P(bx, by)
+            + " C" + P(mx + nx * br, my + ny * br)
+            + " "  + P(tx + nx * br * 0.5, ty + ny * br * 0.5)
+            + " "  + P(tx, ty)
+            + " C" + P(tx - nx * br * 0.5, ty - ny * br * 0.5)
+            + " "  + P(mx - nx * br, my - ny * br)
+            + " "  + P(bx + nx * -0.4, by + 2.6) + " Z");
         }
-        return { hand: hand, arm: arm, handDecken: handDecken,
-                 grossDecken: grossDecken, mittelDecken: mittelDecken,
-                 alula: alula, flaeche: flaeche, klein: klein };
+        /* Die Deckfedern: drei kurze Striche auf dem Armfittich —
+           ohne sie ist der Fittich eine leere Flaeche. */
+        const decken = "M" + P(70, 12) + " L" + P(66, 20)
+          + " M" + P(78, 13) + " L" + P(74, 21)
+          + " M" + P(86, 17) + " L" + P(83, 24);
+        return { arm: arm, federn: federn, decken: decken };
       };
       const fluegelHtml = (k, klasse) => {
         const w = greifFluegel(k);
-        const lage = (reihe, kl) =>
-          reihe.federn.map((d) => '<path class="' + kl + '" d="' + d + '"/>').join("")
-          + reihe.kiele.map((d) => '<path class="lc-greif-kiel" d="' + d + '"/>').join("");
-        /* Die Reihenfolge ist die Malreihenfolge und damit die
-           Anatomie: was weiter hinten liegt, wird zuerst gezeichnet.
-           Armschwingen ganz nach hinten, dann die Handschwingen,
-           dann die Flaeche, die beider Wurzeln deckt, und darauf die
-           drei Deckenreihen und der Daumenfittich. */
         return '<g class="lc-greif-fluegel ' + klasse + '"'
           + ' style="transform-origin:96px 28px">'
-          + lage(w.arm, "lc-greif-armschwinge")
-          + lage(w.hand, "lc-greif-schwinge")
-          + '<path class="lc-greif-arm" d="' + w.flaeche + '"/>'
-          + lage(w.handDecken, "lc-greif-handdecke")
-          + lage(w.grossDecken, "lc-greif-grossdecke")
-          + lage(w.mittelDecken, "lc-greif-mitteldecke")
-          + '<path class="lc-greif-kleindecke" d="' + w.klein + '"/>'
-          + lage(w.alula, "lc-greif-alula")
+          + '<path class="lc-greif-arm" d="' + w.arm + '"/>'
+          + w.federn.map((d) => '<path class="lc-greif-schwinge" d="' + d + '"/>').join("")
+          + '<path class="lc-greif-decke" d="' + w.decken + '"/>'
           + "</g>";
       };
-      /* DER SCHWANZ. Ein Weisskopfseeadler hat ihn WEISS, und er
-         besteht aus zwoelf Steuerfedern, von denen man im Flug sechs
-         nebeneinander sieht. Vorher war es ein Trapez mit drei
-         Kerben — das ist ein Brett, kein Schwanz. */
-      const schwanzHtml = (() => {
-        const P = (x, y) => x.toFixed(1) + " " + y.toFixed(1);
-        const r = greifReihe(P, 6, [60, 33], [60, 41], [11, 25], [18, 46], 3.4, 3.0, 0.55);
-        return r.federn.map((d) => '<path class="lc-greif-steuer" d="' + d + '"/>').join("")
-          + r.kiele.map((d) => '<path class="lc-greif-kiel" d="' + d + '"/>').join("");
-      })();
       greif.innerHTML =
-        '<svg class="lc-greif-form" viewBox="0 0 146 111" aria-hidden="true">'
+        '<svg class="lc-greif-form" viewBox="0 0 140 111" aria-hidden="true">'
         /* Der FERNE Fluegel liegt hinter dem Koerper. */
         + fluegelHtml(0.78, "lc-greif-fluegel-fern")
         + '<g class="lc-greif-koerper">'
-        + schwanzHtml
-        /* Die Oberschwanzdecken: dort, wo das Braun des Rumpfes auf
-           das Weiss des Schwanzes trifft. */
-        + '<path class="lc-greif-schwanzdecke" d="M56 31 C62 30 66 33 66 37'
-        + ' C66 41 62 44 56 43 C58 39 58 35 56 31 Z"/>'
+        /* Schwanz: gefaechert, mit drei Federkerben. */
+        + '<path class="lc-greif-schwanz" d="M62 34 L14 26 L12 34 L16 42 L62 42 Z"/>'
+        + '<path class="lc-greif-kerbe" d="M14 28 L30 33 M13 36 L30 36 M16 41 L30 39"/>'
         /* Rumpf: vorn breit, hinten schlank. */
         + '<path class="lc-greif-rumpf" d="M58 24 C74 18 96 18 110 24'
         + ' C120 28 122 36 112 41 C96 48 74 48 60 42 C54 39 54 27 58 24 Z"/>'
         /* Brustgefieder — feine Striche, kein Muster aus der Dose. */
         + '<path class="lc-greif-feder" d="M70 40 l4-5 M78 42 l4-5 M86 42 l4-5'
         + ' M94 41 l4-5 M74 33 l4-4 M84 33 l4-4 M94 33 l4-4"/>'
-        /* =========================================================
-           DER KOPF DES WEISSKOPFSEEADLERS.
-           Erst die Nackenfedern, die als Zacken ins Braun greifen —
-           eine glatte Grenze gaebe es bei keinem Vogel. Dann der
-           weisse Kopf, dann Wachshaut, Schnabel, Auge und der
-           Ueberaugenwulst.
-           ========================================================= */
-        + '<path class="lc-greif-nackenzacken" d="M104 18 L100 21 L105 22'
-        + ' L100 25 L105 26 L100 29 L105 30 L101 33 L106 34 L103 37 L109 38'
-        + ' L110 20 Z"/>'
-        + '<path class="lc-greif-kopf" d="M105 21 C108 14 116 11 124 13'
-        + ' C131 15 135 20 134.5 26 C134 32 128 38 119 38.5'
-        + ' C111 39 105.5 34 105 28.5 Z"/>'
-        /* Die feinen Federstriche auf dem weissen Kopf. */
-        + '<path class="lc-greif-kopffeder" d="M109 24 l5 1.4 M108.6 29 l5 .8'
-        + ' M110 33.6 l4.8 .2 M113 19.6 l4.6 1.6 M118 16.6 l4.4 1.8'
-        + ' M112 36.4 l4.6 -.6"/>'
-        /* Die Wachshaut an der Schnabelwurzel, mit dem Nasenloch. */
-        + '<path class="lc-greif-wachs" d="M128 18.8 C132 19 134.6 20.4 135.6 22.4'
-        + ' C133.6 23.8 130.4 24 128 23 Z"/>'
-        + '<ellipse class="lc-greif-nasloch" cx="131.6" cy="21.4" rx="1.05" ry=".8"/>'
-        /* Der Hakenschnabel: Oberschnabel mit Haken, darunter der
-           kuerzere Unterschnabel. */
-        + '<path class="lc-greif-schnabel" d="M128 22.4 C133 22.8 138.2 24.6 141 28.2'
-        + ' C141.6 31.6 139.6 34.6 136.8 35.2 C137.6 32 136 29.6 132.2 28.4'
-        + ' C130.4 27.8 128.8 27.4 127.6 27.2 Z"/>'
-        + '<path class="lc-greif-schnabel-unten" d="M127.8 28 C131 28.6 134.4 29.6'
-        + ' 136.4 31.6 C134.2 33.2 130.6 33.2 128 31.8 Z"/>'
-        /* Die Schneide — der helle Strich zwischen Ober- und
-           Unterschnabel. */
-        + '<path class="lc-greif-schneide" d="M127.8 27.6 C131.4 28.2 135 29.2 137 31"/>'
-        /* Das Auge sitzt dicht hinter der Wachshaut. */
-        + '<circle class="lc-greif-auge" cx="125.4" cy="24.2" r="3"/>'
-        + '<circle class="lc-greif-pupille" cx="126.2" cy="24.2" r="1.35"/>'
-        + '<circle class="lc-greif-glanz" cx="124.6" cy="23.2" r=".65"/>'
-        /* DER UEBERAUGENWULST. Ohne diesen Knochenwulst ueber dem
-           Auge sieht jeder Greifvogel freundlich aus — er ist das
-           eine Detail, an dem der Blick haengt. */
-        + '<path class="lc-greif-braue" d="M119.6 20.6 C122.6 19 126.6 19.2 129.4 21"/>'
+        /* Kopf mit Nackenkapuze, Auge und Hakenschnabel. */
+        + '<path class="lc-greif-kopf" d="M106 20 C116 18 126 22 128 28'
+        + ' C129 34 122 39 112 38 C104 37 100 31 101 26 C102 22 103 21 106 20 Z"/>'
+        + '<circle class="lc-greif-auge" cx="120" cy="26" r="2.6"/>'
+        + '<circle class="lc-greif-pupille" cx="120.8" cy="26" r="1.2"/>'
+        + '<path class="lc-greif-schnabel" d="M127 24.5 L134.6 26.4 C135.6 29.6 133 32.2 129.6 31.3'
+        + ' C131.4 28.8 130.4 26.4 127 24.5 Z"/>'
         /* Die Faenge: zwei Beine, je drei Zehen mit Krallen.
            RUNDE 71 — XANDER: „seine Beine auch nicht so komisch
            comicmaessig auseinander."
@@ -36323,18 +36193,11 @@
            Greifvogel, der Beute traegt, haelt die Faenge dicht
            beieinander und fast senkrecht. Jetzt 81→80 und 89→90:
            der Abstand unten schrumpft von 18 auf 10 Einheiten.
-           RUNDE 87 — dazu die Hosen (die befiederten Schenkel): ein
-           Adler hat oben am Bein Federn und erst darunter den nackten
-           gelben Lauf. */
-        + '<path class="lc-greif-hose" d="M77 42 C80 40 84 40 86 42'
-        + ' C86 47 84 50 81.5 50 C79 50 77 47 77 42 Z'
-        + ' M86 42 C89 40 93 40 95 42 C95 47 93 50 90.5 50'
-        + ' C88 50 86 47 86 42 Z"/>'
-        + '<path class="lc-greif-bein" d="M81 48 L80 56 M89 48 L90 56"/>'
-        /* Die Schuppen am Lauf — der nackte Teil des Beins ist
-           genarbt, nicht glatt. */
-        + '<path class="lc-greif-schuppe" d="M78.6 50.4 h3 M78.6 53 h3'
-        + ' M88.6 50.4 h3 M88.6 53 h3"/>'
+           Die Krallen liegen in einer eigenen Gruppe, damit sie in
+           dem Moment zugreifen koennen, in dem sie das Bild
+           aufnehmen — „dass seine Krallen in dem Moment, wo sie das
+           Profilbild aufnehmen zu krallen." */
+        + '<path class="lc-greif-bein" d="M81 46 L80 56 M89 46 L90 56"/>'
         + '<g class="lc-greif-faenge">'
         + '<path class="lc-greif-kralle" d="M80 56 C77.4 57.4 76.2 59.6 76.8 62.2'
         + ' M80 56 C80 58.8 79.5 61 78.3 62.8 M80 56 C82.6 57.4 83.8 59.6 83.2 62.2"/>'
@@ -70471,44 +70334,6 @@
 
       <h3 id="kompass-geschichte" class="kompass-heading">${ExerciseData.activeHistoryTitle ? ExerciseData.activeHistoryTitle() : "📜 Es war einmal in Deutschland …"}</h3>
       ${textInListeKnopfHtml("Es war einmal in Deutschland")}
-      ${/* ============================================================
-            RUNDE 87 — DAS UPDATE-PANEL STEHT WIEDER GANZ OBEN.
-
-            XANDER: „Ich sehe übrigens immer noch nicht wieder mein
-            Update Panel bei ,Es war einmal in Deutschland'. Ich als
-            Administrator muss das sehen, damit ich darauf Einfluss
-            haben kann. Das Update Panel ist jetzt plötzlich bei
-            Dichter und Denker … und es war auch über ,Es war einmal
-            in Deutschland', an der Stelle wo es früher war, soll es
-            wieder sein. Du sagst, du machst es, es ist aber nicht
-            sichtbar. Wie kann das sein?"
-
-            NACHGEMESSEN, und er hat recht — zweimal:
-              1. ES STAND ZU TIEF. Der Schalter lag hinter dem
-                 Hinweiskasten und der Standzeile, also 1434 Pixel
-                 unter dem Seitenanfang und damit UNTERHALB des
-                 halben Abschnitts. Weiter unten steht der Schalter
-                 von „Dichter & Denker" (eigenes Merkmal,
-                 dichter_und_denker) — und genau den hat er
-                 gefunden, während er seinen hier suchte. Jetzt steht
-                 dieser hier als ERSTES unter der Überschrift, über
-                 allem anderen.
-              2. ER KONNTE STILL VERSCHWINDEN. Die Bedingung lautete
-                 „histBatchKey && histNeuKeys.length &&
-                 histDarfNeuesSehen". Zwei davon sind überflüssig und
-                 gefährlich: ob jemand moderieren darf, prüft
-                 inlineFeatureFlagToggleHtml ohnehin selbst (und gibt
-                 sonst einen leeren Text zurück), und ob die Liste
-                 der wartenden Tage gerade gefüllt ist, hat mit dem
-                 SCHALTER nichts zu tun — der gehört zum Paket, nicht
-                 zur Liste. War eines von beidem im falschen Moment
-                 leer, war das Panel weg, ohne dass irgendwo etwas
-                 stand. Beide Bedingungen sind raus.
-            Die Überschrift darüber ist neu: ohne sie sehen alle vier
-            Schalter auf dieser Seite gleich aus, und genau das hat
-            zur Verwechslung geführt. */ ""}
-      ${histBatchKey ? `<p class="eyebrow" style="margin:4px 0 -2px;">🚦 Update-Freigabe für diese Sammlung</p>`
-        + inlineFeatureFlagToggleHtml(histBatchKey, true) : ""}
       ${(() => {
         // Sichtbarer Stand der Sammlung — zeigt auf einen Blick, wann zuletzt neue
         // Tage dazugekommen sind und wie voll das Jahr inzwischen ist.
@@ -70577,6 +70402,7 @@
         <p class="empty-note" style="margin:-6px 0 12px; color:#4FA88E; font-weight:700;">
           ✅ Alle ${histNeuKeys.length} Tage sind freigegeben — jede und jeder sieht sie.
         </p>` : ""}
+      ${histBatchKey && histNeuKeys.length && histDarfNeuesSehen ? inlineFeatureFlagToggleHtml(histBatchKey, true) : ""}
       ${todayHistory ? `
         <div class="question-card" id="kompass-geschichte-heute" style="margin-bottom:16px; scroll-margin-top:16px;">
           <p class="eyebrow">… vor ${now.getFullYear() - todayHistory.year} Jahren (${todayHistory.year})${todayHistoryIstNeu ? ` <span style="background:var(--coral-400,#E8825F); color:#fff; border-radius:99px; padding:2px 8px; font-size:0.65rem; letter-spacing:0.5px;">NEU · noch nicht freigegeben</span>` : ""}</p>
