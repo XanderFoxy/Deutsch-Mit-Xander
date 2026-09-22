@@ -156,8 +156,14 @@ const sage = (gut, text, dazu) => {
     const p = document.querySelector("#lcAugen .lc-augenpaar");
     return p ? Math.round(p.getBoundingClientRect().top) : null;
   });
-  sage(vorher !== null && nachher !== null && Math.abs(vorher - nachher) <= 2,
-    "beim Rollen springen sie nicht mehr",
+  /* WIEVIEL DARF ES SEIN? Die Augen WACKELN von sich aus: lcAugenWackelt
+     hebt sie um 3 px und senkt sie wieder, immerzu. Gemessen wird also
+     nie zweimal genau dieselbe Zahl — springen sie dagegen mit der
+     Seite mit, waeren es 220 px (so weit wurde gerollt). Die Grenze
+     liegt deshalb bei 8 px: mehr als das Wackeln, viel weniger als ein
+     Sprung. */
+  sage(vorher !== null && nachher !== null && Math.abs(vorher - nachher) <= 8,
+    "beim Rollen springen sie nicht mehr (gerollt wurde um 220 px)",
     "vor dem Rollen " + vorher + " px, danach " + nachher + " px");
   await pg.evaluate(() => window.scrollTo(0, 0));
   await pg.waitForTimeout(600);

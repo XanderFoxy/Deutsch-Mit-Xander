@@ -49,18 +49,18 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 454 — alle Sonden wieder gruen",
+  stand: "Fassung 455 — Runde 85 und 86 sind abgearbeitet, alle Sonden gruen",
 
   inArbeit: [
-    { seit: "2026-09-22T12:20",
-      text: "Nichts mehr aus Runde 85 und 86 — beide Listen sind abgearbeitet" },
+    { seit: "2026-09-22T12:39",
+      text: "Nichts offen — beide Listen sind fertig" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T12:20",
-      text: "Drei Sonden auf die zurueckgenommenen Entscheidungen umgeschrieben: Birne (zweiter Druck), Beamen/Fahrstuhl, Zaubertrick" },
-    { seit: "2026-09-22T12:20",
+    { seit: "2026-09-22T12:39",
+      text: "Die Sonde fuer die Augen rechnet jetzt mit ihrem eigenen Wackeln (3 px) statt es als Sprung zu zaehlen" },
+    { seit: "2026-09-22T12:39",
       text: "Alle 144 Sonden laufen durch" },
   ],
 };
