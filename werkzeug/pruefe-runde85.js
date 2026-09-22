@@ -173,8 +173,20 @@ function tonDauer(name) {
     const krumm = pac.winkel.filter((w) => w % 90 !== 0).length;
     sage(krumm === 0, "sein Maul springt in die Fahrtrichtung, es dreht sich nicht weich",
       "Winkel: " + [...new Set(pac.winkel)].join(", "));
-    sage(pac.krumen > 12 && pac.bleiben > 8,
-      "das ganze Feld liegt voller Punkte, auch neben seinem Weg",
+    /* =============================================================
+       ZURUECKGENOMMEN IN RUNDE 87 — und zwar auf seinen Wunsch.
+       In Runde 85 hiess es: „ich moechte auch, dass das ganze Feld
+       mit Futterpunkten gefuellt ist, auch wenn er nicht alle
+       auffrisst." Daraufhin lagen zusaetzlich Punkte ZWISCHEN den
+       Plaetzen, und diese Regel verlangte mehr als zwoelf davon.
+       In Runde 87 sagt er genauer: „beim Pac-Man sollen auch die
+       Futterelemente nicht an Stellen sein, die keine
+       Profil-Sitzplaetze sind." Das ist das Spaetere und das
+       Genauere — also gilt es. Gefuellt ist das Feld weiterhin, aber
+       eben dort, wo Plaetze sind: einer je Platz, acht insgesamt.
+       Wo genau sie liegen, misst pruefe-runde87-pacman.js. */
+    sage(pac.krumen === 8 && pac.bleiben >= 6,
+      "auf jedem Platz liegt ein Punkt — und keiner dazwischen (Runde 87)",
       pac.krumen + " Punkte, davon " + pac.bleiben + " liegenbleibend");
     sage(pac.schein === "none" && pac.name === "hidden",
       "kein Leuchtring und kein Name — er IST Pac-Man",

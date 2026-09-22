@@ -40630,27 +40630,14 @@
     const jeFeld = 480;
     const hin = felder * jeFeld;
     const beissen = 900;
-    /* =============================================================
-       RUNDE 87 — ER GEHT NICHT MEHR ZURUECK
-       -------------------------------------------------------------
-       XANDER: „Wenn ich mit Pac-Man einen Weg einzeichne und er da
-       landet, wo er landet, dann soll er nicht zurueckgehen. Er soll
-       da bleiben und er soll immer in die Richtung schauen … am Ende,
-       wo er ankommt und bleibt, soll er wieder zu meinem Profilbild
-       werden."
-
-       In Runde 85 ging es noch um den RUECKWEG („dann darf er nicht
-       schraeg uebers Feld zurueckgehen, sondern muss den naechsten
-       logischen Weg zuruecknehmen") — das war damals richtig. Jetzt
-       sagt er etwas anderes und Spaeteres: es soll gar keinen
-       Rueckweg mehr geben. Er frisst, bleibt stehen, schaut weiter in
-       seine Laufrichtung, wird wieder zum Profilbild — und sitzt dann
-       auch wirklich dort. Genau so endet Pac-Man ein Leben lang: da,
-       wo er aufgehoert hat.
-       Die Dauer ist damit nur noch Hinweg plus Fressen plus die
-       Ruecknahme in die Gestalt (520 ms). */
-    const zurueckWerden = 520;
-    const dauer = hin + beissen + zurueckWerden;
+    /* RUNDE 85 — XANDER: „wenn er zurueckgeht, das hast du auch nicht
+       beruecksichtigt, dann darf er nicht schraeg uebers Feld
+       zurueckgehen, sondern muss den naechsten logischen Weg
+       zuruecknehmen. Also so wie er gekommen ist."
+       Der Rueckweg ist jetzt derselbe Weg rueckwaerts und dauert
+       deshalb genauso lang wie der Hinweg — vorher waren es 70 % und
+       eine einzige Diagonale quer ueber alles. */
+    const dauer = hin + beissen + hin;
     const bei = (ms) => Math.min(1, ms / dauer);
 
     /* Die Punkte auf der Linie — sie liegen in der Sitzreihe, damit
@@ -40698,17 +40685,32 @@
       const t = wannAuf[g.nr];
       kruemel(g.x, g.y, t === undefined ? null : t, true);
     });
-    /* =============================================================
-       RUNDE 87 — KEIN FUTTER MEHR ZWISCHEN DEN PLAETZEN
-       -------------------------------------------------------------
-       XANDER: „beim Pac-Man sollen auch die Futterelemente nicht an
-       Stellen sein, die keine Profil-Sitzplaetze sind."
-       In Runde 85 lagen deshalb zusaetzlich Punkte in der MITTE
-       zwischen je zwei Nachbarn — das Feld sollte voll aussehen. Er
-       sagt jetzt klar, dass dort keine hingehoeren: gefressen wird
-       auf Plaetzen, und nur dort liegt etwas. Ein Punkt je Platz,
-       sonst nichts. Der Block, der die Zwischenpunkte gelegt hat,
-       ist deshalb ersatzlos weg. */
+    /* Und zwischen je zwei Nachbarn zwei. Nur einmal je Paar —
+       deshalb nur nach rechts und nach unten. */
+    gitter.forEach((g) => {
+      gitter.forEach((h) => {
+        const rechts = h.reihe === g.reihe && h.spalte === g.spalte + 1;
+        const drunter = h.spalte === g.spalte && h.reihe === g.reihe + 1;
+        if (!rechts && !drunter) return;
+        /* Liegt dieses Stueck auf seinem Weg, verschwinden die
+           beiden Punkte, wenn er darueberlaeuft. */
+        let ab = null;
+        for (let i = 0; i < weg.length - 1; i++) {
+          if ((weg[i].nr === g.nr && weg[i + 1].nr === h.nr)
+              || (weg[i].nr === h.nr && weg[i + 1].nr === g.nr)) { ab = i; break; }
+        }
+        /* NACHGESEHEN am ersten Versuch: bei 34 % und 68 % des
+           Abstands lagen die Punkte 38 px von der Platzmitte
+           entfernt — und der Bildkreis hat 51 px Radius. Sie lagen
+           also IM Bild und sahen aus wie Konfetti auf dem Gesicht.
+           Genau EIN Punkt in der Mitte zwischen zwei Plaetzen (55 px)
+           liegt dagegen im Zwischenraum, und so sieht ein
+           Pac-Man-Feld auch aus. */
+        const px = (g.x + h.x) / 2;
+        const py = (g.y + h.y) / 2;
+        kruemel(px, py, ab === null ? null : (ab + 0.5) * jeFeld);
+      });
+    });
 
     /* =========================================================
        ICH BIN DER PAC-MAN — UND DER KREIS BLEIBT RUND
@@ -40798,24 +40800,26 @@
       + "px) scale(1.14)", offset: bei(hin + beissen) });
     drehungen.push({ transform: "rotate(" + drehEnde + "deg)", offset: bei(hin + beissen) });
     /* =============================================================
-       RUNDE 87 — ER BLEIBT, WO ER ANGEKOMMEN IST
+       RUNDE 85 — DER RUECKWEG IST DERSELBE WEG
        -------------------------------------------------------------
-       XANDER: „dann soll er nicht zurueckgehen. Er soll da bleiben
-       und er soll immer in die Richtung schauen … am Ende, wo er
-       ankommt und bleibt, soll er wieder zu meinem Profilbild
-       werden."
-       Hier stand bis Runde 86 der Rueckweg Feld fuer Feld. Er ist
-       ersatzlos weg. Was bleibt, ist das Zurueckwerden in die eigene
-       Gestalt: die Pac-Man-Figur blendet in 520 ms aus, waehrend der
-       Kreis von 1,14 auf 1 zurueckgeht. Das Bild steht dann am
-       Zielplatz — und weil das Opfer in diesem Moment von der Buehne
-       geht, ist der Platz auch frei. */
-    bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + e.y.toFixed(1)
-      + "px) scale(1)", offset: 1 });
-    /* Und das Maul bleibt in der Laufrichtung stehen — es dreht sich
-       nicht mehr um, weil es nirgendwo mehr hingeht. */
-    drehungen.push({ transform: "rotate(" + drehEnde + "deg)", offset: 1 });
-
+       XANDER: „wenn er zurueckgeht … dann darf er nicht schraeg
+       uebers Feld zurueckgehen, sondern muss den naechsten logischen
+       Weg zuruecknehmen. Also so wie er gekommen ist."
+       Hier stand EIN Bild: „translate(0,0)" — er schnitt also quer
+       ueber alle Felder zurueck. Jetzt geht er Feld fuer Feld
+       denselben Weg zurueck, und sein Maul zeigt dabei nach hinten,
+       weil er ja rueckwaerts durch die Kette laeuft. */
+    for (let i = punkte.length - 2; i >= 0; i--) {
+      const q = punkte[i];
+      const wann = hin + beissen + (punkte.length - 1 - i) * jeFeld;
+      bilder.push({ transform: "translate(" + q.x.toFixed(1) + "px, " + q.y.toFixed(1)
+        + "px) scale(" + (i ? 1.08 : 1) + ")", offset: bei(wann) });
+      /* Die Richtung des Rueckwegs: vom vorherigen Feld auf dieses. */
+      const vor = punkte[i + 1];
+      const gradR = Math.round(Math.atan2(q.y - vor.y, q.x - vor.x) / (Math.PI / 2)) * 90;
+      drehungen.push({ transform: "rotate(" + gradR + "deg)",
+                       offset: bei(hin + beissen + (punkte.length - 2 - i) * jeFeld) });
+    }
     try {
       const svg = figur.querySelector("svg");
       /* RUNDE 85 — XANDER: „wenn Pac-Man eine Kurve macht, dann
@@ -40831,29 +40835,18 @@
     } catch (err) {}
 
     lcPlatzUnterwegs(ab.el, true);
-    /* RUNDE 87 — „Er soll da bleiben."
-       Deshalb zwei getrennte Aufraeumschritte. Frueher stand hier
-       „fill: none": in der Sekunde, in der die Animation endete,
-       sprang das Bild an seinen alten Platz zurueck — auch dann, wenn
-       er gar nicht zurueckgehen sollte. Jetzt bleibt die letzte Lage
-       stehen („forwards"), und sie wird erst dann freigegeben, wenn
-       der Platzwechsel wirklich durch ist. Sonst saehe man ihn kurz
-       an zwei Stellen. */
-    let lauf = null;
     const aufraeumen = () => {
       ab.el.style.zIndex = altZ;
+      lcPlatzUnterwegs(ab.el, false);
       kreis.classList.remove("lc-pacman");
       figur.remove();
       krumen.forEach((k) => k.remove());
     };
-    const lageFreigeben = () => {
-      try { if (lauf) lauf.cancel(); } catch (e) {}
-      lcPlatzUnterwegs(ab.el, false);
-    };
     try {
-      lauf = kreis.animate(bilder, { duration: dauer, easing: "linear", fill: "forwards" });
+      const lauf = kreis.animate(bilder, { duration: dauer, easing: "linear", fill: "none" });
       lauf.onfinish = aufraeumen;
-    } catch (err) { aufraeumen(); lageFreigeben(); return false; }
+      lauf.oncancel = aufraeumen;
+    } catch (err) { aufraeumen(); return false; }
     setTimeout(aufraeumen, dauer + 200);
 
     /* Das Opfer wird eingesogen, sobald Pac-Man da ist. */
@@ -40864,39 +40857,6 @@
       setTimeout(() => opfer.classList.remove("lc-verschlungen"), 1400);
     }, hin);
     setTimeout(gefressen, hin + 900);
-    /* RUNDE 87 — „am Ende, wo er ankommt und bleibt, soll er wieder
-       zu meinem Profilbild werden."
-       Die Figur blendet aus, und in demselben Augenblick faellt die
-       Klasse „lc-pacman" weg — darunter liegt das Profilbild und ist
-       sofort wieder da. Die Figur verschwindet darueber, statt
-       wegzuspringen. */
-    setTimeout(() => {
-      try {
-        kreis.classList.remove("lc-pacman");
-        figur.animate([{ opacity: 1 }, { opacity: 0 }],
-          { duration: zurueckWerden, easing: "ease-in", fill: "forwards" });
-      } catch (e) {}
-    }, hin + beissen);
-    /* UND ER BLEIBT AUCH WIRKLICH DORT. „Er soll da bleiben" heisst
-       nicht nur, dass die Animation dort aufhoert — er sitzt danach
-       auf diesem Platz. Das Opfer geht in demselben Moment von der
-       Buehne, der Platz ist also frei. Wie ueberall sonst gilt das
-       nur auf dem eigenen Geraet; die anderen erfahren es ueber den
-       Raum. */
-    if (!probe && ab.el.classList.contains("lc-platz-ich")) {
-      setTimeout(() => {
-        try {
-          const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(zu.nr) : null;
-          if (erg && erg.ok) { renderLiveChat(); showToast("👾 Aufgefressen — und du sitzt jetzt dort."); }
-        } catch (e) {}
-        lageFreigeben();
-      }, dauer + 80);
-    } else {
-      /* Bei allen anderen (und bei der Vorfuehrung) gibt die Lage
-         nach einem Wimpernschlag von selbst wieder frei — sie
-         bekommen den Sitzwechsel ueber den Raum. */
-      setTimeout(lageFreigeben, dauer + 260);
-    }
     lcTonZu("pacjagd");
     return true;
   }
