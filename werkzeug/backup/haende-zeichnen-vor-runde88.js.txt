@@ -34,21 +34,11 @@ const fs = require("fs");
 const path = require("path");
 
 const r = (n) => Math.round(n * 100) / 100;
-/* RUNDE 88 — XANDER: „baue eine realistische Hand in der
-   realistischen Faerbung … ohne den Pinocchio Look, mit realistischer
-   Hautfarbe."
-   Die alten drei Toene (#f6c79a / #f0b077 / #d89a63) sind gemessen
-   stark gesaettigt — im HSL-Raum 33 bis 50 Prozent Saettigung bei
-   einem Farbton um 28 Grad. Das ist Orange, keine Haut. Menschliche
-   helle Haut liegt bei Farbton 20 bis 25 Grad und 25 bis 35 Prozent
-   Saettigung; der Schatten wird dabei nicht nur dunkler, sondern auch
-   ROETLICHER (mehr Durchblutung im dickeren Gewebe), nicht brauner.
-   Genau danach sind die drei Toene neu gesetzt. */
-const HAUT_HELL = "#f4d0b4";
-const HAUT = "#e7b492";
-const HAUT_TIEF = "#cd9370";
-const KANTE = "rgba(150,100,72,.38)";   // weich, nicht schwarz
-const FALTE = "rgba(150,100,72,.26)";
+const HAUT_HELL = "#f6c79a";
+const HAUT = "#f0b077";
+const HAUT_TIEF = "#d89a63";
+const KANTE = "rgba(150,95,50,.42)";   // weich, nicht schwarz
+const FALTE = "rgba(150,95,50,.30)";
 
 /* --- Ein Finger als Umriss-Stück ---------------------------------
    Geliefert werden nur die beiden Seiten und die Kuppe; die Stücke
@@ -166,32 +156,12 @@ const WINKEN = {
   furche: 7,
   gelenk: { links: 34, rechts: 74, y: 112 },
   haut: { dx: -2, dy: 9 },
-  /* RUNDE 88 — DER DAUMEN.
-     XANDER: „die Emoji Haende, die so einen extrem gespreizten Daumen
-     haben … Die Hand wird niemals gehalten beim Winken, die ist ganz
-     natuerlich einfach nur offen und dann winkt man. Da kriegt man
-     keinen Krampf in den Fingern, wenn man winkt, weil man seinen
-     Daumen extrem nach aussen drehen muss. Das ist keine Haltung, die
-     man hat."
-     NACHGESCHLAGEN, was die Anatomie dazu sagt: die Spanne zwischen
-     Daumen und Zeigefinger (Abduktion im Daumensattelgelenk) betraegt
-     in RUHE 30 bis 45 Grad; voll abgespreizt sind es 60 bis 70, und
-     das ist eine Anstrengung, die niemand nebenbei haelt. Hier stand
-     -68 Grad — also der aeusserste Wert, dauerhaft. Genau das hat er
-     gesehen.
-     Jetzt -42 Grad: offen, entspannt, und zwischen Daumen und
-     Zeigefinger bleibt die Schwimmhaut sichtbar. Der Daumen ist dabei
-     auch kuerzer (24 statt 27) und sitzt hoeher am Ballen — er ragt
-     nicht mehr seitlich aus der Hand heraus wie ein Ast. */
-  daumen: { x: 34, y: 76, w: -42, l: 24, b: 13.4 },
-  /* Und die Finger stehen etwas enger. Eine offene Hand faechert
-     nicht; sie liegt einfach offen da (Spreizung je 6 bis 10 Grad,
-     nicht 15 bis 17). */
+  daumen: { x: 33, y: 78, w: -68, l: 27, b: 14 },
   finger: [
-    { x: 41, l: 31, b: 11.6, w: -10 },
-    { x: 52, l: 35, b: 12.0, w: -3 },
-    { x: 63, l: 32, b: 11.4, w: 4 },
-    { x: 73, l: 25, b: 10.0, w: 12, tiefer: 3 }
+    { x: 41, l: 31, b: 11.6, w: -15 },
+    { x: 52, l: 35, b: 12.0, w: -4 },
+    { x: 63, l: 32, b: 11.4, w: 6 },
+    { x: 73, l: 25, b: 10.0, w: 17, tiefer: 3 }
   ],
   ballen: "M38 80 Q32 92 37 106 Q43 110 49 107 Q42 94 44 82 Z",
   linien: [
@@ -210,19 +180,12 @@ const KLATSCHEN = {
   furche: 6,
   gelenk: { links: 32, rechts: 70, y: 104 },
   haut: { dx: -1, dy: 8 },
-  /* RUNDE 88 — XANDER: „Auch beim Klatschen hat man auch nicht diese
-     extrem rausgedehnten Daumen — die sollen schraeg nach oben gehen,
-     ganz natuerlich liegen."
-     Eine klatschende Hand ist flach, und der Daumen liegt dabei
-     ANGELEGT an der Handkante, nur leicht abgespreizt. -74 Grad war
-     waagerecht abstehend; -22 Grad ist schraeg nach oben, genau wie
-     er es beschreibt. */
-  daumen: { x: 34, y: 78, w: -22, l: 23, b: 12.6 },
+  daumen: { x: 32, y: 72, w: -74, l: 24, b: 13 },
   finger: [
-    { x: 40, l: 30, b: 11.2, w: -5 },
-    { x: 50, l: 33, b: 11.6, w: -1.5 },
-    { x: 60, l: 30, b: 11.0, w: 2 },
-    { x: 69, l: 23, b: 9.6, w: 7, tiefer: 3 }
+    { x: 40, l: 30, b: 11.2, w: -7 },
+    { x: 50, l: 33, b: 11.6, w: -2 },
+    { x: 60, l: 30, b: 11.0, w: 3 },
+    { x: 69, l: 23, b: 9.6, w: 10, tiefer: 3 }
   ],
   ballen: "M37 72 Q31 84 36 98 Q42 102 48 99 Q41 86 43 74 Z",
   linien: [
@@ -307,15 +270,7 @@ const klatschen = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 130"
      (animation-timing-function); deshalb laeuft die Animation selbst
      auf „linear". */
   + "\n  .l { animation: klatschL 0.62s linear infinite; transform-box: view-box; transform-origin: 26% 92%; }"
-  /* RUNDE 88 — DIE VORDERE HAND WIRFT EINEN SCHATTEN AUF DIE HINTERE.
-     Sobald sich die beiden Haende in der Mitte wirklich treffen,
-     liegen dort zwei gleich helle Flaechen uebereinander — und dann
-     sieht man nicht mehr, welche vorn ist. Frueher hiess das bei ihm
-     „die sind so immer noch verschachtelt". Ein weicher Schatten
-     unter der vorderen Hand loest das mit einem einzigen Filter:
-     jetzt liegt sichtbar eine VOR der anderen. */
-  + "\n  .r { animation: klatschR 0.62s linear infinite; transform-box: view-box; transform-origin: 74% 92%;"
-  + " filter: drop-shadow(-2.5px 1.5px 2px rgba(120,72,44,.38)); }"
+  + "\n  .r { animation: klatschR 0.62s linear infinite; transform-box: view-box; transform-origin: 74% 92%; }"
   + "\n  .funk { animation: funk 0.62s linear infinite; transform-box: view-box; transform-origin: 50% 44%; }"
   /* WIE WEIT SIE SICH TREFFEN.
      Fotografiert: gingen sie bis auf null zusammen, lagen zwei
@@ -336,60 +291,25 @@ const klatschen = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 130"
   + "\n           transform: translateX(-4px) rotate(-2deg) scaleX(1.03); }"
   + "\n    100% { transform: translateX(-11px) rotate(-6deg) scaleX(1); }"
   + "\n  }"
-  /* RUNDE 88 — DAS VORZEICHEN WAR VERKEHRT, UND ZWAR SEIT IMMER.
-     Die rechte Hand steckt in einer gespiegelten Gruppe
-     (scale(-1 1)). In einer gespiegelten Gruppe schiebt ein
-     POSITIVES translateX nach LINKS. Hier stand +11 px fuer die
-     Ruhelage — das hat die rechte Hand in der Ruhe zur MITTE
-     geschoben und im Anschlag von ihr weg, also genau andersherum.
-     Gemessen am Bildschirm: die linke Hand wanderte von 106,1 auf
-     122, die rechte von 83,6 auf 99,8 — beide um dieselben 16 Punkte
-     nach rechts. Der Abstand zwischen ihnen aenderte sich also
-     ueberhaupt nicht; das ganze Paar rutschte nur zur Seite. Es gab
-     nie einen Anschlag, es sah nur so aus, weil sie ohnehin dicht
-     beieinander standen.
-     Jetzt sind die Vorzeichen gedreht: -11 px in der Ruhe (im Bild
-     nach RECHTS, also weg von der Mitte) und +1 px im Anschlag. */
   + "\n  @keyframes klatschR {"
   + "\n    0%   { animation-timing-function: cubic-bezier(.5,0,.95,.4);"
-  + "\n           transform: translateX(-11px) rotate(-6deg) scaleX(1); }"
+  + "\n           transform: translateX(11px) rotate(6deg) scaleX(1); }"
   + "\n    42%  { animation-timing-function: cubic-bezier(.1,.9,.3,1);"
-  + "\n           transform: translateX(1px) rotate(1deg) scaleX(.88); }"
+  + "\n           transform: translateX(-1px) rotate(-1deg) scaleX(.88); }"
   + "\n    48%  { transform: translateX(0) rotate(0) scaleX(.98); }"
   + "\n    56%  { animation-timing-function: cubic-bezier(.4,0,.6,1);"
-  + "\n           transform: translateX(-4px) rotate(-2deg) scaleX(1.03); }"
-  + "\n    100% { transform: translateX(-11px) rotate(-6deg) scaleX(1); }"
+  + "\n           transform: translateX(4px) rotate(2deg) scaleX(1.03); }"
+  + "\n    100% { transform: translateX(11px) rotate(6deg) scaleX(1); }"
   + "\n  }"
   /* Der Funke sass bei 52 %, also zehn Prozent NACH dem Treffer.
      Er gehoert genau auf den Treffer bei 42 %. */
   + "\n  @keyframes funk { 0%,40%{opacity:0; transform:scale(.4)} 44%{opacity:1; transform:scale(1)} 100%{opacity:0; transform:scale(1.6)} }"
   + "\n</style>"
-  /* =================================================================
-     RUNDE 88 — DIE HANDFLAECHEN TREFFEN SICH IN DER MITTE
-     -----------------------------------------------------------------
-     XANDER: „beim Klatschen soll sich die Handflaeche in der Mitte
-     treffen. Wir hatten das in einer der frueheren Iterationen schon
-     mal gehabt, dass sie wenigstens mit den Handflaechen aufeinander
-     schlagen."
-
-     WAS BISHER DASTAND — und warum es das Gegenteil war: beide Haende
-     waren VONEINANDER WEG geneigt (die linke um -24 Grad, die rechte
-     gespiegelt). Ihre Finger zeigten nach aussen, und in der Mitte
-     trafen sich die KLEINFINGERKANTEN. Zwei Haende, die sich mit den
-     Aussenkanten beruehren, klatschen nicht — sie stossen an.
-     Jetzt sind sie ZUEINANDER hin geneigt (+34 Grad und gespiegelt):
-     die Finger zeigen schraeg nach oben zur Mitte, die Handflaechen
-     liegen einander gegenueber und treffen sich dort, wo beim
-     wirklichen Klatschen der Ton entsteht — zwischen den Ballen und
-     den Fingergrundgelenken.
-     Die Daumen liegen dabei aussen und zeigen schraeg nach oben,
-     genau wie er es beschrieben hat.
-     ================================================================= */
-  + '\n<g transform="translate(31 4) rotate(34 43 66)"><g class="l">\n  '
+  + '\n<g transform="translate(26 10) rotate(-24 43 66)"><g class="l">\n  '
   + handSvg(KLATSCHEN, "a") + "\n</g></g>"
   /* Die zweite Hand ist das Spiegelbild der ersten — dieselbe
      Zeichnung, nicht eine zweite, die „ungefähr gleich" aussieht. */
-  + '\n<g transform="translate(111 10) rotate(-34 43 66) translate(86 0) scale(-1 1)"><g class="r">\n  '
+  + '\n<g transform="translate(108 10) rotate(24 43 66) translate(86 0) scale(-1 1)"><g class="r">\n  '
   + handSvg(KLATSCHEN, "b") + "\n</g></g>"
   + '\n<g class="funk">'
   + '\n  <path d="M110 26 L110 12 M93 32 L84 22 M127 32 L136 22 M88 46 L74 42 M132 46 L146 42"'

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 130" width="220" height="130">
+<style>
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  .l { animation: klatschL 0.62s linear infinite; transform-box: view-box; transform-origin: 26% 92%; }
+  .r { animation: klatschR 0.62s linear infinite; transform-box: view-box; transform-origin: 74% 92%; }
+  .funk { animation: funk 0.62s linear infinite; transform-box: view-box; transform-origin: 50% 44%; }
+  @keyframes klatschL {
+    0%   { animation-timing-function: cubic-bezier(.5,0,.95,.4);
+           transform: translateX(-11px) rotate(-6deg) scaleX(1); }
+    42%  { animation-timing-function: cubic-bezier(.1,.9,.3,1);
+           transform: translateX(1px) rotate(1deg) scaleX(.88); }
+    48%  { transform: translateX(0) rotate(0) scaleX(.98); }
+    56%  { animation-timing-function: cubic-bezier(.4,0,.6,1);
+           transform: translateX(-4px) rotate(-2deg) scaleX(1.03); }
+    100% { transform: translateX(-11px) rotate(-6deg) scaleX(1); }
+  }
+  @keyframes klatschR {
+    0%   { animation-timing-function: cubic-bezier(.5,0,.95,.4);
+           transform: translateX(11px) rotate(6deg) scaleX(1); }
+    42%  { animation-timing-function: cubic-bezier(.1,.9,.3,1);
+           transform: translateX(-1px) rotate(-1deg) scaleX(.88); }
+    48%  { transform: translateX(0) rotate(0) scaleX(.98); }
+    56%  { animation-timing-function: cubic-bezier(.4,0,.6,1);
+           transform: translateX(4px) rotate(2deg) scaleX(1.03); }
+    100% { transform: translateX(11px) rotate(6deg) scaleX(1); }
+  }
+  @keyframes funk { 0%,40%{opacity:0; transform:scale(.4)} 44%{opacity:1; transform:scale(1)} 100%{opacity:0; transform:scale(1.6)} }
+</style>
+<g transform="translate(26 10) rotate(-24 43 66)"><g class="l">
+  <defs><radialGradient id="hauta" cx="38%" cy="30%" r="78%"><stop offset="0" stop-color="#f6c79a"/><stop offset="0.62" stop-color="#f0b077"/><stop offset="1" stop-color="#d89a63"/></radialGradient></defs><path d="M32 104 Q29 90 30.21 78.25 L12.76 72.3 A5.59 5.59 0 0 1 15.84 61.55 L33.79 65.75 Q33.12 72.22 34.44 62.68 L32.35 37.34 A4.59 4.59 0 0 1 41.46 36.22 L45.56 61.32 Q44.88 68.2 44.2 62.2 L44.26 33.94 A4.76 4.76 0 0 1 53.77 33.61 L55.8 61.8 Q55.15 67.8 54.51 61.71 L56.83 36.31 A4.51 4.51 0 0 1 65.84 36.78 L65.49 62.29 Q64.88 70.17 64.27 64.17 L68.43 45.54 A3.94 3.94 0 0 1 76.19 46.91 L73.73 65.83 Q79.73 81.83 72 88 Q71 100 70 104 Z" fill="url(#hauta)" stroke="rgba(150,95,50,.42)" stroke-width="1.6" stroke-linejoin="round"/><path d="M37 72 Q31 84 36 98 Q42 102 48 99 Q41 86 43 74 Z" fill="#d89a63" opacity=".28"/>
+  <path d="M28.68 50.7 Q32.71 48.59 37.13 49.66" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M28.14 41.69 Q31.61 39.66 35.48 40.79" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M39.31 48.5 Q43.66 46.75 48.13 48.2" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M39.55 38.59 Q43.32 36.86 47.2 38.32" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M50.99 48.91 Q55.25 47.53 59.34 49.35" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M52.01 39.95 Q55.72 38.54 59.26 40.33" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M62.36 54.02 Q66.23 53.08 69.54 55.29" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M64.03 47.31 Q67.43 46.28 70.27 48.41" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M39 76 Q49 86 53 100" stroke="rgba(150,95,50,.30)" stroke-width="1.1" fill="none" opacity=".8" stroke-linecap="round"/>
+  <path d="M37 80 Q53 84 68 79" stroke="rgba(150,95,50,.30)" stroke-width="1.1" fill="none" opacity=".8" stroke-linecap="round"/>
+  <path d="M43 88 Q55 91 66 88" stroke="rgba(150,95,50,.30)" stroke-width="1.1" fill="none" opacity=".8" stroke-linecap="round"/>
+</g></g>
+<g transform="translate(108 10) rotate(24 43 66) translate(86 0) scale(-1 1)"><g class="r">
+  <defs><radialGradient id="hautb" cx="38%" cy="30%" r="78%"><stop offset="0" stop-color="#f6c79a"/><stop offset="0.62" stop-color="#f0b077"/><stop offset="1" stop-color="#d89a63"/></radialGradient></defs><path d="M32 104 Q29 90 30.21 78.25 L12.76 72.3 A5.59 5.59 0 0 1 15.84 61.55 L33.79 65.75 Q33.12 72.22 34.44 62.68 L32.35 37.34 A4.59 4.59 0 0 1 41.46 36.22 L45.56 61.32 Q44.88 68.2 44.2 62.2 L44.26 33.94 A4.76 4.76 0 0 1 53.77 33.61 L55.8 61.8 Q55.15 67.8 54.51 61.71 L56.83 36.31 A4.51 4.51 0 0 1 65.84 36.78 L65.49 62.29 Q64.88 70.17 64.27 64.17 L68.43 45.54 A3.94 3.94 0 0 1 76.19 46.91 L73.73 65.83 Q79.73 81.83 72 88 Q71 100 70 104 Z" fill="url(#hautb)" stroke="rgba(150,95,50,.42)" stroke-width="1.6" stroke-linejoin="round"/><path d="M37 72 Q31 84 36 98 Q42 102 48 99 Q41 86 43 74 Z" fill="#d89a63" opacity=".28"/>
+  <path d="M28.68 50.7 Q32.71 48.59 37.13 49.66" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M28.14 41.69 Q31.61 39.66 35.48 40.79" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M39.31 48.5 Q43.66 46.75 48.13 48.2" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M39.55 38.59 Q43.32 36.86 47.2 38.32" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M50.99 48.91 Q55.25 47.53 59.34 49.35" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M52.01 39.95 Q55.72 38.54 59.26 40.33" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M62.36 54.02 Q66.23 53.08 69.54 55.29" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M64.03 47.31 Q67.43 46.28 70.27 48.41" stroke="rgba(150,95,50,.30)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M39 76 Q49 86 53 100" stroke="rgba(150,95,50,.30)" stroke-width="1.1" fill="none" opacity=".8" stroke-linecap="round"/>
+  <path d="M37 80 Q53 84 68 79" stroke="rgba(150,95,50,.30)" stroke-width="1.1" fill="none" opacity=".8" stroke-linecap="round"/>
+  <path d="M43 88 Q55 91 66 88" stroke="rgba(150,95,50,.30)" stroke-width="1.1" fill="none" opacity=".8" stroke-linecap="round"/>
+</g></g>
+<g class="funk">
+  <path d="M110 26 L110 12 M93 32 L84 22 M127 32 L136 22 M88 46 L74 42 M132 46 L146 42" stroke="#f2b84b" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+</g>
+</svg>
