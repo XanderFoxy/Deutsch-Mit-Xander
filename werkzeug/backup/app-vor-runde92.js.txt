@@ -21906,15 +21906,18 @@
           <button type="button" class="lc-tonknopf" id="lcTonNeu"
                   title="Ton zurücksetzen — wenn du jemanden doppelt hörst"
                   aria-label="Ton zurücksetzen">🔊 Ton</button>
-          <!-- RUNDE 92 — DER VOLLBILDKNOPF IST WEG.
-               XANDER: „Ausserdem solltest du den Vollbildknopf
-               wegmachen. Du solltest das nur so funktionieren lassen."
-               Es gibt ihn deshalb nicht mehr. Der Modus (Adresszeile
-               weg, Bildschirm bleibt an) schaltet sich beim Betreten
-               des Klassenzimmers von selbst ein — siehe lcKinoAn()
-               weiter unten — und beim Verlassen wieder ab. Ein Wisch
-               nach unten oder Esc holt die Zeile jederzeit zurueck;
-               gesperrt ist nichts. -->
+          <!-- RUNDE 87 — XANDER: „Ich habe auch noch immer nicht den
+               Modus, dass oben die Adresszeile ausgeblendet wird beim
+               Klassenzimmer und des Weiteren möchte ich einen
+               Screen-on-Modus haben in dieser Situation, dass man dort
+               länger bleiben kann … ich möchte, dass der Bildschirm
+               hier offen gezwungen bleibt."
+               Beides steckt hinter diesem einen Knopf: siehe
+               lcKinoAn() weiter unten. Der Text darauf sagt jeweils,
+               was gerade gilt. -->
+          <button type="button" class="lc-tonknopf" id="lcKino"
+                  title="Adresszeile ausblenden und den Bildschirm anlassen"
+                  aria-label="Adresszeile ausblenden und den Bildschirm anlassen">🖥️ Vollbild</button>
         </div>
 
         <!-- GEMELDET: „Der Titel ist in meiner Optik mit dem Fokus sehr
@@ -34352,7 +34355,7 @@
     document.getElementById("lcSchiffe")?.remove();
     document.getElementById("lcSchiffeZeile")?.remove();
     const karte = document.getElementById("livechatKarte");
-    if (karte) karte.classList.remove("lc-schiffe-an", "lc-schiffe-still");
+    if (karte) karte.classList.remove("lc-schiffe-an");
     document.querySelectorAll(".lc-platz").forEach((p) => {
       p.classList.remove("lc-schiff-meins", "lc-schiff-treffer", "lc-schiff-daneben",
                          "lc-schiff-feld");
@@ -34491,28 +34494,13 @@
     karte.classList.add("lc-schiffe-an");
 
     const dranIch = stand.phase === "schiessen" && stand.dran === stand.ichBin;
-    /* RUNDE 92 — DREI ABSCHNITTE, wie er sie beschrieben hat:
-       „Man muss sich erst einen Platz suchen, dann beginnt die Runde
-       mit einem Countdown, und dann muss man sich gegenseitig suchen,
-       der Reihe nach."
-       Und waehrend des Versteckens steht auf JEDEM Geraet dasselbe
-       da — eine Zahl, kein Name, kein Feld. */
+    /* RUNDE 88 — die Versteck-Phase gibt es nicht mehr: die Plaetze
+       werden ausgelost (siehe livechat.js, schiffeStarten). Es gibt
+       also nur noch zwei Zustaende: geschossen wird, oder das Spiel
+       ist vorbei. */
     const kopfText = stand.phase === "aus" ? "🚢 Schiffe versenken"
-      : stand.phase === "verstecken"
-        ? (stand.meins ? "🤫 Du liegst auf Platz " + stand.meins
-                         + " — niemand sieht das."
-                       : "🤫 Such dir heimlich einen Platz")
-      : stand.phase === "countdown"
-        ? (stand.countdown > 0 ? "⏱️ " + stand.countdown + " …" : "⏱️ Los!")
       : (dranIch ? "🎯 Du bist dran — wo steckt jemand?"
         : "⏳ " + (stand.dranName || "Jemand") + " ist dran.");
-    /* Solange versteckt wird, ist die Sitzreihe still: keine
-       Sprechanimation, kein Effekt, kein Ton an einem Platz.
-       XANDER: „es darf nicht sein, dass man die Animation desjenigen
-       sieht, der sich versteckt, denn dann wird er direkt verraten …
-       Man darf ihn nur sprechen hoeren." */
-    karte.classList.toggle("lc-schiffe-still",
-      stand.phase === "verstecken" || stand.phase === "countdown");
 
     /* Die Plaetze werden zu Feldern. */
     const wieViele = stand.plaetze || 16;
@@ -49563,21 +49551,6 @@
        nachsehen laesst und nicht geraten werden muss: jeden Effekt
        einzeln ausloesen und hinterher zaehlen, was im Dokument steht. */
     effektNamen: function () { return Object.keys(LC_EFFEKTE); },
-    /* RUNDE 92 — ZWEI HEBEL, DIE IM BETRIEB STAENDIG GEZOGEN WERDEN.
-       XANDER: „die Rueckstaende in Animationen sind immer noch, wenn
-       man den Platz verlaesst."
-       Im Klassenzimmer laeuft neben der Animation der Betrieb weiter:
-       jede Praesenzmeldung frischt die Plaetze auf, und jeder
-       Abschnittswechsel zeichnet den ganzen Bereich neu. Genau dazwischen
-       entstehen Rueckstaende — eine Sonde, die nur den Effekt ausloest
-       und sonst nichts tut, sieht davon nie etwas. Deshalb lassen sich
-       beide Vorgaenge hier von aussen ausloesen. */
-    auffrischen: function () {
-      try { livechatPlaetzeAuffrischen(); return true; } catch (e) { return String(e); }
-    },
-    neuZeichnen: function () {
-      try { renderLiveChat(); return true; } catch (e) { return String(e); }
-    },
     /* RUNDE 88 — DIE AUSWERTUNG VON STADT-LAND-FLUSS ZUM NACHRECHNEN.
        XANDER: „mit einer realistischen Auswertung, so dass die
        Ergebnisse beim Spielfuehrer immer vorliegen und er dann
@@ -51607,12 +51580,29 @@
         e.stopPropagation();
         lcMusikWaehler();
       });
-      /* RUNDE 92 — hier stand der Kino-Knopf. XANDER: „Ausserdem
-         solltest du den Vollbildknopf wegmachen. Du solltest das nur
-         so funktionieren lassen." Also laeuft es von selbst: beim
-         Betreten des Klassenzimmers schaltet lcKinoAn() ein (siehe
-         weiter unten, wo der Bereich aufgebaut wird), beim Verlassen
-         lcKinoAus(). Kein Knopf, keine Meldung. */
+      /* RUNDE 87 — der Kino-Knopf. Ein Tipp schaltet beides zusammen:
+         Vollbild (die Adresszeile ist weg) und Bildschirm-an. Noch ein
+         Tipp schaltet beides ab und merkt sich das. */
+      area.querySelector("#lcKino")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (lcImVollbild() || lcWachSperre) { lcKinoAus(true); return; }
+        lcKinoAn(true);
+        /* Sagen, was passiert ist — und was nicht. Ein Knopf, der auf
+           dem iPhone still nichts tut, waere genau das, was er zu
+           Recht nicht mehr sehen will. */
+        setTimeout(() => {
+          if (lcImVollbild()) {
+            showToast("🖥️ Vollbild an — die Adresszeile ist weg. "
+              + "Wisch nach unten oder drück Esc, um sie zurückzuholen."
+              + (lcWachSperre ? " Der Bildschirm bleibt an." : ""));
+          } else if (lcWachSperre) {
+            showToast("💡 Der Bildschirm bleibt an. Vollbild kann dein Browser nicht — "
+              + "leg die Seite auf den Home-Bildschirm, dann ist die Adresszeile auch weg.");
+          } else {
+            showToast("Dein Browser lässt weder Vollbild noch Bildschirm-an zu.");
+          }
+        }, 260);
+      });
       area.querySelector("#lcTonNeu")?.addEventListener("click", (e) => {
         e.stopPropagation();
         let erg = null;

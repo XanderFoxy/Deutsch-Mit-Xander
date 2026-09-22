@@ -48,39 +48,23 @@ const sage = (gut, text, dazu) => {
   console.log("RUNDE 88 — Schiffe versenken\n");
   const lc = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
   const js = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
-  const css = fs.readFileSync(path.join(WURZEL, "korrekturen.css"), "utf8");
 
   console.log("DIE REGELN DES SPIELS\n");
-  /* NACHGEZOGEN IN RUNDE 92. Hier stand bis eben das Gegenteil: „die
-     Verstecke werden ausgelost". Das war die Loesung aus Runde 88 —
-     und XANDER hat sie ausdruecklich verworfen:
-     „Das Schiffe versenken hast du nicht so gemacht, wie ich es dir
-      gesagt habe … Man muss sich erst einen Platz suchen, dann
-      beginnt die Runde mit einem Countdown, und dann muss man sich
-      gegenseitig suchen, der Reihe nach."
-     Also wieder aussuchen — aber lautlos, und der Schiedsrichter
-     verraet nichts weiter als eine ZAHL. */
-  /* 1. Sechzehn Felder, und man sucht sich seines selbst aus. */
+  /* 1. Ausgelost, nicht ausgesucht. */
   sage(/var SCHIFFE_FELDER = 16;/.test(lc)
-    && /t: "versteck", nr: nr/.test(lc)
-    && /phase: "verstecken"/.test(lc),
-    "sechzehn Felder, und jeder sucht sich seinen Platz selbst");
-  /* 2. Die Wahl geht als persoenliche Post an den Schiedsrichter,
-        an den Raum geht nur die Zahl der Fertigen — kein Name, kein
-        Feld. */
-  sage(/function schiffeVersteckAn/.test(lc)
-    && /schiffeAnAlle\(\{ t: "wartet", fertig: fertig, von: schiffeSpiel\.reihe\.length \}\)/.test(lc)
-    && !/namen:/.test(lc.slice(lc.indexOf("function schiffeVersteckAn"),
-                               lc.indexOf("function schiffeVersteckAn") + 1400)),
-    "die Wahl bleibt geheim — an alle geht nur, WIE VIELE fertig sind");
-  /* 3. Dann der Countdown, und erst danach wird geschossen. */
-  sage(/t: "countdown", sek: 3/.test(lc)
-    && /schiffeStand\.phase = "countdown"/.test(lc)
-    && /schiffeSpiel\.phase = "schiessen";\s*\n\s*schiffeLos\(\);/.test(lc),
-    "dann laeuft ein Countdown, und erst danach geht die Suche los");
-  /* 4. Und die Sitzreihe verraet waehrenddessen nichts. */
-  sage(/lc-schiffe-still/.test(js) && /lc-schiffe-still/.test(css),
-    "waehrend des Versteckens zeigt kein Platz eine Animation");
+    && /schiffeSpiel\.reihe\.forEach\(function \(m, k\) \{ schiffeSpiel\.verstecke\[m\.id\] = felder\[k\]; \}\);/.test(lc),
+    "die Verstecke werden ausgelost — sechzehn Felder, gemischt");
+  /* 2. Und niemand kann mehr nach einem fremden Versteck fragen:
+        es gibt keine Versteck-Nachricht mehr und keine Antwort
+        „da ist schon jemand". */
+  sage(!/t: "versteck"/.test(lc) && !/t: "belegt", nr: nr/.test(lc)
+    && !/systemZeile\("Dort versteckt sich schon jemand/.test(lc),
+    "niemand sucht sich mehr ein Feld aus — also verraet auch niemand eines");
+  /* 3. Jeder erfaehrt nur sein eigenes Feld, und zwar als Post an
+        genau ein Geraet. */
+  sage(/postSenden\(m\.id, \{ art: "spielpost", spiel: \{ t: "platz", nr: nr \} \}\);/.test(lc)
+    && /if \(d\.t === "platz"\)/.test(lc),
+    "und jeder erfaehrt nur sein eigenes Feld, per Post an ein Geraet");
   /* 4. Die Reihenfolge ist die Ankunft. */
   sage(/var reihe = spielReihe\(\);/.test(lc)
     && /return \(a\.seit - b\.seit\)/.test(lc),

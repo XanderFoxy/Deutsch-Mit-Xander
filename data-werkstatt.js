@@ -49,20 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 91b — jetzt lässt sich jeder Tonzeitpunkt nachrechnen (Fassung 500)",
+  stand: "Runde 92 — Vollbildknopf weg, Schiffe versenken mit Verstecken und Countdown (Fassung 501)",
 
   inArbeit: [
-    { seit: "2026-09-22T23:09", nurBetreiber: true,
+    { seit: "2026-09-22T23:40", nurBetreiber: true,
       text: "Sammellauf vor jedem Hochladen: bash werkzeug/alle-pruefen.sh" },
+    { seit: "2026-09-22T23:40",
+      text: "Kopfhörer bleiben nicht auf dem Kopf / Lied an andere — als Nächstes" },
+    { seit: "2026-09-22T23:40",
+      text: "Billard-Physik, Lok-Schienenführung, Klaps mit seitlicher Hand, Fahrstuhl, Delfin, Anrufen, Mario-Töne, Hände vereinheitlichen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T23:09",
-      text: "Neues Werkzeug werkzeug/ton-zeitpunkte.js: geplant + Vorlauf = wirklich zu hören — für jede Einplanung in app.js" },
-    { seit: "2026-09-22T23:09",
-      text: "Die Schwelle der Aufschlag-Sonde nachgezogen (5 statt 20 Prozent): „birneschrauben“ war ein Fehlalarm, „aufsetzen“ bleibt ein echter Fund" },
-    { seit: "2026-09-22T23:09",
-      text: "Am Peitschenknall im Cowboyhut steht jetzt der gemessene Wert: die 600 ms sind in Wirklichkeit 1002 ms" },
+    { seit: "2026-09-22T23:40",
+      text: "Der Vollbildknopf ist weg — der Modus schaltet sich beim Betreten des Klassenzimmers von selbst ein und beim Verlassen wieder ab" },
+    { seit: "2026-09-22T23:40",
+      text: "Schiffe versenken: 16 Plätze, jeder sucht sich seinen Platz SELBST — heimlich; an alle geht nur die Zahl der Fertigen, kein Name, kein Feld" },
+    { seit: "2026-09-22T23:40",
+      text: "Danach ein Countdown, dann wird der Reihe nach gesucht" },
+    { seit: "2026-09-22T23:40",
+      text: "Während des Versteckens ist die Sitzreihe still: keine Sprechanimation, keine Effektschicht, keine Hervorhebung — hören kann man sich weiter" },
+    { seit: "2026-09-22T23:40",
+      text: "Zwei neue Sonden: pruefe-runde92-schiffe (alle drei Abschnitte) und pruefe-runde92-grundebene (Strichlinie und Nummer bei 122 Effekten, beide Plätze, acht Zeitpunkte)" },
   ],
 };
