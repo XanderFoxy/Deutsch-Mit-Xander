@@ -971,6 +971,9 @@ window.LiveChat = (function () {
     lok:      { wirkung: "lok",      satz: "dampft hin\u00fcber zu", emoji: "\ud83d\ude82" },
     liane:    { wirkung: "liane",    satz: "schwingt sich hin\u00fcber zu", emoji: "\ud83c\udf3f" },
     feder:    { wirkung: "feder",    satz: "federt hin\u00fcber zu", emoji: "\ud83e\ude80" },
+    /* RUNDE 76 — XANDER: „Frosch-Sprung" und „Zylinder mit Kaninchen". */
+    frosch:   { wirkung: "frosch",   satz: "h\u00fcpft als Frosch zu", emoji: "\ud83d\udc38" },
+    zylinder: { wirkung: "zylinder", satz: "zaubert sich im Zylinder zu", emoji: "\ud83c\udfa9" },
     beamen:   { wirkung: "beamen",   satz: "beamt sich zu", emoji: "\u2728" },
     /* XANDER: „wie bei Super Mario frueher diese Rohre … wo man sich
        so reinsetzt und dann irgendwo anders wieder rauskommt." */
@@ -8900,6 +8903,11 @@ window.LiveChat = (function () {
       was: "3-Meter-Turm \u2014 Leiter hoch, Anlauf, Sprung, Platsch auf Platz 5" },
     { gr: "reden", w: "liane", kurz: "schwingen", nutzt: "/liane 5",
       was: "Liane \u2014 du schwingst dich wie Tarzan zu Platz 5" },
+    /* RUNDE 76 — XANDER: „Frosch-Sprung" und „Zylinder mit Kaninchen". */
+    { gr: "reden", w: "frosch", kurz: "quaken", nutzt: "/frosch 5",
+      was: "Frosch \u2014 du h\u00fcpfst auf einem Frosch zu Platz 5, er quakt bei jedem Absprung; mit gemaltem Weg auch \u00fcber Umwege (/frosch 1-5-6)" },
+    { gr: "reden", w: "zylinder", kurz: "zauberhut", nutzt: "/zylinder 5",
+      was: "Zauberzylinder \u2014 der Hut kommt \u00fcber dich, es puffft, und auf Platz 5 kommt erst das Kaninchen und dann du heraus" },
     { gr: "reden", w: "feder", kurz: "sprungfeder", nutzt: "/feder 5",
       was: "Sprungfeder \u2014 du federst zu Platz 5 und setzt dabei auf jedem gemalten Platz auf (/feder 1-5-6)" },
     { gr: "reden", w: "beamen", kurz: "beam", nutzt: "/beamen 5",
@@ -10859,6 +10867,8 @@ window.LiveChat = (function () {
     if ((art === "flug" || art === "maulwurf" || art === "portal"
          || art === "boot" || art === "kran" || art === "dampfer"
          || art === "lok" || art === "liane" || art === "feder"
+         /* RUNDE 76 — „Frosch-Sprung" und „Zylinder mit Kaninchen". */
+         || art === "frosch" || art === "zylinder"
          || art === "beamen" || art === "rohr"
          || art === "heli" || art === "pferd"
          || art === "greifvogel" || art === "turm"
@@ -10875,6 +10885,8 @@ window.LiveChat = (function () {
                     lok: [" dampft zu Platz ", "\ud83d\ude82"],
                     liane: [" schwingt sich zu Platz ", "\ud83c\udf3f"],
                     feder: [" federt zu Platz ", "\ud83e\ude80"],
+                    frosch: [" h\u00fcpft als Frosch zu Platz ", "\ud83d\udc38"],
+                    zylinder: [" verschwindet im Zylinder und taucht auf Platz ", "\ud83c\udfa9"],
                     beamen: [" beamt sich zu Platz ", "\u2728"],
                     rohr: [" rutscht durch die R\u00f6hre zu Platz ", "\ud83d\udfe2"],
                     heli: [" fliegt im Hubschrauber zu Platz ", "\ud83d\ude81"],
@@ -10902,7 +10914,8 @@ window.LiveChat = (function () {
          Bei allen anderen Reisen bleibt nur die Zielnummer stehen —
          sie kennen keine Stationen, dort waere ein Umweg nur eine
          krumme Linie. */
-      var kettenR = (art === "flug" || art === "feder" || art === "maulwurf");
+      var kettenR = (art === "flug" || art === "feder" || art === "maulwurf"
+                     || art === "frosch");
       var stationenR = String(rest).replace(/\s+/g, "").split("-")
         .map(function (x) { return parseInt(x, 10); });
       var zielNrR = stationenR[stationenR.length - 1];

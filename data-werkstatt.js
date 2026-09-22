@@ -49,22 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 82: Salve auf mehrere, Hammer mit Glasbruch, groesseres Katapult",
+  stand: "Runde 83: Frosch-Sprung und Zylinder mit Kaninchen",
 
   inArbeit: [
-    { seit: "2026-09-22T04:56",
-      text: "Der Rest aus Runde 76: Zylinder mit Kaninchen, Frosch-Sprung, Musik teilen mit YouTube, Anziehen-Modul, Telefon mit Audio" },
+    { seit: "2026-09-22T08:51",
+      text: "Der Rest aus Runde 76: Musik teilen mit YouTube, Anziehen-Modul, Telefon mit Audio" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T04:56",
-      text: "Die SALVE auf mehrere: hinter jedem Effekt am Platz duerfen jetzt mehrere Namen stehen, durch Komma getrennt — /ei Bea, Cem, Dana. Zwischen einem Namen und allen fehlte genau diese Auswahl. GEMESSEN: zwei Namen treffen die beiden Plaetze, Platznummern gehen genauso, und eine Luecke in der Kette trifft NICHT ploetzlich alle." },
-    { seit: "2026-09-22T04:56",
-      text: "Der HAMMER hat jetzt einen Zufall: faellt das Los klein aus, zerspringt die Scheibe ueber dem Profilbild mit Rissen vom Einschlagpunkt und dem Glasbruch-Ton, sonst fliegen wie bisher die Sterne. Das Los faehrt mit der Nachricht, damit alle dasselbe sehen. GEMESSEN: 13 Risse statt 8 Sterne, die Risse bleiben auf den Bildpunkt genau im Bild, und dasselbe Los ergibt dasselbe Muster." },
-    { seit: "2026-09-22T04:56",
-      text: "Das KATAPULT ist groesser. GEMESSEN: 146 px statt 123 px, also 1,43 statt 1,20 Bildbreiten." },
-    { seit: "2026-09-22T04:56",
-      text: "Neue Pruefung werkzeug/pruefe-runde82.js mit elf Regeln fuer diese drei Punkte, alle gruen." },
+    { seit: "2026-09-22T08:51",
+      text: "Der FROSCH-SPRUNG: ein Frosch in Seitenansicht traegt dein Profilbild auf dem Ruecken und springt Platz fuer Platz hinueber. Seine Hinterbeine strecken sich im Abstoss durch und ziehen sich in der Luft wieder an — das unterscheidet einen Sprung von einem Huepfen. Der gemalte Weg gilt auch hier. GEMESSEN: mit Weg landet er 2,0 und 2,6 px neben den gemalten Plaetzen, ohne Weg 72 und 37 px daneben." },
+    { seit: "2026-09-22T08:51",
+      text: "Neues Geraeusch ton/quaken, selbst gerechnet: ein Froschruf ist eine Pulsfolge von 45 bis 70 Schlaegen je Sekunde, kein tiefer Ton. GEMESSEN: drei getrennte Rufe in 1,80 s." },
+    { seit: "2026-09-22T08:51",
+      text: "Der ZYLINDER MIT KANINCHEN: der Hut kommt ueber dich, es puffft, und einen Augenblick lang ist gar nichts da — ohne diese Pause gibt es kein Verschwinden. Drueben steht der zweite Hut, er wackelt, das Kaninchen guckt heraus, und erst danach steigst du hinterher. GEMESSEN: Kaninchen ab Probe 5, Person ab Probe 7, und der Hut steht noch, wenn sie heraussteigt." },
+    { seit: "2026-09-22T08:51",
+      text: "Neues Geraeusch ton/zauberpuff: Rauchstoss, aufsteigender Funkenregen, Pause, zweiter Rauchstoss und ein ta-daa. GEMESSEN: 2,40 s mit der Stille genau zwischen Verschwinden und Auftauchen." },
+    { seit: "2026-09-22T08:51",
+      text: "Neue Pruefung werkzeug/pruefe-runde83.js mit sechzehn Regeln, alle gruen." },
   ],
 };

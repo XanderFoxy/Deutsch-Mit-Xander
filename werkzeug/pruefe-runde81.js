@@ -534,10 +534,14 @@ function tonMessen(name) {
 
   /* --- Und die Kette kommt ueberhaupt bis zur Animation ------------- */
   const lcW = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
-  sage(/kettenR = \(art === "flug" \|\| art === "feder" \|\| art === "maulwurf"\)/.test(lcW),
-    "livechat.js nimmt die Kette fuer genau diese drei an");
+  /* RUNDE 83 — hier stand „genau diese drei". Seit der Frosch dazu
+     gekommen ist, sind es vier; die Regel selbst ist unveraendert:
+     wer einen Umweg zeichnen kann, muss die Kette auch annehmen. */
+  sage(/kettenR = \(art === "flug" \|\| art === "feder" \|\| art === "maulwurf"/.test(lcW)
+    && /art === "frosch"\)/.test(lcW),
+    "livechat.js nimmt die Kette fuer alle an, die einen Umweg zeichnen koennen");
   const appW = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
-  sage(/const bahnFaehig = \{ flug: 1, feder: 1, maulwurf: 1 \};/.test(appW),
+  sage(/const bahnFaehig = \{ flug: 1, feder: 1, maulwurf: 1, frosch: 1 \};/.test(appW),
     "und das Anreise-Menue schickt ihnen den gemalten Weg mit");
 
   await br.close(); srv.close();

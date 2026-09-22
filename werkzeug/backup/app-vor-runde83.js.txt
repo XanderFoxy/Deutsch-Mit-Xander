@@ -27342,7 +27342,7 @@
        Ein gezeichneter Weg gilt deshalb jetzt fuer Fahren, Laufen UND
        diese drei; alle uebrigen Reisen gehen weiter direkt zur
        Nummer. */
-    const bahnFaehig = { flug: 1, feder: 1, maulwurf: 1, frosch: 1 };
+    const bahnFaehig = { flug: 1, feder: 1, maulwurf: 1 };
     const reihe = document.createElement("div");
     reihe.className = "lc-anreise-reihe";
     [["\u2708\ufe0f", "Flugzeug", "flug"],
@@ -27353,9 +27353,6 @@
      ["\ud83c\udf00", "Tor", "portal"],
      ["\ud83c\udf3f", "Liane", "liane"],
      ["\ud83e\ude80", "Sprungfeder", "feder"],
-     /* RUNDE 76 — „Frosch-Sprung" und „Zylinder mit Kaninchen". */
-     ["\ud83d\udc38", "Frosch", "frosch"],
-     ["\ud83c\udfa9", "Zylinder", "zylinder"],
      ["\ud83c\udfd7\ufe0f", "Kran", "kran"],
      ["\u2728", "Beamen", "beamen"],
      ["\ud83d\udfe2", "R\u00f6hre", "rohr"],
@@ -29099,11 +29096,6 @@
     lok:      { zeichen: ["\ud83d\ude82"], wie: 4, klasse: "umarmen" },
     liane:    { zeichen: ["\ud83c\udf3f"], wie: 4, klasse: "umarmen" },
     feder:    { zeichen: ["\ud83e\ude80"], wie: 4, klasse: "umarmen" },
-    /* RUNDE 76 — die beiden Letzten aus Xanders Liste: „Frosch-Sprung"
-       und „Zylinder mit Kaninchen". Ohne Eintrag HIER steigt lcWirkung
-       gleich in der ersten Zeile aus und zeichnet gar nichts. */
-    frosch:   { zeichen: ["\ud83d\udc38"], wie: 4, klasse: "umarmen" },
-    zylinder: { zeichen: ["\ud83c\udfa9"], wie: 4, klasse: "umarmen" },
     beamen:   { zeichen: ["\u2728"], wie: 4, klasse: "umarmen" },
     rohr:     { zeichen: ["\ud83d\udfe2"], wie: 4, klasse: "umarmen" },
     heli:     { zeichen: ["\ud83d\ude81"], wie: 4, klasse: "umarmen" },
@@ -30025,9 +30017,6 @@
      dessen Schlag langsamer wird. */
   const LC_ANKUNFT_TON = {
     kran: "bonk", liane: "bonk", feder: "bonk", heli: "helilanden", pferd: "bonk",
-    /* RUNDE 76 — der Frosch landet weich auf seinen Hinterbeinen, das
-       ist kein „bonk"; sein Quaken traegt die Ankunft selbst. Der
-       Zylinder ebenso: sein zweiter Puff IST die Ankunft. */
     /* RUNDE 75 — XANDER zur Riesenhand: „und dann wieder so ein
        Aufsatzgeraeusch irgendwo, wo ich wieder ankomme." Das ist
        „bonk". Die Frisbee bekommt es ebenfalls: eine Scheibe, die
@@ -34313,10 +34302,7 @@
     /* RUNDE 75 — die vier Neuen. Das UFO braucht am laengsten: es
        muss herunterkommen, strahlen, fliegen, wieder strahlen und
        weg. Die Frisbee ist die kuerzeste — ein Wurf ist schnell. */
-    /* RUNDE 76 — der Frosch springt schnell, der Zaubertrick braucht
-       Zeit: Hut herunter, Pause, Hut hinauf, Kaninchen, Person. */
-    const grund = { frosch: 2400, zylinder: 2800,
-                  flug: 2600, maulwurf: 2200, boot: 2800, kran: 2800,
+    const grund = { flug: 2600, maulwurf: 2200, boot: 2800, kran: 2800,
                   dampfer: 3000, lok: 3200, liane: 2200, feder: 2400,
                   beamen: 2600, rohr: 2800, heli: 3000, portal: 3400,
                   pferd: 3000, greifvogel: 3000, turm: 3400,
@@ -36110,211 +36096,6 @@
       federLand.forEach((zielT) => {
         lcTonSpaeter("federboing", Math.round(zielT * hin), 0.5, abstandF);
       });
-    } else if (art === "frosch") {
-      /* =================================================================
-         RUNDE 76 — DER FROSCH-SPRUNG
-         -----------------------------------------------------------------
-         XANDER: „Frosch-Sprung."
-         Ein Frosch springt anders als eine Sprungfeder, und der
-         Unterschied ist nicht der Bogen, sondern die BEINE: er zieht
-         sie an, streckt sie im Abstoss durch und zieht sie in der Luft
-         wieder an. Genau das macht aus einem Huepfen ein Springen.
-         Der gemalte Weg gilt auch hier — dieselbe Bahn wie bei
-         Flugzeug, Feder und Maulwurf. */
-      const fro = document.createElement("span");
-      fro.className = "lc-frosch";
-      fro.style.setProperty("--gross", d + "px");
-      fro.innerHTML =
-                '<svg class="lc-frosch-bild" viewBox="0 0 100 74">'
-        /* SEITENANSICHT, und das ist der Grund: von vorn verdeckt das
-           Profilbild auf dem Ruecken den ganzen Frosch (nachgesehen am
-           ersten Versuch — vom Frosch waren nur die Beine zu sehen).
-           Von der Seite sitzt der Kopf vorn, der Reiter hinten, und
-           beide sind gleichzeitig da. Ausserdem sieht man so erst,
-           was einen Froschsprung ausmacht: das lange Hinterbein. */
-        /* Das Hinterbein liegt HINTER dem Koerper und streckt sich im
-           Abstoss durch (siehe lcFroschBeinR83). */
-        + '<g class="lc-frosch-hinten">'
-        + '<path class="lc-frosch-bein" d="M62 40 Q78 38 84 48 Q88 56 80 60'
-        + ' Q72 62 68 54 Q64 47 62 40 Z" fill="#54a050" stroke="#3c7a3a" stroke-width="1.8"/>'
-        + '<path class="lc-frosch-bein" d="M80 58 Q90 60 95 64 Q90 68 80 66 Z"'
-        + ' fill="#4d9349" stroke="#3c7a3a" stroke-width="1.6"/>'
-        + "</g>"
-        /* Der Koerper. */
-        + '<ellipse cx="52" cy="44" rx="28" ry="16" fill="#67b862"'
-        + ' stroke="#3c7a3a" stroke-width="1.8"/>'
-        /* Der Kopf sitzt vorn und geht in den Koerper ueber. */
-        + '<path d="M26 44 Q12 44 11 36 Q11 28 22 27 Q34 26 38 34 Q40 40 38 46 Z"'
-        + ' fill="#67b862" stroke="#3c7a3a" stroke-width="1.8"/>'
-        /* Das Auge sitzt OBEN auf dem Kopf — das Froschigste am Frosch. */
-        + '<circle cx="24" cy="24" r="8.4" fill="#6cbf66" stroke="#3c7a3a" stroke-width="1.6"/>'
-        + '<circle cx="24" cy="23" r="4.8" fill="#f7f3e3"/>'
-        + '<circle cx="25" cy="23.4" r="2.6" fill="#16181d"/>'
-        /* Das breite Maul. */
-        + '<path d="M12 38 Q22 44 34 42" stroke="#3c7a3a" stroke-width="2"'
-        + ' fill="none" stroke-linecap="round"/>'
-        /* Der helle Bauch. */
-        + '<path d="M30 52 Q52 62 74 52 Q52 58 30 52 Z" fill="#cfe8b6" opacity=".9"/>'
-        /* Das Vorderbein. */
-        + '<path class="lc-frosch-vorn" d="M34 52 Q30 60 24 62" stroke="#3c7a3a"'
-        + ' stroke-width="3.6" fill="none" stroke-linecap="round"/>'
-        + "</svg>"
-        + '<span class="lc-frosch-last"' + (quelle
-            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
-          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
-      reihe.appendChild(fro);
-      weg.push(fro);
-      setzen(fro, start.x, start.y);
-      /* Die Spruenge — wie bei der Feder: mit gemaltem Weg eine
-         Landung je Station, sonst eine je ueberquertem Platz. */
-      const froschLand = bahn && bahnAnteile.length
-        ? bahnAnteile.slice()
-        : Array.from({ length: Math.max(1, plaetzeR) },
-                     (_, i) => (i + 1) / Math.max(1, plaetzeR));
-      const froRahmen = (x, y, t, dreh) => ({
-        transform: "translate(" + (x - start.x).toFixed(1) + "px, " + (y - start.y).toFixed(1)
-          + "px) translate(-50%, -50%) rotate(" + dreh.toFixed(1) + "deg)",
-        opacity: 1,
-        offset: Math.min(1, (t * hin) / dauer)
-      });
-      const froSpruenge = [froRahmen(start.x, start.y, 0, 0)];
-      let froVor = 0;
-      froschLand.forEach((zielT) => {
-        const mitteT = (froVor + zielT) / 2;
-        const pm = bahnPunkt(mitteT);
-        const pz = bahnPunkt(zielT);
-        /* In der Luft neigt er sich in die Sprungrichtung und faengt
-           sich bei der Landung wieder — ein Frosch landet flach. */
-        const rueber = pz.x >= bahnPunkt(froVor).x ? 1 : -1;
-        froSpruenge.push(froRahmen(pm.x, pm.y - d * (0.85 - mitteT * 0.3), mitteT, -14 * rueber));
-        froSpruenge.push(froRahmen(pz.x, pz.y, zielT, 0));
-        froVor = zielT;
-      });
-      froSpruenge.push({ transform: "translate(" + (ende.x - start.x).toFixed(1) + "px, "
-        + (ende.y - start.y).toFixed(1) + "px) translate(-50%, -50%) rotate(0deg)",
-        opacity: 1, offset: Math.min(0.97, (hin + 180) / dauer) });
-      froSpruenge.push({ transform: "translate(" + (ende.x - start.x).toFixed(1) + "px, "
-        + (ende.y - start.y).toFixed(1) + "px) translate(-50%, -50%) rotate(0deg)",
-        opacity: 0, offset: 1 });
-      try { fro.animate(froSpruenge, { duration: dauer, easing: "linear", fill: "forwards" }); }
-      catch (e) {}
-      /* Die Beine strecken sich beim Abstoss und ziehen sich in der
-         Luft wieder an — einmal je Sprung. Die Dauer eines Sprungs
-         ist die Strecke durch die Zahl der Spruenge. */
-      const froTakt = Math.max(320, Math.round(hin / Math.max(1, froschLand.length)));
-      fro.querySelectorAll(".lc-frosch-bein").forEach((b) => {
-        b.style.animationDuration = froTakt + "ms";
-      });
-      /* Und er quakt bei jedem Abstoss, nicht nur einmal. */
-      lcTonSpaeter("quaken", 0, 0.6, froTakt);
-      froschLand.slice(0, -1).forEach((zielT) => {
-        lcTonSpaeter("quaken", Math.round(zielT * hin), 0.5, froTakt);
-      });
-    } else if (art === "zylinder") {
-      /* =================================================================
-         RUNDE 76 — DER ZYLINDER MIT DEM KANINCHEN
-         -----------------------------------------------------------------
-         XANDER: „Zylinder mit Kaninchen."
-         Ein Zaubertrick hat drei Teile, und alle drei muessen da sein,
-         sonst ist es keiner:
-           1. Der Hut kommt ueber den Kopf, es puffft, und die Person
-              ist weg.
-           2. Eine Pause, in der NICHTS zu sehen ist — ohne sie gibt es
-              kein Verschwinden, nur ein Verschieben.
-           3. Am Ziel steht der zweite Hut. Erst kommt das KANINCHEN
-              heraus (der Gag), und dann steigt die Person hinterher.
-         Das Bild am Startplatz nimmt die gemeinsame Blende weiter oben
-         weg (16 %) — genau dann sitzt der Hut darueber. */
-      const versatzZ0 = lcBildVersatz(ab.el);
-      const versatzZ1 = lcBildVersatz(zu.el);
-      const hutHtml = (klasse) =>
-        '<span class="' + klasse + '">'
-        + '<svg class="lc-zyl-bild" viewBox="0 0 100 80">'
-        /* Die Krempe liegt VOR dem Zylinder, damit alles, was
-           herauskommt, dahinter aufsteigt. */
-        + '<rect x="30" y="6" width="40" height="46" rx="3" fill="#1b1d24"/>'
-        + '<rect x="30" y="34" width="40" height="9" fill="#8c2230"/>'
-        + '<ellipse cx="50" cy="52" rx="46" ry="11" fill="#1b1d24"/>'
-        + '<ellipse cx="50" cy="50" rx="46" ry="10" fill="#2a2d36"/>'
-        + '<ellipse cx="50" cy="8" rx="20" ry="5" fill="#2a2d36"/>'
-        + "</svg></span>";
-      const rauch = (wo, spaet, versatz) => {
-        const r = document.createElement("span");
-        r.className = "lc-zyl-rauch";
-        r.style.setProperty("--gross", (d * 1.5) + "px");
-        r.style.animationDelay = Math.round(spaet) + "ms";
-        let w = "";
-        for (let i = 0; i < 9; i++) {
-          w += '<i style="--wo:' + (i * 40) + "deg;--weit:"
-             + (52 + ((i * 29) % 46)) + "%;--spaet:" + ((i % 5) * 42) + 'ms"></i>';
-        }
-        r.innerHTML = w;
-        reihe.appendChild(r);
-        weg.push(r);
-        setzen(r, wo.x, wo.y + versatz);
-        return r;
-      };
-      /* 1. Der Hut faellt ueber den Startplatz und hebt sich leer. */
-      const hutA = document.createElement("span");
-      hutA.className = "lc-zylinder lc-zylinder-ab";
-      hutA.style.setProperty("--gross", (d * 1.35) + "px");
-      hutA.innerHTML = hutHtml("lc-zyl-huelle");
-      reihe.appendChild(hutA);
-      weg.push(hutA);
-      setzen(hutA, start.x, start.y + versatzZ0);
-      rauch(start, 0.16 * dauer, versatzZ0);
-      /* 2. Der Hut am Ziel — er steht schon da, bevor etwas
-         herauskommt, sonst wirkt es wie ein Sprung. */
-      const hutB = document.createElement("span");
-      hutB.className = "lc-zylinder lc-zylinder-an";
-      hutB.style.setProperty("--gross", (d * 1.35) + "px");
-      hutB.style.animationDelay = Math.round(hin * 0.36) + "ms";
-      hutB.innerHTML = hutHtml("lc-zyl-huelle");
-      reihe.appendChild(hutB);
-      weg.push(hutB);
-      setzen(hutB, ende.x, ende.y + versatzZ1);
-      /* 3. Das Kaninchen kommt zuerst heraus. */
-      const hase = document.createElement("span");
-      hase.className = "lc-zyl-hase";
-      hase.style.setProperty("--gross", (d * 0.82) + "px");
-      hase.style.animationDelay = Math.round(hin * 0.54) + "ms";
-      hase.innerHTML =
-        /* NACHGEMESSEN am ersten Versuch: der Kopf lag mit 380 bis 414
-           px genau im Zylinderkoerper (379 bis 431) — zu sehen waren
-           nur die Ohren. Jetzt sind die Ohren kuerzer und der Kopf
-           sitzt hoeher im eigenen Kasten, und das Tier steigt weiter
-           heraus (siehe lcZylHaseR83). */
-        '<svg viewBox="0 0 60 60">'
-        + '<ellipse cx="21" cy="14" rx="6.5" ry="14" fill="#f2efe6" stroke="#cbc4b4" stroke-width="1.6"/>'
-        + '<ellipse cx="39" cy="14" rx="6.5" ry="14" fill="#f2efe6" stroke="#cbc4b4" stroke-width="1.6"/>'
-        + '<ellipse cx="21" cy="15" rx="3.1" ry="9.5" fill="#e8a6ac"/>'
-        + '<ellipse cx="39" cy="15" rx="3.1" ry="9.5" fill="#e8a6ac"/>'
-        + '<circle cx="30" cy="40" r="17" fill="#f7f4ec" stroke="#cbc4b4" stroke-width="1.8"/>'
-        + '<circle cx="23" cy="37" r="2.6" fill="#16181d"/>'
-        + '<circle cx="37" cy="37" r="2.6" fill="#16181d"/>'
-        + '<path d="M30 44 l-3 3 h6 Z" fill="#e8848d"/>'
-        + '<path d="M22 50 q8 5 16 0" stroke="#cbc4b4" stroke-width="1.6" fill="none"/>'
-        + '<path d="M17 42 h-9 M17 45 h-8 M43 42 h9 M43 45 h8" stroke="#cbc4b4"'
-        + ' stroke-width="1.1" stroke-linecap="round"/>'
-        + "</svg>";
-      reihe.appendChild(hase);
-      weg.push(hase);
-      setzen(hase, ende.x, ende.y + versatzZ1);
-      /* 4. Und dann die Person hinterher. */
-      const last = document.createElement("span");
-      last.className = "lc-zyl-last";
-      last.style.setProperty("--gross", d + "px");
-      last.style.animationDelay = Math.round(hin * 0.78) + "ms";
-      if (quelle) last.style.backgroundImage = "url(" + quelle.replace(/[()"\']/g, "") + ")";
-      else last.textContent = (ab.name || "?").charAt(0).toUpperCase();
-      reihe.appendChild(last);
-      weg.push(last);
-      setzen(last, ende.x, ende.y + versatzZ1);
-      rauch(ende, hin * 0.58, versatzZ1);
-      /* Der Ton: ein Puff beim Verschwinden, der Funkenregen dazwischen
-         und der zweite Puff beim Auftauchen — „zauberpuff" bringt alle
-         drei mit (2,40 s, gemessen). Er faengt an, wenn der Hut sitzt. */
-      lcTonSpaeter("zauberpuff", Math.round(dauer * 0.14), 0.7);
     } else if (art === "beamen") {
       /* „Das muss wirklich wie bei Star Trek und ein schoener
          Beameffekt sein." Zwei Saeulen: eine loest sich hier auf, die
@@ -38026,7 +37807,6 @@
             showToast(({ flug: "✈️ ", maulwurf: "🦡 ", boot: "⛵ ",
                          kran: "🏗️ ", dampfer: "🚢 ", lok: "🚂 ",
                          liane: "🌿 ", feder: "🪀 ", beamen: "✨ ",
-                         frosch: "🐸 ", zylinder: "🎩 ",
                          rohr: "🟢 ", heli: "🚁 ", pferd: "🐎 ",
                          greifvogel: "🦅 ", turm: "🏊 ",
                          untertasse: "🛸 ", mieze: "🐱 ", gotteshand: "🤚 ",
@@ -43523,8 +43303,6 @@
     if (art === "flug" || art === "maulwurf" || art === "portal"
         || art === "boot" || art === "kran" || art === "dampfer"
         || art === "lok" || art === "liane" || art === "feder"
-        /* RUNDE 76 */
-        || art === "frosch" || art === "zylinder"
         || art === "beamen" || art === "rohr"
         || art === "heli" || art === "pferd"
         || art === "greifvogel" || art === "turm"

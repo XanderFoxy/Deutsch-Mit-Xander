@@ -26787,3 +26787,216 @@ body.lc-schreibt .tutor-reiter {
   .lc-hriss-kern { opacity: .9; }
   .lc-hglas-blitz { opacity: 0; }
 }
+
+/* =====================================================================
+   RUNDE 76 — DER FROSCH-SPRUNG
+   ---------------------------------------------------------------------
+   XANDER: „Frosch-Sprung."
+   Die BAHN rechnet das Programm (wie bei der Sprungfeder, damit der
+   gemalte Weg auch hier gilt). Hier steht nur, was am Frosch selbst
+   passiert: die Hinterbeine strecken sich im Abstoss durch und ziehen
+   sich in der Luft wieder an. Ohne das ist es ein Huepfen, kein
+   Springen.
+   ===================================================================== */
+.lc-frosch {
+  position: absolute;
+  width: calc(var(--gross, 64px) * 1.55);
+  height: calc(var(--gross, 64px) * 1.15);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 8;
+}
+.lc-frosch-bild {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3));
+}
+/* Das Profilbild sitzt auf dem RUECKEN — also hinten, nicht auf dem
+   Kopf. Beim ersten Versuch sass es mittig oben und verdeckte den
+   ganzen Frosch; zu sehen waren nur noch die Beine. */
+.lc-frosch-last {
+  position: absolute;
+  left: 58%;
+  top: -2%;
+  width: calc(var(--gross, 64px) * .58);
+  height: calc(var(--gross, 64px) * .58);
+  margin-left: calc(var(--gross, 64px) * -.29);
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-color: #6b5b95;
+  color: #fff;
+  font-weight: 700;
+  font-size: calc(var(--gross, 64px) * .28);
+  line-height: calc(var(--gross, 64px) * .58);
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .35);
+}
+.lc-frosch-bein {
+  transform-box: fill-box;
+  transform-origin: 50% 20%;
+  animation: lcFroschBeinR83 .6s ease-in-out infinite;
+}
+@keyframes lcFroschBeinR83 {
+  /* Angezogen — der Frosch sitzt und laedt. */
+  0%   { transform: scale(1, 1) translateY(0); }
+  /* Der Abstoss: die Beine strecken sich nach hinten durch. */
+  16%  { transform: scale(1.42, .82) translateY(6%); }
+  /* In der Luft wieder angezogen. */
+  48%  { transform: scale(.88, 1.12) translateY(-5%); }
+  /* Und die Landung federt sie kurz auseinander. */
+  78%  { transform: scale(1.14, .94) translateY(3%); }
+  100% { transform: scale(1, 1) translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-frosch-bein { animation: none; }
+}
+
+/* =====================================================================
+   RUNDE 76 — DER ZYLINDER MIT DEM KANINCHEN
+   ---------------------------------------------------------------------
+   XANDER: „Zylinder mit Kaninchen."
+   Vier Stuecke, und die Reihenfolge ist der ganze Trick: Hut herunter,
+   Rauch, Pause — dann drueben der Hut, das Kaninchen, und zuletzt die
+   Person. Wer zuerst die Person und dann das Kaninchen zeigt, hat den
+   Gag verschenkt.
+   ===================================================================== */
+.lc-zylinder {
+  position: absolute;
+  width: var(--gross, 86px);
+  height: calc(var(--gross, 86px) * .8);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 9;
+  opacity: 0;
+}
+.lc-zyl-huelle, .lc-zyl-bild {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .38));
+}
+/* Der Hut am Startplatz: er faellt herunter, sitzt kurz, und hebt sich
+   dann LEER wieder weg. */
+.lc-zylinder-ab { animation: lcZylAbR83 1.6s cubic-bezier(.3, 1.3, .5, 1) both; }
+@keyframes lcZylAbR83 {
+  0%   { opacity: 0; transform: translate(-50%, -190%) rotate(-12deg); }
+  16%  { opacity: 1; transform: translate(-50%, -50%) rotate(0deg); }
+  /* Ein kurzes Setzen — der Hut kommt auf. */
+  22%  { transform: translate(-50%, -44%) rotate(0deg); }
+  26%  { transform: translate(-50%, -50%) rotate(0deg); }
+  64%  { opacity: 1; transform: translate(-50%, -50%) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -210%) rotate(14deg); }
+}
+/* Der Hut am Ziel: er steht erst da, und am Ende kippt er zur Seite. */
+/* 3,0 s und nicht 2,2 s: NACHGEMESSEN kippte der Hut bei 2,2 s schon
+   bei 3,77 s weg, und die Person stieg erst bei 3,78 s auf — sie kam
+   also aus einem Hut, der gar nicht mehr da war. Jetzt steht er bis
+   3,97 s und kippt erst danach zur Seite. */
+.lc-zylinder-an { animation: lcZylAnR83 3s cubic-bezier(.3, 1.2, .5, 1) both; }
+@keyframes lcZylAnR83 {
+  0%   { opacity: 0; transform: translate(-50%, -190%) rotate(10deg); }
+  14%  { opacity: 1; transform: translate(-50%, -50%) rotate(0deg); }
+  /* Es wackelt — da drin ist etwas. Kurz BEVOR das Kaninchen kommt. */
+  18%  { transform: translate(-50%, -52%) rotate(-5deg); }
+  22%  { transform: translate(-50%, -50%) rotate(5deg); }
+  26%  { transform: translate(-50%, -50%) rotate(0deg); }
+  80%  { opacity: 1; transform: translate(-50%, -50%) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-50%, -46%) rotate(-24deg); }
+}
+/* Der Rauch: neun Ballen, die nach aussen quellen und verwehen. */
+.lc-zyl-rauch {
+  position: absolute;
+  width: var(--gross, 96px);
+  height: var(--gross, 96px);
+  margin: calc(var(--gross, 96px) * -.5) 0 0 calc(var(--gross, 96px) * -.5);
+  pointer-events: none;
+  z-index: 10;
+}
+.lc-zyl-rauch > i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34%;
+  height: 34%;
+  margin: -17% 0 0 -17%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(246,244,238,.95) 0%,
+              rgba(214,210,200,.62) 55%, rgba(200,196,186,0) 78%);
+  opacity: 0;
+  animation: lcZylRauchR83 .95s ease-out var(--spaet, 0ms) both;
+}
+@keyframes lcZylRauchR83 {
+  0%   { opacity: 0; transform: rotate(var(--wo, 0deg)) translateX(0) scale(.3); }
+  18%  { opacity: .95; }
+  100% { opacity: 0; transform: rotate(var(--wo, 0deg)) translateX(var(--weit, 60%)) scale(1.5); }
+}
+/* Das Kaninchen: es kommt aus dem Hut und guckt sich um. */
+.lc-zyl-hase {
+  position: absolute;
+  width: calc(var(--gross, 52px) * .86);
+  height: var(--gross, 52px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  /* HINTER dem Hut (der hat 9): nur so sieht es aus, als KOMME das
+     Kaninchen aus der Oeffnung. Liegt es davor, klebt es am Hut. */
+  z-index: 8;
+  opacity: 0;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3));
+  animation: lcZylHaseR83 1.5s cubic-bezier(.25, 1.5, .45, 1) both;
+}
+.lc-zyl-hase > svg { width: 100%; height: 100%; overflow: visible; }
+@keyframes lcZylHaseR83 {
+  /* Im Hut: unsichtbar und tief. */
+  0%   { opacity: 0; transform: translate(-50%, 20%) scale(.6); }
+  /* NACHGERECHNET: bei -78 % lag der Hasenbauch noch mitten auf dem
+     Zylinderkoerper (Krempe bei -0,42 Bildhoehen, Hasenmitte bei
+     0,64). GEMESSEN lag der Kopf dann bei 380 bis 414 px und der
+     Zylinderkoerper bei 379 bis 431 — der Kopf steckte also ganz
+     darin. Bei -132 % steht er ueber der Oeffnung, und der Hut deckt
+     nur noch das ab, was wirklich noch drinsteckt. */
+  22%  { opacity: 1; transform: translate(-50%, -132%) scale(1); }
+  /* Umschauen. */
+  38%  { transform: translate(-58%, -132%) scale(1) rotate(-7deg); }
+  52%  { transform: translate(-42%, -132%) scale(1) rotate(7deg); }
+  62%  { transform: translate(-50%, -132%) scale(1) rotate(0deg); }
+  /* Und wieder hinein — Platz machen. */
+  84%  { opacity: 1; transform: translate(-50%, 10%) scale(.7); }
+  100% { opacity: 0; transform: translate(-50%, 20%) scale(.6); }
+}
+/* Und zuletzt die Person. */
+.lc-zyl-last {
+  position: absolute;
+  width: var(--gross, 64px);
+  height: var(--gross, 64px);
+  margin: calc(var(--gross, 64px) * -.5) 0 0 calc(var(--gross, 64px) * -.5);
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-color: #6b5b95;
+  color: #fff;
+  font-weight: 700;
+  font-size: calc(var(--gross, 64px) * .42);
+  line-height: var(--gross, 64px);
+  text-align: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .38);
+  pointer-events: none;
+  z-index: 8;
+  opacity: 0;
+  animation: lcZylLastR83 1.1s cubic-bezier(.25, 1.35, .45, 1) both;
+}
+@keyframes lcZylLastR83 {
+  0%   { opacity: 0; transform: translateY(30%) scale(.4); }
+  34%  { opacity: 1; transform: translateY(-14%) scale(1.06); }
+  52%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-zylinder, .lc-zyl-rauch > i, .lc-zyl-hase, .lc-zyl-last { animation: none; }
+  .lc-zyl-last { opacity: 1; }
+}
