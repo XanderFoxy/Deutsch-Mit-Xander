@@ -36864,6 +36864,34 @@
       reihe.appendChild(springer);
       weg.push(springer);
       setzen(springer, start.x, start.y + versatzT);
+      /* =============================================================
+         RUNDE 88 — DIE WASSERDECKE
+         -------------------------------------------------------------
+         XANDER: „Beim Schwimmbecken sieht man immer noch nicht, dass
+         das Profilbild unters Wasser taucht und dann wieder
+         aufploppt, wenn es ankommt."
+
+         NACHGESEHEN, und er hat recht — es TAUCHTE nie unter. Das
+         Becken (.lc-becken, z-index 6) liegt UNTER dem Springer
+         (.lc-turm-springer, z-index 9). Der Springer wurde beim
+         Eintauchen nur kleiner und halb durchsichtig, blieb aber die
+         ganze Zeit VOR dem Wasser. Etwas, das vor dem Wasser liegt,
+         ist nicht darin.
+
+         Dagegen hilft keine Durchsichtigkeit, sondern eine zweite
+         Wasserflaeche, die DARUEBER liegt: dieselbe runde Scheibe,
+         nach dem Springer in die Reihe gehaengt (z-index 10). Sie ist
+         unsichtbar, bis er einschlaegt, deckt ihn zu, solange er
+         unten ist, und wird wieder durchsichtig, wenn er auftaucht.
+         Erst damit verschwindet er WIRKLICH im Wasser.
+         ============================================================= */
+      const decke = document.createElement("span");
+      decke.className = "lc-becken lc-becken-decke";
+      decke.style.setProperty("--gross", d + "px");
+      decke.innerHTML = '<i class="lc-becken-wasser lc-becken-deckwasser"></i>';
+      reihe.appendChild(decke);
+      weg.push(decke);
+      setzen(decke, ende.x, ende.y + versatzT);
       const hochT = d * 1.62;              /* Brettkante ueber dem Platz */
       const anlauf = (linksT ? -1 : 1) * d * 0.34;
       const dxT = ende.x - start.x, dyT = ende.y - start.y;
@@ -36898,16 +36926,31 @@
           /* EINSCHLAG bei 2,73 s. */
           { transform: "translate(" + dxT.toFixed(1) + "px, " + dyT.toFixed(1)
             + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(.96)", opacity: 1, offset: t(2730) },
-          /* Untertauchen … */
-          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT + d * 0.3).toFixed(1)
-            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(.74)",
-            opacity: 0.5, offset: t(3000) },
-          /* … und wieder hoch wie ein Gummireifen. */
-          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT - d * 0.14).toFixed(1)
-            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(1.06)",
-            opacity: 1, offset: t(3300) },
-          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT + d * 0.05).toFixed(1)
-            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(.98)", opacity: 1, offset: t(3560) },
+          /* RUNDE 88 — UNTERTAUCHEN, UND ZWAR RICHTIG.
+             Vorher ging es 270 ms lang um 0,30 Bildbreiten nach
+             unten, auf Groesse 0,74 und halbe Deckkraft — und das
+             VOR dem Wasser. Jetzt sinkt er 330 ms lang um 0,38
+             Bildbreiten auf Groesse 0,58, bleibt 180 ms unten und
+             kommt erst dann wieder hoch. Die Wasserdecke liegt in
+             dieser Zeit darueber (siehe oben), also ist er weg. */
+          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT + d * 0.20).toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(.82)",
+            opacity: 0.9, offset: t(2880) },
+          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT + d * 0.38).toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(.58)",
+            opacity: 0.35, offset: t(3060) },
+          /* Ganz unten, und da bleibt er einen Moment. */
+          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT + d * 0.34).toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(.62)",
+            opacity: 0.4, offset: t(3240) },
+          /* … und dann aufploppen wie ein Gummireifen. */
+          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT - d * 0.16).toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(1.08)",
+            opacity: 1, offset: t(3480) },
+          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT + d * 0.06).toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(.97)", opacity: 1, offset: t(3680) },
+          { transform: "translate(" + dxT.toFixed(1) + "px, " + (dyT - d * 0.03).toFixed(1)
+            + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(1.01)", opacity: 1, offset: t(3820) },
           { transform: "translate(" + dxT.toFixed(1) + "px, " + dyT.toFixed(1)
             + "px) translate(-50%, -50%) rotate(" + drehT + "deg) scale(1)", offset: 1 }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
@@ -36960,6 +37003,22 @@
          Platz": genau bei 2730 ms, dem Einschlag. */
       lcTonSpaeter("platsch", 2730, 0.8);
       becken.style.setProperty("--einschlag", "2730ms");
+      /* Die Wasserdecke: unsichtbar bis zum Einschlag, dann deckt sie
+         ihn zu, und wenn er auftaucht, wird sie wieder klar. Sie
+         haengt an derselben Dauer wie alles andere — nicht an einer
+         festen Sekundenzahl —, damit sie auch bei einem Sprung ueber
+         drei Plaetze an derselben Stelle sitzt. */
+      try {
+        decke.animate([
+          { opacity: 0, offset: 0 },
+          { opacity: 0, offset: t(2700) },
+          { opacity: 1, offset: t(2820) },
+          { opacity: 1, offset: t(3300) },
+          { opacity: 0.5, offset: t(3440) },
+          { opacity: 0, offset: t(3660) },
+          { opacity: 0, offset: 1 }
+        ], { duration: dauer, easing: "linear", fill: "forwards" });
+      } catch (e) {}
     } else if (art === "maulwurf") {
       /* RUNDE 65 — GEMELDET: „der Maulwurfshuegel ist uebrigens nicht
          von oben. Er soll auf dem Platz in demselben kreisrunden

@@ -23005,6 +23005,18 @@ code, pre {
   height: var(--gross, 64px);
   transform: translate(-50%, -50%);
 }
+/* RUNDE 88 — DIE WASSERDECKE liegt UEBER dem Springer (z-index 9),
+   das Becken darunter. Nur so taucht er wirklich unter, statt vor dem
+   Wasser blasser zu werden.
+   SIE MUSS HIER STEHEN, NACH .lc-becken — beide sind eine einzelne
+   Klasse, haben also dasselbe Gewicht, und dann gewinnt die spaetere
+   Regel. Stand sie davor, blieb es bei z-index 6 und die Decke lag
+   wieder unter dem Springer; die Sonde hat genau das gefunden.
+   Ihre Deckkraft steuert die Animation in app.js; das Aufgehen des
+   Beckens (lcBeckenAufR65) gilt fuer sie nicht — sie ist von Anfang
+   an voll und nur unsichtbar. */
+.lc-becken-decke { z-index: 10; }
+.lc-becken-deckwasser { animation: none; opacity: 1; }
 .lc-becken-wasser {
   position: absolute;
   inset: 0;
