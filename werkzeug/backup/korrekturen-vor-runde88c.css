@@ -484,41 +484,6 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   font-size: 0.74rem;
   opacity: 0.9;
 }
-/* =================================================================
-   RUNDE 88 — DAS TEXT-PANEL BLEIBT AUF DEM BILDSCHIRM
-   -----------------------------------------------------------------
-   XANDER: „das Text-Panel, wenn man es oeffnet, ist immer noch beim
-   Android zu gross — man sieht das untere Ende und die Seite nicht,
-   man kann nur hinscrollen, aber man sieht nicht … das geht aus dem
-   Bildschirm raus."
-   Er hat recht, und der Grund stand genau hier: die Liste wuchs
-   ungebremst. Mit sechzig Befehlen in zehn Gruppen, der Schriftwahl
-   und den Erklaerungen wird sie hoeher als jedes Telefon. Weil sie
-   MITTEN IM CHAT steht, schob sie alles unter sich hinaus.
-   Jetzt hat sie eine Hoehe (hoechstens 62 % des Bildschirms) und
-   rollt IN SICH. Die Zeile „Was man tippen kann" bleibt dabei oben
-   stehen — sie ist der Schalter, mit dem man wieder zumacht, und
-   den soll man nicht suchen muessen. */
-.lc-befehle[open] {
-  max-height: min(62vh, 540px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  border: 1px solid rgba(255, 255, 255, .14);
-  border-radius: 12px;
-  padding: 0 10px 10px;
-  background: rgba(16, 12, 26, .45);
-}
-.lc-befehle[open] > summary {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  margin: 0 -10px 6px;
-  padding: 8px 10px;
-  background: rgba(16, 12, 26, .96);
-  border-radius: 12px 12px 0 0;
-  opacity: 1;
-  font-weight: 800;
-}
 .lc-befehle summary { cursor: pointer; opacity: 0.7; }
 .lc-befehle ul { margin: 6px 0 0; padding-left: 16px; line-height: 1.6; }
 .lc-befehle code {
@@ -549,41 +514,6 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   border-radius: 16px;
   padding: 16px;
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
-}
-/* =================================================================
-   RUNDE 88 — „DA IST NICHT MAL EIN SCHLIESSEN UNTEN IN DEM RAHMEN"
-   -----------------------------------------------------------------
-   XANDER hat das Wort „unten in dem Rahmen" benutzt, und genau
-   dorthin gehoert der Knopf: nicht als kleines Kreuz in einer Ecke,
-   die man auf dem Telefon nicht trifft, sondern als breite Zeile am
-   Ende des Panels — dort, wo der Daumen ohnehin ist, wenn man
-   durchgescrollt hat.
-   Im Platzmenue (einem Raster) muss er ueber ALLE Spalten gehen,
-   sonst stuende er als schmale Kachel irgendwo in der letzten
-   Reihe. */
-.lc-panel-zu {
-  display: block;
-  width: 100%;
-  margin: 10px 0 0;
-  padding: 9px 10px;
-  border: 1px solid rgba(255, 255, 255, .22);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, .10);
-  color: inherit;
-  font: inherit;
-  font-size: .78rem;
-  font-weight: 800;
-  letter-spacing: .02em;
-  cursor: pointer;
-}
-.lc-panel-zu:hover, .lc-panel-zu:focus-visible {
-  background: rgba(255, 255, 255, .2);
-}
-.lc-platzmenue > .lc-panel-zu {
-  grid-column: 1 / -1;
-  margin-top: 4px;
-  padding: 7px 8px;
-  font-size: .72rem;
 }
 .lc-waehler-reihe { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .lc-waehler-reihe .lc-chat-feld { flex: 1 1 140px; min-width: 0; }
