@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 436 — Runde 80, dritter Teil: die Bombe hat eine echte digitale Anzeige, die in Zehntelsekunden herunterlaeuft, die analoge hat nur noch EINE Lunte, das Aschehaeufchen ist endlich zu sehen, es gibt eine Granate, die Kachel heisst „Bombe legen“ — und das Pferd hat neue Beine und ein neues Hinterteil.",
+  stand: "Fassung 437 — Runde 80, vierter Teil: die Toene. Tennis klingt nach Saiten statt nach Klatschen, der Kuss hat sein MMM, die Schneekugel klingt beim Schuetteln, die Sprungfeder macht das bekannte Boing, das Schnurren haelt bis zum Ende durch, der Zufall ist eine echte Slotmaschine, der Basketball trifft synchron — dazu der Schrei beim Licht aus, das Fenster staucht nicht mehr, die Jalousie bleibt offen, und im Rollo ziehen Sternschnuppen durch.",
 
   inArbeit: [
-    { seit: "2026-09-22T01:41",
+    { seit: "2026-09-22T02:06",
       text: "Der Rest von Xanders Liste vom 22. September" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T01:41",
-      text: "Digitale Bombe: schwarzes Feld mit rotem Siebensegment-Schein, 0:03.0 laeuft in Zehnteln herunter, Doppelpunkt blinkt im Sekundentakt;analoge Bombe: die zweite Zuendschnur aus Runde 19 faellt weg;Aschehaeufchen dunkler und groesser, dazu ein Schatten darunter — gemessen war es 150|142|130 auf 246|241|231, also unsichtbar;Granate: Ring ziehen, Buegel springt ab und trudelt weg, Zuender zischt, Knall bei 1,95 s, eigener Ton (3,20 s, selbst gerechnet);Befehl /granate und Kachel im Bomben-Untermenue;Kachel „Buehne leeren“ heisst jetzt „Bombe legen“;Pferd: Hinterbein sitzt bei x=49 statt x=52 (Kruppe endet bei 45), Vorderbein fast gerade (3 statt 6 Einheiten Ausschlag), Kruppe faellt von 58|29 auf 46|40 ab;Uebersicht aller sechs Pferdefassungen im Chat geschickt" },
+    { seit: "2026-09-22T02:06",
+      text: "tennistreffer neu gebaut: Saitenanschlag, Ballton bei 480 Hz, Rahmennachklang — 0,42 s statt eines Klatschens;kussmund neu: 0,62 s gesummtes MMM, Schmatzer bei 0,66 s, kurzes mh zum Ausklang;kugelschuetteln neu: sechs Schuettelbewegungen, rieselnde Flocken, Fuss setzt bei 1,18 s auf;feder neu: Tonhoehe schnellt von 150 auf 900 Hz und wackelt aus — das traditionelle Boing;schnurren von 2,00 s auf 3,40 s verlaengert, genau die Laenge der Animation;slot2 neu gerechnet: Hebel, Walzenticken das langsamer wird, drei einzeln einrastende Walzen, Gewinnglocken, Muenzregen;korbrattern von 4,00 s auf 1,25 s — der zweite laute Teil ab 2,05 s klang, als der Ball laengst durchs Netz war;Dribbeln endet bei 2250 ms statt 3250 ms, also genau beim Wurf;Schrei beim Licht aus, 900 ms nach dem Schalter, mit der Stimme des Platzes;Fensterfluegel: Fluchtabstand 420 auf 1600 px — die Hoehe waechst jetzt um 2,6 statt um 11 Prozent;Jalousie bleibt offen bis zum Schluss statt bei 74 Prozent wieder zuzuklappen;drei Sternschnuppen im Nachthimmel hinter dem Rollo;Ohrfeige: Hand holt aus, haelt, und schlaegt dann in 130 ms zu statt in 728 ms;alle 136 Sonden gruen" },
   ],
 };

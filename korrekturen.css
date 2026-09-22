@@ -6148,11 +6148,17 @@ html.lc-dino-beben #livechatKarte { animation: lcDinoSchritt 0.62s ease-in-out 1
      Lamellen zugleich. Den Versatz macht animation-delay. */
   animation: lcLamelleKippt 9s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
+/* RUNDE 80 — XANDER: „bei der Jalousie muss die Jalousie offen
+   bleiben bis zum Ende."
+   GEFUNDEN: bei 74 % begann sie wieder zuzuklappen und war bei 100 %
+   geschlossen — also eine gute Sekunde, bevor die Schicht ueberhaupt
+   abgeraeumt wird. Man sah sie zufallen und dann verschwinden.
+   Jetzt bleibt sie offen, und ganz am Schluss blendet sie weg. */
 @keyframes lcLamelleKippt {
-  0%   { transform: perspective(500px) rotateX(0deg); }
-  26%  { transform: perspective(500px) rotateX(74deg); }
-  74%  { transform: perspective(500px) rotateX(74deg); }
-  100% { transform: perspective(500px) rotateX(0deg); }
+  0%   { transform: perspective(500px) rotateX(0deg); opacity: 1; }
+  22%  { transform: perspective(500px) rotateX(74deg); opacity: 1; }
+  93%  { transform: perspective(500px) rotateX(74deg); opacity: 1; }
+  100% { transform: perspective(500px) rotateX(74deg); opacity: 0; }
 }
 
 /* --- Die Hand von unten ---------------------------------- */
@@ -13098,10 +13104,24 @@ body.lc-schreibt .tutor-reiter {
      Animation (siehe werkzeug/pruefe-tonschleifen.js). */
   animation: lcOhrfeigeHand 2.6s cubic-bezier(.25, 0, .2, 1) both;
 }
+/* RUNDE 80 — XANDER: „bei der Ohrfeigen Animation sieht man die
+   Ohrfeige zu langsam klatschen."
+   GEMESSEN: die Hand brauchte vom Bildrand bis zur Wange 28 % von
+   2,6 s, also 728 Millisekunden. So langsam bewegt sich keine Hand,
+   die zuschlaegt — eine Ohrfeige trifft in gut einer Zehntelsekunde.
+   Der TREFFERZEITPUNKT bleibt bei 28 %, weil der Ton darauf sitzt;
+   was sich aendert, ist die Aufteilung davor: die Hand kommt heran,
+   HAELT beim Ausholen kurz an (23 %) — und dann geht es in 130
+   Millisekunden ins Gesicht. Genau das Halten macht den Schlag
+   schnell, nicht das Tempo allein. */
 @keyframes lcOhrfeigeHand {
   0%   { opacity: 0; transform: translate(var(--wx, 180%), var(--wy, -30%)) rotate(-30deg) scale(.7); }
-  10%  { opacity: 1; }
-  /* 28 % = 0,5 s: da sitzt sie. */
+  6%   { opacity: 1; }
+  /* Herankommen … */
+  19%  { transform: translate(calc(var(--wx, 180%) * .5), calc(var(--wy, -30%) * .48)) rotate(-24deg) scale(.88); }
+  /* … ausholen und halten … */
+  23%  { transform: translate(calc(var(--wx, 180%) * .62), calc(var(--wy, -30%) * .58)) rotate(-28deg) scale(.86); }
+  /* … und zuschlagen. 28 % = 0,73 s: da sitzt sie. */
   28%  { transform: translate(0, 0) rotate(0deg) scale(1); }
   36%  { transform: translate(calc(var(--wx, 180%) * -.14), 4%) rotate(12deg) scale(1); }
   66%  { opacity: .8; transform: translate(calc(var(--wx, 180%) * -.4), -10%) rotate(20deg) scale(.9); }
@@ -15312,7 +15332,21 @@ body.lc-schreibt .tutor-reiter {
    Rechteck. Mit perspective auf der Blende und transform-origin an der
    AUSSENKANTE schwenkt er sichtbar in die Tiefe — die nahe Kante wird
    groesser, die ferne kleiner. */
-.lc-luke .lc-zp-blende { perspective: 420px; perspective-origin: 50% 50%; }
+/* RUNDE 80 — XANDER: „Wenn ich das Fenster oeffne, dann gehen zwar die
+   Tueren auf, aber es staucht die Profilbild Haelften … das Bild darf
+   nicht beeinflusst werden in seiner Hoehe."
+
+   NACHGEMESSEN am offenen Fluegel: er war geschlossen 84 px hoch und
+   offen 93,1 px — also elf Prozent HOEHER. Das kam allein von der
+   Perspektive: bei 420 px Fluchtabstand steht der Betrachter so dicht
+   vor dem Fenster, dass die nahe Kante des Fluegels sichtbar groesser
+   wird als die ferne. Genau das sieht man als Stauchung.
+
+   Der Fluchtabstand steht jetzt auf 1600 px. Damit bleibt die Hoehe,
+   wie sie ist, und der Fluegel wird beim Aufgehen trotzdem schmaler —
+   das ist die VERKUERZUNG, die ein Fenster beim Oeffnen zeigt, und
+   die haengt am Drehwinkel, nicht an der Perspektive. */
+.lc-luke .lc-zp-blende { perspective: 1600px; perspective-origin: 50% 50%; }
 .lc-luke-fluegel {
   position: absolute;
   top: 0;
@@ -25856,4 +25890,46 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-granate-buegel, .lc-granate-ring, .lc-granate-funke { animation: none; opacity: 0; }
   .lc-granate-koerper { animation: none; }
+}
+
+/* =====================================================================
+   RUNDE 80 — STERNSCHNUPPEN IM NACHTHIMMEL
+   ---------------------------------------------------------------------
+   XANDER: „die Animation der Sterne im Rollo Hoch sind immer noch
+   nicht da."
+
+   NACHGESEHEN: die Sterne sind da und blinken auch. Nur ist ein 2 px
+   grosser Punkt, der zwischen 25 und 100 Prozent Deckkraft atmet, im
+   Bild eines Profilfotos schlicht nicht als Bewegung zu erkennen.
+   Was man an einem Nachthimmel wirklich sieht, sind Sternschnuppen —
+   also ziehen jetzt drei davon nacheinander schräg durch, jede mit
+   einem Schweif, der hinter ihr her läuft und verglüht.
+   ===================================================================== */
+.lc-sternschnuppe {
+  position: absolute;
+  top: var(--oben, 20%);
+  left: var(--links, 10%);
+  width: 26%;
+  height: 2px;
+  transform-origin: 0 50%;
+  transform: rotate(28deg) scaleX(0);
+  border-radius: 999px;
+  /* Der Kopf ist hell, der Schweif läuft nach hinten aus. */
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0) 0%, rgba(210, 230, 255, .5) 55%, #ffffff 100%);
+  box-shadow: 0 0 5px rgba(190, 220, 255, .75);
+  opacity: 0;
+  animation: lcSternschnuppeR80 3.4s ease-out infinite;
+  animation-delay: var(--spaet, 0s);
+  pointer-events: none;
+}
+@keyframes lcSternschnuppeR80 {
+  0%      { opacity: 0; transform: rotate(28deg) translateX(0) scaleX(0); }
+  4%      { opacity: 1; transform: rotate(28deg) translateX(0) scaleX(.35); }
+  16%     { opacity: 1; transform: rotate(28deg) translateX(120%) scaleX(1); }
+  26%     { opacity: 0; transform: rotate(28deg) translateX(230%) scaleX(.5); }
+  100%    { opacity: 0; transform: rotate(28deg) translateX(230%) scaleX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-sternschnuppe { animation: none; opacity: 0; }
 }

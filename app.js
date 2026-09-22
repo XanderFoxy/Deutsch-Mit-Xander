@@ -24606,7 +24606,19 @@
        der Korb kommt am Ende (siehe lcBasketball). */
     /* „Man hoert gar nicht das Dribbeln." Jetzt fuenf Aufsetzer auf
        flachem Hallenboden; das Scheppern im Korb kommt aus lcKorb. */
-    basketball:     { ton: "basketdribbeln", dauer: 3000, laut: 0.55 },
+    /* RUNDE 80 — XANDER: „Basketballkorb ist von seiner Animation auch
+       noch nicht passend mit dem Sound synchron."
+       ZWEI Sachen, beide nachgemessen:
+       · Das Dribbeln lief 3000 ms ab 250 ms, also bis 3250 ms — der
+         Wurf setzt aber schon bei 2500 ms ein. Es dribbelte also
+         weiter, waehrend der Ball schon flog. Jetzt 2250 ms: es endet
+         genau, wenn geworfen wird.
+       · „korbrattern" war 4,00 s lang und hatte NACH dem Rattern
+         (0,00-0,35 s) eine lange Stille und dann einen zweiten,
+         ebenso lauten Teil ab 2,05 s — der klang, als der Ball
+         laengst durchs Netz war. Die Datei ist jetzt 1,25 s lang:
+         Rattern, zwei ausspringende Ringtreffer, Netz. */
+    basketball:     { ton: "basketdribbeln", dauer: 2250, laut: 0.55 },
     /* „Dieser Tennisball dieses typische Tennisball Aufschlaggeraeusch." */
     /* XANDER: „Der Tennis-Sound muss verfeinert werden. Erst wird der
        Ball nach oben geworfen, dann hoert man diesen Luftzug, und dann
@@ -24818,6 +24830,10 @@
        wenn jemand „/lunte" ohne Bombe ausloest. */
     lunte:          { ton: "lunte", dauer: 2400, laut: 0.6 },
     /* „Bei dem streicheln moechte ich ein Katzen schnurren haben." */
+    /* RUNDE 80 — XANDER: „das Schnurren beim Streichen koennte etwas
+       laenger sein." Die Aufnahme war 2,00 s lang, die Animation
+       3,4 s — die letzten 1,4 Sekunden streichelte man eine stumme
+       Katze. „schnurren" ist jetzt 3,40 s lang. */
     streicheln:     { ton: "schnurren", dauer: 3400, laut: 0.4 },
     /* „das Knutschen — da koenntest du noch einen Sound machen, da haben wir
        naemlich keinen. Da hoert man so ein Schussgeraeusch oder so." */
@@ -38534,7 +38550,19 @@
       + '<i class="lc-luke-sonne"></i>'
       + '<i class="lc-luke-huegel"></i>'
       + '<i class="lc-luke-huegel lc-luke-huegel-2"></i>'
-      + (nacht ? '<span class="lc-aussicht-sterne">' + sterne + "</span>"
+      /* RUNDE 80 — XANDER: „die Animation der Sterne im Rollo Hoch sind
+         immer noch nicht da."
+         NACHGESEHEN: die Sterne SIND da und blinken auch — aber ein
+         2 px grosser Punkt, der zwischen 25 und 100 Prozent Deckkraft
+         atmet, ist eine Animation, die man nicht sieht. Was man an
+         einem Nachthimmel wirklich als Bewegung wahrnimmt, sind
+         STERNSCHNUPPEN. Deshalb ziehen jetzt drei davon nacheinander
+         schraeg durchs Bild, jede mit ihrem Schweif. */
+      + (nacht ? '<span class="lc-aussicht-sterne">' + sterne
+                 + '<u class="lc-sternschnuppe" style="--oben:16%;--links:8%;--spaet:0.5s"></u>'
+                 + '<u class="lc-sternschnuppe" style="--oben:34%;--links:44%;--spaet:1.9s"></u>'
+                 + '<u class="lc-sternschnuppe" style="--oben:9%;--links:58%;--spaet:3.2s"></u>'
+                 + "</span>"
                : '<i class="lc-luke-vogel"></i><i class="lc-luke-vogel lc-luke-vogel-2"></i>')
       + "</span>";
   }
@@ -39010,6 +39038,14 @@
                        + '<span class="lc-lichtaus-nacht"></span>';
       /* Und das Summen als Zeichen, fuer die, die den Ton aus haben. */
       schicht.insertAdjacentHTML("beforeend", '<span class="lc-lichtaus-summen">bzzzt</span>');
+      /* RUNDE 80 — XANDER: „bei dem Licht aus Sound koenntest du
+         vielleicht noch einen Schrei machen."
+         Der Schalter klackt bei 646 ms (LC_TREFFER.lichtaus), danach
+         wird es dunkel. Erschrecken tut man sich nicht beim Klacken,
+         sondern einen Augenblick SPAETER, wenn man nichts mehr sieht
+         — deshalb bei 900 ms, und mit der Stimme, die zum Platz
+         gehoert (Mann oder Frau, siehe lcStimmeZu). */
+      lcStimmeZu(platz, "schreimann", "schreifrau", 900, 0.55);
       /* RUNDE 70 — XANDER: „da muss die Animation dann auch die
          Dunkelheit ein bisschen halten. Vielleicht kannst du dann
          auch noch in der Dunkelheit zu suchen der Augen machen, wo
