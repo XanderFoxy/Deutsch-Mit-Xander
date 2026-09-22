@@ -42750,7 +42750,49 @@
             steht rechts -> Zeichnung normal,     wirft nach links
          Die ungespiegelte Zeichnung wirft nach links: ihr Prellbalken
          liegt bei x 12 bis 30, also auf der linken Seite. */
-      const wirftNachRechts = !vonRechts;
+      /* =============================================================
+         RUNDE 88 — ER WIRFT JETZT INS ZIMMER, NICHT AUS DEM BILD
+         -------------------------------------------------------------
+         XANDER: „Der Katapult feuert mein Profilbild, das eh schon auf
+         der linken Seite ist, nach links. Das ist doch nicht logisch,
+         dann sieht man doch von der Animation ueberhaupt nichts."
+         Und frueher: „Der Katapult schiesst nach links. Er soll aber
+         nach rechts schiessen."
+
+         NACHGEMESSEN auf der Pruefbuehne (Reihe 434 px breit):
+           Ziel Alex, Mitte bei  51 px, Werfer rechts -> flog nach
+             LINKS bis -205 px, also weit aus dem Bild hinaus
+           Ziel Dana, Mitte bei 383 px, Werfer links  -> flog nach
+             RECHTS bis +205 px, ebenso hinaus
+         Die Regel aus Runde 87 („weg vom Werfenden") ist fuer sich
+         genommen richtig — ein Katapult wirft nie ueber den eigenen
+         Ruecken —, aber sie entscheidet an den Raendern falsch, und
+         an den Raendern sitzt fast immer jemand: von acht Plaetzen
+         sind vier Randplaetze.
+
+         Jetzt entscheidet zuerst der PLATZ, nicht der Werfer: liegt
+         er in der linken Haelfte der Reihe, fliegt die Ladung nach
+         rechts, liegt er rechts, nach links — immer ins Zimmer
+         hinein, wo man sie auch sieht. Nur im mittleren Drittel, wo
+         beide Richtungen sichtbar bleiben, entscheidet weiter der
+         Werfer: dort steht das Geraet auf seiner Seite und wirft von
+         ihm weg, so wie es Runde 87 festgelegt hat (und wie
+         werkzeug/pruefe-runde86b.js es misst).
+         Das Geraet steht dabei immer HINTER der Ladung — also auf
+         der Seite, von der sie wegfliegt. */
+      let wirftNachRechts = !vonRechts;
+      try {
+        const reiheK = document.getElementById("lcPlaetze");
+        if (reiheK) {
+          const rr = reiheK.getBoundingClientRect();
+          const pr = platz.getBoundingClientRect();
+          const anteil = ((pr.left + pr.width / 2) - rr.left) / (rr.width || 1);
+          /* Aussen: die Richtung entscheidet der Platz. Innen (33 bis
+             67 %): es bleibt beim Werfer. */
+          if (anteil < 0.34) wirftNachRechts = true;
+          else if (anteil > 0.66) wirftNachRechts = false;
+        }
+      } catch (e) {}
       const kreis = platz.querySelector(".lc-kreis");
       /* RUNDE 60 NEU GEZEICHNET.
          GEMELDET: „der Katapult sieht auch nicht schoen animiert aus."

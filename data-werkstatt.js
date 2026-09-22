@@ -49,30 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 88z — das Musik-Modul ist nicht mehr beschnitten, auch auf dem kleinen Android.",
+  stand: "Runde 89 — das Katapult wirft ins Zimmer statt aus dem Bild.",
 
   inArbeit: [
-    { seit: "2026-09-22T20:16",
-      text: "Glitches am verlassenen Platz — Sonde misst jetzt bis 8 s und auch die Rueckstaende" },
-    { seit: "2026-09-22T20:16",
+    { seit: "2026-09-22T20:23",
+      text: "Glitches am verlassenen Platz — Rueckstands-Sonde laeuft gerade durch" },
+    { seit: "2026-09-22T20:23",
+      text: "Uebersicht aller Wuensche aus dem Verlauf — wird aus den Sonden gebaut" },
+    { seit: "2026-09-22T20:23",
       text: "Frosch, Pferd, Lok, Helikopter, Fahrstuhl, Adler" },
-    { seit: "2026-09-22T20:16",
+    { seit: "2026-09-22T20:23",
       text: "Haende: greifende Hand, King Kong behaart, Kralle" },
-    { seit: "2026-09-22T20:16",
-      text: "Spruehdose mit Scheibenwischer, eigene Bilder" },
-    { seit: "2026-09-22T20:16",
+    { seit: "2026-09-22T20:23",
       text: "Hammer: demolieren in Stufen" },
-    { seit: "2026-09-22T20:16",
+    { seit: "2026-09-22T20:23",
       text: "Adressleiste temporaer ausblenden, Bildschirm anlassen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T20:16",
-      text: "Musikwaehler: die Liste nimmt sich die Hoehe des Panels — auf 320x568 ist jetzt alles zu sehen, ohne zu rollen" },
-    { seit: "2026-09-22T20:16",
-      text: "Aufgaben-Tafel: rollt nur die Liste, die Ueberschrift bleibt stehen" },
-    { seit: "2026-09-22T20:16",
-      text: "Der eigene Platz wird auch beim Musikhoeren mit „(du)\" hinter dem Namen erkannt" },
+    { seit: "2026-09-22T20:23",
+      text: "Katapult: vom Randplatz fliegt die Ladung jetzt INS Zimmer — vorher flog sie 205 px aus dem Bild hinaus" },
+    { seit: "2026-09-22T20:23",
+      text: "Katapult: im mittleren Drittel bleibt es bei der alten Regel (weg vom Werfenden)" },
   ],
 };

@@ -136,6 +136,33 @@ const sage = (gut, text, dazu) => {
     "Sie fliegt nach LINKS — wieder von der Maschine weg",
     "x = " + (weitR.ladung && weitR.ladung.x) + " bei " + weitR.t + " ms");
 
+  /* =====================================================================
+     RUNDE 88 — AN DEN RAENDERN WIRFT ER INS ZIMMER, NICHT HINAUS
+     ---------------------------------------------------------------------
+     XANDER: „Der Katapult feuert mein Profilbild, das eh schon auf der
+     linken Seite ist, nach links. Das ist doch nicht logisch, dann
+     sieht man doch von der Animation ueberhaupt nichts."
+     NACHGEMESSEN vor der Aenderung (Reihe 434 px breit): Ziel Alex,
+     Platzmitte bei 51 px, Werfer rechts — die Ladung flog bis -205 px,
+     also weit aus dem Bild hinaus. Ziel Dana, Mitte bei 383 px, Werfer
+     links — dasselbe nach rechts.
+     Die Regel „weg vom Werfenden" gilt weiter, aber erst im mittleren
+     Drittel; an den Raendern entscheidet der Platz. Von acht Plaetzen
+     sind vier Randplaetze — deshalb sah er es staendig. */
+  console.log("\n  An den Raendern: ins Zimmer, nicht hinaus");
+  /* Alex sitzt ganz links (Platz 1), Dana wirft von rechts. */
+  const randL = await lauf("Alex", 0, "Dana");
+  const weitRL = randL[randL.length - 3];
+  sage(weitRL.ladung && weitRL.ladung.x > 0.4,
+    "vom linken Randplatz fliegt sie nach RECHTS, ins Zimmer hinein",
+    "x = " + (weitRL.ladung && weitRL.ladung.x) + " bei " + weitRL.t + " ms");
+  /* Dana sitzt ganz rechts (Platz 4), Alex wirft von links. */
+  const randR = await lauf("Dana", 3, "Alex");
+  const weitRR = randR[randR.length - 3];
+  sage(weitRR.ladung && weitRR.ladung.x < -0.4,
+    "vom rechten Randplatz fliegt sie nach LINKS, ins Zimmer hinein",
+    "x = " + (weitRR.ladung && weitRR.ladung.x) + " bei " + weitRR.t + " ms");
+
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
   process.exit(fehler ? 1 : 0);
