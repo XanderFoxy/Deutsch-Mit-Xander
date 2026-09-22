@@ -28187,26 +28187,12 @@ code, pre {
 }
 /* RUNDE 85 — XANDER: „Der Frosch zeigt nicht in die richtige Richtung.
    Er springt verkehrt rum."
-   Die Zeichnung schaut nach links. Geht es nach rechts, wird sie
-   gespiegelt.
-   RUNDE 88 — XANDER: „Der Frosch huepft auch nicht in die Richtung,
-   in die er schaut. Wenn er anfaengt zu springen, schaut er nach
-   links, und wenn er zurueckgeht, schaut er in die richtige
-   Richtung."
-   Die Spiegelung stand hier fest an einer Klasse („lc-frosch-rechts")
-   und galt damit fuer die ganze Reise. Sie steckt jetzt im Programm
-   (app.js, froDrehStufen) und wird je SPRUNG gesetzt, denn ein
-   gemalter Weg kann erst nach links ausholen und trotzdem rechts
-   enden. Hier bleibt nur die Huelle, die gedreht wird. Das
-   Profilbild sitzt MIT darin, damit es auf dem Ruecken bleibt, und
-   bekommt dieselbe Spiegelung noch einmal — dann steht das Gesicht
-   wieder richtig herum. */
-.lc-frosch-dreh {
-  position: absolute;
-  inset: 0;
-  display: block;
-  transform-origin: 50% 50%;
-}
+   Die Zeichnung schaut nach links. Geht die Reise nach rechts, wird
+   sie gespiegelt — das Profilbild auf dem Ruecken aber NICHT, sonst
+   waere das Gesicht seitenverkehrt. Es wandert stattdessen auf die
+   andere Seite des Ruckens. */
+.lc-frosch-rechts .lc-frosch-bild { transform: scaleX(-1); }
+.lc-frosch-rechts .lc-frosch-last { left: 42%; }
 /* Das Profilbild sitzt auf dem RUECKEN — also hinten, nicht auf dem
    Kopf. Beim ersten Versuch sass es mittig oben und verdeckte den
    ganzen Frosch; zu sehen waren nur noch die Beine. */

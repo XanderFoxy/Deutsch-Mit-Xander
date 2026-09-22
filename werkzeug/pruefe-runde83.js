@@ -144,8 +144,15 @@ function tonMessen(name) {
   const gerade = await froschBahn("8");
   sage(gerade && gerade.last && gerade.auge,
     "der Frosch traegt das Profilbild und hat sein Auge oben auf dem Kopf");
-  sage(gerade && gerade.beine.length === 2 && gerade.beine.every((x) => x > 0.3),
-    "und seine Hinterbeine arbeiten im Takt der Spruenge",
+  /* RUNDE 88 — aus zwei beweglichen Teilen sind drei geworden: seit
+     Xanders „Der Frosch hat vorne keine Fuesse" hat er auch ein
+     FERNES Hinterbein, und die Schwimmpfote haengt als eigene Gruppe
+     daran. Gezaehlt wird deshalb „mindestens zwei"; worauf es
+     ankommt, ist ohnehin die Dauer: alle muessen im Takt der Spruenge
+     laufen. */
+  sage(gerade && gerade.beine.length >= 2 && gerade.beine.every((x) => x > 0.3)
+       && new Set(gerade.beine).size === 1,
+    "und seine Hinterbeine arbeiten im Takt der Spruenge, alle im selben",
     gerade ? gerade.beine.map((x) => x.toFixed(2) + " s").join(" / ") : "-");
   const mitWeg = await froschBahn("1-6-7-8");
   const trefferM = [6, 7].map((nr) => nahBei(mitWeg.bahn, nr));

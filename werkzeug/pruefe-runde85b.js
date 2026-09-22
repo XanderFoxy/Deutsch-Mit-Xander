@@ -221,29 +221,43 @@ const sage = (gut, text, dazu) => {
   sage(quakDauer < 0.8,
     "„quaken“ ist jetzt EIN Ruf, der nicht mehr abgeschnitten werden muss",
     quakDauer.toFixed(2) + " s");
-  const froschNach = async (ziel) => {
+  /* RUNDE 88 — DIESE REGELN WAREN VERALTET UND EINE SOGAR LEER.
+     1. Die Spiegelung hing an der Klasse „lc-frosch-rechts" und sass
+        auf „.lc-frosch-bild". Beides gibt es nicht mehr: seit Xanders
+        Satz „Der Frosch huepft auch nicht in die Richtung, in die er
+        schaut" wird je SPRUNG gedreht, und zwar an „.lc-frosch-dreh".
+     2. Die zweite Regel prueft gar nichts: „froschNach('5')" zielt auf
+        Emmis Platz, der ist besetzt, die Reise wird abgelehnt, es gibt
+        keinen Frosch — und „!null" ist wahr. Sie war immer gruen, egal
+        was das Programm tat. Der senkrechte Sprung wird jetzt dort
+        gemessen, wo er wirklich stattfindet: Bea auf Platz 2, Ziel
+        Platz 6 genau darunter (werkzeug/pruefe-runde88-frosch.js).
+     Hier bleibt nur, was zu Runde 85 gehoert: dass er ueberhaupt
+     springt und dabei quakt. */
+  const froschNach = async (von, ziel) => {
     await buehne();
     await pg.evaluate(() => { window.__toene = []; window.__start = performance.now(); });
-    await pg.evaluate((z) => window.DMA_PRUEFUNG.wirkung("frosch", z, "Alex", {}), ziel);
+    await pg.evaluate(([v, z]) => window.DMA_PRUEFUNG.wirkung("frosch", z, v, {}), [von, ziel]);
     await pg.waitForTimeout(1200);
     return pg.evaluate(() => {
       const f = document.querySelector(".lc-frosch");
-      const b = document.querySelector(".lc-frosch-bild");
-      return { rechts: !!f && f.classList.contains("lc-frosch-rechts"),
-               bildGespiegelt: b ? /matrix\(-1/.test(getComputedStyle(b).transform) : null,
+      const dr = document.querySelector(".lc-frosch-dreh");
+      const zahl = (el) => {
+        if (!el) return null;
+        const z = getComputedStyle(el).transform;
+        if (!z || z === "none") return 1;
+        return Number(z.slice(z.indexOf("(") + 1, -1).split(",")[0]);
+      };
+      return { da: !!f, dreh: zahl(dr),
                rufe: (window.__toene || []).filter((x) => x.n === "quaken").length };
     });
   };
-  /* Alex sitzt auf Platz 1 links oben. Platz 8 liegt rechts unten,
-     Platz 5 direkt darunter — also einmal nach rechts, einmal nicht. */
-  const nachRechts = await froschNach("8");
-  await pg.waitForTimeout(2600);
-  const nachUnten = await froschNach("5");
-  sage(nachRechts.rechts && nachRechts.bildGespiegelt,
-    "springt er nach rechts, schaut er auch nach rechts",
-    "gespiegelt: " + nachRechts.bildGespiegelt);
-  sage(!nachUnten.bildGespiegelt,
-    "springt er nach unten (nicht nach rechts), bleibt er wie gezeichnet");
+  /* Alex sitzt auf Platz 1 links oben, Platz 8 liegt rechts unten. */
+  const nachRechts = await froschNach("Alex", "8");
+  sage(nachRechts.da, "der Frosch springt");
+  sage(nachRechts.dreh < -0.5,
+    "springt er nach rechts, schaut er auch nach rechts (die Zeichnung ist gespiegelt)",
+    "scaleX " + nachRechts.dreh);
   sage(nachRechts.rufe >= 1, "und er quakt beim Springen", nachRechts.rufe + " Rufe");
   await pg.waitForTimeout(2600);
 
@@ -251,24 +265,39 @@ const sage = (gut, text, dazu) => {
      6. DIE SCHWINGEN DES ADLERS
      ================================================================= */
   console.log("\nDer Greifvogel");
-  const js = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
-  const spitzen = js.match(/const tx = (\d+) \+ t \* (\d+), ty = (\d+) \+ t \* (\d+);/);
-  /* Der Vogel schaut nach rechts (Schnabel bei x = 134), der Schwanz
-     liegt links. „Nach hinten" heisst also: kleines x. */
-  sage(spitzen && Number(spitzen[1]) <= 20,
-    "die Schwungfedern zeigen nach hinten, zum Schwanz",
-    spitzen ? ("aeusserste Spitze bei x = " + spitzen[1] + " (vorher 33)") : "nicht gefunden");
   await buehne();
   await pg.evaluate(() => window.DMA_PRUEFUNG.wirkung("greifvogel", "6", "Alex", {}));
   await pg.waitForTimeout(900);
+  /* RUNDE 88 — DIESE REGEL WAR VERALTET. Sie suchte im Quelltext von
+     app.js nach der Zeile „const tx = 33 + t * …". Die gibt es nicht
+     mehr, seit der Fluegel in sechs Federreihen zerlegt wurde, und
+     eine Regel, die nur einen Text sucht, faellt bei jeder Umbenennung
+     um, ohne dass sich am Bild etwas geaendert haette. Gemessen wird
+     jetzt die Zeichnung selbst: Xanders Satz war „die Schwungfedern
+     zeigen nach hinten, zum Schwanz" — der Vogel schaut nach rechts,
+     „hinten" ist also kleines x, und die Handschwingen muessen hinter
+     der Armflaeche hervorstehen, auf der sie wurzeln. */
   const fluegel = await pg.evaluate(() => {
-    const f = document.querySelector(".lc-greif-schwinge");
-    const alle = document.querySelectorAll(".lc-greif-schwinge").length;
-    return { federn: alle, da: !!f };
+    const nah = document.querySelector(".lc-greif-fluegel-nah");
+    if (!nah) return { federn: 0, da: false };
+    const links = (w) => {
+      const ps = Array.from(nah.querySelectorAll(w));
+      if (!ps.length) return null;
+      return Math.min.apply(null, ps.map((p) => p.getBBox().x));
+    };
+    return { da: true,
+             federn: document.querySelectorAll(".lc-greif-schwinge").length,
+             federnLinks: links(".lc-greif-schwinge"),
+             flaecheLinks: links(".lc-greif-arm") };
   });
+  sage(fluegel.da && fluegel.federnLinks !== null
+       && fluegel.federnLinks < fluegel.flaecheLinks - 10,
+    "die Schwungfedern zeigen nach hinten, zum Schwanz",
+    "Federn bis x = " + (fluegel.federnLinks || 0).toFixed(1)
+      + ", Armflaeche nur bis x = " + (fluegel.flaecheLinks || 0).toFixed(1));
   sage(fluegel.da && fluegel.federn >= 14,
     "und jeder Fluegel hat einzelne Handschwingen, nicht eine Haut",
-    fluegel.federn + " Federn (zwei Fluegel zu je sieben)");
+    fluegel.federn + " Federn (zwei Fluegel zu je acht)");
 
   /* =================================================================
      7. DER FAHRSTUHL

@@ -38172,89 +38172,28 @@
          ER HAT RECHT: die Zeichnung schaut IMMER nach links (Kopf bei
          x = 11, Hinterbein bei x = 95), gesprungen wird aber in beide
          Richtungen. Ging es nach rechts, sprang er rueckwaerts.
-         Damals wurde die Zeichnung gespiegelt, wenn das ZIEL rechts
-         lag.
-         RUNDE 88 — XANDER: „Der Frosch huepft auch nicht in die
-         Richtung, in die er schaut. Wenn er anfaengt zu springen,
-         schaut er nach links, und wenn er zurueckgeht, schaut er in
-         die richtige Richtung."
-         NACHGESEHEN, und der Fehler war die EINMALIGE Entscheidung:
-         „ende.x >= start.x" gilt fuer die ganze Reise, ein Frosch
-         springt aber Sprung fuer Sprung. Bei einem gemalten Weg, der
-         erst nach links ausholt, und bei jedem Sprung geradeaus nach
-         unten (da ist ende.x === start.x, also galt immer „rechts")
-         schaute er in die falsche Richtung. Jetzt bekommt JEDER
-         Sprung seine eigene Richtung, und der Frosch dreht sich zu
-         Beginn des Sprungs dorthin — auf demselben Zeitstrahl wie die
-         Sprungbahn. Das Profilbild sitzt mit im gedrehten Teil, damit
-         es auf dem Ruecken bleibt, und wird noch einmal gespiegelt,
-         damit das Gesicht seitenrichtig bleibt. */
-      fro.className = "lc-frosch";
+         Jetzt wird die Zeichnung gespiegelt, wenn das Ziel rechts
+         liegt — und nur die Zeichnung: das Profilbild auf dem Ruecken
+         ist ein eigenes Feld daneben und bleibt seitenrichtig, sonst
+         waere das Gesicht spiegelverkehrt. */
+      const froNachRechts = ende.x >= start.x;
+      fro.className = "lc-frosch" + (froNachRechts ? " lc-frosch-rechts" : "");
       fro.style.setProperty("--gross", d + "px");
-      /* RUNDE 88 — XANDER: „Der Frosch hat vorne keine Fuesse, so wie's
-         aussieht."
-         ER HATTE RECHT: vorne war nur EIN Strich — „M34 52 Q30 60 24
-         62", 3,6 breit, ohne alles. Jetzt hat er vorne zwei Arme mit
-         je vier Zehen. Vier, nicht fuenf: ein Frosch hat vorne VIER
-         Finger und hinten FUENF Zehen, und nur hinten sind sie
-         verbunden — Schwimmhaeute braucht er zum Schwimmen, nicht zum
-         Greifen. Deshalb ist die Hinterpfote jetzt auch eine echte
-         Schwimmpfote statt der alten Flosse, die eher nach Schnabel
-         aussah. */
-      /* Der Arm und die vier Finger der NAHEN Vorderpfote — je einmal
-         dunkel und breit (der Umriss) und einmal hell und schmal
-         darueber. Zwei Pfade statt zehn. */
-      const froArmN = "M33 50 Q27.5 54.5 26 61 Q25.4 64 25.8 65.8";
-      const froFingerN = "M25.8 65.8 Q19.6 64.4 13.5 65.4"
-        + " M25.8 65.8 Q19.6 67.6 13.9 69"
-        + " M25.8 65.8 Q21 70 17.4 71.4"
-        + " M26.6 65 Q24.4 69.4 22.2 71.8";
-      /* Die FERNE Vorderpfote steht weiter hinten und ist dunkler —
-         daran sieht man ueberhaupt erst, dass es zwei sind. */
-      const froArmF = "M37 49 Q32 53.5 30.6 59.6 Q30.2 62 30.6 64";
-      const froFingerF = "M30.6 64 Q25.4 62.8 20.6 63.8"
-        + " M30.6 64 Q25.8 65.8 21.2 67.2"
-        + " M30.6 64 Q26.8 68 23.6 69.2";
-      fro.innerHTML = '<span class="lc-frosch-dreh">'
-        + '<svg class="lc-frosch-bild" viewBox="0 0 100 74">'
+      fro.innerHTML =
+                '<svg class="lc-frosch-bild" viewBox="0 0 100 74">'
         /* SEITENANSICHT, und das ist der Grund: von vorn verdeckt das
            Profilbild auf dem Ruecken den ganzen Frosch (nachgesehen am
            ersten Versuch — vom Frosch waren nur die Beine zu sehen).
            Von der Seite sitzt der Kopf vorn, der Reiter hinten, und
            beide sind gleichzeitig da. Ausserdem sieht man so erst,
            was einen Froschsprung ausmacht: das lange Hinterbein. */
-        /* Ganz hinten die FERNE Seite: erst das ferne Hinterbein,
-           dann die ferne Vorderpfote — beide dunkler, damit sie nach
-           hinten wegtreten. */
-        + '<path class="lc-frosch-bein" d="M60 36 Q75 34 81 44 Q85 52 77 56'
-        + ' Q69 58 65 50 Q61 43 60 36 Z" fill="#3f8a3d" stroke="#35702f" stroke-width="1.6"/>'
-        + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froArmF
-        + '" stroke="#35702f" stroke-width="7.2" fill="none" stroke-linecap="round"/>'
-        + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froFingerF
-        + '" stroke="#35702f" stroke-width="4.2" fill="none" stroke-linecap="round"/>'
-        + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froArmF
-        + '" stroke="#4d9349" stroke-width="5" fill="none" stroke-linecap="round"/>'
-        + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froFingerF
-        + '" stroke="#4d9349" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
-        /* Das NAHE Hinterbein liegt hinter dem Koerper und streckt
-           sich im Abstoss durch (siehe lcFroschBeinR83). */
+        /* Das Hinterbein liegt HINTER dem Koerper und streckt sich im
+           Abstoss durch (siehe lcFroschBeinR83). */
         + '<g class="lc-frosch-hinten">'
         + '<path class="lc-frosch-bein" d="M62 40 Q78 38 84 48 Q88 56 80 60'
         + ' Q72 62 68 54 Q64 47 62 40 Z" fill="#54a050" stroke="#3c7a3a" stroke-width="1.8"/>'
-        /* Die Schwimmpfote: erst die Haut zwischen den Zehen als
-           Flaeche, dann die Zehen darueber. Beide stecken in EINER
-           Gruppe, und die Gruppe traegt die Klasse — sonst wuerde die
-           Streckbewegung (lcFroschBeinR83 rechnet mit transform-box:
-           fill-box, also um die eigene Mitte) Haut und Zehen einzeln
-           stauchen und die beiden wuerden auseinanderlaufen. */
-        + '<g class="lc-frosch-bein lc-frosch-pfote">'
-        + '<path d="M78.5 59.5 Q88 60.4 96.8 65.4'
-        + ' Q97 68.4 92.8 70.2 Q85 71.8 79.4 68.4 Z"'
-        + ' fill="#8ecf7e" stroke="#3c7a3a" stroke-width="1.4" stroke-linejoin="round"/>'
-        + '<path d="M79 60.4 Q88 61.4 96.8 65.4'
-        + ' M79 62.4 Q87 64.8 94.4 69.2 M79.4 64.8 Q84 68 88.4 71.2"'
-        + ' stroke="#3c7a3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
-        + "</g>"
+        + '<path class="lc-frosch-bein" d="M80 58 Q90 60 95 64 Q90 68 80 66 Z"'
+        + ' fill="#4d9349" stroke="#3c7a3a" stroke-width="1.6"/>'
         + "</g>"
         /* Der Koerper. */
         + '<ellipse cx="52" cy="44" rx="28" ry="16" fill="#67b862"'
@@ -38269,24 +38208,15 @@
         /* Das breite Maul. */
         + '<path d="M12 38 Q22 44 34 42" stroke="#3c7a3a" stroke-width="2"'
         + ' fill="none" stroke-linecap="round"/>'
-        /* Das Nasenloch — winzig, aber es zeigt, wo vorne ist. */
-        + '<circle cx="14.6" cy="32.4" r="1.1" fill="#3c7a3a"/>'
         /* Der helle Bauch. */
         + '<path d="M30 52 Q52 62 74 52 Q52 58 30 52 Z" fill="#cfe8b6" opacity=".9"/>'
-        /* Die NAHE Vorderpfote — ganz vorn, weil sie vor dem Bauch steht. */
-        + '<path class="lc-frosch-vorn" d="' + froArmN
-        + '" stroke="#3c7a3a" stroke-width="8.6" fill="none" stroke-linecap="round"/>'
-        + '<path class="lc-frosch-vorn" d="' + froFingerN
-        + '" stroke="#3c7a3a" stroke-width="5" fill="none" stroke-linecap="round"/>'
-        + '<path class="lc-frosch-vorn" d="' + froArmN
-        + '" stroke="#67b862" stroke-width="6.2" fill="none" stroke-linecap="round"/>'
-        + '<path class="lc-frosch-vorn" d="' + froFingerN
-        + '" stroke="#7cc775" stroke-width="3" fill="none" stroke-linecap="round"/>'
+        /* Das Vorderbein. */
+        + '<path class="lc-frosch-vorn" d="M34 52 Q30 60 24 62" stroke="#3c7a3a"'
+        + ' stroke-width="3.6" fill="none" stroke-linecap="round"/>'
         + "</svg>"
         + '<span class="lc-frosch-last"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
-          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
-        + "</span>";
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
       reihe.appendChild(fro);
       weg.push(fro);
       setzen(fro, start.x, start.y);
@@ -38302,31 +38232,18 @@
         opacity: 1,
         offset: Math.min(1, (t * hin) / dauer)
       });
-      /* RUNDE 88 — ERST DIE RICHTUNG JEDES EINZELNEN SPRUNGS.
-         Vorher wurde sie einmal aus Start und Ziel bestimmt; dann
-         schaute der Frosch bei einem gemalten Weg, der nach links
-         ausholt, in die falsche Richtung. Weniger als zwei Pixel
-         seitwaerts sind ueberhaupt keine Richtung — bei einem Sprung
-         senkrecht nach unten behaelt er die bisherige bei, statt sich
-         grundlos nach rechts zu drehen. */
-      const froAbschnitte = [];
-      let froVor = 0;
-      let froRichtung = ende.x < start.x ? -1 : 1;
-      froschLand.forEach((zielT) => {
-        const dxF = bahnPunkt(zielT).x - bahnPunkt(froVor).x;
-        if (Math.abs(dxF) >= 2) froRichtung = dxF > 0 ? 1 : -1;
-        froAbschnitte.push({ von: froVor, bis: zielT, rueber: froRichtung });
-        froVor = zielT;
-      });
       const froSpruenge = [froRahmen(start.x, start.y, 0, 0)];
-      froAbschnitte.forEach((s) => {
-        const mitteT = (s.von + s.bis) / 2;
+      let froVor = 0;
+      froschLand.forEach((zielT) => {
+        const mitteT = (froVor + zielT) / 2;
         const pm = bahnPunkt(mitteT);
-        const pz = bahnPunkt(s.bis);
+        const pz = bahnPunkt(zielT);
         /* In der Luft neigt er sich in die Sprungrichtung und faengt
            sich bei der Landung wieder — ein Frosch landet flach. */
-        froSpruenge.push(froRahmen(pm.x, pm.y - d * (0.85 - mitteT * 0.3), mitteT, -14 * s.rueber));
-        froSpruenge.push(froRahmen(pz.x, pz.y, s.bis, 0));
+        const rueber = pz.x >= bahnPunkt(froVor).x ? 1 : -1;
+        froSpruenge.push(froRahmen(pm.x, pm.y - d * (0.85 - mitteT * 0.3), mitteT, -14 * rueber));
+        froSpruenge.push(froRahmen(pz.x, pz.y, zielT, 0));
+        froVor = zielT;
       });
       froSpruenge.push({ transform: "translate(" + (ende.x - start.x).toFixed(1) + "px, "
         + (ende.y - start.y).toFixed(1) + "px) translate(-50%, -50%) rotate(0deg)",
@@ -38336,45 +38253,6 @@
         opacity: 0, offset: 1 });
       try { fro.animate(froSpruenge, { duration: dauer, easing: "linear", fill: "forwards" }); }
       catch (e) {}
-      /* RUNDE 88 — UND DIE DREHUNG, auf demselben Zeitstrahl.
-         Der Weg ueber scaleX(0) ist in der Seitenansicht genau das,
-         was eine Drehung ist: der Frosch wird schmal, verschwindet
-         einen Wimpernschlag lang in der Kante und steht dann
-         andersherum. Gedreht wird in der ersten Drittelsekunde eines
-         Sprungs, also waehrend des Abstosses.
-         Die Zeichnung schaut von Haus aus nach LINKS, also ist der
-         Faktor -rueber: nach rechts springen heisst spiegeln. */
-      const froZeit = (t) => Math.max(0, Math.min(1, (t * hin) / dauer));
-      const froDrehStufen = [];
-      let froSchaut = froAbschnitte.length ? froAbschnitte[0].rueber : froRichtung;
-      const froErsteDrehung = -froSchaut;
-      froDrehStufen.push({ transform: "scaleX(" + froErsteDrehung + ")", offset: 0 });
-      froAbschnitte.forEach((s, i) => {
-        if (i === 0 || s.rueber === froSchaut) return;
-        const a = froZeit(s.von);
-        const b = froZeit(s.von + (s.bis - s.von) * 0.34);
-        const letzte = froDrehStufen[froDrehStufen.length - 1].offset;
-        if (a < letzte || b < a) return;
-        froDrehStufen.push({ transform: "scaleX(" + (-froSchaut) + ")", offset: a });
-        froSchaut = s.rueber;
-        froDrehStufen.push({ transform: "scaleX(" + (-froSchaut) + ")", offset: b });
-      });
-      froDrehStufen.push({ transform: "scaleX(" + (-froSchaut) + ")", offset: 1 });
-      const froDrehTeil = fro.querySelector(".lc-frosch-dreh");
-      const froLast = fro.querySelector(".lc-frosch-last");
-      /* Der Anfangswert steht zusaetzlich fest im Stil: gibt es keine
-         Web-Animationen, schaut er wenigstens von Anfang an richtig. */
-      if (froDrehTeil) froDrehTeil.style.transform = "scaleX(" + froErsteDrehung + ")";
-      /* Das Profilbild bekommt DIESELBE Spiegelung noch einmal:
-         (-1) mal (-1) ist 1, das Gesicht bleibt also seitenrichtig,
-         wandert aber mit dem Ruecken auf die andere Seite. */
-      if (froLast) froLast.style.transform = "scaleX(" + froErsteDrehung + ")";
-      try {
-        if (froDrehTeil) froDrehTeil.animate(froDrehStufen,
-          { duration: dauer, easing: "linear", fill: "forwards" });
-        if (froLast) froLast.animate(froDrehStufen,
-          { duration: dauer, easing: "linear", fill: "forwards" });
-      } catch (e) {}
       /* Die Beine strecken sich beim Abstoss und ziehen sich in der
          Luft wieder an — einmal je Sprung. Die Dauer eines Sprungs
          ist die Strecke durch die Zahl der Spruenge. */
