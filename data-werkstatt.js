@@ -49,28 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 89e — die Kopfhoerer bleiben jetzt wirklich auf dem Kopf, auch wenn man rausgeht und wiederkommt.",
+  stand: "Runde 89f — die Glitch-Sonde ist durch: 122 Effekte, beide Plaetze, bis 8 Sekunden. Alles gruen.",
 
   inArbeit: [
-    { seit: "2026-09-22T20:42",
-      text: "Glitches am verlassenen Platz — Sonde laeuft durch" },
-    { seit: "2026-09-22T20:42",
-      text: "Uebersicht aller Wuensche aus dem Verlauf — wird aus den Sonden gebaut" },
-    { seit: "2026-09-22T20:42",
-      text: "Frosch, Pferd, Lok, Helikopter, Fahrstuhl, Adler" },
-    { seit: "2026-09-22T20:42",
-      text: "Haende: greifende Hand, King Kong behaart, Kralle" },
-    { seit: "2026-09-22T20:42",
-      text: "Hammer: demolieren in Stufen" },
+    { seit: "2026-09-22T20:47",
+      text: "Uebersicht aller Wuensche aus dem Verlauf — der Sammellauf laeuft gerade" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T20:42",
-      text: "Kopfhoerer bleiben nach dem Verlassen und Wiederbetreten auf — vorher waren sie weg, waehrend das Lied weiterlief" },
-    { seit: "2026-09-22T20:42",
-      text: "Der Schein der Gluehbirne bleibt genauso" },
-    { seit: "2026-09-22T20:42",
-      text: "Abgenommen heisst abgenommen — sie kommen nicht von selbst zurueck" },
+    { seit: "2026-09-22T20:47",
+      text: "Glitches am verlassenen Platz: 122 Effekte einzeln gemessen, an BEIDEN Plaetzen, bis 8 s nach dem Start — kein einziger" },
+    { seit: "2026-09-22T20:47",
+      text: "Die Sonde mass vorher den falschen Platz (das Ziel statt des verlassenen) — deshalb stand sie auf gruen" },
+    { seit: "2026-09-22T20:47",
+      text: "Sie prueft jetzt auch die Rueckstaende: Elemente, Klassen, Stile, Groesse, Deckkraft" },
   ],
 };
