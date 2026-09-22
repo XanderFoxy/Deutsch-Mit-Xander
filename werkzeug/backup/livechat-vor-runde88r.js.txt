@@ -9222,7 +9222,6 @@ window.LiveChat = (function () {
     { gr: "fahrzeuge", w: "uboot", kurz: "tiefsee", nutzt: "/uboot",      was: "Film: das U-Boot taucht ab, der Krake greift zu" },
     { gr: "feier", w: "kassette",  kurz: "tape",   nutzt: "/kassette",  was: "Achtziger: eine Musikkassette spult zurück, die Wickel drehen sich" },
     { gr: "feier", w: "pacman",    kurz: "pac",    nutzt: "/pacman [Name]", was: "Achtziger: Pac-Man frisst sich durch den Chat — mit Namen jagt er ueber die Plaetze und frisst denjenigen von der Buehne" },
-    { gr: "feier", w: "mario",     kurz: "pilz",   nutzt: "/mario [Name oder 5-6-7]", was: "Mario-Modus: unter der oberen Reihe entlanghüpfen und an die Plätze darüber schlagen — heraus kommen Münzen oder ein Pilz, und die Punkte zählen mit. Mit gezeichnetem Weg sind Besetzte Gegner" },
     { gr: "welt",  w: "vhs",       kurz: "video",  nutzt: "/vhs",       was: "Achtziger: das Bild verreisst wie bei einem alten Videoband" },
     { gr: "feier", w: "disko",     kurz: "kugel",  nutzt: "/disko",     was: "Achtziger: die Spiegelkugel dreht sich und wirft Lichtflecken" },
     { gr: "fahrzeuge", w: "pirat",  kurz: "schiff", nutzt: "/pirat",     was: "Ein Piratenschiff mit Totenkopfflagge" },
@@ -9315,8 +9314,7 @@ window.LiveChat = (function () {
     gghai: "\ud83e\udd88", ggbaer: "\ud83d\udc3b",
     zug: "\ud83d\ude82",
     raumschiff: "\ud83d\ude80", uboot: "\ud83d\udea2", kassette: "\ud83d\udcfc",
-    pacman: "\ud83d\udc7e", mario: "\ud83c\udf44",
-    disko: "\ud83e\udea9", pirat: "\ud83c\udff4\u200d\u2620\ufe0f",
+    pacman: "\ud83d\udc7e", disko: "\ud83e\udea9", pirat: "\ud83c\udff4\u200d\u2620\ufe0f",
     strudel: "\ud83c\udf00", schwamm: "\ud83e\uddfd", schuss: "\ud83d\udca5",
     wolken: "\u2601\ufe0f", glasbruch: "\ud83e\ude9e", spinnen: "\ud83d\udd77\ufe0f",
     noten: "\ud83c\udfb5", halloween: "\ud83c\udf83", weihnachten: "\ud83c\udf84",
@@ -9491,10 +9489,6 @@ window.LiveChat = (function () {
                 tape: "kassette", musikkassette: "kassette", spulen: "kassette",
                 walkman: "kassette", mixtape: "kassette",
                 pac: "pacman", pacmann: "pacman", arcade: "pacman",
-                /* „muenze" gehoert NICHT hierher: den Befehl /muenze gibt
-                   es schon (der Geldeffekt), und ein Kurzwort, das einen
-                   echten Befehl verdeckt, nimmt ihm die Tuer. */
-                pilz: "mario", supermario: "mario", klempner: "mario",
                 video: "vhs", videoband: "vhs", videorekorder: "vhs", tracking: "vhs",
                 kugel: "disko", spiegelkugel: "disko", discokugel: "disko",
                 disco: "disko", achtziger: "disko",
@@ -11129,35 +11123,6 @@ window.LiveChat = (function () {
        wie man es erwartet: „/lok Emmi" faehrt sie hinueber, „/lok"
        allein zeigt den Film. */
     if (art === "lok" && !rest) art = "zug";
-    /* =========================================================
-       RUNDE 88 — DER MARIO-MODUS
-       ---------------------------------------------------------
-       XANDER: „wenn ich mich unter der oberen Reihe bewege, dass
-       ich wie bei Super Mario an die Plaetze dran schlagen kann,
-       wo Leute sitzen, und dann Power-up rauskommt oder Muenzen
-       … und man kann auch den Weg einzeichnen, auch ueber die
-       Benutzer zeichnen, und wenn man das macht, dann sind die
-       Benutzer halt Gegner."
-
-       Dieser Zweig steht VOR AM_PLATZ: dort ist ein Name Pflicht,
-       und „/mario" OHNE Namen ist hier gerade der Normalfall — er
-       laeuft dann seine eigene Reihe entlang. Drei Formen:
-         /mario          die eigene Reihe entlang, Bloecke schlagen
-         /mario 5-6-7    der gemalte Weg; Besetzte sind Gegner
-         /mario Bea      bis zu Bea
-       Das „los" faehrt mit, damit auf JEDEM Geraet dieselben
-       Muenzen aus denselben Bloecken kommen. */
-    if (art === "mario") {
-      var ketteM = String(rest || "").replace(/\s+/g, "");
-      var istKetteM = /^\d+(-\d+)+$/.test(ketteM);
-      var zielM = istKetteM ? ketteM : String(rest || "").trim();
-      var wortM = istKetteM
-        ? " springt als Mario bis Platz " + ketteM.split("-").pop()
-        : (zielM ? " springt als Mario zu " + zielM
-                 : " springt als Mario unter der oberen Reihe entlang");
-      return anAlle("aktion", zustand.ichName + wortM + "  \ud83c\udf44",
-        { wirkung: "mariolauf", wen: zielM, los: Math.random().toFixed(4) });
-    }
     if (AM_PLATZ[art]) {
       /* =========================================================
          RUNDE 88 — AUFGEZOGEN HEISST BEIM PFERD: GALOPP
@@ -12732,13 +12697,6 @@ window.LiveChat = (function () {
          genau das prueft pruefe-effekttueren; diese vier haben eine,
          sie steht nur nicht in einer Tabelle. */
       w.push("zherz", "heber", "lasso", "lotto");
-      /* RUNDE 88 — und „mariolauf" haengt an „/mario". Der Befehl hat
-         eine eigene Abzweigung, weil er auch OHNE Namen gilt — in
-         AM_PLATZ waere ein Name Pflicht, und „/mario" allein ist
-         gerade der Normalfall („wenn ich mich unter der oberen Reihe
-         bewege"). Die Tuer ist also da, sie steht nur nicht in einer
-         Tabelle. */
-      w.push("mariolauf");
       /* Und die Musik: „musik" haengt an /musik mit einem Lied, „musikaus"
          an /musik aus. Beide haben eine Tuer, sie steht nur in einer
          eigenen Abzweigung und nicht in einer Tabelle. */

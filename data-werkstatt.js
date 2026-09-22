@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 88q — die Lok dreht sich nicht mehr auf der Stelle, sie faehrt um echte Kurvenmodule.",
+  stand: "Runde 88r — der Mario-Modus: Bloecke schlagen, Muenzen sammeln, Gegner erledigen.",
 
   inArbeit: [
-    { seit: "2026-09-22T18:14",
+    { seit: "2026-09-22T18:33",
       text: "Aufgabe-Modul: unklar, welches gemeint ist — Rueckfrage an Xander" },
-    { seit: "2026-09-22T18:14",
-      text: "Mario-Modus mit Muenzen und Punkten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T18:14",
-      text: "Lok: Kurvenmodule an den Eckpunkten, wie bei einer Modelleisenbahn" },
-    { seit: "2026-09-22T18:14",
-      text: "Lok: Draufsicht mit Kessel, Esse und Doemen, wenn sie senkrecht faehrt — Nase voran, auch nach oben" },
-    { seit: "2026-09-22T18:14",
-      text: "Lok: kein Drehen auf der Stelle mehr; die Nase zeigt in die Fahrtrichtung" },
-    { seit: "2026-09-22T18:14",
-      text: "Lok: die Gleise liegen jetzt UNTER den Plaetzen und laufen unter den Personen durch" },
+    { seit: "2026-09-22T18:33",
+      text: "Mario-Modus: unter der oberen Reihe entlanghuepfen und an die Plaetze darueber schlagen" },
+    { seit: "2026-09-22T18:33",
+      text: "Aus den Bloecken kommen Muenze, goldene Muenze oder Pilz — wirklich zufaellig, nie zweimal dasselbe" },
+    { seit: "2026-09-22T18:33",
+      text: "Der Pilz laesst das eigene Profilbild wachsen; die Punkte zaehlen in die Wertung" },
+    { seit: "2026-09-22T18:33",
+      text: "Mit gezeichnetem Weg sind Besetzte Gegner: abwechselnd draufspringen und wegkicken" },
+    { seit: "2026-09-22T18:33",
+      text: "Am Abfahrtsort passiert nichts, bis man zurueck ist" },
   ],
 };
