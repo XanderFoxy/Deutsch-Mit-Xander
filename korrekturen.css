@@ -16638,8 +16638,25 @@ body.lc-schreibt .tutor-reiter {
   background: linear-gradient(180deg, #8a5a33, #5a3a20 62%, #3e2814);
   box-shadow: 0 .12em .3em rgba(0, 0, 0, .45);
   z-index: 5;
-  animation: lcSkGlasR29 7s ease-out both;
+  /* RUNDE 80 — XANDER: „Allerdings verschwindet der Standfuss zu
+     frueh."
+     NACHGERECHNET: Sockel und Glas liefen beide auf lcSkGlasR29 mit
+     7 s, und dort steht die letzte volle Deckkraft bei 88 %. Der
+     Sockel war also nach 6,16 s weg. Die ganze Schneekugel bleibt
+     aber 7,2 s stehen (lcSchneekugel in app.js) — es fehlte gut eine
+     Sekunde, in der eine Kugel ohne Fuss in der Luft stand.
+     Jetzt eine eigene Kurve ueber die vollen 7,2 s, die bis 95 %
+     (6,84 s) stehen bleibt und erst dann in 0,36 s ausblendet. */
+  animation: lcSkSockelR80 7.2s ease-out both;
 }
+@keyframes lcSkSockelR80 {
+  0%   { opacity: 0; }
+  8%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+/* Und das Glas genauso — es gehoert zur selben Kugel. */
+.lc-sk-glas { animation: lcSkSockelR80 7.2s ease-out both; }
 @media (prefers-reduced-motion: reduce) {
   .lc-geschuettelt { animation: none; }
   .lc-sk-flocke { display: none; }
@@ -21855,9 +21872,14 @@ body.lc-schreibt .tutor-reiter {
 @keyframes lcBeckenAufR65 {
   0%   { opacity: 0; }
   /* Das Wasser ist schon da, bevor er springt — sonst entstuende es
-     erst unter ihm, und das sieht nach Zauberei aus. */
-  10%  { opacity: .9; }
-  92%  { opacity: .9; }
+     erst unter ihm, und das sieht nach Zauberei aus.
+     RUNDE 80 — XANDER: „ausserdem ist das Becken noch nicht komplett
+     gefuellt." Die Flaeche war schon so gross wie das ganze Bild,
+     aber sie stand auf 0,9 Deckkraft — das Profilbild schien
+     hindurch, und dadurch sah das Becken aus wie halb voll. Jetzt
+     deckt es ganz. */
+  10%  { opacity: 1; }
+  92%  { opacity: 1; }
   100% { opacity: 0; }
 }
 @keyframes lcBeckenRingR65 {
@@ -22262,12 +22284,18 @@ body.lc-schreibt .tutor-reiter {
 .lc-tor-welle-3 { animation-delay: -.76s; }
 .lc-tor-welle-4 { animation-delay: -1.14s; }
 .lc-tor-welle-5 { animation-delay: -1.52s; }
+/* RUNDE 80 — XANDER: „Das Portal soll in sich geschlossen animiert
+   sein." Der Ring wuchs auf das Achtfache und war dabei erst am Ende
+   ganz durchsichtig — er wurde also vom Rand der Wasserfläche
+   abgeschnitten, statt auszulaufen. Eine Welle, die an einer Kante
+   endet, macht das Tor offen. Jetzt ist sie bei 86 % schon fast weg
+   und bei 100 % ganz — sie verläuft im Wasser, nicht an der Kante. */
 @keyframes lcTorWelleR67 {
   0%   { opacity: 0;   transform: scale(.3); border-width: 3.5px; }
   10%  { opacity: 1; }
-  60%  { opacity: .8;  border-width: 2px; }
-  /* Weiter aussen wird der Ring flacher — die Welle laeuft aus. */
-  100% { opacity: 0;   transform: scale(8.4); border-width: 1px; }
+  60%  { opacity: .7;  border-width: 2px; }
+  86%  { opacity: .18; border-width: 1.2px; }
+  100% { opacity: 0;   transform: scale(7.6); border-width: 1px; }
 }
 /* Der Glanz wandert langsam ueber die Flaeche. */
 .lc-tor-glanz {
@@ -25303,10 +25331,21 @@ body.lc-schreibt .tutor-reiter {
   opacity: 0;
   animation: lcVogelNaseR77 3.4s ease-in both;
 }
+/* RUNDE 80 — XANDER: „der Vogel funktioniert, er koennte aber am
+   Gesicht herunter laufen."
+   Die Nase lief bis 30 % der Bildhoehe — vom Ansatz bei 6 % also bis
+   36 %, das ist gerade die Stirn. Jetzt laeuft sie bis 62 %, also
+   ueber das ganze Gesicht bis unter die Nase, und sie laeuft dabei
+   UNGLEICHMAESSIG: schnell los, dann zaeh (so kriecht etwas
+   Zaehfluessiges), mit einem kurzen Halt bei 78 %, wo der Tropfen
+   haengen bleibt, bevor er weiterlaeuft. */
 @keyframes lcVogelNaseR77 {
   0%, 54% { opacity: 0; height: 0; }
-  56%     { opacity: 1; height: 3%; }
-  100%    { opacity: 1; height: 30%; }
+  56%     { opacity: 1; height: 4%; }
+  64%     { opacity: 1; height: 22%; }
+  78%     { opacity: 1; height: 34%; }
+  86%     { opacity: 1; height: 38%; }
+  100%    { opacity: 1; height: 62%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-vogelkot-vogel, .lc-vogelkot-tropfen, .lc-vogelkot-klecks,
@@ -26304,3 +26343,277 @@ body.lc-schreibt .tutor-reiter {
   stroke-width: .7;
 }
 .lc-pferd-bein { stroke-width: 4.4; }
+
+/* === RUNDE 80: MAN SIEHT DIE ZWILLE AUFZIEHEN ========================
+   XANDER: „Man soll auch sehen, wie das Gummiband aufgezogen wird."
+
+   Das Gummi dehnte sich zwar (lcZwilleGummiR18: scaleY von 1 auf 2,6),
+   aber es zog nichts — die Kugel lag beim Getroffenen und erschien
+   erst beim Einschlag. Man sah ein Band, das von allein länger wurde.
+   Jetzt hängt die Ledertasche mit der Kugel am Band und wandert beim
+   Aufziehen genau so weit mit, wie das Band lang wird: die Spitze des
+   Gummis liegt bei y = 40, sein Ansatz bei y = 20 — mal 2,6 ergibt
+   y = 72, also 32 Einheiten. Die Zeiten sind dieselben wie beim
+   Gummi: ziehen von 26 auf 50 %, loslassen bei 53 %. */
+.lc-zwille-tasche {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: lcZwilleTascheR80 2.6s cubic-bezier(.2, 0, .1, 1) both;
+}
+@keyframes lcZwilleTascheR80 {
+  0%      { opacity: 0; transform: translateY(0); }
+  10%     { opacity: 1; transform: translateY(0); }
+  26%     { opacity: 1; transform: translateY(0); }
+  /* aufgezogen — 32 Einheiten, genau die Laenge, die das Band gewinnt */
+  50%     { opacity: 1; transform: translateY(32px); }
+  /* losgeschnellt: die Tasche schiesst nach vorn, die Kugel ist weg */
+  53%     { opacity: 1; transform: translateY(-7px); }
+  58%     { opacity: .5; transform: translateY(3px); }
+  62%,100%{ opacity: 0; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-zwille-tasche { animation: none; opacity: 0; }
+}
+
+/* === RUNDE 80: GLAS UND FASSUNG SIND EINE FORM IM DREH ===============
+   XANDER: „Bei Birne an … sieht es so aus, als wären die beiden Sachen
+   unterschiedliche Sachen … Das soll wie eine Form im Dreh aussehen."
+
+   NACHGESEHEN, und er beschreibt genau, was da steht: das Glas (das
+   Profilbild) dreht sich räumlich um seine senkrechte Achse —
+   „perspective(520px) rotateY(…)", drei volle Umdrehungen bis 1044°.
+   Das Gewinde darüber drehte sich aber gar nicht: an ihm krochen nur
+   die Rillen nach unten (lcBirneRillenR72) und ein Lichtband seitlich
+   darüber (lcBirneSchaftR77). Zwei verschiedene Bewegungen an zwei
+   Teilen, die zusammengehören — deshalb sehen sie aus wie zwei Dinge.
+
+   Jetzt dreht das Gewinde dieselbe Drehung, mit derselben Perspektive
+   und denselben Stufen wie das Glas (0 → 360 → 720 → 1020 → 1044°).
+   Das Herunterkriechen der Rillen bleibt, es gehört zum Einschrauben.
+   Diese Regel steht am Ende der Datei und gewinnt damit gegen
+   lcBirneRillenR72 und lcBirneGewindeR38. */
+.lc-birne-gewinde {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: lcBirneGewindeDrehtR80 4s cubic-bezier(.2, .6, .2, 1) both;
+}
+@keyframes lcBirneGewindeDrehtR80 {
+  0%   { transform: perspective(520px) rotateY(0deg)    translateY(-21%); }
+  22%  { transform: perspective(520px) rotateY(360deg)  translateY(-14%); }
+  40%  { transform: perspective(520px) rotateY(720deg)  translateY(-7.5%); }
+  54%  { transform: perspective(520px) rotateY(1020deg) translateY(-2.5%); }
+  /* Kontakt: dasselbe kurze Zucken wie am Glas (lcBirneEinR58). */
+  58%  { transform: perspective(520px) rotateY(1044deg) translateY(0); }
+  61%  { transform: perspective(520px) rotateY(1038deg) translateY(0); }
+  64%, 100% { transform: perspective(520px) rotateY(1044deg) translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-birne-gewinde { animation: none; }
+}
+
+/* === RUNDE 80: DER KLAPS AUF DEN HINTERN ALS EIGENE ANIMATION =======
+   XANDER: „bei dem BH … dieses auf den Arsch klatschen zählt mir noch
+   als extra Animation."
+
+   Also nicht mehr ein Anhängsel am BH-Effekt, sondern eine eigene
+   Wirkung mit eigenem Befehl (/klaps), eigenem Ton („klatsch" statt
+   „ohrfeige" — ein Klaps auf Stoff klingt dumpfer und breiter) und
+   eigener Bewegung: die flache Hand kommt von unten-seitlich herein,
+   trifft bei 600 ms von UNTEN auf, das Bild federt kurz nach oben
+   weg, und ein roter Handabdruck bleibt stehen und verblasst. */
+.lc-klaps-hand {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 62%;
+  margin: -31% 0 0 -31%;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .4));
+  animation: lcKlapsHandR80 2.2s cubic-bezier(.3, 0, .2, 1) both;
+}
+@keyframes lcKlapsHandR80 {
+  /* Ausholen: sie kommt von unten aussen, tief und weit weg. */
+  0%    { opacity: 0;
+          transform: translate(var(--wx, 180%), 120%) rotate(-38deg) scale(.7); }
+  9%    { opacity: 1;
+          transform: translate(calc(var(--wx, 180%) * .7), 92%) rotate(-30deg) scale(.9); }
+  /* Kurz halten — ohne das Innehalten sieht man das Ausholen nicht. */
+  18%   { opacity: 1;
+          transform: translate(calc(var(--wx, 180%) * .75), 100%) rotate(-34deg) scale(.92); }
+  /* 27,3 % von 2,2 s = 600 ms: der Aufprall, von unten gegen den
+     Bildrand. Sie staucht sich dabei — eine Hand, die trifft, ist
+     einen Augenblick breiter als eine, die fliegt. */
+  27.3% { opacity: 1;
+          transform: translate(calc(var(--wx, 180%) * .1), 42%) rotate(-6deg) scale(1.06, .92); }
+  33%   { opacity: 1;
+          transform: translate(calc(var(--wx, 180%) * .22), 56%) rotate(-14deg) scale(1); }
+  /* Und wieder weg — langsamer, als sie gekommen ist. */
+  62%   { opacity: .9;
+          transform: translate(calc(var(--wx, 180%) * .6), 86%) rotate(-28deg) scale(.92); }
+  100%  { opacity: 0;
+          transform: translate(var(--wx, 180%), 120%) rotate(-38deg) scale(.72); }
+}
+/* DAS BILD FEDERT NACH OBEN WEG — getroffen wird von unten. */
+.lc-geklapst { animation: lcGeklapstR80 2.2s cubic-bezier(.3, 0, .3, 1) both; }
+@keyframes lcGeklapstR80 {
+  0%, 25%  { transform: translateY(0) rotate(0deg); }
+  28%      { transform: translateY(-7%) rotate(var(--klapsdreh, 8deg)) scaleY(.95); }
+  34%      { transform: translateY(3%) rotate(calc(var(--klapsdreh, 8deg) * -.4)) scaleY(1.03); }
+  41%      { transform: translateY(-2%) rotate(calc(var(--klapsdreh, 8deg) * .3)); }
+  50%, 100%{ transform: translateY(0) rotate(0deg); }
+}
+/* DER ABDRUCK. Fünf Finger und ein Ballen, rot und weich — er
+   erscheint MIT dem Schlag und verblasst über anderthalb Sekunden. */
+.lc-klaps-abdruck {
+  position: absolute;
+  left: 30%;
+  top: 46%;
+  width: 40%;
+  height: 34%;
+  pointer-events: none;
+  opacity: 0;
+  background-repeat: no-repeat;
+  background-image:
+    radial-gradient(ellipse 34% 40% at 50% 74%, rgba(214, 74, 62, .55) 0 58%, rgba(214, 74, 62, 0) 100%),
+    radial-gradient(ellipse 12% 30% at 18% 30%, rgba(214, 74, 62, .5) 0 58%, rgba(214, 74, 62, 0) 100%),
+    radial-gradient(ellipse 12% 34% at 38% 20%, rgba(214, 74, 62, .5) 0 58%, rgba(214, 74, 62, 0) 100%),
+    radial-gradient(ellipse 12% 32% at 60% 22%, rgba(214, 74, 62, .5) 0 58%, rgba(214, 74, 62, 0) 100%),
+    radial-gradient(ellipse 11% 26% at 80% 34%, rgba(214, 74, 62, .45) 0 58%, rgba(214, 74, 62, 0) 100%);
+  filter: blur(1.1px);
+  animation: lcKlapsAbdruckR80 2.2s ease-out both;
+}
+@keyframes lcKlapsAbdruckR80 {
+  0%, 26%  { opacity: 0; transform: scale(.94); }
+  /* Er kommt nicht sofort voll: die Haut braucht einen Moment. */
+  29%      { opacity: .55; transform: scale(1.04); }
+  38%      { opacity: .9;  transform: scale(1); }
+  70%      { opacity: .7;  transform: scale(1); }
+  100%     { opacity: 0;   transform: scale(1); }
+}
+.lc-klaps-wort {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  transform: translateX(-50%);
+  font-weight: 900;
+  font-size: .82em;
+  color: #ff9a7a;
+  text-shadow: 0 0 8px rgba(0, 0, 0, .6);
+  animation: lcZpWort .9s ease-out .6s both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-klaps-hand, .lc-klaps-abdruck, .lc-klaps-wort { animation: none; opacity: 0; }
+  .lc-geklapst { animation: none; }
+}
+
+/* === RUNDE 80: DIE GANZE SEITE WIRD DUNKEL ==========================
+   XANDER: „im Prinzip soll die ganze Webseite abgedunkelt sein" und
+   „wenn man durch die Seite scrollt springen die Augen immer noch."
+
+   Beides hatte dieselbe Ursache: die Dunkelheit lag IN der
+   Effektbühne und deckte deshalb nur das Klassenzimmer ab — und die
+   Bühne wird in jedem Bildtakt nachgezogen, sodass die Augen, die
+   relativ zu ihr gesetzt wurden, beim Scrollen einen Takt
+   hinterherhingen. Jetzt hängt die Dunkelheit am body, steht fest am
+   Bildschirm und kann sich gar nicht mehr bewegen. */
+.lc-stromaus-seite {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+}
+
+/* === RUNDE 80: DIE AUGEN SIND EMOJI-AUGEN ===========================
+   XANDER: „und die Augen können auch wie diese Emoji Augen sein."
+   Gemeint ist 👀: ein sauber begrenztes weisses Augapfel-Oval mit
+   einer grossen, runden, ganz dunklen Pupille und einem kleinen
+   Lichtpunkt darauf. Bisher war das Auge ein weicher Schein, der
+   nach aussen auslief — von einer Form war nichts zu sehen. */
+.lc-auge {
+  background: radial-gradient(ellipse at 50% 46%, #ffffff 0 62%, #f2ecd8 84%, #ded6bd 100%);
+  box-shadow: 0 0 9px rgba(255, 248, 220, .45),
+              inset 0 -1px 2px rgba(120, 110, 86, .35);
+}
+/* Die Pupille: grösser und ganz dunkel — ein Emoji-Auge hat eine
+   deutliche Pupille, keinen Punkt. */
+.lc-auge > b {
+  height: 78%;
+  background: #0b0a07;
+  box-shadow: inset 0 0 0 .18em #1c1913;
+}
+/* Und der Lichtpunkt darauf. Er sitzt oben links, wie bei jedem
+   gezeichneten Auge — ohne ihn wirkt die Pupille wie ein Loch. */
+.lc-auge > b::after {
+  content: "";
+  position: absolute;
+  left: 20%;
+  top: 16%;
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .92);
+}
+
+/* === RUNDE 80: DIE SANDUHR WIRD REALISTISCH =========================
+   XANDER: „Die Sanduhr ist auch noch nicht realistisch."
+
+   Die Körner liefen über die ganze Breite (8 bis 92 %) und waren alle
+   gleich gross — das ist Regen, kein Sand. In einer Sanduhr fällt der
+   Sand durch ein Loch: eine schmale Säule, die sich erst im Fallen
+   ein wenig auffächert, und darunter ein Haufen, der von der MITTE
+   her wächst. Die Zahlen stehen in app.js (lcSanduhr), hier steht,
+   was sie bewirken: --streu fächert die Säule mit der Fallhöhe auf,
+   --korn gibt jedem Korn sein eigenes Mass. */
+.lc-sandkorn {
+  width: calc(3.2% * var(--korn, 1));
+  height: calc(3.2% * var(--korn, 1));
+  top: 30%;
+  animation-name: lcSandkornR80;
+}
+@keyframes lcSandkornR80 {
+  0%   { opacity: 0; transform: translate(0, 0) scale(.7); }
+  8%   { opacity: .95; }
+  /* Auf halbem Weg ist die Säule noch schmal … */
+  50%  { transform: translate(calc(var(--streu, 0%) * .35), 190%) scale(1); }
+  88%  { opacity: .95; }
+  /* … und erst kurz vor dem Haufen fächert sie auf. */
+  100% { opacity: 0; transform: translate(var(--streu, 0%), 420%) scale(1.05); }
+}
+/* DER HAUFEN IST EIN KEGEL, KEINE KUPPEL — und er bleibt liegen.
+   Vorher war er 86 % breit (also fast so breit wie das Bild) und
+   fiel bei 90 % wieder auf 4 % zusammen: der Sand verschwand, statt
+   sich zu sammeln. Jetzt wächst er von 26 auf 72 % Breite mit und
+   bleibt bis zum Schluss stehen. */
+.lc-sandhaufen {
+  width: 72%;
+  margin-left: -36%;
+  height: 30%;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  animation: lcSandhaufenR80 3.2s ease-out both;
+}
+@keyframes lcSandhaufenR80 {
+  0%   { opacity: 0; transform: scale(.34, 0); }
+  12%  { opacity: .95; transform: scale(.4, .12); }
+  40%  { opacity: .95; transform: scale(.66, .46); }
+  70%  { opacity: .95; transform: scale(.88, .78); }
+  92%  { opacity: .95; transform: scale(1, 1); }
+  100% { opacity: .8;  transform: scale(1, 1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-sandkorn, .lc-sandhaufen { animation: none; }
+}
+
+/* === RUNDE 80: DIE KATZE SCHLÄGT WIRKLICH ZU ========================
+   XANDER: „die Katze … kann ein bisschen besser animiert werden."
+   Der Schwanz wedelte und die Pupillen wurden gross — aber die PFOTE
+   stand still. Der Ball rollte los, ohne dass ihn etwas angestossen
+   hätte. Ihre Schläge setzt jetzt app.js (lcReise, art „mieze") auf
+   genau die Zeitpunkte, an denen der Ball anfängt zu rollen. Hier
+   steht nur, worum sie sich dreht: um die SCHULTER (x = 74, y = 66
+   im viewBox 120 × 92, also 62 % / 72 %), nicht um ihre eigene Mitte
+   — sonst dreht sich die Pfote um sich selbst, statt zu schlagen. */
+.lc-katze-pfote {
+  transform-box: view-box;
+  transform-origin: 62% 72%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-katze-pfote { animation: none; }
+}

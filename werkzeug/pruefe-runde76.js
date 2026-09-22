@@ -134,9 +134,17 @@ pruefe("beim Herausdrehen ist sie da",
 console.log("\nDIE AUGEN IM DUNKELN\n");
 /* Die Augen wurden RELATIV ZUR BUEHNE gesetzt, und die Buehne wird in
    ihrem eigenen Bildtakt nachgezogen — ein Takt Verzug, und den sieht
-   man als Springen. */
-pruefe("die Buehne wird im selben Bildtakt zuerst nachgezogen",
-  /const setzenA = \(\) => \{\s*\n\s*try \{ lcBuehneSetzen\(\); \} catch \(e\) \{\}/.test(js));
+   man als Springen.
+   RUNDE 80 — XANDER: „wenn man durch die Seite scrollt springen die
+   Augen immer noch." Die Reihenfolge allein hat also nicht gereicht.
+   Jetzt liegt die Dunkelheit fest am Bildschirm („position: fixed"),
+   und die Augen werden in BILDSCHIRMKOORDINATEN gesetzt — ohne den
+   Kasten der beweglichen Buehne abzuziehen. Damit kann gar nichts
+   mehr auseinanderlaufen; ein Nachziehen der Buehne braucht es hier
+   nicht mehr. Geprueft wird deshalb, dass die Subtraktion WEG ist. */
+pruefe("die Augen rechnen nicht mehr gegen die bewegliche Buehne",
+  /p\.paar\.style\.left = \(k\.left \+ k\.width \/ 2\)\.toFixed\(1\) \+ "px";/.test(js)
+  && !/const hk = heim\.getBoundingClientRect\(\);/.test(js));
 
 console.log("\nBOWLING UND STROHHALM\n");
 /* lcWeggestossen setzte sich bei 30 % von 2,4 s in Bewegung (720 ms),

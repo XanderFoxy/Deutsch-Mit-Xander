@@ -80,8 +80,15 @@ pruefe("er ist nur an, waehrend das Bild steigt und sinkt",
    wieder unveraendert da, es kann also nichts haengen bleiben. */
 pruefe("das Bild am Platz behaelt nichts zurueck",
   (js.match(/duration: dauer, easing: "linear", fill: "none"/g) || []).length >= 4);
+/* RUNDE 80 — XANDER: „Wenn man mit dem UFO fliegt, kann das UFO etwas
+   tiefer sein." Die Schwebehoehe ist von 1,45 auf 1,12 Bildbreiten
+   zurueckgenommen. Geprueft wird deshalb, was die Regel meint: die
+   Untertasse schwebt ueber dem Platz (also mehr als eine Bildbreite
+   hoch), und sie ist schmal genug, dass sie nicht ueber den Rand des
+   Klassenzimmers hinausragt (deshalb 1,7 statt der frueheren 2,3). */
 pruefe("und die Untertasse bleibt am Klassenzimmer",
-  /const schweb = d \* 1\.45;/.test(js)
+  /const schweb = d \* ([\d.]+);/.test(js)
+  && Number(RegExp.$1) >= 1.0 && Number(RegExp.$1) <= 1.7
   && /width: calc\(var\(--gross, 64px\) \* 1\.7\);/.test(css));
 
 console.log("\nDIE KATZE\n");
@@ -194,9 +201,19 @@ pruefe("die Hand kommt erst NACH dem Ton",
    y = 24,5 und damit HOEHER als die Schultern daneben (y = 30) — von
    vorn also drei Buckel. Eine Cattleman-Falte hat in der Mitte eine
    DELLE. Jetzt Mitte 33,6, Schultern 28,4, Grate 14. */
-pruefe("die Krone hat eine Delle in der Mitte, keinen dritten Buckel",
-  /C62\.5 32 66 33\.6 70 33\.6 C74 33\.6 77\.5 32 80\.5 28\.4/.test(js)
-  && !/C61\.5 26 65\.5 24\.5 70 24\.5/.test(js));
+/* RUNDE 80 — XANDER: „diese Hoecker sind noch zu duenn." Die Grate
+   sind breiter geworden (44 bis 55 statt 46 bis 54,5), die Senke
+   dazwischen schmaler. Die Delle in der Mitte bleibt — sie ist das,
+   was diesen Hut zu einem Stetson macht. Geprueft wird deshalb die
+   FORM und nicht die alte Zeichenkette: der Punkt bei x = 70 liegt
+   tiefer als die Schultern daneben. */
+pruefe("die Krone hat eine Delle in der Mitte, keinen dritten Buckel", (() => {
+  const m = /C64 31\.4 66\.8 ([\d.]+) 70 ([\d.]+) C73\.2 ([\d.]+) 76 31\.4 78\.5 ([\d.]+)/.exec(js);
+  if (!m) return false;
+  const mitte = Number(m[2]), schulter = Number(m[4]);
+  /* Grosse y sind WEITER UNTEN: die Mitte muss tiefer liegen. */
+  return mitte > schulter && !/C61\.5 26 65\.5 24\.5 70 24\.5/.test(js);
+})());
 pruefe("und der Hut sitzt bis dahin gerade",
   /25%, 82% \{ opacity: 1; transform: translateY\(1%\) rotate\(-1deg\)/.test(css));
 
@@ -258,8 +275,14 @@ pruefe("das Sprechfeld sitzt konzentrisch auf dem Bild",
    33,2 bis 34,8 %, Mitte 34,0 %: das sind 0,73 Prozentpunkte
    INNERHALB des Randes, knapp 0,9 px. Die Fuesse sitzen damit
    im Bild und die Flamme steht auf dem Reifen, statt daneben. */
+/* RUNDE 80 — XANDER: „beim Feuer kannst du noch ein bisschen die
+   Flammen nach unten bringen." Das Band ist noch einmal nach innen
+   gerueckt. Geprueft wird die Regel: die Fusspunkte liegen INNERHALB
+   des Bildrandes (34,73 %) und nicht mehr als drei Prozentpunkte
+   darunter — sonst schwebte die Flamme mitten im Gesicht. */
 pruefe("und die Flammen stehen auf dem Ring",
-  /band: \[33\.2, 34\.8\]/.test(js));
+  /band: \[([\d.]+), ([\d.]+)\], zeichen: \[""\] \},/.test(js.slice(js.indexOf('feuer:  { menge: 30')))
+  && Number(RegExp.$2) < 34.73 && Number(RegExp.$1) > 31.7);
 /* Erst wurden die Funken kleiner gemacht — sie blieben trotzdem als
    weiche Punkte NEBEN dem Reifen stehen. Die Maske liess ein Band von
    40 bis 59 px stehen, der Bildradius ist aber 42 px. Also ganz weg. */

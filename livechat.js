@@ -1075,6 +1075,9 @@ window.LiveChat = (function () {
        nicht an. Jetzt gibt es das Herausdrehen als eigene Sache. */
     birneraus:  { wirkung: "birneraus",  satz: "dreht die Gl\u00fchbirne heraus bei", emoji: "\ud83d\udd0c" },
     entbloessung:{ wirkung: "entbloessung", satz: "zieht den BH herunter bei", emoji: "\ud83d\udc59" },
+    /* RUNDE 80 — XANDER: „dieses auf den Arsch klatschen zaehlt mir
+       noch als extra Animation." Also ein eigener Befehl dafuer. */
+    klaps:      { wirkung: "klaps",      satz: "gibt einen Klaps auf den Hintern von", emoji: "\ud83d\udd90\ufe0f" },
     /* RUNDE 19 — der Hut, die Zeitbombe, und zwei zum Gutsein. */
     hut:        { wirkung: "hut",        satz: "setzt einen Cowboyhut auf", emoji: "\ud83e\udd20" },
     /* RUNDE 75 — XANDER: „es soll noch ein Profileffekt geben, wo
@@ -8979,6 +8982,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "gluehbirne", kurz: "birne", nutzt: "/gluehbirne Name", was: "Gl\u00fchbirne \u2014 eingedreht, bis es leuchtet" },
     { gr: "reden", w: "birneraus", kurz: "dunkel", nutzt: "/birneraus Name", was: "Gl\u00fchbirne heraus \u2014 es wird dunkel, nur Augen bleiben" },
     { gr: "reden", w: "entbloessung", kurz: "ups", nutzt: "/entbloessung Name", was: "Ups! \u2014 geht nur bei dem, der direkt neben dir sitzt" },
+    { gr: "reden", w: "klaps", kurz: "", nutzt: "/klaps Name", was: "Klaps auf den Hintern \u2014 die Hand kommt von unten, der Abdruck bleibt kurz" },
     { gr: "reden", w: "hut", kurz: "cowboy",  nutzt: "/hut Name",       was: "Cowboyhut \u2014 er faellt von oben und sitzt schief" },
     { gr: "reden", w: "sonnenbrille", kurz: "", nutzt: "/sonnenbrille Name",
       was: "Sonnenbrille \u2014 sie schiebt sich aufs Gesicht, dann blitzt das Glas" },

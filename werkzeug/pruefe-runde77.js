@@ -300,9 +300,19 @@ pruefe("der Vogel fliegt ueber dem Bild, nicht darin",
   /\.lc-vogelkot-vogel \{[\s\S]{0,200}?top: -46%;/.test(css));
 pruefe("und der Tropfen faellt erst, wenn er ueber dem Kopf ist",
   /0%, 46%  \{ opacity: 0; transform: translateY\(0\) scaleY\(1\); \}/.test(css));
-pruefe("was liegen bleibt, laeuft ein Stueck herunter",
-  /@keyframes lcVogelNaseR77/.test(css)
-  && /100%    \{ opacity: 1; height: 30%; \}/.test(css));
+/* RUNDE 80 — XANDER: „der Vogel funktioniert, er koennte aber am
+   Gesicht herunter laufen." Die Nase lief bis 30 % der Bildhoehe —
+   vom Ansatz bei 6 % also nur bis zur Stirn. Geprueft wird deshalb
+   nicht mehr die Zahl von damals, sondern was die Regel meint: sie
+   laeuft ueber das halbe Bild, und sie laeuft dabei ungleichmaessig
+   (mehr als zwei Stufen). */
+pruefe("was liegen bleibt, laeuft ein Stueck herunter", (() => {
+  const m = /@keyframes lcVogelNaseR77 \{([\s\S]*?)\n\}/.exec(css);
+  if (!m) return false;
+  const hoehen = (m[1].match(/height: ([\d.]+)%/g) || [])
+    .map((t) => Number(t.replace(/[^\d.]/g, "")));
+  return hoehen.length >= 4 && Math.max(...hoehen) >= 50;
+})());
 pruefe("die Rotze zieht in drei Faeden verschiedener Laenge",
   /\[\[0, 62, 7\], \[-13, 40, 5\.4\], \[11, 27, 4\.2\]\]/.test(js));
 /* Zaeher Schleim rutscht, bleibt haengen, rutscht weiter. Ein

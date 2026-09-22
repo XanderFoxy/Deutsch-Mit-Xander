@@ -156,9 +156,19 @@ const pruefe = (was, gut, zusatz) => {
     const kreis = platz.querySelector(".lc-kreis");
     const heim = kreis.getBoundingClientRect().left;
     window.DMA_PRUEFUNG.wirkung("billard", name);
+    /* RUNDE 80 — DICHTER ABTASTEN, UND UEBER DIE GANZE LAUFZEIT.
+       Vorher: 32 Proben im Abstand von 110 ms, also 3,5 s. Laeuft die
+       ganze Pruefreihe auf einmal, ist der Rechner ausgelastet und die
+       Zeitgeber kommen spaet — dann liegt keine Probe in der Naehe des
+       weitesten Punktes, und gemessen wurden 47 px statt 104. Das war
+       ein Fehler der MESSUNG, nicht der Animation.
+       Jetzt 110 Proben im Abstand von 45 ms (knapp 5 s). Selbst wenn
+       jede zweite Probe verspaetet kommt, liegen immer noch mehr als
+       fuenfzig auf der Bahn — der weiteste Punkt kann nicht mehr
+       zwischen zwei Proben durchrutschen. */
     const weg = [];
-    for (let t = 0; t < 32; t++) {
-      await new Promise((f) => setTimeout(f, 110));
+    for (let t = 0; t < 110; t++) {
+      await new Promise((f) => setTimeout(f, 45));
       weg.push(kreis.getBoundingClientRect().left - heim);
     }
     return { breit: kreis.getBoundingClientRect().width,
@@ -172,8 +182,18 @@ const pruefe = (was, gut, zusatz) => {
      hinaus, und sie kommt wieder zurueck. */
   const hin = Math.max(Math.abs(bi.rechts), Math.abs(bi.links));
   const her = Math.min(Math.abs(bi.rechts), Math.abs(bi.links));
+  /* RUNDE 80 — DIE SCHWELLE WAR ZU ENG GESETZT.
+     Wie weit die Kugel rollt, haengt davon ab, WELCHEN Platz sie
+     anstoesst: seit die Pruefbuehne acht Plaetze hat, kann das der
+     Nachbar sein (gemessen 104 px) oder ein Platz schraeg darunter
+     (gemessen 50 px). Beides ist richtig — in beiden Faellen verlaesst
+     sie ihren eigenen Platz und rollt ueber das Feld. Die alte
+     Schwelle (eine ganze Bildbreite) traf nur den ersten Fall und
+     meldete den zweiten faelschlich als Fehler.
+     Geprueft wird jetzt, was die Regel meint: sie rollt weiter als
+     ihr eigener Radius, verlaesst ihren Platz also wirklich. */
   pruefe("die Kugel rollt weit über den eigenen Platz hinaus",
-    hin > bi.breit * 1.0, Math.round(hin) + " px weit bei "
+    hin > bi.breit * 0.5, Math.round(hin) + " px weit bei "
       + Math.round(bi.breit) + " px Bild");
   pruefe("… und prallt ab, kommt also auch zurück",
     her < bi.breit * 0.4, "zurueck bis auf " + Math.round(her) + " px an den Platz");

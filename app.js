@@ -24903,6 +24903,10 @@
        zur Bewegung), und der Pfiff kommt als Zusatzton danach.
        So kann keiner mehr vor dem anderen liegen. */
     entbloessung:   { ton: "bhriss",   dauer: 3000, laut: 0.95 },
+    /* RUNDE 80 — der Klaps ist jetzt eine eigene Wirkung. „klatsch"
+       statt „ohrfeige": eine Ohrfeige klingt hell und trocken, ein
+       Klaps auf Stoff dumpfer und breiter. */
+    klaps:          { ton: "klatsch",  dauer: 2200, laut: 0.8 },
     /* „wenn man den Hut aufsetzt, dann koennte so ein YIHAAH wie bei den
        Cowboys kommen, und vielleicht so ein Peitschenknall zur selben Zeit."
        Vorher lag hier „kitt" — ein Motorgeraeusch: „da ist irgendwie so ein
@@ -26649,6 +26653,7 @@
       [["\ud83d\udca1", "Birne an",  "gluehbirne"],
        ["\ud83d\udd0c", "Birne raus", "birneraus"]]],
     ["\ud83d\udc59", "Ups!",     "entbloessung"],
+    ["\ud83d\udd90\ufe0f", "Klaps",    "klaps"],
     /* RUNDE 19: „Vielleicht kannst du noch auf das Profilbild einen
        Cowboyhut setzen" · „so ein Countdown im Profilbild … und dann
        einfach explodiert" · „Und fuer Liebe brauchen wir auch noch
@@ -29230,6 +29235,7 @@
     gluehbirne: { zeichen: ["\ud83d\udca1"], wie: 5, klasse: "umarmen" },
     birneraus:  { zeichen: ["\ud83d\udd0c"], wie: 5, klasse: "umarmen" },
     entbloessung:{ zeichen: ["\ud83d\udc59"], wie: 5, klasse: "umarmen" },
+    klaps:      { zeichen: ["\ud83d\udd90\ufe0f"], wie: 5, klasse: "umarmen" },
     sonnenbrille:{ zeichen: ["\ud83d\udd76\ufe0f"], wie: 5, klasse: "umarmen" },
     hut:        { zeichen: ["\ud83e\udd20"], wie: 5, klasse: "umarmen" },
     bombe:      { zeichen: ["\ud83d\udca3"], wie: 5, klasse: "umarmen" },
@@ -30080,6 +30086,9 @@
        lautesten (-33 -28 -16 -32 -57 dB), trifft also mit 620 ms
        genau auf den Rutsch. */
     entbloessung: 620,
+    /* Der Schlag ist im Bild bei 600 ms; „klatsch" hat 0 ms Vorlauf,
+       startet also genau dort. */
+    klaps: 600,
     /* RUNDE 72 — XANDER: „Der Cowboy Sound ist immer noch am Anfang
        abgeschnitten."
        NACHGEMESSEN, und er hat recht: „cowboy.opus" begann mit dem
@@ -33151,6 +33160,16 @@
       const blende = lcZpBlende(schicht);
       blende.innerHTML = '<span class="lc-vogelkot-klecks"></span>'
                        + '<span class="lc-vogelkot-nase"></span>';
+      /* RUNDE 80 — XANDER: „vielleicht koennte man den Vogel auch
+         zwitschern hoeren."
+         In der Tonkiste lag keines — „greifvogel" ist ein Schrei,
+         „vogelkot" das Pfeifen im Fall. Also gerechnet:
+         werkzeug/zwitschern-bauen.py, fuenf Rufe in 1,5 s (gemessen
+         bei 0,00 / 0,17 / 0,42 / 0,56 / 0,95 s). Es laeuft von
+         Anfang an, waehrend der Vogel heranfliegt — der Klecks faellt
+         erst bei 51,4 % von 3,4 s, also bei 1,75 s. Leiser als der
+         Aufschlag, sonst deckt der Vogel seinen eigenen Treffer zu. */
+      lcTonSpaeter("zwitschern", 0, 0.42);
       /* Und der kurze Ekellaut, wenn begriffen ist, was da liegt. */
       lcStimmeZu(platz, "ekelmann", "ekelfrau", 2050, 0.55);
     }, 3400, "vogelkot");
@@ -36391,7 +36410,11 @@
          hinaus. XANDER: „ohne Design-Inkonsistenzen." Jetzt 1,15
          Bildbreiten hoch und 1,7 breit — sie schwebt sichtbar ueber
          dem Platz, bleibt aber am Klassenzimmer. */
-      const schweb = d * 1.45;
+      /* RUNDE 80 — XANDER: „Wenn man mit dem UFO fliegt, kann das UFO
+         etwas tiefer sein." Von 1,45 auf 1,12 Bildbreiten: die
+         Untertasse steht damit rund ein Drittel Bildbreite tiefer und
+         der Strahl ist entsprechend kuerzer — er wirkt straffer. */
+      const schweb = d * 1.12;
       const ufo = document.createElement("span");
       ufo.className = "lc-ufo";
       ufo.style.setProperty("--gross", d + "px");
@@ -36520,18 +36543,39 @@
           { transform: "translate(-50%, -50%) translateY(" + (hoch * 0.18).toFixed(1) + "px) scale(.97) rotate(-5deg)", opacity: 1, offset: T(0.28) },
           { transform: "translate(-50%, -50%) translateY(" + (hoch * 0.55).toFixed(1) + "px) scale(.9) rotate(6deg)", opacity: 1, offset: T(0.33) },
           { transform: "translate(-50%, -50%) translateY(" + hoch.toFixed(1) + "px) scale(.82) rotate(-3deg)", opacity: 1, offset: T(0.40) },
-          /* mitreisen, genau unter der Untertasse */
+          /* RUNDE 80 — XANDER: „es sollte das Profilbild komplett
+             einsaugen mit seinem Beamstrahl."
+             Bisher blieb das Bild unter der Untertasse haengen: es
+             stieg bis 0,82 seiner Groesse und reiste dort sichtbar
+             mit. Eingesaugt war es also nie. Jetzt geht es die
+             letzten 0,55 Bildbreiten weiter nach oben — das ist die
+             Strecke bis in den Rumpf — und schrumpft dabei auf ein
+             Sechstel, bis es verschwunden ist. Das passt zum Strahl:
+             der schaltet bei 44 % ab (siehe oben), also muss das Bild
+             bis dahin drin sein. */
+          { transform: "translate(-50%, -50%) translateY(" + (hoch - d * 0.30).toFixed(1)
+                       + "px) scale(.5) rotate(4deg)", opacity: .8, offset: T(0.42) },
+          { transform: "translate(-50%, -50%) translateY(" + (hoch - d * 0.55).toFixed(1)
+                       + "px) scale(.14) rotate(9deg)", opacity: 0, offset: T(0.435) },
+          /* Mitreisen — IM Schiff, also unsichtbar. */
           { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.08).toFixed(1) + "px), -50%) translateY("
-                       + (hoch * 1.04).toFixed(1) + "px) scale(.8) rotate(4deg)", opacity: 1, offset: T(0.50) },
+                       + (hoch - d * 0.55).toFixed(1) + "px) scale(.14)", opacity: 0, offset: T(0.50) },
           { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.50).toFixed(1) + "px), calc(-50% + "
-                       + ((endeY - startY) * 0.50).toFixed(1) + "px)) translateY(" + (hoch * 1.07).toFixed(1)
-                       + "px) scale(.78) rotate(-4deg)", opacity: 1, offset: T(0.62) },
+                       + ((endeY - startY) * 0.50).toFixed(1) + "px)) translateY(" + (hoch - d * 0.55).toFixed(1)
+                       + "px) scale(.14)", opacity: 0, offset: T(0.62) },
           { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.92).toFixed(1) + "px), calc(-50% + "
-                       + ((endeY - startY) * 0.92).toFixed(1) + "px)) translateY(" + (hoch * 1.04).toFixed(1)
-                       + "px) scale(.8) rotate(3deg)", opacity: 1, offset: T(0.72) },
+                       + ((endeY - startY) * 0.92).toFixed(1) + "px)) translateY(" + (hoch - d * 0.55).toFixed(1)
+                       + "px) scale(.14)", opacity: 0, offset: T(0.72) },
+          /* Und wieder heraus, sobald der Strahl erneut angeht (82 %). */
+          { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
+                       + (endeY - startY).toFixed(1) + "px)) translateY(" + (hoch - d * 0.55).toFixed(1)
+                       + "px) scale(.14)", opacity: 0, offset: T(0.80) },
+          { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
+                       + (endeY - startY).toFixed(1) + "px)) translateY(" + (hoch - d * 0.28).toFixed(1)
+                       + "px) scale(.52) rotate(-6deg)", opacity: .85, offset: T(0.835) },
           { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
                        + (endeY - startY).toFixed(1) + "px)) translateY(" + hoch.toFixed(1)
-                       + "px) scale(.82) rotate(0deg)", opacity: 1, offset: T(0.80) },
+                       + "px) scale(.82) rotate(0deg)", opacity: 1, offset: T(0.855) },
           /* und wieder herunter, langsamer werdend */
           { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
                        + (endeY - startY).toFixed(1) + "px)) translateY(" + (hoch * 0.52).toFixed(1)
@@ -36670,6 +36714,18 @@
           { transform: "translate(-50%, -50%) rotate(0deg)", opacity: 0, offset: 0 },
           { transform: "translate(-50%, -50%) rotate(0deg)", opacity: 1, offset: 0.07 * tAnK }
         ];
+        /* RUNDE 80 — XANDER: „die Katze … kann ein bisschen besser
+           animiert werden."
+           Was fehlte, war das Wichtigste an einer spielenden Katze:
+           die PFOTE. Sie war gezeichnet, aber sie bewegte sich nie —
+           der Ball rollte los, ohne dass ihn etwas angestossen haette.
+           Jetzt holt sie vor jedem Schlag aus und schnellt vor, und
+           zwar zu GENAU den Zeitpunkten, zu denen der Ball anfaengt
+           zu rollen (dieselben t0/t1 wie unten in der Schleife). Der
+           Drehpunkt sitzt an der Schulter, nicht in der Pfotenmitte —
+           sonst dreht sich die Pfote um sich selbst, statt zu
+           schlagen. */
+        const pfoteRahmen = [{ transform: "rotate(0deg)", offset: 0 }];
         /* JEDER SCHLAG. Der Ball legt in jedem Schlag ein Stueck
            zurueck, und die Stuecke werden KUERZER — so laeuft etwas
            aus, das einmal angestossen wurde. Die Summe ist immer
@@ -36705,6 +36761,19 @@
               + (links ? -6 : 6) + "deg)" + sp,
             opacity: 1, offset: t0 + (t1 - t0) * 0.20
           });
+          /* Die Pfote: ausholen, schlagen, zurueck — im Takt des
+             Schlags. Die Zeiten liegen zwischen den beiden
+             Katzen-Schluesselbildern von oben (0,10 und 0,20). */
+          pfoteRahmen.push({ transform: "rotate(0deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.04) });
+          pfoteRahmen.push({ transform: "rotate(-30deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.12) });
+          pfoteRahmen.push({ transform: "rotate(34deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.20) });
+          pfoteRahmen.push({ transform: "rotate(6deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.28) });
+          pfoteRahmen.push({ transform: "rotate(0deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.44) });
           const nachPos = bei(1);
           katzRahmen.push({
             transform: "translate(calc(-50% + " + (nachPos.x - dxK * 0.06).toFixed(1) + "px), calc(-50% + "
@@ -36755,6 +36824,15 @@
         });
         ballRahmen.push({ opacity: 0, offset: 1 });
         katze.animate(katzRahmen, { duration: dauer, easing: "linear", fill: "both" });
+        /* Und die Pfote dazu. Sie liegt IM SVG, bekommt also ihren
+           Drehpunkt ueber die CSS (.lc-katze-pfote) — ohne
+           „transform-box: fill-box" drehte ein SVG-Pfad um den
+           Nullpunkt der ZEICHNUNG und floege davon. */
+        const pfote = katze.querySelector(".lc-katze-pfote");
+        if (pfote && pfoteRahmen.length > 1) {
+          pfoteRahmen.push({ transform: "rotate(0deg)", offset: 1 });
+          pfote.animate(pfoteRahmen, { duration: dauer, easing: "ease-in-out", fill: "both" });
+        }
         ball.animate(ballRahmen, { duration: dauer, easing: "linear", fill: "both" });
         kreis.animate([
           { opacity: 1, offset: 0 },
@@ -37302,7 +37380,15 @@
              10 px — bei 108 % flog er ganze 11 px weit und blieb
              mitten im Tor haengen. Bis an den Rand sind es 58 px,
              also rund 580 %. */
-          st.style.setProperty("--weit", (480 + ((k * 37) % 46) * 5) + "%");
+          /* RUNDE 80 — XANDER: „Das Portal soll in sich geschlossen
+             animiert sein."
+             GEMESSEN: bis an den Rand des Tors sind es rund 580 %
+             (siehe Runde 73). Die Tropfen flogen 480 bis 705 % weit —
+             ueber ein Drittel von ihnen also AUS dem Tor hinaus. Ein
+             Tor, aus dem es herausspritzt, ist nicht in sich
+             geschlossen. Jetzt 330 bis 520 %: sie steigen bis knapp
+             unter den Rand und fallen dort zurueck. */
+          st.style.setProperty("--weit", (330 + ((k * 37) % 46) * 4.2).toFixed(0) + "%");
           st.style.setProperty("--klein", (0.5 + ((k * 13) % 9) / 12).toFixed(2));
           st.style.animationDelay = ((k * 97) % 1100) + "ms";
           tor.appendChild(st);
@@ -38964,6 +39050,17 @@
         + ' transform="rotate(14 62 10)"/>'
         + '<path d="M10 20 L20 16 L22 24 Z" fill="#8b93a3"/>'
         + "</svg>");
+      /* RUNDE 80 — XANDER: „das mit der Platte geht jetzt einigermassen
+         mit dem Sketschen, aber es koennte nach dem Sketschen mit
+         einer Musik weitergehen."
+         GEMESSEN: „scratch" ist 1,00 s lang und ab 0,90 s still. Die
+         Platte dreht aber 3,6 s — danach war zweieinhalb Sekunden
+         lang nur ein stummer Plattenteller zu sehen. „disko" ist
+         4,00 s lang und laeuft durchgehend im Takt; es faengt bei
+         950 ms an, also genau dort, wo das Kratzen aufhoert. Leiser
+         als das Kratzen (0,42 statt 0,5), weil Musik ein Bett ist
+         und kein Ereignis. */
+      lcTonSpaeter("disko", 950, 0.42);
     }, 3600, "platte");
   }
 
@@ -39033,6 +39130,60 @@
          Geschlecht DES GETROFFENEN, nicht des Absenders. */
       lcTonSpaeter(lcSchmerzTon(platz), 790, 0.75);
     }, 2600, "ohrfeige");
+  }
+
+  /* --- DER KLAPS AUF DEN HINTERN --------------------------------------
+     XANDER (Runde 80): „bei dem BH … dieses auf den Arsch klatschen
+     zaehlt mir noch als extra Animation."
+     Also eine eigene Wirkung, nicht mehr ein Anhaengsel am
+     BH-Effekt: die flache Hand kommt von unten-seitlich herein,
+     schlaegt von unten gegen den Bildrand, das Bild federt kurz nach
+     oben weg — und es bleibt ein roter Handabdruck stehen, der
+     langsam verblasst. Das Geraeusch ist „klatsch", nicht
+     „ohrfeige": eine Ohrfeige klingt hell und trocken, ein Klaps auf
+     Stoff dumpfer und breiter. */
+  function lcKlaps(wen) {
+    return lcAmPlatz(wen, "lc-klaps", (schicht, platz) => {
+      /* Von welcher Seite? Vom Absender her — sonst schlaegt die Hand
+         aus der falschen Richtung zu. */
+      const r = lcWurfSetzen(schicht, platz, 180);
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        /* Das Bild federt nach OBEN weg, nicht zur Seite: getroffen
+           wird von unten. Die Seite entscheidet nur, wohin es kippt. */
+        kreis.style.setProperty("--klapsdreh", (r.x > 0 ? -1 : 1) * 8 + "deg");
+        kreis.classList.remove("lc-geklapst");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-geklapst");
+        setTimeout(() => {
+          kreis.classList.remove("lc-geklapst");
+          kreis.style.removeProperty("--klapsdreh");
+        }, 2200);
+      }
+      schicht.innerHTML =
+        /* Die flache Hand, von unten gesehen — Handflaeche voran.
+           Vier Finger nebeneinander, der Daumen liegt an. */
+        '<svg class="lc-klaps-hand" viewBox="0 0 64 62" aria-hidden="true">'
+        + '<path d="M14 58 C8 50 7 38 11 30 L15 34 L15 14 A4 4 0 0 1 23 14'
+        + ' L23 30 L25 10 A4 4 0 0 1 33 10 L33 30 L35 13 A4 4 0 0 1 43 13'
+        + ' L43 31 L47 21 A4.5 4.5 0 0 1 54 26 C54 42 48 54 40 59 Z"'
+        + ' fill="#eec0a8" stroke="#bf9280" stroke-width="2"'
+        + ' stroke-linejoin="round"/>'
+        /* Die Handlinien — ohne sie ist es eine Flosse. */
+        + '<path d="M19 40 C26 44 36 45 45 42 M20 47 C27 50 35 51 42 49"'
+        + ' fill="none" stroke="#c99a84" stroke-width="1.6"'
+        + ' stroke-linecap="round" opacity=".55"/>'
+        + "</svg>"
+        + '<span class="lc-klaps-wort">KLAPS</span>';
+      /* Der Abdruck liegt IM Bild — die Blende schneidet ihn rund ab,
+         damit er nicht ueber den Rahmen hinaussteht. */
+      const blende = lcZpBlende(schicht);
+      blende.innerHTML = '<span class="lc-klaps-abdruck"></span>';
+      /* Der Aufprall liegt bei 600 ms (siehe lcKlapsHandR80); der
+         kurze Schmerzlaut kommt 90 ms danach — nah genug, dass er
+         zum Schlag gehoert, und nicht so nah, dass beide verschmelzen. */
+      lcTonSpaeter(lcSchmerzTon(platz), 690, 0.6);
+    }, 2200, "klaps");
   }
 
   /* --- BASKETBALL UND TENNIS ------------------------------------------ */
@@ -39562,6 +39713,24 @@
         /* Das Gummi, das sich spannt und losschnellt. */
         + '<path class="lc-zwille-gummi" d="M8 20 L35 40 L62 20" fill="none"'
         + ' stroke="#3f3f46" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'
+        /* RUNDE 80 — XANDER: „Man soll auch sehen, wie das Gummiband
+           aufgezogen wird."
+           Bisher dehnte sich zwar das Gummi (scaleY von 1 auf 2,6),
+           aber es zog NICHTS: die Kugel lag erst beim Getroffenen und
+           erschien auch erst beim Einschlag. Man sah also ein Band,
+           das sich von selbst laenger machte. Jetzt haengt die
+           Ledertasche mit der Kugel darin am Band und wandert beim
+           Aufziehen mit — genau so weit, wie das Band lang wird:
+           die Spitze des Gummis liegt bei y = 40, sein Ansatz bei
+           y = 20; mal 2,6 wird daraus y = 72, also 32 Einheiten
+           weiter unten. Um genau 32 wandert die Tasche. */
+        + '<g class="lc-zwille-tasche">'
+        + '<path d="M28.5 37 L41.5 37 L39.5 49 L30.5 49 Z" fill="#5a4326"'
+        + ' stroke="#3a2a16" stroke-width="1.4" stroke-linejoin="round"/>'
+        + '<circle cx="35" cy="43" r="4.6" fill="#8d95a4"'
+        + ' stroke="#3a3f49" stroke-width="1"/>'
+        + '<circle cx="33.4" cy="41.4" r="1.5" fill="#cfd6e2" opacity=".85"/>'
+        + "</g>"
         + "</svg>", 2600);
       /* „man hoert wirklich das quietschen von diesem dehnen
          Gummiband ... und derjenige, der getroffen wird ... macht dann
@@ -39714,14 +39883,32 @@
   const LC_DUNKEL_DAUER = 5600;
   function lcStromAus(mitAugen) {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const heim = lcEffektHeim();
-    if (!heim) return;
+    /* RUNDE 80 — XANDER: „im Prinzip soll die ganze Webseite
+       abgedunkelt sein" und „wenn man durch die Seite scrollt springen
+       die Augen immer noch."
+       -----------------------------------------------------------------
+       BEIDES HAT DIESELBE URSACHE, und deshalb loest es EIN Schritt:
+       die Dunkelheit lag bisher IN der Effektbuehne (lcEffektHeim) und
+       deckte deshalb nur das Klassenzimmer ab. Die Buehne ist ausserdem
+       selbst beweglich — sie wird in jedem Bildtakt auf den sichtbaren
+       Teil der Karte nachgezogen. Die Augen wurden RELATIV zu ihr
+       gesetzt; sobald Buehne und Augen in verschiedenen Takten liefen,
+       sah man das als Springen. Runde 76 hat die Reihenfolge
+       geradegerueckt, aber das Grundproblem blieb: zwei bewegliche
+       Bezugspunkte.
+       Jetzt haengt die Dunkelheit am BODY und ist „position: fixed;
+       inset: 0" — sie deckt die ganze Seite ab und bewegt sich beim
+       Scrollen ueberhaupt nicht. Und weil sie stillsteht, sind
+       Bildschirmkoordinaten (getBoundingClientRect) direkt ihre
+       Koordinaten: die Augen brauchen gar keine Umrechnung mehr, und
+       damit kann auch nichts mehr auseinanderlaufen. */
     document.getElementById("lcStromAus")?.remove();
     const d = document.createElement("div");
     d.id = "lcStromAus";
-    d.className = "lc-stromaus" + (mitAugen ? " lc-stromaus-lang" : "");
+    d.className = "lc-stromaus lc-stromaus-seite"
+      + (mitAugen ? " lc-stromaus-lang" : "");
     d.setAttribute("aria-hidden", "true");
-    heim.appendChild(d);
+    document.body.appendChild(d);
     const dauerD = mitAugen ? LC_DUNKEL_DAUER : 1200;
     if (mitAugen) {
       lcTonSpaeter("dunkelbrumm", 0, 0.5);
@@ -39802,15 +39989,18 @@
              im selben Takt denselben Stand, und der Versatz kann gar
              nicht mehr entstehen. lcBuehneSetzen rechnet nur und
              schreibt vier Zahlen — das kostet nichts. */
+          /* RUNDE 80: kein Abzug mehr. Die Dunkelheit steht fest am
+             Bildschirm („position: fixed; inset: 0"), also sind die
+             Werte aus getBoundingClientRect schon ihre Koordinaten.
+             Vorher wurde der Kasten der beweglichen Buehne abgezogen —
+             und genau diese Subtraktion war das Springen. */
           const setzenA = () => {
-            try { lcBuehneSetzen(); } catch (e) {}
-            const hk = heim.getBoundingClientRect();
             paare.forEach((p) => {
               if (!p.el.isConnected) { p.paar.style.opacity = "0"; return; }
               const k = p.el.getBoundingClientRect();
               const hoch = lcBildVersatz(p.el);
-              p.paar.style.left = (k.left + k.width / 2 - hk.left).toFixed(1) + "px";
-              p.paar.style.top = (k.top + k.height / 2 + hoch - hk.top).toFixed(1) + "px";
+              p.paar.style.left = (k.left + k.width / 2).toFixed(1) + "px";
+              p.paar.style.top = (k.top + k.height / 2 + hoch).toFixed(1) + "px";
             });
           };
           setzenA();
@@ -40255,6 +40445,15 @@
         kreis.classList.add("lc-behutet");
         setTimeout(() => kreis.classList.remove("lc-behutet"), 3000);
       }
+      /* RUNDE 80 — XANDER: „bei dem YIHAAH Schrei vom Cowboy fehlt
+         noch das Peitsch Geraeusch."
+         Der Ruf („cowboy", 1,86 s) startet bei 120 ms (LC_TREFFER.hut).
+         Der Peitschenknall gehoert MITTEN hinein, nicht davor und
+         nicht danach: bei 600 ms sitzt er im Ruf, so wie beim Rodeo
+         auch zuerst gerufen und dann geknallt wird. „peitschehieb"
+         ist 0,95 s lang, endet also bei 1,55 s und laeuft dem Ruf
+         (Ende 1,98 s) nicht davon. */
+      lcTonSpaeter("peitschehieb", 600, 0.72);
       schicht.innerHTML =
         '<svg class="lc-hut-bild" viewBox="0 0 140 76">'
         /* RUNDE 58 — XANDER: „Der Cowboy Hut sieht aus wie ein
@@ -40324,21 +40523,34 @@
            Und die Krone ist hoeher: die Grate standen bei 18,6, jetzt
            bei 14. Ein Stetson hat eine hohe Krone; bei einer flachen
            sieht er aus wie ein Hut zum Wandern. */
-        + '<path class="lc-hut-krone" d="M40 60 C38 36 41 19 46 14'
-        + ' C49 11.6 52.5 13 54.5 16.6 C56.5 20.2 58 25 59.5 28.4'
-        + ' C62.5 32 66 33.6 70 33.6 C74 33.6 77.5 32 80.5 28.4'
-        + ' C82 25 83.5 20.2 85.5 16.6 C87.5 13 91 11.6 94 14'
-        + ' C99 19 102 36 100 60 C86 64 54 64 40 60 Z"'
+        /* RUNDE 80 — XANDER: „diese Hoecker sind noch zu duenn."
+           NACHGEMESSEN an der alten Linie: ein Grat lief von x = 46
+           bis x = 54,5 — 8,5 Einheiten breit bei einer Krone von 60.
+           Das ist ein Zacken, kein Hoecker. Jetzt laeuft er von 44 bis
+           55, also 11 Einheiten, und die Senke dazwischen ist von
+           15,0 auf 17,0 Einheiten geschrumpft: die Grate nehmen den
+           Platz ein, den vorher die Luecke hatte. Sie stehen ausserdem
+           einen Zehntel hoeher (13 statt 14) — ein Stetson traegt
+           seine Cattleman-Falte hoch. Die Werte sind um x = 70
+           gespiegelt, damit der Hut symmetrisch bleibt:
+           44/96, 55/85, 61,5/78,5. */
+        + '<path class="lc-hut-krone" d="M40 60 C37 36 40 18 44 13'
+        + ' C47.5 10.4 52 11.4 55 15 C57.5 18 59.5 23.5 61.5 27.6'
+        + ' C64 31.4 66.8 33.2 70 33.2 C73.2 33.2 76 31.4 78.5 27.6'
+        + ' C80.5 23.5 82.5 18 85 15 C88 11.4 92.5 10.4 96 13'
+        + ' C100 18 103 36 100 60 C86 64 54 64 40 60 Z"'
         + ' fill="url(#hut1)" stroke="#4e310f" stroke-width="2.2"'
         + ' stroke-linejoin="round"/>'
         /* Die drei Falten als Schattenlinien — ohne sie sieht die
            Krone wieder glatt aus. */
         + '<path d="M70 34 C69 41 69 49 70 56" fill="none" stroke="#5e3c17"'
         + ' stroke-width="2.2" opacity=".6"/>'
-        + '<path d="M55 27 C54 36 54 47 55 56" fill="none" stroke="#5e3c17"'
-        + ' stroke-width="1.6" opacity=".4"/>'
-        + '<path d="M85 27 C86 36 86 47 85 56" fill="none" stroke="#5e3c17"'
-        + ' stroke-width="1.6" opacity=".4"/>'
+        /* Die Seitenfalten sitzen auf den Graten — die stehen seit
+           Runde 80 bei 49,5 und 90,5 statt bei 55 und 85. */
+        + '<path d="M49.5 25 C48.5 35 48.5 47 49.5 56" fill="none" stroke="#5e3c17"'
+        + ' stroke-width="1.8" opacity=".4"/>'
+        + '<path d="M90.5 25 C91.5 35 91.5 47 90.5 56" fill="none" stroke="#5e3c17"'
+        + ' stroke-width="1.8" opacity=".4"/>'
         /* DAS HUTBAND, am Kronenfuss und der Krempe folgend. */
         + '<path d="M40.6 52 C54 57 86 57 99.4 52 L100 60 C86 64 54 64 40 60 Z"'
         + ' fill="#3f2a12"/>'
@@ -41112,10 +41324,29 @@
     const sand = document.createElement("span");
     sand.className = "lc-sandwerk";
     let inhalt = '<span class="lc-sandhaufen"></span>';
-    for (let i = 0; i < 22; i++) {
-      inhalt += '<i class="lc-sandkorn" style="--wo:' + (8 + ((i * 37) % 84))
-        + "%;--spaet:" + ((i % 11) * 0.13).toFixed(2) + "s;--lang:"
-        + (1.1 + ((i % 5) * 0.16)).toFixed(2) + 's"></i>';
+    /* RUNDE 80 — XANDER: „Die Sanduhr ist auch noch nicht realistisch."
+       -----------------------------------------------------------------
+       DREI SACHEN WAREN FALSCH, und alle drei stehen hier:
+       1. DER SAND FIEL UEBERALL. „--wo" lief von 8 bis 92 Prozent der
+          Breite — es regnete also auf der ganzen Flaeche. In einer
+          Sanduhr faellt der Sand durch EIN Loch; die Saeule ist
+          schmal, und erst der HAUFEN wird breit. Jetzt liegen alle
+          Koerner zwischen 44 und 56 Prozent, und sie streuen mit
+          zunehmender Fallhoehe ein wenig auseinander (--streu).
+       2. ALLE KOERNER WAREN GLEICH GROSS. Sand ist es nie. Jedes
+          bekommt jetzt sein eigenes Mass (--korn, 0,6 bis 1,3).
+       3. SIE FIELEN ALLE GLEICH SCHNELL AN DERSELBEN STELLE LOS.
+          Jetzt sind Start und Dauer ungleich verteilt (die Schrittwei-
+          ten 7 und 5 sind teilerfremd zu 22, deshalb wiederholt sich
+          die Reihe nicht).
+       Dreissig Koerner statt zweiundzwanzig — eine Saeule, die nur aus
+       zweiundzwanzig Punkten besteht, ist ein Rieseln, kein Strahl. */
+    for (let i = 0; i < 30; i++) {
+      inhalt += '<i class="lc-sandkorn" style="--wo:' + (44 + ((i * 7) % 13))
+        + "%;--streu:" + (((i % 7) - 3) * 2.2).toFixed(1) + "%;--korn:"
+        + (0.6 + ((i * 5) % 8) * 0.09).toFixed(2)
+        + ";--spaet:" + (((i * 7) % 22) * 0.062).toFixed(2) + "s;--lang:"
+        + (0.95 + ((i % 6) * 0.13)).toFixed(2) + 's"></i>';
     }
     sand.innerHTML = inhalt;
     /* Der Sand gehoert INS Bild, darf aber NICHT in .lc-kreis: dort
@@ -42362,7 +42593,7 @@
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
     vogelkot: 1, spucken: 1,
     birneraus: 1,
-    entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, kuss: 1
+    entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, kuss: 1, klaps: 1
   };
 
   function lcWirkung(art, anZeile, nachricht) {
@@ -42505,6 +42736,7 @@
       if (art === "gluehbirne" && lcGluehbirne(wenZ)) return;
       if (art === "birneraus" && lcGluehbirneRaus()) return;
       if (art === "hut" && lcHut(wenZ)) return;
+      if (art === "klaps" && lcKlaps(wenZ)) return;
       if (art === "sonnenbrille" && lcSonnenbrille(wenZ)) return;
       if (art === "bombe" && lcBombe(wenZ, false)) return;
       if (art === "granate" && lcGranate(wenZ)) return;

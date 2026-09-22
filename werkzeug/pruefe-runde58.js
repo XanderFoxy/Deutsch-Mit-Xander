@@ -400,8 +400,16 @@ const pruefe = (was, gut, zusatz) => {
     const dunkel = document.getElementById("lcStromAus");
     const deck = dunkel ? Number(getComputedStyle(dunkel).opacity) : 0;
     const buehne = document.getElementById("lcEffektBuehne");
-    const voll = dunkel && buehne
-      ? Math.abs(dunkel.getBoundingClientRect().width - buehne.getBoundingClientRect().width) <= 2
+    /* RUNDE 80 — XANDER: „im Prinzip soll die ganze Webseite
+       abgedunkelt sein."
+       Die Dunkelheit lag bisher IN der Effektbuehne und war deshalb
+       genau so breit wie sie. Jetzt haengt sie am body und ist
+       „position: fixed; inset: 0" — sie deckt den ganzen Bildschirm
+       ab, nicht nur das Klassenzimmer. Gemessen wird deshalb gegen
+       den SICHTBAREN BEREICH, nicht gegen die Buehne. */
+    const voll = dunkel
+      ? Math.abs(dunkel.getBoundingClientRect().width - window.innerWidth) <= 2
+        && Math.abs(dunkel.getBoundingClientRect().height - window.innerHeight) <= 2
       : false;
     await new Promise((f) => setTimeout(f, 1400));
     return { einDreh: einDreh, bleibtAn: bleibtAn, raus: raus,
@@ -420,7 +428,7 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("ein zweites Mal dreht sie wieder heraus", bi.raus === "lcBirneRausR58", bi.raus);
   pruefe("dabei faellt der Strom auf der ganzen Buehne aus",
     bi.dunkelDa && bi.deck > 0.5, "Deckkraft " + bi.deck);
-  pruefe("und zwar wirklich auf der GANZEN Buehne", bi.voll);
+  pruefe("und zwar wirklich auf der ganzen SEITE", bi.voll);
   pruefe("danach ist sie aus", !bi.nochAn);
 
   console.log("\nDER REGEN FAELLT NACH UNTEN, NICHT SCHRAEG ZUR SEITE\n");

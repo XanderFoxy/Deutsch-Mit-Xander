@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 80, siebter Teil: Wetter, Pferd und die Haende",
+  stand: "Runde 80, achter Teil: Zwille, Birne, Klaps, Dunkelmodus, UFO",
 
   inArbeit: [
-    { seit: "2026-09-22T03:06",
+    { seit: "2026-09-22T03:27",
       text: "Der Rest von Xanders Liste vom 22. September" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T03:06",
-      text: "Beim Neuladen stand nachts die Sonne im Kopfstreifen. GEMESSEN: um 0, 3 und 22 Uhr waren fuenf Sonnenstrahlen zu sehen; jetzt null, und um 13 Uhr weiterhin fuenf. Die Himmelsrechnung braucht kein Netz — sie laeuft jetzt schon beim ersten Zeichnen." },
-    { seit: "2026-09-22T03:06",
-      text: "Die drei Punkte im Kopfstreifen, die wie Bildfehler aussahen, sind sieben Sterne: ihre Schicht stand auf 'relative' statt 'absolute', war dadurch 0 x 0 gross, und alle sieben Prozentangaben landeten auf demselben Punkt. Jetzt liegen sie wieder ueber den ganzen Streifen verteilt." },
-    { seit: "2026-09-22T03:06",
-      text: "Das Pferd hat Hinterhand und Schulter bekommen, und die Beine sind nicht mehr wie eine Ziehharmonika gefaltet: statt drei scharfer Knicke bei gleichbleibender Dicke jetzt weiche Bogen unter einer Muskelpartie, die am Hinterteil sitzt." },
-    { seit: "2026-09-22T03:06",
-      text: "Die Riesenhand greift wirklich: Arm und Handruecken liegen hinter dem Bild, die vier Finger davor. Vorher lag das Bild vor der ganzen Hand — es hielt sichtbar nichts." },
-    { seit: "2026-09-22T03:06",
-      text: "Das Klatschen hat einen Klatsch-Moment. GEMESSEN: der groesste Schliess-Schritt war 1,9-mal so gross wie der Durchschnitt (also keiner), jetzt 6,3-mal — und der Funke blitzt bei 44 statt bei 52 Prozent, also auf dem Treffer statt danach. Das Winken hat vier ungleiche Ausschlaege statt eines Metronoms." },
+    { seit: "2026-09-22T03:27",
+      text: "Die Zwille zieht sichtbar auf: die Ledertasche mit der Kugel wandert genau die 32 Einheiten mit, die das Gummi an Laenge gewinnt (gemessen). Der Standfuss der Schneekugel bleibt bis zum Schluss stehen statt 1 Sekunde zu frueh zu verschwinden." },
+    { seit: "2026-09-22T03:27",
+      text: "Glas und Fassung der Gluehbirne sind eine Form im Dreh: das Gewinde dreht jetzt dieselbe raeumliche Drehung mit denselben Stufen wie das Glas (0 / 360 / 720 / 1020 / 1044 Grad, gemessen identische Matrizen)." },
+    { seit: "2026-09-22T03:27",
+      text: "Der Klaps auf den Hintern ist eine eigene Animation mit eigenem Befehl /klaps: die Hand kommt von unten, trifft bei 600 ms, das Bild federt nach oben weg, ein roter Handabdruck bleibt kurz stehen." },
+    { seit: "2026-09-22T03:27",
+      text: "Der Dunkelmodus deckt jetzt die GANZE Seite ab (gemessen: 420 x 860 = der ganze Bildschirm), die Augen springen beim Scrollen nicht mehr (Abstand zum Gesicht 0,2 px vor und nach dem Scrollen) und sehen aus wie Emoji-Augen." },
+    { seit: "2026-09-22T03:27",
+      text: "UFO tiefer (1,12 statt 1,45 Bildbreiten) und das Profilbild wird komplett eingesaugt statt sichtbar unter dem Schiff mitzureisen. Die Katze schlaegt mit der Pfote wirklich zu. Der Plattenspieler laeuft nach dem Kratzen mit Musik weiter. Die Sanduhr rieselt aus einer schmalen Saeule und der Haufen bleibt liegen. Das Portal spritzt nicht mehr heraus. Der Cowboy hat dickere Hoecker und den Peitschenknall, der Vogel zwitschert und sein Kot laeuft weiter am Gesicht herunter. Das Becken beim Turmsprung ist voll." },
   ],
 };
