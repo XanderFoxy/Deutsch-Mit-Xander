@@ -26984,116 +26984,43 @@ code, pre {
   60%, 100% { transform: none; }
 }
 
-/* --- Bongo auf dem BILD ----------------------------------------------
-   RUNDE 88 — XANDER: „bei der Bongo, bei der Trommel soll man auf dem
-   BILD Bongo spielen, nicht auf Bongos — sondern das Bild soll die
-   Bongo-Fläche sein." Und noch einmal: „Du hast die Bongos aber immer
-   noch als Bongos im Bild. Du sollst mit den Händen auf die
-   BILDFLÄCHE schlagen, nicht auf Bongos."
-   Hier standen zwei gezeichnete Fässer (.lc-bongo-fass) vor dem
-   Profilbild, und die Hände schlugen auf deren Felle. Beides ist weg.
-   Geschlagen wird auf das Bild, und das Bild federt ein wie ein Fell.
-   Die Welle ist der Ring, der bei jedem Schlag über die Fläche läuft
-   — daran sieht man, dass es ein Fell ist und kein Foto. */
-.lc-bongo-welle {
+/* --- Das Bongo-Paar -------------------------------------------------- */
+.lc-bongo-fass {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 62%;
-  aspect-ratio: 1;
-  margin: -31% 0 0 -31%;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, .55);
-  box-shadow: 0 0 10px rgba(255, 255, 255, .3) inset;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 3;
-  animation: lcBongoWelleR88 2.5s linear both;
+  bottom: -14%;
+  width: 40%;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .4));
+  transform-origin: 50% 100%;
+  animation: lcBongoSteht 2.5s ease-out both;
 }
-/* Bei „alle" schlägt je Platz nur EINE Hand — dann pulst die Welle
-   auch nur auf deren Schlägen. */
-.lc-bongo-welle-l { animation-name: lcBongoWelleLinksR88; }
-.lc-bongo-welle-r { animation-name: lcBongoWelleRechtsR88; }
-/* Ein Puls dauert rund 4 % von 2,5 s, also 100 ms — so lange braucht
-   eine Welle über ein Fell dieser Größe. */
-@keyframes lcBongoWelleR88 {
-  0%, 2%   { opacity: 0; transform: scale(.28); }
-  3%       { opacity: .6; transform: scale(.42); }
-  7%       { opacity: 0; transform: scale(1.05); }
-  11%      { opacity: .5; transform: scale(.42); }
-  15%      { opacity: 0; transform: scale(1.05); }
-  18%      { opacity: .6; transform: scale(.42); }
-  23%      { opacity: 0; transform: scale(1.05); }
-  28%      { opacity: .5; transform: scale(.42); }
-  33%      { opacity: 0; transform: scale(1.05); }
-  36%      { opacity: .6; transform: scale(.42); }
-  41%      { opacity: 0; transform: scale(1.05); }
-  45%      { opacity: .5; transform: scale(.42); }
-  50%      { opacity: 0; transform: scale(1.05); }
-  57%      { opacity: .6; transform: scale(.42); }
-  62%      { opacity: 0; transform: scale(1.05); }
-  65%      { opacity: .5; transform: scale(.42); }
-  70%      { opacity: 0; transform: scale(1.05); }
-  75%      { opacity: .6; transform: scale(.42); }
-  80%      { opacity: 0; transform: scale(1.05); }
-  83%      { opacity: .5; transform: scale(.42); }
-  88%      { opacity: 0; transform: scale(1.05); }
-  100%     { opacity: 0; transform: scale(1.05); }
-}
-@keyframes lcBongoWelleLinksR88 {
-  0%, 2% { opacity: 0; transform: scale(.28); }
-  3%     { opacity: .6; transform: scale(.42); }
-  8%     { opacity: 0; transform: scale(1.05); }
-  19%    { opacity: .6; transform: scale(.42); }
-  24%    { opacity: 0; transform: scale(1.05); }
-  37%    { opacity: .6; transform: scale(.42); }
-  42%    { opacity: 0; transform: scale(1.05); }
-  58%    { opacity: .6; transform: scale(.42); }
-  63%    { opacity: 0; transform: scale(1.05); }
-  76%    { opacity: .6; transform: scale(.42); }
-  81%    { opacity: 0; transform: scale(1.05); }
-  100%   { opacity: 0; transform: scale(1.05); }
-}
-@keyframes lcBongoWelleRechtsR88 {
-  0%, 11% { opacity: 0; transform: scale(.28); }
-  12%     { opacity: .6; transform: scale(.42); }
-  17%     { opacity: 0; transform: scale(1.05); }
-  29%     { opacity: .6; transform: scale(.42); }
-  34%     { opacity: 0; transform: scale(1.05); }
-  46%     { opacity: .6; transform: scale(.42); }
-  51%     { opacity: 0; transform: scale(1.05); }
-  66%     { opacity: .6; transform: scale(.42); }
-  71%     { opacity: 0; transform: scale(1.05); }
-  84%     { opacity: .6; transform: scale(.42); }
-  89%     { opacity: 0; transform: scale(1.05); }
-  100%    { opacity: 0; transform: scale(1.05); }
+.lc-bongo-fass svg { display: block; width: 100%; height: auto; }
+/* Links die kleine hohe, rechts die grosse tiefe — so herum steht ein
+   Bongo-Paar wirklich. */
+.lc-bongo-klein { left: 6%; width: 36%; }
+.lc-bongo-gross { right: 6%; width: 44%; }
+@keyframes lcBongoSteht {
+  0%   { opacity: 0; transform: translateY(34%) scale(.82); }
+  10%  { opacity: 1; transform: translateY(0) scale(1); }
+  88%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(20%) scale(.9); }
 }
 /* Die beiden Hände schlagen ABWECHSELND — das ist der ganze
    Unterschied zwischen Bongo und Klatschen. Der Takt ist derselbe wie
    im Ton: fünfzehn Schläge in 2,4 s. */
-/* RUNDE 88 — die Hände liegen jetzt AUF DEM BILD, nicht auf einem
-   Fassrand darunter. Sie sitzen links und rechts der Mitte, beide auf
-   derselben Höhe: auf einem Fell schlägt man nebeneinander, nicht auf
-   zwei verschiedenen Höhen. Und sie sind größer geworden (34 statt
-   26 % der Bildbreite) — es ist ja ein großes Fell. */
+/* Jede Hand liegt auf IHREM Fell. Gerechnet: das kleine Fass ist 36 %
+   breit, sein SVG 60x74, also 44,4 % hoch; das Fell sitzt bei y = 18
+   von 74, das sind 19,6 % ueber dem unteren Bildrand. Das grosse Fass
+   ist 44 % breit und sein Fell liegt entsprechend bei 27,1 %. */
 .lc-bongo-hand {
   position: absolute;
-  width: 34%;
+  width: 26%;
   z-index: 4;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .42));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .38));
   transform-origin: 50% 100%;
 }
 .lc-bongo-hand svg { display: block; width: 100%; height: auto; }
-.lc-bongo-hand-l { left: 9%; bottom: 30%; animation: lcBongoLinks 2.5s linear both; }
-.lc-bongo-hand-r { right: 9%; bottom: 30%; animation: lcBongoRechts 2.5s linear both; }
-/* Bei „alle" bekommt jeder Platz genau EINE Hand — die steht dann in
-   der Mitte des Fells, nicht am Rand. */
-.lc-bongo-hand-allein { left: 33%; right: auto; }
-/* Und die rechte Hand ist die SPIEGELBILDLICHE: der Daumen sitzt
-   innen, nicht bei beiden Händen links. Gespiegelt wird die Zeichnung
-   im SVG, nicht das Element — sonst käme die Spiegelung der
-   Schlagbewegung in die Quere, die auf demselben transform sitzt. */
-.lc-bongo-hand-r svg { transform: scaleX(-1); }
+.lc-bongo-hand-l { left: 11%; bottom: 19%; animation: lcBongoLinks 2.5s linear both; }
+.lc-bongo-hand-r { right: 11%; bottom: 27%; animation: lcBongoRechts 2.5s linear both; }
 /* 0,00 / 0,17 / 0,48 / 0,60 / 0,92 / 1,05 / 1,34 / 1,78 / 1,90 s sind
    die Schläge der HOHEN Trommel (links im Ton), der Rest gehört der
    tiefen. In Prozent von 2,5 s sind das die Zahlen hier. */
@@ -27135,39 +27062,24 @@ code, pre {
   100% { opacity: 0; transform: translateY(-62%) rotate(12deg); }
 }
 /* Und das Bild wippt im Takt mit — es ist ja das Fell. */
-/* RUNDE 88 — das Bild IST das Fell, also federt es bei JEDEM Schlag
-   ein: bei den Schlägen der linken Hand (3, 19, 37, 58, 76 %) und
-   denen der rechten (12, 29, 46, 66, 84 %). Vorher stand hier nur ein
-   Wippen auf den linken Schlägen, weil die rechte Hand ja auf eine
-   eigene Trommel schlug. Und es federt tiefer als vorher (0,94 statt
-   0,97) — ein Fell gibt nach, eine Tischplatte nicht. */
-.lc-kreis.lc-bongowippt { animation: lcBongoWippt 2.5s linear both; }
+.lc-kreis.lc-bongowippt { animation: lcBongoWippt 2.4s linear both; }
 @keyframes lcBongoWippt {
   0%, 100% { transform: none; }
-  3%   { transform: scale(1.05, .94); }
+  3%   { transform: scale(1.03, .97); }
   7%   { transform: none; }
-  12%  { transform: scale(1.04, .95); }
-  16%  { transform: none; }
-  19%  { transform: scale(1.05, .94); }
-  23%  { transform: none; }
-  29%  { transform: scale(1.04, .95); }
-  33%  { transform: none; }
-  37%  { transform: scale(1.05, .94); }
-  41%  { transform: none; }
-  46%  { transform: scale(1.04, .95); }
-  50%  { transform: none; }
-  58%  { transform: scale(1.05, .94); }
-  62%  { transform: none; }
-  66%  { transform: scale(1.04, .95); }
-  70%  { transform: none; }
-  76%  { transform: scale(1.05, .94); }
-  80%  { transform: none; }
-  84%  { transform: scale(1.03, .96); }
-  88%  { transform: none; }
+  13%  { transform: scale(1.025, .975); }
+  19%  { transform: none; }
+  33%  { transform: scale(1.03, .97); }
+  37%  { transform: none; }
+  54%  { transform: scale(1.03, .97); }
+  58%  { transform: none; }
+  71%  { transform: scale(1.025, .975); }
+  76%  { transform: none; }
+  88%  { transform: scale(1.02, .98); }
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-gong-schlaegel, .lc-gong-welle, .lc-bongo-hand { animation: none; }
-  .lc-gong-scheibe, .lc-bongo-welle { animation: none; }
+  .lc-gong-scheibe, .lc-bongo-fass { animation: none; }
   .lc-kreis.lc-gonghallt, .lc-kreis.lc-bongowippt { animation: none; }
 }
 

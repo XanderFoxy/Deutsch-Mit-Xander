@@ -34184,27 +34184,7 @@
      Schlag staucht das Fell kurz ein.
      Der Takt der Haende ist derselbe wie im Ton (ton/bongo): fuenfzehn
      Schlaege in 2,4 s, hoch und tief im Wechsel. */
-  /* RUNDE 88 — DAS BILD IST DIE TROMMEL, NICHT EIN GEGENSTAND DAVOR.
-     XANDER: „bei der Bongo, bei der Trommel soll man auf dem BILD
-     Bongo spielen, nicht auf Bongos — sondern das Bild soll die
-     Bongo-Flaeche sein."
-     Und noch einmal, deutlicher: „Du sagst, du bist mit der Liste
-     fertig, hast die Bongos aber immer noch als Bongos im Bild. Du
-     sollst mit den Haenden auf die BILDFLAECHE schlagen, nicht auf
-     Bongos."
-     ER HAT RECHT GEHABT: hier standen zwei gezeichnete Faesser
-     („lc-bongo-fass") vor dem Profilbild, und die Haende schlugen auf
-     deren Felle. Die Faesser sind weg. Geschlagen wird auf das Bild
-     selbst, und das Bild federt bei jedem Schlag ein wie ein Fell.
-     UND: „wenn ich zum Beispiel bei ‚alle' — kannst du die Bongo auch
-     mit reinmachen … dann wird auf allen jeweils mit EINER Hand immer
-     getrommelt, so also linke und rechte Hand."
-     Also: ein Ziel bekommt beide Haende, viele Ziele bekommen je
-     eine, und die wechseln sich reihum ab — wie an einem Schlagzeug,
-     bei dem jede Trommel ihre Hand hat. */
   function lcBongo(wen) {
-    const ziele = lcZielPlaetze(wen);
-    const viele = ziele.length > 1;
     return lcAmPlatz(wen, "lc-bongo", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
@@ -34213,14 +34193,25 @@
         kreis.classList.add("lc-bongowippt");
         setTimeout(() => kreis.classList.remove("lc-bongowippt"), 2500);
       }
-      const nr = Math.max(0, ziele.indexOf(platz));
-      const haende = viele ? [nr % 2 ? "r" : "l"] : ["l", "r"];
+      const trommel = (seite, gross) =>
+        '<span class="lc-bongo-fass lc-bongo-' + seite + '">'
+        + '<svg viewBox="0 0 60 74">'
+        /* Der Korpus, unten schmaler — ein Bongo ist ein Kegelstumpf. */
+        + '<path d="M4 18 L56 18 L48 70 L12 70 Z" fill="#a4661f"'
+        + ' stroke="#6d3f0f" stroke-width="2.4" stroke-linejoin="round"/>'
+        + '<path d="M9 22 L14 66" stroke="rgba(255,226,180,.35)" stroke-width="3.4"'
+        + ' stroke-linecap="round"/>'
+        /* Der Spannring aus Metall. */
+        + '<ellipse cx="30" cy="18" rx="27" ry="8.6" fill="#d8ddE4"'
+        + ' stroke="#8d949e" stroke-width="2.2"/>'
+        /* Und das Fell, das geschlagen wird. */
+        + '<ellipse class="lc-bongo-fell" cx="30" cy="18" rx="23" ry="7"'
+        + ' fill="' + (gross ? "#f3e2c4" : "#f8ecd6") + '" stroke="#cbb08a" stroke-width="1.8"/>'
+        + "</svg></span>";
       schicht.insertAdjacentHTML("beforeend",
-        /* Die Welle im Fell — sie pulst genau auf den Schlaegen. */
-        '<i class="lc-bongo-welle' + (viele ? " lc-bongo-welle-" + haende[0] : "") + '"></i>'
-        + haende.map((h) => '<span class="lc-bongo-hand lc-bongo-hand-' + h
-            + (viele ? " lc-bongo-hand-allein" : "") + '">'
-            + lcBongoHandSvg() + "</span>").join(""));
+        trommel("klein", false) + trommel("gross", true)
+        + '<span class="lc-bongo-hand lc-bongo-hand-l">' + lcBongoHandSvg() + "</span>"
+        + '<span class="lc-bongo-hand lc-bongo-hand-r">' + lcBongoHandSvg() + "</span>");
     }, 2500, "bongo");
   }
 
