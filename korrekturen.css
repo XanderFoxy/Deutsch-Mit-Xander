@@ -17728,6 +17728,138 @@ code, pre {
 .lc-schiffe-fusszeile { font-size: .7rem; opacity: .9; min-height: .9em; }
 
 /* =================================================================
+   RUNDE 88 — DER UNTERGANG
+   -----------------------------------------------------------------
+   XANDER: „wenn man jemanden getroffen hat und versenkt hat, dann
+   soll das auch eine Animation dazu geben, dass man dort ein Schiff
+   versinken sieht — so Titanic-maessig, so dramatisch im Stil, mit
+   der Nase nach oben und dem Rumpf gebrochen, oder irgendwas, dass
+   es dort wirklich in dieses Positionsbild abtaucht."
+
+   DREI DINGE MACHEN DEN UNTERSCHIED ZWISCHEN „ein Boot kippt" UND
+   „ein Schiff geht unter":
+   1. BEIDE HAELFTEN DREHEN UM DIE BRUCHKANTE (60|34 in der
+      Zeichnung), nicht um ihre eigene Mitte. Sonst klafft dort eine
+      Luecke, und man sieht zwei Boote statt eines gebrochenen
+      Schiffes. Dafuer braucht es transform-box: view-box — mit
+      fill-box waere der Nullpunkt die Box der Haelfte selbst.
+   2. DAS WASSER LIEGT DARUEBER. Es ist der letzte Pfad im SVG und
+      deckt alles zu, was unter die Wasserlinie faellt. Nur so
+      TAUCHT etwas ab, statt einfach nach unten zu rutschen.
+   3. DIE ZEITEN SIND UNGLEICH. Das Heck saeuft schnell ab, die Nase
+      steht lange senkrecht und geht als Letztes. Gleichmaessig
+      wirkt es wie ein Spielzeug.
+   ================================================================= */
+.lc-schiff-unter {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 116%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 6;
+  /* Der Untergang bleibt IM Platz — „dass es dort wirklich in dieses
+     Positionsbild abtaucht". */
+  overflow: hidden;
+  border-radius: 50%;
+}
+.lc-schiff-bild { display: block; width: 100%; height: auto; overflow: visible; }
+.lc-schiff-bug, .lc-schiff-heck {
+  transform-box: view-box;
+  /* Die Bruchkante. Beide Haelften drehen um DIESEN Punkt. */
+  transform-origin: 60px 70px;
+}
+/* Waehrend des Untergangs steht kein Zeichen auf dem Platz — das 💥
+   lag sonst genau auf dem Schiff. */
+.lc-schiff-sinkt .lc-schiff-zeichen { opacity: 0; }
+.lc-schiff-bug  { animation: lcSchiffBugR88  3.4s linear both; }
+.lc-schiff-heck { animation: lcSchiffHeckR88 3.4s linear both; }
+/* NACHGERECHNET — UND DAS WAR DER GANZE FEHLER DER ERSTEN FASSUNG:
+   die Nase liegt LINKS der Bruchkante. Eine NEGATIVE Drehung (gegen
+   den Uhrzeigersinn) schwenkt sie damit nach UNTEN, nicht nach oben.
+   Nachgerechnet fuer die Bugspitze (4|62), also 56 Einheiten links
+   und 8 ueber dem Drehpunkt (60|70):
+     rotate(-74deg) → sie landet bei (36|121) — 47 Einheiten UNTER
+                      dem Wasser, man sieht sie ueberhaupt nicht.
+     rotate(+76deg) → sie landet bei (58|18) — 56 Einheiten ueber
+                      dem Wasser, also senkrecht in der Luft.
+   XANDER wollte „mit der Nase nach oben". Also positiv. */
+@keyframes lcSchiffBugR88 {
+  /* 0 bis 500 ms: es schaukelt noch. */
+  0%    { transform: translate(0, 0) rotate(0deg); }
+  6%    { transform: translate(0, .6px) rotate(1.2deg); }
+  14.7% { transform: translate(0, 0) rotate(-1deg); }
+  /* 500 bis 1400 ms: das Heck saeuft ab, die Nase hebt sich. */
+  26%   { transform: translate(0, 0) rotate(9deg); }
+  41.2% { transform: translate(0, 1px) rotate(21deg); }
+  /* 1400 bis 1700 ms: der Rumpf bricht — die Nase faellt kurz
+     zurueck, weil ihr das Gegengewicht wegbricht, und schnellt
+     dann hoch. */
+  44%   { transform: translate(0, 1px) rotate(16deg); }
+  50%   { transform: translate(0, 2px) rotate(38deg); }
+  /* 1700 bis 2500 ms: sie steht senkrecht. */
+  73.5% { transform: translate(0, 4px) rotate(76deg); }
+  /* 2500 bis 3400 ms: und geht als Letztes unter — senkrecht, wie
+     sie steht. */
+  88%   { transform: translate(0, 26px) rotate(84deg); }
+  100%  { transform: translate(0, 74px) rotate(86deg); }
+}
+@keyframes lcSchiffHeckR88 {
+  0%    { transform: translate(0, 0) rotate(0deg); }
+  6%    { transform: translate(0, .6px) rotate(1.2deg); }
+  14.7% { transform: translate(0, 0) rotate(-1deg); }
+  /* Dasselbe Drehen hebt die Nase und drueckt das Heck ins Wasser —
+     es ist ja dieselbe Bewegung um dieselbe Kante. */
+  26%   { transform: translate(0, 2px) rotate(4deg); }
+  41.2% { transform: translate(0, 5px) rotate(9deg); }
+  /* Ab dem Bruch geht es allein und schnell nach unten. */
+  50%   { transform: translate(1px, 10px) rotate(16deg); }
+  67.6% { transform: translate(2px, 26px) rotate(26deg); }
+  100%  { transform: translate(3px, 52px) rotate(32deg); }
+}
+/* DER BRUCH — 1400 bis 1700 ms, sonst unsichtbar. */
+.lc-schiff-bruch { opacity: 0; animation: lcSchiffBruchR88 3.4s linear both; }
+@keyframes lcSchiffBruchR88 {
+  0%, 40.5% { opacity: 0; }
+  42%       { opacity: 1; }
+  47%       { opacity: .75; }
+  52%       { opacity: 0; }
+  100%      { opacity: 0; }
+}
+/* DAS WASSER schwappt, wenn das Schiff hineinfaellt. */
+.lc-schiff-wasser, .lc-schiff-schaum {
+  animation: lcSchiffWasserR88 3.4s ease-in-out both;
+}
+@keyframes lcSchiffWasserR88 {
+  0%, 20%  { transform: translateY(0); }
+  44%      { transform: translateY(-1.4px); }
+  56%      { transform: translateY(.8px); }
+  70%      { transform: translateY(-.6px); }
+  100%     { transform: translateY(0); }
+}
+/* DIE BLASEN steigen erst auf, wenn das Schiff unten ist. */
+.lc-schiff-blasen circle {
+  fill: rgba(232, 246, 255, .85);
+  opacity: 0;
+  animation: lcSchiffBlasenR88 3.4s linear both;
+}
+.lc-schiff-blasen circle:nth-child(2) { animation-delay: .18s; }
+.lc-schiff-blasen circle:nth-child(3) { animation-delay: .34s; }
+.lc-schiff-blasen circle:nth-child(4) { animation-delay: .5s; }
+.lc-schiff-blasen circle:nth-child(5) { animation-delay: .1s; }
+@keyframes lcSchiffBlasenR88 {
+  0%, 47%  { opacity: 0; transform: translateY(0) scale(.6); }
+  53%      { opacity: .9; transform: translateY(-4px) scale(1); }
+  82%      { opacity: .5; transform: translateY(-18px) scale(.8); }
+  100%     { opacity: 0; transform: translateY(-26px) scale(.5); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-schiff-bug, .lc-schiff-heck, .lc-schiff-bruch,
+  .lc-schiff-wasser, .lc-schiff-schaum, .lc-schiff-blasen circle {
+    animation: none;
+  }
+}
+
+/* =================================================================
    DREI ANDERE ARTEN, ZU EINEM PLATZ ZU KOMMEN
    -----------------------------------------------------------------
    GEWÜNSCHT: „dass du das Profilbild in ein Flugzeug, also auf einen

@@ -33684,22 +33684,15 @@
   /* Damit sich das von aussen messen laesst. */
   window.DMA_SECHZEHN = lcSechzehnSetzen;
 
-  function lcSchiffeBrett() {
-    const karte = document.getElementById("livechatKarte");
-    if (!karte) return null;
-    let brett = document.getElementById("lcSchiffe");
-    if (brett) return brett;
-    const plaetze = karte.querySelector("#lcPlaetze, .lc-plaetze");
-    if (!plaetze) return null;
-    brett = document.createElement("div");
-    brett.className = "lc-schiffe";
-    brett.id = "lcSchiffe";
-    brett.innerHTML = '<div class="lc-schiffe-kopf" id="lcSchiffeKopf"></div>'
-                    + '<div class="lc-schiffe-felder" id="lcSchiffeFelder"></div>'
-                    + '<div class="lc-schiffe-fuss" id="lcSchiffeFuss"></div>';
-    plaetze.appendChild(brett);
-    return brett;
-  }
+  /* RUNDE 88 — DAS ALTE SPIELBRETT IST RAUS.
+     Hier stand lcSchiffeBrett(): ein eigener blauer Kasten mit
+     eigenen Feldern, eigener Kopf- und Fusszeile. Seit Runde 87 ruft
+     ihn niemand mehr auf — XANDER: „es soll so mit den Plaetzen
+     sein, nicht irgendwie ein anderes Design bekommen." Er stand
+     nur noch da und konnte hoechstens versehentlich
+     wiederauftauchen. Was von ihm gebraucht wird, raeumt
+     lcSchiffeAufraeumen weiterhin weg (#lcSchiffe), falls noch ein
+     Geraet mit alter Fassung eines gebaut hat. */
 
   /* =================================================================
      RUNDE 87 — SCHIFFE VERSENKEN AUF DEN SECHZEHN PLAETZEN
@@ -33732,8 +33725,127 @@
                          "lc-schiff-feld");
       const z = p.querySelector(".lc-schiff-zeichen");
       if (z) z.remove();
+      const u = p.querySelector(".lc-schiff-unter");
+      if (u) u.remove();
+      p.classList.remove("lc-schiff-sinkt");
+      delete p.dataset.lcSchiffGesunken;
     });
     try { lcSechzehnSetzen(false); } catch (e) {}
+  }
+
+  /* =================================================================
+     RUNDE 88 — DER UNTERGANG
+     -----------------------------------------------------------------
+     XANDER: „wenn man jemanden getroffen hat und versenkt hat, dann
+     soll das auch eine Animation dazu geben, dass man dort ein Schiff
+     versinken sieht — so Titanic-maessig, so dramatisch im Stil, mit
+     der Nase nach oben und dem Rumpf gebrochen, oder irgendwas, dass
+     es dort wirklich in dieses Positionsbild abtaucht."
+
+     Also genau das, in dieser Reihenfolge und in diesen Zeiten:
+       0 bis  500 ms  das Schiff liegt im Wasser und schaukelt
+       500 bis 1400   das Heck saeuft ab, die Nase hebt sich
+      1400 bis 1700   DER RUMPF BRICHT — an der Stelle, an der sich
+                      die beiden Haelften trennen, blitzt der Bruch
+      1700 bis 2500   das Heck rutscht nach unten weg
+      2500 bis 3400   die Nase steht senkrecht und geht als Letztes
+                      unter; Blasen steigen auf
+     Beide Haelften drehen um DIESELBE Stelle (60|34 in der
+     Zeichnung) — das ist die Bruchkante. Wuerde jede um ihre eigene
+     Mitte drehen, klaffte dort eine Luecke, und man saehe zwei
+     Boote statt eines gebrochenen Schiffes.
+
+     Gezeichnet ist ein Vierschornsteiner, weil er das so genannt
+     hat: Rumpf, weisse Aufbauten, vier Schornsteine mit schwarzem
+     Kopf, Reling, Bullaugen. Der Schnitt liegt zwischen dem
+     zweiten und dem dritten Schornstein — dort ist die Titanic
+     wirklich gebrochen.
+     ================================================================= */
+  function lcSchiffUntergang(feld) {
+    if (!feld || feld.querySelector(".lc-schiff-unter")) return;
+    const huelle = document.createElement("span");
+    huelle.className = "lc-schiff-unter";
+    /* WARUM DIE ZEICHNUNG SO HOCH IST (viewBox 120 x 104, das Schiff
+       liegt unten): die Nase ist 56 Einheiten lang und soll am Ende
+       SENKRECHT stehen. Dafuer braucht sie 56 Einheiten Luft ueber
+       der Bruchkante. In der ersten Fassung war der Kasten nur 64
+       hoch und die Wasserlinie lag bei 40 — die Nase haette 56
+       Einheiten nach oben gebraucht und hatte 30. Sie ging deshalb
+       nach UNTEN aus dem Bild, und von „Nase nach oben" war nichts
+       zu sehen. Jetzt liegt die Bruchkante bei (60|70), das Wasser
+       bei y = 74, und darueber sind 70 Einheiten frei. */
+    /* Ein Schornstein: Koerper und schwarzer Kopf. */
+    const schlot = (x, klasse) =>
+      '<g class="' + klasse + '">'
+      + '<path d="M' + x + ' 59.5 L' + (x + 1.6) + ' 45.5 L' + (x + 6.4) + ' 45.5 L'
+      + (x + 8) + ' 59.5 Z" fill="#e2c188" stroke="#8d6f3c" stroke-width=".7"/>'
+      + '<path d="M' + (x + 1.6) + ' 45.5 L' + (x + 6.4) + ' 45.5 L' + (x + 6.9) + ' 49.5 L'
+      + (x + 1.1) + ' 49.5 Z" fill="#241a12"/>'
+      + "</g>";
+    /* Bullaugen in einer Reihe. */
+    const augen = (von, bis) => {
+      let o = "";
+      for (let x = von; x <= bis; x += 7) {
+        o += '<circle cx="' + x + '" cy="66" r="1.1" fill="#f5e6c0" opacity=".8"/>';
+      }
+      return o;
+    };
+    huelle.innerHTML =
+      '<svg class="lc-schiff-bild" viewBox="0 0 120 104" aria-hidden="true">'
+      /* DIE NASE — alles links der Bruchkante bei x = 60. */
+      + '<g class="lc-schiff-bug">'
+      + '<path d="M4 62 L60 62 L60 78 Q36 79 16 75 Z"'
+      + ' fill="#2c2f36" stroke="#14161a" stroke-width=".8"/>'
+      + '<path d="M6 62 L60 62 L60 64.5 L8.6 64.5 Z" fill="#8a3230"/>'
+      + augen(14, 55)
+      + '<path d="M30 55.5 L60 55.5 L60 62 L30 62 Z" fill="#efe9dc"'
+      + ' stroke="#b9b2a2" stroke-width=".6"/>'
+      + schlot(40, "lc-schiff-schlot")
+      + '<path d="M4 62 L4 53.5" stroke="#14161a" stroke-width="1.2"/>'
+      + "</g>"
+      /* DAS HECK — alles rechts davon. */
+      + '<g class="lc-schiff-heck">'
+      + '<path d="M60 62 L116 62 L110 76 Q86 78.5 60 78 Z"'
+      + ' fill="#2c2f36" stroke="#14161a" stroke-width=".8"/>'
+      + '<path d="M60 62 L114 62 L113.2 64.5 L60 64.5 Z" fill="#8a3230"/>'
+      + augen(64, 105)
+      + '<path d="M60 55.5 L96 55.5 L96 62 L60 62 Z" fill="#efe9dc"'
+      + ' stroke="#b9b2a2" stroke-width=".6"/>'
+      + schlot(62, "lc-schiff-schlot")
+      + schlot(76, "lc-schiff-schlot")
+      + schlot(90, "lc-schiff-schlot")
+      + '<path d="M116 62 L116 54.5" stroke="#14161a" stroke-width="1.2"/>'
+      + "</g>"
+      /* DER BRUCH — ein kurzer Blitz genau auf der Trennlinie. */
+      + '<path class="lc-schiff-bruch" d="M60 54 L57 62 L62 67 L58 78"'
+      + ' fill="none" stroke="#ffd98a" stroke-width="2.2" stroke-linecap="round"/>'
+      /* DAS WASSER liegt DARUEBER: was darunter sinkt, ist weg. */
+      + '<path class="lc-schiff-wasser" d="M0 74 Q30 70 60 74 T120 74 L120 104 L0 104 Z"'
+      + ' fill="rgba(22,74,122,.88)"/>'
+      + '<path class="lc-schiff-schaum" d="M0 74 Q30 70 60 74 T120 74"'
+      + ' fill="none" stroke="rgba(226,242,255,.85)" stroke-width="1.6"/>'
+      /* UND DIE BLASEN, die nach dem Schiff hochkommen. */
+      + '<g class="lc-schiff-blasen">'
+      + '<circle cx="52" cy="92" r="2.6"/><circle cx="62" cy="95" r="1.8"/>'
+      + '<circle cx="45" cy="97" r="2.1"/><circle cx="70" cy="93" r="1.5"/>'
+      + '<circle cx="57" cy="99" r="3"/>'
+      + "</g>"
+      + "</svg>";
+    feld.appendChild(huelle);
+    /* Solange das Schiff untergeht, steht KEIN Zeichen darauf — das
+       💥 verdeckte sonst genau die Stelle, an der es passiert. Es
+       kommt danach, und dann bleibt es stehen. */
+    feld.classList.add("lc-schiff-sinkt");
+    /* Der Ton: erst der Pfiff, dann das Wasser, dann die Blasen —
+       in denselben Zeiten wie das Bild. */
+    try {
+      lcTonSpaeter("dampferpfiff", 120, 0.5);
+      lcTonSpaeter("sogwasser", 1500, 0.55);
+      lcTonSpaeter("blubbern", 2500, 0.5);
+    } catch (e) {}
+    setTimeout(() => {
+      try { huelle.remove(); feld.classList.remove("lc-schiff-sinkt"); } catch (e) {}
+    }, 3600);
   }
 
   window.DMA_SCHIFFE = function (stand) {
@@ -33746,11 +33858,13 @@
     karte.classList.add("lc-schiffe-an");
 
     const dranIch = stand.phase === "schiessen" && stand.dran === stand.ichBin;
-    const kopfText = stand.phase === "verstecken"
-      ? "🚢 Such dir ein Versteck — niemand sieht, wo du hingehst."
-      : (stand.phase === "aus" ? "🚢 Schiffe versenken"
-        : (dranIch ? "🎯 Du bist dran — wo steckt jemand?"
-          : "⏳ " + (stand.dranName || "Jemand") + " ist dran."));
+    /* RUNDE 88 — die Versteck-Phase gibt es nicht mehr: die Plaetze
+       werden ausgelost (siehe livechat.js, schiffeStarten). Es gibt
+       also nur noch zwei Zustaende: geschossen wird, oder das Spiel
+       ist vorbei. */
+    const kopfText = stand.phase === "aus" ? "🚢 Schiffe versenken"
+      : (dranIch ? "🎯 Du bist dran — wo steckt jemand?"
+        : "⏳ " + (stand.dranName || "Jemand") + " ist dran.");
 
     /* Die Plaetze werden zu Feldern. */
     const wieViele = stand.plaetze || 16;
@@ -33759,6 +33873,13 @@
       if (!feld) continue;
       feld.classList.add("lc-schiff-feld");
       const was = stand.tafel && stand.tafel[nr];
+      /* EIN TREFFER WIRD GENAU EINMAL GEZEIGT. Das Brett wird bei
+         jeder Nachricht neu gezeichnet; ohne diese Marke liefe der
+         Untergang bei jedem Zug von vorn los. */
+      if (was === "treffer" && !feld.dataset.lcSchiffGesunken) {
+        feld.dataset.lcSchiffGesunken = "1";
+        lcSchiffUntergang(feld);
+      }
       feld.classList.toggle("lc-schiff-treffer", was === "treffer");
       feld.classList.toggle("lc-schiff-daneben", was === "daneben");
       feld.classList.toggle("lc-schiff-meins", stand.meins === nr);
@@ -33781,15 +33902,23 @@
       }
     }
 
-    /* Und die beiden Zeilen darunter. */
-    const grund = document.getElementById("lcGrund");
+    /* Und die beiden Zeilen darunter. Sie gehoeren nach #lcGrund —
+       dorthin, wo ohnehin die Standzeilen des Raums stehen. RUNDE 88:
+       wenn es den Kasten einmal nicht gibt, haengen sie direkt unter
+       der Sitzreihe. Vorher fielen sie in dem Fall stillschweigend
+       aus, und dann stand nirgends, wer dran ist — bei einem Spiel,
+       das reihum geht, ist das die wichtigste Zeile ueberhaupt. */
+    const gitterJetzt = document.getElementById("lcPlaetze")
+      || karte.querySelector(".lc-plaetze");
+    const grund = document.getElementById("lcGrund") || gitterJetzt;
     if (grund) {
       let zeile = document.getElementById("lcSchiffeZeile");
       if (!zeile) {
         zeile = document.createElement("div");
         zeile.id = "lcSchiffeZeile";
         zeile.className = "lc-schiffe-zeile";
-        grund.insertAdjacentElement("afterbegin", zeile);
+        if (grund.id === "lcGrund") grund.insertAdjacentElement("afterbegin", zeile);
+        else grund.insertAdjacentElement("afterend", zeile);
       }
       /* Wer schon versenkt ist, steht dabei — sonst verliert man den
          Ueberblick, wer noch mitspielt. */

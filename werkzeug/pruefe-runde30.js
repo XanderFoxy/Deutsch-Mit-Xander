@@ -143,14 +143,34 @@ const pruefe = (was, gut, zusatz) => {
   console.log("\nSCHIFFE VERSENKEN\n");
   pruefe("es gibt den Befehl", /w: "versenken"/.test(lc)
     && /art === "versenken" \|\| art === "schiffe"/.test(lc));
-  pruefe("das Versteck geht NUR an den Schiedsrichter",
-    /postSenden\(schiffeStand\.richter, \{ art: "spielpost"/.test(lc)
+  /* RUNDE 88: die Richtung hat sich umgedreht. Frueher schickte
+     jeder sein selbstgewaehltes Versteck an den Schiedsrichter;
+     heute lost der Schiedsrichter aus und schickt jedem sein Feld.
+     Was gleich geblieben ist — und worum es in dieser Regel geht —:
+     es geht immer an GENAU EIN Geraet, nie an alle. */
+  pruefe("ein Versteck geht nie an alle, immer nur an ein Geraet",
+    /postSenden\(m\.id, \{ art: "spielpost", spiel: \{ t: "platz", nr: nr \} \}\);/.test(lc)
+    && /postSenden\(schiffeStand\.richter, \{ art: "spielpost"/.test(lc)
+    && !/schiffeAnAlle\(\{ t: "platz"/.test(lc)
     && !/schiffeAnAlle\(\{ t: "versteck"/.test(lc));
   pruefe("der Schiedsrichter entscheidet den Treffer",
     /function schiffeSchuss/.test(lc) && /schiffeSpiel\.raus\[getroffenId\] = true/.test(lc));
   pruefe("wer nicht dran ist, kann nicht schiessen",
     /if \(!dranM \|\| dranM\.id !== vonId\) return;/.test(lc));
-  pruefe("zwei koennen nicht im selben Loch stecken", /t: "belegt"/.test(lc));
+  /* RUNDE 88 — ANDERS GEWORDEN, ABER DIESELBE FRAGE.
+     Bisher meldete der Schiedsrichter „belegt", wenn jemand ein
+     schon besetztes Feld anklickte. XANDER hat genau das als Fehler
+     erkannt: „wenn sich ein Zweiter einen Platz aussucht, dann darf
+     er nicht rausfinden, dass ein Platz besetzt ist, weil dann
+     wuerde er den ja anklicken, um ihn zu versenken."
+     Jetzt werden die Felder ausgelost — einmal gemischt, dann
+     bekommt der Erste der Reihe das erste gezogene Feld, der Zweite
+     das zweite. Zwei koennen damit gar nicht im selben Loch
+     stecken, und niemand muss es erfahren. */
+  pruefe("zwei koennen nicht im selben Loch stecken",
+    /for \(var i = felder\.length - 1; i > 0; i--\)/.test(lc)
+    && /schiffeSpiel\.reihe\.forEach\(function \(m, k\) \{ schiffeSpiel\.verstecke\[m\.id\] = felder\[k\]; \}\);/.test(lc)
+    && !/t: "belegt", nr: nr/.test(lc));
   pruefe("und am Ende steht ein Sieger", /t: "ende", sieger/.test(lc));
 
   console.log("\nDREI ANDERE ARTEN, ZU EINEM PLATZ ZU KOMMEN\n");
@@ -250,47 +270,36 @@ const pruefe = (was, gut, zusatz) => {
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForTimeout(1200);
 
-  console.log("\nDAS BRETT — GEMESSEN\n");
-  const brett = await pg.evaluate(async () => {
-    DMA_PRUEF.effektBuehne();
-    const karte = document.getElementById("livechatKarte");
-    const vorher = karte.getBoundingClientRect().height;
-    window.DMA_SCHIFFE({ phase: "verstecken", richter: "r1", plaetze: 8,
-      reihe: [{ id: "a", name: "Alex" }, { id: "b", name: "Bea" }],
-      tafel: {}, meins: 0, dran: "", dranName: "", raus: [], text: "", ichBin: "a" });
-    await new Promise((f) => setTimeout(f, 200));
-    const nachher = karte.getBoundingClientRect().height;
-    const felder = document.querySelectorAll(".lc-schiffe-feld").length;
-    const platzSichtbar = getComputedStyle(document.querySelector(".lc-platz")).visibility;
-    /* Treffer und Daneben zeichnen */
-    window.DMA_SCHIFFE({ phase: "schiessen", richter: "r1", plaetze: 8,
-      reihe: [{ id: "a", name: "Alex" }, { id: "b", name: "Bea" }],
-      tafel: { 3: "treffer", 5: "daneben" }, meins: 2, dran: "a", dranName: "Alex",
-      raus: ["Bea"], text: "Alex trifft auf Platz 3", ichBin: "a" });
-    await new Promise((f) => setTimeout(f, 150));
-    const treffer = document.querySelectorAll(".lc-schiffe-treffer").length;
-    const daneben = document.querySelectorAll(".lc-schiffe-daneben").length;
-    const meins = document.querySelectorAll(".lc-schiffe-meins").length;
-    const kopf = document.getElementById("lcSchiffeKopf").textContent;
-    const fuss = document.getElementById("lcSchiffeFuss").textContent;
-    window.DMA_SCHIFFE(null);
-    await new Promise((f) => setTimeout(f, 100));
-    const weg = !document.getElementById("lcSchiffe")
-      && !karte.classList.contains("lc-schiffe-an");
-    return { vorher, nachher, felder, platzSichtbar, treffer, daneben, meins, kopf, fuss, weg };
-  });
-  pruefe("acht Felder stehen bereit", brett.felder === 8, brett.felder + " Felder");
-  pruefe("der Kasten wird KEINEN Bildpunkt hoeher",
-    Math.abs(brett.nachher - brett.vorher) < 2,
-    brett.vorher.toFixed(1) + " px vorher, " + brett.nachher.toFixed(1) + " px nachher");
-  pruefe("die Mitspieler sind waehrend des Spiels nicht zu sehen",
-    brett.platzSichtbar === "hidden", "visibility: " + brett.platzSichtbar);
-  pruefe("Treffer, Daneben und das eigene Versteck sind zu erkennen",
-    brett.treffer === 1 && brett.daneben === 1 && brett.meins === 1,
-    brett.treffer + " Treffer, " + brett.daneben + " daneben, " + brett.meins + " eigenes");
-  pruefe("der Kopf sagt, wer dran ist", /Du bist dran/.test(brett.kopf), brett.kopf);
-  pruefe("und unten steht, wer versenkt ist", /Bea/.test(brett.fuss), brett.fuss);
-  pruefe("zum Schluss ist das Brett wieder weg", brett.weg);
+  /* =================================================================
+     RUNDE 88 — DAS BRETT GIBT ES NICHT MEHR
+     -----------------------------------------------------------------
+     Hier stand bis Runde 87 eine Messung an einem blauen Spielbrett
+     mit eigenen Feldern (#lcSchiffe, .lc-schiffe-feld, #lcSchiffeKopf).
+     XANDER hat dieses Brett verworfen: „es soll so mit den Plaetzen
+     sein, nicht irgendwie ein anderes Design bekommen. Es soll
+     einfach so mit den Plaetzen sein … wir muessen nur die Plaetze
+     neu auffuellen mit 16 Plaetzen."
+     Seither SIND die Sitzplaetze das Brett. Diese Messung hat
+     deshalb kein Ziel mehr — sie suchte Elemente, die es nicht mehr
+     geben darf — und sie ist vollstaendig nach
+     werkzeug/pruefe-runde88-schiffe.js umgezogen, wo am heutigen
+     Aufbau gemessen wird: sechzehn Felder, nichts verrutscht oben
+     oder unten, ausgeloste Verstecke, der Untergang mit der Nase
+     nach oben, und das Ausschalten.
+     Was HIER bleibt, ist die Frage, um die es in Runde 30 ging:
+     gibt es das Spiel ueberhaupt, und zaehlt es der Reihe nach? */
+  pruefe("es gibt Schiffe versenken, und es laeuft auf den Plaetzen",
+    /window\.DMA_SCHIFFE = function \(stand\)/.test(js)
+    && /lcSechzehnSetzen\(true\);/.test(js)
+    && !/id="lcSchiffeFelder"/.test(js));
+  /* „es soll ja der Reihe nach zaehlen, wer als naechstes dran ist …
+     oder die Leute sind, wie sie nacheinander in den Raum gekommen
+     sind, in der Reihenfolge gezaehlt." */
+  pruefe("und es zaehlt nach der Ankunft im Raum, nicht nach der Platznummer",
+    /var reihe = spielReihe\(\);/.test(lc)
+    && /return \(a\.seit - b\.seit\)/.test(lc));
+  pruefe("die Messung am Brett steht in der Sonde zu Runde 88",
+    fs.existsSync(path.join(WURZEL, "werkzeug", "pruefe-runde88-schiffe.js")));
 
   await br.close(); srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 30 sitzt.\n");

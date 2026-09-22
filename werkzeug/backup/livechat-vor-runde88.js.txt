@@ -6842,57 +6842,14 @@ window.LiveChat = (function () {
 
      Die Reihenfolge ist die Ankunft im Raum (spielReihe) — sie bleibt
      stehen, auch wenn mitten im Spiel jemand den Platz wechselt.
-     XANDER dazu: „diese Reihenfolge muss einem logischen Prinzip
-     folgen, nach der Reihe der Anmeldungen im Chat … weil, wenn die
-     Leute staendig ihre Plaetze tauschen … nicht, dass das System
-     dann zaehlt, dass derjenige der Dritte ist und der Achte."
-
-     RUNDE 88 — NIEMAND SUCHT SICH MEHR SEIN VERSTECK AUS.
-     XANDER hat den Fehler selbst gefunden: „Das Schiffe versenken
-     macht im Uebrigen auch keinen Sinn. Da muessen wir uns etwas
-     ueberlegen, wie wir das spielen koennen, denn wenn sich ein
-     Zweiter einen Platz aussucht, dann darf er nicht rausfinden,
-     dass ein Platz besetzt ist, weil dann wuerde er den ja
-     anklicken, um ihn zu versenken. Deswegen musst du das eher mit
-     Zufallszahlen loesen, dass einfach jeder zufaellig gesetzt wird
-     und die anderen das eben nicht wissen, wo sie hingesetzt sind."
-
-     Er hat recht, und es war wirklich so: wer ein besetztes Feld
-     anklickte, bekam „Dort versteckt sich schon jemand" zurueck —
-     das war eine Auskunft ueber ein fremdes Versteck, also genau
-     das, was das Spiel kaputtmacht. Jetzt lost der Schiedsrichter
-     die Plaetze aus (Fisher-Yates ueber alle sechzehn Felder) und
-     sagt jedem NUR SEINEN EIGENEN, als persoenliche Post. Niemand
-     klickt mehr etwas an, um sich zu verstecken, also kann auch
-     niemand etwas erfragen.
-
-     SECHZEHN FELDER, nicht acht — auch das seine Rechnung: „weil
-     wir sind ja maximal acht Leute, und damit wir ein bisschen
-     Verteilung machen koennen … dass da vielleicht ploetzlich
-     sechzehn sind." Bei acht Feldern und acht Spielern waere jedes
-     Feld belegt; bei sechzehn ist hoechstens jedes zweite.
      ================================================================= */
-  var SCHIFFE_FELDER = 16;    /* so viele Felder hat das Spielbrett */
   var schiffeSpiel = null;    /* nur beim Schiedsrichter: das ganze Wissen */
   var schiffeStand = null;    /* auf JEDEM Geraet: was gezeichnet wird */
 
   function schiffeZeichnen() {
     try { if (window.DMA_SCHIFFE) window.DMA_SCHIFFE(schiffeStand); } catch (e) {}
   }
-  /* RUNDE 88 — DER SCHIEDSRICHTER SIEHT SEIN EIGENES SPIEL.
-     XANDER: „hast du das ueberprueft, dass es auf jedem Geraet von
-     allen nacheinander gespielt werden kann" und „jeder soll auf
-     jeder Seite immer alles sehen und alles hoeren."
-     GEFUNDEN: „senden" ist ein Rundruf, und „empfangen" wirft die
-     eigene Post weg („die eigene Post nicht lesen"). Damit kam beim
-     Spielleiter NICHTS an: nicht, dass er dran ist, nicht, wer
-     getroffen wurde, nicht das Spielende. Nur der Aufbau des
-     Brettes war von Hand nachgereicht. Jetzt legt jeder Rundruf
-     auch auf dem eigenen Geraet an — ein Weg fuer alle. */
-  function schiffeAnAlle(d) {
-    senden({ art: "spiel", spiel: d });
-    schiffeEmpfangen(d, zustand.ichId);
-  }
+  function schiffeAnAlle(d) { senden({ art: "spiel", spiel: d }); }
   function schiffeAnRichter(d) {
     if (!schiffeStand || !schiffeStand.richter) return false;
     if (schiffeStand.richter === zustand.ichId) { schiffeRichter(d, zustand.ichId, zustand.ichName); return true; }
@@ -6915,48 +6872,42 @@ window.LiveChat = (function () {
       return systemZeile("Schiffe versenken geht ab ZWEI Leuten im Raum — "
         + "gerade ist hier nur " + reihe.length + ".");
     }
-    if (reihe.length > SCHIFFE_FELDER) reihe = reihe.slice(0, SCHIFFE_FELDER);
     schiffeSpiel = {
       reihe: reihe.map(function (m) { return { id: m.id, name: m.name }; }),
       verstecke: {}, raus: {}, dran: 0
     };
-    /* DIE AUSLOSUNG. Fisher-Yates ueber alle sechzehn Felder, dann
-       bekommt der Erste der Reihe das erste gezogene Feld, der
-       Zweite das zweite und so fort. Zwei koennen damit gar nicht
-       im selben Feld landen — und keiner erfaehrt etwas ueber ein
-       fremdes Feld, weil niemand mehr eines anklickt. */
-    var felder = [];
-    for (var f = 1; f <= SCHIFFE_FELDER; f++) felder.push(f);
-    for (var i = felder.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var hin = felder[i]; felder[i] = felder[j]; felder[j] = hin;
-    }
-    schiffeSpiel.reihe.forEach(function (m, k) { schiffeSpiel.verstecke[m.id] = felder[k]; });
-
-    schiffeAnAlle({ t: "start", reihe: schiffeSpiel.reihe,
-                    plaetze: SCHIFFE_FELDER, richter: zustand.ichId });
-    /* UND JETZT DAS EINZIGE GEHEIMNIS DES SPIELS: jeder erfaehrt
-       sein eigenes Feld — und nur seines. Das geht als persoenliche
-       Post an genau EIN Geraet, nicht an alle. */
-    schiffeSpiel.reihe.forEach(function (m) {
-      var nr = schiffeSpiel.verstecke[m.id];
-      if (m.id === zustand.ichId) schiffeEmpfangen({ t: "platz", nr: nr }, zustand.ichId);
-      else postSenden(m.id, { art: "spielpost", spiel: { t: "platz", nr: nr } });
-    });
+    schiffeAnAlle({ t: "start", reihe: schiffeSpiel.reihe, plaetze: PLAETZE, richter: zustand.ichId });
+    /* Der Schiedsrichter spielt mit — also baut auch sein Geraet das
+       Brett auf, ueber denselben Weg wie bei allen anderen. */
+    schiffeEmpfangen({ t: "start", reihe: schiffeSpiel.reihe, plaetze: PLAETZE,
+                       richter: zustand.ichId }, zustand.ichId);
     anAlle("aktion", zustand.ichName + " startet Schiffe versenken — "
-      + "die Verstecke sind ausgelost  🚢");
-    schiffeLos();
+      + "jeder sucht sich ein Versteck  🚢");
     return true;
   }
 
   /* ---- DER SCHIEDSRICHTER ---- */
   function schiffeRichter(d, vonId, vonName) {
     if (!schiffeSpiel || !d) return;
-    /* RUNDE 88 — „versteck" gibt es nicht mehr. Die Plaetze werden
-       beim Start ausgelost (siehe schiffeStarten); kein Mitspieler
-       schickt mehr ein Feld an den Schiedsrichter, und deshalb kann
-       ihm der Schiedsrichter auch nicht mehr aus Versehen
-       verraten, dass eines belegt ist. */
+    if (d.t === "versteck") {
+      var nr = Number(d.nr) || 0;
+      if (nr < 1 || nr > PLAETZE) return;
+      /* Zwei duerfen nicht im selben Loch stecken. */
+      var belegt = Object.keys(schiffeSpiel.verstecke).some(function (id) {
+        return id !== vonId && schiffeSpiel.verstecke[id] === nr;
+      });
+      if (belegt) {
+        if (vonId === zustand.ichId) systemZeile("Dort versteckt sich schon jemand — nimm ein anderes Feld.");
+        else postSenden(vonId, { art: "spielpost", spiel: { t: "belegt", nr: nr } });
+        return;
+      }
+      schiffeSpiel.verstecke[vonId] = nr;
+      var fehlen = schiffeSpiel.reihe.filter(function (m) { return !schiffeSpiel.verstecke[m.id]; });
+      schiffeAnAlle({ t: "wartet", fehlt: fehlen.length,
+                      namen: fehlen.map(function (m) { return m.name; }).join(", ") });
+      if (!fehlen.length) schiffeLos();
+      return;
+    }
     if (d.t === "schuss") {
       var dranM = schiffeSpiel.reihe[schiffeSpiel.dran % schiffeSpiel.reihe.length];
       if (!dranM || dranM.id !== vonId) return;          /* nicht dran — nichts passiert */
@@ -6992,8 +6943,7 @@ window.LiveChat = (function () {
     if (getroffenId) schiffeSpiel.raus[getroffenId] = true;
     var uebrig = schiffeSpiel.reihe.filter(function (m) { return !schiffeSpiel.raus[m.id]; });
     if (uebrig.length <= 1) {
-      schiffeAnAlle({ t: "schuss", nr: nr, treffer: Boolean(getroffenId), von: vonName,
-                      wen: getroffenName });
+      schiffeAnAlle({ t: "schuss", nr: nr, treffer: true, von: vonName, wen: getroffenName });
       schiffeAnAlle({ t: "ende", sieger: uebrig.length ? uebrig[0].name : vonName });
       schiffeSpiel = null;
       return;
@@ -7008,28 +6958,15 @@ window.LiveChat = (function () {
   function schiffeEmpfangen(d, vonId) {
     if (!d || !d.t) return;
     if (d.t === "start") {
-      /* RUNDE 88: es gibt keine Versteck-Phase mehr — es wird
-         ausgelost, und danach wird geschossen. */
-      schiffeStand = { phase: "schiessen", richter: d.richter || vonId,
-                       plaetze: Number(d.plaetze) || SCHIFFE_FELDER,
+      schiffeStand = { phase: "verstecken", richter: d.richter || vonId,
+                       plaetze: Number(d.plaetze) || PLAETZE,
                        reihe: d.reihe || [], tafel: {}, meins: 0,
-                       dran: "", dranName: "", raus: [],
-                       text: "Die Verstecke sind ausgelost.",
+                       dran: "", dranName: "", raus: [], text: "",
                        ichBin: zustand.ichId };
       schiffeZeichnen();
       return;
     }
     if (!schiffeStand) return;
-    if (d.t === "platz") {
-      /* Nur mein eigenes Feld, und nur auf meinem Geraet. Diese
-         Zeile steht mit Absicht HINTER der Abfrage oben: kaeme die
-         Post vor dem Startruf an, gaebe es noch gar keinen Stand,
-         in den sie sich eintragen koennte. */
-      schiffeStand.meins = Number(d.nr) || 0;
-      schiffeStand.text = "Du liegst auf Platz " + schiffeStand.meins + ".";
-      schiffeZeichnen();
-      return;
-    }
     if (d.t === "aus") { schiffeStand = null; schiffeZeichnen(); return; }
     if (d.t === "wartet") {
       schiffeStand.text = d.fehlt
@@ -7043,10 +6980,7 @@ window.LiveChat = (function () {
       schiffeStand.reihe = d.reihe || schiffeStand.reihe;
       schiffeStand.dran = d.dran || "";
       schiffeStand.dranName = d.dranName || "";
-      /* Der Text bleibt stehen. Frueher wurde er hier geleert — das
-         war richtig, solange darin nur „Alle sind versteckt" stand.
-         Jetzt steht darin, auf welchem Platz man selbst liegt, und
-         das ist das Einzige, was man ueber das Spiel weiss. */
+      schiffeStand.text = "";
       schiffeZeichnen();
       return;
     }
@@ -7069,10 +7003,11 @@ window.LiveChat = (function () {
       setTimeout(function () { schiffeStand = null; schiffeZeichnen(); }, 9000);
       return;
     }
-    /* „belegt" und „wartet" stammen aus der Zeit, in der man sich
-       sein Versteck aussuchte. Sie werden nicht mehr gesendet; der
-       Empfang bleibt nur stehen, damit ein Geraet mit alter Fassung
-       im Raum nichts kaputtmacht. */
+    if (d.t === "belegt") {
+      schiffeStand.text = "Dort versteckt sich schon jemand — nimm ein anderes Feld.";
+      schiffeStand.meins = 0;
+      schiffeZeichnen();
+    }
   }
 
   /* Ein Tipp aufs Brett — dasselbe Feld bedeutet je nach Abschnitt
@@ -7080,7 +7015,12 @@ window.LiveChat = (function () {
   function schiffeWahl(nr) {
     nr = Number(nr) || 0;
     if (!schiffeStand || nr < 1) return false;
-    /* RUNDE 88: ein Klick kann nur noch eines bedeuten — schiessen. */
+    if (schiffeStand.phase === "verstecken") {
+      schiffeStand.meins = nr;
+      schiffeStand.text = "Du versteckst dich auf Platz " + nr + ".";
+      schiffeZeichnen();
+      return schiffeAnRichter({ t: "versteck", nr: nr });
+    }
     if (schiffeStand.phase === "schiessen") {
       if (schiffeStand.dran !== zustand.ichId) {
         schiffeStand.text = (schiffeStand.dranName || "Jemand anders") + " ist dran.";
