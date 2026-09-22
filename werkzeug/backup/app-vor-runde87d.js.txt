@@ -24914,7 +24914,7 @@
        Klack; jetzt Seil, Holz, Ausloeser und Schwung. */
     /* „Der Katapult hat immer noch kein realistisches Soundeffekt."
        Neu: Winde, Ausloeser, Anschlag am Querbalken. */
-    katapult:       { ton: "katapult3", dauer: 3600, laut: 0.65 },
+    katapult:       { ton: "katapult3", dauer: 2600, laut: 0.65 },
     /* RUNDE 85 — der Fahrstuhl: Tuer zu, Fahrt, Glocke, Tuer auf.
        Die Aufnahme ist 2,40 s lang, die Reise 2,60 s — der Ton ist
        also fertig, bevor die Kabine verschwindet. */
@@ -31235,16 +31235,9 @@
        es aber gar nicht — das Katapult war stumm. Jetzt liegt sie da,
        und sie traegt zuerst das Winden der Seile und dann den Abschuss.
        GEMESSEN: der Abschuss ist ihre lauteste Stelle und liegt bei
-       620 ms.
-       RUNDE 87 — die Animation laeuft jetzt 3,6 s statt 2,6 s, weil
-       das Aufnehmen der Ladung sichtbar lange dauern soll. Damit
-       wandert der Abwurf mit: gemessen schnellt der Arm zwischen
-       1100 und 1200 ms los (die Schale springt in dieser Zeit von
-       -0,79/0,27 auf -0,06/-0,16). Der Abwurf liegt also bei rund
-       1160 ms, und die Aufnahme muss 620 ms vorher beginnen —
-       deshalb 540 statt 0. Die 540 ms davor sind das Winden der
-       Seile, und genau dann geht der Arm herunter. */
-    katapult: 540,
+       620 ms. Damit er mit dem Arm zusammenfaellt (676 ms), faengt
+       die Aufnahme sofort an — deshalb hier 0 statt 676. */
+    katapult: 0,
     /* RUNDE 80 — XANDER: „Peitschen knallen ist okay, hier koennte man
        den Sound ein bisschen fester, haerter machen." Beim Nachmessen
        fiel zugleich auf, dass er gar nicht sass:
@@ -31740,25 +31733,15 @@
         const f = document.createElement("span");
         f.className = "lc-wecker-fuss lc-wecker-fuss-" + seite;
         f.innerHTML =
-          /* RUNDE 87 — XANDER: „die Standfuesse sehen aus wie kleine
-             Glocken oder sowas — der soll doch unten keine Glocken
-             haben, das soll ein Standfuss sein."
-             ER HAT RECHT: das Bein war UNTEN BREITER als oben und
-             trug einen breiten Teller — das ist die Form einer
-             Glocke, genau wie die Schellen oben am Wecker. Ein
-             Standfuss ist andersherum: oben breit am Gehaeuse, nach
-             unten schlanker, und darunter ein schmales Plaettchen,
-             mit dem er aufsetzt. */
           '<svg viewBox="0 0 26 30">'
-          /* Das Bein: oben breit am Gehaeuse, nach unten schlanker. */
-          + '<path d="M5 1 L21 1 L17 20 L9 20 Z" fill="#e0bd4e"'
+          /* Das Bein, unten breiter als oben. */
+          + '<path d="M8 1 L18 1 L22 21 L4 21 Z" fill="#e0bd4e"'
           + ' stroke="#9c7b1e" stroke-width="2.2" stroke-linejoin="round"/>'
-          /* Das Plaettchen, mit dem er aufsetzt — schmaler als das
-             Bein oben, sonst waere es wieder eine Glocke. */
-          + '<rect x="6.2" y="19" width="13.6" height="5.4" rx="2.4"'
+          /* Der Teller, auf dem er steht. */
+          + '<rect x="1.4" y="20" width="23.2" height="7" rx="3.4"'
           + ' fill="#f3d46e" stroke="#9c7b1e" stroke-width="2.2"/>'
           /* Ein Glanzstrich, damit es nach Blech aussieht. */
-          + '<path d="M9.5 4 L11 17" fill="none" stroke="#fff6cf"'
+          + '<path d="M10 4 L8.6 18" fill="none" stroke="#fff6cf"'
           + ' stroke-width="2.4" stroke-linecap="round" opacity=".8"/>'
           + "</svg>";
         schicht.appendChild(f);
@@ -40417,26 +40400,6 @@
          sitzt rechts. Dann steht das Katapult rechts. */
       const vonRechts = r.x > 0;
       schicht.style.setProperty("--kataseite", (vonRechts ? 41.4 : -41.4) + "%");
-      /* =============================================================
-         RUNDE 87 — XANDER: „Der Katapult schiesst nach links. Er soll
-         aber nach rechts schiessen."
-
-         ER HAT RECHT, UND ES WAR EIN DENKFEHLER. Bisher galt: das
-         Geraet steht auf der Seite des Werfenden UND schiesst in
-         dessen Richtung. Damit warf es ueber seinen eigenen Ruecken —
-         ein Katapult tut das nie. Es steht HINTER der Ladung und
-         schleudert sie nach vorn, also von sich weg.
-         Steht es links (weil links jemand sitzt), fliegt die Ladung
-         nach RECHTS — genau das hat er beschrieben, denn er sitzt
-         links („das kommt dann von links … wo man links sitzt",
-         22.09.).
-         Gedreht wird deshalb beides zugleich: das Geraet schaut zur
-         Bildmitte, und die Ladung fliegt in dieselbe Richtung.
-            steht links  -> Zeichnung gespiegelt, wirft nach rechts
-            steht rechts -> Zeichnung normal,     wirft nach links
-         Die ungespiegelte Zeichnung wirft nach links: ihr Prellbalken
-         liegt bei x 12 bis 30, also auf der linken Seite. */
-      const wirftNachRechts = !vonRechts;
       const kreis = platz.querySelector(".lc-kreis");
       /* RUNDE 60 NEU GEZEICHNET.
          GEMELDET: „der Katapult sieht auch nicht schoen animiert aus."
@@ -40458,9 +40421,9 @@
          genau (34|38), und das ist die Achse. */
       schicht.innerHTML =
         '<svg class="lc-katapult-bild" viewBox="0 0 80 60">'
-        /* Steht das Geraet LINKS, wird es gespiegelt — dann schaut es
-           nach rechts und wirft dorthin, von sich weg. */
-        + (wirftNachRechts ? '<g transform="translate(80,0) scale(-1,1)">' : "<g>")
+        /* Sitzt der Werfende rechts, steht das ganze Geraet
+           spiegelverkehrt — dann wirft es nach rechts. */
+        + (vonRechts ? '<g transform="translate(80,0) scale(-1,1)">' : "<g>")
         /* --- Grundschwelle --- */
         + '<path d="M5 45.4 h62 a2.2 2.2 0 0 1 0 4.4 h-62 a2.2 2.2 0 0 1 0 -4.4 Z"'
         + ' fill="#7a4e22" stroke="#4e3114" stroke-width="1.5"/>'
@@ -40522,74 +40485,53 @@
       if (quelle) last.style.backgroundImage = "url(" + quelle.replace(/[()"']/g, "") + ")";
       else last.textContent = (lcHammerWer(platz) || "?").charAt(0).toUpperCase();
       schicht.appendChild(last);
-      /* „seite" dreht Flugbahn und Drehung mit. Die Zahlen unten sind
-         fuer einen Wurf nach LINKS geschrieben (negatives x, negative
-         Grad); wirft es nach rechts, kehrt sich beides um. */
-      const seite = wirftNachRechts ? -1 : 1;
+      const seite = vonRechts ? -1 : 1;
       const wo = (x, y, gr, dreh) => "translate(" + (x * seite * 100).toFixed(1) + "%, "
         + (y * 100).toFixed(1) + "%) scale(" + gr.toFixed(2) + ") rotate("
         + (dreh * seite).toFixed(0) + "deg)";
       last.animate([
-        /* =============================================================
-           RUNDE 87 — DIE LADUNG WIRD WIRKLICH AUFGENOMMEN.
-           XANDER, dreimal in zwei Tagen: „Er sollte realistisch die
-           Ladung erst mal aufnehmen und dann wegschmeissen, das kann
-           auch ein bisschen laenger sein", „der Katapult nimmt das
-           Profilbild immer noch nicht als Ladung auf", „der Katapult
-           kann ein bisschen groesser sein, so dass er das Profilbild
-           realistisch aufnimmt."
-
-           NACHGEMESSEN, warum es nie so aussah: die Ladung bewegte
-           sich beim „Aufnehmen" um 0,075 Bildbreiten nach unten und
-           blieb sonst in der Bildmitte. Die SCHALE liegt im
-           gespannten Zustand aber gar nicht dort, sondern
-           0,80 Bildbreiten zur Seite und 0,26 darunter (gemessen bei
-           700 bis 1100 ms). Die Ladung lag also neben der Schale und
-           sprang dann einfach weg. Jetzt wandert sie wirklich
-           hinueber und faellt hinein:
-              0,15  (540 ms)   die Kopie uebernimmt, der Platz wird leer
-              0,19  (684 ms)   sie hebt ab, Richtung Schale
-              0,235 (846 ms)   sie steht ueber der Schale
-              0,26  (936 ms)   sie faellt hinein
-              0,285 (1026 ms)  sie federt nach
-              0,31  (1116 ms)  sie liegt STILL in der Schale
-              0,33  (1188 ms)  losgelassen — dort, wo die Schale beim
-                               Abwurf steht (gemessen: 0,06 / -0,16)
-           Die Zahl „x" zaehlt dabei ZUR MASCHINE HIN als positiv;
-           „seite" dreht das um, je nachdem wo sie steht. Deshalb
-           stimmen dieselben Zahlen fuer links und fuer rechts. */
-        { offset: 0,     opacity: 0, transform: wo(0, 0, 1, 0) },
-        { offset: 0.14,  opacity: 0, transform: wo(0, 0, 1, 0) },
-        { offset: 0.15,  opacity: 1, transform: wo(0, 0, 1, 0) },
-        { offset: 0.19,  opacity: 1, transform: wo(0.36, -0.10, 0.92, 6), easing: "ease-in-out" },
-        { offset: 0.235, opacity: 1, transform: wo(0.78, 0.10, 0.82, 12), easing: "ease-in" },
-        { offset: 0.26,  opacity: 1, transform: wo(0.80, 0.27, 0.78, 14), easing: "ease-out" },
-        { offset: 0.285, opacity: 1, transform: wo(0.80, 0.235, 0.79, 13) },
-        { offset: 0.31,  opacity: 1, transform: wo(0.80, 0.26, 0.78, 14) },
-        /* Der Arm steht im Stilblatt nominell erst bei 34 % im
-           Abwurf; seine Feder (cubic-bezier mit 1,4) ueberholt die
-           Marke aber — deshalb 33 %, sonst bliebe die Ladung einen
-           Wimpernschlag in der Luft stehen, waehrend der Arm schon
-           weg ist. */
-        { offset: 0.33,  opacity: 1, transform: wo(0.06, -0.16, 0.78, -30), easing: "ease-out" },
-        { offset: 0.35,  opacity: 1, transform: wo(-0.45, -0.42, 0.74, -90) },
-        { offset: 0.42,  opacity: 1, transform: wo(-1.25, -0.82, 0.62, -190) },
-        { offset: 0.53,  opacity: 0, transform: wo(-2.05, -1.55, 0.34, -380) },
+        /* 0–12 %: das echte Bild liegt noch da, die Kopie wartet. */
+        { offset: 0,    opacity: 0, transform: wo(0, 0, 1, 0) },
+        { offset: 0.11, opacity: 0, transform: wo(0, 0, 1, 0) },
+        /* 12 %: der Arm ist heruntergezogen, die Schale liegt auf dem
+           Bild — jetzt uebernimmt die Kopie. */
+        { offset: 0.12, opacity: 1, transform: wo(0, 0, 1, 0) },
+        /* Sie FAELLT in die Schale. Die liegt nicht auf Bildmitte: das
+           Geraet steht 30 % tiefer als das Bild, seine Achse also bei
+           0,849 Bildbreiten und die gespannte Schale bei 0,716 — das
+           sind 0,216 Bildbreiten UNTER der Bildmitte. Genau so weit
+           sinkt die Ladung, und sie wird kleiner, weil sie in die
+           Schale passen muss. Daran sieht man, dass sie aufgenommen
+           wird und nicht nur daliegt. */
+        { offset: 0.17, opacity: 1, transform: wo(0, 0.075, 0.78, -7), easing: "ease-in" },
+        /* Ein kurzes Nachwippen: so sieht ein Gewicht aus, das in eine
+           Schale faellt — ohne das liegt es nur da. */
+        { offset: 0.20, opacity: 1, transform: wo(0, 0.045, 0.8, -5), easing: "ease-out" },
+        { offset: 0.22, opacity: 1, transform: wo(0, 0.062, 0.79, -6) },
+        /* 26 %: losgelassen — dort, wo die Schale beim Abwurf steht
+           (Winkel -18 Grad, also 0,71 Bildbreiten zur Seite und 0,18
+           ueber der Bildmitte). GEMESSEN, wann der Arm wirklich
+           loslaesst: bei 560 ms steht er noch auf +76 Grad, bei 620 ms
+           schon auf -22,6 — die Feder (cubic-bezier mit 1.4)
+           ueberholt die Marke. Deshalb 24,5 % und nicht 26 %, sonst
+           bliebe die Ladung einen Wimpernschlag in der Luft stehen,
+           waehrend der Arm schon weg ist. */
+        { offset: 0.245, opacity: 1, transform: wo(-0.707, -0.178, 0.78, -60), easing: "ease-out" },
+        { offset: 0.34, opacity: 1, transform: wo(-1.25, -0.82, 0.62, -190) },
+        { offset: 0.46, opacity: 0, transform: wo(-2.05, -1.55, 0.34, -380) },
         /* Und dann faellt sie wieder herunter — von oben auf den
            eigenen Platz, nicht aus der Wurfrichtung. */
-        { offset: 0.66,  opacity: 0, transform: wo(0, -1.7, 0.42, -520) },
-        { offset: 0.68,  opacity: 1, transform: wo(0, -1.6, 0.46, -540) },
-        { offset: 0.85,  opacity: 1, transform: wo(0, 0.07, 1.07, -700), easing: "ease-in" },
-        { offset: 0.90,  opacity: 1, transform: wo(0, 0, 1, -720), easing: "ease-out" },
-        { offset: 1,     opacity: 1, transform: wo(0, 0, 1, -720) }
-      ], { duration: 3600, easing: "linear", fill: "forwards" });
-      /* Solange die Kopie in der Schale liegt und fliegt, ist der
-         Platz leer — ab 15 % (540 ms), wo die Kopie uebernimmt, bis
-         sie bei 90 % (3240 ms) wieder auf ihrem Platz sitzt. */
-      setTimeout(() => kreis.classList.add("lc-kata-leer"), 540);
-      setTimeout(() => kreis.classList.remove("lc-kata-leer"), 3180);
-      setTimeout(() => { if (last.parentNode) last.parentNode.removeChild(last); }, 3560);
-    }, 3600, "katapult");
+        { offset: 0.60, opacity: 0, transform: wo(0, -1.7, 0.42, -520) },
+        { offset: 0.62, opacity: 1, transform: wo(0, -1.6, 0.46, -540) },
+        { offset: 0.78, opacity: 1, transform: wo(0, 0.07, 1.07, -700), easing: "ease-in" },
+        { offset: 0.84, opacity: 1, transform: wo(0, 0, 1, -720), easing: "ease-out" },
+        { offset: 1,    opacity: 1, transform: wo(0, 0, 1, -720) }
+      ], { duration: 2600, easing: "linear", fill: "forwards" });
+      /* Solange die Kopie fliegt, ist der Platz leer. */
+      setTimeout(() => kreis.classList.add("lc-kata-leer"), 300);
+      setTimeout(() => kreis.classList.remove("lc-kata-leer"), 2200);
+      setTimeout(() => { if (last.parentNode) last.parentNode.removeChild(last); }, 2560);
+    }, 2600, "katapult");
   }
 
   /* =================================================================
@@ -44285,19 +44227,7 @@
          und genau daran hoert man, dass es ein MUND ist: Frau
          720/1250 Hz, Mann 470/880 Hz. GEMESSEN (50-ms-Schritte):
          Frau -40 -28 -21 -15 -28 -37 …, Mann -49 -36 -25 -14 -31 … */
-      /* RUNDE 87 — XANDER: „Der Kuss hat immer noch keinen Sound,
-         keinen S-M-A-C-K Sound mit M-M-M-H Geraeusch — also wenn man
-         jemanden mit Sound kuesst, mit so einem Humming."
-         Der Schmatz WAR da; was fehlte, war das Brummen danach. Beide
-         Aufnahmen sind neu gebaut (werkzeug/kuss-bauen.py): erst der
-         Schmatz, dann ein stimmhaftes „mmmh" mit Nasenresonanz, das
-         bis 0,95 s ausklingt. GEMESSEN liegt die Spitze jetzt bei
-         0,079 s (Frau) bzw. 0,082 s (Mann) und ist 5 dB lauter als
-         das Brummen — der Kuss bleibt also der Kuss.
-         Und weil die Spitze 79 ms nach dem Dateianfang liegt, faengt
-         die Aufnahme 79 ms FRUEHER an: 441 statt 520. So schmatzt es
-         genau dann, wenn der Mund am Bild ankommt. */
-      lcStimmeZu(meiner, "kussmann", "kussfrau", 441, 0.62);
+      lcStimmeZu(meiner, "kussmann", "kussfrau", 520, 0.62);
     }, 3200, "kuss");
   }
 
