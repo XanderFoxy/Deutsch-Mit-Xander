@@ -201,6 +201,13 @@ vorne gekappt (`werkzeug/ton-vorlauf-kappen.sh`, jetzt mit setzbarer Grenze:
 **Sonde:** `werkzeug/pruefe-runde90-aufschlagtoene.js` — sie liest die
 Ankunftstoene aus `LC_ANKUNFT_TON` und misst an der Wellenform, dass der
 laute Teil innerhalb von 60 ms kommt.
+
+**Werkzeug:** `node werkzeug/ton-zeitpunkte.js [wort]` rechnet fuer jede
+Einplanung *geplant + Vorlauf = wirklich zu hoeren*. Damit ist eine Meldung
+„der Ton kommt zu frueh/zu spaet" in einer Minute nachgemessen statt geraten.
+So steht jetzt auch am Peitschenknall im Cowboyhut, dass seine 600 ms in
+Wirklichkeit 1002 ms sind — die Zahl stimmt, sie bedeutet nur etwas anderes,
+als sie aussieht.
 Und `werkzeug/pruefe-runde90-bumerangton.js` misst dasselbe von der anderen
 Seite: dass das Sausen **verklungen** ist, wenn es klopft.
 

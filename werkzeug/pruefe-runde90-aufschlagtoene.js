@@ -19,6 +19,16 @@
    bei einem Aufschlagton muss der laute Teil GLEICH kommen. Alles
    ueber 60 Millisekunden hoert man als Verspaetung.
 
+   WO DIE SCHWELLE LIEGT, UND WARUM SIE NACHGEZOGEN WURDE: zuerst galt
+   „ueber 20 Prozent der eigenen Spitze". Das meldete „birneschrauben"
+   mit 601 ms Vorlauf — nachgemessen war die Datei aber von der ersten
+   Zehntelsekunde an zu hoeren (19 Prozent); nur ihr lautester Schraub
+   liegt spaet, und daran wurden alle frueheren gemessen. Eine Sonde,
+   die so etwas meldet, erzeugt Fehlalarm. Jetzt gilt 5 Prozent der
+   Spitze (rund -26 dB) — das ist die Grenze, ab der ein Ohr etwas
+   hoert, und sie trifft den echten Fall („aufsetzen", 68 ms stumm)
+   weiterhin.
+
    Welche Toene Aufschlagtoene sind, steht nicht im Gefuehl, sondern
    in app.js: LC_ANKUNFT_TON nennt die Toene, die beim ANKOMMEN einer
    Reise gespielt werden — genau die muessen sitzen. Dazu kommen die
@@ -66,7 +76,7 @@ function vorlauf(name) {
     if (b > spitze) spitze = b;
   }
   for (let i = 0; i < x.length; i++) {
-    if (Math.abs(x[i]) > spitze * 0.2) {
+    if (Math.abs(x[i]) > spitze * 0.05) {
       return { vor: i / RATE * 1000, laenge: x.length / RATE * 1000 };
     }
   }

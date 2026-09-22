@@ -46597,7 +46597,13 @@
          nicht danach: bei 600 ms sitzt er im Ruf, so wie beim Rodeo
          auch zuerst gerufen und dann geknallt wird. „peitschehieb"
          ist 0,95 s lang, endet also bei 1,55 s und laeuft dem Ruf
-         (Ende 1,98 s) nicht davon. */
+         (Ende 2,36 s seit Runde 88) nicht davon.
+         RUNDE 91 — NACHGEMESSEN mit werkzeug/ton-zeitpunkte.js: die
+         Datei hat 402 ms Vorlauf (sie holt aus, bevor sie knallt).
+         Der Knall ist also bei 1002 ms zu hoeren — mitten im Ruf, wie
+         gewollt. Die Zahl 600 ist damit richtig, aber sie bedeutet
+         nicht 600: das steht hier, damit es beim naechsten Mal nicht
+         falsch nachgerechnet wird. */
       lcTonSpaeter("peitschehieb", 600, 0.72);
       /* RUNDE 88 — XANDER: „das YIHAAH Geraeusch ist immer noch
          abgeschnitten."

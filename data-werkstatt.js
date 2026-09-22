@@ -49,24 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 91 — die Töne am Aufschlag, gemessen an der Wellenform (Fassung 499)",
+  stand: "Runde 91b — jetzt lässt sich jeder Tonzeitpunkt nachrechnen (Fassung 500)",
 
   inArbeit: [
-    { seit: "2026-09-22T23:06", nurBetreiber: true,
+    { seit: "2026-09-22T23:09", nurBetreiber: true,
       text: "Sammellauf vor jedem Hochladen: bash werkzeug/alle-pruefen.sh" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T23:06",
-      text: "ton/aufsetzen: die ersten 62 ms waren still — der Schlag kam 80 ms zu spät, jetzt 16 ms (Riesenhand und Gorillapranke setzen jetzt hörbar auf)" },
-    { seit: "2026-09-22T23:06",
-      text: "Neue Sonde pruefe-runde90-aufschlagtoene: misst JEDEN Ankunftston an der Wellenform, nicht am Quelltext" },
-    { seit: "2026-09-22T23:06",
-      text: "Neue Sonde pruefe-runde90-bumerangton: das Sausen ist verklungen (903 ms), wenn es klopft (860 ms) — genau wie du es verlangt hast" },
-    { seit: "2026-09-22T23:06",
-      text: "KLASSENZIMMER-LISTE.md hat jetzt ein Themenregister: Adler, Frosch, Lok, Kopfhörer, Luftballon … mit den Messungen dahinter" },
-    { seit: "2026-09-22T23:06",
-      text: "183 Sonden, 183 grün" },
+    { seit: "2026-09-22T23:09",
+      text: "Neues Werkzeug werkzeug/ton-zeitpunkte.js: geplant + Vorlauf = wirklich zu hören — für jede Einplanung in app.js" },
+    { seit: "2026-09-22T23:09",
+      text: "Die Schwelle der Aufschlag-Sonde nachgezogen (5 statt 20 Prozent): „birneschrauben“ war ein Fehlalarm, „aufsetzen“ bleibt ein echter Fund" },
+    { seit: "2026-09-22T23:09",
+      text: "Am Peitschenknall im Cowboyhut steht jetzt der gemessene Wert: die 600 ms sind in Wirklichkeit 1002 ms" },
   ],
 };
