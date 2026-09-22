@@ -16644,18 +16644,6 @@
      Nur der Kasten selbst zaehlt als „daneben": ein Tipp INNEN
      schliesst nichts, sonst koennte man nichts mehr auswaehlen.
      ================================================================= */
-  /* RUNDE 88 — WANN HAT ZULETZT EIN MENSCH ETWAS ANGEFASST.
-     Daran entscheidet sich, ob ein Rollen ein Rollen des Benutzers ist
-     oder eines, das die Seite selbst macht. Nur das erste darf ein
-     offenes Menue zumachen. */
-  let lcLetzteGeste = 0;
-  ["pointerdown", "wheel", "touchstart", "keydown"].forEach((art) => {
-    try {
-      document.addEventListener(art, () => { lcLetzteGeste = Date.now(); },
-                                { capture: true, passive: true });
-    } catch (e) {}
-  });
-
   const LC_BEDIENBARES = "button, a, input, select, textarea, label,"
     + " [role='button'], [role='menuitem'], [role='tab'], [contenteditable='true'],"
     + " .lc-waehler-knopf, .lc-kachel, .lc-platzmenue-knopf, .lc-bildkachel,"
@@ -16760,35 +16748,26 @@
      was an den Rand des Dokuments gehaengt wird. Wer kuenftig ein
      Panel baut, bekommt den Knopf geschenkt.
      ================================================================= */
-  /* =================================================================
-     RUNDE 88 — DER SCHLIESSEN-KNOPF KOMMT WIEDER WEG
-     -----------------------------------------------------------------
-     XANDER: „Du sollst diesen Schliessen-Button entfernen — das habe
-     ich niemals von dir verlangt. Ich habe gesagt, dass man das Panel
-     durch Klicken in den Leerbereich von dem Panel schliessen soll,
-     nicht anders. Ich moechte das intuitiv wie bei Apple, also mache
-     das wieder, wie es vorher war, auch in den Animations-Menues.
-     Sowas hab ich nie verlangt."
-
-     Und genauer, damit es keine zweite Auslegung gibt:
-     „Generell meine ich bei den Modulen, dass du sie schliessen
-     sollst, indem man ins Leere klickt innerhalb der Module, da wo
-     Platz ist, wo man nicht irgendwas anwaehlen soll. Saemtlicher
-     Platz, der beschriftet ist oder der keine Buttons oder
-     Navigationselemente enthaelt, die man anklicken kann, soll dieses
-     Panel mit einem Klick in das Panel geschlossen werden koennen,
-     ohne den Hintergrund und die Elemente im Hintergrund zu
-     beeinflussen. Das bei allen aufklappbaren Panels."
-
-     Also KEIN Knopf mehr — und zwar auch dort, wo schon einer haengt:
-     der Beobachter nimmt ihn jetzt ab, statt ihn anzuhaengen. Was
-     schliesst, steht darunter, an einer einzigen Stelle fuer alle
-     Panels. */
   function lcPanelZuKnopf(kasten) {
-    if (!kasten) return;
-    kasten.querySelectorAll
-      && kasten.querySelectorAll(".lc-panel-zu").forEach((b) => b.remove());
-    delete kasten.dataset.lcZuKnopf;
+    if (!kasten || kasten.dataset.lcZuKnopf) return;
+    /* Ein Menue mit einer einzigen Zeile braucht keinen Knopf — da
+       ist der Rahmen selbst kaum groesser als der Finger. */
+    kasten.dataset.lcZuKnopf = "1";
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "lc-panel-zu";
+    b.title = "Dieses Panel schliessen";
+    b.setAttribute("aria-label", "Panel schliessen");
+    b.textContent = "\u2715  Schliessen";
+    b.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      /* Ein <details> wird nicht entfernt — es wird zugeklappt.
+         Waere es weg, kaeme man nie wieder an die Befehle. */
+      if (kasten.tagName === "DETAILS") { kasten.open = false; return; }
+      const hinter = kasten.closest(".lc-waehler-hinter");
+      (hinter || kasten).remove();
+    }, true);
+    kasten.appendChild(b);
   }
   (function lcPanelKnoepfe() {
     const pflegen = (wurzel) => {
@@ -16816,47 +16795,17 @@
        Befehlsliste galt sie NIE — sie ist ein <details> mitten im
        Chat und nicht eines der schwebenden Panels. Genau deshalb kam
        er dort nicht heraus. */
-    /* =================================================================
-       RUNDE 88 — EINE REGEL FUER ALLE PANELS
-       -----------------------------------------------------------------
-       XANDER: „Saemtlicher Platz, der beschriftet ist oder der keine
-       Buttons oder Navigationselemente enthaelt, die man anklicken
-       kann, soll dieses Panel mit einem Klick in das Panel geschlossen
-       werden koennen, ohne den Hintergrund und die Elemente im
-       Hintergrund zu beeinflussen. Das bei allen aufklappbaren
-       Panels."
-
-       Frueher stand diese Regel dreimal verschieden da: fuer die
-       Waehler seit Runde 73, fuers Platzmenue seit Runde 79, fuer die
-       Befehlsliste seit Runde 87 — und jede hatte ihre eigenen
-       Ausnahmen. Eine davon war „Text zum Lesen schliesst nicht"; er
-       sagt jetzt ausdruecklich, dass auch beschrifteter Platz
-       schliessen soll. Also EINE Regel, hier, fuer alle.
-
-       Die einzige Ausnahme, die bleibt: wer gerade Text MARKIERT,
-       will lesen und nicht zumachen. */
-    const LC_PANELS = ".lc-waehler, .lc-platzmenue, .lc-befehle, .lc-lesewahl";
     document.addEventListener("pointerdown", (e) => {
+      const offen = [...document.querySelectorAll("details.lc-befehle[open]")];
+      if (!offen.length) return;
       const ziel = e.target;
-      if (!ziel || !ziel.closest) return;
-      const panel = ziel.closest(LC_PANELS);
-      if (!panel) return;
-      if (ziel.closest(LC_BEDIENBARES)) return;
-      try {
-        const aus = window.getSelection && window.getSelection();
-        if (aus && String(aus).length) return;
-      } catch (x) {}
-      /* „ohne den Hintergrund und die Elemente im Hintergrund zu
-         beeinflussen" — der Tipp endet hier und geht nirgends weiter. */
-      e.preventDefault();
-      e.stopPropagation();
-      /* Ein <details> wird nicht entfernt, sondern zugeklappt — waere
-         es weg, kaeme man nie wieder an die Befehle. */
-      if (panel.tagName === "DETAILS") { panel.open = false; return; }
-      const hinter = panel.closest(".lc-waehler-hinter");
-      if (hinter) { hinter.remove(); return; }
-      if (panel.id === "lcPlatzMenue") { lcPlatzMenueZu(); return; }
-      panel.remove();
+      offen.forEach((d) => {
+        if (!ziel || !d.contains(ziel)) return;          /* daneben: das macht schon der Chat */
+        if (ziel.closest && ziel.closest(LC_BEDIENBARES)) return;
+        const text = (ziel.textContent || "").trim();
+        if (text && ziel.children.length === 0) return;  /* Text zum Lesen */
+        d.open = false;
+      });
     }, true);
   })();
 
@@ -29142,7 +29091,6 @@
        Wimpernschlag wieder weg. Der Merker sorgt dafuer, dass gar
        nichts mehr angehaengt wird, wenn schon abgehaengt wurde. */
     let abgehaengt = false;
-    const auf = Date.now();
     const abhaengen = () => {
       abgehaengt = true;
       document.removeEventListener("pointerdown", weg, true);
@@ -29150,11 +29098,7 @@
       window.removeEventListener("scroll", weg, true);
     };
     const weg = (e) => {
-      /* RUNDE 88 — „contains" will einen Knoten. Bei einem Rollen des
-         FENSTERS ist das Ziel aber das Fenster selbst und kein Knoten;
-         ohne diese Schranke wirft die Zeile, und dann bleibt der Zuhoerer
-         haengen, statt zu schliessen. */
-      if (e && e.target && e.target.nodeType === 1 && kasten.contains(e.target)) {
+      if (e && e.target && kasten.contains(e.target)) {
         /* RUNDE 79 — im Kasten, aber auf nichts Bedienbarem: das ist
            „ins Leere", und dann macht es zu. Ein Tipp auf eine Kachel
            laeuft weiter wie bisher; der schliesst das Menue ohnehin
@@ -29180,24 +29124,6 @@
          Ab jetzt macht nur das Rollen der SEITE zu. */
       if (e && e.type === "scroll" && e.target && e.target !== document
           && e.target !== document.documentElement && e.target !== document.body) return;
-      /* =============================================================
-         RUNDE 88 — EIN ROLLEN OHNE FINGER SCHLIESST NICHTS
-         -------------------------------------------------------------
-         GEMESSEN: in einem von sechs Laeufen war „Musik fuer alle"
-         zwanzig Millisekunden nach dem Aufgehen wieder weg. Der Grund
-         steht hier: die Seite rollt auch von SELBST — der Chat
-         springt ans Ende, ein Bild laedt nach, das Klassenzimmer
-         rueckt sich zurecht. Jedes dieser Rollen riss das eben
-         geoeffnete Menue mit.
-         Zugemacht wird jetzt nur noch, wenn das Rollen zu einer
-         ECHTEN Geste gehoert (Finger, Rad oder Taste, hoechstens
-         700 ms her) — und nie in den ersten 300 ms, in denen das
-         Menue sich selbst noch zurechtrueckt. */
-      if (e && e.type === "scroll") {
-        const jetzt = Date.now();
-        if (jetzt - auf < 300) return;
-        if (jetzt - lcLetzteGeste > 700) return;
-      }
       abhaengen();
       lcMenueAufraeumen = null;
       lcPlatzMenueZu();

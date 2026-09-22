@@ -13,18 +13,28 @@
       das ist viel zu umstaendlich — UND DA IST NICHT MAL EIN
       SCHLIESSEN UNTEN IN DEM RAHMEN."
 
-   Der letzte Halbsatz ist der Kern. „Ins Leere tippen" gibt es seit
-   Runde 73 und 79 und es funktioniert — aber man SIEHT es nicht. Wer
-   es nicht weiss, sucht einen Knopf. Gezaehlt: kein einziges Panel im
-   Klassenzimmer hatte einen.
+   RUNDE 88 — UND DANN HAT ER GENAU DAS ZURUECKGENOMMEN:
+   „Du sollst diesen Schliessen-Button entfernen — das habe ich niemals
+    von dir verlangt. Ich habe gesagt, dass man das Panel durch Klicken
+    in den Leerbereich von dem Panel schliessen soll, nicht anders. Ich
+    moechte das intuitiv wie bei Apple, also mache das wieder, wie es
+    vorher war, auch in den Animations-Menues."
+   Und genauer: „Saemtlicher Platz, der beschriftet ist oder der keine
+   Buttons oder Navigationselemente enthaelt, die man anklicken kann,
+   soll dieses Panel mit einem Klick in das Panel geschlossen werden
+   koennen, ohne den Hintergrund und die Elemente im Hintergrund zu
+   beeinflussen. Das bei allen aufklappbaren Panels."
 
-   Gemessen wird deshalb an einem 360 x 740 grossen Bildschirm — das
+   Die Regeln 1 und 2 verlangten den Knopf. Sie verlangen jetzt das
+   Gegenteil — das ist kein Rueckschritt, sondern seine spaetere
+   Ansage. Gemessen wird an einem 360 x 740 grossen Bildschirm — das
    ist ein gewoehnliches Android-Telefon —, und zwar:
-     1. hat das Panel einen sichtbaren Schliessen-Knopf in SEINEM
-        Rahmen?
-     2. schliesst dieser Knopf es auch wirklich?
+     1. ist KEIN Schliessen-Knopf mehr im Rahmen?
+     2. schliesst ein Tipp auf beschrifteten, nicht bedienbaren Platz
+        INNERHALB des Panels es wirklich?
      3. passt das Panel ganz auf den Bildschirm?
-     4. und beim Text-Panel: bleibt es in seiner Hoehe und rollt in
+     4. bleibt das Panel offen, wenn die SEITE von selbst rollt?
+     5. und beim Text-Panel: bleibt es in seiner Hoehe und rollt in
         sich, statt den Chat aus dem Bild zu schieben?
    ===================================================================== */
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -77,12 +87,26 @@ const sage = (gut, text, dazu) => {
       const erg = { name,
         drin: r.left >= -1 && r.top >= -1 && r.right <= w + 1 && r.bottom <= h + 1,
         kasten: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)],
-        knopf: Boolean(zu), wort: zu ? zu.textContent.trim() : "" };
-      if (zu) {
-        zu.click();
-        await new Promise((f) => setTimeout(f, 120));
-        erg.zuDanach = !document.querySelector(".lc-platzmenue");
-      }
+        knopf: Boolean(zu) };
+      /* ROLLT DIE SEITE VON SELBST, BLEIBT DAS MENUE. Genau daran ist
+         es frueher gescheitert: der Chat springt ans Ende, und das
+         eben geoeffnete Menue war weg. Hier wird das Rollen ohne
+         Fingerdruck ausgeloest — also genau so, wie die Seite es
+         selbst tut. */
+      /* So, wie eine Seite wirklich rollt: das Ereignis entsteht am
+         Dokument und steigt zum Fenster auf. */
+      document.dispatchEvent(new Event("scroll", { bubbles: true }));
+      await new Promise((f) => setTimeout(f, 80));
+      erg.nachRollen = Boolean(document.querySelector(".lc-platzmenue"));
+      /* UND EIN TIPP AUF BESCHRIFTETEN LEERRAUM SCHLIESST. Gesucht
+         wird die Kopfzeile des Panels — beschriftet, aber nichts zum
+         Anklicken. */
+      const leer = el.querySelector(".lc-platzmenue-kopf") || el;
+      erg.leerWort = (leer.textContent || "").trim().slice(0, 40);
+      leer.dispatchEvent(new PointerEvent("pointerdown",
+        { bubbles: true, cancelable: true }));
+      await new Promise((f) => setTimeout(f, 120));
+      erg.zuDanach = !document.querySelector(".lc-platzmenue");
       return erg;
     };
     const aus = [];
@@ -107,8 +131,12 @@ const sage = (gut, text, dazu) => {
       sage(false, m.name + ": das Menü geht auf", m.fehler || "es kam keines");
       return;
     }
-    sage(m.knopf, m.name + ": hat ein „Schliessen“ im Rahmen", m.wort);
-    sage(m.zuDanach === true, m.name + ": und der Knopf schliesst es auch wirklich");
+    sage(m.knopf === false, m.name + ": KEIN Schliessen-Knopf mehr im Rahmen");
+    sage(m.nachRollen === true,
+      m.name + ": ein Rollen der Seite schliesst es NICHT mehr von selbst");
+    sage(m.zuDanach === true,
+      m.name + ": ein Tipp auf beschrifteten Leerraum schliesst es",
+      "getippt auf \u201e" + (m.leerWort || "") + "\u201c");
     sage(m.drin, m.name + ": passt ganz auf den Bildschirm",
       m.kasten.join(" ") + " bei " + menues.schirm.join(" x "));
   });
@@ -155,13 +183,16 @@ const sage = (gut, text, dazu) => {
       "und rollt in sich, statt den Chat hinauszuschieben", "overflow-y: " + text.rollt);
     sage(text.kopfKlebt === "sticky",
       "die Zeile „Was man tippen kann“ bleibt oben stehen", "position: " + text.kopfKlebt);
-    sage(text.knopf, "es hat ein „Schliessen“ im Rahmen");
+    /* RUNDE 88 — auch hier verlangt er das Gegenteil von vorher:
+       „Du sollst diesen Schliessen-Button entfernen … Ich habe gesagt,
+       dass man das Panel durch Klicken in den Leerbereich von dem
+       Panel schliessen soll, nicht anders." */
+    sage(text.knopf === false, "KEIN Schliessen-Knopf mehr im Rahmen");
     sage(text.zuNachLeer === true, "ein Tipp ins Leere schliesst es");
-    sage(text.zuNachKnopf === true, "und der Knopf schliesst es auch");
   }
 
   await br.close(); srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)\n"
-                     : "\nJedes Panel hat sein Schliessen — und bleibt auf dem Bildschirm.\n");
+                     : "\nKein Knopf mehr — ein Tipp ins Leere macht zu, wie bei Apple.\n");
   process.exit(fehler ? 1 : 0);
 })();

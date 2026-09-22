@@ -29726,20 +29726,3 @@ code, pre {
   font-size: 0.84rem;
   opacity: .85;
 }
-
-/* =====================================================================
-   RUNDE 88 — KEIN SCHLIESSEN-KNOPF MEHR
-   ---------------------------------------------------------------------
-   XANDER: „Du sollst diesen Schliessen-Button entfernen — das habe ich
-   niemals von dir verlangt. Ich habe gesagt, dass man das Panel durch
-   Klicken in den Leerbereich von dem Panel schliessen soll, nicht
-   anders. Ich moechte das intuitiv wie bei Apple, also mache das
-   wieder, wie es vorher war, auch in den Animations-Menues."
-
-   Gebaut wird er nicht mehr (app.js nimmt ihn sogar ab, wo noch einer
-   haengt). Diese Zeile ist der Riegel dahinter: taucht doch irgendwo
-   einer auf — aus einer alten zwischengespeicherten Datei etwa —,
-   sieht man ihn trotzdem nicht. Die Gestaltung von frueher steht
-   weiter oben und bleibt stehen; sie greift nur nirgends mehr.
-   ===================================================================== */
-.lc-panel-zu { display: none !important; }
