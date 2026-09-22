@@ -1040,13 +1040,6 @@ window.LiveChat = (function () {
        nicht gemacht, dass man jemand aufblasen kann wie ne
        Luftballon." */
     ballonpumpe: { wirkung: "luftballon", satz: "pumpt auf wie einen Luftballon", emoji: "\ud83c\udf88" },
-    /* RUNDE 88 — XANDER: „dann mit dem Zauberstab auf den Zylinder
-       schlaegt und dann ein Kaninchen an seinen Ohren herausholt und
-       dann so Beifall geklatscht wird. Vor Kunststueck halt."
-       Und: „Der Zauberer mit Kaninchen, das sollte ein
-       Profilbild-Effekt sein, keine Reise." Deshalb ein eigener
-       Befehl neben „/zylinder", der die REISE ist. */
-    kaninchen:  { wirkung: "kaninchen",  satz: "zaubert aus dem Zylinder", emoji: "\ud83d\udc07" },
     strohhalm:  { wirkung: "strohhalm",  satz: "saugt mit dem Strohhalm an", emoji: "\ud83e\udd64" },
     blubbern:   { wirkung: "blubbern",   satz: "pustet in den Strohhalm von", emoji: "\ud83e\uded7" },
     knuellen:   { wirkung: "knuell",     satz: "zerkn\u00fcllt wie ein Blatt Papier", emoji: "\ud83d\uddd2\ufe0f" },
@@ -9033,15 +9026,6 @@ window.LiveChat = (function () {
        faellt zurueck. Deshalb ein eigenes Wort: /ballonpumpe. */
     { gr: "reden", w: "ballonpumpe", kurz: "ballonpumpe", nutzt: "/ballonpumpe Name",
       was: "Ballonpumpe — dreimal pumpen, dann saust der andere als Ballon durchs Feld" },
-    /* RUNDE 88 — XANDER: „Die Animation mit dem Kaninchen … als
-       einfacher Profil-Effekt … und dass ich andere damit
-       beeinflussen kann. Und die Reise ist ein anderer Effekt."
-       Ohne diese Zeile gaebe es zwar die Zeichnung, aber
-       befehlBekannt() wuerde „/kaninchen" als Vertipper abweisen und
-       die Zeile ginge gar nicht erst hinaus — genau der Fehler, den
-       pruefe-effekttueren seit Fassung 360 bewacht. */
-    { gr: "reden", w: "kaninchen", kurz: "zauberstab", nutzt: "/kaninchen [Name]",
-      was: "Kaninchen aus dem Zylinder \u2014 Hut drueber, dreimal mit dem Zauberstab geklopft, an den Ohren heraus, Beifall" },
     { gr: "reden", w: "brennen", kurz: "flammen", nutzt: "/brennen Name",
       was: "Der Rahmen brennt \u2014 Flammen zuengeln am Rand des Profilbildes hoch" },
     { gr: "reden", w: "zorro", kurz: "schlitzen", nutzt: "/zorro Name",

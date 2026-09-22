@@ -27807,13 +27807,6 @@
       [["\ud83c\udf88", "Aufpumpen", "ballonpumpe"],
        ["\ud83c\udf88", "Helium \u2014 fliegt weg", "ballonpumpe", "helium"],
        ["\ud83d\udca5", "Bis es platzt", "aufblasen"]]],
-    /* RUNDE 88 — XANDER: „Die Animation mit dem Kaninchen … als
-       einfacher Profil-Effekt … und dass ich andere damit
-       beeinflussen kann. Und die Reise ist ein anderer Effekt. Das
-       sind zwei verschiedene Paar Schuhe." Die Kachel steht deshalb
-       HIER bei den Profilbild-Effekten und nicht unter den Reisen —
-       dort hat „Zylinder" schon seinen Platz. */
-    ["\ud83d\udc07", "Kaninchen", "kaninchen"],
     /* RUNDE 85 — XANDER: „Wenn ich den Kopfhoerer einmal druecke, dass
        ich die Option angezeigt bekomme, ob ich ihn nur schicken will
        oder mit Audio-Ausschnitt."
@@ -30352,11 +30345,6 @@
     /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
        ne Luftballon." */
     luftballon: { zeichen: ["\ud83c\udf88"], wie: 4, klasse: "umarmen" },
-    /* RUNDE 88 — das Kaninchen aus dem Zylinder. XANDER: „Der
-       Zauberer mit Kaninchen, das sollte ein Profilbild-Effekt sein,
-       keine Reise." Ohne Eintrag HIER steigt lcWirkung gleich in der
-       ersten Zeile aus und zeichnet gar nichts. */
-    kaninchen: { zeichen: ["\ud83d\udc07"], wie: 4, klasse: "umarmen" },
     /* RUNDE 85 — der Fahrstuhl: „ich moechte beim Reisen noch eine
        Fahrstuhltuer." */
     fahrstuhl: { zeichen: ["\ud83d\udec5"], wie: 4, klasse: "umarmen" },
@@ -41945,239 +41933,6 @@
     }, 4200, "luftballon");
   }
 
-  /* ==================================================================
-     RUNDE 88 — DAS KANINCHEN AUS DEM ZYLINDER, ALS PROFIL-EFFEKT
-     ------------------------------------------------------------------
-     XANDER (Runde 79): „eine Animation koennte auch noch sein, dass
-     man jemanden ODER SICH SELBST mit dem Profileffekt beeinflusst,
-     der wie ein Zylinder ist, und dann mit dem Zauberstab auf den
-     Zylinder schlaegt und dann ein Kaninchen an seinen Ohren
-     herausholt und dann so Beifall geklatscht wird. Vor Kunststueck
-     halt."
-     XANDER (Runde 87): „Der Zauberer mit Kaninchen, das sollte ein
-     Profilbild-Effekt sein, keine Reise."
-     XANDER (Runde 88): „Die Animation mit dem Kaninchen, dass man ne
-     einfache Animation hat, wo man ausm Zylinder gezogen wird als
-     Kaninchen, als einfacher Profil-Effekt — das haben wir auch noch
-     nicht … Ich moechte, dass du in dieser Variation wieder
-     reingehst und sie wieder da machst als Profileffekt, und dass ich
-     andere damit beeinflussen kann. Und die Reise ist ein anderer
-     Effekt. Das sind zwei verschiedene Paar Schuhe."
-
-     ES IST ALSO AUSDRUECKLICH NICHT DIE REISE. „/zylinder" traegt
-     jemanden auf einen anderen Platz; dieser hier bleibt, wo er ist,
-     und gilt genau EINEM Bild — auch dem eigenen.
-
-     DER ABLAUF, und jede Zahl ist ein Anteil der 4,6 Sekunden:
-       0,00–0,08  der Zylinder faellt von oben ueber das Bild
-       0,08–0,13  er sitzt, das Bild ist darunter verschwunden
-       0,13–0,30  der Zauberstab klopft DREIMAL auf den Hut; bei jedem
-                  Schlag staucht er sich und es funkelt
-       0,30–0,38  im Hut rumort es — er wackelt
-       0,38–0,56  das Bild kommt AN DEN OHREN heraus und baumelt
-       0,56–0,66  es faellt zurueck auf den Platz, die Ohren
-                  schrumpfen, der Hut kippt weg
-       0,66–1,00  Beifall: Haende klatschen rings um den Platz
-     ================================================================== */
-  function lcKaninchen(wen) {
-    const DAUER = 4600;
-    const bei = (t) => Math.max(0, Math.min(1, t));
-    return lcAmPlatz(wen, "lc-zaubertrick", (schicht, platz) => {
-      const kreis = platz.querySelector(".lc-kreis");
-      if (!kreis) return;
-
-      /* --- DER ZYLINDER ------------------------------------------ */
-      const hut = document.createElement("span");
-      hut.className = "lc-zt-hut";
-      hut.innerHTML =
-        '<svg viewBox="0 0 100 86">'
-        /* Die Krempe liegt HINTEN, damit der Kopf davor steckt. */
-        + '<ellipse cx="50" cy="62" rx="47" ry="12" fill="#12141a"/>'
-        + '<ellipse cx="50" cy="59" rx="47" ry="11" fill="#2a2d36"/>'
-        /* Der Kegel. */
-        + '<path d="M28 16 v40 q0 7 22 7 q22 0 22 -7 V16 Z" fill="#1b1d24"/>'
-        /* Das Band. */
-        + '<rect x="28" y="40" width="44" height="10" fill="#8f2033"/>'
-        /* Die Oeffnung oben — dunkel, damit man glaubt, dass da etwas
-           hineinpasst. */
-        + '<ellipse cx="50" cy="16" rx="22" ry="7" fill="#07080c"/>'
-        + '<ellipse cx="50" cy="15" rx="22" ry="6.4" fill="#2a2d36"/>'
-        + '<ellipse cx="50" cy="15.6" rx="18" ry="4.8" fill="#07080c"/>'
-        + "</svg>";
-      schicht.appendChild(hut);
-
-      /* --- DER ZAUBERSTAB ---------------------------------------- */
-      const stab = document.createElement("span");
-      stab.className = "lc-zt-stab";
-      stab.innerHTML =
-        '<svg viewBox="0 0 70 14">'
-        + '<rect x="0" y="4" width="14" height="6" rx="3" fill="#f2efe6"/>'
-        + '<rect x="12" y="4" width="46" height="6" rx="3" fill="#16181d"/>'
-        + '<rect x="56" y="4" width="14" height="6" rx="3" fill="#f2efe6"/>'
-        + "</svg>";
-      schicht.appendChild(stab);
-
-      /* --- DIE OHREN, die am BILD haengen ------------------------- */
-      const ohren = document.createElement("i");
-      ohren.className = "lc-zt-ohren";
-      ohren.innerHTML =
-        '<svg viewBox="0 0 60 60">'
-        + '<ellipse cx="21" cy="26" rx="6.4" ry="24" fill="#f2efe6"'
-        + ' stroke="#cbc4b4" stroke-width="1.6" transform="rotate(-11 21 26)"/>'
-        + '<ellipse cx="39" cy="26" rx="6.4" ry="24" fill="#f2efe6"'
-        + ' stroke="#cbc4b4" stroke-width="1.6" transform="rotate(11 39 26)"/>'
-        + '<ellipse cx="21" cy="27" rx="3" ry="16" fill="#e8a6ac" transform="rotate(-11 21 27)"/>'
-        + '<ellipse cx="39" cy="27" rx="3" ry="16" fill="#e8a6ac" transform="rotate(11 39 27)"/>'
-        + "</svg>";
-      schicht.appendChild(ohren);
-
-      /* --- DIE FUNKEN bei jedem Schlag ---------------------------- */
-      /* Die Weite steht als FAKTOR der Bildbreite da, nicht als
-         Prozentzahl. Prozente in einem translateX zaehlen die eigene
-         Breite des Teilchens — bei einem Funken von sieben Pixeln
-         waeren 88 % gerade sechs Pixel, und alle zehn Funken laegen
-         auf einem Haufen in der Mitte. Genau das war beim ersten
-         Versuch zu sehen. */
-      const gross = kreis.offsetWidth || 64;
-      schicht.style.setProperty("--gross", gross + "px");
-      const funken = document.createElement("span");
-      funken.className = "lc-zt-funken";
-      let fw = "";
-      for (let i = 0; i < 10; i++) {
-        fw += '<i style="--wo:' + (i * 36 + 8) + "deg;--weit:"
-            + (0.46 + ((i * 31) % 40) / 100).toFixed(2) + ";--spaet:"
-            + ((i % 4) * 40) + 'ms"></i>';
-      }
-      funken.innerHTML = fw;
-      schicht.appendChild(funken);
-
-      /* --- DER BEIFALL ------------------------------------------- */
-      /* „und dann so Beifall geklatscht wird. Vor Kunststueck halt."
-         Sechs Haende rings um den Platz, jede mit eigenem Takt. */
-      const beifall = document.createElement("span");
-      beifall.className = "lc-zt-beifall";
-      let bw = "";
-      for (let i = 0; i < 6; i++) {
-        /* Rings HERUM, nicht nur oben: sechs Haende im Abstand von
-           61 Grad ergeben einen fast geschlossenen Kranz. */
-        bw += '<i style="--wo:' + (i * 61 + 18) + "deg;--spaet:"
-            + (i * 90) + 'ms">👏</i>';
-      }
-      beifall.innerHTML = bw;
-      schicht.appendChild(beifall);
-
-      /* --- DIE BEWEGUNGEN ---------------------------------------- */
-      const takt = { duration: DAUER, easing: "linear", fill: "none" };
-      /* Der Hut: faellt, sitzt, wird dreimal geklopft, wackelt und
-         kippt am Ende weg. */
-      try {
-        hut.animate([
-          { transform: "translate(-50%, -160%) scale(.7)", opacity: 0, offset: 0, easing: "ease-in" },
-          { transform: "translate(-50%, -6%) scale(1)", opacity: 1, offset: bei(0.08), easing: "ease-out" },
-          { transform: "translate(-50%, 0%) scale(1)", opacity: 1, offset: bei(0.12) },
-          /* Drei Schlaege — er staucht sich und federt zurueck. */
-          { transform: "translate(-50%, 2%) scale(1.04, .93)", opacity: 1, offset: bei(0.16), easing: "ease-out" },
-          { transform: "translate(-50%, 0%) scale(1)", opacity: 1, offset: bei(0.20), easing: "ease-in-out" },
-          { transform: "translate(-50%, 2%) scale(1.04, .93)", opacity: 1, offset: bei(0.23), easing: "ease-out" },
-          { transform: "translate(-50%, 0%) scale(1)", opacity: 1, offset: bei(0.27), easing: "ease-in-out" },
-          { transform: "translate(-50%, 2%) scale(1.04, .93)", opacity: 1, offset: bei(0.30), easing: "ease-out" },
-          /* Im Hut rumort es. */
-          { transform: "translate(-50%, 0%) rotate(-4deg)", opacity: 1, offset: bei(0.33), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0%) rotate(5deg)", opacity: 1, offset: bei(0.36), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0%) rotate(-3deg)", opacity: 1, offset: bei(0.39), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0%) rotate(0deg)", opacity: 1, offset: bei(0.42), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0%) rotate(0deg)", opacity: 1, offset: bei(0.58), easing: "ease-in-out" },
-          /* Und weg damit. */
-          { transform: "translate(-124%, 24%) rotate(-38deg) scale(.8)", opacity: 0, offset: bei(0.68), easing: "ease-in" },
-          { transform: "translate(-124%, 24%) rotate(-38deg) scale(.8)", opacity: 0, offset: 1 }
-        ], takt);
-      } catch (e) {}
-      /* Der Stab kommt dreimal von rechts oben und tippt auf. */
-      try {
-        const tipp = (t, tief) => ({
-          transform: "translate(" + (tief ? 6 : 34) + "%, " + (tief ? -74 : -108)
-            + "%) rotate(" + (tief ? 24 : 44) + "deg)",
-          opacity: 1, offset: bei(t), easing: tief ? "ease-in" : "ease-out"
-        });
-        stab.animate([
-          { transform: "translate(74%, -150%) rotate(52deg)", opacity: 0, offset: 0, easing: "ease-out" },
-          { transform: "translate(34%, -108%) rotate(44deg)", opacity: 1, offset: bei(0.12), easing: "ease-in" },
-          tipp(0.155, true), tipp(0.195, false),
-          tipp(0.225, true), tipp(0.265, false),
-          tipp(0.295, true), tipp(0.335, false),
-          { transform: "translate(74%, -150%) rotate(52deg)", opacity: 0, offset: bei(0.40), easing: "ease-in" },
-          { transform: "translate(74%, -150%) rotate(52deg)", opacity: 0, offset: 1 }
-        ], takt);
-      } catch (e) {}
-      /* Das BILD: es verschwindet unter dem Hut, kommt an den Ohren
-         heraus, baumelt und faellt zurueck.
-         Der Hut deckt es zu — trotzdem wird es kleiner gemacht,
-         damit es unter der Krempe nicht hervorschaut. */
-      try {
-        kreis.animate([
-          { transform: "translateY(0) scale(1) rotate(0deg)", offset: 0 },
-          { transform: "translateY(0) scale(1) rotate(0deg)", offset: bei(0.07) },
-          { transform: "translateY(6%) scale(.86) rotate(0deg)", offset: bei(0.12), easing: "ease-in" },
-          { transform: "translateY(6%) scale(.86) rotate(0deg)", offset: bei(0.38) },
-          /* An den Ohren heraus — und es zappelt dabei. */
-          { transform: "translateY(-74%) scale(.9) rotate(-9deg)", offset: bei(0.46), easing: "ease-out" },
-          { transform: "translateY(-82%) scale(.9) rotate(8deg)", offset: bei(0.50), easing: "ease-in-out" },
-          { transform: "translateY(-78%) scale(.9) rotate(-6deg)", offset: bei(0.54), easing: "ease-in-out" },
-          { transform: "translateY(-82%) scale(.9) rotate(4deg)", offset: bei(0.58), easing: "ease-in-out" },
-          /* Zurueck auf den Platz, mit einem kurzen Federn. */
-          { transform: "translateY(6%) scale(1.06) rotate(0deg)", offset: bei(0.66), easing: "ease-in" },
-          { transform: "translateY(-4%) scale(.98) rotate(0deg)", offset: bei(0.70), easing: "ease-out" },
-          { transform: "translateY(0) scale(1) rotate(0deg)", offset: bei(0.74), easing: "ease-in-out" },
-          { transform: "translateY(0) scale(1) rotate(0deg)", offset: 1 }
-        ], takt);
-      } catch (e) {}
-      /* Die Ohren wachsen genau dann, wenn er zupackt, und sind
-         wieder weg, sobald das Bild steht. Sie folgen dem Bild. */
-      try {
-        ohren.animate([
-          { transform: "translate(-50%, 0) translateY(0) scaleY(0)", opacity: 0, offset: 0 },
-          { transform: "translate(-50%, 0) translateY(0) scaleY(0)", opacity: 0, offset: bei(0.40) },
-          { transform: "translate(-50%, 0) translateY(-74%) scaleY(1) rotate(-9deg)", opacity: 1, offset: bei(0.46), easing: "ease-out" },
-          { transform: "translate(-50%, 0) translateY(-82%) scaleY(1) rotate(8deg)", opacity: 1, offset: bei(0.50), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0) translateY(-78%) scaleY(1) rotate(-6deg)", opacity: 1, offset: bei(0.54), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0) translateY(-82%) scaleY(1) rotate(4deg)", opacity: 1, offset: bei(0.58), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0) translateY(6%) scaleY(1)", opacity: 1, offset: bei(0.66), easing: "ease-in" },
-          { transform: "translate(-50%, 0) translateY(0) scaleY(0)", opacity: 0, offset: bei(0.74), easing: "ease-in" },
-          { transform: "translate(-50%, 0) translateY(0) scaleY(0)", opacity: 0, offset: 1 }
-        ], takt);
-      } catch (e) {}
-      /* Funken: einmal je Schlag und einmal beim Herausziehen. */
-      [0.155, 0.225, 0.295, 0.42].forEach((t, i) => {
-        setTimeout(() => {
-          if (!funken.isConnected) return;
-          funken.classList.remove("lc-zt-funkt");
-          void funken.offsetWidth;
-          funken.classList.add("lc-zt-funkt");
-          if (i === 3) funken.classList.add("lc-zt-funkt-gross");
-        }, Math.round(t * DAUER));
-      });
-      /* Beifall erst am Schluss. */
-      setTimeout(() => {
-        if (beifall.isConnected) beifall.classList.add("lc-zt-klatscht");
-      }, Math.round(0.66 * DAUER));
-
-      /* --- UND DIE TOENE ------------------------------------------ */
-      /* Alles aus der vorhandenen Tonkiste: der Stab klopft auf Filz
-         („holzklopf"), der Trick macht „zauberpuff", das Herausziehen
-         klingelt („bling"), und am Ende wird geklatscht und gejubelt.
-         Die Abstaende sind so gewaehlt, dass nie zwei uebereinander
-         liegen — dieselbe Regel wie beim Quaken und beim Maulwurf. */
-      lcTonSpaeter("swoosh", 0, 0.45);
-      [0.155, 0.225, 0.295].forEach((t) => {
-        lcTonSpaeter("holzklopf", Math.round(t * DAUER), 0.5);
-      });
-      lcTonSpaeter("zauberpuff", Math.round(0.40 * DAUER), 0.6);
-      lcTonSpaeter("bling", Math.round(0.47 * DAUER), 0.5);
-      lcTonSpaeter("klatsch", Math.round(0.68 * DAUER), 0.6);
-      lcTonSpaeter("jubel", Math.round(0.74 * DAUER), 0.45);
-    }, DAUER);
-  }
-
   /* ------------------------------------------------------------------
      DER MAULWURFSHUEGEL VON OBEN
      GEMELDET: „das soll man von oben, von der Draufsicht."
@@ -47507,11 +47262,7 @@
     telefon: 1, anziehen: 1, frosch: 1, zylinder: 1,
     /* RUNDE 86 — die Spruehdose gilt genau EINEM Platz, und der
        Luftballon blaest genau EINEN auf. */
-    spray: 1, luftballon: 1,
-    /* RUNDE 88 — das Kaninchen wird aus GENAU EINEM Zylinder
-       gezogen; ueber den ganzen Raum zu regnen waere kein Kunststueck
-       mehr, sondern ein Unfall. */
-    kaninchen: 1
+    spray: 1, luftballon: 1
   };
 
   function lcWirkung(art, anZeile, nachricht) {
@@ -47634,9 +47385,6 @@
       if (art === "katapult" && lcKatapult(wenZ)) return;
       if (art === "luftballon"
           && lcLuftballon(wenZ, (nachricht && nachricht.stueck) || "")) return;
-      /* RUNDE 88 — „ein einfacher Profil-Effekt … und dass ich andere
-         damit beeinflussen kann." */
-      if (art === "kaninchen" && lcKaninchen(wenZ)) return;
       if (art === "marsch" && lcTrommel(wenZ, true)) return;
       if (art === "gong" && lcGong(wenZ)) return;
       if (art === "bongo" && lcBongo(wenZ)) return;
