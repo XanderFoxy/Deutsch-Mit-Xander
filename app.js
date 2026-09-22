@@ -26790,6 +26790,43 @@
   function lcPlatzSchluessel(el) {
     return lcNameVomPlatz(el).toLowerCase();
   }
+  /* =================================================================
+     RUNDE 92 — DER LACK BLEIBT, BIS JEMAND WISCHT
+     -----------------------------------------------------------------
+     XANDER: „Das mit dem Gesicht einspruehen — und dass es bleibt, die
+     ganze Zeit, ungeachtet davon, ob man es durch Klicken aufs eigene
+     Profilbild resettet. Das geht in dem Moment nicht. Es geht nur
+     durch den Scheibenwischer wieder weg."
+
+     Bisher nahm sich die Spruehdose nach 6,2 Sekunden selbst zurueck —
+     Dose, Nebel UND Lack. Jetzt sind es zwei Dinge:
+       · das SPRUEHEN (Dose, Nebel, Zischen) dauert wie bisher,
+       · der LACK bleibt als eigene Schicht liegen. Er ueberlebt jedes
+         Auffrischen und jedes Neuzeichnen (lcSprayListe), und nur
+         „/wischer" nimmt ihn ab.
+     Gespeichert wird das fertige Bild als Data-URL — so laesst es sich
+     nach einem Neuaufbau in derselben Koernung wieder hinlegen. */
+  const lcSprayListe = {};
+  function lcSprayBleibt(platzEl, bildUrl) {
+    if (!platzEl || !bildUrl) return false;
+    platzEl.querySelectorAll(".lc-sprayfarbe").forEach((x) => x.remove());
+    const schicht = document.createElement("span");
+    schicht.className = "lc-zp lc-sprayfarbe";
+    schicht.setAttribute("aria-hidden", "true");
+    const blende = lcZpBlende(schicht);
+    const bild = document.createElement("img");
+    bild.className = "lc-sprayfarbe-bild";
+    bild.alt = "";
+    bild.src = bildUrl;
+    blende.appendChild(bild);
+    platzEl.appendChild(schicht);
+    return true;
+  }
+  function lcSprayMerken(platzEl, bildUrl) {
+    const nm = lcPlatzSchluessel(platzEl);
+    if (nm) lcSprayListe[nm] = bildUrl;
+  }
+
   function lcBleibendesAuffrischen() {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return;
@@ -26808,6 +26845,13 @@
       if (kreis) {
         const soll = Boolean(nm && lcBirneListe[nm] && !frei);
         kreis.classList.toggle("lc-birne-an", soll);
+      }
+      /* RUNDE 92 — und der aufgespruehte Lack. */
+      const lack = el.querySelector(".lc-sprayfarbe");
+      if (nm && lcSprayListe[nm] && !frei) {
+        if (!lack) lcSprayBleibt(el, lcSprayListe[nm]);
+      } else if (lack) {
+        lack.remove();
       }
     });
   }
@@ -27143,15 +27187,24 @@
         : lcSprayMotivBild(Math.round(gr * 2), "sticker/" + wahl.replace(/[^a-z0-9_-]/g, "") + ".svg")
             .catch(() => lcSprayMotivSmiley(Math.round(gr * 2), true));
       let abbrechen = null;
+      let lackFlaeche = null;
       bauen.then((motiv) => {
         if (!schicht.isConnected) return;
         abbrechen = lcSprayMalen(blende, motiv, gr, 1700);
+        lackFlaeche = blende.querySelector(".lc-spray-lack");
       });
       /* Das Zischen liegt auf dem Spruehen, nicht auf dem Anflug. */
       lcTonSpaeter("spray", 320, 0.6);
       setTimeout(() => {
         if (abbrechen) abbrechen();
+        /* RUNDE 92 — der Lack wird NICHT mitgenommen. Er wird als Bild
+           festgehalten und bleibt als eigene Schicht liegen, bis
+           jemand wischt. XANDER: „dass es bleibt die ganze Zeit …
+           es geht nur durch den Scheibenwischer wieder weg." */
+        let url = "";
+        try { if (lackFlaeche) url = lackFlaeche.toDataURL("image/png"); } catch (e) { url = ""; }
         schicht.remove();
+        if (url) { lcSprayBleibt(platz, url); lcSprayMerken(platz, url); }
       }, 6200);
     }, i * 90));
     return true;
@@ -45840,6 +45893,18 @@
      durch, und mit jedem Zug verschwindet ein Stueck vom Dreck. */
   function lcWischer(wen) {
     return lcAmPlatz(wen, "lc-wischer", (schicht, platz) => {
+      /* RUNDE 92 — DER WISCHER IST DAS EINZIGE, WAS DEN LACK ABNIMMT.
+         XANDER: „Es geht nur durch den Scheibenwischer wieder weg."
+         Er wird deshalb hier aus der Liste gestrichen und am Ende der
+         Wischbewegung abgenommen — nicht vorher, sonst waere die
+         Scheibe schon sauber, bevor das Blatt darueberlaeuft. */
+      const nmW = lcPlatzSchluessel(platz);
+      if (nmW) delete lcSprayListe[nmW];
+      const lackW = platz.querySelector(".lc-sprayfarbe");
+      if (lackW) {
+        lackW.classList.add("lc-sprayfarbe-geht");
+        setTimeout(() => { try { lackW.remove(); } catch (e) {} }, 2600);
+      }
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
         kreis.classList.remove("lc-gewischt");
@@ -47931,8 +47996,17 @@
     const xmax = Math.max.apply(null, xs) + rand - r;
     const ymin = Math.min.apply(null, ys) - rand + r;
     const ymax = Math.max.apply(null, ys) + rand - r;
-    /* Die Abweichung vom geraden Stoss: hoechstens 14 Grad. */
-    const ab = ((Number(wurf) || 0) - 0.5) * 2 * (14 * Math.PI / 180);
+    /* RUNDE 92 — DIE ABWEICHUNG WAR ZU KLEIN.
+       XANDER: „Die Billard-Physik ist immer noch nicht da … weil sie
+       immer an dasselbe Loch fliegt."
+       NACHGEMESSEN mit sieben verschiedenen Stoessen auf derselben
+       Buehne: die Kugel fiel fuenfmal in Loch 6 oder 7, einmal in
+       gar keins — Loch 8 hat sie nie gesehen. Mit hoechstens
+       14 Grad Abweichung ist die Bahn eben fast immer dieselbe.
+       Jetzt 34 Grad: das ist noch ein gezielter Stoss (kein
+       Zufallswurf), aber er faechert weit genug, dass jedes Loch am
+       Tisch erreichbar ist. */
+    const ab = ((Number(wurf) || 0) - 0.5) * 2 * (34 * Math.PI / 180);
     const co = Math.cos(ab), si = Math.sin(ab);
     /* UND DER EFFET. Ein Queue trifft die Kugel nie genau in der
        Mitte; der Rest ist Seitendrall, und der laesst sie ueber den
@@ -47957,8 +48031,17 @@
     const u = (streu - Math.floor(streu)) * 2 - 1;
     const drall = (u < 0 ? -1 : 1) * (0.0018 + Math.abs(u) * 0.0032);
     const dco = Math.cos(drall), dsi = Math.sin(drall);
-    let vx = (sx * co - sy * si) * (r * 0.28);
-    let vy = (sx * si + sy * co) * (r * 0.28);
+    /* RUNDE 92 — AUCH DIE HAERTE DES STOSSES GEHOERT ZUM STOSS.
+       Bisher war sie fest (0,28 r je Schritt). Damit lief jede Kugel
+       gleich weit, und welches Loch sie fand, hing nur am Winkel —
+       also fielen fast alle in dieselben zwei. Ein Billardspieler
+       stoesst aber mal sanft, mal fest: „los" bestimmt jetzt beides.
+       0,20 bis 0,40 r je Schritt, dazu Reibung (siehe unten) — ein
+       sanfter Stoss bleibt in der Naehe liegen, ein fester geht ueber
+       die Banden bis ans andere Ende. */
+    const haerte = r * (0.20 + ((Number(wurf) || 0) * 0.20));
+    let vx = (sx * co - sy * si) * haerte;
+    let vy = (sx * si + sy * co) * haerte;
     let x = startP.x, y = startP.y;
     const punkte = [{ x: 0, y: 0 }];
     /* „bandenBei" merkt sich, in WELCHEM Schritt und an welcher Achse
@@ -47974,7 +48057,10 @@
        (0,7 s Warten plus 1,3 s Rollen). Mit nur 170 Schritten blieben
        gemessen fuenf von zwoelf Stoessen ohne Loch — die Kugel war
        schlicht noch nicht genug herumgekommen. */
-    for (let i = 0; i < 260; i++) {
+    /* RUNDE 92 — 420 statt 260 Schritte. Wer weiter faechert, braucht
+       laenger, bis er ankommt; sonst bleibt die Kugel auf halbem Weg
+       liegen und faellt in gar kein Loch. */
+    for (let i = 0; i < 420; i++) {
       x += vx; y += vy;
       /* Die Bande: Einfallswinkel gleich Ausfallswinkel. Der
          Ueberschuss wird gespiegelt, sonst klebte die Kugel am Rand. */
@@ -47990,10 +48076,18 @@
       const nvx = vx * dco - vy * dsi;
       vy = vx * dsi + vy * dco;
       vx = nvx;
+      /* REIBUNG. Tuch bremst — ohne sie rollt die Kugel bis zum
+         letzten Schritt gleich schnell, und das ist der Grund, warum
+         ein sanfter und ein fester Stoss bisher dasselbe Loch fanden. */
+      vx *= 0.9965; vy *= 0.9965;
       punkte.push({ x: x - startP.x, y: y - startP.y });
       if (i > 5) {
         for (let k = 0; k < frei.length; k++) {
-          if (Math.hypot(x - frei[k].x, y - frei[k].y) < r) { loch = frei[k]; break; }
+          /* Ein Loch ist kleiner als die Kugel breit ist: sie faellt
+             nur hinein, wenn sie es MITTIG trifft (0,62 r statt r).
+             Sonst rollte sie schon an jeder Tasche vorbei hinein, die
+             sie streifte — und das war immer die erste auf ihrem Weg. */
+          if (Math.hypot(x - frei[k].x, y - frei[k].y) < r * 0.62) { loch = frei[k]; break; }
         }
       }
       if (loch) break;
@@ -49748,8 +49842,19 @@
        statt nur zu schauen, ob sich etwas bewegt. */
     billardBahn: function (vonNr, zuNr, los) {
       const gitter = lcPlatzGitter();
-      const v = gitter.find((p) => p.nr === Number(vonNr));
-      const z = gitter.find((p) => p.nr === Number(zuNr));
+      /* RUNDE 92 — Nummer ODER Name. Die Sonde aus Runde 88 rechnet mit
+         Platznummern („von 1 zu 3"), die neue aus Runde 92 mit Namen
+         („Alex stoesst Bea an"). Beides geht durch dieselbe Rechnung —
+         zwei Schnittstellen fuer dieselbe Physik waeren genau die Art
+         Doppelung, die spaeter auseinanderlaeuft. */
+      const finde = function (was) {
+        const zahl = Number(was);
+        if (zahl) return gitter.find((p) => p.nr === zahl);
+        const nm = String(was || "").trim().toLowerCase();
+        return gitter.find((p) => p.name && p.name.toLowerCase() === nm);
+      };
+      const v = finde(vonNr);
+      const z = finde(zuNr);
       if (!v || !z) return null;
       const kreis = z.el.querySelector(".lc-kreis");
       const dx = z.x - v.x, dy = z.y - v.y;
@@ -49967,6 +50072,313 @@
        zwoelf ausgesuchte Effekte prueft, findet sie den dreizehnten
        nie. Hiermit kann sie ALLE durchgehen. */
     platzWirkungen: function () { return Object.keys(LC_NUR_AM_PLATZ); },
+    /* RUNDE 92 — der Billardtisch von aussen: wo liegen die Plaetze,
+       welche sind frei? Ohne das laesst sich „sie faellt immer ins
+       selbe Loch" nicht nachrechnen, sondern nur nachsehen. */
+    platzGitter: function () {
+      try {
+        return lcPlatzGitter().map(function (p) {
+          return { nummer: p.nr, x: p.x, y: p.y, frei: p.frei, name: p.name };
+        });
+      } catch (e) { return []; }
+    },
+    /* RUNDE 88 — DIE AUSWERTUNG VON STADT-LAND-FLUSS ZUM NACHRECHNEN.
+       XANDER: „mit einer realistischen Auswertung, so dass die
+       Ergebnisse beim Spielfuehrer immer vorliegen und er dann
+       entscheiden kann, ob die Woerter Sinn machen."
+       Ein Strich darf nicht nur eine Zelle ausgrauen — er muss die
+       Punkte der ANDEREN mitverschieben. Das laesst sich nur pruefen,
+       wenn man dieselbe Runde von aussen aufbauen und dieselben
+       Knoepfe druecken kann, die ein Mensch drueckt. Genau das
+       passiert hier: aufgebaut wird der Vergleich, gedrueckt wird das
+       echte slfUrteilen. */
+    slfProbeStellen: function (wunsch) {
+      const spalten = wunsch.spalten || ["stadt", "land", "fluss"];
+      slfGesamt = {};
+      slfUrteile = {};
+      /* „gast" heisst: jemand anderes ist Spielfuehrer. Dann darf hier
+         niemand streichen — es sei denn, der Lehrer sieht zu. */
+      slfRaum = wunsch.gast
+        ? { id: "probe", host: "jemand-anders", hostName: "Bea", zeilen: [],
+            mitglieder: wunsch.blaetter.map((b, i) => ({ id: "p" + i, name: b.name })),
+            phase: "vergleich", buchstabe: wunsch.buchstabe, spalten,
+            blaetter: {}, anwesend: {} }
+        : null;
+      slfLauf = { runde: slfNeueRunde(wunsch.buchstabe, spalten),
+                  blaetter: wunsch.blaetter, phase: "vergleich" };
+      slfLauf.wertung = slfWerten(slfLauf.runde, wunsch.blaetter, slfUrteile);
+      slfGesamtZaehlen(wunsch.blaetter, slfLauf.wertung);
+      return window.DMA_PRUEF.slfProbeStand();
+    },
+    slfProbeUrteilen: function (schluessel) {
+      slfUrteilen(schluessel);           // der echte Weg, nicht nachgebaut
+      return window.DMA_PRUEF.slfProbeStand();
+    },
+    slfProbeFremdesUrteil: function (fremd) {
+      const anders = slfUrteileMischen(fremd);
+      if (anders) slfNeuRechnen();
+      return Object.assign(window.DMA_PRUEF.slfProbeStand(), { anders });
+    },
+    slfProbeStand: function () {
+      return {
+        html: slfVergleichHtml(),
+        punkte: slfLauf.wertung.punkte.slice(),
+        gruende: slfLauf.runde.spalten.map((s) =>
+          slfLauf.wertung.zellen[s.id].map((z) => z.grund)),
+        gesamt: Object.assign({}, slfGesamt),
+        urteile: JSON.parse(JSON.stringify(slfUrteile)),
+      };
+    },
+    slfProbeAufraeumen: function () { slfAufraeumen(); },
+    /* RUNDE 88 — DIE BILLARDBAHN ZUM NACHRECHNEN.
+       XANDER: „die Physik soll stimmen wie beim Billardspiel."
+       Eine Behauptung ueber Physik ist wertlos, wenn man sie nicht
+       nachmessen kann. Hier kommt die gerechnete Bahn heraus — samt
+       Bandenzahl und gefundenem Loch —, damit die Sonde
+       Einfallswinkel und Ausfallswinkel wirklich vergleichen kann,
+       statt nur zu schauen, ob sich etwas bewegt. */
+    billardBahn: function (vonNr, zuNr, los) {
+      const gitter = lcPlatzGitter();
+      /* RUNDE 92 — Nummer ODER Name. Die Sonde aus Runde 88 rechnet mit
+         Platznummern („von 1 zu 3"), die neue aus Runde 92 mit Namen
+         („Alex stoesst Bea an"). Beides geht durch dieselbe Rechnung —
+         zwei Schnittstellen fuer dieselbe Physik waeren genau die Art
+         Doppelung, die spaeter auseinanderlaeuft. */
+      const finde = function (was) {
+        const zahl = Number(was);
+        if (zahl) return gitter.find((p) => p.nr === zahl);
+        const nm = String(was || "").trim().toLowerCase();
+        return gitter.find((p) => p.name && p.name.toLowerCase() === nm);
+      };
+      const v = finde(vonNr);
+      const z = finde(zuNr);
+      if (!v || !z) return null;
+      const kreis = z.el.querySelector(".lc-kreis");
+      const dx = z.x - v.x, dy = z.y - v.y;
+      const l = Math.hypot(dx, dy) || 1;
+      const b = lcBillardPhysik(gitter, z, dx / l, dy / l,
+                                Number(los), (kreis && kreis.offsetWidth) || 64);
+      return { punkte: b.punkte, banden: b.banden, bandenBei: b.bandenBei,
+               loch: b.loch ? b.loch.nr : null,
+               start: { x: z.x, y: z.y },
+               plaetze: gitter.map((p) => ({ nr: p.nr, x: p.x, y: p.y, frei: p.frei })) };
+    },
+    /* Die Aufgabentafel von Hand zeichnen — sonst muesste die Sonde
+       den ganzen Raum aufbauen, nur um zu sehen, ob die Teile da sind. */
+    aufgabeZeichnen: function () { return lcAufgabeZeichnen(); },
+    /* Wo die Karte LIEGT (ohne Animation) und wo sie gerade GEZEICHNET
+       wird — damit sich nachmessen laesst, dass die Buehne dem
+       Wackeln nicht folgt. */
+    kartenKasten: function () {
+      const k = document.getElementById("livechatKarte")
+             || document.getElementById("livechatArea");
+      if (!k) return null;
+      const g = k.getBoundingClientRect();
+      return { layout: lcLayoutKasten(k),
+               gemalt: { left: g.left, top: g.top, width: g.width, height: g.height } };
+    },
+    /* GEMELDET: „Einige Aufgaben gehen noch nicht, wie das
+       Galgenmaennchen." Damit sich das Ergebnis nachspielen laesst
+       und nicht behauptet werden muss: eine Lueckentext-Aufgabe
+       aufbauen und danach im Dokument nachsehen, ob die Kaesten
+       wirklich da sind und ob das Eintragen bewertet wird. */
+    galgenAufgabe: function () {
+      Quiz.startSession(["lueckentext"], "leicht", null, "mix", null, "");
+      renderQuestion();
+      /* Nicht jede Lueckentext-Aufgabe taugt dafuer: „zu", „-" oder
+         ein Wort mit Bindestrich bleiben beim Anklicken, und das ist
+         richtig so. Die Sonde soll trotzdem nicht am Zufall haengen —
+         hier wird deshalb so lange weitergeblaettert, bis eine
+         Aufgabe kommt, die Kaesten baut. */
+      let versuche = 0;
+      while (!document.querySelector(".galgen") && versuche < 40) {
+        versuche++;
+        if (!Quiz.advance()) break;
+        renderQuestion();
+      }
+      const g = document.querySelector(".galgen");
+      return g ? { wort: g.dataset.wort,
+                   felder: g.querySelectorAll(".galgen-feld").length,
+                   fest: g.querySelectorAll(".galgen-fest").length,
+                   tasten: g.querySelectorAll(".galgen-taste").length } : null;
+    },
+    /* Die beiden Bildfaecher — damit sich nachsehen laesst, ob die
+       GIPHY-Bibliothek wirklich gefuellt aufgeht und nachlaedt. */
+    haeufigHtml: function () { return lcHaeufigHtml(); },
+    /* Die GIPHY-Merkzettel — damit sich nachsehen laesst, dass
+       Favoriten und Suchen wirklich im Profil landen. */
+    gif: {
+      favoriten: () => lcGifFavoriten(),
+      umschalten: (u) => lcGifFavoritUmschalten(u),
+      genommen: (u) => lcGifGenommen(u),
+      suchen: () => lcGifSuchen(),
+      sucheMerken: (w) => lcGifSucheMerken(w),
+      leeren: () => {
+        kzEinstellungSetzen("gifFavoriten", []);
+        kzEinstellungSetzen("gifZaehler", {});
+        kzEinstellungSetzen("gifSuchen", []);
+      }
+    },
+    tonSchluessel: function () { return LC_TON_SCHLUESSEL; },
+    bildWaehler: function () { return livechatBildWaehler(); },
+    sendeWaehler: function () { return livechatSendeWaehler(); },
+    /* Eine BÜHNE für die Prüfung: ohne Chatverlauf und ohne Plätze
+       zeichnen die kleinen Effekte gar nichts — nicht weil sie kaputt
+       sind, sondern weil sie sich an die Zeile und an den Platz
+       hängen. Genau das hat mich zweimal in die Irre geführt: neun
+       Effekte sahen „leer" aus, obwohl sie im echten Chat laufen.
+       Wer prüfen will, ob ein Effekt wirkt, muss ihm die Umgebung
+       geben, die er im Betrieb hat. */
+    /* Die Wegsuche einzeln nachrechenbar — sonst laesst sich „nur
+       ueber freie Plaetze" nur am Ergebnis erahnen. Gibt die
+       Platznummern des Weges zurueck oder null. */
+    wegPruefen: function (vonNr, zuNr, ueberBesetzte) {
+      const weg = lcWegSuchen(lcPlatzGitter(), vonNr, zuNr, Boolean(ueberBesetzte));
+      return weg ? weg.map((p) => p.nr) : null;
+    },
+    /* RUNDE 88 — die Zielsuche einzeln nachrechenbar. Ohne sie
+       liesse sich „mein eigener Platz wird auch mit „(du)" hinter dem
+       Namen gefunden" nur am fertigen Effekt erahnen, und dann weiss
+       man bei einem Fehlschlag nicht, ob die Suche oder die
+       Zeichnung schuld war (werkzeug/pruefe-runde88-selbst.js). */
+    zielPlaetze: function (wen) { return lcZielPlaetze(wen); },
+    effektBuehne: function () {
+      document.getElementById("lcPruefBuehne")?.remove();
+      const b = document.createElement("div");
+      b.id = "lcPruefBuehne";
+      b.innerHTML = `
+        <div class="question-card livechat" id="livechatKarte">
+          <div class="lc-plaetze" id="lcPlaetze">
+            <!-- FUENF PLAETZE STATT ZWEI, UND EINER BIN ICH.
+                 Zwei Plaetze haben gereicht, solange jede Animation nur
+                 am Ziel haengt. Angel, Lasso, Fahren und Spielzug gehen
+                 aber VON MEINEM PLATZ AUS — ohne einen Platz mit der
+                 Klasse „lc-platz-ich" finden sie gar keinen Anfang und
+                 zeichnen nichts. Und „egal wo er unten sitzt" laesst
+                 sich mit zwei Plaetzen nebeneinander nicht pruefen. -->
+            <!-- RUNDE 79 — DAS SCHILD FEHLTE HIER, UND DAS WAR EINE LUECKE.
+                 XANDER hat rund zwanzigmal gemeldet, dass Animationen „die
+                 Strichlinie und die Platznummer" mitnehmen. Keine Sonde
+                 konnte das je finden: in dieser Buehne gab es weder ein
+                 „lc-schild" noch eine „lc-nummer", und ohne die Klasse
+                 „lc-platz-belegt" greift auch keine einzige Regel, die
+                 sich auf einen besetzten Platz bezieht.
+                 Eine Pruefbuehne, die anders aussieht als der echte Raum,
+                 prueft den echten Raum nicht. Deshalb steht hier jetzt
+                 dieselbe Auszeichnung wie in renderLiveChat. -->
+            <button class="lc-platz lc-platz-ich lc-platz-belegt" data-lc-platz="1"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">1</span></span><span class="lc-platz-name">Alex</span></button>
+            <button class="lc-platz lc-platz-belegt" data-lc-platz="2"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">2</span></span><span class="lc-platz-name">Bea</span></button>
+            <button class="lc-platz lc-platz-belegt" data-lc-platz="3"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">3</span></span><span class="lc-platz-name">Cem</span></button>
+            <button class="lc-platz lc-platz-belegt" data-lc-platz="4"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">4</span></span><span class="lc-platz-name">Dana</span></button>
+            <button class="lc-platz lc-platz-belegt" data-lc-platz="5"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">5</span></span><span class="lc-platz-name">Emmi</span></button>
+            <!-- RUNDE 80 — DREI FREIE PLAETZE, UND DAS WAR DIE NAECHSTE LUECKE.
+                 Jede REISE (Schiff, Lok, Flugzeug, Sprungfeder, Kran,
+                 Beamen, Roehre, Maulwurf, Helikopter, UFO, Pferd …)
+                 bricht sofort ab, wenn das Ziel nicht frei ist. In
+                 dieser Buehne waren alle fuenf Plaetze belegt — also
+                 konnte keine einzige Sonde je eine Reise sehen.
+                 Genau deshalb blieb der Rueckstand am Startplatz so
+                 lange unentdeckt, den Xander rund ein Dutzend Mal
+                 gemeldet hat („immer wenn man landet, ist das
+                 Profilbild kurz noch mal auf der Seite zu sehen, von
+                 der aus man startet").
+                 Ein freier Platz sieht im echten Raum so aus: die
+                 Klasse „lc-platz-frei" und keine Namenszeile. -->
+            <button class="lc-platz lc-platz-frei" data-lc-platz="6"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">6</span></span><span class="lc-platz-name"></span></button>
+            <button class="lc-platz lc-platz-frei" data-lc-platz="7"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">7</span></span><span class="lc-platz-name"></span></button>
+            <button class="lc-platz lc-platz-frei" data-lc-platz="8"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">8</span></span><span class="lc-platz-name"></span></button>
+          </div>
+          <div class="lc-chat-verlauf" id="lcVerlauf" style="height:220px; overflow:auto;">
+            <p class="lc-zeile" id="lcPruefZeile">Alex drückt Emmi</p>
+          </div>
+        </div>`;
+      document.body.appendChild(b);
+      /* UND SIE MUSS AUCH ZU SEHEN SEIN.
+         Gemessen wird in pruefe-platzmenue, wie viel Prozent einer
+         Animation sichtbar bleiben — da zaehlt das Fenster als letzte
+         Blende mit. Seit die Buehne fuenf Plaetze hat, ist sie hoeher
+         und rutschte unter den unteren Fensterrand; gemeldet wurden
+         dann „0 % sichtbar (letzte Blende: HTML)" fuer Hammer, Wecker
+         und Wolke — sie waren gezeichnet, nur eben ausserhalb des
+         Bildschirms. Deshalb: Luft nach oben und unten (ein Hammer
+         kommt von ausserhalb des Bildes) und in die Mitte rollen. */
+      b.style.padding = "160px 0";
+      /* „instant" ist Absicht: html traegt scroll-behavior: smooth,
+         und ein weiches Rollen feuert eine Dreiviertelsekunde lang
+         scroll-Ereignisse. Die machen jedes Menue wieder zu, das in
+         dieser Zeit aufgeht — das hat die Sonde pruefe-wagenheber
+         gemessen: das Umsetz-Menue ging auf und war sofort weg. */
+      try { b.scrollIntoView({ block: "center", behavior: "instant" }); }
+      catch (e) { try { b.scrollIntoView(); } catch (x) {} }
+      return true;
+    },
+    effekt: function (name, wen, zusatz) {
+      /* NACHGEBESSERT, weil die Messung selbst zweimal gelogen hat:
+         1. Die Umarmung, das Lecken und das Boxen haengen sich mit
+            einer Verzoegerung an die Plaetze — wer sofort nachsieht,
+            findet nichts und haelt sie fuer kaputt.
+         2. Gezaehlt wurde nur das ZULETZT angehaengte Element. Beim
+            Regen ist das der Blitz mit zwei Teilen, waehrend der
+            Regenvorhang mit 170 Tropfen daneben haengt.
+         3. Erdbeben und Falten legen gar nichts an, sie setzen eine
+            KLASSE. Auch das ist eine Wirkung.
+         Deshalb merkt sich effekt() nur den Ausgangszustand; gemessen
+         wird in effektNachher(), nach einer Wartezeit. */
+      const karte = document.getElementById("livechatKarte");
+      window.__effektStand = {
+        name: name,
+        koerper: document.body.childElementCount,
+        imChat: karte ? karte.querySelectorAll("*").length : 0,
+        klassen: document.body.className + "|" + (karte ? karte.className : "")
+      };
+      const zeile = document.getElementById("lcPruefZeile");
+      /* „zusatz" kam in Runde 29 dazu: das Billard braucht das Los,
+         das mit der Nachricht mitfaehrt, sonst laesst sich gar nicht
+         messen, ob zwei Geraete denselben verschwinden lassen. */
+      const botschaft = wen ? { wen: wen } : {};
+      if (zusatz && typeof zusatz === "object") {
+        Object.keys(zusatz).forEach((k) => { botschaft[k] = zusatz[k]; });
+      }
+      try { lcWirkung(name, zeile || null, botschaft); }
+      catch (e) { return { name, fehler: String(e && e.message || e) }; }
+      return { name };
+    },
+    effektNachher: function () {
+      const v = window.__effektStand || {};
+      const karte = document.getElementById("livechatKarte");
+      const neu = [...document.body.children].filter(
+        (el) => /(^|\s)lc-/.test(el.className || ""));
+      let teile = 0, klasse = "";
+      neu.forEach((el) => {
+        const t = el.querySelectorAll("*").length;
+        if (t >= teile) { teile = t; klasse = String(el.className); }
+      });
+      const jetztKlassen = document.body.className + "|" + (karte ? karte.className : "");
+      return {
+        name: v.name,
+        angelegt: document.body.childElementCount - (v.koerper || 0),
+        imChat: (karte ? karte.querySelectorAll("*").length : 0) - (v.imChat || 0),
+        klassenNeu: jetztKlassen !== v.klassen,
+        teile: teile,
+        klasse: klasse
+      };
+    },
+    /* RUNDE 87 — die Liste ALLER Wirkungen, die genau einem Platz
+       gelten, und aller Reisen. XANDER: „auch die Inkonsistenzen der
+       Strichlinien, die immer noch da sind." Solange eine Sonde nur
+       zwoelf ausgesuchte Effekte prueft, findet sie den dreizehnten
+       nie. Hiermit kann sie ALLE durchgehen. */
+    platzWirkungen: function () { return Object.keys(LC_NUR_AM_PLATZ); },
+    /* RUNDE 92 — der Billardtisch von aussen: wo liegen die Plaetze,
+       welche sind frei? Ohne das laesst sich „sie faellt immer ins
+       selbe Loch" nicht nachrechnen, sondern nur nachsehen. */
+    platzGitter: function () {
+      try {
+        return lcPlatzGitter().map(function (p) {
+          return { nummer: p.nr, x: p.x, y: p.y, frei: p.frei, name: p.name };
+        });
+      } catch (e) { return []; }
+    },
     reiseArten: function () {
       return ["fahren", "fahrstuhl", "frosch", "zylinder", "flug", "maulwurf",
               "boot", "kran", "dampfer", "lok", "liane", "feder", "beamen",

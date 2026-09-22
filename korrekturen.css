@@ -29950,3 +29950,35 @@ code, pre {
   cursor: pointer;
 }
 .lc-liedangebot .lc-musikband-titel { font-weight: 600; }
+
+/* =====================================================================
+   RUNDE 92 — DER AUFGESPRUEHTE LACK BLEIBT LIEGEN
+   ---------------------------------------------------------------------
+   XANDER: „Das mit dem Gesicht einspruehen und dass es bleibt die ganze
+   Zeit … es geht nur durch den Scheibenwischer wieder weg."
+   Die Schicht liegt UEBER dem Bild, aber unter allem, was danach
+   passiert: sie faengt keine Fingertipps ab (der Platz bleibt
+   anklickbar) und sie bewegt sich nicht mit irgendeiner Animation.
+   ===================================================================== */
+.lc-sprayfarbe { pointer-events: none; z-index: 5; }
+.lc-sprayfarbe-bild {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+/* Beim Wischen geht er weg, wie Farbe unter dem Blatt: von links nach
+   rechts, in derselben Zeit, in der das Blatt darueberlaeuft. */
+.lc-sprayfarbe-geht .lc-sprayfarbe-bild {
+  animation: lcLackWegR92 2.4s ease-in-out forwards;
+}
+@keyframes lcLackWegR92 {
+  0%   { clip-path: inset(0 0 0 0); opacity: 1; }
+  70%  { clip-path: inset(0 0 0 72%); opacity: .9; }
+  100% { clip-path: inset(0 0 0 100%); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-sprayfarbe-geht .lc-sprayfarbe-bild { animation: none; opacity: 0; }
+}

@@ -11235,7 +11235,21 @@ window.LiveChat = (function () {
                     mieze: [" wird von der Katze gespielt zu Platz ", "\ud83d\udc31"],
                     gotteshand: [" wird von einer riesigen Hand gesetzt auf Platz ", "\ud83e\udd1a"],
                     pranke: [" wird von der Gorillapranke gesetzt auf Platz ", "\ud83e\udd8d"],
-                    frisbee: [" fliegt als Frisbee zu Platz ", "\ud83e\udd4f"] }[art];
+                    frisbee: [" fliegt als Frisbee zu Platz ", "\ud83e\udd4f"],
+                    /* RUNDE 92 — DER FAHRSTUHL HAT HIER GEFEHLT, und das
+                       war kein Schoenheitsfehler: „satzR" blieb
+                       undefined, die naechste Zeile griff auf satzR[0]
+                       zu, und der Befehl brach mit einem TypeError ab.
+                       „/fahrstuhl Bea" ging deshalb, „/fahrstuhl 5"
+                       nicht — und aus dem Menue kommt IMMER eine
+                       Nummer. XANDER: „Der Fahrstuhl funktioniert auch
+                       nicht. Die Animation solltest du machen, da
+                       funktioniert noch gar nix." Genau das war es. */
+                    fahrstuhl: [" f\u00e4hrt mit dem Fahrstuhl zu Platz ", "\ud83d\udec5"] }[art]
+                    /* Und falls je wieder eine Reise in der Liste oben
+                       steht, die hier fehlt: lieber ein schlichter Satz
+                       als ein Absturz. */
+                    || [" reist zu Platz ", "\u27a1\ufe0f"];
       /* =========================================================
          RUNDE 80 — DER GEMALTE WEG GILT AUCH FUER FLUGZEUG,
          SPRUNGFEDER UND MAULWURF

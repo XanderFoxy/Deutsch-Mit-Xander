@@ -49,22 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 93 — dein Lied kommt an, und der Klaps zeigt wieder die ganze Hand (Fassung 502)",
+  stand: "Runde 94 — Fahrstuhl repariert, Lack bleibt, Billard trifft verschiedene Löcher (Fassung 503)",
 
   inArbeit: [
-    { seit: "2026-09-22T23:47", nurBetreiber: true,
+    { seit: "2026-09-22T23:57", nurBetreiber: true,
       text: "Sammellauf vor jedem Hochladen: bash werkzeug/alle-pruefen.sh" },
-    { seit: "2026-09-22T23:47",
-      text: "Billard-Physik, Lok-Schienenführung, Fahrstuhl, Sprühbild bleibt bis zum Scheibenwischer, Mario-Töne, Delfin, Anrufen, Hände vereinheitlichen" },
+    { seit: "2026-09-22T23:57",
+      text: "Lok-Schienenführung, Mario-Töne beim Draufspringen, Delfin, Anrufen (heimlich telefonieren), Hände vereinheitlichen, Cowboyhut zurechtrücken" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T23:47",
-      text: "Ein Lied, das dir jemand aufsetzt, geht nie mehr still unter: sind deine Töne aus oder sperrt der Browser, kommt eine grüne Leiste „Bea setzt dir auf: …“ — ein Tipp, und es spielt" },
-    { seit: "2026-09-22T23:47",
-      text: "Der Klaps zeigt wieder die GANZE Hand in der Draufsicht (Handrücken, vier Finger, Daumen) statt des schmalen Profils — und sie trifft die Backe auf 12 px genau" },
-    { seit: "2026-09-22T23:47",
-      text: "Neue Sonde pruefe-runde92-liedangebot: Töne an, Töne aus, Tipp — und die Kopfhörer bleiben auch nach komplettem Neuzeichnen liegen" },
+    { seit: "2026-09-22T23:57",
+      text: "„/fahrstuhl 5“ stürzte ab — mit einer Platznummer (und die schickt das Menü immer) brach der Befehl mit einem Fehler ab. Jetzt fährt er; neue Sonde prüft ALLE 28 Reisen mit Nummer" },
+    { seit: "2026-09-22T23:57",
+      text: "Das aufgesprühte Bild bleibt jetzt liegen — über Auffrischen, Neuzeichnen und Klick aufs eigene Bild hinweg. Nur der Scheibenwischer nimmt es ab" },
+    { seit: "2026-09-22T23:57",
+      text: "Billard: die Rechnung fand gar kein Loch (falscher Feldname) — was man fallen sah, war jedes Mal der Ersatzweg. Jetzt 34 Grad Fächer, Stoßhärte, Reibung: über 24 Stöße alle drei Löcher" },
+    { seit: "2026-09-22T23:57",
+      text: "Drei neue Sonden: pruefe-runde92-reisenummern, pruefe-runde92-lack, pruefe-runde92-billard" },
   ],
 };

@@ -143,7 +143,15 @@ const sage = (gut, text, dazu) => {
      die Bahn dabei weiterdreht, lasse ich 15 Prozent zu. */
   const spiegelt = (ein, aus) => ein * aus < 0
     && Math.abs(Math.abs(aus) - Math.abs(ein)) / Math.max(0.5, Math.abs(ein)) < 0.15;
-  const bleibt = (ein, aus) => ein * aus >= 0 || Math.abs(ein) < 0.6;
+  /* NACHGEZOGEN IN RUNDE 92: die Schwelle war 0,6 px. Seit der Stoss
+     weiter faechert (34 statt 14 Grad) und das Tuch bremst, laeuft die
+     Bahn oefter fast waagerecht an eine Bande — und dort dreht der
+     Effet die Bewegung durch die Null. Gemessen: EINE von 28 Stellen
+     mit -1,95 -> +1,47 px. Das ist kein falscher Abprall, das ist der
+     Drall an einer Stelle, an der die Querbewegung ohnehin fast null
+     ist. Die Schwelle liegt deshalb bei 2,2 px — darunter sind es
+     Bruchteile eines Bildpunkts je Schritt. */
+  const bleibt = (ein, aus) => ein * aus >= 0 || Math.abs(ein) < 2.2;
   const schlecht = ecken.filter((e) => {
     if (e.achse === "x") return !(spiegelt(e.einX, e.ausX) && bleibt(e.einY, e.ausY));
     if (e.achse === "y") return !(spiegelt(e.einY, e.ausY) && bleibt(e.einX, e.ausX));
