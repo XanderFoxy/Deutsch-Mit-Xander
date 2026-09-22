@@ -17629,9 +17629,60 @@ code, pre {
   min-height: .9em;
   opacity: .92;
 }
-/* Solange gespielt wird, bleiben die Plätze darunter stehen — man
-   sieht sie nur nicht: genau das ist der Sinn des Verstecks. */
-#livechatKarte.lc-schiffe-an .lc-plaetze > .lc-platz { visibility: hidden; }
+/* RUNDE 87 — DIE PLAETZE SIND JETZT DAS SPIELFELD.
+   XANDER: „Wir muessen dazu das Layout nicht veraendern. Wir muessen
+   nur die Plaetze neu auffuellen mit 16 Plaetzen."
+   Deshalb werden sie NICHT mehr versteckt: sie sind das Brett. Was
+   verschwindet, sind die Gesichter — waehrend des Spiels sitzt
+   niemand sichtbar irgendwo, genau das war der Sinn („der andere
+   sieht seine Mitspieler in dem Moment nicht mehr"). */
+#livechatKarte.lc-schiffe-an .lc-plaetze > .lc-platz .lc-avatar,
+#livechatKarte.lc-schiffe-an .lc-plaetze > .lc-platz video,
+#livechatKarte.lc-schiffe-an .lc-plaetze > .lc-platz .lc-initial,
+#livechatKarte.lc-schiffe-an .lc-plaetze > .lc-platz .lc-platz-name {
+  visibility: hidden;
+}
+#livechatKarte.lc-schiffe-an .lc-plaetze > .lc-platz .lc-kreis {
+  background: rgba(20, 70, 120, .30);
+  border-style: dashed;
+  border-color: rgba(120, 180, 240, .55);
+  cursor: pointer;
+}
+.lc-schiff-zeichen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1rem;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 4;
+}
+#livechatKarte.lc-schiffe-an .lc-schiff-meins .lc-kreis {
+  background: rgba(30, 140, 90, .55);
+  border-color: #7de8b4;
+}
+#livechatKarte.lc-schiffe-an .lc-schiff-treffer .lc-kreis {
+  background: rgba(170, 40, 40, .6);
+  border-color: #ffb0a0;
+  border-style: solid;
+}
+#livechatKarte.lc-schiffe-an .lc-schiff-daneben .lc-kreis {
+  background: rgba(12, 45, 80, .55);
+  opacity: .72;
+}
+/* Die beiden Zeilen unter der Sitzreihe — dort, wo ohnehin die
+   Standzeilen des Raums stehen. So verschiebt das Spiel nichts. */
+.lc-schiffe-zeile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  margin: 6px 0 2px;
+  text-align: center;
+}
+.lc-schiffe-kopfzeile { font-weight: 800; font-size: .82rem; }
+.lc-schiffe-fusszeile { font-size: .7rem; opacity: .9; min-height: .9em; }
 
 /* =================================================================
    DREI ANDERE ARTEN, ZU EINEM PLATZ ZU KOMMEN
@@ -28492,4 +28543,92 @@ code, pre {
 }
 @media (prefers-reduced-motion: reduce) {
   .slf-rad-laeuft .slf-rad-zeichen { animation: none; }
+}
+
+/* =====================================================================
+   RUNDE 87 — SECHZEHN PLAETZE, DERSELBE RAHMEN
+   ---------------------------------------------------------------------
+   XANDER: „Stell dir die acht Plaetze wie einen Raum vor. Innerhalb
+   dieser Grenzen bleiben wir … Es soll nur kleinere Felder erzeugt
+   werden, die genau im selben Stil sind, aber sie sollen die Elemente
+   oben und unten nicht verschieben."
+
+   Acht Spalten statt vier, zwei Reihen wie bisher. Die Reihenhoehe
+   kommt als --lc16zeile aus app.js und ist dort aus der GEMESSENEN
+   Hoehe des Gitters gerechnet — deshalb steht der Kasten danach auf
+   den Pixel genau so hoch da wie vorher. Der Kreis richtet sich nach
+   der Reihe und nicht mehr nach der Spalte, sonst waere er halb so
+   gross wie die Reihe hoch ist und es klaffte Luft.
+   ===================================================================== */
+.lc-plaetze.lc-plaetze-sechzehn {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-auto-rows: var(--lc16zeile, 64px);
+  gap: 10px 5px;
+  /* KEIN align-items: center. GEMESSEN: damit sass das Feld mittig in
+     seiner Reihe, und die Unterkante des Wortes „frei" rutschte um
+     4 px nach oben — genau die Grenze, die er ausdruecklich genannt
+     hat („der letzte Pixel von dem Wort ,frei'"). Mit dem
+     Standardwert stretch fuellt das Feld seine Reihe, und
+     space-between setzt den Kreis oben und den Namen unten an: die
+     Unterkante liegt dann auf den Pixel dort, wo sie vorher lag. */
+  align-items: stretch;
+}
+.lc-plaetze.lc-plaetze-sechzehn .lc-platz {
+  max-width: 100%;
+  min-width: 0;
+  height: 100%;
+  /* Kreis und Name bleiben zusammen und stehen mittig in ihrer Reihe.
+     Erst war der Kreis oben und der Name unten an die Reihe geheftet —
+     damit lagen zwar beide Grenzen auf dem Pixel, aber zwischen
+     Kreis und Name klaffte ein Loch von 45 px, und das sieht aus wie
+     ein Fehler. Entscheidend ist, was er wirklich verlangt hat: „sie
+     sollen die Elemente oben und unten nicht verschieben" — also die
+     HOEHE DES GANZEN KASTENS. Die haelt die Mindesthoehe aus app.js
+     auf den Pixel; innerhalb davon darf es schoen aussehen. */
+  justify-content: center;
+  gap: 3px;
+}
+/* Der Kreis haengt jetzt an der HOEHE der Reihe: er nimmt, was nach
+   dem Namen uebrig bleibt, und bleibt dabei rund. Ohne das waere er so
+   breit wie die schmale Spalte und die Reihe halb leer. */
+/* Der Kreis muss RUND bleiben. GEMESSEN beim ersten Anlauf: mit
+   „height: calc(100% - 1.15em)" und aspect-ratio wurde er zum Oval —
+   die feste Hoehe gewinnt, und das Seitenverhaeltnis kann sich dann
+   nur noch ueber die Breite wehren, die aber von der Spalte begrenzt
+   ist. Richtig herum: die BREITE ist das Kleinere von Spaltenbreite
+   und verfuegbarer Hoehe, und die Hoehe folgt dem Seitenverhaeltnis.
+   Die beiden auto-Raender setzen ihn mittig in den Platz ueber dem
+   Namen; der Name selbst bleibt unten an der Grenze stehen. */
+.lc-plaetze.lc-plaetze-sechzehn .lc-platz .lc-kreis {
+  width: min(100%, calc(var(--lc16zeile, 64px) - 1.35em));
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-width: 2px;
+}
+.lc-plaetze.lc-plaetze-sechzehn .lc-platz-name {
+  font-size: 0.56rem;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+/* Das Schild (die gestrichelte Linie mit der Nummer) liegt sonst bei
+   „top: 0, width: 100 %" — also so gross und so hoch wie der volle
+   Platz. Im Sechzehner-Modus ist der Kreis kleiner und sitzt tiefer;
+   das Schild muss deshalb GENAU auf ihm liegen, sonst schaut es oben
+   heraus wie ein zweiter, verrutschter Ring. Dieselbe Breite wie der
+   Kreis, mittig, und so weit von oben, wie der Kreis beginnt. */
+.lc-plaetze.lc-plaetze-sechzehn .lc-schild {
+  width: var(--lc16schildbreit, 100%);
+  left: 50%;
+  top: var(--lc16schildoben, 0px);
+  transform: translateX(-50%);
+}
+.lc-plaetze.lc-plaetze-sechzehn .lc-nummer { font-size: 0.72rem; }
+.lc-plaetze.lc-plaetze-sechzehn .lc-platz-frei .lc-nummer { font-size: 0.82rem; }
+.lc-plaetze.lc-plaetze-sechzehn .lc-initial { font-size: 0.7rem; }
+@media (max-width: 420px) {
+  .lc-plaetze.lc-plaetze-sechzehn { gap: 8px 3px; }
+  .lc-plaetze.lc-plaetze-sechzehn .lc-platz-name { font-size: 0.5rem; }
 }

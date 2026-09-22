@@ -33587,6 +33587,96 @@
      Mitspieler sind waehrend des Spiels wirklich nicht zu sehen.
      Wer wo steckt, weiss nur der Schiedsrichter (siehe livechat.js).
      ================================================================= */
+  /* =================================================================
+     RUNDE 87 — SECHZEHN PLAETZE IN DEMSELBEN RAHMEN
+     -----------------------------------------------------------------
+     XANDER, sehr genau: „sie sollen das Design nicht veraendern, oben
+     und unten die Position soll fest bleiben. Es soll nur kleinere
+     Felder erzeugt werden, die genau im selben Stil sind, aber sie
+     sollen die Elemente oben und unten nicht verschieben. Stell dir
+     die acht Plaetze wie einen Raum vor. Innerhalb dieser Grenzen
+     bleiben wir: die oberste Grenze ist die Strichlinie der obersten
+     Positionen von den Plaetzen und die unterste Grenze ist der letzte
+     Pixel von dem Wort ,frei' an der untersten Grenze … Deswegen
+     muessen sie prozentual kleiner gerechnet werden, dass sie nur
+     diesen Platz benutzen — dann sind es halt Miniatur-Schaltflaechen.
+     Das spielt keine Rolle … Wir muessen nur die Plaetze neu
+     auffuellen mit 16 Plaetzen."
+
+     DARAUS FOLGT DIE GANZE RECHNUNG:
+       · ACHT SPALTEN statt vier, zwei Reihen wie bisher. Damit
+         verdoppelt sich die Anzahl, und die beiden Reihen bleiben da,
+         wo sie sind — das ist die Form, die er kennt.
+       · DIE HOEHE WIRD VORHER GEMESSEN und festgehalten. Ein halb so
+         breiter Kreis waere auch halb so hoch, und der Kasten wuerde
+         schrumpfen: die Unterkante („frei") wanderte nach oben. Also
+         wird die Hoehe des Gitters VOR dem Umbau gelesen und als
+         Mindesthoehe gesetzt, und die Reihenhoehe daraus gerechnet:
+             Reihe = (Hoehe - Reihenabstand) / 2
+         Danach ist der Kasten auf den Pixel genau so hoch wie zuvor.
+       · DER STIL BLEIBT. Es sind dieselben Schaltflaechen mit
+         demselben gestrichelten Ring, derselben Nummer und demselben
+         Wort darunter — nur kleiner. Nichts Neues, nichts Blaues.
+     ================================================================= */
+  function lcZusatzPlatzHtml(nr) {
+    return '<button type="button" class="lc-platz lc-platz-frei" data-lc-platz="' + nr
+      + '" data-lc-zusatz="1" aria-label="Platz ' + nr + ', frei">'
+      + '<span class="lc-kreis">'
+      + '<span class="lc-initial" data-lc-initial="' + nr + '">·</span>'
+      + "</span>"
+      + '<span class="lc-schild" aria-hidden="true"><span class="lc-nummer">'
+      + nr + "</span></span>"
+      + '<span class="lc-platz-name" data-lc-name="' + nr + '">frei</span>'
+      + "</button>";
+  }
+  function lcSechzehnSetzen(an) {
+    const gitter = document.getElementById("lcPlaetze")
+      || document.querySelector("#livechatKarte .lc-plaetze");
+    if (!gitter) return false;
+    if (!an) {
+      gitter.querySelectorAll('[data-lc-zusatz="1"]').forEach((x) => x.remove());
+      gitter.classList.remove("lc-plaetze-sechzehn");
+      gitter.style.removeProperty("--lc16zeile");
+      gitter.style.removeProperty("--lc16schildoben");
+      gitter.style.removeProperty("--lc16schildbreit");
+      gitter.style.removeProperty("min-height");
+      return true;
+    }
+    if (gitter.classList.contains("lc-plaetze-sechzehn")) return true;
+    /* ERST MESSEN, DANN UMBAUEN — anders geht es nicht: sobald die
+       Spalten schmaler sind, ist die alte Hoehe nicht mehr zu
+       erfahren. */
+    const vorher = gitter.getBoundingClientRect().height;
+    const st = getComputedStyle(gitter);
+    const zeilenLuft = parseFloat(st.rowGap || st.gridRowGap) || 0;
+    const zeile = Math.max(28, (vorher - zeilenLuft) / 2);
+    gitter.style.setProperty("--lc16zeile", zeile.toFixed(2) + "px");
+    gitter.style.minHeight = vorher.toFixed(2) + "px";
+    let dazu = "";
+    for (let nr = 9; nr <= 16; nr++) dazu += lcZusatzPlatzHtml(nr);
+    gitter.insertAdjacentHTML("beforeend", dazu);
+    gitter.classList.add("lc-plaetze-sechzehn");
+    /* DAS SCHILD MUSS AUF DEM KREIS LIEGEN.
+       Es ist absolut gesetzt (top: 0, width: 100 %) und damit so gross
+       wie der ganze Platz — im Normalfall ist das genau der Kreis. Im
+       Sechzehner-Modus ist der Kreis kleiner und steht mittig, also
+       laege der gestrichelte Ring darueber wie ein zweiter,
+       verrutschter Kreis. Rechnen laesst sich das in CSS nicht sauber
+       (es haengt an der gerade gemessenen Schrifthoehe des Namens),
+       also wird es GEMESSEN, sobald das neue Raster steht. */
+    requestAnimationFrame(() => {
+      try {
+        const eins = gitter.querySelector(".lc-platz .lc-kreis");
+        if (!eins) return;
+        gitter.style.setProperty("--lc16schildoben", eins.offsetTop + "px");
+        gitter.style.setProperty("--lc16schildbreit", eins.offsetWidth + "px");
+      } catch (e) {}
+    });
+    return true;
+  }
+  /* Damit sich das von aussen messen laesst. */
+  window.DMA_SECHZEHN = lcSechzehnSetzen;
+
   function lcSchiffeBrett() {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return null;
@@ -33604,53 +33694,105 @@
     return brett;
   }
 
+  /* =================================================================
+     RUNDE 87 — SCHIFFE VERSENKEN AUF DEN SECHZEHN PLAETZEN
+     -----------------------------------------------------------------
+     XANDER: „das Schiffe versenken ist auch noch nicht gebaut, das
+     Modul mit den 16 Plaetzen … Wir muessen dazu das Layout nicht
+     veraendern. Wir muessen nur die Plaetze neu auffuellen mit 16
+     Plaetzen. Jedenfalls koennte man dann so Schiffe versenken
+     spielen."
+
+     ALSO KEIN BLAUES BRETT MEHR. Das Spielfeld sind die Plaetze
+     selbst: sechzehn statt acht, kleiner, sonst unveraendert. Das ist
+     genau das, was er beschrieben hat — und es hat einen zweiten
+     Vorteil, den er auch genannt hat: „der andere sieht aber in dem
+     Moment beim Schiffe versenken die anderen Leute, seine
+     Mitspieler, nicht mehr." Waehrend des Spiels sind alle Plaetze
+     leer und nummeriert; wer wo steckt, weiss nur der Schiedsrichter.
+
+     Die beiden Zeilen (wer dran ist, was zuletzt passierte) stehen
+     unter der Sitzreihe in #lcGrund — dort, wo ohnehin die
+     Standzeilen des Raums stehen. Damit verschiebt sich nichts.
+     ================================================================= */
+  function lcSchiffeAufraeumen() {
+    document.getElementById("lcSchiffe")?.remove();
+    document.getElementById("lcSchiffeZeile")?.remove();
+    const karte = document.getElementById("livechatKarte");
+    if (karte) karte.classList.remove("lc-schiffe-an");
+    document.querySelectorAll(".lc-platz").forEach((p) => {
+      p.classList.remove("lc-schiff-meins", "lc-schiff-treffer", "lc-schiff-daneben",
+                         "lc-schiff-feld");
+      const z = p.querySelector(".lc-schiff-zeichen");
+      if (z) z.remove();
+    });
+    try { lcSechzehnSetzen(false); } catch (e) {}
+  }
+
   window.DMA_SCHIFFE = function (stand) {
     const karte = document.getElementById("livechatKarte");
-    if (!stand) {
-      document.getElementById("lcSchiffe")?.remove();
-      if (karte) karte.classList.remove("lc-schiffe-an");
-      return;
-    }
-    const brett = lcSchiffeBrett();
-    if (!brett || !karte) return;
+    if (!stand) { lcSchiffeAufraeumen(); return; }
+    if (!karte) return;
+    /* Sechzehn Plaetze — und erst danach zeichnen, sonst sind die
+       acht neuen noch gar nicht da. */
+    lcSechzehnSetzen(true);
     karte.classList.add("lc-schiffe-an");
-    const kopf = brett.querySelector("#lcSchiffeKopf");
-    const felder = brett.querySelector("#lcSchiffeFelder");
-    const fuss = brett.querySelector("#lcSchiffeFuss");
 
     const dranIch = stand.phase === "schiessen" && stand.dran === stand.ichBin;
-    kopf.textContent = stand.phase === "verstecken"
+    const kopfText = stand.phase === "verstecken"
       ? "🚢 Such dir ein Versteck — niemand sieht, wo du hingehst."
       : (stand.phase === "aus" ? "🚢 Schiffe versenken"
         : (dranIch ? "🎯 Du bist dran — wo steckt jemand?"
           : "⏳ " + (stand.dranName || "Jemand") + " ist dran."));
 
-    felder.innerHTML = "";
-    const wieViele = stand.plaetze || 8;
+    /* Die Plaetze werden zu Feldern. */
+    const wieViele = stand.plaetze || 16;
     for (let nr = 1; nr <= wieViele; nr++) {
-      const f = document.createElement("button");
-      f.type = "button";
-      f.className = "lc-schiffe-feld";
+      const feld = document.querySelector('.lc-platz[data-lc-platz="' + nr + '"]');
+      if (!feld) continue;
+      feld.classList.add("lc-schiff-feld");
       const was = stand.tafel && stand.tafel[nr];
-      if (was === "treffer") f.classList.add("lc-schiffe-treffer");
-      if (was === "daneben") f.classList.add("lc-schiffe-daneben");
-      if (stand.meins === nr) f.classList.add("lc-schiffe-meins");
-      f.innerHTML = '<span class="lc-schiffe-nr">' + nr + "</span>"
-        + '<span class="lc-schiffe-zeichen">'
-        + (was === "treffer" ? "💥" : was === "daneben" ? "🌊"
-           : (stand.meins === nr ? "🚢" : ""))
-        + "</span>";
-      f.addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        try { LiveChat.schiffeWahl(nr); } catch (err) {}
-      });
-      felder.appendChild(f);
+      feld.classList.toggle("lc-schiff-treffer", was === "treffer");
+      feld.classList.toggle("lc-schiff-daneben", was === "daneben");
+      feld.classList.toggle("lc-schiff-meins", stand.meins === nr);
+      let z = feld.querySelector(".lc-schiff-zeichen");
+      if (!z) {
+        z = document.createElement("span");
+        z.className = "lc-schiff-zeichen";
+        feld.appendChild(z);
+      }
+      z.textContent = was === "treffer" ? "💥" : was === "daneben" ? "🌊"
+        : (stand.meins === nr ? "🚢" : "");
+      if (!feld.dataset.lcSchiffGebunden) {
+        feld.dataset.lcSchiffGebunden = "1";
+        feld.addEventListener("click", (e) => {
+          if (!document.getElementById("livechatKarte")?.classList.contains("lc-schiffe-an")) return;
+          e.preventDefault(); e.stopPropagation();
+          const n = Number(feld.dataset.lcPlatz) || 0;
+          try { LiveChat.schiffeWahl(n); } catch (err) {}
+        }, true);
+      }
     }
-    /* Wer schon versenkt ist, steht unten — sonst verliert man den
-       Ueberblick, wer noch mitspielt. */
-    const raus = (stand.raus || []).filter(Boolean);
-    fuss.textContent = (stand.text || "")
-      + (raus.length ? "   — versenkt: " + raus.join(", ") : "");
+
+    /* Und die beiden Zeilen darunter. */
+    const grund = document.getElementById("lcGrund");
+    if (grund) {
+      let zeile = document.getElementById("lcSchiffeZeile");
+      if (!zeile) {
+        zeile = document.createElement("div");
+        zeile.id = "lcSchiffeZeile";
+        zeile.className = "lc-schiffe-zeile";
+        grund.insertAdjacentElement("afterbegin", zeile);
+      }
+      /* Wer schon versenkt ist, steht dabei — sonst verliert man den
+         Ueberblick, wer noch mitspielt. */
+      const raus = (stand.raus || []).filter(Boolean);
+      zeile.innerHTML = '<span class="lc-schiffe-kopfzeile"></span>'
+                      + '<span class="lc-schiffe-fusszeile"></span>';
+      zeile.querySelector(".lc-schiffe-kopfzeile").textContent = kopfText;
+      zeile.querySelector(".lc-schiffe-fusszeile").textContent = (stand.text || "")
+        + (raus.length ? "   — versenkt: " + raus.join(", ") : "");
+    }
   };
 
   /* Nur wer die Tafel aufgemacht hat, reicht sie nach — sonst schickten
