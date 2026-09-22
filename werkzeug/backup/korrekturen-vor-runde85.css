@@ -13379,39 +13379,24 @@ body.lc-schreibt .tutor-reiter {
    Der Weg selbst wird in app.js gerechnet (lcWegSuchen, Breiten-
    suche ueber die Sitzfelder); hier steht nur, wie es aussieht.
    ===================================================================== */
-/* =====================================================================
-   RUNDE 85 — ICH BIN PAC-MAN, NICHT ICH MIT EINEM PAC-MAN DARUEBER
-   ---------------------------------------------------------------------
-   XANDER: „In dem Moment, wo er das Spielfeld betritt, wird das
-   Profilbild einfach nur zum Pac-Man. Hat auch kein Extra Kreise
-   drumherum, dass man erkennt, dass ich das bin, oder dass da mein
-   Name oder irgendwas auf meinem Profil-Platz noch zurueckgelassen
-   wird, sondern in dem Moment bin ich Pac-Man."
-
-   HIER STAND DAS GEGENTEIL: ein gelber Leuchtring um das Bild
-   (border-color und box-shadow), und das Profilbild selbst blieb
-   sichtbar und wurde per clip-path angeknabbert. Beides ist genau
-   das „Extra", das er nicht will.
-   Jetzt bleibt vom Platz nichts als die Figur: kein Rand, kein
-   Schein, kein Bild. Den Namen nimmt „lc-platz-unterwegs" weg. */
 .lc-kreis.lc-pacman {
-  border-color: transparent !important;
-  background: none !important;
-  box-shadow: none !important;
-  animation: none !important;
-  clip-path: none !important;
+  border-color: #ffd93b !important;
+  box-shadow: 0 0 0 3px rgba(255, 217, 59, .75), 0 0 18px 6px rgba(255, 200, 40, .5);
+  animation: lcPacMaul .34s steps(1, end) infinite !important;
 }
-/* Das Foto und alles andere im Kreis verschwindet — nur die
-   Pac-Man-Figur bleibt. */
-.lc-kreis.lc-pacman > *:not(.lc-pac-figur) {
-  visibility: hidden;
+/* Auf und zu. Zwei Stufen reichen — Pac-Man hatte nie mehr. */
+@keyframes lcPacMaul {
+  0%, 49% {
+    -webkit-clip-path: polygon(100% 32%, 50% 50%, 100% 68%, 100% 100%, 0 100%, 0 0, 100% 0);
+    clip-path: polygon(100% 32%, 50% 50%, 100% 68%, 100% 100%, 0 100%, 0 0, 100% 0);
+  }
+  50%, 100% {
+    -webkit-clip-path: polygon(100% 4%, 50% 50%, 100% 96%, 100% 100%, 0 100%, 0 0, 100% 0);
+    clip-path: polygon(100% 4%, 50% 50%, 100% 96%, 100% 100%, 0 100%, 0 0, 100% 0);
+  }
 }
 /* Die Punkte auf der Linie. Jeder verschwindet genau dann, wenn
    Pac-Man ueber sein Feld kommt — den Verzug setzt app.js. */
-/* RUNDE 85 — die Punkte, ueber die er NICHT laeuft, bleiben liegen:
-   „auch wenn er nicht alle auffrisst". Sie sind etwas blasser, damit
-   die Spur, die er frisst, trotzdem zu sehen ist. */
-.lc-pac-krume-bleibt { opacity: .72; }
 .lc-pac-krume {
   position: absolute;
   width: 8px;
@@ -14199,17 +14184,9 @@ body.lc-schreibt .tutor-reiter {
    Ursache fuer beides), sondern liegt als ORIGINAL-Figur darueber —
    dieselbe Zeichnung wie beim Raumeffekt. Das !important hebt die
    Regel aus Fassung 358 auf, die noch clip-path animierte. */
-/* RUNDE 85 — HIER STAND DER GELBE RING, DEN XANDER NICHT WILL:
-   „Hat auch kein Extra Kreise drumherum, dass man erkennt, dass ich
-   das bin … sondern in dem Moment bin ich Pac-Man."
-   NACHGEMESSEN: die Randfarbe war trotz der neuen Regel weiter oben
-   immer noch rgb(255,216,60) — weil DIESE Regel spaeter im Stilblatt
-   steht und ebenfalls !important traegt. Jetzt steht hier dasselbe
-   wie oben, und damit bleibt vom Platz wirklich nur die Figur. */
 .lc-kreis.lc-pacman {
-  border-color: transparent !important;
-  background: none !important;
-  box-shadow: none !important;
+  border-color: #ffd93b !important;
+  box-shadow: 0 0 0 3px rgba(255, 217, 59, .75), 0 0 18px 6px rgba(255, 200, 40, .5);
   animation: none !important;
   -webkit-clip-path: none !important;
   clip-path: none !important;
@@ -27221,87 +27198,4 @@ body.lc-schreibt .tutor-reiter {
   .lc-tel-gerufen, .lc-tel-anrufer, .lc-tel-welle, .lc-tel-kabel { animation: none; }
   .lc-tel-kabel { stroke-dashoffset: 0; }
   .lc-tel-welle { opacity: 0; }
-}
-
-/* =====================================================================
-   RUNDE 85 — DER VERLASSENE PLATZ SIEHT LEER AUS
-   ---------------------------------------------------------------------
-   XANDER: „generell, was alle noch gemeinsam haben ist, dass mein
-   Platz, der verlassen wird, noch meinen Namen traegt — der soll
-   natuerlich auch nicht mehr da stehen."
-   Er hat recht, und es ist derselbe Gedanke wie beim gestrichelten
-   Ring und der Nummer: waehrend der Reise sitzt dort niemand, also
-   darf dort auch nichts von ihm stehen. Der Platz behaelt seinen
-   Platz im Layout (visibility statt display) — sonst ruckt die ganze
-   Sitzreihe zusammen, sobald jemand losfaehrt.
-   ===================================================================== */
-.lc-platz-unterwegs .lc-platz-name {
-  visibility: hidden;
-}
-/* Und das Bild, sobald die Reise es mitgenommen hat. Die Klasse
-   kommt erst NACH der 220-ms-Blende dazu (siehe lcReise), damit man
-   das Schrumpfen noch sieht — aber eben nur 220 ms lang. */
-.lc-platz-bildweg .lc-kreis {
-  opacity: 0;
-}
-
-/* =====================================================================
-   RUNDE 85 — GLEISE UND SCHIEBEBUEHNE FUER DIE LOK
-   ---------------------------------------------------------------------
-   XANDER: „das sieht auch nicht so aus, als wenn die Lok wirklich auf
-   Schienen bei den Feldern lang faehrt. Vielleicht koenntest du das in
-   Zukunft auch noch machen, realistische Gleise zu bauen."
-   Also: zwei Schienen auf Schwellen, und zwar nur dort, wo sie
-   wirklich faehrt. Beim Reihenwechsel liegt kein Gleis — dort traegt
-   sie die Schiebebuehne, wie in einem Betriebswerk.
-   ===================================================================== */
-.lc-lok-gleis {
-  position: absolute;
-  pointer-events: none;
-  overflow: visible;
-  z-index: 3;
-  animation: lcLokGleisR85 .4s ease-out both;
-}
-@keyframes lcLokGleisR85 {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.lc-lok-schwelle {
-  fill: #6b4e2e;
-  opacity: .62;
-}
-.lc-lok-schiene {
-  stroke: #8d8f96;
-  stroke-width: 2.6;
-  stroke-linecap: round;
-  opacity: .92;
-}
-/* Die Schiebebuehne: eine Plattform mit zwei Fuehrungen, auf der die
-   Lok waagerecht liegend die Reihe wechselt. */
-.lc-lok-buehne {
-  position: absolute;
-  width: var(--gross, 96px);
-  height: calc(var(--gross, 96px) * .22);
-  margin: calc(var(--gross, 96px) * .16) 0 0 calc(var(--gross, 96px) * -.5);
-  border-radius: 4px;
-  background: linear-gradient(180deg, #9aa0ab 0%, #6f757f 55%, #4d525b 100%);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, .35);
-  pointer-events: none;
-  z-index: 4;
-  transition: opacity .18s ease-out;
-}
-.lc-lok-buehne::before,
-.lc-lok-buehne::after {
-  content: "";
-  position: absolute;
-  left: 6%;
-  right: 6%;
-  height: 2px;
-  border-radius: 2px;
-  background: #cfd3da;
-}
-.lc-lok-buehne::before { top: 26%; }
-.lc-lok-buehne::after  { top: 62%; }
-@media (prefers-reduced-motion: reduce) {
-  .lc-lok-gleis { animation: none; }
 }

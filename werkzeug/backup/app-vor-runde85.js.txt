@@ -24524,15 +24524,7 @@
        Fahrt, „bremse" kommt bei der Ankunft (siehe lcFahrtLauf). */
     fahren:         { ton: "fahrt",    dauer: 2600, laut: 0.5 },
     bremse:         { ton: "bremse",   dauer: 1600, laut: 0.55 },
-    /* RUNDE 85 — XANDER: „ich glaube, man hoert auch kein
-       Laufgeraeusch, wenn man bloss laeuft, beziehungsweise klingt
-       das nicht nach laufen. Das ist uebrigens auch dasselbe
-       Geraeusch, was der Zufall verwendet."
-       Beides stimmte: hier stand „gummi" — ein Comic-Boing —, und
-       das Los sprang mit demselben Ton. Jetzt ein gerechneter
-       Schritt (Ferse, dann Ballen, 0,26 s), und das Los hat seinen
-       eigenen Ton bekommen. */
-    spielzug:       { ton: "schritt",  dauer: 260,  laut: 0.6 },   /* ein Schritt je Feld */
+    spielzug:       { ton: "gummi",    dauer: 700,  laut: 0.5 },   /* ein Huepfer je Sprung */
     pacjagd:        { ton: "pacman",   dauer: 3400, laut: 0.55 }, /* die Jagd ueber die Felder */
     stoerung:       { ton: "rauschen", dauer: 3200, laut: 0.5 },  /* Xander: „bist du dir sicher, dass es die Stoerung ist, die wir urspruenglich hatten?" -> eigenes Fernsehrauschen statt Gewitterton */
     aufessen:       { ton: "keks",     dauer: 700,  laut: 0.5 },   /* ein Biss, kein Dauerkauen */
@@ -34140,15 +34132,6 @@
   function lcPlatzUnterwegs(el, an) {
     if (!el) return;
     el.classList.toggle("lc-platz-unterwegs", Boolean(an));
-    /* RUNDE 85 — XANDER: „generell, was alle noch gemeinsam haben ist,
-       dass mein Platz, der verlassen wird, noch meinen Namen traegt —
-       der soll natuerlich auch nicht mehr da stehen."
-       Der Name haengt am Stilblatt (siehe .lc-platz-unterwegs). Was
-       hier dazu kommt, ist die zweite Klasse: „lc-platz-bildweg"
-       blendet das Profilbild ganz aus, sobald es die Reise mitgenommen
-       hat. Sie wird immer zusammen mit der ersten abgeraeumt — sonst
-       bliebe ein Platz leer, auf dem laengst wieder jemand sitzt. */
-    if (!an) el.classList.remove("lc-platz-bildweg");
     const nr = el.dataset && el.dataset.lcPlatz;
     if (!nr) return;
     if (LC_UNTERWEGS_WACHE[nr]) {
@@ -34162,7 +34145,7 @@
         const karte = document.getElementById("livechatKarte");
         if (!karte) return;
         karte.querySelectorAll('.lc-platz[data-lc-platz="' + nr + '"]')
-          .forEach((p) => p.classList.remove("lc-platz-unterwegs", "lc-platz-bildweg"));
+          .forEach((p) => p.classList.remove("lc-platz-unterwegs"));
       } catch (e) {}
     }, 12000);
   }
@@ -34334,14 +34317,7 @@
          Jump-Geräusch" — einer je Feld, nicht einer fuer alles. */
       for (let i = 1; i <= felder; i++) setTimeout(() => lcTonZu("spielzug"), i * jeFeld);
     } else {
-      /* RUNDE 85 — XANDER: „beim Reisen hoert man kein Fahrgeraeusch,
-         man hoert nur das quietschende Bremsen am Schluss."
-         GEFUNDEN: „fahrt.opus" ist 1,00 s lang, die Fahrt ueber vier
-         Felder dauert aber ein Vielfaches davon — der Ton war lange
-         vorbei, bevor das Bild ankam, und was blieb, war die Bremse.
-         lcTonReise streckt ihn auf die wirkliche Fahrzeit, genau wie
-         bei Schiff, Lok und Flugzeug. */
-      lcTonReise("fahren", hin);
+      lcTonZu("fahren");
       /* NACHGEBESSERT: „der Bremssound ist nicht synchron. Er muss
          etwas vorher kommen — das muessen zwei getrennte Sounds sein.
          Wenn er wirklich auf dem Platz landet, muss das quietschen
@@ -34758,35 +34734,11 @@
            heisst ohnehin, dass danach wieder der normale Stil gilt:
            die Sitzreihe wird neu gezeichnet und zeigt das Bild dann
            dort, wo die Person WIRKLICH sitzt. */
-        /* =========================================================
-           RUNDE 85 — DAS BILD SCHRUMPFT NICHT MEHR MINUTENLANG
-           ---------------------------------------------------------
-           XANDER: „bei einigen der Reisen sieht man auch immer noch
-           meine Profilbild-Verkleinerung im Hintergrund, zum Beispiel
-           bei der Sprungfeder oder dem Kran."
-
-           GEFUNDEN, und es war die Rechenart: die Blende lief ueber
-           16 PROZENT DER GANZEN REISE. Bei der Feder sind das 679 ms,
-           beim Kran 779 ms — NACHGEMESSEN stand das Bild nach 900 ms
-           noch bei Deckkraft 0,57 (Feder) und 0,70 (Kran) und war auf
-           0,66 beziehungsweise 0,76 geschrumpft. Genau dieses lange
-           Schrumpfen sieht er.
-           Eine Blende ist aber kein Anteil einer Reise, sondern eine
-           feste kurze Zeit. Jetzt 220 ms — danach haelt die Klasse
-           „lc-platz-bildweg" das Bild weg, bis aufgeraeumt wird. Das
-           ist zugleich robuster als „fill: none": vorher kam das Bild
-           am alten Platz wieder, sobald die Animation zu Ende war,
-           und auf den Geraeten der anderen kam der Sitzwechsel erst
-           danach ueber das Netz. */
         kreis.animate([
-          { opacity: 1, transform: "scale(1)" },
-          { opacity: 0, transform: "scale(.2)" }
-        ], { duration: 220, easing: "ease-in", fill: "none" });
-        setTimeout(() => {
-          if (ab.el.classList.contains("lc-platz-unterwegs")) {
-            ab.el.classList.add("lc-platz-bildweg");
-          }
-        }, 200);
+          { opacity: 1, transform: "scale(1)", offset: 0 },
+          { opacity: 0, transform: "scale(.2)", offset: 0.16 },
+          { opacity: 0, transform: "scale(.2)", offset: 1 }
+        ], { duration: dauer, easing: "ease-in-out", fill: "none" });
       } catch (e) {}
     }
 
@@ -36157,25 +36109,7 @@
          Klappt die Runde nicht (etwa weil das Sitzgitter noch nicht
          steht), faehrt sie wie bisher geradeaus — lieber eine gerade
          Fahrt als gar keine. */
-      /* RUNDE 85 — XANDER: „die Lokomotive faehrt jetzt nur noch im
-         Kreis und das soll sie nicht. Wenn ich irgendwo hin moechte,
-         soll sie ganz normal dahinfahren."
-         Jetzt faehrt sie die Strecke ueber die Sitzfelder ab, auf
-         Gleisen, und wechselt die Reihe auf einer Schiebebuehne.
-         Findet die Wegsuche keinen Weg (ein Raum, in dem nichts
-         zusammenhaengt), bleibt es bei der geraden Fahrt. */
-      const lokWeg = lcWegSuchen(lcPlatzGitter(), ab.nr, zu.nr, true);
-      const lokZeug = lokWeg
-        ? lcLokFahrt(lok, reihe, rk, ab, zu, start, ende, dauer, hin, d, lokWeg)
-        : null;
-      if (lokZeug) {
-        /* Gleise und Buehne raeumt „weg" mit auf; die Uhren, die die
-           Buehne ein- und ausblenden, bekommen ihre eigene Absage,
-           damit sie nicht an einem entfernten Element weiterarbeiten. */
-        weg.push(lokZeug.gleis, lokZeug.buehne);
-        setTimeout(() => (lokZeug.uhren || []).forEach((u) => clearTimeout(u)),
-                   dauer + 420);
-      } else {
+      if (!lcLokRunden(lok, start, ende, dauer, hin)) {
         lcReiseWaagerecht(lok, start, ende, dauer, hin, "lok");
       }
       lcTonZu("lok");
@@ -38523,96 +38457,39 @@
      dort sitzt, schreit. Welche Stimme, entscheidet das Geschlecht des
      Ueberfahrenen (lcSchmerzTon), damit es nicht immer dieselbe ist.
      ================================================================= */
-  /* =================================================================
-     RUNDE 85 — DIE LOK FAEHRT AUF SCHIENEN ZUM ZIEL
-     -----------------------------------------------------------------
-     XANDER: „die Lokomotive faehrt jetzt nur noch im Kreis und das
-     soll sie nicht. Wenn ich irgendwo hin moechte, soll sie ganz
-     normal dahinfahren. So wie vorher auch."
-     Und zur Kurve: „entweder gehen wir direkt im Winkel nach unten
-     und drehen dann den Winkel wieder rum, wenn er wieder waagerecht
-     faehrt, oder wir heben die Lok runter wie ein Elevator … mach
-     bitte das, was besser aussieht."
-
-     GEWAEHLT: DER ELEVATOR — und zwar aus einem sachlichen Grund, es
-     ist keine Geschmacksfrage. Eine Lok, die sich um 90 Grad kippt
-     und eine Wand hinunterfaehrt, gibt es nicht; das sieht bei jeder
-     Groesse falsch aus. Eine SCHIEBEBUEHNE dagegen gibt es wirklich
-     in jedem Betriebswerk: die Lok faehrt auf eine Plattform, die
-     Plattform verschiebt sie waagerecht liegend zum naechsten Gleis,
-     und dort faehrt sie geradeaus weiter. Genau das passiert hier —
-     die Lok bleibt immer waagerecht, und beim Reihenwechsel traegt
-     sie eine Buehne.
-
-     DER WEG ist keine gerade Linie mehr, sondern die Strecke ueber
-     die Sitzfelder (dieselbe Breitensuche, die auch das Fahren
-     benutzt). Damit faehrt sie wirklich „bei den Feldern lang".
-     UND DIE GLEISE: „Vielleicht koenntest du das in Zukunft auch
-     noch machen, realistische Gleise zu bauen, wo sie dann lang
-     faehrt." Sie liegen jetzt unter ihr — zwei Schienen auf
-     Schwellen, und nur dort, wo sie wirklich faehrt.
-     ================================================================= */
-  function lcLokGleise(reihe, pk, rk, d) {
-    const svg = document.createElementNS(NS_SVG, "svg");
-    svg.setAttribute("class", "lc-lok-gleis");
-    const alleX = pk.map((q) => q.x), alleY = pk.map((q) => q.y);
-    const links = Math.min.apply(null, alleX) - d;
-    const oben = Math.min.apply(null, alleY) - d;
-    const breit = Math.max.apply(null, alleX) - links + d * 2;
-    const hoch = Math.max.apply(null, alleY) - oben + d * 2;
-    svg.setAttribute("width", Math.max(1, breit).toFixed(0));
-    svg.setAttribute("height", Math.max(1, hoch).toFixed(0));
-    svg.style.left = links.toFixed(1) + "px";
-    svg.style.top = oben.toFixed(1) + "px";
-    /* Die Spurweite: ein Sechstel der Bildbreite sieht bei 64 px
-       richtig aus — schmaler wirkt es wie ein Draht, breiter wie
-       eine Strasse. */
-    const spur = d * 0.17;
-    let teile = "";
-    for (let i = 1; i < pk.length; i++) {
-      const a = pk[i - 1], b = pk[i];
-      /* Nur die waagerechten Stuecke bekommen Gleise. Beim
-         Reihenwechsel traegt die Schiebebuehne — dort liegt kein
-         Gleis, sonst waere es eine Achterbahn. */
-      if (Math.abs(b.y - a.y) > 4) continue;
-      const x1 = Math.min(a.x, b.x) - links - d * 0.5;
-      const x2 = Math.max(a.x, b.x) - links + d * 0.5;
-      const y = a.y - oben;
-      /* Die Schwellen zuerst — sie liegen UNTER den Schienen. */
-      const schritt = Math.max(9, d * 0.22);
-      for (let x = x1 + schritt / 2; x < x2; x += schritt) {
-        teile += '<rect class="lc-lok-schwelle" x="' + x.toFixed(1)
-          + '" y="' + (y - spur - 2.4).toFixed(1) + '" width="'
-          + Math.max(3, schritt * 0.34).toFixed(1) + '" height="'
-          + (spur * 2 + 4.8).toFixed(1) + '" rx="1.2"/>';
-      }
-      [-spur, spur].forEach((ver) => {
-        teile += '<line class="lc-lok-schiene" x1="' + x1.toFixed(1) + '" y1="'
-          + (y + ver).toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="'
-          + (y + ver).toFixed(1) + '"/>';
-      });
-    }
-    svg.innerHTML = teile;
-    reihe.appendChild(svg);
-    return svg;
-  }
-
-  function lcLokFahrt(lok, reihe, rk, ab, zu, start, ende, dauer, hin, d, weg) {
+  function lcLokRunden(lok, start, ende, dauer, hin) {
     const gitter = lcPlatzGitter() || [];
-    if (!weg || weg.length < 2) return null;
-    /* Die Stationen in Buehnen-Koordinaten; Anfang und Ende genau
-       dort, wo die Reise ohnehin anfaengt und aufhoert. */
-    const pk = weg.map((p) => ({ x: p.x - rk.left, y: p.y - rk.top }));
-    pk[0] = { x: start.x, y: start.y };
-    pk[pk.length - 1] = { x: ende.x, y: ende.y };
+    if (gitter.length < 2) return false;
+    const reihen = {};
+    gitter.forEach((g) => { (reihen[g.reihe] = reihen[g.reihe] || []).push(g); });
+    const nummern = Object.keys(reihen).map(Number).sort((a, b) => a - b);
+    if (!nummern.length) return false;
+    const alleX = gitter.map((g) => g.x);
+    const linksX = Math.min.apply(null, alleX);
+    const rechtsX = Math.max.apply(null, alleX);
+    const obenY = reihen[nummern[0]][0].y;
+    const untenY = reihen[nummern[nummern.length - 1]][0].y;
+    /* Eine Runde: vier Ecken. Bei nur einer Reihe wird daraus ein Hin
+       und Her — auch das ist eine Runde, nur eine flache. */
+    const runde = [
+      { x: linksX, y: obenY }, { x: rechtsX, y: obenY },
+      { x: rechtsX, y: untenY }, { x: linksX, y: untenY }
+    ];
+    const RUNDEN = 2;
+    const punkte = [{ x: start.x, y: start.y }];
+    for (let r = 0; r < RUNDEN; r++) runde.forEach((q) => punkte.push(q));
+    punkte.push({ x: ende.x, y: ende.y });
+    /* Die Zeiten kommen aus der wirklichen Weglaenge — sonst faehrt
+       sie die kurzen Stuecke genauso lange wie die langen. */
     let gesamt = 0;
     const laengen = [];
-    for (let i = 1; i < pk.length; i++) {
-      const l = Math.hypot(pk[i].x - pk[i - 1].x, pk[i].y - pk[i - 1].y) || 1;
+    for (let i = 1; i < punkte.length; i++) {
+      const l = Math.hypot(punkte[i].x - punkte[i - 1].x,
+                           punkte[i].y - punkte[i - 1].y) || 1;
       laengen.push(l); gesamt += l;
     }
     const tAn = hin / dauer;
-    const bild = (q, t, sicht, sp, buehne) => ({
+    const bei = (q, t, sicht, sp) => ({
       transform: "translate(" + (q.x - start.x).toFixed(1) + "px, "
         + (q.y - start.y).toFixed(1) + "px) translate(-50%, -50%) scaleX("
         + sp + ") scale(" + (sicht ? 1 : 0.3) + ")",
@@ -38621,80 +38498,39 @@
     });
     const rahmen = [];
     let sp = 1, weit = 0;
-    rahmen.push(bild(pk[0], 0, 0, sp));
-    rahmen.push(bild(pk[0], Math.min(0.1, tAn * 0.12), 1, sp));
-    const hebeZeiten = [];
-    for (let i = 1; i < pk.length; i++) {
-      const dx = pk[i].x - pk[i - 1].x;
-      const dy = pk[i].y - pk[i - 1].y;
-      /* Waagerecht: die Lok dreht sich in die Fahrtrichtung.
-         Senkrecht: sie behaelt ihre Richtung — auf einer
-         Schiebebuehne dreht sich nichts. */
-      if (Math.abs(dx) > 1 && Math.abs(dy) <= 4) sp = dx < 0 ? -1 : 1;
-      const vor = weit / gesamt;
+    rahmen.push(bei(punkte[0], 0, 0, sp));
+    for (let i = 1; i < punkte.length; i++) {
+      const dx = punkte[i].x - punkte[i - 1].x;
+      if (Math.abs(dx) > 1) sp = dx < 0 ? -1 : 1;
       weit += laengen[i - 1];
-      const t = tAn * (weit / gesamt);
-      if (Math.abs(dy) > 4) hebeZeiten.push([dauer * tAn * vor, dauer * (t - tAn * vor)]);
-      rahmen.push(bild(pk[i], t, 1, sp));
+      rahmen.push(bei(punkte[i], tAn * (weit / gesamt), 1, sp));
     }
-    rahmen.push(bild(pk[pk.length - 1], 1, 0, sp));
+    rahmen.push(bei(punkte[punkte.length - 1], 1, 0, sp));
     try {
       lok.animate(rahmen, { duration: dauer, easing: "linear", fill: "forwards" });
-    } catch (e) { return null; }
+    } catch (e) { return false; }
 
-    /* Die Gleise unter ihr. */
-    const gleis = lcLokGleise(reihe, pk, rk, d);
-
-    /* Die Schiebebuehne — sie ist nur da, wenn die Lok die Reihe
-       wechselt, und genau so lange. */
-    const buehne = document.createElement("span");
-    buehne.className = "lc-lok-buehne";
-    buehne.style.setProperty("--gross", (d * 1.5) + "px");
-    buehne.style.opacity = "0";
-    reihe.appendChild(buehne);
-    const buehneFolgen = [];
-    hebeZeiten.forEach(([abMs, langMs]) => {
-      buehneFolgen.push(setTimeout(() => {
-        buehne.style.opacity = "1";
-      }, Math.max(0, abMs - 120)));
-      buehneFolgen.push(setTimeout(() => {
-        buehne.style.opacity = "0";
-      }, Math.max(0, abMs + langMs + 120)));
-    });
-    /* Sie haengt am selben Weg wie die Lok, nur ohne Spiegelung. */
-    try {
-      buehne.animate(rahmen.map((r) => ({
-        transform: r.transform.replace(/scaleX\([-\d.]+\)/, "scaleX(1)"),
-        offset: r.offset
-      })), { duration: dauer, easing: "linear", fill: "forwards" });
-    } catch (e) {}
-
-    /* WER UEBERFAHREN WIRD. Nur auf den waagerechten Stuecken, nur
-       wo wirklich jemand sitzt — und das wird im AUGENBLICK des
-       Ueberfahrens noch einmal nachgesehen. XANDER: „erst dann
-       ausgeloest werden, wenn ich ueber dieses Feld von demjenigen
-       fahre, wenn dort wirklich jemand sitzt … und nicht einfach
-       so." */
+    /* WER UEBERFAHREN WIRD. Ein besetzter Platz wird in dem Augenblick
+       erwischt, in dem die Lok seine x-Stelle erreicht. Der Augenblick
+       wird aus demselben Weg gerechnet, aus dem auch die Bilder
+       kommen — dann stimmt er auf den Bildpunkt genau. */
     let stueck = 0;
-    for (let i = 1; i < pk.length; i++) {
-      const a = pk[i - 1], b = pk[i];
+    for (let i = 1; i < punkte.length; i++) {
+      const a = punkte[i - 1], b = punkte[i];
       const vorher = stueck / gesamt;
       stueck += laengen[i - 1];
       const nachher = stueck / gesamt;
+      /* Nur die waagerechten Stuecke fahren durch eine Reihe. */
       if (Math.abs(b.y - a.y) > 4) continue;
       const spanne = b.x - a.x;
       if (Math.abs(spanne) < 1) continue;
       gitter.forEach((g) => {
-        const gx = g.x - rk.left, gy = g.y - rk.top;
-        if (g.nr === ab.nr || Math.abs(gy - a.y) > 6) return;
-        const f = (gx - a.x) / spanne;
+        if (g.frei || Math.abs(g.y - a.y) > 6) return;
+        const f = (g.x - a.x) / spanne;
         if (f < 0 || f > 1) return;
         const wann = dauer * tAn * (vorher + (nachher - vorher) * f);
         setTimeout(() => {
           if (!g.el.isConnected) return;
-          /* Erst JETZT entscheidet sich, ob dort jemand sitzt. */
-          if (g.el.classList.contains("lc-platz-frei")
-              || g.el.classList.contains("lc-platz-unterwegs")) return;
           const k = g.el.querySelector(".lc-kreis");
           if (k) {
             k.classList.remove("lc-ueberfahren");
@@ -38706,7 +38542,7 @@
         }, Math.max(0, wann));
       });
     }
-    return { gleis: gleis, buehne: buehne, uhren: buehneFolgen };
+    return true;
   }
 
   /* Eine Absage, die man auch sieht. Sie gehoert nicht in den Chat der
@@ -38830,14 +38666,7 @@
     const jeFeld = 480;
     const hin = felder * jeFeld;
     const beissen = 900;
-    /* RUNDE 85 — XANDER: „wenn er zurueckgeht, das hast du auch nicht
-       beruecksichtigt, dann darf er nicht schraeg uebers Feld
-       zurueckgehen, sondern muss den naechsten logischen Weg
-       zuruecknehmen. Also so wie er gekommen ist."
-       Der Rueckweg ist jetzt derselbe Weg rueckwaerts und dauert
-       deshalb genauso lang wie der Hinweg — vorher waren es 70 % und
-       eine einzige Diagonale quer ueber alles. */
-    const dauer = hin + beissen + hin;
+    const dauer = hin + beissen + hin * 0.7;
     const bei = (ms) => Math.min(1, ms / dauer);
 
     /* Die Punkte auf der Linie — sie liegen in der Sitzreihe, damit
@@ -38846,71 +38675,35 @@
     if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
     const rk = lcLayoutKasten(reihe);
     const krumen = [];
-    /* =============================================================
-       RUNDE 85 — DAS GANZE FELD LIEGT VOLLER PUNKTE
-       -------------------------------------------------------------
-       XANDER: „ich moechte auch, dass das ganze Feld mit
-       Futterpunkten gefuellt ist, auch wenn er nicht alle
-       auffrisst."
-       Vorher lagen Punkte NUR auf seiner Strecke — das sah aus wie
-       eine gelegte Spur, nicht wie ein Spielfeld. Jetzt liegt auf
-       jedem Platz einer und zwischen je zwei Nachbarn zwei weitere,
-       ueber das ganze Gitter. Die auf seinem Weg verschwinden genau
-       dann, wenn er dort ankommt; alle anderen bleiben liegen, bis
-       aufgeraeumt wird.
-       „wannAuf" sagt zu jedem Feld, wann er dort ist — einmal auf
-       dem Hinweg, und falls er zweimal darueber kommt, gilt das
-       erste Mal. */
-    const wannAuf = {};
-    weg.forEach((p, i) => {
-      if (wannAuf[p.nr] === undefined) wannAuf[p.nr] = i * jeFeld;
-    });
-    const kruemel = (px, py, spaet, aufPlatz) => {
+    /* XANDER: „gelbe Punkte auf den Plaetzen."
+       Vorher lagen die Punkte NUR zwischen den Plaetzen (bei 34 und
+       68 Prozent der Strecke) — auf den Sitzen selbst lag keiner. Bei
+       Pac-Man liegt aber auf JEDEM Feld einer, auch auf dem, auf dem
+       man steht. Deshalb bekommt jeder Wegpunkt seinen eigenen, und
+       er verschwindet genau dann, wenn Pac-Man dort ankommt. */
+    for (let i = 0; i < weg.length; i++) {
       const k = document.createElement("i");
-      /* „lc-pac-krume-platz" heisst: dieser Punkt liegt AUF einem
-         Sitzfeld (und damit auf einem Profilbild) — Xander wollte
-         das schon in Runde 52 so, und pruefe-runde52 misst es. */
-      k.className = "lc-pac-krume" + (aufPlatz ? " lc-pac-krume-platz" : "")
-        + (spaet === null ? " lc-pac-krume-bleibt" : "");
-      k.style.left = (px - rk.left) + "px";
-      k.style.top = (py - rk.top) + "px";
-      if (spaet === null) k.style.animation = "none";
-      else k.style.animationDelay = (spaet / 1000).toFixed(2) + "s";
+      k.className = "lc-pac-krume lc-pac-krume-platz";
+      k.style.left = (weg[i].x - rk.left) + "px";
+      k.style.top = (weg[i].y - rk.top) + "px";
+      k.style.animationDelay = (i * jeFeld / 1000).toFixed(2) + "s";
       reihe.appendChild(k);
       krumen.push(k);
-      return k;
-    };
-    /* Auf jedem Platz einer. */
-    gitter.forEach((g) => {
-      const t = wannAuf[g.nr];
-      kruemel(g.x, g.y, t === undefined ? null : t, true);
-    });
-    /* Und zwischen je zwei Nachbarn zwei. Nur einmal je Paar —
-       deshalb nur nach rechts und nach unten. */
-    gitter.forEach((g) => {
-      gitter.forEach((h) => {
-        const rechts = h.reihe === g.reihe && h.spalte === g.spalte + 1;
-        const drunter = h.spalte === g.spalte && h.reihe === g.reihe + 1;
-        if (!rechts && !drunter) return;
-        /* Liegt dieses Stueck auf seinem Weg, verschwinden die
-           beiden Punkte, wenn er darueberlaeuft. */
-        let ab = null;
-        for (let i = 0; i < weg.length - 1; i++) {
-          if ((weg[i].nr === g.nr && weg[i + 1].nr === h.nr)
-              || (weg[i].nr === h.nr && weg[i + 1].nr === g.nr)) { ab = i; break; }
-        }
-        /* NACHGESEHEN am ersten Versuch: bei 34 % und 68 % des
-           Abstands lagen die Punkte 38 px von der Platzmitte
-           entfernt — und der Bildkreis hat 51 px Radius. Sie lagen
-           also IM Bild und sahen aus wie Konfetti auf dem Gesicht.
-           Genau EIN Punkt in der Mitte zwischen zwei Plaetzen (55 px)
-           liegt dagegen im Zwischenraum, und so sieht ein
-           Pac-Man-Feld auch aus. */
-        const px = (g.x + h.x) / 2;
-        const py = (g.y + h.y) / 2;
-        kruemel(px, py, ab === null ? null : (ab + 0.5) * jeFeld);
-      });
-    });
+    }
+    for (let i = 0; i < punkte.length - 1; i++) {
+      for (const t of [0.34, 0.68]) {
+        const px = weg[i].x + (weg[i + 1].x - weg[i].x) * t;
+        const py = weg[i].y + (weg[i + 1].y - weg[i].y) * t;
+        const k = document.createElement("i");
+        k.className = "lc-pac-krume";
+        k.style.left = (px - rk.left) + "px";
+        k.style.top = (py - rk.top) + "px";
+        /* Jeder Punkt verschwindet, wenn Pac-Man dort ankommt. */
+        k.style.animationDelay = ((i + t) * jeFeld / 1000).toFixed(2) + "s";
+        reihe.appendChild(k);
+        krumen.push(k);
+      }
+    }
 
     /* =========================================================
        ICH BIN DER PAC-MAN — UND DER KREIS BLEIBT RUND
@@ -38998,40 +38791,12 @@
       + "px) scale(1.2)", offset: bei(hin + 320) });
     bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + e.y.toFixed(1)
       + "px) scale(1.14)", offset: bei(hin + beissen) });
+    bilder.push({ transform: "translate(0px, 0px) scale(1)", offset: 1 });
     drehungen.push({ transform: "rotate(" + drehEnde + "deg)", offset: bei(hin + beissen) });
-    /* =============================================================
-       RUNDE 85 — DER RUECKWEG IST DERSELBE WEG
-       -------------------------------------------------------------
-       XANDER: „wenn er zurueckgeht … dann darf er nicht schraeg
-       uebers Feld zurueckgehen, sondern muss den naechsten logischen
-       Weg zuruecknehmen. Also so wie er gekommen ist."
-       Hier stand EIN Bild: „translate(0,0)" — er schnitt also quer
-       ueber alle Felder zurueck. Jetzt geht er Feld fuer Feld
-       denselben Weg zurueck, und sein Maul zeigt dabei nach hinten,
-       weil er ja rueckwaerts durch die Kette laeuft. */
-    for (let i = punkte.length - 2; i >= 0; i--) {
-      const q = punkte[i];
-      const wann = hin + beissen + (punkte.length - 1 - i) * jeFeld;
-      bilder.push({ transform: "translate(" + q.x.toFixed(1) + "px, " + q.y.toFixed(1)
-        + "px) scale(" + (i ? 1.08 : 1) + ")", offset: bei(wann) });
-      /* Die Richtung des Rueckwegs: vom vorherigen Feld auf dieses. */
-      const vor = punkte[i + 1];
-      const gradR = Math.round(Math.atan2(q.y - vor.y, q.x - vor.x) / (Math.PI / 2)) * 90;
-      drehungen.push({ transform: "rotate(" + gradR + "deg)",
-                       offset: bei(hin + beissen + (punkte.length - 2 - i) * jeFeld) });
-    }
+    drehungen.push({ transform: "rotate(" + drehEnde + "deg)", offset: 1 });
     try {
       const svg = figur.querySelector("svg");
-      /* RUNDE 85 — XANDER: „wenn Pac-Man eine Kurve macht, dann
-         moechte ich, dass das wie im Original ist mit der Ausrichtung
-         seines fressenden Mauls … darf das Maul nicht nach unten
-         bleiben."
-         „steps(1)" ist der Unterschied: die Drehung SPRINGT am Feld
-         um, statt sich weich mitzudrehen. Bei „linear" stand das Maul
-         die halbe Strecke schraeg zwischen zwei Richtungen — und
-         genau das sieht er, wenn er sagt, es bleibe nach unten
-         stehen. Im Original dreht Pac-Man sich nie weich. */
-      if (svg) svg.animate(drehungen, { duration: dauer, easing: "steps(1, end)", fill: "forwards" });
+      if (svg) svg.animate(drehungen, { duration: dauer, easing: "linear", fill: "forwards" });
     } catch (err) {}
 
     lcPlatzUnterwegs(ab.el, true);
@@ -42616,29 +42381,8 @@
       lauf.oncancel = () => { ab.el.style.zIndex = altZ; lcPlatzUnterwegs(ab.el, false); };
     } catch (e) { zurueck(); return false; }
     setTimeout(zurueck, gesamt + 700);
-    /* =============================================================
-       RUNDE 85 — DAS LOS KLINGT WIE EINE SLOTMASCHINE
-       -------------------------------------------------------------
-       XANDER: „der Zufall hat immer noch nicht das
-       Slot-Maschinengeraeusch beziehungsweise dieses Flipper-Klingeln,
-       wenn man an die Seiten stoesst."
-       HIER STAND „spielzug" — je Sprung ein Comic-Boing, derselbe Ton
-       wie beim Laufen. Jetzt laeuft „slot" als Bett unter der ganzen
-       Lostrommel (gemessen 4,00 s, die Trommel braucht 3,8 s), und
-       jeder Sprung setzt ein helles „bling" darauf — das ist das
-       Klingeln, das er meint. Der letzte Sprung, der Treffer, klingt
-       lauter als die davor. */
-    lcGeraeusch("slot", "lotto", 0.55);
-    folge.forEach((_, i) => {
-      const wann = dauern.slice(0, i + 1).reduce((a, b) => a + b, 0);
-      /* „bling" ist 2,00 s lang (gemessen), die Spruenge liegen 90 bis
-         464 ms auseinander — ohne Grenze laegen zwoelf davon
-         uebereinander und es waere Brei. Jeder Schlag hoert deshalb
-         auf, wenn der naechste kommt; nur der Treffer darf ausklingen. */
-      const letzter = i === folge.length - 1;
-      lcTonSpaeter("bling", wann, letzter ? 0.7 : 0.3,
-                   letzter ? 1400 : Math.max(120, dauern[i + 1] || 200));
-    });
+    folge.forEach((_, i) => setTimeout(() => lcTonZu("spielzug"),
+      dauern.slice(0, i + 1).reduce((a, b) => a + b, 0)));
 
     /* Und am Ende sitzt man wirklich dort — aber nur auf dem eigenen
        Geraet, sonst setzte jeder jeden um. */

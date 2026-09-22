@@ -200,10 +200,16 @@ function tonMessen(name) {
   sage(/@keyframes lcKlapsHandR80/.test(css) && /@keyframes lcKlapsAbdruckR80/.test(css),
     "die Hand kommt von unten und hinterlaesst einen Abdruck");
 
-  /* „die lok soll man auch mehrmals im Kreis herumfahren lassen und
-     kann die Menschen auch ueberfahren … sie sollen dann schreien." */
-  sage(/function lcLokRunden\(/.test(js) && /const RUNDEN = 2;/.test(js),
-    "die Lok faehrt zwei Runden");
+  /* RUNDE 85 — HIER STAND DAS GEGENTEIL, und Xander hat es
+     zurueckgenommen: „die Lokomotive faehrt jetzt nur noch im Kreis
+     und das soll sie nicht. Wenn ich irgendwo hin moechte, soll sie
+     ganz normal dahinfahren. So wie vorher auch."
+     Geblieben ist der andere Teil desselben Wunsches — dass sie die
+     Leute ueberfaehrt und die dann schreien. Das steht jetzt hier,
+     zusammen mit dem, was an die Stelle der Runden getreten ist:
+     Gleise und eine Schiebebuehne. */
+  sage(/function lcLokFahrt\(/.test(js) && !/const RUNDEN = 2;/.test(js),
+    "die Lok faehrt zum Ziel statt im Kreis");
   sage(/lcGeraeusch\(lcSchmerzTon\(g\.el\), "lokopfer", 0\.5\);/.test(js)
     && /@keyframes lcUeberfahrenR80/.test(css),
     "und wer ueberfahren wird, schreit");
@@ -501,9 +507,17 @@ function tonMessen(name) {
     await pg.evaluate((x) => window.DMA_PRUEFUNG.wirkung("pacjagd", x, "Alex"), was);
     await new Promise((f) => setTimeout(f, 260));
     const aus = await pg.evaluate(() => {
-      const kr = [...document.querySelectorAll(".lc-pac-krume-platz")].map((e) => {
-        const r = e.getBoundingClientRect();
-        return [r.left + r.width / 2, r.top + r.height / 2]; });
+      /* RUNDE 85 — seit das GANZE Feld voller Punkte liegt, sagt die
+         blosse Zahl der Platz-Punkte nichts mehr. Gefressen werden
+         genau die, die KEIN „bleibt" tragen; ihre Reihenfolge steht
+         im Verzug ihrer Animation. Genau das ist sein Weg. */
+      const kr = [...document.querySelectorAll(".lc-pac-krume-platz")]
+        .filter((e) => !e.classList.contains("lc-pac-krume-bleibt"))
+        .sort((a, b) => parseFloat(getComputedStyle(a).animationDelay)
+                      - parseFloat(getComputedStyle(b).animationDelay))
+        .map((e) => {
+          const r = e.getBoundingClientRect();
+          return [r.left + r.width / 2, r.top + r.height / 2]; });
       const pl = [...document.querySelectorAll(".lc-platz")].map((q) => {
         const r = q.getBoundingClientRect();
         return { nr: +q.dataset.lcPlatz, x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
