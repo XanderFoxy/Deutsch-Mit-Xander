@@ -41932,28 +41932,12 @@
       const weiblich = /^(w|f)/.test(String(
         (platz && platz.dataset && platz.dataset.lcGeschlecht) || "")
         .trim().toLowerCase());
-      /* RUNDE 87 — XANDER: „der Arsch ist immer noch nicht zu sehen,
-         auf dem man drauf schlaegt."
-         NACHGESEHEN, woran das lag: gezeichnet WAR er, aber er sass
-         im unteren Drittel des Ausschnitts, und die oberen zwei
-         Drittel waren Ruecken. Durch die runde Blende sah man vor
-         allem einen Rumpf. Die Backen sind deshalb groesser geworden
-         und hoeher gerutscht, sodass sie den Ausschnitt wirklich
-         fuellen:
-                        frueher             jetzt
-           Backenmitte  y 64 / 62           y 58 / 57
-           Halbachsen   23x25 / 20x21       27x29 / 24x25
-           Abstand      22 / 18             24 / 20
-         Damit sind die Backen 102 (Frau) bzw. 88 (Mann) von 100
-         Einheiten breit — sie gehen also bis an den Rand der runden
-         Blende und werden dort beschnitten, und genau das ist
-         gewollt: er fuellt das Bild. */
       const hueftBreit = weiblich ? 84 : 66;
       const taille = weiblich ? 46 : 58;
-      const backeX = weiblich ? 24 : 20;   /* Abstand der Backenmitten */
-      const backeRx = weiblich ? 27 : 24;
-      const backeRy = weiblich ? 29 : 25;
-      const backeY = weiblich ? 58 : 57;
+      const backeX = weiblich ? 22 : 18;   /* Abstand der Backenmitten */
+      const backeRx = weiblich ? 23 : 20;
+      const backeRy = weiblich ? 25 : 21;
+      const backeY = weiblich ? 64 : 62;
       const popo = document.createElement("span");
       popo.className = "lc-popo" + (weiblich ? " lc-popo-frau" : " lc-popo-mann");
       popo.innerHTML =
@@ -41962,33 +41946,15 @@
         + '<stop offset="0%" stop-color="#f6d3bd"/>'
         + '<stop offset="62%" stop-color="#eec0a8"/>'
         + '<stop offset="100%" stop-color="#d9a68c"/>'
-        + "</radialGradient>"
-        /* Der Stoff der Waesche: ein Verlauf von oben links nach unten
-           rechts. Flach eingefaerbt sah das Hoeschen aus wie ein
-           schwarzer Kasten ueber dem Bild und nicht wie Stoff, der
-           sich um etwas legt. */
-        + '<linearGradient id="lcSlipStoff" x1="18%" y1="0%" x2="82%" y2="100%">'
-        + '<stop offset="0%" stop-color="#3c3e52"/>'
-        + '<stop offset="46%" stop-color="#2b2c3a"/>'
-        + '<stop offset="100%" stop-color="#1c1d28"/>'
-        + "</linearGradient></defs>"
-        /* Ruecken, Huefte und Oberschenkel. Der Umriss beginnt
-           OBERHALB des Bildes (y = -10), damit die runde Blende die
-           obere Kante wegschneidet — sonst laege im Bild ein harter
-           Strich quer ueber dem Ruecken. Und er hoert jetzt
-           UNTERHALB auf (y = 104) statt bei 74: vorher klaffte unter
-           dem Popo eine Luecke, durch die der helle Sitzplatz
-           durchschien, als schwebte er. Dort stehen jetzt die
-           Oberschenkel. */
+        + "</radialGradient></defs>"
+        /* Ruecken und Huefte. Sie beginnt OBERHALB des Bildes (y = -10),
+           damit die runde Blende die obere Kante wegschneidet — sonst
+           laege im Bild ein harter Strich quer ueber dem Ruecken. */
         + '<path class="lc-popo-leib" d="M' + (50 - taille / 2) + ' -10'
-        + " C" + (50 - taille / 2 - 3) + " 26 " + (50 - hueftBreit / 2) + " 44 "
-        + (50 - hueftBreit / 2 + 1) + " 66"
-        + " C" + (50 - hueftBreit / 2 + 2) + " 84 " + (50 - hueftBreit / 2 + 6)
-        + " 92 " + (50 - hueftBreit / 2 + 8) + " 104"
-        + " L" + (50 + hueftBreit / 2 - 8) + " 104"
-        + " C" + (50 + hueftBreit / 2 - 6) + " 92 " + (50 + hueftBreit / 2 - 2)
-        + " 84 " + (50 + hueftBreit / 2 - 1) + " 66"
-        + " C" + (50 + hueftBreit / 2) + " 44 " + (50 + taille / 2 + 3) + " 26 "
+        + " C" + (50 - taille / 2 - 3) + " 30 " + (50 - hueftBreit / 2) + " 52 "
+        + (50 - hueftBreit / 2 + 2) + " 74"
+        + " L" + (50 + hueftBreit / 2 - 2) + " 74"
+        + " C" + (50 + hueftBreit / 2) + " 52 " + (50 + taille / 2 + 3) + " 30 "
         + (50 + taille / 2) + " -10 Z" + '" fill="url(#lcPopoHaut)"/>'
         /* Die beiden Backen. */
         + '<ellipse class="lc-popo-backe lc-popo-links" cx="' + (50 - backeX)
@@ -41997,12 +41963,6 @@
         + '<ellipse class="lc-popo-backe lc-popo-rechts" cx="' + (50 + backeX)
         + '" cy="' + backeY + '" rx="' + backeRx + '" ry="' + backeRy
         + '" fill="url(#lcPopoHaut)"/>'
-        /* Der Spalt zwischen den Beinen — er beginnt dort, wo die
-           Backen aufhoeren, und laeuft bis unter den Bildrand. Ohne
-           ihn saehen die Oberschenkel aus wie ein Block. */
-        + '<path class="lc-popo-spalt" d="M50 ' + (backeY + backeRy - 2)
-        + " C49 " + (backeY + backeRy + 6) + " 49 " + (backeY + backeRy + 14)
-        + ' 50 104"/>'
         /* Die Falte in der Mitte. */
         + '<path class="lc-popo-falte" d="M50 ' + (backeY - backeRy + 4)
         + " C48 " + (backeY - 4) + " 48 " + (backeY + 8) + " 50 "
@@ -42018,111 +41978,9 @@
               + (backeY + 10) + " C" + (50 - backeX) + " " + (backeY + 16)
               + " " + (50 - 8) + " " + (backeY + 15) + " " + (50 - 4) + " "
               + (backeY + 9) + '"/>')
-        /* =========================================================
-           RUNDE 87 — XANDER: „Ich habe dir auch gesagt, dass man der
-           Frau den Tanga runterziehen soll, bevor man den Po schlaegt
-           und die Hand soll auch drauf schlagen und es soll auch der
-           Abdruck sein, der vorher da war, nur eben, dass er jetzt auf
-           der Pobacke zu sehen ist."
-
-           Drei Dinge, und alle drei hingen zusammen:
-             1. Es lag nichts auf dem Popo, was man haette runterziehen
-                koennen. Jetzt liegt Waesche darauf, und sie rutscht
-                herunter, BEVOR die Hand da ist — Schlag ist bei 600 ms,
-                die Waesche ist bei 530 ms unten.
-             2. Die Hand war hinter dem Popo verschwunden: der Popo hat
-                z-index 3 und steht in der Blende, die NACH der Hand
-                angehaengt wird — also lag er darueber. Die Hand liegt
-                jetzt hoeher (siehe .lc-klaps-hand im Stilblatt).
-             3. Der Abdruck sass in der Bildmitte, weil er aus der Zeit
-                stammt, in der die Hand noch ins Gesicht schlug. Er
-                sitzt jetzt auf der Backe — gerechnet aus genau den
-                Zahlen, mit denen die Backe gezeichnet wird.
-
-           Die Waesche richtet sich nach demselben eingestellten
-           Geschlecht wie der Popo selbst: Tanga (schmales Baendchen,
-           duenne Schnur) bei der Frau — sein Wort —, Unterhose (breiter
-           Bund, geschlossenes Bein) beim Mann. */
-        + '<g class="lc-popo-slip">'
-        + (weiblich
-            /* Tanga von hinten: ein schmales Baendchen ueber der
-               Huefte und die duenne Schnur, die in der Falte
-               verschwindet. Gezeichnet als STRICH, nicht als Flaeche
-               — als gefuelltes Rechteck sah es aus wie ein
-               Zensurbalken und nicht wie Stoff. Der helle Strich
-               darunter ist der Gummizug; erst er macht aus dem Band
-               ein Kleidungsstueck. Die Enden laufen absichtlich
-               ueber den Koerperrand hinaus: dort wickelt sich das
-               Baendchen um die Huefte und ist nicht mehr zu sehen. */
-            ? '<path class="lc-popo-slip-band" d="M' + (50 - hueftBreit / 2 - 8)
-              + ' 33 C' + (50 - 20) + ' 41 ' + (50 + 20) + ' 41 '
-              + (50 + hueftBreit / 2 + 8) + ' 33"/>'
-              + '<path class="lc-popo-slip-glanz" d="M' + (50 - hueftBreit / 2 - 5)
-              + ' 35 C' + (50 - 18) + ' 42.6 ' + (50 + 18) + ' 42.6 '
-              + (50 + hueftBreit / 2 + 5) + ' 35"/>'
-              + '<path class="lc-popo-slip-schnur" d="M50 40 C47.5 '
-              + (backeY - 4) + " 47.5 " + (backeY + 10) + " 50 "
-              + (backeY + backeRy) + '"/>'
-            /* Unterhose: ein geschlossenes Hoeschen mit Bund und zwei
-               Beinausschnitten, die unter den Backen hervorschauen. */
-            : '<path class="lc-popo-slip-hose" fill="url(#lcSlipStoff)" d="M' + (50 - hueftBreit / 2 - 2)
-              + ' 33 C' + (50 - 18) + ' 40 ' + (50 + 18) + ' 40 '
-              + (50 + hueftBreit / 2 + 2) + ' 33'
-              + " C" + (50 + hueftBreit / 2 + 4) + " " + (backeY - 6) + " "
-              + (50 + hueftBreit / 2 + 3) + " " + (backeY + 4) + " "
-              + (50 + hueftBreit / 2 + 1) + " " + (backeY + 13)
-              /* Der Beinausschnitt: er steigt von aussen nach innen an,
-                 sonst sieht das Hoeschen aus wie ein schwarzer Kasten. */
-              + " C" + (50 + 22) + " " + (backeY + 12) + " " + (50 + 9) + " "
-              + (backeY + 4) + " 50 " + (backeY + 3)
-              + " C" + (50 - 9) + " " + (backeY + 4) + " " + (50 - 22) + " "
-              + (backeY + 12) + " " + (50 - hueftBreit / 2 - 1) + " "
-              + (backeY + 13)
-              + " C" + (50 - hueftBreit / 2 - 3) + " " + (backeY + 4) + " "
-              + (50 - hueftBreit / 2 - 4) + " " + (backeY - 6) + " "
-              + (50 - hueftBreit / 2 - 2) + ' 33 Z"/>'
-              /* Die Naht in der Mitte — ohne sie ist es eine Flaeche. */
-              + '<path class="lc-popo-slip-naht" d="M50 42 C48.6 ' + (backeY - 6)
-              + " 48.6 " + (backeY - 2) + " 50 " + (backeY + 3) + '"/>'
-              + '<path class="lc-popo-slip-glanz" d="M' + (50 - hueftBreit / 2 - 1)
-              + ' 35.5 C' + (50 - 16) + ' 42.2 ' + (50 + 16) + ' 42.2 '
-              + (50 + hueftBreit / 2 + 1) + ' 35.5"/>')
-        + "</g>"
         + "</svg>";
       blende.appendChild(popo);
       blende.insertAdjacentHTML("beforeend", '<span class="lc-klaps-abdruck"></span>');
-      /* -----------------------------------------------------------
-         WO GENAU LIEGT DIE BACKE? Gerechnet, nicht geraten.
-         Der Popo ist 96 % der Blende breit, quadratisch, und steht
-         4 % ueber deren Unterkante. Eine SVG-Einheit ist also
-         0,96 % der Blende, der linke Rand liegt bei 2 %, der obere
-         bei 8 %. Daraus:
-             x = 2 %  + (50 + Seite * backeX) * 0,96 %
-             y = 8 %  + backeY               * 0,96 %
-         Getroffen wird die Backe auf der Seite, von der die Hand
-         kommt — alles andere waere ein Schlag quer durch den Koerper.
-         ----------------------------------------------------------- */
-      const klapsSeite = r.x > 0 ? 1 : -1;
-      const backeMx = 2 + (50 + klapsSeite * backeX) * 0.96;
-      const backeMy = 8 + backeY * 0.96;
-      /* Der Abdruck ist 36 % breit und 30 % hoch — knapp die Groesse
-         einer Backe: 2 * backeRx sind 44,2 % der Blende bei der Frau
-         und 38,4 % beim Mann. */
-      schicht.style.setProperty("--abdruckx", (backeMx - 18).toFixed(1) + "%");
-      schicht.style.setProperty("--abdrucky", (backeMy - 15).toFixed(1) + "%");
-      /* Und dorthin muss die HANDFLAECHE. Die Hand ist 62 % der Blende
-         breit, ihr Kasten 60,1 % hoch (viewBox 64 x 62), ihre Mitte
-         liegt bei 50 % / 49,0 %. Der Ballen sitzt in der Zeichnung bei
-         (32, 47) von (64, 62) — ohne Verschiebung also bei
-         50 % / 64,5 % der Blende. Die Verschiebung in den Keyframes
-         rechnet in Prozent des HANDKASTENS, deshalb wird die Differenz
-         durch 0,62 bzw. 0,601 geteilt. */
-      const ballenX = 50, ballenY = 19 + (47 / 62) * 60.06;
-      schicht.style.setProperty("--klapsx", ((backeMx - ballenX) / 0.62).toFixed(1) + "%");
-      schicht.style.setProperty("--klapsy", ((backeMy - ballenY) / 0.6006).toFixed(1) + "%");
-      /* Kommt sie von links, ist es die andere Hand — gespiegelt, sonst
-         zeigt der Daumen nach aussen statt zum Koerper. */
-      schicht.style.setProperty("--klapsdir", String(klapsSeite));
       /* Der Aufprall liegt bei 600 ms (siehe lcKlapsHandR80); der
          kurze Schmerzlaut kommt 90 ms danach — nah genug, dass er
          zum Schlag gehoert, und nicht so nah, dass beide verschmelzen. */

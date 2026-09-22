@@ -13011,13 +13011,6 @@ code, pre {
   stroke-width: 1.6;
   stroke-linecap: round;
 }
-/* Der Spalt zwischen den Oberschenkeln, unter den Backen. */
-.lc-popo-spalt {
-  fill: none;
-  stroke: rgba(150, 100, 80, .5);
-  stroke-width: 2.6;
-  stroke-linecap: round;
-}
 @keyframes lcPopoDaR85 {
   0%   { opacity: 0; transform: translateY(22%) scale(.9); }
   10%  { opacity: 1; transform: translateY(0) scale(1); }
@@ -13030,87 +13023,8 @@ code, pre {
   86%  { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(14%) scale(.95); }
 }
-/* =====================================================================
-   DIE WAESCHE, DIE VORHER RUNTERGEZOGEN WIRD
-   ---------------------------------------------------------------------
-   XANDER (Runde 87): „dass man der Frau den Tanga runterziehen soll,
-   bevor man den Po schlaegt".
-   „Bevor" ist hier die ganze Arbeit: der Schlag liegt bei 600 ms
-   (27,3 % von 2,2 s). Die Waesche muss also VORHER unten sein, sonst
-   schlaegt die Hand auf Stoff. Gerechnet:
-       9 %  = 198 ms  — der Popo steht, es passiert noch nichts
-      13 %  = 286 ms  — sie loest sich
-      24 %  = 528 ms  — sie liegt unten, 72 ms vor dem Schlag
-   Danach bleibt sie liegen und verschwindet mit dem Popo zusammen.
-   Verschoben wird in SVG-Einheiten (px heisst hier Nutzereinheit, weil
-   die Pfade im viewBox 0 0 100 100 liegen), NICHT in Prozent — bei
-   Prozent bezoege sich das auf den Kasten des Elements und der ist bei
-   einem <g> nicht definiert.
-   ===================================================================== */
-.lc-popo-slip {
-  animation: lcSlipRunterR87 2.2s cubic-bezier(.3, 0, .3, 1) both;
-}
-/* Das Baendchen des Tangas ist ein STRICH, keine Flaeche. Als
-   gefuelltes Rechteck sah es aus wie ein Zensurbalken; als Strich mit
-   runden Enden und einem hellen Gummizug darunter sieht man Stoff. */
-.lc-popo-slip-band {
-  fill: none;
-  stroke: #2b2c3a;
-  stroke-width: 6;
-  stroke-linecap: round;
-}
-.lc-popo-slip-schnur {
-  fill: none;
-  stroke: #2b2c3a;
-  stroke-width: 2.6;
-  stroke-linecap: round;
-}
-/* Die Unterhose des Mannes ist dagegen eine Flaeche — sie deckt ab.
-   Nicht flach eingefaerbt, sondern mit einem Verlauf von oben links
-   nach unten rechts: flach gefuellt sah sie aus wie ein schwarzer
-   Kasten ueber dem Bild und nicht wie Stoff, der sich um etwas legt. */
-.lc-popo-slip-hose {
-  fill: #2b2c3a;
-  fill-opacity: .96;
-  stroke: rgba(16, 16, 26, .7);
-  stroke-width: 1;
-  stroke-linejoin: round;
-}
-/* Die Naht in der Mitte. */
-.lc-popo-slip-naht {
-  fill: none;
-  stroke: rgba(120, 124, 152, .6);
-  stroke-width: 1.2;
-  stroke-linecap: round;
-}
-/* Der Gummizug: ein schmaler heller Strich unter der Oberkante. Er
-   ist das, woran das Auge Stoff erkennt. */
-.lc-popo-slip-glanz {
-  fill: none;
-  stroke: rgba(158, 162, 192, .8);
-  stroke-width: 1.3;
-  stroke-linecap: round;
-}
-@keyframes lcSlipRunterR87 {
-  0%, 9%     { transform: translate(0, 0); opacity: 1; }
-  13%        { transform: translate(0, 4px); opacity: 1; }
-  24%        { transform: translate(0, 46px); opacity: 1; }
-  /* Ab hier liegt sie unten — der Schlag bei 27,3 % trifft die Haut.
-     48 Einheiten sind gerechnet, nicht geschaetzt: das Baendchen
-     liegt bei y = 33..41, die Backen enden bei y = 87 (Frau) bzw.
-     82 (Mann). Bei 48 liegt es also bei y = 81..89 — unter den
-     Backen, dort wo heruntergezogene Waesche wirklich haengt, und
-     noch INNERHALB der runden Blende. Weiter unten waere es zwar
-     rechnerisch sauberer, aber die Blende schneidet es dann ganz
-     weg, und dann saehe man das Herunterziehen gar nicht mehr. */
-  27.3%, 86% { transform: translate(0, 48px); opacity: 1; }
-  100%       { transform: translate(0, 48px); opacity: 0; }
-}
 @media (prefers-reduced-motion: reduce) {
   .lc-popo { animation: none; opacity: 1; }
-  /* Ohne Bewegung liegt sie von Anfang an unten — der Popo ist frei,
-     nur eben ohne das Herunterziehen. */
-  .lc-popo-slip { animation: none; transform: translate(0, 48px); }
 }
 
 /* =====================================================================
@@ -27190,48 +27104,36 @@ code, pre {
    eigener Bewegung: die flache Hand kommt von unten-seitlich herein,
    trifft bei 600 ms von UNTEN auf, das Bild federt kurz nach oben
    weg, und ein roter Handabdruck bleibt stehen und verblasst. */
-/* RUNDE 87 — XANDER: „die Hand soll auch drauf schlagen".
-   GEFUNDEN, warum man sie nicht schlagen sah: der gezeichnete Popo hat
-   z-index 3 und haengt in der Blende, die NACH der Hand an die Schicht
-   gehaengt wird. Ohne eigenen z-index lag die Hand also darunter und
-   verschwand in dem Moment, in dem sie ankam. Mit z-index 6 liegt sie
-   darueber — Popo 3, Abdruck 4, Hand 6.
-   Und sie schlaegt jetzt nicht mehr von unten gegen den Bildrand,
-   sondern auf die Backe: --klapsx/--klapsy kommen aus app.js und sind
-   aus genau den Zahlen gerechnet, mit denen die Backe gezeichnet wird.
-   --klapsdir ist 1, wenn sie von rechts kommt, und -1 von links; damit
-   dreht und spiegelt sich die ganze Bewegung mit. */
 .lc-klaps-hand {
   position: absolute;
   left: 50%;
   top: 50%;
   width: 62%;
   margin: -31% 0 0 -31%;
-  z-index: 6;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .4));
   animation: lcKlapsHandR80 2.2s cubic-bezier(.3, 0, .2, 1) both;
 }
 @keyframes lcKlapsHandR80 {
   /* Ausholen: sie kommt von unten aussen, tief und weit weg. */
   0%    { opacity: 0;
-          transform: translate(var(--wx, 180%), 120%) rotate(calc(var(--klapsdir, 1) * -38deg)) scale(calc(var(--klapsdir, 1) * .7), .7); }
+          transform: translate(var(--wx, 180%), 120%) rotate(-38deg) scale(.7); }
   9%    { opacity: 1;
-          transform: translate(calc(var(--wx, 180%) * .7), 92%) rotate(calc(var(--klapsdir, 1) * -30deg)) scale(calc(var(--klapsdir, 1) * .9), .9); }
+          transform: translate(calc(var(--wx, 180%) * .7), 92%) rotate(-30deg) scale(.9); }
   /* Kurz halten — ohne das Innehalten sieht man das Ausholen nicht. */
   18%   { opacity: 1;
-          transform: translate(calc(var(--wx, 180%) * .75), 100%) rotate(calc(var(--klapsdir, 1) * -34deg)) scale(calc(var(--klapsdir, 1) * .92), .92); }
-  /* 27,3 % von 2,2 s = 600 ms: der Aufprall — jetzt mitten auf der
-     Backe. Sie staucht sich dabei: eine Hand, die trifft, ist einen
-     Augenblick breiter als eine, die fliegt. */
+          transform: translate(calc(var(--wx, 180%) * .75), 100%) rotate(-34deg) scale(.92); }
+  /* 27,3 % von 2,2 s = 600 ms: der Aufprall, von unten gegen den
+     Bildrand. Sie staucht sich dabei — eine Hand, die trifft, ist
+     einen Augenblick breiter als eine, die fliegt. */
   27.3% { opacity: 1;
-          transform: translate(var(--klapsx, 0%), var(--klapsy, 42%)) rotate(calc(var(--klapsdir, 1) * -6deg)) scale(calc(var(--klapsdir, 1) * 1.06), .92); }
+          transform: translate(calc(var(--wx, 180%) * .1), 42%) rotate(-6deg) scale(1.06, .92); }
   33%   { opacity: 1;
-          transform: translate(calc(var(--klapsx, 0%) * 1.15), calc(var(--klapsy, 42%) + 14%)) rotate(calc(var(--klapsdir, 1) * -14deg)) scale(calc(var(--klapsdir, 1) * 1), 1); }
+          transform: translate(calc(var(--wx, 180%) * .22), 56%) rotate(-14deg) scale(1); }
   /* Und wieder weg — langsamer, als sie gekommen ist. */
   62%   { opacity: .9;
-          transform: translate(calc(var(--wx, 180%) * .6), 86%) rotate(calc(var(--klapsdir, 1) * -28deg)) scale(calc(var(--klapsdir, 1) * .92), .92); }
+          transform: translate(calc(var(--wx, 180%) * .6), 86%) rotate(-28deg) scale(.92); }
   100%  { opacity: 0;
-          transform: translate(var(--wx, 180%), 120%) rotate(calc(var(--klapsdir, 1) * -38deg)) scale(calc(var(--klapsdir, 1) * .72), .72); }
+          transform: translate(var(--wx, 180%), 120%) rotate(-38deg) scale(.72); }
 }
 /* DAS BILD FEDERT NACH OBEN WEG — getroffen wird von unten. */
 .lc-geklapst { animation: lcGeklapstR80 2.2s cubic-bezier(.3, 0, .3, 1) both; }
@@ -27244,20 +27146,12 @@ code, pre {
 }
 /* DER ABDRUCK. Fünf Finger und ein Ballen, rot und weich — er
    erscheint MIT dem Schlag und verblasst über anderthalb Sekunden. */
-/* RUNDE 87 — XANDER: „es soll auch der Abdruck sein, der vorher da
-   war, nur eben, dass er jetzt auf der Pobacke zu sehen ist."
-   Die Zeichnung bleibt Wort fuer Wort dieselbe (fuenf Finger und ein
-   Ballen) — nur der Platz aendert sich. --abdruckx/--abdrucky kommen
-   aus app.js und zeigen auf die Mitte der getroffenen Backe; die alten
-   Werte 30 % / 46 % stehen noch als Rueckfall drin, falls der Effekt
-   einmal ohne gezeichneten Popo laeuft. */
 .lc-klaps-abdruck {
   position: absolute;
-  left: var(--abdruckx, 30%);
-  top: var(--abdrucky, 46%);
-  width: 36%;
-  height: 30%;
-  z-index: 4;
+  left: 30%;
+  top: 46%;
+  width: 40%;
+  height: 34%;
   pointer-events: none;
   opacity: 0;
   background-repeat: no-repeat;
