@@ -26084,9 +26084,37 @@ code, pre {
    dann klappt der Finger nicht zu, er fliegt weg. „fill-box" macht
    seinen eigenen Kasten zum Bezug, und der Drehpunkt sitzt oben in
    der Mitte: das ist der Knoechel. */
-.lc-rhand-finger, .lc-rhand-daumen {
-  transform-box: fill-box;
-  transform-origin: 50% 0%;
+/* RUNDE 87 — auch der Daumen hat jetzt zwei Glieder und zwei
+   Gelenke, und seine Drehpunkte stehen in Zeicheneinheiten. Deshalb
+   hier ebenfalls view-box und NICHT fill-box (siehe die Erklaerung
+   bei den Fingern gleich darunter). */
+.lc-rd-cmc, .lc-rd-mcp {
+  transform-box: view-box;
+}
+/* === RUNDE 87: DIE GELENKE BRAUCHEN IHREN EIGENEN DREHPUNKT =========
+   Jetzt besteht ein Finger aus drei ineinander geschachtelten
+   Gruppen, und jede dreht um IHR Gelenk. Dessen Lage steht in
+   Zeicheneinheiten im style-Attribut (z. B. „42px 82px") — und damit
+   diese Zahlen im Koordinatensystem der ZEICHNUNG gelten und nicht im
+   Kasten der Gruppe, muss hier „view-box" stehen und nicht
+   „fill-box". Mit fill-box waere jeder Drehpunkt relativ zum eigenen
+   Kasten gemeint, und genau dann knickt das Mittelglied an der
+   falschen Stelle ab.
+   WICHTIG: die Regel darf nicht weniger spezifisch sein als die alte
+   oben, sonst gewinnt dort fill-box wieder. */
+.lc-rf-mcp, .lc-rf-pip, .lc-rf-dip {
+  transform-box: view-box;
+}
+/* Der Nagel. Er liegt auf dem Endglied und ist immer eine Spur
+   heller als die Haut ringsum — auch beim Gorilla, dort nur weniger. */
+.lc-rhand-nagel {
+  fill: rgba(255, 246, 236, .72);
+  stroke: rgba(0, 0, 0, .22);
+  stroke-width: .8;
+}
+.lc-riesenhand-affe .lc-rhand-nagel {
+  fill: rgba(190, 178, 166, .55);
+  stroke: rgba(0, 0, 0, .35);
 }
 
 /* =====================================================================
