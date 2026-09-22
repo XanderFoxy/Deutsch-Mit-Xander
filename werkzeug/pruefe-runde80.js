@@ -222,7 +222,16 @@ function tonMessen(name) {
      · Und ihr seitlicher Ausschlag bleibt klein. */
   sage(/class="lc-pferd-hand" d="M(\d+) /.test(app) && Number(RegExp.$1) <= 50,
     "die Hinterhand sitzt am Hinterteil (x = " + RegExp.$1 + ", Kruppe bei 45)");
-  const beine = [...app.matchAll(/lc-pferd-b\d" d="([^"]+)"/g)].map((m) => m[1]);
+  /* RUNDE 88 — DIE REGEL SUCHTE AN DER FALSCHEN STELLE. Seit Trab und
+     Galopp sitzt „lc-pferd-bN" nicht mehr am Pfad, sondern an einer
+     GRUPPE („<g class='lc-pferd-beingruppe lc-pferd-b1' …>"), in der
+     Bein und Huf zusammen schwingen — sonst blieb der Huf beim
+     Ausschlag neben dem Bein stehen. Der Pfad darin heisst
+     „lc-pferd-bein". Gesucht wird deshalb jetzt dort; was geprueft
+     wird, ist unveraendert: Boegen (Q), keine Knicke (L). */
+  const beine = [...app.matchAll(
+      /lc-pferd-b\d"[\s\S]{0,160}?class="lc-pferd-bein" d="([^"]+)"/g)]
+    .map((m) => m[1]);
   sage(beine.length === 4 && beine.every((d) => !/ L/.test(d) && /Q/.test(d)),
     "alle vier Beine schwingen in Bogen statt zu knicken",
     beine.length + " Beine geprueft");

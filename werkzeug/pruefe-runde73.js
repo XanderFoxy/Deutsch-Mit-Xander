@@ -116,8 +116,21 @@ pruefe("und an den Plaetzen liegt sie dicker",
      XANDER: „keine Klumpen in verschiedener Groesse, die wirklich
      nach Erdaufschuettung aussehen." */
   && /h\.style\.setProperty\("--gross", \(d \* dickeBei\(hx, hy\) \* eigen\)/.test(js));
+/* RUNDE 88 — DIESE REGEL SUCHTE EINE ZEILE, DIE FALSCH WAR.
+   „const proj = (g.x - start.x) * ex …" zog zwei verschiedene
+   Nullpunkte voneinander ab (g.x zaehlt vom Seitenrand, start.x vom
+   Rand des Platzkastens) und war damit um rk.left/rk.top daneben —
+   auf der Pruefbuehne 12 und 224 Pixel. Gemessen grub die Reise von
+   Platz 1 nach Platz 7 deshalb UEBERHAUPT KEINEN Platz auf, nicht
+   einmal den eigenen; diese Regel war trotzdem gruen, weil sie nur
+   nach dem Text suchte. Jetzt wird die Bahn Schritt fuer Schritt
+   abgegangen (das gilt auch fuer einen gemalten Umweg), und ob
+   wirklich aufgegraben wird, misst werkzeug/pruefe-runde88-maulwurf.js
+   an der laufenden Animation. */
 pruefe("jeder Platz auf dem Weg wird aufgegraben, nicht nur Start und Ziel",
-  /const proj = \(g\.x - start\.x\) \* ex \+ \(g\.y - start\.y\) \* ey;/.test(js));
+  /const schritteM = 160;/.test(js)
+  && /const gx = g\.x - rk\.left;/.test(js)
+  && /if \(naeh > einheitM \* 0\.5\) return;/.test(js));
 pruefe("und man hoert ihn die ganze Strecke graben",
   ton("graben") && gelistet("graben")
   /* RUNDE 74: das Graben bekommt eine Grenze — XANDER: „Das
@@ -321,8 +334,12 @@ pruefe("die Fluegel sitzen an der Schulter, nicht am Hinterteil",
   /const SCHULTER = \{ x: 96, y: 28 \};/.test(js)
   && /transform-origin:96px 28px/.test(js)
   && !/transform-origin:70px 30px/.test(js));
+/* RUNDE 88 — die Blesse ist noch schmaler geworden und laeuft jetzt
+   spitz aus („M119.6 11.5 Q124 10.5 128.2 12.9 …"), weil Xander sie
+   immer noch zu breit fand. Der Sinn der Regel bleibt: ein SCHMALER
+   Streifen, kein Fleck. */
 pruefe("die Blesse ist ein schmaler Streifen",
-  /M119\.4 11\.4 Q124 10\.2 128\.4 12\.8/.test(js));
+  /M119\.6 11\.5 Q124 10\.5 128\.2 12\.9/.test(js));
 /* RUNDE 80: der Rumpf ist neu gezeichnet — die Kruppe faellt jetzt
    vom Widerrist (58|29) nach hinten auf (46|40) ab, also deutlicher
    als vorher. Siehe pruefe-runde71 und pruefe-runde80. */

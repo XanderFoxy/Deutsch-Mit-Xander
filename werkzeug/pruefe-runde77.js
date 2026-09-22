@@ -249,8 +249,15 @@ pruefe("der Wall laeuft auf der Linie der BILDmitten",
   /const versatzM0 = lcBildVersatz\(ab\.el\);/.test(js)
   && /const versatzM1 = lcBildVersatz\(zu\.el\);/.test(js)
   && /\+ \(versatzM0 \+ \(versatzM1 - versatzM0\) \* t\)/.test(js));
+/* RUNDE 88 — dieselbe Zeile, aber mit dem richtigen Nullpunkt:
+   „x" und „y" kommen aus bahnPunkt und zaehlen vom Rand des
+   Platzkastens, „g.x" und „g.y" aus lcPlatzGitter und zaehlen vom
+   Seitenrand. Der Vergleich war um rk.left/rk.top daneben (auf der
+   Pruefbuehne 12 und 224 Pixel) — die dicke Stelle wurde also mehr
+   als zwei Bildbreiten zu weit oben gesucht. */
 pruefe("und die dicken Stellen suchen ebenfalls die Bildmitten",
-  /Math\.hypot\(g\.x - x, \(g\.y \+ lcBildVersatz\(g\.el\)\) - y\)/.test(js));
+  /Math\.hypot\(\(g\.x - rk\.left\) - x,/.test(js)
+  && /\(g\.y - rk\.top \+ lcBildVersatz\(g\.el\)\) - y\)/.test(js));
 
 console.log("\nDIE TÖNE\n");
 pruefe("die Farbe laeuft, sie saugt nicht mehr ein",

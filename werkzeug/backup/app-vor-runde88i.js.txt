@@ -37126,20 +37126,10 @@
          und was uebrig bleibt, ist die gewollte Unruhe („quer"). */
       const versatzM0 = lcBildVersatz(ab.el);
       const versatzM1 = lcBildVersatz(zu.el);
-      /* RUNDE 88 — DERSELBE NULLPUNKT-FEHLER WIE UNTEN BEI DEN
-         AUFGEBROCHENEN PLAETZEN: „x" und „y" kommen aus bahnPunkt und
-         zaehlen vom Rand des Platzkastens, „g.x" und „g.y" aus
-         lcPlatzGitter und zaehlen vom Seitenrand. Der Vergleich war
-         also um rk.left/rk.top daneben, und damit suchte „besonders
-         dick an der Stelle von den Positionen" den dicken Punkt an
-         einer verschobenen Stelle. Gemessen auf der Pruefbuehne:
-         rk.left = 12 px, rk.top = 224 px — der Zuschlag wurde also
-         mehr als zwei Bildbreiten zu weit oben gesucht. */
       const dickeBei = (x, y) => {
         let naeh = 1e9;
         (gitterM || []).forEach((g) => {
-          const e = Math.hypot((g.x - rk.left) - x,
-                               (g.y - rk.top + lcBildVersatz(g.el)) - y);
+          const e = Math.hypot(g.x - x, (g.y + lcBildVersatz(g.el)) - y);
           if (e < naeh) naeh = e;
         });
         /* Direkt auf dem Platz: voller Aufschlag. Eine halbe Sitzweite
@@ -37245,60 +37235,21 @@
          seiner Mitte zur Strecke. Liegt er naeher als eine halbe
          Sitzweite, wird er aufgegraben — und zwar genau dann, wenn
          der Maulwurf dort ist. */
-      /* RUNDE 88 — WELCHE PLAETZE LIEGEN AUF DEM WEG, und WANN ist er
-         dort? Bisher wurde mit der GERADEN von Start zu Ziel
-         gerechnet. Seit der Maulwurf einem gemalten Weg folgen darf
-         (Runde 80), ist das falsch: ein Umweg ueber Platz 4 fuehrt
-         unter Plaetzen durch, die auf der Luftlinie gar nicht liegen,
-         und unter anderen NICHT durch, die darauf liegen. Jetzt wird
-         die Bahn in 160 Schritten abgegangen und fuer jeden Platz der
-         Schritt gesucht, bei dem der Maulwurf ihm am naechsten ist.
-         Verglichen wird mit der BILDmitte (also samt lcBildVersatz),
-         denn dort graebt er — nicht unter dem Namen.
-         UND EIN RECHENFEHLER IST DABEI HERAUSGEKOMMEN, den die alte
-         Fassung seit Runde 73 hatte: „g.x" kommt aus lcPlatzGitter und
-         zaehlt vom Seitenrand, „start.x" und alles, was aus bahnPunkt
-         faellt, zaehlt vom Rand des Platzkastens (start.x = ab.x -
-         rk.left). Die alte Zeile „(g.x - start.x) * ex" hat also zwei
-         verschiedene Nullpunkte voneinander abgezogen und war um
-         rk.left/rk.top daneben — auf der Pruefbuehne sind das 12 und
-         224 Pixel. GEMESSEN, was das anrichtete: die Reise von Platz 1
-         nach Platz 7 grub UEBERHAUPT KEINEN Platz auf, nicht einmal
-         den eigenen. Jetzt wird alles in den Nullpunkt des
-         Platzkastens gerechnet. */
-      const schritteM = 160;
-      let letzterKnall = -9999;
+      const laengeM = Math.hypot(ende.x - start.x, ende.y - start.y) || 1;
+      const ex = (ende.x - start.x) / laengeM, ey = (ende.y - start.y) / laengeM;
       (gitterM || []).forEach((g) => {
         if (!g.el) return;
-        const gx = g.x - rk.left;
-        const gy = g.y - rk.top + lcBildVersatz(g.el);
-        let naeh = 1e9, wannT = 0;
-        for (let s = 0; s <= schritteM; s++) {
-          const t = s / schritteM;
-          const p = bahnPunkt(t);
-          const py = p.y + versatzM0 + (versatzM1 - versatzM0) * t;
-          const e = Math.hypot(p.x - gx, py - gy);
-          if (e < naeh) { naeh = e; wannT = t; }
-        }
-        if (naeh > einheitM * 0.5) return;
-        const wann = Math.max(0, Math.round(wannT * Math.max(0, hin - 500)));
+        /* Wie weit laeuft man auf der Strecke, bis man ihm am
+           naechsten ist — und wie weit ist er dann noch weg? */
+        const proj = (g.x - start.x) * ex + (g.y - start.y) * ey;
+        if (proj < -einheitM * 0.4 || proj > laengeM + einheitM * 0.4) return;
+        const ab2 = Math.hypot(g.x - start.x - ex * proj, g.y - start.y - ey * proj);
+        if (ab2 > einheitM * 0.5) return;
+        const wann = Math.max(0, Math.round((Math.max(0, proj) / laengeM) * (hin - 500)));
         setTimeout(() => {
           g.el.classList.add("lc-platz-untergraben");
           setTimeout(() => g.el.classList.remove("lc-platz-untergraben"), 1900);
         }, wann);
-        /* Start und Ziel bekommen ihr eigenes Loch (lochBauen) — dort
-           ist der Platz schon aufgebrochen. Aufgebrochen wird, wo er
-           DURCHgraebt: „was du mit den Personen machst, wenn ich durch
-           sie durchgrabe". */
-        if (g.el === ab.el || g.el === zu.el) return;
-        lcMaulwurfAufbrechen(g.el, wann, d).forEach((k) => weg.push(k));
-        /* Und man hoert es brechen. Hoechstens alle 520 ms einmal,
-           sonst liegen bei fuenf Plaetzen fuenf „erdeauf"
-           uebereinander — denselben Fehler hatte schon das Quaken. */
-        if (wann - letzterKnall >= 520) {
-          letzterKnall = wann;
-          lcTonSpaeter("erdeauf", wann, 0.3);
-        }
       });
 
       /* Und das Bild: es sackt senkrecht ins eigene Loch … */
@@ -41878,87 +41829,6 @@
       + '<path class="lc-maulwurf-loch" d="' + kranz(13, 8.4, 0.1, 5.9) + '"/>'
       + krumen + tier
       + "</svg>";
-  }
-
-  /* =================================================================
-     RUNDE 88 — DER MAULWURF BRICHT DIE PLAETZE WIRKLICH AUF
-     -----------------------------------------------------------------
-     XANDER: „Die Striche und Positionsnummer soll immer von jeglicher
-     Animation ausbleiben, es sei denn ich sag es ausdruecklich wie zum
-     Beispiel beim Maulwurfhuegel. Dort hast du das wieder rausgenommen?
-     Offenbar dort sollen die Plaetze richtig aufgebrochen werden."
-     Und genauer: „die Maulwurfhuegel, die im uebrigen immer noch nicht
-     aufgeschuettet werden an dem Profilnummern — da sollen diese
-     Profilnummern durcheinandergebracht werden. Und ueberlege dir auch
-     was, was du mit den Personen machst, wenn ich durch sie durchgrabe:
-     dann koennten sie vielleicht auf den Kopf stehen oder so, aber
-     trotzdem mit Erde bisschen gehaeuft werden, dass sie auch ein
-     bisschen durcheinandergebracht werden. Wenn es leere Plaetze sind,
-     dann sollen die Strichlinie und Zahlen durcheinandergebracht
-     werden — also dass da wirklich das mit sich umkippt realistisch —
-     und wenn dort Leute sitzen, dass die entsprechend auch
-     durcheinandergebracht werden."
-
-     DA WAR ZU WENIG. Bisher gab es „lc-platz-untergraben": der Platz
-     sackte um 2,5 Prozent, und die gestrichelte Linie wackelte um
-     hoechstens 1,4 Grad. Die ZAHL wurde ueberhaupt nicht angefasst,
-     und Erde lag nur auf der Spur ZWISCHEN den Plaetzen, nie auf
-     einem Platz selbst. Jetzt passiert auf jedem Platz, unter dem er
-     DURCHgraebt, dreierlei:
-
-     1. ERDE FAELLT AUF DEN PLATZ, und zwar genau dorthin, wo die
-        Nummer steht. Auf einem freien Platz steht sie in der Mitte
-        (.lc-platz-frei .lc-schild .lc-nummer hat top: 50 %), auf
-        einem besetzten als kleines Abzeichen oben. Die Klumpen
-        liegen deshalb an verschiedenen Stellen — sie sollen ja etwas
-        zudecken und nicht daneben.
-     2. IST DER PLATZ FREI, kippt die Zahl um: sie bekommt einen Stoss
-        von unten, faellt auf 62 Grad zur Seite, bleibt einen Moment
-        liegen und richtet sich dann wieder auf. Die gestrichelte
-        Linie kippt mit.
-     3. SITZT JEMAND DORT, wird ER durcheinandergebracht: sein Bild
-        dreht sich auf den Kopf, bleibt so, und dreht sich dann in
-        derselben Richtung weiter, bis es wieder richtig steht.
-
-     Nichts davon bleibt. Nach 2,3 Sekunden ist jeder Platz wieder
-     genau wie vorher — aufbrechen ja, kaputtmachen nein.
-     ================================================================= */
-  function lcMaulwurfAufbrechen(platzEl, spaet, gross) {
-    if (!platzEl) return [];
-    const frei = platzEl.classList.contains("lc-platz-frei");
-    const reste = [];
-    /* Fuenf Klumpen. Die dritte Zahl ist die Groesse, gemessen in
-       Bildbreiten.
-       ERSTER VERSUCH WAR ZU VIEL: mit einem 0,50 breiten Klumpen
-       mitten auf der Nummer war der ganze Platz zugeschuettet — man
-       sah weder die Zahl umkippen noch den Nachbarn auf dem Kopf
-       stehen, und darum geht es ja gerade. Jetzt liegt die Erde UM
-       das Herum, was sie durcheinanderbringen soll: auf einem freien
-       Platz ringsum die Zahl in der Mitte, auf einem besetzten um das
-       Abzeichen oben und ueber den unteren Bildrand. */
-    const stellen = frei
-      ? [[27, 52, 0.34], [73, 49, 0.32], [43, 71, 0.30], [64, 69, 0.28], [50, 28, 0.26]]
-      : [[32, 13, 0.30], [68, 11, 0.28], [38, 72, 0.32], [62, 70, 0.30], [50, 80, 0.26]];
-    stellen.forEach((s, i) => {
-      const k = document.createElement("i");
-      k.className = "lc-erdwurf";
-      k.style.left = s[0] + "%";
-      k.style.top = s[1] + "%";
-      k.style.setProperty("--gross", (gross * s[2]).toFixed(1) + "px");
-      k.style.setProperty("--dreh", (((i * 47) % 41) - 20) + "deg");
-      k.style.animationDelay = Math.max(0, Math.round(spaet + i * 55)) + "ms";
-      platzEl.appendChild(k);
-      reste.push(k);
-    });
-    const wann = Math.max(0, Math.round(spaet));
-    window.setTimeout(() => {
-      platzEl.classList.add(frei ? "lc-platz-umgekippt" : "lc-platz-kopfueber");
-    }, wann);
-    window.setTimeout(() => {
-      platzEl.classList.remove("lc-platz-umgekippt", "lc-platz-kopfueber");
-      reste.forEach((k) => { if (k.parentNode) k.remove(); });
-    }, wann + 2400);
-    return reste;
   }
 
   /* --- DER STROHHALM ------------------------------------------------ */
