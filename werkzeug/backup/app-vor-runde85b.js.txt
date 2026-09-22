@@ -16829,36 +16829,6 @@
     return b;
   }
 
-  /* =================================================================
-     WAS DER GANZEN SEITE GILT, HAENGT AN DER SEITE
-     -----------------------------------------------------------------
-     XANDER (Runde 85): „wenn man die Seite scrollt, springen die Augen
-     immer noch … und das Dunkel ist auch gar nicht ueber die ganze
-     Webseite."
-
-     BEIDES HAT DIESELBE URSACHE, und sie steht in lcEffektHeim: die
-     Effektbuehne liegt ueber der KARTE und wird in jedem Bild
-     nachgefuehrt (lcBuehneSetzen). Sie traegt dazu „transform:
-     translateZ(0)" — und ein transformierter Vorfahr macht aus
-     „position: fixed" eine Lage RELATIV ZU IHM. Die Augen klebten
-     also nicht am Fenster, sondern an der Karte, und die Dunkelheit
-     endete an deren Rand.
-
-     Was der GANZEN Seite gilt, braucht deshalb ein eigenes Zuhause:
-     dieses hier haengt direkt am body, hat keine Transformation und
-     keine „contain"-Regel — darin ist „fixed" wieder fixed. */
-  function lcSeitenHeim() {
-    let b = document.getElementById("lcSeitenBuehne");
-    if (!b) {
-      b = document.createElement("div");
-      b.id = "lcSeitenBuehne";
-      b.className = "lc-seitenbuehne";
-      b.setAttribute("aria-hidden", "true");
-      document.body.appendChild(b);
-    }
-    return b;
-  }
-
   function lcKonfetti() {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     document.getElementById("lcKonfetti")?.remove();
@@ -18257,10 +18227,7 @@
       a.style.setProperty("--lc-au-takt", (2.6 + Math.random() * 1.8).toFixed(2) + "s");
       schicht.appendChild(a);
     }
-    /* RUNDE 85: die Augen gelten der ganzen Seite — deshalb haengen
-       sie an der Seite und nicht an der Karte (siehe lcSeitenHeim).
-       Vorher sprangen sie bei jedem Rollen mit der Buehne mit. */
-    lcSeitenHeim().appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 9000);
   }
 
@@ -18499,10 +18466,7 @@
     wort.className = "lc-dunkel-wort";
     wort.textContent = "… und dann war es dunkel.";
     schicht.appendChild(wort);
-    /* RUNDE 85 — XANDER: „das Dunkel ist auch gar nicht ueber die
-       ganze Webseite." Genau deshalb: es hing an der Karte und endete
-       an deren Rand (siehe lcSeitenHeim). */
-    lcSeitenHeim().appendChild(schicht);
+    lcEffektHeim().appendChild(schicht);
     setTimeout(() => schicht.remove(), 6400);
   }
 
@@ -35571,28 +35535,15 @@
           + " " + P(96, 28) + " Z";
         /* Die Handschwingen. */
         const federn = [];
-        /* RUNDE 85 — XANDER: „dann hat der Adler noch keine
-           realistischen Schwingen … Die Federn gehen doch eher nach
-           hinten."
-           NACHGEMESSEN an der Zeichnung: die Spitzen lagen zwischen
-           x = 33 und x = 52, die Wurzeln zwischen x = 58 und x = 63 —
-           die Federn standen also nur 6 bis 25 Einheiten vor der
-           Handwurzel und dabei fast senkrecht nach oben. So sieht ein
-           Fluegel im Ruderschlag aus, nicht im Flug. Ein Greifvogel
-           traegt die Hand ZURUECK: die Schwungfedern zeigen nach
-           hinten (zum Schwanz, also zu kleinem x) und faechern dabei
-           nach unten auf. Jetzt liegen die Spitzen zwischen x = 16
-           und x = 42 und reichen bis y = 34 — der Fluegel bekommt
-           damit die Sichelform, an der man einen Greifvogel erkennt. */
         for (let f = 0; f < 7; f++) {
           const t = f / 6;
-          const bx = 62 - t * 4,  by = 8 + t * 18;   /* Wurzel */
-          const tx = 16 + t * 26, ty = 4 + t * 30;   /* Spitze */
+          const bx = 63 - t * 5,  by = 8 + t * 18;   /* Wurzel */
+          const tx = 33 + t * 19, ty = 1 + t * 27;   /* Spitze */
           const dx = tx - bx, dy = ty - by;
           const lang = Math.hypot(dx, dy) || 1;
           const nx = -dy / lang, ny = dx / lang;     /* quer zur Feder */
           /* Die aeusseren Federn sind die laengsten und schmalsten. */
-          const br = 2.5 - t * 0.55;
+          const br = 2.7 - t * 0.6;
           const mx = bx + dx * 0.55, my = by + dy * 0.55;
           federn.push("M" + P(bx, by)
             + " C" + P(mx + nx * br, my + ny * br)
@@ -37046,17 +36997,7 @@
          Der gemalte Weg gilt auch hier — dieselbe Bahn wie bei
          Flugzeug, Feder und Maulwurf. */
       const fro = document.createElement("span");
-      /* RUNDE 85 — XANDER: „Der Frosch zeigt nicht in die richtige
-         Richtung. Er springt verkehrt rum."
-         ER HAT RECHT: die Zeichnung schaut IMMER nach links (Kopf bei
-         x = 11, Hinterbein bei x = 95), gesprungen wird aber in beide
-         Richtungen. Ging es nach rechts, sprang er rueckwaerts.
-         Jetzt wird die Zeichnung gespiegelt, wenn das Ziel rechts
-         liegt — und nur die Zeichnung: das Profilbild auf dem Ruecken
-         ist ein eigenes Feld daneben und bleibt seitenrichtig, sonst
-         waere das Gesicht spiegelverkehrt. */
-      const froNachRechts = ende.x >= start.x;
-      fro.className = "lc-frosch" + (froNachRechts ? " lc-frosch-rechts" : "");
+      fro.className = "lc-frosch";
       fro.style.setProperty("--gross", d + "px");
       fro.innerHTML =
                 '<svg class="lc-frosch-bild" viewBox="0 0 100 74">'
@@ -37139,21 +37080,10 @@
       fro.querySelectorAll(".lc-frosch-bein").forEach((b) => {
         b.style.animationDuration = froTakt + "ms";
       });
-      /* Und er quakt bei jedem Abstoss, nicht nur einmal.
-         RUNDE 85 — XANDER: „und er quakt nicht richtig."
-         GEFUNDEN: der vierte Wert schnitt die Aufnahme nach „froTakt"
-         ab — bei kurzen Spruengen also nach 320 ms, mitten im Quaken.
-         Ein abgeschnittenes Quaken klingt nach Knacken. „quaken" ist
-         jetzt EIN Ruf von 0,62 s (werkzeug/quaken-bauen.py), und er
-         darf ausklingen: kein Schnitt mehr, dafuer nie zwei
-         gleichzeitig — deshalb hoechstens ein Ruf je 620 ms. */
-      const froRufe = [0].concat(froschLand.slice(0, -1)
-        .map((zielT) => Math.round(zielT * hin)));
-      let froZuletzt = -9999;
-      froRufe.forEach((wann, i) => {
-        if (wann - froZuletzt < 620) return;
-        froZuletzt = wann;
-        lcTonSpaeter("quaken", wann, i ? 0.5 : 0.6);
+      /* Und er quakt bei jedem Abstoss, nicht nur einmal. */
+      lcTonSpaeter("quaken", 0, 0.6, froTakt);
+      froschLand.slice(0, -1).forEach((zielT) => {
+        lcTonSpaeter("quaken", Math.round(zielT * hin), 0.5, froTakt);
       });
     } else if (art === "zylinder") {
       /* =================================================================
@@ -41532,81 +41462,10 @@
         + ' stroke-linecap="round" opacity=".55"/>'
         + "</svg>"
         + '<span class="lc-klaps-wort">KLAPS</span>';
-      /* =============================================================
-         RUNDE 85 — XANDER: „den Popo, den ich einen Klatsch gebe, der
-         soll auch als Popo in dem Moment grafisch dargestellt sein.
-         Also mit der Erkennung von einem Frauen-Popo und einem
-         Maenner-Popo, je nach Geschlechtererkennung, was im Profil
-         als Geschlecht eingestellt ist."
-
-         Bisher klatschte die Hand auf das Gesicht — und ein Klaps
-         gilt nun einmal woanders hin. Fuer die Dauer des Effekts
-         liegt deshalb ein gezeichneter Popo ueber dem Bild, und zwar
-         der, der zum eingestellten Geschlecht passt (data-lc-
-         geschlecht am Platz, dieselbe Quelle wie beim Schmerzlaut).
-
-         WORIN SIE SICH UNTERSCHEIDEN, und das ist keine Erfindung,
-         sondern das, woran man es zeichnerisch erkennt:
-           · Frau: breitere Huefte als Taille (hier 84 zu 46 von 100),
-             die Backen runder und tiefer angesetzt.
-           · Mann: Huefte kaum breiter als die Taille (66 zu 58), die
-             Backen flacher, dazu die Linie des Gesaessmuskels.
-         Alles andere ist gleich: Hautton wie die Hand, eine Falte in
-         der Mitte, ein Schatten darunter.
-         ============================================================= */
+      /* Der Abdruck liegt IM Bild — die Blende schneidet ihn rund ab,
+         damit er nicht ueber den Rahmen hinaussteht. */
       const blende = lcZpBlende(schicht);
-      const weiblich = /^(w|f)/.test(String(
-        (platz && platz.dataset && platz.dataset.lcGeschlecht) || "")
-        .trim().toLowerCase());
-      const hueftBreit = weiblich ? 84 : 66;
-      const taille = weiblich ? 46 : 58;
-      const backeX = weiblich ? 22 : 18;   /* Abstand der Backenmitten */
-      const backeRx = weiblich ? 23 : 20;
-      const backeRy = weiblich ? 25 : 21;
-      const backeY = weiblich ? 64 : 62;
-      const popo = document.createElement("span");
-      popo.className = "lc-popo" + (weiblich ? " lc-popo-frau" : " lc-popo-mann");
-      popo.innerHTML =
-        '<svg viewBox="0 0 100 100" aria-hidden="true">'
-        + '<defs><radialGradient id="lcPopoHaut" cx="42%" cy="34%" r="72%">'
-        + '<stop offset="0%" stop-color="#f6d3bd"/>'
-        + '<stop offset="62%" stop-color="#eec0a8"/>'
-        + '<stop offset="100%" stop-color="#d9a68c"/>'
-        + "</radialGradient></defs>"
-        /* Ruecken und Huefte. Sie beginnt OBERHALB des Bildes (y = -10),
-           damit die runde Blende die obere Kante wegschneidet — sonst
-           laege im Bild ein harter Strich quer ueber dem Ruecken. */
-        + '<path class="lc-popo-leib" d="M' + (50 - taille / 2) + ' -10'
-        + " C" + (50 - taille / 2 - 3) + " 30 " + (50 - hueftBreit / 2) + " 52 "
-        + (50 - hueftBreit / 2 + 2) + " 74"
-        + " L" + (50 + hueftBreit / 2 - 2) + " 74"
-        + " C" + (50 + hueftBreit / 2) + " 52 " + (50 + taille / 2 + 3) + " 30 "
-        + (50 + taille / 2) + " -10 Z" + '" fill="url(#lcPopoHaut)"/>'
-        /* Die beiden Backen. */
-        + '<ellipse class="lc-popo-backe lc-popo-links" cx="' + (50 - backeX)
-        + '" cy="' + backeY + '" rx="' + backeRx + '" ry="' + backeRy
-        + '" fill="url(#lcPopoHaut)"/>'
-        + '<ellipse class="lc-popo-backe lc-popo-rechts" cx="' + (50 + backeX)
-        + '" cy="' + backeY + '" rx="' + backeRx + '" ry="' + backeRy
-        + '" fill="url(#lcPopoHaut)"/>'
-        /* Die Falte in der Mitte. */
-        + '<path class="lc-popo-falte" d="M50 ' + (backeY - backeRy + 4)
-        + " C48 " + (backeY - 4) + " 48 " + (backeY + 8) + " 50 "
-        + (backeY + backeRy - 3) + '"/>'
-        /* Beim Mann die Linie des Gesaessmuskels, bei der Frau die
-           weiche Rundung der Huefte. */
-        + (weiblich
-            ? '<path class="lc-popo-linie" d="M' + (50 - backeX - backeRx + 3)
-              + " " + (backeY - 6) + " C" + (50 - backeX) + " " + (backeY - 15)
-              + " " + (50 - 6) + " " + (backeY - 14) + " " + (50 - 3) + " "
-              + (backeY - 9) + '"/>'
-            : '<path class="lc-popo-linie" d="M' + (50 - backeX - 8) + " "
-              + (backeY + 10) + " C" + (50 - backeX) + " " + (backeY + 16)
-              + " " + (50 - 8) + " " + (backeY + 15) + " " + (50 - 4) + " "
-              + (backeY + 9) + '"/>')
-        + "</svg>";
-      blende.appendChild(popo);
-      blende.insertAdjacentHTML("beforeend", '<span class="lc-klaps-abdruck"></span>');
+      blende.innerHTML = '<span class="lc-klaps-abdruck"></span>';
       /* Der Aufprall liegt bei 600 ms (siehe lcKlapsHandR80); der
          kurze Schmerzlaut kommt 90 ms danach — nah genug, dass er
          zum Schlag gehoert, und nicht so nah, dass beide verschmelzen. */
@@ -42620,15 +42479,15 @@
     setTimeout(() => d.remove(), 2200);
   }
   function lcGluehbirne(wen) {
-    /* RUNDE 85 — XANDER: „es kann nicht sein, wenn man Birne anmacht,
-       dass beim zweiten Betaetigen von Birne an die Birne ausgeht."
-
-       ER HAT RECHT, UND HIER STAND ES: brannte die Birne schon, machte
-       derselbe Befehl sie wieder aus (ein Schalter statt eines
-       Befehls). Zum Herausdrehen gibt es aber einen EIGENEN Befehl,
-       /birneraus — zwei Wege fuer dasselbe, und einer davon
-       ueberraschend. Jetzt dreht /gluehbirne immer ein; wer sie
-       loswerden will, dreht sie heraus. */
+    /* Steckt sie schon drin? Dann wird jetzt herausgedreht. */
+    const drin = (() => {
+      try {
+        const pl = lcPlatzMitNamen(wen);
+        const k = pl && pl.querySelector(".lc-kreis");
+        return k && k.classList.contains("lc-birne-an") ? k : null;
+      } catch (e) { return null; }
+    })();
+    if (drin) return lcBirneHeraus(drin);
     return lcAmPlatz(wen, "lc-birne", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {

@@ -54,17 +54,24 @@ function tonMessen(name) {
   sage(/\|quaken\|/.test(gl) && /\|zauberpuff\|/.test(gl),
     "und beide stehen in data-geraeusche.js");
 
-  /* Ein Quaken ist eine PULSFOLGE mit Pausen dazwischen, kein
-     Dauerton: drei Rufe muessen als drei Inseln messbar sein. */
+  /* ACHTUNG, HIER STAND FRUEHER: „quaken sind drei getrennte Rufe in
+     1,8 s". Das hat Xander in Runde 85 zurueckgenommen: „und er quakt
+     nicht richtig." Der Grund war die Laenge — der Frosch spielte die
+     Datei bei JEDEM Sprung neu an und schnitt sie nach der
+     Sprungdauer ab, oft nach 320 ms. Man hoerte also immer denselben
+     angeschnittenen ersten Ruf. Jetzt enthaelt die Datei EINEN Ruf,
+     der ausklingen darf; gemessen wird deshalb: ein Ruf, kurz genug,
+     um zu einem Sprung zu gehoeren, und trotzdem eine Pulsfolge und
+     kein Dauerton. */
   const q = tonMessen("quaken");
   let inseln = 0, drin = false;
   q.huelle.forEach((d) => {
     if (d > -40 && !drin) { inseln++; drin = true; }
     else if (d <= -40) drin = false;
   });
-  sage(inseln === 3 && Math.abs(q.dauer - 1.8) < 0.15,
-    "quaken sind drei getrennte Rufe in 1,8 s",
-    inseln + " Rufe, " + q.dauer.toFixed(2) + " s");
+  sage(inseln === 1 && q.dauer < 0.8,
+    "quaken ist EIN Ruf, kurz genug fuer einen Sprung",
+    inseln + " Ruf, " + q.dauer.toFixed(2) + " s");
 
   /* Der Zauberpuff hat ZWEI Puffs mit einer Stille dazwischen — sonst
      gibt es kein Verschwinden und kein Auftauchen, nur Geklingel. */

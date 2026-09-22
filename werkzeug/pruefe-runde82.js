@@ -181,9 +181,18 @@ const sage = (gut, text, dazu) => {
     kata ? kata.breit + " px = " + kata.anteil.toFixed(2) + " Bildbreiten (Bild "
       + kata.bild + " px)" : "nicht gefunden");
   const css = fs.readFileSync(path.join(WURZEL, "korrekturen.css"), "utf8");
-  sage(/\.lc-katapult-bild \{[\s\S]{0,180}?width: 164%;/.test(css)
-    && /margin-left: -82%;/.test(css),
-    "und es bleibt dabei mittig ueber dem Platz");
+  /* ACHTUNG, AUCH HIER STAND FRUEHER ETWAS ANDERES: „und es bleibt
+     dabei mittig ueber dem Platz". Genau das hat Xander in Runde 86
+     zurueckgenommen: „der Katapult nimmt das Profilbild immer noch
+     nicht als Ladung auf … das kommt dann von links, von rechts, wo
+     man links sitzt." Mittig kann es nicht stehen, wenn seine SCHALE
+     auf dem Bild liegen soll — sie sitzt beim gespannten Arm 75 % der
+     Geraetebreite rechts. Gemessen wird deshalb jetzt, dass das
+     Geraet ueberhaupt zur Seite ruecken kann (--kataseite) und dabei
+     seine Groesse behaelt. */
+  sage(/\.lc-katapult-bild \{[\s\S]{0,240}?width: 164%;/.test(css)
+    && /margin-left: calc\(-82% \+ var\(--kataseite, 0%\)\);/.test(css),
+    "und es rueckt zur Seite des Werfenden, damit seine Schale auf dem Bild liegt");
 
   await br.close(); srv.close();
   console.log(fehler ? "\n" + fehler + " Regel(n) nicht erfuellt" : "\nAlles in Ordnung");

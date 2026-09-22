@@ -1036,7 +1036,7 @@ window.LiveChat = (function () {
     /* RUNDE 86 — XANDER: „das mit dem Luftballon hast du auch noch
        nicht gemacht, dass man jemand aufblasen kann wie ne
        Luftballon." */
-    luftballon: { wirkung: "luftballon", satz: "bl\u00e4st auf wie einen Luftballon", emoji: "\ud83c\udf88" },
+    ballonpumpe: { wirkung: "luftballon", satz: "pumpt auf wie einen Luftballon", emoji: "\ud83c\udf88" },
     strohhalm:  { wirkung: "strohhalm",  satz: "saugt mit dem Strohhalm an", emoji: "\ud83e\udd64" },
     blubbern:   { wirkung: "blubbern",   satz: "pustet in den Strohhalm von", emoji: "\ud83e\uded7" },
     knuellen:   { wirkung: "knuell",     satz: "zerkn\u00fcllt wie ein Blatt Papier", emoji: "\ud83d\uddd2\ufe0f" },
@@ -8953,8 +8953,14 @@ window.LiveChat = (function () {
     { gr: "reden", w: "laufen",  kurz: "",      nutzt: "/laufen 8",           was: "Feld f\u00fcr Feld zu Platz 8 laufen \u2014 geht auch mit /fahren 8" },
     { gr: "reden", w: "huepfen", kurz: "spielzug", nutzt: "/huepfen Name",     was: "Spielzug — dein Bild huepft Platz fuer Platz zu jemandem" },
     { gr: "reden", w: "katapult", kurz: "kata", nutzt: "/katapult Name",   was: "Katapult — der andere wird weggeschleudert" },
-    { gr: "reden", w: "luftballon", kurz: "aufblasen", nutzt: "/luftballon Name",
-      was: "Luftballon — dreimal pumpen, dann saust er als Ballon durchs Feld" },
+    /* DER NAME. „luftballon" ist seit langem die Kurzform fuer die
+       Ballons im ganzen Raum (/ballon), und „aufblasen" gibt es seit
+       Runde 65 schon: da wird das Bild unter Druck gesetzt, bis es
+       zerplatzt. Dieser hier ist etwas anderes — eine Pumpe, drei
+       Huebe, und dann saust der andere als Ballon durchs Feld und
+       faellt zurueck. Deshalb ein eigenes Wort: /ballonpumpe. */
+    { gr: "reden", w: "ballonpumpe", kurz: "ballonpumpe", nutzt: "/ballonpumpe Name",
+      was: "Ballonpumpe — dreimal pumpen, dann saust der andere als Ballon durchs Feld" },
     { gr: "reden", w: "brennen", kurz: "flammen", nutzt: "/brennen Name",
       was: "Der Rahmen brennt \u2014 Flammen zuengeln am Rand des Profilbildes hoch" },
     { gr: "reden", w: "zorro", kurz: "schlitzen", nutzt: "/zorro Name",

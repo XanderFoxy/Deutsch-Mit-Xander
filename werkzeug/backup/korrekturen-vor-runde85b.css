@@ -9742,19 +9742,6 @@ body.lc-schreibt .tutor-reiter {
    Der Kasten selbst nimmt keine Tipps an (pointer-events: none) — man
    soll durch die Animation hindurch auf den Chat tippen können.
    ===================================================================== */
-/* RUNDE 85 — DAS ZUHAUSE FUER ALLES, WAS DER GANZEN SEITE GILT.
-   Keine Transformation, kein „contain": nur so bleibt „position:
-   fixed" darin wirklich am Fenster stehen (siehe lcSeitenHeim in
-   app.js). Die Buehne darunter gilt weiterhin der Karte. */
-.lc-seitenbuehne {
-  position: fixed;
-  inset: 0;
-  z-index: 9340;
-  pointer-events: none;
-}
-.lc-seitenbuehne > * { pointer-events: none; }
-@media (prefers-reduced-motion: reduce) { .lc-seitenbuehne { display: none; } }
-
 .lc-effektbuehne {
   position: fixed;
   z-index: 9300;
@@ -12927,59 +12914,6 @@ body.lc-schreibt .tutor-reiter {
   .lc-ballon-glanz, .lc-ballon-knoten { opacity: .9; }
 }
 
-/* =====================================================================
-   DER POPO BEIM KLAPS
-   ---------------------------------------------------------------------
-   XANDER (Runde 85): „den Popo, den ich einen Klatsch gebe, der soll
-   auch als Popo in dem Moment grafisch dargestellt sein."
-   Gezeichnet wird er in app.js (lcKlaps), weil die Masse vom
-   eingestellten Geschlecht abhaengen. Hier steht, wie er liegt und
-   wie er auf den Schlag reagiert: er kommt herauf, bekommt bei 600 ms
-   — dort trifft die Hand — einen Stoss und wippt aus.
-   ===================================================================== */
-.lc-popo {
-  position: absolute;
-  left: 50%;
-  bottom: -4%;
-  width: 96%;
-  margin-left: -48%;
-  aspect-ratio: 1 / 1;
-  pointer-events: none;
-  z-index: 3;
-  filter: drop-shadow(0 2px 5px rgba(40, 20, 10, .35));
-  transform-origin: 50% 20%;
-  animation: lcPopoDaR85 2.2s ease-out both;
-}
-.lc-popo svg { width: 100%; height: 100%; display: block; overflow: visible; }
-.lc-popo-backe { stroke: rgba(176, 124, 100, .55); stroke-width: 1.1; }
-.lc-popo-falte {
-  fill: none;
-  stroke: rgba(150, 100, 80, .6);
-  stroke-width: 2.2;
-  stroke-linecap: round;
-}
-.lc-popo-linie {
-  fill: none;
-  stroke: rgba(176, 124, 100, .45);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-}
-@keyframes lcPopoDaR85 {
-  0%   { opacity: 0; transform: translateY(22%) scale(.9); }
-  10%  { opacity: 1; transform: translateY(0) scale(1); }
-  /* 27 % von 2,2 s = 600 ms: da trifft die Hand. */
-  25%  { transform: translateY(0) scale(1); }
-  29%  { transform: translateY(2%) scale(1.06, .93); }
-  34%  { transform: translateY(-1%) scale(.97, 1.04); }
-  40%  { transform: translateY(0) scale(1.02, .99); }
-  46%  { transform: translateY(0) scale(1); }
-  86%  { opacity: 1; transform: translateY(0) scale(1); }
-  100% { opacity: 0; transform: translateY(14%) scale(.95); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lc-popo { animation: none; opacity: 1; }
-}
-
 /* --- DER STROHHALM ---------------------------------------------------- */
 .lc-stroh-rohr {
   position: absolute;
@@ -15129,19 +15063,13 @@ body.lc-schreibt .tutor-reiter {
   /* Drei Umdrehungen, jede langsamer — so schraubt man ein. */
   22%  { transform: rotate(360deg) scale(1); filter: brightness(.72); }
   40%  { transform: rotate(720deg) scale(1); filter: brightness(.78); }
-  54%  { transform: rotate(1056deg) scale(1); filter: brightness(.85); }
+  54%  { transform: rotate(1020deg) scale(1); filter: brightness(.85); }
   /* Kontakt: es zuckt und zuendet. */
-  58%  { transform: rotate(1086deg) scale(1.02); filter: brightness(1.7); }
-  61%  { transform: rotate(1074deg) scale(1); filter: brightness(.9); }
-  64%  { transform: rotate(1080deg) scale(1.01); filter: brightness(1.9); }
-  /* RUNDE 85 — XANDER: „sie haengt so ein bisschen in der Schraege,
-     bevor die Animation ueberhaupt fertig ist."
-     NACHGERECHNET: hier stand 1044 Grad. 1044 = 2 volle Umdrehungen
-     plus 324 — das Bild blieb also um 36 Grad verdreht stehen, und
-     genau diese Schraege hat er gesehen. Drei volle Umdrehungen sind
-     1080 Grad; damit steht es am Ende wieder gerade. */
-  72%, 88% { transform: rotate(1080deg) scale(1); filter: brightness(1.55); }
-  100% { transform: rotate(1080deg) scale(1); filter: brightness(1); }
+  58%  { transform: rotate(1044deg) scale(1.02); filter: brightness(1.7); }
+  61%  { transform: rotate(1038deg) scale(1); filter: brightness(.9); }
+  64%  { transform: rotate(1044deg) scale(1.01); filter: brightness(1.9); }
+  72%, 88% { transform: rotate(1044deg) scale(1); filter: brightness(1.55); }
+  100% { transform: rotate(1044deg) scale(1); filter: brightness(1); }
 }
 .lc-birne-fassung {
   position: absolute;
@@ -16814,17 +16742,7 @@ body.lc-schreibt .tutor-reiter {
    Drittel, der Schnee ist weiss und klein, das Glas ist ein Hauch.
    Das Bild bleibt die ganze Zeit zu sehen.
    ----------------------------------------------------------------- */
-/* RUNDE 85 — XANDER: „Die Schneekugel sieht so aus, als ob sie ohne
-   ihren Sockel geschuettelt wird. Und die Animation geht laenger als
-   das Schuettelgeraeusch."
-   ZWEIERLEI: geschuettelt wurde nur das BILD — Glas und Sockel
-   standen still, als haenge die Kugel in der Luft. Und die
-   Schuettelbewegung dauerte 1 s, waehrend „kugelschuetteln" gemessen
-   bis 1,45 s zu hoeren ist (danach unter -47 dB). Jetzt schuetteln
-   alle drei dasselbe, und zwar 1,45 s lang: so hoert das Rasseln
-   genau dann auf, wenn die Hand aufhoert. */
-.lc-geschuettelt { animation: lcSchuettelnR29 1.45s cubic-bezier(.36, .07, .19, .97) both; }
-
+.lc-geschuettelt { animation: lcSchuettelnR29 1s cubic-bezier(.36, .07, .19, .97) both; }
 @keyframes lcSchuettelnR29 {
   0%   { transform: translate(0, 0) rotate(0deg); }
   10%  { transform: translate(-9%, 2%) rotate(-7deg); }
@@ -17027,17 +16945,8 @@ body.lc-schreibt .tutor-reiter {
   95%  { opacity: 1; }
   100% { opacity: 0; }
 }
-/* Und das Glas genauso — es gehoert zur selben Kugel.
-   RUNDE 85 — XANDER: „Die Schneekugel sieht so aus, als ob sie ohne
-   ihren Sockel geschuettelt wird."
-   Geschuettelt wurde nur das Bild. Glas und Sockel bekommen deshalb
-   DIESELBE Schuettelbewegung dazu — sie gehoeren zu derselben Kugel
-   und muessen sich mitbewegen. (Diese Regeln stehen absichtlich hier
-   unten: weiter oben wuerden sie von den Einzelregeln ueberschrieben.) */
-.lc-sk-glas, .lc-sk-sockel {
-  animation: lcSkSockelR80 7.2s ease-out both,
-             lcSchuettelnR29 1.45s cubic-bezier(.36, .07, .19, .97) both;
-}
+/* Und das Glas genauso — es gehoert zur selben Kugel. */
+.lc-sk-glas { animation: lcSkSockelR80 7.2s ease-out both; }
 @media (prefers-reduced-motion: reduce) {
   .lc-geschuettelt { animation: none; }
   .lc-sk-flocke { display: none; }
@@ -27313,14 +27222,6 @@ body.lc-schreibt .tutor-reiter {
   overflow: visible;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3));
 }
-/* RUNDE 85 — XANDER: „Der Frosch zeigt nicht in die richtige Richtung.
-   Er springt verkehrt rum."
-   Die Zeichnung schaut nach links. Geht die Reise nach rechts, wird
-   sie gespiegelt — das Profilbild auf dem Ruecken aber NICHT, sonst
-   waere das Gesicht seitenverkehrt. Es wandert stattdessen auf die
-   andere Seite des Ruckens. */
-.lc-frosch-rechts .lc-frosch-bild { transform: scaleX(-1); }
-.lc-frosch-rechts .lc-frosch-last { left: 42%; }
 /* Das Profilbild sitzt auf dem RUECKEN — also hinten, nicht auf dem
    Kopf. Beim ersten Versuch sass es mittig oben und verdeckte den
    ganzen Frosch; zu sehen waren nur noch die Beine. */

@@ -20,10 +20,19 @@ WAS EIN QUAKEN AUSMACHT, und warum ein tiefer Ton keins ist:
   · Die Rufe kommen in ungleichen Abstaenden. Gleiche Pausen klingen
     nach Maschine.
 
-Gebaut werden drei Rufe in 1,8 s — einer je Sprung:
-  0,00 s  260 Hz, Puls 62 -> 48 Hz, 300 ms
-  0,62 s  238 Hz, Puls 58 -> 44 Hz, 330 ms
-  1,26 s  276 Hz, Puls 66 -> 50 Hz, 280 ms
+RUNDE 85 — XANDER: „und er quakt nicht richtig."
+GEFUNDEN, und es war nicht der Klang, sondern die LAENGE: die Datei
+enthielt DREI Rufe in 1,8 s, und der Frosch spielte sie bei jedem
+Sprung neu an — abgeschnitten nach der Sprungdauer (oft 320 ms).
+Damit hoerte man jedes Mal denselben angeschnittenen ersten Ruf mit
+einem Knack am Ende. Ein Ruf gehoert zu einem Sprung, also enthaelt
+die Datei jetzt GENAU EINEN Ruf, der ausklingen darf:
+
+  0,00 s  252 Hz, Puls 60 -> 46 Hz, 340 ms Ruf
+  danach  das Nachhallen des Kehlsacks bis 0,62 s
+
+Die alte Aufnahme mit drei Rufen liegt in
+werkzeug/backup/ton-runde85/quaken-drei.opus.
 
     python3 werkzeug/quaken-bauen.py
 =====================================================================
@@ -36,7 +45,7 @@ AUS = os.path.join(WURZEL, "ton")
 FF = os.environ.get("FF", "/tmp/claude-0/node_modules/ffmpeg-static/ffmpeg")
 
 RATE = 24000
-DAUER = 1.8
+DAUER = 0.62
 NAME = "quaken"
 
 
@@ -78,9 +87,10 @@ def ruf(daten, start, laenge, grund, puls0, puls1, laut):
 def main():
     n = int(RATE * DAUER)
     daten = [0.0] * n
-    ruf(daten, 0.00, 0.300, 260, 62, 48, 0.30)
-    ruf(daten, 0.62, 0.330, 238, 58, 44, 0.28)
-    ruf(daten, 1.26, 0.280, 276, 66, 50, 0.29)
+    ruf(daten, 0.00, 0.340, 252, 60, 46, 0.32)
+    # Der Nachhall: derselbe Ruf, sehr leise und tiefer — so klingt
+    # ein Kehlsack aus, statt abrupt aufzuhoeren.
+    ruf(daten, 0.30, 0.260, 214, 44, 34, 0.09)
     roh = b"".join(struct.pack("<h", max(-32000, min(32000, int(w * 32000))))
                    for w in daten)
     p = subprocess.run([FF, "-y", "-v", "error",
