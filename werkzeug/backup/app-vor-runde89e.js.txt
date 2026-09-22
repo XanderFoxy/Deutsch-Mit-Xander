@@ -44250,29 +44250,75 @@
       + "</g>";
   }
 
-  /* =================================================================
-     RUNDE 89 — DIE ZEICHNUNG EINMAL, ZWEI WEGE DORTHIN
-     -----------------------------------------------------------------
-     Bisher stand die ganze Kopfhoerer-Zeichnung IN der Rueckruf-
-     funktion von lcAmPlatz. Damit gab es genau einen Weg, sie
-     anzulegen: ueber den Effekt. Nach jedem Neuzeichnen der Sitzreihe
-     war sie deshalb weg — XANDER: „Die Kopfhoerer bleiben auch nicht
-     auf meinem Kopf, waehrend ich das Lied anhoeren koennte."
-     Jetzt steht sie hier, und lcBleibendesAuffrischen kann sie nach
-     einem Neuzeichnen wieder anlegen. „mitNoten" unterscheidet die
-     beiden Faelle: die aufsteigenden Noten gehoeren zum AUFSETZEN,
-     nicht zum Tragen. */
-  function lcKopfhoererZeichnen(schicht, mitNoten) {
+  function lcKopfhoerer(wen, nachricht) {
+    /* GEWUENSCHT: „dass ich ein Lied aussuchen kann und den Leuten
+       dann dieses Lied auf die Ohren setzen kann aus dem Musikordner."
+       Auf die OHREN heisst: es hoert der, dem sie aufgesetzt werden —
+       nicht der ganze Raum. Alle anderen sehen die Kopfhoerer und
+       lesen den Titel in der Chatzeile. */
+    const lied = (nachricht && nachricht.lied) || "";
+    if (lied) {
+      /* RUNDE 58 — XANDER: „der andere hoert immer noch nicht die
+         Musik, wenn ich sie ihm schicke."
+
+         Hier wurde nur der NAME verglichen: „bin ich gemeint?" hiess
+         „heisst der Empfaenger genau wie ich?". Das geht schief,
+         sobald der Absender eine PLATZNUMMER nimmt — „/hoerer 3
+         Lied". Dann steht in „wen" die Ziffer 3, die heisst niemand,
+         und auf keinem einzigen Geraet lief die Musik. Ueberall
+         sonst darf man Plaetze mit ihrer Nummer meinen
+         (lcZielPlaetze kann das seit Runde 50), nur hier nicht.
+
+         Jetzt wird nicht mehr der Name verglichen, sondern der
+         PLATZ: wer gemeint ist, wird genauso gesucht wie bei jedem
+         anderen Effekt — und wenn dieser Platz mein eigener ist
+         („lc-platz-ich"), laeuft die Musik. Damit gilt der Name
+         weiterhin, die Nummer jetzt auch. */
+      if (lcMusikFuerMich(wen)) {
+        /* RUNDE 80 — der Ausschnitt reist in der Nachricht mit
+           (liedAb/liedBis, gesetzt in livechat.js), damit er auf dem
+           Geraet des Hoerers gilt und nicht nur beim Absender. */
+        lcMusikSpielen(lied, (nachricht && nachricht.liedTitel) || "",
+                       (nachricht && nachricht.liedAb) || 0,
+                       (nachricht && nachricht.liedBis) || 0);
+      }
+    }
+    /* XANDER: „sollen die Kopfhoerer auch so lange auf der Person
+       bleiben, bis sie sie von selber abnimmt."
+       Vorher waren sie nach 3,2 Sekunden weg wie jeder andere Effekt.
+       Jetzt bleiben sie liegen — und ein zweites „Hoerer" auf
+       dieselbe Person nimmt sie wieder ab. Wer sie selbst traegt,
+       kann sie auch einfach antippen (siehe .lc-kopfhoerer im
+       Stylesheet). */
+    const schonAuf = (() => {
+      try {
+        const pl = lcPlatzMitNamen(wen);
+        return pl ? pl.querySelector(".lc-kopfhoerer") : null;
+      } catch (e) { return null; }
+    })();
+    /* RUNDE 87 — XANDER: „die Kopfhoerer bleiben auch nicht auf
+       meinem Kopf."
+       GEFUNDEN, warum: diese eine Zeile war ein reiner Umschalter.
+       Wer schon Kopfhoerer auf hatte und ein ZWEITES Lied bekam,
+       verlor sie dabei — die Musik wechselte (der Block darueber
+       laeuft ja vorher), aber die Kopfhoerer waren weg. Genau das
+       passiert beim Ausprobieren staendig, weil man selten beim
+       ersten Lied bleibt.
+       Jetzt gilt: ein neues LIED laesst sie auf dem Kopf, und nur
+       das blosse „Nur aufsetzen" ein zweites Mal nimmt sie ab — so
+       war es gemeint („bis sie sie von selber abnimmt"). */
+    if (schonAuf) {
+      if (lied) return true;
+      schonAuf.remove();
+      return true;
+    }
+
+    return lcAmPlatz(wen, "lc-kopfhoerer", (schicht) => {
       /* Antippen nimmt sie ab — „bis sie sie von selber abnimmt". */
       schicht.style.pointerEvents = "auto";
       schicht.title = "Antippen: Kopfh\u00f6rer abnehmen";
       schicht.addEventListener("click", (e) => {
         e.preventDefault(); e.stopPropagation();
-        /* RUNDE 89 — wer sie abnimmt, traegt sie auch nach dem
-           naechsten Neuzeichnen nicht mehr: sonst legt
-           lcBleibendesAuffrischen sie sofort wieder auf. */
-        const plE = schicht.closest(".lc-platz");
-        if (plE) delete lcHoererListe[lcPlatzSchluessel(plE)];
         schicht.remove();
       });
       /* GEWUENSCHT: „Bei den Kopfhoerern kannst du versuchen, solche
@@ -44391,7 +44437,7 @@
         + "</svg>";
       /* Noten, die aus den Muscheln steigen — sonst sind es nur zwei
          schwarze Klumpen am Kopf. */
-      if (mitNoten) ["\u266a", "\u266b", "\u266c"].forEach((z, i) => {
+      ["\u266a", "\u266b", "\u266c"].forEach((z, i) => {
         const n = document.createElement("i");
         n.className = "lc-kopfhoerer-note";
         n.textContent = z;
@@ -44407,94 +44453,7 @@
       /* Zehn Minuten: lang genug, dass niemand sie „von selbst"
          verliert, kurz genug, dass ein vergessener Hoerer nicht ewig
          am Platz klebt. */
-  }
-  /* Die Hoerer an einen Platz legen, ohne dass ein Effekt laeuft —
-     genau das braucht lcBleibendesAuffrischen. */
-  function lcKopfhoererAnlegen(platzEl) {
-    if (!platzEl || platzEl.querySelector(".lc-kopfhoerer")) return false;
-    const schicht = document.createElement("div");
-    schicht.className = "lc-zp lc-kopfhoerer";
-    schicht.setAttribute("aria-hidden", "true");
-    lcKopfhoererZeichnen(schicht, false);
-    platzEl.appendChild(schicht);
-    return true;
-  }
-
-  function lcKopfhoerer(wen, nachricht) {
-    /* GEWUENSCHT: „dass ich ein Lied aussuchen kann und den Leuten
-       dann dieses Lied auf die Ohren setzen kann aus dem Musikordner."
-       Auf die OHREN heisst: es hoert der, dem sie aufgesetzt werden —
-       nicht der ganze Raum. Alle anderen sehen die Kopfhoerer und
-       lesen den Titel in der Chatzeile. */
-    const lied = (nachricht && nachricht.lied) || "";
-    if (lied) {
-      /* RUNDE 58 — XANDER: „der andere hoert immer noch nicht die
-         Musik, wenn ich sie ihm schicke."
-
-         Hier wurde nur der NAME verglichen: „bin ich gemeint?" hiess
-         „heisst der Empfaenger genau wie ich?". Das geht schief,
-         sobald der Absender eine PLATZNUMMER nimmt — „/hoerer 3
-         Lied". Dann steht in „wen" die Ziffer 3, die heisst niemand,
-         und auf keinem einzigen Geraet lief die Musik. Ueberall
-         sonst darf man Plaetze mit ihrer Nummer meinen
-         (lcZielPlaetze kann das seit Runde 50), nur hier nicht.
-
-         Jetzt wird nicht mehr der Name verglichen, sondern der
-         PLATZ: wer gemeint ist, wird genauso gesucht wie bei jedem
-         anderen Effekt — und wenn dieser Platz mein eigener ist
-         („lc-platz-ich"), laeuft die Musik. Damit gilt der Name
-         weiterhin, die Nummer jetzt auch. */
-      if (lcMusikFuerMich(wen)) {
-        /* RUNDE 80 — der Ausschnitt reist in der Nachricht mit
-           (liedAb/liedBis, gesetzt in livechat.js), damit er auf dem
-           Geraet des Hoerers gilt und nicht nur beim Absender. */
-        lcMusikSpielen(lied, (nachricht && nachricht.liedTitel) || "",
-                       (nachricht && nachricht.liedAb) || 0,
-                       (nachricht && nachricht.liedBis) || 0);
-      }
-    }
-    /* XANDER: „sollen die Kopfhoerer auch so lange auf der Person
-       bleiben, bis sie sie von selber abnimmt."
-       Vorher waren sie nach 3,2 Sekunden weg wie jeder andere Effekt.
-       Jetzt bleiben sie liegen — und ein zweites „Hoerer" auf
-       dieselbe Person nimmt sie wieder ab. Wer sie selbst traegt,
-       kann sie auch einfach antippen (siehe .lc-kopfhoerer im
-       Stylesheet). */
-    const schonAuf = (() => {
-      try {
-        const pl = lcPlatzMitNamen(wen);
-        return pl ? pl.querySelector(".lc-kopfhoerer") : null;
-      } catch (e) { return null; }
-    })();
-    /* RUNDE 87 — XANDER: „die Kopfhoerer bleiben auch nicht auf
-       meinem Kopf."
-       GEFUNDEN, warum: diese eine Zeile war ein reiner Umschalter.
-       Wer schon Kopfhoerer auf hatte und ein ZWEITES Lied bekam,
-       verlor sie dabei — die Musik wechselte (der Block darueber
-       laeuft ja vorher), aber die Kopfhoerer waren weg. Genau das
-       passiert beim Ausprobieren staendig, weil man selten beim
-       ersten Lied bleibt.
-       Jetzt gilt: ein neues LIED laesst sie auf dem Kopf, und nur
-       das blosse „Nur aufsetzen" ein zweites Mal nimmt sie ab — so
-       war es gemeint („bis sie sie von selber abnimmt"). */
-    if (schonAuf) {
-      if (lied) return true;
-      /* Abgenommen heisst abgenommen — auch nach dem Neuzeichnen. */
-      const plA = schonAuf.closest(".lc-platz");
-      if (plA) delete lcHoererListe[lcPlatzSchluessel(plA)];
-      schonAuf.remove();
-      return true;
-    }
-
-    /* RUNDE 89 — merken, wer sie traegt: nach dem naechsten
-       Neuzeichnen legt lcBleibendesAuffrischen sie wieder auf.
-       XANDER: „Die Kopfhoerer bleiben auch nicht auf meinem Kopf." */
-    lcZielPlaetze(wen).forEach((pl) => {
-      const nm = lcPlatzSchluessel(pl);
-      if (nm) lcHoererListe[nm] = true;
-    });
-    return lcAmPlatz(wen, "lc-kopfhoerer",
-      (schicht) => lcKopfhoererZeichnen(schicht, true), 600000, "kopfhoerer");
+    }, 600000, "kopfhoerer");
   }
 
   /* --- DIE FENSTERLUKE ----------------------------------------------- */
@@ -46274,9 +46233,6 @@
       karte.querySelectorAll(".lc-birne-halt").forEach((x) => x.remove());
       karte.querySelectorAll(".lc-kreis.lc-birne-an")
         .forEach((k) => k.classList.remove("lc-birne-an"));
-      /* Und aus der Merkliste, sonst brennt sie beim naechsten
-         Neuzeichnen wieder. */
-      Object.keys(lcBirneListe).forEach((k) => delete lcBirneListe[k]);
     }
     const meiner = lcMeinPlatz();
     const k = meiner && meiner.querySelector(".lc-kreis");
@@ -46323,12 +46279,6 @@
           kreis.classList.remove("lc-eingedreht");
           /* Sie brennt weiter — bis jemand sie herausdreht. */
           kreis.classList.add("lc-birne-an");
-          /* RUNDE 89 — und sie ueberlebt das Neuzeichnen der Reihe:
-             ohne diesen Eintrag war der Schein beim naechsten
-             Auffrischen weg (dieselbe Ursache wie bei den
-             Kopfhoerern). */
-          const nmB = lcPlatzSchluessel(platz);
-          if (nmB) lcBirneListe[nmB] = true;
           /* RUNDE 76 — HIER STAND lcBirneFassungBleibt(platz), und
              genau das wollte Xander nicht:
              „sie soll am Ende auch nicht auf der Glühbirne bleiben.

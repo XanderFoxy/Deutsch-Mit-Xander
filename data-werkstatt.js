@@ -49,26 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 89d — der Songausschnitt springt jetzt wirklich, auch mitten im laufenden Lied.",
+  stand: "Runde 89e — die Kopfhoerer bleiben jetzt wirklich auf dem Kopf, auch wenn man rausgeht und wiederkommt.",
 
   inArbeit: [
-    { seit: "2026-09-22T20:36",
+    { seit: "2026-09-22T20:42",
       text: "Glitches am verlassenen Platz — Sonde laeuft durch" },
-    { seit: "2026-09-22T20:36",
+    { seit: "2026-09-22T20:42",
       text: "Uebersicht aller Wuensche aus dem Verlauf — wird aus den Sonden gebaut" },
-    { seit: "2026-09-22T20:36",
+    { seit: "2026-09-22T20:42",
       text: "Frosch, Pferd, Lok, Helikopter, Fahrstuhl, Adler" },
-    { seit: "2026-09-22T20:36",
+    { seit: "2026-09-22T20:42",
       text: "Haende: greifende Hand, King Kong behaart, Kralle" },
-    { seit: "2026-09-22T20:36",
+    { seit: "2026-09-22T20:42",
       text: "Hammer: demolieren in Stufen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T20:36",
-      text: "Songausschnitt: wer eine Stelle im schon laufenden Lied waehlt, hoert sie jetzt auch — vorher passierte nichts" },
-    { seit: "2026-09-22T20:36",
-      text: "Gemessen: nach „ab 0:20\" steht der Spieler bei 20,8 s statt bei 2,2 s, und bei 0:22 hoert er auf" },
+    { seit: "2026-09-22T20:42",
+      text: "Kopfhoerer bleiben nach dem Verlassen und Wiederbetreten auf — vorher waren sie weg, waehrend das Lied weiterlief" },
+    { seit: "2026-09-22T20:42",
+      text: "Der Schein der Gluehbirne bleibt genauso" },
+    { seit: "2026-09-22T20:42",
+      text: "Abgenommen heisst abgenommen — sie kommen nicht von selbst zurueck" },
   ],
 };
