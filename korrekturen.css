@@ -19979,15 +19979,19 @@ code, pre {
   stroke-width: 7;
   stroke-linecap: round;
   fill: none;
-  transform-box: fill-box;
-  transform-origin: 50% 0%;
-  animation: lcPferdBeinR49 .42s ease-in-out infinite;
 }
-.lc-pferd-b2, .lc-pferd-b3 { animation-delay: -.21s; }
-@keyframes lcPferdBeinR49 {
-  0%, 100% { transform: rotate(-26deg); }
-  50%      { transform: rotate(24deg); }
-}
+/* RUNDE 88 — HIER STAND EINE ZWEITE BEINBEWEGUNG, und die lief mit.
+   .lc-pferd-bein war frueher der Pfad, der sich selbst drehte
+   (lcPferdBeinR49, .42s). Seit Runde 88 haengt das Bein mit seinem
+   Huf in einer Gruppe (.lc-pferd-beingruppe), und GEDREHT WIRD DIE
+   GRUPPE. Stuende die alte Regel noch da, drehte sich der Pfad im
+   alten Takt INNERHALB der Gruppe, die sich im neuen Takt dreht —
+   zwei Gangarten uebereinander. Sie ist deshalb weg; was bleibt, ist
+   die Farbe und die Strichstaerke.
+   Ebenso die alte Verzoegerung „.lc-pferd-b2, .lc-pferd-b3:
+   animation-delay -.21s": die Klassen sitzen jetzt an den Gruppen,
+   und welche Gangart wann ansetzt, steht weiter unten bei Trab und
+   Galopp. */
 .lc-pferd-reiter {
   position: absolute;
   left: 51%;
@@ -21933,42 +21937,82 @@ code, pre {
   transform-box: fill-box;
   transform-origin: 0% 50%;
 }
-/* Der Galopp: vier Beine, vier Takte, eine Runde in 0,46 s. */
-.lc-pferd-b1, .lc-pferd-h1 { animation: lcGaloppR57a .46s ease-in-out infinite; }
-.lc-pferd-b2, .lc-pferd-h2 { animation: lcGaloppR57b .46s ease-in-out infinite; }
-.lc-pferd-b3, .lc-pferd-h3 { animation: lcGaloppR57c .46s ease-in-out infinite; }
-.lc-pferd-b4, .lc-pferd-h4 { animation: lcGaloppR57d .46s ease-in-out infinite; }
-/* Hinterbein fern: schiebt ab, zieht nach. */
-@keyframes lcGaloppR57a {
-  0%   { transform: rotate(-34deg); }
-  35%  { transform: rotate(18deg); }
-  60%  { transform: rotate(26deg); }
-  100% { transform: rotate(-34deg); }
+/* =====================================================================
+   RUNDE 88 — TRAB UND GALOPP SIND ZWEI VERSCHIEDENE GANGARTEN
+   ---------------------------------------------------------------------
+   XANDER: „bei der Physik der Beine von dem Pferd, da gibt es auch
+   Wissenschaften dazu, wie so ein Pferd Galopp laeuft. Ja, entweder
+   sind es beide Beine, die gleichzeitig auftreffen vorne, und dann die
+   hinteren, die nachziehen, oder sie sind im Wechsel — so, das ist
+   glaube ich Trab, der Wechsel ist Trab. Aber da koenntest du ja
+   entweder den Trab machen, wie realistisch ist, und wenn man das
+   Ganze aufzieht, dann soll es Pferd im Galopp."
+
+   ER HAT DIE BEIDEN GANGARTEN RICHTIG BESCHRIEBEN, und die Lehrbuecher
+   sagen dasselbe:
+
+   · TRAB — ZWEITAKT, DIAGONAL. Immer ein Vorderbein und das
+     GEGENUEBERLIEGENDE Hinterbein setzen GLEICHZEITIG auf, dann das
+     andere Paar. Zwischen den beiden Takten ist das Pferd kurz ganz in
+     der Luft. Das ist sein „im Wechsel".
+     In dieser Zeichnung heisst das: b1 (Hinterbein fern) geht mit b4
+     (Vorderbein nah), und b3 (Hinterbein nah) mit b2 (Vorderbein
+     fern) — um eine halbe Runde versetzt.
+
+   · GALOPP — VIERTAKT, DANN SCHWEBE. Die Hufe setzen NACHEINANDER auf:
+     erst das aeussere Hinterbein, dann das innere Hinterbein, dann das
+     aeussere Vorderbein, dann das innere Vorderbein, und danach ist
+     das Pferd frei in der Luft. Das ist sein „beide Beine, die
+     gleichzeitig auftreffen vorne, und dann die hinteren, die
+     nachziehen" — nur eben sauber nacheinander.
+     Gemacht wird das mit EINEM Bewegungsablauf und vier
+     Startverzoegerungen: 0, 12, 30 und 42 Prozent der Runde.
+
+   WAS BISHER DASTAND: vier einzeln von Hand gesetzte Taktfolgen mit
+   den Verzoegerungen 0, 30, 28 und 38 Prozent — also weder die
+   Diagonale des Trabs noch die Viertaktfolge des Galopps, sondern
+   dazwischen. Und Trab gab es ueberhaupt nicht.
+   ===================================================================== */
+/* Bein und Huf haengen jetzt in EINER Gruppe zusammen, und gedreht
+   wird die Gruppe um den oberen Punkt des Beins (im style-Attribut
+   der Gruppe, weil er je Bein anders liegt). transform-box muss
+   deshalb view-box sein: fill-box waere die Box der Gruppe selbst,
+   und dann saesse der Drehpunkt woanders. */
+.lc-pferd-beingruppe { transform-box: view-box; }
+/* EIN Schritt, viermal benutzt: aufsetzen vorn, abstossen nach
+   hinten, anziehen, wieder nach vorn schwingen. */
+@keyframes lcPferdSchrittR88 {
+  0%    { transform: rotate(-27deg); }   /* Huf setzt vorn auf */
+  34%   { transform: rotate(23deg); }    /* Stuetzbein, abgestossen */
+  46%   { transform: rotate(9deg); }     /* angezogen, hebt ab */
+  66%   { transform: rotate(-16deg); }   /* schwingt nach vorn */
+  100%  { transform: rotate(-27deg); }
 }
-/* Vorderbein fern: greift nach vorn, faengt ab. */
-@keyframes lcGaloppR57b {
-  0%   { transform: rotate(24deg); }
-  30%  { transform: rotate(-22deg); }
-  65%  { transform: rotate(-30deg); }
-  100% { transform: rotate(24deg); }
+/* --- TRAB: zwei Takte, diagonal --- */
+.lc-pferd-trab .lc-pferd-beingruppe {
+  animation: lcPferdSchrittR88 .54s linear infinite;
 }
-/* Hinterbein nah — eine Achtelrunde versetzt zum fernen. */
-@keyframes lcGaloppR57c {
-  0%   { transform: rotate(-24deg); }
-  28%  { transform: rotate(22deg); }
-  55%  { transform: rotate(30deg); }
-  100% { transform: rotate(-24deg); }
+/* Erstes Paar: Hinterbein fern und Vorderbein nah. */
+.lc-pferd-trab .lc-pferd-b1,
+.lc-pferd-trab .lc-pferd-b4 { animation-delay: 0s; }
+/* Zweites Paar: eine HALBE Runde spaeter — das ist der Zweitakt. */
+.lc-pferd-trab .lc-pferd-b3,
+.lc-pferd-trab .lc-pferd-b2 { animation-delay: -.27s; }
+/* --- GALOPP: vier Takte, dann Schwebe --- */
+.lc-pferd-galopp .lc-pferd-beingruppe {
+  animation: lcPferdSchrittR88 .42s linear infinite;
 }
-/* Vorderbein nah. */
-@keyframes lcGaloppR57d {
-  0%   { transform: rotate(32deg); }
-  38%  { transform: rotate(-18deg); }
-  70%  { transform: rotate(-26deg); }
-  100% { transform: rotate(32deg); }
-}
+.lc-pferd-galopp .lc-pferd-b1 { animation-delay: 0s; }      /* Hinterbein aussen */
+.lc-pferd-galopp .lc-pferd-b3 { animation-delay: -.050s; }  /* Hinterbein innen (12 %) */
+.lc-pferd-galopp .lc-pferd-b2 { animation-delay: -.126s; }  /* Vorderbein aussen (30 %) */
+.lc-pferd-galopp .lc-pferd-b4 { animation-delay: -.176s; }  /* Vorderbein innen (42 %) */
 /* Der Sprung: im Galopp ist das Pferd zwischen zwei Takten ganz in
    der Luft. Deshalb hebt der Rumpf zweimal je Runde. */
-.lc-pferd-huepf { animation-duration: .46s !important; }
+/* Der Rumpf hebt EINMAL je Schwebephase. Im Trab gibt es zwei davon
+   (nach jedem Diagonalpaar), im Galopp eine — deshalb ist der Takt
+   des Huepfens im Trab halb so lang wie die Beinrunde. */
+.lc-pferd-trab .lc-pferd-huepf { animation-duration: .27s !important; }
+.lc-pferd-galopp .lc-pferd-huepf { animation-duration: .42s !important; }
 @media (prefers-reduced-motion: reduce) {
   .lc-pferd-bein, .lc-pferd-huf { animation: none; }
 }
@@ -27566,6 +27610,15 @@ code, pre {
   fill: #7d5130;
   stroke: #5d3a1c;
   stroke-width: .7;
+}
+/* RUNDE 88 — die Kante zwischen Kruppe und Gesaess. Nur ein Strich,
+   aber ohne ihn liegt die Hinterhand als eine Flaeche da und die drei
+   Abschnitte (Kruppe, Gesaess, Oberschenkel) sind nicht zu sehen. */
+.lc-pferd-kruppe {
+  fill: none;
+  stroke: rgba(93, 58, 28, .45);
+  stroke-width: 1.2;
+  stroke-linecap: round;
 }
 .lc-pferd-bein { stroke-width: 4.4; }
 

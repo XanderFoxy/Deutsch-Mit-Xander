@@ -102,8 +102,15 @@ pruefe("der duenne gruene Ring ist weg",
   !/box-shadow: 0 0 0 3px #57a83c/.test(cssK));
 
 console.log("\nDER GREIFVOGEL KRALLT WIRKLICH ZU");
+/* RUNDE 88 NACHGEFUEHRT: der Lauf faengt seit Runde 87 nicht mehr
+   bei y = 46 an, sondern bei 48 — darueber sitzen jetzt die HOSEN,
+   also die befiederten Schenkel („ein Adler hat oben am Bein Federn
+   und erst darunter den nackten gelben Lauf"). Worum es in dieser
+   Regel geht, ist unveraendert: die beiden Laeufe stehen fast
+   senkrecht (80 → 80 und 89 → 90), nicht gespreizt (79 → 76 und
+   91 → 94). */
 pruefe("die Beine stehen fast senkrecht statt gespreizt",
-  /d="M81 46 L80 56 M89 46 L90 56"/.test(js)
+  /d="M81 48 L80 56 M89 48 L90 56"/.test(js)
   && !/d="M79 46 L76 55 M91 46 L94 55"/.test(js));
 pruefe("die Faenge sind eine eigene Gruppe",
   /<g class="lc-greif-faenge">/.test(js));

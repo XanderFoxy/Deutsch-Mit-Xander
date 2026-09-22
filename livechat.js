@@ -11108,6 +11108,29 @@ window.LiveChat = (function () {
        allein zeigt den Film. */
     if (art === "lok" && !rest) art = "zug";
     if (AM_PLATZ[art]) {
+      /* =========================================================
+         RUNDE 88 — AUFGEZOGEN HEISST BEIM PFERD: GALOPP
+         ---------------------------------------------------------
+         XANDER: „bei der Physik der Beine von dem Pferd, da gibt es
+         auch Wissenschaften dazu, wie so ein Pferd Galopp laeuft.
+         Ja, entweder sind es beide Beine, die gleichzeitig
+         auftreffen vorne, und dann die hinteren, die nachziehen,
+         oder sie sind im Wechsel — so, das ist glaube ich Trab, der
+         Wechsel ist Trab. Aber da koenntest du ja entweder den Trab
+         machen, wie realistisch ist, und wenn man das Ganze
+         aufzieht, dann soll es Pferd im Galopp."
+
+         Das Aufziehen („x3" hinter dem Ziel) gab es bisher nur beim
+         Fahren und beim Spielzug. Beim Pferd wird es jetzt genauso
+         gelesen — ohne x laeuft es im TRAB, mit x im GALOPP. Die
+         Zahl faehrt als „tempo" mit, damit alle dasselbe sehen. */
+      var tempoP = 1;
+      if (art === "pferd") {
+        rest = String(rest || "").replace(/\s*[x\u00d7](\d)\s*$/i, function (_, z) {
+          tempoP = Math.max(1, Math.min(5, parseInt(z, 10) || 1));
+          return "";
+        }).trim();
+      }
       /* RUNDE 67 — GEWUENSCHT: „Effekte fuer ALLE gleichzeitig —
          umarmen, kuessen, treten, Bombe."
          Zeichnen konnte das Klassenzimmer es laengst: lcZielPlaetze
@@ -11164,8 +11187,10 @@ window.LiveChat = (function () {
          bei ihm. Also wird EINMAL gewuerfelt — hier, beim Absender —
          und die Zahl reist als „los" mit der Zeile. Jeder kuenftige
          Effekt mit Zufall kann sie ebenso benutzen. */
-      return anAlle("aktion", zustand.ichName + " " + satzP.satz + " " + zielWort(wemP) + "  " + satzP.emoji,
-                    { wirkung: satzP.wirkung, wen: wemP.name, los: Math.random().toFixed(4) });
+      return anAlle("aktion", zustand.ichName + " " + satzP.satz + " " + zielWort(wemP)
+                    + (tempoP > 1 ? " im Galopp" : "") + "  " + satzP.emoji,
+                    { wirkung: satzP.wirkung, wen: wemP.name, los: Math.random().toFixed(4),
+                      tempo: String(tempoP) });
     }
     /* =========================================================
        RUNDE 76 — PAC-MAN FRISST EINEN GEMALTEN WEG

@@ -159,8 +159,13 @@ function tonMessen(name) {
      Beine sind so komisch gefaltet wie so eine Ziehharmonika." */
   sage(/class="lc-pferd-hand"/.test(js) && /class="lc-pferd-schulter"/.test(js),
     "das Pferd hat Hinterhand und Schulter");
+  /* RUNDE 88 NACHGEFUEHRT: die Klasse lc-pferd-b1 sitzt jetzt an
+     einer GRUPPE, in der Bein und Huf zusammen haengen — vorher
+     stand sie am Pfad selbst. Der Pfad ist derselbe geblieben; nur
+     die Klasse ist eine Ebene hoeher gewandert. */
   sage(!/d="M49 56 L55 70 L46 80 L48 92"/.test(js)
-    && /lc-pferd-b1" d="M54 68 Q55 75 49 80 Q48 86 50 91"/.test(js),
+    && /lc-pferd-b1" style="transform-origin:54px 68px"/.test(js)
+    && /lc-pferd-bein" d="M54 68 Q55 75 49 80 Q48 86 50 91"/.test(js),
     "und seine Beine knicken nicht mehr wie eine Ziehharmonika");
 
   /* „diese Hoecker sind noch zu duenn." Der Grat lief von 46 bis 54,5

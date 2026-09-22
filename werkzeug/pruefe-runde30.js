@@ -183,8 +183,12 @@ const pruefe = (was, gut, zusatz) => {
      der Nachricht reisen — sonst saehen die anderen nur eine halbe
      Reise. Die Regel selbst bleibt, was sie war: der Aufruf bewegt
      den ABSENDER (vonR), nicht den Genannten. */
+  /* RUNDE 88 NACHGEFUEHRT: lcReise hat einen FUENFTEN Wert bekommen
+     — das Aufziehen. XANDER: „wenn man das Ganze aufzieht, dann soll
+     es Pferd im Galopp." Die Regel selbst ist unveraendert: der
+     Aufruf bewegt den ABSENDER (vonR), nicht den Genannten. */
   pruefe("sie bewegen den Absender",
-    /if \(lcReise\(wenR, vonR, art, Boolean\(nachricht && nachricht\.tausch\)\)\) return;/.test(js));
+    /if \(lcReise\(wenR, vonR, art, Boolean\(nachricht && nachricht\.tausch\), tempoR\)\) return;/.test(js));
   pruefe("im Flugzeugfenster sitzt sein Bild",
     /lc-flieger-fenster/.test(js) && /lc-flieger-fenster/.test(css));
   /* RUNDE 63 NACHGEFUEHRT: „das soll man von oben, von der

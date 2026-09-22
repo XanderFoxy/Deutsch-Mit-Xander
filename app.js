@@ -35986,7 +35986,7 @@
      Es fehlten nur zwei Dinge: lcReise hat besetzte Ziele vorher
      rundweg abgelehnt, und es flog nur EIN Bild. Beides steht jetzt
      hier; „tausch" schaltet es ein. */
-  function lcReise(wen, von, art, tausch) {
+  function lcReise(wen, von, art, tausch, tempo) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return false;
     const gitter = lcPlatzGitter();
@@ -38772,7 +38772,18 @@
          vor der Kruppe), und die vier Beine laufen im Galopp — je
          zwei im Gegentakt, dazu das Auf und Ab des Ruempfes. */
       const pferd = document.createElement("span");
-      pferd.className = "lc-pferd";
+      /* RUNDE 88 — TRAB ODER GALOPP.
+         XANDER: „entweder sind es beide Beine, die gleichzeitig
+         auftreffen vorne, und dann die hinteren, die nachziehen,
+         oder sie sind im Wechsel — so, das ist glaube ich Trab, der
+         Wechsel ist Trab. Aber da koenntest du ja entweder den Trab
+         machen, wie realistisch ist, und wenn man das Ganze
+         aufzieht, dann soll es Pferd im Galopp."
+         Genau so: ohne Aufziehen Trab, mit Aufziehen (/pferd Bea x3)
+         Galopp. Welche Beine wann aufsetzen, steht in
+         korrekturen.css — die Gangarten sind dort nachgerechnet. */
+      const galopp = Number(tempo) > 1;
+      pferd.className = "lc-pferd " + (galopp ? "lc-pferd-galopp" : "lc-pferd-trab");
       pferd.style.setProperty("--gross", d + "px");
       pferd.innerHTML =
         '<span class="lc-pferd-huepf">'
@@ -38862,11 +38873,25 @@
              Sprunggelenkversatz ist von neun auf fuenf Einheiten
              zurueckgenommen — er ist noch zu sehen, aber er klappt
              nicht mehr um. */
-        + '<path class="lc-pferd-bein lc-pferd-b1" d="M54 68 Q55 75 49 80 Q48 86 50 91"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h1" d="M50 91 L56 92"/>'
+        /* RUNDE 88 — DER HUF GEHOERT ANS BEIN, NICHT DANEBEN.
+           Bisher waren Bein und Huf zwei GETRENNTE Pfade mit zwei
+           getrennten Drehungen: das Bein drehte um seinen oberen
+           Punkt, der Huf um sein eigenes linkes Ende. Ein Huf, der
+           um sich selbst kippt, waehrend das Bein ueber ihn
+           hinwegschwingt, bleibt stehen, wo er ist — im Bild lagen
+           deshalb zwei dunkle Klumpen frei im Raum, neben den
+           Beinen. Jetzt stecken Bein und Huf in EINER Gruppe, und
+           gedreht wird die Gruppe um den oberen Punkt des Beins.
+           Damit faehrt der Huf mit, wie er es muss. */
+        + '<g class="lc-pferd-beingruppe lc-pferd-b1" style="transform-origin:54px 68px">'
+        + '<path class="lc-pferd-bein" d="M54 68 Q55 75 49 80 Q48 86 50 91"/>'
+        + '<path class="lc-pferd-huf" d="M50 91 L56 92"/>'
+        + "</g>"
         /* Vorderbein: fast gerade, nur das Knie setzt einen Grad ab. */
-        + '<path class="lc-pferd-bein lc-pferd-b2" d="M99 66 Q100 76 98 83 Q97 88 98 92"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h2" d="M98 92 L104 93"/>'
+        + '<g class="lc-pferd-beingruppe lc-pferd-b2" style="transform-origin:99px 66px">'
+        + '<path class="lc-pferd-bein" d="M99 66 Q100 76 98 83 Q97 88 98 92"/>'
+        + '<path class="lc-pferd-huf" d="M98 92 L104 93"/>'
+        + "</g>"
         + "</g>"
         /* --- DER SCHWEIF, oben auf der abfallenden Kruppe --- */
         + '<path class="lc-pferd-schweif" d="M46 38 Q24 40 14 58 Q11 69 17 76'
@@ -38881,8 +38906,34 @@
            Schulter vorn unter dem Hals. Beide gehoeren zum Koerper und
            bewegen sich deshalb NICHT mit — nur das schlanke Bein
            darunter schwingt. */
-        + '<path class="lc-pferd-hand" d="M47 41 Q62 43 64 59 Q64 71 57 73'
-        + ' Q49 71 46 60 Q44 49 47 41 Z"/>'
+        /* RUNDE 88 — DIE HINTERHAND IST KEIN OVAL.
+           XANDER: „der Arsch hinten, weil das so lang ist, das sieht
+           nicht so realistisch aus. Es sieht aus wie so eine wulstige
+           Wurst anstatt von dem Pferdekoerper."
+           NACHGESEHEN: hier stand ein Oval (M47 41 Q62 43 64 59
+           Q64 71 57 73 Q49 71 46 60 Q44 49 47 41 Z) — oben und unten
+           derselbe Bogen, also ein Wurstende, das hinten am Rumpf
+           klebte.
+           Eine Pferdehinterhand hat drei Abschnitte, und die stehen
+           jetzt einzeln da:
+             · die KRUPPE faellt vom Rumpf nach hinten unten ab
+               (47|39 → 41|52),
+             · das GESAESS steht darunter nach hinten heraus
+               (41|52 → 44|66) — das ist die runde Kante, die man
+               von der Seite sieht,
+             · der OBERSCHENKEL zieht sich nach vorn unten wieder ein
+               und laeuft schmal auf das Sprunggelenk zu (52|74).
+           Dadurch ist sie oben breit und unten schmal statt ueberall
+           gleich dick. */
+        + '<path class="lc-pferd-hand" d="M47 39'
+        + ' C56 41 63 48 64 57'
+        + ' C64.6 66 60 72.5 54 74'
+        + ' C49.6 74.6 46.5 71 45 66'
+        + ' C43.2 60 42.4 56 41.6 52'
+        + ' C41 47 43 41 47 39 Z"/>'
+        /* Die Kante zwischen Kruppe und Gesaess — ohne sie sieht man
+           die drei Abschnitte nicht. */
+        + '<path class="lc-pferd-kruppe" d="M47 40 C44.5 45 43.5 49 43.6 54"/>'
         + '<path class="lc-pferd-schulter" d="M89 39 Q101 42 101 55 Q101 66 96 69'
         + ' Q89 67 88 55 Q87 45 89 39 Z"/>'
         /* --- HALS UND KOPF --- */
@@ -38913,18 +38964,30 @@
            ueber dem Nasenbein, rund ein Drittel davon. Jetzt 2,4
            Einheiten, und sie laeuft nach unten spitz aus, wie eine
            echte Blesse es tut. */
-        + '<path class="lc-pferd-blesse" d="M119.4 11.4 Q124 10.2 128.4 12.8'
-        + ' Q130.6 16.4 130.2 20.6 Q129 17.6 126.6 15.6 Q123.2 13.4 120 13 Z"/>'
+        /* RUNDE 88 — XANDER: „Diese Zeichnung auf der Nasenspitze vom
+           Pferd, die sieht schon realistisch aus, aber die kann
+           bisschen duenner sein, bisschen filigran."
+           Sie war seit Runde 73 rund 2,4 Einheiten breit. Jetzt 1,4
+           an der Stirn und sie laeuft nach unten in eine Spitze aus
+           — eine Blesse ist ein schmaler Streifen, der ueber dem
+           Nasenbein liegt, und beim Pferd wird er zur Nuester hin
+           schmaler, nicht breiter. */
+        + '<path class="lc-pferd-blesse" d="M119.6 11.5 Q124 10.5 128.2 12.9'
+        + ' Q130.4 16.5 130 21.2 Q129.4 17.4 127.4 15.2 Q123.8 13.2 120.2 12.9 Z"/>'
         + '<path class="lc-pferd-zug" d="M112 19 Q117 22 124 23 M128 24 Q131 25 133 24'
         + ' M115 12.5 Q118 10.6 121.6 11"/>'
         /* --- DIE BEINE DER NAHEN SEITE --- */
         /* Dasselbe noch einmal fuer die nahe Seite, einen Schritt
            versetzt: hinten der Sprunggelenkknick nach hinten, vorn
            ein beinahe gerades Bein. */
-        + '<path class="lc-pferd-bein lc-pferd-b3" d="M60 70 Q61 77 55 82 Q54 88 56 93"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h3" d="M56 93 L62 94"/>'
-        + '<path class="lc-pferd-bein lc-pferd-b4" d="M95 68 Q96 78 94 84 Q93 89 94 94"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h4" d="M94 94 L100 95"/>'
+        + '<g class="lc-pferd-beingruppe lc-pferd-b3" style="transform-origin:60px 70px">'
+        + '<path class="lc-pferd-bein" d="M60 70 Q61 77 55 82 Q54 88 56 93"/>'
+        + '<path class="lc-pferd-huf" d="M56 93 L62 94"/>'
+        + "</g>"
+        + '<g class="lc-pferd-beingruppe lc-pferd-b4" style="transform-origin:95px 68px">'
+        + '<path class="lc-pferd-bein" d="M95 68 Q96 78 94 84 Q93 89 94 94"/>'
+        + '<path class="lc-pferd-huf" d="M94 94 L100 95"/>'
+        + "</g>"
         /* --- SATTEL UND GURT --- */
         + '<path class="lc-pferd-sattel" d="M66 30 Q80 23 94 30 L94 38'
         + ' Q80 32 66 38 Z"/>'
@@ -47039,7 +47102,11 @@
       /* RUNDE 78 — „tausch" reist mit der Nachricht, damit JEDES
          Geraet dieselben zwei Bilder fliegen sieht. Stuende es nur
          beim Absender, saehen die anderen nur eine halbe Reise. */
-      if (lcReise(wenR, vonR, art, Boolean(nachricht && nachricht.tausch))) return;
+      /* RUNDE 88 — das Aufziehen faehrt mit. Beim Pferd entscheidet
+         es zwischen Trab (ohne) und Galopp (mit): XANDER, „wenn man
+         das Ganze aufzieht, dann soll es Pferd im Galopp". */
+      const tempoR = Math.max(1, Math.min(5, Number(nachricht && nachricht.tempo) || 1));
+      if (lcReise(wenR, vonR, art, Boolean(nachricht && nachricht.tausch), tempoR)) return;
     }
     /* RUNDE 76 — XANDER: „Telefon mit Audio."
        Es braucht BEIDE Plaetze — den, der anruft, und den, der
