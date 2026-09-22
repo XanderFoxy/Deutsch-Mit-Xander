@@ -2860,7 +2860,9 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
 .lc-vogel-svg { filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.55)); }
 .lc-vogel {
   position: absolute;
-  animation: lcVogelHebt 0.62s ease-in-out infinite;
+  /* RUNDE 80: 2,4 s statt 0,62 s — in dieser Runde stecken vier
+     Schlaege UND das Gleiten danach (siehe lcSchwingt). */
+  animation: lcVogelHebt 2.4s ease-in-out infinite;
   animation-delay: var(--lc-v-verzug, 0s);
 }
 .lc-vogel-svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -2868,26 +2870,63 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    Fluegel beim Schlag davon. */
 .lc-vogel .lc-schwinge {
   transform-origin: 50% 30%;
-  animation: lcSchwingt 0.62s ease-in-out infinite;
+  animation: lcSchwingt 2.4s ease-in-out infinite;
   animation-delay: var(--lc-v-verzug, 0s);
 }
+/* RUNDE 80 — XANDER: „und die Voegel im Ersten Design, die Fliegen
+   auch noch nicht so wie ich das wollte."
+   ------------------------------------------------------------------
+   ZWEI SACHEN STIMMTEN NICHT, und beide sind gut zu benennen:
+
+   1. SIE SCHLUGEN OHNE PAUSE. Der Takt lief 0,62 s im Kreis, also
+      rund hundert Schlaege in der Minute, dreizehn Sekunden am
+      Stueck. Zugvoegel machen das nicht: sie schlagen ein paar Mal
+      und GLEITEN dann. Genau dieser Wechsel ist es, woran man einen
+      ziehenden Vogel von einem flatternden unterscheidet.
+      Jetzt dauert eine Runde 2,4 s: bis 44 % vier Schlaege, danach
+      bis 88 % das Gleiten mit ruhig gestellten Schwingen, dann
+      wieder von vorn.
+   2. SIE FLOGEN SCHNURGERADE. Ein Keil sackt ab und faengt sich
+      wieder, er faehrt auf der Luft. Die Bahn hat deshalb jetzt
+      vier Zwischenstellen mit verschiedenen Hoehen statt einer
+      geraden Linie von links oben nach rechts unten. */
 @keyframes lcSchwingt {
-  0%, 100% { transform: scaleY(1)    translateY(0); }
-  30%      { transform: scaleY(-0.55) translateY(3px); }
-  60%      { transform: scaleY(1.25)  translateY(-2px); }
+  0%    { transform: scaleY(1)     translateY(0); }
+  11%   { transform: scaleY(-0.55) translateY(3px); }
+  22%   { transform: scaleY(1.25)  translateY(-2px); }
+  33%   { transform: scaleY(-0.5)  translateY(2.4px); }
+  44%   { transform: scaleY(1.18)  translateY(-1.6px); }
+  /* Das Gleiten: die Schwingen stehen fast still, nur ein Hauch
+     Bewegung — ein Fluegel in der Luft ist nie ganz starr. */
+  56%   { transform: scaleY(1.02)  translateY(-0.4px); }
+  74%   { transform: scaleY(.98)   translateY(0.4px); }
+  88%   { transform: scaleY(1.02)  translateY(-0.3px); }
+  100%  { transform: scaleY(1)     translateY(0); }
 }
 /* Der Koerper steigt beim Abschlag und sinkt beim Aufschlag — ohne
    das wirkt der Fluegelschlag wie ein Zappeln an Ort und Stelle. */
 @keyframes lcVogelHebt {
-  0%, 100% { transform: translateY(0); }
-  30%      { transform: translateY(4px); }
-  60%      { transform: translateY(-4px); }
+  0%    { transform: translateY(0); }
+  11%   { transform: translateY(4px); }
+  22%   { transform: translateY(-4px); }
+  33%   { transform: translateY(3px); }
+  44%   { transform: translateY(-3px); }
+  /* Im Gleiten sinkt er langsam ab — das ist, was Gleiten ist. */
+  70%   { transform: translateY(2px); }
+  88%   { transform: translateY(3px); }
+  100%  { transform: translateY(0); }
 }
-/* Nach rechts unten: in den Sueden. */
+/* Nach rechts unten: in den Sueden — aber nicht auf einer Linie.
+   RUNDE 80: vier Zwischenstellen, damit der Keil absackt und sich
+   wieder faengt. Die Hoehen sind bewusst ungleich verteilt (-14, -6,
+   -11, 2, 14, 34 vh), sonst sieht die Welle aus wie ein Muster. */
 @keyframes lcKeilZieht {
   0%   { opacity: 0; transform: translate3d(-24vw, -14vh, 0); }
-  7%   { opacity: 1; }
-  88%  { opacity: 1; }
+  7%   { opacity: 1; transform: translate3d(-8vw, -6vh, 0); }
+  28%  { opacity: 1; transform: translate3d(20vw, -11vh, 0); }
+  52%  { opacity: 1; transform: translate3d(50vw, 2vh, 0); }
+  76%  { opacity: 1; transform: translate3d(80vw, -3vh, 0); }
+  88%  { opacity: 1; transform: translate3d(98vw, 14vh, 0); }
   100% { opacity: 0; transform: translate3d(118vw, 34vh, 0); }
 }
 @media (prefers-reduced-motion: reduce) { .lc-flieger { display: none; } }
@@ -23883,7 +23922,15 @@ body.lc-schreibt .tutor-reiter {
 .lc-kopfhoerer-bild {
   width: 112%;
   margin-left: -56%;
-  top: -6%;
+  /* RUNDE 80 — XANDER: „Die Kopfhörer sehen jetzt super aus. Du
+     könntest ihn allerdings etwas Lücke lassen."
+     Der Bügel lag bei -6 % direkt auf dem Bildrand auf — es sah aus,
+     als klebte er am Kopf. Jetzt -11 %: bei 84 px Bild sind das
+     4,2 px Luft zwischen Bügel und Rand. Die BREITE bleibt bei
+     112 %, denn daran hängt etwas anderes: zwischen zwei Plätzen
+     liegen nur 7 px, und breitere Hörer würden sich mit dem Nachbarn
+     überschneiden (nachgerechnet in Runde 74). */
+  top: -11%;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .34));
 }
 

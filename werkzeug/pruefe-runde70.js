@@ -148,8 +148,13 @@ pruefe("Pfeil: das Sausen liegt vor dem Einschlag bei 656 ms",
   /lcTonSpaeter\("pfeilflug", 400, 0\.55\)/.test(js)
   && /pfeilflug:\s+\{ ton: "pfeilflug", dauer: 260/.test(js)
   && /saugpfeil: 656,/.test(js));
+/* RUNDE 80 — XANDER: „und der Sound ist auch nicht durchgaengig."
+   Die Aufnahme ist ab 0,9 s praktisch tot, geflogen wird drei
+   Sekunden. Der Schlag wird deshalb VIERMAL angesetzt — der erste
+   weiterhin bei 340 ms mit 0,55. */
 pruefe("Greifvogel: Fluegelschlag unter dem Ruf",
-  /lcTonSpaeter\("fluegelschlag", 340, 0\.55\)/.test(js));
+  /\[340, 0\.55\]/.test(js)
+  && /lcTonSpaeter\("fluegelschlag", wann, laut, 700\)/.test(js));
 pruefe("Turm: die Leiter ist zu hoeren",
   /lcTonSpaeter\("sprungturm", 0, 0\.6\)/.test(js));
 

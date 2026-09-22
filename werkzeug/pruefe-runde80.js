@@ -212,17 +212,28 @@ function tonMessen(name) {
      (das Hinterteil endet bei x = 45), und das VORDERBEIN weicht auf
      seiner ganzen Laenge um hoechstens zwei Einheiten von der
      Senkrechten ab — es ist also kein Zickzack mehr. */
-  const hinten = /lc-pferd-b1" d="M(\d+) /.exec(app);
-  sage(hinten && Number(hinten[1]) <= 52,
-    "das Hinterbein sitzt am Hinterteil (x = " + (hinten ? hinten[1] : "?") + ", Kruppe bei 45)");
-  const vorn = /lc-pferd-b2" d="M(\d+) \d+ L(\d+) \d+ L(\d+) \d+ L(\d+) /.exec(app);
-  if (!vorn) sage(false, "das Vorderbein liess sich nicht messen");
-  else {
-    const xs = [1, 2, 3, 4].map((i) => Number(vorn[i]));
-    const ausschlag = Math.max(...xs) - Math.min(...xs);
-    sage(ausschlag <= 3,
-      "das Vorderbein ist fast gerade: " + ausschlag + " Einheiten Ausschlag (vorher 6)");
-  }
+  /* RUNDE 80, ZWEITER ANLAUF — er hat es noch einmal gemeldet, und er
+     hatte recht: das Bein war EIN Strich von gleichbleibender Dicke,
+     der dreimal scharf umklappte. Jetzt kommt es aus einer gefuellten
+     Muskelpartie (lc-pferd-hand / lc-pferd-schulter) und schwingt in
+     weichen Bogen (Q) statt zu knicken. Gemessen wird deshalb:
+     · Die Hinterhand sitzt am Hinterteil (der Rumpf endet bei x = 45).
+     · Beide Beine sind Bogen, keine Knicklinien — kein „L" mehr darin.
+     · Und ihr seitlicher Ausschlag bleibt klein. */
+  sage(/class="lc-pferd-hand" d="M(\d+) /.test(app) && Number(RegExp.$1) <= 50,
+    "die Hinterhand sitzt am Hinterteil (x = " + RegExp.$1 + ", Kruppe bei 45)");
+  const beine = [...app.matchAll(/lc-pferd-b\d" d="([^"]+)"/g)].map((m) => m[1]);
+  sage(beine.length === 4 && beine.every((d) => !/ L/.test(d) && /Q/.test(d)),
+    "alle vier Beine schwingen in Bogen statt zu knicken",
+    beine.length + " Beine geprueft");
+  const ausschlaege = beine.map((d) => {
+    const xs = (d.match(/[MQ]?\s*([\d.]+) [\d.]+/g) || [])
+      .map((t) => Number((t.match(/([\d.]+) [\d.]+/) || [])[1]));
+    return xs.length ? Math.max(...xs) - Math.min(...xs) : 99;
+  });
+  sage(Math.max(...ausschlaege) <= 8,
+    "und ihr seitlicher Ausschlag bleibt klein",
+    "groesster Ausschlag " + Math.max(...ausschlaege).toFixed(1) + " Einheiten");
 
   /* =================================================================
      3. DER BROWSER — Bahnen und Sitzplatz-Auszeichnung

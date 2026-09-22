@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 80, neunter Teil: Vogel, Lok, Pac-Man",
+  stand: "Runde 80, zehnter Teil: Kopfhoerer, Zugvoegel, Spuckton",
 
   inArbeit: [
-    { seit: "2026-09-22T03:34",
+    { seit: "2026-09-22T03:53",
       text: "Der Rest von Xanders Liste vom 22. September" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T03:34",
-      text: "Der Greifvogel hat echte Schwingen statt Fledermausfluegel: Armfittich mit glatter Hinterkante plus sieben einzelne Handschwingen, die faecherfoermig auseinanderstehen — die Luecken dazwischen sind das, woran man einen Vogel erkennt. Dazu Deckfedern auf dem Fittich." },
-    { seit: "2026-09-22T03:34",
-      text: "Sein Fluegelschlag ist durchgaengig. GEMESSEN: die Aufnahme ist zwar 4 s lang, aber schon bei 0,9 s auf -25 dB und bei 2 s auf -40 dB — zu hoeren war nicht einmal eine Sekunde. Sie wird jetzt viermal im Abstand von 660 ms angesetzt und jedes Mal nach 700 ms gekappt." },
-    { seit: "2026-09-22T03:34",
-      text: "Die Lok faehrt zwei Runden durch die Sitzreihen und faehrt dabei die Leute um: sie werden flachgedrueckt, kippen weg und schreien. GEMESSEN: drei Richtungswechsel, 309 px Hoehenunterschied, bis zu vier gleichzeitig Ueberfahrene." },
-    { seit: "2026-09-22T03:34",
-      text: "Pac-Man laesst sich auch ohne Ziel uebers Feld schicken. GEMESSEN: in allen 34 Proben sichtbar, 255 px weit, 13 Kuegelchen gelegt und am Ende null davon uebrig — er frisst sie alle." },
-    { seit: "2026-09-22T03:34",
-      text: "Der Vogelkot laeuft jetzt bis ueber die halbe Bildhoehe herunter statt nur bis zur Stirn." },
+    { seit: "2026-09-22T03:53",
+      text: "Der Kopfhoerer laesst Luft: der Buegel sitzt 5,5 px ueber dem Bildrand statt darauf (gemessen). Die Breite bleibt bei 112 %, sonst ueberschneidet er sich mit dem Nachbarplatz — zwischen zwei Bildern liegen nur 7 px." },
+    { seit: "2026-09-22T03:53",
+      text: "Ein Song-Ausschnitt laesst sich jetzt angeben: /kopfhoerer Bea 3 1:20-1:50 spielt genau diese dreissig Sekunden. Der Ausschnitt reist in der Nachricht mit, gilt also auf dem Geraet des Hoerers." },
+    { seit: "2026-09-22T03:53",
+      text: "Die Zugvoegel schlagen nicht mehr ohne Pause: vier Schlaege, dann Gleiten (gemessen 8 Schritte mit Schlag, 14 im Gleiten von 25). Und der Keil faehrt auf der Luft statt schnurgerade zu ziehen — vier Hoehenwechsel, 413 px Spanne." },
+    { seit: "2026-09-22T03:53",
+      text: "Das Spuckgeraeusch ist neu gerechnet. GEMESSEN war der Auswurf mit -31 dB die LEISESTE Stelle — leiser als das Raeuspern davor. Jetzt ist er mit -18,7 dB der lauteste Punkt des ganzen Geraeusches." },
+    { seit: "2026-09-22T03:53",
+      text: "Neue Pruefung werkzeug/pruefe-runde81.js: 36 Regeln fuer diesen Teil der Liste, alle gruen. Fuenf aeltere Pruefungen pruefen jetzt, was die Regel meint, statt der Zahlen, die Xander aendern wollte." },
   ],
 };

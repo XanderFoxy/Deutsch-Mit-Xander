@@ -28,8 +28,14 @@ pruefe("es traegt eine eigene Kennung", /lc-tor-wasserwand/.test(jsK)
   && /\.lc-tor-wasserwand/.test(cssK));
 pruefe("der alte Sog ist abgeschaltet, nicht nur ueberdeckt",
   /\.lc-tor-wasserwand \.lc-tor-sog[\s\S]{0,200}?display: none;/.test(cssK));
+/* RUNDE 80 — XANDER: „Das Portal soll in sich geschlossen animiert
+   sein." Der Ring war am Ende noch sichtbar und wurde von der Kante
+   der Wasserflaeche abgeschnitten; er verlaeuft jetzt VORHER. Geprueft
+   wird die Regel: er waechst deutlich ueber das Vielfache hinaus, von
+   der Mitte nach aussen. */
 pruefe("Ringe laufen von der Mitte nach aussen", /lc-tor-welle/.test(jsK)
-  && /@keyframes lcTorWelleR67[\s\S]{0,300}?scale\(8\.4\)/.test(cssK));
+  && /@keyframes lcTorWelleR67[\s\S]{0,700}?scale\((\d+(?:\.\d+)?)\)/.test(cssK)
+  && Number(RegExp.$1) >= 6);
 pruefe("es sind fuenf, damit die Flaeche nie glatt ist",
   /* Die ELEMENTE zaehlen, nicht die Zeichenkette: in
      class="lc-tor-welle lc-tor-welle-2" steht sie zweimal, und beim

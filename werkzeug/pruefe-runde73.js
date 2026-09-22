@@ -265,9 +265,14 @@ pruefe("das Tor hat keine Nudelholz-Ringe mehr",
   /\.lc-tor-wasserwand \.lc-tor-welle \{ display: none; \}/.test(css));
 pruefe("und dafuer einen Trichter, der Tiefe macht",
   /@keyframes lcTorTrichterR73/.test(css));
+/* RUNDE 80 — XANDER: „Das Portal soll in sich geschlossen animiert
+   sein." Bis an den Rand des Tors sind es rund 580 %; die Tropfen
+   flogen 480 bis 705 % weit, ein Drittel also HINAUS. Jetzt 330 bis
+   520 %. Geprueft wird die Regel: sie starten in der Mitte und
+   bleiben innerhalb des Tors. */
 pruefe("die Kruemel oben links sind weg — die Tropfen stehen am Rand",
   /\.lc-tor-wirbel \.lc-tor-tropfen \{[\s\S]{0,120}?left: 50%;/.test(css)
-  && /\(480 \+ \(\(k \* 37\) % 46\) \* 5\)/.test(js));
+  && /\(330 \+ \(\(k \* 37\) % 46\) \* 4\.2\)\.toFixed\(0\)/.test(js));
 pruefe("die Bowlingkugel trifft, wenn es im Ton kracht",
   /@keyframes lcBowlingRolltR73/.test(css)
   && /58%  \{ transform: translate\(0, 0\) scale\(1\) rotate\(520deg\); \}/.test(css)
@@ -292,8 +297,13 @@ pruefe("der Raddampfer hat seine Dixie-Band",
 pruefe("die Geigen spielen langsam wie ein Quartett",
   ton("geigenquartett") && gelistet("geigenquartett")
   && /lcTonSpaeter\("geigenquartett", 1780, 0\.62\);/.test(js));
+/* RUNDE 80 — der Fluegel wird nicht mehr als fertiger Umriss
+   („const flg = …") hingeschrieben, sondern gerechnet: Armfittich
+   plus einzelne Handschwingen, weil er sonst wie ein
+   Fledermausfluegel aussieht. Der Ansatzpunkt bleibt die SCHULTER —
+   und genau darum geht es in dieser Regel. */
 pruefe("die Fluegel sitzen an der Schulter, nicht am Hinterteil",
-  /const flg = "M96 28/.test(js)
+  /const SCHULTER = \{ x: 96, y: 28 \};/.test(js)
   && /transform-origin:96px 28px/.test(js)
   && !/transform-origin:70px 30px/.test(js));
 pruefe("die Blesse ist ein schmaler Streifen",

@@ -99,8 +99,15 @@ pruefe("er ist eine eigene Reise", /art === "greifvogel"/.test(js)
   && /greifvogel: \{ wirkung: "greifvogel"/.test(lc));
 pruefe("er verdeckt /greif nicht — das ist die Kurzform von /adler",
   !/w: "greif",/.test(lc) && /kurz: "greif",  nutzt: "\/adler"/.test(lc));
+/* RUNDE 80 — XANDER: „das Bild von seinen Fluegeln sehen aus wie
+   Fledermausfluegel." Der Fluegel ist seitdem kein einziger Umriss
+   mehr („flgFern"), sondern wird gerechnet: Armfittich plus einzelne
+   Handschwingen, und der ferne bekommt denselben Bau mit dem
+   Verkuerzungsfaktor 0,78. Geprueft wird deshalb die Regel: es gibt
+   beide Fluegel, und der ferne ist verkuerzt. */
 pruefe("zwei Fluegel, der ferne verkuerzt",
-  /flgFern/.test(js) && /lc-greif-fluegel-fern/.test(js) && /lc-greif-fluegel-nah/.test(js));
+  /fluegelHtml\(0\.78, "lc-greif-fluegel-fern"\)/.test(js)
+  && /fluegelHtml\(1, "lc-greif-fluegel-nah"\)/.test(js));
 pruefe("Abschlag kurz, Aufschlag lang — 30 zu 70",
   /@keyframes lcGreifSchlagR65[\s\S]{0,700}?30%\s*\{ transform: rotate\(36deg\)/.test(css));
 pruefe("der Koerper steigt beim Abschlag", /lcGreifHebtR65/.test(css)

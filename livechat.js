@@ -8937,7 +8937,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "billard", kurz: "queue", nutzt: "/billard Name",    was: "Billard — angestossen und weggerollt" },
     { gr: "reden", w: "schneekugel", kurz: "glaskugel", nutzt: "/schneekugel Name",
       was: "Schneekugel — durchgeschüttelt, dann rieselt der Schnee über Häuschen und Tanne" },
-    { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name 3", was: "Kopfhoerer — aufgesetzt; mit Liednummer hoert der andere das Lied" },
+    { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name 3 1:20-1:50", was: "Kopfhoerer — aufgesetzt; mit Liednummer hoert der andere das Lied, mit Zeitangabe nur diesen Ausschnitt" },
     { gr: "reden", w: "musik", kurz: "lied", nutzt: "/musik 3", was: "Musik fuer alle aus dem Musikordner — /musik zeigt die Liste, /musik aus haelt an" },
     { gr: "schule", w: "versenken", kurz: "schiffe", nutzt: "/versenken",
       was: "Schiffe versenken \u2014 jeder versteckt sich auf einem Platz, dann wird der Reihe nach geraten; /versenken aus beendet es" },
@@ -11101,16 +11101,56 @@ window.LiveChat = (function () {
     if (art === "kopfhoerer" && rest && /\s/.test(rest.trim())) {
       var stkK = rest.trim().split(/\s+/);
       var namK = stkK.shift();
+      /* RUNDE 80 — XANDER: „da moechte ich noch einen Song Ausschnitt
+         definieren koennen."
+         Steht am Ende eine Zeitangabe, ist sie der AUSSCHNITT und
+         gehoert nicht mehr zum Liednamen:
+           /kopfhoerer Bea 3 1:20        ab 1:20 bis zum Schluss
+           /kopfhoerer Bea 3 1:20-1:50   genau diese dreissig Sekunden
+         Erlaubt sind „1:20", „80" (Sekunden) und beides mit Bindestrich
+         dazwischen. Wird nichts angegeben, laeuft das Lied wie bisher
+         von vorn — der Ausschnitt ist ein Zusatz, keine Pflicht. */
+      var stueckK = null;
+      if (stkK.length > 1) {
+        var letzteK = stkK[stkK.length - 1];
+        var mK = /^(\d+(?::[0-5]\d)?)(?:\s*-\s*(\d+(?::[0-5]\d)?))?$/.exec(letzteK);
+        if (mK) {
+          var inSek = function (t) {
+            var teil = String(t).split(":");
+            return teil.length === 2
+              ? Number(teil[0]) * 60 + Number(teil[1])
+              : Number(teil[0]);
+          };
+          var abK = inSek(mK[1]);
+          var bisK = mK[2] ? inSek(mK[2]) : 0;
+          /* Ein Ausschnitt, der rueckwaerts laeuft, ist keiner. */
+          if (!bisK || bisK > abK) {
+            stueckK = { ab: abK, bis: bisK };
+            stkK.pop();
+          }
+        }
+      }
       var liedK = liedFinden(stkK.join(" "));
       var wemK = personNachName(namK) || praesenzNachName(namK) || { name: namK };
       if (!liedK) {
         return systemZeile("\u201e" + stkK.join(" ") + "\u201c liegt nicht im Musikordner.\n"
           + liederListe());
       }
+      var zusatzK = stueckK
+        ? " (ab " + Math.floor(stueckK.ab / 60) + ":"
+          + String(stueckK.ab % 60).padStart(2, "0")
+          + (stueckK.bis
+              ? " bis " + Math.floor(stueckK.bis / 60) + ":"
+                + String(stueckK.bis % 60).padStart(2, "0")
+              : "") + ")"
+        : "";
       return anAlle("aktion", zustand.ichName + " setzt " + zielWort(wemK)
-                    + " Kopfh\u00f6rer auf \u2014 \u201e" + liedK.titel + "\u201c  \ud83c\udfa7",
+                    + " Kopfh\u00f6rer auf \u2014 \u201e" + liedK.titel + "\u201c"
+                    + zusatzK + "  \ud83c\udfa7",
                     { wirkung: "kopfhoerer", wen: wemK.name,
-                      lied: liedK.datei, liedTitel: liedK.titel });
+                      lied: liedK.datei, liedTitel: liedK.titel,
+                      liedAb: stueckK ? stueckK.ab : 0,
+                      liedBis: stueckK ? stueckK.bis : 0 });
     }
 
     if (WETTER[art]) {

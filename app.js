@@ -25419,7 +25419,14 @@
      gewohnte Tempo, fuenf sind Rennauto. */
   let lcAufzieh = 1;
   let lcMusikRefrainAus = 0;
-  function lcMusikSpielen(datei, titel, ab) {
+  /* RUNDE 80 — XANDER: „da moechte ich noch einen Song Ausschnitt
+     definieren koennen."
+     „ab" gab es schon (der Refrain-Einstieg von /noten), aber danach
+     lief immer genau eine halbe Minute — ein Ausschnitt war das
+     nicht, sondern eine feste Portion. „bis" ist neu: damit steht
+     BEIDES fest, Anfang und Ende. Ohne „bis" bleibt es bei den 30
+     Sekunden, damit sich am Refrain-Einstieg nichts aendert. */
+  function lcMusikSpielen(datei, titel, ab, bis) {
     if (!datei) return false;
     if (!lcToeneAn()) return false;
     lcMusikStoppen();
@@ -25450,9 +25457,15 @@
         };
         if (lcMusikSpieler.readyState >= 1) springen();
         else lcMusikSpieler.addEventListener("loadedmetadata", springen, { once: true });
-        /* Nur der Refrain, nicht das ganze Lied. */
+      }
+      /* Der Ausschnitt hoert auf, wenn er zu Ende ist. Steht kein Ende
+         da, bleibt es bei einer halben Minute — so lange lief der
+         Refrain-Einstieg von jeher. */
+      const endeSek = Number(bis) || 0;
+      if (sek > 0 || endeSek > 0) {
+        const lauf = endeSek > sek ? (endeSek - sek) : 30;
         clearTimeout(lcMusikRefrainAus);
-        lcMusikRefrainAus = setTimeout(() => lcMusikStoppen(), 30000);
+        lcMusikRefrainAus = setTimeout(() => lcMusikStoppen(), lauf * 1000);
       }
       const v = lcMusikSpieler.play();
       if (v && v.catch) v.catch(() => lcMusikNachholen(titel));
@@ -38830,7 +38843,12 @@
          („lc-platz-ich"), laeuft die Musik. Damit gilt der Name
          weiterhin, die Nummer jetzt auch. */
       if (lcMusikFuerMich(wen)) {
-        lcMusikSpielen(lied, (nachricht && nachricht.liedTitel) || "");
+        /* RUNDE 80 — der Ausschnitt reist in der Nachricht mit
+           (liedAb/liedBis, gesetzt in livechat.js), damit er auf dem
+           Geraet des Hoerers gilt und nicht nur beim Absender. */
+        lcMusikSpielen(lied, (nachricht && nachricht.liedTitel) || "",
+                       (nachricht && nachricht.liedAb) || 0,
+                       (nachricht && nachricht.liedBis) || 0);
       }
     }
     /* XANDER: „sollen die Kopfhoerer auch so lange auf der Person
