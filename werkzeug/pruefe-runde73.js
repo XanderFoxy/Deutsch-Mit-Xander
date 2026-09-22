@@ -174,9 +174,15 @@ pruefe("und die beiden Zahlen koennen nicht auseinanderlaufen",
 pruefe("es gibt ein Werkzeug, das beide gemeinsam setzt",
   fs.existsSync(path.join(WURZEL, "werkzeug", "fassung-setzen.js")));
 
+/* RUNDE 76 — die zweite Zeile hat frueher geprueft, dass der Zusatz
+   NUR ohne Namen mitgeht („name ? name : zusatz"). Seit das
+   Anzieh-Modul beide braucht („/anziehen Bea krone"), gehen Name und
+   Zusatz nebeneinander hinaus. Fuer die Kacheln unter „Alle" aendert
+   das nichts: sie haben keinen Namen, also bleibt „alle" als einziger
+   Anhang — und genau das ist die Regel, die Xander gemeint hat. */
 pruefe("die Effekte fuer ALLE schicken wirklich das Wort „alle“",
   /\["\\ud83d\\ude18", "K\\u00fcssen", "kuss", "alle"\]/.test(js)
-  && /\+ \(name \? " " \+ name : \(zusatz \? " " \+ zusatz : ""\)\)/.test(js));
+  && /\+ \(name \? " " \+ name : ""\) \+ \(zusatz \? " " \+ zusatz : ""\)/.test(js));
 pruefe("schwebende Panels gehen auch im Leerraum zu",
   /const LC_BEDIENBAR = /.test(js)
   && /if \(ziel\.closest\(LC_BEDIENBAR\)\) return;/.test(js));

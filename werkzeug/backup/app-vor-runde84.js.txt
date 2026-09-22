@@ -23591,9 +23591,6 @@
   function livechatPlaetzeAuffrischen(l) {
     lcAnsichtZeichnen(l);
     lcAufgabeZeichnen();
-    /* RUNDE 76 — was jemand anhat, ueberlebt das Neuzeichnen. Steht
-       das nicht hier, ist die Krone beim naechsten Auffrischen weg. */
-    setTimeout(lcKleiderAuffrischen, 0);
     l.plaetze.forEach((p) => {
       const knopf = document.querySelector(`[data-lc-platz="${p.nummer}"]`);
       if (!knopf) return;
@@ -25486,336 +25483,6 @@
      auch, WAS laeuft — sonst spielt Musik und niemand weiss, woher.
      Pause und Stopp gelten auf DIESEM Geraet; wer fuer alle
      anhalten will, nimmt /musik pause oder /musik aus. */
-  /* =================================================================
-     RUNDE 76 — MUSIK TEILEN MIT YOUTUBE
-     -----------------------------------------------------------------
-     XANDER: „Musik teilen mit YouTube."
-     Der Musikordner reicht nicht: dort liegt nur, was vorher jemand
-     hochgeladen hat. Ein YouTube-Link ist das, was man WIRKLICH
-     teilt — man hat ihn ohnehin schon in der Zwischenablage.
-
-     Drei Dinge waren dabei zu loesen:
-       · DIE KENNUNG. Der Link sieht jedes Mal anders aus
-         (youtube.com/watch?v=, youtu.be/, /embed/, /shorts/, /live/,
-         dazu Anhaengsel wie &t= oder ?si=). Gesucht ist immer
-         dieselbe elfstellige Kennung — lcYtId holt sie heraus.
-       · DASS ES BEI ALLEN LAEUFT. Der Link faehrt in der Nachricht
-         mit, nicht das Bild. Jedes Geraet baut sich seinen eigenen
-         Spieler; so gibt es keinen Strom, der durch den Raum muss,
-         und niemand haengt hinterher.
-       · DIE AUTOPLAY-SPERRE. Ein Browser laesst Ton nur zu, wenn der
-         Mensch selbst etwas angetippt hat. Wer die Toene ausgemacht
-         hat, bekommt den Spieler deshalb STUMM gezeigt und kann ihn
-         selbst starten — statt dass ihm ungefragt Musik anspringt.
-     ================================================================= */
-  function lcYtId(text) {
-    const t = String(text || "").trim();
-    /* Schon die blanke Kennung? Elf Zeichen, sonst nichts. */
-    if (/^[A-Za-z0-9_-]{11}$/.test(t)) return t;
-    const m = t.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^ ]*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-    return m ? m[1] : "";
-  }
-  /* „1:20" sind achtzig Sekunden, „80" auch. */
-  function lcYtSekunden(text) {
-    const t = String(text || "").trim();
-    const m = t.match(/^(\d{1,2}):([0-5]\d)$/);
-    if (m) return Number(m[1]) * 60 + Number(m[2]);
-    return /^\d{1,4}$/.test(t) ? Number(t) : 0;
-  }
-  function lcYouTubeAus() {
-    document.getElementById("lcYouTube")?.remove();
-  }
-  function lcYouTube(id, titel, ab) {
-    const kennung = lcYtId(id);
-    if (!kennung) return false;
-    const karte = document.getElementById("livechatKarte");
-    if (!karte) return false;
-    lcYouTubeAus();
-    /* Zwei Musiken uebereinander sind keine. */
-    lcMusikStoppen();
-    const laut = lcToeneAn();
-    const kasten = document.createElement("div");
-    kasten.id = "lcYouTube";
-    kasten.className = "lc-ytband";
-    const kopf = document.createElement("p");
-    kopf.className = "lc-ytband-kopf";
-    kopf.innerHTML = '<span class="lc-ytband-zeichen">\u25b6\ufe0f</span>'
-      + '<span class="lc-ytband-titel"></span>'
-      + '<button type="button" class="lc-ytband-knopf" data-tun="aus"'
-      + ' title="Bei dir zumachen" aria-label="Zumachen">\u2715</button>';
-    kopf.querySelector(".lc-ytband-titel").textContent =
-      (titel && String(titel).trim()) || "YouTube";
-    kasten.appendChild(kopf);
-    const rahmen = document.createElement("iframe");
-    rahmen.className = "lc-ytband-bild";
-    rahmen.setAttribute("title", (titel && String(titel).trim()) || "YouTube");
-    rahmen.setAttribute("loading", "lazy");
-    rahmen.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-    rahmen.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
-    rahmen.setAttribute("allowfullscreen", "");
-    /* „nocookie" ist dieselbe Wiedergabe ohne Werbeverfolgung — das
-       gehoert in ein Klassenzimmer, in dem auch Kinder sitzen. */
-    rahmen.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(kennung)
-      + "?rel=0&modestbranding=1&playsinline=1"
-      + (laut ? "&autoplay=1" : "")
-      + (Number(ab) > 0 ? "&start=" + Math.round(Number(ab)) : "");
-    kasten.appendChild(rahmen);
-    if (!laut) {
-      const hinweis = document.createElement("p");
-      hinweis.className = "lc-ytband-hinweis";
-      hinweis.textContent = "Deine T\u00f6ne sind aus \u2014 tippe auf das Bild, "
-        + "wenn du trotzdem h\u00f6ren willst.";
-      kasten.appendChild(hinweis);
-    }
-    kopf.addEventListener("click", (e) => {
-      const k = e.target.closest ? e.target.closest(".lc-ytband-knopf") : null;
-      if (!k) return;
-      e.stopPropagation();
-      lcYouTubeAus();
-      showToast("\u2715 Das Video ist bei dir zu \u2014 die anderen sehen es weiter.");
-    });
-    karte.appendChild(kasten);
-    return true;
-  }
-
-  /* =================================================================
-     RUNDE 76 — DAS ANZIEH-MODUL
-     -----------------------------------------------------------------
-     XANDER: „Anziehen-Modul."
-     Alle anderen Effekte am Platz sind Ereignisse: sie kommen, sie
-     wirken, sie sind wieder weg. Anziehen ist das Gegenteil — was
-     man jemandem aufsetzt, BLEIBT auf, bis es jemand abnimmt. Daraus
-     folgen drei Dinge, die es sonst nirgends gibt:
-       · Es haengt an der PERSON, nicht am Platz. Wer sich umsetzt,
-         nimmt seine Krone mit.
-       · Es ueberlebt jedes Neuzeichnen der Sitzreihe. Deshalb steht
-         es in einer Liste und wird nach jedem Auffrischen wieder
-         angelegt, statt nur einmal ins Bild geschrieben zu werden.
-       · Und es reist mit der Nachricht, damit alle dasselbe sehen.
-     Gezeichnet wird auf einem Kasten von 100 x 100 ueber dem Bild;
-     der Bildkreis ist der einbeschriebene Kreis. Was darueber
-     hinausragt (Krone, Muetze), darf das auch — ein Hut sitzt nun
-     einmal auf dem Kopf und nicht darin.
-     ================================================================= */
-  const LC_KLEIDUNG = {
-    krone: { wort: "Krone", zeichen: "👑", bild:
-      '<path d="M22 34 L18 10 L34 22 L50 6 L66 22 L82 10 L78 34 Z"'
-      + ' fill="#e8b93a" stroke="#a97f14" stroke-width="2.4" stroke-linejoin="round"/>'
-      + '<rect x="21" y="33" width="58" height="9" rx="3" fill="#d9a92c"'
-      + ' stroke="#a97f14" stroke-width="2"/>'
-      + '<circle cx="34" cy="37.5" r="2.6" fill="#c8384a"/>'
-      + '<circle cx="50" cy="37.5" r="2.9" fill="#3f6fc4"/>'
-      + '<circle cx="66" cy="37.5" r="2.6" fill="#3f9d55"/>' },
-    brille: { wort: "Brille", zeichen: "👓", bild:
-      '<circle cx="31" cy="52" r="15" fill="rgba(255,255,255,.18)"'
-      + ' stroke="#2c2f38" stroke-width="3.4"/>'
-      + '<circle cx="69" cy="52" r="15" fill="rgba(255,255,255,.18)"'
-      + ' stroke="#2c2f38" stroke-width="3.4"/>'
-      + '<path d="M46 50 q4 -4 8 0" stroke="#2c2f38" stroke-width="3.4" fill="none"/>'
-      + '<path d="M16 50 L4 44 M84 50 L96 44" stroke="#2c2f38" stroke-width="3.2"'
-      + ' stroke-linecap="round"/>' },
-    sonnenbrille: { wort: "Sonnenbrille", zeichen: "🕶️", bild:
-      '<path d="M12 42 h30 q4 0 4 4 v6 q0 10 -11 10 h-9 q-10 0 -12 -9 l-2 -8'
-      + ' q-1 -3 0 -3 Z" fill="#1c1f26" stroke="#0e1014" stroke-width="2"/>'
-      + '<path d="M88 42 h-30 q-4 0 -4 4 v6 q0 10 11 10 h9 q10 0 12 -9 l2 -8'
-      + ' q1 -3 0 -3 Z" fill="#1c1f26" stroke="#0e1014" stroke-width="2"/>'
-      + '<path d="M46 45 q4 -3 8 0" stroke="#0e1014" stroke-width="3" fill="none"/>'
-      + '<path d="M14 44 q6 4 12 5" stroke="rgba(255,255,255,.35)" stroke-width="2.4"'
-      + ' fill="none" stroke-linecap="round"/>' },
-    schnurrbart: { wort: "Schnurrbart", zeichen: "🥸", bild:
-      '<path d="M50 66 q-6 -5 -16 -5 q-12 0 -16 9 q-1 7 7 8 q11 1 17 -7'
-      + ' q2 -3 8 -3 q6 0 8 3 q6 8 17 7 q8 -1 7 -8 q-4 -9 -16 -9'
-      + ' q-10 0 -16 5 Z" fill="#3a2a1d" stroke="#241a11" stroke-width="1.6"/>' },
-    muetze: { wort: "Wollmütze", zeichen: "🧢", bild:
-      '<path d="M18 40 q0 -26 32 -26 q32 0 32 26 Z" fill="#b8434f"'
-      + ' stroke="#8b2b36" stroke-width="2.2"/>'
-      + '<rect x="15" y="37" width="70" height="11" rx="5" fill="#f2efe6"'
-      + ' stroke="#cbc4b4" stroke-width="2"/>'
-      + '<circle cx="50" cy="11" r="7" fill="#f2efe6" stroke="#cbc4b4" stroke-width="2"/>' },
-    maske: { wort: "Maske", zeichen: "🎭", bild:
-      '<path d="M10 44 q14 -10 40 -10 q26 0 40 10 q-2 18 -16 20 q-14 2 -22 -8'
-      + ' q-2 -2 -4 0 q-8 10 -22 8 q-14 -2 -16 -20 Z" fill="#6b4fb0"'
-      + ' stroke="#3f2a70" stroke-width="2.2"/>'
-      + '<ellipse cx="30" cy="48" rx="9" ry="6.5" fill="#f7f3e3"/>'
-      + '<ellipse cx="70" cy="48" rx="9" ry="6.5" fill="#f7f3e3"/>'
-      + '<path d="M10 44 L2 40 M90 44 L98 40" stroke="#3f2a70" stroke-width="2.6"'
-      + ' stroke-linecap="round"/>' }
-  };
-  /* Wer was traegt — nach NAMEN, nicht nach Platznummer. */
-  const lcKleiderliste = {};
-  function lcKleidAnlegen(platzEl, was) {
-    platzEl.querySelectorAll(".lc-kleid").forEach((x) => x.remove());
-    const stueck = LC_KLEIDUNG[was];
-    if (!stueck) return false;
-    const schicht = document.createElement("span");
-    schicht.className = "lc-kleid";
-    schicht.setAttribute("aria-hidden", "true");
-    schicht.dataset.lcKleid = was;
-    schicht.innerHTML = '<svg viewBox="0 0 100 100">' + stueck.bild + "</svg>";
-    platzEl.appendChild(schicht);
-    return true;
-  }
-  /* Nach jedem Auffrischen wieder anlegen — sonst ist die Krone beim
-     naechsten Neuzeichnen der Sitzreihe weg. */
-  function lcKleiderAuffrischen() {
-    const karte = document.getElementById("livechatKarte");
-    if (!karte) return;
-    karte.querySelectorAll(".lc-platz").forEach((el) => {
-      const nm = ((el.querySelector(".lc-platz-name") || {}).textContent || "")
-        .replace(/\s*\(du\)$/, "").trim().toLowerCase();
-      const was = nm ? lcKleiderliste[nm] : "";
-      const da = el.querySelector(".lc-kleid");
-      if (!was || el.classList.contains("lc-platz-frei")) {
-        if (da) da.remove();
-        return;
-      }
-      if (!da || da.dataset.lcKleid !== was) lcKleidAnlegen(el, was);
-    });
-  }
-  function lcAnziehen(wen, was) {
-    const ziele = lcZielPlaetze(wen);
-    if (!ziele.length) return false;
-    const ab = /^(aus|ab|weg|nichts|nackt)$/i.test(String(was || "").trim());
-    if (!ab && !LC_KLEIDUNG[was]) return false;
-    ziele.forEach((platz) => {
-      const nm = ((platz.querySelector(".lc-platz-name") || {}).textContent || "")
-        .replace(/\s*\(du\)$/, "").trim().toLowerCase();
-      if (ab) {
-        platz.querySelectorAll(".lc-kleid").forEach((x) => x.remove());
-        if (nm) delete lcKleiderliste[nm];
-        return;
-      }
-      if (nm) lcKleiderliste[nm] = was;
-      lcKleidAnlegen(platz, was);
-    });
-    return true;
-  }
-
-  /* =================================================================
-     RUNDE 76 — DAS TELEFON MIT AUDIO
-     -----------------------------------------------------------------
-     XANDER: „Telefon mit Audio."
-     „Mit Audio" ist der Kern: ein Hoerer, der stumm auf einem Bild
-     liegt, ist kein Telefon. Der Ton traegt die ganze Handlung —
-     zweimal klingeln, dann das Abheben (zwei Klicks und die offene
-     Leitung), und genau dann erst geht die Schnur auf.
-     Die Zeiten hier sind aus ton/telefon.opus abgelesen und nicht
-     geschaetzt: Klingeln bei 0,00 und 1,45 s (je 0,90 s), Gabel bei
-     2,80 s, Hoerer bei 2,90 s.
-     ================================================================= */
-  const LC_TEL_ABHEBEN = 2860;   /* ms — zwischen den beiden Klicks */
-  function lcTelHoererHtml() {
-    return '<svg viewBox="0 0 100 60">'
-      /* NEU GEZEICHNET: der erste Versuch war ein Klumpen — bei
-         46 px Breite verschwand jede Einbuchtung. Jetzt drei klar
-         getrennte Teile, die man auch klein noch erkennt: zwei
-         Schalen und ein Griff dazwischen. */
-      /* Der Griff. */
-      + '<path d="M26 22 q24 20 48 0 l6 9 q-30 24 -60 0 Z"'
-      + ' fill="#2b2f3a" stroke="#14161d" stroke-width="2.2" stroke-linejoin="round"/>'
-      /* Die beiden Schalen — Hoermuschel und Sprechmuschel. */
-      + '<path d="M6 16 q16 -6 26 4 l-8 14 q-12 -6 -20 -2 Z"'
-      + ' fill="#333846" stroke="#14161d" stroke-width="2.2" stroke-linejoin="round"/>'
-      + '<path d="M94 16 q-16 -6 -26 4 l8 14 q12 -6 20 -2 Z"'
-      + ' fill="#333846" stroke="#14161d" stroke-width="2.2" stroke-linejoin="round"/>'
-      + '<ellipse cx="17" cy="21" rx="7.5" ry="5" fill="#5a6273"'
-      + ' transform="rotate(-14 17 21)"/>'
-      + '<ellipse cx="83" cy="21" rx="7.5" ry="5" fill="#5a6273"'
-      + ' transform="rotate(14 83 21)"/>'
-      + "</svg>";
-  }
-  function lcTelefon(wen, von) {
-    const karte = document.getElementById("livechatKarte");
-    if (!karte) return false;
-    const gitter = lcPlatzGitter();
-    if (!gitter.length) return false;
-    const abEl = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
-    const zuEl = lcPlatzMitNamen(wen);
-    const ab = gitter.find((p) => p.el === abEl);
-    const zu = gitter.find((p) => p.el === zuEl);
-    if (!ab || !zu || ab.nr === zu.nr) return false;
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      lcGeraeusch("telefon", "telefon", 0.6);
-      return true;
-    }
-    const reihe = document.getElementById("lcPlaetze") || karte;
-    if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
-    const rk = lcLayoutKasten(reihe);
-    const d = (ab.el.querySelector(".lc-kreis") || {}).offsetWidth || 64;
-    const weg = [];
-    const punkt = (p) => ({ x: p.x - rk.left, y: p.y - rk.top + lcBildVersatz(p.el) });
-    const a = punkt(ab), b = punkt(zu);
-
-    /* DIE SCHNUR. Sie geht erst auf, wenn abgehoben ist — vorher gibt
-       es ja keine Verbindung. Gezeichnet als Welle zwischen den
-       beiden Bildern, und sie „waechst" ueber stroke-dasharray. */
-    const laenge = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-    const bogen = Math.min(60, laenge * 0.28);
-    const schnur = document.createElementNS(NS_SVG, "svg");
-    schnur.setAttribute("class", "lc-tel-schnur");
-    schnur.setAttribute("width", Math.abs(b.x - a.x) + 2 * bogen + 40);
-    schnur.setAttribute("height", Math.abs(b.y - a.y) + 2 * bogen + 40);
-    const links = Math.min(a.x, b.x) - bogen - 20;
-    const oben = Math.min(a.y, b.y) - bogen - 20;
-    schnur.style.left = links.toFixed(1) + "px";
-    schnur.style.top = oben.toFixed(1) + "px";
-    /* Eine Telefonschnur haengt DURCH und ist gekringelt. Die Welle
-       entsteht aus Abschnitten quer zur Verbindung. */
-    const quer = { x: -(b.y - a.y) / laenge, y: (b.x - a.x) / laenge };
-    let dpfad = "M" + (a.x - links).toFixed(1) + " " + (a.y - oben).toFixed(1);
-    /* NACHGESEHEN: mit 14 Abschnitten wurde aus der Kringelschnur ein
-       Zickzack aus geraden Stuecken. 56 Abschnitte auf sieben Wellen
-       sind acht Punkte je Welle — das laeuft rund. */
-    const TEILE = 56;
-    for (let i = 1; i <= TEILE; i++) {
-      const t = i / TEILE;
-      const seit = Math.sin(t * Math.PI * 7) * (d * 0.10) * Math.sin(t * Math.PI);
-      const sack = Math.sin(t * Math.PI) * (d * 0.30);
-      const x = a.x + (b.x - a.x) * t + quer.x * seit - links;
-      const y = a.y + (b.y - a.y) * t + quer.y * seit + sack - oben;
-      dpfad += " L" + x.toFixed(1) + " " + y.toFixed(1);
-    }
-    const pf = document.createElementNS(NS_SVG, "path");
-    pf.setAttribute("d", dpfad);
-    pf.setAttribute("class", "lc-tel-kabel");
-    pf.style.animationDelay = LC_TEL_ABHEBEN + "ms";
-    schnur.appendChild(pf);
-    reihe.appendChild(schnur);
-    weg.push(schnur);
-
-    /* DIE HOERER. Der beim Angerufenen klingelt (er wackelt im Takt
-       der Klingel), der beim Anrufer wartet ruhig — er hat ja schon
-       abgehoben. Beim Abheben gehen beide ans Ohr. */
-    [[ab, "lc-tel-anrufer"], [zu, "lc-tel-gerufen"]].forEach(([p, klasse]) => {
-      const h = document.createElement("span");
-      h.className = "lc-tel-hoerer " + klasse;
-      h.style.setProperty("--gross", (d * 0.72) + "px");
-      h.style.setProperty("--abheben", LC_TEL_ABHEBEN + "ms");
-      h.innerHTML = lcTelHoererHtml();
-      const q = punkt(p);
-      h.style.left = q.x.toFixed(1) + "px";
-      h.style.top = q.y.toFixed(1) + "px";
-      reihe.appendChild(h);
-      weg.push(h);
-    });
-    /* Und die Klingelbogen am Angerufenen — zwei Wellen, genau zu den
-       beiden Klingeltoenen. */
-    [0, 1450].forEach((wann) => {
-      const w = document.createElement("i");
-      w.className = "lc-tel-welle";
-      w.style.setProperty("--gross", (d * 1.25) + "px");
-      w.style.animationDelay = wann + "ms";
-      const q = punkt(zu);
-      w.style.left = q.x.toFixed(1) + "px";
-      w.style.top = q.y.toFixed(1) + "px";
-      reihe.appendChild(w);
-      weg.push(w);
-    });
-    lcGeraeusch("telefon", "telefon", 0.6);
-    setTimeout(() => weg.forEach((el) => el.remove()), 4800);
-    return true;
-  }
-
   function lcMusikBandZeigen(titel) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return;
@@ -26960,18 +26627,6 @@
     ["\ud83c\udfbe", "Tennis",    "tennis"],
     ["\ud83c\udfb0", "Zufall",    "zufall", true],
     /* „Das wäre die witzigste Animation." */
-    /* RUNDE 76 — XANDER: „Anziehen-Modul."
-       Eine Kachel, sechs Sachen und ein „Ausziehen" — mehr braucht es
-       nicht, und als sieben einzelne Kacheln waere das Menue laenger
-       als der Bildschirm. */
-    ["\ud83d\udc52", "Anziehen", "anziehen", false,
-      [["\ud83d\udc51", "Krone", "anziehen", "krone"],
-       ["\ud83d\udc53", "Brille", "anziehen", "brille"],
-       ["\ud83d\udd76\ufe0f", "Sonnenbrille", "anziehen", "sonnenbrille"],
-       ["\ud83e\udd78", "Schnurrbart", "anziehen", "schnurrbart"],
-       ["\ud83e\udde2", "Wollm\u00fctze", "anziehen", "muetze"],
-       ["\ud83c\udfad", "Maske", "anziehen", "maske"],
-       ["\ud83e\uddfa", "Ausziehen", "anziehen", "aus"]]],
     /* RUNDE 76 — XANDER: „Pac-Man: eigener Weg zeichnen … ueber die
        Plaetze." Deshalb zwei Eintraege unter einer Kachel: sofort
        losfressen (der kuerzeste Weg, wie bisher) oder erst den Weg
@@ -27267,11 +26922,8 @@
            Zusatz. Gesendet wird dann erst beim Loslassen, mit der
            ganzen Kette. */
         if (befehl === "*weg") { lcWegMalen(zusatz, platz); return; }
-        /* RUNDE 76 — Name UND Zusatz: das Anzieh-Modul braucht beide
-           („/anziehen Bea krone"). Die Kacheln unter „Alle" haben
-           keinen Namen, dort bleibt es beim Zusatz allein. */
         const zeile = "/" + befehl
-          + (name ? " " + name : "") + (zusatz ? " " + zusatz : "");
+          + (name ? " " + name : (zusatz ? " " + zusatz : ""));
         try { LiveChat.schreiben(zeile); } catch (x) {}
         lcNachDemSenden(zeile);
       });
@@ -29451,12 +29103,6 @@
        und „Zylinder mit Kaninchen". Ohne Eintrag HIER steigt lcWirkung
        gleich in der ersten Zeile aus und zeichnet gar nichts. */
     frosch:   { zeichen: ["\ud83d\udc38"], wie: 4, klasse: "umarmen" },
-    /* RUNDE 76 — Telefon und Anziehen zeichnen selbst und regnen
-       nichts; ohne Eintrag HIER steigt lcWirkung gleich aus. */
-    telefon:  { zeichen: ["\u260e\ufe0f"], wie: 4, klasse: "umarmen" },
-    anziehen: { zeichen: ["\ud83d\udc52"], wie: 4, klasse: "umarmen" },
-    ytmusik:  { zeichen: ["\u25b6\ufe0f"], wie: 3, klasse: "umarmen" },
-    ytaus:    { zeichen: ["\u23f9\ufe0f"], wie: 3, klasse: "umarmen" },
     zylinder: { zeichen: ["\ud83c\udfa9"], wie: 4, klasse: "umarmen" },
     beamen:   { zeichen: ["\u2728"], wie: 4, klasse: "umarmen" },
     rohr:     { zeichen: ["\ud83d\udfe2"], wie: 4, klasse: "umarmen" },
@@ -43705,11 +43351,7 @@
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
     vogelkot: 1, spucken: 1,
     birneraus: 1,
-    entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, kuss: 1, klaps: 1,
-    /* RUNDE 76 — die drei Neuen: Telefon und Anziehen gelten genau
-       EINEM Platz, sie duerfen nicht ueber den ganzen Raum regnen.
-       „frosch" und „zylinder" sind Reisen und stehen schon oben. */
-    telefon: 1, anziehen: 1, frosch: 1, zylinder: 1
+    entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, kuss: 1, klaps: 1
   };
 
   function lcWirkung(art, anZeile, nachricht) {
@@ -43725,24 +43367,6 @@
       return;
     }
     if (art === "musikaus") { lcMusikStoppen(); return; }
-    /* RUNDE 76 — XANDER: „Musik teilen mit YouTube."
-       Genau wie die Musik: sie klingt, sie zeichnet nichts. */
-    if (art === "ytmusik") {
-      lcYouTube((nachricht && nachricht.lied) || "",
-                (nachricht && nachricht.liedTitel) || "",
-                Number((nachricht && nachricht.ab) || 0));
-      return;
-    }
-    if (art === "ytaus") { lcYouTubeAus(); return; }
-    /* RUNDE 76 — XANDER: „Anziehen-Modul."
-       Auch das zeichnet nichts, was regnet: es setzt etwas auf und
-       laesst es dort. Deshalb steht es hier oben bei der Musik und
-       nicht unten bei den Wuerfen. */
-    if (art === "anziehen") {
-      lcAnziehen((nachricht && (nachricht.wen || nachricht.an)) || "",
-                 (nachricht && nachricht.stueck) || "");
-      return;
-    }
     /* /noten MIT einem Lied: der Refrain klingt, und die Noten steigen
        trotzdem auf — deshalb faellt es NICHT durch, sondern zeichnet
        gleich hier weiter (kein return). */
@@ -43916,18 +43540,6 @@
          Geraet dieselben zwei Bilder fliegen sieht. Stuende es nur
          beim Absender, saehen die anderen nur eine halbe Reise. */
       if (lcReise(wenR, vonR, art, Boolean(nachricht && nachricht.tausch))) return;
-    }
-    /* RUNDE 76 — XANDER: „Telefon mit Audio."
-       Es braucht BEIDE Plaetze — den, der anruft, und den, der
-       angerufen wird —, also steht es hier bei den Wirkungen, die
-       den Absender kennen. */
-    if (art === "telefon") {
-      const wenT = nachricht && (nachricht.wen || nachricht.an);
-      let vonT = (nachricht && nachricht.name) || "";
-      if (nachricht && nachricht.eigen) {
-        try { vonT = (LiveChat.lage() || {}).ichName || vonT; } catch (e) {}
-      }
-      if (lcTelefon(wenT, vonT)) return;
     }
     if (art === "fahren" || art === "spielzug") {
       const wenF = nachricht && (nachricht.wen || nachricht.an);
@@ -76033,14 +75645,6 @@ An einem Morgen lief ein kleiner Fuchs los…
           playedAt: new Date().toISOString() });
         return Backend.currentProfile()?.extraProfileData?.itKurs || null;
       },
-      /* RUNDE 76 — das geteilte YouTube-Video einzeln pruefbar: die
-         Kennung aus einem Link und die Karte im Raum. Ohne diese
-         beiden liesse sich nur feststellen, DASS nichts kommt. */
-      ytId: (text) => lcYtId(text),
-      /* RUNDE 76 — das Anzieh-Modul einzeln pruefbar. */
-      anziehen: (wen, was) => lcAnziehen(wen, was),
-      kleiderAuffrischen: () => lcKleiderAuffrischen(),
-      ytZeigen: (id, titel, ab) => lcYouTube(id, titel, ab),
       woerterbuch: () => buildDictionaryEntries(),
       /* Der Fuchs am Fluss: der laufende Stand und, welcher Stein
          trägt — damit sich eine ganze Runde ohne Raten durchspielen

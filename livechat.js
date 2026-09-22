@@ -1141,6 +1141,22 @@ window.LiveChat = (function () {
     pacman:    { wirkung: "pacjagd",    satz: "jagt als Pac-Man \u00fcber die Pl\u00e4tze und frisst", emoji: "\ud83d\udc7e" }
   };
 
+  /* =========================================================
+     DIE KENNUNG AUS EINEM YOUTUBE-LINK
+     ---------------------------------------------------------
+     RUNDE 76 — XANDER: „Musik teilen mit YouTube."
+     Ein Link sieht jedes Mal anders aus: youtube.com/watch?v=,
+     youtu.be/, /embed/, /shorts/, /live/, dazu Anhaengsel wie
+     &t=42s oder ?si=… Gesucht ist immer dieselbe elfstellige
+     Kennung. Wer sie schon blank hat, darf sie auch so schreiben.
+     ========================================================= */
+  function ytKennung(text) {
+    var t = String(text || "").trim();
+    if (/^[A-Za-z0-9_-]{11}$/.test(t)) return t;
+    var m = t.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^ ]*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : "";
+  }
+
   var SCHRIFTEN = {
     "1": { was: "klassisch" },
     "2": { was: "Schreibmaschine" },
@@ -8947,6 +8963,17 @@ window.LiveChat = (function () {
       was: "Schneekugel — durchgeschüttelt, dann rieselt der Schnee über Häuschen und Tanne" },
     { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name 3 1:20-1:50", was: "Kopfhoerer — aufgesetzt; mit Liednummer hoert der andere das Lied, mit Zeitangabe nur diesen Ausschnitt" },
     { gr: "reden", w: "musik", kurz: "lied", nutzt: "/musik 3", was: "Musik fuer alle aus dem Musikordner — /musik zeigt die Liste, /musik aus haelt an" },
+    /* RUNDE 76 — XANDER: „Musik teilen mit YouTube." */
+    /* RUNDE 76 — XANDER: „Telefon mit Audio". */
+    { gr: "reden", w: "telefon", kurz: "anrufen", nutzt: "/telefon Name",
+      was: "jemanden anrufen \u2014 es klingelt bei ihm, und wenn abgehoben ist, h\u00e4ngt die Schnur zwischen euch" },
+    /* RUNDE 76 — XANDER: „Anziehen-Modul". */
+    { gr: "reden", w: "anziehen", kurz: "aufsetzen", nutzt: "/anziehen Name krone",
+      was: "jemandem etwas aufsetzen, das ANBLEIBT \u2014 krone, brille, sonnenbrille, schnurrbart, muetze, maske; /anziehen Name aus nimmt es ab" },
+    { gr: "reden", w: "ausziehen", kurz: "abnehmen", nutzt: "/ausziehen Name",
+      was: "nimmt wieder ab, was jemand aufhat" },
+    { gr: "reden", w: "yt", kurz: "youtube", nutzt: "/yt <Link>",
+      was: "Musik teilen \u2014 ein YouTube-Link l\u00e4uft bei allen im Raum; /yt <Link> 1:20 f\u00e4ngt sp\u00e4ter an, /yt aus macht es zu" },
     { gr: "schule", w: "versenken", kurz: "schiffe", nutzt: "/versenken",
       was: "Schiffe versenken \u2014 jeder versteckt sich auf einem Platz, dann wird der Reihe nach geraten; /versenken aus beendet es" },
     { gr: "schule", w: "tafel", kurz: "whiteboard", nutzt: "/tafel",
@@ -11171,6 +11198,104 @@ window.LiveChat = (function () {
       return anAlle("aktion", zustand.ichName + " legt \u201e" + liedM.titel + "\u201c auf  \ud83c\udfb5",
                     { wirkung: "musik", lied: liedM.datei, liedTitel: liedM.titel });
     }
+    /* ---- DAS TELEFON ----
+       RUNDE 76 — XANDER: „Telefon mit Audio."
+       Es klingelt beim Angerufenen, und wenn abgehoben ist, geht die
+       Schnur zwischen den beiden auf. Der Ton traegt die Handlung:
+       zweimal klingeln, Gabel, Hoerer, offene Leitung. */
+    if (art === "telefon") {
+      if (!rest) return systemZeile("So geht es:  /telefon Nickname");
+      var wemF = personNachName(rest) || praesenzNachName(rest) || { name: rest };
+      return anAlle("aktion", zustand.ichName + " ruft " + wemF.name
+        + " an  \u260e\ufe0f", { wirkung: "telefon", wen: wemF.name });
+    }
+    /* ---- DAS ANZIEH-MODUL ----
+       RUNDE 76 — XANDER: „Anziehen-Modul."
+       Anders als alle anderen Effekte am Platz BLEIBT das hier: was
+       man jemandem aufsetzt, hat er an, bis es jemand abnimmt. Der
+       Befehl braucht deshalb zwei Angaben — wen und was:
+         /anziehen Bea krone
+         /anziehen Bea aus        nimmt es wieder ab
+       Ohne Angabe zeigt er, was es gibt; raten soll niemand. */
+    if (art === "anziehen" || art === "ausziehen") {
+      var STUECKE = { krone: "die Krone", brille: "die Brille",
+                      sonnenbrille: "die Sonnenbrille",
+                      schnurrbart: "den Schnurrbart",
+                      muetze: "die Wollm\u00fctze", maske: "die Maske" };
+      var teileA = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
+      if (art === "ausziehen") teileA.push("aus");
+      if (!teileA.length) {
+        return systemZeile("Anziehen:\n"
+          + "  /anziehen Name krone   \u00b7   brille   \u00b7   sonnenbrille\n"
+          + "  /anziehen Name schnurrbart   \u00b7   muetze   \u00b7   maske\n"
+          + "  /anziehen Name aus     nimmt es wieder ab");
+      }
+      var stueckA = String(teileA[teileA.length - 1] || "").toLowerCase()
+        .replace(/\u00fc/g, "ue").replace(/\u00e4/g, "ae").replace(/\u00f6/g, "oe");
+      var abA = /^(aus|ab|weg|nichts|nackt)$/.test(stueckA);
+      if (!abA && !STUECKE[stueckA]) {
+        return systemZeile("\u201e" + teileA[teileA.length - 1] + "\u201c gibt es nicht.\n"
+          + "Es gibt: krone, brille, sonnenbrille, schnurrbart, muetze, maske \u2014 "
+          + "oder aus.");
+      }
+      teileA.pop();
+      var namenA = teileA.join(" ").trim();
+      if (!namenA) {
+        return systemZeile("Wem denn?  So geht es:  /anziehen Nickname " + stueckA);
+      }
+      var wemA = personNachName(namenA) || praesenzNachName(namenA) || { name: namenA };
+      return anAlle("aktion", zustand.ichName
+        + (abA ? " zieht " + wemA.name + " alles wieder aus  \ud83e\uddfa"
+               : " setzt " + wemA.name + " " + STUECKE[stueckA] + " auf  \ud83d\udc52"),
+        { wirkung: "anziehen", wen: wemA.name, stueck: abA ? "aus" : stueckA });
+    }
+    /* ---- MUSIK TEILEN MIT YOUTUBE ----
+       RUNDE 76 — XANDER: „Musik teilen mit YouTube."
+       Der Musikordner hat nur, was vorher jemand hochgeladen hat.
+       Einen YouTube-Link hat man dagegen ohnehin schon in der Hand.
+       Hinter dem Befehl darf stehen:
+         /yt <Link>                      laeuft bei allen von vorn
+         /yt <Link> 1:20                 faengt bei 1:20 an
+         /yt <Link> 1:20 Mark Forster    mit eigener Aufschrift
+         /yt aus                         macht es bei allen zu
+       Die KENNUNG faehrt mit, nicht das Bild: jedes Geraet baut sich
+       seinen eigenen Spieler, dann haengt niemand hinterher. */
+    if (art === "yt") {
+      var wunschY = String(rest || "").trim();
+      if (!wunschY) {
+        return systemZeile("Musik teilen:\n"
+          + "  /yt <YouTube-Link>          l\u00e4uft bei allen im Raum\n"
+          + "  /yt <Link> 1:20             f\u00e4ngt bei 1:20 an\n"
+          + "  /yt <Link> 1:20 Titel       mit eigener Aufschrift\n"
+          + "  /yt aus                     macht es bei allen zu");
+      }
+      if (/^(aus|zu|stop|stopp|schluss|weg|fertig)$/i.test(wunschY)) {
+        return anAlle("aktion", zustand.ichName + " macht das Video aus  \u23f9\ufe0f",
+                      { wirkung: "ytaus" });
+      }
+      var teileY = wunschY.split(/\s+/);
+      var kennungY = ytKennung(teileY[0]);
+      if (!kennungY) {
+        return systemZeile("Das sieht nicht nach einem YouTube-Link aus.\n"
+          + "So geht es:  /yt https://www.youtube.com/watch?v=\u2026");
+      }
+      teileY.shift();
+      /* Eine Zeitangabe darf dahinter stehen — „1:20" oder „80". */
+      var abY = 0;
+      if (teileY.length && /^(\d{1,2}:[0-5]\d|\d{1,4})$/.test(teileY[0])) {
+        var zeitY = teileY.shift();
+        var mY = zeitY.match(/^(\d{1,2}):([0-5]\d)$/);
+        abY = mY ? (Number(mY[1]) * 60 + Number(mY[2])) : Number(zeitY);
+      }
+      var titelY = teileY.join(" ").trim();
+      return anAlle("aktion", zustand.ichName + " teilt "
+        + (titelY ? "\u201e" + titelY + "\u201c" : "ein Video")
+        + (abY ? " (ab " + Math.floor(abY / 60) + ":"
+                 + String(abY % 60).padStart(2, "0") + ")" : "")
+        + "  \u25b6\ufe0f",
+        { wirkung: "ytmusik", lied: kennungY, liedTitel: titelY,
+          ab: String(abY) });
+    }
     /* ---- UND EINS AUF DIE OHREN ----
        /kopfhoerer Name          nur die Kopfhoerer
        /kopfhoerer Name 3        Kopfhoerer UND Lied 3 — gehoert wird es
@@ -12358,6 +12483,11 @@ window.LiveChat = (function () {
          an /musik aus. Beide haben eine Tuer, sie steht nur in einer
          eigenen Abzweigung und nicht in einer Tabelle. */
       w.push("musik", "musikaus", "musikpause", "musikweiter");
+      /* RUNDE 76 — und dasselbe fuer das geteilte YouTube-Video. */
+      w.push("ytmusik", "ytaus");
+      /* Und das Anzieh-Modul: „anziehen" haengt an /anziehen und
+         /ausziehen — auch eine eigene Abzweigung, keine Tabelle. */
+      w.push("anziehen", "telefon");
       /* Und das Whiteboard: „tafelauf" haengt an /tafel, „tafelzu" an
          /tafel aus — auch das eine eigene Abzweigung, keine Tabelle. */
       w.push("tafelauf", "tafelzu");

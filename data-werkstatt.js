@@ -49,24 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 83: Frosch-Sprung und Zylinder mit Kaninchen",
+  stand: "Runde 84: YouTube teilen, Anziehen, Telefon — Runde 76 ist damit abgearbeitet",
 
   inArbeit: [
-    { seit: "2026-09-22T08:51",
-      text: "Der Rest aus Runde 76: Musik teilen mit YouTube, Anziehen-Modul, Telefon mit Audio" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T08:51",
-      text: "Der FROSCH-SPRUNG: ein Frosch in Seitenansicht traegt dein Profilbild auf dem Ruecken und springt Platz fuer Platz hinueber. Seine Hinterbeine strecken sich im Abstoss durch und ziehen sich in der Luft wieder an — das unterscheidet einen Sprung von einem Huepfen. Der gemalte Weg gilt auch hier. GEMESSEN: mit Weg landet er 2,0 und 2,6 px neben den gemalten Plaetzen, ohne Weg 72 und 37 px daneben." },
-    { seit: "2026-09-22T08:51",
-      text: "Neues Geraeusch ton/quaken, selbst gerechnet: ein Froschruf ist eine Pulsfolge von 45 bis 70 Schlaegen je Sekunde, kein tiefer Ton. GEMESSEN: drei getrennte Rufe in 1,80 s." },
-    { seit: "2026-09-22T08:51",
-      text: "Der ZYLINDER MIT KANINCHEN: der Hut kommt ueber dich, es puffft, und einen Augenblick lang ist gar nichts da — ohne diese Pause gibt es kein Verschwinden. Drueben steht der zweite Hut, er wackelt, das Kaninchen guckt heraus, und erst danach steigst du hinterher. GEMESSEN: Kaninchen ab Probe 5, Person ab Probe 7, und der Hut steht noch, wenn sie heraussteigt." },
-    { seit: "2026-09-22T08:51",
-      text: "Neues Geraeusch ton/zauberpuff: Rauchstoss, aufsteigender Funkenregen, Pause, zweiter Rauchstoss und ein ta-daa. GEMESSEN: 2,40 s mit der Stille genau zwischen Verschwinden und Auftauchen." },
-    { seit: "2026-09-22T08:51",
-      text: "Neue Pruefung werkzeug/pruefe-runde83.js mit sechzehn Regeln, alle gruen." },
+    { seit: "2026-09-22T09:17",
+      text: "MUSIK TEILEN MIT YOUTUBE: /yt <Link> laesst ein Video bei allen im Raum laufen, /yt <Link> 1:20 faengt spaeter an, /yt aus macht es zu. Die Kennung faehrt mit, nicht das Bild — jedes Geraet baut seinen eigenen Spieler. GEMESSEN: alle fuenf ueblichen Linkformen ergeben dieselbe Kennung, ein fremder Link keine; die Karte sitzt im Klassenzimmer und ist 16:9." },
+    { seit: "2026-09-22T09:17",
+      text: "DAS ANZIEH-MODUL: /anziehen Name krone setzt jemandem etwas auf, das ANBLEIBT — Krone, Brille, Sonnenbrille, Schnurrbart, Wollmuetze, Maske. In der Kachel Anziehen stehen alle sechs und ein Ausziehen. GEMESSEN: es sitzt auf den Bildpunkt genau auf dem Profilbild, ueberlebt das Neuzeichnen der Sitzreihe und wird nur dem Einen wieder abgenommen." },
+    { seit: "2026-09-22T09:17",
+      text: "TELEFON MIT AUDIO: /telefon Name laesst es beim Angerufenen klingeln — sein Hoerer wackelt im Takt —, und wenn abgehoben ist, geht die Schnur zwischen euch auf. Neues Geraeusch ton/telefon mit dem deutschen Freizeichen (425 Hz), Gabel, Hoerer und offener Leitung. GEMESSEN: zwei Klingeln in 3,40 s; die Schnur ist bei 2,6 s noch ganz zu und bei 4,2 s offen." },
+    { seit: "2026-09-22T09:17",
+      text: "Neue Pruefung werkzeug/pruefe-runde84.js mit siebzehn Regeln, alle gruen. Damit ist Xanders Liste aus Runde 76 vollstaendig abgearbeitet." },
   ],
 };
