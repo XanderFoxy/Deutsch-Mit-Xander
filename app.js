@@ -22278,13 +22278,38 @@
        fuer Magie und Funkeln jetzt eine schiefe Verteilung steht —
        viele winzige, wenige grosse. Vorher war jede Groesse gleich
        wahrscheinlich, und dann sieht man vor allem die grossen. */
-    magie:  { menge: 66, klasse: "lc-tmagie", rand: true, band: [33.0, 37.0],
+    /* RUNDE 80 — XANDER: „bei der Magie sind die Elemente jetzt
+       filigran … koennen noch ein bisschen filigraner sein."
+       Von 66 auf 88 Teilchen, und vier weitere haarfeine Zeichen —
+       aber vor allem: die Groesse wird noch staerker zu den kleinen
+       hin verzogen (siehe --gross weiter unten, Exponent 3 statt 2).
+       Filigran heisst nicht MEHR, sondern KLEINER — wenn zwischen
+       vielen winzigen ein paar grosse stehen, sieht man nur die
+       grossen. */
+    magie:  { menge: 88, klasse: "lc-tmagie", rand: true, band: [33.0, 37.0],
               zeichen: ["\u2726", "\u2727", "\u00b7", "\u2734", "\u2735",
                         "\u22c6", "\u2219", "\u25ca", "\u02da", "\u2739",
-                        "\u2022", "\u00b0", "\u2027"] },
-    noten:  { menge: 14, klasse: "lc-tnoten", rand: true,
+                        "\u2022", "\u00b0", "\u2027", "\u22c5", "\u2e30",
+                        "\u2e31", "\u205a"] },
+    /* RUNDE 80 — XANDER: „Die Noten sind immer noch nicht am Pfad des
+       Rahmens orientiert."
+       Sie standen zwar AUF dem Rand („rand: true"), aber alle
+       aufrecht — wie Schilder, die man an einen Kreis lehnt. Am PFAD
+       orientiert heisst: jede Note steht senkrecht auf dem Kreis, wie
+       die Buchstaben auf einem Siegel. Dafuer bekommt jedes Teilchen
+       jetzt seinen eigenen Drehwinkel (siehe --dreh in lcTeilchen),
+       und die Noten sind die einzige Sorte, die ihn benutzt. */
+    noten:  { menge: 16, klasse: "lc-tnoten", rand: true, band: [33.4, 36.2],
+              aufPfad: true,
               zeichen: ["\u266a", "\u266b", "\u266c", "\u2669"] },
-    herzen: { menge: 10, klasse: "lc-therzen",
+    /* RUNDE 80 — XANDER: „bei den Herzen … sollten kleiner sein und
+       am kreisrunden Rahmen."
+       Sie lagen frei im Feld verstreut („rand" fehlte) und waren so
+       gross wie die Notenzeichen. Jetzt stehen sie auf demselben
+       Band wie Feuer und Magie — das ist der Reifen — und sind
+       kleiner (siehe .lc-therzen im Stylesheet). Dafuer mehr davon,
+       damit der Ring trotzdem voll wird. */
+    herzen: { menge: 18, klasse: "lc-therzen", rand: true, band: [33.4, 36.0],
               zeichen: ["\u2665", "\u2764", "\ud83d\udc96"] },
     /* XANDER: „bei den Flammen arbeite etwas filigraner am oberen
        Rand, dass sie nicht vom Reifen wegfliegen, sondern auf dem
@@ -22346,14 +22371,19 @@
        feine Details."
        Beides steht hier: 64 statt 36 Teilchen, und vier weitere
        haarfeine Zeichen. „Weniger grosse" steht bei --gross. */
-    funkeln:{ menge: 64, klasse: "lc-tfunkeln", rand: true, band: [33.2, 36.8],
+    /* RUNDE 80 — XANDER: „das Funkeln … da fehlen noch ein paar
+       Partikel in der Menge." Von 64 auf 96. */
+    funkeln:{ menge: 96, klasse: "lc-tfunkeln", rand: true, band: [33.2, 36.8],
               zeichen: ["\u2726", "\u2727", "\u00b7", "\u2728", "\u22c6",
                         "\u2219", "\u02da", "\u205e", "\u2022", "\u00b0",
                         "\u2027", "\u22c5"] },
     /* Die Ladungen tanzen AUF dem Rahmen — ein schmales Band, sonst
        schweben sie daneben. */
     strom:  { menge: 14, klasse: "lc-tstrom", rand: true, band: [33.4, 35.6], zeichen: [""] },
-    blasen: { menge: 16, klasse: "lc-tblasen", zeichen: [""] }
+    /* RUNDE 80 — XANDER: „bei den Blasen … koennen noch kleine
+       Miniblasen mehr sein." Von 16 auf 34, und die Groessenverteilung
+       liegt jetzt deutlich bei den kleinen (siehe .lc-tblasen). */
+    blasen: { menge: 34, klasse: "lc-tblasen", zeichen: [""] }
   };
 
   /* =================================================================
@@ -23392,18 +23422,31 @@
          es bleiben also ein paar grosse Funken, aber die Masse ist
          fein. (Gerechnet: Median 0,4 + 0,25 · 1,15 = 0,69, groesster
          Wert unveraendert 1,55.) */
+      /* RUNDE 80 — XANDER: „bei der Magie sind die Elemente jetzt
+         filigran … koennen noch ein bisschen filigraner sein" und
+         „bei den Blasen … koennen noch kleine Miniblasen mehr sein".
+         Fuer Magie und Funkeln wird die Groesse jetzt in der DRITTEN
+         Potenz gewuerfelt statt quadriert: der Median faellt damit
+         von 0,69 auf 0,54, die groessten bleiben gleich. Fuer die
+         Blasen dieselbe Idee — viele winzige, wenige grosse. */
       const fein = art === "magie" || art === "funkeln";
       const wurf = Math.random();
       t.style.setProperty("--gross", fein
-        ? (0.4 + wurf * wurf * 1.15).toFixed(2)
-        : (0.7 + wurf * spanne).toFixed(2));
+        ? (0.32 + wurf * wurf * wurf * 1.25).toFixed(2)
+        : art === "blasen"
+          ? (0.34 + wurf * wurf * 1.9).toFixed(2)
+          : (0.7 + wurf * spanne).toFixed(2));
       t.style.setProperty("--hell", (0.62 + Math.random() * 0.38).toFixed(2));
       /* Blasen, Noten und Herzen steigen von unten auf — die stehen
          nicht auf einer Kreisbahn, sondern verteilt ueber die Breite.
          Fuer sie (und NUR fuer sie) wird --links neu gewuerfelt; die
          Zeile stand vorher ohne Bedingung hier und hat damit jede
          berechnete Kreisbahn wieder ueberschrieben. */
-      if (art === "blasen" || art === "herzen") {
+      /* RUNDE 80: die Herzen stehen nicht mehr frei im Feld, sondern
+         auf dem Ring (siehe LC_TEILCHENBILDER.herzen) — deshalb darf
+         --links hier nicht mehr ueberschrieben werden. Fuer die
+         Blasen bleibt es: die steigen im Bild auf. */
+      if (art === "blasen") {
         t.style.setProperty("--links", (10 + Math.random() * 80).toFixed(0) + "%");
       }
       /* XANDER: „Die Noten koennen aber mehr innerhalb des Kreises
@@ -23413,8 +23456,19 @@
          Feldbreite. Gestreut wurde aber von 10 bis 90 — jede dritte
          Note startete NEBEN dem Bild. Jetzt 24 bis 76 Prozent: das
          ist mit Rand noch im Bild. */
-      if (art === "noten") {
-        t.style.setProperty("--links", (24 + Math.random() * 52).toFixed(0) + "%");
+      /* RUNDE 80 — XANDER: „Die Noten sind immer noch nicht am Pfad
+         des Rahmens orientiert."
+         Sie standen frei ueber die Breite gestreut. Jetzt sitzen sie
+         auf dem Ring (band in LC_TEILCHENBILDER) — und sie STEHEN
+         darauf: --dreh ist der Winkel der Kreistangente an ihrer
+         Stelle, also genau die Richtung des Pfades. Der Winkel wird
+         so gedreht, dass keine Note auf dem Kopf steht: zwischen 90
+         und 270 Grad wird sie um 180 Grad gewendet. */
+      if (bau.aufPfad) {
+        let grad = winkel * 180 / Math.PI + 90;
+        const roh = ((winkel * 180 / Math.PI) % 360 + 360) % 360;
+        if (roh > 90 && roh < 270) grad += 180;
+        t.style.setProperty("--dreh", grad.toFixed(1) + "deg");
       }
       /* XANDER: „arbeite mal ein bisschen Atmosphaere und nicht mit
          solchen geometrischen perfekten Formen, sondern natuerlichen
@@ -26583,11 +26637,103 @@
       kasten.appendChild(b);
     });
 
+    /* =============================================================
+       RUNDE 80 — DIE FARBE DES SPRECHRINGS
+       -------------------------------------------------------------
+       XANDER: „der gruene Ring, der normal da ist, der koennte auch
+       ein bisschen mehr Weichheit haben … dann irgendwie unter der
+       Kachel dem Benutzer ne Moeglichkeit geben, ne eigene Farbe
+       auszuwaehlen."
+
+       Also eine Reihe Farbpunkte UNTER den Kacheln, genau dort, wo
+       er sie erwartet hat. Ein Tipp faerbt den Ring sofort um; die
+       Wahl bleibt auf dem Geraet (localStorage), damit sie beim
+       naechsten Mal wieder da ist. Die Farbe steht als
+       „--sprechton" an der Wurzel und wird im Stylesheet ueberall
+       dort benutzt, wo vorher das feste Gruen stand.
+       Der letzte Punkt ist kein fester Ton, sondern ein echtes
+       Farbfeld — wer eine ganz eigene Farbe will, bekommt sie. */
+    const farbzeile = document.createElement("p");
+    farbzeile.className = "lc-platzmenue-kopf lc-sprechfarbe-kopf";
+    farbzeile.textContent = "Farbe des Rings";
+    kasten.appendChild(farbzeile);
+
+    const farbreihe = document.createElement("div");
+    farbreihe.className = "lc-sprechfarben";
+    /* Die Toene sind so gewaehlt, dass jeder auf dem hellen wie auf
+       dem dunklen Hintergrund steht — und Gruen bleibt das erste,
+       weil es das bisherige ist. */
+    const TOENE = [
+      ["90, 168, 107", "Gr\u00fcn"],
+      ["72, 150, 220", "Blau"],
+      ["156, 110, 220", "Violett"],
+      ["226, 104, 150", "Rosa"],
+      ["230, 138, 60", "Orange"],
+      ["222, 76, 76", "Rot"],
+      ["228, 190, 62", "Gelb"],
+      ["70, 190, 180", "T\u00fcrkis"]
+    ];
+    TOENE.forEach(([rgb, wort]) => {
+      const f = document.createElement("button");
+      f.type = "button";
+      f.className = "lc-sprechfarbe";
+      f.style.setProperty("--ton", rgb);
+      f.title = wort;
+      f.setAttribute("aria-label", "Ringfarbe " + wort);
+      if (lcSprechtonJetzt() === rgb) f.classList.add("lc-sprechfarbe-an");
+      f.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        lcSprechtonSetzen(rgb);
+        farbreihe.querySelectorAll(".lc-sprechfarbe").forEach((x) =>
+          x.classList.toggle("lc-sprechfarbe-an", x.style.getPropertyValue("--ton") === rgb));
+        showToast("Ringfarbe: " + wort);
+      });
+      farbreihe.appendChild(f);
+    });
+    /* Und das freie Farbfeld. */
+    const eigen = document.createElement("label");
+    eigen.className = "lc-sprechfarbe lc-sprechfarbe-eigen";
+    eigen.title = "Eigene Farbe";
+    const feld = document.createElement("input");
+    feld.type = "color";
+    feld.value = lcSprechtonHex();
+    feld.setAttribute("aria-label", "Eigene Ringfarbe");
+    feld.addEventListener("input", () => {
+      const h = feld.value.replace("#", "");
+      const rgb = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)).join(", ");
+      lcSprechtonSetzen(rgb);
+      farbreihe.querySelectorAll(".lc-sprechfarbe").forEach((x) =>
+        x.classList.remove("lc-sprechfarbe-an"));
+    });
+    feld.addEventListener("click", (e) => e.stopPropagation());
+    eigen.appendChild(feld);
+    farbreihe.appendChild(eigen);
+    kasten.appendChild(farbreihe);
+
     document.body.appendChild(kasten);
     lcMenueStellen(kasten, platz);
     lcMenueSchliessen(kasten);
     return true;
   }
+
+  /* Der gewaehlte Ton als „r, g, b" — so, wie ihn rgba() braucht. */
+  function lcSprechtonJetzt() {
+    let t = "";
+    try { t = localStorage.getItem("dma_sprechton") || ""; } catch (e) {}
+    return t || "90, 168, 107";
+  }
+  function lcSprechtonHex() {
+    const teile = lcSprechtonJetzt().split(",").map((x) => Number(x.trim()) || 0);
+    return "#" + teile.map((x) => Math.max(0, Math.min(255, x)).toString(16).padStart(2, "0")).join("");
+  }
+  function lcSprechtonSetzen(rgb) {
+    try { localStorage.setItem("dma_sprechton", rgb); } catch (e) {}
+    try { document.documentElement.style.setProperty("--sprechton", rgb); } catch (e) {}
+  }
+  /* Beim Laden gleich anwenden — sonst waere die Wahl erst nach dem
+     naechsten Oeffnen des Menues wieder da. */
+  try { document.documentElement.style.setProperty("--sprechton", lcSprechtonJetzt()); } catch (e) {}
 
   /* =================================================================
      JEMANDEN UMSETZEN — UND VOR ALLEM: ZU SICH ZIEHEN
@@ -74287,6 +74433,9 @@ An einem Morgen lief ein kleiner Fuchs los…
       /* Das Platzmenue und die Wirkung an einem Platz — ohne echten
          Raum und ohne echten langen Druck nachstellbar. */
       platzMenue: (platz) => lcPlatzMenue(platz),
+      /* RUNDE 80: das Sprechbild-Menue einzeln aufrufbar — sonst
+         liesse sich die neue Farbreihe darunter nicht messen. */
+      sprechbildMenue: (platz) => lcSprechbildMenue(platz),
       /* Das Anreise-Menue (langer Druck auf einen FREIEN Platz) —
          damit sich nachsehen laesst, dass die Reisen wirklich
          darinstehen: „die Reisen sollen mit bei dem Fahren drin sein." */

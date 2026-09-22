@@ -146,13 +146,21 @@ pruefe("die Eisblumen wachsen von aussen herein",
   && /-webkit-mask-size: 68% 68%; mask-size: 68% 68%;/.test(css));
 
 console.log("\nGLÜHEN UND MAGIE: MEHR UND FEINER\n");
-pruefe("das Funkeln hat 64 Teilchen statt 36",
-  /funkeln:\{ menge: 64,/.test(js));
-pruefe("die Magie hat 66 statt 38",
-  /magie:  \{ menge: 66,/.test(js));
+/* RUNDE 80 — XANDER hat beide Zahlen noch einmal nach oben gesetzt:
+   „das Funkeln … da fehlen noch ein paar Partikel in der Menge" und
+   „bei der Magie … koennen noch ein bisschen filigraner sein".
+   Gemessen wird deshalb nicht mehr eine feste Zahl, sondern was die
+   Regel meint: deutlich mehr als die 36 bzw. 38 von damals. */
+pruefe("das Funkeln hat viel mehr Teilchen als die 36 von Runde 76",
+  /funkeln:\{ menge: (\d+),/.test(js) && Number(RegExp.$1) >= 64);
+pruefe("die Magie hat viel mehr als die 38 von Runde 76",
+  /magie:  \{ menge: (\d+),/.test(js) && Number(RegExp.$1) >= 66);
+/* Die Groesse wird schief gewuerfelt — viele kleine, wenige grosse.
+   Seit Runde 80 in der DRITTEN Potenz statt quadriert, der Median
+   faellt damit von 0,69 auf 0,54. */
 pruefe("und die Groesse wird schief gewuerfelt — viele kleine",
   /const fein = art === "magie" \|\| art === "funkeln";/.test(js)
-  && /\? \(0\.4 \+ wurf \* wurf \* 1\.15\)\.toFixed\(2\)/.test(js));
+  && /\? \(0\.32 \+ wurf \* wurf \* wurf \* 1\.25\)\.toFixed\(2\)/.test(js));
 
 console.log("\nDIE GLÜHBIRNE DREHT SICH MIT IHREM SCHAFT\n");
 pruefe("auf dem Schaft laeuft ein Lichtband",

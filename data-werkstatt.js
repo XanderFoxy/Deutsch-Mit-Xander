@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 437 — Runde 80, vierter Teil: die Toene. Tennis klingt nach Saiten statt nach Klatschen, der Kuss hat sein MMM, die Schneekugel klingt beim Schuetteln, die Sprungfeder macht das bekannte Boing, das Schnurren haelt bis zum Ende durch, der Zufall ist eine echte Slotmaschine, der Basketball trifft synchron — dazu der Schrei beim Licht aus, das Fenster staucht nicht mehr, die Jalousie bleibt offen, und im Rollo ziehen Sternschnuppen durch.",
+  stand: "Fassung 438 — Runde 80, fuenfter Teil: die Sprechbilder. Die Noten stehen jetzt wirklich auf dem Pfad des Rahmens, die Herzen sitzen kleiner am Ring, der Regenbogen durchwandert die Farben, die Schallwellen haben keine Luecke mehr, Magie und Funkeln sind feiner, bei den Blasen gibt es mehr kleine — und der gruene Sprechring ist weich geworden und laesst sich in der Farbe waehlen.",
 
   inArbeit: [
-    { seit: "2026-09-22T02:06",
+    { seit: "2026-09-22T02:30",
       text: "Der Rest von Xanders Liste vom 22. September" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T02:06",
-      text: "tennistreffer neu gebaut: Saitenanschlag, Ballton bei 480 Hz, Rahmennachklang — 0,42 s statt eines Klatschens;kussmund neu: 0,62 s gesummtes MMM, Schmatzer bei 0,66 s, kurzes mh zum Ausklang;kugelschuetteln neu: sechs Schuettelbewegungen, rieselnde Flocken, Fuss setzt bei 1,18 s auf;feder neu: Tonhoehe schnellt von 150 auf 900 Hz und wackelt aus — das traditionelle Boing;schnurren von 2,00 s auf 3,40 s verlaengert, genau die Laenge der Animation;slot2 neu gerechnet: Hebel, Walzenticken das langsamer wird, drei einzeln einrastende Walzen, Gewinnglocken, Muenzregen;korbrattern von 4,00 s auf 1,25 s — der zweite laute Teil ab 2,05 s klang, als der Ball laengst durchs Netz war;Dribbeln endet bei 2250 ms statt 3250 ms, also genau beim Wurf;Schrei beim Licht aus, 900 ms nach dem Schalter, mit der Stimme des Platzes;Fensterfluegel: Fluchtabstand 420 auf 1600 px — die Hoehe waechst jetzt um 2,6 statt um 11 Prozent;Jalousie bleibt offen bis zum Schluss statt bei 74 Prozent wieder zuzuklappen;drei Sternschnuppen im Nachthimmel hinter dem Rollo;Ohrfeige: Hand holt aus, haelt, und schlaegt dann in 130 ms zu statt in 728 ms;alle 136 Sonden gruen" },
+    { seit: "2026-09-22T02:30",
+      text: "Noten: jede steht senkrecht auf dem Kreis (gemessen: 0 von 16 weichen um mehr als 4 Grad ab, alle auf demselben Ring, Spanne 3,2 px);Herzen: vom freien Feld auf den Ring geholt und kleiner gemacht (Spanne 3,0 px);Regenbogen: hue-rotate laeuft in 6,4 s einmal ganz herum — die Farben wandern wirklich;Schallwellen: vier Ringe, die einander nachruecken, statt eines Impulses der verschwindet und neu anfaengt;Magie 66 auf 88 Teilchen und Groesse in dritter Potenz gewuerfelt (Median 0,69 auf 0,54);Funkeln 64 auf 96 Teilchen;Blasen 16 auf 34, Groessenverteilung zu den kleinen hin;Sprechring: kein harter Rand mehr, sondern ein Verlauf mit weichem Auslauf und Hof;Farbwahl fuer den Ring unter den Kacheln — acht Toene plus freies Farbfeld, die Wahl bleibt auf dem Geraet;alle 136 Sonden gruen" },
   ],
 };

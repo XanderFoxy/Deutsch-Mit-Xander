@@ -296,6 +296,100 @@ function tonMessen(name) {
     "vor dem Giessen ist kein Wasser zu sehen (Deckkraft " + (pfuetze.deck ?? "?") + ")");
   await new Promise((f) => setTimeout(f, 6200));
 
+  /* --- Die Sprechbilder ------------------------------------------- */
+  console.log("\nSprechbilder");
+
+  /* „Die Noten sind immer noch nicht am Pfad des Rahmens orientiert."
+     Gemessen wird der Drehwinkel jeder Note gegen ihre Lage auf dem
+     Kreis: er muss der Tangente entsprechen. */
+  await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
+  const notenLage = await pg.evaluate(() => {
+    const pl = document.querySelectorAll(".lc-platz")[1];
+    pl.classList.add("lc-platz-spricht");
+    pl.setAttribute("data-sprechbild", "noten");
+    window.DMA_PRUEFUNG.sprechFeld(pl, "noten");
+    const feld = pl.querySelector(".lc-sprechfeld");
+    if (!feld) return null;
+    const fr = feld.getBoundingClientRect();
+    const mx = fr.left + fr.width / 2, my = fr.top + fr.height / 2;
+    return [...feld.querySelectorAll(".lc-teilchen")].map((t) => {
+      const r = t.getBoundingClientRect();
+      const dx = (r.left + r.width / 2) - mx, dy = (r.top + r.height / 2) - my;
+      const lage = Math.atan2(dy, dx) * 180 / Math.PI;
+      const m = new DOMMatrix(getComputedStyle(t).transform);
+      const dreh = Math.atan2(m.b, m.a) * 180 / Math.PI;
+      /* Erwartet: Tangente = Lage + 90, gegebenenfalls um 180 gewendet. */
+      let ab = ((dreh - (lage + 90)) % 360 + 360) % 360;
+      if (ab > 180) ab = 360 - ab;
+      if (ab > 90) ab = 180 - ab;
+      return { ab: +ab.toFixed(1), abstand: +Math.hypot(dx, dy).toFixed(1) };
+    });
+  });
+  if (!notenLage || !notenLage.length) sage(false, "die Noten liessen sich nicht messen");
+  else {
+    const schief = notenLage.filter((n) => n.ab > 4).length;
+    sage(schief === 0,
+      "jede Note steht auf dem Pfad des Rahmens (" + schief + " von "
+      + notenLage.length + " weichen um mehr als 4 Grad ab)");
+    const rad = notenLage.map((n) => n.abstand);
+    const spanne = Math.max(...rad) - Math.min(...rad);
+    sage(spanne < 14,
+      "und alle sitzen auf demselben Ring (Spanne " + spanne.toFixed(1) + " px)");
+  }
+
+  /* „bei den Herzen … sollten kleiner sein und am kreisrunden Rahmen." */
+  const herzLage = await pg.evaluate(() => {
+    const pl = document.querySelectorAll(".lc-platz")[1];
+    pl.querySelectorAll(".lc-sprechfeld").forEach((x) => x.remove());
+    pl.setAttribute("data-sprechbild", "herzen");
+    window.DMA_PRUEFUNG.sprechFeld(pl, "herzen");
+    const feld = pl.querySelector(".lc-sprechfeld");
+    if (!feld) return null;
+    const fr = feld.getBoundingClientRect();
+    const mx = fr.left + fr.width / 2, my = fr.top + fr.height / 2;
+    const t = [...feld.querySelectorAll(".lc-teilchen")];
+    const rad = t.map((e) => {
+      const r = e.getBoundingClientRect();
+      return Math.hypot(r.left + r.width / 2 - mx, r.top + r.height / 2 - my);
+    });
+    return { spanne: Math.max(...rad) - Math.min(...rad), anzahl: t.length };
+  });
+  sage(herzLage && herzLage.spanne < 14,
+    "die Herzen sitzen auf dem Ring (Spanne "
+    + (herzLage ? herzLage.spanne.toFixed(1) : "?") + " px)");
+
+  /* „Die Schallwellen haben immer noch diese grosse Luecke … sollen
+     nicht wie ein Impuls gesendet werden." */
+  sage(/@keyframes lcSfWelleR80/.test(css)
+    && /0 0 0 13px rgba\(120, 220, 255, \.42\)/.test(css),
+    "die Schallwellen laufen ohne Luecke (vier Ringe, die einander nachruecken)");
+
+  /* „Allerdings durchwandert es die Farben nicht." */
+  sage(/hue-rotate\(360deg\)/.test(css) && /lcSfRegenbogenR77 6\.4s linear/.test(css),
+    "der Regenbogen wandert einmal ganz durch die Farben");
+
+  /* „der gruene Ring … koennte auch ein bisschen mehr Weichheit haben
+     … dem Benutzer ne Moeglichkeit geben, ne eigene Farbe auszuwaehlen." */
+  sage(/:root \{ --sprechton: 90, 168, 107; \}/.test(css)
+    && !/border: 2px solid rgba\(90, 168, 107, \.75\)/.test(css),
+    "der Sprechring hat keinen harten Rand mehr und nimmt --sprechton");
+  const farben = await pg.evaluate(() => {
+    document.getElementById("lcPlatzMenue")?.remove();
+    window.DMA_PRUEFUNG.sprechbildMenue(document.querySelectorAll(".lc-platz")[0]);
+    const k = document.getElementById("lcPlatzMenue");
+    if (!k) return null;
+    const reihe = k.querySelector(".lc-sprechfarben");
+    const p = [...k.querySelectorAll(".lc-sprechfarbe")].map((x) => x.getBoundingClientRect());
+    const zeilen = new Set(p.map((r) => Math.round(r.top))).size;
+    return { anzahl: p.length, zeilen: zeilen, reihe: Boolean(reihe) };
+  });
+  sage(farben && farben.anzahl >= 8,
+    "unter den Kacheln stehen " + (farben ? farben.anzahl : 0) + " Farben zur Wahl");
+  sage(farben && farben.zeilen <= 2,
+    "und sie stehen nebeneinander, nicht untereinander ("
+    + (farben ? farben.zeilen : "?") + " Zeile(n))");
+  await pg.evaluate(() => document.getElementById("lcPlatzMenue")?.remove());
+
   console.log("\nSitzplatz bleibt unberuehrt");
 
   /* „Die Zahl blendet weg, und dann taucht sie zuerst wieder auf, das

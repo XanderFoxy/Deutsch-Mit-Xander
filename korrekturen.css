@@ -17864,19 +17864,45 @@ body.lc-schreibt .tutor-reiter {
    Ein Element kann nur EINEN Rand haben — mehrere Ringe gehen aber
    über box-shadow: jeder Schatten mit wachsendem Radius ist ein
    weiterer Ring. Drei laufen gleichzeitig nach aussen, versetzt. */
+/* RUNDE 80 — XANDER: „Die Schallwellen haben immer noch diese grosse
+   Luecke … Die Schallwellen sollen nicht wie ein Impuls gesendet
+   werden."
+
+   GEFUNDEN, und es ist ein Denkfehler von mir gewesen: hier lief EIN
+   Ring von scale(1) auf scale(1,9) und wurde dabei durchsichtig —
+   und dann fing er wieder von vorn an. Zwischen dem Verschwinden des
+   Rings und dem Erscheinen des naechsten ist genau die Luecke, die
+   er sieht. Das IST ein Impuls, kein Schall.
+
+   Schall laeuft ununterbrochen. Deshalb jetzt VIER Ringe zugleich,
+   als box-shadow mit wachsendem Radius — und der Kniff steckt im
+   Schluss: am Ende des Umlaufs stehen sie bei 13, 26, 39 und 52 px
+   mit den Deckkraeften .42, .18, 0 und 0. Am Anfang stehen sie bei
+   0, 13, 26 und 39 px mit .70, .42, .18 und 0. Die Ringe bei 13 und
+   26 px haben also in beiden Bildern DIESELBE Deckkraft; beim
+   Wiederholen ruecken sie nur eine Stelle weiter, und innen kommt
+   einer nach. Man sieht keinen Sprung, weil an keiner Stelle etwas
+   verschwindet oder auftaucht — es wandert nur alles nach aussen.
+
+   Der Ring des Elements selbst faellt weg (er war der Impuls); die
+   Bewegung machen allein die Schatten, deshalb auch kein scale und
+   kein opacity mehr am Element. */
 .lc-platz-spricht[data-sprechbild="welle"]::after {
-  border: 2px solid rgba(120, 220, 255, .85);
-  animation: lcSfWelleR35 1.8s cubic-bezier(.2, .7, .4, 1) infinite;
+  border: 0;
+  border-radius: 50%;
+  opacity: 1;
+  transform: translateX(-50%) scale(1.02);
+  animation: lcSfWelleR80 1.5s linear infinite;
 }
-@keyframes lcSfWelleR35 {
-  0%   { transform: translateX(-50%) scale(1); opacity: .95; border-width: 3px;
-         box-shadow: 0 0 0 0 rgba(120, 220, 255, .55),
-                     0 0 0 0 rgba(120, 220, 255, .38),
-                     0 0 0 0 rgba(120, 220, 255, .22); }
-  100% { transform: translateX(-50%) scale(1.9); opacity: 0; border-width: 1px;
-         box-shadow: 0 0 0 9px rgba(120, 220, 255, 0),
-                     0 0 0 19px rgba(120, 220, 255, 0),
-                     0 0 0 30px rgba(120, 220, 255, 0); }
+@keyframes lcSfWelleR80 {
+  0%   { box-shadow: 0 0 0 0px  rgba(120, 220, 255, .70),
+                     0 0 0 13px rgba(120, 220, 255, .42),
+                     0 0 0 26px rgba(120, 220, 255, .18),
+                     0 0 0 39px rgba(120, 220, 255, 0); }
+  100% { box-shadow: 0 0 0 13px rgba(120, 220, 255, .42),
+                     0 0 0 26px rgba(120, 220, 255, .18),
+                     0 0 0 39px rgba(120, 220, 255, 0),
+                     0 0 0 52px rgba(120, 220, 255, 0); }
 }
 
 /* --- STROM: ganz feine Verästelungen bis zum Rand ------------------ */
@@ -24881,22 +24907,48 @@ body.lc-schreibt .tutor-reiter {
     transparent 0 64%, #000 68% 94%, transparent 100%);
   mask: radial-gradient(circle closest-side,
     transparent 0 64%, #000 68% 94%, transparent 100%);
-  animation: lcSfRegenbogenR77 6.4s ease-in-out infinite;
+  animation: lcSfRegenbogenR77 6.4s linear infinite;
 }
+/* RUNDE 80 — XANDER: „Bei den Regenbogen sind die Ringe jetzt als
+   Kreise von innen nach aussen. Allerdings durchwandert es die Farben
+   nicht."
+
+   Er hat recht: die Farbfolge stand fest, animiert waren nur Groesse
+   und Saettigung. Eine Farbfolge in einem CSS-Verlauf laesst sich
+   nicht Stop fuer Stop animieren — wohl aber als Ganzes durch den
+   Farbkreis DREHEN, und genau das ist „die Farben durchwandern":
+   hue-rotate laeuft in 6,4 s einmal ganz herum (0 auf 360 Grad), also
+   wandert jeder Ring durch alle Farben und kommt genau dort wieder
+   an, wo er angefangen hat — deshalb gibt es beim Wiederholen keinen
+   Sprung. Die Bewegung nach aussen (das Atmen) bleibt daneben
+   bestehen, und weil sie doppelt so schnell ist wie der Farbumlauf,
+   sieht man beides getrennt.
+   Wichtig: „linear" statt „ease-in-out", sonst wuerde die Farbe in
+   der Mitte des Umlaufs stehenbleiben. */
 @keyframes lcSfRegenbogenR77 {
   0% {
     transform: translateX(-50%) scale(1.44);
-    filter: blur(.5px) saturate(1.35)
+    filter: blur(.5px) saturate(1.35) hue-rotate(0deg)
             drop-shadow(0 0 5px rgba(255, 255, 255, .35));
   }
-  50% {
+  25% {
     transform: translateX(-50%) scale(1.54);
-    filter: blur(.5px) saturate(1.5)
+    filter: blur(.5px) saturate(1.5) hue-rotate(90deg)
+            drop-shadow(0 0 10px rgba(255, 255, 255, .5));
+  }
+  50% {
+    transform: translateX(-50%) scale(1.44);
+    filter: blur(.5px) saturate(1.42) hue-rotate(180deg)
+            drop-shadow(0 0 7px rgba(255, 255, 255, .42));
+  }
+  75% {
+    transform: translateX(-50%) scale(1.54);
+    filter: blur(.5px) saturate(1.5) hue-rotate(270deg)
             drop-shadow(0 0 10px rgba(255, 255, 255, .5));
   }
   100% {
     transform: translateX(-50%) scale(1.44);
-    filter: blur(.5px) saturate(1.35)
+    filter: blur(.5px) saturate(1.35) hue-rotate(360deg)
             drop-shadow(0 0 5px rgba(255, 255, 255, .35));
   }
 }
@@ -25932,4 +25984,149 @@ body.lc-schreibt .tutor-reiter {
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-sternschnuppe { animation: none; opacity: 0; }
+}
+
+/* =====================================================================
+   RUNDE 80 — NOTEN UND HERZEN GEHÖREN AUF DEN RING
+   ---------------------------------------------------------------------
+   XANDER: „Die Noten sind immer noch nicht am Pfad des Rahmens
+   orientiert" und „bei den Herzen … sollten kleiner sein und am
+   kreisrunden Rahmen."
+
+   Beide stiegen bisher von UNTEN auf (left: var(--links); bottom: 14%),
+   also in einer Säule über dem Bild — mit dem Rahmen hatte das nichts
+   zu tun. Jetzt sitzen beide dort, wo app.js sie ausrechnet: auf dem
+   Ring (--links/--oben liegen auf der Kreisbahn). Die Noten STEHEN
+   zusätzlich auf dem Pfad, jede um den Tangentenwinkel ihrer Stelle
+   gedreht (--dreh) — wie die Buchstaben auf einem Siegel. Und sie
+   atmen dort, statt fortzufliegen.
+   ===================================================================== */
+.lc-tnoten .lc-teilchen,
+.lc-therzen .lc-teilchen {
+  left: var(--links, 50%);
+  top: var(--oben, 50%);
+  bottom: auto;
+  animation-name: lcRingAtmetR80;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+/* Die Note steht senkrecht auf dem Kreis — das ist „am Pfad
+   orientiert". --dreh kommt aus app.js und ist der Tangentenwinkel. */
+.lc-tnoten .lc-teilchen {
+  transform: translate(-50%, -50%) rotate(var(--dreh, 0deg));
+}
+/* Die Herzen bleiben aufrecht (ein Herz auf der Seite liest sich
+   nicht mehr als Herz) und sind kleiner als die Noten. */
+.lc-therzen .lc-teilchen {
+  font-size: calc(0.34rem * var(--gross, 1) + 0.24rem);
+  transform: translate(-50%, -50%);
+}
+@keyframes lcRingAtmetR80 {
+  0%   { opacity: calc(var(--hell, .9) * .45);
+         transform: translate(-50%, -50%) rotate(var(--dreh, 0deg)) scale(.72); }
+  100% { opacity: var(--hell, .9);
+         transform: translate(-50%, -50%) rotate(var(--dreh, 0deg)) scale(1.06); }
+}
+
+/* =====================================================================
+   RUNDE 80 — DER SPRECHRING: WEICHER, UND IN DER FARBE, DIE MAN WILL
+   ---------------------------------------------------------------------
+   XANDER: „der grüne Ring, der normal da ist, der könnte auch ein
+   bisschen mehr Weichheit haben … dann irgendwie unter der Kachel dem
+   Benutzer ne Möglichkeit geben, ne eigene Farbe auszuwählen."
+
+   ZWEI SACHEN:
+
+   · WEICHER. Der Ring war eine 2 px harte Linie mit einem harten
+     Rand darunter — deshalb wirkte er wie ein aufgeklebter Reifen.
+     Jetzt trägt er keinen Rand mehr, sondern einen Verlauf, der zu
+     beiden Seiten ausläuft, und darüber liegt ein weicher Hof. Der
+     Puls bleibt, nur schlägt er nicht mehr gegen eine Kante.
+
+   · DIE FARBE. Überall, wo vorher 90/168/107 fest im Stylesheet
+     stand, steht jetzt var(--sprechton). Die Voreinstellung ist
+     genau dasselbe Grün wie bisher; wer im Menü „Beim Sprechen"
+     unten eine andere Farbe antippt, setzt --sprechton an der
+     Wurzel, und das gilt sofort für alles hier.
+   ===================================================================== */
+:root { --sprechton: 90, 168, 107; }
+.lc-platz-spricht .lc-kreis {
+  border-color: rgba(var(--sprechton), .85) !important;
+  box-shadow: 0 0 0 3px rgba(var(--sprechton), .22),
+              0 0 10px 2px rgba(var(--sprechton), .18);
+}
+.lc-platz-spricht .lc-kreis::after {
+  inset: -7px;
+  border: 0;
+  /* Ein Ring aus einem Verlauf läuft an beiden Kanten aus — das ist
+     die Weichheit, die eine Linie nicht haben kann. */
+  background: radial-gradient(circle closest-side,
+    rgba(var(--sprechton), 0) 0 62%,
+    rgba(var(--sprechton), .30) 76%,
+    rgba(var(--sprechton), .52) 86%,
+    rgba(var(--sprechton), .18) 95%,
+    rgba(var(--sprechton), 0) 100%);
+  filter: blur(.6px);
+}
+@keyframes lcSprichtHof {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(var(--sprechton), .20); }
+  50%      { box-shadow: 0 0 0 7px rgba(var(--sprechton), .10); }
+}
+@keyframes lcSprichtKreis {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(var(--sprechton), .20); }
+  50%      { box-shadow: 0 0 0 7px rgba(var(--sprechton), .10); }
+}
+@keyframes lcSprichtRing {
+  0%   { opacity: .8; transform: scale(1); }
+  100% { opacity: 0;  transform: scale(1.46); }
+}
+
+/* --- Die Farbpunkte unter den Kacheln ------------------------------ */
+.lc-sprechfarbe-kopf { margin-top: 10px; }
+.lc-sprechfarben {
+  /* Das Menue ist ein Raster; ohne diese Zeile ist die Farbreihe EINE
+     Spalte breit und die Punkte stapeln sich untereinander. Gemessen:
+     neun Punkte, neun Zeilen. Jetzt laeuft sie ueber die ganze
+     Breite. */
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 2px 4px 4px;
+  justify-content: center;
+}
+.lc-sprechfarbe {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, .12);
+  background: rgb(var(--ton, 90, 168, 107));
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.lc-sprechfarbe-an {
+  border-color: rgba(20, 20, 20, .7);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .85), 0 1px 3px rgba(0, 0, 0, .3);
+}
+/* Das freie Farbfeld sieht aus wie die anderen Punkte, ist aber ein
+   echtes Eingabefeld — deshalb liegt das <input> darin und füllt es. */
+.lc-sprechfarbe-eigen {
+  background: conic-gradient(#e24c4c, #e68a3c, #e4be3e, #5aa86b,
+                             #46beb4, #4896dc, #9c6edc, #e26896, #e24c4c);
+  position: relative;
+}
+.lc-sprechfarbe-eigen input[type="color"] {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  opacity: 0;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
 }
