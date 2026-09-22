@@ -129,8 +129,32 @@ pruefe("das Platschen kommt beim EINSCHLAG, nicht am Ende",
   /lcTonSpaeter\("platsch", 2730/.test(js));
 pruefe("und das Brett federt vorher", /lcTonSpaeter\("sprungbrett", 1000/.test(js)
   && da("sprungbrett"));
+/* RUNDE 88 — DIESE REGEL SUCHTE ZWEI ZAHLEN, DIE ES NICHT MEHR GIBT.
+   Sie stand auf „scale(.74)" und „scale(1.06)" — beide waren schon vor
+   dieser Runde aus dem Sprung verschwunden (nachgesehen in
+   werkzeug/backup und im Stand der Fassung 480), und die zweite fand
+   sich nur noch beim ZAUBERER wieder. Die Regel war also halb blind
+   und halb zufaellig gruen.
+   Gemessen wird jetzt der VERLAUF im Sprungblock statt zweier
+   Zeichenketten: es muss ein Bild geben, in dem der Springer deutlich
+   kleiner ist als sein Platz (untertauchen), danach eines, in dem er
+   groesser ist als sein Platz (aufploppen wie ein Gummireifen), und am
+   Ende steht er wieder auf Groesse eins. Andere Zahlen sind dann kein
+   Fehler mehr — eine andere Bewegung schon. */
+const turmBlock = (() => {
+  const a = js.indexOf('} else if (art === "turm") {');
+  const b = js.indexOf('} else if (art === ', a + 10);
+  return a < 0 ? "" : js.slice(a, b < 0 ? a + 20000 : b);
+})();
+const turmScale = (turmBlock.match(/scale\((\.?\d+(?:\.\d+)?)\)/g) || [])
+  .map((x) => Number(x.slice(6, -1)));
+const tief = turmScale.findIndex((v) => v < 0.7);
+const hoch = turmScale.findIndex((v, i) => i > tief && tief >= 0 && v > 1.02);
 pruefe("untertauchen und wieder hoch wie ein Gummireifen",
-  /scale\(\.74\)/.test(js) && /scale\(1\.06\)/.test(js));
+  tief >= 0 && hoch > tief && turmScale[turmScale.length - 1] === 1,
+  "tiefster Punkt " + (tief >= 0 ? turmScale[tief] : "-")
+    + ", hoechster danach " + (hoch > 0 ? turmScale[hoch] : "-")
+    + ", am Ende " + turmScale[turmScale.length - 1]);
 pruefe("die Zeitkurve verbiegt die ausgerechneten Zeiten nicht",
   (js.match(/easing: "linear", fill: "forwards"/g) || []).length >= 2);
 

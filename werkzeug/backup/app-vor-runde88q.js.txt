@@ -37782,13 +37782,8 @@
           + '" r="1.5"/>'
           + "</g>";
       };
-      /* RUNDE 88 — ZWEI ZEICHNUNGEN IN EINER HUELLE. Die Seitenansicht
-         und die Draufsicht liegen uebereinander; welche man sieht,
-         entscheidet die Fahrt. Nur so laesst sich eine Kurve zeigen,
-         ohne die Lok auf der Stelle zu spiegeln. */
       lok.innerHTML =
-        '<span class="lc-lok-seite">'
-        + '<svg class="lc-lok-form" viewBox="0 0 120 60" aria-hidden="true">'
+        '<svg class="lc-lok-form" viewBox="0 0 120 60" aria-hidden="true">'
         /* Pufferbohle mit zwei Puffern — vorn, wo es stoesst. */
         + '<rect class="lc-lok-bohle" x="3" y="35" width="7" height="17" rx="1.5"/>'
         + '<circle class="lc-lok-puffer" cx="4.5" cy="38.5" r="2.4"/>'
@@ -37879,9 +37874,7 @@
         + '<i class="lc-lok-rauch lc-lok-rauch-3"></i>'
         + '<span class="lc-lok-fenster"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
-          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
-        + "</span>"
-        + lcLokOben(quelle, (ab.name || "?").charAt(0).toUpperCase());
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
       reihe.appendChild(lok);
       weg.push(lok);
       setzen(lok, start.x, start.y);
@@ -37902,11 +37895,10 @@
         ? lcLokFahrt(lok, reihe, rk, ab, zu, start, ende, dauer, hin, d, lokWeg)
         : null;
       if (lokZeug) {
-        /* Die Gleise raeumt „weg" mit auf; die Uhren, die die Schreie
-           ausloesen, bekommen ihre eigene Absage, damit sie nicht an
-           einem entfernten Element weiterarbeiten. */
-        weg.push(lokZeug.gleis);
-        if (lokZeug.buehne) weg.push(lokZeug.buehne);
+        /* Gleise und Buehne raeumt „weg" mit auf; die Uhren, die die
+           Buehne ein- und ausblenden, bekommen ihre eigene Absage,
+           damit sie nicht an einem entfernten Element weiterarbeiten. */
+        weg.push(lokZeug.gleis, lokZeug.buehne);
         setTimeout(() => (lokZeug.uhren || []).forEach((u) => clearTimeout(u)),
                    dauer + 420);
       } else {
@@ -41023,142 +41015,39 @@
      dort sitzt, schreit. Welche Stimme, entscheidet das Geschlecht des
      Ueberfahrenen (lcSchmerzTon), damit es nicht immer dieselbe ist.
      ================================================================= */
-  /* =====================================================================
-     RUNDE 88 — DIE LOK FAEHRT WIE EINE MODELLEISENBAHN
-     ---------------------------------------------------------------------
-     XANDER: „Bei der Lokomotive moechte ich, dass die Gleise an den
-     Eckpunkten, die ich einzeichne, realistische Kurvenmodule haben wie
-     bei einer Modelleisenbahn auf der Modelleisenbahn Platte, wo man das
-     so zusammenstecken kann. Und selbst wenn ich immer oefter ums Eck
-     fahre, sollen entsprechend Gleise gebaut werden … brauchst du ne
-     Physik in der Lokomotive, wo die Lok realistisch dreht an dem
-     Eckpunkt … dass sie, wenn sie nach unten faehrt, nur von oben zu
-     sehen ist, von der Draufsicht — da musst du eine Draufsicht
-     generieren und denk dabei an alles, an die Kessel und an die Esse …
-     und wenn sie nach oben faehrt, muss die Draufsicht so zu sehen sein,
-     dass sie mit der Nase nach vorne nach oben faehrt."
-     Und: „Die Lok dreht sich immer noch auf der Stelle. Bevor sie
-     zurueckfaehrt, dreht sie sich einmal rum."
+  /* =================================================================
+     RUNDE 85 — DIE LOK FAEHRT AUF SCHIENEN ZUM ZIEL
+     -----------------------------------------------------------------
+     XANDER: „die Lokomotive faehrt jetzt nur noch im Kreis und das
+     soll sie nicht. Wenn ich irgendwo hin moechte, soll sie ganz
+     normal dahinfahren. So wie vorher auch."
+     Und zur Kurve: „entweder gehen wir direkt im Winkel nach unten
+     und drehen dann den Winkel wieder rum, wenn er wieder waagerecht
+     faehrt, oder wir heben die Lok runter wie ein Elevator … mach
+     bitte das, was besser aussieht."
 
-     WARUM SIE SICH DREHTE. Die Richtung steckte in einem scaleX(±1).
-     Zwischen zwei Bildern rechnet der Browser das stetig aus — und ein
-     Weg von +1 nach -1 fuehrt zwangslaeufig durch die Null. Genau das
-     sieht man: die Lok wird schmaler, verschwindet zu einem Strich und
-     kommt andersherum wieder heraus. Ein Spiegeln ist keine Drehung.
+     GEWAEHLT: DER ELEVATOR — und zwar aus einem sachlichen Grund, es
+     ist keine Geschmacksfrage. Eine Lok, die sich um 90 Grad kippt
+     und eine Wand hinunterfaehrt, gibt es nicht; das sieht bei jeder
+     Groesse falsch aus. Eine SCHIEBEBUEHNE dagegen gibt es wirklich
+     in jedem Betriebswerk: die Lok faehrt auf eine Plattform, die
+     Plattform verschiebt sie waagerecht liegend zum naechsten Gleis,
+     und dort faehrt sie geradeaus weiter. Genau das passiert hier —
+     die Lok bleibt immer waagerecht, und beim Reihenwechsel traegt
+     sie eine Buehne.
 
-     WIE ES JETZT GEHT — wie im Trickfilm, mit zwei Zeichnungen:
-       · die SEITENANSICHT, solange sie waagerecht faehrt,
-       · die DRAUFSICHT (Kessel, Esse, Doeme, Fuehrerhausdach), sobald
-         sie in die Kurve geht, und weiter, solange sie senkrecht faehrt.
-     Im Bogen dreht sich die Draufsicht um genau den Winkel, den das
-     Gleis vorgibt, und die beiden Zeichnungen blenden ineinander. Das
-     Spiegeln der Seitenansicht passiert in der Mitte des Bogens — dort
-     ist sie unsichtbar, also sieht man es nicht.
-
-     DIE BAHN SELBST ist jetzt ein Gleisplan und keine Linienkette mehr:
-     Geraden und echte Viertelkreis-Bogenstuecke, die aneinanderstossen
-     wie die Module einer Modellbahn. Die Lok faehrt auf genau dieser
-     Bahn, und die Gleise werden aus genau denselben Stuecken gezeichnet.
-     Dadurch KANN sie gar nicht mehr neben dem Gleis fahren.
-     ===================================================================== */
-  /* Ein Winkel in Grad, an den vorigen angeglichen: aus 179 und -179
-     wird 179 und 181. Ohne das dreht sich die Draufsicht am
-     Vorzeichenwechsel einmal komplett um die eigene Achse. */
-  function lcWinkelFolge(neu, vorher) {
-    let w = neu;
-    while (w - vorher > 180) w -= 360;
-    while (w - vorher < -180) w += 360;
-    return w;
-  }
-
-  /* Aus den Eckpunkten wird ein Gleisplan: Geraden und Bogenstuecke.
-     Zurueck kommt beides — die Module zum ZEICHNEN und die Stationen
-     zum FAHREN (mit Richtung und zurueckgelegtem Weg). */
-  function lcLokBahn(pk, rMax) {
-    const mod = [], pt = [];
-    const einheit = (a, b) => {
-      const dx = b.x - a.x, dy = b.y - a.y;
-      const l = Math.hypot(dx, dy) || 1;
-      return { x: dx / l, y: dy / l };
-    };
-    const grad = (u) => Math.atan2(u.y, u.x) * 180 / Math.PI;
-    let letzterWinkel = grad(einheit(pk[0], pk[1]));
-    const setze = (x, y, winkel, bogen) => {
-      letzterWinkel = lcWinkelFolge(winkel, letzterWinkel);
-      pt.push({ x: x, y: y, winkel: letzterWinkel,
-                bogen: (bogen === undefined ? -1 : bogen) });
-    };
-    let hier = { x: pk[0].x, y: pk[0].y };
-    setze(hier.x, hier.y, letzterWinkel);
-    for (let i = 1; i < pk.length; i++) {
-      const ein = einheit(pk[i - 1], pk[i]);
-      const ecke = i < pk.length - 1;
-      const aus = ecke ? einheit(pk[i], pk[i + 1]) : null;
-      /* Nur eine echte Ecke bekommt ein Kurvenmodul. Faehrt die Bahn
-         geradeaus weiter, waere ein Bogen mit Radius null Unsinn. */
-      let r = 0;
-      if (ecke && Math.abs(ein.x * aus.x + ein.y * aus.y) < 0.35) {
-        const lVor = Math.hypot(pk[i].x - pk[i - 1].x, pk[i].y - pk[i - 1].y);
-        const lNach = Math.hypot(pk[i + 1].x - pk[i].x, pk[i + 1].y - pk[i].y);
-        r = Math.max(0, Math.min(rMax, lVor * 0.45, lNach * 0.45));
-      }
-      const A = { x: pk[i].x - ein.x * r, y: pk[i].y - ein.y * r };
-      if (Math.hypot(A.x - hier.x, A.y - hier.y) > 0.5) {
-        mod.push({ art: "gerade", a: { x: hier.x, y: hier.y }, b: { x: A.x, y: A.y } });
-        setze(A.x, A.y, grad(ein));
-      }
-      if (r > 0.5) {
-        const B = { x: pk[i].x + aus.x * r, y: pk[i].y + aus.y * r };
-        /* Der Mittelpunkt des Bogens: von A aus einen Radius in die
-           AUSFAHRTS-Richtung. Bei einem rechten Winkel liegt er damit
-           genau so, dass A und B beide r entfernt sind. */
-        const C = { x: A.x + aus.x * r, y: A.y + aus.y * r };
-        let w0 = Math.atan2(A.y - C.y, A.x - C.x);
-        let w1 = Math.atan2(B.y - C.y, B.x - C.x);
-        let dw = w1 - w0;
-        while (dw > Math.PI) dw -= 2 * Math.PI;
-        while (dw < -Math.PI) dw += 2 * Math.PI;
-        mod.push({ art: "bogen", c: C, r: r, a: A, b: B, w0: w0, dw: dw });
-        const stufen = 8;
-        for (let k = 1; k <= stufen; k++) {
-          const f = k / stufen;
-          const w = w0 + dw * f;
-          setze(C.x + r * Math.cos(w), C.y + r * Math.sin(w),
-                (w + (dw > 0 ? Math.PI / 2 : -Math.PI / 2)) * 180 / Math.PI, f);
-        }
-        hier = B;
-      } else {
-        hier = { x: pk[i].x, y: pk[i].y };
-        if (ecke) setze(hier.x, hier.y, grad(aus));
-      }
-    }
-    /* Der zurueckgelegte Weg — daraus werden die Zeitpunkte. */
-    let s = 0;
-    pt[0].s = 0;
-    for (let i = 1; i < pt.length; i++) {
-      s += Math.hypot(pt[i].x - pt[i - 1].x, pt[i].y - pt[i - 1].y);
-      pt[i].s = s;
-    }
-    return { mod: mod, pt: pt, gesamt: s || 1 };
-  }
-
-  /* =====================================================================
-     DIE GLEISE — GERADEN UND KURVENMODULE
-     ---------------------------------------------------------------------
-     XANDER: „die Gleise, so wie ich sie male, und wenn Personen im Weg
-     sind, dann werden die Gleise unter der Person lang gezogen, so dass
-     man in den Zwischenraeumen von den Profilplaetzen die Gleise noch
-     sieht, wie sie dazwischen gesteckt sind."
-     Deshalb liegt das Gleis UNTER den Plaetzen (z-index) und hoert nicht
-     an ihnen auf. Und deshalb heisst die Kurve hier Modul: sie ist ein
-     Viertelkreis mit Schwellen, die vom Mittelpunkt wegzeigen — genau
-     wie das Stueck, das man auf der Platte einsteckt.
-     ===================================================================== */
-  function lcLokGleise(reihe, bahn, rk, d) {
+     DER WEG ist keine gerade Linie mehr, sondern die Strecke ueber
+     die Sitzfelder (dieselbe Breitensuche, die auch das Fahren
+     benutzt). Damit faehrt sie wirklich „bei den Feldern lang".
+     UND DIE GLEISE: „Vielleicht koenntest du das in Zukunft auch
+     noch machen, realistische Gleise zu bauen, wo sie dann lang
+     faehrt." Sie liegen jetzt unter ihr — zwei Schienen auf
+     Schwellen, und nur dort, wo sie wirklich faehrt.
+     ================================================================= */
+  function lcLokGleise(reihe, pk, rk, d) {
     const svg = document.createElementNS(NS_SVG, "svg");
     svg.setAttribute("class", "lc-lok-gleis");
-    const alleX = [], alleY = [];
-    bahn.pt.forEach((q) => { alleX.push(q.x); alleY.push(q.y); });
+    const alleX = pk.map((q) => q.x), alleY = pk.map((q) => q.y);
     const links = Math.min.apply(null, alleX) - d;
     const oben = Math.min.apply(null, alleY) - d;
     const breit = Math.max.apply(null, alleX) - links + d * 2;
@@ -41171,135 +41060,33 @@
        richtig aus — schmaler wirkt es wie ein Draht, breiter wie
        eine Strasse. */
     const spur = d * 0.17;
-    const ueber = spur + Math.max(2.4, d * 0.045);   // Schwelle steht ueber
-    const schritt = Math.max(9, d * 0.22);
-    let schwellen = "", schienen = "";
-    const schwelle = (x, y, nx, ny) => {
-      schwellen += '<line class="lc-lok-schwelle" x1="' + (x - nx * ueber - links).toFixed(1)
-        + '" y1="' + (y - ny * ueber - oben).toFixed(1)
-        + '" x2="' + (x + nx * ueber - links).toFixed(1)
-        + '" y2="' + (y + ny * ueber - oben).toFixed(1) + '"/>';
-    };
-    /* Das erste und das letzte Modul ragen ein Stueck ueber Anfang und
-       Ende hinaus — ein Gleis, das genau unter der Lok aufhoert, sieht
-       aus wie ein Bauzaun. */
-    const rand = d * 0.5;
-    bahn.mod.forEach((m, i) => {
-      if (m.art === "gerade") {
-        const dx = m.b.x - m.a.x, dy = m.b.y - m.a.y;
-        const l = Math.hypot(dx, dy) || 1;
-        const ux = dx / l, uy = dy / l;
-        const nx = -uy, ny = ux;
-        const vor = i === 0 ? rand : 0;
-        const nach = i === bahn.mod.length - 1 ? rand : 0;
-        const ax = m.a.x - ux * vor, ay = m.a.y - uy * vor;
-        const bx = m.b.x + ux * nach, by = m.b.y + uy * nach;
-        const lang = l + vor + nach;
-        /* Eine Schwelle liegt an JEDEM Ende — so sieht man, wo zwei
-           Module aneinanderstossen. Dazwischen gleichmaessig verteilt,
-           damit am Stoss keine halbe Luecke bleibt. */
-        const wieVieleG = Math.max(1, Math.round(lang / schritt));
-        for (let k = 0; k <= wieVieleG; k++) {
-          const tt = lang * (k / wieVieleG);
-          schwelle(ax + ux * tt, ay + uy * tt, nx, ny);
-        }
-        [-spur, spur].forEach((v) => {
-          schienen += '<path class="lc-lok-schiene" d="M' + (ax + nx * v - links).toFixed(1)
-            + " " + (ay + ny * v - oben).toFixed(1) + "L" + (bx + nx * v - links).toFixed(1)
-            + " " + (by + ny * v - oben).toFixed(1) + '"/>';
-        });
-      } else {
-        /* Das Kurvenmodul. Die Schwellen zeigen vom Mittelpunkt weg —
-           daran erkennt man auf der Platte ein Kurvenstueck. */
-        const bogenLang = Math.abs(m.dw) * m.r;
-        const wieViel = Math.max(4, Math.round(bogenLang / (schritt * 0.8)));
-        for (let k = 0; k <= wieViel; k++) {
-          const w = m.w0 + m.dw * (k / wieViel);
-          const nx = Math.cos(w), ny = Math.sin(w);
-          schwelle(m.c.x + m.r * nx, m.c.y + m.r * ny, nx, ny);
-        }
-        const dreh = m.dw > 0 ? 1 : 0;
-        [-spur, spur].forEach((v) => {
-          const rr = m.r + v;
-          const x1 = m.c.x + rr * Math.cos(m.w0) - links;
-          const y1 = m.c.y + rr * Math.sin(m.w0) - oben;
-          const x2 = m.c.x + rr * Math.cos(m.w0 + m.dw) - links;
-          const y2 = m.c.y + rr * Math.sin(m.w0 + m.dw) - oben;
-          schienen += '<path class="lc-lok-schiene" d="M' + x1.toFixed(1) + " " + y1.toFixed(1)
-            + "A" + rr.toFixed(1) + " " + rr.toFixed(1) + " 0 0 " + dreh + " "
-            + x2.toFixed(1) + " " + y2.toFixed(1) + '"/>';
-        });
+    let teile = "";
+    for (let i = 1; i < pk.length; i++) {
+      const a = pk[i - 1], b = pk[i];
+      /* Nur die waagerechten Stuecke bekommen Gleise. Beim
+         Reihenwechsel traegt die Schiebebuehne — dort liegt kein
+         Gleis, sonst waere es eine Achterbahn. */
+      if (Math.abs(b.y - a.y) > 4) continue;
+      const x1 = Math.min(a.x, b.x) - links - d * 0.5;
+      const x2 = Math.max(a.x, b.x) - links + d * 0.5;
+      const y = a.y - oben;
+      /* Die Schwellen zuerst — sie liegen UNTER den Schienen. */
+      const schritt = Math.max(9, d * 0.22);
+      for (let x = x1 + schritt / 2; x < x2; x += schritt) {
+        teile += '<rect class="lc-lok-schwelle" x="' + x.toFixed(1)
+          + '" y="' + (y - spur - 2.4).toFixed(1) + '" width="'
+          + Math.max(3, schritt * 0.34).toFixed(1) + '" height="'
+          + (spur * 2 + 4.8).toFixed(1) + '" rx="1.2"/>';
       }
-    });
-    /* Schwellen zuerst — die Schienen liegen darauf, nicht darunter. */
-    svg.innerHTML = schwellen + schienen;
+      [-spur, spur].forEach((ver) => {
+        teile += '<line class="lc-lok-schiene" x1="' + x1.toFixed(1) + '" y1="'
+          + (y + ver).toFixed(1) + '" x2="' + x2.toFixed(1) + '" y2="'
+          + (y + ver).toFixed(1) + '"/>';
+      });
+    }
+    svg.innerHTML = teile;
     reihe.appendChild(svg);
     return svg;
-  }
-
-  /* =====================================================================
-     DIE DRAUFSICHT
-     ---------------------------------------------------------------------
-     XANDER: „da musst du eine Draufsicht generieren und denk dabei an
-     alles, an die Kessel und an die Esse, so wie sie Design ist, dass
-     man sie so realistisch von oben sehen kann."
-     Von oben sieht man: die Pufferbohle mit den zwei Puffern, den runden
-     Kessel als langes Rohr mit Lichtkante, die Esse als Rohr, in das man
-     HINEINSIEHT (deshalb ein dunkler Kreis im hellen Ring), Dampfdom und
-     Sanddom als Messingkuppeln, die drei Kesselbaender quer, die
-     Laufbleche links und rechts mit ihren Handlaeufen, das gewoelbte
-     Dach des Fuehrerhauses mit dem Dachluefter — und aussen die
-     Radkanten, die unter den Blechen hervorschauen.
-     Die Nase zeigt nach RECHTS; gedreht wird sie dann auf den Winkel,
-     den das Gleis vorgibt.
-     ===================================================================== */
-  function lcLokOben(quelle, buchstabe) {
-    const band = (x) => '<line class="lc-lok-o-band" x1="' + x + '" y1="17.5" x2="' + x + '" y2="42.5"/>';
-    const radKante = (x) =>
-      '<rect class="lc-lok-o-rad" x="' + (x - 5) + '" y="8.5" width="10" height="4.6" rx="1.4"/>'
-      + '<rect class="lc-lok-o-rad" x="' + (x - 5) + '" y="46.9" width="10" height="4.6" rx="1.4"/>';
-    return '<span class="lc-lok-oben">'
-      + '<svg class="lc-lok-o-form" viewBox="0 0 120 60" aria-hidden="true">'
-      /* Radkanten schauen unter den Laufblechen hervor. */
-      + radKante(30) + radKante(58) + radKante(86)
-      /* Laufbleche links und rechts. */
-      + '<rect class="lc-lok-o-blech" x="14" y="12" width="98" height="6.5" rx="1.6"/>'
-      + '<rect class="lc-lok-o-blech" x="14" y="41.5" width="98" height="6.5" rx="1.6"/>'
-      + '<line class="lc-lok-o-handlauf" x1="17" y1="15.2" x2="109" y2="15.2"/>'
-      + '<line class="lc-lok-o-handlauf" x1="17" y1="44.8" x2="109" y2="44.8"/>'
-      /* Der Kessel: ein liegendes Rohr. Oben die Lichtkante, unten der
-         Schatten — daran sieht das Auge, dass es rund ist. */
-      + '<rect class="lc-lok-o-kessel" x="42" y="16.5" width="70" height="27" rx="6.5"/>'
-      + '<rect class="lc-lok-o-glanz" x="44" y="21" width="66" height="5.4" rx="2.7"/>'
-      + '<rect class="lc-lok-o-schatten" x="44" y="35.2" width="66" height="4.6" rx="2.3"/>'
-      + band(62) + band(76) + band(90)
-      /* Pufferbohle ganz vorn, mit zwei Puffern. */
-      + '<rect class="lc-lok-o-bohle" x="112" y="14" width="6" height="32" rx="1.5"/>'
-      + '<circle class="lc-lok-o-puffer" cx="117" cy="20" r="2.6"/>'
-      + '<circle class="lc-lok-o-puffer" cx="117" cy="40" r="2.6"/>'
-      /* Die Esse — von oben sieht man in das Rohr hinein. */
-      + '<circle class="lc-lok-o-esse" cx="100" cy="30" r="7.4"/>'
-      + '<circle class="lc-lok-o-esseloch" cx="100" cy="30" r="4.6"/>'
-      /* Dampfdom und Sanddom aus Messing, mit einem Lichtpunkt. */
-      + '<circle class="lc-lok-o-dom" cx="80" cy="30" r="6.6"/>'
-      + '<circle class="lc-lok-o-domglanz" cx="78" cy="27.8" r="2.1"/>'
-      + '<circle class="lc-lok-o-dom" cx="66" cy="30" r="5.1"/>'
-      + '<circle class="lc-lok-o-domglanz" cx="64.6" cy="28.3" r="1.6"/>'
-      + '<rect class="lc-lok-o-pfeife" x="51" y="27.4" width="5" height="5.2" rx="1.4"/>'
-      /* Das Fuehrerhaus von oben: das gewoelbte Dach mit Luefter. */
-      + '<rect class="lc-lok-o-dach" x="12" y="9.5" width="32" height="41" rx="4"/>'
-      /* Das Dach ist QUER gewoelbt — der First laeuft also laengs, und
-         das Licht liegt auf ihm. Darauf sitzt der Dachluefter, wie bei
-         jeder Dampflok. */
-      + '<rect class="lc-lok-o-dachglanz" x="13" y="25" width="30" height="10" rx="5"/>'
-      + '<rect class="lc-lok-o-luefter" x="22" y="25.5" width="12" height="9" rx="1.8"/>'
-      + "</svg>"
-      /* Der Dampf steigt von oben gesehen als wachsender Ring auf. */
-      + '<i class="lc-lok-o-dampf"></i><i class="lc-lok-o-dampf lc-lok-o-dampf-2"></i>'
-      + '<span class="lc-lok-fenster lc-lok-fenster-oben"' + (quelle
-          ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
-        + ">" + (quelle ? "" : buchstabe) + "</span>"
-      + "</span>";
   }
 
   function lcLokFahrt(lok, reihe, rk, ab, zu, start, ende, dauer, hin, d, weg) {
@@ -41310,150 +41097,108 @@
     const pk = weg.map((p) => ({ x: p.x - rk.left, y: p.y - rk.top }));
     pk[0] = { x: start.x, y: start.y };
     pk[pk.length - 1] = { x: ende.x, y: ende.y };
-    const bahn = lcLokBahn(pk, d * 0.62);
-    const pt = bahn.pt, gesamt = bahn.gesamt;
+    let gesamt = 0;
+    const laengen = [];
+    for (let i = 1; i < pk.length; i++) {
+      const l = Math.hypot(pk[i].x - pk[i - 1].x, pk[i].y - pk[i - 1].y) || 1;
+      laengen.push(l); gesamt += l;
+    }
     const tAn = hin / dauer;
-
-    /* Wie die Seitenansicht schaut. LC_REISE_BLICK.lok ist -1, weil die
-       Zeichnung den Schornstein LINKS hat: ohne das fuhr die Lok
-       rueckwaerts — „Die Lok faehrt auch falsch rum." */
-    const blick = LC_REISE_BLICK.lok || -1;
-    const seitlich = (w) => {
-      const a = ((w % 360) + 360) % 360;
-      return a < 12 || a > 348 || Math.abs(a - 180) < 12;
-    };
-    const nachLinks = (w) => {
-      const a = ((w % 360) + 360) % 360;
-      return Math.abs(a - 180) < 90;
-    };
-    /* Im Bogen blendet die Seitenansicht aus und die Draufsicht ein.
-       Der Wechsel liegt in der Mitte des Bogens — dort ist die
-       Seitenansicht unsichtbar, und nur dort wird gespiegelt.
-       WICHTIG ist dabei, WOHER und WOHIN der Bogen fuehrt: eine Kurve
-       von der Waagerechten in die Senkrechte blendet die Seitenansicht
-       nur am ANFANG ein. Blendete sie am Ende wieder auf, faehre die
-       Lok senkrecht nach unten und waere dabei von der Seite zu
-       sehen — genau das sollte die Draufsicht ja abloesen. */
-    pt.forEach((q, i) => {
-      if (q.bogen < 0) return;
-      q.einSeit = i > 0 ? (pt[i - 1].einSeit !== undefined && pt[i - 1].bogen >= 0
-        ? pt[i - 1].einSeit : seitlich(pt[i - 1].winkel)) : true;
-      q.ausSeit = seitlich(q.winkel);
+    const bild = (q, t, sicht, sp, buehne) => ({
+      transform: "translate(" + (q.x - start.x).toFixed(1) + "px, "
+        + (q.y - start.y).toFixed(1) + "px) translate(-50%, -50%) scaleX("
+        + sp + ") scale(" + (sicht ? 1 : 0.3) + ")",
+      opacity: sicht ? 1 : 0,
+      offset: Math.max(0, Math.min(1, t))
     });
-    /* Der Ausgang des Bogens steht erst fest, wenn seine letzte
-       Station gelesen ist — darum rueckwaerts noch einmal darueber. */
-    for (let i = pt.length - 2; i >= 0; i--) {
-      if (pt[i].bogen >= 0 && pt[i + 1].bogen >= 0 && pt[i + 1].bogen > pt[i].bogen) {
-        pt[i].ausSeit = pt[i + 1].ausSeit;
-      }
+    const rahmen = [];
+    let sp = 1, weit = 0;
+    rahmen.push(bild(pk[0], 0, 0, sp));
+    rahmen.push(bild(pk[0], Math.min(0.1, tAn * 0.12), 1, sp));
+    const hebeZeiten = [];
+    for (let i = 1; i < pk.length; i++) {
+      const dx = pk[i].x - pk[i - 1].x;
+      const dy = pk[i].y - pk[i - 1].y;
+      /* Waagerecht: die Lok dreht sich in die Fahrtrichtung.
+         Senkrecht: sie behaelt ihre Richtung — auf einer
+         Schiebebuehne dreht sich nichts. */
+      if (Math.abs(dx) > 1 && Math.abs(dy) <= 4) sp = dx < 0 ? -1 : 1;
+      const vor = weit / gesamt;
+      weit += laengen[i - 1];
+      const t = tAn * (weit / gesamt);
+      if (Math.abs(dy) > 4) hebeZeiten.push([dauer * tAn * vor, dauer * (t - tAn * vor)]);
+      rahmen.push(bild(pk[i], t, 1, sp));
     }
-    const seiteKlar = (q) => {
-      if (q.bogen < 0) return seitlich(q.winkel) ? 1 : 0;
-      if (q.bogen < 0.34) return q.einSeit ? 1 - q.bogen / 0.34 : 0;
-      if (q.bogen > 0.66) return q.ausSeit ? (q.bogen - 0.66) / 0.34 : 0;
-      return 0;
-    };
-
-    const ort = (q) => "translate(" + (q.x - start.x).toFixed(1) + "px, "
-      + (q.y - start.y).toFixed(1) + "px) translate(-50%, -50%)";
-    const zeit = (q) => Math.max(0, Math.min(1, tAn * (q.s / gesamt)));
-    const auf = Math.max(0.004, Math.min(0.1, tAn * 0.12, zeit(pt[1] || pt[0]) * 0.6));
-
-    /* 1. DER WEG. Nur verschieben und am Anfang/Ende auftauchen. */
-    const rahmen = [
-      { transform: ort(pt[0]) + " scale(.3)", opacity: 0, offset: 0 },
-      { transform: ort(pt[0]) + " scale(1)", opacity: 1, offset: auf },
-    ];
-    pt.forEach((q, i) => {
-      if (i === 0) return;
-      rahmen.push({ transform: ort(q) + " scale(1)", opacity: 1,
-                    offset: Math.max(auf, zeit(q)) });
-    });
-    rahmen.push({ transform: ort(pt[pt.length - 1]) + " scale(.3)", opacity: 0, offset: 1 });
-
-    /* 2. DIE SEITENANSICHT: sichtbar auf den Geraden, gespiegelt in der
-       Mitte des Bogens — also unsichtbar. Kein Drehen auf der Stelle. */
-    const seiteEl = lok.querySelector(".lc-lok-seite");
-    const obenEl = lok.querySelector(".lc-lok-oben");
-    const seiteRahmen = [], obenRahmen = [];
-    let spur = nachLinks(pt[0].winkel) ? -blick : blick;
-    pt.forEach((q) => {
-      const t = Math.max(0, Math.min(1, zeit(q)));
-      const klar = seiteKlar(q);
-      /* Gespiegelt wird erst hinter der Mitte des Bogens. */
-      if (q.bogen < 0 || q.bogen > 0.5) spur = nachLinks(q.winkel) ? -blick : blick;
-      seiteRahmen.push({ opacity: klar, transform: "scaleX(" + spur + ")", offset: t });
-      obenRahmen.push({ opacity: 1 - klar,
-                        transform: "rotate(" + q.winkel.toFixed(1) + "deg)", offset: t });
-    });
-    /* Bis zum Schluss stehen lassen, sonst springt die Zeichnung am
-       Ende der Reise in ihre Grundstellung zurueck. */
-    const letztS = seiteRahmen[seiteRahmen.length - 1];
-    const letztO = obenRahmen[obenRahmen.length - 1];
-    if (letztS.offset < 1) {
-      seiteRahmen.push(Object.assign({}, letztS, { offset: 1 }));
-      obenRahmen.push(Object.assign({}, letztO, { offset: 1 }));
-    }
+    rahmen.push(bild(pk[pk.length - 1], 1, 0, sp));
     try {
       lok.animate(rahmen, { duration: dauer, easing: "linear", fill: "forwards" });
-      if (seiteEl) seiteEl.animate(seiteRahmen, { duration: dauer, easing: "linear", fill: "forwards" });
-      if (obenEl) obenEl.animate(obenRahmen, { duration: dauer, easing: "linear", fill: "forwards" });
     } catch (e) { return null; }
 
-    /* 3. DIE GLEISE — aus denselben Modulen, auf denen sie faehrt. */
-    const gleis = lcLokGleise(reihe, bahn, rk, d);
+    /* Die Gleise unter ihr. */
+    const gleis = lcLokGleise(reihe, pk, rk, d);
 
-    /* =================================================================
-       WER UEBERFAHREN WIRD
-       -----------------------------------------------------------------
-       XANDER: „aber trotzdem beim Ueberfahren der Person die Schreie
-       ausloesen, gemessen an ihrem Geschlecht, ob es ein Mann oder
-       eine Frau ist, und sie koennten dann auch vom Bild her
-       entsprechend geplaettet sein."
-       Getroffen ist, wessen Platzmitte nahe genug an der BAHN liegt —
-       nicht mehr nur auf den waagerechten Stuecken, denn jetzt liegen
-       auch in der Kurve und auf der Senkrechten Gleise. Gerechnet wird
-       der Lotfusspunkt auf jedes Teilstueck; daraus kommt der
-       zurueckgelegte Weg und damit der AUGENBLICK des Ueberfahrens.
-       Ob dort wirklich jemand sitzt, entscheidet sich erst dann.
-       ================================================================= */
-    const uhren = [];
-    const nah = d * 0.42;
-    gitter.forEach((g) => {
-      if (g.nr === ab.nr) return;
-      const gx = g.x - rk.left, gy = g.y - rk.top;
-      let beste = Infinity, besteS = 0;
-      for (let i = 1; i < pt.length; i++) {
-        const a = pt[i - 1], b = pt[i];
-        const dx = b.x - a.x, dy = b.y - a.y;
-        const ll = dx * dx + dy * dy;
-        let f = ll ? ((gx - a.x) * dx + (gy - a.y) * dy) / ll : 0;
-        f = Math.max(0, Math.min(1, f));
-        const px = a.x + dx * f, py = a.y + dy * f;
-        const ds = Math.hypot(gx - px, gy - py);
-        if (ds < beste) { beste = ds; besteS = a.s + (b.s - a.s) * f; }
-      }
-      if (beste > nah) return;
-      const wann = dauer * tAn * (besteS / gesamt);
-      uhren.push(setTimeout(() => {
-        if (!g.el.isConnected) return;
-        /* Erst JETZT entscheidet sich, ob dort jemand sitzt. */
-        if (g.el.classList.contains("lc-platz-frei")
-            || g.el.classList.contains("lc-platz-unterwegs")) return;
-        const k = g.el.querySelector(".lc-kreis");
-        if (k) {
-          k.classList.remove("lc-ueberfahren");
-          void k.offsetWidth;
-          k.classList.add("lc-ueberfahren");
-          setTimeout(() => k.classList.remove("lc-ueberfahren"), 900);
-        }
-        lcGeraeusch(lcSchmerzTon(g.el), "lokopfer", 0.5);
-      }, Math.max(0, wann)));
+    /* Die Schiebebuehne — sie ist nur da, wenn die Lok die Reihe
+       wechselt, und genau so lange. */
+    const buehne = document.createElement("span");
+    buehne.className = "lc-lok-buehne";
+    buehne.style.setProperty("--gross", (d * 1.5) + "px");
+    buehne.style.opacity = "0";
+    reihe.appendChild(buehne);
+    const buehneFolgen = [];
+    hebeZeiten.forEach(([abMs, langMs]) => {
+      buehneFolgen.push(setTimeout(() => {
+        buehne.style.opacity = "1";
+      }, Math.max(0, abMs - 120)));
+      buehneFolgen.push(setTimeout(() => {
+        buehne.style.opacity = "0";
+      }, Math.max(0, abMs + langMs + 120)));
     });
-    /* „buehne" bleibt in der Antwort, weil der Aufrufer sie aufraeumt —
-       eine Schiebebuehne gibt es aber nicht mehr: sie war der Ersatz
-       fuer die Kurve, und die Kurve ist jetzt da. */
-    return { gleis: gleis, buehne: null, uhren: uhren };
+    /* Sie haengt am selben Weg wie die Lok, nur ohne Spiegelung. */
+    try {
+      buehne.animate(rahmen.map((r) => ({
+        transform: r.transform.replace(/scaleX\([-\d.]+\)/, "scaleX(1)"),
+        offset: r.offset
+      })), { duration: dauer, easing: "linear", fill: "forwards" });
+    } catch (e) {}
+
+    /* WER UEBERFAHREN WIRD. Nur auf den waagerechten Stuecken, nur
+       wo wirklich jemand sitzt — und das wird im AUGENBLICK des
+       Ueberfahrens noch einmal nachgesehen. XANDER: „erst dann
+       ausgeloest werden, wenn ich ueber dieses Feld von demjenigen
+       fahre, wenn dort wirklich jemand sitzt … und nicht einfach
+       so." */
+    let stueck = 0;
+    for (let i = 1; i < pk.length; i++) {
+      const a = pk[i - 1], b = pk[i];
+      const vorher = stueck / gesamt;
+      stueck += laengen[i - 1];
+      const nachher = stueck / gesamt;
+      if (Math.abs(b.y - a.y) > 4) continue;
+      const spanne = b.x - a.x;
+      if (Math.abs(spanne) < 1) continue;
+      gitter.forEach((g) => {
+        const gx = g.x - rk.left, gy = g.y - rk.top;
+        if (g.nr === ab.nr || Math.abs(gy - a.y) > 6) return;
+        const f = (gx - a.x) / spanne;
+        if (f < 0 || f > 1) return;
+        const wann = dauer * tAn * (vorher + (nachher - vorher) * f);
+        setTimeout(() => {
+          if (!g.el.isConnected) return;
+          /* Erst JETZT entscheidet sich, ob dort jemand sitzt. */
+          if (g.el.classList.contains("lc-platz-frei")
+              || g.el.classList.contains("lc-platz-unterwegs")) return;
+          const k = g.el.querySelector(".lc-kreis");
+          if (k) {
+            k.classList.remove("lc-ueberfahren");
+            void k.offsetWidth;
+            k.classList.add("lc-ueberfahren");
+            setTimeout(() => k.classList.remove("lc-ueberfahren"), 900);
+          }
+          lcGeraeusch(lcSchmerzTon(g.el), "lokopfer", 0.5);
+        }, Math.max(0, wann));
+      });
+    }
+    return { gleis: gleis, buehne: buehne, uhren: buehneFolgen };
   }
 
   /* Eine Absage, die man auch sieht. Sie gehoert nicht in den Chat der

@@ -28740,13 +28740,7 @@ code, pre {
   position: absolute;
   pointer-events: none;
   overflow: visible;
-  /* RUNDE 88 — XANDER: „wenn Personen im Weg sind, dann werden die
-     Gleise unter der Person lang gezogen, so dass man in den
-     Zwischenraeumen von den Profilplaetzen die Gleise noch sieht."
-     Bei z-index 3 lagen sie darueber und malten quer ueber jedes
-     Gesicht. Die Plaetze stehen auf 1 — das Gleis gehoert also
-     darunter, und in den Luecken sieht man es trotzdem. */
-  z-index: 0;
+  z-index: 3;
   animation: lcLokGleisR85 .4s ease-out both;
 }
 @keyframes lcLokGleisR85 {
@@ -29467,105 +29461,4 @@ code, pre {
 }
 .slf-zelle-raus .slf-zellpunkte {
   font-style: italic; color: rgba(217, 79, 79, 0.95); opacity: 0.9;
-}
-
-/* =====================================================================
-   RUNDE 88 — DIE LOK IN DER KURVE
-   ---------------------------------------------------------------------
-   XANDER: „Die Lok dreht sich immer noch auf der Stelle. Bevor sie
-   zurueckfaehrt, dreht sie sich einmal rum … brauchst du ne Physik in
-   der Lokomotive, wo die Lok realistisch dreht an dem Eckpunkt … dass
-   sie, wenn sie nach unten faehrt, nur von oben zu sehen ist, von der
-   Draufsicht — da musst du eine Draufsicht generieren und denk dabei
-   an alles, an die Kessel und an die Esse."
-
-   Zwei Zeichnungen liegen genau uebereinander: die Seitenansicht und
-   die Draufsicht. Beide fuellen die Huelle vollstaendig aus, beide
-   drehen um ihre eigene Mitte. Welche man sieht, entscheidet die
-   Fahrt — nicht diese Datei.
-   ===================================================================== */
-.lc-lok-seite,
-.lc-lok-oben {
-  position: absolute;
-  inset: 0;
-  transform-origin: 50% 50%;
-  will-change: transform, opacity;
-}
-/* Die Draufsicht wartet unsichtbar, bis die erste Kurve kommt. */
-.lc-lok-oben { opacity: 0; }
-.lc-lok-o-form { width: 100%; height: 100%; overflow: visible; }
-
-/* Der Kessel als liegendes Rohr: dunkler Lack, oben die Lichtkante,
-   unten der Schatten — daran sieht das Auge, dass er rund ist. */
-.lc-lok-o-kessel   { fill: url(#lokLack); stroke: #04060a; stroke-width: 1.4; }
-.lc-lok-o-glanz    { fill: #4d5865; opacity: .5; }
-.lc-lok-o-schatten { fill: #020406; opacity: .6; }
-.lc-lok-o-band     { stroke: #e7bb4e; stroke-width: 2.2; stroke-linecap: round; }
-/* Die Laufbleche links und rechts, mit ihren Handlaeufen. */
-.lc-lok-o-blech    { fill: #2b3138; stroke: #04060a; stroke-width: .9; }
-.lc-lok-o-handlauf { stroke: #f0cf7a; stroke-width: 1.1; opacity: .85; }
-.lc-lok-o-rad      { fill: #2a2a2a; stroke: #6d1717; stroke-width: .8; }
-/* Die Pufferbohle ist rot, wie an der Seite auch. */
-.lc-lok-o-bohle    { fill: #8a1e1e; stroke: #4d1010; stroke-width: .9; }
-.lc-lok-o-puffer   { fill: #4a4a4a; stroke: #2a2a2a; stroke-width: 1; }
-/* Die Esse: von oben sieht man IN das Rohr hinein, deshalb der
-   dunkle Kreis im helleren Ring. */
-.lc-lok-o-esse     { fill: #2a3139; stroke: #04060a; stroke-width: 1.3; }
-.lc-lok-o-esseloch { fill: #05070a; }
-.lc-lok-o-dom      { fill: url(#lokGold); stroke: #6d5012; stroke-width: 1; }
-.lc-lok-o-domglanz { fill: #fff3cd; opacity: .9; }
-.lc-lok-o-pfeife   { fill: url(#lokGold); }
-/* Das gewoelbte Dach des Fuehrerhauses, mit Dachluefter und Grat. */
-.lc-lok-o-dach      { fill: #0c1014; stroke: #04060a; stroke-width: 1.4; }
-.lc-lok-o-dachglanz { fill: #39424c; opacity: .55; }
-.lc-lok-o-luefter   { fill: #1a1f25; stroke: #04060a; stroke-width: .9; }
-/* Der Dampf steigt von oben gesehen als wachsender Ring auf — man
-   schaut ja in die Saeule hinein, nicht von der Seite an ihr vorbei. */
-.lc-lok-o-dampf {
-  position: absolute;
-  left: 83.3%;
-  top: 50%;
-  width: 11%;
-  height: 22%;
-  transform: translate(-50%, -50%);
-  border: 2px solid rgba(232, 232, 232, .55);
-  border-radius: 50%;
-  animation: lcLokDampfOben 1.6s ease-out infinite;
-}
-.lc-lok-o-dampf-2 { animation-delay: .8s; }
-@keyframes lcLokDampfOben {
-  0%   { opacity: .7; transform: translate(-50%, -50%) scale(.5); }
-  100% { opacity: 0;  transform: translate(-50%, -50%) scale(2.6); }
-}
-/* Das Profilbild sitzt in der Dachluke — von oben schaut man in das
-   Fuehrerhaus hinein. */
-/* Genau auf die Dachluke: die reicht im Bild von x 22 bis 34 und von
-   y 25,5 bis 34,5 — Mitte also 23,3 % / 50 %. Die Verschiebung um die
-   halbe eigene Groesse erbt sie von .lc-lok-fenster; ein zusaetzlicher
-   Aussenabstand haette sie nach oben gezogen. */
-.lc-lok-fenster-oben {
-  left: 23.3%;
-  top: 50%;
-  width: 10%;
-  height: 15%;
-  border-radius: 3px;
-}
-
-/* Die Kurvenmodule. Die Schienen sind jetzt Pfade (Geraden UND
-   Viertelkreise), also brauchen sie ausdruecklich keine Fuellung.
-   Die Schwellen sind Linien: so lassen sie sich in der Kurve
-   strahlenfoermig vom Mittelpunkt weg legen — genau daran erkennt man
-   auf der Platte ein Bogenstueck. */
-.lc-lok-schiene {
-  fill: none;
-}
-.lc-lok-schwelle {
-  fill: none;
-  stroke: #6b4e2e;
-  stroke-width: 5;
-  stroke-linecap: butt;
-  opacity: .62;
-}
-@media (prefers-reduced-motion: reduce) {
-  .lc-lok-o-dampf { animation: none; opacity: 0; }
 }

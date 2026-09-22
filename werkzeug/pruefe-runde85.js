@@ -99,8 +99,11 @@ function tonDauer(name) {
       return { nr: +p.dataset.lcPlatz, x: r.left + r.width / 2, y: r.top + r.height / 2 };
     });
     return { bahn: bahn, pl: pl,
+             kreisR: document.querySelector(".lc-kreis").getBoundingClientRect().width / 2,
              schienen: document.querySelectorAll(".lc-lok-schiene").length,
              schwellen: document.querySelectorAll(".lc-lok-schwelle").length,
+             boegen: [...document.querySelectorAll(".lc-lok-schiene")]
+               .filter((q) => /A/.test(q.getAttribute("d") || "")).length,
              buehne: !!document.querySelector(".lc-lok-buehne") };
   });
   if (!lok) { sage(false, "die Lok liess sich nicht messen"); }
@@ -118,11 +121,30 @@ function tonDauer(name) {
       const g = lok.pl.find((p) => p.nr === nr);
       return Math.min(...lok.bahn.map((q) => Math.hypot(q[0] - g.x, q[1] - g.y)));
     });
-    sage(Math.max(...ueber) < 8, "und dabei wirklich ueber die Sitzfelder",
-      "groesster Abstand " + Math.max(...ueber).toFixed(1) + " px");
-    sage(lok.schienen >= 2 && lok.schwellen >= 8 && lok.buehne,
-      "auf Gleisen mit Schwellen, und die Schiebebuehne ist da",
-      lok.schienen + " Schienen, " + lok.schwellen + " Schwellen");
+    /* RUNDE 88 — FRUEHER STAND HIER „< 8 px", ALSO PRAKTISCH GENAU
+       DURCH DIE MITTE. Das ging nur, solange die Lok an der Ecke einen
+       rechten Winkel fuhr. Ein Kurvenmodul SCHNEIDET die Ecke — das
+       ist keine Ungenauigkeit, das ist der Sinn einer Kurve. Gefordert
+       ist deshalb jetzt, was Xander wirklich will: dass sie ueber das
+       Bild faehrt. Gemessen am Bild selbst, nicht an einer erfundenen
+       Zahl — der Abstand muss kleiner sein als die Haelfte des
+       Bildradius, die Lok laeuft also deutlich innerhalb des
+       Profilbildes. */
+    const grenze = lok.kreisR * 0.5;
+    sage(Math.max(...ueber) < grenze, "und dabei wirklich ueber die Sitzfelder",
+      "groesster Abstand " + Math.max(...ueber).toFixed(1) + " px bei Bildradius "
+        + lok.kreisR.toFixed(1) + " px (erlaubt bis " + grenze.toFixed(1) + ")");
+    /* RUNDE 88 — DIESE REGEL VERLANGTE DIE SCHIEBEBUEHNE. Die gibt es
+       nicht mehr, und das ist kein Rueckschritt: sie war der Ersatz
+       fuer die Kurve, die Xander seitdem ausdruecklich verlangt hat —
+       „dass die Gleise an den Eckpunkten, die ich einzeichne,
+       realistische Kurvenmodule haben wie bei einer Modelleisenbahn."
+       Die Regel prueft deshalb jetzt das Kurvenmodul statt der Buehne;
+       gemessen wird es in pruefe-runde88-lok.js im Einzelnen. */
+    sage(lok.schienen >= 2 && lok.schwellen >= 8 && lok.boegen >= 2 && !lok.buehne,
+      "auf Gleisen mit Schwellen, und an der Ecke liegt ein Kurvenmodul",
+      lok.schienen + " Schienen, " + lok.schwellen + " Schwellen, "
+        + lok.boegen + " Bogenschienen");
   }
   await new Promise((f) => setTimeout(f, 6000));
 

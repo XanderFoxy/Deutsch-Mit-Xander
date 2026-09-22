@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 88p — bei Stadt · Land · Fluss entscheidet jetzt der Spielfuehrer, ob ein Wort gilt.",
+  stand: "Runde 88q — die Lok dreht sich nicht mehr auf der Stelle, sie faehrt um echte Kurvenmodule.",
 
   inArbeit: [
-    { seit: "2026-09-22T17:50",
+    { seit: "2026-09-22T18:14",
       text: "Aufgabe-Modul: unklar, welches gemeint ist — Rueckfrage an Xander" },
-    { seit: "2026-09-22T17:50",
-      text: "Lok: Kurvenmodule, Draufsicht, Schrei beim Ueberfahren" },
-    { seit: "2026-09-22T17:50",
+    { seit: "2026-09-22T18:14",
       text: "Mario-Modus mit Muenzen und Punkten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T17:50",
-      text: "Stadt-Land-Fluss: der Spielfuehrer kann jedes Wort streichen oder gelten lassen" },
-    { seit: "2026-09-22T17:50",
-      text: "Ein gestrichenes Wort faellt fuer die ganze Spalte weg — wer allein uebrig bleibt, bekommt die 20 Punkte" },
-    { seit: "2026-09-22T17:50",
-      text: "Der Lehrer darf auch als Gast mitentscheiden; alle sehen dasselbe Blatt" },
+    { seit: "2026-09-22T18:14",
+      text: "Lok: Kurvenmodule an den Eckpunkten, wie bei einer Modelleisenbahn" },
+    { seit: "2026-09-22T18:14",
+      text: "Lok: Draufsicht mit Kessel, Esse und Doemen, wenn sie senkrecht faehrt — Nase voran, auch nach oben" },
+    { seit: "2026-09-22T18:14",
+      text: "Lok: kein Drehen auf der Stelle mehr; die Nase zeigt in die Fahrtrichtung" },
+    { seit: "2026-09-22T18:14",
+      text: "Lok: die Gleise liegen jetzt UNTER den Plaetzen und laufen unter den Personen durch" },
   ],
 };
