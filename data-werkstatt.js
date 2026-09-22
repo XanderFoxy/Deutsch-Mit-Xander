@@ -49,28 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 88n — das Fahrgeraeusch laeuft jetzt die ganze Fahrt: neuer Motor als nahtlose Schleife.",
+  stand: "Runde 88o — das Hineindrehen der Gluehbirne klingt jetzt nach Gewinde statt nach Motor.",
 
   inArbeit: [
-    { seit: "2026-09-22T17:34",
+    { seit: "2026-09-22T17:39",
       text: "Aufgabe-Modul: unklar, welches gemeint ist — Rueckfrage an Xander" },
-    { seit: "2026-09-22T17:34",
+    { seit: "2026-09-22T17:39",
       text: "Lok: Kurvenmodule, Draufsicht, Schrei beim Ueberfahren" },
-    { seit: "2026-09-22T17:34",
+    { seit: "2026-09-22T17:39",
       text: "Mario-Modus mit Muenzen und Punkten" },
-    { seit: "2026-09-22T17:34",
-      text: "Eigener Ton fuers Einschrauben der Birne" },
-    { seit: "2026-09-22T17:34",
+    { seit: "2026-09-22T17:39",
       text: "Stadt-Land-Fluss: Auswertung beim Spielfuehrer nachziehen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T17:34",
-      text: "Fahren: der Motor laeuft die ganze Fahrt, nicht nur eine Sekunde" },
-    { seit: "2026-09-22T17:34",
-      text: "Fahren: ton/fahrt.opus neu gerechnet als nahtlose Schleife (88 Zuendungen in 1,20 s)" },
-    { seit: "2026-09-22T17:34",
-      text: "Fahren: Anfang und Ende sind gleich laut — nichts pumpt mehr im Sekundentakt" },
+    { seit: "2026-09-22T17:39",
+      text: "Birne: das Hineindrehen hat einen eigenen, realistischen Drehsound" },
+    { seit: "2026-09-22T17:39",
+      text: "Birne: sechzehn Rucker, die dichter und lauter werden, je weiter sie hineingeht" },
+    { seit: "2026-09-22T17:39",
+      text: "Birne: Schwerpunkt von 674 auf 4764 Hz — Metall statt Brummen" },
   ],
 };

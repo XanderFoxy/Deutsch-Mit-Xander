@@ -25374,7 +25374,22 @@
        deren Energie bei etwa 5000 Hz, und so klingt eine Autobremse.
        „birnedrehen" ist selbst gebaut und trocken: drei Gruppen
        kurzer Kontakte (drei Vierteldrehungen) im Mittelbereich, dann
-       das Einrasten bei 2,22 s. Kein gehaltener hoher Ton. */
+       das Einrasten bei 2,22 s. Kein gehaltener hoher Ton.
+       RUNDE 88 — XANDER: „wenn man die Birne in die Fassung dreht
+       und somit das Licht [anmacht], hat man nicht denselben
+       Drehsound, den er hat, wenn man die Birne raus dreht. Wenn man
+       die Birne rein dreht, klingt [es] … nicht realistisch."
+       NACHGEMESSEN, und er hatte recht: die alte „birnedrehen"
+       (2,31 s) hatte ihren Schwerpunkt bei 674 Hz und stand fast
+       durchgehend bei -25 dB — ein tiefes Brummen ohne Luecken, also
+       ein Motor und kein Gewinde. Das HERAUSdrehen
+       („birneschrauben") liegt bei 5572 Hz und springt zwischen -10
+       und -60 dB: einzelne Schabgeraeusche mit Stille dazwischen.
+       Die Datei ist neu gerechnet (werkzeug/birnedrehen-bauen.py):
+       sechzehn Rucker eines Gewindes, die dichter, lauter und heller
+       werden, je weiter sie hineingeht — beim Herausdrehen ist es
+       umgekehrt. Gemessen jetzt 4764 Hz Schwerpunkt und 31 dB
+       Spanne statt 18. */
     gluehbirne:     { ton: "birnedrehen", dauer: 4000, laut: 0.62 },
     /* „vielleicht besser so ein pfeifen, wie man ne Frau auf der
        Strasse nach pfeift." (ton/boing gab es ohnehin nie.) */

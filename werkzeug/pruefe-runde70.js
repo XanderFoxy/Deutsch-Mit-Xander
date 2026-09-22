@@ -84,8 +84,12 @@ pruefe("Anspucken: ein Ekellaut statt des kurzen au",
 console.log("\nMANN UND FRAU");
 pruefe("Tarzan ruft verschieden",
   /lcStimmeZu\(ab\.el, "tarzanmann", "tarzanfrau", 260, 0\.75\)/.test(js));
+/* RUNDE 88 NACHGEFUEHRT: der Kussmund liegt nicht mehr bei 520 ms.
+   Seit die Animation nachgemessen wurde, kommt er bei 441 ms — dort
+   treffen die Lippen wirklich auf. Worum es dieser Regel geht, bleibt
+   dasselbe: Mann und Frau kuessen mit verschiedener Stimme. */
 pruefe("der Kuss auch",
-  /lcStimmeZu\(meiner, "kussmann", "kussfrau", 520, 0\.62\)/.test(js));
+  /lcStimmeZu\(meiner, "kussmann", "kussfrau", 441, 0\.62\)/.test(js));
 pruefe("und der Plan mischt sich beim Kuss nicht mehr ein",
   /kuss:\s+\{ still: true/.test(js)
   && /if \(plan && plan\.still\) return;/.test(js));
@@ -134,8 +138,14 @@ pruefe("Hammer: der Treffer bleibt, das Ausholen kommt dazu",
    Quietschen an der Birne. */
 pruefe("Gluehbirne: Gewinde statt Quietschen",
   /gluehbirne:\s+\{ ton: "birnedrehen"/.test(js));
+/* RUNDE 88 NACHGEFUEHRT: „katapult: 0" gibt es nicht mehr. Seit die
+   Animation in Runde 87 auf 3,6 s verlaengert wurde, schnellt der Arm
+   erst bei rund 1150 ms los, und der Ton wartet entsprechend
+   („katapult: 540" im Trefferplan). Worum es dieser Regel geht,
+   bleibt dasselbe: die Datei, die im Plan steht, liegt auch wirklich
+   da — vorher war das Katapult stumm. */
 pruefe("Katapult: die Aufnahme, die im Plan stand, liegt endlich da",
-  /katapult: 0,/.test(js) && da("katapult3"));
+  /katapult: *\{ ton: "katapult3"/.test(js) && da("katapult3"));
 /* RUNDE 72 NACHGEFUEHRT: der Einschlag liegt nicht bei 714 ms,
    sondern gemessen bei 656 ms (Bild fuer Bild im Browser verfolgt).
    Die 714 kamen aus „21 % von 3,4 s" — aber auf der Animation liegt
