@@ -298,8 +298,11 @@ pruefe("die Fluegel sitzen an der Schulter, nicht am Hinterteil",
   && !/transform-origin:70px 30px/.test(js));
 pruefe("die Blesse ist ein schmaler Streifen",
   /M119\.4 11\.4 Q124 10\.2 128\.4 12\.8/.test(js));
+/* RUNDE 80: der Rumpf ist neu gezeichnet — die Kruppe faellt jetzt
+   vom Widerrist (58|29) nach hinten auf (46|40) ab, also deutlicher
+   als vorher. Siehe pruefe-runde71 und pruefe-runde80. */
 pruefe("und die Kruppe faellt ab, statt eine Wurst zu sein",
-  /M40 44 Q40 33 56 31 L88 31/.test(js));
+  /M58 29 L88 29/.test(js) && /Q45 48 46 40 Q48 31 58 29 Z/.test(js));
 
 
 console.log("\nTEIL 5 — DAS FEUER UND DAS BLUT\n");

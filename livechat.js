@@ -1085,6 +1085,10 @@ window.LiveChat = (function () {
        und eine mit Zuendschnur." /bombe zaehlt Ziffern, /lunte brennt
        eine Schnur ab — zwei Befehle, zwei Geraeusche. */
     lunte:      { wirkung: "lunte",      satz: "z\u00fcndet eine Lunte bei", emoji: "\ud83e\udde8" },
+    /* RUNDE 80 — XANDER: „unter der Kategorie Bombe kannst du auch noch
+       ne Granate machen." Sie steht im Bomben-Untermenue und hat einen
+       eigenen Befehl, sonst waere sie gezeichnet, aber nicht aufrufbar. */
+    granate:    { wirkung: "granate",    satz: "wirft eine Granate auf", emoji: "\ud83e\uddaf" },
     streicheln: { wirkung: "streicheln", satz: "streichelt", emoji: "\ud83e\udef6" },
     kuss:       { wirkung: "kuss",       satz: "gibt einen Kuss", emoji: "\ud83d\udc8b" },
     /* RUNDE 65 — XANDER: „dass man ein Profilbild noch ein bisschen
@@ -8980,6 +8984,7 @@ window.LiveChat = (function () {
       was: "Sonnenbrille \u2014 sie schiebt sich aufs Gesicht, dann blitzt das Glas" },
     { gr: "reden", w: "bombe", kurz: "zisch", nutzt: "/bombe Name",     was: "Zeitbombe \u2014 3, 2, 1 und weg, nur Asche bleibt" },
     { gr: "reden", w: "lunte", kurz: "schnur", nutzt: "/lunte Name",    was: "Bombe mit Z\u00fcndschnur \u2014 sie brennt ab, dann knallt es" },
+    { gr: "reden", w: "granate", kurz: "handgranate", nutzt: "/granate Name", was: "Handgranate \u2014 der B\u00fcgel springt ab, der Z\u00fcnder zischt, dann knallt es" },
     { gr: "reden", w: "streicheln", kurz: "lieb", nutzt: "/streicheln Name", was: "Streicheln \u2014 sanft, mit Herzchen" },
     { gr: "reden", w: "kuss", kurz: "bussi",  nutzt: "/kuss Name",      was: "Kuss \u2014 der Abdruck bleibt kurz stehen" },
     { gr: "reden", w: "neunschwanz", kurz: "neunschwaenzig", nutzt: "/neunschwanz",

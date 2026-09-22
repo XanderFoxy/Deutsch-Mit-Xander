@@ -139,10 +139,17 @@ console.log("\nDAS PFERD IST EIN PONY GEWORDEN");
    40|44) und zieht sich unten ein (Zusatzpunkt 41|55). Alles
    andere am Pferd aus Runde 65 bleibt Strich fuer Strich stehen;
    die Regel prueft das an den Hinterbeinen mit. */
-pruefe("das alte Pferd ist zurueck, Rumpf kuerzer und Kruppe schraeg",
-  /lc-pferd-rumpf" d="M40 44 Q40 33 56 31 L88 31/.test(js)
-  && /Q46 62 41 55 Q38 50 40 44 Z/.test(js)
-  && /d="M60 64 L54 76 L60 86 L57 94"/.test(js)
+/* RUNDE 80 — XANDER: „Das Pferd hat immer noch hinten diese Wulst am
+   Koerper … achte dabei auf den Arsch, dass die Beine am Arsch sind,
+   und die Beine sind so komisch gefaltet wie so eine Ziehharmonika."
+   Rumpf und Beine sind deshalb neu gezeichnet. Was diese Regel meint,
+   bleibt richtig und wird weiter gemessen: der Rumpf ist kurz (nicht
+   das lange Pony von Runde 70), und die Kruppe faellt schraeg ab,
+   statt als Bogen mit gleichem Radius zu enden. Dazu jetzt das, was
+   Xander in Runde 80 verlangt hat — siehe pruefe-runde80. */
+pruefe("das Pferd hat einen kurzen Rumpf und eine abfallende Kruppe",
+  /lc-pferd-rumpf" d="M58 29 L88 29/.test(js)
+  && /Q54 63 49 56 Q45 48 46 40 Q48 31 58 29 Z/.test(js)
   && !/d="M40 56 Q38 42 58 39 L94 39/.test(js));
 pruefe("Hals und Kopf sind um dieselben 10 Einheiten mitgerueckt",
   /lc-pferd-hals" d="M94 38 Q106 30 110 16 L122 18/.test(js)

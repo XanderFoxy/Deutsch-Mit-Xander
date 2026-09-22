@@ -109,6 +109,13 @@ function tonMessen(name) {
   /* =================================================================
      2. DIE ZEICHNUNG — gerechnet, nicht angesehen
      ================================================================= */
+  /* „unter der Kategorie Bombe kannst du auch noch ne Granate machen." */
+  sage(fs.existsSync(path.join(WURZEL, "ton", "granate.opus")), "ton/granate.opus gibt es");
+  const gran = tonMessen("granate");
+  const knallBei = gran.huelle.indexOf(Math.max(...gran.huelle)) * 0.05;
+  sage(gran.dauer > 3 && knallBei > 1.5 && knallBei < 2.4,
+    "die Granate zischt und knallt dann bei " + knallBei.toFixed(2) + " s");
+
   console.log("\nZeichnung");
 
   /* „Bei den Armen, die einen umarmen … die haben immer noch ein
@@ -170,6 +177,52 @@ function tonMessen(name) {
      heissen … Dann sag lieber Gott und King Kong." */
   sage(/"Gott", "gotteshand"/.test(app) && /"King Kong", "pranke"/.test(app),
     "die Handkacheln heissen Gott und King Kong");
+
+  /* --- Die Bombe, die Granate und das Pferd ------------------------ */
+  console.log("\nBombe, Granate, Pferd");
+
+  /* „der Zeitzuender der Bombe soll bei der digitalen Uhr eigentlich
+     auch eine digitale Anzeige sein, die runterlaeuft." */
+  sage(/lc-bombe-anzeige/.test(app) && /lc-bombe-zehntel/.test(app),
+    "die digitale Bombe hat eine Anzeige, die in Zehntelsekunden laeuft");
+  sage(/for \(let t = 1; t <= 30; t\+\+\)/.test(app),
+    "und sie zaehlt dreissig Zehntel herunter, nicht drei Ziffern");
+
+  /* „Bei der analogen Bombe sind zwei Lunten da." */
+  sage(/\(lunte \? "" : '<span class="lc-bombe-schnur">/.test(app),
+    "die analoge Bombe hat nur noch EINE Zuendschnur");
+
+  /* „und am Ende hat man auch kein Aschehaeufchen." Gemessen war das
+     Haeufchen da, nur zu blass: 150|142|130 auf einem Grund von
+     246|241|231. Jetzt dunkler und groesser. */
+  sage(/\.lc-asche-punkt \{[\s\S]{0,240}?background: rgba\(104, 97, 86/.test(css)
+    && /\.lc-bombe-asche::before/.test(css),
+    "das Aschehaeufchen hebt sich vom hellen Grund ab");
+
+  /* „es soll hier auch nicht Buehne legen stehen, sondern Bombe legen." */
+  sage(/"Bombe legen", "bombe", "alle"/.test(app) && !/B\\u00fchne leeren/.test(app),
+    "die Kachel heisst „Bombe legen\u201c");
+  sage(/\["\\ud83e\\uddaf", "Granate",     "granate"\]\]\],/.test(app),
+    "die Granate steht im Bomben-Untermenue");
+
+  /* „Das Pferd hat immer noch hinten diese Wulst … die Beine sind so
+     komisch gefaltet wie so eine Ziehharmonika … achte auf den Arsch,
+     dass die Beine am Arsch sind."
+     Gemessen wird am Pfad: das Hinterbein setzt hinter x = 56 an
+     (das Hinterteil endet bei x = 45), und das VORDERBEIN weicht auf
+     seiner ganzen Laenge um hoechstens zwei Einheiten von der
+     Senkrechten ab — es ist also kein Zickzack mehr. */
+  const hinten = /lc-pferd-b1" d="M(\d+) /.exec(app);
+  sage(hinten && Number(hinten[1]) <= 52,
+    "das Hinterbein sitzt am Hinterteil (x = " + (hinten ? hinten[1] : "?") + ", Kruppe bei 45)");
+  const vorn = /lc-pferd-b2" d="M(\d+) \d+ L(\d+) \d+ L(\d+) \d+ L(\d+) /.exec(app);
+  if (!vorn) sage(false, "das Vorderbein liess sich nicht messen");
+  else {
+    const xs = [1, 2, 3, 4].map((i) => Number(vorn[i]));
+    const ausschlag = Math.max(...xs) - Math.min(...xs);
+    sage(ausschlag <= 3,
+      "das Vorderbein ist fast gerade: " + ausschlag + " Einheiten Ausschlag (vorher 6)");
+  }
 
   /* =================================================================
      3. DER BROWSER — Bahnen und Sitzplatz-Auszeichnung

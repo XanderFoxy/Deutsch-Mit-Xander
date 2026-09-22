@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 435 — Runde 80, zweiter Teil: Gong und Bongo sind dazugekommen, die Eierschalen laufen aussen spitz zu, der Katapult ist deutlich groesser, der Blubber-Strohhalm steckt im Glas, der Spuckball hat nur noch einen Ton, das Pusterohr sieht man auch beim Selbstbespucken, der Maulwurf klopft auch am Ziel, das Helikopterglas ist gewoelbt, die Handkacheln heissen Gott und King Kong — und das Profilbild bleibt bei JEDER Reise am Startplatz weg.",
+  stand: "Fassung 436 — Runde 80, dritter Teil: die Bombe hat eine echte digitale Anzeige, die in Zehntelsekunden herunterlaeuft, die analoge hat nur noch EINE Lunte, das Aschehaeufchen ist endlich zu sehen, es gibt eine Granate, die Kachel heisst „Bombe legen“ — und das Pferd hat neue Beine und ein neues Hinterteil.",
 
   inArbeit: [
-    { seit: "2026-09-22T01:16",
+    { seit: "2026-09-22T01:41",
       text: "Der Rest von Xanders Liste vom 22. September" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T01:16",
-      text: "Gong: haengende Bronzescheibe hinter dem Bild, Schlaegel trifft bei 333 ms, drei Klangringe, eigener Ton (3,60 s, zwoelf unharmonische Teiltoene);Bongo: zwei Faesser und zwei Haende, die abwechselnd schlagen, eigener Ton (2,40 s, fuenfzehn Schlaege);Befehle /gong und /bongo, beide auch im Trommel-Untermenue;Eierschalen: Bruchkante innen, runde Eispitze aussen (vorher genau verkehrt herum);Katapult 138 Prozent statt 78 Prozent der Bildbreite;Blubber-Strohhalm von right -6 Prozent auf right 20 Prozent — jetzt im Glas;Strohhalm-Seite: am linken Rand von rechts, auf Platz 3 und 4 von links;spuckkugel von 2,00 s auf 0,86 s — der zweite Laut war der Ekel, den die Stimme ohnehin spricht;Pusterohr auch am eigenen Platz sichtbar (lcBeimSchuetzen kann jetzt auchSelbst);erdeauf klingt auch am Ziel, wenn der Maulwurfhuegel dort aufbricht;Helikopterkanzel gewoelbt statt aus vier geraden Strecken, mit Spiegelung auf dem Glas;gemeinsame Reiseblende: das Bild am Startplatz bleibt bis zum Schluss weg (betraf Schiff, Lok, Flugzeug, Sprungfeder, Kran und alle anderen);Beamen, Roehre und Maulwurf einzeln nachgezogen;Pruefbuehne hat jetzt acht Plaetze (fuenf besetzt, drei frei) — ohne freien Platz konnte keine Sonde je eine Reise sehen;neue Sonde pruefe-runde80 mit 39 Regeln;alle 136 Sonden gruen" },
+    { seit: "2026-09-22T01:41",
+      text: "Digitale Bombe: schwarzes Feld mit rotem Siebensegment-Schein, 0:03.0 laeuft in Zehnteln herunter, Doppelpunkt blinkt im Sekundentakt;analoge Bombe: die zweite Zuendschnur aus Runde 19 faellt weg;Aschehaeufchen dunkler und groesser, dazu ein Schatten darunter — gemessen war es 150|142|130 auf 246|241|231, also unsichtbar;Granate: Ring ziehen, Buegel springt ab und trudelt weg, Zuender zischt, Knall bei 1,95 s, eigener Ton (3,20 s, selbst gerechnet);Befehl /granate und Kachel im Bomben-Untermenue;Kachel „Buehne leeren“ heisst jetzt „Bombe legen“;Pferd: Hinterbein sitzt bei x=49 statt x=52 (Kruppe endet bei 45), Vorderbein fast gerade (3 statt 6 Einheiten Ausschlag), Kruppe faellt von 58|29 auf 46|40 ab;Uebersicht aller sechs Pferdefassungen im Chat geschickt" },
   ],
 };

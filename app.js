@@ -24807,6 +24807,10 @@
        dem Piepton und war deshalb nicht zu hoeren; der Piepton ist
        jetzt weg, und der Knall darf der lauteste Punkt sein. */
     bombe:          { ton: "explosion2", dauer: 2600, laut: 0.9 },
+    /* RUNDE 80 — die Granate. Der Ton ist selbst gerechnet: Buegel bei
+       0,05 s, Zischen bis 1,90 s, Knall bei 1,95 s. Er faengt deshalb
+       ganz am Anfang an und braucht keinen Versatz. */
+    granate:        { ton: "granate", dauer: 3300, laut: 0.62 },
     /* RUNDE 71: die Zuendschnur prasselt bis zur Null (2100 ms) und
        hoert dann auf — danach knallt es ja. Die Aufnahme selbst ist
        7 s lang; was davon zu hoeren ist, sagt diese Dauer. Gespielt
@@ -26495,7 +26499,10 @@
        nichts. Jetzt stehen beide darunter, wie beim Strohhalm. */
     ["\ud83d\udca3", "Bombe",    "bombe", false,
       [["\u23f1\ufe0f", "Zeitz\u00fcnder", "bombe"],
-       ["\ud83e\uddf5", "Lunte",       "lunte"]]],
+       ["\ud83e\uddf5", "Lunte",       "lunte"],
+       /* RUNDE 80 — XANDER: „unter der Kategorie Bombe kannst du auch
+          noch ne Granate machen." */
+       ["\ud83e\uddaf", "Granate",     "granate"]]],
     ["\ud83e\udef6", "Streicheln", "streicheln"],
     ["\ud83d\udc8b", "Kuss",     "kuss"]
   ];
@@ -27220,7 +27227,9 @@
       ["\ud83e\udd17", "Umarmen", "drueck", "alle"],
       ["\ud83d\ude18", "K\u00fcssen", "kuss", "alle"],
       ["\ud83e\uddb6", "Treten", "tritt", "alle"],
-      ["\ud83d\udca5", "B\u00fchne leeren", "bombe", "alle"]
+      /* RUNDE 80 — XANDER: „es soll hier auch nicht Buehne legen
+         stehen, sondern Bombe legen." */
+      ["\ud83d\udca3", "Bombe legen", "bombe", "alle"]
     ]));
     /* Nur bei einem FREMDEN Platz: jemanden woanders hinsetzen. Bei
        sich selbst waere das /tausch, und den gibt es schon. Der Befehl
@@ -28960,6 +28969,7 @@
     sonnenbrille:{ zeichen: ["\ud83d\udd76\ufe0f"], wie: 5, klasse: "umarmen" },
     hut:        { zeichen: ["\ud83e\udd20"], wie: 5, klasse: "umarmen" },
     bombe:      { zeichen: ["\ud83d\udca3"], wie: 5, klasse: "umarmen" },
+    granate:    { zeichen: ["\ud83e\uddaf"], wie: 5, klasse: "umarmen" },
     lunte:      { zeichen: ["\ud83e\udde8"], wie: 5, klasse: "umarmen" },
     streicheln: { zeichen: ["\ud83e\udef6"], wie: 6, klasse: "herz" },
     kuss:       { zeichen: ["\ud83d\udc8b"], wie: 6, klasse: "herz" },
@@ -35643,28 +35653,51 @@
            Gesicht, mehr nicht. */
         + '<svg class="lc-pferd-form" viewBox="0 0 150 100" aria-hidden="true">'
         /* --- DIE BEINE DER FERNEN SEITE (dunkler, sie liegen hinten) --- */
+        /* RUNDE 80 — XANDER: „Das Pferd hat immer noch hinten diese
+           Wulst am Koerper … achte dabei auf den Arsch, dass die
+           Beine am Arsch sind, und die Beine sind so komisch
+           gefaltet wie so eine Ziehharmonika."
+
+           Drei Sachen, und alle drei stimmten:
+
+           · DIE ZIEHHARMONIKA. Vorder- und Hinterbein waren derselbe
+             Zickzack aus drei gleich langen Stuecken, die
+             abwechselnd um rund fuenf Einheiten nach links und
+             rechts sprangen (M52 62 L47 74 L52 84 L50 92). Ein
+             Faltenbalg sieht genau so aus. Ein Pferdebein nicht:
+             das VORDERBEIN ist fast gerade — Schulter, Vorderfusswurzel
+             (nur eine Andeutung), Fessel —, und nur das HINTERBEIN
+             hat einen echten Knick, naemlich das Sprunggelenk, und
+             das zeigt nach HINTEN, nicht abwechselnd.
+
+           · DIE BEINE SITZEN NICHT AM HINTERTEIL. Die Hinterbeine
+             hingen bei x = 52 und 60, das Hinterteil endet aber bei
+             x = 44. Sie standen also zwoelf bis sechzehn Einheiten
+             VOR der Kruppe, mitten unter dem Bauch. Jetzt setzen sie
+             bei 49 und 55 an, also wirklich unter dem Hinterteil.
+
+           · DIE WULST. Die Kruppe war ein Bogen mit oben und unten
+             demselben Radius — ein Wurstende. Bei einem Pferd
+             FAELLT die Kruppe vom Widerrist nach hinten ab, das
+             Gesaess steht darunter heraus und darunter zieht sich
+             die Hinterhand wieder ein. Genau diese drei Abschnitte
+             stehen jetzt in der Linie. */
+        /* --- DIE BEINE DER FERNEN SEITE (dunkler, sie liegen hinten) --- */
         + '<g class="lc-pferd-fern">'
-        + '<path class="lc-pferd-bein lc-pferd-b1" d="M52 62 L47 74 L52 84 L50 92"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h1" d="M50 92 L56 93"/>'
-        + '<path class="lc-pferd-bein lc-pferd-b2" d="M96 62 L102 73 L97 83 L100 92"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h2" d="M100 92 L106 93"/>'
+        /* Hinterbein: Oberschenkel nach vorn-unten, Sprunggelenk nach
+           HINTEN, dann gerade herunter. Ein Knick, kein Zickzack. */
+        + '<path class="lc-pferd-bein lc-pferd-b1" d="M49 56 L55 70 L46 80 L48 92"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h1" d="M48 92 L54 93"/>'
+        /* Vorderbein: fast gerade, nur die Fessel setzt einen Grad ab. */
+        + '<path class="lc-pferd-bein lc-pferd-b2" d="M96 60 L98 74 L97 86 L99 92"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h2" d="M99 92 L105 93"/>'
         + "</g>"
-        /* --- DER SCHWEIF, hinter der Kruppe --- */
-        + '<path class="lc-pferd-schweif" d="M40 44 Q20 44 12 62 Q10 72 16 78'
-        + ' Q16 66 24 58 Q32 50 42 50 Z"/>'
-        /* --- DER RUMPF: Brust vorn hoch, Kruppe hinten rund --- */
-        /* RUNDE 73 — XANDER: „und das Hinterteil soll nicht so
-           wurstig sein."
-           GEMESSEN: die Kruppe (links, denn der Kopf steht rechts)
-           lief von x=38 bis x=56 als EIN runder Bogen mit gleichem
-           Radius oben wie unten — daher der Wurstzipfel. Bei einem
-           Pferd faellt die Kruppe von oben schraeg nach hinten ab,
-           und darunter zieht sich die Hinterhand ein. Jetzt genau
-           das: oben ein flacher Abfall (38|44 statt 38|48), unten
-           eine Einziehung bei 46|60. Der Rest bleibt unangetastet. */
-        + '<path class="lc-pferd-rumpf" d="M40 44 Q40 33 56 31 L88 31'
-        + ' Q104 33 108 46 Q110 58 96 64 L58 64 Q46 62 41 55 Q38 50 40 44 Z"/>'
-        /* Die Schulter- und Flankenlinie — ohne sie ist es ein Sack. */
+        /* --- DER SCHWEIF, oben auf der abfallenden Kruppe --- */
+        + '<path class="lc-pferd-schweif" d="M46 38 Q24 40 14 58 Q11 69 17 76'
+        + ' Q18 63 26 54 Q35 45 47 44 Z"/>'
+        /* --- DER RUMPF --- */
+        + '<path class="lc-pferd-rumpf" d="M58 29 L88 29 Q104 31 108 44'
+        + ' Q110 56 96 62 L66 63 Q54 63 49 56 Q45 48 46 40 Q48 31 58 29 Z"/>'
         + '<path class="lc-pferd-linie" d="M58 33 Q54 48 58 62 M90 34 Q96 48 92 63"/>'
         /* --- HALS UND KOPF --- */
         + '<path class="lc-pferd-hals" d="M94 38 Q106 30 110 16 L122 18'
@@ -35699,14 +35732,17 @@
         + '<path class="lc-pferd-zug" d="M112 19 Q117 22 124 23 M128 24 Q131 25 133 24'
         + ' M115 12.5 Q118 10.6 121.6 11"/>'
         /* --- DIE BEINE DER NAHEN SEITE --- */
-        + '<path class="lc-pferd-bein lc-pferd-b3" d="M60 64 L54 76 L60 86 L57 94"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h3" d="M57 94 L64 95"/>'
-        + '<path class="lc-pferd-bein lc-pferd-b4" d="M90 64 L97 75 L91 85 L95 94"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h4" d="M95 94 L102 95"/>'
+        /* Dasselbe noch einmal fuer die nahe Seite, einen Schritt
+           versetzt: hinten der Sprunggelenkknick nach hinten, vorn
+           ein beinahe gerades Bein. */
+        + '<path class="lc-pferd-bein lc-pferd-b3" d="M55 58 L62 72 L53 82 L55 94"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h3" d="M55 94 L62 95"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b4" d="M91 62 L93 76 L92 88 L94 94"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h4" d="M94 94 L101 95"/>'
         /* --- SATTEL UND GURT --- */
-        + '<path class="lc-pferd-sattel" d="M66 32 Q80 25 94 32 L94 40'
-        + ' Q80 34 66 40 Z"/>'
-        + '<path class="lc-pferd-gurt" d="M76 34 L74 63 M88 34 L90 63"/>'
+        + '<path class="lc-pferd-sattel" d="M66 30 Q80 23 94 30 L94 38'
+        + ' Q80 32 66 38 Z"/>'
+        + '<path class="lc-pferd-gurt" d="M76 32 L75 62 M88 32 L90 62"/>'
         + "</svg>"
         + '<span class="lc-pferd-reiter"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
@@ -40052,22 +40088,59 @@
            sein." Kein Piepsen; das gehoert zur digitalen Fassung. */
         lcTonSpaeter("lunte", 0, 0.6);
       } else {
-        blende.innerHTML = '<span class="lc-bombe-zahl">3</span>'
-                         + '<span class="lc-bombe-blitz"></span>';
-        const zahl = blende.querySelector(".lc-bombe-zahl");
-        [2, 1, 0].forEach((z, i) => setTimeout(() => {
-          if (!zahl.isConnected) return;
-          zahl.textContent = z === 0 ? "\ud83d\udca5" : String(z);
-          zahl.classList.remove("lc-bombe-tick");
-          void zahl.offsetWidth;
-          zahl.classList.add("lc-bombe-tick");
+        /* RUNDE 80 — XANDER: „der Zeitzuender der Bombe soll bei der
+           digitalen Uhr eigentlich auch eine digitale Anzeige sein,
+           die runterlaeuft."
+
+           Bisher stand da eine einzelne grosse Ziffer, die dreimal
+           wechselte — das ist eine Zahl, keine Anzeige. Jetzt ist es
+           ein richtiges Zeitzuender-Display: schwarzes Feld, roter
+           Siebensegment-Schein, und es laeuft in ZEHNTELSEKUNDEN
+           herunter (0:03.0 … 0:00.0), so wie man das von einer
+           Zeitschaltuhr kennt. Der Doppelpunkt blinkt im Sekundentakt.
+           Die Ziffer, die am Ende explodiert, bleibt: bei 0:00.0
+           springt die Anzeige auf das Blitzzeichen um. */
+        blende.innerHTML =
+          '<span class="lc-bombe-anzeige">'
+          + '<i class="lc-bombe-feld">'
+          + '<b class="lc-bombe-min">0</b>'
+          + '<b class="lc-bombe-doppel">:</b>'
+          + '<b class="lc-bombe-sek">03</b>'
+          + '<b class="lc-bombe-punkt">.</b>'
+          + '<b class="lc-bombe-zehntel">0</b>'
+          + "</i></span>"
+          + '<span class="lc-bombe-blitz"></span>';
+        const anzeige = blende.querySelector(".lc-bombe-anzeige");
+        const feldSek = blende.querySelector(".lc-bombe-sek");
+        const feldZeh = blende.querySelector(".lc-bombe-zehntel");
+        /* Dreissig Zehntel, also genau die drei Sekunden, die der
+           Countdown vorher auch hatte. */
+        for (let t = 1; t <= 30; t++) {
+          setTimeout(() => {
+            if (!anzeige.isConnected) return;
+            const rest = 30 - t;
+            feldSek.textContent = String(Math.floor(rest / 10)).padStart(2, "0");
+            feldZeh.textContent = String(rest % 10);
+            if (rest % 10 === 0 && rest > 0) {
+              anzeige.classList.remove("lc-bombe-tick");
+              void anzeige.offsetWidth;
+              anzeige.classList.add("lc-bombe-tick");
+              lcTonSpaeter("ticken", 0, 0.62);
+            }
+          }, 700 + t * 100);
+        }
+        [0].forEach((z, i) => setTimeout(() => {
+          if (!anzeige.isConnected) return;
+          anzeige.innerHTML = '<i class="lc-bombe-feld lc-bombe-knall">\ud83d\udca5</i>';
+          anzeige.classList.remove("lc-bombe-tick");
+          void anzeige.offsetWidth;
+          anzeige.classList.add("lc-bombe-tick");
           /* RUNDE 72: hier stand lcTonZu("ticken") — und die Datei
              „ticken" gab es ueberhaupt nicht im Ordner. Der Countdown
              war deshalb stumm. Sie ist jetzt da (0,10 s, ein
              trockener Piep) und wird direkt gelegt, weil „ticken"
              kein Plan-Eintrag ist. */
-          if (z !== 0) lcTonSpaeter("ticken", 0, 0.62);
-        }, 700 + i * 700));
+        }, 700 + 3000 + i * 700));
         /* RUNDE 72 — XANDER: „der lange Piepton ist immer noch da,
            immer noch ohne Explosionsknall, und dauert viel zu lang."
            NACHGEMESSEN, und das erklaert beides auf einmal:
@@ -40155,8 +40228,17 @@
           + "--hell:" + (0.45 + Math.random() * 0.45).toFixed(2)
           + '"></i>';
       }
+      /* RUNDE 80 — XANDER: „Bei der analogen Bombe sind zwei Lunten da."
+         GEMESSEN: es waren wirklich zwei. Die eine ist
+         „lc-lunte-schnur" (seit Runde 56, sie brennt ab und wird
+         dabei kuerzer, mit einem Funken am Ende). Die andere ist
+         „lc-bombe-schnur" aus Runde 19 — die alte Zuendschnur, die
+         nie entfernt wurde und einfach ueber dem Bild mitlief.
+         Sie faellt jetzt weg, und zwar NUR bei der analogen Fassung;
+         die digitale hat gar keine Lunte, dort war sie das einzige
+         Zeichen, dass da etwas brennt, und bleibt deshalb stehen. */
       schicht.insertAdjacentHTML("beforeend",
-        '<span class="lc-bombe-schnur"><i></i></span>'
+        (lunte ? "" : '<span class="lc-bombe-schnur"><i></i></span>')
         + '<span class="lc-bombe-asche">' + asche + "</span>");
       for (let f = 0; f < 14; f++) {
         const sp = document.createElement("i");
@@ -40186,6 +40268,90 @@
         } catch (e) {}
       }, 3100);
     }, 4600, "bombe");
+  }
+
+  /* --- DIE GRANATE ---------------------------------------------------
+     RUNDE 80 — XANDER: „unter der Kategorie Bombe kannst du auch noch
+     ne Granate machen."
+
+     Sie gehoert zur Bombe, ist aber etwas anderes als eine Zeitbombe:
+     kein Countdown, sondern der Ablauf, den jeder kennt — der Ring
+     wird gezogen, der BUEGEL springt ab und fliegt weg, der Zuender
+     zischt zwei Sekunden, und dann geht sie hoch. Genau diese drei
+     Schritte sind gezeichnet, und der Ton (ton/granate, selbst
+     gerechnet) hat dieselben drei: Schnalzer bei 0,05 s, Zischen bis
+     1,90 s, Knall bei 1,95 s.
+
+     Was danach passiert, ist dasselbe wie bei der Bombe — Blitz,
+     Splitter, Aschehaufen —, deshalb laufen hier dieselben Bausteine. */
+  function lcGranate(wen) {
+    return lcAmPlatz(wen, "lc-bombe lc-granate", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      const blende = lcZpBlende(schicht);
+      blende.innerHTML =
+        '<span class="lc-granate-koerper">'
+        + '<svg viewBox="0 0 60 84">'
+        + '<defs><linearGradient id="lcGranGruen" x1="0" y1="0" x2="1" y2="0">'
+        + '<stop offset="0" stop-color="#5c6b3a"/>'
+        + '<stop offset="0.45" stop-color="#3f4a25"/>'
+        + '<stop offset="1" stop-color="#2a3118"/></linearGradient></defs>'
+        /* Der Koerper: eifoermig, oben schmaler. */
+        + '<path d="M30 20 C44 20 52 32 52 50 C52 68 43 80 30 80'
+        + ' C17 80 8 68 8 50 C8 32 16 20 30 20 Z" fill="url(#lcGranGruen)"'
+        + ' stroke="#1e2411" stroke-width="2"/>'
+        /* Die Rillen — daran erkennt man eine Splittergranate. */
+        + '<path d="M11 38 H49 M9 50 H51 M11 62 H49" stroke="#232a13"'
+        + ' stroke-width="2" opacity=".75"/>'
+        + '<path d="M22 22 V79 M38 22 V79" stroke="#232a13"'
+        + ' stroke-width="2" opacity=".55"/>'
+        /* Der Zuenderkopf oben. */
+        + '<rect x="21" y="9" width="18" height="13" rx="3" fill="#6b6152"'
+        + ' stroke="#3a342a" stroke-width="2"/>'
+        + "</svg></span>"
+        /* Der Buegel, der abspringt, und der Ring, an dem gezogen wird. */
+        + '<span class="lc-granate-buegel">'
+        + '<svg viewBox="0 0 34 60">'
+        + '<path d="M17 4 L17 52" stroke="#b9bec6" stroke-width="7" stroke-linecap="round"/>'
+        + '<path d="M17 6 Q30 14 27 34" fill="none" stroke="#d6dae0" stroke-width="4"/>'
+        + "</svg></span>"
+        + '<span class="lc-granate-ring">'
+        + '<svg viewBox="0 0 30 30"><circle cx="15" cy="15" r="10" fill="none"'
+        + ' stroke="#c7ccd3" stroke-width="4"/></svg></span>'
+        /* Das Zischen des Zuenders. */
+        + '<span class="lc-granate-funke"></span>'
+        + '<span class="lc-bombe-blitz"></span>';
+      /* Der Aschehaufen und die Splitter: dieselben wie bei der Bombe,
+         damit Granate und Bombe dasselbe hinterlassen. */
+      let asche = "";
+      for (let a = 0; a < 70; a++) {
+        const glocke = (Math.random() + Math.random() + Math.random()) / 3;
+        const GIPFEL = 0.34;
+        let x = GIPFEL + (glocke - 0.5) * 1.9 * (glocke > 0.5 ? 3 : 1) * 0.5;
+        x = Math.max(0.02, Math.min(0.98, x));
+        asche += '<i class="lc-asche-punkt" style="left:' + (x * 100).toFixed(1) + "%;"
+          + "--gross:" + (0.4 + Math.random() * 1.2).toFixed(2) + ";"
+          + "--liegt:" + (Math.random() * 7).toFixed(1) + "%;"
+          + "--weht:" + (4 + Math.random() * 10).toFixed(0) + "px;"
+          + "--faellt:" + (0.1 + Math.random() * 0.5).toFixed(2) + "s;"
+          + "--hell:" + (0.45 + Math.random() * 0.45).toFixed(2)
+          + '"></i>';
+      }
+      schicht.insertAdjacentHTML("beforeend",
+        '<span class="lc-bombe-asche">' + asche + "</span>");
+      for (let f = 0; f < 14; f++) {
+        const sp = document.createElement("i");
+        sp.className = "lc-bombe-splitter";
+        sp.style.setProperty("--wo", (f * (360 / 14)) + "deg");
+        sp.style.setProperty("--gross", (0.6 + Math.random()).toFixed(2));
+        schicht.appendChild(sp);
+      }
+      if (kreis) {
+        kreis.classList.remove("lc-gesprengt");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gesprengt");
+        setTimeout(() => kreis.classList.remove("lc-gesprengt"), 4600);
+      }
+    }, 4600, "granate");
   }
 
   /* --- STREICHELN ------------------------------------------------------
@@ -41984,6 +42150,7 @@
       if (art === "hut" && lcHut(wenZ)) return;
       if (art === "sonnenbrille" && lcSonnenbrille(wenZ)) return;
       if (art === "bombe" && lcBombe(wenZ, false)) return;
+      if (art === "granate" && lcGranate(wenZ)) return;
       if (art === "lunte" && lcBombe(wenZ, true)) return;
       if (art === "streicheln" && lcStreicheln(wenZ)) return;
       if (art === "kuss" && lcKuss(wenZ)) return;
