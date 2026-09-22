@@ -110,6 +110,32 @@ zu beeinflussen. Ein Rollen der Seite schließt **nicht**.
 
 **Sonde:** `werkzeug/pruefe-runde88-panels.js`
 
+## 8. Jedes Feld, das ein Effekt liest, muss auch ankommen
+
+In `livechat.js` entscheidet **eine** Liste — `ZUSATZ_FELDER` —, welche
+Zusatzfelder eine Chatzeile behält. `anAlle()` schickt zwar alles über die
+Leitung, aber `zusatzUebernehmen()` lässt nur durch, was in dieser Liste
+steht — auf dem eigenen Gerät genauso wie beim Empfänger. Was fehlt, fällt
+still weg, und der Effekt bekommt einen leeren Wert.
+
+So war „ich kann mich immer noch nicht anziehen" kein Zeichenfehler,
+sondern ein fehlendes `stueck`.
+
+**Sonde:** `werkzeug/pruefe-zusatzfelder.js` — sie liest aus `app.js` jedes
+`nachricht.<feld>` heraus und vergleicht es mit der Liste.
+
+## 9. Keine Abzweigung hinter ihrer Tabelle
+
+`befehlAusfuehren()` hat grosse Tabellen (`AM_PLATZ`, `AUCH_AM_PLATZ`,
+`WETTER`), die ein Wort mit einem Standardsatz erledigen. Ein Spezialfall
+für dasselbe Wort muss **davor** stehen, sonst kommt er nie dran — und von
+aussen sieht man nur, dass der Befehl etwas Falsches tut.
+
+So waren `/kopfhoerer Name Lied` (470 Zeilen zu spät) und
+`/ballonpumpe Name helium` (380 Zeilen zu spät) monatelang unerreichbar.
+
+**Sonde:** `werkzeug/pruefe-befehlsreihenfolge.js`
+
 ---
 
 ## Vor jedem Hochladen

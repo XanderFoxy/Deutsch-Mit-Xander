@@ -49,32 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 89b — fuenf Felder fehlten in der Leitung: Anziehen, Ballon, Songausschnitt, Heben, Tausch.",
+  stand: "Runde 89c — zwei neue Waechter: kein Feld faellt mehr weg, keine Abzweigung steht mehr hinter ihrer Tabelle.",
 
   inArbeit: [
-    { seit: "2026-09-22T20:31",
-      text: "Glitches am verlassenen Platz — Sonde laeuft mit den Ausnahmen neu durch" },
-    { seit: "2026-09-22T20:31",
+    { seit: "2026-09-22T20:33",
+      text: "Glitches am verlassenen Platz — Sonde laeuft durch" },
+    { seit: "2026-09-22T20:33",
       text: "Uebersicht aller Wuensche aus dem Verlauf — wird aus den Sonden gebaut" },
-    { seit: "2026-09-22T20:31",
+    { seit: "2026-09-22T20:33",
       text: "Frosch, Pferd, Lok, Helikopter, Fahrstuhl, Adler" },
-    { seit: "2026-09-22T20:31",
+    { seit: "2026-09-22T20:33",
       text: "Haende: greifende Hand, King Kong behaart, Kralle" },
-    { seit: "2026-09-22T20:31",
+    { seit: "2026-09-22T20:33",
       text: "Hammer: demolieren in Stufen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T20:31",
-      text: "Anziehen/Ausziehen: das Kleidungsstueck kam nie an — jetzt liegt es wirklich auf dem Platz" },
-    { seit: "2026-09-22T20:31",
-      text: "Luftballon: die Helium-Variante war ueberhaupt nicht erreichbar, jetzt schon" },
-    { seit: "2026-09-22T20:31",
-      text: "/ballonpumpe und /aufblasen ohne Namen treffen mich selbst" },
-    { seit: "2026-09-22T20:31",
-      text: "Songausschnitt: das ENDE fuhr nicht mit, der Ausschnitt lief bis zum Liedschluss" },
-    { seit: "2026-09-22T20:31",
-      text: "Heben und Platztausch: Zielplatz und Tauschmarke kamen nicht an" },
+    { seit: "2026-09-22T20:33",
+      text: "pruefe-zusatzfelder.js: jedes Feld, das ein Effekt liest, muss auch ankommen" },
+    { seit: "2026-09-22T20:33",
+      text: "pruefe-befehlsreihenfolge.js: kein Spezialfall darf hinter seiner Tabelle stehen" },
+    { seit: "2026-09-22T20:33",
+      text: "werkzeug/animations-regeln.md: die Regel fuer jede kuenftige Animation, mit Sonde zu jeder Zeile" },
   ],
 };
