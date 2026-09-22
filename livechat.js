@@ -8964,6 +8964,9 @@ window.LiveChat = (function () {
     { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name 3 1:20-1:50", was: "Kopfhoerer — aufgesetzt; mit Liednummer hoert der andere das Lied, mit Zeitangabe nur diesen Ausschnitt" },
     { gr: "reden", w: "musik", kurz: "lied", nutzt: "/musik 3", was: "Musik fuer alle aus dem Musikordner — /musik zeigt die Liste, /musik aus haelt an" },
     /* RUNDE 76 — XANDER: „Musik teilen mit YouTube." */
+    /* RUNDE 86 — XANDER: „ich moechte, dass wir eine Spruehdose haben". */
+    { gr: "reden", w: "spray", kurz: "spruehen", nutzt: "/spray Name",
+      was: "Spr\u00fchdose \u2014 spr\u00fcht jemandem ein Gesicht aufs Profilbild; /spray Name traurig oder /spray Name herz f\u00fcr ein Bild" },
     /* RUNDE 76 — XANDER: „Telefon mit Audio". */
     { gr: "reden", w: "telefon", kurz: "anrufen", nutzt: "/telefon Name",
       was: "jemanden anrufen \u2014 es klingelt bei ihm, und wenn abgehoben ist, h\u00e4ngt die Schnur zwischen euch" },
@@ -11198,6 +11201,43 @@ window.LiveChat = (function () {
       return anAlle("aktion", zustand.ichName + " legt \u201e" + liedM.titel + "\u201c auf  \ud83c\udfb5",
                     { wirkung: "musik", lied: liedM.datei, liedTitel: liedM.titel });
     }
+    /* ---- DIE SPRUEHDOSE ----
+       RUNDE 86 — XANDER: „ich moechte, dass wir eine Spruehdose
+       haben. Zum einen soll sie dem anderen ein Smiley aufspruehen,
+       und man soll waehlen koennen zwischen einem lachenden und einem
+       traurigen … und dass man ein Bild seiner Wahl darauf spruehen
+       kann."
+         /spray Bea            spruecht ein lachendes Gesicht
+         /spray Bea traurig    spruecht ein trauriges
+         /spray Bea herz       spruecht einen Aufkleber
+       Welche Aufkleber es gibt, zeigt der Befehl ohne Zusatz. */
+    if (art === "spray") {
+      var AUFKLEBER = ["herz", "stern", "feuer", "regenbogen", "blume", "fuchs",
+                       "sonne", "schnee", "regen", "katze", "musik", "party",
+                       "pokal", "idee", "kaffee", "glocke", "daumen", "lachen",
+                       "traurig", "weinen", "staunen", "denken", "schlafen"];
+      var teileS = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
+      if (!teileS.length) {
+        return systemZeile("Spr\u00fchdose:\n"
+          + "  /spray Name              ein lachendes Gesicht\n"
+          + "  /spray Name traurig      ein trauriges Gesicht\n"
+          + "  /spray Name <Bild>       " + AUFKLEBER.slice(0, 8).join(", ") + " \u2026");
+      }
+      var letztesS = String(teileS[teileS.length - 1]).toLowerCase();
+      var istWahl = /^(froh|happy|lachen|traurig|sad|schade|weinen)$/.test(letztesS)
+        || AUFKLEBER.indexOf(letztesS) >= 0;
+      var wasS = istWahl ? letztesS : "froh";
+      if (istWahl) teileS.pop();
+      var namenS = teileS.join(" ").trim();
+      if (!namenS) return systemZeile("Wem denn?  So geht es:  /spray Nickname " + wasS);
+      var wemS = personNachName(namenS) || praesenzNachName(namenS) || { name: namenS };
+      var wortS = /^(traurig|sad|schade|weinen)$/.test(wasS) ? "ein trauriges Gesicht"
+        : /^(froh|happy|lachen)$/.test(wasS) ? "ein lachendes Gesicht"
+        : "\u201e" + wasS + "\u201c";
+      return anAlle("aktion", zustand.ichName + " spr\u00fcht " + wemS.name + " "
+        + wortS + " aufs Bild  \ud83c\udfa8",
+        { wirkung: "spray", wen: wemS.name, stueck: wasS });
+    }
     /* ---- DAS TELEFON ----
        RUNDE 76 — XANDER: „Telefon mit Audio."
        Es klingelt beim Angerufenen, und wenn abgehoben ist, geht die
@@ -12487,7 +12527,7 @@ window.LiveChat = (function () {
       w.push("ytmusik", "ytaus");
       /* Und das Anzieh-Modul: „anziehen" haengt an /anziehen und
          /ausziehen — auch eine eigene Abzweigung, keine Tabelle. */
-      w.push("anziehen", "telefon");
+      w.push("anziehen", "telefon", "spray");
       /* Und das Whiteboard: „tafelauf" haengt an /tafel, „tafelzu" an
          /tafel aus — auch das eine eigene Abzweigung, keine Tabelle. */
       w.push("tafelauf", "tafelzu");

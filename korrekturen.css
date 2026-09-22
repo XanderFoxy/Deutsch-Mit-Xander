@@ -27305,3 +27305,164 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-lok-gleis { animation: none; }
 }
+
+/* =====================================================================
+   RUNDE 86 — DIE SPRUEHDOSE
+   ---------------------------------------------------------------------
+   XANDER: „das soll realistisch aufgespruecht aussehen … wie dieser
+   magische Tinten-Effekt bei Apple … Pixel fuer Pixel, als wenn man
+   das wirklich dranspruehen wuerde."
+   Den Lack selbst malt eine Leinwand (app.js) — hier steht nur, was
+   drumherum passiert: die Dose fliegt herein, schuettelt sich und
+   spruecht einen Kegel Nebel. Der Lack liegt in der runden Blende,
+   bleibt also im Bild; eine Dose spruecht nicht daneben.
+   ===================================================================== */
+.lc-spray { z-index: 7; }
+.lc-spray-lack {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+/* NACHGESEHEN am ersten Versuch: bei -14 % stand die Dose mitten auf
+   dem Bild und verdeckte genau das, was sie gerade spruecht. Bei
+   -48 % steht sie DANEBEN und haelt nur die Duese hinein. */
+.lc-spray-dose {
+  position: absolute;
+  left: -48%;
+  top: 10%;
+  width: var(--gross, 38px);
+  height: calc(var(--gross, 38px) * 2.25);
+  pointer-events: none;
+  z-index: 3;
+  transform-origin: 50% 90%;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .34));
+  animation: lcSprayDoseR86 2.6s cubic-bezier(.25, 1.2, .4, 1) both;
+}
+.lc-spray-dose > svg { width: 100%; height: 100%; display: block; }
+/* Von rechts, wenn der Platz links sitzt — dieselbe Regel wie beim
+   Strohhalm und bei allen Wuerfen. */
+.lc-spray-dose-rechts {
+  left: auto;
+  right: -48%;
+  animation-name: lcSprayDoseRechtsR86;
+}
+@keyframes lcSprayDoseR86 {
+  0%   { opacity: 0; transform: translate(-70%, 30%) rotate(-40deg); }
+  12%  { opacity: 1; transform: translate(0, 0) rotate(-16deg); }
+  /* Schuetteln — eine Dose muss man schuetteln, sonst kommt nichts. */
+  16%  { transform: translate(0, -6%) rotate(-22deg); }
+  20%  { transform: translate(0, 2%) rotate(-10deg); }
+  24%  { transform: translate(0, -4%) rotate(-20deg); }
+  28%  { transform: translate(0, 0) rotate(-14deg); }
+  /* Spruehen: leicht gekippt, die Duese aufs Bild. */
+  34%  { transform: translate(6%, -2%) rotate(28deg); }
+  82%  { opacity: 1; transform: translate(6%, -2%) rotate(28deg); }
+  100% { opacity: 0; transform: translate(-60%, 24%) rotate(-30deg); }
+}
+@keyframes lcSprayDoseRechtsR86 {
+  0%   { opacity: 0; transform: translate(70%, 30%) rotate(40deg); }
+  12%  { opacity: 1; transform: translate(0, 0) rotate(16deg); }
+  16%  { transform: translate(0, -6%) rotate(22deg); }
+  20%  { transform: translate(0, 2%) rotate(10deg); }
+  24%  { transform: translate(0, -4%) rotate(20deg); }
+  28%  { transform: translate(0, 0) rotate(14deg); }
+  34%  { transform: translate(-6%, -2%) rotate(-28deg); }
+  82%  { opacity: 1; transform: translate(-6%, -2%) rotate(-28deg); }
+  100% { opacity: 0; transform: translate(60%, 24%) rotate(30deg); }
+}
+/* Der Nebel aus der Duese: winzige Tropfen, die in einem Kegel
+   auseinanderlaufen und unterwegs verschwinden. */
+.lc-spray-nebel {
+  position: absolute;
+  left: 50%;
+  top: 4%;
+  width: var(--gross, 3px);
+  height: var(--gross, 3px);
+  margin: 0 0 0 calc(var(--gross, 3px) * -.5);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .85);
+  opacity: 0;
+  animation: lcSprayNebelR86 .7s ease-out var(--spaet, 0ms) infinite;
+}
+@keyframes lcSprayNebelR86 {
+  0%   { opacity: 0;   transform: rotate(var(--ab, 0deg)) translateY(0) scale(.5); }
+  16%  { opacity: .85; }
+  100% { opacity: 0;   transform: rotate(var(--ab, 0deg)) translateY(calc(var(--weit, 40%) * -1)) scale(1.7); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-spray-dose, .lc-spray-nebel { animation: none; }
+  .lc-spray-nebel { opacity: 0; }
+}
+
+/* =====================================================================
+   RUNDE 86 — DER ZAUBERER UEBER DEM SPIELFELD
+   ---------------------------------------------------------------------
+   XANDER: „ueber dem Positionsfeld, wo die Leute sitzen, soll ein
+   etwas groesserer Zauberer sein … dass der Zauberer mittig ist ueber
+   dem Positionsfeld in einer relativen Groesse dazu, dass sowas
+   realistisch aussieht."
+   Die Groesse rechnet app.js aus der Feldbreite; hier steht nur, wie
+   die Teile uebereinander liegen. Wichtig ist die Reihenfolge in der
+   Tiefe: der Hut liegt UEBER der Person, sonst sieht man sie durch
+   den Zylinder hindurch, waehrend sie darin verschwindet.
+   ===================================================================== */
+.lc-zauberer {
+  position: absolute;
+  width: var(--breit, 180px);
+  height: var(--hoch, 220px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 11;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .32));
+}
+.lc-zauberer-bild { width: 100%; height: 100%; overflow: visible; }
+/* Der rechte Arm dreht um die Schulter, nicht um seine Mitte. */
+.lc-zauberer-arm {
+  transform-box: fill-box;
+  transform-origin: 6% 8%;
+}
+.lc-zauberhut {
+  position: absolute;
+  width: var(--gross, 80px);
+  height: calc(var(--gross, 80px) * .8);
+  pointer-events: none;
+  /* Ueber der Person (10), unter dem Zauberer (11). */
+  z-index: 10;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .4));
+}
+.lc-zauberhut-bild { width: 100%; height: 100%; overflow: visible; }
+.lc-zauber-last {
+  position: absolute;
+  width: var(--gross, 64px);
+  height: var(--gross, 64px);
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-color: #6b5b95;
+  color: #fff;
+  font-weight: 700;
+  font-size: calc(var(--gross, 64px) * .42);
+  line-height: var(--gross, 64px);
+  text-align: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .38);
+  pointer-events: none;
+  z-index: 9;
+}
+/* Die imaginaeren Hasenohren sitzen OBEN AM BILD — er packt ja die
+   Person daran, nicht den Hut. */
+.lc-zauber-ohren {
+  position: absolute;
+  left: 50%;
+  bottom: 62%;
+  width: 86%;
+  height: 96%;
+  transform: translate(-50%, 0);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+.lc-zauber-ohren > svg { width: 100%; height: 100%; overflow: visible; }
+@media (prefers-reduced-motion: reduce) {
+  .lc-zauberer, .lc-zauberhut, .lc-zauber-last, .lc-zauber-ohren { animation: none; }
+}

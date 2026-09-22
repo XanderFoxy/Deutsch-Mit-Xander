@@ -149,60 +149,91 @@ function tonMessen(name) {
     + " px, ohne Weg " + trefferO.map((x) => x.toFixed(1)).join(" / ") + " px");
 
   console.log("\nDer Zauberzylinder");
+  /* =================================================================
+     RUNDE 86 — AUS DEM ZYLINDER IST EIN ZAUBERER GEWORDEN
+     -----------------------------------------------------------------
+     XANDER: „ueber dem Positionsfeld, wo die Leute sitzen, soll ein
+     etwas groesserer Zauberer sein, der denjenigen an seinen
+     imaginaeren Hasenohren packt … und ihn in seinen Hut steckt …
+     zeigt dem Publikum seinen Zylinder, dass er leer ist … stellt
+     ihn dann ab auf der Flaeche, wo derjenige hinreisen will, und
+     zieht ihn dort magisch wieder raus."
+     Die alten Regeln pruefen zwei Huete und ein Kaninchen, die es so
+     nicht mehr gibt. Geprueft wird jetzt die REIHENFOLGE des Tricks,
+     denn die ist sein eigentlicher Wunsch — und die Groesse und Lage
+     des Zauberers, um die er ausdruecklich gebeten hat. */
   await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
   await pg.evaluate(() => window.DMA_PRUEFUNG.wirkung("zylinder", "8", "Alex"));
-  const t0 = Date.now();
-  const sicht = [];
-  for (const wann of [300, 900, 1500, 2100, 2700, 3300, 3900, 4500]) {
-    while (Date.now() - t0 < wann) await new Promise((f) => setTimeout(f, 20));
-    sicht.push(await pg.evaluate(() => {
-      const d = (s) => { const e = document.querySelector(s);
-        return e ? +(+getComputedStyle(e).opacity).toFixed(2) : -1; };
-      return { hutA: d(".lc-zylinder-ab"), hutB: d(".lc-zylinder-an"),
-               hase: d(".lc-zyl-hase"), last: d(".lc-zyl-last"),
-               rauch: document.querySelectorAll(".lc-zyl-rauch").length };
-    }));
-  }
-  const zeige = (k) => sicht.map((x) => x[k]).join(" ");
-  /* 1. Zuerst der Hut am Startplatz. */
-  sage(sicht[0].hutA > 0.5 && sicht[0].hutB < 0.5 && sicht[0].last < 0.5,
-    "zuerst steht nur der Hut ueber dem Startplatz", "HutA " + zeige("hutA"));
-  /* 2. Dann eine Pause, in der GAR NICHTS zu sehen ist. */
-  const leer = sicht.filter((x) => x.hutA < 0.1 && x.hutB < 0.1
-                                && x.hase < 0.1 && x.last < 0.1).length;
-  sage(leer >= 1, "dann ist einen Augenblick lang gar nichts da (das Verschwinden)",
-    leer + " von 8 Proben leer");
-  /* 3. Das Kaninchen kommt VOR der Person. */
-  const hasenErst = sicht.findIndex((x) => x.hase > 0.5);
-  const personErst = sicht.findIndex((x) => x.last > 0.5);
-  sage(hasenErst >= 0 && personErst >= 0 && hasenErst < personErst,
-    "das Kaninchen kommt vor der Person heraus",
-    "Hase ab Probe " + hasenErst + ", Person ab Probe " + personErst);
-  /* 4. Und die Person steigt aus einem Hut, der noch da ist. */
-  sage(sicht[personErst].hutB > 0.05,
-    "und der Hut steht noch, wenn sie heraussteigt",
-    "HutB dabei " + sicht[personErst].hutB);
-  sage(sicht[0].rauch === 2, "zwei Rauchwolken: eine hier, eine drueben",
-    sicht[0].rauch + " Wolken");
-  /* 5. Der Kopf des Kaninchens darf nicht im Zylinder stecken. */
-  await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
-  await pg.evaluate(() => window.DMA_PRUEFUNG.wirkung("zylinder", "8", "Alex"));
-  await new Promise((f) => setTimeout(f, 3050));
-  const kopf = await pg.evaluate(() => {
-    const h = document.querySelector(".lc-zyl-hase");
-    const z = document.querySelector(".lc-zylinder-an");
-    if (!h || !z) return null;
-    const k = h.querySelector("circle[r='17']");
-    const kr = z.querySelector("rect");
-    if (!k || !kr) return null;
-    return { kopfOben: k.getBoundingClientRect().top,
-             kopfUnten: k.getBoundingClientRect().bottom,
-             kroneOben: kr.getBoundingClientRect().top };
+  await new Promise((f) => setTimeout(f, 180));
+  const trick = await pg.evaluate(() => {
+    const z = document.querySelector(".lc-zauberer");
+    const h = document.querySelector(".lc-zauberhut");
+    const l = document.querySelector(".lc-zauber-last");
+    const o = document.querySelector(".lc-zauber-ohren");
+    if (!z || !h || !l || !o) return null;
+    const reihe = document.getElementById("lcPlaetze").getBoundingClientRect();
+    const alle = [...z.getAnimations(), ...h.getAnimations(),
+                  ...l.getAnimations(), ...o.getAnimations()];
+    alle.forEach((a) => a.pause());
+    const dauer = z.getAnimations()[0].effect.getTiming().duration;
+    const zr = z.getBoundingClientRect();
+    const proben = [];
+    for (let f = 0.04; f <= 0.98; f += 0.02) {
+      alle.forEach((a) => { a.currentTime = dauer * f; });
+      const hr = h.getBoundingClientRect(), lr = l.getBoundingClientRect();
+      proben.push({ t: +f.toFixed(2),
+        hut: [hr.left + hr.width / 2 - reihe.left, hr.top + hr.height / 2 - reihe.top],
+        person: [lr.left + lr.width / 2 - reihe.left, lr.top + lr.height / 2 - reihe.top],
+        deck: +getComputedStyle(l).opacity,
+        ohren: +getComputedStyle(o).opacity });
+    }
+    const pl = [...document.querySelectorAll("#lcPlaetze .lc-platz")].map((p) => {
+      const r = p.getBoundingClientRect();
+      return { nr: +p.dataset.lcPlatz, x: r.left + r.width / 2 - reihe.left,
+               y: r.top + r.height / 2 - reihe.top };
+    });
+    return { proben: proben, pl: pl, feld: [reihe.width, reihe.height],
+             zauber: { x: zr.left + zr.width / 2 - reihe.left, breit: zr.width } };
   });
-  sage(kopf && kopf.kopfOben < kopf.kroneOben - 20,
-    "der Kopf steht ueber der Zylinderoeffnung, nicht darin",
-    kopf ? "Kopf " + Math.round(kopf.kopfOben) + " bis " + Math.round(kopf.kopfUnten)
-      + " px, Zylinderrand bei " + Math.round(kopf.kroneOben) + " px" : "nicht messbar");
+  if (!trick) { sage(false, "der Zauberer liess sich nicht messen"); }
+  else {
+    const p1 = trick.pl.find((p) => p.nr === 1), p8 = trick.pl.find((p) => p.nr === 8);
+    const nah = (a, b) => Math.hypot(a[0] - b.x, a[1] - b.y);
+    sage(Math.abs(trick.zauber.x - trick.feld[0] / 2) < 6,
+      "der Zauberer steht mittig ueber dem Positionsfeld",
+      "Mitte " + trick.zauber.x.toFixed(0) + " von " + (trick.feld[0] / 2).toFixed(0));
+    sage(trick.zauber.breit > trick.feld[0] * 0.2 && trick.zauber.breit < trick.feld[0] * 0.45,
+      "und ist relativ zum Feld bemessen, nicht fest",
+      trick.zauber.breit.toFixed(0) + " px bei " + trick.feld[0].toFixed(0) + " px Feldbreite");
+    /* Die Ohren wachsen, BEVOR die Person hochgezogen wird. */
+    const ohrenAb = trick.proben.find((p) => p.ohren > 0.5);
+    const hochAb = trick.proben.find((p) => p.deck > 0.5 && p.person[1] < p1.y - 12);
+    sage(ohrenAb && hochAb && ohrenAb.t < hochAb.t,
+      "erst wachsen die Hasenohren, dann wird gezogen",
+      ohrenAb ? "Ohren ab " + ohrenAb.t + ", Zug ab " + (hochAb ? hochAb.t : "nie") : "keine Ohren");
+    /* Die Person verschwindet, und zwar dort, wo der Hut ist. */
+    const weg2 = trick.proben.find((p) => p.t > 0.3 && p.deck < 0.1);
+    sage(weg2 && nah(weg2.hut, { x: p1.x, y: p1.y }) < 120,
+      "sie verschwindet im Hut ueber ihrem eigenen Platz",
+      weg2 ? "bei t=" + weg2.t : "sie verschwindet nie");
+    /* Dann wird der Hut gezeigt — er ist weit vom Startplatz weg und
+       noch nicht am Ziel. */
+    const zeigen = trick.proben.filter((p) => p.t > 0.4 && p.t < 0.62
+      && nah(p.hut, p1) > 90 && nah(p.hut, p8) > 90);
+    sage(zeigen.length >= 3, "dazwischen zeigt er den leeren Hut her",
+      zeigen.length + " Proben");
+    /* Und am Ziel steht der Hut, waehrend die Person herauskommt. */
+    const raus = trick.proben.find((p) => p.t > 0.65 && p.deck > 0.5
+      && p.person[1] < p8.y - 20);
+    sage(raus && nah(raus.hut, p8) < 40,
+      "am Ziel steht der Hut, und die Person kommt daraus hervor",
+      raus ? "bei t=" + raus.t + ", Hut " + nah(raus.hut, p8).toFixed(0) + " px vom Platz"
+           : "sie kommt nicht heraus");
+    const ende2 = trick.proben[trick.proben.length - 1];
+    sage(nah(ende2.person, p8) < 26, "und landet auf dem Zielplatz",
+      nah(ende2.person, p8).toFixed(0) + " px daneben");
+  }
+  await new Promise((f) => setTimeout(f, 7000));
 
   /* --- Und die Befehle kommen an ---------------------------------- */
   const lc = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");

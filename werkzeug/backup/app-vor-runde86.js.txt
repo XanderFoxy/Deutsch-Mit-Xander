@@ -25824,208 +25824,6 @@
     return true;
   }
 
-  /* =================================================================
-     RUNDE 86 — DIE SPRUEHDOSE
-     -----------------------------------------------------------------
-     XANDER: „ich moechte, dass wir eine Spruehdose haben. Zum einen
-     soll sie dem anderen ein Smiley aufspruehen, und man soll waehlen
-     koennen zwischen 🙂 oder 🙁 … das soll realistisch aufgespruecht
-     aussehen … und dass man ein Bild seiner Wahl darauf spruehen kann
-     und dass das Bild genauso partiell eingespruecht wie eingeblendet
-     wird wie dieser magische Tinten-Effekt bei Apple. Das ist halt
-     wirklich, wie Partikel langsam auftaucht und sich realistisch
-     fuellt, das Bild Pixel fuer Pixel, als wenn man das wirklich
-     dranspruehen wuerde."
-
-     WARUM DAS EINE LEINWAND BRAUCHT UND KEINE ANIMATION:
-     Eine CSS-Animation kann ein Bild nur als GANZES ein- oder
-     ausblenden, oder es hinter einer Maske hervorwischen. Beides
-     sieht nach „Folie" aus, nicht nach Farbe. Spruehen heisst: an
-     zufaelligen Stellen liegt schon Farbe, dazwischen noch nicht,
-     und mit jedem Zug wird es dichter. Das laesst sich nur Punkt fuer
-     Punkt zeichnen — also auf einer Leinwand.
-
-     SO ARBEITET ES:
-       1. Das MOTIV wird einmal auf eine unsichtbare Leinwand gemalt
-          (der Smiley mit Strichen, ein Aufkleber als Bild).
-       2. Aus ihr werden die Bildpunkte gelesen. Wo nichts liegt,
-          wird auch nichts gespruecht.
-       3. In rund 1,7 s werden immer wieder winzige weiche Tropfen
-          gesetzt: eine zufaellige Stelle wird gewuerfelt und nur
-          angenommen, wenn dort im Motiv Farbe liegt. Die Farbe kommt
-          aus dem Motiv selbst. Am Anfang sind es wenige, verstreute
-          Tropfen; am Ende ist die Flaeche dicht — genau das ist der
-          Verlauf, den man bei einer Dose sieht.
-       4. Ueber allem fliegt die Dose herein, schuettelt sich und
-          spruecht einen Kegel Nebel auf das Bild.
-     ================================================================= */
-  const LC_SPRAY_FARBEN = {
-    froh:    { strich: "#111318", fuell: "#ffd429" },
-    traurig: { strich: "#111318", fuell: "#6ba7f5" }
-  };
-  /* Der Smiley wird GEZEICHNET, nicht als Schriftzeichen gesetzt: ein
-     Emoji ist auf jedem Geraet ein anderes Bild, und gespruecht sieht
-     es aus wie ein Aufkleber. Striche sehen nach Dose aus. */
-  function lcSprayMotivSmiley(gr, froh) {
-    const c = document.createElement("canvas");
-    c.width = gr; c.height = gr;
-    const g = c.getContext("2d");
-    const f = froh ? LC_SPRAY_FARBEN.froh : LC_SPRAY_FARBEN.traurig;
-    const m = gr / 2, r = gr * 0.36;
-    g.lineCap = "round";
-    g.lineJoin = "round";
-    /* Der Kopf: ausgefuellt und umrandet. */
-    g.fillStyle = f.fuell;
-    g.beginPath(); g.arc(m, m, r, 0, Math.PI * 2); g.fill();
-    g.strokeStyle = f.strich;
-    g.lineWidth = gr * 0.045;
-    g.beginPath(); g.arc(m, m, r, 0, Math.PI * 2); g.stroke();
-    /* Die Augen. */
-    g.fillStyle = f.strich;
-    [-1, 1].forEach((v) => {
-      g.beginPath();
-      g.ellipse(m + v * r * 0.38, m - r * 0.26, gr * 0.035, gr * 0.05, 0, 0, Math.PI * 2);
-      g.fill();
-    });
-    /* Der Mund: froh nach oben offen, traurig nach unten. */
-    g.lineWidth = gr * 0.05;
-    g.beginPath();
-    if (froh) g.arc(m, m + r * 0.06, r * 0.52, 0.22 * Math.PI, 0.78 * Math.PI);
-    else g.arc(m, m + r * 0.72, r * 0.52, 1.22 * Math.PI, 1.78 * Math.PI);
-    g.stroke();
-    return Promise.resolve(c);
-  }
-  function lcSprayMotivBild(gr, quelle) {
-    return new Promise((fertig, schief) => {
-      const b = new Image();
-      b.crossOrigin = "anonymous";
-      b.onload = () => {
-        const c = document.createElement("canvas");
-        c.width = gr; c.height = gr;
-        const g = c.getContext("2d");
-        /* Das Bild wird eingepasst, nicht verzerrt. */
-        const s = Math.min(gr * 0.86 / b.width, gr * 0.86 / b.height);
-        const w = b.width * s, h = b.height * s;
-        g.drawImage(b, (gr - w) / 2, (gr - h) / 2, w, h);
-        fertig(c);
-      };
-      b.onerror = () => schief(new Error("Bild nicht ladbar"));
-      b.src = quelle;
-    });
-  }
-  function lcSprayMalen(schicht, motiv, gr, fertigNach) {
-    const c = document.createElement("canvas");
-    /* Auf einem scharfen Bildschirm doppelt so viele Bildpunkte —
-       sonst sind die Tropfen Kloetzchen. */
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    c.width = Math.round(gr * dpr);
-    c.height = Math.round(gr * dpr);
-    c.className = "lc-spray-lack";
-    schicht.appendChild(c);
-    const g = c.getContext("2d");
-    g.scale(dpr, dpr);
-    const quelle = motiv.getContext("2d").getImageData(0, 0, motiv.width, motiv.height).data;
-    const breit = motiv.width;
-    const anfang = performance.now();
-    let laeuft = true;
-    const schritt = () => {
-      if (!laeuft || !c.isConnected) return;
-      const t = Math.min(1, (performance.now() - anfang) / fertigNach);
-      /* Die Zahl der Tropfen je Bild steigt: erst ein Hauch, dann
-         wird es dicht. Ohne diese Steigerung sieht es aus wie ein
-         gleichmaessiges Einblenden. */
-      const wieViele = Math.round(60 + 340 * t * t);
-      for (let i = 0; i < wieViele; i++) {
-        const x = Math.random() * gr, y = Math.random() * gr;
-        const px = Math.min(breit - 1, Math.round(x / gr * breit));
-        const py = Math.min(motiv.height - 1, Math.round(y / gr * motiv.height));
-        const o = (py * breit + px) * 4;
-        const a = quelle[o + 3];
-        if (!a) continue;
-        /* Je weniger Farbe im Motiv, desto seltener trifft ein
-           Tropfen — so bleiben weiche Kanten weich. */
-        if (Math.random() > (a / 255) * (0.25 + 0.75 * t)) continue;
-        const r = 0.6 + Math.random() * (gr * 0.022);
-        const grad = g.createRadialGradient(x, y, 0, x, y, r);
-        const farbe = quelle[o] + "," + quelle[o + 1] + "," + quelle[o + 2];
-        grad.addColorStop(0, "rgba(" + farbe + ",.85)");
-        grad.addColorStop(1, "rgba(" + farbe + ",0)");
-        g.fillStyle = grad;
-        g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
-      }
-      if (t < 1) requestAnimationFrame(schritt);
-    };
-    requestAnimationFrame(schritt);
-    return () => { laeuft = false; };
-  }
-  function lcSpray(wen, was) {
-    const ziele = lcZielPlaetze(wen);
-    if (!ziele.length) return false;
-    const wahl = String(was || "froh").trim().toLowerCase();
-    const froh = !/^(traurig|sad|:\(|:-\(|schade|weinen)$/.test(wahl);
-    const smiley = /^(froh|happy|lachen|:\)|:-\)|traurig|sad|:\(|:-\(|schade|weinen)$/.test(wahl)
-      || !wahl;
-    ziele.forEach((platz, i) => setTimeout(() => {
-      if (!platz.isConnected) return;
-      platz.querySelectorAll(".lc-spray").forEach((x) => x.remove());
-      const kreis = platz.querySelector(".lc-kreis");
-      const gr = (kreis && kreis.offsetWidth) || 64;
-      const schicht = document.createElement("span");
-      schicht.className = "lc-zp lc-spray";
-      schicht.setAttribute("aria-hidden", "true");
-      platz.appendChild(schicht);
-      /* Der Lack bleibt IM Bild — eine Dose spruecht nicht daneben. */
-      const blende = lcZpBlende(schicht);
-      /* Die Dose kommt von der Seite, auf der der Spruehende sitzt —
-         dieselbe Regel wie beim Strohhalm und bei jedem Wurf.
-         lcWurfRichtung gibt einen Einheitsvektor VOM Werfenden ZUM
-         Getroffenen; ein positives x heisst „er sitzt rechts". */
-      const her = lcWurfRichtung(platz);
-      const dose = document.createElement("span");
-      dose.className = "lc-spray-dose" + (her.x > 0 ? " lc-spray-dose-rechts" : "");
-      dose.style.setProperty("--gross", (gr * 0.5) + "px");
-      dose.innerHTML =
-        '<svg viewBox="0 0 40 90">'
-        + '<rect x="16.5" y="2" width="7" height="7" rx="1.6" fill="#b9bec9"/>'
-        + '<rect x="12" y="8" width="16" height="7" rx="2.4" fill="#e6e9ef"'
-        + ' stroke="#9aa0ab" stroke-width="1.2"/>'
-        + '<rect x="7" y="15" width="26" height="62" rx="6" fill="#d24a4a"'
-        + ' stroke="#8f2b2b" stroke-width="1.6"/>'
-        + '<rect x="7" y="34" width="26" height="12" fill="#f2f0ea" opacity=".92"/>'
-        + '<rect x="7" y="62" width="26" height="6" fill="#8f2b2b" opacity=".5"/>'
-        + '<ellipse cx="20" cy="77" rx="13" ry="4" fill="#a83a3a"/>'
-        + '<rect x="11" y="20" width="4" height="40" rx="2" fill="#ffffff" opacity=".28"/>'
-        + "</svg>";
-      schicht.appendChild(dose);
-      /* Der Nebel: ein Kegel aus Tropfen von der Duese zum Bild. */
-      for (let n = 0; n < 16; n++) {
-        const t = document.createElement("i");
-        t.className = "lc-spray-nebel";
-        t.style.setProperty("--weit", (34 + ((n * 37) % 46)) + "%");
-        t.style.setProperty("--ab", (((n * 23) % 34) - 17) + "deg");
-        t.style.setProperty("--spaet", (120 + ((n * 61) % 620)) + "ms");
-        t.style.setProperty("--gross", (2 + ((n * 13) % 5)) + "px");
-        dose.appendChild(t);
-      }
-      const bauen = smiley
-        ? lcSprayMotivSmiley(Math.round(gr * 2), froh)
-        : lcSprayMotivBild(Math.round(gr * 2), "sticker/" + wahl.replace(/[^a-z0-9_-]/g, "") + ".svg")
-            .catch(() => lcSprayMotivSmiley(Math.round(gr * 2), true));
-      let abbrechen = null;
-      bauen.then((motiv) => {
-        if (!schicht.isConnected) return;
-        abbrechen = lcSprayMalen(blende, motiv, gr, 1700);
-      });
-      /* Das Zischen liegt auf dem Spruehen, nicht auf dem Anflug. */
-      lcTonSpaeter("spray", 320, 0.6);
-      setTimeout(() => {
-        if (abbrechen) abbrechen();
-        schicht.remove();
-      }, 6200);
-    }, i * 90));
-    return true;
-  }
-
   function lcMusikBandZeigen(titel) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return;
@@ -27174,18 +26972,6 @@
        Eine Kachel, sechs Sachen und ein „Ausziehen" — mehr braucht es
        nicht, und als sieben einzelne Kacheln waere das Menue laenger
        als der Bildschirm. */
-    /* RUNDE 86 — XANDER: „eine Spruehdose … zum einen soll sie dem
-       anderen ein Smiley aufspruehen … und dass man ein Bild seiner
-       Wahl darauf spruehen kann." */
-    ["\ud83c\udfa8", "Spr\u00fchdose", "spray", false,
-      [["\ud83d\ude42", "Lachen", "spray", "froh"],
-       ["\ud83d\ude41", "Traurig", "spray", "traurig"],
-       ["\u2764\ufe0f", "Herz", "spray", "herz"],
-       ["\u2b50", "Stern", "spray", "stern"],
-       ["\ud83d\udd25", "Feuer", "spray", "feuer"],
-       ["\ud83c\udf08", "Regenbogen", "spray", "regenbogen"],
-       ["\ud83c\udf3c", "Blume", "spray", "blume"],
-       ["\ud83e\udd8a", "Fuchs", "spray", "fuchs"]]],
     ["\ud83d\udc52", "Anziehen", "anziehen", false,
       [["\ud83d\udc51", "Krone", "anziehen", "krone"],
        ["\ud83d\udc53", "Brille", "anziehen", "brille"],
@@ -29676,8 +29462,6 @@
     /* RUNDE 76 — Telefon und Anziehen zeichnen selbst und regnen
        nichts; ohne Eintrag HIER steigt lcWirkung gleich aus. */
     telefon:  { zeichen: ["\u260e\ufe0f"], wie: 4, klasse: "umarmen" },
-    /* RUNDE 86 — die Spruehdose. */
-    spray:    { zeichen: ["\ud83c\udfa8"], wie: 4, klasse: "umarmen" },
     anziehen: { zeichen: ["\ud83d\udc52"], wie: 4, klasse: "umarmen" },
     ytmusik:  { zeichen: ["\u25b6\ufe0f"], wie: 3, klasse: "umarmen" },
     ytaus:    { zeichen: ["\u23f9\ufe0f"], wie: 3, klasse: "umarmen" },
@@ -34909,11 +34693,7 @@
        weg. Die Frisbee ist die kuerzeste — ein Wurf ist schnell. */
     /* RUNDE 76 — der Frosch springt schnell, der Zaubertrick braucht
        Zeit: Hut herunter, Pause, Hut hinauf, Kaninchen, Person. */
-    /* RUNDE 86 — der Zaubertrick hat acht Abschnitte und XANDER hat
-       ausdruecklich um Zeit gebeten: „bei dieser Animation moechte
-       ich, dass du dir Zeit laesst, dass alles von der Physik richtig
-       stimmt." 3400 statt 2800. */
-    const grund = { frosch: 2400, zylinder: 3400,
+    const grund = { frosch: 2400, zylinder: 2800,
                   flug: 2600, maulwurf: 2200, boot: 2800, kran: 2800,
                   dampfer: 3000, lok: 3200, liane: 2200, feder: 2400,
                   beamen: 2600, rohr: 2800, heli: 3000, portal: 3400,
@@ -36852,248 +36632,36 @@
       });
     } else if (art === "zylinder") {
       /* =================================================================
-         RUNDE 86 — DER ZAUBERER UEBER DEM SPIELFELD
+         RUNDE 76 — DER ZYLINDER MIT DEM KANINCHEN
          -----------------------------------------------------------------
-         XANDER: „bei den Reisen, dass das mit dem Kaninchen trotzdem
-         moeglich ist. Allerdings soll dann ueber dem Positionsfeld, wo
-         die Leute sitzen, ein etwas groesserer Zauberer sein, der
-         denjenigen an seinen imaginaeren Hasenohren packt von seinem
-         Profilbild und ihn in seinen Hut steckt … vielleicht nimmt er
-         den Zylinder erst ab … und dann zeigt er dem Publikum seinen
-         Zylinder, dass er leer ist. Stellt ihn dann ab auf der
-         Flaeche, wo derjenige hinreisen will, und zieht ihn dort
-         magisch wieder raus. Bei dieser Animation moechte ich, dass du
-         dir Zeit laesst, dass alles von der Physik richtig stimmt und
-         dass der Zauberer mittig ist ueber dem Positionsfeld in einer
-         relativen Groesse dazu."
-
-         DIE REIHENFOLGE IST DER TRICK, und sie ist hier Schritt fuer
-         Schritt gebaut — jede Zahl ist ein Anteil der Reisezeit:
-           0,00–0,12  der Zauberer erscheint, mittig ueber dem Feld
-           0,12–0,22  er nimmt den Zylinder vom Kopf
-           0,18–0,36  die Hasenohren wachsen am Profilbild, und er
-                      zieht die Person daran nach oben
-           0,36–0,44  die Person verschwindet im Hut
-           0,44–0,58  er kippt den Hut zum Publikum: er ist leer
-           0,58–0,74  er setzt den Hut auf dem Zielplatz ab
-           0,74–0,90  er zieht die Person dort wieder heraus
-           0,90–1,00  Hut zurueck auf den Kopf, Zauberer verschwindet
-
-         ALLE GROESSEN SIND RELATIV: der Zauberer misst ein Drittel der
-         Feldbreite, hoechstens aber dreieinhalb Profilbilder — sonst
-         fuellt er auf einem schmalen Telefon das ganze Bild und auf
-         einem breiten Schirm wirkt er wie eine Briefmarke.
-         ================================================================= */
-      const feldBreit = Math.max(120, rk.width || (d * 5));
-      const zBreit = Math.min(feldBreit * 0.34, d * 3.4);
-      const zHoch = zBreit * 1.22;
-      /* NACHGEMESSEN, warum er nicht ueber dem Feld stehen kann: die
-         Klassenzimmer-Karte faengt nur 13 px ueber der Sitzreihe an.
-         Ein Zauberer von 150 px Hoehe haengt dort zur Haelfte ueber
-         dem Kartenrand und ueberdeckt die Kopfzeile. Er steht deshalb
-         IM Feld, mittig und oben — genau da, wo auf einer Buehne auch
-         der Zauberer steht: hinter den Zuschauern seiner Vorstellung,
-         nicht ueber ihnen in der Luft. Sein Zylinder sitzt damit
-         knapp unter der oberen Feldkante. */
-      const zMitte = { x: (rk.width || feldBreit) / 2, y: zHoch * 0.36 };
-      const hutGr = zBreit * 0.46;
+         XANDER: „Zylinder mit Kaninchen."
+         Ein Zaubertrick hat drei Teile, und alle drei muessen da sein,
+         sonst ist es keiner:
+           1. Der Hut kommt ueber den Kopf, es puffft, und die Person
+              ist weg.
+           2. Eine Pause, in der NICHTS zu sehen ist — ohne sie gibt es
+              kein Verschwinden, nur ein Verschieben.
+           3. Am Ziel steht der zweite Hut. Erst kommt das KANINCHEN
+              heraus (der Gag), und dann steigt die Person hinterher.
+         Das Bild am Startplatz nimmt die gemeinsame Blende weiter oben
+         weg (16 %) — genau dann sitzt der Hut darueber. */
       const versatzZ0 = lcBildVersatz(ab.el);
       const versatzZ1 = lcBildVersatz(zu.el);
-      /* Wo der Hut auf dem Weg ueberall ist. Alles in Buehnen-
-         Koordinaten, damit Zauberer, Hut und Person dasselbe
-         Koordinatensystem benutzen und nichts auseinanderlaeuft. */
-      const aufKopf = { x: zMitte.x, y: zMitte.y - zHoch * 0.34 };
-      const inHand  = { x: zMitte.x + zBreit * 0.42, y: zMitte.y + zHoch * 0.10 };
-      const ueberAb = { x: start.x, y: start.y + versatzZ0 - d * 0.95 };
-      const amZiel  = { x: ende.x,  y: ende.y + versatzZ1 - d * 0.10 };
-
-      /* --- DER ZAUBERER ------------------------------------------- */
-      const zauber = document.createElement("span");
-      zauber.className = "lc-zauberer";
-      zauber.style.setProperty("--breit", zBreit.toFixed(1) + "px");
-      zauber.style.setProperty("--hoch", zHoch.toFixed(1) + "px");
-      zauber.innerHTML =
-        '<svg viewBox="0 0 100 122" class="lc-zauberer-bild">'
-        /* Der Umhang: breite Schultern, nach unten offen. */
-        + '<path d="M50 44 L84 58 Q96 74 94 118 L6 118 Q4 74 16 58 Z"'
-        + ' fill="#2b2352" stroke="#171233" stroke-width="2.2" stroke-linejoin="round"/>'
-        /* Das rote Futter, das man am offenen Umhang sieht. */
-        + '<path d="M50 46 L70 56 Q74 86 66 118 L34 118 Q26 86 30 56 Z"'
-        + ' fill="#8f2033" stroke="#5f1522" stroke-width="1.6"/>'
-        + '<path d="M50 48 L62 56 Q64 88 58 118 L42 118 Q36 88 38 56 Z" fill="#141028"/>'
-        /* Das Hemd mit Fliege. */
-        + '<path d="M50 46 L57 53 L50 62 L43 53 Z" fill="#f2efe6"/>'
-        + '<path d="M44 50 l-5 -3 v6 Z M56 50 l5 -3 v6 Z" fill="#8f2033"/>'
-        /* Der Kopf. */
-        + '<circle cx="50" cy="30" r="13" fill="#e8c39a" stroke="#c39a72" stroke-width="1.6"/>'
-        + '<circle cx="45" cy="29" r="1.9" fill="#16181d"/>'
-        + '<circle cx="55" cy="29" r="1.9" fill="#16181d"/>'
-        + '<path d="M45 36 q5 4 10 0" stroke="#a97f5c" stroke-width="1.6"'
-        + ' fill="none" stroke-linecap="round"/>'
-        /* Der Schnurrbart — ein Zauberer ohne Bart ist ein Kellner. */
-        + '<path d="M50 34 q-3 -2 -7 -1 q-3 1 -2 3 q4 1 6 -1 q1 -1 3 -1'
-        + ' q2 0 3 1 q2 2 6 1 q1 -2 -2 -3 q-4 -1 -7 1 Z" fill="#3a2a1d"/>'
-        /* Die ARME. Der rechte greift nach unten — er ist der, der
-           zieht und den Hut traegt; er wird eigens gedreht. */
-        + '<g class="lc-zauberer-arm">'
-        + '<path d="M80 56 Q96 66 98 86" stroke="#2b2352" stroke-width="9"'
-        + ' fill="none" stroke-linecap="round"/>'
-        + '<circle cx="98" cy="88" r="6.4" fill="#e8c39a" stroke="#c39a72" stroke-width="1.4"/>'
-        + "</g>"
-        + '<path d="M20 56 Q8 66 7 84" stroke="#2b2352" stroke-width="9"'
-        + ' fill="none" stroke-linecap="round"/>'
-        + '<circle cx="7" cy="86" r="6.2" fill="#e8c39a" stroke="#c39a72" stroke-width="1.4"/>'
-        + "</svg>";
-      reihe.appendChild(zauber);
-      weg.push(zauber);
-      setzen(zauber, zMitte.x, zMitte.y);
-
-      /* --- DER ZYLINDER -------------------------------------------- */
-      const hut = document.createElement("span");
-      hut.className = "lc-zauberhut";
-      hut.style.setProperty("--gross", hutGr.toFixed(1) + "px");
-      hut.innerHTML =
-        '<svg viewBox="0 0 100 80" class="lc-zauberhut-bild">'
-        /* Die OEFFNUNG liegt hinter dem Koerper — nur so kann etwas
-           darin verschwinden, statt davor zu kleben. */
-        + '<ellipse class="lc-zauberhut-loch" cx="50" cy="9" rx="20" ry="6" fill="#07080c"/>'
-        + '<path d="M30 9 v34 q0 6 20 6 q20 0 20 -6 V9 Z" fill="#1b1d24"/>'
-        + '<rect x="30" y="30" width="40" height="9" fill="#8f2033"/>'
-        + '<ellipse cx="50" cy="50" rx="46" ry="11" fill="#1b1d24"/>'
-        + '<ellipse cx="50" cy="48" rx="46" ry="10" fill="#2a2d36"/>'
-        + "</svg>";
-      reihe.appendChild(hut);
-      weg.push(hut);
-      setzen(hut, 0, 0);
-
-      /* --- DIE PERSON, DIE GEZOGEN WIRD ---------------------------- */
-      const last = document.createElement("span");
-      last.className = "lc-zauber-last";
-      last.style.setProperty("--gross", d + "px");
-      if (quelle) last.style.backgroundImage = "url(" + quelle.replace(/[()"\']/g, "") + ")";
-      else last.textContent = (ab.name || "?").charAt(0).toUpperCase();
-      /* Die imaginaeren Hasenohren — sie gehoeren zum Bild, nicht zum
-         Hut: er packt ja die PERSON daran. */
-      const ohren = document.createElement("i");
-      ohren.className = "lc-zauber-ohren";
-      ohren.innerHTML =
-        '<svg viewBox="0 0 60 60">'
-        + '<ellipse cx="21" cy="26" rx="6.4" ry="24" fill="#f2efe6"'
-        + ' stroke="#cbc4b4" stroke-width="1.6" transform="rotate(-10 21 26)"/>'
-        + '<ellipse cx="39" cy="26" rx="6.4" ry="24" fill="#f2efe6"'
-        + ' stroke="#cbc4b4" stroke-width="1.6" transform="rotate(10 39 26)"/>'
-        + '<ellipse cx="21" cy="27" rx="3" ry="16" fill="#e8a6ac" transform="rotate(-10 21 27)"/>'
-        + '<ellipse cx="39" cy="27" rx="3" ry="16" fill="#e8a6ac" transform="rotate(10 39 27)"/>'
-        + "</svg>";
-      last.appendChild(ohren);
-      reihe.appendChild(last);
-      weg.push(last);
-      setzen(last, 0, 0);
-
-      /* --- DIE BAHNEN ---------------------------------------------- */
-      /* Alles laeuft ueber DIESELBE Zeitachse: „beiZ(t)" macht aus
-         einem Anteil der Reisezeit einen Anteil der Animationsdauer.
-         Dadurch kann nichts auseinanderlaufen.
-
-         UND DIE ZEITACHSE IST LINEAR. Das ist keine Kleinigkeit,
-         sondern der Unterschied zwischen einer Choreografie und
-         einem Durcheinander: ein „easing" in den OPTIONEN verbiegt
-         die ganze Zeitachse, nicht die einzelne Bewegung. NACHGEMESSEN
-         mit „ease-in-out": der Hut sollte bis 81,5 % beim Ziel
-         stehen, stand aber schon bei 78 % wieder auf dem Kopf — jeder
-         Abschnitt bekam eine andere Laenge als geplant. Jetzt ist die
-         Achse linear, und jedes einzelne BILD schwingt fuer sich
-         weich ein („easing" am Keyframe). */
-      const beiZ = (t) => Math.max(0, Math.min(1, (t * hin) / dauer));
-      const wo = (q, extra) => "translate(" + q.x.toFixed(1) + "px, " + q.y.toFixed(1)
-        + "px) translate(-50%, -50%)" + (extra || "");
-      /* Der Hut: Kopf -> Hand -> ueber den Startplatz -> kippen ->
-         Zielplatz -> zurueck auf den Kopf. */
-      try {
-        hut.animate([
-          { transform: wo(aufKopf, " scale(.92)"), opacity: 0, offset: 0, easing: "ease-in-out" },
-          { transform: wo(aufKopf, " scale(.92)"), opacity: 1, offset: beiZ(0.10), easing: "ease-in-out" },
-          { transform: wo(inHand),                 opacity: 1, offset: beiZ(0.22), easing: "ease-in-out" },
-          { transform: wo(ueberAb),                opacity: 1, offset: beiZ(0.34), easing: "ease-in-out" },
-          /* Person hinein — der Hut wippt vom Gewicht. */
-          { transform: wo(ueberAb, " rotate(-6deg)"), opacity: 1, offset: beiZ(0.42), easing: "ease-in-out" },
-          /* Dem Publikum zeigen: er kippt die Oeffnung nach vorn. */
-          { transform: wo(inHand, " rotate(-38deg) scale(1.08)"), opacity: 1, offset: beiZ(0.52), easing: "ease-in-out" },
-          { transform: wo(inHand, " rotate(-38deg) scale(1.08)"), opacity: 1, offset: beiZ(0.58), easing: "ease-in-out" },
-          /* Und absetzen, wo die Reise hingeht. */
-          { transform: wo(amZiel),                 opacity: 1, offset: beiZ(0.72), easing: "ease-in-out" },
-          { transform: wo(amZiel),                 opacity: 1, offset: beiZ(0.88), easing: "ease-in-out" },
-          { transform: wo(aufKopf, " scale(.92)"), opacity: 1, offset: beiZ(0.97), easing: "ease-in-out" },
-          { transform: wo(aufKopf, " scale(.92)"), opacity: 0, offset: 1, easing: "ease-in-out" }
-        ], { duration: dauer, easing: "linear", fill: "forwards" });
-      } catch (e) {}
-      /* Der Arm folgt dem Hut: hoch, wenn er ihn abnimmt, weit
-         hinunter, wenn er die Person zieht. */
-      try {
-        const arm = zauber.querySelector(".lc-zauberer-arm");
-        if (arm) arm.animate([
-          { transform: "rotate(0deg)", offset: 0, easing: "ease-in-out" },
-          { transform: "rotate(-52deg)", offset: beiZ(0.16), easing: "ease-in-out" },
-          { transform: "rotate(-18deg)", offset: beiZ(0.26), easing: "ease-in-out" },
-          { transform: "rotate(26deg)", offset: beiZ(0.36), easing: "ease-in-out" },
-          { transform: "rotate(-10deg)", offset: beiZ(0.52), easing: "ease-in-out" },
-          { transform: "rotate(30deg)", offset: beiZ(0.72), easing: "ease-in-out" },
-          { transform: "rotate(10deg)", offset: beiZ(0.84), easing: "ease-in-out" },
-          { transform: "rotate(0deg)", offset: 1, easing: "ease-in-out" }
-        ], { duration: dauer, easing: "linear", fill: "forwards" });
-      } catch (e) {}
-      /* Die Person: am Platz -> an den Ohren hoch -> in den Hut ->
-         weg -> am Ziel wieder heraus -> auf den Platz. */
-      const amPlatz = { x: start.x, y: start.y + versatzZ0 };
-      const ausZiel = { x: ende.x, y: ende.y + versatzZ1 - d * 0.82 };
-      const aufZiel = { x: ende.x, y: ende.y + versatzZ1 };
-      try {
-        last.animate([
-          { transform: wo(amPlatz, " scale(1)"), opacity: 0, offset: 0, easing: "ease-in-out" },
-          { transform: wo(amPlatz, " scale(1)"), opacity: 1, offset: beiZ(0.17), easing: "ease-in-out" },
-          /* Gezogen: erst zappelt es, dann geht es hoch. */
-          { transform: wo({ x: amPlatz.x, y: amPlatz.y - d * 0.10 }, " scale(1) rotate(-5deg)"),
-            opacity: 1, offset: beiZ(0.25), easing: "ease-in-out" },
-          { transform: wo({ x: amPlatz.x, y: amPlatz.y - d * 0.18 }, " scale(1) rotate(5deg)"),
-            opacity: 1, offset: beiZ(0.29), easing: "ease-in-out" },
-          { transform: wo(ueberAb, " scale(.9)"), opacity: 1, offset: beiZ(0.34), easing: "ease-in-out" },
-          /* In den Hut: klein werden und verschwinden. */
-          { transform: wo({ x: ueberAb.x, y: ueberAb.y + hutGr * 0.12 }, " scale(.28)"),
-            opacity: 0, offset: beiZ(0.41) },
-          { transform: wo(amZiel, " scale(.28)"), opacity: 0, offset: beiZ(0.74), easing: "ease-in-out" },
-          /* Und heraus. */
-          { transform: wo(ausZiel, " scale(.95)"), opacity: 1, offset: beiZ(0.84), easing: "ease-in-out" },
-          { transform: wo(aufZiel, " scale(1)"), opacity: 1, offset: beiZ(0.94), easing: "ease-in-out" },
-          { transform: wo(aufZiel, " scale(1)"), opacity: 1, offset: 1, easing: "ease-in-out" }
-        ], { duration: dauer, easing: "linear", fill: "forwards" });
-      } catch (e) {}
-      /* Die Ohren: sie wachsen, kurz bevor er zupackt, und sind
-         wieder weg, sobald die Person steht. */
-      try {
-        ohren.animate([
-          { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: 0, easing: "ease-in-out" },
-          { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: beiZ(0.16), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0) scaleY(1)", opacity: 1, offset: beiZ(0.21), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0) scaleY(1)", opacity: 1, offset: beiZ(0.88), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: beiZ(0.95), easing: "ease-in-out" }
-        ], { duration: dauer, easing: "linear", fill: "forwards" });
-      } catch (e) {}
-      /* Der Zauberer selbst: erscheinen, am Ende verbeugen und weg. */
-      try {
-        zauber.animate([
-          { transform: "translate(-50%, -50%) translateY(26%) scale(.86)", opacity: 0, offset: 0, easing: "ease-in-out" },
-          { transform: "translate(-50%, -50%) translateY(0) scale(1)", opacity: 1, offset: beiZ(0.12), easing: "ease-in-out" },
-          { transform: "translate(-50%, -50%) translateY(0) scale(1)", opacity: 1, offset: beiZ(0.90), easing: "ease-in-out" },
-          { transform: "translate(-50%, -50%) translateY(4%) scale(1)", opacity: 1, offset: beiZ(0.95), easing: "ease-in-out" },
-          { transform: "translate(-50%, -50%) translateY(26%) scale(.9)", opacity: 0, offset: 1, easing: "ease-in-out" }
-        ], { duration: dauer, easing: "linear", fill: "forwards" });
-      } catch (e) {}
-      /* Der Rauch bleibt — er ist es, was das Verschwinden und das
-         Auftauchen erklaert. */
-      const zRauch = (woher, spaet) => {
+      const hutHtml = (klasse) =>
+        '<span class="' + klasse + '">'
+        + '<svg class="lc-zyl-bild" viewBox="0 0 100 80">'
+        /* Die Krempe liegt VOR dem Zylinder, damit alles, was
+           herauskommt, dahinter aufsteigt. */
+        + '<rect x="30" y="6" width="40" height="46" rx="3" fill="#1b1d24"/>'
+        + '<rect x="30" y="34" width="40" height="9" fill="#8c2230"/>'
+        + '<ellipse cx="50" cy="52" rx="46" ry="11" fill="#1b1d24"/>'
+        + '<ellipse cx="50" cy="50" rx="46" ry="10" fill="#2a2d36"/>'
+        + '<ellipse cx="50" cy="8" rx="20" ry="5" fill="#2a2d36"/>'
+        + "</svg></span>";
+      const rauch = (wo, spaet, versatz) => {
         const r = document.createElement("span");
         r.className = "lc-zyl-rauch";
-        r.style.setProperty("--gross", (d * 1.6) + "px");
+        r.style.setProperty("--gross", (d * 1.5) + "px");
         r.style.animationDelay = Math.round(spaet) + "ms";
         let w = "";
         for (let i = 0; i < 9; i++) {
@@ -37103,15 +36671,70 @@
         r.innerHTML = w;
         reihe.appendChild(r);
         weg.push(r);
-        setzen(r, woher.x, woher.y);
+        setzen(r, wo.x, wo.y + versatz);
+        return r;
       };
-      zRauch(ueberAb, hin * 0.40);
-      zRauch(ausZiel, hin * 0.80);
-      /* Der Ton: der erste Puff beim Verschwinden, das ta-daa beim
-         Auftauchen. „zauberpuff" ist 2,40 s lang (gemessen), der
-         zweite Puff liegt darin bei 1,55 s — deshalb faengt er so an,
-         dass der zweite Puff auf das Herausziehen faellt. */
-      lcTonSpaeter("zauberpuff", Math.max(0, Math.round(hin * 0.80 - 1550)), 0.7);
+      /* 1. Der Hut faellt ueber den Startplatz und hebt sich leer. */
+      const hutA = document.createElement("span");
+      hutA.className = "lc-zylinder lc-zylinder-ab";
+      hutA.style.setProperty("--gross", (d * 1.35) + "px");
+      hutA.innerHTML = hutHtml("lc-zyl-huelle");
+      reihe.appendChild(hutA);
+      weg.push(hutA);
+      setzen(hutA, start.x, start.y + versatzZ0);
+      rauch(start, 0.16 * dauer, versatzZ0);
+      /* 2. Der Hut am Ziel — er steht schon da, bevor etwas
+         herauskommt, sonst wirkt es wie ein Sprung. */
+      const hutB = document.createElement("span");
+      hutB.className = "lc-zylinder lc-zylinder-an";
+      hutB.style.setProperty("--gross", (d * 1.35) + "px");
+      hutB.style.animationDelay = Math.round(hin * 0.36) + "ms";
+      hutB.innerHTML = hutHtml("lc-zyl-huelle");
+      reihe.appendChild(hutB);
+      weg.push(hutB);
+      setzen(hutB, ende.x, ende.y + versatzZ1);
+      /* 3. Das Kaninchen kommt zuerst heraus. */
+      const hase = document.createElement("span");
+      hase.className = "lc-zyl-hase";
+      hase.style.setProperty("--gross", (d * 0.82) + "px");
+      hase.style.animationDelay = Math.round(hin * 0.54) + "ms";
+      hase.innerHTML =
+        /* NACHGEMESSEN am ersten Versuch: der Kopf lag mit 380 bis 414
+           px genau im Zylinderkoerper (379 bis 431) — zu sehen waren
+           nur die Ohren. Jetzt sind die Ohren kuerzer und der Kopf
+           sitzt hoeher im eigenen Kasten, und das Tier steigt weiter
+           heraus (siehe lcZylHaseR83). */
+        '<svg viewBox="0 0 60 60">'
+        + '<ellipse cx="21" cy="14" rx="6.5" ry="14" fill="#f2efe6" stroke="#cbc4b4" stroke-width="1.6"/>'
+        + '<ellipse cx="39" cy="14" rx="6.5" ry="14" fill="#f2efe6" stroke="#cbc4b4" stroke-width="1.6"/>'
+        + '<ellipse cx="21" cy="15" rx="3.1" ry="9.5" fill="#e8a6ac"/>'
+        + '<ellipse cx="39" cy="15" rx="3.1" ry="9.5" fill="#e8a6ac"/>'
+        + '<circle cx="30" cy="40" r="17" fill="#f7f4ec" stroke="#cbc4b4" stroke-width="1.8"/>'
+        + '<circle cx="23" cy="37" r="2.6" fill="#16181d"/>'
+        + '<circle cx="37" cy="37" r="2.6" fill="#16181d"/>'
+        + '<path d="M30 44 l-3 3 h6 Z" fill="#e8848d"/>'
+        + '<path d="M22 50 q8 5 16 0" stroke="#cbc4b4" stroke-width="1.6" fill="none"/>'
+        + '<path d="M17 42 h-9 M17 45 h-8 M43 42 h9 M43 45 h8" stroke="#cbc4b4"'
+        + ' stroke-width="1.1" stroke-linecap="round"/>'
+        + "</svg>";
+      reihe.appendChild(hase);
+      weg.push(hase);
+      setzen(hase, ende.x, ende.y + versatzZ1);
+      /* 4. Und dann die Person hinterher. */
+      const last = document.createElement("span");
+      last.className = "lc-zyl-last";
+      last.style.setProperty("--gross", d + "px");
+      last.style.animationDelay = Math.round(hin * 0.78) + "ms";
+      if (quelle) last.style.backgroundImage = "url(" + quelle.replace(/[()"\']/g, "") + ")";
+      else last.textContent = (ab.name || "?").charAt(0).toUpperCase();
+      reihe.appendChild(last);
+      weg.push(last);
+      setzen(last, ende.x, ende.y + versatzZ1);
+      rauch(ende, hin * 0.58, versatzZ1);
+      /* Der Ton: ein Puff beim Verschwinden, der Funkenregen dazwischen
+         und der zweite Puff beim Auftauchen — „zauberpuff" bringt alle
+         drei mit (2,40 s, gemessen). Er faengt an, wenn der Hut sitzt. */
+      lcTonSpaeter("zauberpuff", Math.round(dauer * 0.14), 0.7);
     } else if (art === "beamen") {
       /* „Das muss wirklich wie bei Star Trek und ein schoener
          Beameffekt sein." Zwei Saeulen: eine loest sich hier auf, die
@@ -44342,9 +43965,7 @@
     /* RUNDE 76 — die drei Neuen: Telefon und Anziehen gelten genau
        EINEM Platz, sie duerfen nicht ueber den ganzen Raum regnen.
        „frosch" und „zylinder" sind Reisen und stehen schon oben. */
-    telefon: 1, anziehen: 1, frosch: 1, zylinder: 1,
-    /* RUNDE 86 — die Spruehdose gilt genau EINEM Platz. */
-    spray: 1
+    telefon: 1, anziehen: 1, frosch: 1, zylinder: 1
   };
 
   function lcWirkung(art, anZeile, nachricht) {
@@ -44373,13 +43994,6 @@
        Auch das zeichnet nichts, was regnet: es setzt etwas auf und
        laesst es dort. Deshalb steht es hier oben bei der Musik und
        nicht unten bei den Wuerfen. */
-    /* RUNDE 86 — XANDER: „ich moechte, dass wir eine Spruehdose
-       haben." Sie zeichnet auf EIN Bild, sie regnet nicht. */
-    if (art === "spray") {
-      lcSpray((nachricht && (nachricht.wen || nachricht.an)) || "",
-              (nachricht && nachricht.stueck) || "froh");
-      return;
-    }
     if (art === "anziehen") {
       lcAnziehen((nachricht && (nachricht.wen || nachricht.an)) || "",
                  (nachricht && nachricht.stueck) || "");

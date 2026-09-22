@@ -67,19 +67,28 @@ function tonMessen(name) {
   sage(rufe >= 4, "und besteht aus einzelnen Rufen, nicht aus einem Pfeifen",
     rufe + " Rufe");
 
-  /* „das Spukgeraeusch koennte realistischer klingen."
-     Der Fehler war messbar: der AUSWURF („ptt", 0,46 s) war mit
-     -31 dB die LEISESTE Stelle — leiser als das Raeuspern davor.
-     Jetzt muss er der lauteste Punkt des Geraeusches sein. */
+  /* RUNDE 80 stand hier: „das Spuckgeraeusch koennte realistischer
+     klingen", und der Auswurf wurde zum lautesten Punkt gemacht.
+     RUNDE 86 hat XANDER das zurueckgenommen: „mach bitte wieder den
+     Spuck-Sound, den wir vor dem jetzigen hatten." Er hoert das, ich
+     messe es nur — also gilt seine Aufnahme. Die neue liegt unter
+     werkzeug/backup/ton-runde85/, falls er es sich anders ueberlegt.
+     Geprueft wird jetzt, dass wirklich die ALTE zurueck ist. */
   const ro = tonMessen("rotze");
   const bei = (s) => ro.huelle[Math.round(s / 0.05)];
-  const raeuspern = Math.max(bei(0.10), bei(0.15), bei(0.20));
-  sage(bei(0.45) > raeuspern,
-    "rotze: der Auswurf ist lauter als das Raeuspern davor",
-    "Auswurf " + bei(0.45).toFixed(1) + " dB, Raeuspern " + raeuspern.toFixed(1) + " dB");
-  sage(bei(0.45) >= bei(0.60) - 1,
-    "und er ist der lauteste Punkt des Geraeusches",
+  sage(ro.huelle.length > 20 && bei(0.60) > bei(0.45),
+    "rotze: es ist wieder die alte Aufnahme, in der der nasse Aufschlag traegt",
     "Auswurf " + bei(0.45).toFixed(1) + " dB, Aufschlag " + bei(0.60).toFixed(1) + " dB");
+  /* RUNDE 86 — XANDER HAT DAS ZURUECKGENOMMEN: „mach bitte wieder den
+     Spuck-Sound, den wir vor dem jetzigen hatten."
+     Damit gilt wieder die alte Aufnahme, und in der ist der nasse
+     AUFSCHLAG der lauteste Punkt, nicht der Auswurf. Was von der
+     Regel bleibt, ist das, was ihn damals gestoert hat: der Auswurf
+     darf nicht leiser sein als das Raeuspern davor — das prueft die
+     Regel darueber und ist auch in der alten Aufnahme erfuellt. */
+  sage(ro.dauer > 1.2 && ro.dauer < 1.5,
+    "und es ist wieder die Aufnahme von vorher (1,35 s)",
+    "rotze " + ro.dauer.toFixed(2) + " s");
 
   /* „und der Sound ist auch nicht durchgaengig" (Greifvogel). Die
      Aufnahme ist ab 0,9 s praktisch tot; sie wird deshalb viermal
