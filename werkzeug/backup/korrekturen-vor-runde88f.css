@@ -27661,77 +27661,33 @@ code, pre {
   position: absolute;
   left: 50%;
   top: 50%;
-  /* RUNDE 88 — 52 statt 62 Prozent. Im Profil ist die Hand laenger
-     und schmaler als von vorn; bei 62 % lag sie quer ueber dem
-     ganzen Popo statt auf EINER Backe. Eine Backe ist 44 % der
-     Blende breit (2 * 27 * 0,96 bei der Frau) — 52 % deckt sie mit
-     etwas Ueberstand, so wie eine Hand das tut. */
-  width: 52%;
-  margin: -26% 0 0 -26%;
+  width: 62%;
+  margin: -31% 0 0 -31%;
   z-index: 6;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .4));
   animation: lcKlapsHandR80 2.2s cubic-bezier(.3, 0, .2, 1) both;
 }
-/* =====================================================================
-   RUNDE 88 — DER SCHLAG KOMMT VON OBEN UND HINTEN, NICHT VON DER SEITE
-   ---------------------------------------------------------------------
-   XANDER: „Wenn man jemand auf die Wange schlaegt, schlaegt man
-   seitlich. Wenn man auf den Popo schlaegt, schlaegt man so hinten
-   drauf, und dann ist die Hand flach so von der Seite zu sehen und
-   kommt auch so animiert auf dem Po geschlagen."
-
-   WAS BISHER DASTAND: die Hand kam VON UNTEN AUSSEN (120 % unter der
-   Mitte) mit -38 Grad heran und schlug nach oben gegen die Backe.
-   Das ist die Bahn einer Ohrfeige, nur seitenverkehrt — und weil die
-   Zeichnung dabei die Handflaeche zeigte, sah es aus, als klatschte
-   jemand mit der Rueckhand gegen das Bild.
-
-   JETZT: sie holt OBEN aus, hoch und weit hinten (-135 % ueber der
-   Mitte), faellt in einem Bogen herunter und trifft die Backe mit
-   der Unterkante — also mit der Handflaeche, die dabei nach unten
-   zeigt. Der Winkel dreht dabei von +46 Grad (hoch erhoben) ueber
-   +12 auf -4 Grad (waagerecht im Aufprall): das ist der Schlag aus
-   dem Handgelenk, den jeder kennt.
-   Das Spiegeln (--klapsdir) bleibt, damit sie von beiden Seiten
-   kommen kann; gespiegelt wird nur die Zeichnung, nicht die
-   Fallrichtung — nach unten faellt sie immer.
-
-   UND DAS VORZEICHEN DES SPIEGELNS IST UMGEDREHT. Bei der alten
-   Zeichnung (Handflaeche nach vorn) zeigte der Daumen nach aussen,
-   wenn man NICHT spiegelte. Im Profil ist es andersherum: ungespiegelt
-   liegt die Manschette links und die Finger zeigen nach rechts. Wer
-   die LINKE Backe trifft, dessen Arm kommt von links — also
-   Manschette links, Finger nach rechts, NICHT spiegeln. Deshalb steht
-   in den Schluesselbildern jetzt „var(--klapsdir) * -1" fuer die
-   Breite. Gemessen am Bild: vorher lag die Manschette bei einem
-   Schlag auf die linke Backe rechts, der Arm kam also aus der
-   Koerpermitte.
-   ===================================================================== */
 @keyframes lcKlapsHandR80 {
-  /* Ausholen: hoch ueber der Backe, die Handflaeche schon nach unten. */
+  /* Ausholen: sie kommt von unten aussen, tief und weit weg. */
   0%    { opacity: 0;
-          transform: translate(calc(var(--wx, 180%) * .55), -135%) rotate(calc(var(--klapsdir, 1) * 46deg)) scale(calc(var(--klapsdir, 1) * -.78), .78); }
+          transform: translate(var(--wx, 180%), 120%) rotate(calc(var(--klapsdir, 1) * -38deg)) scale(calc(var(--klapsdir, 1) * .7), .7); }
   9%    { opacity: 1;
-          transform: translate(calc(var(--wx, 180%) * .42), -112%) rotate(calc(var(--klapsdir, 1) * 44deg)) scale(calc(var(--klapsdir, 1) * -.92), .92); }
+          transform: translate(calc(var(--wx, 180%) * .7), 92%) rotate(calc(var(--klapsdir, 1) * -30deg)) scale(calc(var(--klapsdir, 1) * .9), .9); }
   /* Kurz halten — ohne das Innehalten sieht man das Ausholen nicht. */
   18%   { opacity: 1;
-          transform: translate(calc(var(--wx, 180%) * .46), -122%) rotate(calc(var(--klapsdir, 1) * 50deg)) scale(calc(var(--klapsdir, 1) * -.94), .94); }
-  /* Der Bogen nach unten — hier ist sie am schnellsten. */
-  23%   { opacity: 1;
-          transform: translate(calc(var(--klapsx, 0%) + var(--wx, 180%) * .16), calc(var(--klapsy, 42%) - 62%)) rotate(calc(var(--klapsdir, 1) * 24deg)) scale(calc(var(--klapsdir, 1) * -1), 1); }
-  /* 27,3 % von 2,2 s = 600 ms: DER AUFPRALL — die Unterkante liegt
-     auf der Backe. Sie staucht sich dabei: eine Hand, die trifft,
-     ist einen Augenblick flacher als eine, die fliegt. */
+          transform: translate(calc(var(--wx, 180%) * .75), 100%) rotate(calc(var(--klapsdir, 1) * -34deg)) scale(calc(var(--klapsdir, 1) * .92), .92); }
+  /* 27,3 % von 2,2 s = 600 ms: der Aufprall — jetzt mitten auf der
+     Backe. Sie staucht sich dabei: eine Hand, die trifft, ist einen
+     Augenblick breiter als eine, die fliegt. */
   27.3% { opacity: 1;
-          transform: translate(var(--klapsx, 0%), var(--klapsy, 42%)) rotate(calc(var(--klapsdir, 1) * -4deg)) scale(calc(var(--klapsdir, 1) * -1.06), .88); }
-  /* Nachdruecken — die Hand bleibt einen Moment auf der Backe. */
+          transform: translate(var(--klapsx, 0%), var(--klapsy, 42%)) rotate(calc(var(--klapsdir, 1) * -6deg)) scale(calc(var(--klapsdir, 1) * 1.06), .92); }
   33%   { opacity: 1;
-          transform: translate(var(--klapsx, 0%), calc(var(--klapsy, 42%) + 6%)) rotate(calc(var(--klapsdir, 1) * -2deg)) scale(calc(var(--klapsdir, 1) * -1.02), .96); }
-  /* Und wieder hoch — langsamer, als sie gekommen ist. */
+          transform: translate(calc(var(--klapsx, 0%) * 1.15), calc(var(--klapsy, 42%) + 14%)) rotate(calc(var(--klapsdir, 1) * -14deg)) scale(calc(var(--klapsdir, 1) * 1), 1); }
+  /* Und wieder weg — langsamer, als sie gekommen ist. */
   62%   { opacity: .9;
-          transform: translate(calc(var(--wx, 180%) * .38), -96%) rotate(calc(var(--klapsdir, 1) * 36deg)) scale(calc(var(--klapsdir, 1) * -.94), .94); }
+          transform: translate(calc(var(--wx, 180%) * .6), 86%) rotate(calc(var(--klapsdir, 1) * -28deg)) scale(calc(var(--klapsdir, 1) * .92), .92); }
   100%  { opacity: 0;
-          transform: translate(calc(var(--wx, 180%) * .55), -135%) rotate(calc(var(--klapsdir, 1) * 46deg)) scale(calc(var(--klapsdir, 1) * -.8), .8); }
+          transform: translate(var(--wx, 180%), 120%) rotate(calc(var(--klapsdir, 1) * -38deg)) scale(calc(var(--klapsdir, 1) * .72), .72); }
 }
 /* DAS BILD FEDERT NACH OBEN WEG — getroffen wird von unten. */
 .lc-geklapst { animation: lcGeklapstR80 2.2s cubic-bezier(.3, 0, .3, 1) both; }
