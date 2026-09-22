@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 434 — Runde 80, erster Teil: Regen und Gewitter sind jetzt genau so lang wie ihre Animation, die Stoerung hat ein eigenes Rauschen, die Umarmungsarme haben keinen Knick mehr, die Boxhandschuhe kommen von unten mit der Flaeche, das Ablecken laeuft weich aus, der Fussball fliegt ohne Stehenbleiben zurueck, der Eimer zeigt keine Pfuetze mehr vorher, der Wecker hat Standfuesse, vor dem Geld klingelt die Kasse, die Bonbons sind bunt und sammeln sich, der Hammer klickt nicht mehr am Ende, der Schneeball laeuft gerade herunter, Pfeil und Peitsche sitzen auf dem Bild.",
+  stand: "Fassung 435 — Runde 80, zweiter Teil: Gong und Bongo sind dazugekommen, die Eierschalen laufen aussen spitz zu, der Katapult ist deutlich groesser, der Blubber-Strohhalm steckt im Glas, der Spuckball hat nur noch einen Ton, das Pusterohr sieht man auch beim Selbstbespucken, der Maulwurf klopft auch am Ziel, das Helikopterglas ist gewoelbt, die Handkacheln heissen Gott und King Kong — und das Profilbild bleibt bei JEDER Reise am Startplatz weg.",
 
   inArbeit: [
-    { seit: "2026-09-22T00:24",
+    { seit: "2026-09-22T01:16",
       text: "Der Rest von Xanders Liste vom 22. September" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T00:24",
-      text: "Gewitter 11,00 s (vorher 4,00 s) mit Regenbett und drei Schlaegen; Regen 12,00 s;neues Geraeusch rauschen.opus/m4a fuer die Stoerung (vorher lieh sie sich den Gewitterton);Umarmungsarm aus einer Rueckgratlinie gerechnet: groesster Richtungssprung 0,72 Grad statt 18,1 Grad;Boxhandschuhe beim Selbstboxen von links unten und rechts unten, 40 Grad gedreht, Treffer genau in der Bildmitte;Glanzfilm beim Ablecken sitzt auf dem runden Bild statt auf dem ganzen Knopf und laeuft ab 54 Prozent weich aus;Ballflug als echte Wurfparabel mit 32 Stuetzstellen: kleinster Schritt 7,3 px statt Stillstand;Wasserpegel samt Wellen erst sichtbar, wenn der Eimer giesst;zwei schraege Standfuesse am Wecker, die im Takt mitwippen;Registrierkasse auch beim Geld auf eine Person, Geldbett 900 ms spaeter;Bonbons gezeichnet in acht Farben, sammeln sich unten im Bild, Fallzeit 1,15 s statt 2,10 s;hammerbonk auf 1,45 s gekuerzt — der Klick bei 1,90 s (-10 dB) ist weg;Schneeball und seine Spur laufen senkrecht herunter statt schraeg;pfeilschuss hat nur noch EINEN Einschlag (vorher zwei, der zweite 1,4 s zu spaet);peitschehieb haerter (Knall 29 dB ueber dem Ausholen) und startet bei 200 ms, damit er auf die 600 ms der Animation faellt;Strudel ohne harte Kontrastkante, dazu drei Wellen von innen nach aussen" },
+    { seit: "2026-09-22T01:16",
+      text: "Gong: haengende Bronzescheibe hinter dem Bild, Schlaegel trifft bei 333 ms, drei Klangringe, eigener Ton (3,60 s, zwoelf unharmonische Teiltoene);Bongo: zwei Faesser und zwei Haende, die abwechselnd schlagen, eigener Ton (2,40 s, fuenfzehn Schlaege);Befehle /gong und /bongo, beide auch im Trommel-Untermenue;Eierschalen: Bruchkante innen, runde Eispitze aussen (vorher genau verkehrt herum);Katapult 138 Prozent statt 78 Prozent der Bildbreite;Blubber-Strohhalm von right -6 Prozent auf right 20 Prozent — jetzt im Glas;Strohhalm-Seite: am linken Rand von rechts, auf Platz 3 und 4 von links;spuckkugel von 2,00 s auf 0,86 s — der zweite Laut war der Ekel, den die Stimme ohnehin spricht;Pusterohr auch am eigenen Platz sichtbar (lcBeimSchuetzen kann jetzt auchSelbst);erdeauf klingt auch am Ziel, wenn der Maulwurfhuegel dort aufbricht;Helikopterkanzel gewoelbt statt aus vier geraden Strecken, mit Spiegelung auf dem Glas;gemeinsame Reiseblende: das Bild am Startplatz bleibt bis zum Schluss weg (betraf Schiff, Lok, Flugzeug, Sprungfeder, Kran und alle anderen);Beamen, Roehre und Maulwurf einzeln nachgezogen;Pruefbuehne hat jetzt acht Plaetze (fuenf besetzt, drei frei) — ohne freien Platz konnte keine Sonde je eine Reise sehen;neue Sonde pruefe-runde80 mit 39 Regeln;alle 136 Sonden gruen" },
   ],
 };

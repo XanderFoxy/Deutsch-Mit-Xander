@@ -251,9 +251,16 @@ pruefe("und blendet erst dort aus, nicht unterwegs",
    rutschte SENKRECHT nach unten — genau dorthin, wo der Bildkreis
    wegkrummt, und die runde Blende schnitt ihn an einer harten Kante
    ab. Nasser Schnee rutscht zum tiefsten Punkt. */
-pruefe("und er rutscht dabei zur Mitte, nicht an die Kante",
-  /schicht\.style\.setProperty\("--mitte", \(-r\.x \* 38 \* 2\.174\)/.test(js)
-  && /translateX\(calc\(var\(--mitte, 0%\) \* \.42\)\)/.test(css));
+/* RUNDE 80 — XANDER hat diese Regel ausdruecklich zurueckgenommen:
+   „Der Schneeball schleift immer noch schraeg … Lass doch den
+   Schneeball einfach da, wo er auftrifft, nach unten laufen, wie es
+   von der Physik auch realistisch ist."
+   Das Wandern zur Mitte war ein Umgehen der runden Blende, kein
+   Abbild der Physik. Jetzt laeuft er senkrecht, und genau das wird
+   hier gemessen. */
+pruefe("er laeuft senkrecht herunter, nicht schraeg zur Mitte",
+  /schicht\.style\.setProperty\("--mitte", "0%"\)/.test(js)
+  && /schicht\.style\.setProperty\("--spurdreh", "0deg"\)/.test(js));
 /* RUNDE 76 — die Spur waechst weiter mit, aber nicht mehr auf eine
    feste Hoehe: sie folgt jetzt dem Weg des Kleckses (--spurlang) und
    zeigt in seine Richtung (--spurdreh). XANDER: „Der Schneeball hat
@@ -305,11 +312,18 @@ console.log("\nDIE UMARMUNG: DIE ARME KNICKEN NICHT MEHR NACH UNTEN");
    umarmen, sondern wirklich realistisch eine Linienfuehrung haben."
    Jetzt sind Ober- und Unterkante STRECKEN (L-Befehle); rund ist nur
    noch die Schulter und der Uebergang zum Handgelenk. */
-pruefe("der Arm ist eine gerade Fuehrung, keine Kurve",
-  /" L " \+ x\(38\) \+ " 51\.4"/.test(js)
-  && /" L " \+ x\(15\) \+ " 60\.8"/.test(js));
+/* RUNDE 80 — XANDER zum vierten Mal: „Bei den Armen, die einen
+   umarmen … die haben immer noch ein Knick."
+   Die geraden Kanten von Runde 72/73 waren nicht genug: gemessen
+   sprang die MITTELLINIE bei x=15 um 18,1 Grad, und den Knick sieht
+   man an ihr, nicht an den Kanten. Der Arm wird deshalb jetzt aus
+   einer Rueckgratlinie mit Dicke gerechnet. Die Regel „keine Kurve,
+   die durchknickt" bleibt — sie wird nur richtig gemessen, naemlich
+   am Richtungssprung der Mittellinie (siehe pruefe-runde80). */
+pruefe("der Arm wird aus einer Rueckgratlinie gerechnet",
+  /const rippe = \(t\) => \{/.test(js) && /const SCHRITTE = 22;/.test(js));
 pruefe("und die Dicke bleibt, wie sie war — 21 an der Schulter, 14,5 am Gelenk",
-  /x\(hgx\) \+ " 53\.6"/.test(js) && /x\(hgx\) \+ " 68\.1"/.test(js));
+  /const d = 10\.5 \+ \(7\.25 - 10\.5\) \* w;/.test(js));
 pruefe("die Hand sitzt in der Mitte des neuen Handgelenks",
   /x\(hgx\) \+ ' 60\.9\) '/.test(js));
 

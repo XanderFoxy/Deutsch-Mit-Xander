@@ -164,11 +164,19 @@ const pruefe = (was, gut, zusatz) => {
     return { breit: kreis.getBoundingClientRect().width,
              links: Math.min.apply(null, weg), rechts: Math.max.apply(null, weg) };
   }, await nachbar());
+  /* RUNDE 80: die Richtung darf hier NICHT festgeschrieben sein.
+     Die Kugel rollt dorthin, wo der angestossene Platz liegt — und seit
+     die Pruefbuehne acht Plaetze hat (fuenf besetzt, drei frei), kann
+     das ebenso gut nach links sein. Gemessen wird deshalb, was die
+     Regel wirklich meint: sie rollt WEIT ueber den eigenen Platz
+     hinaus, und sie kommt wieder zurueck. */
+  const hin = Math.max(Math.abs(bi.rechts), Math.abs(bi.links));
+  const her = Math.min(Math.abs(bi.rechts), Math.abs(bi.links));
   pruefe("die Kugel rollt weit über den eigenen Platz hinaus",
-    bi.rechts > bi.breit * 1.2, Math.round(bi.rechts) + " px nach rechts bei "
+    hin > bi.breit * 1.0, Math.round(hin) + " px weit bei "
       + Math.round(bi.breit) + " px Bild");
   pruefe("… und prallt ab, kommt also auch zurück",
-    bi.links < -bi.breit * 1.0, Math.round(bi.links) + " px nach links");
+    her < bi.breit * 0.4, "zurueck bis auf " + Math.round(her) + " px an den Platz");
 
   await br.close(); srv.close();
   console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n"

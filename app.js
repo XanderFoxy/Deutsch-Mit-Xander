@@ -24336,6 +24336,12 @@
        Marschtrommel — siehe lcTrommel. */
     trommel:        { ton: "pauke",    dauer: 1400, laut: 0.7 },
     marsch:         { ton: "marschtrommel", dauer: 1600, laut: 0.6 },
+    /* RUNDE 80 — XANDER: „Bei der Trommel koenntest du noch einen Gong
+       hinzufuegen … und vielleicht mit zwei Haenden so Bongo."
+       Beide Toene sind selbst gerechnet, also lizenzfrei. Der Gong
+       klingt 3,60 s lang aus, das Bongo-Muster laeuft 2,40 s. */
+    gong:           { ton: "gong", dauer: 3700, laut: 0.62 },
+    bongo:          { ton: "bongo", dauer: 2500, laut: 0.6 },
     /* Runde 15 — „das Paintball hast du auch noch vergessen", das Ei,
        das Losfahren und die Spielzuege. */
     paintfleck:     { ton: "paintball", dauer: 1600, laut: 0.55 }, /* ein Schuss, kein Dauerfeuer */
@@ -24693,7 +24699,7 @@
     /* „dann hatten wir noch das Blasrohr, wo man diese kleinen Spuck
        Kuegelchen schicken kann ... dann sollen die vielleicht auch so
        ein Ekelgeraeusch von sich geben." */
-    pusterohr:      { ton: "spuckkugel", dauer: 4000, laut: 0.5 },
+    pusterohr:      { ton: "spuckkugel", dauer: 4000, laut: 0.62 },
     /* XANDER: „da hoert man auch dieses realistische Quietschegeraeusch
        beim drehen." Dafuer liegt „gluehbirne.opus" schon im Ordner —
        aber der Plan zeigte auf „kitt", und der Plan hat das erste
@@ -26357,7 +26363,11 @@
        so wie eine Marschtrommel ist." */
     ["\ud83e\udd41", "Trommel", "trommel", false,
       [["\ud83e\udd41", "Paukenschlag", "trommel"],
-       ["\ud83e\udd41", "Marschtrommel", "marsch"]]],
+       ["\ud83e\udd41", "Marschtrommel", "marsch"],
+       /* RUNDE 80 — XANDER: „Bei der Trommel koenntest du noch einen
+          Gong hinzufuegen … und vielleicht mit zwei Haenden so Bongo." */
+       ["\ud83d\udd14", "Gong", "gong"],
+       ["\ud83e\udd41", "Bongo", "bongo"]]],
     /* Die Stoerung steht hier NICHT mehr: „die Störung ist kein Effekt
        um das Profilbild zu beeinflussen durch einen Klick sondern es
        ist ein Sprechbild-Effekt." Sie ist jetzt eines der Bilder im
@@ -27040,8 +27050,13 @@
      ["\ud83d\udef8", "UFO", "untertasse"],
      ["\ud83d\udc31", "Katze", "mieze"],
      ["\ud83e\udd1a", "Hand", "gotteshand",
-      [["\ud83e\udd1a", "Gotteshand", "gotteshand"],
-       ["\ud83e\udd8d", "Gorillapranke", "pranke"]]],
+      /* RUNDE 80 — XANDER: „Der Name von der King Kong Hand kann
+         einfach nur King Kong heissen … Da steht naemlich Gottes Hand
+         und Gorilla Hand in der Kachel abgeschnitten. Dann sag lieber
+         Gott und King Kong." Genau so: kurz genug, dass es in die
+         Kachel passt. */
+      [["\ud83e\udd1a", "Gott", "gotteshand"],
+       ["\ud83e\udd8d", "King Kong", "pranke"]]],
      ["\ud83e\udd4f", "Frisbee", "frisbee"],
      ["\ud83d\udc0e", "Pferd", "pferd"],
      /* RUNDE 65: der Greifvogel und der Drei-Meter-Turm. */
@@ -28902,6 +28917,8 @@
     sahne:      { zeichen: ["\ud83c\udf66"], wie: 6, klasse: "umarmen" },
     sog:        { zeichen: ["\ud83c\udf00"], wie: 6, klasse: "umarmen" },
     trommel:    { zeichen: ["\ud83e\udd41"], wie: 5, klasse: "umarmen" },
+    gong:       { zeichen: ["\ud83d\udd14"], wie: 5, klasse: "umarmen" },
+    bongo:      { zeichen: ["\ud83e\udd41"], wie: 5, klasse: "umarmen" },
     paintfleck: { zeichen: ["\ud83c\udfa8"], wie: 5, klasse: "umarmen" },
     ei:         { zeichen: ["\ud83e\udd5a"], wie: 5, klasse: "umarmen" },
     fahren:     { zeichen: ["\ud83d\ude97"], wie: 5, klasse: "umarmen" },
@@ -29719,7 +29736,18 @@
     peitsche: 200,
     /* Das Dehnen faengt SOFORT an — es ist das erste, was passiert. */
     zwille: 0,
-    pusterohr: 1280,   /* 32 % von 4 s */
+    /* RUNDE 80 — XANDER: „Der Spuck Strohhalm hat immer noch zwei
+       Sounds." GEMESSEN: die zwei steckten IN der Aufnahme —
+       „spuckkugel" hatte den Puster bei 0,00 s und ab 0,75 s einen
+       ganze Sekunde langen zweiten Laut, und der war der Ekel, den
+       der Code 1620 ms spaeter ohnehin als Stimme spricht. Die Datei
+       ist jetzt 0,86 s lang: Puster bei 0,00 s, trockener Aufschlag
+       bei 0,55 s.
+       Der Treffer im Bild liegt bei 1280 ms; damit der Aufschlag
+       genau dort sitzt, faengt der Ton 550 ms frueher an. Der Puster
+       ist dann bei 730 ms zu hoeren — also waehrend die Kugel
+       fliegt, und das ist richtig so. */
+    pusterohr: 730,
     /* 28 % von 2,6 s — GENAU dort sitzt die Hand am Gesicht
        (siehe @keyframes lcOhrfeigeHand, Schluesselbild 28 %). Die
        alten 540 ms stammten noch von der 1,8-s-Fassung und kamen
@@ -29743,6 +29771,10 @@
        Spitze von „pauke" liegt gemessen bei 0,0 s — der Ton faengt
        also mit dem ersten Schlag an. */
     trommel: 0,
+    /* Der Schlaegel trifft bei 9 % von 3,7 s = 333 ms; der Gongton
+       hat seinen Anschlag bei 0,0 s. Das Bongo faengt sofort an. */
+    gong: 333,
+    bongo: 0,
     eimer: 676,        /* da setzt der Strahl ein */
     sahne: 588,        /* 14 % von 4,2 s, da zischt die Dose */
     reichtum: 400,
@@ -30504,21 +30536,36 @@
      sich zum Ziel (--zieldreh). Gibt es den Absender nicht im Raum,
      gibt es auch nichts zu halten — dann bleibt es beim Geschoss
      allein, und das ist besser als eine Zwille im Nichts. */
-  function lcBeimSchuetzen(platz, klasse, html, dauer) {
+  /* RUNDE 80 — XANDER: „wenn man sich selbst bespuckt, dann sieht man
+     kein Spukrohr."
+
+     GEFUNDEN, und es stand woertlich da: „if (!quelle || quelle ===
+     platz) return null" — wer auf sich selbst zielt, bekam gar
+     nichts. Der Grund war einmal richtig (ein Boxhandschuh, der von
+     einem selbst auf einen selbst zufliegt, ergibt keinen Sinn), aber
+     fuer ein Rohr, das man sich selbst vors Gesicht haelt, ist er
+     falsch — genau das tut man ja.
+     Deshalb der Schalter „auchSelbst": wer ihn setzt, bekommt das
+     Geraet auch am eigenen Platz, und es zeigt dann leicht schraeg
+     von unten aufs eigene Bild (-24 Grad), so wie man ein Rohr
+     wirklich haelt. Wer ihn nicht setzt, verhaelt sich wie bisher. */
+  function lcBeimSchuetzen(platz, klasse, html, dauer, auchSelbst) {
     const karte = document.getElementById("livechatKarte");
     const quelle = (lcWurfVon ? lcPlatzMitNamen(lcWurfVon) : null)
       || (karte && karte.querySelector(".lc-platz-ich"));
-    if (!quelle || quelle === platz) return null;
+    if (!quelle) return null;
+    const selbst = quelle === platz;
+    if (selbst && !auchSelbst) return null;
     quelle.querySelectorAll("." + klasse.split(" ")[0]).forEach((x) => x.remove());
     const schicht = document.createElement("div");
-    schicht.className = "lc-zp " + klasse;
+    schicht.className = "lc-zp " + klasse + (selbst ? " lc-selbst-gezielt" : "");
     schicht.setAttribute("aria-hidden", "true");
     /* Wohin gezielt wird: der Winkel vom Schuetzen zum Ziel. */
     const a = quelle.getBoundingClientRect(), b = platz.getBoundingClientRect();
     const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
     const dy = (b.top + b.height / 2) - (a.top + a.height / 2);
-    schicht.style.setProperty("--zieldreh",
-      (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(1) + "deg");
+    schicht.style.setProperty("--zieldreh", selbst ? "-24deg"
+      : (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(1) + "deg");
     schicht.innerHTML = html;
     quelle.appendChild(schicht);
     setTimeout(() => schicht.remove(), dauer);
@@ -32123,6 +32170,119 @@
     }, marsch ? 1600 : 1400, marsch ? "marsch" : "trommel");
   }
 
+  /* --- DER GONG ------------------------------------------------------
+     RUNDE 80 — XANDER: „Bei der Trommel koenntest du noch einen Gong
+     hinzufuegen."
+
+     Ein Gong ist eine Bronzescheibe, die frei in einem Rahmen HAENGT —
+     sie liegt also hinter dem Bild und ragt oben und unten darueber
+     hinaus. Der Schlaegel ist ein Stiel mit einem dicken, weichen
+     Filzkopf; er kommt von rechts, trifft mitten auf die Scheibe und
+     federt zurueck. Danach schwingt die Scheibe nach, und drei Ringe
+     laufen nach aussen — das ist der Klang, den man sieht.
+     Der Ton dazu ist selbst gerechnet (ton/gong): zwoelf UNharmonische
+     Teiltoene, die nacheinander aufbluehen und verschieden schnell
+     verklingen. Genau daran erkennt das Ohr Bronze. */
+  function lcGong(wen) {
+    return lcAmPlatz(wen, "lc-gong", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-gonghallt");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gonghallt");
+        setTimeout(() => kreis.classList.remove("lc-gonghallt"), 3600);
+      }
+      schicht.insertAdjacentHTML("beforeend",
+        '<svg class="lc-gong-scheibe" viewBox="0 0 120 140">'
+        + '<defs><radialGradient id="lcGongBronze" cx="0.38" cy="0.32" r="0.78">'
+        + '<stop offset="0" stop-color="#f6d98a"/>'
+        + '<stop offset="0.55" stop-color="#c79a3c"/>'
+        + '<stop offset="1" stop-color="#8a6416"/></radialGradient></defs>'
+        /* Der Rahmen, an dem er haengt. */
+        + '<path d="M14 10 H106" stroke="#6b4a22" stroke-width="5" stroke-linecap="round"/>'
+        + '<path d="M40 12 L52 30 M80 12 L68 30" stroke="#c9b48e" stroke-width="2.6"'
+        + ' stroke-linecap="round"/>'
+        /* Die Scheibe. */
+        + '<circle cx="60" cy="78" r="46" fill="url(#lcGongBronze)"'
+        + ' stroke="#7a5713" stroke-width="3"/>'
+        /* Der gehaemmerte Rand und der Buckel in der Mitte — beides
+           hat ein echter Gong, und beides sieht man von weitem. */
+        + '<circle cx="60" cy="78" r="37" fill="none" stroke="rgba(122,87,19,.45)" stroke-width="1.6"/>'
+        + '<circle cx="60" cy="78" r="26" fill="none" stroke="rgba(122,87,19,.3)" stroke-width="1.3"/>'
+        + '<circle cx="60" cy="78" r="13" fill="#e0b455" stroke="#8a6416" stroke-width="2.4"/>'
+        + '<path d="M34 56 C40 46 50 40 60 38" fill="none" stroke="rgba(255,247,214,.6)"'
+        + ' stroke-width="4" stroke-linecap="round"/>'
+        + "</svg>"
+        + '<svg class="lc-gong-schlaegel" viewBox="0 0 70 26">'
+        + '<rect x="24" y="11" width="44" height="4.4" rx="2.2" fill="#c79a5b"/>'
+        + '<ellipse cx="14" cy="13" rx="13" ry="11.5" fill="#e8d2ad"'
+        + ' stroke="#a97f38" stroke-width="2"/>'
+        + "</svg>");
+      for (let i = 0; i < 3; i++) {
+        const w = document.createElement("i");
+        w.className = "lc-gong-welle";
+        w.style.animationDelay = (0.34 + i * 0.4).toFixed(2) + "s";
+        schicht.appendChild(w);
+      }
+    }, 3700, "gong");
+  }
+
+  /* --- BONGO MIT ZWEI HAENDEN ---------------------------------------
+     RUNDE 80 — XANDER: „und vielleicht mit zwei Haenden so Bongo."
+
+     Zwei Trommeln nebeneinander, links die kleine hohe, rechts die
+     grosse tiefe — so herum sitzt ein Bongo-Paar wirklich. Darueber
+     zwei Haende, die ABWECHSELND schlagen, nicht gleichzeitig: das
+     ist der ganze Unterschied zwischen Bongo und Klatschen. Jeder
+     Schlag staucht das Fell kurz ein.
+     Der Takt der Haende ist derselbe wie im Ton (ton/bongo): fuenfzehn
+     Schlaege in 2,4 s, hoch und tief im Wechsel. */
+  function lcBongo(wen) {
+    return lcAmPlatz(wen, "lc-bongo", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-bongowippt");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-bongowippt");
+        setTimeout(() => kreis.classList.remove("lc-bongowippt"), 2500);
+      }
+      const trommel = (seite, gross) =>
+        '<span class="lc-bongo-fass lc-bongo-' + seite + '">'
+        + '<svg viewBox="0 0 60 74">'
+        /* Der Korpus, unten schmaler — ein Bongo ist ein Kegelstumpf. */
+        + '<path d="M4 18 L56 18 L48 70 L12 70 Z" fill="#a4661f"'
+        + ' stroke="#6d3f0f" stroke-width="2.4" stroke-linejoin="round"/>'
+        + '<path d="M9 22 L14 66" stroke="rgba(255,226,180,.35)" stroke-width="3.4"'
+        + ' stroke-linecap="round"/>'
+        /* Der Spannring aus Metall. */
+        + '<ellipse cx="30" cy="18" rx="27" ry="8.6" fill="#d8ddE4"'
+        + ' stroke="#8d949e" stroke-width="2.2"/>'
+        /* Und das Fell, das geschlagen wird. */
+        + '<ellipse class="lc-bongo-fell" cx="30" cy="18" rx="23" ry="7"'
+        + ' fill="' + (gross ? "#f3e2c4" : "#f8ecd6") + '" stroke="#cbb08a" stroke-width="1.8"/>'
+        + "</svg></span>";
+      schicht.insertAdjacentHTML("beforeend",
+        trommel("klein", false) + trommel("gross", true)
+        + '<span class="lc-bongo-hand lc-bongo-hand-l">' + lcBongoHandSvg() + "</span>"
+        + '<span class="lc-bongo-hand lc-bongo-hand-r">' + lcBongoHandSvg() + "</span>");
+    }, 2500, "bongo");
+  }
+
+  /* Eine Hand von oben: Handruecken, vier Finger, Daumen an der Seite.
+     Sie schlaegt mit der FLAECHE auf das Fell, darum ist sie flach
+     gezeichnet und nicht als Faust. */
+  function lcBongoHandSvg() {
+    return '<svg viewBox="0 0 44 52">'
+      + '<path d="M8 20 C8 10 13 4 22 4 C31 4 36 10 36 20 L36 34'
+      + ' C36 44 30 48 22 48 C14 48 8 44 8 34 Z" fill="#f0b895"'
+      + ' stroke="#c98a63" stroke-width="1.8"/>'
+      + '<path d="M14 10 V26 M22 8 V26 M30 10 V26" stroke="#d79a74"'
+      + ' stroke-width="1.5" stroke-linecap="round" opacity=".7"/>'
+      + '<path d="M8 22 C2 24 0 30 4 34 C7 37 11 35 12 31 Z" fill="#f4c3a7"'
+      + ' stroke="#c98a63" stroke-width="1.6"/>'
+      + "</svg>";
+  }
+
   /* --- DIE BILDSTOERUNG — BEIDES ---------------------------------------
      GEMELDET, erst: „die Störung ist kein Effekt um das Profilbild zu
      beeinflussen durch einen Klick sondern es ist ein Sprechbild-
@@ -32920,13 +33080,34 @@
         + '<ellipse cx="20" cy="30" rx="17" ry="21" fill="#fdf3e0" stroke="#d9c7a6" stroke-width="2"/>'
         + '<ellipse cx="14" cy="22" rx="5" ry="7" fill="#fffaf0" opacity=".8"/>'
         + "</svg>"
+        /* RUNDE 80 — XANDER: „Die Eierschalen … haben am anderen Ende
+           nicht diese Verjuengung."
+
+           NACHGESEHEN, und er hat in zweifacher Hinsicht recht: die
+           Zacken lagen AUSSEN und die glatte Kante in der Mitte — also
+           genau verkehrt herum. Zerbricht ein Ei, ist die Bruchkante
+           da, wo die beiden Haelften auseinandergehen (in der Mitte),
+           und das andere Ende ist die runde Eispitze. Und diese
+           Spitze war eine gerade Linie von (2|2) nach (20|2), also
+           ueberhaupt keine Verjuengung.
+
+           Jetzt hat jede Haelfte aussen die runde, spitz zulaufende
+           Eiform und innen die gezackte Bruchkante. Dazu innen ein
+           heller Streifen: das ist die Eihaut, die man in einer
+           frisch aufgeschlagenen Schale sieht. */
         + '<svg class="lc-zei-schale lc-zei-schale-links" viewBox="0 0 40 30">'
-        + '<path d="M2 2 L12 10 L4 16 L16 22 L8 28 L20 30 L20 2 Z"'
+        + '<path d="M24 1 C14 0 5 6 2 15 C5 24 14 30 24 29'
+        + ' L18 26 L25 23 L17 19 L25 15 L17 11 L25 7 L19 4 Z"'
         + ' fill="#fdf3e0" stroke="#d9c7a6" stroke-width="2" stroke-linejoin="round"/>'
+        + '<path d="M8 8 C4 12 3 19 6 24" fill="none" stroke="#fffaf0"'
+        + ' stroke-width="2.4" stroke-linecap="round" opacity=".85"/>'
         + "</svg>"
         + '<svg class="lc-zei-schale lc-zei-schale-rechts" viewBox="0 0 40 30">'
-        + '<path d="M38 2 L28 10 L36 16 L24 22 L32 28 L20 30 L20 2 Z"'
+        + '<path d="M16 1 C26 0 35 6 38 15 C35 24 26 30 16 29'
+        + ' L22 26 L15 23 L23 19 L15 15 L23 11 L15 7 L21 4 Z"'
         + ' fill="#fdf3e0" stroke="#d9c7a6" stroke-width="2" stroke-linejoin="round"/>'
+        + '<path d="M32 8 C36 12 37 19 34 24" fill="none" stroke="#fffaf0"'
+        + ' stroke-width="2.4" stroke-linecap="round" opacity=".85"/>'
         + "</svg>");
       /* Das Knacken laeuft schon (LC_TON_PLAN), das Glibbern kommt
          erst, wenn die Schale wirklich auseinandergeht. */
@@ -33683,11 +33864,31 @@
         && art !== "untertasse" && art !== "mieze" && art !== "frisbee"
         && art !== "gotteshand" && art !== "pranke") {
       try {
+        /* RUNDE 80 — XANDER: „wenn das Schiff losfaehrt und ankommt …
+           mein Foto ist noch kurz von der anderen Seite zu sehen …
+           immer wenn man landet, ist das Profilbild kurz noch mal auf
+           der Seite zu sehen, von der aus man startet. Das ist sehr
+           oft bei den Animationen der Fall. Bei der Lok ist dasselbe
+           Problem."
+
+           HIER STAND ES, und zwar an der Stelle, die fuer FAST ALLE
+           Reisen gilt: bei 92 % ging das Bild am alten Platz wieder
+           auf 1. Der Sitzwechsel kommt aber erst bei hin + 120 ms,
+           also NACH dem Ende dieser Blende — in der Luecke dazwischen
+           stand das Bild noch einmal am Startplatz. Genau das sieht
+           er, und deshalb bei so vielen Reisen: Schiff, Lok, Flugzeug,
+           Sprungfeder, Kran und alle anderen laufen hier durch.
+           In Runde 79 waren nur fuenf einzelne Blenden geaendert
+           worden — diese gemeinsame nicht.
+
+           Jetzt bleibt das Bild bis zum Schluss weg. „fill: none"
+           heisst ohnehin, dass danach wieder der normale Stil gilt:
+           die Sitzreihe wird neu gezeichnet und zeigt das Bild dann
+           dort, wo die Person WIRKLICH sitzt. */
         kreis.animate([
           { opacity: 1, transform: "scale(1)", offset: 0 },
           { opacity: 0, transform: "scale(.2)", offset: 0.16 },
-          { opacity: 0, transform: "scale(.2)", offset: 0.92 },
-          { opacity: 1, transform: "scale(1)", offset: 1 }
+          { opacity: 0, transform: "scale(.2)", offset: 1 }
         ], { duration: dauer, easing: "ease-in-out", fill: "none" });
       } catch (e) {}
     }
@@ -34371,8 +34572,12 @@
           { transform: "translateY(0) rotate(0deg)", clipPath: "inset(0 0 0% 0)", offset: 0 },
           { transform: "translateY(4%) rotate(-3deg)", clipPath: "inset(0 0 0% 0)", offset: 0.05 },
           { transform: "translateY(70%) rotate(4deg)", clipPath: "inset(0 0 100% 0)", offset: 0.22 },
-          { transform: "translateY(70%) rotate(0deg)", clipPath: "inset(0 0 100% 0)", offset: 0.86 },
-          { transform: "translateY(0) rotate(0deg)", clipPath: "inset(0 0 0% 0)", offset: 0.99 }
+          /* RUNDE 80: und es bleibt unten. Vorher kam es bei 99 %
+             noch einmal aus dem Loch am ALTEN Platz hoch — derselbe
+             Fehler wie in der gemeinsamen Reiseblende. Der Sitzwechsel
+             kommt erst danach, also blieb es einen Augenblick doppelt
+             stehen. */
+          { transform: "translateY(70%) rotate(0deg)", clipPath: "inset(0 0 100% 0)", offset: 1 }
         ], { duration: dauer, easing: "ease-in-out", fill: "none" });
       } catch (e) {}
 
@@ -34390,6 +34595,14 @@
       zu.el.appendChild(auftauch);
       weg.push(auftauch);
       lcTonZu("maulwurf");
+      /* RUNDE 80 — XANDER: „Das Klopfen beim Maulwurfhuegel ist weg,
+         das finde ich gut. Allerdings kommt kein Geraeusch auf der
+         anderen Seite."
+         Stimmt: es gab genau EIN „erdeauf", und zwar beim Abtauchen.
+         Am Ziel bricht die Erde aber ein zweites Mal auf. Der Huegel
+         dort taucht bei hin-420 ms auf — genau dann klingt es jetzt
+         auch, eine Spur leiser, weil der Haufen kleiner ist. */
+      lcTonSpaeter("erdeauf", Math.max(0, hin - 420), 0.45);
     } else if (art === "boot") {
       /* GEWUENSCHT: „eine Variante vielleicht noch mit einem Boot."
          Das Bild sitzt im Segelboot und schippert ueber die Reihe;
@@ -35249,11 +35462,17 @@
       glanz.className = "lc-beam-glanz";
       glanz.style.setProperty("--beamzeit", dauer + "ms");
       kreis.appendChild(glanz);
+      /* RUNDE 80: erst NACH dem Aufraeumen der Reise. Die Reise
+         raeumt bei dauer + 400 auf und gibt den Platz frei; wer die
+         Blende schon bei dauer + 200 abnimmt, zeigt das Bild in
+         diesen 200 Millisekunden noch einmal am Startplatz — der
+         Rueckstand, den Xander gemeldet hat. Gemessen: genau eine
+         Probe von 110 ms. */
       setTimeout(() => {
         kreis.classList.remove("lc-gebeamt");
         kreis.style.removeProperty("--beamzeit");
         glanz.remove();
-      }, dauer + 200);
+      }, dauer + 560);
       lcTonZu("beamen");
     } else if (art === "heli") {
       /* XANDER: „ein Helikopter … mit realistisch rotierenden
@@ -35318,13 +35537,37 @@
            nach RECHTS oben: von (11,5|41) auf (33|17,5). Das sind
            23,5 Einheiten hoch auf 21,5 nach hinten — eine Neigung
            von 47 Grad, genau die Lage einer echten Frontscheibe. */
-        + '<path class="lc-heli-glas" d="M11.5 41 L33 17.5 L44 17.5 L24 43 Z"/>'
-        /* Die Kinnscheibe: klein, flach, unter der Front. */
-        + '<path class="lc-heli-glas" d="M10.8 40.6 Q9.2 46.4 14.4 47.6'
-        + ' L22.6 47.6 L24 43 Z"/>'
+        /* RUNDE 80 — XANDER: „Beim Helikopter gibt es im Hintergrund
+           vom Bild noch so Erweiterung von dem Glas … das ist noch
+           viel zu eckig und viel zu undefiniert."
+
+           Er hat recht: die Frontscheibe war ein Viereck aus vier
+           GERADEN Strecken (11,5|41 – 33|17,5 – 44|17,5 – 24|43).
+           Eine Hubschrauberkanzel ist aber ein GEWOELBTES Glas; sie
+           hat keine geraden Kanten, sondern eine nach aussen
+           gebogene Vorderkante und abgerundete Ecken. Genau so ist
+           sie jetzt gezeichnet — dieselbe Lage, dieselbe Neigung von
+           47 Grad, aber mit Woelbung. Dazu ein Lichtstreifen auf dem
+           Glas: ohne Spiegelung sieht Glas nach Farbe aus, und das
+           war das „undefiniert". */
+        + '<path class="lc-heli-glas" d="M12.2 41.6'
+        + ' C13.8 32 20.6 23.4 31.4 18.1'
+        + ' C34.6 17.2 40 17.2 43.4 18.2'
+        + ' C36.6 23.2 28.4 31.4 24.6 42.4'
+        + ' C20.8 43.6 15.6 43.2 12.2 41.6 Z" stroke-linejoin="round"/>'
+        /* Die Kinnscheibe: klein, flach, unter der Front — auch sie
+           mit runden Ecken statt Kanten. */
+        + '<path class="lc-heli-glas" d="M11.8 41.4'
+        + ' C9.2 44.6 9.8 47.4 14.6 47.7'
+        + ' L22.4 47.6 C23 45.8 23.7 44.2 24.6 42.4'
+        + ' C20.4 43.4 15.2 43.2 11.8 41.4 Z" stroke-linejoin="round"/>'
         /* Der Rahmen zwischen den beiden Scheiben und die A-Saeule
-           an der Vorderkante — ohne sie sieht es aus wie ein Loch. */
-        + '<path class="lc-heli-saeule" d="M11.5 41 L33 17.5 M24 43 L11.5 41"/>'
+           an der Vorderkante — ohne sie sieht es aus wie ein Loch.
+           Sie folgt jetzt derselben Woelbung wie das Glas. */
+        + '<path class="lc-heli-saeule" d="M12.2 41.6 C13.8 32 20.6 23.4 31.4 18.1'
+        + ' M24.6 42.4 C20.8 43.6 15.6 43.2 12.2 41.6"/>'
+        /* Die Spiegelung auf dem Glas. */
+        + '<path class="lc-heli-spiegel" d="M17.6 38.2 C19.4 31 24.4 24.6 31.6 20.8"/>'
         + '<path class="lc-heli-tuer" d="M46 18.5 L46 47 M62 17 L62 48"/>'
         /* Der Rotorkopf auf dem Mast. */
         + '<path class="lc-heli-mast" d="M50 16 L53 8 L61 8 L58 16 Z"/>'
@@ -35611,8 +35854,11 @@
           rohrBild(0.465, false, 0.215),
           rohrBild(0.62,  false, 0.26),
           /* Und hier bleibt es. Kein Rest, der drueben mitliefe. */
-          rohrBild(0.62,  false, 0.95),
-          { transform: "translateY(0)", clipPath: "inset(0 0 0% 0)", offset: 1 }
+          /* RUNDE 80: und es bleibt drin. Der letzte Schritt stellte
+             das Bild am ALTEN Platz bei 100 % wieder her — und weil
+             der Sitzwechsel erst danach kommt, sah man es dort noch
+             einmal. Siehe die gemeinsame Reiseblende. */
+          rohrBild(0.62,  false, 1)
         ], { duration: dauer, easing: "linear", fill: "none" });
       } catch (e) {}
       /* Das Bild an der ZIELROEHRE. Es ist bis 0,557 vollstaendig
@@ -37295,8 +37541,25 @@
          Gespiegelt wird nicht der Halm selbst (er traegt eigene
          Drehungen und eine Animation, die dabei durcheinanderkaeme),
          sondern eine Huelle um ihn: `.lc-halm-seite`. */
+      /* RUNDE 80 — XANDER: „Und wenn ich links am Rand sitze, dann
+         soll der Strohhalm von rechts stecken … auf Platz 3 oder vier
+         soll er von links stecken."
+
+         Das ist kein Widerspruch zur Regel von Runde 76, sondern
+         ihre Grenze: der Halm richtet sich weiter danach, wo der
+         Handelnde sitzt — aber am RAND der Reihe gibt es auf der
+         einen Seite keinen Platz mehr, und dort haengt der Halm
+         halb ausserhalb des Klassenzimmers. Deshalb entscheidet an
+         den Randspalten die Spalte, und nur dazwischen die Richtung.
+         Die Reihe hat vier Plaetze (LC_JE_REIHE): Spalte 0 sind die
+         Plaetze 1 und 5, Spalte 3 die Plaetze 4 und 8. */
+      const nrH = Number(platz.dataset.lcPlatz || 0) || 0;
+      const spalteH = nrH ? (nrH - 1) % LC_JE_REIHE : -1;
       const rS = lcWurfRichtung(platz);
-      if (rS && rS.x < 0) schicht.classList.add("lc-halm-links");
+      let vonLinks = Boolean(rS && rS.x < 0);
+      if (spalteH === 0) vonLinks = false;                 /* ganz links -> von rechts */
+      else if (spalteH >= 2) vonLinks = true;              /* Platz 3/4 -> von links */
+      if (vonLinks) schicht.classList.add("lc-halm-links");
       schicht.innerHTML = '<span class="lc-halm-seite">'
         + '<span class="lc-stroh-rohr">' + blasen + "</span></span>";
     }, 3000, "strohhalm");
@@ -37404,8 +37667,17 @@
          Gespiegelt wird nicht der Halm selbst (er traegt eigene
          Drehungen und eine Animation, die dabei durcheinanderkaeme),
          sondern eine Huelle um ihn: `.lc-halm-seite`. */
+      /* RUNDE 80: dieselbe Randregel wie beim Austrinken — am linken
+         Rand der Reihe steckt der Halm von rechts, auf Platz 3 und 4
+         von links; dazwischen entscheidet weiter, wo der Handelnde
+         sitzt. Siehe lcStrohhalm. */
+      const nrB = Number(platz.dataset.lcPlatz || 0) || 0;
+      const spalteB = nrB ? (nrB - 1) % LC_JE_REIHE : -1;
       const rB = lcWurfRichtung(platz);
-      if (rB && rB.x < 0) schicht.classList.add("lc-halm-links");
+      let blubberLinks = Boolean(rB && rB.x < 0);
+      if (spalteB === 0) blubberLinks = false;
+      else if (spalteB >= 2) blubberLinks = true;
+      if (blubberLinks) schicht.classList.add("lc-halm-links");
       schicht.insertAdjacentHTML("beforeend",
         '<span class="lc-halm-seite"><span class="lc-blubber-rohr"></span></span>');
     }, 3600, "blubbern");
@@ -38983,8 +39255,10 @@
          haelt man am MUND — es gehoert an den Platz des Pustenden,
          nicht an den des Getroffenen. Dorthin wandert es jetzt, und
          es zielt dahin, wo die Kugel hinfliegt. */
+      /* RUNDE 80: auch dann, wenn man sich selbst bespuckt — dann
+         haelt man sich das Rohr eben selbst vors Gesicht. */
       lcBeimSchuetzen(platz, "lc-puste-halt",
-        '<span class="lc-puste-rohr"></span>', 4000);
+        '<span class="lc-puste-rohr"></span>', 4000, true);
       /* XANDER: „Das Geraeusch, was der Mensch macht, wenn er den
          Spuckball empfaengt, klingt total bescheuert — das klingt gar
          nicht natuerlich beim Aufprall."
@@ -41660,6 +41934,8 @@
             ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "katapult" && lcKatapult(wenZ)) return;
       if (art === "marsch" && lcTrommel(wenZ, true)) return;
+      if (art === "gong" && lcGong(wenZ)) return;
+      if (art === "bongo" && lcBongo(wenZ)) return;
       if (art === "brennen" && lcBrennen(wenZ)) return;
       if (art === "zorro" && lcZorro(wenZ)) return;
       if (art === "strohhalm" && lcStrohhalm(wenZ)) return;
@@ -42186,6 +42462,22 @@
             <button class="lc-platz lc-platz-belegt" data-lc-platz="3"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">3</span></span><span class="lc-platz-name">Cem</span></button>
             <button class="lc-platz lc-platz-belegt" data-lc-platz="4"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">4</span></span><span class="lc-platz-name">Dana</span></button>
             <button class="lc-platz lc-platz-belegt" data-lc-platz="5"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">5</span></span><span class="lc-platz-name">Emmi</span></button>
+            <!-- RUNDE 80 — DREI FREIE PLAETZE, UND DAS WAR DIE NAECHSTE LUECKE.
+                 Jede REISE (Schiff, Lok, Flugzeug, Sprungfeder, Kran,
+                 Beamen, Roehre, Maulwurf, Helikopter, UFO, Pferd …)
+                 bricht sofort ab, wenn das Ziel nicht frei ist. In
+                 dieser Buehne waren alle fuenf Plaetze belegt — also
+                 konnte keine einzige Sonde je eine Reise sehen.
+                 Genau deshalb blieb der Rueckstand am Startplatz so
+                 lange unentdeckt, den Xander rund ein Dutzend Mal
+                 gemeldet hat („immer wenn man landet, ist das
+                 Profilbild kurz noch mal auf der Seite zu sehen, von
+                 der aus man startet").
+                 Ein freier Platz sieht im echten Raum so aus: die
+                 Klasse „lc-platz-frei" und keine Namenszeile. -->
+            <button class="lc-platz lc-platz-frei" data-lc-platz="6"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">6</span></span><span class="lc-platz-name"></span></button>
+            <button class="lc-platz lc-platz-frei" data-lc-platz="7"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">7</span></span><span class="lc-platz-name"></span></button>
+            <button class="lc-platz lc-platz-frei" data-lc-platz="8"><span class="lc-kreis"></span><span class="lc-schild" aria-hidden="true"><span class="lc-nummer">8</span></span><span class="lc-platz-name"></span></button>
           </div>
           <div class="lc-chat-verlauf" id="lcVerlauf" style="height:220px; overflow:auto;">
             <p class="lc-zeile" id="lcPruefZeile">Alex drückt Emmi</p>

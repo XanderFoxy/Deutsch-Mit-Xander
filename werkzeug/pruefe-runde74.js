@@ -65,10 +65,13 @@ pruefe("und sie gehen dem Nachbarn nicht mehr ins Design",
   /\.lc-kopfhoerer-bild \{\s*\n\s*width: 112%;/.test(css));
 
 console.log("\nDAS HELIKOPTERFENSTER IST SCHRAEG\n");
-pruefe("die Frontscheibe ist eine gerade, geneigte Flaeche",
-  /d="M11\.5 41 L33 17\.5 L44 17\.5 L24 43 Z"/.test(js));
+/* RUNDE 80: die Scheibe ist jetzt gewoelbt statt gerade — siehe
+   pruefe-runde66. Geneigt nach hinten ist sie weiter, und die
+   Kinnscheibe sitzt weiter darunter. */
+pruefe("die Frontscheibe ist nach hinten geneigt",
+  /d="M12\.2 41\.6/.test(js) && /C13\.8 32 20\.6 23\.4 31\.4 18\.1/.test(js));
 pruefe("darunter sitzt die Kinnscheibe",
-  /M10\.8 40\.6 Q9\.2 46\.4 14\.4 47\.6/.test(js));
+  /d="M11\.8 41\.4/.test(js));
 /* RUNDE 75 — XANDER: „schau mal, dass das bei dem Helikopter oben
    kreisrund abschneidet. Da war noch ne Ecke … rechts ist wirklich vom
    unteren Eckpunkt zum oberen kreisrund in der Form vom Helikopter."

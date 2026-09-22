@@ -12645,12 +12645,17 @@ body.lc-schreibt .tutor-reiter {
    ===================================================================== */
 
 /* --- DAS KATAPULT ---------------------------------------------------- */
+/* RUNDE 80 — XANDER: „der Katapult ist immer noch nicht gross genug."
+   Gemessen war er 78 % der Bildbreite; ein Katapult, in das ein
+   ganzes Profilbild eingespannt wird, muss groesser sein als das
+   Bild. Jetzt 138 %, und er steht entsprechend tiefer, damit sein
+   Wurfarm auf Bildhoehe schwingt statt darunter. */
 .lc-katapult-bild {
   position: absolute;
   left: 50%;
-  bottom: -34%;
-  width: 78%;
-  margin-left: -39%;
+  bottom: -24%;
+  width: 138%;
+  margin-left: -69%;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
   animation: lcKatapultDa 2.6s ease-out both;
 }
@@ -15991,12 +15996,19 @@ body.lc-schreibt .tutor-reiter {
    Beim Ansaugen wird das Bild duenner (.lc-gesaugt), hier wird es
    dicker — das ist der sichtbare Unterschied zwischen Saugen und
    Pusten. Die Blasen liegen in der runden Blende, also IM Getraenk. */
+/* RUNDE 80 — XANDER: „beim Strohhalm, der die Blasen macht, der ist
+   immer noch nicht im Glas."
+   NACHGERECHNET: der Halm stand auf  right: -6%  — sein unteres Ende
+   lag also AUSSERHALB des runden Bildes, rechts daneben. Er steckte
+   damit neben dem Glas, nicht darin. Jetzt steht er bei  right: 20%,
+   und weil er um sein unteres Ende gedreht wird, bleibt genau dieses
+   Ende an Ort und Stelle: mitten im Getraenk. */
 .lc-blubber-rohr {
   position: absolute;
-  right: -6%;
-  top: -12%;
+  right: 20%;
+  top: -22%;
   width: 11px;
-  height: 78%;
+  height: 84%;
   border-radius: 6px;
   background: linear-gradient(180deg, #ff7f8a 0%, #ff5f6d 55%, #e04a58 100%);
   box-shadow: inset -3px 0 0 rgba(0, 0, 0, 0.14);
@@ -16010,10 +16022,13 @@ body.lc-schreibt .tutor-reiter {
   20%, 86% { transform: rotate(19deg) translateY(0) scaleY(1); opacity: 1; }
   100% { transform: rotate(46deg) translateY(-26px); opacity: 0; }
 }
+/* Die Backen sitzen am OBEREN Ende des Halms, also dort, wo der
+   Mund ist — und das liegt nach der Drehung um 19 Grad rund ein
+   Viertel der Halmlaenge weiter rechts als sein Fuss. */
 .lc-blubber-backen {
   position: absolute;
-  right: -14%;
-  top: -24%;
+  right: -8%;
+  top: -34%;
   width: 40px;
   height: 34px;
   transform-origin: 50% 80%;
@@ -18458,14 +18473,17 @@ body.lc-schreibt .tutor-reiter {
   /* Es zerfällt: die Farbe ist weg, das Bild zieht sich nach oben. */
   20%  { opacity: .55; filter: brightness(2.4) saturate(.1);
          transform: translateY(-8%) scaleY(1.08); }
-  30%, 70% { opacity: 0; filter: brightness(2.6) saturate(0);
-             transform: translateY(-14%) scaleY(1.14); }
-  /* Und drüben wieder zusammen. */
-  82%  { opacity: .55; filter: brightness(2.2) saturate(.2);
-         transform: translateY(-6%) scaleY(1.06); }
-  94%  { opacity: 1; filter: brightness(1.3) saturate(.8);
-         transform: translateY(0) scaleY(1); }
-  100% { opacity: 1; filter: none; transform: translateY(0) scaleY(1); }
+  /* RUNDE 80 — XANDER: „Beim Beamen gibt es auch noch den Rückstand."
+     GEFUNDEN: diese Klasse sitzt auf dem Kreis des START-Platzes. Ab
+     82 % blendete sie ihn wieder ein — „und drüben wieder zusammen"
+     war der Gedanke, aber DRÜBEN ist ein anderer Platz. Was hier
+     wieder auftauchte, war das Bild an der Stelle, von der man
+     gerade weggebeamt ist. Genau der Rückstand.
+     Jetzt bleibt es weg, bis die Animation vorbei ist; danach
+     zeichnet die Sitzreihe das Bild dort, wo die Person wirklich
+     sitzt. */
+  30%, 100% { opacity: 0; filter: brightness(2.6) saturate(0);
+              transform: translateY(-14%) scaleY(1.14); }
 }
 /* Die senkrechten Lichtbänder ÜBER dem Bild. */
 .lc-beam-glanz {
@@ -25408,3 +25426,215 @@ body.lc-schreibt .tutor-reiter {
    ===================================================================== */
 .lc-platzmenue { max-height: 72dvh; }
 .lc-waehler { max-height: 86dvh; }
+
+/* =====================================================================
+   RUNDE 80 — GONG UND BONGO
+   ---------------------------------------------------------------------
+   XANDER: „Bei der Trommel könntest du noch einen Gong hinzufügen …
+   und vielleicht mit zwei Händen so Bongo."
+
+   Beide gehören zur Trommel und sitzen deshalb im selben Untermenü.
+   Der Gong HÄNGT hinter dem Bild (z-index: -1), das Bongo-Paar steht
+   davor am unteren Bildrand — so, wie man beides wirklich vor sich
+   hat.
+   ===================================================================== */
+/* Der Gong HAENGT hinter der Person: die ganze Schicht liegt darum
+   hinter dem Bild, und die Scheibe ist deutlich groesser als das Bild.
+   So sieht man die Bronze als breiten Ring rundherum — und der
+   Schlaegel trifft sie dort, wo sie wirklich zu sehen ist. Laege die
+   Scheibe davor, waere das Gesicht verdeckt; das war der erste
+   Versuch, und er sah aus wie ein Deckel. */
+.lc-zp.lc-gong { z-index: -1; }
+.lc-gong-scheibe {
+  position: absolute;
+  left: 50%;
+  /* Gerechnet, nicht geschaetzt: die Scheibe sitzt im SVG bei y = 78
+     von 140, das Bild ist bei 156 % Breite also 182 % hoch. Damit der
+     Scheibenmittelpunkt auf der Bildmitte (50 %) liegt, muss die
+     Oberkante bei 50 - 78/140*182 = -51,4 % stehen. */
+  top: -51.4%;
+  width: 156%;
+  height: auto;
+  margin-left: -78%;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .4));
+  transform-origin: 50% 8%;
+  animation: lcGongSchwingt 3.7s cubic-bezier(.24, .9, .3, 1) both;
+}
+/* Sie hängt an zwei Schnüren, also schwingt sie um den Balken oben —
+   erst kräftig, dann immer weniger, wie ein Pendel, das ausläuft. */
+@keyframes lcGongSchwingt {
+  0%, 8% { transform: rotate(0deg) scale(1); }
+  11%    { transform: rotate(-2.6deg) scale(1.035, 0.975); }
+  18%    { transform: rotate(2.1deg) scale(0.985, 1.02); }
+  27%    { transform: rotate(-1.5deg) scale(1.018, 0.99); }
+  38%    { transform: rotate(1.1deg); }
+  52%    { transform: rotate(-0.7deg); }
+  68%    { transform: rotate(0.4deg); }
+  85%    { transform: rotate(-0.2deg); }
+  100%   { transform: rotate(0deg) scale(1); }
+}
+/* Der Schlägel kommt von rechts, trifft bei 9 % (= 333 ms, siehe
+   LC_TREFFER.gong) mitten auf den Buckel und federt zurück. */
+.lc-gong-schlaegel {
+  position: absolute;
+  /* Der Schlaegelkopf sitzt im SVG bei x = 14 von 70, bei 72 % Breite
+     also 14,4 % vom linken Rand des Kastens. Bei left: 85 % trifft er
+     damit bei 99,4 % — genau auf dem Bronzering, der rechts neben dem
+     Bild zu sehen ist. */
+  left: 85%;
+  top: 37%;
+  width: 72%;
+  height: auto;
+  z-index: 3;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .42));
+  transform-origin: 96% 50%;
+  animation: lcGongSchlaegt 3.7s cubic-bezier(.3, 0, .2, 1) both;
+}
+@keyframes lcGongSchlaegt {
+  0%   { opacity: 0; transform: translateX(110%) rotate(26deg); }
+  4%   { opacity: 1; }
+  9%   { opacity: 1; transform: translateX(0%) rotate(-4deg); }
+  15%  { transform: translateX(34%) rotate(9deg); }
+  24%  { transform: translateX(18%) rotate(3deg); }
+  40%  { opacity: 1; transform: translateX(74%) rotate(18deg); }
+  100% { opacity: 0; transform: translateX(120%) rotate(28deg); }
+}
+/* Der Klang, den man sieht: drei Ringe, die nach aussen laufen. */
+.lc-gong-welle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 60%;
+  height: 60%;
+  margin: -30% 0 0 -30%;
+  border-radius: 50%;
+  border: 2px solid rgba(246, 217, 138, .75);
+  opacity: 0;
+  pointer-events: none;
+  animation: lcGongWelle 2.1s ease-out both;
+}
+@keyframes lcGongWelle {
+  0%   { opacity: 0; transform: scale(.22); }
+  12%  { opacity: .9; }
+  100% { opacity: 0; transform: scale(2.1); }
+}
+/* Und das Bild zittert im Nachhall aus. */
+.lc-kreis.lc-gonghallt { animation: lcGongHallt 3.6s cubic-bezier(.24, .9, .3, 1) both; }
+@keyframes lcGongHallt {
+  0%, 8% { transform: none; }
+  10%    { transform: scale(1.05, .95); }
+  14%    { transform: scale(.97, 1.03); }
+  20%    { transform: scale(1.025, .985); }
+  28%    { transform: scale(.99, 1.01); }
+  40%    { transform: scale(1.008, .995); }
+  60%, 100% { transform: none; }
+}
+
+/* --- Das Bongo-Paar -------------------------------------------------- */
+.lc-bongo-fass {
+  position: absolute;
+  bottom: -14%;
+  width: 40%;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .4));
+  transform-origin: 50% 100%;
+  animation: lcBongoSteht 2.5s ease-out both;
+}
+.lc-bongo-fass svg { display: block; width: 100%; height: auto; }
+/* Links die kleine hohe, rechts die grosse tiefe — so herum steht ein
+   Bongo-Paar wirklich. */
+.lc-bongo-klein { left: 6%; width: 36%; }
+.lc-bongo-gross { right: 6%; width: 44%; }
+@keyframes lcBongoSteht {
+  0%   { opacity: 0; transform: translateY(34%) scale(.82); }
+  10%  { opacity: 1; transform: translateY(0) scale(1); }
+  88%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(20%) scale(.9); }
+}
+/* Die beiden Hände schlagen ABWECHSELND — das ist der ganze
+   Unterschied zwischen Bongo und Klatschen. Der Takt ist derselbe wie
+   im Ton: fünfzehn Schläge in 2,4 s. */
+/* Jede Hand liegt auf IHREM Fell. Gerechnet: das kleine Fass ist 36 %
+   breit, sein SVG 60x74, also 44,4 % hoch; das Fell sitzt bei y = 18
+   von 74, das sind 19,6 % ueber dem unteren Bildrand. Das grosse Fass
+   ist 44 % breit und sein Fell liegt entsprechend bei 27,1 %. */
+.lc-bongo-hand {
+  position: absolute;
+  width: 26%;
+  z-index: 4;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .38));
+  transform-origin: 50% 100%;
+}
+.lc-bongo-hand svg { display: block; width: 100%; height: auto; }
+.lc-bongo-hand-l { left: 11%; bottom: 19%; animation: lcBongoLinks 2.5s linear both; }
+.lc-bongo-hand-r { right: 11%; bottom: 27%; animation: lcBongoRechts 2.5s linear both; }
+/* 0,00 / 0,17 / 0,48 / 0,60 / 0,92 / 1,05 / 1,34 / 1,78 / 1,90 s sind
+   die Schläge der HOHEN Trommel (links im Ton), der Rest gehört der
+   tiefen. In Prozent von 2,5 s sind das die Zahlen hier. */
+@keyframes lcBongoLinks {
+  0%   { opacity: 0; transform: translateY(-58%) rotate(-12deg); }
+  3%   { opacity: 1; transform: translateY(2%) rotate(0deg); }
+  5%   { transform: translateY(-44%) rotate(-9deg); }
+  7%   { transform: translateY(2%) rotate(0deg); }
+  13%  { transform: translateY(-50%) rotate(-10deg); }
+  19%  { transform: translateY(1%) rotate(0deg); }
+  24%  { transform: translateY(-30%) rotate(-6deg); }
+  28%  { transform: translateY(1%) rotate(0deg); }
+  33%  { transform: translateY(-52%) rotate(-10deg); }
+  37%  { transform: translateY(2%) rotate(0deg); }
+  42%  { transform: translateY(-34%) rotate(-7deg); }
+  46%  { transform: translateY(1%) rotate(0deg); }
+  54%  { transform: translateY(-54%) rotate(-11deg); }
+  58%  { transform: translateY(2%) rotate(0deg); }
+  71%  { transform: translateY(-40%) rotate(-8deg); }
+  76%  { transform: translateY(1%) rotate(0deg); }
+  88%  { opacity: 1; transform: translateY(-36%) rotate(-7deg); }
+  100% { opacity: 0; transform: translateY(-62%) rotate(-12deg); }
+}
+@keyframes lcBongoRechts {
+  0%   { opacity: 0; transform: translateY(-58%) rotate(12deg); }
+  6%   { opacity: 1; transform: translateY(-46%) rotate(10deg); }
+  12%  { transform: translateY(2%) rotate(0deg); }
+  17%  { transform: translateY(-48%) rotate(10deg); }
+  29%  { transform: translateY(2%) rotate(0deg); }
+  35%  { transform: translateY(-44%) rotate(9deg); }
+  46%  { transform: translateY(2%) rotate(0deg); }
+  52%  { transform: translateY(-38%) rotate(8deg); }
+  58%  { transform: translateY(1%) rotate(0deg); }
+  62%  { transform: translateY(-50%) rotate(10deg); }
+  66%  { transform: translateY(2%) rotate(0deg); }
+  80%  { transform: translateY(-46%) rotate(9deg); }
+  84%  { transform: translateY(2%) rotate(0deg); }
+  92%  { opacity: 1; transform: translateY(-30%) rotate(6deg); }
+  100% { opacity: 0; transform: translateY(-62%) rotate(12deg); }
+}
+/* Und das Bild wippt im Takt mit — es ist ja das Fell. */
+.lc-kreis.lc-bongowippt { animation: lcBongoWippt 2.4s linear both; }
+@keyframes lcBongoWippt {
+  0%, 100% { transform: none; }
+  3%   { transform: scale(1.03, .97); }
+  7%   { transform: none; }
+  13%  { transform: scale(1.025, .975); }
+  19%  { transform: none; }
+  33%  { transform: scale(1.03, .97); }
+  37%  { transform: none; }
+  54%  { transform: scale(1.03, .97); }
+  58%  { transform: none; }
+  71%  { transform: scale(1.025, .975); }
+  76%  { transform: none; }
+  88%  { transform: scale(1.02, .98); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-gong-schlaegel, .lc-gong-welle, .lc-bongo-hand { animation: none; }
+  .lc-gong-scheibe, .lc-bongo-fass { animation: none; }
+  .lc-kreis.lc-gonghallt, .lc-kreis.lc-bongowippt { animation: none; }
+}
+
+/* RUNDE 80 — die Spiegelung auf dem Kanzelglas. „viel zu undefiniert"
+   hiess auch: es sah aus wie eine blaue Fläche. Glas erkennt man an
+   dem Lichtstreifen darauf. */
+.lc-heli-spiegel {
+  fill: none;
+  stroke: rgba(255, 255, 255, .72);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}

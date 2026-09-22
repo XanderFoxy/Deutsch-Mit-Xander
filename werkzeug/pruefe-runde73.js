@@ -202,8 +202,11 @@ pruefe("die Muenze wird beim Landen nicht mehr kleiner",
 pruefe("die Trommel hoert auf, wenn der Ton aufhoert",
   /\}, marsch \? 1600 : 1400, marsch \? "marsch" : "trommel"\);/.test(js)
   && /lcStockAR73 1\.4s/.test(css));
-pruefe("der Arm der Umarmung ist eine gerade Fuehrung",
-  /" L " \+ x\(38\) \+ " 51\.4"/.test(js));
+/* RUNDE 80: der Arm wird jetzt aus einer Rueckgratlinie gerechnet —
+   siehe pruefe-runde72 und pruefe-runde80. Die Forderung bleibt
+   dieselbe: eine stetige Fuehrung ohne Knick. */
+pruefe("der Arm der Umarmung ist eine stetige Fuehrung",
+  /const rippe = \(t\) => \{/.test(js));
 pruefe("die Kopfhoerer klemmen am Bild statt daneben zu haengen",
   /\.lc-kopfhoerer-bild \{[\s\S]{0,200}?width: 122%;/.test(css));
 

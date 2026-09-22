@@ -62,9 +62,18 @@ pruefe("das Profilbild sitzt in der Kanzel, nicht mitten im Rumpf",
    (42|18) bis (30|45) — vorn UND unten rund, also ein Klumpen. Eine
    Hubschrauberkanzel besteht aus zwei GERADEN Scheiben: der um 47
    Grad geneigten Frontscheibe und der Kinnscheibe darunter. */
-pruefe("und die verglaste Front ist eine gerade, geneigte Scheibe",
-  /lc-heli-glas" d="M11\.5 41 L33 17\.5 L44 17\.5 L24 43 Z"/.test(js)
-  && /M10\.8 40\.6 Q9\.2 46\.4 14\.4 47\.6/.test(js));
+/* RUNDE 80 — XANDER: „Beim Helikopter gibt es im Hintergrund vom Bild
+   noch so Erweiterung von dem Glas … das ist noch viel zu eckig."
+   Die Kanzel ist deshalb nicht mehr aus GERADEN Strecken gebaut,
+   sondern gewoelbt. Was diese Regel wirklich meint, bleibt richtig
+   und wird weiter gemessen: die Front ist nach hinten geneigt (sie
+   laeuft von unten vorn nach oben hinten), und darunter sitzt eine
+   eigene Kinnscheibe. */
+pruefe("und die verglaste Front ist nach hinten geneigt",
+  /lc-heli-glas" d="M12\.2 41\.6/.test(js)
+  && /C13\.8 32 20\.6 23\.4 31\.4 18\.1/.test(js));
+pruefe("darunter sitzt eine eigene Kinnscheibe",
+  /lc-heli-glas" d="M11\.8 41\.4/.test(js));
 pruefe("er steht auf seinem eigenen Abwind", /lc-heli-wind/.test(js) && /lcHeliWindR66/.test(css));
 
 console.log("\nDER GEWICKELTE GRIFF");

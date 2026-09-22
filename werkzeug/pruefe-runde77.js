@@ -166,9 +166,15 @@ pruefe("und es laeuft im Takt der drei Umdrehungen des Glases",
   && /58%, 100% \{ transform: translateX\(98\.6px\); \}/.test(css));
 
 console.log("\nDIE HAND: EIN MENÜ, EIN GRIFF, ZWEI TÖNE\n");
-pruefe("Gotteshand und Gorillapranke stehen unter EINER Kachel",
+/* RUNDE 80 — XANDER: „Der Name von der King Kong Hand kann einfach
+   nur King Kong heissen … Da steht naemlich Gottes Hand und Gorilla
+   Hand in der Kachel abgeschnitten. Dann sag lieber Gott und King
+   Kong." Beide stehen weiter unter EINER Kachel — nur kuerzer
+   benannt, damit die Schrift nicht abgeschnitten wird. */
+pruefe("Gott und King Kong stehen unter EINER Kachel",
   /\["\\ud83e\\udd1a", "Hand", "gotteshand",/.test(js)
-  && /\["\\ud83e\\udd8d", "Gorillapranke", "pranke"\]\]\],/.test(js));
+  && /\["\\ud83e\\udd1a", "Gott", "gotteshand"\]/.test(js)
+  && /\["\\ud83e\\udd8d", "King Kong", "pranke"\]\]\],/.test(js));
 pruefe("und das Anreise-Menue kann Untermenues",
   /lcUnterMenue\(platz, String\(nr\), wort, unter\);/.test(js));
 pruefe("die Finger knicken beim Zupacken ein",

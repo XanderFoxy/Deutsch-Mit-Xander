@@ -144,9 +144,18 @@ console.log("\nBOWLING UND STROHHALM\n");
 pruefe("beim Bowling faellt er erst, wenn die Kugel da ist",
   /const stossKlasse = art === "billard"/.test(js)
   && /0%, 58% \{ transform: translate\(0, 0\) rotate\(0deg\) scale\(1\); opacity: 1; \}/.test(css));
+/* RUNDE 80 — XANDER hat die Regel an den Raendern ergaenzt: „Und wenn
+   ich links am Rand sitze, dann soll der Strohhalm von rechts stecken
+   … auf Platz 3 oder vier soll er von links stecken."
+   Die Richtung des Handelnden entscheidet weiter — aber an der ersten
+   und den letzten beiden Spalten wuerde der Halm halb ausserhalb des
+   Klassenzimmers haengen, und dort entscheidet deshalb die Spalte. */
 pruefe("der Strohhalm kommt von der Seite, auf der ich sitze",
-  (js.match(/if \(r[SB] && r[SB]\.x < 0\) schicht\.classList\.add\("lc-halm-links"\);/g) || []).length === 2
+  (js.match(/= Boolean\(r[SB] && r[SB]\.x < 0\);/g) || []).length === 2
   && /\.lc-halm-links \.lc-halm-seite \{ transform: scaleX\(-1\); \}/.test(css));
+pruefe("… und am Rand der Reihe entscheidet die Spalte",
+  (js.match(/if \(spalte[HB] === 0\)/g) || []).length === 2
+  && (js.match(/else if \(spalte[HB] >= 2\)/g) || []).length === 2);
 pruefe("und beide Halme sind gleich geringelt",
   (css.match(/repeating-linear-gradient\(to bottom,\s*\n\s*#ff5f7a 0 10%, #ffffff 10% 20%\)/g) || []).length >= 2);
 pruefe("der Spuckball hat nur noch EIN Ekelgeraeusch",

@@ -290,11 +290,18 @@ console.log("\nDER STRUDEL HAT EINEN SWIRL — UND UNTERBRICHT NICHT MEHR");
 pruefe("zwei helle Sektoren laufen mit",
   (js.match(/class="lc-strudel-wirbel/g) || []).length === 2
   && /@keyframes lcStrudelWirbelR71/.test(cssK));
+/* RUNDE 80: der Sektor hat einen laengeren, weicheren Verlauf
+   bekommen („man sieht die Kontrastkante … es soll eher von innen
+   nach aussen so wabern"), deshalb steht mehr zwischen der Regel und
+   ihrer Dauer. Gemessen wird jetzt ohne feste Zeichenzahl. */
 pruefe("innen dreht es schneller als aussen",
-  /\.lc-strudel-wirbel \{[\s\S]{0,700}?animation: lcStrudelWirbelR71 2\.4s linear infinite;/.test(cssK)
+  /animation: lcStrudelWirbelR71 2\.4s linear infinite;/.test(cssK)
   && /\.lc-strudel-wirbel-2 \{[\s\S]{0,200}?animation-duration: 1\.45s;/.test(cssK));
+/* Der Schlund bleibt frei — die Maske faengt erst hinter der Mitte
+   an. Seit Runde 80 laeuft sie aussen weicher aus (74 % statt 92 %),
+   damit dort keine Kante steht; die Regel selbst ist dieselbe. */
 pruefe("der Schlund bleibt frei — der Sektor liegt nur auf dem Ring",
-  /mask: radial-gradient\(circle, rgba\(0,0,0,0\) 0 16%, #000 34% 92%/.test(cssK));
+  /mask: radial-gradient\(circle, rgba\(0,0,0,0\) 0 1[0-9]%, #000 3[0-9]%/.test(cssK));
 pruefe("die Karte dreht sich nicht mehr einmal ganz herum",
   /45%  \{ transform: rotate\(16deg\) scale\(\.9\); \}/.test(cssK)
   && !/transform: rotate\(360deg\) scale\(1\); \}/.test(cssK));

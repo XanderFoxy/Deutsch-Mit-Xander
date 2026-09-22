@@ -922,6 +922,12 @@ window.LiveChat = (function () {
     sahne:    { wirkung: "sahne",      satz: "spr\u00fcht Schlagsahne auf den Kopf von", emoji: "\ud83c\udf66" },
     trommel:  { wirkung: "trommel",    satz: "trommelt auf dem Kopf von",   emoji: "\ud83e\udd41" },
     marsch:   { wirkung: "marsch",     satz: "schl\u00e4gt einen Marschwirbel f\u00fcr", emoji: "\ud83e\udd41" },
+    /* RUNDE 80 — XANDER: „Bei der Trommel koenntest du noch einen Gong
+       hinzufuegen … und vielleicht mit zwei Haenden so Bongo." Beide
+       stehen im Trommel-Untermenue UND haben einen eigenen Befehl —
+       sonst waeren sie gezeichnet, aber nicht aufrufbar. */
+    gong:     { wirkung: "gong",       satz: "schl\u00e4gt den Gong f\u00fcr", emoji: "\ud83d\udd14" },
+    bongo:    { wirkung: "bongo",      satz: "trommelt Bongo f\u00fcr", emoji: "\ud83e\udd41" },
     /* GEMELDET: „die Störung ist kein Effekt um das Profilbild zu
        beeinflussen durch einen Klick sondern es ist ein Sprechbild-
        Effekt." Sie steht deshalb nicht mehr hier, sondern unten bei
@@ -8850,6 +8856,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "sahne",   kurz: "schlagsahne", nutzt: "/sahne Name",  was: "Schlagsahne-Haube auf den Kopf" },
     { gr: "reden", w: "trommel", kurz: "gong",   nutzt: "/trommel Name",     was: "Trommel — auf dem Kopf wird getrommelt" },
     { gr: "reden", w: "marsch", kurz: "marschtrommel", nutzt: "/marsch Name",      was: "Marschtrommel \u2014 ein schneller Wirbel statt eines Schlags" },
+    { gr: "reden", w: "gong", kurz: "tamtam", nutzt: "/gong Name",          was: "Gong \u2014 ein grosser Bronzeteller, der lange nachklingt" },
+    { gr: "reden", w: "bongo", kurz: "bongos", nutzt: "/bongo Name",        was: "Bongo \u2014 zwei Trommeln, mit beiden H\u00e4nden geschlagen" },
     { gr: "reden", w: "ei",       kurz: "ei",    nutzt: "/ei Name",          was: "Ei auf dem Kopf — es wird aufgeschlagen und laeuft herunter" },
     { gr: "reden", w: "stoerung", kurz: "tv",  nutzt: "/stoerung Name",    was: "Bildstoerung — schlechter Empfang, das Bild zerreisst" },
     { gr: "reden", w: "fahren",  kurz: "fahrt", nutzt: "/fahren Name",      was: "hinfahren \u2014 dein Bild rollt zum freien Platz daneben und bleibt dort" },
