@@ -27196,6 +27196,61 @@
     });
     karte.appendChild(band);
   }
+  /* =================================================================
+     RUNDE 92 — EIN LIED, DAS MIR JEMAND AUFSETZT, GEHT NIE STILL UNTER
+     -----------------------------------------------------------------
+     XANDER: „Die Kopfhoerer bleiben immer noch nicht auf dem Kopf, und
+     ich kann jemand anderem immer noch nicht mein Lied zeigen … ich
+     hoere gar nichts, es passiert einfach nichts."
+
+     NACHGESEHEN, und hier ist der stille Ausgang: lcMusikSpielen faengt
+     mit „if (!selbst && !lcToeneAn()) return false" an. Wer seine Toene
+     ausgeschaltet hat — und das tut man im Klassenzimmer schnell, weil
+     die Effekte klingen —, bekommt das Lied NICHT, und zwar ohne ein
+     einziges Zeichen. Genau das beschreibt er: es passiert einfach
+     nichts. Dasselbe gilt, wenn der Browser den Ton sperrt.
+
+     Ein Lied, das MIR persoenlich aufgesetzt wird, ist aber keine
+     Hintergrundmusik — es ist eine Zusendung. Deshalb gibt es dafuer
+     jetzt ein Angebot: eine Leiste, die sagt, wer mir was schickt, und
+     die auf einen Tipp hin spielt. Der Tipp ist zugleich die
+     Nutzergeste, die jeder Browser sehen will.
+     ================================================================= */
+  function lcLiedAngebot(datei, titel, ab, bis, von) {
+    const karte = document.getElementById("livechatKarte");
+    if (!karte || !datei) return false;
+    document.getElementById("lcLiedAngebot")?.remove();
+    const band = document.createElement("div");
+    band.id = "lcLiedAngebot";
+    band.className = "lc-musikband lc-liedangebot";
+    band.innerHTML = '<span class="lc-musikband-note">\ud83c\udfa7</span>'
+      + '<span class="lc-musikband-titel"></span>'
+      + '<button type="button" class="lc-musikband-knopf" data-tun="los"'
+      + ' title="Lied anh\u00f6ren" aria-label="Lied anh\u00f6ren">\u25b6\ufe0f</button>'
+      + '<button type="button" class="lc-musikband-knopf" data-tun="weg"'
+      + ' title="Danke, nein" aria-label="Weg">\u2716\ufe0f</button>';
+    band.querySelector(".lc-musikband-titel").textContent =
+      (von ? von + " setzt dir auf: " : "F\u00fcr dich: ") + (titel || datei);
+    band.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const k = e.target.closest ? e.target.closest(".lc-musikband-knopf") : null;
+      if (k && k.dataset.tun === "weg") { band.remove(); return; }
+      /* Ein Tipp auf die Leiste zaehlt als „ja" — und als Geste. Er
+         spielt das Lied, ohne am Tonschalter des Raums zu drehen:
+         „selbst" heisst hier, dass ICH es ausgeloest habe. */
+      band.remove();
+      lcMusikSpielen(datei, titel, ab, bis, true);
+    });
+    karte.appendChild(band);
+    /* Und eine Zeile dazu, damit es auch sieht, wer gerade woanders
+       hinschaut. */
+    try {
+      showToast("\ud83c\udfa7 " + (von ? von + " schickt dir " : "F\u00fcr dich: ")
+        + (titel || "ein Lied") + " \u2014 antippen zum H\u00f6ren.");
+    } catch (e) {}
+    return true;
+  }
+
   /* WENN DER BROWSER DIE MUSIK VERWEIGERT.
      Ein Tipp irgendwo auf der Seite ist eine echte Nutzergeste —
      danach laesst jeder Browser sie zu. Der Horcher haengt sich
@@ -44468,9 +44523,18 @@
         /* RUNDE 80 — der Ausschnitt reist in der Nachricht mit
            (liedAb/liedBis, gesetzt in livechat.js), damit er auf dem
            Geraet des Hoerers gilt und nicht nur beim Absender. */
-        lcMusikSpielen(lied, (nachricht && nachricht.liedTitel) || "",
+        const lief = lcMusikSpielen(lied, (nachricht && nachricht.liedTitel) || "",
                        (nachricht && nachricht.liedAb) || 0,
                        (nachricht && nachricht.liedBis) || 0);
+        /* RUNDE 92 — und wenn nicht (Toene aus, Browser sperrt), dann
+           NICHT stillschweigend nichts tun. XANDER: „ich hoere gar
+           nichts, es passiert einfach nichts." */
+        if (!lief) {
+          lcLiedAngebot(lied, (nachricht && nachricht.liedTitel) || "",
+                        (nachricht && nachricht.liedAb) || 0,
+                        (nachricht && nachricht.liedBis) || 0,
+                        (nachricht && nachricht.name) || "");
+        }
       }
     }
     /* XANDER: „sollen die Kopfhoerer auch so lange auf der Person
@@ -45050,36 +45114,83 @@
          Getroffen wird mit der UNTERKANTE (der Handflaeche), nicht
          mit der Flaeche zum Betrachter hin.
          ============================================================= */
+      /* =============================================================
+         RUNDE 92 — DIE GANZE HAND, IN DER DRAUFSICHT
+         -------------------------------------------------------------
+         XANDER: „Auf dem Po mit dem Klaps ist immer noch nicht die
+         Hand wie vorher zu sehen. Du schlaegst immer noch flach von
+         obendrauf. Ich habe gesagt, die moechte ich nicht. Moechte
+         die seitliche Hand haben. Das kann auch ein flaches
+         Draufschlagen sein, aber … sie war die ganze Hand zu sehen,
+         in der Draufsicht."
+
+         In Runde 88 hatte ich die Hand ins PROFIL gedreht — anatomisch
+         richtig fuer einen Schlag von oben, aber man sieht davon nur
+         einen schmalen Streifen. Genau das meint er mit „flach von
+         obendrauf": da ist keine Hand mehr zu erkennen.
+
+         JETZT: die DRAUFSICHT auf die ganze Hand — Handruecken, vier
+         Finger, Daumen —, und sie kommt VON DER SEITE herein. Der
+         Schlag bleibt flach; man sieht dabei aber, WAS da schlaegt.
+         Gezeichnet ist der Handruecken (nicht die Innenflaeche): die
+         Finger liegen leicht gefaechert, der Daumen steht nach unten
+         ab, ueber den Knoecheln laufen die Strecksehnen.
+         ============================================================= */
       schicht.innerHTML =
-        '<svg class="lc-klaps-hand" viewBox="0 0 70 30" aria-hidden="true">'
-        /* Die Manschette am Handgelenk — ohne sie endet der Arm in
-           einer geraden Kante mitten in der Luft. */
-        + '<path d="M0 10.5 L9 9.6 L9 22.4 L0 21.4 Z" fill="#8d5fa8"/>'
-        /* DER UMRISS: Handruecken oben, Handflaeche unten. */
-        + '<path d="M8.4 9.8 C5.6 9.4 5.6 22.6 8.4 22.2'
-        + ' C14 23.4 20 25.2 30 25.8'
-        + ' C42 26.2 54 24.9 62.4 22.5'
-        + ' C66.6 21.3 66.9 17 63 15.8'
-        + ' C54 13.3 44 12.4 34 12.2'
-        + ' C29 12.1 26 11.4 24 10'
-        + ' C20 7.4 12.4 8.2 8.4 9.8 Z"'
-        + ' fill="#eec0a8" stroke="#bf9280" stroke-width="1.6"'
+        '<svg class="lc-klaps-hand" viewBox="0 0 96 72" aria-hidden="true">'
+        /* Die Manschette am Handgelenk. */
+        + '<path d="M0 26 L13 22.5 L13 51 L0 47 Z" fill="#8d5fa8"/>'
+        /* DER HANDRUECKEN — von oben gesehen: breiter als hoch, zum
+           Handgelenk hin schmaler. */
+        + '<path d="M12 25 C12 20.5 17 18.5 24 18.2'
+        + ' C38 17.6 50 18.6 57 21.4'
+        + ' C61 23 61.6 28 61 33'
+        + ' C60.4 39 59 45 56.6 48.6'
+        + ' C54 52.4 46 53.6 34 53.2'
+        + ' C22 52.8 14 51.4 12.6 48.4'
+        + ' C11.4 45.6 11.6 30 12 25 Z"'
+        + ' fill="#eec0a8" stroke="#bf9280" stroke-width="1.7"'
         + ' stroke-linejoin="round"/>'
-        /* Der Daumen liegt im Profil OBEN auf dem Handruecken. */
-        + '<path d="M18 10.4 C24 9.2 30 11 33.6 14.6'
-        + ' C35 16 33.8 17.8 32 16.8 C28 14.6 23 12.6 18 12.6 Z"'
-        + ' fill="#f3cbb6" stroke="#bf9280" stroke-width="1.3"'
+        /* DIE VIER FINGER, leicht gefaechert und verschieden lang —
+           Zeigefinger kuerzer als Mittelfinger, kleiner Finger am
+           kuerzesten. Jeder ist eine eigene Form mit runder Kuppe. */
+        + '<path d="M56 22.6 C64 20.4 76 19.6 86 20.8'
+        + ' C91.5 21.4 91.8 27.4 86.4 28.2'
+        + ' C76 29.8 64 29.6 56.6 28.4 Z"'
+        + ' fill="#f0c5ad" stroke="#bf9280" stroke-width="1.5"'
         + ' stroke-linejoin="round"/>'
-        /* Die Fingerkuppen: drei kurze Kerben an der Unterkante —
-           daran erkennt man, dass es Finger sind und keine Flosse. */
-        + '<path d="M46 24.6 C47.4 22.6 47.6 20.4 46.6 18.4'
-        + ' M53 24 C54.4 22 54.6 19.8 53.6 17.8'
-        + ' M59 23 C60.2 21.2 60.4 19.2 59.6 17.4"'
-        + ' fill="none" stroke="#c99a84" stroke-width="1.1"'
-        + ' stroke-linecap="round" opacity=".5"/>'
-        /* Der Ballen und die Knoechellinie. */
-        + '<path d="M11 20.6 C16 23.4 22 24.8 29 25.3"'
-        + ' fill="none" stroke="#c99a84" stroke-width="1.3"'
+        + '<path d="M57 30.4 C66 28.8 80 28.4 90 29.8'
+        + ' C95.4 30.6 95.4 36.4 90 37.2'
+        + ' C80 38.6 66 38.4 57.4 36.8 Z"'
+        + ' fill="#f0c5ad" stroke="#bf9280" stroke-width="1.5"'
+        + ' stroke-linejoin="round"/>'
+        + '<path d="M56.6 38.8 C65 37.6 78 37.6 87 39.2'
+        + ' C92 40.1 92 45.6 87 46.4'
+        + ' C78 47.8 65 47.4 56 45.6 Z"'
+        + ' fill="#f0c5ad" stroke="#bf9280" stroke-width="1.5"'
+        + ' stroke-linejoin="round"/>'
+        + '<path d="M54.6 47 C62 46.2 72 46.6 79 48.2'
+        + ' C83.6 49.2 83.4 54.2 79 55'
+        + ' C71 56.4 61 55.8 53.4 53.6 Z"'
+        + ' fill="#eec0a8" stroke="#bf9280" stroke-width="1.5"'
+        + ' stroke-linejoin="round"/>'
+        /* DER DAUMEN — er steht nach unten ab und liegt in der
+           Draufsicht VOR dem Handruecken, mit seinem Ballen. */
+        + '<path d="M20 48 C22 56 28 64 36 67.4'
+        + ' C41.6 69.8 46.6 65.6 43.4 61'
+        + ' C39 54.8 34 50.2 28.6 47 Z"'
+        + ' fill="#f3cbb6" stroke="#bf9280" stroke-width="1.6"'
+        + ' stroke-linejoin="round"/>'
+        /* DIE STRECKSEHNEN ueber den Knoecheln — daran erkennt man
+           einen Handruecken und keine Handflaeche. */
+        + '<path d="M22 27.4 C32 25.8 44 25.6 54 26.8'
+        + ' M21.6 34.6 C32 33.4 44 33.4 54.6 34.4'
+        + ' M22 41.8 C32 41 43 41.2 53.4 42.2"'
+        + ' fill="none" stroke="#cf9f88" stroke-width="1.1"'
+        + ' stroke-linecap="round" opacity=".55"/>'
+        /* Die Knoechelreihe dort, wo die Finger ansetzen. */
+        + '<path d="M57.6 23.4 C58.6 30 58.6 40 56.6 48"'
+        + ' fill="none" stroke="#c99a84" stroke-width="1.2"'
         + ' stroke-linecap="round" opacity=".45"/>'
         + "</svg>"
         + '<span class="lc-klaps-wort">KLAPS</span>';
@@ -45287,23 +45398,25 @@
          und 38,4 % beim Mann. */
       schicht.style.setProperty("--abdruckx", (backeMx - 18).toFixed(1) + "%");
       schicht.style.setProperty("--abdrucky", (backeMy - 15).toFixed(1) + "%");
-      /* Und dorthin muss die SCHLAGENDE KANTE — also die Unterkante
-         der Hand, die Handflaeche. RUNDE 88 NEU GERECHNET, weil die
-         Zeichnung eine andere ist:
-         Die Hand ist 52 % der Blende breit und haengt mit -26 % am
-         Mittelpunkt; bei viewBox 70 x 30 ist ihr Kasten
-         52 * 30/70 = 22,29 % hoch und beginnt bei 24 %.
-         Die Handflaeche trifft mit ihrer Mitte auf, und die liegt in
-         der Zeichnung bei (38, 25) von (70, 30):
-             x = 24 % + 52 % * 38/70 = 52,23 %
-             y = 24 % + 22,29 % * 25/30 = 42,57 %
+      /* Und dorthin muss die schlagende Flaeche — bei der Draufsicht
+         ist das die MITTE DES HANDRUECKENS, denn darunter liegt die
+         Handflaeche, die trifft.
+         RUNDE 92 NEU GERECHNET, weil die Zeichnung eine andere ist:
+         Die Hand ist 60 % der Blende breit und haengt mit
+         -30 % / -22,5 % am Mittelpunkt; bei viewBox 96 x 72 ist ihr
+         Kasten 60 * 72/96 = 45 % hoch und beginnt bei 27,5 % (oben)
+         bzw. 20 % (links).
+         Der Mittelpunkt des Handruecken liegt in der Zeichnung bei
+         (37, 36) von (96, 72):
+             x = 20 %   + 60 % * 37/96 = 43,13 %
+             y = 27,5 % + 45 % * 36/72 = 50,00 %
          Die Verschiebung in den Keyframes rechnet in Prozent des
-         HANDKASTENS, deshalb wird die Differenz durch 0,52 (Breite)
-         bzw. 0,2229 (Hoehe) geteilt. */
-      const ballenX = 24 + 52 * (38 / 70);
-      const ballenY = 24 + 22.29 * (25 / 30);
-      schicht.style.setProperty("--klapsx", ((backeMx - ballenX) / 0.52).toFixed(1) + "%");
-      schicht.style.setProperty("--klapsy", ((backeMy - ballenY) / 0.2229).toFixed(1) + "%");
+         HANDKASTENS, deshalb wird die Differenz durch 0,60 (Breite)
+         bzw. 0,45 (Hoehe) geteilt. */
+      const ballenX = 20 + 60 * (37 / 96);
+      const ballenY = 27.5 + 45 * (36 / 72);
+      schicht.style.setProperty("--klapsx", ((backeMx - ballenX) / 0.60).toFixed(1) + "%");
+      schicht.style.setProperty("--klapsy", ((backeMy - ballenY) / 0.45).toFixed(1) + "%");
       /* Kommt sie von links, ist es die andere Hand — gespiegelt, sonst
          zeigt der Daumen nach aussen statt zum Koerper. */
       schicht.style.setProperty("--klapsdir", String(klapsSeite));
@@ -81858,6 +81971,12 @@ An einem Morgen lief ein kleiner Fuchs los…
          ob die Musik wirklich am richtigen Ohr ankommt. */
       wirkung: (art, wen, von, mehr) => lcWirkung(art, null,
         Object.assign({ wen: wen, name: von || "Alex" }, mehr || {})),
+      /* RUNDE 92 — der Tonschalter von aussen, damit sich messen
+         laesst, was bei ausgeschaltetem Ton mit einem zugesendeten
+         Lied passiert. XANDER: „ich hoere gar nichts, es passiert
+         einfach nichts." */
+      toeneSetzen: (an) => { lcToeneSetzen(an); return lcToeneAn(); },
+      toeneStand: () => lcToeneAn(),
       musikStand: () => ({ titel: lcMusikTitel,
                            laeuft: Boolean(lcMusikSpieler && !lcMusikSpieler.paused),
                            quelle: lcMusikSpieler ? lcMusikSpieler.src : "" }),

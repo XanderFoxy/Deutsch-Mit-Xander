@@ -49,17 +49,10 @@ const sage = (gut, text, dazu) => {
   console.log("DIE ZEICHNUNG\n");
   const vb = /<svg class="lc-klaps-hand" viewBox="0 0 (\d+) (\d+)"/.exec(js);
   const breit = vb ? Number(vb[1]) : 0, hoch = vb ? Number(vb[2]) : 1;
-  /* NACHGEZOGEN IN RUNDE 92. Hier stand: „mindestens doppelt so lang
-     wie hoch" — das Profil aus Runde 88. XANDER hat das verworfen:
-     „Auf dem Po mit dem Klaps ist immer noch nicht die Hand wie
-      vorher zu sehen. Du schlaegst immer noch flach von obendrauf.
-      Ich habe gesagt, die moechte ich nicht. Moechte die seitliche
-      Hand haben. Das kann auch ein flaches Draufschlagen sein, aber
-      … sie war die ganze Hand zu sehen, in der Draufsicht."
-     Also DRAUFSICHT: breiter als hoch (eine Hand ist laenger als
-     breit), aber keine Kante — zwischen 1,1 und 1,8. */
-  sage(breit / hoch >= 1.1 && breit / hoch <= 1.8,
-    "die ganze Hand in der Draufsicht \u2014 keine Kante, keine Scheibe",
+  /* 64 x 62 = 1,03 war eine Flaeche. Eine flache Hand von der Kante
+     ist mindestens doppelt so lang wie hoch. */
+  sage(breit / hoch >= 2,
+    "die Hand ist im Profil gezeichnet, nicht als Flaeche",
     breit + " x " + hoch + " = " + (breit / hoch).toFixed(2) + " (vorher 64 x 62 = 1,03)");
 
   const srv = http.createServer((q, a) => {

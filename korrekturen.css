@@ -27812,13 +27812,13 @@ code, pre {
   position: absolute;
   left: 50%;
   top: 50%;
-  /* RUNDE 88 — 52 statt 62 Prozent. Im Profil ist die Hand laenger
-     und schmaler als von vorn; bei 62 % lag sie quer ueber dem
-     ganzen Popo statt auf EINER Backe. Eine Backe ist 44 % der
-     Blende breit (2 * 27 * 0,96 bei der Frau) — 52 % deckt sie mit
-     etwas Ueberstand, so wie eine Hand das tut. */
-  width: 52%;
-  margin: -26% 0 0 -26%;
+  /* RUNDE 92 — 60 statt 52 Prozent, und die Zeichnung ist jetzt die
+     DRAUFSICHT auf die ganze Hand (viewBox 96 x 72 statt 70 x 30).
+     XANDER: „sie war die ganze Hand zu sehen, in der Draufsicht."
+     Eine Backe ist 44 % der Blende breit; eine Hand, die daraufliegt,
+     ragt darueber hinaus — genau das tun 60 %. */
+  width: 60%;
+  margin: -22.5% 0 0 -30%;
   z-index: 6;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .4));
   animation: lcKlapsHandR80 2.2s cubic-bezier(.3, 0, .2, 1) both;
@@ -29940,3 +29940,13 @@ code, pre {
 .lc-schiffe-still .lc-platz-ich .lc-kreis { box-shadow: none !important; }
 /* Nur das eigene Schiff bleibt sichtbar — auf dem eigenen Geraet. */
 .lc-schiffe-still .lc-schiff-meins .lc-schiff-zeichen { opacity: 1; }
+
+/* Die Leiste fuer ein zugesendetes Lied sieht aus wie die Musikleiste,
+   nur in Gruen — sie ist ein Angebot, kein Zustand.
+   XANDER: „ich kann jemand anderem immer noch nicht mein Lied zeigen." */
+.lc-liedangebot {
+  background: linear-gradient(180deg, rgba(38, 92, 70, .96), rgba(26, 70, 52, .96));
+  border-color: rgba(120, 220, 170, .5);
+  cursor: pointer;
+}
+.lc-liedangebot .lc-musikband-titel { font-weight: 600; }

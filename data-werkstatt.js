@@ -49,28 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 92 — Vollbildknopf weg, Schiffe versenken mit Verstecken und Countdown (Fassung 501)",
+  stand: "Runde 93 — dein Lied kommt an, und der Klaps zeigt wieder die ganze Hand (Fassung 502)",
 
   inArbeit: [
-    { seit: "2026-09-22T23:40", nurBetreiber: true,
+    { seit: "2026-09-22T23:47", nurBetreiber: true,
       text: "Sammellauf vor jedem Hochladen: bash werkzeug/alle-pruefen.sh" },
-    { seit: "2026-09-22T23:40",
-      text: "Kopfhörer bleiben nicht auf dem Kopf / Lied an andere — als Nächstes" },
-    { seit: "2026-09-22T23:40",
-      text: "Billard-Physik, Lok-Schienenführung, Klaps mit seitlicher Hand, Fahrstuhl, Delfin, Anrufen, Mario-Töne, Hände vereinheitlichen" },
+    { seit: "2026-09-22T23:47",
+      text: "Billard-Physik, Lok-Schienenführung, Fahrstuhl, Sprühbild bleibt bis zum Scheibenwischer, Mario-Töne, Delfin, Anrufen, Hände vereinheitlichen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T23:40",
-      text: "Der Vollbildknopf ist weg — der Modus schaltet sich beim Betreten des Klassenzimmers von selbst ein und beim Verlassen wieder ab" },
-    { seit: "2026-09-22T23:40",
-      text: "Schiffe versenken: 16 Plätze, jeder sucht sich seinen Platz SELBST — heimlich; an alle geht nur die Zahl der Fertigen, kein Name, kein Feld" },
-    { seit: "2026-09-22T23:40",
-      text: "Danach ein Countdown, dann wird der Reihe nach gesucht" },
-    { seit: "2026-09-22T23:40",
-      text: "Während des Versteckens ist die Sitzreihe still: keine Sprechanimation, keine Effektschicht, keine Hervorhebung — hören kann man sich weiter" },
-    { seit: "2026-09-22T23:40",
-      text: "Zwei neue Sonden: pruefe-runde92-schiffe (alle drei Abschnitte) und pruefe-runde92-grundebene (Strichlinie und Nummer bei 122 Effekten, beide Plätze, acht Zeitpunkte)" },
+    { seit: "2026-09-22T23:47",
+      text: "Ein Lied, das dir jemand aufsetzt, geht nie mehr still unter: sind deine Töne aus oder sperrt der Browser, kommt eine grüne Leiste „Bea setzt dir auf: …“ — ein Tipp, und es spielt" },
+    { seit: "2026-09-22T23:47",
+      text: "Der Klaps zeigt wieder die GANZE Hand in der Draufsicht (Handrücken, vier Finger, Daumen) statt des schmalen Profils — und sie trifft die Backe auf 12 px genau" },
+    { seit: "2026-09-22T23:47",
+      text: "Neue Sonde pruefe-runde92-liedangebot: Töne an, Töne aus, Tipp — und die Kopfhörer bleiben auch nach komplettem Neuzeichnen liegen" },
   ],
 };
