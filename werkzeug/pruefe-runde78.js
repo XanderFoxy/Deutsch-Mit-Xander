@@ -36,8 +36,13 @@ const lc = ohneK(fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8"));
 
 (async () => {
   console.log("\nDIE SPERRE GEGEN BESETZTE PLAETZE IST GELOCKERT — ABER NUR DORT\n");
+  /* RUNDE 88 — die Klammer hat ein Argument dazubekommen („tempo",
+     fuer den Galopp des Pferdes). Geprueft wird deshalb, dass
+     „tausch" an vierter Stelle steht, und nicht mehr, dass die Liste
+     danach zu Ende ist — sonst faellt diese Regel bei jedem weiteren
+     Argument um, ohne dass sich am Tausch etwas geaendert haette. */
   pruefe("lcReise kennt den Tausch",
-    /function lcReise\(wen, von, art, tausch\) \{/.test(js));
+    /function lcReise\(wen, von, art, tausch[,)]/.test(js));
   /* Nur Frisbee und Roehre: bei allen anderen Reisen bliebe einer
      von beiden in der Luft, weil es fuer ihn keinen Rueckweg gibt. */
   pruefe("und er gilt nur fuer Frisbee und Roehre",
@@ -46,7 +51,7 @@ const lc = ohneK(fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8"));
   pruefe("auf einem LEEREN Platz ist es die gewoehnliche Reise",
     /if \(tauschbar && zu\.frei\) \{[\s\S]{0,200}?tausch = false;/.test(js));
   pruefe("der Tausch faehrt mit der Nachricht, nicht nur beim Absender",
-    /lcReise\(wenR, vonR, art, Boolean\(nachricht && nachricht\.tausch\)\)/.test(js)
+    /lcReise\(wenR, vonR, art, Boolean\(nachricht && nachricht\.tausch\)[,)]/.test(js)
     /* RUNDE 76 — hier stand „wen: rest.trim()". Seit Flugzeug,
        Sprungfeder und Maulwurf auch eine gemalte Kette annehmen, wird
        die Zielnummer vorher aus dem Rest gezogen („zielNrR"); beim

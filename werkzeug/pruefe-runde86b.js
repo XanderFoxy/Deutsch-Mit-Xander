@@ -144,13 +144,29 @@ const sage = (gut, text, dazu) => {
       gespiegelt: !!sv.querySelector('g[transform*="scale(-1,1)"]')
     };
   });
-  sage(laden && laden.imArm && laden.bildLeer === 0,
-    "das Profilbild liegt als Ladung in der Schale, der Platz ist so lange leer",
-    laden ? ("in der Schale: " + laden.imArm + ", Platz leer: " + (laden.bildLeer === 0)) : "nichts gefunden");
-  /* Alex sitzt links — das Geraet steht links und ist nicht gespiegelt. */
-  sage(laden && laden.geraet < -20 && !laden.gespiegelt,
+  /* =================================================================
+     RUNDE 88 — DIESE DREI REGELN MASSEN EINEN ENTWURF, DEN XANDER
+     SELBST ZURUECKGENOMMEN HAT.
+     -----------------------------------------------------------------
+     In Runde 86 lag die Ladung im Kasten eines Armes, das Geraet war
+     nie gespiegelt, und die Kopie flog nach LINKS. Danach kam:
+     „Der Katapult schiesst nach links. Er soll aber nach rechts
+     schiessen." Runde 87 hat das Geraet daraufhin neu gebaut — es
+     steht auf der Seite des Werfenden, schaut zur Bildmitte und wirft
+     von sich WEG, also nach rechts, wenn der Werfende links sitzt.
+     Genau das misst werkzeug/pruefe-runde87-katapult.js in zwoelf
+     Regeln, und zwar in Bildbreiten statt in Pixeln.
+     Hier bleibt deshalb nur, was auch heute noch gilt: dass es das
+     Geraet ueberhaupt gibt und dass es auf der Seite des Werfenden
+     steht. Die Richtung und die Ladung gehoeren jetzt der anderen
+     Sonde; zwei Sonden, die dasselbe unterschiedlich verlangen,
+     koennen nicht beide recht haben. */
+  sage(Boolean(laden),
+    "das Katapult steht am Platz (Richtung und Ladung: pruefe-runde87-katapult)",
+    laden ? "Arm und Ladung gefunden" : "nichts gefunden");
+  sage(laden && laden.geraet < -20,
     "und es steht auf der Seite, auf der der Werfende sitzt",
-    laden ? (laden.geraet + " px, gespiegelt: " + laden.gespiegelt) : "-");
+    laden ? (laden.geraet + " px") : "-");
   await pg.waitForTimeout(400);
   const flug = await pg.evaluate(() => {
     const pl = document.querySelectorAll(".lc-platz")[3];
@@ -160,13 +176,18 @@ const sage = (gut, text, dazu) => {
     const r = la.getBoundingClientRect();
     return Math.round(r.left + r.width / 2 - (k.left + k.width / 2));
   });
-  sage(flug !== null && flug < -30, "und fliegt davon", flug + " px");
-  await pg.waitForTimeout(2200);
+  sage(flug !== null && Math.abs(flug) > 30, "und die Ladung fliegt davon",
+    flug + " px von der Bildmitte");
+  await pg.waitForTimeout(2600);
+  /* Dass am Ende das Bild wieder sitzt, misst pruefe-runde87-katapult
+     („Am Ende sitzt das Bild wieder auf seinem Platz" und „Und die
+     Kopie liegt genau darauf, nicht daneben") — dort mit dem Ablauf,
+     den es seit Runde 87 wirklich gibt. Hier wird nur nachgesehen,
+     dass das Profilbild nicht durchsichtig zurueckbleibt. */
   sage(await pg.evaluate(() => {
     const pl = document.querySelectorAll(".lc-platz")[3];
-    return !pl.querySelector(".lc-kata-last")
-      && +getComputedStyle(pl.querySelector(".lc-kreis")).opacity === 1;
-  }), "am Ende ist das Bild wieder da und die Kopie weg");
+    return +getComputedStyle(pl.querySelector(".lc-kreis")).opacity === 1;
+  }), "und das Profilbild ist danach wieder voll da");
 
   /* =================================================================
      3. DIE SAHNEDOSE KOMMT VON DER SITZSEITE
@@ -290,7 +311,18 @@ const sage = (gut, text, dazu) => {
   await pg.waitForTimeout(600);
 
   /* =================================================================
-     8. COMIC-AUGEN BEIM LICHT AUS
+     8. DIE AUGEN BEIM LICHT AUS
+     -----------------------------------------------------------------
+     RUNDE 88 — HIER STAND DAS GEGENTEIL, UND ZWAR ZU RECHT: in
+     Runde 86 hatte Xander Comic-Augen beim Lichtausschalten verlangt.
+     Danach hat er es ausdruecklich zurueckgenommen:
+     „Mache die alten Augen, die bei Licht aus waren, wieder hin. Von
+     den Comic Augen habe ich gesprochen bei Birne aus, nicht bei
+     Licht aus."
+     Runde 87 hat das umgesetzt — beim Licht aus suchen wieder die
+     zwei Augen von Runde 70, und die Comic-Augen sitzen jetzt beim
+     Herausdrehen der Birne. Die Regel misst deshalb jetzt genau
+     das: die alten Augen sind da, die Comic-Augen sind es NICHT.
      ================================================================= */
   console.log("\nDas Licht");
   await buehne();
@@ -298,14 +330,12 @@ const sage = (gut, text, dazu) => {
   await pg.waitForTimeout(2600);
   const augen = await pg.evaluate(() => {
     const pl = document.querySelectorAll(".lc-platz")[1];
-    const svg = pl.querySelector(".lc-lichtaus-augen .lc-augen-svg");
-    return { comic: !!svg,
-             pupillen: pl.querySelectorAll(".lc-lichtaus-augen .lc-pupille").length,
-             lider: pl.querySelectorAll(".lc-lichtaus-augen .lc-lid").length,
+    return { comic: !!pl.querySelector(".lc-lichtaus-augen .lc-augen-svg"),
+             alte: pl.querySelectorAll(".lc-lichtaus-augen .lc-auge").length,
              dunkel: !!pl.querySelector(".lc-lichtaus-nacht") };
   });
-  sage(augen.comic && augen.pupillen === 2 && augen.lider === 2 && augen.dunkel,
-    "im Dunkeln gucken jetzt die Comic-Augen mit Pupille und Lid",
+  sage(augen.alte === 2 && !augen.comic && augen.dunkel,
+    "im Dunkeln suchen wieder die ALTEN zwei Augen — keine Comic-Augen",
     JSON.stringify(augen));
   await pg.waitForTimeout(3800);
 

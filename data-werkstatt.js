@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 88r — der Mario-Modus: Bloecke schlagen, Muenzen sammeln, Gegner erledigen.",
+  stand: "Runde 88s — vier Sondenregeln nachgezogen, die noch Entwuerfe von frueher verlangten.",
 
   inArbeit: [
-    { seit: "2026-09-22T18:33",
+    { seit: "2026-09-22T18:58",
       text: "Aufgabe-Modul: unklar, welches gemeint ist — Rueckfrage an Xander" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T18:33",
-      text: "Mario-Modus: unter der oberen Reihe entlanghuepfen und an die Plaetze darueber schlagen" },
-    { seit: "2026-09-22T18:33",
-      text: "Aus den Bloecken kommen Muenze, goldene Muenze oder Pilz — wirklich zufaellig, nie zweimal dasselbe" },
-    { seit: "2026-09-22T18:33",
-      text: "Der Pilz laesst das eigene Profilbild wachsen; die Punkte zaehlen in die Wertung" },
-    { seit: "2026-09-22T18:33",
-      text: "Mit gezeichnetem Weg sind Besetzte Gegner: abwechselnd draufspringen und wegkicken" },
-    { seit: "2026-09-22T18:33",
-      text: "Am Abfahrtsort passiert nichts, bis man zurueck ist" },
+    { seit: "2026-09-22T18:58",
+      text: "Katapult: die Sonde verlangt nicht mehr den Wurf nach links, den du zurueckgenommen hast" },
+    { seit: "2026-09-22T18:58",
+      text: "Licht aus: die Sonde prueft jetzt die ALTEN Augen — die Comic-Augen gehoeren zur Birne" },
+    { seit: "2026-09-22T18:58",
+      text: "Billard und Reise: zwei Regeln standen auf Code, den es nicht mehr gibt" },
+    { seit: "2026-09-22T18:58",
+      text: "Alle 171 Sonden einmal durchgelaufen" },
   ],
 };

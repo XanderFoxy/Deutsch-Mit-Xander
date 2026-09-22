@@ -61,10 +61,24 @@ pruefe("und quer zur Bahn weggedrueckt, wie bei einem Streifschuss",
   /const sx2 = \(p\.x - fx\) \/ seite, sy2 = \(p\.y - fy\) \/ seite;/.test(jsK));
 
 console.log("\nDAS LOCH LIEGT IN DER FLUGRICHTUNG — AUCH FUER DEN GEFALLENEN");
-pruefe("nicht mehr einfach das naechste ueberhaupt",
-  /const vorwaerts = freie\.filter\(\(k\) => k\.mit > 0\.35\)/.test(jsK));
-pruefe("aber wenn vorn keins frei ist, nimmt sie eben das naechste",
-  /opferLoch = vorwaerts\.length \? vorwaerts\[0\]\.p/.test(jsK));
+/* RUNDE 88 — DIESE BEIDEN REGELN STANDEN AUF CODE, DEN ES NICHT MEHR
+   GIBT. In Runde 68 suchte die angestossene Kugel unter den freien
+   Loechern das erste aus, das VORWAERTS lag („vorwaerts[0].p"), und
+   nahm sonst das naechste. Runde 88 hat das ersetzt: sie rollt jetzt
+   wirklich — mit Richtung, Banden und Reibung —, und das Loch ist das
+   ERGEBNIS dieser Bahn und keine Vorauswahl mehr. Damit ist Xanders
+   Anliegen von Runde 68 („die Kugel faellt nicht rueckwaerts ins
+   Loch") nicht aufgegeben, sondern strenger erfuellt.
+   Die Regeln pruefen deshalb jetzt genau das: die Richtung kommt aus
+   dem Stoss, das Loch kommt aus der Bahn, und die alte Abkuerzung ist
+   wirklich weg. Wie die Bahn im Einzelnen laeuft — Einfallswinkel
+   gleich Ausfallswinkel, verschiedene Loecher — misst
+   werkzeug/pruefe-runde88-billard.js an der laufenden Seite. */
+pruefe("nicht mehr einfach das naechste ueberhaupt — die Kugel rollt wirklich",
+  /opferBahn = lcBillardPhysik\(gitter, opfer, ox \/ ol, oy \/ ol,/.test(jsK)
+  && !/vorwaerts\[0\]\.p/.test(jsK));
+pruefe("und das Loch ist das Ergebnis der Bahn, nicht ihre Vorgabe",
+  /opferLoch = opferBahn\.loch;/.test(jsK));
 
 console.log(fehler ? "\n" + fehler + " Abweichung(en)\n" : "\nRunde 68 sitzt.\n");
 process.exit(fehler ? 1 : 0);
