@@ -49,36 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 451 — Popo beim Klaps, Birne, Augen und Dunkelheit, Schneekugel, Frosch, Adler",
+  stand: "Fassung 452 — Fahrstuhl, keine Textmarkierung, Es war einmal in Deutschland ist frei",
 
   inArbeit: [
-    { seit: "2026-09-22T11:48",
-      text: "Fahrstuhl als neue Reise" },
-    { seit: "2026-09-22T11:48",
+    { seit: "2026-09-22T11:55",
       text: "Kopfhoerer: Lied und Ausschnitt waehlen, im Profil merken" },
-    { seit: "2026-09-22T11:48",
-      text: "Keine Textmarkierung beim Halten, Links unmarkierbar" },
-    { seit: "2026-09-22T11:48",
-      text: "Es war einmal in Deutschland freischalten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T11:48",
-      text: "Der Klaps trifft jetzt einen gezeichneten Popo — Frauen- und Maennerform nach dem eingestellten Geschlecht" },
-    { seit: "2026-09-22T11:48",
-      text: "Birne an bleibt an: der zweite Druck dreht sie nicht mehr heraus (dafuer gibt es /birneraus)" },
-    { seit: "2026-09-22T11:48",
-      text: "Und am Ende haengt sie gerade: drei volle Umdrehungen statt 1044 Grad" },
-    { seit: "2026-09-22T11:48",
-      text: "Die Comic-Augen und die Dunkelheit liegen ueber der ganzen Seite und springen beim Rollen nicht mehr" },
-    { seit: "2026-09-22T11:48",
-      text: "Die Schneekugel wird mit Glas und Sockel geschuettelt, 1,45 s — so lange, wie das Geraeusch zu hoeren ist" },
-    { seit: "2026-09-22T11:48",
-      text: "Der Frosch schaut in die Sprungrichtung, und sein Quaken ist ein ganzer Ruf statt eines angeschnittenen" },
-    { seit: "2026-09-22T11:48",
-      text: "Die Schwungfedern des Adlers zeigen nach hinten (Spitze bei x=16 statt 33)" },
-    { seit: "2026-09-22T11:48",
-      text: "Der Ballon-Befehl heisst /ballonpumpe, damit er /aufblasen und /luftballon nicht verdeckt" },
+    { seit: "2026-09-22T11:55",
+      text: "Neue Reise /fahrstuhl: die Tueren gehen zu, die Anzeige zaehlt die Plaetze ab, es klingelt, am Ziel gehen sie auf — ohne Rueckstaende" },
+    { seit: "2026-09-22T11:55",
+      text: "Keine Textmarkierung mehr auf Knoepfen, Links, Reitern und Ueberschriften; lesbarer Text bleibt markierbar" },
+    { seit: "2026-09-22T11:55",
+      text: "„Es war einmal in Deutschland\": die 315 wartenden Tage sind freigegeben — alle 366 Tage sind fuer alle sichtbar" },
   ],
 };

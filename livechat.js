@@ -974,6 +974,9 @@ window.LiveChat = (function () {
     /* RUNDE 76 — XANDER: „Frosch-Sprung" und „Zylinder mit Kaninchen". */
     frosch:   { wirkung: "frosch",   satz: "h\u00fcpft als Frosch zu", emoji: "\ud83d\udc38" },
     zylinder: { wirkung: "zylinder", satz: "zaubert sich im Zylinder zu", emoji: "\ud83c\udfa9" },
+    /* RUNDE 85 — XANDER: „ich moechte beim Reisen noch eine
+       Fahrstuhltuer." */
+    fahrstuhl: { wirkung: "fahrstuhl", satz: "faehrt mit dem Fahrstuhl zu", emoji: "\ud83d\udec5" },
     beamen:   { wirkung: "beamen",   satz: "beamt sich zu", emoji: "\u2728" },
     /* XANDER: „wie bei Super Mario frueher diese Rohre … wo man sich
        so reinsetzt und dann irgendwo anders wieder rauskommt." */
@@ -8926,6 +8929,8 @@ window.LiveChat = (function () {
     /* RUNDE 76 — XANDER: „Frosch-Sprung" und „Zylinder mit Kaninchen". */
     { gr: "reden", w: "frosch", kurz: "quaken", nutzt: "/frosch 5",
       was: "Frosch \u2014 du h\u00fcpfst auf einem Frosch zu Platz 5, er quakt bei jedem Absprung; mit gemaltem Weg auch \u00fcber Umwege (/frosch 1-5-6)" },
+    { gr: "reden", w: "fahrstuhl", kurz: "lift", nutzt: "/fahrstuhl 5",
+      was: "Fahrstuhl \u2014 die T\u00fcren gehen zu, die Anzeige z\u00e4hlt die Pl\u00e4tze ab, es klingelt, und auf Platz 5 gehen sie wieder auf" },
     { gr: "reden", w: "zylinder", kurz: "zauberhut", nutzt: "/zylinder 5",
       was: "Zauberzylinder \u2014 der Hut kommt \u00fcber dich, es puffft, und auf Platz 5 kommt erst das Kaninchen und dann du heraus" },
     { gr: "reden", w: "feder", kurz: "sprungfeder", nutzt: "/feder 5",
@@ -10911,6 +10916,8 @@ window.LiveChat = (function () {
          || art === "lok" || art === "liane" || art === "feder"
          /* RUNDE 76 — „Frosch-Sprung" und „Zylinder mit Kaninchen". */
          || art === "frosch" || art === "zylinder"
+         /* RUNDE 85 — der Fahrstuhl. */
+         || art === "fahrstuhl"
          || art === "beamen" || art === "rohr"
          || art === "heli" || art === "pferd"
          || art === "greifvogel" || art === "turm"

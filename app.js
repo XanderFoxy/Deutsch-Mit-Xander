@@ -24607,6 +24607,10 @@
     /* „Der Katapult hat immer noch kein realistisches Soundeffekt."
        Neu: Winde, Ausloeser, Anschlag am Querbalken. */
     katapult:       { ton: "katapult3", dauer: 2600, laut: 0.65 },
+    /* RUNDE 85 — der Fahrstuhl: Tuer zu, Fahrt, Glocke, Tuer auf.
+       Die Aufnahme ist 2,40 s lang, die Reise 2,60 s — der Ton ist
+       also fertig, bevor die Kabine verschwindet. */
+    fahrstuhl:      { ton: "fahrstuhl", dauer: 2400, laut: 0.55 },
     /* „wenn man jetzt das Getraenk austrinkt, dann koennte man ein
        Schluerfen hoeren, also schoeneres Schluerfen." */
     strohhalm:      { ton: "schlurfen", dauer: 3000, laut: 0.5 },
@@ -27988,6 +27992,8 @@
      /* RUNDE 76 — „Frosch-Sprung" und „Zylinder mit Kaninchen". */
      ["\ud83d\udc38", "Frosch", "frosch"],
      ["\ud83c\udfa9", "Zylinder", "zylinder"],
+     /* RUNDE 85 — „ich moechte beim Reisen noch eine Fahrstuhltuer." */
+     ["\ud83d\udec5", "Fahrstuhl", "fahrstuhl"],
      ["\ud83c\udfd7\ufe0f", "Kran", "kran"],
      ["\u2728", "Beamen", "beamen"],
      ["\ud83d\udfe2", "R\u00f6hre", "rohr"],
@@ -29743,6 +29749,9 @@
     /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
        ne Luftballon." */
     luftballon: { zeichen: ["\ud83c\udf88"], wie: 4, klasse: "umarmen" },
+    /* RUNDE 85 — der Fahrstuhl: „ich moechte beim Reisen noch eine
+       Fahrstuhltuer." */
+    fahrstuhl: { zeichen: ["\ud83d\udec5"], wie: 4, klasse: "umarmen" },
     anziehen: { zeichen: ["\ud83d\udc52"], wie: 4, klasse: "umarmen" },
     ytmusik:  { zeichen: ["\u25b6\ufe0f"], wie: 3, klasse: "umarmen" },
     ytaus:    { zeichen: ["\u23f9\ufe0f"], wie: 3, klasse: "umarmen" },
@@ -35184,7 +35193,7 @@
        ausdruecklich um Zeit gebeten: „bei dieser Animation moechte
        ich, dass du dir Zeit laesst, dass alles von der Physik richtig
        stimmt." 3400 statt 2800. */
-    const grund = { frosch: 2400, zylinder: 3400,
+    const grund = { fahrstuhl: 2600, frosch: 2400, zylinder: 3400,
                   flug: 2600, maulwurf: 2200, boot: 2800, kran: 2800,
                   dampfer: 3000, lok: 3200, liane: 2200, feder: 2400,
                   beamen: 2600, rohr: 2800, heli: 3000, portal: 3400,
@@ -35196,7 +35205,10 @@
     const plaetzeR = einheitR ? Math.max(1, Math.min(4, Math.round(streckeR / einheitR))) : 1;
     /* Das Beamen ist ein Sprung, keine Fahrt — es darf nicht laenger
        werden, nur weil das Ziel weiter weg liegt. */
-    const hin = art === "beamen" ? grund
+    /* RUNDE 85: der Fahrstuhl braucht wie das Beamen immer dieselbe
+       Zeit — seine Tueren und seine Glocke haengen am Geraet, nicht an
+       der Entfernung. */
+    const hin = (art === "beamen" || art === "fahrstuhl") ? grund
       : Math.round(grund * (0.72 + 0.28 * plaetzeR));
     const dauer = hin + 500;
     const altZ = ab.el.style.zIndex;
@@ -37417,6 +37429,60 @@
          zweite Puff liegt darin bei 1,55 s — deshalb faengt er so an,
          dass der zweite Puff auf das Herausziehen faellt. */
       lcTonSpaeter("zauberpuff", Math.max(0, Math.round(hin * 0.80 - 1550)), 0.7);
+    } else if (art === "fahrstuhl") {
+      /* =================================================================
+         RUNDE 85 — DER FAHRSTUHL
+         -----------------------------------------------------------------
+         XANDER: „ich moechte beim Reisen noch eine Fahrstuhltuer."
+
+         Ein Fahrstuhl faehrt nicht ueber das Feld — man sieht ihn gar
+         nicht fahren. Was man sieht, ist an zwei Orten etwas
+         Verschiedenes, und genau daraus besteht die Reise:
+           beim Start   die Tueren schliessen sich vor dem Bild, die
+                        Anzeige zaehlt die Plaetze ab,
+           beim Ziel    steht die Kabine geschlossen da, die Anzeige
+                        kommt an, und die Tueren gehen auf.
+         Deshalb dauert er auch immer gleich lang (wie das Beamen):
+         die Zeit haengt am Fahrstuhl, nicht an der Entfernung.
+
+         DIE ZEITEN STEHEN IM TON. „fahrstuhl" ist gemessen:
+           0,00–0,50 s  die Tuer rollt zu, am Ende der Anschlag
+           0,56–1,76 s  die Fahrt
+           1,76 s       die Glocke, 2,00 s die Tuer geht auf
+         Die Zeichnung haelt sich daran, sonst hoert man eine Tuer und
+         sieht keine. */
+      [start, ende].forEach((wo, i) => {
+        const lift = document.createElement("span");
+        lift.className = "lc-lift" + (i ? " lc-lift-ziel" : " lc-lift-start");
+        lift.style.setProperty("--gross", (d * 1.3) + "px");
+        lift.style.setProperty("--zeit", hin + "ms");
+        lift.innerHTML =
+          '<i class="lc-lift-kasten"></i>'
+          + '<i class="lc-lift-tuer lc-lift-tuer-l"></i>'
+          + '<i class="lc-lift-tuer lc-lift-tuer-r"></i>'
+          + '<i class="lc-lift-spalt"></i>'
+          + '<span class="lc-lift-anzeige">'
+          + '<b class="lc-lift-pfeil">' + (zu.nr > ab.nr ? "\u25bc" : "\u25b2") + "</b>"
+          + '<b class="lc-lift-zahl">' + ab.nr + "</b></span>";
+        reihe.appendChild(lift);
+        weg.push(lift);
+        setzen(lift, wo.x, wo.y);
+      });
+      /* Die Anzeige zaehlt Platz fuer Platz weiter — wie im echten
+         Fahrstuhl das Stockwerk. Sie steht auf BEIDEN Kabinen gleich:
+         es ist ja dieselbe Fahrt. */
+      const liftZahlen = weg.slice(-2).map((l) => l.querySelector(".lc-lift-zahl"));
+      const liftSchritte = Math.max(1, Math.abs(zu.nr - ab.nr));
+      const liftRichtung = zu.nr > ab.nr ? 1 : -1;
+      /* Zwischen dem Schliessen (0,5 s) und der Glocke (1,76 s) ist
+         Zeit fuer alle Zwischenstockwerke. */
+      const liftTakt = Math.max(160, Math.round(1260 / liftSchritte));
+      for (let k = 1; k <= liftSchritte; k++) {
+        setTimeout(() => {
+          liftZahlen.forEach((z) => { if (z) z.textContent = String(ab.nr + liftRichtung * k); });
+        }, 520 + k * liftTakt);
+      }
+      lcTonZu("fahrstuhl");
     } else if (art === "beamen") {
       /* „Das muss wirklich wie bei Star Trek und ein schoener
          Beameffekt sein." Zwei Saeulen: eine loest sich hier auf, die
@@ -39128,7 +39194,7 @@
             showToast(({ flug: "✈️ ", maulwurf: "🦡 ", boot: "⛵ ",
                          kran: "🏗️ ", dampfer: "🚢 ", lok: "🚂 ",
                          liane: "🌿 ", feder: "🪀 ", beamen: "✨ ",
-                         frosch: "🐸 ", zylinder: "🎩 ",
+                         frosch: "🐸 ", zylinder: "🎩 ", fahrstuhl: "🛗 ",
                          rohr: "🟢 ", heli: "🚁 ", pferd: "🐎 ",
                          greifvogel: "🦅 ", turm: "🏊 ",
                          untertasse: "🛸 ", mieze: "🐱 ", gotteshand: "🤚 ",
@@ -45264,6 +45330,7 @@
         || art === "lok" || art === "liane" || art === "feder"
         /* RUNDE 76 */
         || art === "frosch" || art === "zylinder"
+        || art === "fahrstuhl"
         || art === "beamen" || art === "rohr"
         || art === "heli" || art === "pferd"
         || art === "greifvogel" || art === "turm"

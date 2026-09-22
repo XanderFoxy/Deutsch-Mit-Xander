@@ -9808,6 +9808,53 @@ body.lc-schreibt .tutor-reiter {
 }
 
 /* =====================================================================
+   RUNDE 85 — DIE MARKIERUNG GEHT UEBERALL DORT WEG, WO SIE STOERT
+   ---------------------------------------------------------------------
+   XANDER: „ich moechte, dass diese Markierung rausgeht … bei Links
+   brauchen keine Markierung … so dass es sich mehr nach einer App
+   anfuehlt."
+
+   Die Regel oben galt nur den Plaetzen. Eine App fuehlt sich aber
+   ueberall so an: was man ANTIPPT, laesst sich nicht markieren —
+   Knoepfe, Links, Reiter, Ueberschriften, Symbole. Was man LIEST oder
+   SCHREIBT, bleibt markierbar, denn sonst koennte man eine
+   Chatnachricht nicht mehr kopieren und keinen Text aus dem
+   Woerterbuch herausziehen. Deshalb zwei Listen und nicht eine
+   pauschale Regel auf dem body.
+   ===================================================================== */
+button,
+a,
+summary,
+label,
+.tab,
+.chip,
+.pill,
+nav,
+[role="button"],
+[role="tab"],
+h1, h2, h3, h4 {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Und das Gegenstueck: was man liest oder schreibt, bleibt
+   markierbar — sonst liesse sich keine Nachricht mehr kopieren. */
+input,
+textarea,
+[contenteditable="true"],
+.lc-zeile-text,
+.lc-chat-verlauf p,
+.woerterbuch-text,
+.lesetext,
+code, pre {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
+
+/* =====================================================================
    WAS MAN MIT EINEM PROFILBILD ANSTELLEN KANN
    ---------------------------------------------------------------------
    GEWÜNSCHT: „Aber das sind dann nur ganz kleine Symbole, die halt
@@ -12978,6 +13025,134 @@ body.lc-schreibt .tutor-reiter {
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-popo { animation: none; opacity: 1; }
+}
+
+/* =====================================================================
+   DER FAHRSTUHL
+   ---------------------------------------------------------------------
+   XANDER (Runde 85): „ich moechte beim Reisen noch eine Fahrstuhltuer."
+
+   Zwei Kabinen, eine am Start und eine am Ziel. Die Zeiten kommen aus
+   app.js und stehen als --zu und --auf in Prozent der Fahrt, denn sie
+   richten sich nach dem Ton: die Tuer rollt bis 0,50 s zu, die Glocke
+   kommt bei 1,76 s, bei 2,00 s geht sie wieder auf.
+   ===================================================================== */
+.lc-lift {
+  position: absolute;
+  width: var(--gross, 84px);
+  height: calc(var(--gross, 84px) * 1.16);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 9;
+  animation: lcLiftDaR85 var(--zeit, 2600ms) linear both;
+}
+/* Die Kabine am Ziel steht erst da, wenn der Fahrstuhl ankommt. */
+.lc-lift-ziel { animation-name: lcLiftZielR85; }
+@keyframes lcLiftDaR85 {
+  0%   { opacity: 0; }
+  6%   { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes lcLiftZielR85 {
+  0%, 56%  { opacity: 0; }
+  62%      { opacity: 1; }
+  100%     { opacity: 1; }
+}
+/* Der Kasten: der Schacht hinter den Tueren. */
+.lc-lift-kasten {
+  position: absolute;
+  inset: 8% 2% 2%;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #2b3140, #171b25);
+  box-shadow: inset 0 0 0 2px #4a5262, 0 3px 7px rgba(0, 0, 0, .4);
+}
+/* Die beiden Tuerfluegel. Sie stehen offen und fahren zusammen —
+   am Ziel andersherum. */
+.lc-lift-tuer {
+  position: absolute;
+  top: 8%;
+  bottom: 2%;
+  width: 49%;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 3px,
+                              rgba(0,0,0,.05) 3px 6px),
+    linear-gradient(180deg, #c3ccd8, #8d97a6);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35);
+}
+.lc-lift-tuer-l { left: 2%; border-radius: 6px 0 0 6px; }
+.lc-lift-tuer-r { right: 2%; border-radius: 0 6px 6px 0; }
+/* Der feine Spalt in der Mitte, damit man sieht, wo sie sich treffen. */
+.lc-lift-spalt {
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  bottom: 4%;
+  width: 2px;
+  margin-left: -1px;
+  background: rgba(20, 26, 38, .55);
+  opacity: 0;
+  animation: lcLiftSpaltR85 var(--zeit, 2600ms) linear both;
+}
+@keyframes lcLiftSpaltR85 {
+  0%   { opacity: 0; }
+  22%  { opacity: 1; }
+  80%  { opacity: 1; }
+  92%, 100% { opacity: 0; }
+}
+/* Am START gehen die Tueren ZU (bis --zu), am ZIEL gehen sie
+   AUF (ab --auf). Die Wege sind gleich, nur die Richtung nicht. */
+.lc-lift-start .lc-lift-tuer-l { animation: lcLiftZuLinksR85 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
+.lc-lift-start .lc-lift-tuer-r { animation: lcLiftZuRechtsR85 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
+.lc-lift-ziel  .lc-lift-tuer-l { animation: lcLiftAufLinksR85 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
+.lc-lift-ziel  .lc-lift-tuer-r { animation: lcLiftAufRechtsR85 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
+/* DIE ZAHLEN KOMMEN AUS DEM TON, nicht aus dem Gefuehl. Die Fahrt
+   dauert 2600 ms (lcReise, „grund"), und die Aufnahme „fahrstuhl"
+   ist gemessen:
+     0,50 s = 19 %   die Tuer ist zu (dort sitzt der Anschlag)
+     2,00 s = 77 %   die Tuer geht wieder auf
+     2,30 s = 88 %   sie steht offen
+   Ein Keyframe-Anteil laesst sich nicht rechnen — deshalb stehen die
+   Prozente hier ausgeschrieben, mit der Rechnung daneben. */
+@keyframes lcLiftZuLinksR85 {
+  0%   { transform: translateX(-96%); }
+  19%  { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+@keyframes lcLiftZuRechtsR85 {
+  0%   { transform: translateX(96%); }
+  19%  { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+@keyframes lcLiftAufLinksR85 {
+  0%, 77% { transform: translateX(0); }
+  88%, 100% { transform: translateX(-96%); }
+}
+@keyframes lcLiftAufRechtsR85 {
+  0%, 77% { transform: translateX(0); }
+  88%, 100% { transform: translateX(96%); }
+}
+/* Die Anzeige ueber der Tuer: Pfeil und Stockwerk, in Ziffern wie an
+   einem echten Fahrstuhl. */
+.lc-lift-anzeige {
+  position: absolute;
+  left: 50%;
+  top: -2%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #11151d;
+  box-shadow: inset 0 0 0 1px #3d4554;
+  font: 700 calc(var(--gross, 84px) * .17) / 1.3 "DS-Digital", "Courier New", monospace;
+  color: #7ef2a8;
+  text-shadow: 0 0 5px rgba(126, 242, 168, .8);
+}
+.lc-lift-pfeil { font-size: .8em; opacity: .9; }
+@media (prefers-reduced-motion: reduce) {
+  .lc-lift { display: none; }
 }
 
 /* --- DER STROHHALM ---------------------------------------------------- */

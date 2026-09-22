@@ -264,6 +264,58 @@ const sage = (gut, text, dazu) => {
     "und jeder Fluegel hat einzelne Handschwingen, nicht eine Haut",
     fluegel.federn + " Federn (zwei Fluegel zu je sieben)");
 
+  /* =================================================================
+     7. DER FAHRSTUHL
+     ================================================================= */
+  console.log("\nDer Fahrstuhl");
+  await buehne();
+  await pg.evaluate(() => { window.__toene = []; window.__start = performance.now();
+    window.DMA_PRUEFUNG.wirkung("fahrstuhl", "7", "Alex", {}); });
+  const lift = [];
+  for (const ms of [200, 700, 1500, 2300, 2560]) {
+    await pg.waitForTimeout(ms - (lift.length ? [200, 700, 1500, 2300, 2560][lift.length - 1] : 0));
+    lift.push(await pg.evaluate(() => {
+      const hol = (w) => {
+        const k = document.querySelector(w);
+        if (!k) return null;
+        const l = k.querySelector(".lc-lift-tuer-l").getBoundingClientRect();
+        const r = k.querySelector(".lc-lift-tuer-r").getBoundingClientRect();
+        const kk = k.getBoundingClientRect();
+        return { sicht: +(+getComputedStyle(k).opacity).toFixed(2),
+                 /* Wie weit stehen die Tueren auf? 0 = zu. */
+                 spalt: Math.round(r.left - l.right),
+                 zahl: (k.querySelector(".lc-lift-zahl") || {}).textContent,
+                 breit: Math.round(kk.width) };
+      };
+      return { start: hol(".lc-lift-start"), ziel: hol(".lc-lift-ziel") };
+    }));
+  }
+  sage(lift[0].start && lift[0].start.spalt > 10 && lift[1].start && lift[1].start.spalt <= 2,
+    "beim Start gehen die Tueren zu (bis 0,5 s, so lange rollt auch der Ton)",
+    "200 ms: " + (lift[0].start ? lift[0].start.spalt : "-") + " px Spalt, 700 ms: "
+      + (lift[1].start ? lift[1].start.spalt : "-") + " px");
+  sage(lift[1].start && lift[2].start && lift[1].start.zahl !== lift[2].start.zahl,
+    "die Anzeige zaehlt die Plaetze ab",
+    (lift[1].start ? lift[1].start.zahl : "-") + " \u2192 " + (lift[2].start ? lift[2].start.zahl : "-"));
+  sage(!lift[0].ziel || lift[0].ziel.sicht === 0,
+    "die Kabine am Ziel steht erst da, wenn der Fahrstuhl ankommt",
+    lift[0].ziel ? ("Sichtbarkeit am Anfang: " + lift[0].ziel.sicht) : "noch gar nicht da");
+  sage(lift[3].ziel && lift[3].ziel.spalt > 10,
+    "und dort gehen die Tueren wieder auf",
+    "2300 ms: " + (lift[3].ziel ? lift[3].ziel.spalt : "-") + " px Spalt");
+  const liftTon = await pg.evaluate(() =>
+    (window.__toene || []).map((x) => x.n + "@" + Math.round(x.t - window.__start)));
+  sage(liftTon.some((x) => /^fahrstuhl@/.test(x)),
+    "und man hoert Tuer, Fahrt und Glocke", liftTon.join(", ") || "kein Ton");
+  await pg.waitForTimeout(1200);
+  const liftReste = await pg.evaluate(() => ({
+    kabinen: document.querySelectorAll(".lc-lift").length,
+    unterwegs: document.querySelectorAll(".lc-platz-unterwegs").length
+  }));
+  sage(liftReste.kabinen === 0 && liftReste.unterwegs === 0,
+    "danach bleibt nichts stehen",
+    liftReste.kabinen + " Kabinen, " + liftReste.unterwegs + " Plaetze unterwegs");
+
   await br.close(); srv.close();
   console.log(fehler ? "\n" + fehler + " Regel(n) nicht erfuellt" : "\nAlles in Ordnung");
   process.exit(fehler ? 1 : 0);
