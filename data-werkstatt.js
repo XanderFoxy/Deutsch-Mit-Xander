@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 88o — das Hineindrehen der Gluehbirne klingt jetzt nach Gewinde statt nach Motor.",
+  stand: "Runde 88p — bei Stadt · Land · Fluss entscheidet jetzt der Spielfuehrer, ob ein Wort gilt.",
 
   inArbeit: [
-    { seit: "2026-09-22T17:39",
+    { seit: "2026-09-22T17:50",
       text: "Aufgabe-Modul: unklar, welches gemeint ist — Rueckfrage an Xander" },
-    { seit: "2026-09-22T17:39",
+    { seit: "2026-09-22T17:50",
       text: "Lok: Kurvenmodule, Draufsicht, Schrei beim Ueberfahren" },
-    { seit: "2026-09-22T17:39",
+    { seit: "2026-09-22T17:50",
       text: "Mario-Modus mit Muenzen und Punkten" },
-    { seit: "2026-09-22T17:39",
-      text: "Stadt-Land-Fluss: Auswertung beim Spielfuehrer nachziehen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T17:39",
-      text: "Birne: das Hineindrehen hat einen eigenen, realistischen Drehsound" },
-    { seit: "2026-09-22T17:39",
-      text: "Birne: sechzehn Rucker, die dichter und lauter werden, je weiter sie hineingeht" },
-    { seit: "2026-09-22T17:39",
-      text: "Birne: Schwerpunkt von 674 auf 4764 Hz — Metall statt Brummen" },
+    { seit: "2026-09-22T17:50",
+      text: "Stadt-Land-Fluss: der Spielfuehrer kann jedes Wort streichen oder gelten lassen" },
+    { seit: "2026-09-22T17:50",
+      text: "Ein gestrichenes Wort faellt fuer die ganze Spalte weg — wer allein uebrig bleibt, bekommt die 20 Punkte" },
+    { seit: "2026-09-22T17:50",
+      text: "Der Lehrer darf auch als Gast mitentscheiden; alle sehen dasselbe Blatt" },
   ],
 };

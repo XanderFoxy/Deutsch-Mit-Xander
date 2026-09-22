@@ -48288,54 +48288,6 @@
        nachsehen laesst und nicht geraten werden muss: jeden Effekt
        einzeln ausloesen und hinterher zaehlen, was im Dokument steht. */
     effektNamen: function () { return Object.keys(LC_EFFEKTE); },
-    /* RUNDE 88 — DIE AUSWERTUNG VON STADT-LAND-FLUSS ZUM NACHRECHNEN.
-       XANDER: „mit einer realistischen Auswertung, so dass die
-       Ergebnisse beim Spielfuehrer immer vorliegen und er dann
-       entscheiden kann, ob die Woerter Sinn machen."
-       Ein Strich darf nicht nur eine Zelle ausgrauen — er muss die
-       Punkte der ANDEREN mitverschieben. Das laesst sich nur pruefen,
-       wenn man dieselbe Runde von aussen aufbauen und dieselben
-       Knoepfe druecken kann, die ein Mensch drueckt. Genau das
-       passiert hier: aufgebaut wird der Vergleich, gedrueckt wird das
-       echte slfUrteilen. */
-    slfProbeStellen: function (wunsch) {
-      const spalten = wunsch.spalten || ["stadt", "land", "fluss"];
-      slfGesamt = {};
-      slfUrteile = {};
-      /* „gast" heisst: jemand anderes ist Spielfuehrer. Dann darf hier
-         niemand streichen — es sei denn, der Lehrer sieht zu. */
-      slfRaum = wunsch.gast
-        ? { id: "probe", host: "jemand-anders", hostName: "Bea", zeilen: [],
-            mitglieder: wunsch.blaetter.map((b, i) => ({ id: "p" + i, name: b.name })),
-            phase: "vergleich", buchstabe: wunsch.buchstabe, spalten,
-            blaetter: {}, anwesend: {} }
-        : null;
-      slfLauf = { runde: slfNeueRunde(wunsch.buchstabe, spalten),
-                  blaetter: wunsch.blaetter, phase: "vergleich" };
-      slfLauf.wertung = slfWerten(slfLauf.runde, wunsch.blaetter, slfUrteile);
-      slfGesamtZaehlen(wunsch.blaetter, slfLauf.wertung);
-      return window.DMA_PRUEF.slfProbeStand();
-    },
-    slfProbeUrteilen: function (schluessel) {
-      slfUrteilen(schluessel);           // der echte Weg, nicht nachgebaut
-      return window.DMA_PRUEF.slfProbeStand();
-    },
-    slfProbeFremdesUrteil: function (fremd) {
-      const anders = slfUrteileMischen(fremd);
-      if (anders) slfNeuRechnen();
-      return Object.assign(window.DMA_PRUEF.slfProbeStand(), { anders });
-    },
-    slfProbeStand: function () {
-      return {
-        html: slfVergleichHtml(),
-        punkte: slfLauf.wertung.punkte.slice(),
-        gruende: slfLauf.runde.spalten.map((s) =>
-          slfLauf.wertung.zellen[s.id].map((z) => z.grund)),
-        gesamt: Object.assign({}, slfGesamt),
-        urteile: JSON.parse(JSON.stringify(slfUrteile)),
-      };
-    },
-    slfProbeAufraeumen: function () { slfAufraeumen(); },
     /* RUNDE 88 — DIE BILLARDBAHN ZUM NACHRECHNEN.
        XANDER: „die Physik soll stimmen wie beim Billardspiel."
        Eine Behauptung ueber Physik ist wertlos, wenn man sie nicht
@@ -62647,14 +62599,6 @@
   let slfLauf = null;
   let slfUhr = null;
   let slfPoller = null;
-  /* RUNDE 88 — was der Spielfuehrer gestrichen hat.
-     Schluessel ist "spalte|nummer", Wert { raus, n }. Das „n" ist
-     keine Uhrzeit, sondern ein Zaehler, der bei jedem Umschalten um
-     eins steigt: Telefonuhren gehen verschieden, Zaehler nicht.
-     Treffen zwei Urteile mit demselben n aufeinander, gewinnt das
-     strengere — lieber ein Wort zu viel gestrichen als eines, das
-     der Spielfuehrer schon abgelehnt hat, wieder gutgeschrieben. */
-  let slfUrteile = {};
 
   function slfKleinOhneArtikel(w) {
     return String(w || "").replace(/^(der|die|das)\s+/i, "").trim();
@@ -62700,34 +62644,7 @@
   }
 
   /* Die klassische Wertung. blaetter = [{name, blatt}, …] */
-  /* =================================================================
-     RUNDE 88 — DER SPIELFUEHRER ENTSCHEIDET MIT
-     -----------------------------------------------------------------
-     XANDER: „mit einer realistischen Auswertung, so dass die
-     Ergebnisse beim Spielfuehrer immer vorliegen und er dann
-     entscheiden kann, ob die Woerter Sinn machen, ob wir die
-     verwenden koennen, wo der Lehrer aber auch immer noch
-     Mitentscheidungsrecht hat, wenn es zu der Auswertung kommt —
-     also derjenige, der das auswertet, ist ja der Spielfuehrer an
-     sich, der auch am Anfang den Buchstaben bestimmt."
-
-     Bisher rechnete die Auswertung allein: Anfangsbuchstabe stimmt,
-     also zaehlt das Wort. Damit war „Xaver Xylofonbaum" so viel wert
-     wie „Xanten" — und der Spielfuehrer konnte nichts dagegen tun.
-     Jetzt kann er JEDE Zelle streichen, und das ist keine Kosmetik:
-     ein gestrichenes Wort gilt fuer die ganze SPALTE als nicht
-     vorhanden. Bleibt danach nur noch einer uebrig, bekommt der die
-     20 Punkte, die ihm zustehen. Genau so wird am Kuechentisch
-     gewertet.
-
-     „urteile" ist eine Tabelle „spalte|nummer -> true" (gestrichen).
-     Sie faehrt im Raum mit, damit alle dasselbe Blatt sehen.
-     ================================================================= */
-  function slfWerten(runde, blaetter, urteile) {
-    const urteil = urteile || {};
-    /* Unterwegs reist { raus, n }; von Hand geschrieben waere auch
-       ein schlichtes true denkbar. Beides gilt. */
-    const weg = (k) => { const v = urteil[k]; return v === true || Boolean(v && v.raus); };
+  function slfWerten(runde, blaetter) {
     const gueltig = (w) => {
       const rein = slfKleinOhneArtikel(w);
       return rein.length >= 2 && rein[0].toLowerCase() === runde.buchstabe;
@@ -62735,17 +62652,10 @@
     const punkte = blaetter.map(() => 0);
     const zellen = {};
     runde.spalten.forEach((s) => {
-      /* Gestrichene Woerter zaehlen hier schon nicht mehr mit —
-         deshalb aendert ein Strich auch die Punkte der ANDEREN. */
-      const eintraege = blaetter.map((b, i) => (weg(s.id + "|" + i) ? ""
-        : (gueltig(b.blatt[s.id]) ? slfKleinOhneArtikel(b.blatt[s.id]) : "")));
+      const eintraege = blaetter.map((b) => (gueltig(b.blatt[s.id]) ? slfKleinOhneArtikel(b.blatt[s.id]) : ""));
       const gefuellt = eintraege.filter(Boolean).length;
       zellen[s.id] = eintraege.map((w, i) => {
-        const roh = blatt0(blaetter[i], s.id);
-        if (weg(s.id + "|" + i)) {
-          return { wort: roh, wert: 0, grund: "gestrichen", gestrichen: true };
-        }
-        if (!w) return { wort: roh, wert: 0, grund: roh ? "falscher Anfangsbuchstabe" : "leer" };
+        if (!w) return { wort: blatt0(blaetter[i], s.id), wert: 0, grund: blatt0(blaetter[i], s.id) ? "falscher Anfangsbuchstabe" : "leer" };
         if (gefuellt === 1) { punkte[i] += 20; return { wort: w, wert: 20, grund: "nur du" }; }
         const gleich = eintraege.filter((x, j) => j !== i && x.toLowerCase() === w.toLowerCase()).length;
         if (gleich) { punkte[i] += 5; return { wort: w, wert: 5, grund: "gleiches Wort" }; }
@@ -62755,76 +62665,6 @@
     return { punkte, zellen };
   }
   function blatt0(b, id) { return (b && b.blatt && b.blatt[id]) || ""; }
-
-  /* =================================================================
-     WER DARF STREICHEN
-     -----------------------------------------------------------------
-     XANDER: „derjenige, der das auswertet, ist ja der Spielfuehrer an
-     sich, der auch am Anfang den Buchstaben bestimmt … wo der Lehrer
-     aber auch immer noch Mitentscheidungsrecht hat, wenn es zu der
-     Auswertung kommt."
-
-     Also drei Faelle, und nur diese drei:
-       · allein gegen den Fuchs — da ist man sein eigener Spielfuehrer,
-       · der Raumgeber, der den Buchstaben festgelegt hat,
-       · der Lehrer, auch wenn er nur Gast im Raum ist.
-     ================================================================= */
-  function slfDarfUrteilen() {
-    if (!slfRaum) return true;
-    if (slfRaum.host === slfIch()) return true;
-    if (Backend.isOwner && Backend.isOwner()) return true;
-    return Boolean(Backend.canModerate && Backend.canModerate());
-  }
-
-  /* Ein Wort streichen oder wieder gelten lassen. */
-  function slfUrteilen(schluessel) {
-    if (!slfLauf || slfLauf.phase !== "vergleich" || !slfDarfUrteilen()) return;
-    const alt = slfUrteile[schluessel] || { raus: false, n: 0 };
-    slfUrteile[schluessel] = { raus: !alt.raus, n: (Number(alt.n) || 0) + 1 };
-    slfNeuRechnen();
-    /* Bei vielen Spalten steht die Tabelle seitlich verschoben. Wird sie
-       neu gezeichnet, spraenge sie sonst zurueck an den Anfang — und man
-       suchte nach jedem Strich die Spalte wieder, die man gerade
-       beurteilt. */
-    const wrap = document.querySelector(".slf-tabelle-wrap");
-    const seitlich = wrap ? wrap.scrollLeft : 0;
-    renderStadtLandFluss();
-    const neu = document.querySelector(".slf-tabelle-wrap");
-    if (neu) neu.scrollLeft = seitlich;
-    /* Im Raum sehen alle dasselbe Blatt — sonst waere die Auswertung
-       nur die private Meinung eines Geraets. */
-    if (slfRaum && slfRaum.zeilen && slfRaum.zeilen.length) {
-      slfAnAlleSchreiben({ urteile: slfUrteile });
-    }
-  }
-
-  /* Nach einem Urteil noch einmal zaehlen — und den Gesamtstand
-     mitziehen, nicht ein zweites Mal aufaddieren. */
-  function slfNeuRechnen() {
-    if (!slfLauf || !slfLauf.blaetter) return;
-    slfLauf.wertung = slfWerten(slfLauf.runde, slfLauf.blaetter, slfUrteile);
-    slfGesamtZaehlen(slfLauf.blaetter, slfLauf.wertung);
-  }
-
-  /* Fremde Urteile hereinnehmen. Es gewinnt das JUENGERE (hoeheres n);
-     bei Gleichstand das strengere. Zurueck kommt, ob sich am Blatt
-     wirklich etwas geaendert hat — nur dann wird neu gezeichnet. */
-  function slfUrteileMischen(fremd) {
-    if (!fremd || typeof fremd !== "object") return false;
-    let anders = false;
-    Object.keys(fremd).forEach((k) => {
-      const f = fremd[k];
-      if (!f || typeof f !== "object") return;
-      const meins = slfUrteile[k];
-      const fn = Number(f.n) || 0;
-      const mn = (meins && Number(meins.n)) || 0;
-      const nimm = !meins || fn > mn || (fn === mn && f.raus === true && meins.raus !== true);
-      if (!nimm) return;
-      if (Boolean(meins && meins.raus) !== Boolean(f.raus)) anders = true;
-      slfUrteile[k] = { raus: Boolean(f.raus), n: fn };
-    });
-    return anders;
-  }
 
   function slfUhrStoppen() {
     if (slfUhr) { clearInterval(slfUhr); slfUhr = null; }
@@ -63191,15 +63031,9 @@
           Object.keys(b).forEach((k) => {
             if (!slfRaum.blaetter[k]) { slfRaum.blaetter[k] = b[k]; geaendert = true; }
           });
-          /* RUNDE 88 — der Lehrer darf auch als Gast streichen. Sein
-             Urteil steht in SEINER Zeile; der Raumgeber nimmt es auf
-             und schreibt es gleich an alle zurueck. */
-          if (slfUrteileMischen(c.extra && c.extra.urteile)) geaendert = true;
         });
         if (geaendert) {
-          if (slfLauf && slfLauf.phase === "vergleich") slfNeuRechnen();
-          await slfAnAlleSchreiben({
-            anwesend: slfRaum.anwesend, blaetter: slfRaum.blaetter, urteile: slfUrteile });
+          await slfAnAlleSchreiben({ anwesend: slfRaum.anwesend, blaetter: slfRaum.blaetter });
           renderStadtLandFluss();
         }
         return;
@@ -63228,14 +63062,8 @@
       }
       if (e.phase === "vergleich" && slfRaum.phase !== "vergleich") {
         slfRaum.blaetter = e.blaetter || slfRaum.blaetter;
-        slfUrteileMischen(e.urteile);
         slfVergleichZeigen();
         return;
-      }
-      /* RUNDE 88 — streicht der Spielfuehrer waehrend des Vergleichs
-         ein Wort, aendert sich das Blatt bei ALLEN, nicht nur bei ihm. */
-      if (slfUrteileMischen(e.urteile) && slfLauf && slfLauf.phase === "vergleich") {
-        slfNeuRechnen();
       }
       renderStadtLandFluss();
     } catch (err) { /* Netz weg — beim nächsten Takt noch einmal */ }
@@ -63331,7 +63159,6 @@
     await slfAnAlleSchreiben({
       stand: r.stand, runde: r.runde, buchstabe, spalten,
       startIn: r.startIn, dauer: r.dauer, phase: "countdown", blaetter: {},
-      urteile: {},
     });
     slfCountdownStarten();
   }
@@ -63343,7 +63170,6 @@
     slfRaum.phase = "countdown";
     slfRaum.countdownBis = Date.now() + slfRaum.startIn;
     slfLauf = null;
-    slfUrteile = {};        // RUNDE 88 — jede Runde faengt ungestrichen an
     slfPollenStarten(true);
     renderStadtLandFluss();
     slfUhr = setInterval(() => {
@@ -63477,13 +63303,6 @@
     const { runde, blaetter, wertung } = slfLauf;
     const max = Math.max(...wertung.punkte);
     const binHost = slfRaum && slfRaum.host === slfIch();
-    /* RUNDE 88 — „so dass die Ergebnisse beim Spielfuehrer immer
-       vorliegen und er dann entscheiden kann, ob die Woerter Sinn
-       machen, ob wir die verwenden koennen." Der Knopf sitzt in der
-       Zelle selbst, damit man nicht erst suchen muss, wozu er gehoert.
-       Wer nicht urteilen darf, sieht ihn gar nicht — aber er sieht
-       jeden Strich, denn gewertet wird fuer alle gleich. */
-    const darf = slfDarfUrteilen();
     return `
       <div class="question-card">
         <p class="eyebrow">DIE ZETTEL NEBENEINANDER · BUCHSTABE ${runde.buchstabe.toUpperCase()}</p>
@@ -63496,15 +63315,10 @@
               ${runde.spalten.map((s) => `
                 <tr>
                   <th scope="row">${s.name}</th>
-                  ${wertung.zellen[s.id].map((z, i) => `
-                    <td class="slf-wert-${z.wert}${z.gestrichen ? " slf-zelle-raus" : ""}">
+                  ${wertung.zellen[s.id].map((z) => `
+                    <td class="slf-wert-${z.wert}">
                       <span class="slf-zellwort">${z.wort ? escapeHtml(z.wort) : "—"}</span>
-                      <span class="slf-zellpunkte">${z.gestrichen ? "gestrichen" : z.wert}</span>
-                      ${(darf && z.wort) ? `<button type="button" class="slf-urteil${z.gestrichen ? " slf-urteil-zurueck" : ""}"
-                        data-slf-urteil="${s.id}|${i}"
-                        title="${z.gestrichen ? "Doch gelten lassen" : "Streichen — das Wort zaehlt fuer niemanden"}"
-                        aria-label="${escapeHtml(z.wort)} ${z.gestrichen ? "wieder gelten lassen" : "streichen"}"
-                        >${z.gestrichen ? "↩" : "✖"}</button>` : ""}
+                      <span class="slf-zellpunkte">${z.wert}</span>
                     </td>`).join("")}
                 </tr>`).join("")}
               <tr class="slf-summe">
@@ -63519,9 +63333,6 @@
           </table>
         </div>
         <p class="ak-b-hinweis">20 = nur du hattest etwas · 10 = eigenes Wort · 5 = dasselbe Wort · 0 = leer oder falscher Anfangsbuchstabe</p>
-        ${darf
-          ? `<p class="ak-b-hinweis">Du wertest aus: Mit <strong>✖</strong> streichst du ein Wort, das nicht gilt. Es zaehlt dann fuer niemanden mehr — und wer als Einziger uebrig bleibt, bekommt seine 20 Punkte.</p>`
-          : `<p class="ak-b-hinweis">${escapeHtml((slfRaum && slfRaum.hostName) || "Der Spielfuehrer")} entscheidet, ob ein Wort gilt. Gestrichene Woerter stehen durchgestrichen da.</p>`}
         <div class="quiz-actions" style="justify-content:center; margin-top:12px; flex-wrap:wrap; gap:8px;">
           ${(!slfRaum || binHost)
             ? `<button type="button" class="btn btn-coffee" id="slfNochmal">🔄 Noch eine Runde — neuer Buchstabe</button>`
@@ -63540,7 +63351,6 @@
     slfAuswahlOffen = false;
     slfSuche = "";
     slfGesamt = {};
-    slfUrteile = {};
   }
 
   async function renderStadtLandFluss() {
@@ -63640,9 +63450,6 @@
     }
     if (slfLauf && slfLauf.phase === "vergleich") {
       area.innerHTML = slfVergleichHtml();
-      /* RUNDE 88 — die Knoepfe des Spielfuehrers. */
-      area.querySelectorAll("[data-slf-urteil]").forEach((b) =>
-        b.addEventListener("click", () => slfUrteilen(b.dataset.slfUrteil)));
       document.getElementById("slfNochmal")?.addEventListener("click", () => {
         if (slfRaum && slfRaum.mitglieder.length > 1) { slfRundeStarten(true); return; }
         slfStartAllein();
@@ -63684,7 +63491,7 @@
         { name: "\u{1F98A} Der Fuchs", blatt: slfFuchsblatt(slfLauf.runde) },
       ];
       slfLauf.blaetter = blaetter;
-      slfLauf.wertung = slfWerten(slfLauf.runde, blaetter, slfUrteile);
+      slfLauf.wertung = slfWerten(slfLauf.runde, blaetter);
       slfLauf.phase = "vergleich";
       slfGesamtZaehlen(blaetter, slfLauf.wertung);
       slfPunkteBuchen();
@@ -63742,7 +63549,7 @@
     if (!blaetter.length) return;
     if (!slfLauf) slfLauf = { runde: slfNeueRunde(slfRaum.buchstabe, slfRaum.spalten) };
     slfLauf.blaetter = blaetter;
-    slfLauf.wertung = slfWerten(slfLauf.runde, blaetter, slfUrteile);
+    slfLauf.wertung = slfWerten(slfLauf.runde, blaetter);
     slfLauf.phase = "vergleich";
     slfRaum.phase = "vergleich";
     slfGesamtZaehlen(blaetter, slfLauf.wertung);
@@ -63755,23 +63562,11 @@
   /* Der Punktestand \u00fcber mehrere Runden \u2014 damit ein Abend Stadt \u00b7 Land \u00b7
      Fluss auch wie ein Abend z\u00e4hlt und nicht wie f\u00fcnf einzelne Runden. */
   function slfGesamtZaehlen(blaetter, wertung) {
-    /* RUNDE 88 — gebucht wird die DIFFERENZ zum letzten Stand dieser
-       Runde, nicht die Punktzahl. Streicht der Spielfuehrer nachtraeglich
-       ein Wort, wird derselbe Aufruf noch einmal gemacht; ohne die
-       Differenz stuende die Runde danach doppelt im Gesamtstand. */
-    const vorher = (slfLauf && slfLauf.gebucht) || blaetter.map(() => 0);
     blaetter.forEach((b, i) => {
-      slfGesamt[b.name] = (slfGesamt[b.name] || 0)
-        + (wertung.punkte[i] || 0) - (vorher[i] || 0);
+      slfGesamt[b.name] = (slfGesamt[b.name] || 0) + (wertung.punkte[i] || 0);
     });
-    if (slfLauf) slfLauf.gebucht = wertung.punkte.slice();
   }
 
-  /* Das Punktekonto der Seite wird EINMAL gebucht, wenn die Zettel
-     nebeneinanderliegen — nicht bei jedem Strich. Sonst stuenden nach
-     drei Urteilen drei gespielte Runden im Verlauf. Die Tabelle und der
-     Gesamtstand des Abends ziehen dagegen bei jedem Strich mit; sie
-     sind das, was der Spielfuehrer vor sich hat. */
   function slfPunkteBuchen() {
     const eigen = slfLauf.wertung.punkte[0];
     const moeglich = slfLauf.runde.spalten.length * 20;
