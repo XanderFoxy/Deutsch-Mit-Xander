@@ -198,10 +198,28 @@ const KLATSCHEN = {
 const winken = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">'
   + "\n<style>"
   + "\n  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }"
-  + "\n  .hand { animation: winken 0.9s ease-in-out infinite; transform-box: view-box; transform-origin: 54% 92%; }"
-  + "\n  .str  { animation: strich 0.9s ease-in-out infinite; transform-box: view-box; transform-origin: 50% 50%; }"
-  + "\n  @keyframes winken { 0%,100%{transform:rotate(-15deg)} 50%{transform:rotate(15deg)} }"
-  + "\n  @keyframes strich { 0%,100%{opacity:.15; transform:translateX(-4px)} 50%{opacity:.85; transform:translateX(3px)} }"
+  /* RUNDE 80 — XANDER: „die Hand, die winken soll … ueberarbeiten."
+     Vorher ein einziges Hin und Her von -15 auf +15 Grad. Zwei gleich
+     grosse Ausschlaege in gleichem Takt sind ein Metronom, kein Winken.
+     Wer winkt, schlaegt ungleich weit aus und wippt dabei ein wenig
+     mit. Deshalb jetzt vier Umkehrpunkte mit ungleichen Winkeln
+     (-17, +20, -13, +17 Grad), ein kleines Mitheben und eine laengere
+     Runde. */
+  + "\n  .hand { animation: winken 1.25s ease-in-out infinite; transform-box: view-box; transform-origin: 54% 92%; }"
+  + "\n  .str  { animation: strich 1.25s ease-in-out infinite; transform-box: view-box; transform-origin: 50% 50%; }"
+  + "\n  @keyframes winken {"
+  + "\n    0%   { transform: rotate(-17deg) translateY(0); }"
+  + "\n    24%  { transform: rotate(20deg) translateY(-1.5px); }"
+  + "\n    48%  { transform: rotate(-13deg) translateY(0); }"
+  + "\n    72%  { transform: rotate(17deg) translateY(-2.5px); }"
+  + "\n    100% { transform: rotate(-17deg) translateY(0); }"
+  + "\n  }"
+  + "\n  @keyframes strich {"
+  + "\n    0%,100% { opacity:.12; transform: translateX(-5px); }"
+  + "\n    24%     { opacity:.9;  transform: translateX(4px); }"
+  + "\n    48%     { opacity:.2;  transform: translateX(-4px); }"
+  + "\n    72%     { opacity:.8;  transform: translateX(3px); }"
+  + "\n  }"
   + "\n</style>"
   /* Der Ärmel liegt UNTER der Hand und ragt nicht in sie hinein —
      sonst wäre er die nächste sichtbare Fuge. */
@@ -235,9 +253,25 @@ const klatschen = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 130"
      einem Daumen an der falschen Seite.
      Aussen steht deshalb die STELLUNG (Attribut), innen die BEWEGUNG
      (CSS). Zwei Gruppen, kein Streit. */
-  + "\n  .l { animation: klatschL 0.62s ease-in-out infinite; transform-box: view-box; transform-origin: 26% 92%; }"
-  + "\n  .r { animation: klatschR 0.62s ease-in-out infinite; transform-box: view-box; transform-origin: 74% 92%; }"
-  + "\n  .funk { animation: funk 0.62s ease-out infinite; transform-box: view-box; transform-origin: 50% 44%; }"
+  /* RUNDE 80 — XANDER: „Die Haende die klatschen sollen haben gar
+     kein Klatsch Moment."
+     ------------------------------------------------------------------
+     ER HAT RECHT, und es lag an der Zeitkurve. „ease-in-out" ueber die
+     ganze Runde heisst: die Haende gleiten gleichmaessig aufeinander zu
+     und wieder auseinander. Sie sind nirgends schneller als sonst, und
+     deshalb TRIFFT auch nichts auf — es fehlte nicht die Bewegung,
+     sondern der Aufprall.
+     Ein Klatschen hat vier Abschnitte, und die stehen jetzt einzeln da:
+       0-42 %   ausholen und beschleunigen
+       42-48 %  der Treffer: die Haende stauchen sich (scaleX .88)
+       48-56 %  zurueckfedern, noch aneinander
+       56-100 % langsam wieder auseinander
+     Die Kurve je Abschnitt steht IM Schluesselbild
+     (animation-timing-function); deshalb laeuft die Animation selbst
+     auf „linear". */
+  + "\n  .l { animation: klatschL 0.62s linear infinite; transform-box: view-box; transform-origin: 26% 92%; }"
+  + "\n  .r { animation: klatschR 0.62s linear infinite; transform-box: view-box; transform-origin: 74% 92%; }"
+  + "\n  .funk { animation: funk 0.62s linear infinite; transform-box: view-box; transform-origin: 50% 44%; }"
   /* WIE WEIT SIE SICH TREFFEN.
      Fotografiert: gingen sie bis auf null zusammen, lagen zwei
      Handflaechen exakt uebereinander und es sah aus wie EINE Hand.
@@ -247,9 +281,29 @@ const klatschen = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 130"
      gesetzt (gemessen am getBBox der Zeichnung), dass sich die
      beiden Handflaechen dort gerade treffen und nicht ineinander
      verschwinden. */
-  + "\n  @keyframes klatschL { 0%,100%{transform:translateX(-11px) rotate(-6deg)} 46%{transform:translateX(0) rotate(0)} 54%{transform:translateX(-2px) rotate(-1deg)} }"
-  + "\n  @keyframes klatschR { 0%,100%{transform:translateX(11px) rotate(6deg)} 46%{transform:translateX(0) rotate(0)} 54%{transform:translateX(2px) rotate(1deg)} }"
-  + "\n  @keyframes funk { 0%,42%{opacity:0; transform:scale(.4)} 52%{opacity:.95; transform:scale(1)} 100%{opacity:0; transform:scale(1.5)} }"
+  + "\n  @keyframes klatschL {"
+  + "\n    0%   { animation-timing-function: cubic-bezier(.5,0,.95,.4);"
+  + "\n           transform: translateX(-11px) rotate(-6deg) scaleX(1); }"
+  + "\n    42%  { animation-timing-function: cubic-bezier(.1,.9,.3,1);"
+  + "\n           transform: translateX(1px) rotate(1deg) scaleX(.88); }"
+  + "\n    48%  { transform: translateX(0) rotate(0) scaleX(.98); }"
+  + "\n    56%  { animation-timing-function: cubic-bezier(.4,0,.6,1);"
+  + "\n           transform: translateX(-4px) rotate(-2deg) scaleX(1.03); }"
+  + "\n    100% { transform: translateX(-11px) rotate(-6deg) scaleX(1); }"
+  + "\n  }"
+  + "\n  @keyframes klatschR {"
+  + "\n    0%   { animation-timing-function: cubic-bezier(.5,0,.95,.4);"
+  + "\n           transform: translateX(11px) rotate(6deg) scaleX(1); }"
+  + "\n    42%  { animation-timing-function: cubic-bezier(.1,.9,.3,1);"
+  + "\n           transform: translateX(-1px) rotate(-1deg) scaleX(.88); }"
+  + "\n    48%  { transform: translateX(0) rotate(0) scaleX(.98); }"
+  + "\n    56%  { animation-timing-function: cubic-bezier(.4,0,.6,1);"
+  + "\n           transform: translateX(4px) rotate(2deg) scaleX(1.03); }"
+  + "\n    100% { transform: translateX(11px) rotate(6deg) scaleX(1); }"
+  + "\n  }"
+  /* Der Funke sass bei 52 %, also zehn Prozent NACH dem Treffer.
+     Er gehoert genau auf den Treffer bei 42 %. */
+  + "\n  @keyframes funk { 0%,40%{opacity:0; transform:scale(.4)} 44%{opacity:1; transform:scale(1)} 100%{opacity:0; transform:scale(1.6)} }"
   + "\n</style>"
   + '\n<g transform="translate(26 10) rotate(-24 43 66)"><g class="l">\n  '
   + handSvg(KLATSCHEN, "a") + "\n</g></g>"

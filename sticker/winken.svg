@@ -1,10 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
 <style>
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
-  .hand { animation: winken 0.9s ease-in-out infinite; transform-box: view-box; transform-origin: 54% 92%; }
-  .str  { animation: strich 0.9s ease-in-out infinite; transform-box: view-box; transform-origin: 50% 50%; }
-  @keyframes winken { 0%,100%{transform:rotate(-15deg)} 50%{transform:rotate(15deg)} }
-  @keyframes strich { 0%,100%{opacity:.15; transform:translateX(-4px)} 50%{opacity:.85; transform:translateX(3px)} }
+  .hand { animation: winken 1.25s ease-in-out infinite; transform-box: view-box; transform-origin: 54% 92%; }
+  .str  { animation: strich 1.25s ease-in-out infinite; transform-box: view-box; transform-origin: 50% 50%; }
+  @keyframes winken {
+    0%   { transform: rotate(-17deg) translateY(0); }
+    24%  { transform: rotate(20deg) translateY(-1.5px); }
+    48%  { transform: rotate(-13deg) translateY(0); }
+    72%  { transform: rotate(17deg) translateY(-2.5px); }
+    100% { transform: rotate(-17deg) translateY(0); }
+  }
+  @keyframes strich {
+    0%,100% { opacity:.12; transform: translateX(-5px); }
+    24%     { opacity:.9;  transform: translateX(4px); }
+    48%     { opacity:.2;  transform: translateX(-4px); }
+    72%     { opacity:.8;  transform: translateX(3px); }
+  }
 </style>
 <path d="M36 104 L72 104 Q75 114 74 120 L34 120 Q33 112 36 104 Z" fill="#6aa6ee" stroke="rgba(40,70,110,.35)" stroke-width="1.6" stroke-linejoin="round"/>
 <g class="hand">

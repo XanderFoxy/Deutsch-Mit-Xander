@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 80, sechster Teil: die letzten Sprechbilder",
+  stand: "Runde 80, siebter Teil: Wetter, Pferd und die Haende",
 
   inArbeit: [
-    { seit: "2026-09-22T02:50",
+    { seit: "2026-09-22T03:06",
       text: "Der Rest von Xanders Liste vom 22. September" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T02:50",
-      text: "Strom: die Blitze gehen jetzt aus der Mitte wie in einer Plasmakugel — 100 % der Strecken laufen nach aussen, Fusspunkt rund 2 Einheiten von der Mitte; und sie sind nicht mehr haarfein (Kern 0,34 -> 0,62)." },
-    { seit: "2026-09-22T02:50",
-      text: "Feuer: die Flammenfuesse sitzen 2,55 px statt 0,88 px innerhalb des Bildrandes (gemessen, Bildradius 42 px), und jede der 30 Flammen wirft jetzt einen eigenen Funken an ihrer Spitze ab." },
-    { seit: "2026-09-22T02:50",
-      text: "Bluete: sie schliesst sich wieder, wenn jemand aufhoert zu sprechen — 900 ms Zugehen statt sofortigem Verschwinden." },
-    { seit: "2026-09-22T02:50",
-      text: "Eis: die kachelartige Kontrastkante um die Eisblumen ist weg (der Maskenkasten war mit 68 % kleiner als das Bild und schnitt an einem Rechteck ab), und die untersten Eiszapfen werden nicht mehr abgeschnitten (tiefster Punkt 105,95 bei einem viewBox, der bei 100 endete)." },
-    { seit: "2026-09-22T02:50",
-      text: "Blut: der Saum oben laeuft jetzt in zwei Ovalen an den Flanken nach aussen und unten. Dabei sind auch die harten Rechteckkanten der beiden Rinnsale verschwunden — ihr Verlaufsradius war so breit wie die ganze Kachel statt wie ihre Haelfte." },
+    { seit: "2026-09-22T03:06",
+      text: "Beim Neuladen stand nachts die Sonne im Kopfstreifen. GEMESSEN: um 0, 3 und 22 Uhr waren fuenf Sonnenstrahlen zu sehen; jetzt null, und um 13 Uhr weiterhin fuenf. Die Himmelsrechnung braucht kein Netz — sie laeuft jetzt schon beim ersten Zeichnen." },
+    { seit: "2026-09-22T03:06",
+      text: "Die drei Punkte im Kopfstreifen, die wie Bildfehler aussahen, sind sieben Sterne: ihre Schicht stand auf 'relative' statt 'absolute', war dadurch 0 x 0 gross, und alle sieben Prozentangaben landeten auf demselben Punkt. Jetzt liegen sie wieder ueber den ganzen Streifen verteilt." },
+    { seit: "2026-09-22T03:06",
+      text: "Das Pferd hat Hinterhand und Schulter bekommen, und die Beine sind nicht mehr wie eine Ziehharmonika gefaltet: statt drei scharfer Knicke bei gleichbleibender Dicke jetzt weiche Bogen unter einer Muskelpartie, die am Hinterteil sitzt." },
+    { seit: "2026-09-22T03:06",
+      text: "Die Riesenhand greift wirklich: Arm und Handruecken liegen hinter dem Bild, die vier Finger davor. Vorher lag das Bild vor der ganzen Hand — es hielt sichtbar nichts." },
+    { seit: "2026-09-22T03:06",
+      text: "Das Klatschen hat einen Klatsch-Moment. GEMESSEN: der groesste Schliess-Schritt war 1,9-mal so gross wie der Durchschnitt (also keiner), jetzt 6,3-mal — und der Funke blitzt bei 44 statt bei 52 Prozent, also auf dem Treffer statt danach. Das Winken hat vier ungleiche Ausschlaege statt eines Metronoms." },
   ],
 };

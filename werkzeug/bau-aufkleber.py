@@ -977,9 +977,23 @@ AUFKLEBER["katze"] = huelle(
     ),
 )
 
+# RUNDE 80 — DIESE DREI GEHOEREN NICHT MEHR HIERHER.
+# Die winkende Hand, die klatschenden Haende und die Umarmung werden
+# seit Fassung 340 von werkzeug/haende-zeichnen.js gezeichnet: dort ist
+# jede Hand EIN einziger Umriss statt Flaeche plus Finger plus Daumen.
+# Diese Datei hat noch die alten, zusammengesetzten Fassungen — und hat
+# die guten beim Durchlaufen stillschweigend ueberschrieben. Das darf
+# nicht passieren: „Du sollst niemals gute bestehende Zeichnungen
+# kaputtmachen." Deshalb werden sie hier uebersprungen.
+NICHT_UEBERSCHREIBEN = {"winken", "klatschen", "umarmung"}
+
+
 def main():
     os.makedirs(ZIEL, exist_ok=True)
     for name, inhalt in sorted(AUFKLEBER.items()):
+        if name in NICHT_UEBERSCHREIBEN:
+            print("%-14s uebersprungen (kommt aus haende-zeichnen.js)" % name)
+            continue
         pfad = os.path.join(ZIEL, name + ".svg")
         with open(pfad, "w", encoding="utf-8") as f:
             f.write(inhalt)

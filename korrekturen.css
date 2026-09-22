@@ -26261,3 +26261,46 @@ body.lc-schreibt .tutor-reiter {
 @media (prefers-reduced-motion: reduce) {
   .lc-sprech-schliesst[data-sprechbild="bluete"]::after { animation: none !important; opacity: 0; }
 }
+
+/* === RUNDE 80: DIE DREI PIXEL IM KOPFSTREIFEN SIND KEIN BILDFEHLER ===
+   XANDER: „und manchmal kommen auch Bildfehler … so ein kleiner
+   Punkt … mindestens drei Pixel da, die wie Bildfehler aussehen."
+
+   GEMESSEN im Browser, und es sind genau sieben:
+   #starsLayer hatte „position: relative" statt „absolute", war damit
+   0 × 0 Pixel gross — und die sieben Sterne, die mit top/left in
+   PROZENT gesetzt sind (15 %, 30 %, 60 % …), rechneten alle gegen
+   dieses 0 × 0 und landeten auf ein und demselben Punkt. Sieben
+   weisse Punkte von 2 px mit schwarzem Schatten, übereinander an
+   einer Stelle im Streifen: das sieht aus wie ein Bildfehler, und es
+   ist auch einer.
+
+   WOHER: styles.css hat in Zeile 247 „.weather-bar .stars
+   { position: absolute; inset: 0 }" — und 600 Zeilen weiter unten
+   „.weather-bar > *:not(.niederschlag) { position: relative }".
+   Beide Regeln sind gleich stark (zwei Klassen), also gewinnt die
+   spätere. Die Sternenschicht war nie gemeint, sie ist nur mit
+   hineingerutscht. Diese Zeile nimmt sie wieder heraus — sie steht
+   in korrekturen.css und damit als letzte. */
+.weather-bar > .stars {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* === RUNDE 80: DAS PFERD BEKOMMT HINTERHAND UND SCHULTER ============
+   XANDER: „achte dabei auf den Arsch, dass die Beine am Arsch sind und
+   die Beine sind so komisch gefaltet wie so eine Ziehharmonika."
+
+   Die Zeichnung steht in app.js; hier stehen die Farben. Hinterhand
+   und Schulter sind etwas dunkler als der Rumpf — dadurch heben sie
+   sich als eigene Muskelpartie ab, statt mit dem Bauch zu einer
+   Fläche zu verschmelzen. Und das Bein darunter ist schmaler
+   geworden: es ist jetzt nur noch das Röhrbein, nicht mehr das ganze
+   Bein von der Hüfte an. */
+.lc-pferd-hand, .lc-pferd-schulter {
+  fill: #7d5130;
+  stroke: #5d3a1c;
+  stroke-width: .7;
+}
+.lc-pferd-bein { stroke-width: 4.4; }

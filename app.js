@@ -7662,10 +7662,41 @@
      die Dämmerung eine Morgen- oder eine Abenddämmerung ist, sagt die
      Tageshälfte. So passt es überall auf der Welt und zu jeder
      Jahreszeit, ohne eine einzige Uhrzeit im Code. */
-  var wetterDunkel = 0.2;
+  /* RUNDE 80 — XANDER: „wenn man auf der Seite die Seite neu laedt,
+     dann kommt immer noch oben beim Wetter ne Sonnenstrahlen
+     Animation obwohl wir es nachts haben."
+     ---------------------------------------------------------------
+     GEFUNDEN, und es ist genau der Neustart: diese Zahl stand fest
+     auf 0,2 — und 0,2 heisst „Tag". Beim ersten Zeichnen des
+     Wetterstreifens war die Himmelsrechnung noch nicht gelaufen, die
+     Szene bekam also „tz-tag", und die Regel, die nachts die
+     Sonnenstrahlen abschaltet, griff nicht. Erst der naechste Takt
+     hat es geradegerueckt — und genau diesen Moment hat er gesehen.
+
+     Die Rechnung braucht kein Netz: sie kommt aus der Uhr und dem
+     Ort (sonnenHoehe/himmelAusSonne). Sie kann also SOFORT laufen.
+     wetterDunkel startet deshalb als „noch nicht gerechnet", und wer
+     sie braucht, holt sie sich ueber wetterDunkelJetzt(). */
+  var wetterDunkel = null;
+  function wetterDunkelJetzt() {
+    if (wetterDunkel !== null) return wetterDunkel;
+    try {
+      const ort = ortFuerLernraum();
+      const himmel = himmelAusSonne(sonnenHoehe(new Date(), ort.breite, ort.laenge));
+      if (himmel && typeof himmel.dark === "number") {
+        wetterDunkel = himmel.dark;
+        return wetterDunkel;
+      }
+    } catch (e) { /* kein Ort bekannt — dann eben nach der Uhr */ }
+    /* Notnagel: die blosse Stunde. Lieber einmal zu frueh dunkel als
+       eine Sonne am Nachthimmel — genau darum ging es ihm. */
+    const st = new Date().getHours();
+    return (st < 6 || st >= 21) ? 0.85 : 0.2;
+  }
   function tageszeit() {
-    if (wetterDunkel > 0.62) return "nacht";
-    if (wetterDunkel > 0.2) {
+    const dunkel = wetterDunkelJetzt();
+    if (dunkel > 0.62) return "nacht";
+    if (dunkel > 0.2) {
       return new Date().getHours() < 12 ? "morgen" : "abend";
     }
     return "tag";
@@ -7907,7 +7938,15 @@
      diesem Zeitpunkt schlicht undefined, und der erste Takt zeichnet
      einfach noch nichts. */
   var wetterLage = null;        // was das Wetteramt meldet
-  var wetterIstNacht = false;   // aus der Himmelsrechnung, siehe updateDaytimeSky()
+  /* RUNDE 80 — derselbe Grund wie bei wetterDunkel: „false" heisst
+     „Tag", und beim ersten Zeichnen war noch nichts gerechnet.
+     null heisst jetzt „noch nicht gerechnet"; wetterNachtJetzt()
+     holt die Antwort dann aus der Sonnenhoehe. */
+  var wetterIstNacht = null;   // aus der Himmelsrechnung, siehe updateDaytimeSky()
+  function wetterNachtJetzt() {
+    if (wetterIstNacht !== null) return wetterIstNacht;
+    return wetterDunkelJetzt() > 0.62;
+  }
   var wetterSzeneSchluessel = null; // was gerade wirklich im Streifen steht
   var niederschlagArt = null;   // bleibt für alte Aufrufer erhalten
 
@@ -7916,7 +7955,7 @@
      Sternenhimmel mit Mond — bei echtem Wetter gewinnt das Wetter. */
   function wetterSzeneWaehlen() {
     if (!wetterLage) return null;
-    if (wetterIstNacht && (wetterLage === "klar" || wetterLage === "wolkig")) return "nacht";
+    if (wetterNachtJetzt() && (wetterLage === "klar" || wetterLage === "wolkig")) return "nacht";
     return wetterLage;
   }
 
@@ -7942,7 +7981,7 @@
        wird die Nachtszene neu gezeichnet, sonst bleibt sie ungestört
        laufen. */
     const phase = mondPhase();
-    const schluessel = szene + (wetterIstNacht ? "|nacht" : "|tag")
+    const schluessel = szene + (wetterNachtJetzt() ? "|nacht" : "|tag")
       + "|" + (wetterStaerke || "regen")
       + (szene === "nacht" ? "|" + Math.round(phase * 100) : "");
     if (!erzwingen && schluessel === wetterSzeneSchluessel) return;
@@ -8098,7 +8137,7 @@
        Stunde wozu gehoert, haengt nicht an festen Zahlen, sondern an
        Sonnenauf- und -untergang, soweit sie bekannt sind. */
     schicht.className = "niederschlag wetter-szene w-" + szene
-      + (wetterIstNacht ? " ist-nacht" : "") + " tz-" + tageszeit();
+      + (wetterNachtJetzt() ? " ist-nacht" : "") + " tz-" + tageszeit();
     schicht.innerHTML = inhalt;
     /* Sobald Wolkenfelder im Bild sind, läuft ihr Zerlaufen. Die
        Funktion merkt selbst, wenn keine mehr da sind, und hört dann
@@ -8264,7 +8303,7 @@
       gastTimer = null;
       /* Nur bei Tageslicht ohne Niederschlag, nur wenn jemand hinsieht
          — sonst wird einfach neu geplant, ohne dass etwas fliegt. */
-      if (!wetterIstNacht && GAST_LAGEN[wetterLage] && !document.hidden && !bewegungUnerwuenscht()) {
+      if (!wetterNachtJetzt() && GAST_LAGEN[wetterLage] && !document.hidden && !bewegungUnerwuenscht()) {
         gastFliegen();
       }
       gastPlanen();
@@ -8297,10 +8336,14 @@
     /* Die Tageszeit der Wolken hängt an derselben Zahl. Neu gezeichnet
        wird nur, wenn sich wirklich etwas ändert — sonst würde der
        Himmel bei jedem Takt neu aufgebaut. */
+    /* Erst merken, was bisher galt (das kann auch die Vorab-Rechnung
+       aus der Sonnenhoehe sein), dann den neuen Stand setzen — sonst
+       vergleicht man den neuen Wert mit sich selbst. */
+    const vorherNacht = wetterNachtJetzt();
     const vorher = tageszeit();
     wetterDunkel = dark;
-    if (nacht !== wetterIstNacht || tageszeit() !== vorher) {
-      wetterIstNacht = nacht;
+    wetterIstNacht = nacht;
+    if (nacht !== vorherNacht || tageszeit() !== vorher) {
       wetterSzeneZeichnen();
     }
   }
@@ -35905,13 +35948,34 @@
              stehen jetzt in der Linie. */
         /* --- DIE BEINE DER FERNEN SEITE (dunkler, sie liegen hinten) --- */
         + '<g class="lc-pferd-fern">'
-        /* Hinterbein: Oberschenkel nach vorn-unten, Sprunggelenk nach
-           HINTEN, dann gerade herunter. Ein Knick, kein Zickzack. */
-        + '<path class="lc-pferd-bein lc-pferd-b1" d="M49 56 L55 70 L46 80 L48 92"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h1" d="M48 92 L54 93"/>'
-        /* Vorderbein: fast gerade, nur die Fessel setzt einen Grad ab. */
-        + '<path class="lc-pferd-bein lc-pferd-b2" d="M96 60 L98 74 L97 86 L99 92"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h2" d="M99 92 L105 93"/>'
+        /* RUNDE 80 — XANDER: „achte dabei auf den Arsch, dass die
+           Beine am Arsch sind und die Beine sind so komisch gefaltet
+           wie so eine Ziehharmonika."
+           ------------------------------------------------------------
+           BEIDES STIMMTE, und beides hatte dieselbe Ursache: das Bein
+           war EIN Strich von gleichbleibender Dicke, und dieser Strich
+           knickte scharf hin und her (M49 56 L55 70 L46 80 L48 92 —
+           sechs Einheiten nach vorn, neun zurueck, zwei nach vorn).
+           Ein gleich dicker Streifen, der dreimal scharf umklappt, ist
+           genau eine Ziehharmonika.
+
+           Ein echtes Pferdebein ist oben DICK (Oberschenkel, Schulter)
+           und unten DUENN (Roehrbein), und es knickt nicht, es
+           SCHWINGT. Deshalb jetzt zwei Sachen:
+           · Hinterhand und Schulter sind eigene, gefuellte Formen —
+             sie gehoeren zum Koerper und sind das Fleisch, aus dem das
+             Bein kommt. Damit sitzt das Hinterbein sichtbar AM
+             Hinterteil und haengt nicht unter dem Bauch.
+           · Das Bein selbst ist nur noch das schlanke Stueck darunter
+             und laeuft in weichen Bogen (Q) statt in Knicken. Der
+             Sprunggelenkversatz ist von neun auf fuenf Einheiten
+             zurueckgenommen — er ist noch zu sehen, aber er klappt
+             nicht mehr um. */
+        + '<path class="lc-pferd-bein lc-pferd-b1" d="M54 68 Q55 75 49 80 Q48 86 50 91"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h1" d="M50 91 L56 92"/>'
+        /* Vorderbein: fast gerade, nur das Knie setzt einen Grad ab. */
+        + '<path class="lc-pferd-bein lc-pferd-b2" d="M99 66 Q100 76 98 83 Q97 88 98 92"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h2" d="M98 92 L104 93"/>'
         + "</g>"
         /* --- DER SCHWEIF, oben auf der abfallenden Kruppe --- */
         + '<path class="lc-pferd-schweif" d="M46 38 Q24 40 14 58 Q11 69 17 76'
@@ -35920,6 +35984,16 @@
         + '<path class="lc-pferd-rumpf" d="M58 29 L88 29 Q104 31 108 44'
         + ' Q110 56 96 62 L66 63 Q54 63 49 56 Q45 48 46 40 Q48 31 58 29 Z"/>'
         + '<path class="lc-pferd-linie" d="M58 33 Q54 48 58 62 M90 34 Q96 48 92 63"/>'
+        /* RUNDE 80 — DIE HINTERHAND UND DIE SCHULTER.
+           Das Fleisch, aus dem die Beine kommen. Die Hinterhand sitzt
+           am Hinterteil (der Rumpf endet hinten bei x = 45), die
+           Schulter vorn unter dem Hals. Beide gehoeren zum Koerper und
+           bewegen sich deshalb NICHT mit — nur das schlanke Bein
+           darunter schwingt. */
+        + '<path class="lc-pferd-hand" d="M47 41 Q62 43 64 59 Q64 71 57 73'
+        + ' Q49 71 46 60 Q44 49 47 41 Z"/>'
+        + '<path class="lc-pferd-schulter" d="M89 39 Q101 42 101 55 Q101 66 96 69'
+        + ' Q89 67 88 55 Q87 45 89 39 Z"/>'
         /* --- HALS UND KOPF --- */
         + '<path class="lc-pferd-hals" d="M94 38 Q106 30 110 16 L122 18'
         + ' Q118 36 102 48 Z"/>'
@@ -35956,10 +36030,10 @@
         /* Dasselbe noch einmal fuer die nahe Seite, einen Schritt
            versetzt: hinten der Sprunggelenkknick nach hinten, vorn
            ein beinahe gerades Bein. */
-        + '<path class="lc-pferd-bein lc-pferd-b3" d="M55 58 L62 72 L53 82 L55 94"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h3" d="M55 94 L62 95"/>'
-        + '<path class="lc-pferd-bein lc-pferd-b4" d="M91 62 L93 76 L92 88 L94 94"/>'
-        + '<path class="lc-pferd-huf lc-pferd-h4" d="M94 94 L101 95"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b3" d="M60 70 Q61 77 55 82 Q54 88 56 93"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h3" d="M56 93 L62 94"/>'
+        + '<path class="lc-pferd-bein lc-pferd-b4" d="M95 68 Q96 78 94 84 Q93 89 94 94"/>'
+        + '<path class="lc-pferd-huf lc-pferd-h4" d="M94 94 L100 95"/>'
         /* --- SATTEL UND GURT --- */
         + '<path class="lc-pferd-sattel" d="M66 30 Q80 23 94 30 L94 38'
         + ' Q80 32 66 38 Z"/>'
@@ -36747,31 +36821,9 @@
         + ' C88 102 94 86 92 68 C90 52 86 44 82 40 Z"'
         + ' fill="url(#lcHandFarbe' + (gorilla ? "G" : "M") + ')" stroke="' + kante
         + '" stroke-width="2" stroke-linejoin="round"/>'
-        /* VIER FINGER, die sich um das Bild legen. Sie sind
-           unterschiedlich lang — gleich lange Finger sehen aus wie
-           ein Rechen.
-           Sie heissen „lc-rhand-finger" und nicht „lc-hand-finger":
-           den Namen hat seit langem die klatschende Hand, und dort
-           haengt eine Dauerschleife dran (lcHandKrallt, siehe
-           korrekturen.css). Die Riesenhand soll nicht krallen. */
-        + '<path class="lc-rhand-finger" d="M34 84 C30 100 32 118 40 128'
-        + ' C46 135 56 134 58 126 C60 116 54 100 50 86 Z"'
-        + ' fill="' + haut + '" stroke="' + kante + '" stroke-width="2"'
-        + ' stroke-linejoin="round"/>'
-        + '<path class="lc-rhand-finger" d="M50 88 C48 106 50 126 58 136'
-        + ' C64 143 74 142 76 133 C78 122 72 104 68 88 Z"'
-        + ' fill="' + innen + '" stroke="' + kante + '" stroke-width="2"'
-        + ' stroke-linejoin="round"/>'
-        + '<path class="lc-rhand-finger" d="M68 88 C68 104 70 122 78 131'
-        + ' C84 137 92 136 94 128 C96 118 90 102 86 86 Z"'
-        + ' fill="' + haut + '" stroke="' + kante + '" stroke-width="2"'
-        + ' stroke-linejoin="round"/>'
-        + '<path class="lc-rhand-finger" d="M85 82 C88 96 92 110 99 117'
-        + ' C104 122 111 120 112 113 C113 104 106 90 100 78 Z"'
-        + ' fill="' + innen + '" stroke="' + kante + '" stroke-width="2"'
-        + ' stroke-linejoin="round"/>'
         /* DER DAUMEN steht ab — daran erkennt man eine Hand, die
-           greift, und nicht eine Pfote, die draufschlaegt. */
+           greift, und nicht eine Pfote, die draufschlaegt. Er bleibt
+           HINTER dem Bild: er liegt auf der abgewandten Seite. */
         + '<path class="lc-rhand-daumen" d="M30 62 C18 62 8 72 6 84'
         + ' C4 94 12 100 20 96 C28 92 34 80 34 70 Z"'
         + ' fill="' + innen + '" stroke="' + kante + '" stroke-width="2"'
@@ -36797,13 +36849,72 @@
       weg.push(handLast);
       setzen(handLast, start.x, startYH);
 
+      /* =============================================================
+         RUNDE 80 — DIE FINGER LIEGEN VOR DEM BILD
+         -------------------------------------------------------------
+         XANDER: „der Griff ist absolut nicht realistisch bei beiden
+         Haenden."
+         GEFUNDEN, und es ist eine Frage der Reihenfolge: die ganze
+         Hand — Handruecken UND Finger — lag in EINEM Element, und das
+         Bild wurde danach angehaengt. Im Browser deckt das Spaetere
+         das Fruehere, also lag das Bild vollstaendig VOR der Hand.
+         Die Finger krallten sich zwar zu, aber man sah davon nichts:
+         es hielt sichtbar nichts. Genau das ist der unrealistische
+         Griff.
+
+         Jetzt drei Schichten in der Reihenfolge, in der sie auch in
+         Wirklichkeit liegen:
+           1. Arm, Handruecken, Daumen  — HINTER dem Bild
+           2. das Bild
+           3. die vier Finger           — VOR dem Bild
+         Beide Handschichten bekommen dieselbe Bewegung, damit sie
+         sich keinen Bildpunkt gegeneinander verschieben. */
+      const handVorn = document.createElement("span");
+      handVorn.className = "lc-riesenhand lc-riesenhand-vorn"
+        + (gorilla ? " lc-riesenhand-affe" : "");
+      handVorn.style.setProperty("--gross", d + "px");
+      handVorn.innerHTML =
+        '<svg class="lc-riesenhand-form" viewBox="0 0 120 150" aria-hidden="true">'
+        /* VIER FINGER, die sich um das Bild legen. Sie sind
+           unterschiedlich lang — gleich lange Finger sehen aus wie
+           ein Rechen.
+           Sie heissen „lc-rhand-finger" und nicht „lc-hand-finger":
+           den Namen hat seit langem die klatschende Hand, und dort
+           haengt eine Dauerschleife dran (lcHandKrallt, siehe
+           korrekturen.css). Die Riesenhand soll nicht krallen. */
+        + '<path class="lc-rhand-finger" d="M34 84 C30 100 32 118 40 128'
+        + ' C46 135 56 134 58 126 C60 116 54 100 50 86 Z"'
+        + ' fill="' + haut + '" stroke="' + kante + '" stroke-width="2"'
+        + ' stroke-linejoin="round"/>'
+        + '<path class="lc-rhand-finger" d="M50 88 C48 106 50 126 58 136'
+        + ' C64 143 74 142 76 133 C78 122 72 104 68 88 Z"'
+        + ' fill="' + innen + '" stroke="' + kante + '" stroke-width="2"'
+        + ' stroke-linejoin="round"/>'
+        + '<path class="lc-rhand-finger" d="M68 88 C68 104 70 122 78 131'
+        + ' C84 137 92 136 94 128 C96 118 90 102 86 86 Z"'
+        + ' fill="' + haut + '" stroke="' + kante + '" stroke-width="2"'
+        + ' stroke-linejoin="round"/>'
+        + '<path class="lc-rhand-finger" d="M85 82 C88 96 92 110 99 117'
+        + ' C104 122 111 120 112 113 C113 104 106 90 100 78 Z"'
+        + ' fill="' + innen + '" stroke="' + kante + '" stroke-width="2"'
+        + ' stroke-linejoin="round"/>'
+        + "</svg>";
+      reihe.appendChild(handVorn);
+      weg.push(handVorn);
+      setzen(handVorn, start.x, startYH);
+
       try {
         const tAnH = hin / dauer;
         const dxH = ende.x - start.x, dyH = endeYH - startYH;
         const hochH = -d * 1.25;
         /* Die Hand haelt das Bild an seiner Oberkante — der
-           Greifpunkt liegt eine halbe Bildhoehe ueber der Mitte. */
-        const griff = -d * 0.62;
+           Greifpunkt liegt eine halbe Bildhoehe ueber der Mitte.
+           RUNDE 80 — von 0,62 auf 0,44 zurueckgenommen: mit 0,62 hing
+           das Bild unter den Fingerspitzen, statt zwischen ihnen zu
+           liegen. Jetzt greifen die Finger ueber die obere Haelfte
+           des Bildes — und weil sie seit dieser Runde VOR dem Bild
+           liegen (siehe handVorn), sieht man das auch. */
+        const griff = -d * 0.44;
         const handBei = (fx, fy, hoch, dreh, zeit, sicht) => ({
           transform: "translate(calc(-50% + " + (dxH * fx).toFixed(1) + "px), calc(-50% + "
             + (dyH * fy).toFixed(1) + "px)) translateY(" + (griff + hoch).toFixed(1)
@@ -36811,7 +36922,7 @@
           opacity: sicht === undefined ? 1 : sicht,
           offset: Math.max(0, Math.min(1, zeit))
         });
-        hand.animate([
+        const handRahmen = [
           /* HERUNTER — sie faellt nicht, sie senkt sich, wird aber
              schneller: die Abstaende werden groesser. */
           handBei(0, 0, -d * 4.2, 0, 0, 0),
@@ -36839,7 +36950,12 @@
           /* LOSLASSEN und wieder hinauf. */
           handBei(1, 1, -d * 1.4, 2, tAnH + (1 - tAnH) * 0.45, 1),
           handBei(1, 1, -d * 4.2, 3, 1, 0)
-        ], { duration: dauer, easing: "linear", fill: "both" });
+        ];
+        hand.animate(handRahmen, { duration: dauer, easing: "linear", fill: "both" });
+        /* Dieselbe Bewegung, Bild fuer Bild, fuer die Fingerschicht
+           vor dem Bild — sonst wandern Handruecken und Finger
+           auseinander. */
+        handVorn.animate(handRahmen, { duration: dauer, easing: "linear", fill: "both" });
 
         /* =========================================================
            RUNDE 77 — DIE HAND GREIFT WIRKLICH ZU
@@ -36863,7 +36979,7 @@
         const greifWinkel = [-6, -2, 3, 8];
         const greifZu = 0.27 * tAnH;
         const greifAuf = Math.min(0.999, tAnH + (1 - tAnH) * 0.3);
-        hand.querySelectorAll(".lc-rhand-finger").forEach((fi, k) => {
+        handVorn.querySelectorAll(".lc-rhand-finger").forEach((fi, k) => {
           const w = greifWinkel[k] === undefined ? 0 : greifWinkel[k];
           fi.animate([
             { transform: "scaleY(1) rotate(0deg)", offset: 0 },
