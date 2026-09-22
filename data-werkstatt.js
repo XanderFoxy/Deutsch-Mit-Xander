@@ -49,28 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 89c — zwei neue Waechter: kein Feld faellt mehr weg, keine Abzweigung steht mehr hinter ihrer Tabelle.",
+  stand: "Runde 89d — der Songausschnitt springt jetzt wirklich, auch mitten im laufenden Lied.",
 
   inArbeit: [
-    { seit: "2026-09-22T20:33",
+    { seit: "2026-09-22T20:36",
       text: "Glitches am verlassenen Platz — Sonde laeuft durch" },
-    { seit: "2026-09-22T20:33",
+    { seit: "2026-09-22T20:36",
       text: "Uebersicht aller Wuensche aus dem Verlauf — wird aus den Sonden gebaut" },
-    { seit: "2026-09-22T20:33",
+    { seit: "2026-09-22T20:36",
       text: "Frosch, Pferd, Lok, Helikopter, Fahrstuhl, Adler" },
-    { seit: "2026-09-22T20:33",
+    { seit: "2026-09-22T20:36",
       text: "Haende: greifende Hand, King Kong behaart, Kralle" },
-    { seit: "2026-09-22T20:33",
+    { seit: "2026-09-22T20:36",
       text: "Hammer: demolieren in Stufen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T20:33",
-      text: "pruefe-zusatzfelder.js: jedes Feld, das ein Effekt liest, muss auch ankommen" },
-    { seit: "2026-09-22T20:33",
-      text: "pruefe-befehlsreihenfolge.js: kein Spezialfall darf hinter seiner Tabelle stehen" },
-    { seit: "2026-09-22T20:33",
-      text: "werkzeug/animations-regeln.md: die Regel fuer jede kuenftige Animation, mit Sonde zu jeder Zeile" },
+    { seit: "2026-09-22T20:36",
+      text: "Songausschnitt: wer eine Stelle im schon laufenden Lied waehlt, hoert sie jetzt auch — vorher passierte nichts" },
+    { seit: "2026-09-22T20:36",
+      text: "Gemessen: nach „ab 0:20\" steht der Spieler bei 20,8 s statt bei 2,2 s, und bei 0:22 hoert er auf" },
   ],
 };

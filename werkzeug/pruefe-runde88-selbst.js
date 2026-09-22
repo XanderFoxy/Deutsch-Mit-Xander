@@ -49,7 +49,27 @@ const sage = (gut, text, dazu) => {
     if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) {
       a.writeHead(404); return a.end();
     }
-    a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream" });
+    /* =============================================================
+       DIESER SERVER MUSS BEREICHE KOENNEN (Range)
+       -------------------------------------------------------------
+       Sonst faengt jedes Lied bei 0 an, ganz gleich, was im Befehl
+       steht: ein Browser springt in einer Datei nur dorthin, wohin er
+       auch nachladen darf. GEMESSEN: ohne Bereiche stand currentTime
+       bei 0,6 s statt bei 20 s — das haette wie ein Fehler der Seite
+       ausgesehen und war einer der Sonde. Mit Bereichen: 20,2 s. */
+    const st = fs.statSync(f);
+    const typ = TYP[path.extname(f)] || "application/octet-stream";
+    const bereich = q.headers.range && /bytes=(\d*)-(\d*)/.exec(q.headers.range);
+    if (bereich) {
+      const von = bereich[1] ? parseInt(bereich[1], 10) : 0;
+      const bis = bereich[2] ? parseInt(bereich[2], 10) : st.size - 1;
+      a.writeHead(206, { "Content-Type": typ, "Accept-Ranges": "bytes",
+        "Content-Range": "bytes " + von + "-" + bis + "/" + st.size,
+        "Content-Length": bis - von + 1 });
+      return fs.createReadStream(f, { start: von, end: bis }).pipe(a);
+    }
+    a.writeHead(200, { "Content-Type": typ, "Accept-Ranges": "bytes",
+      "Content-Length": st.size });
     fs.createReadStream(f).pipe(a);
   }).listen(0);
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
@@ -284,6 +304,52 @@ const sage = (gut, text, dazu) => {
   sage(kleid.ausDemBefehl === "krone",
     "und der Befehl selbst trägt das Stück bis in die Zeile",
     "stueck: „" + kleid.ausDemBefehl + "“");
+
+  /* =====================================================================
+     5) DER SONGAUSSCHNITT — ANFANG UND ENDE
+     ---------------------------------------------------------------------
+     XANDER (Runde 80): „da moechte ich noch einen Song-Ausschnitt
+     definieren koennen." Und zuletzt: „Ich kann den Ausschnitt waehlen
+     … ich kann mir das Lied noch nicht anhoeren."
+     Der Anfang (liedAb) fuhr schon mit, das ENDE (liedBis) nicht — es
+     stand nicht in ZUSATZ_FELDER. Hier wird beides am Spieler gemessen.
+     ===================================================================== */
+  console.log("\n5) Der Songausschnitt\n");
+  const schnitt = await pg.evaluate(async () => {
+    for (let i = 0; i < 50; i++) {
+      let n = 0;
+      try { n = ((LiveChat.lieder && LiveChat.lieder()) || []).length; } catch (e) { n = 0; }
+      if (n) break;
+      await new Promise((f) => setTimeout(f, 100));
+    }
+    const lieder = (LiveChat.lieder && LiveChat.lieder()) || [];
+    if (!lieder.length) return { ohneLied: true };
+    window.DMA_PRUEF.effektBuehne();
+    const pl = [...document.querySelectorAll(".lc-platz")][0];
+    const name = (pl.dataset.lcName
+      || (pl.querySelector(".lc-platz-name") || {}).textContent || "").trim();
+    window.DMA_PRUEFUNG.wirkung("kopfhoerer", name, "Alex",
+      { lied: lieder[0].datei, liedTitel: lieder[0].titel, liedAb: 20, liedBis: 22 });
+    const spieler = () => [...document.querySelectorAll("audio")]
+      .find((x) => /music/.test(x.src || ""));
+    await new Promise((f) => setTimeout(f, 900));
+    const a1 = spieler();
+    const start = a1 ? a1.currentTime : -1;
+    /* Der Ausschnitt ist zwei Sekunden lang; nach drei ist Schluss. */
+    await new Promise((f) => setTimeout(f, 2400));
+    const a2 = spieler();
+    return { start: Math.round(start * 10) / 10,
+             spaeterAus: !a2 || a2.paused || !a2.src };
+  });
+  if (schnitt.ohneLied) {
+    console.log("  --   kein Lied im Musikordner — nicht messbar");
+  } else {
+    sage(schnitt.start >= 19.5 && schnitt.start <= 22,
+      "der Ausschnitt fängt wirklich bei 0:20 an",
+      "currentTime = " + schnitt.start);
+    sage(schnitt.spaeterAus === true,
+      "und er hört bei 0:22 auch wieder auf — das war „liedBis“");
+  }
 
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));

@@ -26291,6 +26291,10 @@
   let lcMusikSpieler = null;
   let lcMusikTakt = 0;
   let lcMusikTitel = "";
+  /* RUNDE 89 — welcher Ausschnitt gerade laeuft. Ohne diese beiden
+     Zahlen kann lcMusikSpielen nicht unterscheiden, ob „dasselbe Lied"
+     auch „dieselbe Stelle" heisst (siehe dort). */
+  let lcMusikAb = 0, lcMusikBis = 0;
   function lcMusikLautstaerke() {
     if (!lcMusikSpieler) return;
     let redet = false;
@@ -26349,12 +26353,31 @@
        und gleich darauf noch einmal, wenn die eigene Chatzeile aus dem
        Raum zurueckkommt — man haette den Anfang doppelt gehoert. */
     try {
-      if (!selbst && lcMusikSpieler && !lcMusikSpieler.paused
+      /* RUNDE 89 — ABER NUR, WENN AUCH DERSELBE AUSSCHNITT GEMEINT IST
+         -------------------------------------------------------------
+         XANDER: „Ich kann den Ausschnitt waehlen … ich kann mir das
+         Lied noch nicht anhoeren … es passiert einfach nichts."
+         GEFUNDEN: diese Abkuerzung sah nur auf die DATEI. Wer sich
+         zuerst ein Lied aufsetzt und dann eine Stelle daraus waehlt,
+         nennt dieselbe Datei — und genau dann kam sie hier heraus,
+         ohne zu springen. Gemessen: nach „ab 20 s" stand der Spieler
+         bei 2,2 s, also da, wo er ohnehin schon war. Es passierte
+         wirklich nichts, so wie er sagt.
+         Jetzt zaehlt der Ausschnitt mit: laeuft dasselbe Lied mit
+         DEMSELBEN Ausschnitt, laeuft es weiter (dafuer war die
+         Abkuerzung da — die eigene Chatzeile kommt ja aus dem Raum
+         zurueck und haette es sonst doppelt angefangen). Ist der
+         Ausschnitt ein anderer, faengt es an der neuen Stelle an. */
+      const gleicherSchnitt = (Number(ab) || 0) === lcMusikAb
+                           && (Number(bis) || 0) === lcMusikBis;
+      if (!selbst && gleicherSchnitt && lcMusikSpieler && !lcMusikSpieler.paused
           && lcMusikSpieler.src
           && lcMusikSpieler.src.indexOf(encodeURIComponent(datei)) !== -1) {
         return true;
       }
     } catch (e) {}
+    lcMusikAb = Number(ab) || 0;
+    lcMusikBis = Number(bis) || 0;
     lcMusikStoppen();
     try {
       if (!lcMusikSpieler) {
