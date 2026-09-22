@@ -41867,28 +41867,11 @@
       krumen.push(k);
       return k;
     };
-    /* =============================================================
-       RUNDE 88 — DIE PUNKTE LIEGEN JETZT WIRKLICH MITTIG
-       -------------------------------------------------------------
-       XANDER: „Die Futterpunkte beim Pac-Man liegen nicht mittig auf
-       den Feldern … die Futterpunkte muessen exakt im Zentrum der
-       Zahlen liegen."
-       NACHGEMESSEN, und er hat recht: gelegt wurden sie auf die Mitte
-       des PLATZES — und ein Platz ist das Bild PLUS die Namenszeile
-       darunter. Die Mitte des Bildes lag bei y = 277, die Mitte des
-       Platzes bei y = 286: neun Pixel zu tief, auf jedem Feld.
-       lcBildVersatz sagt genau diesen Unterschied; damit liegt der
-       Punkt jetzt auf der Mitte des Bildes — und die Zahl liegt dort
-       auch (gemessen: beide bei y = 277). */
+    /* Auf jedem Platz einer. */
     gitter.forEach((g) => {
       const t = wannAuf[g.nr];
-      kruemel(g.x, g.y + lcBildVersatz(g.el), t === undefined ? null : t, true);
+      kruemel(g.x, g.y, t === undefined ? null : t, true);
     });
-    /* UND DIE ZAHLEN GEHEN SOLANGE WEG. „In dem Moment braucht man
-       auch keine Zahlen zu sehen, damit das wie das klassische Spiel
-       aussieht." Weg heisst hier: unsichtbar, nicht ausgebaut — sonst
-       ruecken die Plaetze zusammen, und nichts darf sich verschieben. */
-    reihe.classList.add("lc-pac-laeuft");
     /* =============================================================
        RUNDE 87 — KEIN FUTTER MEHR ZWISCHEN DEN PLAETZEN
        -------------------------------------------------------------
@@ -41936,22 +41919,10 @@
     const figur = document.createElement("span");
     figur.className = "lc-pac-figur";
     figur.setAttribute("aria-hidden", "true");
-    /* =============================================================
-       RUNDE 88 — DAS MAUL DREHT SICH, DAS GESICHT BLEIBT OBEN
-       -------------------------------------------------------------
-       XANDER: „dann soll er seinen Mund drehen, also beziehungsweise
-       sein Gesicht drehen und richtig herum essen, so wie er sich von
-       der Physik in dem Spiel auch wirklich dreht."
-       Bisher drehte sich das GANZE Bild — und damit das Auge mit. Nach
-       links unterwegs stand es dadurch unten im Kopf. Jetzt liegen
-       Maul und Auge in zwei Gruppen: gedreht wird nur das Maul, das
-       Auge bleibt oben, wo ein Auge hingehoert. */
     figur.innerHTML = '<svg viewBox="-12 -12 24 24" width="100%" height="100%">'
-      + '<g class="lc-pac-maul-gruppe">'
       + '<path class="lc-pac-figur-maul" fill="#ffd429"'
       + ' d="M0 0 L10 -5.5 A11 11 0 1 0 10 5.5 Z"/>'
-      + "</g>"
-      + '<circle class="lc-pac-auge" cx="1.5" cy="-5" r="1.3" fill="#2a2a2a"/></svg>';
+      + '<circle cx="1.5" cy="-5" r="1.3" fill="#2a2a2a"/></svg>';
     kreis.appendChild(figur);
     /* BLICKRICHTUNG — UND WARUM SIE JETZT WOANDERS SITZT.
        GEMELDET: „Der Pac-Man frisst noch nicht in die richtige
@@ -42020,7 +41991,7 @@
     drehungen.push({ transform: "rotate(" + drehEnde + "deg)", offset: 1 });
 
     try {
-      const svg = figur.querySelector(".lc-pac-maul-gruppe");
+      const svg = figur.querySelector("svg");
       /* RUNDE 85 — XANDER: „wenn Pac-Man eine Kurve macht, dann
          moechte ich, dass das wie im Original ist mit der Ausrichtung
          seines fressenden Mauls … darf das Maul nicht nach unten
@@ -42029,25 +42000,8 @@
          um, statt sich weich mitzudrehen. Bei „linear" stand das Maul
          die halbe Strecke schraeg zwischen zwei Richtungen — und
          genau das sieht er, wenn er sagt, es bleibe nach unten
-         stehen. Im Original dreht Pac-Man sich nie weich.
-
-         RUNDE 88 — UND GENAU HIER WAR DER FEHLER, den er seitdem
-         zweimal gemeldet hat: „er frisst immer noch nicht in die
-         richtige Richtung, wenn er die Richtung aendert."
-         „steps(1, end)" stand an der GANZEN Animation. Eine Zeitkurve
-         an dieser Stelle rechnet aber den Fortschritt der ganzen
-         Animation um — und „ein Schritt" heisst dann: null Prozent,
-         bis alles vorbei ist. Das Maul stand damit die komplette
-         Fahrt auf dem allerersten Bild.
-         GEMESSEN ueber den Weg 1-2-3-4-8-7-6-5: Winkel 0 Grad an
-         allen acht Messpunkten, auch waehrend er nach unten und nach
-         links lief. Die Zeitkurve gehoert an JEDES Bild — dort heisst
-         sie: diesen Wert halten, bis das naechste Bild kommt, und
-         dann springen. */
-      if (svg) {
-        svg.animate(drehungen.map((d) => Object.assign({ easing: "steps(1, end)" }, d)),
-                    { duration: dauer, easing: "linear", fill: "forwards" });
-      }
+         stehen. Im Original dreht Pac-Man sich nie weich. */
+      if (svg) svg.animate(drehungen, { duration: dauer, easing: "steps(1, end)", fill: "forwards" });
     } catch (err) {}
 
     lcPlatzUnterwegs(ab.el, true);
@@ -42065,7 +42019,6 @@
       kreis.classList.remove("lc-pacman");
       figur.remove();
       krumen.forEach((k) => k.remove());
-      reihe.classList.remove("lc-pac-laeuft");
     };
     const lageFreigeben = () => {
       try { if (lauf) lauf.cancel(); } catch (e) {}

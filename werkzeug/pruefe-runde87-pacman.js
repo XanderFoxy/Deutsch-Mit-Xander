@@ -55,9 +55,21 @@ const sage = (gut, text, dazu) => {
   /* --- 1. Das Futter ------------------------------------------------- */
   await pg.waitForTimeout(150);
   const futter = await pg.evaluate(() => {
+    /* RUNDE 88 — GEMESSEN WIRD AN DER ZAHL, NICHT AM BILD.
+       Zwei Gruende, und beide sind handfest:
+       · Xander sagt es jetzt so: „Die Futterpunkte muessen exakt im
+         Zentrum der Zahlen liegen."
+       · Und das Bild taugt hier gar nicht als Massstab: EIN Bild ist
+         waehrend der Jagd der Pac-Man selbst und laeuft ueber das
+         Feld. Gemessen man dagegen, ist der Punkt seines eigenen
+         Platzes ploetzlich „zu weit weg" — nicht, weil er falsch
+         liegt, sondern weil der Massstab weggelaufen ist. Die Zahl
+         steht still; sie ist der richtige Massstab. */
     const plaetze = [...document.querySelectorAll(".lc-platz")].map((p) => {
       const k = p.querySelector(".lc-kreis").getBoundingClientRect();
-      return { x: k.left + k.width / 2, y: k.top + k.height / 2, r: k.width / 2 };
+      const n = p.querySelector(".lc-nummer");
+      const z = n ? n.getBoundingClientRect() : k;
+      return { x: z.left + z.width / 2, y: z.top + z.height / 2, r: k.width / 2 };
     });
     const krumen = [...document.querySelectorAll(".lc-pac-krume")].map((k) => {
       const b = k.getBoundingClientRect();
@@ -80,9 +92,9 @@ const sage = (gut, text, dazu) => {
      einen Radius von rund 51 px, und zwei Plaetze liegen etwa 110 px
      auseinander. Ein Punkt IN der Mitte zwischen zwei Plaetzen waere
      also rund 55 px von beiden entfernt. Erlaubt ist deshalb der
-     halbe Radius — damit faellt jeder Zwischenpunkt auf, und die
-     wenigen Pixel Versatz zwischen Platzmitte und Bildmitte (der Name
-     steht ja darunter) stoeren nicht. */
+     halbe Radius — damit faellt jeder Zwischenpunkt auf.
+     RUNDE 88: seit die Punkte auf der Zahl liegen und hier auch an
+     der Zahl gemessen wird, ist der Abstand ohnehin fast null. */
   const grenze = Math.max(10, Math.round(futter.radius / 2));
   const daneben = futter.weiten.filter((w) => w > grenze);
   sage(daneben.length === 0,
