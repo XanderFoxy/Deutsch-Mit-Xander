@@ -21727,6 +21727,21 @@ body.lc-schreibt .tutor-reiter {
 /* Der ferne Fluegel ist dunkler und laeuft 40 ms voraus — daran sieht
    das Auge, dass hier ein Koerper im Raum ist und keine Flaeche. */
 .lc-greif-fluegel-fern path { fill: #4a3522; stroke: #2a1d10; }
+/* RUNDE 80 — XANDER: „das Bild von seinen Fluegeln sehen aus wie
+   Fledermausfluegel. Du sollst realistische schwingen mit einem
+   realistischen Federkleid."
+   Der Fluegel ist seitdem kein einziger Umriss mehr, sondern
+   Armfittich + sieben einzelne Handschwingen + Deckfedern. Damit man
+   die Federn als Federn sieht, brauchen sie eigene Farben: die
+   Schwingen etwas dunkler als der Fittich (so heben sie sich
+   voneinander ab), die Deckfedern nur als Striche. */
+.lc-greif-arm      { fill: #6b4f33; stroke: #3d2b18; stroke-width: 1.2; }
+.lc-greif-schwinge { fill: #5c4229; stroke: #2f2114; stroke-width: 1; }
+.lc-greif-decke    { fill: none; stroke: #4a3520; stroke-width: 1.1;
+                     stroke-linecap: round; opacity: .6; }
+.lc-greif-fluegel-fern .lc-greif-arm      { fill: #4a3522; stroke: #2a1d10; }
+.lc-greif-fluegel-fern .lc-greif-schwinge { fill: #3f2d1c; stroke: #1f1509; }
+.lc-greif-fluegel-fern .lc-greif-decke    { stroke: #30220f; }
 .lc-greif-fluegel-fern { animation: lcGreifSchlagR65 .52s ease-in-out infinite -.04s; }
 .lc-greif-fluegel-nah  { animation: lcGreifSchlagR65 .52s ease-in-out infinite; }
 .lc-greif-koerper      { animation: lcGreifHebtR65 .52s ease-in-out infinite; }
@@ -26616,4 +26631,28 @@ body.lc-schreibt .tutor-reiter {
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-katze-pfote { animation: none; }
+}
+
+/* === RUNDE 80: ÜBERFAHREN VON DER LOK ================================
+   XANDER: „die lok soll man auch mehrmals im Kreis herumfahren lassen
+   und kann die Menschen auch überfahren … sie sollen dann schreien."
+
+   Die Runden und den Zeitpunkt rechnet app.js (lcLokRunden) aus dem
+   wirklichen Sitzgitter. Hier steht nur, was ein überfahrener Platz
+   tut: er wird kurz flach gedrückt, kippt zur Seite weg und richtet
+   sich federnd wieder auf. Das Flachdrücken ist wichtig — ein Bild,
+   das nur wackelt, sieht nach Schreck aus, nicht nach überfahren. */
+.lc-ueberfahren { animation: lcUeberfahrenR80 .9s cubic-bezier(.3, 0, .3, 1) both; }
+@keyframes lcUeberfahrenR80 {
+  0%   { transform: translateY(0) rotate(0deg) scale(1, 1); }
+  /* Der Moment unter dem Rad: flach und breit. */
+  12%  { transform: translateY(6%) rotate(-3deg) scale(1.16, .72); }
+  26%  { transform: translateY(2%) rotate(7deg)  scale(.94, 1.1); }
+  44%  { transform: translateY(0)  rotate(-5deg) scale(1.05, .95); }
+  64%  { transform: translateY(0)  rotate(3deg)  scale(.98, 1.03); }
+  82%  { transform: translateY(0)  rotate(-1deg) scale(1.01, .99); }
+  100% { transform: translateY(0)  rotate(0deg)  scale(1, 1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-ueberfahren { animation: none; }
 }

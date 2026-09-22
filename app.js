@@ -34298,7 +34298,21 @@
          ruft aber selten im Flug — man hoert seine Fluegel. Deshalb
          liegt der Schlag jetzt unter dem Ruf, etwas versetzt, damit
          die beiden nicht gleichzeitig anfangen. */
-      lcTonSpaeter("fluegelschlag", 340, 0.55);
+      /* RUNDE 80 — XANDER: „und der Sound ist auch nicht
+         durchgaengig."
+         GEMESSEN am Ton selbst (0,05-s-Fenster): „fluegelschlag" ist
+         zwar 4,00 s lang, aber seine Kraft steckt ganz vorn — -7 dB
+         bei 0,05 s, -25 dB schon bei 0,9 s, -40 dB bei 2,0 s. Zu
+         hoeren ist also nicht einmal eine Sekunde, und der Vogel
+         fliegt drei. Danach flog er lautlos.
+         Der Schlag wird deshalb viermal angesetzt, im Abstand von
+         660 ms: jedes Mal faengt die Aufnahme wieder mit ihrem
+         lautesten Teil an. Jeder Ansatz wird nach 700 ms gekappt
+         (vierter Wert), damit sich die leisen Auslaeufer nicht
+         uebereinanderstapeln, und jeder ist ein wenig leiser als der
+         davor — der Vogel entfernt sich ja. */
+      [[340, 0.55], [1000, 0.5], [1660, 0.45], [2320, 0.38]]
+        .forEach(([wann, laut]) => lcTonSpaeter("fluegelschlag", wann, laut, 700));
       /* RUNDE 65 — XANDER: „Vielleicht schaffst du es noch, einen
          realistischen Vogel zu bauen, so ein Greifvogel, der unser
          Profilbild mitnimmt und mit dem wir reisen — der von unserem
@@ -34340,23 +34354,84 @@
          die Schwungfedern nicht verlorengehen. Der Drehpunkt wandert
          mit (siehe transform-origin weiter unten), sonst schlaegt
          der Fluegel um einen Punkt, an dem er gar nicht haengt. */
-      const flg = "M96 28 C84 10 62 -2 36 2 C44 10 48 16 50 22"
-        + " C56 20 60 22 62 27 C68 24 72 26 74 30"
-        + " C80 28 86 30 89 34 C93 33 95 31 96 28 Z";
-      /* NACHGESEHEN auf dem Foto bei 1800 ms: beide Fluegel lagen
-         uebereinander und ergaben EINEN braunen Klumpen. Ein Fluegel,
-         der weiter weg ist, ist aber KUERZER zu sehen — er ist
-         verkuerzt. Deshalb derselbe Umriss, um 0,78 zur Schulter hin
-         geschrumpft. So schaut er hinter dem nahen hervor, statt ihn
-         zu verdoppeln. */
-      const flgFern = "M96 28 C86.6 14 69.5 4.6 49.2 7.7 C55.4 14 58.6 18.6 60.1 23.3"
-        + " C64.8 21.8 67.9 23.3 69.5 27.2 C74.2 24.9 77.3 26.4 78.8 29.6"
-        + " C83.5 28 88.2 29.6 90.5 32.7 C93.7 31.9 95.2 30.3 96 28 Z";
+      /* RUNDE 80 — XANDER: „das Bild von seinen Fluegeln sehen aus
+         wie Fledermausfluegel. Du sollst realistische schwingen mit
+         einem realistischen Federkleid."
+         -----------------------------------------------------------
+         ER HAT DEN UNTERSCHIED GENAU BENANNT. Ein Fledermausfluegel
+         ist EINE Haut, die zwischen den Fingern in Bogen durchhaengt
+         — und genau das stand hier: ein einziger Pfad, dessen
+         Hinterkante in vier C-Bogen von der Spitze zur Schulter lief.
+         Ein VOGELfluegel besteht dagegen aus zwei Teilen:
+           · dem ARMFITTICH, innen, mit glatter Hinterkante,
+           · und den HANDSCHWINGEN, aussen: einzelne, laengliche
+             Federn, die faecherfoermig auseinanderstehen und
+             zwischen denen Luft ist. Diese Luecken sind es, woran
+             das Auge einen Vogel erkennt.
+         Die Federn werden deshalb gerechnet und nicht gezeichnet:
+         sieben Stueck, ihre Wurzeln wandern die Handwurzel entlang,
+         ihre Spitzen faechern auseinander, und jede ist ein schmales
+         Blatt um ihre eigene Mittellinie. Ein ferner Fluegel ist
+         verkuerzt zu sehen — derselbe Bau, zur Schulter hin
+         geschrumpft (k). */
+      const SCHULTER = { x: 96, y: 28 };
+      const zuSchulter = (x, y, k) => ({
+        x: SCHULTER.x + (x - SCHULTER.x) * k,
+        y: SCHULTER.y + (y - SCHULTER.y) * k
+      });
+      const greifFluegel = (k) => {
+        const P = (x, y) => {
+          const q = zuSchulter(x, y, k);
+          return q.x.toFixed(1) + " " + q.y.toFixed(1);
+        };
+        /* Der Armfittich: vorn (oben) glatt gewoelbt, hinten (unten)
+           eine ruhige Kante — hier hat ein Vogel keine Zacken, hier
+           liegen die Deckfedern. */
+        const arm = "M" + P(96, 28) + " C" + P(90, 15) + " " + P(78, 7)
+          + " " + P(62, 6) + " C" + P(58, 12) + " " + P(57, 20)
+          + " " + P(59, 27) + " C" + P(68, 25) + " " + P(80, 27)
+          + " " + P(88, 31) + " C" + P(92, 32) + " " + P(95, 31)
+          + " " + P(96, 28) + " Z";
+        /* Die Handschwingen. */
+        const federn = [];
+        for (let f = 0; f < 7; f++) {
+          const t = f / 6;
+          const bx = 63 - t * 5,  by = 8 + t * 18;   /* Wurzel */
+          const tx = 33 + t * 19, ty = 1 + t * 27;   /* Spitze */
+          const dx = tx - bx, dy = ty - by;
+          const lang = Math.hypot(dx, dy) || 1;
+          const nx = -dy / lang, ny = dx / lang;     /* quer zur Feder */
+          /* Die aeusseren Federn sind die laengsten und schmalsten. */
+          const br = 2.7 - t * 0.6;
+          const mx = bx + dx * 0.55, my = by + dy * 0.55;
+          federn.push("M" + P(bx, by)
+            + " C" + P(mx + nx * br, my + ny * br)
+            + " "  + P(tx + nx * br * 0.5, ty + ny * br * 0.5)
+            + " "  + P(tx, ty)
+            + " C" + P(tx - nx * br * 0.5, ty - ny * br * 0.5)
+            + " "  + P(mx - nx * br, my - ny * br)
+            + " "  + P(bx + nx * -0.4, by + 2.6) + " Z");
+        }
+        /* Die Deckfedern: drei kurze Striche auf dem Armfittich —
+           ohne sie ist der Fittich eine leere Flaeche. */
+        const decken = "M" + P(70, 12) + " L" + P(66, 20)
+          + " M" + P(78, 13) + " L" + P(74, 21)
+          + " M" + P(86, 17) + " L" + P(83, 24);
+        return { arm: arm, federn: federn, decken: decken };
+      };
+      const fluegelHtml = (k, klasse) => {
+        const w = greifFluegel(k);
+        return '<g class="lc-greif-fluegel ' + klasse + '"'
+          + ' style="transform-origin:96px 28px">'
+          + '<path class="lc-greif-arm" d="' + w.arm + '"/>'
+          + w.federn.map((d) => '<path class="lc-greif-schwinge" d="' + d + '"/>').join("")
+          + '<path class="lc-greif-decke" d="' + w.decken + '"/>'
+          + "</g>";
+      };
       greif.innerHTML =
         '<svg class="lc-greif-form" viewBox="0 0 140 111" aria-hidden="true">'
         /* Der FERNE Fluegel liegt hinter dem Koerper. */
-        + '<g class="lc-greif-fluegel lc-greif-fluegel-fern"'
-        + ' style="transform-origin:96px 28px"><path d="' + flgFern + '"/></g>'
+        + fluegelHtml(0.78, "lc-greif-fluegel-fern")
         + '<g class="lc-greif-koerper">'
         /* Schwanz: gefaechert, mit drei Federkerben. */
         + '<path class="lc-greif-schwanz" d="M62 34 L14 26 L12 34 L16 42 L62 42 Z"/>'
@@ -34396,8 +34471,7 @@
         + "</g>"
         + "</g>"
         /* Der NAHE Fluegel liegt vor dem Koerper. */
-        + '<g class="lc-greif-fluegel lc-greif-fluegel-nah"'
-        + ' style="transform-origin:96px 28px"><path d="' + flg + '"/></g>'
+        + fluegelHtml(1, "lc-greif-fluegel-nah")
         + "</svg>"
         + '<span class="lc-greif-beute"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
@@ -35384,7 +35458,14 @@
       reihe.appendChild(lok);
       weg.push(lok);
       setzen(lok, start.x, start.y);
-      lcReiseWaagerecht(lok, start, ende, dauer, hin, "lok");
+      /* RUNDE 80 — XANDER: „die lok soll man auch mehrmals im Kreis
+         herumfahren lassen und kann die Menschen auch ueberfahren."
+         Klappt die Runde nicht (etwa weil das Sitzgitter noch nicht
+         steht), faehrt sie wie bisher geradeaus — lieber eine gerade
+         Fahrt als gar keine. */
+      if (!lcLokRunden(lok, start, ende, dauer, hin)) {
+        lcReiseWaagerecht(lok, start, ende, dauer, hin, "lok");
+      }
       lcTonZu("lok");
       /* RUNDE 72 — XANDER: „Der Lokomotive fehlt das Stampfen beim
          Anfahren und das Schienen-/Radgeraeusch. Entweder fehlt es in
@@ -37486,6 +37567,115 @@
     } catch (e) {}
   }
 
+  /* =================================================================
+     RUNDE 80 — DIE LOK DREHT RUNDEN UND FAEHRT LEUTE UM
+     -----------------------------------------------------------------
+     XANDER: „die lok soll man auch mehrmals im Kreis herumfahren
+     lassen und kann die Menschen auch ueberfahren … sie sollen dann
+     schreien."
+
+     Bisher fuhr sie auf der geraden Linie vom Start zum Ziel — von
+     „mehrmals im Kreis" konnte keine Rede sein. Jetzt faehrt sie ZWEI
+     RUNDEN durch die Sitzreihen und danach erst zum Ziel:
+
+       obere Reihe nach rechts  ->  hinunter  ->
+       untere Reihe nach links  ->  hinauf  ->  von vorn.
+
+     Die Bahn wird aus dem wirklichen Sitzgitter gerechnet, nicht
+     geschaetzt: die x-Werte sind die aeusseren Sitzmitten, die y-Werte
+     die Mitten der ersten und der letzten Reihe. Kommt sie an einem
+     BESETZTEN Platz vorbei, wird er ueberfahren — er wackelt, und wer
+     dort sitzt, schreit. Welche Stimme, entscheidet das Geschlecht des
+     Ueberfahrenen (lcSchmerzTon), damit es nicht immer dieselbe ist.
+     ================================================================= */
+  function lcLokRunden(lok, start, ende, dauer, hin) {
+    const gitter = lcPlatzGitter() || [];
+    if (gitter.length < 2) return false;
+    const reihen = {};
+    gitter.forEach((g) => { (reihen[g.reihe] = reihen[g.reihe] || []).push(g); });
+    const nummern = Object.keys(reihen).map(Number).sort((a, b) => a - b);
+    if (!nummern.length) return false;
+    const alleX = gitter.map((g) => g.x);
+    const linksX = Math.min.apply(null, alleX);
+    const rechtsX = Math.max.apply(null, alleX);
+    const obenY = reihen[nummern[0]][0].y;
+    const untenY = reihen[nummern[nummern.length - 1]][0].y;
+    /* Eine Runde: vier Ecken. Bei nur einer Reihe wird daraus ein Hin
+       und Her — auch das ist eine Runde, nur eine flache. */
+    const runde = [
+      { x: linksX, y: obenY }, { x: rechtsX, y: obenY },
+      { x: rechtsX, y: untenY }, { x: linksX, y: untenY }
+    ];
+    const RUNDEN = 2;
+    const punkte = [{ x: start.x, y: start.y }];
+    for (let r = 0; r < RUNDEN; r++) runde.forEach((q) => punkte.push(q));
+    punkte.push({ x: ende.x, y: ende.y });
+    /* Die Zeiten kommen aus der wirklichen Weglaenge — sonst faehrt
+       sie die kurzen Stuecke genauso lange wie die langen. */
+    let gesamt = 0;
+    const laengen = [];
+    for (let i = 1; i < punkte.length; i++) {
+      const l = Math.hypot(punkte[i].x - punkte[i - 1].x,
+                           punkte[i].y - punkte[i - 1].y) || 1;
+      laengen.push(l); gesamt += l;
+    }
+    const tAn = hin / dauer;
+    const bei = (q, t, sicht, sp) => ({
+      transform: "translate(" + (q.x - start.x).toFixed(1) + "px, "
+        + (q.y - start.y).toFixed(1) + "px) translate(-50%, -50%) scaleX("
+        + sp + ") scale(" + (sicht ? 1 : 0.3) + ")",
+      opacity: sicht ? 1 : 0,
+      offset: Math.max(0, Math.min(1, t))
+    });
+    const rahmen = [];
+    let sp = 1, weit = 0;
+    rahmen.push(bei(punkte[0], 0, 0, sp));
+    for (let i = 1; i < punkte.length; i++) {
+      const dx = punkte[i].x - punkte[i - 1].x;
+      if (Math.abs(dx) > 1) sp = dx < 0 ? -1 : 1;
+      weit += laengen[i - 1];
+      rahmen.push(bei(punkte[i], tAn * (weit / gesamt), 1, sp));
+    }
+    rahmen.push(bei(punkte[punkte.length - 1], 1, 0, sp));
+    try {
+      lok.animate(rahmen, { duration: dauer, easing: "linear", fill: "forwards" });
+    } catch (e) { return false; }
+
+    /* WER UEBERFAHREN WIRD. Ein besetzter Platz wird in dem Augenblick
+       erwischt, in dem die Lok seine x-Stelle erreicht. Der Augenblick
+       wird aus demselben Weg gerechnet, aus dem auch die Bilder
+       kommen — dann stimmt er auf den Bildpunkt genau. */
+    let stueck = 0;
+    for (let i = 1; i < punkte.length; i++) {
+      const a = punkte[i - 1], b = punkte[i];
+      const vorher = stueck / gesamt;
+      stueck += laengen[i - 1];
+      const nachher = stueck / gesamt;
+      /* Nur die waagerechten Stuecke fahren durch eine Reihe. */
+      if (Math.abs(b.y - a.y) > 4) continue;
+      const spanne = b.x - a.x;
+      if (Math.abs(spanne) < 1) continue;
+      gitter.forEach((g) => {
+        if (g.frei || Math.abs(g.y - a.y) > 6) return;
+        const f = (g.x - a.x) / spanne;
+        if (f < 0 || f > 1) return;
+        const wann = dauer * tAn * (vorher + (nachher - vorher) * f);
+        setTimeout(() => {
+          if (!g.el.isConnected) return;
+          const k = g.el.querySelector(".lc-kreis");
+          if (k) {
+            k.classList.remove("lc-ueberfahren");
+            void k.offsetWidth;
+            k.classList.add("lc-ueberfahren");
+            setTimeout(() => k.classList.remove("lc-ueberfahren"), 900);
+          }
+          lcGeraeusch(lcSchmerzTon(g.el), "lokopfer", 0.5);
+        }, Math.max(0, wann));
+      });
+    }
+    return true;
+  }
+
   /* Eine Absage, die man auch sieht. Sie gehoert nicht in den Chat der
      anderen — es ist meine Fahrt, die nicht geht. */
   function lcWegAbsage(text) {
@@ -37527,8 +37717,28 @@
     const abEl = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
     const zielEl = lcPlatzMitNamen(wen);
     const ab = gitter.find((p) => p.el === abEl);
-    const zu = gitter.find((p) => p.el === zielEl);
-    if (!ab || !zu || ab.nr === zu.nr) return false;
+    let zu = gitter.find((p) => p.el === zielEl);
+    if (!ab) return false;
+    /* RUNDE 80 — XANDER: „Ich moechte den pacman zum ausprobieren auch
+       wenn niemand da ist uebers Feld schicken koennen."
+       Bisher hoerte die Funktion hier auf, wenn kein Name genannt war
+       oder dort niemand sass — dann passierte gar nichts, und man
+       konnte den Effekt nicht einmal ansehen. Jetzt gibt es die
+       PROBEFAHRT: ohne Ziel sucht sich Pac-Man den am weitesten
+       entfernten Platz und frisst sich bis dorthin durch. Gefressen
+       wird dabei niemand (siehe „probe" weiter unten) — es liegen ja
+       nur die Kuegelchen auf dem Weg, und genau die wollte er sehen. */
+    const probe = !zu || zu.nr === ab.nr;
+    if (probe) {
+      let weit = null, beste = -1;
+      gitter.forEach((p) => {
+        if (p.nr === ab.nr) return;
+        const d = Math.hypot(p.x - ab.x, p.y - ab.y);
+        if (d > beste) { beste = d; weit = p; }
+      });
+      if (!weit) return false;
+      zu = weit;
+    }
     const weg = lcWegSuchen(gitter, ab.nr, zu.nr, true);
     if (!weg) return false;
     const kreis = ab.el.querySelector(".lc-kreis");
@@ -37536,6 +37746,11 @@
     if (!kreis || !opfer) return false;
 
     const gefressen = () => {
+      /* RUNDE 80 — bei der Probefahrt wird niemand gefressen: es ist
+         eine Vorfuehrung, kein Angriff. Ohne diese Zeile wuerde der
+         Absender bei „/pacman" ohne Namen sich selbst von der Buehne
+         werfen, sobald sein eigener Name zufaellig passt. */
+      if (probe) return;
       /* Nur auf dem Geraet dessen, der gemeint ist. */
       try {
         const l = LiveChat.lage() || {};

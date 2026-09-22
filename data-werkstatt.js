@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 80, achter Teil: Zwille, Birne, Klaps, Dunkelmodus, UFO",
+  stand: "Runde 80, neunter Teil: Vogel, Lok, Pac-Man",
 
   inArbeit: [
-    { seit: "2026-09-22T03:27",
+    { seit: "2026-09-22T03:34",
       text: "Der Rest von Xanders Liste vom 22. September" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T03:27",
-      text: "Die Zwille zieht sichtbar auf: die Ledertasche mit der Kugel wandert genau die 32 Einheiten mit, die das Gummi an Laenge gewinnt (gemessen). Der Standfuss der Schneekugel bleibt bis zum Schluss stehen statt 1 Sekunde zu frueh zu verschwinden." },
-    { seit: "2026-09-22T03:27",
-      text: "Glas und Fassung der Gluehbirne sind eine Form im Dreh: das Gewinde dreht jetzt dieselbe raeumliche Drehung mit denselben Stufen wie das Glas (0 / 360 / 720 / 1020 / 1044 Grad, gemessen identische Matrizen)." },
-    { seit: "2026-09-22T03:27",
-      text: "Der Klaps auf den Hintern ist eine eigene Animation mit eigenem Befehl /klaps: die Hand kommt von unten, trifft bei 600 ms, das Bild federt nach oben weg, ein roter Handabdruck bleibt kurz stehen." },
-    { seit: "2026-09-22T03:27",
-      text: "Der Dunkelmodus deckt jetzt die GANZE Seite ab (gemessen: 420 x 860 = der ganze Bildschirm), die Augen springen beim Scrollen nicht mehr (Abstand zum Gesicht 0,2 px vor und nach dem Scrollen) und sehen aus wie Emoji-Augen." },
-    { seit: "2026-09-22T03:27",
-      text: "UFO tiefer (1,12 statt 1,45 Bildbreiten) und das Profilbild wird komplett eingesaugt statt sichtbar unter dem Schiff mitzureisen. Die Katze schlaegt mit der Pfote wirklich zu. Der Plattenspieler laeuft nach dem Kratzen mit Musik weiter. Die Sanduhr rieselt aus einer schmalen Saeule und der Haufen bleibt liegen. Das Portal spritzt nicht mehr heraus. Der Cowboy hat dickere Hoecker und den Peitschenknall, der Vogel zwitschert und sein Kot laeuft weiter am Gesicht herunter. Das Becken beim Turmsprung ist voll." },
+    { seit: "2026-09-22T03:34",
+      text: "Der Greifvogel hat echte Schwingen statt Fledermausfluegel: Armfittich mit glatter Hinterkante plus sieben einzelne Handschwingen, die faecherfoermig auseinanderstehen — die Luecken dazwischen sind das, woran man einen Vogel erkennt. Dazu Deckfedern auf dem Fittich." },
+    { seit: "2026-09-22T03:34",
+      text: "Sein Fluegelschlag ist durchgaengig. GEMESSEN: die Aufnahme ist zwar 4 s lang, aber schon bei 0,9 s auf -25 dB und bei 2 s auf -40 dB — zu hoeren war nicht einmal eine Sekunde. Sie wird jetzt viermal im Abstand von 660 ms angesetzt und jedes Mal nach 700 ms gekappt." },
+    { seit: "2026-09-22T03:34",
+      text: "Die Lok faehrt zwei Runden durch die Sitzreihen und faehrt dabei die Leute um: sie werden flachgedrueckt, kippen weg und schreien. GEMESSEN: drei Richtungswechsel, 309 px Hoehenunterschied, bis zu vier gleichzeitig Ueberfahrene." },
+    { seit: "2026-09-22T03:34",
+      text: "Pac-Man laesst sich auch ohne Ziel uebers Feld schicken. GEMESSEN: in allen 34 Proben sichtbar, 255 px weit, 13 Kuegelchen gelegt und am Ende null davon uebrig — er frisst sie alle." },
+    { seit: "2026-09-22T03:34",
+      text: "Der Vogelkot laeuft jetzt bis ueber die halbe Bildhoehe herunter statt nur bis zur Stirn." },
   ],
 };
