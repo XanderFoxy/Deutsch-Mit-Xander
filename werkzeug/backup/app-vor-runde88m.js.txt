@@ -46472,185 +46472,6 @@
     return { dauer: dauer, ankunft: ankunft };
   }
 
-
-  /* =================================================================
-     RUNDE 88 — ECHTE BILLARD-PHYSIK STATT „DAS NAECHSTE FREIE LOCH"
-     -----------------------------------------------------------------
-     XANDER: „Die Billard-Physik ist offenbar immer noch nicht
-     gemacht, weil sie immer an dasselbe Loch fliegt. Ja, die soll
-     auch, wenn ich das selber mache, so sein, dass ich da ne Physik
-     habe beim Spielen, die an realistisches Billardspielen erinnert."
-     Und frueher schon: „es soll wirklich an allen Ecken abprallen,
-     bis es ein Loch gefunden hat — also die Physik soll stimmen wie
-     beim Billardspiel, dass es realistisch in so'n Loch faellt."
-
-     ER HAT RECHT GEHABT, UND ZWAR AUS EINEM EINFACHEN GRUND: das
-     Loch wurde VORHER ausgesucht („das naechste freie in
-     Stossrichtung"), und dann rollte die Kugel auf dem Spielbrett-Weg
-     dorthin — von Feld zu Feld, wie eine Spielfigur. Bei gleicher
-     Sitzordnung und gleichem Stoss kam deshalb immer dasselbe Loch
-     heraus, und an einer Bande prallte nie etwas ab.
-
-     Jetzt wird gerechnet, was eine Kugel tut, und das Loch ist das
-     ERGEBNIS:
-       · Der Tisch ist das Feld der Plaetze, um eine Bildbreite
-         herum erweitert — das sind die Banden.
-       · Die Kugel bekommt die Stossrichtung, dazu eine Abweichung
-         von hoechstens 14 Grad. Die kommt aus derselben Zahl, die
-         auch in der Nachricht mitfaehrt: jeder sieht dasselbe Spiel,
-         aber zwei Stoesse sind nie gleich. Genau das ist „nicht
-         immer dasselbe Loch".
-       · Sie rollt mit Reibung (0,991 je Schritt) und prallt an den
-         Banden ab — Einfallswinkel gleich Ausfallswinkel, also
-         Vorzeichen der Geschwindigkeit umdrehen.
-       · Kommt ihre Mitte einem freien Platz naeher als ein
-         Bildradius, faellt sie hinein — das freie Feld IST ja ein
-         Kreis von genau dieser Groesse, die Kugel steht dann also
-         ueber dem Loch. Mit 55 Prozent rollte sie in sieben von
-         zwoelf Stoessen an allen Loechern vorbei, und das war nicht
-         „bis es ein Loch gefunden hat".
-     ================================================================= */
-  function lcBillardPhysik(gitter, startP, sx, sy, wurf, gross) {
-    const frei = gitter.filter((p) => p.frei);
-    const alle = gitter.length ? gitter : [startP];
-    const r = Math.max(16, (gross || 64) / 2);
-    const xs = alle.map((p) => p.x), ys = alle.map((p) => p.y);
-    /* Die Banden liegen eine halbe Bildbreite hinter den aeussersten
-       Plaetzen — naeher waere kein Tisch, weiter waere ein Saal. */
-    const rand = r * 1.5;
-    const xmin = Math.min.apply(null, xs) - rand + r;
-    const xmax = Math.max.apply(null, xs) + rand - r;
-    const ymin = Math.min.apply(null, ys) - rand + r;
-    const ymax = Math.max.apply(null, ys) + rand - r;
-    /* Die Abweichung vom geraden Stoss: hoechstens 14 Grad. */
-    const ab = ((Number(wurf) || 0) - 0.5) * 2 * (14 * Math.PI / 180);
-    const co = Math.cos(ab), si = Math.sin(ab);
-    /* UND DER EFFET. Ein Queue trifft die Kugel nie genau in der
-       Mitte; der Rest ist Seitendrall, und der laesst sie ueber den
-       Tisch leicht bogig laufen. Ohne ihn war eine Rechnung
-       fehlerhaft symmetrisch: ein Stoss genau waagerecht (Abweichung
-       nahe null) lief ewig zwischen den beiden Seitenbanden hin und
-       her, IMMER auf der Zeile der oberen Plaetze, und erreichte die
-       unteren Loecher nie. Gemessen: fuenf von zwoelf Stoessen fielen
-       nirgends hinein, und es waren genau die geraden.
-       0,0015 Bogenmass je Schritt sind auf 170 Schritten rund
-       15 Grad — so viel, dass die Bahn nicht auf einer Linie
-       gefangen bleibt, und so wenig, dass es nach Drall aussieht und
-       nicht nach Magnet. */
-    /* Der Drall darf NIE null sein, sonst laeuft der gerade Stoss
-       wieder auf seiner Linie fest. Und er darf nicht mit der
-       Abweichung zusammenhaengen, sonst gibt es Stoesse, die beides
-       auf einmal verlieren — beim ersten Versuch traf „mal 7919" die
-       Werte um 0,4 bis 0,6 alle fast genau auf null, und genau die
-       vier fielen in kein Loch. Deshalb eine richtige Streuung
-       (Sinus mal grosse Zahl, Nachkommateil) und ein Mindestbetrag. */
-    const streu = Math.abs(Math.sin((Number(wurf) || 0) * 127.1) * 43758.5453);
-    const u = (streu - Math.floor(streu)) * 2 - 1;
-    const drall = (u < 0 ? -1 : 1) * (0.0018 + Math.abs(u) * 0.0032);
-    const dco = Math.cos(drall), dsi = Math.sin(drall);
-    let vx = (sx * co - sy * si) * (r * 0.28);
-    let vy = (sx * si + sy * co) * (r * 0.28);
-    let x = startP.x, y = startP.y;
-    const punkte = [{ x: 0, y: 0 }];
-    /* „bandenBei" merkt sich, in WELCHEM Schritt und an welcher Achse
-       gespiegelt wurde. Ohne das laesst sich hinterher nicht sauber
-       nachmessen, ob Einfallswinkel gleich Ausfallswinkel ist: eine
-       Sonde, die Banden am Vorzeichenwechsel von dx sucht, findet
-       auch die Stellen, an denen der Effet die Bahn durch die
-       Senkrechte dreht — dort ist gar keine Bande. */
-    const bandenBei = [];
-    let banden = 0, loch = null;
-    /* Hoechstens 260 Schritte zu je 5 ms: das sind 1,3 Sekunden
-       Rollen, und mehr passt nicht in die Zeit, die der Effekt hat
-       (0,7 s Warten plus 1,3 s Rollen). Mit nur 170 Schritten blieben
-       gemessen fuenf von zwoelf Stoessen ohne Loch — die Kugel war
-       schlicht noch nicht genug herumgekommen. */
-    for (let i = 0; i < 260; i++) {
-      x += vx; y += vy;
-      /* Die Bande: Einfallswinkel gleich Ausfallswinkel. Der
-         Ueberschuss wird gespiegelt, sonst klebte die Kugel am Rand. */
-      let achse = "";
-      if (x < xmin) { x = xmin + (xmin - x); vx = -vx; banden++; achse = "x"; }
-      else if (x > xmax) { x = xmax - (x - xmax); vx = -vx; banden++; achse = "x"; }
-      if (y < ymin) { y = ymin + (ymin - y); vy = -vy; banden++; achse += "y"; }
-      else if (y > ymax) { y = ymax - (y - ymax); vy = -vy; banden++; achse += "y"; }
-      if (achse) bandenBei.push({ i: i + 1, achse: achse });
-      /* Ein wenig Energie geht an der Bande verloren, der Rest an
-         der Reibung des Tuchs. */
-      vx *= 0.991; vy *= 0.991;
-      const nvx = vx * dco - vy * dsi;
-      vy = vx * dsi + vy * dco;
-      vx = nvx;
-      punkte.push({ x: x - startP.x, y: y - startP.y });
-      if (i > 5) {
-        for (let k = 0; k < frei.length; k++) {
-          if (Math.hypot(x - frei[k].x, y - frei[k].y) < r) { loch = frei[k]; break; }
-        }
-      }
-      if (loch) break;
-      if (Math.hypot(vx, vy) < r * 0.012) break;
-    }
-    return { punkte: punkte, loch: loch, banden: banden, bandenBei: bandenBei };
-  }
-
-  /* Die gerechnete Bahn als Bewegung. Gedreht wird die Kugel so weit,
-     wie sie wirklich gerollt ist — Umfang ist Pi mal Durchmesser. */
-  function lcKugelPhysik(startP, bahn, o) {
-    o = o || {};
-    const kreis = startP && startP.el && startP.el.querySelector(".lc-kreis");
-    if (!kreis || !bahn || bahn.punkte.length < 2) return { dauer: 0, ankunft: 0 };
-    const durchmesser = kreis.offsetWidth || 64;
-    const warten = o.warten || 0;
-    /* Jeder Rechenschritt dauert 5 ms; 260 Schritte sind also
-       1,3 Sekunden Rollen. */
-    const schrittMs = o.schritt || 5;
-    const rollen = Math.round((bahn.punkte.length - 1) * schrittMs);
-    const ankunft = warten + rollen;
-    const dauer = ankunft + (o.rein ? 900 : 420);
-    const bei = (ms) => Math.max(0, Math.min(1, ms / dauer));
-    /* Nicht jeder Schritt braucht ein Bild: jedes vierte reicht, und
-       die Eckpunkte an den Banden kommen ohnehin mit. */
-    const bilder = [{ transform: "translate(0px, 0px) rotate(0deg)", offset: 0 }];
-    if (warten > 0) bilder.push({ transform: "translate(0px, 0px) rotate(0deg)",
-      offset: bei(warten) });
-    let dreh = 0;
-    for (let i = 1; i < bahn.punkte.length; i++) {
-      const p = bahn.punkte[i], v = bahn.punkte[i - 1];
-      const stueck = Math.hypot(p.x - v.x, p.y - v.y);
-      dreh += (stueck / (Math.PI * durchmesser)) * 360 * (p.x < v.x ? -1 : 1);
-      if (i % 4 && i !== bahn.punkte.length - 1) continue;
-      bilder.push({
-        transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1) + "px) rotate("
-          + dreh.toFixed(1) + "deg)",
-        offset: bei(warten + i * schrittMs)
-      });
-    }
-    const e = bahn.punkte[bahn.punkte.length - 1];
-    if (o.rein) {
-      bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + (e.y + 6).toFixed(1)
-        + "px) rotate(" + (dreh + 40).toFixed(1) + "deg) scale(.45)", opacity: "1",
-        offset: bei(ankunft + 220) });
-      bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + (e.y + 10).toFixed(1)
-        + "px) rotate(" + (dreh + 90).toFixed(1) + "deg) scale(0)", opacity: "0",
-        offset: bei(ankunft + 400) });
-      bilder.push({ transform: "translate(" + e.x.toFixed(1) + "px, " + (e.y + 10).toFixed(1)
-        + "px) scale(0)", opacity: "0", offset: bei(dauer - 40) });
-    }
-    bilder.push({ transform: "translate(0px, 0px) rotate(0deg) scale(1)", opacity: "1", offset: 1 });
-    const altZ = startP.el.style.zIndex;
-    startP.el.style.zIndex = "6";
-    try {
-      /* LINEAR, und das ist keine Kleinigkeit: ein „easing" ueber die
-         ganze Bahn wuerde die Kugel an den Banden schneller und in
-         der Mitte langsamer machen. Die Verzoegerung steckt schon in
-         der Rechnung (Reibung), sie gehoert nicht noch einmal in die
-         Zeitachse. */
-      const lauf = kreis.animate(bilder, { duration: dauer, easing: "linear", fill: "none" });
-      lauf.onfinish = () => { startP.el.style.zIndex = altZ; };
-    } catch (err) { startP.el.style.zIndex = altZ; }
-    setTimeout(() => { startP.el.style.zIndex = altZ; }, dauer + 200);
-    return { dauer: dauer, ankunft: ankunft };
-  }
   /* Die Tasche (das Loch) am Zielplatz zeigen — sie gehoert zum
      Fallen, nicht zum Stoss, und kommt deshalb erst, wenn die Kugel
      auch wirklich losrollt. */
@@ -46800,52 +46621,64 @@
       const rq = lcWurfRichtung(zu.el);        /* zeigt zum Spieler */
       sx = -rq.x; sy = -rq.y;                  /* also die Stossrichtung */
     }
+    const kandidaten = gitter.filter((p) => p.frei).map((p) => {
+      const dx = p.x - zu.x, dy = p.y - zu.y;
+      const l = Math.hypot(dx, dy) || 1;
+      return { p: p, laenge: l, mit: (dx / l) * sx + (dy / l) * sy };
+    });
+    /* „mit" ist der Kosinus zwischen Stossrichtung und Richtung zum
+       Loch: 1 heisst genau geradeaus, 0 quer, negativ nach hinten.
+       Ab 0,35 (rund 70 Grad Oeffnung) gilt es noch als „in diese
+       Richtung" — enger waere bei acht Plaetzen fast nie erfuellt. */
+    const vorn = kandidaten.filter((k) => k.mit > 0.35)
+                           .sort((a, b) => (b.mit - a.mit) || (a.laenge - b.laenge));
+    /* XANDER: „die Person immer in ihrem eigenen Platz verschwindet.
+       Sie soll ein bisschen durch das Feld rollen, an den Ecken so
+       abprallen."
+       Nachgesehen, woran das lag: liegt KEIN freies Loch in
+       Stossrichtung (bei wenigen Leuten am Tisch ist das der
+       Normalfall), fiel der Getroffene in den Rueckfall „weggestossen"
+       — und der schiebt ihn nur 16 % zur Seite und laesst ihn am
+       eigenen Platz verschwinden. Genau das hat er gesehen.
+       Jetzt gilt: ist vorn nichts frei, nimmt die Kugel das naechste
+       freie Loch in IRGENDEINER Richtung — sie prallt eben ab. Erst
+       wenn gar kein Platz frei ist, greift der Rueckfall, und der
+       rollt dann wenigstens ueber das Feld statt auf der Stelle. */
+    const egalWo = kandidaten.slice().sort((a, b) => a.laenge - b.laenge);
+    const loch = vorn.length ? vorn[0].p : (egalWo.length ? egalWo[0].p : null);
     const kreis = zu.el.querySelector(".lc-kreis");
     if (!kreis) return false;
-    /* RUNDE 88 — HIER WURDE FRUEHER DAS LOCH AUSGESUCHT: „das
-       naechste freie in Stossrichtung". Weil Sitzordnung und Stoss
-       gleich bleiben, war es auch immer dasselbe — genau das, was
-       Xander gemeldet hat: „Die Billard-Physik ist offenbar immer
-       noch nicht gemacht, weil sie immer an dasselbe Loch fliegt."
-       Das Loch wird nicht mehr ausgesucht. Es ist das ERGEBNIS der
-       Rechnung: die Kugel rollt, prallt an den Banden ab und faellt
-       hinein, wenn sie eins trifft.
-       Die Abweichung vom geraden Stoss kommt aus „los" — derselben
-       Zahl, die in der Nachricht mitfaehrt. Damit sieht jeder
-       dasselbe Spiel, und trotzdem ist kein Stoss wie der vorige. */
-    const zahlB = Number(los);
-    const wurfB = (zahlB >= 0 && zahlB < 1) ? zahlB : Math.random();
-    const bahnB = lcBillardPhysik(gitter, zu, sx, sy, wurfB, kreis.offsetWidth || 64);
-    const loch = bahnB.loch;
 
     /* ---- WER SITZT SONST NOCH AM TISCH? ----
        Alle Besetzten ausser dem Stossenden und dem Angestossenen.
        Ist die Liste leer, sind nur zwei da — dann bleibt alles beim
        Alten und der Getroffene rollt selbst ins Loch. */
     const andere = gitter.filter((p) => !p.frei && p !== zu && p !== stoss);
+    const zahl = Number(los);
+    const wurf = (zahl >= 0 && zahl < 1) ? zahl : Math.random();
     const opfer = andere.length
-      ? andere[Math.min(andere.length - 1, Math.floor(wurfB * andere.length))] : null;
+      ? andere[Math.min(andere.length - 1, Math.floor(wurf * andere.length))] : null;
     /* Das Loch fuer den Gefallenen: das naechste freie ab SEINEM Platz
        — nach dem Aufprall gibt es keine Stossrichtung mehr. */
     let opferLoch = null;
-    let opferBahn = null;
     if (opfer) {
       /* RUNDE 68: auch hier gilt, was fuer die erste Kugel laengst
          gilt — sie faellt in das Loch, das in ihrer FLUGRICHTUNG
          liegt. Vorher war es einfach das naechste ueberhaupt, also
          auch das hinter ihr, und eine Kugel, die rueckwaerts ins Loch
          faellt, gibt es nicht. */
-      /* RUNDE 88 — auch die angestossene Kugel rollt jetzt nach der
-         Physik weiter: in der Richtung, aus der sie getroffen wurde,
-         mit Banden und Reibung. Das Loch ist auch hier das Ergebnis
-         und nicht die Vorgabe. Ihre Abweichung ist eine andere als
-         die der ersten Kugel (mal 1,618, der Nachkommateil davon) —
-         sonst liefen beide dieselbe Kurve. */
       const ox = opfer.x - zu.x, oy = opfer.y - zu.y;
       const ol = Math.hypot(ox, oy) || 1;
-      opferBahn = lcBillardPhysik(gitter, opfer, ox / ol, oy / ol,
-                                  (wurfB * 1.618) % 1, kreis.offsetWidth || 64);
-      opferLoch = opferBahn.loch;
+      const freie = gitter.filter((p) => p.frei).map((p) => {
+        const dx = p.x - opfer.x, dy = p.y - opfer.y;
+        const l = Math.hypot(dx, dy) || 1;
+        return { p: p, l: l, mit: (dx / l) * (ox / ol) + (dy / l) * (oy / ol) };
+      });
+      const vorwaerts = freie.filter((k) => k.mit > 0.35)
+        .sort((a, b) => (b.mit - a.mit) || (a.l - b.l));
+      const irgendwo = freie.slice().sort((a, b) => a.l - b.l);
+      opferLoch = vorwaerts.length ? vorwaerts[0].p
+        : (irgendwo.length ? irgendwo[0].p : null);
     }
 
     /* Der Stoss kommt aus der Richtung des Spielers. */
@@ -46906,24 +46739,28 @@
           lcAngestossen(p, { x: fx, y: fy }, hin.ankunft * t + 40, sx2, sy2, einheit);
         });
         lcBillardTasche(opferLoch, hin.ankunft + 60);
-        lcKugelPhysik(opfer, opferBahn, { warten: hin.ankunft + 80, rein: true });
+        lcKugelLauf(gitter, opfer, opferLoch, { warten: hin.ankunft + 80, rein: true });
         return;
       }
       if (!loch) {
-        /* Kein Loch getroffen — dann rollt sie ueber den Tisch, prallt
-           an den Banden ab und kommt zurueck. „Sie soll ein bisschen
-           durch das Feld rollen, an den Ecken so abprallen."
-           RUNDE 88: das ist jetzt DIESELBE gerechnete Bahn wie beim
-           Einlochen, nur ohne das Hineinfallen — vorher war es ein
-           fester Stilblatt-Weg („lc-gerollt"), der mit dem Stoss
-           nichts zu tun hatte. */
-        lcKugelPhysik(zu, bahnB, { warten: 700 });
+        /* Gar kein Platz frei — dann rollt sie wenigstens ueber das
+           Feld und prallt an den Banden ab, statt auf der Stelle zu
+           kippen. „Sie soll ein bisschen durch das Feld rollen, an
+           den Ecken so abprallen." */
+        const altZ = platz.style.zIndex;
+        platz.style.zIndex = "8";
+        kreis.classList.remove("lc-gerollt");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gerollt");
+        setTimeout(() => {
+          kreis.classList.remove("lc-gerollt");
+          platz.style.zIndex = altZ;
+        }, 3600);
         return;
       }
-      /* Zu zweit: der Getroffene rollt selbst ueber den Tisch — und
-         faellt dort hinein, wo die Rechnung ihn hinbringt. */
+      /* Zu zweit: der Getroffene rollt selbst ins Loch. */
       lcBillardTasche(loch, 0);
-      lcKugelPhysik(zu, bahnB, { warten: 700, rein: true });
+      lcKugelLauf(gitter, zu, loch, { warten: 700, rein: true });
       /* „aber das ein Lochgeraeusch musst du wahrscheinlich wieder
          separat machen oder? Das ist halt auf jeden Fall der Laenge
          entspricht." Der Stoss klingt am Anfang, das Einlochen dann,
@@ -48257,28 +48094,6 @@
        nachsehen laesst und nicht geraten werden muss: jeden Effekt
        einzeln ausloesen und hinterher zaehlen, was im Dokument steht. */
     effektNamen: function () { return Object.keys(LC_EFFEKTE); },
-    /* RUNDE 88 — DIE BILLARDBAHN ZUM NACHRECHNEN.
-       XANDER: „die Physik soll stimmen wie beim Billardspiel."
-       Eine Behauptung ueber Physik ist wertlos, wenn man sie nicht
-       nachmessen kann. Hier kommt die gerechnete Bahn heraus — samt
-       Bandenzahl und gefundenem Loch —, damit die Sonde
-       Einfallswinkel und Ausfallswinkel wirklich vergleichen kann,
-       statt nur zu schauen, ob sich etwas bewegt. */
-    billardBahn: function (vonNr, zuNr, los) {
-      const gitter = lcPlatzGitter();
-      const v = gitter.find((p) => p.nr === Number(vonNr));
-      const z = gitter.find((p) => p.nr === Number(zuNr));
-      if (!v || !z) return null;
-      const kreis = z.el.querySelector(".lc-kreis");
-      const dx = z.x - v.x, dy = z.y - v.y;
-      const l = Math.hypot(dx, dy) || 1;
-      const b = lcBillardPhysik(gitter, z, dx / l, dy / l,
-                                Number(los), (kreis && kreis.offsetWidth) || 64);
-      return { punkte: b.punkte, banden: b.banden, bandenBei: b.bandenBei,
-               loch: b.loch ? b.loch.nr : null,
-               start: { x: z.x, y: z.y },
-               plaetze: gitter.map((p) => ({ nr: p.nr, x: p.x, y: p.y, frei: p.frei })) };
-    },
     /* Die Aufgabentafel von Hand zeichnen — sonst muesste die Sonde
        den ganzen Raum aufbauen, nur um zu sehen, ob die Teile da sind. */
     aufgabeZeichnen: function () { return lcAufgabeZeichnen(); },

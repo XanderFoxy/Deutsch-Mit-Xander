@@ -50,9 +50,12 @@ const pruefe = (was, gut, zusatz) => {
     /var ZUSATZ_FELDER = \[[\s\S]{0,300}"los"/.test(lc));
   pruefe("der Absender wuerfelt EINMAL",
     /los: Math\.random\(\)\.toFixed\(4\)/.test(lc));
+  /* RUNDE 88 — die Zahl heisst jetzt „wurfB" und steuert ausserdem
+     die Abweichung des Stosses; der Sinn ist derselbe: die Zahl
+     faehrt in der Nachricht mit, damit jeder dasselbe Spiel sieht. */
   pruefe("und das Billard nimmt es statt eines eigenen Wurfs",
     /function lcBillard\(wen, von, los\)/.test(js)
-    && /const wurf = \(zahl >= 0 && zahl < 1\) \? zahl : Math\.random\(\);/.test(js));
+    && /const wurfB = \(zahlB >= 0 && zahlB < 1\) \? zahlB : Math\.random\(\);/.test(js));
   pruefe("wer wirft, steht in der Zeile — nicht vor dem Geraet",
     /let lcWurfVon = "";/.test(js)
     && /const quelle = \(lcWurfVon \? lcPlatzMitNamen\(lcWurfVon\) : null\)/.test(js));
@@ -60,12 +63,15 @@ const pruefe = (was, gut, zusatz) => {
   console.log("\nBILLARD ZU DRITT\n");
   pruefe("die anderen am Tisch werden gesucht",
     /const andere = gitter\.filter\(\(p\) => !p\.frei && p !== zu && p !== stoss\);/.test(js));
-  pruefe("einer von ihnen faellt ins naechste freie Loch",
-    /lcKugelLauf\(gitter, opfer, opferLoch, \{ warten: hin\.ankunft \+ 80, rein: true \}\)/.test(js));
+  /* RUNDE 88 — „das naechste freie Loch" gibt es nicht mehr: auch die
+     angestossene Kugel rollt nach der Physik und faellt dort hinein,
+     wo sie hinkommt. */
+  pruefe("einer von ihnen faellt in ein Loch",
+    /lcKugelPhysik\(opfer, opferBahn, \{ warten: hin\.ankunft \+ 80, rein: true \}\)/.test(js));
   pruefe("die uebrigen werden nur angestossen",
     /function lcAngestossen/.test(js) && /lcAngestossenR29/.test(css));
-  pruefe("zu zweit bleibt alles wie vorher",
-    /Zu zweit: der Getroffene rollt selbst ins Loch/.test(js));
+  pruefe("zu zweit rollt der Getroffene selbst",
+    /Zu zweit: der Getroffene rollt selbst ueber den Tisch/.test(js));
 
   console.log("\nDIE SCHNEEKUGEL\n");
   pruefe("es gibt sie als Effekt", /function lcSchneekugel/.test(js));

@@ -155,7 +155,14 @@ const pruefe = (was, gut, zusatz) => {
     const platz = document.querySelectorAll(".lc-platz")[1];
     const kreis = platz.querySelector(".lc-kreis");
     const heim = kreis.getBoundingClientRect().left;
-    window.DMA_PRUEFUNG.wirkung("billard", name);
+    /* RUNDE 88 — MIT FESTEM STOSS. Seit die Bahn gerechnet wird
+       (lcBillardPhysik), haengt sie von der Zahl „los" ab; ohne sie
+       wuerfelt das Programm, und diese Messung waere von Lauf zu Lauf
+       eine andere. 0.02 ist ein Stoss, der kein Loch trifft — genau
+       der Fall, den diese Regel meint: „sie soll ein bisschen durch
+       das Feld rollen, an den Ecken so abprallen" und wieder
+       zurueckkommen. */
+    window.DMA_PRUEFUNG.wirkung("billard", name, "", { los: "0.02" });
     /* RUNDE 80 — DICHTER ABTASTEN, UND UEBER DIE GANZE LAUFZEIT.
        Vorher: 32 Proben im Abstand von 110 ms, also 3,5 s. Laeuft die
        ganze Pruefreihe auf einmal, ist der Rechner ausgelastet und die

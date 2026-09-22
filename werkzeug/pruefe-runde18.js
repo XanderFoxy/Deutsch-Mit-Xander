@@ -173,8 +173,20 @@ const BRETT = (frei) => `
      schiefging — gerufen wird nichts mehr. */
   pruefe("die Animation schickt dabei nichts mehr hinaus",
     !/lcNebenMichSetzen\(/.test(js), "kein Kreis mehr");
-  pruefe("Billard sucht das Loch in Stossrichtung",
-    /k\.mit > 0\.35/.test(js), "Kosinus zur Stossrichtung");
+  /* RUNDE 88 — DIESE REGEL BESCHRIEB DEN FEHLER, NICHT DIE LOESUNG.
+     „k.mit > 0.35" war der Kosinus zur Stossrichtung, mit dem das
+     Loch VORHER ausgesucht wurde. Genau daran lag es, dass immer
+     dasselbe Loch herauskam — Xander: „Die Billard-Physik ist
+     offenbar immer noch nicht gemacht, weil sie immer an dasselbe
+     Loch fliegt." Das Loch wird jetzt gar nicht mehr gesucht: die
+     Kugel rollt, prallt an den Banden ab und faellt hinein, wenn sie
+     eins trifft. Was die Regel MEINTE — dass die Kugel in die
+     Richtung laeuft, in die gestossen wurde —, steckt jetzt in der
+     Anfangsgeschwindigkeit, und nachgemessen wird es in
+     werkzeug/pruefe-runde88-billard.js. */
+  pruefe("Billard startet in Stossrichtung und rechnet dann Physik",
+    /function lcBillardPhysik\(/.test(js)
+    && /const bahnB = lcBillardPhysik\(gitter, zu, sx, sy, wurfB/.test(js));
   pruefe("Pac-Man beschneidet den Kreis nicht mehr",
     /\.lc-kreis\.lc-pacman \{[\s\S]*?clip-path: none !important;/.test(css));
   /* NACHGEBESSERT: die Sonde suchte nach class="lc-pac-figur" im
