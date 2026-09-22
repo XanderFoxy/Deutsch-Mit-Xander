@@ -26627,13 +26627,7 @@
     ["\ud83c\udfbe", "Tennis",    "tennis"],
     ["\ud83c\udfb0", "Zufall",    "zufall", true],
     /* „Das wäre die witzigste Animation." */
-    /* RUNDE 76 — XANDER: „Pac-Man: eigener Weg zeichnen … ueber die
-       Plaetze." Deshalb zwei Eintraege unter einer Kachel: sofort
-       losfressen (der kuerzeste Weg, wie bisher) oder erst den Weg
-       mit dem Finger ziehen — auch quer und auch ueber Besetzte. */
-    ["\ud83d\udc7e", "Pac-Man",  "pacman", false,
-      [["\ud83d\udc7e", "Sofort losfressen", "pacman"],
-       ["\u270d\ufe0f", "Weg zeichnen", "*weg", "pacman"]]],
+    ["\ud83d\udc7e", "Pac-Man",  "pacman"],
     ["\ud83c\udf6a", "Aufessen", "aufessen"],   /* der einzige Keks-Effekt */
     ["\u231b",       "Sanduhr",  "sanduhr"],
     /* „du kannst diese Störung aber trotzdem in den klickbaren
@@ -26916,12 +26910,6 @@
            Jetzt darf eine Kachel einen ZUSATZ tragen, und die vier
            unter „Alle" tragen das Wort „alle" — damit laeuft genau
            der Weg, den es dafuer gibt (wen: "*"). */
-        /* RUNDE 76 — XANDER: „Pac-Man: eigener Weg zeichnen."
-           Eine Kachel darf statt eines Befehls auch den Malmodus
-           aufrufen; welcher Befehl danach hinausgeht, steht im
-           Zusatz. Gesendet wird dann erst beim Loslassen, mit der
-           ganzen Kette. */
-        if (befehl === "*weg") { lcWegMalen(zusatz, platz); return; }
         const zeile = "/" + befehl
           + (name ? " " + name : (zusatz ? " " + zusatz : ""));
         try { LiveChat.schreiben(zeile); } catch (x) {}
@@ -27152,7 +27140,7 @@
     feld.setAttribute("aria-hidden", "true");
     feld.innerHTML = '<svg class="lc-wegmal-linie" preserveAspectRatio="none">'
       + '<polyline fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      + '<p class="lc-wegmal-hinweis">' + (art ? 'Zieh den Weg \u2014 loslassen startet' : 'Zieh den Weg \u2014 danach Fahren oder Laufen antippen') + '</p>';
+      + '<p class="lc-wegmal-hinweis">' + (art ? 'Zieh den Weg \u2014 loslassen f\u00e4hrt ab' : 'Zieh den Weg \u2014 danach Fahren oder Laufen antippen') + '</p>';
     reihe.appendChild(feld);
     const linie = feld.querySelector("polyline");
     const rk = lcLayoutKasten(reihe);
@@ -27185,15 +27173,7 @@
       if (weg.length > 1 && p === weg[weg.length - 2]) { weg.pop(); malen(); return; }
       if (weg.indexOf(p) >= 0) return;             // kein Kreisel
       if (!nachbar(letzte, p)) return;             // kein Sprung ueber Felder
-      /* RUNDE 76 — XANDER: „Weg ueber Personen."
-         Hier stand „if (!p.frei) return" — der gemalte Weg brach also
-         ab, sobald jemand im Weg sass, und man konnte um niemanden
-         herumfahren, ohne einen ganz anderen Bogen zu ziehen.
-         Ueber einen besetzten Platz FAHREN geht schon lange (die
-         Wegsuche kennt dafuer „ueberBesetzte"), nur malen liess es
-         sich nicht. Jetzt darf der Strich darueber; dass man dort
-         nicht ANHALTEN kann, faengt der Befehl beim Loslassen ab
-         („Platz X ist besetzt"). */
+      if (!p.frei) return;                         // nicht durch Besetzte
       weg.push(p);
       malen();
       lcTonZu("spielzug");
@@ -27228,10 +27208,7 @@
       /* Der Weg geht an alle — sonst saehe nur ich, wie ich laufe.
          Die Nummern stehen als Kette im Befehl, damit jedes Geraet
          denselben Weg zeichnet und nicht seinen eigenen rechnet. */
-      /* RUNDE 76 — nicht mehr nur Fahren und Laufen: „Pac-Man:
-         eigener Weg zeichnen." Jede Art, die eine Kette versteht,
-         darf hier stehen; „spielzug" heisst im Chat „laufen". */
-      const zeile = "/" + (art === "spielzug" ? "laufen" : art)
+      const zeile = "/" + (art === "spielzug" ? "laufen" : "fahren")
         + " " + nummern.join("-");
       try { LiveChat.schreiben(zeile); } catch (e) {}
       lcNachDemSenden(zeile);
@@ -27336,13 +27313,9 @@
        Beispiel der Maulwurf, das Gate, eine Liane koennte auch noch
        mit drin sein und der Kran."
        Als EINE Reihe kleiner Symbole, nicht als zehn weitere Zeilen —
-       sonst waere das Menue laenger als der Bildschirm.
-       RUNDE 80 — XANDER: „das Weg zeichnen … das soll auch fuer das
-       Flugzeug, die Sprungfeder und den Maulwurf gehen."
-       Ein gezeichneter Weg gilt deshalb jetzt fuer Fahren, Laufen UND
-       diese drei; alle uebrigen Reisen gehen weiter direkt zur
-       Nummer. */
-    const bahnFaehig = { flug: 1, feder: 1, maulwurf: 1 };
+       sonst waere das Menue laenger als der Bildschirm. Ein
+       gezeichneter Weg gilt fuer Fahren und Laufen; die Reisen gehen
+       immer direkt zur Nummer. */
     const reihe = document.createElement("div");
     reihe.className = "lc-anreise-reihe";
     [["\u2708\ufe0f", "Flugzeug", "flug"],
@@ -27396,11 +27369,7 @@
           return;
         }
         lcPlatzMenueZu();
-        /* Nur die drei, die einen Umweg auch zeichnen koennen,
-           bekommen die ganze Kette — bei den anderen waere sie nur
-           eine Zahlenreihe ohne Wirkung. */
-        const zeile = "/" + befehl + " "
-          + (gemalt && bahnFaehig[befehl] ? gemalt.join("-") : nr);
+        const zeile = "/" + befehl + " " + nr;
         try { LiveChat.schreiben(zeile); } catch (err) {}
         lcNachDemSenden(zeile);
       });
@@ -34260,43 +34229,6 @@
       el.style.top = y.toFixed(1) + "px";
     };
 
-    /* =================================================================
-       DER GEMALTE WEG IN BUEHNEN-KOORDINATEN
-       -----------------------------------------------------------------
-       Flugzeug, Sprungfeder und Maulwurf rechnen alle mit „start" und
-       „ende". Die Stationen dazwischen brauchen dieselbe Rechnung,
-       sonst liegen sie nicht auf den Plaetzen.
-       „bahnPunkt(t)" liefert zu einem Anteil der GESAMTSTRECKE den
-       Punkt auf dem Streckenzug. Ueber die Gesamtstrecke zu rechnen und
-       nicht ueber die Abschnitte ist wichtig: sonst bummelt die Reise
-       in kurzen Abschnitten und rast in langen.
-       Ohne gemalten Weg ist die „Bahn" einfach die gerade Strecke von
-       start nach ende — dann rechnet alles wie bisher. */
-    const bahnPunkte = bahn
-      ? bahn.map((p) => ({ x: p.x - rk.left, y: p.y - rk.top }))
-      : [start, ende];
-    if (bahn) { bahnPunkte[0] = start; bahnPunkte[bahnPunkte.length - 1] = ende; }
-    const bahnBis = [];
-    let bahnGesamt = 0;
-    for (let i = 1; i < bahnPunkte.length; i++) {
-      bahnGesamt += Math.hypot(bahnPunkte[i].x - bahnPunkte[i - 1].x,
-                               bahnPunkte[i].y - bahnPunkte[i - 1].y);
-      bahnBis.push(bahnGesamt);
-    }
-    const bahnPunkt = (t) => {
-      if (!bahnGesamt) return { x: ende.x, y: ende.y };
-      const soll = Math.max(0, Math.min(1, t)) * bahnGesamt;
-      let i = 0;
-      while (i < bahnBis.length - 1 && bahnBis[i] < soll) i++;
-      const vor = i ? bahnBis[i - 1] : 0;
-      const a = bahnPunkte[i], b = bahnPunkte[i + 1];
-      const u = bahnBis[i] > vor ? (soll - vor) / (bahnBis[i] - vor) : 1;
-      return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u };
-    };
-    /* Der Anteil der Gesamtstrecke, bei dem jede Station erreicht ist —
-       daran haengen die Aufsetzer der Sprungfeder. */
-    const bahnAnteile = bahnBis.map((l) => (bahnGesamt ? l / bahnGesamt : 1));
-
     if (art === "flug") {
       /* Das Flugzeug mit IHM hinter dem Fenster. */
       const flieger = document.createElement("span");
@@ -34384,15 +34316,11 @@
       ];
       if (bahn && bahn.length > 2) {
         const anheben = mitte.y - (start.y + ende.y) / 2;
-        /* bahnPunkte liegen schon im Koordinatensystem der Buehne
-           (start und ende auch) — die rohen Gitterpunkte duerfen hier
-           NICHT stehen, sonst fliegt das Flugzeug um den Rand des
-           Layout-Kastens daneben. */
-        const stationen = bahnPunkte.slice(1).map((q, i, alle) => ({
-          x: q.x,
+        const stationen = bahn.slice(1).map((p, i, alle) => ({
+          x: p.x,
           /* Die letzte Station ist der Platz selbst — dort wird
              gelandet, also ohne Anhebung. */
-          y: i === alle.length - 1 ? ende.y : Math.max(6, q.y + anheben)
+          y: i === alle.length - 1 ? ende.y : Math.max(6, p.y + anheben)
         }));
         let gesamt = 0;
         const laengen = [];
@@ -34911,10 +34839,7 @@
       /* Die Spur. Die Anzahl richtet sich nach der Strecke, damit die
          Haufen bei zwei Plaetzen nicht auf einem Klumpen liegen und
          bei sechs nicht wie Perlen an einer Schnur. */
-      /* RUNDE 80 — bei gemaltem Weg zaehlt die LAENGE DES UMWEGS,
-         nicht die Luftlinie: sonst legt der Maulwurf zu wenige
-         Haufen und der Wall reisst auf den langen Abschnitten. */
-      const weite = bahnGesamt || Math.hypot(ende.x - start.x, ende.y - start.y);
+      const weite = Math.hypot(ende.x - start.x, ende.y - start.y);
       /* Dichter als beim ersten Versuch: bei 0,38 lagen drei Haufen
          wie Perlen auf der Strecke. Ein Maulwurfsgang ist an der
          Oberflaeche ein durchgehender WALL, also muessen sich die
@@ -34995,13 +34920,8 @@
         /* RUNDE 75 — 0,035 statt 0,05: bei breiteren Haufen war der
            Wall sonst 1,4 Bildbreiten breit und lag neben der Spur. */
         const quer = (((i * 37) % 11) - 5) * (d * 0.035);
-        /* RUNDE 80 — XANDER: „das soll auch fuer das Flugzeug, die
-           Sprungfeder und den Maulwurf gehen."
-           Der Wall folgt jetzt dem gemalten Streckenzug. Ohne
-           gemalten Weg liefert bahnPunkt genau die alte Gerade. */
-        const bp = bahnPunkt(t);
-        const hx = bp.x + quer;
-        const hy = bp.y
+        const hx = start.x + (ende.x - start.x) * t + quer;
+        const hy = start.y + (ende.y - start.y) * t
                  + (versatzM0 + (versatzM1 - versatzM0) * t)
                  + quer * 0.55;
         /* RUNDE 74 — XANDER: „keine Klumpen in verschiedener Groesse,
@@ -35903,49 +35823,32 @@
          Plaetzen auf, und genau dort klang sie. Jetzt ist die Zahl
          der Spruenge gleich der Zahl der ueberquerten Plaetze: jeder
          Aufsetzer liegt auf einem Platz, keiner daneben. */
-      /* RUNDE 80 — DER GEMALTE WEG GILT AUCH FUER DIE SPRUNGFEDER
-         XANDER: „das soll auch fuer das Flugzeug, die Sprungfeder und
-         den Maulwurf gehen."
-         Ist ein Weg gemalt, sind die AUFSETZER die gemalten Stationen
-         — die Feder huepft den Umweg ab und landet auf jedem Platz,
-         den er gezogen hat. Ohne gemalten Weg bleibt es bei einem
-         Sprung je ueberquertem Platz (Runde 74). */
-      const federLand = bahn && bahnAnteile.length
-        ? bahnAnteile.slice()
-        : Array.from({ length: Math.max(1, plaetzeR) },
-                     (_, i) => (i + 1) / Math.max(1, plaetzeR));
-      const federSpruenge = federLand.length;
+      const federSpruenge = Math.max(1, plaetzeR);
+      const federSchritte = federSpruenge * 2;
       const spruenge = [];
-      /* RUNDE 71 — XANDER: „Bei der Feder … ist sie immer so
-         ausgeblendet von der Transparenz."
-         Er hat genau hingesehen. Der Grund ist eine Falle der
-         Web-Animations: steht eine Eigenschaft NUR im letzten Bild,
-         dann rechnet der Browser sie vom Ausgangswert an ueber die
-         GANZE Animation hoch. „opacity: 0" stand nur ganz am Ende —
-         also verblasste die Feder vom ersten Sprung an gleichmaessig
-         bis auf null. Dieselbe Falle war schon einmal beim Sprungturm
-         zu sehen.
-         Deshalb traegt jedes Bild „opacity: 1", und verschwunden wird
-         erst ganz zum Schluss. */
-      const federRahmen = (x, y, t) => ({
-        transform: "translate(" + (x - start.x).toFixed(1) + "px, " + (y - start.y).toFixed(1)
-          + "px) translate(-50%, -50%)",
-        opacity: 1,
-        offset: Math.min(1, (t * hin) / dauer)
-      });
-      spruenge.push(federRahmen(start.x, start.y, 0));
-      let federVor = 0;
-      federLand.forEach((zielT) => {
-        /* Der Scheitel liegt genau zwischen zwei Aufsetzern — so
-           bleibt der Bogen ein Bogen, auch wenn die Abschnitte des
-           gemalten Weges verschieden lang sind. */
-        const mitteT = (federVor + zielT) / 2;
-        const pm = bahnPunkt(mitteT);
-        spruenge.push(federRahmen(pm.x, pm.y - d * (0.8 - mitteT * 0.35), mitteT));
-        const pz = bahnPunkt(zielT);
-        spruenge.push(federRahmen(pz.x, pz.y, zielT));
-        federVor = zielT;
-      });
+      for (let i = 0; i <= federSchritte; i++) {
+        const t = i / federSchritte;
+        const x = start.x + (ende.x - start.x) * t;
+        const bogen = (i % 2 ? 1 : 0) * d * (0.8 - t * 0.35);
+        const y = start.y + (ende.y - start.y) * t - bogen;
+        spruenge.push({
+          transform: "translate(" + (x - start.x).toFixed(1) + "px, " + (y - start.y).toFixed(1)
+            + "px) translate(-50%, -50%)",
+          /* RUNDE 71 — XANDER: „Bei der Feder … ist sie immer so
+             ausgeblendet von der Transparenz."
+             Er hat genau hingesehen. Der Grund ist eine Falle der
+             Web-Animations: steht eine Eigenschaft NUR im letzten
+             Bild, dann rechnet der Browser sie vom Ausgangswert an
+             ueber die GANZE Animation hoch. „opacity: 0" stand nur
+             ganz am Ende — also verblasste die Feder vom ersten
+             Sprung an gleichmaessig bis auf null. Dieselbe Falle war
+             schon einmal beim Sprungturm zu sehen.
+             Deshalb traegt jedes Bild jetzt „opacity: 1", und
+             verschwunden wird erst ganz zum Schluss. */
+          opacity: 1,
+          offset: Math.min(1, (t * hin) / dauer)
+        });
+      }
       /* Angekommen — und noch voll da. */
       spruenge.push({ transform: "translate(" + (ende.x - start.x) + "px, "
         + (ende.y - start.y) + "px) translate(-50%, -50%)", opacity: 1,
@@ -35957,9 +35860,9 @@
       /* RUNDE 59 — XANDER: „Der Sound der Sprungfeder muss fuer jedes
          Feld, auf das die Sprungfeder huepft, immer wieder dieses
          Sprungfedergeraeusch haben und nicht nur einmal."
-         Der Ton liegt deshalb auf dem Abstoss und danach auf JEDEM
-         Aufsetzer — bei gemaltem Weg also auf jeder gemalten Station,
-         sonst auf jedem ueberquerten Platz. */
+         Die Feder setzt bei den GERADEN Schritten auf (0, 2, 4, 6 —
+         dazwischen liegt jeweils der Bogen). Genau dort klingt sie
+         jetzt, viermal statt einmal. */
       /* RUNDE 74 — UND DAS GERAEUSCH IST JETZT EIN BOING.
          XANDER: „Irgendwie ist das nicht dieses typische
          Comicgeraeusch, was man erwarten wuerde."
@@ -35973,10 +35876,10 @@
          Hoehe des Abstands zum naechsten Aufsetzer, damit sich zwei
          Spruenge nie ueberlagern. */
       const abstandF = Math.max(240, Math.round(hin / Math.max(1, federSpruenge)));
-      lcTonSpaeter("federboing", 0, 0.62, abstandF);
-      federLand.forEach((zielT) => {
-        lcTonSpaeter("federboing", Math.round(zielT * hin), 0.5, abstandF);
-      });
+      for (let i = 0; i <= federSchritte; i += 2) {
+        lcTonSpaeter("federboing", Math.round((i / federSchritte) * hin),
+                     i === 0 ? 0.62 : 0.5, abstandF);
+      }
     } else if (art === "beamen") {
       /* „Das muss wirklich wie bei Star Trek und ein schoener
          Beameffekt sein." Zwei Saeulen: eine loest sich hier auf, die
@@ -37904,31 +37807,8 @@
        entfernten Platz und frisst sich bis dorthin durch. Gefressen
        wird dabei niemand (siehe „probe" weiter unten) — es liegen ja
        nur die Kuegelchen auf dem Weg, und genau die wollte er sehen. */
-    /* =================================================================
-       RUNDE 76 — PAC-MAN FRISST DEN GEMALTEN WEG
-       -----------------------------------------------------------------
-       XANDER: „Pac-Man: eigener Weg zeichnen … ueber die Plaetze."
-       Bisher suchte er sich IMMER selbst den kuerzesten Weg. Jetzt
-       darf hinter dem Befehl dieselbe Kette stehen wie beim Fahren
-       („/pacman 1-2-3-7"): dann frisst er sich genau da entlang, auch
-       quer durch den Raum. Die letzte Zahl ist das Ziel — sitzt dort
-       jemand, wird er gefressen; ist der Platz frei, ist es eine
-       Vorfuehrung wie die Probefahrt darunter. */
-    let bahnP = null;
-    const kettePac = String(wen || "").trim();
-    if (/^\d+(-\d+)+$/.test(kettePac)) {
-      const nrnPac = kettePac.split("-").map(Number);
-      const stPac = nrnPac.map((n) => gitter.find((q) => q.nr === n)).filter(Boolean);
-      if (stPac.length === nrnPac.length && stPac.length > 1) {
-        bahnP = stPac[0] === ab ? stPac : [ab].concat(stPac);
-        zu = bahnP[bahnP.length - 1];
-        /* Wer dort sitzt, ist das Opfer — der Name entscheidet weiter
-           unten, auf welchem Geraet jemand von der Buehne faellt. */
-        wen = zu.frei ? "" : (zu.name || "");
-      }
-    }
-    const probe = !zu || zu.nr === ab.nr || !String(wen || "").trim();
-    if (probe && (!zu || zu.nr === ab.nr)) {
+    const probe = !zu || zu.nr === ab.nr;
+    if (probe) {
       let weit = null, beste = -1;
       gitter.forEach((p) => {
         if (p.nr === ab.nr) return;
@@ -37938,7 +37818,7 @@
       if (!weit) return false;
       zu = weit;
     }
-    const weg = bahnP || lcWegSuchen(gitter, ab.nr, zu.nr, true);
+    const weg = lcWegSuchen(gitter, ab.nr, zu.nr, true);
     if (!weg) return false;
     const kreis = ab.el.querySelector(".lc-kreis");
     const opfer = zu.el.querySelector(".lc-kreis");

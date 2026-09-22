@@ -210,7 +210,15 @@ function tonMessen(name) {
 
   /* „Ich moechte den pacman zum ausprobieren auch wenn niemand da ist
      uebers Feld schicken koennen." */
-  sage(/const probe = !zu \|\| zu\.nr === ab\.nr;/.test(js)
+  /* RUNDE 76 — diese Regel stand als Quelltext-Vergleich hier
+     („const probe = !zu || zu.nr === ab.nr;"). Sie ist rot geworden,
+     weil Pac-Man jetzt auch eine gemalte Kette annimmt und die
+     Bedingung deshalb eine dritte Moeglichkeit hat. Was Xander
+     gemeint hat, ist aber nicht die Zeile, sondern das Verhalten:
+     ohne Ziel faehrt er trotzdem, und gefressen wird dabei niemand.
+     Genau das steht jetzt hier — gemessen weiter unten am Weg selbst,
+     hier nur, dass die Probefahrt ueberhaupt vorgesehen ist. */
+  sage(/PROBEFAHRT: ohne Ziel sucht sich Pac-Man den am weitesten/.test(js)
     && /if \(probe\) return;/.test(js),
     "Pac-Man faehrt auch ohne Ziel — und frisst dabei niemanden");
 
@@ -391,6 +399,146 @@ function tonMessen(name) {
   sage(du && du.vor.length >= 4 && weit < 3,
     "und die Augen bleiben beim Scrollen auf den Gesichtern",
     "weitester Abstand danach " + weit.toFixed(1) + " px");
+
+  /* =================================================================
+     DER GEMALTE WEG FUER FLUGZEUG, SPRUNGFEDER UND MAULWURF
+     -----------------------------------------------------------------
+     XANDER: „das Weg zeichnen … das soll auch fuer das Flugzeug, die
+     Sprungfeder und den Maulwurf gehen."
+     Gemessen wird nicht, ob der Quelltext eine Kette annimmt, sondern
+     ob die drei den Umweg WIRKLICH abfahren: das Flugzeug an seiner
+     Weglaenge, die Feder an ihren Aufsetzern und der Maulwurf an
+     seinen Erdhaufen. Verglichen wird jedes Mal mit derselben Reise
+     ohne Kette — nur der Unterschied beweist etwas.
+     Die Pruefbuehne hat acht Plaetze in zwei Reihen
+     (1-4 oben, 5-8 unten); Platz 1 bin ich, 6, 7 und 8 sind frei. */
+  console.log("\nGemalter Weg");
+  await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
+  const gitterW = await pg.evaluate(() => [...document.querySelectorAll(".lc-platz")]
+    .map((p) => { const r = p.getBoundingClientRect();
+      return { nr: +p.dataset.lcPlatz, x: r.left + r.width / 2, y: r.top + r.height / 2 }; }));
+  const platzW = (nr) => gitterW.find((g) => g.nr === nr);
+
+  /* --- Das Flugzeug: der Umweg ist laenger als die gerade Strecke --- */
+  const flugWeg = async (kette) => {
+    await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
+    await pg.evaluate((k) => window.DMA_PRUEFUNG.wirkung("flug", k, "Alex"), kette);
+    await new Promise((f) => setTimeout(f, 160));
+    const bahn = await pg.evaluate(() => {
+      const el = document.querySelector(".lc-flieger"); if (!el) return null;
+      const an = el.getAnimations()[0]; if (!an) return null;
+      an.pause(); const aus = [];
+      for (let ms = 0; ms <= 5200; ms += 60) {
+        an.currentTime = ms; const r = el.getBoundingClientRect();
+        aus.push([r.left + r.width / 2, r.top + r.height / 2]);
+      }
+      return aus;
+    });
+    await new Promise((f) => setTimeout(f, 4600));
+    if (!bahn) return null;
+    return bahn.slice(1).reduce((a, p, i) =>
+      a + Math.hypot(p[0] - bahn[i][0], p[1] - bahn[i][1]), 0);
+  };
+  const flugGerade = await flugWeg("8");
+  const flugUmweg = await flugWeg("1-2-3-4-8");
+  sage(flugGerade && flugUmweg && flugUmweg > flugGerade * 1.15,
+    "flug: der gemalte Umweg wird wirklich geflogen",
+    flugGerade ? "gerade " + flugGerade.toFixed(0) + " px, ueber 2-3-4 "
+      + flugUmweg.toFixed(0) + " px" : "nicht messbar");
+
+  /* --- Die Sprungfeder setzt auf JEDER Station auf ------------------ */
+  const federNah = async (kette) => {
+    await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
+    await pg.evaluate((k) => window.DMA_PRUEFUNG.wirkung("feder", k, "Alex"), kette);
+    await new Promise((f) => setTimeout(f, 160));
+    const aus = await pg.evaluate(() => {
+      const el = document.querySelector(".lc-feder"); if (!el) return null;
+      const an = el.getAnimations()[0]; if (!an) return null;
+      an.pause(); const bahn = [];
+      for (let ms = 0; ms <= 4400; ms += 40) {
+        an.currentTime = ms; const r = el.getBoundingClientRect();
+        bahn.push([r.left + r.width / 2, r.top + r.height / 2]);
+      }
+      return bahn;
+    });
+    await new Promise((f) => setTimeout(f, 4000));
+    if (!aus) return null;
+    return [6, 7].map((nr) => { const g = platzW(nr);
+      return Math.min(...aus.map((p) => Math.hypot(p[0] - g.x, p[1] - g.y))); });
+  };
+  const federOhne = await federNah("8");
+  const federMit = await federNah("1-6-7-8");
+  sage(federMit && federOhne && Math.max(...federMit) < 12
+       && Math.max(...federOhne) > 25,
+    "feder: sie setzt auf jeder gemalten Station auf",
+    federMit ? "mit Weg " + federMit.map((x) => x.toFixed(1)).join(" / ")
+      + " px, ohne Weg " + federOhne.map((x) => x.toFixed(1)).join(" / ") + " px" : "nicht messbar");
+
+  /* --- Der Maulwurfswall folgt dem Umweg --------------------------- */
+  const wallNah = async (kette) => {
+    await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
+    await pg.evaluate((k) => window.DMA_PRUEFUNG.wirkung("maulwurf", k, "Alex"), kette);
+    await new Promise((f) => setTimeout(f, 220));
+    const hs = await pg.evaluate(() => [...document.querySelectorAll(".lc-erdhaufen")]
+      .map((h) => { const r = h.getBoundingClientRect();
+        return [r.left + r.width / 2, r.top + r.height / 2]; }));
+    await new Promise((f) => setTimeout(f, 3400));
+    if (!hs.length) return null;
+    return [6, 7].map((nr) => { const g = platzW(nr);
+      return Math.min(...hs.map((p) => Math.hypot(p[0] - g.x, p[1] - g.y))); });
+  };
+  const wallOhne = await wallNah("8");
+  const wallMit = await wallNah("1-6-7-8");
+  sage(wallMit && wallOhne && Math.max(...wallMit) < 30
+       && Math.max(...wallOhne) > 35,
+    "maulwurf: der Wall graebt sich ueber die gemalten Plaetze",
+    wallMit ? "mit Weg " + wallMit.map((x) => x.toFixed(1)).join(" / ")
+      + " px, ohne Weg " + wallOhne.map((x) => x.toFixed(1)).join(" / ") + " px" : "nicht messbar");
+
+  /* --- Pac-Man frisst den gemalten Weg (Runde 76) ------------------- */
+  const pacWeg = async (was) => {
+    await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
+    await pg.evaluate((x) => window.DMA_PRUEFUNG.wirkung("pacjagd", x, "Alex"), was);
+    await new Promise((f) => setTimeout(f, 260));
+    const aus = await pg.evaluate(() => {
+      const kr = [...document.querySelectorAll(".lc-pac-krume-platz")].map((e) => {
+        const r = e.getBoundingClientRect();
+        return [r.left + r.width / 2, r.top + r.height / 2]; });
+      const pl = [...document.querySelectorAll(".lc-platz")].map((q) => {
+        const r = q.getBoundingClientRect();
+        return { nr: +q.dataset.lcPlatz, x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+      return kr.map((c) => { let b = 0, d = 1e9;
+        pl.forEach((q) => { const e = Math.hypot(q.x - c[0], q.y - c[1]);
+          if (e < d) { d = e; b = q.nr; } }); return b; });
+    });
+    await new Promise((f) => setTimeout(f, 4600));
+    return aus;
+  };
+  const pacKurz = await pacWeg("Emmi");
+  const pacKette = await pacWeg("1-2-3-7");
+  sage(pacKette.join("-") === "1-2-3-7" && pacKurz.join("-") !== "1-2-3-7",
+    "pacman: er frisst genau den gemalten Weg statt des kuerzesten",
+    "mit Kette " + pacKette.join("-") + ", ohne Kette " + pacKurz.join("-"));
+
+  /* Und die Probefahrt ohne Ziel faehrt wirklich (Runde 80) — jetzt
+     gemessen statt am Quelltext abgelesen. */
+  const pacOhne = await pacWeg("");
+  sage(pacOhne.length > 1,
+    "pacman: ohne Ziel faehrt er trotzdem ueber das Feld",
+    "Kruemel auf " + (pacOhne.join("-") || "keinem Platz"));
+
+  /* --- Der gemalte Weg darf ueber Besetzte (Runde 76) --------------- */
+  const appP = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
+  sage(!/if \(!p\.frei\) return;\s*\/\/ nicht durch Besetzte/.test(appP),
+    "der gemalte Weg bricht an einem besetzten Platz nicht mehr ab");
+
+  /* --- Und die Kette kommt ueberhaupt bis zur Animation ------------- */
+  const lcW = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
+  sage(/kettenR = \(art === "flug" \|\| art === "feder" \|\| art === "maulwurf"\)/.test(lcW),
+    "livechat.js nimmt die Kette fuer genau diese drei an");
+  const appW = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
+  sage(/const bahnFaehig = \{ flug: 1, feder: 1, maulwurf: 1 \};/.test(appW),
+    "und das Anreise-Menue schickt ihnen den gemalten Weg mit");
 
   await br.close(); srv.close();
   console.log(fehler ? "\n" + fehler + " Regel(n) nicht erfuellt" : "\nAlles in Ordnung");

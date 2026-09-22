@@ -279,11 +279,18 @@ console.log("\nDIE SPRUNGFEDER TRIFFT DIE FELDER");
    NACHBARPLATZ trotzdem zwei Spruenge — der erste setzte mitten
    zwischen zwei Plaetzen auf. Jetzt ist die Zahl der Spruenge gleich
    der Zahl der ueberquerten Plaetze. */
+/* RUNDE 76 — die Feder folgt jetzt auch einem GEMALTEN Weg („das
+   soll auch fuer das Flugzeug, die Sprungfeder und den Maulwurf
+   gehen"). Die Aufsetzer stehen deshalb in einer Liste („federLand")
+   statt in einer festen Schrittzahl: mit gemaltem Weg ist es je eine
+   Station, ohne einer je ueberquertem Platz. Die Regel, die Xander
+   gemeint hat, ist unveraendert — sie steht nur an einer anderen
+   Stelle im Quelltext. */
 pruefe("die Zahl der Spruenge ist die Zahl der Plaetze",
-  /const federSpruenge = Math\.max\(1, plaetzeR\);/.test(js)
-  && /const federSchritte = federSpruenge \* 2;/.test(js));
+  /Array\.from\(\{ length: Math\.max\(1, plaetzeR\) \}/.test(js)
+  && /const federSpruenge = federLand\.length;/.test(js));
 pruefe("und der Ton liegt auf jedem Aufsetzen",
-  /for \(let i = 0; i <= federSchritte; i \+= 2\)/.test(js));
+  /federLand\.forEach\(\(zielT\) => \{\s*\n\s*lcTonSpaeter\("federboing", Math\.round\(zielT \* hin\)/.test(js));
 
 console.log("\nLOK UND DAMPFER");
 pruefe("die Lok stampft beim Anfahren", ton("lokstampf") && gelistet("lokstampf")

@@ -47,7 +47,11 @@ const lc = ohneK(fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8"));
     /if \(tauschbar && zu\.frei\) \{[\s\S]{0,200}?tausch = false;/.test(js));
   pruefe("der Tausch faehrt mit der Nachricht, nicht nur beim Absender",
     /lcReise\(wenR, vonR, art, Boolean\(nachricht && nachricht\.tausch\)\)/.test(js)
-    && /\{ wirkung: art, wen: rest\.trim\(\), tausch: 1 \}/.test(lc));
+    /* RUNDE 76 — hier stand „wen: rest.trim()". Seit Flugzeug,
+       Sprungfeder und Maulwurf auch eine gemalte Kette annehmen, wird
+       die Zielnummer vorher aus dem Rest gezogen („zielNrR"); beim
+       Tausch faehrt weiterhin genau diese eine Nummer mit. */
+    && /\{ wirkung: art, wen: String\(zielNrR\), tausch: 1 \}/.test(lc));
   pruefe("livechat erkennt den besetzten Platz selbst",
     /if \(zielR && !zielR\.leer && zielR\.id !== zustand\.ichId\) tauschR = 1;/.test(lc));
   pruefe("und es gibt einen Weg dorthin im Platzmenue",

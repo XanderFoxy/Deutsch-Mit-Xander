@@ -8869,9 +8869,9 @@ window.LiveChat = (function () {
     { gr: "reden", w: "stoerung", kurz: "tv",  nutzt: "/stoerung Name",    was: "Bildstoerung — schlechter Empfang, das Bild zerreisst" },
     { gr: "reden", w: "fahren",  kurz: "fahrt", nutzt: "/fahren Name",      was: "hinfahren \u2014 dein Bild rollt zum freien Platz daneben und bleibt dort" },
     { gr: "reden", w: "flug", kurz: "fliegen", nutzt: "/flug 5",
-      was: "Flugzeug \u2014 dein Bild sitzt hinter dem Fenster und wird auf Platz 5 abgesetzt; mit gemaltem Weg auch \u00fcber Umwege (/flug 1-5-6)" },
+      was: "Flugzeug \u2014 dein Bild sitzt hinter dem Fenster und wird auf Platz 5 abgesetzt" },
     { gr: "reden", w: "maulwurf", kurz: "graben", nutzt: "/maulwurf 5",
-      was: "Maulwurf \u2014 du gr\u00e4bst dich unter dem Raum hindurch und kommst auf Platz 5 wieder heraus; mit gemaltem Weg auch \u00fcber Umwege (/maulwurf 1-5-6)" },
+      was: "Maulwurf \u2014 du gr\u00e4bst dich unter dem Raum hindurch und kommst auf Platz 5 wieder heraus" },
     { gr: "reden", w: "portal", kurz: "gate", nutzt: "/portal 5",
       was: "Tor \u2014 du verschwindest im Wirbel und tauchst auf Platz 5 wieder auf" },
     { gr: "reden", w: "boot", kurz: "segeln", nutzt: "/boot 5",
@@ -8901,7 +8901,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "liane", kurz: "schwingen", nutzt: "/liane 5",
       was: "Liane \u2014 du schwingst dich wie Tarzan zu Platz 5" },
     { gr: "reden", w: "feder", kurz: "sprungfeder", nutzt: "/feder 5",
-      was: "Sprungfeder \u2014 du federst zu Platz 5 und setzt dabei auf jedem gemalten Platz auf (/feder 1-5-6)" },
+      was: "Sprungfeder \u2014 du federst zu Platz 5" },
     { gr: "reden", w: "beamen", kurz: "beam", nutzt: "/beamen 5",
       was: "Beamen \u2014 du loest dich auf und erscheinst auf Platz 5 wieder" },
     { gr: "reden", w: "rohr", kurz: "roehre", nutzt: "/rohr 5",
@@ -10865,7 +10865,7 @@ window.LiveChat = (function () {
          /* RUNDE 75 */
          || art === "untertasse" || art === "mieze" || art === "frisbee"
          || art === "gotteshand" || art === "pranke")
-        && /^\s*\d+(\s*-\s*\d+)*\s*$/.test(rest)) {
+        && /^\s*\d+\s*$/.test(rest)) {
       var satzR = { flug: [" fliegt zu Platz ", "\u2708\ufe0f"],
                     maulwurf: [" gr\u00e4bt sich zu Platz ", "\ud83e\udda1"],
                     portal: [" geht durchs Tor zu Platz ", "\ud83c\udf00"],
@@ -10887,30 +10887,6 @@ window.LiveChat = (function () {
                     pranke: [" wird von der Gorillapranke gesetzt auf Platz ", "\ud83e\udd8d"],
                     frisbee: [" fliegt als Frisbee zu Platz ", "\ud83e\udd4f"] }[art];
       /* =========================================================
-         RUNDE 80 — DER GEMALTE WEG GILT AUCH FUER FLUGZEUG,
-         SPRUNGFEDER UND MAULWURF
-         ---------------------------------------------------------
-         XANDER: „das Weg zeichnen … das soll auch fuer das
-         Flugzeug, die Sprungfeder und den Maulwurf gehen."
-         Bisher nahm dieser Zweig nur EINE Zahl an; malte man einen
-         Weg und tippte dann „Flugzeug", fiel die Kette hier durch
-         und landete als Nickname im Chat. Jetzt darf hinter diesen
-         drei Befehlen dieselbe Kette stehen wie beim Fahren
-         („/flug 1-5-6"): die letzte Zahl ist das Ziel, die davor
-         sind die Stationen. Sie faehrt unveraendert mit, damit
-         JEDES Geraet denselben Umweg zeichnet.
-         Bei allen anderen Reisen bleibt nur die Zielnummer stehen —
-         sie kennen keine Stationen, dort waere ein Umweg nur eine
-         krumme Linie. */
-      var kettenR = (art === "flug" || art === "feder" || art === "maulwurf");
-      var stationenR = String(rest).replace(/\s+/g, "").split("-")
-        .map(function (x) { return parseInt(x, 10); });
-      var zielNrR = stationenR[stationenR.length - 1];
-      var ueberR = (kettenR && stationenR.length > 2)
-        ? " \u00fcber " + stationenR.slice(1, -1).join(", ") : "";
-      var wenR = (kettenR && stationenR.length > 1)
-        ? stationenR.join("-") : String(zielNrR);
-      /* =========================================================
          RUNDE 78 — EIN BESETZTER PLATZ IST EIN TAUSCH
          ---------------------------------------------------------
          XANDER: „dass man in dem Reisemenue jemand anderen als Ziel
@@ -10929,7 +10905,7 @@ window.LiveChat = (function () {
       if (art === "frisbee" || art === "rohr") {
         var zielR = null;
         plaetzeBauen().forEach(function (pl) {
-          if (pl.nummer === zielNrR) zielR = pl;
+          if (pl.nummer === parseInt(rest.trim(), 10)) zielR = pl;
         });
         if (zielR && !zielR.leer && zielR.id !== zustand.ichId) tauschR = 1;
       }
@@ -10937,10 +10913,10 @@ window.LiveChat = (function () {
         return anAlle("aktion",
           zustand.ichName + " tauscht den Platz mit " + zielR.name
           + (art === "frisbee" ? "  \ud83e\udd4f" : "  \ud83d\udfe2"),
-          { wirkung: art, wen: String(zielNrR), tausch: 1 });
+          { wirkung: art, wen: rest.trim(), tausch: 1 });
       }
-      return anAlle("aktion", zustand.ichName + satzR[0] + zielNrR + ueberR
-                    + "  " + satzR[1], { wirkung: art, wen: wenR });
+      return anAlle("aktion", zustand.ichName + satzR[0] + rest.trim() + "  " + satzR[1],
+                    { wirkung: art, wen: rest.trim() });
     }
     if ((art === "fahren" || art === "huepfen" || art === "laufen")
         && /^\s*\d+(\s*-\s*\d+)*(\s*[x\u00d7]\d)?\s*$/i.test(rest)) {
@@ -11018,22 +10994,6 @@ window.LiveChat = (function () {
          Effekt mit Zufall kann sie ebenso benutzen. */
       return anAlle("aktion", zustand.ichName + " " + satzP.satz + " " + zielWort(wemP) + "  " + satzP.emoji,
                     { wirkung: satzP.wirkung, wen: wemP.name, los: Math.random().toFixed(4) });
-    }
-    /* =========================================================
-       RUNDE 76 — PAC-MAN FRISST EINEN GEMALTEN WEG
-       ---------------------------------------------------------
-       XANDER: „Pac-Man: eigener Weg zeichnen … ueber die Plaetze."
-       Steht statt eines Namens eine Kette da („/pacman 1-2-3-7"),
-       ist das der gemalte Weg. Er faehrt unveraendert mit, damit
-       JEDES Geraet dieselbe Strecke frisst; im Chat steht das ZIEL
-       und nicht die Zahlenreihe — sonst liest sich die Zeile wie
-       eine Telefonnummer. */
-    if (art === "pacman" && /^\s*\d+(\s*-\s*\d+)+\s*$/.test(rest)) {
-      var kettePac = String(rest).replace(/\s+/g, "");
-      var zielPac = kettePac.split("-").pop();
-      return anAlle("aktion", zustand.ichName
-        + " frisst sich als Pac-Man bis Platz " + zielPac + "  \ud83d\udc7e",
-        { wirkung: "pacjagd", wen: kettePac });
     }
     /* Und die vier, die es fuer den Raum schon gibt: nur MIT Namen
        wird daraus die kleine Fassung am Platz. */

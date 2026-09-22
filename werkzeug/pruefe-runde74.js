@@ -124,8 +124,11 @@ pruefe("die alten liegen im Backup",
   fs.existsSync(path.join(WURZEL, "werkzeug", "backup", "ton-runde73", "rohrsog.opus")));
 
 console.log("\nSPRUNGFEDER, HELIKOPTER, BILLARD, ANGEL\n");
+/* RUNDE 76 — seit die Feder auch einem gemalten Weg folgen kann,
+   stehen die Aufsetzer in „federLand"; ohne gemalten Weg ist das
+   genau wie vorher einer je ueberquertem Platz. */
 pruefe("die Feder setzt auf Plaetzen auf, nicht dazwischen",
-  /const federSpruenge = Math\.max\(1, plaetzeR\);/.test(js));
+  /Array\.from\(\{ length: Math\.max\(1, plaetzeR\) \}/.test(js));
 pruefe("und sie macht ein Comic-Boing",
   ton("federboing") && gelistet("federboing")
   && /lcTonSpaeter\("federboing",/.test(js));

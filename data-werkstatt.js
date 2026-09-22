@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 80, zehnter Teil: Kopfhoerer, Zugvoegel, Spuckton",
+  stand: "Runde 81: der gemalte Weg gilt auch fuer Flugzeug, Sprungfeder, Maulwurf und Pac-Man",
 
   inArbeit: [
-    { seit: "2026-09-22T03:53",
-      text: "Der Rest von Xanders Liste vom 22. September" },
+    { seit: "2026-09-22T04:33",
+      text: "Der Rest von Xanders Liste aus Runde 76: Salve auf mehrere, Zylinder mit Kaninchen, Frosch-Sprung, Musik teilen mit YouTube, Anziehen-Modul, Telefon mit Audio" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T03:53",
-      text: "Der Kopfhoerer laesst Luft: der Buegel sitzt 5,5 px ueber dem Bildrand statt darauf (gemessen). Die Breite bleibt bei 112 %, sonst ueberschneidet er sich mit dem Nachbarplatz — zwischen zwei Bildern liegen nur 7 px." },
-    { seit: "2026-09-22T03:53",
-      text: "Ein Song-Ausschnitt laesst sich jetzt angeben: /kopfhoerer Bea 3 1:20-1:50 spielt genau diese dreissig Sekunden. Der Ausschnitt reist in der Nachricht mit, gilt also auf dem Geraet des Hoerers." },
-    { seit: "2026-09-22T03:53",
-      text: "Die Zugvoegel schlagen nicht mehr ohne Pause: vier Schlaege, dann Gleiten (gemessen 8 Schritte mit Schlag, 14 im Gleiten von 25). Und der Keil faehrt auf der Luft statt schnurgerade zu ziehen — vier Hoehenwechsel, 413 px Spanne." },
-    { seit: "2026-09-22T03:53",
-      text: "Das Spuckgeraeusch ist neu gerechnet. GEMESSEN war der Auswurf mit -31 dB die LEISESTE Stelle — leiser als das Raeuspern davor. Jetzt ist er mit -18,7 dB der lauteste Punkt des ganzen Geraeusches." },
-    { seit: "2026-09-22T03:53",
-      text: "Neue Pruefung werkzeug/pruefe-runde81.js: 36 Regeln fuer diesen Teil der Liste, alle gruen. Fuenf aeltere Pruefungen pruefen jetzt, was die Regel meint, statt der Zahlen, die Xander aendern wollte." },
+    { seit: "2026-09-22T04:33",
+      text: "Der gemalte Weg gilt jetzt auch fuer das Flugzeug, die Sprungfeder und den Maulwurf. GEMESSEN: das Flugzeug fliegt den Umweg wirklich (436 px statt 348 px Luftlinienbogen), die Feder setzt auf jeder gemalten Station auf (2,0 und 2,5 px Abstand statt 72 und 37), und der Maulwurfswall graebt sich ueber die gemalten Plaetze (17 px statt 75)." },
+    { seit: "2026-09-22T04:33",
+      text: "Pac-Man frisst jetzt auch einen selbst gezeichneten Weg. In der Pac-Man-Kachel stehen dafuer zwei Eintraege: sofort losfressen oder erst den Weg mit dem Finger ziehen. GEMESSEN: mit Kette liegen die Kruemel auf 1-2-3-7, ohne auf dem kuerzesten Weg 1-5." },
+    { seit: "2026-09-22T04:33",
+      text: "Der gemalte Weg darf ueber besetzte Plaetze. Bisher brach der Strich ab, sobald jemand im Weg sass; anhalten kann man dort weiterhin nicht, das faengt der Befehl ab." },
+    { seit: "2026-09-22T04:33",
+      text: "Neue Regeln in werkzeug/pruefe-runde81.js fuer diese sechs Punkte, alle gruen. Drei aeltere Pruefungen (72, 74, 78) pruefen jetzt, was die Regel meint, statt der Quelltextzeile, die sich geaendert hat." },
   ],
 };
