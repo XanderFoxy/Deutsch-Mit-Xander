@@ -13473,35 +13473,14 @@ body.lc-schreibt .tutor-reiter {
       rgba(163, 18, 31, 0) 73%),
     /* Das linke Rinnsal. Eine Ellipse, deren Mittelpunkt OBEN am
        Kachelrand sitzt: daraus wird eine Zunge, die oben breit
-       ansetzt und unten rund auslaeuft — eine Nase, kein Balken.
-       RUNDE 80 — die Halbachse quer war „100 %" und damit so breit
-       wie die GANZE Kachel. Am linken und rechten Kachelrand lag der
-       Verlauf deshalb erst bei der Haelfte seines Weges und war dort
-       noch voll deckend: es stand ein hartes Rechteck im Bild. Mit
-       „50 %" endet der Verlauf genau am Kachelrand, und die Zunge hat
-       wieder eine runde Kante. */
-    radial-gradient(ellipse 50% 100% at 50% 0%,
-      #8e1420 0 70%, rgba(163, 18, 31, .85) 86%, rgba(163, 18, 31, 0) 100%),
+       ansetzt und unten rund auslaeuft — eine Nase, kein Balken. */
+    radial-gradient(ellipse 100% 100% at 50% 0%,
+      #8e1420 0 78%, rgba(163, 18, 31, .85) 88%, rgba(163, 18, 31, 0) 96%),
     /* das rechte Rinnsal */
-    radial-gradient(ellipse 50% 100% at 50% 0%,
-      #8e1420 0 70%, rgba(180, 20, 31, .85) 86%, rgba(180, 20, 31, 0) 100%),
-    /* RUNDE 80 — XANDER: „bei dem Blut … vielleicht kannst du dieses
-       Blut was von oben kommt so ein bisschen oval zur Seite laufen
-       lassen."
-       Der Saum oben blieb bisher ein Saum: er wurde nicht breiter und
-       lief nirgendwohin. Diese beiden Lagen sind die zwei OVALE, die
-       vom Saum aus an den Flanken nach aussen und nach unten laufen.
-       Sie sind breiter als hoch — das ist das „oval" — und ihre
-       Stelle wandert in der Animation nach aussen (9 % -> 4 % links,
-       91 % -> 96 % rechts). Weil das Element „border-radius: 50 %"
-       traegt, schneidet der runde Bildrand sie ab; sie legen sich
-       also an die Woelbung an, statt ueber sie hinauszustehen. */
-    radial-gradient(ellipse 50% 50% at 50% 42%,
-      #8e1420 0 44%, rgba(142, 20, 32, .72) 72%, rgba(142, 20, 32, 0) 100%),
-    radial-gradient(ellipse 50% 50% at 50% 42%,
-      #a3121f 0 44%, rgba(163, 18, 31, .72) 72%, rgba(163, 18, 31, 0) 100%);
-  background-position: 50% 0%, 21% 0%, 79% 0%, 9% 10%, 91% 10%;
-  background-size: 100% 100%, 7% 34%, 6% 26%, 16% 9%, 14% 8%;
+    radial-gradient(ellipse 100% 100% at 50% 0%,
+      #8e1420 0 78%, rgba(180, 20, 31, .85) 88%, rgba(180, 20, 31, 0) 96%);
+  background-position: 50% 0%, 21% 0%, 79% 0%;
+  background-size: 100% 100%, 7% 34%, 6% 26%;
   animation: lcBlutSaumR77 4.6s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 3;
@@ -13510,10 +13489,8 @@ body.lc-schreibt .tutor-reiter {
    Der Saum (die erste Lage) behaelt seine Groesse — sonst waere er
    wieder ein Deckel, der auf- und zugeht. */
 @keyframes lcBlutSaumR77 {
-  0%   { background-size: 100% 100%, 7% 16%, 6% 11%, 16% 9%, 14% 8%;
-         background-position: 50% 0%, 21% 0%, 79% 0%, 9% 10%, 91% 10%; }
-  100% { background-size: 100% 100%, 7% 52%, 6% 40%, 32% 19%, 28% 17%;
-         background-position: 50% 0%, 21% 0%, 79% 0%, 4% 27%, 96% 25%; }
+  0%   { background-size: 100% 100%, 7% 16%, 6% 11%; }
+  100% { background-size: 100% 100%, 7% 52%, 6% 40%; }
 }
 /* XANDER: „und bei dem Blut das können wir auch realistischer machen
    das ist mehr runter tropft und dann unten auch sich bisschen
@@ -18434,20 +18411,7 @@ body.lc-schreibt .tutor-reiter {
    lang, an der unteren Hälfte des Rings. */
 .lc-platz-spricht[data-sprechbild="eis"]::after { display: block; }
 .lc-platz-spricht[data-sprechbild="eis"]::after {
-  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%20-7%20100%20114%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22ez%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%22.98%22%2F%3E%3Cstop%20offset%3D%22.35%22%20stop-color%3D%22%23cdecff%22%20stop-opacity%3D%22.95%22%2F%3E%3Cstop%20offset%3D%22.78%22%20stop-color%3D%22%23a3dcf5%22%20stop-opacity%3D%22.84%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238fd2f0%22%20stop-opacity%3D%22.42%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22es%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%22.92%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b6e3fa%22%20stop-opacity%3D%22.9%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M85.18%2C56.06%20A%2035.7%2035.7%200%200%201%2014.82%2C56.06%20L17.97%2C55.52%20A%2032.5%2032.5%200%200%200%2082.03%2C55.52%20Z%22%20fill%3D%22url%28%23es%29%22%2F%3E%3Cpath%20d%3D%22M82.82%2C55.66%20Q82.72%2C59.23%2082.22%2C61.07%20Q81.72%2C60.85%2081.63%2C60.41%20A%2033.3%2033.3%200%200%200%2082.82%2C55.66%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M81.52%2C58.93%20L82.02%2C60.46%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M81.63%2C60.41%20Q81.48%2C67.08%2080.69%2C70.51%20Q79.91%2C68.62%2079.76%2C64.95%20A%2033.3%2033.3%200%200%200%2081.63%2C60.41%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M79.99%2C63.58%20L80.49%2C68.95%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M79.76%2C64.95%20Q79.56%2C71.23%2078.5%2C74.46%20Q77.44%2C72.66%2077.24%2C69.15%20A%2033.3%2033.3%200%200%200%2079.76%2C64.95%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M77.8%2C67.95%20L78.3%2C72.98%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M77.24%2C69.15%20Q76.99%2C79.95%2075.69%2C85.51%20Q74.38%2C81.24%2074.13%2C72.95%20A%2033.3%2033.3%200%200%200%2077.24%2C69.15%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M74.99%2C71.95%20L75.49%2C82.61%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M74.13%2C72.95%20Q73.84%2C82.47%2072.32%2C87.38%20Q70.79%2C83.59%2070.5%2C76.24%20A%2033.3%2033.3%200%200%200%2074.13%2C72.95%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M71.62%2C75.49%20L72.12%2C84.82%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M70.5%2C76.24%20Q70.18%2C83.61%2068.46%2C87.41%20Q66.75%2C84.54%2066.43%2C78.97%20A%2033.3%2033.3%200%200%200%2070.5%2C76.24%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M67.76%2C78.5%20L68.26%2C85.45%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M66.43%2C78.97%20Q66.07%2C91.76%2064.21%2C98.36%20Q62.35%2C92.48%2061.99%2C81.07%20A%2033.3%2033.3%200%200%200%2066.43%2C78.97%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M63.51%2C80.92%20L64.01%2C94.69%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M61.99%2C81.07%20Q61.62%2C90.91%2059.65%2C95.99%20Q57.68%2C91.4%2057.3%2C82.49%20A%2033.3%2033.3%200%200%200%2061.99%2C81.07%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M58.95%2C82.68%20L59.45%2C93.14%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M57.3%2C82.49%20Q56.91%2C97.98%2054.88%2C105.95%20Q52.84%2C98.22%2052.45%2C83.21%20A%2033.3%2033.3%200%200%200%2057.3%2C82.49%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M54.18%2C83.75%20L54.68%2C101.33%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M52.45%2C83.21%20Q52.06%2C95.02%2050%2C101.11%20Q47.94%2C95.02%2047.55%2C83.21%20A%2033.3%2033.3%200%200%200%2052.45%2C83.21%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M49.3%2C84.11%20L49.8%2C97.53%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M47.55%2C83.21%20Q47.16%2C91.09%2045.12%2C95.15%20Q43.09%2C90.84%2042.7%2C82.49%20A%2033.3%2033.3%200%200%200%2047.55%2C83.21%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M44.42%2C83.75%20L44.92%2C92.69%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M42.7%2C82.49%20Q42.32%2C95.23%2040.35%2C101.79%20Q38.38%2C94.74%2038.01%2C81.07%20A%2033.3%2033.3%200%200%200%2042.7%2C82.49%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M39.65%2C82.68%20L40.15%2C97.79%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M38.01%2C81.07%20Q37.65%2C89.59%2035.79%2C93.97%20Q33.93%2C88.87%2033.57%2C78.97%20A%2033.3%2033.3%200%200%200%2038.01%2C81.07%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M35.09%2C80.92%20L35.59%2C91.18%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M33.57%2C78.97%20Q33.25%2C91.19%2031.54%2C97.48%20Q29.82%2C90.26%2029.5%2C76.24%20A%2033.3%2033.3%200%200%200%2033.57%2C78.97%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M30.84%2C78.5%20L31.34%2C93.51%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M29.5%2C76.24%20Q29.21%2C84.18%2027.68%2C88.28%20Q26.16%2C83.06%2025.87%2C72.95%20A%2033.3%2033.3%200%200%200%2029.5%2C76.24%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M26.98%2C75.49%20L27.48%2C85.54%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M25.87%2C72.95%20Q25.62%2C77.16%2024.31%2C79.33%20Q23.01%2C75.87%2022.76%2C69.15%20A%2033.3%2033.3%200%200%200%2025.87%2C72.95%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M23.61%2C71.95%20L24.11%2C77.68%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M22.76%2C69.15%20Q22.56%2C75.16%2021.5%2C78.25%20Q20.44%2C73.73%2020.24%2C64.95%20A%2033.3%2033.3%200%200%200%2022.76%2C69.15%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M20.8%2C67.95%20L21.3%2C76.01%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M20.24%2C64.95%20Q20.09%2C67.66%2019.31%2C69.07%20Q18.52%2C66.12%2018.37%2C60.41%20A%2033.3%2033.3%200%200%200%2020.24%2C64.95%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M18.61%2C63.58%20L19.11%2C67.79%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M18.37%2C60.41%20Q18.28%2C63.23%2017.78%2C64.68%20Q17.28%2C61.61%2017.18%2C55.66%20A%2033.3%2033.3%200%200%200%2018.37%2C60.41%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M17.08%2C58.93%20L17.58%2C63.35%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3C%2Fsvg%3E") center/100% 114% no-repeat;
-  /* RUNDE 80 — XANDER: „die letzten grossen Spitzen, die ganz unten
-     sind, die werden abgeschnitten."
-     GEMESSEN an der Zeichnung selbst: der tiefste Punkt eines Zapfens
-     liegt bei y = 105,95, der viewBox endete aber bei 100. Die
-     untersten sechs Einheiten lagen also ausserhalb des Bildes und
-     wurden weggeschnitten — mit einer schnurgeraden Kante, genau wie
-     er es beschreibt.
-     Der viewBox ist jetzt „0 -7 100 114", die Hintergrundgroesse
-     „100 % 114 %". Das ist kein Verzerren: der Kasten ist auch um
-     14 % hoeher, eine Zeichnungseinheit bleibt also in beiden Achsen
-     genau ein Prozent der Bildbreite. Weil der Hintergrund mittig
-     sitzt, reicht er von -7 bis 107 — der tiefste Zapfen bei 105,95
-     passt hinein, und oben bleibt derselbe Abstand. */
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22ez%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%22.98%22%2F%3E%3Cstop%20offset%3D%22.35%22%20stop-color%3D%22%23cdecff%22%20stop-opacity%3D%22.95%22%2F%3E%3Cstop%20offset%3D%22.78%22%20stop-color%3D%22%23a3dcf5%22%20stop-opacity%3D%22.84%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%238fd2f0%22%20stop-opacity%3D%22.42%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22es%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ffffff%22%20stop-opacity%3D%22.92%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23b6e3fa%22%20stop-opacity%3D%22.9%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M85.18%2C56.06%20A%2035.7%2035.7%200%200%201%2014.82%2C56.06%20L17.97%2C55.52%20A%2032.5%2032.5%200%200%200%2082.03%2C55.52%20Z%22%20fill%3D%22url%28%23es%29%22%2F%3E%3Cpath%20d%3D%22M82.82%2C55.66%20Q82.72%2C59.23%2082.22%2C61.07%20Q81.72%2C60.85%2081.63%2C60.41%20A%2033.3%2033.3%200%200%200%2082.82%2C55.66%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M81.52%2C58.93%20L82.02%2C60.46%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M81.63%2C60.41%20Q81.48%2C67.08%2080.69%2C70.51%20Q79.91%2C68.62%2079.76%2C64.95%20A%2033.3%2033.3%200%200%200%2081.63%2C60.41%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M79.99%2C63.58%20L80.49%2C68.95%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M79.76%2C64.95%20Q79.56%2C71.23%2078.5%2C74.46%20Q77.44%2C72.66%2077.24%2C69.15%20A%2033.3%2033.3%200%200%200%2079.76%2C64.95%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M77.8%2C67.95%20L78.3%2C72.98%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M77.24%2C69.15%20Q76.99%2C79.95%2075.69%2C85.51%20Q74.38%2C81.24%2074.13%2C72.95%20A%2033.3%2033.3%200%200%200%2077.24%2C69.15%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M74.99%2C71.95%20L75.49%2C82.61%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M74.13%2C72.95%20Q73.84%2C82.47%2072.32%2C87.38%20Q70.79%2C83.59%2070.5%2C76.24%20A%2033.3%2033.3%200%200%200%2074.13%2C72.95%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M71.62%2C75.49%20L72.12%2C84.82%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M70.5%2C76.24%20Q70.18%2C83.61%2068.46%2C87.41%20Q66.75%2C84.54%2066.43%2C78.97%20A%2033.3%2033.3%200%200%200%2070.5%2C76.24%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M67.76%2C78.5%20L68.26%2C85.45%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M66.43%2C78.97%20Q66.07%2C91.76%2064.21%2C98.36%20Q62.35%2C92.48%2061.99%2C81.07%20A%2033.3%2033.3%200%200%200%2066.43%2C78.97%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M63.51%2C80.92%20L64.01%2C94.69%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M61.99%2C81.07%20Q61.62%2C90.91%2059.65%2C95.99%20Q57.68%2C91.4%2057.3%2C82.49%20A%2033.3%2033.3%200%200%200%2061.99%2C81.07%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M58.95%2C82.68%20L59.45%2C93.14%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M57.3%2C82.49%20Q56.91%2C97.98%2054.88%2C105.95%20Q52.84%2C98.22%2052.45%2C83.21%20A%2033.3%2033.3%200%200%200%2057.3%2C82.49%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M54.18%2C83.75%20L54.68%2C101.33%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M52.45%2C83.21%20Q52.06%2C95.02%2050%2C101.11%20Q47.94%2C95.02%2047.55%2C83.21%20A%2033.3%2033.3%200%200%200%2052.45%2C83.21%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M49.3%2C84.11%20L49.8%2C97.53%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M47.55%2C83.21%20Q47.16%2C91.09%2045.12%2C95.15%20Q43.09%2C90.84%2042.7%2C82.49%20A%2033.3%2033.3%200%200%200%2047.55%2C83.21%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M44.42%2C83.75%20L44.92%2C92.69%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M42.7%2C82.49%20Q42.32%2C95.23%2040.35%2C101.79%20Q38.38%2C94.74%2038.01%2C81.07%20A%2033.3%2033.3%200%200%200%2042.7%2C82.49%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M39.65%2C82.68%20L40.15%2C97.79%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M38.01%2C81.07%20Q37.65%2C89.59%2035.79%2C93.97%20Q33.93%2C88.87%2033.57%2C78.97%20A%2033.3%2033.3%200%200%200%2038.01%2C81.07%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M35.09%2C80.92%20L35.59%2C91.18%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M33.57%2C78.97%20Q33.25%2C91.19%2031.54%2C97.48%20Q29.82%2C90.26%2029.5%2C76.24%20A%2033.3%2033.3%200%200%200%2033.57%2C78.97%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M30.84%2C78.5%20L31.34%2C93.51%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M29.5%2C76.24%20Q29.21%2C84.18%2027.68%2C88.28%20Q26.16%2C83.06%2025.87%2C72.95%20A%2033.3%2033.3%200%200%200%2029.5%2C76.24%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M26.98%2C75.49%20L27.48%2C85.54%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M25.87%2C72.95%20Q25.62%2C77.16%2024.31%2C79.33%20Q23.01%2C75.87%2022.76%2C69.15%20A%2033.3%2033.3%200%200%200%2025.87%2C72.95%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M23.61%2C71.95%20L24.11%2C77.68%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M22.76%2C69.15%20Q22.56%2C75.16%2021.5%2C78.25%20Q20.44%2C73.73%2020.24%2C64.95%20A%2033.3%2033.3%200%200%200%2022.76%2C69.15%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M20.8%2C67.95%20L21.3%2C76.01%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M20.24%2C64.95%20Q20.09%2C67.66%2019.31%2C69.07%20Q18.52%2C66.12%2018.37%2C60.41%20A%2033.3%2033.3%200%200%200%2020.24%2C64.95%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M18.61%2C63.58%20L19.11%2C67.79%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M18.37%2C60.41%20Q18.28%2C63.23%2017.78%2C64.68%20Q17.28%2C61.61%2017.18%2C55.66%20A%2033.3%2033.3%200%200%200%2018.37%2C60.41%20Z%22%20fill%3D%22url%28%23ez%29%22%2F%3E%3Cpath%20d%3D%22M17.08%2C58.93%20L17.58%2C63.35%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%22.6%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%20opacity%3D%22.6%22%2F%3E%3C%2Fsvg%3E") center/100% 100% no-repeat;
   filter: drop-shadow(0 1px 2px rgba(60, 110, 150, .45));
   animation: lcSfEisR40 3.2s ease-in-out infinite alternate;
 }
@@ -25026,20 +24990,6 @@ body.lc-schreibt .tutor-reiter {
           drop-shadow(0 0 1px rgba(255, 255, 255, .9));
   animation: lcEisblumeR77 5.6s cubic-bezier(.3, .75, .35, 1) infinite alternate;
 }
-/* RUNDE 80 — XANDER: „bei dem Eis … die Eisblumen sind jetzt von so
-   einer kachelartigen Kontrastkante umgeben."
-   GEFUNDEN, und es ist genau eine Kachel: eine Maske mit
-   „mask-repeat: no-repeat" ist AUSSERHALB ihres Kastens durchsichtig,
-   und durchsichtig heisst hier unsichtbar. Bei „mask-size: 68 %" war
-   der Kasten kleiner als das Bild — alles ausserhalb wurde also an
-   einem RECHTECK abgeschnitten. Genau diese vier geraden Kanten hat
-   er gesehen, und deshalb waren die aeusseren Eisblumen auch blass.
-   Der Maskenkasten geht jetzt nie unter 100 %: er deckt das Bild
-   immer ganz ab, also gibt es keine Kante mehr. Das Wachsen von
-   aussen nach innen bleibt — es steckt im Loch der Maske, nicht im
-   Kasten: bei 320 % liegt das durchsichtige Loch (0 bis 52 % des
-   Radius) ueber 83 % der Bildbreite, es ist also nur der aeusserste
-   Saum zu sehen; bei 100 % nur noch ueber den inneren 26 %. */
 @keyframes lcEisblumeR77 {
   0% {
     opacity: .5; transform: scale(.9);
@@ -25047,17 +24997,17 @@ body.lc-schreibt .tutor-reiter {
   }
   40% {
     opacity: 1; transform: scale(1);
-    -webkit-mask-size: 160% 160%; mask-size: 160% 160%;
+    -webkit-mask-size: 120% 120%; mask-size: 120% 120%;
   }
   100% {
     opacity: 1; transform: scale(1.04);
-    -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+    -webkit-mask-size: 68% 68%; mask-size: 68% 68%;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-platz-spricht[data-sprechbild="eis"] .lc-kreis::before {
     animation: none;
-    -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+    -webkit-mask-size: 68% 68%; mask-size: 68% 68%;
   }
 }
 
@@ -26179,85 +26129,4 @@ body.lc-schreibt .tutor-reiter {
   cursor: pointer;
   border: 0;
   padding: 0;
-}
-
-/* === RUNDE 80: FUNKEN AN DER VERJÜNGUNG DER FLAMMEN ==================
-   XANDER: „beim Feuer kannst du noch ein bisschen die Flammen nach
-   unten bringen … und du kannst an den Verjüngung kleine Partikel
-   fliegen lassen."
-
-   Die Verjüngung ist die Spitze. Bisher gab es Funken nur als
-   Hintergrundmuster über dem ganzen Feld (.lc-tfeuer::after) — die
-   stiegen also irgendwo auf, nicht aus einer Flamme. Ein Funke pro
-   Flamme, gebaut in lcSprechFeld (app.js), löst das.
-
-   WARUM KEIN ::after AN DER FLAMME SELBST: jede Flamme trägt einen
-   clip-path für ihre Silhouette, und ein clip-path schneidet auch
-   die Pseudo-Elemente ab. Der Funke wäre also nie zu sehen gewesen.
-
-   DIE HÖHE: die Flamme steht mit „translate(-50%, -100%)" auf ihrem
-   Fusspunkt und ist „0.30rem * --gross + 0.13rem" breit,
-   „0.54rem * --gross + 0.24rem" hoch. Der Funke bekommt denselben
-   Fusspunkt und genau diese Höhe als zusätzliche Verschiebung nach
-   oben — er startet damit auf der Spitze, nicht am Fuss. */
-.lc-funke {
-  position: absolute;
-  left: var(--links, 50%);
-  top: var(--oben, 50%);
-  /* GEMESSEN und nachgebessert: mit 0,075rem waren die Funken auf
-     dem Bildschirm unter einem Bildpunkt gross und praktisch nicht
-     zu sehen. 0,105rem plus Sockel ergibt bei --gross 1 rund 2,4 px
-     — klein genug fuer „kleine Partikel", gross genug, dass man sie
-     fliegen sieht. */
-  width: calc(0.105rem * var(--gross, 1) + 0.06rem);
-  height: calc(0.105rem * var(--gross, 1) + 0.06rem);
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff6dc 0 34%, #ffb347 62%, rgba(255,120,0,0) 100%);
-  box-shadow: 0 0 3px rgba(255, 180, 60, .9);
-  pointer-events: none;
-  will-change: transform, opacity;
-  animation-name: lcFunkeAbR80;
-  animation-timing-function: ease-out;
-  animation-iteration-count: infinite;
-}
-@keyframes lcFunkeAbR80 {
-  0% {
-    transform: translate(-50%, calc(-100% - (0.54rem * var(--gross, 1) + 0.24rem)))
-               rotate(var(--neig, 0deg)) translateY(0) scale(.5);
-    opacity: 0;
-  }
-  14% { opacity: 1; }
-  100% {
-    transform: translate(-50%, calc(-100% - (0.54rem * var(--gross, 1) + 0.24rem)))
-               rotate(var(--neig, 0deg))
-               translateY(calc(-0.5rem * var(--weg, 1)))
-               translateX(calc(0.11rem * var(--weg, 1)))
-               scale(.15);
-    opacity: 0;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lc-funke { animation: none; opacity: 0; }
-}
-
-/* === RUNDE 80: DIE BLÜTE SCHLIESST SICH WIEDER =======================
-   XANDER: „bei der Blüte … vielleicht kannst du so machen, dass wenn
-   man nicht durchgängig spricht, dass sie sich wieder verschließen."
-
-   Bisher hing die ganze Blüte an .lc-platz-spricht — hörte jemand auf
-   zu sprechen, war sie im selben Bild verschwunden. Jetzt hält
-   livechatPlaetzeAuffrischen (app.js) den Platz noch 900 ms als
-   „spricht" und setzt dabei .lc-sprech-schliesst; hier wird in dieser
-   Zeit das Zugehen abgespielt. „forwards" hält den geschlossenen
-   Zustand, damit sie nicht im letzten Moment wieder aufblitzt. */
-.lc-sprech-schliesst[data-sprechbild="bluete"]::after {
-  animation: lcSfBlueteZuR80 .9s cubic-bezier(.4, 0, .6, 1) forwards !important;
-}
-@keyframes lcSfBlueteZuR80 {
-  0%   { transform: translateX(-50%) scale(1.5);  opacity: .96; }
-  45%  { transform: translateX(-50%) scale(1.24); opacity: .8; }
-  100% { transform: translateX(-50%) scale(1.02); opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lc-sprech-schliesst[data-sprechbild="bluete"]::after { animation: none !important; opacity: 0; }
 }

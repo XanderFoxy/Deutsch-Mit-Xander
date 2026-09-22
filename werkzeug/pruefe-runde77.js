@@ -85,11 +85,21 @@ pruefe("oben liegt kein Balken mehr, sondern ein Saum",
   && /@keyframes lcBlutSaumR77/.test(css));
 pruefe("der Saum folgt dem Bildrand, er deckt nicht",
   /radial-gradient\(ellipse 170% 100% at 50% -60%/.test(css));
+/* RUNDE 80 — XANDER: „bei dem Blut … vielleicht kannst du dieses
+   Blut was von oben kommt so ein bisschen oval zur Seite laufen
+   lassen." Dazu sind zwei Lagen dazugekommen (die beiden Ovale an
+   den Flanken), und deren Stelle wandert mit. Gemessen wird deshalb
+   nicht mehr die Zeichenkette von damals, sondern was die Regel
+   sagt: der Saum liegt mittig oben, das linke Rinnsal deutlich
+   links, das rechte deutlich rechts. */
 pruefe("und es laeuft nach links und rechts herunter",
-  /background-position: 50% 0%, 21% 0%, 79% 0%;/.test(css));
+  /background-position: 50% 0%, 21% 0%, 79% 0%(,|;)/.test(css));
+/* Und ebenso: bewegt wird, wie weit die Rinnsale gekommen sind —
+   ihre Hoehe waechst von 16 auf 52 Prozent (links) und von 11 auf
+   40 Prozent (rechts). Die Ovale duerfen dabei mitwachsen. */
 pruefe("bewegt wird nur, wie weit die Rinnsale gekommen sind",
-  /0%   \{ background-size: 100% 100%, 7% 16%, 6% 11%; \}/.test(css)
-  && /100% \{ background-size: 100% 100%, 7% 52%, 6% 40%; \}/.test(css));
+  /0%   \{ background-size: 100% 100%, 7% 16%, 6% 11%/.test(css)
+  && /100% \{ background-size: 100% 100%, 7% 52%, 6% 40%/.test(css));
 
 console.log("\nDIE BLÜTE\n");
 pruefe("die Leuchtvignette um die Blaetter ist weg",
@@ -140,10 +150,18 @@ pruefe("die Zapfen haengen an einem durchgehenden Saum",
   /A 35\.7 35\.7 0 0 1 /.test(cssKlar));
 pruefe("ihr Fuss ist ein Stueck des Kreisbogens, nicht eine Sehne",
   (cssKlar.match(/A 33\.3 33\.3 0 0 0 /g) || []).length >= 19);
+/* RUNDE 80 — XANDER: „die Eisblumen sind jetzt von so einer
+   kachelartigen Kontrastkante umgeben." Das Ende der Maske stand auf
+   68 % und war damit KLEINER als das Bild; ausserhalb des
+   Maskenkastens ist eine no-repeat-Maske durchsichtig, also wurde an
+   einem Rechteck abgeschnitten. Der Kasten endet jetzt bei 100 %.
+   Geprueft wird deshalb, was die Regel meint: das Wachsen faengt
+   weit aussen an, und der Kasten wird nie kleiner als das Bild. */
 pruefe("die Eisblumen wachsen von aussen herein",
   /@keyframes lcEisblumeR77/.test(css)
   && /-webkit-mask-size: 320% 320%; mask-size: 320% 320%;/.test(css)
-  && /-webkit-mask-size: 68% 68%; mask-size: 68% 68%;/.test(css));
+  && /-webkit-mask-size: 100% 100%; mask-size: 100% 100%;/.test(css)
+  && !/mask-size: (\d|[1-9]\d)% /.test(css.split("@keyframes lcEisblumeR77")[1].slice(0, 400)));
 
 console.log("\nGLÜHEN UND MAGIE: MEHR UND FEINER\n");
 /* RUNDE 80 — XANDER hat beide Zahlen noch einmal nach oben gesetzt:
@@ -240,9 +258,19 @@ pruefe("und das Sprechbild wird solange geparkt",
    noch haengt." */
 pruefe("eine haengende Platznummer raeumt sich nach 12 s selbst weg",
   /LC_UNTERWEGS_WACHE/.test(js));
+/* RUNDE 80 — XANDER: „beim Feuer kannst du noch ein bisschen die
+   Flammen nach unten bringen … und du kannst an den Verjuengung
+   kleine Partikel fliegen lassen." Das Band ist deshalb noch einmal
+   nach innen gerueckt, und jede Flamme hat jetzt ihren eigenen
+   Funken an der Spitze. Geprueft wird die Regel, nicht die Zahl von
+   damals: der Fuss sitzt innerhalb des Bildrandes (34,73 %), und es
+   gibt sowohl die aufsteigenden Funken von Runde 77 als auch die
+   Funken an der Verjuengung. */
 pruefe("die Flammen sitzen tiefer und werfen Funken nach oben",
-  /band: \[33\.2, 34\.8\]/.test(js)
-  && /@keyframes lcFunkeAufR77/.test(css));
+  /feuer:  \{ menge: 30, klasse: "lc-tfeuer", rand: true, band: \[([\d.]+), ([\d.]+)\]/.test(js)
+  && Number(RegExp.$2) < 34.73
+  && /@keyframes lcFunkeAufR77/.test(css)
+  && /@keyframes lcFunkeAbR80/.test(css));
 
 console.log("\nDER VOGEL UND DAS ANSPUCKEN — ZWEI NEUE EFFEKTE\n");
 /* Ohne Eintrag in LC_EFFEKTE faellt lcWirkung gleich am Anfang
