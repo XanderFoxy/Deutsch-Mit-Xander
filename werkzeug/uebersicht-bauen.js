@@ -138,6 +138,58 @@ if (!rote.length) {
    XANDER: „Gib mir jetzt bitte eine Liste von den Sachen die alle noch
    offen sind." Wer 179 Abschnitte lesen muss, um das zu sehen, hat
    keine Liste. */
+/* NACH THEMA — damit er nachschlagen kann, statt zu suchen.
+   XANDER: „zeige mir alles was ich dir gesagt habe und was davon
+   wirklich noch offen ist." Sondennamen sagen ihm nichts; „Adler",
+   „Frosch", „Kopfhoerer" schon. Die Woerter stehen hier fest, weil
+   es SEINE Woerter sind — jedes kommt aus seinen Nachrichten. */
+const THEMEN = [
+  ["Adler / Greifvogel", /adler|greifvogel|schwinge|feder/i],
+  ["Aufgabe / Unterricht", /aufgabe|unterricht|lesetext|betonung|benot/i],
+  ["Anziehen / Ausziehen", /anziehen|ausziehen|krone|sonnenbrille|kleid|tanga/i],
+  ["Billard", /billard/i],
+  ["Bongo / Trommel", /bongo|trommel/i],
+  ["Bumerang", /bumerang|swoosh/i],
+  ["Ei", /\bei\b|eiknack|schale/i],
+  ["Fahrstuhl", /fahrstuhl/i],
+  ["Frosch", /frosch|quak/i],
+  ["Haende / Greifen", /hand|haende|greif|klatsch|daumen/i],
+  ["Hammer / Panzerglas", /hammer|panzerglas|splitter/i],
+  ["Hintergrund / Design", /hintergrund|design|kopfzeile|adresszeile|vollbild/i],
+  ["Kalender / Update-Panel", /kalender|update-panel|updatepanel/i],
+  ["Kaninchen / Zauberer", /kaninchen|zauberer|zylinder/i],
+  ["Katapult", /katapult/i],
+  ["Kopfhoerer / Musik", /kopfhoerer|musik|lied|ausschnitt|airpod/i],
+  ["Kuss / Klaps / Popo", /kuss|klaps|popo|arsch/i],
+  ["Lok / Gleise", /lok\b|lokomotive|gleis|draufsicht/i],
+  ["Luftballon", /luftballon|ballon|helium|aufblasen/i],
+  ["Mario-Modus", /mario|muenze|power-?up/i],
+  ["Maulwurf", /maulwurf|erdhaufen|graben/i],
+  ["Pac-Man", /pac-?man|pacman|futter/i],
+  ["Pferd", /pferd|galopp|trab/i],
+  ["Plaetze / Strichlinien", /strichlinie|platznummer|verlassen|rueckstand|glitch/i],
+  ["Schiffe versenken", /schiffe|versenken/i],
+  ["Schwimmbecken", /schwimm|becken|tauch/i],
+  ["Sprechbilder / Spinne", /sprechbild|spinne|spinnweb/i],
+  ["Spruehdose / Sahne", /spruehdose|sahne|spray|smiley/i],
+  ["Toene allgemein", /geraeusch|sound|ton\b|toene/i],
+  ["Verbindung / zwei Geraete", /leitung|paketverlust|supabase|relais|verbindung/i]
+];
+console.log("## Nach Thema \u2014 wo steht was\n");
+THEMEN.forEach(([wort, re]) => {
+  const treffer = zeilen.filter((z) =>
+    re.test(z.titel) || z.zitate.some((q) => re.test(q)));
+  if (!treffer.length) return;
+  const rot = treffer.filter((z) => z.urteil === "rot");
+  console.log("- **" + wort + "** \u2014 " + treffer.length + " Messung"
+    + (treffer.length === 1 ? "" : "en") + ", "
+    + (rot.length ? "**" + rot.length + " davon rot**: " + rot.map((z) => "`" + z.name + "`").join(", ")
+                  : "alle gr\u00fcn")
+    + "  \n  " + treffer.slice(0, 8).map((z) => "`" + z.name + "`").join(", ")
+    + (treffer.length > 8 ? " \u2026" : ""));
+});
+console.log("");
+
 console.log("## Die Kurzfassung \u2014 eine Zeile je Messung\n");
 zeilen.forEach((z) => {
   /* Der Titel bleibt so stehen, wie er im Kopf der Sonde steht —

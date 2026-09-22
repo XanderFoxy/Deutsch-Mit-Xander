@@ -35,7 +35,7 @@ WURZEL="$(cd "$(dirname "$0")/.." && pwd)"
 MACHEN=0
 [ "${1:-}" = "--machen" ] && MACHEN=1
 # Ab dieser Länge lohnt das Schneiden. Darunter hört man es nicht.
-GRENZE=0.12
+GRENZE=${GRENZE:-0.12}
 
 cd "$WURZEL" || exit 1
 for f in ton/*.opus; do

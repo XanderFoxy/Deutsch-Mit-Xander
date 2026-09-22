@@ -179,6 +179,31 @@ Luft entweicht.
 
 **Sonde:** `werkzeug/pruefe-runde89-ballon.js`
 
+## 12. Ein Aufschlagton muss sofort knallen
+
+XANDER: „Man hoert das Ei auch vorher, bevor man es aufschlaegt … der
+Katapult, den hoert man auch schon vorher, den Bumerang hoert man auch schon
+vorher — nicht in dem Moment, wo die Animation aufschlaegt oder trifft."
+
+Dafuer gibt es **zwei** Ursachen, und nur eine steht im Quelltext:
+
+1. Der Ton wird zur falschen Millisekunde eingeplant — das ist eine Zahl in
+   `app.js`.
+2. Die **Datei** hat einen stummen Vorlauf. Dann ist „bei 860 ms" in
+   Wirklichkeit 940 ms, und keine Zahl im Programm stimmt mehr.
+
+Gefunden wurde so `ton/aufsetzen.opus` (der Ton, mit dem die Riesenhand und
+die Gorillapranke jemanden absetzen): die ersten 62 ms waren praktisch still,
+der Schlag kam erst bei 80 ms. Jetzt: 16 ms. Die Datei ist dieselbe, nur
+vorne gekappt (`werkzeug/ton-vorlauf-kappen.sh`, jetzt mit setzbarer Grenze:
+`GRENZE=0.05 bash werkzeug/ton-vorlauf-kappen.sh`).
+
+**Sonde:** `werkzeug/pruefe-runde90-aufschlagtoene.js` — sie liest die
+Ankunftstoene aus `LC_ANKUNFT_TON` und misst an der Wellenform, dass der
+laute Teil innerhalb von 60 ms kommt.
+Und `werkzeug/pruefe-runde90-bumerangton.js` misst dasselbe von der anderen
+Seite: dass das Sausen **verklungen** ist, wenn es klopft.
+
 ---
 
 ## Vor jedem Hochladen

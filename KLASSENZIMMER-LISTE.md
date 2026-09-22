@@ -1,6 +1,6 @@
 # Was du gesagt hast — und was die Seite heute wirklich tut
 
-> Stand: 2026-09-22 22:28 · 181 Sonden · 181 grün, 0 rot, 0 ohne Urteil
+> Stand: 2026-09-22 23:06 · 183 Sonden · 183 grün, 0 rot, 0 ohne Urteil
 
 Diese Liste ist nicht aufgeschrieben, sondern **gemessen**. Jede Zeile
 ist eine Sonde: im Kopf steht dein Satz, im Programm läuft die Messung
@@ -20,6 +20,67 @@ node werkzeug/uebersicht-bauen.js /tmp/stand.txt > KLASSENZIMMER-LISTE.md
 Keine Sonde ist rot. Was noch offen ist, steht in der Werkstatt
 (`data-werkstatt.js`) — das sind die Dinge, für die es noch keine
 Messung gibt, nicht die, die eine Messung widerlegt.
+
+## Nach Thema — wo steht was
+
+- **Adler / Greifvogel** — 4 Messungen, alle grün  
+  `pruefe-runde18`, `pruefe-runde65`, `pruefe-runde72`, `pruefe-runde74`
+- **Aufgabe / Unterricht** — 19 Messungen, alle grün  
+  `pruefe-antwort-gehoert-dazu`, `pruefe-aufgabe-reist`, `pruefe-aufgabe`, `pruefe-aufgaben`, `pruefe-aufgabentafel`, `pruefe-benoten`, `pruefe-betonung-uebung`, `pruefe-betreiber` …
+- **Anziehen / Ausziehen** — 6 Messungen, alle grün  
+  `pruefe-runde18`, `pruefe-runde22`, `pruefe-runde75`, `pruefe-runde87-klaps`, `pruefe-runde88-selbst`, `pruefe-zusatzfelder`
+- **Billard** — 3 Messungen, alle grün  
+  `pruefe-runde29`, `pruefe-runde68`, `pruefe-runde88-billard`
+- **Bongo / Trommel** — 3 Messungen, alle grün  
+  `pruefe-runde18`, `pruefe-runde49`, `pruefe-runde88-bongo`
+- **Bumerang** — 4 Messungen, alle grün  
+  `pruefe-runde72`, `pruefe-runde76`, `pruefe-runde90-aufschlagtoene`, `pruefe-runde90-bumerangton`
+- **Ei** — 1 Messung, alle grün  
+  `pruefe-runde90-aufschlagtoene`
+- **Frosch** — 2 Messungen, alle grün  
+  `pruefe-runde83`, `pruefe-runde88-frosch`
+- **Haende / Greifen** — 18 Messungen, alle grün  
+  `pruefe-haende`, `pruefe-runde18`, `pruefe-runde25`, `pruefe-runde49`, `pruefe-runde65`, `pruefe-runde75`, `pruefe-runde76`, `pruefe-runde77` …
+- **Hammer / Panzerglas** — 1 Messung, alle grün  
+  `pruefe-runde82`
+- **Hintergrund / Design** — 14 Messungen, alle grün  
+  `pruefe-gluecksrad`, `pruefe-platzdesign`, `pruefe-postfach-knopf`, `pruefe-runde18`, `pruefe-runde23`, `pruefe-runde30`, `pruefe-runde74`, `pruefe-runde75` …
+- **Kalender / Update-Panel** — 2 Messungen, alle grün  
+  `pruefe-runde60`, `pruefe-runde87-kalender`
+- **Kaninchen / Zauberer** — 4 Messungen, alle grün  
+  `pruefe-runde83`, `pruefe-runde86`, `pruefe-runde88-kaninchen`, `pruefe-runde88-zauberer`
+- **Katapult** — 3 Messungen, alle grün  
+  `pruefe-katapult60`, `pruefe-runde87-katapult`, `pruefe-runde90-aufschlagtoene`
+- **Kopfhoerer / Musik** — 10 Messungen, alle grün  
+  `pruefe-befehlsreihenfolge`, `pruefe-runde22`, `pruefe-runde23`, `pruefe-runde60`, `pruefe-runde87-lied`, `pruefe-runde88-liedstellen`, `pruefe-runde88-modulhoehe`, `pruefe-runde88-selbst` …
+- **Kuss / Klaps / Popo** — 4 Messungen, alle grün  
+  `pruefe-runde49`, `pruefe-runde87-klaps`, `pruefe-runde88-klaps`, `pruefe-runde88-pferd`
+- **Lok / Gleise** — 8 Messungen, alle grün  
+  `pruefe-plaetze`, `pruefe-runde63`, `pruefe-runde65`, `pruefe-runde66`, `pruefe-runde72`, `pruefe-runde73`, `pruefe-runde74`, `pruefe-runde88-lok`
+- **Luftballon** — 5 Messungen, alle grün  
+  `pruefe-befehlsreihenfolge`, `pruefe-runde65`, `pruefe-runde76`, `pruefe-runde89-ballon`, `pruefe-zusatzfelder`
+- **Mario-Modus** — 4 Messungen, alle grün  
+  `pruefe-runde37`, `pruefe-runde59`, `pruefe-runde76`, `pruefe-runde88-mario`
+- **Maulwurf** — 8 Messungen, alle grün  
+  `pruefe-runde37`, `pruefe-runde63`, `pruefe-runde65`, `pruefe-runde73`, `pruefe-runde74`, `pruefe-runde75`, `pruefe-runde77`, `pruefe-runde88-maulwurf`
+- **Pac-Man** — 3 Messungen, alle grün  
+  `pruefe-runde16`, `pruefe-runde87-pacman`, `pruefe-runde88-pac`
+- **Pferd** — 1 Messung, alle grün  
+  `pruefe-runde88-pferd`
+- **Plaetze / Strichlinien** — 8 Messungen, alle grün  
+  `pruefe-platzdesign`, `pruefe-raumverlauf`, `pruefe-raumwechsel`, `pruefe-runde22`, `pruefe-runde72`, `pruefe-runde87-sechzehn`, `pruefe-runde87-strichlinien`, `pruefe-runde88-maulwurf`
+- **Schiffe versenken** — 2 Messungen, alle grün  
+  `pruefe-runde30`, `pruefe-runde88-schiffe`
+- **Schwimmbecken** — 6 Messungen, alle grün  
+  `pruefe-plaetze`, `pruefe-runde65`, `pruefe-runde72`, `pruefe-runde78`, `pruefe-runde88-becken`, `pruefe-runde88-schiffe`
+- **Sprechbilder / Spinne** — 6 Messungen, alle grün  
+  `pruefe-runde16`, `pruefe-runde20`, `pruefe-runde37`, `pruefe-runde77`, `pruefe-sprechbild-reist`, `pruefe-sprechbilder`
+- **Spruehdose / Sahne** — 1 Messung, alle grün  
+  `pruefe-runde86`
+- **Toene allgemein** — 33 Messungen, alle grün  
+  `pruefe-film-platz`, `pruefe-notenknopf-aufgabe`, `pruefe-runde18`, `pruefe-runde20`, `pruefe-runde27`, `pruefe-runde30`, `pruefe-runde49`, `pruefe-runde59` …
+- **Verbindung / zwei Geraete** — 4 Messungen, alle grün  
+  `pruefe-befund`, `pruefe-leitung`, `pruefe-runde27`, `pruefe-wartende-zeilen`
 
 ## Die Kurzfassung — eine Zeile je Messung
 
@@ -169,6 +230,8 @@ Messung gibt, nicht die, die eine Messung widerlegt.
 - ✅ `pruefe-runde88-zauberer` — DER ZAUBERER MIT BEIDEN HAENDEN
 - ✅ `pruefe-runde89-ballon` — DIE ZWEI LUFTBALLON-VARIANTEN, WIE ER SIE GENANNT HAT
 - ✅ `pruefe-runde89-bleibt` — WAS BLEIBEN SOLL, BLEIBT AUCH
+- ✅ `pruefe-runde90-aufschlagtoene` — EIN AUFSCHLAG MUSS KNALLEN, WENN ER GEPLANT IST
+- ✅ `pruefe-runde90-bumerangton` — DER BUMERANG: GEMESSEN AM TON, NICHT AM QUELLTEXT
 - ✅ `pruefe-runde90-flugwort` — „FLUGZEUG" IST DAS WORT, DAS ER BENUTZT
 - ✅ `pruefe-schallwelle` — MISST, OB DIE SCHALLWELLE EINE KANTE HAT.
 - ✅ `pruefe-schiffe60` — PADDELN UND DAS SEITENRAD
@@ -1265,6 +1328,20 @@ _(kein wörtliches Zitat im Kopf dieser Sonde)_
 > „sollen so lange auf der Person bleiben, bis sie sie von selber abnimmt“
 
 > „es kann nicht sein, dass beim zweiten Betaetigen von Birne an die Birne ausgeht“
+
+### ✅ EIN AUFSCHLAG MUSS KNALLEN, WENN ER GEPLANT IST  
+`pruefe-runde90-aufschlagtoene`
+
+> „Man hoert das Ei auch vorher, bevor man es aufschlaegt … der Katapult, den hoert man auch schon vorher, den Bumerang hoert man auch schon vorher — nicht in dem Moment, wo die Animation aufschlaegt oder trifft. Und das ist auch beim Schneeball so, beim Geld so, und irgendwie bei vielen Animationen.“
+
+### ✅ DER BUMERANG: GEMESSEN AM TON, NICHT AM QUELLTEXT  
+`pruefe-runde90-bumerangton`
+
+> „Bumerang — da fehlt dieses SWOOSH Geraeusch, was er macht, wenn er los fliegt und dann den Aufprall macht. Danach musst du auch ausrechnen, dass in dem Moment, wo der Bumerang aufprallt, das SWOOSH Geraeusch auch zu Ende ist.“
+
+> „Den Bumerang Sound kannst du ueberarbeiten.“
+
+> „Er muss erst mal auftreffen, man muss das hoelzerne Geraeusch, und dann muss der Schrei kommen — und das nicht sofort so getimet, dass der Schrei sofort zu hoeren ist. Das muss ja erst mal weh tun.“
 
 ### ✅ „FLUGZEUG" IST DAS WORT, DAS ER BENUTZT  
 `pruefe-runde90-flugwort`

@@ -49,22 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 90 — das Wort „Flugzeug“ und der Abgleich mit dem ganzen Verlauf (Fassung 498)",
+  stand: "Runde 91 — die Töne am Aufschlag, gemessen an der Wellenform (Fassung 499)",
 
   inArbeit: [
-    { seit: "2026-09-22T22:28", nurBetreiber: true,
+    { seit: "2026-09-22T23:06", nurBetreiber: true,
       text: "Sammellauf vor jedem Hochladen: bash werkzeug/alle-pruefen.sh" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T22:28",
-      text: "„/flugzeug“, „/flieger“ und „/jet“ führen jetzt zur Flugreise — die Reise gab es längst als /flug, nur dein Wort fiel ins Leere" },
-    { seit: "2026-09-22T22:28",
-      text: "Neue Sonde pruefe-runde90-flugwort: dieselbe Reise unter allen vier Wörtern, plus Tragflächen, Fenster und keine Reste" },
-    { seit: "2026-09-22T22:28",
-      text: "Neues Werkzeug werkzeug/verlauf-abgleich.py: gleicht jeden Satz aus deinem Verlauf gegen alle Sondenköpfe ab (3703 mit Echo, 180 ohne — alle 180 einzeln gelesen)" },
-    { seit: "2026-09-22T22:28",
-      text: "181 Sonden, 181 grün — KLASSENZIMMER-LISTE.md neu gebaut" },
+    { seit: "2026-09-22T23:06",
+      text: "ton/aufsetzen: die ersten 62 ms waren still — der Schlag kam 80 ms zu spät, jetzt 16 ms (Riesenhand und Gorillapranke setzen jetzt hörbar auf)" },
+    { seit: "2026-09-22T23:06",
+      text: "Neue Sonde pruefe-runde90-aufschlagtoene: misst JEDEN Ankunftston an der Wellenform, nicht am Quelltext" },
+    { seit: "2026-09-22T23:06",
+      text: "Neue Sonde pruefe-runde90-bumerangton: das Sausen ist verklungen (903 ms), wenn es klopft (860 ms) — genau wie du es verlangt hast" },
+    { seit: "2026-09-22T23:06",
+      text: "KLASSENZIMMER-LISTE.md hat jetzt ein Themenregister: Adler, Frosch, Lok, Kopfhörer, Luftballon … mit den Messungen dahinter" },
+    { seit: "2026-09-22T23:06",
+      text: "183 Sonden, 183 grün" },
   ],
 };
