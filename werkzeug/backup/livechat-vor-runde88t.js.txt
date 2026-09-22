@@ -11345,36 +11345,6 @@ window.LiveChat = (function () {
         return anAlle("aktion", zustand.ichName + " l\u00e4sst die Musik weiterlaufen  \u25b6\ufe0f",
                       { wirkung: "musikweiter" });
       }
-      /* =========================================================
-         RUNDE 88 — DER ABSCHNITT GILT AUCH FUER ALLE
-         ---------------------------------------------------------
-         XANDER: „die Songabschnitte, die ich festlege … sollen fuer
-         alle hoerbar werden."
-         Steht hinter dem Lied eine Zeit, ist sie der Ausschnitt —
-         genau wie beim Kopfhoerer:
-           /musik 3 1:18        ab 1:18 bis zum Schluss
-           /musik 3 1:18-1:53   genau diese Stelle
-         Die Zeit wird VORHER abgeschnitten, sonst suchte
-         liedFinden ein Lied namens „3 1:18". */
-      var stueckM = null;
-      var teileM = wahlM.split(/\s+/);
-      if (teileM.length > 1) {
-        var letzteM = teileM[teileM.length - 1];
-        var mM = /^(\d+(?::[0-5]\d)?)(?:\s*-\s*(\d+(?::[0-5]\d)?))?$/.exec(letzteM);
-        if (mM) {
-          var sekM = function (t) {
-            var teil = String(t).split(":");
-            return teil.length === 2 ? Number(teil[0]) * 60 + Number(teil[1]) : Number(teil[0]);
-          };
-          var abM = sekM(mM[1]);
-          var bisM = mM[2] ? sekM(mM[2]) : 0;
-          if (!bisM || bisM > abM) {
-            stueckM = { ab: abM, bis: bisM };
-            teileM.pop();
-            wahlM = teileM.join(" ");
-          }
-        }
-      }
       var liedM = liedFinden(wahlM);
       if (!liedM) {
         /* Nicht „kenne ich nicht" sagen: genau diese Formel steht fuer
@@ -11383,19 +11353,8 @@ window.LiveChat = (function () {
            anderes. */
         return systemZeile("\u201e" + wahlM + "\u201c liegt nicht im Musikordner.\n" + liederListe());
       }
-      var zeitwortM = stueckM
-        ? " (ab " + Math.floor(stueckM.ab / 60) + ":"
-          + String(stueckM.ab % 60).padStart(2, "0")
-          + (stueckM.bis
-              ? " bis " + Math.floor(stueckM.bis / 60) + ":"
-                + String(stueckM.bis % 60).padStart(2, "0")
-              : "") + ")"
-        : "";
-      return anAlle("aktion", zustand.ichName + " legt \u201e" + liedM.titel + "\u201c"
-                    + zeitwortM + " auf  \ud83c\udfb5",
-                    { wirkung: "musik", lied: liedM.datei, liedTitel: liedM.titel,
-                      liedAb: stueckM ? stueckM.ab : 0,
-                      liedBis: stueckM ? stueckM.bis : 0 });
+      return anAlle("aktion", zustand.ichName + " legt \u201e" + liedM.titel + "\u201c auf  \ud83c\udfb5",
+                    { wirkung: "musik", lied: liedM.datei, liedTitel: liedM.titel });
     }
     /* ---- DIE SPRUEHDOSE ----
        RUNDE 86 — XANDER: „ich moechte, dass wir eine Spruehdose

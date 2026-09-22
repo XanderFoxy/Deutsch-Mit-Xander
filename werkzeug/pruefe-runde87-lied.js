@@ -112,7 +112,14 @@ const sage = (gut, text, dazu) => {
     if (!lied) return { fehlt: "Liedliste" };
     lied.click();
     await new Promise((r) => setTimeout(r, 250));
-    const ganz = document.querySelector("#lcPlatzMenue .lc-lese-text");
+    /* RUNDE 88 — NICHT MEHR „DER ERSTE KNOPF". Seit es Songabschnitte
+       gibt, steht ganz oben der Weg zurueck zur Liederliste („aus dem
+       Mini in die Uebersicht fuer die anderen Lieder"). Wer blind den
+       ersten Knopf drueckt, geht damit zurueck statt vorwaerts — und
+       die Sonde misst dann ein Lied, das nie gestartet wurde. Gesucht
+       wird deshalb der Knopf, den auch ein Mensch sucht. */
+    const ganz = [...document.querySelectorAll("#lcPlatzMenue .lc-lese-text")]
+      .find((b2) => /Ganzes Lied/.test(b2.textContent));
     if (!ganz) return { fehlt: "Ganz-oder-Stueck" };
     ganz.click();
     await new Promise((r) => setTimeout(r, 900));

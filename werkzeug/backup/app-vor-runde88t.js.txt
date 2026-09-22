@@ -22767,63 +22767,6 @@
       localStorage.setItem("dma_lied_ausschnitt", JSON.stringify(alles));
     } catch (e) {}
   }
-  /* =====================================================================
-     RUNDE 88 — DIE SONGABSCHNITTE
-     ---------------------------------------------------------------------
-     XANDER: „Man soll die Moeglichkeit haben, einen Teilbereich des
-     Liedes festzusetzen und zu benennen wie einen Button, den man dann
-     daraus generiert … die Lieder sollen getaggt sein mit ihren
-     Songabschnitten, dass ich die als Buttons anwaehlen kann … und die
-     sollen fuer alle hoerbar werden."
-
-     ZWEI QUELLEN, und sie widersprechen sich nie:
-       · data-liedstellen.js — was mit der Seite ausgeliefert wird und
-         deshalb bei JEDEM da ist. Dort stehen seine eigenen Zeiten.
-       · das Profil — was man selbst benennt. „Diese Einstellungen
-         sollen so lange gespeichert bleiben mit dem Profil."
-     Gleiche Namen gewinnen aus dem Profil; so kann man eine gelieferte
-     Stelle ueberschreiben, ohne sie loeschen zu muessen.
-     ===================================================================== */
-  function lcLiedStellenEigen() {
-    /* Erst das Profil, dann der Notnagel im Geraet: wer nicht
-       angemeldet ist, soll seine Abschnitte trotzdem behalten. */
-    try {
-      const p = Backend.currentProfile && Backend.currentProfile();
-      const e = p && p.extra && p.extra.liedStellen;
-      if (e && typeof e === "object") return e;
-    } catch (x) {}
-    try { return JSON.parse(localStorage.getItem("dma_liedstellen") || "{}"); }
-    catch (x) { return {}; }
-  }
-  function lcLiedStellen(datei) {
-    const fest = (window.DMA_LIEDSTELLEN || {})[datei] || [];
-    const eigen = (lcLiedStellenEigen() || {})[datei] || [];
-    const raus = [];
-    const kenne = {};
-    [].concat(eigen, fest).forEach((st) => {
-      if (!st || !st.name) return;
-      const k = String(st.name).trim().toLowerCase();
-      if (!k || kenne[k]) return;
-      kenne[k] = true;
-      raus.push({ name: String(st.name).trim(),
-                  ab: Math.max(0, Number(st.ab) || 0),
-                  bis: Math.max(0, Number(st.bis) || 0) });
-    });
-    return raus.sort((a, b) => a.ab - b.ab);
-  }
-  function lcLiedStelleMerken(datei, name, ab, bis) {
-    const alles = lcLiedStellenEigen() || {};
-    const liste = (alles[datei] || []).filter(
-      (st) => String(st.name).trim().toLowerCase() !== String(name).trim().toLowerCase());
-    liste.push({ name: String(name).trim(), ab: ab, bis: bis });
-    alles[datei] = liste;
-    try { localStorage.setItem("dma_liedstellen", JSON.stringify(alles)); } catch (x) {}
-    /* „und fuer jeden anderen auch so genauso abrufbar" — deshalb ins
-       Profil und nicht nur ins Geraet. */
-    try { Backend.updateExtraProfileField("liedStellen", alles); } catch (x) {}
-    return liste;
-  }
-
   function lcAusschnittHolen(nr) {
     try {
       const alles = JSON.parse(localStorage.getItem("dma_lied_ausschnitt") || "{}");
@@ -22843,58 +22786,21 @@
     return /^\d{1,4}$/.test(t) ? Number(t) : -1;
   }
 
-  /* =====================================================================
-     SCHRITT 3 — WELCHER TEIL DES LIEDES
-     ---------------------------------------------------------------------
-     XANDER: „Man soll die Moeglichkeit haben, einen Teilbereich des
-     Liedes festzusetzen und zu benennen wie einen Button, den man dann
-     daraus generiert … und wenn man so ein Lied aufsetzt, soll man auch
-     wieder zurueckkommen aus dem Mini in die Uebersicht fuer die
-     anderen Lieder."
-
-     Deshalb steht hier jetzt dreierlei untereinander:
-       · der Weg ZURUECK zur Liederliste,
-       · die fertigen Abschnitte als Knoepfe (mit ihrer Zeit dahinter),
-       · und darunter die zwei Felder, mit denen man einen neuen
-         Abschnitt setzt — und ein Namensfeld, mit dem daraus ein
-         eigener Knopf wird, der bleibt.
-     Und das alles gilt jetzt auch fuer MUSIK FUER ALLE: „die sollen
-     fuer alle hoerbar werden." Ohne Namen geht derselbe Abschnitt als
-     „/musik 3 1:18-1:53" hinaus.
-     ===================================================================== */
+  /* Schritt 3: ganzes Lied oder Ausschnitt? */
   function lcAusschnittWahl(fuerWen, nr, titel) {
     lcPlatzMenueZu();
-    let lieder = [];
-    try { lieder = (LiveChat.lieder && LiveChat.lieder()) || []; } catch (x) {}
-    const lied = lieder[Number(nr) - 1] || null;
-    const datei = (lied && lied.datei) || "";
-    const einer = String(fuerWen || "").trim();
-
     const kasten = document.createElement("div");
     kasten.id = "lcPlatzMenue";
     kasten.className = "lc-platzmenue lc-lesewahl";
     kasten.setAttribute("role", "menu");
     const kopf = document.createElement("p");
     kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = "\u201e" + titel + "\u201c \u2014 welcher Teil?";
+    kopf.textContent = "\u201e" + titel + "\u201c \u2014 ganz oder ein St\u00fcck?";
     kasten.appendChild(kopf);
-
-    /* Der Rueckweg. Er steht OBEN, weil man ihn dort sucht. */
-    const zurueck = document.createElement("button");
-    zurueck.type = "button";
-    zurueck.className = "lc-lese-text lc-lied-zurueck";
-    zurueck.textContent = "\u2039  Zur\u00fcck zu den Liedern";
-    zurueck.addEventListener("click", (e) => {
-      e.preventDefault(); e.stopPropagation();
-      lcMusikWaehler(einer);
-    });
-    kasten.appendChild(zurueck);
 
     const schicken = (zusatz, ab, bis) => {
       lcPlatzMenueZu();
-      const zeile = einer
-        ? "/kopfhoerer " + einer + " " + nr + (zusatz ? " " + zusatz : "")
-        : "/musik " + nr + (zusatz ? " " + zusatz : "");
+      const zeile = "/kopfhoerer " + fuerWen + " " + nr + (zusatz ? " " + zusatz : "");
       try { LiveChat.schreiben(zeile); } catch (x) {}
       lcNachDemSenden(zeile);
       /* RUNDE 87 — „nicht nur einstellen kann, sondern sofort hoeren
@@ -22903,11 +22809,13 @@
          am Rueckweg der Chatzeile durch den Raum; kam die nicht oder
          spaet zurueck, hoerte ich gar nichts. Bei allen anderen
          bleibt es beim Weg ueber die Nachricht, denn nur dort laeuft
-         es auf IHREM Geraet. Fuer ALLE gilt dasselbe: die Nachricht
-         kommt ohnehin bei mir wieder an. */
-      if (!einer || !lcMusikFuerMich(einer)) return;
-      if (!lied) return;
-      lcMusikSpielen(lied.datei, lied.titel || titel, ab || 0, bis || 0, true);
+         es auf IHREM Geraet. */
+      if (!lcMusikFuerMich(fuerWen)) return;
+      let lieder = [];
+      try { lieder = (LiveChat.lieder && LiveChat.lieder()) || []; } catch (x) {}
+      const l = lieder[Number(nr) - 1];
+      if (!l) return;
+      lcMusikSpielen(l.datei, l.titel || titel, ab || 0, bis || 0, true);
     };
 
     const ganz = document.createElement("button");
@@ -22920,24 +22828,8 @@
     });
     kasten.appendChild(ganz);
 
-    /* DIE ABSCHNITTE ALS KNOEPFE. */
-    const stellen = datei ? lcLiedStellen(datei) : [];
-    stellen.forEach((st) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "lc-lese-text lc-lied-stelle";
-      b.innerHTML = "\u2702\ufe0f  " + escapeHtml(st.name)
-        + '<span class="lc-lied-zeit">' + lcZeitText(st.ab)
-        + (st.bis ? "\u2013" + lcZeitText(st.bis) : " \u2013 Ende") + "</span>";
-      b.addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        schicken(lcZeitText(st.ab) + (st.bis ? "-" + lcZeitText(st.bis) : ""), st.ab, st.bis);
-      });
-      kasten.appendChild(b);
-    });
-
-    /* Der Ausschnitt von Hand: zwei Zeiten und ein Name. Vorbelegt mit
-       dem, was zuletzt fuer dieses Lied galt. */
+    /* Der Ausschnitt: zwei Felder und ein Knopf. Vorbelegt mit dem,
+       was zuletzt fuer dieses Lied galt. */
     const alt = lcAusschnittHolen(nr) || { ab: 0, bis: 0 };
     const reihe = document.createElement("div");
     reihe.className = "lc-ausschnitt";
@@ -22946,53 +22838,21 @@
       + ' placeholder="0:00" value="' + (alt.ab ? lcZeitText(alt.ab) : "") + '"></label>'
       + '<label>bis <input type="text" class="lc-ausschnitt-bis" inputmode="numeric"'
       + ' placeholder="Ende" value="' + (alt.bis ? lcZeitText(alt.bis) : "") + '"></label>';
-    kasten.appendChild(reihe);
-    const namensfeld = document.createElement("div");
-    namensfeld.className = "lc-ausschnitt lc-ausschnitt-name";
-    namensfeld.innerHTML =
-      '<label>Name <input type="text" class="lc-stelle-name" maxlength="24"'
-      + ' placeholder="Refrain, Bridge, Solo \u2026"></label>';
-    kasten.appendChild(namensfeld);
-
-    const zeiten = () => {
-      const ab = lcZeitLesen(reihe.querySelector(".lc-ausschnitt-ab").value);
-      const bis = lcZeitLesen(reihe.querySelector(".lc-ausschnitt-bis").value);
-      if (ab < 0 || bis < 0) { showToast("Zeit bitte als 1:20 oder als Sekunden."); return null; }
-      if (bis && bis <= ab) { showToast("Das Ende muss nach dem Anfang liegen."); return null; }
-      return { ab: ab, bis: bis };
-    };
-
     const los = document.createElement("button");
     los.type = "button";
     los.className = "lc-lese-text lc-ausschnitt-los";
-    los.textContent = einer ? "\u2702\ufe0f  Diesen Ausschnitt aufsetzen"
-                            : "\u2702\ufe0f  Diesen Ausschnitt f\u00fcr alle";
+    los.textContent = "\u2702\ufe0f  Diesen Ausschnitt aufsetzen";
     los.addEventListener("click", (e) => {
       e.preventDefault(); e.stopPropagation();
-      const z = zeiten();
-      if (!z) return;
-      lcAusschnittMerken(nr, z.ab, z.bis);
-      schicken(lcZeitText(z.ab) + (z.bis ? "-" + lcZeitText(z.bis) : ""), z.ab, z.bis);
+      const ab = lcZeitLesen(reihe.querySelector(".lc-ausschnitt-ab").value);
+      const bis = lcZeitLesen(reihe.querySelector(".lc-ausschnitt-bis").value);
+      if (ab < 0 || bis < 0) { showToast("Zeit bitte als 1:20 oder als Sekunden."); return; }
+      if (bis && bis <= ab) { showToast("Das Ende muss nach dem Anfang liegen."); return; }
+      lcAusschnittMerken(nr, ab, bis);
+      schicken(lcZeitText(ab) + (bis ? "-" + lcZeitText(bis) : ""), ab, bis);
     });
+    kasten.appendChild(reihe);
     kasten.appendChild(los);
-
-    /* UND DER KNOPF, DER DARAUS EINEN KNOPF MACHT. */
-    const merken = document.createElement("button");
-    merken.type = "button";
-    merken.className = "lc-lese-text lc-stelle-merken";
-    merken.textContent = "\u2795  Merken und benennen";
-    merken.addEventListener("click", (e) => {
-      e.preventDefault(); e.stopPropagation();
-      const z = zeiten();
-      if (!z) return;
-      const name = String(namensfeld.querySelector(".lc-stelle-name").value || "").trim();
-      if (!name) { showToast("Wie soll der Abschnitt heissen?"); return; }
-      if (!datei) { showToast("Das Lied liess sich nicht zuordnen."); return; }
-      lcLiedStelleMerken(datei, name, z.ab, z.bis);
-      showToast("\ud83c\udfb5 \u201e" + name + "\u201c gemerkt \u2014 ab jetzt als Knopf da.");
-      lcAusschnittWahl(fuerWen, nr, titel);
-    });
-    kasten.appendChild(merken);
 
     document.body.appendChild(kasten);
     const platzEl = lcPlatzMitNamen(fuerWen)
@@ -23057,11 +22917,13 @@
         e.preventDefault(); e.stopPropagation();
         /* RUNDE 85: gilt das Lied EINEM, wird noch gefragt, ob es ganz
            laufen soll oder nur ein Stueck — „ob ich ihn nur schicken
-           will oder mit Audio-Ausschnitt".
-           RUNDE 88: das gilt jetzt auch fuer den ganzen Raum. XANDER:
-           „die Songabschnitte, die ich festlege … sollen fuer alle
-           hoerbar werden." Also derselbe Weg, ob einer oder alle. */
-        lcAusschnittWahl(einer, i + 1, l.titel);
+           will oder mit Audio-Ausschnitt". Fuer den ganzen Raum bleibt
+           es beim einen Griff. */
+        if (einer) { lcAusschnittWahl(einer, i + 1, l.titel); return; }
+        lcPlatzMenueZu();
+        const zeile = "/musik " + (i + 1);
+        try { LiveChat.schreiben(zeile); } catch (x) {}
+        lcNachDemSenden(zeile);
       });
       liste.appendChild(b);
     });
@@ -48466,13 +48328,8 @@
        ueber den Chat — und genau das war bei den Platz-Effekten
        schon einmal der Fehler. */
     if (art === "musik") {
-      /* RUNDE 88 — der Abschnitt faehrt mit: „die Songabschnitte, die
-         ich festlege … sollen fuer alle hoerbar werden." Ohne Angabe
-         laeuft das Lied wie bisher von vorn. */
       lcMusikSpielen((nachricht && nachricht.lied) || "",
-                     (nachricht && nachricht.liedTitel) || "",
-                     Number((nachricht && nachricht.liedAb) || 0),
-                     Number((nachricht && nachricht.liedBis) || 0));
+                     (nachricht && nachricht.liedTitel) || "");
       return;
     }
     if (art === "musikaus") { lcMusikStoppen(); return; }
