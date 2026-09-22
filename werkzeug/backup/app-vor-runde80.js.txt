@@ -19510,12 +19510,6 @@
          deshalb unuebersehbar wandert. Das ist der Swirl. */
       + '<i class="lc-strudel-wirbel"></i>'
       + '<i class="lc-strudel-wirbel lc-strudel-wirbel-2"></i>'
-      /* RUNDE 80 — XANDER: „er koennte mehr wabern … es soll eher von
-         innen nach aussen so wabern." Drei Ringe, versetzt gestartet,
-         die im Schlund entstehen und nach aussen laufen. */
-      + '<i class="lc-strudel-waber"></i>'
-      + '<i class="lc-strudel-waber" style="animation-delay:1.07s"></i>'
-      + '<i class="lc-strudel-waber" style="animation-delay:2.13s"></i>'
       + schaum + "</span>";
     lcEffektHeim().appendChild(schicht);
     /* Und der Chat selbst wird hineingezogen: er dreht sich, wird
@@ -24268,7 +24262,7 @@
        an den Anfang, wo sie losgelassen werden — 5,8-mal wiederholt
        klang es wie eine Ballonfabrik. */
     ballon:         { ton: "ballon", dauer: 11500 },
-    gewitter:       { ton: "gewitter", dauer: 11000, laut: 0.34 },  /* Xander: „die Animation ist laenger als der Sound" -> Ton ist jetzt genau 11 s, keine Schleife mehr */
+    gewitter:       { ton: "gewitter", dauer: 11000, schleife: true , laut: 0.34 },
     ostern:         { ton: "ostern", dauer: 11000, schleife: true },
     seifenblasen:   { ton: "seifenblasen", dauer: 11000, schleife: true , laut: 0.34 },
     blut:           { ton: "blut", dauer: 11000, schleife: true },
@@ -24361,7 +24355,7 @@
     bremse:         { ton: "bremse",   dauer: 1600, laut: 0.55 },
     spielzug:       { ton: "gummi",    dauer: 700,  laut: 0.5 },   /* ein Huepfer je Sprung */
     pacjagd:        { ton: "pacman",   dauer: 3400, laut: 0.55 }, /* die Jagd ueber die Felder */
-    stoerung:       { ton: "rauschen", dauer: 3200, laut: 0.5 },  /* Xander: „bist du dir sicher, dass es die Stoerung ist, die wir urspruenglich hatten?" -> eigenes Fernsehrauschen statt Gewitterton */
+    stoerung:       { ton: "gewitter", dauer: 3000, laut: 0.38 },  /* Rauschen */
     aufessen:       { ton: "keks",     dauer: 700,  laut: 0.5 },   /* ein Biss, kein Dauerkauen */
     /* „realistisches Sanduhrgeraeusch an der Stelle." */
     sanduhr:        { ton: "sanduhr",  dauer: 3200, laut: 0.45 },
@@ -24894,7 +24888,7 @@
     ggelefant:      { ton: "jubel", dauer: 8200 },
     gghai:          { ton: "jubel", dauer: 8200 },
     ggbaer:         { ton: "jubel", dauer: 8200 },
-    regen:          { ton: "regen", dauer: 12000 },  /* Xander: „Der Regen ist von der Animation laenger als sein Sound" -> Ton ist jetzt genau 12 s */
+    regen:          { ton: "regen", dauer: 12000, schleife: true },
     /* GEFUNDEN: „schnee.opus" war 4 Sekunden VOLLSTAENDIG still —
        eine tote Datei, gemessen mit werkzeug/ton-vorlauf-kappen.sh.
        Neu aufgenommen als „schneefall". */
@@ -24952,7 +24946,7 @@
        Geraeusch, und ein erfundenes waere kitschig. */
     regenwolke:     { ton: "regen", dauer: 3200 , laut: 0.3 },
     donnerwolke:    { ton: "gewitter", dauer: 3200 , laut: 0.38 },
-    reichtum:       { ton: "geld", dauer: 2800, spaet: 900 },  /* erst die Kasse, dann das Geld */
+    reichtum:       { ton: "geld", dauer: 2800 },
     zucker:         { ton: "bonbon", dauer: 2800 },
     /* „bei dem Angelhaken soll man, waehrend man angelt, auch realistisch
        dieses Einholen der Angelschnur hoeren." */
@@ -29159,62 +29153,22 @@
 
        Die Dicke bleibt, wie sie war, denn sie war nie das Problem:
        21 Einheiten an der Schulter, 14,5 am Handgelenk. */
-    /* RUNDE 80 — XANDER, zum vierten Mal: „Bei den Armen, die einen
-       umarmen … die haben immer noch ein Knick … als wenn das
-       gebrochene Arme sind."
-
-       DIESMAL HABE ICH NACHGEMESSEN, statt wieder an Zahlen zu
-       schrauben. Die Mittellinie des alten Arms lief in drei
-       Abschnitten: von x=0 bis x=15 mit -2,3 Grad (also beinahe
-       waagerecht aus der Schulter), dann von x=15 bis x=38 mit
-       +15,8 Grad, dann mit +13,7 Grad. An x=15 sprang die Richtung
-       also um 18,1 Grad — und GENAU DAS sieht man als Knick. Es half
-       nicht, die Kanten gerade zu machen: solange die Mittellinie
-       springt, knickt der Arm.
-
-       Jetzt wird die Silhouette nicht mehr aus Hand gesetzten Kanten
-       gebaut, sondern aus einer RUECKGRATLINIE mit Dicke. Das
-       Rueckgrat ist EINE kubische Kurve von der Schulter zum
-       Handgelenk; ihre Richtung dreht sich ueber die ganze Laenge um
-       nur rund 6 Grad, stetig verteilt. Ein Sprung ist damit
-       rechnerisch unmoeglich. Die Dicke laeuft weich von 10,5
-       (Schulter, also 21 gesamt) auf 7,25 (Gelenk, also 14,5) —
-       dieselben Werte wie vorher, die waren nie das Problem. */
-    const rippe = (t) => {
-      const u = 1 - t;
-      /* Schulter (0|52,0) -> Handgelenk (46|60,9), zwei Stuetzpunkte
-         so gewaehlt, dass die Richtung nirgends springt. */
-      const px = 3 * u * u * t * 14 + 3 * u * t * t * 31 + t * t * t * 46;
-      const py = u * u * u * 52 + 3 * u * u * t * 53.6 + 3 * u * t * t * 57.6 + t * t * t * 60.9;
-      /* Ableitung = Richtung der Linie an dieser Stelle. */
-      const dx = 3 * u * u * 14 + 6 * u * t * (31 - 14) + 3 * t * t * (46 - 31);
-      const dy = 3 * u * u * (53.6 - 52) + 6 * u * t * (57.6 - 53.6) + 3 * t * t * (60.9 - 57.6);
-      const len = Math.sqrt(dx * dx + dy * dy) || 1;
-      /* Dicke: weich (smoothstep), damit auch die Kante nicht knickt. */
-      const w = t * t * (3 - 2 * t);
-      const d = 10.5 + (7.25 - 10.5) * w;
-      return { x: px, y: py, nx: (-dy / len) * d, ny: (dx / len) * d };
-    };
-    const SCHRITTE = 22;
-    let obenP = [], untenP = [];
-    for (let i = 0; i <= SCHRITTE; i++) {
-      const r = rippe(i / SCHRITTE);
-      obenP.push([r.x + r.nx, r.y + r.ny]);
-      untenP.push([r.x - r.nx, r.y - r.ny]);
-    }
     const koerper =
-      "M " + obenP.map((q) => x(q[0]) + " " + q[1].toFixed(1)).join(" L ")
-      + " L " + untenP.slice().reverse().map((q) => x(q[0]) + " " + q[1].toFixed(1)).join(" L ")
-      + " Z";
+      /* Oberkante: aus der runden Schulter heraus, dann GERADE. */
+      "M " + x(0) + " 42.5 C " + x(6) + " 42.2 " + x(11) + " 42.8 " + x(15) + " 44"
+      + " L " + x(38) + " 51.4"
+      /* Und der Unterarm hebt sich ein wenig — eine stetige Linie. */
+      + " Q " + x(46) + " 53.4 " + x(hgx) + " 53.6"
+      /* Ueber das Handgelenk nach unten. */
+      + " L " + x(hgx) + " 68.1"
+      /* Unterkante zurueck: erst das Handgelenk, dann GERADE. */
+      + " Q " + x(46) + " 68.2 " + x(38) + " 66.4"
+      + " L " + x(15) + " 60.8"
+      + " C " + x(11) + " 62 " + x(6) + " 63.2 " + x(0) + " 63.5 Z";
 
-    /* Der Aermel sitzt auf demselben Rueckgrat — sonst schneidet er
-       den Arm schraeg ab und erzeugt seinerseits einen Knick. */
-    const aS = rippe(0), aE = rippe(0.34);
     const aermel =
-      "M " + x(aS.x + aS.nx * 1.06) + " " + (aS.y + aS.ny * 1.06).toFixed(1)
-      + " L " + x(aE.x + aE.nx * 1.06) + " " + (aE.y + aE.ny * 1.06).toFixed(1)
-      + " L " + x(aE.x - aE.nx * 1.06) + " " + (aE.y - aE.ny * 1.06).toFixed(1)
-      + " L " + x(aS.x - aS.nx * 1.06) + " " + (aS.y - aS.ny * 1.06).toFixed(1) + " Z";
+      "M " + x(0) + " 41.2 C " + x(7) + " 41.3 " + x(13) + " 42 " + x(18) + " 43.5"
+      + " L " + x(16.6) + " 59.2 C " + x(10) + " 61 " + x(5) + " 61.2 " + x(0) + " 61.4 Z";
 
     return '<svg viewBox="0 0 120 120" class="lc-arm lc-arm-' + seite + '">'
       + '<defs>'
@@ -29705,18 +29659,7 @@
        620 ms. Damit er mit dem Arm zusammenfaellt (676 ms), faengt
        die Aufnahme sofort an — deshalb hier 0 statt 676. */
     katapult: 0,
-    /* RUNDE 80 — XANDER: „Peitschen knallen ist okay, hier koennte man
-       den Sound ein bisschen fester, haerter machen." Beim Nachmessen
-       fiel zugleich auf, dass er gar nicht sass:
-       Die Animation laeuft 2 s; die Spitze kommt bei 30 % am fernen
-       Ende an und der KNALL steht bei 27–33 %, also bei rund 600 ms.
-       Die Aufnahme „peitschehieb" holt 0,40 s lang aus und knallt
-       dann. Bei einem Start um 780 ms knallte sie also erst bei
-       1180 ms — gut eine halbe Sekunde NACH dem Bild.
-       Jetzt startet sie bei 200 ms: das Sausen laeuft von 200 bis
-       600 ms mit, waehrend sich die Peitsche ausrollt, und der Knall
-       faellt genau auf die 600 ms. */
-    peitsche: 200,
+    peitsche: 780,     /* 30 % von 2,6 s, da knallt es (Runde 58: mit Ausholen) */
     /* Das Dehnen faengt SOFORT an — es ist das erste, was passiert. */
     zwille: 0,
     pusterohr: 1280,   /* 32 % von 4 s */
@@ -30168,34 +30111,6 @@
         schicht.appendChild(g);
       });
 
-      /* RUNDE 80 — XANDER: „Der Wecker ist okay, allerdings koennte er
-         links und rechts unten so schraeg diese kleinen Stand Fuesse
-         noch haben."
-
-         Ein Glockenwecker steht auf zwei kurzen, schraeg nach aussen
-         gestellten Fuesschen mit einem breiteren Teller unten — sonst
-         wuerde das runde Gehaeuse wegrollen. Sie sitzen unten links
-         und unten rechts, in derselben Machart wie die Schellen
-         (Messing mit dunklem Rand und einem Glanzstrich), und sie
-         wippen leicht mit, wenn es schellt. */
-      ["l", "r"].forEach((seite) => {
-        const f = document.createElement("span");
-        f.className = "lc-wecker-fuss lc-wecker-fuss-" + seite;
-        f.innerHTML =
-          '<svg viewBox="0 0 26 30">'
-          /* Das Bein, unten breiter als oben. */
-          + '<path d="M8 1 L18 1 L22 21 L4 21 Z" fill="#e0bd4e"'
-          + ' stroke="#9c7b1e" stroke-width="2.2" stroke-linejoin="round"/>'
-          /* Der Teller, auf dem er steht. */
-          + '<rect x="1.4" y="20" width="23.2" height="7" rx="3.4"'
-          + ' fill="#f3d46e" stroke="#9c7b1e" stroke-width="2.2"/>'
-          /* Ein Glanzstrich, damit es nach Blech aussieht. */
-          + '<path d="M10 4 L8.6 18" fill="none" stroke="#fff6cf"'
-          + ' stroke-width="2.4" stroke-linecap="round" opacity=".8"/>'
-          + "</svg>";
-        schicht.appendChild(f);
-      });
-
       ["links", "rechts"].forEach((seite) => {
         for (let i = 0; i < 3; i++) {
           const w = document.createElement("i");
@@ -30295,15 +30210,6 @@
          Seite gesehen (darum liegende Ellipsen, nicht Kreise) und
          dazwischen ein paar Scheine. Sie erscheinen von unten nach
          oben, so wie sie fallen — wer zuerst faellt, liegt unten. */
-      /* RUNDE 80 — XANDER: „Bei dem Geld … faellt zu langsam und es
-         gibt immer noch nicht vorher das Registrierkassen-Geraeusch."
-
-         NACHGESEHEN, warum er es nicht hoert: die Kasse („kasse2")
-         klingelt nur im RAUMWEITEN Geldregen (lcGeldregen). Das Geld
-         auf EINE Person laeuft durch lcReichtum — und hier stand nie
-         eine Kasse. Jetzt klingelt sie auch hier zuerst; der
-         Geldhaufen setzt erst danach ein (siehe Verzug unten). */
-      lcTonSpaeter("kasse2", 0, 1.0);
       const blende = lcZpBlende(schicht);
       const haufen = document.createElement("span");
       haufen.className = "lc-geldstand";
@@ -30316,7 +30222,7 @@
           st.style.left = ((k * 100) / JE + (r % 2 ? 9 : 0) - 4).toFixed(0) + "%";
           st.style.bottom = (r * 15 + (k % 2 ? 3 : 0)) + "%";
           st.style.setProperty("--kipp", ((k * 37 + r * 19) % 24 - 12) + "deg");
-          st.style.animationDelay = (0.78 + r * 0.3 + k * 0.045).toFixed(2) + "s";
+          st.style.animationDelay = (0.5 + r * 0.42 + k * 0.06).toFixed(2) + "s";
           haufen.appendChild(st);
         }
       }
@@ -30328,85 +30234,22 @@
         m.textContent = i % 4 === 0 ? "\ud83d\udcb5" : (i % 4 === 1 ? "\ud83d\udcb0" : "\ud83e\ude99");
         m.style.left = (8 + Math.random() * 84).toFixed(0) + "%";
         m.style.setProperty("--dreh", (Math.random() * 720 - 360).toFixed(0) + "deg");
-        m.style.animationDelay = (0.62 + i * 0.075).toFixed(2) + "s";
+        m.style.animationDelay = (i * 0.11).toFixed(2) + "s";
         schicht.appendChild(m);
       }
     }, 3800, "reichtum");
   }
 
-  /* --- ZUCKER: BONBONS ÜBER EINER PERSON --------------------------
-     RUNDE 80 — XANDER: „Die Bonbons fallen auch ziemlich langsam und
-     sie koennten sich unten im Profilbild Rahmen sammeln … und
-     vielleicht auch unterschiedlich bunte Bonbons."
-
-     Drei Dinge daran:
-       * Sie fallen jetzt in 1,15 s statt 2,1 s (siehe
-         .lc-zzucker-stueck im Stylesheet).
-       * Sie SAMMELN sich: unten in der runden Blende waechst ein
-         Haufen, genau wie beim Geldspeicher — wer zuerst faellt,
-         liegt unten.
-       * Und sie sind wirklich verschieden bunt. Mit Emoji ging das
-         nicht: ein Emoji hat die Farbe, die die Schriftart ihm gibt.
-         Darum sind die Bonbons jetzt gezeichnet — ein rundes
-         Bonbon mit zwei eingedrehten Papierzipfeln, ein Glanzpunkt
-         und ein heller Streifen, und die Farbe kommt aus einer
-         Liste. */
-  const LC_BONBONFARBEN = [
-    ["#ff5f7a", "#c22348"], ["#ffb23d", "#d97706"], ["#ffe14f", "#c9a400"],
-    ["#5ed37a", "#1f8f45"], ["#5fb6ff", "#1f6fc0"], ["#b98cff", "#6c3fbd"],
-    ["#ff8ad1", "#c43d92"], ["#54ded0", "#188c84"]
-  ];
-
-  function lcBonbonSvg(nr, gross) {
-    const [hell, dunkel] = LC_BONBONFARBEN[nr % LC_BONBONFARBEN.length];
-    const id = "bon" + nr + (gross ? "g" : "k") + Math.floor(Math.random() * 100000);
-    return '<svg viewBox="0 0 44 22" class="lc-bonbon-svg">'
-      + '<defs><radialGradient id="' + id + '" cx="0.36" cy="0.3" r="0.8">'
-      + '<stop offset="0" stop-color="' + hell + '"/>'
-      + '<stop offset="1" stop-color="' + dunkel + '"/></radialGradient></defs>'
-      /* Die beiden eingedrehten Papierzipfel. */
-      + '<path d="M13 11 L3 3 Q1 11 3 19 Z" fill="' + hell + '" opacity="0.85"/>'
-      + '<path d="M31 11 L41 3 Q43 11 41 19 Z" fill="' + hell + '" opacity="0.85"/>'
-      /* Der Koerper. */
-      + '<ellipse cx="22" cy="11" rx="10" ry="8.4" fill="url(#' + id + ')"'
-      + ' stroke="' + dunkel + '" stroke-width="1.1"/>'
-      /* Ein heller Streifen — daran erkennt man ein Bonbon. */
-      + '<path d="M17 5.6 Q22 11 17 16.4" fill="none" stroke="rgba(255,255,255,0.7)"'
-      + ' stroke-width="1.8" stroke-linecap="round"/>'
-      /* Und der Glanzpunkt. */
-      + '<ellipse cx="19" cy="7.6" rx="2.6" ry="1.7" fill="rgba(255,255,255,0.8)"'
-      + ' transform="rotate(-22 19 7.6)"/>'
-      + "</svg>";
-  }
-
+  /* --- ZUCKER: BONBONS ÜBER EINER PERSON -------------------------- */
   function lcZuckerregen(wen) {
     return lcAmPlatz(wen, "lc-zzucker", (schicht) => {
-      /* Der Haufen, in dem sie sich sammeln — in der runden Blende,
-         damit er am Bildrand endet und nicht darueber hinaussteht. */
-      const blende = lcZpBlende(schicht);
-      const haufen = document.createElement("span");
-      haufen.className = "lc-bonbonhaufen";
-      const REIHEN = 4, JE = 5;
-      for (let r = 0; r < REIHEN; r++) {
-        for (let k = 0; k < JE; k++) {
-          const st = document.createElement("i");
-          st.className = "lc-bonbon-liegt";
-          st.innerHTML = lcBonbonSvg(r * JE + k, false);
-          st.style.left = ((k * 100) / JE + (r % 2 ? 10 : 0) - 6).toFixed(0) + "%";
-          st.style.bottom = (r * 17 + (k % 2 ? 4 : 0)) + "%";
-          st.style.setProperty("--kipp", ((k * 41 + r * 23) % 40 - 20) + "deg");
-          st.style.animationDelay = (0.5 + r * 0.3 + k * 0.05).toFixed(2) + "s";
-          haufen.appendChild(st);
-        }
-      }
-      blende.appendChild(haufen);
-      for (let i = 0; i < 13; i++) {
+      for (let i = 0; i < 11; i++) {
         const b = document.createElement("i");
         b.className = "lc-zzucker-stueck";
-        b.innerHTML = lcBonbonSvg(i, true);
-        b.style.left = (8 + Math.random() * 78).toFixed(0) + "%";
+        b.textContent = i % 3 === 0 ? "\ud83c\udf6c" : (i % 3 === 1 ? "\ud83c\udf6d" : "\ud83c\udf6b");
+        b.style.left = (10 + Math.random() * 80).toFixed(0) + "%";
         b.style.setProperty("--dreh", (Math.random() * 540 - 270).toFixed(0) + "deg");
-        b.style.animationDelay = (i * 0.085).toFixed(2) + "s";
+        b.style.animationDelay = (i * 0.1).toFixed(2) + "s";
         schicht.appendChild(b);
       }
     }, 3400, "zucker");
@@ -30556,20 +30399,7 @@
          --px zaehlt in Prozent der BLENDE, translateX im Klecks aber
          in Prozent seiner EIGENEN Breite, und die ist 46 % der
          Blende. Der Umrechnungsfaktor ist also 100/46 = 2,174. */
-      /* RUNDE 80 — XANDER: „Der Schneeball schleift immer noch
-         schraeg … Lass doch den Schneeball einfach da, wo er
-         auftrifft, nach unten laufen, wie es von der Physik auch
-         realistisch ist."
-
-         Er hat recht, und mein Grund von Runde 72 war ein Umgehen
-         statt eines Loesens: ich liess den Klecks zur Bildmitte
-         wandern, DAMIT die runde Blende ihn nicht anschneidet. Aber
-         nasser Schnee an einer senkrechten Flaeche laeuft senkrecht
-         herunter — er sucht sich nicht die Bildmitte. Was unten aus
-         dem Bild laeuft, laeuft eben aus dem Bild; das ist richtig
-         so und kein Fehler.
-         Also: kein seitlicher Versatz mehr. --mitte bleibt 0. */
-      schicht.style.setProperty("--mitte", "0%");
+      schicht.style.setProperty("--mitte", (-r.x * 38 * 2.174).toFixed(1) + "%");
       /* =============================================================
          RUNDE 76 — DIE SPUR LAEUFT DAHIN, WO DER KLECKS HINLAEUFT
          -------------------------------------------------------------
@@ -30597,12 +30427,11 @@
          Auftreffpunkt und bleibt dort) und waechst auf genau diese
          Laenge. Damit liegt ihr unteres Ende immer genau da, wo der
          Klecks gerade ist. */
-      /* RUNDE 80: weil der Klecks jetzt senkrecht laeuft, laeuft die
-         Spur es auch — kein Winkel mehr, und die Laenge ist genau
-         sein Weg nach unten (105 % seiner eigenen Hoehe, und die ist
-         40 % der Blende). */
-      schicht.style.setProperty("--spurdreh", "0deg");
-      schicht.style.setProperty("--spurlang", "42%");
+      const spurX = -r.x * 38, spurY = 42;
+      schicht.style.setProperty("--spurdreh",
+        (Math.atan2(spurX, spurY) * 180 / Math.PI).toFixed(1) + "deg");
+      schicht.style.setProperty("--spurlang",
+        Math.hypot(spurX, spurY).toFixed(1) + "%");
       const blende = lcZpBlende(schicht);
       /* Der Klecks und die Rinne bleiben INNEN — sie gehoeren aufs
          Bild. Nur der fliegende Ball und die stiebenden Flocken

@@ -49,34 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 433 — das Platzdesign bleibt stehen",
+  stand: "Fassung 434 — Runde 80, erster Teil: Regen und Gewitter sind jetzt genau so lang wie ihre Animation, die Stoerung hat ein eigenes Rauschen, die Umarmungsarme haben keinen Knick mehr, die Boxhandschuhe kommen von unten mit der Flaeche, das Ablecken laeuft weich aus, der Fussball fliegt ohne Stehenbleiben zurueck, der Eimer zeigt keine Pfuetze mehr vorher, der Wecker hat Standfuesse, vor dem Geld klingelt die Kasse, die Bonbons sind bunt und sammeln sich, der Hammer klickt nicht mehr am Ende, der Schneeball laeuft gerade herunter, Pfeil und Peitsche sitzen auf dem Bild.",
 
   inArbeit: [
-    { seit: "2026-09-21T23:45",
-      text: "Boxhandschuhe von links und rechts unten mit der Flaeche; Umarmungsarme ohne Knick." },
-    { seit: "2026-09-21T23:45",
-      text: "Wurfrichtung: alles, was geworfen wird, kommt aus meiner Richtung; Einschlag dort, wo ich hintippe." },
-    { seit: "2026-09-21T23:45",
-      text: "Regen und Gewitter: Animation laenger als der Ton; Geld faellt zu langsam, Kasse fehlt davor." },
-    { seit: "2026-09-21T23:45",
-      text: "Pferd, Vogel, Helikopterglas, Katapult, Sanduhr, Pac-Man-Weg neu zeichnen." },
-    { seit: "2026-09-21T23:45",
-      text: "Kopfhoerer mit Liedausschnitt; Trommel mit Gong und Bongo; Bombe digital mit Ziffern." },
-    { seit: "2026-09-21T23:45",
-      text: "Sprechbilder: Strom aus der Mitte, Schallwellen ohne Luecke, Noten und Herzen am Rand, Ringfarbe waehlbar." },
+    { seit: "2026-09-22T00:24",
+      text: "Der Rest von Xanders Liste vom 22. September" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-21T23:45",
-      text: "Strichlinie und Platznummer bleiben jetzt bei JEDEM Effekt stehen. Der Platzhalter liegt immer unter dem Bild; faehrt das Bild weg, kommt er zum Vorschein. Das betraf rund zwanzig gemeldete Stellen auf einmal (Strudel, Knuellen, Tennis, Sanduhr, Pac-Man, Flugzeug, Lok, Vogel, Turm, Kran, Beamen, Roehre, Pferd, Frisbee, Hand, Katze, Feder, Liane, Maulwurf, Basketball)." },
-    { seit: "2026-09-21T23:45",
-      text: "Das Profilbild taucht nicht mehr kurz am verlassenen Platz auf, bevor es am Ziel landet." },
-    { seit: "2026-09-21T23:45",
-      text: "Jedes Menue schliesst jetzt auch, wenn man IM Kasten ins Leere tippt — dort, wo keine Kachel ist. Das galt bisher nur fuer die Bildwaehler." },
-    { seit: "2026-09-21T23:45",
-      text: "Die Panels begrenzen ihre Hoehe in dvh statt vh: auf Android ist der sichtbare Bereich kleiner als 100vh, solange die Adressleiste steht — daher waren sie angeschnitten." },
-    { seit: "2026-09-21T23:45",
-      text: "Die Pruefbuehne hat jetzt dieselbe Auszeichnung wie der echte Raum (Schild und Nummer). Ohne sie konnte keine Sonde diesen ganzen Fehlerkreis je finden." },
+    { seit: "2026-09-22T00:24",
+      text: "Gewitter 11,00 s (vorher 4,00 s) mit Regenbett und drei Schlaegen; Regen 12,00 s;neues Geraeusch rauschen.opus/m4a fuer die Stoerung (vorher lieh sie sich den Gewitterton);Umarmungsarm aus einer Rueckgratlinie gerechnet: groesster Richtungssprung 0,72 Grad statt 18,1 Grad;Boxhandschuhe beim Selbstboxen von links unten und rechts unten, 40 Grad gedreht, Treffer genau in der Bildmitte;Glanzfilm beim Ablecken sitzt auf dem runden Bild statt auf dem ganzen Knopf und laeuft ab 54 Prozent weich aus;Ballflug als echte Wurfparabel mit 32 Stuetzstellen: kleinster Schritt 7,3 px statt Stillstand;Wasserpegel samt Wellen erst sichtbar, wenn der Eimer giesst;zwei schraege Standfuesse am Wecker, die im Takt mitwippen;Registrierkasse auch beim Geld auf eine Person, Geldbett 900 ms spaeter;Bonbons gezeichnet in acht Farben, sammeln sich unten im Bild, Fallzeit 1,15 s statt 2,10 s;hammerbonk auf 1,45 s gekuerzt — der Klick bei 1,90 s (-10 dB) ist weg;Schneeball und seine Spur laufen senkrecht herunter statt schraeg;pfeilschuss hat nur noch EINEN Einschlag (vorher zwei, der zweite 1,4 s zu spaet);peitschehieb haerter (Knall 29 dB ueber dem Ausholen) und startet bei 200 ms, damit er auf die 600 ms der Animation faellt;Strudel ohne harte Kontrastkante, dazu drei Wellen von innen nach aussen" },
   ],
 };

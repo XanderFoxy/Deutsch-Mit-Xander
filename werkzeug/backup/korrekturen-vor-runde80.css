@@ -6268,12 +6268,8 @@ html.lc-dino-beben #livechatKarte { animation: lcDinoSchritt 0.62s ease-in-out 1
   100% { opacity: 0; transform: translateX(-56%) translateY(-52%) rotate(20deg) scale(0.8); }
 }
 /* Die feuchte Spur bleibt stehen — ohne sie war nur eine Zunge da. */
-/* RUNDE 80: auch die feuchte Spur sass am ganzen Knopf statt am
-   Bild — bei 130 px Knopfhoehe lag sie zu tief. Jetzt haengt sie an
-   der Bildbreite, also am runden Bild. */
 .lc-leck-spur {
-  position: absolute; left: 12%; right: 12%; top: 24%; height: 52%;
-  max-height: 52%;
+  position: absolute; left: 12%; right: 12%; top: 26%; height: 44%;
   border-radius: 50%;
   background: radial-gradient(ellipse at 50% 50%, rgba(190,235,255,0.42) 0%, rgba(190,235,255,0) 70%);
   opacity: 0;
@@ -6305,40 +6301,50 @@ html.lc-dino-beben #livechatKarte { animation: lcDinoSchritt 0.62s ease-in-out 1
   position: absolute; width: 74%; height: 74%;
   filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.45));
 }
-/* RUNDE 80 — XANDER: „Die Boxhandschuhe, die mich selber treffen.
-   Die sollen von links unten und von rechts unten kommen … mit der
-   Flaeche … und nicht seitlich."
-
-   Das betrifft genau den Fall OHNE Absender — wenn man sich selbst
-   boxt oder es allen gilt. Dann kamen die beiden Handschuhe bisher
-   waagerecht von links und rechts hereingeschoben (nur translateX),
-   und weil der Handschuh mit der Faust nach OBEN gezeichnet ist,
-   traf er dabei mit der SEITE, nicht mit der Schlagflaeche.
-
-   Jetzt kommen beide von schraeg unten herauf, und der Winkel ist
-   derselbe wie die Flugrichtung: 40 Grad. Damit zeigt die Faust
-   genau dorthin, wo sie hinschlaegt — man sieht die Flaeche, nicht
-   die Seite. Der rechte ist zusaetzlich gespiegelt, damit er als
-   rechte Hand lesbar ist. */
-.lc-box-l { left: 13%; top: 13%; transform-origin: 50% 50%;
-  animation: lcFaustLinksUnten 1.4s cubic-bezier(0.34, 0, 0.2, 1) both; }
-.lc-box-r { right: 13%; top: 13%; transform-origin: 50% 50%;
-  animation: lcFaustRechtsUnten 1.4s cubic-bezier(0.34, 0, 0.2, 1) 0.42s both; }
-@keyframes lcFaustLinksUnten {
-  0%   { opacity: 0; transform: translate(-150%, 150%) rotate(40deg) scale(0.5); }
-  18%  { opacity: 1; }
-  42%  { transform: translate(0%, 0%) rotate(40deg) scale(1.12); }
-  58%  { transform: translate(-58%, 58%) rotate(40deg) scale(0.84); }
-  74%  { transform: translate(-6%, 6%) rotate(40deg) scale(1.06); }
-  100% { opacity: 0; transform: translate(-150%, 150%) rotate(40deg) scale(0.55); }
+.lc-box-l { left: -34%; top: 10%; animation: lcFaustL 1.4s cubic-bezier(0.4, 0, 0.2, 1) both; }
+.lc-box-r { right: -34%; top: 26%; animation: lcFaustR 1.4s cubic-bezier(0.4, 0, 0.2, 1) 0.42s both; }
+/* DER GERICHTETE SCHLAG.
+   Der Handschuh startet dort, wo der Schlagende wirklich sitzt
+   (--hx/--hy, in app.js aus den beiden Sitzkaesten gerechnet),
+   faehrt auf dem Strich zwischen beiden ins Bild, trifft, und faellt
+   zurueck. --hdreh dreht die Faust so, dass sie nach vorn zeigt. Zwei
+   Schlaege, weil ein einzelner Stups nicht nach Boxen aussieht. */
+.lc-box-gerichtet .lc-box-z {
+  left: 13%;
+  top: 13%;
+  transform-origin: 50% 50%;
+  animation: lcFaustZielt 1.5s cubic-bezier(0.35, 0, 0.2, 1) both;
 }
-@keyframes lcFaustRechtsUnten {
-  0%   { opacity: 0; transform: translate(150%, 150%) scaleX(-1) rotate(40deg) scale(0.5); }
+@keyframes lcFaustZielt {
+  0%   { opacity: 0;
+         transform: translate(var(--hx, 200%), var(--hy, 0%)) rotate(var(--hdreh, 0deg)) scale(0.45); }
   18%  { opacity: 1; }
-  42%  { transform: translate(0%, 0%) scaleX(-1) rotate(40deg) scale(1.12); }
-  58%  { transform: translate(58%, 58%) scaleX(-1) rotate(40deg) scale(0.84); }
-  74%  { transform: translate(6%, 6%) scaleX(-1) rotate(40deg) scale(1.06); }
-  100% { opacity: 0; transform: translate(150%, 150%) scaleX(-1) rotate(40deg) scale(0.55); }
+  34%  { transform: translate(calc(var(--hx, 200%) * 0.06), calc(var(--hy, 0%) * 0.06))
+                    rotate(var(--hdreh, 0deg)) scale(1.2); }
+  46%  { transform: translate(calc(var(--hx, 200%) * 0.55), calc(var(--hy, 0%) * 0.55))
+                    rotate(var(--hdreh, 0deg)) scale(0.8); }
+  62%  { transform: translate(calc(var(--hx, 200%) * 0.04), calc(var(--hy, 0%) * 0.04))
+                    rotate(var(--hdreh, 0deg)) scale(1.16); }
+  78%  { opacity: 1;
+         transform: translate(calc(var(--hx, 200%) * 0.5), calc(var(--hy, 0%) * 0.5))
+                    rotate(var(--hdreh, 0deg)) scale(0.85); }
+  100% { opacity: 0;
+         transform: translate(var(--hx, 200%), var(--hy, 0%)) rotate(var(--hdreh, 0deg)) scale(0.5); }
+}
+/* Er kommt aus der TIEFE auf den Betrachter zu, deshalb wächst er. */
+@keyframes lcFaustL {
+  0%   { opacity: 0; transform: translateX(-70%) scale(0.5); }
+  22%  { opacity: 1; }
+  46%  { transform: translateX(52%) scale(1.18); }
+  62%  { transform: translateX(30%) scale(1); }
+  100% { opacity: 0; transform: translateX(-60%) scale(0.7); }
+}
+@keyframes lcFaustR {
+  0%   { opacity: 0; transform: translateX(70%) scaleX(-0.5) scaleY(0.5); }
+  22%  { opacity: 1; }
+  46%  { transform: translateX(-52%) scaleX(-1.18) scaleY(1.18); }
+  62%  { transform: translateX(-30%) scaleX(-1) scaleY(1); }
+  100% { opacity: 0; transform: translateX(60%) scaleX(-0.7) scaleY(0.7); }
 }
 .lc-box-treffer {
   position: absolute; left: 50%; top: 42%;
@@ -9760,65 +9766,20 @@ body.lc-schreibt .tutor-reiter {
 }
 
 /* --- Der Tritt: das Profilbild fliegt wie ein Ball ---------------- */
-/* RUNDE 80 — XANDER: „der Tritt beim Fussball. Wenn der Ball
-   zurueckkommt, dann faellt er einmal bei einem anderen Platz
-   irgendwie, als wenn er da stoppt … Er soll sich realistisch
-   fluessig zurueckdrehen."
-
-   NACHGESEHEN, woran das lag: der Flug hatte nur SIEBEN Stuetzstellen,
-   und zwischen 38 % und 62 % bewegte sich der Ball von 230 % auf
-   190 % — in fast einem Viertel der Zeit also kaum von der Stelle,
-   waehrend er davor und danach je zwei Bildbreiten zuruecklegte. Das
-   ist das Stoppen, das er sieht. Dazu kam, dass die weiche
-   Beschleunigungskurve auf JEDEN Abschnitt einzeln wirkt: der Ball
-   bremste vor jeder Stuetzstelle ab und zog danach wieder an.
-
-   Jetzt ist die Bahn gerechnet statt geschaetzt — eine echte
-   Wurfparabel hinaus (Scheitel bei 118 % Hoehe), ein kurzer
-   Aufsetzer in der Ferne, eine flachere Parabel zurueck und zum
-   Schluss drei immer kleinere Huepfer beim Ausrollen. 32
-   Stuetzstellen in gleichmaessigem Abstand, dazu  linear  als
-   Ueberblendung: damit ist die Geschwindigkeit an jeder Stelle die,
-   die die Bahn vorgibt, und nirgends bleibt der Ball stehen.
-   Die Drehung laeuft ueber die ganze Bahn mit dem zurueckgelegten
-   WEG mit (1080 Grad insgesamt), deshalb dreht er sich auf dem
-   Rueckweg von selbst weiter und wird beim Ausrollen langsamer. */
 .lc-ball {
-  animation: lcBallFlug 1.6s linear both;
+  animation: lcBallFlug 1.5s cubic-bezier(.3, .1, .3, 1) both;
 }
+/* Der Bogen: erst weg und hoch, dabei drehend und kleiner (weiter
+   weg), dann zurück — und beim Landen wackelt es kurz aus, wie ein
+   Ball, der auf dem Rasen ausrollt. */
 @keyframes lcBallFlug {
-  0% { transform: translate(0%, 0%) rotate(0deg) scale(1); }
-  3.8% { transform: translate(15.8%, -36.1%) rotate(70deg) scale(0.886); }
-  7.5% { transform: translate(31.7%, -65.6%) rotate(129deg) scale(0.789); }
-  11.3% { transform: translate(47.5%, -88.5%) rotate(179deg) scale(0.71); }
-  15% { transform: translate(63.3%, -104.9%) rotate(219deg) scale(0.647); }
-  18.8% { transform: translate(79.2%, -114.7%) rotate(252deg) scale(0.602); }
-  22.5% { transform: translate(95%, -118%) rotate(281deg) scale(0.574); }
-  26.3% { transform: translate(110.8%, -114.7%) rotate(310deg) scale(0.564); }
-  30% { transform: translate(126.7%, -104.9%) rotate(343deg) scale(0.57); }
-  33.8% { transform: translate(142.5%, -88.5%) rotate(383deg) scale(0.594); }
-  37.5% { transform: translate(158.3%, -65.6%) rotate(432deg) scale(0.635); }
-  41.3% { transform: translate(174.2%, -36.1%) rotate(492deg) scale(0.693); }
-  45% { transform: translate(190%, 0%) rotate(562deg) scale(0.769); }
-  47.5% { transform: translate(193.5%, -13%) rotate(586deg) scale(0.73); }
-  50% { transform: translate(197%, 0%) rotate(610deg) scale(0.76); }
-  53.5% { transform: translate(179.1%, -15.9%) rotate(652deg) scale(0.74); }
-  56.9% { transform: translate(161.2%, -28.6%) rotate(691deg) scale(0.728); }
-  60.4% { transform: translate(143.3%, -38.1%) rotate(727deg) scale(0.725); }
-  63.8% { transform: translate(125.4%, -44.4%) rotate(761deg) scale(0.731); }
-  67.3% { transform: translate(107.5%, -47.6%) rotate(793deg) scale(0.744); }
-  70.7% { transform: translate(89.5%, -47.6%) rotate(825deg) scale(0.766); }
-  74.2% { transform: translate(71.6%, -44.4%) rotate(857deg) scale(0.796); }
-  77.6% { transform: translate(53.7%, -38.1%) rotate(891deg) scale(0.834); }
-  81.1% { transform: translate(35.8%, -28.6%) rotate(927deg) scale(0.881); }
-  84.5% { transform: translate(17.9%, -15.9%) rotate(966deg) scale(0.936); }
-  88% { transform: translate(0%, 0%) rotate(1008deg) scale(1); }
-  89.2% { transform: translate(0%, -13%) rotate(1031deg) scale(0.966); }
-  91.8% { transform: translate(0%, 0%) rotate(1054deg) scale(1); }
-  94.7% { transform: translate(0%, -5.5%) rotate(1064deg) scale(0.986); }
-  97.4% { transform: translate(0%, 0%) rotate(1074deg) scale(1); }
-  99% { transform: translate(0%, -1.8%) rotate(1077deg) scale(0.995); }
-  100% { transform: translate(0%, 0%) rotate(1080deg) scale(1); }
+  0%   { transform: translate(0, 0) rotate(0) scale(1); }
+  8%   { transform: translate(6%, 2%) rotate(-8deg) scale(0.96); }
+  38%  { transform: translate(230%, -120%) rotate(430deg) scale(0.42); }
+  62%  { transform: translate(190%, -40%) rotate(700deg) scale(0.55); }
+  84%  { transform: translate(14%, 6%) rotate(980deg) scale(1.04); }
+  92%  { transform: translate(-4%, 0) rotate(994deg) scale(0.98); }
+  100% { transform: translate(0, 0) rotate(1000deg) scale(1); }
 }
 .lc-tritt-schuh {
   position: absolute;
@@ -10105,34 +10066,6 @@ body.lc-schreibt .tutor-reiter {
 .lc-schelle svg { display: block; width: 100%; height: auto; }
 .lc-schelle-l { left: -7.6%; }
 .lc-schelle-r { right: -7.6%; transform-origin: 30% 86%; animation-name: lcSchelleR; }
-/* RUNDE 80 — XANDER: „er koennte links und rechts unten so schraeg
-   diese kleinen Stand Fuesse noch haben."
-   Die Fuesse sitzen unten aussen am Gehaeuse, nach aussen gekippt,
-   und liegen wie die Schellen HINTER dem Bild (z-index: -1). Sie
-   wippen im selben Takt mit, sonst haette der Wecker beim Schellen
-   zwei starre Beine. */
-.lc-wecker-fuss {
-  position: absolute;
-  width: 17%;
-  bottom: -5.5%;
-  z-index: -1;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35));
-  transform-origin: 50% 0%;
-  animation: lcFussWipptL 1.86s linear both;
-}
-.lc-wecker-fuss svg { display: block; width: 100%; height: auto; }
-.lc-wecker-fuss-l { left: 11%; }
-.lc-wecker-fuss-r { right: 11%; animation-name: lcFussWipptR; }
-@keyframes lcFussWipptL {
-  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(-24deg); }
-  4%, 37%, 71%   { transform: rotate(-29deg); }
-  12%, 45%, 79%  { transform: rotate(-19deg); }
-}
-@keyframes lcFussWipptR {
-  0%, 20%, 33%, 53%, 67%, 87%, 100% { transform: rotate(24deg); }
-  4%, 37%, 71%   { transform: rotate(29deg); }
-  12%, 45%, 79%  { transform: rotate(19deg); }
-}
 /* −45° ist die Ruhelage (an der Rundung anliegend), das Klingeln
    schlaegt nur wenige Grad darum aus. */
 @keyframes lcSchelleL {
@@ -10240,26 +10173,18 @@ body.lc-schreibt .tutor-reiter {
 }
 
 /* --- Geld und Bonbons über einer Person --------------------------- */
-/* RUNDE 80 — XANDER: „Bei dem Geld … faellt zu langsam" und „Die
-   Bonbons fallen auch ziemlich langsam".
-   NACHGERECHNET: ein Stueck brauchte 2,1 s fuer 5 em Fallhoehe. Bei
-   einer Schriftgroesse von rund 15 px sind das gut 75 px in
-   2,1 Sekunden — ein Blatt Papier faellt so, eine Muenze nicht.
-   Jetzt 1,15 s, und die Beschleunigungskurve ist steiler
-   (cubic-bezier statt ease-in), damit es unten wirklich schnell
-   ist — so faellt etwas, das Gewicht hat. */
 .lc-zgeld-stueck,
 .lc-zzucker-stueck {
   position: absolute;
   top: -30%;
   font-style: normal;
   font-size: 0.92em;
-  animation: lcZpRieselt 1.15s cubic-bezier(0.55, 0.02, 0.82, 0.6) both;
+  animation: lcZpRieselt 2.1s ease-in both;
 }
 @keyframes lcZpRieselt {
   0%   { opacity: 0; transform: translateY(0) rotate(0); }
-  10%  { opacity: 1; }
-  92%  { opacity: 1; }
+  14%  { opacity: 1; }
+  88%  { opacity: 1; }
   100% { opacity: 0; transform: translateY(5em) rotate(var(--dreh, 180deg)); }
 }
 
@@ -10314,39 +10239,6 @@ body.lc-schreibt .tutor-reiter {
   82%  { opacity: 1; transform: translateY(0) rotate(var(--kipp, 0deg)); }
   100% { opacity: 0; transform: translateY(0.6em) rotate(var(--kipp, 0deg)); }
 }
-/* =========================================================
-   DER BONBONHAUFEN
-   ---------------------------------------------------------
-   RUNDE 80 — XANDER: „sie koennten sich unten im Profilbild
-   Rahmen sammeln … unterschiedlich bunte Bonbons."
-   Derselbe Bau wie der Geldspeicher: ein Haufen, der in der
-   runden Blende von unten waechst. Jedes Bonbon faellt
-   einzeln ein, kippt dabei in seine Lage und bleibt liegen.
-   ========================================================= */
-.lc-bonbonhaufen {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: 58%;
-}
-.lc-bonbon-liegt {
-  position: absolute;
-  width: 26%;
-  transform: rotate(var(--kipp, 0deg));
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .3));
-  animation: lcBonbonFaellt 3.2s ease-out both;
-}
-.lc-bonbon-liegt .lc-bonbon-svg,
-.lc-zzucker-stueck .lc-bonbon-svg { display: block; width: 100%; height: auto; }
-.lc-zzucker-stueck .lc-bonbon-svg { width: 1.5em; }
-@keyframes lcBonbonFaellt {
-  0%   { opacity: 0; transform: translateY(-2.4em) rotate(calc(var(--kipp, 0deg) - 60deg)); }
-  12%  { opacity: 1; }
-  20%  { transform: translateY(0) rotate(var(--kipp, 0deg)) scale(1.06, 0.9); }
-  25%  { transform: translateY(0) rotate(var(--kipp, 0deg)); }
-  84%  { opacity: 1; transform: translateY(0) rotate(var(--kipp, 0deg)); }
-  100% { opacity: 0; transform: translateY(0.5em) rotate(var(--kipp, 0deg)); }
-}
-
 .lc-geldglanz {
   position: absolute;
   inset: 0;
@@ -10988,30 +10880,15 @@ body.lc-schreibt .tutor-reiter {
 }
 
 /* --- „Das muss richtig schön nass werden" ------------------------- */
-/* RUNDE 80 — XANDER: „das lecken … zeigt noch zu viel Kontrastkante.
-   Das muss weicher auslaufen."
-
-   NACHGESEHEN: der Glanzfilm lag auf  inset: 0  — und das ist NICHT
-   das runde Bild, sondern der ganze Sitzknopf samt Namenszeile
-   (rund 103 breit, 130 hoch). Mit  border-radius: 50%  wurde daraus
-   ein hochkant stehendes Oval, dessen Rand quer ueber das Bild lief.
-   GENAU DAS ist die Kontrastkante.
-
-   Jetzt sitzt der Film auf demselben Quadrat wie das Bild
-   (width: 100%, aspect-ratio: 1, oben buendig) — und laeuft zum Rand
-   hin weich aus, statt dort abzubrechen: die Maske haelt ihn bis
-   54 % voll und blendet ihn bis 88 % vollstaendig weg. */
 .lc-leck-nass {
   position: absolute;
-  top: 0; left: 0; width: 100%; aspect-ratio: 1;
+  inset: 0;
   border-radius: 50%;
   pointer-events: none;
   background:
     radial-gradient(ellipse at 38% 30%, rgba(255, 255, 255, .5) 0 12%, transparent 40%),
     radial-gradient(ellipse at 66% 58%, rgba(255, 255, 255, .34) 0 10%, transparent 36%),
     linear-gradient(140deg, rgba(190, 230, 255, .30), rgba(190, 230, 255, .06) 60%);
-  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0 54%, rgba(0,0,0,0.55) 72%, transparent 88%);
-          mask-image: radial-gradient(circle at 50% 50%, #000 0 54%, rgba(0,0,0,0.55) 72%, transparent 88%);
   animation: lcNassWird 3.4s ease-out both;
 }
 @keyframes lcNassWird {
@@ -14921,28 +14798,11 @@ body.lc-schreibt .tutor-reiter {
   animation-delay: 0.76s;
   animation-name: lcWasserSteigtR18;
 }
-/* RUNDE 80 — XANDER: „wenn ich jemanden mit Wasser voll laufen lasse
-   mit dem Eimer, dann ist vorher unten im Profilbild schon eine
-   kleine Pfuetze zu sehen."
-
-   NACHGEMESSEN bei 300 ms, also lange bevor der Eimer kippt: unten
-   am Bild standen zwei Elemente mit 12,5 px Hoehe — die beiden
-   Oberflaechenwellen. Sie haengen IM Pegel, sitzen aber bei
-   top: -0,42em, also ueber dessen Oberkante. Solange der Pegel
-   0 hoch ist, ragen sie trotzdem heraus und liegen genau am
-   Bildboden: die Pfuetze, die er sieht.
-
-   Der Pegel wird deshalb jetzt mitsamt seinen Wellen erst sichtbar,
-   wenn er zu steigen beginnt, und verschwindet, wenn er abgelaufen
-   ist — die Deckkraft gehoert zum Elternelement, also gilt sie auch
-   fuer die Wellen. */
 @keyframes lcWasserSteigtR18 {
-  0%   { height: 0; opacity: 0; }
-  0.6% { opacity: 1; }
-  23%  { height: 106%; opacity: 1; }
-  70%  { height: 106%; opacity: 1; }
-  99%  { height: 0; opacity: 1; }
-  100% { height: 0; opacity: 0; }
+  0%   { height: 0; }
+  23%  { height: 106%; }
+  70%  { height: 106%; }
+  100% { height: 0; }
 }
 
 /* --- DER STROHHALM: PIXELZEILE FUER PIXELZEILE LEER -------------------
@@ -22870,67 +22730,17 @@ body.lc-schreibt .tutor-reiter {
   margin: -37vmin 0 0 -37vmin;
   border-radius: 50%;
   pointer-events: none;
-  /* RUNDE 80 — XANDER: „diese komische Nudelholz … das ist wie eine
-     Extra kreisrunde Ausstand, die von links unten nach rechts oben
-     geht … man sieht die Kontrastkante … es soll eher von innen nach
-     aussen so wabern."
-
-     NACHGESEHEN: der Sektor sprang von 0 auf 0,30 innerhalb von
-     26 Grad und fiel bis 120 Grad wieder auf 0 — danach 240 Grad
-     lang gar nichts. Ein so schmaler, so steiler Bogen liest sich
-     als KANTE, und weil er mit rotateX(62deg) gekippt ist, laeuft
-     diese Kante als Ellipse von links unten nach rechts oben: genau
-     das Nudelholz.
-     Jetzt zieht sich der Helligkeitsverlauf ueber 330 Grad, steigt
-     und faellt in langen Rampen und erreicht hoechstens 0,20. Damit
-     gibt es keine Stelle mehr, an der die Helligkeit springt — es
-     ist ein Wandern, keine Kante. */
   background: conic-gradient(from 0deg,
     rgba(214, 244, 255, 0) 0deg,
-    rgba(214, 244, 255, .05) 34deg,
-    rgba(214, 244, 255, .13) 76deg,
-    rgba(160, 222, 255, .20) 124deg,
-    rgba(214, 244, 255, .15) 172deg,
-    rgba(214, 244, 255, .08) 228deg,
-    rgba(214, 244, 255, .02) 292deg,
-    rgba(214, 244, 255, 0) 344deg,
+    rgba(214, 244, 255, .30) 26deg,
+    rgba(160, 222, 255, .16) 62deg,
+    rgba(214, 244, 255, 0) 120deg,
     rgba(214, 244, 255, 0) 360deg);
-  /* Innen soll nichts leuchten — dort ist der Schlund. Der Rand
-     laeuft weiter aussen weich aus als vorher (78 % statt 92 %),
-     damit auch dort keine Kante steht. */
-  -webkit-mask: radial-gradient(circle, rgba(0,0,0,0) 0 14%, #000 38% 74%, rgba(0,0,0,0) 99%);
-          mask: radial-gradient(circle, rgba(0,0,0,0) 0 14%, #000 38% 74%, rgba(0,0,0,0) 99%);
+  /* Innen soll nichts leuchten — dort ist der Schlund. */
+  -webkit-mask: radial-gradient(circle, rgba(0,0,0,0) 0 16%, #000 34% 92%, rgba(0,0,0,0) 100%);
+          mask: radial-gradient(circle, rgba(0,0,0,0) 0 16%, #000 34% 92%, rgba(0,0,0,0) 100%);
   animation: lcStrudelWirbelR71 2.4s linear infinite;
 }
-/* RUNDE 80 — „es soll eher von innen nach aussen so wabern."
-   Drei Ringe, die im Schlund entstehen und nach aussen laufen,
-   dabei groesser werden und verblassen — und dabei leicht
-   unrund atmen, sonst waeren es Zielscheibenringe statt Wasser.
-   Sie liegen in derselben Kippung wie der Strudel (rotateX 62°),
-   damit sie auf der Wasseroberflaeche laufen und nicht davor. */
-.lc-strudel-waber {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 74vmin;
-  height: 74vmin;
-  margin: -37vmin 0 0 -37vmin;
-  border-radius: 50%;
-  pointer-events: none;
-  border: 0.9vmin solid rgba(196, 236, 255, .22);
-  box-shadow: 0 0 2.4vmin rgba(160, 222, 255, .16) inset;
-  opacity: 0;
-  animation: lcStrudelWabertR80 3.2s cubic-bezier(.32, .1, .52, 1) infinite;
-}
-@keyframes lcStrudelWabertR80 {
-  0%   { opacity: 0; transform: rotateX(62deg) scale(.13); border-width: 0.3vmin; }
-  12%  { opacity: .85; }
-  46%  { transform: rotateX(62deg) scale(.58) scaleX(1.05); }
-  74%  { opacity: .45; transform: rotateX(62deg) scale(.84) scaleY(1.04); }
-  100% { opacity: 0; transform: rotateX(62deg) scale(1.06); border-width: 1.3vmin; }
-}
-@media (prefers-reduced-motion: reduce) { .lc-strudel-waber { display: none; } }
-
 .lc-strudel-wirbel-2 {
   width: 41vmin;
   height: 41vmin;
