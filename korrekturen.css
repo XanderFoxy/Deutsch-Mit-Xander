@@ -28430,3 +28430,66 @@ code, pre {
 @media (prefers-reduced-motion: reduce) {
   .lc-zauberer, .lc-zauberhut, .lc-zauber-last, .lc-zauber-ohren { animation: none; }
 }
+
+/* =====================================================================
+   RUNDE 87 — STADT · LAND · FLUSS: DAS LAUFENDE ALPHABET
+   ---------------------------------------------------------------------
+   XANDER: „so ein grafisch durchlaufendes Alphabet, wo man dann einfach
+   auf den Buchstaben vom durchlaufenden Alphabet klicken muss."
+   Das Fenster ist absichtlich SCHMAL und hoch wie bei einem
+   Spielautomaten: man sieht genau einen Buchstaben, und man sieht, dass
+   er sich bewegt. Die Bewegung selbst rechnet app.js (der Takt wird
+   beim Ausrollen laenger); hier steht nur, wie es aussieht.
+   ===================================================================== */
+.slf-rad {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 2px dashed var(--teal-400, #5ba8a0);
+  border-radius: var(--radius-md, 12px);
+  background: rgba(91, 168, 160, .08);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.slf-rad:hover, .slf-rad:focus-visible { background: rgba(91, 168, 160, .16); outline: none; }
+.slf-rad-fenster {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 78px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, .10), rgba(0, 0, 0, .02) 30%,
+                                      rgba(0, 0, 0, .02) 70%, rgba(0, 0, 0, .10));
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .12);
+  overflow: hidden;
+}
+.slf-rad-zeichen {
+  font-family: "Bebas Neue", system-ui, sans-serif;
+  font-size: 3.1rem;
+  line-height: 1;
+  letter-spacing: .02em;
+}
+/* Solange es laeuft, zittert der Buchstabe leicht in der Senkrechten —
+   das ist es, was eine Walze von einer Anzeige unterscheidet. */
+.slf-rad-laeuft .slf-rad-zeichen {
+  animation: slfRadWalzeR87 .09s linear infinite;
+}
+@keyframes slfRadWalzeR87 {
+  0%   { transform: translateY(-34%); opacity: .35; }
+  40%  { transform: translateY(0);    opacity: 1; }
+  100% { transform: translateY(34%);  opacity: .35; }
+}
+.slf-rad-wort { font-size: .86rem; opacity: .85; text-align: left; }
+/* Die Spaltenwahl: dieselben Kacheln wie bei den Niveaustufen, damit
+   es sich anfuehlt wie der Rest des Hauses. */
+.slf-spaltenwahl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .slf-rad-laeuft .slf-rad-zeichen { animation: none; }
+}

@@ -1,0 +1,172 @@
+/* =====================================================================
+   SONDE RUNDE 87 — DIE STRICHLINIEN, ALLE AUF EINMAL
+   ---------------------------------------------------------------------
+   XANDER: „auch die Inkonsistenzen der Strichlinien, die immer noch da
+   sind" und „keine Design-Inkonsistenzen mehr übrig, wenn man den Platz
+   verlässt … dass das Profilbild verkleinert wird beim Verlassen des
+   Platzes."
+
+   WARUM DIESE SONDE NEU IST, obwohl es pruefe-platzdesign.js schon
+   gibt: die alte prüft ZWÖLF ausgesuchte Effekte. Solange eine Sonde
+   nur zwölf prüft, findet sie den dreizehnten nie — und genau dort
+   sitzt der Rest. Diese hier geht über ALLE Wirkungen, die einem Platz
+   gelten, und über ALLE Reisen.
+
+   Drei Regeln, und sie gelten ausnahmslos:
+     1. Das Schild (die gestrichelte Linie mit der Platznummer) darf
+        sich nicht bewegen, nicht wachsen, nicht schrumpfen und nicht
+        verblassen. Es ist das DESIGN des Platzes, nicht Teil der
+        Animation.
+     2. Der Name unter dem Platz genauso.
+     3. Beim Verlassen darf das Profilbild nicht KLEINER werden. Wer
+        wegfliegt, fliegt in voller Größe weg; verschwinden darf es,
+        schrumpfen nicht.
+   Wer künftig einen Effekt baut, der eines davon anfasst, fällt hier
+   auf.
+   ===================================================================== */
+const http = require("http"), fs = require("fs"), path = require("path");
+const { chromium } = require("/tmp/claude-0/node_modules/playwright");
+const WURZEL = path.join(__dirname, "..");
+const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
+  ".json": "application/json", ".webmanifest": "application/manifest+json",
+  ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml",
+  ".opus": "audio/ogg", ".m4a": "audio/mp4", ".mp3": "audio/mpeg" };
+
+let fehler = 0;
+const sage = (gut, text, dazu) => {
+  if (!gut) fehler++;
+  console.log((gut ? "  ok   " : "  FEHL ") + text + (dazu ? "   " + dazu : ""));
+};
+
+(async () => {
+  console.log("RUNDE 87 — die Strichlinien bei JEDEM Effekt");
+  const srv = http.createServer((q, a) => {
+    let p = decodeURIComponent(q.url.split("?")[0]);
+    if (p === "/") p = "/index.html";
+    const f = path.join(WURZEL, p);
+    if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) {
+      a.writeHead(404); return a.end();
+    }
+    a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream" });
+    fs.createReadStream(f).pipe(a);
+  }).listen(0);
+  const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+  const pg = await br.newPage({ viewport: { width: 460, height: 900 } });
+  pg.on("pageerror", (e) => { console.log("  FEHL Seitenfehler: " + e.message); fehler++; });
+  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
+  await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html",
+    { waitUntil: "domcontentloaded" });
+  await pg.waitForFunction(() => window.DMA_PRUEFUNG && window.DMA_PRUEF
+    && window.DMA_PRUEF.platzWirkungen, { timeout: 20000 });
+
+  const wirkungen = await pg.evaluate(() => window.DMA_PRUEF.platzWirkungen());
+  const reisen = await pg.evaluate(() => window.DMA_PRUEF.reiseArten());
+  console.log("  " + wirkungen.length + " Platz-Wirkungen und " + reisen.length + " Reisen\n");
+
+  /* Ein Durchgang: Buehne bauen, messen, Effekt ausloesen, dreimal
+     nachmessen (Anfang, Mitte, Ende der Bewegung). */
+  const durchgang = (art, istReise) => pg.evaluate(async ([a, reise]) => {
+    document.querySelectorAll(".lc-zp, .lc-sprechfeld, .lc-reise, .lc-greif, .lc-riesenhand")
+      .forEach((x) => x.remove());
+    window.DMA_PRUEF.effektBuehne();
+    const plaetze = [...document.querySelectorAll(".lc-platz")];
+    const pl = plaetze[1];                       /* Bea, Platz 2 */
+    const lies = () => {
+      const sch = pl.querySelector(".lc-schild");
+      const nam = pl.querySelector(".lc-platz-name");
+      const nr = pl.querySelector(".lc-nummer");
+      const kr = pl.querySelector(".lc-kreis");
+      const r = (el) => {
+        if (!el) return null;
+        const b = el.getBoundingClientRect();
+        const st = getComputedStyle(el);
+        return { x: Math.round(b.left), y: Math.round(b.top),
+                 b: Math.round(b.width), h: Math.round(b.height),
+                 deck: Math.round(Number(st.opacity) * 100) / 100,
+                 sicht: st.visibility, zeigt: st.display };
+      };
+      /* Die Groesse des Kreises AUS SEINER MATRIX — die Randbox
+         waere durch Drehungen verfaelscht. */
+      let kreisGr = 1;
+      if (kr) {
+        const m = getComputedStyle(kr).transform;
+        const z = m && m.match(/matrix\(([^)]+)\)/);
+        if (z) {
+          const p2 = z[1].split(",").map(Number);
+          kreisGr = Math.round(Math.hypot(p2[0], p2[1]) * 100) / 100;
+        }
+      }
+      return { schild: r(sch), name: r(nam), nummer: r(nr), kreisGr: kreisGr,
+               unterwegs: pl.classList.contains("lc-platz-unterwegs"),
+               kreisDeck: kr ? Math.round(Number(getComputedStyle(kr).opacity) * 100) / 100 : 1 };
+    };
+    const vorher = lies();
+    try {
+      if (reise) window.DMA_PRUEFUNG.wirkung(a, "Bea", "Alex", {});
+      else window.DMA_PRUEFUNG.wirkung(a, "Bea", "Alex", {});
+    } catch (e) { return { krach: String(e && e.message) }; }
+    const proben = [];
+    for (const w of [260, 900, 1700]) {
+      await new Promise((f) => setTimeout(f, w === 260 ? 260 : 640));
+      proben.push(Object.assign({ t: w }, lies()));
+    }
+    return { vorher: vorher, proben: proben };
+  }, [art, istReise]);
+
+  const gleich = (a, b, feld) => a && b && a[feld] !== undefined && b[feld] !== undefined;
+  const pruefeEinen = (art, m, istReise) => {
+    if (!m || m.krach) { sage(false, art + ": Absturz", m && m.krach); return; }
+    const v = m.vorher;
+    const schlimm = [];
+    m.proben.forEach((p) => {
+      ["schild", "name", "nummer"].forEach((teil) => {
+        const a = v[teil], b = p[teil];
+        if (!a || !b) return;
+        if (Math.abs(a.x - b.x) > 1 || Math.abs(a.y - b.y) > 1) {
+          schlimm.push(p.t + "ms " + teil + " verschoben um "
+            + (b.x - a.x) + "/" + (b.y - a.y) + " px");
+        }
+        if (Math.abs(a.b - b.b) > 1 || Math.abs(a.h - b.h) > 1) {
+          schlimm.push(p.t + "ms " + teil + " Groesse " + a.b + "x" + a.h
+            + " -> " + b.b + "x" + b.h);
+        }
+        if (b.deck < a.deck - 0.02) {
+          schlimm.push(p.t + "ms " + teil + " blasser (" + a.deck + " -> " + b.deck + ")");
+        }
+        /* AUSNAHME, und sie ist seine eigene: „mein Platz, der
+           verlassen wird, traegt noch meinen Namen — der soll
+           natuerlich auch nicht mehr da stehen" (Runde 85). Waehrend
+           einer Reise DARF der Name also verschwinden. Schild und
+           Nummer duerfen es nie. */
+        const reistGerade = p.unterwegs && teil === "name";
+        if (!reistGerade && (b.sicht !== a.sicht || b.zeigt !== a.zeigt)) {
+          schlimm.push(p.t + "ms " + teil + " " + a.sicht + "/" + a.zeigt
+            + " -> " + b.sicht + "/" + b.zeigt);
+        }
+      });
+    });
+    /* XANDER: „dass das Profilbild verkleinert wird beim START des
+       Verlassens des Platzes."
+       DIE REGEL GILT NUR DAFUER, und das ist wichtig: bei manchen
+       Wirkungen IST das Bild der Ball — beim Tennis fliegt es weg und
+       wird dabei kleiner, und das ist richtige Perspektive, kein
+       Fehler. Geprueft wird deshalb nur der ANFANG (die erste Probe)
+       und nur bei Reisen: wer wegreitet, reitet in voller Groesse
+       weg. */
+    if (istReise && m.proben.length && m.proben[0].kreisGr < 0.97) {
+      schlimm.push("beim Verlassen ist das Profilbild auf "
+        + m.proben[0].kreisGr + " geschrumpft");
+    }
+    sage(schlimm.length === 0, art, schlimm.slice(0, 3).join("; "));
+  };
+
+  console.log("A) Die Wirkungen, die genau einem Platz gelten\n");
+  for (const art of wirkungen) pruefeEinen("/" + art, await durchgang(art, false), false);
+
+  console.log("\nB) Die Reisen — dabei verlaesst das Bild seinen Platz\n");
+  for (const art of reisen) pruefeEinen("/" + art, await durchgang(art, true), true);
+
+  await br.close(); srv.close();
+  console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
+  process.exit(fehler ? 1 : 0);
+})();

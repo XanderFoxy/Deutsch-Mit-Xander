@@ -35814,15 +35814,30 @@
            am alten Platz wieder, sobald die Animation zu Ende war,
            und auf den Geraeten der anderen kam der Sitzwechsel erst
            danach ueber das Netz. */
+        /* RUNDE 87 — XANDER: „keine Design-Inkonsistenzen mehr uebrig,
+           wenn man den Platz verlaesst … dass das Profilbild
+           verkleinert wird beim Start des Verlassens des Platzes."
+
+           ER HAT RECHT, UND ES STAND GENAU HIER: die Blende hat das
+           Bild nicht nur ausgeblendet, sie hat es dabei auf 20 Prozent
+           GESCHRUMPFT. Das ist kein Verlassen, das ist ein
+           Einsaugen — und es passt zu keiner einzigen Reise: wer auf
+           dem Pferd wegreitet, wird nicht kleiner, er ist einfach
+           nicht mehr da. Das Schrumpfen ist weg, die Blende bleibt;
+           sie ist jetzt 160 ms kurz, damit der Platz sauber leer
+           wird, sobald die Reise das Bild mitgenommen hat.
+           Was NICHT geht: gar keine Blende. Dann blitzt das Bild am
+           alten Platz noch einen Wimpernschlag auf, waehrend es
+           schon unterwegs ist — man saehe es doppelt. */
         kreis.animate([
-          { opacity: 1, transform: "scale(1)" },
-          { opacity: 0, transform: "scale(.2)" }
-        ], { duration: 220, easing: "ease-in", fill: "none" });
+          { opacity: 1 },
+          { opacity: 0 }
+        ], { duration: 160, easing: "ease-in", fill: "none" });
         setTimeout(() => {
           if (ab.el.classList.contains("lc-platz-unterwegs")) {
             ab.el.classList.add("lc-platz-bildweg");
           }
-        }, 200);
+        }, 145);
       } catch (e) {}
     }
 
@@ -47020,6 +47035,19 @@
         teile: teile,
         klasse: klasse
       };
+    },
+    /* RUNDE 87 — die Liste ALLER Wirkungen, die genau einem Platz
+       gelten, und aller Reisen. XANDER: „auch die Inkonsistenzen der
+       Strichlinien, die immer noch da sind." Solange eine Sonde nur
+       zwoelf ausgesuchte Effekte prueft, findet sie den dreizehnten
+       nie. Hiermit kann sie ALLE durchgehen. */
+    platzWirkungen: function () { return Object.keys(LC_NUR_AM_PLATZ); },
+    reiseArten: function () {
+      return ["fahren", "fahrstuhl", "frosch", "zylinder", "flug", "maulwurf",
+              "boot", "kran", "dampfer", "lok", "liane", "feder", "beamen",
+              "rohr", "heli", "portal", "pferd", "greifvogel", "turm",
+              "untertasse", "mieze", "gotteshand", "pranke", "frisbee",
+              "brennen", "zorro", "spielzug", "pacjagd"];
     },
     /* RUNDE 87 — die beiden Wege zum eigenen Lied, damit sich
        nachmessen laesst, OB es wirklich losspielt (siehe
@@ -61026,6 +61054,51 @@
      und einen Beruf finden? Am Küchentisch würfelt man sie auch weg. */
   const SLF_BUCHSTABEN = "abcdefghijklmnoprstuvwz".split("");
 
+  /* RUNDE 87 — die vier neuen Kategorien. Alles echte Titel und
+     echte Namen, nichts erfundenes; der Fuchs zieht daraus. */
+  const SLF_SPORT = {
+    a: ["Aikido", "Angeln"], b: ["Basketball", "Boxen", "Badminton"],
+    c: ["Curling"], d: ["Dart", "Diskuswerfen"],
+    e: ["Eishockey", "Eiskunstlauf"], f: ["Fussball", "Fechten"],
+    g: ["Golf", "Gewichtheben"], h: ["Handball", "Hockey", "Hochsprung"],
+    i: ["Inlineskaten"], j: ["Judo", "Joggen"],
+    k: ["Klettern", "Karate", "Kanufahren"], l: ["Leichtathletik"],
+    m: ["Marathon", "Motorsport"], n: ["Netzball"],
+    o: ["Orientierungslauf"], p: ["Polo"],
+    r: ["Rudern", "Reiten", "Radfahren"],
+    s: ["Schwimmen", "Segeln", "Skifahren"],
+    t: ["Tennis", "Tischtennis", "Turnen"], u: ["Ultimate Frisbee"],
+    v: ["Volleyball"], w: ["Wandern", "Wasserball"], z: ["Zehnkampf"]
+  };
+  const SLF_FILME = {
+    a: ["Avatar"], b: ["Bambi"], c: ["Casablanca"], d: ["Dracula"],
+    e: ["Es"], f: ["Fluch der Karibik"], g: ["Gladiator"],
+    h: ["Harry Potter"], i: ["Inception"], j: ["Jurassic Park"],
+    k: ["King Kong"], l: ["Lola rennt"], m: ["Matrix"],
+    n: ["Nemo"], o: ["Oceans Eleven"], p: ["Pinocchio"],
+    r: ["Rocky"], s: ["Shrek"], t: ["Titanic"], u: ["Up"],
+    v: ["Vaiana"], w: ["Wall-E"], z: ["Zoomania"]
+  };
+  const SLF_SERIEN = {
+    a: ["Akte X"], b: ["Babylon Berlin"], c: ["Chernobyl"], d: ["Dark"],
+    e: ["Emergency Room"], f: ["Friends"], g: ["Game of Thrones"],
+    h: ["House"], i: ["Inspector Barnaby"], j: ["Julia"],
+    k: ["Kommissar Rex"], l: ["Lost"], m: ["Monk"], n: ["Narcos"],
+    o: ["Outlander"], p: ["Peaky Blinders"], r: ["Raumschiff Enterprise"],
+    s: ["Die Simpsons"], t: ["Tatort"], u: ["Unser Charly"],
+    v: ["Vikings"], w: ["Weissensee"], z: ["Zorro"]
+  };
+  const SLF_SCHAUSPIELER = {
+    a: ["Al Pacino"], b: ["Brad Pitt"], c: ["Charlize Theron"],
+    d: ["Daniel Bruehl"], e: ["Emma Stone"], f: ["Franka Potente"],
+    g: ["George Clooney"], h: ["Heike Makatsch"], i: ["Iris Berben"],
+    j: ["Julia Roberts"], k: ["Keanu Reeves"], l: ["Liam Neeson"],
+    m: ["Matthias Schweighoefer"], n: ["Natalie Portman"],
+    o: ["Orlando Bloom"], p: ["Pierce Brosnan"], r: ["Robert De Niro"],
+    s: ["Sandra Bullock"], t: ["Til Schweiger"], u: ["Uma Thurman"],
+    v: ["Veronica Ferres"], w: ["Will Smith"], z: ["Zendaya"]
+  };
+
   const SLF_SPALTEN = [
     { id: "stadt", name: "Stadt", liste: SLF_STAEDTE, fest: true },
     { id: "land", name: "Land", liste: SLF_LAENDER, fest: true },
@@ -61037,6 +61110,21 @@
     { id: "ding", name: "Gegenstand", kat: ["werkzeuge", "moebel", "haushalt", "kleidung"] },
     { id: "verb", name: "Verb", kat: ["verben"] },
     { id: "eigenschaft", name: "Eigenschaft", kat: ["adjektive"] },
+    /* RUNDE 87 — XANDER: „dass man noch zusaetzliche Kategorien
+       eintragen kann, zum Beispiel fuer Beruf, Essen, Trinken oder
+       Sport oder Tier oder Schauspieler oder Film oder Serie oder
+       solche Kategorien, die man noch dazunehmen moechte."
+       Beruf, Essen & Trinken und Tier standen schon da; Sport, Film,
+       Serie und Schauspieler fehlten. Sie bekommen je eine kleine
+       Liste — nicht damit geprueft wird (er sagt ausdruecklich: „es
+       muss nicht zwingend mit dem Woerterbuch abgeglichen sein, es
+       soll Spass machen und die Leute nicht blockieren"), sondern
+       damit der FUCHS mitspielen kann. Ohne Liste liesse er diese
+       Spalten immer leer, und das waere kein Gegner. */
+    { id: "sport", name: "Sport", liste: SLF_SPORT },
+    { id: "film", name: "Film", liste: SLF_FILME },
+    { id: "serie", name: "Serie", liste: SLF_SERIEN },
+    { id: "schauspieler", name: "Schauspieler:in", liste: SLF_SCHAUSPIELER },
   ];
   const SLF_DAUER = 120;   // Sekunden je Runde
 
@@ -61161,8 +61249,45 @@
   let slfAuswahl = new Set();    // wen der Raumgeber gerade eingeladen hat
   let slfAuswahlOffen = false;
   let slfSuche = "";            // Suchtext in der Einladungsliste
-  let slfWahlmodus = "zufall";   // "zufall" | "selbst"
+  /* RUNDE 87 — XANDER: „so ein grafisch durchlaufendes Alphabet, wo
+     man dann einfach auf den Buchstaben vom durchlaufenden Alphabet
+     klicken muss — also einfach wahllos in die Animation
+     reinklicken muss, um das Alphabet anzuhalten, um einen Buchstaben
+     zu bestimmen."
+     Deshalb drei Arten statt zwei. „rad" ist die neue und ist
+     voreingestellt, weil sie die ist, die er beschrieben hat. */
+  let slfWahlmodus = "rad";      // "rad" | "zufall" | "selbst"
   let slfEigenerBuchstabe = "";
+  let slfRadLaeuft = false;      // das Alphabet dreht sich gerade
+  let slfRadBuchstabe = "";      // was dabei herausgekommen ist
+  let slfRadUhr = null;
+  /* XANDER: „und die bleiben dann auch in aufeinanderfolgenden Runden
+     so voreingestellt, solange bis man das Spiel generell abbricht."
+     Die gewaehlten Zusatzspalten liegen deshalb im Geraet und nicht
+     in der Runde — eine neue Runde erbt sie, ein Abbruch nicht. */
+  const SLF_EXTRA_SCHLUESSEL = "dma_slf_extraspalten";
+  function slfExtraHolen() {
+    try {
+      const roh = JSON.parse(localStorage.getItem(SLF_EXTRA_SCHLUESSEL) || "null");
+      if (Array.isArray(roh) && roh.length) {
+        return roh.filter((id) => SLF_SPALTEN.some((s2) => s2.id === id && !s2.fest));
+      }
+    } catch (e) {}
+    return ["name", "tier"];     /* die beiden klassischen Zusatzspalten */
+  }
+  function slfExtraMerken(ids) {
+    try { localStorage.setItem(SLF_EXTRA_SCHLUESSEL, JSON.stringify(ids)); } catch (e) {}
+  }
+  let slfExtraSpalten = null;    /* erst beim ersten Gebrauch holen */
+  function slfExtra() {
+    if (!slfExtraSpalten) slfExtraSpalten = slfExtraHolen();
+    return slfExtraSpalten;
+  }
+  /* Die Spalten einer Runde: die drei festen plus die gewaehlten. */
+  function slfSpaltenJetzt() {
+    const fest = SLF_SPALTEN.filter((s2) => s2.fest).map((s2) => s2.id);
+    return fest.concat(slfExtra());
+  }
   let slfGesamt = {};            // { spielerId: Punkte } über mehrere Runden
 
   function slfIch() {
@@ -61261,11 +61386,44 @@
             </div>`).join("")}
         </div>
         ${binHost ? `
+          ${/* RUNDE 87 — XANDER: „dass man noch zusaetzliche Kategorien
+                eintragen kann … und die bleiben dann auch in
+                aufeinanderfolgenden Runden so voreingestellt."
+                Die drei festen Spalten stehen fest; alles andere
+                waehlt der Spielfuehrer hier aus, und die Wahl haelt
+                bis zum Abbruch. */ ""}
+          <p class="eyebrow" style="margin-top:14px;">WELCHE SPALTEN?</p>
+          <p class="empty-note" style="margin:0 0 6px;">
+            Stadt, Land und Fluss sind immer dabei. Was noch?
+          </p>
+          <div class="slf-spaltenwahl">
+            ${SLF_SPALTEN.filter((sp) => !sp.fest).map((sp) => `
+              <button type="button" class="trophy-chip slf-spalte-chip ${slfExtra().indexOf(sp.id) !== -1 ? "selected" : ""}"
+                      data-slf-spalte="${sp.id}">${escapeHtml(sp.name)}</button>`).join("")}
+          </div>
+          <p class="empty-note" style="margin:6px 0 0;">
+            Ausgewählt: <strong>${slfExtra().length + 3}</strong> Spalten — sie bleiben
+            auch in den nächsten Runden so, bis ihr das Spiel beendet.
+          </p>
+
           <p class="eyebrow" style="margin-top:14px;">WOHER KOMMT DER BUCHSTABE?</p>
           <div class="order-toggle" style="margin-bottom:8px;">
+            <button type="button" class="order-pill" data-slf-wahl="rad" aria-selected="${slfWahlmodus === "rad"}">🎰 Alphabet anhalten</button>
             <button type="button" class="order-pill" data-slf-wahl="zufall" aria-selected="${slfWahlmodus === "zufall"}">🎲 Der Rechner würfelt</button>
             <button type="button" class="order-pill" data-slf-wahl="selbst" aria-selected="${slfWahlmodus === "selbst"}">✍️ Ich lege ihn fest</button>
           </div>
+          ${slfWahlmodus === "rad" ? `
+            <p class="empty-note" style="margin-bottom:6px;">
+              Das Alphabet läuft durch — tipp irgendwo hinein, dann bleibt es stehen.
+              Der Buchstabe, der dann dasteht, gilt.
+            </p>
+            <button type="button" id="slfRad" class="slf-rad ${slfRadLaeuft ? "slf-rad-laeuft" : ""}"
+                    aria-label="Alphabet anhalten">
+              <span class="slf-rad-fenster"><span class="slf-rad-zeichen" id="slfRadZeichen">${
+                (slfRadBuchstabe || "?").toUpperCase()}</span></span>
+              <span class="slf-rad-wort">${slfRadLaeuft ? "Antippen zum Anhalten"
+                : slfRadBuchstabe ? "Noch einmal drehen" : "Antippen zum Starten"}</span>
+            </button>` : ""}
           ${slfWahlmodus === "selbst" ? `
             <p class="empty-note" style="margin-bottom:6px;">Für den Fall, dass ihr zusammen am Telefon sitzt und einer „Stopp" sagt.</p>
             <input type="text" id="slfBuchstabeFeld" class="vocab-search" maxlength="1" placeholder="Ein Buchstabe, z. B. M"
@@ -61449,6 +61607,59 @@
     }
   }
 
+  /* =================================================================
+     DAS LAUFENDE ALPHABET
+     -----------------------------------------------------------------
+     XANDER: „so ein grafisch durchlaufendes Alphabet, wo man dann
+     einfach auf den Buchstaben vom durchlaufenden Alphabet klicken
+     muss — also einfach wahllos in die Animation reinklicken muss,
+     um das Alphabet anzuhalten, um einen Buchstaben zu bestimmen,
+     anstelle dass man ihn sagt."
+
+     WICHTIG IST DER LAUF, NICHT DER ZUFALL. Ein Rad, das gleichmaessig
+     rattert, waere nur ein Wuerfel mit Anzeige. Ein echtes Rad wird
+     LANGSAMER, wenn es ausrollt — deshalb steigt der Abstand zwischen
+     zwei Buchstaben von 70 ms an, sobald man anhaelt, und erst nach
+     ein paar immer traegeren Schritten bleibt es stehen. So sieht man,
+     dass es ausrollt, und der letzte Buchstabe ist der, den man
+     erwischt hat.
+     ================================================================= */
+  function slfRadStoppen() {
+    if (slfRadUhr) { clearTimeout(slfRadUhr); slfRadUhr = null; }
+    slfRadLaeuft = false;
+  }
+  function slfRadStarten() {
+    slfRadStoppen();
+    slfRadLaeuft = true;
+    let i = Math.floor(Math.random() * SLF_BUCHSTABEN.length);
+    let takt = 70;
+    let ausrollen = false;
+    const zeichen = () => document.getElementById("slfRadZeichen");
+    const schritt = () => {
+      i = (i + 1) % SLF_BUCHSTABEN.length;
+      slfRadBuchstabe = SLF_BUCHSTABEN[i];
+      const z = zeichen();
+      if (z) z.textContent = slfRadBuchstabe.toUpperCase();
+      if (ausrollen) {
+        takt = takt * 1.42 + 12;
+        if (takt > 520) { slfRadStoppen(); renderStadtLandFluss(); return; }
+      }
+      slfRadUhr = setTimeout(schritt, takt);
+    };
+    /* Der zweite Tipp laesst es ausrollen statt hart anzuhalten. */
+    const knopf = document.getElementById("slfRad");
+    if (knopf) {
+      knopf.classList.add("slf-rad-laeuft");
+      const wort = knopf.querySelector(".slf-rad-wort");
+      if (wort) wort.textContent = "Antippen zum Anhalten";
+      knopf.onclick = () => {
+        if (!ausrollen) { ausrollen = true;
+          if (wort) wort.textContent = "läuft aus …"; }
+      };
+    }
+    schritt();
+  }
+
   /* ---------- Die Runde starten ---------- */
   async function slfRundeStarten(ohneFehlende) {
     const r = slfRaum;
@@ -61459,10 +61670,17 @@
     let buchstabe;
     if (slfWahlmodus === "selbst" && /^[a-zäöü]$/i.test(slfEigenerBuchstabe.trim())) {
       buchstabe = slfEigenerBuchstabe.trim().toLowerCase();
+    } else if (slfWahlmodus === "rad" && /^[a-zäöü]$/i.test(String(slfRadBuchstabe))) {
+      /* RUNDE 87 — „so wird das naemlich gleich im System eingeloggt,
+         dass dieser Buchstabe verlangt wird." Der angehaltene
+         Buchstabe gilt, und zwar fuer alle: er reist mit der Runde. */
+      buchstabe = String(slfRadBuchstabe).toLowerCase();
     } else {
       buchstabe = slfZufallsrunde().buchstabe;
     }
-    const spalten = r.spalten || slfZufallsrunde().spalten;
+    /* Die gewaehlten Zusatzspalten gelten fuer JEDE Runde, bis das
+       Spiel abgebrochen wird — nicht nur fuer die erste. */
+    const spalten = slfSpaltenJetzt();
     r.runde = (r.runde || 0) + 1;
     r.stand = (r.stand || 0) + 1;
     r.buchstabe = buchstabe;
@@ -61721,8 +61939,31 @@
         });
       }
       area.querySelectorAll("[data-slf-wahl]").forEach((b) => b.addEventListener("click", () => {
+        slfRadStoppen();
         slfWahlmodus = b.dataset.slfWahl; renderStadtLandFluss();
       }));
+      /* RUNDE 87 — die Spaltenwahl. Die drei festen sind nicht
+         dabei; abwaehlen kann man bis auf eine einzige hinunter,
+         denn ganz ohne Zusatzspalte waere es wieder das alte Spiel. */
+      area.querySelectorAll("[data-slf-spalte]").forEach((b) => b.addEventListener("click", () => {
+        const id = b.dataset.slfSpalte;
+        const jetzt = slfExtra().slice();
+        const i = jetzt.indexOf(id);
+        if (i === -1) jetzt.push(id);
+        else if (jetzt.length > 1) jetzt.splice(i, 1);
+        else { showToast("Mindestens eine Zusatzspalte muss bleiben."); return; }
+        slfExtraSpalten = jetzt;
+        slfExtraMerken(jetzt);
+        if (slfRaum) slfRaum.spalten = slfSpaltenJetzt();
+        renderStadtLandFluss();
+      }));
+      /* Das laufende Alphabet. Ein Tipp startet, der naechste haelt an
+         — genau so hat er es beschrieben: „einfach wahllos in die
+         Animation reinklicken, um das Alphabet anzuhalten." */
+      document.getElementById("slfRad")?.addEventListener("click", () => {
+        if (slfRadLaeuft) { slfRadStoppen(); renderStadtLandFluss(); return; }
+        slfRadStarten();
+      });
       const feld = document.getElementById("slfBuchstabeFeld");
       if (feld) feld.addEventListener("input", () => { slfEigenerBuchstabe = feld.value; });
       document.getElementById("slfJetztStarten")?.addEventListener("click", () => slfRundeStarten(false));
