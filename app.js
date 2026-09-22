@@ -21768,6 +21768,18 @@
           <button type="button" class="lc-tonknopf" id="lcTonNeu"
                   title="Ton zurücksetzen — wenn du jemanden doppelt hörst"
                   aria-label="Ton zurücksetzen">🔊 Ton</button>
+          <!-- RUNDE 87 — XANDER: „Ich habe auch noch immer nicht den
+               Modus, dass oben die Adresszeile ausgeblendet wird beim
+               Klassenzimmer und des Weiteren möchte ich einen
+               Screen-on-Modus haben in dieser Situation, dass man dort
+               länger bleiben kann … ich möchte, dass der Bildschirm
+               hier offen gezwungen bleibt."
+               Beides steckt hinter diesem einen Knopf: siehe
+               lcKinoAn() weiter unten. Der Text darauf sagt jeweils,
+               was gerade gilt. -->
+          <button type="button" class="lc-tonknopf" id="lcKino"
+                  title="Adresszeile ausblenden und den Bildschirm anlassen"
+                  aria-label="Adresszeile ausblenden und den Bildschirm anlassen">🖥️ Vollbild</button>
         </div>
 
         <!-- GEMELDET: „Der Titel ist in meiner Optik mit dem Fokus sehr
@@ -24231,6 +24243,143 @@
   function livechatInsBild(sanft) {
     livechatAnSeinenPlatz(sanft);
   }
+
+  /* =================================================================
+     DER KINO-MODUS: ADRESSZEILE WEG, BILDSCHIRM AN
+     -----------------------------------------------------------------
+     XANDER (Runde 87): „Ich habe auch noch immer nicht den Modus, dass
+     oben die Adresszeile ausgeblendet wird beim Klassenzimmer und des
+     Weiteren möchte ich einen Screen-on-Modus haben in dieser
+     Situation, dass man dort länger bleiben kann … ich möchte, dass
+     der Bildschirm hier offen gezwungen bleibt."
+
+     WARUM DAS BISHER NICHT REICHTE. In Runde 86 stand hier der Versuch,
+     die Adresszeile durch geschicktes Rollen wegzubekommen (nie auf
+     Stand 0 fahren, Luft nach unten schaffen). Das ist richtig, aber
+     es ist nur eine BITTE an den Browser — und ein programmgesteuertes
+     Rollen klappt die Zeile auf keinem iPhone und nur launisch auf
+     Android weg. Es gibt genau EINEN Weg, der sie wirklich verschwinden
+     laesst, und das ist die Vollbild-Schnittstelle. Sie verlangt eine
+     echte Fingerbewegung — deshalb haengt das Einschalten am Tippen auf
+     „Klassenzimmer" und am Knopf, nicht an einem Zeitgeber.
+
+     WAS WO GEHT, ohne Schoenfaerberei:
+       · Android/Chrome, Desktop: Vollbild geht, die Zeile ist weg.
+       · iPhone/Safari: requestFullscreen gibt es fuer normale Elemente
+         NICHT. Dort bleibt es beim Rollen — und beim Hinweis, dass die
+         Zeile im Startbildschirm-Modus („Zum Home-Bildschirm") ganz
+         wegfaellt; dafuer steht display:standalone im manifest.
+       · Der Bildschirm-an-Teil haengt an navigator.wakeLock. Den gibt
+         es auf Android und seit iOS 16.4 auch auf dem iPhone.
+
+     GESPERRT WIRD NICHTS — sein Wort aus Runde 86: „aber nicht so,
+     dass sie komplett gesperrt ist." Ein Wisch nach unten oder Esc
+     holt alles zurueck, und der Knopf schaltet es ganz ab.
+     ================================================================= */
+  const LC_KINO_SCHLUESSEL = "dma_lc_kino";
+  let lcWachSperre = null;
+  let lcKinoLaeuft = false;
+
+  function lcKinoGewollt() {
+    /* Wie beim Tonschalter: nie gesetzt heisst AN. Erst ein
+       ausdrueckliches Aus schaltet es ab. */
+    try { return localStorage.getItem(LC_KINO_SCHLUESSEL) !== "aus"; }
+    catch (e) { return true; }
+  }
+  function lcKinoMerken(an) {
+    try {
+      if (an) localStorage.removeItem(LC_KINO_SCHLUESSEL);
+      else localStorage.setItem(LC_KINO_SCHLUESSEL, "aus");
+    } catch (e) {}
+  }
+  function lcVollbildKann() {
+    const el = document.documentElement;
+    return Boolean(el.requestFullscreen || el.webkitRequestFullscreen);
+  }
+  function lcImVollbild() {
+    return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+  function lcVollbildAn() {
+    const el = document.documentElement;
+    try {
+      if (el.requestFullscreen) return el.requestFullscreen({ navigationUI: "hide" });
+      if (el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); return Promise.resolve(); }
+    } catch (e) {}
+    return Promise.reject(new Error("kein Vollbild"));
+  }
+  function lcVollbildAus() {
+    try {
+      if (document.exitFullscreen && document.fullscreenElement) return document.exitFullscreen();
+      if (document.webkitExitFullscreen && document.webkitFullscreenElement) {
+        document.webkitExitFullscreen(); return Promise.resolve();
+      }
+    } catch (e) {}
+    return Promise.resolve();
+  }
+  /* Der Bildschirm-an-Teil. Die Sperre geht von selbst verloren,
+     sobald das Fenster in den Hintergrund geht — deshalb wird sie bei
+     der Rueckkehr neu geholt (siehe visibilitychange weiter unten). */
+  function lcWachAn() {
+    if (!navigator.wakeLock || lcWachSperre) return Promise.resolve(Boolean(lcWachSperre));
+    return navigator.wakeLock.request("screen").then((sp) => {
+      lcWachSperre = sp;
+      sp.addEventListener("release", () => { lcWachSperre = null; lcKinoKnopfPflegen(); });
+      return true;
+    }).catch(() => false);
+  }
+  function lcWachAus() {
+    const sp = lcWachSperre;
+    lcWachSperre = null;
+    if (sp) { try { sp.release(); } catch (e) {} }
+  }
+  function lcKinoOffen() {
+    return document.getElementById("sub-livechat")?.dataset.active === "true"
+        && document.getElementById("view-knowledge")?.dataset.active === "true";
+  }
+  function lcKinoKnopfPflegen() {
+    const k = document.getElementById("lcKino");
+    if (!k) return;
+    const voll = lcImVollbild();
+    const wach = Boolean(lcWachSperre);
+    k.classList.toggle("lc-kino-an", voll || wach);
+    k.textContent = (voll || wach) ? "🖥️ Vollbild an" : "🖥️ Vollbild";
+    k.title = voll && wach ? "Adresszeile ist weg, der Bildschirm bleibt an — antippen zum Beenden"
+      : voll ? "Adresszeile ist weg — antippen zum Beenden"
+      : wach ? "Der Bildschirm bleibt an — antippen zum Beenden"
+      : lcVollbildKann() ? "Adresszeile ausblenden und den Bildschirm anlassen"
+      : "Dein Browser kennt kein Vollbild (iPhone). Der Bildschirm bleibt trotzdem an; "
+        + "die Adresszeile verschwindet ganz, wenn du die Seite zum Home-Bildschirm hinzufügst.";
+  }
+  function lcKinoAn(vomNutzer) {
+    lcKinoLaeuft = true;
+    if (vomNutzer) lcKinoMerken(true);
+    const fertig = () => { lcKinoKnopfPflegen(); };
+    lcWachAn().then(fertig);
+    if (lcVollbildKann() && !lcImVollbild()) {
+      lcVollbildAn().then(fertig, () => {
+        /* Vollbild darf nur aus einer echten Fingerbewegung heraus
+           kommen. Schlaegt es fehl, bleibt der Bildschirm-an-Teil —
+           und der Knopf sagt es. */
+        fertig();
+      });
+    } else fertig();
+  }
+  function lcKinoAus(vomNutzer) {
+    lcKinoLaeuft = false;
+    if (vomNutzer) lcKinoMerken(false);
+    lcWachAus();
+    lcVollbildAus().then(lcKinoKnopfPflegen, lcKinoKnopfPflegen);
+    lcKinoKnopfPflegen();
+  }
+  document.addEventListener("fullscreenchange", lcKinoKnopfPflegen);
+  document.addEventListener("webkitfullscreenchange", lcKinoKnopfPflegen);
+  /* Kommt das Fenster aus dem Hintergrund zurueck, ist die Sperre weg
+     — das ist so vorgesehen. Wer im Klassenzimmer steht, bekommt sie
+     wieder. */
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    if (lcKinoLaeuft && lcKinoOffen()) lcWachAn().then(lcKinoKnopfPflegen);
+  });
 
   /* =================================================================
      KURZE TÖNE ZU DEN AUFKLEBERN
@@ -48083,6 +48232,29 @@
         e.stopPropagation();
         lcMusikWaehler();
       });
+      /* RUNDE 87 — der Kino-Knopf. Ein Tipp schaltet beides zusammen:
+         Vollbild (die Adresszeile ist weg) und Bildschirm-an. Noch ein
+         Tipp schaltet beides ab und merkt sich das. */
+      area.querySelector("#lcKino")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (lcImVollbild() || lcWachSperre) { lcKinoAus(true); return; }
+        lcKinoAn(true);
+        /* Sagen, was passiert ist — und was nicht. Ein Knopf, der auf
+           dem iPhone still nichts tut, waere genau das, was er zu
+           Recht nicht mehr sehen will. */
+        setTimeout(() => {
+          if (lcImVollbild()) {
+            showToast("🖥️ Vollbild an — die Adresszeile ist weg. "
+              + "Wisch nach unten oder drück Esc, um sie zurückzuholen."
+              + (lcWachSperre ? " Der Bildschirm bleibt an." : ""));
+          } else if (lcWachSperre) {
+            showToast("💡 Der Bildschirm bleibt an. Vollbild kann dein Browser nicht — "
+              + "leg die Seite auf den Home-Bildschirm, dann ist die Adresszeile auch weg.");
+          } else {
+            showToast("Dein Browser lässt weder Vollbild noch Bildschirm-an zu.");
+          }
+        }, 260);
+      });
       area.querySelector("#lcTonNeu")?.addEventListener("click", (e) => {
         e.stopPropagation();
         let erg = null;
@@ -48703,7 +48875,14 @@
     /* Jeder Ansichtswechsel entscheidet neu, ob der Streifen zu
        sehen ist: im Klassenzimmer selbst wäre er nur im Weg. */
     document.addEventListener("click", (e) => {
-      if (e.target.closest(".subnav-pill, .tape-tab")) setTimeout(klassenzimmerStreifen, 60);
+      if (e.target.closest(".subnav-pill, .tape-tab")) setTimeout(() => {
+        klassenzimmerStreifen();
+        /* RUNDE 87 — wer das Klassenzimmer verlaesst, braucht weder
+           Vollbild noch einen wachgehaltenen Bildschirm. Beides geht
+           hier wieder aus; die Einstellung selbst bleibt, damit es
+           beim naechsten Betreten von allein wiederkommt. */
+        if (lcKinoLaeuft && !lcKinoOffen()) { try { lcKinoAus(false); } catch (x) {} }
+      }, 60);
     }, true);
     klassenzimmerStreifen();
 
@@ -48724,6 +48903,11 @@
      sein." */
   document.querySelector('#knowledgeSubnav [data-sub="sub-livechat"]')?.addEventListener("click", () => {
     renderLiveChat();
+    /* RUNDE 87 — HIER und nur hier darf das Vollbild anfangen: dieser
+       Ruf steht in einer echten Fingerbewegung, und nur daraus laesst
+       ein Browser Vollbild zu. Ein Zeitgeber oder ein Aufruf beim
+       Zeichnen wuerde stillschweigend abgelehnt. */
+    if (lcKinoGewollt()) { try { lcKinoAn(false); } catch (e) {} }
     /* Das Ausrichten der Karte macht wireSubnav — EINE Stelle, ein
        Ergebnis. Hier wird nur noch der Verlauf selbst ans Ende
        gezogen, damit man beim Hereinkommen das Neueste sieht. */

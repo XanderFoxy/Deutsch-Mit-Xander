@@ -16450,6 +16450,14 @@ code, pre {
   background: rgba(255, 255, 255, 0.16);
   outline: none;
 }
+/* RUNDE 87 — der Kino-Knopf zeigt an, dass er laeuft. Ohne diese
+   Markierung waere nicht zu unterscheiden, ob das Vollbild gerade an
+   ist oder ob der Knopf nur nichts getan hat. */
+.lc-tonknopf.lc-kino-an {
+  background: rgba(100, 210, 180, 0.28);
+  border-color: rgba(120, 230, 200, 0.55);
+  font-weight: 700;
+}
 
 /* =====================================================================
    RUNDE 20 — DIE FREIE AUFGABE SIEHT AUS WIE EINE AUFGABE

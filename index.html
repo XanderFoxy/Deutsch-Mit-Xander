@@ -29,12 +29,25 @@
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="icon" id="mainFavicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%8A%3C/text%3E%3C/svg%3E" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
+<!-- RUNDE 87 — XANDER: „Ich habe auch noch immer nicht den Modus, dass oben die
+     Adresszeile ausgeblendet wird beim Klassenzimmer."
+     Auf Android und am Rechner macht das die Vollbild-Schnittstelle (siehe
+     lcKinoAn() in app.js). Auf dem iPhone gibt es die fuer normale Elemente
+     NICHT — dort faellt die Adresszeile nur weg, wenn die Seite ueber „Zum
+     Home-Bildschirm" abgelegt wurde. Genau dafuer sind diese beiden Zeilen da:
+     ohne sie oeffnet iOS auch das Symbol vom Home-Bildschirm wieder in Safari,
+     mitsamt Adresszeile. Das manifest allein (display: standalone) reicht dem
+     iPhone nicht, es liest diese Angabe. -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Deutsch mit Alex" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<script>window.DMA_VERSION = "457";</script>
+<script>window.DMA_VERSION = "458";</script>
 <script>
 /* =================================================================
    DIE SEITE MERKT SELBST, DASS SIE VERALTET IST
