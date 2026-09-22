@@ -22711,11 +22711,24 @@
     kopf.textContent = "\u201e" + titel + "\u201c \u2014 ganz oder ein St\u00fcck?";
     kasten.appendChild(kopf);
 
-    const schicken = (zusatz) => {
+    const schicken = (zusatz, ab, bis) => {
       lcPlatzMenueZu();
       const zeile = "/kopfhoerer " + fuerWen + " " + nr + (zusatz ? " " + zusatz : "");
       try { LiveChat.schreiben(zeile); } catch (x) {}
       lcNachDemSenden(zeile);
+      /* RUNDE 87 — „nicht nur einstellen kann, sondern sofort hoeren
+         kann". Gilt das Lied MIR, faengt es hier an — im selben
+         Fingertipp, in dem ich es ausgesucht habe. Vorher hing alles
+         am Rueckweg der Chatzeile durch den Raum; kam die nicht oder
+         spaet zurueck, hoerte ich gar nichts. Bei allen anderen
+         bleibt es beim Weg ueber die Nachricht, denn nur dort laeuft
+         es auf IHREM Geraet. */
+      if (!lcMusikFuerMich(fuerWen)) return;
+      let lieder = [];
+      try { lieder = (LiveChat.lieder && LiveChat.lieder()) || []; } catch (x) {}
+      const l = lieder[Number(nr) - 1];
+      if (!l) return;
+      lcMusikSpielen(l.datei, l.titel || titel, ab || 0, bis || 0, true);
     };
 
     const ganz = document.createElement("button");
@@ -22749,7 +22762,7 @@
       if (ab < 0 || bis < 0) { showToast("Zeit bitte als 1:20 oder als Sekunden."); return; }
       if (bis && bis <= ab) { showToast("Das Ende muss nach dem Anfang liegen."); return; }
       lcAusschnittMerken(nr, ab, bis);
-      schicken(lcZeitText(ab) + (bis ? "-" + lcZeitText(bis) : ""));
+      schicken(lcZeitText(ab) + (bis ? "-" + lcZeitText(bis) : ""), ab, bis);
     });
     kasten.appendChild(reihe);
     kasten.appendChild(los);
@@ -22781,6 +22794,28 @@
     kopf.className = "lc-platzmenue-kopf";
     kopf.textContent = einer ? "Nur f\u00fcr " + einer + " \u2014 welches Lied?" : "Musik f\u00fcr alle";
     kasten.appendChild(kopf);
+
+    /* RUNDE 87 — XANDER: „Das Musikstueck kann ich immer noch nicht
+       fuer mich einstellen ueber die Note oder ueber den Kopfhoerer
+       selber."
+       Die Note legte bisher immer fuer den GANZEN Raum auf. Ein Weg
+       zum eigenen Ohr fehlte hier ganz — man musste den Umweg ueber
+       das eigene Platzmenue kennen. Jetzt steht er obenan. */
+    if (!einer) {
+      let meinName = "";
+      try { meinName = (LiveChat.lage() || {}).ichName || ""; } catch (e) {}
+      if (meinName) {
+        const nurIch = document.createElement("button");
+        nurIch.type = "button";
+        nurIch.className = "lc-lese-text lc-musik-nurich";
+        nurIch.textContent = "\ud83c\udfa7  Nur f\u00fcr mich \u2014 Lied aussuchen";
+        nurIch.addEventListener("click", (e) => {
+          e.preventDefault(); e.stopPropagation();
+          lcMusikWaehler(meinName);
+        });
+        kasten.appendChild(nurIch);
+      }
+    }
 
     const liste = document.createElement("div");
     liste.className = "lc-lese-liste";
@@ -25776,9 +25811,41 @@
      nicht, sondern eine feste Portion. „bis" ist neu: damit steht
      BEIDES fest, Anfang und Ende. Ohne „bis" bleibt es bei den 30
      Sekunden, damit sich am Refrain-Einstieg nichts aendert. */
-  function lcMusikSpielen(datei, titel, ab, bis) {
+  /* RUNDE 87 — XANDER: „mache das moeglich, dass ich mein Lied selber
+     hoeren kann, nicht nur einstellen kann, sondern sofort hoeren kann.
+     Ich kann es immer noch nicht hoeren."
+
+     ZWEI URSACHEN, und die erste steht genau hier: lcToeneAn() ist der
+     Schalter fuer die KURZEN TOENE zu den Aufklebern („Kurze Toene zu
+     den Aufklebern … wenn man die dann noch mal anklickt, dass sie
+     quasi den Ton ausschaltet"). Wer den einmal abgeschaltet hat,
+     bekam damit auch keine Musik mehr — obwohl er gerade selbst ein
+     Lied ausgesucht und aufgesetzt hat. Ein Lied ist kein Nebengeraeusch
+     zu einem Aufkleber, sondern etwas, das jemand ausdruecklich
+     gestartet hat.
+     Deshalb: wer es SELBST anstoesst (selbst = true), hoert es immer.
+     Was ein anderer einem aufsetzt, richtet sich weiter nach dem
+     Schalter — sonst koennte man sich nicht mehr dagegen wehren.
+
+     Die zweite Ursache steckt in lcAusschnittWahl: dort lief alles
+     ueber die Chatzeile und damit ueber den Rueckweg aus dem Raum.
+     Jetzt startet das eigene Lied im selben Fingertipp. Das loest
+     nebenbei auch die Autoplay-Sperre: ein Ton aus einer echten
+     Fingerbewegung wird nie abgelehnt. */
+  function lcMusikSpielen(datei, titel, ab, bis, selbst) {
     if (!datei) return false;
-    if (!lcToeneAn()) return false;
+    if (!selbst && !lcToeneAn()) return false;
+    /* Und wenn dasselbe Lied schon laeuft, laeuft es weiter. Sonst
+       faengt es zweimal an: einmal beim Aussuchen (siehe oben, sofort)
+       und gleich darauf noch einmal, wenn die eigene Chatzeile aus dem
+       Raum zurueckkommt — man haette den Anfang doppelt gehoert. */
+    try {
+      if (!selbst && lcMusikSpieler && !lcMusikSpieler.paused
+          && lcMusikSpieler.src
+          && lcMusikSpieler.src.indexOf(encodeURIComponent(datei)) !== -1) {
+        return true;
+      }
+    } catch (e) {}
     lcMusikStoppen();
     try {
       if (!lcMusikSpieler) {
@@ -25802,11 +25869,27 @@
          Tipp genuegt. */
       const sek = Number(ab) || 0;
       if (sek > 0) {
+        /* RUNDE 87 — GEMESSEN: der Ausschnitt fing trotzdem bei 0 an.
+           Der Grund ist eine Feinheit der Abspieler: setzt man „src",
+           laeuft das Laden ERST IM NAECHSTEN DURCHGANG los. In der
+           Zeile danach steht readyState noch auf dem alten Wert, also
+           wurde sofort gesprungen — und das Laden hat die Stelle
+           gleich wieder auf 0 gesetzt. Der Zweig „sonst warte auf
+           loadedmetadata" kam nie zum Zug.
+           Jetzt wird BEIDES getan: sofort springen UND noch einmal,
+           wenn die Daten wirklich da sind. Zweimal an dieselbe Stelle
+           zu springen kostet nichts; einmal zu frueh kostet den
+           ganzen Ausschnitt. */
         const springen = () => {
-          try { lcMusikSpieler.currentTime = sek; } catch (e) {}
+          try {
+            if (Math.abs((lcMusikSpieler.currentTime || 0) - sek) > 0.4) {
+              lcMusikSpieler.currentTime = sek;
+            }
+          } catch (e) {}
         };
+        lcMusikSpieler.addEventListener("loadedmetadata", springen, { once: true });
+        lcMusikSpieler.addEventListener("playing", springen, { once: true });
         if (lcMusikSpieler.readyState >= 1) springen();
-        else lcMusikSpieler.addEventListener("loadedmetadata", springen, { once: true });
       }
       /* Der Ausschnitt hoert auf, wenn er zu Ende ist. Steht kein Ende
          da, bleibt es bei einer halben Minute — so lange lief der
@@ -41401,7 +41484,22 @@
         return pl ? pl.querySelector(".lc-kopfhoerer") : null;
       } catch (e) { return null; }
     })();
-    if (schonAuf) { schonAuf.remove(); return true; }
+    /* RUNDE 87 — XANDER: „die Kopfhoerer bleiben auch nicht auf
+       meinem Kopf."
+       GEFUNDEN, warum: diese eine Zeile war ein reiner Umschalter.
+       Wer schon Kopfhoerer auf hatte und ein ZWEITES Lied bekam,
+       verlor sie dabei — die Musik wechselte (der Block darueber
+       laeuft ja vorher), aber die Kopfhoerer waren weg. Genau das
+       passiert beim Ausprobieren staendig, weil man selten beim
+       ersten Lied bleibt.
+       Jetzt gilt: ein neues LIED laesst sie auf dem Kopf, und nur
+       das blosse „Nur aufsetzen" ein zweites Mal nimmt sie ab — so
+       war es gemeint („bis sie sie von selber abnimmt"). */
+    if (schonAuf) {
+      if (lied) return true;
+      schonAuf.remove();
+      return true;
+    }
 
     return lcAmPlatz(wen, "lc-kopfhoerer", (schicht) => {
       /* Antippen nimmt sie ab — „bis sie sie von selber abnimmt". */
@@ -46491,6 +46589,11 @@
         klasse: klasse
       };
     },
+    /* RUNDE 87 — die beiden Wege zum eigenen Lied, damit sich
+       nachmessen laesst, OB es wirklich losspielt (siehe
+       werkzeug/pruefe-runde87-lied.js). */
+    musikWaehler: function (fuerWen) { return lcMusikWaehler(fuerWen); },
+    musikSpielen: function (d, t, ab, bis, selbst) { return lcMusikSpielen(d, t, ab, bis, selbst); },
     /* Die eigene Stimme: Name aus dem Wort, Liste nachladen, abspielen. */
     tonStamm: function (w) { return aussprTonStamm(aussprSprechtext(w)); },
     tonLaden: function () { return aussprTonLaden(); },
