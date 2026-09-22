@@ -6684,30 +6684,8 @@ window.LiveChat = (function () {
           + (war ? " („" + String(war).slice(0, 40) + "“)" : "")
           + " — ab jetzt ist wieder alles ganz gewoehnlicher Chat.");
       }
-      /* =========================================================
-         RUNDE 88 — „ICH WEISS IMMER NOCH NICHT, WAS DAS SEIN SOLL"
-         ---------------------------------------------------------
-         XANDER, woertlich: „Die Aufgabe hatte noch keine Funktion,
-         immer noch nicht — ich weiss immer noch nicht, was das sein
-         soll."
-         Hier stand bisher ein einziger Beispielsatz. Der erklaert die
-         FREIE Aufgabe — aber das Aufgaben-Modul hat acht Arten, und
-         jede hat ihren eigenen Befehl. Wer „/aufgabe" tippte, sah
-         also eine von acht und keinen Hinweis auf die anderen
-         sieben. Genau das war der Grund.
-         Jetzt oeffnet „/aufgabe" ohne Text die Tafel in der
-         Oberflaeche (app.js, lcAufgabenWaehler): alle Arten, jede
-         mit einem Satz, was sie tut, mit Beispiel und damit, als was
-         die Note zaehlt. Ohne Oberflaeche — Sonde, Kopfrechner —
-         bleibt die Zeile von frueher stehen. */
-      var tafelAuf = false;
-      try { tafelAuf = Boolean(window.DMA_AUFGABENWAHL && window.DMA_AUFGABENWAHL()); }
-      catch (e) { tafelAuf = false; }
-      if (tafelAuf) return true;
       return systemZeile("So geht es:  /aufgabe Schreib einen Satz mit „weil“"
-        + "  — und  /aufgabe  ohne Text beendet sie wieder."
-        + "\nMehr Arten:  /satz  /wort  /betonung  /raten  /kontexter"
-        + "  /artikel  /begriff");
+        + "  — und  /aufgabe  ohne Text beendet sie wieder.");
     }
     offeneAufgabe = { typ: "frei", loesung: "", frage: text.slice(0, 300),
                       teile: [], wer: {}, zeit: Date.now(), zeileId: "" };
@@ -9264,7 +9242,7 @@ window.LiveChat = (function () {
     { gr: "schule", w: "rw",    kurz: "rueckwaerts", nutzt: "/rw Text",      was: "Satz rückwärts" },
     { gr: "schule", w: "satz",  kurz: "satzpuzzle",  nutzt: "/satz Satz",    was: "Wörter durcheinander — die anderen ordnen sie" },
     { gr: "schule", w: "wort",  kurz: "wortpuzzle",  nutzt: "/wort Wort",    was: "Buchstaben durcheinander" },
-    { gr: "schule", w: "aufgabe", kurz: "frage",     nutzt: "/aufgabe <Text>", was: "Das Aufgaben-Modul: /aufgabe allein öffnet die Tafel mit allen acht Arten. Mit Text dahinter stellst du eine Aufgabe in eigenen Worten — was die anderen danach schreiben, gilt als Antwort und kann benotet werden (läuft schon eine, beendet /aufgabe sie)" },
+    { gr: "schule", w: "aufgabe", kurz: "frage",     nutzt: "/aufgabe <Text>", was: "Eine Aufgabe in eigenen Worten — was die anderen danach schreiben, gilt als Antwort und kann benotet werden (/aufgabe ohne Text beendet sie)" },
     { gr: "schule", w: "betonung", kurz: "beton", nutzt: "/betonung <Wort oder Satz>", was: "Betonungsübung: die anderen tippen an, welche Silbe betont wird — die Silben kommen aus dem Wörterbuch, die Antwort lässt sich benoten (/betonung ohne Text beendet sie)" },
     { gr: "schule", w: "raten", kurz: "aufdecken", nutzt: "/raten Satz",     was: "Aufdecken: ein Satz mit verdeckten Buchstaben (/raten allein nimmt eine Redewendung, /raten liste zeigt alle)" },
     { gr: "schule", w: "note",  kurz: "zensur",      nutzt: "/note Name 1-6", was: "Zensur (nur Lehrer)" },
