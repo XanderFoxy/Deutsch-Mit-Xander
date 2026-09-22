@@ -49,34 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 88m — beim Billard wird jetzt gerechnet statt ausgesucht: die Kugel prallt an den Banden ab und faellt ins Loch, das sie trifft.",
+  stand: "Runde 88n — das Fahrgeraeusch laeuft jetzt die ganze Fahrt: neuer Motor als nahtlose Schleife.",
 
   inArbeit: [
-    { seit: "2026-09-22T17:24",
+    { seit: "2026-09-22T17:34",
       text: "Aufgabe-Modul: unklar, welches gemeint ist — Rueckfrage an Xander" },
-    { seit: "2026-09-22T17:24",
+    { seit: "2026-09-22T17:34",
       text: "Lok: Kurvenmodule, Draufsicht, Schrei beim Ueberfahren" },
-    { seit: "2026-09-22T17:24",
-      text: "Autofahrer-Geraeusch pruefen" },
-    { seit: "2026-09-22T17:24",
+    { seit: "2026-09-22T17:34",
       text: "Mario-Modus mit Muenzen und Punkten" },
-    { seit: "2026-09-22T17:24",
+    { seit: "2026-09-22T17:34",
       text: "Eigener Ton fuers Einschrauben der Birne" },
-    { seit: "2026-09-22T17:24",
+    { seit: "2026-09-22T17:34",
       text: "Stadt-Land-Fluss: Auswertung beim Spielfuehrer nachziehen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T17:24",
-      text: "Billard: das Loch wird nicht mehr vorher ausgesucht — es ist das Ergebnis der Rechnung" },
-    { seit: "2026-09-22T17:24",
-      text: "Billard: die Kugel prallt an den Banden ab, Einfallswinkel gleich Ausfallswinkel" },
-    { seit: "2026-09-22T17:24",
-      text: "Billard: Reibung und Effet, also kein ewiges Hin und Her auf einer Linie" },
-    { seit: "2026-09-22T17:24",
-      text: "Billard: verschiedene Stoesse finden verschiedene Loecher" },
-    { seit: "2026-09-22T17:24",
-      text: "Billard: auch die angestossene Kugel rollt nach der Physik weiter" },
+    { seit: "2026-09-22T17:34",
+      text: "Fahren: der Motor laeuft die ganze Fahrt, nicht nur eine Sekunde" },
+    { seit: "2026-09-22T17:34",
+      text: "Fahren: ton/fahrt.opus neu gerechnet als nahtlose Schleife (88 Zuendungen in 1,20 s)" },
+    { seit: "2026-09-22T17:34",
+      text: "Fahren: Anfang und Ende sind gleich laut — nichts pumpt mehr im Sekundentakt" },
   ],
 };

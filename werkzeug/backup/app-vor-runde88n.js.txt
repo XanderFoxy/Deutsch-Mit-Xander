@@ -24979,23 +24979,7 @@
        du die zwei Sachen einzeln, dass das Quietschen erst ausgeloest wird,
        wenn er da wirklich landet." — genau so: „fahrt" laeuft waehrend der
        Fahrt, „bremse" kommt bei der Ankunft (siehe lcFahrtLauf). */
-    /* RUNDE 88 — XANDER: „Ich weiss auch nicht, ob du das
-       Autofahrer-Geraeusch schon gemacht hast."
-       NACHGESEHEN, und in Runde 85 war es nur halb gemacht:
-       „lcTonReise" streckt zwar die Dauer auf die wirkliche Fahrzeit,
-       aber gestreckt wird damit nur, WANN ABGEBLENDET wird. Ob die
-       Datei von vorn anfaengt, entscheidet „schleife" — und das stand
-       hier nicht. Gemessen war ton/fahrt.opus 1,00 s lang, eine Fahrt
-       ueber vier Felder dauert 2,6 bis 4 Sekunden: eine Sekunde
-       Motor, danach Stille. Genau das war die Klage („man hoert kein
-       Fahrgeraeusch, man hoert nur das quietschende Bremsen am
-       Schluss").
-       Die Datei ist jetzt eine echte Schleife
-       (werkzeug/fahrgeraeusch-bauen.py, 1,20 s, alles darin ein
-       ganzzahliges Vielfaches von 1/1,20 s) — die alte blendete am
-       Ende aus (Anfang 0,049 RMS, Ende 0,000) und haette im Kreis
-       im Sekundentakt gepumpt. */
-    fahren:         { ton: "fahrt",    dauer: 2600, schleife: true, laut: 0.5 },
+    fahren:         { ton: "fahrt",    dauer: 2600, laut: 0.5 },
     bremse:         { ton: "bremse",   dauer: 1600, laut: 0.55 },
     /* RUNDE 85 — XANDER: „ich glaube, man hoert auch kein
        Laufgeraeusch, wenn man bloss laeuft, beziehungsweise klingt
