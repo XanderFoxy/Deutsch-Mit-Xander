@@ -203,15 +203,37 @@ pruefe("Gott und King Kong stehen unter EINER Kachel",
   && /\["\\ud83e\\udd8d", "King Kong", "pranke"\]\]\],/.test(js));
 pruefe("und das Anreise-Menue kann Untermenues",
   /lcUnterMenue\(platz, String\(nr\), wort, unter\);/.test(js));
+/* RUNDE 88 NACHGEFUEHRT — DIESE DREI REGELN BESCHRIEBEN EINE HAND,
+   DIE ES NICHT MEHR GIBT.
+   In Runde 77 bestand die Riesenhand aus vier Pfaden, die beim
+   Zupacken mit scaleY(.58) gestaucht und um einen Winkel gedreht
+   wurden (greifWinkel = [-6, -2, 3, 8]). XANDER hat das in Runde 87
+   verworfen: „Hände mit realistischen Zeichnungen für alle
+   Handstellungen, ein realistisches Greifen aus einem
+   Ursprungszustand in einen Griff in einzelnen Stationen." Seitdem
+   hat jeder Finger drei echte Gelenke (rhFinger/rhGlied,
+   .lc-rf-mcp/.lc-rf-pip/.lc-rf-dip), der Daumen zwei
+   (.lc-rd-cmc/.lc-rd-mcp), und der Griff laeuft ueber die
+   Stationentabelle rhStationen mit der Welle rhWelle.
+   Die Regeln pruefen deshalb jetzt DAS, was sie immer gemeint
+   haben — dass die Finger sich beim Zupacken wirklich beugen und
+   um ihren eigenen Knoechel drehen —, nur am heutigen Bau. Wie es
+   sich dabei bewegt, misst werkzeug/pruefe-runde87-hand.js an der
+   laufenden Animation; hier steht nur, dass der Bau da ist. */
 pruefe("die Finger knicken beim Zupacken ein",
-  /const greifWinkel = \[-6, -2, 3, 8\];/.test(js)
-  && /transform: "scaleY\(\.58\) rotate\(" \+ w \+ "deg\)", offset: greifZu/.test(js));
+  /const rhStationen = /.test(js) && /const rhWelle = /.test(js)
+  && /const rhBahn = \(fi, gelenk, si\) =>/.test(js));
 pruefe("der Daumen kommt von der anderen Seite dagegen",
-  /transform: "rotate\(-24deg\)", offset: greifZu/.test(js));
+  /lc-rd-cmc/.test(js) && /lc-rd-mcp/.test(js)
+  && /const dmBahn = \(feld\) => dmStationen\.map/.test(js));
 /* Ohne transform-box dreht ein SVG-Pfad um den Nullpunkt der
-   Zeichnung — dann klappt der Finger nicht zu, er fliegt weg. */
+   Zeichnung — dann klappt der Finger nicht zu, er fliegt weg.
+   Bei verschachtelten Gelenken muss es view-box sein und nicht
+   fill-box: fill-box waere die Box des Gliedes selbst, und dann
+   saesse jeder Drehpunkt woanders. */
 pruefe("und jeder Finger dreht um seinen eigenen Knoechel",
-  /\.lc-rhand-finger, \.lc-rhand-daumen \{\s*\n\s*transform-box: fill-box;\s*\n\s*transform-origin: 50% 0%;/.test(css));
+  /\.lc-rf-mcp, \.lc-rf-pip, \.lc-rf-dip/.test(css)
+  && /transform-box: view-box;/.test(css));
 pruefe("das Herauszupfen hat einen eigenen Ton",
   ton("zupfraus") && gelistet("zupfraus")
   && /lcTonSpaeter\("zupfraus", Math\.round\(hin \* 0\.29\), 0\.8\)/.test(js));
@@ -236,7 +258,10 @@ pruefe("die Farbe laeuft, sie saugt nicht mehr ein",
   && fs.existsSync(path.join(WURZEL, "werkzeug", "backup", "ton-runde77b", "farbelaeuft.opus")));
 pruefe("der Cowboy-Ruf ist neu, und die Animation passt dazu",
   ton("cowboy") && /hut:            \{ ton: "cowboy",    dauer: 3000/.test(js)
-  && /animation: lcHutR76 3s linear both;/.test(css));
+  /* RUNDE 88: aus 3s sind 4.4s geworden — siehe pruefe-runde76.js.
+     Der Ruf selbst ist derselbe, nur ohne die abgeschnittene
+     Blende am Ende (werkzeug/cowboyruf-bauen.py). */
+  && /animation: lcHutR76 4\.4s linear both;/.test(css));
 pruefe("die alten Toene liegen im Backup",
   fs.existsSync(path.join(WURZEL, "werkzeug", "backup", "ton-runde77b", "cowboy.opus")));
 

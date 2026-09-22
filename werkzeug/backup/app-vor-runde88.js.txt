@@ -25333,13 +25333,6 @@
        kommt nach den Geraeuschen" gilt weiter, nur ohne die Luecke.
        Die Schluesselbilder in korrekturen.css stehen in Prozent und
        rechnen sich damit von selbst um. */
-    /* RUNDE 88 — „dauer" bleibt 3000, und das ist nachgerechnet:
-       die Abspielroutine blendet in den letzten 500 ms aus, hier
-       also ab 2500 ms. Die neue Datei ist 2,49 s lang und unter
-       -60 dB schon ab 2,30 s — die Blende faellt damit hinter das
-       Ende der Datei und schneidet nichts mehr ab. Genau daran lag
-       es frueher NICHT: abgeschnitten war die Datei selbst (siehe
-       lcHut und werkzeug/cowboyruf-bauen.py). */
     hut:            { ton: "cowboy",    dauer: 3000, laut: 0.6 },
     /* RUNDE 75 — die Sonnenbrille. Kein neuer Ton noetig: „swoosh"
        (1,01 s) ist das Wischen, mit dem sie aufs Gesicht rutscht,
@@ -44274,11 +44267,7 @@
         kreis.classList.remove("lc-behutet");
         void kreis.offsetWidth;
         kreis.classList.add("lc-behutet");
-        /* RUNDE 88 — 4400 statt 3000: so lange laeuft die Animation
-           jetzt (XANDER: „Die Animation kann auch ein bisschen
-           laenger sein"). Die Klasse muss genau so lange liegen
-           bleiben, sonst springt der Kopf mittendrin zurueck. */
-        setTimeout(() => kreis.classList.remove("lc-behutet"), 4400);
+        setTimeout(() => kreis.classList.remove("lc-behutet"), 3000);
       }
       /* RUNDE 80 — XANDER: „bei dem YIHAAH Schrei vom Cowboy fehlt
          noch das Peitsch Geraeusch."
@@ -44289,18 +44278,6 @@
          ist 0,95 s lang, endet also bei 1,55 s und laeuft dem Ruf
          (Ende 1,98 s) nicht davon. */
       lcTonSpaeter("peitschehieb", 600, 0.72);
-      /* RUNDE 88 — XANDER: „das YIHAAH Geraeusch ist immer noch
-         abgeschnitten."
-         NACHGEMESSEN an der alten Datei in 10-ms-Fenstern: bis
-         1,71 s faellt der Ruf mit rund 5 dB je 50 ms — sein
-         natuerliches Ausklingen. Ab 1,72 s faellt er mit 45 dB in
-         80 ms. Das war kein Ausklingen, das war eine harte Blende,
-         die beim Erzeugen darauf lag. Genau die hat er gehoert.
-         ton/cowboy.opus ist deshalb neu gebaut (siehe
-         werkzeug/cowboyruf-bauen.py): derselbe Ruf, Ton fuer Ton,
-         nur ohne den Schnitt und mit dem Raum dahinter, in dem
-         man so ruft. Jetzt 2,36 s statt 1,86 s, und er verklingt
-         von -24 dB bei 1,72 s auf -60 dB bei 2,20 s. */
       schicht.innerHTML =
         '<svg class="lc-hut-bild" viewBox="0 0 140 76">'
         /* RUNDE 58 — XANDER: „Der Cowboy Hut sieht aus wie ein
@@ -44462,11 +44439,7 @@
         + '<path d="M26 22.6 C25 26 25 30 26.4 33.4 M33 21.6 C32 25.4 32 30 33.4 33.6"'
         + ' fill="none" stroke="#b98054" stroke-width="1.1" opacity=".7"/>'
         + "</svg>";
-      /* RUNDE 88 — 4400 ms. Der Ruf laeuft von 120 bis 2480 ms,
-         die Hand kommt danach (2600 bis 4250 ms) und richtet den
-         schief gefallenen Hut aus; die Zeiten stehen bei
-         @keyframes lcHutR76 in korrekturen.css. */
-    }, 4400, "hut");
+    }, 3000, "hut");
   }
 
   /* --- DIE ZEITBOMBE ---------------------------------------------------

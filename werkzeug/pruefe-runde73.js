@@ -244,17 +244,26 @@ pruefe("und er ruckelt nicht mehr — keine Kurve ueber die ganze Animation",
    575 ms. Das ist richtig so, denn der Hut faellt gegen den Ruf, und
    der Ruf faengt frueher an zu tragen — bei 0,33 s ist das erste
    „Yee" schon vorbei. */
+/* RUNDE 88 — 4,4 s (XANDER: „Die Animation kann auch ein bisschen
+   laenger sein"). Der Aufschlag liegt jetzt bei 13,07 % — und das
+   sind wieder genau die 575 ms, um die es in dieser Regel von
+   Anfang an ging. */
 pruefe("der Hut setzt auf, wenn man ihn aufsetzen hoert",
-  /animation: lcHutR76 3s linear both;/.test(css)
-  && /13\.7% \{ transform: translateY\(0\)/.test(css)
+  /animation: lcHutR76 4\.4s linear both;/.test(css)
+  && /13\.07% \{ transform: translateY\(0\)/.test(css)
   && /hut:            \{ ton: "cowboy",    dauer: 3000/.test(js));
 /* RUNDE 75 — XANDER: „die Hand, die ihn zurechtrueckt, das soll am
    Schluss kommen." Sie kommt jetzt bei 72 % und zieht bei 81 %; vorher
-   war sie bei 26 % da und bei 54 % schon wieder weg. */
+   war sie bei 26 % da und bei 54 % schon wieder weg.
+   RUNDE 88 — dieselbe Regel, neue Zahlen: unsichtbar bis 59,09 %
+   (2600 ms), da ab 61,36 % (2700 ms), zieht bei 72 % (3168 ms).
+   Dass man sie jetzt auch WIRKLICH SIEHT und dass sich unter ihr
+   etwas aendert, misst werkzeug/pruefe-runde88-hut.js an der
+   laufenden Animation. */
 pruefe("und eine Hand rueckt ihn ganz zum Schluss zurecht",
   /lc-hut-hand/.test(js) && /@keyframes lcHutHandR76/.test(css)
-  && /0%, 76%  \{ opacity: 0;/.test(css)
-  && /79%      \{ opacity: 1;/.test(css));
+  && /0%, 59\.09% \{ opacity: 0;/.test(css)
+  && /61\.36%    \{ opacity: 1;/.test(css));
 pruefe("die Zwille spannt, saust und schlaegt ein",
   /lcTonSpaeter\("gummizug", 180, 0\.95\);/.test(js)
   && /lcTonSpaeter\("swoosh", 1290, 0\.55\);/.test(js)

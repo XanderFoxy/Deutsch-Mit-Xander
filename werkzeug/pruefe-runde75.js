@@ -114,9 +114,15 @@ pruefe("man kann sich die Hand aussuchen: Gotteshand oder Gorilla",
   /gotteshand: \{ wirkung: "gotteshand"/.test(lc)
   && /pranke:   \{ wirkung: "pranke"/.test(lc)
   && /const gorilla = art === "pranke";/.test(js));
+/* RUNDE 88 NACHGEFUEHRT: die Finger heissen seit Runde 87 nicht
+   mehr nur „lc-rhand-finger", sondern tragen zusaetzlich ihr
+   Gelenk („lc-rhand-finger lc-rf-mcp"), weil jeder Finger jetzt
+   drei Gelenke hat. Gezaehlt wird also die Klasse, nicht die
+   ganze Zeichenkette — vier Finger bleiben vier Finger. */
 pruefe("sie hat vier Finger und einen abstehenden Daumen",
-  (js.match(/class="lc-rhand-finger"/g) || []).length === 4
-  && /class="lc-rhand-daumen"/.test(js)
+  (js.match(/lc-rhand-finger lc-rf-mcp/g) || []).length === 1
+  && /rhFinger\.map/.test(js) && /rhFinger = \[/.test(js)
+  && /lc-rhand-daumen/.test(js)
   /* eigener Name: „lc-hand-finger" gehoert der klatschenden Hand */
   && !/class="lc-hand-finger" d="M34 84/.test(js));
 pruefe("nur die Gotteshand leuchtet von oben",
@@ -193,10 +199,14 @@ pruefe("er faengt am Anfang der Animation an, nicht auf dem Aufschlag",
   /hut: 120,/.test(js) && /hut:            \{ ton: "cowboy",    dauer: 3000/.test(js));
 /* RUNDE 76 — XANDER: „Die Hand soll vorher gar nicht zu sehen sein"
    und „sie soll nach den Geraeuschen kommen". Der Ton ist bei
-   3130 ms zu Ende, die Hand kommt bei 79 % von 4,2 s = 3318 ms. */
+   3130 ms zu Ende, die Hand kommt bei 79 % von 4,2 s = 3318 ms.
+   RUNDE 88 NACHGEFUEHRT: die Regel ist dieselbe, die Zahlen sind
+   andere. Der Ruf ist bei 2420 ms verklungen, die Animation
+   dauert 4400 ms, die Hand erscheint bei 61,36 % = 2700 ms und
+   ist bis 59,09 % unsichtbar. */
 pruefe("die Hand kommt erst NACH dem Ton",
   /@keyframes lcHutHandR76/.test(css)
-  && /0%, 76%  \{ opacity: 0;/.test(css));
+  && /0%, 59\.09% \{ opacity: 0;/.test(css));
 /* NACHGESEHEN an der alten Zeichnung: die Mitte der Krone lag bei
    y = 24,5 und damit HOEHER als die Schultern daneben (y = 30) — von
    vorn also drei Buckel. Eine Cattleman-Falte hat in der Mitte eine
@@ -214,8 +224,18 @@ pruefe("die Krone hat eine Delle in der Mitte, keinen dritten Buckel", (() => {
   /* Grosse y sind WEITER UNTEN: die Mitte muss tiefer liegen. */
   return mitte > schulter && !/C61\.5 26 65\.5 24\.5 70 24\.5/.test(js);
 })());
-pruefe("und der Hut sitzt bis dahin gerade",
-  /25%, 82% \{ opacity: 1; transform: translateY\(1%\) rotate\(-1deg\)/.test(css));
+/* RUNDE 88 — DIESE REGEL WIRD UMGEDREHT, UND ZWAR AUF SEINEN
+   WUNSCH HIN. Sie hiess bisher „der Hut sitzt bis dahin gerade".
+   XANDER, Runde 88: „Bei dem Cowboyhut sieht man auch noch nicht,
+   dass er am Ende mit seiner Hand den Cowboyhut ausrichtet."
+   Man sah es nicht, WEIL er vorher gerade sass: eine Hand, die
+   einen geraden Hut schief zieht, richtet nichts aus. Jetzt faellt
+   er schief (-7 Grad), liegt so bis die Hand kommt, und erst sie
+   macht ihn gerade. Geprueft wird also genau andersherum: bis zur
+   Hand schief, danach gerade. */
+pruefe("und der Hut sitzt bis dahin SCHIEF — sonst gibt es nichts auszurichten",
+  /22\.27%, 61\.36% \{ opacity: 1; transform: translateY\(2%\) rotate\(-7deg\)/.test(css)
+  && /84\.09%, 96\.59% \{ opacity: 1; transform: translateY\(3%\) rotate\(0deg\)/.test(css));
 
 console.log("\nDER PLATTENTELLER\n");
 /* NACHGEMESSEN: scratch.opus ist 1,01 s lang und von 0,00 bis

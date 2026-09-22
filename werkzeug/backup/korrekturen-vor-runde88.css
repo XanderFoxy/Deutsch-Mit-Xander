@@ -16159,127 +16159,84 @@ code, pre {
   margin-left: -59%;
   transform-origin: 50% 90%;
   filter: drop-shadow(0 4px 7px rgba(0, 0, 0, .4));
-  /* RUNDE 88 — 4,4 s statt 3 s, UND DIE HAND RICHTET IHN WIRKLICH AUS.
-     XANDER: „Bei dem Cowboyhut sieht man auch noch nicht, dass er am
-     Ende mit seiner Hand den Cowboyhut ausrichtet … Die Animation kann
-     auch ein bisschen laenger sein."
-
-     NACHGERECHNET, warum man es nicht sah — es waren zwei Fehler:
-     1. Die Hand war nur 510 ms ueberhaupt im Bild (79 % bis 96 % von
-        3 s = 2370 bis 2880 ms). Davon gingen 200 ms fuers Heranfahren
-        und 300 ms fuers Wegziehen ab; das Ausrichten selbst dauerte
-        keine 100 ms. Jetzt ist sie von 2600 bis 4250 ms da, also
-        1650 ms, und allein das Zurechtruecken laeuft 800 ms.
-     2. Sie hat den Hut GERADE GERUECKT bekommen — und zwar falsch
-        herum: er sass vorher gerade (rotate(-1deg)) und war hinterher
-        schief (rotate(-7deg)). Das ist das Gegenteil von „ausrichten".
-        Jetzt faellt er SCHIEF auf den Kopf (-7 Grad, so wie ein Hut
-        fällt, den man sich zuwirft), sitzt so waehrend des Rufs, und
-        die Hand zieht ihn dann an der Krempe herunter und dreht ihn
-        auf 0 Grad — er sitzt am Ende richtig. Man sieht die Hand
-        etwas tun, weil sich unter ihr wirklich etwas aendert.
-
-     DIE ZEITEN, gerechnet auf 4400 ms:
-       120 ms  der Ruf faengt an (LC_TREFFER.hut)
-       575 ms  der Hut schlaegt auf (13,07 %)
-       600 ms  der Peitschenknall (lcTonSpaeter, 0,95 s lang)
-      2420 ms  der Ruf ist verklungen (0,12 s + 2,30 s hoerbar; die
-               Datei laeuft danach noch bis 2,49 s aus, aber unter
-               -60 dB — siehe werkzeug/cowboyruf-bauen.py)
-      2700 ms  DANACH kommt die Hand ins Bild (61,36 %) — seine
-               Regel aus Runde 76: „Die Hand soll vorher gar nicht zu
-               sehen sein", „sie soll nach den Geraeuschen kommen"
-      2939 ms  sie fasst die Krempe (66,8 %)
-      3168 ms  sie zieht herunter (72 %)
-      3450 ms  sie dreht den Hut gerade (78,41 %)
-      3700 ms  er sitzt (84,09 %), die Hand laesst los
-      4250 ms  die Hand ist weg (96,59 %) */
-  animation: lcHutR76 4.4s linear both;
+  /* RUNDE 75 — 3,4 s statt 2,8 s. Der Ruf ist neu und 3,01 s lang
+     (siehe ton/cowboy.opus); bei 2,8 s waere er 200 ms laenger als
+     sein Bild gewesen. */
+  animation: lcHutR76 3s linear both;
 }
 @keyframes lcHutR76 {
-  0%     { opacity: 0; transform: translateY(-110%) rotate(-24deg) scale(.82); }
-  1.36%  { opacity: 1; transform: translateY(-104%) rotate(-23deg) scale(.84); }
-  3.41%  { transform: translateY(-90%) rotate(-21deg) scale(.87); }
-  5.91%  { transform: translateY(-72%) rotate(-17deg) scale(.90); }
-  7.95%  { transform: translateY(-52%) rotate(-13deg) scale(.94); }
-  9.77%  { transform: translateY(-30%) rotate(-8deg)  scale(.97); }
-  11.36% { transform: translateY(-14%) rotate(-6deg)  scale(.99); }
-  /* 13,07 % von 4,4 s = 575 ms: DER AUFSCHLAG. */
-  13.07% { transform: translateY(0)    rotate(-4deg)  scale(1); }
-  /* Die Federung: er drueckt sich ein, dann zwei Nachschlaege — und
-     rutscht dabei in die Schraeglage, in der er liegen bleibt. */
-  14.77% { transform: translateY(7%)   rotate(-9deg)  scale(1.05, .95); }
-  17.27% { transform: translateY(-4%)  rotate(-4deg)  scale(1, 1.02); }
-  19.77% { transform: translateY(3%)   rotate(-8deg)  scale(1.01, .99); }
-  /* Von hier an sitzt er SCHIEF — und bleibt so, bis die Hand kommt. */
-  22.27%, 61.36% { opacity: 1; transform: translateY(2%) rotate(-7deg) scale(1); }
-  /* 66,8 % = 2939 ms: die Hand liegt an der Krempe. Der Hut gibt
-     unter dem Griff ein halbes Grad nach — mehr nicht, sie zieht ja
-     noch nicht. */
-  66.8%  { transform: translateY(2%)   rotate(-7.5deg) scale(1); }
-  /* 72 % = 3168 ms: sie zieht die Krempe herunter, er sitzt tiefer. */
-  72%    { transform: translateY(5%)   rotate(-5deg)  scale(1); }
-  /* 78,41 % = 3450 ms: und jetzt dreht sie ihn gerade — ueber die
-     Null hinaus, weil eine Hand, die ausrichtet, immer ein bisschen
-     zu weit dreht und dann zurueckgeht. */
-  78.41% { transform: translateY(4%)   rotate(1deg)   scale(1); }
-  /* 84,09 % = 3700 ms: er sitzt. Gerade, tief, fertig. */
-  84.09%, 96.59% { opacity: 1; transform: translateY(3%) rotate(0deg) scale(1); }
-  100%   { opacity: 0; transform: translateY(-26%) rotate(-6deg) scale(.92); }
+  /* RUNDE 76 — 4,2 s statt 3,4 s, UND DIE HAND KOMMT NACH DEM TON.
+     XANDER: „die Hand beim Cowboyhut, die soll nach den Geräuschen
+     kommen. Also er zieht den Hut an im Position noch mal als
+     zusätzliches Gimmick. Die Hand soll vorher gar nicht zu sehen
+     sein."
+     NACHGERECHNET: der Ton (ton/cowboy.opus, 3,01 s) startet bei
+     120 ms, der Peitschenknall liegt darin bei 1,9 bis 2,9 s, der
+     Ton ist also bei 3130 ms zu Ende. Bei 3,4 s Animation blieben
+     danach nur 270 ms — zu wenig für ein Gimmick. Mit 4,2 s bleibt
+     eine ganze Sekunde: die Hand kommt bei 79 % = 3318 ms, also
+     nach dem letzten Ton, zieht bei 85,7 % und ist bei 96 % weg.
+     Vorher ist sie nicht zu sehen (opacity 0 bis 76 %).
+     Der Fall: die Abstände werden größer, er wird also schneller. */
+  0%    { opacity: 0; transform: translateY(-110%) rotate(-24deg) scale(.82); }
+  2.7%  { opacity: 1; transform: translateY(-104%) rotate(-23deg) scale(.84); }
+  6%    { transform: translateY(-90%)  rotate(-21deg) scale(.87); }
+  8.7%  { transform: translateY(-72%)  rotate(-17deg) scale(.90); }
+  11%   { transform: translateY(-52%)  rotate(-13deg) scale(.94); }
+  12.6% { transform: translateY(-30%)  rotate(-8deg)  scale(.97); }
+  /* 13,7 % von 4,2 s = 575 ms: DER AUFSCHLAG. */
+  13.7% { transform: translateY(0)     rotate(-4deg)  scale(1); }
+  /* Und die Federung: er drückt sich ein, dann zwei Nachschläge. */
+  15.4% { transform: translateY(7%)    rotate(6deg)  scale(1.05, .95); }
+  18%   { transform: translateY(-4%)   rotate(-6deg) scale(1, 1.02); }
+  20.7% { transform: translateY(3%)    rotate(4deg)  scale(1.01, .99); }
+  23.3% { transform: translateY(-1%)   rotate(-2deg) scale(1); }
+  /* Von hier an sitzt er GERADE — die Hand hat ihn noch nicht
+     angefasst, und sie ist auch noch gar nicht da. */
+  25%, 82% { opacity: 1; transform: translateY(1%) rotate(-1deg) scale(1); }
+  /* 85,7 % = 3600 ms: die Hand zieht die Krempe herunter. */
+  85.7% { transform: translateY(3%)    rotate(-8deg) scale(1); }
+  88%   { transform: translateY(2%)    rotate(-6deg) scale(1); }
+  91%, 96% { opacity: 1; transform: translateY(2%) rotate(-7deg) scale(1); }
+  100%  { opacity: 0; transform: translateY(-30%) rotate(-12deg) scale(.9); }
 }
-/* Der Kopf federt unter dem Aufschlag — 13,07 % ist derselbe Punkt. */
-.lc-behutet { animation: lcBehutetR76 4.4s linear both; }
+/* Der Kopf federt unter dem Aufschlag — 13,7 % ist derselbe Punkt. */
+.lc-behutet { animation: lcBehutetR76 3s linear both; }
 @keyframes lcBehutetR76 {
-  0%, 13.07% { transform: translateY(0) scale(1); }
-  14.8%      { transform: translateY(2%) scale(1.03, .96); }
-  16.6%      { transform: translateY(0) scale(.99, 1.01); }
-  18.6%      { transform: translateY(0) scale(1); }
-  100%       { transform: translateY(0) scale(1); }
+  0%, 13.7% { transform: translateY(0) scale(1); }
+  16%       { transform: translateY(2%) scale(1.03, .96); }
+  18.6%     { transform: translateY(0) scale(.99, 1.01); }
+  21.4%     { transform: translateY(0) scale(1); }
+  100%      { transform: translateY(0) scale(1); }
 }
 .lc-hut-hand {
   position: absolute;
-  /* RUNDE 88 — NACHGEMESSEN am Bildschirm (Platz 84 px breit):
-     die Hand war 58 px breit und lag im Griff von x = 39,6 bis
-     97,6 — sie deckte damit die ganze rechte Haelfte des Hutes zu,
-     die Krempenspitze (x = 86) eingeschlossen. Ihre Finger sassen
-     bei x = 47 bis 69, also mitten auf der Krone statt aussen an
-     der Krempe. Man sah eine Faust vor dem Hut, keinen Griff an
-     die Krempe.
-     Jetzt 47 px breit und weiter rechts: die Finger liegen im
-     Griff bei x = 61 bis 79 und y = 5 bis 23 — die Krempe verlaeuft
-     dort zwischen y = 0 und y = 24. Sie fasst sie also wirklich an
-     der Kante an, und die Krone bleibt frei. */
-  left: 50%; top: -12%;
-  width: 56%;
-  margin-left: 14%;
+  left: 50%; top: -18%;
+  width: 66%;
+  margin-left: -4%;
   transform-origin: 90% 50%;
   opacity: 0;
   pointer-events: none;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
-  animation: lcHutHandR76 4.4s linear both;
+  animation: lcHutHandR76 3s linear both;
 }
 @keyframes lcHutHandR76 {
-  /* RUNDE 88 — dieselbe Hand, nur dreimal so lange im Bild, und sie
-     macht jetzt eine ganze Bewegung statt einer Zuckung:
-     heranfahren, greifen, ziehen, geradedrehen, loslassen, weggehen.
-     Seine alte Regel gilt weiter und ist nachgerechnet: der Ruf ist
-     bei 2420 ms verklungen, die Hand erscheint bei 2700 ms. */
-  0%, 59.09% { opacity: 0; transform: translate(52%, -26%) rotate(16deg); }
-  /* 61,36 % = 2700 ms — sie kommt von rechts ins Bild. */
-  61.36%    { opacity: 1; transform: translate(34%, -20%) rotate(13deg); }
-  64%       { opacity: 1; transform: translate(18%, -11%) rotate(8deg); }
-  /* 66,8 % = 2939 ms — Daumen und Finger liegen an der Krempe. */
-  66.8%     { opacity: 1; transform: translate(4%, -2%)   rotate(3deg); }
-  /* 72 % = 3168 ms — sie zieht nach unten. */
-  72%       { opacity: 1; transform: translate(0, 7%)     rotate(-3deg); }
-  /* 78,41 % = 3450 ms — und dreht dabei gegen den Uhrzeigersinn:
-     so richtet man einen Hut aus, der schief sitzt. */
-  78.41%    { opacity: 1; transform: translate(-2%, 6%)   rotate(2deg); }
-  /* 84,09 % = 3700 ms — loslassen. */
-  84.09%    { opacity: 1; transform: translate(2%, 3%)    rotate(0deg); }
-  89.8%     { opacity: 1; transform: translate(24%, -9%)  rotate(9deg); }
-  96.59%    { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
-  100%      { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
+  /* RUNDE 76 — XANDER: „Die Hand soll vorher gar nicht zu sehen
+     sein" und „sie soll nach den Geräuschen kommen".
+     RUNDE 77 — der neue Cowboy-Schrei ist 1,86 s lang statt 3,13 s,
+     deshalb laeuft der ganze Hut jetzt 3 s statt 4,2 s (siehe
+     LC_TON_PLAN.hut in app.js). Die Prozente bleiben, wie sie sind:
+     79 % von 3 s sind 2370 ms, und der Ton ist bei 1860 ms zu Ende.
+     Die Hand kommt also weiter NACH den Geraeuschen — 510 ms
+     danach statt der 1460 ms Leerlauf, die 4,2 s ergeben haetten. */
+  0%, 76%  { opacity: 0; transform: translate(52%, -26%) rotate(16deg); }
+  79%      { opacity: 1; transform: translate(20%, -12%) rotate(9deg); }
+  82%      { opacity: 1; transform: translate(4%, -2%)   rotate(3deg); }
+  /* 85,7 % = 3600 ms — hier zieht sie, und hier kippt der Hut. */
+  85.7%    { opacity: 1; transform: translate(0, 6%)     rotate(-5deg); }
+  89%      { opacity: 1; transform: translate(9%, 1%)    rotate(1deg); }
+  96%      { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
+  100%     { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
 }
 @media (prefers-reduced-motion: reduce) { .lc-hut-hand { animation: none; opacity: 0; } }
 

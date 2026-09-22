@@ -141,9 +141,18 @@ function tonMessen(name) {
   /* „das Bild von seinen Fluegeln sehen aus wie Fledermausfluegel."
      Ein Fledermausfluegel ist EIN Umriss, ein Vogelfluegel besteht aus
      Armfittich und einzelnen Handschwingen. */
+  /* RUNDE 88 NACHGEFUEHRT: seit Runde 87 werden die Federn nicht
+     mehr einzeln mit class="lc-greif-schwinge" in den Quelltext
+     geschrieben, sondern reihenweise gebaut (greifReihe) und von
+     lage() mit ihrer Klasse ausgegeben — „Die Adler schwingen mit
+     den Seitenfedern und den Rückfedern, die nach hinten zeigen in
+     mehreren Lagen." Geprueft wird deshalb, dass es diese Lagen
+     gibt: Handschwingen, Armschwingen und drei Deckenreihen. */
   sage(/const greifFluegel = \(k\) =>/.test(js)
     && /federn\.push\(/.test(js)
-    && /class="lc-greif-schwinge"/.test(js),
+    && /lage\(w\.hand, "lc-greif-schwinge"\)/.test(js)
+    && /lage\(w\.arm, "lc-greif-armschwinge"\)/.test(js)
+    && /lage\(w\.grossDecken, "lc-greif-grossdecke"\)/.test(js),
     "der Greifvogel hat einzelne Handschwingen statt einer Flughaut");
 
   /* „achte dabei auf den Arsch, dass die Beine am Arsch sind und die
@@ -238,8 +247,13 @@ function tonMessen(name) {
     "Pac-Man faehrt auch ohne Ziel — und frisst dabei niemanden");
 
   /* „da moechte ich noch einen Song Ausschnitt definieren koennen." */
+  /* RUNDE 88 NACHGEFUEHRT: lcMusikSpielen hat seit Runde 87 einen
+     fuenften Parameter „selbst" — XANDER: „mache das moeglich, dass
+     ich mein Lied selber hoeren kann, nicht nur einstellen kann,
+     sondern sofort hoeren kann." Der Ausschnitt („ab", „bis")
+     bleibt, worum es in dieser Regel geht. */
   sage(/liedAb: stueckK \? stueckK\.ab : 0,/.test(lc)
-    && /function lcMusikSpielen\(datei, titel, ab, bis\)/.test(js),
+    && /function lcMusikSpielen\(datei, titel, ab, bis, selbst\)/.test(js),
     "der Kopfhoerer nimmt einen Song-Ausschnitt entgegen");
 
   /* =================================================================

@@ -88,7 +88,13 @@ const pruefe = (was, gut, zusatz) => {
      festhalten, den er bemaengelt hat. */
   pruefe("kuss klingt nach Mann oder Frau, nicht nach einer Datei fuer alle",
     /kuss:\s*\{ still: true/.test(js)
-    && /lcStimmeZu\(meiner, "kussmann", "kussfrau", 520, 0\.62\)/.test(js));
+    /* RUNDE 88 NACHGEFUEHRT: 441 statt 520 ms. Der Kuss-Ton ist in
+       Runde 87 neu gebaut worden (werkzeug/kuss-bauen.py); sein
+       Schmatzer liegt jetzt bei 79 bzw. 82 ms in der Datei. Damit
+       er auf den Aufprall bei 520 ms faellt, muss die Datei 441 ms
+       nach dem Start anfangen. Worum es in dieser Regel geht —
+       Mann und Frau klingen verschieden — ist unveraendert. */
+    && /lcStimmeZu\(meiner, "kussmann", "kussfrau", 441, 0\.62\)/.test(js));
   haengt("schneeball", "schneeklatsch");
   haengt("strohhalm", "schlurfen");
   haengt("blubbern", "blubbern");
