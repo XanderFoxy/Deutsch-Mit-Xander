@@ -44039,8 +44039,14 @@
         if (/^\d{1,2}$/.test(suche)) {
           if (String(meinPlatz.dataset.lcPlatz || "") === suche) return true;
         } else {
-          const nm = meinPlatz.querySelector(".lc-platz-name");
-          if (nm && nm.textContent.trim().toLowerCase() === suche) return true;
+          /* RUNDE 88 — auch hier die Beschriftung statt des Namens:
+             der eigene Platz heisst „Alex (du)", die Nachricht sagt
+             „Alex". Der Vergleich ging also nur ueber den Rueckfall
+             ganz unten gut, und der greift nur, wenn LiveChat gerade
+             einen ichName kennt. lcNameVomPlatz() nimmt data-lc-name
+             und faellt sonst auf die Beschriftung ohne „(du)"
+             zurueck. */
+          if (lcNameVomPlatz(meinPlatz).toLowerCase() === suche) return true;
         }
       }
     } catch (e) {}

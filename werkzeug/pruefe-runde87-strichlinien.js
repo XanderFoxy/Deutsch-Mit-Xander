@@ -168,7 +168,13 @@ const sage = (gut, text, dazu) => {
     const proben = [];
     const probenAb = [];
     let stand = 0;
-    for (const w of [260, 900, 1700, 2600, 3600, 5000, 7000]) {
+    /* RUNDE 88 — 8000 STATT 7000, UND ZWAR GERECHNET: der laengste
+       Effekt am Platz ist die Schneekugel mit 7200 ms (lcAmPlatz
+       raeumt genau dann auf). Bei 7000 ms gemessen, lag sie noch da
+       und galt als Rueckstand — ein Fehlalarm der Sonde, kein Fehler
+       der Seite. Die letzte Probe liegt deshalb 800 ms NACH dem
+       Aufraeumen des laengsten Effekts. */
+    for (const w of [260, 900, 1700, 2600, 3600, 5000, 7000, 8000]) {
       await new Promise((f) => setTimeout(f, w - stand));
       stand = w;
       proben.push(Object.assign({ t: w }, lies(plZu)));
@@ -191,7 +197,7 @@ const sage = (gut, text, dazu) => {
         if (!a || !b) return;
         /* Der Maulwurf darf — siehe unten. Nur die letzte Probe zaehlt
            bei ihm: da muss alles wieder stehen, wo es stand. */
-        if (grabend && p.t < 7000) return;
+        if (grabend && p.t < 8000) return;
         const sag = (t) => schlimm.push(wo + " " + p.t + "ms " + t);
         if (Math.abs(a.x - b.x) > 1 || Math.abs(a.y - b.y) > 1) {
           sag(teil + " verschoben um " + (b.x - a.x) + "/" + (b.y - a.y) + " px");
@@ -228,7 +234,13 @@ const sage = (gut, text, dazu) => {
        nachdem die laengste Reise (6,2 s) zu Ende ist. Was dann noch
        anders ist als vorher, ist liegengeblieben. */
     const letzte = proben[proben.length - 1];
-    if (letzte) {
+    /* DIE EINE AUSNAHME BEIM AUFRAEUMEN, und sie ist seine eigene:
+       „sollen die Kopfhoerer auch so lange auf der Person bleiben, bis
+       sie sie von SELBER abnimmt." Der Kopfhoerer ist deshalb mit
+       600 Sekunden angemeldet und liegt absichtlich noch da. Alles
+       andere muss weg sein. */
+    const bleibt = /kopfhoerer/.test(art);
+    if (letzte && !bleibt) {
       const nenn = (t) => schlimm.push(wo + " danach " + t);
       if (letzte.kinder !== v.kinder) {
         const vorher = (v.kinder || "").split("|").filter(Boolean);

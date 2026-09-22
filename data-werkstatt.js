@@ -49,34 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 88y — „ich\" heisst jetzt wirklich ich: sich selbst anziehen, ausziehen, Kopfhoerer aufsetzen.",
+  stand: "Runde 88z — das Musik-Modul ist nicht mehr beschnitten, auch auf dem kleinen Android.",
 
   inArbeit: [
-    { seit: "2026-09-22T20:08",
-      text: "Glitches am verlassenen Platz — Sonde misst jetzt BEIDE Plaetze, Lauf laeuft" },
-    { seit: "2026-09-22T20:08",
+    { seit: "2026-09-22T20:16",
+      text: "Glitches am verlassenen Platz — Sonde misst jetzt bis 8 s und auch die Rueckstaende" },
+    { seit: "2026-09-22T20:16",
       text: "Frosch, Pferd, Lok, Helikopter, Fahrstuhl, Adler" },
-    { seit: "2026-09-22T20:08",
+    { seit: "2026-09-22T20:16",
       text: "Haende: greifende Hand, King Kong behaart, Kralle" },
-    { seit: "2026-09-22T20:08",
+    { seit: "2026-09-22T20:16",
       text: "Spruehdose mit Scheibenwischer, eigene Bilder" },
-    { seit: "2026-09-22T20:08",
+    { seit: "2026-09-22T20:16",
       text: "Hammer: demolieren in Stufen" },
-    { seit: "2026-09-22T20:08",
+    { seit: "2026-09-22T20:16",
       text: "Adressleiste temporaer ausblenden, Bildschirm anlassen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T20:08",
-      text: "„/anziehen ich\", „/ausziehen ich\", „/tritt mich\" — ich, mich, mir, selbst, selber treffen meinen Platz" },
-    { seit: "2026-09-22T20:08",
-      text: "/ausziehen Name krone nimmt genau das ab — der Name wurde vorher mitgefressen" },
-    { seit: "2026-09-22T20:08",
-      text: "/kopfhoerer Name Lied ging nie: AM_PLATZ hat es abgefangen. Jetzt laeuft das Lied wirklich" },
-    { seit: "2026-09-22T20:08",
-      text: "Der eigene Platz wird auch mit „(du)\" hinter dem Namen gefunden" },
-    { seit: "2026-09-22T20:08",
-      text: "Die Regeln fuer jede Animation stehen in werkzeug/animations-regeln.md" },
+    { seit: "2026-09-22T20:16",
+      text: "Musikwaehler: die Liste nimmt sich die Hoehe des Panels — auf 320x568 ist jetzt alles zu sehen, ohne zu rollen" },
+    { seit: "2026-09-22T20:16",
+      text: "Aufgaben-Tafel: rollt nur die Liste, die Ueberschrift bleibt stehen" },
+    { seit: "2026-09-22T20:16",
+      text: "Der eigene Platz wird auch beim Musikhoeren mit „(du)\" hinter dem Namen erkannt" },
   ],
 };

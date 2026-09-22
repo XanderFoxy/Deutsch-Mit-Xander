@@ -29858,3 +29858,54 @@ code, pre {
   opacity: .66;
   font-style: italic;
 }
+
+/* --- DAS MUSIK-PANEL WAR IMMER NOCH BESCHNITTEN (RUNDE 88) ----------
+   XANDER: „das Panel, wenn ich die Musik aufrufe und aussuchen möchte,
+   das ist übrigens immer noch beschnitten. Wir hatten das schon mal als
+   schwebendes Modul so, dass ich es auf dem kleinen Android ganz
+   gesehen habe, aber jetzt ist es wieder beschnitten, und ich muss dann
+   durchscrollen und sehe nicht das ganze Modul."
+
+   NACHGEMESSEN auf drei Bildschirmen, und er hat recht — nur lag es
+   nicht am Panel, sondern an der Liste DARIN:
+
+     Bildschirm   Panel hoch   erlaubt (72vh)   Liste sichtbar / nötig
+     320 x 568    304 px       409 px           261 / 356 px
+     360 x 640    337 px       461 px           294 / 356 px
+     360 x 740    383 px       533 px           340 / 356 px
+
+   Das Panel hat also auf JEDEM Gerät noch über hundert Pixel Luft
+   gehabt und sie nicht benutzt, weil die Liste bei festen 46vh
+   abgeschnitten hat. Auf dem kleinen Android fehlte damit ein Viertel
+   der Liste — genau das, was er beschreibt.
+
+   Jetzt ist das Panel eine Spalte (flex), und die Liste nimmt sich
+   den Platz, der übrig ist: sie rollt erst, wenn das PANEL an seine
+   72vh stößt. Auf 320 x 568 ergibt das 399 px Gesamthöhe — die ganze
+   Liste ist zu sehen, ohne dass irgendetwas über den Rand geht. */
+.lc-lesewahl,
+.lc-aufgabenwahl {
+  display: flex;
+  flex-direction: column;
+  /* Der Rahmen rollt nicht mehr selbst — das tut die Liste in ihm.
+     Sonst rollen beide, und dann springt der Kopf mit weg. */
+  overflow: hidden;
+}
+.lc-lesewahl > .lc-platzmenue-kopf,
+.lc-lesewahl > .lc-lese-kategorien,
+.lc-lesewahl > .lc-lese-stufen,
+.lc-lesewahl > .lc-lese-reihe,
+.lc-aufgabenwahl > .lc-platzmenue-kopf,
+.lc-aufgabenwahl > .lc-aufgabenwahl-sinn,
+.lc-aufgabenwahl > .lc-aufgabenwahl-schluss { flex: 0 0 auto; }
+/* „min-height: 0" ist nicht schmückend: ohne sie darf ein Flex-Kind
+   nicht kleiner werden als sein Inhalt, und dann wächst das Panel doch
+   wieder über den Rand hinaus. */
+.lc-lesewahl > .lc-lese-liste,
+.lc-aufgabenwahl > .lc-aufgabenwahl-liste {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
