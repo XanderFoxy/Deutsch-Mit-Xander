@@ -31364,21 +31364,10 @@
         });
         if (raus.length) return raus;
       }
-      /* RUNDE 88 — DER EIGENE PLATZ HEISST NICHT „Alex (du)"
-         XANDER: „Ich kann mich immer noch nicht selber anziehen und
-         ausziehen … dann kann ich immer noch nicht das Musikstueck
-         fuer mich selber einstellen."
-         Hier stand die Beschriftung des Platzes, und beim eigenen
-         Platz steht dort „Alex (du)" (app.js, lc-gross-name und die
-         Platzzeile). Ein Effekt auf „Alex" verglich also „alex" mit
-         „alex (du)" — genau gleich waren sie nie. Was dann geschah,
-         haengt am Effekt: mancher traf niemanden, mancher fiel auf
-         „alle" zurueck. lcNameVomPlatz() nimmt den gespeicherten
-         Namen (data-lc-name) und faellt nur zur Not auf die
-         Beschriftung zurueck — dann ohne das „(du)". Dieselbe
-         Funktion benutzt lcPlatzMitNamen schon seit Runde 77; hier
-         war sie vergessen worden. */
-      const namen = (pl) => lcNameVomPlatz(pl).toLowerCase();
+      const namen = (pl) => {
+        const nm = pl.querySelector(".lc-platz-name");
+        return nm ? nm.textContent.trim().toLowerCase() : "";
+      };
       /* EINE PLATZNUMMER IST AUCH EIN ZIEL.
          Eine reine Zahl ist nie ein Name — „/zwille 3" meint den
          dritten Platz. Vorher fand die Namenssuche dafuer nichts, und
@@ -49504,12 +49493,6 @@
       const weg = lcWegSuchen(lcPlatzGitter(), vonNr, zuNr, Boolean(ueberBesetzte));
       return weg ? weg.map((p) => p.nr) : null;
     },
-    /* RUNDE 88 — die Zielsuche einzeln nachrechenbar. Ohne sie
-       liesse sich „mein eigener Platz wird auch mit „(du)" hinter dem
-       Namen gefunden" nur am fertigen Effekt erahnen, und dann weiss
-       man bei einem Fehlschlag nicht, ob die Suche oder die
-       Zeichnung schuld war (werkzeug/pruefe-runde88-selbst.js). */
-    zielPlaetze: function (wen) { return lcZielPlaetze(wen); },
     effektBuehne: function () {
       document.getElementById("lcPruefBuehne")?.remove();
       const b = document.createElement("div");

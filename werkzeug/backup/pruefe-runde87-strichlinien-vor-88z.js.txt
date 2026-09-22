@@ -116,31 +116,8 @@ const sage = (gut, text, dazu) => {
           kreisGr = Math.round(Math.hypot(p2[0], p2[1]) * 100) / 100;
         }
       }
-      /* =============================================================
-         RUNDE 88 \u2014 DIE RUECKSTAENDE, UND SIE SIND DER EIGENTLICHE PUNKT
-         -------------------------------------------------------------
-         XANDER: „Merk dir fuer zukuenftige Animationen, dass NIEMALS
-         nach Verlassen des Platzes irgendwelche Art von Rueckstaenden
-         von meinem Profilbild da sind \u2026 Ausserdem sind die
-         Rueckstaende noch in der Strichlinie zu sehen und der Zahl \u2014
-         so was soll generell bei Animationen vermieden werden."
-         Die Sonde hat bis hierher nur GEOMETRIE gemessen: wo steht
-         das Schild, wie gross ist es, wie durchsichtig. Ein
-         Rueckstand ist aber etwas anderes \u2014 ein Element, das
-         liegenbleibt, eine Klasse, die haengenbleibt, ein Stil, der
-         nicht zurueckgenommen wird. Genau das steht hier jetzt
-         daneben, und zwar so, dass es sich mit dem Zustand VOR dem
-         Effekt vergleichen laesst. */
-      const kinder = [...pl.children].map((el) =>
-        el.tagName.toLowerCase() + "." + (el.className.baseVal !== undefined
-          ? el.className.baseVal : String(el.className || ""))).sort().join("|");
       return { schild: r(sch), name: r(nam), nummer: r(nr), kreisGr: kreisGr,
                unterwegs: pl.classList.contains("lc-platz-unterwegs"),
-               kinder: kinder,
-               klassen: [...pl.classList].sort().join(" "),
-               kreisKlassen: kr ? [...kr.classList].sort().join(" ") : "",
-               kreisStil: kr ? String(kr.getAttribute("style") || "") : "",
-               kreisFormel: kr ? getComputedStyle(kr).transform : "",
                kreisDeck: kr ? Math.round(Number(getComputedStyle(kr).opacity) * 100) / 100 : 1 };
     };
     const vorherAb = lies(plAb);
@@ -224,41 +201,6 @@ const sage = (gut, text, dazu) => {
         }
       });
     });
-    /* UND JETZT DIE RUECKSTAENDE \u2014 gemessen bei 7000 ms, also lange
-       nachdem die laengste Reise (6,2 s) zu Ende ist. Was dann noch
-       anders ist als vorher, ist liegengeblieben. */
-    const letzte = proben[proben.length - 1];
-    if (letzte) {
-      const nenn = (t) => schlimm.push(wo + " danach " + t);
-      if (letzte.kinder !== v.kinder) {
-        const vorher = (v.kinder || "").split("|").filter(Boolean);
-        const jetzt = (letzte.kinder || "").split("|").filter(Boolean);
-        const rest = jetzt.slice();
-        vorher.forEach((k) => { const i = rest.indexOf(k); if (i >= 0) rest.splice(i, 1); });
-        const fehlt = vorher.slice();
-        jetzt.forEach((k) => { const i = fehlt.indexOf(k); if (i >= 0) fehlt.splice(i, 1); });
-        if (rest.length) nenn("liegengeblieben: " + rest.join(", "));
-        if (fehlt.length) nenn("verschwunden: " + fehlt.join(", "));
-      }
-      if (letzte.klassen !== v.klassen) {
-        nenn("Klasse am Platz: \u201e" + v.klassen + "\u201c -> \u201e" + letzte.klassen + "\u201c");
-      }
-      if (letzte.kreisKlassen !== v.kreisKlassen) {
-        nenn("Klasse am Bild: \u201e" + v.kreisKlassen + "\u201c -> \u201e" + letzte.kreisKlassen + "\u201c");
-      }
-      if (letzte.kreisStil !== v.kreisStil) {
-        nenn("Stil am Bild: \u201e" + v.kreisStil + "\u201c -> \u201e" + letzte.kreisStil + "\u201c");
-      }
-      if (letzte.kreisFormel !== v.kreisFormel) {
-        nenn("das Bild steht schief/verschoben: " + letzte.kreisFormel);
-      }
-      if (Math.abs(letzte.kreisGr - v.kreisGr) > 0.02) {
-        nenn("das Bild ist " + letzte.kreisGr + " statt " + v.kreisGr + " gross");
-      }
-      if (letzte.kreisDeck < v.kreisDeck - 0.02) {
-        nenn("das Bild ist blasser (" + v.kreisDeck + " -> " + letzte.kreisDeck + ")");
-      }
-    }
     return schlimm;
   };
 

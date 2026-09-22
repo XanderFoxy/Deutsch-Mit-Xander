@@ -34,25 +34,7 @@ for f in werkzeug/pruefe-*.js; do
   # etwas gefunden hat, nicht ob die Sonde gut war. Genau daran ist
   # der erste Entwurf gescheitert: eine stumme Sonde galt als rot,
   # eine abgestuerzte als gruen.
-  # WIE LANGE DARF EINE SONDE LAUFEN?
-  # -------------------------------------------------------------------
-  # 120 Sekunden reichen fuer fast alle. Zwei Sonden gehen aber ueber
-  # ALLE Effekte und messen jeden bis zu seinem Ende — die
-  # Strichlinien-Sonde braucht 122 Effekte mal 7,3 Sekunden, also rund
-  # eine Viertelstunde. Mit dem alten festen Limit wurde sie nach zwei
-  # Minuten abgeschossen und galt als ROT, obwohl sie nur noch nicht
-  # fertig war. Eine Sammlung, in der die gruendlichste Sonde immer rot
-  # ist, schaut sich niemand mehr an — genau der Fehler, vor dem oben
-  # unter Punkt 2 gewarnt wird.
-  # Deshalb haben die langen Sonden hier ihre eigene Frist. Wer eine
-  # neue lange Sonde schreibt, traegt sie hier ein.
-  case "$n" in
-    pruefe-runde87-strichlinien) frist=2400 ;;
-    pruefe-platzdesign)          frist=600  ;;
-    pruefe-jeder-befehl)         frist=600  ;;
-    *)                           frist=120  ;;
-  esac
-  aus=$(timeout "$frist" node "$f" 2>&1)
+  aus=$(timeout 120 node "$f" 2>&1)
   code=$?
   aus=$(printf '%s' "$aus" | grep -v "agent-proxy")
   # Wortgenau: nur echte Meldungen zaehlen, nicht „Befehl“.

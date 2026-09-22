@@ -9752,45 +9752,6 @@ window.LiveChat = (function () {
     return null;
   }
 
-  /* =========================================================
-     RUNDE 88 — „ICH KANN MICH IMMER NOCH NICHT SELBER ANZIEHEN"
-     ---------------------------------------------------------
-     XANDER, woertlich: „dann kann ich immer noch nicht das
-     Musikstueck fuer mich selber einstellen. Ich kann mich immer
-     noch nicht selber anziehen und ausziehen." Und frueher schon:
-     „ich moechte meine eigene Musik hoeren … und ich moechte das
-     selber auch ausprobieren koennen, wie ich das bei mir auf den
-     Kopf setzen soll."
-
-     NACHGESEHEN, WORAN ES LAG — und es war kein fehlender Effekt:
-     jeder Befehl sucht sein Ziel mit personNachName(), und diese
-     Suche geht ueber zustand.leute. Darin stehen ALLE AUSSER MIR;
-     der eigene Platz kommt aus zustand.ichName und liegt gar nicht
-     in der Liste. Wer „ich" schrieb, fand also niemanden, und der
-     Rueckfall { name: „ich" } suchte einen Platz, der „ich" heisst.
-     Es gibt keinen. Der Effekt ging ins Leere.
-     Mit dem eigenen NAMEN ging es uebrigens schon immer — die
-     Platzsuche in app.js (lcZielPlaetze) vergleicht die Namen unter
-     den Plaetzen, und der eigene steht dort auch. Nur kommt niemand
-     auf die Idee, sich selbst mit Namen anzureden.
-
-     Jetzt heisst „ich", „mich", „mir", „selbst", „selber" (und
-     englisch „me", „myself", „self") genau das: mein eigener Platz.
-     Das gilt fuer JEDEN Befehl, der einen Platz trifft — also auch
-     fuer /anziehen, /ausziehen und /kopfhoerer, die er genannt hat. */
-  var SELBST_WORT = /^(ich|mich|mir|selbst|selber|mir\s+selbst|mich\s+selbst|me|myself|self)$/i;
-  function selbstStattName(roh) {
-    var t = String(roh || "").trim();
-    return SELBST_WORT.test(t) ? (zustand.ichName || t) : t;
-  }
-  /* Ein Ziel fuer eine Wirkung am Platz: erst „ich" aufloesen, dann
-     wie bisher suchen. Ohne Treffer bleibt der getippte Name stehen —
-     die Platzsuche in app.js ist nachsichtiger als diese hier. */
-  function zielPerson(roh) {
-    var t = selbstStattName(roh);
-    return personNachName(t) || praesenzNachName(t) || { name: t };
-  }
-
   /* Die Kennung MUSS eindeutig sein. Aus Zeit + eigener Kennung
      allein war sie das nicht: zwei Zeilen in derselben Millisekunde
      bekamen dieselbe, und die zweite wurde als Doppelte verworfen.
@@ -10595,7 +10556,7 @@ window.LiveChat = (function () {
       var allenD = /^(alle|allen|alles|allesamt|jeden|jedem|everyone|all)$/i
         .test(String(rest || "").trim());
       var wen2 = (rest && !allenD)
-        ? (zielPerson(rest)) : null;
+        ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " drückt "
                     + (wen2 ? wen2.name : "ALLE  \ud83e\udd17\ud83e\udd17\ud83e\udd17"),
                     { wirkung: "umarmen", wen: wen2 ? wen2.name : "*" });
@@ -10607,7 +10568,7 @@ window.LiveChat = (function () {
        WEN, und die Wirkung trägt den Namen mit, damit sie auf allen
        Geräten am selben Platz spielt. */
     if (art === "leck") {
-      var wen3 = rest ? (zielPerson(rest)) : null;
+      var wen3 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " leckt " + (wen3 ? wen3.name : "alle") + " ab",
                     { wirkung: "lecken", wen: wen3 ? wen3.name : "" });
     }
@@ -10692,7 +10653,7 @@ window.LiveChat = (function () {
                     { film: fname });
     }
     if (art === "box") {
-      var wen4 = rest ? (zielPerson(rest)) : null;
+      var wen4 = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " boxt " + (wen4 ? wen4.name : "alle"),
                     { wirkung: "boxen", wen: wen4 ? wen4.name : "" });
     }
@@ -10934,7 +10895,7 @@ window.LiveChat = (function () {
     }
 
     if (art === "herz") {
-      var wem = rest ? (zielPerson(rest)) : null;
+      var wem = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       /* GEWUENSCHT: „Man kann auch die Herzen direkt an die Person
          schicken, dass die Herzen auf das Profilbild von dem anderen
          angewendet werden." Mit Namen also AUF den Platz, ohne Namen
@@ -10956,7 +10917,7 @@ window.LiveChat = (function () {
        app.js. Die Zeile selbst ist eine ganz normale Aktion, damit auch
        im Verlauf steht, wer geworfen hat. */
     if (art === "konfetti") {
-      var anWen = rest ? (zielPerson(rest)) : null;
+      var anWen = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " schmeißt Konfetti"
         + (anWen ? " für " + anWen.name : ""), { wirkung: "konfetti" });
     }
@@ -10965,7 +10926,7 @@ window.LiveChat = (function () {
        GEWÜNSCHT: „Luftballons zum Geburtstag." Sie steigen bei allen im
        Raum auf, nicht nur bei dem, der sie geschickt hat. */
     if (art === "ballon") {
-      var fuerWen = rest ? (zielPerson(rest)) : null;
+      var fuerWen = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " l\u00e4sst Luftballons steigen"
         + (fuerWen ? " f\u00fcr " + fuerWen.name : "") + "  \ud83c\udf88",
         { wirkung: "ballon" });
@@ -10987,7 +10948,7 @@ window.LiveChat = (function () {
        und verstopfte ihn; die Animation trägt den Auftritt allein.
        Über /ascii geschenk gibt es das Bild weiterhin, wer es will. */
     if (art === "geschenk") {
-      var wemGe = rest ? (zielPerson(rest)) : null;
+      var wemGe = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       return anAlle("aktion", zustand.ichName + " schenkt "
         + (wemGe ? wemGe.name : "allen") + " etwas  \ud83c\udf81",
         { wirkung: "geschenk" });
@@ -11012,7 +10973,7 @@ window.LiveChat = (function () {
        jedes fremde Geraet wuerfe die Nachricht damit weg. */
     if (GROSSGESCHENK[art]) {
       var g = GROSSGESCHENK[art];
-      var wemG = rest ? (zielPerson(rest)) : null;
+      var wemG = rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null;
       if (!wemG) return anAlle("aktion", zustand.ichName + WETTER[art], { wirkung: art });
       return anAlle("aktion", zustand.ichName + " schenkt " + wemG.name + " " + g.satz + "  " + g.emoji,
                     { wirkung: art, wen: wemG.name });
@@ -11219,86 +11180,6 @@ window.LiveChat = (function () {
       return anAlle("aktion", zustand.ichName + wortM + "  \ud83c\udf44",
         { wirkung: "mariolauf", wen: zielM, los: Math.random().toFixed(4) });
     }
-
-    /* ---- UND EINS AUF DIE OHREN ----
-       /kopfhoerer Name          nur die Kopfhoerer
-       /kopfhoerer Name 3        Kopfhoerer UND Lied 3 — gehoert wird es
-                                 nur von dem, dem sie aufgesetzt werden.
-       =========================================================
-       RUNDE 88 — DIESE ABZWEIGUNG STAND AN DER FALSCHEN STELLE
-       ---------------------------------------------------------
-       Der Satz „Diese Abzweigung muss VOR AM_PLATZ stehen" stand
-       hier seit Runde 80 — sie stand aber DAHINTER, rund 470 Zeilen
-       tiefer. Und AM_PLATZ kennt „kopfhoerer" auch. Also hat AM_PLATZ
-       jeden Aufruf vorher abgefangen, und hier kam nie einer an.
-       GEMESSEN an „/kopfhoerer Bea 1" (mit sechs Liedern im Ordner):
-       es entstand die Zeile „Alex setzt Kopfhörer auf Bea 1" mit
-       wen: „Bea 1" — ein Platz mit diesem Namen existiert nicht, es
-       lief also weder ein Lied noch traf der Effekt jemanden.
-       GENAU DAS hat er gemeldet: „dann kann ich immer noch nicht das
-       Musikstück für mich selber einstellen" und „ich möchte die
-       Einstellung dafür bei mir haben, was ich den Leuten einstelle,
-       was ich ihnen auf den Kopfhörer setze."
-       Jetzt steht sie wirklich vor AM_PLATZ. Und sie bricht nicht
-       mehr ab, wenn hinter dem Namen kein Lied steht: dann faellt es
-       durch zu AM_PLATZ, damit „/kopfhoerer Xander Fox" weiter die
-       blossen Kopfhoerer auf den Platz von Xander Fox setzt. */
-    if (art === "kopfhoerer" && rest && /\s/.test(rest.trim())) {
-      var stkK = rest.trim().split(/\s+/);
-      var namK = stkK.shift();
-      /* RUNDE 80 — XANDER: „da moechte ich noch einen Song Ausschnitt
-         definieren koennen."
-         Steht am Ende eine Zeitangabe, ist sie der AUSSCHNITT und
-         gehoert nicht mehr zum Liednamen:
-           /kopfhoerer Bea 3 1:20        ab 1:20 bis zum Schluss
-           /kopfhoerer Bea 3 1:20-1:50   genau diese dreissig Sekunden
-         Erlaubt sind „1:20", „80" (Sekunden) und beides mit Bindestrich
-         dazwischen. Wird nichts angegeben, laeuft das Lied wie bisher
-         von vorn — der Ausschnitt ist ein Zusatz, keine Pflicht. */
-      var stueckK = null;
-      if (stkK.length > 1) {
-        var letzteK = stkK[stkK.length - 1];
-        var mK = /^(\d+(?::[0-5]\d)?)(?:\s*-\s*(\d+(?::[0-5]\d)?))?$/.exec(letzteK);
-        if (mK) {
-          var inSek = function (t) {
-            var teil = String(t).split(":");
-            return teil.length === 2
-              ? Number(teil[0]) * 60 + Number(teil[1])
-              : Number(teil[0]);
-          };
-          var abK = inSek(mK[1]);
-          var bisK = mK[2] ? inSek(mK[2]) : 0;
-          /* Ein Ausschnitt, der rueckwaerts laeuft, ist keiner. */
-          if (!bisK || bisK > abK) {
-            stueckK = { ab: abK, bis: bisK };
-            stkK.pop();
-          }
-        }
-      }
-      var liedK = liedFinden(stkK.join(" "));
-      var wemK = zielPerson(namK);
-      /* Kein Lied dahinter? Dann war es kein Liedwunsch, sondern ein
-         Name mit Leerzeichen. Nicht abbrechen — durchfallen lassen,
-         AM_PLATZ setzt die blossen Kopfhoerer auf. */
-      if (liedK) {
-      var zusatzK = stueckK
-        ? " (ab " + Math.floor(stueckK.ab / 60) + ":"
-          + String(stueckK.ab % 60).padStart(2, "0")
-          + (stueckK.bis
-              ? " bis " + Math.floor(stueckK.bis / 60) + ":"
-                + String(stueckK.bis % 60).padStart(2, "0")
-              : "") + ")"
-        : "";
-      return anAlle("aktion", zustand.ichName + " setzt " + zielWort(wemK)
-                    + " Kopfh\u00f6rer auf \u2014 \u201e" + liedK.titel + "\u201c"
-                    + zusatzK + "  \ud83c\udfa7",
-                    { wirkung: "kopfhoerer", wen: wemK.name,
-                      lied: liedK.datei, liedTitel: liedK.titel,
-                      liedAb: stueckK ? stueckK.ab : 0,
-                      liedBis: stueckK ? stueckK.bis : 0 });
-      }
-    }
-
     if (AM_PLATZ[art]) {
       /* =========================================================
          RUNDE 88 — AUFGEZOGEN HEISST BEIM PFERD: GALOPP
@@ -11336,7 +11217,7 @@ window.LiveChat = (function () {
       var allenP = /^(alle|allen|alles|allesamt|jeden|jedem|everyone|all)$/i
         .test(String(rest || "").trim());
       var wemP = allenP ? { name: "*" }
-        : (rest ? (zielPerson(rest)) : null);
+        : (rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null);
       /* RUNDE 76 — die Salve steht jetzt auch in der Hilfszeile: wer
          sie nicht kennt, findet sie sonst nie. */
       if (!wemP) return systemZeile("So geht es:  /" + art + " Nickname"
@@ -11358,7 +11239,7 @@ window.LiveChat = (function () {
         .filter(function (x) { return x.length; });
       if (!allenP && teileP.length > 1) {
         var namenP = teileP.map(function (t) {
-          var w = zielPerson(t);
+          var w = personNachName(t) || praesenzNachName(t) || { name: t };
           return w.name;
         });
         return anAlle("aktion", zustand.ichName + " " + satzP.satz + " "
@@ -11408,7 +11289,7 @@ window.LiveChat = (function () {
       var allenQ = /^(alle|allen|alles|allesamt|jeden|jedem|everyone|all)$/i
         .test(String(rest).trim());
       var wemQ = allenQ ? { name: "*" }
-        : (zielPerson(rest));
+        : (personNachName(rest) || praesenzNachName(rest) || { name: rest });
       var satzQ = AUCH_AM_PLATZ[art];
       if (allenQ) {
         return anAlle("aktion", zustand.ichName + " " + alleSatz(satzQ.satz)
@@ -11567,7 +11448,7 @@ window.LiveChat = (function () {
       if (istWahl) teileS.pop();
       var namenS = teileS.join(" ").trim();
       if (!namenS) return systemZeile("Wem denn?  So geht es:  /spray Nickname " + wasS);
-      var wemS = zielPerson(namenS);
+      var wemS = personNachName(namenS) || praesenzNachName(namenS) || { name: namenS };
       var wortS = /^(traurig|sad|schade|weinen)$/.test(wasS) ? "ein trauriges Gesicht"
         : /^(froh|happy|lachen)$/.test(wasS) ? "ein lachendes Gesicht"
         : "\u201e" + wasS + "\u201c";
@@ -11582,7 +11463,7 @@ window.LiveChat = (function () {
        zweimal klingeln, Gabel, Hoerer, offene Leitung. */
     if (art === "telefon") {
       if (!rest) return systemZeile("So geht es:  /telefon Nickname");
-      var wemF = zielPerson(rest);
+      var wemF = personNachName(rest) || praesenzNachName(rest) || { name: rest };
       return anAlle("aktion", zustand.ichName + " ruft " + wemF.name
         + " an  \u260e\ufe0f", { wirkung: "telefon", wen: wemF.name });
     }
@@ -11622,51 +11503,21 @@ window.LiveChat = (function () {
                       froschschenkel: "\ud83d\udc38", pferdehufe: "\ud83d\udc0e",
                       entenfuesse: "\ud83e\udd86" };
       var teileA = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
-      /* =========================================================
-         RUNDE 88 — „/ausziehen Name" HAT DEN NAMEN GEFRESSEN
-         ---------------------------------------------------------
-         XANDER: „Ich kann mich immer noch nicht selber anziehen und
-         ausziehen."
-         HIER WAR DER ZWEITE GRUND (der erste war, dass „ich" keinen
-         Platz fand): bei /ausziehen wurde stumpf ein „aus" ANGEHAENGT
-         und danach das LETZTE Wort als Kleidungsstueck abgezogen —
-         also genau dieses angehaengte „aus". Was uebrig blieb, war
-         alles andere, und das wurde zum NAMEN.
-         GEMESSEN an „/ausziehen ich krone": Teile [ich, krone, aus],
-         abgezogen wird „aus", Name = „ich krone". Es gibt keinen
-         Platz, der „ich krone" heisst — der Effekt ging ins Leere,
-         und in der Zeile stand „Alex zieht ich krone alles wieder
-         aus".
-         Jetzt wird bei /ausziehen NICHTS angehaengt: steht am Ende
-         ein bekanntes Kleidungsstueck, wird genau das abgenommen,
-         sonst alles. Der Name ist, was davor steht — und ohne Namen
-         ist man selbst gemeint (wie bei /me). */
+      if (art === "ausziehen") teileA.push("aus");
       if (!teileA.length) {
         return systemZeile("Anziehen:\n"
           + "  /anziehen Name krone   \u00b7   brille   \u00b7   sonnenbrille\n"
           + "  /anziehen Name schnurrbart   \u00b7   muetze   \u00b7   maske\n"
           + "  /anziehen Name aus     nimmt es wieder ab");
       }
-      var letztesA = String(teileA[teileA.length - 1] || "").toLowerCase()
+      var stueckA = String(teileA[teileA.length - 1] || "").toLowerCase()
         .replace(/\u00fc/g, "ue").replace(/\u00e4/g, "ae").replace(/\u00f6/g, "oe");
-      var stueckA, abA;
-      if (art === "ausziehen") {
-        /* Ausziehen ist immer ein „aus". Steht am Ende ein bekanntes
-           Stueck, wird genau das abgenommen und gehoert nicht mehr
-           zum Namen; steht dort keines, ist der ganze Rest der Name
-           und es geht alles herunter. */
-        abA = true;
-        stueckA = "aus";
-        if (STUECKE[letztesA]) teileA.pop();
-      } else {
-        stueckA = letztesA;
-        abA = /^(aus|ab|weg|nichts|nackt)$/.test(stueckA);
-        if (!abA && !STUECKE[stueckA]) {
-          return systemZeile("\u201e" + teileA[teileA.length - 1] + "\u201c gibt es nicht.\n"
-            + "Es gibt: " + Object.keys(STUECKE).join(", ") + " \u2014 oder aus.");
-        }
-        teileA.pop();
+      var abA = /^(aus|ab|weg|nichts|nackt)$/.test(stueckA);
+      if (!abA && !STUECKE[stueckA]) {
+        return systemZeile("\u201e" + teileA[teileA.length - 1] + "\u201c gibt es nicht.\n"
+          + "Es gibt: " + Object.keys(STUECKE).join(", ") + " \u2014 oder aus.");
       }
+      teileA.pop();
       var namenA = teileA.join(" ").trim();
       /* RUNDE 87 — XANDER: „Ich kann mich immer noch nicht selber
          anziehen und ausziehen."
@@ -11676,7 +11527,7 @@ window.LiveChat = (function () {
       if (!namenA) {
         return systemZeile("Wem denn?  So geht es:  /anziehen Nickname " + stueckA);
       }
-      var wemA = zielPerson(namenA);
+      var wemA = personNachName(namenA) || praesenzNachName(namenA) || { name: namenA };
       /* Sich selbst zieht man an, jemand anderem zieht man etwas an. */
       var selbstA = wemA.name === zustand.ichName;
       var zeichenA = STUECK_ZEICHEN[stueckA] || "\ud83d\udc52";
@@ -11754,11 +11605,72 @@ window.LiveChat = (function () {
         return systemZeile("So geht es:  /ballonpumpe Nickname"
           + "  \u2014 oder  /ballonpumpe Nickname helium");
       }
-      var wemB = zielPerson(namenB);
+      var wemB = personNachName(namenB) || praesenzNachName(namenB) || { name: namenB };
       return anAlle("aktion", zustand.ichName + " pumpt " + wemB.name
         + (artB ? " zum Heliumballon auf \u2014 und er steigt davon" : " auf wie einen Luftballon")
         + "  \ud83c\udf88",
         { wirkung: "luftballon", wen: wemB.name, stueck: artB });
+    }
+
+    /* ---- UND EINS AUF DIE OHREN ----
+       /kopfhoerer Name          nur die Kopfhoerer
+       /kopfhoerer Name 3        Kopfhoerer UND Lied 3 — gehoert wird es
+                                 nur von dem, dem sie aufgesetzt werden.
+       Diese Abzweigung muss VOR AM_PLATZ stehen: dort gilt der ganze
+       Rest als Name, und „Bea 3" heisst niemand. */
+    if (art === "kopfhoerer" && rest && /\s/.test(rest.trim())) {
+      var stkK = rest.trim().split(/\s+/);
+      var namK = stkK.shift();
+      /* RUNDE 80 — XANDER: „da moechte ich noch einen Song Ausschnitt
+         definieren koennen."
+         Steht am Ende eine Zeitangabe, ist sie der AUSSCHNITT und
+         gehoert nicht mehr zum Liednamen:
+           /kopfhoerer Bea 3 1:20        ab 1:20 bis zum Schluss
+           /kopfhoerer Bea 3 1:20-1:50   genau diese dreissig Sekunden
+         Erlaubt sind „1:20", „80" (Sekunden) und beides mit Bindestrich
+         dazwischen. Wird nichts angegeben, laeuft das Lied wie bisher
+         von vorn — der Ausschnitt ist ein Zusatz, keine Pflicht. */
+      var stueckK = null;
+      if (stkK.length > 1) {
+        var letzteK = stkK[stkK.length - 1];
+        var mK = /^(\d+(?::[0-5]\d)?)(?:\s*-\s*(\d+(?::[0-5]\d)?))?$/.exec(letzteK);
+        if (mK) {
+          var inSek = function (t) {
+            var teil = String(t).split(":");
+            return teil.length === 2
+              ? Number(teil[0]) * 60 + Number(teil[1])
+              : Number(teil[0]);
+          };
+          var abK = inSek(mK[1]);
+          var bisK = mK[2] ? inSek(mK[2]) : 0;
+          /* Ein Ausschnitt, der rueckwaerts laeuft, ist keiner. */
+          if (!bisK || bisK > abK) {
+            stueckK = { ab: abK, bis: bisK };
+            stkK.pop();
+          }
+        }
+      }
+      var liedK = liedFinden(stkK.join(" "));
+      var wemK = personNachName(namK) || praesenzNachName(namK) || { name: namK };
+      if (!liedK) {
+        return systemZeile("\u201e" + stkK.join(" ") + "\u201c liegt nicht im Musikordner.\n"
+          + liederListe());
+      }
+      var zusatzK = stueckK
+        ? " (ab " + Math.floor(stueckK.ab / 60) + ":"
+          + String(stueckK.ab % 60).padStart(2, "0")
+          + (stueckK.bis
+              ? " bis " + Math.floor(stueckK.bis / 60) + ":"
+                + String(stueckK.bis % 60).padStart(2, "0")
+              : "") + ")"
+        : "";
+      return anAlle("aktion", zustand.ichName + " setzt " + zielWort(wemK)
+                    + " Kopfh\u00f6rer auf \u2014 \u201e" + liedK.titel + "\u201c"
+                    + zusatzK + "  \ud83c\udfa7",
+                    { wirkung: "kopfhoerer", wen: wemK.name,
+                      lied: liedK.datei, liedTitel: liedK.titel,
+                      liedAb: stueckK ? stueckK.ab : 0,
+                      liedBis: stueckK ? stueckK.bis : 0 });
     }
 
     if (WETTER[art]) {
