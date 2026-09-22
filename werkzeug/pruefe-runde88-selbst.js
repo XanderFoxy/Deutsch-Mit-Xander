@@ -117,6 +117,7 @@ const sage = (gut, text, dazu) => {
       const z = letzte();
       aus[schluessel] = { text: String(z.text || ""), wen: String(z.wen || ""),
                           wirkung: String(z.wirkung || ""),
+                          stueck: String(z.stueck || ""),
                           lied: String(z.lied || "") };
     };
     await einer("/anziehen ich krone", "anziehen");
@@ -132,6 +133,17 @@ const sage = (gut, text, dazu) => {
     if (lieder.length) await einer("/kopfhoerer Bea 1", "beaLied");
     try { LiveChat.pruefPersonSetzen("fox-1", "Xander Fox"); } catch (e) {}
     await einer("/kopfhoerer Xander Fox", "zweiWort");
+    /* RUNDE 89 — DIE ZWEI BALLON-VARIANTEN, die er am 21.09. um
+       19:31 Uhr genannt hat: „eine, dass man ihn aufblasen kann bis er
+       platzt, und eine, dass man ihn einfach nur aufblasen kann wie
+       ein Helium-Luftballon, und er fliegt dann von der Buehne hoch."
+       Und dazu: „Ausserdem geht deine Luftballon-Animation nicht
+       einfach so, man muss immer einen Namen auswaehlen. Die muss auch
+       von sich gehen. Du musst auch mit mir selbst gehen." */
+    await einer("/ballonpumpe", "ballonIch");
+    await einer("/ballonpumpe helium", "ballonHelium");
+    await einer("/aufblasen", "platzenIch");
+    await einer("/ballonpumpe Bea helium", "ballonBea");
     return { ich, aus, lieder: lieder.length };
   }, worte);
 
@@ -167,6 +179,24 @@ const sage = (gut, text, dazu) => {
       "„/kopfhoerer Bea 1“ trifft Bea UND traegt ein Lied",
       "wen: „" + bl.wen + "“, Lied: „" + (bl.lied || "") + "“");
   }
+  console.log("");
+  const bIch = zeilen.aus["ballonIch"] || {};
+  sage(bIch.wen === ich && bIch.wirkung === "luftballon",
+    "„/ballonpumpe“ ohne Namen pumpt MICH auf",
+    "wen: „" + bIch.wen + "“ — " + (bIch.text || "").slice(0, 50));
+  const bHe = zeilen.aus["ballonHelium"] || {};
+  sage(bHe.wen === ich && bHe.stueck === "helium",
+    "„/ballonpumpe helium“ ist die zweite Variante — und trifft mich",
+    "wen: „" + bHe.wen + "“, Stück: „" + (bHe.stueck || "") + "“");
+  const pl2 = zeilen.aus["platzenIch"] || {};
+  sage(pl2.wen === ich && pl2.wirkung === "aufblasen",
+    "„/aufblasen“ ohne Namen lässt MICH platzen",
+    "wen: „" + pl2.wen + "“ — " + (pl2.text || "").slice(0, 50));
+  const bBea = zeilen.aus["ballonBea"] || {};
+  sage(bBea.wen === "Bea" && bBea.stueck === "helium",
+    "und mit Namen trifft es weiterhin den anderen",
+    "wen: „" + bBea.wen + "“, Stück: „" + (bBea.stueck || "") + "“");
+
   const zw = zeilen.aus["zweiWort"] || {};
   sage(zw.wen === "Xander Fox" && !zw.lied,
     "„/kopfhoerer Xander Fox“ bleibt ein Name — kein Liedwunsch",
@@ -209,6 +239,51 @@ const sage = (gut, text, dazu) => {
          || String(musik.quelle).indexOf(musik.datei.slice(0, 12)) >= 0,
       "und die Quelle zeigt auf die Datei", musik.quelle.slice(-40));
   }
+
+  /* =====================================================================
+     4) UND MAN SIEHT ES AUCH — DAS FELD „stueck" KAM NIE AN
+     ---------------------------------------------------------------------
+     XANDER: „Ich kann mich immer noch nicht anziehen und ausziehen."
+     Der Befehl war in Ordnung, das FELD ging verloren: ZUSATZ_FELDER in
+     livechat.js entscheidet, welche Zusatzfelder eine Zeile behaelt, und
+     „stueck" stand nicht darin. Damit kam „/anziehen Bea krone" ueberall
+     als stueck: „" an — auch auf dem eigenen Geraet — und
+     lcAnziehen(wen, "") zieht niemandem etwas an.
+     Hier wird deshalb die WIRKUNG gemessen, nicht die Zeile: liegt nach
+     dem Befehl wirklich ein Kleidungsstueck auf dem Platz?
+     (Die Liste selbst bewacht werkzeug/pruefe-zusatzfelder.js.)
+     ===================================================================== */
+  console.log("\n4) Und man sieht es auch\n");
+  const kleid = await pg.evaluate(async () => {
+    const aus = {};
+    const test = async (schluessel, stueck) => {
+      window.DMA_PRUEF.effektBuehne();
+      window.DMA_PRUEFUNG.wirkung("anziehen", "Bea", "Alex", { stueck: stueck });
+      await new Promise((f) => setTimeout(f, 380));
+      const pl = [...document.querySelectorAll(".lc-platz")][1];
+      aus[schluessel] = [...pl.querySelectorAll("[class*='kleid']")].length;
+    };
+    await test("krone", "krone");
+    await test("ohne", "");
+    /* Und der ganze Weg: der Befehl selbst, nicht der Direktaufruf. */
+    try {
+      LiveChat.pruefSitz({ lage: "drin", ichId: "ich-1", ichName: "Alex",
+                           buehne: true, zuruecksetzen: true });
+      LiveChat.pruefPersonSetzen("bea-1", "Bea");
+    } catch (e) {}
+    LiveChat.schreiben("/anziehen Bea krone");
+    await new Promise((f) => setTimeout(f, 60));
+    const n = (LiveChat.lage().nachrichten || []).slice(-1)[0] || {};
+    aus.ausDemBefehl = String(n.stueck || "");
+    return aus;
+  });
+  sage(kleid.krone > 0, "mit „krone“ liegt wirklich ein Stück auf dem Platz",
+    kleid.krone + " Element(e)");
+  sage(kleid.ohne === 0, "ohne Stück liegt nichts da — so war es vorher IMMER",
+    kleid.ohne + " Element(e)");
+  sage(kleid.ausDemBefehl === "krone",
+    "und der Befehl selbst trägt das Stück bis in die Zeile",
+    "stueck: „" + kleid.ausDemBefehl + "“");
 
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));

@@ -9957,10 +9957,40 @@ window.LiveChat = (function () {
        2. empfangen — die Zeile der anderen,
        3. das Verlaufspaket — fuer die, die spaeter dazukommen.
      Ein neues Feld wird hier eingetragen und ist damit ueberall da. */
+  /* =========================================================
+     RUNDE 89 — FUENF FELDER FEHLTEN, UND DAMIT FUENF WUENSCHE
+     ---------------------------------------------------------
+     Diese Liste entscheidet, welche Zusatzfelder eine Zeile
+     ueberhaupt behaelt. Was hier fehlt, faellt weg — auf dem
+     eigenen Geraet UND bei allen anderen, obwohl anAlle() es ueber
+     die Leitung schickt. Fuenf Felder standen nicht darin, und jedes
+     einzelne ist ein Wunsch von ihm, der deshalb ins Leere lief:
+
+       stueck   — WELCHES Kleidungsstueck, welches Spraybild, welche
+                  Ballonart. XANDER: „Ich kann mich immer noch nicht
+                  anziehen und ausziehen" und „Ausserdem geht deine
+                  Luftballon-Animation nicht einfach so."
+                  GEMESSEN: „/anziehen Bea krone" kam als
+                  stueck: „" an — also ohne Krone.
+       liedBis  — das ENDE des Songausschnitts. XANDER (Runde 80):
+                  „da moechte ich noch einen Song-Ausschnitt
+                  definieren koennen." Der Anfang fuhr mit, das Ende
+                  nicht: der Ausschnitt lief bis zum Schluss des
+                  Liedes.
+       ziel     — auf WELCHEN Platz jemand gehoben wird (/heb).
+       tausch   — ob die beiden Plaetze TAUSCHEN oder nur einer
+                  umzieht.
+       ab       — ab welcher Sekunde die Musik einsetzt.
+
+     Wer hier ein Feld dazunimmt, muss es auch hier eintragen — und
+     werkzeug/pruefe-zusatzfelder.js faellt sonst um: die Sonde liest
+     aus app.js ALLE „nachricht.<feld>" heraus und vergleicht sie mit
+     dieser Liste. */
   var ZUSATZ_FELDER = [
     "wirkung", "wen", "an", "film", "betonung", "raten", "dran",
     "sortieren", "leseZeilen", "leseTitel", "leseNiveau",
-    "lied", "liedTitel", "liedAb", "wortLink", "los", "tempo"
+    "lied", "liedTitel", "liedAb", "liedBis", "wortLink", "los", "tempo",
+    "stueck", "ziel", "tausch", "ab"
   ];
   /* Listen werden begrenzt — eine Zeile aus einer fremden Fassung
      darf den Chat nicht sprengen. */
@@ -11299,6 +11329,50 @@ window.LiveChat = (function () {
       }
     }
 
+    /* ---- DER BALLON: AUFPUMPEN ODER HELIUM ----
+       RUNDE 89 — UND AUCH DIESE ABZWEIGUNG STAND HINTER AM_PLATZ.
+       Derselbe Fehler wie beim Kopfhoerer: „ballonpumpe" steht auch in
+       AM_PLATZ, und AM_PLATZ kommt frueher. GEMESSEN an
+       „/ballonpumpe helium": es entstand „Alex pumpt auf wie einen
+       Luftballon helium" mit wen: „helium" — ein Platz mit diesem
+       Namen gibt es nicht, die Heliumvariante war also gar nicht
+       erreichbar. XANDER: „Ausserdem geht deine Luftballon-Animation
+       nicht einfach so." Jetzt steht sie wirklich davor.
+       RUNDE 87 — XANDER (21.09., 19:31): „da sollen auch zwei
+       Animationen sein: eins, dass man ihn aufblasen kann, bis er
+       platzt, und eins, dass man ihn einfach nur aufblasen kann wie
+       ein Helium-Luftballon, und er fliegt dann von der Buehne hoch."
+       Das Platzen ist /aufblasen. Hier steht das Aufpumpen, und das
+       Wort „helium" dahinter waehlt die zweite Variante. */
+    if (art === "ballonpumpe") {
+      var teileB = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
+      var artB = "";
+      if (teileB.length && /^(helium|schweben|hoch|weg)$/i.test(teileB[teileB.length - 1])) {
+        artB = "helium";
+        teileB.pop();
+      }
+      var namenB = teileB.join(" ").trim();
+      /* RUNDE 89 — XANDER: „Ausserdem geht deine Luftballon-Animation
+         nicht einfach so, man muss immer einen Namen auswaehlen. Die
+         muss auch von sich gehen. Du musst auch mit mir selbst gehen."
+         Hier stand nur „So geht es: /ballonpumpe Nickname" — ohne
+         Namen passierte gar nichts. Wer niemanden nennt, meint sich
+         selbst; genauso macht es /anziehen seit Runde 87. */
+      if (!namenB) namenB = zustand.ichName || "";
+      if (!namenB) {
+        return systemZeile("So geht es:  /ballonpumpe Nickname"
+          + "  \u2014 oder  /ballonpumpe Nickname helium");
+      }
+      var wemB = zielPerson(namenB);
+      /* Sich selbst pumpt man auf, jemand anderen pumpt man auf. */
+      var selbstB = wemB.name === zustand.ichName;
+      return anAlle("aktion", zustand.ichName
+        + (selbstB ? " pumpt sich" : " pumpt " + wemB.name)
+        + (artB ? " zum Heliumballon auf \u2014 und er steigt davon" : " auf wie einen Luftballon")
+        + "  \ud83c\udf88",
+        { wirkung: "luftballon", wen: wemB.name, stueck: artB });
+    }
+
     if (AM_PLATZ[art]) {
       /* =========================================================
          RUNDE 88 — AUFGEZOGEN HEISST BEIM PFERD: GALOPP
@@ -11333,6 +11407,24 @@ window.LiveChat = (function () {
          damit es nicht an der Namenssuche haengt. Wer wirklich
          „Alle" heisst, wird deshalb auch nicht versehentlich
          alleine getroffen. */
+      /* RUNDE 89 — XANDER zum Luftballon: „Ausserdem geht deine
+         Luftballon-Animation nicht einfach so, man muss immer einen
+         Namen auswaehlen. Die muss auch von sich gehen. Du musst auch
+         mit mir selbst gehen."
+         Das gilt fuer die beiden Ballon-Varianten, die er sich
+         gewuenscht hat (21.09., 19:31 Uhr: „eine, dass man ihn
+         aufblasen kann bis er platzt, und eine, dass man ihn einfach
+         nur aufblasen kann wie ein Helium-Luftballon"). „aufblasen"
+         ist die erste davon und laeuft ueber diese Stelle hier; die
+         zweite steht als /ballonpumpe weiter oben und ist dort
+         genauso geaendert.
+         Absichtlich eine kurze Liste und keine allgemeine Regel: bei
+         „/tritt" ohne Namen soll weiterhin die Hilfszeile kommen und
+         nicht ein Tritt gegen einen selbst. */
+      var OHNE_NAME_ICH = { aufblasen: 1 };
+      if (!String(rest || "").trim() && OHNE_NAME_ICH[art]) {
+        rest = zustand.ichName || "";
+      }
       var allenP = /^(alle|allen|alles|allesamt|jeden|jedem|everyone|all)$/i
         .test(String(rest || "").trim());
       var wemP = allenP ? { name: "*" }
@@ -11734,31 +11826,6 @@ window.LiveChat = (function () {
         + "  \u25b6\ufe0f",
         { wirkung: "ytmusik", lied: kennungY, liedTitel: titelY,
           ab: String(abY) });
-    }
-    /* ---- DER BALLON: AUFPUMPEN ODER HELIUM ----
-       RUNDE 87 — XANDER (21.09., 19:31): „da sollen auch zwei
-       Animationen sein: eins, dass man ihn aufblasen kann, bis er
-       platzt, und eins, dass man ihn einfach nur aufblasen kann wie
-       ein Helium-Luftballon, und er fliegt dann von der Buehne hoch."
-       Das Platzen ist /aufblasen. Hier steht das Aufpumpen, und das
-       Wort „helium" dahinter waehlt die zweite Variante. */
-    if (art === "ballonpumpe") {
-      var teileB = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
-      var artB = "";
-      if (teileB.length && /^(helium|schweben|hoch|weg)$/i.test(teileB[teileB.length - 1])) {
-        artB = "helium";
-        teileB.pop();
-      }
-      var namenB = teileB.join(" ").trim();
-      if (!namenB) {
-        return systemZeile("So geht es:  /ballonpumpe Nickname"
-          + "  \u2014 oder  /ballonpumpe Nickname helium");
-      }
-      var wemB = zielPerson(namenB);
-      return anAlle("aktion", zustand.ichName + " pumpt " + wemB.name
-        + (artB ? " zum Heliumballon auf \u2014 und er steigt davon" : " auf wie einen Luftballon")
-        + "  \ud83c\udf88",
-        { wirkung: "luftballon", wen: wemB.name, stueck: artB });
     }
 
     if (WETTER[art]) {

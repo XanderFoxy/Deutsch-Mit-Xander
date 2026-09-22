@@ -131,9 +131,17 @@ const sage = (gut, text, dazu) => {
          nicht zurueckgenommen wird. Genau das steht hier jetzt
          daneben, und zwar so, dass es sich mit dem Zustand VOR dem
          Effekt vergleichen laesst. */
-      const kinder = [...pl.children].map((el) =>
-        el.tagName.toLowerCase() + "." + (el.className.baseVal !== undefined
-          ? el.className.baseVal : String(el.className || ""))).sort().join("|");
+      /* Gezaehlt wird nach TAG und GRUNDKLASSE, nicht nach der ganzen
+         Klassenliste: ein Kreis, an den ein Effekt eine Klasse haengt,
+         ist derselbe Kreis und kein neues Kind. Sonst meldet die Sonde
+         zweimal dasselbe („verschwunden: span.lc-kreis" plus
+         „liegengeblieben: span.lc-kreis lc-birne-an"), und was
+         wirklich passiert ist — eine Klasse mehr — steht drei Zeilen
+         weiter unten noch einmal. */
+      const kinder = [...pl.children].map((el) => {
+        const k = el.classList && el.classList.length ? el.classList[0] : "";
+        return el.tagName.toLowerCase() + (k ? "." + k : "");
+      }).sort().join("|");
       return { schild: r(sch), name: r(nam), nummer: r(nr), kreisGr: kreisGr,
                unterwegs: pl.classList.contains("lc-platz-unterwegs"),
                kinder: kinder,
@@ -239,7 +247,17 @@ const sage = (gut, text, dazu) => {
        sie sie von SELBER abnimmt." Der Kopfhoerer ist deshalb mit
        600 Sekunden angemeldet und liegt absichtlich noch da. Alles
        andere muss weg sein. */
-    const bleibt = /kopfhoerer/.test(art);
+    /* WAS ABSICHTLICH LIEGEN BLEIBT — und zwar, weil er es so wollte:
+         kopfhoerer  „sollen die Kopfhoerer auch so lange auf der
+                      Person bleiben, bis sie sie von SELBER abnimmt"
+         gluehbirne  „es kann nicht sein, wenn man Birne anmacht, dass
+                      beim zweiten Betaetigen die Birne ausgeht" — sie
+                      brennt weiter, bis jemand sie herausdreht
+                      (/birneraus)
+         anziehen    „was man jemandem aufsetzt, hat er an, bis es
+                      jemand abnimmt"
+       Alles andere muss nach dem Effekt weg sein. */
+    const bleibt = /kopfhoerer|gluehbirne|birne|anziehen|ausziehen/.test(art);
     if (letzte && !bleibt) {
       const nenn = (t) => schlimm.push(wo + " danach " + t);
       if (letzte.kinder !== v.kinder) {
