@@ -38501,23 +38501,8 @@
          Koordinatensystem benutzen und nichts auseinanderlaeuft. */
       const aufKopf = { x: zMitte.x, y: zMitte.y - zHoch * 0.34 };
       const inHand  = { x: zMitte.x + zBreit * 0.42, y: zMitte.y + zHoch * 0.10 };
-      /* RUNDE 88 — XANDER, Satz fuer Satz: „Er sollte einen Zylinder
-         mit seinen Haenden an den Platz desjenigen STELLEN, der
-         losreisen will. In diesen Zylinder soll er mit der ANDEREN
-         Hand das Profilbild packen und in den Zylinder rein tun …
-         danach soll er den Zylinder MIT BEIDEN HAENDEN auf dem Platz
-         stellen, wo der Reisende hin moechte."
-         Zwei Dinge fehlten. ERSTENS stand der Hut nie irgendwo: er
-         schwebte 0,95 Bildbreiten ueber dem Startplatz in der Luft
-         („ueberAb"), und die Person wurde hinaufgezogen statt
-         hineingesteckt. Jetzt STEHT er auf dem Platz, und die Person
-         wird darueber gehoben und faellt hinein. ZWEITENS hatte der
-         Zauberer nur EINEN beweglichen Arm — der linke war ein
-         starrer Strich. Ein Hut, den man „mit beiden Haenden"
-         abstellt, braucht zwei. */
-      const aufAb   = { x: start.x, y: start.y + versatzZ0 + d * 0.12 };
-      const ueberAb = { x: start.x, y: start.y + versatzZ0 - d * 0.62 };
-      const amZiel  = { x: ende.x,  y: ende.y + versatzZ1 + d * 0.12 };
+      const ueberAb = { x: start.x, y: start.y + versatzZ0 - d * 0.95 };
+      const amZiel  = { x: ende.x,  y: ende.y + versatzZ1 - d * 0.10 };
 
       /* --- DER ZAUBERER ------------------------------------------- */
       const zauber = document.createElement("span");
@@ -38526,13 +38511,8 @@
       zauber.style.setProperty("--hoch", zHoch.toFixed(1) + "px");
       zauber.innerHTML =
         '<svg viewBox="0 0 100 122" class="lc-zauberer-bild">'
-        /* Der Umhang: breite Schultern, nach unten offen.
-           RUNDE 88 — SCHMALER GEWORDEN (unten 14 bis 86 statt 6 bis
-           94). Er reichte vorher fast bis an die Haende, und weil die
-           Aermel dieselbe Farbe hatten, verschwanden die Arme darin:
-           zu sehen waren nur zwei hautfarbene Kreise auf dem Stoff.
-           Jetzt haengen die Arme neben dem Umhang. */
-        + '<path d="M50 44 L78 58 Q88 74 86 118 L14 118 Q12 74 22 58 Z"'
+        /* Der Umhang: breite Schultern, nach unten offen. */
+        + '<path d="M50 44 L84 58 Q96 74 94 118 L6 118 Q4 74 16 58 Z"'
         + ' fill="#2b2352" stroke="#171233" stroke-width="2.2" stroke-linejoin="round"/>'
         /* Das rote Futter, das man am offenen Umhang sieht. */
         + '<path d="M50 46 L70 56 Q74 86 66 118 L34 118 Q26 86 30 56 Z"'
@@ -38552,35 +38532,14 @@
         + ' q2 0 3 1 q2 2 6 1 q1 -2 -2 -3 q-4 -1 -7 1 Z" fill="#3a2a1d"/>'
         /* Die ARME. Der rechte greift nach unten — er ist der, der
            zieht und den Hut traegt; er wird eigens gedreht. */
-        /* RUNDE 88 — DIE AERMEL WAREN UNSICHTBAR. Sie hatten genau
-           die Farbe des Umhangs („#2b2352" auf „#2b2352"), lagen
-           davor und waren deshalb nicht zu erkennen: zu sehen waren
-           nur zwei hautfarbene Kreise, die vor der Brust schwebten.
-           Jetzt bekommt jeder Arm einen dunklen Umriss, einen
-           helleren Aermel und eine weisse Manschette am Handgelenk —
-           daran sieht man ueberhaupt erst, dass er zwei Haende hat.*/
-        + '<g class="lc-zauberer-arm lc-zauberer-arm-rechts">'
-        + '<path d="M80 56 Q96 66 98 86" stroke="#171233" stroke-width="12.4"'
+        + '<g class="lc-zauberer-arm">'
+        + '<path d="M80 56 Q96 66 98 86" stroke="#2b2352" stroke-width="9"'
         + ' fill="none" stroke-linecap="round"/>'
-        + '<path d="M80 56 Q96 66 98 86" stroke="#5a4ca6" stroke-width="9"'
-        + ' fill="none" stroke-linecap="round"/>'
-        + '<path d="M91.6 80.6 L104.4 80.6" stroke="#f2efe6" stroke-width="4.2"'
-        + ' stroke-linecap="round"/>'
         + '<circle cx="98" cy="88" r="6.4" fill="#e8c39a" stroke="#c39a72" stroke-width="1.4"/>'
         + "</g>"
-        /* Und der LINKE, der bis Runde 88 ein starrer Strich war.
-           XANDER: „mit der anderen Hand das Profilbild packen" und
-           „mit beiden Haenden auf dem Platz stellen" — beides geht
-           nur, wenn er sich auch bewegt. */
-        + '<g class="lc-zauberer-arm lc-zauberer-arm-links">'
-        + '<path d="M20 56 Q8 66 7 84" stroke="#171233" stroke-width="12.4"'
+        + '<path d="M20 56 Q8 66 7 84" stroke="#2b2352" stroke-width="9"'
         + ' fill="none" stroke-linecap="round"/>'
-        + '<path d="M20 56 Q8 66 7 84" stroke="#5a4ca6" stroke-width="9"'
-        + ' fill="none" stroke-linecap="round"/>'
-        + '<path d="M0.6 78.6 L13.4 78.6" stroke="#f2efe6" stroke-width="4.2"'
-        + ' stroke-linecap="round"/>'
         + '<circle cx="7" cy="86" r="6.2" fill="#e8c39a" stroke="#c39a72" stroke-width="1.4"/>'
-        + "</g>"
         + "</svg>";
       reihe.appendChild(zauber);
       weg.push(zauber);
@@ -38647,114 +38606,37 @@
         + "px) translate(-50%, -50%)" + (extra || "");
       /* Der Hut: Kopf -> Hand -> ueber den Startplatz -> kippen ->
          Zielplatz -> zurueck auf den Kopf. */
-      /* RUNDE 88 — DIE HUTBAHN FOLGT JETZT SEINEM SATZ.
-         „an den Platz desjenigen stellen" heisst ABSTELLEN, nicht
-         darueber halten — der Hut steht von 0,26 bis 0,46 auf dem
-         Startplatz und von 0,70 bis 0,88 auf dem Zielplatz. */
       try {
         hut.animate([
           { transform: wo(aufKopf, " scale(.92)"), opacity: 0, offset: 0, easing: "ease-in-out" },
           { transform: wo(aufKopf, " scale(.92)"), opacity: 1, offset: beiZ(0.10), easing: "ease-in-out" },
-          { transform: wo(inHand),                 opacity: 1, offset: beiZ(0.18), easing: "ease-in-out" },
-          /* Mit beiden Haenden auf den Platz des Reisenden gestellt. */
-          { transform: wo(aufAb),                  opacity: 1, offset: beiZ(0.26), easing: "ease-in-out" },
-          { transform: wo(aufAb),                  opacity: 1, offset: beiZ(0.40), easing: "ease-in-out" },
-          /* Person faellt hinein — der Hut wippt vom Gewicht. */
-          { transform: wo(aufAb, " rotate(-5deg)"), opacity: 1, offset: beiZ(0.46), easing: "ease-in-out" },
+          { transform: wo(inHand),                 opacity: 1, offset: beiZ(0.22), easing: "ease-in-out" },
+          { transform: wo(ueberAb),                opacity: 1, offset: beiZ(0.34), easing: "ease-in-out" },
+          /* Person hinein — der Hut wippt vom Gewicht. */
+          { transform: wo(ueberAb, " rotate(-6deg)"), opacity: 1, offset: beiZ(0.42), easing: "ease-in-out" },
           /* Dem Publikum zeigen: er kippt die Oeffnung nach vorn. */
-          { transform: wo(inHand, " rotate(-38deg) scale(1.08)"), opacity: 1, offset: beiZ(0.56), easing: "ease-in-out" },
-          { transform: wo(inHand, " rotate(-38deg) scale(1.08)"), opacity: 1, offset: beiZ(0.62), easing: "ease-in-out" },
-          /* Und mit beiden Haenden abstellen, wo die Reise hingeht. */
+          { transform: wo(inHand, " rotate(-38deg) scale(1.08)"), opacity: 1, offset: beiZ(0.52), easing: "ease-in-out" },
+          { transform: wo(inHand, " rotate(-38deg) scale(1.08)"), opacity: 1, offset: beiZ(0.58), easing: "ease-in-out" },
+          /* Und absetzen, wo die Reise hingeht. */
           { transform: wo(amZiel),                 opacity: 1, offset: beiZ(0.72), easing: "ease-in-out" },
           { transform: wo(amZiel),                 opacity: 1, offset: beiZ(0.88), easing: "ease-in-out" },
           { transform: wo(aufKopf, " scale(.92)"), opacity: 1, offset: beiZ(0.97), easing: "ease-in-out" },
           { transform: wo(aufKopf, " scale(.92)"), opacity: 0, offset: 1, easing: "ease-in-out" }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
-
-      /* =============================================================
-         RUNDE 88 — BEIDE ARME, UND SIE ZEIGEN WIRKLICH HIN
-         -------------------------------------------------------------
-         Die Arme bekommen keine ausgedachten Winkel mehr, sondern
-         gerechnete: fuer jeden Zeitpunkt wird der Winkel von der
-         Schulter zu dem Punkt bestimmt, auf den die Hand zeigen soll
-         (Hut oder Profilbild), und davon der RUHEWINKEL des Arms
-         abgezogen. Nur so zeigt die Hand auch dann noch hin, wenn der
-         Platz ganz links oder ganz rechts liegt — mit festen Werten
-         zeigte der Arm einmal hin und einmal daneben.
-         DIE GRENZEN SIND NICHT SYMMETRISCH, und das ist der Punkt.
-         Ein Schultergelenk laesst den Arm nach AUSSEN und nach OBEN
-         weit schwingen, nach INNEN aber kaum — wer den rechten Arm
-         quer vor den Bauch dreht, hat keinen Arm mehr, sondern eine
-         Hand auf der Brust. Genau das war beim ersten Versuch zu
-         sehen: mit einer Grenze von 75 Grad in beide Richtungen
-         klappten beide Arme vor den Umhang, und der Zauberer sah aus
-         wie ohne Arme.
-         Der rechte Arm ruht bei 60,6 Grad (nach rechts unten); gerade
-         nach unten sind 90 Grad, also +29. Er darf deshalb von -85
-         (weit nach oben aussen) bis +32 (knapp ueber senkrecht).
-         Der linke ruht spiegelbildlich bei 113,4 Grad und darf von
-         -32 bis +85. Innerhalb dieser Grenzen zeigt die Hand so weit
-         zum Hut, wie eine Schulter es zulaesst.
-         ============================================================= */
-      const zPunkt = (sx, sy) => ({ x: zMitte.x + (sx / 100 - 0.5) * zBreit,
-                                    y: zMitte.y + (sy / 122 - 0.5) * zHoch });
-      const schulterR = zPunkt(80, 56);
-      const schulterL = zPunkt(20, 56);
-      /* Die Ruhelage: vom Schulterpunkt zur Hand, so wie gezeichnet. */
-      const ruheR = Math.atan2(88 - 56, 98 - 80) * 180 / Math.PI;
-      const ruheL = Math.atan2(86 - 56, 7 - 20) * 180 / Math.PI;
-      const zeigt = (schulter, ruhe, ziel, min, max) => {
-        const w = Math.atan2(ziel.y - schulter.y, ziel.x - schulter.x) * 180 / Math.PI - ruhe;
-        return Math.max(min, Math.min(max, w)).toFixed(1);
-      };
-      const armBild = (schulter, ruhe, min, max) => (t, ziel) => ({
-        transform: "rotate(" + (ziel ? zeigt(schulter, ruhe, ziel, min, max) : "0") + "deg)",
-        offset: beiZ(t), easing: "ease-in-out"
-      });
-      const amPlatzZ = { x: start.x, y: start.y + versatzZ0 };
-      const amZielZ = { x: ende.x, y: ende.y + versatzZ1 };
+      /* Der Arm folgt dem Hut: hoch, wenn er ihn abnimmt, weit
+         hinunter, wenn er die Person zieht. */
       try {
-        const armR = zauber.querySelector(".lc-zauberer-arm-rechts");
-        const bR = armBild(schulterR, ruheR, -85, 32);
-        if (armR) armR.animate([
-          bR(0, null),
-          /* Er nimmt den Hut vom Kopf … */
-          bR(0.14, aufKopf),
-          /* … und stellt ihn MIT BEIDEN HAENDEN auf den Startplatz. */
-          bR(0.26, aufAb),
-          bR(0.40, aufAb),
-          /* Dann hebt er ihn und zeigt dem Publikum, dass er leer ist. */
-          bR(0.56, inHand),
-          bR(0.62, inHand),
-          /* Und stellt ihn, wieder mit beiden Haenden, ans Ziel. */
-          bR(0.72, amZiel),
-          /* Dort zieht er die Person heraus. */
-          bR(0.84, amZielZ),
-          bR(0.94, aufKopf),
-          bR(1, null)
-        ], { duration: dauer, easing: "linear", fill: "forwards" });
-      } catch (e) {}
-      try {
-        const armL = zauber.querySelector(".lc-zauberer-arm-links");
-        const bL = armBild(schulterL, ruheL, -32, 85);
-        if (armL) armL.animate([
-          bL(0, null),
-          bL(0.14, null),
-          /* „mit beiden Haenden … stellen" — also fasst er mit an. */
-          bL(0.26, aufAb),
-          /* „mit der ANDEREN Hand das Profilbild packen und in den
-             Zylinder rein tun": waehrend die rechte den Hut haelt,
-             greift die linke die Person an den Ohren. */
-          bL(0.34, amPlatzZ),
-          bL(0.44, aufAb),
-          /* Beim Vorzeigen haelt die rechte allein; die linke weist
-             zum Publikum, wie es ein Zauberer tut. */
-          bL(0.58, null),
-          /* Und wieder mit beiden Haenden abstellen. */
-          bL(0.72, amZiel),
-          bL(0.86, amZiel),
-          bL(1, null)
+        const arm = zauber.querySelector(".lc-zauberer-arm");
+        if (arm) arm.animate([
+          { transform: "rotate(0deg)", offset: 0, easing: "ease-in-out" },
+          { transform: "rotate(-52deg)", offset: beiZ(0.16), easing: "ease-in-out" },
+          { transform: "rotate(-18deg)", offset: beiZ(0.26), easing: "ease-in-out" },
+          { transform: "rotate(26deg)", offset: beiZ(0.36), easing: "ease-in-out" },
+          { transform: "rotate(-10deg)", offset: beiZ(0.52), easing: "ease-in-out" },
+          { transform: "rotate(30deg)", offset: beiZ(0.72), easing: "ease-in-out" },
+          { transform: "rotate(10deg)", offset: beiZ(0.84), easing: "ease-in-out" },
+          { transform: "rotate(0deg)", offset: 1, easing: "ease-in-out" }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
       /* Die Person: am Platz -> an den Ohren hoch -> in den Hut ->
@@ -38762,29 +38644,23 @@
       const amPlatz = { x: start.x, y: start.y + versatzZ0 };
       const ausZiel = { x: ende.x, y: ende.y + versatzZ1 - d * 0.82 };
       const aufZiel = { x: ende.x, y: ende.y + versatzZ1 };
-      /* RUNDE 88 — der Weg der Person folgt jetzt dem Hut, und der
-         steht ab 0,26 auf dem Platz. „in den Zylinder rein tun"
-         heisst also: hoch an den Ohren, ueber die Oeffnung, und
-         hinein FALLEN — nicht wie vorher nach oben wegziehen, wo gar
-         kein Hut mehr war. Die Oeffnung liegt bei „aufAb.y" minus
-         drei Zehntel der Huthoehe; dort verschwindet das Bild. */
-      const hutMund = { x: aufAb.x, y: aufAb.y - hutGr * 0.30 };
       try {
         last.animate([
           { transform: wo(amPlatz, " scale(1)"), opacity: 0, offset: 0, easing: "ease-in-out" },
           { transform: wo(amPlatz, " scale(1)"), opacity: 1, offset: beiZ(0.17), easing: "ease-in-out" },
           /* Gezogen: erst zappelt es, dann geht es hoch. */
           { transform: wo({ x: amPlatz.x, y: amPlatz.y - d * 0.10 }, " scale(1) rotate(-5deg)"),
-            opacity: 1, offset: beiZ(0.30), easing: "ease-in-out" },
-          { transform: wo({ x: amPlatz.x, y: amPlatz.y - d * 0.20 }, " scale(1) rotate(5deg)"),
-            opacity: 1, offset: beiZ(0.34), easing: "ease-in-out" },
-          { transform: wo(ueberAb, " scale(.9)"), opacity: 1, offset: beiZ(0.39), easing: "ease-in-out" },
+            opacity: 1, offset: beiZ(0.25), easing: "ease-in-out" },
+          { transform: wo({ x: amPlatz.x, y: amPlatz.y - d * 0.18 }, " scale(1) rotate(5deg)"),
+            opacity: 1, offset: beiZ(0.29), easing: "ease-in-out" },
+          { transform: wo(ueberAb, " scale(.9)"), opacity: 1, offset: beiZ(0.34), easing: "ease-in-out" },
           /* In den Hut: klein werden und verschwinden. */
-          { transform: wo(hutMund, " scale(.28)"), opacity: 0, offset: beiZ(0.45) },
-          { transform: wo(amZiel, " scale(.28)"), opacity: 0, offset: beiZ(0.76), easing: "ease-in-out" },
+          { transform: wo({ x: ueberAb.x, y: ueberAb.y + hutGr * 0.12 }, " scale(.28)"),
+            opacity: 0, offset: beiZ(0.41) },
+          { transform: wo(amZiel, " scale(.28)"), opacity: 0, offset: beiZ(0.74), easing: "ease-in-out" },
           /* Und heraus. */
-          { transform: wo(ausZiel, " scale(.95)"), opacity: 1, offset: beiZ(0.86), easing: "ease-in-out" },
-          { transform: wo(aufZiel, " scale(1)"), opacity: 1, offset: beiZ(0.95), easing: "ease-in-out" },
+          { transform: wo(ausZiel, " scale(.95)"), opacity: 1, offset: beiZ(0.84), easing: "ease-in-out" },
+          { transform: wo(aufZiel, " scale(1)"), opacity: 1, offset: beiZ(0.94), easing: "ease-in-out" },
           { transform: wo(aufZiel, " scale(1)"), opacity: 1, offset: 1, easing: "ease-in-out" }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}

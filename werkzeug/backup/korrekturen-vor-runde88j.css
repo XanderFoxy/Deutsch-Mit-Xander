@@ -28811,27 +28811,10 @@ code, pre {
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .32));
 }
 .lc-zauberer-bild { width: 100%; height: 100%; overflow: visible; }
-/* Die Arme drehen um die SCHULTER, nicht um ihre Mitte.
-   RUNDE 88 — NACHGEMESSEN, wo die Schulter im Umriss wirklich liegt.
-   „transform-box: fill-box" rechnet mit getBBox, und getBBox zählt
-   die Strichdicke NICHT mit. Gemessen im Browser:
-     rechter Arm: x 80,0 bis 104,4   y 56,0 bis 94,4
-     linker  Arm: x  0,8 bis  20,0   y 56,0 bis 92,2
-   Die rechte Schulter (80|56) liegt damit genau in der linken oberen
-   Ecke ihres Kastens (0 % / 0 %), die linke Schulter (20|56) in der
-   rechten oberen (100 % / 0 %). Vorher stand hier 6 % / 8 % — der
-   Drehpunkt lag also gut zwei Einheiten neben dem Gelenk, und der
-   Arm rutschte beim Ausholen sichtbar von der Schulter weg. */
+/* Der rechte Arm dreht um die Schulter, nicht um seine Mitte. */
 .lc-zauberer-arm {
   transform-box: fill-box;
-  transform-origin: 0% 0%;
-}
-/* XANDER: „mit der anderen Hand das Profilbild packen … danach soll
-   er den Zylinder mit beiden Händen auf dem Platz stellen." Der linke
-   Arm war bis Runde 88 ein starrer Strich; jetzt dreht auch er, und
-   zwar spiegelbildlich um seine Schulter. */
-.lc-zauberer-arm-links {
-  transform-origin: 100% 0%;
+  transform-origin: 6% 8%;
 }
 .lc-zauberhut {
   position: absolute;
