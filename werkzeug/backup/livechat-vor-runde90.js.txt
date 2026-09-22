@@ -9495,12 +9495,6 @@ window.LiveChat = (function () {
                 /* „ballon" NICHT — das ist schon der Ballon-Effekt. */
                 aufpumpen: "aufblasen", pumpe: "aufblasen",
                 zerplatzen: "aufblasen",
-                /* RUNDE 90 — XANDER sagt „Flugzeug", der Befehl heisst
-                   seit jeher „/flug": „Alternativ koennte ich mir in
-                   der Zukunft noch im Flugzeug vorstellen." Die Reise
-                   gibt es laengst — nur das Wort, das er benutzt, fiel
-                   bisher ins Leere. Jetzt fuehren beide zum selben. */
-                flugzeug: "flug", flieger: "flug", jet: "flug",
                 /* Er sagt „umarmen"; der Befehl hiess immer nur
                    „/drueck". Beides fuehrt jetzt zum selben. */
                 umarmen: "drueck", umarmung: "drueck", knuddeln: "drueck",

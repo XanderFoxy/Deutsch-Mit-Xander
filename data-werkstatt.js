@@ -49,26 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 89 — die zwei Luftballons und die Gesamtübersicht (Fassung 497)",
+  stand: "Runde 90 — das Wort „Flugzeug“ und der Abgleich mit dem ganzen Verlauf (Fassung 498)",
 
   inArbeit: [
-    { seit: "2026-09-22T22:16", nurBetreiber: true,
+    { seit: "2026-09-22T22:28", nurBetreiber: true,
       text: "Sammellauf vor jedem Hochladen: bash werkzeug/alle-pruefen.sh" },
-    { seit: "2026-09-22T22:16",
-      text: "Flugzeug als weitere Reise — von dir als Zukunft genannt, noch nicht gebaut" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T22:16",
-      text: "Helium-Luftballon: er steigt jetzt 251 px hoch UND treibt 106 px zur Seite aus dem Bild — die zweite Variante vom 21.09., 19:31 Uhr" },
-    { seit: "2026-09-22T22:16",
-      text: "Neue Sonde pruefe-runde89-ballon: misst beide Varianten am laufenden Programm (Platzen mit Fetzen und Knall, Helium ohne entweichende Luft)" },
-    { seit: "2026-09-22T22:16",
-      text: "Drei veraltete Sonden nachgezogen (Runde 22, 23, 85b): sie suchten alten Wortlaut im Quelltext, nicht die Sache" },
-    { seit: "2026-09-22T22:16",
-      text: "KLASSENZIMMER-LISTE.md: 180 Messungen, 180 grün, jede mit deinem Zitat im Kopf" },
-    { seit: "2026-09-22T22:16",
-      text: "Zwei neue Regeln in werkzeug/animations-regeln.md (Sonden messen die Sache; zwei Varianten heissen zwei messbare Varianten)" },
+    { seit: "2026-09-22T22:28",
+      text: "„/flugzeug“, „/flieger“ und „/jet“ führen jetzt zur Flugreise — die Reise gab es längst als /flug, nur dein Wort fiel ins Leere" },
+    { seit: "2026-09-22T22:28",
+      text: "Neue Sonde pruefe-runde90-flugwort: dieselbe Reise unter allen vier Wörtern, plus Tragflächen, Fenster und keine Reste" },
+    { seit: "2026-09-22T22:28",
+      text: "Neues Werkzeug werkzeug/verlauf-abgleich.py: gleicht jeden Satz aus deinem Verlauf gegen alle Sondenköpfe ab (3703 mit Echo, 180 ohne — alle 180 einzeln gelesen)" },
+    { seit: "2026-09-22T22:28",
+      text: "181 Sonden, 181 grün — KLASSENZIMMER-LISTE.md neu gebaut" },
   ],
 };

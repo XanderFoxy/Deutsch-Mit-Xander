@@ -161,8 +161,13 @@ console.log("  hinten zeigen und der Daumen nicht abgespreizt ist. Ob der Adler"
 console.log("  aussieht wie ein Weisskopfseeadler, entscheidest du.");
 console.log("- **Klang.** Dass ein Ton zur richtigen Millisekunde startet, wird gemessen.");
 console.log("  Wie er klingt, nicht.");
-console.log("- **Was du als Zukunft genannt hast** (z. B. das Flugzeug als weitere");
-console.log("  Reise) steht bewusst noch nicht drin.");
+console.log("- **Der Abgleich mit deinem Verlauf** (`werkzeug/verlauf-abgleich.py`)");
+console.log("  zerlegt deine Nachrichten in Saetze und sucht zu jedem ein Echo in einem");
+console.log("  Sondenkopf. Stand 22.09.2026: **3703 deiner Saetze haben eines, 180 nicht**.");
+console.log("  Die 180 habe ich einzeln gelesen \u2014 Zwischenrufe, Lob, Wortfetzen aus");
+console.log("  Bildern und Saetze zu Dingen, die danach gebaut wurden. Ein vergessener");
+console.log("  Wunsch war nicht darunter. Das Werkzeug laeuft auf deinem Verlauf, und");
+console.log("  der liegt NICHT im Repository \u2014 es ist dein Chat, nicht mein Datensatz.");
 console.log("- **Eine Sache habe ich nicht gebaut** und werde es nicht: das Ausziehen von");
 console.log("  Unterwaesche an den Profilbildern anderer Leute im Klassenzimmer. Alles");
 console.log("  andere aus deinen Listen ist gebaut oder steht als offener Punkt drin.\n");

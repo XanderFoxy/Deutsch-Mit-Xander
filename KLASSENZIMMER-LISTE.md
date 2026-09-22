@@ -1,6 +1,6 @@
 # Was du gesagt hast — und was die Seite heute wirklich tut
 
-> Stand: 2026-09-22 22:15 · 180 Sonden · 180 grün, 0 rot, 0 ohne Urteil
+> Stand: 2026-09-22 22:28 · 181 Sonden · 181 grün, 0 rot, 0 ohne Urteil
 
 Diese Liste ist nicht aufgeschrieben, sondern **gemessen**. Jede Zeile
 ist eine Sonde: im Kopf steht dein Satz, im Programm läuft die Messung
@@ -169,6 +169,7 @@ Messung gibt, nicht die, die eine Messung widerlegt.
 - ✅ `pruefe-runde88-zauberer` — DER ZAUBERER MIT BEIDEN HAENDEN
 - ✅ `pruefe-runde89-ballon` — DIE ZWEI LUFTBALLON-VARIANTEN, WIE ER SIE GENANNT HAT
 - ✅ `pruefe-runde89-bleibt` — WAS BLEIBEN SOLL, BLEIBT AUCH
+- ✅ `pruefe-runde90-flugwort` — „FLUGZEUG" IST DAS WORT, DAS ER BENUTZT
 - ✅ `pruefe-schallwelle` — MISST, OB DIE SCHALLWELLE EINE KANTE HAT.
 - ✅ `pruefe-schiffe60` — PADDELN UND DAS SEITENRAD
 - ✅ `pruefe-schrei-echo` — MISST DEN NEUEN SCHREI — TON UND WELLE.
@@ -216,8 +217,13 @@ Messung gibt, nicht die, die eine Messung widerlegt.
   aussieht wie ein Weisskopfseeadler, entscheidest du.
 - **Klang.** Dass ein Ton zur richtigen Millisekunde startet, wird gemessen.
   Wie er klingt, nicht.
-- **Was du als Zukunft genannt hast** (z. B. das Flugzeug als weitere
-  Reise) steht bewusst noch nicht drin.
+- **Der Abgleich mit deinem Verlauf** (`werkzeug/verlauf-abgleich.py`)
+  zerlegt deine Nachrichten in Saetze und sucht zu jedem ein Echo in einem
+  Sondenkopf. Stand 22.09.2026: **3703 deiner Saetze haben eines, 180 nicht**.
+  Die 180 habe ich einzeln gelesen — Zwischenrufe, Lob, Wortfetzen aus
+  Bildern und Saetze zu Dingen, die danach gebaut wurden. Ein vergessener
+  Wunsch war nicht darunter. Das Werkzeug laeuft auf deinem Verlauf, und
+  der liegt NICHT im Repository — es ist dein Chat, nicht mein Datensatz.
 - **Eine Sache habe ich nicht gebaut** und werde es nicht: das Ausziehen von
   Unterwaesche an den Profilbildern anderer Leute im Klassenzimmer. Alles
   andere aus deinen Listen ist gebaut oder steht als offener Punkt drin.
@@ -1259,6 +1265,15 @@ _(kein wörtliches Zitat im Kopf dieser Sonde)_
 > „sollen so lange auf der Person bleiben, bis sie sie von selber abnimmt“
 
 > „es kann nicht sein, dass beim zweiten Betaetigen von Birne an die Birne ausgeht“
+
+### ✅ „FLUGZEUG" IST DAS WORT, DAS ER BENUTZT  
+`pruefe-runde90-flugwort`
+
+> „FLUGZEUG" IST DAS WORT, DAS ER BENUTZT --------------------------------------------------------------------- XANDER (22.09.2026): „der soll uns transportieren … Alternativ koennte ich mir in der Zukunft noch im Flugzeug vorstellen.“
+
+> „/flug", und das Flugzeug darin ist in Runde 73 und 80 nach seinen Angaben nachgezeichnet worden (beide Tragflaechen sichtbar, Hoehenleitwerk, Triebwerk, spitze Nase). Was fehlte, war nur das WORT: wer „/flugzeug“
+
+> „Diesen Befehl gibt es nicht“
 
 ### ✅ MISST, OB DIE SCHALLWELLE EINE KANTE HAT.  
 `pruefe-schallwelle`
