@@ -49,22 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 81: der gemalte Weg gilt auch fuer Flugzeug, Sprungfeder, Maulwurf und Pac-Man",
+  stand: "Runde 82: Salve auf mehrere, Hammer mit Glasbruch, groesseres Katapult",
 
   inArbeit: [
-    { seit: "2026-09-22T04:33",
-      text: "Der Rest von Xanders Liste aus Runde 76: Salve auf mehrere, Zylinder mit Kaninchen, Frosch-Sprung, Musik teilen mit YouTube, Anziehen-Modul, Telefon mit Audio" },
+    { seit: "2026-09-22T04:56",
+      text: "Der Rest aus Runde 76: Zylinder mit Kaninchen, Frosch-Sprung, Musik teilen mit YouTube, Anziehen-Modul, Telefon mit Audio" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T04:33",
-      text: "Der gemalte Weg gilt jetzt auch fuer das Flugzeug, die Sprungfeder und den Maulwurf. GEMESSEN: das Flugzeug fliegt den Umweg wirklich (436 px statt 348 px Luftlinienbogen), die Feder setzt auf jeder gemalten Station auf (2,0 und 2,5 px Abstand statt 72 und 37), und der Maulwurfswall graebt sich ueber die gemalten Plaetze (17 px statt 75)." },
-    { seit: "2026-09-22T04:33",
-      text: "Pac-Man frisst jetzt auch einen selbst gezeichneten Weg. In der Pac-Man-Kachel stehen dafuer zwei Eintraege: sofort losfressen oder erst den Weg mit dem Finger ziehen. GEMESSEN: mit Kette liegen die Kruemel auf 1-2-3-7, ohne auf dem kuerzesten Weg 1-5." },
-    { seit: "2026-09-22T04:33",
-      text: "Der gemalte Weg darf ueber besetzte Plaetze. Bisher brach der Strich ab, sobald jemand im Weg sass; anhalten kann man dort weiterhin nicht, das faengt der Befehl ab." },
-    { seit: "2026-09-22T04:33",
-      text: "Neue Regeln in werkzeug/pruefe-runde81.js fuer diese sechs Punkte, alle gruen. Drei aeltere Pruefungen (72, 74, 78) pruefen jetzt, was die Regel meint, statt der Quelltextzeile, die sich geaendert hat." },
+    { seit: "2026-09-22T04:56",
+      text: "Die SALVE auf mehrere: hinter jedem Effekt am Platz duerfen jetzt mehrere Namen stehen, durch Komma getrennt — /ei Bea, Cem, Dana. Zwischen einem Namen und allen fehlte genau diese Auswahl. GEMESSEN: zwei Namen treffen die beiden Plaetze, Platznummern gehen genauso, und eine Luecke in der Kette trifft NICHT ploetzlich alle." },
+    { seit: "2026-09-22T04:56",
+      text: "Der HAMMER hat jetzt einen Zufall: faellt das Los klein aus, zerspringt die Scheibe ueber dem Profilbild mit Rissen vom Einschlagpunkt und dem Glasbruch-Ton, sonst fliegen wie bisher die Sterne. Das Los faehrt mit der Nachricht, damit alle dasselbe sehen. GEMESSEN: 13 Risse statt 8 Sterne, die Risse bleiben auf den Bildpunkt genau im Bild, und dasselbe Los ergibt dasselbe Muster." },
+    { seit: "2026-09-22T04:56",
+      text: "Das KATAPULT ist groesser. GEMESSEN: 146 px statt 123 px, also 1,43 statt 1,20 Bildbreiten." },
+    { seit: "2026-09-22T04:56",
+      text: "Neue Pruefung werkzeug/pruefe-runde82.js mit elf Regeln fuer diese drei Punkte, alle gruen." },
   ],
 };

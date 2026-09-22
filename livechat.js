@@ -11000,9 +11000,35 @@ window.LiveChat = (function () {
         .test(String(rest || "").trim());
       var wemP = allenP ? { name: "*" }
         : (rest ? (personNachName(rest) || praesenzNachName(rest) || { name: rest }) : null);
+      /* RUNDE 76 — die Salve steht jetzt auch in der Hilfszeile: wer
+         sie nicht kennt, findet sie sonst nie. */
       if (!wemP) return systemZeile("So geht es:  /" + art + " Nickname"
+        + "  \u2014 mehrere mit Komma:  /" + art + " Bea, Cem"
         + "  \u2014 oder  /" + art + " alle");
       var satzP = AM_PLATZ[art];
+      /* =========================================================
+         RUNDE 76 — DIE SALVE AUF MEHRERE
+         ---------------------------------------------------------
+         XANDER: „Salve auf mehrere."
+         Zwischen EINEM Namen und ALLEN fehlte die Auswahl. Stehen
+         mehrere Namen durch Komma getrennt hinter dem Befehl
+         („/ei Bea, Cem, Dana"), gilt der Effekt fuer jeden davon.
+         Die Namen fahren als Komma-Kette mit, damit JEDES Geraet
+         dieselben trifft und nicht seine eigene Auswahl rechnet;
+         lcZielPlaetze loest die Kette drueben wieder auf. */
+      var teileP = String(rest || "").split(",")
+        .map(function (x) { return x.trim(); })
+        .filter(function (x) { return x.length; });
+      if (!allenP && teileP.length > 1) {
+        var namenP = teileP.map(function (t) {
+          var w = personNachName(t) || praesenzNachName(t) || { name: t };
+          return w.name;
+        });
+        return anAlle("aktion", zustand.ichName + " " + satzP.satz + " "
+                      + namenP.join(", ") + "  " + satzP.emoji,
+                      { wirkung: satzP.wirkung, wen: namenP.join(","),
+                        los: Math.random().toFixed(4) });
+      }
       if (allenP) {
         return anAlle("aktion", zustand.ichName + " " + alleSatz(satzP.satz)
                       + "  " + satzP.emoji + satzP.emoji + satzP.emoji,

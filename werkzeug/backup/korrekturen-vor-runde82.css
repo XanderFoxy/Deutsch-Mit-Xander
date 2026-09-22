@@ -12695,29 +12695,12 @@ body.lc-schreibt .tutor-reiter {
    ganzes Profilbild eingespannt wird, muss groesser sein als das
    Bild. Jetzt 138 %, und er steht entsprechend tiefer, damit sein
    Wurfarm auf Bildhoehe schwingt statt darunter. */
-/* RUNDE 76 — XANDER: „Katapult groesser."
-   Es stand auf 138 % der Bildbreite und wirkte damit wie ein
-   Tischmodell neben dem Kopf. Ein Onager ist ein Belagerungsgeraet:
-   er ist groesser als der Mensch, den er trifft. Jetzt 164 % statt
-   138 %.
-   BEIDE FASSUNGEN NACHGEMESSEN auf der Pruefbuehne (Profilbild
-   103 px, Plaetze 111 px auseinander, zwischen zwei Bildern also
-   8 px Luft):
-     vorher  138 %: 123 px = 1,20 Bildbreiten, 15 px ueber dem
-             rechten und 9 px ueber dem linken Nachbarbild
-     nachher 164 %: 146 px = 1,43 Bildbreiten, 28 px ueber dem
-             rechten und 20 px ueber dem linken Nachbarbild
-   Dass er die Nachbarn beruehrt, ist nicht neu und nicht zu
-   vermeiden: bei 8 px Luft ragt jedes Geraet darueber, das breiter
-   ist als ein Bild. Ein Belagerungsgeraet, das kleiner ist als der
-   Kopf, den es trifft, sieht nach Spielzeug aus. Es liegt 2,6 s
-   darueber und ist dann wieder weg. */
 .lc-katapult-bild {
   position: absolute;
   left: 50%;
-  bottom: -30%;
-  width: 164%;
-  margin-left: -82%;
+  bottom: -24%;
+  width: 138%;
+  margin-left: -69%;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .35));
   animation: lcKatapultDa 2.6s ease-out both;
 }
@@ -26719,71 +26702,4 @@ body.lc-schreibt .tutor-reiter {
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-ueberfahren { animation: none; }
-}
-
-/* =====================================================================
-   RUNDE 76 — HAMMER MIT ZUFALL UND GLASBRUCH
-   ---------------------------------------------------------------------
-   XANDER: „Hammer mit Zufall und Glasbruch."
-   Faellt das Los so, zerspringt die Scheibe ueber dem Profilbild,
-   statt dass Sterne fliegen. Die Risse liegen in der runden Blende,
-   bleiben also im Bild — und sie zeichnen sich erst beim EINSCHLAG
-   (0,30 s, dieselbe Stelle wie die Sterne), nicht schon beim Ausholen.
-   ===================================================================== */
-.lc-hglas { z-index: 2; }
-.lc-hglas .lc-hglas-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-/* Ein Riss ist eine helle Kante mit dunklem Saum — sonst verschwindet
-   er auf einem hellen Profilbild. */
-.lc-hriss {
-  fill: none;
-  stroke: rgba(255, 255, 255, .95);
-  stroke-width: 1.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 1.1px rgba(18, 34, 64, .9));
-  stroke-dasharray: 130;
-  stroke-dashoffset: 130;
-  animation: lcHRissR82 .32s ease-out both;
-}
-.lc-hriss-ring { stroke-width: .9; opacity: .78; }
-@keyframes lcHRissR82 {
-  from { stroke-dashoffset: 130; }
-  to   { stroke-dashoffset: 0; }
-}
-.lc-hriss-kern {
-  fill: rgba(255, 255, 255, .9);
-  opacity: 0;
-  animation: lcHKernR82 .24s ease-out .30s both;
-}
-@keyframes lcHKernR82 {
-  from { opacity: 0; transform: scale(.2); }
-  to   { opacity: .9; transform: scale(1); }
-}
-/* Der weisse Schlag im Augenblick des Bruchs — kurz, sonst blendet er. */
-.lc-hglas-blitz {
-  position: absolute;
-  width: 34%;
-  height: 34%;
-  margin: -17% 0 0 -17%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,.95) 0%,
-              rgba(255,255,255,.35) 42%, rgba(255,255,255,0) 72%);
-  opacity: 0;
-  animation: lcHBlitzR82 .34s ease-out .30s both;
-}
-@keyframes lcHBlitzR82 {
-  0%   { opacity: 0;  transform: scale(.3); }
-  22%  { opacity: 1;  transform: scale(1); }
-  100% { opacity: 0;  transform: scale(1.5); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lc-hriss, .lc-hriss-kern, .lc-hglas-blitz { animation: none; }
-  .lc-hriss { stroke-dashoffset: 0; }
-  .lc-hriss-kern { opacity: .9; }
-  .lc-hglas-blitz { opacity: 0; }
 }

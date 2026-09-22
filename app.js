@@ -29621,6 +29621,33 @@
       if (suche === "*") {
         return plaetze.filter((pl) => !pl.classList.contains("lc-platz-frei"));
       }
+      /* =============================================================
+         RUNDE 76 — DIE SALVE AUF MEHRERE
+         -------------------------------------------------------------
+         XANDER: „Salve auf mehrere."
+         Bisher gab es nur EINEN Namen oder ALLE. Dazwischen fehlte
+         genau das, was er meint: sich aussuchen, wen es trifft.
+         Stehen mehrere Namen durch KOMMA getrennt hinter dem Befehl
+         („/ei Bea, Cem, Dana"), dann gilt der Effekt fuer jeden
+         davon. Gestaffelt wird nichts extra — lcAmPlatz laesst die
+         Ziele ohnehin im Abstand von 80 ms losgehen, und genau das
+         ist eine Salve.
+         Jeder Teil laeuft durch dieselbe Suche wie ein einzelner
+         Name, also gelten auch Platznummern und die nachsichtige
+         Schreibweise weiter. Leere Teile werden uebersprungen: ein
+         leerer Name faende sonst ueber den Rueckfall ganz unten
+         ALLE, und aus der Salve wuerde ein Flaechenbombardement. */
+      if (suche.indexOf(",") > 0) {
+        const raus = [];
+        String(wen).split(",").forEach((teil) => {
+          const t = teil.trim();
+          if (!t) return;
+          lcZielPlaetze(t).forEach((pl) => {
+            if (raus.indexOf(pl) < 0) raus.push(pl);
+          });
+        });
+        if (raus.length) return raus;
+      }
       const namen = (pl) => {
         const nm = pl.querySelector(".lc-platz-name");
         return nm ? nm.textContent.trim().toLowerCase() : "";
@@ -32647,7 +32674,25 @@
   }
 
   /* --- DER HAMMER ------------------------------------------------- */
-  function lcHammer(wen) {
+  function lcHammer(wen, los) {
+    /* =================================================================
+       RUNDE 76 — HAMMER MIT ZUFALL UND GLASBRUCH
+       -----------------------------------------------------------------
+       XANDER: „Hammer mit Zufall und Glasbruch."
+       Bisher endete jeder Schlag gleich: acht Sterne, immer dieselben.
+       Jetzt entscheidet das LOS, ob es bei den Sternen bleibt oder ob
+       die Scheibe ueber dem Bild zerspringt.
+       Das Los wuerfelt der Absender EINMAL und schickt es mit der
+       Nachricht (livechat.js legt „los" an jede Wirkung am Platz) —
+       sonst saehe jeder etwas anderes. Auch die Form der Risse kommt
+       aus dem Los und nicht aus Math.random: dieselbe Zahl, dasselbe
+       Bild, auf jedem Geraet.
+       Faehrt ausnahmsweise kein Los mit (eine aeltere Fassung am
+       anderen Ende), wird hier gewuerfelt — dann stimmt wenigstens das
+       eigene Bild. */
+    const zahl = Number(los);
+    const wurf = (zahl >= 0 && zahl <= 1) ? zahl : Math.random();
+    const glas = wurf < 0.45;
     return lcAmPlatz(wen, "lc-zhammer", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
@@ -32668,13 +32713,87 @@
          schlaegt, dass er synchron mit dem Klang ist."
          Also ein Schlag — und die Sterne fliegen genau dann, wenn er
          auftrifft (0.30 s, siehe lcHammerSchlag in korrekturen.css). */
-      for (let t = 0; t < 8; t++) {
-        const st = document.createElement("i");
-        st.className = "lc-zhammer-stern";
-        st.style.setProperty("--wo", (t * 45) + "deg");
-        st.style.animationDelay = (0.30 + t * 0.04).toFixed(2) + "s";
-        st.textContent = t % 2 ? "\u2726" : "\u2727";
-        schicht.appendChild(st);
+      if (!glas) {
+        for (let t = 0; t < 8; t++) {
+          const st = document.createElement("i");
+          st.className = "lc-zhammer-stern";
+          st.style.setProperty("--wo", (t * 45) + "deg");
+          st.style.animationDelay = (0.30 + t * 0.04).toFixed(2) + "s";
+          st.textContent = t % 2 ? "\u2726" : "\u2727";
+          schicht.appendChild(st);
+        }
+      } else {
+        /* DER GLASBRUCH. Er sitzt IM Bild — deshalb die runde Blende,
+           dieselbe, mit der auch Wasserstand und Eis im Kreis bleiben.
+           Der Einschlag liegt dort, wo der Hammerkopf auftrifft: in
+           der Mitte, etwas oberhalb (der Kopf steht im Bild bei y 10
+           bis 30 von 70, seine Unterkante also bei 43 % der Hoehe).
+           Gezeichnet wird wie beim grossen Display-Bruch: Strahlen
+           vom Einschlag nach aussen, Ringe dazwischen, ein
+           zersplitterter Kern. Nur kleiner, und ohne Erdbeben — es
+           zerspringt ja ein Bild und nicht der Bildschirm. */
+        const blende = lcZpBlende(schicht);
+        blende.classList.add("lc-hglas");
+        /* Aus dem Los eine Zahlenfolge machen, die auf jedem Geraet
+           dieselbe ist. */
+        let saat = Math.floor(wurf * 1e6) + 7;
+        const zuf = () => {
+          saat = (saat * 1103515245 + 12345) % 2147483648;
+          return saat / 2147483648;
+        };
+        const mx = 44 + zuf() * 12, my = 38 + zuf() * 10;
+        const svg = document.createElementNS(NS_SVG, "svg");
+        svg.setAttribute("class", "lc-hglas-svg");
+        svg.setAttribute("viewBox", "0 0 100 100");
+        svg.setAttribute("preserveAspectRatio", "none");
+        const STRAHLEN = 11;
+        const enden = [];
+        for (let i = 0; i < STRAHLEN; i++) {
+          const w = ((360 / STRAHLEN) * i + (zuf() - 0.5) * 18) * Math.PI / 180;
+          const punkte = ["M" + mx.toFixed(1) + " " + my.toFixed(1)];
+          const schritte = 3;
+          for (let k = 1; k <= schritte; k++) {
+            const lang = (k / schritte) * (46 + zuf() * 34);
+            punkte.push("L" + (mx + Math.cos(w) * lang + (zuf() - 0.5) * 5).toFixed(1)
+                      + " " + (my + Math.sin(w) * lang + (zuf() - 0.5) * 5).toFixed(1));
+          }
+          enden.push(w);
+          const pf = document.createElementNS(NS_SVG, "path");
+          pf.setAttribute("d", punkte.join(" "));
+          pf.setAttribute("class", "lc-hriss");
+          pf.style.animationDelay = (0.30 + i * 0.012).toFixed(3) + "s";
+          svg.appendChild(pf);
+        }
+        [0.3, 0.56].forEach((anteil, r2) => {
+          const d = [];
+          enden.forEach((w, i) => {
+            const lang = anteil * (48 + (i % 3) * 12);
+            d.push((i ? "L" : "M") + (mx + Math.cos(w) * lang).toFixed(1)
+                 + " " + (my + Math.sin(w) * lang).toFixed(1));
+          });
+          d.push("Z");
+          const pf = document.createElementNS(NS_SVG, "path");
+          pf.setAttribute("d", d.join(" "));
+          pf.setAttribute("class", "lc-hriss lc-hriss-ring");
+          pf.style.animationDelay = (0.34 + r2 * 0.05).toFixed(3) + "s";
+          svg.appendChild(pf);
+        });
+        const kern = document.createElementNS(NS_SVG, "circle");
+        kern.setAttribute("cx", mx.toFixed(1));
+        kern.setAttribute("cy", my.toFixed(1));
+        kern.setAttribute("r", "2.4");
+        kern.setAttribute("class", "lc-hriss-kern");
+        svg.appendChild(kern);
+        blende.appendChild(svg);
+        /* Der weisse Schlag im Augenblick des Bruchs. */
+        const blitz = document.createElement("b");
+        blitz.className = "lc-hglas-blitz";
+        blitz.style.left = mx.toFixed(1) + "%";
+        blitz.style.top = my.toFixed(1) + "%";
+        blende.appendChild(blitz);
+        /* Und der Ton genau dort, wo der Hammer auftrifft (0,30 s) —
+           nicht beim Abschicken. */
+        lcTonSpaeter("glasbruch", 300, 0.5);
       }
       /* RUNDE 70 — XANDER: „Schau dass der Animation Sound vom Hammer
          auch zu Bewegung passt." Der Treffer sass schon richtig
@@ -43087,7 +43206,9 @@
       if (art === "donnerwolke" && lcWolkeUeber(wenZ, true)) return;
       if (art === "reichtum" && lcReichtum(wenZ)) return;
       if (art === "zucker" && lcZuckerregen(wenZ)) return;
-      if (art === "hammer" && lcHammer(wenZ)) return;
+      /* RUNDE 76 — „Hammer mit Zufall und Glasbruch": das Los faehrt
+         mit der Nachricht, damit alle denselben Ausgang sehen. */
+      if (art === "hammer" && lcHammer(wenZ, nachricht && nachricht.los)) return;
       if (art === "schneeball" && lcSchneeball(wenZ)) return;
       if (art === "bumerang" && lcBumerang(wenZ)) return;
       if (art === "saugpfeil" && lcSaugpfeil(wenZ)) return;
