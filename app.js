@@ -25814,7 +25814,9 @@
        seine Spitze liegt GEMESSEN bei 129 ms. Der Tropfen reisst bei
        1300 ms ab — deshalb faengt die Aufnahme bei 1171 ms an, damit
        die Spitze auf den Abriss faellt (siehe LC_TREFFER). */
-    sabbern:        { ton: "schlurf",  dauer: 1400, laut: 0.55 },
+    /* RUNDE 99: „klingt absolut nicht realistisch" — jetzt ein echtes
+       Sabbern (Schlurfen, Faden, zwei Tropfen), 2,5 s. */
+    sabbern:        { ton: "sabberlaut",  dauer: 2600, laut: 0.7 },
     /* „wenn man das Ei aufschlaegt, das kann auch realistischer
        klingen und dann ... kann das so bisschen eklig klingen."
        Das sind ZWEI Dinge nacheinander: erst knackt die Schale
@@ -26265,7 +26267,10 @@
     /* RUNDE 80 — der Klaps ist jetzt eine eigene Wirkung. „klatsch"
        statt „ohrfeige": eine Ohrfeige klingt hell und trocken, ein
        Klaps auf Stoff dumpfer und breiter. */
-    klaps:          { ton: "klatsch",  dauer: 2200, laut: 0.8 },
+    /* RUNDE 99 — XANDER: „klingt jetzt komisch wie eine Snare". Der
+       „klatsch" hat 26 % Nachhall; „popoklatsch" ist trocken (4 %) und
+       tiefer — gebaut aus der Ohrfeige (werkzeug/popoklatsch-bauen.py). */
+    klaps:          { ton: "popoklatsch",  dauer: 900, laut: 0.85 },
     /* „wenn man den Hut aufsetzt, dann koennte so ein YIHAAH wie bei den
        Cowboys kommen, und vielleicht so ein Peitschenknall zur selben Zeit."
        Vorher lag hier „kitt" — ein Motorgeraeusch: „da ist irgendwie so ein
@@ -29806,8 +29811,12 @@
      will, aendert eine Zeile hier und sonst nichts.
      ===================================================================== */
   const LC_MENUE_GRUPPEN = [
+    /* RUNDE 99, ZWEITER ANLAUF — XANDER (Walkie-Talkie): „bei Werfen
+       braucht nicht Eimer, Sahne und Pfeil oder Zwille rein — Pfeil und
+       Zwille sind Schusseffekte, die koennen einzeln aussen bleiben, und
+       Eimer und Sahne koennen auch einzeln bleiben." */
     ["\ud83c\udfaf", "Werfen",
-     ["bumerang", "pfeil", "zwille", "ei", "sahne", "katapult", "wasser"]],
+     ["bumerang", "ei", "katapult"]],
     ["\ud83e\udd22", "Eklig",
      ["spucken", "vogelkot", "sabbern"]],
     ["\ud83d\udd8c\ufe0f", "Schmutzig",
@@ -33478,7 +33487,7 @@
        Hochziehen im Rachen noch vor den Wurf, wie es soll. */
     spucken: 630,
     /* 1300 ms minus die 129 ms bis zur Spitze der Aufnahme. */
-    sabbern: 1171,
+    sabbern: 250,        /* RUNDE 99: der Sabberlaut beginnt mit dem Schlurfen, wenn er ueber dem anderen ankommt */
     tritt: 180,        /* 0,18 s — „das ist der Anstoss" */
     /* RUNDE 98 — der erste Klatscher liegt bei 45 % des ersten Takts
        (340 ms), also bei 153 ms. */
@@ -38678,8 +38687,46 @@
      Die Lache liegt in der Blende, also INNERHALB der Bildgrenzen —
      „es soll nur innerhalb der Platz Grenzen stattfinden".
      ===================================================================== */
+  /* RUNDE 99, ZWEITER ANLAUF — XANDER (Walkie-Talkie): „es ist so
+     gemeint, dass ICH selber sabbern soll, wenn ich ueber jemandem
+     drueber sitze, und das laeuft dann auf sein Profilbild drauf. Und
+     der Ton klingt absolut nicht realistisch … und das Ekelgeraeusch
+     ist immer noch dasselbe … das braucht Abwechslung."
+     Jetzt: das Bild dessen, der sabbert, schwebt UEBER das Bild des
+     anderen (so, dass sein Kinn am oberen Rand des anderen liegt),
+     bleibt dort, waehrend Faden und Tropfen herunterlaufen, und kehrt
+     dann an seinen Platz zurueck. Der Ton ist ein echtes Sabbern
+     (ElevenLabs-Geraeusch „sabberlaut"), und der Ekel-Schrei, den auch
+     Spucken und Vogelkot haben, faellt hier weg. */
   function lcSabbern(wen) {
+    const von = lcWurfVon;
     return lcAmPlatz(wen, "lc-sabber", (schicht, platz) => {
+      const vonPlatz = von ? lcPlatzMitNamen(von) : null;
+      const kreisVon = vonPlatz && vonPlatz !== platz ? vonPlatz.querySelector(".lc-kreis") : null;
+      const kreisZiel = platz.querySelector(".lc-kreis");
+      if (kreisVon && kreisZiel) {
+        const a = kreisVon.getBoundingClientRect(), b = kreisZiel.getBoundingClientRect();
+        const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
+        const dy = (b.top - b.height * 0.92 + a.height / 2) - (a.top + a.height / 2);
+        const hin = "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px)";
+        const altZ = vonPlatz.style.zIndex;
+        vonPlatz.style.zIndex = "9";
+        let lauf = null;
+        try {
+          lauf = kreisVon.animate([
+            { transform: "translate(0, 0)", offset: 0 },
+            { transform: hin + " rotate(-3deg)", offset: 0.12 },
+            { transform: hin + " rotate(2deg)", offset: 0.3 },
+            { transform: hin + " rotate(-1deg)", offset: 0.6 },
+            { transform: hin, offset: 0.8 },
+            { transform: "translate(0, 0)", offset: 1 }
+          ], { duration: 3000, easing: "ease-in-out" });
+        } catch (e) { lauf = null; }
+        setTimeout(() => {
+          try { if (lauf) lauf.cancel(); } catch (e) {}
+          vonPlatz.style.zIndex = altZ;
+        }, 3050);
+      }
       /* Der Tropfen mit seinem Faden — er haengt oben ueber dem Bild. */
       schicht.insertAdjacentHTML("beforeend",
         '<span class="lc-sabber-faden"></span>'
@@ -38696,10 +38743,8 @@
             + ' animation-delay:' + (1900 + spaet) + 'ms"></span>';
         });
       blende.innerHTML = html;
-      /* Und der Getroffene sagt, was er davon haelt — erst NACH dem
-         Aufschlag, sonst ekelt er sich vor etwas, das noch gar nicht
-         angekommen ist. */
-      lcStimmeZu(platz, "ekelmann", "ekelfrau", 1900, 0.6);
+      /* Kein Ekel-Schrei mehr — den haben Spucken und Vogelkot schon
+         (siehe oben: „das braucht Abwechslung"). */
     }, 3000, "sabbern");
   }
 
@@ -41863,7 +41908,19 @@
            Schlaege dicht hintereinander, alle 380 ms. Er setzt ein,
            wenn die Lok wirklich rollt (bei einem Fuenftel der
            Fahrzeit), und ist leiser als das Stampfen. */
-      lcTonSpaeter("lokstampf", 0, 0.6);
+      /* RUNDE 99, ZWEITER ANLAUF — XANDER (Walkie-Talkie): „das
+         Klingeln muss authentischer nach so einer realistischen
+         Zugglocke klingen, und vielleicht auch begleitet von so einer
+         realistischen Zugpfeife, die so tuut tuut macht, aber in der
+         Reihenfolge logisch sinnvoll, wie das frueher bei diesen Loks
+         ueblich war."
+         So war es: vor der Abfahrt pfeift die Lok (zwei kurze Pfiffe:
+         „Achtung, es geht los"), DANN setzt das Stampfen ein; beim
+         Einrollen in den Bahnhof laeutet die Glocke. Pfeife und Glocke
+         sind jetzt echte Aufnahmen (ElevenLabs-Geraeusche); die
+         selbst gebaute Glocke liegt in .sicherung/ton-vor-r99. */
+      lcTonSpaeter("lokpfeife", 0, 0.5);
+      lcTonSpaeter("lokstampf", 350, 0.6);
       lcTonSpaeter("lokschiene", Math.round(hin * 0.2), 0.42);
       /* RUNDE 99 — XANDER: „wenn die Lok ankommt, noch so ein typisches
          Glockenklingeln, dass man weiss: alles aussteigen."
@@ -51645,12 +51702,18 @@
       const gK = String(((kuesser || {}).dataset || {}).lcGeschlecht || "")
         .trim().toLowerCase();
       if (/^(w|f|m)/.test(gK)) {
-        lcStimmeZu(kuesser, "kussmann", "kussfrau", 441, 0.62);
+        /* RUNDE 99 — XANDER: „es klingt nach einem Holzklotz, der auf den
+           Tisch gelegt wird, und danach ein Muhen von einer Kuh". Die
+           selbst gebauten Kuesse hatten nach dem Schmatz 0,7 s Brummen
+           unter 400 Hz — das WAR die Kuh. Jetzt echte Aufnahmen
+           (ElevenLabs-Geraeusche), zugeschnitten: der Schmatz liegt bei
+           140 ms, also startet die Aufnahme 380 ms nach Beginn. */
+        lcStimmeZu(kuesser, "kussmann", "kussfrau", 380, 0.7);
       } else {
         /* Kein Geschlecht beim Absender: seine Regel woertlich — der
            Empfaenger hoert das Gegenteil seines eigenen. Deshalb
            stehen die beiden Namen hier VERTAUSCHT. */
-        lcStimmeZu(platz, "kussfrau", "kussmann", 441, 0.62);
+        lcStimmeZu(platz, "kussfrau", "kussmann", 380, 0.7);
       }
     }, 3200, "kuss");
   }

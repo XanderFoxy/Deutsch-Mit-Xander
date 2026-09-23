@@ -132,10 +132,38 @@ const sage = (gut, text, dazu) => {
   });
   await pg.waitForTimeout(2400);
   const toene = await pg.evaluate(() => (window.DMA_TONLOG || []).map((t) => t.name));
-  sage(toene.indexOf("schlurf") >= 0, "Der nasse Ton kommt", toene.join(", ") || "gar nichts");
-  sage(toene.some((n) => n === "ekelmann" || n === "ekelfrau"),
-    "Und der Getroffene sagt, was er davon haelt",
+  /* ZWEITER ANLAUF (Walkie-Talkie): „der Ton klingt absolut nicht
+     okay … und das Ekelgeraeusch ist immer noch dasselbe … es soll
+     nicht in jeder Animation dasselbe Ekelgeraeusch haben." Jetzt ein
+     echter Sabberlaut, und KEIN Ekel-Schrei — den haben Spucken und
+     Vogelkot. */
+  sage(toene.indexOf("sabberlaut") >= 0, "Der echte Sabberlaut kommt", toene.join(", ") || "gar nichts");
+  sage(!toene.some((n) => n === "ekelmann" || n === "ekelfrau"),
+    "Und KEIN Ekel-Schrei — Abwechslung zu Spucken und Vogelkot",
     toene.join(", ") || "gar nichts");
+
+  console.log("\n2b  WER SABBERT, SCHWEBT UEBER DEM ANDEREN\n");
+  /* XANDER: „dass ich selber sabbern soll, wenn ich ueber jemandem
+     drueber sitze, und das laeuft dann auf sein Profilbild drauf." */
+  const schweb = await pg.evaluate(async () => {
+    window.DMA_PRUEF.effektBuehne();
+    await new Promise((f) => setTimeout(f, 300));
+    const platz = (n) => [...document.querySelectorAll("#lcPlaetze .lc-platz")]
+      .find((x) => (x.textContent || "").indexOf(n) >= 0).querySelector(".lc-kreis");
+    const a0 = platz("Alex").getBoundingClientRect();
+    window.DMA_PRUEFUNG.wirkung("sabbern", "Bea", "Alex");
+    await new Promise((f) => setTimeout(f, 1200));
+    const a = platz("Alex").getBoundingClientRect(), b = platz("Bea").getBoundingClientRect();
+    await new Promise((f) => setTimeout(f, 2200));
+    const a2 = platz("Alex").getBoundingClientRect();
+    return { dx: Math.round((a.left + a.width / 2) - (b.left + b.width / 2)),
+             kinn: Math.round(a.bottom - b.top),
+             zurueck: Math.round(Math.hypot(a2.left - a0.left, a2.top - a0.top)) };
+  });
+  sage(Math.abs(schweb.dx) <= 4 && schweb.kinn >= -4 && schweb.kinn <= 20,
+    "Alex schwebt genau ueber Bea, sein Kinn am oberen Rand ihres Bildes",
+    schweb.dx + " px seitlich, Kinn " + schweb.kinn + " px im Bild");
+  sage(schweb.zurueck <= 2, "und ist danach wieder auf seinem Platz", schweb.zurueck + " px daneben");
 
   console.log("\n3  DIE HAND STREICHELT AN DER WANGE, NICHT UEBERS GESICHT\n");
   const str = await abtasten("streicheln", 3400, `function () {

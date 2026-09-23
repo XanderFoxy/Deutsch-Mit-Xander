@@ -137,18 +137,23 @@ const sage = (gut, text, dazu) => {
   const hoch2 = await bei(450);
   const treffer = await bei(600);
   const nach = await bei(760);
-  /* RUNDE 99 — die erste Bahn kommt von UNTEN AUSSEN herauf: 300 ms
-     vor dem Aufprall steht die Hand also TIEFER als im Aufprall.
-     (In Runde 88 stand hier das Gegenteil; das war die Bahn von oben,
-     die er zurueckgenommen hat.) */
-  sage(hoch1 && treffer && hoch1.my > treffer.my + 20,
-    "300 ms vor dem Aufprall holt die Hand unten aus",
-    hoch1 ? "Mitte bei y = " + hoch1.my + ", im Aufprall " + treffer.my : "-");
-  sage(hoch2 && hoch2.my > treffer.my && hoch2.my < hoch1.my,
-    "und sie schwingt dazwischen herauf \u2014 es ist ein Bogen, kein Sprung",
-    hoch2 ? hoch1.my + " \u2192 " + hoch2.my + " \u2192 " + treffer.my : "-");
-  sage(treffer && Math.abs(treffer.grad) <= 16,
-    "beim Aufprall liegt sie fast waagerecht auf der Backe",
+  /* RUNDE 99, ZWEITER ANLAUF — XANDER (Walkie-Talkie): „sie sollte
+     ein bisschen seitlich schlagen — du musst sie zur Seite drehen,
+     die Hand, dass sie auf den Po schlaegt."
+     Die Bahn kommt jetzt von der SEITE: 300 ms vor dem Aufprall steht
+     die Hand weit aussen (nicht tiefer), sie schwingt waagerecht herein,
+     und im Aufprall liegt sie QUER (um 70 Grad gedreht, Finger zur
+     Pomitte). Die Regeln davor (von unten, fast waagerecht) galten der
+     Bahn, die er jetzt anders bestellt hat. */
+  const seitlich = (h) => (h && treffer) ? Math.abs(h.mx - treffer.mx) : 0;
+  sage(hoch1 && treffer && seitlich(hoch1) > treffer.feld[0] * 0.5,
+    "300 ms vor dem Aufprall holt die Hand SEITLICH aus",
+    hoch1 ? "x = " + hoch1.mx + ", im Aufprall " + treffer.mx : "-");
+  sage(hoch2 && seitlich(hoch2) < seitlich(hoch1) && seitlich(hoch2) > 2,
+    "und sie schwingt von der Seite herein \u2014 ein Bogen, kein Sprung",
+    hoch2 ? hoch1.mx + " \u2192 " + hoch2.mx + " \u2192 " + treffer.mx : "-");
+  sage(treffer && Math.abs(treffer.grad) >= 55 && Math.abs(treffer.grad) <= 85,
+    "beim Aufprall liegt sie quer, zur Seite gedreht, auf der Backe",
     treffer ? treffer.grad + " Grad" : "-");
   sage(nach && nach.my >= treffer.my - 2,
     "und drueckt danach noch einmal nach, statt sofort wegzuspringen",
@@ -195,8 +200,15 @@ const sage = (gut, text, dazu) => {
     }
     /* Die Waesche ist unten, sobald sie ihren tiefsten Punkt erreicht
        hat (danach bleibt sie liegen). */
+    /* RUNDE 99: gezaehlt wird der ERSTE Augenblick, in dem sie (bis
+       auf 1,5 px) ganz unten ist. Vorher zaehlte der letzte tiefste
+       Punkt — und weil der Popo beim Aufprall mitwackelt, kam dieser
+       „tiefste Punkt" erst NACH dem Schlag, obwohl die Waesche schon
+       lange unten lag. */
     let tiefste = -1, waesche = 0;
-    waescheBahn.forEach(([t, y]) => { if (y > tiefste) { tiefste = y; waesche = Math.round(t); } });
+    waescheBahn.forEach(([t, y]) => { if (y > tiefste) tiefste = y; });
+    const erst = waescheBahn.find(([t, y]) => y >= tiefste - 1.5);
+    if (erst) waesche = Math.round(erst[0]);
     /* Die Hand trifft dort, wo sie der Backe am naechsten ist. */
     let naeheste = 1e9, schlag = 0;
     handBahn.forEach(([t, d]) => { if (d < naeheste) { naeheste = d; schlag = Math.round(t); } });

@@ -43,7 +43,9 @@ const sage = (gut, text, dazu) => {
    hier noch einmal, faellt es auf, wenn jemand nur eine der beiden
    Stellen aendert. */
 const GRUPPEN = {
-  "Werfen": ["Bumerang", "Pfeil", "Zwille", "Ei", "Sahne", "Katapult", "Eimer"],
+  /* ZWEITER ANLAUF (Walkie-Talkie): „Pfeil und Zwille sind Schusseffekte,
+     die koennen einzeln aussen bleiben, und Eimer und Sahne auch." */
+  "Werfen": ["Bumerang", "Ei", "Katapult"],
   "Eklig": ["Spucken", "Vogel"],
   "Schmutzig": ["Paint", "Sprühdose"],
   "Sauber machen": ["Putzen", "Wischer", "Birne"],

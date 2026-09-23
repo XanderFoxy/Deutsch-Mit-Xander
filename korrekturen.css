@@ -32172,3 +32172,60 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .lc-gesicht-bild { transform: translate(-50%, -58%); }
 }
+
+/* =====================================================================
+   RUNDE 99 — DIE ERSTE POPO-HAND, SEITLICH GEDREHT
+   ---------------------------------------------------------------------
+   XANDER (Walkie-Talkie): „ja, nur sollte sie ein bisschen seitlich
+   schlagen — du musst sie zur Seite drehen, die Hand, dass sie auf den
+   Po schlaegt."
+   Die ZEICHNUNG bleibt die erste (Runde 80, wie bestellt). Geaendert
+   ist nur, wie sie gehalten wird: bisher kam sie von UNTEN, Finger nach
+   oben, und traf mit -6 Grad fast senkrecht. Jetzt kommt sie von der
+   SEITE, auf Hoehe der Backe, und liegt beim Aufprall QUER (-70 Grad):
+   die Finger zeigen zur Pomitte, die Handflaeche liegt flach auf der
+   Backe — so, wie man wirklich von der Seite auf den Po schlaegt.
+   Der Aufprall bleibt bei 27,3 % von 2,2 s = 600 ms (Ton, Abdruck,
+   Schrei haengen daran).
+   ===================================================================== */
+.lc-klaps-hand { animation-name: lcKlapsHandR99; }
+@keyframes lcKlapsHandR99 {
+  0%    { opacity: 0;
+          transform: translate(calc(var(--wx, 180%) * 1.15), calc(var(--klapsy, 42%) - 18%))
+                     rotate(calc(var(--klapsdir, 1) * -104deg)) scale(calc(var(--klapsdir, 1) * .8), .8); }
+  9%    { opacity: 1;
+          transform: translate(calc(var(--wx, 180%) * .95), calc(var(--klapsy, 42%) - 22%))
+                     rotate(calc(var(--klapsdir, 1) * -112deg)) scale(calc(var(--klapsdir, 1) * .92), .92); }
+  /* Ausholen: kurz halten, weit draussen. */
+  18%   { opacity: 1;
+          transform: translate(var(--wx, 180%), calc(var(--klapsy, 42%) - 24%))
+                     rotate(calc(var(--klapsdir, 1) * -118deg)) scale(calc(var(--klapsdir, 1) * .94), .94); }
+  /* DER AUFPRALL — quer auf der Backe, leicht gestaucht. */
+  27.3% { opacity: 1;
+          transform: translate(var(--klapsx, 0%), var(--klapsy, 42%))
+                     rotate(calc(var(--klapsdir, 1) * -70deg)) scale(calc(var(--klapsdir, 1) * 1.06), .9); }
+  /* Nachdruecken: die Hand bleibt einen Moment liegen. */
+  33%   { opacity: 1;
+          transform: translate(var(--klapsx, 0%), calc(var(--klapsy, 42%) + 4%))
+                     rotate(calc(var(--klapsdir, 1) * -74deg)) scale(calc(var(--klapsdir, 1) * 1), 1); }
+  /* Und wieder zurueck zur Seite, langsamer als sie gekommen ist. */
+  62%   { opacity: .9;
+          transform: translate(calc(var(--wx, 180%) * .6), calc(var(--klapsy, 42%) - 10%))
+                     rotate(calc(var(--klapsdir, 1) * -96deg)) scale(calc(var(--klapsdir, 1) * .92), .92); }
+  100%  { opacity: 0;
+          transform: translate(calc(var(--wx, 180%) * 1.1), calc(var(--klapsy, 42%) - 14%))
+                     rotate(calc(var(--klapsdir, 1) * -104deg)) scale(calc(var(--klapsdir, 1) * .8), .8); }
+}
+/* RUNDE 99 — XANDER: „achte darauf, dass erst die Hose runtergezogen
+   wird, dann der Schlag kommt und dann der Schrei." Gemessen lagen
+   Waesche-unten und Aufprall auf DEMSELBEN Augenblick (27,3 %) — je
+   nach Takt kam die Hand 30 ms zu frueh. Jetzt ist die Waesche bei
+   21,6 % (475 ms) unten, 125 ms vor dem Aufprall (600 ms). */
+.lc-popo-slip { animation-name: lcSlipRunterR99; }
+@keyframes lcSlipRunterR99 {
+  0%, 8%     { transform: translate(0, 0); opacity: 1; }
+  11%        { transform: translate(0, 4px); opacity: 1; }
+  19%        { transform: translate(0, 46px); opacity: 1; }
+  21.6%, 86% { transform: translate(0, 48px); opacity: 1; }
+  100%       { transform: translate(0, 48px); opacity: 0; }
+}
