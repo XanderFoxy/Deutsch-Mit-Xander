@@ -26944,6 +26944,65 @@
     if (nm) lcSprayListe[nm] = bildUrl;
   }
 
+  /* =====================================================================
+     RUNDE 98 — DRECK BLEIBT LIEGEN, BIS JEMAND PUTZT
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „saemtlicher Dreck, der erzeugt wird wie durch
+     die Vogelkacke oder irgendwas anderes — das koennen wir wieder
+     sauber putzen … dann ist es insgesamt viel witziger."
+
+     Bisher war jeder Dreck ein Effekt: er kam, er war kurz da, er ging
+     von selbst. Damit kann man nichts putzen — es gibt ja nichts mehr.
+     Jetzt gibt es eine eigene Schicht je Platz, in der Flecken LIEGEN
+     BLEIBEN. Sie ueberlebt jedes Neuzeichnen (gemerkt am Namen) und
+     geht nur weg, wenn jemand sie abwischt: Scheibenwischer, Schwamm,
+     Lappen oder Spucke.
+     ===================================================================== */
+  const lcDreckListe = {};   /* Name -> Liste von Flecken */
+  function lcDreckBleibt(platzEl) {
+    if (!platzEl) return false;
+    const nm = lcPlatzSchluessel(platzEl);
+    const flecken = (nm && lcDreckListe[nm]) || [];
+    platzEl.querySelectorAll(".lc-dreckschicht").forEach((x) => x.remove());
+    if (!flecken.length) return false;
+    const schicht = document.createElement("span");
+    schicht.className = "lc-zp lc-dreckschicht";
+    schicht.setAttribute("aria-hidden", "true");
+    const blende = lcZpBlende(schicht);
+    blende.innerHTML = flecken.map((f) =>
+      '<i class="lc-dreckfleck lc-dreck-' + (f.art || "kot") + '" style="left:'
+      + f.x + "%;top:" + f.y + "%;--gross:" + f.gross + ";--dreh:" + f.dreh + 'deg"></i>'
+    ).join("");
+    platzEl.appendChild(schicht);
+    return true;
+  }
+  /* Einen Fleck dazulegen — und ihn merken. */
+  function lcDreckDazu(platzEl, art, wieViele) {
+    if (!platzEl) return false;
+    const nm = lcPlatzSchluessel(platzEl);
+    if (!nm) return false;
+    const liste = lcDreckListe[nm] || (lcDreckListe[nm] = []);
+    const anzahl = Math.max(1, Number(wieViele) || 1);
+    for (let i = 0; i < anzahl; i++) {
+      liste.push({ art: art || "kot",
+        x: Math.round(18 + Math.random() * 64),
+        y: Math.round(16 + Math.random() * 60),
+        gross: (0.7 + Math.random() * 0.8).toFixed(2),
+        dreh: Math.round(Math.random() * 360) });
+    }
+    /* Mehr als zwoelf Flecken sieht kein Mensch mehr auseinander. */
+    if (liste.length > 12) liste.splice(0, liste.length - 12);
+    return lcDreckBleibt(platzEl);
+  }
+  /* Und alles wieder weg — das ist der Sinn des Putzens. */
+  function lcDreckWeg(platzEl) {
+    if (!platzEl) return false;
+    const nm = lcPlatzSchluessel(platzEl);
+    if (nm) delete lcDreckListe[nm];
+    platzEl.querySelectorAll(".lc-dreckschicht").forEach((x) => x.remove());
+    return true;
+  }
+
   function lcBleibendesAuffrischen() {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return;
@@ -26969,6 +27028,13 @@
         if (!lack) lcSprayBleibt(el, lcSprayListe[nm]);
       } else if (lack) {
         lack.remove();
+      }
+      /* RUNDE 98 — der liegengebliebene Dreck. */
+      const dreck = el.querySelector(".lc-dreckschicht");
+      if (nm && (lcDreckListe[nm] || []).length && !frei) {
+        if (!dreck) lcDreckBleibt(el);
+      } else if (dreck) {
+        dreck.remove();
       }
       /* RUNDE 98 — und das zerschlagene Bild. XANDER: „Ansonsten bleibt
          der Scherbenhaufen immer unten, nachdem man jemanden mit dem
@@ -27165,6 +27231,73 @@
     froh:    { strich: "#111318", fuell: "#ffd429" },
     traurig: { strich: "#111318", fuell: "#6ba7f5" }
   };
+  /* =====================================================================
+     RUNDE 98 — DIE GIFTDOSE
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „man kann immer noch kein Giftspruehen oder
+     irgendetwas anderes."
+     Gift ist nicht einfach ein gruener Aufkleber: es ist eine WOLKE,
+     die sich ueber das ganze Bild legt, mit einem Totenkopf darin. Der
+     Totenkopf wird gezeichnet (keine Schriftzeichen, siehe unten), und
+     die Wolke kommt als eigene Schicht dazu, damit sie schwebt statt
+     zu kleben.
+     ===================================================================== */
+  function lcSprayMotivGift(gr) {
+    const c = document.createElement("canvas");
+    c.width = gr; c.height = gr;
+    const g = c.getContext("2d");
+    const m = gr / 2;
+    g.lineCap = "round";
+    g.lineJoin = "round";
+    /* Der Schaedel. */
+    g.fillStyle = "#d8ffd0";
+    g.strokeStyle = "#14351a";
+    g.lineWidth = gr * 0.022;
+    g.beginPath();
+    g.ellipse(m, m - gr * 0.07, gr * 0.21, gr * 0.19, 0, 0, Math.PI * 2);
+    g.fill(); g.stroke();
+    /* Der Kiefer. */
+    g.beginPath();
+    g.moveTo(m - gr * 0.10, m + gr * 0.08);
+    g.lineTo(m - gr * 0.09, m + gr * 0.17);
+    g.lineTo(m + gr * 0.09, m + gr * 0.17);
+    g.lineTo(m + gr * 0.10, m + gr * 0.08);
+    g.closePath();
+    g.fill(); g.stroke();
+    /* Zwei Augenhoehlen und die Nase. */
+    g.fillStyle = "#14351a";
+    [-1, 1].forEach((v) => {
+      g.beginPath();
+      g.ellipse(m + v * gr * 0.085, m - gr * 0.075, gr * 0.05, gr * 0.058, 0, 0, Math.PI * 2);
+      g.fill();
+    });
+    g.beginPath();
+    g.moveTo(m, m - gr * 0.01);
+    g.lineTo(m - gr * 0.03, m + gr * 0.045);
+    g.lineTo(m + gr * 0.03, m + gr * 0.045);
+    g.closePath();
+    g.fill();
+    /* Die Zaehne. */
+    g.strokeStyle = "#14351a";
+    g.lineWidth = gr * 0.014;
+    [-0.05, 0, 0.05].forEach((v) => {
+      g.beginPath();
+      g.moveTo(m + gr * v, m + gr * 0.09);
+      g.lineTo(m + gr * v, m + gr * 0.165);
+      g.stroke();
+    });
+    /* Die gekreuzten Knochen darunter. */
+    g.strokeStyle = "#d8ffd0";
+    g.lineWidth = gr * 0.045;
+    [-1, 1].forEach((v) => {
+      g.beginPath();
+      g.moveTo(m - v * gr * 0.19, m + gr * 0.12);
+      g.lineTo(m + v * gr * 0.19, m + gr * 0.30);
+      g.stroke();
+    });
+    return c;
+  }
+
   /* Der Smiley wird GEZEICHNET, nicht als Schriftzeichen gesetzt: ein
      Emoji ist auf jedem Geraet ein anderes Bild, und gespruecht sieht
      es aus wie ein Aufkleber. Striche sehen nach Dose aus. */
@@ -27248,9 +27381,32 @@
            Tropfen — so bleiben weiche Kanten weich. */
         if (Math.random() > (a / 255) * (0.25 + 0.75 * t)) continue;
         const r = 0.6 + Math.random() * (gr * 0.022);
-        const grad = g.createRadialGradient(x, y, 0, x, y, r);
         const farbe = quelle[o] + "," + quelle[o + 1] + "," + quelle[o + 2];
-        grad.addColorStop(0, "rgba(" + farbe + ",.85)");
+        /* =========================================================
+           RUNDE 98 — DER LACK MUSS AUF JEDEM UNTERGRUND ZU ERKENNEN
+           SEIN
+           ---------------------------------------------------------
+           XANDER (23.09.2026): „das Spruehen von der Spraydose muss
+           etwas deutlicher sein, weil man meistens die Bilder nicht
+           erkennt auf anderen Untergruenden."
+           Der Grund ist nicht die Deckkraft, sondern der KONTRAST:
+           ein gelbes Herz auf einem hellen Bild verschwindet, ein
+           dunkelblaues auf einem dunklen genauso. Deshalb bekommt
+           jeder Tropfen einen dunklen Schatten UNTER sich, etwas
+           groesser als er selbst. Die Farbe deckt ihn in der Mitte
+           zu; aussen bleibt ein dunkler Saum stehen — genau das,
+           was eine Sprayschablone auf der Wand auch hinterlaesst,
+           und genau das, was eine Form auf jedem Untergrund lesbar
+           macht.
+           ========================================================= */
+        const saum = g.createRadialGradient(x, y, 0, x, y, r * 1.85);
+        saum.addColorStop(0, "rgba(22,16,12,.32)");
+        saum.addColorStop(1, "rgba(22,16,12,0)");
+        g.fillStyle = saum;
+        g.beginPath(); g.arc(x, y, r * 1.85, 0, Math.PI * 2); g.fill();
+        const grad = g.createRadialGradient(x, y, 0, x, y, r);
+        /* Und die Farbe selbst deckt kraeftiger als vorher (.85). */
+        grad.addColorStop(0, "rgba(" + farbe + ",.95)");
         grad.addColorStop(1, "rgba(" + farbe + ",0)");
         g.fillStyle = grad;
         g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
@@ -27271,7 +27427,10 @@
     const eigenesBild = /^(https?:\/\/|data:image\/)/i.test(rohWahl);
     const wahl = eigenesBild ? rohWahl : rohWahl.toLowerCase();
     const froh = !/^(traurig|sad|:\(|:-\(|schade|weinen)$/.test(wahl);
-    const smiley = !eigenesBild
+    /* RUNDE 98 — Gift ist eine eigene Dose. XANDER: „man kann immer
+       noch kein Giftspruehen oder irgendetwas anderes." */
+    const gift = !eigenesBild && /^(gift|giftig|poison|totenkopf)$/.test(wahl);
+    const smiley = !eigenesBild && !gift
       && (/^(froh|happy|lachen|:\)|:-\)|traurig|sad|:\(|:-\(|schade|weinen)$/.test(wahl)
           || !wahl);
     ziele.forEach((platz, i) => setTimeout(() => {
@@ -27321,7 +27480,9 @@
          CORS), wird nicht stillschweigend etwas anderes gespruecht,
          sondern es gibt eine Meldung — sonst haette er ein Gesicht
          auf dem Bild, das er nie gewaehlt hat. */
-      const bauen = smiley
+      const bauen = gift
+        ? Promise.resolve(lcSprayMotivGift(Math.round(gr * 2)))
+        : smiley
         ? lcSprayMotivSmiley(Math.round(gr * 2), froh)
         : eigenesBild
           ? lcSprayMotivBild(Math.round(gr * 2), wahl)
@@ -27343,6 +27504,22 @@
       }).catch(() => {});
       /* Das Zischen liegt auf dem Spruehen, nicht auf dem Anflug. */
       lcTonSpaeter("spray", 320, 0.6);
+      /* RUNDE 98 — GIFT: eine gruene Wolke legt sich ueber das Bild,
+         und der Getroffene findet das hoerbar eklig. */
+      if (gift) {
+        const wolke = document.createElement("span");
+        wolke.className = "lc-giftwolke";
+        for (let n = 0; n < 5; n++) {
+          const b = document.createElement("i");
+          b.className = "lc-giftschwade";
+          b.style.setProperty("--spaet", (220 + n * 180) + "ms");
+          b.style.setProperty("--wx", (-18 + n * 9) + "%");
+          wolke.appendChild(b);
+        }
+        blende.appendChild(wolke);
+        lcTonSpaeter(/^(w|f)/.test(String((platz.dataset || {}).lcGeschlecht || "")
+          .trim().toLowerCase()) ? "ekelfrau" : "ekelmann", 900, 0.5);
+      }
       setTimeout(() => {
         if (abbrechen) abbrechen();
         /* RUNDE 92 — der Lack wird NICHT mitgenommen. Er wird als Bild
@@ -28596,6 +28773,8 @@
        ["\ud83c\udf08", "Regenbogen", "spray", "regenbogen"],
        ["\ud83c\udf3c", "Blume", "spray", "blume"],
        ["\ud83e\udd8a", "Fuchs", "spray", "fuchs"],
+       /* RUNDE 98 — die Giftdose. */
+       ["\u2620\ufe0f", "Gift", "spray", "gift"],
        /* RUNDE 97 — der Teil seines Wunsches, der bisher fehlte:
           „und dass man ein Bild seiner Wahl darauf spruehen kann." */
        ["\ud83d\uddbc\ufe0f", "Eigenes Bild \u2026", "*spraybild"]]],
@@ -28640,6 +28819,13 @@
     ["\ud83c\udf1a", "Licht aus", "licht"],
     ["\ud83e\ude99", "M\u00fcnze",   "muenze"],
     ["\ud83e\uddfd", "Wischer",  "wischer"],
+    /* RUNDE 98 — XANDER: „Dann haette ich gern noch alternativen
+       Putzlappen … oder mit dem Schwamm … oder alternativ dran spucken
+       und wegputzen." Drei Wege unter einer Kachel. */
+    ["\ud83e\uddfc", "Putzen", "putzen", false,
+      [["\ud83e\uddfd", "Schwamm und Eimer", "putzen", "schwamm"],
+       ["\ud83e\uddf9", "Putzlappen", "putzen", "lappen"],
+       ["\ud83d\udca6", "Draufspucken", "putzen", "spucke"]]],
     ["\ud83e\ude83", "Zwille",   "zwille"],
     /* RUNDE 70 — XANDER: „Bei dem Anspucken haben wir das Pusten als
        extra Kachel noch uebrig obwohl die rausgenommen werden kann.
@@ -31139,6 +31325,8 @@
     /* RUNDE 98 — XANDER: „dass wir einen Pflaster Profil Effekt
        nehmen … und dann ist alles wieder heil." */
     pflaster: { zeichen: ["\ud83e\ude79"], wie: 4, klasse: "umarmen" },
+    /* RUNDE 98 — der Putzkasten: Schwamm mit Eimer, Lappen, Spucke. */
+    putzen:   { zeichen: ["\ud83e\uddfd"], wie: 4, klasse: "umarmen" },
     /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
        ne Luftballon." */
     luftballon: { zeichen: ["\ud83c\udf88"], wie: 4, klasse: "umarmen" },
@@ -36177,6 +36365,16 @@
       lcTonSpaeter("zwitschern", 0, 0.42);
       /* Und der kurze Ekellaut, wenn begriffen ist, was da liegt. */
       lcStimmeZu(platz, "ekelmann", "ekelfrau", 2050, 0.55);
+      /* RUNDE 98 — UND DER KLECKS BLEIBT LIEGEN.
+         XANDER: „saemtlicher Dreck, der erzeugt wird wie durch die
+         Vogelkacke oder irgendwas anderes — das koennen wir wieder
+         sauber putzen."
+         Vorher verschwand er mit dem Effekt; putzen konnte man also
+         nichts. Jetzt legt der Vogel einen echten Fleck ab, und der
+         bleibt, bis jemand wischt. */
+      setTimeout(() => {
+        if (platz.isConnected) lcDreckDazu(platz, "kot", 1);
+      }, 2100);
     }, 3400, "vogelkot");
   }
 
@@ -46563,6 +46761,95 @@
      Scheibenwischer Sinn macht irgendwie."
      Genau so herum: erst wird es dreckig, dann wischt der Arm zweimal
      durch, und mit jedem Zug verschwindet ein Stueck vom Dreck. */
+  /* =====================================================================
+     RUNDE 98 — DER PUTZKASTEN: SCHWAMM, LAPPEN UND SPUCKE
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „Dann haette ich gern noch alternativen
+     Putzlappen, der die Scheibe wischt. Also alternativ zum
+     Scheibenwischer … Die Leute muessen das selber putzen entweder mit
+     dem Scheibenwischer oder mit dem Schwamm, ja vielleicht ist dabei
+     auch noch ein Eimer Wasser daneben, wo der Schwamm dann in den
+     Eimer Wasser geht und dann wischt man die Scheibe und dann quietscht
+     es so, damit man das putzen kann — oder alternativ dran spucken und
+     wegputzen, und saemtlicher Dreck, der erzeugt wird wie durch die
+     Vogelkacke oder irgendwas anderes, das koennen wir wieder sauber
+     putzen. Dann ist es insgesamt viel witziger."
+
+     Drei Wege, ein Ergebnis — und jeder sieht anders aus:
+       SCHWAMM  taucht erst in den Eimer (es platscht), wischt dann in
+                drei Bahnen von oben nach unten, und am Ende quietscht
+                die Scheibe.
+       LAPPEN   wischt in Kreisen, ohne Eimer — der schnelle Weg.
+       SPUCKE   erst ein Spucker, dann wird mit dem Aermel verrieben.
+     Weg ist danach ALLES: der aufgespruehte Lack und jeder Fleck.
+     ===================================================================== */
+  function lcPutzen(wen, art) {
+    const wie = /^(lappen|tuch)$/.test(String(art || "")) ? "lappen"
+      : /^(spucke|spucken|rotz)$/.test(String(art || "")) ? "spucke" : "schwamm";
+    return lcAmPlatz(wen, "lc-putzen", (schicht, platz) => {
+      schicht.classList.add("lc-putzen-" + wie);
+      const blende = lcZpBlende(schicht);
+      const nm = lcPlatzSchluessel(platz);
+      /* DER EIMER steht NEBEN dem Bild, nicht darin — deshalb haengt
+         er an der Schicht und nicht in der runden Blende. */
+      if (wie === "schwamm") {
+        schicht.insertAdjacentHTML("beforeend",
+          '<span class="lc-putz-eimer">'
+          + '<svg viewBox="0 0 60 54" aria-hidden="true">'
+          + '<path class="lc-eimer-wand" d="M8 12 L52 12 L46 50 L14 50 Z"/>'
+          + '<ellipse class="lc-eimer-wasser" cx="30" cy="18" rx="20" ry="5.4"/>'
+          + '<path class="lc-eimer-henkel" d="M10 14 C16 2 44 2 50 14" fill="none"/>'
+          + "</svg></span>");
+        lcTonSpaeter("eimerwasser", 120, 0.45);
+      }
+      if (wie === "spucke") {
+        blende.insertAdjacentHTML("beforeend", '<i class="lc-putz-spucke"></i>');
+        lcTonSpaeter("rotze", 120, 0.5);
+      }
+      /* DAS PUTZZEUG SELBST. */
+      const zeug = document.createElement("span");
+      zeug.className = "lc-putzzeug lc-putzzeug-" + wie;
+      zeug.innerHTML = wie === "schwamm"
+        ? '<svg viewBox="0 0 70 46" aria-hidden="true">'
+          + '<rect class="lc-schwamm-gelb" x="2" y="2" width="66" height="30" rx="7"/>'
+          + '<rect class="lc-schwamm-blau" x="2" y="28" width="66" height="16" rx="6"/>'
+          /* Die Poren — ohne sie ist es ein Ziegelstein. */
+          + [[14, 12], [28, 9], [44, 14], [56, 10], [20, 22], [38, 21], [52, 24]]
+              .map((q) => '<circle class="lc-schwamm-pore" cx="' + q[0] + '" cy="'
+                + q[1] + '" r="' + (1.6 + (q[0] % 5) * 0.32).toFixed(1) + '"/>').join("")
+          + "</svg>"
+        : wie === "lappen"
+        ? '<svg viewBox="0 0 64 56" aria-hidden="true">'
+          + '<path class="lc-lappen-tuch" d="M6 10 C18 2 46 2 58 10'
+          + ' C56 26 60 40 52 50 C40 56 24 56 12 50 C4 40 8 26 6 10 Z"/>'
+          + '<path class="lc-lappen-falte" d="M18 14 C24 26 22 38 16 46'
+          + ' M34 12 C36 26 34 40 32 50 M48 14 C46 28 48 40 46 48" fill="none"/>'
+          + "</svg>"
+        : '<svg viewBox="0 0 60 44" aria-hidden="true">'
+          /* Der Aermel: ein Stueck Stoff mit Bund. */
+          + '<path class="lc-aermel-stoff" d="M4 12 L44 4 L56 16 L52 40 L10 40 Z"/>'
+          + '<path class="lc-aermel-bund" d="M44 4 L56 16 L50 22 L38 10 Z"/>'
+          + "</svg>";
+      schicht.appendChild(zeug);
+      /* UND JETZT IST ES SAUBER. Erst am Ende der Bewegung — vorher
+         waere die Scheibe rein, bevor der Schwamm darueberlaeuft. */
+      const sauber = wie === "spucke" ? 1500 : 1750;
+      setTimeout(() => {
+        if (nm) delete lcSprayListe[nm];
+        const lack = platz.querySelector(".lc-sprayfarbe");
+        if (lack) {
+          lack.classList.add("lc-sprayfarbe-geht");
+          setTimeout(() => { try { lack.remove(); } catch (e) {} }, 2600);
+        }
+        lcDreckWeg(platz);
+      }, sauber);
+      /* Das Quietschen kommt, wenn die Scheibe wirklich sauber ist —
+         auf schmutzigem Glas quietscht nichts. */
+      if (wie !== "spucke") lcTonSpaeter("quietschen", sauber + 60, 0.5);
+      lcTonSpaeter("schwamm", wie === "schwamm" ? 700 : 300, 0.42);
+    }, 3200, "putzen");
+  }
+
   function lcWischer(wen) {
     return lcAmPlatz(wen, "lc-wischer", (schicht, platz) => {
       /* RUNDE 92 — DER WISCHER IST DAS EINZIGE, WAS DEN LACK ABNIMMT.
@@ -46571,6 +46858,17 @@
          Wischbewegung abgenommen — nicht vorher, sonst waere die
          Scheibe schon sauber, bevor das Blatt darueberlaeuft. */
       const nmW = lcPlatzSchluessel(platz);
+      /* RUNDE 98 — XANDER: „beim Scheibenwischer: wenn man ueber ein
+         draufgespritztes Bild wischt, dann darf die Grundeinstellung
+         von dem Dreck nicht da sein, dann muss er nur den Smiley
+         wegwischen."
+         Der Wischer hat sich bisher IMMER seinen eigenen Dreck
+         hingemalt — achtzehn Kleckse, bevor er losfuhr. Liegt aber
+         schon etwas auf der Scheibe (Lack oder Flecken), dann gibt es
+         nichts hinzuzumalen: dann wischt er genau das weg, was da
+         ist. */
+      const schonDreckig = Boolean(platz.querySelector(".lc-sprayfarbe"))
+        || Boolean((lcDreckListe[nmW] || []).length);
       if (nmW) delete lcSprayListe[nmW];
       const lackW = platz.querySelector(".lc-sprayfarbe");
       if (lackW) {
@@ -46587,14 +46885,22 @@
       const blende = lcZpBlende(schicht);
       /* Der Dreck: Spritzer in drei Brauntoenen, ungleich verteilt —
          gleichmaessiger Dreck sieht aus wie ein Farbverlauf. */
-      let dreck = '<span class="lc-wischer-dreck"></span>';
-      for (let i = 0; i < 18; i++) {
-        dreck += '<i class="lc-wischer-klecks" style="left:'
-          + (4 + Math.random() * 90).toFixed(0) + "%;top:"
-          + (4 + Math.random() * 90).toFixed(0) + "%;--gross:"
-          + (0.5 + Math.random() * 1.3).toFixed(2) + ';"></i>';
+      let dreck = "";
+      if (!schonDreckig) {
+        dreck = '<span class="lc-wischer-dreck"></span>';
+        for (let i = 0; i < 18; i++) {
+          dreck += '<i class="lc-wischer-klecks" style="left:'
+            + (4 + Math.random() * 90).toFixed(0) + "%;top:"
+            + (4 + Math.random() * 90).toFixed(0) + "%;--gross:"
+            + (0.5 + Math.random() * 1.3).toFixed(2) + ';"></i>';
+        }
       }
       blende.innerHTML = dreck;
+      /* Und die liegengebliebenen Flecken gehen mit derselben
+         Bewegung weg wie der Lack. */
+      const dreckSchicht = platz.querySelector(".lc-dreckschicht");
+      if (dreckSchicht) dreckSchicht.classList.add("lc-sprayfarbe-geht");
+      setTimeout(() => { if (platz.isConnected) lcDreckWeg(platz); }, 2600);
       /* Und der Arm — er wischt um seinen Drehpunkt unten links,
          genau wie an einer Windschutzscheibe. */
       /* GEMELDET: „Bei dem Scheibenwischer — der sieht nicht wie ein
@@ -49858,8 +50164,9 @@
     /* RUNDE 86 — die Spruehdose gilt genau EINEM Platz, und der
        Luftballon blaest genau EINEN auf. */
     spray: 1, luftballon: 1,
-    /* RUNDE 98 — das Pflaster klebt auf GENAU EINEM Bild. */
-    pflaster: 1,
+    /* RUNDE 98 — das Pflaster klebt auf GENAU EINEM Bild, und geputzt
+       wird ebenfalls genau eine Scheibe. */
+    pflaster: 1, putzen: 1,
     /* RUNDE 88 — das Kaninchen wird aus GENAU EINEM Zylinder
        gezogen; ueber den ganzen Raum zu regnen waere kein Kunststueck
        mehr, sondern ein Unfall. */
@@ -49903,6 +50210,13 @@
        hat. Es gilt EINEM Bild, es regnet nicht. */
     if (art === "pflaster") {
       lcPflaster((nachricht && (nachricht.wen || nachricht.an)) || "");
+      return;
+    }
+    /* RUNDE 98 — geputzt wird mit Schwamm, Lappen oder Spucke; welches
+       davon, steht im Stueck. */
+    if (art === "putzen") {
+      lcPutzen((nachricht && (nachricht.wen || nachricht.an)) || "",
+               (nachricht && nachricht.stueck) || "schwamm");
       return;
     }
     if (art === "spray") {

@@ -30323,3 +30323,183 @@ code, pre {
 @media (prefers-reduced-motion: reduce) {
   .lc-pflaster-eins, .lc-pflaster-zwei, .lc-pflaster-funke { animation: none; opacity: 1; }
 }
+
+/* =====================================================================
+   RUNDE 98 — DIE GIFTDOSE
+   ---------------------------------------------------------------------
+   XANDER: „man kann immer noch kein Giftsprühen oder irgendetwas
+   anderes."
+   Gift ist mehr als eine grüne Farbe: über dem Bild steht eine Wolke,
+   die aufsteigt und sich auflöst — fünf Schwaden, jeder etwas später
+   und etwas versetzt.
+   ===================================================================== */
+.lc-giftwolke { position: absolute; inset: 0; pointer-events: none; }
+.lc-giftschwade {
+  position: absolute;
+  left: calc(50% + var(--wx, 0%));
+  bottom: 18%;
+  width: 46%;
+  height: 46%;
+  margin-left: -23%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 42%,
+              rgba(150, 240, 130, .72) 0%,
+              rgba(96, 200, 90, .42) 48%,
+              rgba(96, 200, 90, 0) 72%);
+  filter: blur(1px);
+  animation: lcGiftschwadeR98 3.6s ease-out var(--spaet, 0ms) both;
+}
+@keyframes lcGiftschwadeR98 {
+  0%   { opacity: 0; transform: translateY(18%) scale(.35); }
+  22%  { opacity: .95; transform: translateY(-6%) scale(.9); }
+  62%  { opacity: .7; transform: translateY(-42%) scale(1.25) rotate(8deg); }
+  100% { opacity: 0; transform: translateY(-86%) scale(1.6) rotate(-6deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-giftschwade { animation: none; opacity: .6; }
+}
+
+/* =====================================================================
+   RUNDE 98 — DRECK, DER LIEGEN BLEIBT, UND DER PUTZKASTEN
+   ---------------------------------------------------------------------
+   XANDER (23.09.2026): „Die Leute müssen das selber putzen entweder mit
+   dem Scheibenwischer oder mit dem Schwamm, ja vielleicht ist dabei auch
+   noch ein Eimer Wasser daneben, wo der Schwamm dann in den Eimer Wasser
+   geht und dann wischt man die Scheibe und dann quietscht es so, damit
+   man das putzen kann — oder alternativ dran spucken und wegputzen, und
+   sämtlicher Dreck, der erzeugt wird wie durch die Vogelkacke oder
+   irgendwas anderes, das können wir wieder sauber putzen."
+   ===================================================================== */
+
+/* DIE FLECKEN. Sie liegen im Bild und bleiben dort. */
+.lc-dreckfleck {
+  position: absolute;
+  width: calc(16% * var(--gross, 1));
+  height: calc(16% * var(--gross, 1));
+  transform: translate(-50%, -50%) rotate(var(--dreh, 0deg));
+  border-radius: 46% 54% 58% 42% / 52% 46% 54% 48%;
+  pointer-events: none;
+}
+/* Vogelkacke: weiss mit gelbem Kern, wie sie wirklich aussieht. */
+.lc-dreck-kot {
+  background: radial-gradient(circle at 42% 38%,
+              #ffffff 0%, #f3f0e6 52%, #ddd6c2 78%, rgba(221, 214, 194, 0) 100%);
+  box-shadow: inset -2px -3px 4px rgba(120, 112, 88, .35);
+}
+.lc-dreck-kot::after {
+  content: "";
+  position: absolute;
+  left: 38%;
+  top: 44%;
+  width: 34%;
+  height: 30%;
+  border-radius: 50%;
+  background: #e6cf6a;
+  opacity: .8;
+}
+/* Erde, Matsch und anderes Zeug — für spätere Dreckquellen. */
+.lc-dreck-matsch {
+  background: radial-gradient(circle at 44% 40%,
+              #7a5a37 0%, #5f4527 60%, rgba(95, 69, 39, 0) 100%);
+}
+
+/* DER PUTZKASTEN. */
+.lc-putz-eimer {
+  position: absolute;
+  left: -6%;
+  bottom: 2%;
+  width: 34%;
+  animation: lcEimerR98 3.2s ease-out both;
+}
+.lc-putz-eimer svg { width: 100%; height: auto; display: block; }
+.lc-eimer-wand   { fill: #5b8fd6; stroke: #33578a; stroke-width: 2; stroke-linejoin: round; }
+.lc-eimer-wasser { fill: #9ed8f7; opacity: .95; }
+.lc-eimer-henkel { stroke: #33578a; stroke-width: 2.6; }
+@keyframes lcEimerR98 {
+  0%   { opacity: 0; transform: translateY(24%) scale(.85); }
+  12%  { opacity: 1; transform: translateY(0) scale(1); }
+  86%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(14%) scale(.9); }
+}
+
+.lc-putzzeug {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52%;
+  margin: -14% 0 0 -26%;
+  pointer-events: none;
+}
+.lc-putzzeug svg { width: 100%; height: auto; display: block; }
+.lc-schwamm-gelb { fill: #f2d24b; stroke: #b8992a; stroke-width: 2; }
+.lc-schwamm-blau { fill: #5aa7d8; stroke: #2f6f9c; stroke-width: 2; }
+.lc-schwamm-pore { fill: #cfae2f; opacity: .75; }
+.lc-lappen-tuch  { fill: #d9e7f3; stroke: #91a8bd; stroke-width: 2.2; stroke-linejoin: round; }
+.lc-lappen-falte { stroke: #a9bccd; stroke-width: 1.6; }
+.lc-aermel-stoff { fill: #7f6ad0; stroke: #55459a; stroke-width: 2; stroke-linejoin: round; }
+.lc-aermel-bund  { fill: #9f8ce4; stroke: #55459a; stroke-width: 1.6; }
+
+/* Der Schwamm taucht erst in den Eimer, dann wischt er in drei Bahnen
+   von oben nach unten — so putzt man eine Scheibe wirklich. */
+.lc-putzzeug-schwamm { animation: lcSchwammR98 3.2s cubic-bezier(.4, 0, .3, 1) both; }
+@keyframes lcSchwammR98 {
+  0%    { opacity: 0; transform: translate(-70%, 60%) rotate(-16deg) scale(.9); }
+  /* In den Eimer. */
+  8%    { opacity: 1; transform: translate(-58%, 74%) rotate(-10deg) scale(.95); }
+  14%   { transform: translate(-58%, 86%) rotate(-6deg) scale(.92, .8); }
+  20%   { transform: translate(-58%, 62%) rotate(-8deg) scale(1); }
+  /* Erste Bahn. */
+  30%   { transform: translate(-32%, -34%) rotate(4deg) scale(1); }
+  40%   { transform: translate(24%, -26%) rotate(-4deg) scale(1); }
+  /* Zweite. */
+  50%   { transform: translate(-28%, 2%) rotate(5deg) scale(1); }
+  60%   { transform: translate(26%, 8%) rotate(-5deg) scale(1); }
+  /* Dritte. */
+  70%   { transform: translate(-24%, 34%) rotate(4deg) scale(1); }
+  80%   { transform: translate(22%, 38%) rotate(-3deg) scale(1); }
+  92%   { opacity: 1; transform: translate(60%, 58%) rotate(-12deg) scale(.95); }
+  100%  { opacity: 0; transform: translate(78%, 68%) rotate(-16deg) scale(.88); }
+}
+/* Der Lappen wischt in Kreisen — der schnelle Weg. */
+.lc-putzzeug-lappen { animation: lcLappenR98 3.2s cubic-bezier(.35, 0, .3, 1) both; }
+@keyframes lcLappenR98 {
+  0%   { opacity: 0; transform: translate(-64%, -52%) rotate(-14deg) scale(.9); }
+  10%  { opacity: 1; transform: translate(-30%, -30%) rotate(-6deg) scale(1); }
+  25%  { transform: translate(24%, -26%) rotate(10deg) scale(1); }
+  40%  { transform: translate(30%, 18%) rotate(-8deg) scale(1); }
+  55%  { transform: translate(-24%, 24%) rotate(9deg) scale(1); }
+  70%  { transform: translate(-26%, -14%) rotate(-7deg) scale(1); }
+  85%  { opacity: 1; transform: translate(18%, 0%) rotate(6deg) scale(1); }
+  100% { opacity: 0; transform: translate(62%, 44%) rotate(-12deg) scale(.9); }
+}
+/* Spucke: erst der Spucker, dann der Ärmel darüber. */
+.lc-putz-spucke {
+  position: absolute;
+  left: 42%;
+  top: 34%;
+  width: 16%;
+  height: 16%;
+  border-radius: 52% 48% 44% 56% / 48% 52% 48% 52%;
+  background: radial-gradient(circle at 40% 36%,
+              rgba(255, 255, 255, .95) 0%, rgba(198, 233, 245, .8) 55%,
+              rgba(198, 233, 245, 0) 100%);
+  animation: lcSpuckeR98 1.4s ease-out both;
+}
+@keyframes lcSpuckeR98 {
+  0%   { opacity: 0; transform: translate(-120%, -60%) scale(.3); }
+  30%  { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: .85; transform: translate(0, 6%) scale(1.1); }
+}
+.lc-putzzeug-spucke { animation: lcAermelR98 3.2s cubic-bezier(.4, 0, .3, 1) both; }
+@keyframes lcAermelR98 {
+  0%, 22% { opacity: 0; transform: translate(-80%, 20%) rotate(-12deg) scale(.95); }
+  30%  { opacity: 1; transform: translate(-34%, 6%) rotate(-6deg) scale(1); }
+  45%  { transform: translate(26%, -6%) rotate(6deg) scale(1); }
+  58%  { transform: translate(-28%, 10%) rotate(-6deg) scale(1); }
+  70%  { transform: translate(24%, 16%) rotate(5deg) scale(1); }
+  86%  { opacity: 1; transform: translate(52%, 30%) rotate(-8deg) scale(.96); }
+  100% { opacity: 0; transform: translate(76%, 44%) rotate(-12deg) scale(.9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-putzzeug, .lc-putz-eimer, .lc-putz-spucke { animation: none; opacity: 1; }
+}

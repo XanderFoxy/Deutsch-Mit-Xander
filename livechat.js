@@ -900,6 +900,10 @@ window.LiveChat = (function () {
        machen kann \u2026 ist dass wir einen Pflaster Profil Effekt
        nehmen \u2026 kreuz \u2026 und dann ist alles wieder heil." */
     pflaster: { wirkung: "pflaster", satz: "klebt zwei Pflaster \u00fcber Kreuz auf", emoji: "\ud83e\ude79" },
+    /* RUNDE 98 — XANDER: „Die Leute muessen das selber putzen entweder
+       mit dem Scheibenwischer oder mit dem Schwamm \u2026 oder alternativ
+       dran spucken und wegputzen." */
+    putzen: { wirkung: "putzen", satz: "putzt die Scheibe von", emoji: "\ud83e\uddfd" },
     /* GEWUENSCHT, Stueck fuer Stueck aus der Wunschliste:
        „Wir koennen uns auch Schneebaelle gegenseitig zuschiessen aufs
         Profilbild, so dass derjenige eingeseift wird mit Schnee."
@@ -9312,6 +9316,8 @@ window.LiveChat = (function () {
     /* RUNDE 98 — XANDER: „der einzige Weg wie man sich wieder ganz
        machen kann \u2026 ist dass wir einen Pflaster Profil Effekt
        nehmen." */
+    { gr: "reden", w: "putzen", kurz: "sauber", nutzt: "/putzen Name",
+      was: "macht die Scheibe wieder sauber \u2014 /putzen Name lappen oder /putzen Name spucke f\u00fcr die anderen beiden Wege" },
     { gr: "reden", w: "pflaster", kurz: "heilen", nutzt: "/pflaster Name",
       was: "klebt zwei Pflaster \u00fcber Kreuz aufs Bild \u2014 danach ist alles wieder heil, auch ein vom Hammer zerschlagenes Profilbild" },
     /* RUNDE 76 — XANDER: „Telefon mit Audio". */
@@ -9761,7 +9767,12 @@ window.LiveChat = (function () {
                 baer: "ggbaer", baerchen: "ggbaer", grizzly: "ggbaer",
                 schiff: "pirat", piraten: "pirat", segel: "pirat", totenkopf: "pirat",
                 sog: "strudel", wirbel: "strudel", ertrinken: "strudel", wirbeln: "strudel",
-                wischen: "schwamm", tafelwischen: "schwamm", putzen: "schwamm",
+                /* RUNDE 98 — „putzen" ist jetzt ein eigener Befehl (die
+                   Scheibe eines Platzes sauber machen, mit Schwamm,
+                   Lappen oder Spucke). Als Kurzwort fuer den
+                   Tafelschwamm darf es deshalb nicht mehr stehen —
+                   sonst verdeckt das eine das andere. */
+                wischen: "schwamm", tafelwischen: "schwamm", tafelputzen: "schwamm",
                 ballern: "schuss", schuesse: "schuss", schiessen: "schuss",
                 schussloch: "schuss", knarre: "schuss",
                 wolke: "wolken", bewoelkt: "wolken",
@@ -11899,11 +11910,33 @@ window.LiveChat = (function () {
          /spray Bea traurig    spruecht ein trauriges
          /spray Bea herz       spruecht einen Aufkleber
        Welche Aufkleber es gibt, zeigt der Befehl ohne Zusatz. */
+    /* RUNDE 98 — PUTZEN. Welches Putzzeug, steht hinten: Schwamm
+       (Vorgabe), Lappen oder Spucke. */
+    if (art === "putzen") {
+      var teileP = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
+      var letztesP = String(teileP[teileP.length - 1] || "").toLowerCase();
+      var istZeug = /^(schwamm|eimer|lappen|tuch|spucke|spucken|rotz)$/.test(letztesP);
+      var zeugP = istZeug ? letztesP : "schwamm";
+      if (istZeug) teileP.pop();
+      var namenP = teileP.join(" ").trim();
+      if (!namenP) return systemZeile("Wen putzen?  So geht es:  /putzen Nickname "
+        + "\u2014 oder /putzen Nickname lappen, /putzen Nickname spucke");
+      var wemP2 = zielPerson(namenP);
+      var wortP = /^(lappen|tuch)$/.test(zeugP) ? "mit dem Putzlappen"
+        : /^(spucke|spucken|rotz)$/.test(zeugP) ? "mit Spucke und \u00c4rmel"
+        : "mit Schwamm und Wassereimer";
+      return anAlle("aktion", zustand.ichName + " putzt die Scheibe von "
+        + wemP2.name + " " + wortP + "  \ud83e\uddfd",
+        { wirkung: "putzen", wen: wemP2.name, stueck: zeugP });
+    }
     if (art === "spray") {
       var AUFKLEBER = ["herz", "stern", "feuer", "regenbogen", "blume", "fuchs",
                        "sonne", "schnee", "regen", "katze", "musik", "party",
                        "pokal", "idee", "kaffee", "glocke", "daumen", "lachen",
-                       "traurig", "weinen", "staunen", "denken", "schlafen"];
+                       "traurig", "weinen", "staunen", "denken", "schlafen",
+                       /* RUNDE 98 — XANDER: „man kann immer noch kein
+                          Giftspruehen oder irgendetwas anderes." */
+                       "gift"];
       var teileS = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
       if (!teileS.length) {
         return systemZeile("Spr\u00fchdose:\n"
@@ -11929,6 +11962,7 @@ window.LiveChat = (function () {
       if (!namenS) return systemZeile("Wem denn?  So geht es:  /spray Nickname " + wasS);
       var wemS = zielPerson(namenS);
       var wortS = istBild ? "ein Bild"
+        : /^(gift|giftig|poison|totenkopf)$/.test(wasS) ? "eine Ladung Gift"
         : /^(traurig|sad|schade|weinen)$/.test(wasS) ? "ein trauriges Gesicht"
         : /^(froh|happy|lachen)$/.test(wasS) ? "ein lachendes Gesicht"
         : "\u201e" + wasS + "\u201c";
