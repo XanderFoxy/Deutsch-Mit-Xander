@@ -32229,3 +32229,41 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   21.6%, 86% { transform: translate(0, 48px); opacity: 1; }
   100%       { transform: translate(0, 48px); opacity: 0; }
 }
+
+/* =====================================================================
+   RUNDE 99 — DIE MARIO-MUETZE WIRD NICHT MEHR ABGESCHNITTEN
+   ---------------------------------------------------------------------
+   XANDER (Walkie-Talkie): „die Muetze von Mario wird abgeschnitten und
+   geht nicht ueber dem Profilbild weiter — man sieht sie also nicht,
+   weil sie maskiert ist, sie ist nur innen ein Stueck zu sehen."
+   GEFUNDEN: die Kappe haengt IM Bildkreis (sie muss ja mit dem Bild
+   ueber das Spielfeld laufen), und der Kreis traegt overflow: hidden —
+   so wird ein eckiges Foto rund. Alles, was ueber den Kreis hinausragt,
+   war damit weg: die -22 % aus der letzten Runde lagen gerade ausserhalb.
+   JETZT: solange Mario laeuft, schneidet der Kreis nichts ab; rund
+   bleibt das Bild trotzdem, weil Foto, Video und Anfangsbuchstabe ihre
+   eigene runde Form bekommen. */
+.lc-platz .lc-kreis.lc-mario { overflow: visible; }
+.lc-kreis.lc-mario > video,
+.lc-kreis.lc-mario > img,
+.lc-kreis.lc-mario > .lc-initial {
+  border-radius: 50%;
+  overflow: hidden;
+}
+.lc-kreis.lc-mario > .lc-mario-kappe { z-index: 3; }
+
+/* RUNDE 99 — die Schneekugel blendet als EIN Ganzes aus (die Schicht,
+   siehe lcSchneekugel). Glas und Sockel haben deshalb keine eigene
+   Blende mehr, und die Flocken hoeren mit der Schicht auf, statt allein
+   weiterzufallen. */
+.lc-schneekugel .lc-sk-glas, .lc-schneekugel .lc-sk-sockel { animation: none; opacity: 1; }
+/* Und die Landschaft steht still: sie stieg in den ersten 1,1 s um 12 %
+   auf — genau waehrend des Schuettelns, und das sah aus, als rutsche das
+   Innenleben in der Kugel (gemessen 3,2 px gegen das Bild). Jetzt blendet
+   sie nur ein; das Ausblenden macht die ganze Kugel. */
+.lc-schneekugel .lc-sk-land { animation: lcSkLandR99 7.2s ease-out both; }
+@keyframes lcSkLandR99 {
+  0%   { opacity: 0; transform: none; }
+  8%   { opacity: 1; transform: none; }
+  100% { opacity: 1; transform: none; }
+}

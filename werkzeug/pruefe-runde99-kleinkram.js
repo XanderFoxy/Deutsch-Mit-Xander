@@ -83,11 +83,28 @@ const sage = (gut, was, zusatz) => {
     const rc = kreis.getBoundingClientRect();
     /* Wie weit steht die Muetze ueber dem Bild? In Prozent der
        Bildhoehe, damit die Zahl auf jedem Bildschirm dieselbe ist. */
-    return { ueber: Math.round((rc.top - rk.top) / rc.height * 100) };
+    /* ZWEITER ANLAUF (Walkie-Talkie): „die Muetze wird abgeschnitten …
+       sie ist nur innen ein Stueck zu sehen." Der Kasten allein sagt
+       nichts darueber, ob man sie SIEHT — der Kreis schnitt sie ab. Also:
+       ein Punkt der Kappe knapp UEBER dem Bildrand — trifft der Blick
+       dort wirklich die Kappe? */
+    const x = rk.left + rk.width / 2, y = rc.top - rc.height * 0.06;
+    /* Die Kappe nimmt keine Tipps an (pointer-events: none) — fuer die
+       Messung kurz einschalten, sonst sieht elementFromPoint sie nie. */
+    k.style.pointerEvents = "auto";
+    k.querySelectorAll("*").forEach((e) => { e.style.pointerEvents = "auto"; });
+    const da = document.elementFromPoint(x, y);
+    const sichtbar = Boolean(da && da.closest && da.closest(".lc-mario-kappe"));
+    const cs = getComputedStyle(kreis);
+    return { ueber: Math.round((rc.top - rk.top) / rc.height * 100), sichtbar,
+             schnitt: cs.overflow };
   });
   sage(kappe && kappe.ueber >= 12,
     "die Mütze steht deutlich über dem Bild",
     kappe ? kappe.ueber + " % der Bildhöhe (vorher 3 %)" : "-");
+  sage(kappe && kappe.sichtbar && kappe.schnitt === "visible",
+    "und man SIEHT sie dort auch — der Kreis schneidet sie nicht ab",
+    kappe ? "Kreis overflow " + kappe.schnitt : "-");
 
   console.log("\n2  DIE EIHAELFTEN SIND SO BREIT WIE DAS EI\n");
   const ei = await pg.evaluate(async () => {
@@ -179,7 +196,14 @@ const sage = (gut, was, zusatz) => {
        Koerper gleich, egal wie er sich dreht. */
     const mitte = (el) => { const b = el.getBoundingClientRect();
       return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; };
-    let groessterVersatz = 0, proben = 0, bildBewegt = 0;
+    let groessterVersatz = 0, proben = 0, bildBewegt = 0, landRutscht = 0;
+    const land = platz.querySelector(".lc-sk-land") || platz.querySelector(".lc-sk-decke");
+    const kmitte = () => mitte(kreis);
+    /* ZWEITER ANLAUF: „man sieht sogar, dass sich innen das Innenleben,
+       die Landschaft, verschiebt" — gemessen wird der Abstand der
+       Landschaft zur Bildmitte. */
+    const l0 = land ? mitte(land) : null, k0m = kmitte();
+    const landAbstand0 = l0 ? Math.hypot(l0.x - k0m.x, l0.y - k0m.y) : 0;
     const m0 = mitte(glas), s0 = mitte(sockel);
     const startAbstand = Math.hypot(m0.x - s0.x, m0.y - s0.y);
     const kr0 = kreis.getBoundingClientRect();
@@ -190,16 +214,25 @@ const sage = (gut, was, zusatz) => {
         Math.abs(Math.hypot(mg.x - ms.x, mg.y - ms.y) - startAbstand));
       const kr = kreis.getBoundingClientRect();
       bildBewegt = Math.max(bildBewegt, Math.abs(kr.left - kr0.left), Math.abs(kr.top - kr0.top));
+      if (land) {
+        const lm = mitte(land), km = kmitte();
+        landRutscht = Math.max(landRutscht, Math.abs(Math.hypot(lm.x - km.x, lm.y - km.y) - landAbstand0));
+      }
       proben++;
     }
     /* Und: hoeren Bild und Kugel zusammen auf? Beide tragen dieselbe
        Dauer — abgelesen am laufenden Stil. */
+    /* RUNDE 99, ZWEITER ANLAUF: die Bewegung laeuft per animate() mit
+       gemeinsamem Startzeitpunkt — abgelesen wird deshalb dort. */
     const schicht = platz.querySelector(".lc-schneekugel");
-    const dauerKreis = getComputedStyle(kreis).animationDuration;
-    const dauerKugel = schicht ? getComputedStyle(schicht).animationDuration : "";
     return { versatz: Math.round(groessterVersatz * 10) / 10, proben: proben,
              bild: Math.round(bildBewegt * 10) / 10,
-             dauerKreis: dauerKreis, dauerKugel: dauerKugel };
+             land: Math.round(landRutscht * 10) / 10, hatLand: Boolean(land),
+             glasEigen: getComputedStyle(glas).animationName,
+             blendetGanz: schicht ? schicht.getAnimations().some((a) => {
+               const k = a.effect && a.effect.getKeyframes ? a.effect.getKeyframes() : [];
+               return k.some((f) => f.opacity !== undefined && Number(f.opacity) === 0);
+             }) : false };
   });
   sage(kugel && kugel.versatz <= 0.6,
     "Glas und Sockel h\u00e4ngen fest zusammen \u2014 ihr Abstand \u00e4ndert sich nicht",
@@ -207,9 +240,12 @@ const sage = (gut, was, zusatz) => {
   sage(kugel && kugel.bild > 1,
     "und geschüttelt wird wirklich — das Bild bewegt sich",
     kugel ? kugel.bild + " px" : "-");
-  sage(kugel && kugel.dauerKreis === kugel.dauerKugel && /1\.45/.test(kugel.dauerKreis),
-    "Bild und Kugel hören zur selben Zeit auf",
-    kugel ? "Bild " + kugel.dauerKreis + ", Kugel " + kugel.dauerKugel : "-");
+  sage(kugel && kugel.hatLand && kugel.land <= 1,
+    "Das Innenleben verrutscht nicht gegen das Bild",
+    kugel ? kugel.land + " px Unterschied" : "-");
+  sage(kugel && kugel.glasEigen === "none" && kugel.blendetGanz,
+    "Die ganze Kugel blendet gemeinsam aus, nicht Teil fuer Teil",
+    kugel ? "Glas eigene Blende: " + kugel.glasEigen + ", Schicht blendet: " + kugel.blendetGanz : "-");
 
   await br.close(); srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)" : "\nalles gruen");

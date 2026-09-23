@@ -92,9 +92,11 @@ pruefe("Tarzan ruft verschieden",
    Zuschauers („meiner"), sondern nach dem KUESSER — sonst klingt
    derselbe Kuss auf jedem Geraet anders. Die Regel selbst (Mann und
    Frau kuessen mit verschiedener Stimme, bei 441 ms) bleibt. */
+/* RUNDE 99, ZWEITER ANLAUF: echte Kuss-Aufnahmen (Walkie-Talkie: „Holzklotz
+   und Kuh"); Schmatz bei 140 ms, also Start bei 380 ms. */
 pruefe("der Kuss auch",
-  /lcStimmeZu\(kuesser, "kussmann", "kussfrau", 441, 0\.62\)/.test(js)
-  && /lcStimmeZu\(platz, "kussfrau", "kussmann", 441, 0\.62\)/.test(js));
+  /lcStimmeZu\(kuesser, "kussmann", "kussfrau", 380, 0\.7\)/.test(js)
+  && /lcStimmeZu\(platz, "kussfrau", "kussmann", 380, 0\.7\)/.test(js));
 pruefe("und der Plan mischt sich beim Kuss nicht mehr ein",
   /kuss:\s+\{ still: true/.test(js)
   && /if \(plan && plan\.still\) return;/.test(js));

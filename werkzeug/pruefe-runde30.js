@@ -104,8 +104,11 @@ const pruefe = (was, gut, zusatz) => {
        Worum es in dieser Regel geht — Mann und Frau klingen verschieden,
        und zwar mit genau diesen beiden Dateien bei 441 ms — ist
        unveraendert. */
-    && /lcStimmeZu\(kuesser, "kussmann", "kussfrau", 441, 0\.62\)/.test(js)
-    && /lcStimmeZu\(platz, "kussfrau", "kussmann", 441, 0\.62\)/.test(js));
+    /* RUNDE 99, ZWEITER ANLAUF: echte Kuss-Aufnahmen statt „Holzklotz
+       und Kuh" (Walkie-Talkie). Ihr Schmatz liegt bei 140 ms, also
+       beginnt die Datei 380 ms nach dem Start; etwas lauter (0,7). */
+    && /lcStimmeZu\(kuesser, "kussmann", "kussfrau", 380, 0\.7\)/.test(js)
+    && /lcStimmeZu\(platz, "kussfrau", "kussmann", 380, 0\.7\)/.test(js));
   haengt("schneeball", "schneeklatsch");
   haengt("strohhalm", "schlurfen");
   haengt("blubbern", "blubbern");

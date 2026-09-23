@@ -123,11 +123,44 @@ const sage = (gut, text, dazu) => {
     const hoechstVorher = Math.min.apply(null, vorher.map((p) => p.bildY));
     const raus = bahn.filter((p) => p.t >= 0.47 && p.t <= 0.58);
     const hoechstRaus = Math.min.apply(null, raus.map((p) => p.bildY));
-    sage(hoechstVorher > -6 && hoechstRaus < -30,
+    /* ZWEITER ANLAUF: unter dem Hut wird das Bild jetzt in die Mitte
+       des Kegels gezogen (translateY -12 %, siehe app.js) — das ist
+       VERSTECKEN, nicht herauskommen. Deshalb zaehlt jetzt: vor dem
+       Umdrehen ruehrt es sich nicht (hoechstens 3 px Unterschied), und
+       danach geht es deutlich hoeher als je zuvor. */
+    const tiefsteVorher = Math.max.apply(null, vorher.map((p) => p.bildY));
+    sage(tiefsteVorher - hoechstVorher <= 3 && hoechstRaus < hoechstVorher - 30,
       "Das Bild kommt erst NACH dem Umdrehen heraus",
       "vor dem Umdrehen hoechstens " + hoechstVorher
       + " px, danach " + hoechstRaus + " px");
   }
+
+  /* ZWEITER ANLAUF (Walkie-Talkie): „das Bild muss in dem Moment unter
+     dem Hut verschwinden, wenn der Hut dort steht — realistisch
+     umschliessen." Gemessen bei 20 % (der Hut sitzt, der Stab klopft):
+     liegt das Bild ganz innerhalb des Kegels (28–72 % der Hutbreite)? */
+  const pg2 = await br.newPage({ viewport: { width: 900, height: 1000 } });
+  await pg2.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
+  await pg2.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
+  await pg2.waitForFunction(() => window.DMA_PRUEF && window.DMA_PRUEFUNG, { timeout: 25000 });
+  const drunter = await pg2.evaluate(async () => {
+    window.DMA_PRUEF.effektBuehne();
+    await new Promise((f) => setTimeout(f, 300));
+    window.DMA_PRUEFUNG.wirkung("kaninchen", "Bea", "Alex");
+    await new Promise((f) => setTimeout(f, 950));
+    const platz = [...document.querySelectorAll("#lcPlaetze .lc-platz")]
+      .find((x) => (x.textContent || "").indexOf("Bea") >= 0);
+    const k = platz.querySelector(".lc-kreis").getBoundingClientRect();
+    const h = platz.querySelector(".lc-zt-hut").getBoundingClientRect();
+    const kegel = { l: h.left + h.width * 0.28, r: h.left + h.width * 0.72,
+                    o: h.top + h.height * 0.186, u: h.top + h.height * 0.86 };
+    return { links: Math.round(k.left - kegel.l), rechts: Math.round(kegel.r - k.right),
+             oben: Math.round(k.top - kegel.o), unten: Math.round(kegel.u - k.bottom) };
+  });
+  sage(drunter.links >= 0 && drunter.rechts >= 0 && drunter.oben >= 0 && drunter.unten >= 0,
+    "Solange der Hut sitzt, liegt das Bild ganz darunter (nichts schaut heraus)",
+    "Rand zum Kegel: links " + drunter.links + ", rechts " + drunter.rechts
+    + ", oben " + drunter.oben + ", unten " + drunter.unten + " px");
 
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));

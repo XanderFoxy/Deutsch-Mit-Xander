@@ -35131,14 +35131,43 @@
            Der Kreis bekommt seine Bewegung im SELBEN Augenblick wie
            die Schicht; deshalb stehen beide Zeilen direkt
            hintereinander und nicht in zwei Zeitgebern. */
-        schicht.classList.add("lc-sk-schuettelt");
-        kreis.classList.remove("lc-geschuettelt");
-        void kreis.offsetWidth;
-        kreis.classList.add("lc-geschuettelt");
-        setTimeout(() => {
-          kreis.classList.remove("lc-geschuettelt");
-          schicht.classList.remove("lc-sk-schuettelt");
-        }, 1450);
+        /* RUNDE 99, ZWEITER ANLAUF — XANDER (Walkie-Talkie): „der
+           Sockel schuettelt unabhaengig vom Glas, das ist nicht eine
+           Einheit — man sieht sogar, dass sich innen das Innenleben,
+           die Landschaft, verschiebt."
+           GEFUNDEN: die Bewegung stand in PROZENT (translate -9 %, 8 % …)
+           und Prozente zaehlen die Groesse des EIGENEN Elements. Bild und
+           Kugel-Schicht sind verschieden gross (der Sockel ragt unten
+           heraus) — dieselbe Zeile bewegte sie also verschieden weit,
+           und das Innenleben rutschte gegen das Bild.
+           JETZT: dieselbe Bewegung in PIXELN, gerechnet aus der
+           Bildbreite, fuer Bild und Kugel mit DEMSELBEN Startzeitpunkt
+           (startTime) — sie sind damit eine Einheit, Bild fuer Bild. */
+        const g = kreis.offsetWidth || 64;
+        const px = (v) => (v * g / 100).toFixed(1) + "px";
+        const bb = [[0, 0, 0, 0], [0.10, -9, 2, -7], [0.22, 8, -3, 6], [0.34, -7, 3, -5],
+                    [0.46, 6, -2, 4], [0.58, -4, 2, -3], [0.70, 3, -1, 2], [0.84, -1.5, 1, -1], [1, 0, 0, 0]]
+          .map(([o, x, y, r]) => ({ offset: o,
+            transform: "translate(" + px(x) + ", " + px(y) + ") rotate(" + r + "deg)" }));
+        const takt = { duration: 1450, easing: "cubic-bezier(.36, .07, .19, .97)" };
+        try {
+          /* Die Kugel dreht sich um die Bildmitte — genau wie das Bild. */
+          schicht.style.transformOrigin = (kreis.offsetLeft + g / 2 - schicht.offsetLeft) + "px "
+            + (kreis.offsetTop + (kreis.offsetHeight || g) / 2 - schicht.offsetTop) + "px";
+          const a1 = kreis.animate(bb, takt);
+          const a2 = schicht.animate(bb, takt);
+          const t = document.timeline.currentTime;
+          a1.startTime = t; a2.startTime = t;
+        } catch (e) {}
+        /* UND ALLES BLENDET ZUSAMMEN AUS. „Es blenden nicht alle
+           Elemente gleichzeitig aus — ich glaube, zum Schluss ist allein
+           nur noch der Schneefall zu sehen." Glas, Sockel, Landschaft
+           und Schnee liegen in DIESER Schicht; sie blendet als Ganzes
+           aus (die Einzelkurven sind abgeschaltet, siehe CSS). */
+        try {
+          schicht.animate([{ opacity: 0 }, { opacity: 1, offset: 0.06 },
+            { opacity: 1, offset: 0.9 }, { opacity: 0 }], { duration: 7200, fill: "both" });
+        } catch (e) {}
       }
     }, 7200, "schneekugel");
   }
@@ -39065,19 +39094,17 @@
     return [...karte.querySelectorAll(".lc-platz")].map((el, i) => {
       const nr = Number(el.dataset.lcPlatz || 0) || (i + 1);
       const k = lcLayoutKasten(el);
-      /* RUNDE 99 — DIE MITTE IST DIE BILDMITTE, NICHT DIE PLATZMITTE.
-         XANDER: „Bei der Lok sind die Schienen nicht mittig ueber die
-         Positionsfelder."
-         GEMESSEN: auf einem Weg 1-5-6-7-3 lagen die Schienen an den
-         Zwischenplaetzen 10 px UNTER der Bildmitte, an Start und Ziel
-         aber genau darauf. Grund: hier stand die Mitte des ganzen
-         Platzes — und der ist unten um das Namensschild laenger. Start
-         und Ziel rechnen dagegen mit dem Bild. Jetzt rechnen alle mit
-         dem Bild; davon haben ALLE Fahrzeuge etwas, die ueber
-         Zwischenplaetze fahren, nicht nur die Lok. */
-      const kr = el.querySelector(".lc-kreis");
-      const mx = kr ? kr.offsetLeft + kr.offsetWidth / 2 : k.width / 2;
-      const my = kr ? kr.offsetTop + kr.offsetHeight / 2 : k.height / 2;
+      /* RUNDE 99 — HIER STEHT WIEDER DIE PLATZMITTE.
+         In Fassung 516 hatte ich sie auf die BILDmitte umgestellt, damit
+         die Lok-Schienen mittig liegen. Das war an der falschen Stelle:
+         rund zwanzig Reisen (Zauberer, Maulwurf, Tor, Flug, Beamen …)
+         rechnen seit Runde 72 selbst „+ lcBildVersatz" dazu — sie
+         zaehlten den Versatz danach DOPPELT. Gefunden hat es die Sonde
+         runde88-zauberer: die Arme standen fest an ihren Grenzen
+         (85 / -32 Grad statt 115 / 94 in Fassung 515). Die Lok nimmt
+         den Versatz jetzt selbst dazu, wie alle anderen. */
+      const mx = k.width / 2;
+      const my = k.height / 2;
       return {
         nr: nr,
         el: el,
@@ -45659,7 +45686,10 @@
     if (!weg || weg.length < 2) return null;
     /* Die Stationen in Buehnen-Koordinaten; Anfang und Ende genau
        dort, wo die Reise ohnehin anfaengt und aufhoert. */
-    const pk = weg.map((p) => ({ x: p.x - rk.left, y: p.y - rk.top }));
+    /* RUNDE 99 — die Zwischenplaetze auf die BILDmitte (lcBildVersatz),
+       wie Start und Ziel: „die Schienen nicht mittig ueber den
+       Positionsfeldern" — gemessen lagen sie sonst 10 px darunter. */
+    const pk = weg.map((p) => ({ x: p.x - rk.left, y: p.y - rk.top + lcBildVersatz(p.el) }));
     pk[0] = { x: start.x, y: start.y };
     pk[pk.length - 1] = { x: ende.x, y: ende.y };
     /* RUNDE 99 — AUSPROBIERT UND ZURUECKGENOMMEN: ein engerer Bogen
@@ -47515,12 +47545,23 @@
          Der Hut deckt es zu — trotzdem wird es kleiner gemacht,
          damit es unter der Krempe nicht hervorschaut. */
       try {
+        /* RUNDE 99, ZWEITER ANLAUF — XANDER (Walkie-Talkie): „das Bild
+           von meinem Profil muss in dem Moment unter dem Hut
+           verschwinden, wenn der Hut dort steht — das muss realistisch
+           umschliessen."
+           GERECHNET: der Hut ist 1,24 Bildbreiten breit, sein Kegel
+           davon 44 % — also nur 0,55 Bildbreiten. Das Bild schrumpfte
+           aber nur auf 0,86 und schaute links und rechts neben dem
+           Kegel heraus. Jetzt wird es in dem Augenblick, in dem der Hut
+           herunterkommt (5–8 %), auf 0,46 zusammengezogen und in die
+           Mitte des Kegels geschoben (Kegel reicht von 7 bis 69 % der
+           Bildhoehe, Mitte bei 38 %): es verschwindet ganz darunter. */
         kreis.animate([
           { transform: "translateY(0) scale(1) rotate(0deg)", offset: 0 },
-          { transform: "translateY(0) scale(1) rotate(0deg)", offset: bei(0.07) },
-          { transform: "translateY(6%) scale(.86) rotate(0deg)", offset: bei(0.12), easing: "ease-in" },
+          { transform: "translateY(0) scale(1) rotate(0deg)", offset: bei(0.05) },
+          { transform: "translateY(-12%) scale(.46) rotate(0deg)", offset: bei(0.085), easing: "ease-in" },
           /* RUNDE 99 — es wartet, bis der Hut umgedreht ist (38,5 %). */
-          { transform: "translateY(6%) scale(.86) rotate(0deg)", offset: bei(0.40) },
+          { transform: "translateY(-12%) scale(.46) rotate(0deg)", offset: bei(0.40) },
           /* An den Ohren heraus — und es zappelt dabei. */
           { transform: "translateY(-74%) scale(.9) rotate(-9deg)", offset: bei(0.46), easing: "ease-out" },
           { transform: "translateY(-82%) scale(.9) rotate(8deg)", offset: bei(0.50), easing: "ease-in-out" },

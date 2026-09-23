@@ -293,8 +293,13 @@ pruefe("und der Ton liegt auf jedem Aufsetzen",
   /federLand\.forEach\(\(zielT\) => \{\s*\n\s*lcTonSpaeter\("federboing", Math\.round\(zielT \* hin\)/.test(js));
 
 console.log("\nLOK UND DAMPFER");
-pruefe("die Lok stampft beim Anfahren", ton("lokstampf") && gelistet("lokstampf")
-  && /lcTonSpaeter\("lokstampf", 0, 0\.6\)/.test(js));
+/* RUNDE 99, ZWEITER ANLAUF — XANDER: erst die Pfeife „tuut tuut", dann
+   das Stampfen, „in der Reihenfolge logisch sinnvoll". Die Pfeife steht
+   bei 0, das Stampfen setzt 350 ms danach ein. */
+pruefe("die Lok pfeift und stampft dann beim Anfahren", ton("lokstampf") && gelistet("lokstampf")
+  && ton("lokpfeife") && gelistet("lokpfeife")
+  && /lcTonSpaeter\("lokpfeife", 0, 0\.5\)/.test(js)
+  && /lcTonSpaeter\("lokstampf", 350, 0\.6\)/.test(js));
 pruefe("und die Raeder gehen ueber die Schienenstoesse",
   ton("lokschiene") && gelistet("lokschiene")
   && /lcTonSpaeter\("lokschiene", Math\.round\(hin \* 0\.2\), 0\.42\)/.test(js));
