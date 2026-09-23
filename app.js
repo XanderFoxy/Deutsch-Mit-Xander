@@ -34764,10 +34764,31 @@
       schicht.insertAdjacentHTML("beforeend",
         '<span class="lc-sk-glas"></span><span class="lc-sk-sockel"></span>');
       if (kreis) {
+        /* RUNDE 99 — XANDER: „Schau bei der Schneekugel, dass sich die
+           Glaskugel nicht vom Sockel wegwackelt und beide Einheiten
+           unterschiedlich schuetteln, sondern das soll eine Einheit
+           schuetteln."
+           ZWEI URSACHEN, beide hier:
+             1. Glas und Sockel trugen die Schuettelbewegung JEDER FUER
+                SICH. Zwei Animationen, zwei Startzeitpunkte — schon ein
+                halbes Bild Unterschied sieht man als Wackeln
+                gegeneinander. Jetzt schuettelt die ganze SCHICHT (sie
+                enthaelt Glas, Sockel, Landschaft und Schnee), also
+                genau eine Einheit.
+             2. Das Bild hoerte nach 1100 ms auf zu schuetteln, die
+                Kugel aber erst nach 1450 ms — dieselbe Bewegung, zwei
+                verschiedene Enden. Jetzt hoeren beide zusammen auf.
+           Der Kreis bekommt seine Bewegung im SELBEN Augenblick wie
+           die Schicht; deshalb stehen beide Zeilen direkt
+           hintereinander und nicht in zwei Zeitgebern. */
+        schicht.classList.add("lc-sk-schuettelt");
         kreis.classList.remove("lc-geschuettelt");
         void kreis.offsetWidth;
         kreis.classList.add("lc-geschuettelt");
-        setTimeout(() => kreis.classList.remove("lc-geschuettelt"), 1100);
+        setTimeout(() => {
+          kreis.classList.remove("lc-geschuettelt");
+          schicht.classList.remove("lc-sk-schuettelt");
+        }, 1450);
       }
     }, 7200, "schneekugel");
   }
@@ -42920,6 +42941,23 @@
         ], { duration: dauer, easing: "linear", fill: "none" });
       } catch (e) {}
       lcTonZu("untertasse");
+      /* RUNDE 99 — XANDER: „Man hoert bei dem Ufo noch nicht den
+         Ent-Materialisieren oder den Re-Materialisieren Sound. Wenn
+         man ankommt, ist noch kein Sound dafuer da."
+         Stimmt: „beamen" lief als gleichmaessiges Bett ueber die
+         ganze Fahrt, und die beiden Augenblicke, auf die es ankommt,
+         klangen wie alles andere. Jetzt liegt auf jedem ein eigener
+         Ton:
+           · 25 % — das Bild loest sich am Startplatz auf
+             (dieselbe Marke, bei der der Kreis auf opacity 0 geht),
+           · 83,5 % — es baut sich am Ziel wieder auf
+             (dieselbe Marke, bei der die Kopie wieder erscheint).
+         Beide Marken stehen oben in den Keyframes; sie sind hier
+         nicht geschaetzt, sondern abgelesen. */
+      try {
+        lcTonSpaeter("portaldunkel", Math.round(T(0.25) * dauer), 0.5);
+        lcTonSpaeter("portal", Math.round(T(0.835) * dauer), 0.55);
+      } catch (e) {}
     } else if (art === "mieze") {
       /* =============================================================
          RUNDE 75 — DIE KATZE MIT DEM WOLLKNAEUEL
@@ -46015,7 +46053,17 @@
       /* Und das Entweichen genau beim Loslassen (46 %) — aber nur
          beim Zickzack. Ein Heliumballon verliert keine Luft, der
          steigt einfach. */
-      if (!helium) lcTonSpaeter("luftraus", Math.round(0.46 * 4200), 0.6);
+      if (!helium) {
+        lcTonSpaeter("luftraus", Math.round(0.46 * 4200), 0.6);
+        /* RUNDE 99 — XANDER: „und bei dem Sound von dem Wegfliegen vom
+           Luftballon hast du dieses Quietschgeraeusch noch nicht, das
+           koennte dazu addiert werden."
+           Ein Ballon, den man loslaesst, macht beides: die Luft faehrt
+           heraus UND der Hals quietscht dabei. Das Quietschen liegt
+           deshalb 180 ms nach dem Loslassen und etwas leiser — es
+           gehoert zum Entweichen, nicht daneben. */
+        lcTonSpaeter("quietschen", Math.round(0.46 * 4200) + 180, 0.45);
+      }
     }, 4200, "luftballon");
   }
 

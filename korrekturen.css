@@ -12664,12 +12664,20 @@ code, pre {
   20%  { opacity: 1; transform: translateY(-6%) rotate(3deg); }
   22%, 100% { opacity: 0; transform: translateY(-6%) rotate(3deg); }
 }
+/* RUNDE 99 — XANDER: „bei dem Ei hast du immer noch zu kleine
+   Eihaelften, weil es faengt von einem grossen Ei an und es ist dann
+   ploetzlich klein geoeffnet."
+   NACHGERECHNET: das ganze Ei ist 26 % breit, die Haelften waren 22 %
+   — also 15 % schmaler, obwohl beide Zeichnungen dieselbe Breite
+   haben (40 Einheiten in der viewBox). Aus einem Ei von 26 % wurden
+   also Schalen von 22 %, und genau das sieht man. Jetzt sind sie
+   gleich breit, und die Schale passt zum Ei, aus dem sie kommt. */
 .lc-zei-schale {
   position: absolute;
   left: 50%;
   top: -26%;
-  width: 22%;
-  margin-left: -11%;
+  width: 26%;
+  margin-left: -13%;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .28));
   animation: lcEiSchale 3.8s cubic-bezier(.3, .7, .3, 1) both;
 }
@@ -17657,9 +17665,20 @@ code, pre {
    DIESELBE Schuettelbewegung dazu — sie gehoeren zu derselben Kugel
    und muessen sich mitbewegen. (Diese Regeln stehen absichtlich hier
    unten: weiter oben wuerden sie von den Einzelregeln ueberschrieben.) */
+/* RUNDE 99 — EINE EINHEIT, EINE BEWEGUNG.
+   XANDER: „Schau bei der Schneekugel, dass sich die Glaskugel nicht vom
+   Sockel wegwackelt und beide Einheiten unterschiedlich schuetteln,
+   sondern das soll eine Einheit schuetteln."
+   Glas und Sockel hatten jedes seine eigene Schuettelbewegung — zwei
+   Animationen, die schon bei einem halben Bild Versatz gegeneinander
+   arbeiten. Das Schuetteln sitzt jetzt auf der ganzen Schicht
+   (.lc-sk-schuettelt), in der Glas, Sockel, Landschaft und Schnee
+   zusammen liegen. Hier bleibt nur das Ein- und Ausblenden. */
 .lc-sk-glas, .lc-sk-sockel {
-  animation: lcSkSockelR80 7.2s ease-out both,
-             lcSchuettelnR29 1.45s cubic-bezier(.36, .07, .19, .97) both;
+  animation: lcSkSockelR80 7.2s ease-out both;
+}
+.lc-schneekugel.lc-sk-schuettelt {
+  animation: lcSchuettelnR29 1.45s cubic-bezier(.36, .07, .19, .97) both;
 }
 @media (prefers-reduced-motion: reduce) {
   .lc-geschuettelt { animation: none; }
@@ -29876,10 +29895,16 @@ code, pre {
 .lc-mario { z-index: 9; }
 /* Die Kappe sitzt AUF dem Bild, nicht darin: das Profilbild bleibt
    unangetastet, sie deckt nur den oberen Rand. */
+/* RUNDE 99 — XANDER: „Die Muetze von Mario kann etwas hoeher auf dem
+   Profilbild sitzen, dass man ein bisschen sieht, dass Mario gemeint
+   sein soll mit dem Spiel."
+   Sie sass bei -6 % und verschwand damit fast im Bild. Bei -22 % steht
+   sie deutlich darueber — man sieht das rote M, bevor man den Kopf
+   sieht. */
 .lc-mario-kappe {
   position: absolute;
   left: 50%;
-  top: -6%;
+  top: -22%;
   width: 78%;
   height: 44%;
   transform: translateX(-50%);
