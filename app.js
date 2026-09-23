@@ -51359,6 +51359,12 @@
 
   function lcRatenTafel(n, zeile) {
     const satz = String(n.raten || "");
+    /* RUNDE 98 — die Kennung dieser Aufgabe wird GLEICH gebraucht:
+       die Runde wird je Aufgabenzeile gefragt (LiveChat.dranZu), nicht
+       mehr nur allgemein. Sonst stand auf einem Geraet, das die
+       Aufgabe nie bekommen hat, fuer immer der Name vom Anfang.
+       XANDER: „das Aufdecken muss auf allen Seiten funktionieren." */
+    const meineAufgabeId = String(n.aufgabeId || n.id || "");
     const kasten = document.createElement("div");
     kasten.className = "lc-betonung lc-raten";
 
@@ -51376,8 +51382,11 @@
     dranZeile.className = "lc-raten-dran";
     const dranZeigen = () => {
       let wer = "";
-      try { wer = (LiveChat.werIstDran && LiveChat.werIstDran()) || String(n.dran || ""); }
-      catch (e) { wer = String(n.dran || ""); }
+      try {
+        wer = (LiveChat.dranZu && LiveChat.dranZu(meineAufgabeId))
+          || (LiveChat.werIstDran && LiveChat.werIstDran())
+          || String(n.dran || "");
+      } catch (e) { wer = String(n.dran || ""); }
       if (!wer) { dranZeile.style.display = "none"; return; }
       let ich = "";
       try { ich = (LiveChat.lage() || {}).ichName || ""; } catch (e) {}
@@ -51500,7 +51509,7 @@
        auch am Kasten, damit sich von aussen nachsehen laesst, welche
        Tafel gerade welche Aufgabe meint — sonst ist „diese Runde ist
        vorbei" nicht nachpruefbar. */
-    const meineId = String(n.aufgabeId || n.id || "");
+    const meineId = meineAufgabeId;
     kasten.dataset.aufgabeId = meineId;
     const standJetzt = () => {
       try { return (LiveChat.aufgabeStand && LiveChat.aufgabeStand()) || { offen: false }; }
@@ -51521,8 +51530,11 @@
       let ich = "";
       try { ich = (LiveChat.lage() || {}).ichName || ""; } catch (e) {}
       let wer = "";
-      try { wer = (LiveChat.werIstDran && LiveChat.werIstDran()) || String(n.dran || ""); }
-      catch (e) { wer = String(n.dran || ""); }
+      try {
+        wer = (LiveChat.dranZu && LiveChat.dranZu(meineAufgabeId))
+          || (LiveChat.werIstDran && LiveChat.werIstDran())
+          || String(n.dran || "");
+      } catch (e) { wer = String(n.dran || ""); }
       if (!wer || !ich) return true;           /* ohne Runde darf jeder */
       return wer.trim().toLowerCase() === ich.trim().toLowerCase();
     };
@@ -85131,6 +85143,11 @@ An einem Morgen lief ein kleiner Fuchs los…
       /* Runde 54: die Lesetafel einzeln aufrufbar — sonst liesse sich
          die Benotung nur mit einer echten Nachricht pruefen. */
       lesetafel: (n, z) => lcLeseTafel(n, z),
+      /* RUNDE 98 — die Aufdeck-Tafel von aussen bauen. XANDER: „die
+         Felder, die keine Buchstaben enthalten, sollen genau dieselbe
+         Groesse haben." Das laesst sich nur messen, wenn man sie
+         stellen kann. */
+      ratentafel: (n, z) => lcRatenTafel(n, z),
       sprechFeldWeg: (knopf) => lcSprechFeldWeg(knopf),
       /* „von" kam dazu, als Fahren und Spielzug dazukamen: bei denen
          bewegt sich der ABSENDER, nicht der Genannte — ohne seinen

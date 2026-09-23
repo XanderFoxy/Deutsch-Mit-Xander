@@ -3753,7 +3753,18 @@ window.LiveChat = (function () {
     }
     /* Die Runde ist weitergerueckt. */
     if (n.art === "dran") {
-      if (!offeneAufgabe) return;
+      /* RUNDE 98 — AUCH WER DIE AUFGABE NICHT HAT, MERKT SICH, WER
+         DRAN IST.
+         XANDER: „das Aufdecken muss auf allen Seiten funktionieren."
+         GEFUNDEN: hier stand nur „if (!offeneAufgabe) return;". Wer
+         spaeter dazukam oder die Aufgabenzeile verpasst hatte, warf
+         jede Runden-Meldung weg — auf seinem Geraet stand dann fuer
+         immer der Name aus der Chatzeile, also der vom Anfang. Jetzt
+         wird die Runde je Aufgabenzeile gemerkt, auch ohne offene
+         Aufgabe; die Tafel fragt danach. */
+      var zidD = String(n.zeileId || "");
+      if (zidD) dranMerker[zidD] = String(n.name || "");
+      if (!offeneAufgabe) { melden(); return; }
       offeneAufgabe.dran = String(n.name || "");
       aufgabeMerken();
       melden();
@@ -6994,15 +7005,36 @@ window.LiveChat = (function () {
       return spielReihe().map(function (p) { return { id: p.id, name: p.name }; });
     } catch (e) { return []; }
   }
-  function naechsterDran(nachId) {
+  /* RUNDE 98 — REIHUM HEISST REIHUM.
+     XANDER (23.09.2026): „das muss wirklich reihum funktionieren in
+     einer logischen Reihenfolge von den Leuten, die da sind."
+     Diese Suche nimmt jetzt eine KENNUNG ODER EINEN NAMEN. Gebraucht
+     wird beides: die Runde merkt sich, WER dran ist, und das ist ein
+     Name; wer antwortet, kommt aber als Kennung herein. */
+  function naechsterDran(nach) {
     var reihe = rundeNamen();
     if (!reihe.length) return "";
-    var i = reihe.findIndex(function (p) { return p.id === nachId; });
+    var schluessel = String(nach || "").trim().toLowerCase();
+    var i = reihe.findIndex(function (p) {
+      return String(p.id).toLowerCase() === schluessel
+          || String(p.name || "").trim().toLowerCase() === schluessel;
+    });
     return reihe[(i + 1) % reihe.length].name;
   }
+  function nameZuId(id) {
+    var reihe = rundeNamen();
+    for (var i = 0; i < reihe.length; i++) {
+      if (reihe[i].id === id) return reihe[i].name || "";
+    }
+    return "";
+  }
+  /* RUNDE 98 — wer bei WELCHER Aufgabenzeile gerade dran ist. Auch
+     auf Geraeten ohne offene Aufgabe (siehe den Empfang von „dran"). */
+  var dranMerker = {};
   function dranSetzen(name) {
     if (!offeneAufgabe) return false;
     offeneAufgabe.dran = String(name || "");
+    if (offeneAufgabe.zeileId) dranMerker[offeneAufgabe.zeileId] = offeneAufgabe.dran;
     aufgabeMerken();
     senden({ art: "dran", zeileId: offeneAufgabe.zeileId || "", name: offeneAufgabe.dran });
     melden();
@@ -7718,10 +7750,27 @@ window.LiveChat = (function () {
     /* Beim Aufdecken laeuft die Runde weiter, sobald jemand geraten
        hat — und zwar nur auf dem Geraet, das die Aufgabe gestellt
        hat. Von dort geht ein Ruf an alle. */
+    /* =================================================================
+       RUNDE 98 — WER DAZWISCHENRUFT, DREHT DIE RUNDE NICHT WEITER
+       -----------------------------------------------------------------
+       XANDER: „das muss wirklich reihum funktionieren in einer
+       logischen Reihenfolge von den Leuten, die da sind."
+       GEMESSEN, vorher: die Reihe war Alex → Bea → Cem → Dana. Dana
+       war dran, Bea rief dazwischen — und weitergezaehlt wurde von
+       BEA aus, also auf Cem. Dana kam nie an die Reihe, und die
+       Reihenfolge sprang.
+       JETZT: weitergezaehlt wird von dem, der DRAN WAR. Und wer nicht
+       dran ist, dreht gar nichts weiter — er darf mitraten, die
+       Reihe bleibt aber stehen, bis der Richtige antwortet.
+       ================================================================= */
     var rundeWeiter = function () {
-      if (offeneAufgabe && offeneAufgabe.typ === "raten" && offeneAufgabe.vonMir) {
-        try { dranSetzen(naechsterDran(von)); } catch (e) {}
+      if (!(offeneAufgabe && offeneAufgabe.typ === "raten" && offeneAufgabe.vonMir)) return;
+      var dran = String(offeneAufgabe.dran || "").trim();
+      if (dran) {
+        var werName = nameZuId(von);
+        if (werName && werName.trim().toLowerCase() !== dran.toLowerCase()) return;
       }
+      try { dranSetzen(naechsterDran(dran || von)); } catch (e) {}
     };
     /* Eine Aufgabe in eigenen Worten hat keine Musterloesung. Dort ist
        die ERSTE Zeile nach der Aufgabe die Antwort — danach plaudert
@@ -13823,6 +13872,17 @@ window.LiveChat = (function () {
        Waehler, gelesen werden sie hier. */
     /* Wer ist gerade dran? Die Oberflaeche schreibt es an die Tafel. */
     werIstDran: function () { return (offeneAufgabe && offeneAufgabe.dran) || ""; },
+    /* RUNDE 98 — und wer bei GENAU DIESER Aufgabenzeile dran ist.
+       Die Tafel im Chat fragt danach: so stimmt der Name auch auf
+       einem Geraet, das die Aufgabe selbst nie bekommen hat. */
+    dranZu: function (zeileId) {
+      var zid = String(zeileId || "");
+      if (zid && dranMerker[zid]) return dranMerker[zid];
+      if (offeneAufgabe && (!zid || offeneAufgabe.zeileId === zid)) {
+        return offeneAufgabe.dran || "";
+      }
+      return "";
+    },
     lieder: function () { return LIEDER.map(function (l) {
       return { datei: l.datei, titel: l.titel }; }); },
     tonWacheStand: function () { return { geheilt: tonWacheZaehler.geheilt,
