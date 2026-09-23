@@ -127,7 +127,18 @@ const zeilen = [];
     const bleibtErlaubt = [".lc-kopfhoerer", ".lc-sprayfarbe", ".lc-kleid", ".lc-hschaden",
       /* RUNDE 98 — das zerschlagene Bild und sein Scherbenhaufen
          bleiben ebenfalls absichtlich liegen, bis „/pflaster" kommt. */
-      ".lc-zerschlagen", ".lc-scherbenhaufen"];
+      ".lc-zerschlagen", ".lc-scherbenhaufen",
+      /* RUNDE 98 — UND DER DRECK BLEIBT AUCH LIEGEN.
+         XANDER (23.09.2026): „saemtlicher Dreck, der erzeugt wird wie
+         durch die Vogelkacke oder irgendwas anderes — das koennen wir
+         wieder sauber putzen … dann ist es insgesamt viel witziger."
+         Bis Runde 98 war Dreck ein Effekt, der von selbst wieder ging;
+         genau das hat er abbestellt. Diese Sonde hat den Vogelkot
+         danach als Rueckstand gemeldet („3 Bausteine mehr") — also
+         genau das, was er bestellt hat. Dass der Dreck wirklich
+         liegenbleibt UND sich wegputzen laesst, misst
+         werkzeug/pruefe-runde98-putzen.js. */
+      ".lc-dreckschicht"];
     let erlaubt = 0;
     bleibtErlaubt.forEach((wahl) => {
       reihe2.querySelectorAll(wahl).forEach((el) => {
