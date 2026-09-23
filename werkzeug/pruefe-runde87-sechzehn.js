@@ -84,7 +84,9 @@ const sage = (gut, text, dazu) => {
         gestrichelt: st ? st.borderStyle : "-",
         hatNummer: plaetze.every((p) => p.querySelector(".lc-nummer")),
         hatName: plaetze.every((p) => p.querySelector(".lc-platz-name")),
-        /* Und die Reihen: bei 16 muessen es acht je Reihe sein. */
+        /* Und die Reihen: bei 16 muessen es VIER je Reihe sein
+           (Runde 99 — „oben vier, darunter vier, dann noch mal vier
+           und darunter auch noch mal vier"). */
         reihen: (() => {
           const y = plaetze.map((p) => Math.round(p.getBoundingClientRect().top));
           return [...new Set(y)].length;
@@ -102,7 +104,14 @@ const sage = (gut, text, dazu) => {
 
     sage(vorher.wieViele === 8, "Vorher acht Plätze", vorher.wieViele + "");
     sage(nachher.wieViele === 16, "Danach sechzehn", nachher.wieViele + "");
-    sage(nachher.reihen === 2, "In zwei Reihen wie vorher", nachher.reihen + " Reihen");
+    /* RUNDE 99 — VIER STATT ZWEI REIHEN.
+       XANDER (23.09.2026): „beim Schiffe versenken hab ich dir nicht
+       gesagt, dass oben acht sein sollen und unten noch mal acht,
+       sondern es sollten oben vier, darunter vier, dann noch mal vier
+       und darunter auch noch mal vier."
+       Die alte Regel („in zwei Reihen wie vorher") stammt aus Runde
+       87 und war meine Auslegung, nicht seine Bestellung. */
+    sage(nachher.reihen === 4, "In vier Reihen zu vier", nachher.reihen + " Reihen");
     sage(Math.abs(nachher.oben - vorher.oben) <= 1,
       "Die OBERE Grenze der Zone bleibt, wo sie war",
       vorher.oben + " -> " + nachher.oben + " px");

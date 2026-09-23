@@ -197,14 +197,28 @@ const sage = (gut, text, dazu) => {
       const m = t.match(/matrix\(([-\d.]+), ([-\d.]+), ([-\d.]+), ([-\d.]+), ([-\d.]+), ([-\d.]+)/);
       return m ? { x: +(+m[5]).toFixed(1), y: +(+m[6]).toFixed(1) } : null;
     };
-    return { bild: teil(".lc-kreis"), glas: teil(".lc-sk-glas"), sockel: teil(".lc-sk-sockel"),
+    /* RUNDE 99 — NEU GEMESSEN, WEIL ER ES NEU BESTELLT HAT.
+       XANDER (23.09.2026): „Schau bei der Schneekugel, dass sich die
+       Glaskugel nicht vom Sockel wegwackelt und beide Einheiten
+       unterschiedlich schuetteln, sondern das soll EINE Einheit
+       schuetteln."
+       Bis Runde 98 trugen Bild, Glas und Sockel jedes seine eigene
+       Schuettelbewegung — drei Animationen, die schon bei einem
+       halben Bild Versatz gegeneinander arbeiten. Genau das hat er
+       gesehen. Jetzt schuettelt die ganze SCHICHT (in ihr liegen
+       Glas, Sockel, Landschaft und Schnee), und das Bild daneben mit
+       derselben Kurve. Glas und Sockel haben deshalb KEINE eigene
+       Bewegung mehr — sie zu suchen waere jetzt die falsche Frage.
+       Gemessen wird stattdessen das, was „eine Einheit" bedeutet:
+       die Schicht bewegt sich, und der Abstand zwischen Glas und
+       Sockel bleibt dabei gleich. */
+    return { bild: teil(".lc-kreis"), schicht: teil(".lc-schneekugel"),
              dauer: getComputedStyle(pl.querySelector(".lc-kreis")).animationDuration };
   });
   const bewegt = (a) => a && (Math.abs(a.x) > 0.3 || Math.abs(a.y) > 0.3);
-  sage(bewegt(kugel.bild) && bewegt(kugel.glas) && bewegt(kugel.sockel),
-    "Bild, Glas und Sockel werden zusammen geschuettelt",
-    JSON.stringify(kugel.bild) + " / " + JSON.stringify(kugel.glas)
-      + " / " + JSON.stringify(kugel.sockel));
+  sage(bewegt(kugel.bild) && bewegt(kugel.schicht),
+    "Bild und Kugel werden als EINE Einheit geschuettelt",
+    JSON.stringify(kugel.bild) + " / " + JSON.stringify(kugel.schicht));
   sage(/1\.45s/.test(kugel.dauer || ""),
     "und das Schuetteln dauert so lange wie das Geraeusch zu hoeren ist (1,45 s)",
     kugel.dauer);

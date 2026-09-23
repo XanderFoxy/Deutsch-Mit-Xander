@@ -211,14 +211,19 @@ pruefe("und sie bleiben auf dem Bildschirm",
 pruefe("die Birne dreht trocken statt zu quietschen",
   ton("birnedrehen") && gelistet("birnedrehen")
   && /gluehbirne:\s+\{ ton: "birnedrehen"/.test(js));
-/* RUNDE 98 — es quietscht jetzt an DREI Stellen, und die dritte hat
-   er selbst bestellt: „dann wischt man die Scheibe und dann quietscht
-   es so, damit man das Putzen [hoert]". Zwei davon sind die Bremse
-   (Fahren und gemeinsames Fahren), die dritte ist das Putzen. Was
-   weiterhin gilt: es quietscht nie SOFORT beim Ausloesen
-   (lcTonZu) — immer erst, wenn die Bewegung dort ankommt. */
-pruefe("es quietscht nur die Bremse und der Putzlappen \u2014 und nie zu frueh",
-  (js.match(/lcTonSpaeter\("quietschen"/g) || []).length === 3
+/* RUNDE 99 — es quietscht jetzt an VIER Stellen, und jede hat er
+   selbst bestellt:
+     · zweimal die Bremse (Fahren und gemeinsames Fahren),
+     · das Putzen — „dann wischt man die Scheibe und dann quietscht es
+       so, damit man das Putzen [hoert]" (Runde 98),
+     · und seit Runde 99 der Luftballon — „bei dem Sound von dem
+       Wegfliegen vom Luftballon hast du dieses Quietschgeraeusch noch
+       nicht, das koennte dazu addiert werden."
+   Was unveraendert gilt und der eigentliche Kern dieser Regel ist:
+   es quietscht nie SOFORT beim Ausloesen (lcTonZu) — immer erst
+   dann, wenn die Bewegung dort ankommt, wo es quietschen soll. */
+pruefe("es quietscht nur an den vier bestellten Stellen \u2014 und nie zu frueh",
+  (js.match(/lcTonSpaeter\("quietschen"/g) || []).length === 4
   && !/lcTonZu\("quietschen"\)/.test(js));
 pruefe("das Geld faellt schneller",
   /\(1\.9 \+ Math\.random\(\) \* 1\.4\)/.test(js)

@@ -31535,9 +31535,15 @@ code, pre {
    ausdruecklich still. Die Sonde werkzeug/pruefe-runde99-grundebene.js
    liest diese Regeln nach und misst sie am laufenden Bild.
    ===================================================================== */
-.lc-platz .lc-schild,
-.lc-platz .lc-schild::before,
-.lc-platz .lc-nummer {
+/* AUSGENOMMEN IST NUR DER MAULWURF — und zwar mit seinen eigenen
+   Worten: „die einzige Inkonsistenz, die mit den Profilplaetzen
+   passieren darf, ist das Durcheinander-Wirbeln der Leute, wenn ich da
+   durchgrabe." Dort KIPPT die Zahl absichtlich mit, und genau das misst
+   werkzeug/pruefe-runde88-maulwurf.js. Ohne diese Ausnahme haette ich
+   ihm mit der einen Regel die andere kaputtgemacht. */
+.lc-platz:not(.lc-platz-untergraben) .lc-schild,
+.lc-platz:not(.lc-platz-untergraben) .lc-schild::before,
+.lc-platz:not(.lc-platz-untergraben) .lc-nummer {
   animation: none !important;
   transition: none !important;
 }
