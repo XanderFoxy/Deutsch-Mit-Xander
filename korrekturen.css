@@ -13221,6 +13221,31 @@ code, pre {
    richten sich nach dem Ton: die Tuer rollt bis 0,50 s zu, die Glocke
    kommt bei 1,76 s, bei 2,00 s geht sie wieder auf.
    ===================================================================== */
+/* =====================================================================
+   DER FAHRSTUHL — RUNDE 85, NEU GEBAUT IN RUNDE 98
+   ---------------------------------------------------------------------
+   XANDER (Runde 98): „Der Fahrstuhl ist unlogisch, weil die Tueren von
+   einem Fahrstuhl niemals nach links und rechts sich erweitern. Sie
+   geht innerhalb des Rahmens auf, dann wird er auch nicht so riesig
+   der Fahrstuhl … Die Fahrstuhltuer geht auf und im Fahrstuhl ist das
+   Profilbild, wonach sich der Fahrstuhl dann leicht ausblendet und das
+   Profilbild wieder seinen Platz einnimmt."
+
+   DAS WAR DER FEHLER: die Tuerfluegel schoben sich um 96 % ihrer
+   Breite NACH AUSSEN, und nichts hat sie beschnitten — sie standen
+   also links und rechts neben der Kabine in der Luft. Eine echte
+   Fahrstuhltuer laeuft in die Wand. Deshalb liegt jetzt ein Rahmen mit
+   „overflow: hidden" darum, und die Fluegel fahren HINEIN.
+
+   DIE ZEITEN STEHEN IM TON. „fahrstuhl" ist gemessen:
+     0,00–0,50 s  die Tuer rollt zu, am Ende der Anschlag  (19 %)
+     0,56–1,76 s  die Fahrt — hier zaehlt die Anzeige
+     1,76 s       die Glocke (dazu das „bling")
+     2,00 s       die Tuer geht auf                        (77 %)
+     2,30 s       sie steht offen                          (88 %)
+   Ein Keyframe-Anteil laesst sich nicht rechnen — deshalb stehen die
+   Prozente ausgeschrieben, mit der Rechnung daneben.
+   ===================================================================== */
 .lc-lift {
   position: absolute;
   width: var(--gross, 84px);
@@ -13228,50 +13253,82 @@ code, pre {
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 9;
-  animation: lcLiftDaR85 var(--zeit, 2600ms) linear both;
+  animation: lcLiftDaR98 var(--zeit, 2600ms) linear both;
 }
-/* Die Kabine am Ziel steht erst da, wenn der Fahrstuhl ankommt. */
-.lc-lift-ziel { animation-name: lcLiftZielR85; }
-@keyframes lcLiftDaR85 {
+/* Die Kabine am Ziel steht von Anfang an da — mit geschlossener Tuer
+   und mitlaufender Anzeige: „auf der anderen Seite soll die Zahl
+   genauso am steigen sein." Vorher tauchte sie erst bei 56 % auf, da
+   war vom Zaehlen nichts mehr zu sehen. */
+.lc-lift-ziel { animation-name: lcLiftZielR98; }
+@keyframes lcLiftDaR98 {
   0%   { opacity: 0; }
   6%   { opacity: 1; }
-  88%  { opacity: 1; }
-  100% { opacity: 0; }
+  100% { opacity: 1; }
 }
-@keyframes lcLiftZielR85 {
-  0%, 56%  { opacity: 0; }
-  62%      { opacity: 1; }
-  100%     { opacity: 1; }
+@keyframes lcLiftZielR98 {
+  0%   { opacity: 0; }
+  8%   { opacity: 1; }
+  100% { opacity: 1; }
 }
-/* Der Kasten: der Schacht hinter den Tueren. */
-.lc-lift-kasten {
+/* DER RAHMEN. Er ist der Tuerausschnitt in der Wand, und er
+   BESCHNEIDET alles: Kabine, Bild und Tuerfluegel. Nichts von alledem
+   kann mehr seitlich herausstehen. */
+.lc-lift-rahmen {
   position: absolute;
   inset: 8% 2% 2%;
-  border-radius: 6px;
-  background: linear-gradient(180deg, #2b3140, #171b25);
-  box-shadow: inset 0 0 0 2px #4a5262, 0 3px 7px rgba(0, 0, 0, .4);
+  border-radius: 7px;
+  overflow: hidden;
+  display: block;
 }
-/* Die beiden Tuerfluegel. Sie stehen offen und fahren zusammen —
-   am Ziel andersherum. */
+/* Der Kasten: der dunkle Schacht hinter den Tueren. */
+.lc-lift-kasten {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #2b3140, #171b25);
+}
+/* IM FAHRSTUHL IST DAS PROFILBILD. Eine Abschrift des Kreises, rund,
+   mittig in der Kabine — die Tueren gehen davor zu und davor auf. */
+.lc-lift-bild {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 74%;
+  height: 74%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .18),
+              0 4px 10px rgba(0, 0, 0, .45);
+}
+.lc-lift-bild .lc-kreis {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  display: block;
+}
+.lc-lift-bild img { width: 100%; height: 100%; object-fit: cover; }
+/* Die beiden Tuerfluegel. Jeder ist halb so breit wie der Rahmen und
+   faehrt um seine EIGENE Breite in die Wand — innerhalb des Rahmens,
+   der ihn abschneidet. */
 .lc-lift-tuer {
   position: absolute;
-  top: 8%;
-  bottom: 2%;
-  width: 49%;
+  top: 0;
+  bottom: 0;
+  width: 50%;
   background:
     repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 3px,
                               rgba(0,0,0,.05) 3px 6px),
     linear-gradient(180deg, #c3ccd8, #8d97a6);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35);
 }
-.lc-lift-tuer-l { left: 2%; border-radius: 6px 0 0 6px; }
-.lc-lift-tuer-r { right: 2%; border-radius: 0 6px 6px 0; }
+.lc-lift-tuer-l { left: 0; }
+.lc-lift-tuer-r { right: 0; }
 /* Der feine Spalt in der Mitte, damit man sieht, wo sie sich treffen. */
 .lc-lift-spalt {
   position: absolute;
   left: 50%;
-  top: 10%;
-  bottom: 4%;
+  top: 0;
+  bottom: 0;
   width: 2px;
   margin-left: -1px;
   background: rgba(20, 26, 38, .55);
@@ -13281,40 +13338,72 @@ code, pre {
 @keyframes lcLiftSpaltR85 {
   0%   { opacity: 0; }
   22%  { opacity: 1; }
-  80%  { opacity: 1; }
-  92%, 100% { opacity: 0; }
+  74%  { opacity: 1; }
+  80%, 100% { opacity: 0; }
 }
-/* Am START gehen die Tueren ZU (bis --zu), am ZIEL gehen sie
-   AUF (ab --auf). Die Wege sind gleich, nur die Richtung nicht. */
-.lc-lift-start .lc-lift-tuer-l { animation: lcLiftZuLinksR85 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
-.lc-lift-start .lc-lift-tuer-r { animation: lcLiftZuRechtsR85 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
-.lc-lift-ziel  .lc-lift-tuer-l { animation: lcLiftAufLinksR85 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
-.lc-lift-ziel  .lc-lift-tuer-r { animation: lcLiftAufRechtsR85 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
-/* DIE ZAHLEN KOMMEN AUS DEM TON, nicht aus dem Gefuehl. Die Fahrt
-   dauert 2600 ms (lcReise, „grund"), und die Aufnahme „fahrstuhl"
-   ist gemessen:
-     0,50 s = 19 %   die Tuer ist zu (dort sitzt der Anschlag)
-     2,00 s = 77 %   die Tuer geht wieder auf
-     2,30 s = 88 %   sie steht offen
-   Ein Keyframe-Anteil laesst sich nicht rechnen — deshalb stehen die
-   Prozente hier ausgeschrieben, mit der Rechnung daneben. */
-@keyframes lcLiftZuLinksR85 {
-  0%   { transform: translateX(-96%); }
+/* Die Zarge: der helle Rand um den Ausschnitt. Sie liegt UEBER den
+   Fluegeln, damit die Kante sauber bleibt. */
+.lc-lift-rand {
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 2px #4a5262;
+}
+/* Am START gehen die Tueren ZU, am ZIEL gehen sie AUF. */
+.lc-lift-start .lc-lift-tuer-l { animation: lcLiftZuLinksR98 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
+.lc-lift-start .lc-lift-tuer-r { animation: lcLiftZuRechtsR98 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
+.lc-lift-ziel  .lc-lift-tuer-l { animation: lcLiftAufLinksR98 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
+.lc-lift-ziel  .lc-lift-tuer-r { animation: lcLiftAufRechtsR98 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both; }
+@keyframes lcLiftZuLinksR98 {
+  0%   { transform: translateX(-100%); }
   19%  { transform: translateX(0); }
   100% { transform: translateX(0); }
 }
-@keyframes lcLiftZuRechtsR85 {
-  0%   { transform: translateX(96%); }
+@keyframes lcLiftZuRechtsR98 {
+  0%   { transform: translateX(100%); }
   19%  { transform: translateX(0); }
   100% { transform: translateX(0); }
 }
-@keyframes lcLiftAufLinksR85 {
+@keyframes lcLiftAufLinksR98 {
   0%, 77% { transform: translateX(0); }
-  88%, 100% { transform: translateX(-96%); }
+  88%, 100% { transform: translateX(-100%); }
 }
-@keyframes lcLiftAufRechtsR85 {
+@keyframes lcLiftAufRechtsR98 {
   0%, 77% { transform: translateX(0); }
-  88%, 100% { transform: translateX(96%); }
+  88%, 100% { transform: translateX(100%); }
+}
+/* UND DANN BLENDET SICH DER FAHRSTUHL AUS, NICHT DAS BILD.
+   „wonach sich der Fahrstuhl dann leicht ausblendet und das
+   Profilbild wieder seinen Platz einnimmt."
+   Deshalb liegt die Blende auf der KABINE, den Tueren, der Zarge und
+   der Anzeige — und ausdruecklich NICHT auf .lc-lift-bild. Das Bild
+   bleibt stehen, bis die Sitzreihe es wieder an seinem Platz zeigt. */
+.lc-lift-ziel .lc-lift-kasten,
+.lc-lift-ziel .lc-lift-rand,
+.lc-lift-ziel .lc-lift-anzeige {
+  animation: lcLiftWegR98 var(--zeit, 2600ms) linear both;
+}
+.lc-lift-ziel .lc-lift-tuer-l {
+  animation: lcLiftAufLinksR98 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both,
+             lcLiftWegR98 var(--zeit, 2600ms) linear both;
+}
+.lc-lift-ziel .lc-lift-tuer-r {
+  animation: lcLiftAufRechtsR98 var(--zeit, 2600ms) cubic-bezier(.4, 0, .3, 1) both,
+             lcLiftWegR98 var(--zeit, 2600ms) linear both;
+}
+@keyframes lcLiftWegR98 {
+  0%, 90% { opacity: 1; }
+  100%    { opacity: 0; }
+}
+/* Die Kabine am START verschwindet, sobald der Fahrstuhl weg ist —
+   dort sitzt ja niemand mehr. */
+.lc-lift-start .lc-lift-rahmen,
+.lc-lift-start .lc-lift-anzeige {
+  animation: lcLiftStartWegR98 var(--zeit, 2600ms) linear both;
+}
+@keyframes lcLiftStartWegR98 {
+  0%, 74% { opacity: 1; }
+  88%, 100% { opacity: 0; }
 }
 /* Die Anzeige ueber der Tuer: Pfeil und Stockwerk, in Ziffern wie an
    einem echten Fahrstuhl. */
@@ -13333,6 +13422,7 @@ code, pre {
   font: 700 calc(var(--gross, 84px) * .17) / 1.3 "DS-Digital", "Courier New", monospace;
   color: #7ef2a8;
   text-shadow: 0 0 5px rgba(126, 242, 168, .8);
+  z-index: 2;
 }
 .lc-lift-pfeil { font-size: .8em; opacity: .9; }
 @media (prefers-reduced-motion: reduce) {

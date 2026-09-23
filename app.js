@@ -40409,16 +40409,62 @@
            1,76 s       die Glocke, 2,00 s die Tuer geht auf
          Die Zeichnung haelt sich daran, sonst hoert man eine Tuer und
          sieht keine. */
+      /* =================================================================
+         RUNDE 98 — DER FAHRSTUHL NOCH EINMAL VON VORN
+         -----------------------------------------------------------------
+         XANDER: „Der Fahrstuhl ist unlogisch, weil die Tueren von einem
+         Fahrstuhl niemals nach links und rechts sich erweitern. Sie geht
+         innerhalb des Rahmens auf, dann wird er auch nicht so riesig der
+         Fahrstuhl, und er soll realistisch zaehlen: auf der einen Seite,
+         wo man losfaehrt, soll die Zahl steigen, solange bleiben die
+         Tueren zu, und auf der anderen Seite soll die Zahl genauso am
+         steigen sein und dann dieses Blink-Geraeusch geben. Die
+         Fahrstuhltuer geht auf, und im Fahrstuhl ist das Profilbild,
+         wonach sich der Fahrstuhl dann leicht ausblendet und das
+         Profilbild wieder seinen Platz einnimmt."
+
+         VIER FEHLER, EINZELN BEHOBEN:
+          1 DIE TUEREN WUCHSEN AUS DEM RAHMEN HERAUS. Sie schoben sich um
+            96 % ihrer Breite nach aussen — und weil nichts sie beschnitt,
+            standen sie links und rechts NEBEN der Kabine. Eine echte
+            Fahrstuhltuer laeuft in die Wand. Jetzt liegt ein Rahmen mit
+            „overflow: hidden" darum: die Fluegel fahren hinein und sind
+            weg, ohne dass irgendetwas breiter wird.
+          2 ER WAR ZU GROSS: 1,30 × Platzbreite. Jetzt 1,06 — die Kabine
+            deckt das Bild, mehr nicht.
+          3 IM FAHRSTUHL WAR NICHTS DRIN. Jetzt steckt in BEIDEN Kabinen
+            eine Abschrift des Profilbildes: am Start schliessen sich die
+            Tueren davor, am Ziel gehen sie davor auf.
+          4 DIE GLOCKE WAR NUR IN DER AUFNAHME. Jetzt liegt zusaetzlich
+            das kurze „bling" genau auf dem Moment, in dem die Tuer
+            aufgeht — das ist sein „Blink-Geraeusch".
+         ================================================================= */
+      /* Die Abschrift des Profilbildes. Video und Stummzeichen fliegen
+         heraus: ein zweiter Videostrom waere nur Ballast, und das
+         Stummzeichen gehoert an den Platz, nicht in den Fahrstuhl. */
+      const liftBild = () => {
+        const k = ab.el.querySelector(".lc-kreis");
+        if (!k) return "";
+        const kopie = k.cloneNode(true);
+        kopie.querySelectorAll("video, .lc-stumm").forEach((x) => x.remove());
+        kopie.removeAttribute("id");
+        return '<span class="lc-lift-bild">' + kopie.outerHTML + "</span>";
+      };
       [start, ende].forEach((wo, i) => {
         const lift = document.createElement("span");
         lift.className = "lc-lift" + (i ? " lc-lift-ziel" : " lc-lift-start");
-        lift.style.setProperty("--gross", (d * 1.3) + "px");
+        /* „dann wird er auch nicht so riesig der Fahrstuhl." */
+        lift.style.setProperty("--gross", (d * 1.06) + "px");
         lift.style.setProperty("--zeit", hin + "ms");
         lift.innerHTML =
-          '<i class="lc-lift-kasten"></i>'
+          '<i class="lc-lift-rahmen">'
+          + '<i class="lc-lift-kasten"></i>'
+          + liftBild()
           + '<i class="lc-lift-tuer lc-lift-tuer-l"></i>'
           + '<i class="lc-lift-tuer lc-lift-tuer-r"></i>'
           + '<i class="lc-lift-spalt"></i>'
+          + '<i class="lc-lift-rand"></i>'
+          + "</i>"
           + '<span class="lc-lift-anzeige">'
           + '<b class="lc-lift-pfeil">' + (zu.nr > ab.nr ? "\u25bc" : "\u25b2") + "</b>"
           + '<b class="lc-lift-zahl">' + ab.nr + "</b></span>";
@@ -40441,6 +40487,10 @@
         }, 520 + k * liftTakt);
       }
       lcTonZu("fahrstuhl");
+      /* „und dann dieses Blink-Geraeusch geben. Die Fahrstuhltuer geht
+         auf." Die Tuer geht bei 77 % von 2600 ms auf, also bei 2002 ms;
+         das Glockchen kommt einen Wimpernschlag davor. */
+      lcTonSpaeter("bling", Math.round(hin * 0.75), 0.55);
     } else if (art === "beamen") {
       /* „Das muss wirklich wie bei Star Trek und ein schoener
          Beameffekt sein." Zwei Saeulen: eine loest sich hier auf, die
