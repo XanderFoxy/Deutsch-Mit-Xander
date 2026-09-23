@@ -44989,8 +44989,9 @@
         zufaellig ablaufen"). Dreimal dasselbe hintereinander gibt es
         nicht. Beides raeumt sie von der Buehne. Ohne gezeichneten Weg
         gibt es keine Gegner — er geht dann gar nicht ueber Besetzte.
-        KEIN SCHREI dabei: nur die Spielgeraeusche „mariostampf" und
-        „mariokick".
+        Dazu die Spielgeraeusche „mariostampf" und „mariokick" — und
+        LEISE hinterher der Schrei: „Meinetwegen kannst du den Schrei
+        mit dazu bringen aber diese Sounds sollen mit vorhanden sein."
      4b DAS GEHEIME FELD liegt ueber einem LEEREN Platz — dort, wo nichts
         zu sehen ist. Einmal pro Lauf kann Mario dort einen versteckten
         Fragezeichenstein aufschlagen; heraus kommt die FEUERBLUME
@@ -45187,8 +45188,8 @@
     });
 
     /* --- WER GEGNER IST --------------------------------------------
-       Nur auf einem gezeichneten Weg, und abwechselnd draufspringen
-       und wegkicken. */
+       Nur auf einem gezeichneten Weg; ob draufgesprungen oder
+       weggekickt wird, wuerfelt er aus (Runde 98). */
     const gegner = [];
     if (gezeichnet) {
       bahn.forEach((g, i) => {
@@ -45363,13 +45364,18 @@
            springt auf dem Panzer von so einer Schildkroete oder man
            kickt den Gegner weg, das sollen dann die typischen Sounds
            wie bei Mario sein."
-           Hier stand bis eben noch lcStimmeZu(… „schreimann",
-           „schreifrau" …) — also GENAU der Schrei, den er zweimal
-           abbestellt hat. Er ist raus. Uebrig bleibt nur das
-           Spielgeraeusch. */
+           Deshalb kommt das SPIELGERAEUSCH zuerst und laut. */
         lcGeraeusch(f.wie === "kick" ? "mariokick"
                     : f.wie === "feuer" ? "mariofeuer" : "mariostampf",
                     "mariogegner", 0.6);
+        /* RUNDE 98 — XANDER, ZWEITER SATZ IN DERSELBEN DIKTAT-ZEILE:
+           „Meinetwegen kannst du den Schrei mit dazu bringen aber diese
+           Sounds sollen mit vorhanden sein."
+           Also kommt der Schrei zurueck — aber NACH dem Spielgeraeusch
+           und deutlich leiser (0,34 statt 0,6), damit „mariostampf" und
+           „mariokick" oben liegen. Genau so steht es in seiner Zeile:
+           erst die Mario-Sounds, der Schrei nur „meinetwegen" dazu. */
+        lcStimmeZu(f.platz.el, "schreimann", "schreifrau", 220, 0.34);
         /* Von der Buehne geht nur, wer es auf SEINEM Geraet erfaehrt. */
         try {
           const l = LiveChat.lage() || {};

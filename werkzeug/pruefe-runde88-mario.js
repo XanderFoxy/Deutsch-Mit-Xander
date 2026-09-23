@@ -236,43 +236,75 @@ const breite = (m) => {
   }
 
   console.log("\nGEZEICHNETER WEG: DIE BESETZTEN SIND GEGNER\n");
-  await laufen("0.5", "5-1-2-3");
-  /* NACHSEHEN, SOLANGE ES LAEUFT. Jede Behandlung dauert 1,5 s und
-     wird danach wieder abgeraeumt — wer erst am Ende hinsieht, findet
-     beim ersten Gegner nichts mehr und haelt es faelschlich fuer einen
-     Fehler. Deshalb wird waehrend des Laufs mitgeschrieben. */
-  const gesehen = { 1: "", 2: "", 3: "" };
-  for (let i = 0; i < 26; i++) {
-    await pg.waitForTimeout(110);
-    const jetzt = await pg.evaluate(() => {
-      const raus = {};
-      ["1", "2", "3"].forEach((n) => {
-        const k = document.querySelector('.lc-platz[data-lc-platz="' + n + '"] .lc-kreis');
-        raus[n] = k ? k.className : "";
+  /* EIN LAUF UEBER DIE DREI BESETZTEN, MITGESCHRIEBEN WAEHREND ER LAEUFT.
+     Jede Behandlung dauert 1,5 s und wird danach wieder abgeraeumt — wer
+     erst am Ende hinsieht, findet beim ersten Gegner nichts mehr und
+     haelt es faelschlich fuer einen Fehler. */
+  const gegnerLauf = async (los) => {
+    await laufen(los, "5-1-2-3");
+    const gesehen = { 1: "", 2: "", 3: "" };
+    for (let i = 0; i < 26; i++) {
+      await pg.waitForTimeout(110);
+      const jetzt = await pg.evaluate(() => {
+        const raus = {};
+        ["1", "2", "3"].forEach((n) => {
+          const k = document.querySelector('.lc-platz[data-lc-platz="' + n + '"] .lc-kreis');
+          raus[n] = k ? k.className : "";
+        });
+        return raus;
       });
-      return raus;
-    });
-    ["1", "2", "3"].forEach((n) => {
-      if (!gesehen[n] && /lc-mario-(geplaettet|gekickt)/.test(jetzt[n])) gesehen[n] = jetzt[n];
-    });
-  }
-  const gegner = {
-    plaetze: ["1", "2", "3"].map((n) => ({ nr: n, k: gesehen[n] })),
-    toene: await pg.evaluate(() => window.__toene || []),
+      ["1", "2", "3"].forEach((n) => {
+        if (!gesehen[n] && /lc-mario-(geplaettet|gekickt)/.test(jetzt[n])) gesehen[n] = jetzt[n];
+      });
+    }
+    return {
+      plaetze: ["1", "2", "3"].map((n) => ({ nr: n, k: gesehen[n] })),
+      toene: await pg.evaluate(() => window.__toene || []),
+    };
   };
-  const behandelt = gegner.plaetze.filter((p) => /lc-mario-(geplaettet|gekickt)/.test(p.k));
-  sage(behandelt.length === 3,
+
+  /* RUNDE 98 — XANDER: „Die Sachen sollen bisschen zufaellig ablaufen,
+     dass er manchmal jemanden kickt und manchmal jemanden durch drauf
+     springen erledigt."
+     Bis Runde 98 stand hier die alte Regel aus Runde 88: die Folge
+     musste GENAU „sks" sein, also stur abwechselnd. Genau das hat er
+     jetzt abbestellt — abwechselnd ist nicht zufaellig. Eine einzelne
+     Folge beweist aber gar nichts, deshalb laufen ZEHN Laeufe mit
+     verschiedenen „los"-Werten (das ist der Wuerfelstart, der mit der
+     Nachricht mitreist). Gemessen wird dreierlei:
+       a) in jedem Lauf wird jeder Besetzte erledigt,
+       b) ueber alle Laeufe kommen BEIDE Arten vor und es ist nicht
+          jedes Mal dieselbe Folge (sonst waere es wieder fest),
+       c) innerhalb eines Laufs nie dreimal dasselbe hintereinander —
+          das ist seine alte Hammer-Regel, die er nie zurueckgenommen
+          hat. */
+  const gegnerFolgen = [];
+  let gegner = null;
+  for (let i = 0; i < 10; i++) {
+    gegner = await gegnerLauf((0.07 + i * 0.0931).toFixed(4));
+    gegnerFolgen.push(gegner.plaetze.map((p) => /geplaettet/.test(p.k) ? "s"
+      : /gekickt/.test(p.k) ? "k" : "-").join(""));
+  }
+  sage(gegnerFolgen.every((f) => !/-/.test(f)),
     "auf dem gezeichneten Weg wird jeder Besetzte erledigt",
-    gegner.plaetze.map((p) => p.nr + ": "
-      + (/geplaettet/.test(p.k) ? "draufgesprungen"
-        : /gekickt/.test(p.k) ? "weggekickt" : "nichts")).join(", "));
-  const wie = gegner.plaetze.map((p) => /geplaettet/.test(p.k) ? "s"
-    : /gekickt/.test(p.k) ? "k" : "-").join("");
-  sage(wie === "sks",
-    "und zwar ABWECHSELND: draufspringen, wegkicken, draufspringen",
-    "gemessen \u201e" + wie + "\u201c (s = Sprung, k = Kick)");
+    gegnerFolgen.join(" ") + " (s = Sprung, k = Kick, - = nichts)");
+  const alleG = gegnerFolgen.join("");
+  sage(/s/.test(alleG) && /k/.test(alleG) && new Set(gegnerFolgen).size > 1,
+    "und zwar GEWUERFELT: mal draufspringen, mal wegkicken",
+    "Sprung " + (alleG.match(/s/g) || []).length + "\u00d7, Kick "
+    + (alleG.match(/k/g) || []).length + "\u00d7, "
+    + new Set(gegnerFolgen).size + " verschiedene Folgen in 10 L\u00e4ufen");
+  sage(gegnerFolgen.every((f) => !/sss|kkk/.test(f)),
+    "aber nie dreimal dasselbe hintereinander",
+    gegnerFolgen.filter((f) => /sss|kkk/.test(f)).join(" ") || "keine Dreierkette");
+  /* RUNDE 98 — XANDER: „Meinetwegen kannst du den Schrei mit dazu
+     bringen aber diese Sounds sollen mit vorhanden sein."
+     Also muessen BEIDE da sein: das Mario-Geraeusch UND der Schrei. */
+  sage(gegner.toene.some((t) => /^mario(stampf|kick|feuer)$/.test(t)),
+    "dabei laeuft das Mario-Ger\u00e4usch (Stampfen/Kicken)",
+    gegner.toene.filter((t) => /^mario/.test(t)).join(", ") || "kein Mario-Ger\u00e4usch");
   sage(gegner.toene.some((t) => t === "schreimann" || t === "schreifrau"),
-    "wer erledigt wird, schreit dabei",
+    "und der Schrei ist \u201emeinetwegen\u201c mit dabei",
     gegner.toene.filter((t) => /schrei/.test(t)).join(", ") || "kein Schrei");
 
   console.log("\nAM ABFAHRTSORT PASSIERT NICHTS\n");
