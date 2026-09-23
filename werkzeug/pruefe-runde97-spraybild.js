@@ -73,13 +73,35 @@ const BILD = "data:image/svg+xml;base64," + Buffer.from(
       await new Promise((f) => setTimeout(f, 260));
       const c = document.querySelector(".lc-spray-lack");
       if (!c) { deckung.push(null); continue; }
-      try {
-        const g = c.getContext("2d");
-        const d = g.getImageData(0, 0, c.width, c.height).data;
-        let voll = 0;
-        for (let k = 3; k < d.length; k += 4 * 40) if (d[k] > 24) voll++;
-        deckung.push(Math.round(voll * 4 * 40 / d.length * 1000) / 10);
-      } catch (e) { deckung.push(-1); }
+      /* RUNDE 98 — ZWEI BAUARTEN, EINE MESSUNG.
+         Ein gemaltes Motiv liegt als Leinwand da; dort werden die
+         nicht durchsichtigen Bildpunkte gezaehlt. Ein EIGENES Bild
+         haengt seit Runde 98 als echtes <img> da, weil ein GIF sonst
+         waehrend des Spruehens stillstuende („es muss in seinen
+         Pixeln genauso aufgesprüht werden selbst ein gif sogar").
+         Seine Tropfen sind ein wachsender Ausschnitt aus Kreisen —
+         gemessen wird dort die Flaeche dieser Kreise, in Prozent der
+         Bildflaeche. Beide Zahlen bedeuten dasselbe: wie viel vom
+         Bild schon da ist. */
+      if (c.getContext) {
+        try {
+          const g = c.getContext("2d");
+          const d = g.getImageData(0, 0, c.width, c.height).data;
+          let voll = 0;
+          for (let k = 3; k < d.length; k += 4 * 40) if (d[k] > 24) voll++;
+          deckung.push(Math.round(voll * 4 * 40 / d.length * 1000) / 10);
+        } catch (e) { deckung.push(-1); }
+        continue;
+      }
+      const schablone = c.querySelector("clipPath");
+      if (!schablone) { deckung.push(null); continue; }
+      let flaeche = 0;
+      [...schablone.children].forEach((k) => {
+        const r = Number(k.getAttribute("r")) || 0;
+        flaeche += Math.PI * r * r;     /* r in Anteilen der Bildflaeche */
+      });
+      /* Mit Ueberdeckung: 1 - e^(-Flaeche) ist der bedeckte Anteil. */
+      deckung.push(Math.round((1 - Math.exp(-flaeche)) * 1000) / 10);
     }
     /* Und danach: bleibt es liegen? */
     await new Promise((f) => setTimeout(f, 4200));

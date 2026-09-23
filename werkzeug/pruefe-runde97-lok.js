@@ -58,7 +58,17 @@ const sage = (gut, was, zusatz) => {
   console.log("\nGLEIS UND LOK, IN PIXELN GEMESSEN\n");
   const mess = await pg.evaluate(async () => {
     window.DMA_PRUEF.effektBuehne();
-    window.DMA_PRUEFUNG.wirkung("lok", "Emmi", "Alex", {});
+    /* RUNDE 98 — HIER WIRD EIN GEZEICHNETER WEG MIT ECKE GEFAHREN.
+       XANDER: „sie soll generell ueber alle Leute immer fahren
+       koennen, egal wo ich hinfahren moechte."
+       Seit die Lok jeden Platz anfaehrt (auch besetzte), liegt die
+       Strecke von Emmi aus GERADE nach oben — und auf einer geraden
+       Strecke gibt es gar kein Kurvenmodul. Die Messung unten
+       verglich die Loklaenge dann mit einem Kurvendurchmesser von
+       0 px und meldete einen Fehler, den es nicht gab. Deshalb wird
+       jetzt ausdruecklich ein Weg mit Ecke gezeichnet: 5 → 6 → 7 → 3.
+       Dort gibt es beides, Gerade und Kurve. */
+    window.DMA_PRUEFUNG.wirkung("lok", "5-6-7-3", "Alex", {});
     await new Promise((f) => setTimeout(f, 700));
     const gleis = document.querySelector(".lc-lok-gleis");
     const lok = document.querySelector(".lc-lok");
@@ -85,17 +95,34 @@ const sage = (gut, was, zusatz) => {
       }
     }
 
-    /* Die Radkanten der Lok: in der Draufsicht die obere und die
-       untere Reihe. Gemessen wird ihr Abstand auf dem Bildschirm. */
+    /* Die Radkanten der Lok: in der Draufsicht die linke und die
+       rechte Reihe.
+       RUNDE 98 — WARUM NICHT MEHR AUF DEM BILDSCHIRM GEMESSEN WIRD.
+       Vorher stand hier der Abstand der Radmitten in Bildschirm-
+       Hoehe. Das ging nur gut, solange die Lok WAAGERECHT fuhr.
+       Seit sie jeden Platz anfaehrt, faehrt sie auch senkrecht und
+       durch Kurven — dann liegt ihre Spur quer zum Bildschirm, und
+       die alte Messung las den ACHSABSTAND (52,9 px) statt der Spur
+       und meldete „16,7 px Unterschied". Nachgemessen war die Spur
+       in Wahrheit 36,25 px bei 36,2 px Gleis — also genau richtig.
+       Jetzt wird im Zeichenraster der Lok gemessen (getBBox, also
+       ohne jede Drehung) und mit demselben Massstab umgerechnet,
+       mit dem der Browser die Zeichnung einpasst. Das Ergebnis
+       stimmt in jeder Fahrtrichtung. */
     const raeder = [...lok.querySelectorAll(".lc-lok-o-rad")];
     const kasten = lok.getBoundingClientRect();
+    const form = lok.querySelector(".lc-lok-form");
+    const vb = String((form && form.getAttribute("viewBox")) || "0 0 120 60")
+      .trim().split(/[\s,]+/).map(Number);
+    const fr = form ? form.getBoundingClientRect() : kasten;
+    const massstab = Math.min(fr.width / (vb[2] || 1), fr.height / (vb[3] || 1));
     let obenY = Infinity, untenY = -Infinity;
     raeder.forEach((r) => {
-      const b = r.getBoundingClientRect();
-      obenY = Math.min(obenY, b.top + b.height / 2);
-      untenY = Math.max(untenY, b.top + b.height / 2);
+      const b = r.getBBox();
+      obenY = Math.min(obenY, b.y + b.height / 2);
+      untenY = Math.max(untenY, b.y + b.height / 2);
     });
-    const radspur = raeder.length ? untenY - obenY : 0;
+    const radspur = raeder.length ? (untenY - obenY) * massstab : 0;
 
     /* Der Kurvenradius: aus dem Bogen-Pfad. */
     const bogen = [...gleis.querySelectorAll(".lc-lok-schiene")]

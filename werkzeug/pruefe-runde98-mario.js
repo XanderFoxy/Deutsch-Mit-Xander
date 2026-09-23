@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE RUNDE 98 — MARIO: KEIN SCHREI, ECHTER ZUFALL, GEHEIMES FELD
+   SONDE RUNDE 98 — MARIO: SPIELSOUNDS, ECHTER ZUFALL, GEHEIMES FELD
    ---------------------------------------------------------------------
    XANDER (23.09.2026): „Bei den Mario, wenn man auf jemand drauf
    springt oder jemanden beeinflusst und ihn dadurch von der Buehne
@@ -15,10 +15,17 @@
    er dann dran springt und das geheime Feld freischaltet und
    vielleicht ein Power-up kriegt und so, ja, vielleicht koennte er
    dann 'ne Feuerblume haben und dann noch mal die Leute anbrennen."
+   UND IM SELBEN DIKTAT, ZWEI SAETZE SPAETER: „Meinetwegen kannst du
+   den Schrei mit dazu bringen aber diese Sounds sollen mit vorhanden
+   sein." Ich hatte zuerst nur den ersten Halbsatz gelesen und den
+   Schrei ganz rausgeworfen. Erlaubt ist er, nur nicht STATT der
+   Spielgeraeusche. Gemessen wird deshalb: beides ist da, und das
+   Mario-Geraeusch kommt zuerst.
 
    DREI MESSUNGEN:
-     1  Beim Erledigen eines Gegners klingt KEIN Schrei mehr — nur
-        „mariostampf" bzw. „mariokick".
+     1  Beim Erledigen eines Gegners klingt das SPIELGERAEUSCH
+        („mariostampf" bzw. „mariokick") — und der Schrei darf
+        „meinetwegen" dazukommen, aber erst danach.
      2  Ueber viele Laeufe kommen BEIDE Arten vor, und sie wechseln
         sich nicht stur ab (das war der alte Stand: gegner.length % 2).
      3  Ueber einem LEEREN Platz kann ein geheimer Fragezeichenstein
@@ -124,17 +131,27 @@ const sage = (gut, was, zusatz) => {
     };
   });
 
-  console.log("\n1  KEIN SCHREI MEHR BEIM ERLEDIGEN\n");
+  console.log("\n1  DIE SPIELGERAEUSCHE BEIM ERLEDIGEN\n");
   const lauf = await pg.evaluate(() => window.__marioLauf("2-3-4", "Emmi", 0.42));
   const erledigt = lauf.gesehen.kick.length + lauf.gesehen.platt.length;
   sage(erledigt > 0, "die Gegner werden wirklich erledigt",
     erledigt + " Gegner (gekickt " + (lauf.gesehen.kick.join(",") || "-")
     + ", geplaettet " + (lauf.gesehen.platt.join(",") || "-") + ")");
-  sage(lauf.toene.indexOf("schreimann") < 0 && lauf.toene.indexOf("schreifrau") < 0
-    && lauf.toene.indexOf("schrei") < 0,
-    "und dabei schreit niemand mehr", lauf.toene.join(", ") || "nichts");
+  /* Seine Worte: „das sollen dann die typischen Sounds wie bei Mario
+     sein. Meinetwegen kannst du den Schrei mit dazu bringen aber diese
+     Sounds sollen mit vorhanden sein." Also beides — und das
+     Spielgeraeusch zuerst, sonst waere der Schrei wieder das
+     Hauptereignis. */
+  const spielTon = lauf.toene.findIndex((t) => /^mario(stampf|kick|feuer)$/.test(t));
+  const schreiTon = lauf.toene.findIndex((t) => /^schrei/.test(t));
+  sage(spielTon >= 0, "und dabei klingt das Mario-Ger\u00e4usch",
+    lauf.toene.join(", ") || "nichts");
+  sage(schreiTon >= 0 && schreiTon > spielTon,
+    "der Schrei kommt \u201emeinetwegen" + "\u201c dazu \u2014 aber NACH dem Ger\u00e4usch",
+    lauf.toene.join(", ") || "nichts");
   sage(lauf.toene.indexOf("mariostampf") >= 0 || lauf.toene.indexOf("mariokick") >= 0,
-    "stattdessen klingt das Spielgeraeusch", lauf.toene.join(", ") || "nichts");
+    "und es ist wirklich \u201emariostampf" + "\u201c bzw. \u201emariokick\u201c",
+    lauf.toene.join(", ") || "nichts");
 
   console.log("\n2  ZUFALL STATT STURER ABWECHSLUNG\n");
   const muster = [];
@@ -191,8 +208,9 @@ const sage = (gut, was, zusatz) => {
       r.toene.join(", "));
     sage(r.toene.indexOf("mariofeuer") >= 0, "und das Anbrennen nach Feuerball",
       r.toene.join(", "));
-    sage(r.toene.indexOf("schreimann") < 0 && r.toene.indexOf("schreifrau") < 0,
-      "auch hier schreit niemand");
+    sage(r.toene.some((t) => /^schrei/.test(t)),
+      "und der Schrei ist auch hier dabei",
+      r.toene.filter((t) => /^schrei/.test(t)).join(", ") || "kein Schrei");
   }
 
   /* Und die Gegenprobe: ohne geheimes Feld gibt es auch keine
