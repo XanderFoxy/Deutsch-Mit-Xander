@@ -27774,17 +27774,47 @@
         lcTonSpaeter(/^(w|f)/.test(String((platz.dataset || {}).lcGeschlecht || "")
           .trim().toLowerCase()) ? "ekelfrau" : "ekelmann", 900, 0.5);
       }
+      /* =============================================================
+         RUNDE 92 — der Lack wird NICHT mitgenommen. Er wird als Bild
+         festgehalten und bleibt als eigene Schicht liegen, bis jemand
+         wischt. XANDER: „dass es bleibt die ganze Zeit … es geht nur
+         durch den Scheibenwischer wieder weg."
+
+         RUNDE 98 — UND ZWAR SOFORT, NICHT ERST NACH SECHS SEKUNDEN
+         -------------------------------------------------------------
+         XANDER: „wenn jemand spricht oder generell, scheint sich der
+         aufgespruehte Effekt zu verfluechtigen — das darf nicht
+         sein … Die Leute muessen das selber putzen."
+
+         GEFUNDEN: gemalt war der Lack nach 1,7 s, festgehalten wurde
+         er aber erst nach 6,2 s — zusammen mit dem Abraeumen der
+         Spruehschicht. In diesen 4,5 Sekunden lag die Farbe nur auf
+         einer Leinwand, die zur Animation gehoert: in lcSprayListe
+         stand noch nichts. Wurde die Sitzreihe in dieser Zeit neu
+         gezeichnet (und das passiert beim Sprechen, beim Kommen und
+         Gehen, bei jedem Sitzwechsel), war der Lack weg — es gab ja
+         nichts, was ihn haette wiederherstellen koennen. Genau das
+         sieht er als „verfluechtigen".
+
+         Jetzt zwei Uhren statt einer:
+           2,2 s   der Lack wird festgehalten und liegt ab sofort in
+                   seiner eigenen bleibenden Schicht; die Leinwand
+                   darueber wird unsichtbar, damit nichts doppelt
+                   liegt.
+           6,2 s   die Spruehschicht mit Dose und Wolke wird
+                   abgeraeumt — wie bisher.
+         ============================================================= */
       setTimeout(() => {
         if (abbrechen) abbrechen();
-        /* RUNDE 92 — der Lack wird NICHT mitgenommen. Er wird als Bild
-           festgehalten und bleibt als eigene Schicht liegen, bis
-           jemand wischt. XANDER: „dass es bleibt die ganze Zeit …
-           es geht nur durch den Scheibenwischer wieder weg." */
         let url = "";
         try { if (lackFlaeche) url = lackFlaeche.toDataURL("image/png"); } catch (e) { url = ""; }
-        schicht.remove();
-        if (url) { lcSprayBleibt(platz, url); lcSprayMerken(platz, url); }
-      }, 6200);
+        if (url) {
+          lcSprayBleibt(platz, url);
+          lcSprayMerken(platz, url);
+          try { lackFlaeche.style.visibility = "hidden"; } catch (e) {}
+        }
+      }, 2200);
+      setTimeout(() => { schicht.remove(); }, 6200);
     }, i * 90));
     return true;
   }

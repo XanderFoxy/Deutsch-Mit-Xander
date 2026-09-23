@@ -135,6 +135,51 @@ const sage = (gut, was, zusatz) => {
     "der Lack bleibt vollstaendig sichtbar, solange sie spricht",
     Array.isArray(bleibt) ? "kleinster Wert " + Math.min.apply(null, bleibt) + " %" : "-");
 
+  /* =====================================================================
+     RUNDE 98 \u2014 UND WIE FRUEH DER LACK IN SICHERHEIT IST
+     ---------------------------------------------------------------------
+     XANDER: „wenn jemand spricht oder generell, scheint sich der
+     aufgespruehte Effekt zu verfluechtigen \u2014 das darf nicht sein."
+     GEFUNDEN: gemalt war der Lack nach 1,7 s, FESTGEHALTEN aber erst
+     nach 6,2 s. In diesen 4,5 Sekunden lag er nur auf der Leinwand der
+     Animation; wurde die Sitzreihe in dieser Zeit neu gezeichnet (beim
+     Sprechen, beim Kommen und Gehen, bei jedem Sitzwechsel), war er
+     weg. Gemessen wird deshalb genau das: die Spruehschicht wird
+     mitten im Lauf weggenommen \u2014 der Lack muss bleiben.
+     ===================================================================== */
+  console.log("\nUND DER LACK UEBERLEBT EIN NEUZEICHNEN MITTENDRIN\n");
+  const frueh = await pg.evaluate(async () => {
+    window.DMA_PRUEF.effektBuehne();
+    window.DMA_PRUEFUNG.wirkung("spray", "Bea", "Alex", { stueck: "herz" });
+    const raus = { bei: [], nachWegnahme: 0, doppelt: 0 };
+    for (const t of [1500, 1000, 1000]) {
+      await new Promise((f) => setTimeout(f, t));
+      raus.bei.push(document.querySelectorAll(".lc-sprayfarbe").length);
+    }
+    /* Doppelt gezeichnet? Die Leinwand muss weg sein, sobald der Lack
+       in seiner eigenen Schicht liegt. */
+    const lw = document.querySelector(".lc-spray-lack");
+    raus.doppelt = lw && getComputedStyle(lw).visibility !== "hidden" ? 1 : 0;
+    /* Und jetzt das Neuzeichnen: die Spruehschicht faellt weg. */
+    document.querySelectorAll(".lc-spray").forEach((x) => x.remove());
+    if (window.DMA_PRUEF.auffrischen) window.DMA_PRUEF.auffrischen();
+    await new Promise((f) => setTimeout(f, 400));
+    raus.nachWegnahme = document.querySelectorAll(".lc-sprayfarbe").length;
+    return raus;
+  });
+  /* Gemalt ist er nach 1,7 s, festgehalten nach 2,2 s (dazu kommen
+     bis zu 90 ms Anlauf je Ziel). Vor dem Umbau lag er erst nach
+     6,2 s in seiner eigenen Schicht \u2014 die Messung bei 2,5 s ist
+     also genau die, die vorher rot war. */
+  sage(frueh.bei[1] >= 1,
+    "der Lack liegt schon nach zweieinhalb Sekunden in seiner eigenen Schicht",
+    "nach 1,5 s: " + frueh.bei[0] + ", nach 2,5 s: " + frueh.bei[1]
+      + ", nach 3,5 s: " + frueh.bei[2]);
+  sage(frueh.doppelt === 0, "und die Leinwand darueber ist weg, nichts liegt doppelt");
+  sage(frueh.nachWegnahme >= 1,
+    "nimmt man die Spruehschicht mittendrin weg, bleibt der Lack trotzdem",
+    frueh.nachWegnahme + " Lackschicht(en)");
+
   await br.close();
   srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)" : "\nalles gruen");
