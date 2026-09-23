@@ -31270,3 +31270,38 @@ code, pre {
 @media (prefers-reduced-motion: reduce) {
   .lc-leiter-holz { animation: none; }
 }
+
+/* =========================================================
+   RUNDE 98 — DAS FOKUSBAND UNTER DEM CHAT
+   ---------------------------------------------------------
+   XANDER (23.09.2026): „Wenn ich auf Fokus gehe, dann gehe ich davon
+   aus, dass das unten am untersten im Chatraum ist, dass alle das
+   immer lesen und dass das niemand stören kann … alles, was
+   geschrieben wird, kommt zwar in der History nach dem Modul
+   zeitlich auch, aber solange man Unterricht hat, rutscht die
+   Chatzeile deswegen nicht weiter … das Modul bleibt angepinnt, dass
+   man fokussiert lesen kann."
+
+   Vorher lag die festgehaltene Tafel IM rollenden Verlauf und war
+   nur „sticky" — jede neue Zeile konnte sie wegschieben, sobald man
+   nicht ganz unten stand. Jetzt liegt sie hier, AUSSERHALB des
+   rollenden Kastens: der Chat läuft darüber weiter, das Modul steht.
+   ========================================================= */
+.lc-fokusband {
+  flex: 0 0 auto;
+  margin-top: 6px;
+  max-height: 46vh;
+  overflow: auto;
+  /* Es gehört zum Chat, nicht zum Verlauf: derselbe Innenabstand wie
+     eine Chatzeile, damit die Tafel nicht am Rand klebt. */
+  padding: 0 2px;
+}
+.lc-fokusband[hidden] { display: none; }
+.lc-fokusband .lc-zeile { margin: 0; }
+/* Im Band braucht die Tafel kein „sticky" mehr — sie IST der
+   unterste Platz. Der Rahmen bleibt, damit man sieht, dass sie
+   angepinnt ist. */
+.lc-fokusband .lc-lesetafel.lc-lese-fest {
+  position: static;
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.28);
+}

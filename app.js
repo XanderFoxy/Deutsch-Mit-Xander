@@ -22103,6 +22103,24 @@
           <div class="lc-verlauf-huelle">
             <div class="lc-live-leiste" id="lcLiveLeiste" hidden aria-live="polite"></div>
             <div class="lc-chat-verlauf" id="lcVerlauf" aria-live="polite"></div>
+            <!-- RUNDE 98 — DAS FOKUSBAND.
+                 XANDER (23.09.2026): „Wenn ich auf Fokus gehe, dann
+                 gehe ich davon aus, dass das unten am untersten im
+                 Chatraum ist, dass alle das immer lesen und dass das
+                 niemand stoeren kann … alles, was geschrieben wird,
+                 kommt zwar in der History nach dem Modul zeitlich
+                 auch, aber solange man Unterricht hat, rutscht die
+                 Chatzeile deswegen nicht weiter … das Modul bleibt
+                 angepinnt, dass man fokussiert lesen kann."
+
+                 SOLANGE es IM Verlauf lag, konnte jede neue Zeile es
+                 wegschieben — klebrig hin oder her, der Verlauf
+                 rollt, und das Modul rollte mit. Hier liegt es
+                 AUSSERHALB des rollenden Kastens: der Chat laeuft
+                 darueber weiter, das Modul steht. Niemand kann es
+                 verdraengen, weil es gar nicht mehr in derselben
+                 Liste steht. -->
+            <div class="lc-fokusband" id="lcFokusband" hidden></div>
           </div>
           ${!Backend.currentUser() ? `
           <p class="lc-gast-hinweis">
@@ -23676,23 +23694,82 @@
      Festgehalten wird immer nur EINE Tafel; eine zweite loest die
      erste ab. */
   let lcLeseFest = "";
+  /* =================================================================
+     RUNDE 98 — DER FOKUS GILT FUER ALLE, UND NICHTS SCHIEBT IHN WEG
+     -----------------------------------------------------------------
+     XANDER (23.09.2026): „ausserdem gibt es keinen gleichbleibenden
+     Modus, der fuer alle dieses Ding festmacht. Wenn ich auf Fokus
+     gehe, dann gehe ich davon aus, dass das unten am untersten im
+     Chatraum ist, dass alle das immer lesen und dass das niemand
+     stoeren kann … solange das festgepinnt ist, ist es in Platz und
+     das kann niemand verhindern und den Fokus muessen alle immer
+     sehen … alles, was geschrieben wird, kommt zwar in der History
+     nach dem Modul zeitlich auch, aber solange man Unterricht hat,
+     rutscht die Chatzeile deswegen nicht weiter … das Modul bleibt
+     angepinnt, dass man fokussiert lesen kann."
+
+     ZWEI DINGE WAREN FALSCH, beide gemessen:
+       1. Der Fokus galt NUR auf dem eigenen Geraet. Wer ihn setzte,
+          setzte ihn fuer sich; bei den anderen blieb alles, wie es
+          war. Jetzt geht er ueber LiveChat hinaus an alle, genau wie
+          die aufgerufene Zeile.
+       2. Die festgehaltene Tafel lag IM rollenden Verlauf. Jede neue
+          Chatzeile wurde dahinter gehaengt, und das Modul rutschte
+          mit nach oben weg — „klebrig" half nur, solange man ganz
+          unten stand. Jetzt liegt sie AUSSERHALB des rollenden
+          Kastens, im Fokusband unter ihm. Der Chat laeuft darueber
+          weiter, das Modul steht. ========================= */
+  function lcFokusband() {
+    return document.getElementById("lcFokusband");
+  }
   function lcLeseTafelNachziehen() {
-    if (!lcLeseFest) return false;
-    const tafel = document.querySelector('.lc-lesetafel[data-lese-id="' + lcLeseFest + '"]');
+    const band = lcFokusband();
     const verlauf = document.getElementById("lcVerlauf");
-    if (!tafel || !verlauf) return false;
+    if (!band) return false;
+    /* IST NICHTS FESTGEHALTEN, ist das Band leer — und was darin lag,
+       geht zurueck in den Verlauf, an seine Stelle am Ende. */
+    if (!lcLeseFest) {
+      [...band.children].forEach((x) => {
+        if (verlauf) verlauf.appendChild(x); else x.remove();
+      });
+      band.hidden = true;
+      return false;
+    }
+    const tafel = document.querySelector('.lc-lesetafel[data-lese-id="' + lcLeseFest + '"]');
+    if (!tafel) {
+      /* Wirklich weg (Raumwechsel, geleerter Verlauf) — dann darf
+         auch nichts mehr im Band liegen. Solange sie im Band liegt,
+         findet die Suche sie DORT (sie geht über das ganze Dokument),
+         es geht hier also nicht um den kurzen Moment während eines
+         Neuaufbaus. */
+      [...band.children].forEach((x) => x.remove());
+      band.hidden = true;
+      return false;
+    }
     tafel.classList.add("lc-lese-fest");
     const zeile = tafel.closest(".lc-zeile") || tafel.parentElement;
-    if (zeile && zeile.parentElement === verlauf && verlauf.lastElementChild !== zeile) {
-      verlauf.appendChild(zeile);
-    }
+    if (!zeile) return false;
+    /* Was vorher im Band lag und nicht mehr gilt, geht zurueck. */
+    [...band.children].forEach((x) => {
+      if (x !== zeile && verlauf) verlauf.appendChild(x);
+    });
+    if (zeile.parentElement !== band) band.appendChild(zeile);
+    band.hidden = false;
     return true;
   }
-  function lcLeseFestSetzen(leseId) {
+  /* „vonAussen" heisst: die Meldung kam von einem anderen Geraet.
+     Dann wird sie NICHT noch einmal hinausgeschickt — sonst schoben
+     sich zwei Geraete den Fokus endlos hin und her. */
+  function lcLeseFestSetzen(leseId, vonAussen) {
     lcLeseFest = String(leseId || "");
     document.querySelectorAll(".lc-lesetafel").forEach((t) => {
       t.classList.toggle("lc-lese-fest", t.dataset.leseId === lcLeseFest);
     });
+    if (!vonAussen) {
+      try {
+        if (window.LiveChat && LiveChat.leseFestSetzen) LiveChat.leseFestSetzen(lcLeseFest);
+      } catch (e) {}
+    }
     return lcLeseTafelNachziehen();
   }
   /* =================================================================
@@ -23835,7 +23912,10 @@
 
   window.DMA_PRUEF_LESESTOFF = lcLesestoff;
   window.DMA_LESEFEST = { setzen: lcLeseFestSetzen, nachziehen: lcLeseTafelNachziehen,
-                          welche: () => lcLeseFest };
+                          welche: () => lcLeseFest,
+    /* RUNDE 98 — der Weg von aussen: eine Meldung aus dem Raum setzt
+       den Fokus hier, ohne ihn wieder hinauszuschicken. */
+    vonAussen: (leseId) => lcLeseFestSetzen(leseId, true) };
 
   function lcLeseTafel(n, z) {
     const t = document.createElement("span");
@@ -23870,7 +23950,8 @@
     const festKnopf = document.createElement("button");
     festKnopf.type = "button";
     festKnopf.className = "lc-lese-schalter";
-    festKnopf.title = "Den Text festhalten \u2014 er bleibt unten im Blick";
+    festKnopf.title = "Den Text festhalten \u2014 er bleibt unten im Blick, "
+      + "beim Lehrer f\u00fcr alle im Raum";
     kopf.appendChild(festKnopf);
     t.appendChild(kopf);
 
@@ -23979,6 +24060,15 @@
     betZeichnen();
     festZeichnen();
     if (lcLeseFest === (n.id || "")) t.classList.add("lc-lese-fest");
+    /* RUNDE 98 — kam die Fokus-Meldung aus dem Raum an, BEVOR die
+       Tafel gezeichnet war (wer spaeter dazukommt, hat genau das),
+       dann steht sie nur in LiveChat. Hier wird sie nachgeholt. */
+    try {
+      const festRaum = (LiveChat.leseFestWelche && LiveChat.leseFestWelche()) || "";
+      if (festRaum && festRaum === (n.id || "") && lcLeseFest !== festRaum) {
+        lcLeseFestSetzen(festRaum, true);
+      }
+    } catch (e) {}
 
     /* Steht schon eine Zeile fest (man kommt spaeter dazu), gleich
        markieren. */
@@ -52622,6 +52712,10 @@
           <div class="lc-chat-verlauf" id="lcVerlauf" style="height:220px; overflow:auto;">
             <p class="lc-zeile" id="lcPruefZeile">Alex drückt Emmi</p>
           </div>
+          <!-- RUNDE 98 — auch die Pruefbuehne braucht das Fokusband,
+               sonst laesst sich nicht messen, ob das angepinnte Modul
+               dort landet und dort stehen bleibt. -->
+          <div class="lc-fokusband" id="lcFokusband" hidden></div>
         </div>`;
       document.body.appendChild(b);
       /* UND SIE MUSS AUCH ZU SEHEN SEIN.
@@ -52919,6 +53013,10 @@
           <div class="lc-chat-verlauf" id="lcVerlauf" style="height:220px; overflow:auto;">
             <p class="lc-zeile" id="lcPruefZeile">Alex drückt Emmi</p>
           </div>
+          <!-- RUNDE 98 — auch die Pruefbuehne braucht das Fokusband,
+               sonst laesst sich nicht messen, ob das angepinnte Modul
+               dort landet und dort stehen bleibt. -->
+          <div class="lc-fokusband" id="lcFokusband" hidden></div>
         </div>`;
       document.body.appendChild(b);
       /* UND SIE MUSS AUCH ZU SEHEN SEIN.
@@ -53291,8 +53389,14 @@
       const schon = livechatGezeigt.get(n.id);
       if (schon === marke) return;
       livechatGezeigt.set(n.id, marke);
+      /* RUNDE 98 — GESUCHT WIRD IM GANZEN CHAT, NICHT NUR IM VERLAUF.
+         Eine angepinnte Lesetafel liegt jetzt im Fokusband UNTER dem
+         rollenden Kasten. Wer nur in „v" sucht, findet sie dort nicht
+         — und hängt dieselbe Nachricht ein zweites Mal in den
+         Verlauf. Deshalb geht die Suche über die ganze Hülle. */
+      const chatRaum = v.closest(".lc-verlauf-huelle") || v;
       const alteZeile = schon !== undefined
-        ? v.querySelector('[data-lc-id="' + CSS.escape(String(n.id)) + '"]')
+        ? chatRaum.querySelector('[data-lc-id="' + CSS.escape(String(n.id)) + '"]')
         : null;
       const art = n.art || "text";
       const z = document.createElement("div");

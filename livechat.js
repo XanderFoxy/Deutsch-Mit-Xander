@@ -2920,6 +2920,12 @@ window.LiveChat = (function () {
   /* Welche Zeile eines Lesetextes gerade dran ist. Der Schluessel
      ist die Kennung der Chatzeile, in der der Text steht. */
   var leseStelle = {};
+  /* RUNDE 98 — WELCHE TAFEL IM RAUM ANGEPINNT IST.
+     XANDER: „es gibt keinen gleichbleibenden Modus, der fuer alle
+     dieses Ding festmacht … den Fokus muessen alle immer sehen."
+     Eine Kennung, fuer den ganzen Raum dieselbe; leer heisst: nichts
+     ist angepinnt. */
+  var leseFest = "";
 
   var tonWacheTakt = 0;
   var tonWacheZaehler = { geheilt: 0, letzte: "" };
@@ -3881,6 +3887,17 @@ window.LiveChat = (function () {
         }
         melden();
       }
+      return;
+    }
+    /* RUNDE 98 — DER FOKUS KOMMT VON DRUEBEN.
+       XANDER: „es gibt keinen gleichbleibenden Modus, der fuer alle
+       dieses Ding festmacht … den Fokus muessen alle immer sehen."
+       Bisher galt der Fokus nur auf dem Geraet, an dem er gesetzt
+       wurde. Jetzt reist er wie die aufgerufene Zeile. */
+    if (n.art === "lesefest") {
+      leseFest = String(n.leseId || "");
+      try { if (window.DMA_LESEFEST) window.DMA_LESEFEST.vonAussen(leseFest); }
+      catch (e) {}
       return;
     }
     if (n.art === "lesezeile") {
@@ -13773,6 +13790,21 @@ window.LiveChat = (function () {
       if (zeile && zeile.id) leseStelle[zeile.id] = -1;
       return true;
     },
+    /* RUNDE 98 — DEN FOKUS FUER ALLE SETZEN.
+       Wer fuehrt (der Lehrer oder wer die Tafel gestellt hat), pinnt
+       sie fuer den ganzen Raum an; wer nicht fuehrt, haelt sie nur
+       bei sich fest. Deshalb geht die Meldung nur vom Fuehrenden
+       hinaus — sonst koennte jeder allen anderen den Unterricht
+       umstellen, und genau das soll der Fokus ja verhindern:
+       „das kann niemand verhindern". */
+    leseFestSetzen: function (leseId) {
+      var id = String(leseId || "");
+      if (!zustand.haeuptling) return false;
+      leseFest = id;
+      senden({ art: "lesefest", leseId: id });
+      return true;
+    },
+    leseFestWelche: function () { return leseFest; },
     leseZeileSetzen: function (leseId, nr) {
       var id = String(leseId || "");
       var n = Number(nr);
