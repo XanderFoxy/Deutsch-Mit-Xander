@@ -96,6 +96,7 @@ for f in werkzeug/pruefe-*.js; do
     pruefe-runde99-kuss)         frist=240  ;;
     # Zwei Effekte mit je 60 Haltepunkten.
     pruefe-runde99-eklig)        frist=420  ;;
+    pruefe-runde99-rueckfrage)   frist=200  ;;
     *)                           frist=120  ;;
   esac
   aus=$(timeout "$frist" node "$f" 2>&1)

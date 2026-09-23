@@ -31819,3 +31819,54 @@ code, pre {
   30%  { opacity: .9; transform: scaleY(.5); }
   100% { opacity: .8; transform: scaleY(1); }
 }
+
+/* =====================================================================
+   RUNDE 99 — DIE RUECKFRAGE-KARTE (nur fuer den Betreiber)
+   ---------------------------------------------------------------------
+   Unten LINKS, weil unten rechts die Werkstatt sitzt. Klein, solange
+   alles passt; erst bei „Nein" klappen die Moeglichkeiten auf.
+   ===================================================================== */
+.rf-karte {
+  position: fixed;
+  left: 14px; bottom: 14px;
+  z-index: 2147483000;
+  width: min(330px, calc(100vw - 28px));
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  padding: 12px 14px 12px;
+  border-radius: 16px;
+  background: rgba(24, 22, 32, .96);
+  color: #f4f1ea;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35), 0 0 0 1px rgba(255, 255, 255, .08);
+  font-size: .9rem;
+  line-height: 1.35;
+  animation: rfRein .32s cubic-bezier(.2, .9, .3, 1.2) both;
+}
+@keyframes rfRein {
+  from { opacity: 0; transform: translateY(14px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.rf-kopf { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.rf-marke { font-weight: 800; font-size: .78rem; letter-spacing: .02em; color: #ffd166; }
+.rf-thema { font-size: .74rem; opacity: .7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rf-zahl { margin-left: auto; font-size: .72rem; opacity: .6; }
+.rf-frage { margin: 0 0 10px; font-weight: 600; }
+.rf-liste { display: grid; gap: 4px; margin: 0 0 8px; }
+.rf-option { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; font-size: .85rem; }
+.rf-option input { margin-top: 2px; width: 16px; height: 16px; accent-color: #45c07a; flex: 0 0 auto; }
+.rf-notiz {
+  width: 100%; box-sizing: border-box; resize: vertical;
+  margin: 0 0 8px; padding: 6px 8px; border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  background: rgba(255, 255, 255, .06); color: inherit; font: inherit; font-size: .85rem;
+}
+.rf-knoepfe { display: flex; gap: 6px; flex-wrap: wrap; }
+.rf-knoepfe button {
+  border: 0; border-radius: 10px; padding: 7px 12px; cursor: pointer;
+  font: inherit; font-weight: 700; font-size: .85rem;
+}
+.rf-ja { background: #2f9e62; color: #fff; }
+.rf-nein { background: #b8434b; color: #fff; }
+.rf-senden { background: #ffd166; color: #221c10; }
+.rf-spaeter { margin-left: auto; background: transparent; color: #f4f1ea; opacity: .6; }
+.rf-knoepfe button:disabled { opacity: .5; cursor: default; }
