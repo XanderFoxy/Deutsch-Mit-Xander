@@ -32325,3 +32325,34 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   cursor: pointer; white-space: nowrap;
 }
 .rf-puppe.rf-puppe-an { background: rgba(255, 209, 102, .18); }
+
+/* =====================================================================
+   RUNDE 100 — DER ABDRUCK LIEGT WIE DIE HAND: QUER
+   ---------------------------------------------------------------------
+   XANDER (Walkie-Talkie): „den Abdruck wie die aufschlagende Hand auch
+   seitlich darstellen, damit es optisch logisch Sinn macht."
+   Die Hand trifft seit Runde 99 quer (-70 Grad, von rechts; von links
+   gespiegelt, siehe lcKlapsHandR99). Der Abdruck stand aber noch
+   aufrecht, Finger nach oben — so kann keine Hand geschlagen haben, die
+   quer lag. Jetzt bekommt er dieselbe Drehung und dieselbe Spiegelung
+   wie die Hand im Augenblick des Aufpralls. Die Zeichnung selbst (fuenf
+   Finger, ein Ballen) bleibt, wie sie war.
+   ===================================================================== */
+/* Gedreht wird um den BALLEN (bei 50 % / 74 % der Zeichnung): er liegt
+   dort, wo die Hand aufgetroffen ist, und bleibt beim Drehen stehen. */
+.lc-klaps-abdruck {
+  transform-origin: 50% 74%;
+  animation-name: lcKlapsAbdruckR100;
+}
+@keyframes lcKlapsAbdruckR100 {
+  0%, 26% { opacity: 0;
+            transform: rotate(calc(var(--klapsdir, 1) * -70deg)) scale(calc(var(--klapsdir, 1) * .94), .94); }
+  29%     { opacity: .55;
+            transform: rotate(calc(var(--klapsdir, 1) * -70deg)) scale(calc(var(--klapsdir, 1) * 1.04), 1.04); }
+  38%     { opacity: .9;
+            transform: rotate(calc(var(--klapsdir, 1) * -70deg)) scale(var(--klapsdir, 1), 1); }
+  70%     { opacity: .7;
+            transform: rotate(calc(var(--klapsdir, 1) * -70deg)) scale(var(--klapsdir, 1), 1); }
+  100%    { opacity: 0;
+            transform: rotate(calc(var(--klapsdir, 1) * -70deg)) scale(var(--klapsdir, 1), 1); }
+}

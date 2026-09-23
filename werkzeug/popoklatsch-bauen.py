@@ -26,6 +26,20 @@ Schlag auf Haut, schon im Haus):
   · nach 380 ms ist Schluss (kurzes Ausblenden) — kein Nachhall,
   · Spitze bei -3 dBFS.
 Ausgabe: ton/popoklatsch.opus und ton/popoklatsch.m4a, mono.
+
+RUNDE 100 — ERSETZT DURCH EINEN ECHTEN KLATSCHER (ElevenLabs)
+XANDER (Walkie-Talkie): „auf jeden Fall das Klatschgeraeusch
+verbessern" — und den alten Schmerzlaut dabei lassen.
+Vier Vorschlaege erzeugt (eleven_text_to_sound_v2, 0,8 s, „single firm
+open-palm spank … meaty fleshy smack … very dry, no snare"), gemessen:
+    a  1 Einschlag bei 50 ms, 30 ms laut, kein Nachhall   <- genommen
+    b  verschmiert (90 ms laut, steigt vorher an)
+    c  nur 20 ms, duenn
+    d  zwei Einschlaege (10 und 60 ms) — klingt doppelt
+Der Anfang wird um 35 ms gekuerzt, damit der Schlag auf den Aufprall
+der Hand faellt (LC_TREFFER klaps: 600 ms). Rohdatei und die bisherige
+Fassung liegen in .sicherung/ton-vor-r100/. Dieses Skript baut die
+ALTE Fassung aus der Ohrfeige und wird nicht mehr aufgerufen.
 =====================================================================
 """
 import subprocess, os

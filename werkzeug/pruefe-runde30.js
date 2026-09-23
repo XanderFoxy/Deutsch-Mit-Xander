@@ -107,8 +107,13 @@ const pruefe = (was, gut, zusatz) => {
     /* RUNDE 99, ZWEITER ANLAUF: echte Kuss-Aufnahmen statt „Holzklotz
        und Kuh" (Walkie-Talkie). Ihr Schmatz liegt bei 140 ms, also
        beginnt die Datei 380 ms nach dem Start; etwas lauter (0,7). */
-    && /lcStimmeZu\(kuesser, "kussmann", "kussfrau", 380, 0\.7\)/.test(js)
-    && /lcStimmeZu\(platz, "kussfrau", "kussmann", 380, 0\.7\)/.test(js));
+    /* RUNDE 100 — XANDER (Walkie-Talkie): „der Mann wird von einer Frau
+       gekuesst und die Frau wird von einem Mann gekuesst." Die Stimme
+       richtet sich jetzt nach dem GEKUESSTEN (das andere Geschlecht),
+       und vor dem Schmatz liegt ein „Mmmh" — Schmatz bei 455 ms, Start 65 ms. */
+    && /if \(\/\^\(w\|f\)\/\.test\(gZiel\)\) stimme = "kussmann"/.test(js)
+    && /else if \(\/\^m\/\.test\(gZiel\)\) stimme = "kussfrau"/.test(js)
+    && /lcTonSpaeter\(stimme, 65, 0\.8\)/.test(js));
   haengt("schneeball", "schneeklatsch");
   haengt("strohhalm", "schlurfen");
   haengt("blubbern", "blubbern");

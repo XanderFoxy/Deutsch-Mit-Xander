@@ -158,6 +158,23 @@ const sage = (gut, text, dazu) => {
   sage(nach && nach.my >= treffer.my - 2,
     "und drueckt danach noch einmal nach, statt sofort wegzuspringen",
     nach ? "y = " + nach.my + " nach " + treffer.my : "-");
+  /* RUNDE 100 — XANDER (Walkie-Talkie): „den Abdruck wie die
+     aufschlagende Hand auch seitlich darstellen, damit es optisch
+     logisch Sinn macht." Gemessen bei 900 ms (der Abdruck ist voll da):
+     er liegt im selben Winkel wie die Hand im Aufprall. */
+  await bei(900);
+  const abdruck2 = await pg.evaluate(() => {
+    const a = document.querySelector(".lc-klaps-abdruck");
+    if (!a) return null;
+    const m = getComputedStyle(a).transform;
+    if (!m || m === "none") return { grad: 0, deck: Number(getComputedStyle(a).opacity) };
+    const z = m.slice(m.indexOf("(") + 1, -1).split(",").map(Number);
+    return { grad: Number((Math.atan2(-z[2], z[3]) * 180 / Math.PI).toFixed(1)),
+             deck: Number(getComputedStyle(a).opacity) };
+  });
+  sage(abdruck2 && treffer && abdruck2.deck > 0.5 && Math.abs(abdruck2.grad - treffer.grad) <= 3,
+    "der Abdruck liegt quer wie die Hand, die ihn geschlagen hat",
+    abdruck2 ? "Abdruck " + abdruck2.grad + " Grad, Hand " + (treffer && treffer.grad) + " Grad" : "kein Abdruck");
 
   console.log("\nDIE REIHENFOLGE: WAESCHE, SCHLAG, LAUT\n");
   /* XANDER: „achte darauf, dass erst die Hose runtergezogen wird, dann

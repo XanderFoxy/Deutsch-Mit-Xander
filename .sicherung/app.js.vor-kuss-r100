@@ -51858,32 +51858,23 @@
          genau dann, wenn der Mund am Bild ankommt. */
       /* Wer hat gekuesst? Sein Platz sagt es — und er ist auf jedem
          Geraet derselbe. */
-      /* =============================================================
-         RUNDE 100 — ERST „MMMH", DANN DER SCHMATZ — UND WER KUESST
-         -------------------------------------------------------------
-         XANDER (Walkie-Talkie): „Da fehlt noch der Mmmmh-Sound vor dem
-         Kuss-Sound." Und: „Da fehlt noch der tonale Sound beim Kuessen,
-         der je nach Geschlecht variieren soll, und der Mann wird von
-         einer Frau gekuesst und die Frau wird von einem Mann gekuesst."
-         GEMESSEN an den bisherigen Dateien: vor dem Schmatz 0 ms (Mann)
-         bzw. 20 ms (Frau) Stimme — das „Mmmh" fehlte wirklich.
-         JETZT: vor den bewaehrten Schmatz (der blieb, mit ihm war er
-         zufrieden) ist ein echtes gesummtes „Mmmh" gesetzt (ElevenLabs,
-         Frau 199 Hz steigend, Mann 107 Hz). In beiden Dateien liegt der
-         Schmatz bei 455 ms; der Mund kommt bei 520 ms am Bild an
-         (LC_TREFFER kuss), also beginnt die Aufnahme bei 65 ms.
-         WELCHE STIMME: seine Regel woertlich — die geküsste Person hoert
-         das andere Geschlecht. Ist beim Getroffenen keins bekannt, gilt
-         die Stimme dessen, der kuesst. Rohdateien und alte Fassung:
-         .sicherung/ton-vor-r100/. */
       const kuesser = von ? lcPlatzMitNamen(von) : null;
-      const gZiel = String(((platz || {}).dataset || {}).lcGeschlecht || "").trim().toLowerCase();
-      const gK = String(((kuesser || {}).dataset || {}).lcGeschlecht || "").trim().toLowerCase();
-      let stimme = "kussfrau";
-      if (/^(w|f)/.test(gZiel)) stimme = "kussmann";
-      else if (/^m/.test(gZiel)) stimme = "kussfrau";
-      else if (/^m/.test(gK)) stimme = "kussmann";
-      lcTonSpaeter(stimme, 65, 0.8);
+      const gK = String(((kuesser || {}).dataset || {}).lcGeschlecht || "")
+        .trim().toLowerCase();
+      if (/^(w|f|m)/.test(gK)) {
+        /* RUNDE 99 — XANDER: „es klingt nach einem Holzklotz, der auf den
+           Tisch gelegt wird, und danach ein Muhen von einer Kuh". Die
+           selbst gebauten Kuesse hatten nach dem Schmatz 0,7 s Brummen
+           unter 400 Hz — das WAR die Kuh. Jetzt echte Aufnahmen
+           (ElevenLabs-Geraeusche), zugeschnitten: der Schmatz liegt bei
+           140 ms, also startet die Aufnahme 380 ms nach Beginn. */
+        lcStimmeZu(kuesser, "kussmann", "kussfrau", 380, 0.7);
+      } else {
+        /* Kein Geschlecht beim Absender: seine Regel woertlich — der
+           Empfaenger hoert das Gegenteil seines eigenen. Deshalb
+           stehen die beiden Namen hier VERTAUSCHT. */
+        lcStimmeZu(platz, "kussfrau", "kussmann", 380, 0.7);
+      }
     }, 3200, "kuss");
   }
 
