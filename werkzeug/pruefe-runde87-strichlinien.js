@@ -271,7 +271,15 @@ const sage = (gut, text, dazu) => {
        bleibt der Scherbenhaufen immer unten, nachdem man jemanden mit
        dem Hammer kaputt gemacht hat." Heil macht es nur „/pflaster" —
        und dass es das tut, misst werkzeug/pruefe-runde98-hammer.js. */
-    const bleibt = /kopfhoerer|gluehbirne|birne|anziehen|ausziehen|spray|lack|hammer|pflaster/.test(art);
+    /* RUNDE 98 — und der DRECK bleibt jetzt ebenfalls liegen. XANDER:
+       „saemtlicher Dreck, der erzeugt wird wie durch die Vogelkacke
+       oder irgendetwas anderes — das koennen wir wieder sauber putzen,
+       dann ist es insgesamt viel witziger."
+       Ein Fleck, der von selbst verschwindet, waere nichts zum
+       Wegputzen. Weg macht ihn „/putzen" (Schwamm, Lappen oder
+       Spucke) — und dass er das tut, misst
+       werkzeug/pruefe-runde98-putzen.js. */
+    const bleibt = /kopfhoerer|gluehbirne|birne|anziehen|ausziehen|spray|lack|hammer|pflaster|vogelkot/.test(art);
     if (letzte && !bleibt) {
       const nenn = (t) => schlimm.push(wo + " danach " + t);
       if (letzte.kinder !== v.kinder) {

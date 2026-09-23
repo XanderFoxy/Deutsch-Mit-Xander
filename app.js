@@ -29799,7 +29799,24 @@
        Ein gezeichneter Weg gilt deshalb jetzt fuer Fahren, Laufen UND
        diese drei; alle uebrigen Reisen gehen weiter direkt zur
        Nummer. */
-    const bahnFaehig = { flug: 1, feder: 1, maulwurf: 1, frosch: 1 };
+    /* =================================================================
+       RUNDE 98 — DER GEMALTE WEG GILT FUER JEDES FAHRZEUG
+       -----------------------------------------------------------------
+       XANDER: „saemtliche Fahrzeuge sollen den Weg eingezeichnet
+       bekommen."
+       Hier standen vier: Flugzeug, Sprungfeder, Maulwurf und Frosch.
+       Alle anderen bekamen nur die Zielnummer und fuhren schnurgerade.
+       Jetzt bekommt jedes Fahrzeug die ganze Kette — ausser denen, die
+       gar nicht FAHREN: Beamen, Tor, Roehre, Fahrstuhl und Zylinder
+       sind Spruenge von hier nach dort. Ein gemalter Umweg waere dort
+       eine Strecke, die niemand zurueckliegt. */
+    const ohneWeg = { beamen: 1, portal: 1, rohr: 1, fahrstuhl: 1, zylinder: 1,
+                      /* Die Liane haengt an EINEM festen Punkt und
+                         schwingt darum — ein Pendel kann keine
+                         Stationen abfahren, es kaeme nie zurueck.
+                         Und der Drei-Meter-Turm ist ein Sprung, kein
+                         Weg. */
+                      liane: 1, turm: 1 };
     const reihe = document.createElement("div");
     reihe.className = "lc-anreise-reihe";
     [["\u2708\ufe0f", "Flugzeug", "flug"],
@@ -29862,7 +29879,7 @@
            bekommen die ganze Kette — bei den anderen waere sie nur
            eine Zahlenreihe ohne Wirkung. */
         const zeile = "/" + befehl + " "
-          + (gemalt && bahnFaehig[befehl] ? gemalt.join("-") : nr);
+          + (gemalt && !ohneWeg[befehl] ? gemalt.join("-") : nr);
         try { LiveChat.schreiben(zeile); } catch (err) {}
         lcNachDemSenden(zeile);
       });
@@ -38088,6 +38105,60 @@
     /* Der Anteil der Gesamtstrecke, bei dem jede Station erreicht ist —
        daran haengen die Aufsetzer der Sprungfeder. */
     const bahnAnteile = bahnBis.map((l) => (bahnGesamt ? l / bahnGesamt : 1));
+    /* =================================================================
+       RUNDE 98 — JEDES FAHRZEUG FAEHRT DEN GEMALTEN WEG AB
+       -----------------------------------------------------------------
+       XANDER: „saemtliche Fahrzeuge sollen den Weg eingezeichnet
+       bekommen."
+
+       Bisher konnten das genau vier: Flugzeug, Sprungfeder, Maulwurf
+       und Frosch. Alle anderen fuhren schnurgerade zum Ziel, auch wenn
+       ein Umweg gemalt war — und im Platzmenue bekamen sie die Kette
+       gar nicht erst mit („bahnFaehig").
+
+       „bahnAb(t)" liefert zu einem Anteil der Gesamtstrecke den
+       VERSATZ vom Startpunkt aus — also genau das, was in ein
+       translate() gehoert. OHNE gemalten Weg ist die Bahn die gerade
+       Strecke, dann ist bahnAb(t) rechnerisch dasselbe wie
+       (ende - start) * t: die alten Animationen aendern sich um
+       keinen Bildpunkt. */
+    const bahnAb = (t) => {
+      const p = bahnPunkt(Math.max(0, Math.min(1, t)));
+      return { x: p.x - start.x, y: p.y - start.y };
+    };
+    /* Und die Kette der Zwischenbilder dazu: aus einem Anfangs- und
+       einem Endanteil wird eine Reihe von Schluesselbildern, die jede
+       Station mitnimmt. „mach(dx, dy, t)" baut jedes einzelne. */
+    const bahnKette = (vonAnteil, bisAnteil, mach, schritte) => {
+      const n = Math.max(2, schritte || 18);
+      const raus = [];
+      for (let i = 1; i <= n; i++) {
+        const t = i / n;
+        const p = bahnAb(t);
+        raus.push(mach(p.x, p.y, t, vonAnteil + (bisAnteil - vonAnteil) * t));
+      }
+      return raus;
+    };
+    /* Und der haeufigste Fall in einem Satz: ein Fahrzeug, das
+       waagerecht faehrt. Ohne gemalten Weg kommt genau das eine
+       Bild heraus, das vorher dort stand. */
+    /* Manche Reisen rechnen mit einem eigenen y — sie setzen das Bild
+       um lcBildVersatz hoeher oder tiefer. „dyGesamt" ist ihr eigener
+       Gesamtversatz; der Unterschied zur reinen Platzhoehe wird ueber
+       die Strecke verteilt. Ohne gemalten Weg kommt exakt dasselbe
+       heraus wie vorher (dyGesamt * t). */
+    const bahnAbY = (t, dyGesamt) => {
+      const pp = bahnAb(t);
+      return { x: pp.x, y: pp.y + (dyGesamt - (ende.y - start.y)) * t };
+    };
+    const bahnWaagerecht = (sp, vonAnteil, bisAnteil) => (bahn
+      ? bahnKette(vonAnteil, bisAnteil, (dx, dy, t, off) => ({
+          transform: "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1)
+            + "px) translate(-50%, -50%)" + sp + " scale(1)", opacity: 1, offset: off
+        }))
+      : [{ transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
+            + "px) translate(-50%, -50%)" + sp + " scale(1)", opacity: 1,
+           offset: bisAnteil }]);
 
     if (art === "flug") {
       /* Das Flugzeug mit IHM hinter dem Fenster. */
@@ -38579,17 +38650,22 @@
       const linksG = ende.x < start.x;
       const spG = " scaleX(" + (linksG ? -1 : 1) + ")";
       try {
+        /* RUNDE 98 — mit gemaltem Weg fliegt er die Stationen ab; ohne
+           behaelt er seinen Bogen ueber die Reihe. Beides gleichzeitig
+           ginge nicht: ein Bogen IST schon ein Umweg. */
         greif.animate([
           { transform: "translate(-50%, -50%)" + spG + " scale(.3)", opacity: 0, offset: 0 },
-          { transform: "translate(-50%, -50%)" + spG + " scale(1)", opacity: 1, offset: 0.12 },
+          { transform: "translate(-50%, -50%)" + spG + " scale(1)", opacity: 1, offset: 0.12 }
+        ].concat(bahn ? bahnWaagerecht(spG, 0.12, hin / dauer) : [
           { transform: "translate(" + (mitteG.x - start.x) + "px, " + (mitteG.y - start.y)
             + "px) translate(-50%, -50%)" + spG + " scale(1)", opacity: 1, offset: 0.54 },
           { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
             + "px) translate(-50%, -50%)" + spG + " scale(1)", opacity: 1,
-            offset: hin / dauer },
+            offset: hin / dauer }
+        ]).concat([
           { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
             + "px) translate(-50%, -50%)" + spG + " scale(.3)", opacity: 0, offset: 1 }
-        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+        ]), { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       } catch (e) {}
       /* RUNDE 71: die Krallen greifen zu, wenn sie das Bild aufnehmen
          — das ist bei 12 % der Reise, dort ist der Vogel voll da und
@@ -39229,15 +39305,17 @@
       setzen(schiff, start.x, start.y);
       const linksB = ende.x < start.x;
       try {
+        const spB = " scaleX(" + (linksB ? -1 : 1) + ")";
+        /* RUNDE 98 — „saemtliche Fahrzeuge sollen den Weg eingezeichnet
+           bekommen." Mit gemaltem Weg faehrt es die Stationen ab, ohne
+           genau wie bisher geradeaus. */
         schiff.animate([
-          { transform: "translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(.3)", opacity: 0, offset: 0 },
-          { transform: "translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(1)", opacity: 1, offset: 0.14 },
+          { transform: "translate(-50%, -50%)" + spB + " scale(.3)", opacity: 0, offset: 0 },
+          { transform: "translate(-50%, -50%)" + spB + " scale(1)", opacity: 1, offset: 0.14 }
+        ].concat(bahnWaagerecht(spB, 0.14, hin / dauer)).concat([
           { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
-            + "px) translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(1)", opacity: 1,
-            offset: hin / dauer },
-          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
-            + "px) translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(.3)", opacity: 0, offset: 1 }
-        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+            + "px) translate(-50%, -50%)" + spB + " scale(.3)", opacity: 0, offset: 1 }
+        ]), { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       } catch (e) {}
       lcTonReise("boot", dauer);
     } else if (art === "delfin") {
@@ -39296,8 +39374,27 @@
       reihe.appendChild(del);
       weg.push(del);
       setzen(del, start.x, start.y);
-      const linksD = ende.x < start.x;
-      const spD = " scaleX(" + (linksD ? -1 : 1) + ")";
+      /* =============================================================
+         RUNDE 98 — ER SCHWAMM RUECKWAERTS
+         -------------------------------------------------------------
+         XANDER: „im Uebrigen schwimmt der Delfin nicht in die richtige
+         Richtung."
+
+         ER HAT RECHT, UND ES STEHT IN DER ZEICHNUNG: die Schnauze
+         liegt bei x = 0 bis 14, die Schwanzflosse bei x = 126 bis 140.
+         Der gezeichnete Delfin schaut also nach LINKS. Hier stand
+         aber „scaleX(-1), wenn es nach links geht" — genau
+         andersherum. Wer nach rechts reiste, wurde nicht gespiegelt
+         und schwamm mit dem Schwanz voran.
+         Jetzt: nach links gar nicht spiegeln (er schaut ja schon
+         dorthin), nach rechts spiegeln.
+         UND DIE NEIGUNG DAZU: unter scaleX(-1) kehrt sich jede
+         Drehung optisch um. Oben im Bogen soll die Nase nach OBEN
+         zeigen, unten nach UNTEN — und weil die Spiegelung das
+         Vorzeichen schon dreht, ist es in BEIDEN Richtungen derselbe
+         Winkel: +16 Grad oben, -14 Grad unten. */
+      const nachRechtsD = ende.x > start.x;
+      const spD = " scaleX(" + (nachRechtsD ? -1 : 1) + ")";
       /* DREI BOEGEN. Die Hoehe ist ein Drittel der Strecke, mindestens
          aber eine halbe Bildhoehe — sonst sieht ein kurzer Sprung aus
          wie ein Zittern. */
@@ -39312,15 +39409,18 @@
       for (let b = 1; b <= bogen; b++) {
         const t = b / bogen;
         const vor = (b - 0.5) / bogen;
-        const x1 = (ende.x - start.x) * vor, y1 = (ende.y - start.y) * vor;
-        const x2 = (ende.x - start.x) * t, y2 = (ende.y - start.y) * t;
+        /* RUNDE 98 — auch der Delfin springt den gemalten Weg entlang.
+           Ohne gemalten Weg ist bahnAb(t) genau (ende - start) * t. */
+        const p1 = bahnAb(vor), p2 = bahnAb(t);
+        const x1 = p1.x, y1 = p1.y;
+        const x2 = p2.x, y2 = p2.y;
         /* Oben im Bogen: die Nase zeigt nach oben. */
         stufen.push({ transform: "translate(" + x1 + "px, " + (y1 - hochD)
-          + "px) translate(-50%, -50%)" + spD + " rotate(" + (linksD ? 16 : -16) + "deg) scale(1)",
+          + "px) translate(-50%, -50%)" + spD + " rotate(16deg) scale(1)",
           opacity: 1, offset: 0.1 + (hin / dauer - 0.1) * (vor) });
         /* Unten: die Nase zeigt nach unten — er taucht ein. */
         stufen.push({ transform: "translate(" + x2 + "px, " + y2
-          + "px) translate(-50%, -50%)" + spD + " rotate(" + (linksD ? -14 : 14) + "deg) scale(1)",
+          + "px) translate(-50%, -50%)" + spD + " rotate(-14deg) scale(1)",
           opacity: 1, offset: 0.1 + (hin / dauer - 0.1) * t });
       }
       stufen.push({ transform: "translate(" + (ende.x - start.x) + "px, "
@@ -39359,14 +39459,23 @@
       const anteil = (y) => (y / seilVoll).toFixed(3);
       const seil = kran.querySelector(".lc-kran-seil");
       try {
+        /* RUNDE 98 — der gemalte Weg gilt auch hier, aber nur
+           WAAGERECHT: die Last haengt am Seil und bleibt oben, bis sie
+           ueber dem Ziel ist. Die Hoehe kommt vom Kran, nicht vom
+           gemalten Weg. */
         kran.animate([
           { transform: "translate(-50%, -50%)", offset: 0 },
-          { transform: "translate(0px, " + (hochK - start.y) + "px) translate(-50%, -50%)", offset: 0.24 },
-          { transform: "translate(" + (ende.x - start.x) + "px, " + (hochK - start.y)
-            + "px) translate(-50%, -50%)", offset: hin / dauer },
+          { transform: "translate(0px, " + (hochK - start.y) + "px) translate(-50%, -50%)", offset: 0.24 }
+        ].concat(bahn
+          ? bahnKette(0.24, hin / dauer, (dx, dy, t, off) => ({
+              transform: "translate(" + dx.toFixed(1) + "px, " + (hochK - start.y)
+                + "px) translate(-50%, -50%)", offset: off }))
+          : [{ transform: "translate(" + (ende.x - start.x) + "px, " + (hochK - start.y)
+                + "px) translate(-50%, -50%)", offset: hin / dauer }]
+        ).concat([
           { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
             + "px) translate(-50%, -50%)", offset: 1 }
-        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+        ]), { duration: dauer, easing: "ease-in-out", fill: "forwards" });
         if (seil) {
           seil.animate([
             { transform: "translateX(-50%) scaleY(1)", offset: 0 },
@@ -39491,15 +39600,17 @@
       setzen(schiff, start.x, start.y);
       const linksB = ende.x < start.x;
       try {
+        const spB = " scaleX(" + (linksB ? -1 : 1) + ")";
+        /* RUNDE 98 — „saemtliche Fahrzeuge sollen den Weg eingezeichnet
+           bekommen." Mit gemaltem Weg faehrt es die Stationen ab, ohne
+           genau wie bisher geradeaus. */
         schiff.animate([
-          { transform: "translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(.3)", opacity: 0, offset: 0 },
-          { transform: "translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(1)", opacity: 1, offset: 0.14 },
+          { transform: "translate(-50%, -50%)" + spB + " scale(.3)", opacity: 0, offset: 0 },
+          { transform: "translate(-50%, -50%)" + spB + " scale(1)", opacity: 1, offset: 0.14 }
+        ].concat(bahnWaagerecht(spB, 0.14, hin / dauer)).concat([
           { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
-            + "px) translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(1)", opacity: 1,
-            offset: hin / dauer },
-          { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
-            + "px) translate(-50%, -50%) scaleX(" + (linksB ? -1 : 1) + ") scale(.3)", opacity: 0, offset: 1 }
-        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+            + "px) translate(-50%, -50%)" + spB + " scale(.3)", opacity: 0, offset: 1 }
+        ]), { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       } catch (e) {}
       /* RUNDE 70: hier stand lcTonZu("boot") — der Raddampfer
          klang wie ein Segelboot, obwohl er seinen eigenen Eintrag
@@ -39593,14 +39704,23 @@
       const anteil = (y) => (y / seilVoll).toFixed(3);
       const seil = kran.querySelector(".lc-kran-seil");
       try {
+        /* RUNDE 98 — der gemalte Weg gilt auch hier, aber nur
+           WAAGERECHT: die Last haengt am Seil und bleibt oben, bis sie
+           ueber dem Ziel ist. Die Hoehe kommt vom Kran, nicht vom
+           gemalten Weg. */
         kran.animate([
           { transform: "translate(-50%, -50%)", offset: 0 },
-          { transform: "translate(0px, " + (hochK - start.y) + "px) translate(-50%, -50%)", offset: 0.24 },
-          { transform: "translate(" + (ende.x - start.x) + "px, " + (hochK - start.y)
-            + "px) translate(-50%, -50%)", offset: hin / dauer },
+          { transform: "translate(0px, " + (hochK - start.y) + "px) translate(-50%, -50%)", offset: 0.24 }
+        ].concat(bahn
+          ? bahnKette(0.24, hin / dauer, (dx, dy, t, off) => ({
+              transform: "translate(" + dx.toFixed(1) + "px, " + (hochK - start.y)
+                + "px) translate(-50%, -50%)", offset: off }))
+          : [{ transform: "translate(" + (ende.x - start.x) + "px, " + (hochK - start.y)
+                + "px) translate(-50%, -50%)", offset: hin / dauer }]
+        ).concat([
           { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
             + "px) translate(-50%, -50%)", offset: 1 }
-        ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+        ]), { duration: dauer, easing: "ease-in-out", fill: "forwards" });
         if (seil) {
           seil.animate([
             { transform: "translateX(-50%) scaleY(1)", offset: 0 },
@@ -39781,7 +39901,26 @@
          Gleisen, und wechselt die Reihe auf einer Schiebebuehne.
          Findet die Wegsuche keinen Weg (ein Raum, in dem nichts
          zusammenhaengt), bleibt es bei der geraden Fahrt. */
-      const lokWeg = lcWegSuchen(lcPlatzGitter(), ab.nr, zu.nr, true);
+      /* =============================================================
+         RUNDE 98 — DIE LOK FAEHRT DEN GEMALTEN WEG
+         -------------------------------------------------------------
+         XANDER: „Die Schienen von der Lok gehen noch nicht in alle
+         Richtung. Die ist noch total inkonsistent … aber sie soll
+         generell ueber alle Leute immer fahren koennen, egal wo ich
+         hinfahren moechte."
+
+         GEFUNDEN: die Lok hat den gemalten Weg NIE gesehen. Sie hat
+         sich ihre Strecke immer selbst gesucht (lcWegSuchen, die
+         kuerzeste Verbindung von Feld zu Feld) — auch dann, wenn man
+         mit dem Finger eine ganz andere gezogen hatte. Genau das
+         sieht er als „inkonsistent": man malt einen Weg, und sie
+         faehrt einen anderen.
+         Jetzt hat der gemalte Weg Vorrang; ohne einen sucht sie sich
+         weiterhin selbst den kuerzesten — und der geht seit jeher
+         UEBER Besetzte (lcWegSuchen mit „ueberBesetzte"). */
+      const lokWeg = (bahn && bahn.length > 1)
+        ? bahn
+        : lcWegSuchen(lcPlatzGitter(), ab.nr, zu.nr, true);
       const lokZeug = lokWeg
         ? lcLokFahrt(lok, reihe, rk, ab, zu, start, ende, dauer, hin, d, lokWeg)
         : null;
@@ -41051,7 +41190,7 @@
       reihe.appendChild(heli);
       weg.push(heli);
       setzen(heli, start.x, start.y);
-      lcReiseWaagerecht(heli, start, ende, dauer, hin, "heli");
+      lcReiseWaagerecht(heli, start, ende, dauer, hin, "heli", bahn ? bahnKette : null);
       lcTonZu("heli");
     } else if (art === "pferd") {
       /* „und vielleicht irgendwie ein Pferd, auf dem man da hin
@@ -41289,7 +41428,7 @@
       reihe.appendChild(pferd);
       weg.push(pferd);
       setzen(pferd, start.x, start.y);
-      lcReiseWaagerecht(pferd, start, ende, dauer, hin, "pferd");
+      lcReiseWaagerecht(pferd, start, ende, dauer, hin, "pferd", bahn ? bahnKette : null);
       lcTonZu("pferd");
     } else if (art === "rohr") {
       /* XANDER: „An der Stelle kannst du auch noch wie bei Super Mario
@@ -41716,13 +41855,20 @@
           /* Ueber dem Start stehen, waehrend der Strahl arbeitet */
           { transform: "translate(-50%, -50%) translateY(2%)",    opacity: 1, offset: T(0.30) },
           { transform: "translate(-50%, -50%) translateY(0)",     opacity: 1, offset: T(0.42) },
-          /* Hinueber — erst langsam anziehen, dann wieder bremsen */
-          { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.08).toFixed(1) + "px), -50%)"
-                       + " translateY(-4%)", opacity: 1, offset: T(0.50) },
-          { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.50).toFixed(1) + "px), calc(-50% + "
-                       + ((endeY - startY) * 0.50).toFixed(1) + "px)) translateY(-7%)", opacity: 1, offset: T(0.62) },
-          { transform: "translate(calc(-50% + " + ((ende.x - start.x) * 0.92).toFixed(1) + "px), calc(-50% + "
-                       + ((endeY - startY) * 0.92).toFixed(1) + "px)) translateY(-4%)", opacity: 1, offset: T(0.72) },
+          /* Hinueber — erst langsam anziehen, dann wieder bremsen.
+             RUNDE 98: mit gemaltem Weg fliegt die Untertasse die
+             Stationen ab. Die drei Bruchteile unten sind genau das,
+             was ohne gemalten Weg herauskommt. */
+        ].concat((bahn
+          ? [0.08, 0.22, 0.36, 0.50, 0.64, 0.78, 0.92]
+          : [0.08, 0.50, 0.92]).map((f, i, alle) => {
+            const pU = bahnAbY(f, endeY - startY);
+            const schweben = f < 0.2 || f > 0.85 ? 4 : 7;
+            return { transform: "translate(calc(-50% + " + pU.x.toFixed(1)
+              + "px), calc(-50% + " + pU.y.toFixed(1) + "px)) translateY(-"
+              + schweben + "%)", opacity: 1,
+              offset: T(0.50 + (0.72 - 0.50) * (alle.length > 1 ? i / (alle.length - 1) : 1)) };
+          })).concat([
           { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
                        + (endeY - startY).toFixed(1) + "px)) translateY(0)", opacity: 1, offset: T(0.78) },
           { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
@@ -41732,7 +41878,7 @@
                        + (endeY - startY).toFixed(1) + "px)) translateY(-120%)", opacity: .7, offset: Math.min(1, T(1) + (1 - T(1)) * 0.6) },
           { transform: "translate(calc(-50% + " + (ende.x - start.x).toFixed(1) + "px), calc(-50% + "
                        + (endeY - startY).toFixed(1) + "px)) translateY(-300%)", opacity: 0, offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "both" });
+        ]), { duration: dauer, easing: "linear", fill: "both" });
 
         /* DER STRAHL. Er ist an, waehrend das Bild steigt und
            waehrend es sinkt — und nur dann. */
@@ -41967,10 +42113,10 @@
           const vorher = gelegt / summe;
           gelegt += stuecke[k];
           const nachher = gelegt / summe;
-          const bei = (f) => ({
-            x: dxK * (vorher + (nachher - vorher) * f),
-            y: dyK * (vorher + (nachher - vorher) * f)
-          });
+          /* RUNDE 98 — auch die Katze schlaegt das Bild den gemalten
+             Weg entlang. Ohne gemalten Weg ist bahnAbY(t, dyK) genau
+             { dxK * t, dyK * t }. */
+          const bei = (f) => bahnAbY(vorher + (nachher - vorher) * f, dyK);
           /* DIE KATZE holt aus, schlaegt und springt hinterher. */
           const vorPos = bei(0);
           katzRahmen.push({
@@ -42688,12 +42834,14 @@
           /* Waagerecht gleichmaessig — eine geworfene Scheibe wird
              durch die Luft kaum gebremst. */
           const hoch = -bogen * Math.sin(Math.PI * f);
+          /* RUNDE 98 — die Scheibe fliegt den gemalten Weg. */
+          const pF = bahnAbY(f, dyF);
           /* Die Neigung: -16 Grad beim Abwurf, 0 in der Mitte,
              +10 beim Ankommen. */
           const neig = -16 + 26 * f;
           rahmen.push({
-            transform: "translate(calc(-50% + " + (dxF * f).toFixed(1) + "px), calc(-50% + "
-              + (dyF * f + hoch).toFixed(1) + "px))"
+            transform: "translate(calc(-50% + " + pF.x.toFixed(1) + "px), calc(-50% + "
+              + (pF.y + hoch).toFixed(1) + "px))"
               + " rotate(" + neig.toFixed(1) + "deg)"
               + " scaleY(" + (0.34 + 0.66 * Math.pow(Math.max(0, (f - 0.86) / 0.14), 2)).toFixed(3) + ")",
             opacity: 1,
@@ -42974,19 +43122,38 @@
     greifvogel: 1 /* Schnabel bei x=132 */
   };
 
-  function lcReiseWaagerecht(el, start, ende, dauer, hin, art) {
+  function lcReiseWaagerecht(el, start, ende, dauer, hin, art, kette) {
     const links = ende.x < start.x;
     const blick = LC_REISE_BLICK[art] || 1;
+    /* WARUM DIE RICHTUNG UEBER DEN GANZEN WEG DIESELBE BLEIBT, auch
+       wenn der gemalte Weg einen Haken schlaegt: ein scaleX(±1)
+       laesst sich nicht umschalten, ohne durch die Null zu gehen —
+       das Fahrzeug wuerde zu einem Strich zusammenschnurren und
+       andersherum wieder herauskommen. Genau das war der Fehler, den
+       die Lok in Runde 88 hatte („Die Lok dreht sich immer noch auf
+       der Stelle"). Also: gespiegelt wird nach der Gesamtrichtung. */
     const sp = " scaleX(" + ((links ? -1 : 1) * blick) + ")";
+    const ziel = hin / dauer;
+    const bild = (dx, dy, gross, deck, offset) => ({
+      transform: "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1)
+        + "px) translate(-50%, -50%)" + sp + " scale(" + gross + ")",
+      opacity: deck, offset: offset
+    });
+    const bilder = [
+      { transform: "translate(-50%, -50%)" + sp + " scale(.3)", opacity: 0, offset: 0 },
+      { transform: "translate(-50%, -50%)" + sp + " scale(1)", opacity: 1, offset: 0.14 }
+    ];
+    if (kette) {
+      /* RUNDE 98 — der gemalte Weg: Station fuer Station statt
+         schnurgerade. */
+      kette(0.14, ziel, (dx, dy, t, offset) => bild(dx, dy, 1, 1, offset))
+        .forEach((k) => bilder.push(k));
+    } else {
+      bilder.push(bild(ende.x - start.x, ende.y - start.y, 1, 1, ziel));
+    }
+    bilder.push(bild(ende.x - start.x, ende.y - start.y, .3, 0, 1));
     try {
-      el.animate([
-        { transform: "translate(-50%, -50%)" + sp + " scale(.3)", opacity: 0, offset: 0 },
-        { transform: "translate(-50%, -50%)" + sp + " scale(1)", opacity: 1, offset: 0.14 },
-        { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
-          + "px) translate(-50%, -50%)" + sp + " scale(1)", opacity: 1, offset: hin / dauer },
-        { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
-          + "px) translate(-50%, -50%)" + sp + " scale(.3)", opacity: 0, offset: 1 }
-      ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+      el.animate(bilder, { duration: dauer, easing: "ease-in-out", fill: "forwards" });
     } catch (e) {}
   }
 
