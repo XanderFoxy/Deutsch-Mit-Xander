@@ -30797,6 +30797,12 @@
          den Sprechbildern; ein Tipp darauf setzt es sofort und
          speichert es mit dem Profil. */
       knopf("\ud83c\udf99\ufe0f", "Sprechbild", () => lcSprechbildMenue(platz));
+      /* RUNDE 100 — XANDER (Walkie-Talkie, zum Kran): „Der Effekt soll
+         ausserdem auch immer mit mir selbst gehen." Das „Holen" gibt es
+         nur bei den anderen (sich selbst angeln ergibt keinen Sinn) —
+         den Kran aber auf dem eigenen Bild: er hebt einen selbst auf
+         den Platz, den man danach waehlt. */
+      knopf("\ud83c\udfd7\ufe0f", "Kran", () => lcHebenMenue(platz, name, "kranheb"));
     }
     lcSpielzeugGeordnet().forEach(([zeichen, wort, befehl, ohneNamen, unter]) => {
       /* EIN UNTERMENUE STATT DREI KACHELN.
