@@ -112,27 +112,68 @@ const sage = (gut, was, zusatz) => {
       "Alex", stueck ? { stueck: stueck } : {});
     const spur = [];
     let hoerner = 0, breitsten = 1, schmalsten = 1;
-    for (let i = 0; i < 60; i++) {
-      await new Promise((f) => setTimeout(f, 70));
-      const r = kreis.getBoundingClientRect();
-      spur.push(r.top + r.height / 2);
-      hoerner = Math.max(hoerner, platz.querySelectorAll(".lc-ballhoerner").length);
-      const v = r.width / (r.height || 1);
-      breitsten = Math.max(breitsten, v);
-      schmalsten = Math.min(schmalsten, v);
-    }
-    /* Der Hub an einer Stelle: wie viel tiefer liegt der NAECHSTE
-       Nachbar auf beiden Seiten? Nur wo beide tiefer liegen, war das
-       Bild oben in der Luft. */
+    let griffeGesehen = 0, farbeGesehen = "";
+    /* GEMESSEN WIRD JEDES BILD, NICHT ALLE 70 ms.
+       Beim vollen Durchlauf (zwei Sonden gleichzeitig) hat diese
+       Messung „Hub 18 px, 1 Sprungstelle" gemeldet und war rot,
+       obwohl sie allein 23 px und 3 Sprungstellen misst. Der Grund
+       war die Sonde, nicht der Huepfball: unter Last zieht sich ein
+       setTimeout(70) auf ein Vielfaches, und dann fallen ganze
+       Spruenge zwischen zwei Messungen. Jetzt wird an JEDEM Bild
+       gemessen (requestAnimationFrame) und die Zeit dazu behalten. */
+    const zeit = [];
+    const bis = performance.now() + 4400;
+    await new Promise((fertig) => {
+      const schlag = () => {
+        const r = kreis.getBoundingClientRect();
+        spur.push(r.top + r.height / 2);
+        zeit.push(performance.now());
+        const hh = platz.querySelector(".lc-ballhoerner");
+        hoerner = Math.max(hoerner, platz.querySelectorAll(".lc-ballhoerner").length);
+        /* Die Griffe WAEHREND der Fahrt festhalten. Am Ende der
+           Messung sind die Hoerner schon wieder abgeraeumt — wer erst
+           danach nachsieht, findet null Griffe und haelt das
+           faelschlich fuer einen Fehler. */
+        if (hh && !griffeGesehen) {
+          griffeGesehen = hh.querySelectorAll(".lc-ballhorn-griff").length;
+          const gg = hh.querySelector(".lc-ballhorn-griff");
+          if (gg) farbeGesehen = getComputedStyle(gg).fill;
+        }
+        const v = r.width / (r.height || 1);
+        breitsten = Math.max(breitsten, v);
+        schmalsten = Math.min(schmalsten, v);
+        if (performance.now() < bis) requestAnimationFrame(schlag); else fertig();
+      };
+      requestAnimationFrame(schlag);
+    });
+    /* Der Hub an einer Stelle: wie viel tiefer liegt der Nachbar auf
+       beiden Seiten?
+       ABSTAND IN ZEIT, NICHT IN MESSPUNKTEN: bei 60 Bildern je
+       Sekunde liegt das Nachbarbild 16 ms daneben, und so kurz
+       aendert sich an einem Sprung fast nichts — der Hub waere
+       immer ungefaehr null. Verglichen wird deshalb mit dem
+       Messpunkt 90 ms davor und 90 ms danach. */
+    const nachbar = (i, richtung) => {
+      const ziel = zeit[i] + richtung * 90;
+      let k = i;
+      while (k + richtung >= 0 && k + richtung < zeit.length
+             && (richtung > 0 ? zeit[k] < ziel : zeit[k] > ziel)) k += richtung;
+      return k;
+    };
     let hub = 0, spruenge = 0;
     for (let i = 1; i < spur.length - 1; i++) {
-      const h = Math.min(spur[i - 1], spur[i + 1]) - spur[i];
+      const a = nachbar(i, -1), b = nachbar(i, 1);
+      if (a === i || b === i) continue;
+      const h = Math.min(spur[a], spur[b]) - spur[i];
       if (h > hub) hub = h;
-      if (h > 8) spruenge++;
+      /* Eine Sprungstelle nur einmal zaehlen: der hoechste Punkt in
+         seiner Umgebung. Sonst zaehlt ein einziger Sprung bei 60
+         Bildern je Sekunde als zwanzig. */
+      if (h > 8 && spur[i] <= spur[i - 1] && spur[i] < spur[i + 1]) spruenge++;
     }
     const h = platz.querySelector(".lc-ballhoerner");
-    let griffe = 0, farbe = "";
-    if (h) {
+    let griffe = griffeGesehen, farbe = farbeGesehen;
+    if (h && !griffe) {
       griffe = h.querySelectorAll(".lc-ballhorn-griff").length;
       const g = h.querySelector(".lc-ballhorn-griff");
       if (g) farbe = getComputedStyle(g).fill;

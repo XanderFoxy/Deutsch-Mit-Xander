@@ -240,6 +240,25 @@ const pruefe = (was, gut, zusatz) => {
     if (!seiner.dataset.lcPlatz) seiner.dataset.lcPlatz = "2";
     meiner.classList.add("lc-platz-ich");
     window.DMA_PRUEFUNG.platzMenue(seiner);
+    /* RUNDE 98 — DIE ANGEL LIEGT JETZT EINE EBENE TIEFER.
+       XANDER: „Dann haette ich gerne den Kran dafuer, dass man jemand
+       anderen noch auf einen Platz heben kann und repariere noch das
+       Lasso und die Angel."
+       Seitdem gibt es drei Werkzeuge zum Holen (Angel, Lasso, Kran),
+       und sie stehen zusammen unter der Kachel „Holen" — sonst waere
+       das Platzmenue noch eine Zeile laenger geworden. Diese Sonde
+       hat danach „keine Kachel" gemeldet: sie suchte die Angel noch
+       ganz oben. Also wird jetzt erst „Holen" geoeffnet. */
+    const oben = document.getElementById("lcPlatzMenue");
+    const holen = oben ? [...oben.querySelectorAll(".lc-platzmenue-knopf")]
+      /* Gesucht wird das WORT der Kachel, nicht ihr ganzer Text: davor
+         steht noch das Zeichen (🪝), und mit dem passt kein „^Holen$". */
+      .filter((b) => /^Holen$/i.test(
+        ((b.querySelector(".lc-platzmenue-wort") || {}).textContent || "").trim()))[0] : null;
+    if (holen) {
+      holen.click();
+      await new Promise((f) => setTimeout(f, 140));
+    }
     const k = document.getElementById("lcPlatzMenue");
     const um = k ? [...k.querySelectorAll(".lc-platzmenue-knopf")]
       /* NACHGEZOGEN IN RUNDE 22 — die Sache hat sich geaendert:

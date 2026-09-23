@@ -70,6 +70,15 @@ for f in werkzeug/pruefe-*.js; do
     pruefe-runde98-aufdecken)    frist=420  ;;
     pruefe-runde98-spraybild)    frist=420  ;;
     pruefe-runde98-gesichter)    frist=300  ;;
+    # Diese faehrt 16 Fahrzeuge je zweimal ab (mit und ohne gemaltem
+    # Weg) — gemessen 152 s, mit 120 s wurde sie mitten im Lauf
+    # abgeschnitten und stand als ROT in der Liste, obwohl sie gruen
+    # ist. Deshalb 420 s.
+    pruefe-runde98-wegfahrzeuge) frist=420  ;;
+    # Zehn Mario-Laeufe hintereinander, damit der Zufall nachzaehlbar
+    # ist (Runde 98) — das dauert laenger als zwei Minuten.
+    pruefe-runde88-mario)        frist=600  ;;
+    pruefe-runde98-mario)        frist=600  ;;
     *)                           frist=120  ;;
   esac
   aus=$(timeout "$frist" node "$f" 2>&1)
