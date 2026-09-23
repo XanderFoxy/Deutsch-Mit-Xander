@@ -88,6 +88,8 @@ for f in werkzeug/pruefe-*.js; do
     # Sechs Haende, jede dreimal gemessen, dazu zwei Bildvergleiche
     # gegen die alte Fassung — gemessen 2 Minuten, mit Luft 420 s.
     pruefe-runde99-haende)       frist=420  ;;
+    # Das Menue wird fuenfmal komplett auf- und zugeklappt.
+    pruefe-runde99-menue)        frist=300  ;;
     *)                           frist=120  ;;
   esac
   aus=$(timeout "$frist" node "$f" 2>&1)

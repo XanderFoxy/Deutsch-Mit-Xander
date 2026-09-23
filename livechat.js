@@ -9617,7 +9617,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "spucken", kurz: "spuck", nutzt: "/spucken Name", was: "Anspucken \u2014 die Rotze l\u00e4uft danach herunter" },
     { gr: "reden", w: "gluehbirne", kurz: "birne", nutzt: "/gluehbirne Name", was: "Gl\u00fchbirne \u2014 eingedreht, bis es leuchtet" },
     { gr: "reden", w: "birneraus", kurz: "dunkel", nutzt: "/birneraus Name", was: "Gl\u00fchbirne heraus \u2014 es wird dunkel, nur Augen bleiben" },
-    { gr: "reden", w: "entbloessung", kurz: "ups", nutzt: "/entbloessung Name", was: "Ups! \u2014 geht nur bei dem, der direkt neben dir sitzt" },
+    { gr: "reden", w: "entbloessung", kurz: "ups", nutzt: "/entbloessung Name",
+      was: "Ups! \u2014 dazu geht  hinten , oben  oder  vorn  (z. B. /entbloessung Bea oben)" },
     { gr: "reden", w: "klaps", kurz: "", nutzt: "/klaps Name", was: "Klaps auf den Hintern \u2014 die Hand kommt von unten, der Abdruck bleibt kurz" },
     { gr: "reden", w: "hut", kurz: "cowboy",  nutzt: "/hut Name",       was: "Cowboyhut \u2014 er faellt von oben und sitzt schief" },
     { gr: "reden", w: "sonnenbrille", kurz: "", nutzt: "/sonnenbrille Name",
@@ -12063,6 +12064,33 @@ window.LiveChat = (function () {
        mehr ab, wenn hinter dem Namen kein Lied steht: dann faellt es
        durch zu AM_PLATZ, damit „/kopfhoerer Xander Fox" weiter die
        blossen Kopfhoerer auf den Platz von Xander Fox setzt. */
+    /* =========================================================
+       RUNDE 99 — WIE DER BH AUFGEHT
+       ---------------------------------------------------------
+       XANDER: „der BH kann hinten aufgehen, oder ueber den Kopf,
+       oder vorne auf."
+       ACHTUNG, REIHENFOLGE: dieser Zweig MUSS vor „if (AM_PLATZ[art])"
+       stehen. Steht er dahinter, faengt die Tabelle
+       „/entbloessung Bea oben" schon vorher ab, sucht eine Person
+       namens „Bea oben" und findet keine — genau der Fehler, den
+       werkzeug/pruefe-befehlsreihenfolge.js seit Runde 85 bewacht. */
+    if (art === "entbloessung" && rest && /\s/.test(rest.trim())) {
+      var stkE = rest.trim().split(/\s+/);
+      var wieE = String(stkE[stkE.length - 1]).toLowerCase();
+      if (wieE === "hinten" || wieE === "oben" || wieE === "vorn" || wieE === "vorne") {
+        stkE.pop();
+        var wemE = stkE.length ? zielPerson(stkE.join(" ")) : null;
+        if (wemE) {
+          var satzE = AM_PLATZ.entbloessung;
+          return anAlle("aktion", zustand.ichName + " " + satzE.satz + " "
+                        + zielWort(wemE) + "  " + satzE.emoji,
+                        { wirkung: "entbloessung", wen: wemE.name,
+                          wie: (wieE === "vorne" ? "vorn" : wieE) });
+        }
+      }
+      /* Kein bekanntes Wort dahinter? Dann war es ein Name mit
+         Leerzeichen — durchfallen lassen, AM_PLATZ macht den Rest. */
+    }
     if (art === "kopfhoerer" && rest && /\s/.test(rest.trim())) {
       var stkK = rest.trim().split(/\s+/);
       var namK = stkK.shift();

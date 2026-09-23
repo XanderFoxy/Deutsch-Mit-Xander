@@ -31595,3 +31595,104 @@ code, pre {
   stroke: rgba(8, 24, 32, .7);
   stroke-width: .7;
 }
+
+/* =====================================================================
+   RUNDE 99 — „FUER ALLE" UND DIE AUSNAHMEN IM UNTERMENUE
+   ---------------------------------------------------------------------
+   XANDER: „In jedem Untermenue sollte auch stehen ,fuer alle' mit so
+   einem Haekchen … und dann kann man einzelne wieder abwaehlen, die
+   das nicht abbekommen sollen."
+   Die Zeile sieht aus wie die Kacheln darunter — gleiche Hoehe,
+   gleicher Abstand, gleiche Schrift. Ein Haekchen, das aus einem
+   anderen Menue zu stammen scheint, verwirrt mehr, als es hilft.
+   ===================================================================== */
+.lc-menue-alle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  margin: 2px 0 4px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: .86rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, .06);
+}
+.lc-menue-alle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #45c07a;
+  flex: 0 0 auto;
+}
+/* Die Ausnahmen stehen eingerueckt darunter — sie gehoeren sichtbar
+   zu dem Haekchen darueber und nicht zu den Kacheln. */
+.lc-menue-ausnahmen {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 8px;
+  margin: 0 0 6px 14px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(255, 255, 255, .18);
+  max-height: 34vh;
+  overflow-y: auto;
+}
+.lc-menue-ausnahme {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.lc-menue-ausnahme input {
+  width: 14px;
+  height: 14px;
+  accent-color: #45c07a;
+  flex: 0 0 auto;
+}
+.lc-menue-ausnahme span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Mit ausgeklappten Ausnahmen braucht das Menue etwas mehr Platz. */
+.lc-platzmenue.lc-platzmenue-breit {
+  min-width: 15.5rem;
+}
+
+/* =====================================================================
+   RUNDE 99 — DREI ARTEN, WIE DER BH AUFGEHT
+   ---------------------------------------------------------------------
+   XANDER: „der BH kann hinten aufgehen, oder ueber den Kopf, oder
+   vorne auf."
+   „hinten" ist die Fassung aus Runde 73 und bleibt der Standard —
+   wer nichts dazusagt, bekommt genau das, was er kennt.
+   ===================================================================== */
+.lc-entbl-bh.lc-entbl-oben { animation-name: lcEntblObenR99; }
+@keyframes lcEntblObenR99 {
+  0%   { opacity: 0; transform: translateY(-16%); }
+  10%  { opacity: 1; transform: translateY(0); }
+  /* 22 % = 0,66 s: hier packt die Hand zu, hier liegt „bhriss". */
+  22%  { opacity: 1; transform: translateY(0); }
+  /* Nach OBEN gezogen: er staucht sich erst (der Stoff gibt nach),
+     dann geht er ueber den Kopf. */
+  30%  { opacity: 1; transform: translateY(-6%) scaleY(.94); }
+  42%  { opacity: 1; transform: translateY(-38%) scaleY(.86) rotate(3deg); }
+  56%  { opacity: 1; transform: translateY(-74%) scaleY(.82) rotate(6deg); }
+  74%  { opacity: 1; transform: translateY(-104%) rotate(9deg); }
+  100% { opacity: 0; transform: translateY(-132%) rotate(12deg); }
+}
+.lc-entbl-bh.lc-entbl-vorn { animation-name: lcEntblVornR99; }
+@keyframes lcEntblVornR99 {
+  0%   { opacity: 0; transform: translateY(-16%); }
+  10%  { opacity: 1; transform: translateY(0) scaleX(1); }
+  22%  { opacity: 1; transform: translateY(0) scaleX(1); }
+  /* Der Verschluss sitzt VORN: er springt auf, und die Koerbchen
+     weichen zur Seite, bevor das Ganze faellt. */
+  28%  { opacity: 1; transform: translateY(2%) scaleX(1.18); }
+  34%  { opacity: 1; transform: translateY(8%) scaleX(1.26) rotate(1deg); }
+  46%  { opacity: 1; transform: translateY(34%) scaleX(1.2) rotate(-3deg); }
+  60%  { opacity: 1; transform: translateY(66%) scaleX(1.12) rotate(-5deg); }
+  78%  { opacity: 1; transform: translateY(90%) rotate(-7deg); }
+  100% { opacity: 0; transform: translateY(108%) rotate(-9deg); }
+}

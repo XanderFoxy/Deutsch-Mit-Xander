@@ -29413,7 +29413,13 @@
     ["\ud83d\udca1", "Birne", "gluehbirne", false,
       [["\ud83d\udca1", "Birne an",  "gluehbirne"],
        ["\ud83d\udd0c", "Birne raus", "birneraus"]]],
-    ["\ud83d\udc59", "Ups!",     "entbloessung"],
+    /* RUNDE 99 — XANDER: „Das Frivole und das Sexy koenntest du auch
+       mal sammeln." Die drei Arten stehen als Unterwahl darunter;
+       „Ups!" allein bleibt, was es war (hinten). */
+    ["\ud83d\udc59", "Ups!",     "entbloessung", false,
+      [["\ud83d\udc59", "Hinten auf", "entbloessung", "hinten"],
+       ["\u2b06\ufe0f", "\u00dcber den Kopf", "entbloessung", "oben"],
+       ["\ud83d\udd13", "Vorne auf", "entbloessung", "vorn"]]],
     ["\ud83d\udd90\ufe0f", "Klaps",    "klaps"],
     /* RUNDE 19: „Vielleicht kannst du noch auf das Profilbild einen
        Cowboyhut setzen" · „so ein Countdown im Profilbild … und dann
@@ -29650,6 +29656,101 @@
      ================================================================= */
   /* Die aufgeklappte Kachelgruppe. Sie sieht aus wie das Platzmenue
      und schickt dieselben Zeilen — nur eine Ebene tiefer. */
+  /* =====================================================================
+     RUNDE 99 — „FUER ALLE", UND EINZELNE WIEDER ABWAEHLEN
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „In jedem Untermenue sollte auch stehen ,fuer
+     alle' mit so einem Haekchen … und dann kann man einzelne wieder
+     abwaehlen, die das nicht abbekommen sollen."
+
+     WICHTIG: dafuer musste KEINE neue Befehlssprache erfunden werden.
+     Seit Runde 76 versteht jeder Platz-Befehl eine Komma-Kette
+     („/ei Bea, Cem, Dana") — das ist genau „alle ausser den
+     Abgewaehlten". Gesendet wird deshalb
+       „alle"          wenn niemand abgewaehlt ist (kuerzeste Zeile),
+       „Bea, Dana"     wenn Cem das Haekchen verloren hat.
+     Beides laeuft durch Wege, die es schon gibt und die gemessen
+     funktionieren — statt einen dritten zu bauen, den niemand prueft.
+     ===================================================================== */
+  function lcMenueLeute() {
+    /* GELESEN WIRD, WAS AUF DEM BILDSCHIRM STEHT — dieselbe Regel wie
+       beim Heben-Menue: das Modell kann leer sein, der Raum nicht. */
+    const raus = [];
+    document.querySelectorAll("#lcPlaetze .lc-platz").forEach((p) => {
+      if (p.classList.contains("lc-platz-frei")) return;
+      const n = (p.dataset.lcName
+        || (p.querySelector(".lc-platz-name") || {}).textContent || "")
+        .replace(/\s*\(du\)$/, "").trim();
+      if (n && n !== "frei" && raus.indexOf(n) < 0) raus.push(n);
+    });
+    return raus;
+  }
+
+  /* =====================================================================
+     RUNDE 99 — DAS MENUE AUFRAEUMEN: VIER KATEGORIEN
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „Das Menue koennte man noch ein bisschen
+     aufraeumen … Kategorien: Werfen, Eklig, Schmutzig, und Sauber
+     machen oder Reparieren."
+
+     DIE REGEL, nach der eine Kachel einsortiert ist: nach der HANDLUNG,
+     nicht nach dem Gegenstand.
+       Werfen    — etwas fliegt zu ihm hinueber
+       Eklig     — es ist einfach eklig
+       Schmutzig — es bleibt etwas kleben
+       Sauber    — es geht wieder weg, oder es wird repariert
+     Jede Kachel steht in GENAU EINER Gruppe. Stuende sie in zweien,
+     waere das Menue nicht kuerzer geworden, sondern nur unuebersichtlich
+     — und genau das sollte weg.
+
+     GEBAUT WIRD NICHT UMGESCHRIEBEN: LC_PLATZ_SPIELZEUG bleibt Zeile
+     fuer Zeile stehen, mitsamt allem, was dort erklaert ist. Die
+     Gruppen werden beim OEFFNEN gebildet. Wer eine Kachel umsortieren
+     will, aendert eine Zeile hier und sonst nichts.
+     ===================================================================== */
+  const LC_MENUE_GRUPPEN = [
+    ["\ud83c\udfaf", "Werfen",
+     ["bumerang", "pfeil", "zwille", "ei", "sahne", "katapult", "wasser"]],
+    ["\ud83e\udd22", "Eklig",
+     ["spucken", "vogelkot"]],
+    ["\ud83d\udd8c\ufe0f", "Schmutzig",
+     ["paintball", "spray"]],
+    ["\ud83e\uddfd", "Sauber machen",
+     ["putzen", "wischer", "gluehbirne"]],
+    /* XANDER: „Das Frivole und das Sexy koenntest du auch mal sammeln,
+       das kann ein Untermenue sein." */
+    ["\ud83d\ude0f", "Frivol",
+     ["entbloessung", "klaps"]]
+  ];
+  /* Die Kachelwand, wie sie auf den Bildschirm kommt: die Mitglieder
+     einer Gruppe verschwinden aus der obersten Ebene und stehen
+     stattdessen unter IHRER Kachel — an der Stelle, wo vorher das
+     erste Mitglied stand, damit sich nichts anderes verschiebt. */
+  function lcSpielzeugGeordnet() {
+    const wohin = {};
+    LC_MENUE_GRUPPEN.forEach((g, gi) => {
+      g[2].forEach((b) => { wohin[b] = gi; });
+    });
+    const inhalt = LC_MENUE_GRUPPEN.map(() => []);
+    const reihe = [];
+    const schon = {};
+    LC_PLATZ_SPIELZEUG.forEach((k) => {
+      const gi = wohin[k[2]];
+      if (gi === undefined) { reihe.push(k); return; }
+      /* Im Untermenue bedeutet das vierte Feld ZUSATZ, in der obersten
+         Ebene dagegen „ohne Namen". Es darf deshalb NICHT einfach
+         mitwandern — sonst stuende hinter dem Befehl ploetzlich das
+         Wort „true". */
+      inhalt[gi].push([k[0], k[1], k[2], null, k[4]]);
+      if (!schon[gi]) { schon[gi] = 1; reihe.push({ gruppe: gi }); }
+    });
+    return reihe.map((k) => {
+      if (!k || !k.gruppe && k.gruppe !== 0) return k;
+      const g = LC_MENUE_GRUPPEN[k.gruppe];
+      return [g[0], g[1], "*gruppe", false, inhalt[k.gruppe]];
+    });
+  }
+
   function lcUnterMenue(platz, name, titel, liste) {
     lcPlatzMenueZu();
     const kasten = document.createElement("div");
@@ -29660,7 +29761,64 @@
     kopf.className = "lc-platzmenue-kopf";
     kopf.textContent = titel;
     kasten.appendChild(kopf);
-    liste.forEach(([zeichen, wort, befehl, zusatz]) => {
+
+    /* --- „fuer alle" mit Ausnahmen ---------------------------------
+       Nur dort, wo es ueberhaupt einen Sinn hat: ein Untermenue, das
+       gar keine Person meint (name leer), hat nichts zu verteilen. */
+    const leute = name ? lcMenueLeute() : [];
+    const ausgenommen = {};
+    let fuerAlle = false;
+    let liste2 = null;
+    if (leute.length > 1) {
+      const zeileA = document.createElement("label");
+      zeileA.className = "lc-menue-alle";
+      const hakenA = document.createElement("input");
+      hakenA.type = "checkbox";
+      hakenA.className = "lc-menue-alle-haken";
+      const wortA = document.createElement("span");
+      wortA.textContent = "f\u00fcr alle";
+      zeileA.appendChild(hakenA);
+      zeileA.appendChild(wortA);
+      kasten.appendChild(zeileA);
+
+      liste2 = document.createElement("div");
+      liste2.className = "lc-menue-ausnahmen";
+      liste2.hidden = true;
+      leute.forEach((n) => {
+        const z = document.createElement("label");
+        z.className = "lc-menue-ausnahme";
+        const h = document.createElement("input");
+        h.type = "checkbox";
+        h.checked = true;
+        h.dataset.lcWen = n;
+        const w = document.createElement("span");
+        w.textContent = n;
+        h.addEventListener("change", () => {
+          if (h.checked) delete ausgenommen[n]; else ausgenommen[n] = 1;
+        });
+        z.appendChild(h); z.appendChild(w);
+        liste2.appendChild(z);
+      });
+      kasten.appendChild(liste2);
+      hakenA.addEventListener("change", () => {
+        fuerAlle = hakenA.checked;
+        liste2.hidden = !fuerAlle;
+        kasten.classList.toggle("lc-platzmenue-breit", fuerAlle);
+        lcMenueStellen(kasten, platz);
+      });
+      /* Das Haekchen darf das Menue NICHT schliessen — sonst waere es
+         nach dem ersten Klick weg, bevor man die Kachel trifft. */
+      zeileA.addEventListener("click", (e) => e.stopPropagation());
+      liste2.addEventListener("click", (e) => e.stopPropagation());
+    }
+    /* Wen meint die Kachel gerade? */
+    const wenJetzt = () => {
+      if (!fuerAlle) return name;
+      const bleibt = leute.filter((n) => !ausgenommen[n]);
+      if (!bleibt.length) return name;
+      return bleibt.length === leute.length ? "alle" : bleibt.join(", ");
+    };
+    liste.forEach(([zeichen, wort, befehl, zusatz, unter]) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "lc-platzmenue-knopf";
@@ -29670,6 +29828,16 @@
       b.querySelector(".lc-platzmenue-wort").textContent = wort;
       b.addEventListener("click", (e) => {
         e.preventDefault(); e.stopPropagation();
+        /* RUNDE 99 — EIN UNTERMENUE DARF SELBST EINES HABEN.
+           Ohne das gaebe es die Kategorien nicht: die Spruehdose hat
+           zwoelf Motive und gehoert unter „Schmutzig" — beides
+           zusammen sind zwei Ebenen. Wen die Kachel trifft, wandert
+           mit: wer hier oben „fuer alle" angehakt hat, meint auch
+           eine Ebene tiefer alle. */
+        if (unter && unter.length) {
+          lcUnterMenue(platz, wenJetzt(), wort, unter);
+          return;
+        }
         lcPlatzMenueZu();
         /* RUNDE 73 — XANDER: „Wenn man die Effekte auf alle anwendet,
            geht es nicht auf alle — da geht nur der erste. Bei dem
@@ -29704,6 +29872,10 @@
             + (zusatz ? " " + zusatz : ""), platz);
           return;
         }
+        /* RUNDE 99 — WEN die Kachel trifft, entscheidet das Haekchen
+           „fuer alle" und wer davon abgewaehlt ist. Ohne Haekchen ist
+           es wie bisher genau die eine Person. */
+        const wen = wenJetzt();
         /* RUNDE 85 — „Mit Lied …" fragt weiter, statt zu schicken. */
         if (befehl === "*lied") { lcMusikWaehler(name); return; }
         /* RUNDE 97 — „Eigenes Bild …" fragt genauso weiter. */
@@ -29720,7 +29892,7 @@
            („/anziehen Bea krone"). Die Kacheln unter „Alle" haben
            keinen Namen, dort bleibt es beim Zusatz allein. */
         const zeile = "/" + befehl
-          + (name ? " " + name : "") + (zusatz ? " " + zusatz : "");
+          + (wen ? " " + wen : "") + (zusatz ? " " + zusatz : "");
         try { LiveChat.schreiben(zeile); } catch (x) {}
         lcNachDemSenden(zeile);
       });
@@ -30328,7 +30500,7 @@
       kasten.appendChild(b);
     };
 
-    LC_PLATZ_SPIELZEUG.forEach(([zeichen, wort, befehl, ohneNamen, unter]) => {
+    lcSpielzeugGeordnet().forEach(([zeichen, wort, befehl, ohneNamen, unter]) => {
       /* Eine Kachel mit Unterwahl klappt auch hier auf — nur heisst
          der „Name" dann eben „alle". */
       if (unter && unter.length) {
@@ -30475,7 +30647,7 @@
          speichert es mit dem Profil. */
       knopf("\ud83c\udf99\ufe0f", "Sprechbild", () => lcSprechbildMenue(platz));
     }
-    LC_PLATZ_SPIELZEUG.forEach(([zeichen, wort, befehl, ohneNamen, unter]) => {
+    lcSpielzeugGeordnet().forEach(([zeichen, wort, befehl, ohneNamen, unter]) => {
       /* EIN UNTERMENUE STATT DREI KACHELN.
          GEWUENSCHT: „Mach bei dem Fenster zwei Versionen … kannst du
          auch drei Versionen machen, dass, wenn man ein entsprechendes
@@ -49731,7 +49903,26 @@
      Absage und sonst nichts — gerechnet aus dem Sitzgitter, nicht
      geraten. Gezeichnet ist es als Comic: ein BH, der herunterrutscht,
      und zwei Kreise darunter. */
-  function lcEntbloessung(wen, von) {
+  /* =====================================================================
+     RUNDE 99 — DREI ARTEN, UND ES KOMMT DARAUF AN, WER DA SITZT
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „Das Frivole und das Sexy koenntest du auch
+     mal sammeln … der BH kann hinten aufgehen, oder ueber den Kopf,
+     oder vorne auf — und je nachdem, ob das ein Mann oder eine Frau
+     ist."
+       hinten  der Verschluss geht hinten auf, er faellt herunter
+       oben    er wird nach oben ueber den Kopf gezogen
+       vorn    der Verschluss sitzt vorn: die Koerbchen klappen auf
+     UND: bei einem MANN ist es kein BH, sondern ein Unterhemd, und
+     darunter kommt keine Frauenbrust zum Vorschein, sondern eine
+     Maennerbrust mit Brusthaar. Ein Mann, dem ein BH vom Leib
+     rutscht, ist kein Gag, sondern ein Fehler.
+     Das Geschlecht steht am Platz (dataset.lcGeschlecht) — dieselbe
+     Quelle wie bei den Stimmen (lcStimmeZu). Steht dort nichts, bleibt
+     es bei der Fassung, die es seit Runde 18 gibt; eine stille
+     Umstellung fuer alle ohne Angabe waere schlimmer als keine.
+     ===================================================================== */
+  function lcEntbloessung(wen, von, wie) {
     /* GEMELDET: „Das mit dem BH soll auf jeden Platz gehen, also nicht
        nur wenn er neben mir sitzt, sondern ich kann das ueberall
        machen."
@@ -49741,6 +49932,12 @@
        Comic-Gag und braucht keinen Arm. „von" wird trotzdem noch
        entgegengenommen, damit alte Aufrufe nicht ins Leere laufen. */
     return lcAmPlatz(wen, "lc-entbl", (schicht, platz) => {
+      /* NUR wer ausdruecklich als Mann eingetragen ist, bekommt die
+         Maennerfassung. Wer nichts angegeben hat, behaelt die alte —
+         eine stille Umstellung fuer alle waere schlimmer als keine. */
+      const gE = String((platz.dataset || {}).lcGeschlecht || "").trim().toLowerCase();
+      const mann = /^m/.test(gE);
+      const artE = (wie === "oben" || wie === "vorn") ? wie : "hinten";
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
         kreis.classList.remove("lc-erschrocken");
@@ -49780,18 +49977,63 @@
         + '<stop offset="55%" stop-color="' + lcHaut().haut + '"/>'
         + '<stop offset="100%" stop-color="' + lcHaut().tief + '"/>'
         + "</radialGradient></defs>"
-        + '<circle cx="34" cy="56" r="16" fill="url(#lcHautR63)" stroke="' + lcHaut().kante + '" stroke-width="2.2"/>'
-        + '<circle cx="66" cy="56" r="16" fill="url(#lcHautR63)" stroke="' + lcHaut().kante + '" stroke-width="2.2"/>'
-        + '<circle cx="34" cy="56" r="5" fill="#c08a7c"/>'
-        + '<circle cx="66" cy="56" r="5" fill="#c08a7c"/>'
-        + '<circle cx="34" cy="56" r="2.1" fill="#a97064"/>'
-        + '<circle cx="66" cy="56" r="2.1" fill="#a97064"/>'
+        + (mann
+            /* RUNDE 99 — EINE MAENNERBRUST IST KEINE FRAUENBRUST.
+               Ein breiter Brustkorb mit einer Mittelfurche, zwei
+               kleine Warzen und Brusthaar — mit festem Wuerfel
+               gerechnet (Saat 99), damit dieselbe Brust immer
+               dieselben Haare hat und nicht bei jedem Aufruf
+               flimmert. */
+            ? '<path d="M16 42 C16 30 32 24 50 24 C68 24 84 30 84 42'
+              + ' C84 64 69 78 50 78 C31 78 16 64 16 42 Z"'
+              + ' fill="url(#lcHautR63)" stroke="' + lcHaut().kante
+              + '" stroke-width="2.2"/>'
+              + '<path d="M50 32 L50 72" fill="none" stroke="' + lcHaut().kante
+              + '" stroke-width="1.5" opacity=".5"/>'
+              + '<circle cx="33" cy="52" r="3.4" fill="#a97064"/>'
+              + '<circle cx="67" cy="52" r="3.4" fill="#a97064"/>'
+              + '<path d="' + (() => {
+                  let z = 99, d3 = "";
+                  const w = () => { z = (z * 1103515245 + 12345) % 2147483648; return z / 2147483648; };
+                  for (let h = 0; h < 22; h++) {
+                    const x = 28 + w() * 44, y = 38 + w() * 30;
+                    const lang = 3 + w() * 3, neig = -0.5 + w();
+                    d3 += "M" + x.toFixed(1) + " " + y.toFixed(1)
+                      + " q" + (neig * lang).toFixed(1) + " " + (lang * 0.6).toFixed(1)
+                      + " " + (neig * lang * 1.6).toFixed(1) + " " + lang.toFixed(1) + " ";
+                  }
+                  return d3.trim();
+                })() + '" fill="none" stroke="rgba(60,40,28,.6)" stroke-width="1.3"'
+              + ' stroke-linecap="round"/>'
+            : '<circle cx="34" cy="56" r="16" fill="url(#lcHautR63)" stroke="' + lcHaut().kante + '" stroke-width="2.2"/>'
+              + '<circle cx="66" cy="56" r="16" fill="url(#lcHautR63)" stroke="' + lcHaut().kante + '" stroke-width="2.2"/>'
+              + '<circle cx="34" cy="56" r="5" fill="#c08a7c"/>'
+              + '<circle cx="66" cy="56" r="5" fill="#c08a7c"/>'
+              + '<circle cx="34" cy="56" r="2.1" fill="#a97064"/>'
+              + '<circle cx="66" cy="56" r="2.1" fill="#a97064"/>')
         + "</svg></span>"
-        + '<span class="lc-entbl-bh">'
-        + '<svg viewBox="0 0 100 52" width="100%" height="100%">'
-        + '<defs><linearGradient id="lcBhR29" x1="0" y1="0" x2="0" y2="1">'
-        + '<stop offset="0" stop-color="#f18bb6"/><stop offset="1" stop-color="#cf5c8c"/>'
-        + "</linearGradient></defs>"
+        + '<span class="lc-entbl-bh lc-entbl-' + artE
+        + (mann ? " lc-entbl-hemd" : "") + '">'
+        + (mann
+            /* Ein Unterhemd: zwei schmale Traeger, ein gerader
+               Ausschnitt und ein Rippenmuster. Es geht nicht „auf",
+               es rutscht — deshalb hat es auch keinen Verschluss. */
+            ? '<svg viewBox="0 0 100 52" width="100%" height="100%">'
+              + '<defs><linearGradient id="lcHemdR99" x1="0" y1="0" x2="0" y2="1">'
+              + '<stop offset="0" stop-color="#f4f6f8"/>'
+              + '<stop offset="1" stop-color="#d7dde3"/></linearGradient></defs>'
+              + '<path d="M26 14 C22 8 22 3 22 0 M74 14 C78 8 78 3 78 0" fill="none"'
+              + ' stroke="#c9d1d8" stroke-width="4" stroke-linecap="round"/>'
+              + '<path d="M18 16 L82 16 L82 50 L18 50 Z" fill="url(#lcHemdR99)"'
+              + ' stroke="#b9c2ca" stroke-width="2.2" stroke-linejoin="round"/>'
+              + '<path d="M24 20 L24 48 M32 20 L32 48 M40 20 L40 48 M48 20 L48 48'
+              + ' M56 20 L56 48 M64 20 L64 48 M72 20 L72 48" fill="none"'
+              + ' stroke="rgba(150,162,172,.45)" stroke-width="1.1"/>'
+              + "</svg></span>"
+            : '<svg viewBox="0 0 100 52" width="100%" height="100%">'
+              + '<defs><linearGradient id="lcBhR29" x1="0" y1="0" x2="0" y2="1">'
+              + '<stop offset="0" stop-color="#f18bb6"/><stop offset="1" stop-color="#cf5c8c"/>'
+              + "</linearGradient></defs>"
         /* Die beiden Traeger, nach aussen oben. */
         + '<path d="M16 16 C10 8 8 4 8 0 M84 16 C90 8 92 4 92 0" fill="none"'
         + ' stroke="#cf5c8c" stroke-width="3.5" stroke-linecap="round"/>'
@@ -49811,7 +50053,16 @@
         + '<path d="M10 14 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0'
         + ' q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0 q3 -4 6 0"'
         + ' fill="none" stroke="#e79ec0" stroke-width="1.6"/>'
-        + "</svg></span>";
+        /* RUNDE 99 — DER VERSCHLUSS VORN. Er ist nur bei „vorn" zu
+           sehen; dort geht er auf, und die Koerbchen klappen zur
+           Seite. Bei „hinten" sitzt er im Ruecken, also ausserhalb
+           des Bildes — deshalb steht er dort auch nicht da. */
+        + (artE === "vorn"
+            ? '<rect x="47" y="17" width="6" height="7" rx="1.6" fill="#8e3d63"/>'
+              + '<path d="M50 17 L50 24" stroke="rgba(255,255,255,.6)"'
+              + ' stroke-width="1"/>'
+            : "")
+        + "</svg></span>");
       schicht.insertAdjacentHTML("beforeend", '<span class="lc-entbl-wort">UPS!</span>');
       /* RUNDE 75 — DER PFIFF KOMMT DANACH, UND ER IST KUERZER.
          XANDER: „erst sollte der Effekt den BH weg reissen vom Sound
@@ -52597,7 +52848,8 @@
       if (art === "streicheln" && lcStreicheln(wenZ)) return;
       if (art === "kuss" && lcKuss(wenZ)) return;
       if (art === "entbloessung" && lcEntbloessung(wenZ, (nachricht && nachricht.eigen)
-            ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
+            ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""),
+            (nachricht && nachricht.wie) || "")) return;
       if (art === "zufall" && lcZufall(wenZ, nachricht)) return;
     }
     /* Fahren und Spielzug bewegen den ABSENDER, nicht den
