@@ -49,28 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 507 — Hände, Hut, Lok und die Sprühdose",
+  stand: "Fassung 507 — geprüft: 198 Sonden, alle grün",
 
   inArbeit: [
-    { seit: "2026-09-23T01:41",
-      text: "Die grosse Sammelprüfung läuft noch durch (rund zwei Stunden) — danach kommt die neue Übersichtsliste" },
-    { seit: "2026-09-23T01:41",
-      text: "Antwort zu Recraft und den HelloTalk-Effekten liegt in werkzeug/profi-effekte.md" },
+    { seit: "2026-09-23T04:13",
+      text: "Wenn du willst: einen Effekt als Lottie-Versuch bauen und nebeneinander vergleichen (siehe werkzeug/profi-effekte.md)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-23T01:41",
-      text: "Eine Haut für ALLE Hände: Ohrfeige, Basketball, Streicheln, Klaps, Hut und die Riesenhand holen ihre Farbe jetzt aus einer einzigen Quelle" },
-    { seit: "2026-09-23T01:41",
-      text: "Die greifende Hand hat keine Modul-Ringe mehr: die Fingerglieder greifen untereinander, die Kante läuft nur noch aussen durch" },
-    { seit: "2026-09-23T01:41",
-      text: "Der Cowboyhut wird nach links UND nach rechts zurechtgerückt und sitzt erst dann" },
-    { seit: "2026-09-23T01:41",
-      text: "Die Lok steht auf ihrem Gleis: Radkanten und Spurweite decken sich (0,1 px), und sie ist kürzer als ihr Kurvendurchmesser" },
-    { seit: "2026-09-23T01:41",
-      text: "Die Sprühdose kann ein BILD deiner Wahl aufsprühen — aus deiner Sammlung, aus den zuletzt benutzten oder von einer Adresse" },
-    { seit: "2026-09-23T01:41",
-      text: "Schiffe versenken sagt beim Start nicht mehr das Falsche (es wird nichts mehr ausgelost, man sucht sich selbst einen Platz)" },
+    { seit: "2026-09-23T04:13",
+      text: "Die grosse Sammelprüfung ist durch: 198 Messungen, 198 grün, 0 rot" },
+    { seit: "2026-09-23T04:13",
+      text: "Die Rückstands-Prüfung über ALLE 96 Effekte (jeder dreimal) ist zum ersten Mal ganz durchgelaufen — kein einziger echter Rückstand" },
+    { seit: "2026-09-23T04:13",
+      text: "Neue Übersichtsliste aus den Messungen gebaut (KLASSENZIMMER-LISTE.md)" },
   ],
 };

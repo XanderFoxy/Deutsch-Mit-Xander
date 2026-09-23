@@ -1,6 +1,6 @@
 # Was du gesagt hast — und was die Seite heute wirklich tut
 
-> Stand: 2026-09-22 23:06 · 183 Sonden · 183 grün, 0 rot, 0 ohne Urteil
+> Stand: 2026-09-23 04:12 · 198 Sonden · 198 grün, 0 rot, 0 ohne Urteil
 
 Diese Liste ist nicht aufgeschrieben, sondern **gemessen**. Jede Zeile
 ist eine Sonde: im Kopf steht dein Satz, im Programm läuft die Messung
@@ -29,17 +29,19 @@ Messung gibt, nicht die, die eine Messung widerlegt.
   `pruefe-antwort-gehoert-dazu`, `pruefe-aufgabe-reist`, `pruefe-aufgabe`, `pruefe-aufgaben`, `pruefe-aufgabentafel`, `pruefe-benoten`, `pruefe-betonung-uebung`, `pruefe-betreiber` …
 - **Anziehen / Ausziehen** — 6 Messungen, alle grün  
   `pruefe-runde18`, `pruefe-runde22`, `pruefe-runde75`, `pruefe-runde87-klaps`, `pruefe-runde88-selbst`, `pruefe-zusatzfelder`
-- **Billard** — 3 Messungen, alle grün  
-  `pruefe-runde29`, `pruefe-runde68`, `pruefe-runde88-billard`
+- **Billard** — 4 Messungen, alle grün  
+  `pruefe-runde29`, `pruefe-runde68`, `pruefe-runde88-billard`, `pruefe-runde92-billard`
 - **Bongo / Trommel** — 3 Messungen, alle grün  
   `pruefe-runde18`, `pruefe-runde49`, `pruefe-runde88-bongo`
 - **Bumerang** — 4 Messungen, alle grün  
   `pruefe-runde72`, `pruefe-runde76`, `pruefe-runde90-aufschlagtoene`, `pruefe-runde90-bumerangton`
 - **Ei** — 1 Messung, alle grün  
   `pruefe-runde90-aufschlagtoene`
+- **Fahrstuhl** — 2 Messungen, alle grün  
+  `pruefe-runde92-reisenummern`, `pruefe-runde96-besetzt`
 - **Frosch** — 2 Messungen, alle grün  
   `pruefe-runde83`, `pruefe-runde88-frosch`
-- **Haende / Greifen** — 18 Messungen, alle grün  
+- **Haende / Greifen** — 20 Messungen, alle grün  
   `pruefe-haende`, `pruefe-runde18`, `pruefe-runde25`, `pruefe-runde49`, `pruefe-runde65`, `pruefe-runde75`, `pruefe-runde76`, `pruefe-runde77` …
 - **Hammer / Panzerglas** — 1 Messung, alle grün  
   `pruefe-runde82`
@@ -51,33 +53,33 @@ Messung gibt, nicht die, die eine Messung widerlegt.
   `pruefe-runde83`, `pruefe-runde86`, `pruefe-runde88-kaninchen`, `pruefe-runde88-zauberer`
 - **Katapult** — 3 Messungen, alle grün  
   `pruefe-katapult60`, `pruefe-runde87-katapult`, `pruefe-runde90-aufschlagtoene`
-- **Kopfhoerer / Musik** — 10 Messungen, alle grün  
+- **Kopfhoerer / Musik** — 11 Messungen, alle grün  
   `pruefe-befehlsreihenfolge`, `pruefe-runde22`, `pruefe-runde23`, `pruefe-runde60`, `pruefe-runde87-lied`, `pruefe-runde88-liedstellen`, `pruefe-runde88-modulhoehe`, `pruefe-runde88-selbst` …
 - **Kuss / Klaps / Popo** — 4 Messungen, alle grün  
   `pruefe-runde49`, `pruefe-runde87-klaps`, `pruefe-runde88-klaps`, `pruefe-runde88-pferd`
-- **Lok / Gleise** — 8 Messungen, alle grün  
-  `pruefe-plaetze`, `pruefe-runde63`, `pruefe-runde65`, `pruefe-runde66`, `pruefe-runde72`, `pruefe-runde73`, `pruefe-runde74`, `pruefe-runde88-lok`
+- **Lok / Gleise** — 9 Messungen, alle grün  
+  `pruefe-plaetze`, `pruefe-runde63`, `pruefe-runde65`, `pruefe-runde66`, `pruefe-runde72`, `pruefe-runde73`, `pruefe-runde74`, `pruefe-runde88-lok` …
 - **Luftballon** — 5 Messungen, alle grün  
   `pruefe-befehlsreihenfolge`, `pruefe-runde65`, `pruefe-runde76`, `pruefe-runde89-ballon`, `pruefe-zusatzfelder`
-- **Mario-Modus** — 4 Messungen, alle grün  
-  `pruefe-runde37`, `pruefe-runde59`, `pruefe-runde76`, `pruefe-runde88-mario`
+- **Mario-Modus** — 5 Messungen, alle grün  
+  `pruefe-runde37`, `pruefe-runde59`, `pruefe-runde76`, `pruefe-runde88-mario`, `pruefe-runde94-mariotoene`
 - **Maulwurf** — 8 Messungen, alle grün  
   `pruefe-runde37`, `pruefe-runde63`, `pruefe-runde65`, `pruefe-runde73`, `pruefe-runde74`, `pruefe-runde75`, `pruefe-runde77`, `pruefe-runde88-maulwurf`
 - **Pac-Man** — 3 Messungen, alle grün  
   `pruefe-runde16`, `pruefe-runde87-pacman`, `pruefe-runde88-pac`
 - **Pferd** — 1 Messung, alle grün  
   `pruefe-runde88-pferd`
-- **Plaetze / Strichlinien** — 8 Messungen, alle grün  
-  `pruefe-platzdesign`, `pruefe-raumverlauf`, `pruefe-raumwechsel`, `pruefe-runde22`, `pruefe-runde72`, `pruefe-runde87-sechzehn`, `pruefe-runde87-strichlinien`, `pruefe-runde88-maulwurf`
+- **Plaetze / Strichlinien** — 9 Messungen, alle grün  
+  `pruefe-platzdesign`, `pruefe-raumverlauf`, `pruefe-raumwechsel`, `pruefe-runde22`, `pruefe-runde72`, `pruefe-runde87-sechzehn`, `pruefe-runde87-strichlinien`, `pruefe-runde88-maulwurf` …
 - **Schiffe versenken** — 2 Messungen, alle grün  
   `pruefe-runde30`, `pruefe-runde88-schiffe`
-- **Schwimmbecken** — 6 Messungen, alle grün  
-  `pruefe-plaetze`, `pruefe-runde65`, `pruefe-runde72`, `pruefe-runde78`, `pruefe-runde88-becken`, `pruefe-runde88-schiffe`
+- **Schwimmbecken** — 7 Messungen, alle grün  
+  `pruefe-plaetze`, `pruefe-runde65`, `pruefe-runde72`, `pruefe-runde78`, `pruefe-runde88-becken`, `pruefe-runde88-schiffe`, `pruefe-runde97-spraybild`
 - **Sprechbilder / Spinne** — 6 Messungen, alle grün  
   `pruefe-runde16`, `pruefe-runde20`, `pruefe-runde37`, `pruefe-runde77`, `pruefe-sprechbild-reist`, `pruefe-sprechbilder`
 - **Spruehdose / Sahne** — 1 Messung, alle grün  
   `pruefe-runde86`
-- **Toene allgemein** — 33 Messungen, alle grün  
+- **Toene allgemein** — 34 Messungen, alle grün  
   `pruefe-film-platz`, `pruefe-notenknopf-aufgabe`, `pruefe-runde18`, `pruefe-runde20`, `pruefe-runde27`, `pruefe-runde30`, `pruefe-runde49`, `pruefe-runde59` …
 - **Verbindung / zwei Geraete** — 4 Messungen, alle grün  
   `pruefe-befund`, `pruefe-leitung`, `pruefe-runde27`, `pruefe-wartende-zeilen`
@@ -233,6 +235,21 @@ Messung gibt, nicht die, die eine Messung widerlegt.
 - ✅ `pruefe-runde90-aufschlagtoene` — EIN AUFSCHLAG MUSS KNALLEN, WENN ER GEPLANT IST
 - ✅ `pruefe-runde90-bumerangton` — DER BUMERANG: GEMESSEN AM TON, NICHT AM QUELLTEXT
 - ✅ `pruefe-runde90-flugwort` — „FLUGZEUG" IST DAS WORT, DAS ER BENUTZT
+- ✅ `pruefe-runde92-betrieb` — RUECKSTAENDE, WENN DER BETRIEB DAZWISCHENFUNKT
+- ✅ `pruefe-runde92-billard` — DIE KUGEL FAELLT NICHT IMMER INS SELBE LOCH
+- ✅ `pruefe-runde92-grundebene` — DIE GESCHUETZTE EBENE: STRICHLINIE UND NUMMER
+- ✅ `pruefe-runde92-lack` — DER AUFGESPRUEHTE LACK BLEIBT, BIS JEMAND WISCHT
+- ✅ `pruefe-runde92-liedangebot` — EIN ZUGESENDETES LIED GEHT NIE STILL UNTER
+- ✅ `pruefe-runde92-reisenummern` — JEDE REISE MUSS AUCH MIT EINER NUMMER GEHEN
+- ✅ `pruefe-runde92-schiffe` — VERSTECKEN, COUNTDOWN, SUCHEN
+- ✅ `pruefe-runde94-anruf` — HEIMLICH TELEFONIEREN
+- ✅ `pruefe-runde94-mariotoene` — DIE TYPISCHEN MARIO-GERAEUSCHE
+- ✅ `pruefe-runde95-delfin` — RUNDE 95 — DER DELFIN
+- ✅ `pruefe-runde96-besetzt` — EIN BESETZTER PLATZ IST KEINE SACKGASSE
+- ✅ `pruefe-runde97-haende` — EINE HAUT FUER ALLE HAENDE, UND KEINE MODULE MEHR
+- ✅ `pruefe-runde97-hut` — DER HUT WIRD NACH LINKS UND NACH RECHTS GERUECKT
+- ✅ `pruefe-runde97-lok` — DIE LOK STEHT AUF IHREM GLEIS
+- ✅ `pruefe-runde97-spraybild` — EIN BILD SEINER WAHL AUFSPRUEHEN
 - ✅ `pruefe-schallwelle` — MISST, OB DIE SCHALLWELLE EINE KANTE HAT.
 - ✅ `pruefe-schiffe60` — PADDELN UND DAS SEITENRAD
 - ✅ `pruefe-schrei-echo` — MISST DEN NEUEN SCHREI — TON UND WELLE.
@@ -1089,6 +1106,8 @@ _(kein wörtliches Zitat im Kopf dieser Sonde)_
 
 > „Ich habe auch noch immer nicht den Modus, dass oben die Adresszeile ausgeblendet wird beim Klassenzimmer und des Weiteren möchte ich einen Screen-on-Modus haben in dieser Situation, dass man dort länger bleiben kann … ich möchte, dass der Bildschirm hier offen gezwungen bleibt.“
 
+> „Ausserdem solltest du den Vollbildknopf wegmachen. Du solltest das nur so funktionieren lassen.“
+
 ### ✅ RUNDE 87 — DER KLAPS  
 `pruefe-runde87-klaps`
 
@@ -1334,6 +1353,8 @@ _(kein wörtliches Zitat im Kopf dieser Sonde)_
 
 > „Man hoert das Ei auch vorher, bevor man es aufschlaegt … der Katapult, den hoert man auch schon vorher, den Bumerang hoert man auch schon vorher — nicht in dem Moment, wo die Animation aufschlaegt oder trifft. Und das ist auch beim Schneeball so, beim Geld so, und irgendwie bei vielen Animationen.“
 
+> „ueber 20 Prozent der eigenen Spitze“
+
 ### ✅ DER BUMERANG: GEMESSEN AM TON, NICHT AM QUELLTEXT  
 `pruefe-runde90-bumerangton`
 
@@ -1351,6 +1372,97 @@ _(kein wörtliches Zitat im Kopf dieser Sonde)_
 > „/flug", und das Flugzeug darin ist in Runde 73 und 80 nach seinen Angaben nachgezeichnet worden (beide Tragflaechen sichtbar, Hoehenleitwerk, Triebwerk, spitze Nase). Was fehlte, war nur das WORT: wer „/flugzeug“
 
 > „Diesen Befehl gibt es nicht“
+
+### ✅ RUECKSTAENDE, WENN DER BETRIEB DAZWISCHENFUNKT  
+`pruefe-runde92-betrieb`
+
+> „Die Rueckstaende in Animationen sind immer noch, wenn man den Platz verlaesst.“
+
+### ✅ DIE KUGEL FAELLT NICHT IMMER INS SELBE LOCH  
+`pruefe-runde92-billard`
+
+> „Die Billard-Physik ist immer noch nicht da. Du sagst, du machst es fertig, hast es aber nicht fertig.“
+
+> „weil sie immer an dasselbe Loch fliegt.“
+
+### ✅ DIE GESCHUETZTE EBENE: STRICHLINIE UND NUMMER  
+`pruefe-runde92-grundebene`
+
+> „Die Rueckstaende in Animationen sind immer noch, wenn man den Platz verlaesst. Warum sind die Positionsnummern und Strichlinien nicht auf einer eigenen Ebene, die geschuetzt ist, die nicht beeinflusst werden kann von den Animationen? Warum wird das immer zerstoert, wenn ich es gar nicht moechte?“
+
+### ✅ DER AUFGESPRUEHTE LACK BLEIBT, BIS JEMAND WISCHT  
+`pruefe-runde92-lack`
+
+> „Das mit dem Gesicht einspruehen und dass es bleibt die ganze Zeit, ungeachtet davon, ob man es durch Klicken aufs eigene Profilbild resettet — das geht in dem Moment nicht. Es geht nur durch den Scheibenwischer wieder weg.“
+
+### ✅ EIN ZUGESENDETES LIED GEHT NIE STILL UNTER  
+`pruefe-runde92-liedangebot`
+
+> „Die Kopfhoerer bleiben immer noch nicht auf dem Kopf und ich kann jemand anderem immer noch nicht mein Lied zeigen.“
+
+> „Du sagst, dass ich mir ein Lied anhoeren kann. Ich kann's mir immer noch nicht anhoeren … ich hoere gar nix … es passiert einfach nichts.“
+
+### ✅ JEDE REISE MUSS AUCH MIT EINER NUMMER GEHEN  
+`pruefe-runde92-reisenummern`
+
+> „Der Fahrstuhl funktioniert auch nicht. Die Animation solltest du machen, da funktioniert noch gar nix.“
+
+> „flug" -> „fliegt zu Platz“
+
+### ✅ VERSTECKEN, COUNTDOWN, SUCHEN  
+`pruefe-runde92-schiffe`
+
+_(kein wörtliches Zitat im Kopf dieser Sonde)_
+
+### ✅ HEIMLICH TELEFONIEREN  
+`pruefe-runde94-anruf`
+
+> „Das Anrufen ist auch noch nicht da, wo ich mit jemand heimlich telefonieren kann.“
+
+> „HEIMLICH" HIER HEISST, und was nicht: geheim ist, WAS die beiden sagen. Dass sie telefonieren, sieht man — sonst redet der Raum ins Leere. Gemessen wird deshalb beides: 1. Der Befehl „/anruf Name“
+
+### ✅ DIE TYPISCHEN MARIO-GERAEUSCHE  
+`pruefe-runde94-mariotoene`
+
+> „Beim Ueberspringen der Personen im Mario-Modus moechte ich, dass die typischen Geraeusche kommen, denn Mario bespringt diese Personen entweder von oben oder kickt sie weg, genauso wie mit den Muenzen. Da hast du ja auch einen typischen Sound.“
+
+> „bonk" (Holzklopfen) und „tritt“
+
+### ✅ RUNDE 95 — DER DELFIN  
+`pruefe-runde95-delfin`
+
+> „Du hast den Delfin noch nicht gebaut.“
+
+### ✅ EIN BESETZTER PLATZ IST KEINE SACKGASSE  
+`pruefe-runde96-besetzt`
+
+> „Der Fahrstuhl funktioniert auch nicht. Die Animation solltest du machen, da funktioniert noch gar nix.“
+
+### ✅ EINE HAUT FUER ALLE HAENDE, UND KEINE MODULE MEHR  
+`pruefe-runde97-haende`
+
+> „Du hast die Hand noch nicht vereinheitlicht.“
+
+> „Wie greift eine Hand realistisch, ohne dass sie nach einer Roboter Hand aussieht, ohne dass sie nach einer Hand bestehend aus einzelnen Modulen aussieht. Eine durchgaengige Hand mit Fingern.“
+
+### ✅ DER HUT WIRD NACH LINKS UND NACH RECHTS GERUECKT  
+`pruefe-runde97-hut`
+
+> „Bei dem Cowboyhut sieht man auch noch nicht, dass er am Ende mit seiner Hand den Cowboyhut nach links und nach rechts so um ihn auszurichten.“
+
+> „Der Cowboyhut hat immer noch kein realistisches Zurechtruecken.“
+
+### ✅ DIE LOK STEHT AUF IHREM GLEIS  
+`pruefe-runde97-lok`
+
+> „Die Lokomotive hat immer noch keine Schienenfuehrung.“
+
+### ✅ EIN BILD SEINER WAHL AUFSPRUEHEN  
+`pruefe-runde97-spraybild`
+
+> „und dass man ein Bild seiner Wahl darauf spruehen kann und dass das Bild genauso partiell eingespruecht wird … wie Partikel langsam auftaucht und sich realistisch fuellt, das Bild Pixel fuer Pixel, als wenn man das wirklich dran spruehen wuerde.“
+
+> „Die [gespruehten] Sachen haben immer noch kein Bild, was man sich einspruehen kann.“
 
 ### ✅ MISST, OB DIE SCHALLWELLE EINE KANTE HAT.  
 `pruefe-schallwelle`
