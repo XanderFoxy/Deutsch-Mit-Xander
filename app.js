@@ -29017,7 +29017,16 @@
        /* RUNDE 95 — XANDER: „Du hast den Delfin noch nicht gebaut." */
        ["\ud83d\udc2c", "Delfin", "delfin"],
        ["\ud83c\udfd7\ufe0f", "Kran", "kran"],
-       ["\ud83d\udeb2", "Zu zweit", "gemeinsam"]]],
+       /* RUNDE 98 \u2014 ZU ZWEIT, IN DREI FASSUNGEN.
+          XANDER: \u201edas zu zweit reisen \u2026 einmal dass ich mit
+          jemanden gemeinsam ein Fahrrad bin \u2026 Dann kann ich auch den
+          Weg einzeichnen, wo ich lang fahr und einmal dass ich
+          denjenigen als Sprungball benutze und auf ihm sitze und ihn
+          an seinen H\u00f6rnern packe." */
+       ["\ud83d\udeb2", "Zu zweit \u2014 Rad", "gemeinsam"],
+       ["\ud83e\udd38", "Zu zweit \u2014 H\u00fcpfball", "gemeinsam", "ball"],
+       ["\u270d\ufe0f", "Zu zweit \u2014 Weg malen", "*zuzweitweg"],
+       ["\u270d\ufe0f", "H\u00fcpfball \u2014 Weg malen", "*zuzweitweg", "ball"]]],
     ["\ud83d\udd2e", "Schneekugel", "schneekugel"],
     /* RUNDE 87 — XANDER: „Man soll das auch auf sich selbst anwenden
        koennen, deswegen soll es in den allgemeinen Profilbild-Effekten
@@ -29394,6 +29403,19 @@
            Zusatz. Gesendet wird dann erst beim Loslassen, mit der
            ganzen Kette. */
         if (befehl === "*weg") { lcWegMalen(zusatz, platz); return; }
+        /* RUNDE 98 \u2014 ZU ZWEIT MIT GEMALTEM WEG.
+           XANDER: \u201eDann kann ich auch den Weg einzeichnen, wo ich
+           lang fahr."
+           \u201e*weg" allein reicht hier nicht: es schickt nur
+           \u201e/befehl 3-4-8", und dann fehlte, WER mitf\u00e4hrt. Deshalb
+           wandert der Name (und beim H\u00fcpfball das Wort \u201eball")
+           gleich mit in den Befehl \u2014 heraus geht am Ende
+           \u201e/gemeinsam Bea ball 3-4-8". */
+        if (befehl === "*zuzweitweg") {
+          lcWegMalen("gemeinsam" + (name ? " " + name : "")
+            + (zusatz ? " " + zusatz : ""), platz);
+          return;
+        }
         /* RUNDE 85 — „Mit Lied …" fragt weiter, statt zu schicken. */
         if (befehl === "*lied") { lcMusikWaehler(name); return; }
         /* RUNDE 97 — „Eigenes Bild …" fragt genauso weiter. */
@@ -37850,11 +37872,46 @@
      selbst: der Fahrende nimmt das Ziel, der Mitfahrende den Platz
      daneben. Sonst setzte ein Geraet den anderen um.
      ================================================================= */
-  function lcGemeinsam(wen, von) {
+  /* =====================================================================
+     RUNDE 98 — ZU ZWEIT REISEN: FAHRRAD ODER HUEPFBALL
+     ---------------------------------------------------------------------
+     XANDER: „Das zu zweit reisen, das soll auch besser funktionieren:
+     einmal, dass ich mit jemandem gemeinsam ein Fahrrad bin, wenn ich
+     neben ihm bin, mit ihm losfahren kann … und einmal, dass ich
+     denjenigen als Sprungball benutze und auf ihm sitze und ihn an
+     seinen Hoernern packe beziehungsweise an diesem Gummiball, um mit
+     ihm da loszureiten."
+
+     ZWEI ARTEN, EINE FUNKTION. Der Rahmen ist bei beiden derselbe —
+     zwei Leute, zwei freie Plaetze, ein Weg dorthin. Verschieden ist
+     nur, WIE sie sich bewegen:
+       · „rad"  (wie bisher): beide rollen wie Raeder, der andere
+                  haengt hinten dran, Speichen drehen sich mit.
+       · „ball" (neu): der andere IST der Huepfball — er bekommt zwei
+                  Hoerner aufgesetzt, staucht sich beim Aufsetzen und
+                  springt wieder ab. Ich sitze OBEN DRAUF und halte
+                  mich an den Hoernern fest.
+     ===================================================================== */
+  function lcGemeinsam(wen, von, art, kette) {
+    const ball = String(art || "").toLowerCase() === "ball";
     const karte = document.getElementById("livechatKarte");
     if (!karte) return false;
     const gitter = lcPlatzGitter();
     if (!gitter.length) return false;
+    /* RUNDE 98 \u2014 DER GEMALTE WEG GILT AUCH ZU ZWEIT.
+       XANDER: \u201eDann kann ich auch den Weg einzeichnen, wo ich lang
+       fahr."
+       Dieselbe Kette wie bei /fahren und /flug: \u201e/gemeinsam Bea
+       3-4-8" \u2014 die letzte Zahl ist der Platz, an dem wir ankommen,
+       die Zahlen davor sind die Stationen dazwischen. Sie reisen in
+       der Nachricht mit, damit JEDES Ger\u00e4t denselben Umweg zeichnet. */
+    let bahnG = null;
+    const ketteG = String(kette || "").trim();
+    if (/^\d+(-\d+)+$/.test(ketteG)) {
+      const nrnG = ketteG.split("-").map(Number);
+      const stG = nrnG.map((n) => gitter.find((p) => p.nr === n)).filter(Boolean);
+      if (stG.length === nrnG.length && stG.length > 1) bahnG = stG;
+    }
     const ab = gitter.find((p) => p.el === (lcPlatzMitNamen(von)
       || karte.querySelector(".lc-platz-ich")));
     const mit = gitter.find((p) => p.el === lcPlatzMitNamen(wen));
@@ -37881,7 +37938,20 @@
        besetzte Plaetze gehen. Und liegt kein Paar nebeneinander,
        tut es auch der naechste freie Platz in der Naehe. */
     let ziel = null, zielMit = null;
+    /* Ist ein Weg gemalt, endet die Fahrt dort, wo er endet \u2014 die
+       Suche nach dem weitesten Platz entf\u00e4llt dann. */
+    if (bahnG) {
+      const letzterG = bahnG[bahnG.length - 1];
+      if (letzterG.frei && letzterG !== ab && letzterG !== mit) ziel = letzterG;
+      else bahnG = null;
+    }
+    if (ziel) {
+      zielMit = frei.filter((p) => p !== ziel)
+        .sort((a, b) => (Math.abs(a.reihe - ziel.reihe) + Math.abs(a.spalte - ziel.spalte))
+                      - (Math.abs(b.reihe - ziel.reihe) + Math.abs(b.spalte - ziel.spalte)))[0] || null;
+    }
     for (const z of weit) {
+      if (ziel) break;
       const n = frei.find((p) => p !== z
         && Math.abs(p.reihe - z.reihe) + Math.abs(p.spalte - z.spalte) === 1);
       if (n) { ziel = z; zielMit = n; break; }
@@ -37896,7 +37966,13 @@
       lcWegAbsage("Zu zweit braucht ihr zwei freie Pl\u00e4tze — so viele sind nicht frei.");
       return true;
     }
-    const weg = lcWegSuchen(gitter, ab.nr, ziel.nr, true) || [ab, ziel];
+    /* Der gemalte Weg schl\u00e4gt die eigene Wegsuche \u2014 er ist ja
+       genau das, was Xander eingezeichnet hat. Alle Punkte rechnen vom
+       ERSTEN Eintrag aus (lcWegPunkte), deshalb muss der eigene Platz
+       vorne stehen, auch wenn die Kette erst beim n\u00e4chsten Feld
+       anf\u00e4ngt. */
+    if (bahnG && bahnG[0] !== ab) bahnG = [ab].concat(bahnG);
+    const weg = bahnG || lcWegSuchen(gitter, ab.nr, ziel.nr, true) || [ab, ziel];
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
 
     const kreisAb = ab.el.querySelector(".lc-kreis");
@@ -37913,10 +37989,15 @@
     const bei = (ms) => Math.min(1, ms / dauer);
 
     /* Die Sitzseite: der Mitfahrende haengt hinten dran, also
-       entgegen der ersten Fahrtrichtung. */
+       entgegen der ersten Fahrtrichtung.
+       BEIM HUEPFBALL ist es anders herum: der andere ist der BALL und
+       liegt UNTER mir — ich sitze oben drauf. */
     const erst = punkte[1] || { x: 1, y: 0 };
     const rl = Math.hypot(erst.x, erst.y) || 1;
-    const hx = -(erst.x / rl) * d * 0.60, hy = -(erst.y / rl) * d * 0.60 - d * 0.10;
+    const hx = ball ? 0 : -(erst.x / rl) * d * 0.60;
+    const hy = ball ? d * 0.72 : -(erst.y / rl) * d * 0.60 - d * 0.10;
+    /* Wie hoch ein Sprung geht — ein Huepfball hebt spuerbar ab. */
+    const hoch = d * 0.55;
 
     /* ---- DER FAHRENDE ---- */
     const altZ = ab.el.style.zIndex, altZM = mit.el.style.zIndex;
@@ -37930,7 +38011,17 @@
       const vor = punkte[i - 1];
       if (vor) {
         const stueck = Math.hypot(p.x - vor.x, p.y - vor.y);
-        dreh += (stueck / (Math.PI * d)) * 360 * (p.x < vor.x ? -1 : 1);
+        dreh += ball ? 0 : (stueck / (Math.PI * d)) * 360 * (p.x < vor.x ? -1 : 1);
+        /* RUNDE 98 — DER SPRUNG. Zwischen zwei Feldern liegt der
+           Scheitel: dort sind beide oben in der Luft. Ein Huepfball
+           rollt nicht, er springt — deshalb dreht sich hier auch
+           nichts. */
+        if (ball) {
+          const m = { x: (vor.x + p.x) / 2, y: (vor.y + p.y) / 2 };
+          bilderA.push({ transform: "translate(" + m.x.toFixed(1) + "px, "
+            + (m.y - hoch).toFixed(1) + "px) rotate(0deg)",
+            offset: bei(ankuppeln + (i - 0.5) * jeFeld) });
+        }
       }
       bilderA.push({ transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1)
         + "px) rotate(" + dreh.toFixed(1) + "deg)", offset: bei(ankuppeln + i * jeFeld) });
@@ -37945,20 +38036,37 @@
        Alles relativ zu SEINEM Platz: erst herueber zu mir, dann
        denselben Weg, dann auf den Platz neben mir. */
     const zuMir = { x: ab.x - mit.x + hx, y: ab.y - mit.y + hy };
+    /* Der Ball rollt nicht heran, er huepft heran — und er bleibt
+       aufrecht, ein Ball mit Hoernern steht nicht auf dem Kopf. */
+    const drehM = ball ? 0 : (zuMir.x < 0 ? -200 : 200);
+    const grossM = ball ? 1 : 0.84;
     const bilderM = [
       { transform: "translate(0px, 0px) rotate(0deg) scale(1)", offset: 0 },
       { transform: "translate(" + zuMir.x.toFixed(1) + "px, " + zuMir.y.toFixed(1)
-        + "px) rotate(" + (zuMir.x < 0 ? -200 : 200) + "deg) scale(.84)", offset: bei(ankuppeln) }
+        + "px) rotate(" + drehM + "deg) scale(" + grossM + ")", offset: bei(ankuppeln) }
     ];
     punkte.forEach((p, i) => {
+      if (ball && i > 0) {
+        const vor = punkte[i - 1];
+        const m = { x: (vor.x + p.x) / 2, y: (vor.y + p.y) / 2 };
+        /* Oben in der Luft zieht sich ein Gummiball lang. */
+        bilderM.push({ transform: "translate(" + (zuMir.x + m.x).toFixed(1) + "px, "
+          + (zuMir.y + m.y - hoch).toFixed(1) + "px) rotate(0deg) scale(.94, 1.08)",
+          offset: bei(ankuppeln + (i - 0.5) * jeFeld) });
+        /* Und beim Aufsetzen staucht er sich. */
+        bilderM.push({ transform: "translate(" + (zuMir.x + p.x).toFixed(1) + "px, "
+          + (zuMir.y + p.y + d * 0.06).toFixed(1) + "px) rotate(0deg) scale(1.12, .86)",
+          offset: bei(ankuppeln + i * jeFeld) });
+        return;
+      }
       bilderM.push({ transform: "translate(" + (zuMir.x + p.x).toFixed(1) + "px, "
-        + (zuMir.y + p.y).toFixed(1) + "px) rotate(" + (zuMir.x < 0 ? -200 : 200)
-        + "deg) scale(.84)", offset: bei(ankuppeln + i * jeFeld) });
+        + (zuMir.y + p.y).toFixed(1) + "px) rotate(" + drehM
+        + "deg) scale(" + grossM + ")", offset: bei(ankuppeln + i * jeFeld) });
     });
     const abst = { x: zielMit.x - mit.x, y: zielMit.y - mit.y };
     bilderM.push({ transform: "translate(" + (zuMir.x + eA.x).toFixed(1) + "px, "
-      + (zuMir.y + eA.y).toFixed(1) + "px) rotate(" + (zuMir.x < 0 ? -200 : 200)
-      + "deg) scale(.84)", offset: bei(hin + 120) });
+      + (zuMir.y + eA.y).toFixed(1) + "px) rotate(" + drehM
+      + "deg) scale(" + grossM + ")", offset: bei(hin + 120) });
     bilderM.push({ transform: "translate(" + abst.x.toFixed(1) + "px, " + abst.y.toFixed(1)
       + "px) rotate(0deg) scale(1)", offset: 1 });
 
@@ -37983,17 +38091,46 @@
        liegen IM Bild (der Kreis schneidet rund ab) und drehen sich
        deshalb von selbst mit. */
     const speichen = [];
-    [kreisAb, kreisMit].forEach((k) => {
-      const sp = document.createElement("span");
-      sp.className = "lc-speichen";
-      sp.style.animationDuration = (dauer / 1000).toFixed(2) + "s";
-      k.appendChild(sp);
-      speichen.push(sp);
-    });
+    if (!ball) {
+      [kreisAb, kreisMit].forEach((k) => {
+        const sp = document.createElement("span");
+        sp.className = "lc-speichen";
+        sp.style.animationDuration = (dauer / 1000).toFixed(2) + "s";
+        k.appendChild(sp);
+        speichen.push(sp);
+      });
+    } else {
+      /* RUNDE 98 — DIE HOERNER. „auf ihm sitze und ihn an seinen
+         Hoernern packe beziehungsweise an diesem Gummiball."
+         Ein Huepfball hat vorn zwei Griffe wie Hoerner; daran haelt
+         man sich fest. Sie sitzen AUF dem Bild, nicht darin — das
+         Profilbild bleibt unangetastet. */
+      const hoerner = document.createElement("span");
+      hoerner.className = "lc-ballhoerner";
+      hoerner.setAttribute("aria-hidden", "true");
+      hoerner.innerHTML = '<svg viewBox="0 0 80 40" width="100%" height="100%">'
+        + '<path class="lc-ballhorn" d="M26 38 C20 26 14 16 6 10 C2 7 6 2 11 4'
+        + ' C22 9 30 20 34 34 Z"/>'
+        + '<path class="lc-ballhorn" d="M54 38 C60 26 66 16 74 10 C78 7 74 2 69 4'
+        + ' C58 9 50 20 46 34 Z"/>'
+        + '<ellipse class="lc-ballhorn-griff" cx="9" cy="7" rx="5" ry="3.4"/>'
+        + '<ellipse class="lc-ballhorn-griff" cx="71" cy="7" rx="5" ry="3.4"/>'
+        + "</svg>";
+      kreisMit.appendChild(hoerner);
+      speichen.push(hoerner);
+    }
     setTimeout(() => speichen.forEach((x) => x.remove()), dauer + 700);
-    lcTonZu("fahren");
-    /* Auch hier: das Quietschen endet mit dem Stillstand, nicht danach. */
-    lcTonSpaeter("quietschen", Math.max(0, hin - 700), 0.55);
+    if (ball) {
+      /* Jeder Aufsetzer federt — einmal je Feld. */
+      lcTonZu("feder");
+      for (let i = 1; i <= felder; i++) {
+        lcTonSpaeter("federboing", ankuppeln + i * jeFeld, 0.42);
+      }
+    } else {
+      lcTonZu("fahren");
+      /* Auch hier: das Quietschen endet mit dem Stillstand, nicht danach. */
+      lcTonSpaeter("quietschen", Math.max(0, hin - 700), 0.55);
+    }
 
     /* Und dann sitzt auch jeder wirklich dort — jedes Geraet aber nur
        fuer sich selbst. */
@@ -51499,8 +51636,12 @@
          kriege ich sein Profilbild an und sage dann Fahrrad oder so
          und dann fahren wir einfach weg." — bewegt BEIDE, deshalb
          braucht es wie beim Fahren auch den Absender. */
+      /* RUNDE 98 — „stueck" sagt, WIE zu zweit gereist wird: als
+         Fahrrad (wie bisher) oder auf dem Huepfball. */
       if (art === "gemeinsam" && lcGemeinsam(wenZ, (nachricht && nachricht.eigen)
-            ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
+            ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""),
+            (nachricht && nachricht.stueck) || "",
+            (nachricht && nachricht.bahn) || "")) return;
       if (art === "billard" && lcBillard(wenZ, (nachricht && nachricht.eigen)
             ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""),
             nachricht && nachricht.los)) return;

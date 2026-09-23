@@ -9295,7 +9295,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "pferd", kurz: "reiten", nutzt: "/pferd 5",
       was: "Pferd \u2014 du sitzt im Sattel und galoppierst hin\u00fcber" },
     { gr: "reden", w: "gemeinsam", kurz: "zuzweit", nutzt: "/gemeinsam Name",
-      was: "zu zweit losfahren \u2014 sein Bild h\u00e4ngt sich an deins und ihr rollt zusammen weg" },
+      was: "zu zweit losfahren \u2014 auf einem Fahrrad, oder mit „/gemeinsam Name ball\u201c auf ihm als H\u00fcpfball" },
     { gr: "reden", w: "laufen",  kurz: "",      nutzt: "/laufen 8",           was: "Feld f\u00fcr Feld zu Platz 8 laufen \u2014 geht auch mit /fahren 8" },
     { gr: "reden", w: "huepfen", kurz: "spielzug", nutzt: "/huepfen Name",     was: "Spielzug — dein Bild huepft Platz fuer Platz zu jemandem" },
     { gr: "reden", w: "katapult", kurz: "kata", nutzt: "/katapult Name",   was: "Katapult — der andere wird weggeschleudert" },
@@ -10276,7 +10276,12 @@ window.LiveChat = (function () {
     "wirkung", "wen", "an", "film", "betonung", "raten", "dran",
     "sortieren", "leseZeilen", "leseTitel", "leseNiveau",
     "lied", "liedTitel", "liedAb", "liedBis", "wortLink", "los", "tempo",
-    "stueck", "ziel", "tausch", "ab"
+    "stueck", "ziel", "tausch", "ab",
+    /* RUNDE 98 \u2014 der gemalte Weg beim Reisen zu zweit
+       (\u201e/gemeinsam Bea 3-4-8"). Ohne diesen Eintrag k\u00e4me die Kette
+       nie bei den anderen an, und jedes Ger\u00e4t rechnete sich wieder
+       seinen eigenen Weg. */
+    "bahn"
   ];
   /* Listen werden begrenzt — eine Zeile aus einer fremden Fassung
      darf den Chat nicht sprengen. */
@@ -11732,6 +11737,50 @@ window.LiveChat = (function () {
         + (artB ? " zum Heliumballon auf \u2014 und er steigt davon" : " auf wie einen Luftballon")
         + "  \ud83c\udf88",
         { wirkung: "luftballon", wen: wemB.name, stueck: artB });
+    }
+
+    /* =========================================================
+       RUNDE 98 — ZU ZWEIT: FAHRRAD ODER HUEPFBALL
+       ---------------------------------------------------------
+       XANDER: „das zu zweit reisen … einmal, dass ich mit jemandem
+       gemeinsam ein Fahrrad bin … und einmal, dass ich denjenigen
+       als Sprungball benutze und auf ihm sitze und ihn an seinen
+       Hörnern packe."
+       Steht hinter dem Namen „ball" (oder „hüpfball", „sprungball"),
+       wird er zum Hüpfball; sonst bleibt es das Fahrrad wie bisher. */
+    if (art === "gemeinsam") {
+      var restG = String(rest || "").trim();
+      /* RUNDE 98 \u2014 DER GEMALTE WEG. XANDER: \u201eDann kann ich auch
+         den Weg einzeichnen, wo ich lang fahr."
+         Dieselbe Schreibweise wie bei /fahren und /flug: eine Kette von
+         Platznummern. Sie reist in der Nachricht mit, damit jedes
+         Ger\u00e4t denselben Umweg zeichnet.
+         SIE WIRD ZUERST ABGESCHNITTEN, denn sie steht ganz hinten \u2014
+         erst danach steht das Wort f\u00fcr das Fahrzeug am Ende
+         (\u201e/gemeinsam Bea ball 3-4-8"). */
+      var ketteG = "";
+      restG = restG.replace(/\s+(\d+(?:-\d+)+)\s*$/, function (_, k) {
+        ketteG = k; return "";
+      }).trim();
+      var stueckG = "rad";
+      restG = restG.replace(
+        /\s+(ball|h(ue|\u00fc)pfball|sprungball|gummiball|rad|fahrrad|tandem)\s*$/i,
+        function (_, w) {
+          stueckG = /rad|tandem/i.test(w) ? "rad" : "ball";
+          return "";
+        }).trim();
+      if (!restG) {
+        return systemZeile("Zu zweit reisen:\n"
+          + "  /gemeinsam Nickname         auf einem Fahrrad\n"
+          + "  /gemeinsam Nickname ball    auf ihm als H\u00fcpfball\n"
+          + "  /gemeinsam Nickname 3-4-8   den Weg selbst einzeichnen");
+      }
+      var wemG = zielPerson(restG);
+      return anAlle("aktion", zustand.ichName
+        + (stueckG === "ball"
+            ? " h\u00fcpft auf " + wemG.name + " davon  \ud83e\uddb5"
+            : " f\u00e4hrt gemeinsam los mit " + wemG.name + "  \ud83d\udeb2"),
+        { wirkung: "gemeinsam", wen: wemG.name, stueck: stueckG, bahn: ketteG });
     }
 
     if (AM_PLATZ[art]) {
