@@ -11950,7 +11950,7 @@ window.LiveChat = (function () {
       return systemZeile("Das Lieder-Panel gibt es nur im Klassenzimmer.");
     }
     if (art === "gesicht") {
-      var GESICHTER = ["ohmygod", "wow", "verbissen"];
+      var GESICHTER = ["ohmygod", "wow", "verbissen", "schockiert", "leute", "hallo"];
       var teileG = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
       var welchesG = "";
       if (teileG.length) {

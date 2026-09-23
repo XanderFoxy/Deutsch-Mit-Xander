@@ -17,10 +17,11 @@
      · und der Befehl versteht beide Schreibweisen.
 
    WAS FEHLT, SAGT DIESE SONDE AUCH: von den sieben gewuenschten
-   Gesichtern sind DREI gezeichnet (ohmygod, wow, verbissen). Die
-   anderen vier (schockiert, Leute, Hallo, okay) fehlen noch — das
-   Tageslimit des ElevenLabs-Zugangs war nach drei Bildern erreicht.
-   Die Sonde zaehlt sie mit, damit das nicht in Vergessenheit geraet.
+   Gesichtern sind SECHS gezeichnet (ohmygod, wow, verbissen,
+   schockiert, Leute, Hallo). Das siebte (okay) fehlt noch — der
+   Zugang zum Bildwerkzeug laesst im kostenlosen Plan nur drei Bilder
+   je Zeitfenster zu, und das war zweimal aufgebraucht.
+   Die Sonde zaehlt es mit, damit das nicht in Vergessenheit geraet.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -31,7 +32,7 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
   ".opus": "audio/ogg", ".m4a": "audio/mp4" };
 
 const GEWUENSCHT = ["ohmygod", "wow", "verbissen", "schockiert", "leute", "hallo", "okay"];
-const DA = ["ohmygod", "wow", "verbissen"];
+const DA = ["ohmygod", "wow", "verbissen", "schockiert", "leute", "hallo"];
 
 let fehler = 0;
 const sage = (gut, was, zusatz) => {
@@ -146,7 +147,8 @@ const sage = (gut, was, zusatz) => {
     menue.kacheln + " Kacheln, " + menue.unten + " px unter dem Rand");
   sage(menue.unten <= 0, "und das Menue passt weiterhin auf den Bildschirm",
     menue.unten + " px");
-  sage(menue.unter.length >= 3, "darunter stehen die drei Gesichter",
+  sage(menue.unter.length >= DA.length,
+    "darunter stehen alle gezeichneten Gesichter",
     menue.unter.join(" · "));
 
   await br.close(); srv.close();

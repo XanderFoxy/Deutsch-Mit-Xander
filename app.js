@@ -29457,7 +29457,10 @@
     ["\ud83d\ude32", "Gesicht", "gesicht", false,
       [["\ud83d\ude31", "Oh my God", "gesicht", "ohmygod"],
        ["\ud83e\udd29", "Wow", "gesicht", "wow"],
-       ["\ud83d\ude24", "Verbissen", "gesicht", "verbissen"]]]
+       ["\ud83d\ude24", "Verbissen", "gesicht", "verbissen"],
+       ["\ud83d\ude33", "Schockiert", "gesicht", "schockiert"],
+       ["\ud83d\ude44", "Leute \u2026", "gesicht", "leute"],
+       ["\ud83d\udc4b", "Hallo", "gesicht", "hallo"]]]
   ];
 
   /* Die Zeichen zu den Sprechbildern — sie stehen hier und nicht in
@@ -36555,6 +36558,13 @@
     { wort: "ohmygod",   zeigt: "Oh my God", sagt: "Oh my God!",  ton: "aufrau" },
     { wort: "wow",       zeigt: "Wow",       sagt: "Wow!",         ton: "jubel" },
     { wort: "verbissen", zeigt: "Verbissen", sagt: "Jetzt aber.",  ton: "bonk" },
+    /* Die zweite Haelfte seiner Liste: „und dann so Alter verbissen,
+       schockiert und eins wo er sagt Leute bisschen genervt, wo er die
+       Aufmerksamkeit der anderen zu sich zieht und eins, wo er Hallo
+       sagt und eins, wo er okay sagt." */
+    { wort: "schockiert", zeigt: "Schockiert", sagt: "Was?!",      ton: "aufrau" },
+    { wort: "leute",      zeigt: "Leute",      sagt: "Leute \u2026",   ton: "bonk" },
+    { wort: "hallo",      zeigt: "Hallo",      sagt: "Hallo!",      ton: "jubel" },
   ];
   function lcGesichtFinden(was) {
     const w = String(was || "").trim().toLowerCase().replace(/[^a-z]/g, "");

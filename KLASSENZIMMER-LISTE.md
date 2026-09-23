@@ -1,6 +1,6 @@
 # Was du gesagt hast — und was die Seite heute wirklich tut
 
-> Stand: 2026-09-23 04:12 · 198 Sonden · 198 grün, 0 rot, 0 ohne Urteil
+> Stand: 2026-09-23 11:50 · 222 Sonden · 222 grün, 0 rot, 0 ohne Urteil
 
 Diese Liste ist nicht aufgeschrieben, sondern **gemessen**. Jede Zeile
 ist eine Sonde: im Kopf steht dein Satz, im Programm läuft die Messung
@@ -25,7 +25,7 @@ Messung gibt, nicht die, die eine Messung widerlegt.
 
 - **Adler / Greifvogel** — 4 Messungen, alle grün  
   `pruefe-runde18`, `pruefe-runde65`, `pruefe-runde72`, `pruefe-runde74`
-- **Aufgabe / Unterricht** — 19 Messungen, alle grün  
+- **Aufgabe / Unterricht** — 20 Messungen, alle grün  
   `pruefe-antwort-gehoert-dazu`, `pruefe-aufgabe-reist`, `pruefe-aufgabe`, `pruefe-aufgaben`, `pruefe-aufgabentafel`, `pruefe-benoten`, `pruefe-betonung-uebung`, `pruefe-betreiber` …
 - **Anziehen / Ausziehen** — 6 Messungen, alle grün  
   `pruefe-runde18`, `pruefe-runde22`, `pruefe-runde75`, `pruefe-runde87-klaps`, `pruefe-runde88-selbst`, `pruefe-zusatzfelder`
@@ -37,11 +37,11 @@ Messung gibt, nicht die, die eine Messung widerlegt.
   `pruefe-runde72`, `pruefe-runde76`, `pruefe-runde90-aufschlagtoene`, `pruefe-runde90-bumerangton`
 - **Ei** — 1 Messung, alle grün  
   `pruefe-runde90-aufschlagtoene`
-- **Fahrstuhl** — 2 Messungen, alle grün  
-  `pruefe-runde92-reisenummern`, `pruefe-runde96-besetzt`
+- **Fahrstuhl** — 3 Messungen, alle grün  
+  `pruefe-runde92-reisenummern`, `pruefe-runde96-besetzt`, `pruefe-runde98-fahrstuhl`
 - **Frosch** — 2 Messungen, alle grün  
   `pruefe-runde83`, `pruefe-runde88-frosch`
-- **Haende / Greifen** — 20 Messungen, alle grün  
+- **Haende / Greifen** — 22 Messungen, alle grün  
   `pruefe-haende`, `pruefe-runde18`, `pruefe-runde25`, `pruefe-runde49`, `pruefe-runde65`, `pruefe-runde75`, `pruefe-runde76`, `pruefe-runde77` …
 - **Hammer / Panzerglas** — 1 Messung, alle grün  
   `pruefe-runde82`
@@ -53,33 +53,33 @@ Messung gibt, nicht die, die eine Messung widerlegt.
   `pruefe-runde83`, `pruefe-runde86`, `pruefe-runde88-kaninchen`, `pruefe-runde88-zauberer`
 - **Katapult** — 3 Messungen, alle grün  
   `pruefe-katapult60`, `pruefe-runde87-katapult`, `pruefe-runde90-aufschlagtoene`
-- **Kopfhoerer / Musik** — 11 Messungen, alle grün  
+- **Kopfhoerer / Musik** — 12 Messungen, alle grün  
   `pruefe-befehlsreihenfolge`, `pruefe-runde22`, `pruefe-runde23`, `pruefe-runde60`, `pruefe-runde87-lied`, `pruefe-runde88-liedstellen`, `pruefe-runde88-modulhoehe`, `pruefe-runde88-selbst` …
 - **Kuss / Klaps / Popo** — 4 Messungen, alle grün  
   `pruefe-runde49`, `pruefe-runde87-klaps`, `pruefe-runde88-klaps`, `pruefe-runde88-pferd`
-- **Lok / Gleise** — 9 Messungen, alle grün  
+- **Lok / Gleise** — 11 Messungen, alle grün  
   `pruefe-plaetze`, `pruefe-runde63`, `pruefe-runde65`, `pruefe-runde66`, `pruefe-runde72`, `pruefe-runde73`, `pruefe-runde74`, `pruefe-runde88-lok` …
 - **Luftballon** — 5 Messungen, alle grün  
   `pruefe-befehlsreihenfolge`, `pruefe-runde65`, `pruefe-runde76`, `pruefe-runde89-ballon`, `pruefe-zusatzfelder`
-- **Mario-Modus** — 5 Messungen, alle grün  
-  `pruefe-runde37`, `pruefe-runde59`, `pruefe-runde76`, `pruefe-runde88-mario`, `pruefe-runde94-mariotoene`
+- **Mario-Modus** — 6 Messungen, alle grün  
+  `pruefe-runde37`, `pruefe-runde59`, `pruefe-runde76`, `pruefe-runde88-mario`, `pruefe-runde94-mariotoene`, `pruefe-runde98-mario`
 - **Maulwurf** — 8 Messungen, alle grün  
   `pruefe-runde37`, `pruefe-runde63`, `pruefe-runde65`, `pruefe-runde73`, `pruefe-runde74`, `pruefe-runde75`, `pruefe-runde77`, `pruefe-runde88-maulwurf`
-- **Pac-Man** — 3 Messungen, alle grün  
-  `pruefe-runde16`, `pruefe-runde87-pacman`, `pruefe-runde88-pac`
+- **Pac-Man** — 4 Messungen, alle grün  
+  `pruefe-runde16`, `pruefe-runde87-pacman`, `pruefe-runde88-pac`, `pruefe-runde98-pacman`
 - **Pferd** — 1 Messung, alle grün  
   `pruefe-runde88-pferd`
-- **Plaetze / Strichlinien** — 9 Messungen, alle grün  
+- **Plaetze / Strichlinien** — 10 Messungen, alle grün  
   `pruefe-platzdesign`, `pruefe-raumverlauf`, `pruefe-raumwechsel`, `pruefe-runde22`, `pruefe-runde72`, `pruefe-runde87-sechzehn`, `pruefe-runde87-strichlinien`, `pruefe-runde88-maulwurf` …
-- **Schiffe versenken** — 2 Messungen, alle grün  
-  `pruefe-runde30`, `pruefe-runde88-schiffe`
-- **Schwimmbecken** — 7 Messungen, alle grün  
-  `pruefe-plaetze`, `pruefe-runde65`, `pruefe-runde72`, `pruefe-runde78`, `pruefe-runde88-becken`, `pruefe-runde88-schiffe`, `pruefe-runde97-spraybild`
+- **Schiffe versenken** — 3 Messungen, alle grün  
+  `pruefe-runde30`, `pruefe-runde88-schiffe`, `pruefe-runde98-schiffe-aus`
+- **Schwimmbecken** — 8 Messungen, alle grün  
+  `pruefe-plaetze`, `pruefe-runde65`, `pruefe-runde72`, `pruefe-runde78`, `pruefe-runde88-becken`, `pruefe-runde88-schiffe`, `pruefe-runde97-spraybild`, `pruefe-runde98-wegfahrzeuge`
 - **Sprechbilder / Spinne** — 6 Messungen, alle grün  
   `pruefe-runde16`, `pruefe-runde20`, `pruefe-runde37`, `pruefe-runde77`, `pruefe-sprechbild-reist`, `pruefe-sprechbilder`
-- **Spruehdose / Sahne** — 1 Messung, alle grün  
-  `pruefe-runde86`
-- **Toene allgemein** — 34 Messungen, alle grün  
+- **Spruehdose / Sahne** — 2 Messungen, alle grün  
+  `pruefe-runde86`, `pruefe-runde98-spray`
+- **Toene allgemein** — 35 Messungen, alle grün  
   `pruefe-film-platz`, `pruefe-notenknopf-aufgabe`, `pruefe-runde18`, `pruefe-runde20`, `pruefe-runde27`, `pruefe-runde30`, `pruefe-runde49`, `pruefe-runde59` …
 - **Verbindung / zwei Geraete** — 4 Messungen, alle grün  
   `pruefe-befund`, `pruefe-leitung`, `pruefe-runde27`, `pruefe-wartende-zeilen`
@@ -250,6 +250,30 @@ Messung gibt, nicht die, die eine Messung widerlegt.
 - ✅ `pruefe-runde97-hut` — DER HUT WIRD NACH LINKS UND NACH RECHTS GERUECKT
 - ✅ `pruefe-runde97-lok` — DIE LOK STEHT AUF IHREM GLEIS
 - ✅ `pruefe-runde97-spraybild` — EIN BILD SEINER WAHL AUFSPRUEHEN
+- ✅ `pruefe-runde98-alle-telefon` — ALLES FUER ALLE, UND DAS TELEFON IM PLATZMENUE
+- ✅ `pruefe-runde98-angel-lasso` — ERST FANGEN, DANN ZIEHEN
+- ✅ `pruefe-runde98-applaus` — RUNDE 98 — DER APPLAUS
+- ✅ `pruefe-runde98-aufdecken` — DAS AUFDECKEN: GLEICHE FELDER, ECHTES REIHUM
+- ✅ `pruefe-runde98-blume-leiter` — DIE BLUME UND DIE LEITER
+- ✅ `pruefe-runde98-fahrstuhl` — RUNDE 98 — DER FAHRSTUHL
+- ✅ `pruefe-runde98-fokus` — DER FOKUS BLEIBT, UND ER GILT FUER ALLE
+- ✅ `pruefe-runde98-gesichter` — DIE GESICHTER VOM AVATAR
+- ✅ `pruefe-runde98-hammer` — GANZ KAPUTT, UND NUR DAS PFLASTER MACHT ES HEIL
+- ✅ `pruefe-runde98-kran` — DER KRAN HEBT JEMAND ANDEREN AUF EINEN PLATZ
+- ✅ `pruefe-runde98-lesekopf` — DIE UEBERSCHRIFT IM KOPF DER LESETAFEL
+- ✅ `pruefe-runde98-lok` — DIE LOK FAEHRT, WO MAN SIE HINSCHICKT
+- ✅ `pruefe-runde98-mario` — MARIO: SPIELSOUNDS, ECHTER ZUFALL, GEHEIMES FELD
+- ✅ `pruefe-runde98-musikpanel` — RUNDE 98 — DAS LIEDER-PANEL
+- ✅ `pruefe-runde98-pacman` — PAC-MAN FRISST WIRKLICH
+- ✅ `pruefe-runde98-putzen` — DRECK BLEIBT LIEGEN, UND MAN KANN IHN WEGPUTZEN
+- ✅ `pruefe-runde98-schiffe-aus` — SCHIFFE VERSENKEN LAESST SICH WIRKLICH BEENDEN
+- ✅ `pruefe-runde98-slf-fuehrer` — DER SPIELFUEHRER BEI STADT · LAND · FLUSS
+- ✅ `pruefe-runde98-spray` — DER LACK IST DEUTLICH, UND ES GIBT GIFT
+- ✅ `pruefe-runde98-spraybild` — DAS EIGENE BILD WIRD WIRKLICH AUFGESPRUEHT
+- ✅ `pruefe-runde98-strichlinien` — DIE STRICHLINIE BEIM VERLASSEN UND ANKOMMEN
+- ✅ `pruefe-runde98-wegfahrzeuge` — DER GEMALTE WEG UND DIE RICHTUNG DES DELFINS
+- ✅ `pruefe-runde98-ziel` — WO MAN HINWILL, DA FAEHRT MAN HIN
+- ✅ `pruefe-runde98-zuzweit` — ZU ZWEIT REISEN: RAD, HUEPFBALL UND GEMALTER WEG
 - ✅ `pruefe-schallwelle` — MISST, OB DIE SCHALLWELLE EINE KANTE HAT.
 - ✅ `pruefe-schiffe60` — PADDELN UND DAS SEITENRAD
 - ✅ `pruefe-schrei-echo` — MISST DEN NEUEN SCHREI — TON UND WELLE.
@@ -1463,6 +1487,142 @@ _(kein wörtliches Zitat im Kopf dieser Sonde)_
 > „und dass man ein Bild seiner Wahl darauf spruehen kann und dass das Bild genauso partiell eingespruecht wird … wie Partikel langsam auftaucht und sich realistisch fuellt, das Bild Pixel fuer Pixel, als wenn man das wirklich dran spruehen wuerde.“
 
 > „Die [gespruehten] Sachen haben immer noch kein Bild, was man sich einspruehen kann.“
+
+### ✅ ALLES FUER ALLE, UND DAS TELEFON IM PLATZMENUE  
+`pruefe-runde98-alle-telefon`
+
+> „Auch das Telefon muss im Profil-Menue aufrufbar sein.“
+
+> „der Anruf muss von beiden Seiten auch ausgehen, da passiert noch nichts.“
+
+> „Ich moechte alle gleichzeitig bespruehen koennen. Ich moechte eigentlich alles, was man irgendwie machen kann, moechte ich bei allen gleichzeitig machen.“
+
+> „alle" traf jede alle fuenf besetzten Plaetze. Gefehlt hat der WEG DORTHIN: unter „Alle“
+
+### ✅ ERST FANGEN, DANN ZIEHEN  
+`pruefe-runde98-angel-lasso`
+
+> „repariere noch das Lasso und die Angel, weil die sind immer noch von ihrer Animation erst dann, wenn derjenige schon an den Platz gezogen wurde. Sie sollen aber erst mal denjenigen fangen und dann zu sich ziehen. Die Angel kann auch ein bisschen klassischer sein. Also das soll so 'ne Angelrute sein, wo man dann die Angelschnur einrollt, und man denjenigen wirklich hochzieht, und er baumelt dann so ein bisschen.“
+
+### ✅ RUNDE 98 — DER APPLAUS  
+`pruefe-runde98-applaus`
+
+> „Wir brauchen noch eine Applaus Animation mit klatschen den Haenden, wenn jemand etwas schoenes macht.“
+
+### ✅ DAS AUFDECKEN: GLEICHE FELDER, ECHTES REIHUM  
+`pruefe-runde98-aufdecken`
+
+> „und das Aufdecken muss auf allen Seiten funktionieren — die Felder, die keine Buchstaben enthalten, sollen genau dieselbe Groesse haben und einfach nur die Platzhalter fuer die Buchstaben darstellen, und das muss wirklich reihum funktionieren in einer logischen Reihenfolge von den Leuten, die da sind.“
+
+### ✅ DIE BLUME UND DIE LEITER  
+`pruefe-runde98-blume-leiter`
+
+> „ich moechte, dass ein Profileffekt dabei ist, dass ich jemanden zur aufbluehenden Blume machen kann oder dass ich ueber eine Leiter von unten nach oben klettern kann oder jemand anderen von seinem Platz von unten nach oben klettern lassen kann.“
+
+### ✅ RUNDE 98 — DER FAHRSTUHL  
+`pruefe-runde98-fahrstuhl`
+
+_(kein wörtliches Zitat im Kopf dieser Sonde)_
+
+### ✅ DER FOKUS BLEIBT, UND ER GILT FUER ALLE  
+`pruefe-runde98-fokus`
+
+_(kein wörtliches Zitat im Kopf dieser Sonde)_
+
+### ✅ DIE GESICHTER VOM AVATAR  
+`pruefe-runde98-gesichter`
+
+> „Und ich moechte mit meinem Avatar, den wir fuer die Webseiten-Vorstellung haben — nur das Gesicht davon haben wir in Animation, sagt oh my god und wow, also diese zwei einzelnen. Und dann so Alter, verbissen, schockiert, und eins, wo er sagt Leute, bisschen genervt … und eins, wo er Hallo sagt, und eins, wo er okay sagt.“
+
+### ✅ GANZ KAPUTT, UND NUR DAS PFLASTER MACHT ES HEIL  
+`pruefe-runde98-hammer`
+
+_(kein wörtliches Zitat im Kopf dieser Sonde)_
+
+### ✅ DER KRAN HEBT JEMAND ANDEREN AUF EINEN PLATZ  
+`pruefe-runde98-kran`
+
+> „Dann haette ich gerne den Kran dafuer, dass man jemand anderen noch auf einen Platz heben kann.“
+
+> „/heb") und das Lasso. GEMESSEN WIRD: 1 Es gibt den Befehl, und er steht im Platzmenue unter „Holen“
+
+### ✅ DIE UEBERSCHRIFT IM KOPF DER LESETAFEL  
+`pruefe-runde98-lesekopf`
+
+> „repariere mal die Ueberschrift im Android, wo ich bei den Aufgaben etwas mache und dann sollen sie Texte vorlesen — die Ueberschrift, die steht zwischen dem Niveau und zwischen Betonung und Fokus und ist von oben nach unten in einzeln runtergequetscht, das macht ueberhaupt keinen Sinn.“
+
+> „Der Wolkenkratzer in der Abenddaemmerung“
+
+### ✅ DIE LOK FAEHRT, WO MAN SIE HINSCHICKT  
+`pruefe-runde98-lok`
+
+> „Die Schienen von der Lok gehen noch nicht in alle Richtung. Die ist noch total inkonsistent, die geht nach oben, manchmal geht sie auch manchmal um die Kurve, aber sie soll generell ueber alle Leute immer fahren koennen, egal wo ich hinfahren moechte.“
+
+### ✅ MARIO: SPIELSOUNDS, ECHTER ZUFALL, GEHEIMES FELD  
+`pruefe-runde98-mario`
+
+> „Meinetwegen kannst du den Schrei mit dazu bringen aber diese Sounds sollen mit vorhanden sein.“
+
+> „mariokick") — und der Schrei darf „meinetwegen“
+
+### ✅ RUNDE 98 — DAS LIEDER-PANEL  
+`pruefe-runde98-musikpanel`
+
+> „Die Musik kann ich immer noch nicht in Einzelteil-Buttons anlegen, um eine History zu haben beziehungsweise ein abgespeichertes Panel, wo ich direkt auf meine Textzeilen und Refrains zu den jeweiligen dazugehoerigen Liedern kriegen kann.“
+
+### ✅ PAC-MAN FRISST WIRKLICH  
+`pruefe-runde98-pacman`
+
+> „bei Pac-Man soll er die Leute richtig auffressen und gerade wenn auf Plaetzen jemand sitzt, soll er ein bisschen dicker werden aber nur in dem Moment, dann soll er weiter fressen und immer wenn er jemanden frisst, dann soll er ruelpsen und die Leute sollen von der Buehne verschwinden und die Futterpunkte soll er auch realistisch essen.“
+
+### ✅ DRECK BLEIBT LIEGEN, UND MAN KANN IHN WEGPUTZEN  
+`pruefe-runde98-putzen`
+
+_(kein wörtliches Zitat im Kopf dieser Sonde)_
+
+### ✅ SCHIFFE VERSENKEN LAESST SICH WIRKLICH BEENDEN  
+`pruefe-runde98-schiffe-aus`
+
+> „und das Schiffe versenken muss wirklich auf allen Seiten funktionieren. Ich muss es auch beenden koennen auf meiner Seite, falls irgendwas ist.“
+
+### ✅ DER SPIELFUEHRER BEI STADT · LAND · FLUSS  
+`pruefe-runde98-slf-fuehrer`
+
+_(kein wörtliches Zitat im Kopf dieser Sonde)_
+
+### ✅ DER LACK IST DEUTLICH, UND ES GIBT GIFT  
+`pruefe-runde98-spray`
+
+> „das Spruehen von der Spraydose muss etwas deutlicher sein, weil man meistens die Bilder nicht erkennt auf anderen Untergruenden und man kann immer noch kein Giftspruehen oder irgendetwas anderes … ausserdem, wenn jemand spricht oder generell, scheint sich der aufgesprueht Effekt zu verfluechtigen das darf nicht sein.“
+
+### ✅ DAS EIGENE BILD WIRD WIRKLICH AUFGESPRUEHT  
+`pruefe-runde98-spraybild`
+
+> „und das mit dem Bild muss unbedingt funktionieren und es muss in seinen Pixeln genauso aufgespruecht werden selbst ein gif sogar und die Sachen sollen bleibend sein.“
+
+### ✅ DIE STRICHLINIE BEIM VERLASSEN UND ANKOMMEN  
+`pruefe-runde98-strichlinien`
+
+> „Auch diese Strichlinienkreise mit der Profil- Platznummer [werden] beeinflusst, wenn man sie verlaesst und auf einem anderen Profilplatz ankommt — da sind sie immer noch leer oder glitschig. Das wolltest du eigentlich reparieren, das ist immer noch nicht repariert.“
+
+> „.lc-platz-unterwegs .lc-schild { z-index: -1 }“
+
+### ✅ DER GEMALTE WEG UND DIE RICHTUNG DES DELFINS  
+`pruefe-runde98-wegfahrzeuge`
+
+> „im Uebrigen schwimmt der Delfin nicht in die richtige Richtung, der soll auch — saemtliche Fahrzeuge sollen den Weg eingezeichnet bekommen.“
+
+### ✅ WO MAN HINWILL, DA FAEHRT MAN HIN  
+`pruefe-runde98-ziel`
+
+> „Die einzelnen Module der Lokomotive funktionieren immer noch nicht und es soll ungeachtet ob da jemand sitzt. Ich weiss nicht warum du jetzt den Platz von dem anderen beruecksichtigst. Das soll niemals beruecksichtigt werden. Da wo man hinfahren moechte kann man hinfahren egal ob da jemand sitzt, dann ueberfaehrt man ihn eben. Ich habe niemals etwas anderes gesagt.“
+
+> „Wenn alles voll ist, kann ich nicht losfahren“
+
+### ✅ ZU ZWEIT REISEN: RAD, HUEPFBALL UND GEMALTER WEG  
+`pruefe-runde98-zuzweit`
+
+> „das zu zweit reisen. Das soll auch besser funktionieren einmal dass ich mit jemanden gemeinsam ein Fahrrad bin, wenn ich neben ihm bin mit ihm losfahren kann. Dann kann ich auch den Weg einzeichnen, wo ich lang fahr und einmal dass ich denjenigen als Sprungball benutze und auf ihm sitze und ihn an seinen Hoernern packe beziehungsweise an diesen Gummiball fortsetzen, um mit ihm da los zu reiten.“
 
 ### ✅ MISST, OB DIE SCHALLWELLE EINE KANTE HAT.  
 `pruefe-schallwelle`
