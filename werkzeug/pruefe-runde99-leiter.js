@@ -194,6 +194,54 @@ const sage = (gut, text, dazu) => {
     "... und sie sind sich unterwegs entgegengekommen", "Alex bei y=" + e2.er.cy + ", Emmi bei y=" + e2.gegen.cy);
   await pg.screenshot({ path: "/tmp/claude-0/leiter-tausch.png" });
 
+  /* RUNDE 100 — XANDER (Walkie-Talkie): „Die Bilder tauschen sich kurz
+     vor der Ankunft nochmal miteinander aus."
+     Der Tausch wird hier so nachgestellt wie im echten Raum
+     (livechatPlaetzeAuffrischen): dieselben Kreise bleiben, nur Inhalt
+     und Name wechseln. Verfolgt wird jedes Bild Bild fuer Bild — nach
+     der Ankunft darf keines mehr auf seinem alten Platz auftauchen.
+     Einmal zur ueblichen Zeit (3050 ms), einmal spaet (4000 ms), wie es
+     auf einem anderen Geraet ankommen kann.
+     GEGENPROBE mit der alten Fassung: 18 bzw. 39 falsche Bilder. */
+  console.log("\n4  KEIN ZURUECKSPRINGEN BEIM PLATZTAUSCH\n");
+  for (const tauschBei of [3050, 4000]) {
+    await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
+    await pg.waitForTimeout(250);
+    const r = await pg.evaluate(async (T) => {
+      const p = (n) => document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + n + '"]');
+      const mark = (n, wer) => { const i = document.createElement("i"); i.className = "kennung";
+        i.dataset.wer = wer; p(n).querySelector(".lc-kreis").appendChild(i); };
+      mark(1, "Alex"); mark(5, "Emmi");
+      const mitte = (n) => { const b = p(n).querySelector(".lc-kreis").getBoundingClientRect();
+        return [b.left + b.width / 2, b.top + b.height / 2]; };
+      const m1 = mitte(1), m5 = mitte(5);
+      window.DMA_PRUEFUNG.wirkung("leiter", "Alex", "Alex", { ziel: 5 });
+      const t0 = performance.now(), film = [];
+      setTimeout(() => {
+        const k1 = p(1).querySelector(".lc-kreis"), k5 = p(5).querySelector(".lc-kreis");
+        const a = k1.querySelector(".kennung"), b = k5.querySelector(".kennung");
+        k1.appendChild(b); k5.appendChild(a);
+        p(1).querySelector(".lc-platz-name").textContent = "Emmi";
+        p(5).querySelector(".lc-platz-name").textContent = "Alex";
+      }, T);
+      await new Promise((fertig) => { const lauf = () => {
+        const t = performance.now() - t0, wo = {};
+        document.querySelectorAll(".kennung").forEach((k) => {
+          const b = k.closest(".lc-kreis").getBoundingClientRect();
+          wo[k.dataset.wer] = [b.left + b.width / 2, b.top + b.height / 2]; });
+        film.push({ t: t, wo: wo });
+        if (t < 6200) requestAnimationFrame(lauf); else fertig(); }; lauf(); });
+      const nah = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]) < 6;
+      const falsch = film.filter((f) => f.t > 2990 && !(nah(f.wo.Alex, m5) && nah(f.wo.Emmi, m1)));
+      return { falsch: falsch.length, bilder: film.length,
+        rest: [...document.querySelectorAll("#lcPlaetze .lc-kreis")].reduce((n, k) => n + k.getAnimations().length, 0)
+          + document.querySelectorAll(".lc-leiter-weg").length };
+    }, tauschBei);
+    sage(r.falsch === 0, "Tausch bei " + tauschBei + " ms: nach der Ankunft springt kein Bild zurück",
+      r.falsch + " von " + r.bilder + " Bildern falsch");
+    sage(r.rest === 0, "... und danach ist nichts liegengeblieben (Leiter, Bewegung)", r.rest + " Reste");
+  }
+
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
   process.exit(fehler ? 1 : 0);

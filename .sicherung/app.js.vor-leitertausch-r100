@@ -37387,36 +37387,12 @@
         try { laeufe.push(gegen.animate(bahn(-dx, -dy, spur), { duration: dauer, easing: "linear", fill: "forwards" })); }
         catch (e) {}
       }
-      /* RUNDE 100 — XANDER (Walkie-Talkie, Leiter): „Die Bilder tauschen
-         sich kurz vor der Ankunft nochmal miteinander aus."
-         GEFUNDEN: die Plaetze werden beim Tausch nur UMGESCHRIEBEN
-         (livechatPlaetzeAuffrischen) — dieselben Kreise bleiben stehen,
-         nur ihr Inhalt wechselt. Die Sitzordnung kam bei 3050 ms, die
-         Kletterbewegung hielt die Kreise aber bis 3350 ms am Ziel fest:
-         0,3 s lang stand also jedes Bild wieder auf dem Platz, von dem
-         es gekommen war. Und auf einem anderen Geraet kann der Tausch
-         auch NACH 3350 ms ankommen — dann sprangen beide erst zurueck.
-         Jetzt endet die Bewegung genau in dem Augenblick, in dem der
-         Tausch da ist (derselbe Bildaufbau, kein Zwischenbild), und
-         spaetestens nach 5,7 s, falls gar keiner kommt. */
-      const werSitzt = (el) => ((el.querySelector(".lc-platz-name") || {}).textContent || "").trim();
-      const warDa = werSitzt(platz);
-      let aufgeraeumt = false, notfall = 0, wache = null;
-      const aufraeumen = () => {
-        if (aufgeraeumt) return;
-        aufgeraeumt = true;
-        clearTimeout(notfall);
-        try { if (wache) wache.disconnect(); } catch (e) {}
+      setTimeout(() => {
         laeufe.forEach((l) => { try { l.cancel(); } catch (e) {} });
         leiter.remove();
         platz.style.zIndex = altZ;
         if (gegen) zielEl.style.zIndex = zielZ;
-      };
-      try {
-        wache = new MutationObserver(() => { if (werSitzt(platz) !== warDa) aufraeumen(); });
-        wache.observe(platz, { subtree: true, childList: true, characterData: true });
-      } catch (e) { wache = null; }
-      notfall = setTimeout(aufraeumen, dauer + 2500);
+      }, dauer + 150);
       for (let i = 1; i <= schritte; i++) {
         lcTonSpaeter("holzklopf", Math.round((0.12 + (0.74 * i) / schritte) * dauer), 0.34);
       }
