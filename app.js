@@ -36496,35 +36496,50 @@
       : null;
     if (gemalt && gemalt.length > 1) {
       const zuG = gemalt[gemalt.length - 1];
-      if (!zuG.frei) { lcWegAbsage("Platz " + zuG.nr + " ist besetzt."); return true; }
+      /* RUNDE 98 — auch der gemalte Weg darf auf einem besetzten Platz
+         enden. XANDER: „Da wo man hinfahren moechte kann man hinfahren
+         egal ob da jemand sitzt, dann ueberfaehrt man ihn eben." */
       return lcFahrtLauf(ab, gemalt, art, zuG, tempo);
     }
 
-    /* WOHIN? Steht eine Nummer dahinter, ist es dieser Platz. Steht
-       ein Name da, ist es der naechste FREIE Platz neben ihm — „dann
-       halte ich neben ihm an". Auf seinen Platz kann ich nicht
-       fahren, da sitzt er ja. */
+    /* =====================================================================
+       RUNDE 98 — WO MAN HINWILL, DA FAEHRT MAN HIN
+       ---------------------------------------------------------------------
+       XANDER (23.09.2026): „Ich weiss nicht warum du jetzt den Platz von
+       dem anderen beruecksichtigst. Das soll niemals beruecksichtigt
+       werden. Da wo man hinfahren moechte kann man hinfahren egal ob da
+       jemand sitzt, dann ueberfaehrt man ihn eben. Ich habe niemals
+       etwas anderes gesagt."
+
+       Hier standen zwei Bremsen, und beide waren meine:
+         · bei einem NAMEN fuhr man nicht zu ihm, sondern auf den
+           naechsten FREIEN Platz neben ihm — war keiner frei, kam
+           „Kein Platz frei neben Bea" und es passierte nichts;
+         · bei einer NUMMER hiess besetzt schlicht „geht nicht".
+       Beides ist weg: das Ziel ist das Ziel.
+
+       WAS BLEIBT, ist sein aelterer Satz ueber den WEG — „Ich moechte
+       gerne auch an leeren Plaetzen lang fahren … Wenn alles voll ist,
+       kann ich nicht losfahren." Der Weg geht also weiter ueber freie
+       Plaetze; nur das Ziel selbst darf besetzt sein (die Wegsuche
+       erlaubt genau das, siehe lcWegSuchen: das Ziel wird gefunden,
+       bevor auf „frei" geprueft wird).
+
+       WER DORT SITZT, wird ueberfahren — und sitzt danach da, wo der
+       Fahrer herkam: platzNehmen() tauscht von selbst, wenn der Platz
+       besetzt ist (livechat.js). Zwei Leute auf einem Stuhl gibt es
+       nicht.
+       ===================================================================== */
     let zu = null;
     const nummer = Number(String(wen || "").trim());
     if (nummer && gitter.some((p) => p.nr === nummer)) {
       zu = gitter.find((p) => p.nr === nummer);
     } else {
       const zielEl = lcPlatzMitNamen(wen);
-      const ziel = gitter.find((p) => p.el === zielEl);
-      if (!ziel) return false;
-      const naehe = (p) => Math.abs(p.reihe - ziel.reihe) + Math.abs(p.spalte - ziel.spalte);
-      zu = gitter.filter((p) => p.frei && p.nr !== ab.nr)
-                 .sort((a, b) => naehe(a) - naehe(b))[0] || null;
-      if (!zu) {
-        lcWegAbsage("Kein Platz frei neben " + ziel.name + " — da kommst du nicht hin.");
-        return true;
-      }
+      zu = gitter.find((p) => p.el === zielEl) || null;
+      if (!zu) return false;
     }
     if (!zu || zu.nr === ab.nr) return false;
-    if (!zu.frei) {
-      lcWegAbsage("Platz " + zu.nr + " ist besetzt.");
-      return true;
-    }
 
     const weg = lcWegSuchen(gitter, ab.nr, zu.nr, false);
     if (!weg) {
@@ -36660,6 +36675,11 @@
          Stillstand. Es faengt deshalb 700 ms VOR der Ankunft an —
          dann quietscht es beim Landen und nicht danach. */
       lcTonSpaeter("quietschen", Math.max(0, hin - 700), 0.55);
+    }
+    /* RUNDE 98 — und wenn auf dem Zielplatz jemand sitzt, wird er
+       ueberfahren. XANDER: „dann ueberfaehrt man ihn eben." */
+    if (zu && !zu.frei) {
+      setTimeout(() => lcPlatzUeberfahren(zu.el, 0.5), Math.max(0, hin - 60));
     }
     /* UND DANN SITZT MAN AUCH WIRKLICH DORT.
        GEMELDET: „man soll auch einfach den Platz, den man anfahren
@@ -36937,50 +36957,39 @@
     }
 
     /* WOHIN? Genau wie beim Fahren: eine Nummer ist der Platz, ein Name
-       ist der naechste freie Platz neben ihm. */
+       ist SEIN Platz — und zwar auch dann, wenn er besetzt ist.
+       RUNDE 98, XANDER: „Da wo man hinfahren moechte kann man hinfahren
+       egal ob da jemand sitzt, dann ueberfaehrt man ihn eben." */
     let zu = null;
     const nummer = Number(String(wen || "").trim());
     if (nummer && gitter.some((p) => p.nr === nummer)) {
       zu = gitter.find((p) => p.nr === nummer);
     } else {
       const zielEl = lcPlatzMitNamen(wen);
-      const ziel = gitter.find((p) => p.el === zielEl);
-      if (!ziel) return false;
-      const naehe = (p) => Math.abs(p.reihe - ziel.reihe) + Math.abs(p.spalte - ziel.spalte);
-      zu = gitter.filter((p) => p.frei && p.nr !== ab.nr).sort((a, b) => naehe(a) - naehe(b))[0] || null;
-      if (!zu) { lcWegAbsage("Kein Platz frei neben " + ziel.name + "."); return true; }
+      zu = gitter.find((p) => p.el === zielEl) || null;
+      if (!zu) return false;
     }
     if (!zu || zu.nr === ab.nr) return false;
-    /* Ein besetzter Platz ist nur beim TAUSCH erlaubt, und auch dann
-       nur mit den beiden Reisen, die Xander dafuer genannt hat. Bei
-       allen anderen bliebe sonst einer von beiden in der Luft. */
+    /* Tauschen ist weiterhin die WIRKUNG von Frisbee und Rohr — dort
+       fliegen beide, und das ist der Witz daran. */
     const tauschbar = tausch && (art === "frisbee" || art === "rohr");
-    if (!zu.frei && !tauschbar) {
-      /* =============================================================
-         RUNDE 96 — EIN BESETZTER PLATZ IST KEINE SACKGASSE MEHR
-         -------------------------------------------------------------
-         Hier stand: „Platz 5 ist besetzt." — und sonst passierte
-         nichts. Im leeren Testraum faellt das nicht auf; in einem Raum
-         mit vier Leuten ist aber die Haelfte aller Plaetze besetzt,
-         und dann tut die Haelfte aller Reisen scheinbar gar nichts.
-         Genau so klingt seine Klage: „der Fahrstuhl funktioniert auch
-         nicht, da funktioniert noch gar nix."
+    /* =====================================================================
+       RUNDE 98 — EIN BESETZTER PLATZ HAELT NIEMANDEN MEHR AUF
+       ---------------------------------------------------------------------
+       XANDER (23.09.2026): „Ich weiss nicht warum du jetzt den Platz von
+       dem anderen beruecksichtigst. Das soll niemals beruecksichtigt
+       werden … dann ueberfaehrt man ihn eben. Ich habe niemals etwas
+       anderes gesagt."
 
-         Beim NAMEN macht das Programm es laengst richtig: „zu Bea"
-         heisst „auf den naechsten freien Platz NEBEN Bea". Genau das
-         gilt jetzt auch fuer eine besetzte NUMMER. Nur wenn wirklich
-         kein Platz mehr frei ist, kommt eine Absage — und die sagt
-         dann auch, warum.
-         ============================================================= */
-      const nahe = (p) => Math.abs(p.reihe - zu.reihe) + Math.abs(p.spalte - zu.spalte);
-      const ausweich = gitter.filter((p) => p.frei && p.nr !== ab.nr)
-        .sort((a, b) => nahe(a) - nahe(b))[0] || null;
-      if (!ausweich) {
-        lcWegAbsage("Platz " + zu.nr + " ist besetzt, und frei ist auch keiner.");
-        return true;
-      }
-      zu = ausweich;
-    }
+       In Runde 96 habe ich hier eine UMLEITUNG eingebaut: ein besetztes
+       Ziel wurde stillschweigend durch den naechsten freien Platz
+       ersetzt. Davor stand eine Absage. Beides war falsch — beides ist
+       weg. Die Reise geht dorthin, wohin sie gehen soll.
+       Wer dort sitzt, wird ueberfahren und sitzt danach auf dem Platz,
+       von dem der Reisende kam: platzNehmen() tauscht selbst, wenn der
+       Platz besetzt ist (livechat.js).
+       ===================================================================== */
+
     if (tauschbar && zu.frei) {
       /* Auf einem leeren Platz gibt es nichts zu tauschen — dann ist
          es die gewoehnliche Reise. */
@@ -41961,6 +41970,13 @@
        Maulwurf), kommt keiner dazu. */
     const ankunft = LC_ANKUNFT_TON[art];
     if (ankunft) lcTonSpaeter(ankunft, Math.max(0, hin - 260), 0.5);
+    /* RUNDE 98 — sitzt dort jemand, wird er in dem Augenblick
+       ueberfahren, in dem die Reise ankommt. Die Lok bringt ihre
+       eigenen Schreie mit (sie ueberrollt ja auch unterwegs Leute);
+       doppelt soll es nicht wehtun. */
+    if (!zu.frei && art !== "lok") {
+      setTimeout(() => lcPlatzUeberfahren(zu.el, 0.5), Math.max(0, hin - 60));
+    }
 
     setTimeout(aufraeumen, dauer + 400);
     /* Und dann sitzt man auch wirklich dort — nur auf dem eigenen
@@ -45463,6 +45479,31 @@
      livechatPlaetzeAuffrischen). Steht dort nichts — weil jemand es
      nicht angegeben hat —, bleibt es bei der maennlichen Aufnahme;
      Raten waere schlechter als eine feste Wahl. */
+  /* =====================================================================
+     RUNDE 98 — WER AUF SEINEM PLATZ SITZT, WIRD UEBERFAHREN
+     ---------------------------------------------------------------------
+     XANDER: „Da wo man hinfahren moechte kann man hinfahren egal ob da
+     jemand sitzt, dann ueberfaehrt man ihn eben."
+     Also ist das Ankommen auf einem besetzten Platz kein Fehlerfall
+     mehr, sondern eine Handlung mit Folgen: das Bild wird plattgedrueckt
+     (dieselbe Bewegung, die die Lok schon benutzt) und es tut hoerbar
+     weh. Danach tauscht platzNehmen() die beiden — der Ueberfahrene
+     sitzt auf dem Platz, von dem der andere kam.
+     ===================================================================== */
+  function lcPlatzUeberfahren(platzEl, laut) {
+    if (!platzEl) return false;
+    const k = platzEl.querySelector(".lc-kreis");
+    if (k) {
+      k.classList.remove("lc-ueberfahren");
+      void k.offsetWidth;
+      k.classList.add("lc-ueberfahren");
+      setTimeout(() => k.classList.remove("lc-ueberfahren"), 900);
+    }
+    try { lcGeraeusch(lcSchmerzTon(platzEl), "ueberfahren", laut === undefined ? 0.5 : laut); }
+    catch (e) {}
+    return true;
+  }
+
   function lcSchmerzTon(platz) {
     const g = String((platz && platz.dataset && platz.dataset.lcGeschlecht) || "")
       .trim().toLowerCase();
