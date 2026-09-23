@@ -27337,9 +27337,9 @@
     const blende = lcZpBlende(schicht);
     const bild = document.createElement("img");
     /* Die gemalte Leinwand ist quadratisch und randlos — sie deckt den
-       Kreis. RUNDE 100: ein eigenes Bild deckt ihn jetzt genauso
-       („mit deckenden Dimensionen", wie ein hochgeladenes Profilbild);
-       die Klasse bleibt, damit die Regel an einer Stelle steht. */
+       Kreis. Ein eigenes Bild hat aber sein eigenes Seitenverhaeltnis
+       und darf nicht beschnitten werden: es steht mittig und ganz da,
+       genau wie beim Spruehen. */
     bild.className = "lc-sprayfarbe-bild" + (eigen ? " lc-sprayfarbe-eigen" : "");
     bild.alt = "";
     bild.src = bildUrl;
@@ -27932,17 +27932,10 @@
          den gemalten Motiven. Die Tropfen bleiben liegen, es kommen
          nur neue dazu; deshalb wird nur die DIFFERENZ gesetzt. */
       const soll = Math.round(24 + 300 * t * t);
-      /* RUNDE 100 — XANDER (Walkie-Talkie): „die animierten GIFs und
-         generell die Fotos koennen so wie wenn sie normal auch
-         reingeladen werden mit deckenden Dimensionen sein, man sieht
-         sie sonst nur angeschnitten."
-         Das Bild fuellt jetzt den ganzen Kreis (wie ein Profilbild).
-         Deshalb fallen die Tropfen auch bis an den Rand — vorher nur
-         zwischen 7 % und 93 %, passend zum alten Rand von 7 %. */
       for (; gesetzt < soll; gesetzt++) {
         const k = document.createElementNS(NS, "circle");
-        k.setAttribute("cx", Math.random().toFixed(4));
-        k.setAttribute("cy", Math.random().toFixed(4));
+        k.setAttribute("cx", (0.07 + Math.random() * 0.86).toFixed(4));
+        k.setAttribute("cy", (0.07 + Math.random() * 0.86).toFixed(4));
         k.setAttribute("r", (0.014 + Math.random() * 0.055).toFixed(4));
         loch.appendChild(k);
       }

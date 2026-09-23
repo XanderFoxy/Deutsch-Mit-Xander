@@ -98,7 +98,7 @@ const geben = (wurzel) => http.createServer((q, a) => {
   sage(png.quelle.indexOf("pruefbild-viertel.png") >= 0,
     "und zwar als das Bild selbst, nicht als nachgemaltes PNG",
     png.quelle.slice(0, 60));
-  sage(png.eigen, "es liegt vollstaendig da, nicht beschnitten");
+  sage(png.eigen, "es liegt als eigenes Bild da");
   sage(png.leinwandWeg, "und die Spruehleinwand darueber ist weg");
 
   console.log("\nWIE GENAU SIND DIE PIXEL?\n");
@@ -148,6 +148,41 @@ const geben = (wurzel) => http.createServer((q, a) => {
     "das Bild liegt in seinen eigenen Pixeln da",
     genau ? genau.treffer + " % der " + genau.gemessen
       + " Bildpunkte treffen ihre Farbe (vorher 32 %)" : "-");
+
+  /* RUNDE 100 — XANDER (Walkie-Talkie): „die animierten GIFs und
+     generell die Fotos koennen so wie wenn sie normal auch reingeladen
+     werden mit deckenden Dimensionen sein, man sieht sie sonst nur
+     angeschnitten."
+     Gemessen wird an einem BREITEN Bild (2 : 1): es muss den ganzen
+     Kreis fuellen — kein Rand, keine leeren Streifen oben und unten. */
+  console.log("\nEIN BREITES BILD DECKT DEN KREIS\n");
+  const breit = "data:image/svg+xml," + encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' width='200' height='100'>"
+    + "<rect width='200' height='100' fill='#e02020'/></svg>");
+  await spruehen(breit, "Emmi");
+  const deckt = await pg.evaluate(() => {
+    const platz = [...document.querySelectorAll(".lc-platz")].filter((p) =>
+      ((p.querySelector(".lc-platz-name") || {}).textContent || "")
+        .toLowerCase().indexOf("emmi") >= 0)[0];
+    const lack = platz && platz.querySelector(".lc-sprayfarbe-bild");
+    const kreis = platz && platz.querySelector(".lc-kreis");
+    if (!lack || !kreis) return null;
+    const cs = getComputedStyle(lack);
+    /* Verglichen wird mit dem INNEREN des Kreises: sein Rahmen (3 px)
+       gehoert nicht zum Bild — das Profilbild liegt genauso innen. */
+    const a = lack.getBoundingClientRect(), r = kreis.getBoundingClientRect();
+    const k = { left: r.left + kreis.clientLeft, top: r.top + kreis.clientTop,
+      width: kreis.clientWidth, height: kreis.clientHeight };
+    return { fit: cs.objectFit, rand: cs.paddingTop,
+      abweichung: Math.max(Math.abs(a.left - k.left), Math.abs(a.top - k.top),
+        Math.abs(a.width - k.width), Math.abs(a.height - k.height)) };
+  });
+  sage(deckt && deckt.fit === "cover" && deckt.rand === "0px",
+    "das eigene Bild fuellt den Kreis wie ein Profilbild (cover, kein Rand)",
+    deckt ? deckt.fit + ", Rand " + deckt.rand : "keine Schicht");
+  sage(deckt && deckt.abweichung <= 2,
+    "... und die Schicht ist so gross wie der Kreis",
+    deckt ? "Abweichung " + deckt.abweichung.toFixed(1) + " px" : "-");
 
   console.log("\nDAS ANIMIERTE GIF\n");
   const gif = await spruehen(eigen + "/werkzeug/pruefbild-blink.gif", "Cem");

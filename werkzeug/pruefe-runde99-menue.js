@@ -280,6 +280,49 @@ const GRUPPEN = {
     "... und sie liegt ganz im sichtbaren Fenster",
     sw ? "oben " + sw.oben + ", unten " + sw.unten + " von " + sw.hoch + " px" : "-");
 
+  /* RUNDE 100 — XANDER: „das Panel zur Auswahl ist auf dem kleinen
+     Geraet sehr angeschnitten." GEMESSEN vorher auf 360 x 560 mit
+     voller Sammlung (18 + 18): die Vorschaubilder waren nur 16 px hoch,
+     die Bildreihen im Flex-Rahmen plattgedrueckt. */
+  console.log("\n7  SPRUEHDOSE: VOLLE SAMMLUNG AUF DEM KLEINEN HANDY\n");
+  await pg.setViewportSize({ width: 360, height: 560 });
+  await pg.evaluate(() => {
+    const bilder = [];
+    for (let i = 0; i < 18; i++) bilder.push("data:image/svg+xml," + encodeURIComponent(
+      "<svg xmlns='http://www.w3.org/2000/svg' width='" + (i % 2 ? 200 : 100)
+      + "' height='120'><rect width='100%' height='100%' fill='hsl(" + i * 20 + ",70%,50%)'/></svg>"));
+    const alt = Backend.currentProfile;
+    Backend.currentProfile = () => Object.assign({}, alt.call(Backend) || {},
+      { extraProfileData: { bildbibliothek: bilder } });
+    LiveChat.letzteBilder = () => bilder.slice().reverse();
+  });
+  await menueAuf();
+  await klick("Schmutzig");
+  await pg.waitForTimeout(80);
+  await klick("Sprühdose");
+  await pg.waitForTimeout(80);
+  await klick("Eigenes Bild …");
+  await pg.waitForTimeout(400);
+  const voll = await pg.evaluate(() => {
+    const k = document.querySelector("#lcPlatzMenue.lc-spraywahl");
+    if (!k) return null;
+    const r = k.getBoundingClientRect();
+    const knoepfe = [...k.querySelectorAll(".lc-waehler-gif")].map((b) => b.getBoundingClientRect());
+    return { oben: r.top, unten: r.bottom, links: r.left, rechts: r.right,
+      hoch: innerHeight, breit: innerWidth, anzahl: knoepfe.length,
+      kleinste: Math.min.apply(null, knoepfe.map((b) => b.height)),
+      quadratisch: knoepfe.every((b) => Math.abs(b.width - b.height) <= 1),
+      rollt: k.scrollHeight > k.clientHeight && getComputedStyle(k).overflowY === "auto" };
+  });
+  sage(voll && voll.anzahl === 36, "Alle 36 Bilder stehen zur Wahl", voll ? voll.anzahl + "" : "-");
+  sage(voll && voll.kleinste >= 50 && voll.quadratisch,
+    "... und kein Vorschaubild ist plattgedrueckt (quadratisch, mind. 50 px)",
+    voll ? "kleinstes " + Math.round(voll.kleinste) + " px" : "-");
+  sage(voll && voll.oben >= 0 && voll.unten <= voll.hoch && voll.links >= 0 && voll.rechts <= voll.breit,
+    "... das Panel liegt ganz im Fenster",
+    voll ? Math.round(voll.oben) + " bis " + Math.round(voll.unten) + " von " + voll.hoch : "-");
+  sage(voll && voll.rollt, "... und der Rest ist erreichbar, weil der Rahmen rollt");
+
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
   process.exit(fehler ? 1 : 0);
