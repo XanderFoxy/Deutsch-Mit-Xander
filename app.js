@@ -29558,8 +29558,10 @@
     ["\ud83d\udc9e", "Lieb sein", "streicheln", false,
       [["\ud83e\udef6", "Streicheln", "streicheln"],
        ["\ud83d\udc8b", "Kuss", "kuss"],
-       ["\u2764\ufe0f", "Herzen", "herz"],
-       ["\ud83c\udf3c", "Blume aufbluehen lassen", "blume"]]],
+       ["\u2764\ufe0f", "Herzen", "herz"]]],
+    /* RUNDE 99 — XANDER: „die neue Blume … die ist extra, die gehoert
+       nicht mit zu Lieb sein. Du kannst sie aber im Menue lassen." */
+    ["\ud83c\udf3c", "Blume", "blume"],
     ["\ud83e\uddd7", "Leiter", "leiter"],
     /* RUNDE 98 — die Gesichter vom Avatar, in EINER Kachel. */
     ["\ud83d\ude32", "Gesicht", "gesicht", false,
@@ -37067,53 +37069,91 @@
      DAS BILD BLEIBT UNANGETASTET. Alles liegt in einer eigenen Schicht
      UM das Bild herum; niemandes Profilbild wird veraendert.
      ===================================================================== */
+  /* =====================================================================
+     RUNDE 99 — DIE BLUME, RICHTIG HERUM
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „die neue Blume … nicht wie eine Blüte auf
+     ihrem Stängel, sondern der Stängel steht vor der Blüte, und die
+     Blüte ist nicht zentriert mit dem Profilplatz und ist sehr groß. Sie
+     kann etwas kleiner sein."
+
+     GEMESSEN, BEVOR ICH ETWAS GEAENDERT HABE (Bildschirmfoto):
+       - Der Stiel fing in der BILDMITTE an und lief VOR dem Gesicht
+         nach unten, bis in die naechste Reihe.
+       - Die Blaetter waren 0,70 Bildbreiten lang und ragten bis zu
+         einer ganzen Bildbreite ueber die Mitte hinaus — doppelt so
+         weit wie das Bild selbst.
+       - Sie hingen oben rechts statt rundherum: der Kranz lag in der
+         Effekt-Schicht, und deren Mitte ist NICHT die Bildmitte (die
+         Schicht reicht bis unter den Namen).
+     WARUM DAS ALLES ZUSAMMENHING: die Effekt-Schicht liegt ueber dem
+     Bild. Was darin steckt, kann nicht HINTER das Gesicht, egal
+     welchen z-index es bekommt.
+
+     JETZT:
+       - Bluete und Stiel stecken in einem eigenen Element, das VOR dem
+         Bild in den Platz eingesetzt wird und z-index -1 hat. Damit
+         liegt alles hinter dem Gesicht — das Gesicht IST die
+         Bluetenmitte, wie bei einer echten Blume.
+       - Gemessen und gesetzt wird es auf die Mitte des KREISES
+         (offsetLeft/Top + halbe Groesse), nicht auf die der Schicht.
+       - Der Stiel liegt hinter den Blaettern und kommt unten unter
+         ihnen hervor — Bluete auf Stiel, nicht Stiel vor Bluete.
+       - Die Blaetter sind 0,44 Bildbreiten lang und schauen nur noch
+         0,18 Bildbreiten ueber den Bildrand hinaus: ein Kranz, keine
+         Palme.
+     ===================================================================== */
   function lcBlume(wen) {
     return lcAmPlatz(wen, "lc-blume", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
-      const gr = (kreis && kreis.offsetWidth) || 64;
-      schicht.style.setProperty("--gross", gr + "px");
-      /* DER STIEL waechst nach UNTEN aus dem Bild heraus — er steht
-         also ausserhalb des Kreises und gehoert deshalb nicht in die
-         Blende, die nur das Bild abdeckt. */
-      const stiel = document.createElement("span");
-      stiel.className = "lc-blume-stiel";
-      stiel.innerHTML = '<svg viewBox="0 0 60 120" preserveAspectRatio="none" aria-hidden="true">'
-        + '<path class="lc-bl-halm" d="M30 0 C26 30 34 62 30 118" fill="none"/>'
-        + '<path class="lc-bl-blatt lc-bl-blatt-links" d="M29 52 C14 44 6 54 8 66'
-        + ' C18 74 28 66 29 56 Z"/>'
-        + '<path class="lc-bl-blatt lc-bl-blatt-rechts" d="M31 74 C46 66 54 76 52 88'
-        + ' C42 96 32 88 31 78 Z"/>'
-        + "</svg>";
-      schicht.appendChild(stiel);
-      /* DIE BLUETENBLAETTER liegen als Kranz um das Bild. Jedes hat
-         seinen eigenen Winkel und seine eigene Verspaetung — daher
-         das Aufgehen von aussen nach innen. */
+      if (!kreis) return;
+      const gr = kreis.offsetWidth || 64;
+      platz.querySelectorAll(".lc-blume-hinten").forEach((x) => x.remove());
+      const hinten = document.createElement("span");
+      hinten.className = "lc-blume-hinten";
+      hinten.setAttribute("aria-hidden", "true");
+      hinten.style.setProperty("--gross", gr + "px");
+      /* Genau auf die Bildmitte — gemessen am Kreis selbst. */
+      hinten.style.left = (kreis.offsetLeft + gr / 2) + "px";
+      hinten.style.top = (kreis.offsetTop + (kreis.offsetHeight || gr) / 2) + "px";
+      /* Der Stiel zuerst: was im Text vorn steht, liegt im Bild
+         hinten. So kommt er unter den Bluetenblaettern hervor. */
+      hinten.innerHTML =
+        '<span class="lc-blume-stiel"><svg viewBox="0 0 40 100" aria-hidden="true">'
+        + '<path class="lc-bl-halm" d="M20 0 C18 34 23 62 20 100" fill="none"/>'
+        + '<path class="lc-bl-blatt lc-bl-blatt-links" d="M19.5 58 C8 50 2 58 3 68'
+        + ' C11 74 19 68 19.5 61 Z"/>'
+        + '<path class="lc-bl-blatt lc-bl-blatt-rechts" d="M20.5 76 C32 68 38 76 37 86'
+        + ' C29 92 21 86 20.5 79 Z"/>'
+        + "</svg></span>";
       const kranz = document.createElement("span");
       kranz.className = "lc-blume-kranz";
-      const wieViele = 10;
+      const wieViele = 12;
       for (let i = 0; i < wieViele; i++) {
         const b = document.createElement("i");
         b.className = "lc-blbl";
-        b.style.setProperty("--w", (i * (360 / wieViele)).toFixed(1) + "deg");
-        b.style.setProperty("--spaet", (260 + i * 105) + "ms");
+        /* Zwei Kraenze, der hintere um eine halbe Teilung versetzt und
+           etwas dunkler — so sieht es aus wie eine gefuellte Bluete und
+           nicht wie ein Zahnrad. */
+        b.style.setProperty("--w", (i * (360 / wieViele) + (i % 2 ? 15 : 0)).toFixed(1) + "deg");
+        b.style.setProperty("--spaet", (420 + i * 90) + "ms");
+        if (i % 2) b.classList.add("lc-blbl-hinten");
         kranz.appendChild(b);
       }
-      schicht.appendChild(kranz);
+      hinten.appendChild(kranz);
+      /* VOR das Bild einsetzen, damit es im Stapel darunter liegt. */
+      platz.insertBefore(hinten, platz.firstChild);
+      setTimeout(() => hinten.remove(), 4300);
       /* Und das Bild selbst wiegt sich mit — es ist ja die Mitte. */
-      if (kreis) {
-        kreis.classList.remove("lc-blueht");
-        void kreis.offsetWidth;
-        kreis.classList.add("lc-blueht");
-        setTimeout(() => kreis.classList.remove("lc-blueht"), 4200);
-      }
+      kreis.classList.remove("lc-blueht");
+      void kreis.offsetWidth;
+      kreis.classList.add("lc-blueht");
+      setTimeout(() => kreis.classList.remove("lc-blueht"), 4200);
       /* Erst bricht die Erde auf, dann geht die Bluete auf, und am
          Ende zwitschert es kurz — in genau dieser Reihenfolge. */
       lcTonSpaeter("erdeauf", 60, 0.42);
       lcTonSpaeter("zauberpuff", 900, 0.4);
       lcTonSpaeter("zwitschern", 2100, 0.3);
-      /* KEIN Plan-Ton: die drei Geraeusche oben stehen schon an ihrer
-         Stelle. Ein zusaetzlicher Ton waere ein vierter, den niemand
-         bestellt hat. */
     }, 4200, null);
   }
 

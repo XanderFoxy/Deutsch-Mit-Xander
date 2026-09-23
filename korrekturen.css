@@ -31870,3 +31870,63 @@ code, pre {
 .rf-senden { background: #ffd166; color: #221c10; }
 .rf-spaeter { margin-left: auto; background: transparent; color: #f4f1ea; opacity: .6; }
 .rf-knoepfe button:disabled { opacity: .5; cursor: default; }
+
+/* =====================================================================
+   RUNDE 99 — DIE BLUME HINTER DEM GESICHT
+   ---------------------------------------------------------------------
+   Das Element steckt als ERSTES Kind im Platz und hat z-index -1: es
+   liegt damit unter dem Bild (.lc-kreis) und unter dem Namen. Die
+   alten Regeln (.lc-blume-stiel, .lc-blbl aus Runde 98) werden hier
+   ueberschrieben, nicht geloescht — sie stehen in der Sicherung.
+   ===================================================================== */
+.lc-blume-hinten {
+  position: absolute;
+  width: 0; height: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.lc-blume-hinten .lc-blume-stiel {
+  position: absolute;
+  left: calc(var(--gross, 64px) * -0.13);
+  top: 0;
+  width: calc(var(--gross, 64px) * 0.26);
+  height: calc(var(--gross, 64px) * 1.02);
+  transform: none;
+  transform-origin: 50% 0;
+  animation: lcBlStielR99 .9s .15s ease-out both;
+}
+.lc-blume-hinten .lc-blume-stiel svg { width: 100%; height: 100%; overflow: visible; }
+/* Gemessen zu duenn (gut 2 px) — der Stiel war hinter dem Namen kaum
+   zu sehen. Jetzt rund 5 px. */
+.lc-blume-hinten .lc-bl-halm { stroke-width: 7.5; }
+@keyframes lcBlStielR99 {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+.lc-blume-hinten .lc-blume-kranz { position: absolute; left: 0; top: 0; inset: auto; z-index: auto; }
+.lc-blume-hinten .lc-blbl {
+  left: 0; top: 0;
+  width: calc(var(--gross, 64px) * 0.30);
+  height: calc(var(--gross, 64px) * 0.44);
+  margin: calc(var(--gross, 64px) * -0.44) 0 0 calc(var(--gross, 64px) * -0.15);
+  transform-origin: 50% 100%;
+  animation: lcBlblR99 .6s ease-out both;
+  animation-delay: var(--spaet, 0ms);
+}
+/* Der hintere Kranz ist eine Spur dunkler und liegt darunter. */
+.lc-blume-hinten .lc-blbl-hinten {
+  background: radial-gradient(ellipse at 50% 28%,
+    #ffd98a 0 14%, #eea536 46%, #d47d22 80%, #b9661b 100%);
+  filter: brightness(.94);
+}
+@keyframes lcBlblR99 {
+  0%   { transform: rotate(var(--w, 0deg)) translateY(calc(var(--gross, 64px) * -0.08)) scale(.3); opacity: 0; }
+  55%  { transform: rotate(var(--w, 0deg)) translateY(calc(var(--gross, 64px) * -0.27)) scale(1.06); opacity: 1; }
+  100% { transform: rotate(var(--w, 0deg)) translateY(calc(var(--gross, 64px) * -0.24)) scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-blume-hinten .lc-blume-stiel, .lc-blume-hinten .lc-blbl { animation: none; }
+  .lc-blume-hinten .lc-blbl {
+    transform: rotate(var(--w, 0deg)) translateY(calc(var(--gross, 64px) * -0.24)) scale(1);
+  }
+}
