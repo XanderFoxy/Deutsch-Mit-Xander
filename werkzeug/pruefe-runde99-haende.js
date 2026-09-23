@@ -321,6 +321,67 @@ const HAENDE = [
       jetzt.innen + " Punkte — das sind die beiden Falten");
   }
 
+  /* ---------------------------------------------------------------
+     4  SIE GREIFT VON DER SEITE ZU
+     ---------------------------------------------------------------
+     XANDER: „Die Hand kann auch seitlich zugreifen, schraeg."
+     Gemessen wird der Drehwinkel der Hand (aus ihrer Matrix) und ihr
+     seitlicher Abstand zum Platz, ueber den ganzen Lauf verteilt.
+     Erwartet: beim Herunterkommen deutlich schraeg und seitlich
+     versetzt, beim Tragen wieder gerade — sonst haenge das Bild
+     schief in der Hand.
+     --------------------------------------------------------------- */
+  console.log("\n4  KOMMT SIE SCHRAEG VON DER SEITE?\n");
+  const pgS = await neueSeite();
+  await pgS.evaluate(() => {
+    document.querySelectorAll(".lc-riesenhand").forEach((e) => e.remove());
+    window.DMA_PRUEFUNG.wirkung("gotteshand", 4, "Alex");
+  });
+  await pgS.waitForSelector(".lc-riesenhand-vorn", { timeout: 6000 });
+  await pgS.waitForTimeout(120);
+  const bahn = [];
+  for (let k = 0; k <= 40; k++) {
+    const t = k / 40;
+    const p = await pgS.evaluate((tt) => {
+      document.getAnimations().forEach((an) => {
+        try {
+          const d = an.effect && an.effect.getTiming().duration;
+          if (d) { an.currentTime = d * tt; an.pause(); }
+        } catch (e) {}
+      });
+      const h = document.querySelector(".lc-riesenhand:not(.lc-riesenhand-vorn)");
+      if (!h) return null;
+      const m = new DOMMatrixReadOnly(getComputedStyle(h).transform);
+      const winkel = Math.atan2(m.b, m.a) * 180 / Math.PI;
+      const rh = h.getBoundingClientRect();
+      const platz = document.querySelectorAll("#lcPlaetze .lc-platz")[0];
+      const rp = platz.getBoundingClientRect();
+      return {
+        winkel: Math.round(winkel * 10) / 10,
+        quer: Math.round(((rh.left + rh.width / 2) - (rp.left + rp.width / 2)) * 10) / 10,
+        platzBreit: Math.round(rp.width)
+      };
+    }, t);
+    if (p) bahn.push(Object.assign({ t: t }, p));
+  }
+  await pgS.close();
+  if (bahn.length < 30) {
+    sage(false, "Die Bahn der Hand liess sich nicht abtasten", bahn.length + " Punkte");
+  } else {
+    const fruh = bahn.filter((p) => p.t <= 0.16);
+    const mitte = bahn.filter((p) => p.t >= 0.42 && p.t <= 0.60);
+    const maxWinkel = Math.max.apply(null, fruh.map((p) => Math.abs(p.winkel)));
+    const maxQuer = Math.max.apply(null, fruh.map((p) => Math.abs(p.quer)));
+    const mittelWinkel = Math.max.apply(null, mitte.map((p) => Math.abs(p.winkel)));
+    const breit = bahn[0].platzBreit;
+    sage(maxWinkel >= 18, "Beim Herunterkommen steht sie schraeg",
+      maxWinkel.toFixed(1) + " Grad");
+    sage(maxQuer >= breit * 0.5, "Und sie kommt wirklich von der SEITE",
+      maxQuer.toFixed(0) + " px neben dem Platz (Platz " + breit + " px breit)");
+    sage(mittelWinkel <= 10, "Beim Tragen haengt das Bild nicht schief",
+      mittelWinkel.toFixed(1) + " Grad");
+  }
+
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
   process.exit(fehler ? 1 : 0);

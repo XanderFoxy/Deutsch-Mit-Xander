@@ -43761,8 +43761,23 @@
            des Bildes — und weil sie seit dieser Runde VOR dem Bild
            liegen (siehe handVorn), sieht man das auch. */
         const griff = -d * 0.44;
-        const handBei = (fx, fy, hoch, dreh, zeit, sicht) => ({
-          transform: "translate(calc(-50% + " + (dxH * fx).toFixed(1) + "px), calc(-50% + "
+        /* =========================================================
+           RUNDE 99 — SIE GREIFT VON DER SEITE ZU
+           ---------------------------------------------------------
+           XANDER: „Die Hand kann auch seitlich zugreifen, schraeg."
+           Bisher kam sie immer senkrecht von oben herunter wie ein
+           Greifautomat. Jetzt kommt sie SCHRAEG von der Seite
+           herein, richtet sich beim Zupacken auf und traegt dann
+           gerade weiter — die Neigung gehoert zum Greifen, nicht zum
+           Tragen. Sonst haenge das Bild schief in der Hand, und das
+           waere ein neuer Fehler statt eines behobenen.
+           VON WELCHER SEITE? Von der, in die die Reise NICHT geht.
+           Sonst faehrt die Hand dem Bild entgegen, das sie gleich
+           hintragen soll, und kreuzt ihren eigenen Weg. */
+        const vonSeite = (ende.x >= start.x) ? -1 : 1;
+        const handBei = (fx, fy, hoch, dreh, zeit, sicht, quer) => ({
+          transform: "translate(calc(-50% + " + (dxH * fx + (quer || 0)).toFixed(1)
+            + "px), calc(-50% + "
             + (dyH * fy).toFixed(1) + "px)) translateY(" + (griff + hoch).toFixed(1)
             + "px) rotate(" + dreh + "deg)",
           opacity: sicht === undefined ? 1 : sicht,
@@ -43771,13 +43786,14 @@
         const handRahmen = [
           /* HERUNTER — sie faellt nicht, sie senkt sich, wird aber
              schneller: die Abstaende werden groesser. */
-          handBei(0, 0, -d * 4.2, 0, 0, 0),
-          handBei(0, 0, -d * 3.4, 0, 0.04 * tAnH, 1),
-          handBei(0, 0, -d * 2.2, -2, 0.09 * tAnH, 1),
-          handBei(0, 0, -d * 0.9, -3, 0.14 * tAnH, 1),
-          /* ZUGREIFEN: sie hält kurz an, bevor sie zupackt. */
-          handBei(0, 0, 0, -3, 0.19 * tAnH, 1),
-          handBei(0, 0, d * 0.06, -3, 0.24 * tAnH, 1),
+          handBei(0, 0, -d * 4.2, vonSeite * 26, 0, 0, vonSeite * d * 1.2),
+          handBei(0, 0, -d * 3.4, vonSeite * 26, 0.04 * tAnH, 1, vonSeite * d * 1.1),
+          handBei(0, 0, -d * 2.2, vonSeite * 24, 0.09 * tAnH, 1, vonSeite * d * 0.82),
+          handBei(0, 0, -d * 0.9, vonSeite * 18, 0.14 * tAnH, 1, vonSeite * d * 0.44),
+          /* ZUGREIFEN: sie hält kurz an, bevor sie zupackt — und
+             steht dabei noch schraeg. */
+          handBei(0, 0, 0, vonSeite * 12, 0.19 * tAnH, 1, vonSeite * d * 0.14),
+          handBei(0, 0, d * 0.06, vonSeite * 7, 0.24 * tAnH, 1, vonSeite * d * 0.05),
           /* HERAUSZUPFEN — hier sitzt das Plopp. Ruckartig: das
              groesste Stueck Weg in der kuerzesten Zeit. */
           handBei(0, 0, -d * 0.30, -5, 0.29 * tAnH, 1),
@@ -43794,8 +43810,11 @@
           handBei(1, 1, hochH * 0.10, -1, 0.97 * tAnH, 1),
           handBei(1, 1, 0, 0, tAnH, 1),
           /* LOSLASSEN und wieder hinauf. */
-          handBei(1, 1, -d * 1.4, 2, tAnH + (1 - tAnH) * 0.45, 1),
-          handBei(1, 1, -d * 4.2, 3, 1, 0)
+          /* Und sie geht wieder zur Seite hinaus, so wie sie
+             hereingekommen ist. */
+          handBei(1, 1, -d * 1.4, vonSeite * 10, tAnH + (1 - tAnH) * 0.45, 1,
+            vonSeite * d * 0.35),
+          handBei(1, 1, -d * 4.2, vonSeite * 24, 1, 0, vonSeite * d * 1.1)
         ];
         hand.animate(handRahmen, { duration: dauer, easing: "linear", fill: "both" });
         /* Dieselbe Bewegung, Bild fuer Bild, fuer die Fingerschicht
