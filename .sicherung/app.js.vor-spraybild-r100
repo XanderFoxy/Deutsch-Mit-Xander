@@ -23250,15 +23250,6 @@
     kasten.appendChild(reihe);
 
     document.body.appendChild(kasten);
-    /* RUNDE 100 — XANDER (Walkie-Talkie): „die Auswahl des eigenen
-       Bildes ist zwar angegeben, aber wenn man drauf klickt, kommt kein
-       Menue — man kann also nicht auswaehlen."
-       GEMESSEN: das Menue ENTSTAND, aber ohne Platzangabe. Es ist
-       „position: fixed", und ohne top/left landete es auf 390 x 844 bei
-       y = 1484 px — 640 px unter dem unteren Bildschirmrand. Alle
-       anderen Waehler rufen hier lcMenueStellen; genau diese eine Zeile
-       fehlte. Jetzt steht es wie der Musik-Waehler ueber dem Schreibfeld. */
-    lcMenueStellen(kasten, document.getElementById("lcFeld") || document.body);
     lcMenueSchliessen(kasten);
     return true;
   }
@@ -47451,14 +47442,6 @@
         + "</svg>";
       schicht.appendChild(hut);
 
-      /* RUNDE 100 — der zweite Teil desselben Befunds: wird das Bild
-         unter dem Hut klein, kommt dahinter der gestrichelte Ring des
-         Platzes zum Vorschein (er liegt immer hinter dem Bild bereit).
-         Unter der Krempe sah er aus wie der Rand des Bildes. Solange
-         der Trick laeuft, ist der Platz nicht leer — die Person steckt
-         im Hut —, also bleibt der Ring weg. */
-      platz.classList.add("lc-zt-im-hut");
-      setTimeout(() => platz.classList.remove("lc-zt-im-hut"), DAUER);
       /* --- DER ZAUBERSTAB ---------------------------------------- */
       const stab = document.createElement("span");
       stab.className = "lc-zt-stab";
@@ -47525,15 +47508,7 @@
          kippt am Ende weg. */
       try {
         hut.animate([
-          /* RUNDE 100 — XANDER (Walkie-Talkie, zum Zylinder): „Bild noch
-             sichtbar unter dem Hut".
-             GEMESSEN (Film in 70-ms-Schritten, 390 px breit): der Hut
-             blendete waehrend seines ganzen Falls von 0 auf 1 auf — in
-             den ersten 8 % war er halb durchsichtig und das Bild schien
-             durch ihn hindurch. Jetzt ist er nach 1,5 % voll deckend,
-             also noch hoch ueber dem Kopf, und faellt als fester Hut. */
-          { transform: "translate(-50%, -160%) scale(.7)", opacity: 0, offset: 0, easing: "linear" },
-          { transform: "translate(-50%, -142%) scale(.72)", opacity: 1, offset: bei(0.015), easing: "ease-in" },
+          { transform: "translate(-50%, -160%) scale(.7)", opacity: 0, offset: 0, easing: "ease-in" },
           { transform: "translate(-50%, -6%) scale(1)", opacity: 1, offset: bei(0.08), easing: "ease-out" },
           { transform: "translate(-50%, 0%) scale(1)", opacity: 1, offset: bei(0.12) },
           /* Drei Schlaege — er staucht sich und federt zurueck. */

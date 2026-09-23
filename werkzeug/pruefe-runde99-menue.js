@@ -45,7 +45,9 @@ const sage = (gut, text, dazu) => {
 const GRUPPEN = {
   /* ZWEITER ANLAUF (Walkie-Talkie): „Pfeil und Zwille sind Schusseffekte,
      die koennen einzeln aussen bleiben, und Eimer und Sahne auch." */
-  "Werfen": ["Bumerang", "Ei", "Katapult"],
+  /* RUNDE 100: „Ei muss auch da raus, weil man das Ei nicht wirft,
+     sondern aufschlaegt." */
+  "Werfen": ["Bumerang", "Katapult"],
   "Eklig": ["Spucken", "Vogel"],
   "Schmutzig": ["Paint", "Sprühdose"],
   /* Walkie-Talkie: „bei Putzen ist die Birne mit untergebracht, das
@@ -110,6 +112,8 @@ const GRUPPEN = {
   sage(doppelt.length === 0,
     "Keine einsortierte Kachel steht zusaetzlich noch oben",
     doppelt.length ? "noch oben: " + doppelt.join(", ") : oben.length + " Kacheln oben");
+  /* RUNDE 100 — das Ei steht wieder einzeln oben (man schlaegt es auf). */
+  sage(oben.indexOf("Ei") >= 0, "Das Ei steht wieder einzeln in der obersten Ebene");
   const gewandert = Object.keys(GRUPPEN).reduce((n, g) => n + GRUPPEN[g].length, 0);
   console.log("     " + gewandert + " Kacheln sind in die vier Kategorien gewandert,"
     + " die oberste Ebene hat jetzt " + oben.length + " Eintraege");
@@ -248,6 +252,33 @@ const GRUPPEN = {
     const p = document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="2"]');
     delete p.dataset.lcGeschlecht;
   });
+
+  /* RUNDE 100 — XANDER (Walkie-Talkie): „die Auswahl des eigenen Bildes
+     ist zwar angegeben, aber wenn man drauf klickt, kommt kein Menue."
+     Das Menue entstand, stand aber ohne Platzangabe weit unter dem
+     Bildschirmrand. Gemessen wird deshalb nicht, OB es da ist, sondern
+     ob es im sichtbaren Fenster liegt — auf Handy-Groesse. */
+  console.log("\n6  SPRUEHDOSE: „EIGENES BILD …“ IST ZU SEHEN\n");
+  await pg.setViewportSize({ width: 390, height: 844 });
+  await pg.evaluate(() => window.scrollTo(0, 400));
+  await menueAuf();
+  await klick("Schmutzig");
+  await pg.waitForTimeout(80);
+  await klick("Sprühdose");
+  await pg.waitForTimeout(80);
+  await klick("Eigenes Bild …");
+  await pg.waitForTimeout(400);
+  const sw = await pg.evaluate(() => {
+    const k = document.querySelector("#lcPlatzMenue.lc-spraywahl");
+    if (!k) return null;
+    const r = k.getBoundingClientRect();
+    return { oben: Math.round(r.top), unten: Math.round(r.bottom), links: Math.round(r.left),
+             rechts: Math.round(r.right), hoch: innerHeight, breit: innerWidth };
+  });
+  sage(Boolean(sw), "Die Bildauswahl der Sprühdose geht auf");
+  sage(sw && sw.oben >= 0 && sw.unten <= sw.hoch && sw.links >= 0 && sw.rechts <= sw.breit,
+    "... und sie liegt ganz im sichtbaren Fenster",
+    sw ? "oben " + sw.oben + ", unten " + sw.unten + " von " + sw.hoch + " px" : "-");
 
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));

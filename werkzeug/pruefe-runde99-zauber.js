@@ -162,6 +162,37 @@ const sage = (gut, text, dazu) => {
     "Rand zum Kegel: links " + drunter.links + ", rechts " + drunter.rechts
     + ", oben " + drunter.oben + ", unten " + drunter.unten + " px");
 
+  /* RUNDE 100 — XANDER (Walkie-Talkie): „Bild noch sichtbar unter dem
+     Hut". Zwei Ursachen gemessen: der Hut war beim Herabfallen halb
+     durchsichtig (das Bild schien durch), und unter dem kleinen Bild
+     kam der gestrichelte Platzring hervor. */
+  const fall = await pg2.evaluate(async () => {
+    window.DMA_PRUEF.effektBuehne();
+    await new Promise((f) => setTimeout(f, 300));
+    window.DMA_PRUEFUNG.wirkung("kaninchen", "Bea", "Alex");
+    const platz = [...document.querySelectorAll("#lcPlaetze .lc-platz")]
+      .find((x) => (x.textContent || "").indexOf("Bea") >= 0);
+    const deckung = [];
+    let ring = "";
+    for (let i = 0; i < 12; i++) {
+      await new Promise((f) => setTimeout(f, 25));
+      const hut = platz.querySelector(".lc-zt-hut");
+      if (!hut) continue;
+      const t = hut.getAnimations()[0];
+      const zeit = t ? t.currentTime : 0;
+      /* Von 2 % (184 ms) bis zur Landung muss er voll decken. */
+      if (zeit > 4600 * 0.02) deckung.push(Number(getComputedStyle(hut).opacity));
+      if (zeit > 4600 * 0.1 && !ring) ring = getComputedStyle(platz.querySelector(".lc-schild")).visibility;
+    }
+    await new Promise((f) => setTimeout(f, 400));
+    if (!ring) ring = getComputedStyle(platz.querySelector(".lc-schild")).visibility;
+    return { min: deckung.length ? Math.min.apply(null, deckung) : -1, n: deckung.length, ring };
+  });
+  sage(fall.min >= 0.99, "Der Hut faellt undurchsichtig — durch ihn scheint kein Bild",
+    "kleinste Deckung " + fall.min + " in " + fall.n + " Proben");
+  sage(fall.ring === "hidden", "Unter dem Hut kommt kein gestrichelter Platzring hervor",
+    "Ring: " + fall.ring);
+
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
   process.exit(fehler ? 1 : 0);
