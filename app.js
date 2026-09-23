@@ -36440,7 +36440,50 @@
     schicht.style.setProperty("--laenge", Math.round(laenge) + "px");
     schicht.style.transform = "rotate(" + winkel.toFixed(1) + "deg)";
     if (art === "angel") {
+      /* =============================================================
+         RUNDE 98 — EINE RICHTIGE ANGELRUTE
+         -------------------------------------------------------------
+         XANDER: „Die Angel kann auch ein bisschen klassischer sein.
+         Also das soll so 'ne Angelrute sein, wo man dann die
+         Angelschnur einrollt, ja, und man denjenigen wirklich
+         hochzieht, und er baumelt dann so ein bisschen, bis man ihn
+         irgendwo dann runterlaesst."
+
+         Bisher gab es nur die Schnur und den Haken — die Rute fehlte
+         ganz. Jetzt haengt an MEINEM Ende (links, dort wo die Leine
+         beginnt) eine klassische Rute: Griff aus Kork, Rollenhalter,
+         die Rolle mit Kurbel, die Spule mit Schnur darauf, und der
+         Blank mit drei Ringen, durch die die Schnur laeuft. Die
+         Spule DREHT sich, solange eingekurbelt wird — daran sieht
+         man, dass die Schnur wirklich eingeholt wird.
+         Gezeichnet ist sie in Leinenrichtung; die Leine selbst ist
+         ohnehin schon auf den Winkel gedreht. */
       schicht.innerHTML = '<span class="lc-leine-schnur"></span>'
+        + '<span class="lc-angel-rute">'
+        + '<svg viewBox="0 0 120 44" width="100%" height="100%">'
+        /* Der Blank: von der Rolle nach vorn, nach vorn duenner. */
+        + '<path class="lc-angel-blank" d="M44 21 L118 17.6"'
+        + ' fill="none" stroke="#2f3947" stroke-width="3.4" stroke-linecap="round"/>'
+        + '<path class="lc-angel-blank-hell" d="M50 20.4 L114 17.8"'
+        + ' fill="none" stroke="#5a687a" stroke-width="1" stroke-linecap="round"/>'
+        /* Die drei Ringe, durch die die Schnur laeuft. */
+        + '<g class="lc-angel-ringe" fill="none" stroke="#9aa3b2" stroke-width="1.6">'
+        + '<circle cx="66" cy="20" r="3.4"/><circle cx="88" cy="19" r="2.8"/>'
+        + '<circle cx="108" cy="18" r="2.2"/></g>'
+        /* Der Griff aus Kork. */
+        + '<rect class="lc-angel-griff" x="2" y="15.5" width="26" height="11" rx="5"/>'
+        + '<rect class="lc-angel-halter" x="28" y="16.5" width="16" height="9" rx="3"/>'
+        /* Die Rolle unter der Rute: Fuss, Gehaeuse, Spule, Kurbel. */
+        + '<path class="lc-angel-rollenfuss" d="M34 25 L34 30"'
+        + ' stroke="#3c4657" stroke-width="3.2" stroke-linecap="round" fill="none"/>'
+        + '<circle class="lc-angel-rollengehaeuse" cx="34" cy="36" r="7.4"/>'
+        + '<circle class="lc-angel-spule" cx="34" cy="36" r="4.6"/>'
+        + '<g class="lc-angel-kurbel">'
+        + '<path d="M34 36 L41 32" stroke="#e0b24a" stroke-width="1.8"'
+        + ' stroke-linecap="round" fill="none"/>'
+        + '<circle cx="41.6" cy="31.6" r="1.6" fill="#e0b24a"/>'
+        + "</g>"
+        + "</svg></span>"
         + '<svg class="lc-leine-haken" viewBox="0 0 24 36">'
         /* Ein Angelhaken: gerader Schaft, Bogen, Widerhaken. */
         + '<path d="M12 2 V18 C12 27 6 30 6 24" fill="none" stroke="#c8ced8"'

@@ -30850,3 +30850,57 @@ code, pre {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+
+/* =====================================================================
+   RUNDE 98 — DIE KLASSISCHE ANGELRUTE
+   ---------------------------------------------------------------------
+   XANDER: „Die Angel kann auch ein bisschen klassischer sein. Also das
+   soll so 'ne Angelrute sein, wo man dann die Angelschnur einrollt, ja,
+   und man denjenigen wirklich hochzieht, und er baumelt dann so ein
+   bisschen, bis man ihn irgendwo dann runterlaesst."
+
+   Die Rute sitzt an MEINEM Ende der Leine — die Leine selbst ist schon
+   auf den Winkel zum Ziel gedreht, die Rute liegt also automatisch in
+   Wurfrichtung. Die Spule dreht sich, solange eingekurbelt wird: das
+   ist das „Einrollen".
+   ===================================================================== */
+.lc-angel-rute {
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  width: 96px;
+  height: 36px;
+  margin-top: -18px;
+  transform-origin: 14px 18px;
+  pointer-events: none;
+  /* Beim Anschlag zuckt die Rute nach oben und biegt sich dann unter
+     der Last — wie eine Rute, an der wirklich etwas haengt. */
+  animation: lcAngelRuteR98 2.4s cubic-bezier(.3, .8, .4, 1) both;
+}
+@keyframes lcAngelRuteR98 {
+  0%      { transform: rotate(6deg); }
+  28%     { transform: rotate(4deg); }
+  /* 34 % = 816 ms: der Haken sitzt, es ruckt. */
+  36%     { transform: rotate(-11deg); }
+  44%     { transform: rotate(-4deg); }
+  /* Unter der Last biegt sie sich leicht nach unten. */
+  60%     { transform: rotate(-7deg); }
+  82%     { transform: rotate(-3deg); }
+  100%    { transform: rotate(2deg); }
+}
+.lc-angel-griff        { fill: #cfa06a; }
+.lc-angel-halter       { fill: #3c4657; }
+.lc-angel-rollengehaeuse { fill: #39424f; stroke: #222a35; stroke-width: 1.2; }
+.lc-angel-spule        { fill: #b9c1cf; stroke: #6d768a; stroke-width: 1.1; }
+/* DAS EINROLLEN: die Spule dreht sich, solange gezogen wird. */
+.lc-angel-spule, .lc-angel-kurbel {
+  transform-origin: 34px 36px;
+  animation: lcAngelRolleR98 .5s linear 0.82s 4 both;
+}
+@keyframes lcAngelRolleR98 {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-angel-rute, .lc-angel-spule, .lc-angel-kurbel { animation: none; }
+}

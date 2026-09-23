@@ -11179,8 +11179,27 @@ window.LiveChat = (function () {
       /* Wer dort sitzt, bekommt den frei werdenden Platz. */
       var dortH = null;
       plaetzeH.forEach(function (pl) { if (pl.nummer === nummerH && !pl.leer) dortH = pl; });
-      sitzTausch[wenH.id] = nummerH - 1;
-      if (dortH) sitzTausch[dortH.id] = seinerH.nummer - 1;
+      /* =================================================================
+         RUNDE 98 — UMGESETZT WIRD ERST NACH DEM FANGEN
+         -----------------------------------------------------------------
+         XANDER: „repariere noch das Lasso und die Angel, weil die sind
+         immer noch von ihrer Animation erst dann, wenn derjenige schon
+         an den Platz gezogen wurde. Sie sollen aber erst mal denjenigen
+         fangen und dann zu sich ziehen."
+
+         ER HAT WIEDER RECHT, UND DIESMAL LAG ES HIER. In Runde 76 wurde
+         zwar die NACHRICHT verzoegert (senden + melden erst nach
+         2,3 s) — aber „sitzTausch" wurde trotzdem sofort gesetzt. Und
+         sitzTausch ist die Sitzordnung: plaetzeBauen() liest sie, und
+         jedes melden() aus irgendeinem anderen Anlass (eine
+         Anwesenheitsmeldung, ein Chatwort, ein Tonpegel — das passiert
+         mehrmals je Sekunde) zeichnet die Sitzreihe daraufhin neu.
+         Die Person SASS also schon auf dem Zielplatz, waehrend das
+         Lasso noch flog. Genau das beschreibt er.
+
+         Jetzt wird die Sitzordnung erst in schickenH veraendert — im
+         selben Augenblick, in dem sie hinausgeht. Vorher fliegt nur
+         die Animation. */
 
       /* RUNDE 74 — DAS WERKZEUG ENTSCHEIDET, NICHT DIE REIHE.
          XANDER: „Das sollen zwei unterschiedliche Dinge sein. Mit dem
@@ -11230,6 +11249,9 @@ window.LiveChat = (function () {
       var schickenH = function () {
         try {
           if (zustand.raum !== raumH) return;
+          /* RUNDE 98 — HIER, und keinen Wimpernschlag frueher. */
+          sitzTausch[wenH.id] = nummerH - 1;
+          if (dortH) sitzTausch[dortH.id] = seinerH.nummer - 1;
           senden({ art: "sitzplatz", ordnung: sitzTausch, text: satzH });
           melden();
         } catch (e) {}
