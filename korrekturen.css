@@ -32047,3 +32047,62 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   to   { opacity: 1; transform: scaleY(1) rotate(0deg); }
 }
 @media (prefers-reduced-motion: reduce) { .lc-leiter-weg { animation: none; } }
+
+/* =====================================================================
+   RUNDE 99 — DIE ANGEL ALS EINE ZEICHNUNG UEBER DER SITZREIHE
+   ---------------------------------------------------------------------
+   XANDER: „man sieht die Angelschnur nicht … realistische Schnur."
+   Rute, Rolle, Schnur und Haken werden in app.js (lcHeber) Bild fuer
+   Bild gerechnet. Hier stehen nur Farben und Staerken. Die Schnur ist
+   duenn, aber mit einem hellen Saum — sonst verschwindet sie auf
+   hellen Profilbildern wie auf dunklem Hintergrund.
+   Die Buehne liegt ueber den Plaetzen (z 8), das geangelte Bild
+   darueber (z 9, gesetzt in app.js).
+   ===================================================================== */
+.lc-angel-buehne {
+  position: absolute;
+  left: 0; top: 0;
+  z-index: 8;
+  overflow: visible;
+  pointer-events: none;
+}
+.lc-an-schnur {
+  stroke: #eef2f6;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 1px rgba(20, 30, 40, .85));
+}
+.lc-an-rute { stroke: #2f3947; stroke-width: 3.4; stroke-linecap: round; }
+.lc-an-rute-hell { stroke: #6a7a8e; stroke-width: 1; stroke-linecap: round; opacity: .8; }
+.lc-an-griff { fill: #c79a5c; stroke: #8a6537; stroke-width: 1; }
+.lc-an-gehaeuse { fill: #3c4657; }
+.lc-an-spule { fill: #9aa3b2; }
+.lc-an-kurbel { stroke: #e0b24a; stroke-width: 1.8; stroke-linecap: round; }
+.lc-an-haken path { stroke: #c8ced8; stroke-width: 2.4; stroke-linecap: round;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, .6)); }
+.lc-angel-hakenlage { z-index: 10; }
+
+/* =====================================================================
+   RUNDE 99 — DER KRAN ALS EINE ZEICHNUNG UEBER DER SITZREIHE
+   ---------------------------------------------------------------------
+   XANDER: „der Kran muss ueber der Zielposition stehen, wenn er jemanden
+   von unten nach oben hebt." Ausleger, Turm, Katze, Seil und Haken
+   rechnet app.js (lcKranHeben) Bild fuer Bild; hier nur die Farben.
+   Die alten Regeln (.lc-kranheb-*, lcGekrantR98) bleiben stehen,
+   benutzt werden sie nicht mehr.
+   ===================================================================== */
+.lc-kran-buehne {
+  position: absolute;
+  left: 0; top: 0;
+  z-index: 8;
+  overflow: visible;
+  pointer-events: none;
+}
+.lc-kr-gurt   { stroke: #d9a13a; stroke-width: 2.6; fill: none; }
+.lc-kr-strebe { stroke: #b9862c; stroke-width: 1.5; fill: none; }
+.lc-kr-turm   { stroke: #c4913a; stroke-width: 1.6; fill: none; opacity: .9; }
+.lc-kr-katze  { fill: #3a4352; }
+.lc-kr-seil   { stroke: #7f8898; stroke-width: 1.8; fill: none; }
+.lc-kr-haken rect { fill: #cfd5e0; stroke: #7e8798; stroke-width: 1.2; }
+.lc-kr-haken path { stroke: #cfd5e0; stroke-width: 2.4; stroke-linecap: round;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, .55)); }

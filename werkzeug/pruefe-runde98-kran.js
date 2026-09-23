@@ -71,28 +71,33 @@ const sage = (gut, was, zusatz) => {
     const bis = t0 + 2700;
     while (performance.now() < bis) {
       const jetzt = Math.round(performance.now() - t0);
-      const sch = document.querySelector(".lc-kranheb");
+      /* RUNDE 99: der Kran ist eine Zeichnung ueber der Sitzreihe
+         (.lc-kran-buehne) — Gurte und Streben sind Pfade darin. */
+      const sch = document.querySelector(".lc-kran-buehne");
       if (sch && !teile) {
-        teile = { ausleger: sch.querySelectorAll(".lc-kranheb-ausleger").length,
-          gurte: sch.querySelectorAll(".lc-kranheb-gurt").length,
-          streben: sch.querySelectorAll(".lc-kranheb-strebe").length,
-          katze: sch.querySelectorAll(".lc-kranheb-wagen").length,
-          seil: sch.querySelectorAll(".lc-kranheb-seil").length,
-          haken: sch.querySelectorAll(".lc-kranheb-bogen").length };
+        const gurt = sch.querySelector(".lc-kr-gurt"), str = sch.querySelector(".lc-kr-strebe");
+        teile = { ausleger: gurt ? 1 : 0,
+          gurte: gurt ? ((gurt.getAttribute("d") || "").match(/M/g) || []).length : 0,
+          streben: str ? ((str.getAttribute("d") || "").match(/M/g) || []).length : 0,
+          katze: sch.querySelectorAll(".lc-kr-katze").length,
+          seil: sch.querySelectorAll(".lc-kr-seil").length,
+          haken: sch.querySelectorAll(".lc-kr-haken").length };
       }
-      const katze = document.querySelector(".lc-kranheb-katze");
+      const katze = document.querySelector(".lc-kr-katze");
       if (katze) {
         const r = katze.getBoundingClientRect();
         const x = Math.round(r.left + r.width / 2);
         if (katzeVon === null) katzeVon = x;
         katzeBis = x;
       }
-      const haken = document.querySelector(".lc-kranheb-haken");
+      const haken = document.querySelector(".lc-kr-haken");
       if (haken && hakenUnten < 0) {
         const r = haken.getBoundingClientRect();
         const k = document.querySelector('[data-lc-platz="2"] .lc-kreis')
           .getBoundingClientRect();
-        if (r.top + r.height >= k.top + k.height * 0.2) hakenUnten = jetzt;
+        /* Der Haken greift OBEN am Bild an (seit Runde 99 — er haengt
+           am Seil, er steckt nicht im Gesicht). */
+        if (r.top + r.height >= k.top + 2) hakenUnten = jetzt;
       }
       const k2 = document.querySelector('[data-lc-platz="2"] .lc-kreis');
       if (k2) {
@@ -135,6 +140,41 @@ const sage = (gut, was, zusatz) => {
   sage(m.hakenUnten >= 0, "der Haken kommt herunter", "ab " + m.hakenUnten + " ms");
   sage(m.bildAb > m.hakenUnten, "und das Bild bewegt sich erst DANACH",
     "Haken unten ab " + m.hakenUnten + " ms, Bild ab " + m.bildAb + " ms");
+
+  console.log("\n4  RUNDE 99 — VON UNTEN NACH OBEN: DER AUSLEGER STEHT UEBER DEM ZIEL\n");
+  /* XANDER: „der Kran muss ueber der Zielposition stehen, wenn er
+     jemanden von unten nach oben hebt — jetzt faengt er auf der unteren
+     Ebene an und traegt ihn darueber hinaus." */
+  const h = await pg.evaluate(async () => {
+    window.DMA_PRUEF.effektBuehne();
+    await new Promise((f) => setTimeout(f, 300));
+    const zielK = document.querySelector('[data-lc-platz="3"] .lc-kreis').getBoundingClientRect();
+    const k5 = document.querySelector('[data-lc-platz="5"] .lc-kreis');
+    window.DMA_PRUEFUNG.wirkung("kranheben", "Emmi", "Alex", { ziel: 3 });
+    const t0 = performance.now();
+    let auslegerUnten = null, hoechstesBild = 1e9, nahAmZiel = 1e9;
+    while (performance.now() < t0 + 2600) {
+      const gurt = document.querySelector(".lc-kr-gurt");
+      if (gurt && auslegerUnten === null) {
+        const g = gurt.getBoundingClientRect();
+        auslegerUnten = g.bottom;
+      }
+      const r = k5.getBoundingClientRect();
+      if (r.top < hoechstesBild) hoechstesBild = r.top;
+      const d = Math.hypot((r.left + r.width / 2) - (zielK.left + zielK.width / 2),
+                           (r.top + r.height / 2) - (zielK.top + zielK.height / 2));
+      if (d < nahAmZiel) nahAmZiel = d;
+      await new Promise((f) => requestAnimationFrame(f));
+    }
+    return { auslegerUnten: Math.round(auslegerUnten), zielOben: Math.round(zielK.top),
+             hoechstesBild: Math.round(hoechstesBild), nahAmZiel: Math.round(nahAmZiel) };
+  });
+  sage(h.auslegerUnten !== null && h.auslegerUnten <= h.zielOben,
+    "der Ausleger steht UEBER dem Zielplatz oben", "Ausleger bis y=" + h.auslegerUnten
+    + ", Zielbild ab y=" + h.zielOben);
+  sage(h.hoechstesBild >= h.auslegerUnten,
+    "das Bild kommt nie ueber den Ausleger hinaus", "hoechster Bildrand y=" + h.hoechstesBild);
+  sage(h.nahAmZiel <= 4, "und es kommt genau auf dem Zielplatz an", h.nahAmZiel + " px daneben");
 
   await br.close();
   srv.close();

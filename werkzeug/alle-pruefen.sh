@@ -98,6 +98,7 @@ for f in werkzeug/pruefe-*.js; do
     pruefe-runde99-eklig)        frist=420  ;;
     pruefe-runde99-rueckfrage)   frist=200  ;;
     pruefe-runde99-leiter)       frist=240  ;;
+    pruefe-runde99-angel)        frist=300  ;;
     pruefe-runde99-pssst)        frist=200  ;;
     *)                           frist=120  ;;
   esac

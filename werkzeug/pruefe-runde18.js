@@ -159,7 +159,9 @@ const BRETT = (frei) => `
     /--ex", \(r\.x \* 38\)/.test(js));
   /* Seit Runde 41 ist das Seil eine gezeichnete Welle, kein Balken. */
   pruefe("die Peitsche geht ueber die ganze Entfernung",
-    /lcLeineWerfen\(platz, "peitsche"\)/.test(js)
+    /* RUNDE 99: dritter Wert ist der Werfer (vonP) — die Leine kommt
+       seitdem von dem, der schlaegt, nicht vom Zuschauer. */
+    /lcLeineWerfen\(platz, "peitsche"(, \w+)?\)/.test(js)
     && /\.lc-peitsche-welle \{[\s\S]*?width: var\(--laenge/.test(css));
   pruefe("Lasso und Angel ziehen zu MIR",
     /function lcZuMirZiehen/.test(js) && /@keyframes lcZuMirR18/.test(css));

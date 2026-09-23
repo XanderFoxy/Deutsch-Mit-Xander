@@ -161,8 +161,12 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("die Sitzordnung steht", sitz.length === 5, sitz.join("  "));
 
   console.log("\nANGEL UND LASSO: ZWEI VERSCHIEDENE LEINEN VON MEINEM PLATZ\n");
-  for (const [w, art, teil] of [["heber", "angel", ".lc-leine-haken"],
-                                ["lasso", "lasso", ".lc-leine-schlinge"]]) {
+  /* RUNDE 99: die Angel ist keine .lc-leine mehr, sondern eine eigene
+     Zeichnung ueber der Sitzreihe (Rute, Schnur und Haken Bild fuer
+     Bild). Sie wird in pruefe-runde99-angel genauer gemessen: Rute am
+     Platz des Anglers, Haken am Bild, Schnur endet am Haken. Hier
+     bleibt das Lasso. */
+  for (const [w, art, teil] of [["lasso", "lasso", ".lc-leine-schlinge"]]) {
     const d = await pg.evaluate(async (w) => {
       /* ZWEI PLAETZE FREI MACHEN — und das ist keine Bequemlichkeit,
          sondern die neue Regel aus Fassung 358: „Ich kann da nur auf

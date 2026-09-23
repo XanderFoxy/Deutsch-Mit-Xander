@@ -26508,9 +26508,7 @@
     zucker:         { ton: "bonbon", dauer: 2800 },
     /* „bei dem Angelhaken soll man, waehrend man angelt, auch realistisch
        dieses Einholen der Angelschnur hoeren." */
-    /* RUNDE 99: gekurbelt wird erst nach dem Biss (1,5 s) bis zum
-       Absetzen (3,15 s) — vorher fliegt der Haken ja noch. */
-    heber:          { ton: "angelkurbel", dauer: 1650, spaet: 1500 },
+    heber:          { ton: "angelkurbel", dauer: 2400 },
     /* RUNDE 65: hier stand „tritt" — der Tritt-Sound fuer einen
        Lassowurf. Ein geschwungenes Seil zischt, es tritt nicht. */
     lasso:          { ton: "swoosh", dauer: 3400, laut: 0.5 },
@@ -37615,26 +37613,10 @@
          kreist erst ueber dem Ziel, faellt darueber, zieht sich zu —
          und dann zieht das Seil.
      ================================================================= */
-  /* RUNDE 99 — DIE LEINE KOMMT VOM WERFER, NICHT VOM ZUSCHAUER.
-     XANDER: „wenn wir uns gleichzeitig mit dem Lasso werfen … fliegen
-     leere Lassos, und keiner wird gezogen."
-     GEFUNDEN, zwei Fehler hier:
-       1. Der Anfang der Leine war IMMER der eigene Platz
-          (.lc-platz-ich). Beim Werfer stimmte das; bei jedem anderen
-          kam dasselbe Lasso aus SEINEM Platz — und wer selbst das
-          Ziel war, bekam gar keine Leine (von === zu) und keinen Zug.
-       2. Jede neue Leine loeschte ALLE Leinen im Raum. Zwei
-          gleichzeitige Wuerfe: der zweite nahm dem ersten das Seil
-          weg, uebrig blieb eine leere Schlinge.
-     Jetzt: der Anfang ist der Platz dessen, der wirft (von), und
-     ersetzt wird nur eine Leine zwischen DENSELBEN beiden Plaetzen.
-     Zurueck kommt die Leine selbst — so greift jeder Effekt nach
-     SEINER Leine statt nach der ersten im Dokument. */
-  function lcLeineWerfen(zuPlatz, art, von) {
+  function lcLeineWerfen(zuPlatz, art) {
     const karte = document.getElementById("livechatKarte");
     const reihe = document.getElementById("lcPlaetze") || karte;
-    const vonPlatz = (von ? lcPlatzMitNamen(von) : null)
-      || (karte && karte.querySelector(".lc-platz-ich"));
+    const vonPlatz = karte && karte.querySelector(".lc-platz-ich");
     if (!reihe || !vonPlatz || !zuPlatz || vonPlatz === zuPlatz) return false;
     const rr = reihe.getBoundingClientRect();
     const a = vonPlatz.getBoundingClientRect();
@@ -37652,14 +37634,9 @@
     const laenge = Math.max(20, roh - radius * 0.9);
     const winkel = (Math.atan2(by - ay, bx - ax) * 180) / Math.PI;
 
-    const paar = (vonPlatz.getAttribute("data-lc-platz") || "") + ">"
-      + (zuPlatz.getAttribute("data-lc-platz") || "");
-    reihe.querySelectorAll(".lc-leine").forEach((x) => {
-      if (x.dataset.paar === paar) x.remove();
-    });
+    reihe.querySelectorAll(".lc-leine").forEach((x) => x.remove());
     const schicht = document.createElement("div");
     schicht.className = "lc-leine lc-leine-" + art;
-    schicht.dataset.paar = paar;
     schicht.setAttribute("aria-hidden", "true");
     schicht.style.left = ax + "px";
     schicht.style.top = ay + "px";
@@ -37782,7 +37759,7 @@
        letzte Sekunde ohne Seil heran. */
     setTimeout(() => schicht.remove(),
       art === "peitsche" ? 2600 : art === "lasso" ? 3600 : 2000);
-    return schicht;
+    return true;
   }
 
   /* =================================================================
@@ -37806,12 +37783,9 @@
      Ist kein Platz frei, bleibt es beim Ziehen — dann ist eben kein
      Platz, und das ist ehrlicher als ein Platztausch aus dem Nichts.
      ================================================================= */
-  function lcZuMirZiehen(platz, kreis, von) {
+  function lcZuMirZiehen(platz, kreis) {
     const karte = document.getElementById("livechatKarte");
-    /* RUNDE 99 — „zu mir" heisst: zu dem, der das Lasso wirft. Bisher
-       zog es auf jedem Geraet zum ZUSCHAUER hin. */
-    const meiner = (von ? lcPlatzMitNamen(von) : null)
-      || (karte && karte.querySelector(".lc-platz-ich"));
+    const meiner = karte && karte.querySelector(".lc-platz-ich");
     if (!meiner || !kreis || meiner === platz) return null;
     const a = lcLayoutKasten(meiner), b = lcLayoutKasten(platz);
     if (!a || !b) return null;
@@ -37871,270 +37845,51 @@
        `lc-gehoben` — genau die Bewegung des Lassos (lcZuMirR51 zieht
        zu MIR). Jetzt zieht sie zu dem Platz, den der Befehl nennt:
        die Nummer kommt in der Nachricht mit. */
-  /* =====================================================================
-     RUNDE 99 — DIE ANGEL, WIE MAN WIRKLICH ANGELT
-     ---------------------------------------------------------------------
-     XANDER: „man sieht die Angelschnur nicht … die soll schraeg
-     ausgeworfen werden in Richtung Ziel, der Haken beisst, das Bild
-     wackelt, und dann wird es eingeholt und an seinen Platz gebracht
-     … realistische Schnur … und keine Glitches, wenn wir uns
-     gleichzeitig angeln."
-
-     Vorher war die Schnur ein GERADER Balken, der vom Zuschauer (nicht
-     vom Angler) zum Ziel zeigte und nach 2 s verschwand — waehrend das
-     Bild noch unterwegs war. Man sah also ein Bild ohne Schnur fliegen.
-
-     JETZT ist alles EINE Zeichnung ueber der Sitzreihe, Bild fuer Bild
-     gerechnet, und die Schnur haengt in jedem Bild am Haken:
-       0,00–0,15 s  die Rute steht am Platz des ANGLERS, schraeg zum Ziel
-       0,15–1,00 s  Auswurf: der Haken fliegt im Bogen zum Ziel, die
-                    Schnur haengt dabei locker durch
-       1,00–1,50 s  Biss: der Haken sitzt oben am Bild, die Schnur wird
-                    stramm, die Rutenspitze biegt sich, das Bild zappelt
-       1,50–3,15 s  Einholen: das Bild hebt ab, baumelt am Haken (es
-                    pendelt um den Haken, nicht um seine Mitte) und wird
-                    zum Zielplatz getragen; die Kurbel dreht sich
-       3,15 s       abgesetzt — genau dann setzt livechat.js um
-       3,15–3,60 s  der Haken loest sich und schnurrt zur Rute zurueck
-     Wo der Haken ist, wird in jedem Bild am BILD gemessen
-     (getBoundingClientRect) — die Schnur kann ihm gar nicht davonlaufen.
-     Gleichzeitiges Angeln: jede Angel hat ihre eigene Zeichnung
-     (data-paar) und ihren eigenen Takt; keine loescht die andere. */
   function lcHeber(wen, nachricht) {
     const zielNr = Number(nachricht && nachricht.ziel) || 0;
-    const von = lcWurfVon;
     return lcAmPlatz(wen, "lc-heber", (schicht, platz) => {
+      /* Die Schnur kommt von MEINEM Platz — siehe lcLeineWerfen. */
+      const leine = lcLeineWerfen(platz, "angel");
       const kreis = platz.querySelector(".lc-kreis");
-      const reihe = document.getElementById("lcPlaetze");
-      const karte = document.getElementById("livechatKarte");
-      const vonPlatz = (von ? lcPlatzMitNamen(von) : null)
-        || (karte && karte.querySelector(".lc-platz-ich"));
-      const zielEl = zielNr
-        ? document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + zielNr + '"]')
-        : null;
-      if (!kreis || !reihe || !vonPlatz || vonPlatz === platz) {
-        /* Ohne Angler (es gilt allen, oder er sitzt nicht) bleibt der
-           alte Heber als Rueckfall — sonst saehe man gar nichts. */
-        schicht.innerHTML =
-          '<svg class="lc-heber-bild" viewBox="0 0 60 60">'
-          + '<path d="M6 54 L54 54" stroke="#8b93a3" stroke-width="5" stroke-linecap="round"/>'
-          + '<path class="lc-heber-schere" d="M12 52 L30 30 L48 52 M20 41 L40 41"'
-          + ' stroke="#b9c1cf" stroke-width="5" fill="none" stroke-linecap="round"'
-          + ' stroke-linejoin="round"/>'
-          + '<rect x="20" y="20" width="20" height="7" rx="3" fill="#8b93a3"/>'
-          + "</svg>";
-        return;
-      }
-      const DAUER = 3600;
-      const T_WURF = 150, T_BISS = 1000, T_ZUG = 1500, T_AB = 3150;
-      const gr = kreis.offsetWidth || 64;
-      const rr = reihe.getBoundingClientRect();
-      const mitte = (el) => {
-        const r = el.getBoundingClientRect();
-        return { x: r.left + r.width / 2 - rr.left, y: r.top + r.height / 2 - rr.top,
-                 top: r.top - rr.top, h: r.height };
-      };
-      const vk = vonPlatz.querySelector(".lc-kreis") || vonPlatz;
-      const A = mitte(vk);
-      const Z0 = mitte(kreis);
-      /* Wohin geangelt wird: zum gewaehlten Platz. Ohne Zahl hebt die
-         Angel nur an und laesst wieder herunter. */
-      let dx = 0, dy = -Math.round(gr * 0.34);
-      if (zielEl) {
-        const zk = zielEl.querySelector(".lc-kreis") || zielEl;
-        const Zz = mitte(zk);
-        dx = Math.round(Zz.x - Z0.x);
-        dy = Math.round(Zz.y - Z0.y);
-      }
-      /* DIE RUTE: am Angler, schraeg nach oben zum Ziel hin (35 Grad),
-         so lang wie ein Bild. */
-      const seite = Z0.x >= A.x ? 1 : -1;
-      const w = 35 * Math.PI / 180;
-      const rutL = gr * 0.95;
-      const fuss = { x: A.x + seite * gr * 0.12, y: A.y + gr * 0.22 };
-      const spitze0 = { x: fuss.x + seite * Math.cos(w) * rutL, y: fuss.y - Math.sin(w) * rutL };
-
-      const NS = "http://www.w3.org/2000/svg";
-      const paar = (vonPlatz.getAttribute("data-lc-platz") || "") + ">"
-        + (platz.getAttribute("data-lc-platz") || "");
-      reihe.querySelectorAll(".lc-angel-buehne").forEach((x) => {
-        if (x.dataset.paar === paar) x.remove();
-      });
-      const buehne = document.createElementNS(NS, "svg");
-      buehne.setAttribute("class", "lc-angel-buehne");
-      buehne.setAttribute("aria-hidden", "true");
-      buehne.dataset.paar = paar;
-      buehne.setAttribute("width", String(Math.round(rr.width)));
-      buehne.setAttribute("height", String(Math.round(rr.height)));
-      buehne.setAttribute("viewBox", "0 0 " + Math.round(rr.width) + " " + Math.round(rr.height));
-      buehne.innerHTML =
-        '<path class="lc-an-schnur" fill="none"/>'
-        + '<path class="lc-an-rute" fill="none"/>'
-        + '<path class="lc-an-rute-hell" fill="none"/>'
-        + '<rect class="lc-an-griff"/>'
-        + '<g class="lc-an-rolle"><circle class="lc-an-gehaeuse"/><circle class="lc-an-spule"/>'
-        + '<path class="lc-an-kurbel"/></g>';
-      /* Der Haken liegt in einer eigenen Lage UEBER dem geangelten Bild
-         (z 10) — er beisst ja von vorn in den Rand, er steckt nicht
-         dahinter. */
-      const hakenLage = document.createElementNS(NS, "svg");
-      hakenLage.setAttribute("class", "lc-angel-buehne lc-angel-hakenlage");
-      hakenLage.setAttribute("aria-hidden", "true");
-      hakenLage.dataset.paar = paar;
-      hakenLage.setAttribute("width", String(Math.round(rr.width)));
-      hakenLage.setAttribute("height", String(Math.round(rr.height)));
-      hakenLage.setAttribute("viewBox", "0 0 " + Math.round(rr.width) + " " + Math.round(rr.height));
-      hakenLage.innerHTML = '<g class="lc-an-haken"><path d="M0 -9 V3 C0 9 -5 11 -5 6" fill="none"/>'
-        + '<path d="M-5 6 L-7.5 2.6" fill="none"/></g>';
-      const schnur = buehne.querySelector(".lc-an-schnur");
-      const rute = buehne.querySelector(".lc-an-rute");
-      const ruteHell = buehne.querySelector(".lc-an-rute-hell");
-      const griff = buehne.querySelector(".lc-an-griff");
-      const gehaeuse = buehne.querySelector(".lc-an-gehaeuse");
-      const spule = buehne.querySelector(".lc-an-spule");
-      const kurbel = buehne.querySelector(".lc-an-kurbel");
-      const haken = hakenLage.querySelector(".lc-an-haken");
-      const rollePos = { x: fuss.x + seite * Math.cos(w) * rutL * 0.2,
-                         y: fuss.y - Math.sin(w) * rutL * 0.2 + gr * 0.07 };
-      const gw = gr * 0.3, gh = gr * 0.075;
-      griff.setAttribute("x", (fuss.x - gw / 2).toFixed(1));
-      griff.setAttribute("y", (fuss.y - gh / 2).toFixed(1));
-      griff.setAttribute("width", gw.toFixed(1));
-      griff.setAttribute("height", gh.toFixed(1));
-      griff.setAttribute("rx", (gh / 2).toFixed(1));
-      griff.setAttribute("transform", "rotate(" + (-seite * 35) + " "
-        + fuss.x.toFixed(1) + " " + fuss.y.toFixed(1) + ")");
-      gehaeuse.setAttribute("cx", rollePos.x.toFixed(1));
-      gehaeuse.setAttribute("cy", rollePos.y.toFixed(1));
-      gehaeuse.setAttribute("r", (gr * 0.075).toFixed(1));
-      spule.setAttribute("cx", rollePos.x.toFixed(1));
-      spule.setAttribute("cy", rollePos.y.toFixed(1));
-      spule.setAttribute("r", (gr * 0.045).toFixed(1));
-      if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
-      reihe.appendChild(buehne);
-      reihe.appendChild(hakenLage);
-      const wegDamit = () => { buehne.remove(); hakenLage.remove(); };
-
-      /* Das Bild liegt waehrend der Fahrt ueber allem — auch ueber der
-         Schnur, die an ihm haengt. */
-      const altZ = platz.style.zIndex;
-      platz.style.zIndex = "9";
-      const altUrsprung = kreis.style.transformOrigin;
-      kreis.style.transformOrigin = "50% 4%";
-      const lift = gr * 0.42;
-      const bb = [
-        { transform: "translate(0px, 0px) rotate(0deg)", offset: 0 },
-        { transform: "translate(0px, 0px) rotate(0deg)", offset: T_BISS / DAUER },
-        { transform: "translate(0px, -3px) rotate(-9deg)", offset: 1080 / DAUER },
-        { transform: "translate(0px, -1px) rotate(8deg)", offset: 1180 / DAUER },
-        { transform: "translate(0px, -4px) rotate(-6deg)", offset: 1280 / DAUER },
-        { transform: "translate(0px, -2px) rotate(4deg)", offset: 1380 / DAUER },
-        { transform: "translate(0px, -2px) rotate(0deg)", offset: T_ZUG / DAUER },
-        { transform: "translate(0px, " + (-lift).toFixed(1) + "px) rotate(-7deg)", offset: 1850 / DAUER }
-      ];
-      /* Unterwegs: ein flacher Bogen nach oben, und das Bild pendelt
-         mit abnehmendem Ausschlag — gedaempft, wie etwas am Haken. */
-      const unterwegs = [[2150, 0.25, 9], [2450, 0.5, -7], [2750, 0.75, 5], [2980, 1, -3]];
-      unterwegs.forEach(([t, f, dreh]) => {
-        const bogen = gr * 0.22 * Math.sin(Math.PI * f);
-        bb.push({ transform: "translate(" + (dx * f).toFixed(1) + "px, "
-          + (dy * f - lift - bogen).toFixed(1) + "px) rotate(" + dreh + "deg)", offset: t / DAUER });
-      });
-      bb.push({ transform: "translate(" + dx + "px, " + dy + "px) rotate(0deg)", offset: T_AB / DAUER });
-      bb.push({ transform: "translate(" + dx + "px, " + dy + "px) rotate(0deg)", offset: 1 });
-      let lauf = null;
-      try { lauf = kreis.animate(bb, { duration: DAUER, easing: "linear", fill: "forwards" }); }
-      catch (e) { lauf = null; }
-
-      /* Welcher Name steht jetzt am Platz? Wechselt er (die neue
-         Sitzordnung ist da), ist das Bild am Ziel angekommen — dann
-         sofort loslassen, sonst stuende hier kurz das FALSCHE Bild. */
-      const nameAlt = lcNameVomPlatz(platz);
-      const t0 = performance.now();
-      let fertig = false;
-      const aufraeumen = () => {
-        if (fertig) return;
-        fertig = true;
-        try { if (lauf) lauf.cancel(); } catch (e) {}
-        kreis.style.transformOrigin = altUrsprung;
-        platz.style.zIndex = altZ;
-      };
-      const ease = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
-      const lerp = (p, q, u) => ({ x: p.x + (q.x - p.x) * u, y: p.y + (q.y - p.y) * u });
-      let letzterHaken = null;
-      const bild = () => {
-        if (!buehne.isConnected) { aufraeumen(); return; }
-        const t = performance.now() - t0;
-        if (!fertig && t > T_ZUG && lcNameVomPlatz(platz) !== nameAlt) aufraeumen();
-        /* Der Haken am Bild: oben in der Mitte, dort wo er sitzt. */
-        const kr = kreis.getBoundingClientRect();
-        const amBild = { x: kr.left + kr.width / 2 - rr.left, y: kr.top + kr.height * 0.06 - rr.top };
-        /* Die Rutenspitze biegt sich, sobald Zug auf der Schnur ist. */
-        const zug = t < T_BISS ? 0 : t < T_ZUG ? 0.5 + 0.5 * Math.sin((t - T_BISS) / 45) * 0.4
-          : t < T_AB ? 0.55 : Math.max(0, 0.55 - (t - T_AB) / 300);
-        const spitze = { x: spitze0.x + seite * zug * gr * 0.04, y: spitze0.y + zug * gr * 0.16 };
-        const knick = { x: fuss.x + seite * Math.cos(w) * rutL * 0.62,
-                        y: fuss.y - Math.sin(w) * rutL * 0.62 + zug * gr * 0.03 };
-        rute.setAttribute("d", "M" + fuss.x.toFixed(1) + " " + fuss.y.toFixed(1)
-          + " Q" + knick.x.toFixed(1) + " " + knick.y.toFixed(1)
-          + " " + spitze.x.toFixed(1) + " " + spitze.y.toFixed(1));
-        ruteHell.setAttribute("d", rute.getAttribute("d"));
-        /* Wo ist der Haken? */
-        let H, locker;
-        if (t < T_WURF) { H = spitze; locker = 0; }
-        else if (t < T_BISS) {
-          const u = ease((t - T_WURF) / (T_BISS - T_WURF));
-          const gerade = lerp(spitze, amBild, u);
-          const weite = Math.hypot(amBild.x - spitze.x, amBild.y - spitze.y);
-          /* Ein flacher Bogen — hoch genug, dass man den Wurf sieht,
-             aber nie ueber den oberen Rand der Karte hinaus (gemessen:
-             der erste Versuch mit 0,55 Bildbreiten flog aus dem Bild). */
-          H = { x: gerade.x, y: Math.max(-gr * 0.25,
-                gerade.y - (gr * 0.3 + weite * 0.08) * 4 * u * (1 - u)) };
-          locker = 0.22 * (1 - u) + 0.06;
-        } else if (t < T_AB && !fertig) { H = amBild; locker = t < T_ZUG ? 0.015 : 0.03; }
-        else {
-          const u = Math.min(1, (t - T_AB) / 420);
-          const von2 = letzterHaken || amBild;
-          H = lerp(von2, spitze, ease(u));
-          locker = 0.12 * (1 - u);
+      if (kreis) {
+        /* Wohin wird geangelt? Der Weg wird GEMESSEN, vom Bild des
+           Geangelten zum Bild des Zielplatzes. Ohne Zielangabe hebt
+           die Angel nur an — nach oben, wie ein Wagenheber. */
+        let zx = 0, zy = -Math.round(kreis.offsetWidth * 0.34);
+        const zielEl = zielNr
+          ? document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + zielNr + '"]')
+          : null;
+        if (zielEl) {
+          const a = platz.getBoundingClientRect();
+          const b = zielEl.getBoundingClientRect();
+          zx = Math.round((b.left + b.width / 2) - (a.left + a.width / 2));
+          zy = Math.round((b.top + b.height / 2) - (a.top + a.height / 2));
         }
-        if (t < T_AB && !fertig) letzterHaken = H;
-        /* DIE SCHNUR: von der Rolle durch die Spitze zum Haken. Locker
-           haengt sie durch (Kontrollpunkt unter der Mitte), stramm ist
-           sie fast gerade. */
-        const lang = Math.hypot(H.x - spitze.x, H.y - spitze.y);
-        const mx = (spitze.x + H.x) / 2, my = (spitze.y + H.y) / 2 + lang * locker * 2;
-        schnur.setAttribute("d", "M" + rollePos.x.toFixed(1) + " " + rollePos.y.toFixed(1)
-          + " L" + spitze.x.toFixed(1) + " " + spitze.y.toFixed(1)
-          + " Q" + mx.toFixed(1) + " " + my.toFixed(1) + " " + H.x.toFixed(1) + " " + H.y.toFixed(1));
-        /* Der Haken zeigt immer in Zugrichtung. */
-        const ri = Math.atan2(H.y - spitze.y, H.x - spitze.x) * 180 / Math.PI - 90;
-        haken.setAttribute("transform", "translate(" + H.x.toFixed(1) + " " + H.y.toFixed(1)
-          + ") rotate(" + (t < T_BISS ? ri + 180 : ri).toFixed(1) + ") scale(" + (gr / 64).toFixed(2) + ")");
-        /* Die Kurbel dreht sich, solange eingeholt wird. */
-        const drehung = t > T_ZUG && t < T_AB ? (t - T_ZUG) * 0.9 : t >= T_AB ? (T_AB - T_ZUG) * 0.9 + (t - T_AB) * 1.6 : 0;
-        const kr2 = gr * 0.07, rad = drehung * Math.PI / 180;
-        kurbel.setAttribute("d", "M" + rollePos.x.toFixed(1) + " " + rollePos.y.toFixed(1)
-          + " L" + (rollePos.x + Math.cos(rad) * kr2).toFixed(1) + " "
-          + (rollePos.y + Math.sin(rad) * kr2).toFixed(1));
-        /* Die Zeichnung ist nach DAUER fertig. Das BILD aber wartet am
-           Ziel, bis die neue Sitzordnung da ist (hoechstens 1,5 s
-           laenger) — sonst schnellte es bei langsamer Leitung erst an
-           seinen alten Platz zurueck und spraenge dann nach vorn. */
-        if (t >= DAUER) buehne.style.opacity = "0", hakenLage.style.opacity = "0";
-        if (t < DAUER + 1500 && !fertig) requestAnimationFrame(bild);
-        else { aufraeumen(); wegDamit(); }
-      };
-      requestAnimationFrame(bild);
-      /* Sicherheitsnetz: laeuft der Takt nicht (Tab im Hintergrund),
-         wird trotzdem aufgeraeumt. */
-      setTimeout(() => { aufraeumen(); wegDamit(); }, DAUER + 2400);
-
-      lcTonSpaeter("swoosh", T_WURF, 0.4);
-      lcTonSpaeter("seilstramm", T_BISS, 0.55);
-      lcTonSpaeter("aufsetzen", T_AB, 0.42);
-    }, 3700, "heber");
+        kreis.style.setProperty("--angelx", zx + "px");
+        kreis.style.setProperty("--angely", zy + "px");
+        kreis.classList.remove("lc-geangelt");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-geangelt");
+        setTimeout(() => {
+          kreis.classList.remove("lc-geangelt");
+          kreis.style.removeProperty("--angelx");
+          kreis.style.removeProperty("--angely");
+        }, 2400);
+      }
+      /* HIER STAND DIE SCHLEIFE — siehe lcNebenMichSetzen. */
+      /* Ohne Leine (es gilt allen, oder ich sitze selbst nicht) bleibt
+         der alte Heber als Rueckfall — sonst saehe man gar nichts. */
+      schicht.innerHTML = leine ? "" :
+        '<svg class="lc-heber-bild" viewBox="0 0 60 60">'
+        + '<path d="M6 54 L54 54" stroke="#8b93a3" stroke-width="5" stroke-linecap="round"/>'
+        + '<path class="lc-heber-schere" d="M12 52 L30 30 L48 52 M20 41 L40 41"'
+        + ' stroke="#b9c1cf" stroke-width="5" fill="none" stroke-linecap="round"'
+        + ' stroke-linejoin="round"/>'
+        + '<rect x="20" y="20" width="20" height="7" rx="3" fill="#8b93a3"/>'
+        + "</svg>";
+      /* Die Kurbel laeuft 2,4 s — „waehrend man angelt" soll man sie ja
+         hoeren, also bleibt die Zeichnung so lange stehen. */
+    }, 2600, "heber");
   }
 
   /* =====================================================================
@@ -38155,182 +37910,68 @@
      dreht sich dabei nicht — das tut ein Turmdrehkran nur, wenn er
      quer versetzt.
      ===================================================================== */
-  /* RUNDE 99 — XANDER: „der Kran muss ueber der Zielposition stehen,
-     wenn er jemanden von unten nach oben hebt — jetzt faengt er auf der
-     unteren Ebene an und traegt ihn darueber hinaus."
-     GEFUNDEN: Ausleger, Katze und Seil hingen fest 12 px ueber dem
-     STARTPLATZ, und die Bahn des Bildes war davon ganz getrennt (eigene
-     Keyframes). Ging es nach oben, lag der Ausleger zwischen den Reihen,
-     und das Bild fuhr ueber ihn hinaus — ein Kran, der unter seiner Last
-     haengt.
-     JETZT ist der Kran EINE Zeichnung ueber der Sitzreihe, wie die Angel:
-       - der Ausleger steht ueber dem HOEHEREN der beiden Plaetze, mit
-         einem Turm am Rand bis hinunter,
-       - die Katze faehrt auf ihm, das Seil geht in jedem Bild von der
-         Katze bis zum Haken am Bild (gemessen, nicht geraten),
-       - das Bild wird bis knapp unter den Ausleger gehoben, faehrt
-         hinueber und wird abgesetzt — es kommt nie ueber den Ausleger.
-     Zeiten: Seil runter 8–22 %, anschlagen bis 32 %, heben bis 48 %,
-     hinueber bis 72 %, absetzen bei 86 % (2,41 s — livechat.js setzt
-     bei 2,4 s um). */
   function lcKranHeben(wen, nachricht) {
     const zielNr = Number(nachricht && nachricht.ziel) || 0;
     return lcAmPlatz(wen, "lc-kranheb", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
-      const reihe = document.getElementById("lcPlaetze");
-      const karte = document.getElementById("livechatKarte");
-      if (!kreis || !reihe) return;
-      const DAUER = 2800;
-      const gr = kreis.offsetWidth || 64;
-      const rr = reihe.getBoundingClientRect();
-      const lage = (el) => {
-        const r = el.getBoundingClientRect();
-        return { x: r.left + r.width / 2 - rr.left, y: r.top + r.height / 2 - rr.top,
-                 top: r.top - rr.top, h: r.height };
-      };
-      const S = lage(kreis);
+      const gr = (kreis && kreis.offsetWidth) || 64;
+      /* Wohin? Gemessen vom Bild des Gehobenen zum Bild des
+         Zielplatzes — dieselbe Rechnung wie bei der Angel. */
+      let zx = 0, zy = -Math.round(gr * 0.34);
       const zielEl = zielNr
         ? document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + zielNr + '"]')
         : null;
-      const Z = zielEl ? lage(zielEl.querySelector(".lc-kreis") || zielEl)
-        : { x: S.x, y: S.y - gr * 0.34, top: S.top - gr * 0.34, h: S.h };
-      const dx = Z.x - S.x, dy = Z.y - S.y;
-      /* WIE HOCH DER AUSLEGER STEHT: ueber dem hoeheren Platz, aber nie
-         ueber den oberen Rand der Karte hinaus (dort saehe man ihn
-         nicht mehr — so war es in Runde 98 gemessen). */
-      /* GEMESSEN (pruefe-runde98-kran, 460 px breit): die obere Reihe
-         liegt nur 13 px unter dem Kartenrand. Mit „nie ueber den Rand"
-         ragte der Ausleger 6 px ins Zielbild — genau der gemeldete
-         Fehler. Deshalb steht er jetzt IMMER ueber dem hoeheren Bild,
-         notfalls ueber der Kopfzeile des Klassenzimmers (die Karte
-         schneidet dort nicht ab — overflow: visible, nachgesehen). */
-      const gh = Math.max(8, gr * 0.12);                /* Hoehe des Gittertraegers */
-      const auslegerY = Math.min(S.top, Z.top) - gr * 0.42 - gh;
-      const seilMin = gr * 0.16;                        /* Katze bis Haken, ganz oben */
-      /* So hoch wird gehoben: bis kurz unter den Ausleger — nie darueber. */
-      const hubTop = Math.min(S.top, Z.top, auslegerY + gh + seilMin);
-      const hebY = hubTop - S.top;                      /* so weit geht das Bild hoch */
-      const links = Math.min(S.x, Z.x) - gr * 0.7;
-      const rechts = Math.max(S.x, Z.x) + gr * 0.7;
-      const turmX = Z.x >= S.x ? links + gr * 0.12 : rechts - gr * 0.12;
-
-      const NS = "http://www.w3.org/2000/svg";
-      reihe.querySelectorAll(".lc-kran-buehne").forEach((x) => {
-        if (x.dataset.platz === platz.getAttribute("data-lc-platz")) x.remove();
-      });
-      const buehne = document.createElementNS(NS, "svg");
-      buehne.setAttribute("class", "lc-kran-buehne");
-      buehne.setAttribute("aria-hidden", "true");
-      buehne.dataset.platz = platz.getAttribute("data-lc-platz") || "";
-      const W = Math.round(rr.width), H = Math.round(rr.height);
-      buehne.setAttribute("width", String(W));
-      buehne.setAttribute("height", String(H));
-      buehne.setAttribute("viewBox", "0 0 " + W + " " + H);
-      /* Der Gittertraeger: Ober- und Untergurt, Diagonalen dazwischen. */
-      let streben = "";
-      const feld = gh * 1.1;
-      for (let x = links, i = 0; x < rechts; x += feld, i++) {
-        const x2 = Math.min(rechts, x + feld);
-        streben += "M" + x.toFixed(1) + " " + (i % 2 ? auslegerY : auslegerY + gh).toFixed(1)
-          + " L" + x2.toFixed(1) + " " + (i % 2 ? auslegerY + gh : auslegerY).toFixed(1) + " ";
+      if (zielEl) {
+        const a2 = platz.getBoundingClientRect();
+        const b2 = zielEl.getBoundingClientRect();
+        zx = Math.round((b2.left + b2.width / 2) - (a2.left + a2.width / 2));
+        zy = Math.round((b2.top + b2.height / 2) - (a2.top + a2.height / 2));
       }
-      /* Der Turm: vom Ausleger bis unter die Sitzreihe. */
-      const tw = gh * 0.9;
-      let turm = "M" + (turmX - tw / 2).toFixed(1) + " " + auslegerY.toFixed(1) + " V" + H
-        + " M" + (turmX + tw / 2).toFixed(1) + " " + auslegerY.toFixed(1) + " V" + H + " ";
-      for (let y = auslegerY + gh, i = 0; y < H; y += tw * 1.2, i++) {
-        turm += "M" + (turmX - tw / 2).toFixed(1) + " " + y.toFixed(1)
-          + " L" + (turmX + tw / 2).toFixed(1) + " " + Math.min(H, y + tw * 1.2).toFixed(1) + " ";
+      if (kreis) {
+        kreis.style.setProperty("--kranx", zx + "px");
+        kreis.style.setProperty("--krany", zy + "px");
+        kreis.classList.remove("lc-gekrant");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gekrant");
+        setTimeout(() => {
+          kreis.classList.remove("lc-gekrant");
+          kreis.style.removeProperty("--kranx");
+          kreis.style.removeProperty("--krany");
+        }, 2600);
       }
-      buehne.innerHTML =
-        '<path class="lc-kr-turm" d="' + turm + '"/>'
-        + '<path class="lc-kr-gurt" d="M' + links.toFixed(1) + " " + auslegerY.toFixed(1)
-        + " H" + rechts.toFixed(1) + " M" + links.toFixed(1) + " " + (auslegerY + gh).toFixed(1)
-        + " H" + rechts.toFixed(1) + '"/>'
-        + '<path class="lc-kr-strebe" d="' + streben + '"/>'
-        + '<rect class="lc-kr-katze" width="' + (gr * 0.3).toFixed(1) + '" height="' + (gh * 0.9).toFixed(1) + '" rx="2"/>'
-        + '<path class="lc-kr-seil"/>'
-        + '<g class="lc-kr-haken"><rect x="-4" y="-7" width="8" height="6" rx="1.5"/>'
-        + '<path d="M0 -1 V4 C0 9 -4.5 10 -4.5 6" fill="none"/></g>';
-      if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
-      reihe.appendChild(buehne);
-      const katze = buehne.querySelector(".lc-kr-katze");
-      const seil = buehne.querySelector(".lc-kr-seil");
-      const haken = buehne.querySelector(".lc-kr-haken");
-
-      /* DAS BILD: erst still, dann gehoben bis unter den Ausleger,
-         hinueber (es baumelt dabei), abgesetzt. */
-      const altZ = platz.style.zIndex;
-      platz.style.zIndex = "9";
-      const altUrsprung = kreis.style.transformOrigin;
-      kreis.style.transformOrigin = "50% 0%";
-      const tr = (x, y, dreh) => "translate(" + x.toFixed(1) + "px, " + y.toFixed(1)
-        + "px) rotate(" + dreh + "deg)";
-      const obenY = Math.min(0, hebY);
-      const bb = [
-        { transform: tr(0, 0, 0), offset: 0 },
-        { transform: tr(0, 0, 0), offset: 0.30 },
-        { transform: tr(0, -2, 2), offset: 0.33 },
-        { transform: tr(0, obenY, -4), offset: 0.48 },
-        { transform: tr(dx * 0.3, obenY, 7), offset: 0.56 },
-        { transform: tr(dx * 0.65, obenY, -5), offset: 0.64 },
-        { transform: tr(dx, obenY, 3), offset: 0.72 },
-        { transform: tr(dx, dy - 3, -1), offset: 0.84 },
-        { transform: tr(dx, dy, 0), offset: 0.86 },
-        { transform: tr(dx, dy, 0), offset: 1 }
-      ];
-      let lauf = null;
-      try { lauf = kreis.animate(bb, { duration: DAUER, easing: "ease-in-out", fill: "forwards" }); }
-      catch (e) { lauf = null; }
-
-      const nameAlt = lcNameVomPlatz(platz);
-      const t0 = performance.now();
-      let fertig = false;
-      const aufraeumen = () => {
-        if (fertig) return;
-        fertig = true;
-        try { if (lauf) lauf.cancel(); } catch (e) {}
-        kreis.style.transformOrigin = altUrsprung;
-        platz.style.zIndex = altZ;
-      };
-      const wegDamit = () => buehne.remove();
-      const glatt = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
-      const bild = () => {
-        if (!buehne.isConnected) { aufraeumen(); return; }
-        const t = performance.now() - t0, f = t / DAUER;
-        if (!fertig && f > 0.7 && lcNameVomPlatz(platz) !== nameAlt) aufraeumen();
-        /* Die Katze: ueber dem Start, faehrt 48–72 % hinueber. */
-        const u = f < 0.48 ? 0 : f > 0.72 ? 1 : glatt((f - 0.48) / 0.24);
-        const kx = S.x + dx * u;
-        katze.setAttribute("x", (kx - gr * 0.15).toFixed(1));
-        katze.setAttribute("y", (auslegerY + gh * 0.05).toFixed(1));
-        /* Der Haken: vor dem Anschlagen und nach dem Absetzen haengt er
-           frei am Seil; dazwischen sitzt er oben am Bild. */
-        const k = kreis.getBoundingClientRect();
-        const amBild = { x: k.left + k.width / 2 - rr.left, y: k.top + k.height * 0.04 - rr.top };
-        const frei = auslegerY + gh + seilMin * 0.6;
-        let hy, hx = kx;
-        if (f < 0.08) hy = frei;
-        else if (f < 0.22) hy = frei + (S.top - frei) * glatt((f - 0.08) / 0.14);
-        else if (f < 0.86 && !fertig) { hy = amBild.y; hx = amBild.x; }
-        else {
-          const w = Math.min(1, (f - 0.86) / 0.12);
-          hy = Z.top + (frei - Z.top) * glatt(w);
-        }
-        seil.setAttribute("d", "M" + kx.toFixed(1) + " " + (auslegerY + gh).toFixed(1)
-          + " L" + hx.toFixed(1) + " " + (hy - 7).toFixed(1));
-        haken.setAttribute("transform", "translate(" + hx.toFixed(1) + " " + hy.toFixed(1)
-          + ") scale(" + (gr / 70).toFixed(2) + ")");
-        buehne.style.opacity = f < 0.06 ? String(f / 0.06) : f > 0.94 ? String(Math.max(0, (1 - f) / 0.06)) : "1";
-        if (t < DAUER + 1500 && !(fertig && f >= 1)) requestAnimationFrame(bild);
-        else { aufraeumen(); wegDamit(); }
-      };
-      requestAnimationFrame(bild);
-      setTimeout(() => { aufraeumen(); wegDamit(); }, DAUER + 2400);
+      /* Der Ausleger reicht ueber beide Plaetze — er muss ja beide
+         erreichen. Er haengt AM PLATZ des Gehobenen; die Katze faehrt
+         darauf bis zum Ziel. */
+      const weit = Math.abs(zx) + gr * 1.2;
+      schicht.style.setProperty("--kranweit", Math.round(weit) + "px");
+      schicht.style.setProperty("--kranx", zx + "px");
+      /* WIE HOCH DER AUSLEGER HAENGT. Nicht hoeher als noetig: ueber
+         der obersten Reihe ist der Rand der Karte, und was darueber
+         liegt, sieht man nicht mehr. 0,62 Bildbreiten — gemessen
+         reicht das, damit das gehobene Bild frei haengt. */
+      schicht.style.setProperty("--kranhoch", Math.round(gr * 0.52) + "px");
+      schicht.innerHTML =
+        '<span class="lc-kranheb-ausleger">'
+        /* Der Gittertraeger: Ober- und Untergurt mit Diagonalen. */
+        + '<svg viewBox="0 0 200 18" preserveAspectRatio="none" width="100%" height="100%">'
+        + '<path class="lc-kranheb-gurt" d="M0 2 H200 M0 16 H200"/>'
+        + '<path class="lc-kranheb-strebe" d="M4 16 L16 2 L28 16 L40 2 L52 16 L64 2'
+        + ' L76 16 L88 2 L100 16 L112 2 L124 16 L136 2 L148 16 L160 2 L172 16 L184 2 L196 16"/>'
+        + "</svg></span>"
+        /* Die Katze mit Seil und Flasche. */
+        + '<span class="lc-kranheb-katze">'
+        + '<i class="lc-kranheb-wagen"></i>'
+        + '<i class="lc-kranheb-seil"></i>'
+        + '<i class="lc-kranheb-haken">'
+        + '<svg viewBox="0 0 20 26" width="100%" height="100%">'
+        + '<rect class="lc-kranheb-flasche" x="5" y="0" width="10" height="8" rx="2"/>'
+        + '<path class="lc-kranheb-bogen" d="M10 8 V14 C10 21 4 23 4 17"'
+        + ' fill="none" stroke-width="2.6" stroke-linecap="round"/>'
+        + "</svg></i></span>";
       /* Der Ton: die Winde laeuft, dann setzt es auf. */
       lcTonSpaeter("kran", 120, 0.5);
-      lcTonSpaeter("aufsetzen", Math.round(DAUER * 0.86), 0.45);
-    }, 2900, "kranheben");
+      lcTonSpaeter("aufsetzen", 2080, 0.45);
+    }, 2800, "kranheben");
   }
 
   /* --- DAS LASSO ---------------------------------------------------
@@ -38338,12 +37979,8 @@
      zieht, dass er naeher ransitzt." Die Schlinge kommt von der
      Seite, legt sich um das Bild und zieht kurz an. */
   function lcLasso(wen) {
-    /* Der Werfer wird JETZT gemerkt — lcAmPlatz baut erst im naechsten
-       Takt, und bis dahin kann schon die naechste Zeile lcWurfVon
-       ueberschrieben haben (zwei Wuerfe gleichzeitig). */
-    const von = lcWurfVon;
     return lcAmPlatz(wen, "lc-lasso", (schicht, platz) => {
-      const leine = lcLeineWerfen(platz, "lasso", von);
+      const leine = lcLeineWerfen(platz, "lasso");
       const kreis = platz.querySelector(".lc-kreis");
       /* RUNDE 65 — XANDER, woertlich: „Das Lasso schlingt sich immer
          noch nicht um das Opfer an seinem Platz, sondern taucht erst
@@ -38359,7 +37996,7 @@
          sie gar nicht zu ihm. Jetzt bekommt sie dieselben --zux/--zuy
          wie der Kreis und wandert mit: wer gefesselt ist, bleibt
          gefesselt. */
-      const zug = kreis ? lcZuMirZiehen(platz, kreis, von) : null;
+      const zug = kreis ? lcZuMirZiehen(platz, kreis) : null;
       if (zug) {
         schicht.style.setProperty("--zux", zug.zux.toFixed(1) + "px");
         schicht.style.setProperty("--zuy", zug.zuy.toFixed(1) + "px");
@@ -38369,7 +38006,7 @@
         /* Wie viel kuerzer wird das Seil, waehrend er herankommt?
            Nicht geschaetzt: die Strecke, die er zurueckliegt (zug.weit),
            geteilt durch die Seillaenge, die lcLeineWerfen gemessen hat. */
-        const seil = leine || null;
+        const seil = document.querySelector(".lc-leine-lasso");
         if (seil) {
           const lang = parseFloat(seil.style.getPropertyValue("--laenge")) || 0;
           if (lang > 0) {
@@ -39677,22 +39314,19 @@
       lcTonSpaeter("quietschen", Math.max(0, hin - 700), 0.55);
     }
 
-    /* Und dann sitzt auch jeder wirklich dort.
-       RUNDE 99 — XANDER: „zu zweit reisen funktioniert nicht mehr."
-       Bisher setzte sich jedes Geraet SELBST um, beide fast im selben
-       Augenblick — und jede Nachricht trug den alten Platz des anderen
-       mit. Wer zuletzt ankam, setzte den anderen zurueck. Jetzt setzt
-       NUR der, der losgefahren ist, BEIDE um, in einer Nachricht. */
-    if (ab.el.classList.contains("lc-platz-ich")) {
-      const mitName = lcNameVomPlatz(mit.el);
+    /* Und dann sitzt auch jeder wirklich dort — jedes Geraet aber nur
+       fuer sich selbst. */
+    const nehmen = (platzEl, nr) => {
+      if (!platzEl.classList.contains("lc-platz-ich")) return;
       setTimeout(() => {
         try {
-          const erg = LiveChat.zuZweitSetzen
-            ? LiveChat.zuZweitSetzen(ziel.nr, mitName, zielMit.nr) : null;
-          if (erg && erg.ok) { renderLiveChat(); showToast((ball ? "🤸 " : "🚲 ") + erg.text); }
+          const erg = LiveChat.platzNehmen ? LiveChat.platzNehmen(nr) : null;
+          if (erg && erg.ok) { renderLiveChat(); showToast("🚲 " + erg.text); }
         } catch (e) {}
       }, dauer - 120);
-    }
+    };
+    nehmen(ab.el, ziel.nr);
+    nehmen(mit.el, zielMit.nr);
     return true;
   }
 
@@ -48119,7 +47753,6 @@
   }
 
   function lcPeitsche(wen) {
-    const vonP = lcWurfVon;
     return lcAmPlatz(wen, "lc-peitsche", (schicht, platz) => {
       /* GEMELDET: „Die Peitsche ist keine schoene Peitsche, sie ist
          nur an dem Profilbild kurz zu sehen, aber sie soll richtig in
@@ -48133,7 +47766,7 @@
          Weg wie Lasso und Angel: lcLeineWerfen spannt sie von MEINEM
          Platz bis an den Rand seines Bildes, ueber die ganze
          Entfernung, und der Griff liegt bei mir. */
-      const leine = lcLeineWerfen(platz, "peitsche", vonP);
+      const leine = lcLeineWerfen(platz, "peitsche");
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
         kreis.classList.remove("lc-gepeitscht");

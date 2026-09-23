@@ -622,63 +622,6 @@ window.LiveChat = (function () {
      laufen soll — abgeleitet aus der Sitzreihe war das schon einmal
      falsch (siehe Runde 74). */
   var kranZieht = false;
-  /* =================================================================
-     RUNDE 99 — ZWEI WERFEN GLEICHZEITIG
-     -----------------------------------------------------------------
-     XANDER: „wenn wir uns gleichzeitig mit dem Lasso werfen … dann
-     fliegen leere Lassos, und keiner wird gezogen … achte darauf, dass
-     sich da nichts verknotet."
-     URSACHE: jedes Geraet setzt nach 2,3 s seine EIGENE neue
-     Sitzordnung ab — beide gerechnet aus demselben alten Stand. Wer
-     zuletzt ankommt, gewinnt, und je nach Laufzeit ist das auf jedem
-     Geraet ein anderer: die Sitzreihe laeuft auseinander.
-     JETZT gilt eine Vorfahrt, die JEDES Geraet gleich ausrechnet: wer
-     die kleinere Kennung hat, zieht; der andere laesst los. Beruehren
-     sich zwei Zuege (dieselbe Person, der Werfer des einen ist das
-     Ziel des anderen, oder derselbe Zielplatz), bricht der Verlierer
-     seinen Platzwechsel ab, bevor er hinausgeht. Die Animation laeuft
-     trotzdem — man sieht, dass er es versucht hat. */
-  var offeneZuege = [];
-  function zugVorfahrt(n) {
-    /* Eine Aktion reist als art „text" mit chatArt „aktion" (anAlle). */
-    if (!n || (n.art !== "aktion" && n.chatArt !== "aktion")) return;
-    if (n.wirkung !== "heber" && n.wirkung !== "lasso" && n.wirkung !== "kranheben") return;
-    var jetzt = Date.now();
-    offeneZuege = offeneZuege.filter(function (z) { return z.bis > jetzt && !z.weg; });
-    var werfer = String(n.name || ""), wen = String(n.wen || ""), ziel = Number(n.ziel) || 0;
-    offeneZuege.forEach(function (z) {
-      var beruehrt = wen === z.wen || wen === z.werfer || werfer === z.wen
-        || (ziel && ziel === z.ziel);
-      if (!beruehrt) return;
-      if (String(zustand.ichId) > String(n.von || "")) {
-        clearTimeout(z.uhr);
-        z.weg = true;
-      }
-    });
-  }
-
-  /* =================================================================
-     RUNDE 99 — NUR DAS SCHICKEN, WAS SICH GEAENDERT HAT
-     -----------------------------------------------------------------
-     XANDER: „zu zweit reisen funktioniert nicht mehr."
-     GEFUNDEN: jede Sitzordnung-Nachricht trug die GANZE eigene Tabelle
-     (ordnung: sitzTausch) — also auch alte, laengst ueberholte
-     Eintraege fuer andere. Beim Reisen zu zweit setzte sich am Ende
-     jedes Geraet selbst um, beide fast gleichzeitig; A schickte dabei
-     Bs ALTEN Platz mit und B den alten von A. Wer die Nachricht des
-     anderen bekam, wurde auf seinen alten Platz zurueckgesetzt — beide
-     sprangen zurueck, je nach Laufzeit auch nur einer.
-     Jetzt geht nur hinaus, was sich in DIESEM Augenblick aendert. Der
-     Empfaenger fuegt es ohnehin nur ein (siehe „sitzplatz" in
-     empfangen); die volle Tabelle faehrt weiter im Puls mit, fuer den,
-     der neu dazukommt. */
-  function sitzSchicken(ids, text) {
-    var teil = {};
-    ids.forEach(function (id) {
-      if (id && typeof sitzTausch[id] === "number") teil[id] = sitzTausch[id];
-    });
-    senden({ art: "sitzplatz", ordnung: teil, text: text });
-  }
 
   function plaetzeBauen() {
     var wer = [];
@@ -3581,7 +3524,6 @@ window.LiveChat = (function () {
     geschlechtMerken(n.von, n.geschlecht);
     kontoMerken(n.von, n.konto);
     uhrVergleichen(n);
-    zugVorfahrt(n);
 
     if (n.art === "puls") {
       /* Die Sitzordnung der anderen uebernehmen, aber nur, was man
@@ -6661,7 +6603,8 @@ window.LiveChat = (function () {
       return platzTauschenMit(ziel.id);
     }
     sitzTausch[zustand.ichId] = n - 1;
-    sitzSchicken([zustand.ichId], zustand.ichName + " setzt sich auf Platz " + n + ".");
+    senden({ art: "sitzplatz", ordnung: sitzTausch,
+             text: zustand.ichName + " setzt sich auf Platz " + n + "." });
     melden();
     return { ok: true, text: "Du sitzt jetzt auf Platz " + n + "." };
   }
@@ -6685,7 +6628,7 @@ window.LiveChat = (function () {
     sitzTausch[zustand.ichId] = seiner.nummer - 1;
     sitzTausch[id] = meiner.nummer - 1;
     var satz = zustand.ichName + " und " + seiner.name + " haben die Plätze getauscht.";
-    sitzSchicken([zustand.ichId, id], satz);
+    senden({ art: "sitzplatz", ordnung: sitzTausch, text: satz });
     melden();
     return { ok: true, text: satz };
   }
@@ -11581,7 +11524,8 @@ window.LiveChat = (function () {
         plaetzeJetzt.forEach(function (pl) { if (frei === null && pl.leer) frei = pl.nummer - 1; });
         if (frei === null) return systemZeile("Es ist kein Platz frei.");
         sitzTausch[zustand.ichId] = frei;
-        sitzSchicken([zustand.ichId], zustand.ichName + " setzt sich auf Platz " + (frei + 1) + ".");
+        senden({ art: "sitzplatz", ordnung: sitzTausch,
+                 text: zustand.ichName + " setzt sich auf Platz " + (frei + 1) + "." });
         systemZeile("Du sitzt jetzt auf Platz " + (frei + 1) + ".");
         melden();
         return;
@@ -11594,7 +11538,7 @@ window.LiveChat = (function () {
       sitzTausch[zustand.ichId] = seiner.nummer - 1;
       sitzTausch[wenT.id] = meiner.nummer - 1;
       var satz = zustand.ichName + " und " + wenT.name + " haben die Plaetze getauscht.";
-      sitzSchicken([zustand.ichId, wenT.id], satz);
+      senden({ art: "sitzplatz", ordnung: sitzTausch, text: satz });
       systemZeile(satz);
       melden();
       return;
@@ -11816,34 +11760,20 @@ window.LiveChat = (function () {
          Die Zeiten stehen hier und in korrekturen.css an derselben
          Stelle; wer eine aendert, muss die andere mitaendern. */
       var raumH = zustand.raum;
-      var meinPlatzH = meinerH ? meinerH.nummer : 0;
       var schickenH = function () {
         try {
           if (zustand.raum !== raumH) return;
-          /* RUNDE 99 — hat sich in den 2,3 s etwas verschoben (jemand
-             anderes hat ihn oder mich schon woanders hingezogen), dann
-             wird NICHT mehr umgesetzt: sonst verknotet es sich. */
-          var jetztH = plaetzeBauen(), nochDa = false, ichNoch = !meinPlatzH, zielFrei = true;
-          jetztH.forEach(function (pl) {
-            if (pl.id === wenH.id && pl.nummer === seinerH.nummer) nochDa = true;
-            if (pl.ich && pl.nummer === meinPlatzH) ichNoch = true;
-            if (pl.nummer === nummerH && !pl.leer && (!dortH || pl.id !== dortH.id)) zielFrei = false;
-          });
-          if (!nochDa || !ichNoch || !zielFrei) return;
           /* RUNDE 98 — HIER, und keinen Wimpernschlag frueher. */
           sitzTausch[wenH.id] = nummerH - 1;
           if (dortH) sitzTausch[dortH.id] = seinerH.nummer - 1;
-          sitzSchicken([wenH.id, dortH && dortH.id], satzH);
+          senden({ art: "sitzplatz", ordnung: sitzTausch, text: satzH });
           melden();
         } catch (e) {}
       };
       /* Der Kran setzt spaeter ab als die Angel: sein Seil geht erst
          wieder herunter (lcGekrantR98, 88 % von 2,6 s = 2288 ms). */
-      /* RUNDE 99: die Angel wirft jetzt erst aus, beisst, holt ein —
-         abgesetzt ist bei 3150 ms (lcHeber in app.js, T_AB). */
-      var dauerH = wieH === "lasso" ? 2300 : wieH === "kranheben" ? 2420 : 3150;
-      offeneZuege.push({ werfer: zustand.ichName, wen: wenH.name, ziel: nummerH,
-                         bis: Date.now() + dauerH + 200, uhr: setTimeout(schickenH, dauerH) });
+      setTimeout(schickenH, wieH === "lasso" ? 2300
+                 : wieH === "kranheben" ? 2400 : 2250);
       /* Und die Angel braucht das ZIEL: sie zieht dorthin, nicht zu
          mir. Ohne diese Zahl koennte die Animation gar nicht wissen,
          wohin sie angeln soll. */
@@ -12254,7 +12184,7 @@ window.LiveChat = (function () {
           if (zustand.raum !== raumL) return;
           sitzTausch[idL] = zielL - 1;
           if (dortL) sitzTausch[dortL.id] = seinerL.nummer - 1;
-          sitzSchicken([idL, dortL && dortL.id], satzL);
+          senden({ art: "sitzplatz", ordnung: sitzTausch, text: satzL });
           melden();
         } catch (e) {}
         /* 3050 ms: das Bild ist bei 92 % der Kletterei (3200 ms) oben
@@ -14433,28 +14363,6 @@ window.LiveChat = (function () {
     /* Punkte aus dem Klassenzimmer gehen durch dieselbe Tuer wie
        jede Spielrunde — app.js meldet sich hier an. */
     platzNehmen: platzNehmen,
-    /* RUNDE 99 — zu zweit reisen: der, der losfaehrt, setzt BEIDE in
-       EINER Nachricht um (siehe sitzSchicken). */
-    zuZweitSetzen: function (nrIch, mitName, nrMit) {
-      if (zustand.lage !== "drin") return { ok: false };
-      var mit = personNachName(mitName);
-      if (!mit) return { ok: false };
-      var a = Number(nrIch), b = Number(nrMit);
-      if (!(a >= 1 && a <= PLAETZE && b >= 1 && b <= PLAETZE) || a === b) return { ok: false };
-      var jetzt = plaetzeBauen(), frei = true;
-      jetzt.forEach(function (pl) {
-        if ((pl.nummer === a || pl.nummer === b) && !pl.leer
-            && pl.id !== zustand.ichId && pl.id !== mit.id) frei = false;
-      });
-      if (!frei) return { ok: false };
-      sitzTausch[zustand.ichId] = a - 1;
-      sitzTausch[mit.id] = b - 1;
-      var satz = zustand.ichName + " und " + mit.name + " sind zu zweit auf Platz "
-        + a + " und " + b + " angekommen.";
-      sitzSchicken([zustand.ichId, mit.id], satz);
-      melden();
-      return { ok: true, text: satz };
-    },
     befehlAusZeichen: befehlAusZeichen,
     sprechbilder: function () { return Object.assign({}, SPRECHBILDER); },
     sprechbild: function () { return zustand.sprechbild || gemerktesSprechbild(); },

@@ -58,9 +58,14 @@ console.log("\nERST DIE ANIMATION, DANN DER PLATZWECHSEL\n");
    Lasso (Seil herunter, anschlagen, hinueberfahren, absetzen). Aus
    zwei Wartezeiten sind drei geworden; die Regel bleibt dieselbe:
    die Sitzordnung geht erst hinaus, wenn die Animation durch ist. */
+/* RUNDE 99 — die Angel wirft jetzt erst aus, beisst und holt ein:
+   abgesetzt bei 3150 ms; der neu gezeichnete Kran setzt bei 86 % von
+   2,8 s = 2408 ms ab, deshalb 2420. Die Regel bleibt: erst die
+   Animation, dann die Sitzordnung. */
 pruefe("die Sitzordnung geht erst raus, wenn die Animation da ist",
-  /setTimeout\(schickenH, wieH === "lasso" \? 2300\s*:\s*wieH === "kranheben" \? 2400 : 2250\);/
-    .test(lc.replace(/\s+/g, " ")));
+  /var dauerH = wieH === "lasso" \? 2300 : wieH === "kranheben" \? 2420 : 3150;/
+    .test(lc.replace(/\s+/g, " "))
+  && /setTimeout\(schickenH, dauerH\)/.test(lc));
 pruefe("und sie geht gar nicht raus, wenn der Raum gewechselt hat",
   /if \(zustand\.raum !== raumH\) return;/.test(lc));
 
