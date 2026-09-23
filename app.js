@@ -52552,6 +52552,45 @@
       if (anders) slfNeuRechnen();
       return Object.assign(window.DMA_PRUEF.slfProbeStand(), { anders });
     },
+    /* RUNDE 98 — DER WECHSEL DES SPIELFUEHRERS ZUM NACHMESSEN.
+       XANDER: „dann ist der mit den meisten Punkten der naechste
+       Spielfuehrer, der dann beim Alphabet den Buchstaben bestimmt."
+       Aufgebaut wird ein Raum mit Punktestand; gedrueckt wird die
+       ECHTE Uebergabe (slfFuehrungWeitergeben), nicht eine
+       nachgebaute. */
+    slfProbeFuehrung: function (w) {
+      slfProbeIch = w.ich || null;
+      slfGesamt = Object.assign({}, w.gesamt || {});
+      slfUrteile = {};
+      slfLauf = null;
+      slfRaum = {
+        id: "probe", host: w.host, hostName: w.hostName || "",
+        fuehrer: w.fuehrer || w.host, fuehrerName: w.fuehrerName || w.hostName || "",
+        mitglieder: w.mitglieder || [], zeilen: [], phase: "vergleich",
+        buchstabe: w.buchstabe || "m", spalten: ["stadt", "land", "fluss"],
+        blaetter: {}, anwesend: {}, runde: 1, stand: 1,
+      };
+      (w.mitglieder || []).forEach((m) => { slfRaum.anwesend[m.id] = true; });
+      return window.DMA_PRUEF.slfProbeFuehrungStand();
+    },
+    slfProbeFuehrungWechseln: function () {
+      const neu = slfFuehrungWeitergeben();
+      return Object.assign(window.DMA_PRUEF.slfProbeFuehrungStand(),
+        { uebergeben: neu || null });
+    },
+    slfProbeFuehrungStand: function () {
+      return {
+        ich: slfIch(),
+        host: slfRaum && slfRaum.host,
+        fuehrer: slfRaum && slfRaum.fuehrer,
+        fuehrerName: slfRaum && slfRaum.fuehrerName,
+        binFuehrer: slfFuehrerIch(),
+        darfUrteilen: slfDarfUrteilen(),
+        warteraum: (function () {
+          try { return slfWarteraumHtml(); } catch (e) { return String(e); }
+        })(),
+      };
+    },
     slfProbeStand: function () {
       return {
         html: slfVergleichHtml(),
@@ -67342,11 +67381,63 @@
        · der Raumgeber, der den Buchstaben festgelegt hat,
        · der Lehrer, auch wenn er nur Gast im Raum ist.
      ================================================================= */
+  /* RUNDE 98 — BIN ICH DER SPIELFUEHRER?
+     XANDER: „es gibt einen Spielfuehrer und der sieht dann das
+     Alphabet durchlaufen und kriegt dann Stop … und dann ist der mit
+     den meisten Punkten der naechste Spielfuehrer."
+     Ohne Raum (allein gegen den Fuchs) ist man es immer. */
+  function slfFuehrerIch() {
+    if (!slfRaum) return true;
+    return (slfRaum.fuehrer || slfRaum.host) === slfIch();
+  }
+  function slfFuehrerName() {
+    if (!slfRaum) return slfMeinName();
+    return slfRaum.fuehrerName || slfRaum.hostName || "Der Spielf\u00fchrer";
+  }
   function slfDarfUrteilen() {
     if (!slfRaum) return true;
-    if (slfRaum.host === slfIch()) return true;
+    /* RUNDE 98 — nicht mehr der Raumgeber entscheidet, sondern der
+       SPIELFUEHRER. Der Lehrer darf weiterhin ueberall streichen. */
+    if (slfFuehrerIch()) return true;
     if (Backend.isOwner && Backend.isOwner()) return true;
     return Boolean(Backend.canModerate && Backend.canModerate());
+  }
+  /* WER FUEHRT DIE NAECHSTE RUNDE? Der mit den meisten Punkten.
+     Bei Gleichstand bleibt der bisherige Spielfuehrer — sonst
+     wechselte die Fuehrung bei jedem Unentschieden hin und her. */
+  /* DIE UEBERGABE SELBST. Sie steht hier fuer sich, damit sie
+     nachmessbar ist und nicht nur mitten im Zeichnen passiert. */
+  function slfFuehrungWeitergeben() {
+    if (!slfRaum || slfRaum.host !== slfIch()) return null;
+    const neu = slfNaechsterFuehrer();
+    if (!neu) return null;
+    slfRaum.fuehrer = neu.id;
+    slfRaum.fuehrerName = neu.name;
+    try {
+      slfAnAlleSchreiben({ fuehrer: neu.id, fuehrerName: neu.name }).catch(() => {});
+    } catch (e) {}
+    try {
+      showToast("\ud83c\udfc6 " + neu.name + " f\u00fchrt die n\u00e4chste Runde \u2014 "
+        + neu.punkte + " Punkte.");
+    } catch (e) {}
+    return neu;
+  }
+  function slfNaechsterFuehrer() {
+    if (!slfRaum || !slfRaum.mitglieder || slfRaum.mitglieder.length < 2) return null;
+    let besterName = "", besteZahl = -1;
+    Object.keys(slfGesamt).forEach((nm) => {
+      const z = Number(slfGesamt[nm]) || 0;
+      if (z > besteZahl) { besteZahl = z; besterName = nm; }
+    });
+    if (!besterName) return null;
+    /* Gleichstand an der Spitze? Dann bleibt es, wie es ist. */
+    const gleichAuf = Object.keys(slfGesamt)
+      .filter((nm) => (Number(slfGesamt[nm]) || 0) === besteZahl);
+    if (gleichAuf.length !== 1) return null;
+    const m = slfRaum.mitglieder.find((x) =>
+      String(x.name || "").trim().toLowerCase() === besterName.trim().toLowerCase());
+    if (!m || m.id === (slfRaum.fuehrer || slfRaum.host)) return null;
+    return { id: m.id, name: m.name || besterName, punkte: besteZahl };
   }
 
   /* Ein Wort streichen oder wieder gelten lassen. */
@@ -67458,6 +67549,10 @@
      Deshalb drei Arten statt zwei. „rad" ist die neue und ist
      voreingestellt, weil sie die ist, die er beschrieben hat. */
   let slfWahlmodus = "rad";      // "rad" | "zufall" | "selbst"
+  /* RUNDE 98 — die Nummer des zuletzt ausgefuehrten Rundenwunsches.
+     Ohne sie startete derselbe Wunsch bei jedem Abfragetakt eine neue
+     Runde, im Sekundentakt. */
+  let slfLetzterWunsch = 0;
   let slfEigenerBuchstabe = "";
   let slfRadLaeuft = false;      // das Alphabet dreht sich gerade
   let slfRadBuchstabe = "";      // was dabei herausgekommen ist
@@ -67491,7 +67586,15 @@
   }
   let slfGesamt = {};            // { spielerId: Punkte } über mehrere Runden
 
+  /* RUNDE 98 — EINE PRUEFKENNUNG.
+     Der Wechsel des Spielfuehrers haengt daran, WER man ist. Auf der
+     Pruefbuehne ist niemand angemeldet, also waere man niemand — und
+     jede Messung liefe ins Leere. Diese eine Zeile erlaubt es, von
+     aussen zu sagen: „ich bin jetzt Bea". Im Betrieb ist sie null und
+     aendert nichts. */
+  let slfProbeIch = null;
   function slfIch() {
+    if (slfProbeIch) return slfProbeIch;
     const u = Backend.currentUser();
     return u ? (u.id || u.email) : null;
   }
@@ -67570,9 +67673,21 @@
     const da = alle.filter((m) => r.anwesend[m.id]);
     const fehlen = alle.filter((m) => !r.anwesend[m.id]);
     const binHost = r.host === slfIch();
+    /* RUNDE 98 — ZWEI ROLLEN, NICHT EINE.
+       XANDER: „es gibt einen Spielfuehrer und der sieht dann das
+       Alphabet durchlaufen und kriegt dann Stop … und dann ist der
+       mit den meisten Punkten der naechste Spielfuehrer, der dann
+       beim Alphabet den Buchstaben bestimmt."
+       Der RAUMGEBER richtet den Raum ein (Spalten, Abbrechen) — der
+       SPIELFUEHRER bestimmt den Buchstaben und startet die Runde.
+       Am Anfang ist beides dieselbe Person. */
+    const binFuehrer = slfFuehrerIch();
     return `
       <div class="question-card">
-        <p class="eyebrow">🚪 WARTERAUM</p>
+        <p class="eyebrow">\ud83d\udeaa WARTERAUM</p>
+        ${r.mitglieder.length > 1 ? `<p class="empty-note" style="margin:0 0 8px;">
+          \ud83c\udfc6 Spielf\u00fchrer: <strong>${escapeHtml(slfFuehrerName())}</strong>${
+            binFuehrer ? " \u2014 das bist du" : ""}</p>` : ""}
         <p class="empty-note" style="margin-bottom:10px;">
           ${fehlen.length
             ? `Es geht los, sobald alle da sind. ${fehlen.length === 1 ? "Eine Person fehlt" : fehlen.length + " Personen fehlen"} noch.`
@@ -67586,7 +67701,8 @@
               <span class="empty-note">${r.anwesend[m.id] ? "ist da" : "wartet noch"}</span>
             </div>`).join("")}
         </div>
-        ${binHost ? `
+        ${(binHost || binFuehrer) ? `
+          ${binHost ? `
           ${/* RUNDE 87 — XANDER: „dass man noch zusaetzliche Kategorien
                 eintragen kann … und die bleiben dann auch in
                 aufeinanderfolgenden Runden so voreingestellt."
@@ -67605,8 +67721,8 @@
           <p class="empty-note" style="margin:6px 0 0;">
             Ausgewählt: <strong>${slfExtra().length + 3}</strong> Spalten — sie bleiben
             auch in den nächsten Runden so, bis ihr das Spiel beendet.
-          </p>
-
+          </p>` : ""}
+          ${binFuehrer ? `
           <p class="eyebrow" style="margin-top:14px;">WOHER KOMMT DER BUCHSTABE?</p>
           <div class="order-toggle" style="margin-bottom:8px;">
             <button type="button" class="order-pill" data-slf-wahl="rad" aria-selected="${slfWahlmodus === "rad"}">🎰 Alphabet anhalten</button>
@@ -67629,14 +67745,16 @@
             <p class="empty-note" style="margin-bottom:6px;">Für den Fall, dass ihr zusammen am Telefon sitzt und einer „Stopp" sagt.</p>
             <input type="text" id="slfBuchstabeFeld" class="vocab-search" maxlength="1" placeholder="Ein Buchstabe, z. B. M"
                    value="${escapeHtml(slfEigenerBuchstabe)}" style="max-width:160px; text-transform:uppercase;" />` : ""}
+          ` : ""}
           <div class="quiz-actions" style="justify-content:flex-start; flex-wrap:wrap; gap:8px; margin-top:10px;">
-            <button type="button" class="btn btn-coffee" id="slfJetztStarten" ${fehlen.length ? "disabled" : ""}>
-              ${fehlen.length ? "⏳ Warten auf " + fehlen.length : "▶️ Runde starten"}
-            </button>
-            <button type="button" class="btn btn-ghost" id="slfTrotzdem">Ohne die Fehlenden starten</button>
-            <button type="button" class="btn btn-ghost" id="slfRaumSchliessen">Abbrechen</button>
+            ${binFuehrer ? `<button type="button" class="btn btn-coffee" id="slfJetztStarten" ${fehlen.length ? "disabled" : ""}>
+              ${fehlen.length ? "\u23f3 Warten auf " + fehlen.length : "\u25b6\ufe0f Runde starten"}
+            </button>` : ""}
+            ${binHost ? `<button type="button" class="btn btn-ghost" id="slfTrotzdem">Ohne die Fehlenden starten</button>
+            <button type="button" class="btn btn-ghost" id="slfRaumSchliessen">Abbrechen</button>` : ""}
+            ${!binHost ? `<button type="button" class="btn btn-ghost" id="slfRaumVerlassen">Warteraum verlassen</button>` : ""}
           </div>` : `
-          <p class="empty-note" style="margin-top:12px;">${escapeHtml(r.hostName)} startet die Runde, sobald alle da sind.</p>
+          <p class="empty-note" style="margin-top:12px;">${escapeHtml(slfFuehrerName())} startet die Runde, sobald alle da sind.</p>
           <button type="button" class="btn btn-ghost" id="slfRaumVerlassen" style="margin-top:8px;">Warteraum verlassen</button>`}
       </div>`;
   }
@@ -67662,6 +67780,17 @@
     slfRaum = {
       id: "raum-" + Date.now(),
       host: ich, hostName: slfMeinName(),
+      /* RUNDE 98 — DER SPIELFUEHRER IST NICHT DER RAUMGEBER.
+         XANDER (23.09.2026): „dann ist der mit dem meisten Punkten der
+         naechste Spielfuehrer, der dann beim Alphabet den Buchstaben
+         bestimmt … und dann immer so weiter, bis man die Runde von
+         selbst beendet."
+         Der RAUMGEBER bleibt, wer die Einladungen verschickt hat — er
+         ist die Stelle, die den Stand in alle Zeilen zurueckschreibt.
+         Der SPIELFUEHRER dagegen wechselt: er bestimmt den Buchstaben
+         und entscheidet, welches Wort gilt. Zu Beginn sind beide
+         dieselbe Person. */
+      fuehrer: ich, fuehrerName: slfMeinName(),
       mitglieder: [{ id: ich, name: slfMeinName() }],
       anwesend: { [ich]: true },
       zeilen: [],                 // die Einladungs-Kennungen, eine je Gast
@@ -67755,6 +67884,7 @@
         /* Der Raumgeber sammelt ein, wer sich gemeldet hat, und schreibt
            den Stand in ALLE Zeilen zurück — dadurch sehen alle dasselbe. */
         let geaendert = false;
+        let wunschRunde = "";
         meine.forEach((c) => {
           const a = (c.extra && c.extra.anwesend) || {};
           Object.keys(a).forEach((k) => {
@@ -67768,7 +67898,24 @@
              Urteil steht in SEINER Zeile; der Raumgeber nimmt es auf
              und schreibt es gleich an alle zurueck. */
           if (slfUrteileMischen(c.extra && c.extra.urteile)) geaendert = true;
+          /* RUNDE 98 — DER WUNSCH DES SPIELFUEHRERS.
+             XANDER: „er klickt den Buchstaben dann an und dann
+             muessen alle den Buchstaben spielen, den er ansagt."
+             Ist der Spielfuehrer ein Gast, kann er nur in seine
+             eigene Zeile schreiben. Hier liest der Raumgeber ihn
+             heraus und startet damit die Runde — fuer alle. */
+          const w = c.extra && c.extra.wunsch;
+          if (w && w.nr && w.nr !== slfLetzterWunsch
+              && w.von === (slfRaum.fuehrer || slfRaum.host)
+              && /^[a-z\u00e4\u00f6\u00fc]$/i.test(String(w.buchstabe || ""))) {
+            slfLetzterWunsch = w.nr;
+            wunschRunde = String(w.buchstabe).toLowerCase();
+          }
         });
+        if (wunschRunde) {
+          slfRundeMitBuchstaben(wunschRunde, true).catch(() => {});
+          return;
+        }
         if (geaendert) {
           if (slfLauf && slfLauf.phase === "vergleich") slfNeuRechnen();
           await slfAnAlleSchreiben({
@@ -67782,6 +67929,14 @@
       const e = c.extra || {};
       slfRaum.zeilen = [{ id: c.id, spieler: slfIch() }];
       slfRaum.mitglieder = e.mitglieder || slfRaum.mitglieder;
+      /* RUNDE 98 — wer gerade Spielfuehrer ist, steht im Raumstand.
+         Ohne diese zwei Zeilen bliebe die Fuehrung bei den Gaesten
+         fuer immer beim Raumgeber, und der Punktbeste haette sie nur
+         auf dem Geraet des Raumgebers. */
+      if (e.fuehrer) {
+        slfRaum.fuehrer = e.fuehrer;
+        slfRaum.fuehrerName = e.fuehrerName || slfRaum.fuehrerName;
+      }
       slfRaum.anwesend = Object.assign({}, e.anwesend || {}, slfRaum.anwesend);
       slfRaum.blaetter = Object.assign({}, e.blaetter || {}, slfRaum.blaetter);
       if (e.stand && e.stand > slfRaum.stand) {
@@ -67874,23 +68029,65 @@
   }
 
   /* ---------- Die Runde starten ---------- */
-  async function slfRundeStarten(ohneFehlende) {
-    const r = slfRaum;
-    if (!ohneFehlende && r.mitglieder.some((m) => !r.anwesend[m.id])) return;
-    if (ohneFehlende) {
-      r.mitglieder = r.mitglieder.filter((m) => r.anwesend[m.id]);
+  /* RUNDE 98 — WELCHER BUCHSTABE GILT JETZT? An EINER Stelle, damit
+     der Spielfuehrer denselben schickt, den er vor sich sieht. */
+  function slfBuchstabeJetzt() {
+    if (slfWahlmodus === "selbst" && /^[a-z\u00e4\u00f6\u00fc]$/i.test(slfEigenerBuchstabe.trim())) {
+      return slfEigenerBuchstabe.trim().toLowerCase();
     }
-    let buchstabe;
-    if (slfWahlmodus === "selbst" && /^[a-zäöü]$/i.test(slfEigenerBuchstabe.trim())) {
-      buchstabe = slfEigenerBuchstabe.trim().toLowerCase();
-    } else if (slfWahlmodus === "rad" && /^[a-zäöü]$/i.test(String(slfRadBuchstabe))) {
+    if (slfWahlmodus === "rad" && /^[a-z\u00e4\u00f6\u00fc]$/i.test(String(slfRadBuchstabe))) {
       /* RUNDE 87 — „so wird das naemlich gleich im System eingeloggt,
          dass dieser Buchstabe verlangt wird." Der angehaltene
          Buchstabe gilt, und zwar fuer alle: er reist mit der Runde. */
-      buchstabe = String(slfRadBuchstabe).toLowerCase();
-    } else {
-      buchstabe = slfZufallsrunde().buchstabe;
+      return String(slfRadBuchstabe).toLowerCase();
     }
+    return slfZufallsrunde().buchstabe;
+  }
+  /* Der Raumgeber startet eine Runde mit einem VORGEGEBENEN Buchstaben
+     — dem, den der Spielfuehrer angehalten hat. */
+  async function slfRundeMitBuchstaben(buchstabe, ohneFehlende) {
+    const merkModus = slfWahlmodus, merkEigen = slfEigenerBuchstabe;
+    slfWahlmodus = "selbst";
+    slfEigenerBuchstabe = buchstabe;
+    try { await slfRundeStarten(ohneFehlende); }
+    finally { slfWahlmodus = merkModus; slfEigenerBuchstabe = merkEigen; }
+  }
+  async function slfRundeStarten(ohneFehlende, vorgabe) {
+    const r = slfRaum;
+    if (!ohneFehlende && r.mitglieder.some((m) => !r.anwesend[m.id])) return;
+    /* =================================================================
+       RUNDE 98 — WENN DER SPIELFUEHRER NICHT DER RAUMGEBER IST
+       -----------------------------------------------------------------
+       XANDER: „dann ist der mit den meisten Punkten der naechste
+       Spielfuehrer, der dann beim Alphabet den Buchstaben bestimmt …
+       er klickt den Buchstaben dann an und dann muessen alle den
+       Buchstaben spielen, den er ansagt."
+       In alle Zeilen schreiben kann nur der RAUMGEBER — ein Gast hat
+       nur seine eigene. Also schickt der Spielfuehrer seinen
+       Buchstaben als WUNSCH in seine eigene Zeile; der Raumgeber
+       liest ihn beim naechsten Nachsehen und startet damit die Runde.
+       Denselben Weg gehen die Urteile schon seit Runde 88.
+       ================================================================= */
+    if (r.host !== slfIch()) {
+      if (!slfFuehrerIch()) return;
+      const wunschBuchstabe = slfBuchstabeJetzt();
+      const meine = (r.zeilen || [])[0];
+      if (!meine) return;
+      try {
+        await Backend.updateChallengeExtra(meine.id,
+          { wunsch: { nr: Date.now(), buchstabe: wunschBuchstabe, von: slfIch() } });
+        showToast("\u25b6\ufe0f Buchstabe " + wunschBuchstabe.toUpperCase()
+          + " \u2014 die Runde startet gleich f\u00fcr alle.");
+      } catch (e) {}
+      return;
+    }
+    if (vorgabe && /^[a-z\u00e4\u00f6\u00fc]$/i.test(String(vorgabe))) {
+      return slfRundeMitBuchstaben(String(vorgabe).toLowerCase(), ohneFehlende);
+    }
+    if (ohneFehlende) {
+      r.mitglieder = r.mitglieder.filter((m) => r.anwesend[m.id]);
+    }
+    const buchstabe = slfBuchstabeJetzt();
     /* Die gewaehlten Zusatzspalten gelten fuer JEDE Runde, bis das
        Spiel abgebrochen wird — nicht nur fuer die erste. */
     const spalten = slfSpaltenJetzt();
@@ -67967,6 +68164,7 @@
     const z = slfZufallsrunde();
     slfRaum = {
       id: "allein", host: slfIch() || "ich", hostName: slfMeinName(),
+      fuehrer: slfIch() || "ich", fuehrerName: slfMeinName(),
       mitglieder: [{ id: slfIch() || "ich", name: slfMeinName() }],
       anwesend: { [slfIch() || "ich"]: true }, zeilen: [],
       phase: "countdown", runde: 1, stand: 1,
@@ -67984,6 +68182,9 @@
     const ich = slfIch();
     slfRaum = {
       id: e.raum, host: e.host, hostName: e.hostName || c.mitName,
+      /* Wer Spielfuehrer ist, steht im Raumstand — zu Beginn der
+         Raumgeber, spaeter der mit den meisten Punkten. */
+      fuehrer: e.fuehrer || e.host, fuehrerName: e.fuehrerName || e.hostName || c.mitName,
       mitglieder: e.mitglieder || [{ id: e.host, name: c.mitName }, { id: ich, name: slfMeinName() }],
       anwesend: Object.assign({}, e.anwesend || {}, { [ich]: true }),
       zeilen: [{ id: c.id, spieler: ich }],
@@ -68050,6 +68251,12 @@
     const { runde, blaetter, wertung } = slfLauf;
     const max = Math.max(...wertung.punkte);
     const binHost = slfRaum && slfRaum.host === slfIch();
+    /* RUNDE 98 — die naechste Runde startet der SPIELFUEHRER, nicht
+       der Raumgeber. XANDER: „dann ist der mit den meisten Punkten
+       der naechste Spielfuehrer, der dann beim Alphabet den
+       Buchstaben bestimmt … und dann immer so weiter, bis man die
+       Runde von selbst beendet." */
+    const binFuehrer = slfFuehrerIch();
     /* RUNDE 88 — „so dass die Ergebnisse beim Spielfuehrer immer
        vorliegen und er dann entscheiden kann, ob die Woerter Sinn
        machen, ob wir die verwenden koennen." Der Knopf sitzt in der
@@ -68094,11 +68301,11 @@
         <p class="ak-b-hinweis">20 = nur du hattest etwas · 10 = eigenes Wort · 5 = dasselbe Wort · 0 = leer oder falscher Anfangsbuchstabe</p>
         ${darf
           ? `<p class="ak-b-hinweis">Du wertest aus: Mit <strong>✖</strong> streichst du ein Wort, das nicht gilt. Es zaehlt dann fuer niemanden mehr — und wer als Einziger uebrig bleibt, bekommt seine 20 Punkte.</p>`
-          : `<p class="ak-b-hinweis">${escapeHtml((slfRaum && slfRaum.hostName) || "Der Spielfuehrer")} entscheidet, ob ein Wort gilt. Gestrichene Woerter stehen durchgestrichen da.</p>`}
+          : `<p class="ak-b-hinweis">${escapeHtml(slfFuehrerName())} entscheidet, ob ein Wort gilt. Gestrichene Woerter stehen durchgestrichen da.</p>`}
         <div class="quiz-actions" style="justify-content:center; margin-top:12px; flex-wrap:wrap; gap:8px;">
-          ${(!slfRaum || binHost)
-            ? `<button type="button" class="btn btn-coffee" id="slfNochmal">🔄 Noch eine Runde — neuer Buchstabe</button>`
-            : `<p class="empty-note" style="width:100%;">${escapeHtml((slfRaum && slfRaum.hostName) || "Der Raumgeber")} kann gleich die nächste Runde starten — bleib einfach hier.</p>`}
+          ${(!slfRaum || binFuehrer)
+            ? `<button type="button" class="btn btn-coffee" id="slfNochmal">\ud83d\udd04 Noch eine Runde \u2014 neuer Buchstabe</button>`
+            : `<p class="empty-note" style="width:100%;">${escapeHtml(slfFuehrerName())} f\u00fchrt jetzt \u2014 er bestimmt den n\u00e4chsten Buchstaben. Bleib einfach hier.</p>`}
           <button type="button" class="btn btn-ghost" id="slfAbbrechen">Zur Übersicht</button>
         </div>
         ${miniBugReportBtnHtml("Stadt-Land-Fluss, Buchstabe " + runde.buchstabe)}
@@ -68320,6 +68527,15 @@
     slfRaum.phase = "vergleich";
     slfGesamtZaehlen(blaetter, slfLauf.wertung);
     slfPunkteBuchen();
+    /* RUNDE 98 — DIE FUEHRUNG WECHSELT ZUM PUNKTBESTEN.
+       XANDER: „dann ist der mit den meisten Punkten der naechste
+       Spielfuehrer, der dann beim Alphabet den Buchstaben bestimmt …
+       und dann immer so weiter, bis man die Runde von selbst
+       beendet."
+       Geschrieben wird das nur vom RAUMGEBER — er ist die Stelle, die
+       in alle Zeilen schreibt. Alle anderen lesen es beim naechsten
+       Nachsehen. */
+    slfFuehrungWeitergeben();
     if (slfPoller) { clearInterval(slfPoller); slfPoller = null; }
     slfPollenStarten(false);   // weiter horchen: der Raumgeber kann eine neue Runde starten
     renderStadtLandFluss();
