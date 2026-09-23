@@ -1033,6 +1033,15 @@ window.LiveChat = (function () {
     mieze:    { wirkung: "mieze",    satz: "wird von der Katze gespielt zu", emoji: "\ud83d\udc31" },
     gotteshand: { wirkung: "gotteshand", satz: "wird von einer riesigen Hand gesetzt zu", emoji: "\ud83e\udd1a" },
     pranke:   { wirkung: "pranke",   satz: "wird von der Gorillapranke gesetzt zu", emoji: "\ud83e\udd8d" },
+    /* RUNDE 99 — XANDER: „Es koennen auch mehr Haende sein, eine
+       Mann-Hand, eine Frauen-Hand." Dazu die Hexe und der Android aus
+       Runde 88. Jede Hand braucht DREI Eintragungen (hier, in
+       LC_EFFEKTE und in BEFEHLE) — darauf achtet
+       werkzeug/pruefe-effekttueren.js. */
+    mannhand: { wirkung: "mannhand", satz: "wird von einer kr\u00e4ftigen Hand gesetzt zu", emoji: "\ud83d\udc4a" },
+    frauenhand: { wirkung: "frauenhand", satz: "wird von einer zarten Hand gesetzt zu", emoji: "\ud83d\udc85" },
+    hexenhand: { wirkung: "hexenhand", satz: "wird von einer Hexenklaue gepackt und gesetzt zu", emoji: "\ud83e\uddd9" },
+    roboterhand: { wirkung: "roboterhand", satz: "wird von einer Androidenhand gesetzt zu", emoji: "\ud83e\udd16" },
     frisbee:  { wirkung: "frisbee",  satz: "fliegt als Frisbee zu", emoji: "\ud83e\udd4f" },
     pferd:    { wirkung: "pferd",    satz: "reitet hin\u00fcber zu", emoji: "\ud83d\udc0e" },
     /* RUNDE 65 — XANDER: „Vielleicht schaffst du es noch, einen
@@ -9470,6 +9479,14 @@ window.LiveChat = (function () {
       was: "eine riesige Hand hebt dich heraus und setzt dich auf Platz 5" },
     { gr: "reden", w: "pranke", kurz: "", nutzt: "/pranke 5",
       was: "dieselbe Bewegung, aber mit der Pranke eines Gorillas" },
+    { gr: "reden", w: "mannhand", kurz: "", nutzt: "/mannhand 5",
+      was: "eine kr\u00e4ftige M\u00e4nnerhand \u2014 breiter, kurze N\u00e4gel, behaart" },
+    { gr: "reden", w: "frauenhand", kurz: "", nutzt: "/frauenhand 5",
+      was: "eine schmale Frauenhand mit lackierten N\u00e4geln" },
+    { gr: "reden", w: "hexenhand", kurz: "", nutzt: "/hexenhand 5",
+      was: "die gr\u00fcne Hexenklaue mit langen Krallen und Warzen" },
+    { gr: "reden", w: "roboterhand", kurz: "", nutzt: "/roboterhand 5",
+      was: "die Hand eines Androiden aus Metall" },
     { gr: "reden", w: "frisbee", kurz: "", nutzt: "/frisbee 5",
       was: "Frisbee \u2014 dein Bild fliegt sich drehend zu Platz 5" },
     { gr: "reden", w: "pferd", kurz: "reiten", nutzt: "/pferd 5",
@@ -11830,7 +11847,10 @@ window.LiveChat = (function () {
          || art === "greifvogel" || art === "turm"
          /* RUNDE 75 */
          || art === "untertasse" || art === "mieze" || art === "frisbee"
-         || art === "gotteshand" || art === "pranke")
+         || art === "gotteshand" || art === "pranke"
+         /* RUNDE 99 — die vier neuen Haende */
+         || art === "mannhand" || art === "frauenhand"
+         || art === "hexenhand" || art === "roboterhand")
         && /^\s*\d+(\s*-\s*\d+)*\s*$/.test(rest)) {
       var satzR = { flug: [" fliegt zu Platz ", "\u2708\ufe0f"],
                     maulwurf: [" gr\u00e4bt sich zu Platz ", "\ud83e\udda1"],
@@ -11854,6 +11874,10 @@ window.LiveChat = (function () {
                     mieze: [" wird von der Katze gespielt zu Platz ", "\ud83d\udc31"],
                     gotteshand: [" wird von einer riesigen Hand gesetzt auf Platz ", "\ud83e\udd1a"],
                     pranke: [" wird von der Gorillapranke gesetzt auf Platz ", "\ud83e\udd8d"],
+                    mannhand: [" wird von einer kr\u00e4ftigen Hand gesetzt auf Platz ", "\ud83d\udc4a"],
+                    frauenhand: [" wird von einer zarten Hand gesetzt auf Platz ", "\ud83d\udc85"],
+                    hexenhand: [" wird von einer Hexenklaue gesetzt auf Platz ", "\ud83e\uddd9"],
+                    roboterhand: [" wird von einer Androidenhand gesetzt auf Platz ", "\ud83e\udd16"],
                     frisbee: [" fliegt als Frisbee zu Platz ", "\ud83e\udd4f"],
                     /* RUNDE 92 — DER FAHRSTUHL HAT HIER GEFEHLT, und das
                        war kein Schoenheitsfehler: „satzR" blieb

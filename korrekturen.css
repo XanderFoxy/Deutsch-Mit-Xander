@@ -31554,3 +31554,44 @@ code, pre {
    anfasst. */
 .lc-platz-frei .lc-kreis { border-color: transparent !important; }
 .lc-platz-frei .lc-schild::before { content: "" !important; }
+
+/* =====================================================================
+   RUNDE 99 — DIE SECHS HAENDE: WAS AN DER FINGERKUPPE SITZT
+   ---------------------------------------------------------------------
+   XANDER (23.09.2026): „Es koennen auch mehr Haende sein, eine
+   Mann-Hand, eine Frauen-Hand."
+   Die Zeichnung ist fuer alle dieselbe — den Unterschied macht die
+   Kuppe. Deshalb steht er hier im Stilblatt und nicht im Programm:
+   wer den Lack roter haben will, aendert EINE Zeile.
+   ===================================================================== */
+.lc-rhand-lack {
+  fill: #c62b4e;
+  stroke: rgba(0, 0, 0, .3);
+  stroke-width: .8;
+}
+/* Die Kralle der Hexe. Sie steht in beiden Durchgaengen und traegt
+   ihren Umriss deshalb schon vom Kantendurchgang — hier nur die
+   Fuellung. */
+.lc-rhand-kralle {
+  fill: #2c2118;
+}
+/* Die Fingerplatte des Androiden: poliertes Metall, oben heller. */
+.lc-rhand-platte {
+  fill: rgba(238, 245, 250, .92);
+  stroke: rgba(12, 20, 28, .45);
+  stroke-width: .8;
+}
+/* Die drei Warzen der Hexe. Sie sitzen an festen Stellen — eine
+   Warze, die bei jedem Aufruf woanders klebt, sieht aus wie ein
+   Fehler und nicht wie eine Hexe. */
+.lc-rhand-warzen circle {
+  fill: #7e9163;
+  stroke: rgba(0, 0, 0, .32);
+  stroke-width: .8;
+}
+/* Der Gelenkpunkt des Androiden — ein kaltes Licht in der Fuge. */
+.lc-rhand-gelenk {
+  fill: #6fd8ee;
+  stroke: rgba(8, 24, 32, .7);
+  stroke-width: .7;
+}

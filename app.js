@@ -30235,8 +30235,13 @@
          und Gorilla Hand in der Kachel abgeschnitten. Dann sag lieber
          Gott und King Kong." Genau so: kurz genug, dass es in die
          Kachel passt. */
-      [["\ud83e\udd1a", "Gott", "gotteshand"],
-       ["\ud83e\udd8d", "King Kong", "pranke"]]],
+      /* RUNDE 99 — XANDER: „Es koennen auch mehr Haende sein, eine
+         Mann-Hand, eine Frauen-Hand." Sie stehen alle unter DERSELBEN
+         Kachel; die Namen sind kurz genug, dass nichts abgeschnitten
+         wird (dieselbe Regel wie in Runde 80). Gebaut aus
+         LC_HANDSORTEN — eine Hand mehr heisst: eine Zeile mehr dort. */
+      Object.keys(LC_HANDSORTEN).map((k) =>
+        [LC_HANDSORTEN[k].emoji, LC_HANDSORTEN[k].wort, k])],
      ["\ud83e\udd4f", "Frisbee", "frisbee"],
      ["\ud83d\udc0e", "Pferd", "pferd"],
      /* RUNDE 65: der Greifvogel und der Drei-Meter-Turm. */
@@ -32062,6 +32067,40 @@
 
      Wer im Betriebssystem „Bewegung reduzieren" eingestellt hat,
      bekommt gar keine (siehe Stilblatt). */
+  /* =====================================================================
+     RUNDE 99 — DIE SECHS HAENDE
+     ---------------------------------------------------------------------
+     XANDER (Runde 75): „Vielleicht kann man sich die Hand auch aussuchen
+     in der Auswahl."  XANDER (Runde 99): „Es koennen auch mehr Haende
+     sein, eine Mann-Hand, eine Frauen-Hand."
+     Hier steht ALLES, was die Haende unterscheidet — an EINER Stelle.
+     Wer eine siebte Hand will, traegt sie hier ein und braucht die
+     Zeichnung nicht anzufassen.
+       affe     behaart, dunkel, und die Naegel sind stumpf
+       schlank  Fingerbreite mal diesem Wert (1 = Standard)
+       lang     Gliedlaenge mal diesem Wert
+       spitze   was an der Fingerkuppe sitzt: "nagel" | "kralle" | "platte"
+       haut/kante/innen  eigene Farben; ohne sie gilt --lc-haut aus
+                dem Stilblatt, damit alle Menschenhaende gleich sind
+       haare    wie viele Haare auf dem Handruecken (0 = keine)
+       warzen   fuer die Hexe
+     ===================================================================== */
+  const LC_HANDSORTEN = {
+    gotteshand: { wort: "Gott",     emoji: "\ud83e\udd1a", spitze: "nagel" },
+    pranke:     { wort: "King Kong",emoji: "\ud83e\udd8d", spitze: "nagel", affe: true,
+                  haut: "#3a322c", kante: "#221c18", innen: "#5c4f45", haare: 26 },
+    mannhand:   { wort: "Mann",     emoji: "\ud83d\udc4a", spitze: "nagel",
+                  schlank: 1.1, lang: 0.97, haare: 9 },
+    frauenhand: { wort: "Frau",     emoji: "\ud83d\udc85", spitze: "lack",
+                  schlank: 0.84, lang: 1.07 },
+    hexenhand:  { wort: "Hexe",     emoji: "\ud83e\uddd9", spitze: "kralle",
+                  schlank: 0.74, lang: 1.14, warzen: 3,
+                  haut: "#9aad82", kante: "#3f4d33", innen: "#b6c79c" },
+    roboterhand:{ wort: "Android",  emoji: "\ud83e\udd16", spitze: "platte",
+                  schlank: 0.98, lang: 1, naehte: true,
+                  haut: "#aeb9c2", kante: "#4e5861", innen: "#d6dee5" }
+  };
+
   const LC_EFFEKTE = {
     /* Das Herz schlägt, statt wegzufliegen — deshalb weniger davon:
        sieben, die pulsieren, sind mehr als vierzehn, die verschwinden. */
@@ -32184,6 +32223,14 @@
     mieze:    { zeichen: ["\ud83d\udc31"], wie: 4, klasse: "umarmen" },
     gotteshand:{ zeichen: ["\ud83e\udd1a"], wie: 4, klasse: "umarmen" },
     pranke:   { zeichen: ["\ud83e\udd8d"], wie: 4, klasse: "umarmen" },
+    /* RUNDE 99 — vier weitere Haende. OHNE Eintrag hier steigt
+       lcWirkung gleich in der ersten Zeile aus; das ist in Runde 65
+       schon einmal passiert und wird seither von
+       werkzeug/pruefe-effekttueren.js bewacht. */
+    mannhand: { zeichen: ["\ud83d\udc4a"], wie: 4, klasse: "umarmen" },
+    frauenhand:{ zeichen: ["\ud83d\udc85"], wie: 4, klasse: "umarmen" },
+    hexenhand:{ zeichen: ["\ud83e\uddd9"], wie: 4, klasse: "umarmen" },
+    roboterhand:{ zeichen: ["\ud83e\udd16"], wie: 4, klasse: "umarmen" },
     frisbee:  { zeichen: ["\ud83e\udd4f"], wie: 4, klasse: "umarmen" },
     pferd:    { zeichen: ["\ud83d\udc0e"], wie: 4, klasse: "umarmen" },
     /* RUNDE 65: Greifvogel und Drei-Meter-Turm. Ohne Eintrag HIER
@@ -33125,7 +33172,9 @@
        „aufsetzen" (0,60 s, gemessen: Spitze -3,0 dB, Mittel -24,3 dB,
        der Aufsatz selbst bei 0,087 s). Frisbee behaelt „bonk" — eine
        gefangene Scheibe KLATSCHT wirklich. */
-    gotteshand: "aufsetzen", pranke: "aufsetzen", frisbee: "bonk"
+    gotteshand: "aufsetzen", pranke: "aufsetzen", frisbee: "bonk",
+    mannhand: "aufsetzen", frauenhand: "aufsetzen",
+    hexenhand: "aufsetzen", roboterhand: "aufsetzen"
   };
 
   const LC_TREFFER = {
@@ -38918,6 +38967,8 @@
                   beamen: 2600, rohr: 2800, heli: 3000, portal: 3400,
                   pferd: 3000, greifvogel: 3000, turm: 3400,
                   untertasse: 4000, mieze: 3200, gotteshand: 3400, pranke: 3400,
+                  mannhand: 3400, frauenhand: 3400, hexenhand: 3400,
+                  roboterhand: 3400,
                   frisbee: 2000 }[art] || 1800;
     const einheitR = lcPlatzAbstand(document.getElementById("lcPlaetze")) || 0;
     const streckeR = Math.hypot(ende.x - start.x, ende.y - start.y);
@@ -38957,7 +39008,7 @@
        16 % wegnehmen — dann griffe die Hand ins Leere. */
     if (art !== "maulwurf" && art !== "rohr" && art !== "beamen"
         && art !== "untertasse" && art !== "mieze" && art !== "frisbee"
-        && art !== "gotteshand" && art !== "pranke") {
+        && !LC_HANDSORTEN[art]) {
       try {
         /* RUNDE 80 — XANDER: „wenn das Schiff losfaehrt und ankommt …
            mein Foto ist noch kurz von der anderen Seite zu sehen …
@@ -43196,7 +43247,7 @@
          sonst wird aus dem Spiel ein Geschrei. */
       lcTonZu("mieze");
       lcTonSpaeter("katze", Math.round(hin * 0.55), 0.42);
-    } else if (art === "gotteshand" || art === "pranke") {
+    } else if (LC_HANDSORTEN[art]) {
       /* =============================================================
          RUNDE 75 — DIE UEBERDIMENSIONALE HAND
          -------------------------------------------------------------
@@ -43218,13 +43269,26 @@
          der vorsichtige Teil. Und das Bild haengt beim Tragen ein
          wenig nach: es schwingt der Hand hinterher.
          ============================================================= */
-      const gorilla = art === "pranke";
+      /* =============================================================
+         RUNDE 99 — MEHR HAENDE ZUR AUSWAHL
+         -------------------------------------------------------------
+         XANDER (23.09.2026): „Es koennen auch mehr Haende sein, eine
+         Mann-Hand, eine Frauen-Hand" — und aus Runde 88 steht die
+         Hexen- und die Androidenhand noch offen.
+         Alle sechs benutzen DIESELBE Zeichnung und DIESELBE Physik;
+         sie unterscheiden sich nur in dem, was eine Hand wirklich
+         unterscheidet: Farbe, Schlankheit, Fingerlaenge und was an
+         der Fingerspitze sitzt. Eine zweite, halb abgeschriebene
+         Hand waere genau das, was er „Trick 17" nennt. */
+      const sorte = LC_HANDSORTEN[art] || LC_HANDSORTEN.gotteshand;
+      const gorilla = !!sorte.affe;
       const versatzH = lcBildVersatz(ab.el);
       const versatzHZ = lcBildVersatz(zu.el);
       const startYH = start.y + versatzH;
       const endeYH = ende.y + versatzHZ;
       const hand = document.createElement("span");
-      hand.className = "lc-riesenhand" + (gorilla ? " lc-riesenhand-affe" : "");
+      hand.className = "lc-riesenhand lc-riesenhand-" + art
+        + (gorilla ? " lc-riesenhand-affe" : "");
       hand.style.setProperty("--gross", d + "px");
       /* RUNDE 97 — EINE HAUT FUER ALLE HAENDE.
          XANDER: „Du hast die Hand noch nicht vereinheitlicht."
@@ -43237,71 +43301,136 @@
          heisst „vereinheitlicht".
          Die Gorillapranke bleibt dunkel: sie ist keine Menschenhand. */
       const hautwerte = lcHaut();
-      const haut = gorilla ? "#3a322c" : hautwerte.haut;
-      const kante = gorilla ? "#221c18" : hautwerte.kante;
-      const innen = gorilla ? "#5c4f45" : hautwerte.hell;
+      /* Wer eigene Farben mitbringt (Gorilla, Hexe, Android), benutzt
+         sie; alle anderen kommen aus derselben Quelle wie jede andere
+         Hand im Haus — --lc-haut in korrekturen.css. */
+      const haut = sorte.haut || hautwerte.haut;
+      const kante = sorte.kante || hautwerte.kante;
+      const innen = sorte.innen || hautwerte.hell;
+      /* =============================================================
+         RUNDE 99 — „DURCHGAENGIG" HEISST: EIN UMRISS, NICHT VIELE
+         -------------------------------------------------------------
+         XANDER (23.09.2026): „Die von Gott und die Gorilla sind immer
+         noch nicht durchgaengige Haende."
+
+         GEMESSEN, nicht geraten: Runde 87 hatte die Kanten oben schon
+         geoeffnet — aber JEDES Teil trug seinen Strich weiterhin
+         selbst. Handruecken, Ballen, Daumengrundglied und Daumenkuppe
+         waren vier Formen mit vier eigenen Umrisslinien. Dort, wo zwei
+         davon aneinanderstossen, liegen zwei Striche nebeneinander,
+         und genau diese Doppellinie liest das Auge als Steckstelle.
+
+         JETZT WIRD DIE HAND ZWEIMAL GEZEICHNET:
+           Durchgang 1 („Kante"): dieselben Formen, alles in der
+             Kantenfarbe, dazu ein 2,6 px breiter Strich rundherum —
+             also eine um 1,3 px groessere Silhouette.
+           Durchgang 2 („Fuellung"): dieselben Formen, nur gefuellt,
+             ohne jeden Strich.
+         Weil Durchgang 2 vollstaendig ueber Durchgang 1 liegt, bleibt
+         vom Dunklen nur der AEUSSERE Rand stehen: ein einziger Umriss
+         um die ganze Hand, innen keine Naht mehr. Das ist zugleich die
+         „Maskierung der Zwischenstuecke" aus seiner Liste.
+
+         Der Arm faengt bei y = -6 an statt bei 0, damit der Strich des
+         ersten Durchgangs nicht als Deckel oben quer ueber den Arm
+         laeuft — er soll ja aus dem Bild herauskommen, nicht
+         abgeschnitten sein.
+         ============================================================= */
+      const rhUmriss = 2.6;
+      const rhVerlauf = "url(#lcHandFarbe" + (gorilla ? "G" : "M") + ")";
+      const rhTon = (m, farbe) => (m === "k" ? kante : farbe);
+      const rhStrich = (m) => (m === "k"
+        ? ' stroke="' + kante + '" stroke-width="' + rhUmriss
+          + '" stroke-linejoin="round" stroke-linecap="round"'
+        : "");
+      /* Ein Durchgang der RUECKSEITE: Arm, Handruecken, Ballen und der
+         zweigliedrige Daumen. Die beiden Daumengruppen tragen in
+         BEIDEN Durchgaengen dieselben Klassen — sonst wuerde sich nur
+         die Fuellung bewegen und die dunkle Silhouette stehenbleiben. */
+      const rhRueckteile = (m) =>
+        '<path d="M34 -6 L86 -6 L82 44 L38 44 Z" fill="' + rhTon(m, rhVerlauf) + '"'
+        + rhStrich(m) + '/>'
+        /* Der HANDRUECKEN. */
+        + '<path d="M30 40 C26 56 26 74 32 88 C38 102 56 110 72 106'
+        + ' C88 102 94 86 92 68 C90 52 86 44 82 40 Z"'
+        + ' fill="' + rhTon(m, rhVerlauf) + '"' + rhStrich(m) + '/>'
+        /* =========================================================
+           DER DAUMEN — RUNDE 87.
+           XANDER: „eine durchgaengige Hand mit Fingern … der Daumen
+           hinter dem Bild."
+           Ein Daumen hat zwei Glieder und zwei Gelenke, dazu den
+           Ballen (Thenar) an der Handwurzel — der Muskelberg, der ihn
+           ueberhaupt gegenueberstellen kann. Ohne den Ballen sieht ein
+           Daumen immer angeklebt aus.
+           Gegenueberstellung („Opposition") heisst: er schwenkt zur
+           Handmitte. Auf dem Bildschirm ist das eine NEGATIVE Drehung,
+           denn seine Spitze liegt links unten. Nachgerechnet: ein
+           Punkt bei (-1|+1) landet bei -20 Grad auf (-0,60|+1,28) —
+           also nach innen und nach unten, genau dorthin, wo der Griff
+           zumacht.
+           ========================================================= */
+        + '<path class="lc-rhand-ballen" d="M32 54 C22 56 16 66 16 78'
+        + ' C16 88 22 94 30 92 C36 90 38 78 38 66 C38 58 36 54 32 54 Z"'
+        + ' fill="' + rhTon(m, innen) + '"' + rhStrich(m) + '/>'
+        + '<g class="lc-rhand-daumen lc-rd-cmc" style="transform-origin:32px 62px">'
+        /* Grundglied: von der Handwurzel schraeg nach unten aussen. */
+        + '<path d="M38 58 C40 66 36 74 24 84 C18 88 12 84 14 76'
+        + ' C18 66 28 58 34 56 Z" fill="' + rhTon(m, innen) + '"' + rhStrich(m) + '/>'
+        + (m === "f" && gorilla
+            ? '<path d="M30 60 l-5 -3 M26 68 l-5 -2 M22 76 l-5 -1"'
+              + ' fill="none" stroke="#2a231e" stroke-width="2"'
+              + ' stroke-linecap="round"/>'
+            : "")
+        /* Die Falte am Daumengelenk — sie sagt, dass dort ein Gelenk
+           ist. Frueher tat das die Umrisslinie; die gibt es innen
+           nicht mehr. */
+        + (m === "f"
+            ? '<path d="M20 80 l6 4 M18 84 l6 3" fill="none"'
+              + ' stroke="rgba(0,0,0,.2)" stroke-width="1" stroke-linecap="round"/>'
+            : "")
+        + '<g class="lc-rd-mcp" style="transform-origin:16px 78px">'
+        /* Endglied mit der runden Kuppe. */
+        + '<path d="M20 78 C22 84 20 92 14 97 C9 101 3 98 4 91'
+        + ' C5 85 10 79 15 76 Z" fill="' + rhTon(m, haut) + '"' + rhStrich(m) + '/>'
+        /* RUNDE 99 — DER DAUMEN TRAEGT, WAS DIE FINGER AUCH TRAGEN.
+           Gemessen aufgefallen: die Hexe hatte vier Krallen und einen
+           gepflegten weissen Daumennagel, die Frau vier rote Naegel
+           und einen farblosen. Eine Hand, bei der ein Finger nicht
+           dazugehoert, ist genau das, was er „Glitch" nennt. */
+        + (sorte.spitze === "kralle"
+            ? (m === "k"
+                ? '<path transform="rotate(-34 11.5 89.5)"'
+                  + ' d="M7.2 91 C6.6 99 8.8 105 13.2 108.5'
+                  + ' C14.2 100.5 15.6 95.5 15.6 91 Z" fill="' + kante
+                  + '" stroke="' + kante + '" stroke-width="' + rhUmriss
+                  + '" stroke-linejoin="round"/>'
+                : '<path class="lc-rhand-kralle" transform="rotate(-34 11.5 89.5)"'
+                  + ' d="M7.2 91 C6.6 99 8.8 105 13.2 108.5'
+                  + ' C14.2 100.5 15.6 95.5 15.6 91 Z"/>')
+            : m !== "f" ? ""
+            : sorte.spitze === "platte"
+              ? '<ellipse class="lc-rhand-platte" cx="11.5" cy="89.5" rx="4.6" ry="5.8"'
+                + ' transform="rotate(-34 11.5 89.5)"/>'
+              : '<ellipse class="lc-rhand-nagel'
+                + (sorte.spitze === "lack" ? " lc-rhand-lack" : "")
+                + '" cx="11.5" cy="89.5" rx="4.2" ry="5.4"'
+                + ' transform="rotate(-34 11.5 89.5)"/>')
+        + "</g></g>";
       hand.innerHTML =
         '<svg class="lc-riesenhand-form" viewBox="0 0 120 150" aria-hidden="true">'
         + '<defs><linearGradient id="lcHandFarbe' + (gorilla ? "G" : "M") + '" x1="0" y1="0" x2="0" y2="1">'
         + '<stop offset="0" stop-color="' + innen + '"/>'
         + '<stop offset="1" stop-color="' + haut + '"/></linearGradient></defs>'
-        /* Der ARM kommt von oben aus dem Bild heraus — ohne ihn
-           schwebt eine abgetrennte Hand im Raum. */
-        + '<path d="M34 0 L86 0 L82 44 L38 44 Z" fill="url(#lcHandFarbe'
-        + (gorilla ? "G" : "M") + ')"/>'
-        /* Beim Gorilla ist der Arm behaart — kurze Striche am Rand. */
+        + '<g class="lc-rh-kante">' + rhRueckteile("k") + "</g>"
+        + '<g class="lc-rh-fuell">' + rhRueckteile("f") + "</g>"
+        /* Beim Gorilla ist der Arm behaart — kurze Striche am Rand.
+           Sie liegen UEBER beiden Durchgaengen, sonst waeren sie von
+           der Fuellung zugedeckt. */
         + (gorilla
             ? '<path d="M36 8 L28 4 M36 18 L27 15 M37 28 L28 26 M84 8 L92 4'
               + ' M84 18 L93 15 M83 28 L92 26" fill="none" stroke="#2a231e"'
               + ' stroke-width="3" stroke-linecap="round"/>'
             : "")
-        /* Der HANDRUECKEN. */
-        + '<path d="M30 40 C26 56 26 74 32 88 C38 102 56 110 72 106'
-        + ' C88 102 94 86 92 68 C90 52 86 44 82 40 Z"'
-        + ' fill="url(#lcHandFarbe' + (gorilla ? "G" : "M") + ')" stroke="' + kante
-        + '" stroke-width="2" stroke-linejoin="round"/>'
-        /* =========================================================
-           DER DAUMEN — RUNDE 87 NEU.
-           XANDER: „eine durchgaengige Hand mit Fingern … der Daumen
-           hinter dem Bild."
-           Er WAR schon hinten, aber er war EIN Klumpen. Ein Daumen
-           hat zwei Glieder und zwei Gelenke, dazu den Ballen
-           (Thenar) an der Handwurzel — das ist der Muskelberg, der
-           ihn ueberhaupt gegenueberstellen kann. Ohne den Ballen
-           sieht ein Daumen immer angeklebt aus.
-           Gegenueberstellung („Opposition") heisst: er schwenkt zur
-           Handmitte. Auf dem Bildschirm ist das eine NEGATIVE
-           Drehung, denn seine Spitze liegt links unten, und eine
-           positive Drehung wuerde sie noch weiter nach links
-           schicken. Nachgerechnet: ein Punkt bei (-1|+1) landet bei
-           -20 Grad auf (-0,60|+1,28) — also nach innen und nach
-           unten, genau dorthin, wo der Griff zumacht.
-           ========================================================= */
-        + '<path class="lc-rhand-ballen" d="M32 54 C22 56 16 66 16 78'
-        + ' C16 88 22 94 30 92 C36 90 38 78 38 66 C38 58 36 54 32 54 Z"'
-        + ' fill="' + innen + '" stroke="' + kante + '" stroke-width="1.6"'
-        + ' stroke-linejoin="round" opacity=".95"/>'
-        + '<g class="lc-rhand-daumen lc-rd-cmc" style="transform-origin:32px 62px">'
-        /* Grundglied: von der Handwurzel schraeg nach unten aussen. */
-        + '<path d="M38 58 C40 66 36 74 24 84 C18 88 12 84 14 76'
-        + ' C18 66 28 58 34 56 Z" fill="' + innen + '" stroke="' + kante
-        + '" stroke-width="1.8" stroke-linejoin="round"/>'
-        + (gorilla
-            ? '<path d="M30 60 l-5 -3 M26 68 l-5 -2 M22 76 l-5 -1"'
-              + ' fill="none" stroke="#2a231e" stroke-width="2"'
-              + ' stroke-linecap="round"/>'
-            : "")
-        /* Die Falte am Daumengelenk. */
-        + '<path d="M20 80 l6 4 M18 84 l6 3" fill="none"'
-        + ' stroke="rgba(0,0,0,.2)" stroke-width="1" stroke-linecap="round"/>'
-        + '<g class="lc-rd-mcp" style="transform-origin:16px 78px">'
-        /* Endglied mit der runden Kuppe. */
-        + '<path d="M20 78 C22 84 20 92 14 97 C9 101 3 98 4 91'
-        + ' C5 85 10 79 15 76 Z" fill="' + haut + '" stroke="' + kante
-        + '" stroke-width="1.8" stroke-linejoin="round"/>'
-        + '<ellipse class="lc-rhand-nagel" cx="11.5" cy="89.5" rx="4.2" ry="5.4"'
-        + ' transform="rotate(-34 11.5 89.5)"/>'
-        + "</g></g>"
         /* Die Knoechel als weiche Schatten. */
         + '<path d="M38 82 C44 78 52 78 58 82 M60 84 C66 80 74 80 80 84"'
         + ' fill="none" stroke="rgba(0,0,0,.18)" stroke-width="3"'
@@ -43313,19 +43442,28 @@
            Richtung (zu den Fingern hin). Gerechnet mit einem festen
            Wuerfel (FNV-artig, Saat 87), damit dieselbe Hand immer
            dieselben Haare hat und nicht bei jedem Aufruf flimmert. */
-        + (gorilla
+        + (sorte.haare
             ? '<path d="' + (() => {
                 let z = 87, d2 = "";
                 const w = () => { z = (z * 1103515245 + 12345) % 2147483648; return z / 2147483648; };
-                for (let h = 0; h < 26; h++) {
+                for (let h = 0; h < sorte.haare; h++) {
                   const x = 34 + w() * 54, y = 44 + w() * 32;
                   const lang = 5 + w() * 4, neig = -0.45 + w() * 0.9;
                   d2 += "M" + x.toFixed(1) + " " + y.toFixed(1)
                     + " l" + (neig * lang).toFixed(1) + " " + (-lang).toFixed(1) + " ";
                 }
                 return d2.trim();
-              })() + '" fill="none" stroke="#2a231e" stroke-width="1.9"'
-              + ' stroke-linecap="round" opacity=".85"/>'
+              })() + '" fill="none" stroke="' + (gorilla ? "#2a231e" : kante) + '"'
+              + ' stroke-width="' + (gorilla ? 1.9 : 1.1) + '"'
+              + ' stroke-linecap="round" opacity="' + (gorilla ? ".85" : ".45") + '"/>'
+            : "")
+        /* RUNDE 99 — DIE WARZEN DER HEXE.
+           Drei Stueck, an festen Stellen: eine Warze, die bei jedem
+           Aufruf woanders sitzt, sieht aus wie ein Fehler. */
+        + (sorte.warzen
+            ? '<g class="lc-rhand-warzen">'
+              + '<circle cx="46" cy="62" r="3.1"/><circle cx="60" cy="52" r="2.2"/>'
+              + '<circle cx="72" cy="70" r="2.6"/></g>'
             : "")
         + "</svg>";
       reihe.appendChild(hand);
@@ -43365,7 +43503,7 @@
          Beide Handschichten bekommen dieselbe Bewegung, damit sie
          sich keinen Bildpunkt gegeneinander verschieben. */
       const handVorn = document.createElement("span");
-      handVorn.className = "lc-riesenhand lc-riesenhand-vorn"
+      handVorn.className = "lc-riesenhand lc-riesenhand-vorn lc-riesenhand-" + art
         + (gorilla ? " lc-riesenhand-affe" : "");
       handVorn.style.setProperty("--gross", d + "px");
       /* =============================================================
@@ -43419,12 +43557,20 @@
       /* Die vier Finger: Knoechel, Breite und die drei Gliedlaengen.
          Sie sind verschieden lang — gleich lange Finger sehen aus wie
          ein Rechen. */
+      /* RUNDE 99 — dieselben vier Finger, aber je Sorte schlanker
+         oder laenger. Eine Frauenhand ist nicht einfach eine kleinere
+         Maennerhand: sie ist im Verhaeltnis schmaler und die Glieder
+         sind laenger. Eine Hexenhand ist beides im Uebermass. */
       const rhFinger = [
         { name: "zeige",  x: 42, y: 82, br: 12.5, l: [25, 16, 11] },
         { name: "mittel", x: 59, y: 86, br: 13,   l: [28, 18, 12] },
         { name: "ring",   x: 76, y: 85, br: 12,   l: [26, 17, 11] },
         { name: "klein",  x: 92, y: 79, br: 10,   l: [21, 13,  9] }
-      ];
+      ].map((f) => ({
+        name: f.name, x: f.x, y: f.y,
+        br: f.br * (sorte.schlank || 1),
+        l: f.l.map((v) => v * (sorte.lang || 1))
+      }));
       /* =========================================================
          EIN GLIED — UND WARUM ES KEINE EIGENE KANTE MEHR HAT
          ---------------------------------------------------------
@@ -43455,7 +43601,7 @@
          so sieht man es an der eigenen Hand: eine durchgehende
          Silhouette, und quer darueber zwei feine Linien.
          ========================================================= */
-      const rhGlied = (x, y, br, lang, schmal, fuell, ueber) => {
+      const rhGlied = (x, y, br, lang, schmal, fuell, ueber, m) => {
         const o = ueber || 0;
         /* Die Aussenkante: vom oberen Rand hinunter, um die Kuppe
            herum und wieder hinauf — offen, ohne Deckel. */
@@ -43465,26 +43611,88 @@
           + (x + schmal / 2) + " " + (y + lang + schmal * 0.42) + " "
           + (x + schmal / 2) + " " + (y + lang - schmal * 0.34)
           + " L" + (x + br / 2) + " " + (y + br * 0.22 - o);
-        /* Dieselbe Linie, oben geschlossen — aber nur zum Fuellen. */
-        return '<path d="' + kanteD + ' Z" fill="' + fuell + '"/>'
-          + '<path d="' + kanteD + '" fill="none" stroke="' + kante
-          + '" stroke-width="1.7" stroke-linejoin="round"'
-          + ' stroke-linecap="round"/>';
+        /* RUNDE 99 — kein Glied traegt mehr seinen eigenen Strich.
+           Im Kantendurchgang ist es eine etwas groessere dunkle
+           Scheibe, im Fuelldurchgang nur Farbe. Den Umriss macht
+           allein der Kantendurchgang, und zwar um die GANZE Hand. */
+        return m === "k"
+          ? '<path d="' + kanteD + ' Z" fill="' + kante + '" stroke="' + kante
+            + '" stroke-width="' + rhUmriss + '" stroke-linejoin="round"'
+            + ' stroke-linecap="round"/>'
+          : '<path d="' + kanteD + ' Z" fill="' + fuell + '"/>';
       };
       /* Die Falten ueber einem Gelenk — zwei feine Striche. Ohne sie
-         ist ein Finger ein Schlauch. */
+         ist ein Finger ein Schlauch. Sie sind jetzt das EINZIGE, was
+         das Gelenk anzeigt: genau so sieht man es an der eigenen
+         Hand — eine durchgehende Silhouette und quer darueber zwei
+         feine Linien. */
       const rhFalte = (x, y, br) =>
         '<path d="M' + (x - br * 0.32) + " " + y + " L" + (x + br * 0.32) + " " + y
         + " M" + (x - br * 0.28) + " " + (y + 2.2) + " L" + (x + br * 0.28) + " " + (y + 2.2)
         + '" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1"'
-        + ' stroke-linecap="round"/>';
-      const rhFingerHtml = (f, i) => {
+        + ' stroke-linecap="round"/>'
+        /* RUNDE 99 — beim Androiden ist das Gelenk kein Hautfaeltchen,
+           sondern eine Fuge: ein dunkler Spalt mit einem hellen
+           Lichtrand darunter. Die Silhouette bleibt trotzdem
+           durchgaengig — es ist eine Zeichnung DARAUF, kein Schnitt. */
+        + (sorte.naehte
+            ? '<path d="M' + (x - br * 0.46) + " " + (y + 0.8)
+              + " L" + (x + br * 0.46) + " " + (y + 0.8)
+              + '" fill="none" stroke="rgba(10,16,22,.72)" stroke-width="2.4"'
+              + ' stroke-linecap="round"/>'
+              + '<path d="M' + (x - br * 0.42) + " " + (y + 3.1)
+              + " L" + (x + br * 0.42) + " " + (y + 3.1)
+              + '" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.1"'
+              + ' stroke-linecap="round"/>'
+              /* Der Gelenkpunkt. Er sagt in einem einzigen Zeichen,
+                 dass hier eine Maschine arbeitet und keine Haut. */
+              + '<circle class="lc-rhand-gelenk" cx="' + x + '" cy="' + (y + 0.8)
+              + '" r="' + (br * 0.17) + '"/>'
+            : "");
+      /* =========================================================
+         RUNDE 99 — DIE FINGERKUPPE ENTSCHEIDET, WESSEN HAND DAS IST
+         ---------------------------------------------------------
+         Nagel (Gott, Mann), Lack (Frau), Kralle (Hexe), Platte
+         (Android). Die KRALLE steht in BEIDEN Durchgaengen: sie
+         gehoert zur Silhouette, also braucht sie denselben Umriss
+         wie der Rest der Hand — sonst waere sie aufgeklebt, und
+         genau das will er nicht mehr sehen.
+         x/y ist der Ansatz des Endglieds, lang seine Laenge.
+         ========================================================= */
+      const rhSpitze = (m, x, y, br, lang) => {
+        if (sorte.spitze === "kralle") {
+          const ky = y + lang - br * 0.10;
+          const d3 = "M" + (x - br * 0.34).toFixed(2) + " " + ky.toFixed(2)
+            + " C" + (x - br * 0.32).toFixed(2) + " " + (ky + lang * 0.55).toFixed(2)
+            + " " + (x - br * 0.14).toFixed(2) + " " + (ky + lang * 0.95).toFixed(2)
+            + " " + (x + br * 0.18).toFixed(2) + " " + (ky + lang * 1.15).toFixed(2)
+            + " C" + (x + br * 0.02).toFixed(2) + " " + (ky + lang * 0.52).toFixed(2)
+            + " " + (x + br * 0.30).toFixed(2) + " " + (ky + lang * 0.16).toFixed(2)
+            + " " + (x + br * 0.32).toFixed(2) + " " + ky.toFixed(2) + " Z";
+          return m === "k"
+            ? '<path d="' + d3 + '" fill="' + kante + '" stroke="' + kante
+              + '" stroke-width="' + rhUmriss + '" stroke-linejoin="round"/>'
+            : '<path class="lc-rhand-kralle" d="' + d3 + '"/>';
+        }
+        if (m !== "f") return "";
+        if (sorte.spitze === "platte") {
+          return '<rect class="lc-rhand-platte" x="' + (x - br * 0.40) + '" y="'
+            + (y + lang * 0.16) + '" width="' + (br * 0.80) + '" height="'
+            + (lang * 0.64) + '" rx="' + (br * 0.20) + '"/>';
+        }
+        return '<rect class="lc-rhand-nagel'
+          + (sorte.spitze === "lack" ? " lc-rhand-lack" : "") + '" x="'
+          + (x - br * 0.30) + '" y="' + (y + lang * 0.26) + '" width="' + (br * 0.60)
+          + '" height="' + (lang * 0.52) + '" rx="' + (br * 0.24) + '"/>';
+      };
+      const rhFingerHtml = (f, i, m) => {
         const g0 = f.l[0], g1 = f.l[1], g2 = f.l[2];
         const b0 = f.br, b1 = f.br * 0.9, b2 = f.br * 0.82;
         /* Abwechselnd die hellere und die dunklere Haut — so trennen
-           sich nebeneinanderliegende Finger voneinander. */
+           sich nebeneinanderliegende Finger voneinander, auch ohne
+           Strich dazwischen. */
         const fuell = (i % 2 === 0) ? haut : innen;
-        const haare = gorilla
+        const haare = (m === "f" && gorilla)
           ? '<path d="M' + (f.x - b0 * 0.5) + " " + (f.y + 6) + " l-4.5 -2.5"
             + " M" + (f.x - b0 * 0.5) + " " + (f.y + 13) + " l-4.5 -2"
             + " M" + (f.x + b0 * 0.5) + " " + (f.y + 6) + " l4.5 -2.5"
@@ -43492,38 +43700,50 @@
             + '" fill="none" stroke="#2a231e" stroke-width="2"'
             + ' stroke-linecap="round"/>'
           : "";
+        const falte = (x, y, br) => (m === "f" ? rhFalte(x, y, br) : "");
         return '<g class="lc-rhand-finger lc-rf-mcp" data-rf="' + i + '"'
           + ' style="transform-origin:' + f.x + 'px ' + f.y + 'px">'
           /* Auch das Grundglied greift nach oben — unter die
              Knoechelreihe. Sonst klafft beim Beugen genau dort eine
              Luecke, wo die Hand am staerksten arbeitet. */
-          + rhGlied(f.x, f.y, b0, g0, b1, fuell, b0 * 0.45)
+          + rhGlied(f.x, f.y, b0, g0, b1, fuell, b0 * 0.45, m)
           + haare
-          + rhFalte(f.x, f.y + g0 - 2.5, b1)
           + '<g class="lc-rf-pip" data-rf="' + i + '"'
           + ' style="transform-origin:' + f.x + 'px ' + (f.y + g0) + 'px">'
-          + rhGlied(f.x, f.y + g0, b1, g1, b2, fuell, b1 * 0.55)
-          + rhFalte(f.x, f.y + g0 + g1 - 2.2, b2)
+          + rhGlied(f.x, f.y + g0, b1, g1, b2, fuell, b1 * 0.55, m)
+          /* RUNDE 99 — DIE FALTE STEHT JETZT DA, WO MAN SIE SIEHT.
+             GEMESSEN: sie lag frueher VOR dem naechsten Glied im
+             Text, und weil jedes Glied ein halbes Glied weiter nach
+             oben reicht (seit Runde 87), deckte das naechste Glied
+             sie vollstaendig zu. Am Bild gezaehlt: 6 dunkle Punkte
+             im ganzen Finger — es gab schlicht keine Falte mehr.
+             Jetzt steht sie NACH dem Glied, das sie sonst zudeckt,
+             und sitzt im Rahmen dieses Gliedes: sie dreht sich also
+             mit, wie eine Falte das tut. */
+          + falte(f.x, f.y + g0 + 1.4, b1)
           + '<g class="lc-rf-dip" data-rf="' + i + '"'
           + ' style="transform-origin:' + f.x + 'px ' + (f.y + g0 + g1) + 'px">'
-          + rhGlied(f.x, f.y + g0 + g1, b2, g2, b2 * 0.94, fuell, b2 * 0.55)
-          /* Der Nagel. Wir sehen die Finger von HINTEN — die Naegel
-             liegen also zu uns. */
-          + '<rect class="lc-rhand-nagel" x="' + (f.x - b2 * 0.30) + '" y="'
-          + (f.y + g0 + g1 + g2 * 0.26) + '" width="' + (b2 * 0.60)
-          + '" height="' + (g2 * 0.52) + '" rx="' + (b2 * 0.24) + '"/>'
+          + rhGlied(f.x, f.y + g0 + g1, b2, g2, b2 * 0.94, fuell, b2 * 0.55, m)
+          + falte(f.x, f.y + g0 + g1 + 1.2, b2)
+          /* Was an der Kuppe sitzt — Nagel, Lack, Kralle oder Platte.
+             Wir sehen die Finger von HINTEN; es liegt also zu uns. */
+          + rhSpitze(m, f.x, f.y + g0 + g1, b2, g2)
           + "</g></g></g>";
       };
+      /* Die Knoechelwuelste — sie liegen VOR dem Bild, dort wo die
+         Finger ansetzen, und schliessen die Luecke zwischen
+         Handruecken und Fingern. Sie stehen in BEIDEN Durchgaengen,
+         damit die Silhouette beim Anschwellen mitgeht. */
+      const rhKnoechel = (m) =>
+        '<path class="lc-rhand-knoechel" d="M34 76 C42 70 52 70 60 74'
+        + ' C68 70 80 70 88 76 C90 82 88 88 84 90 C74 86 46 86 38 90'
+        + ' C34 88 32 82 34 76 Z" fill="' + rhTon(m, haut) + '"' + rhStrich(m) + '/>';
+      const rhVornteile = (m) =>
+        rhKnoechel(m) + rhFinger.map((f, i) => rhFingerHtml(f, i, m)).join("");
       handVorn.innerHTML =
         '<svg class="lc-riesenhand-form" viewBox="0 0 120 150" aria-hidden="true">'
-        /* Die Knoechelwuelste — sie liegen VOR dem Bild, dort wo die
-           Finger ansetzen, und schliessen die Luecke zwischen
-           Handruecken und Fingern. */
-        + '<path class="lc-rhand-knoechel" d="M34 76 C42 70 52 70 60 74'
-        + ' C68 70 80 70 88 76 C90 82 88 88 84 90 C74 86 46 86 38 90'
-        + ' C34 88 32 82 34 76 Z" fill="' + haut + '" stroke="' + kante
-        + '" stroke-width="1.7" stroke-linejoin="round"/>'
-        + rhFinger.map(rhFingerHtml).join("")
+        + '<g class="lc-rh-kante">' + rhVornteile("k") + "</g>"
+        + '<g class="lc-rh-fuell">' + rhVornteile("f") + "</g>"
         + "</svg>";
       reihe.appendChild(handVorn);
       weg.push(handVorn);
@@ -43661,8 +43881,7 @@
         });
         /* Die Knoechelwuelste treten beim Zupacken hervor — beim
            Faustschluss schiebt sich das Grundgelenk nach vorn. */
-        const knoechel = handVorn.querySelector(".lc-rhand-knoechel");
-        if (knoechel) {
+        handVorn.querySelectorAll(".lc-rhand-knoechel").forEach((knoechel) => {
           try {
             knoechel.style.transformBox = "fill-box";
             knoechel.style.transformOrigin = "50% 100%";
@@ -43675,7 +43894,7 @@
               { transform: "scaleY(1)", offset: 1 }
             ], { duration: dauer, easing: "linear", fill: "both" });
           } catch (e) {}
-        }
+        });
         /* RUNDE 87 — DER DAUMEN IN DENSELBEN STATIONEN.
            Er hat jetzt zwei Gelenke, und beide bewegen sich anders:
            das Wurzelgelenk schwenkt ihn zur Handmitte
@@ -43697,17 +43916,21 @@
           transform: "rotate(" + st[feld] + "deg)",
           offset: Math.max(0, Math.min(1, st.zeit))
         }));
-        const daumen = hand.querySelector(".lc-rd-cmc");
-        const daumenKuppe = hand.querySelector(".lc-rd-mcp");
-        if (daumenKuppe) {
+        /* RUNDE 99 — querySelectorAll statt querySelector: den Daumen
+           gibt es seit dem doppelten Durchgang ZWEIMAL (Kante und
+           Fuellung). Mit dem alten Einzelgriff haette sich nur die
+           Fuellung bewegt und der dunkle Umriss waere stehengeblieben
+           — genau die Naht, die er nicht mehr sehen will. */
+        hand.querySelectorAll(".lc-rd-mcp").forEach((k) => {
           try {
-            daumenKuppe.animate(dmBahn("mcp"),
-              { duration: dauer, easing: "linear", fill: "both" });
+            k.animate(dmBahn("mcp"), { duration: dauer, easing: "linear", fill: "both" });
           } catch (e) {}
-        }
-        if (daumen) {
-          daumen.animate(dmBahn("cmc"), { duration: dauer, easing: "linear", fill: "both" });
-        }
+        });
+        hand.querySelectorAll(".lc-rd-cmc").forEach((k) => {
+          try {
+            k.animate(dmBahn("cmc"), { duration: dauer, easing: "linear", fill: "both" });
+          } catch (e) {}
+        });
 
         /* DAS BILD IN DER HAND. Es haengt der Hand ein wenig
            nach — das ist die Traegheit, die er meint. */
@@ -44066,7 +44289,9 @@
                          rohr: "🟢 ", heli: "🚁 ", pferd: "🐎 ",
                          greifvogel: "🦅 ", turm: "🏊 ",
                          untertasse: "🛸 ", mieze: "🐱 ", gotteshand: "🤚 ",
-                         pranke: "🦍 ", frisbee: "🥏 "
+                         pranke: "🦍 ", frisbee: "🥏 ",
+                         mannhand: "👊 ", frauenhand: "💅 ",
+                         hexenhand: "🧙 ", roboterhand: "🤖 "
                        }[art] || "🌀 ") + erg.text);
           }
         } catch (e) {}
@@ -52082,6 +52307,7 @@
     dampfer: 1, lok: 1, liane: 1, feder: 1, beamen: 1, rohr: 1,
     heli: 1, pferd: 1, marsch: 1, greifvogel: 1, turm: 1, aufblasen: 1,
     untertasse: 1, mieze: 1, gotteshand: 1, pranke: 1, frisbee: 1, sonnenbrille: 1,
+    mannhand: 1, frauenhand: 1, hexenhand: 1, roboterhand: 1,
     neunschwanz: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
@@ -52379,7 +52605,7 @@
         || art === "greifvogel" || art === "turm"
         /* RUNDE 75 */
         || art === "untertasse" || art === "mieze" || art === "frisbee"
-        || art === "gotteshand" || art === "pranke") {
+        || LC_HANDSORTEN[art]) {
       const wenR = nachricht && (nachricht.wen || nachricht.an);
       let vonR = (nachricht && nachricht.name) || "";
       if (nachricht && nachricht.eigen) {
@@ -53423,6 +53649,7 @@
               "boot", "delfin", "kran", "dampfer", "lok", "liane", "feder", "beamen",
               "rohr", "heli", "portal", "pferd", "greifvogel", "turm",
               "untertasse", "mieze", "gotteshand", "pranke", "frisbee",
+              "mannhand", "frauenhand", "hexenhand", "roboterhand",
               "brennen", "zorro", "spielzug", "pacjagd"];
     },
     /* RUNDE 87 — die beiden Wege zum eigenen Lied, damit sich

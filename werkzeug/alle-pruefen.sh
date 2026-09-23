@@ -79,6 +79,15 @@ for f in werkzeug/pruefe-*.js; do
     # ist (Runde 98) — das dauert laenger als zwei Minuten.
     pruefe-runde88-mario)        frist=600  ;;
     pruefe-runde98-mario)        frist=600  ;;
+    # RUNDE 99 — die Polizei fuer die Grundebene spielt ALLE 187
+    # Wirkungen durch und misst jede einzeln; gemessen 7 Minuten.
+    pruefe-runde99-grundebene)   frist=1200 ;;
+    pruefe-runde99-kleinkram)    frist=420  ;;
+    pruefe-runde99-privat)       frist=420  ;;
+    pruefe-runde99-schiffe)      frist=300  ;;
+    # Sechs Haende, jede dreimal gemessen, dazu zwei Bildvergleiche
+    # gegen die alte Fassung — gemessen 2 Minuten, mit Luft 420 s.
+    pruefe-runde99-haende)       frist=420  ;;
     *)                           frist=120  ;;
   esac
   aus=$(timeout "$frist" node "$f" 2>&1)
