@@ -578,12 +578,20 @@ function tonMessen(name) {
   const lcW = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
   /* RUNDE 83 — hier stand „genau diese drei". Seit der Frosch dazu
      gekommen ist, sind es vier; die Regel selbst ist unveraendert:
-     wer einen Umweg zeichnen kann, muss die Kette auch annehmen. */
-  sage(/kettenR = \(art === "flug" \|\| art === "feder" \|\| art === "maulwurf"/.test(lcW)
-    && /art === "frosch"\)/.test(lcW),
-    "livechat.js nimmt die Kette fuer alle an, die einen Umweg zeichnen koennen");
+     wer einen Umweg zeichnen kann, muss die Kette auch annehmen.
+     RUNDE 98 — und jetzt sind es ALLE. XANDER: „saemtliche Fahrzeuge
+     sollen den Weg eingezeichnet bekommen." Die Regel ist damit
+     andersherum zu lesen: aufgezaehlt wird, WER die Kette NICHT
+     bekommt, und das sind nur die, die gar nicht fahren — Beamen,
+     Tor, Roehre, Fahrstuhl, Zylinder, Liane und der Turm. Beide
+     Listen muessen zusammenpassen, sonst schickt das Menue eine
+     Kette, die in livechat.js wieder wegfaellt. */
+  sage(/var ohneWegR = \{ beamen: 1, portal: 1, rohr: 1, fahrstuhl: 1,/.test(lcW)
+    && /var kettenR = !ohneWegR\[art\];/.test(lcW),
+    "livechat.js nimmt die Kette fuer JEDES Fahrzeug an, das wirklich faehrt");
   const appW = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
-  sage(/const bahnFaehig = \{ flug: 1, feder: 1, maulwurf: 1, frosch: 1 \};/.test(appW),
+  sage(/const ohneWeg = \{ beamen: 1, portal: 1, rohr: 1, fahrstuhl: 1, zylinder: 1,/.test(appW)
+    && /liane: 1, turm: 1 \};/.test(appW),
     "und das Anreise-Menue schickt ihnen den gemalten Weg mit");
 
   await br.close(); srv.close();

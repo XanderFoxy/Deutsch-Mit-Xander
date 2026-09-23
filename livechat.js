@@ -11429,8 +11429,25 @@ window.LiveChat = (function () {
          Bei allen anderen Reisen bleibt nur die Zielnummer stehen —
          sie kennen keine Stationen, dort waere ein Umweg nur eine
          krumme Linie. */
-      var kettenR = (art === "flug" || art === "feder" || art === "maulwurf"
-                     || art === "frosch");
+      /* =========================================================
+         RUNDE 98 — DIE KETTE GILT FUER JEDES FAHRZEUG
+         ---------------------------------------------------------
+         XANDER: „sämtliche Fahrzeuge sollen den Weg eingezeichnet
+         bekommen."
+         Hier standen vier Namen: Flugzeug, Sprungfeder, Maulwurf und
+         Frosch. Jedes andere Fahrzeug bekam nur die letzte Zahl —
+         und fuhr damit schnurgerade, auch wenn man mit dem Finger
+         einen Umweg gezogen hatte.
+         Jetzt nehmen alle die Kette an, ausser denen, die gar nicht
+         FAHREN: Beamen, Tor, Röhre, Fahrstuhl und Zylinder sind
+         Sprünge von hier nach dort; die Liane hängt an EINEM Punkt
+         und schwingt darum; der Drei-Meter-Turm ist ein Sprung.
+         Dieselbe Liste steht in app.js als „ohneWeg" — sie muss
+         zusammenpassen, sonst schickt das Menü eine Kette, die hier
+         wieder wegfällt. */
+      var ohneWegR = { beamen: 1, portal: 1, rohr: 1, fahrstuhl: 1,
+                       zylinder: 1, liane: 1, turm: 1 };
+      var kettenR = !ohneWegR[art];
       var stationenR = String(rest).replace(/\s+/g, "").split("-")
         .map(function (x) { return parseInt(x, 10); });
       var zielNrR = stationenR[stationenR.length - 1];

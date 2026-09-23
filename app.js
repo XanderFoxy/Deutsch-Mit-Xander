@@ -43710,10 +43710,30 @@
     const weg = bahnP || lcWegSuchen(gitter, ab.nr, zu.nr, true);
     if (!weg) return false;
     const kreis = ab.el.querySelector(".lc-kreis");
+    /* „opfer" pruefte frueher, WEN es am Ende trifft. Seit Runde 98
+       wird jeder besetzte Platz auf der Strecke gefressen (siehe
+       „happen" weiter unten) — geblieben ist die Pruefung, dass der
+       Zielplatz ueberhaupt einen Kreis hat. Ohne ihn gaebe es nichts,
+       worauf er zulaufen koennte. */
     const opfer = zu.el.querySelector(".lc-kreis");
     if (!kreis || !opfer) return false;
 
-    const gefressen = () => {
+    /* =================================================================
+       RUNDE 98 — ER FRISST JEDEN, UEBER DEN ER LAEUFT
+       -----------------------------------------------------------------
+       XANDER: „bei Pac-Man soll er die Leute richtig auffressen, und
+       gerade wenn auf Plaetzen jemand sitzt, soll er ein bisschen
+       dicker werden — aber nur in dem Moment —, dann soll er weiter
+       fressen, und immer wenn er jemanden frisst, dann soll er
+       ruelpsen, und die Leute sollen von der Buehne verschwinden."
+
+       BISHER WURDE GENAU EINER GEFRESSEN: der am Ende des Weges. Wer
+       unterwegs auf einem Platz sass, wurde ueberlaufen und blieb
+       sitzen — dabei ist gerade das der Witz an Pac-Man.
+       Jetzt ist jeder besetzte Platz auf der Strecke ein Happen.
+       „gefressen(name)" nimmt deshalb einen Namen, statt nur den
+       einen vom Ende zu kennen. */
+    const gefressen = (werName) => {
       /* RUNDE 80 — bei der Probefahrt wird niemand gefressen: es ist
          eine Vorfuehrung, kein Angriff. Ohne diese Zeile wuerde der
          Absender bei „/pacman" ohne Namen sich selbst von der Buehne
@@ -43722,8 +43742,9 @@
       /* Nur auf dem Geraet dessen, der gemeint ist. */
       try {
         const l = LiveChat.lage() || {};
-        if (String(l.ichName || "").trim().toLowerCase()
-            === String(wen || "").trim().toLowerCase()
+        const nm = String(werName === undefined ? wen : (werName || "")).trim();
+        if (!nm) return;
+        if (String(l.ichName || "").trim().toLowerCase() === nm.toLowerCase()
             && LiveChat.aufDerBuehne && LiveChat.aufDerBuehne()) {
           LiveChat.buehneSetzen(false);
           showToast("👾 Aufgefressen! Tippe auf einen freien Platz, "
@@ -43740,6 +43761,25 @@
     const punkte = lcWegPunkte(weg);
     const felder = punkte.length - 1;
     const jeFeld = 480;
+    /* =================================================================
+       RUNDE 98 — JEDER BESETZTE PLATZ AUF DER STRECKE IST EIN HAPPEN
+       -----------------------------------------------------------------
+       XANDER: „bei Pac-Man soll er die Leute richtig auffressen."
+       Der eigene Startplatz zaehlt nicht (dort sitzt er selbst), und
+       ein Platz, den gerade jemand verlaesst, auch nicht — dort ist
+       im Moment niemand. Kommt er zweimal ueber dasselbe Feld, wird
+       nur beim ersten Mal gefressen; zweimal geht nicht. */
+    const happen = [];
+    if (!probe || true) {
+      const schon = {};
+      weg.forEach((g, i) => {
+        if (i === 0 || g.nr === ab.nr || schon[g.nr]) return;
+        if (!g.el || g.el.classList.contains("lc-platz-frei")
+            || g.el.classList.contains("lc-platz-unterwegs")) return;
+        schon[g.nr] = true;
+        happen.push({ feld: i, platz: g, name: lcNameVomPlatz(g.el) });
+      });
+    }
     const hin = felder * jeFeld;
     const beissen = 900;
     /* =============================================================
@@ -43926,6 +43966,27 @@
         transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1) + "px)",
         offset: bei(i * jeFeld)
       });
+      /* RUNDE 98 — „soll er ein bisschen dicker werden, aber nur in
+         dem Moment, dann soll er weiter fressen." Also ein kurzer
+         Bauch genau an dem Feld, auf dem jemand sass — und gleich
+         wieder normal, damit er nicht am Ende kugelrund ankommt. */
+      /* NUR UNTERWEGS. Am letzten Feld steht schon das „Satt"-Bild
+         weiter unten (bei hin + 320 ms); ein zweiter Bauch davor
+         haette einen kleineren Zeitanteil als dieses — und
+         Schluesselbilder muessen aufsteigen, sonst wirft
+         animate() und der ganze Lauf faellt aus. Genau das ist beim
+         ersten Versuch passiert: „/pacman 1-2-3-4" zeichnete gar
+         nichts mehr. */
+      if (i < punkte.length - 1 && happen.some((h) => h.feld === i)) {
+        bilder.push({
+          transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1)
+            + "px) scale(1.22)", offset: bei(i * jeFeld + 150)
+        });
+        bilder.push({
+          transform: "translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1)
+            + "px) scale(1.04)", offset: bei(i * jeFeld + 330)
+        });
+      }
       /* steps(1) in der Zeit: das Maul springt am Feld um, es dreht
          sich nicht weich mit — so war Pac-Man immer. */
       drehungen.push({ transform: "rotate(" + richtung(i) + "deg)", offset: bei(i * jeFeld) });
@@ -44015,14 +44076,39 @@
     } catch (err) { aufraeumen(); lageFreigeben(); return false; }
     setTimeout(aufraeumen, dauer + 200);
 
-    /* Das Opfer wird eingesogen, sobald Pac-Man da ist. */
-    setTimeout(() => {
-      opfer.classList.remove("lc-verschlungen");
-      void opfer.offsetWidth;
-      opfer.classList.add("lc-verschlungen");
-      setTimeout(() => opfer.classList.remove("lc-verschlungen"), 1400);
-    }, hin);
-    setTimeout(gefressen, hin + 900);
+    /* =================================================================
+       RUNDE 98 — GEFRESSEN WIRD UNTERWEGS, NICHT ERST AM ENDE
+       -----------------------------------------------------------------
+       XANDER: „immer wenn er jemanden frisst, dann soll er ruelpsen,
+       und die Leute sollen von der Buehne verschwinden."
+       Jeder Happen bekommt deshalb seinen eigenen Zeitpunkt: das Bild
+       wird eingesogen, es ruelpst, und wer dort sass, geht von der
+       Buehne — auf SEINEM Geraet. */
+    const pacUhren = [];
+    happen.forEach((h) => {
+      const wann = h.feld * jeFeld;
+      const k = h.platz.el.querySelector(".lc-kreis");
+      pacUhren.push(setTimeout(() => {
+        if (k) {
+          k.classList.remove("lc-verschlungen");
+          void k.offsetWidth;
+          k.classList.add("lc-verschlungen");
+          setTimeout(() => k.classList.remove("lc-verschlungen"), 1400);
+        }
+        /* Der Ruelpser kommt, wenn der Happen unten ist — nicht
+           beim Zubeissen. */
+        lcTonSpaeter("ruelps", 460, 0.5);
+      }, wann));
+      pacUhren.push(setTimeout(() => gefressen(h.name), wann + 900));
+    });
+    /* Und die Futterpunkte: jeder, den er frisst, macht „waka".
+       „die Futterpunkte soll er auch realistisch essen." */
+    weg.forEach((g, i) => {
+      if (i === 0) return;
+      pacUhren.push(setTimeout(() => lcGeraeusch("pacbiss", "pacbiss", 0.3),
+        i * jeFeld));
+    });
+    setTimeout(() => pacUhren.forEach((u) => clearTimeout(u)), dauer + 1600);
     /* RUNDE 87 — „am Ende, wo er ankommt und bleibt, soll er wieder
        zu meinem Profilbild werden."
        Die Figur blendet aus, und in demselben Augenblick faellt die
