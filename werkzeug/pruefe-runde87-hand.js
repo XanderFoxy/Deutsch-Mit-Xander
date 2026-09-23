@@ -72,21 +72,32 @@ const sage = (gut, text, dazu) => {
     const vorn = document.querySelector(".lc-riesenhand-vorn");
     const hinten = document.querySelector(".lc-riesenhand:not(.lc-riesenhand-vorn)");
     if (!vorn) return null;
-    const hol = (kl) => [...vorn.querySelectorAll("." + kl)]
+    /* RUNDE 99 NACHGEZOGEN: die Hand wird seit dieser Runde ZWEIMAL
+       gezeichnet — einmal als dunkle Silhouette darunter, einmal
+       gefuellt darueber (damit kein Umriss mehr mitten in der Hand
+       liegt). Jedes Gelenk gibt es deshalb doppelt, und ein blosses
+       Zaehlen faende acht Finger statt vier. Gemessen wird der
+       FUELLDURCHGANG — das ist das, was man sieht; die Silhouette
+       darunter macht dieselbe Bewegung (das prueft
+       werkzeug/pruefe-runde99-haende.js eigens nach). */
+    const fuell = vorn.querySelector(".lc-rh-fuell") || vorn;
+    const hol = (kl) => [...fuell.querySelectorAll("." + kl)]
       .sort((a, b) => Number(a.dataset.rf) - Number(b.dataset.rf))
       .map((el) => Object.assign({ rf: Number(el.dataset.rf) }, zahl(el)));
     const bild = document.querySelector(".lc-riesenhand-last");
     const bb = bild ? bild.getBoundingClientRect() : null;
-    const spitzen = [...vorn.querySelectorAll(".lc-rf-dip")].map((el) => {
+    const spitzen = [...fuell.querySelectorAll(".lc-rf-dip")].map((el) => {
       const r = el.getBoundingClientRect();
       return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
     });
     return {
       mcp: hol("lc-rf-mcp"), pip: hol("lc-rf-pip"), dip: hol("lc-rf-dip"),
-      daumenCmc: hinten && hinten.querySelector(".lc-rd-cmc") ? zahl(hinten.querySelector(".lc-rd-cmc")) : null,
-      daumenMcp: hinten && hinten.querySelector(".lc-rd-mcp") ? zahl(hinten.querySelector(".lc-rd-mcp")) : null,
-      naegel: vorn.querySelectorAll(".lc-rhand-nagel").length
-              + (hinten ? hinten.querySelectorAll(".lc-rhand-nagel").length : 0),
+      daumenCmc: hinten && hinten.querySelector(".lc-rh-fuell .lc-rd-cmc")
+        ? zahl(hinten.querySelector(".lc-rh-fuell .lc-rd-cmc")) : null,
+      daumenMcp: hinten && hinten.querySelector(".lc-rh-fuell .lc-rd-mcp")
+        ? zahl(hinten.querySelector(".lc-rh-fuell .lc-rd-mcp")) : null,
+      naegel: fuell.querySelectorAll(".lc-rhand-nagel").length
+              + (hinten ? hinten.querySelectorAll(".lc-rh-fuell .lc-rhand-nagel").length : 0),
       bild: bb ? { x: Math.round(bb.left + bb.width / 2), y: Math.round(bb.top + bb.height / 2),
                    b: Math.round(bb.width) } : null,
       spitzen: spitzen

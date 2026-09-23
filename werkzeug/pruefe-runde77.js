@@ -197,10 +197,15 @@ console.log("\nDIE HAND: EIN MENÜ, EIN GRIFF, ZWEI TÖNE\n");
    Hand in der Kachel abgeschnitten. Dann sag lieber Gott und King
    Kong." Beide stehen weiter unter EINER Kachel — nur kuerzer
    benannt, damit die Schrift nicht abgeschnitten wird. */
+/* RUNDE 99 NACHGEZOGEN: unter der Kachel „Hand" stehen jetzt SECHS
+   Haende, und die Liste wird aus LC_HANDSORTEN gebaut statt Zeile fuer
+   Zeile geschrieben. Seine Regel — alle unter EINER Kachel, mit kurzen
+   Namen — gilt unveraendert und wird hier weiter geprueft. */
 pruefe("Gott und King Kong stehen unter EINER Kachel",
   /\["\\ud83e\\udd1a", "Hand", "gotteshand",/.test(js)
-  && /\["\\ud83e\\udd1a", "Gott", "gotteshand"\]/.test(js)
-  && /\["\\ud83e\\udd8d", "King Kong", "pranke"\]\]\],/.test(js));
+  && /Object\.keys\(LC_HANDSORTEN\)\.map\(\(k\) =>/.test(js)
+  && /gotteshand: \{ wort: "Gott"/.test(js)
+  && /pranke:\s+\{ wort: "King Kong"/.test(js));
 pruefe("und das Anreise-Menue kann Untermenues",
   /lcUnterMenue\(platz, String\(nr\), wort, unter\);/.test(js));
 /* RUNDE 88 NACHGEFUEHRT — DIESE DREI REGELN BESCHRIEBEN EINE HAND,

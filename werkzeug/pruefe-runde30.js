@@ -94,7 +94,18 @@ const pruefe = (was, gut, zusatz) => {
        er auf den Aufprall bei 520 ms faellt, muss die Datei 441 ms
        nach dem Start anfangen. Worum es in dieser Regel geht —
        Mann und Frau klingen verschieden — ist unveraendert. */
-    && /lcStimmeZu\(meiner, "kussmann", "kussfrau", 441, 0\.62\)/.test(js));
+    /* RUNDE 99 NACHGEZOGEN. XANDER: „Beim Kussmund: der Mann soll einen
+       Frauenkuss hoeren und die Frau einen Maennerkuss."
+       Gewaehlt wurde bis dahin nach „meiner" — also nach dem Platz des
+       ZUSCHAUERS. Derselbe Kuss klang damit auf jedem Geraet anders.
+       Jetzt entscheidet der KUESSER, und wenn bei ihm nichts eingetragen
+       ist, bekommt der Empfaenger das Gegenteil seines eigenen zu hoeren
+       (die beiden Namen stehen dann vertauscht).
+       Worum es in dieser Regel geht — Mann und Frau klingen verschieden,
+       und zwar mit genau diesen beiden Dateien bei 441 ms — ist
+       unveraendert. */
+    && /lcStimmeZu\(kuesser, "kussmann", "kussfrau", 441, 0\.62\)/.test(js)
+    && /lcStimmeZu\(platz, "kussfrau", "kussmann", 441, 0\.62\)/.test(js));
   haengt("schneeball", "schneeklatsch");
   haengt("strohhalm", "schlurfen");
   haengt("blubbern", "blubbern");

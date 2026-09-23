@@ -175,8 +175,24 @@ function tonMessen(name) {
 
   /* „Der Name von der King Kong Hand kann einfach nur King Kong
      heissen … Dann sag lieber Gott und King Kong." */
-  sage(/"Gott", "gotteshand"/.test(app) && /"King Kong", "pranke"/.test(app),
+  /* RUNDE 99 NACHGEZOGEN: die Kacheln werden nicht mehr Zeile fuer
+     Zeile geschrieben, sondern aus LC_HANDSORTEN gebaut — seit es
+     sechs Haende gibt (Gott, King Kong, Mann, Frau, Hexe, Android).
+     Seine REGEL von damals gilt unveraendert weiter und wird hier
+     weiter geprueft: die Namen muessen kurz genug sein, damit in der
+     Kachel nichts abgeschnitten wird. „Gottes Hand" und „Gorilla
+     Hand" waren zu lang, „Gott" und „King Kong" passen. */
+  const sorten = /const LC_HANDSORTEN = \{([\s\S]*?)\n  \};/.exec(app);
+  const woerter = sorten
+    ? (sorten[1].match(/wort: "([^"]+)"/g) || []).map((w) => w.slice(7, -1))
+    : [];
+  sage(/gotteshand:\s*\{[^}]*wort: "Gott"/.test(app)
+    && /pranke:\s*\{[^}]*wort: "King Kong"/.test(app),
     "die Handkacheln heissen Gott und King Kong");
+  sage(woerter.length >= 2 && woerter.every((w) => w.length <= 10),
+    "und jeder Handname passt in die Kachel (hoechstens 10 Zeichen)",
+    woerter.join(", ") + " \u2014 laengster "
+    + Math.max.apply(null, woerter.map((w) => w.length)) + " Zeichen");
 
   /* --- Die Bombe, die Granate und das Pferd ------------------------ */
   console.log("\nBombe, Granate, Pferd");

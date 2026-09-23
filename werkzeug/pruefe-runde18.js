@@ -222,7 +222,12 @@ const BRETT = (frei) => `
    ["zwille", "lcZwille"], ["pusterohr", "lcPusterohr"], ["gluehbirne", "lcGluehbirne"],
    ["entbloessung", "lcEntbloessung"]].forEach(([befehl, fn]) => {
     const da = new RegExp("function " + fn + "\\b").test(js);
-    const kachel = new RegExp('"' + befehl + '"\\]').test(js);
+    /* RUNDE 99 NACHGEZOGEN: eine Kachel endet nicht mehr zwingend mit
+       dem Befehl. „Ups!" hat seit dieser Runde eine Unterwahl (hinten,
+       ueber den Kopf, vorne auf), also steht hinter dem Befehl noch
+       etwas. Geprueft wird weiter, DASS die Kachel da ist — mit Komma
+       oder mit schliessender Klammer dahinter. */
+    const kachel = new RegExp('"' + befehl + '"[,\\]]').test(js);
     const kommando = new RegExp("\\b" + befehl + ":\\s*\\{ wirkung: \"" + befehl + "\"").test(lc);
     const verteiler = new RegExp('art === "' + befehl + '" && ' + fn).test(js);
     pruefe("„" + befehl + "“ ist vollstaendig verdrahtet",

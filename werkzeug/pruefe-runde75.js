@@ -110,10 +110,21 @@ pruefe("sie miaut zweimal — beim Auftauchen und unterwegs",
   && /lcTonSpaeter\("katze", Math\.round\(hin \* 0\.55\), 0\.42\)/.test(js));
 
 console.log("\nDIE UEBERDIMENSIONALE HAND\n");
+/* RUNDE 99 NACHGEZOGEN: aus zwei Haenden sind sechs geworden (Gott,
+   King Kong, Mann, Frau, Hexe, Android), und sie stehen jetzt in
+   EINER Tabelle (LC_HANDSORTEN) statt als zwei Sonderfaelle im
+   Programm. „const gorilla = art === ,pranke'" gibt es deshalb nicht
+   mehr; stattdessen sagt die Tabelle, welche Hand behaart ist.
+   Seine Bestellung von damals — „Vielleicht kann man sich die Hand
+   auch aussuchen in der Auswahl" — ist damit nicht weniger, sondern
+   mehr erfuellt, und genau das wird hier geprueft. */
 pruefe("man kann sich die Hand aussuchen: Gotteshand oder Gorilla",
   /gotteshand: \{ wirkung: "gotteshand"/.test(lc)
   && /pranke:   \{ wirkung: "pranke"/.test(lc)
-  && /const gorilla = art === "pranke";/.test(js));
+  && /const LC_HANDSORTEN = \{/.test(js)
+  && /gotteshand: \{ wort: "Gott"/.test(js)
+  && /pranke:\s+\{ wort: "King Kong"/.test(js)
+  && /const gorilla = !!sorte\.affe;/.test(js));
 /* RUNDE 88 NACHGEFUEHRT: die Finger heissen seit Runde 87 nicht
    mehr nur „lc-rhand-finger", sondern tragen zusaetzlich ihr
    Gelenk („lc-rhand-finger lc-rf-mcp"), weil jeder Finger jetzt

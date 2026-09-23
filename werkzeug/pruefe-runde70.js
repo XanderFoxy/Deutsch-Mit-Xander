@@ -88,8 +88,13 @@ pruefe("Tarzan ruft verschieden",
    Seit die Animation nachgemessen wurde, kommt er bei 441 ms — dort
    treffen die Lippen wirklich auf. Worum es dieser Regel geht, bleibt
    dasselbe: Mann und Frau kuessen mit verschiedener Stimme. */
+/* RUNDE 99 NACHGEZOGEN: gewaehlt wird nicht mehr nach dem Platz des
+   Zuschauers („meiner"), sondern nach dem KUESSER — sonst klingt
+   derselbe Kuss auf jedem Geraet anders. Die Regel selbst (Mann und
+   Frau kuessen mit verschiedener Stimme, bei 441 ms) bleibt. */
 pruefe("der Kuss auch",
-  /lcStimmeZu\(meiner, "kussmann", "kussfrau", 441, 0\.62\)/.test(js));
+  /lcStimmeZu\(kuesser, "kussmann", "kussfrau", 441, 0\.62\)/.test(js)
+  && /lcStimmeZu\(platz, "kussfrau", "kussmann", 441, 0\.62\)/.test(js));
 pruefe("und der Plan mischt sich beim Kuss nicht mehr ein",
   /kuss:\s+\{ still: true/.test(js)
   && /if \(plan && plan\.still\) return;/.test(js));

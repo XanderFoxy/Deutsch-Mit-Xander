@@ -202,7 +202,12 @@ pruefe("es gibt ein Werkzeug, das beide gemeinsam setzt",
    Regel prueft deshalb den Weg, nicht mehr die eine Kachel. */
 pruefe("die Effekte fuer ALLE schicken wirklich das Wort „alle“",
   /knopf\(zeichen, wort, \(\) => schicken\("\/" \+ befehl \+ \(ohneNamen \? "" : " alle"\)\)\);/.test(js)
-  && /\+ \(name \? " " \+ name : ""\) \+ \(zusatz \? " " \+ zusatz : ""\)/.test(js));
+  /* RUNDE 99 NACHGEZOGEN: die Kachel haengt nicht mehr „name" an,
+     sondern „wen". Das ist DASSELBE, solange niemand das neue
+     Haekchen „fuer alle" setzt — und wenn doch, steht dort „alle"
+     oder die Namensliste ohne die Abgewaehlten. Fuer die Kacheln
+     unter „Alle" aendert sich nichts: dort ist „name" schon „alle". */
+  && /\+ \(wen \? " " \+ wen : ""\) \+ \(zusatz \? " " \+ zusatz : ""\)/.test(js));
 pruefe("schwebende Panels gehen auch im Leerraum zu",
   /const LC_BEDIENBAR = /.test(js)
   && /if \(ziel\.closest\(LC_BEDIENBAR\)\) return;/.test(js));
