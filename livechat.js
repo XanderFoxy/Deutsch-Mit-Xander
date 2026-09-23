@@ -912,6 +912,9 @@ window.LiveChat = (function () {
        jemand anderen von seinem Platz von unten nach oben klettern
        lassen kann." */
     blume:  { wirkung: "blume",  satz: "l\u00e4sst eine Blume aufbl\u00fchen aus", emoji: "\ud83c\udf3c" },
+    /* RUNDE 98 — XANDER: „ich moechte mit meinem Avatar … nur das
+       Gesicht davon haben wir in Animation, sagt oh my god und wow." */
+    gesicht: { wirkung: "gesicht", satz: "zeigt ein Gesicht \u00fcber", emoji: "\ud83d\ude32" },
     leiter: { wirkung: "leiter", satz: "stellt eine Leiter an den Platz von", emoji: "\ud83e\uddd7" },
     /* RUNDE 98 — XANDER: „Die Leute muessen das selber putzen entweder
        mit dem Scheibenwischer oder mit dem Schwamm \u2026 oder alternativ
@@ -9452,6 +9455,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "pflaster", kurz: "heilen", nutzt: "/pflaster Name",
       was: "klebt zwei Pflaster \u00fcber Kreuz aufs Bild \u2014 danach ist alles wieder heil, auch ein vom Hammer zerschlagenes Profilbild" },
     /* RUNDE 98 — die beiden neuen Profil-Effekte. */
+    { gr: "reden", w: "gesicht", kurz: "mimik", nutzt: "/gesicht wow",
+      was: "Alex\u2019 Gesicht als Reaktion \u2014 ohmygod, wow oder verbissen; mit Namen dahinter \u00fcber seinem Platz" },
     { gr: "reden", w: "blume", kurz: "aufbluehen", nutzt: "/blume Name",
       was: "das Bild wird zur Bl\u00fctenmitte \u2014 zehn Bl\u00e4tter gehen auf, unten w\u00e4chst der Stiel" },
     { gr: "reden", w: "leiter", kurz: "klettern", nutzt: "/leiter Name",
@@ -12175,6 +12180,56 @@ window.LiveChat = (function () {
       return anAlle("aktion", zustand.ichName + " putzt die Scheibe von "
         + wemP2.name + " " + wortP + "  \ud83e\uddfd",
         { wirkung: "putzen", wen: wemP2.name, stueck: zeugP });
+    }
+    /* =============================================================
+       RUNDE 98 — DIE GESICHTER VOM AVATAR
+       -------------------------------------------------------------
+       XANDER: „ich moechte mit meinem Avatar, den wir fuer die
+       Webseiten-Vorstellung haben — nur das Gesicht davon haben wir
+       in Animation, sagt oh my god und wow."
+       „/gesicht wow" gilt mir selbst, „/gesicht Bea wow" ihr. Steht
+       gar kein Gesicht dabei, kommt die Liste.
+       ============================================================= */
+    /* =============================================================
+       RUNDE 98 — DAS LIEDER-PANEL
+       -------------------------------------------------------------
+       XANDER: „Die Musik kann ich immer noch nicht in Einzelteil-
+       Buttons anlegen, um eine History zu haben beziehungsweise ein
+       abgespeichertes Panel."
+       GEFUNDEN von werkzeug/pruefe-jeder-befehl: „/abschnitte" war
+       ein BLINDGAENGER. Er stand in der Befehlsliste, wurde aber nur
+       im Absende-Feld des Chats abgefangen — ueber jeden anderen Weg
+       (Befehlsliste, Kurzwort, Sonde) passierte gar nichts. Jetzt
+       steht er hier, wo alle anderen Befehle auch stehen, und ruft
+       die Ansicht ueber denselben Weg auf wie „/lesezeile".
+       ============================================================= */
+    if (art === "abschnitte" || art === "refrains" || art === "liedpanel") {
+      var ging = false;
+      try { ging = Boolean(window.DMA_LIEDPANEL && window.DMA_LIEDPANEL("")); } catch (e) {}
+      if (ging) return true;
+      return systemZeile("Das Lieder-Panel gibt es nur im Klassenzimmer.");
+    }
+    if (art === "gesicht") {
+      var GESICHTER = ["ohmygod", "wow", "verbissen"];
+      var teileG = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
+      var welchesG = "";
+      if (teileG.length) {
+        var letztesG = String(teileG[teileG.length - 1]).toLowerCase()
+          .replace(/[^a-z]/g, "");
+        if (GESICHTER.indexOf(letztesG) >= 0) {
+          welchesG = letztesG;
+          teileG.pop();
+        }
+      }
+      if (!welchesG) {
+        return systemZeile("Gesichter von Alex:\n"
+          + "  /gesicht wow             \u00fcber deinem eigenen Platz\n"
+          + "  /gesicht Bea ohmygod     \u00fcber ihrem\n"
+          + "  Es gibt: " + GESICHTER.join(", "));
+      }
+      var wemG2 = teileG.length ? zielPerson(teileG.join(" ")) : { name: zustand.ichName };
+      return anAlle("aktion", zustand.ichName + " macht ein Gesicht  \ud83d\ude32",
+        { wirkung: "gesicht", wen: wemG2.name, stueck: welchesG });
     }
     if (art === "spray") {
       var AUFKLEBER = ["herz", "stern", "feuer", "regenbogen", "blume", "fuchs",

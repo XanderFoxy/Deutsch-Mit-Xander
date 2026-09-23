@@ -23911,6 +23911,11 @@
   window.DMA_NACHSCHLAGEN = lcWortNachschlagen;
 
   window.DMA_PRUEF_LESESTOFF = lcLesestoff;
+  /* RUNDE 98 — der Weg von livechat.js zum Lieder-Panel. Dort steht
+     der Befehl, hier steht die Ansicht. */
+  window.DMA_LIEDPANEL = (fuerWen) => {
+    try { return lcLiedPanel(fuerWen || ""); } catch (e) { return false; }
+  };
   window.DMA_LESEFEST = { setzen: lcLeseFestSetzen, nachziehen: lcLeseTafelNachziehen,
                           welche: () => lcLeseFest,
     /* RUNDE 98 — der Weg von aussen: eine Meldung aus dem Raum setzt
@@ -29419,7 +29424,12 @@
        ["\ud83d\udc8b", "Kuss", "kuss"],
        ["\u2764\ufe0f", "Herzen", "herz"],
        ["\ud83c\udf3c", "Blume aufbluehen lassen", "blume"]]],
-    ["\ud83e\uddd7", "Leiter", "leiter"]
+    ["\ud83e\uddd7", "Leiter", "leiter"],
+    /* RUNDE 98 — die Gesichter vom Avatar, in EINER Kachel. */
+    ["\ud83d\ude32", "Gesicht", "gesicht", false,
+      [["\ud83d\ude31", "Oh my God", "gesicht", "ohmygod"],
+       ["\ud83e\udd29", "Wow", "gesicht", "wow"],
+       ["\ud83d\ude24", "Verbissen", "gesicht", "verbissen"]]]
   ];
 
   /* Die Zeichen zu den Sprechbildern — sie stehen hier und nicht in
@@ -32073,6 +32083,8 @@
        machen kann oder dass ich ueber eine Leiter von unten nach oben
        klettern kann." */
     blume:    { zeichen: ["\ud83c\udf3c"], wie: 5, klasse: "herz" },
+    /* RUNDE 98 — die Gesichter vom Avatar. */
+    gesicht:  { zeichen: ["\ud83d\ude32"], wie: 4, klasse: "umarmen" },
     leiter:   { zeichen: ["\ud83e\uddd7"], wie: 4, klasse: "umarmen" },
     /* RUNDE 98 — der Putzkasten: Schwamm mit Eimer, Lappen, Spucke. */
     putzen:   { zeichen: ["\ud83e\uddfd"], wie: 4, klasse: "umarmen" },
@@ -36489,6 +36501,57 @@
         lcHammerHeilen(name);
       }, 2300);
     }, 3400, "pflaster");
+  }
+
+  /* =====================================================================
+     RUNDE 98 — DIE GESICHTER VOM AVATAR
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „Und ich moechte mit meinem Avatar, den wir
+     fuer die Webseiten-Vorstellung haben — nur das Gesicht davon haben
+     wir in Animation, sagt oh my god und wow, also diese zwei
+     einzelnen. Und dann so Alter, verbissen, schockiert, und eins, wo
+     er sagt Leute, bisschen genervt, wo er die Aufmerksamkeit der
+     anderen zu sich zieht, und eins, wo er Hallo sagt, und eins, wo er
+     okay sagt."
+
+     Die Gesichter sind aus dem BESTEHENDEN Avatar gemacht (tutor/
+     alex-comic.png war die Vorlage) — derselbe Kopf, dieselbe Muetze,
+     dieselbe Strichfuehrung, nur eine andere Mimik. Sie liegen als
+     freigestellte PNG in tutor/gesicht-*.png.
+
+     WELCHE ES SCHON GIBT, STEHT IN DIESER EINEN LISTE. Wer ein
+     weiteres Bild dazulegt, traegt es hier ein — Befehl, Kachel und
+     Hilfe wachsen von selbst mit.
+     ===================================================================== */
+  const LC_GESICHTER = [
+    { wort: "ohmygod",   zeigt: "Oh my God", sagt: "Oh my God!",  ton: "aufrau" },
+    { wort: "wow",       zeigt: "Wow",       sagt: "Wow!",         ton: "jubel" },
+    { wort: "verbissen", zeigt: "Verbissen", sagt: "Jetzt aber.",  ton: "bonk" },
+  ];
+  function lcGesichtFinden(was) {
+    const w = String(was || "").trim().toLowerCase().replace(/[^a-z]/g, "");
+    return LC_GESICHTER.find((g) => g.wort === w) || LC_GESICHTER[0];
+  }
+  /* Der Kopf kommt von unten hoch, schiesst ein Stueck ueber, wippt
+     zurueck und bleibt stehen; daneben steht, was er sagt. Nach zwei
+     Sekunden geht er wieder. */
+  function lcGesicht(wen, was) {
+    const g = lcGesichtFinden(was);
+    return lcAmPlatz(wen, "lc-gesicht", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      const gr = (kreis && kreis.offsetWidth) || 64;
+      schicht.style.setProperty("--gross", gr + "px");
+      const kopf = document.createElement("img");
+      kopf.className = "lc-gesicht-bild";
+      kopf.alt = "";
+      kopf.src = "tutor/gesicht-" + g.wort + ".png";
+      schicht.appendChild(kopf);
+      const blase = document.createElement("span");
+      blase.className = "lc-gesicht-wort";
+      blase.textContent = g.sagt;
+      schicht.appendChild(blase);
+      if (g.ton) lcTonSpaeter(g.ton, 260, 0.45);
+    }, 2600, null);
   }
 
   /* =====================================================================
@@ -51849,6 +51912,8 @@
     /* RUNDE 98 — die Blume blueht an GENAU EINEM Platz auf, und die
        Leiter steht an GENAU EINEM Platz. Nichts davon regnet. */
     blume: 1, leiter: 1,
+    /* RUNDE 98 — ein Gesicht gilt EINEM Platz, es regnet nicht. */
+    gesicht: 1,
     /* RUNDE 98 — der Beifall gilt dem, der etwas Schoenes gemacht
        hat, nicht dem ganzen Raum. */
     applaus: 1,
@@ -51903,6 +51968,13 @@
        machen kann." Gilt EINEM Bild, regnet nicht. */
     if (art === "blume") {
       lcBlume((nachricht && (nachricht.wen || nachricht.an)) || "");
+      return;
+    }
+    /* RUNDE 98 — XANDER: „ich moechte mit meinem Avatar … nur das
+       Gesicht davon haben wir in Animation, sagt oh my god und wow." */
+    if (art === "gesicht") {
+      lcGesicht((nachricht && (nachricht.wen || nachricht.an)) || "",
+                (nachricht && nachricht.stueck) || "");
       return;
     }
     /* RUNDE 98 — XANDER: „dass ich ueber eine Leiter von unten nach
@@ -55365,8 +55437,13 @@
            kein Befehl fuer den Raum, sondern eine Ansicht auf dem
            eigenen Geraet \u2014 deshalb wird er hier abgefangen und geht
            gar nicht erst hinaus. */
-        if (/^\/(abschnitte|refrains|liedpanel)\b/i.test(t)
-            || /^\/musik\s+abschnitte\b/i.test(t)) {
+        /* „/musik abschnitte" bleibt hier: es ist eine Schreibweise
+           mit Zusatz, die livechat.js als Musikbefehl liest. Die
+           blanken Woerter „/abschnitte", „/refrains" und
+           „/liedpanel" stehen dagegen jetzt in livechat.js — sonst
+           waeren sie ueberall sonst Blindgaenger (gemessen von
+           werkzeug/pruefe-jeder-befehl). */
+        if (/^\/musik\s+abschnitte\b/i.test(t)) {
           feld.value = "";
           senden.disabled = true;
           lcLiedPanel("");

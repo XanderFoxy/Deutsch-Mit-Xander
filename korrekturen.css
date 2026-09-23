@@ -31315,3 +31315,67 @@ code, pre {
   position: static;
   box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.28);
 }
+
+/* =========================================================
+   RUNDE 98 — DIE GESICHTER VOM AVATAR
+   ---------------------------------------------------------
+   XANDER (23.09.2026): „Und ich möchte mit meinem Avatar, den wir für
+   die Webseiten-Vorstellung haben — nur das Gesicht davon haben wir
+   in Animation, sagt oh my god und wow … und eins, wo er Hallo sagt,
+   und eins, wo er okay sagt."
+
+   Der Kopf kommt von unten hoch, schießt ein Stück über und wippt
+   zurück — so, wie jemand, der plötzlich ins Bild kommt. Er steht
+   VOR dem Profilbild und deckt es dabei nicht zu: er sitzt darüber,
+   nicht darauf.
+   ========================================================= */
+.lc-gesicht { z-index: 9; overflow: visible; }
+.lc-gesicht-bild {
+  position: absolute;
+  left: 50%;
+  bottom: 42%;
+  width: calc(var(--gross, 64px) * 1.15);
+  height: auto;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .45));
+  animation: lcGesichtR98 2.6s cubic-bezier(.22, 1.2, .36, 1) both;
+}
+@keyframes lcGesichtR98 {
+  0%   { transform: translate(-50%, 60%) scale(.55); opacity: 0; }
+  16%  { transform: translate(-50%, -14%) scale(1.1); opacity: 1; }
+  26%  { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  /* Ein kurzes Nicken, damit es lebt und nicht klebt. */
+  40%  { transform: translate(-50%, -4%) scale(1.02); }
+  55%  { transform: translate(-50%, 0) scale(1); }
+  82%  { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, 24%) scale(.8); opacity: 0; }
+}
+/* Und was er sagt — eine kleine Sprechblase daneben. */
+.lc-gesicht-wort {
+  position: absolute;
+  left: 50%;
+  top: -6%;
+  transform: translateX(-50%);
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .94);
+  color: #1a1a1f;
+  font-weight: 800;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
+  pointer-events: none;
+  animation: lcGesichtWortR98 2.6s ease-out both;
+}
+@keyframes lcGesichtWortR98 {
+  0%, 14% { opacity: 0; transform: translateX(-50%) scale(.6); }
+  22%     { opacity: 1; transform: translateX(-50%) scale(1.08); }
+  30%     { opacity: 1; transform: translateX(-50%) scale(1); }
+  82%     { opacity: 1; }
+  100%    { opacity: 0; transform: translateX(-50%) scale(.9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-gesicht-bild, .lc-gesicht-wort { animation: none; }
+  .lc-gesicht-bild { transform: translate(-50%, 0); }
+}
