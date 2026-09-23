@@ -12610,6 +12610,7 @@ window.LiveChat = (function () {
           + "  /spray Name              ein lachendes Gesicht\n"
           + "  /spray Name traurig      ein trauriges Gesicht\n"
           + "  /spray Name <Bild>       " + AUFKLEBER.slice(0, 8).join(", ") + " \u2026\n"
+          + "  /spray Name wort-geil    ein Wort spr\u00fchen (wort-wow, wort-geil \u2026)\n"
           + "  /spray Name <Adresse>    ein Bild deiner Wahl \u2014 oder im "
           + "Platzmen\u00fc unter \u201eSpr\u00fchdose \u203a Eigenes Bild\u201c");
       }
@@ -12621,7 +12622,14 @@ window.LiveChat = (function () {
       var roh = String(teileS[teileS.length - 1] || "");
       var istBild = /^(https?:\/\/|data:image\/)/i.test(roh);
       var letztesS = roh.toLowerCase();
+      /* RUNDE 99 — XANDER: „und vielleicht auch Worte, geil, wow."
+         Ein Wort kommt als „wort-geil" hinten an. Erlaubt sind nur
+         Buchstaben und hoechstens zwoelf davon — ein Befehl, der
+         beliebigen Text an alle weiterreicht und ihn drueben gross
+         auf ein Bild malt, waere eine offene Tuer. */
+      var istWort = /^wort-[a-z\u00e4\u00f6\u00fc\u00df]{1,12}$/.test(letztesS);
       var istWahl = /^(froh|happy|lachen|traurig|sad|schade|weinen)$/.test(letztesS)
+        || istWort
         || AUFKLEBER.indexOf(letztesS) >= 0;
       var wasS = istBild ? roh : (istWahl ? letztesS : "froh");
       if (istWahl || istBild) teileS.pop();

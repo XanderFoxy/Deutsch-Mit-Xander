@@ -27715,6 +27715,62 @@
     g.stroke();
     return Promise.resolve(c);
   }
+  /* =================================================================
+     RUNDE 99 — EIN WORT AN DIE WAND
+     -----------------------------------------------------------------
+     XANDER (23.09.2026): „bei der Spruehdose koennen mehr Motive sein
+     und vielleicht auch Worte, geil, wow."
+     Ein Motiv ist hier immer eine Leinwand — ein Wort also auch. Es
+     wird so gross gesetzt, dass es die Breite fuellt, schraeg
+     gestellt (ein Graffiti steht selten gerade), schwarz umrandet und
+     mit einem Glanzlicht versehen. Danach geht es denselben Weg wie
+     jedes andere Motiv: es wird Tropfen fuer Tropfen aufgespruecht.
+     ================================================================= */
+  function lcSprayMotivWort(gr, wort) {
+    const c = document.createElement("canvas");
+    c.width = gr; c.height = gr;
+    const g = c.getContext("2d");
+    const txt = String(wort || "").toUpperCase().slice(0, 12);
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    /* Die Schriftgroesse wird gesucht, nicht geraten: so gross wie
+       moeglich, aber das Wort muss in die Breite passen. Ein Wort,
+       das ueber den Rand laeuft, waere ein halbes Wort. */
+    let s2 = Math.round(gr * 0.6);
+    const breite = () => {
+      g.font = "900 " + s2 + "px 'Arial Black', Impact, system-ui, sans-serif";
+      return g.measureText(txt).width;
+    };
+    while (s2 > 8 && breite() > gr * 0.86) s2 -= 1;
+    g.translate(gr / 2, gr / 2);
+    g.rotate(-0.09);
+    g.lineJoin = "round";
+    g.lineCap = "round";
+    /* Der Schatten dahinter — er gibt dem Wort eine Wand. */
+    g.fillStyle = "rgba(20,14,24,.45)";
+    g.fillText(txt, gr * 0.035, gr * 0.035);
+    /* Die Kontur. */
+    g.lineWidth = Math.max(3, gr * 0.055);
+    g.strokeStyle = "#141018";
+    g.strokeText(txt, 0, 0);
+    /* Die Fuellung: derselbe Farbverlauf, den auch die frohe Dose
+       benutzt — sonst haette das Wort eine Farbe aus dem Nichts. */
+    const lauf = g.createLinearGradient(-gr / 2, -s2 / 2, gr / 2, s2 / 2);
+    lauf.addColorStop(0, "#ffd34d");
+    lauf.addColorStop(0.5, "#ff6b8a");
+    lauf.addColorStop(1, "#6ad0ff");
+    g.fillStyle = lauf;
+    g.fillText(txt, 0, 0);
+    /* Und ein Glanzlicht auf der oberen Haelfte. */
+    g.save();
+    g.beginPath();
+    g.rect(-gr / 2, -s2 * 0.62, gr, s2 * 0.42);
+    g.clip();
+    g.fillStyle = "rgba(255,255,255,.4)";
+    g.fillText(txt, 0, 0);
+    g.restore();
+    return Promise.resolve(c);
+  }
   function lcSprayMotivBild(gr, quelle) {
     return new Promise((fertig, schief) => {
       const b = new Image();
@@ -27978,7 +28034,9 @@
          CORS), wird nicht stillschweigend etwas anderes gespruecht,
          sondern es gibt eine Meldung — sonst haette er ein Gesicht
          auf dem Bild, das er nie gewaehlt hat. */
-      const bauen = gift
+      const bauen = /^wort-/.test(String(wahl || ""))
+        ? lcSprayMotivWort(Math.round(gr * 2), String(wahl).slice(5))
+        : gift
         ? Promise.resolve(lcSprayMotivGift(Math.round(gr * 2)))
         : smiley
         ? lcSprayMotivSmiley(Math.round(gr * 2), froh)
@@ -29339,6 +29397,21 @@
        ["\ud83e\udd8a", "Fuchs", "spray", "fuchs"],
        /* RUNDE 98 — die Giftdose. */
        ["\u2620\ufe0f", "Gift", "spray", "gift"],
+       /* RUNDE 99 — XANDER: „bei der Spruehdose koennen mehr Motive
+          sein." Es LAGEN schon 24 Aufkleber bereit, im Menue standen
+          aber nur acht davon. Jetzt sind es sechzehn. */
+       ["\ud83d\udc4d", "Daumen", "spray", "daumen"],
+       ["\ud83c\udfc6", "Pokal", "spray", "pokal"],
+       ["\ud83c\udf89", "Party", "spray", "party"],
+       ["\ud83c\udfb5", "Musik", "spray", "musik"],
+       ["\ud83d\udc31", "Katze", "spray", "katze"],
+       ["\u2600\ufe0f", "Sonne", "spray", "sonne"],
+       ["\u2744\ufe0f", "Schnee", "spray", "schnee"],
+       ["\u2615", "Kaffee", "spray", "kaffee"],
+       /* „und vielleicht auch Worte, geil, wow." */
+       ["\ud83d\udcac", "WOW", "spray", "wort-wow"],
+       ["\ud83d\udcac", "GEIL", "spray", "wort-geil"],
+       ["\u270d\ufe0f", "Eigenes Wort \u2026", "*spraywort"],
        /* RUNDE 97 — der Teil seines Wunsches, der bisher fehlte:
           „und dass man ein Bild seiner Wahl darauf spruehen kann." */
        ["\ud83d\uddbc\ufe0f", "Eigenes Bild \u2026", "*spraybild"]]],
@@ -29880,6 +29953,20 @@
         if (befehl === "*lied") { lcMusikWaehler(name); return; }
         /* RUNDE 97 — „Eigenes Bild …" fragt genauso weiter. */
         if (befehl === "*spraybild") { lcSprayBildWaehler(name); return; }
+        /* RUNDE 99 — „Eigenes Wort …" fragt nach dem Wort. Erlaubt
+           sind nur Buchstaben; alles andere wird weggeschnitten, statt
+           es an alle weiterzureichen. */
+        if (befehl === "*spraywort") {
+          const roh = window.prompt("Welches Wort soll an die Wand?", "WOW");
+          if (!roh) return;
+          const wort = String(roh).toLowerCase()
+            .replace(/[^a-z\u00e4\u00f6\u00fc\u00df]/g, "").slice(0, 12);
+          if (!wort) { showToast("Nur Buchstaben, bitte."); return; }
+          const zeileW = "/spray " + (wenJetzt() || name) + " wort-" + wort;
+          try { LiveChat.schreiben(zeileW); } catch (x) {}
+          lcNachDemSenden(zeileW);
+          return;
+        }
         /* RUNDE 98 — Auflegen gilt dem Telefonat, nicht einer Person:
            „/anruf aus" darf deshalb KEINEN Namen bekommen. */
         if (befehl === "*auflegen") {
