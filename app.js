@@ -27768,43 +27768,71 @@
      braucht kein Auslesen der Leinwand und geht deshalb auch mit
      einem fremden Bild.
      ================================================================= */
+  let lcSprayTropfenNr = 0;
   function lcSprayMalenEigen(schicht, bild, gr, fertigNach) {
-    const c = document.createElement("canvas");
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    c.width = Math.round(gr * dpr);
-    c.height = Math.round(gr * dpr);
-    c.className = "lc-spray-lack";
-    schicht.appendChild(c);
-    const g = c.getContext("2d");
-    g.scale(dpr, dpr);
-    const bw = bild.naturalWidth || bild.width || 1;
-    const bh = bild.naturalHeight || bild.height || 1;
-    const sk = Math.min(gr * 0.86 / bw, gr * 0.86 / bh);
-    const w = bw * sk, h = bh * sk;
-    const bx = (gr - w) / 2, by = (gr - h) / 2;
+    /* ===============================================================
+       RUNDE 98 — AUCH WAEHREND DES SPRUEHENS BEWEGT SICH DAS GIF
+       ---------------------------------------------------------------
+       XANDER: „es muss in seinen Pixeln genauso aufgesprüht werden
+       selbst ein gif sogar."
+       GEMESSEN, vorher: die Tropfen waren ein Ausschnitt in einer
+       LEINWAND, durch den das Bild mit „drawImage" gezeichnet wurde.
+       Die Pixel stimmten damit — aber „drawImage" nimmt bei einem
+       bewegten Bild laut Standard IMMER das erste Einzelbild. Also
+       stand ein GIF die ganzen 1,7 Sekunden des Spruehens still und
+       fing erst zu laufen an, wenn die bleibende Schicht lag.
+       Jetzt haengt hier ein ECHTES <img> mit der Ursprungsadresse —
+       das laeuft von der ersten Sekunde an. Die Tropfen sind keine
+       Leinwandloecher mehr, sondern ein wachsender AUSSCHNITT
+       (clipPath) aus lauter Kreisen: erst ein Hauch, dann dicht,
+       zum Schluss faellt der Ausschnitt ganz weg. Pixelgenau ist es
+       damit von selbst — es wird ja nichts nachgemalt, sondern das
+       Bild selbst durch die Tropfen hindurch gezeigt.
+       =============================================================== */
+    const huelle = document.createElement("span");
+    huelle.className = "lc-spray-lack lc-spray-lack-eigen";
+    const nr = "lcSprayTropfen" + (++lcSprayTropfenNr);
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("width", "0");
+    svg.setAttribute("height", "0");
+    svg.setAttribute("aria-hidden", "true");
+    svg.style.position = "absolute";
+    const loch = document.createElementNS(NS, "clipPath");
+    loch.setAttribute("id", nr);
+    /* In Anteilen der Bildflaeche (0 bis 1) \u2014 dann stimmt der
+       Ausschnitt auf jedem Bildschirm und bei jeder Platzgroesse. */
+    loch.setAttribute("clipPathUnits", "objectBoundingBox");
+    svg.appendChild(loch);
+    const b = document.createElement("img");
+    b.className = "lc-spray-lack-bild";
+    b.alt = "";
+    b.src = bild.currentSrc || bild.src;
+    b.style.clipPath = "url(#" + nr + ")";
+    b.style.webkitClipPath = "url(#" + nr + ")";
+    huelle.appendChild(svg);
+    huelle.appendChild(b);
+    schicht.appendChild(huelle);
     const anfang = performance.now();
-    let laeuft = true;
+    let laeuft = true, gesetzt = 0;
     const schritt = () => {
-      if (!laeuft || !c.isConnected) return;
+      if (!laeuft || !huelle.isConnected) return;
       const t = Math.min(1, (performance.now() - anfang) / fertigNach);
-      /* Erst ein Hauch, dann wird es dicht — wie bei den Motiven. */
-      const wieViele = Math.round(40 + 300 * t * t);
-      g.save();
-      g.beginPath();
-      for (let i = 0; i < wieViele; i++) {
-        const x = bx + Math.random() * w, y = by + Math.random() * h;
-        const r = 1.2 + Math.random() * (gr * 0.03);
-        /* „moveTo" vor jedem Kreis: sonst zieht der Pfad eine Linie
-           vom letzten Kreis zum naechsten, und der Ausschnitt waere
-           ein Spinnennetz statt Tropfen. */
-        g.moveTo(x + r, y);
-        g.arc(x, y, r, 0, Math.PI * 2);
+      /* Erst ein Hauch, dann wird es dicht — dieselbe Kurve wie bei
+         den gemalten Motiven. Die Tropfen bleiben liegen, es kommen
+         nur neue dazu; deshalb wird nur die DIFFERENZ gesetzt. */
+      const soll = Math.round(24 + 300 * t * t);
+      for (; gesetzt < soll; gesetzt++) {
+        const k = document.createElementNS(NS, "circle");
+        k.setAttribute("cx", (0.07 + Math.random() * 0.86).toFixed(4));
+        k.setAttribute("cy", (0.07 + Math.random() * 0.86).toFixed(4));
+        k.setAttribute("r", (0.014 + Math.random() * 0.055).toFixed(4));
+        loch.appendChild(k);
       }
-      g.clip();
-      g.drawImage(bild, bx, by, w, h);
-      g.restore();
-      if (t < 1) requestAnimationFrame(schritt);
-      else g.drawImage(bild, bx, by, w, h);
+      if (t < 1) { requestAnimationFrame(schritt); return; }
+      /* Zum Schluss liegt es vollstaendig da. */
+      b.style.clipPath = "none";
+      b.style.webkitClipPath = "none";
     };
     requestAnimationFrame(schritt);
     return () => { laeuft = false; };

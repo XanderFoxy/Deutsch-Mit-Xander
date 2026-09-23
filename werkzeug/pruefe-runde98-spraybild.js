@@ -197,6 +197,75 @@ const geben = (wurzel) => http.createServer((q, a) => {
     "und es laeuft weiter \u2014 das Bild wechselt seine Farbe",
     bewegt ? (bewegt.grund || (bewegt.farben || []).join(" ")) : "-");
 
+  console.log("\nUND SCHON WAEHREND DES SPRUEHENS\n");
+  /* XANDER: „es muss in seinen Pixeln genauso aufgespruecht werden
+     selbst ein gif sogar."
+     GEMESSEN, vorher: die bleibende Schicht bewegte sich — die
+     SPRUEHSCHICHT aber nicht. Sie war eine Leinwand, in die das Bild
+     mit „drawImage" gezeichnet wurde, und der Standard schreibt vor,
+     dass „drawImage" bei einem bewegten Bild immer das ERSTE
+     Einzelbild nimmt. Ein GIF stand also die ganzen 1,7 Sekunden des
+     Spruehens still. Gemessen wird deshalb dasselbe wie oben, nur
+     frueher: Bildschirmfotos der Spruehschicht, WAEHREND sie
+     entsteht. */
+  const beim = await (async () => {
+    const platzNr = await pg.evaluate(async (u) => {
+      window.DMA_PRUEF.effektBuehne();
+      await new Promise((f) => setTimeout(f, 260));
+      const p = [...document.querySelectorAll(".lc-platz")].filter((x) =>
+        ((x.querySelector(".lc-platz-name") || {}).textContent || "")
+          .toLowerCase().indexOf("dana") >= 0)[0];
+      window.DMA_PRUEFUNG.wirkung("spray", "Dana", "Alex", { stueck: u });
+      return p ? p.dataset.lcPlatz : "";
+    }, eigen + "/werkzeug/pruefbild-blink.gif");
+    if (!platzNr) return null;
+    const wahl = '.lc-platz[data-lc-platz="' + platzNr + '"] .lc-spray-lack-bild';
+    let stelle = null;
+    for (let i = 0; i < 24 && !stelle; i++) {
+      stelle = await pg.$(wahl);
+      if (!stelle) await pg.waitForTimeout(80);
+    }
+    if (!stelle) return { grund: "keine Spruehschicht gefunden" };
+    const farben = [], tropfen = [];
+    for (let i = 0; i < 10; i++) {
+      tropfen.push(await pg.evaluate((w) => {
+        const b = document.querySelector(w);
+        if (!b) return -1;
+        /* NICHT ueber die id aus „style.clipPath" suchen: der Browser
+           gibt den Wert als url("#name") MIT Anfuehrungszeichen zurueck,
+           und dann findet getElementById nichts — das waere ein Fehler
+           der Sonde, kein Fehler des Produkts. Die Schablone haengt in
+           derselben Huelle, also wird sie dort direkt geholt. */
+        const c = b.parentNode && b.parentNode.querySelector("clipPath");
+        return c ? c.children.length : 0;
+      }, wahl));
+      let foto;
+      try { foto = await stelle.screenshot(); } catch (e) { break; }
+      fs.writeFileSync(TMP, foto);
+      let roh;
+      try {
+        roh = execFileSync(FFMPEG, ["-v", "quiet", "-i", TMP, "-f", "rawvideo",
+          "-pix_fmt", "rgba", "-"], { maxBuffer: 1e8 });
+      } catch (e) { return { grund: "ffmpeg fehlt" }; }
+      let r = 0, b = 0, n = 0;
+      for (let k = 0; k < roh.length; k += 4) {
+        if (roh[k + 3] < 40) continue;
+        r += roh[k]; b += roh[k + 2]; n++;
+      }
+      farben.push(!n ? "leer" : r > b * 1.4 ? "rot" : b > r * 1.4 ? "blau" : "grau");
+      await pg.waitForTimeout(130);
+    }
+    return { farben: farben, tropfen: tropfen };
+  })();
+  sage(beim && beim.tropfen && beim.tropfen.some((x) => x > 0)
+    && beim.tropfen[beim.tropfen.length - 1] > beim.tropfen[0],
+    "die Tropfen werden waehrend des Spruehens mehr, nicht alle auf einmal",
+    beim ? (beim.grund || (beim.tropfen || []).join(" \u2192 ")) : "-");
+  sage(beim && beim.farben
+    && beim.farben.indexOf("rot") >= 0 && beim.farben.indexOf("blau") >= 0,
+    "und das GIF laeuft schon dabei \u2014 es wechselt seine Farbe",
+    beim ? (beim.grund || (beim.farben || []).join(" ")) : "-");
+
   console.log("\nEIN BILD VON FREMDER HERKUNFT (wie bei GIPHY)\n");
   const weit = await spruehen(fremd + "/pruefbild-viertel.png", "Dana");
   sage(weit.bleibt, "auch ein fremdes Bild wird wirklich aufgespruecht",

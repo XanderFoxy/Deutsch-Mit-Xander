@@ -29048,6 +29048,23 @@ code, pre {
   height: 100%;
   pointer-events: none;
 }
+/* RUNDE 98 — DAS EIGENE BILD WIRD ALS ECHTES BILD GESPRUEHT
+   Xander: „es muss in seinen Pixeln genauso aufgesprüht werden selbst
+   ein gif sogar." Deshalb haengt beim eigenen Bild kein gemaltes
+   Leinwandbild in der Blende, sondern ein <img> mit der
+   Ursprungsadresse — ein GIF laeuft damit schon waehrend des
+   Spruehens. Es steht genauso wie spaeter die bleibende Schicht:
+   ganz zu sehen, mittig, nicht beschnitten. */
+.lc-spray-lack-bild {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 7%;
+  box-sizing: border-box;
+  pointer-events: none;
+}
 /* NACHGESEHEN am ersten Versuch: bei -14 % stand die Dose mitten auf
    dem Bild und verdeckte genau das, was sie gerade spruecht. Bei
    -48 % steht sie DANEBEN und haelt nur die Duese hinein. */
