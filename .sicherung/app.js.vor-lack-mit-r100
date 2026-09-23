@@ -27344,16 +27344,7 @@
     bild.alt = "";
     bild.src = bildUrl;
     blende.appendChild(bild);
-    /* RUNDE 100 — XANDER (Walkie-Talkie, zum Lack): „Er bleibt manchmal
-       als Rueckstand auf einem Platz, wenn man den Platz wechselt. Er
-       soll immer mitgehen mit den Platzwechsel-Animationen und den
-       anderen Animationen auch."
-       GEFUNDEN: die Schicht hing am PLATZ. Jede Reise bewegt aber den
-       KREIS (das Bild) — der Lack blieb also stehen, bis die neue
-       Sitzordnung kam. Jetzt haengt er IM Kreis: was das Bild tut
-       (fliegen, rollen, schrumpfen, verschwinden), tut er mit. Rund
-       bleibt er ohnehin, der Kreis schneidet ihn. */
-    (platzEl.querySelector(".lc-kreis") || platzEl).appendChild(schicht);
+    platzEl.appendChild(schicht);
     return true;
   }
   function lcSprayMerken(platzEl, bildUrl, eigen) {
@@ -27392,9 +27383,7 @@
       '<i class="lc-dreckfleck lc-dreck-' + (f.art || "kot") + '" style="left:'
       + f.x + "%;top:" + f.y + "%;--gross:" + f.gross + ";--dreh:" + f.dreh + 'deg"></i>'
     ).join("");
-    /* RUNDE 100 — wie der Lack: der Dreck klebt am BILD und reist mit
-       (siehe lcSprayBleibt). */
-    (platzEl.querySelector(".lc-kreis") || platzEl).appendChild(schicht);
+    platzEl.appendChild(schicht);
     return true;
   }
   /* Einen Fleck dazulegen — und ihn merken. */
@@ -39865,50 +39854,6 @@
      Es fehlten nur zwei Dinge: lcReise hat besetzte Ziele vorher
      rundweg abgelehnt, und es flog nur EIN Bild. Beides steht jetzt
      hier; „tausch" schaltet es ein. */
-  /* =====================================================================
-     RUNDE 100 — LACK UND DRECK REISEN MIT
-     ---------------------------------------------------------------------
-     XANDER (Walkie-Talkie): „Er bleibt manchmal als Rueckstand auf einem
-     Platz, wenn man den Platz wechselt. Er soll immer mitgehen mit den
-     Platzwechsel-Animationen und den anderen Animationen auch."
-     Die meisten Reisen (UFO, Flugzeug, Boot, Lok, Frosch …) bewegen
-     NICHT den Kreis, sondern bauen ein eigenes Reisebild aus der
-     Bildadresse — im Fenster, auf dem Ruecken, am Haken. Dort war
-     vom Lack nichts zu sehen. Jede Reise meldet sich hier: solange sie
-     laeuft, bekommt jedes neue Element, das genau dieses Bild zeigt,
-     eine Kopie von Lack und Dreck darueber. Kein Reiseweg muss dafuer
-     einzeln angefasst werden, und ein spaeter hinzukommender auch nicht. */
-  function lcRueckstandMitnehmen(platzEl, quelle, dauer) {
-    if (!platzEl || !quelle || typeof MutationObserver !== "function") return;
-    const schichten = [...platzEl.querySelectorAll(".lc-sprayfarbe, .lc-dreckschicht")];
-    if (!schichten.length) return;
-    const url = String(quelle).replace(/[()"']/g, "");
-    const beschichten = (el) => {
-      if (!el || el.nodeType !== 1 || !el.style || el.dataset.lcLackMit) return;
-      if (el.closest && el.closest(".lc-kreis")) return;   /* der Kreis hat ihn schon */
-      if ((el.style.backgroundImage || "").indexOf(url) < 0) return;
-      el.dataset.lcLackMit = "1";
-      try { if (getComputedStyle(el).position === "static") el.style.position = "relative"; } catch (e) {}
-      schichten.forEach((sch) => {
-        const k = sch.cloneNode(true);
-        k.classList.add("lc-lack-reist");
-        el.appendChild(k);
-      });
-    };
-    const pruefen = (n) => {
-      if (!n || n.nodeType !== 1) return;
-      beschichten(n);
-      if (n.querySelectorAll) n.querySelectorAll("[style*='background-image']").forEach(beschichten);
-    };
-    const beob = new MutationObserver((liste) => liste.forEach((m) => {
-      if (m.type === "attributes") beschichten(m.target);
-      else m.addedNodes.forEach(pruefen);
-    }));
-    beob.observe(document.body, { childList: true, subtree: true,
-                                  attributes: true, attributeFilter: ["style"] });
-    setTimeout(() => beob.disconnect(), (Number(dauer) || 4000) + 1500);
-  }
-
   function lcReise(wen, von, art, tausch, tempo) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return false;
@@ -40045,8 +39990,6 @@
     const hin = (art === "beamen" || art === "fahrstuhl") ? grund
       : Math.round(grund * (0.72 + 0.28 * plaetzeR));
     const dauer = hin + 500;
-    /* RUNDE 100 — der Lack reist mit (siehe lcRueckstandMitnehmen). */
-    lcRueckstandMitnehmen(ab.el, quelle, dauer);
     const altZ = ab.el.style.zIndex;
     ab.el.style.zIndex = "7";
     lcPlatzUnterwegs(ab.el, true);

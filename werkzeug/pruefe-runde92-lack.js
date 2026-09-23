@@ -96,6 +96,75 @@ const sage = (gut, was, zusatz) => {
   sage(erg.nachWischer === 0, "erst der Scheibenwischer macht ihn weg",
     erg.nachWischer + " Schicht");
 
+  /* RUNDE 100 — XANDER (Walkie-Talkie): „Er bleibt manchmal als
+     Rueckstand auf einem Platz, wenn man den Platz wechselt. Er soll
+     immer mitgehen mit den Platzwechsel-Animationen und den anderen
+     Animationen auch."
+     Gemessen wird waehrend eines echten Platzwechsels (die Leiter hinunter
+     auf Platz 5 — dort bewegt sich das Bild selbst): liegt
+     der Lack in jedem Augenblick auf dem Bild, auch wenn das Bild
+     unterwegs ist? */
+  console.log("\nDER LACK REIST MIT\n");
+  const reise = await pg.evaluate(async () => {
+    window.DMA_PRUEF.effektBuehne();
+    /* ALEX wird lackiert und klettert dann die Leiter hinunter. */
+    window.DMA_PRUEFUNG.wirkung("spray", "Alex", "Bea", { stueck: "herz" });
+    await new Promise((f) => setTimeout(f, 6600));
+    const platz = document.querySelector('[data-lc-platz="1"]');
+    const kreis = platz.querySelector(".lc-kreis");
+    const mitte = (el) => { const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+    const start = mitte(kreis);
+    window.DMA_PRUEFUNG.wirkung("leiter", "Alex", "Alex", { ziel: 5 });
+    let weit = 0, abstand = 0, proben = 0;
+    for (let i = 0; i < 40; i++) {
+      await new Promise((f) => setTimeout(f, 60));
+      const lack = platz.querySelector(".lc-sprayfarbe");
+      if (!lack) continue;
+      const k = mitte(kreis), l = mitte(lack);
+      weit = Math.max(weit, Math.hypot(k.x - start.x, k.y - start.y));
+      abstand = Math.max(abstand, Math.hypot(k.x - l.x, k.y - l.y));
+      proben++;
+    }
+    return { weit: Math.round(weit), abstand: Math.round(abstand * 10) / 10, proben };
+  });
+  sage(reise.weit > 20, "das Bild ist wirklich unterwegs", reise.weit + " px weit");
+  sage(reise.proben > 10 && reise.abstand <= 2,
+    "und der Lack bleibt dabei auf dem Bild — nichts bleibt am alten Platz zurück",
+    "groesster Versatz " + reise.abstand + " px in " + reise.proben + " Proben");
+
+  /* Die meisten Reisen zeigen das Bild in einem eigenen Reisebild
+     (Fenster, Kanzel, Last am Haken). Auch dort muss der Lack drauf sein. */
+  for (const art of ["flug", "untertasse", "boot", "lok", "frosch"]) {
+    const r = await pg.evaluate(async (art) => {
+      window.DMA_PRUEF.effektBuehne();
+      await new Promise((f) => setTimeout(f, 200));
+      /* Die Testbuehne hat keine Fotos — ohne Bildadresse gibt es auch
+         kein Reisebild. Also bekommt Alex eins, wie im Raum. */
+      const pl = document.querySelector('[data-lc-platz="1"]');
+      const k = pl.querySelector(".lc-kreis");
+      let im = k.querySelector(".lc-avatar");
+      if (!im) { im = document.createElement("img"); im.className = "lc-avatar"; k.prepend(im); }
+      im.src = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#3a6"/></svg>');
+      im.style.display = "";
+      window.DMA_PRUEFUNG.wirkung("spray", "Alex", "Bea", { stueck: "herz" });
+      await new Promise((f) => setTimeout(f, 6600));
+      window.DMA_PRUEFUNG.wirkung(art, "7", "Alex", {});
+      let gesehen = 0, sichtbar = 0;
+      for (let i = 0; i < 30; i++) {
+        await new Promise((f) => setTimeout(f, 80));
+        const mit = [...document.querySelectorAll("[data-lc-lack-mit]")];
+        if (mit.length) gesehen++;
+        if (mit.some((el) => { const l = el.querySelector(".lc-lack-reist");
+          if (!l) return false; const a = l.getBoundingClientRect(), b = el.getBoundingClientRect();
+          return a.width > 4 && Math.abs(a.width - b.width) < 2 && Math.abs(a.left - b.left) < 2; })) sichtbar++;
+      }
+      return { gesehen, sichtbar };
+    }, art);
+    sage(r.sichtbar >= 3, art + ": der Lack sitzt auch auf dem Reisebild",
+      r.sichtbar + " von 30 Proben (Reisebild da in " + r.gesehen + ")");
+  }
+
   sage(aufSeite.length === 0, "keine Fehler auf der Seite",
     aufSeite.slice(0, 2).join(" | ") || "keine");
 

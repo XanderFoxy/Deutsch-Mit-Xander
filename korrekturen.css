@@ -32305,3 +32305,12 @@ body.rf-leiste-auf .rf-reiter { display: none; }
    unter dem Hut" — gemessen war es dieser Ring, der unter der Krempe
    hervorschaute, sobald das Bild darunter klein wurde. */
 .lc-platz.lc-zt-im-hut .lc-schild { visibility: hidden; }
+
+/* RUNDE 100 — die Kopie von Lack und Dreck auf einem Reisebild (siehe
+   lcRueckstandMitnehmen in app.js): sie deckt genau dieses Bild, rund
+   wie das Bild selbst. */
+.lc-lack-reist {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  aspect-ratio: auto; border-radius: 50%; overflow: hidden;
+  pointer-events: none; z-index: 2;
+}
