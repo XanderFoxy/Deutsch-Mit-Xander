@@ -30360,24 +30360,71 @@ code, pre {
    Heimlich ist der INHALT. Dass zwei gerade nur einander hoeren, muss
    man dagegen sehen — sonst redet der Raum ins Leere.
    ===================================================================== */
+/* RUNDE 99 — DER HOERER LIEGT AM OHR, NICHT UEBER DEM SCHEITEL
+   XANDER: „die kleinen Telefon[zeichen] von dem geheimen Anruf, die
+   sollen bisschen logischer am Profilbild anliegen, da wo der
+   Ohrbereich ist, und vielleicht mehr rechtsbuendig."
+   Das Profilbild ist ein Kreis; das Ohr sitzt auf halber Hoehe am
+   Rand. Vorher stand der Hoerer bei top 4 % / right 4 % — also oben
+   in der Ecke, wo an einem Kopf gar nichts ist. Jetzt sitzt er bei
+   38 % Hoehe direkt am rechten Rand und ist leicht zum Kopf hin
+   geneigt, so wie man einen Hoerer haelt. Das Wackeln bleibt, nur
+   um diese Neigung herum. */
 .lc-telefonat {
   position: absolute;
-  right: 4%;
-  top: 4%;
-  font-size: 1.1rem;
+  right: -1%;
+  top: 38%;
+  font-size: 1.05rem;
   line-height: 1;
   z-index: 7;
   pointer-events: none;
+  transform-origin: 30% 60%;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .45));
   animation: lcTelefonWackeltR94 1.8s ease-in-out infinite;
 }
 @keyframes lcTelefonWackeltR94 {
-  0%, 100% { transform: rotate(-8deg); }
-  50%      { transform: rotate(8deg); }
+  0%, 100% { transform: rotate(-26deg); }
+  50%      { transform: rotate(-12deg); }
 }
 /* Die beiden werden zusaetzlich leicht abgeblendet: sie sind gerade
    nicht im Raumgespraech. */
 .lc-platz-telefoniert .lc-kreis { filter: saturate(.75) brightness(.92); }
+/* =====================================================================
+   RUNDE 99 — DER HAKEN „NUR AN DICH"
+   ---------------------------------------------------------------------
+   XANDER: „vielleicht durch das Halten auf sein Profilbild und dann
+   einfach nur ein Checkmark fuer privates."
+   Der Haken sitzt unten links am Bild — dort, wo sonst nichts liegt —
+   und bleibt so lange stehen, wie er gesetzt ist. Er lebt NUR auf dem
+   Geraet dessen, der ihn gesetzt hat; niemand sonst sieht ihn.
+   ===================================================================== */
+.lc-privathaken {
+  position: absolute;
+  left: 2%;
+  bottom: 2%;
+  width: 1.15em;
+  height: 1.15em;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .82rem;
+  line-height: 1;
+  color: #04220f;
+  background: radial-gradient(circle at 34% 30%, #9cf7bd, #2fbd63 62%, #14853f);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .45), inset 0 1px 2px rgba(255, 255, 255, .5);
+  z-index: 8;
+  pointer-events: none;
+}
+.lc-platz-privat .lc-kreis {
+  box-shadow: 0 0 0 2px rgba(47, 189, 99, .9), 0 0 10px rgba(47, 189, 99, .45);
+}
+/* Und in der Schreibzeile steht, an wen es gerade geht — sonst
+   schickt man versehentlich etwas Privates und weiss es nicht. */
+.lc-privatband {
+  background: linear-gradient(180deg, rgba(24, 84, 48, .96), rgba(16, 60, 34, .96));
+  border-color: rgba(120, 232, 164, .5);
+}
 .lc-telefonband {
   background: linear-gradient(180deg, rgba(40, 60, 100, .96), rgba(26, 42, 76, .96));
   border-color: rgba(140, 180, 250, .5);

@@ -6066,6 +6066,13 @@ window.LiveChat = (function () {
         + "Sag es gleich noch einmal, " + wennFertig(fokus_.geschlecht) + ".", "fokus-wartet");
       return false;
     }
+    /* RUNDE 99 — DER HAKEN GILT AUCH FUER DIE STIMME.
+       XANDER: „In dem Moment kann ich einfach ne Sprachnachricht ganz
+       normal schicken und sie kommt dann nur bei dieser Person an."
+       Also: derselbe Knopf, derselbe Handgriff — nur der Weg hinaus
+       ist ein anderer. */
+    var zielS = privatNochDa();
+    if (zielS) return sprachPrivatSenden(zielS, daten, sekunden, o);
     var id = neueNachrichtId();
     var n = {
       id: id,
@@ -8813,6 +8820,11 @@ window.LiveChat = (function () {
   }
 
   function bildSenden(quelle, text) {
+    /* RUNDE 99 — mit gesetztem Haken geht auch das Bild nur an EINEN.
+       XANDER: „ob jetzt Sprachnachrichten oder Bild Nachrichten oder
+       irgendwas." */
+    var zielB = privatNochDa();
+    if (zielB) return bildFluestern(zielB.name, quelle, text);
     var n = {
       id: neueNachrichtId(),
       von: zustand.ichId, name: zustand.ichName,
@@ -9430,6 +9442,12 @@ window.LiveChat = (function () {
     /* RUNDE 94 — das heimliche Telefonat: zwei hoeren nur noch sich. */
     { gr: "reden", w: "anruf", kurz: "telefonieren", nutzt: "/anruf Name",
       was: "Heimlich telefonieren — ihr zwei hoert nur noch euch, der Raum hoert euch nicht" },
+    /* RUNDE 99 — der Haken auf dem Platz. Ueber das Platzmenue (Bild
+       halten) ist er mit einem Tipp gesetzt; hier steht er auch als
+       Befehl, damit man ihn tippen kann und damit die Befehlsliste
+       ihn kennt. */
+    { gr: "reden", w: "privat", kurz: "nurandich", nutzt: "/privat Name",
+      was: "Haken auf einen Platz \u2014 ab jetzt geht alles (Text, Bild, Sprachnachricht) NUR an diese Person; /privat aus nimmt ihn wieder weg" },
     { gr: "reden", w: "schneekugel", kurz: "glaskugel", nutzt: "/schneekugel Name",
       was: "Schneekugel — durchgeschüttelt, dann rieselt der Schnee über Häuschen und Tanne" },
     { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name 3 1:20-1:50", was: "Kopfhoerer — aufgesetzt; mit Liednummer hoert der andere das Lied, mit Zeitangabe nur diesen Ausschnitt" },
@@ -10241,6 +10259,79 @@ window.LiveChat = (function () {
     return true;
   }
 
+  /* =========================================================
+     RUNDE 99 — DER HAKEN AUF DEM PLATZ: „NUR AN DICH"
+     ---------------------------------------------------------
+     XANDER (23.09.2026): „vielleicht durch das Halten auf sein
+     Profilbild und dann einfach nur ein Checkmark für privates und
+     durch dieses Routing, wenn dieser Checkmark gesetzt ist. In dem
+     Moment kann ich einfach ne Sprachnachricht ganz normal schicken
+     und sie kommt dann nur bei dieser Person an … im Prinzip ist
+     alles was man dann macht automatisch an ihn geflüstert, ob jetzt
+     Sprachnachrichten oder Bild Nachrichten oder irgendwas."
+
+     Genau so ist es gebaut: EIN Schalter, und danach ist jeder Weg
+     hinaus umgeleitet. Nicht drei getrennte Knöpfe für Text, Bild
+     und Stimme — ein Ziel, drei Abzweigungen an derselben Stelle,
+     an der sonst „an alle" stünde:
+
+       schreiben()     → fluesternSenden()
+       bildSenden()    → bildFluestern()
+       sprachSenden()  → sprachPrivatSenden()
+
+     Der Haken lebt nur auf DIESEM Gerät. Niemand sonst erfährt, dass
+     er gesetzt ist — auch der Empfänger nicht, bis etwas ankommt.
+     ========================================================= */
+  var privatZiel = null;                 /* { id, name } oder null */
+  function privatStand() {
+    return privatZiel ? { id: privatZiel.id, name: privatZiel.name } : null;
+  }
+  function privatMelden() {
+    try { if (window.DMA_PRIVAT) window.DMA_PRIVAT(privatStand()); } catch (e) {}
+  }
+  function privatSetzen(wen) {
+    /* Nichts übergeben heisst: Haken weg. */
+    if (!wen) {
+      var altP = privatZiel;
+      privatZiel = null;
+      privatMelden();
+      if (altP) systemZeile("Der Haken ist weg — du schreibst wieder an alle.");
+      melden();
+      return true;
+    }
+    var ziel = (wen && wen.id) ? wen : (personNachName(wen) || praesenzNachName(wen));
+    if (!ziel || !ziel.id) {
+      return systemZeile("\u201e" + String(wen && wen.name ? wen.name : wen)
+        + "\u201c ist gerade nicht da.");
+    }
+    if (ziel.id === zustand.ichId) {
+      return systemZeile("Nur an dich selbst \u2014 das liest sowieso nur du.");
+    }
+    /* Schon gesetzt und derselbe Mensch: der Haken ist ein Schalter. */
+    if (privatZiel && privatZiel.id === ziel.id) return privatSetzen(null);
+    privatZiel = { id: ziel.id, name: ziel.name || String(wen) };
+    privatMelden();
+    systemZeile("\u2713 Nur an " + privatZiel.name
+      + " \u2014 alles, was du jetzt schickst (Text, Bild, Sprachnachricht), geht nur an "
+      + (geschlechtVon(privatZiel.id) === "w" ? "sie" : "ihn")
+      + ". Noch einmal antippen macht den Haken wieder weg.");
+    melden();
+    return true;
+  }
+  /* Wer den Raum verlassen hat, kann nichts mehr empfangen — dann
+     faellt der Haken von selbst, statt ins Leere zu schicken. */
+  function privatNochDa() {
+    if (!privatZiel) return null;
+    var da = (zustand.leute && zustand.leute[privatZiel.id])
+      || personNachName(privatZiel.name) || praesenzNachName(privatZiel.name);
+    if (da) return privatZiel;
+    var weg = privatZiel.name;
+    privatZiel = null;
+    privatMelden();
+    systemZeile(weg + " ist nicht mehr da \u2014 der Haken ist weg, du schreibst wieder an alle.");
+    return null;
+  }
+
   /* Ein Bild an EINE Person — von der Oberflaeche aus (Bildwaehler).
      Der Name kommt so herein, wie er im Raum steht. */
   function bildFluestern(name, quelle, text) {
@@ -10445,6 +10536,9 @@ window.LiveChat = (function () {
      Empfängers; niemand sonst hört dort mit. Dasselbe gilt für
      Einladungen, die ja auch in einen anderen Raum gehen.
      ========================================================= */
+  /* Die Stuecke einer gefluesterten Sprachnachricht, bis sie
+     vollstaendig ist (Runde 99). */
+  var fluesterBausteine = {};
   var postKanal = null;
   function postKanalOeffnen() {
     if (postKanal || !zustand.ichId) return;
@@ -10473,6 +10567,91 @@ window.LiveChat = (function () {
       setTimeout(function () { try { ziel.unsubscribe(); } catch (e) {} }, 800);
     });
   }
+  /* RUNDE 99 — MEHRERE PAKETE, EIN KANAL.
+     Eine Sprachnachricht besteht aus vielen Stuecken. Fuer jedes
+     einen eigenen Kanal aufzumachen (postSenden) waere die Leitung
+     zwanzigmal auf- und zuzumachen — das haelt keine Verbindung aus.
+     Hier wird EINMAL aufgemacht, alles mit Luft dazwischen
+     durchgeschickt und danach wieder zugemacht. */
+  function postSendenViele(anId, pakete, luft) {
+    if (!anId || !pakete || !pakete.length) return;
+    /* Der Messhaken steht VOR der Leitungsprüfung — genau wie bei
+       postSenden. Sonst liesse sich nie nachmessen, WAS hinausginge:
+       ohne Leitung stiege die Funktion vorher aus, und die Sonde
+       saehe null Pakete, obwohl das Programm richtig ist. */
+    if (pruefPostHaken) {
+      try { pakete.forEach(function (p) { pruefPostHaken(anId, p); }); } catch (e) {}
+    }
+    var k = klient();
+    if (!k) return;
+    var ziel = k.channel("dma-post-" + anId);
+    var abstand = Math.max(40, Number(luft) || PAKET_LUFT);
+    ziel.subscribe(function (st) {
+      if (st !== "SUBSCRIBED") return;
+      pakete.forEach(function (p, i) {
+        setTimeout(function () {
+          p.von = zustand.ichId;
+          p.vonName = zustand.ichName;
+          p.vonBild = zustand.ichBild;
+          p.vonFarbe = zustand.farbe;
+          try { ziel.send({ type: "broadcast", event: "post", payload: p }); } catch (e) {}
+        }, i * abstand);
+      });
+      setTimeout(function () { try { ziel.unsubscribe(); } catch (e) {} },
+                 pakete.length * abstand + 900);
+    });
+  }
+
+  /* =========================================================
+     RUNDE 99 — DIE GEFLUESTERTE SPRACHNACHRICHT
+     ---------------------------------------------------------
+     XANDER: „sie können sich auch Flüsterer Sprachnachrichten
+     schicken … In dem Moment kann ich einfach ne Sprachnachricht
+     ganz normal schicken und sie kommt dann nur bei dieser Person
+     an."
+
+     Sie geht NICHT ueber den Raumkanal. Beim Raumkanal bekaemen alle
+     Geraete die Bytes und wuerfen sie nur weg — gefluestert waere
+     das nur dem Namen nach. Sie geht ueber den persoenlichen Kanal
+     des Empfaengers, denselben Weg wie ein gefluesterter Satz.
+     Deshalb steht hier eine eigene, kleine Stueckelung: dieselbe
+     Rechnung wie im Raum (PAKET_BYTES), nur eben an EINEN.
+     ========================================================= */
+  function sprachPrivatSenden(ziel, daten, sekunden, wie) {
+    if (!ziel || !ziel.id || !daten) return false;
+    var o = wie || {};
+    var id = neueNachrichtId();
+    /* Die eigene Zeile: sie steht als Fluesterzeile da, mit der
+       Aufnahme daran — man muss nachhoeren koennen, was man gesagt
+       hat. */
+    var n = {
+      id: id, von: zustand.ichId, name: zustand.ichName,
+      text: "an " + ziel.name + ": \ud83d\udd0a Sprachnachricht",
+      art: "fluester", wen: ziel.name, an: ziel.id,
+      sprach: daten, sprachSek: sekunden,
+      sprachAb: o.ab || 0, sprachDauer: o.dauer || 0,
+      zeit: Date.now(), eigen: true,
+      bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName
+    };
+    nachrichtAnhaengen(n);
+    var kopf = { id: id, sprachSek: sekunden, sprachAb: n.sprachAb,
+                 sprachDauer: n.sprachDauer, zeit: n.zeit,
+                 raum: zustand.raum, geschlecht: zustand.geschlecht || "" };
+    var anzahl = Math.max(1, Math.ceil(daten.length / PAKET_BYTES));
+    var pakete = [];
+    for (var i = 0; i < anzahl; i++) {
+      pakete.push({ art: "fluestersprachteil", id: id, nr: i, anzahl: anzahl,
+                    teil: daten.slice(i * PAKET_BYTES, (i + 1) * PAKET_BYTES),
+                    sprachSek: kopf.sprachSek, sprachAb: kopf.sprachAb,
+                    sprachDauer: kopf.sprachDauer, zeit: kopf.zeit,
+                    raum: kopf.raum, geschlecht: kopf.geschlecht });
+    }
+    postSendenViele(ziel.id, pakete);
+    eigeneWortmeldungLaeuft(sekunden);
+    melden();
+    return true;
+  }
+
   function postEmpfangen(n) {
     if (!n) return;
     /* PUNKTE FUER EINE RICHTIGE ANTWORT ODER EINE GUTE ZENSUR.
@@ -10543,6 +10722,46 @@ window.LiveChat = (function () {
         try { zustand.punkteRuf(wieviel, String(n.grund || "Klassenzimmer")); } catch (e) {}
       }
       systemZeile("⭐ " + wieviel + " Punkte für dich — " + String(n.grund || "Klassenzimmer") + ".");
+      return;
+    }
+    /* RUNDE 99 — EINE GEFLUESTERTE SPRACHNACHRICHT KOMMT AN.
+       Sie kommt in Stuecken ueber den persoenlichen Kanal. Erst wenn
+       alle da sind, entsteht die Nachricht: sie steht als
+       Fluesterzeile im Chat UND geht in die Warteschlange, damit sie
+       auch dann zu hoeren ist, wenn der Reiter gar nicht offen ist —
+       genau wie jede andere Wortmeldung. */
+    if (n.art === "fluestersprachteil") {
+      if (!n.id || typeof n.nr !== "number") return;
+      var bF = fluesterBausteine[n.id];
+      if (!bF) {
+        bF = fluesterBausteine[n.id] = { teile: [], anzahl: n.anzahl || 1, da: 0 };
+        setTimeout(function () { delete fluesterBausteine[n.id]; }, 120000);
+      }
+      if (bF.teile[n.nr] === undefined) { bF.teile[n.nr] = n.teil; bF.da++; }
+      if (bF.da < bF.anzahl) return;
+      var ganzF = bF.teile.join("");
+      delete fluesterBausteine[n.id];
+      nachrichtAnhaengen({
+        id: n.id, von: n.von, name: n.vonName || "Jemand",
+        text: "\ud83d\udd0a Sprachnachricht \u2014 nur f\u00fcr dich",
+        art: "fluester",
+        bild: n.vonBild || "", farbe: n.vonFarbe || "",
+        sprach: ganzF, sprachSek: Number(n.sprachSek) || 0,
+        sprachAb: Number(n.sprachAb) || 0, sprachDauer: Number(n.sprachDauer) || 0,
+        woher: n.raum && n.raum !== zustand.raum ? raumKlartext(n.raum) : "",
+        zeit: n.zeit || Date.now(), eigen: false
+      });
+      try {
+        liveEinreihen({
+          id: n.id + "-f", von: n.von, name: n.vonName || "Jemand",
+          bild: n.vonBild || "", farbe: n.vonFarbe || "", farbeName: "",
+          sprach: ganzF, sprachSek: Number(n.sprachSek) || 0,
+          sprachAb: Number(n.sprachAb) || 0, sprachDauer: Number(n.sprachDauer) || 0,
+          zeit: n.zeit || Date.now(), art: "fluester", nurFuerMich: true
+        });
+        liveSagen();
+      } catch (e) {}
+      melden();
       return;
     }
     if (n.art === "fluester") {
@@ -12160,6 +12379,15 @@ window.LiveChat = (function () {
     if (art === "anruf") {
       return telefonatStarten(rest);
     }
+    /* RUNDE 99 — DER HAKEN.
+       XANDER: „das waere dann die einfachste Variante jemanden aus dem
+       Menue heraus so einzuschraenken, dass man in dem Moment nur noch
+       ihn meint." */
+    if (art === "privat") {
+      var restP = String(rest || "").trim();
+      if (!restP || /^(aus|weg|stop|stopp|nein|alle)$/i.test(restP)) return privatSetzen(null);
+      return privatSetzen(restP);
+    }
     if (art === "musik") {
       var wahlM = (rest || "").trim();
       if (!wahlM || /^(liste|was|\?)$/i.test(wahlM)) {
@@ -13303,6 +13531,12 @@ window.LiveChat = (function () {
       if (befehlAusfuehren("/" + ausZeichen + (restZ ? " " + restZ : ""))) return;
     }
     if (geknebelt()) { systemZeile("Du bist gerade geknebelt und kannst nichts sagen."); return; }
+    /* RUNDE 99 — DER HAKEN: „alles was man dann macht [ist]
+       automatisch an ihn geflüstert". Hier ist die Abzweigung fuer
+       den Text. Sie steht NACH den Befehlen (ein „/musik" soll auch
+       mit gesetztem Haken fuer alle gelten) und NACH dem Knebel. */
+    var zielP = privatNochDa();
+    if (zielP) { fluesternSenden(zielP, t); return; }
     /* Steht „/me/" im Satz, ist es eine AKTION: der Name steht dann
        mitten in der Zeile und darf nicht zusätzlich davor stehen. */
     var alsAktion = hatEigennamen(t);
@@ -13688,6 +13922,15 @@ window.LiveChat = (function () {
     sprachAufnahmeStoppen: sprachAufnahmeStoppen,
     sprachAbbrechen: sprachAbbrechen,
     pruefSprachSenden: function (daten, sek, wie) { return sprachSenden(daten, sek, wie); },
+    /* RUNDE 99 — der Haken auf dem Platz: „nur an dich". */
+    privatSetzen: function (wen) { return privatSetzen(wen); },
+    privatStand: privatStand,
+    /* Zum Nachmessen: die Post an EINE Person abfangen.
+       NICHT „pruefPost" nennen — das gibt es schon und bedeutet etwas
+       anderes (einen nachgestellten Raumkanal). Zwei gleiche Namen in
+       derselben Tabelle: der zweite gewinnt, und der erste ist
+       stillschweigend weg. */
+    pruefPersonenPost: function (f) { pruefPostHaken = typeof f === "function" ? f : null; },
     /* Was wirklich auf den Kanal ginge — ohne Kanal. */
     pruefAbfangen: function (f) { pruefSenderHaken = typeof f === "function" ? f : null; },
     pruefWarteschlange: function () { return liveWarteschlange.map(function (w) { return w.id; }); },

@@ -27423,6 +27423,15 @@
         el.querySelectorAll(".lc-zerschlagen, .lc-scherbenhaufen").forEach((x) => x.remove());
       }
     });
+    /* RUNDE 99 — und der Haken „nur an dich". Er ist eine Einstellung
+       dieses Geraets und ueberlebt deshalb jedes Neuzeichnen: sonst
+       waere er nach dem naechsten Auffrischen unsichtbar, obwohl er
+       noch gilt — und man schickt etwas Privates, ohne es zu sehen. */
+    try {
+      if (window.DMA_PRIVAT && window.LiveChat && LiveChat.privatStand) {
+        window.DMA_PRIVAT(LiveChat.privatStand());
+      }
+    } catch (e) {}
   }
   function lcAnziehen(wen, was) {
     const ziele = lcZielPlaetze(wen);
@@ -30419,6 +30428,32 @@
     knopf("\ud83d\udd0d", "Gro\u00df zeigen", () => {
       try { LiveChat.grossZeigen(platz.dataset.lcId || ""); } catch (e) {}
     });
+    /* =============================================================
+       RUNDE 99 — DER HAKEN GANZ OBEN
+       -------------------------------------------------------------
+       XANDER (23.09.2026): „vielleicht durch das Halten auf sein
+       Profilbild und dann einfach nur ein Checkmark fuer privates …
+       In dem Moment kann ich einfach ne Sprachnachricht ganz normal
+       schicken und sie kommt dann nur bei dieser Person an … das
+       waere dann die einfachste Variante, jemanden aus dem Menue
+       heraus so einzuschraenken, dass man in dem Moment nur noch ihn
+       meint."
+       Genau dieses Menue geht beim HALTEN auf, deshalb steht der
+       Haken hier — und zwar weit oben, weil er alles andere
+       umstellt. Er ist ein Schalter: noch einmal antippen nimmt ihn
+       wieder weg. Auf dem eigenen Platz gibt es ihn nicht; an sich
+       selbst fluestert man nicht. */
+    if (!eigen) {
+      let haken = null;
+      try { haken = LiveChat.privatStand ? LiveChat.privatStand() : null; } catch (e) {}
+      const anMir = Boolean(haken && haken.name
+        && haken.name.trim().toLowerCase() === name.trim().toLowerCase());
+      knopf(anMir ? "\u2705" : "\u2b1c",
+        anMir ? "Nur an " + name + " \u2014 an" : "Nur an " + name,
+        () => {
+          try { LiveChat.privatSetzen(anMir ? null : name); } catch (e) {}
+        });
+    }
     if (eigen) {
       /* =========================================================
          DAS SPRECHBILD STEHT JETZT IM MENUE
@@ -35748,6 +35783,48 @@
      Hier geht es nur darum, dass man SIEHT, dass die beiden gerade
      nicht zuhoeren: sonst redet der Raum ins Leere.
      ================================================================= */
+  /* =================================================================
+     RUNDE 99 — DER HAKEN IST ZU SEHEN, ABER NUR BEI MIR
+     -----------------------------------------------------------------
+     XANDER: „ein Checkmark fuer privates … in dem Moment nur noch ihn
+     meint."
+     Zwei Dinge zeigt diese Anzeige, und beide nur auf dem Geraet
+     dessen, der den Haken gesetzt hat:
+       · ein gruener Haken am Profilbild der gemeinten Person,
+       · eine Leiste ueber dem Chat, damit man beim Tippen nicht
+         vergisst, dass gerade alles nur an einen geht.
+     Hinausgeschickt wird davon nichts — der Haken ist eine Einstellung
+     dieses Geraets, kein Ereignis im Raum. Deshalb steht hier auch
+     kein „senden". */
+  window.DMA_PRIVAT = function (stand) {
+    document.querySelectorAll(".lc-platz .lc-privathaken").forEach((x) => x.remove());
+    document.querySelectorAll(".lc-platz").forEach((p) =>
+      p.classList.remove("lc-platz-privat"));
+    const altBand = document.getElementById("lcPrivatband");
+    if (altBand) altBand.remove();
+    if (!stand || !stand.name) return;
+    const pl = lcPlatzMitNamen(stand.name);
+    if (pl) {
+      pl.classList.add("lc-platz-privat");
+      const h = document.createElement("span");
+      h.className = "lc-privathaken";
+      h.setAttribute("aria-hidden", "true");
+      h.textContent = "\u2713";
+      pl.appendChild(h);
+    }
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return;
+    const leiste = document.createElement("div");
+    leiste.id = "lcPrivatband";
+    leiste.className = "lc-musikband lc-privatband";
+    leiste.innerHTML = '<span class="lc-musikband-note">\u2713</span>'
+      + '<span class="lc-musikband-titel"></span>';
+    leiste.querySelector(".lc-musikband-titel").textContent =
+      "Nur an " + stand.name + " \u2014 Text, Bild und Sprachnachricht gehen nur dorthin"
+      + " (Haken noch einmal antippen oder /privat aus)";
+    karte.appendChild(leiste);
+  };
+
   window.DMA_TELEFONAT = function (stand) {
     document.querySelectorAll(".lc-platz .lc-telefonat").forEach((x) => x.remove());
     document.querySelectorAll(".lc-platz").forEach((p) =>
@@ -35755,6 +35832,21 @@
     const band = document.getElementById("lcTelefonband");
     if (band) band.remove();
     if (!stand) return;
+    /* =============================================================
+       RUNDE 99 — NIEMAND SONST SIEHT DAS TELEFONAT
+       -------------------------------------------------------------
+       XANDER (23.09.2026): „Mach es bitte so, dass die Telefonhoerer
+       fuer den Fluesterer-Anruf fuer die andere[n] nicht zu sehen
+       sind … dann mach es so, dass das niemand anderes ausser uns
+       sieht, die beiden, die gerade den Fluesterer-Anruf haben."
+       Bis Runde 98 stand auf JEDEM Geraet ein Hoerer an den beiden
+       Plaetzen und eine Leiste „die beiden telefonieren". Das war
+       gut gemeint (der Raum sollte nicht ins Leere reden), aber es
+       ist genau das Gegenteil von heimlich. Jetzt zeichnet nur, wer
+       selbst im Gespraech ist; fuer alle anderen bleibt der Raum
+       unveraendert — sie hoeren die beiden nur nicht, und das
+       besorgt livechat.js ganz ohne Anzeige. */
+    if (!stand.ichDrin) return;
     const namen = [stand.aName, stand.bName].filter(Boolean);
     namen.forEach((nm) => {
       const pl = lcPlatzMitNamen(nm);
@@ -35778,10 +35870,11 @@
     let ichName = "";
     try { ichName = (LiveChat.lage() || {}).ichName || ""; } catch (e) {}
     const andere = namen.filter((nm) => nm && nm !== ichName);
-    leiste.querySelector(".lc-musikband-titel").textContent = stand.ichDrin
-      ? "Du telefonierst mit " + (andere.join(" und ") || "jemandem")
-        + " \u2014 /anruf aus zum Auflegen"
-      : namen.join(" und ") + " telefonieren \u2014 die beiden h\u00f6ren euch gerade nicht";
+    /* Die Leiste sieht nur noch, wer selbst telefoniert (siehe oben) —
+       deshalb steht hier nur noch der eine Satz. */
+    leiste.querySelector(".lc-musikband-titel").textContent =
+      "Du telefonierst mit " + (andere.join(" und ") || "jemandem")
+      + " \u2014 /anruf aus zum Auflegen";
     karte.appendChild(leiste);
   };
 
