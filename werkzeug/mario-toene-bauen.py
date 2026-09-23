@@ -183,13 +183,70 @@ def kick():
     return len(klang) / RATE
 
 
+def geheim():
+    """DAS GEHEIME FELD.
+
+    XANDER (23.09.2026): „manchmal kann er auch ein Geheimnis Feld
+    freischalten, wenn er irgendwie unterwegs ist und ueber ihm ist
+    vielleicht irgendwas, dass er dann dran springt und das geheime
+    Feld freischaltet und vielleicht ein Power-up kriegt."
+
+    Ein Fund klingt nicht wie eine Muenze. Er klingt wie ein kleiner
+    Dreiklang, der nach oben aufgeht und stehen bleibt: C6, E6, G6,
+    dann C7 lang. Vier Rechtecktoene, der letzte klingt aus — das ist
+    im Ohr das Zeichen fuer „da war noch etwas versteckt".
+    """
+    stufen = [(1046.50, 0.07), (1318.51, 0.07), (1567.98, 0.07), (2093.00, 0.42)]
+    stuecke = []
+    for hz, d in stufen:
+        ton = rechteck(hz, d, 0.5)
+        t = np.arange(len(ton)) / RATE
+        if d > 0.2:
+            ton *= np.exp(-t * 5.0)
+        ton *= huelle(len(ton), 0.002, 0.008 if d < 0.2 else 0.10)
+        stuecke.append(ton)
+    klang = np.concatenate(stuecke) * 0.5
+    print("Geheimfeld: C6-E6-G6-C7, %.2f s" % (len(klang) / RATE))
+    schreiben("mariogeheim", klang, 0.8)
+    return len(klang) / RATE
+
+
+def feuer():
+    """DER FEUERBALL AUS DER FEUERBLUME.
+
+    XANDER: „vielleicht koennte er dann 'ne Feuerblume haben und dann
+    noch mal die Leute anbrennen."
+
+    Ein Feuerball ist kurz und heiss: ein Rechteckton, der in 130 ms
+    von 1200 auf 260 Hz FAELLT (er fliegt weg), darueber ein
+    gefiltertes Rauschen, das wie ein Zischen anschwillt und sofort
+    wieder verglueht.
+    """
+    n = int(RATE * 0.30)
+    t = np.arange(n) / RATE
+    hz = 1200.0 * np.power(260.0 / 1200.0, np.clip(t / 0.13, 0, 1))
+    phase = np.cumsum(hz) / RATE
+    ton = np.where((phase % 1.0) < 0.35, 1.0, -1.0) * np.exp(-t * 9.0)
+    # Das Zischen: Rauschen, das erst anschwillt und dann verglueht.
+    r = np.random.RandomState(29).uniform(-1, 1, n)
+    # Einfache Glaettung = weniger Hoehen, mehr „Flamme" statt „Sand".
+    r = np.convolve(r, np.ones(5) / 5.0, mode="same")
+    zisch = r * np.minimum(t / 0.03, 1.0) * np.exp(-t * 7.5) * 0.55
+    klang = (ton * 0.62 + zisch) * huelle(n, 0.002, 0.09)
+    schreiben("mariofeuer", klang, 0.78)
+    return len(klang) / RATE
+
+
 def main():
     d1 = muenze()
     d2 = pilz()
     d3 = stampf()
     d4 = kick()
+    d5 = geheim()
+    d6 = feuer()
     print("Dauern: mariomuenze %.2f s, mariopilz %.2f s, "
-          "mariostampf %.2f s, mariokick %.2f s" % (d1, d2, d3, d4))
+          "mariostampf %.2f s, mariokick %.2f s, mariogeheim %.2f s, "
+          "mariofeuer %.2f s" % (d1, d2, d3, d4, d5, d6))
 
 
 main()

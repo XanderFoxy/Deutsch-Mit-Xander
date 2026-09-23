@@ -43392,10 +43392,19 @@
         Runde neu. Ein Math.random() auf jedem Geraet einzeln wuerde
         acht verschiedene Filme ergeben.
      4  MIT GEZEICHNETEM WEG („/mario 5-6-7") laeuft er ueber die
-        Besetzten, und die sind dann GEGNER: abwechselnd springt er auf
-        sie drauf und kickt sie weg. Beides raeumt sie von der Buehne.
-        Ohne gezeichneten Weg gibt es keine Gegner — er geht dann gar
-        nicht ueber Besetzte.
+        Besetzten, und die sind dann GEGNER: GEWUERFELT springt er auf
+        sie drauf oder kickt sie weg („die Sachen sollen bisschen
+        zufaellig ablaufen"). Dreimal dasselbe hintereinander gibt es
+        nicht. Beides raeumt sie von der Buehne. Ohne gezeichneten Weg
+        gibt es keine Gegner — er geht dann gar nicht ueber Besetzte.
+        KEIN SCHREI dabei: nur die Spielgeraeusche „mariostampf" und
+        „mariokick".
+     4b DAS GEHEIME FELD liegt ueber einem LEEREN Platz — dort, wo nichts
+        zu sehen ist. Einmal pro Lauf kann Mario dort einen versteckten
+        Fragezeichenstein aufschlagen; heraus kommt die FEUERBLUME
+        (8 Punkte). Ab da glueht sein Bild, und jeden weiteren Gegner
+        brennt er mit einem Feuerball an, statt ihn zu stampfen oder zu
+        kicken.
      5  AM ABFAHRTSORT PASSIERT NICHTS, bis er zurueck ist: der Platz
         steht auf „unterwegs" — Nummer und Strichlinie bleiben, das
         Bild ist bei Mario. Genau das hat er verlangt.
@@ -43408,6 +43417,19 @@
     { art: "gold",   wert: 5, ton: "mariomuenze", wort: "goldene Münze" },
     { art: "pilz",   wert: 3, ton: "mariopilz",   wort: "Pilz" },
   ];
+  /* RUNDE 98 — XANDER: „manchmal kann er auch ein Geheimnis Feld
+     freischalten, wenn er irgendwie unterwegs ist und ueber ihm ist
+     vielleicht irgendwas, dass er dann dran springt und das geheime
+     Feld freischaltet und vielleicht ein Power-up kriegt … vielleicht
+     koennte er dann 'ne Feuerblume haben und dann noch mal die Leute
+     anbrennen."
+     Das geheime Feld liegt ueber einem LEEREN Platz — dort, wo nichts
+     zu sehen ist. Genau das macht es geheim. Herauskommt die
+     Feuerblume; ab da brennt Mario die Gegner an, statt sie zu
+     stampfen oder zu kicken. */
+  const LC_MARIO_BLUME = { art: "feuerblume", wert: 8, ton: "mariogeheim",
+                           wort: "Feuerblume" };
+  const LC_MARIO_GEHEIM = 0.34;   // wie oft ein leeres Feld eins verbirgt
   const LC_MARIO_FELD = 520;      // Millisekunden je Sprung
   const LC_MARIO_ENDE = 420;      // Zurueckwerden in das eigene Bild
 
@@ -43444,7 +43466,31 @@
     const g = document.createElement("i");
     g.className = "lc-mario-gabe lc-mario-gabe-" + art;
     g.setAttribute("aria-hidden", "true");
-    if (art === "pilz") {
+    if (art === "feuerblume") {
+      /* Die Feuerblume: gruener Stiel, zwei Blaetter, acht Blueten-
+         blaetter in Rot-Orange und ein weisses Gesicht mit zwei
+         Augen — so, wie man sie kennt. */
+      let blueten = "";
+      for (let i = 0; i < 8; i++) {
+        const w = (i / 8) * Math.PI * 2;
+        blueten += '<ellipse class="lc-mario-blume-blatt" cx="'
+          + (15 + Math.cos(w) * 7.4).toFixed(2) + '" cy="'
+          + (12 + Math.sin(w) * 7.4).toFixed(2)
+          + '" rx="4.6" ry="3.4" transform="rotate('
+          + ((w * 180 / Math.PI) + 90).toFixed(1) + ' '
+          + (15 + Math.cos(w) * 7.4).toFixed(2) + ' '
+          + (12 + Math.sin(w) * 7.4).toFixed(2) + ')"/>';
+      }
+      g.innerHTML = '<svg viewBox="0 0 30 30" width="100%" height="100%">'
+        + '<path class="lc-mario-blume-stiel" d="M15 20 L15 29"/>'
+        + '<path class="lc-mario-blume-laub" d="M15 24 Q8 22 6 26 Q11 29 15 25 Z"/>'
+        + '<path class="lc-mario-blume-laub" d="M15 22 Q22 20 24 24 Q19 27 15 23 Z"/>'
+        + blueten
+        + '<circle class="lc-mario-blume-mitte" cx="15" cy="12" r="6.2"/>'
+        + '<circle class="lc-mario-blume-auge" cx="12.6" cy="11" r="1.5"/>'
+        + '<circle class="lc-mario-blume-auge" cx="17.4" cy="11" r="1.5"/>'
+        + "</svg>";
+    } else if (art === "pilz") {
       g.innerHTML = '<svg viewBox="0 0 30 30" width="100%" height="100%">'
         + '<rect class="lc-mario-pilz-fuss" x="9" y="15" width="12" height="12" rx="3"/>'
         + '<circle class="lc-mario-pilz-auge" cx="12" cy="21" r="1.5"/>'
@@ -43526,10 +43572,21 @@
       + "|" + bahn.map((p) => p.nr).join("-")));
     const stoesse = [];
     let vorige = -1;
+    let geheimFeld = null;            // ab wo Mario die Feuerblume hat
     bahn.forEach((g, i) => {
       if (i === 0) return;                  // vom eigenen Platz wird nicht gestossen
       const oben = lcMarioDrueber(gitter, g);
-      if (!oben || !lcMarioBesetzt(oben.el)) return;
+      if (!oben) return;
+      if (!lcMarioBesetzt(oben.el)) {
+        /* UEBER IHM IST SCHEINBAR NICHTS — und genau da steckt
+           manchmal das geheime Feld. Nur EINMAL pro Lauf: eine
+           Feuerblume reicht. */
+        if (geheimFeld === null && wuerfel() < LC_MARIO_GEHEIM) {
+          geheimFeld = i;
+          stoesse.push({ feld: i, platz: oben, gabe: LC_MARIO_BLUME, geheim: true });
+        }
+        return;
+      }
       let nr = Math.floor(wuerfel() * LC_MARIO_GABEN.length) % LC_MARIO_GABEN.length;
       if (nr === vorige) nr = (nr + 1 + Math.floor(wuerfel() * (LC_MARIO_GABEN.length - 1)))
         % LC_MARIO_GABEN.length;
@@ -43545,7 +43602,24 @@
       bahn.forEach((g, i) => {
         if (i === 0 || g.nr === ab.nr) return;
         if (!lcMarioBesetzt(g.el)) return;
-        gegner.push({ feld: i, platz: g, wie: gegner.length % 2 ? "kick" : "sprung" });
+        /* RUNDE 98 — XANDER: „Die Sachen sollen bisschen zufaellig
+           ablaufen, dass er manchmal jemanden kickt und manchmal
+           jemanden durch drauf springen erledigt."
+           Vorher stand hier „gegner.length % 2" — also immer
+           abwechselnd, also gar nicht zufaellig. Jetzt entscheidet
+           derselbe Wuerfel wie bei den Gaben (er haengt am „los" der
+           Nachricht, damit alle Geraete denselben Film sehen). Nur
+           dreimal dasselbe hintereinander gibt es nicht — das ist
+           seine alte Regel vom Hammer. */
+        let wie = wuerfel() < 0.5 ? "kick" : "sprung";
+        const l = gegner.length;
+        if (l >= 2 && gegner[l - 1].wie === wie && gegner[l - 2].wie === wie) {
+          wie = wie === "kick" ? "sprung" : "kick";
+        }
+        /* Hat er vorher das geheime Feld aufgeschlagen, brennt er ihn
+           stattdessen an. */
+        if (geheimFeld !== null && i > geheimFeld) wie = "feuer";
+        gegner.push({ feld: i, platz: g, wie: wie });
       });
     }
 
@@ -43597,21 +43671,53 @@
       gesammelt += s.gabe.wert;
       const wann = (s.feld - 0.5) * LC_MARIO_FELD;
       uhren.push(setTimeout(() => {
-        const k = s.platz.el.querySelector(".lc-kreis");
-        if (k) {
-          k.classList.remove("lc-mario-block");
-          void k.offsetWidth;
-          k.classList.add("lc-mario-block");
-          setTimeout(() => k.classList.remove("lc-mario-block"), 700);
+        const kasten = lcLayoutKasten(s.platz.el);
+        if (s.geheim) {
+          /* DAS GEHEIME FELD wird erst jetzt sichtbar: ein
+             Fragezeichenstein taucht ueber dem leeren Platz auf,
+             bekommt den Stoss und bleibt danach als ausgeschlagener
+             Stein stehen — wie im Spiel. Der Platz selbst wird nicht
+             angefasst; Nummer und Strichlinie bleiben, wie ueberall. */
+          const st = document.createElement("i");
+          st.className = "lc-mario-geheimblock";
+          st.setAttribute("aria-hidden", "true");
+          st.innerHTML = '<svg viewBox="0 0 30 30" width="100%" height="100%">'
+            + '<rect class="lc-mario-stein" x="1" y="1" width="28" height="28" rx="3"/>'
+            + '<circle class="lc-mario-niete" cx="5" cy="5" r="1.6"/>'
+            + '<circle class="lc-mario-niete" cx="25" cy="5" r="1.6"/>'
+            + '<circle class="lc-mario-niete" cx="5" cy="25" r="1.6"/>'
+            + '<circle class="lc-mario-niete" cx="25" cy="25" r="1.6"/>'
+            + '<path class="lc-mario-frage" d="M11.4 11.2 Q11.4 7.6 15 7.6 Q18.8 7.6 18.8 11.2'
+            + ' Q18.8 13.8 15.6 15 L15.6 17.6" />'
+            + '<circle class="lc-mario-frage-punkt" cx="15.6" cy="21.2" r="1.7"/>'
+            + "</svg>";
+          st.style.left = (kasten.left + kasten.width / 2 - rk.left) + "px";
+          st.style.top = (kasten.top + kasten.height / 2 - rk.top) + "px";
+          st.style.width = Math.max(26, kasten.width * 0.46) + "px";
+          st.style.height = Math.max(26, kasten.width * 0.46) + "px";
+          reihe.appendChild(st);
+          gaben.push(st);
+          setTimeout(() => st.remove(), 2200);
+          /* Ab hier hat er die Feuerblume: das eigene Bild bekommt den
+             Feuerschein. */
+          kreis.classList.add("lc-mario-feurig");
+        } else {
+          const k = s.platz.el.querySelector(".lc-kreis");
+          if (k) {
+            k.classList.remove("lc-mario-block");
+            void k.offsetWidth;
+            k.classList.add("lc-mario-block");
+            setTimeout(() => k.classList.remove("lc-mario-block"), 700);
+          }
         }
         const g = lcMarioGabeBauen(s.gabe.art);
-        const kasten = lcLayoutKasten(s.platz.el);
         g.style.left = (kasten.left + kasten.width / 2 - rk.left) + "px";
         g.style.top = (kasten.top + kasten.height / 2 - rk.top) + "px";
         reihe.appendChild(g);
         gaben.push(g);
         setTimeout(() => g.remove(), 1500);
-        lcGeraeusch(s.gabe.ton, "mariogabe", s.gabe.art === "pilz" ? 0.5 : 0.62);
+        lcGeraeusch(s.gabe.ton, "mariogabe",
+                    s.gabe.art === "pilz" ? 0.5 : (s.geheim ? 0.66 : 0.62));
       }, Math.max(0, wann)));
     });
 
@@ -43619,9 +43725,29 @@
        sie danach von der Buehne. */
     gegner.forEach((f) => {
       const wann = f.feld * LC_MARIO_FELD;
+      /* DER FEUERBALL: hat Mario die Feuerblume aus dem geheimen Feld,
+         wirft er sie schon vom Feld davor — der Ball fliegt hinueber
+         und brennt den Gegner an. */
+      if (f.wie === "feuer") {
+        uhren.push(setTimeout(() => {
+          const vonP = (bahn[f.feld - 1] || ab).el;
+          const a1 = lcLayoutKasten(vonP), a2 = lcLayoutKasten(f.platz.el);
+          const ball = document.createElement("i");
+          ball.className = "lc-mario-feuerball";
+          ball.setAttribute("aria-hidden", "true");
+          ball.style.left = (a1.left + a1.width / 2 - rk.left) + "px";
+          ball.style.top = (a1.top + a1.height / 2 - rk.top) + "px";
+          ball.style.setProperty("--flugx", (a2.left - a1.left) + "px");
+          ball.style.setProperty("--flugy", (a2.top - a1.top) + "px");
+          reihe.appendChild(ball);
+          gaben.push(ball);
+          setTimeout(() => ball.remove(), 700);
+        }, Math.max(0, wann - 300)));
+      }
       uhren.push(setTimeout(() => {
         const k = f.platz.el.querySelector(".lc-kreis");
-        const klasse = f.wie === "kick" ? "lc-mario-gekickt" : "lc-mario-geplaettet";
+        const klasse = f.wie === "kick" ? "lc-mario-gekickt"
+          : f.wie === "feuer" ? "lc-mario-verbrannt" : "lc-mario-geplaettet";
         if (k) {
           k.classList.remove(klasse);
           void k.offsetWidth;
@@ -43640,9 +43766,18 @@
            werkzeug/mario-toene-bauen.py): „mariostampf" faellt von
            300 auf 90 Hz (etwas wird flachgedrueckt), „mariokick"
            steigt von 180 auf 900 Hz (etwas fliegt davon). */
-        lcGeraeusch(f.wie === "kick" ? "mariokick" : "mariostampf",
+        /* RUNDE 98 — XANDER: „Im normalen Mario Spiel kommt auch kein
+           Schrei, da sollst du Sounds machen wie zum Beispiel man
+           springt auf dem Panzer von so einer Schildkroete oder man
+           kickt den Gegner weg, das sollen dann die typischen Sounds
+           wie bei Mario sein."
+           Hier stand bis eben noch lcStimmeZu(… „schreimann",
+           „schreifrau" …) — also GENAU der Schrei, den er zweimal
+           abbestellt hat. Er ist raus. Uebrig bleibt nur das
+           Spielgeraeusch. */
+        lcGeraeusch(f.wie === "kick" ? "mariokick"
+                    : f.wie === "feuer" ? "mariofeuer" : "mariostampf",
                     "mariogegner", 0.6);
-        lcStimmeZu(f.platz.el, "schreimann", "schreifrau", 90, 0.6);
         /* Von der Buehne geht nur, wer es auf SEINEM Geraet erfaehrt. */
         try {
           const l = LiveChat.lage() || {};
@@ -43663,6 +43798,9 @@
     const aufraeumen = () => {
       ab.el.style.zIndex = altZ;
       kreis.classList.remove("lc-mario");
+      /* Der Feuerschein aus dem geheimen Feld gilt nur fuer diesen
+         Lauf — danach ist das Bild wieder, wie es war. */
+      kreis.classList.remove("lc-mario-feurig");
       kappe.remove();
       gaben.forEach((g) => g.remove());
       try { if (lauf) lauf.cancel(); } catch (e) {}

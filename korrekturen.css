@@ -29731,10 +29731,112 @@ code, pre {
   12%  { transform: translate(calc(var(--kickweg, 120px) * .16), -14%) rotate(24deg) scale(.96); opacity: 1; }
   100% { transform: translate(var(--kickweg, 120px), 120%) rotate(320deg) scale(.42); opacity: 0; }
 }
+/* =====================================================================
+   RUNDE 98 — DAS GEHEIME FELD UND DIE FEUERBLUME
+   ---------------------------------------------------------------------
+   XANDER: „manchmal kann er auch ein Geheimnis Feld freischalten, wenn
+   er irgendwie unterwegs ist und ueber ihm ist vielleicht irgendwas,
+   dass er dann dran springt und das geheime Feld freischaltet und
+   vielleicht ein Power-up kriegt … vielleicht koennte er dann 'ne
+   Feuerblume haben und dann noch mal die Leute anbrennen."
+   ===================================================================== */
+
+/* DER VERSTECKTE STEIN taucht erst auf, wenn Mario dagegen springt —
+   sonst waere er ja nicht geheim. Er blitzt kurz auf, bekommt den
+   Stoss und bleibt danach stehen, bis der Lauf vorbei ist. */
+.lc-mario-geheimblock {
+  position: absolute;
+  margin: -17px 0 0 -17px;
+  pointer-events: none;
+  z-index: 10;
+  animation: lcMarioGeheimR98 2.2s cubic-bezier(.28, .9, .34, 1) both;
+}
+@keyframes lcMarioGeheimR98 {
+  0%   { opacity: 0; transform: translateY(0) scale(.4); }
+  10%  { opacity: 1; transform: translateY(-18%) scale(1.08); }
+  22%  { opacity: 1; transform: translateY(2%) scale(1); }
+  86%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(.9); }
+}
+.lc-mario-stein        { fill: #e8a33d; stroke: #8c5a10; stroke-width: 1.6; }
+.lc-mario-niete        { fill: #8c5a10; }
+.lc-mario-frage        { fill: none; stroke: #fdfdfd; stroke-width: 2.6;
+                         stroke-linecap: round; stroke-linejoin: round; }
+.lc-mario-frage-punkt  { fill: #fdfdfd; }
+
+/* DIE FEUERBLUME: acht Blueten in Rot-Orange, weisses Gesicht, gruener
+   Stiel — und sie leuchtet, weil sie mehr wert ist als alles andere. */
+.lc-mario-blume-blatt { fill: #f24a1c; stroke: #a32806; stroke-width: .9; }
+.lc-mario-blume-mitte { fill: #fdfdfd; stroke: #d8d6d2; stroke-width: .9; }
+.lc-mario-blume-auge  { fill: #1d2a5c; }
+.lc-mario-blume-stiel { fill: none; stroke: #2e9b3a; stroke-width: 2.4;
+                        stroke-linecap: round; }
+.lc-mario-blume-laub  { fill: #2e9b3a; stroke: #1c6b25; stroke-width: .8; }
+.lc-mario-gabe-feuerblume {
+  filter: drop-shadow(0 0 7px rgba(255, 150, 60, .95));
+}
+
+/* MARIO MIT FEUERBLUME: sein eigenes Bild bekommt einen warmen
+   Feuerschein — man sieht ihm an, dass er jetzt brennen kann. Das
+   Bild selbst wird nicht angefasst, nur der Schein aussen herum. */
+.lc-mario-feurig {
+  animation: lcMarioFeurigR98 .9s ease-in-out infinite alternate;
+}
+@keyframes lcMarioFeurigR98 {
+  0%   { box-shadow: 0 0 10px 2px rgba(255, 140, 40, .75),
+                     0 0 20px 6px rgba(255, 80, 20, .35); }
+  100% { box-shadow: 0 0 16px 5px rgba(255, 190, 80, .92),
+                     0 0 34px 12px rgba(255, 90, 20, .5); }
+}
+
+/* DER FEUERBALL fliegt vom Feld davor zum Gegner hinueber. */
+.lc-mario-feuerball {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 11;
+  background: radial-gradient(circle at 36% 34%,
+              #fff6d0 0%, #ffd36a 32%, #ff8a1e 62%, #d93c08 100%);
+  box-shadow: 0 0 12px 4px rgba(255, 140, 40, .8);
+  animation: lcMarioFeuerballR98 .42s cubic-bezier(.3, .1, .6, 1) both;
+}
+@keyframes lcMarioFeuerballR98 {
+  0%   { opacity: 0; transform: translate(0, 0) scale(.4) rotate(0deg); }
+  14%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { opacity: 0;
+         transform: translate(var(--flugx, 0px), var(--flugy, 0px))
+                    scale(1.15) rotate(540deg); }
+}
+
+/* ANGEBRANNT: der Getroffene glueht kurz auf, wird schwarz und faellt
+   als verkohlte Scheibe aus dem Bild. Auch das endet damit, dass er
+   von der Buehne weg ist — wie Stampfen und Kicken. */
+.lc-mario-verbrannt {
+  animation: lcMarioVerbranntR98 1.5s cubic-bezier(.3, .2, .4, 1) both;
+}
+@keyframes lcMarioVerbranntR98 {
+  0%   { filter: none; transform: translate(0, 0) scale(1); opacity: 1; }
+  12%  { filter: brightness(2.4) sepia(1) saturate(6) hue-rotate(-18deg);
+         transform: translate(0, -6%) scale(1.08); opacity: 1; }
+  34%  { filter: brightness(.55) sepia(1) saturate(3) hue-rotate(-24deg);
+         transform: translate(2%, 0) scale(.98) rotate(6deg); opacity: 1; }
+  60%  { filter: brightness(.25) grayscale(.8);
+         transform: translate(-2%, 8%) scale(.92) rotate(-8deg); opacity: .8; }
+  100% { filter: brightness(.12) grayscale(1);
+         transform: translate(0, 96%) scale(.7) rotate(16deg); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lc-mario-block, .lc-mario-gabe, .lc-mario-geplaettet, .lc-mario-gekickt,
-  .lc-mario-gabe-muenze svg, .lc-mario-gabe-gold svg { animation: none; }
-  .lc-mario-gabe { opacity: 1; }
+  .lc-mario-gabe-muenze svg, .lc-mario-gabe-gold svg,
+  .lc-mario-geheimblock, .lc-mario-feurig, .lc-mario-feuerball,
+  .lc-mario-verbrannt { animation: none; }
+  .lc-mario-gabe, .lc-mario-geheimblock { opacity: 1; }
+  .lc-mario-verbrannt { opacity: 0; }
 }
 
 /* =====================================================================
