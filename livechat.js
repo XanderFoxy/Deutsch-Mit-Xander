@@ -906,6 +906,13 @@ window.LiveChat = (function () {
        machen kann \u2026 ist dass wir einen Pflaster Profil Effekt
        nehmen \u2026 kreuz \u2026 und dann ist alles wieder heil." */
     pflaster: { wirkung: "pflaster", satz: "klebt zwei Pflaster \u00fcber Kreuz auf", emoji: "\ud83e\ude79" },
+    /* RUNDE 98 — XANDER: „ich moechte, dass ein Profileffekt dabei ist,
+       dass ich jemanden zur aufbluehenden Blume machen kann oder dass
+       ich ueber eine Leiter von unten nach oben klettern kann oder
+       jemand anderen von seinem Platz von unten nach oben klettern
+       lassen kann." */
+    blume:  { wirkung: "blume",  satz: "l\u00e4sst eine Blume aufbl\u00fchen aus", emoji: "\ud83c\udf3c" },
+    leiter: { wirkung: "leiter", satz: "stellt eine Leiter an den Platz von", emoji: "\ud83e\uddd7" },
     /* RUNDE 98 — XANDER: „Die Leute muessen das selber putzen entweder
        mit dem Scheibenwischer oder mit dem Schwamm \u2026 oder alternativ
        dran spucken und wegputzen." */
@@ -9355,6 +9362,11 @@ window.LiveChat = (function () {
       was: "zwei gezeichnete H\u00e4nde klatschen sechsmal Beifall \u2014 wenn jemand etwas Sch\u00f6nes gemacht hat" },
     { gr: "reden", w: "pflaster", kurz: "heilen", nutzt: "/pflaster Name",
       was: "klebt zwei Pflaster \u00fcber Kreuz aufs Bild \u2014 danach ist alles wieder heil, auch ein vom Hammer zerschlagenes Profilbild" },
+    /* RUNDE 98 — die beiden neuen Profil-Effekte. */
+    { gr: "reden", w: "blume", kurz: "aufbluehen", nutzt: "/blume Name",
+      was: "das Bild wird zur Bl\u00fctenmitte \u2014 zehn Bl\u00e4tter gehen auf, unten w\u00e4chst der Stiel" },
+    { gr: "reden", w: "leiter", kurz: "klettern", nutzt: "/leiter Name",
+      was: "eine Leiter am Platz \u2014 das Bild klettert Sprosse f\u00fcr Sprosse von unten nach oben; ohne Namen kletterst du selbst" },
     /* RUNDE 76 — XANDER: „Telefon mit Audio". */
     { gr: "reden", w: "telefon", kurz: "anrufen", nutzt: "/telefon Name",
       was: "jemanden anrufen \u2014 es klingelt bei ihm, und wenn abgehoben ist, h\u00e4ngt die Schnur zwischen euch" },

@@ -29059,7 +29059,6 @@
     ["\ud83e\udd4a", "Boxen",     "box"],
     ["\ud83d\udc45", "Lecken",  "leck"],
     ["\u26bd",        "Tritt",     "tritt"],
-    ["\u2764\ufe0f", "Herzen",    "herz"],
     ["\ud83e\udea3", "Eimer", "wasser"],
     ["\u23f0",        "Wecker",    "wecker"],
     ["\ud83c\udf27\ufe0f", "Regen", "regen"],
@@ -29310,8 +29309,27 @@
        /* RUNDE 80 — XANDER: „unter der Kategorie Bombe kannst du auch
           noch ne Granate machen." */
        ["\ud83e\uddaf", "Granate",     "granate"]]],
-    ["\ud83e\udef6", "Streicheln", "streicheln"],
-    ["\ud83d\udc8b", "Kuss",     "kuss"]
+    /* RUNDE 98 — XANDER: „ich moechte, dass ein Profileffekt dabei
+       ist, dass ich jemanden zur aufbluehenden Blume machen kann oder
+       dass ich ueber eine Leiter von unten nach oben klettern kann
+       oder jemand anderen von seinem Platz von unten nach oben
+       klettern lassen kann."
+
+       UND WARUM DIE BLUME IN EINEM UNTERMENUE STEHT:
+       mit zwei zusaetzlichen Einzelkacheln reichte das Platzmenue
+       15 px unter den Bildschirmrand (gemessen, pruefe-platzmenue und
+       pruefe-runde98-blume-leiter). Xander dazu frueher: „kannst du
+       auch … machen, dass, wenn man ein entsprechendes Symbol klickt,
+       man da so ein Untermenue hat … So koennen wir das ganze Menue
+       vielleicht ein bisschen aufraeumen."
+       Vier Kacheln, die alle dasselbe meinen — jemandem etwas Liebes
+       tun —, stehen deshalb jetzt unter EINER. */
+    ["\ud83d\udc9e", "Lieb sein", "streicheln", false,
+      [["\ud83e\udef6", "Streicheln", "streicheln"],
+       ["\ud83d\udc8b", "Kuss", "kuss"],
+       ["\u2764\ufe0f", "Herzen", "herz"],
+       ["\ud83c\udf3c", "Blume aufbluehen lassen", "blume"]]],
+    ["\ud83e\uddd7", "Leiter", "leiter"]
   ];
 
   /* Die Zeichen zu den Sprechbildern — sie stehen hier und nicht in
@@ -31961,6 +31979,11 @@
     /* RUNDE 98 — XANDER: „dass wir einen Pflaster Profil Effekt
        nehmen … und dann ist alles wieder heil." */
     pflaster: { zeichen: ["\ud83e\ude79"], wie: 4, klasse: "umarmen" },
+    /* RUNDE 98 — XANDER: „dass ich jemanden zur aufbluehenden Blume
+       machen kann oder dass ich ueber eine Leiter von unten nach oben
+       klettern kann." */
+    blume:    { zeichen: ["\ud83c\udf3c"], wie: 5, klasse: "herz" },
+    leiter:   { zeichen: ["\ud83e\uddd7"], wie: 4, klasse: "umarmen" },
     /* RUNDE 98 — der Putzkasten: Schwamm mit Eimer, Lappen, Spucke. */
     putzen:   { zeichen: ["\ud83e\uddfd"], wie: 4, klasse: "umarmen" },
     /* RUNDE 98 — XANDER: „Wir brauchen noch eine Applaus Animation
@@ -36376,6 +36399,149 @@
         lcHammerHeilen(name);
       }, 2300);
     }, 3400, "pflaster");
+  }
+
+  /* =====================================================================
+     RUNDE 98 — DIE AUFBLUEHENDE BLUME
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „ich moechte, dass ein Profileffekt dabei ist,
+     dass ich jemanden zur aufbluehenden Blume machen kann."
+
+     Das Profilbild IST die Bluetenmitte. Darum herum klappen zehn
+     Blaetter auf, eines nach dem anderen — so, wie eine Blume auch
+     aufgeht: nicht alle gleichzeitig. Unten waechst der Stiel heraus,
+     und an ihm entfalten sich zwei Blaetter. Danach wiegt sich die
+     ganze Blume sachte im Wind.
+
+     DAS BILD BLEIBT UNANGETASTET. Alles liegt in einer eigenen Schicht
+     UM das Bild herum; niemandes Profilbild wird veraendert.
+     ===================================================================== */
+  function lcBlume(wen) {
+    return lcAmPlatz(wen, "lc-blume", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      const gr = (kreis && kreis.offsetWidth) || 64;
+      schicht.style.setProperty("--gross", gr + "px");
+      /* DER STIEL waechst nach UNTEN aus dem Bild heraus — er steht
+         also ausserhalb des Kreises und gehoert deshalb nicht in die
+         Blende, die nur das Bild abdeckt. */
+      const stiel = document.createElement("span");
+      stiel.className = "lc-blume-stiel";
+      stiel.innerHTML = '<svg viewBox="0 0 60 120" preserveAspectRatio="none" aria-hidden="true">'
+        + '<path class="lc-bl-halm" d="M30 0 C26 30 34 62 30 118" fill="none"/>'
+        + '<path class="lc-bl-blatt lc-bl-blatt-links" d="M29 52 C14 44 6 54 8 66'
+        + ' C18 74 28 66 29 56 Z"/>'
+        + '<path class="lc-bl-blatt lc-bl-blatt-rechts" d="M31 74 C46 66 54 76 52 88'
+        + ' C42 96 32 88 31 78 Z"/>'
+        + "</svg>";
+      schicht.appendChild(stiel);
+      /* DIE BLUETENBLAETTER liegen als Kranz um das Bild. Jedes hat
+         seinen eigenen Winkel und seine eigene Verspaetung — daher
+         das Aufgehen von aussen nach innen. */
+      const kranz = document.createElement("span");
+      kranz.className = "lc-blume-kranz";
+      const wieViele = 10;
+      for (let i = 0; i < wieViele; i++) {
+        const b = document.createElement("i");
+        b.className = "lc-blbl";
+        b.style.setProperty("--w", (i * (360 / wieViele)).toFixed(1) + "deg");
+        b.style.setProperty("--spaet", (260 + i * 105) + "ms");
+        kranz.appendChild(b);
+      }
+      schicht.appendChild(kranz);
+      /* Und das Bild selbst wiegt sich mit — es ist ja die Mitte. */
+      if (kreis) {
+        kreis.classList.remove("lc-blueht");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-blueht");
+        setTimeout(() => kreis.classList.remove("lc-blueht"), 4200);
+      }
+      /* Erst bricht die Erde auf, dann geht die Bluete auf, und am
+         Ende zwitschert es kurz — in genau dieser Reihenfolge. */
+      lcTonSpaeter("erdeauf", 60, 0.42);
+      lcTonSpaeter("zauberpuff", 900, 0.4);
+      lcTonSpaeter("zwitschern", 2100, 0.3);
+      /* KEIN Plan-Ton: die drei Geraeusche oben stehen schon an ihrer
+         Stelle. Ein zusaetzlicher Ton waere ein vierter, den niemand
+         bestellt hat. */
+    }, 4200, null);
+  }
+
+  /* =====================================================================
+     RUNDE 98 — DIE LEITER
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „oder dass ich ueber eine Leiter von unten nach
+     oben klettern kann oder jemand anderen von seinem Platz von unten
+     nach oben klettern lassen kann."
+
+     Eine Holzleiter steht am Platz und reicht nach unten aus dem Bild
+     heraus. Das Profilbild rutscht an ihren Fuss und klettert dann
+     SPROSSE FUER SPROSSE hinauf — bei jeder Sprosse ein Schritt, ein
+     kleines Kippen nach links und rechts (man greift ja abwechselnd)
+     und ein Holzklopfen. Oben angekommen sitzt es wieder auf seinem
+     Platz.
+
+     „/leiter" allein gilt mir selbst, „/leiter Name" laesst den
+     anderen klettern — beides, wie gewuenscht.
+     ===================================================================== */
+  function lcLeiter(wen) {
+    return lcAmPlatz(wen, "lc-leiter", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      const gr = (kreis && kreis.offsetWidth) || 64;
+      const hoch = gr * 1.15;                    /* so weit reicht sie nach unten */
+      const sprossen = 6;
+      schicht.style.setProperty("--gross", gr + "px");
+      schicht.style.setProperty("--leiterhoch", hoch.toFixed(1) + "px");
+      const holm = '<rect class="lc-lt-holm" x="4" y="0" width="7" height="120" rx="3"/>'
+                 + '<rect class="lc-lt-holm" x="49" y="0" width="7" height="120" rx="3"/>';
+      const stufen = [];
+      for (let i = 0; i < sprossen; i++) {
+        const y = 10 + i * (100 / sprossen);
+        stufen.push('<rect class="lc-lt-sprosse" x="6" y="' + y.toFixed(1)
+          + '" width="48" height="5.5" rx="2.4"/>');
+      }
+      const leiter = document.createElement("span");
+      leiter.className = "lc-leiter-holz";
+      leiter.innerHTML = '<svg viewBox="0 0 60 120" preserveAspectRatio="none"'
+        + ' aria-hidden="true">' + holm + stufen.join("") + "</svg>";
+      schicht.appendChild(leiter);
+
+      if (!kreis) return;
+      /* DER AUFSTIEG. Zuerst hinunter an den Fuss der Leiter, dann
+         Sprosse fuer Sprosse hinauf. Die Zwischenbilder auf halber
+         Sprosse geben das Kippen: mal greift die linke Hand, mal die
+         rechte.
+         ACHTUNG BEI DEN OFFSETS: sie muessen aufsteigen, sonst wirft
+         animate() und der ganze Effekt bliebe unsichtbar. */
+      const dauer = 4200;
+      const abSchritt = 0.12;                    /* Anteil bis der Fuss erreicht ist */
+      const jeSprosse = (1 - abSchritt - 0.08) / sprossen;
+      const bilder = [
+        { transform: "translateY(0px) rotate(0deg)", offset: 0 },
+        { transform: "translateY(" + hoch.toFixed(1) + "px) rotate(0deg)",
+          offset: abSchritt }
+      ];
+      for (let i = 1; i <= sprossen; i++) {
+        const halb = hoch * (1 - (i - 0.5) / sprossen);
+        const ganz = hoch * (1 - i / sprossen);
+        bilder.push({ transform: "translateY(" + halb.toFixed(1) + "px) rotate("
+          + (i % 2 ? 5 : -5) + "deg)",
+          offset: abSchritt + (i - 0.5) * jeSprosse });
+        bilder.push({ transform: "translateY(" + ganz.toFixed(1) + "px) rotate(0deg)",
+          offset: abSchritt + i * jeSprosse });
+      }
+      bilder.push({ transform: "translateY(0px) rotate(0deg)", offset: 1 });
+      let lauf = null;
+      try {
+        lauf = kreis.animate(bilder, { duration: dauer, easing: "linear", fill: "none" });
+      } catch (e) { lauf = null; }
+      if (lauf) setTimeout(() => { try { lauf.cancel(); } catch (e) {} }, dauer + 200);
+      /* Ein Holzklopfen je Sprosse — sechs Schritte, sechs Geraeusche. */
+      for (let i = 1; i <= sprossen; i++) {
+        lcTonSpaeter("holzklopf", Math.round((abSchritt + i * jeSprosse) * dauer), 0.34);
+      }
+      lcTonSpaeter("aufsetzen", Math.round(dauer * 0.95), 0.4);
+      /* Auch hier kein Plan-Ton — das Klopfen je Sprosse ist der Ton. */
+    }, 4200, null);
   }
 
   /* =====================================================================
@@ -51578,6 +51744,9 @@
     /* RUNDE 98 — das Pflaster klebt auf GENAU EINEM Bild, und geputzt
        wird ebenfalls genau eine Scheibe. */
     pflaster: 1, putzen: 1,
+    /* RUNDE 98 — die Blume blueht an GENAU EINEM Platz auf, und die
+       Leiter steht an GENAU EINEM Platz. Nichts davon regnet. */
+    blume: 1, leiter: 1,
     /* RUNDE 98 — der Beifall gilt dem, der etwas Schoenes gemacht
        hat, nicht dem ganzen Raum. */
     applaus: 1,
@@ -51626,6 +51795,18 @@
        hat. Es gilt EINEM Bild, es regnet nicht. */
     if (art === "pflaster") {
       lcPflaster((nachricht && (nachricht.wen || nachricht.an)) || "");
+      return;
+    }
+    /* RUNDE 98 — XANDER: „dass ich jemanden zur aufbluehenden Blume
+       machen kann." Gilt EINEM Bild, regnet nicht. */
+    if (art === "blume") {
+      lcBlume((nachricht && (nachricht.wen || nachricht.an)) || "");
+      return;
+    }
+    /* RUNDE 98 — XANDER: „dass ich ueber eine Leiter von unten nach
+       oben klettern kann oder jemand anderen … klettern lassen kann." */
+    if (art === "leiter") {
+      lcLeiter((nachricht && (nachricht.wen || nachricht.an)) || "");
       return;
     }
     /* RUNDE 98 — geputzt wird mit Schwamm, Lappen oder Spucke; welches
