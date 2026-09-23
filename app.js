@@ -35581,13 +35581,28 @@
     const vorher = gitter.getBoundingClientRect().height;
     const st = getComputedStyle(gitter);
     const zeilenLuft = parseFloat(st.rowGap || st.gridRowGap) || 0;
-    const zeile = Math.max(28, (vorher - zeilenLuft) / 2);
-    gitter.style.setProperty("--lc16zeile", zeile.toFixed(2) + "px");
+    /* RUNDE 99 — VIER REIHEN STATT ZWEI.
+       XANDER: „es sollten oben vier, darunter vier, dann noch mal vier
+       und darunter auch noch mal vier … es soll nur innerhalb der
+       Platzgrenzen stattfinden."
+       Vorher: zwei Reihen zu acht, also (Hoehe - 1 Luft) / 2. Jetzt
+       vier Reihen zu vier, also (Hoehe - 3 Luft) / 4 — damit stehen
+       alle vier Reihen zusammen genau so hoch da wie die zwei vorher
+       und der Kasten waechst keinen Pixel. */
     gitter.style.minHeight = vorher.toFixed(2) + "px";
     let dazu = "";
     for (let nr = 9; nr <= 16; nr++) dazu += lcZusatzPlatzHtml(nr);
     gitter.insertAdjacentHTML("beforeend", dazu);
     gitter.classList.add("lc-plaetze-sechzehn");
+    /* Die Reihenhoehe wird NACH dem Umschalten gerechnet: im
+       Sechzehner-Modus ist die Luft zwischen den Reihen eine andere
+       (6 px statt 10), und wer mit der alten rechnet, baut den Kasten
+       zu hoch oder zu niedrig. Gelesen wird sie deshalb hier, wo die
+       Klasse schon sitzt. */
+    const luft16 = parseFloat(getComputedStyle(gitter).rowGap
+      || getComputedStyle(gitter).gridRowGap) || zeilenLuft;
+    const zeile = Math.max(22, (vorher - luft16 * 3) / 4);
+    gitter.style.setProperty("--lc16zeile", zeile.toFixed(2) + "px");
     /* DAS SCHILD MUSS AUF DEM KREIS LIEGEN.
        Es ist absolut gesetzt (top: 0, width: 100 %) und damit so gross
        wie der ganze Platz — im Normalfall ist das genau der Kreis. Im

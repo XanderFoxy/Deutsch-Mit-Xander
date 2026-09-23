@@ -7177,7 +7177,17 @@ window.LiveChat = (function () {
        ================================================================= */
     schiffeSpiel = {
       reihe: reihe.map(function (m) { return { id: m.id, name: m.name }; }),
-      verstecke: {}, raus: {}, dran: 0, phase: "verstecken"
+      verstecke: {}, raus: {}, dran: 0, phase: "verstecken",
+      /* RUNDE 99 — WER TRIFFT, BEKOMMT PUNKTE.
+         XANDER: „diejenigen, die Treffer machen, kriegen Punkte, und
+         die kriegen sie in ihr Ranking auch mit gutgeschrieben …
+         Auf jeden Fall muss es gewichtet sein. Entweder kriegen alle,
+         die mitspielen, so ein paar Mindestpunkte, die jetzt nicht so
+         dramatisch sind, aber die, die gewinnen, kriegen halt gute
+         Punkte."
+         Der Schiedsrichter zaehlt die Treffer mit; verteilt wird am
+         Ende. */
+      treffer: {}
     };
     schiffeAnAlle({ t: "start", reihe: schiffeSpiel.reihe,
                     plaetze: SCHIFFE_FELDER, richter: zustand.ichId,
@@ -7297,12 +7307,16 @@ window.LiveChat = (function () {
         getroffenName = m ? m.name : "jemand";
       }
     });
-    if (getroffenId) schiffeSpiel.raus[getroffenId] = true;
+    if (getroffenId) {
+      schiffeSpiel.raus[getroffenId] = true;
+      schiffeSpiel.treffer[vonId] = (schiffeSpiel.treffer[vonId] || 0) + 1;
+    }
     var uebrig = schiffeSpiel.reihe.filter(function (m) { return !schiffeSpiel.raus[m.id]; });
     if (uebrig.length <= 1) {
       schiffeAnAlle({ t: "schuss", nr: nr, treffer: Boolean(getroffenId), von: vonName,
                       wen: getroffenName });
       schiffeAnAlle({ t: "ende", sieger: uebrig.length ? uebrig[0].name : vonName });
+      schiffePunkteVerteilen(uebrig.length ? uebrig[0].id : vonId);
       schiffeSpiel = null;
       return;
     }
@@ -7310,6 +7324,61 @@ window.LiveChat = (function () {
     schiffeAnAlle({ t: "schuss", nr: nr, treffer: Boolean(getroffenId), von: vonName,
                     wen: getroffenName, dran: naechst ? naechst.id : "",
                     dranName: naechst ? naechst.name : "" });
+  }
+
+  /* =========================================================
+     RUNDE 99 — DIE PUNKTE AM ENDE, UND ZWAR GEWICHTET
+     ---------------------------------------------------------
+     XANDER: „die kriegen sie in ihr Ranking auch mit gutgeschrieben …
+     Auf jeden Fall muss es gewichtet sein. Entweder kriegen alle, die
+     mitspielen, so ein paar Mindestpunkte, die jetzt nicht so
+     dramatisch sind, aber die, die gewinnen, kriegen halt gute
+     Punkte."
+
+     Also drei Stufen, und sie stehen in EINER Rechnung:
+       · Mitspielen            1 Punkt   (die „Mindestpunkte")
+       · je Treffer           +2 Punkte  (hoechstens zwei zaehlen mit,
+                                          sonst sprengt es den Deckel)
+       · Gewinnen             +5 Punkte  (die „guten Punkte")
+     Mehr als zehn nimmt die Gegenseite ohnehin nicht an (siehe
+     postEmpfangen), und mehr als 60 in der Stunde auch nicht — beides
+     ist der alte Schutz davor, dass sich jemand im eigenen Raum
+     Punkte macht.
+
+     Gebucht wird auf dem GERAET DES SPIELERS, ueber denselben Weg wie
+     jede Aufgabe. Der Schiedsrichter kann niemandem etwas ins Konto
+     schreiben; er sagt nur „das war ein Treffer". */
+  function schiffePunkte(treffer, gewonnen) {
+    /* NACHGERECHNET: mit +7 fuer den Sieger kaeme ein Gewinner mit
+       zwei Treffern auf 12 — und die Gegenseite nimmt hoechstens 10
+       an (postEmpfangen deckelt). Er haette also stillschweigend zwei
+       Punkte verloren. Mit +5 geht die Rechnung genau auf: 1 + 4 + 5
+       = 10, der hoechste Wert, den es ueberhaupt gibt. */
+    return 1 + Math.min(2, Math.max(0, Number(treffer) || 0)) * 2 + (gewonnen ? 5 : 0);
+  }
+  function schiffePunkteVerteilen(siegerId) {
+    if (!schiffeSpiel) return;
+    schiffeSpiel.reihe.forEach(function (m) {
+      var treffer = schiffeSpiel.treffer[m.id] || 0;
+      var wieviel = schiffePunkte(treffer, m.id === siegerId);
+      if (wieviel <= 0) return;
+      var grund = m.id === siegerId
+        ? "Schiffe versenken \u2014 gewonnen"
+        : (treffer ? "Schiffe versenken \u2014 " + treffer + " Treffer"
+                   : "Schiffe versenken \u2014 mitgespielt");
+      if (m.id === zustand.ichId) {
+        /* Die eigene Gutschrift geht nicht ueber den eigenen Kanal —
+           dort hoert man sich selbst nicht zu (self: false). Sie wird
+           deshalb hier direkt gebucht, genauso wie es postEmpfangen
+           auf der anderen Seite tut. */
+        if (typeof zustand.punkteRuf === "function") {
+          try { zustand.punkteRuf(wieviel, grund); } catch (e) {}
+        }
+        systemZeile("\u2b50 " + wieviel + " Punkte f\u00fcr dich \u2014 " + grund + ".");
+      } else {
+        postSenden(m.id, { art: "punkte", wieviel: wieviel, grund: grund });
+      }
+    });
   }
 
   /* ---- AUF JEDEM GERAET ---- */
@@ -13793,7 +13862,14 @@ window.LiveChat = (function () {
       if (!schiffeSpiel) return null;
       return { phase: schiffeSpiel.phase || "",
                uhrLaeuft: Boolean(schiffeSpiel.frist),
-               mitspieler: (schiffeSpiel.reihe || []).length };
+               mitspieler: (schiffeSpiel.reihe || []).length,
+               treffer: schiffeSpiel.treffer || {} };
+    },
+    /* RUNDE 99 — die Punktrechnung zum Nachrechnen, ohne Spiel und
+       ohne Leitung: dieselbe Formel, die schiffePunkteVerteilen
+       benutzt. Ohne das liesse sich „gewichtet" nur behaupten. */
+    pruefSchiffePunkte: function (treffer, gewonnen) {
+      return schiffePunkte(treffer, gewonnen);
     },
     tafelSenden: function (d) {
       if (!d || typeof d !== "object") return false;
