@@ -93,6 +93,7 @@ for f in werkzeug/pruefe-*.js; do
     pruefe-runde99-zauber)       frist=300  ;;
     # Dreimal spruehen, jedes Mal zwei Sekunden Trocknen.
     pruefe-runde99-spray)        frist=300  ;;
+    pruefe-runde99-kuss)         frist=240  ;;
     *)                           frist=120  ;;
   esac
   aus=$(timeout "$frist" node "$f" 2>&1)

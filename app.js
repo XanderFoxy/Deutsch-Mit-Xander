@@ -26650,6 +26650,18 @@
      alten Verhalten: einmal abspielen und fertig. */
   function lcGeraeusch(name, wirkung, laut) {
     if (!lcToeneAn() || !lcGeraeuschDa(name)) return false;
+    /* RUNDE 99 — EINE NAHT ZUM NACHMESSEN.
+       Bisher liess sich nur pruefen, welche TONDATEI wie klingt, nicht
+       welche davon ein Effekt WAEHLT. Genau darum ging es aber beim
+       Kuss („der Mann soll einen Frauenkuss hoeren"): die Datei war
+       richtig, gewaehlt wurde die falsche. Steht window.DMA_TONLOG als
+       Liste bereit, schreibt jeder Ton seinen Namen und den Zeitpunkt
+       hinein. Ohne diese Liste kostet die Zeile nichts. */
+    try {
+      if (window.DMA_TONLOG && window.DMA_TONLOG.push) {
+        window.DMA_TONLOG.push({ name: name, wann: Math.round(performance.now()) });
+      }
+    } catch (e) {}
     try {
       let a = lcGeraeuschAblage[name];
       if (!a) {
@@ -50866,7 +50878,27 @@
   /* --- DER KUSS --------------------------------------------------------
      „… oder kuesst." Ein Mund kommt heran, drueckt sich auf das Bild
      und hinterlaesst einen Abdruck, der langsam verblasst. */
-  function lcKuss(wen) {
+  /* =====================================================================
+     RUNDE 99 — WESSEN KUSS MAN HOERT
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „Beim Kussmund: der Mann soll einen Frauenkuss
+     hoeren und die Frau einen Maennerkuss."
+
+     GEFUNDEN, UND ES WAR SCHLIMMER ALS GEDACHT: gewaehlt wurde bisher
+     nach „meiner" — also nach dem Platz, auf dem der ZUSCHAUER sitzt.
+     Auf Beas Geraet klang derselbe Kuss deshalb anders als auf Cems.
+     Ein Geraeusch, das auf jedem Bildschirm ein anderes ist, kann nicht
+     zu dem passen, was man sieht.
+
+     JETZT: es zaehlt, WER GEKUESST HAT. Ein Kuss klingt nach dem Mund,
+     aus dem er kommt, und der ist auf jedem Geraet derselbe. Damit
+     hoert der Mann, den eine Frau kuesst, genau den Frauenkuss, den er
+     beschreibt.
+     Steht beim Absender kein Geschlecht (er hat nichts angegeben), gilt
+     seine Regel woertlich: dann bekommt der Empfaenger das Gegenteil
+     seines eigenen zu hoeren — Mann hoert Frau, Frau hoert Mann.
+     ===================================================================== */
+  function lcKuss(wen, von) {
     return lcAmPlatz(wen, "lc-kuss", (schicht, platz) => {
       const r = lcWurfSetzen(schicht, platz, 190);
       schicht.style.setProperty("--px", (r.x * 26).toFixed(1) + "%");
@@ -50937,7 +50969,19 @@
          Und weil die Spitze 79 ms nach dem Dateianfang liegt, faengt
          die Aufnahme 79 ms FRUEHER an: 441 statt 520. So schmatzt es
          genau dann, wenn der Mund am Bild ankommt. */
-      lcStimmeZu(meiner, "kussmann", "kussfrau", 441, 0.62);
+      /* Wer hat gekuesst? Sein Platz sagt es — und er ist auf jedem
+         Geraet derselbe. */
+      const kuesser = von ? lcPlatzMitNamen(von) : null;
+      const gK = String(((kuesser || {}).dataset || {}).lcGeschlecht || "")
+        .trim().toLowerCase();
+      if (/^(w|f|m)/.test(gK)) {
+        lcStimmeZu(kuesser, "kussmann", "kussfrau", 441, 0.62);
+      } else {
+        /* Kein Geschlecht beim Absender: seine Regel woertlich — der
+           Empfaenger hoert das Gegenteil seines eigenen. Deshalb
+           stehen die beiden Namen hier VERTAUSCHT. */
+        lcStimmeZu(platz, "kussfrau", "kussmann", 441, 0.62);
+      }
     }, 3200, "kuss");
   }
 
@@ -52998,7 +53042,8 @@
       if (art === "granate" && lcGranate(wenZ)) return;
       if (art === "lunte" && lcBombe(wenZ, true)) return;
       if (art === "streicheln" && lcStreicheln(wenZ)) return;
-      if (art === "kuss" && lcKuss(wenZ)) return;
+      if (art === "kuss" && lcKuss(wenZ, (nachricht && nachricht.eigen)
+            ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "entbloessung" && lcEntbloessung(wenZ, (nachricht && nachricht.eigen)
             ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""),
             (nachricht && nachricht.wie) || "")) return;
