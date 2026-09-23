@@ -146,10 +146,19 @@ const ARTEN = [
     sage(alle.woerter.length >= 20,
       "unter „Alle“ steht jetzt die ganze Kachelwand, nicht mehr vier Dinge",
       alle.woerter.length + " Kacheln");
-    ["Sprühdose", "Applaus", "Hammer", "Umarmen", "Putzen"].forEach((w) => {
-      sage(alle.woerter.some((x) => x.indexOf(w) === 0),
-        "… darunter „" + w + "“");
-    });
+    /* RUNDE 99 NACHGEZOGEN: „Sprühdose" steht jetzt unter der
+       Kategorie „Schmutzig" und „Putzen" unter „Sauber machen" —
+       XANDER: „Das Menue koennte man noch ein bisschen aufraeumen …
+       Kategorien: Werfen, Eklig, Schmutzig, und Sauber machen."
+       Worum es DIESER Regel geht, bleibt dasselbe: unter „Alle" steht
+       die ganze Kachelwand und nicht mehr eine Auswahl von vier
+       Dingen. Also wird weiter geprueft, dass beide erreichbar sind —
+       nur eben eine Ebene tiefer. */
+    ["Applaus", "Hammer", "Umarmen", "Werfen", "Schmutzig", "Sauber machen"]
+      .forEach((w) => {
+        sage(alle.woerter.some((x) => x.indexOf(w) === 0),
+          "… darunter „" + w + "“");
+      });
     sage(/\salle$/.test(alle.gesendet), "und ein Tipp schickt es wirklich an alle",
       "„" + alle.gesendet + "“");
   }

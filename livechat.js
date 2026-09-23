@@ -10575,7 +10575,14 @@ window.LiveChat = (function () {
        (\u201e/gemeinsam Bea 3-4-8"). Ohne diesen Eintrag k\u00e4me die Kette
        nie bei den anderen an, und jedes Ger\u00e4t rechnete sich wieder
        seinen eigenen Weg. */
-    "bahn"
+    "bahn",
+    /* RUNDE 99 \u2014 WIE der BH aufgeht: hinten, oben oder vorn.
+       XANDER: \u201eder BH kann hinten aufgehen, oder \u00fcber den Kopf,
+       oder vorne auf." Ohne diesen Eintrag k\u00e4me die Wahl nie bei den
+       anderen an, und bei allen au\u00dfer dem Absender ginge er hinten
+       auf \u2014 genau die Art von Unterschied zwischen zwei Ger\u00e4ten,
+       die er nicht mehr sehen will. */
+    "wie"
   ];
   /* Listen werden begrenzt — eine Zeile aus einer fremden Fassung
      darf den Chat nicht sprengen. */

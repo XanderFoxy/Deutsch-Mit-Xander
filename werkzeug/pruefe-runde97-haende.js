@@ -108,18 +108,32 @@ const sage = (gut, was, zusatz) => {
       });
     });
 
-    /* Die Fingerglieder: traegt ein Pfad Fuellung UND Kante? */
+    /* Die Fingerglieder: traegt ein Pfad Fuellung UND Kante?
+       RUNDE 99 NACHGEZOGEN: die Hand wird jetzt ZWEIMAL gezeichnet —
+       unten die etwas groessere dunkle Silhouette, darueber die
+       Fuellung. Die Silhouette DARF und MUSS beides tragen, sie ist ja
+       der Umriss der ganzen Hand. Worum es dieser Regel geht, ist der
+       Ring um das Gelenk — und der entstuende nur, wenn ein SICHTBARES
+       Glied seine eigene Kante traegt. Gemessen wird deshalb der
+       Fuelldurchgang; dass die Silhouette unter ihm liegt und sich
+       mitbewegt, prueft werkzeug/pruefe-runde99-haende.js nach. */
     let glieder = 0, beides = 0, ueberlappt = 0, gelenke = 0;
-    document.querySelectorAll(".lc-rhand-finger path").forEach((f) => {
+    let silhouette = 0;
+    document.querySelectorAll(".lc-rh-fuell .lc-rhand-finger path").forEach((f) => {
       const hatF = f.getAttribute("fill") && f.getAttribute("fill") !== "none";
       const hatK = f.getAttribute("stroke") && f.getAttribute("stroke") !== "none";
       if (hatF || hatK) glieder++;
       if (hatF && hatK) beides++;
     });
+    document.querySelectorAll(".lc-rh-kante .lc-rhand-finger path").forEach((f) => {
+      const hatF = f.getAttribute("fill") && f.getAttribute("fill") !== "none";
+      const hatK = f.getAttribute("stroke") && f.getAttribute("stroke") !== "none";
+      if (hatF && hatK) silhouette++;
+    });
     /* Und greift jedes Glied nach oben unter das vorige? Der oberste
        Punkt des Fuellpfades muss ueber dem Drehpunkt seines Gelenks
        liegen. */
-    document.querySelectorAll(".lc-rf-pip, .lc-rf-dip").forEach((g) => {
+    document.querySelectorAll(".lc-rh-fuell .lc-rf-pip, .lc-rh-fuell .lc-rf-dip").forEach((g) => {
       const ur = (g.getAttribute("style") || "").match(/transform-origin:\s*[\d.]+px\s+([\d.]+)px/);
       const p = g.querySelector("path");
       if (!ur || !p) return;
@@ -131,7 +145,8 @@ const sage = (gut, was, zusatz) => {
     });
 
     return { quelle: quelle, fremd: fremd, gefunden: gefunden,
-      glieder: glieder, beides: beides, gelenke: gelenke, ueberlappt: ueberlappt };
+      glieder: glieder, beides: beides, gelenke: gelenke, ueberlappt: ueberlappt,
+      silhouette: silhouette };
   });
 
   Object.keys(mess.quelle).forEach((n) => console.log("  " + n + " = " + mess.quelle[n]));
@@ -145,8 +160,11 @@ const sage = (gut, was, zusatz) => {
 
   console.log("\nDIE FINGER — DURCHGEHEND ODER AUS MODULEN?\n");
   sage(mess.glieder > 0, "die Fingerglieder sind gezeichnet", mess.glieder + " Pfade");
+  sage(mess.silhouette > 0,
+    "unter der Hand liegt eine durchgehende dunkle Silhouette",
+    mess.silhouette + " Teile im Kantendurchgang");
   sage(mess.beides === 0,
-    "kein Glied traegt Fuellung UND Kante — also kein Ring um das Gelenk",
+    "kein SICHTBARES Glied traegt Fuellung UND Kante — kein Ring ums Gelenk",
     mess.beides + " mit beidem");
   sage(mess.gelenke > 0 && mess.ueberlappt === mess.gelenke,
     "und jedes Glied greift nach oben unter das vorige",
