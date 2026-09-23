@@ -138,8 +138,13 @@ const sage = (gut, text, dazu) => {
      echter Sabberlaut, und KEIN Ekel-Schrei — den haben Spucken und
      Vogelkot. */
   sage(toene.indexOf("sabberlaut") >= 0, "Der echte Sabberlaut kommt", toene.join(", ") || "gar nichts");
-  sage(!toene.some((n) => n === "ekelmann" || n === "ekelfrau"),
-    "Und KEIN Ekel-Schrei — Abwechslung zu Spucken und Vogelkot",
+  /* RUNDE 100 — XANDER (Walkie-Talkie): „Der Ekel-Sound … soll pro
+     Animation ein eigener Ekel-Sound fuer Mann und Frau sein." Also:
+     ein Ekel-Laut ja — aber der EIGENE, keiner von Spucken, Vogelkot
+     oder Pusterohr. */
+  sage(toene.some((n) => /^ekelsabber(mann|frau)$/.test(n))
+    && !toene.some((n) => /^ekel(mann|frau|spuck|kot)/.test(n)),
+    "Und ein EIGENER Ekel-Laut — nicht der von Spucken, Vogelkot oder Pusterohr",
     toene.join(", ") || "gar nichts");
 
   console.log("\n2b  WER SABBERT, SCHWEBT UEBER DEM ANDEREN\n");

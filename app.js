@@ -33518,7 +33518,7 @@
        Hochziehen im Rachen noch vor den Wurf, wie es soll. */
     spucken: 630,
     /* 1300 ms minus die 129 ms bis zur Spitze der Aufnahme. */
-    sabbern: 250,        /* RUNDE 99: der Sabberlaut beginnt mit dem Schlurfen, wenn er ueber dem anderen ankommt */
+    sabbern: 420,        /* RUNDE 99: der Sabberlaut beginnt mit dem Schlurfen; RUNDE 100: erst wenn der Speichel aus dem Mund quillt (14 % von 3 s) */
     tritt: 180,        /* 0,18 s — „das ist der Anstoss" */
     /* RUNDE 98 — der erste Klatscher liegt bei 45 % des ersten Takts
        (340 ms), also bei 153 ms. */
@@ -38667,7 +38667,13 @@
          Aufschlag, sonst deckt der Vogel seinen eigenen Treffer zu. */
       lcTonSpaeter("zwitschern", 0, 0.42);
       /* Und der kurze Ekellaut, wenn begriffen ist, was da liegt. */
-      lcStimmeZu(platz, "ekelmann", "ekelfrau", 2050, 0.55);
+      /* RUNDE 100 — XANDER (Walkie-Talkie): „Der Ekel-Sound ist schon
+         wieder repetitiv und soll pro Animation ein eigener Ekel-Sound
+         fuer Mann und Frau sein." Vogelkot, Spucken und Sabbern haben
+         jetzt je ein eigenes Paar (ElevenLabs, gemessen: Maenner 115 bis
+         130 Hz, Frauen 414 bis 558 Hz); das alte Paar bleibt dem
+         Pusterohr. Rohdateien: .sicherung/ton-vor-r100/ekel-roh/. */
+      lcStimmeZu(platz, "ekelkotmann", "ekelkotfrau", 2050, 0.6);
       /* RUNDE 98 — UND DER KLECKS BLEIBT LIEGEN.
          XANDER: „saemtlicher Dreck, der erzeugt wird wie durch die
          Vogelkacke oder irgendwas anderes — das koennen wir wieder
@@ -38725,7 +38731,8 @@
           + ' animation-delay:' + (1280 + i * 190) + 'ms"></span>';
       });
       blende.innerHTML = fadenHtml;
-      lcStimmeZu(platz, "ekelmann", "ekelfrau", 1820, 0.6);
+      /* RUNDE 100 — eigenes Ekel-Paar fuers Spucken (siehe lcVogelKot). */
+      lcStimmeZu(platz, "ekelspuckmann", "ekelspuckfrau", 1820, 0.62);
     }, 2600, "spucken");
   }
 
@@ -38767,7 +38774,12 @@
       if (kreisVon && kreisZiel) {
         const a = kreisVon.getBoundingClientRect(), b = kreisZiel.getBoundingClientRect();
         const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
-        const dy = (b.top - b.height * 0.92 + a.height / 2) - (a.top + a.height / 2);
+        /* RUNDE 100 — es schwebt jetzt mit einer kleinen Luecke UEBER dem
+           anderen (1,05 Bildhoehen statt 0,92): vorher lag das Kinn auf dem
+           fremden Bild, und der Faden war zwischen beiden gar nicht zu
+           sehen. Der Mund (72 % der eigenen Hoehe) liegt damit bei -33 %
+           des Zielbildes — dort beginnt der Speichel (siehe CSS R100). */
+        const dy = (b.top - b.height * 1.05 + a.height / 2) - (a.top + a.height / 2);
         const hin = "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px)";
         const altZ = vonPlatz.style.zIndex;
         vonPlatz.style.zIndex = "9";
@@ -38787,6 +38799,13 @@
           vonPlatz.style.zIndex = altZ;
         }, 3050);
       }
+      /* RUNDE 100 — die Speichelschicht liegt UEBER dem schwebenden Bild
+         (Platz 10 gegen 9): der Faden soll sichtbar aus dem MUND kommen,
+         nicht hinter dem Kinn hervor. „Der Sabber laeuft noch nicht
+         richtig aus meinem Mund heraus." */
+      const altZZiel = platz.style.zIndex;
+      platz.style.zIndex = "10";
+      setTimeout(() => { platz.style.zIndex = altZZiel; }, 3050);
       /* Der Tropfen mit seinem Faden — er haengt oben ueber dem Bild. */
       schicht.insertAdjacentHTML("beforeend",
         '<span class="lc-sabber-faden"></span>'
@@ -38796,15 +38815,22 @@
          laufen. Verschieden lang und verschieden spaet — zwei
          gleiche Rinnsale sehen gemalt aus. */
       let html = '<span class="lc-sabber-lache"></span>';
-      [[-16, 34, 5.4, 0], [9, 22, 4.2, 240], [20, 14, 3.4, 430]]
+      /* RUNDE 100 — die Rinnsale beginnen am RING, gleich nach dem
+         Kontakt (44 % = 1320 ms), und laufen lang ueber das Gesicht:
+         „er soll ueber den Kreispfad des anderen und ueber das
+         Profilbild drueber laufen." Verschieden lang und spaet — drei
+         gleiche Rinnsale saehen gemalt aus. */
+      [[-7, 62, 4.8, 0], [6, 46, 3.8, 260], [-1, 76, 3.2, 520]]
         .forEach(([quer, lang, breit, spaet]) => {
           html += '<span class="lc-sabber-rinne" style="--quer:' + quer
             + '%; --lang:' + lang + '%; --breit:' + breit + '%;'
-            + ' animation-delay:' + (1900 + spaet) + 'ms"></span>';
+            + ' animation-delay:' + (1380 + spaet) + 'ms"></span>';
         });
       blende.innerHTML = html;
-      /* Kein Ekel-Schrei mehr — den haben Spucken und Vogelkot schon
-         (siehe oben: „das braucht Abwechslung"). */
+      /* RUNDE 100 — jetzt MIT eigenem Ekel-Laut, der nur hier vorkommt:
+         „pro Animation ein eigener Ekel-Sound fuer Mann und Frau".
+         Er kommt 120 ms nach dem Kontakt auf dem Ring (44 % = 1320 ms). */
+      lcStimmeZu(platz, "ekelsabbermann", "ekelsabberfrau", 1440, 0.6);
     }, 3000, "sabbern");
   }
 
