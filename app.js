@@ -26970,6 +26970,16 @@
       } else if (lack) {
         lack.remove();
       }
+      /* RUNDE 98 — und das zerschlagene Bild. XANDER: „Ansonsten bleibt
+         der Scherbenhaufen immer unten, nachdem man jemanden mit dem
+         Hammer kaputt gemacht hat." Also auch nach jedem Neuaufbau. */
+      const kaputt = el.querySelector(".lc-zerschlagen");
+      if (nm && lcKaputtListe[nm] && !frei) {
+        if (!kaputt) lcZerschlagen(el, lcNameVomPlatz(el));
+      } else if (kaputt) {
+        el.classList.remove("lc-platz-zerschlagen");
+        el.querySelectorAll(".lc-zerschlagen, .lc-scherbenhaufen").forEach((x) => x.remove());
+      }
     });
   }
   function lcAnziehen(wen, was) {
@@ -31126,6 +31136,9 @@
     telefon:  { zeichen: ["\u260e\ufe0f"], wie: 4, klasse: "umarmen" },
     /* RUNDE 86 — die Spruehdose. */
     spray:    { zeichen: ["\ud83c\udfa8"], wie: 4, klasse: "umarmen" },
+    /* RUNDE 98 — XANDER: „dass wir einen Pflaster Profil Effekt
+       nehmen … und dann ist alles wieder heil." */
+    pflaster: { zeichen: ["\ud83e\ude79"], wie: 4, klasse: "umarmen" },
     /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
        ne Luftballon." */
     luftballon: { zeichen: ["\ud83c\udf88"], wie: 4, klasse: "umarmen" },
@@ -35165,6 +35178,26 @@
   const LC_HAMMER_SCHADEN = {};          /* Name -> { stufe, uhr } */
   const LC_HAMMER_HEILT = 22000;         /* so lange bleibt der Schaden */
   const LC_HAMMER_HOECHSTE = 9;          /* darueber wird es nicht mehr schlimmer */
+  /* =====================================================================
+     RUNDE 98 — IRGENDWANN IST ES GANZ KAPUTT, UND DANN BLEIBT ES SO
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „Ich moechte, dass der Hammer, wenn man ihn
+     mehrfach benutzt, irgendwann das Ganze kaputt schlagen laesst, dass
+     da nur noch Teile liegen. Das Profilbild in Fragmenten und der
+     einzige Weg wie man sich wieder ganz machen kann, weil es ein
+     bleibender Effekt ist, ist dass wir ein Pflaster nehmen … Ansonsten
+     bleibt der Scherbenhaufen immer unten, nachdem man jemanden mit dem
+     Hammer kaputt gemacht hat."
+
+     Ab dem sechsten Schlag ist Schluss: das Bild zerfaellt in Scherben,
+     unter dem Platz liegt ein Haufen, und die Heiluhr wird GELOESCHT.
+     Von selbst wird das nicht mehr heil — nur „/pflaster" macht es
+     wieder ganz (siehe lcPflaster).
+     Gemerkt wird das am NAMEN, nicht am Platz: wer aufsteht und sich
+     woanders hinsetzt, nimmt seinen Schaden mit.
+     ===================================================================== */
+  const LC_HAMMER_KAPUTT = 6;            /* ab so vielen Schlaegen zerfaellt es */
+  const lcKaputtListe = {};              /* Name -> true, solange es kaputt ist */
 
   /* Aus einem Namen eine feste Zahl machen (FNV-1a) — damit jeder
      dasselbe sieht, ohne dass etwas mitgeschickt wird. */
@@ -35355,6 +35388,163 @@
     }
   }
 
+  /* =====================================================================
+     RUNDE 98 — DAS BILD IN FRAGMENTEN, DER HAUFEN UNTEN
+     ---------------------------------------------------------------------
+     XANDER: „dass da nur noch Teile liegen. Das Profilbild in
+     Fragmenten … Ansonsten bleibt der Scherbenhaufen immer unten."
+
+     Das Bild wird nicht uebermalt, sondern ZERSCHNITTEN: acht Keile aus
+     der Mitte heraus, jeder mit demselben Profilbild darin, jeder ein
+     Stueck verschoben und verdreht. So sieht man die Person noch, aber
+     in Scherben — genau das, was er beschrieben hat.
+     Der Haufen darunter liegt AUSSERHALB des Bildes, am Fuss des
+     Platzes; er gehoert zum Platz und nicht zur Scheibe.
+     ===================================================================== */
+  function lcZerschlagen(platzEl, name) {
+    if (!platzEl) return false;
+    platzEl.querySelectorAll(".lc-zerschlagen, .lc-scherbenhaufen").forEach((x) => x.remove());
+    const kreis = platzEl.querySelector(".lc-kreis");
+    const bild = kreis && kreis.querySelector("img.lc-avatar");
+    const quelle = (bild && bild.getAttribute("src")) || "";
+    const buchstabe = (name || "?").trim().charAt(0).toUpperCase() || "?";
+    const zufall = lcHammerZufall(lcHammerSaat(name) + 7717);
+
+    const schicht = document.createElement("span");
+    schicht.className = "lc-zerschlagen";
+    schicht.setAttribute("aria-hidden", "true");
+    /* Acht Keile. Jeder traegt dasselbe Bild, ist aber anders
+       beschnitten — dadurch passen sie wie ein zerbrochener Spiegel
+       zusammen und zeigen trotzdem dieselbe Person. */
+    const teile = 8;
+    for (let i = 0; i < teile; i++) {
+      const a0 = (i / teile) * 360, a1 = ((i + 1) / teile) * 360;
+      const ecke = (grad) => {
+        const b = (grad - 90) * Math.PI / 180;
+        /* Weit genug hinaus, damit der Keil bis ueber den Rand reicht. */
+        return (50 + Math.cos(b) * 80).toFixed(1) + "% " + (50 + Math.sin(b) * 80).toFixed(1) + "%";
+      };
+      const st = document.createElement("i");
+      st.className = "lc-scherbe";
+      st.style.clipPath = "polygon(50% 50%, " + ecke(a0) + ", "
+        + ecke((a0 + a1) / 2) + ", " + ecke(a1) + ")";
+      if (quelle) {
+        st.style.backgroundImage = "url(\"" + quelle.replace(/"/g, "%22") + "\")";
+      } else {
+        st.classList.add("lc-scherbe-ohne");
+        st.textContent = buchstabe;
+      }
+      /* Jede Scherbe rutscht ein Stueck aus der Mitte heraus und steht
+         schief — sonst waere es wieder ein ganzes Bild mit Rissen. */
+      const w = ((a0 + a1) / 2 - 90) * Math.PI / 180;
+      const weit = 5 + zufall() * 7;
+      st.style.setProperty("--sx", (Math.cos(w) * weit).toFixed(1) + "%");
+      st.style.setProperty("--sy", (Math.sin(w) * weit).toFixed(1) + "%");
+      st.style.setProperty("--sdreh", (-9 + zufall() * 18).toFixed(1) + "deg");
+      schicht.appendChild(st);
+    }
+    platzEl.appendChild(schicht);
+
+    /* DER HAUFEN. Er liegt unten am Platz und bleibt dort. */
+    const haufen = document.createElement("span");
+    haufen.className = "lc-scherbenhaufen";
+    haufen.setAttribute("aria-hidden", "true");
+    let d = "";
+    for (let i = 0; i < 11; i++) {
+      const x = 8 + zufall() * 84;
+      const b = 5 + zufall() * 9;
+      const h = 3 + zufall() * 7;
+      d += '<path class="lc-scherbenstueck" d="M' + x.toFixed(1) + " 20"
+        + " L" + (x + b * 0.5).toFixed(1) + " " + (20 - h).toFixed(1)
+        + " L" + (x + b).toFixed(1) + ' 20 Z"/>';
+    }
+    haufen.innerHTML = '<svg viewBox="0 0 100 22" aria-hidden="true">' + d + "</svg>";
+    platzEl.appendChild(haufen);
+    platzEl.classList.add("lc-platz-zerschlagen");
+    return true;
+  }
+
+  /* Merken, wer kaputt ist — damit es jedes Neuzeichnen ueberlebt. */
+  function lcKaputtMerken(platzEl, name) {
+    const nm = String(name || "").trim().toLowerCase();
+    if (nm) lcKaputtListe[nm] = true;
+  }
+  function lcKaputtHeilen(name) {
+    const nm = String(name || "").trim().toLowerCase();
+    delete lcKaputtListe[nm];
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return;
+    karte.querySelectorAll(".lc-platz").forEach((pl) => {
+      if (lcHammerWer(pl).trim().toLowerCase() !== nm) return;
+      pl.classList.remove("lc-platz-zerschlagen");
+      pl.querySelectorAll(".lc-zerschlagen, .lc-scherbenhaufen").forEach((x) => x.remove());
+    });
+  }
+
+  /* =====================================================================
+     RUNDE 98 — DAS PFLASTER, DAS ALLES WIEDER HEIL MACHT
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „der einzige Weg wie man sich wieder ganz
+     machen kann, weil es ein bleibender Effekt ist, ist dass wir einen
+     Pflaster Profil Effekt nehmen und zwar, dass man von oben links
+     nach unten rechts ein Pflaster klebt und von unten links nach oben
+     rechts dann noch ein zweites, dass es so kreuz ist und dann
+     passiert kurz nach dem so ein kleiner magischer Effekt und alles
+     ist wieder heil und alles ist wieder repariert."
+
+     Genau diese Reihenfolge steht hier, und nichts sonst:
+       0,00 s  das erste Pflaster kommt von oben links, schraeg
+       0,55 s  es klebt — kurzes Andruecken
+       0,90 s  das zweite von unten links, andersherum schraeg
+       1,45 s  das Kreuz steht
+       1,80 s  der magische Puff (Funken von innen nach aussen)
+       2,30 s  alles ist heil: Scherben weg, Haufen weg, Risse weg
+     ===================================================================== */
+  function lcPflaster(wen) {
+    return lcAmPlatz(wen, "lc-pflaster", (schicht, platz) => {
+      const name = lcHammerWer(platz);
+      const blende = lcZpBlende(schicht);
+      const streifen = (klasse) =>
+        '<span class="lc-pflasterstreifen ' + klasse + '">'
+        + '<svg viewBox="0 0 120 34" aria-hidden="true">'
+        /* Der Streifen: Stoff mit abgerundeten Enden. */
+        + '<rect class="lc-pfl-stoff" x="0" y="0" width="120" height="34" rx="9"/>'
+        /* Das Mittelkissen — daran erkennt man ein Pflaster. */
+        + '<rect class="lc-pfl-kissen" x="40" y="5" width="40" height="24" rx="4"/>'
+        /* Die Loecher links und rechts. */
+        + [12, 20, 28, 92, 100, 108].map((x) =>
+            [9, 17, 25].map((y) =>
+              '<circle class="lc-pfl-loch" cx="' + x + '" cy="' + y + '" r="1.7"/>'
+            ).join("")).join("")
+        + "</svg></span>";
+      blende.innerHTML = streifen("lc-pflaster-eins") + streifen("lc-pflaster-zwei");
+      /* Zwei kurze Klebegeraeusche — eins je Streifen. */
+      lcTonSpaeter("kitt", 420, 0.45);
+      lcTonSpaeter("kitt", 1320, 0.45);
+      /* DER MAGISCHE PUFF: Funken, die von der Mitte nach aussen
+         stieben, und der Zauberton dazu. */
+      setTimeout(() => {
+        if (!schicht.isConnected) return;
+        const puff = document.createElement("span");
+        puff.className = "lc-pflaster-puff";
+        for (let i = 0; i < 12; i++) {
+          const f = document.createElement("i");
+          f.className = "lc-pflaster-funke";
+          f.style.setProperty("--w", (i * 30) + "deg");
+          f.style.setProperty("--spaet", (i * 26) + "ms");
+          puff.appendChild(f);
+        }
+        blende.appendChild(puff);
+      }, 1800);
+      lcTonSpaeter("zauberpuff", 1800, 0.5);
+      /* UND DANN IST ALLES HEIL. Das ist der Sinn der Sache. */
+      setTimeout(() => {
+        lcKaputtHeilen(name);
+        lcHammerHeilen(name);
+      }, 2300);
+    }, 3400, "pflaster");
+  }
+
   function lcHammer(wen, los) {
     /* „los" faehrt noch mit, weil aeltere Fassungen es mitschicken —
        gebraucht wird es nicht mehr: der Zufall ist raus. */
@@ -35364,10 +35554,23 @@
       const alt = LC_HAMMER_SCHADEN[name];
       const stufe = Math.min((alt ? alt.stufe : 0) + 1, 99);
       if (alt && alt.uhr) clearTimeout(alt.uhr);
+      /* RUNDE 98 — ab dem sechsten Schlag ist es GANZ kaputt, und dann
+         heilt auch keine Uhr mehr. XANDER: „irgendwann das Ganze kaputt
+         schlagen … weil es ein bleibender Effekt ist." */
+      const kaputt = stufe >= LC_HAMMER_KAPUTT;
       LC_HAMMER_SCHADEN[name] = {
         stufe: stufe,
-        uhr: setTimeout(() => lcHammerHeilen(name), LC_HAMMER_HEILT)
+        uhr: kaputt ? 0 : setTimeout(() => lcHammerHeilen(name), LC_HAMMER_HEILT)
       };
+      if (kaputt) {
+        /* Erst der Schlag, dann zerfaellt es — nicht gleichzeitig. */
+        setTimeout(() => {
+          if (!platz.isConnected) return;
+          lcZerschlagen(platz, name);
+          lcKaputtMerken(platz, name);
+          lcGeraeusch("glasbruch", "zerschlagen", 0.6);
+        }, 420);
+      }
 
       const kreis = platz.querySelector(".lc-kreis");
       if (kreis) {
@@ -49655,6 +49858,8 @@
     /* RUNDE 86 — die Spruehdose gilt genau EINEM Platz, und der
        Luftballon blaest genau EINEN auf. */
     spray: 1, luftballon: 1,
+    /* RUNDE 98 — das Pflaster klebt auf GENAU EINEM Bild. */
+    pflaster: 1,
     /* RUNDE 88 — das Kaninchen wird aus GENAU EINEM Zylinder
        gezogen; ueber den ganzen Raum zu regnen waere kein Kunststueck
        mehr, sondern ein Unfall. */
@@ -49694,6 +49899,12 @@
        nicht unten bei den Wuerfen. */
     /* RUNDE 86 — XANDER: „ich moechte, dass wir eine Spruehdose
        haben." Sie zeichnet auf EIN Bild, sie regnet nicht. */
+    /* RUNDE 98 — das Pflaster macht heil, was der Hammer zerschlagen
+       hat. Es gilt EINEM Bild, es regnet nicht. */
+    if (art === "pflaster") {
+      lcPflaster((nachricht && (nachricht.wen || nachricht.an)) || "");
+      return;
+    }
     if (art === "spray") {
       lcSpray((nachricht && (nachricht.wen || nachricht.an)) || "",
               (nachricht && nachricht.stueck) || "froh");

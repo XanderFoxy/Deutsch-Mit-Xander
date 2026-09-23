@@ -124,7 +124,10 @@ const zeilen = [];
                           werkzeug/pruefe-runde86.js.
        Ohne diesen Abzug meldet die Sonde genau das als Fehler, was er
        ausdruecklich bestellt hat. */
-    const bleibtErlaubt = [".lc-kopfhoerer", ".lc-sprayfarbe", ".lc-kleid", ".lc-hschaden"];
+    const bleibtErlaubt = [".lc-kopfhoerer", ".lc-sprayfarbe", ".lc-kleid", ".lc-hschaden",
+      /* RUNDE 98 — das zerschlagene Bild und sein Scherbenhaufen
+         bleiben ebenfalls absichtlich liegen, bis „/pflaster" kommt. */
+      ".lc-zerschlagen", ".lc-scherbenhaufen"];
     let erlaubt = 0;
     bleibtErlaubt.forEach((wahl) => {
       reihe2.querySelectorAll(wahl).forEach((el) => {

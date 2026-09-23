@@ -266,7 +266,12 @@ const sage = (gut, text, dazu) => {
                       und dass er das tut, misst
                       werkzeug/pruefe-runde92-lack.js.
        Alles andere muss nach dem Effekt weg sein. */
-    const bleibt = /kopfhoerer|gluehbirne|birne|anziehen|ausziehen|spray|lack/.test(art);
+    /* RUNDE 98 — dazu der Hammer: ab dem sechsten Schlag zerfaellt das
+       Bild, und der Scherbenhaufen BLEIBT liegen. XANDER: „Ansonsten
+       bleibt der Scherbenhaufen immer unten, nachdem man jemanden mit
+       dem Hammer kaputt gemacht hat." Heil macht es nur „/pflaster" —
+       und dass es das tut, misst werkzeug/pruefe-runde98-hammer.js. */
+    const bleibt = /kopfhoerer|gluehbirne|birne|anziehen|ausziehen|spray|lack|hammer|pflaster/.test(art);
     if (letzte && !bleibt) {
       const nenn = (t) => schlimm.push(wo + " danach " + t);
       if (letzte.kinder !== v.kinder) {

@@ -896,6 +896,10 @@ window.LiveChat = (function () {
     wasser: { wirkung: "eimer",   satz: "kippt einen Eimer Wasser \u00fcber", emoji: "\ud83e\udea3" },
     wecker: { wirkung: "wecker",  satz: "stellt den Wecker neben", emoji: "\u23f0" },
     hammer: { wirkung: "hammer",  satz: "haut mit dem Hammer auf", emoji: "\ud83d\udd28" },
+    /* RUNDE 98 — XANDER: „der einzige Weg wie man sich wieder ganz
+       machen kann \u2026 ist dass wir einen Pflaster Profil Effekt
+       nehmen \u2026 kreuz \u2026 und dann ist alles wieder heil." */
+    pflaster: { wirkung: "pflaster", satz: "klebt zwei Pflaster \u00fcber Kreuz auf", emoji: "\ud83e\ude79" },
     /* GEWUENSCHT, Stueck fuer Stueck aus der Wunschliste:
        „Wir koennen uns auch Schneebaelle gegenseitig zuschiessen aufs
         Profilbild, so dass derjenige eingeseift wird mit Schnee."
@@ -9305,6 +9309,11 @@ window.LiveChat = (function () {
     /* RUNDE 86 — XANDER: „ich moechte, dass wir eine Spruehdose haben". */
     { gr: "reden", w: "spray", kurz: "spruehen", nutzt: "/spray Name",
       was: "Spr\u00fchdose \u2014 spr\u00fcht jemandem ein Gesicht aufs Profilbild; /spray Name traurig oder /spray Name herz f\u00fcr ein Bild" },
+    /* RUNDE 98 — XANDER: „der einzige Weg wie man sich wieder ganz
+       machen kann \u2026 ist dass wir einen Pflaster Profil Effekt
+       nehmen." */
+    { gr: "reden", w: "pflaster", kurz: "heilen", nutzt: "/pflaster Name",
+      was: "klebt zwei Pflaster \u00fcber Kreuz aufs Bild \u2014 danach ist alles wieder heil, auch ein vom Hammer zerschlagenes Profilbild" },
     /* RUNDE 76 — XANDER: „Telefon mit Audio". */
     { gr: "reden", w: "telefon", kurz: "anrufen", nutzt: "/telefon Name",
       was: "jemanden anrufen \u2014 es klingelt bei ihm, und wenn abgehoben ist, h\u00e4ngt die Schnur zwischen euch" },
