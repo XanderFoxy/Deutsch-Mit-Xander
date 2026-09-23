@@ -38606,6 +38606,19 @@
     return [...karte.querySelectorAll(".lc-platz")].map((el, i) => {
       const nr = Number(el.dataset.lcPlatz || 0) || (i + 1);
       const k = lcLayoutKasten(el);
+      /* RUNDE 99 — DIE MITTE IST DIE BILDMITTE, NICHT DIE PLATZMITTE.
+         XANDER: „Bei der Lok sind die Schienen nicht mittig ueber die
+         Positionsfelder."
+         GEMESSEN: auf einem Weg 1-5-6-7-3 lagen die Schienen an den
+         Zwischenplaetzen 10 px UNTER der Bildmitte, an Start und Ziel
+         aber genau darauf. Grund: hier stand die Mitte des ganzen
+         Platzes — und der ist unten um das Namensschild laenger. Start
+         und Ziel rechnen dagegen mit dem Bild. Jetzt rechnen alle mit
+         dem Bild; davon haben ALLE Fahrzeuge etwas, die ueber
+         Zwischenplaetze fahren, nicht nur die Lok. */
+      const kr = el.querySelector(".lc-kreis");
+      const mx = kr ? kr.offsetLeft + kr.offsetWidth / 2 : k.width / 2;
+      const my = kr ? kr.offsetTop + kr.offsetHeight / 2 : k.height / 2;
       return {
         nr: nr,
         el: el,
@@ -38615,8 +38628,8 @@
         ich: el.classList.contains("lc-platz-ich"),
         name: ((el.querySelector(".lc-platz-name") || {}).textContent || "")
                 .replace(/\s*\(du\)$/, "").trim(),
-        x: k.left + k.width / 2,
-        y: k.top + k.height / 2
+        x: k.left + mx,
+        y: k.top + my
       };
     });
   }
@@ -41435,6 +41448,11 @@
            Fahrzeit), und ist leiser als das Stampfen. */
       lcTonSpaeter("lokstampf", 0, 0.6);
       lcTonSpaeter("lokschiene", Math.round(hin * 0.2), 0.42);
+      /* RUNDE 99 — XANDER: „wenn die Lok ankommt, noch so ein typisches
+         Glockenklingeln, dass man weiss: alles aussteigen."
+         Die Glocke faengt 250 ms VOR dem Stillstand an — eine
+         Rangierlok laeutet, waehrend sie einrollt, nicht danach. */
+      lcTonSpaeter("lokglocke", Math.max(0, hin - 250), 0.5);
     } else if (art === "liane") {
       /* Der Tarzan-Ruf setzt kurz nach dem Abstossen ein und traegt
          ueber den ganzen Schwung.
@@ -45026,7 +45044,11 @@
        hoch, siehe .lc-lok im Stilblatt) sind das 0,432 Platzbreiten.
        Genau diese Haelfte steht jetzt hier — die Raeder stehen damit
        AUF den Schienen und nicht mehr daneben. */
-    const spur = d * 0.176;
+    /* RUNDE 99 — die Lok ist 20 % groesser geworden (XANDER: „sie
+       sollte ein bisschen groesser … ein Mittelding"), also auch die
+       Spur: 0,176 mal 1,2. Sonst standen die Raeder wieder neben den
+       Schienen. */
+    const spur = d * 0.211;
     const ueber = spur + Math.max(2.4, d * 0.045);   // Schwelle steht ueber
     const schritt = Math.max(9, d * 0.22);
     let schwellen = "", schienen = "";
@@ -45166,6 +45188,14 @@
     const pk = weg.map((p) => ({ x: p.x - rk.left, y: p.y - rk.top }));
     pk[0] = { x: start.x, y: start.y };
     pk[pk.length - 1] = { x: ende.x, y: ende.y };
+    /* RUNDE 99 — AUSPROBIERT UND ZURUECKGENOMMEN: ein engerer Bogen
+       (0,34 statt 0,62 Platzbreiten) kam der Mitte des Eckplatzes naeher
+       (17 statt 25 px), aber bei der jetzt breiteren Spur lag die innere
+       Schiene nur noch 16 px vom Kreismittelpunkt — die Schwellen
+       kreuzten sich zu einem Faecher. Ein Bogen, der an beide Geraden
+       glatt anschliesst, KANN die Ecke nicht treffen; er verfehlt sie
+       immer um 0,41 mal seinen Radius. Die Geraden liegen jetzt genau
+       mittig (siehe lcPlatzGitter), die Kurve bleibt schoen rund. */
     const bahn = lcLokBahn(pk, d * 0.62);
     const pt = bahn.pt, gesamt = bahn.gesamt;
     const tAn = hin / dauer;

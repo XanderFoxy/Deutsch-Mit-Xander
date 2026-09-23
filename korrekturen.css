@@ -18581,8 +18581,11 @@ code, pre {
    waechst im selben Zug mit (siehe .lc-lok-fenster).
    ===================================================================== */
 .lc-lok {
-  width: calc(var(--gross, 64px) * 1.1);
-  height: calc(var(--gross, 64px) * 0.55);
+  /* RUNDE 99 — XANDER: „Ausserdem muss sie nicht ganz so klein sein,
+     weil der Effekt geht ein bisschen verloren … vielleicht so ein
+     Mittelding." 20 % groesser; die Spurweite in app.js waechst mit. */
+  width: calc(var(--gross, 64px) * 1.32);
+  height: calc(var(--gross, 64px) * 0.66);
   transform: translate(-50%, -50%);
 }
 .lc-lok-form { width: 100%; height: 100%; overflow: visible; }
