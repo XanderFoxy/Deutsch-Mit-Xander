@@ -18583,13 +18583,9 @@ code, pre {
 .lc-lok {
   /* RUNDE 99 — XANDER: „Ausserdem muss sie nicht ganz so klein sein,
      weil der Effekt geht ein bisschen verloren … vielleicht so ein
-     Mittelding." Gemessen passt 1,25 genau noch in den Bogen: der
-     Bogen kann nicht weiter werden, weil die Plaetze so dicht stehen
-     (Radius hoechstens die halbe Strecke bis zum naechsten Platz).
-     Bei 1,32 ragte die Lok in der Kurve ueber das Gleis hinaus.
-     Also 14 % groesser statt 20 %; die Spurweite in app.js waechst mit. */
-  width: calc(var(--gross, 64px) * 1.25);
-  height: calc(var(--gross, 64px) * 0.625);
+     Mittelding." 20 % groesser; die Spurweite in app.js waechst mit. */
+  width: calc(var(--gross, 64px) * 1.32);
+  height: calc(var(--gross, 64px) * 0.66);
   transform: translate(-50%, -50%);
 }
 .lc-lok-form { width: 100%; height: 100%; overflow: visible; }
@@ -31828,148 +31824,55 @@ code, pre {
 }
 
 /* =====================================================================
-   RUNDE 99 — DAS WALKIE-TALKIE (nur fuer den Betreiber)
+   RUNDE 99 — DIE RUECKFRAGE-KARTE (nur fuer den Betreiber)
    ---------------------------------------------------------------------
-   XANDER: „die Karte verdeckt die Schaltfläche vom Klassenzimmer …
-   mach das wie ein Club-Menü an der Seite, dass ich das Walkie-Talkie
-   aufklappen kann." Darum jetzt: ein schmaler Reiter am LINKEN Rand
-   (der Tutor-Reiter sitzt rechts) und eine Leiste, die nur aufgeht,
-   wenn er sie antippt. Zu ist sie ganz weg; offen laesst sie rechts
-   immer einen Streifen frei, auch auf dem Telefon.
+   Unten LINKS, weil unten rechts die Werkstatt sitzt. Klein, solange
+   alles passt; erst bei „Nein" klappen die Moeglichkeiten auf.
    ===================================================================== */
-.rf-reiter {
+.rf-karte {
   position: fixed;
-  left: 0;
-  top: 34vh;
-  z-index: 3190;
-  width: 34px; height: 44px;
-  padding: 0;
-  border: none;
-  border-radius: 0 10px 10px 0;
-  background: #2a2438;
-  color: #fff;
-  font-size: 1.05rem;
-  line-height: 1;
-  cursor: pointer;
-  opacity: .78;
-  box-shadow: 2px 2px 8px rgba(0, 0, 0, .28);
-  transition: opacity .18s ease, transform .18s ease;
-}
-.rf-reiter:hover { opacity: 1; }
-.rf-reiter-bild { display: block; }
-.rf-reiter-zahl {
-  position: absolute; right: -6px; top: -6px;
-  min-width: 16px; height: 16px; padding: 0 3px;
-  border-radius: 8px;
-  background: #ffd166; color: #221c10;
-  font-size: .64rem; font-weight: 800; line-height: 16px; text-align: center;
-}
-.rf-reiter-zahl:empty { display: none; }
-/* Neues ist da: der Reiter zuckt, springt aber nicht von selbst auf. */
-.rf-reiter.rf-neu { opacity: 1; animation: rfZuck 1.6s ease-in-out infinite; }
-@keyframes rfZuck {
-  0%, 70%, 100% { transform: translateX(0); }
-  78% { transform: translateX(5px); }
-  86% { transform: translateX(0); }
-  92% { transform: translateX(3px); }
-}
-/* Wie beim Tutor: beim Schreiben im Chat ist er weg und nicht mehr
-   anzutippen — sonst laege er ueber einem Knopf. */
-body.lc-schreibt .rf-reiter {
-  opacity: 0; pointer-events: none; transform: translateX(-130%);
-}
-body.rf-leiste-auf .rf-reiter { display: none; }
-
-.rf-leiste {
-  position: fixed;
-  left: 0; top: 6vh;
+  left: 14px; bottom: 14px;
   z-index: 2147483000;
-  width: min(340px, calc(100vw - 64px));
-  max-height: 84vh;
+  width: min(330px, calc(100vw - 28px));
+  max-height: min(70vh, 560px);
   overflow-y: auto;
-  overscroll-behavior: contain;
-  box-sizing: border-box;
-  padding: 10px 12px 12px;
-  border-radius: 0 16px 16px 0;
-  background: rgba(24, 22, 32, .97);
+  padding: 12px 14px 12px;
+  border-radius: 16px;
+  background: rgba(24, 22, 32, .96);
   color: #f4f1ea;
-  box-shadow: 4px 10px 30px rgba(0, 0, 0, .38), 0 0 0 1px rgba(255, 255, 255, .08);
-  font-size: .88rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35), 0 0 0 1px rgba(255, 255, 255, .08);
+  font-size: .9rem;
   line-height: 1.35;
-  animation: rfRein .26s cubic-bezier(.2, .9, .3, 1.1) both;
+  animation: rfRein .32s cubic-bezier(.2, .9, .3, 1.2) both;
 }
 @keyframes rfRein {
-  from { opacity: 0; transform: translateX(-24px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(14px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .rf-kopf { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.rf-marke { font-weight: 800; font-size: .82rem; letter-spacing: .02em; color: #ffd166; }
-.rf-zu {
-  margin-left: auto; border: 0; background: transparent; color: inherit;
-  font-size: 1.1rem; cursor: pointer; opacity: .7; padding: 2px 6px;
-}
-.rf-zu:hover { opacity: 1; }
-.rf-status {
-  margin: 0 0 8px; padding: 6px 8px; border-radius: 8px;
-  background: rgba(255, 209, 102, .1); font-size: .8rem;
-}
-.rf-status-wer { font-weight: 700; color: #ffd166; }
-.rf-status-zeit { opacity: .55; }
-.rf-leer { margin: 6px 0 10px; opacity: .75; }
-.rf-frage-box {
-  padding: 8px 0 10px;
-  border-top: 1px solid rgba(255, 255, 255, .1);
-  border-bottom: 1px solid rgba(255, 255, 255, .1);
-  margin-bottom: 8px;
-}
-.rf-nav { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
-.rf-nav button {
-  border: 0; border-radius: 8px; width: 30px; height: 26px; cursor: pointer;
-  background: rgba(255, 255, 255, .1); color: inherit; font-size: 1rem; line-height: 1;
-}
-.rf-zahl { flex: 1; text-align: center; font-size: .74rem; opacity: .7; }
-.rf-thema { font-size: .74rem; font-weight: 700; opacity: .7; margin-bottom: 2px; }
-.rf-frage { margin: 0 0 6px; font-weight: 600; }
-.rf-wo {
-  margin: 0 0 8px; padding: 5px 8px; border-radius: 8px;
-  background: rgba(69, 192, 122, .12); font-size: .8rem;
-}
-.rf-stufen { display: grid; gap: 5px; margin-bottom: 8px; }
-.rf-stufe {
-  text-align: left; border: 1px solid rgba(255, 255, 255, .16); border-radius: 10px;
-  padding: 7px 10px; cursor: pointer; font: inherit; font-size: .84rem;
-  background: rgba(255, 255, 255, .04); color: inherit;
-}
-.rf-stufe.rf-gewaehlt { font-weight: 700; border-width: 2px; }
-.rf-stufe-fertig.rf-gewaehlt { background: rgba(47, 158, 98, .35); border-color: #45c07a; }
-.rf-stufe-okay.rf-gewaehlt { background: rgba(230, 180, 60, .3); border-color: #ffd166; }
-.rf-stufe-ueberarbeiten.rf-gewaehlt { background: rgba(184, 67, 75, .38); border-color: #e0646c; }
-.rf-unter { font-size: .76rem; opacity: .7; margin: 0 0 4px; }
+.rf-marke { font-weight: 800; font-size: .78rem; letter-spacing: .02em; color: #ffd166; }
+.rf-thema { font-size: .74rem; opacity: .7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rf-zahl { margin-left: auto; font-size: .72rem; opacity: .6; }
+.rf-frage { margin: 0 0 10px; font-weight: 600; }
 .rf-liste { display: grid; gap: 4px; margin: 0 0 8px; }
-.rf-option { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; font-size: .84rem; }
+.rf-option { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; font-size: .85rem; }
 .rf-option input { margin-top: 2px; width: 16px; height: 16px; accent-color: #45c07a; flex: 0 0 auto; }
-.rf-feld { display: flex; gap: 6px; align-items: flex-start; margin: 0 0 8px; }
-.rf-notiz, .rf-vorschlag-text {
-  flex: 1; min-width: 0; box-sizing: border-box; resize: vertical;
-  padding: 6px 8px; border-radius: 8px;
+.rf-notiz {
+  width: 100%; box-sizing: border-box; resize: vertical;
+  margin: 0 0 8px; padding: 6px 8px; border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, .18);
-  background: rgba(255, 255, 255, .06); color: inherit; font: inherit; font-size: .84rem;
+  background: rgba(255, 255, 255, .06); color: inherit; font: inherit; font-size: .85rem;
 }
-.rf-mik {
-  flex: 0 0 auto; width: 36px; height: 36px; border: 0; border-radius: 50%;
-  background: rgba(255, 255, 255, .12); color: inherit; font-size: 1rem; cursor: pointer;
-}
-.rf-mik.rf-hoert { background: #b8434b; animation: rfHoert 1s ease-in-out infinite; }
-@keyframes rfHoert { 50% { box-shadow: 0 0 0 6px rgba(184, 67, 75, .3); } }
-.rf-knoepfe { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.rf-knoepfe { display: flex; gap: 6px; flex-wrap: wrap; }
 .rf-knoepfe button {
   border: 0; border-radius: 10px; padding: 7px 12px; cursor: pointer;
-  font: inherit; font-weight: 700; font-size: .84rem;
+  font: inherit; font-weight: 700; font-size: .85rem;
 }
-.rf-senden, .rf-vorschlag-senden { background: #ffd166; color: #221c10; }
-.rf-spaeter { margin-left: auto; background: transparent; color: #f4f1ea; opacity: .7; }
-.rf-knoepfe button:disabled { opacity: .45; cursor: default; }
-.rf-gesendet { font-size: .78rem; color: #7fd6a4; }
+.rf-ja { background: #2f9e62; color: #fff; }
+.rf-nein { background: #b8434b; color: #fff; }
+.rf-senden { background: #ffd166; color: #221c10; }
+.rf-spaeter { margin-left: auto; background: transparent; color: #f4f1ea; opacity: .6; }
+.rf-knoepfe button:disabled { opacity: .5; cursor: default; }
 
 /* =====================================================================
    RUNDE 99 — DIE BLUME HINTER DEM GESICHT

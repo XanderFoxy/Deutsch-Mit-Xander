@@ -45048,7 +45048,7 @@
        sollte ein bisschen groesser … ein Mittelding"), also auch die
        Spur: 0,176 mal 1,2. Sonst standen die Raeder wieder neben den
        Schienen. */
-    const spur = d * 0.211;
+    const spur = d * 0.2;
     const ueber = spur + Math.max(2.4, d * 0.045);   // Schwelle steht ueber
     const schritt = Math.max(9, d * 0.22);
     let schwellen = "", schienen = "";
