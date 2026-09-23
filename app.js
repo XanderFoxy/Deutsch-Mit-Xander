@@ -29422,7 +29422,48 @@
     return true;
   }
 
-  function lcHebenMenue(platz, name) {
+  /* Angel, Lasso oder Kran? Die Angel und der Kran fragen danach noch,
+     WOHIN; das Lasso zieht immer zu mir — dafuer gibt es nichts zu
+     waehlen. */
+  function lcHolenMenue(platz, name) {
+    lcPlatzMenueZu();
+    const kasten = document.createElement("div");
+    kasten.id = "lcPlatzMenue";
+    kasten.className = "lc-platzmenue";
+    kasten.setAttribute("role", "menu");
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kopf.textContent = name + " holen \u2014 womit?";
+    kasten.appendChild(kopf);
+    const knopf = (zeichen, wort, tun) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-platzmenue-knopf";
+      b.setAttribute("role", "menuitem");
+      b.innerHTML = '<span class="lc-platzmenue-zeichen">' + zeichen + "</span>"
+                  + '<span class="lc-platzmenue-wort"></span>';
+      b.querySelector(".lc-platzmenue-wort").textContent = wort;
+      b.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        tun();
+      });
+      kasten.appendChild(b);
+    };
+    knopf("\ud83e\ude9d", "Angeln", () => lcHebenMenue(platz, name));
+    knopf("\ud83e\udd20", "Lasso \u2014 zu mir", () => {
+      lcPlatzMenueZu();
+      const zeile = "/lasso " + name;
+      try { LiveChat.schreiben(zeile); } catch (e) {}
+      lcNachDemSenden(zeile);
+    });
+    knopf("\ud83c\udfd7\ufe0f", "Kran", () => lcHebenMenue(platz, name, "kranheb"));
+    document.body.appendChild(kasten);
+    lcMenueStellen(kasten, platz);
+    lcMenueSchliessen(kasten);
+    return true;
+  }
+
+  function lcHebenMenue(platz, name, werkzeug) {
     lcPlatzMenueZu();
     /* GELESEN WIRD, WAS AUF DEM BILDSCHIRM STEHT.
        Erst stand hier die Sitzliste aus dem Modell — die ist die
@@ -29453,7 +29494,11 @@
     if (!moeglich.length) return false;
 
     const setzen = (nummer) => {
-      const zeile = "/heb " + name + " " + nummer;
+      /* RUNDE 98 — welches Werkzeug hebt, steht jetzt am Menue:
+         „/heb" ist die Angel, „/kranheb" der Baukran. Das Umsetzen
+         selbst macht in beiden Faellen dieselbe Stelle. */
+      const zeile = "/" + (werkzeug === "kranheb" ? "kranheb" : "heb")
+        + " " + name + " " + nummer;
       try { LiveChat.schreiben(zeile); } catch (e) {}
       lcNachDemSenden(zeile);
     };
@@ -29464,7 +29509,7 @@
     kasten.setAttribute("role", "menu");
     const kopf = document.createElement("p");
     kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = name + " umsetzen";
+    kopf.textContent = name + (werkzeug === "kranheb" ? " mit dem Kran heben" : " umsetzen");
     kasten.appendChild(kopf);
 
     const kachel = (zeichen, wort, titel, tun) => {
@@ -30157,12 +30202,19 @@
       /* Zwei Werkzeuge, zwei Knoepfe — siehe die Begruendung in
          lcHebenMenue. Die Angel fragt, wohin; das Lasso zieht
          sofort zu mir. */
-      knopf("\ud83e\ude9d", "Angeln", () => lcHebenMenue(platz, name));
-      knopf("\ud83e\udd20", "Lasso", () => {
-        const zeile = "/lasso " + name;
-        try { LiveChat.schreiben(zeile); } catch (e) {}
-        lcNachDemSenden(zeile);
-      });
+      /* =========================================================
+         RUNDE 98 — DREI WEGE, JEMANDEN ZU HOLEN, UNTER EINER KACHEL
+         ---------------------------------------------------------
+         XANDER: „Dann haette ich gerne den Kran dafuer, dass man
+         jemand anderen noch auf einen Platz heben kann."
+         Damit sind es drei Werkzeuge — Angel, Lasso und Kran —, und
+         mit drei einzelnen Kacheln reichte das Menue 7 px unter den
+         Bildschirmrand (gemessen von pruefe-platzmenue.js). Also
+         eine Kachel und darunter die Wahl, genau wie bei Birne,
+         Bombe und Sport. Seine eigene Ansage von damals passt
+         weiterhin: „Das kannst du einfach ‚Holen' nennen oder Haken
+         oder Lasso." */
+      knopf("\ud83e\ude9d", "Holen", () => lcHolenMenue(platz, name));
       /* ZWEIMAL KOPFHOERER — GENAU SO GEWUENSCHT:
          „Wenn ich bei jemand anderem die Kopfhoerer aufsetzen soll,
          einmal das normale, der normale Effekt kommen, und einmal
@@ -31762,6 +31814,9 @@
     /* RUNDE 98 — XANDER: „Wir brauchen noch eine Applaus Animation
        mit klatschen den Haenden, wenn jemand etwas schoenes macht." */
     applaus:  { zeichen: ["\ud83d\udc4f"], wie: 4, klasse: "umarmen" },
+    /* RUNDE 98 — XANDER: „Dann haette ich gerne den Kran dafuer, dass
+       man jemand anderen noch auf einen Platz heben kann." */
+    kranheben: { zeichen: ["\ud83c\udfd7\ufe0f"], wie: 4, klasse: "umarmen" },
     /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
        ne Luftballon." */
     luftballon: { zeichen: ["\ud83c\udf88"], wie: 4, klasse: "umarmen" },
@@ -36687,6 +36742,88 @@
       /* Die Kurbel laeuft 2,4 s — „waehrend man angelt" soll man sie ja
          hoeren, also bleibt die Zeichnung so lange stehen. */
     }, 2600, "heber");
+  }
+
+  /* =====================================================================
+     RUNDE 98 — DER KRAN HEBT JEMAND ANDEREN AUF EINEN PLATZ
+     ---------------------------------------------------------------------
+     XANDER: „Dann haette ich gerne den Kran dafuer, dass man jemand
+     anderen noch auf einen Platz heben kann."
+
+     Den Kran gab es bisher nur als REISE: er hat MICH von hier nach
+     dort gehoben. Als Werkzeug fuer jemand anderen fehlte er — dafuer
+     gab es nur die Angel („/heb") und das Lasso.
+
+     WIE EIN BAUKRAN WIRKLICH ARBEITET, und daran haelt sich die
+     Bewegung: der Ausleger steht fest ueber der Reihe, die KATZE (der
+     Laufwagen) faehrt auf ihm hin und her, und an ihr haengt die
+     Flasche am Seil. Also: Seil herunter, anschlagen, heben, die Katze
+     faehrt hinueber, Seil herunter, absetzen. Der Ausleger selbst
+     dreht sich dabei nicht — das tut ein Turmdrehkran nur, wenn er
+     quer versetzt.
+     ===================================================================== */
+  function lcKranHeben(wen, nachricht) {
+    const zielNr = Number(nachricht && nachricht.ziel) || 0;
+    return lcAmPlatz(wen, "lc-kranheb", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      const gr = (kreis && kreis.offsetWidth) || 64;
+      /* Wohin? Gemessen vom Bild des Gehobenen zum Bild des
+         Zielplatzes — dieselbe Rechnung wie bei der Angel. */
+      let zx = 0, zy = -Math.round(gr * 0.34);
+      const zielEl = zielNr
+        ? document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + zielNr + '"]')
+        : null;
+      if (zielEl) {
+        const a2 = platz.getBoundingClientRect();
+        const b2 = zielEl.getBoundingClientRect();
+        zx = Math.round((b2.left + b2.width / 2) - (a2.left + a2.width / 2));
+        zy = Math.round((b2.top + b2.height / 2) - (a2.top + a2.height / 2));
+      }
+      if (kreis) {
+        kreis.style.setProperty("--kranx", zx + "px");
+        kreis.style.setProperty("--krany", zy + "px");
+        kreis.classList.remove("lc-gekrant");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gekrant");
+        setTimeout(() => {
+          kreis.classList.remove("lc-gekrant");
+          kreis.style.removeProperty("--kranx");
+          kreis.style.removeProperty("--krany");
+        }, 2600);
+      }
+      /* Der Ausleger reicht ueber beide Plaetze — er muss ja beide
+         erreichen. Er haengt AM PLATZ des Gehobenen; die Katze faehrt
+         darauf bis zum Ziel. */
+      const weit = Math.abs(zx) + gr * 1.2;
+      schicht.style.setProperty("--kranweit", Math.round(weit) + "px");
+      schicht.style.setProperty("--kranx", zx + "px");
+      /* WIE HOCH DER AUSLEGER HAENGT. Nicht hoeher als noetig: ueber
+         der obersten Reihe ist der Rand der Karte, und was darueber
+         liegt, sieht man nicht mehr. 0,62 Bildbreiten — gemessen
+         reicht das, damit das gehobene Bild frei haengt. */
+      schicht.style.setProperty("--kranhoch", Math.round(gr * 0.52) + "px");
+      schicht.innerHTML =
+        '<span class="lc-kranheb-ausleger">'
+        /* Der Gittertraeger: Ober- und Untergurt mit Diagonalen. */
+        + '<svg viewBox="0 0 200 18" preserveAspectRatio="none" width="100%" height="100%">'
+        + '<path class="lc-kranheb-gurt" d="M0 2 H200 M0 16 H200"/>'
+        + '<path class="lc-kranheb-strebe" d="M4 16 L16 2 L28 16 L40 2 L52 16 L64 2'
+        + ' L76 16 L88 2 L100 16 L112 2 L124 16 L136 2 L148 16 L160 2 L172 16 L184 2 L196 16"/>'
+        + "</svg></span>"
+        /* Die Katze mit Seil und Flasche. */
+        + '<span class="lc-kranheb-katze">'
+        + '<i class="lc-kranheb-wagen"></i>'
+        + '<i class="lc-kranheb-seil"></i>'
+        + '<i class="lc-kranheb-haken">'
+        + '<svg viewBox="0 0 20 26" width="100%" height="100%">'
+        + '<rect class="lc-kranheb-flasche" x="5" y="0" width="10" height="8" rx="2"/>'
+        + '<path class="lc-kranheb-bogen" d="M10 8 V14 C10 21 4 23 4 17"'
+        + ' fill="none" stroke-width="2.6" stroke-linecap="round"/>'
+        + "</svg></i></span>";
+      /* Der Ton: die Winde laeuft, dann setzt es auf. */
+      lcTonSpaeter("kran", 120, 0.5);
+      lcTonSpaeter("aufsetzen", 2080, 0.45);
+    }, 2800, "kranheben");
   }
 
   /* --- DAS LASSO ---------------------------------------------------
@@ -51177,6 +51314,8 @@
     /* RUNDE 98 — der Beifall gilt dem, der etwas Schoenes gemacht
        hat, nicht dem ganzen Raum. */
     applaus: 1,
+    /* RUNDE 98 — der Kran hebt GENAU EINEN auf einen Platz. */
+    kranheben: 1,
     /* RUNDE 88 — das Kaninchen wird aus GENAU EINEM Zylinder
        gezogen; ueber den ganzen Raum zu regnen waere kein Kunststueck
        mehr, sondern ein Unfall. */
@@ -51232,6 +51371,12 @@
     /* RUNDE 98 — der Applaus gilt GENAU EINEM und regnet nicht. */
     if (art === "applaus") {
       lcApplaus((nachricht && (nachricht.wen || nachricht.an)) || "");
+      return;
+    }
+    /* RUNDE 98 — der Kran hebt jemand anderen auf einen Platz. Er
+       braucht die Zielnummer, sonst wuesste er nicht, wohin. */
+    if (art === "kranheben") {
+      lcKranHeben((nachricht && (nachricht.wen || nachricht.an)) || "", nachricht);
       return;
     }
     if (art === "spray") {

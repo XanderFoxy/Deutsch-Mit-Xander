@@ -616,6 +616,12 @@ window.LiveChat = (function () {
      wissen, welche Animation dazugehoert, und hat sie bisher aus der
      Sitzreihe geraten. Genau das hat Xander gemeldet. */
   var lassoZieht = false;
+  /* RUNDE 98 — XANDER: „Dann hätte ich gerne den Kran dafür, dass man
+     jemand anderen noch auf einen Platz heben kann." Dasselbe Muster
+     wie beim Lasso: das Werkzeug sagt selbst an, welche Animation
+     laufen soll — abgeleitet aus der Sitzreihe war das schon einmal
+     falsch (siehe Runde 74). */
+  var kranZieht = false;
 
   function plaetzeBauen() {
     var wer = [];
@@ -9416,6 +9422,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "aufblasen", kurz: "prall", nutzt: "/aufblasen Name",
       was: "Aufblasen \u2014 f\u00fcnf Pumpenhube, das Gummi zittert, dann platzt es" },
     { gr: "raum", w: "panik", kurz: "tonneu", nutzt: "/panik",          was: "Ton zur\u00fccksetzen, wenn du jemanden doppelt h\u00f6rst" },
+    { gr: "raum", w: "kranheb", kurz: "kranheben", nutzt: "/kranheb Name 3",
+      was: "der Baukran hebt jemanden auf einen anderen Platz \u2014 Seil herunter, anschlagen, hin\u00fcberfahren, absetzen" },
     { gr: "reden", w: "lasso", kurz: "herzu", nutzt: "/lasso Name",
       was: "Jemanden mit dem Lasso zu dir heranziehen \u2014 auf den freien Platz neben dir" },
     { gr: "lernen", w: "lesen", kurz: "text",  nutzt: "/lesen",
@@ -11127,6 +11135,21 @@ window.LiveChat = (function () {
       finally { lassoZieht = false; }
     }
 
+    /* RUNDE 98 — DER KRAN ALS WERKZEUG.
+       XANDER: „Dann hätte ich gerne den Kran dafür, dass man jemand
+       anderen noch auf einen Platz heben kann."
+       Er arbeitet wie /heb — nur läuft eine andere Animation. Das
+       Umsetzen steht deshalb weiter an genau EINER Stelle. */
+    if (art === "kranheb") {
+      if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
+      var restK = rest.trim();
+      if (!restK) return systemZeile("So geht es:  /kranheb Nickname 3 \u2014 "
+        + "der Kran hebt ihn auf Platz 3.");
+      kranZieht = true;
+      try { return befehlAusfuehren("/heb " + restK); }
+      finally { kranZieht = false; }
+    }
+
     if (art === "heb") {
       if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
       var teileH = rest.trim().split(/\s+/).filter(Boolean);
@@ -11213,12 +11236,15 @@ window.LiveChat = (function () {
          oder einer tieferen Reihe lag — also immer dann, wenn jemand
          „in der naechsten Naehe" sass. Jetzt gilt: /heb ist die Angel,
          /lasso ist das Lasso. Punkt. */
-      var wieH = lassoZieht ? "lasso" : "heber";
+      var wieH = lassoZieht ? "lasso" : (kranZieht ? "kranheben" : "heber");
       var satzH = zustand.ichName + (wieH === "heber"
         ? " hebt " + wenH.name + " auf Platz " + nummerH
-        : " zieht " + wenH.name + " mit dem Lasso auf Platz " + nummerH)
+        : wieH === "kranheben"
+          ? " hebt " + wenH.name + " mit dem Kran auf Platz " + nummerH
+          : " zieht " + wenH.name + " mit dem Lasso auf Platz " + nummerH)
         + (dortH ? " \u2014 " + dortH.name + " rutscht auf " + seinerH.nummer : "")
-        + "  " + (wieH === "heber" ? "\ud83e\ude9d" : "\ud83e\udd20");
+        + "  " + (wieH === "heber" ? "\ud83e\ude9d"
+                  : wieH === "kranheben" ? "\ud83c\udfd7\ufe0f" : "\ud83e\udd20");
       /* =================================================================
          RUNDE 76 — ERST DIE ANIMATION, DANN DER PLATZWECHSEL
          -----------------------------------------------------------------
@@ -11256,7 +11282,10 @@ window.LiveChat = (function () {
           melden();
         } catch (e) {}
       };
-      setTimeout(schickenH, wieH === "lasso" ? 2300 : 2250);
+      /* Der Kran setzt spaeter ab als die Angel: sein Seil geht erst
+         wieder herunter (lcGekrantR98, 88 % von 2,6 s = 2288 ms). */
+      setTimeout(schickenH, wieH === "lasso" ? 2300
+                 : wieH === "kranheben" ? 2400 : 2250);
       /* Und die Angel braucht das ZIEL: sie zieht dorthin, nicht zu
          mir. Ohne diese Zahl koennte die Animation gar nicht wissen,
          wohin sie angeln soll. */
