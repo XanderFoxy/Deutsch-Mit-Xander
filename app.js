@@ -28958,8 +28958,20 @@
        ["\ud83d\udca6", "Spuckkugel", "pusterohr"]]],
     ["\ud83d\uddd2\ufe0f", "Knüllen", "knuell"],
     ["\ud83e\udea2", "Peitsche",  "peitsche"],
-    ["\ud83c\udfb3", "Bowling",   "bowling"],
-    ["\ud83c\udfb1", "Billard",   "billard"],
+    /* RUNDE 98 — VIER SPIELE UNTER EINER KACHEL.
+       Mit den neuen Kacheln (Applaus, Telefon) reichte das Menue
+       7 px unter den Bildschirmrand — gemessen von
+       werkzeug/pruefe-platzmenue.js, die genau darauf achtet, weil
+       XANDER es mehrfach gemeldet hat („So koennen wir das ganze
+       Menue vielleicht ein bisschen aufraeumen"). Bowling, Billard,
+       Korb und Tennis gehoeren ohnehin zusammen: es sind Spiele, bei
+       denen etwas geworfen oder gestossen wird. Die Befehle bleiben
+       unveraendert. */
+    ["\ud83c\udfc6", "Sport", "bowling", false,
+      [["\ud83c\udfb3", "Bowling", "bowling"],
+       ["\ud83c\udfb1", "Billard", "billard"],
+       ["\ud83c\udfc0", "Korb", "basketball"],
+       ["\ud83c\udfbe", "Tennis", "tennis"]]],
     /* EIN SYMBOL, VIER ARTEN ZU REISEN.
        GEWUENSCHT: „kannst du auch drei Versionen machen, dass, wenn man
        ein entsprechendes Symbol klickt, man da so ein Untermenue hat …
@@ -29007,8 +29019,6 @@
        ["\ud83e\udea7", "Jalousie auf", "lamellen"]]],
     ["\ud83d\udcbf", "Platte",    "platte"],
     ["\ud83e\udef3", "Ohrfeige",  "ohrfeige"],
-    ["\ud83c\udfc0", "Korb", "basketball"],
-    ["\ud83c\udfbe", "Tennis",    "tennis"],
     ["\ud83c\udfb0", "Zufall",    "zufall", true],
     /* „Das wäre die witzigste Animation." */
     /* RUNDE 76 — XANDER: „Anziehen-Modul."
@@ -29358,6 +29368,14 @@
         if (befehl === "*lied") { lcMusikWaehler(name); return; }
         /* RUNDE 97 — „Eigenes Bild …" fragt genauso weiter. */
         if (befehl === "*spraybild") { lcSprayBildWaehler(name); return; }
+        /* RUNDE 98 — Auflegen gilt dem Telefonat, nicht einer Person:
+           „/anruf aus" darf deshalb KEINEN Namen bekommen. */
+        if (befehl === "*auflegen") {
+          const zeileA = "/anruf aus";
+          try { LiveChat.schreiben(zeileA); } catch (x) {}
+          lcNachDemSenden(zeileA);
+          return;
+        }
         /* RUNDE 76 — Name UND Zusatz: das Anzieh-Modul braucht beide
            („/anziehen Bea krone"). Die Kacheln unter „Alle" haben
            keinen Namen, dort bleibt es beim Zusatz allein. */
@@ -29863,6 +29881,81 @@
     return true;
   }
 
+  /* =====================================================================
+     ALLE GLEICHZEITIG — DIESELBE KACHELWAND, NUR OHNE NAMEN
+     ---------------------------------------------------------------------
+     XANDER (Runde 98): „Ich moechte eigentlich alles, was man irgendwie
+     machen kann, moechte ich bei allen gleichzeitig machen."
+     Gebaut wird es aus LC_PLATZ_SPIELZEUG — derselben Liste, aus der
+     auch das Platzmenue entsteht. Damit gibt es keine zweite Liste, die
+     irgendwann hinterherhinkt: eine neue Kachel gilt sofort auch hier.
+     ===================================================================== */
+  function lcAlleMenue(platz) {
+    lcPlatzMenueZu();
+    const kasten = document.createElement("div");
+    kasten.id = "lcPlatzMenue";
+    kasten.className = "lc-platzmenue lc-allemenue";
+    kasten.setAttribute("role", "menu");
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kopf.textContent = "Alle gleichzeitig";
+    kasten.appendChild(kopf);
+
+    const schicken = (zeile) => {
+      lcPlatzMenueZu();
+      try { LiveChat.schreiben(zeile); } catch (e) {}
+      lcNachDemSenden(zeile);
+    };
+    const knopf = (zeichen, wort, tun) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-platzmenue-knopf";
+      b.setAttribute("role", "menuitem");
+      b.innerHTML = '<span class="lc-platzmenue-zeichen">' + zeichen + "</span>"
+                  + '<span class="lc-platzmenue-wort"></span>';
+      b.querySelector(".lc-platzmenue-wort").textContent = wort;
+      b.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        tun();
+      });
+      kasten.appendChild(b);
+    };
+
+    LC_PLATZ_SPIELZEUG.forEach(([zeichen, wort, befehl, ohneNamen, unter]) => {
+      /* Eine Kachel mit Unterwahl klappt auch hier auf — nur heisst
+         der „Name" dann eben „alle". */
+      if (unter && unter.length) {
+        knopf(zeichen, wort, () => lcUnterMenue(platz, "alle",
+          "Alle \u2014 " + wort, unter));
+        return;
+      }
+      /* Der Kopfhoerer fragt erst, ob mit Lied. */
+      if (befehl === "*hoerer") {
+        knopf(zeichen, wort, () => lcHoererMenue(platz, "alle"));
+        return;
+      }
+      /* „ohneNamen" heisst: der Befehl gilt ohnehin nicht einer Person
+         (das Los zum Beispiel). Der bekommt auch hier keinen Zusatz. */
+      knopf(zeichen, wort, () => schicken("/" + befehl + (ohneNamen ? "" : " alle")));
+    });
+
+    /* Und die vier, die schon vorher hier standen und NICHT in der
+       Kachelwand liegen — sie bleiben, wo man sie sucht. */
+    [["\ud83e\udd17", "Umarmen", "drueck"],
+     ["\ud83d\ude18", "K\u00fcssen", "kuss"],
+     ["\ud83e\uddb6", "Treten", "tritt"],
+     /* RUNDE 80 — XANDER: „es soll hier auch nicht Buehne legen
+        stehen, sondern Bombe legen." */
+     ["\ud83d\udca3", "Bombe legen", "bombe"]].forEach(([z, w, c]) => {
+      knopf(z, w, () => schicken("/" + c + " alle"));
+    });
+
+    document.body.appendChild(kasten);
+    lcMenueStellen(kasten, platz);
+    lcMenueSchliessen(kasten);
+    return true;
+  }
+
   function lcPlatzMenue(platz) {
     lcPlatzMenueZu();
     const eigen = platz.classList.contains("lc-platz-ich");
@@ -29985,14 +30078,25 @@
        explodieren, dass man die Buehne komplett leerraeumen kann."
        Vier Befehle, die ohne Namen ohnehin fuer alle gelten — hier
        stehen sie mit einem Wort davor, damit man sie auch findet. */
-    knopf("\ud83d\udc65", "Alle", () => lcUnterMenue(platz, "", "Alle", [
-      ["\ud83e\udd17", "Umarmen", "drueck", "alle"],
-      ["\ud83d\ude18", "K\u00fcssen", "kuss", "alle"],
-      ["\ud83e\uddb6", "Treten", "tritt", "alle"],
-      /* RUNDE 80 — XANDER: „es soll hier auch nicht Buehne legen
-         stehen, sondern Bombe legen." */
-      ["\ud83d\udca3", "Bombe legen", "bombe", "alle"]
-    ]));
+    /* =========================================================
+       RUNDE 98 — ALLES GEHT AUCH BEI ALLEN AUF EINMAL
+       ---------------------------------------------------------
+       XANDER: „Ich moechte alle gleichzeitig bespruehen koennen.
+       Ich moechte eigentlich alles, was man irgendwie machen kann,
+       moechte ich bei allen gleichzeitig machen."
+
+       NACHGEMESSEN, und das ist die gute Nachricht: die WIRKUNGEN
+       koennen es laengst. Zwoelf davon durchgespielt (Spruehdose,
+       Pflaster, Putzen, Applaus, Klaps, Ohrfeige, Anziehen,
+       Kopfhoerer, Hammer, Streicheln, Luftballon, Kuss) — mit dem
+       Wort „alle" traf JEDE alle fuenf besetzten Plaetze.
+       GEFEHLT HAT DER WEG DORTHIN: unter „Alle" standen genau VIER
+       Kacheln (Umarmen, Kuessen, Treten, Bombe). Alles andere ging
+       nur, wenn man den Befehl auswendig tippte.
+       Jetzt wird dieses Menue aus DERSELBEN Kachelwand gebaut wie das
+       Platzmenue — wer eine neue Kachel dazulegt, hat sie damit
+       automatisch auch fuer alle. ========================= */
+    knopf("\ud83d\udc65", "Alle", () => lcAlleMenue(platz));
     /* Nur bei einem FREMDEN Platz: jemanden woanders hinsetzen. Bei
        sich selbst waere das /tausch, und den gibt es schon. Der Befehl
        ohne Nummer zeigt erst einmal, welche Plaetze ueberhaupt gehen —
@@ -30020,6 +30124,30 @@
          Die Kachel „Hoerer" weiter oben ist der normale Effekt; hier
          steht der zweite Weg, und er fragt erst, welches Lied. */
       knopf("\ud83c\udfb6", "Sein Lied", () => lcMusikWaehler(name));
+      /* =========================================================
+         RUNDE 98 — DAS TELEFON STEHT JETZT IM PLATZMENUE
+         ---------------------------------------------------------
+         XANDER: „Auch das Telefon muss im Profil-Menue aufrufbar
+         sein" und „der Anruf muss von beiden Seiten auch ausgehen,
+         da passiert noch nichts."
+
+         BEIDES HING AN DERSELBEN LUECKE: /telefon und /anruf gab es
+         nur als getippte Befehle. Wer sie nicht auswendig wusste,
+         konnte niemanden anrufen — und damit ging der Anruf eben
+         nur von der einen Seite aus, naemlich von der, die tippt.
+         Jetzt steht die Kachel in JEDEM fremden Platzmenue, also
+         auf beiden Seiten, und darunter die drei Dinge, die man
+         mit einem Telefon tut:
+           · Anklingeln   — die Animation mit Klingeln und Schnur,
+           · Heimlich telefonieren — die stille Leitung zu zweit,
+           · Auflegen     — und wieder heraus.
+         ========================================================= */
+      knopf("\u260e\ufe0f", "Telefon", () => lcUnterMenue(platz, name,
+        "Telefon \u2014 " + name, [
+          ["\ud83d\udcde", "Anklingeln", "telefon"],
+          ["\ud83e\udd2b", "Heimlich telefonieren", "anruf"],
+          ["\ud83d\udcf4", "Auflegen", "*auflegen"]
+        ]));
       /* RUNDE 78 — XANDER: „dass man in dem Reisemenue jemand
          anderen als Ziel nehmen kann, bei dem Frisbee … und er
          taucht an meinem Platz wieder auf, und vielleicht auch noch
@@ -51972,6 +52100,10 @@
        Damit sich nachmessen laesst, dass die Knoepfe wirklich da sind
        (siehe werkzeug/pruefe-runde98-musikpanel.js). */
     liedPanel: function (fuerWen) { return lcLiedPanel(fuerWen || ""); },
+    /* RUNDE 98 \u2014 das Platzmenue und das Menue „Alle gleichzeitig",
+       damit sich nachmessen laesst, WAS wirklich darin steht. */
+    platzMenue: function (el) { return lcPlatzMenue(el); },
+    alleMenue: function (el) { return lcAlleMenue(el); },
     liedVerlauf: function () { return lcLiedVerlauf(); },
     liedVerlaufMerken: function (d, t, ab, bis, n) {
       return lcLiedVerlaufMerken(d, t, ab, bis, n);

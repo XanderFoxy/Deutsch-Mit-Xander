@@ -30835,3 +30835,18 @@ code, pre {
   opacity: .8;
 }
 .lc-lied-verlauf-weg { opacity: .75; }
+
+/* =====================================================================
+   RUNDE 98 — DAS MENUE „ALLE GLEICHZEITIG"
+   ---------------------------------------------------------------------
+   XANDER: „Ich moechte eigentlich alles, was man irgendwie machen kann,
+   moechte ich bei allen gleichzeitig machen."
+   Es wird aus derselben Kachelwand gebaut wie das Platzmenue und ist
+   deshalb lang — also scrollt es, statt unter den Bildschirmrand zu
+   wachsen.
+   ===================================================================== */
+.lc-allemenue {
+  max-height: min(68vh, 500px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

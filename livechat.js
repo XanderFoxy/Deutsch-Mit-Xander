@@ -3627,8 +3627,25 @@ window.LiveChat = (function () {
        damit JEDES Geraet dieselbe Regel anwenden kann (siehe
        telefonatGeht). */
     if (n.art === "telefon") {
+      /* RUNDE 98 — XANDER: „der Anruf muss von beiden Seiten auch
+         ausgehen, da passiert noch nichts."
+         Auf dem Geraet des ANGERUFENEN passierte wirklich fast
+         nichts: der Zustand wurde gesetzt, das Band erschien — aber
+         im Chat stand keine Zeile, und wer gerade woanders hinsah,
+         merkte gar nicht, dass er angerufen wurde. Jetzt bekommt er
+         dieselbe Zeile wie der Anrufer, samt dem Weg wieder heraus. */
+      var warDrin = telefonat
+        && (zustand.ichId === telefonat.a || zustand.ichId === telefonat.b);
       telefonatSetzen(n.aus ? null : { a: n.a, b: n.b,
                                        aName: n.aName, bName: n.bName });
+      if (n.aus) {
+        if (warDrin) systemZeile("\ud83d\udcde Aufgelegt — alle hören sich wieder.");
+        return;
+      }
+      if (n.b === zustand.ichId) {
+        systemZeile("\ud83d\udcde " + (n.aName || "Jemand") + " ruft dich an — "
+          + "ihr hört nur noch euch. Auflegen:  /anruf aus");
+      }
       return;
     }
     if (n.art === "tafel") {
