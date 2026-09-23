@@ -46527,8 +46527,34 @@
       /* --- DER ZYLINDER ------------------------------------------ */
       const hut = document.createElement("span");
       hut.className = "lc-zt-hut";
+      /* =============================================================
+         RUNDE 99 — DER HUT WAR WIRKLICH FALSCH HERUM
+         -------------------------------------------------------------
+         XANDER (23.09.2026): „Das Kaninchen, was aus dem Hut gezaubert
+         wird, hast du immer noch nicht gefixt — der Hut ist falsch
+         herum."
+
+         ER HAT RECHT, und man kann es benennen: der Hut stuelpt sich
+         ueber den Kopf, die Krempe liegt also UNTEN und die Oeffnung
+         zeigt nach unten. Gezeichnet war aber oben eine schwarze
+         Oeffnung — das ist die Ansicht eines Hutes, der auf dem Ruecken
+         liegt. Und dann kam das Kaninchen auch noch DURCH den
+         geschlossenen Deckel heraus.
+
+         JETZT ZWEI ANSICHTEN IN EINER ZEICHNUNG:
+           „zu"  der Hut steht auf dem Kopf: Krempe unten, oben der
+                 geschlossene Deckel mit einem Lichtstreifen.
+           „auf" der Hut ist UMGEDREHT: Krempe oben, die Oeffnung zeigt
+                 uns entgegen, der Kegel haengt nach unten.
+         Dazwischen wird er wirklich umgedreht — er staucht sich in der
+         Mitte zusammen (scaleY bis 0,08) und richtet sich als die
+         andere Ansicht wieder auf. Das ist der Moment, in dem ein
+         Zauberer den Hut herumdreht, bevor er hineingreift. Erst
+         DANACH kommt das Kaninchen heraus, und zwar aus der Oeffnung.
+         ============================================================= */
       hut.innerHTML =
         '<svg viewBox="0 0 100 86">'
+        + '<g class="lc-zt-hut-zu">'
         /* Die Krempe liegt HINTEN, damit der Kopf davor steckt. */
         + '<ellipse cx="50" cy="62" rx="47" ry="12" fill="#12141a"/>'
         + '<ellipse cx="50" cy="59" rx="47" ry="11" fill="#2a2d36"/>'
@@ -46536,11 +46562,23 @@
         + '<path d="M28 16 v40 q0 7 22 7 q22 0 22 -7 V16 Z" fill="#1b1d24"/>'
         /* Das Band. */
         + '<rect x="28" y="40" width="44" height="10" fill="#8f2033"/>'
-        /* Die Oeffnung oben — dunkel, damit man glaubt, dass da etwas
-           hineinpasst. */
-        + '<ellipse cx="50" cy="16" rx="22" ry="7" fill="#07080c"/>'
-        + '<ellipse cx="50" cy="15" rx="22" ry="6.4" fill="#2a2d36"/>'
-        + '<ellipse cx="50" cy="15.6" rx="18" ry="4.8" fill="#07080c"/>'
+        /* OBEN IST ZU. Ein Hut, der ueber einem Kopf steht, zeigt uns
+           seinen Deckel und kein Loch. */
+        + '<ellipse cx="50" cy="16" rx="22" ry="7" fill="#22252d"/>'
+        + '<path d="M34 13 q16 -6 32 0" fill="none" stroke="rgba(255,255,255,.14)"'
+        + ' stroke-width="2.4" stroke-linecap="round"/>'
+        + "</g>"
+        + '<g class="lc-zt-hut-auf" opacity="0">'
+        /* UMGEDREHT: der Kegel haengt nach unten … */
+        + '<path d="M28 26 v40 q0 7 22 7 q22 0 22 -7 V26 Z" fill="#1b1d24"/>'
+        + '<rect x="28" y="50" width="44" height="10" fill="#8f2033"/>'
+        /* … die Krempe liegt oben … */
+        + '<ellipse cx="50" cy="27" rx="47" ry="12" fill="#12141a"/>'
+        + '<ellipse cx="50" cy="24" rx="47" ry="11" fill="#2a2d36"/>'
+        /* … und JETZT ist da ein Loch, in das man greifen kann. */
+        + '<ellipse cx="50" cy="24" rx="22" ry="7" fill="#07080c"/>'
+        + '<ellipse cx="50" cy="23.2" rx="18" ry="5" fill="#000"/>'
+        + "</g>"
         + "</svg>";
       schicht.appendChild(hut);
 
@@ -46620,15 +46658,41 @@
           { transform: "translate(-50%, 0%) scale(1)", opacity: 1, offset: bei(0.27), easing: "ease-in-out" },
           { transform: "translate(-50%, 2%) scale(1.04, .93)", opacity: 1, offset: bei(0.30), easing: "ease-out" },
           /* Im Hut rumort es. */
-          { transform: "translate(-50%, 0%) rotate(-4deg)", opacity: 1, offset: bei(0.33), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0%) rotate(5deg)", opacity: 1, offset: bei(0.36), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0%) rotate(-3deg)", opacity: 1, offset: bei(0.39), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0%) rotate(0deg)", opacity: 1, offset: bei(0.42), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0%) rotate(0deg)", opacity: 1, offset: bei(0.58), easing: "ease-in-out" },
+          { transform: "translate(-50%, 0%) rotate(-4deg)", opacity: 1, offset: bei(0.31), easing: "ease-in-out" },
+          { transform: "translate(-50%, 0%) rotate(5deg)", opacity: 1, offset: bei(0.325), easing: "ease-in-out" },
+          { transform: "translate(-50%, 0%) rotate(-3deg)", opacity: 1, offset: bei(0.34), easing: "ease-in-out" },
+          { transform: "translate(-50%, 0%) rotate(0deg)", opacity: 1, offset: bei(0.35), easing: "ease-in-out" },
+          /* DAS UMDREHEN: er staucht sich zusammen …
+             GEMESSEN UND KORRIGIERT: es stand erst bei 43,5 %, das
+             Bild setzte sich aber schon bei 38 % in Bewegung — das
+             Kaninchen kam also WIEDER durch den Deckel, nur ein
+             Stueck spaeter. Jetzt ist das Umdrehen bei 38,5 % fertig
+             und das Bild ruehrt sich bis 40 % nicht. */
+          { transform: "translate(-50%, -4%) rotate(0deg) scaleY(.08)", opacity: 1,
+            offset: bei(0.365), easing: "ease-in" },
+          /* … und richtet sich als die andere Ansicht wieder auf. */
+          { transform: "translate(-50%, -8%) rotate(0deg) scaleY(1)", opacity: 1,
+            offset: bei(0.385), easing: "ease-out" },
+          { transform: "translate(-50%, -8%) rotate(0deg)", opacity: 1, offset: bei(0.58), easing: "ease-in-out" },
           /* Und weg damit. */
           { transform: "translate(-124%, 24%) rotate(-38deg) scale(.8)", opacity: 0, offset: bei(0.68), easing: "ease-in" },
           { transform: "translate(-124%, 24%) rotate(-38deg) scale(.8)", opacity: 0, offset: 1 }
         ], takt);
+      } catch (e) {}
+      /* Genau in der Mitte des Stauchens wird die Ansicht getauscht:
+         bei 36,5 % ist der Hut nur noch acht Prozent hoch, dort sieht
+         man den Wechsel nicht. */
+      try {
+        const zu = hut.querySelector(".lc-zt-hut-zu");
+        const auf = hut.querySelector(".lc-zt-hut-auf");
+        const schalt = (rein) => [
+          { opacity: rein ? 0 : 1, offset: 0 },
+          { opacity: rein ? 0 : 1, offset: bei(0.364) },
+          { opacity: rein ? 1 : 0, offset: bei(0.366) },
+          { opacity: rein ? 1 : 0, offset: 1 }
+        ];
+        if (zu) zu.animate(schalt(false), takt);
+        if (auf) auf.animate(schalt(true), takt);
       } catch (e) {}
       /* Der Stab kommt dreimal von rechts oben und tippt auf. */
       try {
@@ -46656,7 +46720,8 @@
           { transform: "translateY(0) scale(1) rotate(0deg)", offset: 0 },
           { transform: "translateY(0) scale(1) rotate(0deg)", offset: bei(0.07) },
           { transform: "translateY(6%) scale(.86) rotate(0deg)", offset: bei(0.12), easing: "ease-in" },
-          { transform: "translateY(6%) scale(.86) rotate(0deg)", offset: bei(0.38) },
+          /* RUNDE 99 — es wartet, bis der Hut umgedreht ist (38,5 %). */
+          { transform: "translateY(6%) scale(.86) rotate(0deg)", offset: bei(0.40) },
           /* An den Ohren heraus — und es zappelt dabei. */
           { transform: "translateY(-74%) scale(.9) rotate(-9deg)", offset: bei(0.46), easing: "ease-out" },
           { transform: "translateY(-82%) scale(.9) rotate(8deg)", offset: bei(0.50), easing: "ease-in-out" },

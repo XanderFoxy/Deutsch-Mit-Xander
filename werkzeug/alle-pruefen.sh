@@ -90,6 +90,7 @@ for f in werkzeug/pruefe-*.js; do
     pruefe-runde99-haende)       frist=420  ;;
     # Das Menue wird fuenfmal komplett auf- und zugeklappt.
     pruefe-runde99-menue)        frist=300  ;;
+    pruefe-runde99-zauber)       frist=300  ;;
     *)                           frist=120  ;;
   esac
   aus=$(timeout "$frist" node "$f" 2>&1)
