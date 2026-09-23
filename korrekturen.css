@@ -28867,6 +28867,46 @@ code, pre {
 .lc-platz-bildweg .lc-kreis {
   opacity: 0;
 }
+/* =====================================================================
+   RUNDE 98 — EIN FREIER PLATZ IST EIN FREIER PLATZ, PUNKT
+   ---------------------------------------------------------------------
+   XANDER: „Auch diese Strichlinienkreise mit der Profil-Platznummer
+   [werden] beeinflusst, wenn man sie verlaesst und auf einem anderen
+   Profilplatz ankommt — da sind sie immer noch leer oder glitschig.
+   Das wolltest du eigentlich reparieren, das ist immer noch nicht
+   repariert."
+
+   ER HAT RECHT, UND HIER IST DIE URSACHE. Eine Reise macht zwei Dinge
+   zu verschiedenen Zeiten:
+     hin + 120 ms   der Sitzwechsel geht hinaus, der alte Platz wird
+                    in livechatPlaetzeAuffrischen auf „frei" gesetzt,
+     hin + 500 ms   die Reise raeumt auf und nimmt „lc-platz-unterwegs"
+                    und „lc-platz-bildweg" wieder ab.
+   DAZWISCHEN LIEGEN RUND 380 MILLISEKUNDEN, in denen der Platz FREI
+   ist und TROTZDEM noch die Reise-Kennzeichen traegt. Und dann:
+     · auf einem freien Platz ist der gestrichelte Ring der Kreis
+       SELBST (livechat.css) — und „lc-platz-bildweg" setzt genau
+       diesen Kreis auf opacity 0. Der Ring ist weg.
+     · „.lc-platz-unterwegs .lc-schild { z-index: -1 }" steht weiter
+       unten als „.lc-platz-frei .lc-schild { z-index: 3 }" und hat
+       dieselbe Staerke — also gewinnt es und schiebt die Zahl nach
+       hinten.
+   GEMESSEN im Browser: Ring-Deckkraft 0, Schild-Ebene -1 statt 3 —
+   ein nackter Platz mit einer Zahl daneben. Genau das sieht er.
+
+   DIE REGEL AB JETZT: sobald ein Platz frei ist, gilt das Aussehen
+   eines freien Platzes, egal was sonst noch an ihm haengt. Drei
+   Klassen schlagen zwei — deshalb stehen diese Regeln hier, nach
+   allen anderen. Zusaetzlich raeumt livechatPlaetzeAuffrischen die
+   Kennzeichen selbst ab (siehe app.js); das hier ist der Gurt zum
+   Hosentraeger.
+   ===================================================================== */
+.lc-platz-frei.lc-platz-bildweg .lc-kreis { opacity: 1; }
+.lc-platz-frei.lc-platz-unterwegs .lc-schild,
+.lc-platz-frei.lc-platz-bildweg .lc-schild { z-index: 3; }
+/* Und der Name: auf einem freien Platz steht „frei", und das soll man
+   auch lesen koennen. */
+.lc-platz-frei.lc-platz-unterwegs .lc-platz-name { visibility: visible; }
 
 /* =====================================================================
    RUNDE 85 — GLEISE UND SCHIEBEBUEHNE FUER DIE LOK
@@ -30768,3 +30808,30 @@ code, pre {
   .lc-applaus-schwung, .lc-applaus-knall i { animation: none; }
   .lc-applaus-knall i { opacity: 0; }
 }
+
+/* =====================================================================
+   RUNDE 98 — DAS LIEDER-PANEL
+   ---------------------------------------------------------------------
+   XANDER: „Die Musik kann ich immer noch nicht in Einzelteil-Buttons
+   anlegen, um eine History zu haben beziehungsweise ein
+   abgespeichertes Panel, wo ich direkt auf meine Textzeilen und
+   Refrains zu den jeweiligen dazugehoerigen Liedern kriegen kann."
+   Es kann lang werden — deshalb scrollt es, statt aus dem Bild zu
+   wachsen.
+   ===================================================================== */
+.lc-liedpanel {
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* Der Liedtitel ueber seinen Abschnitten — eine Zwischenzeile, kein
+   Knopf: man tippt die Abschnitte an, nicht die Ueberschrift. */
+.lc-liedpanel-titel {
+  margin: 8px 0 2px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--plum-700, #4a3a52);
+  opacity: .8;
+}
+.lc-lied-verlauf-weg { opacity: .75; }

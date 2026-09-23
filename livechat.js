@@ -9312,6 +9312,13 @@ window.LiveChat = (function () {
       was: "Schneekugel — durchgeschüttelt, dann rieselt der Schnee über Häuschen und Tanne" },
     { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name 3 1:20-1:50", was: "Kopfhoerer — aufgesetzt; mit Liednummer hoert der andere das Lied, mit Zeitangabe nur diesen Ausschnitt" },
     { gr: "reden", w: "musik", kurz: "lied", nutzt: "/musik 3", was: "Musik fuer alle aus dem Musikordner — /musik zeigt die Liste, /musik aus haelt an" },
+
+    /* RUNDE 98 — XANDER: „ein abgespeichertes Panel, wo ich direkt auf
+       meine Textzeilen und Refrains zu den jeweiligen dazugehörigen
+       Liedern kriegen kann." Der Befehl öffnet es; er geht nicht in
+       den Raum hinaus, sondern nur auf das eigene Gerät. */
+    { gr: "reden", w: "abschnitte", kurz: "refrains", nutzt: "/abschnitte",
+      was: "öffnet dein Lieder-Panel — dein Verlauf und alle benannten Abschnitte aus allen Liedern, jeder als Knopf" },
     /* RUNDE 76 — XANDER: „Musik teilen mit YouTube." */
     /* RUNDE 86 — XANDER: „ich moechte, dass wir eine Spruehdose haben". */
     { gr: "reden", w: "spray", kurz: "spruehen", nutzt: "/spray Name",

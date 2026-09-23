@@ -22872,6 +22872,72 @@
     return liste;
   }
 
+  /* =====================================================================
+     RUNDE 98 — DAS LIEDER-PANEL: VERLAUF UND EIGENE ABSCHNITTE
+     ---------------------------------------------------------------------
+     XANDER: „Die Musik kann ich immer noch nicht in Einzelteil-Buttons
+     anlegen, um eine History zu haben beziehungsweise ein
+     abgespeichertes Panel, wo ich direkt auf meine Textzeilen und
+     Refrains zu den jeweiligen dazugehoerigen Liedern kriegen kann."
+
+     ER HAT RECHT: die benannten Abschnitte GAB es seit Runde 88, aber
+     nur drei Ebenen tief — Note antippen, Lied aussuchen, dann erst
+     standen sie da. Wer einen Refrain auflegen wollte, musste also
+     erst wissen, in welchem Lied er steckt. Und einen Verlauf gab es
+     ueberhaupt nicht.
+
+     Jetzt gibt es beides an EINER Stelle, gleich hinter der Note:
+       · ZULETZT GESPIELT — die letzten zwoelf, jeder als Knopf,
+       · MEINE ABSCHNITTE — alle benannten Stellen aus ALLEN Liedern,
+         nach Lied geordnet, jeder als Knopf.
+     Beides liegt im Profil („die Einstellungen sollen so lange
+     gespeichert bleiben mit dem Profil") und im Geraet als Notnagel.
+     ===================================================================== */
+  const LC_VERLAUF_MAX = 12;
+
+  function lcLiedVerlauf() {
+    try {
+      const p = Backend.currentProfile && Backend.currentProfile();
+      const e = p && p.extra && p.extra.liedVerlauf;
+      if (e && e.length) return e;
+    } catch (x) {}
+    try { return JSON.parse(localStorage.getItem("dma_liedverlauf") || "[]"); }
+    catch (x) { return []; }
+  }
+
+  /* Ein Eintrag ist ein LIED MIT ZEITFENSTER. Zweimal dasselbe
+     hintereinander waere kein Verlauf, sondern eine Wiederholung —
+     deshalb fliegt ein gleicher Eintrag vorher heraus und kommt
+     vorn wieder hinein. */
+  function lcLiedVerlaufMerken(datei, titel, ab, bis, name) {
+    if (!datei) return;
+    const eins = { datei: String(datei), titel: String(titel || ""),
+                   ab: Math.max(0, Number(ab) || 0),
+                   bis: Math.max(0, Number(bis) || 0),
+                   name: String(name || ""), wann: Date.now() };
+    const gleich = (x) => x && x.datei === eins.datei && Number(x.ab || 0) === eins.ab
+      && Number(x.bis || 0) === eins.bis;
+    const liste = [eins].concat((lcLiedVerlauf() || []).filter((x) => !gleich(x)))
+      .slice(0, LC_VERLAUF_MAX);
+    try { localStorage.setItem("dma_liedverlauf", JSON.stringify(liste)); } catch (x) {}
+    try { Backend.updateExtraProfileField("liedVerlauf", liste); } catch (x) {}
+    return liste;
+  }
+
+  /* Alle benannten Abschnitte, ueber alle Lieder hinweg — genau die
+     Liste, die er „meine Textzeilen und Refrains" nennt. */
+  function lcAlleLiedStellen() {
+    let lieder = [];
+    try { lieder = (LiveChat.lieder && LiveChat.lieder()) || []; } catch (x) {}
+    const raus = [];
+    lieder.forEach((l, i) => {
+      const st = lcLiedStellen(l.datei) || [];
+      if (!st.length) return;
+      raus.push({ nr: i + 1, titel: l.titel || l.datei, datei: l.datei, stellen: st });
+    });
+    return raus;
+  }
+
   function lcAusschnittHolen(nr) {
     try {
       const alles = JSON.parse(localStorage.getItem("dma_lied_ausschnitt") || "{}");
@@ -22953,6 +23019,9 @@
          bleibt es beim Weg ueber die Nachricht, denn nur dort laeuft
          es auf IHREM Geraet. Fuer ALLE gilt dasselbe: die Nachricht
          kommt ohnehin bei mir wieder an. */
+      /* RUNDE 98 — jeder Griff zum Lied landet im Verlauf. Ohne das
+         gaebe es keine History, und genau die hat er vermisst. */
+      if (lied) lcLiedVerlaufMerken(lied.datei, lied.titel || titel, ab, bis, "");
       if (!einer || !lcMusikFuerMich(einer)) return;
       if (!lied) return;
       lcMusikSpielen(lied.datei, lied.titel || titel, ab || 0, bis || 0, true);
@@ -23167,6 +23236,143 @@
     return true;
   }
 
+  /* =====================================================================
+     DAS PANEL — EIN FINGERTIPP BIS ZUM REFRAIN
+     ---------------------------------------------------------------------
+     Oben der Rueckweg zur Liederliste, dann der Verlauf, dann die
+     eigenen Abschnitte nach Liedern geordnet. Jeder Knopf legt sofort
+     auf — fuer alle, oder auf die Ohren eines Einzelnen, je nachdem,
+     womit man hereingekommen ist.
+     ===================================================================== */
+  function lcLiedPanel(fuerWen) {
+    lcPlatzMenueZu();
+    const einer = String(fuerWen || "").trim();
+    let lieder = [];
+    try { lieder = (LiveChat.lieder && LiveChat.lieder()) || []; } catch (x) {}
+
+    const kasten = document.createElement("div");
+    kasten.id = "lcPlatzMenue";
+    kasten.className = "lc-platzmenue lc-lesewahl lc-liedpanel";
+    kasten.setAttribute("role", "menu");
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kopf.textContent = einer ? "Meine Abschnitte — für " + einer
+                             : "Meine Abschnitte und mein Verlauf";
+    kasten.appendChild(kopf);
+
+    const zurueck = document.createElement("button");
+    zurueck.type = "button";
+    zurueck.className = "lc-lese-text lc-lied-zurueck";
+    zurueck.textContent = "\u2039  Zur\u00fcck zu den Liedern";
+    zurueck.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      lcMusikWaehler(einer);
+    });
+    kasten.appendChild(zurueck);
+
+    /* Welche Nummer hat ein Lied? Der Befehl nennt die Nummer, nicht
+       den Dateinamen. */
+    const nrVon = (datei) => {
+      const i = lieder.findIndex((l) => l.datei === datei);
+      return i >= 0 ? i + 1 : 0;
+    };
+    const auflegen = (datei, titel, ab, bis, name) => {
+      const nr = nrVon(datei);
+      if (!nr) { showToast("Das Lied liegt nicht mehr im Ordner."); return; }
+      lcPlatzMenueZu();
+      const spanne = ab || bis
+        ? " " + lcZeitText(ab) + (bis ? "-" + lcZeitText(bis) : "")
+        : "";
+      const zeile = einer ? "/kopfhoerer " + einer + " " + nr + spanne
+                          : "/musik " + nr + spanne;
+      try { LiveChat.schreiben(zeile); } catch (x) {}
+      lcNachDemSenden(zeile);
+      lcLiedVerlaufMerken(datei, titel, ab, bis, name);
+      /* Gilt es MIR, faengt es sofort an — genau wie im Ausschnitt-
+         waehler, aus demselben Grund (Runde 87). */
+      if (einer && !lcMusikFuerMich(einer)) return;
+      lcMusikSpielen(datei, titel, ab || 0, bis || 0, true);
+    };
+
+    const ueberschrift = (wort) => {
+      const p2 = document.createElement("p");
+      p2.className = "eyebrow";
+      p2.style.margin = "10px 0 4px";
+      p2.textContent = wort;
+      kasten.appendChild(p2);
+    };
+    const knopf = (zeichen, wort, zeit, tun) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lc-lese-text lc-lied-stelle";
+      b.innerHTML = zeichen + "  " + escapeHtml(wort)
+        + (zeit ? '<span class="lc-lied-zeit">' + escapeHtml(zeit) + "</span>" : "");
+      b.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        tun();
+      });
+      kasten.appendChild(b);
+      return b;
+    };
+
+    /* --- ZULETZT GESPIELT ------------------------------------------- */
+    const verlauf = (lcLiedVerlauf() || []).filter((v) => v && v.datei);
+    if (verlauf.length) {
+      ueberschrift("ZULETZT GESPIELT");
+      verlauf.forEach((v) => {
+        const spanne = v.ab || v.bis
+          ? lcZeitText(v.ab) + (v.bis ? "\u2013" + lcZeitText(v.bis) : " \u2013 Ende")
+          : "ganz";
+        knopf("\u21ba", (v.name ? v.name + " \u2014 " : "") + (v.titel || v.datei),
+              spanne, () => auflegen(v.datei, v.titel, v.ab, v.bis, v.name));
+      });
+      const weg = document.createElement("button");
+      weg.type = "button";
+      weg.className = "lc-lese-text lc-lied-verlauf-weg";
+      weg.textContent = "\ud83e\uddf9  Verlauf leeren";
+      weg.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        try { localStorage.setItem("dma_liedverlauf", "[]"); } catch (x) {}
+        try { Backend.updateExtraProfileField("liedVerlauf", []); } catch (x) {}
+        lcLiedPanel(einer);
+      });
+      kasten.appendChild(weg);
+    }
+
+    /* --- MEINE ABSCHNITTE ------------------------------------------- */
+    const alle = lcAlleLiedStellen();
+    if (alle.length) {
+      ueberschrift("MEINE ABSCHNITTE");
+      alle.forEach((l) => {
+        const p3 = document.createElement("p");
+        p3.className = "lc-liedpanel-titel";
+        p3.textContent = l.titel;
+        kasten.appendChild(p3);
+        l.stellen.forEach((st) => {
+          knopf("\u2702\ufe0f", st.name,
+            lcZeitText(st.ab) + (st.bis ? "\u2013" + lcZeitText(st.bis) : " \u2013 Ende"),
+            () => auflegen(l.datei, l.titel, st.ab, st.bis, st.name));
+        });
+      });
+    }
+
+    if (!verlauf.length && !alle.length) {
+      const hin = document.createElement("p");
+      hin.className = "empty-note";
+      hin.style.fontSize = "0.75rem";
+      hin.textContent = "Noch nichts gemerkt. Such dir ein Lied aus, setz einen "
+        + "Ausschnitt und tippe auf \u201eMerken und benennen\u201c \u2014 dann steht er "
+        + "ab sofort hier als Knopf.";
+      kasten.appendChild(hin);
+    }
+
+    document.body.appendChild(kasten);
+    const feld = document.getElementById("lcFeld");
+    lcMenueStellen(kasten, feld || document.body);
+    lcMenueSchliessen(kasten);
+    return true;
+  }
+
   function lcMusikWaehler(fuerWen) {
     lcPlatzMenueZu();
     let lieder = [];
@@ -23208,6 +23414,20 @@
         kasten.appendChild(nurIch);
       }
     }
+
+    /* RUNDE 98 — XANDER: „ein abgespeichertes Panel, wo ich direkt auf
+       meine Textzeilen und Refrains zu den jeweiligen dazugehoerigen
+       Liedern kriegen kann." Es steht GANZ OBEN, weil man es sucht,
+       bevor man sich durch die Lieder blaettert. */
+    const panel = document.createElement("button");
+    panel.type = "button";
+    panel.className = "lc-lese-text lc-musik-panel";
+    panel.textContent = "\ud83c\udf9b\ufe0f  Meine Abschnitte und mein Verlauf";
+    panel.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      lcLiedPanel(einer);
+    });
+    kasten.appendChild(panel);
 
     const liste = document.createElement("div");
     liste.className = "lc-lese-liste";
@@ -24395,6 +24615,37 @@
       knopf.classList.toggle("lc-platz-frei", Boolean(p.leer));
       knopf.classList.toggle("lc-platz-belegt", !p.leer);
       knopf.classList.toggle("lc-platz-ich", Boolean(p.ich));
+      /* =========================================================
+         RUNDE 98 — WER FREI IST, IST NICHT MEHR UNTERWEGS
+         ---------------------------------------------------------
+         XANDER: „Auch diese Strichlinienkreise mit der Profil-
+         Platznummer [werden] beeinflusst, wenn man sie verlaesst und
+         auf einem anderen Profilplatz ankommt — da sind sie immer
+         noch leer oder glitschig."
+
+         GEFUNDEN: eine Reise setzt „lc-platz-unterwegs" und
+         „lc-platz-bildweg" am Startplatz und nimmt sie erst beim
+         Aufraeumen wieder ab — rund 380 ms NACH dem Sitzwechsel.
+         In dieser Luecke ist der Platz schon frei und traegt
+         trotzdem noch die Reisekennzeichen. Auf einem freien Platz
+         IST der gestrichelte Ring aber der Kreis selbst, und
+         „lc-platz-bildweg" setzt ihn auf opacity 0: der Ring ist
+         weg, und die Zahl steht nackt im Raster. Gemessen im
+         Browser — Ring-Deckkraft 0, Schild-Ebene -1 statt 3.
+
+         Hier ist die Stelle, an der ueberhaupt bekannt wird, WER auf
+         einem Platz sitzt. Also wird er hier auch von der Reise
+         losgesprochen: wo niemand mehr sitzt, ist nichts mehr zu
+         verstecken — und wo JEMAND ANDERES sitzt (beim Platztausch
+         ist das der Normalfall), darf sein Bild erst recht nicht
+         versteckt bleiben. Wessen Reise es ist, steht seit Runde 98
+         am Platz selbst (lcPlatzUnterwegs setzt data-lc-reist). */
+      const reistHier = knopf.dataset.lcReist || "";
+      const sitztHier = String((p.leer ? "" : (p.id || p.name || "")) || "");
+      if (p.leer || (reistHier && sitztHier && sitztHier !== reistHier)) {
+        knopf.classList.remove("lc-platz-unterwegs", "lc-platz-bildweg");
+        try { delete knopf.dataset.lcReist; } catch (e) {}
+      }
       /* GEWÜNSCHT: „Wenn jemand spricht, dann soll eine Animation sein,
          die für die anderen erkennbar zeigt, dass derjenige gerade
          spricht — also um sein Profilbild herum." Gemessen wird das
@@ -36954,6 +37205,17 @@
   function lcPlatzUnterwegs(el, an) {
     if (!el) return;
     el.classList.toggle("lc-platz-unterwegs", Boolean(an));
+    /* RUNDE 98 — WEM DIE REISE GEHOERT, STEHT JETZT AM PLATZ.
+       Die Kennzeichen verstecken Bild und Namen dessen, der WEGFAEHRT.
+       Setzt sich in der Zwischenzeit jemand anderes auf den Platz (beim
+       Tausch passiert genau das), duerfen sie SEIN Bild nicht auch noch
+       verstecken. Deshalb merkt sich der Platz, wessen Reise das ist —
+       livechatPlaetzeAuffrischen raeumt sie ab, sobald dort jemand
+       anderes oder niemand mehr sitzt. */
+    try {
+      if (an) el.dataset.lcReist = String(el.dataset.lcId || el.dataset.lcName || "1");
+      else delete el.dataset.lcReist;
+    } catch (e) {}
     /* RUNDE 85 — XANDER: „generell, was alle noch gemeinsam haben ist,
        dass mein Platz, der verlassen wird, noch meinen Namen traegt —
        der soll natuerlich auch nicht mehr da stehen."
@@ -51706,6 +51968,16 @@
        werkzeug/pruefe-runde87-lied.js). */
     musikWaehler: function (fuerWen) { return lcMusikWaehler(fuerWen); },
     musikSpielen: function (d, t, ab, bis, selbst) { return lcMusikSpielen(d, t, ab, bis, selbst); },
+    /* RUNDE 98 \u2014 das Lieder-Panel: Verlauf und benannte Abschnitte.
+       Damit sich nachmessen laesst, dass die Knoepfe wirklich da sind
+       (siehe werkzeug/pruefe-runde98-musikpanel.js). */
+    liedPanel: function (fuerWen) { return lcLiedPanel(fuerWen || ""); },
+    liedVerlauf: function () { return lcLiedVerlauf(); },
+    liedVerlaufMerken: function (d, t, ab, bis, n) {
+      return lcLiedVerlaufMerken(d, t, ab, bis, n);
+    },
+    liedStelleMerken: function (d, n, ab, bis) { return lcLiedStelleMerken(d, n, ab, bis); },
+    alleLiedStellen: function () { return lcAlleLiedStellen(); },
     /* Die eigene Stimme: Name aus dem Wort, Liste nachladen, abspielen. */
     tonStamm: function (w) { return aussprTonStamm(aussprSprechtext(w)); },
     tonLaden: function () { return aussprTonLaden(); },
@@ -53879,6 +54151,17 @@
         e.preventDefault();
         const t = feld.value.trim();
         if (!t) return;
+        /* RUNDE 98 \u2014 „/abschnitte" oeffnet das Lieder-Panel. Es ist
+           kein Befehl fuer den Raum, sondern eine Ansicht auf dem
+           eigenen Geraet \u2014 deshalb wird er hier abgefangen und geht
+           gar nicht erst hinaus. */
+        if (/^\/(abschnitte|refrains|liedpanel)\b/i.test(t)
+            || /^\/musik\s+abschnitte\b/i.test(t)) {
+          feld.value = "";
+          senden.disabled = true;
+          lcLiedPanel("");
+          return;
+        }
         LiveChat.schreiben(t);
         feld.value = "";
         senden.disabled = true;
