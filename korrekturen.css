@@ -30605,3 +30605,76 @@ code, pre {
 @media (prefers-reduced-motion: reduce) {
   .lc-putzzeug, .lc-putz-eimer, .lc-putz-spucke { animation: none; opacity: 1; }
 }
+
+/* =====================================================================
+   RUNDE 98 — DER APPLAUS
+   ---------------------------------------------------------------------
+   XANDER: „Wir brauchen noch eine Applaus Animation mit klatschen den
+   Haenden, wenn jemand etwas schoenes macht."
+
+   Zwei gezeichnete Haende, links und rechts vom Bild, die sechsmal
+   zusammenschlagen. Sie stehen SCHRAEG zueinander und treffen sich bei
+   45 % des Takts — der Schlag ist kurz, das Zurueckfedern laenger.
+   ===================================================================== */
+.lc-applaus { pointer-events: none; }
+.lc-applaus-hand {
+  position: absolute;
+  /* GROSS GENUG, UM SIE ZU SEHEN. Xander hat oft gemeldet, dass ein
+     Effekt „kaum zu erkennen" ist — zwei Haende, die zusammen fast
+     so breit sind wie das Bild, sind eindeutig. */
+  bottom: -12%;
+  width: 60%;
+  height: 84%;
+  display: block;
+}
+.lc-applaus-hand svg { width: 100%; height: 100%; overflow: visible;
+                       filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .28)); }
+.lc-applaus-links  { left: -16%; }
+/* Die rechte Hand ist dieselbe Zeichnung, gespiegelt. Gespiegelt wird
+   die HUELLE, damit der Takt darin unveraendert laufen kann. */
+.lc-applaus-rechts { right: -16%; transform: scaleX(-1); }
+.lc-applaus-schwung {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 62% 94%;
+  animation: lcApplausR98 .34s cubic-bezier(.34, .06, .28, 1) 6 both;
+}
+@keyframes lcApplausR98 {
+  0%   { transform: translateX(-30%) rotate(-13deg); }
+  38%  { transform: translateX(10%) rotate(3deg); }
+  45%  { transform: translateX(14%) rotate(5deg); }
+  56%  { transform: translateX(6%) rotate(1deg); }
+  100% { transform: translateX(-30%) rotate(-13deg); }
+}
+/* DIE LUFT, DIE BEIM TREFFER HERAUSSPRITZT: sechs kurze Striche, die
+   vom Beruehrungspunkt wegzeigen. */
+.lc-applaus-knall {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: 0;
+  height: 0;
+}
+.lc-applaus-knall i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 15%;
+  min-width: 9px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 0 4px rgba(255, 255, 255, .7);
+  transform-origin: 0 50%;
+  animation: lcApplausKnallR98 .34s ease-out 6 both;
+}
+@keyframes lcApplausKnallR98 {
+  0%,  40% { opacity: 0; transform: rotate(var(--w, 0deg)) translateX(2px) scaleX(.2); }
+  50%      { opacity: .95; transform: rotate(var(--w, 0deg)) translateX(8px) scaleX(1); }
+  100%     { opacity: 0; transform: rotate(var(--w, 0deg)) translateX(22px) scaleX(.5); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-applaus-schwung, .lc-applaus-knall i { animation: none; }
+  .lc-applaus-knall i { opacity: 0; }
+}

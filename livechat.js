@@ -904,6 +904,9 @@ window.LiveChat = (function () {
        mit dem Scheibenwischer oder mit dem Schwamm \u2026 oder alternativ
        dran spucken und wegputzen." */
     putzen: { wirkung: "putzen", satz: "putzt die Scheibe von", emoji: "\ud83e\uddfd" },
+    /* RUNDE 98 — XANDER: „Wir brauchen noch eine Applaus Animation mit
+       klatschen den Haenden, wenn jemand etwas schoenes macht." */
+    applaus: { wirkung: "applaus", satz: "klatscht Beifall f\u00fcr", emoji: "\ud83d\udc4f" },
     /* GEWUENSCHT, Stueck fuer Stueck aus der Wunschliste:
        „Wir koennen uns auch Schneebaelle gegenseitig zuschiessen aufs
         Profilbild, so dass derjenige eingeseift wird mit Schnee."
@@ -9318,6 +9321,8 @@ window.LiveChat = (function () {
        nehmen." */
     { gr: "reden", w: "putzen", kurz: "sauber", nutzt: "/putzen Name",
       was: "macht die Scheibe wieder sauber \u2014 /putzen Name lappen oder /putzen Name spucke f\u00fcr die anderen beiden Wege" },
+    { gr: "reden", w: "applaus", kurz: "beifall", nutzt: "/applaus Name",
+      was: "zwei gezeichnete H\u00e4nde klatschen sechsmal Beifall \u2014 wenn jemand etwas Sch\u00f6nes gemacht hat" },
     { gr: "reden", w: "pflaster", kurz: "heilen", nutzt: "/pflaster Name",
       was: "klebt zwei Pflaster \u00fcber Kreuz aufs Bild \u2014 danach ist alles wieder heil, auch ein vom Hammer zerschlagenes Profilbild" },
     /* RUNDE 76 — XANDER: „Telefon mit Audio". */

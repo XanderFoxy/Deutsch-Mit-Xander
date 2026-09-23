@@ -25508,6 +25508,9 @@
        Der Grundton ist der Schritt; Muenze und Pilz kommen als eigene
        Toene obendrauf, sobald ein Block wirklich getroffen ist. */
     mariolauf:      { ton: "schritt",  dauer: 260,  laut: 0.5 },
+    /* RUNDE 98 — der Applaus: ein harter Klatscher je Schlag. Die
+       weiteren fuenf legt lcApplaus selbst nach. */
+    applaus:        { ton: "klatsch",  dauer: 2600, laut: 0.42 },
     stoerung:       { ton: "rauschen", dauer: 3200, laut: 0.5 },  /* Xander: „bist du dir sicher, dass es die Stoerung ist, die wir urspruenglich hatten?" -> eigenes Fernsehrauschen statt Gewitterton */
     aufessen:       { ton: "keks",     dauer: 700,  laut: 0.5 },   /* ein Biss, kein Dauerkauen */
     /* „realistisches Sanduhrgeraeusch an der Stelle." */
@@ -28826,6 +28829,9 @@
       [["\ud83e\uddfd", "Schwamm und Eimer", "putzen", "schwamm"],
        ["\ud83e\uddf9", "Putzlappen", "putzen", "lappen"],
        ["\ud83d\udca6", "Draufspucken", "putzen", "spucke"]]],
+    /* RUNDE 98 — XANDER: „Wir brauchen noch eine Applaus Animation mit
+       klatschen den Haenden, wenn jemand etwas schoenes macht." */
+    ["\ud83d\udc4f", "Applaus", "applaus"],
     ["\ud83e\ude83", "Zwille",   "zwille"],
     /* RUNDE 70 — XANDER: „Bei dem Anspucken haben wir das Pusten als
        extra Kachel noch uebrig obwohl die rausgenommen werden kann.
@@ -31327,6 +31333,9 @@
     pflaster: { zeichen: ["\ud83e\ude79"], wie: 4, klasse: "umarmen" },
     /* RUNDE 98 — der Putzkasten: Schwamm mit Eimer, Lappen, Spucke. */
     putzen:   { zeichen: ["\ud83e\uddfd"], wie: 4, klasse: "umarmen" },
+    /* RUNDE 98 — XANDER: „Wir brauchen noch eine Applaus Animation
+       mit klatschen den Haenden, wenn jemand etwas schoenes macht." */
+    applaus:  { zeichen: ["\ud83d\udc4f"], wie: 4, klasse: "umarmen" },
     /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
        ne Luftballon." */
     luftballon: { zeichen: ["\ud83c\udf88"], wie: 4, klasse: "umarmen" },
@@ -32306,6 +32315,9 @@
        Hochziehen im Rachen noch vor den Wurf, wie es soll. */
     spucken: 630,
     tritt: 180,        /* 0,18 s — „das ist der Anstoss" */
+    /* RUNDE 98 — der erste Klatscher liegt bei 45 % des ersten Takts
+       (340 ms), also bei 153 ms. */
+    applaus: 153,
     /* 300 ms — genau dort fliegen die Sterne (lcHammerSchlag, 0,30 s).
        Die alten 430 ms lagen 130 ms hinter dem Bild. */
     hammer: 300,
@@ -35731,6 +35743,97 @@
         lcHammerHeilen(name);
       }, 2300);
     }, 3400, "pflaster");
+  }
+
+  /* =====================================================================
+     RUNDE 98 — DER APPLAUS
+     ---------------------------------------------------------------------
+     XANDER: „Wir brauchen noch eine Applaus Animation mit klatschen den
+     Haenden, wenn jemand etwas schoenes macht."
+
+     ZWEI GEZEICHNETE HAENDE, keine Emoji. Im Haus gab es Beifall bisher
+     nur als 👏 im Zaubertrick — und an Emoji-Haenden hat er sich
+     wiederholt gestoert („ueberleg auch mal … ob das auch richtig
+     aussieht"). Deshalb dieselbe Zeichnung wie bei Klaps und Ohrfeige:
+     Hautton aus lcHaut(), Kante, Schatten, dazu die lila Manschette.
+
+     WIE MAN EINEN KLATSCHER ERKENNT, und daran haelt sich die Bewegung:
+       · Die Haende stehen SCHRAEG zueinander, nicht parallel — sie
+         treffen sich zuerst mit den Ballen, dann klappen die Finger
+         aufeinander.
+       · Der Schlag ist kurz und hart, das Zurueckfedern laenger.
+         Deshalb liegt der Treffer bei 45 % des Takts, nicht bei 50 %.
+       · Beim Treffer spritzt Luft heraus — das sind die Striche, die
+         vom Beruehrungspunkt wegzeigen.
+     Sechs Klatscher zu je 340 ms, und jeder hat seinen eigenen Ton. */
+  const LC_APPLAUS_TAKT = 340;    // Millisekunden je Klatscher
+  const LC_APPLAUS_MAL  = 6;      // so oft wird geklatscht
+
+  /* Eine Hand, von der Seite gesehen, Finger nach oben, Handflaeche nach
+     rechts. Die zweite Hand ist dieselbe Zeichnung, gespiegelt. */
+  function lcApplausHand() {
+    const h = lcHaut();
+    /* Die vier Finger, leicht gefaechert und verschieden lang —
+       Mittelfinger am laengsten, kleiner Finger am kuerzesten. */
+    const finger = [
+      { x: 16, oben: 15, dreh: -7 },
+      { x: 25, oben: 8,  dreh: -2 },
+      { x: 34, oben: 12, dreh: 2 },
+      { x: 43, oben: 21, dreh: 7 },
+    ].map((f, i) =>
+      '<rect x="' + f.x + '" y="' + f.oben + '" width="8.4" height="'
+      + (52 - f.oben) + '" rx="4.2"'
+      + ' fill="' + (i % 2 ? h.hell : h.haut) + '" stroke="' + h.kante + '"'
+      + ' stroke-width="1.5" transform="rotate(' + f.dreh + ' '
+      + (f.x + 4.2) + ' 52)"/>'
+    ).join("");
+    return '<svg viewBox="0 0 66 96" aria-hidden="true">'
+      /* Die Manschette am Handgelenk — dieselbe Farbe wie beim Klaps. */
+      + '<path d="M17 78 L49 78 L47 94 L19 94 Z" fill="#8d5fa8"/>'
+      + finger
+      /* Die Handflaeche: breiter als die Finger, unten zum Gelenk hin
+         wieder schmaler. */
+      + '<path d="M15 46 C15 42 20 40 32 40 C44 40 51 42 51 47'
+      + ' C51 58 50 70 48 76 C46.6 80 38 81.4 32 81.4'
+      + ' C26 81.4 18.4 80 17 76 C15 70 15 52 15 46 Z"'
+      + ' fill="' + h.haut + '" stroke="' + h.kante + '" stroke-width="1.7"'
+      + ' stroke-linejoin="round"/>'
+      /* Der Daumen steht auf der Handflaechenseite ab — daran
+         erkennt man, welche Seite vorn ist. */
+      + '<path d="M49 50 C58 48 65 53 63 60 C61 67 52 69 47 65 Z"'
+      + ' fill="' + h.hell + '" stroke="' + h.kante + '" stroke-width="1.6"'
+      + ' stroke-linejoin="round"/>'
+      /* Der Ballen und die Handlinie. */
+      + '<path d="M21 56 C28 54 38 54 45 56 M22 64 C29 63 37 63 44 64.6"'
+      + ' fill="none" stroke="' + h.schatten + '" stroke-width="1.1"'
+      + ' stroke-linecap="round" opacity=".5"/>'
+      + "</svg>";
+  }
+
+  function lcApplaus(wen) {
+    return lcAmPlatz(wen, "lc-applaus", (schicht) => {
+      const hand = lcApplausHand();
+      schicht.innerHTML =
+        '<span class="lc-applaus-hand lc-applaus-links">'
+        + '<i class="lc-applaus-schwung">' + hand + "</i></span>"
+        + '<span class="lc-applaus-hand lc-applaus-rechts">'
+        + '<i class="lc-applaus-schwung">' + hand + "</i></span>"
+        /* Die Luft, die beim Treffer herausspritzt. */
+        + '<span class="lc-applaus-knall">'
+        + [0, 1, 2, 3, 4, 5].map((i) =>
+            '<i style="--w:' + (i * 60 - 150) + 'deg"></i>').join("")
+        + "</span>";
+      /* Jeder Klatscher hat seinen eigenen Ton — sonst hoert man einen
+         Schlag und sieht sechs. Der erste liegt beim ersten Treffer
+         (45 % des Takts). */
+      for (let i = 1; i < LC_APPLAUS_MAL; i++) {
+        lcTonSpaeter("klatsch",
+          Math.round(LC_APPLAUS_TAKT * (0.45 + i)), 0.38);
+      }
+      /* Und ein kurzer Jubel darueber — „wenn jemand etwas schoenes
+         macht". */
+      lcTonSpaeter("jubel", 260, 0.3);
+    }, LC_APPLAUS_TAKT * LC_APPLAUS_MAL + 560, "applaus");
   }
 
   function lcHammer(wen, los) {
@@ -50305,6 +50408,9 @@
     /* RUNDE 98 — das Pflaster klebt auf GENAU EINEM Bild, und geputzt
        wird ebenfalls genau eine Scheibe. */
     pflaster: 1, putzen: 1,
+    /* RUNDE 98 — der Beifall gilt dem, der etwas Schoenes gemacht
+       hat, nicht dem ganzen Raum. */
+    applaus: 1,
     /* RUNDE 88 — das Kaninchen wird aus GENAU EINEM Zylinder
        gezogen; ueber den ganzen Raum zu regnen waere kein Kunststueck
        mehr, sondern ein Unfall. */
@@ -50355,6 +50461,11 @@
     if (art === "putzen") {
       lcPutzen((nachricht && (nachricht.wen || nachricht.an)) || "",
                (nachricht && nachricht.stueck) || "schwamm");
+      return;
+    }
+    /* RUNDE 98 — der Applaus gilt GENAU EINEM und regnet nicht. */
+    if (art === "applaus") {
+      lcApplaus((nachricht && (nachricht.wen || nachricht.an)) || "");
       return;
     }
     if (art === "spray") {
