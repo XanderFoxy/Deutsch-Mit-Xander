@@ -27178,7 +27178,28 @@
      Gespeichert wird das fertige Bild als Data-URL — so laesst es sich
      nach einem Neuaufbau in derselben Koernung wieder hinlegen. */
   const lcSprayListe = {};
-  function lcSprayBleibt(platzEl, bildUrl) {
+  /* =================================================================
+     RUNDE 98 — EIN EIGENES BILD BLEIBT DAS EIGENE BILD
+     -----------------------------------------------------------------
+     XANDER (23.09.2026): „das mit dem Bild muss unbedingt
+     funktionieren und es muss in seinen Pixeln genauso aufgespr\u00fcht
+     werden selbst ein gif sogar und die Sachen sollen bleibend sein."
+
+     GEMESSEN, vorher: ein eigenes Bild wurde in Tropfen NACHGEMALT und
+     dann als starres PNG festgehalten. Ein Testbild mit vier klaren
+     Vierteln (rot, gr\u00fcn, blau, gelb) kam so heraus: [134,10,8],
+     [14,111,5], [14,10,132], [140,119,5] — also in allen vier Vierteln
+     rund die H\u00e4lfte zu dunkel, nur 32 % der Bildpunkte trafen ihre
+     Farbe. Ein GIF verlor dabei jede Bewegung (es wurde ein einzelnes
+     PNG), und ein Bild von fremder Herkunft (GIPHY!) kam \u00fcberhaupt
+     nicht an: die fremde Leinwand l\u00e4sst sich nicht auslesen.
+
+     Jetzt tr\u00e4gt die bleibende Schicht bei einem eigenen Bild die
+     URSPRUNGSADRESSE. Damit stimmt jeder Bildpunkt, ein GIF bewegt
+     sich weiter, und eine fremde Herkunft ist egal — ein <img> darf
+     sie zeigen, nur auslesen darf man sie nicht. */
+  const lcSprayEigen = {};       /* Name -> true, wenn es ein eigenes Bild ist */
+  function lcSprayBleibt(platzEl, bildUrl, eigen) {
     if (!platzEl || !bildUrl) return false;
     platzEl.querySelectorAll(".lc-sprayfarbe").forEach((x) => x.remove());
     const schicht = document.createElement("span");
@@ -27186,16 +27207,22 @@
     schicht.setAttribute("aria-hidden", "true");
     const blende = lcZpBlende(schicht);
     const bild = document.createElement("img");
-    bild.className = "lc-sprayfarbe-bild";
+    /* Die gemalte Leinwand ist quadratisch und randlos — sie deckt den
+       Kreis. Ein eigenes Bild hat aber sein eigenes Seitenverhaeltnis
+       und darf nicht beschnitten werden: es steht mittig und ganz da,
+       genau wie beim Spruehen. */
+    bild.className = "lc-sprayfarbe-bild" + (eigen ? " lc-sprayfarbe-eigen" : "");
     bild.alt = "";
     bild.src = bildUrl;
     blende.appendChild(bild);
     platzEl.appendChild(schicht);
     return true;
   }
-  function lcSprayMerken(platzEl, bildUrl) {
+  function lcSprayMerken(platzEl, bildUrl, eigen) {
     const nm = lcPlatzSchluessel(platzEl);
-    if (nm) lcSprayListe[nm] = bildUrl;
+    if (!nm) return;
+    lcSprayListe[nm] = bildUrl;
+    if (eigen) lcSprayEigen[nm] = true; else delete lcSprayEigen[nm];
   }
 
   /* =====================================================================
@@ -27279,7 +27306,7 @@
       /* RUNDE 92 — und der aufgespruehte Lack. */
       const lack = el.querySelector(".lc-sprayfarbe");
       if (nm && lcSprayListe[nm] && !frei) {
-        if (!lack) lcSprayBleibt(el, lcSprayListe[nm]);
+        if (!lack) lcSprayBleibt(el, lcSprayListe[nm], lcSprayEigen[nm]);
       } else if (lack) {
         lack.remove();
       }
@@ -27602,6 +27629,91 @@
       b.src = quelle;
     });
   }
+  /* =================================================================
+     RUNDE 98 — EIN EIGENES BILD WIRD ALS BILD GELADEN, NICHT ALS
+     LEINWAND
+     -----------------------------------------------------------------
+     XANDER: „das mit dem Bild muss unbedingt funktionieren … selbst
+     ein gif sogar."
+     GEMESSEN: ein Bild von fremder Herkunft (GIPHY) kam gar nicht an.
+     Der Grund ist der Datenschutz des Browsers: mit
+     „crossOrigin = anonymous" verweigert er das Laden ganz, wenn der
+     fremde Server keine Erlaubnis mitschickt. Ohne diese Zeile laedt
+     er das Bild anstandslos — man darf die Leinwand dann nur nicht
+     AUSLESEN. Und genau das tut der neue Weg auch nicht mehr: er
+     zeichnet das Bild in die Leinwand hinein, statt Farben daraus
+     abzulesen.
+     Also: erst der saubere Weg mit Erlaubnis (dann duerfte man auch
+     auslesen), und wenn der scheitert, derselbe Versuch ohne.
+     ================================================================= */
+  function lcSprayEigenesLaden(quelle) {
+    const laden = (mitErlaubnis) => new Promise((fertig, schief) => {
+      const b = new Image();
+      if (mitErlaubnis) b.crossOrigin = "anonymous";
+      b.decoding = "sync";
+      b.onload = () => fertig(b);
+      b.onerror = () => schief(new Error("Bild nicht ladbar"));
+      b.src = quelle;
+    });
+    return laden(true).catch(() => laden(false));
+  }
+  /* =================================================================
+     UND ES WIRD IN SEINEN EIGENEN PIXELN GESPRUEHT
+     -----------------------------------------------------------------
+     XANDER: „es muss in seinen Pixeln genauso aufgespr\u00fcht werden."
+     GEMESSEN, vorher: das Bild wurde aus Tropfen NACHGEMALT — bei
+     einem Testbild mit vier klaren Vierteln trafen nur 32 % der
+     Bildpunkte ihre Farbe, alles war rund die Haelfte zu dunkel.
+     Der Grund: jeder Tropfen bekam einen dunklen Saum, und die Farbe
+     wurde aus dem Motiv nur STICHPROBENARTIG abgelesen.
+     Jetzt wird nicht mehr nachgemalt. Es werden Tropfen als
+     AUSSCHNITT (clip) gesetzt, und durch dieses Loch wird das Bild
+     SELBST gezeichnet — Bildpunkt fuer Bildpunkt, in seiner eigenen
+     Farbe. Zum Schluss liegt es vollstaendig da. Dasselbe Verfahren
+     braucht kein Auslesen der Leinwand und geht deshalb auch mit
+     einem fremden Bild.
+     ================================================================= */
+  function lcSprayMalenEigen(schicht, bild, gr, fertigNach) {
+    const c = document.createElement("canvas");
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    c.width = Math.round(gr * dpr);
+    c.height = Math.round(gr * dpr);
+    c.className = "lc-spray-lack";
+    schicht.appendChild(c);
+    const g = c.getContext("2d");
+    g.scale(dpr, dpr);
+    const bw = bild.naturalWidth || bild.width || 1;
+    const bh = bild.naturalHeight || bild.height || 1;
+    const sk = Math.min(gr * 0.86 / bw, gr * 0.86 / bh);
+    const w = bw * sk, h = bh * sk;
+    const bx = (gr - w) / 2, by = (gr - h) / 2;
+    const anfang = performance.now();
+    let laeuft = true;
+    const schritt = () => {
+      if (!laeuft || !c.isConnected) return;
+      const t = Math.min(1, (performance.now() - anfang) / fertigNach);
+      /* Erst ein Hauch, dann wird es dicht — wie bei den Motiven. */
+      const wieViele = Math.round(40 + 300 * t * t);
+      g.save();
+      g.beginPath();
+      for (let i = 0; i < wieViele; i++) {
+        const x = bx + Math.random() * w, y = by + Math.random() * h;
+        const r = 1.2 + Math.random() * (gr * 0.03);
+        /* „moveTo" vor jedem Kreis: sonst zieht der Pfad eine Linie
+           vom letzten Kreis zum naechsten, und der Ausschnitt waere
+           ein Spinnennetz statt Tropfen. */
+        g.moveTo(x + r, y);
+        g.arc(x, y, r, 0, Math.PI * 2);
+      }
+      g.clip();
+      g.drawImage(bild, bx, by, w, h);
+      g.restore();
+      if (t < 1) requestAnimationFrame(schritt);
+      else g.drawImage(bild, bx, by, w, h);
+    };
+    requestAnimationFrame(schritt);
+    return () => { laeuft = false; };
+  }
   function lcSprayMalen(schicht, motiv, gr, fertigNach) {
     const c = document.createElement("canvas");
     /* Auf einem scharfen Bildschirm doppelt so viele Bildpunkte —
@@ -27739,7 +27851,10 @@
         : smiley
         ? lcSprayMotivSmiley(Math.round(gr * 2), froh)
         : eigenesBild
-          ? lcSprayMotivBild(Math.round(gr * 2), wahl)
+          /* RUNDE 98 — ein eigenes Bild geht den eigenen Weg: es wird
+             als BILD geladen und in seinen eigenen Pixeln gespr\u00fcht,
+             nicht aus Tropfen nachgemalt. */
+          ? lcSprayEigenesLaden(wahl)
               .catch((e) => {
                 showToast("Das Bild liess sich nicht aufspruehen.");
                 throw e;
@@ -27750,7 +27865,9 @@
       let lackFlaeche = null;
       bauen.then((motiv) => {
         if (!schicht.isConnected) return;
-        abbrechen = lcSprayMalen(blende, motiv, gr, 1700);
+        abbrechen = eigenesBild
+          ? lcSprayMalenEigen(blende, motiv, gr, 1700)
+          : lcSprayMalen(blende, motiv, gr, 1700);
         lackFlaeche = blende.querySelector(".lc-spray-lack");
       /* Gemeldet wurde der Fehlschlag schon oben; hier wird er nur noch
          aufgefangen, damit er nicht als unbehandelt in der Konsole
@@ -27806,11 +27923,24 @@
          ============================================================= */
       setTimeout(() => {
         if (abbrechen) abbrechen();
+        /* RUNDE 98 — WAS BLEIBT LIEGEN?
+           Bei einem eigenen Bild die URSPRUNGSADRESSE. Drei Gruende,
+           alle nachgemessen:
+             · die Pixel stimmen dann wirklich (vorher 32 %),
+             · ein GIF bewegt sich weiter (vorher ein starres PNG),
+             · ein fremdes Bild geht ueberhaupt erst (das Auslesen
+               einer fremden Leinwand verbietet der Browser).
+           Bei den gemalten Motiven bleibt es beim festgehaltenen
+           Bild — dort GIBT es keine Adresse. */
         let url = "";
-        try { if (lackFlaeche) url = lackFlaeche.toDataURL("image/png"); } catch (e) { url = ""; }
+        if (eigenesBild) {
+          url = wahl;
+        } else {
+          try { if (lackFlaeche) url = lackFlaeche.toDataURL("image/png"); } catch (e) { url = ""; }
+        }
         if (url) {
-          lcSprayBleibt(platz, url);
-          lcSprayMerken(platz, url);
+          lcSprayBleibt(platz, url, eigenesBild);
+          lcSprayMerken(platz, url, eigenesBild);
           try { lackFlaeche.style.visibility = "hidden"; } catch (e) {}
         }
       }, 2200);
@@ -48116,7 +48246,7 @@
          waere die Scheibe rein, bevor der Schwamm darueberlaeuft. */
       const sauber = wie === "spucke" ? 1500 : 1750;
       setTimeout(() => {
-        if (nm) delete lcSprayListe[nm];
+        if (nm) { delete lcSprayListe[nm]; delete lcSprayEigen[nm]; }
         const lack = platz.querySelector(".lc-sprayfarbe");
         if (lack) {
           lack.classList.add("lc-sprayfarbe-geht");
@@ -48150,7 +48280,7 @@
          ist. */
       const schonDreckig = Boolean(platz.querySelector(".lc-sprayfarbe"))
         || Boolean((lcDreckListe[nmW] || []).length);
-      if (nmW) delete lcSprayListe[nmW];
+      if (nmW) { delete lcSprayListe[nmW]; delete lcSprayEigen[nmW]; }
       const lackW = platz.querySelector(".lc-sprayfarbe");
       if (lackW) {
         lackW.classList.add("lc-sprayfarbe-geht");

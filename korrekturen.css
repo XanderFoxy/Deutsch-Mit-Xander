@@ -30254,6 +30254,19 @@ code, pre {
   object-fit: cover;
   border-radius: 50%;
 }
+/* RUNDE 98 — EIN EIGENES BILD LIEGT ALS ES SELBST DA
+   XANDER: „es muss in seinen Pixeln genauso aufgesprüht werden selbst
+   ein gif sogar und die Sachen sollen bleibend sein."
+   Die gemalten Motive sind quadratisch und randlos — „cover" ist dort
+   richtig. Ein eigenes Bild hat aber sein eigenes Seitenverhältnis:
+   mit „cover" würde es beschnitten und sähe anders aus als beim
+   Sprühen. Deshalb „contain" und ein Rand von 7 % — dieselben 86 %
+   Fläche, die auch die Sprühleinwand benutzt. */
+.lc-sprayfarbe-bild.lc-sprayfarbe-eigen {
+  object-fit: contain;
+  padding: 7%;
+  box-sizing: border-box;
+}
 /* Beim Wischen geht er weg, wie Farbe unter dem Blatt: von links nach
    rechts, in derselben Zeit, in der das Blatt darueberlaeuft. */
 .lc-sprayfarbe-geht .lc-sprayfarbe-bild {
