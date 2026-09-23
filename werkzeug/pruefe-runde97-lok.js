@@ -127,6 +127,51 @@ const sage = (gut, was, zusatz) => {
         + (mess.radius * 2).toFixed(0) + " px");
   }
 
+  /* =====================================================================
+     UND JETZT DIE FUEHRUNG SELBST: BLEIBT SIE WAEHREND DER FAHRT AUF
+     DEM GLEIS?
+     ---------------------------------------------------------------------
+     Die beiden Zahlen oben sagen, dass Lok und Gleis zusammenpassen.
+     Sie sagen noch nicht, dass sie waehrend der Fahrt auch daraufbleibt
+     — gerade in der Kurve. Deshalb wird die Mitte der Lok Bild fuer
+     Bild gegen die naechstgelegene Schiene gemessen. Der Abstand muss
+     ungefaehr die halbe Spurweite sein und darf sich nicht veraendern:
+     genau das heisst „gefuehrt".
+     ===================================================================== */
+  console.log("\nDIE FAHRT — ABSTAND ZUR SCHIENE, BILD FUER BILD\n");
+  const fahrt = await pg.evaluate(async () => {
+    window.DMA_PRUEF.effektBuehne();
+    window.DMA_PRUEFUNG.wirkung("lok", "Emmi", "Alex", {});
+    await new Promise((f) => setTimeout(f, 600));
+    const spur = [];
+    for (let i = 0; i < 14; i++) {
+      await new Promise((f) => setTimeout(f, 200));
+      const lok = document.querySelector(".lc-lok");
+      const gleis = document.querySelector(".lc-lok-gleis");
+      if (!lok || !gleis) { spur.push(null); continue; }
+      const lb = lok.getBoundingClientRect(), gb = gleis.getBoundingClientRect();
+      const mx = lb.left + lb.width / 2, my = lb.top + lb.height / 2;
+      let nah = Infinity;
+      gleis.querySelectorAll(".lc-lok-schiene").forEach((pfad) => {
+        const lang = pfad.getTotalLength();
+        for (let k = 0; k <= 24; k++) {
+          const pt = pfad.getPointAtLength(lang * k / 24);
+          const d = Math.hypot(gb.left + pt.x - mx, gb.top + pt.y - my);
+          if (d < nah) nah = d;
+        }
+      });
+      spur.push(Math.round(nah));
+    }
+    return spur.filter((x) => x !== null);
+  });
+  console.log("  " + fahrt.join("  ") + " px\n");
+  const grosster = Math.max.apply(null, fahrt);
+  const kleinster = Math.min.apply(null, fahrt);
+  sage(fahrt.length >= 8, "die Lok faehrt wirklich", fahrt.length + " Messpunkte");
+  sage(grosster - kleinster <= 8,
+    "und ihre Mitte bleibt die ganze Fahrt ueber gleich weit von der Schiene",
+    kleinster + " bis " + grosster + " px");
+
   await br.close();
   srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)" : "\nalles gruen");

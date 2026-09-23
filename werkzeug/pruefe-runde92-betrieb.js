@@ -73,6 +73,27 @@ const zeilen = [];
     document.querySelectorAll(".lc-zp, .lc-reise, .lc-greif, .lc-riesenhand, .lc-flieger")
       .forEach((x) => x.remove());
     window.DMA_PRUEF.effektBuehne();
+    /* =================================================================
+       RUNDE 97 — WARUM HIER ERST AUFGEFRISCHT UND DANN GEZAEHLT WIRD
+       -----------------------------------------------------------------
+       Beim ersten vollstaendigen Durchlauf meldete diese Sonde ab dem
+       Kopfhoerer bei JEDEM weiteren Effekt „38 Bausteine mehr" — und
+       das war ein Fehler der SONDE, nicht des Klassenzimmers.
+       Der Grund: vier Dinge bleiben ABSICHTLICH liegen, weil XANDER es
+       so wollte — die Kopfhoerer („bis sie sie von selber abnimmt"),
+       die Gluehbirne, die Kleidung und der Spruehlack („das geht nur
+       durch den Scheibenwischer wieder weg"). Sie haengen an der
+       PERSON und kommen nach jedem Neuaufbau der Buehne zurueck,
+       sobald der Betrieb auffrischt. Die Sonde zaehlte sie dann als
+       Rueckstand, weil ihr Vorher-Bild von der frisch gebauten Buehne
+       stammte — also von einem Zustand, den es im Betrieb gar nicht
+       gibt.
+       Deshalb wird jetzt ERST aufgefrischt und DANN gezaehlt: das
+       Vorher-Bild enthaelt, was bleiben darf. Was danach noch
+       dazukommt, ist ein echter Rueckstand.
+       ================================================================= */
+    window.DMA_PRUEF.auffrischen();
+    await new Promise((f) => setTimeout(f, 120));
     const reihe = document.getElementById("lcPlaetze");
     const vorher = reihe.querySelectorAll("*").length;
     window.DMA_PRUEFUNG.wirkung(art, "Bea", "Alex", {});
@@ -85,8 +106,32 @@ const zeilen = [];
     const plaetze = [...document.querySelectorAll(".lc-platz")];
     const schaden = [];
     if (!reihe2 || !plaetze.length) { schaden.push("die Sitzreihe ist weg"); return schaden; }
-    /* 1. Liegt etwas herum, das vorher nicht da war? */
-    const nachher = reihe2.querySelectorAll("*").length;
+    /* 1. Liegt etwas herum, das vorher nicht da war?
+       ABGEZOGEN WIRD, WAS ABSICHTLICH LIEGEN BLEIBT — und das ist
+       jedes Mal sein eigener Wunsch:
+         .lc-kopfhoerer  „sollen die Kopfhoerer auch so lange auf der
+                          Person bleiben, bis sie sie von SELBER abnimmt"
+         .lc-sprayfarbe  „dass es bleibt die ganze Zeit … es geht nur
+                          durch den Scheibenwischer wieder weg"
+         .lc-kleid       „was man jemandem aufsetzt, hat er an, bis es
+                          jemand abnimmt"
+         .lc-hschaden    der Hammerschaden: er bleibt 22 Sekunden und
+                          waechst mit jedem Schlag („der Schaden soll
+                          auch dann stimmen, wenn der Platz zwischen-
+                          durch neu aufgebaut wurde"). Diese Sonde
+                          wartet nur 8,7 s — der Schaden MUSS hier also
+                          noch da sein. Dass er wieder heilt, misst
+                          werkzeug/pruefe-runde86.js.
+       Ohne diesen Abzug meldet die Sonde genau das als Fehler, was er
+       ausdruecklich bestellt hat. */
+    const bleibtErlaubt = [".lc-kopfhoerer", ".lc-sprayfarbe", ".lc-kleid", ".lc-hschaden"];
+    let erlaubt = 0;
+    bleibtErlaubt.forEach((wahl) => {
+      reihe2.querySelectorAll(wahl).forEach((el) => {
+        erlaubt += 1 + el.querySelectorAll("*").length;
+      });
+    });
+    const nachher = reihe2.querySelectorAll("*").length - erlaubt;
     if (nachher > vorher + 2) schaden.push("liegengeblieben: " + (nachher - vorher) + " Bausteine mehr");
     /* 2. Steht jedes Bild wieder an seinem Platz — unverformt? */
     plaetze.slice(0, 2).forEach((pl, i) => {
