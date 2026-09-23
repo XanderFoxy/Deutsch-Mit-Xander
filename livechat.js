@@ -7332,7 +7332,30 @@ window.LiveChat = (function () {
       schiffeZeichnen();
       return;
     }
-    if (d.t === "aus") { schiffeStand = null; schiffeZeichnen(); return; }
+    if (d.t === "aus") {
+      /* RUNDE 98 — WER BEENDET, BEENDET ES AUCH BEIM SCHIEDSRICHTER.
+         XANDER (23.09.2026): „das Schiffe versenken muss wirklich auf
+         allen Seiten funktionieren. Ich muss es auch beenden koennen
+         auf meiner Seite, falls irgendwas ist."
+         GEFUNDEN: hier wurde nur „schiffeStand" geleert — also das,
+         was GEZEICHNET wird. Das ganze Wissen des Schiedsrichters
+         („schiffeSpiel") blieb liegen, mitsamt seinen laufenden Uhren:
+         der Frist fuers Verstecken und dem Countdown. Beendete jemand
+         anderes das Spiel, schoss die Uhr beim Schiedsrichter kurz
+         darauf weiter und baute das Brett wieder auf. Jetzt wird
+         beides abgeraeumt. */
+      if (schiffeSpiel) {
+        /* Die Frist fuers Verstecken laeuft eine volle Minute — sie
+           muss weg. Der Countdown danach fragt selbst nach
+           („if (!schiffeSpiel) return"), er ist mit dem Leeren hier
+           schon erledigt. */
+        if (schiffeSpiel.frist) { clearTimeout(schiffeSpiel.frist); schiffeSpiel.frist = 0; }
+        schiffeSpiel = null;
+      }
+      schiffeStand = null;
+      schiffeZeichnen();
+      return;
+    }
     if (d.t === "wartet") {
       /* NUR EINE ZAHL. Namen stuenden hier frueher — und wer weiss,
          WER schon fertig ist, weiss beim naechsten Zug mehr, als er
@@ -13459,6 +13482,14 @@ window.LiveChat = (function () {
       return erg;
     },
     schiffeStand: function () { return schiffeStand; },
+    /* RUNDE 98 — damit sich messen laesst, ob beim Schiedsrichter
+       wirklich NICHTS mehr liegt, wenn jemand das Spiel beendet. */
+    schiffeRichterStand: function () {
+      if (!schiffeSpiel) return null;
+      return { phase: schiffeSpiel.phase || "",
+               uhrLaeuft: Boolean(schiffeSpiel.frist),
+               mitspieler: (schiffeSpiel.reihe || []).length };
+    },
     tafelSenden: function (d) {
       if (!d || typeof d !== "object") return false;
       senden({ art: "tafel", tafel: d });
