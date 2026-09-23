@@ -16868,10 +16868,39 @@ code, pre {
 .lc-lese-text:disabled { opacity: 0.4; cursor: default; }
 
 /* --- Die Lesetafel im Chat ------------------------------------------- */
+/* =========================================================
+   RUNDE 98 — DIE ÜBERSCHRIFT IM KOPF DER LESETAFEL
+   ---------------------------------------------------------
+   XANDER (23.09.2026): „repariere mal die Überschrift im Android, wo
+   ich bei den Aufgaben etwas mache und dann sollen sie Texte
+   vorlesen — die Überschrift, die steht zwischen dem Niveau und
+   zwischen Betonung und Fokus und ist von oben nach unten in einzeln
+   runtergequetscht, das macht überhaupt keinen Sinn."
+
+   NACHGEMESSEN, vorher (Titel „Der Wolkenkratzer in der
+   Abenddämmerung", 39 Zeichen):
+       760 px Fenster:   1 Zeile,  Kopf  21 px hoch   — gut
+       460 px:           4 Zeilen, Kopf  72 px
+       412 px (Android): 5 Zeilen, Kopf  89 px
+       360 px (Android): 18 Zeilen, Kopf 322 px, Titel nur 21 px breit
+   Bei 360 px stand also wirklich ein Buchstabe je Zeile.
+
+   DER GRUND: der Kopf war eine EINZELNE Flex-Zeile (kein Umbruch).
+   Die beiden Schalter „Betonung" und „Fokus" tragen white-space:
+   nowrap und geben deshalb keinen Platz ab; der Titel dazwischen
+   wurde zusammengedrückt, bis nichts mehr übrig war — und weil im
+   Chat overflow-wrap: anywhere gilt, bricht er dann Buchstabe für
+   Buchstabe um.
+
+   DIE LÖSUNG: der Kopf darf umbrechen, und der Titel bekommt eine
+   Mindestbreite. Reicht der Platz nicht, rutschen die zwei Schalter
+   in die nächste Zeile — statt die Überschrift zu zerquetschen.
+   ========================================================= */
 .lc-lese-kopf {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 4px 8px;
   margin-bottom: 4px;
 }
 /* „dass dort auch angegeben markiert steht C1" — das Abzeichen. */
@@ -16885,7 +16914,18 @@ code, pre {
   font-weight: 900;
   letter-spacing: .04em;
 }
-.lc-lese-titel { font-weight: 700; line-height: 1.3; }
+.lc-lese-titel {
+  font-weight: 700;
+  line-height: 1.3;
+  /* Sie darf wachsen, aber nie unter acht Zeichen schrumpfen — dann
+     wandern lieber die Schalter in die nächste Zeile. */
+  flex: 1 1 auto;
+  min-width: 8em;
+  /* Und wenn ein Wort wirklich zu lang ist, bricht es am WORTENDE,
+     nicht nach jedem Buchstaben. */
+  overflow-wrap: break-word;
+  word-break: normal;
+}
 .lc-lese-zeilen { display: block; margin-top: 4px; }
 /* Jede Zeile ist ein Satz — „zeilenweise gewissenhaft lesen". */
 .lc-lese-zeile {
@@ -17147,7 +17187,11 @@ code, pre {
 }
 /* Die beiden Schalter im Kopf der Lesetafel. */
 .lc-lese-schalter {
-  margin-left: 6px;
+  /* RUNDE 98 — sie geben keinen Platz ab (nowrap), also dürfen sie
+     auch nicht wachsen: sonst nähmen sie der Überschrift die Breite
+     zurück, die sie gerade bekommen hat. */
+  flex: 0 0 auto;
+  margin-left: 0;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.07);
   color: inherit;
