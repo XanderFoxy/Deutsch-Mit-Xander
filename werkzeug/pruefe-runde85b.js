@@ -212,8 +212,19 @@ const sage = (gut, text, dazu) => {
        Gemessen wird stattdessen das, was „eine Einheit" bedeutet:
        die Schicht bewegt sich, und der Abstand zwischen Glas und
        Sockel bleibt dabei gleich. */
-    return { bild: teil(".lc-kreis"), schicht: teil(".lc-schneekugel"),
-             dauer: getComputedStyle(pl.querySelector(".lc-kreis")).animationDuration };
+    /* RUNDE 99 (Fassung 524): das Schuetteln laeuft jetzt als
+       Web-Animation in PIXELN (siehe app.js lcSchneekugel), nicht mehr
+       als CSS-Animation — „animationDuration" ist deshalb leer. Die
+       Dauer steht in der laufenden Animation selbst; und bewegt wird
+       ueber die ganze Schuettelzeit gemessen, nicht nur in einem
+       einzigen Augenblick. */
+    const anim = (w) => { const el = pl.querySelector(w);
+      return el ? el.getAnimations().find((a) => a.effect && a.effect.getKeyframes().some((k) => /translate/.test(k.transform || ""))) : null; };
+    const a = anim(".lc-kreis");
+    const mitte = (w) => { const el = pl.querySelector(w); const a2 = anim(w);
+      if (!a2) return teil(w); a2.pause(); a2.currentTime = 150; const r = teil(w); a2.play(); return r; };
+    return { bild: mitte(".lc-kreis"), schicht: mitte(".lc-schneekugel"),
+             dauer: a ? (a.effect.getTiming().duration / 1000) + "s" : "" };
   });
   const bewegt = (a) => a && (Math.abs(a.x) > 0.3 || Math.abs(a.y) > 0.3);
   sage(bewegt(kugel.bild) && bewegt(kugel.schicht),

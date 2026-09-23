@@ -247,6 +247,37 @@ const sage = (gut, was, zusatz) => {
     "Die ganze Kugel blendet gemeinsam aus, nicht Teil fuer Teil",
     kugel ? "Glas eigene Blende: " + kugel.glasEigen + ", Schicht blendet: " + kugel.blendetGanz : "-");
 
+  console.log("\n6  „FREI“ STEHT DA, SOBALD DER PLATZ LEER IST\n");
+  /* XANDER (Walkie-Talkie): „in dem Moment, wenn es den Platz verlassen
+     hat, ist der Platz wieder frei, sofort, und da soll frei auch dran
+     stehen — auch bei allen anderen Animationen … ohne zu glitchen." */
+  for (const art of ["untertasse", "flug"]) {
+    const f = await pg.evaluate(async (art) => {
+      window.DMA_PRUEF.effektBuehne();
+      await new Promise((r) => setTimeout(r, 300));
+      const pl = document.querySelector('[data-lc-platz="1"]');
+      const nm = pl.querySelector(".lc-platz-name");
+      const kreis = pl.querySelector(".lc-kreis");
+      window.DMA_PRUEFUNG.wirkung(art, "7", "Alex");
+      let freiVorLeer = false, freiAb = -1, leerAb = -1;
+      const t0 = performance.now();
+      for (let i = 0; i < 40; i++) {
+        await new Promise((r) => setTimeout(r, 60));
+        const t = Math.round(performance.now() - t0);
+        const leer = Number(getComputedStyle(kreis).opacity) < 0.15;
+        const frei = getComputedStyle(nm, "::after").content === '"frei"';
+        if (leer && leerAb < 0) leerAb = t;
+        if (frei && freiAb < 0) freiAb = t;
+        if (frei && !leer) freiVorLeer = true;
+      }
+      return { freiVorLeer, freiAb, leerAb };
+    }, art);
+    sage(f.freiAb >= 0 && !f.freiVorLeer && f.freiAb - f.leerAb <= 150,
+      art + ": „frei“ erscheint, sobald das Bild weg ist — nicht vorher",
+      "Bild weg ab " + f.leerAb + " ms, „frei“ ab " + f.freiAb + " ms");
+    await pg.waitForTimeout(5000);
+  }
+
   await br.close(); srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)" : "\nalles gruen");
   process.exit(fehler ? 1 : 0);

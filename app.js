@@ -24738,7 +24738,7 @@
       const reistHier = knopf.dataset.lcReist || "";
       const sitztHier = String((p.leer ? "" : (p.id || p.name || "")) || "");
       if (p.leer || (reistHier && sitztHier && sitztHier !== reistHier)) {
-        knopf.classList.remove("lc-platz-unterwegs", "lc-platz-bildweg");
+        knopf.classList.remove("lc-platz-unterwegs", "lc-platz-bildweg", "lc-platz-leer");
         try { delete knopf.dataset.lcReist; } catch (e) {}
       }
       /* GEWÜNSCHT: „Wenn jemand spricht, dann soll eine Animation sein,
@@ -39235,6 +39235,32 @@
        hat. Sie wird immer zusammen mit der ersten abgeraeumt — sonst
        bliebe ein Platz leer, auf dem laengst wieder jemand sitzt. */
     if (!an) el.classList.remove("lc-platz-bildweg");
+    /* RUNDE 99 — XANDER (Walkie-Talkie): „in dem Moment, wenn es den
+       Platz verlassen hat, ist der Platz wieder frei, sofort, und da
+       soll frei auch dran stehen — auch bei allen anderen Animationen."
+       Jede Reise nimmt ihr Bild anders mit (die meisten per
+       „lc-platz-bildweg", UFO, Maulwurf, Rohr, Beamen, Katze, Frisbee
+       und die Riesenhaende blenden es selbst aus). Deshalb wird hier fuer
+       ALLE nachgesehen, Bild fuer Bild: sobald das Bild am Startplatz
+       unsichtbar ist, bekommt der Platz „lc-platz-leer" — und damit das
+       Wort „frei" (siehe korrekturen.css). */
+    el.classList.remove("lc-platz-leer");
+    if (an) {
+      const kreis = el.querySelector(".lc-kreis");
+      const schau = () => {
+        if (!el.isConnected || !el.classList.contains("lc-platz-unterwegs")) {
+          el.classList.remove("lc-platz-leer");
+          return;
+        }
+        let weg = el.classList.contains("lc-platz-bildweg");
+        if (!weg && kreis) {
+          try { weg = Number(getComputedStyle(kreis).opacity) < 0.15; } catch (e) {}
+        }
+        if (weg) { el.classList.add("lc-platz-leer"); return; }
+        requestAnimationFrame(schau);
+      };
+      requestAnimationFrame(schau);
+    }
     const nr = el.dataset && el.dataset.lcPlatz;
     if (!nr) return;
     if (LC_UNTERWEGS_WACHE[nr]) {
@@ -39248,7 +39274,7 @@
         const karte = document.getElementById("livechatKarte");
         if (!karte) return;
         karte.querySelectorAll('.lc-platz[data-lc-platz="' + nr + '"]')
-          .forEach((p) => p.classList.remove("lc-platz-unterwegs", "lc-platz-bildweg"));
+          .forEach((p) => p.classList.remove("lc-platz-unterwegs", "lc-platz-bildweg", "lc-platz-leer"));
       } catch (e) {}
     }, 12000);
   }

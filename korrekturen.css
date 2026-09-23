@@ -32267,3 +32267,35 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   8%   { opacity: 1; transform: none; }
   100% { opacity: 1; transform: none; }
 }
+
+/* =====================================================================
+   RUNDE 99 — „FREI" STEHT SOFORT DA, WENN JEMAND DEN PLATZ VERLAESST
+   ---------------------------------------------------------------------
+   XANDER (Walkie-Talkie): „in dem Moment, wenn es den Platz verlaesst,
+   da wo normalerweise frei stehen sollte — in dem Moment, wenn es den
+   Platz verlassen hat, ist der Platz wieder frei, sofort, und da soll
+   frei auch dran stehen, auch bei allen anderen Animationen, wo das
+   beim Platz-Verlassen so ist — ohne dabei zu glitchen."
+   Bisher war der Name waehrend der Reise nur UNSICHTBAR, und „frei"
+   kam erst mit der neuen Sitzordnung am Ende. Jetzt steht an seiner
+   Stelle sofort „frei", im selben Stil wie auf jedem freien Platz. Es
+   ist ein Zusatz am selben Element (::after) — die Hoehe des Schilds
+   aendert sich dadurch nicht, die Sitzreihe ruckt also nicht.
+   Gilt fuer alle Reisen, die lcPlatzUnterwegs setzen (UFO, Maulwurf,
+   Tor, Flug, Kran, Mario, Fahren, zu zweit …). */
+/* Erst wenn das Bild WIRKLICH weg ist (lc-platz-leer, gesetzt von
+   lcPlatzUnterwegs, sobald das Bild unsichtbar ist) — sonst stuende
+   „frei" schon unter einem Bild, das noch dasitzt (gemessen beim UFO:
+   bei 900 ms war das Bild noch da). */
+.lc-platz-leer:not(.lc-platz-frei) .lc-platz-name {
+  position: relative;
+}
+.lc-platz-leer:not(.lc-platz-frei) .lc-platz-name::after {
+  content: "frei";
+  visibility: visible;
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  text-align: center;
+  color: var(--cream-200, #cfc6b2);
+  font-weight: 500;
+}
