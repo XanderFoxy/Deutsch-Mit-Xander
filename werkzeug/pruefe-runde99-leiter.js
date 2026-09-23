@@ -113,6 +113,14 @@ const sage = (gut, text, dazu) => {
     "Ein zweiter Klick: jetzt sitzt " + oben + " unten und klettert HINAUF",
     "Ziel " + (w2 && w2.ziel));
 
+  /* RUNDE 100 — XANDER (Walkie-Talkie): „Ich finde niemand mit dem
+     Namen XanderFox im Raum steht da." Das Platzmenue auf dem EIGENEN
+     Bild schickt den eigenen Namen mit — und der wurde nicht gefunden. */
+  const r3 = await schicken("/leiter Alex");
+  const w3 = r3.pakete.find((p) => p.wirkung === "leiter");
+  sage(Boolean(w3), "Die Leiter geht auch mit dem EIGENEN Namen (Platzmenue auf dem eigenen Bild)",
+    w3 ? "Alex klettert auf Platz " + w3.ziel : "kein Paket — " + (await pg.evaluate(() => (window.LiveChat.pruefZeilen(1) || [])[0])));
+
   console.log("\n2  AUF DEM BILDSCHIRM\n");
   await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
   await pg.waitForTimeout(300);

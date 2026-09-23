@@ -32314,3 +32314,14 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   aspect-ratio: auto; border-radius: 50%; overflow: hidden;
   pointer-events: none; z-index: 2;
 }
+
+/* RUNDE 100 — der Walkie-Reiter laesst sich am Rand schieben (siehe
+   rueckfrage.js): der Finger darf dabei die Seite nicht rollen. */
+.rf-reiter { touch-action: none; }
+/* Und der Knopf fuer die Uebungspuppe im Kopf des Walkie-Talkies. */
+.rf-puppe {
+  border: 1px solid rgba(255, 209, 102, .45); background: transparent; color: #ffd166;
+  border-radius: 999px; font-size: .7rem; font-weight: 700; padding: 3px 8px;
+  cursor: pointer; white-space: nowrap;
+}
+.rf-puppe.rf-puppe-an { background: rgba(255, 209, 102, .18); }

@@ -4306,69 +4306,7 @@ window.LiveChat = (function () {
       }
     }
   }
-  /* =========================================================
-     RUNDE 100 — DIE UEBUNGSPUPPE
-     ---------------------------------------------------------
-     XANDER (Walkie-Talkie): „Mach mir mal einen Angel-Dummy, dass ich
-     testen kann, auch wenn niemand da ist." Und zum Kran und Lasso:
-     „Ich brauche einen Dummy zum Testen."
-     Die Puppe sitzt NUR auf dem eigenen Geraet auf einem freien Platz
-     und laesst sich angeln, mit dem Lasso holen, mit dem Kran heben,
-     bespruehen … wie eine echte Person. Damit nichts durcheinander
-     geraet, gilt:
-       · nur fuer den Betreiber und nur, wenn er allein im Raum ist —
-         die anderen haetten sie nicht, und ihre Sitzordnung wuerde
-         nicht mehr zu seiner passen;
-       · kommt jemand herein, ist sie sofort weg;
-       · sie verfaellt nie (kein Puls noetig) und geht nie ins Netz.
-     Ihr Bild ist gezeichnet: ein Crashtest-Dummy (gelbes Gesicht mit
-     den schwarz-gelben Messmarken) — kein Emoji. */
-  var PUPPE_ID = "uebungspuppe";
-  var PUPPE_BILD = "data:image/svg+xml;utf8," + encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
-    + '<rect width="100" height="100" fill="#e9eef2"/>'
-    + '<ellipse cx="50" cy="54" rx="31" ry="36" fill="#f2c230" stroke="#a37f10" stroke-width="2"/>'
-    + '<circle cx="50" cy="30" r="9" fill="#fff" stroke="#222" stroke-width="1.6"/>'
-    + '<path d="M50 21 A9 9 0 0 1 59 30 L50 30 Z M50 39 A9 9 0 0 1 41 30 L50 30 Z" fill="#222"/>'
-    + '<ellipse cx="38" cy="54" rx="4.2" ry="3" fill="#2b2b2b"/>'
-    + '<ellipse cx="62" cy="54" rx="4.2" ry="3" fill="#2b2b2b"/>'
-    + '<path d="M40 72 Q50 77 60 72" fill="none" stroke="#6b5208" stroke-width="2.4" stroke-linecap="round"/>'
-    + '<rect x="18" y="50" width="6" height="12" rx="2" fill="#d7a91f"/>'
-    + '<rect x="76" y="50" width="6" height="12" rx="2" fill="#d7a91f"/>'
-    + '</svg>');
-  function puppeDa() { return Boolean(zustand.leute[PUPPE_ID]); }
-  function puppeWeg(grund) {
-    if (!puppeDa()) return false;
-    delete zustand.leute[PUPPE_ID];
-    delete sitzTausch[PUPPE_ID];
-    if (platzJe[PUPPE_ID] != null) delete platzJe[PUPPE_ID];
-    if (grund) systemZeile(grund);
-    melden();
-    return true;
-  }
-  function puppeUmschalten() {
-    if (!zustand.betreiber) return systemZeile("Die Übungspuppe gibt es nur für den Betreiber.");
-    if (zustand.lage !== "drin") return systemZeile("Dafür musst du erst im Raum sein.");
-    if (puppeDa()) return puppeWeg("🧍 Die Übungspuppe ist weg.");
-    var andere = Object.keys(zustand.leute).filter(function (id) { return id !== PUPPE_ID; });
-    if (andere.length) {
-      return systemZeile("Die Übungspuppe geht nur, wenn du allein im Raum bist — "
-        + "die anderen würden sie nicht sehen, und eure Sitzordnung passte nicht mehr zusammen.");
-    }
-    zustand.leute[PUPPE_ID] = { id: PUPPE_ID, name: "Puppe", strom: null, seit: Date.now(),
-      gesehen: 9e15, tonAn: false, bildAn: false, bild: PUPPE_BILD, buehne: true,
-      sprechbild: "ring", geschlecht: "" };
-    systemZeile("🧍 Die Übungspuppe sitzt jetzt auf einem freien Platz — nur bei dir. "
-      + "Tipp auf ihr Bild: Angel, Lasso, Kran, Sprühdose … alles geht. "
-      + "Kommt jemand herein, ist sie sofort weg. Nochmal /puppe nimmt sie ab.");
-    melden();
-    return true;
-  }
   function personMerken(id, name, bild) {
-    /* Runde 100 — kommt ein Mensch herein, geht die Puppe. */
-    if (id !== PUPPE_ID && puppeDa() && !zustand.leute[id]) {
-      puppeWeg("🧍 Die Übungspuppe ist weg — es ist jemand hereingekommen.");
-    }
     if (!zustand.leute[id]) {
       zustand.leute[id] = { id: id, name: name || "Gast", strom: null, seit: Date.now(),
                             gesehen: Date.now(), tonAn: true, bildAn: false, bild: bild || "" };
@@ -4510,7 +4448,6 @@ window.LiveChat = (function () {
       /* 1. Wer ist da, hat aber keine Leitung? */
       Object.keys(zustand.leute).forEach(function (id) {
         if (id === zustand.ichId) return;
-        if (id === PUPPE_ID) return;   /* Runde 100: die Puppe hat keine Leitung */
         if (brueckeJe[id]) return;
         /* Nur die Seite mit der kleineren Kennung ruft an — sonst
            rufen beide gleichzeitig, und die Aushandlung zerbricht. */
@@ -4567,7 +4504,6 @@ window.LiveChat = (function () {
     var raus = [];
     Object.keys(zustand.leute).forEach(function (id) {
       if (id === zustand.ichId) return;
-      if (id === PUPPE_ID) return;     /* Runde 100: die Puppe hat keine Leitung */
       var pc = brueckeJe[id];
       raus.push({
         id: id,
@@ -11246,8 +11182,6 @@ window.LiveChat = (function () {
     var m = /^\/([a-zäöüß0-9?]+)\s+([\s\S]*)$|^\/([a-zäöüß0-9?]+)\s*$/i.exec(roh.trim());
     if (!m) return false;
     var wort = (m[1] || m[3] || "").toLowerCase(), rest = (m[2] || "").trim();
-    /* RUNDE 100 — die Uebungspuppe (siehe puppeUmschalten). */
-    if (wort === "puppe" || wort === "dummy") return puppeUmschalten() || true;
 
     /* SPITZE KLAMMERN SIND EINE ANLEITUNG, KEIN TEXT.
        -----------------------------------------------------------
@@ -14299,9 +14233,6 @@ window.LiveChat = (function () {
       return { plaetze: plaetzeBauen(), tausch: sitzTausch };
     },
     pruefBefehl: function (text) { return befehlAusfuehren(text); },
-    /* Runde 100 — die Uebungspuppe an/aus (Knopf im Walkie-Talkie). */
-    puppe: function () { return puppeUmschalten(); },
-    puppeDa: function () { return puppeDa(); },
     /* NACHLESEN, WAS IM CHAT STEHT. Ohne das laesst sich eine
        Systemzeile („diese Filme liegen bereit") nicht pruefen: sie
        haengt an der Oberflaeche, und eine Sonde hat keine. Gibt nur

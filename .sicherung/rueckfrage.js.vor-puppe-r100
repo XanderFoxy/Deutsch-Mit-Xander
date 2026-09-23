@@ -55,7 +55,6 @@ window.Rueckfrage = (function () {
   var SPEICHER_OFFEN = "dma_funk_offen";
   var SPEICHER_ENTWURF = "dma_funk_entwurf";
   var SPEICHER_STELLE = "dma_funk_stelle";
-  var SPEICHER_REITER = "dma_funk_reiter";   /* Runde 100: wo der Reiter am Rand steht */
 
   /* Seine Worte, in seiner Reihenfolge. */
   var STUFEN = [
@@ -166,47 +165,7 @@ window.Rueckfrage = (function () {
     reiter.setAttribute("aria-label", "Walkie-Talkie: Rückfragen von Claude");
     reiter.appendChild(el("span", "rf-reiter-bild", "📻"));
     reiter.appendChild(el("span", "rf-reiter-zahl", ""));
-    /* RUNDE 100 — XANDER: „es darf die Schaltflaeche vom Klassenzimmer
-       nicht verdecken … vielleicht an der linken Seite, dass ich das
-       Walkie-Talkie hab und das nicht stoert."
-       Wo genau „nicht stoert" ist, weiss nur er — auf jedem Geraet liegt
-       etwas anderes am Rand. Deshalb laesst sich der Reiter mit dem
-       Finger am Rand hinauf- und hinunterschieben, und er merkt sich die
-       Stelle (auch nach dem Neuladen). Ein kurzer Tipp klappt wie bisher
-       auf und zu; erst ab 6 px Bewegung ist es ein Schieben. */
-    var gemerkt = Number(lesen(SPEICHER_REITER, 0));
-    if (gemerkt > 0.02 && gemerkt < 0.95) reiter.style.top = (gemerkt * 100).toFixed(1) + "vh";
-    var zug = null, geschoben = false;
-    reiter.addEventListener("pointerdown", function (e) {
-      zug = { y: e.clientY, top: reiter.getBoundingClientRect().top, id: e.pointerId };
-      geschoben = false;
-      try { reiter.setPointerCapture(e.pointerId); } catch (x) {}
-    });
-    reiter.addEventListener("pointermove", function (e) {
-      if (!zug) return;
-      var dy = e.clientY - zug.y;
-      if (!geschoben && Math.abs(dy) < 6) return;
-      geschoben = true;
-      var h = window.innerHeight || 600;
-      var neu = Math.max(8, Math.min(h - 52, zug.top + dy));
-      reiter.style.top = neu + "px";
-    });
-    var loslassen = function () {
-      if (!zug) return;
-      zug = null;
-      if (geschoben) {
-        var h = window.innerHeight || 600;
-        var anteil = reiter.getBoundingClientRect().top / h;
-        merken(SPEICHER_REITER, Number(anteil.toFixed(3)));
-        reiter.style.top = (anteil * 100).toFixed(1) + "vh";
-      }
-    };
-    reiter.addEventListener("pointerup", loslassen);
-    reiter.addEventListener("pointercancel", loslassen);
-    reiter.addEventListener("click", function (e) {
-      if (geschoben) { geschoben = false; e.preventDefault(); return; }
-      aufzu(!istOffen());
-    });
+    reiter.addEventListener("click", function () { aufzu(!istOffen()); });
     abschirmen(reiter);
     document.body.appendChild(reiter);
   }
@@ -272,17 +231,6 @@ window.Rueckfrage = (function () {
 
     var kopf = el("div", "rf-kopf");
     kopf.appendChild(el("span", "rf-marke", "📻 Walkie-Talkie"));
-    /* RUNDE 100 — XANDER: „Mach mir mal einen Angel-Dummy, dass ich
-       testen kann, auch wenn niemand da ist." Ein Tipp setzt die
-       Uebungspuppe auf einen freien Platz (nur bei ihm, nur allein im
-       Raum) — ein zweiter nimmt sie wieder weg. */
-    var puppeAn = false;
-    try { puppeAn = Boolean(window.LiveChat && LiveChat.puppeDa && LiveChat.puppeDa()); } catch (e) {}
-    kopf.appendChild(knopf("rf-puppe" + (puppeAn ? " rf-puppe-an" : ""),
-      puppeAn ? "🧍 Puppe weg" : "🧍 Übungspuppe", function () {
-        try { if (window.LiveChat && LiveChat.puppe) LiveChat.puppe(); } catch (e) {}
-        setTimeout(function () { zeigen(true); }, 60);
-      }));
     kopf.appendChild(knopf("rf-zu", "✕", function () { aufzu(false); }));
     leiste.appendChild(kopf);
 

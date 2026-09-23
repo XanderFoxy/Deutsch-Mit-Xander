@@ -133,6 +133,24 @@ const sage = (gut, text, dazu) => {
   sage(!zu.untenLinks && !zu.mitte, "Unten links und in der Mitte liegt nichts vom Walkie-Talkie");
   sage(zu.zahl === "2", "Der Reiter zeigt, wie viele Fragen offen sind", zu.zahl);
 
+  /* RUNDE 100 — der Reiter laesst sich am Rand verschieben, damit er
+     nichts verdeckt; die Stelle bleibt gemerkt. Schieben klappt NICHT
+     auf, erst ein Tipp. */
+  const vorher = await pg.evaluate(() => document.querySelector(".rf-reiter").getBoundingClientRect());
+  await pg.mouse.move(vorher.left + 15, vorher.top + 20);
+  await pg.mouse.down();
+  await pg.mouse.move(vorher.left + 15, vorher.top + 80, { steps: 6 });
+  await pg.mouse.move(vorher.left + 15, vorher.top + 140, { steps: 6 });
+  await pg.mouse.up();
+  await pg.waitForTimeout(200);
+  const geschoben = await pg.evaluate(() => ({
+    top: Math.round(document.querySelector(".rf-reiter").getBoundingClientRect().top),
+    gemerkt: localStorage.getItem("dma_funk_reiter"),
+    offen: Boolean(document.querySelector(".rf-leiste")) }));
+  sage(geschoben.top - vorher.top > 100 && geschoben.gemerkt && !geschoben.offen,
+    "Den Reiter kann man am Rand verschieben — er merkt sich die Stelle und klappt dabei nicht auf",
+    Math.round(vorher.top) + " → " + geschoben.top + " px, gemerkt " + geschoben.gemerkt);
+
   await pg.evaluate(() => document.querySelector(".rf-reiter").click());
   await pg.waitForSelector(".rf-leiste", { timeout: 3000 });
   const auf = await pg.evaluate(() => {
