@@ -47922,62 +47922,40 @@
          Finger liegen leicht gefaechert, der Daumen steht nach unten
          ab, ueber den Knoecheln laufen die Strecksehnen.
          ============================================================= */
+      /* =============================================================
+         RUNDE 99 — DIE ERSTE HAND IST WIEDER DA
+         -------------------------------------------------------------
+         XANDER (23.09.2026): „Ich moechte die alte Hand wiederhaben,
+         die auf den Popo schlaegt, die erste, die wir hatten. Sie
+         soll nur richtig schlagen, also mach einfach die erste wieder
+         rein. Der Abdruck bleibt, und achte darauf, dass erst die
+         Hose runtergezogen wird, dann der Schlag kommt und dann der
+         Schrei — dass das alles richtig getimet ist."
+
+         Also steht hier wieder GENAU die Zeichnung aus Runde 80: die
+         flache Hand mit der Handflaeche voran, vier Finger
+         nebeneinander, der Daumen angelegt, zwei Handlinien. Zweimal
+         habe ich sie seitdem ersetzt (Profil in Runde 88, Draufsicht
+         in Runde 92) — beides wollte er nicht.
+         Zwei Dinge sind anders als 2026 in Runde 80, und beide, weil
+         er sie selbst bestellt hat:
+           · die Hautfarbe kommt aus lcHaut(), nicht mehr fest aus der
+             Zeichnung;
+           · sie trifft die BACKE (--klapsx/--klapsy) und nicht mehr
+             die Bildmitte — damals gab es den gezeichneten Popo noch
+             gar nicht.
+         ============================================================= */
       schicht.innerHTML =
-        '<svg class="lc-klaps-hand" viewBox="0 0 96 72" aria-hidden="true">'
-        /* Die Manschette am Handgelenk. */
-        + '<path d="M0 26 L13 22.5 L13 51 L0 47 Z" fill="#8d5fa8"/>'
-        /* DER HANDRUECKEN — von oben gesehen: breiter als hoch, zum
-           Handgelenk hin schmaler. */
-        + '<path d="M12 25 C12 20.5 17 18.5 24 18.2'
-        + ' C38 17.6 50 18.6 57 21.4'
-        + ' C61 23 61.6 28 61 33'
-        + ' C60.4 39 59 45 56.6 48.6'
-        + ' C54 52.4 46 53.6 34 53.2'
-        + ' C22 52.8 14 51.4 12.6 48.4'
-        + ' C11.4 45.6 11.6 30 12 25 Z"'
-        + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante + '" stroke-width="1.7"'
+        '<svg class="lc-klaps-hand" viewBox="0 0 64 62" aria-hidden="true">'
+        + '<path d="M14 58 C8 50 7 38 11 30 L15 34 L15 14 A4 4 0 0 1 23 14'
+        + ' L23 30 L25 10 A4 4 0 0 1 33 10 L33 30 L35 13 A4 4 0 0 1 43 13'
+        + ' L43 31 L47 21 A4.5 4.5 0 0 1 54 26 C54 42 48 54 40 59 Z"'
+        + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante + '" stroke-width="2"'
         + ' stroke-linejoin="round"/>'
-        /* DIE VIER FINGER, leicht gefaechert und verschieden lang —
-           Zeigefinger kuerzer als Mittelfinger, kleiner Finger am
-           kuerzesten. Jeder ist eine eigene Form mit runder Kuppe. */
-        + '<path d="M56 22.6 C64 20.4 76 19.6 86 20.8'
-        + ' C91.5 21.4 91.8 27.4 86.4 28.2'
-        + ' C76 29.8 64 29.6 56.6 28.4 Z"'
-        + ' fill="' + lcHaut().hell + '" stroke="' + lcHaut().kante + '" stroke-width="1.5"'
-        + ' stroke-linejoin="round"/>'
-        + '<path d="M57 30.4 C66 28.8 80 28.4 90 29.8'
-        + ' C95.4 30.6 95.4 36.4 90 37.2'
-        + ' C80 38.6 66 38.4 57.4 36.8 Z"'
-        + ' fill="' + lcHaut().hell + '" stroke="' + lcHaut().kante + '" stroke-width="1.5"'
-        + ' stroke-linejoin="round"/>'
-        + '<path d="M56.6 38.8 C65 37.6 78 37.6 87 39.2'
-        + ' C92 40.1 92 45.6 87 46.4'
-        + ' C78 47.8 65 47.4 56 45.6 Z"'
-        + ' fill="' + lcHaut().hell + '" stroke="' + lcHaut().kante + '" stroke-width="1.5"'
-        + ' stroke-linejoin="round"/>'
-        + '<path d="M54.6 47 C62 46.2 72 46.6 79 48.2'
-        + ' C83.6 49.2 83.4 54.2 79 55'
-        + ' C71 56.4 61 55.8 53.4 53.6 Z"'
-        + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante + '" stroke-width="1.5"'
-        + ' stroke-linejoin="round"/>'
-        /* DER DAUMEN — er steht nach unten ab und liegt in der
-           Draufsicht VOR dem Handruecken, mit seinem Ballen. */
-        + '<path d="M20 48 C22 56 28 64 36 67.4'
-        + ' C41.6 69.8 46.6 65.6 43.4 61'
-        + ' C39 54.8 34 50.2 28.6 47 Z"'
-        + ' fill="' + lcHaut().hell + '" stroke="' + lcHaut().kante + '" stroke-width="1.6"'
-        + ' stroke-linejoin="round"/>'
-        /* DIE STRECKSEHNEN ueber den Knoecheln — daran erkennt man
-           einen Handruecken und keine Handflaeche. */
-        + '<path d="M22 27.4 C32 25.8 44 25.6 54 26.8'
-        + ' M21.6 34.6 C32 33.4 44 33.4 54.6 34.4'
-        + ' M22 41.8 C32 41 43 41.2 53.4 42.2"'
-        + ' fill="none" stroke="' + lcHaut().schatten + '" stroke-width="1.1"'
+        /* Die Handlinien — ohne sie ist es eine Flosse. */
+        + '<path d="M19 40 C26 44 36 45 45 42 M20 47 C27 50 35 51 42 49"'
+        + ' fill="none" stroke="' + lcHaut().schatten + '" stroke-width="1.6"'
         + ' stroke-linecap="round" opacity=".55"/>'
-        /* Die Knoechelreihe dort, wo die Finger ansetzen. */
-        + '<path d="M57.6 23.4 C58.6 30 58.6 40 56.6 48"'
-        + ' fill="none" stroke="' + lcHaut().schatten + '" stroke-width="1.2"'
-        + ' stroke-linecap="round" opacity=".45"/>'
         + "</svg>"
         + '<span class="lc-klaps-wort">KLAPS</span>';
       /* =============================================================
@@ -48203,10 +48181,22 @@
          Die Verschiebung in den Keyframes rechnet in Prozent des
          HANDKASTENS, deshalb wird die Differenz durch 0,60 (Breite)
          bzw. 0,45 (Hoehe) geteilt. */
-      const ballenX = 20 + 60 * (37 / 96);
-      const ballenY = 27.5 + 45 * (36 / 72);
-      schicht.style.setProperty("--klapsx", ((backeMx - ballenX) / 0.60).toFixed(1) + "%");
-      schicht.style.setProperty("--klapsy", ((backeMy - ballenY) / 0.45).toFixed(1) + "%");
+      /* RUNDE 99 — NEU GERECHNET FUER DIE ERSTE ZEICHNUNG.
+         Die Hand ist 62 % der Blende breit und haengt mit
+         -31 % / -30 % am Mittelpunkt; bei viewBox 64 x 62 ist ihr
+         Kasten 62 * 62/64 = 60,1 % hoch. Ihr Kasten beginnt also bei
+         19 % (links) und 20 % (oben).
+         Die schlagende Flaeche ist der Ballen der Handflaeche, in der
+         Zeichnung bei (32, 40) von (64, 62):
+             x = 19 % + 62 %   * 32/64 = 50,0 %
+             y = 20 % + 60,1 % * 40/62 = 58,8 %
+         Die Verschiebung in den Keyframes rechnet in Prozent des
+         HANDKASTENS, deshalb wird die Differenz durch 0,62 (Breite)
+         bzw. 0,601 (Hoehe) geteilt. */
+      const ballenX = 19 + 62 * (32 / 64);
+      const ballenY = 20 + 60.1 * (40 / 62);
+      schicht.style.setProperty("--klapsx", ((backeMx - ballenX) / 0.62).toFixed(1) + "%");
+      schicht.style.setProperty("--klapsy", ((backeMy - ballenY) / 0.601).toFixed(1) + "%");
       /* Kommt sie von links, ist es die andere Hand — gespiegelt, sonst
          zeigt der Daumen nach aussen statt zum Koerper. */
       schicht.style.setProperty("--klapsdir", String(klapsSeite));

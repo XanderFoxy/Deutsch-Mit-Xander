@@ -1,5 +1,5 @@
 /* =====================================================================
-   SONDE RUNDE 88 — DER KLAPS KOMMT VON OBEN UND HINTEN
+   SONDE RUNDE 88/99 — DER KLAPS: DIE ERSTE HAND, UND SIE TRIFFT
    ---------------------------------------------------------------------
    XANDER: „ueberleg auch mal, wenn man jemanden schlaegt auf dem Popo,
    das bei den Emoji-Haenden, ob das auch richtig aussieht. Die kommen
@@ -20,14 +20,27 @@
    also quadratisch) und kam von UNTEN AUSSEN herauf. Das ist die Bahn
    einer Ohrfeige, nur seitenverkehrt.
 
-   Gemessen wird deshalb viererlei:
-     1. Ist die Zeichnung ein PROFIL (breit und flach) statt einer
-        Flaeche (quadratisch)?
-     2. Kommt die Hand von OBEN — liegt sie 200 ms vor dem Aufprall
-        hoeher als beim Aufprall?
-     3. Liegt sie beim Aufprall WAAGERECHT auf der Backe?
-     4. Kommt der Arm von AUSSEN — liegt die Manschette weiter vom
-        Bildmittelpunkt entfernt als die Fingerkuppen?
+   NACHGEZOGEN IN RUNDE 99, und zwar auf seinen ausdruecklichen Wunsch:
+   „Ich moechte die alte Hand wiederhaben, die auf den Popo schlaegt,
+    die erste, die wir hatten. Sie soll nur richtig schlagen, also mach
+    einfach die erste wieder rein. Der Abdruck bleibt, und achte darauf,
+    dass erst die Hose runtergezogen wird, dann der Schlag kommt und
+    dann der Schrei — dass das alles richtig getimet ist."
+
+   Damit sind ZWEI Regeln dieser Sonde hinfaellig: die Zeichnung ist
+   wieder die ERSTE (flache Handflaeche, viewBox 64 x 62, also fast
+   quadratisch), und die Bahn kommt wieder von UNTEN AUSSEN herauf.
+   Beides hat er selbst zurueckbestellt; was er zweimal verworfen hat,
+   war meine Verbesserung, nicht seine Bestellung.
+
+   Gemessen wird deshalb jetzt:
+     1. Ist die Zeichnung wieder die erste (fast quadratisch)?
+     2. Ist es ein BOGEN und kein Sprung — die Hand kommt aus der
+        Ferne und ist beim Aufprall am naechsten an der Backe?
+     3. Trifft sie wirklich, also liegt die Handflaeche im Aufprall
+        auf der Pobacke (das misst pruefe-runde87-klaps in Pixeln)?
+     4. Und die REIHENFOLGE: Waesche runter, dann der Schlag, dann der
+        Laut — in dieser Reihenfolge und nicht durcheinander.
    ===================================================================== */
 const http = require("http"), fs = require("fs"), path = require("path");
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
@@ -44,7 +57,7 @@ const sage = (gut, text, dazu) => {
 };
 
 (async () => {
-  console.log("RUNDE 88 — der Klaps\n");
+  console.log("RUNDE 88/99 — der Klaps\n");
   const js = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
   console.log("DIE ZEICHNUNG\n");
   const vb = /<svg class="lc-klaps-hand" viewBox="0 0 (\d+) (\d+)"/.exec(js);
@@ -58,9 +71,11 @@ const sage = (gut, text, dazu) => {
       … sie war die ganze Hand zu sehen, in der Draufsicht."
      Also DRAUFSICHT: breiter als hoch (eine Hand ist laenger als
      breit), aber keine Kante — zwischen 1,1 und 1,8. */
-  sage(breit / hoch >= 1.1 && breit / hoch <= 1.8,
-    "die ganze Hand in der Draufsicht \u2014 keine Kante, keine Scheibe",
-    breit + " x " + hoch + " = " + (breit / hoch).toFixed(2) + " (vorher 64 x 62 = 1,03)");
+  /* RUNDE 99 — zurueck zur ERSTEN Zeichnung: „mach einfach die erste
+     wieder rein." Die war 64 x 62, also fast quadratisch. */
+  sage(breit === 64 && hoch === 62,
+    "es ist wieder die erste Hand \u2014 die flache Handfl\u00e4che",
+    breit + " x " + hoch + " (die erste war 64 x 62)");
 
   const srv = http.createServer((q, a) => {
     let p = decodeURIComponent(q.url.split("?")[0]);
@@ -122,50 +137,85 @@ const sage = (gut, text, dazu) => {
   const hoch2 = await bei(450);
   const treffer = await bei(600);
   const nach = await bei(760);
-  sage(hoch1 && treffer && hoch1.my < treffer.my - 20,
-    "300 ms vor dem Aufprall ist die Hand deutlich weiter oben",
+  /* RUNDE 99 — die erste Bahn kommt von UNTEN AUSSEN herauf: 300 ms
+     vor dem Aufprall steht die Hand also TIEFER als im Aufprall.
+     (In Runde 88 stand hier das Gegenteil; das war die Bahn von oben,
+     die er zurueckgenommen hat.) */
+  sage(hoch1 && treffer && hoch1.my > treffer.my + 20,
+    "300 ms vor dem Aufprall holt die Hand unten aus",
     hoch1 ? "Mitte bei y = " + hoch1.my + ", im Aufprall " + treffer.my : "-");
-  sage(hoch2 && hoch2.my < treffer.my && hoch2.my > hoch1.my,
-    "und sie faellt dazwischen — es ist ein Bogen, kein Sprung",
-    hoch2 ? hoch1.my + " → " + hoch2.my + " → " + treffer.my : "-");
-  /* Beim Aufprall liegt sie flach. Vorher stand sie dort mit -6 bis
-     -14 Grad schraeg und kam von unten. */
-  sage(treffer && Math.abs(treffer.grad) <= 10,
-    "beim Aufprall liegt sie waagerecht auf der Backe",
+  sage(hoch2 && hoch2.my > treffer.my && hoch2.my < hoch1.my,
+    "und sie schwingt dazwischen herauf \u2014 es ist ein Bogen, kein Sprung",
+    hoch2 ? hoch1.my + " \u2192 " + hoch2.my + " \u2192 " + treffer.my : "-");
+  sage(treffer && Math.abs(treffer.grad) <= 16,
+    "beim Aufprall liegt sie fast waagerecht auf der Backe",
     treffer ? treffer.grad + " Grad" : "-");
   sage(nach && nach.my >= treffer.my - 2,
     "und drueckt danach noch einmal nach, statt sofort wegzuspringen",
     nach ? "y = " + nach.my + " nach " + treffer.my : "-");
 
-  console.log("\nWOHER DER ARM KOMMT\n");
-  const seiten = await pg.evaluate(() => {
-    const h = document.querySelector(".lc-klaps-hand");
-    const bl = h.parentElement;
-    const p = bl.getBoundingClientRect();
-    /* Die Manschette ist der erste Pfad der Zeichnung, die
-       Fingerkuppen sind die Kerben. */
-    const stueck = (i) => {
-      const e = h.querySelectorAll("path")[i].getBoundingClientRect();
-      return Number((e.left + e.width / 2 - p.left - p.width / 2).toFixed(1));
-    };
-    return { manschette: stueck(0), kuppen: stueck(3),
-             abdruck: (() => {
-               const a = bl.querySelector(".lc-klaps-abdruck");
-               if (!a) return null;
-               const e = a.getBoundingClientRect();
-               return Number((e.left + e.width / 2 - p.left - p.width / 2).toFixed(1));
-             })() };
+  console.log("\nDIE REIHENFOLGE: WAESCHE, SCHLAG, LAUT\n");
+  /* XANDER: „achte darauf, dass erst die Hose runtergezogen wird, dann
+     der Schlag kommt und dann der Schrei \u2014 dass das alles richtig
+     getimet ist."
+     Gemessen wird an dem, was wirklich passiert: wann die Waesche
+     unten ist, wann die Hand die Backe beruehrt, wann der Laut
+     bestellt ist. Der Laut wird nicht gehoert, sondern abgefangen —
+     eine Sonde hat keine Ohren, aber sie kann mitschreiben, wann er
+     bestellt wurde. */
+  const folge = await pg.evaluate(async () => {
+    window.DMA_PRUEF.effektBuehne();
+    await new Promise((f) => setTimeout(f, 200));
+    const platz = [...document.querySelectorAll(".lc-platz")].filter((p) =>
+      ((p.querySelector(".lc-platz-name") || {}).textContent || "")
+        .toLowerCase().indexOf("bea") >= 0)[0];
+    const start = performance.now();
+    window.DMA_PRUEFUNG.wirkung("klaps", "Bea", "Alex", {});
+    /* Zwei Bahnen mitschreiben: wie tief die Waesche steht und wie
+       weit die Hand von der Backe weg ist. Danach wird ausgewertet —
+       waehrend des Laufs zu urteilen fuehrt in die Irre (die Hand
+       kommt auf ihrem Bogen ZWEIMAL in die Naehe). */
+    const waescheBahn = [], handBahn = [];
+    for (let i = 0; i < 45; i++) {
+      await new Promise((f) => setTimeout(f, 30));
+      const jetzt = performance.now() - start;
+      const slip = platz.querySelector(".lc-popo-slip, .lc-popo-slip-hose, .lc-popo-band");
+      if (slip) {
+        const b = slip.getBoundingClientRect();
+        const p = platz.getBoundingClientRect();
+        waescheBahn.push([jetzt, b.top + b.height / 2 - p.top]);
+      }
+      const hand = platz.querySelector(".lc-klaps-hand");
+      const abdruck = platz.querySelector(".lc-klaps-abdruck");
+      if (hand && abdruck) {
+        const h = hand.getBoundingClientRect(), a = abdruck.getBoundingClientRect();
+        handBahn.push([jetzt, Math.hypot(h.left + h.width / 2 - (a.left + a.width / 2),
+                                         h.top + h.height / 2 - (a.top + a.height / 2))]);
+      }
+    }
+    /* Die Waesche ist unten, sobald sie ihren tiefsten Punkt erreicht
+       hat (danach bleibt sie liegen). */
+    let tiefste = -1, waesche = 0;
+    waescheBahn.forEach(([t, y]) => { if (y > tiefste) { tiefste = y; waesche = Math.round(t); } });
+    /* Die Hand trifft dort, wo sie der Backe am naechsten ist. */
+    let naeheste = 1e9, schlag = 0;
+    handBahn.forEach(([t, d]) => { if (d < naeheste) { naeheste = d; schlag = Math.round(t); } });
+    return { waesche: waesche, schlag: schlag,
+             abstand: Math.round(naeheste), tief: Math.round(tiefste) };
   });
-  sage(Math.abs(seiten.manschette) > Math.abs(seiten.kuppen),
-    "die Manschette liegt weiter aussen als die Fingerkuppen — der Arm kommt von aussen",
-    "Manschette " + seiten.manschette + ", Kuppen " + seiten.kuppen + " (0 = Bildmitte)");
-  sage(seiten.abdruck !== null
-    && Math.sign(seiten.abdruck) === Math.sign(seiten.manschette),
-    "und der Abdruck bleibt auf der Backe, auf die geschlagen wurde",
-    "Abdruck bei " + seiten.abdruck);
+  sage(folge.waesche > 0 && folge.schlag > 0 && folge.waesche <= folge.schlag,
+    "erst ist die W\u00e4sche unten, dann trifft die Hand",
+    "W\u00e4sche unten bei " + folge.waesche + " ms, Schlag bei " + folge.schlag
+    + " ms (Abstand zur Backe dann " + folge.abstand + " px)");
+  /* Und der Laut steht im Programm 90 ms NACH dem Aufprall — das ist
+     nachlesbar und braucht keine Ohren. */
+  const tonZeile = /lcTonSpaeter\(lcSchmerzTon\(platz\), (\d+)/.exec(js);
+  sage(tonZeile && Number(tonZeile[1]) > 600,
+    "und der Schmerzlaut kommt NACH dem Schlag",
+    tonZeile ? tonZeile[1] + " ms (Aufprall bei 600 ms)" : "nicht gefunden");
 
   await br.close(); srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)\n"
-                     : "\nVon oben und hinten, flach von der Kante — so schlaegt man auf den Popo.\n");
+                     : "\nDie erste Hand ist wieder da, sie trifft die Backe, und die Reihenfolge stimmt.\n");
   process.exit(fehler ? 1 : 0);
 })();

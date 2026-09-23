@@ -28012,13 +28012,11 @@ code, pre {
   position: absolute;
   left: 50%;
   top: 50%;
-  /* RUNDE 92 — 60 statt 52 Prozent, und die Zeichnung ist jetzt die
-     DRAUFSICHT auf die ganze Hand (viewBox 96 x 72 statt 70 x 30).
-     XANDER: „sie war die ganze Hand zu sehen, in der Draufsicht."
-     Eine Backe ist 44 % der Blende breit; eine Hand, die daraufliegt,
-     ragt darueber hinaus — genau das tun 60 %. */
-  width: 60%;
-  margin: -22.5% 0 0 -30%;
+  /* RUNDE 99 — zurueck auf die Masse der ERSTEN Hand (viewBox 64 x 62):
+     62 % breit, also 60,1 % hoch. XANDER: „mach einfach die erste
+     wieder rein." */
+  width: 62%;
+  margin: -30% 0 0 -31%;
   z-index: 6;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .4));
   animation: lcKlapsHandR80 2.2s cubic-bezier(.3, 0, .2, 1) both;
@@ -28059,30 +28057,34 @@ code, pre {
    Koerpermitte.
    ===================================================================== */
 @keyframes lcKlapsHandR80 {
-  /* Ausholen: hoch ueber der Backe, die Handflaeche schon nach unten. */
+  /* RUNDE 99 — DIE BAHN DER ERSTEN HAND, NUR MIT RICHTIGEM ZIEL.
+     XANDER: „mach einfach die erste wieder rein. Sie soll nur richtig
+     schlagen."
+     Die Bahn ist wieder die aus Runde 80: sie holt UNTEN AUSSEN aus,
+     schwingt herauf und trifft von unten. Damals traf sie die
+     Bildmitte, weil es den gezeichneten Popo noch gar nicht gab;
+     jetzt trifft sie die BACKE (--klapsx/--klapsy). Der Aufprall
+     liegt weiterhin bei 27,3 % von 2,2 s = 600 ms, und dort steht
+     auch der Abdruck und der Schmerzlaut (690 ms). */
   0%    { opacity: 0;
-          transform: translate(calc(var(--wx, 180%) * .55), -135%) rotate(calc(var(--klapsdir, 1) * 46deg)) scale(calc(var(--klapsdir, 1) * -.78), .78); }
+          transform: translate(var(--wx, 180%), 120%) rotate(calc(var(--klapsdir, 1) * -38deg)) scale(calc(var(--klapsdir, 1) * .7), .7); }
   9%    { opacity: 1;
-          transform: translate(calc(var(--wx, 180%) * .42), -112%) rotate(calc(var(--klapsdir, 1) * 44deg)) scale(calc(var(--klapsdir, 1) * -.92), .92); }
+          transform: translate(calc(var(--wx, 180%) * .7), 92%) rotate(calc(var(--klapsdir, 1) * -30deg)) scale(calc(var(--klapsdir, 1) * .9), .9); }
   /* Kurz halten — ohne das Innehalten sieht man das Ausholen nicht. */
   18%   { opacity: 1;
-          transform: translate(calc(var(--wx, 180%) * .46), -122%) rotate(calc(var(--klapsdir, 1) * 50deg)) scale(calc(var(--klapsdir, 1) * -.94), .94); }
-  /* Der Bogen nach unten — hier ist sie am schnellsten. */
-  23%   { opacity: 1;
-          transform: translate(calc(var(--klapsx, 0%) + var(--wx, 180%) * .16), calc(var(--klapsy, 42%) - 62%)) rotate(calc(var(--klapsdir, 1) * 24deg)) scale(calc(var(--klapsdir, 1) * -1), 1); }
-  /* 27,3 % von 2,2 s = 600 ms: DER AUFPRALL — die Unterkante liegt
-     auf der Backe. Sie staucht sich dabei: eine Hand, die trifft,
-     ist einen Augenblick flacher als eine, die fliegt. */
+          transform: translate(calc(var(--wx, 180%) * .75), 100%) rotate(calc(var(--klapsdir, 1) * -34deg)) scale(calc(var(--klapsdir, 1) * .92), .92); }
+  /* DER AUFPRALL. Sie staucht sich dabei — eine Hand, die trifft, ist
+     einen Augenblick breiter als eine, die fliegt. */
   27.3% { opacity: 1;
-          transform: translate(var(--klapsx, 0%), var(--klapsy, 42%)) rotate(calc(var(--klapsdir, 1) * -4deg)) scale(calc(var(--klapsdir, 1) * -1.06), .88); }
+          transform: translate(var(--klapsx, 0%), var(--klapsy, 42%)) rotate(calc(var(--klapsdir, 1) * -6deg)) scale(calc(var(--klapsdir, 1) * 1.06), .92); }
   /* Nachdruecken — die Hand bleibt einen Moment auf der Backe. */
   33%   { opacity: 1;
-          transform: translate(var(--klapsx, 0%), calc(var(--klapsy, 42%) + 6%)) rotate(calc(var(--klapsdir, 1) * -2deg)) scale(calc(var(--klapsdir, 1) * -1.02), .96); }
-  /* Und wieder hoch — langsamer, als sie gekommen ist. */
+          transform: translate(var(--klapsx, 0%), calc(var(--klapsy, 42%) + 8%)) rotate(calc(var(--klapsdir, 1) * -14deg)) scale(calc(var(--klapsdir, 1) * 1), 1); }
+  /* Und wieder weg — langsamer, als sie gekommen ist. */
   62%   { opacity: .9;
-          transform: translate(calc(var(--wx, 180%) * .38), -96%) rotate(calc(var(--klapsdir, 1) * 36deg)) scale(calc(var(--klapsdir, 1) * -.94), .94); }
+          transform: translate(calc(var(--wx, 180%) * .6), 86%) rotate(calc(var(--klapsdir, 1) * -28deg)) scale(calc(var(--klapsdir, 1) * .92), .92); }
   100%  { opacity: 0;
-          transform: translate(calc(var(--wx, 180%) * .55), -135%) rotate(calc(var(--klapsdir, 1) * 46deg)) scale(calc(var(--klapsdir, 1) * -.8), .8); }
+          transform: translate(var(--wx, 180%), 120%) rotate(calc(var(--klapsdir, 1) * -38deg)) scale(calc(var(--klapsdir, 1) * .72), .72); }
 }
 /* DAS BILD FEDERT NACH OBEN WEG — getroffen wird von unten. */
 .lc-geklapst { animation: lcGeklapstR80 2.2s cubic-bezier(.3, 0, .3, 1) both; }
