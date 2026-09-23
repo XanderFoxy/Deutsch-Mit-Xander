@@ -32442,3 +32442,8 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   .lc-sabber-lache { animation: none; width: 34%; height: 15%; opacity: .85; }
   .lc-sabber-rinne { animation: none; opacity: .82; }
 }
+
+/* RUNDE 100 — zum schmaleren Gleis (siehe lcLokGleise): Schwellen und
+   Schienen etwas feiner, damit das Gleis die Lok nicht mehr ueberragt. */
+.lc-lok-schwelle { stroke-width: 3.6; }
+.lc-lok-schiene  { stroke-width: 2.2; }
