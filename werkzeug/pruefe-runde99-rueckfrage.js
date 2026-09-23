@@ -63,6 +63,19 @@ const sage = (gut, text, dazu) => {
         const r = (t, fertig) => Object.assign([{ transcript: t }], { isFinal: fertig });
         /* RUNDE 100 — so kam es von seinem Android wirklich an: jeder
            WACHSENDE Stand des Satzes als eigenes fertiges Ergebnis. */
+        /* RUNDE 100 — „🎤 startet gar nicht": drei Arten, wie es auf einem
+           echten Geraet schiefgehen kann. */
+        if (window.__rfArt === "fehler") {
+          setTimeout(() => { this.onerror && this.onerror({ error: "audio-capture" });
+            this.onend && this.onend(); }, 30);
+          return;
+        }
+        if (window.__rfArt === "stumm") return;          /* springt nie an */
+        if (window.__rfArt === "haengt") {                /* laeuft, aber ⏹ bringt kein Ende */
+          setTimeout(() => this.onstart && this.onstart(), 20);
+          this.stop = () => {};
+          return;
+        }
         if (window.__rfAndroid) {
           const staende = ["wenn", "wenn man", "wenn man sich", "wenn man sich auf der Leiter",
                            "sonst", "sonst sieht das", "sonst sieht das zusammengeklebt aus"];
@@ -292,6 +305,45 @@ const sage = (gut, text, dazu) => {
   sage(andro === "Wenn man sich auf der Leiter sonst sieht das zusammengeklebt aus",
     "Android (jeder Zwischenstand als „fertig“): jedes Wort steht nur EINMAL im Feld",
     JSON.stringify(andro));
+
+  /* RUNDE 100 — XANDER: „🎤 startet gar nicht". Jeder Fehlschlag muss
+     SICHTBAR sein und als Meldung bei Claude ankommen; nichts darf
+     haengenbleiben. */
+  const mikTipp = () => pg.evaluate(() =>
+    document.querySelector(".rf-vorschlag").querySelector(".rf-mik").click());
+  const mikStand = () => pg.evaluate(() => ({
+    knopf: document.querySelector(".rf-vorschlag .rf-mik").textContent,
+    live: (document.querySelector(".rf-vorschlag .rf-live") || {}).textContent || "",
+    funk: window.__rf.funk.map((f) => f.text) }));
+  await pg.evaluate(() => { window.__rfArt = "fehler"; });
+  await mikTipp();
+  await pg.waitForTimeout(300);
+  let ms = await mikStand();
+  sage(ms.knopf === "🎤" && /Mikrofon/.test(ms.live),
+    "Fehler „audio-capture“: der Grund steht sichtbar da", ms.live);
+  sage(ms.funk.some((t) => /Diktat-Fehler: audio-capture/.test(t)),
+    "... und der Fehlercode kommt als Meldung bei Claude an",
+    ms.funk.filter((t) => /Diktat/.test(t)).join(" | ") || "keine");
+  await pg.evaluate(() => { window.__rfArt = "stumm"; });
+  await mikTipp();
+  await pg.waitForTimeout(4400);
+  ms = await mikStand();
+  sage(ms.knopf === "🎤" && /nicht angesprungen/.test(ms.live),
+    "Springt das Mikrofon nie an, sagt es das nach 4 s und haengt nicht", ms.live);
+  await pg.evaluate(() => { window.__rfArt = "haengt"; window.__rfRunden = 0; });
+  await mikTipp();
+  await pg.waitForTimeout(200);
+  await mikTipp();                      /* ⏹ — aber es kommt kein Ende */
+  await pg.waitForTimeout(1000);
+  ms = await mikStand();
+  sage(ms.knopf === "🎤", "⏹ ohne Antwort des Browsers: nach 0,8 s ist es trotzdem aus", ms.knopf);
+  await mikTipp();
+  await pg.waitForTimeout(200);
+  const rn = await pg.evaluate(() => window.__rfRunden);
+  sage(rn === 2, "... und der naechste Tipp startet wirklich neu", rn + " Starts");
+  await mikTipp();
+  await pg.waitForTimeout(1000);
+  await pg.evaluate(() => { window.__rfArt = ""; });
 
   /* Zuklappen und Schreiben im Chat: der Reiter geht aus dem Weg. */
   await pg.screenshot({ path: "/tmp/claude-0/walkie-offen.png" });

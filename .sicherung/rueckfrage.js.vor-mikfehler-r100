@@ -488,40 +488,10 @@ window.Rueckfrage = (function () {
     mik.lang = "de-DE";
     mik.continuous = true;
     mik.interimResults = true;
-    diktat = { mik: mik, klasse: klasse, anfang: feld.value.replace(/\s*$/, ""),
-               an: false, gehoert: false, fehler: "", seit: Date.now() };
-    diktatKnopfZeigen(klasse, true, "Mikrofon wird eingeschaltet \u2026");
-    /* RUNDE 100 — XANDER (Walkie-Talkie, Frage Diktat): „🎤 startet gar
-       nicht". Hier nicht nachzustellen — der Startaufruf ist derselbe wie
-       in der Fassung, die bei ihm lief (523). Gefunden habe ich aber zwei
-       Stellen, an denen es GENAU so aussieht:
-         1. Endet die Erkennung sofort mit einem Fehler, den ich nicht
-            kannte (z. B. „audio-capture", „aborted",
-            „language-not-supported"), sprang der Knopf ohne jedes Wort
-            zurueck auf 🎤.
-         2. Kam nach ⏹ kein „onend", blieb das alte Diktat haengen, und
-            jeder weitere Tipp hielt nur das tote an.
-       Jetzt steht JEDER Grund da, ein Waechter beendet ein Diktat, das
-       nach 4 s noch nicht laeuft, und der Fehlercode geht als Meldung an
-       mich — damit ich den echten Grund sehe statt zu raten. */
-    var zeigenAn = function () {
-      if (!diktat || diktat.mik !== mik || diktat.an) return;
-      diktat.an = true;
-      diktatKnopfZeigen(klasse, true, "Ich h\u00f6re zu \u2026 sprich einfach.");
-    };
-    mik.onstart = zeigenAn;
-    mik.onaudiostart = zeigenAn;
-    setTimeout(function () {
-      if (diktat && diktat.mik === mik && !diktat.an) {
-        try { mik.abort(); } catch (e) {}
-        diktatFehlerMelden("kein-start", "");
-        diktatEnde("Das Mikrofon ist nach 4 Sekunden nicht angesprungen. Ist es gerade in einer anderen App belegt?");
-      }
-    }, 4000);
+    diktat = { mik: mik, klasse: klasse, anfang: feld.value.replace(/\s*$/, "") };
+    diktatKnopfZeigen(klasse, true, "Ich h\u00f6re zu \u2026 sprich einfach.");
     mik.onresult = function (ev) {
       if (!diktat || diktat.mik !== mik) return;
-      diktat.an = true;
-      diktat.gehoert = true;
       var fest = [], zwischen = "";
       for (var i = 0; i < ev.results.length; i++) {
         var stueck = String(ev.results[i][0].transcript || "").trim();
@@ -545,50 +515,15 @@ window.Rueckfrage = (function () {
     };
     mik.onerror = function (ev) {
       if (!diktat || diktat.mik !== mik) return;
-      var w = (ev && ev.error) || "unbekannt";
-      diktat.fehler = w;
-      /* „no-speech" ist kein Defekt — er hat nur (noch) nichts gesagt. */
-      if (w !== "no-speech") diktatFehlerMelden(w, (ev && ev.message) || "");
-      var grund = {
-        "not-allowed": "Das Mikrofon ist nicht erlaubt \u2013 bitte im Browser freigeben.",
-        "service-not-allowed": "Die Spracherkennung ist in diesem Browser gesperrt.",
-        "network": "Die Spracherkennung braucht Netz \u2013 gerade keins.",
-        "audio-capture": "Kein Mikrofon gefunden \u2013 oder eine andere App benutzt es gerade.",
-        "aborted": "Die Spracherkennung wurde vom Browser abgebrochen.",
-        "language-not-supported": "Deutsch wird von der Spracherkennung dieses Browsers nicht angeboten.",
-        "no-speech": "Ich habe nichts geh\u00f6rt \u2013 nochmal \ud83c\udfa4 und gleich sprechen."
-      }[w] || ("Die Spracherkennung meldet: " + w);
-      diktatEnde(grund);
-    };
-    mik.onend = function () {
-      if (!diktat || diktat.mik !== mik) return;
-      /* Ende ohne Fehler und ohne ein einziges Wort: auch das sagen. */
-      if (!diktat.gehoert && Date.now() - diktat.seit < 1500) {
-        diktatFehlerMelden("sofort-ende", "");
-        diktatEnde("Die Spracherkennung hat sofort wieder aufgeh\u00f6rt \u2013 ich habe die Meldung bekommen.");
-        return;
+      var w = ev && ev.error;
+      if (w === "not-allowed" || w === "service-not-allowed") {
+        diktatEnde("Das Mikrofon ist nicht erlaubt \u2013 bitte im Browser freigeben.");
+      } else if (w === "network") {
+        diktatEnde("Die Spracherkennung braucht Netz \u2013 gerade keins.");
       }
-      diktatEnde();
     };
-    try { mik.start(); } catch (e) {
-      diktatFehlerMelden("start-wirft", String((e && e.message) || e));
-      diktatEnde("Die Spracherkennung lie\u00df sich nicht starten.");
-    }
-  }
-  /* Der Fehlercode geht als kleine Meldung an Claude — einmal je Code
-     und Sitzung, damit nichts zugemuellt wird. */
-  var diktatGemeldet = {};
-  function diktatFehlerMelden(code, text) {
-    if (diktatGemeldet[code]) return;
-    diktatGemeldet[code] = true;
-    var sb = zugang();
-    if (!sb) return;
-    var geraet = String(navigator.userAgent || "").slice(0, 160);
-    try {
-      sb.from("betreiber_funk").insert({ von: "xander",
-        text: "[automatisch] Diktat-Fehler: " + code + (text ? " (" + text + ")" : "") + " \u00b7 " + geraet })
-        .then(function () {}, function () {});
-    } catch (e) {}
+    mik.onend = function () { if (diktat && diktat.mik === mik) diktatEnde(); };
+    try { mik.start(); } catch (e) { diktatEnde("Die Spracherkennung lie\u00df sich nicht starten."); }
   }
 
   function textfeld(klasse, platzhalter, wert, tun) {
@@ -609,9 +544,6 @@ window.Rueckfrage = (function () {
         if (diktat) {
           var d = diktat;
           try { d.mik.stop(); } catch (e) { diktatEnde(); }
-          /* Kommt nach ⏹ kein Ende, haengt es nicht fest: nach 0,8 s
-             ist es trotzdem aus, und der naechste Tipp startet neu. */
-          setTimeout(function () { if (diktat === d) diktatEnde(); }, 800);
           return;
         }
         diktatStarten(klasse);
