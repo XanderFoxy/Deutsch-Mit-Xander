@@ -200,8 +200,14 @@ function tonMessen(name) {
     "das Aschehaeufchen hebt sich vom hellen Grund ab");
 
   /* „es soll hier auch nicht Buehne legen stehen, sondern Bombe legen." */
-  sage(/"Bombe legen", "bombe", "alle"/.test(app) && !/B\\u00fchne leeren/.test(app),
-    "die Kachel heisst „Bombe legen\u201c");
+  /* RUNDE 98 — die vier Kacheln unter „Alle" haengen ihr „alle" nicht
+     mehr selbst an, sondern bekommen es beim Schicken
+     (schicken("/" + c + " alle")). Die Aufschrift ist dieselbe
+     geblieben, und genau die hat er verlangt. */
+  sage(/\["\\ud83d\\udca3", "Bombe legen", "bombe"\]/.test(app)
+    && /knopf\(z, w, \(\) => schicken\("\/" \+ c \+ " alle"\)\);/.test(app)
+    && !/B\\u00fchne leeren/.test(app),
+    "die Kachel heisst „Bombe legen\u201c und schickt /bombe alle");
   sage(/\["\\ud83e\\uddaf", "Granate",     "granate"\]\]\],/.test(app),
     "die Granate steht im Bomben-Untermenue");
 

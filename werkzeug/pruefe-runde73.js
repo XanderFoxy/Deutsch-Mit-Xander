@@ -193,8 +193,15 @@ pruefe("es gibt ein Werkzeug, das beide gemeinsam setzt",
    Zusatz nebeneinander hinaus. Fuer die Kacheln unter „Alle" aendert
    das nichts: sie haben keinen Namen, also bleibt „alle" als einziger
    Anhang — und genau das ist die Regel, die Xander gemeint hat. */
+/* RUNDE 98 — das „Alle"-Menue wird nicht mehr aus einer eigenen
+   Liste gebaut, sondern aus DERSELBEN Kachelwand wie das Platzmenue.
+   XANDER: „Ich moechte eigentlich alles, was man irgendwie machen
+   kann, moechte ich bei allen gleichzeitig machen." Damit steht das
+   Wort „alle" nicht mehr in jeder einzelnen Kachel, sondern wird
+   beim Schicken angehaengt — fuer ALLE Kacheln statt fuer vier. Die
+   Regel prueft deshalb den Weg, nicht mehr die eine Kachel. */
 pruefe("die Effekte fuer ALLE schicken wirklich das Wort „alle“",
-  /\["\\ud83d\\ude18", "K\\u00fcssen", "kuss", "alle"\]/.test(js)
+  /knopf\(zeichen, wort, \(\) => schicken\("\/" \+ befehl \+ \(ohneNamen \? "" : " alle"\)\)\);/.test(js)
   && /\+ \(name \? " " \+ name : ""\) \+ \(zusatz \? " " \+ zusatz : ""\)/.test(js));
 pruefe("schwebende Panels gehen auch im Leerraum zu",
   /const LC_BEDIENBAR = /.test(js)
@@ -204,8 +211,14 @@ pruefe("und sie bleiben auf dem Bildschirm",
 pruefe("die Birne dreht trocken statt zu quietschen",
   ton("birnedrehen") && gelistet("birnedrehen")
   && /gluehbirne:\s+\{ ton: "birnedrehen"/.test(js));
-pruefe("und sonst quietscht nur noch die Bremse beim Fahren",
-  (js.match(/lcTonSpaeter\("quietschen"/g) || []).length === 2
+/* RUNDE 98 — es quietscht jetzt an DREI Stellen, und die dritte hat
+   er selbst bestellt: „dann wischt man die Scheibe und dann quietscht
+   es so, damit man das Putzen [hoert]". Zwei davon sind die Bremse
+   (Fahren und gemeinsames Fahren), die dritte ist das Putzen. Was
+   weiterhin gilt: es quietscht nie SOFORT beim Ausloesen
+   (lcTonZu) — immer erst, wenn die Bewegung dort ankommt. */
+pruefe("es quietscht nur die Bremse und der Putzlappen \u2014 und nie zu frueh",
+  (js.match(/lcTonSpaeter\("quietschen"/g) || []).length === 3
   && !/lcTonZu\("quietschen"\)/.test(js));
 pruefe("das Geld faellt schneller",
   /\(1\.9 \+ Math\.random\(\) \* 1\.4\)/.test(js)

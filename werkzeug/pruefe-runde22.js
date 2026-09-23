@@ -54,8 +54,16 @@ const pruefe = (was, gut, zusatz) => {
     "eigener Zweig in befehlAusfuehren");
   pruefe("und es zieht zu MIR",
     /befehlAusfuehren\("\/heb " \+ wenL\.name \+ " " \+ freiL\.nummer\)/.test(lc));
+  /* RUNDE 98 — beide stehen jetzt unter EINER Kachel „Holen":
+     XANDER: „Ich glaub, weil dieses ‚Woanders hinsetzen‘ von der
+     Schrift her den Rahmen sprengt — das kannst du einfach ‚Holen‘
+     nennen oder Haken oder Lasso." Dazu kam in derselben Runde der
+     Kran. Die Regel bleibt dieselbe (beide sind im Platzmenue zu
+     finden), nur der Weg dorthin ist einer geworden. */
   pruefe("im Platzmenue stehen beide nebeneinander",
-    /knopf\("\\ud83e\\ude9d", "Angeln"/.test(js) && /knopf\("\\ud83e\\udd20", "Lasso"/.test(js));
+    /knopf\("\\ud83e\\ude9d", "Angeln"/.test(js)
+    && /knopf\("\\ud83e\\udd20", "Lasso \\u2014 zu mir"/.test(js)
+    && /function lcHolenMenue/.test(js));
 
   console.log("\nDER WEG WIRD ERST GEZEICHNET, DANN GEWAEHLT\n");
   pruefe("es gibt nur noch EINE Zeichnen-Zeile",

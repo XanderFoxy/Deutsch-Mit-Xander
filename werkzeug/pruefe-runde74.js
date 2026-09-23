@@ -139,8 +139,12 @@ pruefe("der Queue stoesst durch, statt zurueckzuziehen",
 pruefe("und die Kugel rollt nicht zum Spieler zurueck",
   /@keyframes lcBillardKugelR74/.test(css)
   && /56%, 88% \{ opacity: 1; transform: translate\(-8%, 0\)/.test(css));
+/* RUNDE 98 — dazugekommen ist der Kran: XANDER: „Dann haette ich
+   gerne den Kran dafuer, dass man jemand anderen noch auf einen Platz
+   heben kann." Es sind also drei Werkzeuge statt zwei — die Regel
+   bleibt dieselbe: das WERKZEUG entscheidet, nicht die Sitzreihe. */
 pruefe("das Werkzeug entscheidet, nicht die Sitzreihe",
-  /var wieH = lassoZieht \? "lasso" : "heber";/.test(lc)
+  /var wieH = lassoZieht \? "lasso" : \(kranZieht \? "kranheben" : "heber"\);/.test(lc)
   && !/reiheNeu < reiheAlt \? "heber" : "lasso"/.test(lc));
 pruefe("die Angel bekommt ihr Ziel mitgeschickt",
   /wirkung: wieH, wen: wenH\.name, ziel: nummerH/.test(lc)

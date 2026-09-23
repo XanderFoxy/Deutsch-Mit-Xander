@@ -45,9 +45,16 @@ const lc = ohneK(fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8"));
     /function lcReise\(wen, von, art, tausch[,)]/.test(js));
   /* Nur Frisbee und Roehre: bei allen anderen Reisen bliebe einer
      von beiden in der Luft, weil es fuer ihn keinen Rueckweg gibt. */
-  pruefe("und er gilt nur fuer Frisbee und Roehre",
-    /const tauschbar = tausch && \(art === "frisbee" \|\| art === "rohr"\);/.test(js)
-    && /if \(!zu\.frei && !tauschbar\) \{/.test(js));
+  /* RUNDE 98 — DIE ZWEITE HAELFTE DIESER REGEL IST AUFGEHOBEN, UND
+     ZWAR VON IHM SELBST: „Da wo man hinfahren moechte kann man
+     hinfahren, egal ob da jemand sitzt, dann ueberfaehrt man ihn
+     eben. Ich habe niemals etwas anderes gesagt."
+     Die Sperre „auf einen besetzten Platz geht es nicht" gibt es
+     deshalb nicht mehr — es gibt gar nichts mehr zu lockern. Was
+     bleibt, ist der TAUSCH: nur Frisbee und Roehre tauschen die
+     Plaetze wirklich, bei allen anderen bliebe einer in der Luft. */
+  pruefe("der Tausch gilt nur fuer Frisbee und Roehre",
+    /const tauschbar = tausch && \(art === "frisbee" \|\| art === "rohr"\);/.test(js));
   pruefe("auf einem LEEREN Platz ist es die gewoehnliche Reise",
     /if \(tauschbar && zu\.frei\) \{[\s\S]{0,200}?tausch = false;/.test(js));
   pruefe("der Tausch faehrt mit der Nachricht, nicht nur beim Absender",
