@@ -31930,3 +31930,20 @@ code, pre {
     transform: rotate(var(--w, 0deg)) translateY(calc(var(--gross, 64px) * -0.24)) scale(1);
   }
 }
+
+/* RUNDE 99 — die Leiter zwischen zwei Plaetzen. Sie steckt als erstes
+   Kind im Startplatz und liegt mit z-index -1 hinter beiden Bildern. */
+.lc-leiter-weg {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  transform-origin: 50% 0;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3));
+  animation: lcLeiterWegR99 .45s ease-out both;
+}
+.lc-leiter-weg svg { display: block; width: 100%; height: 100%; }
+@keyframes lcLeiterWegR99 {
+  from { opacity: 0; transform: scaleY(.6) rotate(-6deg); }
+  to   { opacity: 1; transform: scaleY(1) rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) { .lc-leiter-weg { animation: none; } }

@@ -12076,6 +12076,70 @@ window.LiveChat = (function () {
        durch zu AM_PLATZ, damit „/kopfhoerer Xander Fox" weiter die
        blossen Kopfhoerer auf den Platz von Xander Fox setzt. */
     /* =========================================================
+       RUNDE 99 — DIE LEITER WECHSELT DEN PLATZ
+       ---------------------------------------------------------
+       XANDER (23.09.2026): „Die Leiter ist auch nicht logisch, weil
+       wenn sie angewendet wird, soll sie den Platz entsprechend
+       wechseln. Wenn man sie einmal klickt, dann wird entschieden je
+       nach Position: ist man oben, dann klettert man nach unten, ist
+       man unten, dann klettert man nach oben — und bleibt auch da."
+       Bisher kletterte das Bild nur am eigenen Platz hinunter und
+       wieder hinauf und kam nirgends an.
+       JETZT: ein Klick, und die Reihe entscheidet. Obere Reihe ->
+       der Platz direkt darunter, untere Reihe -> der Platz direkt
+       darueber. Sitzt dort jemand, tauscht er mit — dieselbe Regel
+       wie beim Heben. Und die Sitzordnung aendert sich erst, wenn
+       das Bild OBEN bzw. UNTEN angekommen ist (Runde 98: „erst die
+       Animation, dann der Platzwechsel").
+       ACHTUNG, REIHENFOLGE: steht VOR „if (AM_PLATZ[art])", sonst
+       faengt die Tabelle den Befehl ab und es bliebe beim alten
+       Klettern auf der Stelle.
+       ========================================================= */
+    if (art === "leiter") {
+      if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
+      var plaetzeL = plaetzeBauen();
+      var nameL = String(rest || "").trim();
+      var wenL = nameL ? personNachName(nameL) : null;
+      if (nameL && !wenL) {
+        return systemZeile("Ich finde niemanden mit dem Namen \u201e" + nameL + "\u201c im Raum.");
+      }
+      var seinerL = null;
+      plaetzeL.forEach(function (pl) {
+        if (wenL ? pl.id === wenL.id : pl.ich) seinerL = pl;
+      });
+      if (!seinerL) {
+        return systemZeile((wenL ? wenL.name + " sitzt" : "Du sitzt") + " gerade auf keinem Platz.");
+      }
+      var jeReiheL = 4;
+      var reihenL = Math.ceil(PLAETZE / jeReiheL);
+      var reiheL = Math.ceil(seinerL.nummer / jeReiheL);
+      var zielL = reiheL >= reihenL ? seinerL.nummer - jeReiheL : seinerL.nummer + jeReiheL;
+      if (zielL < 1 || zielL > PLAETZE) return systemZeile("Hier geht keine Leiter hin.");
+      var dortL = null;
+      plaetzeL.forEach(function (pl) { if (pl.nummer === zielL && !pl.leer) dortL = pl; });
+      var hinaufL = zielL < seinerL.nummer;
+      var werL = seinerL.name || (wenL && wenL.name) || zustand.ichName;
+      var satzL = (seinerL.ich ? zustand.ichName : zustand.ichName + " stellt " + werL + " eine Leiter hin \u2014 " + werL)
+        + " klettert " + (hinaufL ? "hinauf" : "hinunter") + " auf Platz " + zielL
+        + (dortL ? " \u2014 " + dortL.name + " klettert auf " + seinerL.nummer : "")
+        + "  \ud83e\uddd7";
+      var raumL = zustand.raum;
+      var idL = seinerL.id;
+      setTimeout(function () {
+        try {
+          if (zustand.raum !== raumL) return;
+          sitzTausch[idL] = zielL - 1;
+          if (dortL) sitzTausch[dortL.id] = seinerL.nummer - 1;
+          senden({ art: "sitzplatz", ordnung: sitzTausch, text: satzL });
+          melden();
+        } catch (e) {}
+        /* 3050 ms: das Bild ist bei 92 % der Kletterei (3200 ms) oben
+           bzw. unten angekommen und steht dort. Dieselbe Zahl steht in
+           app.js (lcLeiter) — wer eine aendert, muss beide aendern. */
+      }, 3050);
+      return anAlle("aktion", satzL, { wirkung: "leiter", wen: werL, ziel: zielL });
+    }
+    /* =========================================================
        RUNDE 99 — WIE DER BH AUFGEHT
        ---------------------------------------------------------
        XANDER: „der BH kann hinten aufgehen, oder ueber den Kopf,

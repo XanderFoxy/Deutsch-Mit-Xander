@@ -37174,7 +37174,95 @@
      „/leiter" allein gilt mir selbst, „/leiter Name" laesst den
      anderen klettern — beides, wie gewuenscht.
      ===================================================================== */
-  function lcLeiter(wen) {
+  /* =====================================================================
+     RUNDE 99 — DIE LEITER ZWISCHEN ZWEI PLAETZEN
+     ---------------------------------------------------------------------
+     XANDER: „ist man oben, dann klettert man nach unten, ist man unten,
+     dann klettert man nach oben — und bleibt auch da."
+     Die Leiter reicht jetzt von einem Bild zum anderen, sie liegt HINTER
+     beiden Bildern (sie steckt im Startplatz mit z-index -1, und der
+     Zielplatz liegt im Stapel darueber), und das Bild klettert Sprosse
+     fuer Sprosse bis zur Mitte des Zielplatzes. Bei 92 % ist es da; die
+     Sitzordnung kommt bei 3050 ms von livechat.js. Ohne Ziel (alte
+     Zeile aus einer frueheren Fassung) bleibt es beim Klettern auf der
+     Stelle — siehe lcLeiterAmPlatz.
+     ===================================================================== */
+  function lcLeiter(wen, ziel) {
+    const zielNr = Number(ziel) || 0;
+    const zielEl = zielNr
+      ? document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + zielNr + '"]')
+      : null;
+    if (!zielEl) return lcLeiterAmPlatz(wen);
+    return lcAmPlatz(wen, "lc-leiter", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      const zk = zielEl.querySelector(".lc-kreis") || zielEl;
+      if (!kreis) return;
+      const a = kreis.getBoundingClientRect(), b = zk.getBoundingClientRect();
+      const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
+      const dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+      const gr = kreis.offsetWidth || 64;
+      /* DIE LEITER, hinter beiden Bildern. Sie ragt ueber beide Mitten
+         ein Stueck hinaus — eine Leiter endet nicht genau am Fuss. */
+      platz.querySelectorAll(".lc-leiter-weg").forEach((x) => x.remove());
+      const ueber = gr * 0.22;
+      const lang = Math.abs(dy) + ueber * 2;
+      const sprossen = Math.max(5, Math.round(lang / (gr * 0.2)));
+      const leiter = document.createElement("span");
+      leiter.className = "lc-leiter-weg";
+      leiter.setAttribute("aria-hidden", "true");
+      leiter.style.width = (gr * 0.5).toFixed(1) + "px";
+      leiter.style.height = lang.toFixed(1) + "px";
+      leiter.style.left = (kreis.offsetLeft + gr / 2 + dx / 2 - gr * 0.25).toFixed(1) + "px";
+      leiter.style.top = (kreis.offsetTop + (kreis.offsetHeight || gr) / 2
+        + Math.min(0, dy) - ueber).toFixed(1) + "px";
+      let svg = '<svg viewBox="0 0 60 ' + (sprossen * 20 + 10) + '" preserveAspectRatio="none">';
+      svg += '<rect class="lc-lt-holm" x="4" y="0" width="7" height="' + (sprossen * 20 + 10) + '" rx="3"/>';
+      svg += '<rect class="lc-lt-holm" x="49" y="0" width="7" height="' + (sprossen * 20 + 10) + '" rx="3"/>';
+      for (let i = 0; i < sprossen; i++) {
+        svg += '<rect class="lc-lt-sprosse" x="6" y="' + (8 + i * 20) + '" width="48" height="5.5" rx="2.4"/>';
+      }
+      leiter.innerHTML = svg + "</svg>";
+      platz.insertBefore(leiter, platz.firstChild);
+      /* DAS KLETTERN: Sprosse fuer Sprosse, jedes Mal ein kleines
+         Kippen, weil man abwechselnd links und rechts greift. */
+      const dauer = 3200;
+      const schritte = Math.max(4, Math.round(Math.abs(dy) / (gr * 0.2)));
+      const bilder = [{ transform: "translate(0px, 0px) rotate(0deg)", offset: 0 },
+                      { transform: "translate(0px, 0px) rotate(0deg)", offset: 0.12 }];
+      for (let i = 1; i <= schritte; i++) {
+        const t0 = 0.12 + (0.80 * (i - 0.5)) / schritte;
+        const t1 = 0.12 + (0.80 * i) / schritte;
+        const halb = (i - 0.5) / schritte, ganz = i / schritte;
+        bilder.push({ transform: "translate(" + (dx * halb).toFixed(1) + "px, "
+          + (dy * halb).toFixed(1) + "px) rotate(" + (i % 2 ? 5 : -5) + "deg)", offset: t0 });
+        bilder.push({ transform: "translate(" + (dx * ganz).toFixed(1) + "px, "
+          + (dy * ganz).toFixed(1) + "px) rotate(0deg)", offset: t1 });
+      }
+      bilder.push({ transform: "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1)
+        + "px) rotate(0deg)", offset: 1 });
+      /* Waehrend es klettert, liegt das Bild ueber allem — sonst
+         verschwaende es hinter dem Platz, an dem es vorbeiklettert. */
+      const altZ = platz.style.zIndex;
+      platz.style.zIndex = "7";
+      let lauf = null;
+      try { lauf = kreis.animate(bilder, { duration: dauer, easing: "linear", fill: "forwards" }); }
+      catch (e) { lauf = null; }
+      setTimeout(() => {
+        try { if (lauf) lauf.cancel(); } catch (e) {}
+        leiter.remove();
+        platz.style.zIndex = altZ;
+      }, dauer + 150);
+      for (let i = 1; i <= schritte; i++) {
+        lcTonSpaeter("holzklopf", Math.round((0.12 + (0.80 * i) / schritte) * dauer), 0.34);
+      }
+      lcTonSpaeter("aufsetzen", Math.round(dauer * 0.93), 0.4);
+    }, 3400, null);
+  }
+
+  /* Die alte Leiter aus Runde 98: klettert am eigenen Platz hinunter
+     und wieder hinauf. Sie bleibt nur als Rueckfall fuer Zeilen ohne
+     Ziel (etwa aus einer aelteren Fassung auf einem anderen Geraet). */
+  function lcLeiterAmPlatz(wen) {
     return lcAmPlatz(wen, "lc-leiter", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       const gr = (kreis && kreis.offsetWidth) || 64;
@@ -52982,7 +53070,8 @@
     /* RUNDE 98 — XANDER: „dass ich ueber eine Leiter von unten nach
        oben klettern kann oder jemand anderen … klettern lassen kann." */
     if (art === "leiter") {
-      lcLeiter((nachricht && (nachricht.wen || nachricht.an)) || "");
+      lcLeiter((nachricht && (nachricht.wen || nachricht.an)) || "",
+               (nachricht && nachricht.ziel) || 0);
       return;
     }
     /* RUNDE 98 — geputzt wird mit Schwamm, Lappen oder Spucke; welches
