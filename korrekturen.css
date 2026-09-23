@@ -2175,7 +2175,8 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    verschoebe sich ein Bild, statt dass etwas bebt. */
 .lc-bebt { animation: lcBebtKarte 0.14s linear 26; }
 .lc-bebt .lc-zeile,
-.lc-bebt .lc-platz {
+/* RUNDE 99 — dasselbe beim Erdbeben: es wackeln die Bilder. */
+.lc-bebt .lc-platz .lc-kreis {
   animation: lcBebtZeile 0.13s linear 28;
   animation-delay: var(--lc-beb-takt, 0s);
 }
@@ -2193,7 +2194,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   100% { transform: translateX(0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lc-bebt, .lc-bebt .lc-zeile, .lc-bebt .lc-platz { animation: none; }
+  .lc-bebt, .lc-bebt .lc-zeile, .lc-bebt .lc-platz .lc-kreis { animation: none; }
   .lc-blitz { display: none; }
 }
 
@@ -3251,7 +3252,10 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
    Boe laeuft deshalb mit Verzug durch die Zeilen.
    ================================================================= */
 .lc-orkant .lc-zeile,
-.lc-orkant .lc-platz {
+/* RUNDE 99 — der Orkan blaest die BILDER durcheinander, nicht die
+   Plaetze: die Zahl und der gestrichelte Ring bleiben stehen.
+   („eine Ebene, die niemals beeinflusst werden kann") */
+.lc-orkant .lc-platz .lc-kreis {
   animation: lcBoe 1.5s cubic-bezier(.3, .8, .4, 1) 3;
   animation-delay: var(--lc-o-verzug, 0s);
   transform-origin: 0% 50%;
@@ -3705,7 +3709,7 @@ body.im-klassenzimmer .wk-blase { bottom: 74px; }
   .lc-fahrt, .lc-bonbon, .lc-wind, .lc-dunkel, .lc-lagerfeuer,
   .lc-schnuppen, .lc-matrix { display: none; }
   .lc-faltet, .lc-faltet .lc-zeile, .lc-orkant .lc-zeile,
-  .lc-orkant .lc-platz { animation: none; }
+  .lc-orkant .lc-platz .lc-kreis { animation: none; }
 }
 
 /* =================================================================
@@ -5568,7 +5572,7 @@ body.lc-ich-spreche .lc-chat-kopf { animation: lcSprichtPuls 1.4s ease-in-out in
 }
 /* Das Nachgeben. Kurz schmaler und ein wenig zusammengesunken —
    zwei Stösse, wie beim Drücken und Nachfassen. */
-.lc-platz.lc-wird-gedrueckt {
+.lc-platz.lc-wird-gedrueckt .lc-kreis {
   animation: lcGedrueckt 1.6s cubic-bezier(0.34, 1.2, 0.5, 1) 0.28s both;
 }
 @keyframes lcGedrueckt {
@@ -5599,7 +5603,7 @@ body.lc-ich-spreche .lc-chat-kopf { animation: lcSprichtPuls 1.4s ease-in-out in
   100% { opacity: 0; transform: translateY(-34px) scale(0.75); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lc-arm, .lc-platz.lc-wird-gedrueckt, .lc-drueckherz { animation: none; }
+  .lc-arm, .lc-platz.lc-wird-gedrueckt .lc-kreis, .lc-drueckherz { animation: none; }
   .lc-arme { display: none; }
 }
 
@@ -6436,7 +6440,7 @@ html.lc-dino-beben #livechatKarte { animation: lcDinoSchritt 0.62s ease-in-out 1
   30% { opacity: 1; } 100% { opacity: 0; transform: translateY(34px); }
 }
 /* Und die Person schüttelt sich — ohne Reaktion ist es keine Tat. */
-.lc-platz.lc-wird-geleckt { animation: lcGeleckt 1.9s ease-in-out 0.5s both; }
+.lc-platz.lc-wird-geleckt .lc-kreis { animation: lcGeleckt 1.9s ease-in-out 0.5s both; }
 @keyframes lcGeleckt {
   0%, 100% { transform: none; }
   22% { transform: rotate(-3.5deg) translateX(-2px); }
@@ -6510,7 +6514,7 @@ html.lc-dino-beben #livechatKarte { animation: lcDinoSchritt 0.62s ease-in-out 1
   25%  { opacity: 1; }
   100% { opacity: 0; transform: rotate(var(--wo, 0deg)) translateY(-42px) scale(1); }
 }
-.lc-platz.lc-wird-geboxt { animation: lcGeboxt 1.5s cubic-bezier(0.3, 1.5, 0.5, 1) 0.42s both; }
+.lc-platz.lc-wird-geboxt .lc-kreis { animation: lcGeboxt 1.5s cubic-bezier(0.3, 1.5, 0.5, 1) 0.42s both; }
 @keyframes lcGeboxt {
   0%, 100% { transform: none; }
   18% { transform: translateX(12px) rotate(7deg) scale(0.94); }
@@ -6553,7 +6557,7 @@ html.lc-dino-beben #livechatKarte { animation: lcDinoSchritt 0.62s ease-in-out 1
     transform: translate(-50%, -50%) !important;
   }
   .lc-platz.lc-wird-geboxt, .lc-platz.lc-boxt-zurueck,
-  .lc-platz.lc-wird-gedrueckt { animation: none; }
+  .lc-platz.lc-wird-gedrueckt .lc-kreis { animation: none; }
 }
 @keyframes lcRuhigZeigen {
   0%   { opacity: 0; }
@@ -9607,7 +9611,7 @@ body.lc-schreibt .tutor-reiter {
 }
 /* Wer zurückgeboxt bekommt, wackelt — kürzer und flacher als beim
    ersten Schlag, sonst wirkt der Konter härter als der Angriff. */
-.lc-platz.lc-boxt-zurueck { animation: lcKonterWackeln 800ms cubic-bezier(0.3, 1.4, 0.5, 1) 0.34s both; }
+.lc-platz.lc-boxt-zurueck .lc-kreis { animation: lcKonterWackeln 800ms cubic-bezier(0.3, 1.4, 0.5, 1) 0.34s both; }
 @keyframes lcKonterWackeln {
   0%, 100% { transform: none; }
   22% { transform: translateY(6px) rotate(-4deg) scale(0.97); }
@@ -9615,7 +9619,7 @@ body.lc-schreibt .tutor-reiter {
   70% { transform: translateY(2px) rotate(-1deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lc-box-konter, .lc-platz.lc-boxt-zurueck { animation: none; }
+  .lc-box-konter, .lc-platz.lc-boxt-zurueck .lc-kreis { animation: none; }
   .lc-box-zurueck { display: none; }
 }
 
@@ -31443,3 +31447,51 @@ code, pre {
   .lc-gesicht-bild, .lc-gesicht-wort { animation: none; }
   .lc-gesicht-bild { transform: translate(-50%, 0); }
 }
+
+/* =====================================================================
+   RUNDE 99 — DIE GRUNDEBENE WIRD NIE WIEDER MITANIMIERT
+   ---------------------------------------------------------------------
+   XANDER (23.09.2026): „Die Platz-Glitches gibt es immer noch ueberall,
+   die sind immer noch nicht gefixt. Kannst du es nicht wirklich so
+   machen, dass das eine Ebene ist, die niemals beeinflusst werden kann?
+   … Ich verstehe gar nicht, wie das mitanimiert werden kann, wenn wir
+   doch mit der Animation ueber dem Platz liegen. Wie koennen diese
+   Teile, die darunter liegen, einfach mitanimiert werden? Das macht
+   doch gar keinen logischen Sinn."
+
+   ER HAT RECHT, UND HIER IST DER GRUND — nachgemessen im Browser:
+   vier Wirkungen haben nicht das BILD animiert, sondern den PLATZ
+   selbst (.lc-platz). Die Zahl und der gestrichelte Ring liegen aber
+   IM Platz. Wer den Platz dreht, dreht sie mit. Gemessen am Schild:
+     /lecken   5,6 px verschoben
+     /boxen   14,0 px verschoben
+   Das ist genau der Glitch, den er seit Wochen sieht.
+
+   Die vier Regeln sitzen deshalb ab jetzt auf .lc-kreis — also auf dem
+   BILD. Das ist auch das, was gemeint ist: der Kopf zuckt, nicht der
+   Sitzplatz. Die Grundebene (.lc-schild mit Ring und Zahl) liegt
+   daneben und wird von keiner dieser Regeln mehr erreicht.
+
+   AUSNAHMEN, und beide sind seine eigenen Worte:
+     · der Maulwurf (.lc-platz-untergraben) — „die einzige
+       Inkonsistenz, die mit den Profilplaetzen passieren darf, ist das
+       Durcheinander-Wirbeln der Leute, wenn ich da durchgrabe";
+     · Erdbeben und Orkan — da wackelt der ganze Raum, nicht ein Platz.
+
+   Und damit es nie wieder passiert, steht die Grundebene hier
+   ausdruecklich still. Die Sonde werkzeug/pruefe-runde99-grundebene.js
+   liest diese Regeln nach und misst sie am laufenden Bild.
+   ===================================================================== */
+.lc-platz .lc-schild,
+.lc-platz .lc-schild::before,
+.lc-platz .lc-nummer {
+  animation: none !important;
+  transition: none !important;
+}
+/* Der gestrichelte Ring eines FREIEN Platzes lag bisher auf .lc-kreis —
+   also genau auf dem Element, das jede Wirkung anfasst. Jetzt zeichnet
+   ihn das Schild, und der freie Kreis traegt gar keinen Rand mehr. Die
+   Zeichnung sieht gleich aus; sie liegt nur in der Ebene, die niemand
+   anfasst. */
+.lc-platz-frei .lc-kreis { border-color: transparent !important; }
+.lc-platz-frei .lc-schild::before { content: "" !important; }
