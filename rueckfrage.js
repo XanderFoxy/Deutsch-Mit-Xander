@@ -407,27 +407,34 @@ window.Rueckfrage = (function () {
         b.classList.remove("rf-hoert"); b.textContent = "🎤";
         live.textContent = hinweis || "";
       };
+      /* RUNDE 99, DRITTER ANLAUF — XANDER: „Die Sprachnachrichten hier im
+         Walkie-Talkie funktionieren ploetzlich nicht mehr wie vorher."
+         Das lag an meinem zweiten Anlauf: Satz fuer Satz erkennen und
+         danach VON SELBST neu starten. Auf Android darf die Erkennung
+         ohne neues Antippen meist nicht wieder anlaufen — nach dem
+         ersten Satz war Schluss. Jetzt wieder die Dauer-Erkennung wie in
+         der Fassung, die bei ihm lief; die Live-Anzeige bleibt. Der Text
+         wird bei jedem Ergebnis NEU aus allen fertigen Stuecken gebaut
+         (nicht angehaengt) — so kann nichts doppelt hineinrutschen. */
       var runde = function () {
         mik = new Erkenner();
         mik.lang = "de-DE";
-        mik.continuous = false;
+        mik.continuous = true;
         mik.interimResults = true;
+        var anfang = t.value.replace(/\s*$/, "");
         mik.onresult = function (ev) {
-          var fest = "", zwischen = "";
-          for (var i = ev.resultIndex; i < ev.results.length; i++) {
-            if (ev.results[i].isFinal) fest += ev.results[i][0].transcript;
-            else zwischen += ev.results[i][0].transcript;
+          var fest = [], zwischen = "";
+          for (var i = 0; i < ev.results.length; i++) {
+            var stueck = String(ev.results[i][0].transcript || "").trim();
+            if (!stueck) continue;
+            if (ev.results[i].isFinal) fest.push(stueck);
+            else zwischen += (zwischen ? " " : "") + stueck;
           }
-          if (fest.trim()) {
-            var satz = fest.trim();
-            /* Gross angefangen wird nur ein neuer Satz — nicht jedes
-               Stueck, das die Erkennung zwischendurch abliefert. */
-            var davor = t.value.replace(/\s*$/, "");
-            if (!davor || /[.!?]$/.test(davor)) satz = satz.charAt(0).toUpperCase() + satz.slice(1);
-            t.value = (davor ? davor + " " : "") + satz;
-            tun(t.value);
-          }
-          live.textContent = zwischen.trim() ? "… " + zwischen.trim() : "Ich höre zu …";
+          var neu = fest.join(" ");
+          if (neu && (!anfang || /[.!?]$/.test(anfang))) neu = neu.charAt(0).toUpperCase() + neu.slice(1);
+          t.value = (anfang ? anfang + (neu ? " " : "") : "") + neu;
+          tun(t.value);
+          live.textContent = zwischen ? "… " + zwischen : "Ich höre zu …";
         };
         mik.onerror = function (ev) {
           var w = ev && ev.error;
@@ -436,11 +443,9 @@ window.Rueckfrage = (function () {
           } else if (w === "network") {
             fertigMachen("Die Spracherkennung braucht Netz – gerade keins.");
           }
-          /* „no-speech" und „aborted": einfach weiter, onend startet neu. */
         };
         mik.onend = function () {
-          if (weiter) { try { runde(); } catch (e) { fertigMachen(""); } }
-          else fertigMachen(t.value.trim() ? "✓ Steht im Feld – jetzt „Senden“." : "");
+          fertigMachen(t.value.trim() ? "✓ Steht im Feld – jetzt „Senden“." : "");
         };
         try { mik.start(); } catch (e) { fertigMachen("Die Spracherkennung ließ sich nicht starten."); }
       };

@@ -48,7 +48,9 @@ const GRUPPEN = {
   "Werfen": ["Bumerang", "Ei", "Katapult"],
   "Eklig": ["Spucken", "Vogel"],
   "Schmutzig": ["Paint", "Sprühdose"],
-  "Sauber machen": ["Putzen", "Wischer", "Birne"],
+  /* Walkie-Talkie: „bei Putzen ist die Birne mit untergebracht, das
+     macht keinen Sinn." */
+  "Sauber machen": ["Putzen", "Wischer"],
   /* XANDER: „Das Frivole und das Sexy koenntest du auch mal sammeln,
      das kann ein Untermenue sein." */
   "Frivol": ["Ups!", "Klaps"]

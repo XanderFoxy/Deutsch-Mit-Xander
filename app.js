@@ -29822,7 +29822,9 @@
     ["\ud83d\udd8c\ufe0f", "Schmutzig",
      ["paintball", "spray"]],
     ["\ud83e\uddfd", "Sauber machen",
-     ["putzen", "wischer", "gluehbirne"]],
+     /* XANDER (Walkie-Talkie): „bei Putzen ist die Birne mit
+        untergebracht, das macht dort ueberhaupt keinen Sinn." */
+     ["putzen", "wischer"]],
     /* XANDER: „Das Frivole und das Sexy koenntest du auch mal sammeln,
        das kann ein Untermenue sein." */
     ["\ud83d\ude0f", "Frivol",

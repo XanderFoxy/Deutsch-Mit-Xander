@@ -54,19 +54,23 @@ const sage = (gut, text, dazu) => {
      Android bei continuous = false. */
   await pg.addInitScript(() => {
     window.__rfRunden = 0;
+    /* DRITTER ANLAUF: Dauer-Erkennung wie auf Android — die Ergebnisse
+       wachsen an (alle bisherigen Saetze stehen jedes Mal mit drin),
+       erst ein Zwischenstand, dann zwei fertige Saetze. */
     window.webkitSpeechRecognition = class {
       start() {
-        const n = ++window.__rfRunden;
-        setTimeout(() => this.onresult && this.onresult({ resultIndex: 0,
-          results: [Object.assign([{ transcript: "bist du" }], { isFinal: false })] }), 30);
+        window.__rfRunden++;
+        const r = (t, fertig) => Object.assign([{ transcript: t }], { isFinal: fertig });
+        setTimeout(() => this.onresult && this.onresult({ resultIndex: 0, results: [r("bist du", false)] }), 30);
         setTimeout(() => {
           window.__rfZwischen = (document.querySelector(".rf-vorschlag .rf-live") || {}).textContent || "";
-          this.onresult && this.onresult({ resultIndex: 0,
-            results: [Object.assign([{ transcript: n === 1 ? "bist du hier" : "und noch was" }], { isFinal: true })] });
+          this.onresult && this.onresult({ resultIndex: 0, results: [r("bist du hier", true)] });
         }, 120);
-        setTimeout(() => this.onend && this.onend(), 160);
+        setTimeout(() => this.onresult && this.onresult({ resultIndex: 1,
+          results: [r("bist du hier", true), r("und noch was", true)] }), 200);
+        this._ende = setTimeout(() => this.onend && this.onend(), 5000);
       }
-      stop() { setTimeout(() => this.onend && this.onend(), 10); }
+      stop() { clearTimeout(this._ende); setTimeout(() => this.onend && this.onend(), 10); }
     };
     /* Neuere Chromes haben sie auch ohne Vorsilbe — beide ersetzen. */
     window.SpeechRecognition = window.webkitSpeechRecognition;
@@ -226,7 +230,7 @@ const sage = (gut, text, dazu) => {
     t.value = ""; t.dispatchEvent(new Event("input"));
     t.closest(".rf-feldrahmen").querySelector(".rf-mik").click();
   });
-  await pg.waitForFunction(() => window.__rfRunden >= 2, { timeout: 4000 }).catch(() => {});
+  await pg.waitForTimeout(400);
   await pg.evaluate(() => document.querySelector(".rf-vorschlag").querySelector(".rf-mik").click());
   await pg.waitForTimeout(400);
   const dikt = await pg.evaluate(() => ({
@@ -236,8 +240,8 @@ const sage = (gut, text, dazu) => {
     runden: window.__rfRunden,
     knopf: document.querySelector(".rf-vorschlag .rf-mik").textContent }));
   sage(/bist du/.test(dikt.zwischen), "Beim Sprechen steht sofort da, was gerade erkannt wird", dikt.zwischen);
-  sage(dikt.text === "Bist du hier und noch was" && dikt.runden >= 2,
-    "Der Satz landet im Feld (gross angefangen), und es hoert von selbst weiter",
+  sage(dikt.text === "Bist du hier und noch was" && dikt.runden === 1,
+    "Beide Saetze landen einmal im Feld (nichts doppelt), ohne Neustart",
     JSON.stringify(dikt.text) + ", " + dikt.runden + " Runden");
   sage(dikt.knopf === "🎤" && /Senden/.test(dikt.live), "⏹ beendet es, und darunter steht, was jetzt zu tun ist",
     dikt.live);
