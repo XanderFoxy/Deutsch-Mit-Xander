@@ -9528,7 +9528,13 @@ window.LiveChat = (function () {
     { gr: "reden", w: "aufblasen", kurz: "prall", nutzt: "/aufblasen Name",
       was: "Aufblasen \u2014 f\u00fcnf Pumpenhube, das Gummi zittert, dann platzt es" },
     { gr: "raum", w: "panik", kurz: "tonneu", nutzt: "/panik",          was: "Ton zur\u00fccksetzen, wenn du jemanden doppelt h\u00f6rst" },
-    { gr: "raum", w: "kranheb", kurz: "kranheben", nutzt: "/kranheb Name 3",
+    /* RUNDE 98 — DER NAME DES BEFEHLS IST DER NAME DER WIRKUNG.
+       werkzeug/pruefe-effekttueren hat es zu Recht rot gemacht: die
+       Wirkung heisst „kranheben", der Befehl hiess „kranheb". Damit
+       stand der Effekt gezeichnet da, war aber unter seinem eigenen
+       Namen nicht aufrufbar. Jetzt heisst der Befehl wie die Wirkung,
+       und „/kranheb" bleibt als Kurzform. */
+    { gr: "raum", w: "kranheben", kurz: "kranheb", nutzt: "/kranheben Name 3",
       was: "der Baukran hebt jemanden auf einen anderen Platz \u2014 Seil herunter, anschlagen, hin\u00fcberfahren, absetzen" },
     { gr: "reden", w: "lasso", kurz: "herzu", nutzt: "/lasso Name",
       was: "Jemanden mit dem Lasso zu dir heranziehen \u2014 auf den freien Platz neben dir" },
@@ -11251,7 +11257,7 @@ window.LiveChat = (function () {
        anderen noch auf einen Platz heben kann."
        Er arbeitet wie /heb — nur läuft eine andere Animation. Das
        Umsetzen steht deshalb weiter an genau EINER Stelle. */
-    if (art === "kranheb") {
+    if (art === "kranheben" || art === "kranheb") {
       if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
       var restK = rest.trim();
       if (!restK) return systemZeile("So geht es:  /kranheb Nickname 3 \u2014 "
@@ -11889,6 +11895,83 @@ window.LiveChat = (function () {
         { wirkung: "gemeinsam", wen: wemG.name, stueck: stueckG, bahn: ketteG });
     }
 
+    /* =============================================================
+       RUNDE 98 — WAS EINEN ZUSATZ HAT, MUSS VOR DIE TABELLE
+       -------------------------------------------------------------
+       werkzeug/pruefe-befehlsreihenfolge hat es rot gemacht: „putzen“
+       und „gesicht“ stehen auch in AM_PLATZ. Wer sie HINTER die
+       Tabellenabfrage schreibt, erreicht seine eigene Abzweigung nie —
+       AM_PLATZ greift vorher und wirft den Zusatz („lappen“, „wow“)
+       weg. Deshalb stehen sie hier, davor.
+       ============================================================= */
+    if (art === "putzen") {
+      var teileP = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
+      var letztesP = String(teileP[teileP.length - 1] || "").toLowerCase();
+      var istZeug = /^(schwamm|eimer|lappen|tuch|spucke|spucken|rotz)$/.test(letztesP);
+      var zeugP = istZeug ? letztesP : "schwamm";
+      if (istZeug) teileP.pop();
+      var namenP = teileP.join(" ").trim();
+      if (!namenP) return systemZeile("Wen putzen?  So geht es:  /putzen Nickname "
+        + "\u2014 oder /putzen Nickname lappen, /putzen Nickname spucke");
+      var wemP2 = zielPerson(namenP);
+      var wortP = /^(lappen|tuch)$/.test(zeugP) ? "mit dem Putzlappen"
+        : /^(spucke|spucken|rotz)$/.test(zeugP) ? "mit Spucke und \u00c4rmel"
+        : "mit Schwamm und Wassereimer";
+      return anAlle("aktion", zustand.ichName + " putzt die Scheibe von "
+        + wemP2.name + " " + wortP + "  \ud83e\uddfd",
+        { wirkung: "putzen", wen: wemP2.name, stueck: zeugP });
+    }
+    /* =============================================================
+       RUNDE 98 — DIE GESICHTER VOM AVATAR
+       -------------------------------------------------------------
+       XANDER: „ich moechte mit meinem Avatar, den wir fuer die
+       Webseiten-Vorstellung haben — nur das Gesicht davon haben wir
+       in Animation, sagt oh my god und wow."
+       „/gesicht wow" gilt mir selbst, „/gesicht Bea wow" ihr. Steht
+       gar kein Gesicht dabei, kommt die Liste.
+       ============================================================= */
+    /* =============================================================
+       RUNDE 98 — DAS LIEDER-PANEL
+       -------------------------------------------------------------
+       XANDER: „Die Musik kann ich immer noch nicht in Einzelteil-
+       Buttons anlegen, um eine History zu haben beziehungsweise ein
+       abgespeichertes Panel."
+       GEFUNDEN von werkzeug/pruefe-jeder-befehl: „/abschnitte" war
+       ein BLINDGAENGER. Er stand in der Befehlsliste, wurde aber nur
+       im Absende-Feld des Chats abgefangen — ueber jeden anderen Weg
+       (Befehlsliste, Kurzwort, Sonde) passierte gar nichts. Jetzt
+       steht er hier, wo alle anderen Befehle auch stehen, und ruft
+       die Ansicht ueber denselben Weg auf wie „/lesezeile".
+       ============================================================= */
+    if (art === "abschnitte" || art === "refrains" || art === "liedpanel") {
+      var ging = false;
+      try { ging = Boolean(window.DMA_LIEDPANEL && window.DMA_LIEDPANEL("")); } catch (e) {}
+      if (ging) return true;
+      return systemZeile("Das Lieder-Panel gibt es nur im Klassenzimmer.");
+    }
+    if (art === "gesicht") {
+      var GESICHTER = ["ohmygod", "wow", "verbissen"];
+      var teileG = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
+      var welchesG = "";
+      if (teileG.length) {
+        var letztesG = String(teileG[teileG.length - 1]).toLowerCase()
+          .replace(/[^a-z]/g, "");
+        if (GESICHTER.indexOf(letztesG) >= 0) {
+          welchesG = letztesG;
+          teileG.pop();
+        }
+      }
+      if (!welchesG) {
+        return systemZeile("Gesichter von Alex:\n"
+          + "  /gesicht wow             \u00fcber deinem eigenen Platz\n"
+          + "  /gesicht Bea ohmygod     \u00fcber ihrem\n"
+          + "  Es gibt: " + GESICHTER.join(", "));
+      }
+      var wemG2 = teileG.length ? zielPerson(teileG.join(" ")) : { name: zustand.ichName };
+      return anAlle("aktion", zustand.ichName + " macht ein Gesicht  \ud83d\ude32",
+        { wirkung: "gesicht", wen: wemG2.name, stueck: welchesG });
+    }
+
     if (AM_PLATZ[art]) {
       /* =========================================================
          RUNDE 88 — AUFGEZOGEN HEISST BEIM PFERD: GALOPP
@@ -12164,73 +12247,6 @@ window.LiveChat = (function () {
        Welche Aufkleber es gibt, zeigt der Befehl ohne Zusatz. */
     /* RUNDE 98 — PUTZEN. Welches Putzzeug, steht hinten: Schwamm
        (Vorgabe), Lappen oder Spucke. */
-    if (art === "putzen") {
-      var teileP = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
-      var letztesP = String(teileP[teileP.length - 1] || "").toLowerCase();
-      var istZeug = /^(schwamm|eimer|lappen|tuch|spucke|spucken|rotz)$/.test(letztesP);
-      var zeugP = istZeug ? letztesP : "schwamm";
-      if (istZeug) teileP.pop();
-      var namenP = teileP.join(" ").trim();
-      if (!namenP) return systemZeile("Wen putzen?  So geht es:  /putzen Nickname "
-        + "\u2014 oder /putzen Nickname lappen, /putzen Nickname spucke");
-      var wemP2 = zielPerson(namenP);
-      var wortP = /^(lappen|tuch)$/.test(zeugP) ? "mit dem Putzlappen"
-        : /^(spucke|spucken|rotz)$/.test(zeugP) ? "mit Spucke und \u00c4rmel"
-        : "mit Schwamm und Wassereimer";
-      return anAlle("aktion", zustand.ichName + " putzt die Scheibe von "
-        + wemP2.name + " " + wortP + "  \ud83e\uddfd",
-        { wirkung: "putzen", wen: wemP2.name, stueck: zeugP });
-    }
-    /* =============================================================
-       RUNDE 98 — DIE GESICHTER VOM AVATAR
-       -------------------------------------------------------------
-       XANDER: „ich moechte mit meinem Avatar, den wir fuer die
-       Webseiten-Vorstellung haben — nur das Gesicht davon haben wir
-       in Animation, sagt oh my god und wow."
-       „/gesicht wow" gilt mir selbst, „/gesicht Bea wow" ihr. Steht
-       gar kein Gesicht dabei, kommt die Liste.
-       ============================================================= */
-    /* =============================================================
-       RUNDE 98 — DAS LIEDER-PANEL
-       -------------------------------------------------------------
-       XANDER: „Die Musik kann ich immer noch nicht in Einzelteil-
-       Buttons anlegen, um eine History zu haben beziehungsweise ein
-       abgespeichertes Panel."
-       GEFUNDEN von werkzeug/pruefe-jeder-befehl: „/abschnitte" war
-       ein BLINDGAENGER. Er stand in der Befehlsliste, wurde aber nur
-       im Absende-Feld des Chats abgefangen — ueber jeden anderen Weg
-       (Befehlsliste, Kurzwort, Sonde) passierte gar nichts. Jetzt
-       steht er hier, wo alle anderen Befehle auch stehen, und ruft
-       die Ansicht ueber denselben Weg auf wie „/lesezeile".
-       ============================================================= */
-    if (art === "abschnitte" || art === "refrains" || art === "liedpanel") {
-      var ging = false;
-      try { ging = Boolean(window.DMA_LIEDPANEL && window.DMA_LIEDPANEL("")); } catch (e) {}
-      if (ging) return true;
-      return systemZeile("Das Lieder-Panel gibt es nur im Klassenzimmer.");
-    }
-    if (art === "gesicht") {
-      var GESICHTER = ["ohmygod", "wow", "verbissen"];
-      var teileG = String(rest || "").trim().split(/\s+/).filter(function (x) { return x; });
-      var welchesG = "";
-      if (teileG.length) {
-        var letztesG = String(teileG[teileG.length - 1]).toLowerCase()
-          .replace(/[^a-z]/g, "");
-        if (GESICHTER.indexOf(letztesG) >= 0) {
-          welchesG = letztesG;
-          teileG.pop();
-        }
-      }
-      if (!welchesG) {
-        return systemZeile("Gesichter von Alex:\n"
-          + "  /gesicht wow             \u00fcber deinem eigenen Platz\n"
-          + "  /gesicht Bea ohmygod     \u00fcber ihrem\n"
-          + "  Es gibt: " + GESICHTER.join(", "));
-      }
-      var wemG2 = teileG.length ? zielPerson(teileG.join(" ")) : { name: zustand.ichName };
-      return anAlle("aktion", zustand.ichName + " macht ein Gesicht  \ud83d\ude32",
-        { wirkung: "gesicht", wen: wemG2.name, stueck: welchesG });
-    }
     if (art === "spray") {
       var AUFKLEBER = ["herz", "stern", "feuer", "regenbogen", "blume", "fuchs",
                        "sonne", "schnee", "regen", "katze", "musik", "party",
@@ -13594,6 +13610,13 @@ window.LiveChat = (function () {
       w.push("tafelauf", "tafelzu");
       /* Und „notenlied": /noten MIT einem Liednamen. */
       w.push("notenlied");
+      /* RUNDE 98 — und „kranheben" haengt an /kranheben (Kurzform
+         /kranheb). Wie beim Lasso und beim Heber steht die Tuer in
+         einer eigenen Abzweigung und nicht in AM_PLATZ: der Befehl
+         nimmt einen Namen UND eine Platznummer. Ohne diese Zeile
+         meldet pruefe-effekttueren den Effekt zu Recht als
+         gezeichnet, aber nicht aufrufbar — genau das hat sie getan. */
+      w.push("kranheben");
       return w;
     },
     /* Nur zum Nachpruefen: die Sitzordnung von aussen nachstellen und

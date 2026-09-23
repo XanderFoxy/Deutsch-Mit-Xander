@@ -439,8 +439,21 @@ const pruefe = (was, gut, zusatz) => {
          keiner. Jetzt wird alle 60 ms nachgesehen und der WEITESTE
          Punkt behalten — der ist unabhaengig davon, wie lange die
          Bewegung dauert und wie sie beschleunigt.
-         Nebenbei wird mitgezaehlt, ob am fremden Bild je eine
-         Animation lief; „er bleibt sitzen" heisst: nie. */
+         Nebenbei wird mitgezaehlt, WIE WEIT das fremde Bild von
+         seinem Platz weggekommen ist — und wo es am Ende steht.
+
+         RUNDE 98 — DIE REGEL HIER IST GEAENDERT, UND ZWAR AUF SEINEN
+         WUNSCH. Bis Runde 80 hiess „er bleibt sitzen": an seinem Bild
+         laeuft NIE etwas. Dann kam:
+           XANDER (23.09.2026, und schon frueher): „Da wo man hinfahren
+           moechte kann man hinfahren, egal ob da jemand sitzt, dann
+           ueberfaehrt man ihn eben."
+         Seitdem zuckt der Ueberfahrene kurz zusammen
+         (lcUeberfahrenR80) — das ist gewollt und keine Panne.
+         GEMESSEN wurde genau das: 16 px Ausschlag, eine Animation.
+         Die Regel heisst deshalb jetzt: er darf ZUCKEN, aber er darf
+         seinen Platz nicht VERLASSEN. Gemessen wird der Ausschlag
+         gegen die Bildbreite und der Stand am Ende. */
       let weiteste = 0, zielWeit = 0, laeuft = 0, zielLaeuft = 0;
       for (let i = 0; i < Math.ceil(wann / 60); i++) {
         await new Promise((f) => setTimeout(f, 60));
@@ -450,6 +463,9 @@ const pruefe = (was, gut, zusatz) => {
         laeuft = Math.max(laeuft, ich.querySelector(".lc-kreis").getAnimations().length);
         zielLaeuft = Math.max(zielLaeuft, ziel.querySelector(".lc-kreis").getAnimations().length);
       }
+      /* Und danach: steht er wieder genau auf seinem Platz? */
+      await new Promise((f) => setTimeout(f, 900));
+      const zielEnde = versatz(ziel);
       const meinJetzt = { x: meinVor.x + weiteste, y: meinVor.y };
       const zielNach = { x: zielVor.x + zielWeit, y: zielVor.y };
       return {
@@ -457,6 +473,8 @@ const pruefe = (was, gut, zusatz) => {
         laeuft: laeuft,
         versetzt: Math.round(Math.hypot(meinJetzt.x - meinVor.x, meinJetzt.y - meinVor.y)),
         zielVerschoben: Math.round(Math.hypot(zielNach.x - zielVor.x, zielNach.y - zielVor.y)),
+        zielZurueck: Math.round(Math.hypot(zielEnde.x - zielVor.x, zielEnde.y - zielVor.y)),
+        zielBreit: Math.round(ziel.querySelector(".lc-kreis").getBoundingClientRect().width),
         zielLaeuft: zielLaeuft
       };
     }, { b: befehl, w: wirkung, wann: wann });
@@ -464,8 +482,14 @@ const pruefe = (was, gut, zusatz) => {
       d.wirkung === wirkung && d.wen === "Emmi", (d.wirkung || "-") + " / " + (d.wen || "-"));
     pruefe(wirkung + ": MEIN Bild ist unterwegs", d.laeuft > 0 && d.versetzt > 10,
       d.versetzt + " px vom eigenen Platz weg, " + d.laeuft + " Lauf");
-    pruefe(wirkung + ": der andere bleibt sitzen", d.zielVerschoben <= 2 && d.zielLaeuft === 0,
-      d.zielVerschoben + " px, " + d.zielLaeuft + " Animation an seinem Bild");
+    /* RUNDE 98 — er darf zucken („dann ueberfaehrt man ihn eben"),
+       aber er darf seinen Platz nicht verlassen: hoechstens ein
+       Viertel seiner Bildbreite Ausschlag, und danach steht er wieder
+       genau dort, wo er war. */
+    pruefe(wirkung + ": der andere wird hoechstens angestossen, bleibt aber sitzen",
+      d.zielVerschoben <= Math.max(4, d.zielBreit * 0.25) && d.zielZurueck <= 2,
+      d.zielVerschoben + " px Ausschlag bei " + d.zielBreit + " px Bildbreite, danach "
+      + d.zielZurueck + " px von seinem Platz weg");
   }
 
   /* =========================================================

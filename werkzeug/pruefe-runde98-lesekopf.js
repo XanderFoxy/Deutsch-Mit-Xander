@@ -109,7 +109,8 @@ const sage = (gut, was, zusatz) => {
     ergebnis.push({ breite: breite, m: mass });
     await pg.close();
   }
-  await br.close(); srv.close();
+  await br.close();
+  const srv2 = srv;          /* fuer den zweiten Teil offen lassen */
 
   console.log("\nWIE HOCH IST DER KOPF, UND AUF WIE VIELEN ZEILEN STEHT DER TITEL?\n");
   ergebnis.forEach((e) => {
@@ -136,6 +137,74 @@ const sage = (gut, was, zusatz) => {
       e.breite + " px: Niveau, Betonung und Fokus stehen weiterhin alle im Kopf",
       "Abzeichen " + (m.abzeichen ? "da" : "fehlt") + ", " + m.schalter + " Schalter");
   });
+
+  /* =====================================================================
+     UND DIE BETONUNG SCHALTET BEIM ERSTEN TIPP
+     ---------------------------------------------------------------------
+     XANDER: „die Geheimzeile und die Betonung muss auf beiden Seiten in
+     jedem Fall immer an- und ausschaltbar sein, fuer jeden auf jeder
+     Seite sichtbar, und nicht, dass das erst nach ein paar Versuchen
+     geht, sondern das muss sofort funktionieren fuer alle."
+     Gemessen wird der ERSTE Tipp auf einem frischen Geraet: vorher
+     keine Betonung, danach muss sie da sein. Und der Schalter steht
+     bei JEDEM — er wird gebaut, bevor ueberhaupt gefragt wird, ob man
+     die Runde fuehrt.
+     ===================================================================== */
+  console.log("\nDIE BETONUNG BEIM ERSTEN TIPP\n");
+  {
+    const br2 = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+    const pg2 = await br2.newPage({ viewport: { width: 460, height: 900 } });
+    await pg2.addInitScript(() => {
+      try {
+        localStorage.setItem("dma_tour_seen", "1");
+        /* Ein frisches Geraet: kein gemerkter Schalterstand. */
+        localStorage.removeItem("dma_lese_betonung");
+      } catch (e) {}
+    });
+    await pg2.goto("http://127.0.0.1:" + srv2.address().port + "/index.html",
+      { waitUntil: "domcontentloaded" });
+    await pg2.waitForFunction(() => window.DMA_PRUEFUNG && window.DMA_PRUEFUNG.lesetafel,
+      { timeout: 20000 });
+    const bet = await pg2.evaluate(async () => {
+      window.DMA_PRUEF.effektBuehne();
+      await new Promise((f) => setTimeout(f, 150));
+      const z = document.createElement("p");
+      z.className = "lc-zeile";
+      const uhr = document.createElement("span");
+      uhr.className = "lc-zeit"; uhr.textContent = "09:12";
+      const nam = document.createElement("b");
+      nam.className = "lc-nick"; nam.textContent = "Alex:";
+      z.appendChild(uhr); z.appendChild(nam);
+      document.getElementById("lcVerlauf").appendChild(z);
+      window.DMA_PRUEFUNG.lesetafel({ id: "bt1", text: "Lies vor.", leseNiveau: "A2",
+        leseTitel: "Der Apfel",
+        leseZeilen: ["Der Apfel liegt auf dem Tisch.", "Die Familie isst zusammen."] }, z);
+      await new Promise((f) => setTimeout(f, 220));
+      const knopf = [...z.querySelectorAll(".lc-lese-schalter")]
+        .filter((b) => /Betonung/.test(b.textContent))[0];
+      if (!knopf) return null;
+      const marken = () => z.querySelectorAll(".stress-mark").length;
+      const vorher = marken();
+      knopf.click();
+      await new Promise((f) => setTimeout(f, 400));
+      const nachEins = marken();
+      knopf.click();
+      await new Promise((f) => setTimeout(f, 400));
+      const nachAus = marken();
+      return { vorher, nachEins, nachAus, schalter: z.querySelectorAll(".lc-lese-schalter").length };
+    });
+    sage(bet && bet.vorher === 0 && bet.nachEins > 0,
+      "der ERSTE Tipp schaltet die Betonung wirklich ein",
+      bet ? "vorher " + bet.vorher + " Betonungsmarken, danach " + bet.nachEins : "-");
+    sage(bet && bet.nachAus === 0, "und der naechste schaltet sie wieder aus",
+      bet ? bet.nachAus + " Marken" : "-");
+    sage(bet && bet.schalter === 2,
+      "beide Schalter stehen da \u2014 sie werden gebaut, bevor gefragt wird, "
+      + "ob man die Runde fuehrt",
+      bet ? bet.schalter + " Schalter" : "-");
+    await br2.close();
+  }
+  srv2.close();
 
   console.log(fehler ? "\n" + fehler + " Abweichung(en)" : "\nalles gruen");
   process.exit(fehler ? 1 : 0);

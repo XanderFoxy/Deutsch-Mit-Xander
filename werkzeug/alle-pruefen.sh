@@ -64,6 +64,12 @@ for f in werkzeug/pruefe-*.js; do
     pruefe-runde92-grundebene)   frist=3600 ;;
     pruefe-platzdesign)          frist=600  ;;
     pruefe-jeder-befehl)         frist=600  ;;
+    # RUNDE 98 — diese vier messen ueber mehrere Fensterbreiten oder
+    # ueber mehrere Sekunden Animation; 120 s reichen ihnen nicht.
+    pruefe-runde98-lesekopf)     frist=420  ;;
+    pruefe-runde98-aufdecken)    frist=420  ;;
+    pruefe-runde98-spraybild)    frist=420  ;;
+    pruefe-runde98-gesichter)    frist=300  ;;
     *)                           frist=120  ;;
   esac
   aus=$(timeout "$frist" node "$f" 2>&1)

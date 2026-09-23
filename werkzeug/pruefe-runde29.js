@@ -83,7 +83,12 @@ const pruefe = (was, gut, zusatz) => {
 
   console.log("\nGEMEINSAM FAHREN\n");
   pruefe("es gibt den Befehl", /w: "gemeinsam"/.test(lc) && /gemeinsam: \{ wirkung: "gemeinsam"/.test(lc));
-  pruefe("beide Bilder fahren", /function lcGemeinsam\(wen, von\)/.test(js)
+  /* RUNDE 98 — die Unterschrift hat zwei Teile dazubekommen: „art"
+     (Fahrrad oder Huepfball) und „kette" (der selbst gezeichnete Weg).
+     XANDER: „einmal, dass ich mit jemandem gemeinsam ein Fahrrad bin
+     … dann kann ich auch den Weg einzeichnen, wo ich lang fahr, und
+     einmal, dass ich denjenigen als Sprungball benutze." */
+  pruefe("beide Bilder fahren", /function lcGemeinsam\(wen, von, art, kette\)/.test(js)
     && /const bilderM = \[/.test(js));
   pruefe("und am Ende sitzt jeder auf einem eigenen Platz",
     /nehmen\(ab\.el, ziel\.nr\);[\s\S]{0,80}nehmen\(mit\.el, zielMit\.nr\);/.test(js));

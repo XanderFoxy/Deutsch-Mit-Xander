@@ -190,17 +190,41 @@ const pruefe = (was, gut, zusatz) => {
     window.LiveChat.schreiben("noch eine Zeile");
     await new Promise((f) => setTimeout(f, 400));
     const verlauf = document.getElementById("lcVerlauf");
+    const band = document.getElementById("lcFokusband");
     const zeile = tafel.closest(".lc-zeile");
-    const unten = verlauf.lastElementChild === zeile;
-    return { fest: fest, kleben: kleben, unten: unten,
+    /* RUNDE 98 — der festgehaltene Text liegt nicht mehr IM Verlauf,
+       sondern im Fokusband DARUNTER (siehe unten). */
+    const imBand = Boolean(band) && zeile.parentElement === band;
+    const rv = verlauf.getBoundingClientRect();
+    const rt = tafel.getBoundingClientRect();
+    return { fest: fest, kleben: kleben, imBand: imBand,
+             unterDemChat: Math.round(rt.top) >= Math.round(rv.bottom) - 2,
              schalter: tafel.querySelectorAll(".lc-lese-schalter").length };
   });
   pruefe("ein Tipp auf die Zeile haelt den Text fest",
     Boolean(fokus && fokus.fest), fokus ? "Klasse gesetzt" : "keine Tafel");
-  pruefe("und er klebt dann unten im Chat",
-    Boolean(fokus && fokus.kleben === "sticky"), fokus ? fokus.kleben : "-");
-  pruefe("schreibt jemand, rutscht der Text unter den Chat",
-    Boolean(fokus && fokus.unten));
+  /* =====================================================================
+     RUNDE 98 — DIE REGEL IST GEAENDERT, UND ZWAR AUF SEINEN WUNSCH
+     ---------------------------------------------------------------------
+     Bis Runde 97 klebte die festgehaltene Tafel mit „position: sticky"
+     IM Chatverlauf und wurde ans Ende geschoben, sobald jemand
+     schrieb. Dann kam:
+       XANDER (23.09.2026): „Wenn ich auf Fokus gehe, dann gehe ich
+       davon aus, dass das unten am untersten im Chatraum ist, dass
+       alle das immer lesen und dass das niemand stoeren kann …
+       solange das festgepinnt ist, ist es in Platz und das kann
+       niemand verhindern."
+     „Sticky" reichte dafuer nicht: es half nur, solange man ganz
+     unten stand. Die Tafel liegt jetzt im FOKUSBAND unter dem
+     rollenden Kasten und kann gar nicht mehr verschoben werden.
+     Gemessen wird deshalb das: sie liegt im Band, und sie liegt unter
+     dem Verlauf. Die ganze Messung dazu steht in
+     werkzeug/pruefe-runde98-fokus.js.
+     ===================================================================== */
+  pruefe("und er liegt dann im Fokusband unter dem Chat",
+    Boolean(fokus && fokus.imBand), fokus ? (fokus.imBand ? "im Band" : "im Verlauf") : "-");
+  pruefe("schreibt jemand, bleibt er unter dem Chat stehen",
+    Boolean(fokus && fokus.unterDemChat));
   pruefe("die Tafel hat Betonung und Fokus als Schalter",
     Boolean(fokus && fokus.schalter === 2), fokus ? fokus.schalter + " Schalter" : "-");
 
