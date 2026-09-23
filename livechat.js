@@ -2720,6 +2720,89 @@ window.LiveChat = (function () {
     }
     return true;
   }
+  /* =========================================================
+     RUNDE 94 — HEIMLICH TELEFONIEREN
+     ---------------------------------------------------------
+     XANDER: „Das Anrufen ist auch noch nicht da, wo ich mit jemand
+     heimlich telefonieren kann."
+
+     „Heimlich" heisst hier: die beiden hoeren EINANDER, und der Rest
+     des Raumes hoert die beiden NICHT — und sie hoeren den Rest
+     nicht. Das geht, weil jedes Geraet ohnehin jeden Strom einzeln
+     anschliesst: es muss nur wissen, wer gerade telefoniert.
+
+     Deshalb faehrt der Stand des Gespraechs als ganz normale
+     Raumnachricht mit („telefonat"), und JEDES Geraet wendet
+     dieselbe Regel an:
+       · Ich telefoniere      -> ich hoere NUR meinen Gegenueber.
+       · Ich telefoniere nicht -> ich hoere alle AUSSER den beiden.
+     Unsichtbar ist es nicht: an den zwei Plaetzen steht ein Hoerer,
+     damit niemand ins Leere redet. Geheim ist, WAS gesprochen wird —
+     und das ist der Sinn eines Telefonats.
+     ========================================================= */
+  var telefonat = null;        /* { a: id, b: id, aName, bName } */
+
+  function telefonatGeht(id) {
+    /* Darf ich die Stimme von „id" hoeren? */
+    if (!telefonat) return true;
+    var ich = zustand.ichId;
+    var drin = (ich === telefonat.a || ich === telefonat.b);
+    var jener = (id === telefonat.a || id === telefonat.b);
+    if (drin) {
+      /* Nur den anderen im Gespraech. */
+      return jener && id !== ich;
+    }
+    /* Die beiden sind fuer alle anderen stumm. */
+    return !jener;
+  }
+
+  function telefonatAnwenden() {
+    Object.keys(tonJe).forEach(function (id) {
+      var a = tonJe[id];
+      if (!a) return;
+      try { a.muted = !telefonatGeht(id); } catch (e) {}
+    });
+    try {
+      if (window.DMA_TELEFONAT) {
+        window.DMA_TELEFONAT(telefonat ? {
+          a: telefonat.a, b: telefonat.b,
+          aName: telefonat.aName, bName: telefonat.bName,
+          ichDrin: zustand.ichId === telefonat.a || zustand.ichId === telefonat.b
+        } : null);
+      }
+    } catch (e) {}
+  }
+
+  function telefonatSetzen(d) {
+    if (!d || d.aus) { telefonat = null; telefonatAnwenden(); return; }
+    telefonat = { a: d.a, b: d.b, aName: d.aName || "", bName: d.bName || "" };
+    telefonatAnwenden();
+  }
+
+  function telefonatStarten(roh) {
+    var rest = String(roh || "").trim();
+    if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
+    if (!rest || /^(aus|stop|stopp|auflegen|ende|schluss)$/i.test(rest)) {
+      if (!telefonat) return systemZeile("Es telefoniert gerade niemand.");
+      senden({ art: "telefon", aus: true });
+      systemZeile("\ud83d\udcde Aufgelegt \u2014 alle h\u00f6ren sich wieder.");
+      telefonatSetzen(null);
+      return true;
+    }
+    var wer = personNachName(rest) || praesenzNachName(rest);
+    if (!wer || !wer.id) {
+      return systemZeile("\u201e" + rest + "\u201c ist gerade nicht im Raum.");
+    }
+    if (wer.id === zustand.ichId) return systemZeile("Mit dir selbst zu telefonieren bringt wenig.");
+    senden({ art: "telefon", a: zustand.ichId, b: wer.id,
+             aName: zustand.ichName, bName: wer.name });
+    systemZeile("\ud83d\udcde Du telefonierst mit " + wer.name
+      + " \u2014 ihr h\u00f6rt nur noch euch. Auflegen:  /anruf aus");
+    telefonatSetzen({ a: zustand.ichId, b: wer.id,
+                      aName: zustand.ichName, bName: wer.name });
+    return true;
+  }
+
   function tonAnschliessen(id, strom) {
     if (tonSelbstSperren(id)) return;
     if (!strom || typeof document === "undefined") return;
@@ -2751,6 +2834,10 @@ window.LiveChat = (function () {
       a.srcObject = strom;
       tonAbspielenVersuchen(a);
     }
+    /* RUNDE 94 — wer gerade nicht gehoert werden darf, wird sofort
+       stumm geschaltet; sonst hoerte man ihn zwischen zwei
+       Auffrischungen doch. */
+    try { a.muted = !telefonatGeht(id); } catch (e) {}
   }
 
   /* =========================================================
@@ -3515,6 +3602,18 @@ window.LiveChat = (function () {
        (die gehen als persoenliche Post an den Schiedsrichter). */
     if (n.art === "spiel") {
       schiffeEmpfangen(n.spiel || {}, n.von);
+      return;
+    }
+    /* RUNDE 94 — DER STAND DES TELEFONATS.
+       XANDER: „Das Anrufen ist auch noch nicht da, wo ich mit jemand
+       heimlich telefonieren kann."
+       Er geht als eigene kleine Nachricht an alle: sie gehoert nicht
+       in den Chatverlauf, sie sagt nur, wer gerade mit wem spricht —
+       damit JEDES Geraet dieselbe Regel anwenden kann (siehe
+       telefonatGeht). */
+    if (n.art === "telefon") {
+      telefonatSetzen(n.aus ? null : { a: n.a, b: n.b,
+                                       aName: n.aName, bName: n.bName });
       return;
     }
     if (n.art === "tafel") {
@@ -9184,6 +9283,9 @@ window.LiveChat = (function () {
     { gr: "reden", w: "peitsche", kurz: "snap", nutzt: "/peitsche Name",   was: "Auspeitschen — es schnalzt, die Strieme bleibt kurz" },
     { gr: "reden", w: "bowling", kurz: "kegel", nutzt: "/bowling Name",    was: "Bowling — die Kugel raeumt ab" },
     { gr: "reden", w: "billard", kurz: "queue", nutzt: "/billard Name",    was: "Billard — angestossen und weggerollt" },
+    /* RUNDE 94 — das heimliche Telefonat: zwei hoeren nur noch sich. */
+    { gr: "reden", w: "anruf", kurz: "telefonieren", nutzt: "/anruf Name",
+      was: "Heimlich telefonieren — ihr zwei hoert nur noch euch, der Raum hoert euch nicht" },
     { gr: "reden", w: "schneekugel", kurz: "glaskugel", nutzt: "/schneekugel Name",
       was: "Schneekugel — durchgeschüttelt, dann rieselt der Schnee über Häuschen und Tanne" },
     { gr: "reden", w: "kopfhoerer", kurz: "ohr", nutzt: "/kopfhoerer Name 3 1:20-1:50", was: "Kopfhoerer — aufgesetzt; mit Liednummer hoert der andere das Lied, mit Zeitangabe nur diesen Ausschnitt" },
@@ -11685,6 +11787,12 @@ window.LiveChat = (function () {
        „Wenn nichts los ist im Chat, ein Lied fuer alle." Ohne Zusatz
        zeigt der Befehl die Liste — man soll nicht raten muessen, was
        im Ordner liegt. */
+    /* RUNDE 94 — „/anruf Name" und „/anruf aus".
+       XANDER: „Das Anrufen ist auch noch nicht da, wo ich mit jemand
+       heimlich telefonieren kann." */
+    if (art === "anruf") {
+      return telefonatStarten(rest);
+    }
     if (art === "musik") {
       var wahlM = (rest || "").trim();
       if (!wahlM || /^(liste|was|\?)$/i.test(wahlM)) {
@@ -13051,6 +13159,16 @@ window.LiveChat = (function () {
                typ: offeneAufgabe.typ || "", dran: offeneAufgabe.dran || "" };
     },
     schiffeWahl: function (nr) { return schiffeWahl(nr); },
+    /* RUNDE 94 — die Telefonregel zum Nachrechnen: „darf Geraet von
+       WEM die Stimme von WEM hoeren?" Ohne das liesse sich nur
+       zusehen, nicht messen. */
+    pruefTelefonRegel: function (aufGeraetVon, stimmeVon) {
+      var merk = zustand.ichId;
+      zustand.ichId = aufGeraetVon;
+      var erg = telefonatGeht(stimmeVon);
+      zustand.ichId = merk;
+      return erg;
+    },
     schiffeStand: function () { return schiffeStand; },
     tafelSenden: function (d) {
       if (!d || typeof d !== "object") return false;

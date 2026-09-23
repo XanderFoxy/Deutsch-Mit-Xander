@@ -128,68 +128,10 @@ def pilz():
     return len(klang) / RATE
 
 
-def stampf():
-    """DER SPRUNG AUF DEN GEGNER.
-
-    XANDER (23.09.2026): „Beim Ueberspringen der Personen im Mario-Modus
-    moechte ich, dass die typischen Geraeusche kommen — denn Mario
-    bespringt diese Personen entweder von oben oder kickt sie weg,
-    genauso wie mit den Muenzen. Da hast du ja auch einen typischen
-    Sound."
-
-    Bisher lag dort „bonk" — ein Holzklopfen. Das ist ein Geraeusch,
-    kein Signal. Der Tritt von oben klingt in einem Achtziger-Spiel
-    anders: ein kurzer, TIEF FALLENDER Rechteckton (von 300 auf 90 Hz
-    in 90 ms), darunter ein Rauschstoss von 40 ms fuer den Aufprall.
-    Das Fallen ist das Entscheidende — es ist der Klang von „etwas
-    wird flachgedrueckt".
-    """
-    n = int(RATE * 0.26)
-    t = np.arange(n) / RATE
-    # Der fallende Ton: die Frequenz sinkt exponentiell.
-    hz = 300.0 * np.power(90.0 / 300.0, np.clip(t / 0.09, 0, 1))
-    phase = np.cumsum(hz) / RATE
-    ton = np.where((phase % 1.0) < 0.25, 1.0, -1.0)
-    ton *= np.exp(-t * 14.0)
-    # Der Aufprall: kurzes Rauschen, gleich wieder weg.
-    rausch = np.zeros(n)
-    m = int(RATE * 0.04)
-    schritt = np.random.RandomState(7).uniform(-1, 1, m)
-    rausch[:m] = schritt * np.linspace(1, 0, m) ** 2
-    klang = (ton * 0.75 + rausch * 0.5) * huelle(n, 0.002, 0.08)
-    schreiben("mariostampf", klang, 0.8)
-    return len(klang) / RATE
-
-
-def kick():
-    """DAS WEGKICKEN.
-
-    Anders als der Stampfer geht der Kick nach OBEN: der Gegner fliegt
-    davon. Ein kurzer Anschlag, dann ein Rechteckton, der in 220 ms von
-    180 auf 900 Hz STEIGT — der Klang von „weg damit". Dazu ein
-    Zischen, das mit ihm nach oben zieht.
-    """
-    n = int(RATE * 0.34)
-    t = np.arange(n) / RATE
-    hz = 180.0 * np.power(900.0 / 180.0, np.clip(t / 0.22, 0, 1))
-    phase = np.cumsum(hz) / RATE
-    ton = np.where((phase % 1.0) < 0.5, 1.0, -1.0) * np.exp(-t * 6.0)
-    zisch = np.random.RandomState(13).uniform(-1, 1, n) * np.exp(-t * 9.0) * 0.35
-    anschlag = np.zeros(n)
-    m = int(RATE * 0.02)
-    anschlag[:m] = np.random.RandomState(3).uniform(-1, 1, m) * np.linspace(1, 0, m)
-    klang = (ton * 0.7 + zisch + anschlag * 0.6) * huelle(n, 0.002, 0.1)
-    schreiben("mariokick", klang, 0.78)
-    return len(klang) / RATE
-
-
 def main():
     d1 = muenze()
     d2 = pilz()
-    d3 = stampf()
-    d4 = kick()
-    print("Dauern: mariomuenze %.2f s, mariopilz %.2f s, "
-          "mariostampf %.2f s, mariokick %.2f s" % (d1, d2, d3, d4))
+    print("Dauern: mariomuenze %.2f s, mariopilz %.2f s" % (d1, d2))
 
 
 main()

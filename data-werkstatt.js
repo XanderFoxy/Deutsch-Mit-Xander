@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 94 — Fahrstuhl repariert, Lack bleibt, Billard trifft verschiedene Löcher (Fassung 503)",
+  stand: "Runde 95 — Mario-Geräusche und heimliches Telefonieren (Fassung 504)",
 
   inArbeit: [
-    { seit: "2026-09-22T23:57", nurBetreiber: true,
+    { seit: "2026-09-23T00:04", nurBetreiber: true,
       text: "Sammellauf vor jedem Hochladen: bash werkzeug/alle-pruefen.sh" },
-    { seit: "2026-09-22T23:57",
-      text: "Lok-Schienenführung, Mario-Töne beim Draufspringen, Delfin, Anrufen (heimlich telefonieren), Hände vereinheitlichen, Cowboyhut zurechtrücken" },
+    { seit: "2026-09-23T00:04",
+      text: "Lok-Schienenführung, Delfin, Cowboyhut zurechtrücken, Hände vereinheitlichen (Roboter- und Hexenhand)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-22T23:57",
-      text: "„/fahrstuhl 5“ stürzte ab — mit einer Platznummer (und die schickt das Menü immer) brach der Befehl mit einem Fehler ab. Jetzt fährt er; neue Sonde prüft ALLE 28 Reisen mit Nummer" },
-    { seit: "2026-09-22T23:57",
-      text: "Das aufgesprühte Bild bleibt jetzt liegen — über Auffrischen, Neuzeichnen und Klick aufs eigene Bild hinweg. Nur der Scheibenwischer nimmt es ab" },
-    { seit: "2026-09-22T23:57",
-      text: "Billard: die Rechnung fand gar kein Loch (falscher Feldname) — was man fallen sah, war jedes Mal der Ersatzweg. Jetzt 34 Grad Fächer, Stoßhärte, Reibung: über 24 Stöße alle drei Löcher" },
-    { seit: "2026-09-22T23:57",
-      text: "Drei neue Sonden: pruefe-runde92-reisenummern, pruefe-runde92-lack, pruefe-runde92-billard" },
+    { seit: "2026-09-23T00:04",
+      text: "Mario: beim Draufspringen und Wegkicken klingen jetzt zwei eigene Signale im Achtziger-Klang statt Holzklopfen und Fußtritt — „mariostampf“ fällt von 300 auf 90 Hz, „mariokick“ steigt von 180 auf 900 Hz" },
+    { seit: "2026-09-23T00:04",
+      text: "„/anruf Name“: heimlich telefonieren — ihr zwei hört nur noch euch, der Raum hört euch nicht. „/anruf aus“ legt auf" },
+    { seit: "2026-09-23T00:04",
+      text: "An beiden Plätzen hängt dabei ein Hörer und eine Leiste sagt, was los ist — geheim ist der Inhalt, nicht die Tatsache" },
+    { seit: "2026-09-23T00:04",
+      text: "Zwei neue Sonden: pruefe-runde94-mariotoene (Tonhöhenverlauf gemessen) und pruefe-runde94-anruf (wer hört wen, auf jedem Gerät)" },
   ],
 };

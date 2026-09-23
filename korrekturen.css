@@ -29982,3 +29982,37 @@ code, pre {
 @media (prefers-reduced-motion: reduce) {
   .lc-sprayfarbe-geht .lc-sprayfarbe-bild { animation: none; opacity: 0; }
 }
+
+/* =====================================================================
+   RUNDE 94 — WER TELEFONIERT, IST ZU SEHEN
+   ---------------------------------------------------------------------
+   XANDER: „Das Anrufen ist auch noch nicht da, wo ich mit jemand
+   heimlich telefonieren kann."
+   Heimlich ist der INHALT. Dass zwei gerade nur einander hoeren, muss
+   man dagegen sehen — sonst redet der Raum ins Leere.
+   ===================================================================== */
+.lc-telefonat {
+  position: absolute;
+  right: 4%;
+  top: 4%;
+  font-size: 1.1rem;
+  line-height: 1;
+  z-index: 7;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .45));
+  animation: lcTelefonWackeltR94 1.8s ease-in-out infinite;
+}
+@keyframes lcTelefonWackeltR94 {
+  0%, 100% { transform: rotate(-8deg); }
+  50%      { transform: rotate(8deg); }
+}
+/* Die beiden werden zusaetzlich leicht abgeblendet: sie sind gerade
+   nicht im Raumgespraech. */
+.lc-platz-telefoniert .lc-kreis { filter: saturate(.75) brightness(.92); }
+.lc-telefonband {
+  background: linear-gradient(180deg, rgba(40, 60, 100, .96), rgba(26, 42, 76, .96));
+  border-color: rgba(140, 180, 250, .5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-telefonat { animation: none; }
+}

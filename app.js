@@ -34589,6 +34589,53 @@
     }, 3600);
   }
 
+  /* =================================================================
+     RUNDE 94 — DAS TELEFONAT IST ZU SEHEN, NICHT ZU HOEREN
+     -----------------------------------------------------------------
+     XANDER: „Das Anrufen ist auch noch nicht da, wo ich mit jemand
+     heimlich telefonieren kann."
+     Geheim ist, WAS gesprochen wird — dafuer sorgt livechat.js, indem
+     jedes Geraet die beiden Stimmen fuer alle anderen stumm schaltet.
+     Hier geht es nur darum, dass man SIEHT, dass die beiden gerade
+     nicht zuhoeren: sonst redet der Raum ins Leere.
+     ================================================================= */
+  window.DMA_TELEFONAT = function (stand) {
+    document.querySelectorAll(".lc-platz .lc-telefonat").forEach((x) => x.remove());
+    document.querySelectorAll(".lc-platz").forEach((p) =>
+      p.classList.remove("lc-platz-telefoniert"));
+    const band = document.getElementById("lcTelefonband");
+    if (band) band.remove();
+    if (!stand) return;
+    const namen = [stand.aName, stand.bName].filter(Boolean);
+    namen.forEach((nm) => {
+      const pl = lcPlatzMitNamen(nm);
+      if (!pl) return;
+      pl.classList.add("lc-platz-telefoniert");
+      const z = document.createElement("span");
+      z.className = "lc-telefonat";
+      z.setAttribute("aria-hidden", "true");
+      z.textContent = "\ud83d\udcde";
+      pl.appendChild(z);
+    });
+    const karte = document.getElementById("livechatKarte");
+    if (!karte) return;
+    const leiste = document.createElement("div");
+    leiste.id = "lcTelefonband";
+    leiste.className = "lc-musikband lc-telefonband";
+    leiste.innerHTML = '<span class="lc-musikband-note">\ud83d\udcde</span>'
+      + '<span class="lc-musikband-titel"></span>';
+    /* Wer selbst telefoniert, liest den NAMEN DES ANDEREN — nicht
+       seinen eigenen mit dazu. */
+    let ichName = "";
+    try { ichName = (LiveChat.lage() || {}).ichName || ""; } catch (e) {}
+    const andere = namen.filter((nm) => nm && nm !== ichName);
+    leiste.querySelector(".lc-musikband-titel").textContent = stand.ichDrin
+      ? "Du telefonierst mit " + (andere.join(" und ") || "jemandem")
+        + " \u2014 /anruf aus zum Auflegen"
+      : namen.join(" und ") + " telefonieren \u2014 die beiden h\u00f6ren euch gerade nicht";
+    karte.appendChild(leiste);
+  };
+
   window.DMA_SCHIFFE = function (stand) {
     const karte = document.getElementById("livechatKarte");
     if (!stand) { lcSchiffeAufraeumen(); return; }
@@ -42800,7 +42847,19 @@
           k.classList.add(klasse);
           setTimeout(() => { k.classList.remove(klasse); k.style.removeProperty("--kickweg"); }, 1500);
         }
-        lcGeraeusch(f.wie === "kick" ? "tritt" : "bonk", "mariogegner", 0.55);
+        /* RUNDE 94 — XANDER: „Beim Ueberspringen der Personen im
+           Mario-Modus moechte ich, dass die typischen Geraeusche
+           kommen, denn Mario bespringt diese Personen entweder von
+           oben oder kickt sie weg, genauso wie mit den Muenzen. Da
+           hast du ja auch einen typischen Sound."
+           Hier lagen „tritt" und „bonk" — ein Fusstritt und ein
+           Holzklopfen, beides Geraeusche aus der wirklichen Welt.
+           Jetzt zwei eigene Signale im Klang der Achtziger (gebaut in
+           werkzeug/mario-toene-bauen.py): „mariostampf" faellt von
+           300 auf 90 Hz (etwas wird flachgedrueckt), „mariokick"
+           steigt von 180 auf 900 Hz (etwas fliegt davon). */
+        lcGeraeusch(f.wie === "kick" ? "mariokick" : "mariostampf",
+                    "mariogegner", 0.6);
         lcStimmeZu(f.platz.el, "schreimann", "schreifrau", 90, 0.6);
         /* Von der Buehne geht nur, wer es auf SEINEM Geraet erfaehrt. */
         try {
