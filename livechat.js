@@ -1038,6 +1038,8 @@ window.LiveChat = (function () {
        Runde 88. Jede Hand braucht DREI Eintragungen (hier, in
        LC_EFFEKTE und in BEFEHLE) — darauf achtet
        werkzeug/pruefe-effekttueren.js. */
+    /* RUNDE 99 — XANDER: „Man kann auch jemanden ansabbern." */
+    sabbern:  { wirkung: "sabbern",  satz: "sabbert auf", emoji: "\ud83e\udd24" },
     mannhand: { wirkung: "mannhand", satz: "wird von einer kr\u00e4ftigen Hand gesetzt zu", emoji: "\ud83d\udc4a" },
     frauenhand: { wirkung: "frauenhand", satz: "wird von einer zarten Hand gesetzt zu", emoji: "\ud83d\udc85" },
     hexenhand: { wirkung: "hexenhand", satz: "wird von einer Hexenklaue gepackt und gesetzt zu", emoji: "\ud83e\uddd9" },
@@ -9479,6 +9481,8 @@ window.LiveChat = (function () {
       was: "eine riesige Hand hebt dich heraus und setzt dich auf Platz 5" },
     { gr: "reden", w: "pranke", kurz: "", nutzt: "/pranke 5",
       was: "dieselbe Bewegung, aber mit der Pranke eines Gorillas" },
+    { gr: "reden", w: "sabbern", kurz: "", nutzt: "/sabbern Name",
+      was: "ein Tropfen sammelt sich, reisst ab und f\u00e4llt auf sein Bild" },
     { gr: "reden", w: "mannhand", kurz: "", nutzt: "/mannhand 5",
       was: "eine kr\u00e4ftige M\u00e4nnerhand \u2014 breiter, kurze N\u00e4gel, behaart" },
     { gr: "reden", w: "frauenhand", kurz: "", nutzt: "/frauenhand 5",

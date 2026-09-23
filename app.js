@@ -25809,6 +25809,12 @@
        um diese Zeit werden sie vorgezogen (siehe LC_TREFFER). */
     vogelkot:       { ton: "vogelkot", dauer: 3400, laut: 0.75 },
     spucken:        { ton: "rotze",    dauer: 2600, laut: 0.8 },
+    /* RUNDE 99 — XANDER: „Man kann auch jemanden ansabbern."
+       Kein neuer Ton: „schlurf" ist genau das nasse Geraeusch, und
+       seine Spitze liegt GEMESSEN bei 129 ms. Der Tropfen reisst bei
+       1300 ms ab — deshalb faengt die Aufnahme bei 1171 ms an, damit
+       die Spitze auf den Abriss faellt (siehe LC_TREFFER). */
+    sabbern:        { ton: "schlurf",  dauer: 1400, laut: 0.55 },
     /* „wenn man das Ei aufschlaegt, das kann auch realistischer
        klingen und dann ... kann das so bisschen eklig klingen."
        Das sind ZWEI Dinge nacheinander: erst knackt die Schale
@@ -29517,6 +29523,8 @@
        die Rotze drauf bekommen." */
     ["\ud83d\udc26", "Vogel",    "vogelkot"],
     ["\ud83e\udd7a", "Spucken",  "spucken"],
+    /* RUNDE 99 — XANDER: „Man kann auch jemanden ansabbern." */
+    ["\ud83e\udd24", "Sabbern",  "sabbern"],
     /* RUNDE 75 — XANDER: „es soll noch ein Profileffekt geben, wo
        man sich ne Sonnenbrille aufsetzt und cool zu sein." */
     ["\ud83d\udd76\ufe0f", "Sonnenbrille", "sonnenbrille"],
@@ -29797,7 +29805,7 @@
     ["\ud83c\udfaf", "Werfen",
      ["bumerang", "pfeil", "zwille", "ei", "sahne", "katapult", "wasser"]],
     ["\ud83e\udd22", "Eklig",
-     ["spucken", "vogelkot"]],
+     ["spucken", "vogelkot", "sabbern"]],
     ["\ud83d\udd8c\ufe0f", "Schmutzig",
      ["paintball", "spray"]],
     ["\ud83e\uddfd", "Sauber machen",
@@ -32674,6 +32682,7 @@
        und der Effekt passiert nie. */
     vogelkot:   { zeichen: ["\ud83d\udc26"], wie: 5, klasse: "umarmen" },
     spucken:    { zeichen: ["\ud83e\udd7a"], wie: 5, klasse: "umarmen" },
+    sabbern:    { zeichen: ["\ud83e\udd24"], wie: 5, klasse: "umarmen" },
     gluehbirne: { zeichen: ["\ud83d\udca1"], wie: 5, klasse: "umarmen" },
     birneraus:  { zeichen: ["\ud83d\udd0c"], wie: 5, klasse: "umarmen" },
     entbloessung:{ zeichen: ["\ud83d\udc59"], wie: 5, klasse: "umarmen" },
@@ -33458,6 +33467,8 @@
        im Ton bei 620 ms — also Start bei 630 ms. Dann faellt das
        Hochziehen im Rachen noch vor den Wurf, wie es soll. */
     spucken: 630,
+    /* 1300 ms minus die 129 ms bis zur Spitze der Aufnahme. */
+    sabbern: 1171,
     tritt: 180,        /* 0,18 s — „das ist der Anstoss" */
     /* RUNDE 98 — der erste Klatscher liegt bei 45 % des ersten Takts
        (340 ms), also bei 153 ms. */
@@ -38091,6 +38102,49 @@
       blende.innerHTML = fadenHtml;
       lcStimmeZu(platz, "ekelmann", "ekelfrau", 1820, 0.6);
     }, 2600, "spucken");
+  }
+
+  /* =====================================================================
+     RUNDE 99 — SABBERN
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „Man kann auch jemanden ansabbern."
+
+     Es ist kein Spucken: beim Spucken fliegt etwas, beim Sabbern faellt
+     es. Deshalb macht es der Reihe nach das, was ein Tropfen wirklich
+     tut — und nicht alles auf einmal:
+       0,00-0,90 s  oben sammelt sich ein Tropfen und wird schwerer
+       0,90-1,30 s  er zieht sich in die Laenge, der Faden wird duenn
+       1,30 s       er REISST AB (hier liegt die Spitze von „schlurf")
+       1,30-1,75 s  er faellt — und wird dabei schneller
+       1,75 s       er trifft auf und zerlaeuft zu einer Lache
+       1,90 s       der Getroffene sagt, was er davon haelt
+       bis 3,00 s   die Lache glaenzt und laeuft langsam ueber den Rand
+     Die Lache liegt in der Blende, also INNERHALB der Bildgrenzen —
+     „es soll nur innerhalb der Platz Grenzen stattfinden".
+     ===================================================================== */
+  function lcSabbern(wen) {
+    return lcAmPlatz(wen, "lc-sabber", (schicht, platz) => {
+      /* Der Tropfen mit seinem Faden — er haengt oben ueber dem Bild. */
+      schicht.insertAdjacentHTML("beforeend",
+        '<span class="lc-sabber-faden"></span>'
+        + '<span class="lc-sabber-tropfen"></span>');
+      const blende = lcZpBlende(schicht);
+      /* Die Lache und zwei Rinnsale, die spaeter ueber den Rand
+         laufen. Verschieden lang und verschieden spaet — zwei
+         gleiche Rinnsale sehen gemalt aus. */
+      let html = '<span class="lc-sabber-lache"></span>';
+      [[-16, 34, 5.4, 0], [9, 22, 4.2, 240], [20, 14, 3.4, 430]]
+        .forEach(([quer, lang, breit, spaet]) => {
+          html += '<span class="lc-sabber-rinne" style="--quer:' + quer
+            + '%; --lang:' + lang + '%; --breit:' + breit + '%;'
+            + ' animation-delay:' + (1900 + spaet) + 'ms"></span>';
+        });
+      blende.innerHTML = html;
+      /* Und der Getroffene sagt, was er davon haelt — erst NACH dem
+         Aufschlag, sonst ekelt er sich vor etwas, das noch gar nicht
+         angekommen ist. */
+      lcStimmeZu(platz, "ekelmann", "ekelfrau", 1900, 0.6);
+    }, 3000, "sabbern");
   }
 
   function lcPaintfleck(wen) {
@@ -50856,12 +50910,38 @@
         kreis.classList.add("lc-gestreichelt");
         setTimeout(() => kreis.classList.remove("lc-gestreichelt"), 3400);
       }
+      /* =============================================================
+         RUNDE 99 — MIT DEM HANDRUECKEN AN DER WANGE
+         -------------------------------------------------------------
+         XANDER (23.09.2026): „Beim Streicheln koennte man auch mit dem
+         Handruecken an der Wange streicheln."
+         Bisher stand hier eine offene Handflaeche mit vier
+         ausgestreckten Fingern, und sie wischte quer ueber das ganze
+         Gesicht — das ist ein Streicheln ueber den KOPF, kein
+         Streicheln an der Wange.
+         Jetzt: der HANDRUECKEN. Man sieht ihn von aussen, die Finger
+         sind eingerollt und liegen als vier Kuppen unten an — genau so
+         hält man die Hand, wenn man jemandem ueber die Wange faehrt.
+         Und die Bewegung geht nicht mehr quer, sondern an der Wange
+         HINUNTER (siehe lcStreichelR99 im Stilblatt).
+         ============================================================= */
       schicht.innerHTML =
         '<svg class="lc-streichel-hand" viewBox="0 0 100 80">'
-        + '<path d="M14 66 C4 54 4 36 12 26 L20 36 L20 10 A6 6 0 0 1 32 10 L32 34'
-        + ' L36 6 A6 6 0 0 1 48 6 L48 34 L52 10 A6 6 0 0 1 64 10 L64 36'
-        + ' L70 18 A6 6 0 0 1 82 22 C82 48 72 68 58 76 Z"'
-        + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante + '" stroke-width="2.6" stroke-linejoin="round"/>'
+        /* Der Handruecken. */
+        + '<path d="M34 12 C26 22 24 40 30 52 C36 64 58 68 70 60'
+        + ' C82 52 84 28 78 16 C72 6 42 4 34 12 Z"'
+        + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante
+        + '" stroke-width="2.6" stroke-linejoin="round"/>'
+        /* Die vier eingerollten Finger — das ist die Seite, die die
+           Wange beruehrt. */
+        + [0, 1, 2, 3].map((i) => '<rect x="' + (24 + i * 12.5) + '" y="'
+            + (50 + i * 1.6) + '" width="11.5" height="'
+            + (18 - i * 1.4) + '" rx="5.7" fill="' + lcHaut().hell
+            + '" stroke="' + lcHaut().kante + '" stroke-width="2.2"/>').join("")
+        /* Die Knoechel — daran erkennt man, dass es der RUECKEN ist. */
+        + '<path d="M34 40 C42 34 54 34 62 39 M32 49 C40 44 52 44 60 49"'
+        + ' fill="none" stroke="rgba(0,0,0,.18)" stroke-width="3"'
+        + ' stroke-linecap="round"/>'
         + "</svg>";
       const blende = lcZpBlende(schicht);
       for (let h = 0; h < 6; h++) {
@@ -52778,7 +52858,7 @@
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
-    vogelkot: 1, spucken: 1,
+    vogelkot: 1, spucken: 1, sabbern: 1,
     birneraus: 1,
     entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, kuss: 1, klaps: 1,
     /* RUNDE 76 — die drei Neuen: Telefon und Anziehen gelten genau
@@ -53033,6 +53113,7 @@
       if (art === "pusterohr" && lcPusterohr(wenZ)) return;
       if (art === "vogelkot" && lcVogelKot(wenZ)) return;
       if (art === "spucken" && lcSpucken(wenZ)) return;
+      if (art === "sabbern" && lcSabbern(wenZ)) return;
       if (art === "gluehbirne" && lcGluehbirne(wenZ)) return;
       if (art === "birneraus" && lcGluehbirneRaus()) return;
       if (art === "hut" && lcHut(wenZ)) return;
