@@ -30016,3 +30016,74 @@ code, pre {
 @media (prefers-reduced-motion: reduce) {
   .lc-telefonat { animation: none; }
 }
+
+/* =====================================================================
+   RUNDE 95 — DER DELFIN
+   ---------------------------------------------------------------------
+   XANDER (23.09.2026): „Du hast den Delfin noch nicht gebaut."
+   Er springt in Boegen ueber die Sitzreihe; das Bild sitzt auf seinem
+   Ruecken und dreht sich NICHT mit — wer auf einem Delfin reitet,
+   bleibt aufrecht. Die Bahn selbst steht in app.js (drei Boegen mit
+   einem Platsch an jedem Ende); hier steht nur, wie er aussieht.
+   ===================================================================== */
+.lc-delfin {
+  position: absolute;
+  width: calc(var(--gross, 64px) * 2.1);
+  height: calc(var(--gross, 64px) * 1.15);
+  pointer-events: none;
+  z-index: 24;
+}
+.lc-delfin-koerper { position: absolute; inset: 0; }
+.lc-delfin-form { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lc-delfin-leib { fill: #6f8aa6; stroke: #43586e; stroke-width: 2; }
+.lc-delfin-schnauze { fill: #7d99b4; stroke: #43586e; stroke-width: 1.6; }
+.lc-delfin-finne, .lc-delfin-brust, .lc-delfin-schwanz {
+  fill: #5d7790; stroke: #3a4c60; stroke-width: 1.6;
+}
+.lc-delfin-auge { fill: #1d2733; }
+.lc-delfin-loch { stroke: #43586e; stroke-width: 1.6; stroke-linecap: round; }
+/* Der Bauch ist heller — daran erkennt man einen Delfin sofort. */
+.lc-delfin-leib { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .35)); }
+/* Das Profilbild sitzt auf dem Ruecken, hinter der Finne. */
+.lc-delfin-reiter {
+  position: absolute;
+  left: 46%;
+  top: 2%;
+  width: 42%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(255, 255, 255, .9);
+  border: 2px solid rgba(255, 255, 255, .85);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #2b3444;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .35);
+}
+/* Das Wasser, in das er eintaucht: ein flacher Schaumring, der bei
+   jedem Bogenende aufblitzt. */
+.lc-delfin-wasser,
+.lc-delfin-platsch {
+  position: absolute;
+  left: 50%;
+  bottom: -6%;
+  width: 62%;
+  height: 22%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center,
+              rgba(255, 255, 255, .85), rgba(180, 220, 255, .35) 60%, transparent 72%);
+  opacity: 0;
+  animation: lcDelfinPlatschR95 1s ease-out infinite;
+}
+.lc-delfin-platsch { animation-delay: .5s; width: 78%; }
+@keyframes lcDelfinPlatschR95 {
+  0%   { opacity: 0; transform: translateX(-50%) scale(.5); }
+  35%  { opacity: .9; transform: translateX(-50%) scale(1.1); }
+  100% { opacity: 0; transform: translateX(-50%) scale(1.5); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-delfin-wasser, .lc-delfin-platsch { animation: none; opacity: .5; }
+}

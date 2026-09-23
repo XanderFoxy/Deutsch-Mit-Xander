@@ -28393,6 +28393,8 @@
        ["\ud83e\udda1", "Maulwurf", "maulwurf"],
        ["\ud83c\udf00", "Tor", "portal"],
        ["\u26f5", "Boot", "boot"],
+       /* RUNDE 95 — XANDER: „Du hast den Delfin noch nicht gebaut." */
+       ["\ud83d\udc2c", "Delfin", "delfin"],
        ["\ud83c\udfd7\ufe0f", "Kran", "kran"],
        ["\ud83d\udeb2", "Zu zweit", "gemeinsam"]]],
     ["\ud83d\udd2e", "Schneekugel", "schneekugel"],
@@ -30965,6 +30967,8 @@
     maulwurf: { zeichen: ["\ud83e\udda1"], wie: 4, klasse: "umarmen" },
     portal:   { zeichen: ["\ud83c\udf00"], wie: 4, klasse: "umarmen" },
     boot:     { zeichen: ["\u26f5"], wie: 4, klasse: "umarmen" },
+    /* RUNDE 95 — XANDER: „Du hast den Delfin noch nicht gebaut." */
+    delfin:   { zeichen: ["\ud83d\udc2c"], wie: 4, klasse: "umarmen" },
     kran:     { zeichen: ["\ud83c\udfd7\ufe0f"], wie: 4, klasse: "umarmen" },
     dampfer:  { zeichen: ["\ud83d\udea2"], wie: 4, klasse: "umarmen" },
     lok:      { zeichen: ["\ud83d\ude82"], wie: 4, klasse: "umarmen" },
@@ -36817,7 +36821,7 @@
        ich, dass du dir Zeit laesst, dass alles von der Physik richtig
        stimmt." 3400 statt 2800. */
     const grund = { fahrstuhl: 2600, frosch: 2400, zylinder: 3400,
-                  flug: 2600, maulwurf: 2200, boot: 2800, kran: 2800,
+                  flug: 2600, maulwurf: 2200, boot: 2800, delfin: 3000, kran: 2800,
                   dampfer: 3000, lok: 3200, liane: 2200, feder: 2400,
                   beamen: 2600, rohr: 2800, heli: 3000, portal: 3400,
                   pferd: 3000, greifvogel: 3000, turm: 3400,
@@ -38124,6 +38128,101 @@
         ], { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       } catch (e) {}
       lcTonReise("boot", dauer);
+    } else if (art === "delfin") {
+      /* =============================================================
+         RUNDE 95 — DER DELFIN
+         -------------------------------------------------------------
+         XANDER (23.09.2026): „Du hast den Delfin noch nicht gebaut."
+
+         Ein Delfin schwimmt nicht wie ein Boot ueber die Reihe — er
+         SPRINGT. Immer dasselbe Muster: er kommt heraus, fliegt einen
+         Bogen, taucht mit der Schnauze zuerst wieder ein, und beim
+         Eintauchen spritzt es. Deshalb traegt diese Reise als einzige
+         eine eigene Bahn: drei Boegen ueber die Strecke, jeder mit
+         einem Platsch an seinem Ende.
+
+         Das Bild sitzt auf seinem Ruecken, zwischen Blasloch und
+         Ruecken­finne — dort, wo man sitzt, wenn man mit einem Delfin
+         schwimmt. Es dreht sich NICHT mit: wer auf einem Delfin
+         reitet, bleibt aufrecht.
+         ============================================================= */
+      const del = document.createElement("span");
+      del.className = "lc-delfin";
+      del.style.setProperty("--gross", d + "px");
+      del.innerHTML =
+        '<i class="lc-delfin-wasser"></i>'
+        + '<span class="lc-delfin-koerper">'
+        + '<svg class="lc-delfin-form" viewBox="0 0 140 76" aria-hidden="true">'
+        /* Der Leib: vorne die runde Stirn, dann die Schnauze, hinten
+           schlank zum Schwanz. */
+        + '<path class="lc-delfin-leib" d="M6 44'
+        + ' C10 26 30 14 56 14 C78 14 96 20 112 32'
+        + ' C120 38 128 42 136 44 C128 50 118 54 108 56'
+        + ' C92 60 70 62 52 58 C30 53 12 50 6 44 Z"/>'
+        /* Die Schnauze. */
+        + '<path class="lc-delfin-schnauze" d="M6 44 C2 42 0 40 0 38'
+        + ' C4 36 10 36 14 38 Z"/>'
+        /* Die Rueckenfinne. */
+        + '<path class="lc-delfin-finne" d="M62 15 C66 4 78 0 86 2'
+        + ' C80 8 74 14 70 18 Z"/>'
+        /* Die Brustflosse. */
+        + '<path class="lc-delfin-brust" d="M42 50 C36 58 30 64 22 66'
+        + ' C26 58 32 52 38 48 Z"/>'
+        /* Die Schwanzflosse, hochkant wie bei einem Wal. */
+        + '<path class="lc-delfin-schwanz" d="M126 44 C134 34 140 30 140 30'
+        + ' C140 40 138 46 136 48 C138 52 140 58 140 66'
+        + ' C140 66 132 56 126 46 Z"/>'
+        /* Das Auge und das Blasloch. */
+        + '<circle class="lc-delfin-auge" cx="24" cy="38" r="2.6"/>'
+        + '<path class="lc-delfin-loch" d="M44 18 q4 -3 8 0" fill="none"/>'
+        + "</svg>"
+        + '<span class="lc-delfin-reiter"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
+        + "</span>"
+        + '<i class="lc-delfin-platsch"></i>';
+      reihe.appendChild(del);
+      weg.push(del);
+      setzen(del, start.x, start.y);
+      const linksD = ende.x < start.x;
+      const spD = " scaleX(" + (linksD ? -1 : 1) + ")";
+      /* DREI BOEGEN. Die Hoehe ist ein Drittel der Strecke, mindestens
+         aber eine halbe Bildhoehe — sonst sieht ein kurzer Sprung aus
+         wie ein Zittern. */
+      const weitD = Math.hypot(ende.x - start.x, ende.y - start.y);
+      const hochD = Math.max(d * 0.55, weitD / 3);
+      const stufen = [];
+      const bogen = 3;
+      stufen.push({ transform: "translate(-50%, -50%)" + spD + " scale(.3)",
+                    opacity: 0, offset: 0 });
+      stufen.push({ transform: "translate(-50%, -50%)" + spD + " scale(1)",
+                    opacity: 1, offset: 0.1 });
+      for (let b = 1; b <= bogen; b++) {
+        const t = b / bogen;
+        const vor = (b - 0.5) / bogen;
+        const x1 = (ende.x - start.x) * vor, y1 = (ende.y - start.y) * vor;
+        const x2 = (ende.x - start.x) * t, y2 = (ende.y - start.y) * t;
+        /* Oben im Bogen: die Nase zeigt nach oben. */
+        stufen.push({ transform: "translate(" + x1 + "px, " + (y1 - hochD)
+          + "px) translate(-50%, -50%)" + spD + " rotate(" + (linksD ? 16 : -16) + "deg) scale(1)",
+          opacity: 1, offset: 0.1 + (hin / dauer - 0.1) * (vor) });
+        /* Unten: die Nase zeigt nach unten — er taucht ein. */
+        stufen.push({ transform: "translate(" + x2 + "px, " + y2
+          + "px) translate(-50%, -50%)" + spD + " rotate(" + (linksD ? -14 : 14) + "deg) scale(1)",
+          opacity: 1, offset: 0.1 + (hin / dauer - 0.1) * t });
+      }
+      stufen.push({ transform: "translate(" + (ende.x - start.x) + "px, "
+        + (ende.y - start.y) + "px) translate(-50%, -50%)" + spD + " scale(.3)",
+        opacity: 0, offset: 1 });
+      try { del.animate(stufen, { duration: dauer, easing: "ease-in-out", fill: "forwards" }); }
+      catch (e) {}
+      /* Und bei jedem Eintauchen platscht es — genau dann, wenn der
+         Bogen unten ankommt. */
+      for (let b = 1; b <= bogen; b++) {
+        const wann = Math.round(dauer * (0.1 + (hin / dauer - 0.1) * (b / bogen)));
+        lcTonSpaeter("platsch", wann, 0.42);
+      }
+      lcTonReise("delfin", dauer);
     } else if (art === "kran") {
       /* GEWUENSCHT: „oder dass man einen Baustellenkran hat, der
          einen dann dahin hebt." Das Bild haengt am Seil: hoch,
@@ -49455,7 +49554,7 @@
     }
     /* Fliegen, Graben und das Tor bewegen ebenfalls den Absender. */
     if (art === "flug" || art === "maulwurf" || art === "portal"
-        || art === "boot" || art === "kran" || art === "dampfer"
+        || art === "boot" || art === "delfin" || art === "kran" || art === "dampfer"
         || art === "lok" || art === "liane" || art === "feder"
         /* RUNDE 76 */
         || art === "frosch" || art === "zylinder"
@@ -50440,7 +50539,7 @@
     },
     reiseArten: function () {
       return ["fahren", "fahrstuhl", "frosch", "zylinder", "flug", "maulwurf",
-              "boot", "kran", "dampfer", "lok", "liane", "feder", "beamen",
+              "boot", "delfin", "kran", "dampfer", "lok", "liane", "feder", "beamen",
               "rohr", "heli", "portal", "pferd", "greifvogel", "turm",
               "untertasse", "mieze", "gotteshand", "pranke", "frisbee",
               "brennen", "zorro", "spielzug", "pacjagd"];

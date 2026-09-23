@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 95 — Mario-Geräusche und heimliches Telefonieren (Fassung 504)",
+  stand: "Runde 96 — der Delfin (Fassung 505)",
 
   inArbeit: [
-    { seit: "2026-09-23T00:04", nurBetreiber: true,
+    { seit: "2026-09-23T00:10", nurBetreiber: true,
       text: "Sammellauf vor jedem Hochladen: bash werkzeug/alle-pruefen.sh" },
-    { seit: "2026-09-23T00:04",
-      text: "Lok-Schienenführung, Delfin, Cowboyhut zurechtrücken, Hände vereinheitlichen (Roboter- und Hexenhand)" },
+    { seit: "2026-09-23T00:10",
+      text: "Lok-Schienenführung, Cowboyhut zurechtrücken, Hände vereinheitlichen (Roboter- und Hexenhand)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-23T00:04",
-      text: "Mario: beim Draufspringen und Wegkicken klingen jetzt zwei eigene Signale im Achtziger-Klang statt Holzklopfen und Fußtritt — „mariostampf“ fällt von 300 auf 90 Hz, „mariokick“ steigt von 180 auf 900 Hz" },
-    { seit: "2026-09-23T00:04",
-      text: "„/anruf Name“: heimlich telefonieren — ihr zwei hört nur noch euch, der Raum hört euch nicht. „/anruf aus“ legt auf" },
-    { seit: "2026-09-23T00:04",
-      text: "An beiden Plätzen hängt dabei ein Hörer und eine Leiste sagt, was los ist — geheim ist der Inhalt, nicht die Tatsache" },
-    { seit: "2026-09-23T00:04",
-      text: "Zwei neue Sonden: pruefe-runde94-mariotoene (Tonhöhenverlauf gemessen) und pruefe-runde94-anruf (wer hört wen, auf jedem Gerät)" },
+    { seit: "2026-09-23T00:10",
+      text: "Der Delfin ist gebaut: „/delfin 5“ oder „/delfin Name“ — er springt in drei Bögen über die Sitzreihe, das Profilbild sitzt auf seinem Rücken, bei jedem Eintauchen platscht es" },
+    { seit: "2026-09-23T00:10",
+      text: "Er steht in der Reise-Kachel neben dem Boot, in der Hilfe und in allen drei Registern (Befehl, LC_EFFEKTE, Verteiler)" },
+    { seit: "2026-09-23T00:10",
+      text: "Neue Sonde pruefe-runde95-delfin: misst Sprungbahn (5 Richtungswechsel), Finne, Schwanz, Reiter, Platschen und dass nichts liegen bleibt" },
   ],
 };

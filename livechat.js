@@ -960,6 +960,10 @@ window.LiveChat = (function () {
        Variante vielleicht noch mit einem Boot ... oder dass man einen
        Baustellenkran hat." Zwei weitere Reisen, gleiche Technik. */
     boot:     { wirkung: "boot",     satz: "schippert hin\u00fcber zu", emoji: "\u26f5" },
+    /* RUNDE 95 — XANDER: „Du hast den Delfin noch nicht gebaut."
+       Er springt in drei Boegen ueber die Reihe; das Bild sitzt auf
+       seinem Ruecken, zwischen Blasloch und Finne. */
+    delfin:   { wirkung: "delfin",   satz: "reitet auf dem Delfin zu", emoji: "\ud83d\udc2c" },
     kran:     { wirkung: "kran",     satz: "l\u00e4sst sich hin\u00fcberheben zu", emoji: "\ud83c\udfd7\ufe0f" },
     /* GEWUENSCHT: „Mach mal zusaetzlich zum Segelboot noch ein
        Dampfboot vielleicht ein Raddampfer ... und vielleicht noch ne
@@ -9283,6 +9287,8 @@ window.LiveChat = (function () {
     { gr: "reden", w: "peitsche", kurz: "snap", nutzt: "/peitsche Name",   was: "Auspeitschen — es schnalzt, die Strieme bleibt kurz" },
     { gr: "reden", w: "bowling", kurz: "kegel", nutzt: "/bowling Name",    was: "Bowling — die Kugel raeumt ab" },
     { gr: "reden", w: "billard", kurz: "queue", nutzt: "/billard Name",    was: "Billard — angestossen und weggerollt" },
+    { gr: "reden", w: "delfin", kurz: "delphin", nutzt: "/delfin 5",
+      was: "Auf dem Delfin hinueber — er springt in Boegen durchs Wasser" },
     /* RUNDE 94 — das heimliche Telefonat: zwei hoeren nur noch sich. */
     { gr: "reden", w: "anruf", kurz: "telefonieren", nutzt: "/anruf Name",
       was: "Heimlich telefonieren — ihr zwei hoert nur noch euch, der Raum hoert euch nicht" },
@@ -11303,7 +11309,7 @@ window.LiveChat = (function () {
        NUMMER — sonst stuende im Chat „fliegt hinueber zu 5", als hiesse
        jemand 5. */
     if ((art === "flug" || art === "maulwurf" || art === "portal"
-         || art === "boot" || art === "kran" || art === "dampfer"
+         || art === "boot" || art === "delfin" || art === "kran" || art === "dampfer"
          || art === "lok" || art === "liane" || art === "feder"
          /* RUNDE 76 — „Frosch-Sprung" und „Zylinder mit Kaninchen". */
          || art === "frosch" || art === "zylinder"
@@ -11320,6 +11326,7 @@ window.LiveChat = (function () {
                     maulwurf: [" gr\u00e4bt sich zu Platz ", "\ud83e\udda1"],
                     portal: [" geht durchs Tor zu Platz ", "\ud83c\udf00"],
                     boot: [" schippert zu Platz ", "\u26f5"],
+                    delfin: [" reitet auf dem Delfin zu Platz ", "\ud83d\udc2c"],
                     kran: [" wird gehoben zu Platz ", "\ud83c\udfd7\ufe0f"],
                     dampfer: [" tuckert zu Platz ", "\ud83d\udea2"],
                     lok: [" dampft zu Platz ", "\ud83d\ude82"],
