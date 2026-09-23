@@ -253,7 +253,17 @@ function tonMessen(name) {
   const lc = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
   sage(/frosch:   \{ wirkung: "frosch"/.test(lc) && /zylinder: \{ wirkung: "zylinder"/.test(lc),
     "beide haben einen eigenen Befehl");
-  sage(/art === "frosch"\)/.test(lc),
+  /* RUNDE 98 — hier stand „art === \"frosch\")" mit Klammer dahinter.
+     Die Klammer ist weg, seit hinter dem Frosch noch der Zylinder in
+     derselben Aufzaehlung steht — der Frosch ist aber unveraendert
+     dabei. Geprueft wird deshalb beides: dass er in der Aufzaehlung
+     steht, die eine ZAHL hinter dem Befehl annimmt, und dass diese
+     Aufzaehlung wirklich eine Kette von Platznummern liest.
+     XANDER: „saemtliche Fahrzeuge sollen den Weg eingezeichnet
+     bekommen." */
+  const js2 = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
+  sage(/\|\| art === "frosch"/.test(lc)
+    && /if \(\/\^\\d\+\(-\\d\+\)\+\$\/\.test\(kette\)\) \{/.test(js2),
     "und der Frosch nimmt auch den gemalten Weg an");
 
   await br.close(); srv.close();

@@ -332,9 +332,23 @@ const sage = (gut, text, dazu) => {
   sage(lift[1].start && lift[2].start && lift[1].start.zahl !== lift[2].start.zahl,
     "die Anzeige zaehlt die Plaetze ab",
     (lift[1].start ? lift[1].start.zahl : "-") + " \u2192 " + (lift[2].start ? lift[2].start.zahl : "-"));
-  sage(!lift[0].ziel || lift[0].ziel.sicht === 0,
-    "die Kabine am Ziel steht erst da, wenn der Fahrstuhl ankommt",
-    lift[0].ziel ? ("Sichtbarkeit am Anfang: " + lift[0].ziel.sicht) : "noch gar nicht da");
+  /* RUNDE 98 — DIESE REGEL IST UMGEDREHT, UND ZWAR AUF SEINEN WUNSCH.
+     XANDER (23.09.2026): „er soll realistisch zaehlen: auf der einen
+     Seite, wo man losfaehrt, soll die Zahl steigen, solange bleiben
+     die Tueren zu, und auf der anderen Seite soll die Zahl genauso am
+     steigen sein, und dann dieses Blink-Geraeusch geben."
+     Dafuer MUSS die Kabine am Ziel von Anfang an dastehen — vorher
+     tauchte sie erst bei 56 % auf, da war vom Zaehlen nichts mehr zu
+     sehen. Gemessen wird jetzt: sie steht da, ihre Tueren sind zu,
+     und ihre Zahl zaehlt mit. */
+  sage(lift[1].ziel && lift[1].ziel.sicht > 0.5 && lift[1].ziel.spalt <= 2,
+    "die Kabine am Ziel steht von Anfang an da \u2014 mit geschlossener Tuer",
+    lift[1].ziel ? ("Sichtbarkeit " + lift[1].ziel.sicht + ", Spalt "
+      + lift[1].ziel.spalt + " px") : "noch gar nicht da");
+  sage(lift[1].ziel && lift[2].ziel && lift[1].ziel.zahl !== lift[2].ziel.zahl,
+    "und ihre Zahl zaehlt genauso mit wie die auf der Startseite",
+    (lift[1].ziel ? lift[1].ziel.zahl : "-") + " \u2192 "
+      + (lift[2].ziel ? lift[2].ziel.zahl : "-"));
   sage(lift[3].ziel && lift[3].ziel.spalt > 10,
     "und dort gehen die Tueren wieder auf",
     "2300 ms: " + (lift[3].ziel ? lift[3].ziel.spalt : "-") + " px Spalt");
@@ -392,8 +406,16 @@ const sage = (gut, text, dazu) => {
   await pg.waitForTimeout(250);
   const lieder = await pg.evaluate(() =>
     [...document.querySelectorAll("#lcPlatzMenue .lc-lese-text")].map((x) => x.textContent.trim()));
-  sage(lieder.length === 2 && /Erstes Lied/.test(lieder.join(" ")),
-    "dann steht die Liste aus dem Musikordner da", lieder.join(" / "));
+  /* RUNDE 98 — GANZ OBEN STEHT JETZT DAS LIEDER-PANEL.
+     XANDER: „Die Musik kann ich immer noch nicht in Einzelteil-Buttons
+     anlegen, um eine History zu haben beziehungsweise ein
+     abgespeichertes Panel." Der erste Knopf in dieser Liste fuehrt
+     deshalb dorthin; die Lieder stehen darunter. Gezaehlt werden
+     deshalb nur die Lieder. */
+  const nurLieder = lieder.filter((x) => !/Abschnitte|Verlauf/.test(x));
+  sage(nurLieder.length === 2 && /Erstes Lied/.test(nurLieder.join(" ")),
+    "dann steht die Liste aus dem Musikordner da \u2014 mit dem Panel darueber",
+    lieder.join(" / "));
   await tippen("Zweites Lied");
   await pg.waitForTimeout(250);
   const frage3 = await pg.evaluate(() => ({

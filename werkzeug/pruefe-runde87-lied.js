@@ -108,7 +108,16 @@ const sage = (gut, text, dazu) => {
        Lied, dann „Ganzes Lied". Alles ueber echte Klicks. */
     window.DMA_PRUEF.musikWaehler("Alex");
     await new Promise((r) => setTimeout(r, 200));
-    const lied = document.querySelector("#lcPlatzMenue .lc-lese-text");
+    /* RUNDE 98 — NICHT MEHR „DER ERSTE KNOPF IN DER LISTE". Ganz oben
+       steht jetzt der Weg ins Lieder-Panel: XANDER: „Die Musik kann
+       ich immer noch nicht in Einzelteil-Buttons anlegen, um eine
+       History zu haben beziehungsweise ein abgespeichertes Panel."
+       Wer blind den ersten Knopf drueckt, landet dort statt bei einem
+       Lied — und die Sonde misst dann ein Lied, das nie gestartet
+       wurde. Gesucht wird deshalb der erste Knopf, der WIRKLICH ein
+       Lied ist. */
+    const lied = [...document.querySelectorAll("#lcPlatzMenue .lc-lese-text")]
+      .find((b2) => !/Abschnitte|Verlauf/.test(b2.textContent));
     if (!lied) return { fehlt: "Liedliste" };
     lied.click();
     await new Promise((r) => setTimeout(r, 250));

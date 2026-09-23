@@ -49,20 +49,36 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 507 — geprüft: 198 Sonden, alle grün",
+  stand: "Runde 98 — Fassung 508",
 
   inArbeit: [
-    { seit: "2026-09-23T04:13",
-      text: "Wenn du willst: einen Effekt als Lottie-Versuch bauen und nebeneinander vergleichen (siehe werkzeug/profi-effekte.md)" },
+    { seit: "2026-09-23T07:22",
+      text: "Vier Gesichter fehlen noch: schockiert, Leute, Hallo, okay — das Tageslimit des ElevenLabs-Zugangs war nach drei Bildern erreicht" },
+    { seit: "2026-09-23T07:22",
+      text: "Bild-Aufspruehen pixelweise auch fuer bewegte GIF-Einzelbilder (heute laeuft das GIF, gemalt wird das erste Bild)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-23T04:13",
-      text: "Die grosse Sammelprüfung ist durch: 198 Messungen, 198 grün, 0 rot" },
-    { seit: "2026-09-23T04:13",
-      text: "Die Rückstands-Prüfung über ALLE 96 Effekte (jeder dreimal) ist zum ersten Mal ganz durchgelaufen — kein einziger echter Rückstand" },
-    { seit: "2026-09-23T04:13",
-      text: "Neue Übersichtsliste aus den Messungen gebaut (KLASSENZIMMER-LISTE.md)" },
+    { seit: "2026-09-23T07:22",
+      text: "Zu zweit reisen: Fahrrad, Huepfball mit Hoernern, und der selbst gezeichnete Weg (/gemeinsam Bea ball 3-4-8)" },
+    { seit: "2026-09-23T07:22",
+      text: "Das aufgespruehte Bild: echte Pixel (94 % statt 32 %), GIF bleibt GIF, und fremde Bilder (GIPHY) gehen ueberhaupt erst" },
+    { seit: "2026-09-23T07:22",
+      text: "Zwei neue Profil-Effekte: die aufbluehende Blume und die Leiter zum Hochklettern" },
+    { seit: "2026-09-23T07:22",
+      text: "Die Ueberschrift der Lesetafel steht wieder waagerecht — bei 360 px waren es 18 Zeilen, jetzt 2" },
+    { seit: "2026-09-23T07:22",
+      text: "Der Fokus gilt fuer alle und steht im neuen Fokusband unter dem Chat — dreissig neue Zeilen ruecken ihn nicht mehr weg" },
+    { seit: "2026-09-23T07:22",
+      text: "Aufdecken geht wirklich reihum; wer dazwischenruft, dreht die Runde nicht weiter" },
+    { seit: "2026-09-23T07:22",
+      text: "Schiffe versenken laesst sich wirklich beenden — auch beim Schiedsrichter bleibt nichts liegen" },
+    { seit: "2026-09-23T07:22",
+      text: "Stadt-Land-Fluss: der Punktbeste wird Spielfuehrer und bestimmt den naechsten Buchstaben" },
+    { seit: "2026-09-23T07:22",
+      text: "Alex' Gesicht als Reaktion: ohmygod, wow, verbissen (/gesicht wow)" },
+    { seit: "2026-09-23T07:22",
+      text: "Elf rote Sonden wieder gruen — Kran, Befehlsreihenfolge, ueberfahren und sechs alte Regeln auf deinen Stand gebracht" },
   ],
 };
