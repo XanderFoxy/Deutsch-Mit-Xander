@@ -49,22 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 96 — der Delfin (Fassung 505)",
+  stand: "Runde 97 — Reisen auf besetzte Plätze gehen jetzt (Fassung 506)",
 
   inArbeit: [
-    { seit: "2026-09-23T00:10", nurBetreiber: true,
+    { seit: "2026-09-23T00:14", nurBetreiber: true,
       text: "Sammellauf vor jedem Hochladen: bash werkzeug/alle-pruefen.sh" },
-    { seit: "2026-09-23T00:10",
-      text: "Lok-Schienenführung, Cowboyhut zurechtrücken, Hände vereinheitlichen (Roboter- und Hexenhand)" },
+    { seit: "2026-09-23T00:14",
+      text: "Cowboyhut zurechtrücken, Hände vereinheitlichen (Roboter- und Hexenhand)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-23T00:10",
-      text: "Der Delfin ist gebaut: „/delfin 5“ oder „/delfin Name“ — er springt in drei Bögen über die Sitzreihe, das Profilbild sitzt auf seinem Rücken, bei jedem Eintauchen platscht es" },
-    { seit: "2026-09-23T00:10",
-      text: "Er steht in der Reise-Kachel neben dem Boot, in der Hilfe und in allen drei Registern (Befehl, LC_EFFEKTE, Verteiler)" },
-    { seit: "2026-09-23T00:10",
-      text: "Neue Sonde pruefe-runde95-delfin: misst Sprungbahn (5 Richtungswechsel), Finne, Schwanz, Reiter, Platschen und dass nichts liegen bleibt" },
+    { seit: "2026-09-23T00:14",
+      text: "GEFUNDEN: jede Reise auf einen BESETZTEN Platz wurde abgelehnt („Platz 5 ist besetzt.“) — im Raum mit vier Leuten tat damit die Hälfte aller Reisen scheinbar nichts. Genau das war „der Fahrstuhl funktioniert nicht“" },
+    { seit: "2026-09-23T00:14",
+      text: "Jetzt weicht die Reise auf den nächsten freien Platz daneben aus — so, wie es beim Namen („zu Bea“) schon immer war" },
+    { seit: "2026-09-23T00:14",
+      text: "Neue Sonde pruefe-runde96-besetzt: 26 Reisen auf einen besetzten Platz, jede muss losfahren" },
   ],
 };

@@ -36769,8 +36769,30 @@
        allen anderen bliebe sonst einer von beiden in der Luft. */
     const tauschbar = tausch && (art === "frisbee" || art === "rohr");
     if (!zu.frei && !tauschbar) {
-      lcWegAbsage("Platz " + zu.nr + " ist besetzt.");
-      return true;
+      /* =============================================================
+         RUNDE 96 — EIN BESETZTER PLATZ IST KEINE SACKGASSE MEHR
+         -------------------------------------------------------------
+         Hier stand: „Platz 5 ist besetzt." — und sonst passierte
+         nichts. Im leeren Testraum faellt das nicht auf; in einem Raum
+         mit vier Leuten ist aber die Haelfte aller Plaetze besetzt,
+         und dann tut die Haelfte aller Reisen scheinbar gar nichts.
+         Genau so klingt seine Klage: „der Fahrstuhl funktioniert auch
+         nicht, da funktioniert noch gar nix."
+
+         Beim NAMEN macht das Programm es laengst richtig: „zu Bea"
+         heisst „auf den naechsten freien Platz NEBEN Bea". Genau das
+         gilt jetzt auch fuer eine besetzte NUMMER. Nur wenn wirklich
+         kein Platz mehr frei ist, kommt eine Absage — und die sagt
+         dann auch, warum.
+         ============================================================= */
+      const nahe = (p) => Math.abs(p.reihe - zu.reihe) + Math.abs(p.spalte - zu.spalte);
+      const ausweich = gitter.filter((p) => p.frei && p.nr !== ab.nr)
+        .sort((a, b) => nahe(a) - nahe(b))[0] || null;
+      if (!ausweich) {
+        lcWegAbsage("Platz " + zu.nr + " ist besetzt, und frei ist auch keiner.");
+        return true;
+      }
+      zu = ausweich;
     }
     if (tauschbar && zu.frei) {
       /* Auf einem leeren Platz gibt es nichts zu tauschen — dann ist
