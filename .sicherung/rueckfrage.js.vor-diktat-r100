@@ -432,100 +432,6 @@ window.Rueckfrage = (function () {
          bis er ⏹ drueckt — nichts doppelt, nichts bricht ab,
        - klappt es nicht (Mikrofon verboten, kein Netz), steht dort,
          warum. */
-  /* =====================================================================
-     DAS DIKTAT — EINS FUER DAS GANZE WALKIE-TALKIE
-     ---------------------------------------------------------------------
-     RUNDE 100 — zwei Fehler, die bei ihm zusammen den Salat ergaben
-     („Wenn wenn man wenn man sich …", Frage Leiter):
-       1. Chrome auf Android liefert jeden WACHSENDEN Stand des Satzes als
-          eigenes fertiges Ergebnis („wenn", „wenn man", …). Hintereinander
-          gehaengt ergab das jedes Wort viele Male.
-       2. Kommt waehrend des Sprechens eine neue Meldung von Claude, wird
-          das Walkie-Talkie neu gebaut. Der NEUE 🎤-Knopf wusste nichts vom
-          laufenden Diktat: ⏹ startete ein zweites, und der ganze Text
-          stand doppelt da.
-     Deshalb gehoert das laufende Diktat jetzt dem Walkie-Talkie, nicht
-     einem Knopf: jeder neu gebaute Knopf sieht, dass es laeuft, und die
-     Worte landen immer im Feld, das GERADE auf dem Bildschirm ist.
-     ===================================================================== */
-  var diktat = null;   /* { mik, klasse, anfang } */
-  function diktatFeld(klasse) { return document.querySelector("textarea." + klasse); }
-  function diktatKnopfZeigen(klasse, laeuft, hinweis) {
-    var feld = diktatFeld(klasse);
-    var rahmen = feld && feld.closest(".rf-feldrahmen");
-    if (!rahmen) return;
-    var b = rahmen.querySelector(".rf-mik"), live = rahmen.querySelector(".rf-live");
-    if (b) { b.classList.toggle("rf-hoert", laeuft); b.textContent = laeuft ? "\u23f9" : "\ud83c\udfa4"; }
-    if (live && hinweis !== undefined) live.textContent = hinweis;
-  }
-  function diktatGleich(a) {
-    return String(a || "").toLowerCase().replace(/[^a-z\u00e4\u00f6\u00fc\u00df0-9 ]/g, "")
-      .replace(/\s+/g, " ").trim();
-  }
-  /* Ein neues Stueck, das mit dem vorigen ANFAENGT, ersetzt es; eines, das
-     im vorigen schon steckt, wird uebersprungen; nur Neues kommt dazu. */
-  function diktatAnfuegen(liste, stueck) {
-    var letzte = liste.length ? liste[liste.length - 1] : "";
-    var a = diktatGleich(letzte), b = diktatGleich(stueck);
-    if (!b) return;
-    if (a && b.indexOf(a) === 0) { liste[liste.length - 1] = stueck; return; }
-    if (a && a.indexOf(b) === 0) return;
-    liste.push(stueck);
-  }
-  function diktatEnde(hinweis) {
-    var d = diktat;
-    diktat = null;
-    if (!d) return;
-    var feld = diktatFeld(d.klasse);
-    diktatKnopfZeigen(d.klasse, false,
-      hinweis !== undefined ? hinweis : (feld && feld.value.trim() ? "\u2713 Steht im Feld \u2013 jetzt \u201eSenden\u201c." : ""));
-  }
-  function diktatStarten(klasse) {
-    var Erkenner = window.SpeechRecognition || window.webkitSpeechRecognition;
-    var feld = diktatFeld(klasse);
-    if (!Erkenner || !feld) return;
-    var mik = new Erkenner();
-    mik.lang = "de-DE";
-    mik.continuous = true;
-    mik.interimResults = true;
-    diktat = { mik: mik, klasse: klasse, anfang: feld.value.replace(/\s*$/, "") };
-    diktatKnopfZeigen(klasse, true, "Ich h\u00f6re zu \u2026 sprich einfach.");
-    mik.onresult = function (ev) {
-      if (!diktat || diktat.mik !== mik) return;
-      var fest = [], zwischen = "";
-      for (var i = 0; i < ev.results.length; i++) {
-        var stueck = String(ev.results[i][0].transcript || "").trim();
-        if (!stueck) continue;
-        if (ev.results[i].isFinal) diktatAnfuegen(fest, stueck);
-        else zwischen = stueck;
-      }
-      if (zwischen && fest.length &&
-          diktatGleich(zwischen).indexOf(diktatGleich(fest[fest.length - 1])) === 0) {
-        zwischen = zwischen.slice(fest[fest.length - 1].length).trim();
-      }
-      var anfang = diktat.anfang;
-      var neu = fest.join(" ");
-      if (neu && (!anfang || /[.!?]$/.test(anfang))) neu = neu.charAt(0).toUpperCase() + neu.slice(1);
-      var ziel = diktatFeld(klasse);
-      if (ziel) {
-        ziel.value = (anfang ? anfang + (neu ? " " : "") : "") + neu;
-        ziel.dispatchEvent(new Event("input"));
-      }
-      diktatKnopfZeigen(klasse, true, zwischen ? "\u2026 " + zwischen : "Ich h\u00f6re zu \u2026");
-    };
-    mik.onerror = function (ev) {
-      if (!diktat || diktat.mik !== mik) return;
-      var w = ev && ev.error;
-      if (w === "not-allowed" || w === "service-not-allowed") {
-        diktatEnde("Das Mikrofon ist nicht erlaubt \u2013 bitte im Browser freigeben.");
-      } else if (w === "network") {
-        diktatEnde("Die Spracherkennung braucht Netz \u2013 gerade keins.");
-      }
-    };
-    mik.onend = function () { if (diktat && diktat.mik === mik) diktatEnde(); };
-    try { mik.start(); } catch (e) { diktatEnde("Die Spracherkennung lie\u00df sich nicht starten."); }
-  }
-
   function textfeld(klasse, platzhalter, wert, tun) {
     var huelle = el("div", "rf-feld");
     var t = document.createElement("textarea");
@@ -538,16 +444,63 @@ window.Rueckfrage = (function () {
     huelle.appendChild(t);
     var Erkenner = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (Erkenner) {
-      var laeuft = Boolean(diktat && diktat.klasse === klasse);
-      var live = el("div", "rf-live", laeuft ? "Ich h\u00f6re zu \u2026" : "");
-      var b = knopf("rf-mik" + (laeuft ? " rf-hoert" : ""), laeuft ? "\u23f9" : "\ud83c\udfa4", function () {
-        if (diktat) {
-          var d = diktat;
-          try { d.mik.stop(); } catch (e) { diktatEnde(); }
-          return;
-        }
-        diktatStarten(klasse);
+      var mik = null, weiter = false;
+      var live = el("div", "rf-live", "");
+      var b = knopf("rf-mik", "🎤", function () {
+        if (weiter) { weiter = false; if (mik) try { mik.stop(); } catch (e) {} return; }
+        weiter = true;
+        b.classList.add("rf-hoert");
+        b.textContent = "⏹";
+        live.textContent = "Ich höre zu … sprich einfach.";
+        runde();
       });
+      var fertigMachen = function (hinweis) {
+        weiter = false; mik = null;
+        b.classList.remove("rf-hoert"); b.textContent = "🎤";
+        live.textContent = hinweis || "";
+      };
+      /* RUNDE 99, DRITTER ANLAUF — XANDER: „Die Sprachnachrichten hier im
+         Walkie-Talkie funktionieren ploetzlich nicht mehr wie vorher."
+         Das lag an meinem zweiten Anlauf: Satz fuer Satz erkennen und
+         danach VON SELBST neu starten. Auf Android darf die Erkennung
+         ohne neues Antippen meist nicht wieder anlaufen — nach dem
+         ersten Satz war Schluss. Jetzt wieder die Dauer-Erkennung wie in
+         der Fassung, die bei ihm lief; die Live-Anzeige bleibt. Der Text
+         wird bei jedem Ergebnis NEU aus allen fertigen Stuecken gebaut
+         (nicht angehaengt) — so kann nichts doppelt hineinrutschen. */
+      var runde = function () {
+        mik = new Erkenner();
+        mik.lang = "de-DE";
+        mik.continuous = true;
+        mik.interimResults = true;
+        var anfang = t.value.replace(/\s*$/, "");
+        mik.onresult = function (ev) {
+          var fest = [], zwischen = "";
+          for (var i = 0; i < ev.results.length; i++) {
+            var stueck = String(ev.results[i][0].transcript || "").trim();
+            if (!stueck) continue;
+            if (ev.results[i].isFinal) fest.push(stueck);
+            else zwischen += (zwischen ? " " : "") + stueck;
+          }
+          var neu = fest.join(" ");
+          if (neu && (!anfang || /[.!?]$/.test(anfang))) neu = neu.charAt(0).toUpperCase() + neu.slice(1);
+          t.value = (anfang ? anfang + (neu ? " " : "") : "") + neu;
+          tun(t.value);
+          live.textContent = zwischen ? "… " + zwischen : "Ich höre zu …";
+        };
+        mik.onerror = function (ev) {
+          var w = ev && ev.error;
+          if (w === "not-allowed" || w === "service-not-allowed") {
+            fertigMachen("Das Mikrofon ist nicht erlaubt – bitte im Browser freigeben.");
+          } else if (w === "network") {
+            fertigMachen("Die Spracherkennung braucht Netz – gerade keins.");
+          }
+        };
+        mik.onend = function () {
+          fertigMachen(t.value.trim() ? "✓ Steht im Feld – jetzt „Senden“." : "");
+        };
+        try { mik.start(); } catch (e) { fertigMachen("Die Spracherkennung ließ sich nicht starten."); }
+      };
       b.setAttribute("aria-label", "Sprechen statt tippen");
       huelle.appendChild(b);
       var rahmen = el("div", "rf-feldrahmen");

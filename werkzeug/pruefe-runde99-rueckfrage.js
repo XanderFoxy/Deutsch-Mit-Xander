@@ -61,6 +61,19 @@ const sage = (gut, text, dazu) => {
       start() {
         window.__rfRunden++;
         const r = (t, fertig) => Object.assign([{ transcript: t }], { isFinal: fertig });
+        /* RUNDE 100 — so kam es von seinem Android wirklich an: jeder
+           WACHSENDE Stand des Satzes als eigenes fertiges Ergebnis. */
+        if (window.__rfAndroid) {
+          const staende = ["wenn", "wenn man", "wenn man sich", "wenn man sich auf der Leiter",
+                           "sonst", "sonst sieht das", "sonst sieht das zusammengeklebt aus"];
+          const liste = [];
+          staende.forEach((st, i) => setTimeout(() => {
+            liste.push(r(st, true));
+            this.onresult && this.onresult({ resultIndex: liste.length - 1, results: liste.slice() });
+          }, 20 + i * 25));
+          this._ende = setTimeout(() => this.onend && this.onend(), 5000);
+          return;
+        }
         setTimeout(() => this.onresult && this.onresult({ resultIndex: 0, results: [r("bist du", false)] }), 30);
         setTimeout(() => {
           window.__rfZwischen = (document.querySelector(".rf-vorschlag .rf-live") || {}).textContent || "";
@@ -263,6 +276,22 @@ const sage = (gut, text, dazu) => {
     JSON.stringify(dikt.text) + ", " + dikt.runden + " Runden");
   sage(dikt.knopf === "🎤" && /Senden/.test(dikt.live), "⏹ beendet es, und darunter steht, was jetzt zu tun ist",
     dikt.live);
+
+  /* RUNDE 100 — der Android-Salat: „Wenn wenn man wenn man sich …" */
+  await pg.evaluate(() => {
+    window.__rfAndroid = true;
+    const t = document.querySelector(".rf-vorschlag-text");
+    t.value = ""; t.dispatchEvent(new Event("input"));
+    t.closest(".rf-feldrahmen").querySelector(".rf-mik").click();
+  });
+  await pg.waitForTimeout(400);
+  await pg.evaluate(() => document.querySelector(".rf-vorschlag").querySelector(".rf-mik").click());
+  await pg.waitForTimeout(300);
+  const andro = await pg.evaluate(() => { window.__rfAndroid = false;
+    return document.querySelector(".rf-vorschlag-text").value; });
+  sage(andro === "Wenn man sich auf der Leiter sonst sieht das zusammengeklebt aus",
+    "Android (jeder Zwischenstand als „fertig“): jedes Wort steht nur EINMAL im Feld",
+    JSON.stringify(andro));
 
   /* Zuklappen und Schreiben im Chat: der Reiter geht aus dem Weg. */
   await pg.screenshot({ path: "/tmp/claude-0/walkie-offen.png" });

@@ -37303,17 +37303,9 @@
       const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
       const dy = (b.top + b.height / 2) - (a.top + a.height / 2);
       const gr = kreis.offsetWidth || 64;
-      /* RUNDE 100 — XANDER (Walkie-Talkie, Leiter): „Wenn man sich auf der
-         Leiter gegenueberkommt, koennte eine Luecke besser sein zwischen
-         den kleineren Leitern, sonst sieht das so zusammengeklebt aus."
-         Bisher: drei Holme und DURCHGEHENDE Sprossen — eine breite Leiter.
-         Jetzt zwei eigene Leitern (je zwei Holme, eigene Sprossen) mit
-         einer Luecke von 16 der 120 Einheiten (0,15 Platzbreiten); jede
-         Haelfte ist 50 Einheiten breit, ihre Mitte liegt 33 Einheiten neben
-         der Mitte = 0,32 Platzbreiten bei 1,16 Platzbreiten Gesamtbreite. */
-      const klein = gegen ? 0.42 : 0.62;             /* so gross ist das Bild auf der Leiter */
-      const spur = gegen ? gr * 0.32 : 0;           /* Abstand jeder Leiter zur Mitte */
-      const breit = gegen ? gr * 1.16 : gr * 0.86;   /* breiter als das Bild */
+      const klein = gegen ? 0.44 : 0.62;             /* so gross ist das Bild auf der Leiter */
+      const spur = gegen ? gr * 0.25 : 0;           /* Abstand jeder Haelfte zur Mitte */
+      const breit = gegen ? gr * 1.08 : gr * 0.86;   /* breiter als das Bild */
       platz.querySelectorAll(".lc-leiter-weg").forEach((x) => x.remove());
       const ueber = gr * 0.22;
       const lang = Math.abs(dy) + ueber * 2;
@@ -37329,18 +37321,14 @@
       leiter.style.top = (kreis.offsetTop + (kreis.offsetHeight || gr) / 2
         + Math.min(0, dy) - ueber).toFixed(1) + "px";
       let svg = '<svg viewBox="0 0 ' + vbB + " " + vbH + '" preserveAspectRatio="none">';
-      /* Jede Leiter: [linker Holm, rechter Holm]. Die Sprossen reichen
-         nur von Holm zu Holm DERSELBEN Leiter — die Luecke bleibt frei. */
-      const leitern = gegen ? [[2, 45], [68, 111]] : [[3, 70]];
-      leitern.forEach(([l, r]) => {
-        [l, r].forEach((x) => {
-          svg += '<rect class="lc-lt-holm" x="' + x + '" y="0" width="7" height="' + vbH + '" rx="3"/>';
-        });
-        for (let i = 0; i < sprossen; i++) {
-          svg += '<rect class="lc-lt-sprosse" x="' + (l + 2) + '" y="' + (8 + i * 20) + '" width="'
-            + (r - l + 3) + '" height="5.5" rx="2.4"/>';
-        }
+      const holme = gegen ? [3, 56.5, 110] : [3, 70];
+      holme.forEach((x) => {
+        svg += '<rect class="lc-lt-holm" x="' + x + '" y="0" width="7" height="' + vbH + '" rx="3"/>';
       });
+      for (let i = 0; i < sprossen; i++) {
+        svg += '<rect class="lc-lt-sprosse" x="5" y="' + (8 + i * 20) + '" width="'
+          + (vbB - 10) + '" height="5.5" rx="2.4"/>';
+      }
       leiter.innerHTML = svg + "</svg>";
       platz.insertBefore(leiter, platz.firstChild);
 
