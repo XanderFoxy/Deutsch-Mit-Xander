@@ -16289,12 +16289,26 @@ code, pre {
   66.8%  { transform: translateY(2%)   rotate(-7.5deg) scale(1); }
   /* 72 % = 3168 ms: sie zieht die Krempe herunter, er sitzt tiefer. */
   72%    { transform: translateY(5%)   rotate(-5deg)  scale(1); }
-  /* 78,41 % = 3450 ms: und jetzt dreht sie ihn gerade — ueber die
-     Null hinaus, weil eine Hand, die ausrichtet, immer ein bisschen
-     zu weit dreht und dann zurueckgeht. */
-  78.41% { transform: translateY(4%)   rotate(1deg)   scale(1); }
-  /* 84,09 % = 3700 ms: er sitzt. Gerade, tief, fertig. */
-  84.09%, 96.59% { opacity: 1; transform: translateY(3%) rotate(0deg) scale(1); }
+  /* =====================================================================
+     RUNDE 97 — ER RUECKT IHN NACH LINKS UND NACH RECHTS ZURECHT
+     ---------------------------------------------------------------------
+     XANDER: „Bei dem Cowboyhut sieht man auch noch nicht, dass er am
+     Ende mit seiner Hand den Cowboyhut nach links und nach rechts so
+     um ihn auszurichten." Und heute noch einmal: „Der Cowboyhut hat
+     immer noch kein realistisches Zurechtruecken."
+     Bisher war es EIN Dreh auf gerade. So rueckt aber niemand einen
+     Hut zurecht: man zieht ihn herunter, dreht ihn nach der einen
+     Seite, dann nach der anderen, und LAESST ihn dann sitzen.
+     ===================================================================== */
+  /* 78,41 % = 3450 ms: nach LINKS. */
+  78.41% { transform: translateY(4%)   rotate(-5deg)  scale(1); }
+  /* 82,5 % = 3630 ms: und nach RECHTS. */
+  82.5%  { transform: translateY(4%)   rotate(4deg)   scale(1); }
+  /* 86 % = 3784 ms: noch einmal kurz links, kleiner — so pendelt man
+     sich ein. */
+  86%    { transform: translateY(3.5%) rotate(-2deg)  scale(1); }
+  /* 89 % = 3916 ms: er sitzt. Gerade, tief, fertig. */
+  89%, 96.59% { opacity: 1; transform: translateY(3%) rotate(0deg) scale(1); }
   100%   { opacity: 0; transform: translateY(-26%) rotate(-6deg) scale(.92); }
 }
 /* Der Kopf federt unter dem Aufschlag — 13,07 % ist derselbe Punkt. */
@@ -16342,12 +16356,16 @@ code, pre {
   66.8%     { opacity: 1; transform: translate(4%, -2%)   rotate(3deg); }
   /* 72 % = 3168 ms — sie zieht nach unten. */
   72%       { opacity: 1; transform: translate(0, 7%)     rotate(-3deg); }
-  /* 78,41 % = 3450 ms — und dreht dabei gegen den Uhrzeigersinn:
-     so richtet man einen Hut aus, der schief sitzt. */
-  78.41%    { opacity: 1; transform: translate(-2%, 6%)   rotate(2deg); }
-  /* 84,09 % = 3700 ms — loslassen. */
-  84.09%    { opacity: 1; transform: translate(2%, 3%)    rotate(0deg); }
-  89.8%     { opacity: 1; transform: translate(24%, -9%)  rotate(9deg); }
+  /* 78,41 % = 3450 ms — sie dreht ihn nach LINKS … */
+  78.41%    { opacity: 1; transform: translate(-3%, 6%)   rotate(-4deg); }
+  /* 82,5 % = 3630 ms — … und nach RECHTS. Die Hand geht mit dem Hut,
+     sie klebt nicht daneben. */
+  82.5%     { opacity: 1; transform: translate(3%, 6%)    rotate(5deg); }
+  /* 86 % = 3784 ms — noch einmal klein nach links. */
+  86%       { opacity: 1; transform: translate(-1%, 5%)   rotate(-1deg); }
+  /* 89 % = 3916 ms — loslassen. */
+  89%       { opacity: 1; transform: translate(2%, 3%)    rotate(0deg); }
+  92.5%     { opacity: 1; transform: translate(24%, -9%)  rotate(9deg); }
   96.59%    { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
   100%      { opacity: 0; transform: translate(48%, -20%) rotate(14deg); }
 }
@@ -18340,9 +18358,39 @@ code, pre {
   100% { opacity: 0; transform: translate(-40%, -160%) scale(1.8); }
 }
 /* Die Dampflok. */
+/* =====================================================================
+   RUNDE 97 — DIE LOK PASST JETZT AUF IHR GLEIS
+   ---------------------------------------------------------------------
+   XANDER (23.09.2026): „Die Lokomotive hat immer noch keine
+   Schienenfuehrung."
+
+   NACHGEMESSEN, und er hat recht — es sind zwei Zahlen:
+   1. DIE SPURWEITE. Die Lok war 2 x 1 Platzbreiten gross; ihre
+      Radkanten liegen in der Draufsicht aussen bei 72 % ihrer Hoehe,
+      von MITTE zu MITTE sind es 64 % — bei der alten Groesse also
+      0,64 Platzbreiten. Das Gleis darunter war 0,34 Platzbreiten
+      breit. Die Raeder standen damit WEIT AUSSERHALB der Schienen —
+      die Lok stand nicht auf dem Gleis, sie stand darueber.
+      (Gemessen wird von Mitte zu Mitte, weil eine Schiene ein Strich
+      ist und ein Rad auf ihr steht, nicht neben ihr.)
+   2. DER BOGEN. Die Kurve hat einen Radius von rund einer halben
+      Platzbreite (gemessen: 50 px bei d = 103 px). Die Lok war 1,77
+      Platzbreiten LANG — also laenger als der ganze Kurvendurchmesser.
+      Ein Fahrzeug, das laenger ist als seine Kurve, kann ihr gar nicht
+      folgen; es legte sich quer ueber die Ecke.
+
+   JETZT: die Lok ist 1,1 x 0,55 Platzbreiten. Ihre Radkanten stehen
+   damit 0,35 Platzbreiten auseinander — genau so breit wie das Gleis
+   (siehe „spur" in lcLokGleise, app.js). Und sie ist 0,97 Platzbreiten
+   lang — kuerzer als der Durchmesser ihrer Kurve, sie kann ihr also
+   ueberhaupt folgen. Vorher war sie doppelt so lang wie die Kurve
+   breit.
+   Das Bild des Fahrgastes bleibt trotzdem gleich gross: das Fenster
+   waechst im selben Zug mit (siehe .lc-lok-fenster).
+   ===================================================================== */
 .lc-lok {
-  width: calc(var(--gross, 64px) * 2);
-  height: calc(var(--gross, 64px) * 1);
+  width: calc(var(--gross, 64px) * 1.1);
+  height: calc(var(--gross, 64px) * 0.55);
   transform: translate(-50%, -50%);
 }
 .lc-lok-form { width: 100%; height: 100%; overflow: visible; }
@@ -18425,8 +18473,12 @@ code, pre {
      heraus. */
   left: 84%;
   top: 45%;
-  width: 17%;
-  height: 34%;
+  /* RUNDE 97 — die Lok ist auf 60 % geschrumpft, damit sie auf ihr
+     Gleis passt. Das Gesicht darf davon nichts abbekommen: 17 % von
+     der alten Breite sind 28 % von der neuen. Auf dem Bildschirm ist
+     es damit gleich gross wie vorher. */
+  width: 30%;
+  height: 61%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background-size: cover;
@@ -29546,8 +29598,9 @@ code, pre {
 .lc-lok-fenster-oben {
   left: 23.3%;
   top: 50%;
-  width: 10%;
-  height: 15%;
+  /* RUNDE 97 — mitgewachsen, aus demselben Grund wie oben. */
+  width: 18.5%;
+  height: 27%;
   border-radius: 3px;
 }
 
@@ -30087,3 +30140,49 @@ code, pre {
 @media (prefers-reduced-motion: reduce) {
   .lc-delfin-wasser, .lc-delfin-platsch { animation: none; opacity: .5; }
 }
+
+
+/* =====================================================================
+   RUNDE 97 — EINE HAUT FUER ALLE HAENDE
+   ---------------------------------------------------------------------
+   XANDER (23.09.2026): „Du hast die Hand noch nicht vereinheitlicht."
+   Jede Hand hatte ihren eigenen Ton: die Riesenhand #e8b489, der Klaps
+   #eec0a8, das Greifen wieder einen anderen. Nebeneinander sah das aus
+   wie drei verschiedene Leute. Hier stehen die Werte EINMAL; alle
+   Zeichnungen holen sie sich von hier.
+   ===================================================================== */
+:root {
+  --lc-haut: #eec0a8;          /* die Flaeche */
+  --lc-haut-hell: #f3cbb6;     /* das Licht darauf */
+  --lc-haut-kante: #bf9280;    /* die Umrisslinie */
+  --lc-haut-schatten: #c99a84; /* Falten und Sehnen */
+  --lc-haut-tief: #d9a68c;     /* der Rand eines Verlaufs */
+}
+/* HIER STANDEN EINMAL Regeln, die die Klaps-Hand ueber ihre alten
+   Farbwerte (path[fill="#eec0a8"] und so weiter) wieder einfaerbten.
+   Das war ein Umweg: die Zeichnung trug die alte Farbe weiter im
+   Bild, und das Stilblatt musste sie hinterher ueberschreiben. Wer
+   den Wert oben aendert, haette dann zwei Stellen aendern muessen.
+   Jetzt holt sich JEDE Zeichnung die Farbe direkt aus diesen Werten
+   (lcHaut() in app.js liest sie aus). Die Regeln sind damit ueber-
+   fluessig geworden und stehen deshalb nicht mehr hier.
+   XANDER: „Du hast die Hand noch nicht vereinheitlicht." */
+
+
+/* =====================================================================
+   RUNDE 97 — DER WAEHLER FUER DAS AUFGESPRUEHTE BILD
+   ---------------------------------------------------------------------
+   XANDER: „und dass man ein Bild seiner Wahl darauf spruehen kann."
+   Er steht im selben Rahmen wie die Lesewahl; die Bildchen sind
+   kleiner als im grossen Bildmenue, weil hier nur gewaehlt und nicht
+   verwaltet wird.
+   ===================================================================== */
+.lc-spraywahl { max-height: 68vh; overflow-y: auto; }
+.lc-spraywahl .lc-waehler-gifs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  min-height: 0;
+}
+.lc-spraywahl .lc-waehler-gif img { height: 54px; }
+.lc-spraywahl .eyebrow { font-size: 0.66rem; letter-spacing: .08em; }

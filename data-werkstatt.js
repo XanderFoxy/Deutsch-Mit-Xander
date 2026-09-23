@@ -49,22 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Runde 97 — Reisen auf besetzte Plätze gehen jetzt (Fassung 506)",
+  stand: "Fassung 507 — Hände, Hut, Lok und die Sprühdose",
 
   inArbeit: [
-    { seit: "2026-09-23T00:14", nurBetreiber: true,
-      text: "Sammellauf vor jedem Hochladen: bash werkzeug/alle-pruefen.sh" },
-    { seit: "2026-09-23T00:14",
-      text: "Cowboyhut zurechtrücken, Hände vereinheitlichen (Roboter- und Hexenhand)" },
+    { seit: "2026-09-23T01:41",
+      text: "Die grosse Sammelprüfung läuft noch durch (rund zwei Stunden) — danach kommt die neue Übersichtsliste" },
+    { seit: "2026-09-23T01:41",
+      text: "Antwort zu Recraft und den HelloTalk-Effekten liegt in werkzeug/profi-effekte.md" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-23T00:14",
-      text: "GEFUNDEN: jede Reise auf einen BESETZTEN Platz wurde abgelehnt („Platz 5 ist besetzt.“) — im Raum mit vier Leuten tat damit die Hälfte aller Reisen scheinbar nichts. Genau das war „der Fahrstuhl funktioniert nicht“" },
-    { seit: "2026-09-23T00:14",
-      text: "Jetzt weicht die Reise auf den nächsten freien Platz daneben aus — so, wie es beim Namen („zu Bea“) schon immer war" },
-    { seit: "2026-09-23T00:14",
-      text: "Neue Sonde pruefe-runde96-besetzt: 26 Reisen auf einen besetzten Platz, jede muss losfahren" },
+    { seit: "2026-09-23T01:41",
+      text: "Eine Haut für ALLE Hände: Ohrfeige, Basketball, Streicheln, Klaps, Hut und die Riesenhand holen ihre Farbe jetzt aus einer einzigen Quelle" },
+    { seit: "2026-09-23T01:41",
+      text: "Die greifende Hand hat keine Modul-Ringe mehr: die Fingerglieder greifen untereinander, die Kante läuft nur noch aussen durch" },
+    { seit: "2026-09-23T01:41",
+      text: "Der Cowboyhut wird nach links UND nach rechts zurechtgerückt und sitzt erst dann" },
+    { seit: "2026-09-23T01:41",
+      text: "Die Lok steht auf ihrem Gleis: Radkanten und Spurweite decken sich (0,1 px), und sie ist kürzer als ihr Kurvendurchmesser" },
+    { seit: "2026-09-23T01:41",
+      text: "Die Sprühdose kann ein BILD deiner Wahl aufsprühen — aus deiner Sammlung, aus den zuletzt benutzten oder von einer Adresse" },
+    { seit: "2026-09-23T01:41",
+      text: "Schiffe versenken sagt beim Start nicht mehr das Falsche (es wird nichts mehr ausgelost, man sucht sich selbst einen Platz)" },
   ],
 };

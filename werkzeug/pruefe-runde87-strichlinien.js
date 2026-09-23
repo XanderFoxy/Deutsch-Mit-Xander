@@ -256,8 +256,17 @@ const sage = (gut, text, dazu) => {
                       (/birneraus)
          anziehen    „was man jemandem aufsetzt, hat er an, bis es
                       jemand abnimmt"
+         spray       RUNDE 92, und er hat es zweimal gesagt: „das mit
+                      dem Gesicht einspruehen — und dass es bleibt, die
+                      ganze Zeit, ungeachtet davon, ob man es durch
+                      Klicken aufs eigene Profilbild resettet. Es geht
+                      nur durch den Scheibenwischer wieder weg."
+                      Der Lack ist deshalb kein Rueckstand, sondern das
+                      ERGEBNIS. Der Wischer (/wischer) nimmt ihn ab —
+                      und dass er das tut, misst
+                      werkzeug/pruefe-runde92-lack.js.
        Alles andere muss nach dem Effekt weg sein. */
-    const bleibt = /kopfhoerer|gluehbirne|birne|anziehen|ausziehen/.test(art);
+    const bleibt = /kopfhoerer|gluehbirne|birne|anziehen|ausziehen|spray|lack/.test(art);
     if (letzte && !bleibt) {
       const nenn = (t) => schlimm.push(wo + " danach " + t);
       if (letzte.kinder !== v.kinder) {

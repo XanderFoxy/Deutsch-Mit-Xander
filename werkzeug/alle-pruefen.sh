@@ -46,8 +46,22 @@ for f in werkzeug/pruefe-*.js; do
   # unter Punkt 2 gewarnt wird.
   # Deshalb haben die langen Sonden hier ihre eigene Frist. Wer eine
   # neue lange Sonde schreibt, traegt sie hier ein.
+  # RUNDE 97 NACHGETRAGEN. NACHGEMESSEN, nicht geschaetzt: die
+  # Betriebs-Sonde schafft 28 Effekte in 23 Minuten, also rund 49
+  # Sekunden je Effekt (dreimal messen plus Aufbau) — 96 Effekte sind
+  # damit gut 78 Minuten. Deshalb 5400 s; die Ebenen-Sonde misst nur
+  # einmal je Effekt und ist in rund 35 Minuten durch (3600 s):
+  # die beiden Sonden aus Runde 92 gehen
+  # ebenfalls ueber ALLE 96 Effekte, die eine sogar dreimal
+  # (ungestoert / Auffrischen / Neuzeichnen). Sie standen hier nicht
+  # drin und wurden deshalb nach 120 Sekunden abgeschossen — im
+  # Sammelbericht sahen sie aus wie abgestuerzt („Node.js v22..."),
+  # dabei waren sie nur mitten in der Arbeit. Genau der Fehler, vor
+  # dem oben unter Punkt 2 gewarnt wird.
   case "$n" in
     pruefe-runde87-strichlinien) frist=2400 ;;
+    pruefe-runde92-betrieb)      frist=5400 ;;
+    pruefe-runde92-grundebene)   frist=3600 ;;
     pruefe-platzdesign)          frist=600  ;;
     pruefe-jeder-befehl)         frist=600  ;;
     *)                           frist=120  ;;

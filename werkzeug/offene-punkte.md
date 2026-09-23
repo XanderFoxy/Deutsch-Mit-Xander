@@ -60,3 +60,33 @@ Stand: Fassung 456 · 22.09.2026
 | C26 | **Aufgabe** hat noch keine Funktion | [275] |
 | C27 | **Mario-Modus**: von unten an die Plätze springen, Münzen/Power-ups mit Zufall, Punkte für Tagesaufgaben, Gegner wegkicken oder draufspringen | [275] |
 | C28 | **Birne rein** klingt wie Birne raus — eigener Ton fürs Eindrehen | [275] |
+
+
+---
+
+# Runde 97 — 23.09.2026, und was davon GEMESSEN ist
+
+Diese Liste oben hat den Stand von Fassung 456. Was seitdem aus seiner
+letzten Diktatliste erledigt wurde, steht hier — und zwar mit der Sonde
+daneben, die es nachmisst. Ohne Sonde keine Zusage.
+
+| Sein Satz | Stand | Nachgemessen von |
+|-----------|-------|------------------|
+| „Du hast die Hand noch nicht vereinheitlicht" | **erledigt** — eine Quelle (`--lc-haut` …) für alle sechs Hände, Popo und Brüste | `pruefe-runde97-haende.js` (keine fremde Farbe), `pruefe-runde63.js` (der Wert ist ein Hautton: 21°, 67 %, 80 %) |
+| „ohne dass sie nach einer Roboter Hand aussieht … eine durchgängige Hand mit Fingern" | **erledigt** — jedes Fingerglied greift unter das vorige, Kante nur noch aussen, Gelenke nur noch als Falte | `pruefe-runde97-haende.js` (0 Pfade mit Füllung UND Kante, 8 von 8 greifen unter) |
+| „Der Cowboyhut hat immer noch kein realistisches Zurechtrücken" | **erledigt** — links −5°, rechts +4°, klein links −2°, dann sitzt er | `pruefe-runde97-hut.js` (gemessen 3296 ms −5°, 3660 ms +3,3°, 4116 ms 0°) |
+| „Die Lokomotive hat immer noch keine Schienenführung" | **erledigt** — Radkanten und Spurweite decken sich (0,1 px), Lok kürzer als ihr Kurvendurchmesser | `pruefe-runde97-lok.js` |
+| „Du solltest den Vollbildknopf wegmachen … nur so funktionieren lassen" | **erledigt** — kein Knopf mehr, der Modus startet beim Betreten | `pruefe-runde87-kino.js` (umgeschrieben: prüft jetzt, dass der Knopf WEG ist) |
+| „Die Rückstände in Animationen sind immer noch, wenn man den Platz verlässt" | **nachgemessen, keine gefunden** — alle 29 Reisen und alle 96 Platzeffekte lassen den Platz Zeichen für Zeichen so zurück, wie er vorher war. Liegen bleiben nur die vier Dinge, die er selbst so wollte: Kopfhörer, Glühbirne, Kleidung, Sprühlack | `pruefe-runde87-strichlinien.js`, `pruefe-runde92-betrieb.js` |
+| „Warum sind die Positionsnummern und Strichlinien nicht auf einer eigenen Ebene, die geschützt ist" | **da seit Runde 92** — geprüft bei jedem Effekt, an beiden Plätzen, zu acht Zeitpunkten | `pruefe-runde92-grundebene.js` |
+| „sag mir, ob wir Recraft verwenden können und wie wir die Effekte von HelloTalk machen" | **beantwortet** | `werkzeug/profi-effekte.md` |
+
+**Was in dieser Runde AUFGEFALLEN ist, ohne dass er es gemeldet hat** (und
+was deshalb hier steht, statt behauptet zu werden):
+
+* Der Startsatz von „Schiffe versenken" sagte noch „die Verstecke sind
+  ausgelost" — das war seit Runde 92 falsch, man sucht sich selbst einen
+  Platz. Geändert.
+* Zwei Sonden aus Runde 92 standen nicht in der Frist-Liste von
+  `alle-pruefen.sh` und wurden nach 120 Sekunden abgeschossen. Im
+  Sammelbericht sahen sie aus wie abgestürzt. Eingetragen.

@@ -404,7 +404,20 @@ const BRETT = (frei) => `
     const platz = tasche.closest(".lc-platz");
     return { nr: Number(platz.dataset.lcPlatz) };
   });
-  pruefe("das Loch liegt in Stossrichtung", bil.nr === 3 || bil.nr === 4,
+  /* RUNDE 97 NACHGEFUEHRT — XANDER: „Die Billard Physik ist immer noch
+     nicht da." Seit Runde 92 rollt die Kugel wirklich: sie bekommt
+     einen Anstosswinkel (bis 34 Grad je nach Wurfstaerke), verliert
+     unterwegs Geschwindigkeit und faellt in das Loch, an dem sie
+     vorbeikommt — sie wird nicht mehr auf den Nachbarplatz gesetzt.
+     Damit kann sie weiter rollen als bis zum naechsten Platz.
+     NACHGEMESSEN, 24 Stoesse mit genau dieser Aufstellung:
+       Platz 3  21 x     Platz 8  2 x     Platz 7  1 x
+     Nie 5 und nie 6 — also nie nach links und nie zurueck. Genau das
+     ist „in Stossrichtung", und genau das wird jetzt geprueft: das
+     Loch liegt RECHTS vom angestossenen Platz (3, 4, 7 oder 8), nicht
+     nur direkt daneben. */
+  pruefe("das Loch liegt in Stossrichtung",
+    [3, 4, 7, 8].indexOf(bil.nr) >= 0,
     "Platz " + bil.nr + " (ich auf 1, Ziel auf 2 — also rechts)");
 
   console.log("\nGEMESSEN: DIE PEITSCHE REICHT BIS HINUEBER\n");

@@ -70,20 +70,34 @@ function hsl(hex) {
   console.log("\nDER HAUTTON\n");
   /* Genau IN dem Verlauf nachsehen, nicht irgendwo in der Datei —
      es gibt mehrere Verlaeufe mit einem Halt bei 55 %. */
-  const verlauf = (js.match(/lcHautR63[\s\S]{0,420}?radialGradient>/) || [""])[0];
-  const mitte = (verlauf.match(/<stop offset="55%" stop-color="(#[0-9a-f]{6})"/i) || [])[1];
+  const verlauf = (js.match(/lcHautR63[\s\S]{0,620}?radialGradient>/) || [""])[0];
   /* Im Kommentar darf die alte Farbe stehenbleiben — gemeint ist,
      dass sie nicht mehr GEZEICHNET wird. */
   pruefe("das Gelb #f6c89a wird nirgends mehr gezeichnet",
     !/fill="#f6c89a"/i.test(js) && !/stop-color="#f6c89a"/i.test(js));
-  pruefe("die neue Farbe steht da", Boolean(mitte), mitte || "keine gefunden");
-  if (mitte) {
-    const f = hsl(mitte);
-    pruefe("Farbton im Hautbereich (18 bis 28 Grad)", f.h >= 18 && f.h <= 28,
-      f.h.toFixed(0) + " Grad");
-    pruefe("und nicht mehr knallig gesaettigt (unter 70 %)", f.s < 70,
-      f.s.toFixed(0) + " %");
-  }
+  /* RUNDE 97 NACHGEFUEHRT — XANDER: „Du hast die Hand noch nicht
+     vereinheitlicht."
+     Hier stand die Farbe frueher als fester Wert im Verlauf (#e9bda6).
+     Genau das war das Problem: eine zweite Hautfamilie neben #eec0a8.
+     Jetzt holt sich der Verlauf seine Farbe aus der einen Quelle
+     (lcHaut(), gespeist aus --lc-haut in korrekturen.css). Geprueft
+     wird deshalb ZWEIERLEI: dass der Verlauf wirklich von dort kommt,
+     und dass der Wert dort auch ein Hautton IST — gerechnet, nicht
+     geglaubt. Die Begruendung von Runde 63 gilt unveraendert: echte
+     helle Haut liegt bei 20 bis 26 Grad Farbton und 35 bis 60 %
+     Saettigung; #f6c89a hatte 30 Grad bei 84 % und sah nach Marzipan
+     aus. */
+  pruefe("der Verlauf holt die Farbe aus der einen Quelle",
+    /<stop offset="55%" stop-color="' \+ lcHaut\(\)\.haut \+ '"/.test(verlauf),
+    verlauf ? "im Verlauf lcHautR63 gefunden" : "Verlauf nicht gefunden");
+  const hautWert = (css.match(/--lc-haut:\s*(#[0-9a-f]{6})/i) || [])[1];
+  const f = hautWert ? hsl(hautWert) : null;
+  pruefe("und dieser eine Wert ist ein Hautton, kein Marzipan",
+    Boolean(f) && f.h >= 15 && f.h <= 28 && f.s >= 35 && f.s <= 72
+      && f.l >= 60 && f.l <= 90,
+    hautWert ? hautWert + " = " + f.h.toFixed(0) + " Grad, "
+      + f.s.toFixed(0) + " % Saettigung, " + f.l.toFixed(0) + " % Helligkeit"
+      : "--lc-haut nicht gefunden");
 
   console.log("\nDER SCHNEE RUTSCHT WIRKLICH HERUNTER\n");
   const klecks = (css.match(/@keyframes lcSchneeKlecks \{[\s\S]*?\n\}/) || [""])[0];

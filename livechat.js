@@ -7085,8 +7085,13 @@ window.LiveChat = (function () {
     /* Die Frist: eine Minute reicht zum Aussuchen. Sind alle frueher
        fertig, geht es sofort los. */
     schiffeSpiel.frist = setTimeout(function () { schiffeAlleDa(true); }, 60000);
+    /* RUNDE 97: der Satz stammte noch aus Runde 88, als die Verstecke
+       ausgelost wurden. Seit Runde 92 sucht sich jeder selbst eines
+       aus — XANDER: „Man muss sich erst einen Platz suchen, dann
+       beginnt die Runde mit einem Countdown." Der Satz sagte also das
+       Gegenteil von dem, was das Spiel tut. */
     anAlle("aktion", zustand.ichName + " startet Schiffe versenken — "
-      + "die Verstecke sind ausgelost  🚢");
+      + "sucht euch ein Versteck  🚢");
     schiffeLos();
     return true;
   }
@@ -11895,17 +11900,27 @@ window.LiveChat = (function () {
         return systemZeile("Spr\u00fchdose:\n"
           + "  /spray Name              ein lachendes Gesicht\n"
           + "  /spray Name traurig      ein trauriges Gesicht\n"
-          + "  /spray Name <Bild>       " + AUFKLEBER.slice(0, 8).join(", ") + " \u2026");
+          + "  /spray Name <Bild>       " + AUFKLEBER.slice(0, 8).join(", ") + " \u2026\n"
+          + "  /spray Name <Adresse>    ein Bild deiner Wahl \u2014 oder im "
+          + "Platzmen\u00fc unter \u201eSpr\u00fchdose \u203a Eigenes Bild\u201c");
       }
-      var letztesS = String(teileS[teileS.length - 1]).toLowerCase();
+      /* RUNDE 97 — XANDER: „und dass man ein Bild seiner Wahl darauf
+         spruehen kann." Steht hinten eine BILDADRESSE, ist sie das
+         Motiv. Erlaubt ist nur, was wirklich ein Bild sein kann
+         (http, https, data:image) — ein Befehl, der beliebige
+         Adressen an alle weiterreicht, waere eine offene Tuer. */
+      var roh = String(teileS[teileS.length - 1] || "");
+      var istBild = /^(https?:\/\/|data:image\/)/i.test(roh);
+      var letztesS = roh.toLowerCase();
       var istWahl = /^(froh|happy|lachen|traurig|sad|schade|weinen)$/.test(letztesS)
         || AUFKLEBER.indexOf(letztesS) >= 0;
-      var wasS = istWahl ? letztesS : "froh";
-      if (istWahl) teileS.pop();
+      var wasS = istBild ? roh : (istWahl ? letztesS : "froh");
+      if (istWahl || istBild) teileS.pop();
       var namenS = teileS.join(" ").trim();
       if (!namenS) return systemZeile("Wem denn?  So geht es:  /spray Nickname " + wasS);
       var wemS = zielPerson(namenS);
-      var wortS = /^(traurig|sad|schade|weinen)$/.test(wasS) ? "ein trauriges Gesicht"
+      var wortS = istBild ? "ein Bild"
+        : /^(traurig|sad|schade|weinen)$/.test(wasS) ? "ein trauriges Gesicht"
         : /^(froh|happy|lachen)$/.test(wasS) ? "ein lachendes Gesicht"
         : "\u201e" + wasS + "\u201c";
       return anAlle("aktion", zustand.ichName + " spr\u00fcht " + wemS.name + " "

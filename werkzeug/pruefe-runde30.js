@@ -143,34 +143,45 @@ const pruefe = (was, gut, zusatz) => {
   console.log("\nSCHIFFE VERSENKEN\n");
   pruefe("es gibt den Befehl", /w: "versenken"/.test(lc)
     && /art === "versenken" \|\| art === "schiffe"/.test(lc));
-  /* RUNDE 88: die Richtung hat sich umgedreht. Frueher schickte
-     jeder sein selbstgewaehltes Versteck an den Schiedsrichter;
-     heute lost der Schiedsrichter aus und schickt jedem sein Feld.
-     Was gleich geblieben ist — und worum es in dieser Regel geht —:
-     es geht immer an GENAU EIN Geraet, nie an alle. */
+  /* RUNDE 97 NACHGEFUEHRT. Die Regel bleibt — ein Versteck geht nie
+     an alle —, der Weg dorthin ist ein anderer.
+     RUNDE 88 loste der Schiedsrichter die Felder aus und schickte
+     jedem seines. XANDER (23.09.2026) will es andersherum: „Man muss
+     sich erst einen Platz suchen, dann beginnt die Runde mit einem
+     Countdown, und dann muss man sich gegenseitig suchen, der Reihe
+     nach."
+     Seit Runde 92 waehlt also jeder selbst. Seine Wahl geht als
+     persoenliche Post an den Schiedsrichter (schiffePost), und der
+     bestaetigt sie ebenso persoenlich. An ALLE geht nur eine ZAHL:
+     wie viele schon fertig sind. Genau das wird hier gemessen. */
   pruefe("ein Versteck geht nie an alle, immer nur an ein Geraet",
-    /postSenden\(m\.id, \{ art: "spielpost", spiel: \{ t: "platz", nr: nr \} \}\);/.test(lc)
-    && /postSenden\(schiffeStand\.richter, \{ art: "spielpost"/.test(lc)
+    /schiffePost\(vonId, \{ t: "platz", nr: nr \}\);/.test(lc)
+    && /function schiffePost\(id, d\) \{[\s\S]{0,220}postSenden\(id, \{ art: "spielpost", spiel: d \}\);/.test(lc)
+    && /schiffeAnAlle\(\{ t: "wartet", fertig: fertig, von: schiffeSpiel\.reihe\.length \}\);/.test(lc)
     && !/schiffeAnAlle\(\{ t: "platz"/.test(lc)
     && !/schiffeAnAlle\(\{ t: "versteck"/.test(lc));
   pruefe("der Schiedsrichter entscheidet den Treffer",
     /function schiffeSchuss/.test(lc) && /schiffeSpiel\.raus\[getroffenId\] = true/.test(lc));
   pruefe("wer nicht dran ist, kann nicht schiessen",
     /if \(!dranM \|\| dranM\.id !== vonId\) return;/.test(lc));
-  /* RUNDE 88 — ANDERS GEWORDEN, ABER DIESELBE FRAGE.
-     Bisher meldete der Schiedsrichter „belegt", wenn jemand ein
-     schon besetztes Feld anklickte. XANDER hat genau das als Fehler
-     erkannt: „wenn sich ein Zweiter einen Platz aussucht, dann darf
-     er nicht rausfinden, dass ein Platz besetzt ist, weil dann
-     wuerde er den ja anklicken, um ihn zu versenken."
-     Jetzt werden die Felder ausgelost — einmal gemischt, dann
-     bekommt der Erste der Reihe das erste gezogene Feld, der Zweite
-     das zweite. Zwei koennen damit gar nicht im selben Loch
-     stecken, und niemand muss es erfahren. */
+  /* RUNDE 97 NACHGEFUEHRT — DIESELBE FRAGE, ANDERE ANTWORT.
+     Runde 88 loste die Felder aus, damit niemand erfaehrt, welches
+     Feld belegt ist. Das nimmt aber genau die Wahl weg, die XANDER
+     jetzt ausdruecklich will („Man muss sich erst einen Platz
+     suchen"). Wer selbst waehlt, muss erfahren, wenn sein Feld schon
+     vergeben ist — sonst laegen zwei im selben Loch.
+     Also: der Schiedsrichter prueft und antwortet mit „belegt",
+     aber NUR dem einen Fragenden (schiffePost, nicht schiffeAnAlle),
+     und ohne Namen. Mehr als „dieses eine Feld ist weg" erfaehrt er
+     nicht — dieselbe Auskunft, die er im echten Raum auch haette,
+     wenn er sich auf einen besetzten Stuhl setzen will.
+     Geprueft wird deshalb dreierlei: dass geprueft wird, dass die
+     Antwort persoenlich geht, und dass sie keinen Namen traegt. */
   pruefe("zwei koennen nicht im selben Loch stecken",
-    /for \(var i = felder\.length - 1; i > 0; i--\)/.test(lc)
-    && /schiffeSpiel\.reihe\.forEach\(function \(m, k\) \{ schiffeSpiel\.verstecke\[m\.id\] = felder\[k\]; \}\);/.test(lc)
-    && !/t: "belegt", nr: nr/.test(lc));
+    /if \(id !== vonId && schiffeSpiel\.verstecke\[id\] === nr\) frei = false;/.test(lc)
+    && /schiffePost\(vonId, \{ t: "belegt", nr: nr \}\);/.test(lc)
+    && !/schiffeAnAlle\(\{ t: "belegt"/.test(lc)
+    && !/t: "belegt", nr: nr, name/.test(lc));
   pruefe("und am Ende steht ein Sieger", /t: "ende", sieger/.test(lc));
 
   console.log("\nDREI ANDERE ARTEN, ZU EINEM PLATZ ZU KOMMEN\n");

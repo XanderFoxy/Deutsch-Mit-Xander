@@ -233,9 +233,25 @@ pruefe("die Krone hat eine Delle in der Mitte, keinen dritten Buckel", (() => {
    er schief (-7 Grad), liegt so bis die Hand kommt, und erst sie
    macht ihn gerade. Geprueft wird also genau andersherum: bis zur
    Hand schief, danach gerade. */
+/* RUNDE 97 NACHGEFUEHRT — XANDER: „Der Cowboyhut hat immer noch kein
+   realistisches Zurechtruecken." Und frueher schon: „er soll ihn am
+   Ende mit seiner Hand nach links und nach rechts ausrichten."
+   Die Regel selbst bleibt, wie sie in Runde 88 gedreht wurde: bis zur
+   Hand schief, danach gerade. NUR DER ZEITPUNKT hat sich verschoben.
+   Frueher war der Hut bei 84,09 % (3700 ms) fertig — mit EINEM Dreh
+   auf gerade. Jetzt liegt dazwischen das Zurechtruecken: 78,41 %
+   nach links (-5 Grad), 82,5 % nach rechts (+4 Grad), 86 % noch
+   einmal klein nach links (-2 Grad), und erst bei 89 % (3916 ms)
+   sitzt er. Nachgemessen mit werkzeug/pruefe-runde97-hut.js am
+   Element selbst: 3296 ms -5 Grad, 3660 ms +3,3 Grad, 4116 ms 0 Grad. */
 pruefe("und der Hut sitzt bis dahin SCHIEF — sonst gibt es nichts auszurichten",
   /22\.27%, 61\.36% \{ opacity: 1; transform: translateY\(2%\) rotate\(-7deg\)/.test(css)
-  && /84\.09%, 96\.59% \{ opacity: 1; transform: translateY\(3%\) rotate\(0deg\)/.test(css));
+  && /89%, 96\.59% \{ opacity: 1; transform: translateY\(3%\) rotate\(0deg\)/.test(css));
+/* Und das Zurechtruecken selbst: erst links, dann rechts, dann sitzt er. */
+pruefe("und dazwischen rueckt die Hand ihn nach links UND nach rechts",
+  /78\.41% \{ transform: translateY\(4%\)   rotate\(-5deg\)/.test(css)
+  && /82\.5%  \{ transform: translateY\(4%\)   rotate\(4deg\)/.test(css)
+  && /86%    \{ transform: translateY\(3\.5%\) rotate\(-2deg\)/.test(css));
 
 console.log("\nDER PLATTENTELLER\n");
 /* NACHGEMESSEN: scratch.opus ist 1,01 s lang und von 0,00 bis

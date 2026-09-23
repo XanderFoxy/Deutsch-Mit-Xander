@@ -213,6 +213,79 @@ Seite: dass das Sausen **verklungen** ist, wenn es klopft.
 
 ---
 
+## 13 · Eine Haut. Eine Quelle. Fuer alle Haende.
+
+**Xander (23.09.2026):** „Du hast die Hand noch nicht vereinheitlicht."
+
+Es gab zwei Hautfamilien im Haus: `#e9bda6` (Ohrfeige, Basketball,
+Streicheln, Brueste) und `#eec0a8` (Riesenhand, Klaps, Popo), dazu die
+Hut-Hand mit einer dritten, oraengeren Haut. Nebeneinander sieht das aus wie
+drei verschiedene Leute.
+
+**Regel:** Kein Hautton steht mehr als fester Wert in einer Zeichnung. Er
+kommt aus **einer** Quelle:
+
+```css
+:root {
+  --lc-haut: #eec0a8;          /* die Flaeche */
+  --lc-haut-hell: #f3cbb6;     /* das Licht darauf */
+  --lc-haut-kante: #bf9280;    /* die Umrisslinie */
+  --lc-haut-schatten: #c99a84; /* Falten und Sehnen */
+  --lc-haut-tief: #d9a68c;     /* der Rand eines Verlaufs */
+}
+```
+
+Im Programm liest `lcHaut()` diese Werte **einmal** aus und gibt sie an jede
+Zeichnung weiter. Warum nicht `fill="var(--lc-haut)"` direkt ins Bild? Weil
+eine Zeichnung, die als Bilddatei irgendwo landet, von diesen Werten nichts
+weiss — aus `lcHaut()` kommt immer eine fertige Farbe.
+
+**Sonde:** `werkzeug/pruefe-runde97-haende.js` holt alle sechs Haende
+gleichzeitig auf die Buehne und prueft jede Flaeche, jede Kante und jeden
+Verlaufshalt gegen genau diese fuenf Werte.
+
+## 14 · Ein Finger ist kein Stapel Module
+
+**Xander:** „ohne dass sie nach einer Roboter Hand aussieht, ohne dass sie
+nach einer Hand bestehend aus einzelnen Modulen aussieht. Eine durchgaengige
+Hand mit Fingern."
+
+Jedes Fingerglied war eine geschlossene Kapsel **mit Umrisslinie ringsherum**.
+An jedem Gelenk lagen damit zwei Linien uebereinander — das ist der Ring, an
+dem das Auge einen Roboter erkennt.
+
+**Regel fuer jedes gegliederte Koerperteil:**
+
+1. Jedes Glied reicht nach oben **unter** das vorige (rund ein halbes Glied).
+   Dann klafft beim Beugen keine Luecke.
+2. Die Kante wird **nur aussen** gezogen: eine Seite, die Kuppe, die andere
+   Seite. Oben, wo das Glied unter dem Nachbarn verschwindet, **keine Linie**.
+3. Dass dort ein Gelenk ist, sagen die **Falten**, nicht ein Umriss.
+
+Gemessen wird das in derselben Sonde: kein Pfad eines Fingergliedes darf
+Fuellung UND Kante tragen, und jedes Glied muss ueber seinem Drehpunkt
+beginnen.
+
+## 15 · Ein Fahrzeug muss auf sein Gleis passen
+
+**Xander:** „Die Lokomotive hat immer noch keine Schienenfuehrung."
+
+Die Gleise waren da und stimmten — die Lok passte nur nicht dazu. Zwei
+Zahlen, beide nachgemessen:
+
+* **Spurweite:** das Gleis war 0,34 Platzbreiten breit, die Radkanten der Lok
+  standen 0,72 auseinander. Die Raeder liefen also neben den Schienen.
+* **Laenge:** die Lok war 1,77 Platzbreiten lang, ihr Kurvenradius eine halbe.
+  Sie war laenger als der ganze Kurvendurchmesser und konnte der Kurve
+  geometrisch gar nicht folgen.
+
+**Regel:** Wer ein Fahrzeug auf einen gezeichneten Weg setzt, prueft zwei
+Verhaeltnisse — *Radstand zu Spurweite* und *Fahrzeuglaenge zu Kurvenradius*.
+Beides steht in `werkzeug/pruefe-runde97-lok.js` und wird am laufenden Bild
+gemessen, nicht am Quelltext.
+
+---
+
 ## Vor jedem Hochladen
 
 ```

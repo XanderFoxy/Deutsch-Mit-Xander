@@ -23050,6 +23050,123 @@
     return true;
   }
 
+  /* =====================================================================
+     RUNDE 97 — EIN BILD SEINER WAHL AUFSPRUEHEN
+     ---------------------------------------------------------------------
+     XANDER (Runde 86, und am 23.09.2026 noch einmal gemeldet): „und
+     dass man ein Bild seiner Wahl darauf spruehen kann und dass das Bild
+     genauso partiell eingespruecht wird … wie Partikel langsam
+     auftaucht und sich realistisch fuellt, das Bild Pixel fuer Pixel,
+     als wenn man das wirklich dran spruehen wuerde."
+     Und zuletzt: „Die [gespruehten] Sachen haben immer noch kein Bild,
+     was man sich einspruehen kann."
+
+     ER HAT RECHT GEHABT: die Spruehdose kannte 23 feste Motive und zwei
+     Gesichter — und sonst nichts. Ein EIGENES Bild ging nirgends.
+     Dabei liegt alles schon bereit: die eigene Sammlung im Konto
+     (lcBibliothek), die zuletzt benutzten Bilder (LiveChat.letzteBilder)
+     und jede GIF-Adresse. Hier ist der Waehler dazu; gespruecht wird
+     danach genau so wie ein Motiv, Tropfen fuer Tropfen.
+     ===================================================================== */
+  function lcSprayBildWaehler(fuerWen) {
+    lcPlatzMenueZu();
+    const wen = String(fuerWen || "").trim();
+    let sammlung = [];
+    try { sammlung = lcBibliothek() || []; } catch (e) { sammlung = []; }
+    let letzte = [];
+    try { letzte = (LiveChat.letzteBilder && LiveChat.letzteBilder()) || []; }
+    catch (e) { letzte = []; }
+
+    const kasten = document.createElement("div");
+    kasten.id = "lcPlatzMenue";
+    kasten.className = "lc-platzmenue lc-lesewahl lc-spraywahl";
+    kasten.setAttribute("role", "menu");
+    const kopf = document.createElement("p");
+    kopf.className = "lc-platzmenue-kopf";
+    kopf.textContent = wen ? "Welches Bild auf " + wen + "?" : "Welches Bild?";
+    kasten.appendChild(kopf);
+
+    const schicken = (quelle) => {
+      const q = String(quelle || "").trim();
+      /* Nur echte Bildadressen. Ein Befehl, der irgendetwas
+         weiterreicht, waere eine offene Tuer. */
+      if (!/^(https?:\/\/|data:image\/)/i.test(q)) {
+        showToast("Das war keine Bildadresse.");
+        return;
+      }
+      lcPlatzMenueZu();
+      const zeile = "/spray" + (wen ? " " + wen : "") + " " + q;
+      try { LiveChat.schreiben(zeile); } catch (e) {}
+      lcNachDemSenden(zeile);
+    };
+
+    const fach = (titel, bilder) => {
+      if (!bilder.length) return;
+      const p2 = document.createElement("p");
+      p2.className = "eyebrow";
+      p2.style.margin = "8px 0 4px";
+      p2.textContent = titel;
+      kasten.appendChild(p2);
+      const reihe = document.createElement("div");
+      reihe.className = "lc-waehler-gifs";
+      bilder.slice(0, 18).forEach((q) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "lc-waehler-gif";
+        b.title = "Dieses Bild aufspr\u00fchen";
+        const i = document.createElement("img");
+        i.src = q;
+        i.alt = "";
+        i.loading = "lazy";
+        b.appendChild(i);
+        b.addEventListener("click", (e) => {
+          e.preventDefault(); e.stopPropagation();
+          schicken(q);
+        });
+        reihe.appendChild(b);
+      });
+      kasten.appendChild(reihe);
+    };
+
+    fach("MEINE SAMMLUNG", sammlung);
+    fach("ZULETZT BENUTZT", letzte);
+    if (!sammlung.length && !letzte.length) {
+      const hin = document.createElement("p");
+      hin.className = "empty-note";
+      hin.style.fontSize = "0.75rem";
+      hin.textContent = "Deine Sammlung ist noch leer \u2014 im Bildmen\u00fc kannst du "
+        + "eigene PNG und GIF hinzuf\u00fcgen. Eine Adresse geht auch sofort:";
+      kasten.appendChild(hin);
+    }
+
+    /* Und der Weg fuer alles andere: eine Adresse einsetzen. */
+    const reihe = document.createElement("div");
+    reihe.className = "lc-waehler-reihe";
+    reihe.style.marginTop = "8px";
+    const feld = document.createElement("input");
+    feld.type = "text";
+    feld.className = "lc-chat-feld";
+    feld.placeholder = "\u2026 oder eine Bildadresse einsetzen";
+    const knopf = document.createElement("button");
+    knopf.type = "button";
+    knopf.className = "btn btn-ghost";
+    knopf.textContent = "Spr\u00fchen";
+    knopf.addEventListener("click", (e) => {
+      e.preventDefault(); e.stopPropagation();
+      schicken(feld.value);
+    });
+    feld.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); schicken(feld.value); }
+    });
+    reihe.appendChild(feld);
+    reihe.appendChild(knopf);
+    kasten.appendChild(reihe);
+
+    document.body.appendChild(kasten);
+    lcMenueSchliessen(kasten);
+    return true;
+  }
+
   function lcMusikWaehler(fuerWen) {
     lcPlatzMenueZu();
     let lieder = [];
@@ -27136,10 +27253,17 @@
   function lcSpray(wen, was) {
     const ziele = lcZielPlaetze(wen);
     if (!ziele.length) return false;
-    const wahl = String(was || "froh").trim().toLowerCase();
+    /* RUNDE 97 — XANDER: „und dass man ein Bild seiner Wahl darauf
+       spruehen kann." Eine Adresse bleibt, wie sie ist (Adressen
+       unterscheiden Gross und Klein); alles andere ist ein Motivname
+       und wird kleingeschrieben verglichen. */
+    const rohWahl = String(was || "froh").trim();
+    const eigenesBild = /^(https?:\/\/|data:image\/)/i.test(rohWahl);
+    const wahl = eigenesBild ? rohWahl : rohWahl.toLowerCase();
     const froh = !/^(traurig|sad|:\(|:-\(|schade|weinen)$/.test(wahl);
-    const smiley = /^(froh|happy|lachen|:\)|:-\)|traurig|sad|:\(|:-\(|schade|weinen)$/.test(wahl)
-      || !wahl;
+    const smiley = !eigenesBild
+      && (/^(froh|happy|lachen|:\)|:-\)|traurig|sad|:\(|:-\(|schade|weinen)$/.test(wahl)
+          || !wahl);
     ziele.forEach((platz, i) => setTimeout(() => {
       if (!platz.isConnected) return;
       platz.querySelectorAll(".lc-spray").forEach((x) => x.remove());
@@ -27182,17 +27306,31 @@
         t.style.setProperty("--gross", (2 + ((n * 13) % 5)) + "px");
         dose.appendChild(t);
       }
+      /* Ein eigenes Bild kommt von seiner Adresse, ein Motiv aus dem
+         Aufkleberordner. Geht das eigene Bild nicht (kein Netz, kein
+         CORS), wird nicht stillschweigend etwas anderes gespruecht,
+         sondern es gibt eine Meldung — sonst haette er ein Gesicht
+         auf dem Bild, das er nie gewaehlt hat. */
       const bauen = smiley
         ? lcSprayMotivSmiley(Math.round(gr * 2), froh)
-        : lcSprayMotivBild(Math.round(gr * 2), "sticker/" + wahl.replace(/[^a-z0-9_-]/g, "") + ".svg")
-            .catch(() => lcSprayMotivSmiley(Math.round(gr * 2), true));
+        : eigenesBild
+          ? lcSprayMotivBild(Math.round(gr * 2), wahl)
+              .catch((e) => {
+                showToast("Das Bild liess sich nicht aufspruehen.");
+                throw e;
+              })
+          : lcSprayMotivBild(Math.round(gr * 2), "sticker/" + wahl.replace(/[^a-z0-9_-]/g, "") + ".svg")
+              .catch(() => lcSprayMotivSmiley(Math.round(gr * 2), true));
       let abbrechen = null;
       let lackFlaeche = null;
       bauen.then((motiv) => {
         if (!schicht.isConnected) return;
         abbrechen = lcSprayMalen(blende, motiv, gr, 1700);
         lackFlaeche = blende.querySelector(".lc-spray-lack");
-      });
+      /* Gemeldet wurde der Fehlschlag schon oben; hier wird er nur noch
+         aufgefangen, damit er nicht als unbehandelt in der Konsole
+         landet. Die Dose verschwindet dann einfach wieder. */
+      }).catch(() => {});
       /* Das Zischen liegt auf dem Spruehen, nicht auf dem Anflug. */
       lcTonSpaeter("spray", 320, 0.6);
       setTimeout(() => {
@@ -28447,7 +28585,10 @@
        ["\ud83d\udd25", "Feuer", "spray", "feuer"],
        ["\ud83c\udf08", "Regenbogen", "spray", "regenbogen"],
        ["\ud83c\udf3c", "Blume", "spray", "blume"],
-       ["\ud83e\udd8a", "Fuchs", "spray", "fuchs"]]],
+       ["\ud83e\udd8a", "Fuchs", "spray", "fuchs"],
+       /* RUNDE 97 — der Teil seines Wunsches, der bisher fehlte:
+          „und dass man ein Bild seiner Wahl darauf spruehen kann." */
+       ["\ud83d\uddbc\ufe0f", "Eigenes Bild \u2026", "*spraybild"]]],
     ["\ud83d\udc52", "Anziehen", "anziehen", false,
       [["\ud83d\udc51", "Krone", "anziehen", "krone"],
        ["\ud83d\udc53", "Brille", "anziehen", "brille"],
@@ -28762,6 +28903,8 @@
         if (befehl === "*weg") { lcWegMalen(zusatz, platz); return; }
         /* RUNDE 85 — „Mit Lied …" fragt weiter, statt zu schicken. */
         if (befehl === "*lied") { lcMusikWaehler(name); return; }
+        /* RUNDE 97 — „Eigenes Bild …" fragt genauso weiter. */
+        if (befehl === "*spraybild") { lcSprayBildWaehler(name); return; }
         /* RUNDE 76 — Name UND Zusatz: das Anzieh-Modul braucht beide
            („/anziehen Bea krone"). Die Kacheln unter „Alle" haben
            keinen Namen, dort bleibt es beim Zusatz allein. */
@@ -36089,6 +36232,50 @@
      ================================================================= */
   const LC_JE_REIHE = 4;
 
+  /* =====================================================================
+     RUNDE 97 — EINE HAUT FUER ALLE HAENDE
+     ---------------------------------------------------------------------
+     XANDER (23.09.2026): „Du hast die Hand noch nicht vereinheitlicht."
+     Und frueher schon: „ohne dass sie nach einer Roboter Hand aussieht,
+     ohne dass sie nach einer Hand bestehend aus einzelnen Modulen
+     aussieht. Eine durchgaengige Hand mit Fingern."
+
+     NACHGESEHEN, und er hat recht: es gab ZWEI Hautfamilien im Haus.
+     Die eine (Runde 63) mit #e9bda6 fuer Ohrfeige, Basketball und
+     Streicheln, die andere mit #eec0a8 fuer Riesenhand, Klaps und Popo.
+     Nebeneinander sind das zwei verschiedene Leute.
+
+     Jetzt gibt es EINE Quelle: die Farbwerte --lc-haut, --lc-haut-hell,
+     --lc-haut-kante, --lc-haut-schatten und --lc-haut-tief in
+     korrekturen.css. Diese Funktion liest sie EINMAL aus und gibt sie
+     an jede Zeichnung weiter. Warum nicht direkt var(--lc-haut) in das
+     fill-Attribut? Weil eine Zeichnung, die als Bilddatei oder in einem
+     alten Browser landet, von diesen Werten nichts weiss — hier steht
+     am Ende immer eine fertige Farbe im Bild.
+     Wer den Ton aendert, aendert ihn ueberall. Genau das heisst
+     „vereinheitlicht".
+     ===================================================================== */
+  var lcHautGemerkt = null;
+  function lcHaut() {
+    if (lcHautGemerkt) return lcHautGemerkt;
+    var gib = function (name, ersatz) {
+      try {
+        var w = getComputedStyle(document.documentElement).getPropertyValue(name);
+        w = (w || "").trim();
+        return w || ersatz;
+      } catch (e) { return ersatz; }
+    };
+    lcHautGemerkt = {
+      haut: gib("--lc-haut", "#eec0a8"),
+      hell: gib("--lc-haut-hell", "#f3cbb6"),
+      kante: gib("--lc-haut-kante", "#bf9280"),
+      schatten: gib("--lc-haut-schatten", "#c99a84"),
+      tief: gib("--lc-haut-tief", "#d9a68c")
+    };
+    return lcHautGemerkt;
+  }
+  window.LC_HAUT = lcHaut;
+
   /* RUNDE 71: wie weit liegt die Mitte des BILDES ueber der Mitte
      des PLATZES? Der Platz ist hoeher als sein Bild, weil der Name
      darunter steht — wer etwas „mittig auf den Platz" legt, legt es
@@ -40960,9 +41147,20 @@
       const hand = document.createElement("span");
       hand.className = "lc-riesenhand" + (gorilla ? " lc-riesenhand-affe" : "");
       hand.style.setProperty("--gross", d + "px");
-      const haut = gorilla ? "#3a322c" : "#e8b489";
-      const kante = gorilla ? "#221c18" : "#b47a52";
-      const innen = gorilla ? "#5c4f45" : "#f3cfae";
+      /* RUNDE 97 — EINE HAUT FUER ALLE HAENDE.
+         XANDER: „Du hast die Hand noch nicht vereinheitlicht."
+         Die Riesenhand hatte ihren eigenen Hautton (#e8b489), der
+         Klaps seinen (#eec0a8), das Greifen wieder einen anderen.
+         Nebeneinander sah das aus wie drei verschiedene Leute. Jetzt
+         kommen alle aus DERSELBEN Quelle: den Farbwerten --lc-haut,
+         --lc-haut-hell und --lc-haut-kante in korrekturen.css. Wer
+         den Ton einmal aendert, aendert ihn ueberall — genau das
+         heisst „vereinheitlicht".
+         Die Gorillapranke bleibt dunkel: sie ist keine Menschenhand. */
+      const hautwerte = lcHaut();
+      const haut = gorilla ? "#3a322c" : hautwerte.haut;
+      const kante = gorilla ? "#221c18" : hautwerte.kante;
+      const innen = gorilla ? "#5c4f45" : hautwerte.hell;
       hand.innerHTML =
         '<svg class="lc-riesenhand-form" viewBox="0 0 120 150" aria-hidden="true">'
         + '<defs><linearGradient id="lcHandFarbe' + (gorilla ? "G" : "M") + '" x1="0" y1="0" x2="0" y2="1">'
@@ -41148,19 +41346,52 @@
         { name: "ring",   x: 76, y: 85, br: 12,   l: [26, 17, 11] },
         { name: "klein",  x: 92, y: 79, br: 10,   l: [21, 13,  9] }
       ];
-      /* Ein Glied: eine Kapsel, zur Spitze hin eine Spur schmaler —
-         ein Finger ist am Grundgelenk dicker als an der Kuppe. */
-      const rhGlied = (x, y, br, lang, schmal, fuell) =>
-        '<path d="M' + (x - br / 2) + " " + (y + br * 0.22)
-        + " C" + (x - br / 2) + " " + (y - br * 0.30) + " "
-        + (x + br / 2) + " " + (y - br * 0.30) + " "
-        + (x + br / 2) + " " + (y + br * 0.22)
-        + " L" + (x + schmal / 2) + " " + (y + lang - schmal * 0.34)
-        + " C" + (x + schmal / 2) + " " + (y + lang + schmal * 0.42) + " "
-        + (x - schmal / 2) + " " + (y + lang + schmal * 0.42) + " "
-        + (x - schmal / 2) + " " + (y + lang - schmal * 0.34)
-        + ' Z" fill="' + fuell + '" stroke="' + kante
-        + '" stroke-width="1.7" stroke-linejoin="round"/>';
+      /* =========================================================
+         EIN GLIED — UND WARUM ES KEINE EIGENE KANTE MEHR HAT
+         ---------------------------------------------------------
+         XANDER: „ohne dass sie nach einer Roboter Hand aussieht,
+         ohne dass sie nach einer Hand bestehend aus einzelnen
+         Modulen aussieht. Eine durchgaengige Hand mit Fingern."
+         Und heute: „Du hast die Hand noch nicht vereinheitlicht."
+
+         GEFUNDEN: jedes der drei Fingerglieder war eine GESCHLOSSENE
+         Kapsel mit einer Umrisslinie RINGSHERUM. An jedem Gelenk
+         trafen damit zwei Linien aufeinander — eine ueber der
+         anderen. Genau das sieht man als Ring um das Gelenk, und
+         genau daran erkennt das Auge einen Roboter: ein Finger aus
+         drei aufgefaedelten Modulen.
+
+         ZWEI AENDERUNGEN, und beide sind noetig:
+         1. JEDES GLIED REICHT NACH OBEN UNTER DAS VORIGE („ueber").
+            Es faengt ein halbes Glied hoeher an, als sein Gelenk
+            liegt. Beim Beugen kann so keine Luecke aufklaffen — das
+            Glied schiebt sich unter den Nachbarn, wie die Haut es
+            auch tut.
+         2. DIE KANTE WIRD NUR NOCH AUSSEN GEZOGEN: linke Seite,
+            Kuppe, rechte Seite. Oben, wo das Glied unter dem
+            Nachbarn verschwindet, ist KEINE Linie mehr. Der Umriss
+            laeuft dadurch von der Knoechelreihe bis zur
+            Fingerspitze durch — EINE Linie statt drei.
+         Dass dort ein Gelenk ist, sagen die Falten (rhFalte). Genau
+         so sieht man es an der eigenen Hand: eine durchgehende
+         Silhouette, und quer darueber zwei feine Linien.
+         ========================================================= */
+      const rhGlied = (x, y, br, lang, schmal, fuell, ueber) => {
+        const o = ueber || 0;
+        /* Die Aussenkante: vom oberen Rand hinunter, um die Kuppe
+           herum und wieder hinauf — offen, ohne Deckel. */
+        const kanteD = "M" + (x - br / 2) + " " + (y + br * 0.22 - o)
+          + " L" + (x - schmal / 2) + " " + (y + lang - schmal * 0.34)
+          + " C" + (x - schmal / 2) + " " + (y + lang + schmal * 0.42) + " "
+          + (x + schmal / 2) + " " + (y + lang + schmal * 0.42) + " "
+          + (x + schmal / 2) + " " + (y + lang - schmal * 0.34)
+          + " L" + (x + br / 2) + " " + (y + br * 0.22 - o);
+        /* Dieselbe Linie, oben geschlossen — aber nur zum Fuellen. */
+        return '<path d="' + kanteD + ' Z" fill="' + fuell + '"/>'
+          + '<path d="' + kanteD + '" fill="none" stroke="' + kante
+          + '" stroke-width="1.7" stroke-linejoin="round"'
+          + ' stroke-linecap="round"/>';
+      };
       /* Die Falten ueber einem Gelenk — zwei feine Striche. Ohne sie
          ist ein Finger ein Schlauch. */
       const rhFalte = (x, y, br) =>
@@ -41184,16 +41415,19 @@
           : "";
         return '<g class="lc-rhand-finger lc-rf-mcp" data-rf="' + i + '"'
           + ' style="transform-origin:' + f.x + 'px ' + f.y + 'px">'
-          + rhGlied(f.x, f.y, b0, g0, b1, fuell)
+          /* Auch das Grundglied greift nach oben — unter die
+             Knoechelreihe. Sonst klafft beim Beugen genau dort eine
+             Luecke, wo die Hand am staerksten arbeitet. */
+          + rhGlied(f.x, f.y, b0, g0, b1, fuell, b0 * 0.45)
           + haare
           + rhFalte(f.x, f.y + g0 - 2.5, b1)
           + '<g class="lc-rf-pip" data-rf="' + i + '"'
           + ' style="transform-origin:' + f.x + 'px ' + (f.y + g0) + 'px">'
-          + rhGlied(f.x, f.y + g0, b1, g1, b2, fuell)
+          + rhGlied(f.x, f.y + g0, b1, g1, b2, fuell, b1 * 0.55)
           + rhFalte(f.x, f.y + g0 + g1 - 2.2, b2)
           + '<g class="lc-rf-dip" data-rf="' + i + '"'
           + ' style="transform-origin:' + f.x + 'px ' + (f.y + g0 + g1) + 'px">'
-          + rhGlied(f.x, f.y + g0 + g1, b2, g2, b2 * 0.94, fuell)
+          + rhGlied(f.x, f.y + g0 + g1, b2, g2, b2 * 0.94, fuell, b2 * 0.55)
           /* Der Nagel. Wir sehen die Finger von HINTEN — die Naegel
              liegen also zu uns. */
           + '<rect class="lc-rhand-nagel" x="' + (f.x - b2 * 0.30) + '" y="'
@@ -41894,7 +42128,12 @@
       if (ecke && Math.abs(ein.x * aus.x + ein.y * aus.y) < 0.35) {
         const lVor = Math.hypot(pk[i].x - pk[i - 1].x, pk[i].y - pk[i - 1].y);
         const lNach = Math.hypot(pk[i + 1].x - pk[i].x, pk[i + 1].y - pk[i].y);
-        r = Math.max(0, Math.min(rMax, lVor * 0.45, lNach * 0.45));
+        /* RUNDE 97: 0,45 auf 0,49 heraufgesetzt. Mehr geht nicht —
+           bei 0,5 stiessen zwei Bogen aneinander und es bliebe keine
+           Gerade mehr dazwischen. Der Bogen wird dadurch so weit, wie
+           der Platz es ueberhaupt hergibt, und die Lok kommt ohne
+           Ueberhang herum. */
+        r = Math.max(0, Math.min(rMax, lVor * 0.49, lNach * 0.49));
       }
       const A = { x: pk[i].x - ein.x * r, y: pk[i].y - ein.y * r };
       if (Math.hypot(A.x - hier.x, A.y - hier.y) > 0.5) {
@@ -41961,10 +42200,15 @@
     svg.setAttribute("height", Math.max(1, hoch).toFixed(0));
     svg.style.left = links.toFixed(1) + "px";
     svg.style.top = oben.toFixed(1) + "px";
-    /* Die Spurweite: ein Sechstel der Bildbreite sieht bei 64 px
-       richtig aus — schmaler wirkt es wie ein Draht, breiter wie
-       eine Strasse. */
-    const spur = d * 0.17;
+    /* DIE SPURWEITE — RUNDE 97 NACHGEMESSEN.
+       XANDER: „Die Lokomotive hat immer noch keine Schienenfuehrung."
+       Sie stand 0,17 Platzbreiten neben der Mitte, das Gleis war also
+       0,34 breit. Die Radkanten der Lok liegen in ihrer Zeichnung bei
+       72 % ihrer Hoehe; bei der neuen Lokgroesse (0,6 Platzbreiten
+       hoch, siehe .lc-lok im Stilblatt) sind das 0,432 Platzbreiten.
+       Genau diese Haelfte steht jetzt hier — die Raeder stehen damit
+       AUF den Schienen und nicht mehr daneben. */
+    const spur = d * 0.176;
     const ueber = spur + Math.max(2.4, d * 0.045);   // Schwelle steht ueber
     const schritt = Math.max(9, d * 0.22);
     let schwellen = "", schienen = "";
@@ -45261,7 +45505,7 @@
         + '<path d="M18 54 C10 46 8 34 12 26 L16 30 L16 12 A4 4 0 0 1 24 12 L24 26'
         + ' L26 8 A4 4 0 0 1 34 8 L34 26 L36 12 A4 4 0 0 1 44 12 L44 28'
         + ' L48 20 A4 4 0 0 1 54 24 C54 40 48 52 40 56 Z"'
-        + ' fill="#e9bda6" stroke="#bf9280" stroke-width="2" stroke-linejoin="round"/>'
+        + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante + '" stroke-width="2" stroke-linejoin="round"/>'
         + "</svg>"
         + '<span class="lc-ohrfeige-klatsch">KLATSCH</span>';
       /* XANDER: „dann moechte ich abhaengig vom Geschlecht ... ein
@@ -45382,7 +45626,7 @@
         + ' C54 52.4 46 53.6 34 53.2'
         + ' C22 52.8 14 51.4 12.6 48.4'
         + ' C11.4 45.6 11.6 30 12 25 Z"'
-        + ' fill="#eec0a8" stroke="#bf9280" stroke-width="1.7"'
+        + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante + '" stroke-width="1.7"'
         + ' stroke-linejoin="round"/>'
         /* DIE VIER FINGER, leicht gefaechert und verschieden lang —
            Zeigefinger kuerzer als Mittelfinger, kleiner Finger am
@@ -45390,40 +45634,40 @@
         + '<path d="M56 22.6 C64 20.4 76 19.6 86 20.8'
         + ' C91.5 21.4 91.8 27.4 86.4 28.2'
         + ' C76 29.8 64 29.6 56.6 28.4 Z"'
-        + ' fill="#f0c5ad" stroke="#bf9280" stroke-width="1.5"'
+        + ' fill="' + lcHaut().hell + '" stroke="' + lcHaut().kante + '" stroke-width="1.5"'
         + ' stroke-linejoin="round"/>'
         + '<path d="M57 30.4 C66 28.8 80 28.4 90 29.8'
         + ' C95.4 30.6 95.4 36.4 90 37.2'
         + ' C80 38.6 66 38.4 57.4 36.8 Z"'
-        + ' fill="#f0c5ad" stroke="#bf9280" stroke-width="1.5"'
+        + ' fill="' + lcHaut().hell + '" stroke="' + lcHaut().kante + '" stroke-width="1.5"'
         + ' stroke-linejoin="round"/>'
         + '<path d="M56.6 38.8 C65 37.6 78 37.6 87 39.2'
         + ' C92 40.1 92 45.6 87 46.4'
         + ' C78 47.8 65 47.4 56 45.6 Z"'
-        + ' fill="#f0c5ad" stroke="#bf9280" stroke-width="1.5"'
+        + ' fill="' + lcHaut().hell + '" stroke="' + lcHaut().kante + '" stroke-width="1.5"'
         + ' stroke-linejoin="round"/>'
         + '<path d="M54.6 47 C62 46.2 72 46.6 79 48.2'
         + ' C83.6 49.2 83.4 54.2 79 55'
         + ' C71 56.4 61 55.8 53.4 53.6 Z"'
-        + ' fill="#eec0a8" stroke="#bf9280" stroke-width="1.5"'
+        + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante + '" stroke-width="1.5"'
         + ' stroke-linejoin="round"/>'
         /* DER DAUMEN — er steht nach unten ab und liegt in der
            Draufsicht VOR dem Handruecken, mit seinem Ballen. */
         + '<path d="M20 48 C22 56 28 64 36 67.4'
         + ' C41.6 69.8 46.6 65.6 43.4 61'
         + ' C39 54.8 34 50.2 28.6 47 Z"'
-        + ' fill="#f3cbb6" stroke="#bf9280" stroke-width="1.6"'
+        + ' fill="' + lcHaut().hell + '" stroke="' + lcHaut().kante + '" stroke-width="1.6"'
         + ' stroke-linejoin="round"/>'
         /* DIE STRECKSEHNEN ueber den Knoecheln — daran erkennt man
            einen Handruecken und keine Handflaeche. */
         + '<path d="M22 27.4 C32 25.8 44 25.6 54 26.8'
         + ' M21.6 34.6 C32 33.4 44 33.4 54.6 34.4'
         + ' M22 41.8 C32 41 43 41.2 53.4 42.2"'
-        + ' fill="none" stroke="#cf9f88" stroke-width="1.1"'
+        + ' fill="none" stroke="' + lcHaut().schatten + '" stroke-width="1.1"'
         + ' stroke-linecap="round" opacity=".55"/>'
         /* Die Knoechelreihe dort, wo die Finger ansetzen. */
         + '<path d="M57.6 23.4 C58.6 30 58.6 40 56.6 48"'
-        + ' fill="none" stroke="#c99a84" stroke-width="1.2"'
+        + ' fill="none" stroke="' + lcHaut().schatten + '" stroke-width="1.2"'
         + ' stroke-linecap="round" opacity=".45"/>'
         + "</svg>"
         + '<span class="lc-klaps-wort">KLAPS</span>';
@@ -45480,9 +45724,13 @@
       popo.innerHTML =
         '<svg viewBox="0 0 100 100" aria-hidden="true">'
         + '<defs><radialGradient id="lcPopoHaut" cx="42%" cy="34%" r="72%">'
-        + '<stop offset="0%" stop-color="#f6d3bd"/>'
-        + '<stop offset="62%" stop-color="#eec0a8"/>'
-        + '<stop offset="100%" stop-color="#d9a68c"/>'
+        /* RUNDE 97 — auch dieser Verlauf holt sich die Haut aus der
+           einen Quelle (lcHaut), damit Popo und Hand nicht zwei
+           verschiedene Leute sind. XANDER: „Du hast die Hand noch
+           nicht vereinheitlicht." */
+        + '<stop offset="0%" stop-color="' + lcHaut().hell + '"/>'
+        + '<stop offset="62%" stop-color="' + lcHaut().haut + '"/>'
+        + '<stop offset="100%" stop-color="' + lcHaut().tief + '"/>'
         + "</radialGradient>"
         /* Der Stoff der Waesche: ein Verlauf von oben links nach unten
            rechts. Flach eingefaerbt sah das Hoeschen aus wie ein
@@ -45852,8 +46100,8 @@
           + '<path d="M18 74 C6 60 6 40 14 28 L22 38 L22 8 A7 7 0 0 1 36 8 L36 34'
           + ' L40 4 A7 7 0 0 1 54 4 L54 34 L58 8 A7 7 0 0 1 72 8 L72 36'
           + ' L78 16 A7 7 0 0 1 92 20 C92 50 82 72 66 84 Z"'
-          + ' fill="#e9bda6" stroke="#bf9280" stroke-width="3" stroke-linejoin="round"/>'
-          + '<path d="M26 44 L34 44 M42 40 L50 40 M60 44 L68 44" stroke="#c9915e"'
+          + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante + '" stroke-width="3" stroke-linejoin="round"/>'
+          + '<path d="M26 44 L34 44 M42 40 L50 40 M60 44 L68 44" stroke="' + lcHaut().schatten + '"'
           + ' stroke-width="2.4" stroke-linecap="round" opacity=".7"/>'
           + "</svg>";
       /* „dieses realistische Geraeusch, wenn der Ball in den Korb
@@ -46811,12 +47059,15 @@
            andere Haut als der Rest, und das faellt sofort auf. */
         + '<svg viewBox="0 0 100 100" width="100%" height="100%">'
         + '<defs><radialGradient id="lcHautR63" cx="38%" cy="32%" r="72%">'
-        + '<stop offset="0" stop-color="#f4d3c1"/>'
-        + '<stop offset="55%" stop-color="#e9bda6"/>'
-        + '<stop offset="100%" stop-color="#d6a68d"/>'
+        /* RUNDE 97 — dieselbe Quelle wie alle Haende (lcHaut). Vorher
+           stand hier die zweite Hautfamilie #e9bda6; genau daran sah
+           man, dass Hand und Koerper nicht zusammengehoerten. */
+        + '<stop offset="0" stop-color="' + lcHaut().hell + '"/>'
+        + '<stop offset="55%" stop-color="' + lcHaut().haut + '"/>'
+        + '<stop offset="100%" stop-color="' + lcHaut().tief + '"/>'
         + "</radialGradient></defs>"
-        + '<circle cx="34" cy="56" r="16" fill="url(#lcHautR63)" stroke="#bf9280" stroke-width="2.2"/>'
-        + '<circle cx="66" cy="56" r="16" fill="url(#lcHautR63)" stroke="#bf9280" stroke-width="2.2"/>'
+        + '<circle cx="34" cy="56" r="16" fill="url(#lcHautR63)" stroke="' + lcHaut().kante + '" stroke-width="2.2"/>'
+        + '<circle cx="66" cy="56" r="16" fill="url(#lcHautR63)" stroke="' + lcHaut().kante + '" stroke-width="2.2"/>'
         + '<circle cx="34" cy="56" r="5" fill="#c08a7c"/>'
         + '<circle cx="66" cy="56" r="5" fill="#c08a7c"/>'
         + '<circle cx="34" cy="56" r="2.1" fill="#a97064"/>'
@@ -47126,27 +47377,27 @@
            Kante mitten in der Luft, und das sah aus wie ein
            abgeschnittener Arm statt wie einer, der von aussen
            hereingreift. */
-        + '<path d="M56 13 L40 20 L42 34 L56 33 Z" fill="#c98f63"/>'
+        + '<path d="M56 13 L40 20 L42 34 L56 33 Z" fill="' + lcHaut().haut + '"/>'
         + '<path d="M60 10 L54 12.6 L54.8 33.6 L60 35 Z" fill="#8d5fa8"/>'
         + '<path d="M54 12.6 L54.8 33.6" fill="none" stroke="#6d4685"'
         + ' stroke-width="1.6"/>'
         /* Der Handruecken. */
         + '<path d="M44 16 C34 15 24 18 18 23 C13 27 12 32 16 35'
-        + ' C21 39 33 39 42 36 C46 34.6 47 30 46.4 25 Z" fill="#e0a87a"'
-        + ' stroke="#a9714a" stroke-width="1.4" stroke-linejoin="round"/>'
+        + ' C21 39 33 39 42 36 C46 34.6 47 30 46.4 25 Z" fill="' + lcHaut().haut + '"'
+        + ' stroke="' + lcHaut().kante + '" stroke-width="1.4" stroke-linejoin="round"/>'
         /* Daumen und drei Finger, die die Krempe fassen. */
         + '<path d="M20 22 C15 21 10 23 8 26 C6.6 28.4 7.6 30.6 10.4 30.8'
-        + ' C14 31 18 29 20.4 26.6 Z" fill="#e6b184" stroke="#a9714a"'
+        + ' C14 31 18 29 20.4 26.6 Z" fill="' + lcHaut().hell + '" stroke="' + lcHaut().kante + '"'
         + ' stroke-width="1.2" stroke-linejoin="round"/>'
         + '<path d="M17 30 C12 31 8.6 33.4 8.4 36 C8.2 38.4 11 39.6 14.6 38.8'
-        + ' C18 38 21 36 22.6 33.6 Z" fill="#e6b184" stroke="#a9714a"'
+        + ' C18 38 21 36 22.6 33.6 Z" fill="' + lcHaut().hell + '" stroke="' + lcHaut().kante + '"'
         + ' stroke-width="1.2" stroke-linejoin="round"/>'
         + '<path d="M22 36 C18.6 37.6 16.4 39.8 16.8 41.8 C17.2 43.8 20 44.4 23 43.2'
-        + ' C26 42 28 40 28.8 38 Z" fill="#dfa87b" stroke="#a9714a"'
+        + ' C26 42 28 40 28.8 38 Z" fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante + '"'
         + ' stroke-width="1.2" stroke-linejoin="round"/>'
         /* Zwei Linien fuer die Knoechel — ohne sie ist es ein Fleck. */
         + '<path d="M26 22.6 C25 26 25 30 26.4 33.4 M33 21.6 C32 25.4 32 30 33.4 33.6"'
-        + ' fill="none" stroke="#b98054" stroke-width="1.1" opacity=".7"/>'
+        + ' fill="none" stroke="' + lcHaut().schatten + '" stroke-width="1.1" opacity=".7"/>'
         + "</svg>";
       /* RUNDE 88 — 4400 ms. Der Ruf laeuft von 120 bis 2480 ms,
          die Hand kommt danach (2600 bis 4250 ms) und richtet den
@@ -47481,7 +47732,7 @@
         + '<path d="M14 66 C4 54 4 36 12 26 L20 36 L20 10 A6 6 0 0 1 32 10 L32 34'
         + ' L36 6 A6 6 0 0 1 48 6 L48 34 L52 10 A6 6 0 0 1 64 10 L64 36'
         + ' L70 18 A6 6 0 0 1 82 22 C82 48 72 68 58 76 Z"'
-        + ' fill="#e9bda6" stroke="#bf9280" stroke-width="2.6" stroke-linejoin="round"/>'
+        + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante + '" stroke-width="2.6" stroke-linejoin="round"/>'
         + "</svg>";
       const blende = lcZpBlende(schicht);
       for (let h = 0; h < 6; h++) {
@@ -49961,6 +50212,25 @@
        beide Vorgaenge hier von aussen ausloesen. */
     auffrischen: function () {
       try { livechatPlaetzeAuffrischen(); return true; } catch (e) { return String(e); }
+    },
+    /* RUNDE 97 — DER KINO-MODUS OHNE KNOPF.
+       XANDER: „Ausserdem solltest du den Vollbildknopf wegmachen. Du
+       solltest das nur so funktionieren lassen."
+       Der Knopf ist weg, und damit auch die einzige Stelle, an der man
+       von aussen ablesen konnte, ob der Bildschirm wachgehalten wird
+       (es stand in seinem Titel). Damit das nachpruefbar bleibt und
+       nicht geglaubt werden muss, steht der Zustand jetzt hier. */
+    /* RUNDE 97 — der Waehler fuer das aufgespruehte Bild. Im
+       Klassenzimmer geht er ueber das Platzmenue auf; auf der
+       Pruefbuehne gibt es kein Platzmenue, also steht hier der
+       gerade Weg dorthin. XANDER: „und dass man ein Bild seiner
+       Wahl darauf spruehen kann." */
+    sprayWaehler: function (wen) {
+      try { return lcSprayBildWaehler(wen); } catch (e) { return String(e); }
+    },
+    kinoStand: function () {
+      return { voll: lcImVollbild(), wach: Boolean(lcWachSperre),
+               laeuft: Boolean(lcKinoLaeuft), knopf: Boolean(document.getElementById("lcKino")) };
     },
     neuZeichnen: function () {
       try { renderLiveChat(); return true; } catch (e) { return String(e); }

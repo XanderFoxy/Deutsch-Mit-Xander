@@ -7,13 +7,21 @@
    dort länger bleiben kann … ich möchte, dass der Bildschirm hier offen
    gezwungen bleibt."
 
+   RUNDE 97 UMGESTELLT — XANDER: „Ausserdem solltest du den
+   Vollbildknopf wegmachen. Du solltest das nur so funktionieren
+   lassen." Der Knopf ist also weg; der Modus selbst bleibt und geht
+   beim Betreten von allein an. Die Sonde prueft deshalb jetzt genau
+   andersherum: dass es den Knopf NICHT mehr gibt und trotzdem alles
+   funktioniert.
+
    Gemessen wird:
-     1. Steht der Knopf in der Kopfzeile des Klassenzimmers?
-     2. Bringt ein echter Tipp die Seite ins Vollbild? (Nur das nimmt
-        die Adresszeile wirklich weg — Rollen tut es nicht.)
-     3. Merkt sich der Knopf sein Aus, und kommt es beim naechsten
-        Betreten von allein wieder?
-     4. Geht beides aus, wenn man das Klassenzimmer verlaesst?
+     1. Ist der Knopf wirklich weg — aus der Seite und aus dem Code?
+     2. Bringt schon das Betreten die Seite ins Vollbild? (Nur das
+        nimmt die Adresszeile wirklich weg — Rollen tut es nicht.)
+     3. Wird der Bildschirm wachgehalten? (Ablesbar ueber
+        DMA_PRUEF.kinoStand(), seit der Knopf weg ist.)
+     4. Kommt es beim naechsten Betreten von allein wieder?
+     5. Geht beides aus, wenn man das Klassenzimmer verlaesst?
    ===================================================================== */
 const http = require("http"), fs = require("fs"), path = require("path");
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
@@ -71,56 +79,43 @@ const sage = (gut, text, dazu) => {
     await pg.waitForTimeout(900);
   };
 
-  /* --- 1. Der Knopf ist da ------------------------------------------- */
+  /* --- 1. Der Knopf ist WEG ------------------------------------------ */
   await insKlassenzimmer();
-  const knopfDa = await pg.evaluate(() => {
+  const knopfWeg = await pg.evaluate(() => {
     const k = document.getElementById("lcKino");
-    return k ? { text: k.textContent.trim(), titel: k.title,
-                 imKopf: Boolean(k.closest(".lc-kopf, .lc-karte, #livechatArea")) } : null;
+    const stand = window.DMA_PRUEF && window.DMA_PRUEF.kinoStand
+      ? window.DMA_PRUEF.kinoStand() : null;
+    return { knopf: Boolean(k), stand: stand,
+             text: document.body.innerText.indexOf("Vollbild") >= 0 };
   });
-  sage(Boolean(knopfDa), "Der Knopf steht im Klassenzimmer",
-    knopfDa ? JSON.stringify(knopfDa) : "fehlt");
+  sage(knopfWeg.knopf === false, "Der Vollbildknopf ist weg",
+    knopfWeg.knopf ? "er steht noch da" : "kein #lcKino mehr");
+  sage(knopfWeg.text === false, "und das Wort ,Vollbild\u2018 steht auch nirgends mehr auf der Seite");
 
-  /* --- 2. Ein echter Tipp bringt Vollbild ---------------------------- */
-  /* Schon das Betreten schaltet ein — das ist der „Modus", den er
-     wollte, und nicht erst der Knopf. Also wird genau das geprueft. */
-  const beimEintritt = await pg.evaluate(() => ({
-    voll: Boolean(document.fullscreenElement),
-    /* Und der zweite Teil: bleibt der Bildschirm an? Die Sperre
-       selbst ist von aussen nicht sichtbar, ihr Zustand steht aber
-       im Knopftext. */
-    titel: document.getElementById("lcKino")?.title || ""
-  }));
+  /* --- 2. Schon das Betreten bringt Vollbild -------------------------- */
+  const beimEintritt = await pg.evaluate(() => {
+    const stand = window.DMA_PRUEF && window.DMA_PRUEF.kinoStand
+      ? window.DMA_PRUEF.kinoStand() : {};
+    return { voll: Boolean(document.fullscreenElement), stand: stand,
+             wachKann: Boolean(navigator.wakeLock) };
+  });
   sage(beimEintritt.voll === true,
     "Schon das Betreten blendet die Adresszeile aus (Vollbild)");
-  sage(/Bildschirm bleibt an/.test(beimEintritt.titel),
-    "Und der Bildschirm wird wachgehalten", beimEintritt.titel);
-  /* Fuer die naechste Messung wieder aus, sonst misst der Tipp das
-     Ausschalten. */
-  await pg.click("#lcKino"); await pg.waitForTimeout(400);
-  await pg.click("#lcKino");
-  await pg.waitForTimeout(700);
-  const nachAn = await pg.evaluate(() => ({
-    voll: Boolean(document.fullscreenElement),
-    markiert: document.getElementById("lcKino")?.classList.contains("lc-kino-an"),
-    text: document.getElementById("lcKino")?.textContent.trim(),
-    merker: (() => { try { return localStorage.getItem("dma_lc_kino"); } catch (e) { return "?"; } })()
-  }));
-  sage(nachAn.voll === true, "Ein Tipp bringt die Seite ins Vollbild — die Adresszeile ist weg");
-  sage(nachAn.markiert === true, "Der Knopf zeigt, dass er laeuft", nachAn.text);
-  sage(nachAn.merker === null, "Das Einschalten ist gemerkt (kein ,aus')", String(nachAn.merker));
+  sage(beimEintritt.stand.laeuft === true,
+    "der Kino-Modus laeuft, ohne dass jemand etwas antippen musste",
+    JSON.stringify(beimEintritt.stand));
 
-  /* --- 3. Noch ein Tipp schaltet ab und merkt sich das ---------------- */
-  await pg.click("#lcKino");
-  await pg.waitForTimeout(700);
-  const nachAus = await pg.evaluate(() => ({
-    voll: Boolean(document.fullscreenElement),
-    markiert: document.getElementById("lcKino")?.classList.contains("lc-kino-an"),
-    merker: (() => { try { return localStorage.getItem("dma_lc_kino"); } catch (e) { return "?"; } })()
-  }));
-  sage(nachAus.voll === false, "Noch ein Tipp beendet das Vollbild");
-  sage(nachAus.markiert === false, "Der Knopf sieht wieder aus wie vorher");
-  sage(nachAus.merker === "aus", "Das Ausschalten ist gemerkt", String(nachAus.merker));
+  /* --- 3. Der Bildschirm bleibt an ----------------------------------- */
+  /* Die Sperre kann nur halten, wo der Browser sie kennt. In diesem
+     Chromium gibt es navigator.wakeLock; wo nicht, wird es gesagt und
+     nicht als Fehler gezaehlt — sonst behauptete die Sonde etwas ueber
+     ein Geraet, das gar nicht mitspielt. */
+  if (beimEintritt.wachKann) {
+    sage(beimEintritt.stand.wach === true, "Und der Bildschirm wird wachgehalten",
+      JSON.stringify(beimEintritt.stand));
+  } else {
+    console.log("  (zur Kenntnis) dieser Browser kennt navigator.wakeLock nicht");
+  }
 
   /* --- 4. Beim Betreten kommt es von allein wieder -------------------- */
   await pg.evaluate(() => { try { localStorage.removeItem("dma_lc_kino"); } catch (e) {} });
