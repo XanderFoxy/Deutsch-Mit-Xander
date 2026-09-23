@@ -13,6 +13,12 @@
         Platzwechsel").
      3. Auf dem Bildschirm kommt das Bild genau in der Mitte des
         Zielplatzes an, und die Leiter liegt hinter beiden Bildern.
+     4. ZWEITER ANLAUF — „das Bild muss VOR der Leiter klettern …
+        denk logisch": mitten im Klettern trifft ein Tipp auf die
+        Bildmitte das BILD, und links und rechts daneben sieht man die
+        Holme (die Leiter ist breiter als das kletternde Bild).
+     5. Sitzt am Ziel jemand, klettert er gleichzeitig entgegen —
+        ebenfalls VOR der Leiter.
    ===================================================================== */
 const http = require("http"), fs = require("fs"), path = require("path");
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
@@ -128,6 +134,57 @@ const sage = (gut, text, dazu) => {
     m.versatz + " px neben dessen Mitte");
   sage(m.leiter && m.leiterZ === "-1", "Die Leiter liegt HINTER den Bildern",
     "z-index " + m.leiterZ);
+
+  console.log("\n3  VOR DER LEITER, NICHT DAHINTER\n");
+  /* Mitten im Klettern: was liegt an der Bildmitte oben, und was
+     links und rechts am Bildrand daneben? */
+  const mitte = async (wen, ziel, partner) => {
+    await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
+    await pg.waitForTimeout(400);
+    await pg.evaluate(([w, z]) => window.DMA_PRUEFUNG.wirkung("leiter", w, "Alex", { ziel: z }), [wen, ziel]);
+    await pg.waitForFunction(() => document.querySelector(".lc-leiter-weg"), { timeout: 4000 });
+    await pg.waitForTimeout(1300);
+    return pg.evaluate(([w, p]) => {
+      const platzVon = (n) => [...document.querySelectorAll("#lcPlaetze .lc-platz")]
+        .find((x) => (x.textContent || "").indexOf(n) >= 0);
+      const pruefe = (name) => {
+        const k = platzVon(name).querySelector(".lc-kreis");
+        const r = k.getBoundingClientRect();
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        const oben = document.elementFromPoint(cx, cy);
+        /* Die Leiter nimmt sonst keine Tipps an (pointer-events: none);
+           fuer die Messung kurz einschalten und genau auf die HOLME
+           zielen (viewBox-Stellen 3..10 und 70..77 von 80). Liegt dort gerade
+           eine Sprosse ueber dem Holm, zaehlt sie genauso: sichtbar
+           ist in beiden Faellen die Leiter, nicht das Bild. */
+        const le = document.querySelector(".lc-leiter-weg");
+        le.style.pointerEvents = "auto";
+        const l = le.getBoundingClientRect();
+        const links = document.elementFromPoint(l.left + l.width * 0.08, cy);
+        const rechts = document.elementFromPoint(l.right - l.width * 0.08, cy);
+        le.style.pointerEvents = "";
+        return { bildOben: Boolean(oben && k.contains(oben)),
+                 holmL: Boolean(links && links.closest && links.closest(".lc-leiter-weg")),
+                 holmR: Boolean(rechts && rechts.closest && rechts.closest(".lc-leiter-weg")),
+                 wasL: links && (links.tagName + "." + (links.getAttribute("class")||"")), wasR: rechts && (rechts.tagName + "." + (rechts.getAttribute("class")||"")),
+                 bildB: Math.round(r.width), leiterB: Math.round(l.width), cy: Math.round(cy) };
+      };
+      return { er: pruefe(w), gegen: p ? pruefe(p) : null };
+    }, [wen, partner]);
+  };
+  const e1 = await mitte("Bea", 6, null);
+  sage(e1.er.bildOben, "Mitten im Klettern liegt das Bild VOR der Leiter");
+  sage(e1.er.holmL && e1.er.holmR && e1.er.leiterB > e1.er.bildB,
+    "... und links und rechts daneben sieht man die Holme",
+    "Bild " + e1.er.bildB + " px, Leiter " + e1.er.leiterB + " px " + e1.er.wasL + " / " + e1.er.wasR);
+  await pg.waitForTimeout(2600);
+
+  const e2 = await mitte("Alex", 5, "Emmi");
+  sage(e2.er.bildOben && e2.gegen && e2.gegen.bildOben,
+    "Ziel besetzt: beide klettern, beide VOR der Leiter");
+  sage(e2.gegen && e2.er.cy !== e2.gegen.cy && Math.abs(e2.er.cy - e2.gegen.cy) < 80,
+    "... und sie sind sich unterwegs entgegengekommen", "Alex bei y=" + e2.er.cy + ", Emmi bei y=" + e2.gegen.cy);
+  await pg.screenshot({ path: "/tmp/claude-0/leiter-tausch.png" });
 
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));

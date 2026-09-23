@@ -103,7 +103,10 @@ const sage = (gut, was, zusatz) => {
       kreisGross: Math.round(kreis.getBoundingClientRect().width)
     };
   });
-  sage(blume && blume.blaetter === 10, "zehn Bluetenblaetter liegen um das Bild",
+  /* RUNDE 99 (Fassung 513) hat die Bluete auf zwoelf Blaetter in zwei
+     Kraenzen umgebaut — auf seinen Wunsch „Bluete auf Stiel, zentriert,
+     kleiner". Die Regel folgt seinem neuen Stand. */
+  sage(blume && blume.blaetter === 12, "zwoelf Bluetenblaetter liegen um das Bild",
     blume ? blume.blaetter + " Blaetter" : "-");
   sage(blume && blume.stiel && blume.stielHoch > 20 && blume.blattAmStiel === 2,
     "der Stiel waechst unten heraus, mit zwei Blaettern daran",
@@ -201,23 +204,23 @@ const sage = (gut, was, zusatz) => {
              oben: Math.round(r.top) };
   });
   sage(menue && menue.worte.indexOf("Leiter") >= 0, "die Leiter ist eine Kachel");
-  /* Die Blume steht unter „Lieb sein" — zusammen mit Streicheln, Kuss
-     und Herzen. Vier Einzelkacheln haetten das Menue 15 px unter den
-     Bildschirmrand geschoben (nachgemessen). */
-  sage(menue && menue.worte.indexOf("Lieb sein") >= 0,
-    "und die Blume steht unter \u201eLieb sein\u201c");
+  /* RUNDE 99 — XANDER: die Blume ist „ein Extra, nicht unter Lieb
+     sein". Seit Fassung 513 hat sie ihre eigene Kachel; die Regel folgt
+     seinem neuen Stand (vorher: unter „Lieb sein"). */
+  sage(menue && menue.worte.indexOf("Blume") >= 0,
+    "die Blume hat ihre eigene Kachel", (menue ? menue.worte : []).join(" \u00b7 "));
   const unter = await pg.evaluate(async () => {
     const w = [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-wort")]
       .filter((x) => x.textContent.trim() === "Lieb sein")[0];
-    if (!w) return null;
+    if (!w) return [];
     w.closest("button").click();
     await new Promise((f) => setTimeout(f, 220));
     return [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-wort")]
       .map((x) => x.textContent.trim());
   });
-  sage(unter && unter.some((x) => x.indexOf("Blume") >= 0),
-    "und dort ist sie auch wirklich anklickbar",
-    (unter || []).join(" \u00b7 "));
+  sage(!unter.some((x) => x.indexOf("Blume") >= 0),
+    "und unter \u201eLieb sein\u201c steht sie nicht mehr doppelt",
+    unter.join(" \u00b7 "));
   sage(menue && menue.unten <= 0 && menue.oben >= 0,
     "und das Menue passt weiterhin auf den Bildschirm",
     menue ? menue.unten + " px unter dem Rand, oben bei " + menue.oben
