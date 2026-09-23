@@ -100,16 +100,38 @@ const sage = (gut, was, zusatz) => {
         ueberdeckung: Math.round(Math.max(0,
           Math.min(rb.bottom, rk.bottom) - Math.max(rb.top, rk.top))),
         kreisHoch: Math.round(rk.height),
-        wort: wort ? wort.textContent : ""
+        wort: wort ? wort.textContent : "",
+        /* RUNDE 99: wo liegt die Gesichtsmitte (im Bild 50 % / 58 %)
+           gegenueber der Bildmitte, und beruehrt die Blase das Gesicht
+           (Kasten 20–80 % breit, 30–85 % hoch)? */
+        mitteDx: Math.round(rb.left + rb.width * 0.5 - (rk.left + rk.width / 2)),
+        mitteDy: Math.round(rb.top + rb.height * 0.58 - (rk.top + rk.height / 2)),
+        blaseAufGesicht: (() => {
+          if (!wort) return 0;
+          const w = wort.getBoundingClientRect();
+          const g = { l: rb.left + rb.width * 0.2, r: rb.left + rb.width * 0.8,
+                      o: rb.top + rb.height * 0.3, u: rb.top + rb.height * 0.85 };
+          const x = Math.max(0, Math.min(w.right, g.r) - Math.max(w.left, g.l));
+          const y = Math.max(0, Math.min(w.bottom, g.u) - Math.max(w.top, g.o));
+          return Math.round(x * y);
+        })()
       };
     }, welches);
     sage(m && m.da && m.geladen, welches + ": das Gesicht ist da und geladen",
       m ? (m.quelle || "-") + (m.geladen ? "" : " (laedt NICHT)") : "-");
     sage(m && m.wort && m.wort.length > 1, welches + ": und es steht dabei, was er sagt",
       m ? "„" + m.wort + "“" : "-");
-    sage(m && m.ueberdeckung < m.kreisHoch * 0.75,
-      welches + ": das Profilbild bleibt dabei sichtbar",
-      m ? m.ueberdeckung + " px von " + m.kreisHoch + " px ueberdeckt" : "-");
+    /* RUNDE 99 — XANDER: „das Gesicht soll mittig auf dem Platzpunkt
+       null sitzen" und „die Woerter verdecken mein Gesicht". Die alte
+       Regel (Profilbild bleibt sichtbar) galt fuer den Kopf, der
+       UEBER dem Bild auftauchte — das hat er ausdruecklich anders
+       bestellt. */
+    sage(m && Math.abs(m.mitteDx) <= 3 && Math.abs(m.mitteDy) <= 3,
+      welches + ": das Gesicht sitzt mittig auf dem Platz",
+      m ? m.mitteDx + " / " + m.mitteDy + " px neben der Mitte" : "-");
+    sage(m && m.blaseAufGesicht === 0,
+      welches + ": und die Schrift liegt NICHT auf dem Gesicht",
+      m ? m.blaseAufGesicht + " px² Ueberschneidung" : "-");
   }
 
   console.log("\nUND ES GEHT AUCH WIEDER WEG\n");

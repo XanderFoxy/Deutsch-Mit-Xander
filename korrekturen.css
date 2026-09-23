@@ -32112,3 +32112,63 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .rf-live { min-height: 1em; font-size: .76rem; color: #9fdcb8; font-style: italic; }
 .rf-live:empty { display: none; }
 .lc-an-ring { fill: none; stroke: #9aa3b2; stroke-width: 1.4; }
+
+/* =====================================================================
+   RUNDE 99 — DAS GESICHT MITTIG, DIE SCHRIFT DARUEBER
+   ---------------------------------------------------------------------
+   XANDER: „die Woerter (Leute, cool …) verdecken mein Gesicht — das
+   Gesicht soll mittig auf dem Platzpunkt null sitzen; ich hoffe, die
+   Woerter sind deine eigenen Beschriftungen."
+   Ja, die Woerter sind meine Sprechblase — in den Bildern selbst steht
+   keine Schrift (nachgesehen). Gemessen am alten Stand: der Kopf sass
+   mit dem Kinn bei 42 % und ragte nach OBEN aus dem Platz, die Blase
+   stand bei -6 % — also genau auf Stirn und Muetze.
+   JETZT: die Gesichtsmitte (im Bild bei 50 % / 58 %, unter dem Schirm)
+   liegt genau auf der Mitte des Profilbilds, und die Blase steht UEBER
+   dem ganzen Kopf, mit Abstand. Die alten Regeln oben bleiben stehen
+   und werden hier ueberschrieben.
+   ===================================================================== */
+.lc-gesicht-bild {
+  left: 50%;
+  top: 50%;
+  bottom: auto;
+  width: calc(var(--gross, 64px) * 1.1);
+  transform-origin: 50% 58%;
+  animation-name: lcGesichtR99;
+}
+@keyframes lcGesichtR99 {
+  0%   { transform: translate(-50%, -30%) scale(.55); opacity: 0; }
+  16%  { transform: translate(-50%, -64%) scale(1.08); opacity: 1; }
+  26%  { transform: translate(-50%, -58%) scale(1); opacity: 1; }
+  40%  { transform: translate(-50%, -61%) scale(1.02); }
+  55%  { transform: translate(-50%, -58%) scale(1); }
+  82%  { transform: translate(-50%, -58%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -40%) scale(.8); opacity: 0; }
+}
+/* Die Blase steht wie eine Sprechblase OBEN RECHTS neben dem Kopf —
+   ueber dem Kopf lag sie (gemessen) auf dem Namen der Reihe darueber. */
+.lc-gesicht-wort {
+  top: 2%;
+  left: 88%;
+  bottom: auto;
+  z-index: 1;
+  animation-name: lcGesichtWortR99;
+}
+.lc-gesicht-wort::after {
+  content: "";
+  position: absolute;
+  left: 8px; bottom: -5px;
+  border: 5px solid transparent;
+  border-top-color: rgba(255, 255, 255, .94);
+  border-bottom: 0;
+}
+@keyframes lcGesichtWortR99 {
+  0%, 14% { opacity: 0; transform: translate(0, 0) scale(.6); }
+  22%     { opacity: 1; transform: translate(0, -2px) scale(1.08); }
+  30%     { opacity: 1; transform: translate(0, 0) scale(1); }
+  82%     { opacity: 1; }
+  100%    { opacity: 0; transform: translate(0, 0) scale(.9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-gesicht-bild { transform: translate(-50%, -58%); }
+}

@@ -1215,7 +1215,9 @@ window.LiveChat = (function () {
        zerplatzt wie ein Luftballon." */
     /* RUNDE 66 — XANDER: „eine mehrschwaenzige fuer alle auf einmal."
        Sie nennt niemanden: sie trifft jeden, der dasitzt. */
-    neunschwanz: { wirkung: "neunschwanz", satz: "laesst die neunschwaenzige auf alle niedergehen", emoji: "\ud83e\udeac" },
+    /* RUNDE 99: mit Namen stand da „… auf alle niedergehen Bea" — der
+       Name wird hinten angehaengt, also muss der Satz dort offen sein. */
+    neunschwanz: { wirkung: "neunschwanz", satz: "schwingt die neunschwaenzige \u00fcber", emoji: "\ud83e\udeac" },
     aufblasen:  { wirkung: "aufblasen",  satz: "blaeht das Bild auf, bis es platzt, von", emoji: "\ud83c\udf88" },
     /* GEMELDET: „bei den Effekten, die man noch auswählen kann, dass
        man den anderen wie so ein Keks aufessen kann … dass man so Biss
