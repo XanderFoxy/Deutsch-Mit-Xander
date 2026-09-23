@@ -47545,73 +47545,35 @@
          Zauberer den Hut herumdreht, bevor er hineingreift. Erst
          DANACH kommt das Kaninchen heraus, und zwar aus der Oeffnung.
          ============================================================= */
-      /* RUNDE 100 — XANDER (Walkie-Talkie, Zylinder): „Der eigentliche
-         Zylinder des Hutes soll noch ein bisschen breiter sein, also die
-         Roehre, damit der Zylinder wie ein echter Zylinder aussieht.
-         Beim Rausholen wirkt es noch so, als ob das Profilbild HINTER dem
-         Hut heraus gezogen wird."
-         1. Die Roehre ist von 44 auf 58 der 94 Krempeneinheiten breiter
-            (x 21 bis 79) — das Verhaeltnis eines echten Zylinders.
-         2. ZWEI EBENEN. Bisher lag der ganze Hut als EINE Schicht vor
-            dem Bild — auch seine dunkle Oeffnung. Das Bild konnte also
-            nur hinter dem Hut hervorkommen. Jetzt liegt beim umgedrehten
-            Hut die hintere Krempe mit der Oeffnung HINTER dem Bild
-            (hutHinten, Ebene 0) und Roehre plus vordere Krempe DAVOR
-            (hut, Ebene 13). Das Bild steigt sichtbar AUS der Oeffnung:
-            unterhalb der vorderen Kante steckt es noch im Hut, darueber
-            ist es zu sehen. Die Ohren liegen dazwischen (Ebene 12) und
-            wachsen ebenso aus der Oeffnung. */
       hut.innerHTML =
         '<svg viewBox="0 0 100 86">'
         + '<g class="lc-zt-hut-zu">'
         /* Die Krempe liegt HINTEN, damit der Kopf davor steckt. */
         + '<ellipse cx="50" cy="62" rx="47" ry="12" fill="#12141a"/>'
         + '<ellipse cx="50" cy="59" rx="47" ry="11" fill="#2a2d36"/>'
-        /* Die Roehre. */
-        + '<path d="M21 16 v40 q0 7 29 7 q29 0 29 -7 V16 Z" fill="#1b1d24"/>'
+        /* Der Kegel. */
+        + '<path d="M28 16 v40 q0 7 22 7 q22 0 22 -7 V16 Z" fill="#1b1d24"/>'
         /* Das Band. */
-        + '<rect x="21" y="40" width="58" height="10" fill="#8f2033"/>'
+        + '<rect x="28" y="40" width="44" height="10" fill="#8f2033"/>'
         /* OBEN IST ZU. Ein Hut, der ueber einem Kopf steht, zeigt uns
            seinen Deckel und kein Loch. */
-        + '<ellipse cx="50" cy="16" rx="29" ry="8" fill="#22252d"/>'
-        + '<path d="M30 13 q20 -7 40 0" fill="none" stroke="rgba(255,255,255,.14)"'
+        + '<ellipse cx="50" cy="16" rx="22" ry="7" fill="#22252d"/>'
+        + '<path d="M34 13 q16 -6 32 0" fill="none" stroke="rgba(255,255,255,.14)"'
         + ' stroke-width="2.4" stroke-linecap="round"/>'
         + "</g>"
         + '<g class="lc-zt-hut-auf" opacity="0">'
-        /* UMGEDREHT, VORDERER TEIL: die Roehre haengt nach unten … */
-        + '<path d="M21 26 v40 q0 7 29 7 q29 0 29 -7 V26 Z" fill="#1b1d24"/>'
-        + '<rect x="21" y="50" width="58" height="10" fill="#8f2033"/>'
-        /* … und die VORDERE Haelfte der Krempe (Rand und Oberseite bis
-           zur Oeffnung). Die hintere Haelfte und das Loch liegen in
-           hutHinten — hinter dem Bild. */
-        + '<path d="M3 27 A47 12 0 0 0 97 27 Z" fill="#12141a"/>'
-        + '<path d="M3 24 A47 11 0 0 0 97 24 L79 24 A29 8 0 0 1 21 24 Z" fill="#2a2d36"/>'
-        + "</g>"
-        + "</svg>";
-      const hutHinten = document.createElement("span");
-      hutHinten.className = "lc-zt-hut lc-zt-hut-hinten";
-      hutHinten.innerHTML =
-        '<svg viewBox="0 0 100 86"><g class="lc-zt-hut-auf" opacity="0">'
-        /* UMGEDREHT, HINTERER TEIL: die ganze Krempe und die Oeffnung. */
+        /* UMGEDREHT: der Kegel haengt nach unten … */
+        + '<path d="M28 26 v40 q0 7 22 7 q22 0 22 -7 V26 Z" fill="#1b1d24"/>'
+        + '<rect x="28" y="50" width="44" height="10" fill="#8f2033"/>'
+        /* … die Krempe liegt oben … */
         + '<ellipse cx="50" cy="27" rx="47" ry="12" fill="#12141a"/>'
         + '<ellipse cx="50" cy="24" rx="47" ry="11" fill="#2a2d36"/>'
-        + '<ellipse cx="50" cy="24" rx="29" ry="8" fill="#07080c"/>'
-        + '<ellipse cx="50" cy="23.2" rx="24" ry="6" fill="#000"/>'
-        + "</g></svg>";
-      /* Die zwei Ebenen: hinten (unter dem Bild) und vorn (ueber allem). */
-      const ebeneHinten = document.createElement("div");
-      ebeneHinten.className = "lc-zp lc-zaubertrick lc-zt-ebene-hinten";
-      ebeneHinten.setAttribute("aria-hidden", "true");
-      ebeneHinten.style.zIndex = "0";
-      ebeneHinten.appendChild(hutHinten);
-      kreis.parentNode.insertBefore(ebeneHinten, kreis);
-      const ebeneVorn = document.createElement("div");
-      ebeneVorn.className = "lc-zp lc-zaubertrick lc-zt-ebene-vorn";
-      ebeneVorn.setAttribute("aria-hidden", "true");
-      ebeneVorn.style.zIndex = "13";
-      ebeneVorn.appendChild(hut);
-      platz.appendChild(ebeneVorn);
-      setTimeout(() => { ebeneHinten.remove(); ebeneVorn.remove(); }, DAUER + 60);
+        /* … und JETZT ist da ein Loch, in das man greifen kann. */
+        + '<ellipse cx="50" cy="24" rx="22" ry="7" fill="#07080c"/>'
+        + '<ellipse cx="50" cy="23.2" rx="18" ry="5" fill="#000"/>'
+        + "</g>"
+        + "</svg>";
+      schicht.appendChild(hut);
 
       /* RUNDE 100 — der zweite Teil desselben Befunds: wird das Bild
          unter dem Hut klein, kommt dahinter der gestrichelte Ring des
@@ -47630,7 +47592,7 @@
         + '<rect x="12" y="4" width="46" height="6" rx="3" fill="#16181d"/>'
         + '<rect x="56" y="4" width="14" height="6" rx="3" fill="#f2efe6"/>'
         + "</svg>";
-      ebeneVorn.appendChild(stab);
+      schicht.appendChild(stab);
 
       /* --- DIE OHREN, die am BILD haengen ------------------------- */
       const ohren = document.createElement("i");
@@ -47655,7 +47617,6 @@
          Versuch zu sehen. */
       const gross = kreis.offsetWidth || 64;
       schicht.style.setProperty("--gross", gross + "px");
-      ebeneVorn.style.setProperty("--gross", gross + "px");
       const funken = document.createElement("span");
       funken.className = "lc-zt-funken";
       let fw = "";
@@ -47665,7 +47626,7 @@
             + ((i % 4) * 40) + 'ms"></i>';
       }
       funken.innerHTML = fw;
-      ebeneVorn.appendChild(funken);
+      schicht.appendChild(funken);
 
       /* --- DER BEIFALL ------------------------------------------- */
       /* „und dann so Beifall geklatscht wird. Vor Kunststueck halt."
@@ -47680,14 +47641,14 @@
             + (i * 90) + 'ms">👏</i>';
       }
       beifall.innerHTML = bw;
-      ebeneVorn.appendChild(beifall);
+      schicht.appendChild(beifall);
 
       /* --- DIE BEWEGUNGEN ---------------------------------------- */
       const takt = { duration: DAUER, easing: "linear", fill: "none" };
       /* Der Hut: faellt, sitzt, wird dreimal geklopft, wackelt und
          kippt am Ende weg. */
       try {
-        const hutBahn = [
+        hut.animate([
           /* RUNDE 100 — XANDER (Walkie-Talkie, zum Zylinder): „Bild noch
              sichtbar unter dem Hut".
              GEMESSEN (Film in 70-ms-Schritten, 390 px breit): der Hut
@@ -47725,9 +47686,7 @@
           /* Und weg damit. */
           { transform: "translate(-124%, 24%) rotate(-38deg) scale(.8)", opacity: 0, offset: bei(0.68), easing: "ease-in" },
           { transform: "translate(-124%, 24%) rotate(-38deg) scale(.8)", opacity: 0, offset: 1 }
-        ];
-        hut.animate(hutBahn, takt);
-        hutHinten.animate(hutBahn, takt);
+        ], takt);
       } catch (e) {}
       /* Genau in der Mitte des Stauchens wird die Ansicht getauscht:
          bei 36,5 % ist der Hut nur noch acht Prozent hoch, dort sieht
@@ -47743,8 +47702,6 @@
         ];
         if (zu) zu.animate(schalt(false), takt);
         if (auf) auf.animate(schalt(true), takt);
-        const aufHinten = hutHinten.querySelector(".lc-zt-hut-auf");
-        if (aufHinten) aufHinten.animate(schalt(true), takt);
       } catch (e) {}
       /* Der Stab kommt dreimal von rechts oben und tippt auf. */
       try {
@@ -47784,15 +47741,10 @@
           { transform: "translateY(0) scale(1) rotate(0deg)", offset: bei(0.05) },
           { transform: "translateY(-12%) scale(.46) rotate(0deg)", offset: bei(0.085), easing: "ease-in" },
           /* RUNDE 99 — es wartet, bis der Hut umgedreht ist (38,5 %). */
-          { transform: "translateY(-12%) scale(.46) rotate(0deg)", offset: bei(0.40), easing: "ease-in" },
-          /* RUNDE 100 — „da kann die Animation noch ein bisschen fluessiger
-             sein": an den Ohren heraus in vier Stufen statt einem Sprung —
-             erst langsam aus der Oeffnung, dann schneller, oben abbremsen. */
-          { transform: "translateY(-26%) scale(.55) rotate(-2deg)", offset: bei(0.422) },
-          { transform: "translateY(-50%) scale(.72) rotate(-5deg)", offset: bei(0.444) },
-          { transform: "translateY(-70%) scale(.86) rotate(-8deg)", offset: bei(0.466), easing: "ease-out" },
-          { transform: "translateY(-76%) scale(.9) rotate(-9deg)", offset: bei(0.48), easing: "ease-in-out" },
-          { transform: "translateY(-82%) scale(.9) rotate(8deg)", offset: bei(0.51), easing: "ease-in-out" },
+          { transform: "translateY(-12%) scale(.46) rotate(0deg)", offset: bei(0.40) },
+          /* An den Ohren heraus — und es zappelt dabei. */
+          { transform: "translateY(-74%) scale(.9) rotate(-9deg)", offset: bei(0.46), easing: "ease-out" },
+          { transform: "translateY(-82%) scale(.9) rotate(8deg)", offset: bei(0.50), easing: "ease-in-out" },
           { transform: "translateY(-78%) scale(.9) rotate(-6deg)", offset: bei(0.54), easing: "ease-in-out" },
           { transform: "translateY(-82%) scale(.9) rotate(4deg)", offset: bei(0.58), easing: "ease-in-out" },
           /* Zurueck auf den Platz, mit einem kurzen Federn. */
@@ -47807,15 +47759,9 @@
       try {
         ohren.animate([
           { transform: "translate(-50%, 0) translateY(0) scaleY(0)", opacity: 0, offset: 0 },
-          /* RUNDE 100 — dieselben Stufen wie das Bild: die Ohren wachsen
-             zuerst aus der Oeffnung (sie liegen zwischen hinterer und
-             vorderer Hutebene), das Bild folgt. */
-          { transform: "translate(-50%, 0) translateY(-12%) scaleY(0)", opacity: 0, offset: bei(0.40), easing: "ease-in" },
-          { transform: "translate(-50%, 0) translateY(-26%) scaleY(.5) rotate(-2deg)", opacity: 1, offset: bei(0.422) },
-          { transform: "translate(-50%, 0) translateY(-50%) scaleY(.85) rotate(-5deg)", opacity: 1, offset: bei(0.444) },
-          { transform: "translate(-50%, 0) translateY(-70%) scaleY(1) rotate(-8deg)", opacity: 1, offset: bei(0.466), easing: "ease-out" },
-          { transform: "translate(-50%, 0) translateY(-76%) scaleY(1) rotate(-9deg)", opacity: 1, offset: bei(0.48), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0) translateY(-82%) scaleY(1) rotate(8deg)", opacity: 1, offset: bei(0.51), easing: "ease-in-out" },
+          { transform: "translate(-50%, 0) translateY(0) scaleY(0)", opacity: 0, offset: bei(0.40) },
+          { transform: "translate(-50%, 0) translateY(-74%) scaleY(1) rotate(-9deg)", opacity: 1, offset: bei(0.46), easing: "ease-out" },
+          { transform: "translate(-50%, 0) translateY(-82%) scaleY(1) rotate(8deg)", opacity: 1, offset: bei(0.50), easing: "ease-in-out" },
           { transform: "translate(-50%, 0) translateY(-78%) scaleY(1) rotate(-6deg)", opacity: 1, offset: bei(0.54), easing: "ease-in-out" },
           { transform: "translate(-50%, 0) translateY(-82%) scaleY(1) rotate(4deg)", opacity: 1, offset: bei(0.58), easing: "ease-in-out" },
           { transform: "translate(-50%, 0) translateY(6%) scaleY(1)", opacity: 1, offset: bei(0.66), easing: "ease-in" },
