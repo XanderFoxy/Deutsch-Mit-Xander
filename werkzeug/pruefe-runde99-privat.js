@@ -131,7 +131,10 @@ const sage = (gut, was, zusatz) => {
     const kasten = document.getElementById("lcPlatzMenue");
     const knoepfe = [...kasten.querySelectorAll(".lc-platzmenue-knopf")];
     const haken = knoepfe.filter((b) =>
-      /^Nur an /.test(((b.querySelector(".lc-platzmenue-wort") || {}).textContent || "").trim()))[0];
+      /* RUNDE 99 NACHGEZOGEN — XANDER: „einfach nur ein Checkmark und
+         ein kurzes Wort … zum Beispiel Solo oder privat." Aus „Nur an
+         Bea" ist „Privat" geworden. */
+      /^Privat$/.test(((b.querySelector(".lc-platzmenue-wort") || {}).textContent || "").trim()))[0];
     if (!haken) {
       return { keineKachel: true,
                worte: knoepfe.slice(0, 6).map((b) =>
@@ -149,7 +152,7 @@ const sage = (gut, was, zusatz) => {
     };
   });
   sage(!menue.keineKachel && !menue.keinPlatz,
-    "die Kachel „Nur an …“ steht im Platzmenue",
+    "die Kachel „Privat“ (mit Häkchen) steht im Platzmenue",
     menue.keineKachel ? (menue.worte || []).join(" · ") : "an Stelle " + (menue.wo + 1));
   sage(menue.stand && menue.stand.name === "Bea",
     "ein Tipp setzt den Haken auf genau diesen Menschen",

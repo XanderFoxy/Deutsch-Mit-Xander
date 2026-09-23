@@ -5507,6 +5507,39 @@ window.LiveChat = (function () {
     } catch (e) { /* ohne Ping geht es auch */ }
   }
 
+  /* =========================================================
+     RUNDE 99 — WER FLUESTERT, IST FUER DIE ANDEREN STUMM
+     ---------------------------------------------------------
+     XANDER (23.09.2026): „Mir ist auch aufgefallen, wo ich das mit
+     jemandem getestet habe, dass ich ihn noch gehoert habe, waehrend
+     er die Sprachnachricht geschickt hat."
+     GEFUNDEN: die Sprachnachricht nimmt aus einem EIGENEN Mikrofon-
+     Strom auf (sprachSpur), das Live-Mikrofon (zustand.eigenerStrom)
+     lief daneben einfach weiter — an ALLE. Wer also gefluestert hat,
+     hat es gleichzeitig laut in den Raum gesagt.
+     Jetzt: solange eine PRIVATE Sprachnachricht aufgenommen wird, ist
+     das Live-Mikrofon aus und geht danach genau so wieder an, wie es
+     vorher war. Ein „stumm"-Paket geht dabei NICHT hinaus — sonst
+     saehen alle anderen, dass gerade gefluestert wird.
+     ========================================================= */
+  var fluesterStumm = false;
+  function liveStummFuerFluestern(an) {
+    var spuren = zustand.eigenerStrom ? zustand.eigenerStrom.getAudioTracks() : [];
+    if (an) {
+      if (fluesterStumm) return;
+      fluesterStumm = true;
+      spuren.forEach(function (t) { t.enabled = false; });
+    } else {
+      if (!fluesterStumm) return;
+      fluesterStumm = false;
+      spuren.forEach(function (t) { t.enabled = Boolean(zustand.tonAn); });
+    }
+  }
+  /* Das Pssst — ueber denselben Weg wie jeder Effekt-Ton (app.js). */
+  function pssst(laut) {
+    try { if (window.DMA_GERAEUSCH) window.DMA_GERAEUSCH("pssst", laut || 0.55); } catch (e) {}
+  }
+
   function sprachAufnahmeStarten() {
     if (sprachRekorder) return Promise.resolve(false);
     if (!sprachGehtDas()) {
@@ -5547,6 +5580,12 @@ window.LiveChat = (function () {
       };
       sprachRekorder.start();
       sprachStart = Date.now();
+      /* RUNDE 99 — gefluestert: Live-Mikrofon aus, und ein leises
+         Pssst sagt dem Absender, dass er gerade NUR zu einem spricht. */
+      if (privatNochDa()) {
+        liveStummFuerFluestern(true);
+        pssst(0.35);
+      }
       /* Harte Grenze: fuenf Minuten. Laenger wird auch die
          geduldigste Zuhoererin nicht — und die Aufnahme wird in
          Stuecken verschickt, passt also durch den Kanal. */
@@ -5565,6 +5604,9 @@ window.LiveChat = (function () {
   function sprachAufraeumen() {
     clearTimeout(sprachEndeTakt);
     sprachRekorder = null;
+    /* Nach dem Fluestern geht das Live-Mikrofon wieder so an, wie es
+       vorher war — auch wenn die Aufnahme abgebrochen wurde. */
+    liveStummFuerFluestern(false);
     sprachWarm = Date.now();
   }
   /* Und wenn wirklich Schluss ist (Raum verlassen), auch die Spur. */
@@ -10849,16 +10891,28 @@ window.LiveChat = (function () {
         woher: n.raum && n.raum !== zustand.raum ? raumKlartext(n.raum) : "",
         zeit: n.zeit || Date.now(), eigen: false
       });
-      try {
-        liveEinreihen({
-          id: n.id + "-f", von: n.von, name: n.vonName || "Jemand",
-          bild: n.vonBild || "", farbe: n.vonFarbe || "", farbeName: "",
-          sprach: ganzF, sprachSek: Number(n.sprachSek) || 0,
-          sprachAb: Number(n.sprachAb) || 0, sprachDauer: Number(n.sprachDauer) || 0,
-          zeit: n.zeit || Date.now(), art: "fluester", nurFuerMich: true
-        });
-        liveSagen();
-      } catch (e) {}
+      /* RUNDE 99 — XANDER: „dass diese von einem PSSST angekuendigt
+         wird … damit man nicht instinktiv auf denjenigen antwortet."
+         Erst das Pssst (0,72 s lang), dann die Stimme — sonst reden
+         beide gleichzeitig. */
+      pssst(0.6);
+      var fertigF = { id: n.id, von: n.von, name: n.vonName || "Jemand",
+        bild: n.vonBild || "", farbe: n.vonFarbe || "",
+        sprach: ganzF, sprachSek: Number(n.sprachSek) || 0,
+        sprachAb: Number(n.sprachAb) || 0, sprachDauer: Number(n.sprachDauer) || 0,
+        zeit: n.zeit || Date.now() };
+      setTimeout(function () {
+        try {
+          liveEinreihen({
+            id: fertigF.id + "-f", von: fertigF.von, name: fertigF.name,
+            bild: fertigF.bild, farbe: fertigF.farbe, farbeName: "",
+            sprach: fertigF.sprach, sprachSek: fertigF.sprachSek,
+            sprachAb: fertigF.sprachAb, sprachDauer: fertigF.sprachDauer,
+            zeit: fertigF.zeit, art: "fluester", nurFuerMich: true
+          });
+          liveSagen();
+        } catch (e) {}
+      }, 760);
       melden();
       return;
     }
@@ -14469,6 +14523,16 @@ window.LiveChat = (function () {
        wird die eigene Funktion aufgerufen, nicht die exportierte.
        Genau daran ist eine Messung schon einmal vorbeigelaufen. */
     pruefBetreiber: function (ja) { zustand.betreiber = ja !== false; return zustand.betreiber; },
+    /* RUNDE 99 — das Fluestern mit offenem Live-Mikrofon nachstellen:
+       einen eigenen Strom setzen, eine private Aufnahme starten und
+       stoppen, und dazwischen nachsehen, ob die Live-Spur aus ist. */
+    pruefEigenerStrom: function (strom, tonAn) {
+      zustand.eigenerStrom = strom || null;
+      zustand.tonAn = tonAn !== false;
+      return Boolean(zustand.eigenerStrom);
+    },
+    pruefAufnahmeStarten: function () { return sprachAufnahmeStarten(); },
+    pruefAufnahmeStoppen: function () { return sprachAufnahmeStoppen(); },
     /* Damit sich nachmessen laesst, was passiert, wenn die Leitung
        „aufgebraucht" meldet — ohne dass man erst ein Kontingent
        leerfahren muss. Setzt nur den Grund und meldet ihn. */

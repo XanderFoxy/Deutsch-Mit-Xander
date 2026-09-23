@@ -30734,8 +30734,14 @@
       try { haken = LiveChat.privatStand ? LiveChat.privatStand() : null; } catch (e) {}
       const anMir = Boolean(haken && haken.name
         && haken.name.trim().toLowerCase() === name.trim().toLowerCase());
-      knopf(anMir ? "\u2705" : "\u2b1c",
-        anMir ? "Nur an " + name + " \u2014 an" : "Nur an " + name,
+      /* RUNDE 99 — XANDER: „Wenn ich in den Fluestermodus mit
+         jemandem gehen moechte, dann moechte ich einfach nur oben ein
+         Checkmark-Symbol haben, da wo jetzt steht ,nur an Bea' … der
+         soll einfach nur ein Checkmark sein und ein kurzes Wort, was
+         die Kachel beschreibt, zum Beispiel Solo oder privat."
+         Also: Haekchen + „Privat". Wem es gilt, steht ohnehin oben im
+         Menue (der Kopf ist der Name). */
+      knopf(anMir ? "\u2705" : "\u2b1c", "Privat",
         () => {
           try { LiveChat.privatSetzen(anMir ? null : name); } catch (e) {}
         });
@@ -36165,6 +36171,14 @@
      Hinausgeschickt wird davon nichts — der Haken ist eine Einstellung
      dieses Geraets, kein Ereignis im Raum. Deshalb steht hier auch
      kein „senden". */
+  /* RUNDE 99 — EIN GERAEUSCH VON AUSSEN ABSPIELEN.
+     livechat.js braucht fuer das Pssst vor einer gefluesterten
+     Sprachnachricht denselben Weg wie jeder Effekt: er achtet auf den
+     Tonschalter und duckt sich, wenn jemand spricht. Eine eigene
+     Audio-Zeile in livechat.js haette beides umgangen. */
+  window.DMA_GERAEUSCH = function (name, laut) {
+    try { return lcGeraeusch(String(name || ""), null, laut); } catch (e) { return false; }
+  };
   window.DMA_PRIVAT = function (stand) {
     document.querySelectorAll(".lc-platz .lc-privathaken").forEach((x) => x.remove());
     document.querySelectorAll(".lc-platz").forEach((p) =>
