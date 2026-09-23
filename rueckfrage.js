@@ -369,7 +369,17 @@ window.Rueckfrage = (function () {
 
   /* Ein Textfeld mit 🎤: die Spracherkennung des Browsers schreibt
      mit, was er sagt. Gibt es sie nicht (manche Browser), bleibt
-     nur das Tippen — der Knopf erscheint dann gar nicht erst. */
+     nur das Tippen — der Knopf erscheint dann gar nicht erst.
+     RUNDE 99, ZWEITER ANLAUF — XANDER: „die Sprachnachrichten scheint
+     es nicht zu senden." Angekommen ist sie (als Text) — aber er hat
+     beim Sprechen NICHTS gesehen und konnte nicht wissen, ob es lief.
+     Und auf Android liefert die Dauer-Erkennung (continuous) Saetze
+     doppelt oder bricht nach ein paar Sekunden still ab. Deshalb jetzt:
+       - was erkannt wird, steht SOFORT darunter (auch Zwischenstaende),
+       - Satz fuer Satz einzeln erkannt und danach von selbst weiter,
+         bis er ⏹ drueckt — nichts doppelt, nichts bricht ab,
+       - klappt es nicht (Mikrofon verboten, kein Netz), steht dort,
+         warum. */
   function textfeld(klasse, platzhalter, wert, tun) {
     var huelle = el("div", "rf-feld");
     var t = document.createElement("textarea");
@@ -377,35 +387,69 @@ window.Rueckfrage = (function () {
     t.rows = 2;
     t.placeholder = platzhalter;
     t.value = wert || "";
+    t.setAttribute("autocapitalize", "sentences");
     t.addEventListener("input", function () { tun(t.value); });
     huelle.appendChild(t);
     var Erkenner = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (Erkenner) {
-      var mik = null;
+      var mik = null, weiter = false;
+      var live = el("div", "rf-live", "");
       var b = knopf("rf-mik", "🎤", function () {
-        if (mik) { mik.stop(); return; }
-        mik = new Erkenner();
-        mik.lang = "de-DE";
-        mik.continuous = true;
-        mik.interimResults = false;
-        var anfang = t.value;
-        mik.onresult = function (ev) {
-          var neu = "";
-          for (var i = 0; i < ev.results.length; i++) {
-            if (ev.results[i].isFinal) neu += ev.results[i][0].transcript;
-          }
-          t.value = (anfang ? anfang.replace(/\s*$/, " ") : "") + neu.trim();
-          tun(t.value);
-        };
-        mik.onend = mik.onerror = function () {
-          mik = null; b.classList.remove("rf-hoert"); b.textContent = "🎤";
-        };
+        if (weiter) { weiter = false; if (mik) try { mik.stop(); } catch (e) {} return; }
+        weiter = true;
         b.classList.add("rf-hoert");
         b.textContent = "⏹";
-        try { mik.start(); } catch (e) { mik = null; b.classList.remove("rf-hoert"); b.textContent = "🎤"; }
+        live.textContent = "Ich höre zu … sprich einfach.";
+        runde();
       });
+      var fertigMachen = function (hinweis) {
+        weiter = false; mik = null;
+        b.classList.remove("rf-hoert"); b.textContent = "🎤";
+        live.textContent = hinweis || "";
+      };
+      var runde = function () {
+        mik = new Erkenner();
+        mik.lang = "de-DE";
+        mik.continuous = false;
+        mik.interimResults = true;
+        mik.onresult = function (ev) {
+          var fest = "", zwischen = "";
+          for (var i = ev.resultIndex; i < ev.results.length; i++) {
+            if (ev.results[i].isFinal) fest += ev.results[i][0].transcript;
+            else zwischen += ev.results[i][0].transcript;
+          }
+          if (fest.trim()) {
+            var satz = fest.trim();
+            /* Gross angefangen wird nur ein neuer Satz — nicht jedes
+               Stueck, das die Erkennung zwischendurch abliefert. */
+            var davor = t.value.replace(/\s*$/, "");
+            if (!davor || /[.!?]$/.test(davor)) satz = satz.charAt(0).toUpperCase() + satz.slice(1);
+            t.value = (davor ? davor + " " : "") + satz;
+            tun(t.value);
+          }
+          live.textContent = zwischen.trim() ? "… " + zwischen.trim() : "Ich höre zu …";
+        };
+        mik.onerror = function (ev) {
+          var w = ev && ev.error;
+          if (w === "not-allowed" || w === "service-not-allowed") {
+            fertigMachen("Das Mikrofon ist nicht erlaubt – bitte im Browser freigeben.");
+          } else if (w === "network") {
+            fertigMachen("Die Spracherkennung braucht Netz – gerade keins.");
+          }
+          /* „no-speech" und „aborted": einfach weiter, onend startet neu. */
+        };
+        mik.onend = function () {
+          if (weiter) { try { runde(); } catch (e) { fertigMachen(""); } }
+          else fertigMachen(t.value.trim() ? "✓ Steht im Feld – jetzt „Senden“." : "");
+        };
+        try { mik.start(); } catch (e) { fertigMachen("Die Spracherkennung ließ sich nicht starten."); }
+      };
       b.setAttribute("aria-label", "Sprechen statt tippen");
       huelle.appendChild(b);
+      var rahmen = el("div", "rf-feldrahmen");
+      rahmen.appendChild(huelle);
+      rahmen.appendChild(live);
+      return rahmen;
     }
     return huelle;
   }

@@ -32106,3 +32106,9 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-kr-haken rect { fill: #cfd5e0; stroke: #7e8798; stroke-width: 1.2; }
 .lc-kr-haken path { stroke: #cfd5e0; stroke-width: 2.4; stroke-linecap: round;
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, .55)); }
+/* RUNDE 99 — was die Spracherkennung gerade hoert, steht live darunter. */
+.rf-feldrahmen { margin: 0 0 8px; }
+.rf-feldrahmen .rf-feld { margin-bottom: 2px; }
+.rf-live { min-height: 1em; font-size: .76rem; color: #9fdcb8; font-style: italic; }
+.rf-live:empty { display: none; }
+.lc-an-ring { fill: none; stroke: #9aa3b2; stroke-width: 1.4; }

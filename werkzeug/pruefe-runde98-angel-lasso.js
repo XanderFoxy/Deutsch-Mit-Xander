@@ -73,7 +73,10 @@ const sage = (gut, was, zusatz) => {
      Sitzreihe (sie geht ja von meinem Platz aus) \u2014 deshalb zwei
      verschiedene Wege, sie zu finden. */
   for (const [art, wahl, wort] of [["lasso", '[data-lc-platz="2"] .lc-lasso-schlinge', "Lasso"],
-                                   ["heber", ".lc-leine-angel .lc-leine-haken", "Angel"]]) {
+                                   /* RUNDE 99: die Angel ist eine eigene Zeichnung
+                                      ueber der Sitzreihe; der Haken liegt in
+                                      seiner eigenen Lage ueber dem Bild. */
+                                   ["heber", ".lc-angel-hakenlage .lc-an-haken[transform]", "Angel"]]) {
     const r = await pg.evaluate(async ([art, wahl]) => {
       window.DMA_PRUEF.effektBuehne();
       window.DMA_PRUEFUNG.wirkung(art, "Bea", "Alex", { ziel: 7 });
@@ -108,20 +111,22 @@ const sage = (gut, was, zusatz) => {
   const rute = await pg.evaluate(async () => {
     window.DMA_PRUEF.effektBuehne();
     window.DMA_PRUEFUNG.wirkung("heber", "Bea", "Alex", { ziel: 7 });
-    await new Promise((f) => setTimeout(f, 400));
-    const r = document.querySelector(".lc-angel-rute");
+    /* RUNDE 99: gekurbelt wird beim EINHOLEN (1,5 bis 3,15 s) — erst
+       dann wird die Kurbel gemessen. */
+    await new Promise((f) => setTimeout(f, 1600));
+    const r = document.querySelector(".lc-angel-buehne:not(.lc-angel-hakenlage)");
     if (!r) return null;
-    const spule = r.querySelector(".lc-angel-spule");
+    const kurbel = r.querySelector(".lc-an-kurbel");
     const dreht = [];
     for (let i = 0; i < 8; i++) {
       await new Promise((f) => setTimeout(f, 140));
-      const t = getComputedStyle(spule).transform;
+      const t = kurbel ? kurbel.getAttribute("d") : "";
       if (dreht.indexOf(t) < 0) dreht.push(t);
     }
-    return { rute: 1, griff: r.querySelectorAll(".lc-angel-griff").length,
-      rolle: r.querySelectorAll(".lc-angel-rollengehaeuse").length,
-      kurbel: r.querySelectorAll(".lc-angel-kurbel").length,
-      ringe: r.querySelectorAll(".lc-angel-ringe circle").length,
+    return { rute: 1, griff: r.querySelectorAll(".lc-an-griff").length,
+      rolle: r.querySelectorAll(".lc-an-gehaeuse").length,
+      kurbel: r.querySelectorAll(".lc-an-kurbel").length,
+      ringe: r.querySelectorAll(".lc-an-ring").length,
       drehstufen: dreht.length };
   });
   if (!rute) {

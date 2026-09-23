@@ -49,6 +49,28 @@ const sage = (gut, text, dazu) => {
   const pg = await br.newPage({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
   pg.on("pageerror", (e) => { console.log("  FEHL Seitenfehler: " + e.message); fehler++; });
   await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
+  /* Eine nachgebaute Spracherkennung: sie „hoert" erst einen
+     Zwischenstand, dann den fertigen Satz, und endet — wie Chrome auf
+     Android bei continuous = false. */
+  await pg.addInitScript(() => {
+    window.__rfRunden = 0;
+    window.webkitSpeechRecognition = class {
+      start() {
+        const n = ++window.__rfRunden;
+        setTimeout(() => this.onresult && this.onresult({ resultIndex: 0,
+          results: [Object.assign([{ transcript: "bist du" }], { isFinal: false })] }), 30);
+        setTimeout(() => {
+          window.__rfZwischen = (document.querySelector(".rf-vorschlag .rf-live") || {}).textContent || "";
+          this.onresult && this.onresult({ resultIndex: 0,
+            results: [Object.assign([{ transcript: n === 1 ? "bist du hier" : "und noch was" }], { isFinal: true })] });
+        }, 120);
+        setTimeout(() => this.onend && this.onend(), 160);
+      }
+      stop() { setTimeout(() => this.onend && this.onend(), 10); }
+    };
+    /* Neuere Chromes haben sie auch ohne Vorsilbe — beide ersetzen. */
+    window.SpeechRecognition = window.webkitSpeechRecognition;
+  });
   const url = "http://127.0.0.1:" + srv.address().port + "/index.html";
   await pg.goto(url, { waitUntil: "domcontentloaded" });
   await pg.waitForFunction(() => window.Rueckfrage && typeof Backend !== "undefined", { timeout: 25000 });
@@ -197,6 +219,28 @@ const sage = (gut, text, dazu) => {
     ok: document.querySelector(".rf-gesendet").textContent }));
   sage(f.funk.length === 1 && f.funk[0].von === "xander" && f.funk[0].text === "Bist du hier?" &&
     /angekommen/.test(f.ok), "Ein Vorschlag an Claude kommt an", JSON.stringify(f.funk[0] || {}));
+
+  /* DAS DIKTAT: 🎤 druecken, zwei Saetze hoeren lassen, ⏹. */
+  await pg.evaluate(() => {
+    const t = document.querySelector(".rf-vorschlag-text");
+    t.value = ""; t.dispatchEvent(new Event("input"));
+    t.closest(".rf-feldrahmen").querySelector(".rf-mik").click();
+  });
+  await pg.waitForFunction(() => window.__rfRunden >= 2, { timeout: 4000 }).catch(() => {});
+  await pg.evaluate(() => document.querySelector(".rf-vorschlag").querySelector(".rf-mik").click());
+  await pg.waitForTimeout(400);
+  const dikt = await pg.evaluate(() => ({
+    zwischen: window.__rfZwischen || "",
+    text: document.querySelector(".rf-vorschlag-text").value,
+    live: (document.querySelector(".rf-vorschlag .rf-live") || {}).textContent || "",
+    runden: window.__rfRunden,
+    knopf: document.querySelector(".rf-vorschlag .rf-mik").textContent }));
+  sage(/bist du/.test(dikt.zwischen), "Beim Sprechen steht sofort da, was gerade erkannt wird", dikt.zwischen);
+  sage(dikt.text === "Bist du hier und noch was" && dikt.runden >= 2,
+    "Der Satz landet im Feld (gross angefangen), und es hoert von selbst weiter",
+    JSON.stringify(dikt.text) + ", " + dikt.runden + " Runden");
+  sage(dikt.knopf === "🎤" && /Senden/.test(dikt.live), "⏹ beendet es, und darunter steht, was jetzt zu tun ist",
+    dikt.live);
 
   /* Zuklappen und Schreiben im Chat: der Reiter geht aus dem Weg. */
   await pg.screenshot({ path: "/tmp/claude-0/walkie-offen.png" });

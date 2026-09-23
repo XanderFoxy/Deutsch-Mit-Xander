@@ -184,8 +184,13 @@ const pruefe = (was, gut, zusatz) => {
          deshalb jetzt ueber den Platz. */
       const platz = sch ? sch.closest(".lc-platz") : null;
       const kreis = platz ? platz.querySelector(".lc-kreis") : null;
+      /* RUNDE 99: die Angel bewegt das Bild mit animate() (Wurf, Biss,
+         Einholen) statt mit einer CSS-Klasse — beides zaehlt. */
+      const lauf = kreis && kreis.getAnimations
+        ? kreis.getAnimations().filter((x) => !(x instanceof CSSAnimation)).length : 0;
+      const css = kreis ? getComputedStyle(kreis).animationName : "none";
       return { klassen: sch ? sch.className : "",
-        bewegt: kreis ? getComputedStyle(kreis).animationName : "none" };
+        bewegt: css !== "none" ? css : (lauf ? lauf + " Bewegung(en) per animate()" : "none") };
     }, art);
     pruefe(art + " wird gezeichnet", String(d.klassen).indexOf(klasse) >= 0, d.klassen || "nichts");
     pruefe(art + " bewegt das Profilbild", d.bewegt !== "none", d.bewegt);

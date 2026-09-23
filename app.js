@@ -37971,6 +37971,9 @@
         '<path class="lc-an-schnur" fill="none"/>'
         + '<path class="lc-an-rute" fill="none"/>'
         + '<path class="lc-an-rute-hell" fill="none"/>'
+        /* Die drei Fuehrungsringe der Runde-98-Rute bleiben — die
+           Schnur laeuft durch sie hindurch. */
+        + '<circle class="lc-an-ring"/><circle class="lc-an-ring"/><circle class="lc-an-ring"/>'
         + '<rect class="lc-an-griff"/>'
         + '<g class="lc-an-rolle"><circle class="lc-an-gehaeuse"/><circle class="lc-an-spule"/>'
         + '<path class="lc-an-kurbel"/></g>';
@@ -37994,6 +37997,7 @@
       const spule = buehne.querySelector(".lc-an-spule");
       const kurbel = buehne.querySelector(".lc-an-kurbel");
       const haken = hakenLage.querySelector(".lc-an-haken");
+      const ringe = [...buehne.querySelectorAll(".lc-an-ring")];
       const rollePos = { x: fuss.x + seite * Math.cos(w) * rutL * 0.2,
                          y: fuss.y - Math.sin(w) * rutL * 0.2 + gr * 0.07 };
       const gw = gr * 0.3, gh = gr * 0.075;
@@ -38079,6 +38083,16 @@
           + " Q" + knick.x.toFixed(1) + " " + knick.y.toFixed(1)
           + " " + spitze.x.toFixed(1) + " " + spitze.y.toFixed(1));
         ruteHell.setAttribute("d", rute.getAttribute("d"));
+        /* Die Ringe sitzen auf der (gebogenen) Rute: Punkte auf der
+           quadratischen Kurve bei 45, 68 und 88 Prozent. */
+        [0.45, 0.68, 0.88].forEach((q, i) => {
+          const u1 = 1 - q;
+          const rx = u1 * u1 * fuss.x + 2 * u1 * q * knick.x + q * q * spitze.x;
+          const ry = u1 * u1 * fuss.y + 2 * u1 * q * knick.y + q * q * spitze.y;
+          ringe[i].setAttribute("cx", rx.toFixed(1));
+          ringe[i].setAttribute("cy", (ry - gr * 0.025).toFixed(1));
+          ringe[i].setAttribute("r", (gr * (0.04 - i * 0.008)).toFixed(1));
+        });
         /* Wo ist der Haken? */
         let H, locker;
         if (t < T_WURF) { H = spitze; locker = 0; }
