@@ -42944,7 +42944,7 @@
     setTimeout(() => beob.disconnect(), (Number(dauer) || 4000) + 1500);
   }
 
-  function lcReise(wen, von, art, tausch, tempo) {
+  function lcReise(wen, von, art, tausch, tempo, los) {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return false;
     const gitter = lcPlatzGitter();
@@ -43077,9 +43077,20 @@
     /* RUNDE 85: der Fahrstuhl braucht wie das Beamen immer dieselbe
        Zeit — seine Tueren und seine Glocke haengen am Geraet, nicht an
        der Entfernung. */
-    const hin = (art === "beamen" || art === "fahrstuhl") ? grund
+    const hinBasis = (art === "beamen" || art === "fahrstuhl") ? grund
       : Math.round(grund * (0.72 + 0.28 * plaetzeR));
-    const dauer = hin + 500;
+    /* FUNK 76 — die Lok plant ihre Strecke VORHER: Tunnel und Schranke
+       verlaengern die Fahrt, und der Sitzwechsel („hin") muss genau dann
+       kommen, wenn sie am Ziel ist (siehe lcLokPlan). */
+    let lokPlan = null, lokZeit = null;
+    if (art === "lok") {
+      try {
+        lokPlan = lcLokPlan(ab, zu, bahn, rk, d, start, ende, los);
+        if (lokPlan) lokZeit = lokPlan.zeiten(hinBasis);
+      } catch (e) { lokPlan = null; lokZeit = null; }
+    }
+    const hin = lokZeit ? lokZeit.hin : hinBasis;
+    const dauer = lokZeit ? lokZeit.dauer : hin + 500;
     /* RUNDE 100 — der Lack reist mit (siehe lcRueckstandMitnehmen). */
     lcRueckstandMitnehmen(ab.el, quelle, dauer);
     const altZ = ab.el.style.zIndex;
@@ -45033,11 +45044,8 @@
          Jetzt hat der gemalte Weg Vorrang; ohne einen sucht sie sich
          weiterhin selbst den kuerzesten — und der geht seit jeher
          UEBER Besetzte (lcWegSuchen mit „ueberBesetzte"). */
-      const lokWeg = (bahn && bahn.length > 1)
-        ? bahn
-        : lcWegSuchen(lcPlatzGitter(), ab.nr, zu.nr, true);
-      const lokZeug = lokWeg
-        ? lcLokFahrt(lok, reihe, rk, ab, zu, start, ende, dauer, hin, d, lokWeg)
+      const lokZeug = lokPlan
+        ? lcLokFahrt(lok, reihe, rk, ab, zu, start, ende, dauer, hin, d, lokPlan, lokZeit)
         : null;
       if (lokZeug) {
         /* Die Gleise raeumt „weg" mit auf; die Uhren, die die Schreie
@@ -45045,12 +45053,16 @@
            einem entfernten Element weiterarbeiten. */
         weg.push(lokZeug.gleis);
         if (lokZeug.buehne) weg.push(lokZeug.buehne);
+        (lokZeug.weitere || []).forEach((x) => weg.push(x));
         setTimeout(() => (lokZeug.uhren || []).forEach((u) => clearTimeout(u)),
                    dauer + 420);
       } else {
         lcReiseWaagerecht(lok, start, ende, dauer, hin, "lok");
       }
-      lcTonZu("lok");
+      /* FUNK 76 — mit Tunnel, Schranke und Wagen dauert die Fahrt bis zu
+         zwoelf Sekunden; das Rollen laeuft so lange mit (die Aufnahme ist
+         neun Sekunden lang). */
+      lcTonReise("lok", Math.min(9000, dauer));
       /* RUNDE 72 — XANDER: „Der Lokomotive fehlt das Stampfen beim
          Anfahren und das Schienen-/Radgeraeusch. Entweder fehlt es in
          der Laenge oder es setzt zu spaet ein oder es kommt zu
@@ -48795,11 +48807,13 @@
        ist nur Gleis (Klasse lc-lok-rund). */
     if (abstand < d * 0.3 && n >= 4) {
       const P = pk.slice(0, n - 1).map((q) => ({ x: q.x, y: q.y }));
-      if (flaeche(P) > d * d * 0.5) return { P: P, fahrt: P.length };
+      if (flaeche(P) > d * d * 0.5) return { P: P, fahrt: P.length, geschlossen: true };
     }
-    if (abstand < d * 1.15 && n >= 3) {
+    /* FUNK 76 — „Nachbar" ist der echte Abstand im Sitzgitter (die Reihen
+       stehen 1,3 Platzbreiten auseinander, nicht 1,15). */
+    if (abstand < ((mitte && mitte.nachbar) || d * 1.15) && n >= 3) {
       const P = pk.map((q) => ({ x: q.x, y: q.y }));
-      if (flaeche(P) > d * d * 0.5) return { P: P, fahrt: n - 1 };
+      if (flaeche(P) > d * d * 0.5) return { P: P, fahrt: n - 1, geschlossen: true };
     }
     /* 0,72 Platzbreiten Abstand: bei 0,5 wurde der Wendebogen so eng
        (0,245 d), dass die innere Schiene fast im Mittelpunkt lag und
@@ -49110,38 +49124,398 @@
       + "</span>";
   }
 
-  function lcLokFahrt(lok, reihe, rk, ab, zu, start, ende, dauer, hin, d, weg) {
+  /* =====================================================================
+     FUNK 76 (24.09.) — DIE MODELLBAHN: KREIS, TUNNEL, SCHRANKE, WAGEN
+     ---------------------------------------------------------------------
+     XANDER: „Bei der Lokomotive möchte ich, dass sie, wenn sie von der 1
+     bis zur vier über die acht zur fünf fährt, dass der Kreis geschlossen
+     ist … die Gleise selber sollen mit ihrer Mitte, wenn sie senkrecht
+     gehen oder wenn sie waagerecht gehen, jeweils über die Positionsfelder
+     und die Mitte der Positionsfelder gehen … wenn man jetzt von oben von
+     der eins zu fünf zur sechs zu zwei zu drei zu sieben zu acht zu vier
+     zieht, also dass die Enden oben offen sind, dann sollen dort Tunnel
+     sein — immer wo es kein einfacher geschlossener Kreis ist … du kannst
+     auch da, wo Leute sind, mal eine Eisenbahnschranke einbauen, wo die
+     Bahn kurz wartet … und wenn sie dann weiterfährt und sie sitzen immer
+     noch da, dann werden sie überfahren … weil sie aus dem Tunnel kommt,
+     dann tauchen plötzlich noch weitere Waggons auf, die sie mitzieht …
+     die Waggons zu der traditionellen Lok … von der Seite und von der
+     Draufsicht."
+
+     GEFUNDEN, warum 1-2-3-4-8-7-6-5 kein Kreis wurde: lcLokRundkurs
+     schloss nur, wenn das Ziel naeher als 1,15 PLATZBREITEN am Start lag.
+     Die Reihen stehen aber 1,3 Platzbreiten auseinander — Platz 5 war fuer
+     die Rechnung „zu weit" von Platz 1 weg, und das Gleis lief aussen um
+     den halben Bildschirm herum. Jetzt zaehlt der echte Nachbarabstand im
+     Sitzgitter.
+
+     DER PLAN steht fest, BEVOR die Reise ihre Zeit bekommt: Tunnel und
+     Schranke machen die Fahrt laenger, und der Sitzwechsel („hin") muss
+     genau dann kommen, wenn die Lok am Ziel ist.
+     ===================================================================== */
+  /* Die Laengen des Zuges in Platzbreiten — dieselben Zahlen stehen im
+     Stilblatt (.lc-lok-wagen-…). Abstand = Mitte zu Mitte. */
+  const LC_ZUG = { lok: 1.7, tender: 0.99, wagen: 1.417, luft: 0.04 };
+  const LC_ZUG_ABSTAND = (() => {
+    const a = [], halb = LC_ZUG.lok / 2;
+    let x = halb + LC_ZUG.luft + LC_ZUG.tender / 2;
+    a.push({ art: "tender", ab: x });
+    x += LC_ZUG.tender / 2 + LC_ZUG.luft + LC_ZUG.wagen / 2;
+    a.push({ art: "wagen", ab: x });
+    x += LC_ZUG.wagen + LC_ZUG.luft;
+    a.push({ art: "wagen", ab: x });
+    return { liste: a, schwanz: x + LC_ZUG.wagen / 2 };
+  })();
+
+  /* Wo auf dem Streckenzug liegt der Punkt q? Zurueck: der Weg s bis
+     dorthin, der Abstand zur Bahn und die Fahrtrichtung an der Stelle. */
+  function lcLokLot(pt, q) {
+    let beste = { dist: Infinity, s: 0, winkel: 0 };
+    for (let i = 1; i < pt.length; i++) {
+      const a = pt[i - 1], b = pt[i];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const ll = dx * dx + dy * dy;
+      let f = ll ? ((q.x - a.x) * dx + (q.y - a.y) * dy) / ll : 0;
+      f = Math.max(0, Math.min(1, f));
+      const ds = Math.hypot(q.x - (a.x + dx * f), q.y - (a.y + dy * f));
+      if (ds < beste.dist) {
+        beste = { dist: ds, s: a.s + (b.s - a.s) * f,
+                  winkel: ll ? Math.atan2(dy, dx) * 180 / Math.PI : a.winkel };
+      }
+    }
+    return beste;
+  }
+
+  function lcLokPlan(ab, zu, bahn, rk, d, start, ende, los) {
     const gitter = lcPlatzGitter() || [];
+    const weg = (bahn && bahn.length > 1) ? bahn : lcWegSuchen(gitter, ab.nr, zu.nr, true);
     if (!weg || weg.length < 2) return null;
-    /* Die Stationen in Buehnen-Koordinaten; Anfang und Ende genau
-       dort, wo die Reise ohnehin anfaengt und aufhoert. */
-    /* RUNDE 99 — die Zwischenplaetze auf die BILDmitte (lcBildVersatz),
-       wie Start und Ziel: „die Schienen nicht mittig ueber den
-       Positionsfeldern" — gemessen lagen sie sonst 10 px darunter. */
-    const pk = weg.map((p) => ({ x: p.x - rk.left, y: p.y - rk.top + lcBildVersatz(p.el) }));
-    /* RUNDE 100 — XANDER (Walkie-Talkie, Lok): „Die Gleise sind teilweise
-       schief auf der geraden Strecke."
-       GEMESSEN (390 px breit): Anfang und Ende lagen auf der PLATZmitte
-       (mit Namensschild), alle Zwischenpunkte auf der BILDmitte — am
-       Start 12,4 px, am Ziel 8 px tiefer. Das erste und das letzte
-       Stueck Gerade fielen dadurch schraeg ab (12 px auf 133 px), und
-       die waagerecht gezeichnete Lok stand auf der schiefen Strecke mal
-       ueber, mal unter der Schiene. Jetzt liegen auch Anfang und Ende
-       auf der Bildmitte; die Lok selbst wird mit „ort" relativ zum
-       Startpunkt gesetzt und rueckt damit von selbst mit. */
+    const mitte = (g) => ({ x: g.x - rk.left, y: g.y - rk.top + lcBildVersatz(g.el) });
+    const pk = weg.map(mitte);
     pk[0] = { x: start.x, y: start.y + lcBildVersatz(ab.el) };
     pk[pk.length - 1] = { x: ende.x, y: ende.y + lcBildVersatz(zu.el) };
-    /* RUNDE 99 — AUSPROBIERT UND ZURUECKGENOMMEN: ein engerer Bogen
-       (0,34 statt 0,62 Platzbreiten) kam der Mitte des Eckplatzes naeher
-       (17 statt 25 px), aber bei der jetzt breiteren Spur lag die innere
-       Schiene nur noch 16 px vom Kreismittelpunkt — die Schwellen
-       kreuzten sich zu einem Faecher. Ein Bogen, der an beide Geraden
-       glatt anschliesst, KANN die Ecke nicht treffen; er verfehlt sie
-       immer um 0,41 mal seinen Radius. Die Geraden liegen jetzt genau
-       mittig (siehe lcPlatzGitter), die Kurve bleibt schoen rund. */
-    const bahn = lcLokBahn(pk, d * 0.62);
-    const pt = bahn.pt, gesamt = bahn.gesamt;
-    const tAn = hin / dauer;
+    /* Zweimal derselbe Punkt hintereinander (etwa „5-1-2" vom Platz 1
+       aus) hat keine Richtung — der Tunnel landete dann AUF dem Platz. */
+    for (let i = pk.length - 1; i > 0; i--) {
+      if (Math.hypot(pk[i].x - pk[i - 1].x, pk[i].y - pk[i - 1].y) < 2) pk.splice(i === pk.length - 1 ? i - 1 : i, 1);
+    }
+    if (pk.length < 2) return null;
+    const sitze = gitter.map((g) => Object.assign(mitte(g), { g: g }));
+    /* Der echte Nachbarabstand: waagerecht und senkrecht getrennt. */
+    let sx = Infinity, sy = Infinity;
+    sitze.forEach((a) => sitze.forEach((b) => {
+      const dx = Math.abs(a.x - b.x), dy = Math.abs(a.y - b.y);
+      if (dy < d * 0.3 && dx > d * 0.3) sx = Math.min(sx, dx);
+      if (dx < d * 0.3 && dy > d * 0.3) sy = Math.min(sy, dy);
+    }));
+    if (!isFinite(sx)) sx = d * 1.1;
+    if (!isFinite(sy)) sy = sx;
+    const kurs = lcLokRundkurs(pk, d, { x: rk.width / 2, y: rk.height / 2, breite: rk.width,
+                                         nachbar: Math.max(sx, sy) * 1.12 });
+    const einheit = (a, b) => {
+      const l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      return { x: (b.x - a.x) / l, y: (b.y - a.y) / l };
+    };
+    const plan = { pk: pk, d: d, rund: null, tunnel: null, schranke: null, wagen: false };
+    const n = pk.length;
+    let fahrPk = pk, vorlauf = 0, nachlauf = 0;
+    if (kurs && kurs.geschlossen) {
+      plan.rund = kurs;
+    } else {
+      /* DER TUNNEL sitzt ausserhalb der Sitzreihen, in Verlaengerung des
+         ersten und des letzten Stuecks — dort, wo die Strecke offen ist. */
+      const box = { x0: Math.min.apply(null, sitze.map((q) => q.x)),
+                    x1: Math.max.apply(null, sitze.map((q) => q.x)),
+                    y0: Math.min.apply(null, sitze.map((q) => q.y)),
+                    y1: Math.max.apply(null, sitze.map((q) => q.y)) };
+      const portal = (P, u) => {
+        /* Seitlich ist bis zum Rand nur gut eine halbe Platzbreite Platz —
+           dort sitzt das Portal knapp neben dem aeusseren Bild. */
+        const rand = Math.abs(u.y) > Math.abs(u.x) ? d * 0.74 : d * 0.6;
+        const ts = [];
+        if (u.x > 0.2) ts.push((box.x1 + rand - P.x) / u.x);
+        if (u.x < -0.2) ts.push((box.x0 - rand - P.x) / u.x);
+        if (u.y > 0.2) ts.push((box.y1 + rand - P.y) / u.y);
+        if (u.y < -0.2) ts.push((box.y0 - rand - P.y) / u.y);
+        const t = Math.max(d * 0.75, ts.length ? Math.min.apply(null, ts) : rand);
+        return { x: P.x + u.x * t, y: P.y + u.y * t, ux: u.x, uy: u.y, lauf: t };
+      };
+      const TA = portal(pk[0], einheit(pk[1], pk[0]));
+      const TB = portal(pk[n - 1], einheit(pk[n - 2], pk[n - 1]));
+      plan.tunnel = [TA, TB];
+      plan.wagen = true;
+      /* Die Lok steht am Anfang GANZ im Tunnel (ihre halbe Laenge plus
+         Luft hinter dem Portal); am Ende faehrt der ganze Zug hinein. */
+      const tief = d * (LC_ZUG.lok / 2 + 0.2);
+      const hinein = d * (LC_ZUG_ABSTAND.schwanz + 0.25);
+      fahrPk = [{ x: TA.x + TA.ux * tief, y: TA.y + TA.uy * tief }]
+        .concat(pk, [{ x: TB.x + TB.ux * hinein, y: TB.y + TB.uy * hinein }]);
+      vorlauf = TA.lauf + tief;
+      nachlauf = TB.lauf + hinein;
+      /* Das Gleis laeuft im Berg so weit wie der Zug — dort maskiert. */
+      const zugTief = d * (LC_ZUG_ABSTAND.schwanz + 1);
+      plan.gleisPk = [{ x: TA.x + TA.ux * zugTief, y: TA.y + TA.uy * zugTief }]
+        .concat(pk, [{ x: TB.x + TB.ux * hinein, y: TB.y + TB.uy * hinein }]);
+    }
+    const bahnF = lcLokBahn(fahrPk, d * 0.62);
+    plan.bahnF = bahnF;
+    plan.sA = vorlauf;
+    plan.sB = bahnF.gesamt - nachlauf;
+    plan.sPortalA = plan.tunnel ? vorlauf - plan.tunnel[0].lauf : -Infinity;
+
+    /* DIE SCHRANKE — „nicht immer, das kann mal so zufaellig mit dabei
+       sein". Gewuerfelt wird EINMAL beim Absender („los" reist mit der
+       Zeile), damit alle dieselbe Schranke an derselben Stelle sehen. */
+    const r = Number(los);
+    if (isFinite(r) && r > 0 && r < 0.5) {
+      const kand = [];
+      sitze.forEach((q) => {
+        if (q.g.nr === ab.nr || q.g.nr === zu.nr || q.g.frei) return;
+        const lot = lcLokLot(bahnF.pt, q);
+        if (lot.dist > d * 0.3) return;
+        /* Nur auf einem GERADEN Stueck — in der Kurve stand sie schraeg. */
+        const schief = ((lot.winkel % 90) + 90) % 90;
+        if (schief > 8 && schief < 82) return;
+        const sHalt = lot.s - d * (LC_ZUG.lok / 2 + 0.6);
+        const frei = plan.tunnel ? plan.sPortalA + d * (LC_ZUG.lok / 2 + 0.1) : d * 0.4;
+        if (sHalt < frei || lot.s > plan.sB) return;
+        kand.push({ q: q, s: lot.s, sHalt: sHalt, winkel: lot.winkel });
+      });
+      kand.sort((a, b) => a.s - b.s);
+      if (kand.length) plan.schranke = kand[Math.min(kand.length - 1, Math.floor(r * 2 * kand.length))];
+    }
+
+    /* Die Uhr. Ohne Tunnel faehrt sie so schnell wie immer (die Strecke
+       A-B in „hinBasis"); mit Tunnel nie langsamer als eine Platzbreite
+       in 0,65 s — sonst kriecht sie bei einem einzigen Platz minutenlang
+       aus dem Berg. */
+    plan.zeiten = (hinBasis) => {
+      const strecke = Math.max(1, plan.sB - plan.sA);
+      let v = strecke / Math.max(600, hinBasis);
+      if (plan.tunnel) v = Math.max(v, d / 650);
+      const W = plan.schranke ? 2600 : 0;
+      const T = (s) => s / v + (plan.schranke && s > plan.schranke.sHalt ? W : 0);
+      const hin = Math.round(T(plan.sB));
+      const dauer = plan.tunnel ? Math.round(T(bahnF.gesamt)) + 250 : hin + 500;
+      return { v: v, W: W, T: T, hin: hin, dauer: dauer };
+    };
+    return plan;
+  }
+
+  /* Die Wagen zur traditionellen Lok: ein Tender (Kohle vorn, Wasser
+     hinten) und zwei Abteilwagen in Weinrot mit Goldlinie, Oberlicht-
+     dach und zwei Drehgestellen — so fuhren sie hinter solchen Loks.
+     Wie die Lok: Seitenansicht mit dem Vorderende LINKS, Draufsicht
+     mit der Nase nach RECHTS. */
+  function lcLokWagen(art, d) {
+    const w = document.createElement("span");
+    /* Bewusst NICHT „lc-lok": das ist die Lok selbst (Sonden, Aufraeumen,
+       Fenster). Die Wagen teilen nur Groesse und Ansichten. */
+    w.className = "lc-lok-wagen lc-lok-wagen-" + art;
+    w.style.setProperty("--gross", d + "px");
+    const rad = (cx, cy, r) => {
+      let sp = "";
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3;
+        sp += '<path class="lc-lok-speiche" d="M' + cx + " " + cy + " L"
+          + (cx + Math.cos(a) * (r - 1.2)).toFixed(1) + " " + (cy + Math.sin(a) * (r - 1.2)).toFixed(1) + '"/>';
+      }
+      return '<g class="lc-lok-rad" style="transform-origin:' + cx + "px " + cy + 'px">'
+        + '<circle class="lc-lok-reifen" cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>' + sp
+        + '<circle class="lc-lok-nabe" cx="' + cx + '" cy="' + cy + '" r="' + (r * 0.26).toFixed(1) + '"/></g>';
+    };
+    let seite = "", oben = "", vb = "";
+    if (art === "tender") {
+      vb = "0 0 70 60";
+      seite =
+        '<rect class="lc-wg-rahmen" x="3" y="42" width="64" height="6" rx="1"/>'
+        + '<rect class="lc-lok-bohle" x="0.5" y="40" width="4" height="9" rx="1"/>'
+        + '<rect class="lc-lok-bohle" x="65.5" y="40" width="4" height="9" rx="1"/>'
+        + '<path class="lc-wg-tender" d="M5 21 L65 21 L65 43 L5 43 Z"/>'
+        + '<path class="lc-wg-glanz" d="M5 22.4 H65 V26 H5 Z"/>'
+        + '<path class="lc-wg-schatten" d="M5 38.5 H65 V43 H5 Z"/>'
+        /* Die Kohle ragt vorn ueber den Kasten — ein Haufen, kein Brett. */
+        + '<path class="lc-wg-kohle" d="M6 21 Q9 13 16 15 Q20 11 26 14 Q31 12 35 16 Q38 15 40 21 Z"/>'
+        + '<circle class="lc-wg-kohleglanz" cx="15" cy="16.4" r="1"/><circle class="lc-wg-kohleglanz" cx="27" cy="15.2" r=".9"/>'
+        + '<circle class="lc-wg-kohleglanz" cx="33" cy="17.6" r=".8"/>'
+        /* Der Wasserdeckel hinten, Messing. */
+        + '<rect class="lc-wg-messing" x="49" y="17.5" width="9" height="3.5" rx="1.4"/>'
+        + '<path class="lc-wg-linie" d="M8 24.5 H62 M8 39.5 H62 M8 24.5 V39.5 M62 24.5 V39.5"/>'
+        + rad(16, 49.5, 6.5) + rad(35, 49.5, 6.5) + rad(54, 49.5, 6.5);
+      oben =
+        '<rect class="lc-lok-o-rad" x="11" y="16.2" width="10" height="4.6" rx="1.4"/><rect class="lc-lok-o-rad" x="11" y="39.2" width="10" height="4.6" rx="1.4"/>'
+        + '<rect class="lc-lok-o-rad" x="49" y="16.2" width="10" height="4.6" rx="1.4"/><rect class="lc-lok-o-rad" x="49" y="39.2" width="10" height="4.6" rx="1.4"/>'
+        + '<rect class="lc-wg-o-kasten" x="4" y="14" width="62" height="32" rx="2.5"/>'
+        + '<rect class="lc-wg-o-wasser" x="7" y="17" width="27" height="26" rx="2"/>'
+        + '<circle class="lc-wg-messing" cx="17" cy="30" r="4.2"/>'
+        + '<circle class="lc-wg-o-deckel" cx="17" cy="30" r="2.3"/>'
+        + '<path class="lc-wg-kohle" d="M37 17 Q46 15 55 18 Q63 20 63 30 Q63 40 55 42 Q46 45 37 43 Z"/>'
+        + '<circle class="lc-wg-kohleglanz" cx="44" cy="24" r="1.2"/><circle class="lc-wg-kohleglanz" cx="53" cy="33" r="1.1"/>'
+        + '<circle class="lc-wg-kohleglanz" cx="47" cy="38" r=".9"/><circle class="lc-wg-kohleglanz" cx="57" cy="24" r=".9"/>'
+        + '<rect class="lc-lok-o-bohle" x="65" y="18" width="4" height="24" rx="1.2"/>'
+        + '<rect class="lc-lok-o-bohle" x="1" y="18" width="4" height="24" rx="1.2"/>';
+    } else {
+      vb = "0 0 100 60";
+      let fenster = "";
+      for (let i = 0; i < 6; i++) {
+        const x = 15 + i * 12;
+        fenster += '<rect class="lc-wg-fenster" x="' + x + '" y="23.5" width="8.6" height="9.5" rx="1.6"/>'
+          + '<path class="lc-wg-spiegel" d="M' + (x + 1.4) + " 31.5 L" + (x + 5.8) + ' 24.8"/>';
+        /* Ein paar Reisende — nur Schemen hinter dem Glas. */
+        if (i === 1 || i === 3 || i === 4) {
+          fenster += '<path class="lc-wg-gast" d="M' + (x + 1.6) + " 33 Q" + (x + 1.6) + " 28.6 " + (x + 4.3) + " 28.4 Q"
+            + (x + 7) + " 28.6 " + (x + 7) + ' 33 Z"/><circle class="lc-wg-gast" cx="' + (x + 4.3) + '" cy="26.8" r="1.7"/>';
+        }
+      }
+      seite =
+        '<rect class="lc-wg-rahmen" x="4" y="44" width="92" height="4.5" rx="1"/>'
+        + '<rect class="lc-lok-bohle" x="0.5" y="41" width="4.5" height="8" rx="1"/>'
+        + '<rect class="lc-lok-bohle" x="95" y="41" width="4.5" height="8" rx="1"/>'
+        /* Das Oberlichtdach: gewoelbt, darauf der schmale Aufbau. */
+        + '<path class="lc-wg-dach" d="M3 19 Q50 9 97 19 L97 21 L3 21 Z"/>'
+        + '<rect class="lc-wg-oberlicht" x="16" y="10.8" width="68" height="4.2" rx="1.2"/>'
+        + '<path class="lc-wg-koerper" d="M4 20 H96 V45 H4 Z"/>'
+        + '<path class="lc-wg-glanz" d="M4 21.4 H96 V23 H4 Z"/>'
+        + '<path class="lc-wg-schatten" d="M4 41 H96 V45 H4 Z"/>'
+        + '<path class="lc-wg-linie" d="M6 35.8 H94 M6 22.4 H94"/>'
+        + fenster
+        /* Die Tueren an beiden Enden, mit Griff. */
+        + '<rect class="lc-wg-tuer" x="5.6" y="23" width="7" height="18" rx="1"/>'
+        + '<rect class="lc-wg-tuer" x="87.4" y="23" width="7" height="18" rx="1"/>'
+        + '<circle class="lc-wg-messing" cx="11" cy="32.5" r=".9"/><circle class="lc-wg-messing" cx="89" cy="32.5" r=".9"/>'
+        /* Zwei Drehgestelle. */
+        + '<rect class="lc-wg-gestell" x="10" y="45.5" width="24" height="4" rx="1.4"/>'
+        + '<rect class="lc-wg-gestell" x="66" y="45.5" width="24" height="4" rx="1.4"/>'
+        + rad(15, 49.5, 6.5) + rad(29, 49.5, 6.5) + rad(71, 49.5, 6.5) + rad(85, 49.5, 6.5);
+      let luefter = "";
+      for (let i = 0; i < 5; i++) luefter += '<circle class="lc-wg-o-luefter" cx="' + (22 + i * 14) + '" cy="30" r="1.9"/>';
+      oben =
+        '<rect class="lc-lok-o-rad" x="10" y="16.2" width="24" height="4.6" rx="1.4"/><rect class="lc-lok-o-rad" x="10" y="39.2" width="24" height="4.6" rx="1.4"/>'
+        + '<rect class="lc-lok-o-rad" x="66" y="16.2" width="24" height="4.6" rx="1.4"/><rect class="lc-lok-o-rad" x="66" y="39.2" width="24" height="4.6" rx="1.4"/>'
+        + '<rect class="lc-wg-o-seite" x="3" y="12.5" width="94" height="35" rx="4"/>'
+        + '<rect class="lc-wg-o-dach" x="4.5" y="15" width="91" height="30" rx="5"/>'
+        + '<rect class="lc-wg-o-dachglanz" x="5" y="17" width="90" height="6" rx="3"/>'
+        + '<rect class="lc-wg-oberlicht" x="15" y="25.5" width="70" height="9" rx="2"/>'
+        + luefter
+        /* Die Faltenbaelge an den Enden — dort geht man hinueber. */
+        + '<rect class="lc-wg-o-balg" x="0" y="22" width="3.4" height="16" rx="1"/>'
+        + '<rect class="lc-wg-o-balg" x="96.6" y="22" width="3.4" height="16" rx="1"/>';
+    }
+    w.innerHTML = '<span class="lc-lok-seite"><svg class="lc-lok-form" viewBox="' + vb + '" aria-hidden="true">'
+      + seite + "</svg></span>"
+      + '<span class="lc-lok-oben"><svg class="lc-lok-o-form" viewBox="' + vb + '" aria-hidden="true">'
+      + oben + "</svg></span>";
+    return w;
+  }
+
+  /* Der Tunnel, wie auf der Modellbahnplatte: ein bewachsener Berg, davor
+     das Portal aus Bruchstein mit dunkler Einfahrt. „innen" zeigt in den
+     Berg; gezeichnet wird von oben, das Portal leicht von vorn — so, wie
+     man eine Platte von schraeg oben anschaut. */
+  function lcLokTunnelZeichnung(tn, d) {
+    const g = d, w = Math.atan2(tn.uy, tn.ux) * 180 / Math.PI;
+    const f = (x) => (x * g).toFixed(1);
+    /* Baeume von oben: je drei Kronen dicht beieinander, Licht oben links —
+       einzelne Kreise sahen aus wie Pickel. */
+    let baeume = "";
+    [[0.5, -0.26, 0.085], [0.66, 0.2, 0.095], [0.36, 0.3, 0.07]].forEach(([x, y, r]) => {
+      [[0, 0], [r * 0.9, r * 0.35], [r * 0.25, -r * 0.85]].forEach(([dx, dy]) => {
+        baeume += '<circle class="lc-tn-baum" cx="' + f(x + dx) + '" cy="' + f(y + dy) + '" r="' + f(r) + '"/>';
+      });
+      [[0, 0], [r * 0.9, r * 0.35], [r * 0.25, -r * 0.85]].forEach(([dx, dy]) => {
+        baeume += '<circle class="lc-tn-baumlicht" cx="' + f(x + dx - r * 0.28) + '" cy="' + f(y + dy - r * 0.28) + '" r="' + f(r * 0.5) + '"/>';
+      });
+    });
+    /* Nach oben und unten ist wenig Platz (Kopfzeile, Knoepfe): dort
+       wird der Berg in Fahrtrichtung gestaucht. */
+    const stauch = Math.abs(tn.uy) > Math.abs(tn.ux) ? 0.7 : 0.55;
+    return '<g class="lc-tn" transform="translate(' + tn.x.toFixed(1) + " " + tn.y.toFixed(1) + ") rotate(" + w.toFixed(1) + ')">'
+      + '<g transform="scale(' + stauch + ' 1)">'
+      /* Der Berg: flach und niedrig, damit er nicht die halbe Kopfzeile
+         zudeckt — zwei Kuppen, ein Fels. */
+      + '<path class="lc-tn-berg" d="M0 ' + f(-0.42) + " C" + f(0.22) + " " + f(-0.5) + " " + f(0.56) + " " + f(-0.5) + " " + f(0.72) + " " + f(-0.3)
+        + " C" + f(0.86) + " " + f(-0.12) + " " + f(0.84) + " " + f(0.18) + " " + f(0.7) + " " + f(0.34)
+        + " C" + f(0.52) + " " + f(0.52) + " " + f(0.2) + " " + f(0.5) + " 0 " + f(0.42) + ' Z"/>'
+      + '<ellipse class="lc-tn-kuppe" cx="' + f(0.42) + '" cy="' + f(-0.06) + '" rx="' + f(0.3) + '" ry="' + f(0.26) + '"/>'
+      + '<ellipse class="lc-tn-fels" cx="' + f(0.2) + '" cy="' + f(-0.36) + '" rx="' + f(0.08) + '" ry="' + f(0.055) + '"/>'
+      + '<ellipse class="lc-tn-fels" cx="' + f(0.74) + '" cy="' + f(-0.02) + '" rx="' + f(0.06) + '" ry="' + f(0.045) + '"/>'
+      + baeume
+      + "</g>"
+      /* Die Einfahrt: man sieht schraeg hinein, deshalb ein Bogen ins Dunkle. */
+      + '<path class="lc-tn-loch" d="M0 ' + f(-0.26) + " C" + f(0.1) + " " + f(-0.26) + " " + f(0.24) + " " + f(-0.17)
+        + " " + f(0.24) + " 0 C" + f(0.24) + " " + f(0.17) + " " + f(0.1) + " " + f(0.26) + " 0 " + f(0.26) + ' Z"/>'
+      /* Das Portal: Bruchsteinmauer quer ueber dem Gleis, mit Schlussstein
+         und zwei Fluegelmauern, die zur Strecke hin auseinandergehen. */
+      + '<path class="lc-tn-fluegel" d="M' + f(-0.02) + " " + f(-0.38) + " L" + f(-0.18) + " " + f(-0.5) + " L" + f(-0.22) + " " + f(-0.45)
+        + " L" + f(-0.06) + " " + f(-0.32) + ' Z"/>'
+      + '<path class="lc-tn-fluegel" d="M' + f(-0.02) + " " + f(0.38) + " L" + f(-0.18) + " " + f(0.5) + " L" + f(-0.22) + " " + f(0.45)
+        + " L" + f(-0.06) + " " + f(0.32) + ' Z"/>'
+      + '<rect class="lc-tn-mauer" x="' + f(-0.08) + '" y="' + f(-0.4) + '" width="' + f(0.1) + '" height="' + f(0.8) + '" rx="' + f(0.02) + '"/>'
+      + '<path class="lc-tn-fuge" d="M' + f(-0.08) + " " + f(-0.26) + " H" + f(0.02) + " M" + f(-0.08) + " " + f(-0.1) + " H" + f(0.02)
+        + " M" + f(-0.08) + " " + f(0.1) + " H" + f(0.02) + " M" + f(-0.08) + " " + f(0.26) + " H" + f(0.02)
+        + " M" + f(-0.03) + " " + f(-0.4) + " V" + f(-0.26) + " M" + f(-0.03) + " " + f(-0.1) + " V" + f(0.1)
+        + " M" + f(-0.03) + " " + f(0.26) + " V" + f(0.4) + '"/>'
+      + '<rect class="lc-tn-schluss" x="' + f(-0.1) + '" y="' + f(-0.045) + '" width="' + f(0.14) + '" height="' + f(0.09) + '" rx="' + f(0.015) + '"/>'
+      + "</g>";
+  }
+
+  /* Die Schranke: zwei Halbschranken rot-weiss, je ein Pfosten mit
+     Andreaskreuz und Blinklicht. Die Strasse kreuzt das Gleis genau dort,
+     wo jemand sitzt. Offen zeigen die Baeume vom Gleis weg, geschlossen
+     liegen sie quer ueber der Strasse. */
+  function lcLokSchrankeZeichnung(sr, d) {
+    const f = (x) => (x * d).toFixed(1);
+    const baum = (px, py, offen, zu) =>
+      '<g transform="translate(' + f(px) + " " + f(py) + ')">'
+      /* Gedreht wird mit SMIL um den Pfosten — eine CSS-Drehung dreht in
+         SVG um den Ursprung der ganzen Zeichnung, nicht um den Pfosten. */
+      + '<g class="lc-sr-baum" transform="rotate(' + offen + ')">'
+      + '<animateTransform class="lc-sr-ab" attributeName="transform" type="rotate" from="' + offen + '" to="' + zu
+        + '" dur="0.9s" begin="indefinite" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .3 1"/>'
+      + '<animateTransform class="lc-sr-auf" attributeName="transform" type="rotate" from="' + zu + '" to="' + offen
+        + '" dur="0.9s" begin="indefinite" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .3 1"/>'
+      + '<rect class="lc-sr-weiss" x="0" y="' + f(-0.028) + '" width="' + f(0.74) + '" height="' + f(0.056) + '" rx="' + f(0.02) + '"/>'
+      + '<path class="lc-sr-rot" d="M' + f(0.1) + " 0 H" + f(0.71) + '"/>'
+      + "</g>"
+      + '<circle class="lc-sr-pfosten" r="' + f(0.07) + '"/>'
+      + '<circle class="lc-sr-licht" r="' + f(0.035) + '"/>'
+      /* Das Andreaskreuz neben dem Pfosten. */
+      + '<g transform="translate(' + f(px < 0 ? -0.16 : 0.16) + " " + f(py < 0 ? -0.1 : 0.1) + ')">'
+      + '<path class="lc-sr-kreuz" d="M' + f(-0.07) + " " + f(-0.07) + " L" + f(0.07) + " " + f(0.07) + " M" + f(0.07) + " " + f(-0.07) + " L" + f(-0.07) + " " + f(0.07) + '"/>'
+      + "</g></g>";
+    return '<g transform="translate(' + sr.q.x.toFixed(1) + " " + sr.q.y.toFixed(1) + ") rotate(" + sr.winkel.toFixed(1) + ')">'
+      + baum(-0.52, -0.64, -90, 0) + baum(0.52, 0.64, 90, 180)
+      + "</g>";
+  }
+
+  /* Die Tunnelmaske: alles, was hinter einem Portal im Berg liegt, wird
+     ausgespart. „x0/y0" ist die linke obere Ecke des Elements in
+     Buehnen-Koordinaten. Zug UND Gleis tragen sie — das Gleis laeuft im
+     Berg weiter, man sieht es nur nicht. */
+  function lcLokTunnelMaske(el, x0, y0, b, h, tunnel, d) {
+    let loecher = "";
+    tunnel.forEach((tn) => {
+      const nx = -tn.uy, ny = tn.ux, q = d * 1.3, tief = d * 10;
+      const p = [[tn.x + nx * q, tn.y + ny * q], [tn.x + nx * q + tn.ux * tief, tn.y + ny * q + tn.uy * tief],
+                 [tn.x - nx * q + tn.ux * tief, tn.y - ny * q + tn.uy * tief], [tn.x - nx * q, tn.y - ny * q]];
+      loecher += " M" + p.map(([x, y]) => (x - x0).toFixed(1) + " " + (y - y0).toFixed(1)).join(" L") + " Z";
+    });
+    const maske = '<svg xmlns="http://www.w3.org/2000/svg" width="' + b.toFixed(0) + '" height="' + h.toFixed(0) + '">'
+      + '<path fill-rule="evenodd" fill="#000" d="M0 0 H' + b.toFixed(0) + " V" + h.toFixed(0) + " H0 Z" + loecher + '"/></svg>';
+    const url = 'url("data:image/svg+xml;utf8,' + encodeURIComponent(maske) + '")';
+    el.style.webkitMaskImage = url;
+    el.style.maskImage = url;
+    el.style.webkitMaskSize = "100% 100%";
+    el.style.maskSize = "100% 100%";
+    el.style.webkitMaskRepeat = "no-repeat";
+    el.style.maskRepeat = "no-repeat";
+  }
+
+  function lcLokFahrt(lok, reihe, rk, ab, zu, start, ende, dauer, hin, d, plan, zeit) {
+    const gitter = lcPlatzGitter() || [];
+    if (!plan || !zeit) return null;
+    const bahn = plan.bahnF;
+    const pt = bahn.pt, gesamt = bahn.gesamt, T = zeit.T;
 
     /* Wie die Seitenansicht schaut. LC_REISE_BLICK.lok ist -1, weil die
        Zeichnung den Schornstein LINKS hat: ohne das fuhr die Lok
@@ -49169,8 +49543,6 @@
         ? pt[i - 1].einSeit : seitlich(pt[i - 1].winkel)) : true;
       q.ausSeit = seitlich(q.winkel);
     });
-    /* Der Ausgang des Bogens steht erst fest, wenn seine letzte
-       Station gelesen ist — darum rueckwaerts noch einmal darueber. */
     for (let i = pt.length - 2; i >= 0; i--) {
       if (pt[i].bogen >= 0 && pt[i + 1].bogen >= 0 && pt[i + 1].bogen > pt[i].bogen) {
         pt[i].ausSeit = pt[i + 1].ausSeit;
@@ -49182,62 +49554,216 @@
       if (q.bogen > 0.66) return q.ausSeit ? (q.bogen - 0.66) / 0.34 : 0;
       return 0;
     };
+    pt.forEach((q) => { q.klar = seiteKlar(q); });
 
+    /* Ein Ort auf der Strecke zu jedem Weg s — auch VOR dem Anfang und
+       HINTER dem Ende (dort stehen die Wagen, solange sie noch im Berg
+       sind): die erste und die letzte Gerade werden einfach verlaengert. */
+    const erstU = (() => {
+      for (let i = 1; i < pt.length; i++) if (pt[i].s > pt[0].s + 0.1) {
+        const l = pt[i].s - pt[0].s;
+        return { x: (pt[i].x - pt[0].x) / l, y: (pt[i].y - pt[0].y) / l };
+      }
+      return { x: 1, y: 0 };
+    })();
+    const letzt = pt[pt.length - 1];
+    const letztU = (() => {
+      for (let i = pt.length - 2; i >= 0; i--) if (pt[i].s < letzt.s - 0.1) {
+        const l = letzt.s - pt[i].s;
+        return { x: (letzt.x - pt[i].x) / l, y: (letzt.y - pt[i].y) / l };
+      }
+      return erstU;
+    })();
+    const ortBei = (s) => {
+      if (s <= pt[0].s) {
+        const k = pt[0].s - s;
+        return { x: pt[0].x - erstU.x * k, y: pt[0].y - erstU.y * k, winkel: pt[0].winkel,
+                 klar: pt[0].klar, bogen: -1 };
+      }
+      if (s >= letzt.s) {
+        const k = s - letzt.s;
+        return { x: letzt.x + letztU.x * k, y: letzt.y + letztU.y * k, winkel: letzt.winkel,
+                 klar: letzt.klar, bogen: -1 };
+      }
+      let i = 1;
+      while (i < pt.length - 1 && pt[i].s < s) i++;
+      const a = pt[i - 1], b = pt[i];
+      const f = b.s > a.s ? (s - a.s) / (b.s - a.s) : 0;
+      return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f,
+               winkel: a.winkel + (b.winkel - a.winkel) * f,
+               klar: a.klar + (b.klar - a.klar) * f,
+               bogen: f < 0.5 ? a.bogen : b.bogen };
+    };
+
+    /* Der Fahrplan eines Fahrzeugs, das „L" hinter der Lok faehrt: es
+       ist an der Stelle s, wenn die Lok bei s + L ist. Dazu die zwei
+       Augenblicke an der Schranke, in denen der ganze Zug steht. */
+    const fahrplan = (L) => {
+      const liste = [{ t: 0, s: -L }];
+      pt.forEach((q) => {
+        if (q.s <= -L || q.s >= gesamt - L) return;
+        liste.push({ t: T(q.s + L), s: q.s });
+      });
+      if (plan.schranke) {
+        const sh = plan.schranke.sHalt;
+        liste.push({ t: sh / zeit.v, s: sh - L });
+        liste.push({ t: sh / zeit.v + zeit.W, s: sh - L });
+      }
+      liste.push({ t: T(gesamt), s: gesamt - L });
+      liste.sort((a, b) => a.t - b.t || a.s - b.s);
+      return liste.filter((e, i) => i === 0 || e.t > liste[i - 1].t + 0.5 || e.s !== liste[i - 1].s);
+    };
     const ort = (q) => "translate(" + (q.x - start.x).toFixed(1) + "px, "
       + (q.y - start.y).toFixed(1) + "px) translate(-50%, -50%)";
-    const zeit = (q) => Math.max(0, Math.min(1, tAn * (q.s / gesamt)));
-    const auf = Math.max(0.004, Math.min(0.1, tAn * 0.12, zeit(pt[1] || pt[0]) * 0.6));
+    const zuOffset = (t) => Math.max(0, Math.min(1, t / dauer));
 
-    /* 1. DER WEG. Nur verschieben und am Anfang/Ende auftauchen. */
-    const rahmen = [
-      { transform: ort(pt[0]) + " scale(.3)", opacity: 0, offset: 0 },
-      { transform: ort(pt[0]) + " scale(1)", opacity: 1, offset: auf },
-    ];
-    pt.forEach((q, i) => {
-      if (i === 0) return;
-      rahmen.push({ transform: ort(q) + " scale(1)", opacity: 1,
-                    offset: Math.max(auf, zeit(q)) });
-    });
-    rahmen.push({ transform: ort(pt[pt.length - 1]) + " scale(.3)", opacity: 0, offset: 1 });
+    /* Ein Fahrzeug in Gang setzen: Weg, Seitenansicht, Draufsicht. */
+    const fahren = (el, L, mitBlende) => {
+      const plan2 = fahrplan(L);
+      const rahmen = [], seiteRahmen = [], obenRahmen = [];
+      let spur = null;
+      plan2.forEach((e, i) => {
+        const q = ortBei(e.s);
+        const off = zuOffset(e.t);
+        if (spur === null) spur = nachLinks(q.winkel) ? -blick : blick;
+        if (q.bogen < 0 || q.bogen > 0.5) spur = nachLinks(q.winkel) ? -blick : blick;
+        rahmen.push({ transform: ort(q) + " scale(1)", opacity: 1, offset: off });
+        seiteRahmen.push({ opacity: q.klar, transform: "scaleX(" + spur + ")", offset: off });
+        obenRahmen.push({ opacity: 1 - q.klar, transform: "rotate(" + q.winkel.toFixed(1) + "deg)", offset: off });
+      });
+      /* Offsets duerfen nicht rueckwaerts laufen (Rundungen). */
+      [rahmen, seiteRahmen, obenRahmen].forEach((r) => {
+        for (let i = 1; i < r.length; i++) if (r[i].offset < r[i - 1].offset) r[i].offset = r[i - 1].offset;
+        const l = r[r.length - 1];
+        if (l.offset < 1) r.push(Object.assign({}, l, { offset: 1 }));
+      });
+      if (mitBlende) {
+        /* Ohne Tunnel: auftauchen am Start, verschwinden am Ziel — wie bisher. */
+        const erst = rahmen.length > 1 ? rahmen[1].offset : 0.1;
+        const auf = Math.max(0.004, Math.min(0.1, zuOffset(hin) * 0.12, erst * 0.6));
+        const r0 = rahmen[0];
+        rahmen[0] = Object.assign({}, r0, { transform: r0.transform.replace("scale(1)", "scale(.3)"), opacity: 0 });
+        rahmen.splice(1, 0, Object.assign({}, r0, { offset: auf }));
+        const l = rahmen[rahmen.length - 1];
+        rahmen[rahmen.length - 1] = Object.assign({}, l, { transform: l.transform.replace("scale(1)", "scale(.3)"), opacity: 0, offset: 1 });
+      }
+      el.animate(rahmen, { duration: dauer, easing: "linear", fill: "forwards" });
+      const se = el.querySelector(".lc-lok-seite"), ob = el.querySelector(".lc-lok-oben");
+      if (se) se.animate(seiteRahmen, { duration: dauer, easing: "linear", fill: "forwards" });
+      if (ob) ob.animate(obenRahmen, { duration: dauer, easing: "linear", fill: "forwards" });
+    };
 
-    /* 2. DIE SEITENANSICHT: sichtbar auf den Geraden, gespiegelt in der
-       Mitte des Bogens — also unsichtbar. Kein Drehen auf der Stelle. */
-    const seiteEl = lok.querySelector(".lc-lok-seite");
-    const obenEl = lok.querySelector(".lc-lok-oben");
-    const seiteRahmen = [], obenRahmen = [];
-    let spur = nachLinks(pt[0].winkel) ? -blick : blick;
-    pt.forEach((q) => {
-      const t = Math.max(0, Math.min(1, zeit(q)));
-      const klar = seiteKlar(q);
-      /* Gespiegelt wird erst hinter der Mitte des Bogens. */
-      if (q.bogen < 0 || q.bogen > 0.5) spur = nachLinks(q.winkel) ? -blick : blick;
-      seiteRahmen.push({ opacity: klar, transform: "scaleX(" + spur + ")", offset: t });
-      obenRahmen.push({ opacity: 1 - klar,
-                        transform: "rotate(" + q.winkel.toFixed(1) + "deg)", offset: t });
-    });
-    /* Bis zum Schluss stehen lassen, sonst springt die Zeichnung am
-       Ende der Reise in ihre Grundstellung zurueck. */
-    const letztS = seiteRahmen[seiteRahmen.length - 1];
-    const letztO = obenRahmen[obenRahmen.length - 1];
-    if (letztS.offset < 1) {
-      seiteRahmen.push(Object.assign({}, letztS, { offset: 1 }));
-      obenRahmen.push(Object.assign({}, letztO, { offset: 1 }));
+    /* 1. DIE HUELLE MIT DEM TUNNEL. Was im Berg ist, sieht man nicht:
+       die Huelle traegt eine Maske, die hinter jedem Portal ein Stueck
+       Gleis ausspart. Deshalb koennen Lok und Wagen schon IM Berg
+       stehen und kommen Stueck fuer Stueck heraus. */
+    const weitere = [];
+    let huelle = null, hx = 0, hy = 0;
+    if (plan.tunnel) {
+      const xs = pt.map((q) => q.x), ys = pt.map((q) => q.y);
+      hx = Math.min.apply(null, xs) - d * 7;
+      hy = Math.min.apply(null, ys) - d * 7;
+      const hb = Math.max.apply(null, xs) + d * 7 - hx, hh = Math.max.apply(null, ys) + d * 7 - hy;
+      huelle = document.createElement("div");
+      huelle.className = "lc-lok-zug";
+      huelle.style.left = hx.toFixed(1) + "px";
+      huelle.style.top = hy.toFixed(1) + "px";
+      huelle.style.width = hb.toFixed(0) + "px";
+      huelle.style.height = hh.toFixed(0) + "px";
+      lcLokTunnelMaske(huelle, hx, hy, hb, hh, plan.tunnel, d);
+      reihe.appendChild(huelle);
+      weitere.push(huelle);
+      huelle.appendChild(lok);
+      lok.style.left = (start.x - hx).toFixed(1) + "px";
+      lok.style.top = (start.y - hy).toFixed(1) + "px";
+      /* Die Berge liegen UEBER dem Zug. */
+      const berg = document.createElementNS(NS_SVG, "svg");
+      berg.setAttribute("class", "lc-lok-tunnel");
+      berg.setAttribute("width", hb.toFixed(0));
+      berg.setAttribute("height", hh.toFixed(0));
+      berg.style.left = hx.toFixed(1) + "px";
+      berg.style.top = hy.toFixed(1) + "px";
+      berg.innerHTML = '<g transform="translate(' + (-hx).toFixed(1) + " " + (-hy).toFixed(1) + ')">'
+        + plan.tunnel.map((tn) => lcLokTunnelZeichnung(tn, d)).join("") + "</g>";
+      reihe.appendChild(berg);
+      weitere.push(berg);
     }
+
+    /* 2. DIE WAGEN — nur wenn der Zug aus dem Tunnel kommt: „dann tauchen
+       ploetzlich noch weitere Waggons auf, die sie mitzieht". */
     try {
-      lok.animate(rahmen, { duration: dauer, easing: "linear", fill: "forwards" });
-      if (seiteEl) seiteEl.animate(seiteRahmen, { duration: dauer, easing: "linear", fill: "forwards" });
-      if (obenEl) obenEl.animate(obenRahmen, { duration: dauer, easing: "linear", fill: "forwards" });
+      if (plan.wagen && huelle) {
+        LC_ZUG_ABSTAND.liste.slice().reverse().forEach((wz) => {
+          const wg = lcLokWagen(wz.art, d);
+          huelle.insertBefore(wg, huelle.firstChild);
+          wg.style.left = (start.x - hx).toFixed(1) + "px";
+          wg.style.top = (start.y - hy).toFixed(1) + "px";
+          fahren(wg, wz.ab * d, false);
+        });
+      }
+      fahren(lok, 0, !plan.tunnel);
     } catch (e) { return null; }
 
-    /* 3. DIE GLEISE — aus denselben Modulen, auf denen sie faehrt. */
-    /* RUNDE 100: gezeichnet wird der geschlossene Rundkurs (siehe
-       lcLokRundkurs); gefahren wird weiter nur die eigene Strecke. */
+    /* Der Fahrgast steigt am Ziel aus: mit Tunnel faehrt die Lok weiter
+       in den Berg, das Bild im Fenster ist dann schon am Platz. */
+    if (plan.tunnel) {
+      const aus = zuOffset(hin - 160), weg2 = zuOffset(hin + 60);
+      lok.querySelectorAll(".lc-lok-fenster").forEach((fe) => {
+        try {
+          fe.animate([{ opacity: 1, offset: 0 }, { opacity: 1, offset: aus },
+                      { opacity: 0, offset: Math.max(aus, weg2) }, { opacity: 0, offset: 1 }],
+                     { duration: dauer, fill: "forwards" });
+        } catch (e) {}
+      });
+    }
+
+    /* 3. DIE GLEISE — geschlossener Kreis oder offen bis in die Tunnel. */
     let gleisPlan = bahn;
     try {
-      const rund = lcLokBahnRund(lcLokRundkurs(pk, d, { x: rk.width / 2, y: rk.height / 2, breite: rk.width }), d * 0.62);
-      if (rund && rund.mod.length) gleisPlan = rund;
+      if (plan.rund) {
+        const rund = lcLokBahnRund(plan.rund, d * 0.62);
+        if (rund && rund.mod.length) gleisPlan = rund;
+      } else if (plan.gleisPk) {
+        gleisPlan = lcLokBahn(plan.gleisPk, d * 0.62);
+        gleisPlan.zu = true;
+      }
     } catch (e) { gleisPlan = bahn; }
     const gleis = lcLokGleise(reihe, gleisPlan, rk, d);
+    if (plan.tunnel && gleis) {
+      lcLokTunnelMaske(gleis, parseFloat(gleis.style.left) || 0, parseFloat(gleis.style.top) || 0,
+                       Number(gleis.getAttribute("width")) || 1, Number(gleis.getAttribute("height")) || 1,
+                       plan.tunnel, d);
+    }
+
+    /* 4. DIE SCHRANKE. Sie blinkt und laeutet, bevor die Lok ankommt,
+       schliesst, die Lok wartet — und wer dann noch dasitzt, wird
+       ueberfahren. Aufgemacht wird erst, wenn der letzte Wagen durch ist. */
+    const uhren = [];
+    if (plan.schranke) {
+      const sr = plan.schranke;
+      const tAn = sr.sHalt / zeit.v;
+      const schwanz = plan.wagen ? LC_ZUG_ABSTAND.schwanz : LC_ZUG.lok / 2;
+      const tDurch = Math.min(dauer - 200, T(sr.s + d * (0.55 + schwanz)));
+      const el = document.createElementNS(NS_SVG, "svg");
+      el.setAttribute("class", "lc-lok-schranke");
+      el.setAttribute("width", Math.max(1, rk.width + d * 4).toFixed(0));
+      el.setAttribute("height", Math.max(1, rk.height + d * 4).toFixed(0));
+      el.style.left = (-d * 2).toFixed(1) + "px";
+      el.style.top = (-d * 2).toFixed(1) + "px";
+      el.innerHTML = '<g transform="translate(' + (d * 2).toFixed(1) + " " + (d * 2).toFixed(1) + ')">'
+        + lcLokSchrankeZeichnung(sr, d) + "</g>";
+      reihe.appendChild(el);
+      weitere.push(el);
+      uhren.push(setTimeout(() => el.classList.add("lc-sr-da"), Math.max(0, tAn - 1900)));
+      uhren.push(setTimeout(() => {
+        el.classList.add("lc-sr-blinkt");
+        lcTonSpaeter("lokglocke", 0, 0.32);
+      }, Math.max(0, tAn - 1500)));
+      const smil = (wahl) => el.querySelectorAll(wahl).forEach((a) => { try { a.beginElement(); } catch (e) {} });
+      uhren.push(setTimeout(() => smil(".lc-sr-ab"), Math.max(0, tAn - 1000)));
+      uhren.push(setTimeout(() => { el.classList.remove("lc-sr-blinkt"); smil(".lc-sr-auf"); }, Math.max(0, tDurch)));
+      uhren.push(setTimeout(() => el.classList.remove("lc-sr-da"), Math.max(0, tDurch + 700)));
+    }
 
     /* =================================================================
        WER UEBERFAHREN WIRD
@@ -49246,34 +49772,20 @@
        ausloesen, gemessen an ihrem Geschlecht, ob es ein Mann oder
        eine Frau ist, und sie koennten dann auch vom Bild her
        entsprechend geplaettet sein."
-       Getroffen ist, wessen Platzmitte nahe genug an der BAHN liegt —
-       nicht mehr nur auf den waagerechten Stuecken, denn jetzt liegen
-       auch in der Kurve und auf der Senkrechten Gleise. Gerechnet wird
-       der Lotfusspunkt auf jedes Teilstueck; daraus kommt der
-       zurueckgelegte Weg und damit der AUGENBLICK des Ueberfahrens.
+       Getroffen ist, wessen Platzmitte nahe genug an der BAHN liegt.
+       Der AUGENBLICK kommt jetzt aus dem Fahrplan (T) — mit Tunnel und
+       Schranke faehrt die Lok nicht mehr gleichmaessig von 0 bis „hin".
        Ob dort wirklich jemand sitzt, entscheidet sich erst dann.
        ================================================================= */
-    const uhren = [];
     const nah = d * 0.42;
     gitter.forEach((g) => {
       if (g.nr === ab.nr) return;
-      const gx = g.x - rk.left, gy = g.y - rk.top;
-      let beste = Infinity, besteS = 0;
-      for (let i = 1; i < pt.length; i++) {
-        const a = pt[i - 1], b = pt[i];
-        const dx = b.x - a.x, dy = b.y - a.y;
-        const ll = dx * dx + dy * dy;
-        let f = ll ? ((gx - a.x) * dx + (gy - a.y) * dy) / ll : 0;
-        f = Math.max(0, Math.min(1, f));
-        const px = a.x + dx * f, py = a.y + dy * f;
-        const ds = Math.hypot(gx - px, gy - py);
-        if (ds < beste) { beste = ds; besteS = a.s + (b.s - a.s) * f; }
-      }
-      if (beste > nah) return;
-      const wann = dauer * tAn * (besteS / gesamt);
+      const lot = lcLokLot(pt, { x: g.x - rk.left, y: g.y - rk.top + lcBildVersatz(g.el) });
+      if (lot.dist > nah) return;
+      const wann = T(lot.s);
+      if (wann > dauer) return;
       uhren.push(setTimeout(() => {
         if (!g.el.isConnected) return;
-        /* Erst JETZT entscheidet sich, ob dort jemand sitzt. */
         if (g.el.classList.contains("lc-platz-frei")
             || g.el.classList.contains("lc-platz-unterwegs")) return;
         const k = g.el.querySelector(".lc-kreis");
@@ -49286,10 +49798,7 @@
         lcGeraeusch(lcSchmerzTon(g.el), "lokopfer", 0.5);
       }, Math.max(0, wann)));
     });
-    /* „buehne" bleibt in der Antwort, weil der Aufrufer sie aufraeumt —
-       eine Schiebebuehne gibt es aber nicht mehr: sie war der Ersatz
-       fuer die Kurve, und die Kurve ist jetzt da. */
-    return { gleis: gleis, buehne: null, uhren: uhren };
+    return { gleis: gleis, buehne: null, weitere: weitere, uhren: uhren };
   }
 
   /* Eine Absage, die man auch sieht. Sie gehoert nicht in den Chat der
@@ -57526,7 +58035,8 @@
          es zwischen Trab (ohne) und Galopp (mit): XANDER, „wenn man
          das Ganze aufzieht, dann soll es Pferd im Galopp". */
       const tempoR = Math.max(1, Math.min(5, Number(nachricht && nachricht.tempo) || 1));
-      if (lcReise(wenR, vonR, art, Boolean(nachricht && nachricht.tausch), tempoR)) return;
+      if (lcReise(wenR, vonR, art, Boolean(nachricht && nachricht.tausch), tempoR,
+                  nachricht && nachricht.los)) return;
     }
     /* RUNDE 76 — XANDER: „Telefon mit Audio."
        Es braucht BEIDE Plaetze — den, der anruft, und den, der

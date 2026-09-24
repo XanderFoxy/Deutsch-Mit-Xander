@@ -12619,8 +12619,12 @@ window.LiveChat = (function () {
           + (art === "frisbee" ? "  \ud83e\udd4f" : "  \ud83d\udfe2"),
           { wirkung: art, wen: String(zielNrR), tausch: 1 });
       }
+      /* FUNK 76 — das Los faehrt mit: ob die Lok an einer Schranke
+         haelt, wird EINMAL beim Absender gewuerfelt, damit alle dieselbe
+         Fahrt sehen (und der Sitzwechsel ueberall gleich spaet kommt). */
       return anAlle("aktion", zustand.ichName + satzR[0] + zielNrR + ueberR
-                    + "  " + satzR[1], { wirkung: art, wen: wenR });
+                    + "  " + satzR[1], { wirkung: art, wen: wenR,
+                                         los: Math.random().toFixed(4) });
     }
     if ((art === "fahren" || art === "huepfen" || art === "laufen")
         && /^\s*\d+(\s*-\s*\d+)*(\s*[x\u00d7]\d)?\s*$/i.test(rest)) {

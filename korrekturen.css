@@ -33395,3 +33395,88 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-hotrod-buehne .lc-hr-rohr { stroke: #d6dce3; stroke-width: 4.6; filter: none; }
 .lc-hr-rohr-licht { fill: none; stroke: #ffffff; stroke-opacity: .85; stroke-width: 1.3; stroke-linecap: round; }
 .lc-hotrod-buehne .lc-hr-trichter { fill: #f3f5f8; stroke: #4b5563; stroke-width: 1.4; }
+
+/* =====================================================================
+   FUNK 76 (24.09.) — MODELLBAHN: TUNNEL, SCHRANKE, WAGEN
+   ---------------------------------------------------------------------
+   XANDER: „dann sollen dort Tunnel sein … diese Tunnel können schön
+   ausgestaltet sein wie auf einer realistischen Modelleisenbahnplatte …
+   mal eine Eisenbahnschranke … die Waggons zu der traditionellen Lok …
+   dass sie dem Look entsprechen und schön aussehen."
+   Reihenfolge von unten: Gleis (0) · Plaetze · Schranke (6) · Zug (8)
+   · Berg mit Portal (9) — der Zug faehrt UNTER dem Berg hindurch.
+   ===================================================================== */
+.lc-lok-zug {
+  position: absolute;
+  pointer-events: none;
+  z-index: 8;
+}
+.lc-lok-tunnel, .lc-lok-schranke {
+  position: absolute;
+  pointer-events: none;
+  overflow: visible;
+}
+.lc-lok-tunnel { z-index: 9; animation: lcLokGleisR85 .4s ease-out both; }
+.lc-lok-schranke { z-index: 6; opacity: 0; transition: opacity .35s ease; }
+.lc-lok-schranke.lc-sr-da { opacity: 1; }
+
+/* Der Berg: Gras mit Licht oben links, dunklerer Fuss. */
+.lc-tn-berg  { fill: #5d8a3c; stroke: #3b5e25; stroke-width: 1.2; }
+.lc-tn-kuppe { fill: #79a24e; opacity: .75; }
+.lc-tn-fels  { fill: #8f8a80; stroke: #5f5a52; stroke-width: .8; }
+.lc-tn-baum  { fill: #2e5a27; stroke: #1d3b18; stroke-width: .8; }
+.lc-tn-baumlicht { fill: #4f8a3a; opacity: .8; }
+.lc-tn-loch  { fill: #0c0e0f; stroke: #2a2d2f; stroke-width: 1; }
+.lc-tn-mauer, .lc-tn-fluegel { fill: #a39d92; stroke: #6a655d; stroke-width: 1; }
+.lc-tn-fuge  { stroke: #6a655d; stroke-width: .8; fill: none; }
+.lc-tn-schluss { fill: #c2bcb0; stroke: #6a655d; stroke-width: .8; }
+
+/* Die Schranke: rot-weisse Baeume, die herunterschwingen. */
+.lc-sr-weiss  { fill: #f7f5f0; stroke: #555; stroke-width: .7; }
+.lc-sr-rot    { stroke: #c62828; stroke-width: 3.4; stroke-dasharray: 6 6; fill: none; }
+.lc-sr-pfosten { fill: #e9e6df; stroke: #4a4a4a; stroke-width: 1; }
+.lc-sr-licht  { fill: #5a1414; }
+.lc-sr-blinkt .lc-sr-licht { animation: lcSrBlink .5s steps(1, end) infinite; }
+@keyframes lcSrBlink {
+  0%   { fill: #ff3b30; filter: drop-shadow(0 0 3px #ff3b30); }
+  50%  { fill: #5a1414; filter: none; }
+}
+.lc-sr-kreuz  { stroke: #fff; stroke-width: 3.2; stroke-linecap: round; fill: none;
+                filter: drop-shadow(0 0 .6px #c62828) drop-shadow(0 0 .6px #c62828); }
+
+/* Die Wagen: Tender 0,99 und Abteilwagen 1,417 Platzbreiten lang,
+   gleich hoch wie die Lok (0,85) — die Raeder stehen auf derselben
+   Schiene. Dieselben Zahlen stehen in app.js (LC_ZUG). */
+.lc-lok-wagen {
+  position: absolute;
+  pointer-events: none;
+  height: calc(var(--gross, 64px) * 0.85);
+  transform: translate(-50%, -50%);
+}
+.lc-lok-wagen-tender { width: calc(var(--gross, 64px) * 0.99); }
+.lc-lok-wagen-wagen  { width: calc(var(--gross, 64px) * 1.417); }
+.lc-wg-rahmen   { fill: #15191d; }
+.lc-wg-tender   { fill: url(#lokLack); stroke: #070a0c; stroke-width: 1.2; }
+.lc-wg-glanz    { fill: #4d5865; opacity: .45; }
+.lc-wg-schatten { fill: #020406; opacity: .5; }
+.lc-wg-kohle    { fill: #1b1b1d; stroke: #0a0a0b; stroke-width: .8; }
+.lc-wg-kohleglanz { fill: #8a8f96; opacity: .8; }
+.lc-wg-messing  { fill: url(#lokGold); stroke: #6d5012; stroke-width: .5; }
+.lc-wg-linie    { stroke: #e7bb4e; stroke-width: .9; fill: none; opacity: .9; }
+.lc-wg-koerper  { fill: #6b1b24; stroke: #3a0d12; stroke-width: 1.2; }
+.lc-wg-dach     { fill: #2c3035; stroke: #15181b; stroke-width: 1; }
+.lc-wg-oberlicht { fill: #3b4046; stroke: #15181b; stroke-width: .8; }
+.lc-wg-fenster  { fill: #1d2a33; stroke: #e9dcb8; stroke-width: 1.1; }
+.lc-wg-spiegel  { stroke: #cfe3ef; stroke-width: 1; opacity: .45; }
+.lc-wg-gast     { fill: #0e1418; opacity: .75; }
+.lc-wg-tuer     { fill: none; stroke: #e7bb4e; stroke-width: .8; }
+.lc-wg-gestell  { fill: #1b1f23; }
+.lc-wg-o-kasten { fill: url(#lokLack); stroke: #04060a; stroke-width: 1.2; }
+.lc-wg-o-wasser { fill: #242b33; stroke: #04060a; stroke-width: .8; }
+.lc-wg-o-deckel { fill: #3a3326; }
+.lc-wg-o-dach   { fill: #33383e; stroke: #111417; stroke-width: 1.2; }
+.lc-wg-o-dachglanz { fill: #59606a; opacity: .5; }
+.lc-wg-o-luefter { fill: #22262a; stroke: #111417; stroke-width: .7; }
+.lc-wg-o-balg   { fill: #111; }
+.lc-wg-o-seite { fill: #6b1b24; stroke: #3a0d12; stroke-width: 1; }
+.lc-lok-tunnel .lc-tn { filter: drop-shadow(0 2px 2px rgba(40, 50, 20, .35)); }

@@ -273,7 +273,7 @@ const sage = (gut, was, zusatz) => {
     "und ihre Mitte bleibt die ganze Fahrt ueber gleich weit von der Schiene",
     kleinster + " bis " + grosster + " px");
 
-  console.log("\nRUNDE 100 — DIE STRECKE IST IMMER EIN GESCHLOSSENER KREIS\n");
+  console.log("\nFUNK 76 — KREIS ODER TUNNEL\n");
   /* XANDER (Walkie #84): „Wenn man die Lok einmal im Kreis fahren läßt,
      soll die Strecke mit einer runden Kurve abschließen und generell soll
      die Strecke immer automatisch und logisch geschlossen werden, egal
@@ -284,7 +284,17 @@ const sage = (gut, was, zusatz) => {
      springt schraeg von 1 nach 6 — an schraegen Ecken gibt es kein
      Kurvenmodul, dort klaffen die Schienen (auch vor Runde 100 schon:
      8 freie Enden). Das bleibt eine eigene Baustelle. */
-  for (const weg of ["2", "1-2-6-5", "1-5-6-7-3", "1-5-6-7-8-4"]) {
+  /* FUNK 76 (24.09.) — XANDER: „wenn sie von der 1 bis zur vier über die
+     acht zur fünf fährt, dass der Kreis geschlossen ist … immer wo es kein
+     einfacher geschlossener Kreis ist, sollen Tunnel sein."
+     Die Regel aus Walkie #84 („immer geschlossen") gilt damit nur noch
+     fuer den Kreis. Eine offene Strecke endet in zwei Tunneln: jedes
+     freie Schienenende muss IM Berg liegen (hoechstens eine halbe
+     Platzbreite hinter dem Portal). */
+  const d97 = await pg.evaluate(() => (document.querySelector(".lc-kreis") || {}).offsetWidth || 64);
+  for (const [weg, kreisErwartet] of [["1-2-6-5", true], ["1-2-3-4-8-7-6-5", true],
+                                       ["2", false], ["1-5-6-7-3", false], ["1-5-6-7-8-4", false],
+                                       ["1-5-6-2-3-7-8-4", false]]) {
     const kreis = await pg.evaluate(async (w) => {
       window.DMA_PRUEF.effektBuehne();
       await new Promise((f) => setTimeout(f, 250));
@@ -292,21 +302,41 @@ const sage = (gut, was, zusatz) => {
       await new Promise((f) => setTimeout(f, 700));
       const g = document.querySelector(".lc-lok-gleis");
       if (!g) return null;
+      const gr = g.getBoundingClientRect();
       const enden = [];
       g.querySelectorAll(".lc-lok-schiene").forEach((pf) => {
         const z = (pf.getAttribute("d").match(/-?[0-9.]+/g) || []).map(Number);
         if (z.length >= 4) enden.push([z[0], z[1]], [z[z.length - 2], z[z.length - 1]]);
       });
       const frei = enden.filter((e, i) => !enden.some((f, j) => j !== i
-        && Math.hypot(e[0] - f[0], e[1] - f[1]) < 1.5)).length;
-      const r = g.getBoundingClientRect();
-      return { frei: frei, schienen: g.querySelectorAll(".lc-lok-schiene").length,
-               rund: g.querySelectorAll(".lc-lok-schiene.lc-lok-rund").length,
-               links: Math.round(r.left), rechts: Math.round(r.right), breite: window.innerWidth };
+        && Math.hypot(e[0] - f[0], e[1] - f[1]) < 1.5)).map((e) => [e[0] + gr.left, e[1] + gr.top]);
+      const portale = [...document.querySelectorAll(".lc-lok-tunnel .lc-tn-mauer")].map((m) => {
+        const r = m.getBoundingClientRect();
+        return [r.left + r.width / 2, r.top + r.height / 2];
+      });
+      /* „Im Berg": das Schienenende liegt naeher an einem Portal als an
+         jedem Platz — es laeuft also HINTER dem Portal weiter (die Maske
+         verbirgt es), statt vor ihm offen aufzuhoeren. */
+      const sitze = [...document.querySelectorAll(".lc-platz .lc-kreis")].map((k) => {
+        const r = k.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2];
+      });
+      const naechst = (e, liste) => Math.min.apply(null, liste.map((p) => Math.hypot(e[0] - p[0], e[1] - p[1])));
+      const imBerg = frei.filter((e) => portale.length && naechst(e, portale) < naechst(e, sitze)).length;
+      const maske = getComputedStyle(g).maskImage || getComputedStyle(g).webkitMaskImage || "";
+      return { frei: frei.length, imBerg: imBerg, tunnel: portale.length, maske: /svg/.test(maske),
+               schienen: g.querySelectorAll(".lc-lok-schiene").length };
     }, weg);
     if (!kreis) { sage(false, "Weg " + weg + ": es liegt ein Gleis"); continue; }
-    sage(kreis.frei === 0 && kreis.rund > 0, "Weg " + weg + ": geschlossener Kreis, kein offenes Schienenende",
-      kreis.frei + " freie Enden, " + kreis.rund + " von " + kreis.schienen + " Schienen schliessen den Kreis");
+    if (kreisErwartet) {
+      sage(kreis.frei === 0 && kreis.tunnel === 0, "Weg " + weg + ": geschlossener Kreis, kein offenes Schienenende, kein Tunnel",
+        kreis.frei + " freie Enden, " + kreis.tunnel + " Tunnel");
+    } else {
+      sage(kreis.tunnel === 2 && kreis.frei > 0 && kreis.imBerg === kreis.frei && kreis.maske,
+        "Weg " + weg + ": offen — beide Enden verschwinden in einem Tunnel",
+        kreis.tunnel + " Tunnel, " + kreis.imBerg + " von " + kreis.frei + " Schienenenden im Berg"
+        + (kreis.maske ? ", Gleis maskiert" : ", Gleis NICHT maskiert"));
+    }
+    await pg.waitForTimeout(100);
   }
 
   await br.close();

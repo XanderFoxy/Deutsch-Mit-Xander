@@ -76,8 +76,15 @@ const sage = (gut, was, zusatz) => {
     const st4 = platz(4);
     window.DMA_PRUEFUNG.wirkung("lok", ziel, "Alex", {});
     let naeh = 1e9, strecke = 0, vorX = null;
-    const bis = performance.now() + 4000;
-    while (performance.now() < bis) {
+    /* FUNK 76 — die ganze Fahrt messen (mit Tunnel und Wagen dauert sie
+       laenger); frueher hoerte die Messung nach 4 s auf, und ob die Lok
+       Platz 4 „erreichte", hing nur davon ab, wie schnell sie war. */
+    const bis = performance.now() + 16000;
+    await new Promise((f) => setTimeout(f, 200));
+    /* Das Gleis wird gleich am Anfang festgehalten — nach der Fahrt ist
+       es aufgeraeumt. */
+    const gleisKopie = (document.querySelector(".lc-lok-gleis") || { cloneNode: () => null }).cloneNode(true);
+    while (performance.now() < bis && document.querySelector(".lc-lok")) {
       const el = document.querySelector(".lc-lok");
       if (el) {
         const k = el.getBoundingClientRect();
@@ -89,7 +96,7 @@ const sage = (gut, was, zusatz) => {
       await new Promise((f) => requestAnimationFrame(f));
     }
     /* Die Gleise: jedes Schienenstueck als Richtung. */
-    const gleis = document.querySelector(".lc-lok-gleis");
+    const gleis = gleisKopie;
     let waagerecht = 0, senkrecht = 0, bogen = 0, schienen = 0;
     if (gleis) {
       gleis.querySelectorAll(".lc-lok-schiene:not(.lc-lok-rund)").forEach((pf) => {
@@ -112,7 +119,10 @@ const sage = (gut, was, zusatz) => {
 
   console.log("\n1  DER GEMALTE WEG GILT\n");
   const mit = await fahrt("1-4-5-8");
-  const ohne = await fahrt("8");
+  /* Ohne gemalten Weg nach 5: die kuerzeste Strecke fuehrt senkrecht
+     hinunter und kommt Platz 4 nie nahe (nach 8 kann die kuerzeste
+     Strecke selbst ueber 4 fuehren — dann bewiese der Vergleich nichts). */
+  const ohne = await fahrt("5");
   sage(mit.naeh <= 60 && mit.naeh < ohne.naeh - 20,
     "mit gemaltem Weg kommt sie an Platz 4 vorbei",
     "mit Weg " + mit.naeh + " px, ohne Weg " + ohne.naeh + " px");

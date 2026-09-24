@@ -109,8 +109,8 @@ const winkelAus = (m) => {
     await pg.waitForTimeout(45);
     return pg.evaluate(() => {
       const l = document.querySelector(".lc-lok");
-      const se = document.querySelector(".lc-lok-seite");
-      const ob = document.querySelector(".lc-lok-oben");
+      const se = document.querySelector(".lc-lok .lc-lok-seite");
+      const ob = document.querySelector(".lc-lok .lc-lok-oben");
       if (!l || !se || !ob) return null;
       const r = l.getBoundingClientRect();
       const sm = getComputedStyle(se).transform;
@@ -140,8 +140,8 @@ const winkelAus = (m) => {
   console.log("DIE FAHRT UM DIE ECKE — Platz 1 nach Platz 8\n");
   await fahren("8", "Alex");
   const da = await pg.evaluate(() => ({
-    seite: !!document.querySelector(".lc-lok-seite"),
-    oben: !!document.querySelector(".lc-lok-oben"),
+    seite: !!document.querySelector(".lc-lok .lc-lok-seite"),
+    oben: !!document.querySelector(".lc-lok .lc-lok-oben"),
     buehne: !!document.querySelector(".lc-lok-buehne"),
   }));
   sage(da.seite && da.oben, "die Lok hat zwei Zeichnungen: Seitenansicht und Draufsicht");

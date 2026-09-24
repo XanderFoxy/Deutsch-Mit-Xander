@@ -111,9 +111,16 @@ function tonDauer(name) {
   });
   if (!lok) { sage(false, "die Lok liess sich nicht messen"); }
   else {
-    const lang = lok.bahn.slice(1).reduce((a, p, i) =>
-      a + Math.hypot(p[0] - lok.bahn[i][0], p[1] - lok.bahn[i][1]), 0);
     const p1 = lok.pl.find((p) => p.nr === 1), p8 = lok.pl.find((p) => p.nr === 8);
+    /* FUNK 76 — mit Tunnel faehrt die Lok vorher und nachher ein Stueck
+       im Berg (unsichtbar). Gemessen wird deshalb nur von Platz 1 bis
+       Platz 8: vom naechsten Punkt an 1 bis zum naechsten Punkt an 8. */
+    const naechst = (pp) => lok.bahn.reduce((b, q, i) =>
+      (Math.hypot(q[0] - pp.x, q[1] - pp.y) < Math.hypot(lok.bahn[b][0] - pp.x, lok.bahn[b][1] - pp.y) ? i : b), 0);
+    const i1 = naechst(p1), i8 = naechst(p8);
+    const stueck = lok.bahn.slice(Math.min(i1, i8), Math.max(i1, i8) + 1);
+    const lang = stueck.slice(1).reduce((a, p, i) =>
+      a + Math.hypot(p[0] - stueck[i][0], p[1] - stueck[i][1]), 0);
     const luft = Math.hypot(p8.x - p1.x, p8.y - p1.y);
     /* Im Kreis hiess: mehr als doppelt so weit wie die Strecke. */
     sage(lang < luft * 1.6,
