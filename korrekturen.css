@@ -34203,3 +34203,6 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-tritt-wumms, .lc-bumerang-treffer, .lc-pfeil-platsch, .lc-zhammer-knall,
 .lc-peitsche-knall, .lc-ohrfeige-klatsch, .lc-klaps-wort, .lc-zwille-aua,
 .lc-entbl-wort { display: none !important; }
+
+/* WALKIE #210 — der Kruemmerflansch vorn, aus dem die Seitenrohre kommen. */
+.lc-hotrod-buehne .lc-hr-flansch { fill: #9aa4ae; stroke: #3d444c; stroke-width: .8; }

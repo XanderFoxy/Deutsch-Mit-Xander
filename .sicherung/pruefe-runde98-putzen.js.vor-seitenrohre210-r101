@@ -327,17 +327,12 @@ const sage = (gut, was, zusatz) => {
     const t0 = performance.now();
     window.LiveChat.pruefBefehl("/hotrod Bea x3");
     const text = ((window.LiveChat.lage().nachrichten || []).slice(-1)[0] || {}).text || "";
-    let raeder = 0, rohre = 0, schluessel = 0, dampf = 0, weit = 0, kippMax = 0, rohrLang = 0;
+    let raeder = 0, rohre = 0, schluessel = 0, dampf = 0, weit = 0, kippMax = 0;
     while (performance.now() - t0 < 5600) {
       const t = performance.now() - t0, r = kreis.getBoundingClientRect(), g = reihe.getBoundingClientRect();
       raeder = Math.max(raeder, document.querySelectorAll(".lc-hr-rad").length);
       /* FUNK 75: die Rohre sind gefuellte Chromformen mit Trompete. */
       rohre = Math.max(rohre, document.querySelectorAll(".lc-hr-chrom").length);
-      /* WALKIE #210: „der Verlauf muss auch an der Seite zu sehen sein" —
-         wie lang laufen die Rohre am Wagen entlang (waagerecht)? */
-      document.querySelectorAll(".lc-hr-chrom").forEach((c) => {
-        rohrLang = Math.max(rohrLang, c.getBoundingClientRect().width);
-      });
       schluessel = Math.max(schluessel, document.querySelectorAll(".lc-hr-schluessel").length);
       dampf = Math.max(dampf, [...document.querySelectorAll(".lc-hr-dampf")].filter((c) => Number(c.style.opacity) > 0.1).length);
       weit = Math.max(weit, Math.hypot(r.left - k0.left, r.top - k0.top - 0));
@@ -358,7 +353,7 @@ const sage = (gut, was, zusatz) => {
     window.DMA_PRUEFUNG.wirkung("putzen", "Cem", "Alex", { stueck: "schwamm" });
     await new Promise((f) => setTimeout(f, 3600));
     const nachPutzen = platzVon("Cem").querySelectorAll(".lc-dreck-russ").length;
-    return { text, raeder, rohre, rohrLang: Math.round(rohrLang), schluessel, dampf, weit: Math.round(weit), kippMax: Math.round(kippMax),
+    return { text, raeder, rohre, schluessel, dampf, weit: Math.round(weit), kippMax: Math.round(kippMax),
              zurueck: Math.round(Math.hypot(k1.left - k0.left, k1.top - k0.top)), breite: k0.width,
              russ, nachNeu, nachPutzen, weg: !document.querySelector(".lc-hotrod-buehne"),
              toene: (window.DMA_TONLOG || []).map((x) => [x.name, Math.round(x.wann - t0)]) };
@@ -367,9 +362,6 @@ const sage = (gut, was, zusatz) => {
   sage(/zieht Bea 3× auf .* Hot Rod/.test(hr.text), "die Zeile sagt, was passiert", hr.text.trim());
   sage(hr.raeder === 2 && hr.rohre >= 3 && hr.schluessel === 1,
     "zwei Mini-Raeder, verchromte Auspuffe, ein Aufziehschluessel", hr.raeder + " Raeder, " + hr.rohre + " Rohre, " + hr.schluessel + " Schluessel");
-  sage(hr.rohrLang >= hr.breite * 0.8,
-    "die Auspuffe laufen an der Seite entlang bis nach hinten (Walkie #210)",
-    "Rohr " + hr.rohrLang + " px lang, Bild " + Math.round(hr.breite) + " px breit");
   sage(hr.dampf >= 8, "es dampft kraeftig", "bis " + hr.dampf + " Wolken gleichzeitig");
   sage(hr.weit > hr.breite * 2, "er flitzt wirklich los (nicht nur auf der Stelle)", hr.weit + " px weit");
   sage(hr.kippMax <= 7, "das Bild (der Fahrer) dreht sich nie, es kippt nur leicht", "hoechstens " + hr.kippMax + "°");

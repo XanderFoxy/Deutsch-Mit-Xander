@@ -41559,19 +41559,9 @@
          Kurve: vorn am Motor duenn (Durchmesser 2,6), zum Ende hin erst
          kaum, dann schnell weiter — die Trompete (Durchmesser 9). In der
          Oeffnung sieht man dunkel hinein, der Rand glaenzt. */
-      /* WALKIE #210 — XANDER: „Die Rohre bzw der Verlauf … muss auch an
-         der Seite zu sehen sein das ist ja so seitlich angebracht und die
-         sind hinten kommen die dann raus so wie ich es von Anfang an
-         gesagt habe." GEFUNDEN: die Rohre begannen erst bei x = -30, am
-         Bildrand — zu sehen waren nur die Trompeten hinten. Jetzt kommen
-         sie VORN am Motor aus einem Kruemmerflansch, laufen duenn und
-         eng gebuendelt unten an der Seite entlang und biegen erst hinten
-         zu den Trompeten hoch. Die Enden bleiben, wo sie waren, der
-         Rauch kommt genau dort heraus. */
-      let rohre = '<rect class="lc-hr-flansch" x="' + f1(20 * g) + '" y="' + f1(25 * g) + '" width="'
-        + f1(7 * g) + '" height="' + f1(15 * g) + '" rx="' + f1(1.6 * g) + '"/>';
-      [[28, 24, -58, 18], [32.5, 24, -63, 28], [37, 24, -60, 38]].forEach(([y0, xa, xe, ye]) => {
-        const P0 = [xa, y0], P1 = [-34, y0 + 1], P2 = [-52, ye - 2], P3 = [xe, ye - 10];
+      let rohre = "";
+      [[16, 30, -58, 18], [26, 34, -63, 28], [36, 38, -60, 38]].forEach(([y0, xa, xe, ye]) => {
+        const P0 = [-xa, y0], P1 = [-48, y0], P2 = [-52, ye - 4], P3 = [xe, ye - 10];
         const bez = (t) => {
           const m = 1 - t;
           return [m * m * m * P0[0] + 3 * m * m * t * P1[0] + 3 * m * t * t * P2[0] + t * t * t * P3[0],
@@ -41583,12 +41573,12 @@
                   3 * m * m * (P1[1] - P0[1]) + 6 * m * t * (P2[1] - P1[1]) + 3 * t * t * (P3[1] - P2[1])];
         };
         const links = [], rechts = [];
-        const N = 36;
+        const N = 22;
         let ende = null;
         for (let i = 0; i <= N; i++) {
           const t = i / N, pt = bez(t), d = abl(t);
           const l = Math.hypot(d[0], d[1]) || 1, nx = -d[1] / l, ny = d[0] / l;
-          const w = 1.2 + 3.3 * Math.pow(t, 5);
+          const w = 1.3 + 3.2 * Math.pow(t, 3.4);
           links.push([pt[0] + nx * w, pt[1] + ny * w]);
           rechts.push([pt[0] - nx * w, pt[1] - ny * w]);
           if (i === N) ende = { x: pt[0], y: pt[1], w: w, winkel: Math.atan2(d[1], d[0]) * 180 / Math.PI };
