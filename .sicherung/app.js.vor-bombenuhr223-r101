@@ -57416,37 +57416,9 @@
      /lunte brennt eine Schnur ab. Der Ton haengt am Zuender, nicht an
      der Bombe — sonst piepte die Lunte. */
   function lcBombe(wen, lunte) {
-    /* WALKIE #223 — XANDER: „Noch nicht synchron" (Digitale Bombe: Null
-       genau beim Knall). GEFUNDEN: DREI Uhren. Der Blitz ist eine
-       CSS-Animation (laeuft im Grafikprozessor weiter), die zwanzig
-       Ziffern und der Knallton hingen an einzelnen setTimeout-Aufrufen
-       im Hauptprogramm. Auf dem Telefon stockt das Hauptprogramm — die
-       Ziffern und der Ton kommen zu spaet, der Blitz nicht.
-       Jetzt gibt es EINE Uhr: die Laufzeit der Blitz-Animation selbst.
-       Ziffern, Piepen, das 💥 und der Knall werden in jedem Bild aus
-       dieser Uhr abgelesen — was stockt, stockt gemeinsam. Bei „alle"
-       knallt es nur einmal. */
-    const knallSchon = { v: false };
     return lcAmPlatz(wen, lunte ? "lc-bombe lc-bombe-lunte" : "lc-bombe", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       const blende = lcZpBlende(schicht);
-      const tB0 = performance.now();
-      let uhrAnim = null;
-      const bombenUhr = () => {
-        if (!uhrAnim) {
-          const bl = blende.querySelector(".lc-bombe-blitz");
-          if (bl && bl.getAnimations) {
-            void getComputedStyle(bl).animationName;
-            uhrAnim = bl.getAnimations()[0] || null;
-          }
-        }
-        return uhrAnim && typeof uhrAnim.currentTime === "number" ? uhrAnim.currentTime : performance.now() - tB0;
-      };
-      const knall = () => {
-        if (knallSchon.v) return;
-        knallSchon.v = true;
-        lcTonZu("bombe");
-      };
       if (lunte) {
         /* DIE ZUENDSCHNUR. Sie liegt am oberen Rand, brennt von aussen
            nach innen ab und wird dabei wirklich kuerzer — deshalb ein
@@ -57480,15 +57452,16 @@
         const lfunke = lsvg.querySelector(".lc-lunte2-funke");
         const lspr = lsvg.querySelector(".lc-lunte2-spritzer");
         const lLang = lpfade[1].getTotalLength ? lpfade[1].getTotalLength() : 60;
+        const lt0 = performance.now();
         const lBrennt = () => {
           if (!lsvg.isConnected) return;
-          const k = Math.min(1, bombenUhr() / 2100);
+          const k = Math.min(1, (performance.now() - lt0) / 2100);
           const rest = lLang * (1 - k);
           lpfade.forEach((pf) => { pf.style.strokeDasharray = rest.toFixed(2) + " " + (lLang + 4).toFixed(2); });
           const pt = lpfade[1].getPointAtLength(rest);
           lfunke.setAttribute("transform", "translate(" + pt.x.toFixed(2) + " " + pt.y.toFixed(2) + ")");
           lspr.setAttribute("transform", "rotate(" + ((performance.now() * 0.9) % 360).toFixed(0) + ")");
-          if (k >= 1) { lsvg.classList.add("lc-lunte2-aus"); knall(); return; }
+          if (k >= 1) { lsvg.classList.add("lc-lunte2-aus"); return; }
           requestAnimationFrame(lBrennt);
         };
         requestAnimationFrame(lBrennt);
@@ -57530,14 +57503,10 @@
            Blitz und Zerplatzen (47 % von 4,6 s) liegen aber bei rund
            2100 ms — 1,6 s VOR der Null. Jetzt zaehlt sie 20 Zehntel
            ab 100 ms und steht genau beim Knall auf Null. */
-        /* Ab hier liest alles die EINE Uhr (siehe oben, Walkie #223). */
-        let zuletztRest = 20, hektik = false, geplatzt = false;
-        const zaehlen = () => {
-          if (!anzeige.isConnected) return;
-          const t = bombenUhr();
-          const rest = Math.max(0, 20 - Math.floor(Math.max(0, t - 100) / 100));
-          if (!geplatzt && rest !== zuletztRest) {
-            zuletztRest = rest;
+        for (let t = 1; t <= 20; t++) {
+          setTimeout(() => {
+            if (!anzeige.isConnected) return;
+            const rest = 20 - t;
             feldSek.textContent = String(Math.floor(rest / 10)).padStart(2, "0");
             feldZeh.textContent = String(rest % 10);
             if (rest % 10 === 0 && rest > 0) {
@@ -57546,22 +57515,20 @@
               anzeige.classList.add("lc-bombe-tick");
               lcTonSpaeter("ticken", 0, 0.62);
             }
-          }
-          /* „bombehektik" (0,57 s) ist genau zur Null fertig. */
-          if (!hektik && t >= 1530) { hektik = true; lcTonSpaeter("bombehektik", 0, 0.6); }
-          if (!geplatzt && t >= 2100) {
-            geplatzt = true;
-            feldSek.textContent = "00"; feldZeh.textContent = "0";
-            anzeige.innerHTML = '<i class="lc-bombe-feld lc-bombe-knall">\ud83d\udca5</i>';
-            anzeige.classList.remove("lc-bombe-tick");
-            void anzeige.offsetWidth;
-            anzeige.classList.add("lc-bombe-tick");
-            knall();
-            return;
-          }
-          requestAnimationFrame(zaehlen);
-        };
-        requestAnimationFrame(zaehlen);
+          }, 100 + t * 100);
+        }
+        [0].forEach((z, i) => setTimeout(() => {
+          if (!anzeige.isConnected) return;
+          anzeige.innerHTML = '<i class="lc-bombe-feld lc-bombe-knall">\ud83d\udca5</i>';
+          anzeige.classList.remove("lc-bombe-tick");
+          void anzeige.offsetWidth;
+          anzeige.classList.add("lc-bombe-tick");
+          /* RUNDE 72: hier stand lcTonZu("ticken") — und die Datei
+             „ticken" gab es ueberhaupt nicht im Ordner. Der Countdown
+             war deshalb stumm. Sie ist jetzt da (0,10 s, ein
+             trockener Piep) und wird direkt gelegt, weil „ticken"
+             kein Plan-Eintrag ist. */
+        }, 100 + 2000 + i * 700));
         /* RUNDE 72 — XANDER: „der lange Piepton ist immer noch da,
            immer noch ohne Explosionsknall, und dauert viel zu lang."
            NACHGEMESSEN, und das erklaert beides auf einmal:
@@ -57577,6 +57544,7 @@
            Jetzt piept „bombehektik" (selbst gebaut, gemessen 0,57 s,
            acht Piepse, jeder etwas hoeher) von 1530 bis 2100 ms und
            ist zur Null fertig. Danach steht der Knall allein. */
+        lcTonSpaeter("bombehektik", 1530, 0.6);
       }
       /* Die Zuendschnur laeuft am oberen Rand entlang und wird kuerzer. */
       /* DAS HAEUFCHEN ASCHE.
@@ -57687,8 +57655,7 @@
           }
         } catch (e) {}
       }, 3100);
-    /* Kein Ton ueber lcAmPlatz: der Knall kommt aus der Bombenuhr. */
-    }, 4600, null);
+    }, 4600, "bombe");
   }
 
   /* --- DIE GRANATE ---------------------------------------------------

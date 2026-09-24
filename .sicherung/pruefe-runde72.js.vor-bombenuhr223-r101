@@ -194,8 +194,7 @@ pruefe("der Countdown tickt ueberhaupt", ton("ticken") && gelistet("ticken")
   && /lcTonSpaeter\("ticken", 0, 0\.62\)/.test(js));
 pruefe("das Piepsen ist kurz statt fuenf Sekunden",
   ton("bombehektik") && gelistet("bombehektik")
-  /* WALKIE #223: 1530 ms auf der Bombenuhr statt eigener Zeitgeber. */
-  && /t >= 1530\) \{ hektik = true; lcTonSpaeter\("bombehektik", 0, 0\.6\)/.test(js)
+  && /lcTonSpaeter\("bombehektik", 1530, 0\.6\)/.test(js)
   && !/bombedigital2/.test(js));
 pruefe("und der Knall darf der lauteste Punkt sein",
   /bombe:\s+\{ ton: "explosion2", dauer: 2600, laut: 0\.9 \}/.test(js));

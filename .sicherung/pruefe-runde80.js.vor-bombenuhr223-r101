@@ -205,11 +205,7 @@ function tonMessen(name) {
      bevor überhaupt die Anzeige auf Null geht." Die Zehntel bleiben,
      aber es sind jetzt ZWANZIG ab 100 ms — so steht die Null genau beim
      Knall (2100 ms) statt 1,6 s danach. */
-  /* WALKIE #223 — „Noch nicht synchron": die Zehntel kommen jetzt aus
-     derselben Uhr wie der Blitz (bombenUhr), 20 Stueck ab 100 ms, und
-     bei 2100 ms steht in DEMSELBEN Bild das 💥 und knallt es. */
-  sage(/20 - Math\.floor\(Math\.max\(0, t - 100\) \/ 100\)/.test(app)
-    && /if \(!geplatzt && t >= 2100\)/.test(app) && /\}, 4600, null\);/.test(app),
+  sage(/for \(let t = 1; t <= 20; t\+\+\)/.test(app) && /\}, 100 \+ t \* 100\);/.test(app),
     "und sie zaehlt Zehntel herunter und steht beim Knall (2100 ms) auf Null");
 
   /* „Bei der analogen Bombe sind zwei Lunten da." */

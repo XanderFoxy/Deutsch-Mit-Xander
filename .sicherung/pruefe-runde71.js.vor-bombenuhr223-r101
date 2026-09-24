@@ -215,9 +215,7 @@ pruefe("die Zuendschnur prasselt von Anfang an",
    genau darunter. Jetzt piept „bombehektik" (gemessen 0,57 s, acht
    Piepse) von 1530 bis 2100 ms und ist zur Null fertig. */
 pruefe("das Piepsen kommt nur kurz vor der Null",
-  /* WALKIE #223: die 1530 ms liest jetzt die Bombenuhr ab, statt einen
-     eigenen Zeitgeber zu stellen. */
-  /t >= 1530\) \{ hektik = true; lcTonSpaeter\("bombehektik", 0, 0\.6\)/.test(js)
+  /lcTonSpaeter\("bombehektik", 1530, 0\.6\)/.test(js)
   && !/bombe:\s+\{ ton: "bombedigital2"/.test(js)
   && !/lcTonSpaeter\("bombedigital2"/.test(js));
 pruefe("und am Ende knallt eine echte Explosion",
