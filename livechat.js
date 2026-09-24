@@ -1216,6 +1216,8 @@ window.LiveChat = (function () {
     granate:    { wirkung: "granate",    satz: "wirft eine Granate auf", emoji: "\ud83e\uddaf" },
     streicheln: { wirkung: "streicheln", satz: "streichelt", emoji: "\ud83e\udef6" },
     wange: { wirkung: "wange", satz: "streichelt mit dem Handr\u00fccken die Wange von", emoji: "\ud83e\udef3" },
+    /* FUNK 75 — die Hand kratzt ueber das Bild wie ueber eine Tafel. */
+    kratzen: { wirkung: "kratzen", satz: "kratzt quietschend \u00fcber das Bild von", emoji: "\ud83d\udc85" },
     kuss:       { wirkung: "kuss",       satz: "gibt einen Kuss", emoji: "\ud83d\udc8b" },
     /* RUNDE 65 — XANDER: „dass man ein Profilbild noch ein bisschen
        aufblasen kann, dass man es total unter Druck setzt und es dann
@@ -10064,6 +10066,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "granate", kurz: "handgranate", nutzt: "/granate Name", was: "Handgranate \u2014 der B\u00fcgel springt ab, der Z\u00fcnder zischt, dann knallt es" },
     { gr: "reden", w: "streicheln", kurz: "lieb", nutzt: "/streicheln Name", was: "Streicheln \u2014 sanft, mit Herzchen" },
     { gr: "reden", w: "wange", kurz: "handruecken", nutzt: "/wange Name", was: "Wange streicheln \u2014 seitlich mit dem Handr\u00fccken" },
+    { gr: "reden", w: "kratzen", kurz: "tafel", nutzt: "/kratzen Name", was: "Kratzen \u2014 die N\u00e4gel quietschen \u00fcber das Bild wie \u00fcber eine Tafel" },
     { gr: "reden", w: "kuss", kurz: "bussi",  nutzt: "/kuss Name",      was: "Kuss \u2014 der Abdruck bleibt kurz stehen" },
     { gr: "reden", w: "neunschwanz", kurz: "neunschwaenzig", nutzt: "/neunschwanz",
       was: "Neunschw\u00e4nzige \u2014 ein Griff, aus dem f\u00fcr JEDEN im Raum ein Schwanz l\u00e4uft, alle knallen zugleich" },

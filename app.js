@@ -27380,6 +27380,9 @@
        Katze. „schnurren" ist jetzt 3,40 s lang. */
     streicheln:     { ton: "schnurren", dauer: 3400, laut: 0.4 },
     wange:          { ton: "schnurren", dauer: 3400, laut: 0.4 },
+    /* FUNK 75 — „ganz schreckliche Quietschgeraeusche, die keiner hoeren
+       kann, wie wenn man ueber eine Tafel kratzt": drei Kratzer. */
+    kratzen:        { ton: "tafelkratzen", dauer: 3700, laut: 0.5 },
     /* „das Knutschen — da koenntest du noch einen Sound machen, da haben wir
        naemlich keinen. Da hoert man so ein Schussgeraeusch oder so." */
     /* RUNDE 70 — XANDER: „Vielleicht kannst du beim Sound auch
@@ -30541,7 +30544,11 @@
        ["\ud83c\udf9a\ufe0f", "Rollo hoch", "rollo"],
        ["\ud83e\udea7", "Jalousie auf", "lamellen"]]],
     ["\ud83d\udcbf", "Platte",    "platte"],
-    ["\ud83e\udef3", "Ohrfeige",  "ohrfeige"],
+    /* FUNK 75 — das Kratzen steht bei der Ohrfeige: beides tut man
+       jemandem an. So bleibt das Menue so lang, wie es ist. */
+    ["\ud83e\udef3", "Ohrfeige",  "ohrfeige", false,
+      [["\ud83e\udef3", "Ohrfeige", "ohrfeige"],
+       ["\ud83d\udc85", "Kratzen", "kratzen"]]],
     ["\ud83c\udfb0", "Zufall",    "zufall", true],
     /* „Das wäre die witzigste Animation." */
     /* RUNDE 76 — XANDER: „Anziehen-Modul."
@@ -34254,6 +34261,7 @@
     lunte:      { zeichen: ["\ud83e\udde8"], wie: 5, klasse: "umarmen" },
     streicheln: { zeichen: ["\ud83e\udef6"], wie: 6, klasse: "herz" },
     wange: { zeichen: ["\ud83e\udef3"], wie: 6, klasse: "herz" },
+    kratzen: { zeichen: ["\ud83d\udc85"], wie: 5, klasse: "umarmen" },
     kuss:       { zeichen: ["\ud83d\udc8b"], wie: 6, klasse: "herz" },
     zufall:     { zeichen: ["\ud83c\udfb0"], wie: 5, klasse: "umarmen" },
     boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
@@ -35179,6 +35187,7 @@
     kuss: 520,         /* wenn der Mund ankommt */
     streicheln: 300,
     wange: 300,
+    kratzen: 150,     /* der erste Kratzer beginnt, wenn die Hand aufsetzt */
     /* Der erste Pumpenhub ist sofort da. */
     aufblasen: 0
   };
@@ -56134,6 +56143,64 @@
     }, 3400, "wange");
   }
 
+  /* =====================================================================
+     FUNK 75 (24.09.) — KRATZEN WIE AN DER TAFEL
+     ---------------------------------------------------------------------
+     XANDER: „dann möchte ich noch eine Animation, wo eine Hand übers Bild
+     kratzt und diese ganz schrecklichen Quietschgeräusche macht, die
+     keiner hören kann, wie wenn man über eine Tafel kratzt."
+     Eine Hand mit gekruemmten Fingern setzt oben am Bild an und zieht die
+     Naegel dreimal nach unten. Wo sie ziehen, bleiben vier helle Spuren
+     wie Kreidestriche stehen und verblassen erst am Ende. Die drei
+     Kratzer liegen genau auf den drei Quietschern im Ton (0,15 / 1,43 /
+     2,65 s, siehe ton/tafelkratzen). Das Bild zuckt bei jedem Kratzer.
+     ===================================================================== */
+  function lcKratzen(wen) {
+    return lcAmPlatz(wen, "lc-kratzen", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (kreis) {
+        kreis.classList.remove("lc-gekratzt");
+        void kreis.offsetWidth;
+        kreis.classList.add("lc-gekratzt");
+        setTimeout(() => kreis.classList.remove("lc-gekratzt"), 3700);
+      }
+      const hw = lcHaut();
+      /* Die Spuren: drei Kratzer mit je vier Naegeln, im Bild. */
+      const blende = lcZpBlende(schicht);
+      const zuege = [[34, 0.15, 1.03], [52, 1.43, 0.97], [42, 2.65, 0.97]];
+      let spuren = "";
+      zuege.forEach(([x, ab, lang], z) => {
+        let linien = "";
+        for (let n = 0; n < 4; n++) {
+          const x0 = x + n * 6.2 - 2 + z, x1 = x0 + 5 - n * 0.6;
+          linien += '<path pathLength="1" d="M' + x0.toFixed(1) + " 14 C" + (x0 + 1.4).toFixed(1) + " 40 " + (x1 - 1).toFixed(1) + " 64 " + x1.toFixed(1) + ' 88"/>';
+        }
+        spuren += '<g class="lc-kratz-spur" style="--ab:' + ab + "s;--lang:" + lang + 's">' + linien + "</g>";
+      });
+      blende.innerHTML = '<svg class="lc-kratz-spuren" viewBox="0 0 100 100" preserveAspectRatio="none">' + spuren + "</svg>";
+      /* Die Hand: Handruecken von vorn, vier Finger nach unten gekruemmt,
+         die Naegel zeigen aufs Bild. */
+      let finger = "";
+      [[26, 0], [40, 3], [54, 3], [67, 0]].forEach(([x, dy]) => {
+        finger += '<path d="M' + (x - 6) + " " + (40 + dy) + " C" + (x - 6.6) + " " + (58 + dy) + " " + (x - 5.4) + " " + (70 + dy) + " " + (x - 2.6) + " " + (78 + dy)
+          + " L" + (x + 3) + " " + (78 + dy) + " C" + (x + 5.6) + " " + (70 + dy) + " " + (x + 6.4) + " " + (58 + dy) + " " + (x + 6) + " " + (40 + dy) + ' Z"'
+          + ' fill="' + hw.haut + '" stroke="' + hw.kante + '" stroke-width="1.6" stroke-linejoin="round"/>'
+          + '<path d="M' + (x - 4.6) + " " + (61 + dy) + " C" + (x - 1.6) + " " + (63 + dy) + " " + (x + 1.6) + " " + (63 + dy) + " " + (x + 4.6) + " " + (61 + dy) + '" fill="none" stroke="rgba(120,60,40,.35)" stroke-width="1"/>'
+          + '<path class="lc-kratz-nagel" d="M' + (x - 3) + " " + (74 + dy) + " C" + (x - 2.6) + " " + (79 + dy) + " " + (x - 1) + " " + (83 + dy) + " " + (x + 0.2) + " " + (84 + dy)
+          + " C" + (x + 1.4) + " " + (83 + dy) + " " + (x + 2.8) + " " + (79 + dy) + " " + (x + 3.2) + " " + (74 + dy) + ' Z"'
+          + ' fill="' + hw.hell + '" stroke="rgba(150,90,70,.6)" stroke-width=".8"/>';
+      });
+      const hand = document.createElement("span");
+      hand.className = "lc-kratz-hand";
+      hand.innerHTML = '<svg viewBox="0 0 100 100" aria-hidden="true">'
+        + '<path d="M16 -20 C14 6 16 30 20 44 L74 44 C78 30 82 6 80 -20 Z" fill="' + hw.haut + '" stroke="' + hw.kante + '" stroke-width="1.8"/>'
+        + '<path d="M28 6 C27 18 28 30 30 40 M46 4 C45.6 18 46 30 47 40 M62 6 C62.6 18 62 30 61 40" fill="none" stroke="rgba(120,60,40,.18)" stroke-width="1.2"/>'
+        + '<path d="M80 20 C88 26 90 36 86 46 C84 50 79 50 78 45 C78 38 76 30 74 26 Z" fill="' + hw.haut + '" stroke="' + hw.kante + '" stroke-width="1.6"/>'
+        + finger + "</svg>";
+      schicht.appendChild(hand);
+    }, 3700, "kratzen");
+  }
+
   /* --- DER KUSS --------------------------------------------------------
      „… oder kuesst." Ein Mund kommt heran, drueckt sich auf das Bild
      und hinterlaesst einen Abdruck, der langsam verblasst. */
@@ -58061,7 +58128,7 @@
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
     vogelkot: 1, spucken: 1, sabbern: 1, waschmaschine: 1,
     birneraus: 1,
-    entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, wange: 1, kuss: 1, klaps: 1,
+    entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, wange: 1, kratzen: 1, kuss: 1, klaps: 1,
     /* RUNDE 76 — die drei Neuen: Telefon und Anziehen gelten genau
        EINEM Platz, sie duerfen nicht ueber den ganzen Raum regnen.
        „frosch" und „zylinder" sind Reisen und stehen schon oben. */
@@ -58347,6 +58414,7 @@
       if (art === "lunte" && lcBombe(wenZ, true)) return;
       if (art === "streicheln" && lcStreicheln(wenZ)) return;
       if (art === "wange" && lcWangeStreicheln(wenZ)) return;
+      if (art === "kratzen" && lcKratzen(wenZ)) return;
       if (art === "kuss" && lcKuss(wenZ, (nachricht && nachricht.eigen)
             ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "entbloessung" && lcEntbloessung(wenZ, (nachricht && nachricht.eigen)
