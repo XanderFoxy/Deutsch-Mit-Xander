@@ -41,8 +41,7 @@ const sage = (gut, was, zusatz) => {
   const lc = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
   sage(/art === "kranheb"/.test(lc), "der Befehl /kranheb steht in livechat.js");
   sage(/var kranZieht = false;/.test(lc)
-    /* RUNDE 101 — der Bagger haengt sich genauso dazwischen. */
-    && /lassoZieht \? "lasso" : \(kranZieht \? "kranheben" : \(baggerZieht \? "bagger" : "heber"\)\)/.test(lc),
+    && /lassoZieht \? "lasso" : \(kranZieht \? "kranheben" : "heber"\)/.test(lc),
     "und das Werkzeug sagt selbst an, welche Animation laeuft");
 
   const srv = http.createServer((q, a) => {
@@ -285,104 +284,6 @@ const sage = (gut, was, zusatz) => {
     "der Ausleger steht bei jedem Zug gleich hoch ueber der obersten Reihe", luefte.join(" / ") + " px");
   sage(echt.every((r) => r.turmAussen), "der Turm steht aussen neben den Plaetzen",
     echt.map((r) => r.wer + ": " + r.turm + " (Felder " + r.feld.join("–") + ")").join(", "));
-
-  /* =====================================================================
-     7  RUNDE 101 — DER SCHAUFELRADBAGGER
-     XANDER (Funk #39): „einen Schaufelradbagger [der jemanden] von seinem
-     Platz weg befördern kann und realistisch irgendwo abladen kann."
-     ===================================================================== */
-  console.log("\n7  RUNDE 101 — DER SCHAUFELRADBAGGER\n");
-  const bag = [];
-  for (const [wer, ziel] of [["Bea", 6], ["Fritz", 3], ["Dana", 5]]) {
-    const pg7 = await br.newPage({ viewport: { width: 390, height: 844 } });
-    await pg7.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
-    await pg7.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
-    await pg7.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF, { timeout: 25000 });
-    bag.push(await pg7.evaluate(async ({ wer, ziel }) => {
-      window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000, zuruecksetzen: true,
-        leute: { p0: { id: "p0", name: "Bea", seit: 2000 }, p1: { id: "p1", name: "Cem", seit: 2100 },
-                 p2: { id: "p2", name: "Dana", seit: 2200 }, p3: { id: "p3", name: "Emil", seit: 2300 },
-                 p4: { id: "p4", name: "Fritz", seit: 2400 } } });
-      document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
-      let e = document.getElementById("livechatArea");
-      while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
-      window.DMA_PRUEF.neuZeichnen();
-      await new Promise((f) => setTimeout(f, 500));
-      const reihe = document.getElementById("lcPlaetze");
-      const platzVon = (n) => [...reihe.querySelectorAll(".lc-platz")].find((p) =>
-        ((p.querySelector(".lc-platz-name") || {}).textContent || "") === n);
-      const platz = platzVon(wer);
-      const kreis = platz.querySelector(".lc-kreis");
-      const zielK = reihe.querySelector('.lc-platz[data-lc-platz="' + ziel + '"] .lc-kreis');
-      const mitte = (r) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
-      /* Die Lage des Ziels merken wir RELATIV zur Reihe — die Seite rutscht,
-         sobald die Chatzeile erscheint. */
-      const g0 = reihe.getBoundingClientRect(), zr = zielK.getBoundingClientRect();
-      const zRel = { x: mitte(zr).x - g0.left, y: mitte(zr).y - g0.top };
-      const breiteK = kreis.getBoundingClientRect().width;
-      window.DMA_TONLOG = [];
-      window.LiveChat.pruefBefehl("/bagger " + wer + " " + ziel);
-      const t0 = performance.now(), proben = [];
-      while (performance.now() < t0 + 4200) {
-        const t = performance.now() - t0, g = reihe.getBoundingClientRect();
-        const k = mitte(kreis.getBoundingClientRect());
-        const nabe = document.querySelector(".lc-bg-nabe");
-        const nb = nabe ? mitte(nabe.getBoundingClientRect()) : null;
-        /* Liegt die Radnabe auf einem Gesicht? (innerhalb 30 % des Radius
-           um die Mitte eines anderen Bildes) */
-        let aufGesicht = false;
-        if (nb && t > 3600 * 0.15 && t < 3600 * 0.84) {
-          reihe.querySelectorAll(".lc-platz .lc-kreis").forEach((kk) => {
-            if (kk === kreis) return;
-            const m = mitte(kk.getBoundingClientRect());
-            if (Math.hypot(m.x - nb.x, m.y - nb.y) < breiteK * 0.3) aufGesicht = true;
-          });
-        }
-        const zl = mitte(zielK.getBoundingClientRect());
-        proben.push({ t: Math.round(t), bx: k.x - g.left, by: k.y - g.top, zx: zl.x - g.left, zy: zl.y - g.top,
-                      da: !!document.querySelector(".lc-bagger-buehne"), aufGesicht });
-        await new Promise((f) => requestAnimationFrame(f));
-      }
-      const nachher = platzVon(wer);
-      return { wer, ziel, zRel, proben, breiteK,
-               sitztAuf: nachher ? Number(nachher.getAttribute("data-lc-platz")) : 0,
-               nachricht: ((window.LiveChat.lage().nachrichten || []).slice(-1)[0] || {}).text || "",
-               toene: (window.DMA_TONLOG || []).map((x) => [x.name, Math.round(x.wann - t0)]) };
-    }, { wer, ziel }));
-    await pg7.close();
-  }
-  bag.forEach((b) => {
-    const P = b.proben;
-    const bei = (ms) => P.reduce((a, c) => (Math.abs(c.t - ms) < Math.abs(a.t - ms) ? c : a));
-    /* 80 % ist der Aufprall; danach federt es bis 86 % gewollt nach.
-       Gesucht wird der Augenblick, in dem das Bild dem Ziel am naechsten
-       ist — und der muss zum Aufsetz-Ton passen. */
-    const umLand = P.filter((p) => p.t > 3600 * 0.76 && p.t < 3600 * 0.9);
-    /* Der ERSTE Augenblick auf dem Ziel (spaeter, beim Platztausch um
-       3150 ms, liegt es sowieso dort). */
-    const land = umLand.find((c) => Math.hypot(c.bx - c.zx, c.by - c.zy) <= 3)
-      || umLand.reduce((a, c) => (Math.hypot(c.bx - c.zx, c.by - c.zy) < Math.hypot(a.bx - a.zx, a.by - a.zy) ? c : a));
-    const abLand = Math.round(Math.hypot(land.bx - land.zx, land.by - land.zy));
-    let sprung = 0, sprungBei = 0;
-    for (let i = 1; i < P.length; i++) {
-      if (P[i].t > 3600 * 0.84) break;
-      const d = Math.hypot(P[i].bx - P[i - 1].bx, P[i].by - P[i - 1].by);
-      if (d > sprung) { sprung = d; sprungBei = P[i].t; }
-    }
-    sage(/Schaufelradbagger/.test(b.nachricht), b.wer + " → " + b.ziel + ": die Zeile nennt den Bagger", b.nachricht.trim());
-    sage(P.filter((p) => p.t > 200 && p.t < 3300).every((p) => p.da), "   der Bagger steht die ganze Zeit da");
-    const tonAuf = (b.toene.find((x) => x[0] === "aufsetzen") || ["", -1])[1];
-    sage(abLand <= 3, "   das Bild landet genau auf dem Zielplatz", abLand + " px daneben, bei " + land.t + " ms");
-    sage(Math.abs(land.t - tonAuf) <= 80, "   und der Aufsetz-Ton kommt mit dem Aufprall", "Aufprall " + land.t + " ms, Ton " + tonAuf + " ms");
-    sage(sprung <= b.breiteK * 0.25, "   das Bild springt nie (groesster Schritt je Bild)", Math.round(sprung) + " px bei " + sprungBei + " ms");
-    sage(b.sitztAuf === b.ziel, "   danach sitzt " + b.wer + " wirklich auf Platz " + b.ziel, "Platz " + b.sitztAuf);
-    sage(P.filter((p) => p.t > 4000).every((p) => !p.da), "   und der Bagger ist wieder weg");
-    const auf = P.filter((p) => p.aufGesicht).length;
-    sage(auf === 0, "   die Radnabe steht nie auf einem fremden Gesicht", auf + " Bilder");
-    const ton = (n) => (b.toene.find((x) => x[0] === n) || [n, -1])[1];
-    sage(Math.abs(ton("aufsetzen") - 2880) <= 150, "   das Aufsetzen klingt beim Aufprall (2,88 s)", ton("aufsetzen") + " ms");
-    sage(Math.abs(ton("graben") - 684) <= 150, "   das Graben klingt beim Schaufeln (0,68 s)", ton("graben") + " ms");
-  });
 
   await br.close();
   srv.close();

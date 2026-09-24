@@ -49,20 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "561: Abnahme-Runde im Walkie, Stadt·Land·Fluss kompakt",
+  stand: "562: Schaufelradbagger",
 
   inArbeit: [
-    { seit: "2026-09-24T04:25",
+    { seit: "2026-09-24T04:38",
       text: "Deine Antworten auf die 37 Abnahme-Fragen" },
-    { seit: "2026-09-24T04:25",
-      text: "Waschmaschine: eigener Ton als neue Datei?" },
+    { seit: "2026-09-24T04:38",
+      text: "Was genau ist mit „die Sprechbilder“ gemeint? (Frage im Walkie)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T04:25",
-      text: "Stadt·Land·Fluss-Blatt kompakt: auf einem kleinen Android (360 px) 256 px statt 500 px hoch. Kopf in einer Zeile, Felder zweispaltig, Eingabe bleibt 16 px (kein Hineinzoomen)." },
-    { seit: "2026-09-24T04:25",
-      text: "Walkie: 37 Abnahme-Fragen, jeder Punkt seit gestern früh einzeln, mit „📍 Wo testen“." },
+    { seit: "2026-09-24T04:38",
+      text: "Schaufelradbagger (/bagger Name 3 oder Bild antippen → Bagger → Platz wählen): Er fährt unter der Sitzreihe herein und schaufelt das Bild vom Platz. Dann schwenkt er durch die Lücken zwischen den Plätzen, ohne Gesichter zu verdecken, und lädt das Bild auf dem Zielplatz ab, mit Staub und Aufsetz-Ton. Umgesetzt wird erst danach. Gemessen: landet auf 0 px genau, der Ton passt auf 60 ms." },
+    { seit: "2026-09-24T04:38",
+      text: "Stadt·Land·Fluss-Blatt kompakt: auf einem kleinen Android 256 px statt 500 px hoch." },
   ],
 };

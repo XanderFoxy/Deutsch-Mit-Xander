@@ -32971,35 +32971,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-slf-stopp { font-size: 0.9rem; }
 .lc-slf-tabelle { font-size: 0.74rem; }
 .lc-slf-tabelle th, .lc-slf-tabelle td { padding: 3px 5px; }
-
-/* === RUNDE 101: DER SCHAUFELRADBAGGER =================================
-   XANDER (Funk #39): „einen Schaufelradbagger [der jemanden] von seinem
-   Platz weg befördern kann und realistisch irgendwo abladen kann."
-   Liegt wie der Kran ueber der Sitzreihe (8), das getragene Bild darueber
-   (9) — es liegt IM Eimer, also vor dem Rad. Farben eines Tagebau-
-   Baggers: Gelb mit grauem Stahl, dunkle Raupen. */
-.lc-bagger-buehne {
-  position: absolute;
-  left: 0; top: 0;
-  z-index: 8;
-  overflow: visible;
-  pointer-events: none;
-}
-.lc-bg-raupe      { fill: #2e3238; }
-.lc-bg-rolle      { fill: #6c737d; stroke: #22262b; stroke-width: 1; }
-.lc-bg-unterwagen { fill: #4a5058; }
-.lc-bg-oberwagen  { fill: #f2b61f; stroke: #b9860d; stroke-width: 1.2; }
-.lc-bg-gewicht    { fill: #5b616a; }
-.lc-bg-haus       { fill: #f7c843; stroke: #b9860d; stroke-width: 1.2; }
-.lc-bg-fenster    { fill: #8fc3e6; stroke: #4c6f87; stroke-width: .8; }
-.lc-bg-streifen   { stroke: #2e3238; stroke-width: 2.4; stroke-dasharray: 5 4; fill: none; }
-.lc-bg-ausleger   { stroke: #e0a516; stroke-width: 2.8; fill: none; stroke-linecap: round; }
-.lc-bg-ausleger-strebe { stroke: #c38d12; stroke-width: 1.4; fill: none; }
-.lc-bg-seil       { stroke: #6d7480; stroke-width: 1.2; fill: none; }
-.lc-bg-felge      { fill: none; stroke: #e0a516; stroke-width: 3; }
-.lc-bg-speiche    { stroke: #c38d12; stroke-width: 2; }
-.lc-bg-nabe       { fill: #4a5058; stroke: #2e3238; stroke-width: 1; }
-.lc-bg-eimer      { fill: #7b828c; stroke: #3f454d; stroke-width: 1.2; stroke-linejoin: round; }
-.lc-bg-zahn       { fill: none; stroke: #3f454d; stroke-width: 1.2; }
-.lc-bg-staub circle { fill: rgba(150, 120, 80, .55); }
-.lc-bg-staub      { opacity: 0; }

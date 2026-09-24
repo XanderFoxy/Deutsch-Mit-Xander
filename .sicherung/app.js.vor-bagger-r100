@@ -30498,9 +30498,6 @@
       lcNachDemSenden(zeile);
     });
     knopf("\ud83c\udfd7\ufe0f", "Kran", () => lcHebenMenue(platz, name, "kranheb"));
-    /* RUNDE 101 — XANDER: „einen Schaufelradbagger [der jemanden] von
-       seinem Platz weg befördern kann". Gleiche Platzwahl wie der Kran. */
-    knopf("\ud83d\ude9c", "Bagger", () => lcHebenMenue(platz, name, "bagger"));
     document.body.appendChild(kasten);
     lcMenueStellen(kasten, platz);
     lcMenueSchliessen(kasten);
@@ -30541,7 +30538,7 @@
       /* RUNDE 98 — welches Werkzeug hebt, steht jetzt am Menue:
          „/heb" ist die Angel, „/kranheb" der Baukran. Das Umsetzen
          selbst macht in beiden Faellen dieselbe Stelle. */
-      const zeile = "/" + (werkzeug === "kranheb" ? "kranheb" : werkzeug === "bagger" ? "bagger" : "heb")
+      const zeile = "/" + (werkzeug === "kranheb" ? "kranheb" : "heb")
         + " " + name + " " + nummer;
       try { LiveChat.schreiben(zeile); } catch (e) {}
       lcNachDemSenden(zeile);
@@ -30553,8 +30550,7 @@
     kasten.setAttribute("role", "menu");
     const kopf = document.createElement("p");
     kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = name + (werkzeug === "kranheb" ? " mit dem Kran heben"
-      : werkzeug === "bagger" ? " mit dem Bagger umladen" : " umsetzen");
+    kopf.textContent = name + (werkzeug === "kranheb" ? " mit dem Kran heben" : " umsetzen");
     kasten.appendChild(kopf);
 
     const kachel = (zeichen, wort, titel, tun) => {
@@ -30577,7 +30573,7 @@
     /* RUNDE 100 — im Kran-Menue stand „Angeln": ein Tipp darauf hob
        dann mit dem Kran, nicht mit der Angel. Die Abkuerzung gehoert
        nur ins Angel-Menue. */
-    if (meiner && werkzeug !== "kranheb" && werkzeug !== "bagger") {
+    if (meiner && werkzeug !== "kranheb") {
       /* Der naechste freie Platz zu meinem — und wenn keiner frei ist,
          der naechste ueberhaupt (dann tauschen die beiden). */
       const naehe = (a, b) => Math.abs(a - b);
@@ -32993,7 +32989,6 @@
     /* RUNDE 98 — XANDER: „Dann haette ich gerne den Kran dafuer, dass
        man jemand anderen noch auf einen Platz heben kann." */
     kranheben: { zeichen: ["\ud83c\udfd7\ufe0f"], wie: 4, klasse: "umarmen" },
-    bagger:    { zeichen: ["\ud83d\ude9c"], wie: 4, klasse: "umarmen" },
     /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
        ne Luftballon." */
     luftballon: { zeichen: ["\ud83c\udf88"], wie: 4, klasse: "umarmen" },
@@ -39158,293 +39153,6 @@
       lcTonSpaeter("kran", 120, 0.5);
       lcTonSpaeter("aufsetzen", Math.round(DAUER * 0.86), 0.45);
     }, 2900, "kranheben");
-  }
-
-  /* =====================================================================
-     DER SCHAUFELRADBAGGER
-     ---------------------------------------------------------------------
-     XANDER (Walkie-Funk #39): „… und einen Schaufelradbagger [der
-     jemanden] von seinem Platz weg befördern kann und realistisch
-     irgendwo abladen kann." — (Funk #54) „den Bagger … als Nächstes."
-
-     Gebaut wie der Kran: EINE Zeichnung ueber der Sitzreihe, Bild und
-     Maschine laufen nach DERSELBEN Uhr (lauf.currentTime), umgesetzt
-     wird erst, wenn abgeladen ist (livechat.js, 3150 ms).
-
-     Der Bagger faehrt UNTER der Sitzreihe herein — neben ihr ist am
-     Handy kein Platz (gemessen beim Kran: 19 px bis zum Rand). Vom
-     Oberwagen geht der Ausleger schraeg hinauf, vorn dreht das
-     Schaufelrad mit acht Eimern.
-       0–14 %   hereinfahren, Rad dreht schon
-      14–32 %   Rad an den Startplatz, graben: ein Eimer schaufelt das
-                Bild vom Platz und nimmt es mit nach oben
-      32–64 %   Ausleger schwenkt hinueber, das Bild liegt oben im Eimer
-      64–80 %   Rad dreht weiter, das Bild rutscht aus dem Eimer und
-                faellt auf den Zielplatz, federt nach (bis 86 %)
-      86–100 %  Bagger faehrt zurueck, blendet aus
-     ===================================================================== */
-  function lcBagger(wen, nachricht) {
-    const zielNr = Number(nachricht && nachricht.ziel) || 0;
-    return lcAmPlatz(wen, "lc-baggerzug", (schicht, platz) => {
-      const kreis = platz.querySelector(".lc-kreis");
-      const reihe = document.getElementById("lcPlaetze");
-      if (!kreis || !reihe) return;
-      const DAUER = 3600;
-      const gr = kreis.offsetWidth || 64;
-      const rr = reihe.getBoundingClientRect();
-      const lage = (el) => {
-        const r = el.getBoundingClientRect();
-        return { x: r.left + r.width / 2 - rr.left, y: r.top + r.height / 2 - rr.top };
-      };
-      const S = lage(kreis);
-      const zielEl = zielNr
-        ? document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + zielNr + '"]')
-        : null;
-      const Z = zielEl ? lage(zielEl.querySelector(".lc-kreis") || zielEl) : { x: S.x + gr * 1.2, y: S.y };
-      const felder = [...reihe.querySelectorAll(".lc-platz .lc-kreis")]
-        .filter((k) => k.offsetWidth > 0).map(lage);
-      felder.push(S, Z);
-      const feldLinks = Math.min(...felder.map((l) => l.x));
-      const feldRechts = Math.max(...felder.map((l) => l.x));
-      const feldUnten = Math.max(...felder.map((l) => l.y)) + gr / 2;
-      /* Von welcher Seite das Rad kommt: von der Seite, auf der die
-         beiden Plaetze liegen — so reicht der Ausleger kurz hinueber. */
-      const mitte = (feldLinks + feldRechts) / 2;
-      const vonLinks = (S.x + Z.x) / 2 <= mitte;
-      const dir = vonLinks ? 1 : -1;                  /* +1: Rad greift nach rechts */
-      /* GESEHEN (Standbilder, erster Anlauf): mit dem Rad NEBEN dem Bild
-         (Radius 0,62) stand es die ganze Zeit mitten auf dem Gesicht des
-         Nachbarn. Jetzt kleiner (0,5) und SCHRAEG UNTER dem Startplatz —
-         die Nabe sitzt in der Luecke zwischen vier Plaetzen, der Eimer
-         greift von unten. Zum Abladen steht das Rad knapp UEBER dem Ziel,
-         das Bild faellt fast senkrecht hinunter. */
-      const R = gr * 0.5;                             /* Radius des Schaufelrads */
-      /* GEMESSEN (pruefe-runde98-kran, 7): beim Schwenk quer ueber die
-         Sitzreihe stand die Radnabe bis zu 20 Bilder lang auf fremden
-         Gesichtern. Jetzt faehrt sie nur durch die LUECKEN: Wa liegt in
-         der Spaltenluecke neben dem Startplatz, Wb in der Spaltenluecke
-         neben dem Ziel und in der Reihenluecke darueber. Der Weg geht
-         erst senkrecht durch die Spaltenluecke, dann waagerecht durch die
-         Reihenluecke. */
-      const Wa = { x: S.x - dir * gr * 0.62, y: S.y + gr * 0.58 };
-      const Wb = { x: Z.x - dir * gr * 0.62, y: Z.y - gr * 0.66 };
-      /* Der Oberwagen steht unter der Sitzreihe, auf der Seite des Rads. */
-      const koerperX = vonLinks ? feldLinks - gr * 0.1 : feldRechts + gr * 0.1;
-      const bodenY = feldUnten + gr * 0.95;           /* Unterkante der Raupen */
-      const P = { x: koerperX, y: bodenY - gr * 0.78 }; /* Drehpunkt des Auslegers */
-      const W0 = Math.round(rr.width), H = Math.round(rr.height);
-      const aussen = vonLinks ? -(koerperX + gr * 1.4) : (W0 - koerperX + gr * 1.4);
-
-      const NS = "http://www.w3.org/2000/svg";
-      reihe.querySelectorAll(".lc-bagger-buehne").forEach((x) => {
-        if (x.dataset.platz === platz.getAttribute("data-lc-platz")) x.remove();
-      });
-      const buehne = document.createElementNS(NS, "svg");
-      buehne.setAttribute("class", "lc-bagger-buehne");
-      buehne.setAttribute("aria-hidden", "true");
-      buehne.dataset.platz = platz.getAttribute("data-lc-platz") || "";
-      buehne.setAttribute("width", String(W0));
-      buehne.setAttribute("height", String(H));
-      buehne.setAttribute("viewBox", "0 0 " + W0 + " " + H);
-      const f1 = (v) => v.toFixed(1);
-      /* Unterwagen mit Raupen, Oberwagen mit Fuehrerhaus und Gegengewicht.
-         Gezeichnet mit dem Ausleger nach rechts; nach links gespiegelt. */
-      const u = gr / 100;
-      const sp = vonLinks ? "" : " scale(-1 1)";
-      let raeder = "";
-      for (let i = 0; i < 5; i++) {
-        raeder += '<circle class="lc-bg-rolle" cx="' + f1((-52 + i * 26) * u) + '" cy="' + f1(-11 * u) + '" r="' + f1(7 * u) + '"/>';
-      }
-      const koerper =
-        '<g class="lc-bg-maschine" transform="translate(' + f1(koerperX) + ' ' + f1(bodenY) + ')' + sp + '">'
-        + '<rect class="lc-bg-raupe" x="' + f1(-66 * u) + '" y="' + f1(-24 * u) + '" width="' + f1(132 * u) + '" height="' + f1(24 * u) + '" rx="' + f1(12 * u) + '"/>'
-        + raeder
-        + '<rect class="lc-bg-unterwagen" x="' + f1(-40 * u) + '" y="' + f1(-38 * u) + '" width="' + f1(80 * u) + '" height="' + f1(15 * u) + '" rx="' + f1(3 * u) + '"/>'
-        + '<path class="lc-bg-oberwagen" d="M' + f1(-58 * u) + ' ' + f1(-38 * u) + ' L' + f1(-58 * u) + ' ' + f1(-70 * u)
-        + ' L' + f1(20 * u) + ' ' + f1(-70 * u) + ' L' + f1(34 * u) + ' ' + f1(-52 * u) + ' L' + f1(34 * u) + ' ' + f1(-38 * u) + ' Z"/>'
-        + '<rect class="lc-bg-gewicht" x="' + f1(-74 * u) + '" y="' + f1(-66 * u) + '" width="' + f1(20 * u) + '" height="' + f1(26 * u) + '" rx="' + f1(3 * u) + '"/>'
-        + '<rect class="lc-bg-haus" x="' + f1(-8 * u) + '" y="' + f1(-96 * u) + '" width="' + f1(30 * u) + '" height="' + f1(28 * u) + '" rx="' + f1(3 * u) + '"/>'
-        + '<rect class="lc-bg-fenster" x="' + f1(4 * u) + '" y="' + f1(-91 * u) + '" width="' + f1(14 * u) + '" height="' + f1(12 * u) + '" rx="' + f1(2 * u) + '"/>'
-        + '<path class="lc-bg-streifen" d="M' + f1(-56 * u) + ' ' + f1(-46 * u) + ' H' + f1(32 * u) + '"/>'
-        + '</g>';
-      /* Das Schaufelrad: Felge, Speichen, acht Eimer mit Zaehnen. */
-      let eimer = "";
-      for (let i = 0; i < 8; i++) {
-        const a = i * 45;
-        eimer += '<g transform="rotate(' + a + ')"><path class="lc-bg-eimer" d="M' + f1(-R * 0.26) + ' ' + f1(-R * 0.86)
-          + ' L' + f1(R * 0.22) + ' ' + f1(-R * 0.86) + ' L' + f1(R * 0.3) + ' ' + f1(-R * 1.16)
-          + ' L' + f1(-R * 0.3) + ' ' + f1(-R * 1.16) + ' Z"/>'
-          + '<path class="lc-bg-zahn" d="M' + f1(-R * 0.26) + ' ' + f1(-R * 1.16) + ' l' + f1(R * 0.05) + ' ' + f1(-R * 0.1)
-          + ' l' + f1(R * 0.05) + ' ' + f1(R * 0.1) + ' M' + f1(-R * 0.05) + ' ' + f1(-R * 1.16) + ' l' + f1(R * 0.05) + ' ' + f1(-R * 0.1)
-          + ' l' + f1(R * 0.05) + ' ' + f1(R * 0.1) + ' M' + f1(R * 0.15) + ' ' + f1(-R * 1.16) + ' l' + f1(R * 0.05) + ' ' + f1(-R * 0.1)
-          + ' l' + f1(R * 0.05) + ' ' + f1(R * 0.1) + '"/></g>';
-      }
-      let speichen = "";
-      for (let i = 0; i < 4; i++) speichen += '<path class="lc-bg-speiche" d="M0 0 L0 ' + f1(-R * 0.84) + '" transform="rotate(' + (i * 90 + 22.5) + ')"/>';
-      speichen += speichen.replace(/rotate\((\d+(\.\d+)?)\)/g, (m, a) => "rotate(" + (Number(a) + 180) + ")");
-      const rad =
-        '<g class="lc-bg-rad"><g class="lc-bg-raddreh">' + eimer
-        + '<circle class="lc-bg-felge" r="' + f1(R * 0.86) + '"/>' + speichen
-        + '<circle class="lc-bg-nabe" r="' + f1(R * 0.14) + '"/></g></g>';
-      buehne.innerHTML =
-        '<g class="lc-bg-alles">'
-        + '<path class="lc-bg-ausleger"/><path class="lc-bg-ausleger-strebe"/>'
-        + '<path class="lc-bg-seil"/>'
-        + koerper + rad
-        + '<g class="lc-bg-staub">'
-        + [0, 1, 2, 3, 4].map((i) => '<circle r="' + f1(gr * (0.1 + 0.03 * i)) + '"/>').join("")
-        + '</g></g>';
-      if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
-      reihe.appendChild(buehne);
-      const alles = buehne.querySelector(".lc-bg-alles");
-      const auslegerEl = buehne.querySelector(".lc-bg-ausleger");
-      const strebeEl = buehne.querySelector(".lc-bg-ausleger-strebe");
-      const seilEl = buehne.querySelector(".lc-bg-seil");
-      const radEl = buehne.querySelector(".lc-bg-rad");
-      const radDreh = buehne.querySelector(".lc-bg-raddreh");
-      const staub = buehne.querySelector(".lc-bg-staub");
-
-      const glatt = (x) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
-      const zw = (f, a, b) => Math.max(0, Math.min(1, (f - a) / (b - a)));
-      /* Wo das Rad in jedem Augenblick steht (ohne die Einfahrt). */
-      const radBei = (f) => {
-        if (f < 0.14) return { x: Wa.x, y: Wa.y + gr * 0.5 * (1 - glatt(zw(f, 0, 0.14))) };
-        if (f < 0.32) return Wa;
-        /* Nach dem Abladen senkt sich der Ausleger zuerst unter die
-           Sitzreihe, DANN faehrt der Bagger weg — sonst schleift das Rad
-           ueber die Gesichter der anderen (Standbild 3,3 s). */
-        if (f > 0.84) {
-          const k = glatt(zw(f, 0.84, 0.93));
-          return { x: Wb.x, y: Wb.y + (feldUnten + R * 0.2 - Wb.y) * k };
-        }
-        const k = glatt(zw(f, 0.32, 0.64));
-        const L1 = Math.abs(Wb.y - Wa.y), L2 = Math.abs(Wb.x - Wa.x), s = k * (L1 + L2);
-        if (s <= L1) return { x: Wa.x, y: Wa.y + Math.sign(Wb.y - Wa.y) * s };
-        return { x: Wa.x + Math.sign(Wb.x - Wa.x) * (s - L1), y: Wb.y };
-      };
-      /* Wie weit das Rad gedreht ist (Grad) — es dreht beim Graben und
-         beim Abladen, dazwischen steht es still. Positiv = zum Bild hin. */
-      /* Beim Graben dreht das Rad so, dass der Eimer auf der Bildseite
-         NACH OBEN laeuft (gegen dir), beim Abladen weiter zum Ziel (mit dir). */
-      const drehBei = (f) => dir * (-180 * glatt(zw(f, 0, 0.14)) - 220 * zw(f, 0.14, 0.32)
-        + 70 * glatt(zw(f, 0.64, 0.74)));
-      /* Das Bild: wo liegt es, wie gross, wie gedreht? */
-      const th0 = Math.atan2(dir * (S.x - Wa.x), -(S.y - Wa.y));   /* Winkel vom Rad aus, 0 = oben */
-      const r0 = Math.hypot(S.x - Wa.x, S.y - Wa.y);
-      const rE = R * 0.98, klein = 0.58;
-      const bildBei = (f) => {
-        if (f < 0.22) return { x: S.x, y: S.y, s: 1, d: 0 };
-        if (f < 0.32) {
-          /* Der Eimer schaufelt: das Bild laeuft auf dem Rad nach oben. */
-          const k = glatt(zw(f, 0.22, 0.32));
-          const th = th0 * (1 - k), r = r0 + (rE - r0) * k;
-          return { x: Wa.x + dir * r * Math.sin(th), y: Wa.y - r * Math.cos(th), s: 1 - (1 - klein) * k, d: dir * -25 * k };
-        }
-        if (f < 0.68) {
-          const W = radBei(f);
-          return { x: W.x, y: W.y - rE, s: klein, d: dir * -25 + Math.sin(f * 40) * 3 };
-        }
-        const W = radBei(f);
-        if (f < 0.72) {
-          /* Das Rad dreht weiter, der Eimer kippt zum Ziel hin. */
-          const k = zw(f, 0.68, 0.72), th = dir * 0.55 * k;
-          return { x: W.x + rE * Math.sin(th), y: W.y - rE * Math.cos(th), s: klein, d: dir * (-25 + 45 * k) };
-        }
-        /* Freier Fall aus dem Eimer auf den Zielplatz (Parabel), dann
-           Nachfedern. */
-        const th = dir * 0.55;
-        const A = { x: W.x + rE * Math.sin(th), y: W.y - rE * Math.cos(th) };
-        if (f < 0.80) {
-          const k = zw(f, 0.72, 0.80);
-          return { x: A.x + (Z.x - A.x) * k, y: A.y + (Z.y - A.y) * k * k - gr * 0.25 * Math.sin(Math.PI * k) * (1 - k),
-                   s: klein + (1 - klein) * k, d: dir * (20 * (1 - k)) };
-        }
-        const k = zw(f, 0.80, 0.86);
-        return { x: Z.x, y: Z.y - Math.sin(Math.PI * k) * gr * 0.1, s: 1 + Math.sin(Math.PI * k) * 0.04, d: 0 };
-      };
-
-      /* Das Bild laeuft als WAAPI-Animation (linear, fein abgetastet), damit
-         es mit derselben Uhr steht wie die Zeichnung. */
-      const frames = [];
-      for (let i = 0; i <= 90; i++) {
-        const f = i / 90, b = bildBei(f);
-        frames.push({ offset: f, transform: "translate(" + f1(b.x - S.x) + "px, " + f1(b.y - S.y)
-          + "px) rotate(" + f1(b.d) + "deg) scale(" + b.s.toFixed(3) + ")" });
-      }
-      const altZ = platz.style.zIndex;
-      platz.style.zIndex = "9";
-      let lauf = null;
-      try { lauf = kreis.animate(frames, { duration: DAUER, easing: "linear", fill: "forwards" }); }
-      catch (e) { lauf = null; }
-
-      const nameAlt = lcNameVomPlatz(platz);
-      const t0 = performance.now();
-      let fertig = false;
-      const aufraeumen = () => {
-        if (fertig) return;
-        fertig = true;
-        try { if (lauf) lauf.cancel(); } catch (e) {}
-        platz.style.zIndex = altZ;
-      };
-      const bild = () => {
-        if (!buehne.isConnected) { aufraeumen(); return; }
-        const uhr = lauf && !fertig ? lauf.currentTime : null;
-        const t = typeof uhr === "number" ? uhr : performance.now() - t0, f = Math.min(1, t / DAUER);
-        /* Umgesetzt (der Name am Platz ist ein anderer): das Bild sitzt
-           jetzt wirklich auf dem Zielplatz — die Animation geht weg. */
-        if (!fertig && f > 0.8 && lcNameVomPlatz(platz) !== nameAlt) aufraeumen();
-        /* Einfahrt und Ausfahrt: die ganze Maschine faehrt seitlich. */
-        const rein = 1 - glatt(zw(f, 0, 0.14)), raus = glatt(zw(f, 0.92, 1));
-        const verschub = aussen * Math.max(rein, raus);
-        alles.setAttribute("transform", "translate(" + f1(verschub) + " 0)");
-        const W = radBei(f);
-        radEl.setAttribute("transform", "translate(" + f1(W.x) + " " + f1(W.y) + ")");
-        radDreh.setAttribute("transform", "rotate(" + f1(drehBei(f)) + ")");
-        /* Der Ausleger: ein Fachwerk vom Drehpunkt bis zur Radnabe. */
-        const lx = W.x - P.x, ly = W.y - P.y, L = Math.hypot(lx, ly) || 1;
-        const nx = -ly / L, ny = lx / L, b = gr * 0.07;
-        const o1 = { x: P.x + nx * b, y: P.y + ny * b }, o2 = { x: W.x + nx * b * 0.6, y: W.y + ny * b * 0.6 };
-        const u1 = { x: P.x - nx * b, y: P.y - ny * b }, u2 = { x: W.x - nx * b * 0.6, y: W.y - ny * b * 0.6 };
-        auslegerEl.setAttribute("d", "M" + f1(o1.x) + " " + f1(o1.y) + " L" + f1(o2.x) + " " + f1(o2.y)
-          + " M" + f1(u1.x) + " " + f1(u1.y) + " L" + f1(u2.x) + " " + f1(u2.y));
-        let zz = "";
-        const n = Math.max(3, Math.round(L / (gr * 0.16)));
-        for (let i = 0; i < n; i++) {
-          const a = i / n, c = (i + 1) / n;
-          const p = (i % 2 ? o1 : u1), q = (i % 2 ? o2 : u2), p2 = (i % 2 ? u1 : o1), q2 = (i % 2 ? u2 : o2);
-          zz += "M" + f1(p.x + (q.x - p.x) * a) + " " + f1(p.y + (q.y - p.y) * a)
-            + " L" + f1(p2.x + (q2.x - p2.x) * c) + " " + f1(p2.y + (q2.y - p2.y) * c) + " ";
-        }
-        strebeEl.setAttribute("d", zz);
-        /* Das Halteseil vom Mast auf dem Oberwagen zur Auslegerspitze. */
-        const mast = { x: P.x - dir * gr * 0.3, y: P.y - gr * 0.42 };
-        seilEl.setAttribute("d", "M" + f1(mast.x) + " " + f1(mast.y) + " L" + f1(P.x) + " " + f1(P.y)
-          + " M" + f1(mast.x) + " " + f1(mast.y) + " L" + f1(P.x + lx * 0.7) + " " + f1(P.y + ly * 0.7));
-        /* Staub: beim Graben am Startplatz, beim Aufprall am Ziel. */
-        const stGrab = zw(f, 0.18, 0.34), stAuf = zw(f, 0.79, 0.92);
-        const st = stGrab > 0 && stGrab < 1 ? { k: stGrab, x: S.x, y: S.y + gr * 0.4 }
-          : stAuf > 0 && stAuf < 1 ? { k: stAuf, x: Z.x, y: Z.y + gr * 0.42 } : null;
-        staub.style.opacity = st ? String(Math.sin(Math.PI * st.k) * 0.8) : "0";
-        if (st) {
-          [...staub.children].forEach((c, i) => {
-            const a = (i - 2) * 0.55;
-            c.setAttribute("cx", f1(st.x + Math.sin(a) * gr * (0.2 + 0.35 * st.k)));
-            c.setAttribute("cy", f1(st.y - Math.cos(a) * gr * 0.12 * st.k - gr * 0.05 * i * st.k));
-          });
-        }
-        buehne.style.opacity = f < 0.04 ? String(f / 0.04) : f > 0.95 ? String(Math.max(0, (1 - f) / 0.05)) : "1";
-        if (t < DAUER + 1500 && f < 1) requestAnimationFrame(bild);
-        else { aufraeumen(); buehne.remove(); }
-      };
-      requestAnimationFrame(bild);
-      setTimeout(() => { aufraeumen(); buehne.remove(); }, DAUER + 2400);
-      /* Die Toene: der Motor beim Hereinfahren, das Graben, der Motor beim
-         Schwenk, das Aufsetzen im Augenblick des Aufpralls (80 %). */
-      lcTonSpaeter("kran", 0, 0.4, 700);
-      lcTonSpaeter("graben", Math.round(DAUER * 0.19), 0.55, 800);
-      lcTonSpaeter("kran", Math.round(DAUER * 0.33), 0.4, 1100);
-      lcTonSpaeter("aufsetzen", Math.round(DAUER * 0.80), 0.55);
-    }, 3700);
   }
 
   /* --- DAS LASSO ---------------------------------------------------
@@ -55484,7 +55192,6 @@
     applaus: 1,
     /* RUNDE 98 — der Kran hebt GENAU EINEN auf einen Platz. */
     kranheben: 1,
-    bagger: 1,
     /* RUNDE 88 — das Kaninchen wird aus GENAU EINEM Zylinder
        gezogen; ueber den ganzen Raum zu regnen waere kein Kunststueck
        mehr, sondern ein Unfall. */
@@ -55566,12 +55273,6 @@
        braucht die Zielnummer, sonst wuesste er nicht, wohin. */
     if (art === "kranheben") {
       lcKranHeben((nachricht && (nachricht.wen || nachricht.an)) || "", nachricht);
-      return;
-    }
-    /* RUNDE 101 — der Schaufelradbagger holt jemanden vom Platz und
-       laedt ihn auf einem anderen ab (Funk #39). */
-    if (art === "bagger") {
-      lcBagger((nachricht && (nachricht.wen || nachricht.an)) || "", nachricht);
       return;
     }
     if (art === "spray") {
