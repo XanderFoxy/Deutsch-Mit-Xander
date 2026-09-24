@@ -65,7 +65,11 @@ const zeilen = [];
 
   const reisen = await pg.evaluate(() => window.DMA_PRUEF.reiseArten());
   const wirkungen = await pg.evaluate(() => window.DMA_PRUEF.platzWirkungen());
-  const alle = [...new Set([...reisen, ...wirkungen])].filter((a) => !NUR || a === NUR);
+  /* RUNDE 101 — „ab:Name" setzt dort fort (der ganze Lauf dauert
+     ueber 30 Minuten; so kann man ihn in Stuecken laufen lassen). */
+  const ab = /^ab:/.test(NUR) ? NUR.slice(3) : "";
+  let alle = [...new Set([...reisen, ...wirkungen])].filter((a) => !NUR || ab || a === NUR);
+  if (ab) { const i = alle.indexOf(ab); alle = i >= 0 ? alle.slice(i) : alle; }
   console.log("\nRUNDE 92 — " + alle.length + " Effekte, jeder dreimal "
     + "(ungestoert / Auffrischen / Neuzeichnen)\n");
 

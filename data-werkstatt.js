@@ -49,32 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 594: Funk 75 fertig – Münzwurf, Bagger mit Schaufel, MTB, Zielfernrohr, Laserduell, Transport",
+  stand: "Fassung 596: Sprechbilder nach Walkie #159–161, Ton-Vorladen gegen Ruckeln",
 
   inArbeit: [
-    { seit: "2026-09-24T17:47",
-      text: "Walkie-Fragen zu 582–594" },
-    { seit: "2026-09-24T17:47",
-      text: "Reisen/Hot Rod/Leiter auch unter Transport? (Rückfrage)" },
-    { seit: "2026-09-24T17:47",
-      text: "Langlauf-Sonden runde92-betrieb und grundebene" },
+    { seit: "2026-09-24T18:02",
+      text: "Walkie-Fragen #170–180 warten auf Antwort" },
+    { seit: "2026-09-24T18:02",
+      text: "Betriebssonde: zweite Hälfte läuft" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T17:47",
-      text: "Münzwurf: Kopf oder Zahl, die Zahl bleibt bis zum eigenen Tipp aufs Bild" },
-    { seit: "2026-09-24T17:47",
-      text: "Bagger mit Schaufel: nimmt jemanden auf und fährt hinüber (auch mit sich selbst)" },
-    { seit: "2026-09-24T17:47",
-      text: "Zu zweit auf dem Mountainbike: Stollenreifen, Kette, Schaltung, Klingel, Ausrollen" },
-    { seit: "2026-09-24T17:47",
-      text: "Zielfernrohr: Lupe gleitet übers Bild, Fokus, Schuss, von der Bühne" },
-    { seit: "2026-09-24T17:47",
-      text: "Laserduell: rot gegen blau, ausweichen, der siebte Schuss entscheidet" },
-    { seit: "2026-09-24T17:47",
-      text: "Transport-Kachel: Angel, Lasso, Kran, beide Bagger – auf dem eigenen Bild Kran und Bagger" },
-    { seit: "2026-09-24T17:47",
-      text: "Eis 2: Farn-Eisblumen mit Reif, Blüte 2 geht gemeinsam auf" },
+    { seit: "2026-09-24T18:02",
+      text: "Ekel-Ausruf beim Vogel: verzögerte Töne werden jetzt vorgeladen (kein Stocken)" },
+    { seit: "2026-09-24T18:02",
+      text: "Magie 2 kräftiger und bunter, Funkeln 2 mit 230 Punkten und Sternen" },
+    { seit: "2026-09-24T18:02",
+      text: "Regenbogen 2 schmaler, Herzen 2 mehr, Noten 2 steigen und schaukeln" },
+    { seit: "2026-09-24T18:02",
+      text: "Kranz voller, Kugel mehr Schnee, Ohren größer, längere Vampirzähne, deutlicherer Schemen" },
+    { seit: "2026-09-24T18:02",
+      text: "Sonde runde92-betrieb kann mit ab:Name fortsetzen" },
   ],
 };
