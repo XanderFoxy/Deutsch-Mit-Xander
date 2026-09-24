@@ -298,6 +298,73 @@ const sage = (gut, was, zusatz) => {
     "das Menue bleibt dabei vollstaendig auf dem Bildschirm",
     menue ? menue.unten + " px unter dem Rand, oben bei " + menue.oben : "-");
 
+  /* =================================================================
+     RUNDE 100 — VOM EIGENEN BILD AUS, IM ECHTEN RAUM
+     -----------------------------------------------------------------
+     XANDER (Walkie-Talkie): „Es geht ueberhaupt nicht und scheint
+     einen doppelten Eintrag zu haben."
+     NACHGESTELLT: im Menue des EIGENEN Bildes schickte „Zu zweit" den
+     eigenen Namen — „Alex faehrt gemeinsam los mit Alex" —, und nichts
+     bewegte sich. Hier wird genau dieser Weg gegangen, mit der
+     Uebungspuppe, mit der er es ausprobiert hat: eigenes Bild →
+     Reisen → Zu zweit — Rad → „Mit wem?" → Puppe.
+     ================================================================= */
+  console.log("\nVOM EIGENEN BILD AUS (echter Raum, Uebungspuppe)\n");
+  const eigen = await pg.evaluate(async () => {
+    document.getElementById("lcPruefBuehne")?.remove();
+    window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000,
+      zuruecksetzen: true, leute: {} });
+    window.LiveChat.pruefBetreiber(true);
+    window.LiveChat.puppe();
+    document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
+    let e = document.getElementById("livechatArea");
+    while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
+    window.DMA_PRUEF.neuZeichnen();
+    await new Promise((f) => setTimeout(f, 500));
+    const pakete = [];
+    window.LiveChat.pruefPost((p) => pakete.push(p));
+    const ich = document.querySelector("#lcPlaetze .lc-platz-ich");
+    const puppe = [...document.querySelectorAll("#lcPlaetze .lc-platz")]
+      .find((p) => ((p.querySelector(".lc-platz-name") || {}).textContent || "").trim() === "Puppe");
+    if (!ich || !puppe) return { fehlt: true };
+    const vorherPuppe = puppe.dataset.lcPlatz;
+    const tipp = (wort) => {
+      const b = [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-knopf")]
+        .find((x) => (x.querySelector(".lc-platzmenue-wort") || {}).textContent.trim() === wort);
+      if (b) b.click();
+      return Boolean(b);
+    };
+    window.DMA_PRUEFUNG.platzMenue(ich);
+    const r1 = tipp("Reisen");
+    const r2 = tipp("Zu zweit \u2014 Rad");
+    const frage = (document.querySelector("#lcPlatzMenue .lc-platzmenue-kopf") || {}).textContent || "";
+    const wahl = [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-wort")].map((w) => w.textContent.trim());
+    const r3 = tipp("Puppe");
+    const kreis = ich.querySelector(".lc-kreis");
+    const a0 = kreis.getBoundingClientRect();
+    await new Promise((f) => setTimeout(f, 1800));
+    const a1 = kreis.getBoundingClientRect();
+    await new Promise((f) => setTimeout(f, 4500));
+    const nachPuppe = ([...document.querySelectorAll("#lcPlaetze .lc-platz")]
+      .find((p) => ((p.querySelector(".lc-platz-name") || {}).textContent || "").trim() === "Puppe") || {}).dataset;
+    const zeilen = window.LiveChat.pruefZeilen(3);
+    return { tipps: [r1, r2, r3], frage: frage, wahl: wahl,
+      bewegt: Math.round(Math.hypot(a1.left - a0.left, a1.top - a0.top)),
+      puppeVorher: vorherPuppe, puppeNachher: nachPuppe ? nachPuppe.lcPlatz : "",
+      doppelt: zeilen.some((z) => /mit Alex/.test(z)),
+      satz: zeilen.filter((z) => /gemeinsam/.test(z)).pop() || "" };
+  });
+  sage(eigen && !eigen.fehlt && eigen.tipps.every(Boolean), "eigenes Bild → Reisen → Zu zweit — Rad laesst sich antippen",
+    eigen ? JSON.stringify(eigen.tipps) : "-");
+  sage(eigen && /Mit wem/.test(eigen.frage) && eigen.wahl.indexOf("Puppe") >= 0 && eigen.wahl.indexOf("Alex") < 0,
+    "... dann kommt „Mit wem?“ — die Puppe steht zur Wahl, man selbst nicht",
+    eigen ? eigen.frage + " " + eigen.wahl.join(", ") : "-");
+  sage(eigen && eigen.bewegt > 20, "... und nach der Wahl fahren sie wirklich los",
+    eigen ? "mein Bild ist nach 1,8 s " + eigen.bewegt + " px gefahren" : "-");
+  sage(eigen && eigen.puppeNachher && eigen.puppeNachher !== eigen.puppeVorher,
+    "... und die Puppe sitzt danach woanders", eigen ? eigen.puppeVorher + " → " + eigen.puppeNachher : "-");
+  sage(eigen && !eigen.doppelt, "kein „… mit Alex“ — kein doppelter Name im Chat", eigen ? eigen.satz : "-");
+
   await br.close();
   srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)" : "\nalles gruen");

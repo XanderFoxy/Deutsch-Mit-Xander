@@ -12526,15 +12526,6 @@ window.LiveChat = (function () {
           + "  /gemeinsam Nickname 3-4-8   den Weg selbst einzeichnen");
       }
       var wemG = zielPerson(restG);
-      /* RUNDE 100 — mit sich selbst kann man nicht zu zweit fahren. Vorher
-         ging „Alex faehrt gemeinsam los mit Alex" an alle hinaus, und
-         nichts bewegte sich (XANDER: „es geht ueberhaupt nicht und
-         scheint einen doppelten Eintrag zu haben"). */
-      if ((wemG.id && wemG.id === zustand.ichId)
-          || String(wemG.name || "").toLowerCase() === String(zustand.ichName || "").toLowerCase()) {
-        return systemZeile("Zu zweit geht nur mit jemand anderem: tipp auf sein Bild \u2192 Reisen \u2192 Zu zweit, "
-          + "oder /gemeinsam Nickname.");
-      }
       return anAlle("aktion", zustand.ichName
         + (stueckG === "ball"
             ? " h\u00fcpft auf " + wemG.name + " davon  \ud83e\uddb5"

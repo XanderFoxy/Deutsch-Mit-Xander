@@ -30005,18 +30005,6 @@
            wandert der Name (und beim H\u00fcpfball das Wort \u201eball")
            gleich mit in den Befehl \u2014 heraus geht am Ende
            \u201e/gemeinsam Bea ball 3-4-8". */
-        /* RUNDE 100 — XANDER (Walkie-Talkie, Zu zweit reisen): „Es geht
-           ueberhaupt nicht und scheint einen doppelten Eintrag zu haben."
-           NACHGESTELLT: im Menue des EIGENEN Bildes steht „Reisen → Zu
-           zweit" auch — und dort ist „name" der eigene Name. Hinaus ging
-           „Alex faehrt gemeinsam los mit Alex" (der doppelte Name), und
-           weil man nicht mit sich selbst fahren kann, bewegte sich nichts.
-           Jetzt fragt das eigene Menue: mit wem? */
-        if ((befehl === "gemeinsam" || befehl === "*zuzweitweg")
-            && platz && platz.classList.contains("lc-platz-ich")) {
-          lcZuZweitWaehler(platz, befehl, zusatz);
-          return;
-        }
         if (befehl === "*zuzweitweg") {
           lcWegMalen("gemeinsam" + (name ? " " + name : "")
             + (zusatz ? " " + zusatz : ""), platz);
@@ -30057,56 +30045,6 @@
            keinen Namen, dort bleibt es beim Zusatz allein. */
         const zeile = "/" + befehl
           + (wen ? " " + wen : "") + (zusatz ? " " + zusatz : "");
-        try { LiveChat.schreiben(zeile); } catch (x) {}
-        lcNachDemSenden(zeile);
-      });
-      kasten.appendChild(b);
-    });
-    document.body.appendChild(kasten);
-    lcMenueStellen(kasten, platz);
-    lcMenueSchliessen(kasten);
-    return true;
-  }
-
-  /* RUNDE 100 — ZU ZWEIT VOM EIGENEN BILD AUS: MIT WEM?
-     Jeder, der gerade oben sitzt (auch die Uebungspuppe), steht hier
-     als Knopf. Dann geht es genau so weiter wie vom Bild des anderen
-     aus: „/gemeinsam Name" — oder erst der gemalte Weg. */
-  function lcZuZweitWaehler(platz, befehl, zusatz) {
-    lcPlatzMenueZu();
-    const andere = [...document.querySelectorAll("#lcPlaetze .lc-platz.lc-platz-belegt")]
-      .filter((p) => !p.classList.contains("lc-platz-ich"))
-      .map((p) => ((p.querySelector(".lc-platz-name") || {}).textContent || "")
-        .replace(/\s*\(du\)$/, "").trim())
-      .filter((n) => n && n !== "frei");
-    if (!andere.length) {
-      showToast("Zu zweit geht nur mit jemandem, der oben sitzt \u2014 zum Ausprobieren: \ud83e\uddcd \u00dcbungspuppe im Walkie-Talkie.");
-      return false;
-    }
-    const kasten = document.createElement("div");
-    kasten.id = "lcPlatzMenue";
-    kasten.className = "lc-platzmenue";
-    kasten.setAttribute("role", "menu");
-    const kopf = document.createElement("p");
-    kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = (zusatz === "ball" ? "Auf wem h\u00fcpfst du davon?" : "Mit wem f\u00e4hrst du los?");
-    kasten.appendChild(kopf);
-    andere.forEach((nm) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "lc-platzmenue-knopf";
-      b.setAttribute("role", "menuitem");
-      b.innerHTML = '<span class="lc-platzmenue-zeichen">' + (zusatz === "ball" ? "\ud83e\udd38" : "\ud83d\udeb2")
-        + '</span><span class="lc-platzmenue-wort"></span>';
-      b.querySelector(".lc-platzmenue-wort").textContent = nm;
-      b.addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        lcPlatzMenueZu();
-        if (befehl === "*zuzweitweg") {
-          lcWegMalen("gemeinsam " + nm + (zusatz ? " " + zusatz : ""), platz);
-          return;
-        }
-        const zeile = "/gemeinsam " + nm + (zusatz ? " " + zusatz : "");
         try { LiveChat.schreiben(zeile); } catch (x) {}
         lcNachDemSenden(zeile);
       });
