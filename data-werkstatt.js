@@ -49,26 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 596: Sprechbilder nach Walkie #159–161, Ton-Vorladen gegen Ruckeln",
+  stand: "Fassung 599: Adler und Flugzeug von oben neu gezeichnet; eigene Reisen nur noch beim Halten auf ein leeres Feld (Kran, beide Bagger, Delfin dort); Zielfernrohr-Bild kommt nach 7,8 s zurück.",
 
   inArbeit: [
-    { seit: "2026-09-24T18:02",
-      text: "Walkie-Fragen #170–180 warten auf Antwort" },
-    { seit: "2026-09-24T18:02",
-      text: "Betriebssonde: zweite Hälfte läuft" },
+    { seit: "2026-09-24T19:05",
+      text: "Funk 84/85: Adler kleiner + Seitenansicht, Flugzeug weniger länglich, Pferdebauch höher, Delfin reparieren, Zielfernrohr ausweichen + Punkte, Bombe synchron, Granate pfeift, Waschmaschine gegen Dreck, Hot-Rod-Weg, gemeinsam Reisen, Mario-Röhren, Lok-Schranke, Zauberer, Monstertruck, Feuerwerk, Kettensäge, Bazooka, Einstiegsanimation, Knöpfe unter den Plätzen; Spielsystem als Plan" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T18:02",
-      text: "Ekel-Ausruf beim Vogel: verzögerte Töne werden jetzt vorgeladen (kein Stocken)" },
-    { seit: "2026-09-24T18:02",
-      text: "Magie 2 kräftiger und bunter, Funkeln 2 mit 230 Punkten und Sternen" },
-    { seit: "2026-09-24T18:02",
-      text: "Regenbogen 2 schmaler, Herzen 2 mehr, Noten 2 steigen und schaukeln" },
-    { seit: "2026-09-24T18:02",
-      text: "Kranz voller, Kugel mehr Schnee, Ohren größer, längere Vampirzähne, deutlicherer Schemen" },
-    { seit: "2026-09-24T18:02",
-      text: "Sonde runde92-betrieb kann mit ab:Name fortsetzen" },
+    { seit: "2026-09-24T19:05",
+      text: "Walkie #168 Draufsicht, #175 eigene Reisen, Funk 83 (nicht im Menü)" },
   ],
 };
