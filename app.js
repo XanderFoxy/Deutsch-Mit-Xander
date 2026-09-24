@@ -55081,12 +55081,15 @@
   }
 
   /* wen: Ziel · los: das gemeinsame Los · zurueck: nur zurueck auf Kopf
-     drehen (der eigene Tipp aufs Bild) — ein kleinerer Wurf mit
-     anderthalb Ueberschlaegen, aber mit DEMSELBEN Ton: auch er landet
-     bei 1,31 s. */
+     drehen (der eigene Tipp aufs Bild).
+     RUNDE 101 — XANDER (Walkie #170): „Es soll einfach nur resetten,
+     ohne nochmal zu werfen, beim Antippen der Münze, nachdem sie
+     geworfen wurde." Also kein zweiter Wurf mehr: die Muenze dreht
+     sich an Ort und Stelle einmal um (0,45 s), ohne Flug, ohne
+     Wurfgeraeusch. */
   function lcMuenzwurf(wen, los, zurueck) {
-    /* Ab hier liegt sie still (Ton: 1,55 s). */
-    const ruhe = 1560;
+    /* Ab hier liegt sie still (Ton: 1,55 s; das Umdrehen: 0,45 s). */
+    const ruhe = zurueck ? 450 : 1560;
     return lcAmPlatz(wen, "lc-muenzwurf", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       if (!kreis) return;
@@ -55109,13 +55112,12 @@
          Hoehe fehlt, macht die Naehe wett: sie kommt auf einen zu. */
       const karteOben = ((document.getElementById("livechatKarte") || platz).getBoundingClientRect() || {}).top || 0;
       const platzOben = Math.max(0, rk.top - karteOben - 6);
-      const H = Math.max(hoch * 0.35, Math.min(zurueck ? hoch * 0.9 : hoch * 1.55, platzOben));
-      const nahe = zurueck ? 0.12 : 0.12 + 0.25 * (1 - H / (hoch * 1.55));
-      const flug = LC_MW_LANDUNG;
+      const H = zurueck ? 0 : Math.max(hoch * 0.35, Math.min(hoch * 1.55, platzOben));
+      const nahe = zurueck ? 0 : 0.12 + 0.25 * (1 - H / (hoch * 1.55));
+      const flug = zurueck ? ruhe : LC_MW_LANDUNG;
       const runden = zurueck ? 0 : 5;
       const t0 = Math.PI * (vorher ? 1 : 0);
-      const tEnde = t0 + Math.PI * 2 * runden + ((zahl !== vorher) ? Math.PI : 0)
-        + (zurueck ? Math.PI * 2 : 0);
+      const tEnde = t0 + Math.PI * 2 * runden + ((zahl !== vorher) ? Math.PI : 0);
 
       const altUebergang = kreis.style.transition;
       const altZ = platz.style.zIndex;
@@ -55148,7 +55150,7 @@
           /* Schnell aus dem Daumen, gegen Ende etwas langsamer. */
           const d = 1 - Math.pow(1 - u, 1.35);
           winkel = t0 + (tEnde - t0) * d;
-        } else {
+        } else if (!zurueck) {
           /* Die zwei kleinen Nachhopser, genau auf die Klicks im Ton. */
           LC_MW_HOPS.forEach(([a, b, h]) => {
             if (t >= a && t < b) {
@@ -55170,22 +55172,14 @@
           schatten.style.transform = "translateX(-50%) scale(" + (1 - 0.55 * h).toFixed(3) + ")";
           schatten.style.opacity = (0.55 - 0.4 * h).toFixed(3);
         }
-        if (t >= ruhe) {
-          ende();
-          if (!zurueck) {
-            /* Was gefallen ist, kurz in Worten — dann weiss es jeder. */
-            const wort = document.createElement("span");
-            wort.className = "lc-muenzwurf-wort";
-            wort.textContent = zahl ? "Zahl!" : "Kopf!";
-            schicht.appendChild(wort);
-          }
-          return;
-        }
+        /* RUNDE 101 — XANDER (Walkie #170): „Kopf!/Zahl!-Schild
+           weglassen." Was gefallen ist, sieht man an der Muenze. */
+        if (t >= ruhe) { ende(); return; }
         requestAnimationFrame(bild);
       };
       requestAnimationFrame(bild);
       setTimeout(ende, ruhe + 400);
-    }, zurueck ? 2000 : 3600, "muenzwurf");
+    }, zurueck ? 700 : 2400, zurueck ? "" : "muenzwurf");
   }
 
   /* =====================================================================
