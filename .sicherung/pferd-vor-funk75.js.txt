@@ -1,0 +1,239 @@
+    } else if (art === "pferd") {
+      /* „und vielleicht irgendwie ein Pferd, auf dem man da hin
+         reiten kann. Das muss aber dann auch realistisch sein, wie
+         man da drauf sitzt und reiten kann."
+         Also sitzt das Bild wirklich IM Sattel (hinter dem Widerrist,
+         vor der Kruppe), und die vier Beine laufen im Galopp — je
+         zwei im Gegentakt, dazu das Auf und Ab des Ruempfes. */
+      const pferd = document.createElement("span");
+      /* RUNDE 88 — TRAB ODER GALOPP.
+         XANDER: „entweder sind es beide Beine, die gleichzeitig
+         auftreffen vorne, und dann die hinteren, die nachziehen,
+         oder sie sind im Wechsel — so, das ist glaube ich Trab, der
+         Wechsel ist Trab. Aber da koenntest du ja entweder den Trab
+         machen, wie realistisch ist, und wenn man das Ganze
+         aufzieht, dann soll es Pferd im Galopp."
+         Genau so: ohne Aufziehen Trab, mit Aufziehen (/pferd Bea x3)
+         Galopp. Welche Beine wann aufsetzen, steht in
+         korrekturen.css — die Gangarten sind dort nachgerechnet. */
+      const galopp = Number(tempo) > 1;
+      pferd.className = "lc-pferd " + (galopp ? "lc-pferd-galopp" : "lc-pferd-trab");
+      pferd.style.setProperty("--gross", d + "px");
+      pferd.innerHTML =
+        '<span class="lc-pferd-huepf">'
+        /* XANDER: „Das Pferd muss auch ein bisschen ausgearbeitet
+           werden, viel natuerlicher sein, mit dem richtigen
+           Pferdekopf. Viel echter. Und die Pferdehufe mit dem
+           typischen Knickbein im Galopp. Das muss richtig echt
+           dargestellt sein."
+
+           Was vorher dastand, war ein Rechteck mit vier GERADEN
+           Strichen als Beinen und einem eckigen Klotz als Kopf.
+           Ein Pferdebein ist aber nie gerade: es knickt zweimal —
+           vorne am Vorderfusswurzelgelenk, hinten am Sprunggelenk —
+           und laeuft in den Huf aus. Genau das steht jetzt in jedem
+           Bein: Schulter, Knick, Fessel, Huf, und der Huf als
+           eigener, dickerer Strich.
+           Der Kopf hat jetzt eine Ganasche, einen schmalen
+           Nasenruecken, ein Maul mit Nuestern und ein Ohr — daran
+           erkennt man ein Pferd, nicht an einem Viereck. */
+        /* RUNDE 72 — ZURUECKGEHOLT. XANDER: „ich glaub das Pferd, was
+           du gestaltet hast, sieht noch haesslicher aus als das
+           vorherige. ich wollte bei unserem vorherigen Pferd lediglich
+           den Koerper nicht ganz so lang gestreckt haben. Ansonsten
+           sah das schon ziemlich cool aus."
+           Also steht hier wieder das Pferd aus Runde 65, Strich fuer
+           Strich — es liegt zusaetzlich in werkzeug/backup/
+           pferd-vor-runde71.txt, damit es nie wieder verloren geht.
+           GEAENDERT wurde nur das eine, was er wollte: der Rumpf lief
+           von x=38 bis 118 (80 lang) bei 33 Hoehe, also 2,4 : 1.
+           Jetzt 38 bis 108 — 70 lang, 2,1 : 1. Hals, Kopf und die
+           Hinterbeine ruecken um dieselben 10 Einheiten mit, sonst
+           haenge der Kopf in der Luft. Dazu ein paar Zuege im
+           Gesicht, mehr nicht. */
+        + '<svg class="lc-pferd-form" viewBox="0 0 150 100" aria-hidden="true">'
+        /* --- DIE BEINE DER FERNEN SEITE (dunkler, sie liegen hinten) --- */
+        /* RUNDE 80 — XANDER: „Das Pferd hat immer noch hinten diese
+           Wulst am Koerper … achte dabei auf den Arsch, dass die
+           Beine am Arsch sind, und die Beine sind so komisch
+           gefaltet wie so eine Ziehharmonika."
+
+           Drei Sachen, und alle drei stimmten:
+
+           · DIE ZIEHHARMONIKA. Vorder- und Hinterbein waren derselbe
+             Zickzack aus drei gleich langen Stuecken, die
+             abwechselnd um rund fuenf Einheiten nach links und
+             rechts sprangen (M52 62 L47 74 L52 84 L50 92). Ein
+             Faltenbalg sieht genau so aus. Ein Pferdebein nicht:
+             das VORDERBEIN ist fast gerade — Schulter, Vorderfusswurzel
+             (nur eine Andeutung), Fessel —, und nur das HINTERBEIN
+             hat einen echten Knick, naemlich das Sprunggelenk, und
+             das zeigt nach HINTEN, nicht abwechselnd.
+
+           · DIE BEINE SITZEN NICHT AM HINTERTEIL. Die Hinterbeine
+             hingen bei x = 52 und 60, das Hinterteil endet aber bei
+             x = 44. Sie standen also zwoelf bis sechzehn Einheiten
+             VOR der Kruppe, mitten unter dem Bauch. Jetzt setzen sie
+             bei 49 und 55 an, also wirklich unter dem Hinterteil.
+
+           · DIE WULST. Die Kruppe war ein Bogen mit oben und unten
+             demselben Radius — ein Wurstende. Bei einem Pferd
+             FAELLT die Kruppe vom Widerrist nach hinten ab, das
+             Gesaess steht darunter heraus und darunter zieht sich
+             die Hinterhand wieder ein. Genau diese drei Abschnitte
+             stehen jetzt in der Linie. */
+        /* --- DIE BEINE DER FERNEN SEITE (dunkler, sie liegen hinten) --- */
+        + '<g class="lc-pferd-fern">'
+        /* RUNDE 80 — XANDER: „achte dabei auf den Arsch, dass die
+           Beine am Arsch sind und die Beine sind so komisch gefaltet
+           wie so eine Ziehharmonika."
+           ------------------------------------------------------------
+           BEIDES STIMMTE, und beides hatte dieselbe Ursache: das Bein
+           war EIN Strich von gleichbleibender Dicke, und dieser Strich
+           knickte scharf hin und her (M49 56 L55 70 L46 80 L48 92 —
+           sechs Einheiten nach vorn, neun zurueck, zwei nach vorn).
+           Ein gleich dicker Streifen, der dreimal scharf umklappt, ist
+           genau eine Ziehharmonika.
+
+           Ein echtes Pferdebein ist oben DICK (Oberschenkel, Schulter)
+           und unten DUENN (Roehrbein), und es knickt nicht, es
+           SCHWINGT. Deshalb jetzt zwei Sachen:
+           · Hinterhand und Schulter sind eigene, gefuellte Formen —
+             sie gehoeren zum Koerper und sind das Fleisch, aus dem das
+             Bein kommt. Damit sitzt das Hinterbein sichtbar AM
+             Hinterteil und haengt nicht unter dem Bauch.
+           · Das Bein selbst ist nur noch das schlanke Stueck darunter
+             und laeuft in weichen Bogen (Q) statt in Knicken. Der
+             Sprunggelenkversatz ist von neun auf fuenf Einheiten
+             zurueckgenommen — er ist noch zu sehen, aber er klappt
+             nicht mehr um. */
+        /* RUNDE 88 — DER HUF GEHOERT ANS BEIN, NICHT DANEBEN.
+           Bisher waren Bein und Huf zwei GETRENNTE Pfade mit zwei
+           getrennten Drehungen: das Bein drehte um seinen oberen
+           Punkt, der Huf um sein eigenes linkes Ende. Ein Huf, der
+           um sich selbst kippt, waehrend das Bein ueber ihn
+           hinwegschwingt, bleibt stehen, wo er ist — im Bild lagen
+           deshalb zwei dunkle Klumpen frei im Raum, neben den
+           Beinen. Jetzt stecken Bein und Huf in EINER Gruppe, und
+           gedreht wird die Gruppe um den oberen Punkt des Beins.
+           Damit faehrt der Huf mit, wie er es muss. */
+        + '<g class="lc-pferd-beingruppe lc-pferd-b1" style="transform-origin:54px 68px">'
+        + '<path class="lc-pferd-bein" d="M54 68 Q55 75 49 80 Q48 86 50 91"/>'
+        + '<path class="lc-pferd-huf" d="M50 91 L56 92"/>'
+        + "</g>"
+        /* Vorderbein: fast gerade, nur das Knie setzt einen Grad ab. */
+        + '<g class="lc-pferd-beingruppe lc-pferd-b2" style="transform-origin:99px 66px">'
+        + '<path class="lc-pferd-bein" d="M99 66 Q100 76 98 83 Q97 88 98 92"/>'
+        + '<path class="lc-pferd-huf" d="M98 92 L104 93"/>'
+        + "</g>"
+        + "</g>"
+        /* --- DER SCHWEIF, oben auf der abfallenden Kruppe --- */
+        + '<path class="lc-pferd-schweif" d="M46 38 Q24 40 14 58 Q11 69 17 76'
+        + ' Q18 63 26 54 Q35 45 47 44 Z"/>'
+        /* --- DER RUMPF --- */
+        + '<path class="lc-pferd-rumpf" d="M58 29 L88 29 Q104 31 108 44'
+        + ' Q110 56 96 62 L66 63 Q54 63 49 56 Q45 48 46 40 Q48 31 58 29 Z"/>'
+        + '<path class="lc-pferd-linie" d="M58 33 Q54 48 58 62 M90 34 Q96 48 92 63"/>'
+        /* RUNDE 80 — DIE HINTERHAND UND DIE SCHULTER.
+           Das Fleisch, aus dem die Beine kommen. Die Hinterhand sitzt
+           am Hinterteil (der Rumpf endet hinten bei x = 45), die
+           Schulter vorn unter dem Hals. Beide gehoeren zum Koerper und
+           bewegen sich deshalb NICHT mit — nur das schlanke Bein
+           darunter schwingt. */
+        /* RUNDE 88 — DIE HINTERHAND IST KEIN OVAL.
+           XANDER: „der Arsch hinten, weil das so lang ist, das sieht
+           nicht so realistisch aus. Es sieht aus wie so eine wulstige
+           Wurst anstatt von dem Pferdekoerper."
+           NACHGESEHEN: hier stand ein Oval (M47 41 Q62 43 64 59
+           Q64 71 57 73 Q49 71 46 60 Q44 49 47 41 Z) — oben und unten
+           derselbe Bogen, also ein Wurstende, das hinten am Rumpf
+           klebte.
+           Eine Pferdehinterhand hat drei Abschnitte, und die stehen
+           jetzt einzeln da:
+             · die KRUPPE faellt vom Rumpf nach hinten unten ab
+               (47|39 → 41|52),
+             · das GESAESS steht darunter nach hinten heraus
+               (41|52 → 44|66) — das ist die runde Kante, die man
+               von der Seite sieht,
+             · der OBERSCHENKEL zieht sich nach vorn unten wieder ein
+               und laeuft schmal auf das Sprunggelenk zu (52|74).
+           Dadurch ist sie oben breit und unten schmal statt ueberall
+           gleich dick. */
+        + '<path class="lc-pferd-hand" d="M47 39'
+        + ' C56 41 63 48 64 57'
+        + ' C64.6 66 60 72.5 54 74'
+        + ' C49.6 74.6 46.5 71 45 66'
+        + ' C43.2 60 42.4 56 41.6 52'
+        + ' C41 47 43 41 47 39 Z"/>'
+        /* Die Kante zwischen Kruppe und Gesaess — ohne sie sieht man
+           die drei Abschnitte nicht. */
+        + '<path class="lc-pferd-kruppe" d="M47 40 C44.5 45 43.5 49 43.6 54"/>'
+        + '<path class="lc-pferd-schulter" d="M89 39 Q101 42 101 55 Q101 66 96 69'
+        + ' Q89 67 88 55 Q87 45 89 39 Z"/>'
+        /* --- HALS UND KOPF --- */
+        + '<path class="lc-pferd-hals" d="M94 38 Q106 30 110 16 L122 18'
+        + ' Q118 36 102 48 Z"/>'
+        /* Der Kopf: Ganasche rund, Nasenruecken schmal, Maul stumpf. */
+        + '<path class="lc-pferd-kopf" d="M108 14 Q116 6 124 8 Q132 10 135 18'
+        + ' Q137 24 133 27 L126 28 Q118 28 114 24 Q108 20 108 14 Z"/>'
+        + '<circle class="lc-pferd-auge" cx="118" cy="15" r="2"/>'
+        + '<path class="lc-pferd-nuester" d="M131 22 Q133.5 21 134 23"/>'
+        /* Das Ohr — spitz, nach vorn gestellt. */
+        + '<path class="lc-pferd-ohr" d="M110 12 L112 3 L117 9 Z"/>'
+        /* Die Maehne laeuft am Halskamm entlang. */
+        + '<path class="lc-pferd-maehne" d="M110 16 Q106 6 112 2 L106 2'
+        + ' Q98 10 96 24 Q94 32 92 38 L100 36 Q102 24 110 16 Z"/>'
+        /* RUNDE 72 — XANDER: „Da kannst du maximal bei dem vorherigen
+           Pferd noch was mit dem Gesicht machen, dass das noch ein
+           bisschen Details hat."
+           Also ein paar Zuege, die ein Pferdegesicht ausmachen und
+           die vorher fehlten: die Nuesternfalte, ein Lidstrich ueber
+           dem Auge, die Backenlinie (Ganasche) und eine helle
+           Blesse ueber dem Nasenruecken. */
+        /* RUNDE 73 — XANDER: „Bei dem Pferd soll die Blesse an der
+           Nase duenner sein."
+           GEMESSEN: sie war an der breitesten Stelle gut 6 Einheiten
+           breit, bei einem Nasenruecken von rund 9 — also zwei
+           Drittel des Gesichts. Eine Blesse ist ein SCHMALER Streifen
+           ueber dem Nasenbein, rund ein Drittel davon. Jetzt 2,4
+           Einheiten, und sie laeuft nach unten spitz aus, wie eine
+           echte Blesse es tut. */
+        /* RUNDE 88 — XANDER: „Diese Zeichnung auf der Nasenspitze vom
+           Pferd, die sieht schon realistisch aus, aber die kann
+           bisschen duenner sein, bisschen filigran."
+           Sie war seit Runde 73 rund 2,4 Einheiten breit. Jetzt 1,4
+           an der Stirn und sie laeuft nach unten in eine Spitze aus
+           — eine Blesse ist ein schmaler Streifen, der ueber dem
+           Nasenbein liegt, und beim Pferd wird er zur Nuester hin
+           schmaler, nicht breiter. */
+        + '<path class="lc-pferd-blesse" d="M119.6 11.5 Q124 10.5 128.2 12.9'
+        + ' Q130.4 16.5 130 21.2 Q129.4 17.4 127.4 15.2 Q123.8 13.2 120.2 12.9 Z"/>'
+        + '<path class="lc-pferd-zug" d="M112 19 Q117 22 124 23 M128 24 Q131 25 133 24'
+        + ' M115 12.5 Q118 10.6 121.6 11"/>'
+        /* --- DIE BEINE DER NAHEN SEITE --- */
+        /* Dasselbe noch einmal fuer die nahe Seite, einen Schritt
+           versetzt: hinten der Sprunggelenkknick nach hinten, vorn
+           ein beinahe gerades Bein. */
+        + '<g class="lc-pferd-beingruppe lc-pferd-b3" style="transform-origin:60px 70px">'
+        + '<path class="lc-pferd-bein" d="M60 70 Q61 77 55 82 Q54 88 56 93"/>'
+        + '<path class="lc-pferd-huf" d="M56 93 L62 94"/>'
+        + "</g>"
+        + '<g class="lc-pferd-beingruppe lc-pferd-b4" style="transform-origin:95px 68px">'
+        + '<path class="lc-pferd-bein" d="M95 68 Q96 78 94 84 Q93 89 94 94"/>'
+        + '<path class="lc-pferd-huf" d="M94 94 L100 95"/>'
+        + "</g>"
+        /* --- SATTEL UND GURT --- */
+        + '<path class="lc-pferd-sattel" d="M66 30 Q80 23 94 30 L94 38'
+        + ' Q80 32 66 38 Z"/>'
+        + '<path class="lc-pferd-gurt" d="M76 32 L75 62 M88 32 L90 62"/>'
+        + "</svg>"
+        + '<span class="lc-pferd-reiter"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
+        + "</span>";
+      reihe.appendChild(pferd);
+      weg.push(pferd);
+      setzen(pferd, start.x, start.y);
+      lcReiseWaagerecht(pferd, start, ende, dauer, hin, "pferd", bahn ? bahnKette : null);
+      lcTonZu("pferd");
+    } else if (art === "rohr") {
