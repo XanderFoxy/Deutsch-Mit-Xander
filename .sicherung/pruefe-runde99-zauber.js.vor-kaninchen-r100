@@ -193,40 +193,6 @@ const sage = (gut, text, dazu) => {
   sage(fall.ring === "hidden", "Unter dem Hut kommt kein gestrichelter Platzring hervor",
     "Ring: " + fall.ring);
 
-  console.log("\nRUNDE 100 — KEIN KLITSCHEN, BEVOR ES RAUSKOMMT\n");
-  /* XANDER (Walkie #74): „Das Bild klitscht noch bevor es rauskommt."
-     Gemessen: beim Umdrehen des Huts (36,5 %) war der Hut nur 8 % hoch,
-     das Bild darunter lag 6 Bilder lang frei. Zwischen 10 % und 40 %
-     darf vom Bild nichts neben dem Hut zu sehen sein. */
-  const pgK = await br.newPage({ viewport: { width: 390, height: 844 } });
-  await pgK.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
-  await pgK.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
-  await pgK.waitForFunction(() => window.DMA_PRUEF && window.DMA_PRUEFUNG, { timeout: 25000 });
-  const kl = await pgK.evaluate(async () => {
-    window.DMA_PRUEF.effektBuehne();
-    await new Promise((f) => setTimeout(f, 300));
-    window.DMA_PRUEFUNG.wirkung("kaninchen", "Bea", "Alex", {});
-    const platz = [...document.querySelectorAll(".lc-platz")].find((p) => /Bea/.test(p.textContent));
-    const kreis = platz.querySelector(".lc-kreis");
-    const t0 = performance.now();
-    let frei = 0, n = 0;
-    while (performance.now() - t0 < 1840) {
-      const t = performance.now() - t0;
-      const hut = document.querySelector(".lc-zt-hut:not(.lc-zt-hut-hinten)");
-      if (t > 470 && hut) {
-        n++;
-        const k = kreis.getBoundingClientRect(), h = hut.getBoundingClientRect();
-        const offen = Math.max(0, h.top - k.top) + Math.max(0, k.bottom - h.bottom);
-        if (Number(getComputedStyle(kreis).opacity) > 0.05 && offen > 2) frei++;
-      }
-      await new Promise((f) => requestAnimationFrame(f));
-    }
-    return { frei, n };
-  });
-  await pgK.close();
-  sage(kl.n > 20 && kl.frei === 0, "unter dem Hut ist vom Bild nichts zu sehen — auch nicht beim Umdrehen",
-    kl.frei + " von " + kl.n + " Bildern mit freiliegendem Bild");
-
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
   process.exit(fehler ? 1 : 0);

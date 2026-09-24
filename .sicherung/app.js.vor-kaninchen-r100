@@ -48896,20 +48896,12 @@
            herunterkommt (5–8 %), auf 0,46 zusammengezogen und in die
            Mitte des Kegels geschoben (Kegel reicht von 7 bis 69 % der
            Bildhoehe, Mitte bei 38 %): es verschwindet ganz darunter. */
-        /* RUNDE 100 — XANDER (Walkie #74): „Das Bild klitscht noch bevor
-           es rauskommt." GEMESSEN: beim Umdrehen (36,5 %) ist der Hut nur
-           noch 8 % hoch — das wartende Bild darunter lag 6 Bilder lang
-           frei (1683–1766 ms, bis 50 von 39 px ungedeckt). Solange es
-           UNTER dem Hut steckt (10–40 %), ist es jetzt unsichtbar; es
-           taucht erst in der Oeffnung wieder auf. */
         kreis.animate([
-          { transform: "translateY(0) scale(1) rotate(0deg)", opacity: 1, offset: 0 },
-          { transform: "translateY(0) scale(1) rotate(0deg)", opacity: 1, offset: bei(0.05) },
-          { transform: "translateY(-12%) scale(.46) rotate(0deg)", opacity: 1, offset: bei(0.085), easing: "ease-in" },
-          { transform: "translateY(-12%) scale(.46) rotate(0deg)", opacity: 0, offset: bei(0.10) },
+          { transform: "translateY(0) scale(1) rotate(0deg)", offset: 0 },
+          { transform: "translateY(0) scale(1) rotate(0deg)", offset: bei(0.05) },
+          { transform: "translateY(-12%) scale(.46) rotate(0deg)", offset: bei(0.085), easing: "ease-in" },
           /* RUNDE 99 — es wartet, bis der Hut umgedreht ist (38,5 %). */
-          { transform: "translateY(-12%) scale(.46) rotate(0deg)", opacity: 0, offset: bei(0.398) },
-          { transform: "translateY(-12%) scale(.46) rotate(0deg)", opacity: 1, offset: bei(0.40), easing: "ease-in" },
+          { transform: "translateY(-12%) scale(.46) rotate(0deg)", offset: bei(0.40), easing: "ease-in" },
           /* RUNDE 100 — „da kann die Animation noch ein bisschen fluessiger
              sein": an den Ohren heraus in vier Stufen statt einem Sprung —
              erst langsam aus der Oeffnung, dann schneller, oben abbremsen. */
