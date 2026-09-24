@@ -28875,14 +28875,6 @@ code, pre {
 }
 .lc-kleid.lc-kleid-unten > svg { height: 100%; }
 .lc-kleid > svg {
-  /* ANZIEHEN — XANDER: „… und dass das auch alles optisch passt dass
-     das alles hin passt."
-     GEMESSEN im echten Klassenzimmer: Bild 97 x 97 px, die Schicht
-     darueber 97 x 105 px. Ein <svg> steht sonst wie ein Buchstabe auf
-     der Schriftlinie, und der Platz fuer die Unterlaengen machte die
-     Schicht 8 px hoeher — alles sass 4 px zu tief. Als Block gibt es
-     keine Schriftlinie mehr. */
-  display: block;
   width: 100%;
   height: 100%;
   overflow: visible;

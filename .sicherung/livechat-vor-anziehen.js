@@ -1318,11 +1318,8 @@ window.LiveChat = (function () {
       if (f) localStorage.setItem(NAMENSFARB_SCHLUESSEL, f);
       else localStorage.removeItem(NAMENSFARB_SCHLUESSEL);
     } catch (e) {}
-    ablageSetzen("farbeName", f || "");
   }
   function gemerkteNamensfarbe() {
-    var p = ablageHolen("farbeName");
-    if (p !== null) return p;
     try { return localStorage.getItem(NAMENSFARB_SCHLUESSEL) || ""; } catch (e) { return ""; }
   }
 
@@ -1439,51 +1436,27 @@ window.LiveChat = (function () {
       if (x && SPRECHBILDER[x]) localStorage.setItem(SPRECHBILD_SCHLUESSEL, x);
       else localStorage.removeItem(SPRECHBILD_SCHLUESSEL);
     } catch (e) {}
-    ablageSetzen("sprechbild", x || "");
-  }
-  /* Was in der Ablage steht — oder "", wenn dort nichts Gueltiges
-     liegt. gemerktesSprechbild() macht daraus den Ring als Vorgabe. */
-  function sprechbildAusAblage() {
-    var ausProfil = ablageHolen("sprechbild");
-    if (ausProfil && SPRECHBILDER[ausProfil]) return ausProfil;
-    try {
-      var x = localStorage.getItem(SPRECHBILD_SCHLUESSEL) || "";
-      return SPRECHBILDER[x] ? x : "";
-    } catch (e) { return ""; }
+    try { if (window.DMA_EINST) window.DMA_EINST.setzen("sprechbild", x || ""); } catch (e) {}
   }
   function gemerktesSprechbild() {
-    return sprechbildAusAblage() || "ring";
-  }
-  /* Die gemeinsame Ablage aus app.js (kzEinstellung) — sie schreibt
-     ins Geraet UND ins Profil und entscheidet je Einstellung nach der
-     Zeit, welches Geraet zuletzt gewaehlt hat. null heisst: dort steht
-     nichts (oder app.js ist noch nicht so weit). */
-  function ablageHolen(name) {
     try {
-      if (!window.DMA_EINST) return null;
-      var w = window.DMA_EINST.holen(name, null);
-      return (w === null || w === undefined) ? null : String(w);
-    } catch (e) { return null; }
-  }
-  function ablageSetzen(name, wert) {
-    try { if (window.DMA_EINST) window.DMA_EINST.setzen(name, wert); } catch (e) {}
+      var ausProfil = window.DMA_EINST ? window.DMA_EINST.holen("sprechbild", "") : "";
+      if (ausProfil && SPRECHBILDER[ausProfil]) return ausProfil;
+    } catch (e) {}
+    try {
+      var x = localStorage.getItem(SPRECHBILD_SCHLUESSEL) || "";
+      return SPRECHBILDER[x] ? x : "ring";
+    } catch (e) { return "ring"; }
   }
 
-  /* Die Farbe von Name und Schrift reist genauso mit dem Profil —
-     sie ist wie das Sprechbild ein Teil davon, wie man im Raum
-     aussieht („Abspeichern im gesamten Profil"). Die Schrift oben
-     bleibt absichtlich am Geraet: sie ist eine Lesehilfe. */
   var FARB_SCHLUESSEL = "dma_livechat_farbe";
   function farbeMerken(f) {
     try {
       if (f) localStorage.setItem(FARB_SCHLUESSEL, f);
       else localStorage.removeItem(FARB_SCHLUESSEL);
     } catch (e) {}
-    ablageSetzen("farbe", f || "");
   }
   function gemerkteFarbe() {
-    var p = ablageHolen("farbe");
-    if (p !== null) return p;
     try { return localStorage.getItem(FARB_SCHLUESSEL) || ""; } catch (e) { return ""; }
   }
 
@@ -1504,14 +1477,7 @@ window.LiveChat = (function () {
      kein Neuladen mehr, sondern ein Weggehen; dann bleibt der
      Raum zu. */
   var RUECK_SCHLUESSEL = "dma_livechat_zurueck";
-  /* FUNK 101 — XANDER: „wenn ich irgendwas auf der Seite neu laden muss
-     dass ich trotzdem schnell in den Chat reinkomme … dass ich sofort
-     mit den Leuten reden kann".
-     Die Rückkehr ohne Nachfrage galt nur 2 Minuten. Wer nach einem
-     längeren Anruf oder einem Update zurückkam, musste wieder durch das
-     Tor. Jetzt gilt sie 30 Minuten; sie liegt im sessionStorage, gilt
-     also nur für diesen einen Tab. */
-  var RUECK_FRIST_MS = 30 * 60 * 1000;
+  var RUECK_FRIST_MS = 120000;
   function rueckkehrMerken() {
     try {
       sessionStorage.setItem(RUECK_SCHLUESSEL, JSON.stringify({
@@ -3669,13 +3635,8 @@ window.LiveChat = (function () {
     kontoMerken(n.von, n.konto);
     spielMerken(n.von, n.spiel);
     /* FUNK 95 — Spielereignisse (Schuss, Treffer, Stand, Duell) gehen an
-       spiel.js; gerechnet wird dort nichts, nur gezeigt.
-       NACHGEBESSERT (Funk 100): auch Schiffe versenken schickt
-       art „spiel" (mit dem Zug in n.spiel). Diese Weiche fing seit
-       Fassung 618 JEDEN Schiffe-Zug ab — zwischen zwei Geräten lief das
-       Spiel nicht mehr (gefunden von pruefe-runde98-schiffe-aus). Ein
-       Ereignis des Spielsystems erkennt man an n.ereignis. */
-    if (n.art === "spiel" && n.ereignis) {
+       spiel.js; gerechnet wird dort nichts, nur gezeigt. */
+    if (n.art === "spiel") {
       try { if (window.DMA_SPIEL && window.DMA_SPIEL.empfangen) window.DMA_SPIEL.empfangen(n); } catch (e) {}
       return;
     }
@@ -4947,13 +4908,9 @@ window.LiveChat = (function () {
     /* Nur fuer den Klang eines Schreis: maennlich, weiblich, divers
        oder leer. Steht im Profil, reist mit der Nachricht mit. */
     zustand.geschlecht = o.geschlecht || zustand.geschlecht || "";
-    zustand.farbe = o.farbe || (ablageHolen("farbe") !== null ? gemerkteFarbe()
-                                 : (zustand.farbe || gemerkteFarbe()));
-    zustand.farbeName = ablageHolen("farbeName") !== null ? gemerkteNamensfarbe()
-                        : (zustand.farbeName || gemerkteNamensfarbe());
-    /* Die Ablage zuerst: sie traegt die juengste Wahl von ALLEN
-       Geraeten. Was nur hier im Speicher steht, kann vom Morgen sein. */
-    zustand.sprechbild = sprechbildAusAblage() || zustand.sprechbild || "ring";
+    zustand.farbe = o.farbe || zustand.farbe || gemerkteFarbe();
+    zustand.farbeName = zustand.farbeName || gemerkteNamensfarbe();
+    zustand.sprechbild = zustand.sprechbild || gemerktesSprechbild();
     zustand.schrift = gemerkteSchrift();
     zustand.buehne = o.buehne !== false;
     platzJe = {};                 // neuer Raum, neue Sitzordnung
@@ -7704,48 +7661,8 @@ window.LiveChat = (function () {
        Gegenteil von dem, was das Spiel tut. */
     anAlle("aktion", zustand.ichName + " startet Schiffe versenken — "
       + "sucht euch ein Versteck  🚢");
-    /* FUNK 100 — hier stand noch „schiffeLos()" aus Runde 88, als die
-       Verstecke ausgelost wurden. Seit Runde 92 sucht sich jeder sein
-       Versteck selbst („Man muss sich erst einen Platz suchen, dann
-       beginnt die Runde mit einem Countdown"). Der alte Aufruf schaltete
-       alle Geräte schon beim Start auf „Schießen" — mitten ins
-       Verstecken. Los geht es jetzt nur noch nach dem Countdown
-       (schiffeAlleDa).
-
-       XANDER (Funk 100): „Kannst du mir den Dummy so machen dass ich mit
-       ihm Schiffe testen … dass er eigenes Spielzüge macht".
-       Die Übungspuppen sitzen nur auf dem eigenen Gerät — und wer
-       /versenken tippt, ist Schiedsrichter. Also zieht der
-       Schiedsrichter für sie: sie verstecken sich sofort auf einem
-       zufälligen freien Feld und schießen, wenn sie dran sind. */
-    schiffeSpiel.reihe.forEach(function (m) {
-      if (!istPuppe(m.id)) return;
-      var belegt = {};
-      Object.keys(schiffeSpiel.verstecke).forEach(function (id) { belegt[schiffeSpiel.verstecke[id]] = true; });
-      var frei = [];
-      for (var f = 1; f <= SCHIFFE_FELDER; f++) if (!belegt[f]) frei.push(f);
-      if (frei.length) schiffeVersteckAn(frei[Math.floor(Math.random() * frei.length)], m.id);
-    });
+    schiffeLos();
     return true;
-  }
-  /* FUNK 100 — die Puppe ist dran: kurz „überlegen", dann auf ein Feld
-     schießen, auf das noch niemand geschossen hat (nie auf ihr eigenes). */
-  function schiffePuppeZug() {
-    if (!schiffeSpiel || schiffeSpiel.phase !== "schiessen") return;
-    var m = schiffeSpiel.reihe[schiffeSpiel.dran % schiffeSpiel.reihe.length];
-    if (!m || !istPuppe(m.id) || schiffeSpiel.raus[m.id]) return;
-    var runde = schiffeSpiel;
-    setTimeout(function () {
-      if (schiffeSpiel !== runde || schiffeSpiel.phase !== "schiessen") return;
-      var jetzt = schiffeSpiel.reihe[schiffeSpiel.dran % schiffeSpiel.reihe.length];
-      if (!jetzt || jetzt.id !== m.id) return;
-      var geschossen = schiffeSpiel.geschossen || {};
-      var eigenes = schiffeSpiel.verstecke[m.id];
-      var frei = [];
-      for (var f = 1; f <= SCHIFFE_FELDER; f++) if (!geschossen[f] && f !== eigenes) frei.push(f);
-      if (!frei.length) return;
-      schiffeSchuss(frei[Math.floor(Math.random() * frei.length)], m.id, m.name);
-    }, 1400 + Math.floor(Math.random() * 1200));
   }
 
   /* Der Schiedsrichter nimmt ein Versteck entgegen — und verraet es
@@ -7779,7 +7696,6 @@ window.LiveChat = (function () {
   /* Eine Nachricht an genau ein Geraet — auch an das eigene. */
   function schiffePost(id, d) {
     if (id === zustand.ichId) schiffeEmpfangen(d, zustand.ichId);
-    else if (istPuppe(id)) return;          /* FUNK 100: die Puppe hat kein Gerät */
     else postSenden(id, { art: "spielpost", spiel: d });
   }
   /* Alle da (oder die Frist ist um): wer noch kein Feld hat, bekommt
@@ -7830,7 +7746,6 @@ window.LiveChat = (function () {
     var m = schiffeSpiel.reihe[0];
     schiffeAnAlle({ t: "los", dran: m.id, dranName: m.name,
                     reihe: schiffeSpiel.reihe });
-    schiffePuppeZug();
   }
   function schiffeWeiter() {
     var n = schiffeSpiel.reihe.length;
@@ -7848,10 +7763,6 @@ window.LiveChat = (function () {
        (schiffeVersteckAn prueft SCHIFFE_FELDER), aber jeder Schuss auf
        9 bis 16 wurde vom Schiedsrichter stillschweigend verworfen. */
     if (!schiffeSpiel || nr < 1 || nr > SCHIFFE_FELDER) return;
-    /* FUNK 100: welche Felder schon beschossen sind — damit die Puppe
-       nicht zweimal auf dasselbe schießt. */
-    schiffeSpiel.geschossen = schiffeSpiel.geschossen || {};
-    schiffeSpiel.geschossen[nr] = true;
     var getroffenId = "", getroffenName = "";
     Object.keys(schiffeSpiel.verstecke).forEach(function (id) {
       if (id === vonId || schiffeSpiel.raus[id]) return;
@@ -7878,7 +7789,6 @@ window.LiveChat = (function () {
     schiffeAnAlle({ t: "schuss", nr: nr, treffer: Boolean(getroffenId), von: vonName,
                     wen: getroffenName, dran: naechst ? naechst.id : "",
                     dranName: naechst ? naechst.name : "" });
-    schiffePuppeZug();
   }
 
   /* =========================================================
@@ -7930,7 +7840,7 @@ window.LiveChat = (function () {
           try { zustand.punkteRuf(wieviel, grund); } catch (e) {}
         }
         systemZeile("\u2b50 " + wieviel + " Punkte f\u00fcr dich \u2014 " + grund + ".");
-      } else if (!istPuppe(m.id)) {
+      } else {
         postSenden(m.id, { art: "punkte", wieviel: wieviel, grund: grund });
       }
     });
@@ -10146,7 +10056,7 @@ window.LiveChat = (function () {
     { gr: "reden", w: "anziehen", kurz: "aufsetzen", nutzt: "/anziehen Name krone",
       was: "jemandem etwas aufsetzen, das ANBLEIBT \u2014 krone, brille, sonnenbrille, schnurrbart, muetze, maske; /anziehen Name aus nimmt es ab" },
     { gr: "reden", w: "ausziehen", kurz: "abnehmen", nutzt: "/ausziehen Name",
-      was: "nimmt wieder ab, was jemand aufhat — /ausziehen Name krone nur die Krone" },
+      was: "nimmt wieder ab, was jemand aufhat" },
     { gr: "reden", w: "yt", kurz: "youtube", nutzt: "/yt <Link>",
       was: "Musik teilen \u2014 ein YouTube-Link l\u00e4uft bei allen im Raum; /yt <Link> 1:20 f\u00e4ngt sp\u00e4ter an, /yt aus macht es zu" },
     { gr: "schule", w: "versenken", kurz: "schiffe", nutzt: "/versenken",
@@ -13632,13 +13542,11 @@ window.LiveChat = (function () {
         return systemZeile("Anziehen:\n"
           + "  /anziehen Name krone   \u00b7   brille   \u00b7   sonnenbrille\n"
           + "  /anziehen Name schnurrbart   \u00b7   muetze   \u00b7   maske\n"
-          + "  Kopf, Augen und Mund gehen zusammen (Krone + Brille + Schnurrbart)\n"
-          + "  /ausziehen Name krone  nimmt nur die Krone ab\n"
-          + "  /anziehen Name aus     nimmt alles wieder ab");
+          + "  /anziehen Name aus     nimmt es wieder ab");
       }
       var letztesA = String(teileA[teileA.length - 1] || "").toLowerCase()
         .replace(/\u00fc/g, "ue").replace(/\u00e4/g, "ae").replace(/\u00f6/g, "oe");
-      var stueckA, abA, nurA = "";
+      var stueckA, abA;
       if (art === "ausziehen") {
         /* Ausziehen ist immer ein „aus". Steht am Ende ein bekanntes
            Stueck, wird genau das abgenommen und gehoert nicht mehr
@@ -13646,13 +13554,7 @@ window.LiveChat = (function () {
            und es geht alles herunter. */
         abA = true;
         stueckA = "aus";
-        /* ANZIEHEN — XANDER: „… dass ich jemanden anziehen kann und
-           ausziehen kann …"
-           Seit man mehrere Sachen zugleich tragen kann (Krone UND Brille),
-           nimmt „/ausziehen Bea krone" wirklich nur die Krone ab — vorher
-           ging trotz genanntem Stueck immer alles herunter. Es reist als
-           „aus:krone"; ohne Stueck bleibt es „aus" (alles). */
-        if (STUECKE[letztesA]) { nurA = letztesA; teileA.pop(); }
+        if (STUECKE[letztesA]) teileA.pop();
       } else {
         stueckA = letztesA;
         abA = /^(aus|ab|weg|nichts|nackt)$/.test(stueckA);
@@ -13675,15 +13577,13 @@ window.LiveChat = (function () {
       /* Sich selbst zieht man an, jemand anderem zieht man etwas an. */
       var selbstA = wemA.name === zustand.ichName;
       var zeichenA = STUECK_ZEICHEN[stueckA] || "\ud83d\udc52";
-      var wasAb = nurA ? STUECKE[nurA] : "alles";
       return anAlle("aktion", zustand.ichName
-        + (abA ? (selbstA ? " zieht sich " + wasAb + " wieder aus  \ud83e\uddfa"
-                          : " zieht " + wemA.name + " " + wasAb + " wieder aus  \ud83e\uddfa")
+        + (abA ? (selbstA ? " zieht sich alles wieder aus  \ud83e\uddfa"
+                          : " zieht " + wemA.name + " alles wieder aus  \ud83e\uddfa")
                : (selbstA ? " zieht sich " + STUECKE[stueckA] + " an  " + zeichenA
                           : " zieht " + wemA.name + " " + STUECKE[stueckA]
                             + " an  " + zeichenA)),
-        { wirkung: "anziehen", wen: wemA.name,
-          stueck: abA ? (nurA ? "aus:" + nurA : "aus") : stueckA });
+        { wirkung: "anziehen", wen: wemA.name, stueck: abA ? "aus" : stueckA });
     }
     /* ---- MUSIK TEILEN MIT YOUTUBE ----
        RUNDE 76 — XANDER: „Musik teilen mit YouTube."
@@ -14850,8 +14750,6 @@ window.LiveChat = (function () {
       return { phase: schiffeSpiel.phase || "",
                uhrLaeuft: Boolean(schiffeSpiel.frist),
                mitspieler: (schiffeSpiel.reihe || []).length,
-               /* FUNK 100: wie viele schon versteckt sind (nur die Zahl) */
-               versteckt: Object.keys(schiffeSpiel.verstecke || {}).length,
                treffer: schiffeSpiel.treffer || {} };
     },
     /* RUNDE 99 — die Punktrechnung zum Nachrechnen, ohne Spiel und
@@ -15282,28 +15180,6 @@ window.LiveChat = (function () {
     befehlAusZeichen: befehlAusZeichen,
     sprechbilder: function () { return Object.assign({}, SPRECHBILDER); },
     sprechbild: function () { return zustand.sprechbild || gemerktesSprechbild(); },
-    /* app.js ruft das, wenn das Profil frisch vom Server kam (Telefon
-       aus dem Hintergrund zurueck). XANDER: „auf meinem iPhone 12 …
-       habe ich eine andere Sprachbild Animation als die die ich gerade
-       eingestellt habe zuletzt." — also die neuere Wahl gleich
-       uebernehmen und den anderen im Raum zeigen, ohne sie noch einmal
-       zu speichern (sie liegt ja schon im Profil). */
-    einstellungenNeuLesen: function () {
-      var sb = sprechbildAusAblage();
-      var fa = ablageHolen("farbe"), fn = ablageHolen("farbeName");
-      var geaendert = false;
-      if (sb && sb !== zustand.sprechbild) { zustand.sprechbild = sb; geaendert = true; }
-      if (fa !== null && fa !== (zustand.farbe || "")) { zustand.farbe = fa; geaendert = true; }
-      if (fn !== null && fn !== (zustand.farbeName || "")) { zustand.farbeName = fn; geaendert = true; }
-      if (!geaendert) return false;
-      if (kanal) {
-        senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn,
-                 bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
-                 sprechbild: zustand.sprechbild });
-      }
-      melden();
-      return true;
-    },
     sprechbildSetzen: function (x) {
       if (!SPRECHBILDER[x]) return false;
       zustand.sprechbild = x;

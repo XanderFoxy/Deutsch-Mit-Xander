@@ -137,12 +137,7 @@ function tonMessen(name) {
     window.DMA_PRUEFUNG.kleiderAuffrischen();
     return [...document.querySelectorAll(".lc-kleid")].map((k) => k.dataset.lcKleid).sort();
   });
-  /* ANZIEHEN — XANDER: „… dass das auch alles optisch passt dass das
-     alles hin passt." Seitdem traegt man je FACH ein Stueck (Kopf,
-     Augen, Mund): Bea hat nach allen sechs die Muetze (ersetzt die
-     Krone), die Maske (ersetzt Brille und Sonnenbrille) und den
-     Schnurrbart auf — vorher blieb nur das letzte Stueck uebrig. */
-  sage(nachher.length === 5 && nachher.join(",") === "krone,maske,maske,muetze,schnurrbart",
+  sage(nachher.length === 3 && nachher.join(",") === "krone,maske,maske",
     "was jemand anhat, ueberlebt das Neuzeichnen der Sitzreihe",
     "danach getragen: " + nachher.join(", "));
   const ausgezogen = await pg.evaluate(() => {

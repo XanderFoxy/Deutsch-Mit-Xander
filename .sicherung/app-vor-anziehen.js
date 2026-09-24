@@ -13470,7 +13470,7 @@
     return aussprTonLaden().then(() => {
       const weg = aussprTonWeg(w);
       if (!weg) return null;
-      return AusspracheP.tonLesen(weg + (window.DMA_V ? DMA_V(weg) : "?v=" + (window.DMA_VERSION || "1"))).then((puffer) => {
+      return AusspracheP.tonLesen(weg + "?v=" + (window.DMA_VERSION || "1")).then((puffer) => {
         if (!puffer || !puffer.length) return null;
         return { puffer: puffer, art: "alex", huelle: AusspracheP.huellkurve(puffer, 150) };
       }).catch(() => null);
@@ -13687,7 +13687,7 @@
      Schlimmste von beidem. */
   function aussprTonSpielen(weg, tempo) {
     return new Promise((fertig) => {
-      const a = new Audio(weg + (window.DMA_V ? DMA_V(weg) : "?v=" + (window.DMA_VERSION || "1")));
+      const a = new Audio(weg + "?v=" + (window.DMA_VERSION || "1"));
       a.playbackRate = tempo || 1;
       let erledigt = false;
       const schluss = (ok) => { if (erledigt) return; erledigt = true; fertig(ok); };
@@ -16597,44 +16597,17 @@
       try { kzEinstCache = JSON.parse(localStorage.getItem(KZ_EINST_SCHLUESSEL) || "{}") || {}; }
       catch (e) { kzEinstCache = {}; }
     }
-    /* Das Profil gewinnt — aber nur, wenn es wirklich schon da ist
-       UND seine Einstellung juenger ist als die des Geraets. Sonst
-       wuerde ein noch leeres Profil die Einstellung des Geraets
-       ueberschreiben, kaum dass man sie gemacht hat.
-
-       RUNDE „SPRECHBILD-ABGLEICH" — XANDER: „ich habe schon wieder
-       gemerkt dass meine sprechanimation also mein sprechbild die
-       Einstellung die ich gemacht habe auf dem anderen Gerät nicht
-       gefunden wird auf meinem iPhone 12 … habe ich eine andere
-       Sprachbild Animation als die die ich gerade eingestellt habe
-       zuletzt."
-       Frueher gewann das Profil hier im Ganzen. Jetzt entscheidet je
-       Einstellung die Zeit in „_stand" (Backend.einstellungenZusammen):
-       was zuletzt gesetzt wurde, gewinnt — egal auf welchem Geraet. */
+    /* Das Profil gewinnt — aber nur, wenn es wirklich schon da ist.
+       Sonst wuerde ein noch leeres Profil die Einstellung des Geraets
+       ueberschreiben, kaum dass man sie gemacht hat. */
     try {
-      const x = kzBackend() && kzBackend().currentProfile && kzBackend().currentProfile();
+      const x = Backend.currentProfile && Backend.currentProfile();
       const ausProfil = x && x.extraProfileData && x.extraProfileData.klassenzimmer;
       if (ausProfil && typeof ausProfil === "object") {
-        kzEinstCache = kzBackend().einstellungenZusammen
-          ? kzBackend().einstellungenZusammen(ausProfil, kzEinstCache)
-          : Object.assign({}, kzEinstCache, ausProfil);
+        kzEinstCache = Object.assign({}, kzEinstCache, ausProfil);
       }
     } catch (e) {}
     return kzEinstCache;
-  }
-  /* DAS BACKEND HEISST BACKEND — NICHT window.Backend (siehe
-     livechat.js, konto()). Genau hier stand „window.Backend && …",
-     und das ist IMMER falsch: backend.js legt „const Backend" an, und
-     ein const auf oberster Ebene ist keine Eigenschaft am Fenster.
-     Folge: kzEinstellungSetzen schrieb NIE ins Profil, sondern nur ins
-     Geraet — darum fand das iPhone das Sprechbild vom Rechner nicht.
-     (Gemessen in der Datenbank am 24.09.: in KEINEM Profil gab es
-     extra_profile_data.klassenzimmer.) */
-  function kzBackend() {
-    try {
-      /* eslint-disable-next-line no-undef */
-      return (typeof Backend !== "undefined" && Backend) ? Backend : null;
-    } catch (e) { return null; }
   }
   function kzEinstellung(name, ersatz) {
     const e = kzEinstellungen();
@@ -16643,41 +16616,14 @@
   function kzEinstellungSetzen(name, wert) {
     const e = kzEinstellungen();
     e[name] = wert;
-    /* Wann gesetzt — danach entscheidet einstellungenZusammen, welches
-       Geraet die neuere Wahl hat. Sofort an den Server, ohne Warten:
-       wer gleich danach neu laedt oder das Telefon zur Hand nimmt,
-       soll die Wahl schon dort finden. */
-    e._stand = Object.assign({}, e._stand, { [name]: Date.now() });
     try { localStorage.setItem(KZ_EINST_SCHLUESSEL, JSON.stringify(e)); } catch (x) {}
     try {
-      const be = kzBackend();
-      if (be && be.updateExtraProfileField) {
-        const erg = be.updateExtraProfileField("klassenzimmer", e);
-        if (erg && erg.catch) erg.catch(() => {});
+      if (window.Backend && Backend.updateExtraProfileField) {
+        Backend.updateExtraProfileField("klassenzimmer", e);
       }
     } catch (x) {}
     return e;
   }
-  /* Kommt das Telefon aus dem Hintergrund zurueck, liegt im Speicher
-     noch das Profil vom Oeffnen der Seite. Dann einmal die
-     Klassenzimmer-Einstellungen frisch holen (hoechstens alle 30
-     Sekunden) und dem Klassenzimmer sagen, dass das Sprechbild neu
-     gelesen werden soll. */
-  let kzAbgleichZuletzt = 0;
-  const kzAbgleichen = () => {
-    const be = kzBackend();
-    if (!be || !be.klassenzimmerAbgleichen || !be.currentUser || !be.currentUser()) return;
-    if (Date.now() - kzAbgleichZuletzt < 30000) return;
-    kzAbgleichZuletzt = Date.now();
-    be.klassenzimmerAbgleichen().then((neu) => {
-      if (!neu) return;
-      try { if (window.LiveChat && LiveChat.einstellungenNeuLesen) LiveChat.einstellungenNeuLesen(); } catch (e) {}
-    }).catch(() => {});
-  };
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") kzAbgleichen();
-  });
-  window.addEventListener("pageshow", (ev) => { if (ev && ev.persisted) kzAbgleichen(); });
 
   /* =================================================================
      JEDER WAEHLER GEHT ZU, WENN MAN DANEBEN TIPPT
@@ -20423,7 +20369,7 @@
       const ton = (plan && plan.ton) || w;
       if (!lcGeraeuschDa(ton) || lcGeraeuschAblage[ton]) return false;
       try {
-        const au = new Audio("ton/" + ton + lcGeraeuschArt() + (window.DMA_V ? DMA_V("ton/") : "?v=" + (window.DMA_VERSION || "1")));
+        const au = new Audio("ton/" + ton + lcGeraeuschArt() + "?v=" + (window.DMA_VERSION || "1"));
         au.preload = "auto";
         lcGeraeuschAblage[ton] = au;
         zahl++;
@@ -27999,7 +27945,7 @@
     try {
       let a = lcGeraeuschAblage[name];
       if (!a) {
-        a = new Audio("ton/" + name + lcGeraeuschArt() + (window.DMA_V ? DMA_V("ton/") : "?v=" + (window.DMA_VERSION || "1")));
+        a = new Audio("ton/" + name + lcGeraeuschArt() + "?v=" + (window.DMA_VERSION || "1"));
         a.preload = "auto";
         lcGeraeuschAblage[name] = a;
       }
@@ -28386,53 +28332,26 @@
       + '<circle cx="34" cy="37.5" r="2.6" fill="#c8384a"/>'
       + '<circle cx="50" cy="37.5" r="2.9" fill="#3f6fc4"/>'
       + '<circle cx="66" cy="37.5" r="2.6" fill="#3f9d55"/>' },
-    /* =================================================================
-       ANZIEHEN — BRILLE, SONNENBRILLE, SCHNURRBART UND MASKE PASSEN JETZT
-       -----------------------------------------------------------------
-       XANDER: „Und lass meinetwegen jemanden mitarbeiten dass das System
-       mit dem Anziehen auch funktioniert dass ich jemanden anziehen kann
-       und ausziehen kann und dass das auch alles optisch passt dass das
-       alles hin passt."
-       GEMESSEN auf einem Probegesicht (Augen bei 45 %, Nase bis 55 %,
-       Mund bei 63 %, Gesicht 28–72 % breit):
-         · die Brille ging von 4 bis 96 — die Buegel standen links und
-           rechts aus dem Kreis heraus, die Glaeser sassen 7 Einheiten
-           UNTER den Augen und deckten Nase und Wangen zu;
-         · die Sonnenbrille genauso: 12 bis 88 breit, zu tief;
-         · der Schnurrbart war 64 breit und sass UNTER dem Mund, er
-           deckte Mund und Kinn;
-         · die Maske ging von 2 bis 98, und ihre Augenloecher waren
-           cremeweiss GEFUELLT — die Augen der Person verschwanden
-           hinter zwei weissen Flecken.
-       Jetzt sitzt alles auf der Augenlinie (45) bzw. unter der Nase und
-       bleibt im Gesicht (etwa 22–78). Die Mitte des Gesichts bleibt frei
-       — ausser bei Brille und Maske, die gehoeren nun einmal dorthin.
-       Die Maske hat echte Loecher (evenodd): man sieht die Augen. */
     brille: { wort: "Brille", zeichen: "👓", bild:
-      '<circle cx="38.5" cy="45" r="9.5" fill="rgba(255,255,255,.16)"'
-      + ' stroke="#2c2f38" stroke-width="2.3"/>'
-      + '<circle cx="61.5" cy="45" r="9.5" fill="rgba(255,255,255,.16)"'
-      + ' stroke="#2c2f38" stroke-width="2.3"/>'
-      + '<path d="M48 44 q2 -2.4 4 0" stroke="#2c2f38" stroke-width="2.2" fill="none"/>'
-      + '<path d="M29 43.5 L23.5 42 M71 43.5 L76.5 42" stroke="#2c2f38" stroke-width="2.1"'
+      '<circle cx="31" cy="52" r="15" fill="rgba(255,255,255,.18)"'
+      + ' stroke="#2c2f38" stroke-width="3.4"/>'
+      + '<circle cx="69" cy="52" r="15" fill="rgba(255,255,255,.18)"'
+      + ' stroke="#2c2f38" stroke-width="3.4"/>'
+      + '<path d="M46 50 q4 -4 8 0" stroke="#2c2f38" stroke-width="3.4" fill="none"/>'
+      + '<path d="M16 50 L4 44 M84 50 L96 44" stroke="#2c2f38" stroke-width="3.2"'
       + ' stroke-linecap="round"/>' },
     sonnenbrille: { wort: "Sonnenbrille", zeichen: "🕶️", bild:
-      '<path d="M27 40 h19 q1.5 0 1.5 1.5 v3 q0 7.5 -7.5 7.5 h-5 q-7 0 -8.5 -6.5'
-      + ' l-.9 -4 q-.3 -1.5 1.4 -1.5 Z" fill="#1c1f26" stroke="#0e1014" stroke-width="1.5"/>'
-      + '<path d="M73 40 h-19 q-1.5 0 -1.5 1.5 v3 q0 7.5 7.5 7.5 h5 q7 0 8.5 -6.5'
-      + ' l.9 -4 q.3 -1.5 -1.4 -1.5 Z" fill="#1c1f26" stroke="#0e1014" stroke-width="1.5"/>'
-      + '<path d="M47.5 42 q2.5 -2 5 0" stroke="#0e1014" stroke-width="2" fill="none"/>'
-      + '<path d="M25.8 41.5 L22 40.5 M74.2 41.5 L78 40.5" stroke="#0e1014" stroke-width="1.8"'
-      + ' stroke-linecap="round"/>'
-      + '<path d="M29 42.5 q3 2.5 7 3" stroke="rgba(255,255,255,.35)" stroke-width="1.6"'
+      '<path d="M12 42 h30 q4 0 4 4 v6 q0 10 -11 10 h-9 q-10 0 -12 -9 l-2 -8'
+      + ' q-1 -3 0 -3 Z" fill="#1c1f26" stroke="#0e1014" stroke-width="2"/>'
+      + '<path d="M88 42 h-30 q-4 0 -4 4 v6 q0 10 11 10 h9 q10 0 12 -9 l2 -8'
+      + ' q1 -3 0 -3 Z" fill="#1c1f26" stroke="#0e1014" stroke-width="2"/>'
+      + '<path d="M46 45 q4 -3 8 0" stroke="#0e1014" stroke-width="3" fill="none"/>'
+      + '<path d="M14 44 q6 4 12 5" stroke="rgba(255,255,255,.35)" stroke-width="2.4"'
       + ' fill="none" stroke-linecap="round"/>' },
     schnurrbart: { wort: "Schnurrbart", zeichen: "🥸", bild:
-      /* Dieselbe Form wie vorher, nur auf knapp die Haelfte verkleinert
-         und unter die Nase gesetzt (Oberkante 54,7, Unterkante 62,5). */
-      '<g transform="translate(50 57) scale(.46) translate(-50 -66)">'
-      + '<path d="M50 66 q-6 -5 -16 -5 q-12 0 -16 9 q-1 7 7 8 q11 1 17 -7'
+      '<path d="M50 66 q-6 -5 -16 -5 q-12 0 -16 9 q-1 7 7 8 q11 1 17 -7'
       + ' q2 -3 8 -3 q6 0 8 3 q6 8 17 7 q8 -1 7 -8 q-4 -9 -16 -9'
-      + ' q-10 0 -16 5 Z" fill="#3a2a1d" stroke="#241a11" stroke-width="3"/></g>' },
+      + ' q-10 0 -16 5 Z" fill="#3a2a1d" stroke="#241a11" stroke-width="1.6"/>' },
     muetze: { wort: "Wollmütze", zeichen: "🧢", bild:
       '<path d="M18 40 q0 -26 32 -26 q32 0 32 26 Z" fill="#b8434f"'
       + ' stroke="#8b2b36" stroke-width="2.2"/>'
@@ -28440,12 +28359,12 @@
       + ' stroke="#cbc4b4" stroke-width="2"/>'
       + '<circle cx="50" cy="11" r="7" fill="#f2efe6" stroke="#cbc4b4" stroke-width="2"/>' },
     maske: { wort: "Maske", zeichen: "🎭", bild:
-      '<path fill-rule="evenodd" d="M25 42 q10 -6 25 -6 q15 0 25 6 q-1 11 -10 12'
-      + ' q-8 1 -13 -5 q-2 -2 -4 0 q-5 6 -13 5 q-9 -1 -10 -12 Z'
-      + ' M32.5 44 a5.5 3.8 0 1 0 11 0 a5.5 3.8 0 1 0 -11 0 Z'
-      + ' M56.5 44 a5.5 3.8 0 1 0 11 0 a5.5 3.8 0 1 0 -11 0 Z"'
-      + ' fill="#6b4fb0" stroke="#3f2a70" stroke-width="1.6"/>'
-      + '<path d="M25 42 L20.5 40 M75 42 L79.5 40" stroke="#3f2a70" stroke-width="1.8"'
+      '<path d="M10 44 q14 -10 40 -10 q26 0 40 10 q-2 18 -16 20 q-14 2 -22 -8'
+      + ' q-2 -2 -4 0 q-8 10 -22 8 q-14 -2 -16 -20 Z" fill="#6b4fb0"'
+      + ' stroke="#3f2a70" stroke-width="2.2"/>'
+      + '<ellipse cx="30" cy="48" rx="9" ry="6.5" fill="#f7f3e3"/>'
+      + '<ellipse cx="70" cy="48" rx="9" ry="6.5" fill="#f7f3e3"/>'
+      + '<path d="M10 44 L2 40 M90 44 L98 40" stroke="#3f2a70" stroke-width="2.6"'
       + ' stroke-linecap="round"/>' },
 
     /* =================================================================
@@ -28565,54 +28484,23 @@
       + '<path d="M42 32 l-7 16 M42 32 l7 16 M58 32 l7 16 M58 32 l-7 16"'
       + ' stroke="#b8802a" stroke-width="1.6"/>' }
   };
-  /* Wer was traegt — nach NAMEN, nicht nach Platznummer.
-     ANZIEHEN — MEHRERE SACHEN AUF EINMAL
-     XANDER: „… dass ich jemanden anziehen kann und ausziehen kann und
-     dass das auch alles optisch passt dass das alles hin passt."
-     GEMESSEN: Krone, dann Brille, dann Schnurrbart auf Bea — getragen
-     war danach NUR der Schnurrbart. Jedes neue Stueck riss das vorige
-     herunter, obwohl die Kopfbedeckungen in Runde 101 extra hoeher
-     gesetzt wurden, „dass man unten noch Gestaltungsspielraum hat fuer
-     Bart oder Brille". Jetzt hat jede Person je FACH ein Stueck:
-       kopf  — Krone, Wollmuetze
-       augen — Brille, Sonnenbrille, Maske
-       mund  — Schnurrbart
-       unten — was unter dem Bild haengt (Runde 87, unveraendert)
-     Ein neues Stueck ersetzt nur das Stueck im selben Fach: Krone und
-     Muetze zugleich passt nicht auf einen Kopf, Krone und Brille schon.
-     lcKleiderliste[name] ist deshalb { fach: stueck }. */
+  /* Wer was traegt — nach NAMEN, nicht nach Platznummer. */
   const lcKleiderliste = {};
-  function lcKleidFach(was) {
-    const st = LC_KLEIDUNG[was];
-    if (!st) return "";
-    if (st.unten) return "unten";
-    if (was === "krone" || was === "muetze") return "kopf";
-    if (was === "schnurrbart") return "mund";
-    return "augen";
-  }
-  /* Die Reihenfolge, in der die Schichten uebereinander liegen: was
-     weiter vorn im Gesicht sitzt, liegt oben. */
-  const LC_KLEID_FAECHER = ["unten", "mund", "augen", "kopf"];
   function lcKleidAnlegen(platzEl, was) {
+    platzEl.querySelectorAll(".lc-kleid").forEach((x) => x.remove());
     const stueck = LC_KLEIDUNG[was];
     if (!stueck) return false;
-    const fach = lcKleidFach(was);
-    /* Nur das Stueck im SELBEN Fach geht herunter — nicht alles. */
-    platzEl.querySelectorAll(".lc-kleid").forEach((x) => {
-      if ((x.dataset.lcFach || lcKleidFach(x.dataset.lcKleid)) === fach) x.remove();
-    });
     const schicht = document.createElement("span");
     schicht.className = "lc-kleid";
     schicht.setAttribute("aria-hidden", "true");
     schicht.dataset.lcKleid = was;
-    schicht.dataset.lcFach = fach;
     /* RUNDE 87: was zum Koerper gehoert, haengt UNTER dem Bild — und
        darf ueber den Kasten hinausragen, deshalb ein eigener
        Ausschnitt (viewBox mit Rand) und eine eigene Klasse. */
     if (stueck.unten) {
       schicht.classList.add("lc-kleid-unten");
       schicht.innerHTML = '<svg viewBox="0 -20 100 110">' + stueck.bild + "</svg>";
-    } else if (fach === "kopf") {
+    } else if (was === "krone" || was === "muetze") {
       /* RUNDE 101 — XANDER (Funk 91): „die Mützen oder die Kronen kannst
          du ein bisschen höher anbringen, dass man unten noch Gestaltungs-
          spielraum hat für Bart oder Brille … arbeite da ein bisschen
@@ -28623,16 +28511,7 @@
     } else {
       schicht.innerHTML = '<svg viewBox="0 0 100 100">' + stueck.bild + "</svg>";
     }
-    /* In der festen Reihenfolge einsortieren (Mund unter Brille unter
-       Krone), egal in welcher Reihenfolge angezogen wurde. */
-    const rang = LC_KLEID_FAECHER.indexOf(fach);
-    const danach = [...platzEl.querySelectorAll(":scope > .lc-kleid")]
-      .find((x) => LC_KLEID_FAECHER.indexOf(x.dataset.lcFach) > rang);
-    if (danach) platzEl.insertBefore(schicht, danach);
-    else platzEl.appendChild(schicht);
-    lcKleidFolgenBeobachten(platzEl.parentElement);
-    /* Laeuft gerade eine Reise, soll das neue Stueck gleich mitgehen. */
-    lcKleidFolgenStarten();
+    platzEl.appendChild(schicht);
     return true;
   }
   /* Nach jedem Auffrischen wieder anlegen — sonst ist die Krone beim
@@ -28641,100 +28520,16 @@
     const karte = document.getElementById("livechatKarte");
     if (!karte) return;
     karte.querySelectorAll(".lc-platz").forEach((el) => {
-      const nm = lcPlatzSchluessel(el);
-      const frei = el.classList.contains("lc-platz-frei");
-      const soll = (nm && !frei && lcKleiderliste[nm]) || {};
-      const da = [...el.querySelectorAll(".lc-kleid")];
-      /* Weg, was nicht (mehr) getragen wird … */
-      da.forEach((x) => {
-        const f = x.dataset.lcFach || lcKleidFach(x.dataset.lcKleid);
-        if (soll[f] !== x.dataset.lcKleid) x.remove();
-      });
-      /* … und dazu, was fehlt. */
-      Object.keys(soll).forEach((f) => {
-        if (!el.querySelector('.lc-kleid[data-lc-kleid="' + soll[f] + '"]')) {
-          lcKleidAnlegen(el, soll[f]);
-        }
-      });
-    });
-  }
-
-  /* =================================================================
-     ANZIEHEN — DAS STUECK GEHT MIT DEM BILD MIT
-     -----------------------------------------------------------------
-     XANDER: „… und dass das auch alles optisch passt dass das alles
-     hin passt."
-     GEMESSEN: Alex traegt eine Krone und faehrt mit /fahren zu Bea.
-     Das Bild rollt 111 px weit — die Krone blieb ueber dem leeren
-     Platz haengen. Bei Lok, Kran, Flug usw. wird das Bild am Platz
-     ausgeblendet (opacity 0), die Krone schwebte trotzdem weiter
-     ueber dem Platz, unter dem jetzt „frei" steht.
-     Der Grund: die Kleidung haengt am PLATZ (sie darf ueber den Kreis
-     hinausragen, und der Kreis schneidet rund ab). Jede Reise bewegt
-     aber den KREIS. Deshalb schaut hier ein Beobachter, ob sich an
-     einem Kreis etwas tut; solange es sich bewegt, uebernimmt die
-     Kleidung Bild fuer Bild genau dessen Verschiebung, Drehung,
-     Groesse und Deckkraft. Steht der Kreis wieder still, ist die
-     Kleidung wieder ganz normal. Die Plaetze selbst werden dabei nicht
-     angefasst — nichts an der Sitzordnung verschiebt sich. */
-  const lcKleidBeobachtet = new WeakSet();
-  let lcKleidFolgtLauf = 0;
-  function lcKleidFolgenBeobachten(reihe) {
-    if (!reihe || lcKleidBeobachtet.has(reihe) || typeof MutationObserver !== "function") return;
-    lcKleidBeobachtet.add(reihe);
-    new MutationObserver((liste) => {
-      for (const m of liste) {
-        const t = m.target;
-        if (t && t.classList && (t.classList.contains("lc-kreis") || t.classList.contains("lc-platz"))) {
-          lcKleidFolgenStarten();
-          return;
-        }
+      const nm = ((el.querySelector(".lc-platz-name") || {}).textContent || "")
+        .replace(/\s*\(du\)$/, "").trim().toLowerCase();
+      const was = nm ? lcKleiderliste[nm] : "";
+      const da = el.querySelector(".lc-kleid");
+      if (!was || el.classList.contains("lc-platz-frei")) {
+        if (da) da.remove();
+        return;
       }
-    }).observe(reihe, { subtree: true, attributes: true, attributeFilter: ["class", "style"] });
-  }
-  const LC_KLEID_FOLGT = ["transform", "translate", "rotate", "scale", "transformOrigin", "opacity", "visibility"];
-  function lcKreisBewegtSich(kreis) {
-    if (!kreis.getAnimations) return false;
-    return kreis.getAnimations().some((an) => {
-      try {
-        return an.effect.getKeyframes().some((k) => "transform" in k || "opacity" in k
-          || "translate" in k || "rotate" in k || "scale" in k);
-      } catch (e) { return false; }
+      if (!da || da.dataset.lcKleid !== was) lcKleidAnlegen(el, was);
     });
-  }
-  function lcKleidFolgenStarten() {
-    if (lcKleidFolgtLauf || typeof requestAnimationFrame !== "function") return;
-    lcKleidFolgtLauf = requestAnimationFrame(lcKleidFolgenSchritt);
-  }
-  function lcKleidFolgenSchritt() {
-    lcKleidFolgtLauf = 0;
-    let weiter = false;
-    document.querySelectorAll(".lc-platz").forEach((pl) => {
-      const kleider = pl.querySelectorAll(":scope > .lc-kleid");
-      if (!kleider.length) return;
-      const kreis = pl.querySelector(".lc-kreis");
-      if (!kreis) return;
-      const cs = getComputedStyle(kreis);
-      const weg = cs.display === "none";
-      const bewegt = weg || pl.classList.contains("lc-platz-unterwegs")
-        || cs.transform !== "none" || (cs.translate && cs.translate !== "none")
-        || (cs.rotate && cs.rotate !== "none") || (cs.scale && cs.scale !== "none")
-        || Number(cs.opacity) < 1 || cs.visibility === "hidden" || lcKreisBewegtSich(kreis);
-      kleider.forEach((k) => {
-        if (bewegt) {
-          LC_KLEID_FOLGT.forEach((e) => {
-            const w = e === "opacity" && weg ? "0" : (cs[e] || "");
-            if (k.style[e] !== w) k.style[e] = w;
-          });
-          k.dataset.lcFolgt = "1";
-        } else if (k.dataset.lcFolgt) {
-          LC_KLEID_FOLGT.forEach((e) => { k.style[e] = ""; });
-          delete k.dataset.lcFolgt;
-        }
-      });
-      if (bewegt) weiter = true;
-    });
-    if (weiter) lcKleidFolgtLauf = requestAnimationFrame(lcKleidFolgenSchritt);
   }
 
   /* =================================================================
@@ -28971,75 +28766,22 @@
     } catch (e) {}
   }
   function lcAnziehen(wen, was) {
-    /* ANZIEHEN — XANDER: „… dass ich jemanden anziehen kann und
-       ausziehen kann …"
-       „aus" (ab, weg, nichts) nimmt ALLES ab, „aus:krone" nur die
-       Krone (so schickt es „/ausziehen Bea krone"). */
-    const roh = String(was || "").trim().toLowerCase();
-    const ab = /^(aus|ab|weg|nichts|nackt)$/.test(roh);
-    const nurAb = /^aus:([a-z]+)$/.exec(roh);
-    const nurWas = nurAb && LC_KLEIDUNG[nurAb[1]] ? nurAb[1] : "";
-    if (!ab && !nurWas && !LC_KLEIDUNG[roh]) return false;
-    let ziele = lcZielPlaetze(wen);
-    /* KEIN RUECKFALL AUF ALLE.
-       lcZielPlaetze faellt bei einem Namen, der auf keinem Platz steht,
-       auf ALLE besetzten Plaetze zurueck. Fuer einen Wurf mag das
-       gehen — Kleidung aber BLEIBT. GEMESSEN: „/anziehen Zoe krone",
-       waehrend Zoe nicht auf der Buehne sitzt, setzte allen fuenf
-       Leuten auf der Buehne eine Krone auf, und die blieb. Bei einem
-       schlichten Namen zaehlt deshalb nur ein Platz, der auch so heisst
-       (oder die eine nachsichtige Schreibweise, „Emmi" fuer „Emmy"). */
-    const suche = String(wen || "").trim().toLowerCase();
-    const schlicht = suche && suche !== "*" && !/^\d+$/.test(suche) && suche.indexOf(",") < 0;
-    const passt = (pl) => {
-      const n = lcPlatzSchluessel(pl);
-      if (!n) return false;
-      if (n === suche) return true;
-      /* dieselbe Nachsicht wie in lcZielPlaetze, aber nur fuer EINEN */
-      const k = Math.min(n.length, suche.length) - 1;
-      return suche.length >= 3 && (n.indexOf(suche) === 0 || suche.indexOf(n) === 0
-        || (Math.abs(n.length - suche.length) <= 1 && k >= 2 && n.slice(0, k) === suche.slice(0, k)));
-    };
-    if (schlicht && !(ziele.length === 1 ? passt(ziele[0])
-                      : ziele.every((pl) => lcPlatzSchluessel(pl) === suche))) {
-      ziele = [];
-    }
-    if (!ziele.length) {
-      /* Sitzt die Person gerade nicht (oder ist die Sitzreihe noch nicht
-         gezeichnet, etwa beim Nachlesen des Verlaufs nach dem Betreten),
-         wird es trotzdem gemerkt — die Kleidung haengt an der PERSON.
-         Nur bei einem schlichten Namen, nicht bei „*", Nummern oder
-         Listen. */
-      if (!schlicht) return false;
-      lcKleiderMerken(suche, roh, ab, nurWas);
-      return false;
-    }
+    const ziele = lcZielPlaetze(wen);
+    if (!ziele.length) return false;
+    const ab = /^(aus|ab|weg|nichts|nackt)$/i.test(String(was || "").trim());
+    if (!ab && !LC_KLEIDUNG[was]) return false;
     ziele.forEach((platz) => {
-      const nm = lcPlatzSchluessel(platz);
-      if (nm) lcKleiderMerken(nm, roh, ab, nurWas);
+      const nm = ((platz.querySelector(".lc-platz-name") || {}).textContent || "")
+        .replace(/\s*\(du\)$/, "").trim().toLowerCase();
       if (ab) {
         platz.querySelectorAll(".lc-kleid").forEach((x) => x.remove());
+        if (nm) delete lcKleiderliste[nm];
         return;
       }
-      if (nurWas) {
-        platz.querySelectorAll('.lc-kleid[data-lc-kleid="' + nurWas + '"]').forEach((x) => x.remove());
-        return;
-      }
-      lcKleidAnlegen(platz, roh);
+      if (nm) lcKleiderliste[nm] = was;
+      lcKleidAnlegen(platz, was);
     });
     return true;
-  }
-  function lcKleiderMerken(nm, was, ab, nurWas) {
-    if (ab) { delete lcKleiderliste[nm]; return; }
-    const liste = lcKleiderliste[nm] || {};
-    if (nurWas) {
-      const f = lcKleidFach(nurWas);
-      if (liste[f] === nurWas) delete liste[f];
-    } else {
-      liste[lcKleidFach(was)] = was;
-    }
-    if (Object.keys(liste).length) lcKleiderliste[nm] = liste;
-    else delete lcKleiderliste[nm];
   }
 
   /* =================================================================
@@ -29965,7 +29707,7 @@
   function lcGeraeuschVorwaermen(name) {
     try {
       if (!lcToeneAn() || !lcGeraeuschDa(name) || lcGeraeuschAblage[name]) return;
-      const a = new Audio("ton/" + name + lcGeraeuschArt() + (window.DMA_V ? DMA_V("ton/") : "?v=" + (window.DMA_VERSION || "1")));
+      const a = new Audio("ton/" + name + lcGeraeuschArt() + "?v=" + (window.DMA_VERSION || "1"));
       a.preload = "auto";
       try { a.load(); } catch (e) {}
       lcGeraeuschAblage[name] = a;
@@ -62906,20 +62648,6 @@
         if (!alt && !livechatEffektGespielt.has(n.id)) {
           livechatEffektGespielt.add(n.id);
           lcWirkung(eff, z, n);
-        } else if (alt && eff === "anziehen" && !livechatEffektGespielt.has(n.id)) {
-          /* ANZIEHEN — WER SPAETER KOMMT, SIEHT DASSELBE.
-             XANDER: „… dass das auch alles optisch passt dass das
-             alles hin passt."
-             Kleidung ist kein Ereignis, sie ist ein ZUSTAND: was Bea
-             vor zehn Minuten aufgesetzt bekam, hat sie jetzt noch an.
-             Bisher galt die Zeile beim Betreten als Vergangenheit und
-             blieb still — wer spaeter kam (oder neu lud), sah Bea ohne
-             Krone, alle anderen mit. Deshalb wird genau diese eine
-             Wirkung beim Nachlesen still nachgeholt, der Reihe nach
-             (die letzte Zeile gewinnt). Kein Ton, keine Animation. */
-          livechatEffektGespielt.add(n.id);
-          lcAnziehen(n.wen || n.an || "", n.stueck || "");
-          setTimeout(lcKleiderAuffrischen, 0);
         }
       }
     });
@@ -64155,7 +63883,7 @@
     if (logikGeladen) return logikGeladen;
     logikGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-logik.js" + (window.DMA_V ? DMA_V("data-logik.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-logik.js?v=" + (window.DMA_VERSION || "1");
       s.onload = () => fertig(true);
       s.onerror = () => { logikGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -64341,7 +64069,7 @@
     if (ausspracheKursGeladen) return ausspracheKursGeladen;
     ausspracheKursGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-aussprache.js" + (window.DMA_V ? DMA_V("data-aussprache.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-aussprache.js?v=" + (window.DMA_VERSION || "1");
       s.onload = () => fertig(true);
       s.onerror = () => { ausspracheKursGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -64769,7 +64497,7 @@
     if (dialogeGeladen) return dialogeGeladen;
     dialogeGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-dialoge.js" + (window.DMA_V ? DMA_V("data-dialoge.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-dialoge.js?v=" + (window.DMA_VERSION || "1");
       s.onload = () => fertig(true);
       s.onerror = () => { dialogeGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -65108,7 +64836,7 @@
     if (festeGeladen) return festeGeladen;
     festeGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-feste.js" + (window.DMA_V ? DMA_V("data-feste.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-feste.js?v=" + (window.DMA_VERSION || "1");
       s.onload = () => fertig(true);
       s.onerror = () => { festeGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -71831,7 +71559,7 @@
     beitraegeGeladen = new Promise((fertig) => {
       if (window.DMA_DATEN && window.DMA_DATEN.EIGENE_BEITRAEGE) { fertig(true); return; }
       const sk = document.createElement("script");
-      sk.src = "data-beitraege.js" + (window.DMA_V ? DMA_V("data-beitraege.js") : "?v=" + (window.DMA_VERSION || "1"));
+      sk.src = "data-beitraege.js?v=" + (window.DMA_VERSION || "1");
       sk.async = true;
       sk.onload = () => fertig(true);
       sk.onerror = () => { console.warn("Beiträge konnten nicht geladen werden."); fertig(false); };
@@ -72254,7 +71982,7 @@
     if (witzeGeladen) return witzeGeladen;
     witzeGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-witze.js" + (window.DMA_V ? DMA_V("data-witze.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-witze.js?v=" + (window.DMA_VERSION || "1");
       s.onload = () => fertig(true);
       s.onerror = () => { witzeGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -79198,7 +78926,7 @@
     if (window.DMA_WORTKATEGORIEN) { wortKatGeladen = Promise.resolve(true); return wortKatGeladen; }
     wortKatGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-wortkategorien.js" + (window.DMA_V ? DMA_V("data-wortkategorien.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-wortkategorien.js?v=" + (window.DMA_VERSION || "1");
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { wortKatGeladen = null; fertig(false); };
@@ -83880,7 +83608,7 @@
     if (window.DMA_WORTSPRACHEN) { sprachenGeladen = Promise.resolve(true); return sprachenGeladen; }
     sprachenGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "wortsprachen.js" + (window.DMA_V ? DMA_V("wortsprachen.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "wortsprachen.js?v=" + (window.DMA_VERSION || "1");
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { sprachenGeladen = null; fertig(false); };
@@ -83913,7 +83641,7 @@
     if (window.DMA_SZENEN) { szenenGeladen = Promise.resolve(true); return szenenGeladen; }
     szenenGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-szenen.js" + (window.DMA_V ? DMA_V("data-szenen.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-szenen.js?v=" + (window.DMA_VERSION || "1");
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { szenenGeladen = null; fertig(false); };
@@ -83984,7 +83712,7 @@
       };
       if ((window.DMA_SZENE || {})[id]) { fertigmachen(); return; }
       const sk = document.createElement("script");
-      sk.src = "szenen/" + id + ".js" + (window.DMA_V ? DMA_V("szenen/") : "?v=" + (window.DMA_VERSION || "1"));
+      sk.src = "szenen/" + id + ".js?v=" + (window.DMA_VERSION || "1");
       sk.async = true;
       sk.onload = fertigmachen;
       sk.onerror = () => { szeneLaeuft[id] = null; fertig(null); };
@@ -85226,7 +84954,7 @@
     if (window.DMA_LERNWEG) { lernwegGeladen = Promise.resolve(true); return lernwegGeladen; }
     lernwegGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-lernweg.js" + (window.DMA_V ? DMA_V("data-lernweg.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-lernweg.js?v=" + (window.DMA_VERSION || "1");
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { lernwegGeladen = null; fertig(false); };
@@ -92358,7 +92086,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (brDateien[weg]) return brDateien[weg];
     brDateien[weg] = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = weg + (window.DMA_V ? DMA_V(weg) : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = weg + "?v=" + (window.DMA_VERSION || "1");
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { brDateien[weg] = null; fertig(false); };
@@ -94611,7 +94339,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     tutorTonStoppen();
     if (!name) return false;
     try {
-      const a = new Audio("tutor/" + name + tutorTonArt() + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1")));
+      const a = new Audio("tutor/" + name + tutorTonArt() + "?v=" + (window.DMA_VERSION || "1"));
       a.preload = "auto";
       a.volume = 0.95;
       tutorTon = a;
@@ -94834,7 +94562,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     const v = document.createElement("video");
     v.muted = true; v.playsInline = true; v.setAttribute("playsinline", "");
     v.crossOrigin = "anonymous";
-    v.src = "tutor/video/" + ton + "-maske.mp4" + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1"));
+    v.src = "tutor/video/" + ton + "-maske.mp4?v=" + (window.DMA_VERSION || "1");
     const ecke = "attribute vec2 p;varying vec2 t;void main(){t=vec2((p.x+1.0)/2.0,(1.0-p.y)/2.0);"
       + "gl_Position=vec4(p,0.0,1.0);}";
     const flaeche = "precision mediump float;varying vec2 t;uniform sampler2D b;"
@@ -94955,7 +94683,7 @@ An einem Morgen lief ein kleiner Fuchs los…
        Safari spielt webm mit Alpha nicht — dort schlaegt play() fehl
        oder das Bild bleibt leer, und genau dafuer ist der Rueckfall
        da: das Standbild steht ohnehin darunter. */
-    const quelle = "tutor/video/" + ton + ".webm" + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1"));
+    const quelle = "tutor/video/" + ton + ".webm?v=" + (window.DMA_VERSION || "1");
     if (v.getAttribute("src") !== quelle) v.setAttribute("src", quelle);
     v.onerror = aus;
     v.onended = aus;
@@ -95136,7 +94864,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       tutorBereichGezeigt.add(sub);
       const b = tutorBuehne();
       const bild = b.querySelector("#tutorFigur");
-      const neuBild = "tutor/alex-" + tutorArt() + ".png" + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1"));
+      const neuBild = "tutor/alex-" + tutorArt() + ".png?v=" + (window.DMA_VERSION || "1");
       if (bild.getAttribute("src") !== neuBild) bild.setAttribute("src", neuBild);
       b.classList.toggle("tutor-comic", tutorArt() === "comic");
       requestAnimationFrame(() => requestAnimationFrame(() => b.classList.add("tutor-da")));
@@ -95177,7 +94905,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       tutorGezeigt.add(bereich);
       const b = tutorBuehne();
       const bild = b.querySelector("#tutorFigur");
-      const neu = "tutor/alex-" + tutorArt() + ".png" + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1"));
+      const neu = "tutor/alex-" + tutorArt() + ".png?v=" + (window.DMA_VERSION || "1");
       if (bild.getAttribute("src") !== neu) bild.setAttribute("src", neu);
       b.classList.toggle("tutor-comic", tutorArt() === "comic");
       /* Erst im nächsten Bild anschalten, sonst gibt es keine
