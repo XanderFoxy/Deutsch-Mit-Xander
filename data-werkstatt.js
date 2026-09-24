@@ -49,20 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 545: Lasso — eine Schlinge, zieht die Person bis an den Platz",
+  stand: "Fassung 546: Kran einheitlich über allen Feldern, Haken bleibt am Bild (auch Angel)",
 
   inArbeit: [
-    { seit: "2026-09-24T01:19",
-      text: "Angel: Schnur-Physik, senkrecht heben" },
-    { seit: "2026-09-24T01:19",
-      text: "Aufdecken: nach Fehler zum Nächsten (2-Geräte-Test)" },
-    { seit: "2026-09-24T01:19",
-      text: "Zylinder, Sprühdose wischen, Sabbern, Kuss-Stimme, Vogelkot-Ton" },
+    { seit: "2026-09-24T01:44",
+      text: "Kran-Menü: Plätze wie auf der Bühne untereinander, Android ohne Verschiebung" },
+    { seit: "2026-09-24T01:44",
+      text: "Leiter: Namen frei, sobald man den Platz verlässt; Lok-Strecke immer rund schließen" },
+    { seit: "2026-09-24T01:44",
+      text: "Angel: senkrecht heben, Schnur-Physik" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T01:19",
-      text: "Lasso: nie mehr zwei Schlingen gleichzeitig (alt: 2); das Bild wird bis zum Zielplatz gezogen, beim Platztausch springt es nicht mehr (alt: 178 px Sprung, neu: 1 px); Platztausch erst bei 2950 ms statt 2300 ms" },
+    { seit: "2026-09-24T01:44",
+      text: "Kran: Turm außen neben der Sitzreihe (Seite nach der gehobenen Person), Ausleger immer gleich hoch über der obersten Reihe" },
+    { seit: "2026-09-24T01:44",
+      text: "Kran und Angel: Haken hing nach dem Chat-Rutschen neben dem Bild (alt bis 103 px, neu ≤17 px)" },
+    { seit: "2026-09-24T01:44",
+      text: "Kran: Katze läuft nach der Uhr des Bildes (alt bis 28 px Vorsprung, neu 6 px)" },
   ],
 };

@@ -17,11 +17,6 @@
      4  Das Bild wird gehoben und kommt am Zielplatz an.
      5  Erst fangen, dann heben: das Bild bewegt sich erst, nachdem der
         Haken unten war.
-     6  RUNDE 100 — XANDER (Walkie #85): „Der Kran kann einheitlich über
-        allen Feldern stehen … Die Animation geht gar nicht mit."
-        Im echten Raum (die Chatzeile schiebt die Seite): der Haken
-        bleibt am Bild, der Ausleger steht bei jedem Zug gleich hoch
-        ueber der obersten Reihe, der Turm aussen neben den Plaetzen.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -208,10 +203,7 @@ const sage = (gut, was, zusatz) => {
                   staerken: [...new Set([...document.querySelectorAll(".lc-kran-buehne .lc-kr-gurt")]
                     .map((g) => getComputedStyle(g).strokeWidth))] };
       }
-      /* Erst messen, wenn ALLE Bildtakt-Aufrufe dieses Bildes gelaufen
-         sind — sonst liest die Probe mal vor, mal nach dem Setzen der
-         Katze (gemessen: dieselbe Fassung ergab 10, 18, 10 px). */
-      await new Promise((f) => requestAnimationFrame(() => setTimeout(f, 0)));
+      await new Promise((f) => requestAnimationFrame(f));
     }
     return { max: ab.length ? Math.max.apply(null, ab) : 999, n: ab.length, teile: teile };
   });
@@ -224,66 +216,6 @@ const sage = (gut, was, zusatz) => {
     "oben: Fuehrerhaus mit Fenster, Gegengewicht, Abspannseile", JSON.stringify(tl));
   sage(tl.staerken && tl.staerken.length === 1, "Turm und Ausleger: dieselbe Gurtstaerke",
     tl.staerken ? tl.staerken.join(", ") : "-");
-
-  console.log("\n6  RUNDE 100 — IM ECHTEN RAUM: HAKEN AM BILD, KRAN UEBER ALLEN FELDERN\n");
-  const echt = [];
-  for (const [wer, ziel] of [["Cem", 8], ["Emil", 3], ["Dana", 5]]) {
-    const pg6 = await br.newPage({ viewport: { width: 390, height: 844 } });
-    await pg6.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
-    await pg6.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
-    await pg6.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF, { timeout: 25000 });
-    echt.push(await pg6.evaluate(async ({ wer, ziel }) => {
-      window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000, zuruecksetzen: true,
-        leute: { p0: { id: "p0", name: "Bea", seit: 2000 }, p1: { id: "p1", name: "Cem", seit: 2100 },
-                 p2: { id: "p2", name: "Dana", seit: 2200 }, p3: { id: "p3", name: "Emil", seit: 2300 },
-                 p4: { id: "p4", name: "Fritz", seit: 2400 } } });
-      document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
-      let e = document.getElementById("livechatArea");
-      while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
-      window.DMA_PRUEF.neuZeichnen();
-      await new Promise((f) => setTimeout(f, 500));
-      const reihe = document.getElementById("lcPlaetze");
-      const platz = [...reihe.querySelectorAll(".lc-platz")].find((p) => p.textContent.indexOf(wer) >= 0);
-      const kreis = platz.querySelector(".lc-kreis");
-      const alle = [...reihe.querySelectorAll(".lc-platz .lc-kreis")].map((k) => k.getBoundingClientRect());
-      const g0 = reihe.getBoundingClientRect();
-      const feldOben = Math.min(...alle.map((b) => b.top)) - g0.top;
-      const feldL = Math.min(...alle.map((b) => b.left)) - g0.left, feldR = Math.max(...alle.map((b) => b.right)) - g0.left;
-      window.LiveChat.pruefBefehl("/kranheb " + wer + " " + ziel);
-      const t0 = performance.now(), abst = [];
-      let ausleger = null, turm = null, verschoben = 0;
-      while (performance.now() < t0 + 2300) {
-        const t = performance.now() - t0, g = reihe.getBoundingClientRect();
-        verschoben = Math.max(verschoben, Math.abs(g.top - g0.top));
-        const h = document.querySelector(".lc-kr-haken");
-        if (h && t > 2800 * 0.36 && t < 2800 * 0.8) {
-          const a = h.getBoundingClientRect(), b = kreis.getBoundingClientRect();
-          abst.push(Math.hypot((a.left + a.width / 2) - (b.left + b.width / 2), a.bottom - (b.top + b.height * 0.04)));
-        }
-        if (!ausleger && document.querySelector(".lc-kran-buehne .lc-kr-gurt")) {
-          const bb = document.querySelector(".lc-kran-buehne .lc-kr-gurt").getBBox();
-          const tb = document.querySelector(".lc-kran-buehne .lc-kr-turmgurt").getBBox();
-          ausleger = bb.y + bb.height;                     /* Unterkante des Auslegers */
-          turm = tb.x + tb.width / 2;
-        }
-        await new Promise((f) => requestAnimationFrame(f));
-      }
-      return { wer, ziel, haken: abst.length ? Math.max(...abst) : 999, n: abst.length, verschoben: Math.round(verschoben),
-               luft: Math.round(feldOben - ausleger), turmAussen: turm < feldL || turm > feldR, turm: Math.round(turm),
-               feld: [Math.round(feldL), Math.round(feldR)] };
-    }, { wer, ziel }));
-    await pg6.close();
-  }
-  /* 20 px: der Hakenbogen reicht ~11 px unter seinen Aufhaengepunkt,
-     und das Bild pendelt ±7° um seinen oberen Rand. Vorher: ~100 px —
-     so weit, wie die Seite gerutscht war. */
-  echt.forEach((r) => sage(r.n > 5 && r.haken <= 20, r.wer + " → " + r.ziel + ": der Haken bleibt am Bild",
-    "groesster Abstand " + Math.round(r.haken) + " px, Seite dabei um " + r.verschoben + " px gerutscht"));
-  const luefte = echt.map((r) => r.luft);
-  sage(Math.max(...luefte) - Math.min(...luefte) <= 1 && Math.min(...luefte) > 0,
-    "der Ausleger steht bei jedem Zug gleich hoch ueber der obersten Reihe", luefte.join(" / ") + " px");
-  sage(echt.every((r) => r.turmAussen), "der Turm steht aussen neben den Plaetzen",
-    echt.map((r) => r.wer + ": " + r.turm + " (Felder " + r.feld.join("–") + ")").join(", "));
 
   await br.close();
   srv.close();

@@ -191,6 +191,43 @@ const sage = (gut, was, zusatz) => {
     sage(leer === 0, "zwischen Fang und Platztausch ist das Lasso nie leer", leer + " Bilder ohne Schlinge");
   }
 
+  /* RUNDE 100 — dieselbe Falle bei der Angel: der Haken wurde gegen
+     die Lage der Sitzreihe vom START gerechnet; die Chatzeile schiebt
+     die Seite, und der Haken hing neben dem Bild. */
+  const pg3 = await br.newPage({ viewport: { width: 390, height: 844 } });
+  await pg3.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
+  await pg3.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
+  await pg3.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF, { timeout: 25000 });
+  const angel = await pg3.evaluate(async () => {
+    window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000, zuruecksetzen: true,
+      leute: { p0: { id: "p0", name: "Bea", seit: 2000 }, p1: { id: "p1", name: "Cem", seit: 2100 }, p2: { id: "p2", name: "Dana", seit: 2200 } } });
+    document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
+    let e = document.getElementById("livechatArea");
+    while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
+    window.DMA_PRUEF.neuZeichnen();
+    await new Promise((f) => setTimeout(f, 500));
+    const reihe = document.getElementById("lcPlaetze"), g0 = reihe.getBoundingClientRect();
+    const kreis = [...reihe.querySelectorAll(".lc-platz")].find((p) => p.textContent.indexOf("Cem") >= 0).querySelector(".lc-kreis");
+    window.LiveChat.pruefBefehl("/heb Cem 8");
+    const t0 = performance.now(), abst = [];
+    let rutsch = 0;
+    while (performance.now() < t0 + 3000) {
+      const t = performance.now() - t0;
+      rutsch = Math.max(rutsch, Math.abs(reihe.getBoundingClientRect().top - g0.top));
+      const h = document.querySelector(".lc-an-haken");
+      if (h && t > 1100 && t < 3000) {
+        const a = h.getBoundingClientRect(), b = kreis.getBoundingClientRect();
+        abst.push(Math.hypot((a.left + a.width / 2) - (b.left + b.width / 2), (a.top + a.height / 2) - (b.top + b.height * 0.06)));
+      }
+      await new Promise((f) => requestAnimationFrame(f));
+    }
+    return { max: abst.length ? Math.max(...abst) : 999, n: abst.length, rutsch: Math.round(rutsch) };
+  });
+  await pg3.close();
+  /* 20 px: Hakengroesse und das Pendeln des Bildes. */
+  sage(angel.n > 5 && angel.max <= 20, "Angel: der Haken bleibt am Bild, auch wenn die Seite rutscht",
+    "groesster Abstand " + Math.round(angel.max) + " px, Seite um " + angel.rutsch + " px gerutscht");
+
   /* Ein Bild von der Rute. */
   await pg.evaluate(() => {
     window.DMA_PRUEF.effektBuehne();
