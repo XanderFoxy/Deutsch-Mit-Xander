@@ -39066,16 +39066,7 @@
            dadurch versetzt, dass gerade und ungerade Blaetter sich
            abwechseln: vorn 0°, 60°, 120° …, hinten 30°, 90°, 150° … */
         b.style.setProperty("--w", (i * (360 / wieViele)).toFixed(1) + "deg");
-        /* XANDER (24.09.): „Passt auf, dass du bei der Blume und bei
-           solchen Designs immer schön im Zentrum arbeitest mit dem
-           Blumenkopf." GEFUNDEN: die Blaetter gingen reihum auf (0°, 30°,
-           60° …) — nach 900 ms standen nur die oberen rechten, die Bluete
-           wirkte nach oben rechts verrutscht. Jetzt oeffnen immer zwei
-           GEGENUEBERLIEGENDE Blaetter gemeinsam, erst oben/unten, dann
-           links/rechts, dann die Schraegen. Der Schwerpunkt bleibt in
-           jedem Augenblick auf der Bildmitte. */
-        const paarFolge = [0, 3, 1, 4, 2, 5];
-        b.style.setProperty("--spaet", (420 + paarFolge.indexOf(i % 6) * 110) + "ms");
+        b.style.setProperty("--spaet", (420 + i * 90) + "ms");
         if (i % 2) b.classList.add("lc-blbl-hinten");
         kranz.appendChild(b);
       }

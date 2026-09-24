@@ -82,28 +82,11 @@ const sage = (gut, was, zusatz) => {
     const offen = () => [...document.querySelectorAll(".lc-blbl")]
       .filter((b) => b.getBoundingClientRect().width > 4
         && Number(getComputedStyle(b).opacity) > 0.5).length;
-    /* „immer schön im Zentrum arbeitest mit dem Blumenkopf":
-       Schwerpunkt der schon offenen Blaetter, Abstand zur Bildmitte. */
-    const schwer = () => {
-      const m = mitte();
-      const auf = [...document.querySelectorAll(".lc-blbl")]
-        .filter((b) => b.getBoundingClientRect().width > 4
-          && Number(getComputedStyle(b).opacity) > 0.5);
-      if (!auf.length) return 0;
-      let x = 0, y = 0;
-      auf.forEach((b) => {
-        const r = b.getBoundingClientRect();
-        x += r.left + r.width / 2; y += r.top + r.height / 2;
-      });
-      return Math.round(Math.hypot(x / auf.length - m.x, y / auf.length - m.y));
-    };
     const spur = [];
-    let versatz = 0;
     let stielHoch = 0;
     for (let i = 0; i < 24; i++) {
       await new Promise((f) => setTimeout(f, 140));
       spur.push(offen());
-      versatz = Math.max(versatz, schwer());
       const st = document.querySelector(".lc-blume-stiel");
       if (st) stielHoch = Math.max(stielHoch, Math.round(st.getBoundingClientRect().height));
     }
@@ -117,8 +100,7 @@ const sage = (gut, was, zusatz) => {
       wiegt: Boolean(kreis && kreis.classList.contains("lc-blueht")),
       bildNachher: (platz.querySelector(".lc-kreis img") || {}).src || "",
       bildVorher: bildVorher,
-      kreisGross: Math.round(kreis.getBoundingClientRect().width),
-      versatz: versatz
+      kreisGross: Math.round(kreis.getBoundingClientRect().width)
     };
   });
   /* RUNDE 99 (Fassung 513) hat die Bluete auf zwoelf Blaetter in zwei
@@ -135,9 +117,6 @@ const sage = (gut, was, zusatz) => {
   const stufig = blume && blume.spur
     && blume.spur[0] < blume.spur[blume.spur.length - 1]
     && new Set(blume.spur).size >= 4;
-  sage(blume && blume.versatz <= Math.max(3, blume.kreisGross * 0.06),
-    "die Bluete geht aus der Mitte auf – kein Verrutschen waehrend des Oeffnens",
-    blume ? "groesster Versatz des Schwerpunkts " + blume.versatz + " px" : "-");
   console.log("  offene Blaetter im Verlauf: " + ((blume && blume.spur) || []).join(" ") + "\n");
   sage(stufig, "sie gehen NACHEINANDER auf, nicht alle auf einen Schlag",
     blume ? new Set(blume.spur).size + " verschiedene Staende gemessen" : "-");
