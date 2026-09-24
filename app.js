@@ -35730,11 +35730,14 @@
            oben etwas kreisrunder ist." Der Buegel war eine flache Kurve
            (Scheitel bei y = 13); jetzt ein runder Bogen bis y = 0, und
            der Kloeppel haengt an einem kurzen Steg darunter. */
-        + '<path d="M8 34 A52 34 0 0 1 112 34" fill="none" stroke="#c9a638"'
-        + ' stroke-width="7" stroke-linecap="round"/>'
-        + '<path d="M8.6 34 A51.4 31.4 0 0 1 111.4 34" fill="none" stroke="#f3d46e"'
-        + ' stroke-width="3" stroke-linecap="round"/>'
-        + '<rect x="58.4" y="1" width="3.2" height="12" rx="1.4" fill="#a98a22"/>'
+        /* RUNDE 101 — XANDER (Funk 91): „das Kreisrunde da, das kann ein
+           bisschen filigraner sein … ich brauche so einen filigranen
+           Halter für die Schellen." Bügel 7 → 4 Einheiten, Glanz 3 → 1,6. */
+        + '<path d="M8 34 A52 34 0 0 1 112 34" fill="none" stroke="#b8952e"'
+        + ' stroke-width="4" stroke-linecap="round"/>'
+        + '<path d="M8.6 34 A51.4 32.6 0 0 1 111.4 34" fill="none" stroke="#f3d46e"'
+        + ' stroke-width="1.6" stroke-linecap="round"/>'
+        + '<rect x="58.9" y="1.5" width="2.2" height="11" rx="1" fill="#a98a22"/>'
         /* XANDER: „bei den Wecker musst du diesen Kloeppel da zwischen
            den zwei schallkuppeln hin und her schlaegt."
            Vorher war das Haemmerchen ein 20 Einheiten kurzer Stift, der
@@ -35745,8 +35748,8 @@
            oben in der Mitte des Buegels, der Kopf unten, und der
            Ausschlag reicht bis unter die Schellen. */
         + '<g class="lc-schelle-hammer">'
-        + '<rect x="57.5" y="11" width="5" height="29" rx="2.5" fill="#a98a22"/>'
-        + '<circle cx="60" cy="41" r="6.5" fill="#f3d46e" stroke="#9c7b1e" stroke-width="2"/>'
+        + '<rect x="58.4" y="11" width="3.2" height="29" rx="1.6" fill="#a98a22"/>'
+        + '<circle cx="60" cy="41" r="5" fill="#f3d46e" stroke="#9c7b1e" stroke-width="1.6"/>'
         + "</g></svg></span>");
 
       /* Und die Schellen — halb hinter dem Bild, wie Ohren. */
@@ -35825,6 +35828,17 @@
           schicht.appendChild(w);
         }
       });
+      /* RUNDE 101 — XANDER (Funk 91): „nach der Animation verschwinden
+         einige Teile vom Wecker, und das wird nicht realistisch
+         ausgeblendet." GEFUNDEN: der Buegel blendete bei 2,6 s aus, das
+         Zifferblatt bei 3,4 s, Schellen und Fuesse gar nicht — sie
+         blieben stehen, bis die Schicht bei 3,6 s schlagartig wegfiel.
+         Jetzt blendet der ganze Wecker ab 3,0 s gemeinsam in 0,55 s aus. */
+      setTimeout(() => {
+        if (!schicht.isConnected) return;
+        schicht.style.transition = "opacity .55s ease-in";
+        schicht.style.opacity = "0";
+      }, 3000);
     }, 3600, "wecker");
   }
 
@@ -47074,24 +47088,13 @@
            47 Grad, aber mit Woelbung. Dazu ein Lichtstreifen auf dem
            Glas: ohne Spiegelung sieht Glas nach Farbe aus, und das
            war das „undefiniert". */
-        + '<path class="lc-heli-glas" d="M12.2 41.6'
-        + ' C13.8 32 20.6 23.4 31.4 18.1'
-        + ' C34.6 17.2 40 17.2 43.4 18.2'
-        + ' C36.6 23.2 28.4 31.4 24.6 42.4'
-        + ' C20.8 43.6 15.6 43.2 12.2 41.6 Z" stroke-linejoin="round"/>'
-        /* Die Kinnscheibe: klein, flach, unter der Front — auch sie
-           mit runden Ecken statt Kanten. */
-        + '<path class="lc-heli-glas" d="M11.8 41.4'
-        + ' C9.2 44.6 9.8 47.4 14.6 47.7'
-        + ' L22.4 47.6 C23 45.8 23.7 44.2 24.6 42.4'
-        + ' C20.4 43.4 15.2 43.2 11.8 41.4 Z" stroke-linejoin="round"/>'
-        /* Der Rahmen zwischen den beiden Scheiben und die A-Saeule
-           an der Vorderkante — ohne sie sieht es aus wie ein Loch.
-           Sie folgt jetzt derselben Woelbung wie das Glas. */
-        + '<path class="lc-heli-saeule" d="M12.2 41.6 C13.8 32 20.6 23.4 31.4 18.1'
-        + ' M24.6 42.4 C20.8 43.6 15.6 43.2 12.2 41.6"/>'
-        /* Die Spiegelung auf dem Glas. */
-        + '<path class="lc-heli-spiegel" d="M17.6 38.2 C19.4 31 24.4 24.6 31.6 20.8"/>'
+        /* RUNDE 101 — XANDER (Funk 91): „das Glas, was du hinter dem
+           Profilbild hast, das kann weg, dieses eckige Seitenglas. Da
+           soll dieses kreisrunde sein, was typisch für einen
+           Helikopter ist, und das soll aus dem Profilbild
+           herausgestanzt sein." Frontscheibe, Kinnscheibe, Saeule und
+           Spiegelung (Runden 74/80) sind deshalb weg — das Fenster IST
+           jetzt das Bild selbst (.lc-heli-kanzel, korrekturen.css). */
         + '<path class="lc-heli-tuer" d="M46 18.5 L46 47 M62 17 L62 48"/>'
         /* Der Rotorkopf auf dem Mast. */
         + '<path class="lc-heli-mast" d="M50 16 L53 8 L61 8 L58 16 Z"/>'

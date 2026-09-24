@@ -34094,3 +34094,23 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   font: 800 calc(var(--gross, 64px) * .16) / 1.1 system-ui, sans-serif;
   white-space: nowrap; z-index: 3;
 }
+
+/* RUNDE 101 — Funk 91: der Buegel bleibt stehen, bis der ganze Wecker
+   gemeinsam ausblendet (vorher ging er allein bei 2,6 s). */
+.lc-wecker .lc-schelle-buegel { animation-duration: 3.6s; }
+
+/* RUNDE 101 — XANDER (Funk 91): „oben lässt du einfach den Kreis …
+   und unten machst du dann so abgerundete Ecken, aber so, dass es wie
+   ein Helikopterfenster aussieht, knapp unter dem Rahmen, das genau
+   mit dieser Biegung mitgeht." Kein Vieleck-Zuschnitt mehr: oben ein
+   Halbkreis, unten zwei runde Ecken — vorn (zur Nase) die weitere, weil
+   sie der Nasenrundung folgt. Etwas tiefer in die Nase gedrueckt. */
+.lc-heli .lc-heli-kanzel {
+  left: 18.8%;
+  top: 46%;
+  clip-path: none;
+  border-radius: 50% 50% 30% 46% / 50% 50% 38% 50%;
+  box-shadow: inset 0 0 0 2px rgba(143, 166, 191, .95),
+              inset 0 4px 8px rgba(255, 255, 255, .35),
+              0 2px 5px rgba(0, 0, 0, .45);
+}

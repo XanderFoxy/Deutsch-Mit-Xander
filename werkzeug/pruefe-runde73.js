@@ -82,9 +82,10 @@ pruefe("und das Triebwerk haengt unter dem nahen Fluegel",
   /x="44" y="38" width="19" height="8"/.test(js));
 
 console.log("\nDAS HELIKOPTER-FENSTER");
-pruefe("vorne schraeg, hinten rund — und kein Rechteck mehr",
-  /\.lc-heli-kanzel \{[\s\S]{0,900}?clip-path: polygon\(/.test(css)
-  && /\.lc-heli-kanzel \{[\s\S]{0,900}?border-radius: 0;/.test(css));
+/* RUNDE 101 — Funk 91: statt Vieleck „oben der Kreis, unten
+   abgerundete Ecken" (siehe pruefe-runde66). Kein Rechteck bleibt. */
+pruefe("oben rund, unten runde Ecken — und kein Rechteck mehr",
+  /\.lc-heli \.lc-heli-kanzel \{[\s\S]{0,200}?border-radius: 50% 50% 30% 46%/.test(css));
 
 console.log("\nDIE LOK: LACK UND GOLD");
 pruefe("es gibt einen Lackverlauf und einen Goldverlauf",

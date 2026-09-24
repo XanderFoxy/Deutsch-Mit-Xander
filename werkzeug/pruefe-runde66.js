@@ -69,11 +69,13 @@ pruefe("das Profilbild sitzt in der Kanzel, nicht mitten im Rumpf",
    und wird weiter gemessen: die Front ist nach hinten geneigt (sie
    laeuft von unten vorn nach oben hinten), und darunter sitzt eine
    eigene Kinnscheibe. */
-pruefe("und die verglaste Front ist nach hinten geneigt",
-  /lc-heli-glas" d="M12\.2 41\.6/.test(js)
-  && /C13\.8 32 20\.6 23\.4 31\.4 18\.1/.test(js));
-pruefe("darunter sitzt eine eigene Kinnscheibe",
-  /lc-heli-glas" d="M11\.8 41\.4/.test(js));
+/* RUNDE 101 — XANDER (Funk 91): „das Glas, was du hinter dem
+   Profilbild hast, das kann weg … da soll dieses kreisrunde sein …
+   aus dem Profilbild herausgestanzt." Front- und Kinnscheibe sind
+   deshalb absichtlich weg; gemessen wird jetzt das runde Fenster. */
+pruefe("kein eckiges Glas mehr hinter dem Bild — das Fenster ist das Bild",
+  !/lc-heli-glas" d=/.test(js)
+  && /\.lc-heli \.lc-heli-kanzel \{[\s\S]{0,200}?clip-path: none;[\s\S]{0,80}?border-radius: 50% 50%/.test(css));
 pruefe("er steht auf seinem eigenen Abwind", /lc-heli-wind/.test(js) && /lcHeliWindR66/.test(css));
 
 console.log("\nDER GEWICKELTE GRIFF");
