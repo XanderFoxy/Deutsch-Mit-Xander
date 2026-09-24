@@ -24647,38 +24647,6 @@
     return '<svg class="lc-feuer-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + defs + "</defs>" + bild + "</svg>";
   }
 
-  /* =================================================================
-     SCHON-PASS SPRECHBILDER — 3. WELLE
-     -----------------------------------------------------------------
-     XANDERS LISTE: „Problem: Lücke zwischen Rahmen und erster Welle
-     zeigt die Bühne. Soll: dauerhafter halbtransparenter Saum am Ring
-     (20–35 % Deckkraft, 4–7 % Breite). Davon lösen sich 2–3
-     geschlossene Ringe, laufen 8–14 % nach außen, verblassen. Nie
-     Rahmen und Welle gleichzeitig ‚aus‘ — immer eine Schicht deckt
-     den Nahtspalt."
-     Rechnung: Bilddurchmesser im Feld = 69,4. Der Saum ist 3,6 breit
-     (5,2 %) und beginnt INNEN am Ring — zwischen Bild und Saum gibt es
-     also keinen Spalt. Die Ringe starten auf dem Saum und laufen 6,2
-     nach aussen (9 % — mehr stoesst an den Nachbarplatz). Der Saum ist nie aus.
-     ================================================================= */
-  function lcWelleSvg() {
-    const R = 34.7, f = (v) => v.toFixed(2);
-    const SAUM = 3.6, start = R + SAUM / 2 - 0.4, weit = 6.2, takt = 2.1;
-    let bild = '<circle cx="50" cy="50" r="' + f(start) + '" fill="none" stroke="#78DCFF" stroke-width="' + f(SAUM) + '" stroke-opacity=".3">'
-      + '<animate attributeName="stroke-opacity" dur="' + takt + 's" repeatCount="indefinite" values=".24;.34;.24" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/></circle>';
-    for (let i = 0; i < 3; i++) {
-      const bg = f(-i * takt / 3);
-      bild += '<circle cx="50" cy="50" fill="none" stroke="#5CC8F0" r="' + f(start) + '">'
-        + '<animate attributeName="r" dur="' + takt + 's" begin="' + bg + 's" repeatCount="indefinite" values="' + f(start) + ";" + f(start + weit) + '" calcMode="spline" keySplines=".2 .6 .4 1"/>'
-        + '<animate attributeName="stroke-width" dur="' + takt + 's" begin="' + bg + 's" repeatCount="indefinite" values="' + f(SAUM * 0.7) + ';0.5"/>'
-        + '<animate attributeName="stroke-opacity" dur="' + takt + 's" begin="' + bg + 's" repeatCount="indefinite" values=".55;.35;0" keyTimes="0;.45;1"/></circle>';
-    }
-    return '<svg class="lc-welle-bild" viewBox="0 0 100 100" aria-hidden="true">' + bild + "</svg>";
-  }
-  /* Welche Sprechbilder seit dem SCHON-PASS EIN Bild sind statt
-     Teilchen oder Rand-Schichten. */
-  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg };
-
   function lcSprechFeld(knopf, art) {
     const kreis = knopf.querySelector(".lc-kreis");
     if (!kreis) return;
@@ -24692,16 +24660,16 @@
        wie Stottern. */
     if (alt && alt.dataset.art === art) return;
     if (alt) alt.remove();
-    if (!bau && !LC_SPRECH_SVG[art]) return;
+    if (!bau) return;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     /* SCHON-PASS 2: das Feuer ist ein Bild, keine Teilchen mehr
        (siehe lcFeuerSvg). */
-    if (LC_SPRECH_SVG[art]) {
+    if (art === "feuer") {
       const feld = document.createElement("span");
-      feld.className = "lc-sprechfeld lc-s" + art;
+      feld.className = "lc-sprechfeld lc-sfeuer";
       feld.dataset.art = art;
       feld.setAttribute("aria-hidden", "true");
-      feld.innerHTML = LC_SPRECH_SVG[art]();
+      feld.innerHTML = lcFeuerSvg();
       knopf.appendChild(feld);
       return;
     }

@@ -173,6 +173,28 @@ const TEILCHEN = ["magie", "noten", "herzen", "strom", "blasen"];
   pruefe("6 bis 10 Funken", fe.funken >= 6 && fe.funken <= 10, fe.funken);
   pruefe("Feuer bleibt beim Profilbild", fe.ueber <= 40, fe.ueber + " px groesser als das Bild");
 
+  console.log("\nSCHON-PASS 3 — DIE WELLE OHNE LUECKE\n");
+  const we = await pg.evaluate(() => {
+    const knopf = document.querySelector(".lc-platz");
+    knopf.dataset.sprechbild = "welle";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "welle");
+    const svg = knopf.querySelector(".lc-sprechfeld svg.lc-welle-bild");
+    if (!svg) return { da: false };
+    const k = [...svg.querySelectorAll("circle")];
+    const saum = k[0];
+    const r = parseFloat(saum.getAttribute("r")), b = parseFloat(saum.getAttribute("stroke-width"));
+    const ringe = k.slice(1).map((c) => c.querySelector('animate[attributeName="r"]').getAttribute("values").split(";").map(parseFloat));
+    const deck = saum.querySelector("animate").getAttribute("values").split(";").map(parseFloat);
+    return { da: true, innen: r - b / 2, breite: b / 69.4 * 100, deckMin: Math.min(...deck), deckMax: Math.max(...deck),
+      ringe: ringe.length, lauf: ringe.map((v) => (v[1] - v[0]) / 69.4 * 100), abSaum: ringe.every((v) => Math.abs(v[0] - r) < 0.01) };
+  });
+  pruefe("Welle ist ein Bild mit festem Saum", we.da, we.da ? "ja" : "fehlt");
+  pruefe("der Saum beginnt am Ring — kein Spalt zum Bild", we.innen <= 34.7, "Innenkante " + (we.innen || 0).toFixed(2) + " (Ring 34,7)");
+  pruefe("Saum 4–7 % breit", we.breite >= 4 && we.breite <= 7, (we.breite || 0).toFixed(1) + " %");
+  pruefe("Saum 20–35 % Deckkraft und nie aus", we.deckMin >= 0.2 && we.deckMax <= 0.35, we.deckMin + " bis " + we.deckMax);
+  pruefe("2–3 Ringe loesen sich vom Saum", we.ringe >= 2 && we.ringe <= 3 && we.abSaum, we.ringe + " Ringe");
+  pruefe("sie laufen 8–14 % nach aussen", we.lauf && we.lauf.every((x) => x >= 8 && x <= 14), (we.lauf || []).map((x) => x.toFixed(1)).join(", "));
+
   console.log("\nUND WENN DAS SPRECHEN AUFHOERT?\n");
   const weg = await pg.evaluate(() => {
     const knopf = document.querySelector(".lc-platz");

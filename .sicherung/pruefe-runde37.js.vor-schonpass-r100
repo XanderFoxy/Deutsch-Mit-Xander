@@ -45,12 +45,8 @@ const pruefe = (was, gut, zusatz) => {
    dem Strom sind diese Zacken nach aussen zu viel ... innen drin
    sollen ganz filigrane, feine Blitzlinien laufen." Gemessen wird er
    deshalb weiter unten, nach seiner eigenen Vorgabe. */
-/* SCHON-PASS (Xanders Liste vom 23.09.): Feuer und Welle sind seitdem
-   EIN Bild im Feld (lcFeuerSvg, lcWelleSvg) — weder Teilchen noch
-   Rand-Schicht. Gemessen werden sie in pruefe-sprechbilder.js nach
-   den Zahlen seiner Liste. */
-const SPRECHBILDER = ["bluete", "regenbogen"];
-const TEILCHENBILDER = ["funkeln", "magie"];
+const SPRECHBILDER = ["bluete", "regenbogen", "welle"];
+const TEILCHENBILDER = ["feuer", "funkeln", "magie"];
 
 (async () => {
   const srv = http.createServer((q, a) => {
