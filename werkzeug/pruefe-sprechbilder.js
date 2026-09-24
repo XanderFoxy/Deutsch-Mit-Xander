@@ -362,13 +362,15 @@ const TEILCHEN = ["magie", "noten", "herzen", "feuer", "strom2", "blasen"];
     });
     return erg;
   });
-  pruefe("Magie: 88 Lichtpunkte, keine Sternzeichen", mf.magie.punkte === 88 && mf.magie.zeichen === 0, mf.magie.punkte + " Punkte");
+  /* RUNDE 101 — Walkie #159 „Magie zu blass": 96 groessere Punkte. */
+  pruefe("Magie: 88–110 Lichtpunkte, keine Sternzeichen", mf.magie.punkte >= 88 && mf.magie.punkte <= 110 && mf.magie.zeichen === 0, mf.magie.punkte + " Punkte");
   pruefe("Magie: Mitte leer (alle ausserhalb des Rings)", mf.magie.rMin >= 34.7, "naechster " + mf.magie.rMin.toFixed(1));
   pruefe("Magie: Richtungswechsel alle 0,4–0,9 s", mf.magie.stueckMin >= 0.39 && mf.magie.stueckMax <= 0.91,
     mf.magie.stueckMin.toFixed(2) + "–" + mf.magie.stueckMax.toFixed(2) + " s");
-  pruefe("Magie: 1–2 Lichtfaeden am Saum", mf.magie.faeden >= 1 && mf.magie.faeden <= 2, mf.magie.faeden);
+  pruefe("Magie: 1–3 Lichtfaeden am Saum", mf.magie.faeden >= 1 && mf.magie.faeden <= 3, mf.magie.faeden);
   pruefe("Funkeln: viele winzige Punkte am Saum", mf.funkeln.punkte >= 60 && mf.funkeln.rMin >= 34.7, mf.funkeln.punkte + " Punkte");
-  pruefe("Funkeln: Aufblitzen 0,15–0,35 s", mf.funkeln.blitzMin >= 0.149 && mf.funkeln.blitzMax <= 0.351,
+  /* RUNDE 101 — Walkie #159 „Funkeln zu wenig": laenger hell (bis 0,5 s). */
+  pruefe("Funkeln: Aufblitzen 0,15–0,5 s", mf.funkeln.blitzMin >= 0.149 && mf.funkeln.blitzMax <= 0.501,
     mf.funkeln.blitzMin.toFixed(2) + "–" + mf.funkeln.blitzMax.toFixed(2) + " s");
   pruefe("Funkeln: kein stehendes Raster (jeder Punkt wechselt den Ort)", mf.funkeln.orte, "");
 
@@ -387,7 +389,8 @@ const TEILCHEN = ["magie", "noten", "herzen", "feuer", "strom2", "blasen"];
     return { herzen: hz.length, strichMin: Math.min(...striche), strichMax: Math.max(...striche), zeichenH,
       noten: nt.length, rMin: Math.min(...r), zeichenN: knopf.querySelector(".lc-sprechfeld").textContent.trim().length };
   });
-  pruefe("Herzen: 18 oder etwas mehr, als Herz-Pfad (kein Zeichen)", hn.herzen >= 18 && hn.herzen <= 26 && hn.zeichenH === 0, hn.herzen);
+  /* RUNDE 101 — Walkie #160 „Herzen mehr": 40. */
+  pruefe("Herzen: 36–44, als Herz-Pfad (kein Zeichen)", hn.herzen >= 36 && hn.herzen <= 44 && hn.zeichenH === 0, hn.herzen);
   pruefe("Herzen: Strich 1–1,5 px", hn.strichMin >= 0.95 && hn.strichMax <= 1.55, hn.strichMin.toFixed(2) + "–" + hn.strichMax.toFixed(2) + " px");
   pruefe("Noten: auf dem Ring, nicht aus der Mitte, keine Zeichen", hn.noten >= 12 && hn.rMin >= 34.7 && hn.zeichenN === 0, hn.noten + " Noten, naechste " + hn.rMin.toFixed(1));
 
@@ -420,9 +423,11 @@ const TEILCHEN = ["magie", "noten", "herzen", "feuer", "strom2", "blasen"];
     e.schatten = s ? parseFloat(s.querySelector("animateMotion").getAttribute("dur")) : 0;
     return e;
   });
-  pruefe("Kranz: 4–6 Kerzen, Nadeln mit Luecken", nu.kerzen >= 4 && nu.kerzen <= 6 && nu.nadeln > 150 && nu.nadeln < 260, nu.kerzen + " Kerzen, " + nu.nadeln + " Nadeln");
+  /* RUNDE 101 — Walkie #161 „Kranz: mehr Nadeln": 520 (mit Luecken). */
+  pruefe("Kranz: 4–6 Kerzen, Nadeln mit Luecken", nu.kerzen >= 4 && nu.kerzen <= 6 && nu.nadeln > 400 && nu.nadeln < 520, nu.kerzen + " Kerzen, " + nu.nadeln + " Nadeln");
   pruefe("Kranz: Flammen flackern 8–12 %", nu.flackern.length && nu.flackern.every((x) => x >= 0.08 && x <= 0.12), nu.flackern.map((x) => x.toFixed(2)).join(" "));
-  pruefe("Kugel: 12–20 Schneepunkte, 2–3 Paeckchen", nu.schnee >= 12 && nu.schnee <= 20 && nu.pakete >= 2 && nu.pakete <= 3, nu.schnee + " Schnee, " + nu.pakete + " Paeckchen");
+  /* RUNDE 101 — Walkie #161 „Kugel: mehr Schnee": 60. */
+  pruefe("Kugel: 50–70 Schneepunkte, 2–3 Paeckchen", nu.schnee >= 50 && nu.schnee <= 70 && nu.pakete >= 2 && nu.pakete <= 3, nu.schnee + " Schnee, " + nu.pakete + " Paeckchen");
   pruefe("Hasenohren: 20–40 Haare je Ohr, 4–8 Grad, nicht im Takt",
     nu.ohren.length === 2 && nu.ohren.every((o) => o.haare >= 20 && o.haare <= 40 && o.neig >= 4 && o.neig <= 8) && nu.ohren[0].takt !== nu.ohren[1].takt,
     JSON.stringify(nu.ohren));

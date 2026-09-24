@@ -25212,9 +25212,13 @@
     const R = 34.7, n = ++lcMagieNr, f = (v) => v.toFixed(2), z = (a, b) => a + Math.random() * (b - a);
     /* Auf dem hellen Raum muessen die Punkte Farbe haben — helle
        Lila- und Weisstoene waren dort unsichtbar (Standbild). */
-    const farben = ["#8B5CF6", "#A78BFA", "#7C3AED", "#F59E0B", "#C084FC", "#6366F1"];
+    /* RUNDE 101 — XANDER (Walkie #159): „Magie zu blass" und „Farben
+       ändern". Statt Lila-in-Lila jetzt satte Zauberfarben: Magenta,
+       Gold, Violett, Tuerkis — jede kraeftig genug fuer den hellen Raum.
+       Punkte groesser, der Leuchthof staerker, nie ganz ausgeblendet. */
+    const farben = ["#FF2E97", "#FFC300", "#8A2BE2", "#00D1FF", "#FF6B00", "#C21EFF", "#19E3B1"];
     let staub = "";
-    for (let i = 0; i < 88; i++) {
+    for (let i = 0; i < 96; i++) {
       const w = z(0, Math.PI * 2), r = R + z(0.6, 7);
       const x = 50 + Math.cos(w) * r, y = 50 + Math.sin(w) * r;
       /* der Zickzack: 4–6 Stuecke, dann zurueck zum Anfang */
@@ -25234,30 +25238,36 @@
       /* vier Stellen: mit zweien wuerde aus 0,40 s schon mal 0,38 */
       const kt = zeiten.map((t) => (t / dauer).toFixed(4)).join(";");
       const kp = zeiten.map((t, j) => (j / (zeiten.length - 1)).toFixed(4)).join(";");
-      const gross = z(0.25, 0.75);
+      const gross = z(0.45, 1.05);
       staub += '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(gross) + '" fill="' + farben[i % farben.length] + '">'
         + '<animateMotion dur="' + f(dauer) + 's" begin="' + f(-z(0, dauer)) + 's" repeatCount="indefinite" path="' + d + '" keyPoints="' + kp + '" keyTimes="' + kt + '" calcMode="linear"/>'
-        + '<animate attributeName="opacity" dur="' + f(z(1.6, 3.2)) + 's" begin="' + f(-z(0, 3)) + 's" repeatCount="indefinite" values=".25;1;.5;.9;.25"/></circle>';
+        + '<animate attributeName="opacity" dur="' + f(z(1.6, 3.2)) + 's" begin="' + f(-z(0, 3)) + 's" repeatCount="indefinite" values=".55;1;.7;1;.55"/></circle>';
     }
     /* LICHTFAEDEN: zwei kurze Boegen am Saum, die fuer 0,2 s aufleuchten
        — jeder in einem eigenen, langen Takt, also „gelegentlich". */
     let faeden = "";
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 3; i++) {
       const w0 = z(0, Math.PI * 2), w1 = w0 + z(0.35, 0.7), r = R + z(1.5, 3.5);
       const dur = z(2.4, 4), an = 0.2 / dur, t0 = z(0.1, 0.8);
       faeden += '<path d="M' + f(50 + Math.cos(w0) * r) + " " + f(50 + Math.sin(w0) * r) + " A" + f(r) + " " + f(r) + " 0 0 1 "
-        + f(50 + Math.cos(w1) * r) + " " + f(50 + Math.sin(w1) * r) + '" fill="none" stroke="#A78BFA" stroke-width=".45" stroke-linecap="round" opacity="0">'
+        + f(50 + Math.cos(w1) * r) + " " + f(50 + Math.sin(w1) * r) + '" fill="none" stroke="' + ["#FFC300", "#FF2E97", "#00D1FF"][i % 3] + '" stroke-width=".6" stroke-linecap="round" opacity="0">'
         + '<animate attributeName="opacity" dur="' + f(dur) + 's" repeatCount="indefinite" keyTimes="0;' + f(t0) + ";" + f(t0 + an * 0.3) + ";" + f(t0 + an) + ';1" values="0;0;1;0;0"/></path>';
     }
     return '<svg class="lc-magie-bild" viewBox="0 0 100 100" aria-hidden="true"><defs><filter id="lcMg' + n
-      + '" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation=".7"/></filter></defs>'
-      + '<g filter="url(#lcMg' + n + ')" opacity=".8">' + staub + "</g>" + staub + faeden + "</svg>";
+      + '" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1"/></filter></defs>'
+      + '<g filter="url(#lcMg' + n + ')">' + staub + "</g>" + staub + faeden + "</svg>";
   }
   function lcFunkelnSvg() {
     const R = 34.7, f = (v) => v.toFixed(2), z = (a, b) => a + Math.random() * (b - a);
+    /* RUNDE 101 — XANDER (Walkie #159): „Funkeln zu wenig" und „Farben
+       ändern". 230 statt 110 Punkte, groesser, laenger hell; jeder
+       fuenfte ist ein Vierstrahl-Stern. Das Farbspiel reicht jetzt von
+       Tuerkis ueber Magenta und Gold bis Hellgruen und Weiss. */
     let punkte = "";
-    for (let i = 0; i < 110; i++) {
-      const dur = Math.round(z(0.9, 2) * 1000) / 1000, blitz = z(0.15, 0.35) / dur, t0 = z(0.05, 0.9 - blitz);
+    const spektren = ["#00E5FF;#00E5FF;#FF2EC4;#FFD400;#00E5FF;#00E5FF", "#FF2EC4;#FF2EC4;#FFD400;#7CFF4F;#FF2EC4;#FF2EC4",
+                      "#FFD400;#FFD400;#FFFFFF;#00E5FF;#FFD400;#FFD400", "#7CFF4F;#7CFF4F;#00E5FF;#FF2EC4;#7CFF4F;#7CFF4F"];
+    for (let i = 0; i < 230; i++) {
+      const dur = Math.round(z(0.7, 1.6) * 1000) / 1000, blitz = Math.min(0.6, z(0.28, 0.5) / dur), t0 = z(0.05, 0.95 - blitz);
       const orte = [];
       for (let k = 0; k < 5; k++) {
         const w = z(0, Math.PI * 2), r = R + z(0.4, 4.2);
@@ -25268,13 +25278,21 @@
       const bg = f(-z(0, dur));
       const g4 = (v) => v.toFixed(4);
       const kt = "0;" + g4(t0) + ";" + g4(t0 + blitz * 0.35) + ";" + g4(t0 + blitz) + ";1";
-      punkte += '<circle r="' + f(z(0.35, 0.8)) + '" cx="' + f(orte[0][0]) + '" cy="' + f(orte[0][1]) + '" opacity="0">'
-        + '<animate attributeName="cx" dur="' + f(dur * 5) + 's" begin="' + bg + 's" repeatCount="indefinite" calcMode="discrete" values="' + orte.map((o) => f(o[0])).join(";") + '"/>'
-        + '<animate attributeName="cy" dur="' + f(dur * 5) + 's" begin="' + bg + 's" repeatCount="indefinite" calcMode="discrete" values="' + orte.map((o) => f(o[1])).join(";") + '"/>'
+      const stern = i % 5 === 0, gr = stern ? z(1.1, 1.7) : z(0.45, 1);
+      /* Ein Stern springt nicht ueber cx/cy, sondern ueber translate. */
+      const form = stern
+        ? '<path d="M0 ' + f(-gr) + " L" + f(gr * 0.22) + " " + f(-gr * 0.22) + " L" + f(gr) + " 0 L" + f(gr * 0.22) + " " + f(gr * 0.22)
+          + " L0 " + f(gr) + " L" + f(-gr * 0.22) + " " + f(gr * 0.22) + " L" + f(-gr) + " 0 L" + f(-gr * 0.22) + " " + f(-gr * 0.22) + ' Z" opacity="0">'
+          + '<animateTransform attributeName="transform" type="translate" dur="' + f(dur * 5) + 's" begin="' + bg + 's" repeatCount="indefinite" calcMode="discrete" values="' + orte.map((o) => f(o[0]) + " " + f(o[1])).join(";") + '"/>'
+        : '<circle r="' + f(gr) + '" cx="' + f(orte[0][0]) + '" cy="' + f(orte[0][1]) + '" opacity="0">'
+          + '<animate attributeName="cx" dur="' + f(dur * 5) + 's" begin="' + bg + 's" repeatCount="indefinite" calcMode="discrete" values="' + orte.map((o) => f(o[0])).join(";") + '"/>'
+          + '<animate attributeName="cy" dur="' + f(dur * 5) + 's" begin="' + bg + 's" repeatCount="indefinite" calcMode="discrete" values="' + orte.map((o) => f(o[1])).join(";") + '"/>';
+      punkte += form
         + '<animate attributeName="opacity" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="' + kt + '" values="0;0;1;0;0"/>'
         /* irisierend: waehrend des Blitzes laeuft die Farbe durchs
-           kurze CD-Spektrum */
-        + '<animate attributeName="fill" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="0;' + g4(t0) + ";" + g4(t0 + blitz * 0.33) + ";" + g4(t0 + blitz * 0.66) + ";" + g4(t0 + blitz) + ';1" values="#06B6D4;#06B6D4;#D946EF;#EAB308;#06B6D4;#06B6D4"/></circle>';
+           Spektrum */
+        + '<animate attributeName="fill" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="0;' + g4(t0) + ";" + g4(t0 + blitz * 0.33) + ";" + g4(t0 + blitz * 0.66) + ";" + g4(t0 + blitz) + ';1" values="' + spektren[i % 4] + '"/>'
+        + (stern ? "</path>" : "</circle>");
     }
     return '<svg class="lc-funkeln-bild" viewBox="0 0 100 100" aria-hidden="true">' + punkte + "</svg>";
   }
@@ -25305,9 +25323,11 @@
   function lcHerzenSvg() {
     const R = 34.7, f = (v) => v.toFixed(2), z = (a, b) => a + Math.random() * (b - a);
     let bild = "";
-    const menge = 22;
+    /* RUNDE 101 — XANDER (Walkie #160): „Herzen mehr." 40 statt 22, in
+       zwei Ringen: dicht am Bild und etwas weiter draussen. */
+    const menge = 40;
     for (let i = 0; i < menge; i++) {
-      const w = (i / menge) * Math.PI * 2 + z(-0.12, 0.12), r = R + z(0.4, 3);
+      const w = (i / menge) * Math.PI * 2 * 2 + z(-0.12, 0.12), r = R + (i % 2 ? z(3, 6) : z(0.4, 3));
       const x = 50 + Math.cos(w) * r, y = 50 + Math.sin(w) * r;
       /* 4–8 % des Kreisdurchmessers (69,4): 2,8 bis 5,5 — „viele klein":
          die Groesse wird zum kleinen Ende hin gewuerfelt. */
@@ -25334,18 +25354,23 @@
     const viertel = '<ellipse cx="0" cy="0" rx="1" ry=".7" transform="rotate(-24)"/><path d="M.9 -.2 V-4.4" fill="none" stroke-width=".28"/>';
     const achtel = viertel.replace("</path>", "") + '<path d="M.9 -4.4 C1.9 -3.5 2.6 -2.9 2.1 -1.5" fill="none" stroke-width=".28"/>';
     let bild = "";
-    const menge = 16;
+    const menge = 20;
     for (let i = 0; i < menge; i++) {
       const w = (i / menge) * Math.PI * 2 + z(-0.1, 0.1), r = R + z(1.6, 3.2);
       const x = 50 + Math.cos(w) * r, y = 50 + Math.sin(w) * r;
       let grad = w * 180 / Math.PI + 90;
       const roh = ((w * 180 / Math.PI) % 360 + 360) % 360;
       if (roh > 90 && roh < 270) grad += 180;
-      const g = z(1.05, 1.4), dur = z(2.2, 3.6), bg = f(-z(0, dur));
-      bild += '<g transform="translate(' + f(x) + " " + f(y) + ") rotate(" + f(grad) + ") scale(" + f(g) + ')" fill="#5B21B6" stroke="#5B21B6">'
-        + '<animate attributeName="opacity" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" values=".15;.85;.6;.15"/>'
-        + '<g><animateTransform attributeName="transform" type="translate" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" values="0 0;0 -1.2;0 0" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>'
-        + (i % 2 ? achtel : viertel) + "</g></g>";
+      /* RUNDE 101 — XANDER (Walkie #160): „Noten bewegen sich zu
+         wenig." Vorher hob sich jede Note um 1,2 Einheiten. Jetzt steigt
+         sie wie ein Ton, der davonschwebt: 9 Einheiten nach oben,
+         schaukelt dabei hin und her (±14 Grad) und verblasst oben. */
+      const g = z(1.05, 1.4), dur = z(2.4, 3.4), bg = f(-z(0, dur)), sx = z(1.2, 2.4) * (Math.random() < 0.5 ? -1 : 1);
+      bild += '<g transform="translate(' + f(x) + " " + f(y) + ')" fill="#5B21B6" stroke="#5B21B6">'
+        + '<animate attributeName="opacity" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" values="0;.95;.85;0" keyTimes="0;.18;.7;1"/>'
+        + '<g><animateTransform attributeName="transform" type="translate" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" values="0 0;' + f(sx) + " -3;" + f(-sx) + " -6;0 -9" + '" calcMode="spline" keySplines=".4 0 .6 1;.4 0 .6 1;.4 0 .6 1"/>'
+        + '<g transform="rotate(' + f(grad) + ") scale(" + f(g) + ')"><g><animateTransform attributeName="transform" type="rotate" dur="' + f(dur / 2) + 's" begin="' + bg + 's" repeatCount="indefinite" values="-14;14;-14" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>'
+        + (i % 2 ? achtel : viertel) + "</g></g></g></g>";
     }
     return '<svg class="lc-noten-bild" viewBox="0 0 100 100" aria-hidden="true">' + bild + "</svg>";
   }
@@ -25387,18 +25412,20 @@
     /* Luecken: vier kurze Stuecke ohne Nadeln */
     const luecken = Array.from({ length: 4 }, () => { const a = z(0, 360); return [a, a + z(4, 9)]; });
     const inLuecke = (g) => luecken.some(([a, b]) => ((g - a + 360) % 360) < (b - a));
-    for (let i = 0; i < 260; i++) {
+    /* RUNDE 101 — XANDER (Walkie #161): „Kranz: mehr Nadeln." 520
+       statt 260, etwas laenger, und der Kranz etwas breiter. */
+    for (let i = 0; i < 520; i++) {
       const g = z(0, 360);
       if (inLuecke(g)) continue;
-      const r = R + z(-1.2, 4.2);
+      const r = R + z(-1.6, 5);
       const [x, y] = lcRingPunkt(g, r);
-      const w = (g + 90 + z(-40, 40)) * Math.PI / 180, l = z(1.1, 3.1);
+      const w = (g + 90 + z(-40, 40)) * Math.PI / 180, l = z(1.3, 3.6);
       nadeln += '<path d="M' + f(x) + " " + f(y) + " l" + f(Math.cos(w) * l) + " " + f(Math.sin(w) * l) + '" stroke="' + (i % 3 ? "#166534" : "#14532D") + '"/>';
     }
     /* Zweige: ein paar dunkle Aeste, auf denen die Nadeln sitzen */
     let zweige = "";
-    for (let i = 0; i < 9; i++) {
-      const g0 = i * 40 + z(0, 15), g1 = g0 + z(22, 34), r = R + z(0.8, 2.4);
+    for (let i = 0; i < 12; i++) {
+      const g0 = i * 30 + z(0, 12), g1 = g0 + z(22, 34), r = R + z(0.8, 2.8);
       const [x0, y0] = lcRingPunkt(g0, r), [x1, y1] = lcRingPunkt(g1, r + z(-1, 1));
       zweige += '<path d="M' + f(x0) + " " + f(y0) + " A" + f(r) + " " + f(r) + " 0 0 1 " + f(x1) + " " + f(y1) + '" stroke="#3F2A14" stroke-width=".5" fill="none" opacity=".7"/>';
     }
@@ -25430,11 +25457,14 @@
       + '<path d="' + (() => { const [a, b] = lcRingPunkt(20, R - 2), [c, d] = lcRingPunkt(38, R - 2); return "M" + f(a) + " " + f(b) + " A" + f(R - 2) + " " + f(R - 2) + " 0 0 1 " + f(c) + " " + f(d); })()
       + '" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width=".6" stroke-linecap="round"/>';
     /* Schnee NUR in der Ringzone: Maske = Ring zwischen R−6 und R+1 */
-    const defs = '<mask id="lcKm' + n + '"><rect width="100" height="100" fill="#000"/><circle cx="50" cy="50" r="' + f(R + 1) + '" fill="#fff"/><circle cx="50" cy="50" r="' + f(R - 6) + '" fill="#000"/></mask>'
+    /* RUNDE 101 — XANDER (Walkie #161): „Kugel: mehr Schnee." 60 statt
+       16 Flocken, verschieden gross, in einer etwas breiteren Zone
+       (R−9 statt R−6) — die Mitte bleibt trotzdem frei. */
+    const defs = '<mask id="lcKm' + n + '"><rect width="100" height="100" fill="#000"/><circle cx="50" cy="50" r="' + f(R + 1) + '" fill="#fff"/><circle cx="50" cy="50" r="' + f(R - 9) + '" fill="#000"/></mask>'
       + '<clipPath id="lcKc' + n + '"><circle cx="50" cy="50" r="' + f(R - 0.5) + '"/></clipPath>';
     let schnee = "";
-    for (let i = 0; i < 16; i++) {
-      const x = 50 + z(-R, R), dur = z(3, 5.5), rr = z(0.35, 0.65);
+    for (let i = 0; i < 60; i++) {
+      const x = 50 + z(-R, R), dur = z(3, 5.5), rr = z(0.4, 1);
       schnee += '<circle cx="' + f(x) + '" r="' + f(rr) + '" fill="#fff" stroke="#94A3B8" stroke-width=".12">'
         + '<animate attributeName="cy" dur="' + f(dur) + 's" begin="' + f(-z(0, dur)) + 's" repeatCount="indefinite" values="' + f(50 - R - 2) + ";" + f(50 + R + 2) + '"/>'
         + '<animate attributeName="cx" dur="' + f(dur / 2) + 's" repeatCount="indefinite" values="' + f(x) + ";" + f(x + z(-1.5, 1.5)) + ";" + f(x) + '"/></circle>';
@@ -25464,18 +25494,20 @@
       const neig = baer ? z(2, 3) : z(4, 8), dur = f(k ? z(1.25, 1.5) : z(0.95, 1.15));
       let form, innen, haare = "";
       if (baer) {
-        form = '<circle cx="0" cy="-4.2" r="5" fill="url(#lcOa' + n + ')"/>';
-        innen = '<circle cx="0" cy="-3.8" r="2.8" fill="#C4906A" filter="url(#lcOi' + n + ')"/>';
-        for (let i = 0; i < 12; i++) { const w = z(-2.6, -0.5), l = z(0.4, 0.9); const px = Math.cos(w) * 5, py = -4.2 + Math.sin(w) * 5;
+        /* RUNDE 101 — XANDER (Walkie #161): „Ohren größer." Baer 5 → 6,8. */
+        form = '<circle cx="0" cy="-5.7" r="6.8" fill="url(#lcOa' + n + ')"/>';
+        innen = '<circle cx="0" cy="-5.2" r="3.8" fill="#C4906A" filter="url(#lcOi' + n + ')"/>';
+        for (let i = 0; i < 16; i++) { const w = z(-2.6, -0.5), l = z(0.5, 1.1); const px = Math.cos(w) * 6.8, py = -5.7 + Math.sin(w) * 6.8;
           haare += '<path d="M' + f(px) + " " + f(py) + " l" + f(Math.cos(w) * l) + " " + f(Math.sin(w) * l) + '"/>'; }
       } else {
-        const L = 17, B = 6;
+        /* RUNDE 101 — „Ohren größer": Hase 17×6 → 23×8. */
+        const L = 23, B = 8;
         form = '<path d="M' + f(-B * 0.45) + " 0 C" + f(-B * 0.75) + " " + f(-L * 0.45) + " " + f(-B * 0.62) + " " + f(-L * 0.92) + " 0 " + f(-L)
           + " C" + f(B * 0.62) + " " + f(-L * 0.92) + " " + f(B * 0.75) + " " + f(-L * 0.45) + " " + f(B * 0.45) + ' 0 Z" fill="url(#lcOa' + n + ')"/>';
         innen = '<path d="M' + f(-B * 0.2) + " -1 C" + f(-B * 0.42) + " " + f(-L * 0.45) + " " + f(-B * 0.32) + " " + f(-L * 0.82) + " 0 " + f(-L * 0.88)
           + " C" + f(B * 0.32) + " " + f(-L * 0.82) + " " + f(B * 0.42) + " " + f(-L * 0.45) + " " + f(B * 0.2) + ' -1 Z" fill="#F4B6C2" filter="url(#lcOi' + n + ')" opacity=".85"/>';
         /* 20–40 Haarstriche am Rand entlang, Laenge verschieden */
-        const menge = 26 + Math.floor(Math.random() * 12);
+        const menge = 30 + Math.floor(Math.random() * 10);   /* Liste: 20–40 je Ohr */
         for (let i = 0; i < menge; i++) {
           const t = z(0.05, 0.98), s = i % 2 ? 1 : -1;
           const py = -L * t, bx = B * 0.72 * Math.sin(Math.PI * Math.min(1, t * 1.05)) * (t < 0.5 ? 1 : 1 - (t - 0.5) * 0.8);
@@ -25507,8 +25539,10 @@
       const [x, y] = lcRingPunkt(g, R - D * 0.5);
       /* rotate(g+90): die lokale y-Achse zeigt dann zur Bildmitte — der
          Zahn haengt nach INNEN (mit g−90 stand er nach aussen). */
-      return '<g transform="translate(' + f(x) + " " + f(y) + ") rotate(" + f(g + 90) + ')"><path d="M-1 0 C-.8 2.4 -.3 4.6 0 6 C.3 4.6 .8 2.4 1 0 Z" fill="#F8FAFC" stroke="#CBD5E1" stroke-width=".15"/>'
-        + '<path d="M-.35 .4 C-.3 2.2 -.15 3.8 0 4.8" stroke="#fff" stroke-width=".25" fill="none" opacity=".9"/></g>';
+      /* RUNDE 101 — XANDER (Walkie #161): „Maul: Zähne länger." 6 → 9,5
+         Einheiten, am Ansatz etwas breiter, spitz zulaufend. */
+      return '<g transform="translate(' + f(x) + " " + f(y) + ") rotate(" + f(g + 90) + ')"><path d="M-1.3 0 C-1.1 3.6 -.4 7.2 0 9.5 C.4 7.2 1.1 3.6 1.3 0 Z" fill="#F8FAFC" stroke="#CBD5E1" stroke-width=".15"/>'
+        + '<path d="M-.45 .5 C-.4 3.4 -.2 6 0 7.6" stroke="#fff" stroke-width=".3" fill="none" opacity=".9"/></g>';
     };
     const defs = '<linearGradient id="lcMl' + n + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1C0505"/><stop offset=".5" stop-color="#7F1D1D"/><stop offset="1" stop-color="#450A0A"/></linearGradient>';
     const spalt = z(5.6, 12.5) / 2, dur = f(z(1, 1.4));
@@ -25525,16 +25559,21 @@
     const weg = "M" + f(50 + R - 6) + " 50 A" + f(R - 6) + " " + f(R - 6) + " 0 1 1 " + f(50 - R + 6) + " 50 A" + f(R - 6) + " " + f(R - 6) + " 0 1 1 " + f(50 + R - 6) + " 50";
     return '<svg class="lc-neu-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>'
       + '<clipPath id="lcSc' + n + '"><circle cx="50" cy="50" r="' + f(R - 0.3) + '"/></clipPath>'
-      + '<filter id="lcSs' + n + '" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2.4"/></filter></defs>'
+      + '<filter id="lcSs' + n + '" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.7"/></filter></defs>'
       + '<g clip-path="url(#lcSc' + n + ')">'
       /* abdunkeln auf etwa 50 % — sanft, nicht auf einen Schlag */
       + '<rect width="100" height="100" fill="#0B0B12" opacity="0"><animate attributeName="opacity" dur=".8s" fill="freeze" values="0;.5"/>'
       + '<animate attributeName="opacity" begin=".8s" dur="3.3s" repeatCount="indefinite" values=".5;.58;.44;.5"/></rect>'
       /* der Schatten: ein weicher, laenglicher Fleck ohne Gesicht, der am
          Innenrand entlanghuscht */
+      /* RUNDE 101 — XANDER (Walkie #161): „Schemen: Schatten deutlicher."
+         Groesser, dunkler, weniger verwischt, mit einem Nachzieher, der
+         eine Viertelsekunde hinterherhuscht. */
       + '<g><animateMotion dur="' + dur + 's" repeatCount="indefinite" rotate="auto" path="' + weg + '" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines=".6 0 .4 1"/>'
-      + '<ellipse rx="7" ry="3.2" fill="#000" opacity=".7" filter="url(#lcSs' + n + ')"/>'
-      + '<ellipse cx="-4" rx="4" ry="1.8" fill="#000" opacity=".45" filter="url(#lcSs' + n + ')"/></g>'
+      + '<ellipse rx="10.5" ry="4.8" fill="#000" opacity=".92" filter="url(#lcSs' + n + ')"/>'
+      + '<ellipse cx="-6" rx="6" ry="2.6" fill="#000" opacity=".7" filter="url(#lcSs' + n + ')"/></g>'
+      + '<g opacity=".55"><animateMotion dur="' + dur + 's" begin="-.25s" repeatCount="indefinite" rotate="auto" path="' + weg + '" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines=".6 0 .4 1"/>'
+      + '<ellipse rx="7" ry="3.2" fill="#000" filter="url(#lcSs' + n + ')"/></g>'
       + "</g></svg>";
   }
 

@@ -33287,6 +33287,9 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 /* Der Regenbogen: der Bildrand liegt bei 69,4 % des Feldradius. Drei
    weiche Baender bei 70–76 %, 78–84 % und 86–92 %, mit weichen
    Kanten — die Farben laufen ineinander, nichts ist hart. */
+/* RUNDE 101 — XANDER (Walkie #160): „Regenbogen zu breit." Die drei
+   Baender liegen jetzt dicht am Bild, zusammen nur noch 70–82 % statt
+   70–93 % — halb so breit, dieselben weichen Uebergaenge. */
 .lc-sprechfeld.lc-sregenbogen2 .lc-rb-lage {
   position: absolute;
   inset: 0;
@@ -33295,11 +33298,11 @@ body.rf-leiste-auf .rf-reiter { display: none; }
     hsl(0 70% 62%), hsl(35 75% 60%), hsl(55 70% 58%), hsl(120 45% 55%),
     hsl(190 60% 58%), hsl(235 55% 64%), hsl(285 50% 64%), hsl(340 65% 64%), hsl(360 70% 62%));
   -webkit-mask: radial-gradient(circle closest-side,
-    transparent 0 68.5%, #000 71%, #000 74%, rgba(0,0,0,.45) 77%,
-    #000 80%, #000 82%, rgba(0,0,0,.35) 85%, #000 88%, rgba(0,0,0,.6) 90%, transparent 93%);
+    transparent 0 69%, #000 70.5%, #000 72.5%, rgba(0,0,0,.4) 74%,
+    #000 75.5%, #000 77%, rgba(0,0,0,.35) 78.3%, #000 79.3%, rgba(0,0,0,.6) 80.5%, transparent 82%);
   mask: radial-gradient(circle closest-side,
-    transparent 0 68.5%, #000 71%, #000 74%, rgba(0,0,0,.45) 77%,
-    #000 80%, #000 82%, rgba(0,0,0,.35) 85%, #000 88%, rgba(0,0,0,.6) 90%, transparent 93%);
+    transparent 0 69%, #000 70.5%, #000 72.5%, rgba(0,0,0,.4) 74%,
+    #000 75.5%, #000 77%, rgba(0,0,0,.35) 78.3%, #000 79.3%, rgba(0,0,0,.6) 80.5%, transparent 82%);
   filter: blur(1.2px);
   opacity: .85;
   animation: lcRbDriftR101 80s linear infinite;
