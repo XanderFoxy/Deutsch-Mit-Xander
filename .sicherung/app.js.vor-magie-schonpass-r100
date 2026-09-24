@@ -25120,102 +25120,10 @@
       + '<g filter="url(#lcSb' + n + ')" opacity=".8">' + kaefig + "</g>" + kaefig + "</svg>";
   }
 
-  /* =================================================================
-     SCHON-PASS SPRECHBILDER — 8. MAGIE UND FUNKELN
-     -----------------------------------------------------------------
-     XANDERS LISTE:
-     „MAGIE: 88 Teilchen-Idee behalten, Zeichen noch kleiner, Mitte
-     leer. Bahn: nicht kreisen auf Schiene. Jedes Teilchen: langsames
-     Treiben, alle 0,4–0,9 s Mini-Richtungswechsel (Staub/
-     Glühwürmchen). Gelegentlich 1–2 kurze Lichtfäden am Saum (0,2 s).
-     Kein Stern-Emoji."
-     „FUNKELN: Viele winzige Punkte am äußeren Saum. Aufblitzen
-     0,15–0,35 s, irisierend (kurzes CD-Spektrum: cyan/magenta/gold),
-     dann weg. Kein stehendes Glitter-Raster."
-     Keine Schriftzeichen mehr — nur Lichtpunkte. Ein Magie-Teilchen
-     treibt auf einem eigenen Zickzack aus kleinen Stuecken, jedes
-     Stueck 0,4–0,9 s lang und in eine andere Richtung; am Ende kommt
-     es wieder dort an, wo es losging, damit die Schleife nicht
-     springt. Ein Funkel-Punkt blitzt jedes Mal an einer ANDEREN Stelle
-     auf (fuenf Stellen, hart umgesetzt, waehrend er dunkel ist).
-     ================================================================= */
-  let lcMagieNr = 0;
-  function lcMagieSvg() {
-    const R = 34.7, n = ++lcMagieNr, f = (v) => v.toFixed(2), z = (a, b) => a + Math.random() * (b - a);
-    /* Auf dem hellen Raum muessen die Punkte Farbe haben — helle
-       Lila- und Weisstoene waren dort unsichtbar (Standbild). */
-    const farben = ["#8B5CF6", "#A78BFA", "#7C3AED", "#F59E0B", "#C084FC", "#6366F1"];
-    let staub = "";
-    for (let i = 0; i < 88; i++) {
-      const w = z(0, Math.PI * 2), r = R + z(0.6, 7);
-      const x = 50 + Math.cos(w) * r, y = 50 + Math.sin(w) * r;
-      /* der Zickzack: 4–6 Stuecke, dann zurueck zum Anfang */
-      const stuecke = 4 + Math.floor(Math.random() * 3);
-      let px = 0, py = 0, d = "M0 0", dauer = 0;
-      const zeiten = [0];
-      for (let k = 0; k < stuecke; k++) {
-        const rw = z(0, Math.PI * 2), l = z(0.8, 2.2);
-        px += Math.cos(rw) * l; py += Math.sin(rw) * l;
-        /* nie nach innen ueber den Ring */
-        const ax = x + px - 50, ay = y + py - 50;
-        if (Math.hypot(ax, ay) < R + 0.4) { px -= Math.cos(rw) * l * 2; py -= Math.sin(rw) * l * 2; }
-        d += " L" + f(px) + " " + f(py);
-        dauer += z(0.4, 0.9); zeiten.push(dauer);
-      }
-      d += " Z"; dauer += z(0.4, 0.9); zeiten.push(dauer);
-      /* vier Stellen: mit zweien wuerde aus 0,40 s schon mal 0,38 */
-      const kt = zeiten.map((t) => (t / dauer).toFixed(4)).join(";");
-      const kp = zeiten.map((t, j) => (j / (zeiten.length - 1)).toFixed(4)).join(";");
-      const gross = z(0.25, 0.75);
-      staub += '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(gross) + '" fill="' + farben[i % farben.length] + '">'
-        + '<animateMotion dur="' + f(dauer) + 's" begin="' + f(-z(0, dauer)) + 's" repeatCount="indefinite" path="' + d + '" keyPoints="' + kp + '" keyTimes="' + kt + '" calcMode="linear"/>'
-        + '<animate attributeName="opacity" dur="' + f(z(1.6, 3.2)) + 's" begin="' + f(-z(0, 3)) + 's" repeatCount="indefinite" values=".25;1;.5;.9;.25"/></circle>';
-    }
-    /* LICHTFAEDEN: zwei kurze Boegen am Saum, die fuer 0,2 s aufleuchten
-       — jeder in einem eigenen, langen Takt, also „gelegentlich". */
-    let faeden = "";
-    for (let i = 0; i < 2; i++) {
-      const w0 = z(0, Math.PI * 2), w1 = w0 + z(0.35, 0.7), r = R + z(1.5, 3.5);
-      const dur = z(2.4, 4), an = 0.2 / dur, t0 = z(0.1, 0.8);
-      faeden += '<path d="M' + f(50 + Math.cos(w0) * r) + " " + f(50 + Math.sin(w0) * r) + " A" + f(r) + " " + f(r) + " 0 0 1 "
-        + f(50 + Math.cos(w1) * r) + " " + f(50 + Math.sin(w1) * r) + '" fill="none" stroke="#A78BFA" stroke-width=".45" stroke-linecap="round" opacity="0">'
-        + '<animate attributeName="opacity" dur="' + f(dur) + 's" repeatCount="indefinite" keyTimes="0;' + f(t0) + ";" + f(t0 + an * 0.3) + ";" + f(t0 + an) + ';1" values="0;0;1;0;0"/></path>';
-    }
-    return '<svg class="lc-magie-bild" viewBox="0 0 100 100" aria-hidden="true"><defs><filter id="lcMg' + n
-      + '" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation=".7"/></filter></defs>'
-      + '<g filter="url(#lcMg' + n + ')" opacity=".8">' + staub + "</g>" + staub + faeden + "</svg>";
-  }
-  function lcFunkelnSvg() {
-    const R = 34.7, f = (v) => v.toFixed(2), z = (a, b) => a + Math.random() * (b - a);
-    let punkte = "";
-    for (let i = 0; i < 110; i++) {
-      const dur = Math.round(z(0.9, 2) * 1000) / 1000, blitz = z(0.15, 0.35) / dur, t0 = z(0.05, 0.9 - blitz);
-      const orte = [];
-      for (let k = 0; k < 5; k++) {
-        const w = z(0, Math.PI * 2), r = R + z(0.4, 4.2);
-        orte.push([50 + Math.cos(w) * r, 50 + Math.sin(w) * r]);
-      }
-      /* Der Ort springt nur, waehrend er dunkel ist: ein Umlauf dauert
-         fuenfmal so lang wie ein Blitz-Takt. */
-      const bg = f(-z(0, dur));
-      const g4 = (v) => v.toFixed(4);
-      const kt = "0;" + g4(t0) + ";" + g4(t0 + blitz * 0.35) + ";" + g4(t0 + blitz) + ";1";
-      punkte += '<circle r="' + f(z(0.35, 0.8)) + '" cx="' + f(orte[0][0]) + '" cy="' + f(orte[0][1]) + '" opacity="0">'
-        + '<animate attributeName="cx" dur="' + f(dur * 5) + 's" begin="' + bg + 's" repeatCount="indefinite" calcMode="discrete" values="' + orte.map((o) => f(o[0])).join(";") + '"/>'
-        + '<animate attributeName="cy" dur="' + f(dur * 5) + 's" begin="' + bg + 's" repeatCount="indefinite" calcMode="discrete" values="' + orte.map((o) => f(o[1])).join(";") + '"/>'
-        + '<animate attributeName="opacity" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="' + kt + '" values="0;0;1;0;0"/>'
-        /* irisierend: waehrend des Blitzes laeuft die Farbe durchs
-           kurze CD-Spektrum */
-        + '<animate attributeName="fill" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="0;' + g4(t0) + ";" + g4(t0 + blitz * 0.33) + ";" + g4(t0 + blitz * 0.66) + ";" + g4(t0 + blitz) + ';1" values="#06B6D4;#06B6D4;#D946EF;#EAB308;#06B6D4;#06B6D4"/></circle>';
-    }
-    return '<svg class="lc-funkeln-bild" viewBox="0 0 100 100" aria-hidden="true">' + punkte + "</svg>";
-  }
-
   /* Welche Sprechbilder seit dem SCHON-PASS EIN Bild sind statt
      Teilchen oder Rand-Schichten. */
   const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg, blut: lcBlutSvg, eis: lcEisSvg, bluete: lcBlueteSvg,
-    strom: lcStromASvg, stromkugel: lcStromBSvg, strommantel: lcStromCSvg,
-    magie: lcMagieSvg, funkeln: lcFunkelnSvg };
+    strom: lcStromASvg, stromkugel: lcStromBSvg, strommantel: lcStromCSvg };
 
   function lcSprechFeld(knopf, art) {
     const kreis = knopf.querySelector(".lc-kreis");

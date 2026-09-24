@@ -50,7 +50,7 @@ const pruefe = (was, gut, zusatz) => {
    Rand-Schicht. Gemessen werden sie in pruefe-sprechbilder.js nach
    den Zahlen seiner Liste. */
 const SPRECHBILDER = ["regenbogen"]; /* die Bluete ist seit SCHON-PASS 6 ebenfalls ein Bild */
-const TEILCHENBILDER = ["funkeln", "magie"];
+const TEILCHENBILDER = []; /* Funkeln und Magie seit SCHON-PASS 8 Bilder */
 
 (async () => {
   const srv = http.createServer((q, a) => {

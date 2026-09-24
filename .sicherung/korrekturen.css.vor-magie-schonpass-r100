@@ -33234,28 +33234,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-sprechfeld .lc-strom-bild {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
 }
-
-/* =====================================================================
-   SCHON-PASS SPRECHBILDER — 8. MAGIE UND FUNKELN (Xanders Liste 23.09.)
-   Beide sind Bilder im Feld (.lc-smagie, .lc-sfunkeln) — nur Licht-
-   punkte, keine Sternzeichen. Die alten Schichten (lila/gruener
-   Doppelring bei Magie, gelber Schein bei Funkeln, Sterne am Platz)
-   sind aus.
-   ===================================================================== */
-.lc-platz-spricht[data-sprechbild="magie"] .lc-kreis,
-.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis {
-  animation: none !important;
-  box-shadow: none !important;
-}
-.lc-platz-spricht[data-sprechbild="magie"] .lc-kreis { border-color: #C4B5FD !important; }
-.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis { border-color: #E5E7EB !important; }
-.lc-platz-spricht[data-sprechbild="magie"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="magie"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="magie"]::after,
-.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="funkeln"]::after { display: none !important; }
-.lc-sprechfeld.lc-smagie, .lc-sprechfeld.lc-sfunkeln { overflow: visible; }
-.lc-sprechfeld .lc-magie-bild, .lc-sprechfeld .lc-funkeln-bild {
-  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
-}

@@ -35,7 +35,7 @@ const pruefe = (was, gut, zusatz) => {
 
 /* SCHON-PASS (Xanders Liste vom 23.09.): das Feuer ist seitdem EIN
    Bild statt Teilchen — es hat unten einen eigenen Abschnitt. */
-const TEILCHEN = ["magie", "noten", "herzen", "blasen"]; /* Strom seit SCHON-PASS 7 ein Bild */
+const TEILCHEN = ["noten", "herzen", "blasen"]; /* Strom seit SCHON-PASS 7 ein Bild */
 
 (async () => {
   const srv = http.createServer((q, a) => {
@@ -304,6 +304,43 @@ const TEILCHEN = ["magie", "noten", "herzen", "blasen"]; /* Strom seit SCHON-PAS
   pruefe("Kugelblitz: eine Kugel wandert auf dem Ring", sm.stromkugel && sm.stromkugel.kugel && / A34\.7 34\.7 /.test(sm.stromkugel.weg), sm.stromkugel ? sm.stromkugel.weg : "fehlt");
   /* Mantel: kein Punkt naeher an der Mitte als der Ring — „innen leer von Blitzen" */
   pruefe("Strommantel: Entladungen NUR aussen", sm.strommantel && sm.strommantel.rMin >= 34.7, sm.strommantel ? "naechster Punkt " + sm.strommantel.rMin.toFixed(1) : "fehlt");
+
+  console.log("\nSCHON-PASS 8 — MAGIE UND FUNKELN\n");
+  const mf = await pg.evaluate(() => {
+    const knopf = document.querySelector(".lc-platz");
+    const erg = {};
+    ["magie", "funkeln"].forEach((a) => {
+      knopf.dataset.sprechbild = a;
+      window.DMA_PRUEFUNG.sprechFeld(knopf, a);
+      const feld = knopf.querySelector(".lc-sprechfeld");
+      const svg = feld && feld.querySelector("svg");
+      const punkte = svg ? [...svg.querySelectorAll(":scope > circle")] : [];
+      erg[a] = { da: !!svg, zeichen: feld ? feld.textContent.trim().length : -1, punkte: punkte.length,
+        rMin: Math.min(...punkte.map((c) => Math.hypot(parseFloat(c.getAttribute("cx")) - 50, parseFloat(c.getAttribute("cy")) - 50))) };
+      if (a === "magie") {
+        const takte = [];
+        punkte.forEach((c) => { const m = c.querySelector("animateMotion"); const kt = m.getAttribute("keyTimes").split(";").map(Number);
+          const d = parseFloat(m.getAttribute("dur")); for (let i = 1; i < kt.length; i++) takte.push((kt[i] - kt[i - 1]) * d); });
+        erg[a].stueckMin = Math.min(...takte); erg[a].stueckMax = Math.max(...takte);
+        erg[a].faeden = svg.querySelectorAll(":scope > path").length;
+      } else {
+        const bl = punkte.map((c) => { const an = c.querySelector('animate[attributeName="opacity"]'); const kt = an.getAttribute("keyTimes").split(";").map(Number);
+          return (kt[3] - kt[1]) * parseFloat(an.getAttribute("dur")); });
+        erg[a].blitzMin = Math.min(...bl); erg[a].blitzMax = Math.max(...bl);
+        erg[a].orte = punkte.every((c) => c.querySelector('animate[attributeName="cx"]').getAttribute("values").split(";").length >= 5);
+      }
+    });
+    return erg;
+  });
+  pruefe("Magie: 88 Lichtpunkte, keine Sternzeichen", mf.magie.punkte === 88 && mf.magie.zeichen === 0, mf.magie.punkte + " Punkte");
+  pruefe("Magie: Mitte leer (alle ausserhalb des Rings)", mf.magie.rMin >= 34.7, "naechster " + mf.magie.rMin.toFixed(1));
+  pruefe("Magie: Richtungswechsel alle 0,4–0,9 s", mf.magie.stueckMin >= 0.39 && mf.magie.stueckMax <= 0.91,
+    mf.magie.stueckMin.toFixed(2) + "–" + mf.magie.stueckMax.toFixed(2) + " s");
+  pruefe("Magie: 1–2 Lichtfaeden am Saum", mf.magie.faeden >= 1 && mf.magie.faeden <= 2, mf.magie.faeden);
+  pruefe("Funkeln: viele winzige Punkte am Saum", mf.funkeln.punkte >= 60 && mf.funkeln.rMin >= 34.7, mf.funkeln.punkte + " Punkte");
+  pruefe("Funkeln: Aufblitzen 0,15–0,35 s", mf.funkeln.blitzMin >= 0.149 && mf.funkeln.blitzMax <= 0.351,
+    mf.funkeln.blitzMin.toFixed(2) + "–" + mf.funkeln.blitzMax.toFixed(2) + " s");
+  pruefe("Funkeln: kein stehendes Raster (jeder Punkt wechselt den Ort)", mf.funkeln.orte, "");
 
   console.log("\nUND WENN DAS SPRECHEN AUFHOERT?\n");
   const weg = await pg.evaluate(() => {
