@@ -33964,3 +33964,33 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 }
 .lc-zf-schuss .lc-zf-blitz { animation: lcZfBlitz .35s ease-out both; }
 @keyframes lcZfBlitz { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+/* =====================================================================
+   RUNDE 101 — DAS LASERDUELL (siehe lcLaserDuell)
+   XANDER (Funk 75): „wo wir uns mit Laserstrahlen bekriegen können."
+   Rot schiesst der Herausforderer, blau der andere. Weisser Kern mit
+   farbiger Glut — so sieht ein Blasterbolzen aus.
+   ===================================================================== */
+.lc-laser-buehne { position: absolute; left: 0; top: 0; z-index: 8; overflow: visible; pointer-events: none; }
+.lc-ld-bolzen .lc-ld-kern { stroke: #fff; stroke-width: 2.4px; stroke-linecap: round; }
+.lc-ld-bolzen .lc-ld-glut { stroke-width: 6px; stroke-linecap: round; }
+.lc-ld-bolzen .lc-ld-hof { stroke-width: 15px; stroke-linecap: round; opacity: .35; }
+.lc-ld-rot .lc-ld-glut, .lc-ld-rot .lc-ld-hof { stroke: #ff2344; }
+.lc-ld-blau .lc-ld-glut, .lc-ld-blau .lc-ld-hof { stroke: #1fd3ff; }
+.lc-ld-duese { fill: #2b2f36; stroke: #9aa3ad; stroke-width: 1.2px; }
+.lc-ld-muendung { opacity: 0; }
+.lc-ld-rot .lc-ld-muendung { fill: rgba(255, 60, 80, .75); }
+.lc-ld-blau .lc-ld-muendung { fill: rgba(40, 210, 255, .75); }
+.lc-ld-feuer .lc-ld-muendung { opacity: 1; }
+.lc-ld-funken line { stroke-width: 1.8px; stroke-linecap: round; animation: lcLdFunke .4s ease-out both; }
+.lc-ld-rot line { stroke: #ffd0d6; }
+.lc-ld-blau line { stroke: #d2f6ff; }
+.lc-ld-funken .lc-ld-blitz { animation: lcLdBlitz .35s ease-out both; }
+.lc-ld-rot .lc-ld-blitz { fill: rgba(255, 70, 90, .8); }
+.lc-ld-blau .lc-ld-blitz { fill: rgba(60, 220, 255, .8); }
+.lc-ld-gross line { animation-duration: .65s; }
+@keyframes lcLdFunke { 0% { opacity: 1; stroke-dasharray: 2 40; } 100% { opacity: 0; stroke-dasharray: 2 4; } }
+@keyframes lcLdBlitz { 0% { opacity: 1; transform: scale(.4); } 100% { opacity: 0; transform: scale(1.3); } }
+.lc-ld-funken .lc-ld-blitz { transform-box: fill-box; transform-origin: center; }
+/* Der Verlierer raucht einen Moment. */
+.lc-platz.lc-ld-raucht .lc-kreis { filter: brightness(.82) contrast(1.05); transition: filter .3s; }

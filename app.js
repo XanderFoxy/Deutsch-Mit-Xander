@@ -30660,7 +30660,9 @@
        darin der erste Eintrag. */
     ["\ud83c\udfaf", "Schie\u00dfen", "zwille", false,
       [["\ud83e\ude83", "Zwille", "zwille"],
-       ["\ud83c\udfaf", "Zielfernrohr", "zielfernrohr"]]],
+       ["\ud83c\udfaf", "Zielfernrohr", "zielfernrohr"],
+       /* „wo wir uns mit Laserstrahlen bekriegen können" */
+       ["\u26a1", "Laserduell", "laser"]]],
     /* RUNDE 70 — XANDER: „Bei dem Anspucken haben wir das Pusten als
        extra Kachel noch uebrig obwohl die rausgenommen werden kann.
        Die ist ja im Strohhalm drin."
@@ -34272,6 +34274,7 @@
     muenzwurf:  { zeichen: ["\ud83e\ude99"], wie: 5, klasse: "umarmen" },
     muenzkopf:  { zeichen: ["\ud83e\ude99"], wie: 5, klasse: "umarmen" },
     zielfernrohr: { zeichen: ["\ud83c\udfaf"], wie: 5, klasse: "umarmen" },
+    laser:      { zeichen: ["\u26a1"], wie: 5, klasse: "umarmen" },
     wischer:    { zeichen: ["\ud83e\uddfd"], wie: 5, klasse: "umarmen" },
     zwille:     { zeichen: ["\ud83e\ude83"], wie: 5, klasse: "umarmen" },
     pusterohr:  { zeichen: ["\ud83e\udd64"], wie: 5, klasse: "umarmen" },
@@ -55085,6 +55088,192 @@
                   (wie beim Pac-Man, LiveChat.buehneSetzen(false))
      Der Ton (ton/zielfernrohr) ist auf diese Marken gemischt.
      ===================================================================== */
+  /* =====================================================================
+     RUNDE 101 — DAS LASERDUELL
+     ---------------------------------------------------------------------
+     XANDER (Funk 75): „und noch eine Animation, wo wir uns mit
+     Laserstrahlen bekriegen können."
+
+     Zwei schiessen abwechselnd aufeinander: ich rot, der andere blau.
+     Jeder Schuss ist ein kurzer, leuchtender Bolzen, der in einem
+     Fünftel einer Sekunde hinueberfliegt. Wer getroffen wird, zuckt,
+     es spruehen Funken; wer ausweicht, rutscht zur Seite, und der
+     Bolzen fliegt vorbei. Der siebte Schuss entscheidet: der Verlierer
+     wird voll getroffen, raucht — und behaelt einen Russrand am Bild,
+     bis jemand putzt (dieselbe Schicht wie der Hot-Rod-Russ).
+
+     Wer trifft und wer ausweicht, entscheidet das „los" aus der
+     Nachricht: jedes Geraet sieht dasselbe Duell.
+     ===================================================================== */
+  const LC_LD = { erst: 300, abstand: 480, flug: 210, schuesse: 7 };
+  function lcLaserDuell(wen, von, los) {
+    const karte = document.getElementById("livechatKarte");
+    const reihe = document.getElementById("lcPlaetze");
+    if (!karte || !reihe) return false;
+    const plB = lcPlatzMitNamen(wen);
+    const plA = lcPlatzMitNamen(von) || karte.querySelector(".lc-platz-ich");
+    if (!plA || !plB || plA === plB) return false;
+    const kA = plA.querySelector(".lc-kreis"), kB = plB.querySelector(".lc-kreis");
+    if (!kA || !kB) return false;
+    const zufall = lcHammerZufall(lcHammerSaat("laser|" + String(los || Math.random()) + "|" + von + "|" + wen));
+    const rr = reihe.getBoundingClientRect();
+    const mitte = (el) => { const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2 - rr.left, y: r.top + r.height / 2 - rr.top }; };
+    const A = mitte(kA), B = mitte(kB);
+    const d = kA.offsetWidth || 64, r = d / 2;
+    const dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy) || 1;
+    const ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+
+    /* Der Plan: sieben Schuesse, abwechselnd, der letzte entscheidet. */
+    const verlierer = zufall() < 0.5 ? "A" : "B";
+    const plan = [];
+    for (let i = 0; i < LC_LD.schuesse; i++) {
+      const letzter = i === LC_LD.schuesse - 1;
+      const schuetze = letzter ? (verlierer === "A" ? "B" : "A") : (i % 2 ? "B" : "A");
+      plan.push({ t: LC_LD.erst + i * LC_LD.abstand + (letzter ? 160 : 0), wer: schuetze,
+                  trifft: letzter ? true : zufall() < 0.45,
+                  seite: zufall() < 0.5 ? 1 : -1, letzter });
+    }
+    const dauer = plan[plan.length - 1].t + LC_LD.flug + 1400;
+
+    const NS = "http://www.w3.org/2000/svg";
+    const buehne = document.createElementNS(NS, "svg");
+    buehne.setAttribute("class", "lc-laser-buehne");
+    buehne.setAttribute("aria-hidden", "true");
+    buehne.setAttribute("width", String(Math.round(rr.width)));
+    buehne.setAttribute("height", String(Math.round(rr.height)));
+    buehne.setAttribute("viewBox", "0 0 " + Math.round(rr.width) + " " + Math.round(rr.height));
+    buehne.innerHTML = '<defs><filter id="ldGlut" x="-50%" y="-50%" width="200%" height="200%">'
+      + '<feGaussianBlur stdDeviation="2.4"/></filter></defs>';
+    if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
+    reihe.appendChild(buehne);
+    const f1 = (v) => v.toFixed(1);
+    /* Kleine Strahler an beiden Bildern: ein Ring, der beim Schuss
+       aufleuchtet — damit man sieht, WER schiesst. */
+    const strahler = (P, s, farbe) => {
+      const g = document.createElementNS(NS, "g");
+      g.setAttribute("class", "lc-ld-strahler lc-ld-" + farbe);
+      const x = P.x + s * ux * r * 1.02, y = P.y + s * uy * r * 1.02;
+      g.innerHTML = '<circle cx="' + f1(x) + '" cy="' + f1(y) + '" r="' + f1(r * 0.16) + '" class="lc-ld-duese"/>'
+        + '<circle cx="' + f1(x) + '" cy="' + f1(y) + '" r="' + f1(r * 0.3) + '" class="lc-ld-muendung"/>';
+      buehne.appendChild(g);
+      return g;
+    };
+    const stA = strahler(A, 1, "rot"), stB = strahler(B, -1, "blau");
+
+    const altA = kA.style.transition, altB = kB.style.transition;
+    kA.style.transition = kB.style.transition = "none";
+    const zA = plA.style.zIndex, zB = plB.style.zIndex;
+    plA.style.zIndex = plB.style.zIndex = "7";
+    /* Zuckungen und Ausweichen als Liste; das Bild bekommt in jedem Takt
+       die Summe (nichts laeuft neben der Uhr her). */
+    const stoesse = [];
+    const bolzen = plan.map((s) => {
+      const g = document.createElementNS(NS, "g");
+      g.setAttribute("class", "lc-ld-bolzen lc-ld-" + (s.wer === "A" ? "rot" : "blau"));
+      const lang = Math.min(L * 0.45, d * 0.75);
+      /* Kein Blur-Filter: eine waagerechte Linie hat die Hoehe 0, und
+         dann rechnet der Filter gar nichts (gemessen: nur der weisse
+         Kern war zu sehen). Stattdessen drei Schichten Leuchten. */
+      g.innerHTML = '<line class="lc-ld-hof" x1="0" y1="0" x2="' + f1(-lang) + '" y2="0"/>'
+        + '<line class="lc-ld-glut" x1="0" y1="0" x2="' + f1(-lang) + '" y2="0"/>'
+        + '<line class="lc-ld-kern" x1="0" y1="0" x2="' + f1(-lang * 0.92) + '" y2="0"/>';
+      g.style.opacity = "0";
+      buehne.appendChild(g);
+      return { g, s, lang };
+    });
+    const funken = (P, farbe, gross) => {
+      const g = document.createElementNS(NS, "g");
+      g.setAttribute("class", "lc-ld-funken lc-ld-" + farbe + (gross ? " lc-ld-gross" : ""));
+      let h = '<circle class="lc-ld-blitz" cx="' + f1(P.x) + '" cy="' + f1(P.y) + '" r="' + f1(r * (gross ? 0.7 : 0.4)) + '"/>';
+      for (let i = 0; i < (gross ? 12 : 7); i++) {
+        const w = zufall() * Math.PI * 2, l = r * (0.35 + zufall() * (gross ? 0.8 : 0.45));
+        h += '<line x1="' + f1(P.x) + '" y1="' + f1(P.y) + '" x2="' + f1(P.x + Math.cos(w) * l) + '" y2="' + f1(P.y + Math.sin(w) * l) + '"/>';
+      }
+      g.innerHTML = h;
+      buehne.appendChild(g);
+      setTimeout(() => g.remove(), gross ? 700 : 420);
+    };
+
+    const t0 = performance.now();
+    let fertig = false;
+    const erledigt = new Set();
+    const aufraeumen = () => {
+      if (fertig) return;
+      fertig = true;
+      kA.style.transform = kB.style.transform = "";
+      kA.style.transition = altA; kB.style.transition = altB;
+      plA.style.zIndex = zA; plB.style.zIndex = zB;
+      buehne.remove();
+    };
+    const lauf = () => {
+      if (fertig) return;
+      if (!buehne.isConnected || !kA.isConnected || !kB.isConnected) { aufraeumen(); return; }
+      const t = performance.now() - t0;
+      bolzen.forEach((b, i) => {
+        const s = b.s, von2 = s.wer === "A" ? A : B, zu = s.wer === "A" ? B : A;
+        const rich = s.wer === "A" ? 1 : -1;
+        const k = (t - s.t) / LC_LD.flug;
+        /* Mündungsfeuer am Strahler. */
+        (s.wer === "A" ? stA : stB).classList.toggle("lc-ld-feuer", k > -0.05 && k < 0.5);
+        if (k < 0 || k > (s.trifft ? 1 : 1.8)) { b.g.style.opacity = "0"; }
+        else {
+          /* Vom Rand des Schuetzen zum Rand des Ziels (oder daran vorbei). */
+          const start = { x: von2.x + rich * ux * r, y: von2.y + rich * uy * r };
+          const ende = { x: zu.x - rich * ux * r * 0.8, y: zu.y - rich * uy * r * 0.8 };
+          const px = start.x + (ende.x - start.x) * k, py = start.y + (ende.y - start.y) * k;
+          const w = Math.atan2(rich * uy, rich * ux) * 57.2958;
+          b.g.setAttribute("transform", "translate(" + f1(px) + " " + f1(py) + ") rotate(" + f1(w) + ")");
+          b.g.style.opacity = k > 1.5 ? String(Math.max(0, (1.8 - k) / 0.3)) : "1";
+        }
+        /* Ankunft: Treffer oder Ausweichen — genau einmal. */
+        if (!erledigt.has(i) && k >= (s.trifft ? 1 : 0.55)) {
+          erledigt.add(i);
+          const ziel = s.wer === "A" ? "B" : "A", Z = ziel === "A" ? A : B;
+          if (s.trifft) {
+            funken({ x: Z.x - rich * ux * r * 0.8, y: Z.y - rich * uy * r * 0.8 }, s.wer === "A" ? "rot" : "blau", s.letzter);
+            stoesse.push({ wer: ziel, t: t, art: "treffer", rich, gross: s.letzter });
+            lcTonSpaeter("lasertreffer", 0, s.letzter ? 0.6 : 0.42);
+            if (s.letzter) {
+              const pl = ziel === "A" ? plA : plB;
+              setTimeout(() => { try { lcDreckDazu(pl, "russ", 3); } catch (e) {} }, 380);
+              pl.classList.add("lc-ld-raucht");
+              setTimeout(() => pl.classList.remove("lc-ld-raucht"), 1600);
+            }
+          } else {
+            stoesse.push({ wer: ziel, t: t - 90, art: "weg", seite: s.seite });
+          }
+        }
+      });
+      /* Die Bilder: Summe aller Stoesse. */
+      ["A", "B"].forEach((wer) => {
+        let x = 0, y = 0, dreh = 0;
+        stoesse.filter((q) => q.wer === wer).forEach((q) => {
+          const k = t - q.t;
+          if (q.art === "treffer") {
+            const a = Math.exp(-k / (q.gross ? 180 : 110)) * Math.sin(Math.min(Math.PI * 3, k / 35));
+            x += q.rich * ux * d * (q.gross ? 0.14 : 0.07) * Math.abs(a);
+            y += q.rich * uy * d * (q.gross ? 0.14 : 0.07) * Math.abs(a);
+            dreh += a * (q.gross ? 12 : 6);
+          } else if (k > 0 && k < 420) {
+            /* Ausweichen quer zur Schusslinie und wieder zurueck. */
+            const e = Math.sin(Math.PI * k / 420);
+            x += nx * q.seite * d * 0.3 * e; y += ny * q.seite * d * 0.3 * e;
+          }
+        });
+        (wer === "A" ? kA : kB).style.transform = (x || y || dreh)
+          ? "translate(" + f1(x) + "px, " + f1(y) + "px) rotate(" + f1(dreh) + "deg)" : "";
+      });
+      buehne.style.opacity = t > dauer - 300 ? String(Math.max(0, (dauer - t) / 300)) : "1";
+      if (t >= dauer) { aufraeumen(); return; }
+      requestAnimationFrame(lauf);
+    };
+    requestAnimationFrame(lauf);
+    setTimeout(aufraeumen, dauer + 1500);
+    /* Jeder Schuss hat seinen Ton; rot und blau klingen verschieden. */
+    plan.forEach((s) => lcTonSpaeter(s.wer === "A" ? "laserrot" : "laserblau", s.t, 0.45));
+    return true;
+  }
   const LC_ZF = { dauer: 7200, fokusAb: 3400, erfasst: 4600, schuss: 5200, weg: 6000 };
   function lcZielfernrohr(wen) {
     const ziele = lcZielPlaetze(wen);
@@ -58990,7 +59179,7 @@
     neunschwanz: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
-    licht: 1, muenze: 1, muenzwurf: 1, muenzkopf: 1, zielfernrohr: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
+    licht: 1, muenze: 1, muenzwurf: 1, muenzkopf: 1, zielfernrohr: 1, laser: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
     vogelkot: 1, spucken: 1, sabbern: 1, waschmaschine: 1,
     birneraus: 1,
     entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, wange: 1, kratzen: 1, kuss: 1, klaps: 1,
@@ -59275,6 +59464,10 @@
       if (art === "muenzwurf" && lcMuenzwurf(wenZ, nachricht && nachricht.los)) return;
       /* RUNDE 101 — anvisieren, scharf stellen, Schuss, von der Buehne. */
       if (art === "zielfernrohr" && lcZielfernrohr(wenZ)) return;
+      /* RUNDE 101 — das Laserduell: zwei Leute, das Los entscheidet. */
+      if (art === "laser" && lcLaserDuell(wenZ, (nachricht && nachricht.eigen)
+            ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""),
+            (nachricht && nachricht.los) || "")) return;
       if (art === "muenzkopf") {
         const werDreht = String((nachricht && nachricht.eigen)
           ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || "")).trim().toLowerCase();

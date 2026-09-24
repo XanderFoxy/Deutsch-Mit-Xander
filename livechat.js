@@ -1187,6 +1187,8 @@ window.LiveChat = (function () {
     muenzwurf:  { wirkung: "muenzwurf",  satz: "wirft eine M\u00fcnze f\u00fcr", emoji: "\ud83e\ude99" },
     kopfzahl:   { wirkung: "muenzwurf",  satz: "wirft eine M\u00fcnze f\u00fcr", emoji: "\ud83e\ude99" },
     zielfernrohr: { wirkung: "zielfernrohr", satz: "nimmt mit dem Zielfernrohr ins Visier:", emoji: "\ud83c\udfaf" },
+    laser:      { wirkung: "laser",      satz: "fordert zum Laserduell heraus:", emoji: "\u26a1" },
+    laserduell: { wirkung: "laser",      satz: "fordert zum Laserduell heraus:", emoji: "\u26a1" },
     visier:     { wirkung: "zielfernrohr", satz: "nimmt mit dem Zielfernrohr ins Visier:", emoji: "\ud83c\udfaf" },
     muenzkopf:  { wirkung: "muenzkopf",  satz: "dreht die M\u00fcnze zur\u00fcck auf Kopf bei", emoji: "\ud83e\ude99" },
     wischer:    { wirkung: "wischer",    satz: "putzt mit dem Scheibenwischer", emoji: "\ud83e\uddfd" },
@@ -10052,6 +10054,7 @@ window.LiveChat = (function () {
        hier — und pruefe-effekttueren achtet ab sofort darauf. */
     { gr: "reden", w: "licht", kurz: "aus",     nutzt: "/licht Name",     was: "Licht aus \u2014 es flackert, summt und wird dunkel" },
     { gr: "reden", w: "muenze", kurz: "dreh",   nutzt: "/muenze Name",    was: "M\u00fcnze \u2014 das Bild kreiselt und faellt flach hin" },
+    { gr: "reden", w: "laser", kurz: "laserduell", nutzt: "/laser Name", was: "Laserduell \u2014 abwechselnd schie\u00dfen, ausweichen, der siebte Schuss entscheidet" },
     { gr: "reden", w: "zielfernrohr", kurz: "visier", nutzt: "/zielfernrohr Name", was: "Zielfernrohr \u2014 langsam anvisieren, die Lupe gleitet \u00fcbers Bild, Schuss: von der B\u00fchne" },
     { gr: "reden", w: "muenzkopf", nutzt: "/muenzkopf mich", was: "M\u00fcnze zur\u00fcck auf Kopf \u2014 geht auch mit einem Tipp aufs eigene Bild" },
     { gr: "reden", w: "muenzwurf", kurz: "kopfzahl", nutzt: "/muenzwurf Name", was: "M\u00fcnzwurf \u2014 Kopf oder Zahl; die Zahl bleibt, bis man selbst auf sein Bild tippt" },
