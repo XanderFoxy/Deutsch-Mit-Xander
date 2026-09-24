@@ -287,36 +287,16 @@ const sage = (gut, text, dazu) => {
       const g = reihe();
       document.querySelectorAll("#lcPlaetze .lc-kreis").forEach((k) => {
         const r = k.getBoundingClientRect(); wo[wer(k)] = [r.left + r.width / 2 - g.left, r.top + r.height / 2 - g.top]; });
-      /* RUNDE 100 — steht an beiden verlassenen Plaetzen „frei"? */
-      const freiAn = (nr) => { const n = platz(nr).querySelector(".lc-platz-name");
-        return Boolean(n) && getComputedStyle(n).visibility === "hidden"
-          && getComputedStyle(n, "::after").content === '"frei"'; };
-      film.push({ t: t, wo: wo, frei: [freiAn(nrA), freiAn(nrZ)] });
+      film.push({ t: t, wo: wo });
       if (t < 5000) requestAnimationFrame(lauf); else fertig(); }; lauf(); });
     const nah = (p, q) => p && Math.hypot(p[0] - q[0], p[1] - q[1]) < 6;
     const falsch = film.filter((f) => f.t > 2990 && !(nah(f.wo.A, m5) && nah(f.wo[anderer], m1)));
-    /* 12 % von 3200 ms = 384 ms tritt man auf die Leiter; bis zum
-       Tausch (~3050 ms) sind beide Plaetze verlassen. */
-    const unterwegs = film.filter((f) => f.t > 450 && f.t < 2950);
-    const ohneFrei = unterwegs.filter((f) => !(f.frei[0] && f.frei[1])).length;
     return { falsch: falsch.length, bilder: film.length, von: nrA, nach: nrZ,
-      ohneFrei: ohneFrei, unterwegs: unterwegs.length,
-      /* und nach dem Tausch sitzt dort wieder jemand — kein „frei" mehr */
-      freiDanach: film[film.length - 1].frei.some(Boolean)
-        || [nrA, nrZ].some((nr) => platz(nr).classList.contains("lc-platz-leer")),
       getauscht: (platz(nrZ).querySelector(".lc-platz-name") || {}).textContent };
   });
   sage(echt && echt.getauscht && echt.getauscht.indexOf("Alex") >= 0,
     "Im echten Raum: Alex klettert und sitzt danach auf dem Zielplatz",
     echt ? echt.von + " -> " + echt.nach + ": " + echt.getauscht : "Raum nicht aufgebaut");
-  /* RUNDE 100 — XANDER (Walkie #84): „Die Namen stehen immer noch unter
-     der Leiter wenn man los geht. Da soll frei stehen, sobald man den
-     Platz verlässt." */
-  sage(echt && echt.unterwegs > 20 && echt.ohneFrei === 0,
-    "... waehrend des Kletterns steht an beiden verlassenen Plaetzen „frei“",
-    echt ? echt.ohneFrei + " von " + echt.unterwegs + " Bildern ohne „frei“" : "-");
-  sage(echt && echt.freiDanach === false, "... und nach dem Tausch haengt an keinem besetzten Platz „frei“",
-    echt ? String(echt.freiDanach) : "-");
   sage(echt && echt.falsch === 0, "... und nach der Ankunft springt kein Bild zurück",
     echt ? echt.falsch + " von " + echt.bilder + " Bildern falsch" : "-");
 

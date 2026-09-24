@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 547: Kran-/Angel-Menü wie die Bühne, kein Überstand am Rand",
+  stand: "Fassung 548: Leiter — „frei“ steht da, sobald man den Platz verlässt",
 
   inArbeit: [
-    { seit: "2026-09-24T01:52",
-      text: "Leiter: Namen frei, sobald man den Platz verlässt; Lok-Strecke immer rund schließen" },
-    { seit: "2026-09-24T01:52",
+    { seit: "2026-09-24T01:59",
+      text: "Lok-Strecke immer rund und logisch schließen" },
+    { seit: "2026-09-24T01:59",
       text: "Angel: senkrecht heben, Schnur-Physik" },
-    { seit: "2026-09-24T01:52",
+    { seit: "2026-09-24T01:59",
       text: "Probe runde29 (Schneekugel/Platz) seit mind. Fassung 535 rot — prüfen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T01:52",
-      text: "Platzwahl für Kran und Angel als Abbild der Bühne (4×2, Nummer + Name, eigener und Personenplatz grau)" },
-    { seit: "2026-09-24T01:52",
-      text: "Alle Platzmenüs: ragten am Handy rechts bis 12 px über den Rand (gemessen während der Aufklapp-Animation) — jetzt ganz auf dem Bildschirm" },
-    { seit: "2026-09-24T01:52",
-      text: "Im Kran-Menü steht kein „Angeln“ mehr" },
+    { seit: "2026-09-24T01:59",
+      text: "Leiter: an beiden verlassenen Plätzen stehen ab dem ersten Schritt Ring, Nummer und „frei“ statt des Namens (alt: 150 von 150 Bildern mit Namen)" },
+    { seit: "2026-09-24T01:59",
+      text: "Nach dem Tausch hängt an keinem besetzten Platz „frei“" },
   ],
 };

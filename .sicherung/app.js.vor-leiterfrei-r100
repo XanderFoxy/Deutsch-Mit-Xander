@@ -37787,28 +37787,10 @@
       const werSitzt = (el) => ((el.querySelector(".lc-platz-name") || {}).textContent || "").trim();
       const warDa = werSitzt(platz);
       let aufgeraeumt = false, notfall = 0, wache = null;
-      /* RUNDE 100 — XANDER (Walkie #84): „Die Namen stehen immer noch
-         unter der Leiter wenn man los geht. Da soll frei stehen, sobald
-         man den Platz verlässt."
-         GEFUNDEN: die Leiter setzte den Platz nie auf „unterwegs", und
-         „frei" erscheint sonst erst, wenn das Bild UNSICHTBAR wird
-         (lcPlatzUnterwegs). Auf der Leiter bleibt es aber sichtbar — es
-         klettert ja. Deshalb hier ausdruecklich: sobald das Bild auf die
-         Leiter tritt (12 %), steht am verlassenen Platz „frei"; kommt
-         jemand entgegen, auch an seinem. */
-      let freiUhr = 0;
-      const verlassen = [platz].concat(gegen ? [zielEl] : []);
-      const freiZeigen = () => {
-        if (aufgeraeumt) return;
-        verlassen.forEach((el) => { lcPlatzUnterwegs(el, true); el.classList.add("lc-platz-leer"); });
-      };
-      freiUhr = setTimeout(freiZeigen, Math.round(dauer * 0.12));
       const aufraeumen = () => {
         if (aufgeraeumt) return;
         aufgeraeumt = true;
         clearTimeout(notfall);
-        clearTimeout(freiUhr);
-        verlassen.forEach((el) => lcPlatzUnterwegs(el, false));
         try { if (wache) wache.disconnect(); } catch (e) {}
         laeufe.forEach((l) => { try { l.cancel(); } catch (e) {} });
         leiter.remove();
