@@ -143,13 +143,9 @@ pruefe("und die Kugel rollt nicht zum Spieler zurueck",
    gerne den Kran dafuer, dass man jemand anderen noch auf einen Platz
    heben kann." Es sind also drei Werkzeuge statt zwei — die Regel
    bleibt dieselbe: das WERKZEUG entscheidet, nicht die Sitzreihe. */
-/* RUNDE 101 — dazugekommen sind Bagger und „Hau ab" (Fassung 562/563);
-   die Kette hat damit fuenf Glieder. Die alte Zeile („reiheNeu <
-   reiheAlt") steht nur noch in einem Kommentar, der erklaert, warum sie
-   weg ist — geprueft wird deshalb der Code OHNE Kommentare. */
 pruefe("das Werkzeug entscheidet, nicht die Sitzreihe",
-  /var wieH = lassoZieht \? "lasso" : \(kranZieht \? "kranheben" : \(baggerZieht \? "bagger"\s*: \(hauabZieht \? "hauab" : "heber"\)\)\);/.test(lc)
-  && !/reiheNeu < reiheAlt \? "heber" : "lasso"/.test(lc.replace(/\/\*[\s\S]*?\*\//g, "")));
+  /var wieH = lassoZieht \? "lasso" : \(kranZieht \? "kranheben" : "heber"\);/.test(lc)
+  && !/reiheNeu < reiheAlt \? "heber" : "lasso"/.test(lc));
 pruefe("die Angel bekommt ihr Ziel mitgeschickt",
   /wirkung: wieH, wen: wenH\.name, ziel: nummerH/.test(lc)
   && /const zielNr = Number\(nachricht && nachricht\.ziel\) \|\| 0;/.test(js));

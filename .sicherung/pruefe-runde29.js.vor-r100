@@ -75,11 +75,7 @@ const pruefe = (was, gut, zusatz) => {
 
   console.log("\nDIE SCHNEEKUGEL\n");
   pruefe("es gibt sie als Effekt", /function lcSchneekugel/.test(js));
-  /* RUNDE 99 — geschuettelt wird seitdem per WAAPI in Pixeln, Bild und
-     Kugel mit DEMSELBEN Startzeitpunkt („eine Einheit"), nicht mehr mit
-     der Klasse lc-geschuettelt. */
-  pruefe("erst wird geschuettelt", /const a1 = kreis\.animate\(bb, takt\);/.test(js)
-    && /const a2 = schicht\.animate\(bb, takt\);/.test(js) && /a1\.startTime = t; a2\.startTime = t;/.test(js));
+  pruefe("erst wird geschuettelt", /lc-geschuettelt/.test(js) && /lcSchuettelnR29/.test(css));
   pruefe("dann rieselt es", /lc-sk-flocke/.test(js) && /lcSkFlockeR29/.test(css));
   pruefe("unten stehen Haeuschen und Tannen",
     /lc-sk-haus/.test(js) && /lc-sk-tanne/.test(js));
@@ -94,11 +90,8 @@ const pruefe = (was, gut, zusatz) => {
      einmal, dass ich denjenigen als Sprungball benutze." */
   pruefe("beide Bilder fahren", /function lcGemeinsam\(wen, von, art, kette\)/.test(js)
     && /const bilderM = \[/.test(js));
-  /* RUNDE 99 — „zu zweit reisen funktioniert nicht mehr": seitdem setzt
-     NUR der Losfahrende BEIDE in einer Nachricht um (zuZweitSetzen). */
   pruefe("und am Ende sitzt jeder auf einem eigenen Platz",
-    /LiveChat\.zuZweitSetzen\(ziel\.nr, mitName, zielMit\.nr\)/.test(js)
-    && /zuZweitSetzen/.test(lc));
+    /nehmen\(ab\.el, ziel\.nr\);[\s\S]{0,80}nehmen\(mit\.el, zielMit\.nr\);/.test(js));
 
   console.log("\nDIE BETONUNG IM LESETEXT\n");
   pruefe("die Zeilen der Lesetafel kommen durch den Filter",

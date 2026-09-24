@@ -196,7 +196,9 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
   pruefe("Saum 4–7 % breit", we.breite >= 4 && we.breite <= 7, (we.breite || 0).toFixed(1) + " %");
   pruefe("Saum 20–35 % Deckkraft und nie aus", we.deckMin >= 0.2 && we.deckMax <= 0.35, we.deckMin + " bis " + we.deckMax);
   pruefe("2–3 Ringe loesen sich vom Saum", we.ringe >= 2 && we.ringe <= 3 && we.abSaum, we.ringe + " Ringe");
-  pruefe("sie laufen 8–14 % nach aussen", we.lauf && we.lauf.every((x) => x >= 8 && x <= 14), (we.lauf || []).map((x) => x.toFixed(1)).join(", "));
+  /* Liste: 8–14 %; XANDER danach (Walkie #148): „Ringe weiter nach
+     außen" — jetzt 15 %. */
+  pruefe("sie laufen weit nach aussen (14–18 %)", we.lauf && we.lauf.every((x) => x >= 14 && x <= 18), (we.lauf || []).map((x) => x.toFixed(1)).join(", "));
 
   console.log("\nSCHON-PASS 4 — BLUT\n");
   const bl = await pg.evaluate(() => {

@@ -154,8 +154,15 @@ const sage = (gut, text, dazu) => {
     const vorherAb = lies(plAb);
     const vorher = lies(plZu);
     try {
-      if (reise) window.DMA_PRUEFUNG.wirkung(a, "Bea", "Alex", {});
-      else window.DMA_PRUEFUNG.wirkung(a, "Bea", "Alex", {});
+      /* /zufall wuerfelt — manchmal den Hammer oder die Kopfhoerer, die
+         absichtlich liegen bleiben. Damit die Sonde nicht vom Wurf
+         abhaengt, wird hier fest der erste Eintrag (Tritt) gezogen. */
+      const zufallAlt = Math.random;
+      if (a === "zufall") Math.random = () => 0;
+      try {
+        if (reise) window.DMA_PRUEFUNG.wirkung(a, "Bea", "Alex", {});
+        else window.DMA_PRUEFUNG.wirkung(a, "Bea", "Alex", {});
+      } finally { Math.random = zufallAlt; }
     } catch (e) { return { krach: String(e && e.message) }; }
     /* =============================================================
        RUNDE 88 — BIS ZUM ENDE MESSEN, NICHT NUR BIS ZUR MITTE
@@ -233,7 +240,13 @@ const sage = (gut, text, dazu) => {
            Die Zahl wird dabei nur UNSICHTBAR, nicht ausgebaut und
            nicht bewegt. */
         const pacZahl = /pacjagd/.test(art) && teil === "nummer";
-        if (!reistGerade && !pacZahl && (b.sicht !== a.sicht || b.zeigt !== a.zeigt)) {
+        /* RUNDE 100 — beim Zaubertrick ist das Schild (Strichlinie und
+           Nummer) ABSICHTLICH unsichtbar, solange das Bild im Hut steckt.
+           XANDER: „Bild noch sichtbar unter dem Hut" — gemessen war es der
+           gestrichelte Ring, der unter der Krempe hervorschaute
+           (.lc-zt-im-hut .lc-schild in korrekturen.css). */
+        const imHut = art === "kaninchen" && (teil === "schild" || teil === "nummer");
+        if (!reistGerade && !pacZahl && !imHut && (b.sicht !== a.sicht || b.zeigt !== a.zeigt)) {
           sag(teil + " " + a.sicht + "/" + a.zeigt + " -> " + b.sicht + "/" + b.zeigt);
         }
       });

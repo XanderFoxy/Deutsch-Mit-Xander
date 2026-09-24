@@ -86,14 +86,10 @@ const sage = (gut, text, dazu) => {
     funken: document.querySelectorAll(".lc-zt-funken > i").length,
     haende: document.querySelectorAll(".lc-zt-beifall > i").length
   }));
-  /* RUNDE 99 — der Trick liegt seitdem in DREI Ebenen (hinten, Mitte,
-     vorn), damit der Hut das Bild wirklich umschliesst: die Krempe vorn,
-     das Innere hinten. „Genau ein Platz" heisst also: ALLE Ebenen liegen
-     auf Platz 3, und keine woanders. */
-  sage(gemalt.schichten >= 1 && gemalt.aufPlatz3 === gemalt.schichten,
+  sage(gemalt.schichten === 1 && gemalt.aufPlatz3 === 1,
     "er wirkt auf GENAU EINEN Platz — den, der gemeint ist",
     gemalt.schichten + " Schicht(en), davon auf Platz 3: " + gemalt.aufPlatz3);
-  sage(gemalt.hut >= 1 && gemalt.stab === 1 && gemalt.ohren === 1
+  sage(gemalt.hut === 1 && gemalt.stab === 1 && gemalt.ohren === 1
        && gemalt.funken === 10 && gemalt.haende === 6,
     "Zylinder, Zauberstab, Ohren, Funken und klatschende Haende sind da",
     "Hut " + gemalt.hut + ", Stab " + gemalt.stab + ", Ohren " + gemalt.ohren
@@ -109,9 +105,8 @@ const sage = (gut, text, dazu) => {
                     2000, 2200, 2450, 2700, 3000, 3200, 3500, 3900]) {
     await pg.waitForTimeout(ms - letzt); letzt = ms;
     mess.push(Object.assign({ t: ms }, await pg.evaluate(() => {
-      /* ueber ALLE Ebenen des Tricks suchen, nicht nur in der ersten */
-      if (!document.querySelector(".lc-zaubertrick")) return { weg: true };
-      const s = document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="3"]');
+      const s = document.querySelector(".lc-zaubertrick");
+      if (!s) return { weg: true };
       const kasten = (w) => {
         const e = s.querySelector(w);
         if (!e) return null;
@@ -119,7 +114,7 @@ const sage = (gut, text, dazu) => {
         return { x: r.left + r.width / 2, y: r.top + r.height / 2,
                  h: r.height, o: Number(getComputedStyle(e).opacity) };
       };
-      const platz = s;
+      const platz = s.closest(".lc-platz");
       const kr = platz.querySelector(".lc-kreis").getBoundingClientRect();
       const sichtbar = Array.from(s.querySelectorAll(".lc-zt-beifall > i"))
         .filter((e) => Number(getComputedStyle(e).opacity) > 0.35).length;

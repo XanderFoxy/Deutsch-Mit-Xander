@@ -24615,9 +24615,7 @@
     };
     const formen = (L, B) => {
       const v = [];
-      /* lodernd: jede Form eine andere Hoehe (0,8–1,3) und Knickung
-         (bis 9 Grad), in zufaelliger Reihenfolge — kein Takt. */
-      for (let k = 0; k < 4; k++) v.push(zunge(L, B, zufall(0.8, 1.3), zufall(-9, 9)));
+      for (let k = 0; k < 4; k++) v.push(zunge(L, B, 1 + zufall(0.08, 0.2) * (k % 2 ? 1 : 0.35), (k % 2 ? 1 : -1) * zufall(2, 6)));
       v.push(v[0]);
       return v.join(";");
     };
@@ -24625,22 +24623,23 @@
     const sp = '" calcMode="spline" keySplines=".4 0 .6 1;.4 0 .6 1;.4 0 .6 1;.4 0 .6 1"/>';
     const lage = (menge, versatz, gross, hell) => {
       for (let i = 0; i < menge; i++) {
-        const w = ((i + versatz) / menge) * Math.PI * 2 + zufall(-0.12, 0.12);
+        const w = ((i + versatz) / menge) * Math.PI * 2 + zufall(-0.08, 0.08);
         const ox = Math.cos(w), oy = Math.sin(w);
-        /* XANDER (Walkie #149): „Die Flammen müssen realistisch nach oben
-           schlagen, auch innerhalb des Kreises, und natürlicher und
-           zufälliger — ein richtiges loderndes Feuer."
-           Jetzt zeigt JEDE Zunge nach oben (Feuer steigt), nur um eine
-           zufaellige Neigung gekippt; unten am Ring schlagen sie deshalb
-           ins Bild hinein, oben ueber den Rand hinaus. Die Mitte des
-           Gesichts bleibt frei: unten sind sie kuerzer. */
-        const bx = 50 + ox * (R - 0.4), by = 50 + oy * (R - 0.4);
-        const neig = zufall(-0.3, 0.3) + ox * 0.18;
-        let dx = Math.sin(neig), dy = -Math.cos(neig);
-        const grad = neig * 180 / Math.PI;
+        const bx = 50 + ox * (R + 0.1), by = 50 + oy * (R + 0.1);
+        let dx = 0.9 * ox, dy = -1 + 0.9 * oy;
+        let lang = Math.hypot(dx, dy);
+        if (lang < 1e-3 || (dx * ox + dy * oy) / lang < 0.3) {
+          /* unten: am Ring entlang nach oben */
+          let tx = -oy, ty = ox;
+          if (ty > 0 || (Math.abs(ty) < 1e-3 && i % 2)) { tx = -tx; ty = -ty; }
+          dx = tx + 0.4 * ox; dy = ty + 0.4 * oy;
+          lang = Math.hypot(dx, dy);
+        }
+        dx /= lang; dy /= lang;
+        const grad = Math.atan2(dx, -dy) * 180 / Math.PI;
         const oben = Math.max(0, -oy), unten = Math.max(0, oy);
-        const L = (zufall(7, 10.5) + oben * 4.5 - unten * 1.5) * gross * zufall(0.85, 1.2), B = L * zufall(0.38, 0.52);
-        const takt = f(zufall(0.45, 0.95)), start = f(-zufall(0, 1.3));
+        const L = (zufall(7, 9.5) + oben * 4.5 - unten * 2.2) * gross, B = L * zufall(0.42, 0.5);
+        const takt = f(zufall(0.7, 1.25)), start = f(-zufall(0, 1.3));
         const aussen = formen(L, B), innen = formen(L * 0.66, B * 0.5);
         bild += '<g transform="translate(' + f(bx) + " " + f(by) + ") rotate(" + f(grad) + ')"' + (hell ? "" : ' opacity=".92"') + ">"
           + '<path fill="url(#' + (hell ? "lcFh" : "lcFz") + n + ')" d="' + aussen.split(";")[0] + '"><animate attributeName="d" dur="' + takt
@@ -24693,9 +24692,7 @@
      ================================================================= */
   function lcWelleSvg() {
     const R = 34.7, f = (v) => v.toFixed(2);
-    /* XANDER (Walkie #148): „Ringe weiter nach außen" — 10,4 statt 6,2
-       (15 % statt 9 %). */
-    const SAUM = 3.6, start = R + SAUM / 2 - 0.4, weit = 10.4, takt = 2.3;
+    const SAUM = 3.6, start = R + SAUM / 2 - 0.4, weit = 6.2, takt = 2.1;
     let bild = '<circle cx="50" cy="50" r="' + f(start) + '" fill="none" stroke="#78DCFF" stroke-width="' + f(SAUM) + '" stroke-opacity=".3">'
       + '<animate attributeName="stroke-opacity" dur="' + takt + 's" repeatCount="indefinite" values=".24;.34;.24" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/></circle>';
     for (let i = 0; i < 3; i++) {
@@ -24746,13 +24743,11 @@
       return d + " Z";
     };
     innen += '<path fill="#7F1D1D" fill-opacity=".85" d="' + bogen(0.6) + '">'
-      + '<animate attributeName="d" dur="3s" fill="freeze" values="' + bogen(0.6) + ";" + bogen(5) + '" calcMode="spline" keySplines=".3 0 .4 1"/></path>';
+      + '<animate attributeName="d" dur="3s" fill="freeze" values="' + bogen(0.6) + ";" + bogen(3.2) + '" calcMode="spline" keySplines=".3 0 .4 1"/></path>';
     /* DIE RINNSALE: zaeh — sie kriechen in 2,5 bis 4 s herunter
        (Strich wird freigelegt), vorn ein runder Kopf, dazu ein feiner
        heller Glanzstreifen, damit es nass aussieht und nicht matt. */
-    /* XANDER (Walkie #150): „Zu wenig Blut" — sechs Rinnsale statt vier,
-       dicker, eine groessere Lache, mehr Tropfen. */
-    [[-27, 70], [-21, 80], [-14.5, 52], [14.5, 56], [21, 82], [27, 72]].forEach(([x0, y1], k) => {
+    [[-23, 72], [-15, 46], [15, 50], [23, 76]].forEach(([x0, y1], k) => {
       const x = 50 + x0 + zufall(-1.5, 1.5);
       const y0 = 50 - Math.sqrt(R * R - (x - 50) * (x - 50)) - 1;
       const ende = y1 + zufall(-4, 4);
@@ -24766,7 +24761,7 @@
       const lang = (ende - y0) * 1.05, dur = f(zufall(2.5, 4)), bg = f(zufall(0.1, 0.9));
       /* Die Spur ist duenn, der Kopf dick — so sieht zaehes Blut aus:
          vorne sammelt es sich, hinten bleibt ein Film. */
-      const dicke = zufall(1.5, 2.1);
+      const dicke = zufall(1.1, 1.5);
       innen += '<path d="' + weg + '" fill="none" stroke="#7F1D1D" stroke-opacity=".86" stroke-width="' + f(dicke)
         + '" stroke-linecap="round" stroke-dasharray="' + f(lang) + " " + f(lang) + '" stroke-dashoffset="' + f(lang) + '">'
         + '<animate attributeName="stroke-dashoffset" dur="' + dur + 's" begin="' + bg + 's" fill="freeze" values="' + f(lang) + ';0" calcMode="spline" keySplines=".25 .1 .35 1"/></path>'
@@ -24794,7 +24789,7 @@
       return d + " L" + f(pk[8][0]) + " " + f(pk[8][1]) + " L" + f(50 + R + 2) + " " + f(50 + R + 2) + " Z";
     };
     innen += '<path fill="url(#lcBl' + n + ')" stroke="#DC2626" stroke-opacity=".35" stroke-width=".5" d="' + lache(0.4) + '">'
-      + '<animate attributeName="d" dur="3.4s" begin=".4s" fill="freeze" values="' + lache(0.4) + ";" + lache(12.5) + '" calcMode="spline" keySplines=".3 0 .4 1"/></path>'
+      + '<animate attributeName="d" dur="3.4s" begin=".4s" fill="freeze" values="' + lache(0.4) + ";" + lache(8.5) + '" calcMode="spline" keySplines=".3 0 .4 1"/></path>'
       + '<ellipse cx="' + f(50 - 6) + '" cy="' + f(50 + R - 5.2) + '" rx="4.5" ry=".7" fill="#fff" opacity="0">'
       + '<animate attributeName="opacity" dur="3.4s" begin=".4s" fill="freeze" values="0;0;.28"/></ellipse>';
     /* DIE TROPFEN: zwei Laeufe, um die Haelfte versetzt — alle 1,6 s
@@ -24803,8 +24798,8 @@
        zu einem flachen Fleck, der verschwindet. */
     let tropfen = "";
     const unten = 50 + R;
-    for (let k = 0; k < 3; k++) {
-      const x = 50 + zufall(-11, 11), fall = zufall(17, 28), dur = 3.3, bg = f(3 + k * 1.1);
+    for (let k = 0; k < 2; k++) {
+      const x = 50 + zufall(-9, 9), fall = zufall(17, 28), dur = 3.2, bg = f(3 + k * 1.6);
       const kt = "0;.3;.42;.78;.8;1";
       tropfen += '<ellipse cx="' + f(x) + '" cy="' + f(unten) + '" rx="0" ry="0" fill="#7F1D1D" fill-opacity=".9">'
         + '<animate attributeName="cy" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="' + kt + '" values="'
@@ -24895,13 +24890,11 @@
         ader(ax, ay, w + seite * zufall(0.7, 1.0), lang * zufall(0.28, 0.4) * (1 - t * 0.4), tiefe + 1, bg + t * 0.6, deck * 0.75);
       }
     };
-    /* XANDER (Walkie #152): „Eisblumen dichter" — 16 statt 8, und sie
-       kommen doppelt so schnell nacheinander (alle 0,35 s). */
-    for (let i = 0; i < 16; i++) {
-      const w = (i / 16) * Math.PI * 2 + zufall(-0.2, 0.2);
+    for (let i = 0; i < 8; i++) {
+      const w = zufall(0, Math.PI * 2);
       const sx = 50 + Math.cos(w) * (R - RING - 0.5), sy = 50 + Math.sin(w) * (R - RING - 0.5);
       /* nach innen, etwas schraeg — und nicht bis in die Mitte */
-      ader(sx, sy, w + Math.PI + zufall(-0.5, 0.5), zufall(9, 15), 0, 0.2 + i * 0.35, zufall(0.3, 0.45));
+      ader(sx, sy, w + Math.PI + zufall(-0.5, 0.5), zufall(8, 14), 0, 0.3 + i * 0.6, zufall(0.3, 0.45));
     }
     bild = '<g clip-path="url(#lcEm' + n + ')" fill="none" stroke="#F0F9FF" stroke-linecap="round">' + frost + "</g>" + bild;
     return '<svg class="lc-eis-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + defs + "</defs>" + bild + "</svg>";

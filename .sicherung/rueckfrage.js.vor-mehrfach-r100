@@ -353,16 +353,7 @@ window.Rueckfrage = (function () {
     var extra = Array.isArray(f.optionen) ? f.optionen.map(String) : [];
     var senden;
 
-    /* RUNDE 101 — XANDER (Walkie #152): „Bitte das alte Walkie-Talkie-
-       Modul zurück, was vorher war, mit der Mehrfachauswahl und der
-       funktionierenden Spracheingabe."
-       GEFUNDEN: die Fragen ab #145 hatte ich mit der Art „auswahl"
-       angelegt — die zeigt nur runde Einfachknoepfe, ohne die drei
-       Stufen und ohne die festen Zusatzpunkte. Ab jetzt bekommt JEDE
-       Frage das volle Modul (Stufen + Mehrfachauswahl + Textfeld mit
-       Mikrofon); „auswahl" gilt nur noch, wenn eine Frage es
-       ausdruecklich mit „einzeln: true" verlangt. */
-    if (f.art === "auswahl" && f.einzeln === true) {
+    if (f.art === "auswahl") {
       /* Genau eine Moeglichkeit — so wie gefragt. */
       var wahl = el("div", "rf-liste");
       extra.forEach(function (o) {
@@ -651,7 +642,7 @@ window.Rueckfrage = (function () {
   function abschicken(f, e, knoepfe) {
     var sb = zugang();
     if (!sb) return;
-    var antwort = (f.art === "auswahl" && f.einzeln === true)
+    var antwort = f.art === "auswahl"
       ? { gewaehlt: e.gewaehlt.slice() }
       : { stufe: e.stufe, gewaehlt: e.gewaehlt.slice() };
     knoepfe.querySelectorAll("button").forEach(function (b) { b.disabled = true; });

@@ -33389,9 +33389,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .lc-streichel-hand.lc-wange-hand, .lc-streichel-hand:not(.lc-wange-hand) { animation: none; opacity: 0; }
 }
-
-/* RUNDE 101 — dicke verchromte Seitenrohre am Hot Rod (XANDER #144). */
-.lc-hr-rohr-rand { fill: none; stroke: #4b5563; stroke-width: 6.4; stroke-linecap: round; }
-.lc-hotrod-buehne .lc-hr-rohr { stroke: #d6dce3; stroke-width: 4.6; filter: none; }
-.lc-hr-rohr-licht { fill: none; stroke: #ffffff; stroke-opacity: .85; stroke-width: 1.3; stroke-linecap: round; }
-.lc-hotrod-buehne .lc-hr-trichter { fill: #f3f5f8; stroke: #4b5563; stroke-width: 1.4; }

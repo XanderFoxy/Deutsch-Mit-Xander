@@ -11025,12 +11025,7 @@ window.LiveChat = (function () {
        anderen an, und bei allen au\u00dfer dem Absender ginge er hinten
        auf \u2014 genau die Art von Unterschied zwischen zwei Ger\u00e4ten,
        die er nicht mehr sehen will. */
-    "wie",
-    /* RUNDE 101 — wie oft der Hot Rod aufgezogen wurde (1×, 3×, 5×).
-       XANDER (Funk 67): „Er fährt immer gleich schnell.“ GEFUNDEN im
-       Prüflauf (pruefe-zusatzfelder): das Feld fehlte hier — bei allen
-       ANDEREN kam der Hot Rod deshalb immer mit Kraft 1 an. */
-    "kraft"
+    "wie"
   ];
   /* Listen werden begrenzt — eine Zeile aus einer fremden Fassung
      darf den Chat nicht sprengen. */

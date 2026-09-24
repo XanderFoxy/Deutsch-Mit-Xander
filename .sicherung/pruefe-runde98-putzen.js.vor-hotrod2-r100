@@ -373,10 +373,7 @@ const sage = (gut, was, zusatz) => {
   sage(hr.nachNeu >= 1, "der Russ bleibt auch nach dem Neuzeichnen", hr.nachNeu + " Flecken");
   sage(hr.nachPutzen === 0, "und geht mit dem Schwamm wieder weg", hr.nachPutzen + " Flecken");
   const tonR = (n) => (hr.toene.find((x) => x[0] === n) || [n, -1])[1];
-  /* RUNDE 101 — das Aufziehen dauert jetzt je Umdrehung 0,55 s (Funk 67:
-     „zieht gar nicht in den benannten Zahlen auf"): bei 3× also
-     350 + 3 · 550 = 2000 ms bis zum Loslassen. */
-  sage(tonR("aufziehen") >= 0 && tonR("aufziehen") <= 120 && Math.abs(tonR("luftraus") - 2000) <= 120 && Math.abs(tonR("rennauto") - 2060) <= 120,
+  sage(tonR("aufziehen") >= 0 && tonR("aufziehen") <= 120 && Math.abs(tonR("luftraus") - 1200) <= 120 && Math.abs(tonR("rennauto") - 1260) <= 120,
     "Ratschen beim Aufziehen, Zischen beim Loslassen, Motor beim Flitzen",
     tonR("aufziehen") + " / " + tonR("luftraus") + " / " + tonR("rennauto") + " ms");
 
