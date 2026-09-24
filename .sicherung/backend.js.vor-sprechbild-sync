@@ -1576,75 +1576,8 @@ const Backend = (function () {
     try {
       const { data, error } = await client.from("profiles").select("extra_profile_data").eq("id", demo.user.id).maybeSingle();
       if (error || !data) return { ...lokal };
-      const server = data.extra_profile_data || {};
-      const zusammen = { ...server, ...lokal };
-      // Einstellungen mit Zeitstempel NICHT im Ganzen vom lokalen Stand
-      // überschreiben lassen — siehe einstellungenZusammen().
-      Object.keys(EINZELN_ZUSAMMENFUEHREN).forEach((k) => {
-        if (server[k] !== undefined || lokal[k] !== undefined) {
-          zusammen[k] = EINZELN_ZUSAMMENFUEHREN[k](server[k], lokal[k]);
-        }
-      });
-      return zusammen;
+      return { ...(data.extra_profile_data || {}), ...lokal };
     } catch (e) { return { ...lokal }; }
-  }
-
-  /* ============================================================
-     KLASSENZIMMER-EINSTELLUNGEN: JE EINSTELLUNG GEWINNT DIE NEUESTE
-     ------------------------------------------------------------
-     GEMELDET (Xander): „Ach so noch etwas zum Abspeichern im gesamten
-     Profil ich habe schon wieder gemerkt dass meine sprechanimation
-     also mein sprechbild die Einstellung die ich gemacht habe auf dem
-     anderen Gerät nicht gefunden wird auf meinem iPhone 12 … habe ich
-     eine andere Sprachbild Animation als die die ich gerade eingestellt
-     habe zuletzt."
-
-     extra_profile_data.klassenzimmer ist EIN Objekt mit vielen
-     Einstellungen (Sprechbild, GIF-Favoriten, GIF-Zähler, Raumnamen …).
-     frischesExtra() lässt den lokalen Stand gewinnen — für dieses eine
-     Objekt hiesse das: ein Gerät, das seit heute Morgen offen ist und
-     nur einen GIF-Zähler hochsetzt, schreibt sein ALTES Sprechbild
-     gleich mit zurück und löscht das neue vom anderen Gerät.
-
-     Deshalb trägt jede Einstellung in „_stand" die Zeit, zu der sie
-     gesetzt wurde (Millisekunden), und zusammengeführt wird EINZELN:
-     die jüngere gewinnt. Ohne Zeit zählt 0; bei Gleichstand gewinnt
-     der Server — er ist die Quelle der Wahrheit. */
-  function einstellungenZusammen(server, lokal) {
-    const alsObjekt = (x) => (x && typeof x === "object" && !Array.isArray(x)) ? x : {};
-    const s = alsObjekt(server), l = alsObjekt(lokal);
-    const sStand = alsObjekt(s._stand), lStand = alsObjekt(l._stand);
-    const hat = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
-    const erg = {}, stand = {};
-    new Set([...Object.keys(s), ...Object.keys(l)]).forEach((k) => {
-      if (k === "_stand") return;
-      const ts = Number(sStand[k]) || 0, tl = Number(lStand[k]) || 0;
-      const lokalGewinnt = hat(l, k) && (!hat(s, k) || tl > ts);
-      erg[k] = lokalGewinnt ? l[k] : s[k];
-      const t = lokalGewinnt ? tl : ts;
-      if (t) stand[k] = t;
-    });
-    erg._stand = stand;
-    return erg;
-  }
-  const EINZELN_ZUSAMMENFUEHREN = { klassenzimmer: einstellungenZusammen };
-
-  // Holt NUR extra_profile_data.klassenzimmer frisch vom Server und führt es
-  // Einstellung für Einstellung mit dem Stand im Speicher zusammen. Für das
-  // Telefon, das aus dem Hintergrund zurückkommt: dort ist das Profil vom
-  // Morgen noch im Speicher, und das Sprechbild vom Rechner wäre sonst erst
-  // nach dem Neuladen da. Gibt true zurück, wenn sich etwas geändert hat.
-  async function klassenzimmerAbgleichen() {
-    if (!client || !demo.user || !demo.profile || demo.profile.ladefehler) return false;
-    try {
-      const { data, error } = await client.from("profiles")
-        .select("klassenzimmer:extra_profile_data->klassenzimmer").eq("id", demo.user.id).maybeSingle();
-      if (error || !data || !data.klassenzimmer) return false;
-      const ex = demo.profile.extraProfileData = demo.profile.extraProfileData || {};
-      const vorher = JSON.stringify(ex.klassenzimmer || null);
-      ex.klassenzimmer = einstellungenZusammen(data.klassenzimmer, ex.klassenzimmer);
-      return JSON.stringify(ex.klassenzimmer) !== vorher;
-    } catch (e) { return false; }
   }
   // Erneuter Ladeversuch — für den Knopf im Hinweisbanner, wenn das Profil beim
   // Anmelden nicht durchkam.
@@ -1785,7 +1718,7 @@ const Backend = (function () {
       // Erst den Serverstand dazuholen, dann schreiben — sonst löscht dieses
       // Gerät Einstellungen, die inzwischen auf einem anderen gemacht wurden.
       const zusammen = await frischesExtra();
-      zusammen[key] = EINZELN_ZUSAMMENFUEHREN[key] ? EINZELN_ZUSAMMENFUEHREN[key](zusammen[key], value) : value;
+      zusammen[key] = value;
       demo.profile.extraProfileData = zusammen;
       const { error } = await client.from("profiles").update({ extra_profile_data: zusammen }).eq("id", demo.user.id);
       if (error) return { ok: false, message: friendlyDbError(error.message) };
@@ -1923,15 +1856,7 @@ const Backend = (function () {
     // normalen Bearbeitungsformulars unabsichtlich wieder gelöscht.
     // Serverstand + lokaler Stand + neue Angaben — in dieser Reihenfolge, damit
     // weder ein anderes Gerät noch dieses Formular Einstellungen wegwirft.
-    const frisch = await frischesExtra();
-    demo.profile.extraProfileData = { ...frisch, ...(extra || {}) };
-    // Bringt das Formular eine (alte) Abschrift der Klassenzimmer-Einstellungen
-    // mit, darf sie das Sprechbild vom anderen Gerät nicht überschreiben.
-    Object.keys(EINZELN_ZUSAMMENFUEHREN).forEach((k) => {
-      if (extra && extra[k] !== undefined) {
-        demo.profile.extraProfileData[k] = EINZELN_ZUSAMMENFUEHREN[k](frisch[k], extra[k]);
-      }
-    });
+    demo.profile.extraProfileData = { ...(await frischesExtra()), ...(extra || {}) };
     if (client && demo.user) {
       const { data, error } = await client.from("profiles").update({
         languages, fav_movie: favMovie, fav_series: favSeries, fav_song: favSong, fav_food: favFood,
@@ -4245,7 +4170,6 @@ const Backend = (function () {
     deleteComment,
     saveBio,
     saveExtendedProfile, updateExtraProfileField, toggleBestFriend, getBestFriendIds,
-    einstellungenZusammen, klassenzimmerAbgleichen,
     profilSchreibbar, reloadProfile, profilReparieren, SPERR_TEXT, sicherungSchreiben, sicherungStand,
     SYMPATHY_LEVELS, setSympathyLevel, removeSympathyLevel, getMySympathyFor,
     getAllSympathyLevels, addCustomSympathyLevel, removeCustomSympathyLevel,

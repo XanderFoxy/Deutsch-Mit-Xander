@@ -1318,11 +1318,8 @@ window.LiveChat = (function () {
       if (f) localStorage.setItem(NAMENSFARB_SCHLUESSEL, f);
       else localStorage.removeItem(NAMENSFARB_SCHLUESSEL);
     } catch (e) {}
-    ablageSetzen("farbeName", f || "");
   }
   function gemerkteNamensfarbe() {
-    var p = ablageHolen("farbeName");
-    if (p !== null) return p;
     try { return localStorage.getItem(NAMENSFARB_SCHLUESSEL) || ""; } catch (e) { return ""; }
   }
 
@@ -1439,51 +1436,27 @@ window.LiveChat = (function () {
       if (x && SPRECHBILDER[x]) localStorage.setItem(SPRECHBILD_SCHLUESSEL, x);
       else localStorage.removeItem(SPRECHBILD_SCHLUESSEL);
     } catch (e) {}
-    ablageSetzen("sprechbild", x || "");
-  }
-  /* Was in der Ablage steht — oder "", wenn dort nichts Gueltiges
-     liegt. gemerktesSprechbild() macht daraus den Ring als Vorgabe. */
-  function sprechbildAusAblage() {
-    var ausProfil = ablageHolen("sprechbild");
-    if (ausProfil && SPRECHBILDER[ausProfil]) return ausProfil;
-    try {
-      var x = localStorage.getItem(SPRECHBILD_SCHLUESSEL) || "";
-      return SPRECHBILDER[x] ? x : "";
-    } catch (e) { return ""; }
+    try { if (window.DMA_EINST) window.DMA_EINST.setzen("sprechbild", x || ""); } catch (e) {}
   }
   function gemerktesSprechbild() {
-    return sprechbildAusAblage() || "ring";
-  }
-  /* Die gemeinsame Ablage aus app.js (kzEinstellung) — sie schreibt
-     ins Geraet UND ins Profil und entscheidet je Einstellung nach der
-     Zeit, welches Geraet zuletzt gewaehlt hat. null heisst: dort steht
-     nichts (oder app.js ist noch nicht so weit). */
-  function ablageHolen(name) {
     try {
-      if (!window.DMA_EINST) return null;
-      var w = window.DMA_EINST.holen(name, null);
-      return (w === null || w === undefined) ? null : String(w);
-    } catch (e) { return null; }
-  }
-  function ablageSetzen(name, wert) {
-    try { if (window.DMA_EINST) window.DMA_EINST.setzen(name, wert); } catch (e) {}
+      var ausProfil = window.DMA_EINST ? window.DMA_EINST.holen("sprechbild", "") : "";
+      if (ausProfil && SPRECHBILDER[ausProfil]) return ausProfil;
+    } catch (e) {}
+    try {
+      var x = localStorage.getItem(SPRECHBILD_SCHLUESSEL) || "";
+      return SPRECHBILDER[x] ? x : "ring";
+    } catch (e) { return "ring"; }
   }
 
-  /* Die Farbe von Name und Schrift reist genauso mit dem Profil —
-     sie ist wie das Sprechbild ein Teil davon, wie man im Raum
-     aussieht („Abspeichern im gesamten Profil"). Die Schrift oben
-     bleibt absichtlich am Geraet: sie ist eine Lesehilfe. */
   var FARB_SCHLUESSEL = "dma_livechat_farbe";
   function farbeMerken(f) {
     try {
       if (f) localStorage.setItem(FARB_SCHLUESSEL, f);
       else localStorage.removeItem(FARB_SCHLUESSEL);
     } catch (e) {}
-    ablageSetzen("farbe", f || "");
   }
   function gemerkteFarbe() {
-    var p = ablageHolen("farbe");
-    if (p !== null) return p;
     try { return localStorage.getItem(FARB_SCHLUESSEL) || ""; } catch (e) { return ""; }
   }
 
@@ -1504,14 +1477,7 @@ window.LiveChat = (function () {
      kein Neuladen mehr, sondern ein Weggehen; dann bleibt der
      Raum zu. */
   var RUECK_SCHLUESSEL = "dma_livechat_zurueck";
-  /* FUNK 101 — XANDER: „wenn ich irgendwas auf der Seite neu laden muss
-     dass ich trotzdem schnell in den Chat reinkomme … dass ich sofort
-     mit den Leuten reden kann".
-     Die Rückkehr ohne Nachfrage galt nur 2 Minuten. Wer nach einem
-     längeren Anruf oder einem Update zurückkam, musste wieder durch das
-     Tor. Jetzt gilt sie 30 Minuten; sie liegt im sessionStorage, gilt
-     also nur für diesen einen Tab. */
-  var RUECK_FRIST_MS = 30 * 60 * 1000;
+  var RUECK_FRIST_MS = 120000;
   function rueckkehrMerken() {
     try {
       sessionStorage.setItem(RUECK_SCHLUESSEL, JSON.stringify({
@@ -4942,13 +4908,9 @@ window.LiveChat = (function () {
     /* Nur fuer den Klang eines Schreis: maennlich, weiblich, divers
        oder leer. Steht im Profil, reist mit der Nachricht mit. */
     zustand.geschlecht = o.geschlecht || zustand.geschlecht || "";
-    zustand.farbe = o.farbe || (ablageHolen("farbe") !== null ? gemerkteFarbe()
-                                 : (zustand.farbe || gemerkteFarbe()));
-    zustand.farbeName = ablageHolen("farbeName") !== null ? gemerkteNamensfarbe()
-                        : (zustand.farbeName || gemerkteNamensfarbe());
-    /* Die Ablage zuerst: sie traegt die juengste Wahl von ALLEN
-       Geraeten. Was nur hier im Speicher steht, kann vom Morgen sein. */
-    zustand.sprechbild = sprechbildAusAblage() || zustand.sprechbild || "ring";
+    zustand.farbe = o.farbe || zustand.farbe || gemerkteFarbe();
+    zustand.farbeName = zustand.farbeName || gemerkteNamensfarbe();
+    zustand.sprechbild = zustand.sprechbild || gemerktesSprechbild();
     zustand.schrift = gemerkteSchrift();
     zustand.buehne = o.buehne !== false;
     platzJe = {};                 // neuer Raum, neue Sitzordnung
@@ -15218,28 +15180,6 @@ window.LiveChat = (function () {
     befehlAusZeichen: befehlAusZeichen,
     sprechbilder: function () { return Object.assign({}, SPRECHBILDER); },
     sprechbild: function () { return zustand.sprechbild || gemerktesSprechbild(); },
-    /* app.js ruft das, wenn das Profil frisch vom Server kam (Telefon
-       aus dem Hintergrund zurueck). XANDER: „auf meinem iPhone 12 …
-       habe ich eine andere Sprachbild Animation als die die ich gerade
-       eingestellt habe zuletzt." — also die neuere Wahl gleich
-       uebernehmen und den anderen im Raum zeigen, ohne sie noch einmal
-       zu speichern (sie liegt ja schon im Profil). */
-    einstellungenNeuLesen: function () {
-      var sb = sprechbildAusAblage();
-      var fa = ablageHolen("farbe"), fn = ablageHolen("farbeName");
-      var geaendert = false;
-      if (sb && sb !== zustand.sprechbild) { zustand.sprechbild = sb; geaendert = true; }
-      if (fa !== null && fa !== (zustand.farbe || "")) { zustand.farbe = fa; geaendert = true; }
-      if (fn !== null && fn !== (zustand.farbeName || "")) { zustand.farbeName = fn; geaendert = true; }
-      if (!geaendert) return false;
-      if (kanal) {
-        senden({ art: "stumm", tonAn: zustand.tonAn, bildAn: zustand.bildAn,
-                 bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
-                 sprechbild: zustand.sprechbild });
-      }
-      melden();
-      return true;
-    },
     sprechbildSetzen: function (x) {
       if (!SPRECHBILDER[x]) return false;
       zustand.sprechbild = x;
