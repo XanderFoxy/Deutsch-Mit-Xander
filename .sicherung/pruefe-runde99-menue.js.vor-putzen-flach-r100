@@ -52,10 +52,7 @@ const GRUPPEN = {
   "Schmutzig": ["Paint", "Sprühdose"],
   /* Walkie-Talkie: „bei Putzen ist die Birne mit untergebracht, das
      macht keinen Sinn." */
-  /* RUNDE 101 — Xander (Abnahme 10): „Die Spucke ist nicht mehr auffindbar
-     unter Sauber machen." Putzen ist dort jetzt aufgeklappt: Schwamm,
-     Lappen und Spucke stehen direkt da. */
-  "Sauber machen": ["Schwamm und Eimer", "Putzlappen", "Draufspucken", "Wischer", "Waschmaschine"],
+  "Sauber machen": ["Putzen", "Wischer"],
   /* XANDER: „Das Frivole und das Sexy koenntest du auch mal sammeln,
      das kann ein Untermenue sein." */
   "Frivol": ["Ups!", "Klaps"]

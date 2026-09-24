@@ -291,12 +291,11 @@ const sage = (gut, was, zusatz) => {
   sage(wechsel >= 6, "Beim Schleudern dreht es sich mehrmals ganz herum", wechsel + " Halbdrehungen gezaehlt");
   sage(wm.nachher === "none", "Am Ende steht das Bild wieder gerade", wm.nachher);
   const ton = (n) => (wm.toene.find((t) => t[0] === n) || [n, -1])[1];
-  sage(Math.abs(ton("schiffwasser") - 900) <= 150, "Das Wasser rauscht, wenn es einlaeuft (0,9 s)",
-    ton("schiffwasser") + " ms");
-  sage(Math.abs(ton("kugelschuetteln") - 1500) <= 150, "Das Schwappen kommt mit dem Waschen (1,5 s)",
-    ton("kugelschuetteln") + " ms");
-  sage(Math.abs(ton("sogwasser") - 3200) <= 150, "Das Abpumpen kommt, wenn das Wasser sinkt (3,2 s)",
-    ton("sogwasser") + " ms");
+  /* RUNDE 101 — ein eigener Waschmaschinen-Ton (Xander: „Echten
+     Waschmaschinen-Ton machen"), schon auf die Phasen geschnitten; er
+     beginnt mit der Animation. */
+  sage(ton("waschmaschine") >= 0 && ton("waschmaschine") <= 150, "Der eigene Waschmaschinen-Ton beginnt mit der Animation",
+    ton("waschmaschine") + " ms");
 
   /* ===================================================================
      RUNDE 101 — DER AUFZIEH-HOT-ROD

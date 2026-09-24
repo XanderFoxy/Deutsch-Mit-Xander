@@ -12320,7 +12320,7 @@ window.LiveChat = (function () {
       /* RUNDE 101 — der Bagger laedt bei 80 % von 3,6 s ab und federt
          bis 86 % (3096 ms) nach; umgesetzt wird danach. */
       var dauerH = wieH === "lasso" ? 2950 : wieH === "kranheben" ? 2420
-        : wieH === "bagger" ? 4200
+        : wieH === "bagger" ? 3150
         /* „Hau ab": das Bild steht bei 93 % von 2 s still (1860 ms). */
         : wieH === "hauab" ? 1900 : 3150;
       offeneZuege.push({ werfer: zustand.ichName, wen: wenH.name, ziel: nummerH,

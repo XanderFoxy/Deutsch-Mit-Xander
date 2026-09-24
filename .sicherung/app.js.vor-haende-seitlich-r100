@@ -25829,11 +25829,7 @@
     /* RUNDE 101 — die Waschmaschine: das Einlaufen des Wassers. Die
        beiden anderen Phasen (Waschen, Abpumpen) legt lcWaschmaschine
        selbst auf ihre Zeit. */
-    /* RUNDE 101 — XANDER (Abnahme 37): „Echten Waschmaschinen-Ton machen".
-       Aus einer ElevenLabs-Aufnahme geschnitten, Stueck fuer Stueck auf die
-       Uhr der Animation gelegt: Tuer zu 0,7 s, Wasser 0,9 s, Poltern 1,5 s,
-       Pumpe 3,15 s, Schleudern 3,3 s, Riegel 4,95 s (5,6 s lang). */
-    waschmaschine:  { ton: "waschmaschine", dauer: 5600, laut: 0.65 },
+    waschmaschine:  { ton: "schiffwasser", dauer: 1400, laut: 0.6 },
     /* „wenn man das Ei aufschlaegt, das kann auch realistischer
        klingen und dann ... kann das so bisschen eklig klingen."
        Das sind ZWEI Dinge nacheinander: erst knackt die Schale
@@ -29420,10 +29416,6 @@
     ["\ud83d\udcb8", "Geld", "geld"],
     ["\ud83c\udf6c", "Bonbons",   "bonbon"],
     ["\ud83d\udd28", "Hammer",    "hammer"],
-    /* XANDER (Walkie, Abnahme Hammer): „Pflaster taucht nicht auf" —
-       es gab nur /pflaster, aber keine Kachel. Jetzt steht es direkt
-       neben dem Hammer, der es noetig macht. */
-    ["\ud83e\ude79", "Pflaster",  "pflaster"],
     ["\u2744\ufe0f", "Schnee", "schnee"],
     ["\ud83e\ude83", "Bumerang", "bumerang"],
     ["\ud83c\udff9", "Pfeil",    "pfeil"],
@@ -29995,7 +29987,6 @@
      einer Gruppe verschwinden aus der obersten Ebene und stehen
      stattdessen unter IHRER Kachel — an der Stelle, wo vorher das
      erste Mitglied stand, damit sich nichts anderes verschiebt. */
-  const LC_GRUPPE_FLACH = { putzen: 1 };
   function lcSpielzeugGeordnet() {
     const wohin = {};
     LC_MENUE_GRUPPEN.forEach((g, gi) => {
@@ -30011,17 +30002,7 @@
          Ebene dagegen „ohne Namen". Es darf deshalb NICHT einfach
          mitwandern — sonst stuende hinter dem Befehl ploetzlich das
          Wort „true". */
-      /* RUNDE 101 — XANDER (Abnahme 10): „Die Spucke ist nicht mehr
-         auffindbar unter Sauber machen." Sie stand drei Ebenen tief
-         (Sauber machen → Putzen → Draufspucken). Ein Untermenue, das in
-         einer Gruppe steht und in LC_GRUPPE_FLACH genannt ist, wird dort
-         gleich aufgeklappt: Schwamm, Lappen und Spucke stehen direkt
-         unter „Sauber machen". */
-      if (LC_GRUPPE_FLACH[k[2]] && Array.isArray(k[4]) && k[4].length) {
-        k[4].forEach((u) => inhalt[gi].push(u));
-      } else {
-        inhalt[gi].push([k[0], k[1], k[2], null, k[4]]);
-      }
+      inhalt[gi].push([k[0], k[1], k[2], null, k[4]]);
       if (!schon[gi]) { schon[gi] = 1; reihe.push({ gruppe: gi }); }
     });
     return reihe.map((k) => {
@@ -34023,7 +34004,7 @@
        Hochziehen im Rachen noch vor den Wurf, wie es soll. */
     spucken: 630,
     /* 1300 ms minus die 129 ms bis zur Spitze der Aufnahme. */
-    waschmaschine: 0,    /* RUNDE 101: der eigene Ton ist schon auf die Animation gelegt */
+    waschmaschine: 900,  /* RUNDE 101: das Wasser laeuft bei 900 ms ein */
     sabbern: 420,        /* RUNDE 99: der Sabberlaut beginnt mit dem Schlurfen; RUNDE 100: erst wenn der Speichel aus dem Mund quillt (14 % von 3 s) */
     tritt: 180,        /* 0,18 s — „das ist der Anstoss" */
     /* RUNDE 98 — der erste Klatscher liegt bei 45 % des ersten Takts
@@ -39223,14 +39204,11 @@
      ===================================================================== */
   function lcBagger(wen, nachricht) {
     const zielNr = Number(nachricht && nachricht.ziel) || 0;
-    /* RUNDE 101 — XANDER (Walkie): „Zu schnell". 4,8 s statt 3,6 s; alle
-       Marken sind Anteile, sie wandern mit. livechat.js setzt bei 4200 ms
-       um (87,5 %). */
     return lcAmPlatz(wen, "lc-baggerzug", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       const reihe = document.getElementById("lcPlaetze");
       if (!kreis || !reihe) return;
-      const DAUER = 4800;
+      const DAUER = 3600;
       const gr = kreis.offsetWidth || 64;
       const rr = reihe.getBoundingClientRect();
       const lage = (el) => {
@@ -39479,12 +39457,13 @@
       };
       requestAnimationFrame(bild);
       setTimeout(() => { aufraeumen(); buehne.remove(); }, DAUER + 2400);
-      /* RUNDE 101 — XANDER (Walkie): „Echter Bagger-Motorton". Eine Datei,
-         aus einer ElevenLabs-Aufnahme auf diese Uhr geschnitten: Motor beim
-         Hereinfahren, Mahlen des Schaufelrads ab 0,65 s, Motor beim
-         Schwenk, der Schlag beim Abladen bei 80 % (3,82 s), Wegfahren. */
-      lcTonSpaeter("bagger", 0, 0.6, DAUER);
-    }, 4900);
+      /* Die Toene: der Motor beim Hereinfahren, das Graben, der Motor beim
+         Schwenk, das Aufsetzen im Augenblick des Aufpralls (80 %). */
+      lcTonSpaeter("kran", 0, 0.4, 700);
+      lcTonSpaeter("graben", Math.round(DAUER * 0.19), 0.55, 800);
+      lcTonSpaeter("kran", Math.round(DAUER * 0.33), 0.4, 1100);
+      lcTonSpaeter("aufsetzen", Math.round(DAUER * 0.80), 0.55);
+    }, 3700);
   }
 
   /* =====================================================================
@@ -39705,12 +39684,6 @@
       setTimeout(() => { aufraeumen(); buehne.remove(); }, DAUER + 2400);
       /* Die Toene: das Anlegen der Haende (30 %), das Rutschen (60 %). */
       lcTonSpaeter("aufsetzen", Math.round(DAUER * 0.30), 0.45);
-      /* RUNDE 101 — XANDER (Walkie): „Eigener ‚Hau ab!'-Ruf". Die Stimme
-         dessen, der schiebt (Mann/Frau aus seinem Platz; unbekannt =
-         Mann). Das Wort ist in beiden Dateien bei 0,32 s am lautesten —
-         es soll auf den Stoss fallen (30 % = 600 ms), also Start 280 ms. */
-      const gS = String(((vonPlatz || {}).dataset || {}).lcGeschlecht || "").trim().toLowerCase();
-      lcTonSpaeter(/^(w|f)/.test(gS) ? "hauabfrau" : "hauabmann", 280, 0.85);
       lcTonSpaeter("schlurfen", Math.round(DAUER * 0.60), 0.5, 520);
     }, 2100);
   }
@@ -40499,10 +40472,7 @@
     return lcAmPlatz(wen, "lc-wasch", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
       /* Das Gehaeuse: Masseinheit ist 1 % des Kreises. Der Kreis sitzt
-         bei (95 | 122) mit Radius 50 — dort ist das Loch fuer die Tuer.
-         RUNDE 101 — XANDER (Abnahme 37): „Maschine zu groß". Der Korpus
-         ist jetzt 142 statt 186 breit und 172 statt 217 hoch (ein Viertel
-         kleiner); das Bullauge bleibt genau das Bild. */
+         bei (95 | 122) mit Radius 50 — dort ist das Loch fuer die Tuer. */
       const gehaeuse =
         '<svg class="lc-wasch-gehaeuse" viewBox="0 0 190 225" aria-hidden="true">'
         + '<defs>'
@@ -40514,23 +40484,23 @@
         + '</defs>'
         /* Der Korpus mit dem Loch fuer die Tuer (evenodd). */
         + '<path fill="url(#lcWaschBlech)" stroke="#aeb7c3" stroke-width="1.6" fill-rule="evenodd"'
-        + ' d="M30 32 H160 Q166 32 166 38 V198 Q166 204 160 204 H30 Q24 204 24 198 V38 Q24 32 30 32 Z'
+        + ' d="M10 2 H180 Q188 2 188 10 V211 Q188 219 180 219 H10 Q2 219 2 211 V10 Q2 2 10 2 Z'
         + ' M95 72 A50 50 0 1 0 95 172 A50 50 0 1 0 95 72 Z"/>'
         /* Die Gummimanschette direkt am Bild. */
         + '<circle cx="95" cy="122" r="53" fill="none" stroke="url(#lcWaschManschette)" stroke-width="6"/>'
         /* Die Bedienleiste oben: Waschmittelfach, Anzeige, Drehknopf. */
-        + '<path d="M24 62 H166" stroke="#b9c1cc" stroke-width="1.2"/>'
-        + '<rect x="30" y="38" width="30" height="17" rx="2.5" fill="#e6eaf0" stroke="#b3bcc8" stroke-width="1"/>'
-        + '<rect x="34" y="49" width="22" height="2.4" rx="1.2" fill="#b3bcc8"/>'
-        + '<rect x="68" y="39" width="40" height="15" rx="2.5" fill="#1d2733"/>'
-        + '<text class="lc-wasch-anzeige" x="88" y="50.5" text-anchor="middle">1:20</text>'
-        + '<circle cx="116" cy="46.5" r="2" class="lc-wasch-lampe"/>'
-        + '<circle cx="146" cy="47" r="10" fill="#dfe4ea" stroke="#9aa4b1" stroke-width="1.4"/>'
-        + '<g class="lc-wasch-knopf"><rect x="144.8" y="38.5" width="2.4" height="7" rx="1.2" fill="#6b7686"/></g>'
+        + '<path d="M2 42 H188" stroke="#b9c1cc" stroke-width="1.4"/>'
+        + '<rect x="12" y="10" width="46" height="24" rx="3" fill="#e6eaf0" stroke="#b3bcc8" stroke-width="1.2"/>'
+        + '<rect x="18" y="26" width="34" height="3" rx="1.5" fill="#b3bcc8"/>'
+        + '<rect x="70" y="13" width="44" height="17" rx="3" fill="#1d2733"/>'
+        + '<text class="lc-wasch-anzeige" x="92" y="26" text-anchor="middle">1:20</text>'
+        + '<circle cx="124" cy="21.5" r="2.2" class="lc-wasch-lampe"/>'
+        + '<circle cx="158" cy="22" r="13" fill="#dfe4ea" stroke="#9aa4b1" stroke-width="1.6"/>'
+        + '<g class="lc-wasch-knopf"><rect x="156.5" y="11" width="3" height="9" rx="1.5" fill="#6b7686"/></g>'
         /* Sockelblende und Fuesse. */
-        + '<path d="M24 192 H166" stroke="#c2c9d3" stroke-width="1"/>'
-        + '<rect x="32" y="204" width="13" height="5" rx="2" fill="#8a93a0"/>'
-        + '<rect x="145" y="204" width="13" height="5" rx="2" fill="#8a93a0"/>'
+        + '<path d="M2 200 H188" stroke="#c2c9d3" stroke-width="1.2"/>'
+        + '<rect x="14" y="219" width="16" height="6" rx="2" fill="#8a93a0"/>'
+        + '<rect x="160" y="219" width="16" height="6" rx="2" fill="#8a93a0"/>'
         + '</svg>';
       /* Die Tuer: Chromring und Glas, Scharnier links. Das Glas ist in
          der Mitte ganz klar, nur zum Rand hin leicht blaeulich, und oben
@@ -40624,7 +40594,8 @@
 
       /* Die Toene — der erste kommt ueber LC_TREFFER, wenn das Wasser
          einlaeuft (900 ms); diese beiden liegen auf ihren Phasen. */
-      /* Der Ton kommt ueber LC_TON_PLAN (eine Datei fuer alle Phasen). */
+      lcTonSpaeter("kugelschuetteln", 1500, 0.55, 1700);
+      lcTonSpaeter("sogwasser", 3200, 0.6, 900);
     }, DAUER, "waschmaschine");
   }
 
@@ -46562,22 +46533,6 @@
         handLast.style.backgroundImage = "url(" + quelle.replace(/[()"']/g, "") + ")";
       } else {
         handLast.textContent = (ab.name || "?").charAt(0).toUpperCase();
-        /* RUNDE 101 — XANDER (Abnahme 6): „Hand sieht unecht aus".
-           Standbild: das getragene Bild wurde SCHWARZ (#3a3a3a aus dem
-           Stilblatt), waehrend es am Platz orange oder gruen war — ein
-           anderes Bild als das, das gegriffen wurde. Jetzt traegt es die
-           Farbe, die der Kreis am Platz wirklich hat. */
-        try {
-          /* GEMESSEN: der Kreis selbst ist cremefarben, die Farbe des
-             Buchstabens sitzt auf .lc-initial (Alex orange, Bea gruen). */
-          const kr = ab.el.querySelector(".lc-initial") || ab.el.querySelector(".lc-kreis");
-          const cs = kr ? getComputedStyle(kr) : null;
-          if (cs && cs.backgroundImage && cs.backgroundImage !== "none") handLast.style.backgroundImage = cs.backgroundImage;
-          if (cs && cs.backgroundColor && !/rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor)) {
-            handLast.style.backgroundColor = cs.backgroundColor;
-          }
-          if (cs && cs.color) handLast.style.color = cs.color;
-        } catch (e) {}
       }
       reihe.appendChild(handLast);
       weg.push(handLast);
@@ -46876,52 +46831,25 @@
            Sonst faehrt die Hand dem Bild entgegen, das sie gleich
            hintragen soll, und kreuzt ihren eigenen Weg. */
         const vonSeite = (ende.x >= start.x) ? -1 : 1;
-        /* =========================================================
-           RUNDE 101 — WIRKLICH SEITLICH
-           ---------------------------------------------------------
-           XANDER (Abnahme 6/37, Hände): „Greifen nicht seitlich" und
-           „Hand sieht unecht aus".
-           NACHGESEHEN (Standbilder): Runde 99 liess die Hand zwar schraeg
-           hereinkommen (26 Grad), richtete sie zum Zupacken aber auf 7
-           Grad auf — gegriffen wurde also doch von OBEN, und die vier
-           Finger lagen beim Tragen quer ueber dem ganzen Gesicht.
-           JETZT kommt sie WAAGERECHT von der Seite (78 Grad gedreht,
-           der Arm zeigt nach aussen), die Knoechel liegen an der Kante
-           des Bildes, und die Finger legen sich nur um den Rand. Sie
-           ist dabei etwas kleiner (0,78) — eine Hand, die ein Bild
-           seitlich haelt, ist nicht groesser als das Bild. So bleibt
-           die Mitte des Gesichts frei.
-           Rechnung: die Hand dreht um ihre Mitte; ihre Knoechel liegen
-           5 Einheiten unter der Mitte (1 Einheit = 1,5 d / 120). Damit
-           sie auf der Bildkante (0,55 d) liegen, steht die Mitte der
-           Hand 0,6 d neben dem Bild, entlang ihrer eigenen Achse. */
-        /* XANDER (Walkie, Abnahme 14/37): „Der Daumen der Hand muss oben
-           sein, wo es logisch ist, genau so bei der seitlichen Greifhand,
-           die einen transportiert in den Reisen."
-           NACHGESEHEN (Standbild 850 ms): von LINKS kam die rechte Hand
-           mit dem Daumen nach UNTEN. Von links greift deshalb jetzt die
-           gespiegelte, also die linke Hand — Daumen oben. Von rechts lag
-           er schon oben. */
-        const SEITE_GRAD = 78, SEITE_KLEIN = 0.78;
-        const achse = { x: Math.sin(SEITE_GRAD * Math.PI / 180), y: -Math.cos(SEITE_GRAD * Math.PI / 180) };
         const handBei = (fx, fy, hoch, dreh, zeit, sicht, quer) => ({
-          transform: "translate(calc(-50% + "
-            + (dxH * fx + vonSeite * achse.x * d * 0.6 + (quer || 0)).toFixed(1) + "px), calc(-50% + "
-            + (dyH * fy + achse.y * d * 0.6 + hoch).toFixed(1) + "px)) rotate("
-            + (vonSeite * SEITE_GRAD + dreh).toFixed(1) + "deg) scale(" + (vonSeite < 0 ? -SEITE_KLEIN : SEITE_KLEIN) + ", " + SEITE_KLEIN + ")",
+          transform: "translate(calc(-50% + " + (dxH * fx + (quer || 0)).toFixed(1)
+            + "px), calc(-50% + "
+            + (dyH * fy).toFixed(1) + "px)) translateY(" + (griff + hoch).toFixed(1)
+            + "px) rotate(" + dreh + "deg)",
           opacity: sicht === undefined ? 1 : sicht,
           offset: Math.max(0, Math.min(1, zeit))
         });
         const handRahmen = [
-          /* HEREIN — waagerecht von der Seite, auf Hoehe des Bildes; sie
-             wird langsamer, je naeher sie kommt. */
-          handBei(0, 0, -d * 0.1, 0, 0, 0, vonSeite * d * 2.6),
-          handBei(0, 0, -d * 0.1, 0, 0.04 * tAnH, 1, vonSeite * d * 2.1),
-          handBei(0, 0, -d * 0.06, -2, 0.09 * tAnH, 1, vonSeite * d * 1.3),
-          handBei(0, 0, -d * 0.02, -3, 0.14 * tAnH, 1, vonSeite * d * 0.6),
-          /* ZUGREIFEN: sie hält kurz an, bevor sie zupackt. */
-          handBei(0, 0, 0, -2, 0.19 * tAnH, 1, vonSeite * d * 0.12),
-          handBei(0, 0, d * 0.03, 0, 0.24 * tAnH, 1, 0),
+          /* HERUNTER — sie faellt nicht, sie senkt sich, wird aber
+             schneller: die Abstaende werden groesser. */
+          handBei(0, 0, -d * 4.2, vonSeite * 26, 0, 0, vonSeite * d * 1.2),
+          handBei(0, 0, -d * 3.4, vonSeite * 26, 0.04 * tAnH, 1, vonSeite * d * 1.1),
+          handBei(0, 0, -d * 2.2, vonSeite * 24, 0.09 * tAnH, 1, vonSeite * d * 0.82),
+          handBei(0, 0, -d * 0.9, vonSeite * 18, 0.14 * tAnH, 1, vonSeite * d * 0.44),
+          /* ZUGREIFEN: sie hält kurz an, bevor sie zupackt — und
+             steht dabei noch schraeg. */
+          handBei(0, 0, 0, vonSeite * 12, 0.19 * tAnH, 1, vonSeite * d * 0.14),
+          handBei(0, 0, d * 0.06, vonSeite * 7, 0.24 * tAnH, 1, vonSeite * d * 0.05),
           /* HERAUSZUPFEN — hier sitzt das Plopp. Ruckartig: das
              groesste Stueck Weg in der kuerzesten Zeit. */
           handBei(0, 0, -d * 0.30, -5, 0.29 * tAnH, 1),
@@ -46931,15 +46859,18 @@
           handBei(0.46, 0.46, hochH * 1.08, -3, 0.58 * tAnH, 1),
           handBei(0.78, 0.78, hochH * 1.04, 3, 0.70 * tAnH, 1),
           handBei(1, 1, hochH, 0, 0.78 * tAnH, 1),
-          /* ABSETZEN — langsamer als das Anheben. */
+          /* ABSETZEN — langsamer als das Anheben. Die Abstaende
+             werden nach unten hin KLEINER. */
           handBei(1, 1, hochH * 0.62, -2, 0.85 * tAnH, 1),
           handBei(1, 1, hochH * 0.30, -2, 0.92 * tAnH, 1),
           handBei(1, 1, hochH * 0.10, -1, 0.97 * tAnH, 1),
           handBei(1, 1, 0, 0, tAnH, 1),
-          /* LOSLASSEN und wieder zur Seite hinaus, so wie sie
+          /* LOSLASSEN und wieder hinauf. */
+          /* Und sie geht wieder zur Seite hinaus, so wie sie
              hereingekommen ist. */
-          handBei(1, 1, 0, 2, tAnH + (1 - tAnH) * 0.45, 1, vonSeite * d * 0.7),
-          handBei(1, 1, 0, 0, 1, 0, vonSeite * d * 2.6)
+          handBei(1, 1, -d * 1.4, vonSeite * 10, tAnH + (1 - tAnH) * 0.45, 1,
+            vonSeite * d * 0.35),
+          handBei(1, 1, -d * 4.2, vonSeite * 24, 1, 0, vonSeite * d * 1.1)
         ];
         hand.animate(handRahmen, { duration: dauer, easing: "linear", fill: "both" });
         /* Dieselbe Bewegung, Bild fuer Bild, fuer die Fingerschicht
@@ -52464,11 +52395,7 @@
       }
       if (wie === "spucke") {
         blende.insertAdjacentHTML("beforeend", '<i class="lc-putz-spucke"></i>');
-        /* Der Klecks klatscht bei 9 % (288 ms) auf. „rotze" (vorher) hat
-           seinen Aufschlag erst bei 0,62 s — er haette 330 ms VOR der
-           Animation starten muessen. „spucktreffer" ist bei 0,05–0,1 s am
-           lautesten (gemessen), also Start 210 ms: der Klatsch sitzt. */
-        lcTonSpaeter("spucktreffer", 210, 0.55);
+        lcTonSpaeter("rotze", 120, 0.5);
       }
       /* DAS PUTZZEUG SELBST. */
       const zeug = document.createElement("span");
@@ -52557,10 +52484,8 @@
         if (nm) { delete lcSprayListe[nm]; delete lcSprayEigen[nm]; }
         const lack = platz.querySelector(".lc-sprayfarbe");
         if (lack) {
-          /* RUNDE 101 — „lc-geputzt": der Rest geht in 0,5 s, nicht in 2,4 s
-             (siehe korrekturen.css, „die Spucke entfernt sich nicht richtig"). */
-          lack.classList.add("lc-sprayfarbe-geht", "lc-geputzt");
-          setTimeout(() => { try { lack.remove(); } catch (e) {} }, 600);
+          lack.classList.add("lc-sprayfarbe-geht");
+          setTimeout(() => { try { lack.remove(); } catch (e) {} }, 2600);
         }
         lcDreckWeg(platz);
       }, sauber);

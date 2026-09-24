@@ -323,7 +323,7 @@ const sage = (gut, was, zusatz) => {
       window.DMA_TONLOG = [];
       window.LiveChat.pruefBefehl("/bagger " + wer + " " + ziel);
       const t0 = performance.now(), proben = [];
-      while (performance.now() < t0 + 4200) {
+      while (performance.now() < t0 + 5600) {
         const t = performance.now() - t0, g = reihe.getBoundingClientRect();
         const k = mitte(kreis.getBoundingClientRect());
         const nabe = document.querySelector(".lc-bg-nabe");
@@ -331,7 +331,7 @@ const sage = (gut, was, zusatz) => {
         /* Liegt die Radnabe auf einem Gesicht? (innerhalb 30 % des Radius
            um die Mitte eines anderen Bildes) */
         let aufGesicht = false;
-        if (nb && t > 3600 * 0.15 && t < 3600 * 0.84) {
+        if (nb && t > 4800 * 0.15 && t < 4800 * 0.84) {
           reihe.querySelectorAll(".lc-platz .lc-kreis").forEach((kk) => {
             if (kk === kreis) return;
             const m = mitte(kk.getBoundingClientRect());
@@ -357,7 +357,7 @@ const sage = (gut, was, zusatz) => {
     /* 80 % ist der Aufprall; danach federt es bis 86 % gewollt nach.
        Gesucht wird der Augenblick, in dem das Bild dem Ziel am naechsten
        ist — und der muss zum Aufsetz-Ton passen. */
-    const umLand = P.filter((p) => p.t > 3600 * 0.76 && p.t < 3600 * 0.9);
+    const umLand = P.filter((p) => p.t > 4800 * 0.76 && p.t < 4800 * 0.86);
     /* Der ERSTE Augenblick auf dem Ziel (spaeter, beim Platztausch um
        3150 ms, liegt es sowieso dort). */
     const land = umLand.find((c) => Math.hypot(c.bx - c.zx, c.by - c.zy) <= 3)
@@ -365,23 +365,25 @@ const sage = (gut, was, zusatz) => {
     const abLand = Math.round(Math.hypot(land.bx - land.zx, land.by - land.zy));
     let sprung = 0, sprungBei = 0;
     for (let i = 1; i < P.length; i++) {
-      if (P[i].t > 3600 * 0.84) break;
+      if (P[i].t > 4800 * 0.84) break;
       const d = Math.hypot(P[i].bx - P[i - 1].bx, P[i].by - P[i - 1].by);
       if (d > sprung) { sprung = d; sprungBei = P[i].t; }
     }
     sage(/Schaufelradbagger/.test(b.nachricht), b.wer + " → " + b.ziel + ": die Zeile nennt den Bagger", b.nachricht.trim());
-    sage(P.filter((p) => p.t > 200 && p.t < 3300).every((p) => p.da), "   der Bagger steht die ganze Zeit da");
-    const tonAuf = (b.toene.find((x) => x[0] === "aufsetzen") || ["", -1])[1];
+    sage(P.filter((p) => p.t > 200 && p.t < 4400).every((p) => p.da), "   der Bagger steht die ganze Zeit da");
+    /* RUNDE 101 — eigener Bagger-Ton, eine Datei; der Schlag darin liegt
+       bei 80 % (3,82 s). Xander: „Zu schnell" — jetzt 4,8 s. */
+    const tonB = (b.toene.find((x) => x[0] === "bagger") || ["", -1])[1];
     sage(abLand <= 3, "   das Bild landet genau auf dem Zielplatz", abLand + " px daneben, bei " + land.t + " ms");
-    sage(Math.abs(land.t - tonAuf) <= 80, "   und der Aufsetz-Ton kommt mit dem Aufprall", "Aufprall " + land.t + " ms, Ton " + tonAuf + " ms");
+    sage(tonB >= 0 && Math.abs(land.t - (tonB + 3820)) <= 100, "   und der Schlag im Bagger-Ton kommt mit dem Aufprall",
+      "Aufprall " + land.t + " ms, Schlag " + (tonB + 3820) + " ms");
     sage(sprung <= b.breiteK * 0.25, "   das Bild springt nie (groesster Schritt je Bild)", Math.round(sprung) + " px bei " + sprungBei + " ms");
     sage(b.sitztAuf === b.ziel, "   danach sitzt " + b.wer + " wirklich auf Platz " + b.ziel, "Platz " + b.sitztAuf);
-    sage(P.filter((p) => p.t > 4000).every((p) => !p.da), "   und der Bagger ist wieder weg");
+    sage(P.filter((p) => p.t > 5300).every((p) => !p.da), "   und der Bagger ist wieder weg");
     const auf = P.filter((p) => p.aufGesicht).length;
     sage(auf === 0, "   die Radnabe steht nie auf einem fremden Gesicht", auf + " Bilder");
     const ton = (n) => (b.toene.find((x) => x[0] === n) || [n, -1])[1];
-    sage(Math.abs(ton("aufsetzen") - 2880) <= 150, "   das Aufsetzen klingt beim Aufprall (2,88 s)", ton("aufsetzen") + " ms");
-    sage(Math.abs(ton("graben") - 684) <= 150, "   das Graben klingt beim Schaufeln (0,68 s)", ton("graben") + " ms");
+    sage(ton("bagger") >= 0 && ton("bagger") <= 120, "   der Bagger-Ton beginnt mit der Animation", ton("bagger") + " ms");
   });
 
   /* =====================================================================
@@ -491,6 +493,9 @@ const sage = (gut, was, zusatz) => {
     const ton = (n) => (b.toene.find((x) => x[0] === n) || [n, -1])[1];
     sage(Math.abs(ton("aufsetzen") - 600) <= 120 && Math.abs(ton("schlurfen") - 1200) <= 120,
       "   Anlegen (0,6 s) und Rutschen (1,2 s) sind zu hoeren", ton("aufsetzen") + " / " + ton("schlurfen") + " ms");
+    /* RUNDE 101 — Xander: „Eigener ‚Hau ab!'-Ruf". */
+    sage(Math.abs(ton("hauabmann") - 280) <= 120 || Math.abs(ton("hauabfrau") - 280) <= 120,
+      "   und der Ruf „Hau ab!“ faellt auf den Stoss", ton("hauabmann") + " / " + ton("hauabfrau") + " ms");
   }
 
   await br.close();

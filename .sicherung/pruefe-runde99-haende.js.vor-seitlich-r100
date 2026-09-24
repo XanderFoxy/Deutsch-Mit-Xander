@@ -177,13 +177,6 @@ const HAENDE = [
   for (const h of HAENDE) {
     await handStellen(pg, h.art, 0.12);
     masse[h.art] = await pg.evaluate(() => {
-      /* RUNDE 101 — die Hand greift jetzt SEITLICH (78 Grad gedreht). Ein
-         Umrechteck misst dann quer statt laengs. Fuer die Masse wird die
-         Drehung der ganzen Hand deshalb abgenommen; die Gelenke bleiben,
-         wie sie sind. */
-      const vorn = document.querySelector(".lc-riesenhand-vorn");
-      vorn.getAnimations().forEach((an) => { try { an.cancel(); } catch (e) {} });
-      vorn.style.transform = "translate(-50%, -50%)";
       const f = document.querySelector(".lc-riesenhand-vorn .lc-rh-fuell");
       /* NUR DAS GLIED messen, nicht die Gruppe: die Gruppe enthaelt
          bei der Hexe auch die Kralle, und dann waere eine duenne Hand
@@ -363,11 +356,7 @@ const HAENDE = [
       const rh = h.getBoundingClientRect();
       const platz = document.querySelectorAll("#lcPlaetze .lc-platz")[0];
       const rp = platz.getBoundingClientRect();
-      const last = document.querySelector(".lc-riesenhand-last");
-      let lastWinkel = null;
-      if (last) { const ml = new DOMMatrixReadOnly(getComputedStyle(last).transform); lastWinkel = Math.round(Math.atan2(ml.b, ml.a) * 1800 / Math.PI) / 10; }
       return {
-        lastWinkel: lastWinkel,
         winkel: Math.round(winkel * 10) / 10,
         quer: Math.round(((rh.left + rh.width / 2) - (rp.left + rp.width / 2)) * 10) / 10,
         platzBreit: Math.round(rp.width)
@@ -379,25 +368,18 @@ const HAENDE = [
   if (bahn.length < 30) {
     sage(false, "Die Bahn der Hand liess sich nicht abtasten", bahn.length + " Punkte");
   } else {
-    /* RUNDE 101 — XANDER (Abnahme 6): „Greifen nicht seitlich". Jetzt
-       gilt: sie kommt waagerecht (mindestens 60 Grad) und BLEIBT beim
-       Tragen seitlich; gerade bleiben muss das BILD, nicht die Hand. */
     const fruh = bahn.filter((p) => p.t <= 0.16);
     const mitte = bahn.filter((p) => p.t >= 0.42 && p.t <= 0.60);
     const maxWinkel = Math.max.apply(null, fruh.map((p) => Math.abs(p.winkel)));
     const maxQuer = Math.max.apply(null, fruh.map((p) => Math.abs(p.quer)));
     const mittelWinkel = Math.max.apply(null, mitte.map((p) => Math.abs(p.winkel)));
     const breit = bahn[0].platzBreit;
-    sage(maxWinkel >= 60, "Sie kommt waagerecht von der Seite (nicht von oben)",
+    sage(maxWinkel >= 18, "Beim Herunterkommen steht sie schraeg",
       maxWinkel.toFixed(1) + " Grad");
     sage(maxQuer >= breit * 0.5, "Und sie kommt wirklich von der SEITE",
       maxQuer.toFixed(0) + " px neben dem Platz (Platz " + breit + " px breit)");
-    sage(mittelWinkel >= 60, "Beim Tragen haelt sie das Bild weiter von der Seite",
+    sage(mittelWinkel <= 10, "Beim Tragen haengt das Bild nicht schief",
       mittelWinkel.toFixed(1) + " Grad");
-    const bildMitte = bahn.filter((p) => p.t >= 0.42 && p.t <= 0.60 && p.lastWinkel !== null);
-    const bildSchief = Math.max.apply(null, bildMitte.map((p) => Math.abs(p.lastWinkel)));
-    sage(bildMitte.length && bildSchief <= 10, "und das Bild selbst haengt dabei nicht schief",
-      bildSchief.toFixed(1) + " Grad");
   }
 
   await br.close(); srv.close();

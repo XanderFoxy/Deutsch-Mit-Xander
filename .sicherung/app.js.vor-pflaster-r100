@@ -29420,10 +29420,6 @@
     ["\ud83d\udcb8", "Geld", "geld"],
     ["\ud83c\udf6c", "Bonbons",   "bonbon"],
     ["\ud83d\udd28", "Hammer",    "hammer"],
-    /* XANDER (Walkie, Abnahme Hammer): „Pflaster taucht nicht auf" —
-       es gab nur /pflaster, aber keine Kachel. Jetzt steht es direkt
-       neben dem Hammer, der es noetig macht. */
-    ["\ud83e\ude79", "Pflaster",  "pflaster"],
     ["\u2744\ufe0f", "Schnee", "schnee"],
     ["\ud83e\ude83", "Bumerang", "bumerang"],
     ["\ud83c\udff9", "Pfeil",    "pfeil"],
@@ -46895,20 +46891,13 @@
            5 Einheiten unter der Mitte (1 Einheit = 1,5 d / 120). Damit
            sie auf der Bildkante (0,55 d) liegen, steht die Mitte der
            Hand 0,6 d neben dem Bild, entlang ihrer eigenen Achse. */
-        /* XANDER (Walkie, Abnahme 14/37): „Der Daumen der Hand muss oben
-           sein, wo es logisch ist, genau so bei der seitlichen Greifhand,
-           die einen transportiert in den Reisen."
-           NACHGESEHEN (Standbild 850 ms): von LINKS kam die rechte Hand
-           mit dem Daumen nach UNTEN. Von links greift deshalb jetzt die
-           gespiegelte, also die linke Hand — Daumen oben. Von rechts lag
-           er schon oben. */
         const SEITE_GRAD = 78, SEITE_KLEIN = 0.78;
         const achse = { x: Math.sin(SEITE_GRAD * Math.PI / 180), y: -Math.cos(SEITE_GRAD * Math.PI / 180) };
         const handBei = (fx, fy, hoch, dreh, zeit, sicht, quer) => ({
           transform: "translate(calc(-50% + "
             + (dxH * fx + vonSeite * achse.x * d * 0.6 + (quer || 0)).toFixed(1) + "px), calc(-50% + "
             + (dyH * fy + achse.y * d * 0.6 + hoch).toFixed(1) + "px)) rotate("
-            + (vonSeite * SEITE_GRAD + dreh).toFixed(1) + "deg) scale(" + (vonSeite < 0 ? -SEITE_KLEIN : SEITE_KLEIN) + ", " + SEITE_KLEIN + ")",
+            + (vonSeite * SEITE_GRAD + dreh).toFixed(1) + "deg) scale(" + SEITE_KLEIN + ")",
           opacity: sicht === undefined ? 1 : sicht,
           offset: Math.max(0, Math.min(1, zeit))
         });
