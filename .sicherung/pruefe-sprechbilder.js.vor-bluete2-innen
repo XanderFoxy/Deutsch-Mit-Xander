@@ -289,18 +289,11 @@ const TEILCHEN = ["magie", "noten", "herzen", "feuer", "strom2", "blasen"];
   await pg.waitForTimeout(1700);
   const offen = await groesse();
   const formen = await pg.evaluate(() => new Set([...document.querySelectorAll(".lc-sbluete2 .lc-bl-blatt > path:first-of-type")].map((p) => p.getAttribute("d"))).size);
-  /* WALKIE #248 — beim Verstummen legen sich die Blaetter nach INNEN
-     über das Bild (y-Skalierung negativ = zeigt zur Mitte) und die
-     Bluete blendet aus. */
-  const hoehe = () => pg.evaluate(() => [...document.querySelectorAll(".lc-sbluete2 .lc-bl-blatt")].map((g) => {
-    const l = g.transform.animVal; let d = 1; for (let i = 0; i < l.numberOfItems; i++) { const t = l.getItem(i); if (t.type === 3) d *= t.matrix.d; }
-    return Math.round(d * 100) / 100; }));
   await pg.evaluate(() => window.DMA_PRUEFUNG.blueteZu(document.querySelector(".lc-sbluete2")));
-  await pg.waitForTimeout(1250);
-  const innen = await hoehe();
-  await pg.waitForTimeout(500);
-  const blass = await pg.evaluate(() => { const f = document.querySelector(".lc-sbluete2"); const b = f && f.querySelector(".lc-bluete-bild");
-    return { klasse: Boolean(f && f.classList.contains("lc-bl-blasst")), deckkraft: b ? Number(getComputedStyle(b).opacity) : -1 }; });
+  await pg.waitForTimeout(700);
+  const halbZu = await groesse();
+  await pg.waitForTimeout(1300);
+  const zu = await groesse();
   pruefe("8–12 Blaetter", offen.length >= 8 && offen.length <= 12, offen.length);
   pruefe("jedes Blatt hat seine eigene Form", formen === offen.length, formen + " Formen");
   /* RUNDE 101 — XANDER (Walkie #157): „Gemeinsameres Aufgehen."
@@ -308,8 +301,8 @@ const TEILCHEN = ["magie", "noten", "herzen", "feuer", "strom2", "blasen"];
      fuer Blatt). Jetzt: nach 450 ms sind ALLE Blaetter offen (> 0,8). */
   pruefe("sie gehen GEMEINSAM auf (Walkie #157)", Math.min(...frueh) > 0.8, frueh.join(" "));
   pruefe("am Ende sind alle offen", offen.every((x) => x >= 0.95), offen.join(" "));
-  pruefe("beim Verstummen legen sich alle Blaetter nach innen (Walkie #248)", innen.every((x) => x < -1), innen.join(" "));
-  pruefe("dann blendet die Bluete aus", blass.klasse && blass.deckkraft < 0.1, JSON.stringify(blass));
+  pruefe("beim Verstummen Blatt fuer Blatt zu", Math.min(...halbZu) < 0.5 && Math.max(...halbZu) > 0.8, halbZu.join(" "));
+  pruefe("dann ist der Kelch zu", zu.every((x) => x <= 0.35), zu.join(" "));
 
   console.log("\nSCHON-PASS 7 — STROM A / B / C\n");
   const sm = await pg.evaluate(() => {

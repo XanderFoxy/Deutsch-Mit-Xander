@@ -14139,13 +14139,7 @@ window.LiveChat = (function () {
         var redet = laut > LAUT_SCHWELLE && zustand.tonAn && zustand.buehne;
         if (redet) stillSeit = 0;
         else if (!stillSeit) stillSeit = Date.now();
-        /* WALKIE #248 — Blüte 2: „mach die Sensibilität dann ein bisschen
-           schneller so dass man das auch sieht wie das zusammen geht".
-           Bei diesem Sprechbild gilt eine Pause schon nach 0,3 s als
-           Pause (sonst 0,55 s) — dann sieht man die Blätter auch zwischen
-           zwei Sätzen zugehen. */
-        var nachlauf = zustand.sprechbild === "bluete2" ? 300 : STILL_MS;
-        var neu = redet || (stillSeit && Date.now() - stillSeit < nachlauf);
+        var neu = redet || (stillSeit && Date.now() - stillSeit < STILL_MS);
         neu = Boolean(neu);
         if (neu !== zustand.spricht) {
           zustand.spricht = neu;

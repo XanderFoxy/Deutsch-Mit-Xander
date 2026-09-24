@@ -33223,9 +33223,6 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-sprechfeld.lc-sbluete2 .lc-bluete-bild {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
 }
-/* WALKIE #248 — „es langsam wieder darüber legen und dann ausblenden" */
-.lc-sprechfeld.lc-sbluete2 .lc-bluete-bild { transition: opacity .55s ease-in; }
-.lc-sprechfeld.lc-sbluete2.lc-bl-blasst .lc-bluete-bild { opacity: 0; }
 
 /* =====================================================================
    SCHON-PASS SPRECHBILDER — 7. STROM A / B / C (Xanders Liste vom 23.09.)

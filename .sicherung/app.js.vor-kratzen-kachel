@@ -25086,18 +25086,6 @@
         + '<g class="lc-bl-blatt" transform="scale(' + zu + ')">'
         + '<animateTransform class="lc-bl-auf" attributeName="transform" type="scale" dur=".55s" begin="indefinite" fill="freeze" values="' + zu + ";1.15 1.12;.97 .98;" + auf + '" keyTimes="0;.45;.75;1" calcMode="spline" keySplines=".15 .75 .35 1;.4 0 .6 1;.4 0 .6 1"/>'
         + '<animateTransform class="lc-bl-zu" attributeName="transform" type="scale" dur=".4s" begin="indefinite" fill="freeze" values="' + auf + ";" + zu + '" calcMode="spline" keySplines=".4 0 .7 1"/>'
-        /* WALKIE #248 — XANDER: „die Blütenblätter sollen sich nach innen
-           zum Kern der Blume hinschließen also da wo das Zentrum der Blüte
-           ist … wenn man nicht mehr spricht sondern es langsam wieder
-           darüber legen und dann ausblenden … wenn man widerspricht dann
-           gehen sie wieder auf".
-           „innen": das Blatt richtet sich auf (von oben gesehen wird es
-           kurz), klappt über den Ansatz nach INNEN und legt sich lang
-           über das Bild bis fast zur Mitte (scale y negativ = zeigt nach
-           innen; 2,55 × Blattlänge ≈ Weg vom Ring zum Kern).
-           „raus": derselbe Weg zurück, mit einem kleinen Überschwingen. */
-        + '<animateTransform class="lc-bl-innen" attributeName="transform" type="scale" dur=".95s" begin="indefinite" fill="freeze" values="1 1;.96 .16;' + f(0.62 + untenFrei * 0.1) + " " + f(untenFrei ? -1.6 : -2.55) + '" keyTimes="0;.42;1" calcMode="spline" keySplines=".45 0 .6 1;.3 .1 .35 1"/>'
-        + '<animateTransform class="lc-bl-raus" attributeName="transform" type="scale" dur=".42s" begin="indefinite" fill="freeze" values="' + f(0.62 + untenFrei * 0.1) + " " + f(untenFrei ? -1.6 : -2.55) + ';.96 .16;1.12 1.08;1 1" keyTimes="0;.38;.72;1" calcMode="spline" keySplines=".3 0 .6 1;.2 .7 .4 1;.4 0 .6 1"/>'
         + '<path d="' + d + '" transform="rotate(' + dreh + ')" fill="url(#lcBb' + n + ')" stroke="#D38C9F" stroke-opacity=".35" stroke-width=".3"/>'
         + '<path d="' + ader + '" transform="rotate(' + dreh + ')" fill="none" stroke="#C07A8E" stroke-opacity=".4" stroke-width=".22" stroke-linecap="round"/>'
         + "</g></g></g>";
@@ -25150,40 +25138,8 @@
     }
     feld._lcBlZeiten = alle.map((a, i) => setTimeout(() => los(a), i * schritt));
   }
-  /* WALKIE #248 — Zugehen heisst jetzt: nach INNEN über das Bild legen
-     (lc-bl-innen), danach ausblenden (lc-bl-blasst). Spricht die Person
-     wieder, bevor alles weg ist, gehen die Blaetter von dort wieder auf
-     (lc-bl-raus) — nicht noch einmal aus der Knospe. */
-  function lcBlueteAuf(feld) {
-    if (feld.dataset.zu === "1") {
-      feld.dataset.zu = "";
-      clearTimeout(feld._lcBlBlass);
-      (feld._lcBlZeiten || []).forEach(clearTimeout);
-      feld.classList.remove("lc-bl-blasst");
-      const los = (a) => { try { a.beginElement(); } catch (e) {} };
-      feld._lcBlZeiten = [...feld.querySelectorAll(".lc-bl-knick")].map((kn, i) => setTimeout(() => {
-        kn.querySelectorAll("animateTransform.lc-bl-raus").forEach(los);
-      }, (i * 23) % 70));
-      return;
-    }
-    feld.dataset.zu = "";
-    lcBlueteStoss(feld, "lc-bl-auf", false);
-  }
-  function lcBlueteZu(feld) {
-    if (feld.dataset.zu === "1") return;
-    feld.dataset.zu = "1";
-    (feld._lcBlZeiten || []).forEach(clearTimeout);
-    clearTimeout(feld._lcBlBlass);
-    const los = (a) => { try { a.beginElement(); } catch (e) {} };
-    const knicke = [...feld.querySelectorAll(".lc-bl-knick")];
-    /* Nicht streng reihum: jedes Blatt mit eigenem kleinen Versatz
-       (bis 0,2 s) — eine Bluete schliesst sich nicht wie ein Uhrzeiger. */
-    feld._lcBlZeiten = knicke.map((kn, i) => setTimeout(() => {
-      kn.querySelectorAll("animateTransform.lc-bl-innen").forEach(los);
-    }, (i * 53) % 210));
-    /* Wenn alle Blaetter liegen: ausblenden (CSS, 0,55 s). */
-    feld._lcBlBlass = setTimeout(() => feld.classList.add("lc-bl-blasst"), 1080);
-  }
+  function lcBlueteAuf(feld) { feld.dataset.zu = ""; lcBlueteStoss(feld, "lc-bl-auf", false); }
+  function lcBlueteZu(feld) { if (feld.dataset.zu === "1") return; feld.dataset.zu = "1"; lcBlueteStoss(feld, "lc-bl-zu", true); }
 
   /* =================================================================
      SCHON-PASS SPRECHBILDER — 7. STROM A / B / C
@@ -25411,7 +25367,7 @@
     const spektren = ["#00E5FF;#00E5FF;#FF2EC4;#FFD400;#00E5FF;#00E5FF", "#FF2EC4;#FF2EC4;#FFD400;#7CFF4F;#FF2EC4;#FF2EC4",
                       "#FFD400;#FFD400;#FFFFFF;#00E5FF;#FFD400;#FFD400", "#7CFF4F;#7CFF4F;#00E5FF;#FF2EC4;#7CFF4F;#7CFF4F"];
     for (let i = 0; i < 230; i++) {
-      const dur = Math.round(z(0.7, 1.6) * 1000) / 1000, blitz = Math.min(0.6, z(0.28, 0.49) / dur) /* 0,49: nach dem Runden (dur auf 2 Stellen) sonst knapp über 0,5 s */, t0 = z(0.05, 0.95 - blitz);
+      const dur = Math.round(z(0.7, 1.6) * 1000) / 1000, blitz = Math.min(0.6, z(0.28, 0.5) / dur), t0 = z(0.05, 0.95 - blitz);
       const orte = [];
       for (let k = 0; k < 5; k++) {
         const w = z(0, Math.PI * 2), r = R + z(0.4, 4.2);
@@ -26009,7 +25965,7 @@
         knopf._lcBlueteZu = setTimeout(() => {
           knopf.classList.remove("lc-sprech-schliesst", "lc-platz-spricht");
           lcSprechFeldWeg(knopf);
-        }, blueteNeu ? 1700 : 900);
+        }, blueteNeu ? 1600 : 900);
       } else if (sprichtJetzt) {
         clearTimeout(knopf._lcBlueteZu);
         knopf.classList.remove("lc-sprech-schliesst");
@@ -31046,12 +31002,11 @@
     /* FUNK 95 — das Spielsystem: Lebenspunkte, Deutsch-Aufgaben,
        Waffen, Schutz, Duell. Die Kachel oeffnet das Spielfenster. */
     ["\u2694\ufe0f", "Spiel", "*spiel"],
-    /* WALKIE #243 — XANDER: „Bitte nicht unter Ohrfeige sammeln das hat
-       nichts mit einer Ohrfeige zu tun das soll als einzelner Effekt
-       sichtbar sein." (Funk 75 hatte das Kratzen unter die Ohrfeige
-       gelegt; deshalb fand er es nicht.) Jetzt zwei eigene Kacheln. */
-    ["\ud83e\udef3", "Ohrfeige",  "ohrfeige"],
-    ["\ud83d\udc85", "Kratzen",   "kratzen"],
+    /* FUNK 75 — das Kratzen steht bei der Ohrfeige: beides tut man
+       jemandem an. So bleibt das Menue so lang, wie es ist. */
+    ["\ud83e\udef3", "Ohrfeige",  "ohrfeige", false,
+      [["\ud83e\udef3", "Ohrfeige", "ohrfeige"],
+       ["\ud83d\udc85", "Kratzen", "kratzen"]]],
     ["\ud83c\udfb0", "Zufall",    "zufall", true],
     /* „Das wäre die witzigste Animation." */
     /* RUNDE 76 — XANDER: „Anziehen-Modul."
