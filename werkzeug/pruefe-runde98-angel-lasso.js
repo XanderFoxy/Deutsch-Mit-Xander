@@ -228,6 +228,57 @@ const sage = (gut, was, zusatz) => {
   sage(angel.n > 5 && angel.max <= 20, "Angel: der Haken bleibt am Bild, auch wenn die Seite rutscht",
     "groesster Abstand " + Math.round(angel.max) + " px, Seite um " + angel.rutsch + " px gerutscht");
 
+  /* RUNDE 100 — XANDER (Walkie #88): „Die Person landet nicht neben
+     mir." Zwei Faelle im echten Raum:
+       a) Platz 2 ist frei, Dana sitzt auf 3 — sie muss auf 2 (neben
+          mir), nicht auf 5 (unter mir).
+       b) Die Puppe sitzt schon auf 2 — sie bleibt sitzen. */
+  const pg4 = await br.newPage({ viewport: { width: 390, height: 844 } });
+  await pg4.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
+  await pg4.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
+  await pg4.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF, { timeout: 25000 });
+  const neben = await pg4.evaluate(async () => {
+    const aufbauen = (leute) => {
+      window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000, zuruecksetzen: true, leute });
+      document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
+      let e = document.getElementById("livechatArea");
+      while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
+      window.DMA_PRUEF.neuZeichnen();
+    };
+    const sitzt = (name) => { const p = [...document.querySelectorAll("#lcPlaetze .lc-platz")]
+      .find((x) => ((x.querySelector(".lc-platz-name") || {}).textContent || "").indexOf(name) >= 0);
+      return p ? Number(p.dataset.lcPlatz) : 0; };
+    const warte = (ms) => new Promise((f) => setTimeout(f, ms));
+    /* a) Cem von 2 weg (Angel auf 8), dann Dana (auf 3) mit dem Lasso */
+    aufbauen({ p1: { id: "p1", name: "Cem", seit: 2100 }, p2: { id: "p2", name: "Dana", seit: 2200 } });
+    await warte(500);
+    const danaVorher = sitzt("Dana");
+    window.LiveChat.pruefBefehl("/heb Cem 8");
+    await warte(3800);
+    const cemJetzt = sitzt("Cem");
+    window.LiveChat.pruefBefehl("/lasso Dana");
+    await warte(3600);
+    const danaNachher = sitzt("Dana");
+    /* b) nur die Puppe */
+    window.LiveChat.pruefBetreiber(true);
+    aufbauen({});
+    window.LiveChat.puppe();
+    window.DMA_PRUEF.neuZeichnen();
+    await warte(500);
+    const puppeVorher = sitzt("Puppe");
+    window.LiveChat.pruefBefehl("/lasso Puppe");
+    await warte(3600);
+    return { danaVorher, cemJetzt, danaNachher, puppeVorher, puppeNachher: sitzt("Puppe"),
+             ich: sitzt("Alex") };
+  });
+  await pg4.close();
+  sage(neben.cemJetzt === 8 && neben.danaNachher === neben.ich + 1,
+    "Lasso: ist der Platz neben mir frei, landet die Person dort — nicht darunter",
+    "ich " + neben.ich + ", Dana " + neben.danaVorher + " → " + neben.danaNachher + " (Cem auf " + neben.cemJetzt + ")");
+  sage(neben.puppeVorher > 0 && neben.puppeNachher === neben.puppeVorher,
+    "Lasso: wer schon direkt neben mir sitzt, wird nicht weggezogen",
+    "Puppe " + neben.puppeVorher + " → " + neben.puppeNachher);
+
   /* Ein Bild von der Rute. */
   await pg.evaluate(() => {
     window.DMA_PRUEF.effektBuehne();

@@ -11758,23 +11758,11 @@ window.LiveChat = (function () {
       });
       if (!meinerL) return systemZeile("Du sitzt noch nicht oben \u2014 das Lasso braucht einen Standpunkt.");
       if (!seinerL) return systemZeile(wenL.name + " sitzt gerade auf keinem Platz.");
-      /* RUNDE 100 — XANDER (Walkie #88): „Die Person landet nicht neben
-         mir." GEFUNDEN (Puppe auf Platz 2, ich auf 1): „unter mir" (5)
-         zaehlte genauso nah wie „neben mir" (2) — und sass die Person
-         SCHON neben mir, zog das Lasso sie von dort weg nach unten.
-         Jetzt: eine Reihe weiter zaehlt 1,5 Plaetze, links/rechts in
-         derselben Reihe gewinnt also immer; und wer schon direkt neben
-         mir sitzt, bleibt sitzen. */
-      var lageL = function (n) { return { r: Math.floor((n - 1) / 4), s: (n - 1) % 4 }; };
-      var ichL = lageL(meinerL.nummer);
       var naeheL = function (n) {
-        var l = lageL(n);
-        return Math.abs(l.r - ichL.r) * 1.5 + Math.abs(l.s - ichL.s);
+        var r1 = Math.floor((n - 1) / 4), s1 = (n - 1) % 4;
+        var r2 = Math.floor((meinerL.nummer - 1) / 4), s2 = (meinerL.nummer - 1) % 4;
+        return Math.abs(r1 - r2) + Math.abs(s1 - s2);
       };
-      var seineLage = lageL(seinerL.nummer);
-      if (seineLage.r === ichL.r && Math.abs(seineLage.s - ichL.s) === 1) {
-        return systemZeile(wenL.name + " sitzt schon direkt neben dir.");
-      }
       var freiL = plaetzeL.filter(function (pl) { return pl.leer && pl.nummer !== meinerL.nummer; })
                           .sort(function (a, b) { return naeheL(a.nummer) - naeheL(b.nummer); })[0];
       if (!freiL) return systemZeile("Neben dir ist kein Platz frei \u2014 "

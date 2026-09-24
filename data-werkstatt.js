@@ -49,22 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 548: Leiter — „frei“ steht da, sobald man den Platz verlässt",
+  stand: "Fassung 549: Lasso — landet neben dir, wer schon neben dir sitzt bleibt",
 
   inArbeit: [
-    { seit: "2026-09-24T01:59",
+    { seit: "2026-09-24T02:09",
       text: "Lok-Strecke immer rund und logisch schließen" },
-    { seit: "2026-09-24T01:59",
+    { seit: "2026-09-24T02:09",
+      text: "Stadt·Land·Fluss im Livestream statt eigener Seite" },
+    { seit: "2026-09-24T02:09",
+      text: "Zu zweit: Rad soll wie ein Fahrrad aussehen" },
+    { seit: "2026-09-24T02:09",
       text: "Angel: senkrecht heben, Schnur-Physik" },
-    { seit: "2026-09-24T01:59",
-      text: "Probe runde29 (Schneekugel/Platz) seit mind. Fassung 535 rot — prüfen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T01:59",
-      text: "Leiter: an beiden verlassenen Plätzen stehen ab dem ersten Schritt Ring, Nummer und „frei“ statt des Namens (alt: 150 von 150 Bildern mit Namen)" },
-    { seit: "2026-09-24T01:59",
-      text: "Nach dem Tausch hängt an keinem besetzten Platz „frei“" },
+    { seit: "2026-09-24T02:09",
+      text: "Lasso: wer schon direkt neben dir sitzt (z. B. die Puppe auf Platz 2), wird nicht mehr nach unten weggezogen — Meldung „sitzt schon direkt neben dir“" },
+    { seit: "2026-09-24T02:09",
+      text: "Lasso: links/rechts in derselben Reihe gewinnt immer vor „darunter/darüber“" },
   ],
 };
