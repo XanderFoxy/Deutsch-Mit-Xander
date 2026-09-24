@@ -42280,6 +42280,23 @@
       /* Die Toene — der erste kommt ueber LC_TREFFER, wenn das Wasser
          einlaeuft (900 ms); diese beiden liegen auf ihren Phasen. */
       /* Der Ton kommt ueber LC_TON_PLAN (eine Datei fuer alle Phasen). */
+
+      /* RUNDE 101 — XANDER (Funk 84): „bei der Waschmaschine, die soll
+         auch zum Abwaschen von dem Dreck benutzt werden können."
+         Was am Bild klebt (Vogelkot, Russ, Schlamm — lcDreckListe —
+         und der aufgespruehte Lack — lcSprayListe), loest sich beim
+         Waschen (ab 1500 ms) langsam auf und ist nach dem Abpumpen
+         (3200 ms) weg; danach ist es auch aus dem Gedaechtnis
+         geloescht, kommt also beim Neuzeichnen nicht zurueck. */
+      setTimeout(() => {
+        platz.querySelectorAll(".lc-dreckschicht, .lc-sprayfarbe").forEach((x) => x.classList.add("lc-waescht-weg"));
+      }, 1500);
+      setTimeout(() => {
+        const nm = lcPlatzSchluessel(platz);
+        if (nm) { delete lcSprayListe[nm]; delete lcSprayEigen[nm]; }
+        platz.querySelectorAll(".lc-sprayfarbe").forEach((x) => { try { x.remove(); } catch (e) {} });
+        lcDreckWeg(platz);
+      }, 3200);
     }, DAUER, "waschmaschine");
   }
 
@@ -55593,7 +55610,18 @@
     const opferName = lcNameVomPlatz(platz);
     /* Nur auf dem Geraet des Getroffenen geht es von der Buehne — genau
        wie beim Pac-Man. */
+    /* RUNDE 101 — XANDER (Funk 84): „wenn ich jemanden anvisiere mit
+       dem Zielfernrohr, soll derjenige noch die Möglichkeit haben, den
+       Platz zu wechseln, und wenn ich ihn abschieße … geht er dadurch
+       natürlich von der Bühne."
+       GEFUNDEN: „runter" lief fest nach 6,0 s — auch wenn gar nicht
+       geschossen wurde, weil der Platz inzwischen neu gezeichnet war.
+       Wer rechtzeitig floh, flog trotzdem von der Buehne. Jetzt gilt:
+       nur wer beim Schuss (5,2 s) noch auf DEM Platz sitzt, ist
+       getroffen. Wer vorher wechselt, entkommt — „Daneben!". */
+    let getroffen = false;
     const runter = () => {
+      if (!getroffen) return;
       try {
         const l = LiveChat.lage() || {};
         if (String(l.ichName || "").trim().toLowerCase() === String(opferName || "").trim().toLowerCase()
@@ -55692,11 +55720,17 @@
         if (!geschossen && t >= LC_ZF.schuss) {
           geschossen = true;
           glas.classList.add("lc-zf-schuss");
-          platz.classList.add("lc-zf-getroffen");
+          /* Sitzt er noch da? Sonst ging der Schuss ins Leere. */
+          getroffen = platz.isConnected && lcNameVomPlatz(platz) === opferName;
+          if (getroffen) platz.classList.add("lc-zf-getroffen");
+          else {
+            glas.classList.add("lc-zf-daneben");
+            glas.insertAdjacentHTML("beforeend", '<b class="lc-zf-danebenschild">Daneben!</b>');
+          }
         }
         /* Das Bild: kurzes Zucken beim Treffer, dann kippt es und faellt
            nach unten aus dem Platz heraus. */
-        if (t >= LC_ZF.schuss) {
+        if (t >= LC_ZF.schuss && getroffen) {
           const k = t - LC_ZF.schuss;
           const zuck = k < 160 ? Math.sin(k / 160 * Math.PI) : 0;
           const fall = zw(k, 260, 1300);
@@ -55723,7 +55757,14 @@
         platz.classList.remove("lc-zf-getroffen");
       };
       const warte = setInterval(() => {
-        if (!platz.isConnected || lcNameVomPlatz(platz) !== opferName) { clearInterval(warte); zurueck(); }
+        if (!platz.isConnected || lcNameVomPlatz(platz) !== opferName) {
+          clearInterval(warte);
+          /* Vor dem Schuss geflohen: das Rohr zielt weiter, der Schuss
+             kommt und geht daneben — man soll SEHEN, dass er entkommen
+             ist. Nach dem Schuss: wie bisher aufraeumen. */
+          if (geschossen) zurueck();
+          else { kreis.style.transform = ""; kreis.style.opacity = ""; kreis.style.transition = altUebergang; }
+        }
       }, 200);
       /* Sonde runde92-betrieb: wer getroffen ist, aber NICHT von der
          Buehne geht (etwa weil sein Geraet schlaeft), darf nicht als
@@ -57106,10 +57147,47 @@
            nach innen ab und wird dabei wirklich kuerzer — deshalb ein
            eigenes Element fuer die Schnur und eines fuer den Funken,
            der an ihrem Ende sitzt. */
-        blende.innerHTML =
-          '<span class="lc-lunte-schnur"><i></i></span>'
-          + '<span class="lc-lunte-funke"></span>'
-          + '<span class="lc-bombe-blitz"></span>';
+        /* RUNDE 101 — XANDER (Funk 84): „die Lunte ist immer noch
+           nicht realistisch an der Bombe dran, sie soll ja von der
+           Bombe unten abhängen bzw. dranhängen."
+           Vorher lag sie als gerader Streifen QUER ueber dem oberen
+           Bildrand — in der runden Blende, also IM Bild. Jetzt kommt
+           sie aus einer Messingkappe unten am Bild und haengt als
+           gebogene Schnur herab — rechts unten, damit der Name frei
+           bleibt; der Funke frisst sich vom freien Ende
+           NACH OBEN zur Bombe und ist bei 2100 ms (LC_TREFFER.bombe,
+           der Knall) an der Kappe. Sie liegt ausserhalb der Blende,
+           sonst schnitte der Bildrand sie ab. */
+        blende.innerHTML = '<span class="lc-bombe-blitz"></span>';
+        const NS = "http://www.w3.org/2000/svg";
+        const lsvg = document.createElementNS(NS, "svg");
+        lsvg.setAttribute("class", "lc-lunte2");
+        lsvg.setAttribute("viewBox", "0 0 40 52");
+        lsvg.setAttribute("aria-hidden", "true");
+        lsvg.innerHTML = '<path class="lc-lunte2-schatten" d="M6 5 C9 17 25 14 29 26 C33 38 20 41 26 50"/>'
+          + '<path class="lc-lunte2-schnur" d="M6 5 C9 17 25 14 29 26 C33 38 20 41 26 50"/>'
+          + '<path class="lc-lunte2-drall" d="M6 5 C9 17 25 14 29 26 C33 38 20 41 26 50"/>'
+          + '<rect class="lc-lunte2-kappe" x="1.5" y="0" width="9" height="6.4" rx="1.6" transform="rotate(-20 6 3.2)"/>'
+          + '<g class="lc-lunte2-funke"><circle r="3.6" class="lc-lunte2-glut"/><circle r="1.6" class="lc-lunte2-kern"/>'
+          + '<path class="lc-lunte2-spritzer" d="M0 0 L-4.5 -3 M0 0 L4 -4 M0 0 L5 1.5 M0 0 L-5 2 M0 0 L1 5"/></g>';
+        schicht.appendChild(lsvg);
+        const lpfade = [...lsvg.querySelectorAll(".lc-lunte2-schatten, .lc-lunte2-schnur, .lc-lunte2-drall")];
+        const lfunke = lsvg.querySelector(".lc-lunte2-funke");
+        const lspr = lsvg.querySelector(".lc-lunte2-spritzer");
+        const lLang = lpfade[1].getTotalLength ? lpfade[1].getTotalLength() : 60;
+        const lt0 = performance.now();
+        const lBrennt = () => {
+          if (!lsvg.isConnected) return;
+          const k = Math.min(1, (performance.now() - lt0) / 2100);
+          const rest = lLang * (1 - k);
+          lpfade.forEach((pf) => { pf.style.strokeDasharray = rest.toFixed(2) + " " + (lLang + 4).toFixed(2); });
+          const pt = lpfade[1].getPointAtLength(rest);
+          lfunke.setAttribute("transform", "translate(" + pt.x.toFixed(2) + " " + pt.y.toFixed(2) + ")");
+          lspr.setAttribute("transform", "rotate(" + ((performance.now() * 0.9) % 360).toFixed(0) + ")");
+          if (k >= 1) { lsvg.classList.add("lc-lunte2-aus"); return; }
+          requestAnimationFrame(lBrennt);
+        };
+        requestAnimationFrame(lBrennt);
         /* RUNDE 71: die Zuendschnur prasselt von Anfang an —
            XANDER: „das soll wirklich so ein prasseln abbrennen
            sein." Kein Piepsen; das gehoert zur digitalen Fassung. */
@@ -57132,7 +57210,7 @@
           + '<i class="lc-bombe-feld">'
           + '<b class="lc-bombe-min">0</b>'
           + '<b class="lc-bombe-doppel">:</b>'
-          + '<b class="lc-bombe-sek">03</b>'
+          + '<b class="lc-bombe-sek">02</b>'
           + '<b class="lc-bombe-punkt">.</b>'
           + '<b class="lc-bombe-zehntel">0</b>'
           + "</i></span>"
@@ -57140,12 +57218,18 @@
         const anzeige = blende.querySelector(".lc-bombe-anzeige");
         const feldSek = blende.querySelector(".lc-bombe-sek");
         const feldZeh = blende.querySelector(".lc-bombe-zehntel");
-        /* Dreissig Zehntel, also genau die drei Sekunden, die der
-           Countdown vorher auch hatte. */
-        for (let t = 1; t <= 30; t++) {
+        /* RUNDE 101 — XANDER (Funk 84): „auch die Bombe ist von ihrer
+           Animation und dem Sound nicht synchron … meistens explodiert
+           sie vorher, bevor überhaupt die Anzeige auf Null geht."
+           GEMESSEN: die Anzeige zaehlte 30 Zehntel ab 700 ms, stand
+           also erst bei 3700 ms auf 0:00.0. Knall (LC_TREFFER.bombe),
+           Blitz und Zerplatzen (47 % von 4,6 s) liegen aber bei rund
+           2100 ms — 1,6 s VOR der Null. Jetzt zaehlt sie 20 Zehntel
+           ab 100 ms und steht genau beim Knall auf Null. */
+        for (let t = 1; t <= 20; t++) {
           setTimeout(() => {
             if (!anzeige.isConnected) return;
-            const rest = 30 - t;
+            const rest = 20 - t;
             feldSek.textContent = String(Math.floor(rest / 10)).padStart(2, "0");
             feldZeh.textContent = String(rest % 10);
             if (rest % 10 === 0 && rest > 0) {
@@ -57154,7 +57238,7 @@
               anzeige.classList.add("lc-bombe-tick");
               lcTonSpaeter("ticken", 0, 0.62);
             }
-          }, 700 + t * 100);
+          }, 100 + t * 100);
         }
         [0].forEach((z, i) => setTimeout(() => {
           if (!anzeige.isConnected) return;
@@ -57167,7 +57251,7 @@
              war deshalb stumm. Sie ist jetzt da (0,10 s, ein
              trockener Piep) und wird direkt gelegt, weil „ticken"
              kein Plan-Eintrag ist. */
-        }, 700 + 3000 + i * 700));
+        }, 100 + 2000 + i * 700));
         /* RUNDE 72 — XANDER: „der lange Piepton ist immer noch da,
            immer noch ohne Explosionsknall, und dauert viel zu lang."
            NACHGEMESSEN, und das erklaert beides auf einmal:
@@ -57379,6 +57463,62 @@
         setTimeout(() => kreis.classList.remove("lc-gesprengt"), 4600);
       }
     }, 4600, "granate");
+  }
+
+  /* =====================================================================
+     RUNDE 101 — DER WURF DER GRANATE
+     ---------------------------------------------------------------------
+     XANDER (Funk 84): „übrigens die Granate funktioniert noch nicht so
+     richtig, sie hat noch keinen Pfeifton beim Werfen."
+     Vorher gab es gar keinen Wurf: die Granate stand sofort auf dem
+     Bild. Jetzt fliegt sie vom Werfer in einem Bogen hinueber, dreht
+     sich dabei, und es pfeift — ein fallender Ton von 2600 auf 1100 Hz,
+     0,85 s lang (ton/granatenpfeifen, selbst gerechnet). Genau bei der
+     Landung beginnt der alte Ablauf (Buegel, Zischen, Knall) — dessen
+     Zeiten bleiben also unveraendert zum Ton ton/granate.
+     Steht der Werfer nicht auf der Buehne, kommt sie von oben. */
+  const LC_GW_FLUG = 850;
+  function lcGranateWurf(wen, von) {
+    const reihe = document.getElementById("lcPlaetze");
+    const ziel = lcZielPlaetze(wen)[0];
+    const kZ = ziel && ziel.querySelector(".lc-kreis");
+    if (!reihe || !kZ || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+      return lcGranate(wen);
+    }
+    const rr = reihe.getBoundingClientRect();
+    const mitte = (el) => { const r = el.getBoundingClientRect();
+      return { x: r.left + r.width / 2 - rr.left, y: r.top + r.height / 2 - rr.top }; };
+    const B = mitte(kZ), d = kZ.offsetWidth || 64;
+    const plA = von ? lcPlatzMitNamen(von) : null;
+    const kA = plA && plA !== ziel ? plA.querySelector(".lc-kreis") : null;
+    const A = kA ? mitte(kA) : { x: B.x - d * 0.6, y: B.y - d * 2.4 };
+    const hoch = Math.max(d * 0.8, Math.hypot(B.x - A.x, B.y - A.y) * 0.32);
+    const g = document.createElement("span");
+    g.className = "lc-granate-flug";
+    g.style.width = (d * 0.34).toFixed(1) + "px";
+    g.innerHTML = '<svg viewBox="0 0 60 84" aria-hidden="true">'
+      + '<path d="M30 20 C44 20 52 32 52 50 C52 68 43 80 30 80 C17 80 8 68 8 50 C8 32 16 20 30 20 Z"'
+      + ' fill="#3f4a25" stroke="#1e2411" stroke-width="3"/>'
+      + '<path d="M11 38 H49 M9 50 H51 M11 62 H49" stroke="#232a13" stroke-width="2.4" opacity=".75"/>'
+      + '<rect x="21" y="9" width="18" height="13" rx="3" fill="#6b6152" stroke="#3a342a" stroke-width="2"/>'
+      + '<path d="M39 12 Q52 18 48 38" fill="none" stroke="#d6dae0" stroke-width="4"/></svg>';
+    if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
+    reihe.appendChild(g);
+    const t0 = performance.now();
+    lcTonSpaeter("granatenpfeifen", 0, 0.5);
+    const lauf = () => {
+      if (!g.isConnected) return;
+      const k = Math.min(1, (performance.now() - t0) / LC_GW_FLUG);
+      const x = A.x + (B.x - A.x) * k, y = A.y + (B.y - A.y) * k - hoch * 4 * k * (1 - k);
+      g.style.transform = "translate(" + x.toFixed(1) + "px, " + y.toFixed(1) + "px) translate(-50%, -50%) rotate("
+        + (k * 540).toFixed(0) + "deg) scale(" + (0.7 + 0.3 * k).toFixed(2) + ")";
+      if (k < 1) { requestAnimationFrame(lauf); return; }
+      g.remove();
+      lcGranate(wen);
+    };
+    requestAnimationFrame(lauf);
+    setTimeout(() => { if (g.isConnected) { g.remove(); lcGranate(wen); } }, LC_GW_FLUG + 800);
+    return true;
   }
 
   /* --- STREICHELN ------------------------------------------------------
@@ -59799,7 +59939,9 @@
       if (art === "klaps" && lcKlaps(wenZ)) return;
       if (art === "sonnenbrille" && lcSonnenbrille(wenZ)) return;
       if (art === "bombe" && lcBombe(wenZ, false)) return;
-      if (art === "granate" && lcGranate(wenZ)) return;
+      /* RUNDE 101 — Funk 84: die Granate wird GEWORFEN, mit Pfeifen. */
+      if (art === "granate" && lcGranateWurf(wenZ, (nachricht && nachricht.eigen)
+            ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "lunte" && lcBombe(wenZ, true)) return;
       if (art === "streicheln" && lcStreicheln(wenZ)) return;
       if (art === "wange" && lcWangeStreicheln(wenZ)) return;

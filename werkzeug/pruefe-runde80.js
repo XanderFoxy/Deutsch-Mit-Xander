@@ -201,8 +201,12 @@ function tonMessen(name) {
      auch eine digitale Anzeige sein, die runterlaeuft." */
   sage(/lc-bombe-anzeige/.test(app) && /lc-bombe-zehntel/.test(app),
     "die digitale Bombe hat eine Anzeige, die in Zehntelsekunden laeuft");
-  sage(/for \(let t = 1; t <= 30; t\+\+\)/.test(app),
-    "und sie zaehlt dreissig Zehntel herunter, nicht drei Ziffern");
+  /* RUNDE 101 — XANDER (Funk 84): „meistens explodiert sie vorher,
+     bevor überhaupt die Anzeige auf Null geht." Die Zehntel bleiben,
+     aber es sind jetzt ZWANZIG ab 100 ms — so steht die Null genau beim
+     Knall (2100 ms) statt 1,6 s danach. */
+  sage(/for \(let t = 1; t <= 20; t\+\+\)/.test(app) && /\}, 100 \+ t \* 100\);/.test(app),
+    "und sie zaehlt Zehntel herunter und steht beim Knall (2100 ms) auf Null");
 
   /* „Bei der analogen Bombe sind zwei Lunten da." */
   sage(/\(lunte \? "" : '<span class="lc-bombe-schnur">/.test(app),
