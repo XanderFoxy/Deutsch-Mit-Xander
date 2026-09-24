@@ -1382,13 +1382,6 @@ window.LiveChat = (function () {
        haengt, solange jemand spricht. Also Sprechbilder. */
     blut:       "Blut — es läuft über das Bild, solange du sprichst",
     spinnweb:   "Spinnweben — der Rahmen wächst zu, eine Spinne seilt sich ab",
-    /* SCHON-PASS 11–15 (Xanders Liste vom 23.09.): die neuen. */
-    kranz:      "Adventskranz — Tannenzweige und Kerzen am Rand",
-    kugel:      "Schneekugel — Glas, Schnee am Rand, Päckchen unten",
-    ohren:      "Hasenohren — wackeln beim Sprechen",
-    baerohren:  "Bärenohren — rund und honigwarm",
-    maul:       "Vampirmaul — der Rahmen öffnet und schließt sich",
-    schemen:    "Schemen — es wird dunkel, ein Schatten huscht am Rand",
     aus:        "Nichts — kein Zeichen beim Sprechen"
   };
   var SPRECHBILD_SCHLUESSEL = "dma_livechat_sprechbild";

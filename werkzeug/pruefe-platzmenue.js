@@ -356,7 +356,9 @@ const PAARE = [
      kein Effekt um das Profilbild zu beeinflussen durch einen Klick
      sondern es ist ein Sprechbild-Effekt." */
   /* 17 seit Fassung 358: Blut und Spinnweben sind dazugekommen. */
-  pruefe("es zeigt alle Sprechbilder", sb.kacheln === 17, sb.kacheln + " Kacheln");
+  /* 25 seit Fassung 574 (SCHON-PASS): Kugelblitz, Strommantel, Kranz,
+     Kugel, Hasen- und Baerenohren, Vampirmaul, Schemen. */
+  pruefe("es zeigt alle Sprechbilder", sb.kacheln === 25, sb.kacheln + " Kacheln");
   pruefe("und markiert genau das, was gerade gilt", sb.markiert === 1,
     sb.markiert + " markiert");
   pruefe("ein Tipp setzt es wirklich", Boolean(sb.gewaehlt) && sb.zu === true,

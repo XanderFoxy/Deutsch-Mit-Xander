@@ -33319,32 +33319,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .lc-sprechfeld.lc-sregenbogen .lc-rb-lage { animation: none; }
 }
-
-/* =====================================================================
-   SCHON-PASS SPRECHBILDER — 11 BIS 15 (Xanders Liste vom 23.09.)
-   Kranz, Kugel, Hasen- und Baerenohren, Vampirmaul, Schemen — alle als
-   Bild im Sprechfeld (siehe lcKranzSvg bis lcSchemenSvg).
-   ===================================================================== */
-.lc-sprechfeld.lc-skranz, .lc-sprechfeld.lc-skugel, .lc-sprechfeld.lc-sohren,
-.lc-sprechfeld.lc-sbaerohren, .lc-sprechfeld.lc-smaul, .lc-sprechfeld.lc-sschemen { overflow: visible; }
-.lc-sprechfeld .lc-neu-bild {
-  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
-}
-.lc-platz-spricht[data-sprechbild="kranz"] .lc-kreis,
-.lc-platz-spricht[data-sprechbild="kugel"] .lc-kreis,
-.lc-platz-spricht[data-sprechbild="ohren"] .lc-kreis,
-.lc-platz-spricht[data-sprechbild="baerohren"] .lc-kreis,
-.lc-platz-spricht[data-sprechbild="maul"] .lc-kreis,
-.lc-platz-spricht[data-sprechbild="schemen"] .lc-kreis { animation: none !important; box-shadow: none !important; }
-.lc-platz-spricht[data-sprechbild="kranz"] .lc-kreis::after, .lc-platz-spricht[data-sprechbild="kranz"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="kugel"] .lc-kreis::after, .lc-platz-spricht[data-sprechbild="kugel"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="ohren"] .lc-kreis::after, .lc-platz-spricht[data-sprechbild="ohren"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="baerohren"] .lc-kreis::after, .lc-platz-spricht[data-sprechbild="baerohren"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="maul"] .lc-kreis::after, .lc-platz-spricht[data-sprechbild="maul"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="schemen"] .lc-kreis::after, .lc-platz-spricht[data-sprechbild="schemen"] .lc-kreis::before { display: none !important; }
-.lc-platz-spricht[data-sprechbild="kranz"] .lc-kreis { border-color: #166534 !important; }
-.lc-platz-spricht[data-sprechbild="kugel"] .lc-kreis { border-color: #E0F2FE !important; }
-.lc-platz-spricht[data-sprechbild="ohren"] .lc-kreis,
-.lc-platz-spricht[data-sprechbild="baerohren"] .lc-kreis { border-color: #E7D8C6 !important; }
-.lc-platz-spricht[data-sprechbild="maul"] .lc-kreis { border-color: transparent !important; }
-.lc-platz-spricht[data-sprechbild="schemen"] .lc-kreis { border-color: #1F2937 !important; }

@@ -70,7 +70,8 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
      Zustand, kein Wurf. */
   /* SCHON-PASS 7: Strom in drei Arten (Plasmalampe, Kugel, Mantel) —
      zwei mehr. */
-  pruefe("es sind achtzehn Sprechbilder plus „aus“", liste.length === 19,
+  /* SCHON-PASS 11–15: Kranz, Kugel, Hasen-, Baerenohren, Maul, Schemen */
+  pruefe("es sind vierundzwanzig Sprechbilder plus „aus“", liste.length === 25,
     liste.length + ": " + liste.join(", "));
   ["eis", "bluete", "stoerung", "blut", "spinnweb"].forEach((n) => pruefe("„" + n + "“ ist neu dabei", liste.indexOf(n) >= 0));
   TEILCHEN.forEach((t) => pruefe("„" + t + "“ steht dabei", liste.indexOf(t) >= 0));
@@ -358,6 +359,47 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
   pruefe("Herzen: 18 oder etwas mehr, als Herz-Pfad (kein Zeichen)", hn.herzen >= 18 && hn.herzen <= 26 && hn.zeichenH === 0, hn.herzen);
   pruefe("Herzen: Strich 1–1,5 px", hn.strichMin >= 0.95 && hn.strichMax <= 1.55, hn.strichMin.toFixed(2) + "–" + hn.strichMax.toFixed(2) + " px");
   pruefe("Noten: auf dem Ring, nicht aus der Mitte, keine Zeichen", hn.noten >= 12 && hn.rMin >= 34.7 && hn.zeichenN === 0, hn.noten + " Noten, naechste " + hn.rMin.toFixed(1));
+
+  console.log("\nSCHON-PASS 11–15 — KRANZ, KUGEL, OHREN, MAUL, SCHEMEN\n");
+  const nu = await pg.evaluate(() => {
+    const knopf = document.querySelector(".lc-platz");
+    const bau = (a) => { knopf.dataset.sprechbild = a; window.DMA_PRUEFUNG.sprechFeld(knopf, a); return knopf.querySelector(".lc-sprechfeld svg"); };
+    const e = {};
+    let s = bau("kranz");
+    e.kerzen = s ? s.querySelectorAll("rect[fill='#B45309']").length : 0;
+    e.flackern = s ? [...s.querySelectorAll("ellipse > animateTransform")].map((a) => Math.max(...a.getAttribute("values").split(";").map((v) => Math.abs(parseFloat(v) - 1)))) : [];
+    e.nadeln = s ? s.querySelectorAll("g path").length : 0;
+    s = bau("kugel");
+    e.schnee = s ? s.querySelectorAll("g[mask] circle").length : 0;
+    e.pakete = s ? s.querySelectorAll("g[clip-path] rect").length : 0;
+    s = bau("ohren");
+    e.ohren = s ? [...s.querySelectorAll(":scope > g")].map((g) => ({ haare: g.querySelectorAll("g[stroke] path").length,
+      takt: g.querySelector("animateTransform").getAttribute("dur"), neig: Math.abs(parseFloat(g.querySelector("animateTransform").getAttribute("values"))) })) : [];
+    s = bau("baerohren");
+    e.baer = s ? [...s.querySelectorAll(":scope > g")].map((g) => ({ haare: g.querySelectorAll("g[stroke] path").length,
+      neig: Math.abs(parseFloat(g.querySelector("animateTransform").getAttribute("values"))) })) : [];
+    s = bau("maul");
+    const hub = s ? [...s.querySelectorAll(":scope > g > animateTransform")].map((a) => Math.abs(parseFloat(a.getAttribute("values").split(";")[1].split(" ")[1]))) : [];
+    e.spalt = hub.reduce((x, y) => x + y, 0) / 69.4 * 100;
+    e.maulTakt = s ? parseFloat(s.querySelector("animateTransform").getAttribute("dur")) : 0;
+    e.zaehne = s ? s.querySelectorAll("path[fill='#F8FAFC']").length : 0;
+    s = bau("schemen");
+    const dunkel = s ? s.querySelector("rect animate").getAttribute("values").split(";").map(Number) : [0];
+    e.dunkel = Math.max(...dunkel);
+    e.schatten = s ? parseFloat(s.querySelector("animateMotion").getAttribute("dur")) : 0;
+    return e;
+  });
+  pruefe("Kranz: 4–6 Kerzen, Nadeln mit Luecken", nu.kerzen >= 4 && nu.kerzen <= 6 && nu.nadeln > 150 && nu.nadeln < 260, nu.kerzen + " Kerzen, " + nu.nadeln + " Nadeln");
+  pruefe("Kranz: Flammen flackern 8–12 %", nu.flackern.length && nu.flackern.every((x) => x >= 0.08 && x <= 0.12), nu.flackern.map((x) => x.toFixed(2)).join(" "));
+  pruefe("Kugel: 12–20 Schneepunkte, 2–3 Paeckchen", nu.schnee >= 12 && nu.schnee <= 20 && nu.pakete >= 2 && nu.pakete <= 3, nu.schnee + " Schnee, " + nu.pakete + " Paeckchen");
+  pruefe("Hasenohren: 20–40 Haare je Ohr, 4–8 Grad, nicht im Takt",
+    nu.ohren.length === 2 && nu.ohren.every((o) => o.haare >= 20 && o.haare <= 40 && o.neig >= 4 && o.neig <= 8) && nu.ohren[0].takt !== nu.ohren[1].takt,
+    JSON.stringify(nu.ohren));
+  pruefe("Baerenohren: weniger Haar, schwaecherer Wackel", nu.baer.length === 2 && nu.baer.every((o) => o.haare < 20 && o.neig < 4), JSON.stringify(nu.baer));
+  pruefe("Maul: Spalt 8–18 %, Takt 1–1,4 s, zwei Zaehne", nu.spalt >= 8 && nu.spalt <= 18 && nu.maulTakt >= 1 && nu.maulTakt <= 1.4 && nu.zaehne === 2,
+    nu.spalt.toFixed(1) + " %, " + nu.maulTakt + " s");
+  pruefe("Schemen: abdunkeln auf 40–60 %, Schatten 1,5–2,5 s", nu.dunkel >= 0.4 && nu.dunkel <= 0.6 && nu.schatten >= 1.5 && nu.schatten <= 2.5,
+    nu.dunkel + " / " + nu.schatten + " s");
 
   console.log("\nUND WENN DAS SPRECHEN AUFHOERT?\n");
   const weg = await pg.evaluate(() => {
