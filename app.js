@@ -29591,8 +29591,26 @@
      klingen soll. Ausgeblendet wird ueber eine halbe Sekunde —
      genauso wie im Plan, denn ein hart abgeschnittener Ton klingt
      kaputt. */
+  /* RUNDE 101 — XANDER (Walkie #165, Vogel): „Glitch / ruckelt …
+     der Ekel-Ausruf." GEMESSEN: die Datei ist sauber (keine Spruenge,
+     keine Luecken) und wird genau einmal gestartet. Aber das Audio-
+     Element entstand erst im Augenblick des Abspielens — der Ausruf
+     kommt 2,05 s nach Beginn, und genau dann musste das Telefon die
+     Datei erst holen und entpacken. Das stockt. Jetzt wird jeder
+     verzoegerte Ton SOFORT angelegt und geladen; abgespielt wird er
+     zur richtigen Zeit aus dem Speicher. */
+  function lcGeraeuschVorwaermen(name) {
+    try {
+      if (!lcToeneAn() || !lcGeraeuschDa(name) || lcGeraeuschAblage[name]) return;
+      const a = new Audio("ton/" + name + lcGeraeuschArt() + "?v=" + (window.DMA_VERSION || "1"));
+      a.preload = "auto";
+      try { a.load(); } catch (e) {}
+      lcGeraeuschAblage[name] = a;
+    } catch (e) {}
+  }
   function lcTonSpaeter(name, nachMs, laut, hoechstens) {
     const wann = Math.max(0, Number(nachMs) || 0);
+    if (wann > 0) lcGeraeuschVorwaermen(name);
     setTimeout(() => {
       try {
         if (!lcGeraeusch(name, name, laut)) return;
