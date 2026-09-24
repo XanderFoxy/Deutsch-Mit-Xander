@@ -24871,39 +24871,95 @@
         + '<path transform="translate(' + f(-bx) + " " + f(-by) + ')" d="M' + f(bx - breit * 0.18) + " " + f(by + 0.4) + " Q" + f(bx - breit * 0.14) + " " + f(by + lang * 0.5) + " " + f(bx + kr * 0.8) + " " + f(by + lang * 0.9)
         + '" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width=".35" stroke-linecap="round"/></g></g>';
     });
-    /* DIE EISBLUMEN: vom Rand her wachsende, haardünne Adern mit
-       Seitenaesten (wie Frost an der Scheibe). Jede Ader wird
-       freigelegt (Strich-Versatz), und sie kommen NACHEINANDER —
-       alle 0,6 s eine mehr, bis zu acht. Deckkraft 20–45 %, die
-       feineren Aeste blasser, runde Enden. */
+    /* =============================================================
+       RUNDE 101 — EISBLUMEN WIE AN EINER GEFRORENEN SCHEIBE
+       -------------------------------------------------------------
+       XANDER (Walkie #156, zu „Eisblumen dichter"): „überarbeiten".
+       Angesehen: die 16 Adern sahen aus wie kahle Zweige, nicht wie
+       Frost. Echte Eisblumen sind FARNE: eine gebogene Hauptader, an
+       der dicht an dicht kurze, parallele Fiedern sitzen, schraeg
+       nach vorn, zur Spitze hin kuerzer — dazu ein milchiger Reif am
+       Rand der Scheibe und hier und da ein kleiner Sechsstern.
+       Wachsen: EINE Maske zieht den Frost vom Rand nach innen (bis
+       gut zur Haelfte, die Mitte bleibt frei), die Farne kommen
+       nacheinander dazu. So sind es nur wenige Animationen — wichtig
+       fuers Telefon. Deckkraft 25–50 %, das Foto scheint durch. */
     let frost = "";
-    const ader = (x, y, w, lang, tiefe, bg, deck) => {
+    const farn = (x, y, w, lang, biege, deck) => {
+      /* Hauptader als Kurve; Punkte und Richtung entlang der Kurve. */
       const x2 = x + Math.cos(w) * lang, y2 = y + Math.sin(w) * lang;
-      const mx = (x + x2) / 2 + Math.cos(w + 1.57) * zufall(-1, 1), my = (y + y2) / 2 + Math.sin(w + 1.57) * zufall(-1, 1);
-      const l = lang * 1.05;
-      frost += '<path d="M' + f(x) + " " + f(y) + " Q" + f(mx) + " " + f(my) + " " + f(x2) + " " + f(y2) + '" stroke-width="' + f(0.4 - tiefe * 0.09)
-        + '" stroke-opacity="' + f(deck) + '" stroke-dasharray="' + f(l) + " " + f(l) + '" stroke-dashoffset="' + f(l) + '">'
-        + '<animate attributeName="stroke-dashoffset" dur="' + f(0.9 + lang * 0.05) + 's" begin="' + f(bg) + 's" fill="freeze" values="' + f(l) + ';0" calcMode="spline" keySplines=".3 0 .5 1"/></path>';
-      /* Gefiedert wie Frost: drei Ebenen, nach aussen immer kuerzere,
-         dichtere Aestchen im Wechsel links und rechts. */
-      if (tiefe >= 3) return;
-      const aeste = [4, 3, 2][tiefe] + Math.floor(Math.random() * 2);
-      for (let k = 1; k <= aeste; k++) {
-        const t = k / (aeste + 1);
-        const ax = x + (x2 - x) * t, ay = y + (y2 - y) * t;
-        const seite = k % 2 ? 1 : -1;
-        ader(ax, ay, w + seite * zufall(0.7, 1.0), lang * zufall(0.28, 0.4) * (1 - t * 0.4), tiefe + 1, bg + t * 0.6, deck * 0.75);
+      const cx = (x + x2) / 2 + Math.cos(w + 1.57) * biege, cy = (y + y2) / 2 + Math.sin(w + 1.57) * biege;
+      const pkt = (t) => ({ x: (1 - t) * (1 - t) * x + 2 * (1 - t) * t * cx + t * t * x2,
+                            y: (1 - t) * (1 - t) * y + 2 * (1 - t) * t * cy + t * t * y2 });
+      const rich = (t) => Math.atan2(2 * (1 - t) * (cy - y) + 2 * t * (y2 - cy), 2 * (1 - t) * (cx - x) + 2 * t * (x2 - cx));
+      let d = "M" + f(x) + " " + f(y) + " Q" + f(cx) + " " + f(cy) + " " + f(x2) + " " + f(y2);
+      let fein = "";
+      const n2 = Math.max(8, Math.round(lang * 1.3));
+      for (let k = 1; k < n2; k++) {
+        const t = k / n2, P = pkt(t), a = rich(t);
+        const fl = lang * 0.3 * Math.pow(1 - t, 0.75) + 0.35;
+        [1, -1].forEach((seite) => {
+          const aw = a + seite * zufall(0.85, 1.05);
+          const ex = P.x + Math.cos(aw) * fl, ey = P.y + Math.sin(aw) * fl;
+          d += " M" + f(P.x) + " " + f(P.y) + " L" + f(ex) + " " + f(ey);
+          /* An den langen Fiedern noch feinere Haerchen. */
+          if (fl > 2.2 && k % 2 === 0) {
+            for (let j = 1; j <= 2; j++) {
+              const tt = j / 3, qx = P.x + (ex - P.x) * tt, qy = P.y + (ey - P.y) * tt;
+              const hw = aw + seite * 0.9, hl = fl * 0.28;
+              fein += "M" + f(qx) + " " + f(qy) + " L" + f(qx + Math.cos(hw) * hl) + " " + f(qy + Math.sin(hw) * hl) + " ";
+            }
+          }
+        });
       }
+      return '<path d="' + d + '" stroke-width=".32" stroke-opacity="' + f(deck) + '"/>'
+        + (fein ? '<path d="' + fein + '" stroke-width=".18" stroke-opacity="' + f(deck * 0.8) + '"/>' : "");
     };
-    /* XANDER (Walkie #152): „Eisblumen dichter" — 16 statt 8, und sie
-       kommen doppelt so schnell nacheinander (alle 0,35 s). */
-    for (let i = 0; i < 16; i++) {
-      const w = (i / 16) * Math.PI * 2 + zufall(-0.2, 0.2);
-      const sx = 50 + Math.cos(w) * (R - RING - 0.5), sy = 50 + Math.sin(w) * (R - RING - 0.5);
-      /* nach innen, etwas schraeg — und nicht bis in die Mitte */
-      ader(sx, sy, w + Math.PI + zufall(-0.5, 0.5), zufall(9, 15), 0, 0.2 + i * 0.35, zufall(0.3, 0.45));
+    const stern = (x, y, gr, deck) => {
+      let d = "";
+      for (let k = 0; k < 6; k++) {
+        const a = k * Math.PI / 3 + zufall(-0.05, 0.05);
+        const ex = x + Math.cos(a) * gr, ey = y + Math.sin(a) * gr;
+        d += "M" + f(x) + " " + f(y) + " L" + f(ex) + " " + f(ey) + " ";
+        [0.55].forEach((t) => {
+          const qx = x + Math.cos(a) * gr * t, qy = y + Math.sin(a) * gr * t;
+          d += "M" + f(qx) + " " + f(qy) + " L" + f(qx + Math.cos(a + 0.8) * gr * 0.3) + " " + f(qy + Math.sin(a + 0.8) * gr * 0.3)
+            + " M" + f(qx) + " " + f(qy) + " L" + f(qx + Math.cos(a - 0.8) * gr * 0.3) + " " + f(qy + Math.sin(a - 0.8) * gr * 0.3) + " ";
+        });
+      }
+      return '<path d="' + d + '" stroke-width=".25" stroke-opacity="' + f(deck) + '"/>';
+    };
+    /* 14 Farne rundum, vom Rand schraeg nach innen, nacheinander. */
+    for (let i = 0; i < 14; i++) {
+      const w = (i / 14) * Math.PI * 2 + zufall(-0.18, 0.18);
+      const sx = 50 + Math.cos(w) * (R - RING - 0.4), sy = 50 + Math.sin(w) * (R - RING - 0.4);
+      const bg = 0.15 + i * 0.32;
+      frost += '<g opacity="0"><animate attributeName="opacity" dur=".7s" begin="' + f(bg) + 's" fill="freeze" values="0;1"/>'
+        + farn(sx, sy, w + Math.PI + zufall(-0.55, 0.55), zufall(10, 16), zufall(-3, 3), zufall(0.3, 0.45))
+        /* manchmal ein zweiter, kleinerer Farn aus demselben Ansatz */
+        + (Math.random() < 0.5 ? farn(sx, sy, w + Math.PI + zufall(-1.1, 1.1), zufall(5, 8), zufall(-2, 2), zufall(0.25, 0.4)) : "")
+        + "</g>";
     }
-    bild = '<g clip-path="url(#lcEm' + n + ')" fill="none" stroke="#F0F9FF" stroke-linecap="round">' + frost + "</g>" + bild;
+    for (let i = 0; i < 9; i++) {
+      const w = zufall(0, Math.PI * 2), rr = (R - RING) * zufall(0.72, 0.92);
+      frost += '<g opacity="0"><animate attributeName="opacity" dur=".5s" begin="' + f(0.8 + i * 0.45) + 's" fill="freeze" values="0;1"/>'
+        + stern(50 + Math.cos(w) * rr, 50 + Math.sin(w) * rr, zufall(1.1, 2), zufall(0.3, 0.45)) + "</g>";
+    }
+    /* Der milchige Reif am Rand und die Maske, die den Frost von aussen
+       nach innen wachsen laesst (bis 45 % des Radius — die Mitte bleibt
+       frei, man sieht das Gesicht). */
+    const innen0 = R - RING - 1, innen1 = (R - RING) * 0.45;
+    const reif = '<circle cx="50" cy="50" r="' + f(R - RING / 2) + '" fill="url(#lcEr' + n + ')" opacity="0">'
+      + '<animate attributeName="opacity" dur="3s" begin=".2s" fill="freeze" values="0;1"/></circle>';
+    const maske = '<mask id="lcEk' + n + '"><circle cx="50" cy="50" r="' + f(R) + '" fill="#fff"/>'
+      + '<circle cx="50" cy="50" r="' + f(innen0) + '" fill="#000">'
+      + '<animate attributeName="r" dur="5.5s" begin=".1s" fill="freeze" values="' + f(innen0) + ";" + f(innen1) + '" calcMode="spline" keySplines=".25 0 .4 1"/>'
+      + "</circle></mask>"
+      + '<radialGradient id="lcEr' + n + '" cx="50%" cy="50%" r="50%">'
+      + '<stop offset=".6" stop-color="#F0F9FF" stop-opacity="0"/><stop offset=".86" stop-color="#F0F9FF" stop-opacity=".16"/>'
+      + '<stop offset="1" stop-color="#FFFFFF" stop-opacity=".42"/></radialGradient>';
+    bild = '<defs>' + maske + '</defs><g clip-path="url(#lcEm' + n + ')">' + reif
+      + '<g mask="url(#lcEk' + n + ')" fill="none" stroke="#F8FCFF" stroke-linecap="round">' + frost + "</g></g>" + bild;
     return '<svg class="lc-eis-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + defs + "</defs>" + bild + "</svg>";
   }
 
@@ -24959,7 +25015,7 @@
       const zu = "0.3 0.12", auf = "1 1", dreh = f(zufall(-6, 6));
       blaetter += '<g transform="translate(' + f(bx) + " " + f(by) + ") rotate(" + f(w + 90) + ')">'
         + '<g class="lc-bl-blatt" transform="scale(' + zu + ') rotate(' + dreh + ')">'
-        + '<animateTransform class="lc-bl-auf" attributeName="transform" type="scale" dur=".42s" begin="indefinite" fill="freeze" values="' + zu + ";1.06 1.04;" + auf + '" calcMode="spline" keySplines=".3 0 .4 1;.4 0 .6 1"/>'
+        + '<animateTransform class="lc-bl-auf" attributeName="transform" type="scale" dur=".6s" begin="indefinite" fill="freeze" values="' + zu + ";1.06 1.04;" + auf + '" calcMode="spline" keySplines=".3 0 .4 1;.4 0 .6 1"/>'
         + '<animateTransform class="lc-bl-zu" attributeName="transform" type="scale" dur=".34s" begin="indefinite" fill="freeze" values="' + auf + ";" + zu + '" calcMode="spline" keySplines=".4 0 .7 1"/>'
         + '<path d="' + d + '" fill="url(#lcBb' + n + ')" stroke="#D38C9F" stroke-opacity=".35" stroke-width=".3"/>'
         + '<path d="' + ader + '" fill="none" stroke="#C07A8E" stroke-opacity=".4" stroke-width=".22" stroke-linecap="round"/>'
@@ -24975,7 +25031,12 @@
     if (rueckwaerts) alle.reverse();
     clearTimeout(feld._lcBlStoss);
     (feld._lcBlZeiten || []).forEach(clearTimeout);
-    feld._lcBlZeiten = alle.map((a, i) => setTimeout(() => { try { a.beginElement(); } catch (e) {} }, i * 110));
+    /* RUNDE 101 — XANDER (Walkie #157): „Gemeinsameres Aufgehen."
+       Beim AUFGEHEN nur noch 25 ms Versatz (die ganze Krone oeffnet
+       sich in 0,3 s wie eine Bewegung, mit einem Hauch Welle); beim
+       Zugehen bleibt es Blatt fuer Blatt. */
+    const schritt = klasse === "lc-bl-auf" ? 25 : 110;
+    feld._lcBlZeiten = alle.map((a, i) => setTimeout(() => { try { a.beginElement(); } catch (e) {} }, i * schritt));
   }
   function lcBlueteAuf(feld) { feld.dataset.zu = ""; lcBlueteStoss(feld, "lc-bl-auf", false); }
   function lcBlueteZu(feld) { if (feld.dataset.zu === "1") return; feld.dataset.zu = "1"; lcBlueteStoss(feld, "lc-bl-zu", true); }

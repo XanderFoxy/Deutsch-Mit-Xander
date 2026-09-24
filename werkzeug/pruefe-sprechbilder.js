@@ -257,10 +257,14 @@ const TEILCHEN = ["magie", "noten", "herzen", "feuer", "strom2", "blasen"];
     if (!svg) return { da: false };
     const zapfen = [...svg.querySelectorAll('path[fill^="url(#lcEz"]')];
     const tiefste = Math.max(...zapfen.map((z) => { const zahlen = z.getAttribute("d").match(/-?\d+\.?\d*/g).map(Number); return Math.max(...zahlen.filter((v, i) => i % 2 === 1)); }));
-    const adern = [...svg.querySelectorAll("g[clip-path] path")];
+    /* RUNDE 101 — die Eisblumen sind jetzt Farne (Walkie #156
+       „ueberarbeiten"): sie liegen unter einer Maske, die den Frost vom
+       Rand nach innen wachsen laesst, und jeder Farn blendet als Gruppe
+       ein. Gemessen wird deshalb in der Maskengruppe. */
+    const adern = [...svg.querySelectorAll("g[mask] path")];
     const deck = adern.map((p) => parseFloat(p.getAttribute("stroke-opacity")));
     const dick = adern.map((p) => parseFloat(p.getAttribute("stroke-width")));
-    const starts = new Set(adern.map((p) => p.querySelector("animate").getAttribute("begin")));
+    const starts = new Set([...svg.querySelectorAll("g[mask] > g > animate")].map((a) => a.getAttribute("begin")));
     return { da: true, zapfen: zapfen.length, tiefste, adern: adern.length, deckMax: Math.max(...deck), deckMin: Math.min(...deck),
       dickMax: Math.max(...dick), starts: starts.size, sticker: knopf.querySelectorAll(".lc-teilchen").length };
   });
@@ -292,7 +296,10 @@ const TEILCHEN = ["magie", "noten", "herzen", "feuer", "strom2", "blasen"];
   const zu = await groesse();
   pruefe("8–12 Blaetter", offen.length >= 8 && offen.length <= 12, offen.length);
   pruefe("jedes Blatt hat seine eigene Form", formen === offen.length, formen + " Formen");
-  pruefe("sie gehen NACHEINANDER auf (Zeitraffer)", Math.min(...frueh) < 0.5 && Math.max(...frueh) > 0.8, frueh.join(" "));
+  /* RUNDE 101 — XANDER (Walkie #157): „Gemeinsameres Aufgehen."
+     Vorher verlangte diese Pruefung das Gegenteil (Zeitraffer, Blatt
+     fuer Blatt). Jetzt: nach 450 ms sind ALLE Blaetter offen (> 0,8). */
+  pruefe("sie gehen GEMEINSAM auf (Walkie #157)", Math.min(...frueh) > 0.8, frueh.join(" "));
   pruefe("am Ende sind alle offen", offen.every((x) => x >= 0.95), offen.join(" "));
   pruefe("beim Verstummen Blatt fuer Blatt zu", Math.min(...halbZu) < 0.5 && Math.max(...halbZu) > 0.8, halbZu.join(" "));
   pruefe("dann ist der Kelch zu", zu.every((x) => x <= 0.35), zu.join(" "));
