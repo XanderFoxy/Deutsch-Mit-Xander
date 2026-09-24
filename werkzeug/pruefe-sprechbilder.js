@@ -35,7 +35,7 @@ const pruefe = (was, gut, zusatz) => {
 
 /* SCHON-PASS (Xanders Liste vom 23.09.): das Feuer ist seitdem EIN
    Bild statt Teilchen — es hat unten einen eigenen Abschnitt. */
-const TEILCHEN = ["noten", "herzen", "blasen"]; /* Strom seit SCHON-PASS 7 ein Bild */
+const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /* Strom seit SCHON-PASS 7 ein Bild */
 
 (async () => {
   const srv = http.createServer((q, a) => {
@@ -89,26 +89,24 @@ const TEILCHEN = ["noten", "herzen", "blasen"]; /* Strom seit SCHON-PASS 7 ein B
   });
 
   console.log("\nIST DER REGENBOGEN WIRKLICH BUNT?\n");
+  /* SCHON-PASS 9: der Regenbogen ist eine Lage im Sprechfeld —
+     „2–3 weiche Farbbänder … Farben laufen ineinander … sehr langsam
+     driftend". */
   const bogen = await pg.evaluate(() => {
     const knopf = document.querySelector(".lc-platz");
     knopf.dataset.sprechbild = "regenbogen";
-    const kreis = knopf.querySelector(".lc-kreis");
-    const vor = getComputedStyle(kreis, "::before");
-    const nach = getComputedStyle(kreis, "::after");
-    const zaehle = (t) => (String(t).match(/rgb/g) || []).length;
-    return {
-      vorBild: vor.backgroundImage.slice(0, 40),
-      farbenVor: zaehle(vor.backgroundImage),
-      farbenNach: zaehle(nach.backgroundImage),
-      schein: nach.filter
-    };
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "regenbogen");
+    const lage = knopf.querySelector(".lc-sregenbogen .lc-rb-lage");
+    if (!lage) return null;
+    const cs = getComputedStyle(lage);
+    const baender = ((cs.maskImage || cs.webkitMaskImage || "").match(/rgb\(0, 0, 0\)|rgba\(0, 0, 0, 1\)/g) || []).length;
+    return { bild: cs.backgroundImage.slice(0, 40), farben: (cs.backgroundImage.match(/rgb/g) || []).length,
+      schein: cs.filter, dauer: parseFloat(cs.animationDuration), lagen: knopf.querySelectorAll(".lc-rb-lage").length };
   });
-  pruefe("der Ring ist ein Farbkreis, kein einzelner Farbton",
-    /conic-gradient/.test(bogen.vorBild), bogen.vorBild);
-  pruefe("er zeigt viele Farben GLEICHZEITIG", bogen.farbenVor >= 8,
-    bogen.farbenVor + " Farben im Ring");
-  pruefe("und strahlt weich nach aussen", /blur/.test(bogen.schein || ""),
-    bogen.schein || "kein Schein");
+  pruefe("der Ring ist ein Farbkreis", bogen && /conic-gradient/.test(bogen.bild), bogen ? bogen.bild : "fehlt");
+  pruefe("viele Farben, die ineinanderlaufen", bogen && bogen.farben >= 8, bogen ? bogen.farben + " Farben" : "");
+  pruefe("weich (unscharf), nicht hart", bogen && /blur/.test(bogen.schein), bogen ? bogen.schein : "");
+  pruefe("sehr langsam driftend (mind. 60 s je Umlauf)", bogen && bogen.dauer >= 60, bogen ? bogen.dauer + " s" : "");
 
   console.log("\nDIE TEILCHEN\n");
   for (const art of TEILCHEN) {
@@ -341,6 +339,25 @@ const TEILCHEN = ["noten", "herzen", "blasen"]; /* Strom seit SCHON-PASS 7 ein B
   pruefe("Funkeln: Aufblitzen 0,15–0,35 s", mf.funkeln.blitzMin >= 0.149 && mf.funkeln.blitzMax <= 0.351,
     mf.funkeln.blitzMin.toFixed(2) + "–" + mf.funkeln.blitzMax.toFixed(2) + " s");
   pruefe("Funkeln: kein stehendes Raster (jeder Punkt wechselt den Ort)", mf.funkeln.orte, "");
+
+  console.log("\nSCHON-PASS 10 — HERZEN UND NOTEN\n");
+  const hn = await pg.evaluate(() => {
+    const knopf = document.querySelector(".lc-platz");
+    knopf.dataset.sprechbild = "herzen";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "herzen");
+    const hz = [...knopf.querySelectorAll(".lc-herzen-bild path")];
+    const striche = hz.map((p) => parseFloat(p.getAttribute("stroke-width")) * knopf.querySelector(".lc-sprechfeld").getBoundingClientRect().width / 100);
+    const zeichenH = knopf.querySelector(".lc-sprechfeld").textContent.trim().length;
+    knopf.dataset.sprechbild = "noten";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "noten");
+    const nt = [...knopf.querySelectorAll(".lc-noten-bild > g")];
+    const r = nt.map((g) => { const m = g.getAttribute("transform").match(/translate\(([\d.]+) ([\d.]+)\)/); return Math.hypot(m[1] - 50, m[2] - 50); });
+    return { herzen: hz.length, strichMin: Math.min(...striche), strichMax: Math.max(...striche), zeichenH,
+      noten: nt.length, rMin: Math.min(...r), zeichenN: knopf.querySelector(".lc-sprechfeld").textContent.trim().length };
+  });
+  pruefe("Herzen: 18 oder etwas mehr, als Herz-Pfad (kein Zeichen)", hn.herzen >= 18 && hn.herzen <= 26 && hn.zeichenH === 0, hn.herzen);
+  pruefe("Herzen: Strich 1–1,5 px", hn.strichMin >= 0.95 && hn.strichMax <= 1.55, hn.strichMin.toFixed(2) + "–" + hn.strichMax.toFixed(2) + " px");
+  pruefe("Noten: auf dem Ring, nicht aus der Mitte, keine Zeichen", hn.noten >= 12 && hn.rMin >= 34.7 && hn.zeichenN === 0, hn.noten + " Noten, naechste " + hn.rMin.toFixed(1));
 
   console.log("\nUND WENN DAS SPRECHEN AUFHOERT?\n");
   const weg = await pg.evaluate(() => {

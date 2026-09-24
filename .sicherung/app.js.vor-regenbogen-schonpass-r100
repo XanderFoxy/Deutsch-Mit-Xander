@@ -25211,83 +25211,11 @@
     return '<svg class="lc-funkeln-bild" viewBox="0 0 100 100" aria-hidden="true">' + punkte + "</svg>";
   }
 
-  /* =================================================================
-     SCHON-PASS SPRECHBILDER — 9. REGENBOGEN, 10. HERZEN UND NOTEN
-     -----------------------------------------------------------------
-     XANDERS LISTE:
-     „REGENBOGEN: 2–3 weiche Farbbänder entlang des Rings, Farben
-     laufen ineinander (kein hartes 7-Streifen-Sticker). Sättigung
-     mittel, Bewegung sehr langsam driftend. Deutlich, aber nicht
-     grell."
-     „HERZEN: 18 können bleiben oder leicht mehr. Form: echter
-     Herz-Pfad (zwei Bögen + Spitze), Strich 1–1,5 px, nicht ❤️. Nur
-     Band am Rahmen. Größe 4–8 % des Kreises, viele klein. Leicht
-     aufsteigen 6–12 px, dann weg. Versatz."
-     „NOTEN: Nur auf Pfad am Ring. Formen ♩♪ filigran, nicht fett.
-     Tangente zum Pfad (schon da), Größe runter. Nicht aus der Mitte."
-     REGENBOGEN: SVG kennt keinen Farbkreis-Verlauf, deshalb ein Kasten
-     mit conic-gradient, den eine weiche Ringmaske auf drei Baender
-     beschneidet. Zwei Lagen drehen gegeneinander (80 s und 110 s) —
-     so laufen die Farben ineinander statt als Streifen zu stehen.
-     Masse: 1 px = 0,83 Feldeinheiten (Feld 120,6 px breit).
-     ================================================================= */
-  function lcRegenbogenSvg() {
-    return '<span class="lc-rb-lage lc-rb-eins"></span><span class="lc-rb-lage lc-rb-zwei"></span>';
-  }
-  function lcHerzenSvg() {
-    const R = 34.7, f = (v) => v.toFixed(2), z = (a, b) => a + Math.random() * (b - a);
-    let bild = "";
-    const menge = 22;
-    for (let i = 0; i < menge; i++) {
-      const w = (i / menge) * Math.PI * 2 + z(-0.12, 0.12), r = R + z(0.4, 3);
-      const x = 50 + Math.cos(w) * r, y = 50 + Math.sin(w) * r;
-      /* 4–8 % des Kreisdurchmessers (69,4): 2,8 bis 5,5 — „viele klein":
-         die Groesse wird zum kleinen Ende hin gewuerfelt. */
-      const wurf = Math.random(), g = 2.8 + wurf * wurf * 2.7;
-      const k = g / 2;
-      /* echter Herzpfad: zwei Boegen oben, Spitze unten */
-      const herz = "M0 " + f(k * 0.9) + " C" + f(-k * 1.1) + " " + f(k * 0.1) + " " + f(-k * 1.05) + " " + f(-k * 0.85) + " " + f(-k * 0.45) + " " + f(-k * 0.9)
-        + " C" + f(-k * 0.15) + " " + f(-k * 1.05) + " 0 " + f(-k * 0.7) + " 0 " + f(-k * 0.45)
-        + " C0 " + f(-k * 0.7) + " " + f(k * 0.15) + " " + f(-k * 1.05) + " " + f(k * 0.45) + " " + f(-k * 0.9)
-        + " C" + f(k * 1.05) + " " + f(-k * 0.85) + " " + f(k * 1.1) + " " + f(k * 0.1) + " 0 " + f(k * 0.9) + " Z";
-      const hoch = z(5, 10), dur = z(1.8, 3), bg = f(-z(0, dur));
-      bild += '<g transform="translate(' + f(x) + " " + f(y) + ')"><g>'
-        + '<animateTransform attributeName="transform" type="translate" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" values="0 0;' + f(z(-1, 1)) + " " + f(-hoch) + '"/>'
-        + '<animate attributeName="opacity" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" values="0;1;.8;0" keyTimes="0;.15;.6;1"/>'
-        + '<path d="' + herz + '" fill="#FDA4AF" fill-opacity=".35" stroke="#E11D48" stroke-width="' + f(z(0.83, 1.25)) + '" stroke-linejoin="round" transform="rotate(' + f(z(-12, 12)) + ')"/>'
-        + "</g></g>";
-    }
-    return '<svg class="lc-herzen-bild" viewBox="0 0 100 100" aria-hidden="true">' + bild + "</svg>";
-  }
-  function lcNotenSvg() {
-    const R = 34.7, f = (v) => v.toFixed(2), z = (a, b) => a + Math.random() * (b - a);
-    /* ♩ Viertel und ♪ Achtel als feine Zeichnung: Kopf ein schraeges
-       Oval, Hals ein Haarstrich, beim Achtel eine Fahne. */
-    const viertel = '<ellipse cx="0" cy="0" rx="1" ry=".7" transform="rotate(-24)"/><path d="M.9 -.2 V-4.4" fill="none" stroke-width=".28"/>';
-    const achtel = viertel.replace("</path>", "") + '<path d="M.9 -4.4 C1.9 -3.5 2.6 -2.9 2.1 -1.5" fill="none" stroke-width=".28"/>';
-    let bild = "";
-    const menge = 16;
-    for (let i = 0; i < menge; i++) {
-      const w = (i / menge) * Math.PI * 2 + z(-0.1, 0.1), r = R + z(1.6, 3.2);
-      const x = 50 + Math.cos(w) * r, y = 50 + Math.sin(w) * r;
-      let grad = w * 180 / Math.PI + 90;
-      const roh = ((w * 180 / Math.PI) % 360 + 360) % 360;
-      if (roh > 90 && roh < 270) grad += 180;
-      const g = z(1.05, 1.4), dur = z(2.2, 3.6), bg = f(-z(0, dur));
-      bild += '<g transform="translate(' + f(x) + " " + f(y) + ") rotate(" + f(grad) + ") scale(" + f(g) + ')" fill="#5B21B6" stroke="#5B21B6">'
-        + '<animate attributeName="opacity" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" values=".15;.85;.6;.15"/>'
-        + '<g><animateTransform attributeName="transform" type="translate" dur="' + f(dur) + 's" begin="' + bg + 's" repeatCount="indefinite" values="0 0;0 -1.2;0 0" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>'
-        + (i % 2 ? achtel : viertel) + "</g></g>";
-    }
-    return '<svg class="lc-noten-bild" viewBox="0 0 100 100" aria-hidden="true">' + bild + "</svg>";
-  }
-
   /* Welche Sprechbilder seit dem SCHON-PASS EIN Bild sind statt
      Teilchen oder Rand-Schichten. */
   const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg, blut: lcBlutSvg, eis: lcEisSvg, bluete: lcBlueteSvg,
     strom: lcStromASvg, stromkugel: lcStromBSvg, strommantel: lcStromCSvg,
-    magie: lcMagieSvg, funkeln: lcFunkelnSvg,
-    regenbogen: lcRegenbogenSvg, herzen: lcHerzenSvg, noten: lcNotenSvg };
+    magie: lcMagieSvg, funkeln: lcFunkelnSvg };
 
   function lcSprechFeld(knopf, art) {
     const kreis = knopf.querySelector(".lc-kreis");

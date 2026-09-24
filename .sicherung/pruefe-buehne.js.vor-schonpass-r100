@@ -116,10 +116,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
      "und der Farbkreis dreht sich am Rand", erg.regenbogen.nachAnimation);
   ok(erg.regenbogen.animation === "none",
      "das Bild selbst bleibt frei", erg.regenbogen.animation);
-  /* SCHON-PASS 8 (Xanders Liste vom 23.09.): Funkeln blitzt seitdem im
-     Sprechfeld auf („Aufblitzen 0,15–0,35 s … dann weg") — das Bild
-     selbst glimmt nicht mehr. Gemessen in pruefe-sprechbilder. */
-  ok(erg.funkeln.animation === "none", "Funkeln: das Bild selbst bleibt ruhig", erg.funkeln.animation);
+  ok(erg.funkeln.animation === "lcFunkelGlimmen", "Funkeln glimmt", erg.funkeln.animation);
   ok(erg.funkeln.nachAnimation === "lcFunkelDreh" && erg.funkeln.vorAnimation === "lcFunkelDreh",
      "und zwei Lichterkränze wandern gegenläufig");
   ok(erg.funkeln.nachBild.indexOf("radial-gradient") === 0,

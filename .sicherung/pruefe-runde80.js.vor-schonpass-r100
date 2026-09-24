@@ -354,18 +354,17 @@ function tonMessen(name) {
     if (!feld) return null;
     const fr = feld.getBoundingClientRect();
     const mx = fr.left + fr.width / 2, my = fr.top + fr.height / 2;
-    /* SCHON-PASS 10: die Noten sind seitdem gezeichnete Gruppen im
-       Bild (translate + rotate) statt Zeichen — gemessen wird dasselbe:
-       Drehung gegen Lage auf dem Kreis. */
-    return [...feld.querySelectorAll(".lc-noten-bild > g")].map((g) => {
-      const m = g.getAttribute("transform").match(/translate\(([-\d.]+) ([-\d.]+)\) rotate\(([-\d.]+)\)/);
-      const dx = m[1] - 50, dy = m[2] - 50;
+    return [...feld.querySelectorAll(".lc-teilchen")].map((t) => {
+      const r = t.getBoundingClientRect();
+      const dx = (r.left + r.width / 2) - mx, dy = (r.top + r.height / 2) - my;
       const lage = Math.atan2(dy, dx) * 180 / Math.PI;
-      const dreh = parseFloat(m[3]);
+      const m = new DOMMatrix(getComputedStyle(t).transform);
+      const dreh = Math.atan2(m.b, m.a) * 180 / Math.PI;
+      /* Erwartet: Tangente = Lage + 90, gegebenenfalls um 180 gewendet. */
       let ab = ((dreh - (lage + 90)) % 360 + 360) % 360;
       if (ab > 180) ab = 360 - ab;
       if (ab > 90) ab = 180 - ab;
-      return { ab: +ab.toFixed(1), abstand: +(Math.hypot(dx, dy) * fr.width / 100).toFixed(1) };
+      return { ab: +ab.toFixed(1), abstand: +Math.hypot(dx, dy).toFixed(1) };
     });
   });
   if (!notenLage || !notenLage.length) sage(false, "die Noten liessen sich nicht messen");
@@ -390,16 +389,14 @@ function tonMessen(name) {
     if (!feld) return null;
     const fr = feld.getBoundingClientRect();
     const mx = fr.left + fr.width / 2, my = fr.top + fr.height / 2;
-    /* SCHON-PASS 10: Herzen sind Gruppen im Bild — ihr Startpunkt
-       (translate) ist die Lage auf dem Ring. */
-    const t = [...feld.querySelectorAll(".lc-herzen-bild > g")];
-    const rad = t.map((g) => {
-      const m = g.getAttribute("transform").match(/translate\(([-\d.]+) ([-\d.]+)\)/);
-      return Math.hypot(m[1] - 50, m[2] - 50) * fr.width / 100;
+    const t = [...feld.querySelectorAll(".lc-teilchen")];
+    const rad = t.map((e) => {
+      const r = e.getBoundingClientRect();
+      return Math.hypot(r.left + r.width / 2 - mx, r.top + r.height / 2 - my);
     });
     return { spanne: Math.max(...rad) - Math.min(...rad), anzahl: t.length };
   });
-  sage(herzLage && herzLage.anzahl > 0 && herzLage.spanne < 14,
+  sage(herzLage && herzLage.spanne < 14,
     "die Herzen sitzen auf dem Ring (Spanne "
     + (herzLage ? herzLage.spanne.toFixed(1) : "?") + " px)");
 
