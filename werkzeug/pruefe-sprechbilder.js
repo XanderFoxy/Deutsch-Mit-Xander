@@ -223,6 +223,29 @@ const TEILCHEN = ["magie", "noten", "herzen", "strom", "blasen"];
   /* Platzhoehe im Feld: Bild 69,4 + Name ~ 83 → 20–40 % = 16,6 bis 33,2 */
   pruefe("er faellt 20–40 % der Platzhoehe", bl.fall && bl.fall.every((x) => x >= 16.6 && x <= 33.2), (bl.fall || []).map((x) => x.toFixed(1)).join(", "));
 
+  console.log("\nSCHON-PASS 5 — EIS\n");
+  const ei = await pg.evaluate(() => {
+    const knopf = document.querySelector(".lc-platz");
+    knopf.dataset.sprechbild = "eis";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "eis");
+    const svg = knopf.querySelector(".lc-sprechfeld svg.lc-eis-bild");
+    if (!svg) return { da: false };
+    const zapfen = [...svg.querySelectorAll('path[fill^="url(#lcEz"]')];
+    const tiefste = Math.max(...zapfen.map((z) => { const zahlen = z.getAttribute("d").match(/-?\d+\.?\d*/g).map(Number); return Math.max(...zahlen.filter((v, i) => i % 2 === 1)); }));
+    const adern = [...svg.querySelectorAll("g[clip-path] path")];
+    const deck = adern.map((p) => parseFloat(p.getAttribute("stroke-opacity")));
+    const dick = adern.map((p) => parseFloat(p.getAttribute("stroke-width")));
+    const starts = new Set(adern.map((p) => p.querySelector("animate").getAttribute("begin")));
+    return { da: true, zapfen: zapfen.length, tiefste, adern: adern.length, deckMax: Math.max(...deck), deckMin: Math.min(...deck),
+      dickMax: Math.max(...dick), starts: starts.size, sticker: knopf.querySelectorAll(".lc-teilchen").length };
+  });
+  pruefe("Eis ist ein Bild, kein Sticker", ei.da && ei.sticker === 0, ei.da ? "ja" : "fehlt");
+  pruefe("Zapfen wachsen aus der Ringlinie", ei.zapfen >= 6, ei.zapfen + " Zapfen");
+  pruefe("kein Zapfen haengt ueber den Namen (y < 88)", ei.tiefste < 88, "tiefste Spitze " + (ei.tiefste || 0).toFixed(1));
+  pruefe("Eisblumen haardünn", ei.dickMax <= 0.45, "dickste Ader " + ei.dickMax);
+  pruefe("Hauptadern 20–45 % Deckkraft, Aestchen blasser", ei.deckMax <= 0.45 && ei.deckMin > 0.05, ei.deckMin + " bis " + ei.deckMax);
+  pruefe("sie kommen nacheinander, nicht alle auf einmal", ei.starts >= 8, ei.starts + " verschiedene Startzeiten");
+
   console.log("\nUND WENN DAS SPRECHEN AUFHOERT?\n");
   const weg = await pg.evaluate(() => {
     const knopf = document.querySelector(".lc-platz");

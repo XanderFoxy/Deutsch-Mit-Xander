@@ -24812,97 +24812,9 @@
       + '<g clip-path="url(#lcBm' + n + ')">' + innen + "</g>" + tropfen + "</svg>";
   }
 
-  /* =================================================================
-     SCHON-PASS SPRECHBILDER — 5. EIS
-     -----------------------------------------------------------------
-     XANDERS LISTE: „Zapfen wachsen aus der Ringlinie (Dachkante),
-     gleiche Strichstärke wie der Rahmen, weicher Übergang, kein extra
-     Halbkreis oben drauf. Eisblumen nur über dem Foto: haardünne
-     Adern, 20–45 % Deckkraft, weiche Enden. Beim Sprechen nacheinander
-     dichter, nicht alle auf einmal. Kein undurchsichtiger Sticker,
-     Foto muss durchscheinen."
-     GEMESSEN: der Rahmen ist 3 px bei 83,75 px Bild — im Feld 2,5
-     Einheiten. So breit ist jeder Zapfen am Ansatz, und er setzt
-     IN der Ringlinie an (der Ring deckt den Ansatz, kein Deckel).
-     Der Name beginnt 3,3 Einheiten unter dem Kreis (y 88). Die Zapfen
-     haengen deshalb nur seitlich unten (20–62 Grad beidseits) und
-     keiner reicht tiefer als y 86 — der Name bleibt frei (die alten
-     hingen ueber ihm).
-     ================================================================= */
-  let lcEisNr = 0;
-  function lcEisSvg() {
-    const R = 34.7, RING = 2.5, n = ++lcEisNr, f = (v) => v.toFixed(2), zufall = (a, b) => a + Math.random() * (b - a);
-    const defs = '<clipPath id="lcEm' + n + '"><circle cx="50" cy="50" r="' + f(R - RING / 2) + '"/></clipPath>'
-      + '<linearGradient id="lcEz' + n + '" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0" stop-color="#E0F2FE" stop-opacity=".95"/><stop offset=".55" stop-color="#BAE6FD" stop-opacity=".8"/>'
-      + '<stop offset="1" stop-color="#F0F9FF" stop-opacity=".55"/></linearGradient>';
-    /* DER RING wird Eis: dieselbe Linie, nur eisblau, mit einer
-       glasigen hellen Kante innen. */
-    let bild = '<circle cx="50" cy="50" r="' + f(R - RING / 2) + '" fill="none" stroke="#9BD3EE" stroke-width="' + RING + '"/>'
-      + '<circle cx="50" cy="50" r="' + f(R - RING - 0.3) + '" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width=".5"/>';
-    /* DIE ZAPFEN */
-    const winkel = [];
-    [[22, 62], [118, 158]].forEach(([a, b]) => {
-      const m = 4 + Math.floor(Math.random() * 2);
-      for (let i = 0; i < m; i++) winkel.push(a + (b - a) * (i + 0.5) / m + zufall(-3, 3));
-    });
-    winkel.forEach((g, i) => {
-      const w = g * Math.PI / 180;
-      const bx = 50 + Math.cos(w) * (R - RING / 2), by = 50 + Math.sin(w) * (R - RING / 2);
-      const breit = RING * zufall(0.95, 1.25);
-      const lang = Math.min(zufall(4, 8.5), 86 - by);
-      if (lang < 2) return;
-      /* Ansatz etwas IN der Ringlinie, damit der Ring ihn deckt; die
-         Seiten laufen weich ein (Bogen), die Spitze ist leicht krumm. */
-      const kr = zufall(-0.5, 0.5);
-      const d = "M" + f(bx - breit / 2) + " " + f(by - 0.6)
-        + " C" + f(bx - breit / 2) + " " + f(by + lang * 0.35) + " " + f(bx - breit * 0.12 + kr) + " " + f(by + lang * 0.7) + " " + f(bx + kr) + " " + f(by + lang)
-        + " C" + f(bx + breit * 0.12 + kr) + " " + f(by + lang * 0.7) + " " + f(bx + breit / 2) + " " + f(by + lang * 0.35) + " " + f(bx + breit / 2) + " " + f(by - 0.6) + " Z";
-      const bg = f(zufall(0.1, 2.2)), dur = f(zufall(1.4, 2.4));
-      /* Wachsen: von oben nach unten, am Ansatz festgehalten. */
-      bild += '<g transform="translate(' + f(bx) + " " + f(by) + ')"><g transform="scale(1 0)">'
-        + '<animateTransform attributeName="transform" type="scale" dur="' + dur + 's" begin="' + bg + 's" fill="freeze" values="1 0;1 1" calcMode="spline" keySplines=".3 0 .3 1"/>'
-        + '<path transform="translate(' + f(-bx) + " " + f(-by) + ')" d="' + d + '" fill="url(#lcEz' + n + ')" stroke="#9BD3EE" stroke-width=".45" stroke-linejoin="round"/>'
-        + '<path transform="translate(' + f(-bx) + " " + f(-by) + ')" d="M' + f(bx - breit * 0.18) + " " + f(by + 0.4) + " Q" + f(bx - breit * 0.14) + " " + f(by + lang * 0.5) + " " + f(bx + kr * 0.8) + " " + f(by + lang * 0.9)
-        + '" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width=".35" stroke-linecap="round"/></g></g>';
-    });
-    /* DIE EISBLUMEN: vom Rand her wachsende, haardünne Adern mit
-       Seitenaesten (wie Frost an der Scheibe). Jede Ader wird
-       freigelegt (Strich-Versatz), und sie kommen NACHEINANDER —
-       alle 0,6 s eine mehr, bis zu acht. Deckkraft 20–45 %, die
-       feineren Aeste blasser, runde Enden. */
-    let frost = "";
-    const ader = (x, y, w, lang, tiefe, bg, deck) => {
-      const x2 = x + Math.cos(w) * lang, y2 = y + Math.sin(w) * lang;
-      const mx = (x + x2) / 2 + Math.cos(w + 1.57) * zufall(-1, 1), my = (y + y2) / 2 + Math.sin(w + 1.57) * zufall(-1, 1);
-      const l = lang * 1.05;
-      frost += '<path d="M' + f(x) + " " + f(y) + " Q" + f(mx) + " " + f(my) + " " + f(x2) + " " + f(y2) + '" stroke-width="' + f(0.4 - tiefe * 0.09)
-        + '" stroke-opacity="' + f(deck) + '" stroke-dasharray="' + f(l) + " " + f(l) + '" stroke-dashoffset="' + f(l) + '">'
-        + '<animate attributeName="stroke-dashoffset" dur="' + f(0.9 + lang * 0.05) + 's" begin="' + f(bg) + 's" fill="freeze" values="' + f(l) + ';0" calcMode="spline" keySplines=".3 0 .5 1"/></path>';
-      /* Gefiedert wie Frost: drei Ebenen, nach aussen immer kuerzere,
-         dichtere Aestchen im Wechsel links und rechts. */
-      if (tiefe >= 3) return;
-      const aeste = [4, 3, 2][tiefe] + Math.floor(Math.random() * 2);
-      for (let k = 1; k <= aeste; k++) {
-        const t = k / (aeste + 1);
-        const ax = x + (x2 - x) * t, ay = y + (y2 - y) * t;
-        const seite = k % 2 ? 1 : -1;
-        ader(ax, ay, w + seite * zufall(0.7, 1.0), lang * zufall(0.28, 0.4) * (1 - t * 0.4), tiefe + 1, bg + t * 0.6, deck * 0.75);
-      }
-    };
-    for (let i = 0; i < 8; i++) {
-      const w = zufall(0, Math.PI * 2);
-      const sx = 50 + Math.cos(w) * (R - RING - 0.5), sy = 50 + Math.sin(w) * (R - RING - 0.5);
-      /* nach innen, etwas schraeg — und nicht bis in die Mitte */
-      ader(sx, sy, w + Math.PI + zufall(-0.5, 0.5), zufall(8, 14), 0, 0.3 + i * 0.6, zufall(0.3, 0.45));
-    }
-    bild = '<g clip-path="url(#lcEm' + n + ')" fill="none" stroke="#F0F9FF" stroke-linecap="round">' + frost + "</g>" + bild;
-    return '<svg class="lc-eis-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + defs + "</defs>" + bild + "</svg>";
-  }
-
   /* Welche Sprechbilder seit dem SCHON-PASS EIN Bild sind statt
      Teilchen oder Rand-Schichten. */
-  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg, blut: lcBlutSvg, eis: lcEisSvg };
+  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg, blut: lcBlutSvg };
 
   function lcSprechFeld(knopf, art) {
     const kreis = knopf.querySelector(".lc-kreis");
