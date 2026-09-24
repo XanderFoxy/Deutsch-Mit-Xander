@@ -49,20 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 558: Sabbern — kippen und sichtbar aus dem Mund",
+  stand: "559: Kuss – Männerstimme neu gesummt",
 
   inArbeit: [
-    { seit: "2026-09-24T03:42",
-      text: "Kuss-Stimme (Mann), Vogelkot-Ton" },
-    { seit: "2026-09-24T03:42",
-      text: "Stadt · Land · Fluss: Wörter streichen im Raum" },
-    { seit: "2026-09-24T03:42",
-      text: "Popo-Klaps verbessern" },
+    { seit: "2026-09-24T03:46",
+      text: "Dein Ohr: klingt der Mann beim Kuss jetzt natürlich?" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T03:42",
-      text: "Sabbern: dein Bild kippt bis 15° und wackelt (vorher 3°), gedreht um den Mund; am Mund quillt ein Speichelwulst auf, dünner Nebenfaden, beim Abreißen zuckt der Kopf zurück" },
+    { seit: "2026-09-24T03:46",
+      text: "Kuss: das Summen der Männerstimme ist neu – wärmer, tiefer und es fällt natürlich ab (vorher ein gleichbleibender Ton um 105 Hz). Das Schmatzen ist unverändert und kommt weiter bei 455 ms." },
   ],
 };
