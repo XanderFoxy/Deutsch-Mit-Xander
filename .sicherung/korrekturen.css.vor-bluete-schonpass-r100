@@ -33196,22 +33196,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-sprechfeld.lc-seis .lc-eis-bild {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
 }
-
-/* =====================================================================
-   SCHON-PASS SPRECHBILDER — 6. BLÜTE (Xanders Liste vom 23.09.)
-   Die Bluete ist jetzt ein Bild im Feld (.lc-sbluete, siehe
-   lcBlueteSvg): unregelmaessige Blaetter, Blatt fuer Blatt auf und zu.
-   Die alte Bluete am Platz (::after, auch beim Zugehen) ist aus.
-   ===================================================================== */
-.lc-platz-spricht[data-sprechbild="bluete"] .lc-kreis {
-  animation: none !important;
-  box-shadow: none !important;
-}
-.lc-platz-spricht[data-sprechbild="bluete"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="bluete"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="bluete"]::after,
-.lc-sprech-schliesst[data-sprechbild="bluete"]::after { display: none !important; }
-.lc-sprechfeld.lc-sbluete { overflow: visible; }
-.lc-sprechfeld.lc-sbluete .lc-bluete-bild {
-  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
-}

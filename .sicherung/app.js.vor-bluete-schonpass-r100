@@ -24900,82 +24900,9 @@
     return '<svg class="lc-eis-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + defs + "</defs>" + bild + "</svg>";
   }
 
-  /* =================================================================
-     SCHON-PASS SPRECHBILDER — 6. BLÜTE
-     -----------------------------------------------------------------
-     XANDERS LISTE: „8–12 unregelmäßige Blätter am Ring (kein Emoji-
-     Blume). Entfalten: innen klein am Kelch → nacheinander nach außen
-     klappen, 0,08–0,15 s Versatz wie Zeitraffer. Weniger/kein
-     Sprechen: umgekehrt, Blatt für Blatt wieder in den Kreis, Kelch zu
-     (‚unreif‘). Farben: gedämpftes Rosa/Creme, Ader dünn, Rand weich."
-     Jedes Blatt hat zwei Bewegungen, die NICHT von selbst laufen
-     (begin="indefinite"): Aufgehen und Zugehen. lcBlueteAuf und
-     lcBlueteZu stossen sie Blatt fuer Blatt an — 0,11 s versetzt.
-     Die Kelchblaetter (gruen, spitz) bleiben stehen: sie sind das,
-     was von einer zugegangenen Bluete uebrig bleibt.
-     ================================================================= */
-  let lcBlueteNr = 0;
-  function lcBlueteSvg() {
-    const R = 34.7, n = ++lcBlueteNr, f = (v) => v.toFixed(2), zufall = (a, b) => a + Math.random() * (b - a);
-    const defs = '<linearGradient id="lcBb' + n + '" x1="0" y1="1" x2="0" y2="0">'
-      + '<stop offset="0" stop-color="#FDF2E9"/><stop offset=".55" stop-color="#F3C7D0"/>'
-      + '<stop offset="1" stop-color="#E3A1B3"/></linearGradient>'
-      + '<linearGradient id="lcBk' + n + '" x1="0" y1="1" x2="0" y2="0">'
-      + '<stop offset="0" stop-color="#4D7C3A"/><stop offset="1" stop-color="#86A86B"/></linearGradient>';
-    const menge = 12;
-    let kelch = "", blaetter = "";
-    for (let i = 0; i < menge; i++) {
-      /* KELCHBLATT zwischen zwei Bluetenblaettern */
-      const wk = ((i + 0.5) / menge) * 360 - 90;
-      const kx = 50 + Math.cos(wk * Math.PI / 180) * (R - 0.4), ky = 50 + Math.sin(wk * Math.PI / 180) * (R - 0.4);
-      const kl = zufall(3.6, 5);
-      kelch += '<path transform="translate(' + f(kx) + " " + f(ky) + ") rotate(" + f(wk + 90) + ')" d="M-1.6 0 C-1.4 ' + f(-kl * 0.5) + " -.4 " + f(-kl * 0.85) + " 0 " + f(-kl)
-        + " C.4 " + f(-kl * 0.85) + " 1.4 " + f(-kl * 0.5) + ' 1.6 0 Z" fill="url(#lcBk' + n + ')" opacity=".85"/>';
-      /* BLUETENBLATT: jedes etwas anders — Laenge, Breite, eine
-         Schulter hoeher als die andere, die Spitze leicht eingekerbt. */
-      const w = (i / menge) * 360 - 90 + zufall(-5, 5);
-      const bx = 50 + Math.cos(w * Math.PI / 180) * (R - 0.6), by = 50 + Math.sin(w * Math.PI / 180) * (R - 0.6);
-      /* Gross genug, dass sich die Blaetter ueberlappen — eine Krone,
-         keine einzelnen Knospen. Unten (60–120 Grad) sind sie kurz und
-         breit: dort steht der Name, und der bleibt frei. */
-      const wu = ((w % 360) + 360) % 360;
-      const untenFrei = wu > 55 && wu < 125;
-      const L = untenFrei ? zufall(2.6, 3.2) : zufall(10.5, 13), B = untenFrei ? zufall(9, 11) : zufall(12, 14.5);
-      const sl = zufall(0.5, 0.64), sr = zufall(0.5, 0.64), kerb = zufall(0.2, 0.9);
-      const d = "M" + f(-B * 0.3) + " 0 C" + f(-B * sl) + " " + f(-L * 0.18) + " " + f(-B * 0.62) + " " + f(-L * 0.72) + " " + f(-B * 0.2) + " " + f(-L * 0.97)
-        + " Q" + f(-B * 0.05) + " " + f(-L * 1.02) + " 0 " + f(-L + kerb)
-        + " Q" + f(B * 0.05) + " " + f(-L * 1.02) + " " + f(B * 0.2) + " " + f(-L * 0.97)
-        + " C" + f(B * 0.62) + " " + f(-L * 0.72) + " " + f(B * sr) + " " + f(-L * 0.18) + " " + f(B * 0.3) + " 0 Z";
-      const ader = "M0 -.3 Q" + f(zufall(-0.6, 0.6)) + " " + f(-L * 0.45) + " 0 " + f(-L * 0.8)
-        + " M0 " + f(-L * 0.3) + " Q" + f(-B * 0.18) + " " + f(-L * 0.45) + " " + f(-B * 0.3) + " " + f(-L * 0.62)
-        + " M0 " + f(-L * 0.36) + " Q" + f(B * 0.18) + " " + f(-L * 0.5) + " " + f(B * 0.3) + " " + f(-L * 0.66);
-      const zu = "0.3 0.12", auf = "1 1", dreh = f(zufall(-6, 6));
-      blaetter += '<g transform="translate(' + f(bx) + " " + f(by) + ") rotate(" + f(w + 90) + ')">'
-        + '<g class="lc-bl-blatt" transform="scale(' + zu + ') rotate(' + dreh + ')">'
-        + '<animateTransform class="lc-bl-auf" attributeName="transform" type="scale" dur=".42s" begin="indefinite" fill="freeze" values="' + zu + ";1.06 1.04;" + auf + '" calcMode="spline" keySplines=".3 0 .4 1;.4 0 .6 1"/>'
-        + '<animateTransform class="lc-bl-zu" attributeName="transform" type="scale" dur=".34s" begin="indefinite" fill="freeze" values="' + auf + ";" + zu + '" calcMode="spline" keySplines=".4 0 .7 1"/>'
-        + '<path d="' + d + '" fill="url(#lcBb' + n + ')" stroke="#D38C9F" stroke-opacity=".35" stroke-width=".3"/>'
-        + '<path d="' + ader + '" fill="none" stroke="#C07A8E" stroke-opacity=".4" stroke-width=".22" stroke-linecap="round"/>'
-        + "</g></g>";
-    }
-    return '<svg class="lc-bluete-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + defs + "</defs>"
-      + blaetter + kelch + "</svg>";
-  }
-  /* Blatt fuer Blatt auf bzw. zu — „wie Zeitraffer", 0,11 s Versatz.
-     Zu geht es in umgekehrter Reihenfolge. */
-  function lcBlueteStoss(feld, klasse, rueckwaerts) {
-    const alle = [...feld.querySelectorAll("animateTransform." + klasse)];
-    if (rueckwaerts) alle.reverse();
-    clearTimeout(feld._lcBlStoss);
-    (feld._lcBlZeiten || []).forEach(clearTimeout);
-    feld._lcBlZeiten = alle.map((a, i) => setTimeout(() => { try { a.beginElement(); } catch (e) {} }, i * 110));
-  }
-  function lcBlueteAuf(feld) { feld.dataset.zu = ""; lcBlueteStoss(feld, "lc-bl-auf", false); }
-  function lcBlueteZu(feld) { if (feld.dataset.zu === "1") return; feld.dataset.zu = "1"; lcBlueteStoss(feld, "lc-bl-zu", true); }
-
   /* Welche Sprechbilder seit dem SCHON-PASS EIN Bild sind statt
      Teilchen oder Rand-Schichten. */
-  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg, blut: lcBlutSvg, eis: lcEisSvg, bluete: lcBlueteSvg };
+  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg, blut: lcBlutSvg, eis: lcEisSvg };
 
   function lcSprechFeld(knopf, art) {
     const kreis = knopf.querySelector(".lc-kreis");
@@ -24988,12 +24915,7 @@
     /* Nichts neu bauen, was schon steht — sonst fangen die Teilchen
        bei jedem Auffrischen des Raums von vorn an, und das sieht aus
        wie Stottern. */
-    if (alt && alt.dataset.art === art) {
-      /* SCHON-PASS 6: war die Bluete gerade am Zugehen, geht sie
-         wieder auf, sobald wieder gesprochen wird. */
-      if (art === "bluete" && alt.dataset.zu === "1") lcBlueteAuf(alt);
-      return;
-    }
+    if (alt && alt.dataset.art === art) return;
     if (alt) alt.remove();
     if (!bau && !LC_SPRECH_SVG[art]) return;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -25006,7 +24928,6 @@
       feld.setAttribute("aria-hidden", "true");
       feld.innerHTML = LC_SPRECH_SVG[art]();
       knopf.appendChild(feld);
-      if (art === "bluete") lcBlueteAuf(feld);
       return;
     }
     const feld = document.createElement("span");
@@ -25248,12 +25169,9 @@
           && !knopf.classList.contains("lc-sprech-schliesst")) {
         knopf.classList.add("lc-sprech-schliesst");
         clearTimeout(knopf._lcBlueteZu);
-        /* SCHON-PASS 6: zwoelf Blaetter, 0,11 s versetzt, je 0,34 s — die
-           Bluete braucht 1,55 s zum Zugehen, nicht 0,9. */
         knopf._lcBlueteZu = setTimeout(() => {
           knopf.classList.remove("lc-sprech-schliesst", "lc-platz-spricht");
-          lcSprechFeldWeg(knopf);
-        }, 1600);
+        }, 900);
       } else if (sprichtJetzt) {
         clearTimeout(knopf._lcBlueteZu);
         knopf.classList.remove("lc-sprech-schliesst");
@@ -25271,12 +25189,6 @@
          entstehen, solange jemand spricht, und verschwinden danach
          wieder. Siehe lcSprechFeld weiter oben. */
       if (!p.leer && p.spricht) lcSprechFeld(knopf, p.sprechbild || "ring");
-      else if (istBluete && knopf.classList.contains("lc-sprech-schliesst")) {
-        /* SCHON-PASS 6: „Blatt für Blatt wieder in den Kreis" — das Feld
-           bleibt stehen, bis die Bluete zu ist (Zeitgeber unten). */
-        const fb = knopf.querySelector(".lc-sprechfeld.lc-sbluete");
-        if (fb) lcBlueteZu(fb); else lcSprechFeldWeg(knopf);
-      }
       else lcSprechFeldWeg(knopf);
       if (p.leer) knopf.title = "Freier Platz — antippen, um auf die Bühne zu gehen";
       knopf.tabIndex = p.leer ? -1 : 0;
@@ -90130,7 +90042,6 @@ An einem Morgen lief ein kleiner Fuchs los…
          feststellen, DASS es nicht aufgeht, nicht warum. */
       hebenMenue: (platz, name) => lcHebenMenue(platz, name),
       sprechFeld: (knopf, art) => lcSprechFeld(knopf, art),
-      blueteZu: (feld) => lcBlueteZu(feld),
       /* Runde 54: die Lesetafel einzeln aufrufbar — sonst liesse sich
          die Benotung nur mit einer echten Nachricht pruefen. */
       lesetafel: (n, z) => lcLeseTafel(n, z),

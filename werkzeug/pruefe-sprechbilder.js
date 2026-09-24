@@ -246,6 +246,32 @@ const TEILCHEN = ["magie", "noten", "herzen", "strom", "blasen"];
   pruefe("Hauptadern 20–45 % Deckkraft, Aestchen blasser", ei.deckMax <= 0.45 && ei.deckMin > 0.05, ei.deckMin + " bis " + ei.deckMax);
   pruefe("sie kommen nacheinander, nicht alle auf einmal", ei.starts >= 8, ei.starts + " verschiedene Startzeiten");
 
+  console.log("\nSCHON-PASS 6 — BLUETE\n");
+  await pg.evaluate(() => {
+    const knopf = document.querySelector(".lc-platz");
+    knopf.dataset.sprechbild = "bluete";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "bluete");
+  });
+  const groesse = () => pg.evaluate(() => [...document.querySelectorAll(".lc-sbluete .lc-bl-blatt")].map((g) => {
+    const l = g.transform.animVal; let a = 1; for (let i = 0; i < l.numberOfItems; i++) { const t = l.getItem(i); if (t.type === 3) a *= t.matrix.a; }
+    return Math.round(a * 100) / 100; }));
+  await pg.waitForTimeout(450);
+  const frueh = await groesse();
+  await pg.waitForTimeout(1700);
+  const offen = await groesse();
+  const formen = await pg.evaluate(() => new Set([...document.querySelectorAll(".lc-sbluete .lc-bl-blatt > path:first-of-type")].map((p) => p.getAttribute("d"))).size);
+  await pg.evaluate(() => window.DMA_PRUEFUNG.blueteZu(document.querySelector(".lc-sbluete")));
+  await pg.waitForTimeout(700);
+  const halbZu = await groesse();
+  await pg.waitForTimeout(1300);
+  const zu = await groesse();
+  pruefe("8–12 Blaetter", offen.length >= 8 && offen.length <= 12, offen.length);
+  pruefe("jedes Blatt hat seine eigene Form", formen === offen.length, formen + " Formen");
+  pruefe("sie gehen NACHEINANDER auf (Zeitraffer)", Math.min(...frueh) < 0.5 && Math.max(...frueh) > 0.8, frueh.join(" "));
+  pruefe("am Ende sind alle offen", offen.every((x) => x >= 0.95), offen.join(" "));
+  pruefe("beim Verstummen Blatt fuer Blatt zu", Math.min(...halbZu) < 0.5 && Math.max(...halbZu) > 0.8, halbZu.join(" "));
+  pruefe("dann ist der Kelch zu", zu.every((x) => x <= 0.35), zu.join(" "));
+
   console.log("\nUND WENN DAS SPRECHEN AUFHOERT?\n");
   const weg = await pg.evaluate(() => {
     const knopf = document.querySelector(".lc-platz");

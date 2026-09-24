@@ -49,7 +49,7 @@ const pruefe = (was, gut, zusatz) => {
    EIN Bild im Feld (lcFeuerSvg, lcWelleSvg) — weder Teilchen noch
    Rand-Schicht. Gemessen werden sie in pruefe-sprechbilder.js nach
    den Zahlen seiner Liste. */
-const SPRECHBILDER = ["bluete", "regenbogen"];
+const SPRECHBILDER = ["regenbogen"]; /* die Bluete ist seit SCHON-PASS 6 ebenfalls ein Bild */
 const TEILCHENBILDER = ["funkeln", "magie"];
 
 (async () => {
