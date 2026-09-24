@@ -242,6 +242,64 @@ const sage = (gut, text, dazu) => {
     sage(r.rest === 0, "... und danach ist nichts liegengeblieben (Leiter, Bewegung)", r.rest + " Reste");
   }
 
+  /* RUNDE 100 — DERSELBE TAUSCH IM ECHTEN RAUM.
+     XANDER antwortete auf 536 „springt noch" — 9 Minuten nach dem
+     Hochladen, also womoeglich noch mit der alten Fassung. Damit das
+     nicht geglaubt werden muss: hier laeuft der ECHTE Ablauf — die echte
+     Sitzreihe (renderLiveChat), der echte Befehl „/leiter", der echte
+     Platztausch aus livechat.js. Gegenprobe mit der Fassung vor 536:
+     von 3068 bis 3368 ms stehen beide Bilder wieder auf dem alten Platz. */
+  console.log("\n5  IM ECHTEN RAUM: /leiter MIT PLATZTAUSCH\n");
+  const echt = await pg.evaluate(async () => {
+    document.getElementById("lcPruefBuehne")?.remove();
+    const leute = {};
+    ["Bea", "Cem", "Dana", "Emmi"].forEach((n, i) => { leute["q" + i] = { id: "q" + i, name: n, seit: 2000 + i * 100 }; });
+    window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000,
+      zuruecksetzen: true, leute: leute });
+    const a = document.getElementById("livechatArea");
+    document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
+    let e = a;
+    while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
+    window.DMA_PRUEF.neuZeichnen();
+    await new Promise((f) => setTimeout(f, 500));
+    const platz = (nr) => document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + nr + '"]');
+    const wer = (k) => ((k.querySelector("[data-lc-initial]") || {}).textContent || "").trim();
+    /* Alles RELATIV zur Sitzreihe: waehrend des Kletterns kommt die
+       Chatzeile dazu, und die ganze Seite rueckt 61 px — das ist keine
+       Bewegung des Bildes. */
+    const reihe = () => document.getElementById("lcPlaetze").getBoundingClientRect();
+    const mitte = (nr) => { const r = platz(nr).querySelector(".lc-kreis").getBoundingClientRect(), g = reihe();
+      return [r.left + r.width / 2 - g.left, r.top + r.height / 2 - g.top]; };
+    /* Wo Alex gerade sitzt, steht in der Sitzreihe — Abschnitt 1 hat
+       schon umgesetzt, und das merkt sich der Raum. */
+    const alle = [...document.querySelectorAll("#lcPlaetze .lc-platz")];
+    const ab = alle.find((p) => ((p.querySelector(".lc-platz-name") || {}).textContent || "").indexOf("Alex") >= 0);
+    if (!ab) return null;
+    const nrA = Number(ab.dataset.lcPlatz), nrZ = nrA <= 4 ? nrA + 4 : nrA - 4;
+    if (!platz(nrZ) || !mitte(nrA)[0]) return null;
+    const anderer = wer(platz(nrZ).querySelector(".lc-kreis"));
+    if (!anderer) return null;              /* es soll jemand entgegenkommen */
+    const m1 = mitte(nrA), m5 = mitte(nrZ);
+    const film = [], t0 = performance.now();
+    window.LiveChat.pruefBefehl("/leiter Alex");
+    await new Promise((fertig) => { const lauf = () => {
+      const t = performance.now() - t0, wo = {};
+      const g = reihe();
+      document.querySelectorAll("#lcPlaetze .lc-kreis").forEach((k) => {
+        const r = k.getBoundingClientRect(); wo[wer(k)] = [r.left + r.width / 2 - g.left, r.top + r.height / 2 - g.top]; });
+      film.push({ t: t, wo: wo });
+      if (t < 5000) requestAnimationFrame(lauf); else fertig(); }; lauf(); });
+    const nah = (p, q) => p && Math.hypot(p[0] - q[0], p[1] - q[1]) < 6;
+    const falsch = film.filter((f) => f.t > 2990 && !(nah(f.wo.A, m5) && nah(f.wo[anderer], m1)));
+    return { falsch: falsch.length, bilder: film.length, von: nrA, nach: nrZ,
+      getauscht: (platz(nrZ).querySelector(".lc-platz-name") || {}).textContent };
+  });
+  sage(echt && echt.getauscht && echt.getauscht.indexOf("Alex") >= 0,
+    "Im echten Raum: Alex klettert und sitzt danach auf dem Zielplatz",
+    echt ? echt.von + " -> " + echt.nach + ": " + echt.getauscht : "Raum nicht aufgebaut");
+  sage(echt && echt.falsch === 0, "... und nach der Ankunft springt kein Bild zurück",
+    echt ? echt.falsch + " von " + echt.bilder + " Bildern falsch" : "-");
+
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
   process.exit(fehler ? 1 : 0);
