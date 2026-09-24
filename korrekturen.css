@@ -33480,3 +33480,105 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-wg-o-balg   { fill: #111; }
 .lc-wg-o-seite { fill: #6b1b24; stroke: #3a0d12; stroke-width: 1; }
 .lc-lok-tunnel .lc-tn { filter: drop-shadow(0 2px 2px rgba(40, 50, 20, .35)); }
+
+/* =====================================================================
+   FUNK 75 (24.09.) — DRAUFSICHT FUER FLUGZEUG, HELIKOPTER, ADLER
+   ---------------------------------------------------------------------
+   XANDER: „… den Adler in der Priorität und den Sachen in der
+   Draufsicht, die wir in der Draufsicht brauchen, z.B. das Flugzeug,
+   den Helikopter." Zwei Zeichnungen in einer Huelle, wie bei der Lok;
+   welche man sieht, entscheidet die Flugrichtung (lcBlickwechsel).
+   ===================================================================== */
+.lc-v-seite, .lc-v-oben {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+.lc-v-oben { opacity: 0; }
+.lc-v-form { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.lc-v-bild {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #cfd8e3 center / cover no-repeat;
+  display: flex; align-items: center; justify-content: center;
+  font: 700 calc(var(--gross, 64px) * 0.13) / 1 system-ui, sans-serif;
+  color: #2b3a4a;
+}
+/* Flugzeug von oben: weisser Rumpf, graue gepfeilte Fluegel. */
+.lc-fo-rumpf    { fill: #eef3fa; stroke: #9fb0c6; stroke-width: 1.4; }
+.lc-fo-licht    { fill: #ffffff; opacity: .8; }
+.lc-fo-fluegel  { fill: #d5dde8; stroke: #93a3b8; stroke-width: 1.2; stroke-linejoin: round; }
+.lc-fo-kante    { stroke: #b7c4d5; stroke-width: 1; fill: none; }
+.lc-fo-leitwerk { fill: #d5dde8; stroke: #93a3b8; stroke-width: 1.1; }
+.lc-fo-triebwerk { fill: #8795a8; stroke: #5d6b7e; stroke-width: 1; }
+.lc-fo-seitenruder { stroke: #2f6fb3; stroke-width: 3.2; stroke-linecap: round; }
+.lc-fo-cockpit  { fill: #23384f; }
+.lc-flieger-oben-bild { left: 68%; top: 50%; width: 12%;
+  box-shadow: 0 0 0 1.5px #9fb0c6, 0 0 0 3px #eef3fa; }
+/* Helikopter von oben: dunkler Rumpf, Glaskanzel vorn, Rotorscheibe. */
+.lc-ho-rumpf    { fill: #1d2530; stroke: #0a0e13; stroke-width: 1.4; }
+.lc-ho-licht    { fill: #3a4656; opacity: .7; }
+.lc-ho-glas     { fill: #6fa7cf; stroke: #0a0e13; stroke-width: 1; opacity: .9; }
+.lc-ho-ausleger, .lc-ho-flosse, .lc-ho-heck { fill: #232c38; stroke: #0a0e13; stroke-width: 1; }
+.lc-ho-kufe     { stroke: #3b4450; stroke-width: 3; stroke-linecap: round; fill: none; }
+.lc-ho-kopf     { fill: #4a5563; stroke: #0a0e13; stroke-width: 1; }
+.lc-heli-oben-bild { left: 71%; top: 50%; width: 13%;
+  box-shadow: 0 0 0 1.5px #0a0e13; }
+.lc-ho-rotor {
+  position: absolute;
+  left: 61%; top: 50%;
+  width: 92%; aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.lc-ho-scheibe {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle, rgba(40, 48, 58, .05) 0 40%, rgba(40, 48, 58, .16) 70%, rgba(40, 48, 58, .05) 100%);
+}
+.lc-ho-blatt {
+  position: absolute; left: 0; right: 0; top: 50%;
+  height: 4.5%; margin-top: -2.25%;
+  border-radius: 40%;
+  background: linear-gradient(90deg, rgba(20, 24, 30, .75), rgba(20, 24, 30, .35) 40%, rgba(20, 24, 30, .35) 60%, rgba(20, 24, 30, .75));
+  animation: lcHoDreh .22s linear infinite;
+}
+.lc-ho-blatt-2 { animation-delay: -.11s; }
+@keyframes lcHoDreh { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.lc-ho-heckrotor {
+  position: absolute; left: 11.8%; top: 50%;
+  width: 3%; height: 22%;
+  transform: translate(-50%, -50%);
+  border-radius: 40%;
+  background: rgba(30, 36, 44, .35);
+}
+/* Adler von oben: braune Schwingen, heller Kopf, weisser Faecher. */
+.lc-go-arm       { fill: #4a2f1c; stroke: #2a190d; stroke-width: 1; stroke-linejoin: round; }
+.lc-go-decken    { fill: #6b4a2e; opacity: .9; }
+.lc-go-kiel      { stroke: #2a190d; stroke-width: .8; opacity: .6; }
+.lc-go-schwinge  { fill: #34200f; stroke: #1c1007; stroke-width: .8; stroke-linejoin: round; }
+.lc-go-schwanz   { fill: #f4f1ea; stroke: #b8b1a3; stroke-width: 1; }
+.lc-go-schwanzlinie { stroke: #cfc8b9; stroke-width: .8; fill: none; }
+.lc-go-rumpf     { fill: #553620; stroke: #2a190d; stroke-width: 1.1; }
+.lc-go-rueckenlicht { fill: #7a5433; opacity: .8; }
+.lc-go-kopf      { fill: #f7f5ef; stroke: #b8b1a3; stroke-width: 1; }
+.lc-go-schnabel  { fill: #f2b01e; stroke: #a8740a; stroke-width: .8; }
+.lc-go-krallen   { stroke: #e0a81c; stroke-width: 2.2; stroke-linecap: round; }
+.lc-greif-oben-bild { left: 49%; top: 50%; width: 32%;
+  box-shadow: 0 0 0 2px rgba(60, 40, 20, .5); }
+/* Der Fluegelschlag von oben: die Schwinge wird im Abschlag kuerzer
+   (sie geht nach unten weg) und streckt sich im Aufschlag wieder. */
+.lc-go-fluegel { transform-box: fill-box; animation: lcGoSchlag .52s ease-in-out infinite; }
+.lc-go-links  { transform-origin: 50% 100%; }
+.lc-go-rechts { transform-origin: 50% 0%; }
+@keyframes lcGoSchlag {
+  0%   { transform: scaleY(1); }
+  30%  { transform: scaleY(.62); }
+  56%  { transform: scaleY(.78); }
+  100% { transform: scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-go-fluegel, .lc-ho-blatt { animation: none; }
+}

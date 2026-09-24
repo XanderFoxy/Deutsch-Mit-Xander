@@ -43355,6 +43355,8 @@
         + '<span class="lc-flieger-fenster"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
+      flieger.innerHTML = '<span class="lc-v-seite">' + flieger.innerHTML + "</span>"
+        + lcDraufsicht("flug", quelle, (ab.name || "?").charAt(0).toUpperCase());
       reihe.appendChild(flieger);
       weg.push(flieger);
       setzen(flieger, start.x, start.y);
@@ -43414,10 +43416,10 @@
         });
       }
       try {
-        flieger.animate(flugRahmen.concat([
+        lcBlickwechsel(flieger, flugRahmen.concat([
           { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
             + "px) translate(-50%, -50%) scaleX(" + (links ? -1 : 1) + ") scale(.2)", opacity: 0, offset: 1 }
-        ]), { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+        ]), 1, { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       } catch (e) {}
       /* RUNDE 73 — XANDER: „Der Sound ist noch nicht lang genug fuer
          die Wegstrecke, je nach Platz was man sich aussucht … und es
@@ -43766,6 +43768,8 @@
         + '<span class="lc-greif-beute"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
+      greif.innerHTML = '<span class="lc-v-seite">' + greif.innerHTML + "</span>"
+        + lcDraufsicht("greifvogel", quelle, (ab.name || "?").charAt(0).toUpperCase());
       reihe.appendChild(greif);
       weg.push(greif);
       setzen(greif, start.x, start.y);
@@ -43779,7 +43783,7 @@
         /* RUNDE 98 — mit gemaltem Weg fliegt er die Stationen ab; ohne
            behaelt er seinen Bogen ueber die Reihe. Beides gleichzeitig
            ginge nicht: ein Bogen IST schon ein Umweg. */
-        greif.animate([
+        lcBlickwechsel(greif, [
           { transform: "translate(-50%, -50%)" + spG + " scale(.3)", opacity: 0, offset: 0 },
           { transform: "translate(-50%, -50%)" + spG + " scale(1)", opacity: 1, offset: 0.12 }
         ].concat(bahn ? bahnWaagerecht(spG, 0.12, hin / dauer) : [
@@ -43791,7 +43795,7 @@
         ]).concat([
           { transform: "translate(" + (ende.x - start.x) + "px, " + (ende.y - start.y)
             + "px) translate(-50%, -50%)" + spG + " scale(.3)", opacity: 0, offset: 1 }
-        ]), { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+        ]), 1, { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       } catch (e) {}
       /* RUNDE 71: die Krallen greifen zu, wenn sie das Bild aufnehmen
          — das ist bei 12 % der Reise, dort ist der Vogel voll da und
@@ -46339,6 +46343,9 @@
         + '<span class="lc-heli-kanzel"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
+      /* FUNK 75 — die Draufsicht dazu (siehe lcDraufsicht). */
+      heli.innerHTML = '<span class="lc-v-seite">' + heli.innerHTML + "</span>"
+        + lcDraufsicht("heli", quelle, (ab.name || "?").charAt(0).toUpperCase());
       reihe.appendChild(heli);
       weg.push(heli);
       setzen(heli, start.x, start.y);
@@ -48589,6 +48596,177 @@
     greifvogel: 1 /* Schnabel bei x=132 */
   };
 
+  /* =====================================================================
+     FUNK 75 (24.09.) — DRAUFSICHT BEIM FLIEGEN
+     ---------------------------------------------------------------------
+     XANDER: „… du machst jetzt weiter mit dem Adler in der Priorität und
+     den Sachen in der Draufsicht, die wir in der Draufsicht brauchen, z.B.
+     das Flugzeug, den Helikopter."
+     Wie bei der Lok: zwei Zeichnungen in einer Huelle. Geht der Flug
+     ueberwiegend waagerecht, sieht man die Seitenansicht; geht er
+     steil nach oben oder unten, die Draufsicht, gedreht in Flugrichtung.
+     Dazwischen blenden beide ineinander. Gespiegelt wird die
+     Seitenansicht nur, wenn sie gerade unsichtbar ist — sonst schnurrt
+     sie zu einem Strich zusammen.
+     Die Bahn selbst bleibt, wie sie ist: lcBlickwechsel liest nur die
+     Orte aus den fertigen Schluesselbildern und legt die beiden
+     Ansichten darueber.
+     ===================================================================== */
+  function lcBlickwechsel(el, rahmen, blick, optionen) {
+    const seite = el.querySelector(":scope > .lc-v-seite");
+    const oben = el.querySelector(":scope > .lc-v-oben");
+    const ohneSpiegel = rahmen.map((r) => Object.assign({}, r,
+      { transform: String(r.transform || "").replace(/\s*scaleX\(-?[\d.]+\)/, "") }));
+    try { el.animate(ohneSpiegel, optionen); } catch (e) { return; }
+    if (!seite || !oben) return;
+    const ort = rahmen.map((r) => {
+      const m = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)\s*translate\(-50%/.exec(String(r.transform || ""));
+      return m ? { x: Number(m[1]), y: Number(m[2]) } : { x: 0, y: 0 };
+    });
+    const n = ort.length;
+    /* Die Richtung jedes Stuecks; ein Stueck ohne Laenge erbt sie. */
+    const stueck = [];
+    for (let i = 0; i < n - 1; i++) {
+      const dx = ort[i + 1].x - ort[i].x, dy = ort[i + 1].y - ort[i].y;
+      stueck.push(Math.hypot(dx, dy) > 1.5 ? Math.atan2(dy, dx) * 180 / Math.PI : null);
+    }
+    let vorher = stueck.find((h) => h !== null);
+    if (vorher === undefined || vorher === null) vorher = 0;
+    for (let i = 0; i < stueck.length; i++) {
+      if (stueck[i] === null) stueck[i] = vorher; else vorher = stueck[i];
+    }
+    if (!stueck.length) stueck.push(0);
+    const seiteR = [], obenR = [];
+    let w = null, spiegel = null;
+    /* „hWeiter" ist die Richtung, in die es danach geht: nur solange die
+       Seitenansicht unsichtbar ist, wird sie darauf umgespiegelt — und
+       zwar sprunghaft, in zwei Bildern auf demselben Zeitpunkt. */
+    const setze = (h, off, nurOben, hWeiter) => {
+      w = w === null ? h : lcWinkelFolge(h, w);
+      const c = Math.cos(h * Math.PI / 180);
+      /* bis 37 Grad Steigung ganz Seite, ab 60 Grad ganz Draufsicht */
+      const klar = nurOben ? 0 : Math.max(0, Math.min(1, (Math.abs(c) - 0.5) / 0.3));
+      if (spiegel === null) spiegel = Math.abs(c) > 0.2 ? (c < 0 ? -1 : 1)
+        : (Math.cos((hWeiter === undefined ? h : hWeiter) * Math.PI / 180) < 0 ? -1 : 1);
+      const obenBild = { opacity: 1 - klar, transform: "rotate(" + w.toFixed(1) + "deg)", offset: off };
+      seiteR.push({ opacity: klar, transform: "scaleX(" + (spiegel * blick) + ")", offset: off });
+      obenR.push(obenBild);
+      if (klar === 0) {
+        const cw = Math.cos((hWeiter === undefined ? h : hWeiter) * Math.PI / 180);
+        const neu = Math.abs(cw) > 0.2 ? (cw < 0 ? -1 : 1) : spiegel;
+        if (neu !== spiegel) {
+          spiegel = neu;
+          seiteR.push({ opacity: 0, transform: "scaleX(" + (spiegel * blick) + ")", offset: off });
+          obenR.push(Object.assign({}, obenBild));
+        }
+      }
+    };
+    for (let i = 0; i < n; i++) {
+      const off = rahmen[i].offset;
+      const hEin = i > 0 ? stueck[i - 1] : stueck[0];
+      const hAus = i < n - 1 ? stueck[i] : stueck[stueck.length - 1];
+      let dreh = hAus - hEin;
+      while (dreh > 180) dreh -= 360;
+      while (dreh < -180) dreh += 360;
+      if (i > 0 && i < n - 1 && Math.abs(dreh) > 2) {
+        /* An einer Station dreht er sich — kurz davor die alte, kurz
+           danach die neue Richtung. Bei einer Kehre (mehr als 100 Grad)
+           sieht man in der Mitte die Draufsicht: er dreht um, er
+           schnurrt nicht zusammen. */
+        const e = Math.min(0.035, (off - rahmen[i - 1].offset) / 3, (rahmen[i + 1].offset - off) / 3);
+        setze(hEin, Math.max(rahmen[i - 1].offset, off - e), false, hAus);
+        if (Math.abs(dreh) > 100) setze(hEin + dreh / 2, off, true, hAus);
+        setze(hAus, Math.min(rahmen[i + 1].offset, off + e), false, hAus);
+      } else {
+        setze(i === 0 ? hAus : hEin, off, false, hAus);
+      }
+    }
+    try {
+      seite.animate(seiteR, optionen);
+      oben.animate(obenR, optionen);
+    } catch (e) {}
+  }
+
+  /* Die Draufsichten. Alle mit der Nase nach RECHTS; gedreht wird in
+     lcBlickwechsel. Das Bild des Reisenden bleibt auch von oben zu sehen. */
+  function lcDraufsicht(art, quelle, buchstabe) {
+    const bild = (klasse) => '<span class="' + klasse + '"' + (quelle
+      ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
+      + ">" + (quelle ? "" : buchstabe) + "</span>";
+    if (art === "flug") {
+      return '<span class="lc-v-oben lc-flieger-oben"><svg class="lc-v-form" viewBox="0 0 210 92" aria-hidden="true">'
+        /* Hoehenleitwerk hinten, Fluegel gepfeilt, darunter die Triebwerke. */
+        + '<path class="lc-fo-leitwerk" d="M34 44 L14 16 L6 16 L18 44 Z M34 48 L14 76 L6 76 L18 48 Z"/>'
+        + '<path class="lc-fo-fluegel" d="M132 40 L80 -44 L66 -44 L96 40 Z"/>'
+        + '<path class="lc-fo-fluegel" d="M132 52 L80 136 L66 136 L96 52 Z"/>'
+        + '<path class="lc-fo-kante" d="M126 36 L78 -40 M126 56 L78 132"/>'
+        + '<rect class="lc-fo-triebwerk" x="112" y="7" width="26" height="9" rx="4.5"/>'
+        + '<rect class="lc-fo-triebwerk" x="112" y="76" width="26" height="9" rx="4.5"/>'
+        + '<path class="lc-fo-rumpf" d="M8 46 C8 38 16 34 28 34 L176 34 C192 34 204 40 206 46 C204 52 192 58 176 58 L28 58 C16 58 8 54 8 46 Z"/>'
+        + '<path class="lc-fo-licht" d="M20 38.5 L176 38.5 C188 38.5 197 41 201 44 L20 44 Z"/>'
+        + '<path class="lc-fo-seitenruder" d="M8 46 L36 46"/>'
+        + '<path class="lc-fo-cockpit" d="M188 41 C194 41.5 198 43.5 199.5 46 C198 48.5 194 50.5 188 51 Z"/>'
+        + "</svg>" + bild("lc-v-bild lc-flieger-oben-bild") + "</span>";
+    }
+    if (art === "heli") {
+      return '<span class="lc-v-oben lc-heli-oben"><svg class="lc-v-form" viewBox="0 0 210 125" aria-hidden="true">'
+        + '<path class="lc-ho-kufe" d="M104 38 L176 38 M104 87 L176 87"/>'
+        + '<path class="lc-ho-ausleger" d="M26 59 L108 56 L108 69 L26 66 Z"/>'
+        + '<path class="lc-ho-flosse" d="M40 50 L50 50 L50 75 L40 75 Z"/>'
+        + '<rect class="lc-ho-heck" x="18" y="52" width="14" height="21" rx="3"/>'
+        + '<path class="lc-ho-rumpf" d="M98 62.5 C98 48 112 40 134 40 C156 40 176 48 180 62.5 C176 77 156 85 134 85 C112 85 98 77 98 62.5 Z"/>'
+        + '<path class="lc-ho-licht" d="M106 55 C112 46 126 43.5 138 43.5 C154 43.5 168 48 174 55 Z"/>'
+        + '<path class="lc-ho-glas" d="M150 44.5 C166 46 177 53 179 62.5 C177 72 166 79 150 80.5 C155 73 157 68 157 62.5 C157 57 155 52 150 44.5 Z"/>'
+        + '<circle class="lc-ho-kopf" cx="128" cy="62.5" r="6"/>'
+        + "</svg>"
+        + bild("lc-v-bild lc-heli-oben-bild")
+        /* Der Hauptrotor von oben: eine flirrende Scheibe mit zwei Blaettern. */
+        + '<span class="lc-ho-rotor"><i class="lc-ho-scheibe"></i><i class="lc-ho-blatt"></i>'
+        + '<i class="lc-ho-blatt lc-ho-blatt-2"></i></span>'
+        + '<span class="lc-ho-heckrotor"></span>'
+        + "</span>";
+    }
+    /* Der Adler von oben: weisser Kopf, weisser Schwanzfaecher, zwei
+       breite Schwingen mit gespreizten Handschwingen. Das Bild haengt
+       in den Faengen UNTER dem Koerper — von oben schaut es rundum
+       hervor. */
+    let fluegel = "";
+    [-1, 1].forEach((seite) => {
+      const y = (v) => (81 + seite * v).toFixed(1);
+      let finger = "";
+      for (let i = 0; i < 6; i++) {
+        const wurzel = 128 - i * 7, spitze = 150 - i * 11;
+        const tief = 96 + i * 3 - (i > 3 ? (i - 3) * 6 : 0);
+        finger += '<path class="lc-go-schwinge" d="M' + wurzel + " " + y(64 + i * 3) + " L" + (spitze + 3) + " " + y(tief - 2)
+          + " L" + spitze + " " + y(tief + 4) + " L" + (wurzel - 6) + " " + y(66 + i * 3) + ' Z"/>';
+      }
+      fluegel += '<g class="lc-go-fluegel ' + (seite < 0 ? "lc-go-links" : "lc-go-rechts") + '">'
+        + finger
+        /* Armfittich: breite Flaeche von der Schulter bis zur Hand, die
+           Hinterkante mit den Armschwingen gezackt. */
+        + '<path class="lc-go-arm" d="M126 ' + y(10) + " C132 " + y(30) + " 134 " + y(52) + " 128 " + y(70)
+        + " L98 " + y(74) + " L94 " + y(66) + " L88 " + y(70) + " L84 " + y(62) + " L78 " + y(64) + " L76 " + y(52)
+        + " C78 " + y(36) + " 84 " + y(20) + " 88 " + y(10) + ' Z"/>'
+        + '<path class="lc-go-decken" d="M122 ' + y(16) + " C126 " + y(30) + " 126 " + y(46) + " 120 " + y(58)
+        + " L96 " + y(58) + " C92 " + y(44) + " 92 " + y(28) + " 94 " + y(16) + ' Z"/>'
+        + '<path class="lc-go-kiel" d="M112 ' + y(20) + " L108 " + y(56) + " M102 " + y(20) + " L100 " + y(56) + '"/>'
+        + "</g>";
+    });
+    return '<span class="lc-v-oben lc-greif-oben">'
+      + bild("lc-v-bild lc-greif-oben-bild")
+      + '<svg class="lc-v-form" viewBox="0 0 205 162" aria-hidden="true">'
+      + '<path class="lc-go-krallen" d="M92 70 l-4 -5 M100 70 l2 -6 M92 92 l-4 5 M100 92 l2 6"/>'
+      + fluegel
+      /* Schwanzfaecher, Rumpf, Kopf mit gelbem Schnabel. */
+      + '<path class="lc-go-schwanz" d="M72 72 L40 62 C34 72 34 90 40 100 L72 90 Z"/>'
+      + '<path class="lc-go-schwanzlinie" d="M70 76 L42 70 M70 81 L38 81 M70 86 L42 92"/>'
+      + '<ellipse class="lc-go-rumpf" cx="104" cy="81" rx="36" ry="15"/>'
+      + '<path class="lc-go-rueckenlicht" d="M80 77 C94 71 116 71 128 76 C116 75 94 75 80 79 Z"/>'
+      + '<path class="lc-go-kopf" d="M134 81 C134 72 142 69 150 70 C158 71 162 76 162 81 C162 86 158 91 150 92 C142 93 134 90 134 81 Z"/>'
+      + '<path class="lc-go-schnabel" d="M161 77.5 C166 78 170 80 171 81 C170 82 166 84 161 84.5 Z"/>'
+      + "</svg></span>";
+  }
+
   function lcReiseWaagerecht(el, start, ende, dauer, hin, art, kette) {
     const links = ende.x < start.x;
     const blick = LC_REISE_BLICK[art] || 1;
@@ -48619,6 +48797,12 @@
       bilder.push(bild(ende.x - start.x, ende.y - start.y, 1, 1, ziel));
     }
     bilder.push(bild(ende.x - start.x, ende.y - start.y, .3, 0, 1));
+    /* FUNK 75 — wer eine Draufsicht mitbringt, wechselt die Ansicht mit
+       der Flugrichtung (lcBlickwechsel). */
+    if (el.querySelector(":scope > .lc-v-oben")) {
+      lcBlickwechsel(el, bilder, blick, { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+      return;
+    }
     try {
       el.animate(bilder, { duration: dauer, easing: "ease-in-out", fill: "forwards" });
     } catch (e) {}
