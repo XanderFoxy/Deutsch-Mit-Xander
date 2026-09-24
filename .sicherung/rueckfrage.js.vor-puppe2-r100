@@ -276,16 +276,10 @@ window.Rueckfrage = (function () {
        testen kann, auch wenn niemand da ist." Ein Tipp setzt die
        Uebungspuppe auf einen freien Platz (nur bei ihm, nur allein im
        Raum) — ein zweiter nimmt sie wieder weg. */
-    /* RUNDE 100 — „Ich brauche einen zweiten Dummy um das auszutesten":
-       reihum keine → Puppe → dazu „Dummy" → beide weg. */
-    var puppen = 0;
-    try {
-      puppen = window.LiveChat && LiveChat.puppeZahl ? LiveChat.puppeZahl()
-        : (LiveChat.puppeDa && LiveChat.puppeDa() ? 1 : 0);
-    } catch (e) {}
-    var puppeAn = puppen > 0;
+    var puppeAn = false;
+    try { puppeAn = Boolean(window.LiveChat && LiveChat.puppeDa && LiveChat.puppeDa()); } catch (e) {}
     kopf.appendChild(knopf("rf-puppe" + (puppeAn ? " rf-puppe-an" : ""),
-      puppen >= 2 ? "🧍 Puppen weg" : puppen === 1 ? "🧍 2. Puppe" : "🧍 Übungspuppe", function () {
+      puppeAn ? "🧍 Puppe weg" : "🧍 Übungspuppe", function () {
         try { if (window.LiveChat && LiveChat.puppe) LiveChat.puppe(); } catch (e) {}
         setTimeout(function () { zeigen(true); }, 60);
       }));

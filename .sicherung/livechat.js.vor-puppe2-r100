@@ -4341,62 +4341,37 @@ window.LiveChat = (function () {
     + '<rect x="18" y="50" width="6" height="12" rx="2" fill="#d7a91f"/>'
     + '<rect x="76" y="50" width="6" height="12" rx="2" fill="#d7a91f"/>'
     + '</svg>');
-  /* RUNDE 100 — XANDER (Walkie #95/#96): „Ich brauche einen zweiten
-     Dummy um das auszutesten" (Fahrrad zu zweit, Angel). Der Knopf
-     schaltet jetzt reihum: keine → Puppe → dazu „Dummy" → beide weg.
-     „Dummy" ist ein Wort, damit „/heb Dummy 5" eindeutig bleibt. */
-  var PUPPE2_ID = "uebungspuppe2";
-  var PUPPE2_BILD = PUPPE_BILD.replace(/%23f2c230/g, "%2368b7e8").replace(/%23a37f10/g, "%232a6f9e")
-    .replace(/%23d7a91f/g, "%234a9ad0").replace(/%236b5208/g, "%23234f72");
-  function istPuppe(id) { return id === PUPPE_ID || id === PUPPE2_ID; }
-  function puppeZahl() {
-    return (zustand.leute[PUPPE_ID] ? 1 : 0) + (zustand.leute[PUPPE2_ID] ? 1 : 0);
-  }
-  function puppeDa() { return puppeZahl() > 0; }
+  function puppeDa() { return Boolean(zustand.leute[PUPPE_ID]); }
   function puppeWeg(grund) {
     if (!puppeDa()) return false;
-    [PUPPE_ID, PUPPE2_ID].forEach(function (id) {
-      delete zustand.leute[id];
-      delete sitzTausch[id];
-      if (platzJe[id] != null) delete platzJe[id];
-    });
+    delete zustand.leute[PUPPE_ID];
+    delete sitzTausch[PUPPE_ID];
+    if (platzJe[PUPPE_ID] != null) delete platzJe[PUPPE_ID];
     if (grund) systemZeile(grund);
     melden();
     return true;
   }
-  function puppeSetzen(id, name, bild) {
-    zustand.leute[id] = { id: id, name: name, strom: null, seit: Date.now(),
-      gesehen: 9e15, tonAn: false, bildAn: false, bild: bild, buehne: true,
-      sprechbild: "ring", geschlecht: "" };
-  }
-  function puppeUmschalten(wunsch) {
+  function puppeUmschalten() {
     if (!zustand.betreiber) return systemZeile("Die Übungspuppe gibt es nur für den Betreiber.");
     if (zustand.lage !== "drin") return systemZeile("Dafür musst du erst im Raum sein.");
-    var w = String(wunsch || "").trim().toLowerCase();
-    if (w === "weg" || w === "aus") return puppeWeg("🧍 Die Übungspuppen sind weg.") || true;
-    var zahl = puppeZahl();
-    if (zahl >= 2) return puppeWeg("🧍 Beide Übungspuppen sind weg.");
-    var andere = Object.keys(zustand.leute).filter(function (id) { return !istPuppe(id); });
+    if (puppeDa()) return puppeWeg("🧍 Die Übungspuppe ist weg.");
+    var andere = Object.keys(zustand.leute).filter(function (id) { return id !== PUPPE_ID; });
     if (andere.length) {
       return systemZeile("Die Übungspuppe geht nur, wenn du allein im Raum bist — "
         + "die anderen würden sie nicht sehen, und eure Sitzordnung passte nicht mehr zusammen.");
     }
-    if (zahl === 0) {
-      puppeSetzen(PUPPE_ID, "Puppe", PUPPE_BILD);
-      systemZeile("🧍 Die Übungspuppe sitzt jetzt auf einem freien Platz — nur bei dir. "
-        + "Tipp auf ihr Bild: Angel, Lasso, Kran, Sprühdose … alles geht. "
-        + "Kommt jemand herein, ist sie sofort weg. Nochmal /puppe setzt eine zweite dazu („Dummy“).");
-    } else {
-      puppeSetzen(PUPPE2_ID, "Dummy", PUPPE2_BILD);
-      systemZeile("🧍 Die zweite Übungspuppe „Dummy“ sitzt jetzt auch da — für Zu zweit, Angel, Lasso "
-        + "zwischen zwei anderen. Nochmal /puppe nimmt beide ab.");
-    }
+    zustand.leute[PUPPE_ID] = { id: PUPPE_ID, name: "Puppe", strom: null, seit: Date.now(),
+      gesehen: 9e15, tonAn: false, bildAn: false, bild: PUPPE_BILD, buehne: true,
+      sprechbild: "ring", geschlecht: "" };
+    systemZeile("🧍 Die Übungspuppe sitzt jetzt auf einem freien Platz — nur bei dir. "
+      + "Tipp auf ihr Bild: Angel, Lasso, Kran, Sprühdose … alles geht. "
+      + "Kommt jemand herein, ist sie sofort weg. Nochmal /puppe nimmt sie ab.");
     melden();
     return true;
   }
   function personMerken(id, name, bild) {
     /* Runde 100 — kommt ein Mensch herein, geht die Puppe. */
-    if (!istPuppe(id) && puppeDa() && !zustand.leute[id]) {
+    if (id !== PUPPE_ID && puppeDa() && !zustand.leute[id]) {
       puppeWeg("🧍 Die Übungspuppe ist weg — es ist jemand hereingekommen.");
     }
     if (!zustand.leute[id]) {
@@ -4540,7 +4515,7 @@ window.LiveChat = (function () {
       /* 1. Wer ist da, hat aber keine Leitung? */
       Object.keys(zustand.leute).forEach(function (id) {
         if (id === zustand.ichId) return;
-        if (istPuppe(id)) return;   /* Runde 100: die Puppe hat keine Leitung */
+        if (id === PUPPE_ID) return;   /* Runde 100: die Puppe hat keine Leitung */
         if (brueckeJe[id]) return;
         /* Nur die Seite mit der kleineren Kennung ruft an — sonst
            rufen beide gleichzeitig, und die Aushandlung zerbricht. */
@@ -4597,7 +4572,7 @@ window.LiveChat = (function () {
     var raus = [];
     Object.keys(zustand.leute).forEach(function (id) {
       if (id === zustand.ichId) return;
-      if (istPuppe(id)) return;     /* Runde 100: die Puppe hat keine Leitung */
+      if (id === PUPPE_ID) return;     /* Runde 100: die Puppe hat keine Leitung */
       var pc = brueckeJe[id];
       raus.push({
         id: id,
@@ -7390,7 +7365,7 @@ window.LiveChat = (function () {
     }
     spalten = spalten.slice(0, 6).map(function (x) { return { id: String(x.id), name: String(x.name) }; });
     var dauer = Number(hilfe.dauer) || 120;
-    var mit = spielReihe().filter(function (x) { return !istPuppe(x.id); })
+    var mit = spielReihe().filter(function (x) { return x.id !== PUPPE_ID; })
       .map(function (x) { return { id: x.id, name: x.name }; });
     var runde = Date.now();
     slfLeitung = { runde: runde, blaetter: {}, erwartet: mit.map(function (x) { return x.id; }),
@@ -7517,7 +7492,7 @@ window.LiveChat = (function () {
         if (typeof zustand.punkteRuf === "function") {
           try { zustand.punkteRuf(wieviel, grund); } catch (e) {}
         }
-      } else if (!istPuppe(x.id)) {
+      } else if (x.id !== PUPPE_ID) {
         postSenden(x.id, { art: "punkte", wieviel: wieviel, grund: grund });
       }
     });
@@ -11486,7 +11461,7 @@ window.LiveChat = (function () {
     if (!m) return false;
     var wort = (m[1] || m[3] || "").toLowerCase(), rest = (m[2] || "").trim();
     /* RUNDE 100 — die Uebungspuppe (siehe puppeUmschalten). */
-    if (wort === "puppe" || wort === "dummy") return puppeUmschalten(rest) || true;
+    if (wort === "puppe" || wort === "dummy") return puppeUmschalten() || true;
 
     /* SPITZE KLAMMERN SIND EINE ANLEITUNG, KEIN TEXT.
        -----------------------------------------------------------
@@ -14607,7 +14582,7 @@ window.LiveChat = (function () {
       an = an !== false;
       zustand.alleStumm = an;
       Object.keys(zustand.leute).forEach(function (id) {
-        if (istPuppe(id)) return;
+        if (id === PUPPE_ID) return;
         zustand.stumm[id] = an;
         postSenden(id, { art: "redeverbot", an_: an, raum: zustand.raum });
       });
@@ -14618,7 +14593,7 @@ window.LiveChat = (function () {
       if (!zustand.haeuptling) return systemZeile("Die Bühne frei machen darf nur der Häuptling.");
       var zahl = 0;
       plaetzeBauen().forEach(function (pl) {
-        if (pl.leer || pl.ich || istPuppe(pl.id)) return;
+        if (pl.leer || pl.ich || pl.id === PUPPE_ID) return;
         postSenden(pl.id, { art: "runter", raum: zustand.raum });
         zahl++;
       });
@@ -14641,7 +14616,6 @@ window.LiveChat = (function () {
     },
     puppe: function () { return puppeUmschalten(); },
     puppeDa: function () { return puppeDa(); },
-    puppeZahl: function () { return puppeZahl(); },
     /* NACHLESEN, WAS IM CHAT STEHT. Ohne das laesst sich eine
        Systemzeile („diese Filme liegen bereit") nicht pruefen: sie
        haengt an der Oberflaeche, und eine Sonde hat keine. Gibt nur

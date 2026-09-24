@@ -49,22 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 555: Putzen — gewischt wird, wo der Schwamm ist",
+  stand: "Fassung 556: zweite Übungspuppe „Dummy“",
 
   inArbeit: [
-    { seit: "2026-09-24T03:32",
-      text: "Stadt · Land · Fluss: Wörter streichen im Raum" },
-    { seit: "2026-09-24T03:32",
+    { seit: "2026-09-24T03:36",
+      text: "Lasso: Strick steht manchmal ohne Schlaufe" },
+    { seit: "2026-09-24T03:36",
       text: "Sabbern: Mund lebendiger, Bild leicht kippen" },
-    { seit: "2026-09-24T03:32",
+    { seit: "2026-09-24T03:36",
       text: "Kuss-Stimme (Mann), Vogelkot-Ton" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T03:32",
-      text: "Schwamm/Lappen/Ärmel nehmen Lack und Dreck genau dort weg, wo sie entlangfahren, Bahn für Bahn mit Schlieren (vorher alles auf einmal bei 1,75 s, mitten im zweiten Zug)" },
-    { seit: "2026-09-24T03:32",
-      text: "Ganz sauber und Quietschen erst nach dem letzten Zug" },
+    { seit: "2026-09-24T03:36",
+      text: "Walkie-Knopf schaltet reihum: Übungspuppe → 2. Puppe („Dummy“, blau) → Puppen weg; /puppe genauso, /puppe weg nimmt beide ab" },
   ],
 };
