@@ -245,7 +245,7 @@ const sage = (gut, text, dazu) => {
            XANDER: „Bild noch sichtbar unter dem Hut" — gemessen war es der
            gestrichelte Ring, der unter der Krempe hervorschaute
            (.lc-zt-im-hut .lc-schild in korrekturen.css). */
-        const imHut = art === "kaninchen" && (teil === "schild" || teil === "nummer");
+        const imHut = /kaninchen/.test(art) && (teil === "schild" || teil === "nummer");
         if (!reistGerade && !pacZahl && !imHut && (b.sicht !== a.sicht || b.zeigt !== a.zeigt)) {
           sag(teil + " " + a.sicht + "/" + a.zeigt + " -> " + b.sicht + "/" + b.zeigt);
         }

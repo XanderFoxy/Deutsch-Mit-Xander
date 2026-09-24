@@ -40934,7 +40934,12 @@
       };
       const bild = () => {
         if (!buehne.isConnected) { aufraeumen(); return; }
-        const uhr = lauf && !fertig ? lauf.currentTime : null;
+        /* RUNDE 101 — die Uhr des Bildlaufs bleibt nach dem Ende bei
+           DAUER stehen. Dann lag die (unsichtbare) Buehne bis zum
+           Notfall-Zeitgeber noch zwei Sekunden herum — die Sonde
+           runde92-betrieb hat sie als „71 Bausteine mehr" gefunden.
+           Ist der Lauf fertig, zaehlt ab jetzt die echte Zeit. */
+        const uhr = lauf && !fertig && lauf.playState !== "finished" ? lauf.currentTime : null;
         const t = typeof uhr === "number" ? uhr : performance.now() - t0;
         if (!fertig && lcNameVomPlatz(platz) !== nameAlt) { aufraeumen(); buehne.remove(); return; }
         const p = lageBei(Math.min(t, DAUER));
@@ -40986,7 +40991,7 @@
           c.setAttribute("r", f1(gr * (0.08 + q.gross * k)));
           c.style.opacity = String((1 - k) * 0.75);
         });
-        if (t < DAUER + 1000 && !(fertig && t >= DAUER)) requestAnimationFrame(bild);
+        if (t < DAUER + 150 && !(fertig && t >= DAUER)) requestAnimationFrame(bild);
         else { aufraeumen(); buehne.remove(); }
       };
       requestAnimationFrame(bild);
@@ -47480,7 +47485,7 @@
          zweigliedrige Daumen. Die beiden Daumengruppen tragen in
          BEIDEN Durchgaengen dieselben Klassen — sonst wuerde sich nur
          die Fuellung bewegen und die dunkle Silhouette stehenbleiben. */
-      const rhRueckteile = (m) =>
+      const rhRueckteileAlt = (m) =>
         '<path d="M34 -6 L86 -6 L82 44 L38 44 Z" fill="' + rhTon(m, rhVerlauf) + '"'
         + rhStrich(m) + '/>'
         /* Der HANDRUECKEN. */
@@ -47549,11 +47554,36 @@
                 + '" cx="11.5" cy="89.5" rx="4.2" ry="5.4"'
                 + ' transform="rotate(-34 11.5 89.5)"/>')
         + "</g></g>";
+      /* RUNDE 101 — XANDER (Walkie #151): „Die Hand wirkt viel zu eckig
+         und viel zu künstlich und zu aufgesetzt und sie sieht immer noch
+         nicht wie ein Ganzes aus."
+         NACHGESEHEN (Nahaufnahme, 8-fach): die vordere Schicht (Knoechel
+         und Finger) setzte mit EIGENEN Kanten auf den Handruecken auf, der
+         hinter dem Bild lag — zwei Zeichnungen uebereinander, die Naht ist
+         genau die „Trennlinie". Und der Arm endete als Trapez mit gerader
+         Schnittkante.
+         JETZT: Arm, Handruecken, Ballen, Knoechel und Finger sind EINE
+         Zeichnung vor dem Bild — ein gemeinsamer Kantendurchgang, dann ein
+         gemeinsamer Fuelldurchgang; innen gibt es keine Linie mehr. Hinter
+         dem Bild bleibt nur der Daumen: er greift von hinten, das ist der
+         Griff. Der Arm blendet zum Ende hin weich aus (Maske), statt
+         abgeschnitten zu sein. */
+      const rhTeile = (m) => {
+        const t = rhRueckteileAlt(m), i = t.indexOf('<g class="lc-rhand-daumen');
+        return i < 0 ? [t, ""] : [t.slice(0, i), t.slice(i)];
+      };
+      const rhRumpf = (m) => rhTeile(m)[0];
+      const rhDaumen = (m) => rhTeile(m)[1];
       hand.innerHTML =
         '<svg class="lc-riesenhand-form" viewBox="0 0 120 150" aria-hidden="true">'
         + '<defs>' + rhVerlaufDef + '</defs>'
-        + '<g class="lc-rh-kante">' + rhRueckteile("k") + "</g>"
-        + '<g class="lc-rh-fuell">' + rhRueckteile("f") + "</g>"
+        + '<g class="lc-rh-kante">' + rhDaumen("k") + "</g>"
+        + '<g class="lc-rh-fuell">' + rhDaumen("f") + "</g>"
+        + "</svg>";
+      /* Was frueher nach den beiden Durchgaengen auf dem Handruecken lag
+         (Haare, Knoechelschatten, Warzen), liegt jetzt vorn — dort ist
+         der Handruecken. */
+      const rhAufRuecken = ""
         /* Beim Gorilla ist der Arm behaart — kurze Striche am Rand.
            Sie liegen UEBER beiden Durchgaengen, sonst waeren sie von
            der Fuellung zugedeckt. */
@@ -47563,8 +47593,11 @@
               + ' stroke-width="3" stroke-linecap="round"/>'
             : "")
         /* Die Knoechel als weiche Schatten. */
+        /* RUNDE 101: vorher lagen die Knoechelschatten halb verdeckt hinter
+           dem Bild; jetzt liegen sie vorn und waren als harte braune Boegen
+           zu sehen — deshalb nur noch ein Hauch. */
         + '<path d="M38 82 C44 78 52 78 58 82 M60 84 C66 80 74 80 80 84"'
-        + ' fill="none" stroke="rgba(0,0,0,.18)" stroke-width="3"'
+        + ' fill="none" stroke="rgba(110,52,30,.09)" stroke-width="2.4"'
         + ' stroke-linecap="round"/>'
         /* RUNDE 87 — XANDER: „bei der Gorilla-Hand fehlende Details,
            da koennen mehr Haare sein."
@@ -47596,7 +47629,7 @@
               + '<circle cx="46" cy="62" r="3.1"/><circle cx="60" cy="52" r="2.2"/>'
               + '<circle cx="72" cy="70" r="2.6"/></g>'
             : "")
-        + "</svg>";
+        ;
       reihe.appendChild(hand);
       weg.push(hand);
       setzen(hand, start.x, startYH);
@@ -47902,8 +47935,14 @@
         rhKnoechelNeu(m) + rhFinger.map((f, i) => rhFingerHtml(f, i, m)).join("");
       handVorn.innerHTML =
         '<svg class="lc-riesenhand-form" viewBox="0 0 120 150" aria-hidden="true">'
-        + '<g class="lc-rh-kante">' + rhVornteile("k") + "</g>"
-        + '<g class="lc-rh-fuell">' + rhVornteile("f") + "</g>"
+        + '<defs><linearGradient id="' + rhId + 'm" x1="0" y1="-6" x2="0" y2="26" gradientUnits="userSpaceOnUse">'
+        + '<stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="1"/></linearGradient>'
+        + '<mask id="' + rhId + 'k" maskUnits="userSpaceOnUse" x="-20" y="-20" width="160" height="200">'
+        + '<rect x="-20" y="-20" width="160" height="200" fill="url(#' + rhId + 'm)"/></mask></defs>'
+        + '<g mask="url(#' + rhId + 'k)">'
+        + '<g class="lc-rh-kante">' + rhRumpf("k") + rhVornteile("k") + "</g>"
+        + '<g class="lc-rh-fuell">' + rhRumpf("f") + rhVornteile("f") + "</g>"
+        + rhAufRuecken + "</g>"
         + "</svg>";
       reihe.appendChild(handVorn);
       weg.push(handVorn);

@@ -99,6 +99,11 @@ const sage = (gut, was, zusatz) => {
           ["fill", "stroke", "stop-color"].forEach((eig) => {
             const roh = f.getAttribute(eig);
             if (!roh || roh === "none" || roh.indexOf("url(") === 0) return;
+            /* RUNDE 101 — der Verlauf einer MASKE (weiss = sichtbar,
+               schwarz = weg) ist keine Hautfarbe: er blendet nur den
+               Arm aus („realistische Einheit"). */
+            if (f.closest("mask") || (f.tagName === "stop" && f.parentNode
+              && f.parentNode.id && svg.querySelector("mask [fill='url(#" + f.parentNode.id + ")']"))) return;
             if (roh.indexOf("rgba(") === 0 || roh.indexOf("#8d5fa8") === 0
               || roh.indexOf("#6d4685") === 0) return;  /* Manschette, Hemd */
             const r = inRgb(roh);
