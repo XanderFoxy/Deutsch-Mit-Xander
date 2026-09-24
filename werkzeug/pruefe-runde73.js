@@ -361,13 +361,19 @@ pruefe("die Fluegel sitzen an der Schulter, nicht am Hinterteil",
    spitz aus („M119.6 11.5 Q124 10.5 128.2 12.9 …"), weil Xander sie
    immer noch zu breit fand. Der Sinn der Regel bleibt: ein SCHMALER
    Streifen, kein Fleck. */
-pruefe("die Blesse ist ein schmaler Streifen",
-  /M119\.6 11\.5 Q124 10\.5 128\.2 12\.9/.test(js));
+/* RUNDE 101 — XANDER (Walkie #169): „das ursprüngliche Pferdegesicht
+   wieder, die erste Version, wo wir den Streifen auf der Nase zum ersten
+   Mal dünner gemacht haben" — also genau die Blesse aus DIESER Runde
+   (73), nicht mehr die noch schmalere aus Runde 88. */
+pruefe("die Blesse ist ein schmaler Streifen (Fassung aus Runde 73)",
+  /M119\.4 11\.4 Q124 10\.2 128\.4 12\.8/.test(js));
 /* RUNDE 80: der Rumpf ist neu gezeichnet — die Kruppe faellt jetzt
    vom Widerrist (58|29) nach hinten auf (46|40) ab, also deutlicher
    als vorher. Siehe pruefe-runde71 und pruefe-runde80. */
 pruefe("und die Kruppe faellt ab, statt eine Wurst zu sein",
-  /M58 29 L88 29/.test(js) && /Q45 48 46 40 Q48 31 58 29 Z/.test(js));
+  /* RUNDE 101: der Bauch ist voller (Walkie #169), die Kruppe faellt
+     unveraendert von 58|29 nach 46|40 ab. */
+  /M58 29 L88 29/.test(js) && /Q4[45] 48 46 40 Q48 31 58 29 Z/.test(js));
 
 
 console.log("\nTEIL 5 — DAS FEUER UND DAS BLUT\n");

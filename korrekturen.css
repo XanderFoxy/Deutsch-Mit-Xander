@@ -33997,3 +33997,21 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-ld-funken .lc-ld-blitz { transform-box: fill-box; transform-origin: center; }
 /* Der Verlierer raucht einen Moment. */
 .lc-platz.lc-ld-raucht .lc-kreis { filter: brightness(.82) contrast(1.05); transition: filter .3s; }
+
+/* =====================================================================
+   RUNDE 101 — DAS SATTELZEUG (Walkie #169)
+   XANDER: „Du solltest das Sattelzeug schöner und realistischer machen."
+   Lederbraun in drei Toenen, die Decke cremefarben, Metall silbern.
+   ===================================================================== */
+.lc-pferd-schabracke { fill: #efe4cf; stroke: #b9a07a; stroke-width: .6; }
+.lc-pferd-paspel { fill: none; stroke: #8a1f2b; stroke-width: 1.1; stroke-linecap: round; }
+.lc-pferd-blatt { fill: #6a3f22; stroke: #3a2414; stroke-width: .6; }
+.lc-pferd-sattel { fill: #4a2b16 !important; stroke: #2a180c; stroke-width: .7; }
+.lc-pferd-sitzglanz { fill: none; stroke: rgba(255, 220, 180, .35); stroke-width: 1; stroke-linecap: round; }
+.lc-pferd-gurt { stroke: #3a2414 !important; stroke-width: 2.6 !important; fill: none; }
+.lc-pferd-schnalle { fill: none; stroke: #c9ced4; stroke-width: .7; }
+.lc-pferd-buegelriemen { fill: none; stroke: #2e1b0e; stroke-width: 1.1; }
+.lc-pferd-buegel { fill: none; stroke: #b8bec5; stroke-width: 1.1; stroke-linejoin: round; }
+.lc-pferd-zaum { fill: none; stroke: #2e1b0e; stroke-width: 1.1; stroke-linecap: round; }
+.lc-pferd-trense { fill: none; stroke: #c9ced4; stroke-width: .8; }
+.lc-pferd-zuegel { fill: none; stroke: #2e1b0e; stroke-width: .9; stroke-linecap: round; }

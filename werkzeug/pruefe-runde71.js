@@ -156,7 +156,10 @@ console.log("\nDAS PFERD IST EIN PONY GEWORDEN");
    Xander in Runde 80 verlangt hat — siehe pruefe-runde80. */
 pruefe("das Pferd hat einen kurzen Rumpf und eine abfallende Kruppe",
   /lc-pferd-rumpf" d="M58 29 L88 29/.test(js)
-  && /Q54 63 49 56 Q45 48 46 40 Q48 31 58 29 Z/.test(js)
+  /* RUNDE 101 (Walkie #169 „Bauch nicht mehr so schön"): der Bauch
+     haengt jetzt als weiter Bogen durch; die Kruppe faellt unveraendert
+     von 58|29 nach 46|40 ab. */
+  && /Q5[45] 6[35] 49 5[67] Q4[45] 48 46 40 Q48 31 58 29 Z/.test(js)
   && !/d="M40 56 Q38 42 58 39 L94 39/.test(js));
 pruefe("Hals und Kopf sind um dieselben 10 Einheiten mitgerueckt",
   /lc-pferd-hals" d="M94 38 Q106 30 110 16 L122 18/.test(js)

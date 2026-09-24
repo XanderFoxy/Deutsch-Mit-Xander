@@ -32241,8 +32241,15 @@
         /* Nur die drei, die einen Umweg auch zeichnen koennen,
            bekommen die ganze Kette — bei den anderen waere sie nur
            eine Zahlenreihe ohne Wirkung. */
+        /* RUNDE 101 — XANDER (Walkie #169): „Es gibt noch keinen Galopp
+           beim Aufziehen." GEFUNDEN: nur Fahren und Laufen haengten das
+           „x3" an — tippte man nach dem Aufziehen aufs Pferd in dieser
+           Reihe, ging „/pferd 5" ohne Zahl hinaus, und das Pferd trabte.
+           Jetzt faehrt das Aufziehen bei jedem Fahrzeug mit. */
         const zeile = "/" + befehl + " "
-          + (gemalt && !ohneWeg[befehl] ? gemalt.join("-") : nr);
+          + (gemalt && !ohneWeg[befehl] ? gemalt.join("-") : nr)
+          + (lcAufzieh > 1 ? " x" + lcAufzieh : "");
+        lcAufzieh = 1;
         try { LiveChat.schreiben(zeile); } catch (err) {}
         lcNachDemSenden(zeile);
       });
@@ -47185,8 +47192,14 @@
         + '<path class="lc-pferd-schweif" d="M46 38 Q24 40 14 58 Q11 69 17 76'
         + ' Q18 63 26 54 Q35 45 47 44 Z"/>'
         /* --- DER RUMPF --- */
+        /* RUNDE 101 — XANDER (Walkie #169): „Der Pferdebauch ist nicht
+           mehr so schön." Mit den aufgesetzten Muskelflaechen (bis 581)
+           verschwand auch das, was den Bauch rund machte. Jetzt formt der
+           Rumpf das selbst, in EINER Linie: die Brust waechst nach vorn
+           unten (bis y 64), der Bauch haengt als weiter Bogen durch
+           (tiefste Stelle y 68) und steigt zur Flanke wieder an. */
         + '<path class="lc-pferd-rumpf" d="M58 29 L88 29 Q104 31 108 44'
-        + ' Q110 56 96 62 L66 63 Q54 63 49 56 Q45 48 46 40 Q48 31 58 29 Z"/>'
+        + ' Q111 58 99 64 Q84 71 68 66 Q55 65 49 57 Q44 48 46 40 Q48 31 58 29 Z"/>'
         /* RUNDE 80 — DIE HINTERHAND UND DIE SCHULTER.
            Das Fleisch, aus dem die Beine kommen. Die Hinterhand sitzt
            am Hinterteil (der Rumpf endet hinten bei x = 45), die
@@ -47247,8 +47260,13 @@
            — eine Blesse ist ein schmaler Streifen, der ueber dem
            Nasenbein liegt, und beim Pferd wird er zur Nuester hin
            schmaler, nicht breiter. */
-        + '<path class="lc-pferd-blesse" d="M119.6 11.5 Q124 10.5 128.2 12.9'
-        + ' Q130.4 16.5 130 21.2 Q129.4 17.4 127.4 15.2 Q123.8 13.2 120.2 12.9 Z"/>'
+        /* RUNDE 101 — XANDER (Walkie #169): „Ich möchte das ursprüngliche
+           Pferdegesicht wieder, die erste Version, wo wir den Streifen auf
+           der Nase zum ersten Mal dünner gemacht haben." Das ist die
+           Blesse aus Runde 73 (Fassung 424), Punkt fuer Punkt; der Kopf
+           selbst ist seitdem unveraendert. */
+        + '<path class="lc-pferd-blesse" d="M119.4 11.4 Q124 10.2 128.4 12.8'
+        + ' Q130.6 16.4 130.2 20.6 Q129 17.6 126.6 15.6 Q123.2 13.4 120 13 Z"/>'
         + '<path class="lc-pferd-zug" d="M112 19 Q117 22 124 23 M128 24 Q131 25 133 24'
         + ' M115 12.5 Q118 10.6 121.6 11"/>'
         /* --- DIE BEINE DER NAHEN SEITE --- */
@@ -47264,9 +47282,30 @@
         + '<ellipse cx="95" cy="50" rx="6.5" ry="10"/>'
         + '<ellipse cx="78" cy="60" rx="16" ry="3.2"/>'
         + "</g>"
-        + '<path class="lc-pferd-sattel" d="M66 30 Q80 23 94 30 L94 38'
-        + ' Q80 32 66 38 Z"/>'
-        + '<path class="lc-pferd-gurt" d="M87 33 L89.5 62"/>'
+        /* RUNDE 101 — XANDER (Walkie #169): „Du solltest das Sattelzeug
+           schöner und realistischer machen." Ein Sattel hat Teile, die
+           man von der Seite sieht, und genau die stehen jetzt da:
+             · die SCHABRACKE (helle Decke) unter allem, mit Paspel,
+             · das SATTELBLATT, das seitlich herunterhaengt,
+             · der SITZ mit hohem Hinterzwiesel und Sattelknauf vorn,
+             · der GURT unter dem Bauch mit Schnalle,
+             · STEIGBUEGELRIEMEN und STEIGBUEGEL,
+             · am Kopf das ZAUMZEUG: Genickstueck, Stirnriemen,
+               Nasenriemen, Trensenring — und die ZUEGEL zum Knauf. */
+        + '<path class="lc-pferd-schabracke" d="M62 29.5 Q80 26 98 29.5 L98.5 44 Q80 47 62.5 44.5 Z"/>'
+        + '<path class="lc-pferd-paspel" d="M63.5 43.2 Q80 45.8 97 42.8"/>'
+        + '<path class="lc-pferd-blatt" d="M71 31 Q81 29.5 90 31 L91.2 47.5 Q81 49.5 70.2 47.2 Z"/>'
+        + '<path class="lc-pferd-sattel" d="M65.5 31.5 Q63.5 22.5 69.5 22.8 Q74 27.2 80.5 27.6'
+        + ' Q87 27.3 91 24.2 Q95.4 21 96.4 25.2 Q96.8 29.4 94 31.2 Q80 29.2 65.5 31.5 Z"/>'
+        + '<path class="lc-pferd-sitzglanz" d="M71 25.5 Q76 28.4 83 28.3"/>'
+        + '<path class="lc-pferd-gurt" d="M86.5 36 L89.2 66.5"/>'
+        + '<rect class="lc-pferd-schnalle" x="86.2" y="48" width="3.2" height="2.6" rx=".5" transform="rotate(5 87.8 49.3)"/>'
+        + '<path class="lc-pferd-buegelriemen" d="M79.5 31 L78.6 53"/>'
+        + '<path class="lc-pferd-buegel" d="M75.6 53 L81.6 53 L82.4 56.6 L74.8 56.6 Z"/>'
+        + '<path class="lc-pferd-zaum" d="M112.4 8.6 L116.6 24.6 M112 10.6 L118.6 8.4'
+        + ' M122.6 21.4 Q128 26.4 134.6 23.6"/>'
+        + '<circle class="lc-pferd-trense" cx="127.2" cy="26" r="1.3"/>'
+        + '<path class="lc-pferd-zuegel" d="M127 26.6 Q112 38 96 25.4"/>'
         + "</svg>"
         + '<span class="lc-pferd-reiter"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
