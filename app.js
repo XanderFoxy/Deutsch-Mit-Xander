@@ -26969,6 +26969,15 @@
        Schritt (Ferse, dann Ballen, 0,26 s), und das Los hat seinen
        eigenen Ton bekommen. */
     spielzug:       { ton: "schritt",  dauer: 260,  laut: 0.6 },   /* ein Schritt je Feld */
+    /* RUNDE 101 — XANDER (Funk 84): „die Zeichnung … soll den alten
+       Sound haben, wenn man den Strich führt … schaue dazu bitte in
+       deinem Verlauf, wie das Original geklungen hat beim ersten Mal."
+       NACHGESEHEN (git 2460628, Runde 19, wo lcWegMalen entstand): der
+       Strich spielte „spielzug" = ton/gummi, 700 ms, 0,5. In Runde 85
+       (fbe419e) wurde „spielzug" fuers LAUFEN auf „schritt" gestellt —
+       das Zeichnen hing mit dran und verlor seinen Ton. Jetzt hat es
+       einen eigenen Eintrag mit genau dem Original. */
+    wegmalen:       { ton: "gummi",    dauer: 700,  laut: 0.5 },
     pacjagd:        { ton: "pacman",   dauer: 3400, laut: 0.55 }, /* die Jagd ueber die Felder */
     /* RUNDE 88 — XANDER: „wie bei Super Mario an die Plaetze dran
        schlagen … dann kriege ich ne Muenze und noch mal ne Muenze."
@@ -32030,7 +32039,7 @@
          („Platz X ist besetzt"). */
       weg.push(p);
       malen();
-      lcTonZu("spielzug");
+      lcTonZu("wegmalen");
     };
     const halten = (e) => { if (lcMalWeg) e.preventDefault(); };
     const schliessen = () => {
