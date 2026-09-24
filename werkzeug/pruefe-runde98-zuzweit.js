@@ -334,9 +334,16 @@ const sage = (gut, was, zusatz) => {
       if (b) b.click();
       return Boolean(b);
     };
-    window.DMA_PRUEFUNG.platzMenue(ich);
-    const r1 = tipp("Reisen");
-    const r2 = tipp("Zu zweit \u2014 Rad");
+    /* RUNDE 101 — XANDER (#175): eigene Reisen nur noch über das
+       gehaltene LEERE Feld; „Zu zweit" steht dort in der Reisen-Reihe
+       (seit Fassung 609 — in 599 war es mit der Kachel „Reisen" am
+       eigenen Bild verschwunden: „das zu zweit reisen geht nicht mehr"). */
+    const leer = [...document.querySelectorAll("#lcPlaetze .lc-platz")].find((p) => p.classList.contains("lc-platz-frei"));
+    window.DMA_PRUEFUNG.platzMenue(leer);
+    const r1 = Boolean(document.getElementById("lcPlatzMenue"));
+    const rk = [...document.querySelectorAll("#lcPlatzMenue .lc-anreise-knopf")].find((x) => x.title === "Zu zweit \u2013 Rad");
+    if (rk) rk.click();
+    const r2 = Boolean(rk);
     const frage = (document.querySelector("#lcPlatzMenue .lc-platzmenue-kopf") || {}).textContent || "";
     const wahl = [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-wort")].map((w) => w.textContent.trim());
     const r3 = tipp("Puppe");
@@ -354,7 +361,7 @@ const sage = (gut, was, zusatz) => {
       doppelt: zeilen.some((z) => /mit Alex/.test(z)),
       satz: zeilen.filter((z) => /gemeinsam/.test(z)).pop() || "" };
   });
-  sage(eigen && !eigen.fehlt && eigen.tipps.every(Boolean), "eigenes Bild → Reisen → Zu zweit — Rad laesst sich antippen",
+  sage(eigen && !eigen.fehlt && eigen.tipps.every(Boolean), "leeres Feld halten → Zu zweit – Rad laesst sich antippen",
     eigen ? JSON.stringify(eigen.tipps) : "-");
   sage(eigen && /Mit wem/.test(eigen.frage) && eigen.wahl.indexOf("Puppe") >= 0 && eigen.wahl.indexOf("Alex") < 0,
     "... dann kommt „Mit wem?“ — die Puppe steht zur Wahl, man selbst nicht",

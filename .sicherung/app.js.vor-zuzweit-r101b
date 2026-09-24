@@ -31634,7 +31634,7 @@
      Jeder, der gerade oben sitzt (auch die Uebungspuppe), steht hier
      als Knopf. Dann geht es genau so weiter wie vom Bild des anderen
      aus: „/gemeinsam Name" — oder erst der gemalte Weg. */
-  function lcZuZweitWaehler(platz, befehl, zusatz, kette) {
+  function lcZuZweitWaehler(platz, befehl, zusatz) {
     lcPlatzMenueZu();
     const andere = [...document.querySelectorAll("#lcPlaetze .lc-platz.lc-platz-belegt")]
       .filter((p) => !p.classList.contains("lc-platz-ich"))
@@ -31668,10 +31668,7 @@
           lcWegMalen("gemeinsam " + nm + (zusatz ? " " + zusatz : ""), platz);
           return;
         }
-        /* RUNDE 101 — aus der Reisen-Reihe des leeren Feldes kommt eine
-           Kette mit (eigener Platz → gehaltenes Feld, oder der gemalte
-           Weg): dorthin fahren die beiden. */
-        const zeile = "/gemeinsam " + nm + (zusatz ? " " + zusatz : "") + (kette ? " " + kette : "");
+        const zeile = "/gemeinsam " + nm + (zusatz ? " " + zusatz : "");
         try { LiveChat.schreiben(zeile); } catch (x) {}
         lcNachDemSenden(zeile);
       });
@@ -32214,13 +32211,6 @@
      /* RUNDE 101 — Walkie #175: der Delfin stand nur unter der Kachel
         „Reisen" am eigenen Bild; die ist weg, also steht er hier. */
      ["\ud83d\udc2c", "Delfin", "delfin"],
-     /* RUNDE 101 — XANDER (24.09.): „das zu zweit reisen geht nicht
-        mehr". MEIN FEHLER aus Fassung 599: mit der Kachel „Reisen" am
-        eigenen Bild (#175) verschwand auch „Zu zweit". Und schon in
-        Funk 84: „bei Reisen soll … auch das gemeinsame Reisen drin
-        sein". Also stehen beide jetzt HIER, beim gehaltenen Feld. */
-     ["\ud83d\udeb2", "Zu zweit \u2013 Rad", "zuzweit:rad"],
-     ["\ud83e\udd38", "Zu zweit \u2013 H\u00fcpfball", "zuzweit:ball"],
      ["\ud83d\ude82", "Dampflok", "lok"],
      ["\ud83e\udda1", "Maulwurf", "maulwurf"],
      ["\ud83c\udf00", "Tor", "portal"],
@@ -32292,13 +32282,6 @@
            „x3" an — tippte man nach dem Aufziehen aufs Pferd in dieser
            Reihe, ging „/pferd 5" ohne Zahl hinaus, und das Pferd trabte.
            Jetzt faehrt das Aufziehen bei jedem Fahrzeug mit. */
-        if (/^zuzweit:/.test(befehl)) {
-          const ichPl = document.querySelector("#lcPlaetze .lc-platz-ich");
-          const ichNr = ichPl ? Number(ichPl.dataset.lcPlatz) : 0;
-          const kette = gemalt ? gemalt.join("-") : (ichNr && ichNr !== nr ? ichNr + "-" + nr : "");
-          lcZuZweitWaehler(platz, "gemeinsam", befehl === "zuzweit:ball" ? "ball" : "", kette);
-          return;
-        }
         if (/:selbst$/.test(befehl)) {
           /* Die Bagger heben einen Namen auf einen Platz: „/bagger
              Ich 5" — genau wie aus dem Transport-Menue bei anderen. */
