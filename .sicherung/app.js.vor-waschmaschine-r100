@@ -25826,10 +25826,6 @@
     /* RUNDE 99: „klingt absolut nicht realistisch" — jetzt ein echtes
        Sabbern (Schlurfen, Faden, zwei Tropfen), 2,5 s. */
     sabbern:        { ton: "sabberlaut",  dauer: 2600, laut: 0.7 },
-    /* RUNDE 101 — die Waschmaschine: das Einlaufen des Wassers. Die
-       beiden anderen Phasen (Waschen, Abpumpen) legt lcWaschmaschine
-       selbst auf ihre Zeit. */
-    waschmaschine:  { ton: "schiffwasser", dauer: 1400, laut: 0.6 },
     /* „wenn man das Ei aufschlaegt, das kann auch realistischer
        klingen und dann ... kann das so bisschen eklig klingen."
        Das sind ZWEI Dinge nacheinander: erst knackt die Schale
@@ -29663,9 +29659,6 @@
     ["\ud83e\udd7a", "Spucken",  "spucken"],
     /* RUNDE 99 — XANDER: „Man kann auch jemanden ansabbern." */
     ["\ud83e\udd24", "Sabbern",  "sabbern"],
-    /* RUNDE 101 — XANDER: „eine Waschmaschine als Profilbild Effekt wo
-       der andere richtig durchgewirbelt wird". */
-    ["\ud83e\udee7", "Waschmaschine", "waschmaschine"],
     /* RUNDE 75 — XANDER: „es soll noch ein Profileffekt geben, wo
        man sich ne Sonnenbrille aufsetzt und cool zu sein." */
     ["\ud83d\udd76\ufe0f", "Sonnenbrille", "sonnenbrille"],
@@ -29961,7 +29954,7 @@
     ["\ud83e\uddfd", "Sauber machen",
      /* XANDER (Walkie-Talkie): „bei Putzen ist die Birne mit
         untergebracht, das macht dort ueberhaupt keinen Sinn." */
-     ["putzen", "wischer", "waschmaschine"]],
+     ["putzen", "wischer"]],
     /* XANDER: „Das Frivole und das Sexy koenntest du auch mal sammeln,
        das kann ein Untermenue sein." */
     ["\ud83d\ude0f", "Frivol",
@@ -33194,7 +33187,6 @@
     vogelkot:   { zeichen: ["\ud83d\udc26"], wie: 5, klasse: "umarmen" },
     spucken:    { zeichen: ["\ud83e\udd7a"], wie: 5, klasse: "umarmen" },
     sabbern:    { zeichen: ["\ud83e\udd24"], wie: 5, klasse: "umarmen" },
-    waschmaschine: { zeichen: ["\ud83e\udee7"], wie: 5, klasse: "umarmen" },
     gluehbirne: { zeichen: ["\ud83d\udca1"], wie: 5, klasse: "umarmen" },
     birneraus:  { zeichen: ["\ud83d\udd0c"], wie: 5, klasse: "umarmen" },
     entbloessung:{ zeichen: ["\ud83d\udc59"], wie: 5, klasse: "umarmen" },
@@ -33980,7 +33972,6 @@
        Hochziehen im Rachen noch vor den Wurf, wie es soll. */
     spucken: 630,
     /* 1300 ms minus die 129 ms bis zur Spitze der Aufnahme. */
-    waschmaschine: 900,  /* RUNDE 101: das Wasser laeuft bei 900 ms ein */
     sabbern: 420,        /* RUNDE 99: der Sabberlaut beginnt mit dem Schlurfen; RUNDE 100: erst wenn der Speichel aus dem Mund quillt (14 % von 3 s) */
     tritt: 180,        /* 0,18 s — „das ist der Anstoss" */
     /* RUNDE 98 — der erste Klatscher liegt bei 45 % des ersten Takts
@@ -39641,166 +39632,6 @@
          Er kommt 120 ms nach dem Kontakt auf dem Ring (44 % = 1320 ms). */
       lcStimmeZu(platz, "ekelsabbermann", "ekelsabberfrau", 1440, 0.6);
     }, 3000, "sabbern");
-  }
-
-  /* =================================================================
-     DIE WASCHMASCHINE
-     -----------------------------------------------------------------
-     XANDER (Walkie-Funk #39): „Ich möchte eine Waschmaschine als
-     Profilbild Effekt wo der andere richtig durchgewirbelt wird" —
-     und (Funk #54): „Mache Mal Bitte Die Waschmaschine … Als
-     Nächstes."
-
-     Das Profilbild IST das Bullauge: ein Frontlader baut sich um den
-     Kreis herum auf, die Tuer schwenkt an ihrem Scharnier zu, Wasser
-     laeuft ein, die Trommel waescht hin und her, pumpt ab und
-     schleudert — dabei ruettelt die ganze Maschine. Dann geht die
-     Tuer wieder auf, und das Bild torkelt noch kurz nach.
-
-     Gewirbelt wird nur der INHALT des Kreises (Bild, Video, Initiale),
-     nicht der Kreis selbst: der Rahmen bleibt rund und steht, genau
-     wie die Tuer einer echten Maschine. Das Glas ist in der Mitte
-     klar — nur am Rand spiegelt es —, damit das Gesicht frei bleibt.
-
-     Zeitplan (5,6 s, alles auf einer Uhr):
-          0– 800 ms  Maschine erscheint, Tuer schwenkt zu
-        900–1500     Wasser laeuft ein        (Ton „schiffwasser")
-       1500–3200     Waschen: hin und her     (Ton „kugelschuetteln")
-       3200–3500     Abpumpen                 (Ton „sogwasser")
-       3300–4700     Schleudern, Maschine ruettelt
-       4900–5300     Tuer geht auf, Bild torkelt
-       5300–5600     alles blendet aus
-     ================================================================= */
-  function lcWaschmaschine(wen) {
-    const DAUER = 5600;
-    return lcAmPlatz(wen, "lc-wasch", (schicht, platz) => {
-      const kreis = platz.querySelector(".lc-kreis");
-      /* Das Gehaeuse: Masseinheit ist 1 % des Kreises. Der Kreis sitzt
-         bei (95 | 122) mit Radius 50 — dort ist das Loch fuer die Tuer. */
-      const gehaeuse =
-        '<svg class="lc-wasch-gehaeuse" viewBox="0 0 190 225" aria-hidden="true">'
-        + '<defs>'
-        + '<linearGradient id="lcWaschBlech" x1="0" y1="0" x2="1" y2="1">'
-        + '<stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#eef1f5"/>'
-        + '<stop offset="1" stop-color="#cfd6df"/></linearGradient>'
-        + '<radialGradient id="lcWaschManschette" cx=".5" cy=".5" r=".5">'
-        + '<stop offset=".86" stop-color="#8d96a3"/><stop offset="1" stop-color="#c3c9d2"/></radialGradient>'
-        + '</defs>'
-        /* Der Korpus mit dem Loch fuer die Tuer (evenodd). */
-        + '<path fill="url(#lcWaschBlech)" stroke="#aeb7c3" stroke-width="1.6" fill-rule="evenodd"'
-        + ' d="M10 2 H180 Q188 2 188 10 V211 Q188 219 180 219 H10 Q2 219 2 211 V10 Q2 2 10 2 Z'
-        + ' M95 72 A50 50 0 1 0 95 172 A50 50 0 1 0 95 72 Z"/>'
-        /* Die Gummimanschette direkt am Bild. */
-        + '<circle cx="95" cy="122" r="53" fill="none" stroke="url(#lcWaschManschette)" stroke-width="6"/>'
-        /* Die Bedienleiste oben: Waschmittelfach, Anzeige, Drehknopf. */
-        + '<path d="M2 42 H188" stroke="#b9c1cc" stroke-width="1.4"/>'
-        + '<rect x="12" y="10" width="46" height="24" rx="3" fill="#e6eaf0" stroke="#b3bcc8" stroke-width="1.2"/>'
-        + '<rect x="18" y="26" width="34" height="3" rx="1.5" fill="#b3bcc8"/>'
-        + '<rect x="70" y="13" width="44" height="17" rx="3" fill="#1d2733"/>'
-        + '<text class="lc-wasch-anzeige" x="92" y="26" text-anchor="middle">1:20</text>'
-        + '<circle cx="124" cy="21.5" r="2.2" class="lc-wasch-lampe"/>'
-        + '<circle cx="158" cy="22" r="13" fill="#dfe4ea" stroke="#9aa4b1" stroke-width="1.6"/>'
-        + '<g class="lc-wasch-knopf"><rect x="156.5" y="11" width="3" height="9" rx="1.5" fill="#6b7686"/></g>'
-        /* Sockelblende und Fuesse. */
-        + '<path d="M2 200 H188" stroke="#c2c9d3" stroke-width="1.2"/>'
-        + '<rect x="14" y="219" width="16" height="6" rx="2" fill="#8a93a0"/>'
-        + '<rect x="160" y="219" width="16" height="6" rx="2" fill="#8a93a0"/>'
-        + '</svg>';
-      /* Die Tuer: Chromring und Glas, Scharnier links. Das Glas ist in
-         der Mitte ganz klar, nur zum Rand hin leicht blaeulich, und oben
-         links liegt ein Lichtbogen — so sieht man, dass Glas davor ist,
-         ohne dass das Gesicht verdeckt wird. */
-      const tuer =
-        '<span class="lc-wasch-tuer"><svg viewBox="0 0 128 128" aria-hidden="true">'
-        + '<defs>'
-        + '<radialGradient id="lcWaschGlas" cx=".5" cy=".5" r=".5">'
-        + '<stop offset=".72" stop-color="#bfe0f5" stop-opacity="0"/>'
-        + '<stop offset="1" stop-color="#9cc9e8" stop-opacity=".55"/></radialGradient>'
-        + '<linearGradient id="lcWaschChrom" x1="0" y1="0" x2="1" y2="1">'
-        + '<stop offset="0" stop-color="#f7f9fb"/><stop offset=".45" stop-color="#9ea8b5"/>'
-        + '<stop offset=".6" stop-color="#e9edf2"/><stop offset="1" stop-color="#7d8897"/></linearGradient>'
-        + '</defs>'
-        + '<circle cx="64" cy="64" r="50" fill="url(#lcWaschGlas)"/>'
-        + '<path d="M26 46 A42 42 0 0 1 52 23" fill="none" stroke="#fff" stroke-opacity=".7"'
-        + ' stroke-width="4" stroke-linecap="round"/>'
-        + '<path d="M24 58 A42 42 0 0 1 27 50" fill="none" stroke="#fff" stroke-opacity=".5"'
-        + ' stroke-width="2.4" stroke-linecap="round"/>'
-        + '<circle cx="64" cy="64" r="57" fill="none" stroke="url(#lcWaschChrom)" stroke-width="12"/>'
-        + '<circle cx="64" cy="64" r="51" fill="none" stroke="#6f7a88" stroke-width="1.2"/>'
-        + '<rect x="115" y="52" width="9" height="24" rx="4" fill="#dfe4ea" stroke="#8a95a3" stroke-width="1.2"/>'
-        + '</svg></span>';
-      schicht.innerHTML = '<span class="lc-wasch-maschine">' + gehaeuse + tuer + '</span>';
-      /* Wasser und Schaum liegen IM Bild, also in der runden Blende.
-         Jedes Blaeschen lebt 1,6 s und beginnt spaetestens bei 1780 ms —
-         so ist der letzte Schaum weg (3380 ms), bevor das Wasser
-         abgepumpt ist, und nichts schwebt im Trockenen. */
-      const blende = lcZpBlende(schicht);
-      let schaum = "";
-      [[12, 0, 9], [26, 180, 12], [41, 90, 8], [55, 300, 11], [69, 40, 9],
-       [83, 220, 12], [20, 520, 7], [48, 640, 8], [76, 460, 7], [62, 760, 10]]
-        .forEach(([x, spaet, gr]) => {
-          schaum += '<i class="lc-wasch-blase" style="--x:' + x + '%; --gr:' + gr
-            + '%; animation-delay:' + (1400 + spaet / 2) + 'ms"></i>';
-        });
-      blende.innerHTML = '<span class="lc-wasch-wasser"><i class="lc-wasch-welle"></i>'
-        + '<i class="lc-wasch-welle lc-wasch-welle2"></i></span>' + schaum;
-
-      /* Der Inhalt des Bullauges wird gewirbelt — erst waschen (hin und
-         her, die Waesche faellt in der Trommel), dann schleudern (fuenf
-         volle Umdrehungen), dann torkelt es nach. 1800 Grad sind genau
-         fuenf Runden, am Ende steht das Bild also wieder gerade. */
-      const t = (ms) => ms / DAUER;
-      const wirbel = (mitSchwung) => {
-        /* mitSchwung: der Inhalt faellt in der Trommel hin und her und
-           ist dafuer etwas groesser, damit am Rand nichts leer wird.
-           Ohne (Rueckfall, der Kreis selbst dreht sich): nur Drehung,
-           sonst saesse das Bild neben der Tuer. */
-        const w = (x, y, grad, sk) => (mitSchwung
-          ? "translate(" + x + "%, " + y + "%) rotate(" + grad + "deg) scale(" + sk + ")"
-          : "rotate(" + grad + "deg)");
-        return [
-          { transform: "none", offset: 0 },
-          { transform: w(0, 0, 0, 1), offset: t(1400), easing: "ease-in-out" },
-          { transform: w(-4, 5, -150, 1.16), offset: t(1850), easing: "ease-in-out" },
-          { transform: w(5, 6, 115, 1.16), offset: t(2300), easing: "ease-in-out" },
-          { transform: w(-3, 4, -160, 1.16), offset: t(2750), easing: "ease-in-out" },
-          { transform: w(0, 2, 0, 1.1), offset: t(3250), easing: "ease-in" },
-          { transform: w(0, 0, 900, 1.1), offset: t(4000), easing: "ease-out" },
-          { transform: w(0, 0, 1800, 1), offset: t(4800), easing: "ease-in-out" },
-          { transform: w(0, 0, 1788, 1), offset: t(5050), easing: "ease-in-out" },
-          { transform: w(0, 0, 1806, 1), offset: t(5300), easing: "ease-in-out" },
-          { transform: w(0, 0, 1800, 1), offset: 1 }
-        ];
-      };
-      const inhalt = kreis ? [...kreis.querySelectorAll("img, video, .lc-initial")] : [];
-      inhalt.forEach((el) => {
-        try { el.animate(wirbel(true), { duration: DAUER, easing: "linear" }); } catch (e) {}
-      });
-      if (!inhalt.length && kreis) {
-        try { kreis.animate(wirbel(false), { duration: DAUER, easing: "linear", composite: "add" }); }
-        catch (e) {}
-      }
-      /* Beim Schleudern ruettelt die ganze Maschine — und der Kreis
-         ruettelt mit, sonst saesse das Bild schief im Bullauge. */
-      const ruetteln = [{ transform: "none", offset: 0 }, { transform: "none", offset: t(3350) }];
-      for (let ms = 3420, i = 0; ms < 4700; ms += 70, i++) {
-        const st = 1 - Math.abs((ms - 4000) / 700) * 0.6;
-        const x = (i % 2 ? 1 : -1) * 1.6 * st, y = (i % 3 - 1) * 1.1 * st;
-        ruetteln.push({ transform: "translate(" + x.toFixed(2) + "%, " + y.toFixed(2) + "%)", offset: t(ms) });
-      }
-      ruetteln.push({ transform: "none", offset: t(4760) }, { transform: "none", offset: 1 });
-      const maschine = schicht.querySelector(".lc-wasch-maschine");
-      [maschine, kreis].forEach((el) => {
-        if (!el) return;
-        try { el.animate(ruetteln, { duration: DAUER, easing: "linear", composite: "add" }); }
-        catch (e) { try { el.animate(ruetteln, { duration: DAUER, easing: "linear" }); } catch (e2) {} }
-      });
-
-      /* Die Toene — der erste kommt ueber LC_TREFFER, wenn das Wasser
-         einlaeuft (900 ms); diese beiden liegen auf ihren Phasen. */
-      lcTonSpaeter("kugelschuetteln", 1500, 0.55, 1700);
-      lcTonSpaeter("sogwasser", 3200, 0.6, 900);
-    }, DAUER, "waschmaschine");
   }
 
   function lcPaintfleck(wen) {
@@ -55169,7 +55000,7 @@
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
-    vogelkot: 1, spucken: 1, sabbern: 1, waschmaschine: 1,
+    vogelkot: 1, spucken: 1, sabbern: 1,
     birneraus: 1,
     entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, kuss: 1, klaps: 1,
     /* RUNDE 76 — die drei Neuen: Telefon und Anziehen gelten genau
@@ -55426,7 +55257,6 @@
       if (art === "vogelkot" && lcVogelKot(wenZ)) return;
       if (art === "spucken" && lcSpucken(wenZ)) return;
       if (art === "sabbern" && lcSabbern(wenZ)) return;
-      if (art === "waschmaschine" && lcWaschmaschine(wenZ)) return;
       if (art === "gluehbirne" && lcGluehbirne(wenZ)) return;
       if (art === "birneraus" && lcGluehbirneRaus()) return;
       if (art === "hut" && lcHut(wenZ)) return;

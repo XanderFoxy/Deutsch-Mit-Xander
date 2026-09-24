@@ -49,16 +49,18 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "559: Kuss – Männerstimme neu gesummt",
+  stand: "560: Waschmaschine",
 
   inArbeit: [
-    { seit: "2026-09-24T03:46",
-      text: "Dein Ohr: klingt der Mann beim Kuss jetzt natürlich?" },
+    { seit: "2026-09-24T04:04",
+      text: "Waschmaschine: eigener Schleuder-Ton als neue Datei? (Frage im Walkie)" },
+    { seit: "2026-09-24T04:04",
+      text: "Was genau ist mit „die Sprechbilder“ gemeint? (Frage im Walkie)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T03:46",
-      text: "Kuss: das Summen der Männerstimme ist neu – wärmer, tiefer und es fällt natürlich ab (vorher ein gleichbleibender Ton um 105 Hz). Das Schmatzen ist unverändert und kommt weiter bei 455 ms." },
+    { seit: "2026-09-24T04:04",
+      text: "Waschmaschine (/waschmaschine Name, /waschen Name, im Menü unter „Sauber machen“): Das Bild wird zum Bullauge. Die Tür schwenkt zu, Wasser läuft ein, das Bild wirbelt beim Waschen hin und her, dann wird abgepumpt und fünfmal geschleudert. Dabei rüttelt die Maschine. Am Ende geht die Tür auf und das Bild torkelt nach. Das Glas ist in der Mitte klar, das Wasser steht höchstens bei 40 %." },
   ],
 };

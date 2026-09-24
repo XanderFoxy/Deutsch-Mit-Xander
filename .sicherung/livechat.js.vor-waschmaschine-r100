@@ -1097,9 +1097,6 @@ window.LiveChat = (function () {
        werkzeug/pruefe-effekttueren.js. */
     /* RUNDE 99 — XANDER: „Man kann auch jemanden ansabbern." */
     sabbern:  { wirkung: "sabbern",  satz: "sabbert auf", emoji: "\ud83e\udd24" },
-    /* RUNDE 101 — XANDER (Funk #39): „Ich möchte eine Waschmaschine als
-       Profilbild Effekt wo der andere richtig durchgewirbelt wird". */
-    waschmaschine: { wirkung: "waschmaschine", satz: "w\u00e4scht und schleudert", emoji: "\ud83e\udee7" },
     mannhand: { wirkung: "mannhand", satz: "wird von einer kr\u00e4ftigen Hand gesetzt zu", emoji: "\ud83d\udc4a" },
     frauenhand: { wirkung: "frauenhand", satz: "wird von einer zarten Hand gesetzt zu", emoji: "\ud83d\udc85" },
     hexenhand: { wirkung: "hexenhand", satz: "wird von einer Hexenklaue gepackt und gesetzt zu", emoji: "\ud83e\uddd9" },
@@ -9875,8 +9872,6 @@ window.LiveChat = (function () {
       was: "dieselbe Bewegung, aber mit der Pranke eines Gorillas" },
     { gr: "reden", w: "sabbern", kurz: "", nutzt: "/sabbern Name",
       was: "ein Tropfen sammelt sich, reisst ab und f\u00e4llt auf sein Bild" },
-    { gr: "reden", w: "waschmaschine", kurz: "waschen", nutzt: "/waschmaschine Name",
-      was: "sein Bild wird zum Bullauge \u2014 Wasser rein, waschen, schleudern, Tuer auf" },
     { gr: "reden", w: "mannhand", kurz: "", nutzt: "/mannhand 5",
       was: "eine kr\u00e4ftige M\u00e4nnerhand \u2014 breiter, kurze N\u00e4gel, behaart" },
     { gr: "reden", w: "frauenhand", kurz: "", nutzt: "/frauenhand 5",
