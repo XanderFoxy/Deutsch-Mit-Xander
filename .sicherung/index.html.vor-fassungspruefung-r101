@@ -47,7 +47,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
 
-<script>window.DMA_VERSION = "608";</script>
+<script>window.DMA_VERSION = "607";</script>
 <script>
 /* =================================================================
    DIE SEITE MERKT SELBST, DASS SIE VERALTET IST
@@ -77,65 +77,25 @@
    Der Merker in sessionStorage sorgt dafuer, dass daraus keine
    Schleife wird, falls die Zahl einmal nicht stimmen sollte.
    ================================================================= */
-/* RUNDE 101 — XANDER (24.09.): „ich sehe seit Stunden keine Veränderung
-   mehr". GEFUNDEN: geprueft wurde nur beim allerersten Laden. Holt der
-   Browser die Seite aus dem Zwischenspeicher zurueck (Android: Zurueck-
-   Taste, App-Wechsel — „bfcache"), laeuft dieses Skript NICHT noch
-   einmal; und wer die Seite stundenlang offen hat (Livestream), bekam
-   ohnehin nie etwas mit. Jetzt wird zusaetzlich geprueft, wenn die
-   Seite wieder sichtbar wird, wenn sie aus dem Zwischenspeicher kommt,
-   und alle zwei Minuten. Beim ersten Laden laedt sie wie bisher selbst
-   neu; spaeter erscheint oben ein kleiner Knopf „Neue Fassung – laden"
-   (mitten im Livestream soll nichts von selbst neu laden). */
 (function () {
-  var jetzt = String(window.DMA_VERSION || "");
-  var merker = "dma-neu-geladen";
-  function neuLaden(neu) {
-    var adresse = location.pathname + "?f=" + encodeURIComponent(neu) + location.hash;
-    location.replace(adresse);
-  }
-  function knopf(neu) {
-    if (document.getElementById("dmaNeueFassung")) {
-      document.getElementById("dmaNeueFassung").dataset.f = neu;
-      return;
-    }
-    var b = document.createElement("button");
-    b.id = "dmaNeueFassung";
-    b.type = "button";
-    b.dataset.f = neu;
-    b.textContent = "\u21bb Neue Fassung " + neu + " \u2013 jetzt laden";
-    b.style.cssText = "position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:2147483000;"
-      + "border:0;border-radius:999px;padding:6px 14px;font:700 13px/1.2 system-ui,sans-serif;"
-      + "background:#2f6d5a;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer;max-width:92vw";
-    b.addEventListener("click", function () { neuLaden(b.dataset.f); });
-    (document.body || document.documentElement).appendChild(b);
-  }
-  function pruefen(erstesMal) {
-    try {
-      fetch("fassung.json?t=" + Date.now(), { cache: "no-store" })
-        .then(function (a) { return a.ok ? a.json() : null; })
-        .then(function (d) {
-          if (!d || !d.fassung) return;
-          var neu = String(d.fassung);
-          if (neu === jetzt) return;
-          if (!erstesMal) { knopf(neu); return; }
-          var schon = "";
-          try { schon = sessionStorage.getItem(merker) || ""; } catch (e) {}
-          /* Schon einmal versucht und trotzdem alt? Dann kein zweites
-             Mal von selbst (keine Schleife) — aber den Knopf zeigen. */
-          if (schon === neu) { knopf(neu); return; }
-          try { sessionStorage.setItem(merker, neu); } catch (e) {}
-          neuLaden(neu);
-        })
-        .catch(function () {});
-    } catch (e) {}
-  }
-  pruefen(true);
-  window.addEventListener("pageshow", function (e) { if (e.persisted) pruefen(false); });
-  document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible") pruefen(false);
-  });
-  setInterval(function () { if (document.visibilityState !== "hidden") pruefen(false); }, 120000);
+  try {
+    var jetzt = String(window.DMA_VERSION || "");
+    fetch("fassung.json?t=" + Date.now(), { cache: "no-store" })
+      .then(function (a) { return a.ok ? a.json() : null; })
+      .then(function (d) {
+        if (!d || !d.fassung) return;
+        var neu = String(d.fassung);
+        if (neu === jetzt) return;
+        var merker = "dma-neu-geladen";
+        var schon = "";
+        try { schon = sessionStorage.getItem(merker) || ""; } catch (e) {}
+        if (schon === neu) return;          /* schon einmal versucht */
+        try { sessionStorage.setItem(merker, neu); } catch (e) {}
+        var adresse = location.pathname + "?f=" + encodeURIComponent(neu) + location.hash;
+        location.replace(adresse);
+      })
+      .catch(function () {});
+  } catch (e) {}
 })();
 </script>
 <script>
