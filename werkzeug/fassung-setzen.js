@@ -101,6 +101,38 @@ function hakenAnlegen() {
   } catch (e) {}
 }
 
+/* Fassung 628 — beim Zusammenführen zweier Zweige ging ein Kommentar-
+   Anfang verloren; das übrig gebliebene Kommentar-Ende verschluckte die
+   nächste CSS-Regel, still.
+   Jetzt prüft jede Fassung alle Stildateien auf offene oder streunende
+   Kommentare und unausgeglichene Klammern. */
+function cssPruefen() {
+  const fehler = [];
+  fs.readdirSync(WURZEL).filter((n) => /\.css$/.test(n)).forEach((n) => {
+    const s = fs.readFileSync(path.join(WURZEL, n), "utf8");
+    let p = 0, kom = false, tiefe = 0;
+    while (p < s.length) {
+      if (!kom && s.startsWith("/*", p)) { kom = true; p += 2; continue; }
+      if (kom && s.startsWith("*/", p)) { kom = false; p += 2; continue; }
+      if (!kom) {
+        if (s.startsWith("*/", p)) fehler.push(n + ": streunendes */ in Zeile " + (s.slice(0, p).split("\n").length));
+        if (s[p] === "{") tiefe++;
+        else if (s[p] === "}") tiefe--;
+        if (tiefe < 0) { fehler.push(n + ": } ohne { in Zeile " + (s.slice(0, p).split("\n").length)); tiefe = 0; }
+      }
+      p++;
+    }
+    if (kom) fehler.push(n + ": Kommentar am Ende nicht geschlossen");
+    if (tiefe) fehler.push(n + ": " + tiefe + " offene {");
+  });
+  return fehler;
+}
+const cssFehler = cssPruefen();
+if (cssFehler.length) {
+  console.error("CSS-FEHLER:\n  " + cssFehler.join("\n  "));
+  if (process.argv[2] !== "--nur-stempel") process.exit(1);
+}
+
 if (process.argv[2] === "--nur-stempel") {
   const n = stempelSetzen();
   hakenAnlegen();
