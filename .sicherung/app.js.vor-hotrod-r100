@@ -27506,13 +27506,9 @@
     const liste = lcDreckListe[nm] || (lcDreckListe[nm] = []);
     const anzahl = Math.max(1, Number(wieViele) || 1);
     for (let i = 0; i < anzahl; i++) {
-      /* RUNDE 101 — der Russ vom Hot Rod liegt am RAND des Gesichts
-         (28–40 % von der Mitte): schmutzig ja, aber die Mitte bleibt
-         frei, damit man den Menschen noch erkennt. */
-      const ring = art === "russ" ? { w: Math.random() * 2 * Math.PI, r: 28 + Math.random() * 12 } : null;
       liste.push({ art: art || "kot",
-        x: ring ? Math.round(50 + Math.cos(ring.w) * ring.r) : Math.round(18 + Math.random() * 64),
-        y: ring ? Math.round(50 + Math.sin(ring.w) * ring.r) : Math.round(16 + Math.random() * 60),
+        x: Math.round(18 + Math.random() * 64),
+        y: Math.round(16 + Math.random() * 60),
         gross: (0.7 + Math.random() * 0.8).toFixed(2),
         dreh: Math.round(Math.random() * 360) });
     }
@@ -29670,18 +29666,6 @@
     /* RUNDE 101 — XANDER: „eine Waschmaschine als Profilbild Effekt wo
        der andere richtig durchgewirbelt wird". */
     ["\ud83e\udee7", "Waschmaschine", "waschmaschine"],
-    /* RUNDE 101 — XANDER (Funk #18): „jemand mit seinen Händen … von sich
-       weg schieben … falls einem jemand zu nah kommt". Stand erst unter
-       „Holen" — das ist aber das Gegenteil davon. */
-    ["\u270b", "Hau ab", "hauab"],
-    /* RUNDE 101 — XANDER (Funk #40): „jemand anderen aufziehen … und ihn
-       als Auto losflitzen lassen … im selben Look wie das Fahren". Beim
-       eigenen Fahren tippt man den Schluessel mehrmals — hier waehlt man
-       die Zahl der Umdrehungen: mehr Umdrehungen, schneller. */
-    ["\ud83c\udfce\ufe0f", "Hot Rod", "hotrod", false,
-      [["\ud83d\udd11", "1\u00d7 aufgezogen", "hotrod"],
-       ["\ud83d\udd11", "3\u00d7 aufgezogen", "hotrod", "x3"],
-       ["\ud83d\udd11", "5\u00d7 aufgezogen \u2014 volle Kraft", "hotrod", "x5"]]],
     /* RUNDE 75 — XANDER: „es soll noch ein Profileffekt geben, wo
        man sich ne Sonnenbrille aufsetzt und cool zu sein." */
     ["\ud83d\udd76\ufe0f", "Sonnenbrille", "sonnenbrille"],
@@ -30505,9 +30489,16 @@
         tun();
       });
       kasten.appendChild(b);
-      return b;   /* RUNDE 101: der Aufzieh-Knopf schreibt seine Zahl hinein */
     };
     knopf("\ud83e\ude9d", "Angeln", () => lcHebenMenue(platz, name));
+    /* RUNDE 101 — XANDER (Funk #18): „jemand mit seinen Händen … von sich
+       weg schieben … falls einem jemand zu nah kommt". */
+    knopf("\u270b", "Hau ab \u2014 wegschieben", () => {
+      lcPlatzMenueZu();
+      const zeile = "/hauab " + name;
+      try { LiveChat.schreiben(zeile); } catch (e) {}
+      lcNachDemSenden(zeile);
+    });
     knopf("\ud83e\udd20", "Lasso \u2014 zu mir", () => {
       lcPlatzMenueZu();
       const zeile = "/lasso " + name;
@@ -33012,7 +33003,6 @@
     kranheben: { zeichen: ["\ud83c\udfd7\ufe0f"], wie: 4, klasse: "umarmen" },
     bagger:    { zeichen: ["\ud83d\ude9c"], wie: 4, klasse: "umarmen" },
     hauab:     { zeichen: ["\u270b"], wie: 4, klasse: "umarmen" },
-    hotrod:    { zeichen: ["\ud83c\udfce\ufe0f"], wie: 4, klasse: "umarmen" },
     /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
        ne Luftballon." */
     luftballon: { zeichen: ["\ud83c\udf88"], wie: 4, klasse: "umarmen" },
@@ -39686,269 +39676,6 @@
       lcTonSpaeter("aufsetzen", Math.round(DAUER * 0.30), 0.45);
       lcTonSpaeter("schlurfen", Math.round(DAUER * 0.60), 0.5, 520);
     }, 2100);
-  }
-
-  /* =====================================================================
-     DER AUFZIEH-HOT-ROD
-     ---------------------------------------------------------------------
-     XANDER (Walkie-Funk #40): „Ich möchte, dass man jemand anderen
-     aufziehen kann und ihn als Auto losflitzen lassen kann, im selben
-     Look, wie ich dir das für das Fahren erklärt habe — einfach das
-     Profilbild auf zwei Mini-Rädern mit den seitlich verchromten
-     Auspüffen eines Hot Rods, mit ganz viel Dampf, der die anderen
-     Gesichter der anwesenden Teilnehmer bleibend schmutzig macht."
-     (Funk #54: „das Aufzieh Hot Rod Auto als Nächstes.")
-
-     „Im selben Look wie das Fahren": dort zieht man sich selbst mit dem
-     🔑 auf, jeder Tipp eine Umdrehung, mehr Umdrehungen = schneller
-     (lcAufzieh, bis 5). Genau so hier — nur am Bild eines anderen.
-       0–1200 ms   aufziehen: der Schluessel dreht sich hinten am Bild,
-                   das Bild wird zurueckgezogen, Raeder und Auspuffe
-                   kommen dazu
-       1200 ms     loslassen: Dampfstoss
-       danach      eine Runde an ALLEN anderen vorbei (je mehr Umdrehungen,
-                   desto schneller), Dampf aus den Auspuffen; wen er
-                   ueberholt, der bekommt Russ ins Gesicht — und der BLEIBT,
-                   bis jemand putzt (dieselbe Dreckschicht wie beim Vogel)
-       am Ende     zurueck auf dem eigenen Platz, der Schluessel laeuft aus
-     Das Bild selbst dreht sich nie: es ist der Fahrer. Die Mitte der
-     Gesichter bleibt auch beim Russ frei (Flecken nur am Rand).
-     ===================================================================== */
-  function lcHotRod(wen, nachricht) {
-    const kraft = Math.max(1, Math.min(5, Number(nachricht && nachricht.kraft) || 1));
-    const AUF = 1200;
-    const ZOOM = Math.round(3400 / (0.8 + 0.2 * kraft));
-    const DAUER = AUF + ZOOM + 900;
-    return lcAmPlatz(wen, "lc-hotrod", (schicht, platz) => {
-      const kreis = platz.querySelector(".lc-kreis");
-      const reihe = document.getElementById("lcPlaetze");
-      if (!kreis || !reihe) return;
-      const gr = kreis.offsetWidth || 64;
-      const rr = reihe.getBoundingClientRect();
-      const lage = (el) => {
-        const r = el.getBoundingClientRect();
-        return { x: r.left + r.width / 2 - rr.left, y: r.top + r.height / 2 - rr.top };
-      };
-      const S = lage(kreis);
-      /* Die anderen, an denen er vorbeifaehrt: alle besetzten Plaetze. */
-      const andere = [...reihe.querySelectorAll(".lc-platz")]
-        .filter((p) => p !== platz && !p.classList.contains("lc-platz-frei") && lcNameVomPlatz(p))
-        .map((p) => ({ el: p, ...lage(p.querySelector(".lc-kreis") || p), russ: false }));
-      /* Die Runde: um die Mitte aller Plaetze herum, beginnend hinter mir. */
-      const alle = [S, ...andere];
-      const mx = alle.reduce((a, p) => a + p.x, 0) / alle.length;
-      const my = alle.reduce((a, p) => a + p.y, 0) / alle.length;
-      const winkel = (p) => Math.atan2(p.y - my, p.x - mx);
-      const w0 = winkel(S);
-      const reihenfolge = andere.slice().sort((a, b) =>
-        ((winkel(a) - w0 + 4 * Math.PI) % (2 * Math.PI)) - ((winkel(b) - w0 + 4 * Math.PI) % (2 * Math.PI)));
-      /* Er faehrt knapp UNTER jedem Gesicht vorbei — der Dampf steigt
-         ihm dann ins Gesicht, statt dass das Auto darueber faehrt. */
-      const stationen = [S, ...reihenfolge.map((p) => ({ x: p.x, y: p.y + gr * 0.55 })), S];
-      if (stationen.length === 2) stationen.splice(1, 0, { x: S.x + gr * 1.6, y: S.y + gr * 0.3 }, { x: S.x - gr * 1.2, y: S.y + gr * 0.4 });
-      /* Glatte Kurve (Catmull-Rom) und nach Weglaenge abgetastet. */
-      const kurve = [];
-      for (let i = 0; i < stationen.length - 1; i++) {
-        const p0 = stationen[Math.max(0, i - 1)], p1 = stationen[i], p2 = stationen[i + 1],
-              p3 = stationen[Math.min(stationen.length - 1, i + 2)];
-        for (let s = 0; s < 1; s += 1 / 24) {
-          const s2 = s * s, s3 = s2 * s;
-          kurve.push({
-            x: 0.5 * (2 * p1.x + (-p0.x + p2.x) * s + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * s2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * s3),
-            y: 0.5 * (2 * p1.y + (-p0.y + p2.y) * s + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * s2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * s3)
-          });
-        }
-      }
-      kurve.push({ x: S.x, y: S.y });
-      const laengen = [0];
-      for (let i = 1; i < kurve.length; i++) laengen.push(laengen[i - 1] + Math.hypot(kurve[i].x - kurve[i - 1].x, kurve[i].y - kurve[i - 1].y));
-      const gesamt = laengen[laengen.length - 1] || 1;
-      const punktBei = (s) => {
-        const ziel = Math.max(0, Math.min(1, s)) * gesamt;
-        let i = 1;
-        while (i < laengen.length - 1 && laengen[i] < ziel) i++;
-        const a = laengen[i - 1], b = laengen[i], k = b > a ? (ziel - a) / (b - a) : 0;
-        return { x: kurve[i - 1].x + (kurve[i].x - kurve[i - 1].x) * k, y: kurve[i - 1].y + (kurve[i].y - kurve[i - 1].y) * k };
-      };
-      /* Anfahren (kraeftig), Dahinflitzen, Bremsen: Weganteil ueber der Zeit. */
-      const fahrAnteil = (u) => {
-        if (u <= 0) return 0;
-        if (u >= 1) return 1;
-        const a = 0.12, b = 0.18;                       /* Anfahr- und Bremsanteil */
-        const v = 1 / (1 - a / 2 - b / 2);
-        if (u < a) return v * u * u / (2 * a);
-        if (u < 1 - b) return v * (a / 2 + (u - a));
-        const r = 1 - u;
-        return 1 - v * r * r / (2 * b);
-      };
-      const erst = punktBei(0.02);
-      const dir0 = erst.x >= S.x ? 1 : -1;               /* wohin er zuerst faehrt */
-      /* Wo das Bild in jedem Augenblick ist (Reihen-Koordinaten). */
-      const lageBei = (t) => {
-        if (t < AUF) {
-          /* Aufziehen: in drei Rucken zurueckgezogen, gegen die Fahrtrichtung. */
-          const k = t / AUF, ruck = Math.min(1, Math.floor(k * 3) / 3 + Math.min(1, (k * 3 % 1) * 3) / 3);
-          return { x: S.x - dir0 * gr * 0.16 * ruck, y: S.y };
-        }
-        if (t < AUF + ZOOM) {
-          const u = (t - AUF) / ZOOM, p = punktBei(fahrAnteil(u));
-          /* Das Zurueckgezogene holt er in den ersten 6 % wieder ein. */
-          const rest = Math.max(0, 1 - u / 0.06);
-          return { x: p.x - dir0 * gr * 0.16 * rest, y: p.y };
-        }
-        return { x: S.x, y: S.y };
-      };
-
-      /* Das Bild als WAAPI-Animation, fein abgetastet, linear — dieselbe
-         Uhr wie die Zeichnung. Es kippt beim Anfahren leicht nach hinten
-         und beim Bremsen nach vorn (Traegheit), dreht sich sonst nie. */
-      const frames = [];
-      const N = 160;
-      for (let i = 0; i <= N; i++) {
-        const t = DAUER * i / N, p = lageBei(t);
-        let kipp = 0;
-        if (t >= AUF && t < AUF + ZOOM) {
-          const u = (t - AUF) / ZOOM;
-          const q = lageBei(Math.min(AUF + ZOOM, t + 30));
-          const richt = q.x - p.x >= 0 ? 1 : -1;
-          kipp = u < 0.12 ? -6 * Math.sin(Math.PI * u / 0.12) * richt
-            : u > 0.82 ? 5 * Math.sin(Math.PI * (u - 0.82) / 0.18) * richt : 0;
-        }
-        frames.push({ offset: i / N, transform: "translate(" + (p.x - S.x).toFixed(1) + "px, "
-          + (p.y - S.y).toFixed(1) + "px) rotate(" + kipp.toFixed(1) + "deg)" });
-      }
-      const altZ = platz.style.zIndex;
-      platz.style.zIndex = "9";
-      let lauf = null;
-      try { lauf = kreis.animate(frames, { duration: DAUER, easing: "linear" }); } catch (e) { lauf = null; }
-
-      /* Die Zeichnung: Raeder, Achse, Auspuffe, Schluessel und Dampf. */
-      const NS = "http://www.w3.org/2000/svg";
-      const buehne = document.createElementNS(NS, "svg");
-      buehne.setAttribute("class", "lc-hotrod-buehne");
-      buehne.setAttribute("aria-hidden", "true");
-      buehne.setAttribute("width", String(Math.round(rr.width)));
-      buehne.setAttribute("height", String(Math.round(rr.height)));
-      buehne.setAttribute("viewBox", "0 0 " + Math.round(rr.width) + " " + Math.round(rr.height));
-      const g = gr / 100, f1 = (v) => v.toFixed(1);
-      const rad = (cx) => '<g class="lc-hr-rad" transform="translate(' + f1(cx * g) + ' ' + f1(47 * g) + ')">'
-        + '<circle class="lc-hr-reifen" r="' + f1(14 * g) + '"/>'
-        + '<circle class="lc-hr-felge" r="' + f1(8.5 * g) + '"/>'
-        + '<g class="lc-hr-speichen"><path d="M' + f1(-8 * g) + ' 0 H' + f1(8 * g) + ' M0 ' + f1(-8 * g) + ' V' + f1(8 * g)
-        + ' M' + f1(-5.6 * g) + ' ' + f1(-5.6 * g) + ' L' + f1(5.6 * g) + ' ' + f1(5.6 * g)
-        + ' M' + f1(-5.6 * g) + ' ' + f1(5.6 * g) + ' L' + f1(5.6 * g) + ' ' + f1(-5.6 * g) + '"/></g>'
-        + '<circle class="lc-hr-nabe" r="' + f1(2.6 * g) + '"/></g>';
-      /* Drei Auspuffrohre, verchromt, hinten seitlich hochgebogen
-         („Zoomies"), mit Trichter am Ende. Gezeichnet mit der Fahrt nach
-         rechts — hinten ist links. */
-      let rohre = "";
-      [[16, 30, -58, 18], [26, 34, -63, 28], [36, 38, -60, 38]].forEach(([y0, xa, xe, ye]) => {
-        rohre += '<path class="lc-hr-rohr" d="M' + f1(-xa * g) + ' ' + f1(y0 * g) + ' C' + f1(-48 * g) + ' ' + f1(y0 * g)
-          + ' ' + f1(-52 * g) + ' ' + f1((ye - 4) * g) + ' ' + f1(xe * g) + ' ' + f1((ye - 10) * g) + '"/>'
-          + '<ellipse class="lc-hr-trichter" cx="' + f1((xe - 1.5) * g) + '" cy="' + f1((ye - 10.8) * g)
-          + '" rx="' + f1(2.2 * g) + '" ry="' + f1(4.2 * g) + '" transform="rotate(-38 ' + f1((xe - 1.5) * g) + ' ' + f1((ye - 10.8) * g) + ')"/>';
-      });
-      /* Der Aufziehschluessel: Schaft aus dem Bild, Fluegelgriff. */
-      const schluessel = '<g class="lc-hr-schluessel" transform="translate(' + f1(-50 * g) + ' ' + f1(-6 * g) + ')">'
-        + '<path class="lc-hr-schaft" d="M0 0 H' + f1(-13 * g) + '"/>'
-        + '<g class="lc-hr-griff" transform="translate(' + f1(-17 * g) + ' 0)">'
-        + '<ellipse class="lc-hr-fluegel" cx="0" cy="' + f1(-9 * g) + '" rx="' + f1(4.2 * g) + '" ry="' + f1(8.5 * g) + '"/>'
-        + '<ellipse class="lc-hr-fluegel" cx="0" cy="' + f1(9 * g) + '" rx="' + f1(4.2 * g) + '" ry="' + f1(8.5 * g) + '"/>'
-        + '<circle class="lc-hr-knopf" r="' + f1(3 * g) + '"/></g></g>';
-      let dampf = "";
-      for (let i = 0; i < 36; i++) dampf += '<circle class="lc-hr-dampf" r="1" style="opacity:0"/>';
-      buehne.innerHTML = '<g class="lc-hr-dampfwolke">' + dampf + '</g>'
-        + '<g class="lc-hr-auto"><g class="lc-hr-spiegel">'
-        + '<path class="lc-hr-achse" d="M' + f1(-30 * g) + ' ' + f1(47 * g) + ' H' + f1(30 * g) + '"/>'
-        + rohre + rad(-30) + rad(30) + schluessel + '</g></g>';
-      if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
-      reihe.appendChild(buehne);
-      const auto = buehne.querySelector(".lc-hr-auto");
-      const spiegel = buehne.querySelector(".lc-hr-spiegel");
-      const speichen = [...buehne.querySelectorAll(".lc-hr-speichen")];
-      const griff = buehne.querySelector(".lc-hr-griff");
-      const wolken = [...buehne.querySelectorAll(".lc-hr-dampf")];
-      const puffs = [];                                   /* {x, y, t0, vx, vy, gross} */
-      let naechsterPuff = 0, puffIndex = 0;
-      const puffen = (x, y, t, vx, vy, gross) => {
-        puffs[puffIndex % wolken.length] = { x, y, t0: t, vx, vy, gross };
-        puffIndex++;
-      };
-
-      const nameAlt = lcNameVomPlatz(platz);
-      const t0 = performance.now();
-      let fertig = false, richtung = dir0, zuletzt = null;
-      const aufraeumen = () => {
-        if (fertig) return;
-        fertig = true;
-        try { if (lauf) lauf.cancel(); } catch (e) {}
-        platz.style.zIndex = altZ;
-      };
-      const bild = () => {
-        if (!buehne.isConnected) { aufraeumen(); return; }
-        const uhr = lauf && !fertig ? lauf.currentTime : null;
-        const t = typeof uhr === "number" ? uhr : performance.now() - t0;
-        if (!fertig && lcNameVomPlatz(platz) !== nameAlt) { aufraeumen(); buehne.remove(); return; }
-        const p = lageBei(Math.min(t, DAUER));
-        if (zuletzt && Math.abs(p.x - zuletzt.x) > 0.3) richtung = p.x > zuletzt.x ? 1 : -1;
-        const gefahren = zuletzt ? Math.hypot(p.x - zuletzt.x, p.y - zuletzt.y) : 0;
-        zuletzt = p;
-        const sichtbar = t < 300 ? t / 300 : t > DAUER - 300 ? Math.max(0, (DAUER - t) / 300) : 1;
-        auto.setAttribute("transform", "translate(" + f1(p.x) + " " + f1(p.y) + ")");
-        auto.style.opacity = String(sichtbar);
-        spiegel.setAttribute("transform", "scale(" + richtung + " 1)");
-        /* Die Raeder drehen sich mit dem Weg (Umfang 2π · 14 %). */
-        const dreh = (speichen._w = (speichen._w || 0) + gefahren / (14 * g) * 180 / Math.PI * richtung);
-        speichen.forEach((s) => s.setAttribute("transform", "rotate(" + f1(dreh) + ")"));
-        /* Der Schluessel: beim Aufziehen drei schnelle Umdrehungen, beim
-           Fahren laeuft er langsam ab, am Ende steht er. Von der Seite
-           gesehen wird der Griff dabei schmal und wieder breit. */
-        const umdr = t < AUF ? 3 * t / AUF : t < AUF + ZOOM + 500 ? 3 - 3 * (t - AUF) / (ZOOM + 500) : 0;
-        griff.setAttribute("transform", "translate(" + f1(-17 * g) + " 0) scale(1 " + Math.cos(umdr * 2 * Math.PI).toFixed(3) + ")");
-        /* Dampf: ein Stoss beim Loslassen, dann laufend aus den Rohren. */
-        const hinten = { x: p.x - richtung * 62 * g, y: p.y + 20 * g };
-        if (t >= AUF && t < AUF + 60 && naechsterPuff < AUF) {
-          for (let i = 0; i < 8; i++) puffen(hinten.x, hinten.y, t, -richtung * (0.02 + Math.random() * 0.05) * gr / 100, -(0.01 + Math.random() * 0.04) * gr / 100, 0.35 + Math.random() * 0.25);
-          naechsterPuff = AUF + 60;
-        }
-        if (t >= naechsterPuff && t > AUF && t < AUF + ZOOM) {
-          puffen(hinten.x, hinten.y, t, -richtung * 0.015 * gr / 100, -0.03 * gr / 100, 0.3 + Math.random() * 0.2);
-          naechsterPuff = t + 45;
-        }
-        /* Wen er ueberholt, der bekommt eine Ladung ins Gesicht — und der
-           Russ bleibt liegen (lcDreckDazu). */
-        if (t > AUF && t < AUF + ZOOM) {
-          andere.forEach((a) => {
-            if (a.russ) return;
-            if (Math.hypot(p.x - a.x, p.y - (a.y + gr * 0.55)) < gr * 0.35) {
-              a.russ = true;
-              for (let i = 0; i < 4; i++) puffen(a.x + (Math.random() - 0.5) * gr * 0.4, a.y + gr * 0.25, t, 0, -0.04 * gr / 100, 0.4);
-              setTimeout(() => { if (a.el.isConnected) lcDreckDazu(a.el, "russ", 3); }, 220);
-            }
-          });
-        }
-        wolken.forEach((c, i) => {
-          const q = puffs[i];
-          if (!q) return;
-          const alter = t - q.t0, k = alter / 900;
-          if (k < 0 || k > 1) { c.style.opacity = "0"; return; }
-          c.setAttribute("cx", f1(q.x + q.vx * alter));
-          c.setAttribute("cy", f1(q.y + q.vy * alter));
-          c.setAttribute("r", f1(gr * (0.08 + q.gross * k)));
-          c.style.opacity = String((1 - k) * 0.75);
-        });
-        if (t < DAUER + 1000 && !(fertig && t >= DAUER)) requestAnimationFrame(bild);
-        else { aufraeumen(); buehne.remove(); }
-      };
-      requestAnimationFrame(bild);
-      setTimeout(() => { aufraeumen(); buehne.remove(); }, DAUER + 2000);
-      /* Die Toene: das Ratschen beim Aufziehen, das Zischen beim
-         Loslassen, der Motor waehrend der Fahrt, das Bremsen am Ende. */
-      lcTonSpaeter("aufziehen", 0, 0.6, AUF);
-      lcTonSpaeter("luftraus", AUF, 0.55, 900);
-      lcTonSpaeter("rennauto", AUF + 60, 0.45, ZOOM);
-      lcTonSpaeter("quietschen", Math.max(AUF, AUF + ZOOM - 700), 0.4);
-    }, DAUER + 100);
   }
 
   /* --- DAS LASSO ---------------------------------------------------
@@ -55990,7 +55717,6 @@
     kranheben: 1,
     bagger: 1,
     hauab: 1,
-    hotrod: 1,
     /* RUNDE 88 — das Kaninchen wird aus GENAU EINEM Zylinder
        gezogen; ueber den ganzen Raum zu regnen waere kein Kunststueck
        mehr, sondern ein Unfall. */
@@ -56084,11 +55810,6 @@
        schieben (Funk #18). */
     if (art === "hauab") {
       lcHauAb((nachricht && (nachricht.wen || nachricht.an)) || "", nachricht);
-      return;
-    }
-    /* RUNDE 101 — der Aufzieh-Hot-Rod (Funk #40). */
-    if (art === "hotrod") {
-      lcHotRod((nachricht && (nachricht.wen || nachricht.an)) || "", nachricht);
       return;
     }
     if (art === "spray") {

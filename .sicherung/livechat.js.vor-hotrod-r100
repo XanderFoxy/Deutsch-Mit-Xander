@@ -10043,8 +10043,6 @@ window.LiveChat = (function () {
        stand der Effekt gezeichnet da, war aber unter seinem eigenen
        Namen nicht aufrufbar. Jetzt heisst der Befehl wie die Wirkung,
        und „/kranheb" bleibt als Kurzform. */
-    { gr: "reden", w: "hotrod", kurz: "aufziehauto", nutzt: "/hotrod Name x3",
-      was: "jemanden aufziehen und als Hot Rod losflitzen lassen \u2014 sein Dampf macht die anderen Gesichter schmutzig" },
     { gr: "reden", w: "hauab", kurz: "abstand", nutzt: "/hauab Name",
       was: "mit beiden H\u00e4nden wegschieben, wer dir zu nah kommt \u2014 er rutscht einen Platz weiter" },
     { gr: "raum", w: "bagger", kurz: "schaufelradbagger", nutzt: "/bagger Name 3",
@@ -10424,7 +10422,6 @@ window.LiveChat = (function () {
                 /* RUNDE 101 — Xander: „Hau ab oder Abstand" und „das
                    wegschicken". */
                 wegschieben: "hauab", wegschicken: "hauab", schubsen: "hauab",
-                hotroad: "hotrod", aufzieh: "hotrod",
                 /* „muenze" gehoert NICHT hierher: den Befehl /muenze gibt
                    es schon (der Geldeffekt), und ein Kurzwort, das einen
                    echten Befehl verdeckt, nimmt ihm die Tuer. */
@@ -12076,31 +12073,6 @@ window.LiveChat = (function () {
        (von mir zu ihm), gemessen an der Sitzreihe, wie sie auf diesem
        Geraet steht. Die Nummer reist mit, also sieht jedes Geraet
        dasselbe Ziel. Umgesetzt wird an derselben Stelle wie bei /heb. */
-    /* RUNDE 101 — XANDER (Funk #40): „dass man jemand anderen aufziehen
-       kann und ihn als Auto losflitzen lassen kann … Profilbild auf zwei
-       Mini-Rädern mit den seitlich verchromten Auspüffen eines Hot Rods,
-       mit ganz viel Dampf, der die anderen Gesichter … bleibend
-       schmutzig macht." Die Zahl der Umdrehungen („x3") faehrt mit, wie
-       beim eigenen Fahren; sie macht ihn schneller. Kein Platzwechsel. */
-    if (art === "hotrod") {
-      if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
-      var teileR = rest.trim().split(/\s+/).filter(Boolean);
-      var kraftR = 1;
-      if (teileR.length && /^x?[1-5]$/i.test(teileR[teileR.length - 1])) {
-        kraftR = parseInt(teileR.pop().replace(/x/i, ""), 10);
-      }
-      var nameR = teileR.join(" ");
-      if (!nameR) return systemZeile("So geht es:  /hotrod Nickname x3 \u2014 "
-        + "dreimal aufgezogen, dann flitzt er als Hot Rod an allen vorbei.");
-      var wenR = personOderIch(nameR);
-      if (!wenR) return systemZeile("Ich finde niemanden mit dem Namen \u201e" + nameR + "\u201c im Raum.");
-      var wenNameR = wenR.ich ? "sich selbst" : wenR.name;
-      return anAlle("aktion", zustand.ichName + " zieht " + wenNameR
-        + (kraftR > 1 ? " " + kraftR + "\u00d7" : "") + " auf und l\u00e4sst "
-        + (wenR.ich ? "sich" : wenR.name) + " als Hot Rod losflitzen  \ud83c\udfce\ufe0f",
-        { wirkung: "hotrod", wen: wenR.name, kraft: String(kraftR) });
-    }
-
     if (art === "hauab") {
       if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
       var nameA = rest.trim();
@@ -14696,8 +14668,6 @@ window.LiveChat = (function () {
       w.push("bagger");
       /* … und „hauab" an /hauab (Kurzform /abstand). */
       w.push("hauab");
-      /* … und „hotrod" an /hotrod (Zahl der Umdrehungen dahinter). */
-      w.push("hotrod");
       return w;
     },
     /* Nur zum Nachpruefen: die Sitzordnung von aussen nachstellen und

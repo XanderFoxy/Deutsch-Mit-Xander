@@ -49,20 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "563: Hau ab / Abstand",
+  stand: "564: Aufzieh-Hot-Rod",
 
   inArbeit: [
-    { seit: "2026-09-24T04:47",
+    { seit: "2026-09-24T05:21",
       text: "Deine Antworten auf die Abnahme-Fragen im Walkie" },
-    { seit: "2026-09-24T04:47",
+    { seit: "2026-09-24T05:21",
       text: "Was genau ist mit „die Sprechbilder“ gemeint? (Frage im Walkie)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T04:47",
-      text: "Hau ab (/hauab Name, auch /abstand oder /wegschieben; Bild antippen → Hau ab): Zwei Hände fahren aus deinem Bild und drücken gegen den Nachbarn. Er wird angestoßen, rutscht allein weiter und federt aus, genau einen Platz weiter und weg von dir, in jede Richtung, auch schräg. Wer nicht direkt neben dir sitzt, kann nicht geschoben werden." },
-    { seit: "2026-09-24T04:47",
-      text: "Schaufelradbagger (562) und Stadt·Land·Fluss kompakt (561)" },
+    { seit: "2026-09-24T05:21",
+      text: "Hot Rod (Bild antippen → Hot Rod → 1×, 3× oder 5× aufgezogen; oder /hotrod Name x3): Ein Schlüssel zieht das Bild auf, dann flitzt es auf zwei Mini-Rädern mit Chrom-Auspuffen eine Runde an allen vorbei. Aus den Auspuffen kommt viel Dampf. Wer überholt wird, bekommt Ruß am Rand des Gesichts, der liegen bleibt, bis man putzt." },
+    { seit: "2026-09-24T05:21",
+      text: "Hau ab (563), Schaufelradbagger (562), Stadt·Land·Fluss kompakt (561)" },
   ],
 };
