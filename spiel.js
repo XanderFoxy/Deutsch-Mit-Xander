@@ -97,7 +97,21 @@
         if (r && r.error) throw r.error;
         return k;
       });
-    }).then(function (kk) { S.klient = kk; return kk; });
+    }).then(function (kk) { S.klient = kk; S.gast = true; return kk; });
+  }
+  /* FUNK 104 — XANDER: „da ist als Information dass ich mich mit meinem
+     Konto einloggen soll obwohl ich schon eingeloggt bin".
+     Das Spiel trat beim Öffnen der Seite bei, oft BEVOR die Anmeldung
+     wiederhergestellt war — dann galt man als Gast, bekam den
+     Anmelde-Hinweis und wartete 30 s bis zum nächsten Versuch. Sobald
+     die Anmeldung da ist, ruft app.js hier an: neuer Versuch, sofort,
+     mit dem Konto. */
+  function anmeldungDa() {
+    if (S.bereit && !S.gast) return;
+    if (S.gast) { S.klient = null; S.gast = false; S.bereit = false; }
+    S.versucht = false; S.naechsterVersuch = 0; S.fehler = "";
+    try { if (drin()) beitreten(); } catch (e) {}
+    panelAuffrischen();
   }
 
   function rpc(name, args) {
@@ -1018,7 +1032,7 @@
     menue: menue, schliessen: schliessen,
     tippAufPlatz: tippAufPlatz, gesperrt: gesperrt, gesperrtGrund: gesperrtGrund,
     empfangen: empfangen, dreckAbwehren: dreckAbwehren, platzGewechselt: platzGewechselt,
-    lehrerNote: lehrerNote, kampfmodus: kampfmodus,
+    lehrerNote: lehrerNote, kampfmodus: kampfmodus, anmeldungDa: anmeldungDa,
     waffeAblegen: function () { if (S.waffe) { S.waffe = ""; zeichnen(); } },
     aufgabe: function () { menue("deutsch"); aufgabeHolen(false); },
     /* Zum Nachmessen */

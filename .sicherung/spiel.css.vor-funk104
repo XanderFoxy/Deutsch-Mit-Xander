@@ -84,13 +84,6 @@ body.sp-kampf #lcPlaetze .lc-platz:not(.lc-platz-ich):not(.lc-platz-frei) .lc-kr
   width: min(100vw, 480px); max-height: 78vh; overflow: auto; background: #fbfaf7; color: #1d2330;
   border-radius: 16px 16px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.28); padding: 10px 12px 16px;
   font: 14px/1.4 system-ui, sans-serif; }
-/* FUNK 104 — „ob man diesen Intro Screen auf dem Android nicht komplett
-   sieht weil ich nicht weiß ob das wieder unten abgeschnitten ist".
-   78vh rechnet auf Android mit der Höhe OHNE Adressleiste; steht die
-   Leiste da, rutscht der untere Teil aus dem Bild. dvh ist die wirklich
-   sichtbare Höhe; dazu der Abstand zur Gestenleiste. */
-@supports (height: 1dvh) { .sp-panel { max-height: 78dvh; } }
-.sp-panel { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); overscroll-behavior: contain; }
 .sp-panel[hidden] { display: none; }
 .sp-kopf { display: flex; align-items: center; justify-content: space-between; font-size: 16px; margin-bottom: 6px; }
 .sp-zu { border: 0; background: #eceae4; border-radius: 50%; width: 30px; height: 30px; font-size: 15px; cursor: pointer; }

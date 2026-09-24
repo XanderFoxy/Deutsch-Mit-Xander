@@ -14962,6 +14962,27 @@ window.LiveChat = (function () {
       return { plaetze: plaetzeBauen(), tausch: sitzTausch };
     },
     pruefBefehl: function (text) { return befehlAusfuehren(text); },
+    /* FUNK 104 — XANDER: „manchmal erkennt mich das System auch nicht
+       als Betreiber oder dass ich schon da bin ich verstehe nicht woran
+       das manchmal liegt".
+       HIER LAG ES: nach dem Neuladen geht die Seite sofort zurück in den
+       Raum (rueckkehrOffen) — BEVOR die Anmeldung wiederhergestellt ist
+       (Backend.restoreSession läuft noch). Dann stand dort „betreiber:
+       false" und kein Konto, und der Häuptling wurde beim Verbinden
+       nicht vergeben. Sobald die Anmeldung da ist, ruft app.js hier an
+       und alles wird nachgetragen. */
+    kontoNachladen: function (o) {
+      o = o || {};
+      if (o.konto && !kontoId) kontoId = String(o.konto);
+      if (o.betreiber) zustand.betreiber = true;
+      if (zustand.lage === "drin" && binBetreiber() && !zustand.haeuptling) {
+        zustand.haeuptling = true;
+        hinweisZeigen("\ud83e\udd8a Du bist hier Häuptling — als Betreiber in jedem Raum. "
+          + "/t Thema · /i einladen · /lock abschließen · /k rauswerfen", "haeuptling");
+      }
+      melden();
+      return { betreiber: binBetreiber(), konto: kontoId, haeuptling: Boolean(zustand.haeuptling) };
+    },
     /* FUNK 95 — Spielsystem (spiel.js) */
     spielKennungSetzen: function (k) { spielKennung = /^[0-9a-f-]{36}$/i.test(String(k || "")) ? String(k) : ""; },
     spielIdVon: spielIdVon,

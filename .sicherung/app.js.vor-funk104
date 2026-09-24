@@ -93047,17 +93047,6 @@ An einem Morgen lief ein kleiner Fuchs los…
     // Warnband sofort zeigen, falls das Profil nicht durchkam — bevor irgendetwas
     // gespeichert werden könnte.
     profilWarnbandPruefen();
-    /* FUNK 104 — „manchmal erkennt mich das System auch nicht als
-       Betreiber": wer nach dem Neuladen schon wieder im Raum sitzt, war
-       vor der Anmeldung dort. Jetzt, wo sie da ist, wird Konto und Rang
-       nachgetragen (livechat.js, kontoNachladen). */
-    try {
-      if (window.LiveChat && LiveChat.kontoNachladen) {
-        LiveChat.kontoNachladen({ konto: (Backend.currentUser() || {}).id || "",
-          betreiber: Boolean(Backend.canModerate && Backend.canModerate()) });
-      }
-    } catch (e) {}
-    try { if (window.DMA_SPIEL && DMA_SPIEL.anmeldungDa && Backend.currentUser && Backend.currentUser()) DMA_SPIEL.anmeldungDa(); } catch (e) {}
     // Gespeicherte Einstellungen aus dem Konto übernehmen.
     uebersetzungSchalterLaden();
     schwierigkeitLaden();
