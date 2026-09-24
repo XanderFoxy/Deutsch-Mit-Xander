@@ -34021,15 +34021,16 @@ body.rf-leiste-auf .rf-reiter { display: none; }
    ===================================================================== */
 .lc-flieger-oben .lc-fo-rumpf    { fill: url(#lcFoR); stroke: #8fa1b8; stroke-width: 1.2; }
 .lc-flieger-oben .lc-fo-licht    { fill: #ffffff; opacity: .9; }
-.lc-flieger-oben .lc-fo-fluegel  { fill: url(#lcFoF); stroke: #8395ad; stroke-width: 1.1; stroke-linejoin: round; }
+.lc-flieger-oben .lc-fo-fluegel  { fill: url(#lcFoF); stroke: #9fb2ca; stroke-width: 1.1; stroke-linejoin: round; }
 .lc-flieger-oben .lc-fo-klappen  { fill: none; stroke: #9fb0c4; stroke-width: .8; }
-.lc-flieger-oben .lc-fo-winglet  { fill: none; stroke: #2f6fb3; stroke-width: 2.4; stroke-linecap: round; }
-.lc-flieger-oben .lc-fo-leitwerk { fill: #dfe6ef; stroke: #8395ad; stroke-width: 1; stroke-linejoin: round; }
-.lc-flieger-oben .lc-fo-triebwerk { fill: #aab6c5; stroke: #66768b; stroke-width: 1; }
+.lc-flieger-oben .lc-fo-winglet  { fill: none; stroke: #d24d4d; stroke-width: 2.4; stroke-linecap: round; }
+.lc-flieger-oben .lc-fo-leitwerk { fill: #cdd9e8; stroke: #9fb2ca; stroke-width: 1; stroke-linejoin: round; }
+.lc-flieger-oben .lc-fo-triebwerk { fill: #b9c6d8; stroke: #8d9db4; stroke-width: 1.1; }
 .lc-flieger-oben .lc-fo-einlass  { fill: #3a4656; }
-.lc-flieger-oben .lc-fo-seitenruder { stroke: #1f5a9e; stroke-width: 3.4; stroke-linecap: round; }
+.lc-flieger-oben .lc-fo-seitenruder { stroke: #b3c3d7; stroke-width: 3.4; stroke-linecap: round; }
 .lc-flieger-oben .lc-fo-streifen { stroke: #2f6fb3; stroke-width: 1.2; opacity: .55; }
-.lc-flieger-oben .lc-fo-cockpit  { fill: #1c2f45; }
+.lc-flieger-oben .lc-fo-cockpit  { fill: #21374f; }
+.lc-flieger-oben .lc-fo-zier     { fill: none; stroke: #d24d4d; stroke-width: 1.6; opacity: .85; }
 .lc-greif-oben .lc-go-arm      { fill: url(#lcGoG); stroke: #22140a; stroke-width: 1; stroke-linejoin: round; }
 .lc-greif-oben .lc-go-decken   { fill: #7a5535; opacity: .85; }
 .lc-greif-oben .lc-go-kiel     { stroke: #2a190d; stroke-width: .7; fill: none; opacity: .55; }
@@ -34037,3 +34038,16 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-greif-oben .lc-go-schaft   { fill: none; stroke: #7a5836; stroke-width: .6; opacity: .75; }
 .lc-greif-oben .lc-go-nacken   { fill: none; stroke: #d8d2c4; stroke-width: 1.2; }
 .lc-greif-oben .lc-go-kopf     { fill: url(#lcGoK); stroke: #c9c2b2; stroke-width: .8; stroke-linejoin: round; }
+
+/* RUNDE 101 — Funk 85: das Bild sitzt von oben im selben dunklen,
+   runden Fenster wie von der Seite. */
+.lc-flieger-oben .lc-flieger-oben-bild { box-shadow: 0 0 0 1.6px #21374f, 0 0 0 3px #eef3fa; }
+
+/* RUNDE 101 — Funk 85: das Bild reitet HINTER der Rueckenfinne und
+   haelt sich mit beiden Haenden an ihr fest. */
+.lc-delfin .lc-delfin-reiter { left: 53%; top: -6%; width: 35%; }
+.lc-delfin-griff { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.lc-delfin-arm { fill: none; stroke: #33507a; stroke-width: 4.2; stroke-linecap: round; }
+.lc-delfin-arm-fern { stroke: #26405f; }
+.lc-delfin-hand { fill: #f0c49b; stroke: #a8744c; stroke-width: 1; }
+.lc-delfin-hand-fern { fill: #deb087; }

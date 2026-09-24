@@ -45217,6 +45217,21 @@
         + '<span class="lc-delfin-reiter"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
+        /* RUNDE 101 — XANDER (Funk 85): „… dass man sich an seiner
+           Flosse halt festhält, und er reitet dann mit uns und macht
+           vielleicht auch mal so einen Sprung aus dem Wasser."
+           Das Bild sitzt jetzt HINTER der Rueckenfinne (vorher lag es
+           mitten darauf und verdeckte sie), und zwei Arme greifen nach
+           vorn um die Vorderkante der Finne. Sie liegen in einer
+           eigenen Schicht UEBER dem Bild, im selben Koordinatennetz
+           wie der Delfin — so bleiben die Haende an der Finne, egal wie
+           er sich im Sprung neigt. */
+        + '<svg class="lc-delfin-griff" viewBox="0 0 140 76" aria-hidden="true">'
+        + '<path class="lc-delfin-arm" d="M80 30 Q73 26 69.5 16.5"/>'
+        + '<path class="lc-delfin-arm lc-delfin-arm-fern" d="M83 21 Q77 14 73 8.6"/>'
+        + '<path class="lc-delfin-hand" d="M66.2 17.6 C65.4 14.2 67.6 12.4 70.4 13.4 C72.8 14.2 73.2 17 71.6 19 C70 20.6 67 20.2 66.2 17.6 Z"/>'
+        + '<path class="lc-delfin-hand lc-delfin-hand-fern" d="M70.2 9.4 C69.6 6.4 71.8 4.8 74.2 5.8 C76.4 6.6 76.6 9.2 75 10.8 C73.4 12.2 70.8 11.8 70.2 9.4 Z"/>'
+        + "</svg>"
         + "</span>"
         + '<i class="lc-delfin-platsch"></i>';
       reihe.appendChild(del);
@@ -47227,9 +47242,15 @@
            verschwand auch das, was den Bauch rund machte. Jetzt formt der
            Rumpf das selbst, in EINER Linie: die Brust waechst nach vorn
            unten (bis y 64), der Bauch haengt als weiter Bogen durch
-           (tiefste Stelle y 68) und steigt zur Flanke wieder an. */
+           (tiefste Stelle y 68) und steigt zur Flanke wieder an.
+           RUNDE 101 — XANDER (Funk 84): „Der Pferdebauch soll noch ein
+           bisschen höher sein, so dass da ein bisschen Figur von dem
+           Pferd zu sehen ist und nicht so ein dicker Klopsbauch."
+           Jetzt wie beim Pferd: am tiefsten ist die Gurtlage direkt
+           hinter der Brust (y 64), von dort steigt die Bauchlinie nach
+           hinten zur Flanke auf y 58 — der Bauch ist „aufgezogen". */
         + '<path class="lc-pferd-rumpf" d="M58 29 L88 29 Q104 31 108 44'
-        + ' Q111 58 99 64 Q84 71 68 66 Q55 65 49 57 Q44 48 46 40 Q48 31 58 29 Z"/>'
+        + ' Q111 57 100 62 Q91 65.5 81 63.6 Q68 61 59 58.4 Q51 57 48 53 Q44 48 46 40 Q48 31 58 29 Z"/>'
         /* RUNDE 80 — DIE HINTERHAND UND DIE SCHULTER.
            Das Fleisch, aus dem die Beine kommen. Die Hinterhand sitzt
            am Hinterteil (der Rumpf endet hinten bei x = 45), die
@@ -47328,7 +47349,7 @@
         + '<path class="lc-pferd-sattel" d="M65.5 31.5 Q63.5 22.5 69.5 22.8 Q74 27.2 80.5 27.6'
         + ' Q87 27.3 91 24.2 Q95.4 21 96.4 25.2 Q96.8 29.4 94 31.2 Q80 29.2 65.5 31.5 Z"/>'
         + '<path class="lc-pferd-sitzglanz" d="M71 25.5 Q76 28.4 83 28.3"/>'
-        + '<path class="lc-pferd-gurt" d="M86.5 36 L89.2 66.5"/>'
+        + '<path class="lc-pferd-gurt" d="M86.5 36 L88.9 64.4"/>'
         + '<rect class="lc-pferd-schnalle" x="86.2" y="48" width="3.2" height="2.6" rx=".5" transform="rotate(5 87.8 49.3)"/>'
         + '<path class="lc-pferd-buegelriemen" d="M79.5 31 L78.6 53"/>'
         + '<path class="lc-pferd-buegel" d="M75.6 53 L81.6 53 L82.4 56.6 L74.8 56.6 Z"/>'
@@ -49538,27 +49559,40 @@
          der Hinterkante und Winglets, die Triebwerke haengen unter dem
          Fluegel und ragen VOR die Vorderkante, hinten das Hoehenleitwerk
          und die Seitenflosse als Strich, vorn die Cockpitscheiben. */
+      /* RUNDE 101 — XANDER (Funk 85): „das Flugzeug in der Draufsicht
+         sieht viel zu länglich aus … das muss natürlich kongruent da
+         zu sein, wie es in der Seitenansicht auch schon wirkt … dass
+         man sich vorstellen kann, das ist ein und dasselbe Ding."
+         GEMESSEN: von der Seite ist der Rumpf 109 lang und 20 hoch
+         (5,5 : 1), von oben war er 201 lang und 19 breit (11 : 1).
+         Jetzt 160 : 28 (5,7 : 1), die Spannweite so lang wie der Rumpf
+         statt weit ueber den Rand, und dieselben Farben wie von der
+         Seite: blassblaue Fluegel, graublaue Triebwerke, der rote
+         Zierstreifen, das dunkle runde Fenster mit dem Bild. */
       const y = (v, seite) => (46 + seite * v).toFixed(1);
       let fluegel = "", leitwerk = "", triebwerke = "";
       [-1, 1].forEach((sg) => {
-        fluegel += '<path class="lc-fo-fluegel" d="M128 ' + y(8, sg) + " L78 " + y(98, sg) + " L66 " + y(100, sg)
-          + " L70 " + y(96, sg) + " L88 " + y(46, sg) + " L100 " + y(9, sg) + ' Z"/>'
-          + '<path class="lc-fo-klappen" d="M72 ' + y(92, sg) + " L89 " + y(47, sg) + " L101 " + y(12, sg) + '"/>'
-          + '<path class="lc-fo-winglet" d="M78 ' + y(98, sg) + " L66 " + y(100, sg) + '"/>';
-        leitwerk += '<path class="lc-fo-leitwerk" d="M40 ' + y(7, sg) + " L20 " + y(34, sg) + " L12 " + y(35, sg) + " L20 " + y(7, sg) + ' Z"/>';
-        triebwerke += '<rect class="lc-fo-triebwerk" x="98" y="' + (46 + sg * 44 - 5).toFixed(1) + '" width="28" height="10" rx="5"/>'
-          + '<ellipse class="lc-fo-einlass" cx="125.5" cy="' + (46 + sg * 44).toFixed(1) + '" rx="1.6" ry="4"/>';
+        fluegel += '<path class="lc-fo-fluegel" d="M127 ' + y(13, sg) + " L101 " + y(70, sg) + " L89 " + y(71, sg)
+          + " L92 " + y(40, sg) + " L96 " + y(13, sg) + ' Z"/>'
+          + '<path class="lc-fo-klappen" d="M91.5 ' + y(62, sg) + " L94 " + y(38, sg) + " L97.5 " + y(16, sg) + '"/>'
+          + '<path class="lc-fo-winglet" d="M101 ' + y(70, sg) + " L89 " + y(71, sg) + '"/>';
+        leitwerk += '<path class="lc-fo-leitwerk" d="M62 ' + y(7, sg) + " L46 " + y(29, sg) + " L39 " + y(29.5, sg) + " L43 " + y(5, sg) + ' Z"/>';
+        triebwerke += '<rect class="lc-fo-triebwerk" x="108" y="' + (46 + sg * 34 - 4.8).toFixed(1) + '" width="19" height="9.6" rx="4.8"/>'
+          + '<ellipse class="lc-fo-einlass" cx="126.2" cy="' + (46 + sg * 34).toFixed(1) + '" rx="1.4" ry="3.6"/>';
       });
       return '<span class="lc-v-oben lc-flieger-oben"><svg class="lc-v-form" viewBox="0 0 210 92" aria-hidden="true">'
         + '<defs><linearGradient id="lcFoR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/>'
-        + '<stop offset=".55" stop-color="#eef2f7"/><stop offset="1" stop-color="#c9d3df"/></linearGradient>'
-        + '<linearGradient id="lcFoF" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#e9eef5"/><stop offset="1" stop-color="#c3cedb"/></linearGradient></defs>'
+        + '<stop offset=".5" stop-color="#eef3fa"/><stop offset="1" stop-color="#cfdae8"/></linearGradient>'
+        + '<linearGradient id="lcFoF" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#e2eaf4"/><stop offset="1" stop-color="#c7d4e5"/></linearGradient></defs>'
         + leitwerk + fluegel + triebwerke
-        + '<path class="lc-fo-rumpf" d="M6 46 C6 40 14 37 26 37 L172 36.5 C188 36.5 202 41 207 46 C202 51 188 55.5 172 55.5 L26 55 C14 55 6 52 6 46 Z"/>'
-        + '<path class="lc-fo-licht" d="M22 40 L172 39.5 C184 39.5 194 41.5 199 44 L22 44 Z"/>'
-        + '<path class="lc-fo-seitenruder" d="M8 46 L40 46"/>'
-        + '<path class="lc-fo-streifen" d="M44 46 L186 46"/>'
-        + '<path class="lc-fo-cockpit" d="M193 41.6 C198 42.4 202 44 203.6 46 C202 48 198 49.6 193 50.4 L195 46 Z"/>'
+        + '<path class="lc-fo-rumpf" d="M34 46 C34 43 36 42 40 41.6 L66 33 C72 32.2 80 32 90 32 L166 32'
+        + ' C180 32 190 38 194 46 C190 54 180 60 166 60 L90 60 C80 60 72 59.8 66 59 L40 50.4 C36 50 34 49 34 46 Z"/>'
+        + '<path class="lc-fo-licht" d="M70 35.5 L166 35.2 C177 35.2 185 38.5 189 42 L70 42 Z"/>'
+        /* Der rote Zierstreifen der Seitenansicht, von oben an beiden Flanken. */
+        + '<path class="lc-fo-zier" d="M62 35.4 L170 34.4 M62 56.6 L170 57.6"/>'
+        /* Die Seitenflosse, von oben nur ein Grat. */
+        + '<path class="lc-fo-seitenruder" d="M36 46 L64 46"/>'
+        + '<path class="lc-fo-cockpit" d="M178 38.6 C184 39.6 188 42.2 189.6 46 C188 49.8 184 52.4 178 53.4 L181.4 46 Z"/>'
         + "</svg>" + bild("lc-v-bild lc-flieger-oben-bild") + "</span>";
     }
     if (art === "heli") {
@@ -49664,7 +49698,14 @@
       + '<stop offset="1" stop-color="#3a2413"/></linearGradient>'
       + '<radialGradient id="lcGoK" cx=".62" cy=".4" r=".7"><stop offset="0" stop-color="#ffffff"/>'
       + '<stop offset="1" stop-color="#e6e1d6"/></radialGradient></defs>'
-      + '<g transform="translate(102.5 81) scale(.84) translate(-102.5 -81)">'
+      /* RUNDE 101 — XANDER (Funk 84): „er sollte nicht so sehr breit
+         sein, weil wenn er über die Plätze fliegt … dann sollen die
+         Flügel nicht abgeschnitten sein, deswegen kannst du ihn dort
+         etwas kleiner machen." GEMESSEN am linken Rand-Platz (400 px
+         breit): mit .70 waren es 150 px Spannweite, die Spitze stiess
+         an den Bildschirmrand. Mit .60 sind es rund 128 px — der
+         Platz selbst ist 96 px breit, seine Mitte 73 px vom Rand. */
+      + '<g transform="translate(102.5 81) scale(.60) translate(-102.5 -81)">'
       + '<path class="lc-go-krallen" d="M92 70 l-4 -5 M100 70 l2 -6 M92 92 l-4 5 M100 92 l2 6"/>'
       + fluegel
       /* Schwanz: ein weisser Faecher, das Ende aus runden Federn. */
