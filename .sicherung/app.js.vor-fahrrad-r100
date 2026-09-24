@@ -40337,92 +40337,6 @@
                   springt wieder ab. Ich sitze OBEN DRAUF und halte
                   mich an den Hoernern fest.
      ===================================================================== */
-  /* =================================================================
-     RUNDE 100 — DER FAHRRADRAHMEN FUER „ZU ZWEIT"
-     -----------------------------------------------------------------
-     XANDER (Walkie #82): „Das Rad sieht nicht nach einem Fahrrad aus."
-     Die zwei Profilbilder sind die Raeder; dazu kommt, was ein Fahrrad
-     ausmacht: Diamantrahmen (Oberrohr, Unterrohr, Sitzrohr, Ketten- und
-     Sitzstreben), Gabel, Sattel, Lenker, Kettenblatt mit Kette und
-     Pedalen, die sich drehen, solange gefahren wird.
-     Er liegt HINTER den Bildern (die Gesichter bleiben frei) und wird
-     jedes Bild zwischen den beiden Radmitten neu gezeichnet — so passt
-     er in jeder Richtung, auch wenn die Seite dabei rutscht.
-     ================================================================= */
-  function lcRadRahmen(vorn, hinten, d, ab, bis, dauer) {
-    const reihe = document.getElementById("lcPlaetze");
-    if (!reihe || !vorn || !hinten) return null;
-    const NS = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(NS, "svg");
-    svg.setAttribute("class", "lc-rad-rahmen");
-    svg.setAttribute("aria-hidden", "true");
-    svg.innerHTML = '<g class="lc-rad-kette"><path class="lc-rad-kettenlinie"/></g>'
-      + '<path class="lc-rad-rohr"/><path class="lc-rad-gabel"/>'
-      + '<path class="lc-rad-sattel"/><path class="lc-rad-lenker"/>'
-      + '<circle class="lc-rad-blatt"/><path class="lc-rad-kurbel"/><path class="lc-rad-pedal"/>';
-    if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
-    reihe.appendChild(svg);
-    const q = (sel) => svg.querySelector(sel);
-    const r = d / 2;
-    const t0 = performance.now();
-    const f1 = (v) => v.toFixed(1);
-    const bild = () => {
-      if (!svg.isConnected) return;
-      const t = performance.now() - t0;
-      if (t > dauer + 400) { svg.remove(); return; }
-      const g = reihe.getBoundingClientRect();
-      const a = vorn.getBoundingClientRect(), b = hinten.getBoundingClientRect();
-      const F = { x: a.left + a.width / 2 - g.left, y: a.top + a.height / 2 - g.top };
-      const R = { x: b.left + b.width / 2 - g.left, y: b.top + b.height / 2 - g.top };
-      const L = Math.hypot(F.x - R.x, F.y - R.y) || 1;
-      const u = { x: (F.x - R.x) / L, y: (F.y - R.y) / L };
-      /* „oben" ist die Seite der Senkrechten, die auf dem Bildschirm
-         weiter oben liegt — faehrt das Rad senkrecht, die linke. */
-      let n = { x: u.y, y: -u.x };
-      if (n.y > 0.01 || (Math.abs(n.y) <= 0.01 && n.x > 0)) n = { x: -n.x, y: -n.y };
-      const P = (s2, h) => ({ x: R.x + u.x * s2 * L + n.x * h * r, y: R.y + u.y * s2 * L + n.y * h * r });
-      const M = (p) => f1(p.x) + " " + f1(p.y);
-      const BB = P(0.47, -0.08), S = P(0.33, 1.02), H = P(0.84, 1.02), HU = P(0.87, 0.62);
-      q(".lc-rad-rohr").setAttribute("d", "M" + M(R) + " L" + M(BB) + " L" + M(S) + " L" + M(R)
-        + " M" + M(S) + " L" + M(H) + " L" + M(HU) + " L" + M(BB));
-      q(".lc-rad-gabel").setAttribute("d", "M" + M(HU) + " L" + M(F));
-      const s1 = P(0.27, 1.22), s2 = P(0.41, 1.22), sp = P(0.335, 1.02);
-      q(".lc-rad-sattel").setAttribute("d", "M" + M(sp) + " L" + M(P(0.335, 1.2))
-        + " M" + M(s1) + " L" + M(s2));
-      const st = P(0.83, 1.32), gr1 = P(0.76, 1.36);
-      q(".lc-rad-lenker").setAttribute("d", "M" + M(H) + " L" + M(st) + " L" + M(gr1));
-      q(".lc-rad-blatt").setAttribute("cx", f1(BB.x));
-      q(".lc-rad-blatt").setAttribute("cy", f1(BB.y));
-      q(".lc-rad-blatt").setAttribute("r", f1(r * 0.2));
-      /* Die Kette: oben und unten vom Kettenblatt zur Hinterradnabe. */
-      const ko = P(0.47, 0.12), ku = P(0.47, -0.28);
-      q(".lc-rad-kettenlinie").setAttribute("d", "M" + M(ko) + " L" + M(P(0, 0.08))
-        + " M" + M(ku) + " L" + M(P(0, -0.08)));
-      /* Die Kurbel dreht sich, solange gefahren wird. */
-      const w = (Math.min(t, bis) / 1000) * Math.PI * 2 * 1.3;
-      const kl = r * 0.34;
-      const k1 = { x: BB.x + (u.x * Math.cos(w) + n.x * Math.sin(w)) * kl,
-                   y: BB.y + (u.y * Math.cos(w) + n.y * Math.sin(w)) * kl };
-      const k2 = { x: 2 * BB.x - k1.x, y: 2 * BB.y - k1.y };
-      q(".lc-rad-kurbel").setAttribute("d", "M" + M(k1) + " L" + M(k2));
-      const pl = r * 0.14;
-      q(".lc-rad-pedal").setAttribute("d", "M" + f1(k1.x - u.x * pl) + " " + f1(k1.y - u.y * pl)
-        + " L" + f1(k1.x + u.x * pl) + " " + f1(k1.y + u.y * pl)
-        + " M" + f1(k2.x - u.x * pl) + " " + f1(k2.y - u.y * pl)
-        + " L" + f1(k2.x + u.x * pl) + " " + f1(k2.y + u.y * pl));
-      /* Erst sichtbar, wenn er angekuppelt ist; beim Absteigen weg. */
-      const sicht = t < ab ? 0 : t < ab + 180 ? (t - ab) / 180
-        : t < bis ? 1 : Math.max(0, 1 - (t - bis) / 220);
-      /* Solange die Raeder noch uebereinander liegen (Ankuppeln), kein
-         zusammengestauchter Rahmen: erst ab 0,9 d Radstand. */
-      const breit = Math.max(0, Math.min(1, (L - d * 0.9) / (d * 0.3)));
-      svg.style.opacity = (sicht * breit).toFixed(2);
-      requestAnimationFrame(bild);
-    };
-    requestAnimationFrame(bild);
-    return svg;
-  }
-
   function lcGemeinsam(wen, von, art, kette) {
     const ball = String(art || "").toLowerCase() === "ball";
     const karte = document.getElementById("livechatKarte");
@@ -40525,13 +40439,8 @@
        liegt UNTER mir — ich sitze oben drauf. */
     const erst = punkte[1] || { x: 1, y: 0 };
     const rl = Math.hypot(erst.x, erst.y) || 1;
-    /* RUNDE 100 — XANDER (Walkie #82): „Das Rad sieht nicht nach einem
-       Fahrrad aus." Die beiden Bilder waren ineinandergeschoben (0,6 d
-       auseinander, das hintere kleiner) — zwei Raeder eines Fahrrads
-       stehen aber gleich gross und mit Luft dazwischen. Jetzt 1,3 d
-       Radstand; der Rahmen kommt unten dazu (lcRadRahmen). */
-    const hx = ball ? 0 : -(erst.x / rl) * d * 1.3;
-    const hy = ball ? d * 0.72 : -(erst.y / rl) * d * 1.3;
+    const hx = ball ? 0 : -(erst.x / rl) * d * 0.60;
+    const hy = ball ? d * 0.72 : -(erst.y / rl) * d * 0.60 - d * 0.10;
     /* Wie hoch ein Sprung geht — ein Huepfball hebt spuerbar ab. */
     const hoch = d * 0.55;
 
@@ -40575,9 +40484,7 @@
     /* Der Ball rollt nicht heran, er huepft heran — und er bleibt
        aufrecht, ein Ball mit Hoernern steht nicht auf dem Kopf. */
     const drehM = ball ? 0 : (zuMir.x < 0 ? -200 : 200);
-    const grossM = 1;
-    /* Das Hinterrad dreht sich genauso wie das Vorderrad. */
-    let drehH = drehM;
+    const grossM = ball ? 1 : 0.84;
     const bilderM = [
       { transform: "translate(0px, 0px) rotate(0deg) scale(1)", offset: 0 },
       { transform: "translate(" + zuMir.x.toFixed(1) + "px, " + zuMir.y.toFixed(1)
@@ -40597,82 +40504,16 @@
           offset: bei(ankuppeln + i * jeFeld) });
         return;
       }
-      if (i > 0) {
-        const vor = punkte[i - 1];
-        drehH += (Math.hypot(p.x - vor.x, p.y - vor.y) / (Math.PI * d)) * 360 * (p.x < vor.x ? -1 : 1);
-      }
       bilderM.push({ transform: "translate(" + (zuMir.x + p.x).toFixed(1) + "px, "
-        + (zuMir.y + p.y).toFixed(1) + "px) rotate(" + drehH.toFixed(1)
+        + (zuMir.y + p.y).toFixed(1) + "px) rotate(" + drehM
         + "deg) scale(" + grossM + ")", offset: bei(ankuppeln + i * jeFeld) });
     });
     const abst = { x: zielMit.x - mit.x, y: zielMit.y - mit.y };
     bilderM.push({ transform: "translate(" + (zuMir.x + eA.x).toFixed(1) + "px, "
-      + (zuMir.y + eA.y).toFixed(1) + "px) rotate(" + (ball ? drehM : drehH).toFixed(1)
+      + (zuMir.y + eA.y).toFixed(1) + "px) rotate(" + drehM
       + "deg) scale(" + grossM + ")", offset: bei(hin + 120) });
     bilderM.push({ transform: "translate(" + abst.x.toFixed(1) + "px, " + abst.y.toFixed(1)
       + "px) rotate(0deg) scale(1)", offset: 1 });
-
-    /* RUNDE 100 — DAS HINTERRAD FAEHRT AUF DERSELBEN SPUR.
-       Mit festem Versatz hing der Mitfahrer am Start (Platz 1) halb
-       ausserhalb der Buehne oder am Ziel (Platz 4) rechts hinaus — je
-       nachdem, ob er hinten oder vorn sass (Fotos). Ein Hinterrad
-       rollt aber genau dort, wo das Vorderrad schon war: beim
-       Ankuppeln rolle ich einen Radstand vor und er auf meinen Platz,
-       dann folgt er mir auf dem Weg — immer 1,3 d dahinter, immer
-       auf der Buehne. */
-    if (!ball) {
-      const bogen = [0];
-      for (let k = 1; k < punkte.length; k++) {
-        bogen.push(bogen[k - 1] + Math.hypot(punkte[k].x - punkte[k - 1].x, punkte[k].y - punkte[k - 1].y));
-      }
-      const S = bogen[bogen.length - 1] || 1;
-      const an = (sx) => {
-        const s2 = Math.max(0, Math.min(S, sx));
-        let k = 1;
-        while (k < bogen.length - 1 && bogen[k] < s2) k++;
-        const a0 = punkte[k - 1], a1 = punkte[k] || a0;
-        const l = (bogen[k] - bogen[k - 1]) || 1;
-        const f = (s2 - bogen[k - 1]) / l;
-        return { x: a0.x + (a1.x - a0.x) * f, y: a0.y + (a1.y - a0.y) * f,
-                 links: a1.x < a0.x };
-      };
-      const W = Math.min(d * 1.3, S);
-      const dreh1 = (sx) => (sx / (Math.PI * d)) * 360;
-      const zuM = { x: ab.x - mit.x, y: ab.y - mit.y };
-      const tr = (q, dd, dx, dy) => "translate(" + (q.x + dx).toFixed(1) + "px, " + (q.y + dy).toFixed(1)
-        + "px) rotate(" + dd.toFixed(1) + "deg)";
-      const vorw = an(0).links || (punkte[1] && punkte[1].x < 0) ? -1 : 1;
-      bilderA.length = 0; bilderM.length = 0;
-      bilderA.push({ transform: tr({ x: 0, y: 0 }, 0, 0, 0), offset: 0 });
-      bilderM.push({ transform: "translate(0px, 0px) rotate(0deg) scale(1)", offset: 0 });
-      /* Ankuppeln: ich rolle W vor, er rollt auf meinen Platz. */
-      bilderA.push({ transform: tr(an(W), vorw * dreh1(W), 0, 0), offset: bei(ankuppeln) });
-      bilderM.push({ transform: tr(an(0), drehM, zuM.x, zuM.y) + " scale(1)", offset: bei(ankuppeln) });
-      /* Fahrt: in 24 Schritten, das Hinterrad W dahinter auf der Spur. */
-      const schritte = 24, fahrt = hin - ankuppeln;
-      let dA = vorw * dreh1(W), dM = drehM, sAlt = W;
-      for (let k = 1; k <= schritte; k++) {
-        const sv = W + (S - W) * (k / schritte);
-        const q = an(sv), qh = an(sv - W);
-        const rich = q.links ? -1 : 1;
-        dA += rich * dreh1(sv - sAlt);
-        dM += rich * dreh1(sv - sAlt);
-        sAlt = sv;
-        const o = bei(ankuppeln + fahrt * (k / schritte));
-        bilderA.push({ transform: tr(q, dA, 0, 0), offset: o });
-        bilderM.push({ transform: tr(qh, dM, zuM.x, zuM.y) + " scale(1)", offset: o });
-      }
-      const qE = an(S), qH = an(S - W);
-      bilderA.push({ transform: tr(qE, dA + (qE.x < 0 ? -9 : 9), 0, 0), offset: bei(hin + 90) });
-      bilderA.push({ transform: tr(qE, dA, 0, 0), offset: 1 });
-      bilderM.push({ transform: tr(qH, dM, zuM.x, zuM.y) + " scale(1)", offset: bei(hin + 120) });
-      bilderM.push({ transform: "translate(" + (zielMit.x - mit.x).toFixed(1) + "px, "
-        + (zielMit.y - mit.y).toFixed(1) + "px) rotate(0deg) scale(1)", offset: 1 });
-      /* Weich nur beim Ankuppeln und beim Absteigen; die Fahrt selbst
-         laeuft in echter Zeit (siehe unten: easing linear). */
-      bilderA[0].easing = "ease-in-out"; bilderM[0].easing = "ease-in-out";
-      bilderA[bilderA.length - 3].easing = "ease-out"; bilderM[bilderM.length - 2].easing = "ease-in-out";
-    }
 
     const zurueck = () => {
       ab.el.style.zIndex = altZ; mit.el.style.zIndex = altZM;
@@ -40680,13 +40521,8 @@
     };
     let laufA = null, laufM = null;
     try {
-      /* RUNDE 100 — beim Rad KEINE Kurve ueber die ganze Zeitleiste:
-         „ease-in-out" verschob jede Marke (gemessen: bei 1000 ms kuppelte
-         das Rad noch an, faellig war es bei 760 ms) — Rahmen und
-         Quietschen liefen dann neben der Bewegung her. */
-      const kurve = ball ? "ease-in-out" : "linear";
-      laufA = kreisAb.animate(bilderA, { duration: dauer, easing: kurve, fill: "forwards" });
-      laufM = kreisMit.animate(bilderM, { duration: dauer, easing: kurve, fill: "forwards" });
+      laufA = kreisAb.animate(bilderA, { duration: dauer, easing: "ease-in-out", fill: "forwards" });
+      laufM = kreisMit.animate(bilderM, { duration: dauer, easing: "ease-in-out", fill: "forwards" });
       laufA.oncancel = zurueck;
     } catch (e) { zurueck(); return false; }
     setTimeout(() => {
@@ -40727,10 +40563,6 @@
         + "</svg>";
       kreisMit.appendChild(hoerner);
       speichen.push(hoerner);
-    }
-    if (!ball) {
-      const rahmen = lcRadRahmen(kreisAb, kreisMit, d, ankuppeln * 0.8, hin + 120, dauer);
-      if (rahmen) speichen.push(rahmen);
     }
     setTimeout(() => speichen.forEach((x) => x.remove()), dauer + 700);
     if (ball) {

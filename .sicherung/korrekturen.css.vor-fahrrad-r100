@@ -32783,22 +32783,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-slf-w5 small { color: #9a6b00; }
 .lc-slf-w0 { color: #9a8f7a; }
 .lc-slf-summe td { font-weight: 900; font-size: 0.95rem; }
-
-/* =====================================================================
-   RUNDE 100 — DER FAHRRADRAHMEN FUER „ZU ZWEIT" (siehe lcRadRahmen)
-   XANDER (Walkie #82): „Das Rad sieht nicht nach einem Fahrrad aus."
-   Hinter den Bildern (z-index unter den Plaetzen, die beim Fahren auf 7
-   stehen), damit die Gesichter frei bleiben.
-   ===================================================================== */
-.lc-rad-rahmen {
-  position: absolute; left: 0; top: 0; width: 100%; height: 100%;
-  overflow: visible; pointer-events: none; z-index: 6; opacity: 0;
-}
-.lc-rad-rohr { fill: none; stroke: #c0392b; stroke-width: 4.2; stroke-linejoin: round; stroke-linecap: round; }
-.lc-rad-gabel { fill: none; stroke: #8e8e93; stroke-width: 3.4; stroke-linecap: round; }
-.lc-rad-sattel { fill: none; stroke: #2b2b2b; stroke-width: 3.6; stroke-linecap: round; }
-.lc-rad-lenker { fill: none; stroke: #3a3a3c; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.lc-rad-blatt { fill: #d8d8dc; stroke: #6e6e73; stroke-width: 1.6; }
-.lc-rad-kettenlinie { fill: none; stroke: #4a4a4a; stroke-width: 1.6; stroke-dasharray: 2.2 1.6; }
-.lc-rad-kurbel { fill: none; stroke: #48484a; stroke-width: 2.6; stroke-linecap: round; }
-.lc-rad-pedal { fill: none; stroke: #1c1c1e; stroke-width: 3.2; stroke-linecap: round; }

@@ -365,60 +365,6 @@ const sage = (gut, was, zusatz) => {
     "... und die Puppe sitzt danach woanders", eigen ? eigen.puppeVorher + " → " + eigen.puppeNachher : "-");
   sage(eigen && !eigen.doppelt, "kein „… mit Alex“ — kein doppelter Name im Chat", eigen ? eigen.satz : "-");
 
-  console.log("\nRUNDE 100 — SIEHT AUS WIE EIN FAHRRAD\n");
-  /* XANDER (Walkie #82): „Das Rad sieht nicht nach einem Fahrrad aus."
-     Gemessen waehrend der Fahrt: Rahmen mit Sattel, Lenker und Pedalen,
-     beide Raeder gleich gross, Radstand ~1,3 Bildbreiten, und das
-     Hinterrad bleibt auf der Buehne (vorher lag es am Start halb
-     ausserhalb bzw. hing klein und dicht hinter dem Vorderrad). */
-  const pgR = await br.newPage({ viewport: { width: 390, height: 844 } });
-  await pgR.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
-  await pgR.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
-  await pgR.waitForFunction(() => window.DMA_PRUEF && window.DMA_PRUEF.effektBuehne, { timeout: 20000 });
-  const fr = await pgR.evaluate(async () => {
-    window.DMA_PRUEF.effektBuehne();
-    await new Promise((f) => setTimeout(f, 300));
-    const platzVon = (wort) => [...document.querySelectorAll(".lc-platz")].find((p) =>
-      ((p.querySelector(".lc-platz-name") || {}).textContent || "").toLowerCase().indexOf(wort) >= 0) || null;
-    const bea = platzVon("bea"), ich = document.querySelector(".lc-platz-ich");
-    const kI = ich.querySelector(".lc-kreis"), kB = bea.querySelector(".lc-kreis");
-    const karte = document.getElementById("livechatKarte") || document.body;
-    window.DMA_PRUEFUNG.wirkung("gemeinsam", "Bea", "Alex", {});
-    const t0 = performance.now(), mess = [];
-    let teile = null, ausserhalb = 0;
-    while (performance.now() - t0 < 2400) {
-      const t = performance.now() - t0;
-      const a = kI.getBoundingClientRect(), b = kB.getBoundingClientRect(), k = karte.getBoundingClientRect();
-      if (t > 1000 && t < 2000) {
-        /* Die Bilder drehen sich — ihr Umrechteck waechst dabei. Die
-           Groesse steht deshalb in der Matrix, die Breite in offsetWidth. */
-        const sk = (el) => { const m = new DOMMatrix(getComputedStyle(el).transform); return Math.hypot(m.a, m.b); };
-        mess.push({ t: Math.round(t), abstand: Math.hypot((a.left + a.width / 2) - (b.left + b.width / 2), (a.top + a.height / 2) - (b.top + b.height / 2)) / kI.offsetWidth,
-                    groesse: (sk(kB) * kB.offsetWidth) / (sk(kI) * kI.offsetWidth) });
-        if (b.left < k.left - 2 || b.right > k.right + 2) ausserhalb++;
-      }
-      const r = document.querySelector(".lc-rad-rahmen");
-      if (!teile && r && Number(r.style.opacity) > 0.9) {
-        const hat = (c) => { const e = r.querySelector("." + c); return Boolean(e && (e.getAttribute("d") || e.getAttribute("r"))); };
-        teile = { rohr: hat("lc-rad-rohr"), sattel: hat("lc-rad-sattel"), lenker: hat("lc-rad-lenker"),
-                  pedal: hat("lc-rad-pedal"), blatt: hat("lc-rad-blatt") };
-      }
-      await new Promise((f) => requestAnimationFrame(f));
-    }
-    const ab = mess.map((m) => m.abstand), gr = mess.map((m) => m.groesse);
-    return { teile, ausserhalb, n: mess.length, verlauf: mess.filter((m, i) => i % 6 === 0).map((m) => m.t + ":" + m.abstand.toFixed(2)).join(" "),
-             abMin: Math.min(...ab), abMax: Math.max(...ab), grMin: Math.min(...gr), grMax: Math.max(...gr) };
-  });
-  await pgR.close();
-  const tt = fr.teile || {};
-  sage(tt.rohr && tt.sattel && tt.lenker && tt.pedal && tt.blatt,
-    "ein Fahrradrahmen mit Sattel, Lenker, Kettenblatt und Pedalen", JSON.stringify(tt));
-  sage(fr.grMin > 0.97 && fr.grMax < 1.03, "beide Raeder sind gleich gross",
-    fr.grMin.toFixed(2) + "–" + fr.grMax.toFixed(2));
-  sage(fr.abMin > 1.1 && fr.abMax < 1.45, "Radstand wie beim Fahrrad (Luft zwischen den Raedern)",
-    fr.abMin.toFixed(2) + "–" + fr.abMax.toFixed(2) + " Bildbreiten  [" + fr.verlauf + "]");
-  sage(fr.ausserhalb === 0, "das Hinterrad bleibt auf der Buehne", fr.ausserhalb + " von " + fr.n + " Bildern draussen");
-
   await br.close();
   srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)" : "\nalles gruen");

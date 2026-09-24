@@ -49,22 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 551: Stadt · Land · Fluss im Klassenzimmer",
+  stand: "Fassung 552: Zu zweit — sieht aus wie ein Fahrrad",
 
   inArbeit: [
-    { seit: "2026-09-24T02:38",
-      text: "Zu zweit: Rad soll wie ein Fahrrad aussehen" },
-    { seit: "2026-09-24T02:38",
+    { seit: "2026-09-24T02:47",
       text: "Angel: senkrecht heben, Schnur-Physik" },
-    { seit: "2026-09-24T02:38",
-      text: "Stadt · Land · Fluss: Wörter streichen (Spielleiter/Lehrer) im Raum fehlt noch" },
+    { seit: "2026-09-24T02:47",
+      text: "Stadt · Land · Fluss: Wörter streichen im Raum" },
+    { seit: "2026-09-24T02:47",
+      text: "Zylinder, Sprühdose wischen, Sabbern, Kuss-Stimme, Vogelkot-Ton" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T02:38",
-      text: "Stadt · Land · Fluss läuft jetzt IM Raum: Lehrer-Panel „starten“ (oder /slf) — alle sehen unter der Bühne ihr Blatt mit Buchstabe, Spalten und Uhr; „Stopp!“ gibt ab, die anderen haben 3 s; Auswertung mit der normalen Wertung für alle sichtbar, Rangliste im Chat, Punkte" },
-    { seit: "2026-09-24T02:38",
-      text: "Niemand muss das Klassenzimmer verlassen" },
+    { seit: "2026-09-24T02:47",
+      text: "Zu zweit (Rad): echter Fahrradrahmen hinter den Bildern — Rohre, Gabel, Sattel, Lenker, Kettenblatt, Kette, drehende Pedale" },
+    { seit: "2026-09-24T02:47",
+      text: "Beide Räder gleich groß (vorher 0,84), 1,3 Bildbreiten Radstand (vorher 0,6), beide drehen sich" },
+    { seit: "2026-09-24T02:47",
+      text: "Das Hinterrad rollt auf der Spur hinterher, auch um die Ecke, und bleibt auf der Bühne (vorher 19 von 60 Bildern draußen)" },
   ],
 };
