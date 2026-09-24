@@ -33663,3 +33663,17 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .lc-pf2 .lc-pf-o, .lc-pf2 .lc-pf-m, .lc-pf2 .lc-pf-u, .lc-pf2 .lc-pferd-huepf { animation: none !important; }
 }
+
+/* FUNK 75 — die Chromrohre des Roadsters: gefuellte Form mit Chromverlauf,
+   an der Seite duenn, hinten als Trompete (siehe lcHotRod). */
+.lc-hotrod-buehne .lc-hr-chrom      { fill: url(#hrChrom); stroke: #4d5660; stroke-width: .7; stroke-linejoin: round; }
+.lc-hotrod-buehne .lc-hr-chromlicht { fill: none; stroke: #ffffff; stroke-width: .9; opacity: .75; stroke-linecap: round; }
+.lc-hotrod-buehne .lc-hr-trompete   { fill: #dfe5eb; stroke: #56606b; stroke-width: .8; }
+.lc-hotrod-buehne .lc-hr-schlund    { fill: #15181b; }
+
+/* FUNK 75 — die Chromrohre des Roadsters: gefuellte Form mit Chromverlauf,
+   an der Seite duenn, hinten als Trompete (siehe lcHotRod). */
+.lc-hotrod-buehne .lc-hr-chrom      { fill: url(#hrChrom); stroke: #4d5660; stroke-width: .7; stroke-linejoin: round; }
+.lc-hotrod-buehne .lc-hr-chromlicht { fill: none; stroke: #ffffff; stroke-width: .9; opacity: .75; stroke-linecap: round; }
+.lc-hotrod-buehne .lc-hr-trompete   { fill: #dfe5eb; stroke: #56606b; stroke-width: .8; }
+.lc-hotrod-buehne .lc-hr-schlund    { fill: #15181b; }

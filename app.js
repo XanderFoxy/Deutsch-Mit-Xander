@@ -40871,8 +40871,21 @@
       }
       const altZ = platz.style.zIndex;
       platz.style.zIndex = "9";
+      /* FUNK 75 — „da darf nie wieder das Profilbild ruckeln auf diesem
+         Gestell, das soll nie wieder eine einzelne Sache machen."
+         GEFUNDEN: Bild und Fahrgestell hatten zwei Uhren. Das Bild lief
+         als eigene Animation (160 Stuetzbilder, im Grafikprozessor), das
+         Fahrgestell wurde Bild fuer Bild im Hauptprogramm gesetzt. Stockt
+         das Hauptprogramm auch nur kurz (auf dem Telefon staendig), bleibt
+         das Gestell zurueck, waehrend das Bild weiterfaehrt — das Bild
+         „ruckelt" auf dem Wagen. Jetzt setzt EIN Takt beide, mit demselben
+         Ort und derselben Neigung (siehe bild() unten). */
       let lauf = null;
-      try { lauf = kreis.animate(frames, { duration: DAUER, easing: "linear" }); } catch (e) { lauf = null; }
+      void frames;
+      /* Das Bild hat sonst 0,18 s Uebergang auf transform (fuer das Antippen)
+         — damit liefe es dem Gestell weich hinterher. Waehrend der Fahrt aus. */
+      const altUebergang = kreis.style.transition;
+      kreis.style.transition = "none";
 
       /* Die Zeichnung: Raeder, Achse, Auspuffe, Schluessel und Dampf. */
       const NS = "http://www.w3.org/2000/svg";
@@ -40893,18 +40906,56 @@
       /* Drei Auspuffrohre, verchromt, hinten seitlich hochgebogen
          („Zoomies"), mit Trichter am Ende. Gezeichnet mit der Fahrt nach
          rechts — hinten ist links. */
+      /* FUNK 75 (24.09.) — XANDER: „arbeite den Roadster weiter aus, dass
+         er diese typischen Chrome-Essen hat, die an der Seite etwas
+         dünner sind und nach hinten raus wie solche Trompeten … das sind
+         glaube ich immer drei solche Röhren."
+         Vorher waren es drei gleich dicke Striche mit einer Ellipse am
+         Ende. Jetzt ist jedes Rohr eine gefuellte Form entlang derselben
+         Kurve: vorn am Motor duenn (Durchmesser 2,6), zum Ende hin erst
+         kaum, dann schnell weiter — die Trompete (Durchmesser 9). In der
+         Oeffnung sieht man dunkel hinein, der Rand glaenzt. */
       let rohre = "";
       [[16, 30, -58, 18], [26, 34, -63, 28], [36, 38, -60, 38]].forEach(([y0, xa, xe, ye]) => {
-        /* XANDER (#144): „realistische verchromte dicke Seiten-Essen" —
-           jedes Rohr in drei Lagen: dunkler Rand, Chrom, Glanzlinie. */
-        const rohrD = 'M' + f1(-xa * g) + ' ' + f1(y0 * g) + ' C' + f1(-48 * g) + ' ' + f1(y0 * g)
-          + ' ' + f1(-52 * g) + ' ' + f1((ye - 4) * g) + ' ' + f1(xe * g) + ' ' + f1((ye - 10) * g);
-        rohre += '<path class="lc-hr-rohr-rand" d="' + rohrD + '"/><path class="lc-hr-rohr" d="' + rohrD + '"/>'
-          + '<path class="lc-hr-rohr-licht" d="' + rohrD + '" transform="translate(0 ' + f1(-0.9 * g) + ')"/>'
-          + '<ellipse class="lc-hr-trichter" cx="' + f1((xe - 1.5) * g) + '" cy="' + f1((ye - 10.8) * g)
-          + '" rx="' + f1(2.2 * g) + '" ry="' + f1(4.2 * g) + '" transform="rotate(-38 ' + f1((xe - 1.5) * g) + ' ' + f1((ye - 10.8) * g) + ')"/>';
+        const P0 = [-xa, y0], P1 = [-48, y0], P2 = [-52, ye - 4], P3 = [xe, ye - 10];
+        const bez = (t) => {
+          const m = 1 - t;
+          return [m * m * m * P0[0] + 3 * m * m * t * P1[0] + 3 * m * t * t * P2[0] + t * t * t * P3[0],
+                  m * m * m * P0[1] + 3 * m * m * t * P1[1] + 3 * m * t * t * P2[1] + t * t * t * P3[1]];
+        };
+        const abl = (t) => {
+          const m = 1 - t;
+          return [3 * m * m * (P1[0] - P0[0]) + 6 * m * t * (P2[0] - P1[0]) + 3 * t * t * (P3[0] - P2[0]),
+                  3 * m * m * (P1[1] - P0[1]) + 6 * m * t * (P2[1] - P1[1]) + 3 * t * t * (P3[1] - P2[1])];
+        };
+        const links = [], rechts = [];
+        const N = 22;
+        let ende = null;
+        for (let i = 0; i <= N; i++) {
+          const t = i / N, pt = bez(t), d = abl(t);
+          const l = Math.hypot(d[0], d[1]) || 1, nx = -d[1] / l, ny = d[0] / l;
+          const w = 1.3 + 3.2 * Math.pow(t, 3.4);
+          links.push([pt[0] + nx * w, pt[1] + ny * w]);
+          rechts.push([pt[0] - nx * w, pt[1] - ny * w]);
+          if (i === N) ende = { x: pt[0], y: pt[1], w: w, winkel: Math.atan2(d[1], d[0]) * 180 / Math.PI };
+        }
+        const licht = links.slice(1, -2).map(([x, y], k) => {
+          const r = rechts[k + 1];
+          return f1((x * 0.62 + r[0] * 0.38) * g) + " " + f1((y * 0.62 + r[1] * 0.38) * g);
+        });
+        const pfad = "M" + links.concat(rechts.slice().reverse()).map(([x, y]) => f1(x * g) + " " + f1(y * g)).join(" L") + " Z";
+        const dreh = ' transform="rotate(' + ende.winkel.toFixed(1) + " " + f1(ende.x * g) + " " + f1(ende.y * g) + ')"';
+        rohre += '<path class="lc-hr-chrom" d="' + pfad + '"/>'
+          + '<path class="lc-hr-chromlicht" d="M' + licht.join(" L") + '"/>'
+          + '<ellipse class="lc-hr-trompete" cx="' + f1(ende.x * g) + '" cy="' + f1(ende.y * g) + '" rx="' + f1(ende.w * 0.34 * g)
+          + '" ry="' + f1(ende.w * g) + '"' + dreh + '/>'
+          + '<ellipse class="lc-hr-schlund" cx="' + f1(ende.x * g) + '" cy="' + f1(ende.y * g) + '" rx="' + f1(ende.w * 0.2 * g)
+          + '" ry="' + f1(ende.w * 0.68 * g) + '"' + dreh + '/>';
       });
-      /* Der Aufziehschluessel: Schaft aus dem Bild, Fluegelgriff. */
+      rohre = '<defs><linearGradient id="hrChrom" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#fbfcfd"/><stop offset=".28" stop-color="#cfd6dd"/>'
+        + '<stop offset=".52" stop-color="#6b7683"/><stop offset=".72" stop-color="#eef2f6"/>'
+        + '<stop offset="1" stop-color="#8f9aa6"/></linearGradient></defs>' + rohre;
       const schluessel = '<g class="lc-hr-schluessel" transform="translate(' + f1(-50 * g) + ' ' + f1(-6 * g) + ')">'
         + '<path class="lc-hr-schaft" d="M0 0 H' + f1(-13 * g) + '"/>'
         + '<g class="lc-hr-griff" transform="translate(' + f1(-17 * g) + ' 0)">'
@@ -40938,6 +40989,8 @@
         if (fertig) return;
         fertig = true;
         try { if (lauf) lauf.cancel(); } catch (e) {}
+        kreis.style.transform = "";
+        kreis.style.transition = altUebergang;
         platz.style.zIndex = altZ;
       };
       const bild = () => {
@@ -40955,7 +41008,11 @@
         const gefahren = zuletzt ? Math.hypot(p.x - zuletzt.x, p.y - zuletzt.y) : 0;
         zuletzt = p;
         const sichtbar = t < 300 ? t / 300 : t > DAUER - 300 ? Math.max(0, (DAUER - t) / 300) : 1;
-        auto.setAttribute("transform", "translate(" + f1(p.x) + " " + f1(p.y) + ") rotate(" + kippBei(Math.min(t, DAUER)).toFixed(1) + ")");
+        const kippJetzt = kippBei(Math.min(t, DAUER));
+        auto.setAttribute("transform", "translate(" + f1(p.x) + " " + f1(p.y) + ") rotate(" + kippJetzt.toFixed(1) + ")");
+        /* Dasselbe Bild, derselbe Ort, dieselbe Neigung — im selben Takt. */
+        if (!fertig) kreis.style.transform = "translate(" + (p.x - S.x).toFixed(1) + "px, "
+          + (p.y - S.y).toFixed(1) + "px) rotate(" + kippJetzt.toFixed(1) + "deg)";
         auto.style.opacity = String(sichtbar);
         spiegel.setAttribute("transform", "scale(" + richtung + " 1)");
         /* Die Raeder drehen sich mit dem Weg (Umfang 2π · 14 %). */

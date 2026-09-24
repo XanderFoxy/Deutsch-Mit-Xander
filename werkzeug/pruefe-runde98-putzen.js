@@ -331,7 +331,8 @@ const sage = (gut, was, zusatz) => {
     while (performance.now() - t0 < 5600) {
       const t = performance.now() - t0, r = kreis.getBoundingClientRect(), g = reihe.getBoundingClientRect();
       raeder = Math.max(raeder, document.querySelectorAll(".lc-hr-rad").length);
-      rohre = Math.max(rohre, document.querySelectorAll(".lc-hr-rohr").length);
+      /* FUNK 75: die Rohre sind gefuellte Chromformen mit Trompete. */
+      rohre = Math.max(rohre, document.querySelectorAll(".lc-hr-chrom").length);
       schluessel = Math.max(schluessel, document.querySelectorAll(".lc-hr-schluessel").length);
       dampf = Math.max(dampf, [...document.querySelectorAll(".lc-hr-dampf")].filter((c) => Number(c.style.opacity) > 0.1).length);
       weit = Math.max(weit, Math.hypot(r.left - k0.left, r.top - k0.top - 0));
