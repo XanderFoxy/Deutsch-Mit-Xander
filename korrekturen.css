@@ -11636,7 +11636,7 @@ code, pre {
 }
 
 /* --- STROM: die Plasmakugel aus den Achtzigern ---------------------- */
-.lc-platz-spricht[data-sprechbild="strom"] .lc-kreis {
+.lc-platz-spricht[data-sprechbild="strom2"] .lc-kreis {
   animation: lcStromBratzeln 260ms steps(1) infinite !important;
   border-color: #9fd8ff !important;
 }
@@ -11654,7 +11654,7 @@ code, pre {
    von weitem ein Stern, kein Blitz. Der Keilkranz ist weg. Was bleibt,
    ist ein weicher Plasmaschein am Rand; die BLITZE selbst sind jetzt
    echte Zickzack-Formen und stehen weiter unten bei .lc-tstrom. */
-.lc-platz-spricht[data-sprechbild="strom"] .lc-kreis::after {
+.lc-platz-spricht[data-sprechbild="strom2"] .lc-kreis::after {
   content: "";
   position: absolute;
   inset: -10px;
@@ -19137,7 +19137,7 @@ code, pre {
 .lc-platz-spricht[data-sprechbild="bluete"]::after,
 .lc-platz-spricht[data-sprechbild="regenbogen"]::after,
 .lc-platz-spricht[data-sprechbild="welle"]::after,
-.lc-platz-spricht[data-sprechbild="strom"]::after { display: block; }
+.lc-platz-spricht[data-sprechbild="strom2"]::after { display: block; }
 
 /* --- BLÜTE: acht Blätter wachsen nach außen auf --------------------
    XANDER: „das mit den Blumen mit der Blumenblüte noch nicht so
@@ -19304,7 +19304,7 @@ code, pre {
 }
 
 /* --- STROM: ganz feine Verästelungen bis zum Rand ------------------ */
-.lc-platz-spricht[data-sprechbild="strom"]::after {
+.lc-platz-spricht[data-sprechbild="strom2"]::after {
   background: repeating-conic-gradient(
     rgba(150, 225, 255, 0) 0deg 3.1deg,
     rgba(180, 235, 255, .95) 3.1deg 3.5deg,
@@ -20383,7 +20383,7 @@ code, pre {
    statt von ihm weg. */
 
 /* 1. Die Zacken nach aussen sind weg. */
-.lc-platz-spricht[data-sprechbild="strom"]::after {
+.lc-platz-spricht[data-sprechbild="strom2"]::after {
   display: none !important;
 }
 
@@ -20392,7 +20392,7 @@ code, pre {
       nie still, er springt. Weil .lc-kreis „overflow: hidden" traegt,
       kann keine Linie nach draussen laufen; das ist hier kein
       Hindernis, sondern genau die Vorgabe. */
-.lc-platz-spricht[data-sprechbild="strom"] .lc-kreis::before {
+.lc-platz-spricht[data-sprechbild="strom2"] .lc-kreis::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -33110,22 +33110,22 @@ body.rf-leiste-auf .rf-reiter { display: none; }
    „der Ring selbst trägt unten/außen eine durchgehende zackige
    Glutleiste … Ein unterbrochener Glow hinter den Zungen, Lücken
    lassen, kein zweiter Vollkreis."
-   Das Feuer ist jetzt ein Bild im Feld (.lc-sfeuer, siehe lcFeuerSvg).
+   Das Feuer ist jetzt ein Bild im Feld (.lc-sfeuer2, siehe lcFeuerSvg).
    Deshalb sind die alten Schichten hier AUS: der pulsierende
    Vollkreis-Schein am Bild (lcFeuerRand), die kreisende Zacken-Scheibe
    (::after) und das Flammen-Hintergrundbild am Platz (Runde 35).
    Gesichert in .sicherung/sprechbilder-vor-schonpass-20260924.css.
    ===================================================================== */
-.lc-platz-spricht[data-sprechbild="feuer"] .lc-kreis {
+.lc-platz-spricht[data-sprechbild="feuer2"] .lc-kreis {
   animation: none !important;
   box-shadow: none !important;
   border-color: #9A3412 !important;
 }
-.lc-platz-spricht[data-sprechbild="feuer"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="feuer"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="feuer"]::after { display: none !important; }
-.lc-sprechfeld.lc-sfeuer { overflow: visible; }
-.lc-sprechfeld.lc-sfeuer .lc-feuer-bild {
+.lc-platz-spricht[data-sprechbild="feuer2"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="feuer2"] .lc-kreis::before,
+.lc-platz-spricht[data-sprechbild="feuer2"]::after { display: none !important; }
+.lc-sprechfeld.lc-sfeuer2 { overflow: visible; }
+.lc-sprechfeld.lc-sfeuer2 .lc-feuer-bild {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -33137,19 +33137,19 @@ body.rf-leiste-auf .rf-reiter { display: none; }
    SCHON-PASS SPRECHBILDER — 3. WELLE (Xanders Liste vom 23.09.)
    „Lücke zwischen Rahmen und erster Welle zeigt die Bühne … immer eine
    Schicht deckt den Nahtspalt." Die Welle ist jetzt ein Bild im Feld
-   (.lc-swelle, siehe lcWelleSvg): fester Saum am Ring, drei Ringe
+   (.lc-swelle2, siehe lcWelleSvg): fester Saum am Ring, drei Ringe
    loesen sich davon. Die alten Schichten (wandernder Rand am Platz,
    Schleier am Bild) sind deshalb aus.
    ===================================================================== */
-.lc-platz-spricht[data-sprechbild="welle"] .lc-kreis {
+.lc-platz-spricht[data-sprechbild="welle2"] .lc-kreis {
   animation: none !important;
   box-shadow: none !important;
 }
-.lc-platz-spricht[data-sprechbild="welle"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="welle"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="welle"]::after { display: none !important; }
-.lc-sprechfeld.lc-swelle { overflow: visible; }
-.lc-sprechfeld.lc-swelle .lc-welle-bild {
+.lc-platz-spricht[data-sprechbild="welle2"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="welle2"] .lc-kreis::before,
+.lc-platz-spricht[data-sprechbild="welle2"]::after { display: none !important; }
+.lc-sprechfeld.lc-swelle2 { overflow: visible; }
+.lc-sprechfeld.lc-swelle2 .lc-welle-bild {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -33159,60 +33159,60 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 
 /* =====================================================================
    SCHON-PASS SPRECHBILDER — 4. BLUT (Xanders Liste vom 23.09.)
-   Blut ist jetzt ein Bild im Feld (.lc-sblut, siehe lcBlutSvg): es
+   Blut ist jetzt ein Bild im Feld (.lc-sblut2, siehe lcBlutSvg): es
    quillt oben hinter dem Rand hervor, laeuft zaeh herunter, sammelt
    sich unten, tropft. Die alten Schichten (verstreute rote Punkte am
    Bild, roter Schein ringsum) sind aus — „nicht mattes Rot-Emoji".
    ===================================================================== */
-.lc-platz-spricht[data-sprechbild="blut"] .lc-kreis {
+.lc-platz-spricht[data-sprechbild="blut2"] .lc-kreis {
   animation: none !important;
   box-shadow: none !important;
   border-color: #7F1D1D !important;
 }
-.lc-platz-spricht[data-sprechbild="blut"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="blut"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="blut"]::after { display: none !important; }
-.lc-sprechfeld.lc-sblut { overflow: visible; }
-.lc-sprechfeld.lc-sblut .lc-blut-bild {
+.lc-platz-spricht[data-sprechbild="blut2"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="blut2"] .lc-kreis::before,
+.lc-platz-spricht[data-sprechbild="blut2"]::after { display: none !important; }
+.lc-sprechfeld.lc-sblut2 { overflow: visible; }
+.lc-sprechfeld.lc-sblut2 .lc-blut-bild {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
 }
 
 /* =====================================================================
    SCHON-PASS SPRECHBILDER — 5. EIS (Xanders Liste vom 23.09.)
-   Eis ist jetzt ein Bild im Feld (.lc-seis, siehe lcEisSvg): Zapfen aus
+   Eis ist jetzt ein Bild im Feld (.lc-seis2, siehe lcEisSvg): Zapfen aus
    der Ringlinie, haarfeine Eisblumen ueber dem Foto. Die alten
    Schichten (Schneeflocken-Aufkleber, Zapfenkranz ueber dem Namen,
    Schein) sind aus — „kein undurchsichtiger Sticker".
    ===================================================================== */
-.lc-platz-spricht[data-sprechbild="eis"] .lc-kreis {
+.lc-platz-spricht[data-sprechbild="eis2"] .lc-kreis {
   animation: none !important;
   box-shadow: none !important;
   border-color: #9BD3EE !important;
 }
-.lc-platz-spricht[data-sprechbild="eis"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="eis"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="eis"]::after { display: none !important; }
-.lc-sprechfeld.lc-seis { overflow: visible; }
-.lc-sprechfeld.lc-seis .lc-eis-bild {
+.lc-platz-spricht[data-sprechbild="eis2"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="eis2"] .lc-kreis::before,
+.lc-platz-spricht[data-sprechbild="eis2"]::after { display: none !important; }
+.lc-sprechfeld.lc-seis2 { overflow: visible; }
+.lc-sprechfeld.lc-seis2 .lc-eis-bild {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
 }
 
 /* =====================================================================
    SCHON-PASS SPRECHBILDER — 6. BLÜTE (Xanders Liste vom 23.09.)
-   Die Bluete ist jetzt ein Bild im Feld (.lc-sbluete, siehe
+   Die Bluete ist jetzt ein Bild im Feld (.lc-sbluete2, siehe
    lcBlueteSvg): unregelmaessige Blaetter, Blatt fuer Blatt auf und zu.
    Die alte Bluete am Platz (::after, auch beim Zugehen) ist aus.
    ===================================================================== */
-.lc-platz-spricht[data-sprechbild="bluete"] .lc-kreis {
+.lc-platz-spricht[data-sprechbild="bluete2"] .lc-kreis {
   animation: none !important;
   box-shadow: none !important;
 }
-.lc-platz-spricht[data-sprechbild="bluete"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="bluete"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="bluete"]::after,
-.lc-sprech-schliesst[data-sprechbild="bluete"]::after { display: none !important; }
-.lc-sprechfeld.lc-sbluete { overflow: visible; }
-.lc-sprechfeld.lc-sbluete .lc-bluete-bild {
+.lc-platz-spricht[data-sprechbild="bluete2"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="bluete2"] .lc-kreis::before,
+.lc-platz-spricht[data-sprechbild="bluete2"]::after,
+.lc-sprech-schliesst[data-sprechbild="bluete2"]::after { display: none !important; }
+.lc-sprechfeld.lc-sbluete2 { overflow: visible; }
+.lc-sprechfeld.lc-sbluete2 .lc-bluete-bild {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
 }
 
@@ -33222,14 +33222,14 @@ body.rf-leiste-auf .rf-reiter { display: none; }
    .lc-sstrommantel). Die alten Schichten (lila Vollkreis-Schein,
    Linien am Bild, Teilchen) sind aus.
    ===================================================================== */
-.lc-platz-spricht[data-sprechbild^="strom"] .lc-kreis {
+.lc-platz-spricht[data-sprechbild^="strom"]:not([data-sprechbild="strom2"]) .lc-kreis {
   animation: none !important;
   box-shadow: none !important;
   border-color: #93C5FD !important;
 }
-.lc-platz-spricht[data-sprechbild^="strom"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild^="strom"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild^="strom"]::after { display: none !important; }
+.lc-platz-spricht[data-sprechbild^="strom"]:not([data-sprechbild="strom2"]) .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild^="strom"]:not([data-sprechbild="strom2"]) .lc-kreis::before,
+.lc-platz-spricht[data-sprechbild^="strom"]:not([data-sprechbild="strom2"])::after { display: none !important; }
 .lc-sprechfeld.lc-sstrom, .lc-sprechfeld.lc-sstromkugel, .lc-sprechfeld.lc-sstrommantel { overflow: visible; }
 .lc-sprechfeld .lc-strom-bild {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
@@ -33237,25 +33237,25 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 
 /* =====================================================================
    SCHON-PASS SPRECHBILDER — 8. MAGIE UND FUNKELN (Xanders Liste 23.09.)
-   Beide sind Bilder im Feld (.lc-smagie, .lc-sfunkeln) — nur Licht-
+   Beide sind Bilder im Feld (.lc-smagie2, .lc-sfunkeln2) — nur Licht-
    punkte, keine Sternzeichen. Die alten Schichten (lila/gruener
    Doppelring bei Magie, gelber Schein bei Funkeln, Sterne am Platz)
    sind aus.
    ===================================================================== */
-.lc-platz-spricht[data-sprechbild="magie"] .lc-kreis,
-.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis {
+.lc-platz-spricht[data-sprechbild="magie2"] .lc-kreis,
+.lc-platz-spricht[data-sprechbild="funkeln2"] .lc-kreis {
   animation: none !important;
   box-shadow: none !important;
 }
-.lc-platz-spricht[data-sprechbild="magie"] .lc-kreis { border-color: #C4B5FD !important; }
-.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis { border-color: #E5E7EB !important; }
-.lc-platz-spricht[data-sprechbild="magie"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="magie"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="magie"]::after,
-.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="funkeln"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="funkeln"]::after { display: none !important; }
-.lc-sprechfeld.lc-smagie, .lc-sprechfeld.lc-sfunkeln { overflow: visible; }
+.lc-platz-spricht[data-sprechbild="magie2"] .lc-kreis { border-color: #C4B5FD !important; }
+.lc-platz-spricht[data-sprechbild="funkeln2"] .lc-kreis { border-color: #E5E7EB !important; }
+.lc-platz-spricht[data-sprechbild="magie2"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="magie2"] .lc-kreis::before,
+.lc-platz-spricht[data-sprechbild="magie2"]::after,
+.lc-platz-spricht[data-sprechbild="funkeln2"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="funkeln2"] .lc-kreis::before,
+.lc-platz-spricht[data-sprechbild="funkeln2"]::after { display: none !important; }
+.lc-sprechfeld.lc-smagie2, .lc-sprechfeld.lc-sfunkeln2 { overflow: visible; }
 .lc-sprechfeld .lc-magie-bild, .lc-sprechfeld .lc-funkeln-bild {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
 }
@@ -33265,29 +33265,29 @@ body.rf-leiste-auf .rf-reiter { display: none; }
    (Xanders Liste vom 23.09.) Alle drei im Feld. Die alten Schichten
    (greller 7-Streifen-Ring, Herz- und Noten-Zeichen) sind aus.
    ===================================================================== */
-.lc-platz-spricht[data-sprechbild="regenbogen"] .lc-kreis,
-.lc-platz-spricht[data-sprechbild="herzen"] .lc-kreis,
-.lc-platz-spricht[data-sprechbild="noten"] .lc-kreis {
+.lc-platz-spricht[data-sprechbild="regenbogen2"] .lc-kreis,
+.lc-platz-spricht[data-sprechbild="herzen2"] .lc-kreis,
+.lc-platz-spricht[data-sprechbild="noten2"] .lc-kreis {
   animation: none !important;
   box-shadow: none !important;
 }
-.lc-platz-spricht[data-sprechbild="regenbogen"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="regenbogen"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="regenbogen"]::after,
-.lc-platz-spricht[data-sprechbild="herzen"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="herzen"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="herzen"]::after,
-.lc-platz-spricht[data-sprechbild="noten"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="noten"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="noten"]::after { display: none !important; }
-.lc-sprechfeld.lc-sregenbogen, .lc-sprechfeld.lc-sherzen, .lc-sprechfeld.lc-snoten { overflow: visible; }
+.lc-platz-spricht[data-sprechbild="regenbogen2"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="regenbogen2"] .lc-kreis::before,
+.lc-platz-spricht[data-sprechbild="regenbogen2"]::after,
+.lc-platz-spricht[data-sprechbild="herzen2"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="herzen2"] .lc-kreis::before,
+.lc-platz-spricht[data-sprechbild="herzen2"]::after,
+.lc-platz-spricht[data-sprechbild="noten2"] .lc-kreis::after,
+.lc-platz-spricht[data-sprechbild="noten2"] .lc-kreis::before,
+.lc-platz-spricht[data-sprechbild="noten2"]::after { display: none !important; }
+.lc-sprechfeld.lc-sregenbogen2, .lc-sprechfeld.lc-sherzen2, .lc-sprechfeld.lc-snoten2 { overflow: visible; }
 .lc-sprechfeld .lc-herzen-bild, .lc-sprechfeld .lc-noten-bild {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
 }
 /* Der Regenbogen: der Bildrand liegt bei 69,4 % des Feldradius. Drei
    weiche Baender bei 70–76 %, 78–84 % und 86–92 %, mit weichen
    Kanten — die Farben laufen ineinander, nichts ist hart. */
-.lc-sprechfeld.lc-sregenbogen .lc-rb-lage {
+.lc-sprechfeld.lc-sregenbogen2 .lc-rb-lage {
   position: absolute;
   inset: 0;
   border-radius: 50%;
@@ -33307,17 +33307,17 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 /* Unten steht der Name — dort blenden die aeusseren Baender aus (eine
    zweite Maske, die nur den untersten Streifen des Feldes wegnimmt).
    Sie haengt an einem Rahmen, der sich NICHT mitdreht. */
-.lc-sprechfeld.lc-sregenbogen {
+.lc-sprechfeld.lc-sregenbogen2 {
   -webkit-mask: linear-gradient(to bottom, #000 0 86%, transparent 91%);
   mask: linear-gradient(to bottom, #000 0 86%, transparent 91%);
 }
-.lc-sprechfeld.lc-sregenbogen .lc-rb-zwei {
+.lc-sprechfeld.lc-sregenbogen2 .lc-rb-zwei {
   opacity: .45;
   animation: lcRbDriftR101 110s linear infinite reverse;
 }
 @keyframes lcRbDriftR101 { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .lc-sprechfeld.lc-sregenbogen .lc-rb-lage { animation: none; }
+  .lc-sprechfeld.lc-sregenbogen2 .lc-rb-lage { animation: none; }
 }
 
 /* =====================================================================

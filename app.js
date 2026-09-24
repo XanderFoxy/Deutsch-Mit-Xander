@@ -22633,7 +22633,7 @@
                         "\u2027", "\u22c5"] },
     /* Die Ladungen tanzen AUF dem Rahmen — ein schmales Band, sonst
        schweben sie daneben. */
-    strom:  { menge: 14, klasse: "lc-tstrom", rand: true, band: [33.4, 35.6], zeichen: [""] },
+    strom2: { menge: 14, klasse: "lc-tstrom", rand: true, band: [33.4, 35.6], zeichen: [""] },
     /* RUNDE 80 — XANDER: „bei den Blasen … koennen noch kleine
        Miniblasen mehr sein." Von 16 auf 34, und die Groessenverteilung
        liegt jetzt deutlich bei den kleinen (siehe .lc-tblasen). */
@@ -25479,10 +25479,10 @@
 
   /* Welche Sprechbilder seit dem SCHON-PASS EIN Bild sind statt
      Teilchen oder Rand-Schichten. */
-  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg, blut: lcBlutSvg, eis: lcEisSvg, bluete: lcBlueteSvg,
+  const LC_SPRECH_SVG = { feuer2: lcFeuerSvg, welle2: lcWelleSvg, blut2: lcBlutSvg, eis2: lcEisSvg, bluete2: lcBlueteSvg,
     strom: lcStromASvg, stromkugel: lcStromBSvg, strommantel: lcStromCSvg,
-    magie: lcMagieSvg, funkeln: lcFunkelnSvg,
-    regenbogen: lcRegenbogenSvg, herzen: lcHerzenSvg, noten: lcNotenSvg,
+    magie2: lcMagieSvg, funkeln2: lcFunkelnSvg,
+    regenbogen2: lcRegenbogenSvg, herzen2: lcHerzenSvg, noten2: lcNotenSvg,
     kranz: lcKranzSvg, kugel: lcKugelSvg, ohren: () => lcOhrenSvg(false), baerohren: () => lcOhrenSvg(true),
     maul: lcMaulSvg, schemen: lcSchemenSvg };
 
@@ -25500,7 +25500,7 @@
     if (alt && alt.dataset.art === art) {
       /* SCHON-PASS 6: war die Bluete gerade am Zugehen, geht sie
          wieder auf, sobald wieder gesprochen wird. */
-      if (art === "bluete" && alt.dataset.zu === "1") lcBlueteAuf(alt);
+      if (art === "bluete2" && alt.dataset.zu === "1") lcBlueteAuf(alt);
       return;
     }
     if (alt) alt.remove();
@@ -25515,7 +25515,7 @@
       feld.setAttribute("aria-hidden", "true");
       feld.innerHTML = LC_SPRECH_SVG[art]();
       knopf.appendChild(feld);
-      if (art === "bluete") lcBlueteAuf(feld);
+      if (art === "bluete2") lcBlueteAuf(feld);
       return;
     }
     const feld = document.createElement("span");
@@ -25752,7 +25752,10 @@
          aendert sich nichts. */
       const sprichtJetzt = Boolean(p.spricht) && !p.leer;
       const sprachVorher = knopf.classList.contains("lc-platz-spricht");
-      const istBluete = !p.leer && (p.sprechbild || "ring") === "bluete";
+      const istBluete = !p.leer && /^bluete2?$/.test(p.sprechbild || "ring");
+      /* FUNK 75 — „Bluete" ist wieder die alte (0,9 s zu), „Bluete 2"
+         die neue mit zwoelf Blaettern (1,6 s). */
+      const blueteNeu = (p.sprechbild || "") === "bluete2";
       if (!sprichtJetzt && sprachVorher && istBluete
           && !knopf.classList.contains("lc-sprech-schliesst")) {
         knopf.classList.add("lc-sprech-schliesst");
@@ -25762,7 +25765,7 @@
         knopf._lcBlueteZu = setTimeout(() => {
           knopf.classList.remove("lc-sprech-schliesst", "lc-platz-spricht");
           lcSprechFeldWeg(knopf);
-        }, 1600);
+        }, blueteNeu ? 1600 : 900);
       } else if (sprichtJetzt) {
         clearTimeout(knopf._lcBlueteZu);
         knopf.classList.remove("lc-sprech-schliesst");
@@ -25783,7 +25786,7 @@
       else if (istBluete && knopf.classList.contains("lc-sprech-schliesst")) {
         /* SCHON-PASS 6: „Blatt für Blatt wieder in den Kreis" — das Feld
            bleibt stehen, bis die Bluete zu ist (Zeitgeber unten). */
-        const fb = knopf.querySelector(".lc-sprechfeld.lc-sbluete");
+        const fb = knopf.querySelector(".lc-sprechfeld.lc-sbluete2");
         if (fb) lcBlueteZu(fb); else lcSprechFeldWeg(knopf);
       }
       else lcSprechFeldWeg(knopf);
@@ -30742,6 +30745,11 @@
     noten: "\ud83c\udfb5", herzen: "\u2764\ufe0f", feuer: "\ud83d\udd25",
     kranz: "\ud83d\udd6f\ufe0f", kugel: "\ud83c\udf81", ohren: "\ud83d\udc30", baerohren: "\ud83d\udc3b",
     maul: "\ud83e\udddb", schemen: "\ud83d\udc7b",
+    /* FUNK 75 — die zweiten Fassungen tragen dasselbe Zeichen wie
+       ihr Original; die „2" steht im Namen darunter. */
+    feuer2: "\ud83d\udd25", welle2: "\ud83c\udf0a", blut2: "\ud83e\ude78", eis2: "\u2744\ufe0f",
+    bluete2: "\ud83c\udf38", magie2: "\ud83e\ude84", funkeln2: "\u2728", regenbogen2: "\ud83c\udf08",
+    herzen2: "\u2764\ufe0f", noten2: "\ud83c\udfb5", strom2: "\u26a1",
     strom: "\u26a1", stromkugel: "\u26a1", strommantel: "\u26a1", blasen: "\ud83e\uded0", eis: "\u2744\ufe0f",
     bluete: "\ud83c\udf38", stoerung: "\ud83d\udcfa",
     blut: "\ud83e\ude78", spinnweb: "\ud83d\udd78\ufe0f", aus: "\u2b55"

@@ -33,9 +33,9 @@ const pruefe = (was, gut, zusatz) => {
   console.log((gut ? "  ok   " : "  FEHL ") + was + (zusatz ? "   " + zusatz : ""));
 };
 
-/* SCHON-PASS (Xanders Liste vom 23.09.): das Feuer ist seitdem EIN
-   Bild statt Teilchen — es hat unten einen eigenen Abschnitt. */
-const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /* Strom seit SCHON-PASS 7 ein Bild */
+/* FUNK 75: die alten Sprechbilder sind wieder da (Teilchen), die
+   neuen Fassungen heissen „… 2". Der alte Strom ist „strom2". */
+const TEILCHEN = ["magie", "noten", "herzen", "feuer", "strom2", "blasen"];
 
 (async () => {
   const srv = http.createServer((q, a) => {
@@ -71,7 +71,7 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
   /* SCHON-PASS 7: Strom in drei Arten (Plasmalampe, Kugel, Mantel) —
      zwei mehr. */
   /* SCHON-PASS 11–15: Kranz, Kugel, Hasen-, Baerenohren, Maul, Schemen */
-  pruefe("es sind vierundzwanzig Sprechbilder plus „aus“", liste.length === 25,
+  pruefe("es sind 35 Sprechbilder plus „aus“ (16 alte, 11 zweite Fassungen, 8 neue)", liste.length === 36,
     liste.length + ": " + liste.join(", "));
   ["eis", "bluete", "stoerung", "blut", "spinnweb"].forEach((n) => pruefe("„" + n + "“ ist neu dabei", liste.indexOf(n) >= 0));
   TEILCHEN.forEach((t) => pruefe("„" + t + "“ steht dabei", liste.indexOf(t) >= 0));
@@ -96,18 +96,40 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
   const bogen = await pg.evaluate(() => {
     const knopf = document.querySelector(".lc-platz");
     knopf.dataset.sprechbild = "regenbogen";
-    window.DMA_PRUEFUNG.sprechFeld(knopf, "regenbogen");
-    const lage = knopf.querySelector(".lc-sregenbogen .lc-rb-lage");
+    const kreis = knopf.querySelector(".lc-kreis");
+    const vor = getComputedStyle(kreis, "::before");
+    const nach = getComputedStyle(kreis, "::after");
+    const zaehle = (t) => (String(t).match(/rgb/g) || []).length;
+    return {
+      vorBild: vor.backgroundImage.slice(0, 40),
+      farbenVor: zaehle(vor.backgroundImage),
+      farbenNach: zaehle(nach.backgroundImage),
+      schein: nach.filter
+    };
+  });
+  pruefe("der Ring ist ein Farbkreis, kein einzelner Farbton",
+    /conic-gradient/.test(bogen.vorBild), bogen.vorBild);
+  pruefe("er zeigt viele Farben GLEICHZEITIG", bogen.farbenVor >= 8,
+    bogen.farbenVor + " Farben im Ring");
+  pruefe("und strahlt weich nach aussen", /blur/.test(bogen.schein || ""),
+    bogen.schein || "kein Schein");
+
+  console.log("\nREGENBOGEN 2 (SCHON-PASS 9)\n");
+  const bogen2 = await pg.evaluate(() => {
+    const knopf = document.querySelector(".lc-platz");
+    knopf.dataset.sprechbild = "regenbogen2";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "regenbogen2");
+    const lage = knopf.querySelector(".lc-sregenbogen2 .lc-rb-lage");
     if (!lage) return null;
     const cs = getComputedStyle(lage);
     const baender = ((cs.maskImage || cs.webkitMaskImage || "").match(/rgb\(0, 0, 0\)|rgba\(0, 0, 0, 1\)/g) || []).length;
     return { bild: cs.backgroundImage.slice(0, 40), farben: (cs.backgroundImage.match(/rgb/g) || []).length,
       schein: cs.filter, dauer: parseFloat(cs.animationDuration), lagen: knopf.querySelectorAll(".lc-rb-lage").length };
   });
-  pruefe("der Ring ist ein Farbkreis", bogen && /conic-gradient/.test(bogen.bild), bogen ? bogen.bild : "fehlt");
-  pruefe("viele Farben, die ineinanderlaufen", bogen && bogen.farben >= 8, bogen ? bogen.farben + " Farben" : "");
-  pruefe("weich (unscharf), nicht hart", bogen && /blur/.test(bogen.schein), bogen ? bogen.schein : "");
-  pruefe("sehr langsam driftend (mind. 60 s je Umlauf)", bogen && bogen.dauer >= 60, bogen ? bogen.dauer + " s" : "");
+  pruefe("Regenbogen 2: der Ring ist ein Farbkreis", bogen2 && /conic-gradient/.test(bogen2.bild), bogen2 ? bogen2.bild : "fehlt");
+  pruefe("Regenbogen 2: viele Farben, die ineinanderlaufen", bogen2 && bogen2.farben >= 8, bogen2 ? bogen2.farben + " Farben" : "");
+  pruefe("Regenbogen 2: weich (unscharf), nicht hart", bogen2 && /blur/.test(bogen2.schein), bogen2 ? bogen2.schein : "");
+  pruefe("Regenbogen 2: sehr langsam driftend (mind. 60 s je Umlauf)", bogen2 && bogen2.dauer >= 60, bogen2 ? bogen2.dauer + " s" : "");
 
   console.log("\nDIE TEILCHEN\n");
   for (const art of TEILCHEN) {
@@ -141,8 +163,8 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
   console.log("\nSCHON-PASS 2 — DAS FEUER NACH XANDERS LISTE\n");
   const fe = await pg.evaluate(() => {
     const knopf = document.querySelector(".lc-platz");
-    knopf.dataset.sprechbild = "feuer";
-    window.DMA_PRUEFUNG.sprechFeld(knopf, "feuer");
+    knopf.dataset.sprechbild = "feuer2";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "feuer2");
     const feld = knopf.querySelector(".lc-sprechfeld");
     const svg = feld && feld.querySelector("svg.lc-feuer-bild");
     if (!svg) return { da: false };
@@ -179,8 +201,8 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
   console.log("\nSCHON-PASS 3 — DIE WELLE OHNE LUECKE\n");
   const we = await pg.evaluate(() => {
     const knopf = document.querySelector(".lc-platz");
-    knopf.dataset.sprechbild = "welle";
-    window.DMA_PRUEFUNG.sprechFeld(knopf, "welle");
+    knopf.dataset.sprechbild = "welle2";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "welle2");
     const svg = knopf.querySelector(".lc-sprechfeld svg.lc-welle-bild");
     if (!svg) return { da: false };
     const k = [...svg.querySelectorAll("circle")];
@@ -203,8 +225,8 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
   console.log("\nSCHON-PASS 4 — BLUT\n");
   const bl = await pg.evaluate(() => {
     const knopf = document.querySelector(".lc-platz");
-    knopf.dataset.sprechbild = "blut";
-    window.DMA_PRUEFUNG.sprechFeld(knopf, "blut");
+    knopf.dataset.sprechbild = "blut2";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "blut2");
     const svg = knopf.querySelector(".lc-sprechfeld svg.lc-blut-bild");
     if (!svg) return { da: false };
     const maske = svg.querySelector("clipPath circle");
@@ -229,8 +251,8 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
   console.log("\nSCHON-PASS 5 — EIS\n");
   const ei = await pg.evaluate(() => {
     const knopf = document.querySelector(".lc-platz");
-    knopf.dataset.sprechbild = "eis";
-    window.DMA_PRUEFUNG.sprechFeld(knopf, "eis");
+    knopf.dataset.sprechbild = "eis2";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "eis2");
     const svg = knopf.querySelector(".lc-sprechfeld svg.lc-eis-bild");
     if (!svg) return { da: false };
     const zapfen = [...svg.querySelectorAll('path[fill^="url(#lcEz"]')];
@@ -252,18 +274,18 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
   console.log("\nSCHON-PASS 6 — BLUETE\n");
   await pg.evaluate(() => {
     const knopf = document.querySelector(".lc-platz");
-    knopf.dataset.sprechbild = "bluete";
-    window.DMA_PRUEFUNG.sprechFeld(knopf, "bluete");
+    knopf.dataset.sprechbild = "bluete2";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "bluete2");
   });
-  const groesse = () => pg.evaluate(() => [...document.querySelectorAll(".lc-sbluete .lc-bl-blatt")].map((g) => {
+  const groesse = () => pg.evaluate(() => [...document.querySelectorAll(".lc-sbluete2 .lc-bl-blatt")].map((g) => {
     const l = g.transform.animVal; let a = 1; for (let i = 0; i < l.numberOfItems; i++) { const t = l.getItem(i); if (t.type === 3) a *= t.matrix.a; }
     return Math.round(a * 100) / 100; }));
   await pg.waitForTimeout(450);
   const frueh = await groesse();
   await pg.waitForTimeout(1700);
   const offen = await groesse();
-  const formen = await pg.evaluate(() => new Set([...document.querySelectorAll(".lc-sbluete .lc-bl-blatt > path:first-of-type")].map((p) => p.getAttribute("d"))).size);
-  await pg.evaluate(() => window.DMA_PRUEFUNG.blueteZu(document.querySelector(".lc-sbluete")));
+  const formen = await pg.evaluate(() => new Set([...document.querySelectorAll(".lc-sbluete2 .lc-bl-blatt > path:first-of-type")].map((p) => p.getAttribute("d"))).size);
+  await pg.evaluate(() => window.DMA_PRUEFUNG.blueteZu(document.querySelector(".lc-sbluete2")));
   await pg.waitForTimeout(700);
   const halbZu = await groesse();
   await pg.waitForTimeout(1300);
@@ -311,8 +333,8 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
     const knopf = document.querySelector(".lc-platz");
     const erg = {};
     ["magie", "funkeln"].forEach((a) => {
-      knopf.dataset.sprechbild = a;
-      window.DMA_PRUEFUNG.sprechFeld(knopf, a);
+      knopf.dataset.sprechbild = a + "2";
+      window.DMA_PRUEFUNG.sprechFeld(knopf, a + "2");
       const feld = knopf.querySelector(".lc-sprechfeld");
       const svg = feld && feld.querySelector("svg");
       const punkte = svg ? [...svg.querySelectorAll(":scope > circle")] : [];
@@ -346,13 +368,13 @@ const TEILCHEN = ["blasen"]; /* Noten und Herzen seit SCHON-PASS 10 Bilder */ /*
   console.log("\nSCHON-PASS 10 — HERZEN UND NOTEN\n");
   const hn = await pg.evaluate(() => {
     const knopf = document.querySelector(".lc-platz");
-    knopf.dataset.sprechbild = "herzen";
-    window.DMA_PRUEFUNG.sprechFeld(knopf, "herzen");
+    knopf.dataset.sprechbild = "herzen2";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "herzen2");
     const hz = [...knopf.querySelectorAll(".lc-herzen-bild path")];
     const striche = hz.map((p) => parseFloat(p.getAttribute("stroke-width")) * knopf.querySelector(".lc-sprechfeld").getBoundingClientRect().width / 100);
     const zeichenH = knopf.querySelector(".lc-sprechfeld").textContent.trim().length;
-    knopf.dataset.sprechbild = "noten";
-    window.DMA_PRUEFUNG.sprechFeld(knopf, "noten");
+    knopf.dataset.sprechbild = "noten2";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "noten2");
     const nt = [...knopf.querySelectorAll(".lc-noten-bild > g")];
     const r = nt.map((g) => { const m = g.getAttribute("transform").match(/translate\(([\d.]+) ([\d.]+)\)/); return Math.hypot(m[1] - 50, m[2] - 50); });
     return { herzen: hz.length, strichMin: Math.min(...striche), strichMax: Math.max(...striche), zeichenH,

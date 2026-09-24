@@ -1356,11 +1356,11 @@ window.LiveChat = (function () {
     noten:      "Noten — Musik steigt aus dem Bild auf",
     herzen:     "Herzen — kleine Herzen steigen auf",
     feuer:      "Feuer — Flammen züngeln am Rand",
-    /* SCHON-PASS (Xanders Liste vom 23.09.): Strom in drei Arten —
-       A Plasmalampe, B wandernde Kugel, C Mantel. */
-    strom:      "Plasmalampe — Blitze aus der Mitte suchen den Rand",
-    stromkugel: "Kugelblitz — eine Kugel wandert am Rand und entlädt sich nach außen",
-    strommantel:"Strommantel — Entladungen wie ein Käfig außen um den Kreis",
+    /* FUNK 75 (24.09.): „die einzige Verbesserung, die wir jetzt
+       uebernehmen als Version 1, aber ohne dass du eine Eins dazu
+       schreibst, ist Strom" — die Plasmalampe heisst wieder „Strom",
+       der alte Strom ist jetzt „Strom 2". */
+    strom:      "Strom — eine Plasmalampe: Blitze aus der Mitte suchen den Rand",
     blasen:     "Blasen — Seifenblasen steigen auf",
     /* GEWUENSCHT: „Vielleicht kannst du noch was mit Eis machen, dass
        das Bild gefriert, wenn ich spreche" und „als Sprech-Effekt
@@ -1383,7 +1383,27 @@ window.LiveChat = (function () {
        haengt, solange jemand spricht. Also Sprechbilder. */
     blut:       "Blut — es läuft über das Bild, solange du sprichst",
     spinnweb:   "Spinnweben — der Rahmen wächst zu, eine Spinne seilt sich ab",
-    /* SCHON-PASS 11–15 (Xanders Liste vom 23.09.): die neuen. */
+    /* FUNK 75 (24.09.): „bei den Sprechbildern die alten alle
+       wiederherstellen, so wie sie waren, und alles, was du neu
+       gemacht hast, soll eine zweite Version sein … z.B. Blut 2 …
+       und die alten heissen einfach nur normal."
+       Die alten stehen oben unveraendert an ihrem Platz; die neuen
+       Fassungen aus dem SCHON-PASS folgen hier als „… 2". */
+    feuer2:     "Feuer 2 — lodernde Flammen schlagen nach oben, mit Funken",
+    welle2:     "Schallwellen 2 — Schallringe laufen weit nach außen",
+    blut2:      "Blut 2 — es quillt am Rand hervor und tropft",
+    eis2:       "Eis 2 — Zapfen wachsen, Eisblumen ziehen herein",
+    bluete2:    "Blüte 2 — zwölf Blätter gehen Blatt für Blatt auf und zu",
+    magie2:     "Magie 2 — ein Sternenstrudel um den Kreis",
+    funkeln2:   "Funkeln 2 — dichte Lichter glitzern am Rand",
+    regenbogen2:"Regenbogen 2 — ein Farbband dreht sich um den Kreis",
+    herzen2:    "Herzen 2 — viele Herzen steigen am Rand auf",
+    noten2:     "Noten 2 — große Noten tanzen aus dem Bild",
+    strom2:     "Strom 2 — Blitze zucken um den Kreis",
+    /* SCHON-PASS 11–15 (Xanders Liste vom 23.09.): die ganz neuen —
+       sie tragen keine Nummer. */
+    stromkugel: "Kugelblitz — eine Kugel wandert am Rand und entlädt sich nach außen",
+    strommantel:"Strommantel — Entladungen wie ein Käfig außen um den Kreis",
     kranz:      "Adventskranz — Tannenzweige und Kerzen am Rand",
     kugel:      "Schneekugel — Glas, Schnee am Rand, Päckchen unten",
     ohren:      "Hasenohren — wackeln beim Sprechen",

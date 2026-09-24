@@ -173,16 +173,8 @@ const pruefe = (was, gut, zusatz) => {
     sb.blut.lagen >= 6, sb.blut.lagen + " Lagen");
   pruefe("Blut: beide Bewegungen laufen (Fallen und Sammeln)",
     (sb.blut.ani || "").split(",").length === 2, String(sb.blut.ani));
-  /* SCHON-PASS 5 (Xanders Liste vom 23.09.): die Zapfen haengen nicht
-     mehr als Bild am Platz (sie deckten den Namen zu), sondern wachsen
-     im Sprechfeld aus der Ringlinie — gemessen in pruefe-sprechbilder. */
-  const eisNeu = await pg.evaluate(() => {
-    const k = document.querySelector(".lc-platz");
-    k.dataset.sprechbild = "eis"; k.classList.add("lc-platz-spricht");
-    window.DMA_PRUEFUNG.sprechFeld(k, "eis");
-    return !!k.querySelector(".lc-sprechfeld .lc-eis-bild");
-  });
-  pruefe("Eis: die Zapfen wachsen im Sprechfeld aus der Ringlinie", eisNeu, String(eisNeu));
+  pruefe("Eis: die Zapfen liegen auf der freien Schicht",
+    sb.eis.anzeige === "block" && sb.eis.svg === true, sb.eis.anzeige);
   /* HIER STAND EINE REGEL, DIE ICH MIR SELBST GEGEBEN HATTE — und
      sie war falsch. „je laenger ich spreche am Stueck, dass die
      Spinne tiefer krabbelt" hiess fuer mich: EIN langer Durchlauf,

@@ -362,17 +362,12 @@ function tonMessen(name) {
              funken: platz.querySelectorAll(".lc-funke").length,
              tiefste: Math.max(...fuss) };
   });
-  /* SCHON-PASS 2 (Xanders Liste vom 23.09.): das Feuer ist seitdem EIN
-     Bild — Zungen und Funken, die an den Spitzen starten. Die alte
-     Zaehlung (30 Aufkleber, 30 Funken) gilt nicht mehr; die neuen Zahlen
-     misst pruefe-sprechbilder. Hier nur: es gibt Zungen UND Funken. */
-  const feNeu = await pg.evaluate(() => {
-    const svg = document.querySelector('[data-lc-platz="1"] .lc-sprechfeld .lc-feuer-bild');
-    return svg ? { zungen: svg.querySelectorAll("g[transform]").length, funken: svg.querySelectorAll("circle > animateMotion").length } : null;
-  });
-  sage(!!feNeu && feNeu.zungen >= 24 && feNeu.funken >= 6,
-    "Feuer: Zungen und Funken an den Spitzen",
-    feNeu ? feNeu.zungen + " Zungen, " + feNeu.funken + " Funken" : "kein Feuerbild");
+  sage(fe.flammen === 30 && fe.funken === 30,
+    "jede Flamme hat ihren eigenen Funken an der Spitze",
+    fe.flammen + " Flammen, " + fe.funken + " Funken");
+  sage(fe.tiefste < fe.radius - 1.4,
+    "und die Flammenfuesse sitzen tiefer im Bild",
+    "weitester Fuss " + fe.tiefste.toFixed(2) + " px bei Radius " + fe.radius + " px");
 
   /* „bei der Bluete … dass wenn man nicht durchgaengig spricht, dass
      sie sich wieder verschliessen." */

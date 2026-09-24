@@ -358,7 +358,7 @@ const PAARE = [
   /* 17 seit Fassung 358: Blut und Spinnweben sind dazugekommen. */
   /* 25 seit Fassung 574 (SCHON-PASS): Kugelblitz, Strommantel, Kranz,
      Kugel, Hasen- und Baerenohren, Vampirmaul, Schemen. */
-  pruefe("es zeigt alle Sprechbilder", sb.kacheln === 25, sb.kacheln + " Kacheln");
+  pruefe("es zeigt alle Sprechbilder", sb.kacheln === 36, /* FUNK 75: 16 alte + 11 „… 2" + 8 neue + aus */ sb.kacheln + " Kacheln");
   pruefe("und markiert genau das, was gerade gilt", sb.markiert === 1,
     sb.markiert + " markiert");
   pruefe("ein Tipp setzt es wirklich", Boolean(sb.gewaehlt) && sb.zu === true,
