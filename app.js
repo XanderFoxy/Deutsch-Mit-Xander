@@ -38796,7 +38796,15 @@
         /* Zwei Kraenze, der hintere um eine halbe Teilung versetzt und
            etwas dunkler — so sieht es aus wie eine gefuellte Bluete und
            nicht wie ein Zahnrad. */
-        b.style.setProperty("--w", (i * (360 / wieViele) + (i % 2 ? 15 : 0)).toFixed(1) + "deg");
+        /* FUNK 75 — XANDER: „die Blume müsste noch reparieren, dass ihre
+           Blütenblätter keine Lücken mehr hat bzw. die du immer in Paaren
+           gemacht hast … so dass die Blätter alle nebeneinander sind."
+           GEFUNDEN: hier stand i · 30° + (ungerade ? 15° : 0). Damit lag
+           jedes ungerade Blatt nur 15° neben seinem Vorgaenger und 45° vor
+           dem naechsten — Paare mit Luecken. Die zwei Kraenze sind schon
+           dadurch versetzt, dass gerade und ungerade Blaetter sich
+           abwechseln: vorn 0°, 60°, 120° …, hinten 30°, 90°, 150° … */
+        b.style.setProperty("--w", (i * (360 / wieViele)).toFixed(1) + "deg");
         b.style.setProperty("--spaet", (420 + i * 90) + "ms");
         if (i % 2) b.classList.add("lc-blbl-hinten");
         kranz.appendChild(b);
