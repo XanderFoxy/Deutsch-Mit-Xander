@@ -29,10 +29,84 @@
    Werkzeug sie gemeinsam.
 
    AUFRUF:  node werkzeug/fassung-setzen.js 421
+            node werkzeug/fassung-setzen.js --nur-stempel
+
+   FUNK 101 — XANDER: „warum es im Chat manchmal so extrem lange
+   lädt … liegt das an diesen Updates … bitte mach das der Chat
+   immer flüssig bleibt und dass er von den Updates nicht
+   beeinträchtigt ist."
+
+   GEMESSEN (werkzeug/pruefe-ladezeit.js, 10 Mbit/s, Rechner
+   vierfach gebremst): nach einem Update holte jedes Gerät ALLE
+   Skripte neu, 3,1 MB, 4,4 s — auch die, an denen sich nichts
+   geändert hatte, weil jede Adresse an der Fassungsnummer hing.
+   Ohne Update waren es 1 KB und 0,8 s. Bei mehreren Updates am
+   Tag zahlte man die 3,1 MB also jedes Mal.
+
+   Jetzt bekommt jede Datei ihren EIGENEN Stempel aus ihrem Inhalt
+   (window.DMA_STEMPEL in index.html). Eine Datei, die sich nicht
+   geändert hat, behält ihre Adresse und kommt aus dem
+   Zwischenspeicher. Neu geladen wird nur, was wirklich neu ist.
+
+   Damit ein Stempel nie hinter dem Inhalt herhinkt, legt dieses
+   Werkzeug einen git-Haken an (.git/hooks/pre-commit): vor JEDEM
+   Commit werden die Stempel neu gerechnet (--nur-stempel).
    ========================================================= */
 const fs = require("fs");
 const path = require("path");
 const WURZEL = path.dirname(__dirname);
+
+const indexPfad = path.join(WURZEL, "index.html");
+
+/* Jede Skript- und Stildatei im Hauptordner bekommt einen Stempel aus
+   ihrem Inhalt; die Ordner mit Tönen, Tutor und Szenen je einen für den
+   ganzen Ordner (ändert sich ein Ton, gilt der neue Stempel für alle
+   Töne — das ist selten und hält die Liste klein). */
+const STEMPEL_ORDNER = ["ton", "tutor", "szenen", "aussprache"];
+function stempelSetzen() {
+  const crypto = require("crypto");
+  let html = fs.readFileSync(indexPfad, "utf8");
+  const stempel = {};
+  fs.readdirSync(WURZEL).filter((n) => /^[a-z0-9-]+\.(js|css)$/i.test(n)).sort().forEach((n) => {
+    stempel[n] = crypto.createHash("sha1").update(fs.readFileSync(path.join(WURZEL, n))).digest("hex").slice(0, 10);
+  });
+  const alleDateien = (ordner) => fs.readdirSync(ordner, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? alleDateien(path.join(ordner, e.name)) : [path.join(ordner, e.name)]).sort();
+  STEMPEL_ORDNER.forEach((o) => {
+    const wo = path.join(WURZEL, o);
+    if (!fs.existsSync(wo)) return;
+    const h = crypto.createHash("sha1");
+    alleDateien(wo).forEach((f) => { h.update(path.relative(WURZEL, f)); h.update(fs.readFileSync(f)); });
+    stempel[o + "/"] = h.digest("hex").slice(0, 10);
+  });
+  const zeile = "<script>window.DMA_STEMPEL = " + JSON.stringify(stempel) + ";</script>";
+  const muster = /<script>window\.DMA_STEMPEL = \{[^\n]*\};<\/script>/;
+  if (muster.test(html)) html = html.replace(muster, zeile);
+  else html = html.replace(/(<script>window\.DMA_VERSION = "\d+";<\/script>)/, "$1\n" + zeile);
+  fs.writeFileSync(indexPfad, html);
+  return Object.keys(stempel).length;
+}
+
+function hakenAnlegen() {
+  try {
+    const haken = path.join(WURZEL, ".git", "hooks", "pre-commit");
+    const inhalt = "#!/bin/sh\n# FUNK 101: Stempel vor jedem Commit neu rechnen (werkzeug/fassung-setzen.js)\n"
+      + "grep -q nur-stempel werkzeug/fassung-setzen.js 2>/dev/null || exit 0\n"
+      + "node werkzeug/fassung-setzen.js --nur-stempel >/dev/null && git add index.html\n"
+      + "exit 0\n";
+    if (!fs.existsSync(haken) || fs.readFileSync(haken, "utf8") !== inhalt) {
+      fs.writeFileSync(haken, inhalt);
+      fs.chmodSync(haken, 0o755);
+    }
+  } catch (e) {}
+}
+
+if (process.argv[2] === "--nur-stempel") {
+  const n = stempelSetzen();
+  hakenAnlegen();
+  console.log("Stempel für " + n + " Dateien gesetzt");
+  process.exit(0);
+}
 
 const zahl = String(process.argv[2] || "").trim();
 if (!/^\d+$/.test(zahl)) {
@@ -40,7 +114,6 @@ if (!/^\d+$/.test(zahl)) {
   process.exit(1);
 }
 
-const indexPfad = path.join(WURZEL, "index.html");
 let html = fs.readFileSync(indexPfad, "utf8");
 const muster = /<script>window\.DMA_VERSION = "(\d+)";<\/script>/;
 const treffer = html.match(muster);
@@ -55,4 +128,6 @@ fs.writeFileSync(indexPfad, html);
 fs.writeFileSync(path.join(WURZEL, "fassung.json"),
   JSON.stringify({ fassung: zahl, stand: new Date().toISOString() }, null, 2) + "\n");
 
-console.log("Fassung " + vorher + " → " + zahl + " (index.html und fassung.json)");
+const n = stempelSetzen();
+hakenAnlegen();
+console.log("Fassung " + vorher + " → " + zahl + " (index.html und fassung.json), Stempel für " + n + " Dateien");

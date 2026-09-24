@@ -13470,7 +13470,7 @@
     return aussprTonLaden().then(() => {
       const weg = aussprTonWeg(w);
       if (!weg) return null;
-      return AusspracheP.tonLesen(weg + (window.DMA_V ? DMA_V(weg) : "?v=" + (window.DMA_VERSION || "1"))).then((puffer) => {
+      return AusspracheP.tonLesen(weg + "?v=" + (window.DMA_VERSION || "1")).then((puffer) => {
         if (!puffer || !puffer.length) return null;
         return { puffer: puffer, art: "alex", huelle: AusspracheP.huellkurve(puffer, 150) };
       }).catch(() => null);
@@ -13687,7 +13687,7 @@
      Schlimmste von beidem. */
   function aussprTonSpielen(weg, tempo) {
     return new Promise((fertig) => {
-      const a = new Audio(weg + (window.DMA_V ? DMA_V(weg) : "?v=" + (window.DMA_VERSION || "1")));
+      const a = new Audio(weg + "?v=" + (window.DMA_VERSION || "1"));
       a.playbackRate = tempo || 1;
       let erledigt = false;
       const schluss = (ok) => { if (erledigt) return; erledigt = true; fertig(ok); };
@@ -20369,7 +20369,7 @@
       const ton = (plan && plan.ton) || w;
       if (!lcGeraeuschDa(ton) || lcGeraeuschAblage[ton]) return false;
       try {
-        const au = new Audio("ton/" + ton + lcGeraeuschArt() + (window.DMA_V ? DMA_V("ton/") : "?v=" + (window.DMA_VERSION || "1")));
+        const au = new Audio("ton/" + ton + lcGeraeuschArt() + "?v=" + (window.DMA_VERSION || "1"));
         au.preload = "auto";
         lcGeraeuschAblage[ton] = au;
         zahl++;
@@ -27945,7 +27945,7 @@
     try {
       let a = lcGeraeuschAblage[name];
       if (!a) {
-        a = new Audio("ton/" + name + lcGeraeuschArt() + (window.DMA_V ? DMA_V("ton/") : "?v=" + (window.DMA_VERSION || "1")));
+        a = new Audio("ton/" + name + lcGeraeuschArt() + "?v=" + (window.DMA_VERSION || "1"));
         a.preload = "auto";
         lcGeraeuschAblage[name] = a;
       }
@@ -29707,7 +29707,7 @@
   function lcGeraeuschVorwaermen(name) {
     try {
       if (!lcToeneAn() || !lcGeraeuschDa(name) || lcGeraeuschAblage[name]) return;
-      const a = new Audio("ton/" + name + lcGeraeuschArt() + (window.DMA_V ? DMA_V("ton/") : "?v=" + (window.DMA_VERSION || "1")));
+      const a = new Audio("ton/" + name + lcGeraeuschArt() + "?v=" + (window.DMA_VERSION || "1"));
       a.preload = "auto";
       try { a.load(); } catch (e) {}
       lcGeraeuschAblage[name] = a;
@@ -63883,7 +63883,7 @@
     if (logikGeladen) return logikGeladen;
     logikGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-logik.js" + (window.DMA_V ? DMA_V("data-logik.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-logik.js?v=" + (window.DMA_VERSION || "1");
       s.onload = () => fertig(true);
       s.onerror = () => { logikGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -64069,7 +64069,7 @@
     if (ausspracheKursGeladen) return ausspracheKursGeladen;
     ausspracheKursGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-aussprache.js" + (window.DMA_V ? DMA_V("data-aussprache.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-aussprache.js?v=" + (window.DMA_VERSION || "1");
       s.onload = () => fertig(true);
       s.onerror = () => { ausspracheKursGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -64497,7 +64497,7 @@
     if (dialogeGeladen) return dialogeGeladen;
     dialogeGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-dialoge.js" + (window.DMA_V ? DMA_V("data-dialoge.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-dialoge.js?v=" + (window.DMA_VERSION || "1");
       s.onload = () => fertig(true);
       s.onerror = () => { dialogeGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -64836,7 +64836,7 @@
     if (festeGeladen) return festeGeladen;
     festeGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-feste.js" + (window.DMA_V ? DMA_V("data-feste.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-feste.js?v=" + (window.DMA_VERSION || "1");
       s.onload = () => fertig(true);
       s.onerror = () => { festeGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -71559,7 +71559,7 @@
     beitraegeGeladen = new Promise((fertig) => {
       if (window.DMA_DATEN && window.DMA_DATEN.EIGENE_BEITRAEGE) { fertig(true); return; }
       const sk = document.createElement("script");
-      sk.src = "data-beitraege.js" + (window.DMA_V ? DMA_V("data-beitraege.js") : "?v=" + (window.DMA_VERSION || "1"));
+      sk.src = "data-beitraege.js?v=" + (window.DMA_VERSION || "1");
       sk.async = true;
       sk.onload = () => fertig(true);
       sk.onerror = () => { console.warn("Beiträge konnten nicht geladen werden."); fertig(false); };
@@ -71982,7 +71982,7 @@
     if (witzeGeladen) return witzeGeladen;
     witzeGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-witze.js" + (window.DMA_V ? DMA_V("data-witze.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-witze.js?v=" + (window.DMA_VERSION || "1");
       s.onload = () => fertig(true);
       s.onerror = () => { witzeGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -78926,7 +78926,7 @@
     if (window.DMA_WORTKATEGORIEN) { wortKatGeladen = Promise.resolve(true); return wortKatGeladen; }
     wortKatGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-wortkategorien.js" + (window.DMA_V ? DMA_V("data-wortkategorien.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-wortkategorien.js?v=" + (window.DMA_VERSION || "1");
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { wortKatGeladen = null; fertig(false); };
@@ -83608,7 +83608,7 @@
     if (window.DMA_WORTSPRACHEN) { sprachenGeladen = Promise.resolve(true); return sprachenGeladen; }
     sprachenGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "wortsprachen.js" + (window.DMA_V ? DMA_V("wortsprachen.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "wortsprachen.js?v=" + (window.DMA_VERSION || "1");
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { sprachenGeladen = null; fertig(false); };
@@ -83641,7 +83641,7 @@
     if (window.DMA_SZENEN) { szenenGeladen = Promise.resolve(true); return szenenGeladen; }
     szenenGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-szenen.js" + (window.DMA_V ? DMA_V("data-szenen.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-szenen.js?v=" + (window.DMA_VERSION || "1");
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { szenenGeladen = null; fertig(false); };
@@ -83712,7 +83712,7 @@
       };
       if ((window.DMA_SZENE || {})[id]) { fertigmachen(); return; }
       const sk = document.createElement("script");
-      sk.src = "szenen/" + id + ".js" + (window.DMA_V ? DMA_V("szenen/") : "?v=" + (window.DMA_VERSION || "1"));
+      sk.src = "szenen/" + id + ".js?v=" + (window.DMA_VERSION || "1");
       sk.async = true;
       sk.onload = fertigmachen;
       sk.onerror = () => { szeneLaeuft[id] = null; fertig(null); };
@@ -84954,7 +84954,7 @@
     if (window.DMA_LERNWEG) { lernwegGeladen = Promise.resolve(true); return lernwegGeladen; }
     lernwegGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-lernweg.js" + (window.DMA_V ? DMA_V("data-lernweg.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = "data-lernweg.js?v=" + (window.DMA_VERSION || "1");
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { lernwegGeladen = null; fertig(false); };
@@ -92086,7 +92086,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (brDateien[weg]) return brDateien[weg];
     brDateien[weg] = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = weg + (window.DMA_V ? DMA_V(weg) : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = weg + "?v=" + (window.DMA_VERSION || "1");
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { brDateien[weg] = null; fertig(false); };
@@ -94339,7 +94339,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     tutorTonStoppen();
     if (!name) return false;
     try {
-      const a = new Audio("tutor/" + name + tutorTonArt() + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1")));
+      const a = new Audio("tutor/" + name + tutorTonArt() + "?v=" + (window.DMA_VERSION || "1"));
       a.preload = "auto";
       a.volume = 0.95;
       tutorTon = a;
@@ -94562,7 +94562,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     const v = document.createElement("video");
     v.muted = true; v.playsInline = true; v.setAttribute("playsinline", "");
     v.crossOrigin = "anonymous";
-    v.src = "tutor/video/" + ton + "-maske.mp4" + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1"));
+    v.src = "tutor/video/" + ton + "-maske.mp4?v=" + (window.DMA_VERSION || "1");
     const ecke = "attribute vec2 p;varying vec2 t;void main(){t=vec2((p.x+1.0)/2.0,(1.0-p.y)/2.0);"
       + "gl_Position=vec4(p,0.0,1.0);}";
     const flaeche = "precision mediump float;varying vec2 t;uniform sampler2D b;"
@@ -94683,7 +94683,7 @@ An einem Morgen lief ein kleiner Fuchs los…
        Safari spielt webm mit Alpha nicht — dort schlaegt play() fehl
        oder das Bild bleibt leer, und genau dafuer ist der Rueckfall
        da: das Standbild steht ohnehin darunter. */
-    const quelle = "tutor/video/" + ton + ".webm" + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1"));
+    const quelle = "tutor/video/" + ton + ".webm?v=" + (window.DMA_VERSION || "1");
     if (v.getAttribute("src") !== quelle) v.setAttribute("src", quelle);
     v.onerror = aus;
     v.onended = aus;
@@ -94864,7 +94864,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       tutorBereichGezeigt.add(sub);
       const b = tutorBuehne();
       const bild = b.querySelector("#tutorFigur");
-      const neuBild = "tutor/alex-" + tutorArt() + ".png" + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1"));
+      const neuBild = "tutor/alex-" + tutorArt() + ".png?v=" + (window.DMA_VERSION || "1");
       if (bild.getAttribute("src") !== neuBild) bild.setAttribute("src", neuBild);
       b.classList.toggle("tutor-comic", tutorArt() === "comic");
       requestAnimationFrame(() => requestAnimationFrame(() => b.classList.add("tutor-da")));
@@ -94905,7 +94905,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       tutorGezeigt.add(bereich);
       const b = tutorBuehne();
       const bild = b.querySelector("#tutorFigur");
-      const neu = "tutor/alex-" + tutorArt() + ".png" + (window.DMA_V ? DMA_V("tutor/") : "?v=" + (window.DMA_VERSION || "1"));
+      const neu = "tutor/alex-" + tutorArt() + ".png?v=" + (window.DMA_VERSION || "1");
       if (bild.getAttribute("src") !== neu) bild.setAttribute("src", neu);
       b.classList.toggle("tutor-comic", tutorArt() === "comic");
       /* Erst im nächsten Bild anschalten, sonst gibt es keine

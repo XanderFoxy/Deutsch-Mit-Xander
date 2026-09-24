@@ -1477,14 +1477,7 @@ window.LiveChat = (function () {
      kein Neuladen mehr, sondern ein Weggehen; dann bleibt der
      Raum zu. */
   var RUECK_SCHLUESSEL = "dma_livechat_zurueck";
-  /* FUNK 101 — XANDER: „wenn ich irgendwas auf der Seite neu laden muss
-     dass ich trotzdem schnell in den Chat reinkomme … dass ich sofort
-     mit den Leuten reden kann".
-     Die Rückkehr ohne Nachfrage galt nur 2 Minuten. Wer nach einem
-     längeren Anruf oder einem Update zurückkam, musste wieder durch das
-     Tor. Jetzt gilt sie 30 Minuten; sie liegt im sessionStorage, gilt
-     also nur für diesen einen Tab. */
-  var RUECK_FRIST_MS = 30 * 60 * 1000;
+  var RUECK_FRIST_MS = 120000;
   function rueckkehrMerken() {
     try {
       sessionStorage.setItem(RUECK_SCHLUESSEL, JSON.stringify({
