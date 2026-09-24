@@ -32949,25 +32949,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   60%  { opacity: .9; transform: translateY(-35%) scale(1.1); }
   100% { opacity: 0; transform: translateY(-70%) scale(.6); }
 }
-
-/* === RUNDE 101: STADT · LAND · FLUSS KOMPAKT ==========================
-   XANDER (Walkie #94): „Das Panel von Stadt Land Fluss ist viel zu groß."
-   GEMESSEN auf 360 × 740 (kleines Android): 500 px hoch — zwei Drittel
-   des Bildschirms, der Livestream war weg. Jetzt: Kopf in einer Zeile
-   mit dem Hinweis darunter klein, Felder zweispaltig, flache Knoepfe.
-   Die Eingabe bleibt 16 px gross — darunter zoomt das Handy beim
-   Antippen hinein („Kein Hineinzoomen"). */
-.lc-slf-live { margin: 6px 8px 8px; padding: 7px 9px 8px; border-radius: 12px; border-width: 1.5px; }
-.lc-slf-kopf { gap: 8px; }
-.lc-slf-titel { font-size: 0.82rem; }
-.lc-slf-buchstabe { width: 30px; height: 30px; border-radius: 8px; font-size: 1.15rem; }
-.lc-slf-uhr { font-size: 0.85rem; }
-.lc-slf-hinweis { margin: 3px 0 5px; font-size: 0.7rem; line-height: 1.25; }
-.lc-slf-felder { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 5px 7px; }
-.lc-slf-feld { gap: 1px; font-size: 0.66rem; }
-.lc-slf-feld input { font-size: 16px; padding: 4px 8px; border-radius: 8px; line-height: 1.2; }
-.lc-slf-knoepfe { gap: 6px; margin-top: 7px; }
-.lc-slf-knoepfe button { padding: 6px 12px; border-radius: 9px; font-size: 0.82rem; }
-.lc-slf-stopp { font-size: 0.9rem; }
-.lc-slf-tabelle { font-size: 0.74rem; }
-.lc-slf-tabelle th, .lc-slf-tabelle td { padding: 3px 5px; }

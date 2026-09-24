@@ -49,18 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "560: Waschmaschine",
+  stand: "561: Abnahme-Runde im Walkie, Stadt·Land·Fluss kompakt",
 
   inArbeit: [
-    { seit: "2026-09-24T04:04",
-      text: "Waschmaschine: eigener Schleuder-Ton als neue Datei? (Frage im Walkie)" },
-    { seit: "2026-09-24T04:04",
-      text: "Was genau ist mit „die Sprechbilder“ gemeint? (Frage im Walkie)" },
+    { seit: "2026-09-24T04:25",
+      text: "Deine Antworten auf die 37 Abnahme-Fragen" },
+    { seit: "2026-09-24T04:25",
+      text: "Waschmaschine: eigener Ton als neue Datei?" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T04:04",
-      text: "Waschmaschine (/waschmaschine Name, /waschen Name, im Menü unter „Sauber machen“): Das Bild wird zum Bullauge. Die Tür schwenkt zu, Wasser läuft ein, das Bild wirbelt beim Waschen hin und her, dann wird abgepumpt und fünfmal geschleudert. Dabei rüttelt die Maschine. Am Ende geht die Tür auf und das Bild torkelt nach. Das Glas ist in der Mitte klar, das Wasser steht höchstens bei 40 %." },
+    { seit: "2026-09-24T04:25",
+      text: "Stadt·Land·Fluss-Blatt kompakt: auf einem kleinen Android (360 px) 256 px statt 500 px hoch. Kopf in einer Zeile, Felder zweispaltig, Eingabe bleibt 16 px (kein Hineinzoomen)." },
+    { seit: "2026-09-24T04:25",
+      text: "Walkie: 37 Abnahme-Fragen, jeder Punkt seit gestern früh einzeln, mit „📍 Wo testen“." },
   ],
 };
