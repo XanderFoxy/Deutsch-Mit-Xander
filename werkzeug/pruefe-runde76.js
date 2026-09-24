@@ -66,8 +66,9 @@ console.log("\nERST DIE ANIMATION, DANN DER PLATZWECHSEL\n");
    Animation nicht richtig mitgezogen." Das Lasso zieht jetzt bis ganz
    an den Platz (74–86 % von 3,4 s) — also 2950 statt 2300. */
 pruefe("die Sitzordnung geht erst raus, wenn die Animation da ist",
-  /* RUNDE 101: Bagger (4200) und „Hau ab" (1900) sind dazugekommen. */
-  /var dauerH = wieH === "lasso" \? 2950 : wieH === "kranheben" \? 2420 : wieH === "bagger" \? 4200 : wieH === "hauab" \? 1900 : 3150;/
+  /* RUNDE 101: Bagger (4200) und „Hau ab" (1900) sind dazugekommen,
+     dann der Bagger mit der Schaufel (5600). */
+  /var dauerH = wieH === "lasso" \? 2950 : wieH === "kranheben" \? 2420 : wieH === "bagger" \? 4200 : wieH === "schaufel" \? 5600 : wieH === "hauab" \? 1900 : 3150;/
     .test(lc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " "))
   && /setTimeout\(schickenH, dauerH\)/.test(lc));
 pruefe("und sie geht gar nicht raus, wenn der Raum gewechselt hat",

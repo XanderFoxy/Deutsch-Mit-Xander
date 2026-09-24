@@ -148,7 +148,7 @@ pruefe("und die Kugel rollt nicht zum Spieler zurueck",
    reiheAlt") steht nur noch in einem Kommentar, der erklaert, warum sie
    weg ist — geprueft wird deshalb der Code OHNE Kommentare. */
 pruefe("das Werkzeug entscheidet, nicht die Sitzreihe",
-  /var wieH = lassoZieht \? "lasso" : \(kranZieht \? "kranheben" : \(baggerZieht \? "bagger"\s*: \(hauabZieht \? "hauab" : "heber"\)\)\);/.test(lc)
+  /var wieH = lassoZieht \? "lasso" : \(kranZieht \? "kranheben" : \(baggerZieht \? "bagger"\s*: \(schaufelZieht \? "schaufel" : \(hauabZieht \? "hauab" : "heber"\)\)\)\);/.test(lc)
   && !/reiheNeu < reiheAlt \? "heber" : "lasso"/.test(lc.replace(/\/\*[\s\S]*?\*\//g, "")));
 pruefe("die Angel bekommt ihr Ziel mitgeschickt",
   /wirkung: wieH, wen: wenH\.name, ziel: nummerH/.test(lc)

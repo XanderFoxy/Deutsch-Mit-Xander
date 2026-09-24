@@ -42,7 +42,7 @@ const sage = (gut, was, zusatz) => {
   sage(/art === "kranheb"/.test(lc), "der Befehl /kranheb steht in livechat.js");
   sage(/var kranZieht = false;/.test(lc)
     /* RUNDE 101 — der Bagger haengt sich genauso dazwischen. */
-    && /lassoZieht \? "lasso" : \(kranZieht \? "kranheben" : \(baggerZieht \? "bagger"\s*: \(hauabZieht \? "hauab" : "heber"\)\)\)/.test(lc),
+    && /lassoZieht \? "lasso" : \(kranZieht \? "kranheben" : \(baggerZieht \? "bagger"\s*: \(schaufelZieht \? "schaufel" : \(hauabZieht \? "hauab" : "heber"\)\)\)\)/.test(lc),
     "und das Werkzeug sagt selbst an, welche Animation laeuft");
 
   const srv = http.createServer((q, a) => {

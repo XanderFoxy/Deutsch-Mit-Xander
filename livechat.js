@@ -623,6 +623,7 @@ window.LiveChat = (function () {
      falsch (siehe Runde 74). */
   var kranZieht = false;
   var baggerZieht = false;   /* RUNDE 101 — der Schaufelradbagger */
+  var schaufelZieht = false; /* RUNDE 101 — der Bagger mit der Schaufel */
   var hauabZieht = false;    /* RUNDE 101 — „Hau ab", wegschieben */
   /* =================================================================
      RUNDE 99 — ZWEI WERFEN GLEICHZEITIG
@@ -645,7 +646,7 @@ window.LiveChat = (function () {
     /* Eine Aktion reist als art „text" mit chatArt „aktion" (anAlle). */
     if (!n || (n.art !== "aktion" && n.chatArt !== "aktion")) return;
     if (n.wirkung !== "heber" && n.wirkung !== "lasso" && n.wirkung !== "kranheben"
-        && n.wirkung !== "bagger" && n.wirkung !== "hauab") return;
+        && n.wirkung !== "bagger" && n.wirkung !== "schaufel" && n.wirkung !== "hauab") return;
     var jetzt = Date.now();
     offeneZuege = offeneZuege.filter(function (z) { return z.bis > jetzt && !z.weg; });
     var werfer = String(n.name || ""), wen = String(n.wen || ""), ziel = Number(n.ziel) || 0;
@@ -10090,6 +10091,8 @@ window.LiveChat = (function () {
       was: "jemanden aufziehen und als Hot Rod losflitzen lassen \u2014 sein Dampf macht die anderen Gesichter schmutzig" },
     { gr: "reden", w: "hauab", kurz: "abstand", nutzt: "/hauab Name",
       was: "mit beiden H\u00e4nden wegschieben, wer dir zu nah kommt \u2014 er rutscht einen Platz weiter" },
+    { gr: "raum", w: "schaufel", kurz: "baggerschaufel", nutzt: "/schaufel Name 3",
+      was: "der Bagger nimmt jemanden in die Schaufel und f\u00e4hrt damit auf Platz 3" },
     { gr: "raum", w: "bagger", kurz: "schaufelradbagger", nutzt: "/bagger Name 3",
       was: "der Schaufelradbagger schaufelt jemanden vom Platz und l\u00e4dt ihn auf Platz 3 ab" },
     { gr: "raum", w: "kranheben", kurz: "kranheb", nutzt: "/kranheben Name 3",
@@ -12103,6 +12106,18 @@ window.LiveChat = (function () {
        jemanden] von seinem Platz weg befördern kann und realistisch
        irgendwo abladen kann." Wie der Kran: dieselbe Stelle setzt um,
        nur die Animation ist eine andere. */
+    /* RUNDE 101 — XANDER (Funk 75): „einen normalen Bagger, der eine
+       Schaufel hat, der die anderen weg tragen kann mit der Schaufel,
+       der sie auf seine Schaufel aufnimmt und wegfahren kann." */
+    if (art === "schaufel" || art === "baggerschaufel") {
+      if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
+      var restS = rest.trim();
+      if (!restS) return systemZeile("So geht es:  /schaufel Nickname 3 \u2014 "
+        + "der Bagger nimmt die Person in die Schaufel und f\u00e4hrt sie auf Platz 3.");
+      schaufelZieht = true;
+      try { return befehlAusfuehren("/heb " + restS); }
+      finally { schaufelZieht = false; }
+    }
     if (art === "bagger" || art === "schaufelradbagger") {
       if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
       var restB = rest.trim();
@@ -12292,7 +12307,7 @@ window.LiveChat = (function () {
          „in der naechsten Naehe" sass. Jetzt gilt: /heb ist die Angel,
          /lasso ist das Lasso. Punkt. */
       var wieH = lassoZieht ? "lasso" : (kranZieht ? "kranheben" : (baggerZieht ? "bagger"
-        : (hauabZieht ? "hauab" : "heber")));
+        : (schaufelZieht ? "schaufel" : (hauabZieht ? "hauab" : "heber"))));
       /* Runde 100 — hebt man sich selbst, heisst es „sich selbst". */
       var wenNameH = wenH.ich ? "sich selbst" : wenH.name;
       var satzH = zustand.ichName + (wieH === "heber"
@@ -12301,6 +12316,8 @@ window.LiveChat = (function () {
           ? " hebt " + wenNameH + " mit dem Kran auf Platz " + nummerH
           : wieH === "bagger"
           ? " l\u00e4dt " + wenNameH + " mit dem Schaufelradbagger auf Platz " + nummerH + " ab"
+          : wieH === "schaufel"
+          ? " nimmt " + wenNameH + " in die Baggerschaufel und f\u00e4hrt damit auf Platz " + nummerH
           : wieH === "hauab"
           ? " schiebt " + wenNameH + " mit beiden H\u00e4nden weg \u2014 Abstand! Auf Platz " + nummerH
           : " zieht " + wenNameH + " mit dem Lasso auf Platz " + nummerH)
@@ -12308,6 +12325,7 @@ window.LiveChat = (function () {
         + "  " + (wieH === "heber" ? "\ud83e\ude9d"
                   : wieH === "kranheben" ? "\ud83c\udfd7\ufe0f"
                   : wieH === "bagger" ? "\ud83d\ude9c"
+                  : wieH === "schaufel" ? "\ud83d\udea7"
                   : wieH === "hauab" ? "\u270b" : "\ud83e\udd20");
       /* =================================================================
          RUNDE 76 — ERST DIE ANIMATION, DANN DER PLATZWECHSEL
@@ -12369,6 +12387,9 @@ window.LiveChat = (function () {
          bis 86 % (3096 ms) nach; umgesetzt wird danach. */
       var dauerH = wieH === "lasso" ? 2950 : wieH === "kranheben" ? 2420
         : wieH === "bagger" ? 4200
+        /* RUNDE 101 — der Schaufelbagger kippt bei 86 % von 6,4 s aus
+           (5504 ms, lcSchaufelbagger); danach wird umgesetzt. */
+        : wieH === "schaufel" ? 5600
         /* „Hau ab": das Bild steht bei 93 % von 2 s still (1860 ms). */
         : wieH === "hauab" ? 1900 : 3150;
       offeneZuege.push({ werfer: zustand.ichName, wen: wenH.name, ziel: nummerH,
@@ -14746,6 +14767,8 @@ window.LiveChat = (function () {
       w.push("kranheben");
       /* RUNDE 101 — und „bagger" an /bagger, genauso. */
       w.push("bagger");
+      /* … und „schaufel" an /schaufel (der Bagger mit der Schaufel). */
+      w.push("schaufel");
       /* … und „hauab" an /hauab (Kurzform /abstand). */
       w.push("hauab");
       /* … und „hotrod" an /hotrod (Zahl der Umdrehungen dahinter). */

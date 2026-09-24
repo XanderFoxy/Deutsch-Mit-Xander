@@ -31562,7 +31562,11 @@
     knopf("\ud83c\udfd7\ufe0f", "Kran", () => lcHebenMenue(platz, name, "kranheb"));
     /* RUNDE 101 — XANDER: „einen Schaufelradbagger [der jemanden] von
        seinem Platz weg befördern kann". Gleiche Platzwahl wie der Kran. */
-    knopf("\ud83d\ude9c", "Bagger", () => lcHebenMenue(platz, name, "bagger"));
+    knopf("\ud83d\ude9c", "Schaufelradbagger", () => lcHebenMenue(platz, name, "bagger"));
+    /* RUNDE 101 — XANDER (Funk 75): „einen normalen Bagger, der eine
+       Schaufel hat … der sie auf seine Schaufel aufnimmt und wegfahren
+       kann." */
+    knopf("\ud83d\udea7", "Bagger mit Schaufel", () => lcHebenMenue(platz, name, "schaufel"));
     document.body.appendChild(kasten);
     lcMenueStellen(kasten, platz);
     lcMenueSchliessen(kasten);
@@ -31603,7 +31607,8 @@
       /* RUNDE 98 — welches Werkzeug hebt, steht jetzt am Menue:
          „/heb" ist die Angel, „/kranheb" der Baukran. Das Umsetzen
          selbst macht in beiden Faellen dieselbe Stelle. */
-      const zeile = "/" + (werkzeug === "kranheb" ? "kranheb" : werkzeug === "bagger" ? "bagger" : "heb")
+      const zeile = "/" + (werkzeug === "kranheb" ? "kranheb" : werkzeug === "bagger" ? "bagger"
+        : werkzeug === "schaufel" ? "schaufel" : "heb")
         + " " + name + " " + nummer;
       try { LiveChat.schreiben(zeile); } catch (e) {}
       lcNachDemSenden(zeile);
@@ -31616,7 +31621,8 @@
     const kopf = document.createElement("p");
     kopf.className = "lc-platzmenue-kopf";
     kopf.textContent = name + (werkzeug === "kranheb" ? " mit dem Kran heben"
-      : werkzeug === "bagger" ? " mit dem Bagger umladen" : " umsetzen");
+      : werkzeug === "bagger" ? " mit dem Schaufelradbagger umladen"
+      : werkzeug === "schaufel" ? " mit der Baggerschaufel wegtragen" : " umsetzen");
     kasten.appendChild(kopf);
 
     const kachel = (zeichen, wort, titel, tun) => {
@@ -31639,7 +31645,7 @@
     /* RUNDE 100 — im Kran-Menue stand „Angeln": ein Tipp darauf hob
        dann mit dem Kran, nicht mit der Angel. Die Abkuerzung gehoert
        nur ins Angel-Menue. */
-    if (meiner && werkzeug !== "kranheb" && werkzeug !== "bagger") {
+    if (meiner && werkzeug !== "kranheb" && werkzeug !== "bagger" && werkzeug !== "schaufel") {
       /* Der naechste freie Platz zu meinem — und wenn keiner frei ist,
          der naechste ueberhaupt (dann tauschen die beiden). */
       const naehe = (a, b) => Math.abs(a - b);
@@ -34056,6 +34062,7 @@
        man jemand anderen noch auf einen Platz heben kann." */
     kranheben: { zeichen: ["\ud83c\udfd7\ufe0f"], wie: 4, klasse: "umarmen" },
     bagger:    { zeichen: ["\ud83d\ude9c"], wie: 4, klasse: "umarmen" },
+    schaufel:  { zeichen: ["\ud83d\udea7"], wie: 4, klasse: "umarmen" },
     hauab:     { zeichen: ["\u270b"], wie: 4, klasse: "umarmen" },
     hotrod:    { zeichen: ["\ud83c\udfce\ufe0f"], wie: 4, klasse: "umarmen" },
     /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
@@ -40531,6 +40538,344 @@
          Schwenk, der Schlag beim Abladen bei 80 % (3,82 s), Wegfahren. */
       lcTonSpaeter("bagger", 0, 0.6, DAUER);
     }, 4900);
+  }
+
+  /* =====================================================================
+     RUNDE 101 — DER BAGGER MIT DER SCHAUFEL
+     ---------------------------------------------------------------------
+     XANDER (Funk 75): „und ich möchte noch einen normalen Bagger, der
+     eine Schaufel hat, der die anderen weg tragen kann mit der Schaufel,
+     der sie auf seine Schaufel aufnimmt und wegfahren kann."
+
+     Also KEIN Schaufelrad (das ist /bagger), sondern ein gewoehnlicher
+     Hydraulikbagger: Raupen, Oberwagen mit Fuehrerhaus, Ausleger, Stiel,
+     Loeffel, drei Zylinder. Und er TRAEGT: er faehrt mit der Person in
+     der Schaufel zum Zielplatz.
+
+     Eine Uhr (6,4 s), alle Marken sind Anteile davon:
+        0–13 %  hereinfahren (Raupen laufen, Auspuff raucht)
+       13–27 %  Arm faehrt aus, der offene Loeffel geht unter das Bild
+       27–36 %  schaufeln: der Loeffel dreht ein, das Bild rutscht hinein
+       36–44 %  anheben in die Tragestellung
+       44–68 %  mit dem Bild in der Schaufel hinueberfahren
+       68–80 %  Arm hebt den Loeffel ueber den Zielplatz
+       80–86 %  auskippen: das Bild faellt, bei 86 % (5504 ms) sitzt es
+       86–100 % Arm einziehen, weiterfahren, hinaus
+     livechat.js setzt bei 5600 ms um. Der Ton (ton/schaufelbagger) ist
+     aus vier Aufnahmen genau auf diese Marken gemischt.
+
+     Arm: zwei Glieder (Ausleger, Stiel), gerechnet wie ein Arm mit
+     Ellbogen — das Gelenk liegt immer OBEN, wie beim echten Bagger.
+     Das Bild laeuft in DEMSELBEN Takt wie die Zeichnung (kein WAAPI,
+     siehe Hot Rod: sonst ruckelt es in der Schaufel).
+     ===================================================================== */
+  const LC_SB_DAUER = 6400;
+  function lcSchaufelbagger(wen, nachricht) {
+    const zielNr = Number(nachricht && nachricht.ziel) || 0;
+    return lcAmPlatz(wen, "lc-schaufelzug", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      const reihe = document.getElementById("lcPlaetze");
+      if (!kreis || !reihe) return;
+      const DAUER = LC_SB_DAUER;
+      const gr = kreis.offsetWidth || 64;
+      const rr = reihe.getBoundingClientRect();
+      const lage = (el) => {
+        const r = el.getBoundingClientRect();
+        return { x: r.left + r.width / 2 - rr.left, y: r.top + r.height / 2 - rr.top };
+      };
+      const S = lage(kreis);
+      const zielEl = zielNr
+        ? document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + zielNr + '"]')
+        : null;
+      const Z = zielEl ? lage(zielEl.querySelector(".lc-kreis") || zielEl) : { x: S.x + gr * 1.2, y: S.y };
+      const felder = [...reihe.querySelectorAll(".lc-platz .lc-kreis")]
+        .filter((k) => k.offsetWidth > 0).map(lage);
+      felder.push(S, Z);
+      const feldUnten = Math.max(...felder.map((l) => l.y)) + gr / 2;
+      const W0 = Math.round(rr.width), H0 = Math.round(rr.height);
+      /* Faehrt er nach rechts (+1) oder nach links (-1)? Zum Ziel hin.
+         Liegt das Ziel genau darueber oder darunter: zur freieren Seite. */
+      const dir = Math.abs(Z.x - S.x) > gr * 0.2 ? Math.sign(Z.x - S.x) : (S.x < W0 / 2 ? 1 : -1);
+      const u = gr / 100;
+      const bodenY = feldUnten + gr * 0.95;           /* Unterkante der Raupen */
+      /* Wo der Bagger steht: eine gute Armlaenge VOR dem Bild — aber
+         nie so weit am Rand, dass er halb aus der Karte faellt. */
+      const standX = (x) => Math.max(gr * 0.62, Math.min(W0 - gr * 0.62, x - dir * gr * 1.3));
+      const X1 = standX(S.x), X2 = standX(Z.x);
+      const Xrein = dir > 0 ? -gr * 1.6 : W0 + gr * 1.6;
+      const Xraus = dir > 0 ? W0 + gr * 2.2 : -gr * 2.2;
+      /* Der Arm: Laenge Ausleger und Stiel. */
+      const L1 = gr * 1.55, L2 = gr * 1.2;
+      const drehpunkt = (X) => ({ x: X + dir * 36 * u, y: bodenY - 46 * u });   /* vor dem Fuehrerhaus */
+
+      const NS = "http://www.w3.org/2000/svg";
+      reihe.querySelectorAll(".lc-sb-buehne, .lc-sb-vorn").forEach((x) => {
+        if (x.dataset.platz === platz.getAttribute("data-lc-platz")) x.remove();
+      });
+      const svg = (klasse) => {
+        const s = document.createElementNS(NS, "svg");
+        s.setAttribute("class", klasse);
+        s.setAttribute("aria-hidden", "true");
+        s.dataset.platz = platz.getAttribute("data-lc-platz") || "";
+        s.setAttribute("width", String(W0));
+        s.setAttribute("height", String(H0));
+        s.setAttribute("viewBox", "0 0 " + W0 + " " + H0);
+        return s;
+      };
+      const buehne = svg("lc-sb-buehne");
+      const vorn = svg("lc-sb-vorn");
+      const f1 = (v) => v.toFixed(1);
+      const U = (v) => f1(v * u);
+
+      /* DER UNTERWAGEN UND DER OBERWAGEN — gezeichnet nach rechts
+         blickend, fuer links gespiegelt. Ursprung: Mitte unten. */
+      let rollen = "";
+      for (let i = 0; i < 5; i++) {
+        rollen += '<circle class="lc-sb-rolle" cx="' + U(-34 + i * 17) + '" cy="' + U(-7) + '" r="' + U(5) + '"/>';
+      }
+      const turas = (cx) => '<g class="lc-sb-turas" transform="translate(' + U(cx) + ' ' + U(-11) + ')">'
+        + '<circle r="' + U(10) + '"/>'
+        + [0, 60, 120].map((a) => '<path d="M' + U(-8) + ' 0 H' + U(8) + '" transform="rotate(' + a + ')"/>').join("")
+        + '<circle class="lc-sb-nabe" r="' + U(3) + '"/></g>';
+      const kettenweg = "M" + U(-50) + " " + U(-22) + " H" + U(50) + " A" + U(11) + " " + U(11) + " 0 0 1 " + U(50) + " 0"
+        + " H" + U(-50) + " A" + U(11) + " " + U(11) + " 0 0 1 " + U(-50) + " " + U(-22) + " Z";
+      const maschine =
+        '<g class="lc-sb-maschine">'
+        /* Raupe: Kettenband, Rollen, Antriebsrad hinten, Leitrad vorn. */
+        + '<path class="lc-sb-raupe" d="' + kettenweg + '"/>'
+        + rollen + turas(-49) + turas(49)
+        + '<path class="lc-sb-kette" d="' + kettenweg + '"/>'
+        /* Drehkranz. */
+        + '<rect class="lc-sb-kranz" x="' + U(-30) + '" y="' + U(-28) + '" width="' + U(60) + '" height="' + U(6) + '" rx="' + U(2) + '"/>'
+        /* Oberwagen: Motorhaube hinten, Gegengewicht rund. */
+        + '<path class="lc-sb-ober" d="M' + U(-60) + ' ' + U(-30) + ' L' + U(34) + ' ' + U(-30) + ' L' + U(34) + ' ' + U(-54)
+        + ' L' + U(-2) + ' ' + U(-54) + ' L' + U(-6) + ' ' + U(-64) + ' L' + U(-56) + ' ' + U(-64)
+        + ' Q' + U(-66) + ' ' + U(-64) + ' ' + U(-66) + ' ' + U(-52) + ' L' + U(-66) + ' ' + U(-38)
+        + ' Q' + U(-66) + ' ' + U(-30) + ' ' + U(-60) + ' ' + U(-30) + ' Z"/>'
+        + '<path class="lc-sb-gewicht" d="M' + U(-66) + ' ' + U(-50) + ' L' + U(-66) + ' ' + U(-38)
+        + ' Q' + U(-66) + ' ' + U(-30) + ' ' + U(-60) + ' ' + U(-30) + ' L' + U(-44) + ' ' + U(-30) + ' L' + U(-44) + ' ' + U(-50) + ' Z"/>'
+        + '<path class="lc-sb-lamellen" d="M' + U(-38) + ' ' + U(-58) + ' h' + U(22) + ' M' + U(-38) + ' ' + U(-54) + ' h' + U(22)
+        + ' M' + U(-38) + ' ' + U(-50) + ' h' + U(22) + '"/>'
+        /* Auspuff. */
+        + '<rect class="lc-sb-auspuff" x="' + U(-28) + '" y="' + U(-76) + '" width="' + U(4) + '" height="' + U(13) + '" rx="' + U(1) + '"/>'
+        /* Fuehrerhaus mit grossem Fenster und Tuer. */
+        + '<path class="lc-sb-haus" d="M' + U(-2) + ' ' + U(-54) + ' L' + U(-2) + ' ' + U(-98) + ' L' + U(22) + ' ' + U(-98)
+        + ' L' + U(30) + ' ' + U(-70) + ' L' + U(30) + ' ' + U(-54) + ' Z"/>'
+        + '<path class="lc-sb-glas" d="M' + U(2) + ' ' + U(-58) + ' L' + U(2) + ' ' + U(-94) + ' L' + U(19) + ' ' + U(-94)
+        + ' L' + U(26) + ' ' + U(-70) + ' L' + U(26) + ' ' + U(-58) + ' Z"/>'
+        + '<path class="lc-sb-glanz" d="M' + U(5) + ' ' + U(-90) + ' L' + U(12) + ' ' + U(-90) + ' L' + U(6) + ' ' + U(-66) + ' Z"/>'
+        + '<rect class="lc-sb-rundumleuchte" x="' + U(6) + '" y="' + U(-103) + '" width="' + U(8) + '" height="' + U(5) + '" rx="' + U(2) + '"/>'
+        + '</g>';
+      buehne.innerHTML =
+        '<g class="lc-sb-rauch">' + [0, 1, 2].map(() => '<circle/>').join("") + '</g>'
+        + '<g class="lc-sb-alles">' + maschine + '</g>'
+        /* Der Arm liegt VOR dem Oberwagen (man sieht ihn von der Seite). */
+        + '<path class="lc-sb-zyl lc-sb-zyl-a"/><path class="lc-sb-stange lc-sb-stange-a"/>'
+        + '<path class="lc-sb-arm-rand lc-sb-ausleger-r"/><path class="lc-sb-arm lc-sb-ausleger"/>'
+        + '<path class="lc-sb-zyl lc-sb-zyl-b"/><path class="lc-sb-stange lc-sb-stange-b"/>'
+        + '<path class="lc-sb-arm-rand lc-sb-stiel-r"/><path class="lc-sb-arm lc-sb-stiel"/>'
+        + '<circle class="lc-sb-bolzen lc-sb-b1"/><circle class="lc-sb-bolzen lc-sb-b2"/>'
+        + '<g class="lc-sb-loeffel-hinten"></g>'
+        + '<g class="lc-sb-staub">' + [0, 1, 2, 3, 4].map((i) => '<circle r="' + f1(gr * (0.08 + 0.03 * i)) + '"/>').join("") + '</g>';
+      /* DER LOEFFEL: Rueckwand hinter dem Bild, Vorderwand mit Zaehnen
+         davor — so liegt das Bild IN der Schaufel. Ursprung: der Bolzen
+         am Stielende. Offen zeigt die Schneide nach vorn-unten. */
+      const g = gr / 100;
+      const loeffelRueck = '<path class="lc-sb-loeffel-innen" d="M0 0 C' + f1(-14 * g) + ' ' + f1(12 * g) + ' '
+        + f1(-12 * g) + ' ' + f1(34 * g) + ' ' + f1(6 * g) + ' ' + f1(40 * g) + ' L' + f1(34 * g) + ' ' + f1(40 * g)
+        + ' L' + f1(30 * g) + ' ' + f1(8 * g) + ' Z"/>';
+      const loeffelVorn = '<path class="lc-sb-loeffel" d="M' + f1(-2 * g) + ' ' + f1(4 * g) + ' C' + f1(-14 * g) + ' '
+        + f1(16 * g) + ' ' + f1(-12 * g) + ' ' + f1(34 * g) + ' ' + f1(6 * g) + ' ' + f1(40 * g) + ' L' + f1(34 * g)
+        + ' ' + f1(40 * g) + ' L' + f1(34 * g) + ' ' + f1(33 * g) + ' L' + f1(12 * g) + ' ' + f1(31 * g)
+        + ' C' + f1(0) + ' ' + f1(27 * g) + ' ' + f1(-2 * g) + ' ' + f1(16 * g) + ' ' + f1(4 * g) + ' ' + f1(6 * g) + ' Z"/>'
+        + '<path class="lc-sb-zaehne" d="M' + f1(34 * g) + ' ' + f1(34 * g) + ' l' + f1(7 * g) + ' ' + f1(1 * g)
+        + ' l' + f1(-7 * g) + ' ' + f1(2 * g) + ' M' + f1(34 * g) + ' ' + f1(38 * g) + ' l' + f1(7 * g) + ' ' + f1(1 * g)
+        + ' l' + f1(-7 * g) + ' ' + f1(2 * g) + '"/>'
+        + '<circle class="lc-sb-bolzen" r="' + f1(4 * g) + '"/>';
+      buehne.querySelector(".lc-sb-loeffel-hinten").innerHTML = loeffelRueck;
+      vorn.innerHTML = '<g class="lc-sb-loeffel-vorn">' + loeffelVorn + '</g>';
+      if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
+      reihe.appendChild(buehne);
+      reihe.appendChild(vorn);
+      const q = (s, el) => (el || buehne).querySelector(s);
+      const alles = q(".lc-sb-alles"), kette = q(".lc-sb-kette"), turasse = [...buehne.querySelectorAll(".lc-sb-turas")];
+      const ausleger = q(".lc-sb-ausleger"), auslegerR = q(".lc-sb-ausleger-r");
+      const stiel = q(".lc-sb-stiel"), stielR = q(".lc-sb-stiel-r");
+      const zylA = q(".lc-sb-zyl-a"), stA = q(".lc-sb-stange-a"), zylB = q(".lc-sb-zyl-b"), stB = q(".lc-sb-stange-b");
+      const b1 = q(".lc-sb-b1"), b2 = q(".lc-sb-b2");
+      const loeH = q(".lc-sb-loeffel-hinten"), loeV = vorn.querySelector(".lc-sb-loeffel-vorn");
+      const staub = q(".lc-sb-staub"), rauch = q(".lc-sb-rauch");
+      [b1, b2].forEach((b) => b.setAttribute("r", f1(4.5 * u)));
+
+      const glatt = (x) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+      const zw = (f, a, b) => Math.max(0, Math.min(1, (f - a) / (b - a)));
+      const misch = (a, b, k) => ({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k });
+      /* Wo steht der Bagger? */
+      const koerperBei = (f) => {
+        if (f < 0.13) return Xrein + (X1 - Xrein) * (1 - Math.pow(1 - zw(f, 0, 0.13), 2));
+        if (f < 0.44) return X1;
+        if (f < 0.68) return X1 + (X2 - X1) * glatt(zw(f, 0.44, 0.68));
+        if (f < 0.88) return X2;
+        return X2 + (Xraus - X2) * Math.pow(zw(f, 0.88, 1), 2);
+      };
+      /* Die Stellungen des Loeffels: Bolzen (x, y) und Drehung (Grad,
+         positiv = eingerollt). Die Tragestellung haengt am Bagger. */
+      const trage = (X) => ({ x: X + dir * gr * 1.02, y: feldUnten - gr * 0.02 });
+      const ruhe = (X) => ({ x: X + dir * gr * 0.95, y: bodenY - gr * 0.42 });
+      const unter = { x: S.x - dir * gr * 0.46, y: S.y + gr * 0.12 };   /* offen, neben dem Bild unten */
+      const drin = { x: S.x - dir * gr * 0.2, y: S.y - gr * 0.18 };     /* eingerollt, Bild liegt drin */
+      const ueber = { x: Z.x - dir * gr * 0.28, y: Z.y - gr * 0.56 };   /* knapp ueber dem Ziel */
+      const loeffelBei = (f) => {
+        const X = koerperBei(f);
+        if (f < 0.13) return { p: ruhe(X), w: 30 };
+        if (f < 0.27) { const k = glatt(zw(f, 0.13, 0.27)); return { p: misch(ruhe(X), unter, k), w: 30 - 85 * k }; }
+        if (f < 0.36) { const k = glatt(zw(f, 0.27, 0.36)); return { p: misch(unter, drin, k), w: -55 + 140 * k }; }
+        if (f < 0.44) { const k = glatt(zw(f, 0.36, 0.44)); return { p: misch(drin, trage(X), k), w: 85 }; }
+        if (f < 0.68) {
+          /* Beim Fahren wippt die Last ein wenig auf den Kettengliedern. */
+          const p = trage(X);
+          return { p: { x: p.x, y: p.y + Math.sin(f * 140) * gr * 0.012 }, w: 85 };
+        }
+        if (f < 0.80) { const k = glatt(zw(f, 0.68, 0.80)); return { p: misch(trage(X), ueber, k), w: 85 }; }
+        if (f < 0.86) { const k = glatt(zw(f, 0.80, 0.84)); return { p: ueber, w: 85 - 150 * k }; }
+        const k = glatt(zw(f, 0.86, 0.95));
+        return { p: misch(ueber, ruhe(X), k), w: -65 + 95 * k };
+      };
+      /* Punkt im Loeffel (in Loeffel-Einheiten) -> Buehne. */
+      const imLoeffel = (L, px, py) => {
+        const a = dir * L.w * Math.PI / 180, x = dir * px * g, y = py * g;
+        return { x: L.p.x + x * Math.cos(a) - y * Math.sin(a), y: L.p.y + x * Math.sin(a) + y * Math.cos(a) };
+      };
+      /* Wo liegt das Bild? */
+      const klein = 0.52;
+      const mulde = (L) => imLoeffel(L, 12, 18);
+      const bildBei = (f) => {
+        if (f < 0.29) return { x: S.x, y: S.y, s: 1, d: 0 };
+        if (f < 0.36) {
+          const k = glatt(zw(f, 0.29, 0.36)), M = mulde(loeffelBei(f));
+          return { x: S.x + (M.x - S.x) * k, y: S.y + (M.y - S.y) * k, s: 1 - (1 - klein) * k, d: dir * 10 * k };
+        }
+        if (f < 0.815) { const M = mulde(loeffelBei(f)); return { x: M.x, y: M.y, s: klein, d: dir * 10 }; }
+        /* Aus der gekippten Schaufel: erst rutscht es heraus, dann faellt
+           es auf den Zielplatz (Parabel) und federt einmal nach. */
+        const A = mulde(loeffelBei(0.815));
+        if (f < 0.86) {
+          const k = zw(f, 0.815, 0.86);
+          return { x: A.x + (Z.x - A.x) * k, y: A.y + (Z.y - A.y) * k * k - gr * 0.12 * Math.sin(Math.PI * k),
+                   s: klein + (1 - klein) * k, d: dir * 10 * (1 - k) };
+        }
+        const k = zw(f, 0.86, 0.9);
+        return { x: Z.x, y: Z.y - Math.sin(Math.PI * k) * gr * 0.08, s: 1 + Math.sin(Math.PI * k) * 0.04, d: 0 };
+      };
+      /* Zwei Glieder, Ellbogen oben. */
+      const arm = (P, T) => {
+        const dx = T.x - P.x, dy = T.y - P.y;
+        let d = Math.hypot(dx, dy) || 1;
+        d = Math.min(d, (L1 + L2) * 0.995);
+        const a = Math.atan2(dy, dx);
+        const c = Math.max(-1, Math.min(1, (L1 * L1 + d * d - L2 * L2) / (2 * L1 * d)));
+        /* Ellbogen oben: vom Drehpunkt aus zur Seite hin, die im Bild
+           OBEN liegt — bei dir=+1 gegen den Uhrzeigersinn. */
+        const b = a - dir * Math.acos(c);
+        return { x: P.x + Math.cos(b) * L1, y: P.y + Math.sin(b) * L1 };
+      };
+      /* Ein Glied als leicht gebogener Balken. */
+      const balken = (A, B, bauch) => {
+        const mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2, L = Math.hypot(B.x - A.x, B.y - A.y) || 1;
+        const nx = (B.y - A.y) / L, ny = -(B.x - A.x) / L;   /* nach „oben" fuer dir=+1 */
+        const k = bauch * dir;
+        return "M" + f1(A.x) + " " + f1(A.y) + " Q" + f1(mx + nx * k) + " " + f1(my + ny * k) + " " + f1(B.x) + " " + f1(B.y);
+      };
+      /* Zylinder: Rohr ab A (60 %), blanke Stange bis B. */
+      const zylinder = (rohr, stange, A, B) => {
+        const M = misch(A, B, 0.58);
+        rohr.setAttribute("d", "M" + f1(A.x) + " " + f1(A.y) + " L" + f1(M.x) + " " + f1(M.y));
+        stange.setAttribute("d", "M" + f1(M.x) + " " + f1(M.y) + " L" + f1(B.x) + " " + f1(B.y));
+      };
+
+      const altZ = platz.style.zIndex;
+      const altUebergang = kreis.style.transition;
+      platz.style.zIndex = "9";
+      kreis.style.transition = "none";
+      const nameAlt = lcNameVomPlatz(platz);
+      const t0 = performance.now();
+      let fertig = false, weg = 0;
+      const aufraeumen = () => {
+        if (fertig) return;
+        fertig = true;
+        kreis.style.transform = "";
+        kreis.style.transition = altUebergang;
+        platz.style.zIndex = altZ;
+      };
+      const alleWeg = () => { aufraeumen(); buehne.remove(); vorn.remove(); };
+      let letztX = koerperBei(0);
+      const bild = () => {
+        if (!buehne.isConnected) { alleWeg(); return; }
+        const t = performance.now() - t0, f = Math.min(1, t / DAUER);
+        /* Umgesetzt (anderer Name am Platz): das Bild sitzt wirklich auf
+           dem Zielplatz — die Verschiebung geht weg. */
+        if (!fertig && f > 0.8 && lcNameVomPlatz(platz) !== nameAlt) aufraeumen();
+        const X = koerperBei(f);
+        weg += Math.abs(X - letztX); letztX = X;
+        alles.setAttribute("transform", "translate(" + f1(X) + " " + f1(bodenY) + ") scale(" + dir + " 1)");
+        /* Die Kette laeuft so weit, wie der Bagger faehrt; die Raeder drehen mit. */
+        kette.style.strokeDashoffset = f1(-weg);
+        turasse.forEach((el) => {
+          const tr = el.getAttribute("transform").replace(/ rotate\([^)]*\)/, "");
+          el.setAttribute("transform", tr + " rotate(" + f1((weg / (10 * u)) * 57.3) + ")");
+        });
+        const L = loeffelBei(f), P = drehpunkt(X), E = arm(P, L.p);
+        ausleger.setAttribute("d", balken(P, E, gr * 0.16));
+        auslegerR.setAttribute("d", ausleger.getAttribute("d"));
+        stiel.setAttribute("d", balken(E, L.p, gr * 0.04));
+        stielR.setAttribute("d", stiel.getAttribute("d"));
+        b1.setAttribute("cx", f1(P.x)); b1.setAttribute("cy", f1(P.y));
+        b2.setAttribute("cx", f1(E.x)); b2.setAttribute("cy", f1(E.y));
+        /* Hubzylinder: vom Oberwagen unten zur Mitte des Auslegers.
+           Stielzylinder: vom Auslegerruecken zum Stielende hinter dem Gelenk. */
+        const fuss = { x: X + dir * 30 * u, y: bodenY - 30 * u };
+        zylinder(zylA, stA, fuss, misch(P, E, 0.55));
+        const hinter = { x: E.x - (L.p.x - E.x) * 0.22, y: E.y - (L.p.y - E.y) * 0.22 };
+        zylinder(zylB, stB, misch(P, E, 0.62), hinter);
+        const tf = "translate(" + f1(L.p.x) + " " + f1(L.p.y) + ") scale(" + dir + " 1) rotate(" + f1(L.w) + ")";
+        loeH.setAttribute("transform", tf);
+        loeV.setAttribute("transform", tf);
+        /* Das Bild — im selben Takt. */
+        if (!fertig) {
+          const b = bildBei(f);
+          kreis.style.transform = "translate(" + f1(b.x - S.x) + "px, " + f1(b.y - S.y) + "px) rotate(" + f1(b.d)
+            + "deg) scale(" + b.s.toFixed(3) + ")";
+        }
+        /* Staub beim Schaufeln und beim Aufsetzen. */
+        const stGrab = zw(f, 0.26, 0.38), stAuf = zw(f, 0.85, 0.95);
+        const st = stGrab > 0 && stGrab < 1 ? { k: stGrab, x: S.x, y: S.y + gr * 0.42 }
+          : stAuf > 0 && stAuf < 1 ? { k: stAuf, x: Z.x, y: Z.y + gr * 0.44 } : null;
+        staub.style.opacity = st ? String(Math.sin(Math.PI * st.k) * 0.75) : "0";
+        if (st) {
+          [...staub.children].forEach((c, i) => {
+            const a = (i - 2) * 0.55;
+            c.setAttribute("cx", f1(st.x + Math.sin(a) * gr * (0.2 + 0.35 * st.k)));
+            c.setAttribute("cy", f1(st.y - Math.cos(a) * gr * 0.1 * st.k - gr * 0.04 * i * st.k));
+          });
+        }
+        /* Rauch aus dem Auspuff: kraeftiger, wenn er arbeitet. */
+        const arbeit = (f < 0.13 || (f > 0.44 && f < 0.68) || f > 0.88) ? 1 : (f > 0.13 && f < 0.44) || (f > 0.68 && f < 0.86) ? 0.8 : 0.35;
+        [...rauch.children].forEach((c, i) => {
+          const k = ((t / 900) + i / 3) % 1;
+          c.setAttribute("cx", f1(X - dir * 26 * u - dir * k * gr * 0.35));
+          c.setAttribute("cy", f1(bodenY - 78 * u - k * gr * 0.5));
+          c.setAttribute("r", f1(gr * (0.05 + 0.09 * k)));
+          c.style.opacity = String((1 - k) * 0.45 * arbeit);
+        });
+        const sicht = f < 0.03 ? f / 0.03 : f > 0.97 ? Math.max(0, (1 - f) / 0.03) : 1;
+        buehne.style.opacity = vorn.style.opacity = String(sicht);
+        if (t < DAUER + 1200 && f < 1) requestAnimationFrame(bild);
+        else alleWeg();
+      };
+      requestAnimationFrame(bild);
+      setTimeout(alleWeg, DAUER + 2000);
+      lcTonSpaeter("schaufelbagger", 0, 0.6, DAUER);
+    }, LC_SB_DAUER + 100);
   }
 
   /* =====================================================================
@@ -58390,6 +58735,7 @@
     /* RUNDE 98 — der Kran hebt GENAU EINEN auf einen Platz. */
     kranheben: 1,
     bagger: 1,
+    schaufel: 1,
     hauab: 1,
     hotrod: 1,
     /* RUNDE 88 — das Kaninchen wird aus GENAU EINEM Zylinder
@@ -58479,6 +58825,12 @@
        laedt ihn auf einem anderen ab (Funk #39). */
     if (art === "bagger") {
       lcBagger((nachricht && (nachricht.wen || nachricht.an)) || "", nachricht);
+      return;
+    }
+    /* RUNDE 101 — der Bagger mit der Schaufel traegt jemanden hinueber
+       (Funk 75). */
+    if (art === "schaufel") {
+      lcSchaufelbagger((nachricht && (nachricht.wen || nachricht.an)) || "", nachricht);
       return;
     }
     /* RUNDE 101 — „Hau ab": mit beiden Haenden einen Platz weiter

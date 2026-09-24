@@ -33838,3 +33838,47 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   22%, 80% { opacity: 1; transform: translate(-50%, 4px) scale(1); }
   100% { opacity: 0; transform: translate(-50%, 4px) scale(1); }
 }
+
+/* === RUNDE 101: DER BAGGER MIT DER SCHAUFEL ===========================
+   XANDER (Funk 75): „einen normalen Bagger, der eine Schaufel hat …
+   der sie auf seine Schaufel aufnimmt und wegfahren kann."
+   Zwei Schichten: die Maschine mit der Rueckwand des Loeffels liegt
+   UNTER dem getragenen Bild (8), die Vorderwand mit den Zaehnen DARUEBER
+   (10) — so liegt das Bild IN der Schaufel und nicht davor. */
+.lc-sb-buehne, .lc-sb-vorn {
+  position: absolute;
+  left: 0; top: 0;
+  z-index: 8;
+  overflow: visible;
+  pointer-events: none;
+}
+.lc-sb-vorn { z-index: 10; }
+.lc-sb-raupe  { fill: #2b2f35; }
+.lc-sb-kette  { fill: none; stroke: #4a5058; stroke-width: 2.2; stroke-dasharray: 3.5 2.5; }
+.lc-sb-rolle  { fill: #5f6670; stroke: #1f2327; stroke-width: .8; }
+.lc-sb-turas circle { fill: #6c737d; stroke: #1f2327; stroke-width: 1; }
+.lc-sb-turas path { stroke: #2b2f35; stroke-width: 1.6; }
+.lc-sb-turas .lc-sb-nabe { fill: #f2b61f; }
+.lc-sb-kranz  { fill: #3c4148; }
+.lc-sb-ober   { fill: #f2b61f; stroke: #a8780c; stroke-width: 1.1; stroke-linejoin: round; }
+.lc-sb-gewicht { fill: #3f454d; }
+.lc-sb-lamellen { stroke: #a8780c; stroke-width: 1.2; fill: none; }
+.lc-sb-auspuff { fill: #2b2f35; }
+.lc-sb-haus   { fill: #f5c233; stroke: #a8780c; stroke-width: 1.1; stroke-linejoin: round; }
+.lc-sb-glas   { fill: #7fb6db; stroke: #2e4a5e; stroke-width: .8; stroke-linejoin: round; }
+.lc-sb-glanz  { fill: rgba(255,255,255,.45); }
+.lc-sb-rundumleuchte { fill: #ff9c1a; animation: lcSbLeuchte .5s steps(2) infinite; }
+@keyframes lcSbLeuchte { 50% { fill: #ffe0a0; } }
+.lc-sb-arm-rand { fill: none; stroke: #8a6208; stroke-width: 9px; stroke-linecap: round; }
+.lc-sb-arm    { fill: none; stroke: #f2b61f; stroke-width: 6.5px; stroke-linecap: round; }
+.lc-sb-stiel-r { stroke-width: 7px; }
+.lc-sb-stiel  { stroke-width: 4.6px; }
+.lc-sb-zyl    { fill: none; stroke: #2b2f35; stroke-width: 4px; stroke-linecap: round; }
+.lc-sb-stange { fill: none; stroke: #d9dee4; stroke-width: 2px; stroke-linecap: round; }
+.lc-sb-bolzen { fill: #3c4148; stroke: #d9dee4; stroke-width: .8; }
+.lc-sb-loeffel-innen { fill: #3c4148; }
+.lc-sb-loeffel { fill: #e0a516; stroke: #7a5507; stroke-width: 1; stroke-linejoin: round; }
+.lc-sb-zaehne { fill: #c9ced4; stroke: #3c4148; stroke-width: .8; }
+.lc-sb-staub circle { fill: rgba(150, 120, 80, .55); }
+.lc-sb-staub  { opacity: 0; }
+.lc-sb-rauch circle { fill: #6d7076; }
