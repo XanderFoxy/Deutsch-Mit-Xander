@@ -24587,19 +24587,9 @@
     bild += '<circle cx="50" cy="50" r="' + f(R + 3.2) + '" fill="none" stroke="#EA580C" stroke-opacity=".38" stroke-width="4.2"'
       + ' stroke-dasharray="' + striche.join(" ") + '" filter="url(#lcFb' + n + ')">'
       + '<animate attributeName="stroke-opacity" dur="1.3s" repeatCount="indefinite" values=".26;.42;.3;.26"/></circle>';
-    /* DIE ZUNGEN
-       XANDER (Walkie, zur 566): „Mehr Zungen. Die Flammen sollen
-       lückenfüllend sein … Die Flammen sollen in perfekter Physik nach
-       oben steigen mit realistischen Funken."
-       Deshalb jetzt ZWEI Lagen rund um den ganzen Ring: hinten 18
-       grosse dunklere, vorn 14 kleinere hellere, jeweils versetzt —
-       ihre Baeuche ueberlappen, so bleibt keine Luecke.
-       PHYSIK: Feuer steigt. Jede Zunge zeigt nach oben, nur so weit
-       nach aussen gekippt, dass sie nicht ins Gesicht leckt. Unten,
-       wo „nach oben" durchs Bild ginge, leckt sie am Ring entlang
-       hoch (Tangente, leicht nach aussen) — wie Flammen, die einen
-       brennenden Reifen umschlingen. Oben sind sie am laengsten,
-       weil sich dort die Hitze sammelt. */
+    /* DIE ZUNGEN */
+    const menge = 8 + Math.floor(Math.random() * 5);
+    const spitzen = [];
     const zunge = (L, B, s, knick) => {
       /* Fuss bei (0,0), Spitze nach oben (−y). Die Punkte bis zur
          halben Hoehe haengen NICHT von s und knick ab — die Basis
@@ -24619,59 +24609,40 @@
       v.push(v[0]);
       return v.join(";");
     };
-    const spitzen = [];
-    const sp = '" calcMode="spline" keySplines=".4 0 .6 1;.4 0 .6 1;.4 0 .6 1;.4 0 .6 1"/>';
-    const lage = (menge, versatz, gross, hell) => {
-      for (let i = 0; i < menge; i++) {
-        const w = ((i + versatz) / menge) * Math.PI * 2 + zufall(-0.08, 0.08);
-        const ox = Math.cos(w), oy = Math.sin(w);
-        const bx = 50 + ox * (R + 0.1), by = 50 + oy * (R + 0.1);
-        let dx = 0.9 * ox, dy = -1 + 0.9 * oy;
-        let lang = Math.hypot(dx, dy);
-        if (lang < 1e-3 || (dx * ox + dy * oy) / lang < 0.3) {
-          /* unten: am Ring entlang nach oben */
-          let tx = -oy, ty = ox;
-          if (ty > 0 || (Math.abs(ty) < 1e-3 && i % 2)) { tx = -tx; ty = -ty; }
-          dx = tx + 0.4 * ox; dy = ty + 0.4 * oy;
-          lang = Math.hypot(dx, dy);
-        }
-        dx /= lang; dy /= lang;
-        const grad = Math.atan2(dx, -dy) * 180 / Math.PI;
-        const oben = Math.max(0, -oy), unten = Math.max(0, oy);
-        const L = (zufall(7, 9.5) + oben * 4.5 - unten * 2.2) * gross, B = L * zufall(0.42, 0.5);
-        const takt = f(zufall(0.7, 1.25)), start = f(-zufall(0, 1.3));
-        const aussen = formen(L, B), innen = formen(L * 0.66, B * 0.5);
-        bild += '<g transform="translate(' + f(bx) + " " + f(by) + ") rotate(" + f(grad) + ')"' + (hell ? "" : ' opacity=".92"') + ">"
-          + '<path fill="url(#' + (hell ? "lcFh" : "lcFz") + n + ')" d="' + aussen.split(";")[0] + '"><animate attributeName="d" dur="' + takt
-          + 's" begin="' + start + 's" repeatCount="indefinite" values="' + aussen + sp + "</path>"
-          + '<path fill="url(#lcFi' + n + ')" transform="translate(0 ' + f(-L * 0.06) + ')" d="' + innen.split(";")[0]
-          + '"><animate attributeName="d" dur="' + f(takt * 0.8) + 's" begin="' + start + 's" repeatCount="indefinite" values="'
-          + innen + sp + "</path></g>";
-        spitzen.push({ x: bx + dx * L, y: by + dy * L, oben: oben });
-      }
-    };
-    defs += '<linearGradient id="lcFh' + n + '" x1="0" y1="1" x2="0" y2="0">'
-      + '<stop offset="0" stop-color="#C2410C" stop-opacity=".95"/>'
-      + '<stop offset=".45" stop-color="#F97316" stop-opacity=".92"/>'
-      + '<stop offset="1" stop-color="#FDE68A" stop-opacity=".4"/></linearGradient>';
-    lage(18, 0, 1, false);
-    lage(14, 0.5, 0.72, true);
-    /* DIE FUNKEN: sie starten an einer Spitze (bevorzugt oben, wo es
-       am heissesten ist), werden erst schnell hochgerissen und dann
-       langsamer (Auftrieb laesst nach), driften seitlich im Luftzug,
-       gluehen gelb-weiss und kuehlen auf dem Weg zu Orange ab, bevor
-       sie verloeschen. */
-    const funken = 10 + Math.floor(Math.random() * 4);
-    const oberste = spitzen.slice().sort((p, q) => q.oben - p.oben).slice(0, Math.ceil(spitzen.length * 0.55));
+    /* Unten (zwischen 50 und 130 Grad) stehen keine Zungen: „Spitze
+       nach außen-oben" geht dort nicht, eine Zunge nach unten saehe
+       aus wie ein Blatt. Unten traegt die Glutleiste allein. */
+    const LUECKE_VON = 50 * Math.PI / 180, BOGEN = 280 * Math.PI / 180;
+    for (let i = 0; i < menge; i++) {
+      const w = LUECKE_VON + ((i + 0.5) / menge) * BOGEN + (80 * Math.PI / 180) + zufall(-0.1, 0.1);
+      const bx = 50 + Math.cos(w) * (R + 0.2), by = 50 + Math.sin(w) * (R + 0.2);
+      /* Spitze nach aussen-oben: die Richtung nach aussen, mit einem
+         Zug nach oben — Feuer steigt. */
+      let dx = Math.cos(w), dy = Math.sin(w) - 0.6;
+      const lang = Math.hypot(dx, dy); dx /= lang; dy /= lang;
+      const grad = Math.atan2(dx, -dy) * 180 / Math.PI;
+      const oben = Math.max(0, -Math.sin(w));
+      const L = zufall(8.5, 10.5) + oben * 3, B = L * zufall(0.34, 0.4);
+      const takt = f(zufall(0.8, 1.35)), start = f(-zufall(0, 1.3));
+      const sp = '" calcMode="spline" keySplines=".4 0 .6 1;.4 0 .6 1;.4 0 .6 1;.4 0 .6 1"/>';
+      const aussen = formen(L, B), innen = formen(L * 0.66, B * 0.5);
+      bild += '<g transform="translate(' + f(bx) + " " + f(by) + ") rotate(" + f(grad) + ')">'
+        + '<path fill="url(#lcFz' + n + ')" d="' + aussen.split(";")[0] + '"><animate attributeName="d" dur="' + takt
+        + 's" begin="' + start + 's" repeatCount="indefinite" values="' + aussen + sp + "</path>"
+        + '<path fill="url(#lcFi' + n + ')" transform="translate(0 ' + f(-L * 0.06) + ')" d="' + innen.split(";")[0]
+        + '"><animate attributeName="d" dur="' + f(takt * 0.8) + 's" begin="' + start + 's" repeatCount="indefinite" values="'
+        + innen + sp + "</path></g>";
+      spitzen.push({ x: bx + dx * L, y: by + dy * L });
+    }
+    /* DIE FUNKEN: 6–10, jeder startet an einer Spitze und steigt. */
+    const funken = 6 + Math.floor(Math.random() * 5);
     for (let i = 0; i < funken; i++) {
-      const s = oberste[Math.floor(Math.random() * oberste.length)];
-      const dur = f(zufall(1.1, 2)), bg = f(-zufall(0, 2)), hoch = zufall(7, 12), seit = zufall(-3.5, 3.5);
-      const weg = "M" + f(s.x) + " " + f(s.y) + " Q" + f(s.x + seit * 0.2) + " " + f(s.y - hoch * 0.6) + " " + f(s.x + seit) + " " + f(s.y - hoch);
-      bild += '<circle r="' + f(zufall(0.3, 0.55)) + '" fill="#FFF7D6">'
-        + '<animateMotion dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" path="' + weg + '" keyPoints="0;.7;1" keyTimes="0;.4;1" calcMode="spline" keySplines=".2 .7 .4 1;.3 .5 .6 1"/>'
-        + '<animate attributeName="fill" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" values="#FFF7D6;#FDBA74;#EA580C"/>'
-        + '<animate attributeName="r" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" values="' + f(zufall(0.45, 0.6)) + ';.35;.12"/>'
-        + '<animate attributeName="opacity" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" values="0;1;.85;1;.5;0" keyTimes="0;.08;.3;.45;.75;1"/></circle>';
+      const s = spitzen[Math.floor(Math.random() * spitzen.length)];
+      const dur = f(zufall(0.9, 1.6)), bg = f(-zufall(0, 1.6)), hoch = zufall(5, 9), seit = zufall(-2.5, 2.5);
+      bild += '<circle r="' + f(zufall(0.35, 0.65)) + '" fill="#FDE68A">'
+        + '<animate attributeName="cx" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" values="' + f(s.x) + ";" + f(s.x + seit) + '"/>'
+        + '<animate attributeName="cy" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" values="' + f(s.y) + ";" + f(s.y - hoch) + '"/>'
+        + '<animate attributeName="opacity" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" values="0;1;.6;0" keyTimes="0;.12;.6;1"/></circle>';
     }
     return '<svg class="lc-feuer-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + defs + "</defs>" + bild + "</svg>";
   }
@@ -24704,117 +24675,9 @@
     }
     return '<svg class="lc-welle-bild" viewBox="0 0 100 100" aria-hidden="true">' + bild + "</svg>";
   }
-  /* =================================================================
-     SCHON-PASS SPRECHBILDER — 4. BLUT
-     -----------------------------------------------------------------
-     XANDERS LISTE: „Oben hinter der Kreismaske quillt es (Tropfen
-     selbst unsichtbar). Läuft links und rechts der Stirnlinie, zäh
-     (nicht spritzen). Unten sammelt sich eine unregelmäßige Lache,
-     Oberfläche leicht glänzend (heller Saum, dunkler Kern #7F1D1D /
-     #450A0A). Alle 1–2 s ein Tropfen über den unteren Rand, fällt
-     20–40 % der Platzhöhe, zerplatzt oder verschwindet. Selten,
-     ekelhaft, nicht komisch. Deckkraft 70–90 %, nass."
-     Alles Innere liegt hinter einer Kreismaske (clipPath) — es kommt
-     also wirklich hinter dem Rand hervor. Die Mitte des Gesichts
-     bleibt frei: die Rinnsale laufen bei ±15 und ±23 (Bildradius
-     34,7), die Lache bleibt im unteren Siebtel.
-     ================================================================= */
-  let lcBlutNr = 0;
-  function lcBlutSvg() {
-    const R = 34.7, n = ++lcBlutNr, f = (v) => v.toFixed(2), zufall = (a, b) => a + Math.random() * (b - a);
-    const defs = '<clipPath id="lcBm' + n + '"><circle cx="50" cy="50" r="' + f(R - 0.3) + '"/></clipPath>'
-      + '<radialGradient id="lcBl' + n + '" gradientUnits="userSpaceOnUse" cx="50" cy="' + f(50 + R) + '" r="16">'
-      + '<stop offset="0" stop-color="#450A0A" stop-opacity=".92"/><stop offset=".6" stop-color="#7F1D1D" stop-opacity=".88"/>'
-      + '<stop offset="1" stop-color="#991B1B" stop-opacity=".8"/></radialGradient>';
-    let innen = "";
-    /* OBEN: es quillt hinter dem Rand hervor — ein dunkler Saum an der
-       Innenseite des oberen Bogens, der langsam dicker wird. */
-    const bogen = (dicke) => {
-      let d = "";
-      for (let i = 0; i <= 24; i++) {
-        const w = (-150 + i * 5) * Math.PI / 180;
-        d += (i ? " L" : "M") + f(50 + Math.cos(w) * (R + 1)) + " " + f(50 + Math.sin(w) * (R + 1));
-      }
-      for (let i = 24; i >= 0; i--) {
-        const w = (-150 + i * 5) * Math.PI / 180;
-        const r = R - dicke * (0.6 + 0.4 * Math.sin(i * 1.7) * Math.sin(i * 0.6)) * Math.sin(i / 24 * Math.PI);
-        d += " L" + f(50 + Math.cos(w) * r) + " " + f(50 + Math.sin(w) * r);
-      }
-      return d + " Z";
-    };
-    innen += '<path fill="#7F1D1D" fill-opacity=".85" d="' + bogen(0.6) + '">'
-      + '<animate attributeName="d" dur="3s" fill="freeze" values="' + bogen(0.6) + ";" + bogen(3.2) + '" calcMode="spline" keySplines=".3 0 .4 1"/></path>';
-    /* DIE RINNSALE: zaeh — sie kriechen in 2,5 bis 4 s herunter
-       (Strich wird freigelegt), vorn ein runder Kopf, dazu ein feiner
-       heller Glanzstreifen, damit es nass aussieht und nicht matt. */
-    [[-23, 72], [-15, 46], [15, 50], [23, 76]].forEach(([x0, y1], k) => {
-      const x = 50 + x0 + zufall(-1.5, 1.5);
-      const y0 = 50 - Math.sqrt(R * R - (x - 50) * (x - 50)) - 1;
-      const ende = y1 + zufall(-4, 4);
-      /* Ein Rinnsal laeuft nicht gerade: es sucht sich den Weg, mal
-         etwas links, mal etwas rechts — drei Boegen mit eigenem Versatz. */
-      const w1 = zufall(-2.2, 2.2), w2 = zufall(-2.2, 2.2), w3 = zufall(-1.2, 1.2);
-      const h = ende - y0;
-      const weg = "M" + f(x) + " " + f(y0) + " C" + f(x + w1) + " " + f(y0 + h * 0.15) + " " + f(x + w1) + " " + f(y0 + h * 0.3) + " "
-        + f(x + w1 * 0.5) + " " + f(y0 + h * 0.4) + " S" + f(x + w2) + " " + f(y0 + h * 0.62) + " " + f(x + w2 * 0.6) + " " + f(y0 + h * 0.75)
-        + " S" + f(x + w3) + " " + f(ende - 1) + " " + f(x + w3) + " " + f(ende);
-      const lang = (ende - y0) * 1.05, dur = f(zufall(2.5, 4)), bg = f(zufall(0.1, 0.9));
-      /* Die Spur ist duenn, der Kopf dick — so sieht zaehes Blut aus:
-         vorne sammelt es sich, hinten bleibt ein Film. */
-      const dicke = zufall(1.1, 1.5);
-      innen += '<path d="' + weg + '" fill="none" stroke="#7F1D1D" stroke-opacity=".86" stroke-width="' + f(dicke)
-        + '" stroke-linecap="round" stroke-dasharray="' + f(lang) + " " + f(lang) + '" stroke-dashoffset="' + f(lang) + '">'
-        + '<animate attributeName="stroke-dashoffset" dur="' + dur + 's" begin="' + bg + 's" fill="freeze" values="' + f(lang) + ';0" calcMode="spline" keySplines=".25 .1 .35 1"/></path>'
-        + '<path d="' + weg + '" fill="none" stroke="#FCA5A5" stroke-opacity=".32" stroke-width=".45" transform="translate(' + f(-dicke * 0.22) + ' 0)"'
-        + ' stroke-linecap="round" stroke-dasharray="' + f(lang) + " " + f(lang) + '" stroke-dashoffset="' + f(lang) + '">'
-        + '<animate attributeName="stroke-dashoffset" dur="' + dur + 's" begin="' + bg + 's" fill="freeze" values="' + f(lang) + ';0" calcMode="spline" keySplines=".25 .1 .35 1"/></path>'
-        + '<ellipse rx="' + f(dicke * 1.05) + '" ry="' + f(dicke * 1.35) + '" fill="#7F1D1D" fill-opacity=".92" opacity="0">'
-        + '<set attributeName="opacity" to="1" begin="' + bg + 's" fill="freeze"/>'
-        + '<animateMotion dur="' + dur + 's" begin="' + bg + 's" fill="freeze" path="' + weg + '" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines=".25 .1 .35 1"/></ellipse>';
-    });
-    /* UNTEN DIE LACHE: unregelmaessige Oberkante, waechst in 3 s von
-       nichts auf ihre Hoehe, dunkler Kern, heller Saum, ein Glanz. */
-    /* Weiche Oberkante: die Punkte werden mit Boegen verbunden
-       (Mittelpunkt-Glaettung), sonst ist es ein Gebirge. Die Wellen
-       sind fest gewuerfelt, damit Anfang und Ende dieselbe Form haben
-       und nur die Hoehe waechst. */
-    const lWellen = Array.from({ length: 9 }, () => zufall(0.7, 1.15));
-    const lache = (h) => {
-      const pk = lWellen.map((v, i) => [50 - R - 1 + (2 * R + 2) * i / 8, 50 + R - h * v]);
-      let d = "M" + f(50 - R - 2) + " " + f(50 + R + 2) + " L" + f(pk[0][0]) + " " + f(pk[0][1]);
-      for (let i = 1; i < pk.length; i++) {
-        const mx = (pk[i - 1][0] + pk[i][0]) / 2, my = (pk[i - 1][1] + pk[i][1]) / 2;
-        d += " Q" + f(pk[i - 1][0]) + " " + f(pk[i - 1][1]) + " " + f(mx) + " " + f(my);
-      }
-      return d + " L" + f(pk[8][0]) + " " + f(pk[8][1]) + " L" + f(50 + R + 2) + " " + f(50 + R + 2) + " Z";
-    };
-    innen += '<path fill="url(#lcBl' + n + ')" stroke="#DC2626" stroke-opacity=".35" stroke-width=".5" d="' + lache(0.4) + '">'
-      + '<animate attributeName="d" dur="3.4s" begin=".4s" fill="freeze" values="' + lache(0.4) + ";" + lache(8.5) + '" calcMode="spline" keySplines=".3 0 .4 1"/></path>'
-      + '<ellipse cx="' + f(50 - 6) + '" cy="' + f(50 + R - 5.2) + '" rx="4.5" ry=".7" fill="#fff" opacity="0">'
-      + '<animate attributeName="opacity" dur="3.4s" begin=".4s" fill="freeze" values="0;0;.28"/></ellipse>';
-    /* DIE TROPFEN: zwei Laeufe, um die Haelfte versetzt — alle 1,6 s
-       einer. Er bildet sich am unteren Rand, loest sich, faellt mit
-       Schwerkraft (beschleunigt) 20–40 % der Platzhoehe und zerplatzt
-       zu einem flachen Fleck, der verschwindet. */
-    let tropfen = "";
-    const unten = 50 + R;
-    for (let k = 0; k < 2; k++) {
-      const x = 50 + zufall(-9, 9), fall = zufall(17, 28), dur = 3.2, bg = f(3 + k * 1.6);
-      const kt = "0;.3;.42;.78;.8;1";
-      tropfen += '<ellipse cx="' + f(x) + '" cy="' + f(unten) + '" rx="0" ry="0" fill="#7F1D1D" fill-opacity=".9">'
-        + '<animate attributeName="cy" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="' + kt + '" values="'
-        + f(unten) + ";" + f(unten + 1) + ";" + f(unten + 1.6) + ";" + f(unten + fall) + ";" + f(unten + fall) + ";" + f(unten + fall) + '" calcMode="spline" keySplines=".4 0 .6 1;.4 0 .6 1;.55 0 1 .6;0 0 1 1;0 0 1 1"/>'
-        + '<animate attributeName="rx" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="' + kt + '" values="0;1.1;.9;.8;2.4;2.8"/>'
-        + '<animate attributeName="ry" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="' + kt + '" values="0;1.1;1.6;1.9;.45;.3"/>'
-        + '<animate attributeName="opacity" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="' + kt + '" values="0;1;1;1;.8;0"/></ellipse>';
-    }
-    return '<svg class="lc-blut-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + defs + '</defs>'
-      + '<g clip-path="url(#lcBm' + n + ')">' + innen + "</g>" + tropfen + "</svg>";
-  }
-
   /* Welche Sprechbilder seit dem SCHON-PASS EIN Bild sind statt
      Teilchen oder Rand-Schichten. */
-  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg, blut: lcBlutSvg };
+  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg };
 
   function lcSprechFeld(knopf, art) {
     const kreis = knopf.querySelector(".lc-kreis");
@@ -46730,27 +46593,7 @@
          abgeschnitten sein.
          ============================================================= */
       const rhUmriss = 2.6;
-      /* RUNDE 101 — XANDER (Walkie, Funk 68 und #147): „Mache endlich
-         diesen Modul-Look weg und maskiere diese Trennlinie und lass die
-         Hand endlich eine realistische Einheit werden."
-         GEFUNDEN (Nahaufnahme): drei Dinge machten die Naht.
-         1. Die Finger waren ABWECHSELND hell und dunkel gefaerbt — vier
-            verschiedene Teile statt einer Hand.
-         2. Die vordere Schicht (Knoechel + Finger) war einfarbig, der
-            Handruecken dahinter ein Verlauf: an der Kante springt die
-            Farbe.
-         3. Der Knoechelwulst trug eine eigene dunkle Umrisslinie — quer
-            ueber den Handruecken. Das IST die Trennlinie.
-         Jetzt teilen sich Handruecken, Knoechel und Finger EINEN
-         Verlauf in denselben Zeichenkoordinaten (userSpaceOnUse, y 40
-         bis 108 — die Hoehe des Handrueckens). An jeder Stelle hat die
-         Haut vorn also genau die Farbe, die sie hinten hat. Die ID ist
-         je Hand eindeutig: vorher hiessen alle Verlaeufe gleich, und die
-         Hexe bekam die Hautfarbe der Hand, die zuerst gezeichnet war. */
-      const rhId = "lcHv" + (window.__lcHandNr = (window.__lcHandNr || 0) + 1);
-      const rhVerlauf = "url(#" + rhId + ")";
-      const rhVerlaufDef = '<linearGradient id="' + rhId + '" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="108">'
-        + '<stop offset="0" stop-color="' + innen + '"/><stop offset="1" stop-color="' + haut + '"/></linearGradient>';
+      const rhVerlauf = "url(#lcHandFarbe" + (gorilla ? "G" : "M") + ")";
       const rhTon = (m, farbe) => (m === "k" ? kante : farbe);
       const rhStrich = (m) => (m === "k"
         ? ' stroke="' + kante + '" stroke-width="' + rhUmriss
@@ -46831,7 +46674,9 @@
         + "</g></g>";
       hand.innerHTML =
         '<svg class="lc-riesenhand-form" viewBox="0 0 120 150" aria-hidden="true">'
-        + '<defs>' + rhVerlaufDef + '</defs>'
+        + '<defs><linearGradient id="lcHandFarbe' + (gorilla ? "G" : "M") + '" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="' + innen + '"/>'
+        + '<stop offset="1" stop-color="' + haut + '"/></linearGradient></defs>'
         + '<g class="lc-rh-kante">' + rhRueckteile("k") + "</g>"
         + '<g class="lc-rh-fuell">' + rhRueckteile("f") + "</g>"
         /* Beim Gorilla ist der Arm behaart — kurze Striche am Rand.
@@ -47056,10 +46901,7 @@
       const rhFalte = (x, y, br) =>
         '<path d="M' + (x - br * 0.32) + " " + y + " L" + (x + br * 0.32) + " " + y
         + " M" + (x - br * 0.28) + " " + (y + 2.2) + " L" + (x + br * 0.28) + " " + (y + 2.2)
-        /* RUNDE 101: warmbraun statt grau und etwas kraeftiger — auf der
-           jetzt einheitlichen, helleren Haut waren die grauen Falten
-           kaum noch zu sehen (gemessen: 0 dunkle Punkte im Finger). */
-        + '" fill="none" stroke="rgba(110,52,30,.42)" stroke-width="1"'
+        + '" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1"'
         + ' stroke-linecap="round"/>'
         /* RUNDE 99 — beim Androiden ist das Gelenk kein Hautfaeltchen,
            sondern eine Fuge: ein dunkler Spalt mit einem hellen
@@ -47121,10 +46963,7 @@
         /* Abwechselnd die hellere und die dunklere Haut — so trennen
            sich nebeneinanderliegende Finger voneinander, auch ohne
            Strich dazwischen. */
-        /* RUNDE 101: nicht mehr abwechselnd — derselbe Verlauf wie der
-           Handruecken (siehe rhVerlauf). Die Finger trennt allein die
-           feine Kante zwischen ihnen, wie an einer echten Hand. */
-        const fuell = rhVerlauf;
+        const fuell = (i % 2 === 0) ? haut : innen;
         const haare = (m === "f" && gorilla)
           ? '<path d="M' + (f.x - b0 * 0.5) + " " + (f.y + 6) + " l-4.5 -2.5"
             + " M" + (f.x - b0 * 0.5) + " " + (f.y + 13) + " l-4.5 -2"
@@ -47171,15 +47010,8 @@
         '<path class="lc-rhand-knoechel" d="M34 76 C42 70 52 70 60 74'
         + ' C68 70 80 70 88 76 C90 82 88 88 84 90 C74 86 46 86 38 90'
         + ' C34 88 32 82 34 76 Z" fill="' + rhTon(m, haut) + '"' + rhStrich(m) + '/>';
-      /* RUNDE 101: der Knoechelwulst hat KEINE eigene Kante mehr (sie lag
-         als dunkle Linie quer ueber dem Handruecken) und dieselbe Haut
-         wie der Handruecken darunter. */
-      const rhKnoechelNeu = (m) => (m === "k" ? ""
-        : '<path class="lc-rhand-knoechel" d="M34 76 C42 70 52 70 60 74'
-          + ' C68 70 80 70 88 76 C90 82 88 88 84 90 C74 86 46 86 38 90'
-          + ' C34 88 32 82 34 76 Z" fill="' + rhVerlauf + '"/>');
       const rhVornteile = (m) =>
-        rhKnoechelNeu(m) + rhFinger.map((f, i) => rhFingerHtml(f, i, m)).join("");
+        rhKnoechel(m) + rhFinger.map((f, i) => rhFingerHtml(f, i, m)).join("");
       handVorn.innerHTML =
         '<svg class="lc-riesenhand-form" viewBox="0 0 120 150" aria-hidden="true">'
         + '<g class="lc-rh-kante">' + rhVornteile("k") + "</g>"

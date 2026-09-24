@@ -165,12 +165,14 @@ const TEILCHEN = ["magie", "noten", "herzen", "strom", "blasen"];
       innen: zungen.filter((g) => g.querySelectorAll("path").length === 2).length };
   });
   pruefe("das Feuer ist EIN Bild, keine 30 Aufkleber", fe.da && fe.teilchen === 0, fe.da ? fe.teilchen + " Teilchen" : "kein Bild");
-  pruefe("8 bis 12 Zungen", fe.zungen >= 8 && fe.zungen <= 12, fe.zungen);
+  /* Die Liste sagte 8–12; XANDER danach im Walkie: „Mehr Zungen. Die
+     Flammen sollen lückenfüllend sein." Jetzt zwei Lagen. */
+  pruefe("mehr Zungen, lueckenfuellend (zwei Lagen, mind. 24)", fe.zungen >= 24, fe.zungen);
   pruefe("jede Zunge hat eine hellere Innenzacke", fe.innen === fe.zungen, fe.innen + " von " + fe.zungen);
   pruefe("die Basis klebt — nur die Spitze bewegt sich", fe.fussFest === fe.zungen && fe.spitzeLebt === fe.zungen,
     "Fuss fest " + fe.fussFest + ", Spitze lebt " + fe.spitzeLebt);
   pruefe("der Glow hat Luecken, kein zweiter Vollkreis", fe.luecken >= 8, fe.luecken + " Striche/Luecken");
-  pruefe("6 bis 10 Funken", fe.funken >= 6 && fe.funken <= 10, fe.funken);
+  pruefe("Funken: 10 bis 13", fe.funken >= 10 && fe.funken <= 13, fe.funken);
   pruefe("Feuer bleibt beim Profilbild", fe.ueber <= 40, fe.ueber + " px groesser als das Bild");
 
   console.log("\nSCHON-PASS 3 — DIE WELLE OHNE LUECKE\n");
@@ -194,6 +196,32 @@ const TEILCHEN = ["magie", "noten", "herzen", "strom", "blasen"];
   pruefe("Saum 20–35 % Deckkraft und nie aus", we.deckMin >= 0.2 && we.deckMax <= 0.35, we.deckMin + " bis " + we.deckMax);
   pruefe("2–3 Ringe loesen sich vom Saum", we.ringe >= 2 && we.ringe <= 3 && we.abSaum, we.ringe + " Ringe");
   pruefe("sie laufen 8–14 % nach aussen", we.lauf && we.lauf.every((x) => x >= 8 && x <= 14), (we.lauf || []).map((x) => x.toFixed(1)).join(", "));
+
+  console.log("\nSCHON-PASS 4 — BLUT\n");
+  const bl = await pg.evaluate(() => {
+    const knopf = document.querySelector(".lc-platz");
+    knopf.dataset.sprechbild = "blut";
+    window.DMA_PRUEFUNG.sprechFeld(knopf, "blut");
+    const svg = knopf.querySelector(".lc-sprechfeld svg.lc-blut-bild");
+    if (!svg) return { da: false };
+    const maske = svg.querySelector("clipPath circle");
+    const innen = svg.querySelector("g[clip-path]");
+    const rinnsale = innen ? innen.querySelectorAll('path[stroke-dasharray][stroke="#7F1D1D"]').length : 0;
+    /* die Mitte bleibt frei: kein Rinnsal naeher als 12 an der Mittellinie */
+    const xs = [...innen.querySelectorAll('path[stroke-dasharray][stroke="#7F1D1D"]')].map((p) => parseFloat(p.getAttribute("d").slice(1)));
+    const farben = svg.innerHTML;
+    const tropfen = [...svg.querySelectorAll(":scope > ellipse")];
+    const fall = tropfen.map((t) => { const v = t.querySelector('animate[attributeName="cy"]').getAttribute("values").split(";").map(parseFloat); return v[3] - v[0]; });
+    const takt = tropfen.map((t) => parseFloat(t.querySelector("animate").getAttribute("dur")));
+    return { da: true, maske: !!maske, rinnsale, mitteFrei: xs.every((x) => Math.abs(x - 50) >= 12),
+      kern: /#450A0A/i.test(farben) && /#7F1D1D/i.test(farben), tropfen: tropfen.length, fall, abstand: takt[0] / tropfen.length };
+  });
+  pruefe("Blut ist ein Bild hinter einer Kreismaske", bl.da && bl.maske, bl.da ? "ja" : "fehlt");
+  pruefe("es laeuft links und rechts der Stirn, die Mitte bleibt frei", bl.rinnsale >= 2 && bl.mitteFrei, bl.rinnsale + " Rinnsale");
+  pruefe("dunkler Kern #7F1D1D / #450A0A", bl.kern, "");
+  pruefe("alle 1–2 s ein Tropfen", bl.abstand >= 1 && bl.abstand <= 2, (bl.abstand || 0) + " s");
+  /* Platzhoehe im Feld: Bild 69,4 + Name ~ 83 → 20–40 % = 16,6 bis 33,2 */
+  pruefe("er faellt 20–40 % der Platzhoehe", bl.fall && bl.fall.every((x) => x >= 16.6 && x <= 33.2), (bl.fall || []).map((x) => x.toFixed(1)).join(", "));
 
   console.log("\nUND WENN DAS SPRECHEN AUFHOERT?\n");
   const weg = await pg.evaluate(() => {

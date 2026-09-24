@@ -33156,23 +33156,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   height: 100%;
   overflow: visible;
 }
-
-/* =====================================================================
-   SCHON-PASS SPRECHBILDER — 4. BLUT (Xanders Liste vom 23.09.)
-   Blut ist jetzt ein Bild im Feld (.lc-sblut, siehe lcBlutSvg): es
-   quillt oben hinter dem Rand hervor, laeuft zaeh herunter, sammelt
-   sich unten, tropft. Die alten Schichten (verstreute rote Punkte am
-   Bild, roter Schein ringsum) sind aus — „nicht mattes Rot-Emoji".
-   ===================================================================== */
-.lc-platz-spricht[data-sprechbild="blut"] .lc-kreis {
-  animation: none !important;
-  box-shadow: none !important;
-  border-color: #7F1D1D !important;
-}
-.lc-platz-spricht[data-sprechbild="blut"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="blut"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="blut"]::after { display: none !important; }
-.lc-sprechfeld.lc-sblut { overflow: visible; }
-.lc-sprechfeld.lc-sblut .lc-blut-bild {
-  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
-}

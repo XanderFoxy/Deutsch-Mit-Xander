@@ -24704,117 +24704,9 @@
     }
     return '<svg class="lc-welle-bild" viewBox="0 0 100 100" aria-hidden="true">' + bild + "</svg>";
   }
-  /* =================================================================
-     SCHON-PASS SPRECHBILDER — 4. BLUT
-     -----------------------------------------------------------------
-     XANDERS LISTE: „Oben hinter der Kreismaske quillt es (Tropfen
-     selbst unsichtbar). Läuft links und rechts der Stirnlinie, zäh
-     (nicht spritzen). Unten sammelt sich eine unregelmäßige Lache,
-     Oberfläche leicht glänzend (heller Saum, dunkler Kern #7F1D1D /
-     #450A0A). Alle 1–2 s ein Tropfen über den unteren Rand, fällt
-     20–40 % der Platzhöhe, zerplatzt oder verschwindet. Selten,
-     ekelhaft, nicht komisch. Deckkraft 70–90 %, nass."
-     Alles Innere liegt hinter einer Kreismaske (clipPath) — es kommt
-     also wirklich hinter dem Rand hervor. Die Mitte des Gesichts
-     bleibt frei: die Rinnsale laufen bei ±15 und ±23 (Bildradius
-     34,7), die Lache bleibt im unteren Siebtel.
-     ================================================================= */
-  let lcBlutNr = 0;
-  function lcBlutSvg() {
-    const R = 34.7, n = ++lcBlutNr, f = (v) => v.toFixed(2), zufall = (a, b) => a + Math.random() * (b - a);
-    const defs = '<clipPath id="lcBm' + n + '"><circle cx="50" cy="50" r="' + f(R - 0.3) + '"/></clipPath>'
-      + '<radialGradient id="lcBl' + n + '" gradientUnits="userSpaceOnUse" cx="50" cy="' + f(50 + R) + '" r="16">'
-      + '<stop offset="0" stop-color="#450A0A" stop-opacity=".92"/><stop offset=".6" stop-color="#7F1D1D" stop-opacity=".88"/>'
-      + '<stop offset="1" stop-color="#991B1B" stop-opacity=".8"/></radialGradient>';
-    let innen = "";
-    /* OBEN: es quillt hinter dem Rand hervor — ein dunkler Saum an der
-       Innenseite des oberen Bogens, der langsam dicker wird. */
-    const bogen = (dicke) => {
-      let d = "";
-      for (let i = 0; i <= 24; i++) {
-        const w = (-150 + i * 5) * Math.PI / 180;
-        d += (i ? " L" : "M") + f(50 + Math.cos(w) * (R + 1)) + " " + f(50 + Math.sin(w) * (R + 1));
-      }
-      for (let i = 24; i >= 0; i--) {
-        const w = (-150 + i * 5) * Math.PI / 180;
-        const r = R - dicke * (0.6 + 0.4 * Math.sin(i * 1.7) * Math.sin(i * 0.6)) * Math.sin(i / 24 * Math.PI);
-        d += " L" + f(50 + Math.cos(w) * r) + " " + f(50 + Math.sin(w) * r);
-      }
-      return d + " Z";
-    };
-    innen += '<path fill="#7F1D1D" fill-opacity=".85" d="' + bogen(0.6) + '">'
-      + '<animate attributeName="d" dur="3s" fill="freeze" values="' + bogen(0.6) + ";" + bogen(3.2) + '" calcMode="spline" keySplines=".3 0 .4 1"/></path>';
-    /* DIE RINNSALE: zaeh — sie kriechen in 2,5 bis 4 s herunter
-       (Strich wird freigelegt), vorn ein runder Kopf, dazu ein feiner
-       heller Glanzstreifen, damit es nass aussieht und nicht matt. */
-    [[-23, 72], [-15, 46], [15, 50], [23, 76]].forEach(([x0, y1], k) => {
-      const x = 50 + x0 + zufall(-1.5, 1.5);
-      const y0 = 50 - Math.sqrt(R * R - (x - 50) * (x - 50)) - 1;
-      const ende = y1 + zufall(-4, 4);
-      /* Ein Rinnsal laeuft nicht gerade: es sucht sich den Weg, mal
-         etwas links, mal etwas rechts — drei Boegen mit eigenem Versatz. */
-      const w1 = zufall(-2.2, 2.2), w2 = zufall(-2.2, 2.2), w3 = zufall(-1.2, 1.2);
-      const h = ende - y0;
-      const weg = "M" + f(x) + " " + f(y0) + " C" + f(x + w1) + " " + f(y0 + h * 0.15) + " " + f(x + w1) + " " + f(y0 + h * 0.3) + " "
-        + f(x + w1 * 0.5) + " " + f(y0 + h * 0.4) + " S" + f(x + w2) + " " + f(y0 + h * 0.62) + " " + f(x + w2 * 0.6) + " " + f(y0 + h * 0.75)
-        + " S" + f(x + w3) + " " + f(ende - 1) + " " + f(x + w3) + " " + f(ende);
-      const lang = (ende - y0) * 1.05, dur = f(zufall(2.5, 4)), bg = f(zufall(0.1, 0.9));
-      /* Die Spur ist duenn, der Kopf dick — so sieht zaehes Blut aus:
-         vorne sammelt es sich, hinten bleibt ein Film. */
-      const dicke = zufall(1.1, 1.5);
-      innen += '<path d="' + weg + '" fill="none" stroke="#7F1D1D" stroke-opacity=".86" stroke-width="' + f(dicke)
-        + '" stroke-linecap="round" stroke-dasharray="' + f(lang) + " " + f(lang) + '" stroke-dashoffset="' + f(lang) + '">'
-        + '<animate attributeName="stroke-dashoffset" dur="' + dur + 's" begin="' + bg + 's" fill="freeze" values="' + f(lang) + ';0" calcMode="spline" keySplines=".25 .1 .35 1"/></path>'
-        + '<path d="' + weg + '" fill="none" stroke="#FCA5A5" stroke-opacity=".32" stroke-width=".45" transform="translate(' + f(-dicke * 0.22) + ' 0)"'
-        + ' stroke-linecap="round" stroke-dasharray="' + f(lang) + " " + f(lang) + '" stroke-dashoffset="' + f(lang) + '">'
-        + '<animate attributeName="stroke-dashoffset" dur="' + dur + 's" begin="' + bg + 's" fill="freeze" values="' + f(lang) + ';0" calcMode="spline" keySplines=".25 .1 .35 1"/></path>'
-        + '<ellipse rx="' + f(dicke * 1.05) + '" ry="' + f(dicke * 1.35) + '" fill="#7F1D1D" fill-opacity=".92" opacity="0">'
-        + '<set attributeName="opacity" to="1" begin="' + bg + 's" fill="freeze"/>'
-        + '<animateMotion dur="' + dur + 's" begin="' + bg + 's" fill="freeze" path="' + weg + '" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines=".25 .1 .35 1"/></ellipse>';
-    });
-    /* UNTEN DIE LACHE: unregelmaessige Oberkante, waechst in 3 s von
-       nichts auf ihre Hoehe, dunkler Kern, heller Saum, ein Glanz. */
-    /* Weiche Oberkante: die Punkte werden mit Boegen verbunden
-       (Mittelpunkt-Glaettung), sonst ist es ein Gebirge. Die Wellen
-       sind fest gewuerfelt, damit Anfang und Ende dieselbe Form haben
-       und nur die Hoehe waechst. */
-    const lWellen = Array.from({ length: 9 }, () => zufall(0.7, 1.15));
-    const lache = (h) => {
-      const pk = lWellen.map((v, i) => [50 - R - 1 + (2 * R + 2) * i / 8, 50 + R - h * v]);
-      let d = "M" + f(50 - R - 2) + " " + f(50 + R + 2) + " L" + f(pk[0][0]) + " " + f(pk[0][1]);
-      for (let i = 1; i < pk.length; i++) {
-        const mx = (pk[i - 1][0] + pk[i][0]) / 2, my = (pk[i - 1][1] + pk[i][1]) / 2;
-        d += " Q" + f(pk[i - 1][0]) + " " + f(pk[i - 1][1]) + " " + f(mx) + " " + f(my);
-      }
-      return d + " L" + f(pk[8][0]) + " " + f(pk[8][1]) + " L" + f(50 + R + 2) + " " + f(50 + R + 2) + " Z";
-    };
-    innen += '<path fill="url(#lcBl' + n + ')" stroke="#DC2626" stroke-opacity=".35" stroke-width=".5" d="' + lache(0.4) + '">'
-      + '<animate attributeName="d" dur="3.4s" begin=".4s" fill="freeze" values="' + lache(0.4) + ";" + lache(8.5) + '" calcMode="spline" keySplines=".3 0 .4 1"/></path>'
-      + '<ellipse cx="' + f(50 - 6) + '" cy="' + f(50 + R - 5.2) + '" rx="4.5" ry=".7" fill="#fff" opacity="0">'
-      + '<animate attributeName="opacity" dur="3.4s" begin=".4s" fill="freeze" values="0;0;.28"/></ellipse>';
-    /* DIE TROPFEN: zwei Laeufe, um die Haelfte versetzt — alle 1,6 s
-       einer. Er bildet sich am unteren Rand, loest sich, faellt mit
-       Schwerkraft (beschleunigt) 20–40 % der Platzhoehe und zerplatzt
-       zu einem flachen Fleck, der verschwindet. */
-    let tropfen = "";
-    const unten = 50 + R;
-    for (let k = 0; k < 2; k++) {
-      const x = 50 + zufall(-9, 9), fall = zufall(17, 28), dur = 3.2, bg = f(3 + k * 1.6);
-      const kt = "0;.3;.42;.78;.8;1";
-      tropfen += '<ellipse cx="' + f(x) + '" cy="' + f(unten) + '" rx="0" ry="0" fill="#7F1D1D" fill-opacity=".9">'
-        + '<animate attributeName="cy" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="' + kt + '" values="'
-        + f(unten) + ";" + f(unten + 1) + ";" + f(unten + 1.6) + ";" + f(unten + fall) + ";" + f(unten + fall) + ";" + f(unten + fall) + '" calcMode="spline" keySplines=".4 0 .6 1;.4 0 .6 1;.55 0 1 .6;0 0 1 1;0 0 1 1"/>'
-        + '<animate attributeName="rx" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="' + kt + '" values="0;1.1;.9;.8;2.4;2.8"/>'
-        + '<animate attributeName="ry" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="' + kt + '" values="0;1.1;1.6;1.9;.45;.3"/>'
-        + '<animate attributeName="opacity" dur="' + dur + 's" begin="' + bg + 's" repeatCount="indefinite" keyTimes="' + kt + '" values="0;1;1;1;.8;0"/></ellipse>';
-    }
-    return '<svg class="lc-blut-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + defs + '</defs>'
-      + '<g clip-path="url(#lcBm' + n + ')">' + innen + "</g>" + tropfen + "</svg>";
-  }
-
   /* Welche Sprechbilder seit dem SCHON-PASS EIN Bild sind statt
      Teilchen oder Rand-Schichten. */
-  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg, blut: lcBlutSvg };
+  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg };
 
   function lcSprechFeld(knopf, art) {
     const kreis = knopf.querySelector(".lc-kreis");
@@ -47056,10 +46948,7 @@
       const rhFalte = (x, y, br) =>
         '<path d="M' + (x - br * 0.32) + " " + y + " L" + (x + br * 0.32) + " " + y
         + " M" + (x - br * 0.28) + " " + (y + 2.2) + " L" + (x + br * 0.28) + " " + (y + 2.2)
-        /* RUNDE 101: warmbraun statt grau und etwas kraeftiger — auf der
-           jetzt einheitlichen, helleren Haut waren die grauen Falten
-           kaum noch zu sehen (gemessen: 0 dunkle Punkte im Finger). */
-        + '" fill="none" stroke="rgba(110,52,30,.42)" stroke-width="1"'
+        + '" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1"'
         + ' stroke-linecap="round"/>'
         /* RUNDE 99 — beim Androiden ist das Gelenk kein Hautfaeltchen,
            sondern eine Fuge: ein dunkler Spalt mit einem hellen
