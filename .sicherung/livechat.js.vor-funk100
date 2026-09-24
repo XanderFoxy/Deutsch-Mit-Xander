@@ -3669,13 +3669,8 @@ window.LiveChat = (function () {
     kontoMerken(n.von, n.konto);
     spielMerken(n.von, n.spiel);
     /* FUNK 95 — Spielereignisse (Schuss, Treffer, Stand, Duell) gehen an
-       spiel.js; gerechnet wird dort nichts, nur gezeigt.
-       NACHGEBESSERT (Funk 100): auch Schiffe versenken schickt
-       art „spiel" (mit dem Zug in n.spiel). Diese Weiche fing seit
-       Fassung 618 JEDEN Schiffe-Zug ab — zwischen zwei Geräten lief das
-       Spiel nicht mehr (gefunden von pruefe-runde98-schiffe-aus). Ein
-       Ereignis des Spielsystems erkennt man an n.ereignis. */
-    if (n.art === "spiel" && n.ereignis) {
+       spiel.js; gerechnet wird dort nichts, nur gezeigt. */
+    if (n.art === "spiel") {
       try { if (window.DMA_SPIEL && window.DMA_SPIEL.empfangen) window.DMA_SPIEL.empfangen(n); } catch (e) {}
       return;
     }
@@ -7704,48 +7699,8 @@ window.LiveChat = (function () {
        Gegenteil von dem, was das Spiel tut. */
     anAlle("aktion", zustand.ichName + " startet Schiffe versenken — "
       + "sucht euch ein Versteck  🚢");
-    /* FUNK 100 — hier stand noch „schiffeLos()" aus Runde 88, als die
-       Verstecke ausgelost wurden. Seit Runde 92 sucht sich jeder sein
-       Versteck selbst („Man muss sich erst einen Platz suchen, dann
-       beginnt die Runde mit einem Countdown"). Der alte Aufruf schaltete
-       alle Geräte schon beim Start auf „Schießen" — mitten ins
-       Verstecken. Los geht es jetzt nur noch nach dem Countdown
-       (schiffeAlleDa).
-
-       XANDER (Funk 100): „Kannst du mir den Dummy so machen dass ich mit
-       ihm Schiffe testen … dass er eigenes Spielzüge macht".
-       Die Übungspuppen sitzen nur auf dem eigenen Gerät — und wer
-       /versenken tippt, ist Schiedsrichter. Also zieht der
-       Schiedsrichter für sie: sie verstecken sich sofort auf einem
-       zufälligen freien Feld und schießen, wenn sie dran sind. */
-    schiffeSpiel.reihe.forEach(function (m) {
-      if (!istPuppe(m.id)) return;
-      var belegt = {};
-      Object.keys(schiffeSpiel.verstecke).forEach(function (id) { belegt[schiffeSpiel.verstecke[id]] = true; });
-      var frei = [];
-      for (var f = 1; f <= SCHIFFE_FELDER; f++) if (!belegt[f]) frei.push(f);
-      if (frei.length) schiffeVersteckAn(frei[Math.floor(Math.random() * frei.length)], m.id);
-    });
+    schiffeLos();
     return true;
-  }
-  /* FUNK 100 — die Puppe ist dran: kurz „überlegen", dann auf ein Feld
-     schießen, auf das noch niemand geschossen hat (nie auf ihr eigenes). */
-  function schiffePuppeZug() {
-    if (!schiffeSpiel || schiffeSpiel.phase !== "schiessen") return;
-    var m = schiffeSpiel.reihe[schiffeSpiel.dran % schiffeSpiel.reihe.length];
-    if (!m || !istPuppe(m.id) || schiffeSpiel.raus[m.id]) return;
-    var runde = schiffeSpiel;
-    setTimeout(function () {
-      if (schiffeSpiel !== runde || schiffeSpiel.phase !== "schiessen") return;
-      var jetzt = schiffeSpiel.reihe[schiffeSpiel.dran % schiffeSpiel.reihe.length];
-      if (!jetzt || jetzt.id !== m.id) return;
-      var geschossen = schiffeSpiel.geschossen || {};
-      var eigenes = schiffeSpiel.verstecke[m.id];
-      var frei = [];
-      for (var f = 1; f <= SCHIFFE_FELDER; f++) if (!geschossen[f] && f !== eigenes) frei.push(f);
-      if (!frei.length) return;
-      schiffeSchuss(frei[Math.floor(Math.random() * frei.length)], m.id, m.name);
-    }, 1400 + Math.floor(Math.random() * 1200));
   }
 
   /* Der Schiedsrichter nimmt ein Versteck entgegen — und verraet es
@@ -7779,7 +7734,6 @@ window.LiveChat = (function () {
   /* Eine Nachricht an genau ein Geraet — auch an das eigene. */
   function schiffePost(id, d) {
     if (id === zustand.ichId) schiffeEmpfangen(d, zustand.ichId);
-    else if (istPuppe(id)) return;          /* FUNK 100: die Puppe hat kein Gerät */
     else postSenden(id, { art: "spielpost", spiel: d });
   }
   /* Alle da (oder die Frist ist um): wer noch kein Feld hat, bekommt
@@ -7830,7 +7784,6 @@ window.LiveChat = (function () {
     var m = schiffeSpiel.reihe[0];
     schiffeAnAlle({ t: "los", dran: m.id, dranName: m.name,
                     reihe: schiffeSpiel.reihe });
-    schiffePuppeZug();
   }
   function schiffeWeiter() {
     var n = schiffeSpiel.reihe.length;
@@ -7848,10 +7801,6 @@ window.LiveChat = (function () {
        (schiffeVersteckAn prueft SCHIFFE_FELDER), aber jeder Schuss auf
        9 bis 16 wurde vom Schiedsrichter stillschweigend verworfen. */
     if (!schiffeSpiel || nr < 1 || nr > SCHIFFE_FELDER) return;
-    /* FUNK 100: welche Felder schon beschossen sind — damit die Puppe
-       nicht zweimal auf dasselbe schießt. */
-    schiffeSpiel.geschossen = schiffeSpiel.geschossen || {};
-    schiffeSpiel.geschossen[nr] = true;
     var getroffenId = "", getroffenName = "";
     Object.keys(schiffeSpiel.verstecke).forEach(function (id) {
       if (id === vonId || schiffeSpiel.raus[id]) return;
@@ -7878,7 +7827,6 @@ window.LiveChat = (function () {
     schiffeAnAlle({ t: "schuss", nr: nr, treffer: Boolean(getroffenId), von: vonName,
                     wen: getroffenName, dran: naechst ? naechst.id : "",
                     dranName: naechst ? naechst.name : "" });
-    schiffePuppeZug();
   }
 
   /* =========================================================
@@ -7930,7 +7878,7 @@ window.LiveChat = (function () {
           try { zustand.punkteRuf(wieviel, grund); } catch (e) {}
         }
         systemZeile("\u2b50 " + wieviel + " Punkte f\u00fcr dich \u2014 " + grund + ".");
-      } else if (!istPuppe(m.id)) {
+      } else {
         postSenden(m.id, { art: "punkte", wieviel: wieviel, grund: grund });
       }
     });
@@ -14840,8 +14788,6 @@ window.LiveChat = (function () {
       return { phase: schiffeSpiel.phase || "",
                uhrLaeuft: Boolean(schiffeSpiel.frist),
                mitspieler: (schiffeSpiel.reihe || []).length,
-               /* FUNK 100: wie viele schon versteckt sind (nur die Zahl) */
-               versteckt: Object.keys(schiffeSpiel.verstecke || {}).length,
                treffer: schiffeSpiel.treffer || {} };
     },
     /* RUNDE 99 — die Punktrechnung zum Nachrechnen, ohne Spiel und

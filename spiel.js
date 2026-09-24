@@ -148,6 +148,7 @@
   function plaetze() { try { return LC().lage().plaetze || []; } catch (e) { return []; } }
   function spielIdVon(chatId) {
     if (!chatId) return "";
+    if (istPuppe(chatId)) { puppeStand(chatId); return "puppe:" + chatId; }
     var l = LC();
     try {
       if (chatId === l.lage().ichId) return S.uid;
@@ -167,7 +168,7 @@
     S.letzterAbruf = jetzt;
     var ids = [];
     plaetze().forEach(function (p) {
-      if (p.leer) return;
+      if (p.leer || istPuppe(p.id)) return;     /* FUNK 100: die Puppe hat kein Konto */
       var sid = spielIdVon(p.id);
       if (sid && ids.indexOf(sid) < 0) ids.push(sid);
     });
@@ -179,6 +180,135 @@
       if (ich) { S.ich = ich; S.stand[ich.id] = oeffentlich(ich); }
       zeichnen(); panelAuffrischen();
     }).catch(function () {});
+  }
+
+  /* ---------------------------------------------------------------
+     FUNK 100 — ÜBEN MIT DER PUPPE
+     ---------------------------------------------------------------
+     XANDER: „kann ich das mit dem Dummy testen wenn ich ihn irgendwo
+     hin treffe oder das ja zufällig Punkte so an meinem Profilbild
+     aussucht wo er mir hinschießt dass ich sehen kann ob das
+     funktioniert."
+     Die Übungspuppen (/puppe) sitzen nur auf dem eigenen Gerät und
+     haben kein Konto. Deshalb rechnet hier der Browser, mit genau den
+     Regeln des Servers (spiel_zone, spiel_faktor, spiel_waffe_schaden):
+       · Treffer auf die Puppe: Zone, rote Zahl, Lebensbalken, kaputt;
+         nach 4 s klebt sie sich ein Pflaster drauf.
+       · Übungsduell (Reiter „Duell", Knopf bei der Puppe): die Puppe
+         schießt alle paar Sekunden zurück, auf einen ZUFÄLLIGEN Punkt
+         deines Bildes. Deine Lebenspunkte zählen nur in der Übung —
+         in der Datenbank ändert sich nichts, Punkte gibt es keine.
+     --------------------------------------------------------------- */
+  function istPuppe(chatId) { return /^uebungspuppe2?$/.test(String(chatId || "")); }
+  function puppeStand(chatId) {
+    var sid = "puppe:" + chatId;
+    if (!S.stand[sid]) {
+      S.stand[sid] = { id: sid, name: chatId === "uebungspuppe2" ? "Dummy" : "Puppe", lp: 100, lp_max: 100,
+                       kaputt: false, schild: 0, mauer_art: null, mauer_lp: 0, haustier: false,
+                       geschuetz: false, wischer: 0, anfaenger: false, verdient: 0, uebung: true };
+    }
+    return S.stand[sid];
+  }
+  function zoneRechnen(dx, dy) {
+    var d = Math.hypot(dx, dy);
+    if (d > 1) return "daneben";
+    if (Math.hypot(dx, dy + 0.3) <= 0.3) return "kopf";
+    if (Math.hypot(dx - 0.18, dy - 0.35) <= 0.2) return "herz";
+    return d <= 0.7 ? "koerper" : "streif";
+  }
+  var FAKTOR = { kopf: 2.0, herz: 1.6, koerper: 1.0, streif: 0.5, daneben: 0 };
+  function schadenRechnen(waffe, zone) {
+    return Math.round(((WAFFEN[waffe] || WAFFEN.bogen).schaden) * (FAKTOR[zone] || 0));
+  }
+  function puppeGetroffen(p, waffe, dx, dy) {
+    var st = puppeStand(p.id);
+    if (st.kaputt) { zahlZeigen(p.id, null, "schon kaputt"); return; }
+    var zone = zoneRechnen(dx, dy), schaden = schadenRechnen(waffe, zone);
+    st.lp = Math.max(0, st.lp - schaden);
+    st.kaputt = st.lp <= 0;
+    trefferZeigen(p.id, { zone: zone, schaden: schaden, abgewehrt: 0, kaputt: st.kaputt });
+    if (!S.uebungGesagt) { S.uebungGesagt = true; hinweis("🧍 Übung mit " + st.name + " – zählt nicht, keine Punkte."); }
+    if (st.kaputt) {
+      if (S.duell && S.duell.uebung && S.duell.gegnerChat === p.id) {
+        hinweis("🏆 Übungsduell gewonnen – " + st.name + " ist kaputt.");
+        uebungEnde();
+      }
+      setTimeout(function () {
+        st.lp = st.lp_max; st.kaputt = false;
+        zahlZeigen(p.id, st.lp_max, "Pflaster");
+        zeichnen();
+      }, 4000);
+    }
+    zeichnen();
+  }
+  function meinPlatzNummer() {
+    var ich = meineChatId(), n = null;
+    plaetze().forEach(function (q) { if (q.id === ich) n = q.nummer; });
+    return n;
+  }
+  function uebungStarten(chatId) {
+    if (!istPuppe(chatId) || !platzElVon(chatId)) return false;
+    var st = puppeStand(chatId);
+    st.lp = st.lp_max; st.kaputt = false;
+    var max = (S.ich && S.ich.lp_max) || 100;
+    S.uebung = { lp: max, max: max };
+    S.duell = { id: "uebung", gegner: "puppe:" + chatId, gegnerChat: chatId, bis: Date.now() + 180000, uebung: true };
+    hinweis("⚔️ Übungsduell mit " + st.name + ": tippe auf sie, um zu treffen. Sie schießt zurück – weich aus, indem du den Platz wechselst. Zählt nicht.");
+    schliessen();
+    puppeSchussPlanen();
+    zeichnen();
+    return true;
+  }
+  function uebungEnde() {
+    if (S.duell && S.duell.uebung) S.duell = null;
+    clearTimeout(S.puppeUhr);
+    S.uebung = null;
+    zeichnen();
+    panelAuffrischen();
+  }
+  function puppeSchussPlanen() {
+    clearTimeout(S.puppeUhr);
+    S.puppeUhr = setTimeout(puppeSchiesst, 2600 + Math.floor(Math.random() * 1900));
+  }
+  function puppeSchiesst() {
+    var d = S.duell;
+    if (!d || !d.uebung || !S.uebung) return;
+    if (Date.now() > d.bis) { hinweis("⏱️ Übungsduell vorbei – unentschieden."); uebungEnde(); return; }
+    var gegner = d.gegnerChat, ich = meineChatId();
+    if (!platzElVon(gegner) || !platzElVon(ich)) { uebungEnde(); return; }
+    var st = puppeStand(gegner);
+    if (st.kaputt || S.uebung.lp <= 0) { puppeSchussPlanen(); return; }
+    /* Ein zufälliger Punkt. Ganz gleichmäßig verteilt träfe die Puppe
+       fast nur Rand und Körper — Kopf und Herz sind kleine Flächen, und
+       man sähe kaum, ob sie zählen. Deshalb lost sie zuerst die ZONE
+       (Kopf 25 %, Herz 15 %, Körper 35 %, Rand 15 %, daneben 10 %) und
+       dann einen zufälligen Punkt darin. */
+    var los = Math.random(), wunsch = los < 0.25 ? "kopf" : los < 0.4 ? "herz" : los < 0.75 ? "koerper" : los < 0.9 ? "streif" : "daneben";
+    var dx = 0, dy = 0;
+    for (var v = 0; v < 400; v++) {
+      dx = Math.round((Math.random() * 2.3 - 1.15) * 100) / 100;
+      dy = Math.round((Math.random() * 2.3 - 1.15) * 100) / 100;
+      if (zoneRechnen(dx, dy) === wunsch) break;
+    }
+    var arten = ["zwille", "bogen", "laser", "armbrust", "tomahawk"];
+    var waffe = arten[Math.floor(Math.random() * arten.length)];
+    var farbe = LASERFARBEN[Math.floor(Math.random() * LASERFARBEN.length)];
+    var nummer = meinPlatzNummer();
+    var dauer = geschossZeigen(gegner, ich, waffe, dx, dy, farbe);
+    setTimeout(function () {
+      if (!S.uebung || !S.duell || !S.duell.uebung) return;
+      if (meinPlatzNummer() !== nummer) { zahlZeigen(ich, null, "ausgewichen"); puppeSchussPlanen(); return; }
+      var zone = zoneRechnen(dx, dy), schaden = schadenRechnen(waffe, zone);
+      S.uebung.lp = Math.max(0, S.uebung.lp - schaden);
+      trefferZeigen(ich, { zone: zone, schaden: schaden, abgewehrt: 0, kaputt: S.uebung.lp <= 0 });
+      zeichnen();
+      if (S.uebung.lp <= 0) {
+        hinweis("💔 " + st.name + " hat das Übungsduell gewonnen – in echt wärst du jetzt kaputt.");
+        setTimeout(uebungEnde, 2500);
+        return;
+      }
+      puppeSchussPlanen();
+    }, dauer);
   }
 
   /* ---------------------------------------------------------------
@@ -240,7 +370,7 @@
 
   /* Aufgerufen vom Tipp auf einen Platz (app.js). true = erledigt. */
   function tippAufPlatz(knopf, p, ev) {
-    if (!S.bereit) return false;
+    if (!S.bereit && !(p && istPuppe(p.id) && (S.waffe || imDuellMit(p.id)))) return false;
     var ich = S.ich || {};
     if (p && !p.leer && !p.ich && (S.waffe || imDuellMit(p.id))) {
       schiessen(knopf, p, ev);
@@ -271,7 +401,8 @@
     dx = Math.round(dx * 100) / 100; dy = Math.round(dy * 100) / 100;
     var ichChat = meineChatId();
     var farbe = waffe === "laser" ? S.laserfarbe : "";
-    senden({ ereignis: "schuss", zielChat: p.id, waffe: waffe, dx: dx, dy: dy, farbe: farbe });
+    var puppe = istPuppe(p.id);
+    if (!puppe) senden({ ereignis: "schuss", zielChat: p.id, waffe: waffe, dx: dx, dy: dy, farbe: farbe });
     var dauer = geschossZeigen(ichChat, p.id, waffe, dx, dy, farbe);
     /* Ausweichen (Funk 89: „sie kann ausweichen"): Getroffen wird erst
        beim Einschlag — und nur, wer dann noch auf diesem Platz sitzt. */
@@ -279,10 +410,11 @@
     setTimeout(function () {
       var jetzt = plaetze().find(function (q) { return q.nummer === nummer; });
       if (!jetzt || jetzt.id !== p.id) {
-        senden({ ereignis: "ausgewichen", zielChat: p.id });
+        if (!puppe) senden({ ereignis: "ausgewichen", zielChat: p.id });
         zahlZeigen(p.id, null, "ausgewichen");
         return;
       }
+      if (puppe) { puppeGetroffen(p, waffe, dx, dy); return; }
       var raum = ""; try { raum = LC().lage().raum || ""; } catch (e) {}
       rpc("spiel_treffer", { p_ziel: zielSid, p_waffe: waffe, p_dx: dx, p_dy: dy, p_raum: raum }).then(function (erg) {
         if (!erg || !erg.ok) { hinweis("🛡️ " + ((erg && erg.grund) || "kein Treffer")); return; }
@@ -429,7 +561,11 @@
       var sid = chatId ? spielIdVon(chatId) : "";
       var s = sid ? S.stand[sid] : null;
       var kreis = el.querySelector(".lc-kreis");
-      if (!s || !kreis || !S.bereit) { platzLeeren(el); return; }
+      /* FUNK 100 — im Übungsduell zeigt der eigene Balken die
+         Übungs-Lebenspunkte (die echten bleiben unberührt). */
+      var uebungIch = Boolean(S.uebung && chatId && chatId === meineChatId());
+      if (uebungIch) s = Object.assign({}, s || { name: "Du", schild: 0 }, { lp: S.uebung.lp, lp_max: S.uebung.max, kaputt: S.uebung.lp <= 0 });
+      if (!s || !kreis || (!S.bereit && !uebungIch && !istPuppe(chatId))) { platzLeeren(el); return; }
       /* Unter dem NAMEN: zwischen Kreis und Name ist kein Platz, der
          Balken laege sonst auf der Schrift (Bild 24.09.). */
       var nameEl = el.querySelector(".lc-platz-name");
@@ -579,6 +715,7 @@
      DUELL (Funk 90): „fordert dich zum Duell heraus annehmen oder nicht"
      --------------------------------------------------------------- */
   function duellFordern(chatId, name) {
+    if (istPuppe(chatId)) { uebungStarten(chatId); return; }
     var sid = spielIdVon(chatId);
     if (!sid) { hinweis((name || "Die Person") + " spielt (noch) nicht mit."); return; }
     rpc("spiel_duell", { p_ziel: sid }).then(function (r) {
@@ -720,7 +857,8 @@
       return leute.map(function (p) {
         var s = S.stand[spielIdVon(p.id)];
         return '<div class="sp-zeile"><span><b>' + esc(p.name) + "</b><br><small>" + (s ? s.lp + " / " + s.lp_max + " LP" : "spielt nicht mit") + "</small></span>"
-          + (s ? '<button type="button" data-tu="duell" data-id="' + esc(p.id) + '" data-name="' + esc(p.name) + '">Herausfordern</button>' : "") + "</div>";
+          + (s ? '<button type="button" data-tu="duell" data-id="' + esc(p.id) + '" data-name="' + esc(p.name) + '">'
+            + (istPuppe(p.id) ? (S.duell && S.duell.uebung && S.duell.gegnerChat === p.id ? "Läuft …" : "Übungsduell") : "Herausfordern") + "</button>" : "") + "</div>";
       }).join("") + '<p class="sp-klein">Im Duell trefft ihr euch gegenseitig per Tipp; Unbeteiligte bleiben außen vor. Es endet, wenn einer kaputt ist, oder nach 3 Minuten. Sieg: +5 Punkte.</p>';
     }
     if (reiter === "rang") {
@@ -884,7 +1022,10 @@
     waffeAblegen: function () { if (S.waffe) { S.waffe = ""; zeichnen(); } },
     aufgabe: function () { menue("deutsch"); aufgabeHolen(false); },
     /* Zum Nachmessen */
+    uebungStarten: uebungStarten,
+    uebungEnde: uebungEnde,
     pruef: {
+      puppeSchiesst: puppeSchiesst,
       zustand: function () { return S; },
       setzen: function (o) { Object.keys(o || {}).forEach(function (k) { S[k] = o[k]; }); zeichnen(); },
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
