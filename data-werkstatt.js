@@ -49,16 +49,34 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 607: Flugzeug oben wie von der Seite, Adler passt auf den Schirm, Pferdebauch höher, Delfin mit Händen, Wasser entlang der Strecke und Schwimmbewegung; Bombe synchron, Lunte hängt unten, Granate wird mit Pfeifen geworfen, Waschmaschine wäscht Dreck ab, Zielfernrohr mit Ausweichen; Schießen-Kachel mit Pfeil und Bogen und Zielfernrohr; Hot Rod 1/3/5 Ratscher und Tempo; Wecker blendet sauber aus; Helikopter mit rundem Fenster; Frosch mit Gelenken; Krone und Mütze höher; Wegzeichnen-Ton wie früher.",
+  stand: "Fassung 613 – Adler von oben wieder groß, Heli-Fenster ausgestanzt, Blume aus der Mitte",
 
   inArbeit: [
-    { seit: "2026-09-24T20:11",
-      text: "Hot Rod als Standardfahrzeug mit Weg; gemeinsam Reisen im Reisen-Menü; Adler-Seitenansicht; Mario-Röhren; Lok-Schranke mit Gleisspuren; Zauberer mit Händen; Laserduell per Antippen; Hammer 5 Stufen mit Krümeln und Reisesperre; Pflaster obendrauf; Axt, Kettensäge, Bazooka, Monstertruck, Feuerwerk, Schulbus, Panzer, Klippe, Bergsteiger, Haustier; eigene SVG-Symbole für Kacheln; Knöpfe unter den Plätzen; Spielsystem (Plan in Funk 92, wartet auf Zustimmung)" },
+    { seit: "2026-09-24T20:47",
+      text: "Walkie #238–#241 (Blume, Adler, Heli, Magie/Funkeln)" },
+    { seit: "2026-09-24T20:47",
+      text: "Adler-Seitenansicht schöner (#208)" },
+    { seit: "2026-09-24T20:47",
+      text: "Hot Rod als Standard-Fahrzeug mit Weg, Mario-Röhren, Lok-Schranke, Zauberer beidhändig" },
+    { seit: "2026-09-24T20:47",
+      text: "Spielsystem erst nach deiner Zustimmung (Funk 92)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T20:11",
-      text: "Funk 83, 84 (Teile), 85 (Teile), 89 (Teile), 91 (Wecker, Heli, Anziehen), Walkie #175" },
+    { seit: "2026-09-24T20:47",
+      text: "608: Seite meldet neue Fassung auch nach Zurück/App-Wechsel (Knopf oben)" },
+    { seit: "2026-09-24T20:47",
+      text: "609: Zu zweit wieder da (leeres Feld → Reisen-Reihe)" },
+    { seit: "2026-09-24T20:47",
+      text: "610: Pferd galoppiert beim Aufziehen spürbar schneller (#182)" },
+    { seit: "2026-09-24T20:47",
+      text: "611: keine Comic-Wörter mehr auf den Gesichtern" },
+    { seit: "2026-09-24T20:47",
+      text: "612: Blüte geht paarweise gegenüber auf – Schwerpunkt 0 px neben der Mitte" },
+    { seit: "2026-09-24T20:47",
+      text: "613: Adler von oben 0,85 statt 0,60, am Rand automatisch passend (#208)" },
+    { seit: "2026-09-24T20:47",
+      text: "613: Heli-Fenster zeigt angeschnittenen Gesichtsausschnitt mit Stanzkante (#206)" },
   ],
 };
