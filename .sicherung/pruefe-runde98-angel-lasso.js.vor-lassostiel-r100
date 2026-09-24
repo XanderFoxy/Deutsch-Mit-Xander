@@ -171,11 +171,8 @@ const sage = (gut, was, zusatz) => {
         } });
       const schl = [...document.querySelectorAll(".lc-lasso-nah, .lc-leine-schlinge")]
         .filter((x) => parseFloat(getComputedStyle(x).opacity) > 0.15).length;
-      /* RUNDE 100 — sichtbares Seil (auch die Eltern zaehlen mit). */
-      const sicht = (x) => { let o = 1, e = x; while (e && e !== document.body) { o *= parseFloat(getComputedStyle(e).opacity); e = e.parentElement; } return o; };
-      const seil = [...document.querySelectorAll(".lc-leine-seil")].filter((x) => sicht(x) > 0.15).length;
       const sitz = [...reihe.querySelectorAll(".lc-platz")].map((p) => ((p.querySelector(".lc-platz-name") || {}).textContent || "").trim()[0] || "-").join("");
-      bilder.push({ t, cem, schl, sitz, seil });
+      bilder.push({ t, cem, schl, sitz });
       if (t < 4200) requestAnimationFrame(lauf); else fertig(); }; lauf(); });
     return bilder;
   });
@@ -191,10 +188,6 @@ const sage = (gut, was, zusatz) => {
     sage(sprung <= 12, "beim Platztausch springt das Bild nicht — es wurde bis hin gezogen",
       Math.round(sprung) + " px Sprung bei " + Math.round(film[iW].t) + " ms");
     const leer = film.slice(0, iW).filter((b) => b.t > 520 && b.schl === 0).length;
-    /* XANDER (Walkie #80): „Beim Lasso steht der Strick manchmal alleine
-       wie ein Stiel ohne Schlaufe." Vorher: 12 Bilder nach dem Tausch. */
-    const stiel = film.filter((b) => b.seil > 0 && b.schl === 0).length;
-    sage(stiel === 0, "nie ein Seil ohne Schlinge (kein Stiel)", stiel + " Bilder");
     sage(leer === 0, "zwischen Fang und Platztausch ist das Lasso nie leer", leer + " Bilder ohne Schlinge");
   }
 

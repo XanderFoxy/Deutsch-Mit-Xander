@@ -39235,12 +39235,6 @@
           kreis.style.removeProperty("--zux");
           kreis.style.removeProperty("--zuy");
           if (zielElL) schicht.remove();
-          /* RUNDE 100 — XANDER (Walkie #80): „Beim Lasso steht der Strick
-             manchmal alleine wie ein Stiel ohne Schlaufe." GEMESSEN: beim
-             Platztausch (2950 ms) ging die Schlinge weg, das Seil lief bis
-             3,4 s weiter — 12 Bilder lang ein Seil ohne Schlinge. Seil und
-             Schlinge sind EIN Lasso: sie gehen jetzt im selben Augenblick. */
-          if (zielElL && leine && leine.isConnected) leine.remove();
         };
         if (zielElL) {
           const werSitzt = () => ((platz.querySelector(".lc-platz-name") || {}).textContent || "").trim();

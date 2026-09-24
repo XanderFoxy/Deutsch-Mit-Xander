@@ -49,20 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 556: zweite Übungspuppe „Dummy“",
+  stand: "Fassung 557: Lasso — nie mehr ein Strick ohne Schlaufe",
 
   inArbeit: [
-    { seit: "2026-09-24T03:36",
-      text: "Lasso: Strick steht manchmal ohne Schlaufe" },
-    { seit: "2026-09-24T03:36",
+    { seit: "2026-09-24T03:38",
       text: "Sabbern: Mund lebendiger, Bild leicht kippen" },
-    { seit: "2026-09-24T03:36",
+    { seit: "2026-09-24T03:38",
       text: "Kuss-Stimme (Mann), Vogelkot-Ton" },
+    { seit: "2026-09-24T03:38",
+      text: "Stadt · Land · Fluss: Wörter streichen im Raum" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T03:36",
-      text: "Walkie-Knopf schaltet reihum: Übungspuppe → 2. Puppe („Dummy“, blau) → Puppen weg; /puppe genauso, /puppe weg nimmt beide ab" },
+    { seit: "2026-09-24T03:38",
+      text: "Lasso: Seil und Schlinge enden im selben Augenblick (vorher lief das Seil nach dem Platztausch noch 12 Bilder allein weiter)" },
   ],
 };
