@@ -30180,124 +30180,6 @@
      stumm" und „Buehne leeren" folgen im naechsten Schritt — sie
      brauchen erst eigene Logik. Jeder Knopf schreibt genau den Befehl,
      den man auch tippen koennte: nichts geht an den Regeln vorbei. */
-  /* =================================================================
-     RUNDE 100 — DAS BLATT FUER STADT · LAND · FLUSS IM KLASSENZIMMER
-     -----------------------------------------------------------------
-     Gezeichnet wird, was livechat.js schickt (slfLive): unter der
-     Knopfleiste, ueber dem Chat — das Klassenzimmer bleibt offen.
-     Neu gebaut wird nur, wenn Runde oder Abschnitt wechseln; sonst
-     laeuft nur die Uhr weiter, damit beim Tippen nichts verspringt.
-     ================================================================= */
-  let lcSlfSchluessel = "", lcSlfTakt = 0;
-  const lcSlfEsc = (t) => String(t == null ? "" : t).replace(/[&<>"]/g,
-    (z) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[z]));
-  function lcSlfUhrText(stand) {
-    const rest = Math.max(0, Math.ceil((stand.endeUm - Date.now()) / 1000));
-    return Math.floor(rest / 60) + ":" + String(rest % 60).padStart(2, "0");
-  }
-  window.DMA_SLF_LIVE = function (stand) {
-    const karte = document.getElementById("livechatKarte");
-    let feld = document.getElementById("lcSlfLive");
-    if (!stand) {
-      if (feld) feld.remove();
-      clearInterval(lcSlfTakt); lcSlfTakt = 0; lcSlfSchluessel = "";
-      return;
-    }
-    if (!karte) return;
-    if (!feld) {
-      feld = document.createElement("section");
-      feld.id = "lcSlfLive";
-      feld.className = "lc-slf-live";
-      const leiste = document.getElementById("lcLeiste");
-      if (leiste && leiste.parentElement === karte) leiste.insertAdjacentElement("afterend", feld);
-      else karte.appendChild(feld);
-      lcSlfSchluessel = "";
-    }
-    let ich = "";
-    try { ich = (LiveChat.lage() || {}).ichId || ""; } catch (e) {}
-    const leiter = stand.leiter && stand.leiter === ich;
-    const schluessel = stand.runde + "|" + stand.phase;
-    const B = String(stand.buchstabe || "").toUpperCase();
-    if (schluessel !== lcSlfSchluessel) {
-      lcSlfSchluessel = schluessel;
-      let html = '<header class="lc-slf-kopf"><span class="lc-slf-titel">Stadt · Land · Fluss</span>'
-        + '<span class="lc-slf-buchstabe" aria-label="Buchstabe">' + lcSlfEsc(B) + "</span>"
-        + '<span class="lc-slf-uhr" id="lcSlfUhr">' + (stand.phase === "schreiben" ? lcSlfUhrText(stand) : "") + "</span></header>";
-      if (stand.phase === "schreiben") {
-        html += '<p class="lc-slf-hinweis" id="lcSlfHinweis">Alles mit „' + lcSlfEsc(B) + '“ — Spielleiter: '
-          + lcSlfEsc(stand.leiterName) + "</p>";
-        html += '<div class="lc-slf-felder">' + stand.spalten.map((sp) =>
-          '<label class="lc-slf-feld"><span>' + lcSlfEsc(sp.name) + '</span><input type="text" maxlength="40"'
-          + ' autocomplete="off" autocapitalize="words" spellcheck="false" data-slf="' + lcSlfEsc(sp.id) + '" value="'
-          + lcSlfEsc(stand.blatt[sp.id] || "") + '"></label>').join("") + "</div>";
-        html += '<div class="lc-slf-knoepfe"><button type="button" class="lc-slf-stopp" data-slf-tun="stopp">Stopp!</button>'
-          + (leiter ? '<button type="button" class="lc-slf-aus" data-slf-tun="aus">Runde beenden</button>' : "") + "</div>";
-      } else if (stand.phase === "warten") {
-        html += '<p class="lc-slf-hinweis">Abgegeben — ' + lcSlfEsc(stand.leiterName || "der Spielleiter")
-          + " wertet aus …</p>";
-        html += '<div class="lc-slf-felder">' + stand.spalten.map((sp) =>
-          '<div class="lc-slf-feld lc-slf-fertig"><span>' + lcSlfEsc(sp.name) + "</span><b>"
-          + lcSlfEsc(stand.blatt[sp.id] || "—") + "</b></div>").join("") + "</div>";
-      } else if (stand.phase === "ergebnis") {
-        const e = stand.ergebnis || {};
-        const namen = e.namen || [];
-        const summe = e.punkte || [];
-        let tab = '<div class="lc-slf-tabelle-rahmen"><table class="lc-slf-tabelle"><thead><tr><th></th>'
-          + namen.map((n) => "<th>" + lcSlfEsc(n) + "</th>").join("") + "</tr></thead><tbody>";
-        stand.spalten.forEach((sp) => {
-          const zellen = (e.zellen || {})[sp.id] || [];
-          tab += "<tr><th>" + lcSlfEsc(sp.name) + "</th>" + namen.map((n, i) => {
-            const z = zellen[i] || {};
-            return '<td class="lc-slf-w' + (Number(z.wert) || 0) + '">' + lcSlfEsc(z.wort || "—")
-              + "<small>" + (Number(z.wert) || 0) + "</small></td>";
-          }).join("") + "</tr>";
-        });
-        tab += '<tr class="lc-slf-summe"><th>Punkte</th>' + namen.map((n, i) => "<td>" + (Number(summe[i]) || 0) + "</td>").join("")
-          + "</tr></tbody></table></div>";
-        html += namen.length ? tab : '<p class="lc-slf-hinweis">Kein Blatt ist angekommen.</p>';
-        html += '<div class="lc-slf-knoepfe"><button type="button" class="lc-slf-zu" data-slf-tun="zu">Schließen</button>'
-          + (leiter ? '<button type="button" class="lc-slf-neu" data-slf-tun="neu">Neue Runde</button>' : "") + "</div>";
-      }
-      feld.innerHTML = html;
-      feld.querySelectorAll("input[data-slf]").forEach((inp) => {
-        inp.addEventListener("input", () => {
-          try { LiveChat.slfEintrag(inp.dataset.slf, inp.value); } catch (e) {}
-        });
-      });
-      feld.querySelectorAll("[data-slf-tun]").forEach((b) => {
-        b.addEventListener("click", (ev) => {
-          ev.preventDefault();
-          const tun = b.dataset.slfTun;
-          try {
-            if (tun === "stopp") LiveChat.slfStopp();
-            else if (tun === "aus") LiveChat.schreiben("/slf aus");
-            else if (tun === "zu") LiveChat.slfSchliessen();
-            else if (tun === "neu") LiveChat.schreiben("/slf");
-          } catch (e) {}
-        });
-      });
-    }
-    const hinweis = document.getElementById("lcSlfHinweis");
-    if (hinweis && stand.phase === "schreiben" && stand.stoppVon) {
-      hinweis.textContent = stand.stoppVon + " hat Stopp gerufen — noch 3 Sekunden!";
-      hinweis.classList.add("lc-slf-eilig");
-    }
-    clearInterval(lcSlfTakt);
-    lcSlfTakt = 0;
-    if (stand.phase === "schreiben") {
-      lcSlfTakt = setInterval(() => {
-        const u = document.getElementById("lcSlfUhr");
-        if (!u || !document.getElementById("lcSlfLive")) {
-          clearInterval(lcSlfTakt); lcSlfTakt = 0;
-          lcSlfSchluessel = "";
-          try { window.DMA_SLF_LIVE(LiveChat.slfStand()); } catch (e) {}
-          return;
-        }
-        u.textContent = lcSlfUhrText(stand);
-      }, 250);
-    }
-  };
-
   function lcLehrerPanel(platz) {
     lcPlatzMenueZu();
     const kasten = document.createElement("div");
@@ -30390,16 +30272,13 @@
       lcPlatzMenueZu();
       try { LiveChat.buehneLeeren(); } catch (e) {}
     });
-    /* RUNDE 100 — XANDER (Walkie #87): „Stadt Land Fluß ist kein eigenes
-       Spiel im Livestream wie geplant. Es läßt mich immer den Livestream
-       verlassen. Das soll so nicht sein." Der Knopf startet jetzt eine
-       Runde IM Raum (/slf, siehe livechat.js) — niemand verlaesst das
-       Klassenzimmer, alle sehen das Blatt unter der Buehne. */
-    let slfLaeuft = false;
-    try { slfLaeuft = Boolean(LiveChat.slfLaeuft && LiveChat.slfLaeuft()); } catch (e) {}
-    knopf("\ud83c\udfd9\ufe0f", slfLaeuft ? "Stadt \u00b7 Land \u00b7 Fluss beenden"
-                                        : "Stadt \u00b7 Land \u00b7 Fluss starten",
-      () => schreib(slfLaeuft ? "/slf aus" : "/slf"));
+    knopf("\ud83c\udfd9\ufe0f", "Stadt \u00b7 Land \u00b7 Fluss", () => {
+      lcPlatzMenueZu();
+      try { activateTab("view-learn"); } catch (e) {}
+      const pille = document.querySelector('#learnSubnav [data-sub="sub-stadtlandfluss"]');
+      if (pille) pille.click();
+      else showToast("Stadt \u00b7 Land \u00b7 Fluss ist gerade nicht erreichbar.");
+    });
     document.body.appendChild(kasten);
     lcMenueStellen(kasten, platz);
     lcMenueSchliessen(kasten);
@@ -70470,18 +70349,6 @@
     const fest = SLF_SPALTEN.filter((s2) => s2.fest).map((s2) => s2.id);
     return fest.concat(slfExtra());
   }
-  /* RUNDE 100 — fuer die Runde IM Klassenzimmer (livechat.js,
-     slfLiveStarten): dieselbe Wertung, dieselben Buchstaben, dieselben
-     Spalten wie das grosse Spiel. */
-  window.DMA_SLF = {
-    werten: (runde, blaetter) => slfWerten(runde, blaetter, {}),
-    buchstaben: SLF_BUCHSTABEN,
-    dauer: SLF_DAUER,
-    spaltenJetzt: () => slfSpaltenJetzt().map((id) => {
-      const sp = SLF_SPALTEN.find((x) => x.id === id);
-      return { id: id, name: sp ? sp.name : id };
-    }),
-  };
   let slfGesamt = {};            // { spielerId: Punkte } über mehrere Runden
 
   /* RUNDE 98 — EINE PRUEFKENNUNG.

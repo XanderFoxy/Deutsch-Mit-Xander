@@ -361,35 +361,21 @@ const GRUPPEN = {
     tipp("Laufende Aufgabe beenden");
     await new Promise((f) => setTimeout(f, 200));
     const aufgabeNoch = window.LiveChat.aufgabeLaeuft();
-    /* RUNDE 100 — XANDER (Walkie #87): „Es läßt mich immer den
-       Livestream verlassen. Das soll so nicht sein." Der Knopf startet
-       jetzt eine Runde IM Raum; das Klassenzimmer bleibt offen. */
-    window.DMA_PRUEFUNG.platzMenue(ich); tipp("Lehrer"); tipp("Stadt \u00b7 Land \u00b7 Fluss starten");
+    window.DMA_PRUEFUNG.platzMenue(ich); tipp("Lehrer"); tipp("Stadt \u00b7 Land \u00b7 Fluss");
     await new Promise((f) => setTimeout(f, 400));
-    const slfLaeuft = window.LiveChat.slfLaeuft();
-    const slfBlatt = document.querySelectorAll("#lcSlfLive input").length;
-    const raumOffen = (document.getElementById("sub-stadtlandfluss") || { dataset: {} }).dataset.active !== "true";
-    window.DMA_PRUEFUNG.platzMenue(ich); tipp("Lehrer");
-    const panel4 = worte();
-    tipp("Stadt \u00b7 Land \u00b7 Fluss beenden");
-    await new Promise((f) => setTimeout(f, 300));
-    return { lehrer: true, panel, schiffe, panel2, panel3, aufgabeNoch, slfLaeuft, slfBlatt, raumOffen, panel4,
-      slfAus: !window.LiveChat.slfLaeuft() && !document.getElementById("lcSlfLive") };
+    return { lehrer: true, panel, schiffe, panel2, panel3, aufgabeNoch,
+      slf: ((document.getElementById("sub-stadtlandfluss") || {}).dataset || {}).active };
   }, chef);
   const lp = await lehrer(true);
   sage(lp.lehrer, "Der Betreiber hat auf seinem eigenen Bild „Lehrer“");
   sage(lp.panel && lp.panel.indexOf("Schiffe versenken starten") >= 0 && lp.panel.indexOf("Aufgabe stellen") >= 0
-    && lp.panel.indexOf("Stadt \u00b7 Land \u00b7 Fluss starten") >= 0, "... darin Schiffe versenken, Aufgaben, Stadt · Land · Fluss",
+    && lp.panel.indexOf("Stadt \u00b7 Land \u00b7 Fluss") >= 0, "... darin Schiffe versenken, Aufgaben, Stadt · Land · Fluss",
     lp.panel ? lp.panel.join(" | ") : "-");
   sage(lp.schiffe && lp.panel2 && lp.panel2.indexOf("Schiffe versenken beenden") >= 0,
     "„starten“ startet wirklich, danach heisst der Knopf „beenden“");
   sage(lp.panel3 && lp.panel3.indexOf("Laufende Aufgabe beenden") >= 0 && lp.aufgabeNoch === false,
     "Laeuft eine Aufgabe, laesst sie sich hier beenden");
-  sage(lp.slfLaeuft && lp.slfBlatt >= 3 && lp.raumOffen,
-    "Stadt · Land · Fluss startet IM Klassenzimmer — Blatt unter der Bühne, niemand verlässt den Raum",
-    lp.slfBlatt + " Felder");
-  sage(lp.panel4 && lp.panel4.indexOf("Stadt \u00b7 Land \u00b7 Fluss beenden") >= 0 && lp.slfAus,
-    "... danach heisst der Knopf „beenden“ und beendet die Runde");
+  sage(lp.slf === "true", "Stadt · Land · Fluss geht auf");
   const nl = await lehrer(false);
   sage(nl.lehrer === false, "Ein normaler Nutzer hat KEIN Lehrer-Panel");
 
@@ -485,75 +471,6 @@ const GRUPPEN = {
       breite + " px: Plaetze in derselben Anordnung wie auf der Buehne",
       km.menueSpalten + " Spalten (Buehne " + km.buehneSpalten + "), " + km.nummern);
     sage(!km.angeln, breite + " px: im Kran-Menue steht kein „Angeln“");
-  }
-
-  console.log("\n11  STADT · LAND · FLUSS MIT ZWEI GERAETEN\n");
-  /* Alex startet, Bea ruft „Stopp!", ihr Blatt geht als persoenliche
-     Post an Alex, Alex wertet aus, beide sehen dasselbe Ergebnis.
-     Der Bote spielt die Leitung: was A rundsendet, bekommt B, und
-     umgekehrt. */
-  {
-    const LEUTE = { ich: { id: "ich", name: "Alex", seit: 1000 }, p0: { id: "p0", name: "Bea", seit: 2000 } };
-    const geraet = async (ichId) => {
-      const g = await br.newPage({ viewport: { width: 390, height: 844 } });
-      await g.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
-      await g.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
-      await g.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF, { timeout: 25000 });
-      await g.evaluate(async ({ ichId, LEUTE }) => {
-        const leute = {}; Object.keys(LEUTE).forEach((k) => { if (k !== ichId) leute[k] = LEUTE[k]; });
-        window.LiveChat.pruefSitz({ lage: "drin", ichId, ichName: LEUTE[ichId].name, seit: LEUTE[ichId].seit, zuruecksetzen: true, leute });
-        document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
-        let e = document.getElementById("livechatArea");
-        while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
-        window.DMA_PRUEF.neuZeichnen();
-        await new Promise((f) => setTimeout(f, 400));
-        window.__raus = []; window.__post = [];
-        window.LiveChat.pruefPost((pk) => window.__raus.push(pk));
-        window.LiveChat.pruefPostAbfangen((an, pk) => window.__post.push(pk));
-      }, { ichId, LEUTE });
-      return g;
-    };
-    const A = await geraet("ich"), B = await geraet("p0");
-    const bote = async () => {
-      for (const [von, zu, wer] of [[A, B, "ich"], [B, A, "p0"]]) {
-        const w = await von.evaluate(() => { const r = { raus: window.__raus, post: window.__post };
-          window.__raus = []; window.__post = []; return r; });
-        for (const pk of w.raus) await zu.evaluate((pk) => window.LiveChat.pruefEmpfangen(pk), pk);
-        for (const pk of w.post.filter((x) => x.art === "slfpost")) {
-          await zu.evaluate(({ pk, wer }) => window.LiveChat.pruefPostEmpfangen(Object.assign({}, pk, { von: wer, vonName: wer === "p0" ? "Bea" : "Alex" })), { pk, wer });
-        }
-      }
-    };
-    await A.evaluate(() => window.LiveChat.pruefBefehl("/slf"));
-    await bote();
-    const blatt = async (g) => g.evaluate(() => ({ b: (document.querySelector(".lc-slf-buchstabe") || {}).textContent || "",
-      felder: document.querySelectorAll("#lcSlfLive input").length }));
-    const a1 = await blatt(A), b1 = await blatt(B);
-    sage(a1.felder >= 3 && b1.felder === a1.felder && a1.b && a1.b === b1.b,
-      "beide sehen das Blatt mit demselben Buchstaben", "Alex " + a1.b + "/" + a1.felder + ", Bea " + b1.b + "/" + b1.felder);
-    const tippe = (g, w) => g.evaluate((w) => document.querySelectorAll("#lcSlfLive input").forEach((inp, i) => {
-      if (!w[i]) return; inp.value = w[i]; inp.dispatchEvent(new Event("input")); }), w);
-    const B0 = a1.b;
-    await tippe(A, [B0 + "stadtA", B0 + "land", B0 + "flussA"]);
-    await tippe(B, [B0 + "stadtB", B0 + "land", ""]);
-    await B.evaluate(() => window.LiveChat.slfStopp());
-    await bote();
-    const eilig = await A.evaluate(() => (document.getElementById("lcSlfHinweis") || {}).textContent || "");
-    sage(/Bea hat Stopp gerufen/.test(eilig), "Beas „Stopp!“ kommt bei Alex an — noch 3 Sekunden", eilig);
-    await A.waitForTimeout(3600);
-    await bote();
-    await A.waitForTimeout(300);
-    const erg = async (g) => g.evaluate(() => ({ phase: (window.LiveChat.slfStand() || {}).phase,
-      summe: [...document.querySelectorAll(".lc-slf-summe td")].map((t) => Number(t.textContent)),
-      namen: [...document.querySelectorAll(".lc-slf-tabelle thead th")].map((t) => t.textContent).filter(Boolean) }));
-    const ea = await erg(A), eb = await erg(B);
-    /* Stadt: je eigenes Wort 10; Land: gleiches Wort je 5; Fluss: nur Alex 20. */
-    const soll = { Alex: 35, Bea: 15 };
-    const ist = {}; ea.namen.forEach((n, i) => { ist[n] = ea.summe[i]; });
-    sage(ea.phase === "ergebnis" && eb.phase === "ergebnis" && ist.Alex === soll.Alex && ist.Bea === soll.Bea
-      && JSON.stringify(ea.summe) === JSON.stringify(eb.summe),
-      "Auswertung bei beiden gleich: Alex 35, Bea 15 (20 nur du, 10 eigenes, 5 gleiches Wort)", JSON.stringify(ist));
-    await A.close(); await B.close();
   }
 
   await br.close(); srv.close();

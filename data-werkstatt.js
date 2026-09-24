@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 550: Lok — die Strecke ist immer ein geschlossener Rundkurs",
+  stand: "Fassung 551: Stadt · Land · Fluss im Klassenzimmer",
 
   inArbeit: [
-    { seit: "2026-09-24T02:29",
-      text: "Stadt·Land·Fluss im Livestream statt eigener Seite" },
-    { seit: "2026-09-24T02:29",
+    { seit: "2026-09-24T02:38",
       text: "Zu zweit: Rad soll wie ein Fahrrad aussehen" },
-    { seit: "2026-09-24T02:29",
+    { seit: "2026-09-24T02:38",
       text: "Angel: senkrecht heben, Schnur-Physik" },
-    { seit: "2026-09-24T02:29",
-      text: "Lok: schräge Ecken (Weg nicht ab eigenem Platz) haben noch kein Kurvenstück" },
+    { seit: "2026-09-24T02:38",
+      text: "Stadt · Land · Fluss: Wörter streichen (Spielleiter/Lehrer) im Raum fehlt noch" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T02:29",
-      text: "Lok: das Gleis schließt sich immer zum Kreis — endet die Strecke neben dem Start, mit runder Kurve am Start; sonst hinter dem Ziel weiter, außen herum und gerade in den Start (alt: 4 offene Schienenenden, neu: 0)" },
-    { seit: "2026-09-24T02:29",
-      text: "Auch ein kurzes Stück (1 → 2) wird ein Oval, das auf der Bühne bleibt" },
+    { seit: "2026-09-24T02:38",
+      text: "Stadt · Land · Fluss läuft jetzt IM Raum: Lehrer-Panel „starten“ (oder /slf) — alle sehen unter der Bühne ihr Blatt mit Buchstabe, Spalten und Uhr; „Stopp!“ gibt ab, die anderen haben 3 s; Auswertung mit der normalen Wertung für alle sichtbar, Rangliste im Chat, Punkte" },
+    { seit: "2026-09-24T02:38",
+      text: "Niemand muss das Klassenzimmer verlassen" },
   ],
 };

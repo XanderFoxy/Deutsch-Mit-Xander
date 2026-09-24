@@ -3712,11 +3712,6 @@ window.LiveChat = (function () {
       schiffeEmpfangen(n.spiel || {}, n.von);
       return;
     }
-    /* Runde 100 — Stadt · Land · Fluss im Raum (siehe slfLiveStarten). */
-    if (n.art === "slf") {
-      slfLiveEmpfangen(n.slf || {}, n.von);
-      return;
-    }
     /* RUNDE 94 — DER STAND DES TELEFONATS.
        XANDER: „Das Anrufen ist auch noch nicht da, wo ich mit jemand
        heimlich telefonieren kann."
@@ -7313,191 +7308,6 @@ window.LiveChat = (function () {
     return true;
   }
 
-  /* =================================================================
-     RUNDE 100 — STADT · LAND · FLUSS IM KLASSENZIMMER
-     -----------------------------------------------------------------
-     XANDER (Walkie #87): „Stadt Land Fluß ist kein eigenes Spiel im
-     Livestream wie geplant. Es läßt mich immer den Livestream
-     verlassen. Das soll so nicht sein." — und zum Lehrer-Panel:
-     „Andere sehen es nicht."
-     Bisher sprang der Knopf nur auf die Lernseite; dort laeuft das
-     Spiel ueber Herausforderungen, nicht im Raum. Jetzt gibt es eine
-     Runde IM Raum, fuer alle, die da sind:
-       · wer startet (/slf), ist Spielleiter: Buchstabe und Spalten
-         gehen an alle, jedes Geraet zeigt unter der Buehne sein Blatt;
-       · „Stopp!" gibt das eigene Blatt ab, alle anderen haben noch
-         3 Sekunden; sonst endet die Runde nach der Zeit;
-       · die Blaetter gehen als persoenliche Post an den Spielleiter,
-         er wertet mit derselben Wertung wie das grosse Spiel
-         (slfWerten in app.js: 20 nur du, 10 eigenes Wort, 5 gleiches)
-         und schickt das Ergebnis an alle.
-     ================================================================= */
-  var slfLive = null;       // auf jedem Geraet: die laufende Runde
-  var slfLeitung = null;    // nur beim Spielleiter: die eingegangenen Blaetter
-  var slfLiveUhr = 0;
-  function slfLiveZeichnen() {
-    try { if (typeof window.DMA_SLF_LIVE === "function") window.DMA_SLF_LIVE(slfLive); } catch (e) {}
-  }
-  function slfLiveAnAlle(d) {
-    senden({ art: "slf", slf: d });
-    /* Die eigene Rundsendung hoert man nicht — also hier selbst. */
-    slfLiveEmpfangen(d, zustand.ichId);
-  }
-  function slfLiveStarten(roh) {
-    if (zustand.lage !== "drin") return systemZeile("Dafür musst du erst im Raum sein.");
-    var r = String(roh || "").trim().toLowerCase();
-    if (r === "stopp" && slfLive && slfLive.phase === "schreiben") return slfLiveStopp();
-    if (r === "aus" || r === "ende") {
-      if (!slfLive) return systemZeile("Es läuft gerade kein Stadt · Land · Fluss.");
-      slfLiveAnAlle({ t: "aus", runde: slfLive.runde, wer: zustand.ichName });
-      return true;
-    }
-    if (slfLive && (slfLive.phase === "schreiben" || slfLive.phase === "warten")) {
-      return systemZeile("Es läuft schon eine Runde Stadt · Land · Fluss.");
-    }
-    var hilfe = window.DMA_SLF || {};
-    var buchstaben = hilfe.buchstaben || "abcdefghijklmnoprstuvwz".split("");
-    var b = /^[a-z]$/.test(r) ? r : buchstaben[Math.floor(Math.random() * buchstaben.length)];
-    var spalten = null;
-    try { spalten = typeof hilfe.spaltenJetzt === "function" ? hilfe.spaltenJetzt() : null; } catch (e) {}
-    if (!spalten || !spalten.length) {
-      spalten = [{ id: "stadt", name: "Stadt" }, { id: "land", name: "Land" }, { id: "fluss", name: "Fluss" }];
-    }
-    spalten = spalten.slice(0, 6).map(function (x) { return { id: String(x.id), name: String(x.name) }; });
-    var dauer = Number(hilfe.dauer) || 120;
-    var mit = spielReihe().filter(function (x) { return x.id !== PUPPE_ID; })
-      .map(function (x) { return { id: x.id, name: x.name }; });
-    var runde = Date.now();
-    slfLeitung = { runde: runde, blaetter: {}, erwartet: mit.map(function (x) { return x.id; }),
-                   namen: {}, frist: 0, fertig: false };
-    mit.forEach(function (x) { slfLeitung.namen[x.id] = x.name; });
-    slfLiveAnAlle({ t: "start", runde: runde, buchstabe: b, spalten: spalten, dauer: dauer,
-                    leiter: zustand.ichId, leiterName: zustand.ichName, mit: mit });
-    anAlle("aktion", zustand.ichName + " startet Stadt · Land · Fluss — Buchstabe „"
-      + b.toUpperCase() + "“, " + Math.round(dauer / 60 * 10) / 10 + " Minuten. Das Blatt steht unter der Bühne.");
-    return true;
-  }
-  function slfLeitungFrist(ms) {
-    if (!slfLeitung || slfLeitung.fertig) return;
-    clearTimeout(slfLeitung.frist);
-    slfLeitung.frist = setTimeout(slfLiveWerten, ms);
-  }
-  function slfLiveEmpfangen(d, von) {
-    if (!d || !d.t) return;
-    if (d.t === "start") {
-      clearTimeout(slfLiveUhr);
-      var dauer = Math.max(20, Math.min(600, Number(d.dauer) || 120));
-      slfLive = { runde: d.runde, buchstabe: String(d.buchstabe || "a").slice(0, 1),
-                  spalten: Array.isArray(d.spalten) ? d.spalten.slice(0, 6) : [],
-                  endeUm: Date.now() + dauer * 1000, leiter: d.leiter, leiterName: d.leiterName || "",
-                  mit: Array.isArray(d.mit) ? d.mit : [], phase: "schreiben", blatt: {},
-                  abgegeben: false, stoppVon: "" };
-      slfLiveUhr = setTimeout(slfLiveAbgeben, dauer * 1000);
-      /* Der Spielleiter wartet 8 s laenger — so viel Zeit hat die Post. */
-      if (d.leiter === zustand.ichId) slfLeitungFrist(dauer * 1000 + 8000);
-      slfLiveZeichnen();
-      return;
-    }
-    if (!slfLive || d.runde !== slfLive.runde) return;
-    if (d.t === "stopp") {
-      if (slfLive.leiter === zustand.ichId) slfLeitungFrist(3000 + 6000);
-      if (slfLive.phase !== "schreiben") return;
-      slfLive.stoppVon = String(d.wer || "Jemand");
-      var bis = Date.now() + 3000;
-      if (bis < slfLive.endeUm) {
-        slfLive.endeUm = bis;
-        clearTimeout(slfLiveUhr);
-        slfLiveUhr = setTimeout(slfLiveAbgeben, 3000);
-      }
-      slfLiveZeichnen();
-      return;
-    }
-    if (d.t === "ergebnis") {
-      clearTimeout(slfLiveUhr);
-      slfLive.phase = "ergebnis";
-      slfLive.ergebnis = { namen: d.namen || [], zellen: d.zellen || {}, punkte: d.punkte || [] };
-      slfLiveZeichnen();
-      return;
-    }
-    if (d.t === "aus") {
-      clearTimeout(slfLiveUhr);
-      if (slfLeitung) { clearTimeout(slfLeitung.frist); slfLeitung = null; }
-      slfLive = null;
-      systemZeile("Stadt · Land · Fluss ist beendet" + (d.wer ? " (" + d.wer + ")" : "") + ".");
-      slfLiveZeichnen();
-    }
-  }
-  function slfLiveAbgeben() {
-    if (!slfLive || slfLive.abgegeben || slfLive.phase !== "schreiben") return;
-    slfLive.abgegeben = true;
-    slfLive.phase = "warten";
-    clearTimeout(slfLiveUhr);
-    var blatt = {};
-    slfLive.spalten.forEach(function (sp) {
-      blatt[sp.id] = String(slfLive.blatt[sp.id] || "").trim().slice(0, 40);
-    });
-    var paket = { t: "blatt", runde: slfLive.runde, blatt: blatt };
-    if (slfLive.leiter === zustand.ichId) slfLiveBlatt(paket, zustand.ichId, zustand.ichName);
-    else postSenden(slfLive.leiter, { art: "slfpost", slf: paket });
-    slfLiveZeichnen();
-  }
-  function slfLiveStopp() {
-    if (!slfLive || slfLive.phase !== "schreiben") return false;
-    var runde = slfLive.runde;
-    slfLiveAbgeben();
-    slfLiveAnAlle({ t: "stopp", runde: runde, wer: zustand.ichName });
-    return true;
-  }
-  /* Nur beim Spielleiter: ein Blatt kommt an. */
-  function slfLiveBlatt(d, von, name) {
-    if (!slfLeitung || slfLeitung.fertig || !d || d.runde !== slfLeitung.runde) return;
-    var blatt = {};
-    Object.keys(d.blatt || {}).slice(0, 8).forEach(function (k) {
-      blatt[String(k).slice(0, 20)] = String(d.blatt[k] || "").slice(0, 40);
-    });
-    slfLeitung.blaetter[von] = { name: String(name || slfLeitung.namen[von] || "Gast").slice(0, 40), blatt: blatt };
-    var fehlt = slfLeitung.erwartet.filter(function (id) { return !slfLeitung.blaetter[id]; });
-    if (!fehlt.length) slfLiveWerten();
-  }
-  function slfLiveWerten() {
-    if (!slfLeitung || slfLeitung.fertig || !slfLive) return;
-    slfLeitung.fertig = true;
-    clearTimeout(slfLeitung.frist);
-    var ids = Object.keys(slfLeitung.blaetter);
-    var namen = ids.map(function (id) { return slfLeitung.blaetter[id].name; });
-    var werten = (window.DMA_SLF || {}).werten;
-    var erg = { punkte: ids.map(function () { return 0; }), zellen: {} };
-    try {
-      if (typeof werten === "function" && ids.length) {
-        erg = werten({ buchstabe: slfLive.buchstabe, spalten: slfLive.spalten },
-                     ids.map(function (id) { return { blatt: slfLeitung.blaetter[id].blatt }; }));
-      }
-    } catch (e) {}
-    slfLiveAnAlle({ t: "ergebnis", runde: slfLeitung.runde, namen: namen,
-                    zellen: erg.zellen, punkte: erg.punkte });
-    if (!ids.length) {
-      anAlle("aktion", "Stadt · Land · Fluss: kein Blatt ist angekommen.");
-      return;
-    }
-    var rang = ids.map(function (id, i) { return { id: id, name: namen[i], p: erg.punkte[i] || 0 }; })
-      .sort(function (a, b) { return b.p - a.p; });
-    anAlle("aktion", "Stadt · Land · Fluss „" + slfLive.buchstabe.toUpperCase() + "“: "
-      + rang.map(function (x, i) { return (i + 1) + ". " + x.name + " " + x.p; }).join(" · "));
-    /* Punkte wie bei Schiffe versenken: ein Zehntel, hoechstens 10. */
-    rang.forEach(function (x) {
-      var wieviel = Math.min(10, Math.round(x.p / 10));
-      if (wieviel <= 0) return;
-      var grund = "Stadt · Land · Fluss";
-      if (x.id === zustand.ichId) {
-        if (typeof zustand.punkteRuf === "function") {
-          try { zustand.punkteRuf(wieviel, grund); } catch (e) {}
-        }
-      } else if (x.id !== PUPPE_ID) {
-        postSenden(x.id, { art: "punkte", wieviel: wieviel, grund: grund });
-      }
-    });
-  }
-
   function schiffeStarten(roh) {
     var rest = String(roh || "").trim().toLowerCase();
     if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
@@ -9945,9 +9755,6 @@ window.LiveChat = (function () {
       was: "Musik teilen \u2014 ein YouTube-Link l\u00e4uft bei allen im Raum; /yt <Link> 1:20 f\u00e4ngt sp\u00e4ter an, /yt aus macht es zu" },
     { gr: "schule", w: "versenken", kurz: "schiffe", nutzt: "/versenken",
       was: "Schiffe versenken \u2014 jeder versteckt sich auf einem Platz, dann wird der Reihe nach geraten; /versenken aus beendet es" },
-    /* RUNDE 100 — Stadt · Land · Fluss IM Klassenzimmer (Walkie #87). */
-    { gr: "schule", w: "slf", kurz: "stadtlandfluss", nutzt: "/slf",
-      was: "Stadt \u00b7 Land \u00b7 Fluss im Raum \u2014 alle schreiben gleichzeitig unter der B\u00fchne, \u201eStopp!\u201c beendet die Runde; /slf aus beendet das Spiel" },
     { gr: "schule", w: "tafel", kurz: "whiteboard", nutzt: "/tafel",
       was: "Whiteboard für alle — Bild hineinladen, malen, zeigen, heranholen; /tafel aus macht es zu" },
     { gr: "reden", w: "fenster", kurz: "luke", nutzt: "/fenster Name",
@@ -11166,10 +10973,6 @@ window.LiveChat = (function () {
     /* Das Versteck und der Schuss — nur fuer den Schiedsrichter
        bestimmt. Sie stehen nirgendwo sonst, deshalb sieht auch
        niemand sonst, wo sich wer versteckt hat. */
-    if (n.art === "slfpost") {
-      slfLiveBlatt(n.slf || {}, n.von, n.vonName || "");
-      return;
-    }
     if (n.art === "spielpost") {
       if ((n.spiel || {}).t === "belegt") schiffeEmpfangen(n.spiel, n.von);
       else schiffeRichter(n.spiel || {}, n.von, n.vonName || "");
@@ -13002,7 +12805,6 @@ window.LiveChat = (function () {
 
     /* ---- SCHIFFE VERSENKEN ---- */
     if (art === "versenken" || art === "schiffe") return schiffeStarten(rest);
-    if (art === "slf" || art === "stadtlandfluss") return slfLiveStarten(rest);
 
     /* ---- DAS WHITEBOARD ----
        GEWUENSCHT: „Ich moechte ein Whiteboard implementieren … dass
@@ -14602,18 +14404,6 @@ window.LiveChat = (function () {
     },
     aufgabeBeenden: function () { return offeneAufgabe ? aufgabeFreiStellen("") : false; },
     schiffeLaeuft: function () { return Boolean(schiffeStand); },
-    /* Runde 100 — Stadt · Land · Fluss im Raum. */
-    slfLaeuft: function () { return Boolean(slfLive && slfLive.phase !== "ergebnis"); },
-    slfStand: function () { return slfLive; },
-    slfEintrag: function (id, wort) {
-      if (!slfLive || slfLive.phase !== "schreiben") return false;
-      slfLive.blatt[String(id)] = String(wort || "").slice(0, 40);
-      return true;
-    },
-    slfStopp: function () { return slfLiveStopp(); },
-    slfSchliessen: function () {
-      if (slfLive && slfLive.phase === "ergebnis") { slfLive = null; slfLiveZeichnen(); }
-    },
     puppe: function () { return puppeUmschalten(); },
     puppeDa: function () { return puppeDa(); },
     /* NACHLESEN, WAS IM CHAT STEHT. Ohne das laesst sich eine
