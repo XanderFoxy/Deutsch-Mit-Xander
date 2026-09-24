@@ -48574,26 +48574,12 @@
          ============================================================= */
       const katzBein = (vorn, fern) => {
         const P = vorn ? [72, 56] : [40, 55], K = vorn ? [72.6, 69.5] : [37.6, 70.5];
-        /* WALKIE #245 — XANDER hat die Katze mit „Überarbeiten" bewertet:
-           „Beine", „Pfotenschlag", „Kopf und Gesicht".
-           BEINE: vorher gerade Rohre mit eckigem Unterschenkel — wie
-           Holzpfosten. Jetzt verjuengt sich jedes Glied zum Gelenk
-           hin; der Unterarm ist schlank, das Hinterbein hat den
-           typischen Katzen-Knick (Sprunggelenk nach hinten), und die
-           Pfoten sind rund mit drei Zehenfurchen. */
-        const tatze = (x, y) => '<path class="lc-katze-tatze" d="M' + (x - 4.4) + " " + y
-          + " C" + (x - 4.4) + " " + (y - 1.9) + " " + (x - 2.4) + " " + (y - 2.6) + " " + x + " " + (y - 2.6)
-          + " C" + (x + 3.2) + " " + (y - 2.6) + " " + (x + 5) + " " + (y - 1.4) + " " + (x + 4.8) + " " + (y + 0.6)
-          + " C" + (x + 4.6) + " " + (y + 2.4) + " " + (x + 2.4) + " " + (y + 2.8) + " " + x + " " + (y + 2.8)
-          + " C" + (x - 2.6) + " " + (y + 2.8) + " " + (x - 4.4) + " " + (y + 2.2) + " " + (x - 4.4) + " " + y + ' Z"/>'
-          + '<path d="M' + (x - 1.6) + " " + (y + 0.4) + " l0 2.2 M" + (x + 0.6) + " " + (y + 0.2) + " l0 2.5 M"
-          + (x + 2.7) + " " + (y + 0.4) + ' l0 2.1" stroke="rgba(30,25,21,.55)" stroke-width=".7" stroke-linecap="round"/>';
         const ober = vorn
-          ? '<path class="lc-katze-glied" d="M67.5 50 C72 47.5 77.5 49.5 77 55 C76.6 60 75.4 65 75 69.5 C74.6 71.2 70.6 71.2 70.4 69.5 C69.6 64 67 57 67.5 50 Z"/>'
-          : '<path class="lc-katze-glied" d="M31.5 47 C38 42.5 49 45 48 54 C47.4 60 43.6 64.6 40.4 70.6 C39.4 72.4 35.6 72.2 35.2 70.4 C35.2 64 30.4 56.4 31.5 47 Z"/>';
+          ? '<path class="lc-katze-glied" d="M68 50 C72 48 77 49 77 54 L76 69 C76 71.5 69.4 71.5 69.2 69 Z"/>'
+          : '<path class="lc-katze-glied" d="M33 47 C40 44 48 47 47 55 C46 61 42 66 40.4 71 C39.4 72.4 35.6 72.2 35.2 70.6 C34.4 64 31.6 56 33 47 Z"/>';
         const unter = vorn
-          ? '<path class="lc-katze-glied" d="M70.6 69 C70.3 73.5 70.7 77.5 71.2 81.2 L75.2 81.2 C75.5 77.5 75.4 73.5 75 69 Z"/>' + tatze(73.8, 82.2)
-          : '<path class="lc-katze-glied" d="M35.4 70 C35.8 74 37.4 78.4 38.6 81.6 L42.4 81.6 C41.4 77.8 40.6 74 40 70 Z"/>' + tatze(40.8, 82.6);
+          ? '<path class="lc-katze-glied" d="M70.2 69 L75 69 L75.6 82 L70.6 82 Z"/><ellipse class="lc-katze-tatze" cx="74.4" cy="83.4" rx="4.6" ry="2.7"/>'
+          : '<path class="lc-katze-glied" d="M35.4 70 L40 70 L40.6 82 L36 82 Z"/><ellipse class="lc-katze-tatze" cx="39.6" cy="83.4" rx="4.4" ry="2.6"/>';
         const k = (x) => x.toFixed(1);
         return '<g class="lc-katze-bein ' + (vorn ? "lc-katze-vorn" : "lc-katze-hinten") + (fern ? " lc-katze-fern" : " lc-katze-nah")
           + '"' + (fern ? ' transform="translate(' + (vorn ? 5 : -4) + ' -1.5)"' : "") + '>'
@@ -48625,37 +48611,22 @@
         /* Tigerstreifen quer ueber den Ruecken. */
         + '<path d="M44 37.6 C46 43 45.6 49 43.4 53 M53 36.4 C55 42 55 48 53 52.4 M62 36.6 C64 42 64 47.6 62.4 51.6 M71 38.6 C72.6 43 72.4 47 71 50"'
         + ' fill="none" stroke="rgba(40,34,29,.42)" stroke-width="2.8" stroke-linecap="round"/>'
-        /* WALKIE #245 — KOPF UND GESICHT. Vorher ein Kreis mit zwei
-           langen Dreiecksohren, die schraeg abstanden, und Augen so gross
-           wie Muenzen. Ein Katzenkopf ist breiter als hoch (Wangen), die
-           Ohren sitzen OBEN, breit am Ansatz; die Augen sind mandel-
-           foermig und stehen weiter auseinander, darunter eine helle
-           Schnauze mit Nase, Mund und Schnurrhaaren. */
-        + '<path d="M73.6 28.4 L73.2 13 L83.4 21.4 Z" fill="#6d6259" stroke="#4c443d" stroke-width=".6" stroke-linejoin="round"/>'
-        + '<path d="M75.4 26.2 L75.3 17.4 L80.9 22.2 Z" fill="#c69a9a"/>'
-        + '<path d="M92.6 21.4 L102.8 13 L102.4 28.4 Z" fill="#6d6259" stroke="#4c443d" stroke-width=".6" stroke-linejoin="round"/>'
-        + '<path d="M95.1 22.2 L100.7 17.4 L100.6 26.2 Z" fill="#c69a9a"/>'
-        + '<path d="M71.4 37 C71 27.6 78.6 21.4 88 21.4 C97.4 21.4 105 27.6 104.6 37 C104.4 42 102 45.4 99 47.2'
-        + ' C95.6 49.4 91.8 50.2 88 50.2 C84.2 50.2 80.4 49.4 77 47.2 C74 45.4 71.6 42 71.4 37 Z" fill="url(#lcKatzFell)"/>'
-        /* Wangenfell, ein paar Zacken an den Seiten */
-        + '<path d="M72 39.4 L69.6 41.8 L72.6 42.2 L70.8 44.8 L74.4 44.2 M104 39.4 L106.4 41.8 L103.4 42.2 L105.2 44.8 L101.6 44.2"'
-        + ' fill="none" stroke="#6d6259" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'
-        /* Stirnstreifen */
-        + '<path d="M88 22.6 L88 27.4 M84.6 23.2 L85.4 27 M91.4 23.2 L90.6 27" stroke="rgba(40,34,29,.45)" stroke-width="1.3" stroke-linecap="round"/>'
-        /* Augen: Mandel, gruen-gelb, senkrechter Schlitz, Glanzpunkt */
-        + '<path d="M76.4 34.2 C78.4 30.8 83.2 30.6 85.4 33.8 C83.4 36.8 78.6 37.2 76.4 34.2 Z" fill="#cfdc5e" stroke="#2b2420" stroke-width=".8"/>'
-        + '<path d="M90.6 33.8 C92.8 30.6 97.6 30.8 99.6 34.2 C97.4 37.2 92.6 36.8 90.6 33.8 Z" fill="#cfdc5e" stroke="#2b2420" stroke-width=".8"/>'
-        + '<ellipse class="lc-katze-pupille" cx="81" cy="34" rx="1.1" ry="2.9" fill="#231d18"/>'
-        + '<ellipse class="lc-katze-pupille" cx="95" cy="34" rx="1.1" ry="2.9" fill="#231d18"/>'
-        + '<circle cx="82" cy="32.9" r=".6" fill="#fff"/><circle cx="96" cy="32.9" r=".6" fill="#fff"/>'
-        /* Schnauze: zwei helle Polster */
-        + '<ellipse cx="85.2" cy="43.6" rx="3.8" ry="2.9" fill="#b3a79c"/>'
-        + '<ellipse cx="90.8" cy="43.6" rx="3.8" ry="2.9" fill="#b3a79c"/>'
-        + '<path d="M88 42.4 L85.9 40 L90.1 40 Z" fill="#c07c86" stroke="#8c5a62" stroke-width=".4" stroke-linejoin="round"/>'
-        + '<path d="M88 42.4 L88 44.2 M88 44.2 C86.6 45.8 84.8 45.6 84 44.6 M88 44.2 C89.4 45.8 91.2 45.6 92 44.6"'
-        + ' fill="none" stroke="#2b2420" stroke-width="1" stroke-linecap="round"/>'
-        + '<path d="M82 42.6 L66 40.4 M82 44.4 L66.6 45.4 M82.4 45.8 L68.6 49.4 M94 42.6 L110 40.4 M94 44.4 L109.4 45.4 M93.6 45.8 L107.4 49.4"'
-        + ' fill="none" stroke="rgba(255,255,255,.72)" stroke-width=".7"'
+        /* Kopf und Gesicht — wie vorher. */
+        + '<circle cx="86" cy="36" r="17" fill="url(#lcKatzFell)"/>'
+        + '<path d="M72 26 L70 8 L84 20 Z" fill="#6d6259"/>'
+        + '<path d="M73.5 24 L72.5 14 L80 21 Z" fill="#c69a9a"/>'
+        + '<path d="M96 20 L106 6 L104 25 Z" fill="#6d6259"/>'
+        + '<path d="M97.5 21 L103 12 L102 23 Z" fill="#c69a9a"/>'
+        + '<ellipse cx="81" cy="34" rx="5" ry="6" fill="#d8e36a"/>'
+        + '<ellipse cx="95" cy="34" rx="5" ry="6" fill="#d8e36a"/>'
+        + '<ellipse class="lc-katze-pupille" cx="81" cy="34" rx="1.5" ry="5.4" fill="#231d18"/>'
+        + '<ellipse class="lc-katze-pupille" cx="95" cy="34" rx="1.5" ry="5.4" fill="#231d18"/>'
+        + '<path d="M86 43 L82.4 39.6 L89.6 39.6 Z" fill="#c07c86"/>'
+        + '<path d="M86 43 L86 46 M86 46 C83 48.6 80 47.4 79 45.4'
+        + ' M86 46 C89 48.6 92 47.4 93 45.4" fill="none" stroke="#2b2420"'
+        + ' stroke-width="1.5" stroke-linecap="round"/>'
+        + '<path d="M78 41 L64 38 M78 44 L65 45 M94 41 L108 38 M94 44 L107 45"'
+        + ' fill="none" stroke="rgba(255,255,255,.72)" stroke-width="1.2"'
         + ' stroke-linecap="round"/>'
         + "</g>"
         + katzBein(false, false) + katzBein(true, false)
@@ -48754,27 +48725,20 @@
           /* FUNK 75 — das Vorderbein hebt sich weit nach vorn oben
              (Ausholen), die Pfote krummt sich ein, dann schlaegt die Katze
              schraeg nach vorn unten auf den Ball und nimmt das Bein zurueck. */
-          /* WALKIE #245 — „Pfotenschlag". Vorher riss das Bein bis −96°
-             senkrecht hoch und sank langsam zurueck — ein Winken, kein
-             Schlag. Eine Katze holt KURZ aus (Schulter −64°, Pfote
-             eingerollt +72°), zielt einen Moment, schlaegt dann SCHNELL
-             und flach nach vorn unten (Schulter −16°, Pfote gestreckt
-             −18°) — der Treffer liegt bei 0,21, genau wo der Ball
-             losrollt (0,22) —, federt nach und setzt ab. */
-          const pz = (f) => Math.min(1, t0 + (t1 - t0) * f);
-          pfoteRahmen.push({ transform: "rotate(0deg)", offset: pz(0.04), easing: "cubic-bezier(.2,.7,.3,1)" });
-          pfoteRahmen.push({ transform: "rotate(-64deg)", offset: pz(0.11) });
-          pfoteRahmen.push({ transform: "rotate(-58deg)", offset: pz(0.16), easing: "cubic-bezier(.6,0,.9,.5)" });
-          pfoteRahmen.push({ transform: "rotate(-16deg)", offset: pz(0.21), easing: "ease-out" });
-          pfoteRahmen.push({ transform: "rotate(-24deg)", offset: pz(0.25) });
-          pfoteRahmen.push({ transform: "rotate(-8deg)", offset: pz(0.31) });
-          pfoteRahmen.push({ transform: "rotate(0deg)", offset: pz(0.40) });
-          pfoteURahmen.push({ transform: "rotate(0deg)", offset: pz(0.04), easing: "cubic-bezier(.2,.7,.3,1)" });
-          pfoteURahmen.push({ transform: "rotate(72deg)", offset: pz(0.11) });
-          pfoteURahmen.push({ transform: "rotate(78deg)", offset: pz(0.16), easing: "cubic-bezier(.6,0,.9,.5)" });
-          pfoteURahmen.push({ transform: "rotate(-18deg)", offset: pz(0.21), easing: "ease-out" });
-          pfoteURahmen.push({ transform: "rotate(-4deg)", offset: pz(0.25) });
-          pfoteURahmen.push({ transform: "rotate(0deg)", offset: pz(0.40) });
+          pfoteRahmen.push({ transform: "rotate(0deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.04) });
+          pfoteRahmen.push({ transform: "rotate(-96deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.12) });
+          pfoteRahmen.push({ transform: "rotate(-44deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.20) });
+          pfoteRahmen.push({ transform: "rotate(-30deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.28) });
+          pfoteRahmen.push({ transform: "rotate(0deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.44) });
+          pfoteURahmen.push({ transform: "rotate(0deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.04) });
+          pfoteURahmen.push({ transform: "rotate(62deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.12) });
+          pfoteURahmen.push({ transform: "rotate(-8deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.20) });
+          pfoteURahmen.push({ transform: "rotate(0deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.44) });
           /* Gelaufen wird, waehrend der Ball rollt und sie ihm nachsetzt. */
           laufZeiten.push([t0 + (t1 - t0) * 0.30, t1]);
           const nachPos = bei(1);
