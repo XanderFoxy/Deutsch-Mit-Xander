@@ -154,44 +154,6 @@ const sage = (gut, was, zusatz) => {
     wischer.dreckig + " Kleckse");
   sage(wischer.lack === 0, "und danach ist der Lack ab", wischer.lack + " Lackschichten");
 
-  console.log("\nRUNDE 100 — GEWISCHT WIRD, WO DER SCHWAMM IST\n");
-  /* XANDER (Walkie #75): „das Abputzen mit dem Putzwerkzeug sieht noch
-     nicht realistisch aus." Vorher verschwand der Lack bei 1,75 s auf
-     einen Schlag — mitten im zweiten von drei Zuegen. Jetzt: waehrend
-     der Zuege wird er Stueck fuer Stueck ausgespart (Maske), und weg ist
-     er erst nach dem letzten Zug. */
-  const pgW = await br.newPage({ viewport: { width: 390, height: 844 } });
-  await pgW.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
-  await pgW.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
-  await pgW.waitForFunction(() => window.DMA_PRUEF && window.DMA_PRUEFUNG, { timeout: 25000 });
-  const wi = await pgW.evaluate(async () => {
-    window.DMA_PRUEF.effektBuehne();
-    await new Promise((f) => setTimeout(f, 300));
-    window.DMA_PRUEFUNG.wirkung("spray", "Bea", "Alex", { stueck: "herz" });
-    await new Promise((f) => setTimeout(f, 4200));
-    const platz = [...document.querySelectorAll(".lc-platz")].find((p) => /Bea/.test(p.textContent));
-    window.DMA_PRUEFUNG.wirkung("putzen", "Bea", "Alex", { stueck: "schwamm" });
-    const t0 = performance.now(), stufen = [];
-    let weg = 0;
-    while (performance.now() - t0 < 3300) {
-      const t = performance.now() - t0;
-      const lack = platz.querySelector(".lc-sprayfarbe:not(.lc-sprayfarbe-geht)");
-      const m = lack ? (lack.style.maskImage || lack.style.webkitMaskImage || "") : "";
-      const n = (decodeURIComponent(m).match(/<ellipse/g) || []).length;
-      if (!lack && !weg) weg = Math.round(t);
-      if (stufen.length === 0 || stufen[stufen.length - 1][1] !== n) stufen.push([Math.round(t), n, !!lack]);
-      await new Promise((f) => setTimeout(f, 50));
-    }
-    return { stufen, weg };
-  });
-  await pgW.close();
-  const mitte = wi.stufen.filter((x) => x[0] > 1000 && x[0] < 2400 && x[2]);
-  sage(mitte.length >= 3 && mitte[mitte.length - 1][1] > mitte[0][1],
-    "waehrend der Zuege wird der Lack Stueck fuer Stueck weggewischt",
-    mitte.map((x) => x[0] + "ms:" + x[1]).slice(0, 6).join(" "));
-  sage(wi.weg === 0 || wi.weg > 2500, "ganz weg erst nach dem letzten Zug (2,6 s)",
-    wi.weg ? "weg bei " + wi.weg + " ms" : "bis 3,3 s ausgeblendet");
-
   await br.close();
   srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)" : "\nalles gruen");

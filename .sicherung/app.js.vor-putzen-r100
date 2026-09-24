@@ -51432,64 +51432,9 @@
           + '<path class="lc-aermel-bund" d="M44 4 L56 16 L50 22 L38 10 Z"/>'
           + "</svg>";
       schicht.appendChild(zeug);
-      /* RUNDE 100 — XANDER (Walkie #75): „das Abputzen mit dem
-         Putzwerkzeug sieht noch nicht realistisch aus."
-         GEFUNDEN: der Lack verschwand auf einen Schlag bei 1,75 s — ganz
-         gleich, wo der Schwamm gerade war (mitten in der zweiten von
-         drei Bahnen). Jetzt nimmt das Werkzeug den Lack und den Dreck
-         GENAU DORT weg, wo es entlangfaehrt: jedes Bild wird unter ihm
-         ein weicher Fleck ausgespart (eine Maske), jedes Bild unter dem
-         Schwamm nimmt ein Stueck mehr — wie echtes Wischen, mit
-         Schlieren. Den Rest nimmt erst der Schluss, nach der letzten
-         Bahn. */
-      const wischFenster = wie === "schwamm" ? [0.22, 0.82] : wie === "lappen" ? [0.08, 0.88] : [0.28, 0.88];
-      const schichten = [...platz.querySelectorAll(".lc-sprayfarbe, .lc-dreckschicht")];
-      if (schichten.length) {
-        const flecken = schichten.map(() => []);
-        const t0w = performance.now();
-        let takt = 0;
-        const maske = (liste) => {
-          const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">'
-            + '<defs><filter id="w" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2"/></filter>'
-            + '<mask id="m"><rect width="100" height="100" fill="#fff"/><g filter="url(#w)">'
-            + liste.map((f) => '<ellipse cx="' + f[0] + '" cy="' + f[1] + '" rx="' + f[2] + '" ry="' + f[3]
-              + '" transform="rotate(' + f[4] + " " + f[0] + " " + f[1] + ')" fill="#000" fill-opacity=".42"/>').join("")
-            + "</g></mask></defs>"
-            + '<rect width="100" height="100" fill="#000" mask="url(#m)"/></svg>';
-          return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
-        };
-        const wisch = () => {
-          if (!zeug.isConnected) return;
-          const f = (performance.now() - t0w) / 3200;
-          if (f > wischFenster[1] + 0.02) return;
-          takt++;
-          const z = zeug.getBoundingClientRect();
-          const sicht = Number(getComputedStyle(zeug).opacity) || 0;
-          if (f >= wischFenster[0] && sicht > 0.5 && z.width > 0) {
-            const zx = z.left + z.width / 2, zy = z.top + z.height / 2;
-            const dreh = (new DOMMatrix(getComputedStyle(zeug).transform)).b;
-            schichten.forEach((sch, i) => {
-              const r = sch.getBoundingClientRect();
-              if (!r.width || !r.height) return;
-              flecken[i].push([
-                ((zx - r.left) / r.width * 100).toFixed(1), ((zy - r.top) / r.height * 100).toFixed(1),
-                (z.width * 0.34 / r.width * 100).toFixed(1), (z.height * 0.2 / r.height * 100).toFixed(1),
-                (Math.asin(Math.max(-1, Math.min(1, dreh))) * 180 / Math.PI).toFixed(0)]);
-              if (flecken[i].length > 160) flecken[i].shift();
-              if (takt % 2 === 0) {
-                const m = maske(flecken[i]);
-                sch.style.webkitMaskImage = m; sch.style.maskImage = m;
-                sch.style.webkitMaskSize = "100% 100%"; sch.style.maskSize = "100% 100%";
-              }
-            });
-          }
-          requestAnimationFrame(wisch);
-        };
-        requestAnimationFrame(wisch);
-      }
-      /* UND JETZT IST ES SAUBER — nach der LETZTEN Bahn (vorher 1,75 s,
-         mitten im zweiten Zug). Das Quietschen kommt genau dann. */
-      const sauber = Math.round(wischFenster[1] * 3200);
+      /* UND JETZT IST ES SAUBER. Erst am Ende der Bewegung — vorher
+         waere die Scheibe rein, bevor der Schwamm darueberlaeuft. */
+      const sauber = wie === "spucke" ? 1500 : 1750;
       setTimeout(() => {
         if (nm) { delete lcSprayListe[nm]; delete lcSprayEigen[nm]; }
         const lack = platz.querySelector(".lc-sprayfarbe");

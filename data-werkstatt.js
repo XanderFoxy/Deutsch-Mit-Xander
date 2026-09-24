@@ -49,22 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 554: Zauberer/Kaninchen — kein Klitschen mehr",
+  stand: "Fassung 555: Putzen — gewischt wird, wo der Schwamm ist",
 
   inArbeit: [
-    { seit: "2026-09-24T03:07",
+    { seit: "2026-09-24T03:32",
       text: "Stadt · Land · Fluss: Wörter streichen im Raum" },
-    { seit: "2026-09-24T03:07",
-      text: "Sprühdose: Wischen realistischer" },
-    { seit: "2026-09-24T03:07",
-      text: "Sabbern, Kuss-Stimme, Vogelkot-Ton" },
-    { seit: "2026-09-24T03:07",
-      text: "Probe runde88-kaninchen (alte Erwartungen) rot — prüfen" },
+    { seit: "2026-09-24T03:32",
+      text: "Sabbern: Mund lebendiger, Bild leicht kippen" },
+    { seit: "2026-09-24T03:32",
+      text: "Kuss-Stimme (Mann), Vogelkot-Ton" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T03:07",
-      text: "Zauberer/Kaninchen: beim Umdrehen des Huts lag das Bild darunter 6 Bilder lang frei — jetzt unsichtbar, solange es unter dem Hut steckt (0 von 82)" },
+    { seit: "2026-09-24T03:32",
+      text: "Schwamm/Lappen/Ärmel nehmen Lack und Dreck genau dort weg, wo sie entlangfahren, Bahn für Bahn mit Schlieren (vorher alles auf einmal bei 1,75 s, mitten im zweiten Zug)" },
+    { seit: "2026-09-24T03:32",
+      text: "Ganz sauber und Quietschen erst nach dem letzten Zug" },
   ],
 };
