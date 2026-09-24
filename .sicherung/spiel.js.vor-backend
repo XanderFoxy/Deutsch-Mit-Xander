@@ -68,18 +68,9 @@
   /* ---------------------------------------------------------------
      ANMELDUNG: Konto (auth.uid) oder anonyme Gastsitzung
      --------------------------------------------------------------- */
-  /* backend.js beginnt mit „const Backend = …" — das ist ein globaler
-     Name, aber KEINE Eigenschaft von window. window.Backend war hier
-     also immer leer: jeder Angemeldete galt als Gast, und der Betreiber
-     wurde nie erkannt (gefunden bei Funk 102, dieselbe Falle wie beim
-     Sprechbild: „DAS BACKEND HEISST BACKEND — NICHT window.Backend"). */
-  function BE() {
-    try { if (typeof Backend !== "undefined" && Backend) return Backend; } catch (e) {}
-    return window.Backend || null;
-  }
   function klientHolen() {
     if (S.klient) return Promise.resolve(S.klient);
-    var be = BE();
+    var be = window.Backend;
     var angemeldet = false;
     try { angemeldet = Boolean(be && be.currentUser && be.currentUser() && be.currentUser().id); } catch (e) {}
     if (angemeldet && be.zugang && be.zugang()) {
@@ -127,7 +118,7 @@
       S.naechsterVersuch = Date.now() + 30000;
       /* Ohne Konto geht es nur, wenn in Supabase die anonyme Anmeldung
          eingeschaltet ist (Stand 24.09.: aus — 0 anonyme Nutzer). */
-      S.fehler = BE() && BE().currentUser && BE().currentUser()
+      S.fehler = window.Backend && window.Backend.currentUser && window.Backend.currentUser()
         ? "Das Spiel ist gerade nicht erreichbar – gleich noch mal."
         : "Zum Mitspielen bitte mit deinem Konto anmelden – Punkte und Lebenspunkte gehören zu deinem Konto.";
       panelAuffrischen();
@@ -526,7 +517,7 @@
     if (offen === S.stillstand) return;
     S.stillstand = offen;
     if (offen) { S.waffe = ""; hinweis("🕊️ Waffenstillstand – die Tafel ist offen."); }
-    var be = BE(), betreiber = false;
+    var be = window.Backend, betreiber = false;
     try { betreiber = Boolean(be && ((be.isOwner && be.isOwner()) || (be.canModerate && be.canModerate()))); } catch (e) {}
     if (betreiber && S.bereit) {
       var raum = ""; try { raum = LC().lage().raum || ""; } catch (e) {}
@@ -818,7 +809,7 @@
      der Betreiber-Browser, ob die Sammlung vollständig ist.
      --------------------------------------------------------------- */
   function einspielenWennBetreiber() {
-    var be = BE(), darf = false;
+    var be = window.Backend, darf = false;
     try { darf = Boolean(be && be.isOwner && be.isOwner()); } catch (e) {}
     if (!darf || S.einspielen) return;
     var heute = new Date().toISOString().slice(0, 10);
