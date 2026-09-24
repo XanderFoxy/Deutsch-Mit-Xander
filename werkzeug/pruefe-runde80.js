@@ -242,23 +242,22 @@ function tonMessen(name) {
      · Die Hinterhand sitzt am Hinterteil (der Rumpf endet bei x = 45).
      · Beide Beine sind Bogen, keine Knicklinien — kein „L" mehr darin.
      · Und ihr seitlicher Ausschlag bleibt klein. */
-  sage(/class="lc-pferd-hand" d="M(\d+) /.test(app) && Number(RegExp.$1) <= 50,
-    "die Hinterhand sitzt am Hinterteil (x = " + RegExp.$1 + ", Kruppe bei 45)");
-  /* RUNDE 88 — DIE REGEL SUCHTE AN DER FALSCHEN STELLE. Seit Trab und
-     Galopp sitzt „lc-pferd-bN" nicht mehr am Pfad, sondern an einer
-     GRUPPE („<g class='lc-pferd-beingruppe lc-pferd-b1' …>"), in der
-     Bein und Huf zusammen schwingen — sonst blieb der Huf beim
-     Ausschlag neben dem Bein stehen. Der Pfad darin heisst
-     „lc-pferd-bein". Gesucht wird deshalb jetzt dort; was geprueft
-     wird, ist unveraendert: Boegen (Q), keine Knicke (L). */
-  const beine = [...app.matchAll(
-      /lc-pferd-b\d"[\s\S]{0,160}?class="lc-pferd-bein" d="([^"]+)"/g)]
-    .map((m) => m[1]);
-  sage(beine.length === 4 && beine.every((d) => !/ L/.test(d) && /Q/.test(d)),
-    "alle vier Beine schwingen in Bogen statt zu knicken",
-    beine.length + " Beine geprueft");
+  /* FUNK 75 — „repariere bitte endlich diesen komischen Muskel vom
+     Pferd": die Hinterhand ist keine aufgesetzte Flaeche mehr, sondern
+     der Oberschenkel gehoert zum Bein (lcPfBein „oben") und setzt am
+     Hinterteil an. Die Beine haben drei Gelenke; das Oberglied ist
+     gebogen (C), nur Roehrbein und Fessel sind gerade — wie beim Pferd. */
+  const obenHinten = /P = \[55, 56\];[\s\S]{0,160}?oben = "M(\d+) /.exec(app);
+  sage(obenHinten && Number(obenHinten[1]) <= 50,
+    "die Hinterhand sitzt am Hinterteil (x = " + (obenHinten ? obenHinten[1] : "?") + ", Kruppe bei 45)");
+  const oberglieder = [...app.matchAll(/oben = "(M[^"]+)"/g)].map((m) => m[1]);
+  sage(oberglieder.length === 2 && oberglieder.every((d) => /C/.test(d))
+    && /class="lc-pf-o"[\s\S]{0,400}class="lc-pf-m"[\s\S]{0,400}class="lc-pf-u"/.test(app),
+    "alle vier Beine schwingen in Bogen statt zu knicken — drei Gelenke, gebogene Oberglieder");
+  /* Der seitliche Ausschlag der geraden Glieder (Roehrbein) im Stand. */
+  const beine = [...app.matchAll(/roehr = "(M[^"]+)"/g)].map((m) => m[1]);
   const ausschlaege = beine.map((d) => {
-    const xs = (d.match(/[MQ]?\s*([\d.]+) [\d.]+/g) || [])
+    const xs = (d.match(/[MQL]?\s*([\d.]+) [\d.]+/g) || [])
       .map((t) => Number((t.match(/([\d.]+) [\d.]+/) || [])[1]));
     return xs.length ? Math.max(...xs) - Math.min(...xs) : 99;
   });

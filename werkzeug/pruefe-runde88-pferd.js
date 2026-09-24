@@ -72,22 +72,28 @@ const sage = (gut, text, dazu) => {
     });
   };
   /* Der Winkel jeder Beingruppe zu einem Zeitpunkt. */
+  /* FUNK 75 — die Beine haben jetzt drei Gelenke, und Vorder- und
+     Hinterbein laufen verschiedene Winkel (das Vorderbein knickt anders
+     als das Hinterbein). Gemessen wird deshalb die PHASE des Oberglieds
+     im Takt (0 bis 100): gleiche Phase = gleichzeitig, halbe Runde =
+     Gegentakt. b1 hinten fern, b2 vorn fern, b3 hinten nah, b4 vorn nah
+     — dieselbe Zuordnung wie vorher. */
   const winkel = async (t) => {
     await pg.evaluate((T) => {
-      document.querySelectorAll(".lc-pferd-beingruppe").forEach((el) =>
+      document.querySelectorAll(".lc-pf-o, .lc-pf-m, .lc-pf-u").forEach((el) =>
         el.getAnimations().forEach((a) => { try { a.pause(); a.currentTime = T; } catch (e) {} }));
     }, t);
     await pg.waitForTimeout(60);
     return pg.evaluate(() => {
-      const lies = (k) => {
-        const el = document.querySelector(".lc-pferd-" + k);
+      const lies = (sel) => {
+        const el = document.querySelector(sel + " > .lc-pf-o");
         if (!el) return null;
-        const m = getComputedStyle(el).transform;
-        if (!m || m === "none") return 0;
-        const z = m.slice(m.indexOf("(") + 1, -1).split(",").map(Number);
-        return Number((Math.atan2(z[1], z[0]) * 180 / Math.PI).toFixed(2));
+        const a = el.getAnimations()[0];
+        if (!a) return null;
+        return Number((a.effect.getComputedTiming().progress * 100).toFixed(2));
       };
-      return { b1: lies("b1"), b2: lies("b2"), b3: lies("b3"), b4: lies("b4") };
+      return { b1: lies(".lc-pf-hinten.lc-pf-fern"), b2: lies(".lc-pf-vorn.lc-pf-fern"),
+               b3: lies(".lc-pf-hinten:not(.lc-pf-fern)"), b4: lies(".lc-pf-vorn:not(.lc-pf-fern)") };
     });
   };
 
@@ -105,10 +111,11 @@ const sage = (gut, text, dazu) => {
   sage(messT.every((m) => gleich(m.b3, m.b2)),
     "und das andere Paar ebenso",
     messT.map((m) => m.b3 + "/" + m.b2).join("  "));
-  const abstandT = Math.max.apply(null, messT.map((m) => Math.abs(m.b1 - m.b3)));
-  sage(abstandT > 20,
+  const versatz = (a, b) => { const x = Math.abs(a - b) % 100; return Math.min(x, 100 - x); };
+  const abstandT = Math.min.apply(null, messT.map((m) => versatz(m.b1, m.b3)));
+  sage(abstandT > 45,
     "die beiden Paare laufen im Gegentakt, nicht gleichauf",
-    "groesster Abstand " + abstandT.toFixed(1) + " Grad");
+    "Versatz " + abstandT.toFixed(1) + " von 100 (halbe Runde = 50)");
 
   console.log("\nDER GALOPP — aufgezogen\n");
   const klasseG = await reiten(3);
@@ -137,18 +144,20 @@ const sage = (gut, text, dazu) => {
   /* Bein und Huf muessen zusammen wandern. Gemessen wird der Abstand
      zwischen dem unteren Ende des Beins und der Mitte des Hufs zu
      zwei sehr verschiedenen Zeitpunkten. */
+  /* FUNK 75 — gemessen wird jetzt zwischen Fesselkopf und Huf: das
+     letzte Gelenk und das, was an ihm haengt. */
   const hufAbstand = async (t) => {
     await pg.evaluate((T) => {
-      document.querySelectorAll(".lc-pferd-beingruppe").forEach((el) =>
+      document.querySelectorAll(".lc-pf-o, .lc-pf-m, .lc-pf-u").forEach((el) =>
         el.getAnimations().forEach((a) => { try { a.pause(); a.currentTime = T; } catch (e) {} }));
     }, t);
     await pg.waitForTimeout(60);
     return pg.evaluate(() => {
-      const g = document.querySelector(".lc-pferd-b3");
-      const bein = g.querySelector(".lc-pferd-bein").getBoundingClientRect();
-      const huf = g.querySelector(".lc-pferd-huf").getBoundingClientRect();
-      return Number(Math.hypot(huf.left + huf.width / 2 - (bein.left + bein.width / 2),
-                               huf.top + huf.height / 2 - bein.bottom).toFixed(2));
+      const g = document.querySelector(".lc-pf-hinten:not(.lc-pf-fern)");
+      const kopf = g.querySelector(".lc-pf-fesselkopf").getBoundingClientRect();
+      const huf = g.querySelector(".lc-pf-huf").getBoundingClientRect();
+      return Number(Math.hypot(huf.left + huf.width / 2 - (kopf.left + kopf.width / 2),
+                               huf.top + huf.height / 2 - (kopf.top + kopf.height / 2)).toFixed(2));
     });
   };
   const a1 = await hufAbstand(0), a2 = await hufAbstand(210);
@@ -158,9 +167,19 @@ const sage = (gut, text, dazu) => {
 
   console.log("\nDIE HINTERHAND\n");
   const js = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
-  sage(/class="lc-pferd-kruppe"/.test(js)
-    && !/lc-pferd-hand" d="M47 41 Q62 43 64 59/.test(js),
-    "die Hinterhand ist kein Oval mehr — Kruppe, Gesaess, Oberschenkel");
+  /* FUNK 75 — „repariere bitte endlich diesen komischen Muskel vom
+     Pferd": Hinterhand und Schulter sind keine eigenen Flaechen mit
+     Umriss mehr, sondern weicher Schatten; der Oberschenkel gehoert zum
+     Bein und bewegt sich mit. */
+  const bau = await pg.evaluate(() => ({
+    polster: document.querySelectorAll(".lc-pferd .lc-pferd-hand, .lc-pferd .lc-pferd-schulter").length,
+    schatten: document.querySelectorAll(".lc-pferd .lc-pf-schatten ellipse").length,
+    gelenke: document.querySelectorAll(".lc-pferd .lc-pf-o .lc-pf-m .lc-pf-u").length
+  }));
+  sage(bau.polster === 0 && bau.schatten >= 2,
+    "Hinterhand und Schulter: weicher Schatten statt aufgesetzter Muskelflaechen",
+    bau.polster + " Polster, " + bau.schatten + " Schatten");
+  sage(bau.gelenke === 4, "jedes Bein hat drei Gelenke (oben, Mitte, Fessel)", bau.gelenke + " Beine");
 
   await br.close(); srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)\n"

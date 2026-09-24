@@ -33582,3 +33582,84 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .lc-go-fluegel, .lc-ho-blatt { animation: none; }
 }
+
+/* =====================================================================
+   FUNK 75 (24.09.) — DAS PFERD: DREI GELENKE, TRAB UND GALOPP
+   ---------------------------------------------------------------------
+   XANDER: „repariere bitte endlich diesen komischen Muskel vom Pferd
+   und dass das Pferd endlich in seiner realistischen Physik den Trab
+   läuft und den Galopp und dass das mit der Geschwindigkeit eingestellt
+   werden kann."
+   Winkel in Grad; positiv dreht im Uhrzeigersinn, das Pferd schaut nach
+   rechts — ein Bein, das nach VORN greift, hat also einen negativen
+   Winkel. Vorn knickt die Vorderfusswurzel das Roehrbein nach HINTEN
+   (positiv), hinten klappt das Sprunggelenk es nach VORN (negativ).
+   Jedes Bein laeuft denselben Takt, nur um seine Phase (--ph) versetzt.
+   ===================================================================== */
+.lc-pf2 .lc-pf-ober  { fill: #8a5a34; }
+.lc-pf2 .lc-pf-roehr, .lc-pf2 .lc-pf-gelenk { fill: #7a4c2a; }
+.lc-pf2 .lc-pf-fessel, .lc-pf2 .lc-pf-fesselkopf { fill: #5e3a1f; }
+.lc-pf2 .lc-pf-huf   { fill: #241810; }
+.lc-pf2 .lc-pf-fern  { opacity: .75; filter: brightness(.66); }
+.lc-pf2 .lc-pf-schatten ellipse { fill: #3a2210; opacity: .2; }
+.lc-pf2 .lc-pf-o, .lc-pf2 .lc-pf-m, .lc-pf2 .lc-pf-u {
+  animation-duration: var(--takt, .62s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-delay: calc(var(--takt, .62s) * var(--ph, 0) * -1);
+}
+/* TRAB — Zweitakt. Die Haelfte des Taktes steht das Bein am Boden. */
+.lc-pf2-trab .lc-pf-vorn .lc-pf-o { animation-name: lcPfTrabVo; }
+.lc-pf2-trab .lc-pf-vorn .lc-pf-m { animation-name: lcPfTrabVm; }
+.lc-pf2-trab .lc-pf-vorn .lc-pf-u { animation-name: lcPfTrabVu; }
+.lc-pf2-trab .lc-pf-hinten .lc-pf-o { animation-name: lcPfTrabHo; }
+.lc-pf2-trab .lc-pf-hinten .lc-pf-m { animation-name: lcPfTrabHm; }
+.lc-pf2-trab .lc-pf-hinten .lc-pf-u { animation-name: lcPfTrabHu; }
+@keyframes lcPfTrabVo { 0% { transform: rotate(-18deg); } 48% { transform: rotate(17deg); }
+  62% { transform: rotate(9deg); } 82% { transform: rotate(-14deg); } 100% { transform: rotate(-18deg); } }
+@keyframes lcPfTrabVm { 0% { transform: rotate(2deg); } 48% { transform: rotate(0deg); }
+  62% { transform: rotate(58deg); } 76% { transform: rotate(72deg); } 92% { transform: rotate(12deg); } 100% { transform: rotate(2deg); } }
+@keyframes lcPfTrabVu { 0% { transform: rotate(0deg); } 25% { transform: rotate(-14deg); } 48% { transform: rotate(-8deg); }
+  62% { transform: rotate(38deg); } 82% { transform: rotate(16deg); } 100% { transform: rotate(0deg); } }
+@keyframes lcPfTrabHo { 0% { transform: rotate(-15deg); } 48% { transform: rotate(20deg); }
+  62% { transform: rotate(14deg); } 82% { transform: rotate(-8deg); } 100% { transform: rotate(-15deg); } }
+@keyframes lcPfTrabHm { 0% { transform: rotate(-2deg); } 48% { transform: rotate(10deg); }
+  62% { transform: rotate(-30deg); } 76% { transform: rotate(-52deg); } 92% { transform: rotate(-12deg); } 100% { transform: rotate(-2deg); } }
+@keyframes lcPfTrabHu { 0% { transform: rotate(0deg); } 25% { transform: rotate(-12deg); } 48% { transform: rotate(-16deg); }
+  62% { transform: rotate(34deg); } 82% { transform: rotate(18deg); } 100% { transform: rotate(0deg); } }
+/* GALOPP — Viertakt mit Schwebephase: nur ein Drittel des Taktes am
+   Boden, weiter ausgreifend, staerker eingeklappt. */
+.lc-pf2-galopp .lc-pf-vorn .lc-pf-o { animation-name: lcPfGalVo; }
+.lc-pf2-galopp .lc-pf-vorn .lc-pf-m { animation-name: lcPfGalVm; }
+.lc-pf2-galopp .lc-pf-vorn .lc-pf-u { animation-name: lcPfGalVu; }
+.lc-pf2-galopp .lc-pf-hinten .lc-pf-o { animation-name: lcPfGalHo; }
+.lc-pf2-galopp .lc-pf-hinten .lc-pf-m { animation-name: lcPfGalHm; }
+.lc-pf2-galopp .lc-pf-hinten .lc-pf-u { animation-name: lcPfGalHu; }
+@keyframes lcPfGalVo { 0% { transform: rotate(-30deg); } 32% { transform: rotate(24deg); }
+  46% { transform: rotate(12deg); } 72% { transform: rotate(-22deg); } 100% { transform: rotate(-30deg); } }
+@keyframes lcPfGalVm { 0% { transform: rotate(0deg); } 32% { transform: rotate(0deg); }
+  46% { transform: rotate(72deg); } 64% { transform: rotate(92deg); } 86% { transform: rotate(18deg); } 100% { transform: rotate(0deg); } }
+@keyframes lcPfGalVu { 0% { transform: rotate(0deg); } 18% { transform: rotate(-22deg); } 32% { transform: rotate(-10deg); }
+  46% { transform: rotate(48deg); } 72% { transform: rotate(26deg); } 100% { transform: rotate(0deg); } }
+@keyframes lcPfGalHo { 0% { transform: rotate(-28deg); } 32% { transform: rotate(26deg); }
+  46% { transform: rotate(20deg); } 72% { transform: rotate(-12deg); } 100% { transform: rotate(-28deg); } }
+@keyframes lcPfGalHm { 0% { transform: rotate(0deg); } 32% { transform: rotate(14deg); }
+  46% { transform: rotate(-42deg); } 64% { transform: rotate(-72deg); } 86% { transform: rotate(-16deg); } 100% { transform: rotate(0deg); } }
+@keyframes lcPfGalHu { 0% { transform: rotate(0deg); } 18% { transform: rotate(-20deg); } 32% { transform: rotate(-18deg); }
+  46% { transform: rotate(42deg); } 72% { transform: rotate(24deg); } 100% { transform: rotate(0deg); } }
+/* Der Rumpf: im Trab zwei kurze Stoesse je Takt, im Galopp ein
+   Schaukeln (vorn hoch beim Abdruck hinten, vorn tief beim Auffussen). */
+.lc-pf2 .lc-pferd-huepf { animation: none !important; transform-origin: 50% 70%; }
+.lc-pf2-trab .lc-pferd-huepf { animation: lcPfTrabRumpf calc(var(--takt, .62s) / 2) ease-in-out infinite !important; }
+.lc-pf2-galopp .lc-pferd-huepf { animation: lcPfGalRumpf var(--takt, .45s) ease-in-out infinite !important; }
+@keyframes lcPfTrabRumpf { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3%); } }
+@keyframes lcPfGalRumpf {
+  0%   { transform: translateY(0) rotate(0deg); }
+  25%  { transform: translateY(-2%) rotate(-3deg); }
+  55%  { transform: translateY(-5%) rotate(1deg); }
+  80%  { transform: translateY(-2%) rotate(3deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-pf2 .lc-pf-o, .lc-pf2 .lc-pf-m, .lc-pf2 .lc-pf-u, .lc-pf2 .lc-pferd-huepf { animation: none !important; }
+}

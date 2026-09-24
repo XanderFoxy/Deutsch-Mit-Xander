@@ -43089,7 +43089,10 @@
         if (lokPlan) lokZeit = lokPlan.zeiten(hinBasis);
       } catch (e) { lokPlan = null; lokZeit = null; }
     }
-    const hin = lokZeit ? lokZeit.hin : hinBasis;
+    /* FUNK 75 — das Pferd: je hoeher aufgezogen, desto schneller. */
+    const hin = lokZeit ? lokZeit.hin
+      : art === "pferd" ? Math.round(hinBasis / [1, 1, 1.3, 1.6, 1.9, 2.2][Math.max(1, Math.min(5, Number(tempo) || 1))])
+      : hinBasis;
     const dauer = lokZeit ? lokZeit.dauer : hin + 500;
     /* RUNDE 100 — der Lack reist mit (siehe lcRueckstandMitnehmen). */
     lcRueckstandMitnehmen(ab.el, quelle, dauer);
@@ -46370,8 +46373,72 @@
          Galopp. Welche Beine wann aufsetzen, steht in
          korrekturen.css — die Gangarten sind dort nachgerechnet. */
       const galopp = Number(tempo) > 1;
-      pferd.className = "lc-pferd " + (galopp ? "lc-pferd-galopp" : "lc-pferd-trab");
+      /* =============================================================
+         FUNK 75 (24.09.) — „repariere bitte endlich diesen komischen
+         Muskel vom Pferd, und dass das Pferd endlich in seiner
+         realistischen Physik den Trab läuft und den Galopp, und dass
+         das mit der Geschwindigkeit eingestellt werden kann."
+         DER MUSKEL: Schulter und Hinterhand waren eigene, dunklere
+         Flaechen MIT Umriss, die ueber dem Rumpf lagen — sie sahen aus
+         wie aufgeklebte Polster. Jetzt sind sie weiche Schatten ohne
+         Kante (lc-pf-schatten, weichgezeichnet); die Form des Pferdes
+         bleibt, wie er sie mochte.
+         DIE BEINE hatten EIN Gelenk: ein gebogener Strich drehte sich um
+         seinen oberen Punkt. Ein Pferdebein hat drei, und jedes tut im
+         Schritt etwas anderes:
+           · oben Schulter bzw. Huefte — das ganze Bein pendelt,
+           · in der Mitte Vorderfusswurzel (knickt nach HINTEN) bzw.
+             Sprunggelenk (das Roehrbein klappt nach VORN),
+           · unten die Fessel — sie federt beim Auffussen durch und
+             klappt beim Abheben ein.
+         TRAB ist ein Zweitakt: diagonale Paare (vorn links + hinten
+         rechts) gleichzeitig. GALOPP ein Viertakt mit Schwebephase:
+         hinten aussen, hinten innen, vorn aussen, vorn innen, dann in
+         der Luft. Das Aufziehen (1 bis 5) stellt die Geschwindigkeit
+         ein: 1 Trab, ab 2 Galopp, jede Stufe schneller.
+         ============================================================= */
+      const stufe = Math.max(1, Math.min(5, Number(tempo) || 1));
+      const takt = galopp ? [0, 0, 0.5, 0.45, 0.41, 0.37][stufe] : 0.62;
+      /* Ein Bein aus drei Gliedern. dx/dy verschiebt die ferne Seite. */
+      const pfBein = (vorn, fern, phase) => {
+        const k = (x) => x.toFixed(1);
+        let oben, roehr, fessel, huf, P, K, F;
+        if (vorn) {
+          P = [95, 58]; K = [95.7, 76]; F = [95.8, 88];
+          oben = "M88 50 C92 47.5 100 47.5 102 52 C103 58 101 66 99 72 C98.6 73.6 98.2 75 97.9 76.4 L93.6 76.4 C93 70 91 62 88 50 Z";
+          roehr = "M93.9 75 L97.7 75 L97.1 88.4 L94.5 88.4 Z";
+          fessel = "M94.4 87.4 L97.2 87.4 L99.4 91.6 L96.4 92.1 Z";
+          huf = "M95.8 91 L100.4 90.7 L102 95.2 L95.2 95.2 Z";
+        } else {
+          P = [55, 56]; K = [51.9, 77]; F = [52.3, 89];
+          oben = "M44 46 C52 44 62 46 64 52 C66 58 62 64 58 68 C56 71 55 74 54.4 77.4 L49.4 77.4 C48.6 71 46 64 44.5 58 C43.6 54 43.6 50 44 46 Z";
+          roehr = "M49.9 76 L54.1 76 L53.6 89.4 L51 89.4 Z";
+          fessel = "M51 88.4 L53.6 88.4 L55.6 92.1 L52.8 92.5 Z";
+          huf = "M52.2 91.5 L56.6 91.3 L58 95.2 L51.6 95.2 Z";
+        }
+        const verschieb = fern ? (vorn ? "translate(4 -1)" : "translate(-5 -1)") : "";
+        return '<g class="lc-pf-bein ' + (vorn ? "lc-pf-vorn" : "lc-pf-hinten") + (fern ? " lc-pf-fern" : "")
+          + '" transform="' + verschieb + '" style="--ph:' + phase + '">'
+          + '<g class="lc-pf-o" style="transform-origin:' + k(P[0]) + "px " + k(P[1]) + 'px">'
+          + '<path class="lc-pf-ober" d="' + oben + '"/>'
+          + '<g class="lc-pf-m" style="transform-origin:' + k(K[0]) + "px " + k(K[1]) + 'px">'
+          + '<path class="lc-pf-roehr" d="' + roehr + '"/>'
+          + '<circle class="lc-pf-gelenk" cx="' + k(K[0]) + '" cy="' + k(K[1]) + '" r="' + (vorn ? 2.3 : 2.6) + '"/>'
+          + '<g class="lc-pf-u" style="transform-origin:' + k(F[0]) + "px " + k(F[1]) + 'px">'
+          + '<path class="lc-pf-fessel" d="' + fessel + '"/>'
+          + '<circle class="lc-pf-fesselkopf" cx="' + k(F[0]) + '" cy="' + k(F[1]) + '" r="1.7"/>'
+          + '<path class="lc-pf-huf" d="' + huf + '"/>'
+          + "</g></g></g></g>";
+      };
+      /* Phasen (Anteil des Taktes): Trab — diagonale Paare; Galopp
+         (Rechtsgalopp) — hinten links, hinten rechts, vorn links, vorn
+         rechts. Fern = links, nah = rechts. */
+      const ph = galopp
+        ? { hf: 0, hn: 0.1, vf: 0.24, vn: 0.34 }
+        : { vn: 0, hf: 0, vf: 0.5, hn: 0.5 };
+      pferd.className = "lc-pferd lc-pf2 " + (galopp ? "lc-pferd-galopp lc-pf2-galopp" : "lc-pferd-trab lc-pf2-trab");
       pferd.style.setProperty("--gross", d + "px");
+      pferd.style.setProperty("--takt", takt + "s");
       pferd.innerHTML =
         '<span class="lc-pferd-huepf">'
         /* XANDER: „Das Pferd muss auch ein bisschen ausgearbeitet
@@ -46436,57 +46503,12 @@
              die Hinterhand wieder ein. Genau diese drei Abschnitte
              stehen jetzt in der Linie. */
         /* --- DIE BEINE DER FERNEN SEITE (dunkler, sie liegen hinten) --- */
-        + '<g class="lc-pferd-fern">'
-        /* RUNDE 80 — XANDER: „achte dabei auf den Arsch, dass die
-           Beine am Arsch sind und die Beine sind so komisch gefaltet
-           wie so eine Ziehharmonika."
-           ------------------------------------------------------------
-           BEIDES STIMMTE, und beides hatte dieselbe Ursache: das Bein
-           war EIN Strich von gleichbleibender Dicke, und dieser Strich
-           knickte scharf hin und her (M49 56 L55 70 L46 80 L48 92 —
-           sechs Einheiten nach vorn, neun zurueck, zwei nach vorn).
-           Ein gleich dicker Streifen, der dreimal scharf umklappt, ist
-           genau eine Ziehharmonika.
-
-           Ein echtes Pferdebein ist oben DICK (Oberschenkel, Schulter)
-           und unten DUENN (Roehrbein), und es knickt nicht, es
-           SCHWINGT. Deshalb jetzt zwei Sachen:
-           · Hinterhand und Schulter sind eigene, gefuellte Formen —
-             sie gehoeren zum Koerper und sind das Fleisch, aus dem das
-             Bein kommt. Damit sitzt das Hinterbein sichtbar AM
-             Hinterteil und haengt nicht unter dem Bauch.
-           · Das Bein selbst ist nur noch das schlanke Stueck darunter
-             und laeuft in weichen Bogen (Q) statt in Knicken. Der
-             Sprunggelenkversatz ist von neun auf fuenf Einheiten
-             zurueckgenommen — er ist noch zu sehen, aber er klappt
-             nicht mehr um. */
-        /* RUNDE 88 — DER HUF GEHOERT ANS BEIN, NICHT DANEBEN.
-           Bisher waren Bein und Huf zwei GETRENNTE Pfade mit zwei
-           getrennten Drehungen: das Bein drehte um seinen oberen
-           Punkt, der Huf um sein eigenes linkes Ende. Ein Huf, der
-           um sich selbst kippt, waehrend das Bein ueber ihn
-           hinwegschwingt, bleibt stehen, wo er ist — im Bild lagen
-           deshalb zwei dunkle Klumpen frei im Raum, neben den
-           Beinen. Jetzt stecken Bein und Huf in EINER Gruppe, und
-           gedreht wird die Gruppe um den oberen Punkt des Beins.
-           Damit faehrt der Huf mit, wie er es muss. */
-        + '<g class="lc-pferd-beingruppe lc-pferd-b1" style="transform-origin:54px 68px">'
-        + '<path class="lc-pferd-bein" d="M54 68 Q55 75 49 80 Q48 86 50 91"/>'
-        + '<path class="lc-pferd-huf" d="M50 91 L56 92"/>'
-        + "</g>"
-        /* Vorderbein: fast gerade, nur das Knie setzt einen Grad ab. */
-        + '<g class="lc-pferd-beingruppe lc-pferd-b2" style="transform-origin:99px 66px">'
-        + '<path class="lc-pferd-bein" d="M99 66 Q100 76 98 83 Q97 88 98 92"/>'
-        + '<path class="lc-pferd-huf" d="M98 92 L104 93"/>'
-        + "</g>"
-        + "</g>"
-        /* --- DER SCHWEIF, oben auf der abfallenden Kruppe --- */
+        + pfBein(false, true, ph.hf) + pfBein(true, true, ph.vf)
         + '<path class="lc-pferd-schweif" d="M46 38 Q24 40 14 58 Q11 69 17 76'
         + ' Q18 63 26 54 Q35 45 47 44 Z"/>'
         /* --- DER RUMPF --- */
         + '<path class="lc-pferd-rumpf" d="M58 29 L88 29 Q104 31 108 44'
         + ' Q110 56 96 62 L66 63 Q54 63 49 56 Q45 48 46 40 Q48 31 58 29 Z"/>'
-        + '<path class="lc-pferd-linie" d="M58 33 Q54 48 58 62 M90 34 Q96 48 92 63"/>'
         /* RUNDE 80 — DIE HINTERHAND UND DIE SCHULTER.
            Das Fleisch, aus dem die Beine kommen. Die Hinterhand sitzt
            am Hinterteil (der Rumpf endet hinten bei x = 45), die
@@ -46512,18 +46534,6 @@
                und laeuft schmal auf das Sprunggelenk zu (52|74).
            Dadurch ist sie oben breit und unten schmal statt ueberall
            gleich dick. */
-        + '<path class="lc-pferd-hand" d="M47 39'
-        + ' C56 41 63 48 64 57'
-        + ' C64.6 66 60 72.5 54 74'
-        + ' C49.6 74.6 46.5 71 45 66'
-        + ' C43.2 60 42.4 56 41.6 52'
-        + ' C41 47 43 41 47 39 Z"/>'
-        /* Die Kante zwischen Kruppe und Gesaess — ohne sie sieht man
-           die drei Abschnitte nicht. */
-        + '<path class="lc-pferd-kruppe" d="M47 40 C44.5 45 43.5 49 43.6 54"/>'
-        + '<path class="lc-pferd-schulter" d="M89 39 Q101 42 101 55 Q101 66 96 69'
-        + ' Q89 67 88 55 Q87 45 89 39 Z"/>'
-        /* --- HALS UND KOPF --- */
         + '<path class="lc-pferd-hals" d="M94 38 Q106 30 110 16 L122 18'
         + ' Q118 36 102 48 Z"/>'
         /* Der Kopf: Ganasche rund, Nasenruecken schmal, Maul stumpf. */
@@ -46567,18 +46577,18 @@
         /* Dasselbe noch einmal fuer die nahe Seite, einen Schritt
            versetzt: hinten der Sprunggelenkknick nach hinten, vorn
            ein beinahe gerades Bein. */
-        + '<g class="lc-pferd-beingruppe lc-pferd-b3" style="transform-origin:60px 70px">'
-        + '<path class="lc-pferd-bein" d="M60 70 Q61 77 55 82 Q54 88 56 93"/>'
-        + '<path class="lc-pferd-huf" d="M56 93 L62 94"/>'
+        + pfBein(false, false, ph.hn) + pfBein(true, false, ph.vn)
+        /* Die Muskulatur nur noch als weicher Schatten, ohne Kante. */
+        + '<defs><filter id="pfWeich" x="-30%" y="-30%" width="160%" height="160%">'
+        + '<feGaussianBlur stdDeviation="2.2"/></filter></defs>'
+        + '<g class="lc-pf-schatten" filter="url(#pfWeich)">'
+        + '<ellipse cx="54" cy="50" rx="10" ry="9"/>'
+        + '<ellipse cx="95" cy="50" rx="6.5" ry="10"/>'
+        + '<ellipse cx="78" cy="60" rx="16" ry="3.2"/>'
         + "</g>"
-        + '<g class="lc-pferd-beingruppe lc-pferd-b4" style="transform-origin:95px 68px">'
-        + '<path class="lc-pferd-bein" d="M95 68 Q96 78 94 84 Q93 89 94 94"/>'
-        + '<path class="lc-pferd-huf" d="M94 94 L100 95"/>'
-        + "</g>"
-        /* --- SATTEL UND GURT --- */
         + '<path class="lc-pferd-sattel" d="M66 30 Q80 23 94 30 L94 38'
         + ' Q80 32 66 38 Z"/>'
-        + '<path class="lc-pferd-gurt" d="M76 32 L75 62 M88 32 L90 62"/>'
+        + '<path class="lc-pferd-gurt" d="M87 33 L89.5 62"/>'
         + "</svg>"
         + '<span class="lc-pferd-reiter"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
