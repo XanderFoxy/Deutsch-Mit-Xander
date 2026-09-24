@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 599: Adler und Flugzeug von oben neu gezeichnet; eigene Reisen nur noch beim Halten auf ein leeres Feld (Kran, beide Bagger, Delfin dort); Zielfernrohr-Bild kommt nach 7,8 s zurück.",
+  stand: "Fassung 607: Flugzeug oben wie von der Seite, Adler passt auf den Schirm, Pferdebauch höher, Delfin mit Händen, Wasser entlang der Strecke und Schwimmbewegung; Bombe synchron, Lunte hängt unten, Granate wird mit Pfeifen geworfen, Waschmaschine wäscht Dreck ab, Zielfernrohr mit Ausweichen; Schießen-Kachel mit Pfeil und Bogen und Zielfernrohr; Hot Rod 1/3/5 Ratscher und Tempo; Wecker blendet sauber aus; Helikopter mit rundem Fenster; Frosch mit Gelenken; Krone und Mütze höher; Wegzeichnen-Ton wie früher.",
 
   inArbeit: [
-    { seit: "2026-09-24T19:05",
-      text: "Funk 84/85: Adler kleiner + Seitenansicht, Flugzeug weniger länglich, Pferdebauch höher, Delfin reparieren, Zielfernrohr ausweichen + Punkte, Bombe synchron, Granate pfeift, Waschmaschine gegen Dreck, Hot-Rod-Weg, gemeinsam Reisen, Mario-Röhren, Lok-Schranke, Zauberer, Monstertruck, Feuerwerk, Kettensäge, Bazooka, Einstiegsanimation, Knöpfe unter den Plätzen; Spielsystem als Plan" },
+    { seit: "2026-09-24T20:11",
+      text: "Hot Rod als Standardfahrzeug mit Weg; gemeinsam Reisen im Reisen-Menü; Adler-Seitenansicht; Mario-Röhren; Lok-Schranke mit Gleisspuren; Zauberer mit Händen; Laserduell per Antippen; Hammer 5 Stufen mit Krümeln und Reisesperre; Pflaster obendrauf; Axt, Kettensäge, Bazooka, Monstertruck, Feuerwerk, Schulbus, Panzer, Klippe, Bergsteiger, Haustier; eigene SVG-Symbole für Kacheln; Knöpfe unter den Plätzen; Spielsystem (Plan in Funk 92, wartet auf Zustimmung)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T19:05",
-      text: "Walkie #168 Draufsicht, #175 eigene Reisen, Funk 83 (nicht im Menü)" },
+    { seit: "2026-09-24T20:11",
+      text: "Funk 83, 84 (Teile), 85 (Teile), 89 (Teile), 91 (Wecker, Heli, Anziehen), Walkie #175" },
   ],
 };
