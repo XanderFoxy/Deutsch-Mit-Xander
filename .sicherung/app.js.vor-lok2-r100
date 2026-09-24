@@ -45738,12 +45738,7 @@
        Gleis, und das Gleis war fast so hoch wie die ganze Lok. Jetzt 0,12:
        die untere Schiene liegt an den Raedern, das Gleis ist nur noch
        0,24 statt 0,40 breit, die Schwellen kuerzer und dichter. */
-    /* RUNDE 100, ZWEITER ANLAUF — XANDER: „Die Lok muss wieder groesser."
-       Sie ist jetzt 1,5 x 0,75 Platzbreiten (siehe .lc-lok). Die
-       Radunterkante liegt damit 0,165 Platzbreiten unter der Lokmitte;
-       im selben Verhaeltnis wie vorher (0,12 zu 0,1375) steht die Schiene
-       bei 0,144 — die Raeder stehen AUF ihr. */
-    const spur = d * 0.144;
+    const spur = d * 0.12;
     const ueber = spur + Math.max(2, d * 0.035);     // Schwelle steht ueber
     const schritt = Math.max(7, d * 0.17);
     let schwellen = "", schienen = "";
@@ -45890,18 +45885,8 @@
        wie Start und Ziel: „die Schienen nicht mittig ueber den
        Positionsfeldern" — gemessen lagen sie sonst 10 px darunter. */
     const pk = weg.map((p) => ({ x: p.x - rk.left, y: p.y - rk.top + lcBildVersatz(p.el) }));
-    /* RUNDE 100 — XANDER (Walkie-Talkie, Lok): „Die Gleise sind teilweise
-       schief auf der geraden Strecke."
-       GEMESSEN (390 px breit): Anfang und Ende lagen auf der PLATZmitte
-       (mit Namensschild), alle Zwischenpunkte auf der BILDmitte — am
-       Start 12,4 px, am Ziel 8 px tiefer. Das erste und das letzte
-       Stueck Gerade fielen dadurch schraeg ab (12 px auf 133 px), und
-       die waagerecht gezeichnete Lok stand auf der schiefen Strecke mal
-       ueber, mal unter der Schiene. Jetzt liegen auch Anfang und Ende
-       auf der Bildmitte; die Lok selbst wird mit „ort" relativ zum
-       Startpunkt gesetzt und rueckt damit von selbst mit. */
-    pk[0] = { x: start.x, y: start.y + lcBildVersatz(ab.el) };
-    pk[pk.length - 1] = { x: ende.x, y: ende.y + lcBildVersatz(zu.el) };
+    pk[0] = { x: start.x, y: start.y };
+    pk[pk.length - 1] = { x: ende.x, y: ende.y };
     /* RUNDE 99 — AUSPROBIERT UND ZURUECKGENOMMEN: ein engerer Bogen
        (0,34 statt 0,62 Platzbreiten) kam der Mitte des Eckplatzes naeher
        (17 statt 25 px), aber bei der jetzt breiteren Spur lag die innere

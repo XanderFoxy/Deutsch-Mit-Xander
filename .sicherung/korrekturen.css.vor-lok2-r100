@@ -18592,16 +18592,6 @@ code, pre {
   height: calc(var(--gross, 64px) * 0.625);
   transform: translate(-50%, -50%);
 }
-/* RUNDE 100 — XANDER (Walkie-Talkie): „DIE Lok muss wieder groesser."
-   1,5 x 0,75 Platzbreiten (+20 %). Im Bogen ragt sie damit vorn und
-   hinten etwas ueber das Gleis hinaus — wie jede lange Lok in einer
-   engen Kurve; die Raeder bleiben dabei auf den Schienen (Pfeilhoehe
-   des Radstands 0,11 bei halber Spur 0,144). Die Spur in app.js
-   (lcLokGleise) waechst mit. */
-.lc-lok {
-  width: calc(var(--gross, 64px) * 1.5);
-  height: calc(var(--gross, 64px) * 0.75);
-}
 .lc-lok-form { width: 100%; height: 100%; overflow: visible; }
 /* RUNDE 65 — XANDER: „Im Uebrigen ist unsere Lokomotive noch nicht
    detailliert. Sie soll so schoen sein wie unsere urspruengliche Lok."
@@ -32508,28 +32498,4 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-spraywahl .lc-waehler-reihe .btn-ghost {
   color: #fff;
   border-color: rgba(255, 255, 255, 0.45);
-}
-
-/* =====================================================================
-   RUNDE 100 — DIE LOK STEHT IN DER SEITENANSICHT AUF DER SCHIENE
-   ---------------------------------------------------------------------
-   XANDER (Walkie-Talkie): „Die Lok sitzt von der Seitenansicht noch
-   nicht richtig auf den Gleisen."
-   GEMESSEN (d = 84 px): die Unterkante der Treibraeder lag 0,34 d unter
-   der Lokmitte, die nahe (untere) Schiene aber nur 0,144 d — die Raeder
-   hingen rund 17 px UNTER dem Gleis. Die Seitenansicht rueckt deshalb um
-   genau diesen Abstand hinauf (0,196 d plus die halbe Schienenstaerke von
-   1,1 px): die Raeder stehen AUF der Schiene, bei 360, 390, 460 und
-   900 px Breite nachgemessen. (Gemessen wird die Radmitte plus Radius
-   ueber die Bildschirm-Matrix — der Kasten eines sich DREHENDEN Rades
-   ist groesser als das Rad, damit lag meine erste Zahl 0,02 d daneben.) Die
-   Draufsicht bleibt, wo sie ist — ihre Radkanten liegen schon ueber den
-   Schienen (Sonde runde97-lok: 0,0 px).
-   „top" statt „transform": die Fahrt spiegelt die Seitenansicht mit
-   einem transform (scaleX), der wuerde eine Verschiebung ueberschreiben.
-   ===================================================================== */
-.lc-lok-seite {
-  inset: auto 0;
-  top: calc(var(--gross, 64px) * -0.196 - 1.1px);
-  height: 100%;
 }

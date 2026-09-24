@@ -123,6 +123,15 @@ const sage = (gut, was, zusatz) => {
       untenY = Math.max(untenY, b.y + b.height / 2);
     });
     const radspur = raeder.length ? (untenY - obenY) * massstab : 0;
+    /* RUNDE 100 — der RADSTAND (vorderste bis hinterste Radkante, in
+       Fahrtrichtung): er muss in den Bogen passen, nicht die ganze Lok. */
+    let vornX = Infinity, hintenX = -Infinity;
+    raeder.forEach((r) => {
+      const b = r.getBBox();
+      vornX = Math.min(vornX, b.x + b.width / 2);
+      hintenX = Math.max(hintenX, b.x + b.width / 2);
+    });
+    const radstand = raeder.length ? (hintenX - vornX) * massstab : 0;
 
     /* Der Kurvenradius: aus dem Bogen-Pfad. */
     const bogen = [...gleis.querySelectorAll(".lc-lok-schiene")]
@@ -133,7 +142,7 @@ const sage = (gut, was, zusatz) => {
 
     return { d: d, spurweite: spurweite, radspur: radspur,
       lokLang: kasten.width, lokHoch: kasten.height, radius: radius,
-      raeder: raeder.length };
+      raeder: raeder.length, radstand: radstand };
   });
 
   if (mess.fehlt) { sage(false, "die Lok faehrt ueberhaupt"); }
@@ -148,10 +157,23 @@ const sage = (gut, was, zusatz) => {
     sage(weg <= mess.spurweite * 0.12,
       "die Raeder stehen AUF den Schienen, nicht daneben",
       weg.toFixed(1) + " px Unterschied");
-    sage(mess.lokLang <= mess.radius * 2.4,
-      "und die Lok ist kuerzer als ihre Kurve es verlangt",
-      "Lok " + mess.lokLang.toFixed(0) + " px, Kurvendurchmesser "
-        + (mess.radius * 2).toFixed(0) + " px");
+    /* RUNDE 100 — XANDER (Walkie-Talkie): „DIE Lok muss wieder groesser."
+       Die alte Regel hier („die ganze Lok kuerzer als der Kurven-
+       durchmesser") liess genau das nicht zu. Was fuer die FUEHRUNG
+       zaehlt, ist aber der Radstand: liegt seine Mitte auf dem Bogen,
+       weichen die aeussersten Raeder um die Pfeilhoehe
+       r - sqrt(r^2 - (Radstand/2)^2) nach innen ab. Solange das weniger
+       ist als die halbe Spur, stehen sie noch auf dem Gleis. Dass die
+       Lok vorn und hinten ueber die Kurve ragt, tut jede lange Lok. */
+    const halb = mess.radstand / 2;
+    const pfeil = mess.radius > halb ? mess.radius - Math.sqrt(mess.radius * mess.radius - halb * halb) : Infinity;
+    sage(pfeil < mess.spurweite / 2,
+      "und im Bogen bleiben die Raeder auf dem Gleis (Radstand passt in die Kurve)",
+      "Pfeilhoehe " + pfeil.toFixed(1) + " px, halbe Spur " + (mess.spurweite / 2).toFixed(1)
+        + " px, Lok " + mess.lokLang.toFixed(0) + " px lang");
+    sage(mess.lokLang >= mess.d * 1.45,
+      "... und die Lok ist groesser als vorher (mind. 1,45 Platzbreiten)",
+      (mess.lokLang / mess.d).toFixed(2) + " Platzbreiten");
   }
 
   /* =====================================================================
@@ -165,6 +187,51 @@ const sage = (gut, was, zusatz) => {
      ungefaehr die halbe Spurweite sein und darf sich nicht veraendern:
      genau das heisst „gefuehrt".
      ===================================================================== */
+  /* RUNDE 100 — XANDER (Walkie-Talkie): „Die Lok sitzt von der
+     Seitenansicht noch nicht richtig auf den Gleisen. Die Gleise sind
+     teilweise schief auf der geraden Strecke."
+     GEMESSEN vorher: Anfang und Ende lagen auf der Platzmitte statt
+     der Bildmitte — das erste Stueck fiel 12 px auf 133 px ab. Und die
+     Treibraeder der Seitenansicht hingen 19 px unter der nahen Schiene.
+     Gefahren wird von Platz 1 in derselben Reihe nach rechts: jede
+     Gerade muss waagerecht sein, und die Raeder stehen auf der Schiene. */
+  console.log("\nSEITENANSICHT: GERADE GLEISE, RAEDER AUF DER SCHIENE\n");
+  const seite = await pg.evaluate(async () => {
+    window.DMA_PRUEF.effektBuehne();
+    await new Promise((f) => setTimeout(f, 200));
+    window.DMA_PRUEFUNG.wirkung("lok", "8", "Alex", {});
+    await new Promise((f) => setTimeout(f, 1500));
+    const gleis = document.querySelector(".lc-lok-gleis");
+    const lok = document.querySelector(".lc-lok");
+    if (!gleis || !lok) return null;
+    const g = gleis.getBoundingClientRect();
+    const geraden = [...gleis.querySelectorAll(".lc-lok-schiene")].map((p) => p.getAttribute("d"))
+      .filter((s) => s.indexOf("A") < 0)
+      .map((s) => s.match(/M([\d.-]+) ([\d.-]+)L([\d.-]+) ([\d.-]+)/)).filter(Boolean)
+      .map((m) => ({ x1: +m[1], y1: +m[2] + g.top, x2: +m[3], y2: +m[4] + g.top }));
+    /* schief = weder waagerecht noch senkrecht */
+    const schief = geraden.filter((a) => Math.abs(a.y1 - a.y2) > 0.5 && Math.abs(a.x1 - a.x2) > 0.5);
+    const waag = geraden.filter((a) => Math.abs(a.y1 - a.y2) <= 0.5);
+    const nah = Math.max.apply(null, waag.map((a) => a.y1));      /* die nahe (untere) Schiene */
+    /* Radmitte plus Radius, ueber die Bildschirm-Matrix — NICHT der
+       Kasten: ein sich drehendes Rad hat einen groesseren Kasten. */
+    const zeichnung = lok.querySelector(".lc-lok-seite svg");
+    const mat = zeichnung.getScreenCTM();
+    const reifen = [...zeichnung.querySelectorAll(".lc-lok-reifen")].map((c) => {
+      const sw = parseFloat(getComputedStyle(c).strokeWidth) || 0;
+      return new DOMPoint(+c.getAttribute("cx"), +c.getAttribute("cy") + +c.getAttribute("r") + sw / 2)
+        .matrixTransform(mat).y;
+    });
+    const staerke = parseFloat(getComputedStyle(gleis.querySelector(".lc-lok-schiene")).strokeWidth) || 0;
+    return { schief: schief.length, geraden: geraden.length,
+      treib: Math.max.apply(null, reifen), schieneOben: nah - staerke / 2 };
+  });
+  sage(seite && seite.schief === 0, "keine Gerade liegt schief",
+    seite ? seite.schief + " von " + seite.geraden + " schief" : "keine Fahrt");
+  sage(seite && Math.abs(seite.treib - seite.schieneOben) <= 1,
+    "die Treibraeder der Seitenansicht stehen AUF der nahen Schiene",
+    seite ? "Radunterkante " + seite.treib.toFixed(1) + ", Schienenoberkante " + seite.schieneOben.toFixed(1) : "-");
+
   console.log("\nDIE FAHRT — ABSTAND ZUR SCHIENE, BILD FUER BILD\n");
   const fahrt = await pg.evaluate(async () => {
     window.DMA_PRUEF.effektBuehne();
