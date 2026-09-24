@@ -28445,6 +28445,14 @@
     if (stueck.unten) {
       schicht.classList.add("lc-kleid-unten");
       schicht.innerHTML = '<svg viewBox="0 -20 100 110">' + stueck.bild + "</svg>";
+    } else if (was === "krone" || was === "muetze") {
+      /* RUNDE 101 — XANDER (Funk 91): „die Mützen oder die Kronen kannst
+         du ein bisschen höher anbringen, dass man unten noch Gestaltungs-
+         spielraum hat für Bart oder Brille … arbeite da ein bisschen
+         filigraner." Kopfbedeckungen sitzen 12 Einheiten hoeher (der
+         Rand bei y 21–36 statt 33–48), die Linien sind feiner. */
+      schicht.classList.add("lc-kleid-kopf");
+      schicht.innerHTML = '<svg viewBox="0 0 100 100"><g transform="translate(0 -12)">' + stueck.bild + "</g></svg>";
     } else {
       schicht.innerHTML = '<svg viewBox="0 0 100 100">' + stueck.bild + "</svg>";
     }

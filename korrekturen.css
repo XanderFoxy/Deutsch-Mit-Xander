@@ -34159,3 +34159,6 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .lc-delfin-koerper, .lc-delfin-schwanz { animation: none; }
 }
+
+/* RUNDE 101 — Funk 91: Kopfbedeckungen feiner gezeichnet. */
+.lc-kleid-kopf path, .lc-kleid-kopf rect, .lc-kleid-kopf circle { stroke-width: 1.4px; }
