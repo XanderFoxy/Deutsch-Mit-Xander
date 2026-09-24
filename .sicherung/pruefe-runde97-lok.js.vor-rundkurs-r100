@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-/* RUNDE 100 — gemessen werden nur die Schienen, auf denen die Lok FAEHRT.
-   Der Rueckweg, der die Strecke zum Rundkurs schliesst (XANDER: „die Strecke
-   immer automatisch und logisch geschlossen"), traegt „lc-lok-rund". */
 /* =====================================================================
    SONDE RUNDE 97 — DIE LOK STEHT AUF IHREM GLEIS
    ---------------------------------------------------------------------
@@ -81,7 +78,7 @@ const sage = (gut, was, zusatz) => {
 
     /* Die Spurweite: die beiden Schienen eines GERADEN Stuecks liegen
        parallel; ihr Abstand ist die Spur. */
-    const gerade = [...gleis.querySelectorAll(".lc-lok-schiene:not(.lc-lok-rund)")]
+    const gerade = [...gleis.querySelectorAll(".lc-lok-schiene")]
       .map((p) => p.getAttribute("d"))
       .filter((s) => s.indexOf("A") < 0)
       .map((s) => s.match(/M([\d.-]+) ([\d.-]+)L([\d.-]+) ([\d.-]+)/))
@@ -138,7 +135,7 @@ const sage = (gut, was, zusatz) => {
     const radbreite = raeder.length ? raeder[0].getBBox().height * massstab : 0;
 
     /* Der Kurvenradius: aus dem Bogen-Pfad. */
-    const bogen = [...gleis.querySelectorAll(".lc-lok-schiene:not(.lc-lok-rund)")]
+    const bogen = [...gleis.querySelectorAll(".lc-lok-schiene")]
       .map((p) => p.getAttribute("d"))
       .filter((s) => s.indexOf("A") >= 0)
       .map((s) => Number(s.match(/A([\d.]+)/)[1]));
@@ -212,7 +209,7 @@ const sage = (gut, was, zusatz) => {
     const lok = document.querySelector(".lc-lok");
     if (!gleis || !lok) return null;
     const g = gleis.getBoundingClientRect();
-    const geraden = [...gleis.querySelectorAll(".lc-lok-schiene:not(.lc-lok-rund)")].map((p) => p.getAttribute("d"))
+    const geraden = [...gleis.querySelectorAll(".lc-lok-schiene")].map((p) => p.getAttribute("d"))
       .filter((s) => s.indexOf("A") < 0)
       .map((s) => s.match(/M([\d.-]+) ([\d.-]+)L([\d.-]+) ([\d.-]+)/)).filter(Boolean)
       .map((m) => ({ x1: +m[1], y1: +m[2] + g.top, x2: +m[3], y2: +m[4] + g.top }));
@@ -229,7 +226,7 @@ const sage = (gut, was, zusatz) => {
       return new DOMPoint(+c.getAttribute("cx"), +c.getAttribute("cy") + +c.getAttribute("r") + sw / 2)
         .matrixTransform(mat).y;
     });
-    const staerke = parseFloat(getComputedStyle(gleis.querySelector(".lc-lok-schiene:not(.lc-lok-rund)")).strokeWidth) || 0;
+    const staerke = parseFloat(getComputedStyle(gleis.querySelector(".lc-lok-schiene")).strokeWidth) || 0;
     return { schief: schief.length, geraden: geraden.length,
       treib: Math.max.apply(null, reifen), schieneOben: nah - staerke / 2 };
   });
@@ -253,7 +250,7 @@ const sage = (gut, was, zusatz) => {
       const lb = lok.getBoundingClientRect(), gb = gleis.getBoundingClientRect();
       const mx = lb.left + lb.width / 2, my = lb.top + lb.height / 2;
       let nah = Infinity;
-      gleis.querySelectorAll(".lc-lok-schiene:not(.lc-lok-rund)").forEach((pfad) => {
+      gleis.querySelectorAll(".lc-lok-schiene").forEach((pfad) => {
         const lang = pfad.getTotalLength();
         for (let k = 0; k <= 24; k++) {
           const pt = pfad.getPointAtLength(lang * k / 24);
@@ -272,42 +269,6 @@ const sage = (gut, was, zusatz) => {
   sage(grosster - kleinster <= 8,
     "und ihre Mitte bleibt die ganze Fahrt ueber gleich weit von der Schiene",
     kleinster + " bis " + grosster + " px");
-
-  console.log("\nRUNDE 100 — DIE STRECKE IST IMMER EIN GESCHLOSSENER KREIS\n");
-  /* XANDER (Walkie #84): „Wenn man die Lok einmal im Kreis fahren läßt,
-     soll die Strecke mit einer runden Kurve abschließen und generell soll
-     die Strecke immer automatisch und logisch geschlossen werden, egal
-     wie kurz die Strecke ist, die man einzeichnet."
-     Gemessen: jedes Schienenende muss auf ein anderes treffen (1,5 px).
-     Ein offenes Gleis hat vier freie Enden. */
-  /* Ein gemalter Weg beginnt immer am eigenen Platz (1). „5-6-7-3" oben
-     springt schraeg von 1 nach 6 — an schraegen Ecken gibt es kein
-     Kurvenmodul, dort klaffen die Schienen (auch vor Runde 100 schon:
-     8 freie Enden). Das bleibt eine eigene Baustelle. */
-  for (const weg of ["2", "1-2-6-5", "1-5-6-7-3", "1-5-6-7-8-4"]) {
-    const kreis = await pg.evaluate(async (w) => {
-      window.DMA_PRUEF.effektBuehne();
-      await new Promise((f) => setTimeout(f, 250));
-      window.DMA_PRUEFUNG.wirkung("lok", w, "Alex", {});
-      await new Promise((f) => setTimeout(f, 700));
-      const g = document.querySelector(".lc-lok-gleis");
-      if (!g) return null;
-      const enden = [];
-      g.querySelectorAll(".lc-lok-schiene").forEach((pf) => {
-        const z = (pf.getAttribute("d").match(/-?[0-9.]+/g) || []).map(Number);
-        if (z.length >= 4) enden.push([z[0], z[1]], [z[z.length - 2], z[z.length - 1]]);
-      });
-      const frei = enden.filter((e, i) => !enden.some((f, j) => j !== i
-        && Math.hypot(e[0] - f[0], e[1] - f[1]) < 1.5)).length;
-      const r = g.getBoundingClientRect();
-      return { frei: frei, schienen: g.querySelectorAll(".lc-lok-schiene").length,
-               rund: g.querySelectorAll(".lc-lok-schiene.lc-lok-rund").length,
-               links: Math.round(r.left), rechts: Math.round(r.right), breite: window.innerWidth };
-    }, weg);
-    if (!kreis) { sage(false, "Weg " + weg + ": es liegt ein Gleis"); continue; }
-    sage(kreis.frei === 0 && kreis.rund > 0, "Weg " + weg + ": geschlossener Kreis, kein offenes Schienenende",
-      kreis.frei + " freie Enden, " + kreis.rund + " von " + kreis.schienen + " Schienen schliessen den Kreis");
-  }
 
   await br.close();
   srv.close();

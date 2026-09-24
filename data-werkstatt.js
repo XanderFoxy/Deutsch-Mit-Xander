@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 549: Lasso — landet neben dir, wer schon neben dir sitzt bleibt",
+  stand: "Fassung 550: Lok — die Strecke ist immer ein geschlossener Rundkurs",
 
   inArbeit: [
-    { seit: "2026-09-24T02:09",
-      text: "Lok-Strecke immer rund und logisch schließen" },
-    { seit: "2026-09-24T02:09",
+    { seit: "2026-09-24T02:29",
       text: "Stadt·Land·Fluss im Livestream statt eigener Seite" },
-    { seit: "2026-09-24T02:09",
+    { seit: "2026-09-24T02:29",
       text: "Zu zweit: Rad soll wie ein Fahrrad aussehen" },
-    { seit: "2026-09-24T02:09",
+    { seit: "2026-09-24T02:29",
       text: "Angel: senkrecht heben, Schnur-Physik" },
+    { seit: "2026-09-24T02:29",
+      text: "Lok: schräge Ecken (Weg nicht ab eigenem Platz) haben noch kein Kurvenstück" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T02:09",
-      text: "Lasso: wer schon direkt neben dir sitzt (z. B. die Puppe auf Platz 2), wird nicht mehr nach unten weggezogen — Meldung „sitzt schon direkt neben dir“" },
-    { seit: "2026-09-24T02:09",
-      text: "Lasso: links/rechts in derselben Reihe gewinnt immer vor „darunter/darüber“" },
+    { seit: "2026-09-24T02:29",
+      text: "Lok: das Gleis schließt sich immer zum Kreis — endet die Strecke neben dem Start, mit runder Kurve am Start; sonst hinter dem Ziel weiter, außen herum und gerade in den Start (alt: 4 offene Schienenenden, neu: 0)" },
+    { seit: "2026-09-24T02:29",
+      text: "Auch ein kurzes Stück (1 → 2) wird ein Oval, das auf der Bühne bleibt" },
   ],
 };

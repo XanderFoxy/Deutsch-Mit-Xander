@@ -1,6 +1,3 @@
-/* RUNDE 100 — gemessen werden nur die Schienen, auf denen die Lok FAEHRT.
-   Der Rueckweg, der die Strecke zum Rundkurs schliesst (XANDER: „die Strecke
-   immer automatisch und logisch geschlossen"), traegt „lc-lok-rund". */
 /* =====================================================================
    SONDE RUNDE 85 — Xanders Liste vom 22. September, erster Teil
    ---------------------------------------------------------------------
@@ -103,9 +100,9 @@ function tonDauer(name) {
     });
     return { bahn: bahn, pl: pl,
              kreisR: document.querySelector(".lc-kreis").getBoundingClientRect().width / 2,
-             schienen: document.querySelectorAll(".lc-lok-schiene:not(.lc-lok-rund)").length,
-             schwellen: document.querySelectorAll(".lc-lok-schwelle:not(.lc-lok-rund)").length,
-             boegen: [...document.querySelectorAll(".lc-lok-schiene:not(.lc-lok-rund)")]
+             schienen: document.querySelectorAll(".lc-lok-schiene").length,
+             schwellen: document.querySelectorAll(".lc-lok-schwelle").length,
+             boegen: [...document.querySelectorAll(".lc-lok-schiene")]
                .filter((q) => /A/.test(q.getAttribute("d") || "")).length,
              buehne: !!document.querySelector(".lc-lok-buehne") };
   });

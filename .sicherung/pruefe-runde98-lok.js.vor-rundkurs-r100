@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-/* RUNDE 100 — gemessen werden nur die Schienen, auf denen die Lok FAEHRT.
-   Der Rueckweg, der die Strecke zum Rundkurs schliesst (XANDER: „die Strecke
-   immer automatisch und logisch geschlossen"), traegt „lc-lok-rund". */
 /* =====================================================================
    SONDE RUNDE 98 — DIE LOK FAEHRT, WO MAN SIE HINSCHICKT
    ---------------------------------------------------------------------
@@ -92,7 +89,7 @@ const sage = (gut, was, zusatz) => {
     const gleis = document.querySelector(".lc-lok-gleis");
     let waagerecht = 0, senkrecht = 0, bogen = 0, schienen = 0;
     if (gleis) {
-      gleis.querySelectorAll(".lc-lok-schiene:not(.lc-lok-rund)").forEach((pf) => {
+      gleis.querySelectorAll(".lc-lok-schiene").forEach((pf) => {
         schienen++;
         const d = pf.getAttribute("d") || "";
         if (/A/.test(d)) { bogen++; return; }

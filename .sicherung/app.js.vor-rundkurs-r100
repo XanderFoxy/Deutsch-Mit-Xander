@@ -46260,163 +46260,6 @@
   }
 
   /* =====================================================================
-     RUNDE 100 — DER RUNDKURS
-     ---------------------------------------------------------------------
-     XANDER (Walkie #84): „Wenn man die Lok einmal im Kreis fahren läßt,
-     soll die Strecke mit einer runden Kurve abschließen und generell soll
-     die Strecke immer automatisch und logisch geschlossen werden, egal
-     wie kurz die Strecke ist, die man einzeichnet."
-     Die Lok faehrt weiter nur, was man gezeichnet hat. Das GLEIS aber
-     wird zu einem geschlossenen Kreis ergaenzt, wie auf der Platte:
-       · Endet die Strecke dort, wo sie begann, schliesst ein Bogen am
-         Start den Kreis.
-       · Sonst laeuft das Gleis hinter dem Ziel geradeaus weiter bis an
-         einen Rahmen eine halbe Platzbreite um die ganze Strecke, dort
-         aussen herum (auf dem kuerzeren Weg, bei Gleichstand zur Mitte
-         der Buehne hin) und kommt von hinten GERADE in den Start.
-     Start und Ziel liegen dadurch auf geraden Stuecken, und an jeder
-     gezeichneten Ecke sitzt derselbe Bogen wie beim Fahren — die Lok
-     bleibt auf ihren Schienen. */
-  function lcLokRundkurs(pk, d, mitte) {
-    const n = pk.length;
-    if (n < 2) return null;
-    const einheit = (a, b) => {
-      const l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-      return { x: (b.x - a.x) / l, y: (b.y - a.y) / l };
-    };
-    const P0 = pk[0], PN = pk[n - 1];
-    const flaeche = (P) => Math.abs(P.reduce((s2, q, i) => {
-      const w = P[(i + 1) % P.length];
-      return s2 + q.x * w.y - w.x * q.y;
-    }, 0)) / 2;
-    const abstand = Math.hypot(PN.x - P0.x, PN.y - P0.y);
-    /* Einmal im Kreis: das Ziel ist der Start selbst ODER sein direkter
-       Nachbar (1 → 2 → 6 → 5 endet neben 1). Dann schliesst das Gleis
-       den Kreis direkt — mit einem Bogen an jeder Ecke. */
-    /* „fahrt": so viele Kanten ab P[0] faehrt die Lok selbst — der Rest
-       ist nur Gleis (Klasse lc-lok-rund). */
-    if (abstand < d * 0.3 && n >= 4) {
-      const P = pk.slice(0, n - 1).map((q) => ({ x: q.x, y: q.y }));
-      if (flaeche(P) > d * d * 0.5) return { P: P, fahrt: P.length };
-    }
-    if (abstand < d * 1.15 && n >= 3) {
-      const P = pk.map((q) => ({ x: q.x, y: q.y }));
-      if (flaeche(P) > d * d * 0.5) return { P: P, fahrt: n - 1 };
-    }
-    /* 0,72 Platzbreiten Abstand: bei 0,5 wurde der Wendebogen so eng
-       (0,245 d), dass die innere Schiene fast im Mittelpunkt lag und
-       die Schwellen sich zum Faecher kreuzten (Foto „1 → 2"). */
-    const g = d * 0.72;
-    const xs = pk.map((q) => q.x), ys = pk.map((q) => q.y);
-    const R = { x0: Math.min.apply(null, xs) - g, x1: Math.max.apply(null, xs) + g,
-                y0: Math.min.apply(null, ys) - g, y1: Math.max.apply(null, ys) + g };
-    /* Nicht ueber den Bildschirmrand: seitlich hoechstens 0,2 Platz-
-       breiten ueber die Sitzreihe hinaus (Foto „1 → 2": der Wendebogen
-       lag sonst links zur Haelfte ausserhalb). */
-    if (mitte && mitte.breite) {
-      R.x0 = Math.max(R.x0, Math.min(Math.min.apply(null, xs) - d * 0.3, -d * 0.2));
-      R.x1 = Math.min(R.x1, Math.max(Math.max.apply(null, xs) + d * 0.3, mitte.breite + d * 0.2));
-    }
-    /* Vom Punkt q in Richtung u bis an den Rahmen — auf der Achse, die
-       in u ueberwiegt. */
-    const bisRand = (q, u) => (Math.abs(u.x) >= Math.abs(u.y)
-      ? { x: u.x > 0 ? R.x1 : R.x0, y: q.y }
-      : { x: q.x, y: u.y > 0 ? R.y1 : R.y0 });
-    const aus = bisRand(PN, einheit(pk[n - 2], PN));
-    const u0 = einheit(P0, pk[1]);
-    const ein = bisRand(P0, { x: -u0.x, y: -u0.y });
-    /* Der Rahmen im Uhrzeigersinn (y zeigt nach unten). */
-    const W = R.x1 - R.x0, H = R.y1 - R.y0, U = 2 * (W + H);
-    const lauf = (q) => {
-      if (Math.abs(q.y - R.y0) < 0.5) return q.x - R.x0;
-      if (Math.abs(q.x - R.x1) < 0.5) return W + (q.y - R.y0);
-      if (Math.abs(q.y - R.y1) < 0.5) return W + H + (R.x1 - q.x);
-      return 2 * W + H + (R.y1 - q.y);
-    };
-    const ecken = [{ x: R.x0, y: R.y0, t: 0 }, { x: R.x1, y: R.y0, t: W },
-                   { x: R.x1, y: R.y1, t: W + H }, { x: R.x0, y: R.y1, t: 2 * W + H }];
-    const tA = lauf(aus), tE = lauf(ein);
-    const mitUhr = ((tE - tA) % U + U) % U;
-    const weg = (vorwaerts) => {
-      const liste = [];
-      ecken.forEach((e) => {
-        const dt = vorwaerts ? ((e.t - tA) % U + U) % U : ((tA - e.t) % U + U) % U;
-        const bis = vorwaerts ? mitUhr : U - mitUhr;
-        if (dt > 0.5 && dt < bis - 0.5) liste.push({ x: e.x, y: e.y, dt: dt });
-      });
-      return liste.sort((a, b) => a.dt - b.dt);
-    };
-    const vor = weg(true), rueck = weg(false);
-    let wahl;
-    if (Math.abs(mitUhr - (U - mitUhr)) > d * 0.2) wahl = mitUhr < U - mitUhr ? vor : rueck;
-    else {
-      /* Gleich lang: der Weg, dessen Ecken naeher an der Buehnenmitte
-         liegen — sonst laeuft das Gleis ueber die Kopfzeile hinaus. */
-      const ab = (l) => l.reduce((s, e) => s + Math.hypot(e.x - mitte.x, e.y - mitte.y), 0) / (l.length || 1);
-      wahl = ab(vor) <= ab(rueck) ? vor : rueck;
-    }
-    const kreis = pk.map((q) => ({ x: q.x, y: q.y }));
-    kreis.push(aus);
-    wahl.forEach((e) => kreis.push({ x: e.x, y: e.y }));
-    kreis.push(ein);
-    /* Doppelte Punkte heraus (etwa wenn der Rand schon eine Ecke ist). */
-    return { P: kreis.filter((q, i) => {
-      const v = kreis[(i - 1 + kreis.length) % kreis.length];
-      return i === 0 || Math.hypot(q.x - v.x, q.y - v.y) > 0.5;
-    }), fahrt: n - 1 };
-  }
-
-  /* Der geschlossene Gleisplan: dieselben Module wie lcLokBahn, nur
-     ringsum — jede Ecke, auch die am Start, bekommt ihren Bogen. */
-  function lcLokBahnRund(kurs, rMax) {
-    if (!kurs || !kurs.P) return null;
-    const P = kurs.P, n = P.length, fahrt = kurs.fahrt;
-    if (n < 3) return null;
-    const einheit = (a, b) => {
-      const l = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-      return { x: (b.x - a.x) / l, y: (b.y - a.y) / l };
-    };
-    const ecke = P.map((q, i) => {
-      const v = P[(i - 1 + n) % n], w = P[(i + 1) % n];
-      const e = einheit(v, q), a = einheit(q, w);
-      let r = 0;
-      if (Math.abs(e.x * a.x + e.y * a.y) < 0.35) {
-        r = Math.max(0, Math.min(rMax, Math.hypot(q.x - v.x, q.y - v.y) * 0.49,
-                                       Math.hypot(w.x - q.x, w.y - q.y) * 0.49));
-      }
-      return { e: e, a: a, r: r,
-               A: { x: q.x - e.x * r, y: q.y - e.y * r },
-               B: { x: q.x + a.x * r, y: q.y + a.y * r } };
-    });
-    const mod = [], pt = [];
-    let hier = ecke[0].B;
-    for (let k = 1; k <= n; k++) {
-      const c = ecke[k % n];
-      if (Math.hypot(c.A.x - hier.x, c.A.y - hier.y) > 0.5) {
-        mod.push({ art: "gerade", a: { x: hier.x, y: hier.y }, b: { x: c.A.x, y: c.A.y },
-                   rund: k - 1 >= fahrt });
-      }
-      pt.push({ x: hier.x, y: hier.y }, { x: c.A.x, y: c.A.y });
-      if (c.r > 0.5) {
-        const C = { x: c.A.x + c.a.x * c.r, y: c.A.y + c.a.y * c.r };
-        const w0 = Math.atan2(c.A.y - C.y, c.A.x - C.x);
-        let dw = Math.atan2(c.B.y - C.y, c.B.x - C.x) - w0;
-        while (dw > Math.PI) dw -= 2 * Math.PI;
-        while (dw < -Math.PI) dw += 2 * Math.PI;
-        const ek = k % n;
-        mod.push({ art: "bogen", c: C, r: c.r, a: c.A, b: c.B, w0: w0, dw: dw,
-                   rund: !(ek >= 1 && ek <= fahrt - 1) });
-        for (let j = 1; j <= 4; j++) {
-          const w = w0 + dw * j / 4;
-          pt.push({ x: C.x + c.r * Math.cos(w), y: C.y + c.r * Math.sin(w) });
-        }
-      }
-      hier = c.B;
-    }
-    return { mod: mod, pt: pt, zu: true };
-  }
-
-  /* =====================================================================
      DIE GLEISE — GERADEN UND KURVENMODULE
      ---------------------------------------------------------------------
      XANDER: „die Gleise, so wie ich sie male, und wenn Personen im Weg
@@ -46473,11 +46316,8 @@
     const ueber = spur + Math.max(2, d * 0.035);     // Schwelle steht ueber
     const schritt = Math.max(7, d * 0.17);
     let schwellen = "", schienen = "";
-    /* RUNDE 100 — Stuecke, die nur den Rundkurs schliessen (die Lok
-       faehrt dort nicht), tragen zusaetzlich „lc-lok-rund". */
-    let zusatz = "";
     const schwelle = (x, y, nx, ny) => {
-      schwellen += '<line class="lc-lok-schwelle' + zusatz + '" x1="' + (x - nx * ueber - links).toFixed(1)
+      schwellen += '<line class="lc-lok-schwelle" x1="' + (x - nx * ueber - links).toFixed(1)
         + '" y1="' + (y - ny * ueber - oben).toFixed(1)
         + '" x2="' + (x + nx * ueber - links).toFixed(1)
         + '" y2="' + (y + ny * ueber - oben).toFixed(1) + '"/>';
@@ -46487,15 +46327,13 @@
        aus wie ein Bauzaun. */
     const rand = d * 0.5;
     bahn.mod.forEach((m, i) => {
-      zusatz = m.rund ? " lc-lok-rund" : "";
       if (m.art === "gerade") {
         const dx = m.b.x - m.a.x, dy = m.b.y - m.a.y;
         const l = Math.hypot(dx, dy) || 1;
         const ux = dx / l, uy = dy / l;
         const nx = -uy, ny = ux;
-        /* Ein geschlossener Kreis hat kein Ende, das ueberstehen muesste. */
-        const vor = i === 0 && !bahn.zu ? rand : 0;
-        const nach = i === bahn.mod.length - 1 && !bahn.zu ? rand : 0;
+        const vor = i === 0 ? rand : 0;
+        const nach = i === bahn.mod.length - 1 ? rand : 0;
         const ax = m.a.x - ux * vor, ay = m.a.y - uy * vor;
         const bx = m.b.x + ux * nach, by = m.b.y + uy * nach;
         const lang = l + vor + nach;
@@ -46508,7 +46346,7 @@
           schwelle(ax + ux * tt, ay + uy * tt, nx, ny);
         }
         [-spur, spur].forEach((v) => {
-          schienen += '<path class="lc-lok-schiene' + zusatz + '" d="M' + (ax + nx * v - links).toFixed(1)
+          schienen += '<path class="lc-lok-schiene" d="M' + (ax + nx * v - links).toFixed(1)
             + " " + (ay + ny * v - oben).toFixed(1) + "L" + (bx + nx * v - links).toFixed(1)
             + " " + (by + ny * v - oben).toFixed(1) + '"/>';
         });
@@ -46529,7 +46367,7 @@
           const y1 = m.c.y + rr * Math.sin(m.w0) - oben;
           const x2 = m.c.x + rr * Math.cos(m.w0 + m.dw) - links;
           const y2 = m.c.y + rr * Math.sin(m.w0 + m.dw) - oben;
-          schienen += '<path class="lc-lok-schiene' + zusatz + '" d="M' + x1.toFixed(1) + " " + y1.toFixed(1)
+          schienen += '<path class="lc-lok-schiene" d="M' + x1.toFixed(1) + " " + y1.toFixed(1)
             + "A" + rr.toFixed(1) + " " + rr.toFixed(1) + " 0 0 " + dreh + " "
             + x2.toFixed(1) + " " + y2.toFixed(1) + '"/>';
         });
@@ -46732,14 +46570,7 @@
     } catch (e) { return null; }
 
     /* 3. DIE GLEISE — aus denselben Modulen, auf denen sie faehrt. */
-    /* RUNDE 100: gezeichnet wird der geschlossene Rundkurs (siehe
-       lcLokRundkurs); gefahren wird weiter nur die eigene Strecke. */
-    let gleisPlan = bahn;
-    try {
-      const rund = lcLokBahnRund(lcLokRundkurs(pk, d, { x: rk.width / 2, y: rk.height / 2, breite: rk.width }), d * 0.62);
-      if (rund && rund.mod.length) gleisPlan = rund;
-    } catch (e) { gleisPlan = bahn; }
-    const gleis = lcLokGleise(reihe, gleisPlan, rk, d);
+    const gleis = lcLokGleise(reihe, bahn, rk, d);
 
     /* =================================================================
        WER UEBERFAHREN WIRD
