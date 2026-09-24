@@ -14333,13 +14333,6 @@ window.LiveChat = (function () {
     },
     pruefBefehl: function (text) { return befehlAusfuehren(text); },
     /* Runde 100 — die Uebungspuppe an/aus (Knopf im Walkie-Talkie). */
-    /* RUNDE 100 — fuer das Lehrer-Panel (app.js, lcLehrerPanel):
-       XANDER: „Beim Schiffe versenken und den anderen Aufgaben moechte
-       ich ein kleines Lehrer-Panel beim Aufrufen meines eigenen Profils
-       finden, was nur ich als Betreiber habe." */
-    aufgabeLaeuft: function () { return Boolean(offeneAufgabe); },
-    aufgabeBeenden: function () { return offeneAufgabe ? aufgabeFreiStellen("") : false; },
-    schiffeLaeuft: function () { return Boolean(schiffeStand); },
     puppe: function () { return puppeUmschalten(); },
     puppeDa: function () { return puppeDa(); },
     /* NACHLESEN, WAS IM CHAT STEHT. Ohne das laesst sich eine

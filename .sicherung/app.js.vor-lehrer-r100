@@ -30168,71 +30168,6 @@
     return true;
   }
 
-  /* =================================================================
-     RUNDE 100 — DAS LEHRER-PANEL (erster Schritt)
-     -----------------------------------------------------------------
-     Seine Auswahl im Walkie-Talkie: „Schiffe versenken starten /
-     beenden · Laufende Aufgabe beenden · Aufgabe stellen (Lesen, Raten,
-     Aussprache …) · Alle stumm / Ton an · Wer ist dran – weitergeben /
-     ueberspringen · Buehne leeren / Plaetze tauschen", dazu
-     Stadt-Land-Fluss („kann ich ueberhaupt nicht finden").
-     Hier steht, was es schon als Befehl gibt; „wer ist dran", „alle
-     stumm" und „Buehne leeren" folgen im naechsten Schritt — sie
-     brauchen erst eigene Logik. Jeder Knopf schreibt genau den Befehl,
-     den man auch tippen koennte: nichts geht an den Regeln vorbei. */
-  function lcLehrerPanel(platz) {
-    lcPlatzMenueZu();
-    const kasten = document.createElement("div");
-    kasten.id = "lcPlatzMenue";
-    kasten.className = "lc-platzmenue lc-lehrerpanel";
-    kasten.setAttribute("role", "menu");
-    const kopf = document.createElement("p");
-    kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = "\ud83c\udf93 Lehrer";
-    kasten.appendChild(kopf);
-    const schreib = (zeile) => {
-      lcPlatzMenueZu();
-      try { LiveChat.schreiben(zeile); } catch (e) {}
-      lcNachDemSenden(zeile);
-    };
-    const knopf = (zeichen, wort, tun) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "lc-platzmenue-knopf";
-      b.setAttribute("role", "menuitem");
-      b.innerHTML = '<span class="lc-platzmenue-zeichen">' + zeichen + '</span><span class="lc-platzmenue-wort"></span>';
-      b.querySelector(".lc-platzmenue-wort").textContent = wort;
-      b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); tun(); });
-      kasten.appendChild(b);
-      return b;
-    };
-    let schiffe = false, aufgabe = false;
-    try { schiffe = Boolean(LiveChat.schiffeLaeuft && LiveChat.schiffeLaeuft()); } catch (e) {}
-    try { aufgabe = Boolean(LiveChat.aufgabeLaeuft && LiveChat.aufgabeLaeuft()); } catch (e) {}
-    knopf("\ud83d\udea2", schiffe ? "Schiffe versenken beenden" : "Schiffe versenken starten",
-      () => schreib(schiffe ? "/versenken aus" : "/versenken"));
-    knopf("\ud83e\udde9", "Aufgabe stellen", () => schreib("/aufgabe"));
-    knopf("\ud83d\udcd6", "Lesetext", () => schreib("/lesen"));
-    knopf("\ud83d\udd24", "Aufdecken", () => schreib("/raten"));
-    if (aufgabe) {
-      knopf("\u23f9\ufe0f", "Laufende Aufgabe beenden", () => {
-        lcPlatzMenueZu();
-        try { LiveChat.aufgabeBeenden(); } catch (e) {}
-      });
-    }
-    knopf("\ud83c\udfd9\ufe0f", "Stadt \u00b7 Land \u00b7 Fluss", () => {
-      lcPlatzMenueZu();
-      try { activateTab("view-learn"); } catch (e) {}
-      const pille = document.querySelector('#learnSubnav [data-sub="sub-stadtlandfluss"]');
-      if (pille) pille.click();
-      else showToast("Stadt \u00b7 Land \u00b7 Fluss ist gerade nicht erreichbar.");
-    });
-    document.body.appendChild(kasten);
-    lcMenueStellen(kasten, platz);
-    lcMenueSchliessen(kasten);
-    return true;
-  }
-
   /* RUNDE 100 — ZU ZWEIT VOM EIGENEN BILD AUS: MIT WEM?
      Jeder, der gerade oben sitzt (auch die Uebungspuppe), steht hier
      als Knopf. Dann geht es genau so weiter wie vom Bild des anderen
@@ -31037,13 +30972,6 @@
          den Kran aber auf dem eigenen Bild: er hebt einen selbst auf
          den Platz, den man danach waehlt. */
       knopf("\ud83c\udfd7\ufe0f", "Kran", () => lcHebenMenue(platz, name, "kranheb"));
-      /* RUNDE 100 — XANDER (Walkie-Talkie): „ein kleines Lehrer-Panel
-         beim Aufrufen meines eigenen Profils … was nur ich als Betreiber
-         habe" und „Stadt Land Fluss kann ich ueberhaupt nicht finden, ich
-         finde nicht mal Spiele." Nur auf dem EIGENEN Bild, nur fuer ihn. */
-      let chef = false;
-      try { chef = Boolean(Backend.isOwner && Backend.isOwner()); } catch (e) { chef = false; }
-      if (chef) knopf("\ud83c\udf93", "Lehrer", () => lcLehrerPanel(platz));
     }
     lcSpielzeugGeordnet().forEach(([zeichen, wort, befehl, ohneNamen, unter]) => {
       /* EIN UNTERMENUE STATT DREI KACHELN.

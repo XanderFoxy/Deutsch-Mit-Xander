@@ -323,6 +323,62 @@ const GRUPPEN = {
     voll ? Math.round(voll.oben) + " bis " + Math.round(voll.unten) + " von " + voll.hoch : "-");
   sage(voll && voll.rollt, "... und der Rest ist erreichbar, weil der Rahmen rollt");
 
+  /* RUNDE 100 — XANDER (Walkie-Talkie): „ein kleines Lehrer-Panel beim
+     Aufrufen meines eigenen Profils … was nur ich als Betreiber habe"
+     und „Stadt Land Fluss kann ich ueberhaupt nicht finden, ich finde
+     nicht mal Spiele." Gemessen im ECHTEN Raum. */
+  console.log("\n8  DAS LEHRER-PANEL (nur Betreiber, eigenes Bild)\n");
+  const lehrer = async (chef) => pg.evaluate(async (chef) => {
+    document.getElementById("lcPruefBuehne")?.remove();
+    Backend.isOwner = () => chef;
+    window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000, zuruecksetzen: true,
+      leute: { q0: { id: "q0", name: "Bea", seit: 2000 } } });
+    document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
+    let e = document.getElementById("livechatArea");
+    while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
+    window.DMA_PRUEF.neuZeichnen();
+    await new Promise((f) => setTimeout(f, 400));
+    window.LiveChat.pruefPost(() => {});
+    const ich = document.querySelector("#lcPlaetze .lc-platz-ich");
+    const worte = () => [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-wort")].map((w) => w.textContent.trim());
+    const tipp = (w) => { const b = [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-knopf")]
+      .find((x) => x.querySelector(".lc-platzmenue-wort").textContent.trim() === w); if (b) b.click(); return !!b; };
+    window.DMA_PRUEFUNG.platzMenue(ich);
+    if (worte().indexOf("Lehrer") < 0) return { lehrer: false };
+    tipp("Lehrer");
+    const panel = worte();
+    tipp("Schiffe versenken starten");
+    await new Promise((f) => setTimeout(f, 400));
+    const schiffe = window.LiveChat.schiffeLaeuft();
+    window.DMA_PRUEFUNG.platzMenue(ich); tipp("Lehrer");
+    const panel2 = worte();
+    tipp("Schiffe versenken beenden");
+    await new Promise((f) => setTimeout(f, 300));
+    window.LiveChat.pruefBefehl("/raten Guten Morgen allerseits");
+    await new Promise((f) => setTimeout(f, 200));
+    window.DMA_PRUEFUNG.platzMenue(ich); tipp("Lehrer");
+    const panel3 = worte();
+    tipp("Laufende Aufgabe beenden");
+    await new Promise((f) => setTimeout(f, 200));
+    const aufgabeNoch = window.LiveChat.aufgabeLaeuft();
+    window.DMA_PRUEFUNG.platzMenue(ich); tipp("Lehrer"); tipp("Stadt \u00b7 Land \u00b7 Fluss");
+    await new Promise((f) => setTimeout(f, 400));
+    return { lehrer: true, panel, schiffe, panel2, panel3, aufgabeNoch,
+      slf: ((document.getElementById("sub-stadtlandfluss") || {}).dataset || {}).active };
+  }, chef);
+  const lp = await lehrer(true);
+  sage(lp.lehrer, "Der Betreiber hat auf seinem eigenen Bild „Lehrer“");
+  sage(lp.panel && lp.panel.indexOf("Schiffe versenken starten") >= 0 && lp.panel.indexOf("Aufgabe stellen") >= 0
+    && lp.panel.indexOf("Stadt \u00b7 Land \u00b7 Fluss") >= 0, "... darin Schiffe versenken, Aufgaben, Stadt · Land · Fluss",
+    lp.panel ? lp.panel.join(" | ") : "-");
+  sage(lp.schiffe && lp.panel2 && lp.panel2.indexOf("Schiffe versenken beenden") >= 0,
+    "„starten“ startet wirklich, danach heisst der Knopf „beenden“");
+  sage(lp.panel3 && lp.panel3.indexOf("Laufende Aufgabe beenden") >= 0 && lp.aufgabeNoch === false,
+    "Laeuft eine Aufgabe, laesst sie sich hier beenden");
+  sage(lp.slf === "true", "Stadt · Land · Fluss geht auf");
+  const nl = await lehrer(false);
+  sage(nl.lehrer === false, "Ein normaler Nutzer hat KEIN Lehrer-Panel");
+
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
   process.exit(fehler ? 1 : 0);
