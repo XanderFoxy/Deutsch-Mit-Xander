@@ -43894,13 +43894,9 @@
         if (lokPlan) lokZeit = lokPlan.zeiten(hinBasis);
       } catch (e) { lokPlan = null; lokZeit = null; }
     }
-    /* FUNK 75 — das Pferd: je hoeher aufgezogen, desto schneller.
-       RUNDE 101 — XANDER (Walkie #182): „Das müsste logischerweise etwas
-       schneller galoppieren, damit das Aufziehen Sinn macht." Vorher war
-       3× nur 1,6-mal und 5× nur 2,2-mal so schnell. Jetzt 1,8 / 2,6 /
-       3,4 / 4,2 — so spuerbar wie beim Hot Rod. */
+    /* FUNK 75 — das Pferd: je hoeher aufgezogen, desto schneller. */
     const hin = lokZeit ? lokZeit.hin
-      : art === "pferd" ? Math.round(hinBasis / [1, 1, 1.8, 2.6, 3.4, 4.2][Math.max(1, Math.min(5, Number(tempo) || 1))])
+      : art === "pferd" ? Math.round(hinBasis / [1, 1, 1.3, 1.6, 1.9, 2.2][Math.max(1, Math.min(5, Number(tempo) || 1))])
       : hinBasis;
     const dauer = lokZeit ? lokZeit.dauer : hin + 500;
     /* RUNDE 100 — der Lack reist mit (siehe lcRueckstandMitnehmen). */
@@ -47283,9 +47279,7 @@
          ein: 1 Trab, ab 2 Galopp, jede Stufe schneller.
          ============================================================= */
       const stufe = Math.max(1, Math.min(5, Number(tempo) || 1));
-      /* Walkie #182: der Galopptakt waechst mit — sonst trippelt das Pferd
-         bei 5× mit langsamen Beinen ueber die Buehne. */
-      const takt = galopp ? [0, 0, 0.44, 0.36, 0.3, 0.25][stufe] : 0.62;
+      const takt = galopp ? [0, 0, 0.5, 0.45, 0.41, 0.37][stufe] : 0.62;
       /* Ein Bein aus drei Gliedern. dx/dy verschiebt die ferne Seite. */
       const pfBein = (vorn, fern, phase) => {
         const k = (x) => x.toFixed(1);
