@@ -187,7 +187,9 @@ const sage = (gut, text, dazu) => {
       x: Math.round(((rh.left + rh.width / 2) - (rk.left + rk.width / 2)) / rk.width * 1000) / 10,
       y: Math.round(((rh.top + rh.height / 2) - rk.top) / rk.height * 1000) / 10,
       sicht: Number(getComputedStyle(h).opacity),
-      finger: h.querySelectorAll("rect").length
+      /* FUNK 75: die Hand im Profil — vorn der Zeigefinger (im Umriss
+         der Hand), dahinter drei Finger (.lc-wh-finger). */
+      finger: h.querySelectorAll(".lc-wh-finger").length + (h.querySelector(".lc-wh-hand") ? 1 : 0)
     };
   }`);
   if (str.length < 40) {

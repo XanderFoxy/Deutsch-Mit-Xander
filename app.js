@@ -56078,23 +56078,49 @@
          Und die Bewegung geht nicht mehr quer, sondern an der Wange
          HINUNTER (siehe lcStreichelR99 im Stilblatt).
          ============================================================= */
+      /* =============================================================
+         FUNK 75 (24.09.) — XANDER: „dann möchte ich, dass du die Version
+         der streichelnden Hand von der Seite, die über die Wange
+         streichelt, deutlich verbesserst — wie so eine Hand aussieht,
+         wenn sie von der Seite streichelt."
+         Vorher: ein Oval mit vier Stummeln davor — von der Seite war
+         das keine Hand. Jetzt die Hand im PROFIL: Finger nach unten,
+         leicht eingerollt; die Rueckseite der Finger (Knoechel, Nagel)
+         liegt links an der Wange, die Handflaeche zeigt vom Gesicht
+         weg. Vorn der Zeigefinger mit Grund-, Mittel- und Endglied, dahinter
+         Mittel-, Ring- und kleiner Finger, jeder ein Stueck versetzt.
+         Der Daumen liegt davor, Unterarm geht nach rechts oben aus dem
+         Bild. Handruecken und Finger sind EIN Umriss — keine Naht.
+         ============================================================= */
+      const hw = lcHaut();
+      const finger = (dx, dy, klasse) => '<path class="' + klasse + '" transform="translate(' + dx + " " + dy + ')"'
+        + ' d="M24 70 C22 78 21 84 21.6 88 C22 94 23.6 98 26 101 C28 105 30 108.6 33.4 110 C36.4 111 38.4 109 37.4 105.6'
+        + ' C36.2 101 34 97 33.6 92 C33.4 86 36 80 40 76 Z" fill="' + hw.schatten + '" stroke="' + hw.kante + '" stroke-width="1.5" stroke-linejoin="round"/>';
       schicht.innerHTML =
-        '<svg class="lc-streichel-hand lc-wange-hand" viewBox="0 0 100 80">'
-        /* Der Handruecken. */
-        + '<path d="M34 12 C26 22 24 40 30 52 C36 64 58 68 70 60'
-        + ' C82 52 84 28 78 16 C72 6 42 4 34 12 Z"'
-        + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante
-        + '" stroke-width="2.6" stroke-linejoin="round"/>'
-        /* Die vier eingerollten Finger — das ist die Seite, die die
-           Wange beruehrt. */
-        + [0, 1, 2, 3].map((i) => '<rect x="' + (24 + i * 12.5) + '" y="'
-            + (50 + i * 1.6) + '" width="11.5" height="'
-            + (18 - i * 1.4) + '" rx="5.7" fill="' + lcHaut().hell
-            + '" stroke="' + lcHaut().kante + '" stroke-width="2.2"/>').join("")
-        /* Die Knoechel — daran erkennt man, dass es der RUECKEN ist. */
-        + '<path d="M34 40 C42 34 54 34 62 39 M32 49 C40 44 52 44 60 49"'
-        + ' fill="none" stroke="rgba(0,0,0,.18)" stroke-width="3"'
-        + ' stroke-linecap="round"/>'
+        '<svg class="lc-streichel-hand lc-wange-hand" viewBox="0 0 80 130">'
+        /* Die hinteren drei Finger, jeder etwas weiter weg und tiefer. */
+        + finger(12.5, 3.6, "lc-wh-finger") + finger(8.6, 5, "lc-wh-finger") + finger(4.4, 3.6, "lc-wh-finger")
+        /* Unterarm, Handruecken und Zeigefinger in einem Zug. */
+        + '<path class="lc-wh-hand" d="M38 -10 C35 8 31 26 28.6 40 C26.4 50 23.6 60 23.4 70'
+        + ' C22 78 21 84 21.6 88 C22 94 23.6 98 26 101 C28 105 30 108.6 33.4 110 C36.4 111 38.4 109 37.4 105.6'
+        + ' C36.2 101 34 97 33.6 92 C33.4 86 36 80 40.6 75.6 C44 72 48 67 50.6 60'
+        + ' C53 53 55.6 46 57.6 38 C60 26 63 10 66 -10 Z"'
+        + ' fill="' + hw.haut + '" stroke="' + hw.kante + '" stroke-width="1.7" stroke-linejoin="round"/>'
+        /* Licht auf dem Handruecken — er ist gewoelbt. */
+        + '<path d="M33 18 C30.6 32 28 46 27 58 C26.4 64 25.6 68 25.4 72" fill="none" stroke="' + hw.hell
+        + '" stroke-width="3.2" stroke-linecap="round" opacity=".85"/>'
+        /* Die Knoechel des Zeigefingers: Grundgelenk, Mittelgelenk, Endgelenk. */
+        + '<path d="M22.6 66.6 C24.6 67.8 26.8 67.8 28.4 66.6 M20.8 86.4 C22.6 87.8 25 87.8 26.4 86.6 M23.8 99.6 C25.4 100.6 27.2 100.4 28.4 99.4"'
+        + ' fill="none" stroke="rgba(120,60,40,.42)" stroke-width="1.1" stroke-linecap="round"/>'
+        /* Der Fingernagel an der Kuppe — er liegt auf der Rueckseite. */
+        + '<path d="M28.4 103.6 C29.8 106.2 31.6 108 33.6 108.8 C34.8 109 35.4 108 34.6 106.8 C33 105.4 31.4 104 30.2 102.4 Z"'
+        + ' fill="' + hw.hell + '" stroke="rgba(150,90,70,.55)" stroke-width=".7"/>'
+        /* Sehnen auf dem Handruecken, ganz leicht. */
+        + '<path d="M31 36 C29 46 27.4 56 26.6 64 M35 38 C33.6 48 32 58 31 66" fill="none" stroke="rgba(120,60,40,.16)" stroke-width="1"/>'
+        /* Der Daumen davor, von der Handwurzel schraeg nach unten. */
+        + '<path class="lc-wh-daumen" d="M55 42 C52 50 48.6 58 45 64.6 C42.6 69 39.4 72.4 36.8 71.4 C34.6 70.4 35.6 66.6 38 62.6'
+        + ' C41.4 57 45 50.4 48.4 43.4 Z" fill="' + hw.haut + '" stroke="' + hw.kante + '" stroke-width="1.5" stroke-linejoin="round"/>'
+        + '<path d="M38.4 66.4 C39.6 68.4 41.2 69.2 42.4 68.4" fill="none" stroke="rgba(150,90,70,.55)" stroke-width=".8"/>'
         + "</svg>";
       const blende = lcZpBlende(schicht);
       for (let h = 0; h < 6; h++) {

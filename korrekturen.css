@@ -33686,3 +33686,30 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 /* Die alte Regel drehte die Pfote um 62 % / 72 % — jetzt haengt der
    Drehpunkt direkt an der Schulter (style im SVG). */
 .lc-katze-pfote { transform-origin: 72px 56px; }
+
+/* FUNK 75 — die seitliche Hand an der Wange, im Profil (80 x 130).
+   Sie steht rechts neben dem Bild, die Fingerruecken an der Wange, und
+   streicht zweimal hinunter; dazwischen hebt sie kurz ab. */
+.lc-streichel-hand.lc-wange-hand {
+  width: 54%;
+  margin-left: 0;
+  left: 60%;
+  top: -26%;
+  overflow: visible;
+  transform-origin: 30% 80%;
+  /* Der Unterarm laeuft nach oben weich aus, statt hart abzubrechen. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 26%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 26%);
+  animation: lcWangeF75 3.4s ease-in-out both;
+}
+@keyframes lcWangeF75 {
+  0%   { opacity: 0; transform: translate(26%, -14%) rotate(-10deg); }
+  10%  { opacity: 1; transform: translate(4%, -4%) rotate(-4deg); }
+  28%  { transform: translate(0%, 26%) rotate(6deg); }
+  38%  { transform: translate(8%, 0%) rotate(-3deg); }
+  56%  { transform: translate(0%, 28%) rotate(7deg); }
+  66%  { transform: translate(8%, 2%) rotate(-3deg); }
+  82%  { transform: translate(0%, 26%) rotate(6deg); }
+  92%  { opacity: 1; transform: translate(12%, 14%) rotate(2deg); }
+  100% { opacity: 0; transform: translate(30%, 6%) rotate(-6deg); }
+}
