@@ -38892,12 +38892,11 @@
      „Von rechts nach links waere so ein Lasso, wo man den so zu sich
      zieht, dass er naeher ransitzt." Die Schlinge kommt von der
      Seite, legt sich um das Bild und zieht kurz an. */
-  function lcLasso(wen, nachricht) {
+  function lcLasso(wen) {
     /* Der Werfer wird JETZT gemerkt — lcAmPlatz baut erst im naechsten
        Takt, und bis dahin kann schon die naechste Zeile lcWurfVon
        ueberschrieben haben (zwei Wuerfe gleichzeitig). */
     const von = lcWurfVon;
-    const zielNrL = Number(nachricht && nachricht.ziel) || 0;
     return lcAmPlatz(wen, "lc-lasso", (schicht, platz) => {
       const leine = lcLeineWerfen(platz, "lasso", von);
       const kreis = platz.querySelector(".lc-kreis");
@@ -38916,33 +38915,6 @@
          wie der Kreis und wandert mit: wer gefesselt ist, bleibt
          gefesselt. */
       const zug = kreis ? lcZuMirZiehen(platz, kreis, von) : null;
-      /* =============================================================
-         RUNDE 100 — XANDER (Walkie-Talkie, Lasso an der Puppe): „Person
-         ist zu frueh da und wird von der Animation nicht richtig
-         mitgezogen."
-         GEFUNDEN: das Lasso zog nur ein VIERTEL der Strecke „naeher
-         ran", und die Sitzordnung kam nach 2300 ms — mitten im zweiten
-         Zug. Die Person stand also ploetzlich auf dem neuen Platz, waehrend
-         das Lasso noch zog; nach 3,6 s sprang das Bild obendrein zurueck.
-         Jetzt, wenn die Zeile ein Ziel traegt (/lasso setzt immer um):
-         gezogen wird bis GANZ auf den Zielplatz — der dritte Zug schiesst
-         ein Stueck darueber hinaus und setzt dort ab (Keyframes enden bei
-         95 %, also wird die Strecke durch 0,95 geteilt). Umgesetzt wird
-         erst nach dem dritten Zug (livechat.js, 2950 ms), und die
-         Bewegung endet genau in dem Augenblick, in dem der Tausch da ist. */
-      const zielElL = zielNrL
-        ? document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + zielNrL + '"]') : null;
-      if (zug && zielElL && zielElL !== platz) {
-        const a = lcLayoutKasten(zielElL), b = lcLayoutKasten(platz);
-        if (a && b) {
-          const gx = (a.left + a.width / 2) - (b.left + b.width / 2);
-          const gy = (a.top + a.height / 2) - (b.top + b.height / 2);
-          zug.zux = gx / 0.95; zug.zuy = gy / 0.95;
-          zug.dx = gx; zug.weit = Math.hypot(gx, gy);
-          kreis.style.setProperty("--zux", zug.zux.toFixed(1) + "px");
-          kreis.style.setProperty("--zuy", zug.zuy.toFixed(1) + "px");
-        }
-      }
       if (zug) {
         schicht.style.setProperty("--zux", zug.zux.toFixed(1) + "px");
         schicht.style.setProperty("--zuy", zug.zuy.toFixed(1) + "px");
@@ -38966,29 +38938,12 @@
         void kreis.offsetWidth;
         kreis.classList.add("lc-gezogen");
         /* Drei Zuege mit Pausen dazwischen (lcZuMirR65) brauchen
-           3,4 s — so lange bleibt die Klasse stehen. RUNDE 100: mit Ziel
-           endet der Zug beim Platztausch (siehe oben), spaetestens 5,5 s. */
-        let losgelassen = false, wache = null;
-        const loslassen = () => {
-          if (losgelassen) return;
-          losgelassen = true;
-          try { if (wache) wache.disconnect(); } catch (e) {}
+           3,4 s — so lange bleibt die Klasse stehen. */
+        setTimeout(() => {
           kreis.classList.remove("lc-gezogen");
           kreis.style.removeProperty("--zux");
           kreis.style.removeProperty("--zuy");
-          if (zielElL) schicht.remove();
-        };
-        if (zielElL) {
-          const werSitzt = () => ((platz.querySelector(".lc-platz-name") || {}).textContent || "").trim();
-          const warDa = werSitzt();
-          try {
-            wache = new MutationObserver(() => { if (werSitzt() !== warDa) loslassen(); });
-            wache.observe(platz, { subtree: true, childList: true, characterData: true });
-          } catch (e) { wache = null; }
-          setTimeout(loslassen, 5500);
-        } else {
-          setTimeout(loslassen, 3400);
-        }
+        }, 3400);
       }
       /* „mit dem strammen Seil … das ist so festgezurrt" — das Seil
          KNARZT, wenn es sich strafft. Kein Ton, kein Klang: trockenes
@@ -54502,7 +54457,7 @@
       if (art === "sog" && lcSog(wenZ)) return;
       if (art === "trommel" && lcTrommel(wenZ)) return;
       if (art === "heber" && lcHeber(wenZ, nachricht)) return;
-      if (art === "lasso" && lcLasso(wenZ, nachricht)) return;
+      if (art === "lasso" && lcLasso(wenZ)) return;
       if (art === "aufblasen" && lcAufblasen(wenZ)) return;
       if (art === "paintfleck" && lcPaintfleck(wenZ)) return;
       if (art === "ei" && lcEi(wenZ)) return;

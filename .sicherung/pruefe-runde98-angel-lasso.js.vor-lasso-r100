@@ -21,10 +21,6 @@
         gesetzt, also gemeinsam mit dem Verschicken.
      2  Das Bild bewegt sich erst, nachdem das Fangwerkzeug da ist.
      3  Die Angel hat eine Rute mit Rolle, und die Rolle dreht sich.
-     4  RUNDE 100 — XANDER: „Zwei Schlingen bei einmal Ziehen erzeugt
-        Person ist zu früh da und wird von der Animation nicht richtig
-        mitgezogen." Im echten Raum: nie zwei Schlingen gleichzeitig,
-        und beim Platztausch springt das Bild nicht.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -143,52 +139,6 @@ const sage = (gut, was, zusatz) => {
       rute.ringe + " Ringe");
     sage(rute.drehstufen >= 4, "die Spule dreht sich — die Schnur wird eingerollt",
       rute.drehstufen + " verschiedene Stellungen gemessen");
-  }
-
-  console.log("\n4  LASSO IM ECHTEN RAUM: EINE SCHLINGE, KEIN SPRUNG\n");
-  const pg2 = await br.newPage({ viewport: { width: 390, height: 844 } });
-  await pg2.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
-  await pg2.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
-  await pg2.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF, { timeout: 25000 });
-  const film = await pg2.evaluate(async () => {
-    window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000, zuruecksetzen: true,
-      leute: { p0: { id: "p0", name: "Bea", seit: 2000 }, p1: { id: "p1", name: "Cem", seit: 2100 }, p2: { id: "p2", name: "Dana", seit: 2200 } } });
-    document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
-    let e = document.getElementById("livechatArea");
-    while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
-    window.DMA_PRUEF.neuZeichnen();
-    await new Promise((f) => setTimeout(f, 500));
-    const reihe = document.getElementById("lcPlaetze");
-    const bilder = [], t0 = performance.now();
-    window.LiveChat.pruefBefehl("/lasso Cem");
-    await new Promise((fertig) => { const lauf = () => {
-      const t = performance.now() - t0, g = reihe.getBoundingClientRect();
-      let cem = null;
-      reihe.querySelectorAll(".lc-kreis").forEach((k) => {
-        if (((k.querySelector("[data-lc-initial]") || {}).textContent || "").trim() === "C") {
-          const b = k.getBoundingClientRect();
-          cem = [b.left + b.width / 2 - g.left, b.top + b.height / 2 - g.top];
-        } });
-      const schl = [...document.querySelectorAll(".lc-lasso-nah, .lc-leine-schlinge")]
-        .filter((x) => parseFloat(getComputedStyle(x).opacity) > 0.15).length;
-      const sitz = [...reihe.querySelectorAll(".lc-platz")].map((p) => ((p.querySelector(".lc-platz-name") || {}).textContent || "").trim()[0] || "-").join("");
-      bilder.push({ t, cem, schl, sitz });
-      if (t < 4200) requestAnimationFrame(lauf); else fertig(); }; lauf(); });
-    return bilder;
-  });
-  await pg2.close();
-  const maxSchl = Math.max(...film.map((b) => b.schl));
-  sage(maxSchl === 1, "nie zwei Schlingen gleichzeitig", "hoechstens " + maxSchl);
-  const iW = film.findIndex((b, i) => i > 0 && b.sitz !== film[0].sitz);
-  if (iW < 1) {
-    sage(false, "der Platztausch kommt ueberhaupt");
-  } else {
-    const vor = film[iW - 1].cem, nach = film[iW].cem;
-    const sprung = vor && nach ? Math.hypot(nach[0] - vor[0], nach[1] - vor[1]) : 999;
-    sage(sprung <= 12, "beim Platztausch springt das Bild nicht — es wurde bis hin gezogen",
-      Math.round(sprung) + " px Sprung bei " + Math.round(film[iW].t) + " ms");
-    const leer = film.slice(0, iW).filter((b) => b.t > 520 && b.schl === 0).length;
-    sage(leer === 0, "zwischen Fang und Platztausch ist das Lasso nie leer", leer + " Bilder ohne Schlinge");
   }
 
   /* Ein Bild von der Rute. */

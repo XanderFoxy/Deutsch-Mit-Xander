@@ -11948,11 +11948,7 @@ window.LiveChat = (function () {
          wieder herunter (lcGekrantR98, 88 % von 2,6 s = 2288 ms). */
       /* RUNDE 99: die Angel wirft jetzt erst aus, beisst, holt ein —
          abgesetzt ist bei 3150 ms (lcHeber in app.js, T_AB). */
-      /* RUNDE 100 — das Lasso zieht jetzt bis ganz auf den Zielplatz, in
-         drei Zuegen: der dritte sitzt bei 86 % von 3,4 s = 2924 ms. Erst
-         danach wird umgesetzt (vorher 2300 ms — mitten im zweiten Zug,
-         XANDER: „Person ist zu frueh da"). */
-      var dauerH = wieH === "lasso" ? 2950 : wieH === "kranheben" ? 2420 : 3150;
+      var dauerH = wieH === "lasso" ? 2300 : wieH === "kranheben" ? 2420 : 3150;
       offeneZuege.push({ werfer: zustand.ichName, wen: wenH.name, ziel: nummerH,
                          bis: Date.now() + dauerH + 200, uhr: setTimeout(schickenH, dauerH) });
       /* Und die Angel braucht das ZIEL: sie zieht dorthin, nicht zu

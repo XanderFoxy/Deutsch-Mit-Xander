@@ -23052,10 +23052,7 @@ code, pre {
   9%   { transform: translateX(calc(-.45 * var(--laenge, 80px))) rotate(240deg) scale(.85); opacity: 1; }
   /* 14 % = 476 ms: am Ziel — genau dann haengt die andere Schlinge
      ueber ihm. */
-  /* RUNDE 100: harter Wechsel statt Ueberblenden bis 17 % — sonst
-     sind 14–17 % lang zwei Schlingen zu sehen (gemessen bei 505 ms). */
-  13.9% { transform: translateX(4px) rotate(400deg) scale(1.2); opacity: 1; }
-  14%  { transform: translateX(4px) rotate(400deg) scale(1.2); opacity: 0; }
+  14%  { transform: translateX(4px) rotate(400deg) scale(1.2); opacity: 1; }
   17%  { transform: translateX(0) rotate(396deg) scale(1.05); opacity: 0; }
   100% { transform: translateX(0) rotate(396deg) scale(1.05); opacity: 0; }
 }
@@ -32644,32 +32641,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-kr-haus     { fill: #e3a93c; stroke: #9c6e1e; stroke-width: 1; }
 .lc-kr-fenster  { fill: #bfe3f2; stroke: #5d7b8a; stroke-width: .8; }
 .lc-kr-gewicht  { fill: #9aa0a8; stroke: #6c727b; stroke-width: 1; }
-
-/* =====================================================================
-   RUNDE 100 — EINE SCHLINGE, NICHT ZWEI
-   ---------------------------------------------------------------------
-   XANDER (Walkie-Talkie, Lasso an der Puppe): „Zwei Schlingen bei
-   einmal Ziehen … das Lasso ist oft leer oder eher oder spaeter da."
-   GEMESSEN (Foto bei 300 ms): die grosse Schlinge am Bild war schon ab
-   5 % sichtbar, die geworfene am Seilende noch bis 17 % — zwei Ringe
-   gleichzeitig, und der am Bild lag schon da, bevor das Seil ankam.
-   Jetzt erscheint die Schlinge am Bild erst bei 14,1 % — genau da, wo
-   die geworfene ankommt (lcSchlingeFliegtR65) — und uebernimmt.
-   ===================================================================== */
-@keyframes lcSchlingeUmR100 {
-  0%, 14% { opacity: 0; transform: translate(0, -16%) rotate(-18deg) scale(1.55); }
-  14.1% { opacity: 1; transform: translate(0, -16%) rotate(-18deg) scale(1.55); }
-  20%  { opacity: 1; transform: translate(0, 0) rotate(-10deg) scale(1.2); }
-  26%  { opacity: 1; transform: translate(0, 0) rotate(-4.5deg) scale(1); }
-  34%  { transform: translate(calc(var(--zux, 0px) * .46), calc(var(--zuy, 0px) * .46)) rotate(-12deg) scale(.95); }
-  40%  { transform: translate(calc(var(--zux, 0px) * .40), calc(var(--zuy, 0px) * .40)) rotate(-3deg) scale(.99); }
-  46%  { transform: translate(calc(var(--zux, 0px) * .43), calc(var(--zuy, 0px) * .43)) rotate(-7deg) scale(1); }
-  54%  { transform: translate(calc(var(--zux, 0px) * .76), calc(var(--zuy, 0px) * .76)) rotate(-12deg) scale(.95); }
-  60%  { transform: translate(calc(var(--zux, 0px) * .70), calc(var(--zuy, 0px) * .70)) rotate(-3deg) scale(.99); }
-  66%  { transform: translate(calc(var(--zux, 0px) * .73), calc(var(--zuy, 0px) * .73)) rotate(-7deg) scale(1); }
-  74%  { transform: translate(var(--zux, 0px), var(--zuy, 0px)) rotate(-13deg) scale(.94); }
-  80%  { transform: translate(calc(var(--zux, 0px) * .92), calc(var(--zuy, 0px) * .92)) rotate(-2deg) scale(.99); }
-  86%  { opacity: 1; transform: translate(calc(var(--zux, 0px) * .95), calc(var(--zuy, 0px) * .95)) rotate(-6deg) scale(1); }
-  100% { opacity: 0; transform: translate(calc(var(--zux, 0px) * .95), calc(var(--zuy, 0px) * .95)) rotate(-6deg) scale(1); }
-}
-.lc-lasso .lc-lasso-schlinge { animation-name: lcSchlingeUmR100; }
