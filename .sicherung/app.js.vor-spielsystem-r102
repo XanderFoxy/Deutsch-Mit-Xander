@@ -28672,9 +28672,6 @@
   /* Einen Fleck dazulegen — und ihn merken. */
   function lcDreckDazu(platzEl, art, wieViele) {
     if (!platzEl) return false;
-    /* FUNK 84 — „automatischen Scheibenwischer der dann immer automatisch
-       auslöst falls jemand dreckig gemacht wird" (gekauft im Spiel). */
-    try { if (window.DMA_SPIEL && window.DMA_SPIEL.dreckAbwehren(platzEl, art)) return false; } catch (e) {}
     const nm = lcPlatzSchluessel(platzEl);
     if (!nm) return false;
     const liste = lcDreckListe[nm] || (lcDreckListe[nm] = []);
@@ -30741,9 +30738,6 @@
        ["\ud83c\udf9a\ufe0f", "Rollo hoch", "rollo"],
        ["\ud83e\udea7", "Jalousie auf", "lamellen"]]],
     ["\ud83d\udcbf", "Platte",    "platte"],
-    /* FUNK 95 — das Spielsystem: Lebenspunkte, Deutsch-Aufgaben,
-       Waffen, Schutz, Duell. Die Kachel oeffnet das Spielfenster. */
-    ["\u2694\ufe0f", "Spiel", "*spiel"],
     /* FUNK 75 — das Kratzen steht bei der Ohrfeige: beides tut man
        jemandem an. So bleibt das Menue so lang, wie es ist. */
     ["\ud83e\udef3", "Ohrfeige",  "ohrfeige", false,
@@ -32621,17 +32615,7 @@
         knopf(zeichen, wort, () => lcHoererMenue(platz, name));
         return;
       }
-      if (befehl === "*spiel") {
-        knopf(zeichen, wort, () => {
-          lcPlatzMenueZu();
-          try { if (window.DMA_SPIEL) window.DMA_SPIEL.menue(eigen ? "start" : "duell"); } catch (e) {}
-        });
-        return;
-      }
       knopf(zeichen, wort, () => {
-        /* FUNK 89 — „die Waffe soll dann auch bei einem bleiben bis man
-           irgendwas anderes im Profil Effekt auswählt". */
-        try { if (window.DMA_SPIEL) window.DMA_SPIEL.waffeAblegen(); } catch (e) {}
         /* GEMELDET: „dieses Zufall-Ding soll einfach nur zwischen den
            Feldern hin und her springen und keinen Würfel fallen
            lassen." Der Wuerfel fiel, weil die Kachel „/zufall Name"
@@ -63021,16 +63005,9 @@
          noch die Lupe im Menue — „man soll die anderen gross zeigen
          koennen und dafuer die Lupe haben". */
       area.querySelectorAll("[data-lc-platz]").forEach((k) => {
-        k.addEventListener("click", (ev) => {
+        k.addEventListener("click", () => {
           const nr = Number(k.dataset.lcPlatz);
           const p = LiveChat.lage().plaetze.find((x) => x.nummer === nr);
-          /* FUNK 95 / FUNK 90 — „nur wenn wir in diesem Kampfmodus sind
-             kann man wenn man auf die Profilbilder klickt denjenigen
-             direkt treffen dann tauschen sich die Plätze nicht aus".
-             Und kaputt (0 LP) gibt es keinen Platzwechsel (Funk 89). */
-          try {
-            if (window.DMA_SPIEL && window.DMA_SPIEL.tippAufPlatz(k, p, ev)) return;
-          } catch (e) {}
 
           /* Ein freier Platz: genau dorthin. Wer noch nicht auf der
              Buehne ist, geht zuerst hinauf — sonst gaebe es nichts zu
@@ -93601,23 +93578,6 @@ An einem Morgen lief ein kleiner Fuchs los…
           luft: gleichDanach.luft,
         };
       },
-    };
-
-    /* FUNK 95 — die Bruecke fuer das Spielsystem (spiel.js): Toene,
-       Hinweise, Schmerzlaut, Scheibenwischer und Pflaster sind hier
-       schon fertig gebaut; das Spiel ruft sie nur auf. */
-    window.DMA_SPIEL_BRUECKE = {
-      ton: (name, laut) => { try { lcTonSpaeter(name, 0, laut == null ? 0.5 : laut); } catch (e) {} },
-      toast: (text) => { try { showToast(text); } catch (e) {} },
-      schmerz: (platz) => { try { lcSchmerzTon(platz); } catch (e) {} },
-      wischer: (platz) => { try { const nm = lcNameVomPlatz(platz); if (nm) lcWischer(nm); } catch (e) {} },
-      pflaster: (chatId) => {
-        try {
-          const el = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + String(chatId).replace(/"/g, "") + '"]');
-          const nm = el && lcNameVomPlatz(el);
-          if (nm) lcPflaster(nm);
-        } catch (e) {}
-      }
     };
 
     window.DMA_PRUEFUNG = {

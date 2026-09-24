@@ -1,0 +1,123 @@
+/* =====================================================================
+   SPIELSYSTEM „DEUTSCH ZUM ÜBERLEBEN" — Aussehen (siehe spiel.js)
+   Alles am Platz liegt ABSOLUT über dem Platz: nichts verschiebt die
+   Sitzreihe (keine Sitz-Glitches), und die Gesichtsmitte bleibt frei.
+   ===================================================================== */
+.sp-lp {
+  position: absolute; height: 5px; border-radius: 3px;
+  background: rgba(20, 20, 20, .35); overflow: hidden;
+  pointer-events: none; z-index: 6; box-shadow: 0 0 0 1px rgba(255, 255, 255, .7);
+}
+.sp-lp-voll, .sp-lp-schild { position: absolute; top: 0; bottom: 0; left: 0; transition: width .35s ease, background .35s; }
+.sp-lp-schild { background: #5ab4ff; }
+
+.sp-aura, .sp-mauer, .sp-tier, .sp-geschuetz, .sp-risse, .sp-waffenmarke {
+  position: absolute; pointer-events: none; z-index: 7;
+}
+.sp-aura { border-radius: 50%; box-shadow: 0 0 0 3px rgba(90, 180, 255, .75), 0 0 14px 5px rgba(90, 180, 255, .45);
+  animation: spAura 1.8s ease-in-out infinite alternate; }
+@keyframes spAura { from { box-shadow: 0 0 0 2px rgba(90,180,255,.6), 0 0 10px 3px rgba(90,180,255,.35); }
+                    to   { box-shadow: 0 0 0 4px rgba(120,200,255,.85), 0 0 18px 7px rgba(90,180,255,.5); } }
+.sp-mauer svg, .sp-tier svg, .sp-geschuetz svg, .sp-risse svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sp-mauer { z-index: 8; }
+.sp-tier .sp-tier-koerper { transform-box: fill-box; transform-origin: 50% 100%; animation: spTier 1.1s ease-in-out infinite; }
+@keyframes spTier { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.06, .94); } }
+.sp-waffenmarke svg { position: absolute; right: -8%; top: -6%; width: 34%; height: auto; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.sp-kaputt .lc-kreis { filter: grayscale(.85) brightness(.85); transform: rotate(-4deg); transition: filter .4s, transform .4s; }
+.sp-anfaenger .sp-lp { box-shadow: 0 0 0 1px rgba(90, 180, 255, .9); }
+
+/* Getroffen: kurzes Zucken und ein roter Blitz am Rand */
+.sp-getroffen .lc-kreis { animation: spZucken .45s ease-out; }
+@keyframes spZucken { 0% { transform: translateX(0); box-shadow: 0 0 0 0 rgba(226,64,58,.9); }
+  25% { transform: translateX(-4px); } 50% { transform: translateX(3px); box-shadow: 0 0 0 5px rgba(226,64,58,.35); }
+  100% { transform: translateX(0); box-shadow: 0 0 0 0 rgba(226,64,58,0); } }
+
+/* Zahlen steigen ÜBER dem Kreis auf */
+.sp-zahl {
+  position: absolute; left: 50%; z-index: 12; pointer-events: none; white-space: nowrap;
+  font: 800 14px/1 system-ui, sans-serif; transform: translate(-50%, 0);
+  text-shadow: 0 1px 0 #fff, 0 0 3px #fff; animation: spZahl 1.45s ease-out forwards;
+}
+.sp-zahl-rot { color: #d8261f; }
+.sp-zahl-gruen { color: #1f9d33; }
+.sp-zahl-grau { color: #5a6270; font-size: 12px; }
+@keyframes spZahl { 0% { opacity: 0; transform: translate(-50%, 6px) scale(.8); }
+  15% { opacity: 1; transform: translate(-50%, -4px) scale(1.12); }
+  100% { opacity: 0; transform: translate(-50%, -30px) scale(1); } }
+
+/* Geschosse fliegen über allem */
+.sp-geschoss { position: fixed; left: 0; top: 0; width: 34px; height: 12px; z-index: 9990; pointer-events: none; }
+.sp-geschoss svg { width: 100%; height: 100%; overflow: visible; }
+.sp-g-zwille { width: 12px; height: 12px; }
+.sp-g-tomahawk { width: 26px; height: 26px; }
+.sp-g-bazooka { width: 40px; height: 16px; }
+.sp-laser {
+  position: fixed; height: 3px; z-index: 9990; pointer-events: none; transform-origin: 0 50%;
+  background: var(--farbe, #f22); border-radius: 2px;
+  box-shadow: 0 0 6px 2px var(--farbe, #f22), 0 0 14px 4px var(--farbe, #f22);
+  animation: spLaser .42s ease-out forwards;
+}
+@keyframes spLaser { 0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+.sp-fadenkreuz { position: fixed; width: 60px; height: 60px; margin: -30px 0 0 -30px; z-index: 9991; pointer-events: none;
+  animation: spKreuz .95s ease-out forwards; }
+.sp-fadenkreuz svg { width: 100%; height: 100%; }
+@keyframes spKreuz { 0% { transform: translate(18px, -14px) scale(1.6); opacity: 0; } 30% { opacity: 1; }
+  70% { transform: translate(-2px, 2px) scale(1); } 100% { transform: translate(0, 0) scale(1); opacity: 1; } }
+.sp-einschlag { position: fixed; width: 22px; height: 22px; margin: -11px 0 0 -11px; z-index: 9991; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(circle, #fff6c8 0%, #ffb03a 45%, rgba(255,90,20,0) 70%); animation: spKnall .6s ease-out forwards; }
+.sp-einschlag-gross { width: 70px; height: 70px; margin: -35px 0 0 -35px; }
+@keyframes spKnall { 0% { transform: scale(.2); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+
+body.sp-kampf #lcPlaetze .lc-platz:not(.lc-platz-ich):not(.lc-platz-frei) .lc-kreis { cursor: crosshair; }
+
+/* Die Duell-Frage */
+.sp-frage { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 9995;
+  background: #fff; color: #1d2330; border-radius: 14px; padding: 14px 16px; width: min(92vw, 360px);
+  box-shadow: 0 10px 40px rgba(0,0,0,.35); font: 15px/1.4 system-ui, sans-serif; }
+.sp-frage-knoepfe { display: flex; gap: 8px; margin-top: 10px; }
+.sp-frage-knoepfe button { flex: 1; padding: 9px; border-radius: 10px; border: 0; font-weight: 700; cursor: pointer; }
+.sp-frage-knoepfe button[data-ja="1"] { background: #2f7d32; color: #fff; }
+.sp-frage-knoepfe button[data-ja="0"] { background: #e7e9ee; color: #1d2330; }
+
+/* Das Spielfenster (unten, wie ein Blatt) */
+.sp-panel { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 9994;
+  width: min(100vw, 480px); max-height: 78vh; overflow: auto; background: #fbfaf7; color: #1d2330;
+  border-radius: 16px 16px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.28); padding: 10px 12px 16px;
+  font: 14px/1.4 system-ui, sans-serif; }
+.sp-panel[hidden] { display: none; }
+.sp-kopf { display: flex; align-items: center; justify-content: space-between; font-size: 16px; margin-bottom: 6px; }
+.sp-zu { border: 0; background: #eceae4; border-radius: 50%; width: 30px; height: 30px; font-size: 15px; cursor: pointer; }
+.sp-status { background: #fff; border-radius: 12px; padding: 8px 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.sp-status-balken { display: inline-block; width: 120px; height: 8px; border-radius: 4px; background: #ddd; vertical-align: middle; overflow: hidden; }
+.sp-status-balken i { display: block; height: 100%; background: linear-gradient(90deg, #e2403a, #e8b923 40%, #3bbf4a 70%); }
+.sp-status-werte { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; color: #3b4353; font-size: 13px; }
+.sp-tabs { display: flex; gap: 4px; overflow-x: auto; margin: 10px 0 8px; }
+.sp-tabs button, .sp-chips button, .sp-knoepfe button, .sp-zeile button, .sp-hinweis button, .sp-optionen button {
+  border: 0; border-radius: 10px; padding: 7px 10px; background: #eceae4; color: #1d2330; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.sp-tabs button.sp-an, .sp-chips button.sp-an { background: #2b3a55; color: #fff; }
+.sp-knoepfe { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.sp-knoepfe button { background: #2b3a55; color: #fff; }
+button:disabled { opacity: .45; cursor: default; }
+.sp-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
+.sp-farbe { width: 26px; height: 26px; padding: 0 !important; border-radius: 50% !important; }
+.sp-farbe.sp-an { box-shadow: 0 0 0 3px #2b3a55; }
+.sp-zeile { display: flex; align-items: center; gap: 10px; justify-content: space-between; background: #fff; border-radius: 10px; padding: 7px 9px; margin: 5px 0; }
+.sp-zeile > span:nth-child(2) { flex: 1; }
+.sp-zeile small { color: #5a6270; }
+.sp-bild { width: 38px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }
+.sp-bild svg { width: 100%; height: 100%; }
+.sp-aufgabe { background: #fff; border-radius: 12px; padding: 10px; margin: 6px 0; }
+.sp-frage-satz { font-size: 16px; margin-bottom: 8px; }
+.sp-optionen { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sp-optionen button { padding: 10px 8px; white-space: normal; }
+.sp-optionen .sp-richtig { background: #2f7d32; color: #fff; }
+.sp-optionen .sp-falsch { background: #c62f2a; color: #fff; }
+.sp-erg { font-weight: 800; margin-top: 8px; }
+.sp-gruen { color: #1f8a30; } .sp-rot { color: #c62f2a; } .sp-blau { color: #2b6fd0; }
+.sp-hinweis { background: #fff6dc; border-radius: 10px; padding: 6px 9px; margin-top: 6px; font-size: 13px; }
+.sp-text { margin: 6px 0; } .sp-klein { font-size: 12px; color: #5a6270; margin: 6px 0; }
+.sp-leer { padding: 18px 6px; color: #5a6270; }
+.sp-rang { margin: 6px 0; padding-left: 22px; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-aura, .sp-tier .sp-tier-koerper, .sp-getroffen .lc-kreis { animation: none; }
+}

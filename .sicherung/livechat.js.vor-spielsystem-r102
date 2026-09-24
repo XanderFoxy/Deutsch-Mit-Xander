@@ -3596,7 +3596,6 @@ window.LiveChat = (function () {
   }
   function senden(nutzlast) {
     nutzlast.von = zustand.ichId;
-    if (spielKennung && !nutzlast.spiel) nutzlast.spiel = spielKennung;
     /* Zum Nachmessen: die Pakete abfangen, ohne dass ein Raum offen
        sein muss. Im Betrieb ist der Haken immer null. */
     if (pruefSenderHaken) { try { pruefSenderHaken(nutzlast); } catch (e) {} }
@@ -3633,13 +3632,6 @@ window.LiveChat = (function () {
        sitzt — das Zeichen aus dem Profil reist mit. */
     geschlechtMerken(n.von, n.geschlecht);
     kontoMerken(n.von, n.konto);
-    spielMerken(n.von, n.spiel);
-    /* FUNK 95 — Spielereignisse (Schuss, Treffer, Stand, Duell) gehen an
-       spiel.js; gerechnet wird dort nichts, nur gezeigt. */
-    if (n.art === "spiel") {
-      try { if (window.DMA_SPIEL && window.DMA_SPIEL.empfangen) window.DMA_SPIEL.empfangen(n); } catch (e) {}
-      return;
-    }
     uhrVergleichen(n);
     zugVorfahrt(n);
 
@@ -6764,11 +6756,6 @@ window.LiveChat = (function () {
       postSenden(id, { art: "punkte", wieviel: gut, raum: zustand.raum,
                        grund: "Zensur " + zahl + (wofuer ? " in " + wofuer : "") + " im Klassenzimmer" });
     }
-    /* FUNK 95 — die Note zaehlt auch im Spiel; der Server prueft, dass
-       wirklich der Lehrer sie gibt. */
-    if (id !== zustand.ichId) {
-      try { if (window.DMA_SPIEL && window.DMA_SPIEL.lehrerNote) window.DMA_SPIEL.lehrerNote(id, zahl); } catch (e) {}
-    }
     /* =========================================================
        SIE MUSS ES WIRKLICH MITBEKOMMEN
        ---------------------------------------------------------
@@ -6810,8 +6797,6 @@ window.LiveChat = (function () {
 
   function platzNehmen(nummer) {
     if (zustand.lage !== "drin") return { ok: false, warum: "Dafür musst du erst im Raum sein." };
-    /* FUNK 89: „du kannst nicht reisen oder du kannst nicht wechseln du bist kaputt" */
-    if (spielGesperrt()) return { ok: false, warum: window.DMA_SPIEL.gesperrtGrund() };
     var n = Number(nummer);
     if (!(n >= 1 && n <= PLAETZE)) return { ok: false, warum: "Diesen Platz gibt es nicht." };
     var jetzt = plaetzeBauen();
@@ -6822,7 +6807,6 @@ window.LiveChat = (function () {
       return platzTauschenMit(ziel.id);
     }
     sitzTausch[zustand.ichId] = n - 1;
-    spielGewechselt();
     sitzSchicken([zustand.ichId], zustand.ichName + " setzt sich auf Platz " + n + ".");
     melden();
     return { ok: true, text: "Du sitzt jetzt auf Platz " + n + "." };
@@ -6830,7 +6814,6 @@ window.LiveChat = (function () {
 
   function platzTauschenMit(id) {
     if (zustand.lage !== "drin") return { ok: false, warum: "Dafür musst du erst im Raum sein." };
-    if (spielGesperrt()) return { ok: false, warum: window.DMA_SPIEL.gesperrtGrund() };
     if (!id || id === zustand.ichId) return { ok: false, warum: "Mit dir selbst geht das nicht." };
     var jetzt = plaetzeBauen();
     var meiner = null, seiner = null;
@@ -6847,7 +6830,6 @@ window.LiveChat = (function () {
     }
     sitzTausch[zustand.ichId] = seiner.nummer - 1;
     sitzTausch[id] = meiner.nummer - 1;
-    spielGewechselt();
     var satz = zustand.ichName + " und " + seiner.name + " haben die Plätze getauscht.";
     sitzSchicken([zustand.ichId, id], satz);
     melden();
@@ -8982,27 +8964,6 @@ window.LiveChat = (function () {
   }
 
   var kontenJe = {};
-  /* FUNK 95 — SPIELSYSTEM: jede Person traegt ihre Spiel-Kennung (die
-     Supabase-Kennung: Konto oder anonyme Gastsitzung) in jedem Paket mit.
-     Damit weiss jedes Geraet, WEN ein Treffer auf dem Server meint. */
-  var spielKennung = "";
-  var spielJe = {};
-  function spielMerken(id, k) {
-    if (!id || typeof k !== "string" || !/^[0-9a-f-]{36}$/i.test(k)) return;
-    spielJe[id] = k;
-  }
-  function spielIdVon(id) {
-    if (!id) return "";
-    if (id === zustand.ichId) return spielKennung;
-    var k = spielJe[id] || kontoVon(id) || "";
-    return /^[0-9a-f-]{36}$/i.test(k) ? k : "";
-  }
-  function spielGesperrt() {
-    try { return Boolean(window.DMA_SPIEL && window.DMA_SPIEL.gesperrt && window.DMA_SPIEL.gesperrt()); } catch (e) { return false; }
-  }
-  function spielGewechselt() {
-    try { if (window.DMA_SPIEL && window.DMA_SPIEL.platzGewechselt) window.DMA_SPIEL.platzGewechselt(); } catch (e) {}
-  }
   function kontoMerken(id, k) {
     if (!id || typeof k !== "string" || !k) return;
     kontenJe[id] = k;
@@ -11601,25 +11562,6 @@ window.LiveChat = (function () {
     var wort = (m[1] || m[3] || "").toLowerCase(), rest = (m[2] || "").trim();
     /* RUNDE 100 — die Uebungspuppe (siehe puppeUmschalten). */
     if (wort === "puppe" || wort === "dummy") return puppeUmschalten(rest) || true;
-    /* FUNK 95 — das Spielfenster: /spiel oeffnet es, /lernen holt gleich
-       eine Deutsch-Aufgabe (die einzige Quelle fuer Punkte). */
-    if (wort === "spiel" || wort === "kampf") {
-      if (window.DMA_SPIEL) window.DMA_SPIEL.menue();
-      return true;
-    }
-    if (wort === "lernen" || wort === "deutsch") {
-      if (window.DMA_SPIEL) window.DMA_SPIEL.aufgabe();
-      return true;
-    }
-    /* FUNK 89 — kaputt heisst: nicht reisen, nicht wechseln, bis zum
-       Pflaster. Gesperrt sind die Befehle, mit denen man SICH SELBST
-       bewegt (ohne Namen, mit einer Platznummer oder dem eigenen Namen). */
-    if (spielGesperrt() && /^(tausch|flug|maulwurf|portal|boot|delfin|kran|dampfer|lok|liane|feder|frosch|zylinder|fahrstuhl|beamen|rohr|heli|pferd|greifvogel|turm|untertasse|mieze|frisbee|gotteshand|pranke|mannhand|frauenhand|hexenhand|roboterhand|fahren|hotrod|leiter|gemeinsam|bagger|schaufel)$/.test(wort)) {
-      var rNamen = rest.replace(/[x\u00d7]\d\s*$/i, "").replace(/\d+/g, "").trim().toLowerCase();
-      if (!rNamen || rNamen === String(zustand.ichName || "").toLowerCase() || rNamen === "ich" || rNamen === "mich") {
-        return systemZeile(window.DMA_SPIEL.gesperrtGrund());
-      }
-    }
 
     /* SPITZE KLAMMERN SIND EINE ANLEITUNG, KEIN TEXT.
        -----------------------------------------------------------
@@ -14860,14 +14802,6 @@ window.LiveChat = (function () {
       return { plaetze: plaetzeBauen(), tausch: sitzTausch };
     },
     pruefBefehl: function (text) { return befehlAusfuehren(text); },
-    /* FUNK 95 — Spielsystem (spiel.js) */
-    spielKennungSetzen: function (k) { spielKennung = /^[0-9a-f-]{36}$/i.test(String(k || "")) ? String(k) : ""; },
-    spielIdVon: spielIdVon,
-    spielSenden: function (o) {
-      var p = {}; Object.keys(o || {}).forEach(function (k) { p[k] = o[k]; });
-      p.art = "spiel";
-      senden(p);
-    },
     /* Runde 100 — die Uebungspuppe an/aus (Knopf im Walkie-Talkie). */
     /* RUNDE 100 — fuer das Lehrer-Panel (app.js, lcLehrerPanel):
        XANDER: „Beim Schiffe versenken und den anderen Aufgaben moechte
