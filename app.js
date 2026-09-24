@@ -46303,8 +46303,20 @@
         /* Ganz hinten die FERNE Seite: erst das ferne Hinterbein,
            dann die ferne Vorderpfote — beide dunkler, damit sie nach
            hinten wegtreten. */
-        + '<path class="lc-frosch-bein" d="M60 36 Q75 34 81 44 Q85 52 77 56'
-        + ' Q69 58 65 50 Q61 43 60 36 Z" fill="#3f8a3d" stroke="#35702f" stroke-width="1.6"/>'
+        /* RUNDE 101 — XANDER (Funk 90): „die Beine, die hinten abspringen,
+           die müssen einen Knick in den Knien haben, der in die Richtung
+           geht, wo man abspringt, und nicht die Knie nach hinten …
+           schau mal da wirklich in die echte Physik."
+           GEFUNDEN: das Hinterbein war EIN Klumpen, dessen Woelbung bei
+           x 84–88 lag — HINTER dem Koerper; der Frosch schaut aber nach
+           links. Ein sitzender Frosch faltet das Bein als Z: der
+           Oberschenkel geht von der Huefte nach VORN unten, das Knie
+           steht vorn unter dem Bauch, der Unterschenkel laeuft zurueck
+           zur Ferse, der lange Fuss liegt flach nach vorn. Beim
+           Abstoss klappt alles nach hinten durch. Deshalb sind die
+           Hinterbeine jetzt drei Glieder mit echten Gelenken; die
+           Winkel rechnet lcFroschBein() aus der Sprungphase. */
+        + '<g class="lc-frosch-hbein lc-frosch-hbein-fern" data-huefte="66 45"></g>'
         + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froArmF
         + '" stroke="#35702f" stroke-width="7.2" fill="none" stroke-linecap="round"/>'
         + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froFingerF
@@ -46313,26 +46325,6 @@
         + '" stroke="#4d9349" stroke-width="5" fill="none" stroke-linecap="round"/>'
         + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froFingerF
         + '" stroke="#4d9349" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
-        /* Das NAHE Hinterbein liegt hinter dem Koerper und streckt
-           sich im Abstoss durch (siehe lcFroschBeinR83). */
-        + '<g class="lc-frosch-hinten">'
-        + '<path class="lc-frosch-bein" d="M62 40 Q78 38 84 48 Q88 56 80 60'
-        + ' Q72 62 68 54 Q64 47 62 40 Z" fill="#54a050" stroke="#3c7a3a" stroke-width="1.8"/>'
-        /* Die Schwimmpfote: erst die Haut zwischen den Zehen als
-           Flaeche, dann die Zehen darueber. Beide stecken in EINER
-           Gruppe, und die Gruppe traegt die Klasse — sonst wuerde die
-           Streckbewegung (lcFroschBeinR83 rechnet mit transform-box:
-           fill-box, also um die eigene Mitte) Haut und Zehen einzeln
-           stauchen und die beiden wuerden auseinanderlaufen. */
-        + '<g class="lc-frosch-bein lc-frosch-pfote">'
-        + '<path d="M78.5 59.5 Q88 60.4 96.8 65.4'
-        + ' Q97 68.4 92.8 70.2 Q85 71.8 79.4 68.4 Z"'
-        + ' fill="#8ecf7e" stroke="#3c7a3a" stroke-width="1.4" stroke-linejoin="round"/>'
-        + '<path d="M79 60.4 Q88 61.4 96.8 65.4'
-        + ' M79 62.4 Q87 64.8 94.4 69.2 M79.4 64.8 Q84 68 88.4 71.2"'
-        + ' stroke="#3c7a3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
-        + "</g>"
-        + "</g>"
         /* Der Koerper. */
         + '<ellipse cx="52" cy="44" rx="28" ry="16" fill="#67b862"'
         + ' stroke="#3c7a3a" stroke-width="1.8"/>'
@@ -46350,6 +46342,9 @@
         + '<circle cx="14.6" cy="32.4" r="1.1" fill="#3c7a3a"/>'
         /* Der helle Bauch. */
         + '<path d="M30 52 Q52 62 74 52 Q52 58 30 52 Z" fill="#cfe8b6" opacity=".9"/>'
+        /* Das NAHE Hinterbein liegt VOR dem Koerper — von der Seite
+           sieht man den Oberschenkel auf der Flanke. */
+        + '<g class="lc-frosch-hbein" data-huefte="70 47"></g>'
         /* Die NAHE Vorderpfote — ganz vorn, weil sie vor dem Bauch steht. */
         + '<path class="lc-frosch-vorn" d="' + froArmN
         + '" stroke="#3c7a3a" stroke-width="8.6" fill="none" stroke-linecap="round"/>'
@@ -46411,8 +46406,32 @@
       froSpruenge.push({ transform: "translate(" + (ende.x - start.x).toFixed(1) + "px, "
         + (ende.y - start.y).toFixed(1) + "px) translate(-50%, -50%) rotate(0deg)",
         opacity: 0, offset: 1 });
-      try { fro.animate(froSpruenge, { duration: dauer, easing: "linear", fill: "forwards" }); }
+      let froAnim = null;
+      try { froAnim = fro.animate(froSpruenge, { duration: dauer, easing: "linear", fill: "forwards" }); }
       catch (e) {}
+      /* Die Hinterbeine: Streckung e (0 = sitzend gefaltet, 1 = durch-
+         gestreckt) aus der Phase des laufenden Sprungs. Abstoss in den
+         ersten 18 % (schnell), gestreckt bis 45 %, dann zieht er sie bis
+         80 % wieder an und landet gefaltet. */
+      const froBeine = [...fro.querySelectorAll(".lc-frosch-hbein")];
+      const froStreck = (ms) => {
+        for (const s of froAbschnitte) {
+          const a = s.von * hin, b = s.bis * hin;
+          if (ms < a || ms > b || b <= a) continue;
+          const p = (ms - a) / (b - a);
+          return p < 0.18 ? p / 0.18 : p < 0.45 ? 1 : p < 0.8 ? 1 - (p - 0.45) / 0.35 : 0;
+        }
+        return 0;
+      };
+      const froGelenkTakt = () => {
+        if (!fro.isConnected) return;
+        const ms = froAnim && typeof froAnim.currentTime === "number" ? froAnim.currentTime : 0;
+        const e = froStreck(ms);
+        froBeine.forEach((g) => lcFroschBein(g, e));
+        if (!froAnim || froAnim.playState !== "finished") requestAnimationFrame(froGelenkTakt);
+      };
+      froBeine.forEach((g) => lcFroschBein(g, 0));
+      requestAnimationFrame(froGelenkTakt);
       /* RUNDE 88 — UND DIE DREHUNG, auf demselben Zeitstrahl.
          Der Weg ueber scaleX(0) ist in der Seitenansicht genau das,
          was eine Drehung ist: der Frosch wird schmal, verschwindet
@@ -49587,6 +49606,49 @@
       seite.animate(seiteR, optionen);
       oben.animate(obenR, optionen);
     } catch (e) {}
+  }
+
+  /* RUNDE 101 — Funk 90: das Froschbein mit drei Gliedern.
+     Winkel in Grad im SVG (0 = nach hinten/+x, 90 = nach unten,
+     180 = nach vorn — der Frosch schaut nach links).
+       sitzend:  Oberschenkel 149° (vorn unten → das Knie steht VORN),
+                 Unterschenkel 20° (zurueck zur Ferse), Fuss 165° (flach
+                 nach vorn auf dem Boden)
+       gestreckt: 18° / 22° / 12° — alles nach hinten durchgedrueckt.
+     Der Fuss dreht dabei ueber „nach unten" (die Zehen druecken sich ab),
+     der Oberschenkel schwingt vom Bauch nach hinten. */
+  const LC_FROSCH_SITZ = { ober: 149, unter: 20, fuss: 165 };
+  const LC_FROSCH_STRECK = { ober: 18, unter: 22, fuss: 12 };
+  function lcFroschBein(g, e) {
+    const h = String(g.dataset.huefte || "70 47").split(" ").map(Number);
+    const fern = g.classList.contains("lc-frosch-hbein-fern");
+    const w = (k) => (LC_FROSCH_SITZ[k] + (LC_FROSCH_STRECK[k] - LC_FROSCH_SITZ[k]) * e) * Math.PI / 180;
+    const vor = (p, win, l) => [p[0] + Math.cos(win) * l, p[1] + Math.sin(win) * l];
+    const H = h, K = vor(H, w("ober"), 20), A = vor(K, w("unter"), 20);
+    const f1 = (v) => v.toFixed(1);
+    /* Ein Glied als Keil: an der Wurzel breit, zum Gelenk schmal. */
+    const glied = (P, Q, b1, b2) => {
+      const dx = Q[0] - P[0], dy = Q[1] - P[1], l = Math.hypot(dx, dy) || 1;
+      const nx = -dy / l, ny = dx / l;
+      return "M" + f1(P[0] + nx * b1) + " " + f1(P[1] + ny * b1)
+        + " L" + f1(Q[0] + nx * b2) + " " + f1(Q[1] + ny * b2)
+        + " A" + f1(b2) + " " + f1(b2) + " 0 0 1 " + f1(Q[0] - nx * b2) + " " + f1(Q[1] - ny * b2)
+        + " L" + f1(P[0] - nx * b1) + " " + f1(P[1] - ny * b1)
+        + " A" + f1(b1) + " " + f1(b1) + " 0 0 1 " + f1(P[0] + nx * b1) + " " + f1(P[1] + ny * b1) + " Z";
+    };
+    const hell = fern ? "#3f8a3d" : "#54a050", rand = fern ? "#35702f" : "#3c7a3a";
+    const hautF = fern ? "#6fae63" : "#8ecf7e";
+    const fussW = w("fuss") * 180 / Math.PI;
+    g.innerHTML =
+      '<path d="' + glied(K, A, 3.6, 2.4) + '" fill="' + hell + '" stroke="' + rand + '" stroke-width="1.4"/>'
+      + '<g class="' + (fern ? "lc-frosch-pfote-fern" : "lc-frosch-pfote") + '" transform="translate(' + f1(A[0]) + " " + f1(A[1])
+      + ") rotate(" + fussW.toFixed(1) + ')">'
+      + '<path d="M-0.5 -4 Q9 -3.4 17.8 1.4 Q18 4.4 13.8 6.2 Q6 7.8 0.4 4.4 Z" fill="' + hautF + '" stroke="' + rand
+      + '" stroke-width="1.3" stroke-linejoin="round"/>'
+      + '<path d="M0 -2.8 Q9 -2 17.8 1.4 M0 -0.6 Q8 1.4 15.4 5.2 M0.4 1.8 Q5 4.6 9.4 7.2" stroke="' + rand
+      + '" stroke-width="1.3" fill="none" stroke-linecap="round"/></g>'
+      /* Der Oberschenkel zuletzt: er ist das Dickste und liegt vorn. */
+      + '<path d="' + glied(H, K, 6.4, 3.8) + '" fill="' + hell + '" stroke="' + rand + '" stroke-width="1.6"/>';
   }
 
   /* Die Draufsichten. Alle mit der Nase nach RECHTS; gedreht wird in

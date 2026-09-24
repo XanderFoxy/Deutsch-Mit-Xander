@@ -107,7 +107,7 @@ function tonMessen(name) {
     await pg.evaluate(() => window.DMA_PRUEF.effektBuehne());
     await pg.evaluate((k) => window.DMA_PRUEFUNG.wirkung("frosch", k, "Alex"), kette);
     await new Promise((f) => setTimeout(f, 180));
-    const aus = await pg.evaluate(() => {
+    const aus = await pg.evaluate(async () => {
       const el = document.querySelector(".lc-frosch");
       if (!el) return null;
       const an = el.getAnimations().find((a) => a.effect && a.effect.getKeyframes().length > 3);
@@ -119,8 +119,23 @@ function tonMessen(name) {
         const r = el.getBoundingClientRect();
         bahn.push([r.left + r.width / 2, r.top + r.height / 2]);
       }
-      const beine = [...el.querySelectorAll(".lc-frosch-bein")]
-        .map((b) => parseFloat(getComputedStyle(b).animationDuration));
+      /* RUNDE 101 — XANDER (Funk 90): „die Beine … müssen einen Knick
+         in den Knien haben, der in die Richtung geht, wo man abspringt."
+         Die Hinterbeine sind jetzt Glieder mit Gelenken (lcFroschBein),
+         getrieben von der Sprunguhr — gemessen wird, ob sie sich ueber
+         die Spruenge wirklich strecken UND wieder falten. */
+      const winkel = [];
+      for (let ms = 0; ms <= 4600; ms += 80) {
+        an.currentTime = ms;
+        await new Promise((f) => requestAnimationFrame(() => requestAnimationFrame(() => f())));
+        /* Jedes Bild baut das Bein neu — also jedes Mal neu suchen. */
+        const hb = el.querySelector(".lc-frosch-hbein:not(.lc-frosch-hbein-fern) g");
+        const m = hb && /rotate\(([-\d.]+)\)/.exec(hb.getAttribute("transform") || "");
+        if (m) winkel.push(parseFloat(m[1]));
+      }
+      const beine = [el.querySelectorAll(".lc-frosch-hbein").length,
+                     winkel.length ? Math.max.apply(null, winkel) : 0,
+                     winkel.length ? Math.min.apply(null, winkel) : 0];
       return { bahn: bahn, beine: beine, last: !!el.querySelector(".lc-frosch-last"),
                auge: !!el.querySelector("circle[r='8.4']") };
     });
@@ -150,10 +165,9 @@ function tonMessen(name) {
      daran. Gezaehlt wird deshalb „mindestens zwei"; worauf es
      ankommt, ist ohnehin die Dauer: alle muessen im Takt der Spruenge
      laufen. */
-  sage(gerade && gerade.beine.length >= 2 && gerade.beine.every((x) => x > 0.3)
-       && new Set(gerade.beine).size === 1,
-    "und seine Hinterbeine arbeiten im Takt der Spruenge, alle im selben",
-    gerade ? gerade.beine.map((x) => x.toFixed(2) + " s").join(" / ") : "-");
+  sage(gerade && gerade.beine[0] === 2 && gerade.beine[1] > 150 && gerade.beine[2] < 30,
+    "zwei Hinterbeine mit Gelenken: gefaltet der Fuss nach vorn (>150°), gestreckt nach hinten (<30°)",
+    gerade ? gerade.beine[0] + " Beine, Fuss " + gerade.beine[2].toFixed(0) + "°–" + gerade.beine[1].toFixed(0) + "°" : "-");
   const mitWeg = await froschBahn("1-6-7-8");
   const trefferM = [6, 7].map((nr) => nahBei(mitWeg.bahn, nr));
   const trefferO = [6, 7].map((nr) => nahBei(gerade.bahn, nr));
