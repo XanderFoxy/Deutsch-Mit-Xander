@@ -24973,157 +24973,9 @@
   function lcBlueteAuf(feld) { feld.dataset.zu = ""; lcBlueteStoss(feld, "lc-bl-auf", false); }
   function lcBlueteZu(feld) { if (feld.dataset.zu === "1") return; feld.dataset.zu = "1"; lcBlueteStoss(feld, "lc-bl-zu", true); }
 
-  /* =================================================================
-     SCHON-PASS SPRECHBILDER — 7. STROM A / B / C
-     -----------------------------------------------------------------
-     XANDERS LISTE:
-     „STROM A — Plasmalampe (NICHT Lavalampe: kein Wachs). Elektrode in
-     der Bildmitte, Filamente suchen den Ring wie Glaswand. Pfad: dick
-     am Kern (2–3 px), verjüngt, 2–4 Verästelungen, 0,1–0,3 s leben,
-     neuer Pfad. Kern blitzt kurz auf. Farbe: weiß-lila Kern, außen
-     kaltblau. Bestehende filigrane Linien behalten, nur Dicke +
-     Verästelung + Zucken erhöhen."
-     „STROM B — wandernde Kugel. Eine kleine Kugel (6–10 % des
-     Kreisdurchmessers) wandert auf dem Ring ±40° hin und her. Kurze
-     Entladungen nur nach außen. Nicht durchs Gesicht."
-     „STROM C — Mantel. Entladungen nur außen um den Ring, wie ein
-     Käfig. Innen dunkel/leer von Blitzen."
-     Ein Blitz lebt 0,1–0,3 s und ist dann ein ANDERER: jede Linie hat
-     sechs vorgerechnete Formen, zwischen denen sie hart umspringt
-     (calcMode="discrete"), jede Linie mit eigenem Takt.
-     VERJUENGT: ein Blitz ist hier keine Linie mit fester Breite,
-     sondern eine Flaeche, die am Kern 2,1 Einheiten (2,5 px) breit ist
-     und zur Spitze auf 0,25 ausläuft.
-     ================================================================= */
-  let lcStromNr = 0;
-  const lcStromZ = (a, b) => a + Math.random() * (b - a);
-  const lcStromF = (v) => v.toFixed(2);
-  /* Ein verjuengter Blitz von (x0,y0) nach (x1,y1) als Flaeche, dazu
-     2–4 Aeste. Rueckgabe: ein Pfad-String (mehrere Teilpfade). */
-  function lcBlitzFlaeche(x0, y0, x1, y1, dick, aeste, tiefe) {
-    const f = lcStromF, z = lcStromZ;
-    const n = 9, dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L;
-    const pk = [];
-    for (let i = 0; i <= n; i++) {
-      const t = i / n, zit = (i === 0 || i === n) ? 0 : z(-1, 1) * L * 0.07;
-      pk.push([x0 + dx * t + nx * zit, y0 + dy * t + ny * zit, t]);
-    }
-    const breite = (t) => dick * (1 - t) + 0.25 * t;
-    const links = [], rechts = [];
-    pk.forEach(([x, y, t], i) => {
-      const a = pk[Math.min(i + 1, n)], b = pk[Math.max(i - 1, 0)];
-      let tx = a[0] - b[0], ty = a[1] - b[1]; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-      const w = breite(t) / 2;
-      links.push(f(x - ty * w) + " " + f(y + tx * w));
-      rechts.unshift(f(x + ty * w) + " " + f(y - tx * w));
-    });
-    let d = "M" + links.join(" L") + " L" + rechts.join(" L") + " Z";
-    if (tiefe < 1) {
-      for (let k = 0; k < aeste; k++) {
-        const i = 2 + Math.floor(Math.random() * (n - 4));
-        const [ax, ay, t] = pk[i];
-        const w = Math.atan2(dy, dx) + (Math.random() < 0.5 ? -1 : 1) * z(0.4, 0.9);
-        const l = L * z(0.2, 0.38);
-        d += " " + lcBlitzFlaeche(ax, ay, ax + Math.cos(w) * l, ay + Math.sin(w) * l, breite(t) * 0.55, 0, tiefe + 1);
-      }
-    }
-    return d;
-  }
-  /* Eine zuckende Linie: sechs Formen, hart umgeschaltet, eigener Takt
-     (je Form 0,1–0,3 s), dazu ein Flackern der Deckkraft. */
-  function lcBlitzZucken(formen, fuell, extra) {
-    const f = lcStromF, z = lcStromZ;
-    const dur = formen.length * z(0.1, 0.3);
-    return '<path fill="' + fuell + '" d="' + formen[0] + '"' + (extra || "") + '>'
-      + '<animate attributeName="d" dur="' + f(dur) + 's" begin="' + f(-z(0, dur)) + 's" repeatCount="indefinite" calcMode="discrete" values="' + formen.join(";") + '"/>'
-      + '<animate attributeName="opacity" dur="' + f(z(0.35, 0.7)) + 's" repeatCount="indefinite" calcMode="discrete" values="1;.55;1;.8;.3;1"/></path>';
-  }
-  function lcStromDefs(n) {
-    return '<radialGradient id="lcSg' + n + '" gradientUnits="userSpaceOnUse" cx="50" cy="50" r="36">'
-      + '<stop offset="0" stop-color="#FAF5FF"/><stop offset=".35" stop-color="#E9D5FF"/>'
-      + '<stop offset=".75" stop-color="#A5B4FC"/><stop offset="1" stop-color="#60A5FA"/></radialGradient>'
-      + '<filter id="lcSb' + n + '" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.1"/></filter>';
-  }
-  function lcStromASvg() {
-    const R = 34.7, n = ++lcStromNr, f = lcStromF, z = lcStromZ;
-    let blitze = "";
-    const menge = 5 + Math.floor(Math.random() * 2);
-    for (let i = 0; i < menge; i++) {
-      const formen = [];
-      const basis = (i / menge) * Math.PI * 2;
-      for (let k = 0; k < 6; k++) {
-        /* „Filamente suchen den Ring wie Glaswand": das Ende liegt IMMER
-           auf dem Ring, der Winkel wandert von Form zu Form ein Stueck. */
-        const w = basis + z(-0.5, 0.5);
-        const ex = 50 + Math.cos(w) * (R - 1.4), ey = 50 + Math.sin(w) * (R - 1.4);
-        formen.push(lcBlitzFlaeche(50, 50, ex, ey, 2.1, 2 + Math.floor(Math.random() * 3), 0)
-          + " M" + f(ex + 1.3) + " " + f(ey) + " A1.3 1.3 0 1 0 " + f(ex - 1.3) + " " + f(ey) + " A1.3 1.3 0 1 0 " + f(ex + 1.3) + " " + f(ey) + " Z");
-      }
-      blitze += lcBlitzZucken(formen, "url(#lcSg" + n + ")");
-    }
-    const kern = '<circle cx="50" cy="50" r="2.4" fill="#FAF5FF"><animate attributeName="r" dur="1.3s" repeatCount="indefinite" calcMode="discrete" values="2.4;2.4;3.6;2.4;2.4;2.4;3.2;2.4"/>'
-      + '<animate attributeName="opacity" dur=".9s" repeatCount="indefinite" calcMode="discrete" values="1;.8;1;1;.7"/></circle>';
-    return '<svg class="lc-strom-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + lcStromDefs(n) + "</defs>"
-      + '<g filter="url(#lcSb' + n + ')" opacity=".75">' + blitze + "</g>" + blitze + kern + "</svg>";
-  }
-  function lcStromBSvg() {
-    const R = 34.7, n = ++lcStromNr, f = lcStromF, z = lcStromZ;
-    /* Die Kugel: 8 % des Kreisdurchmessers (69,4) = 5,6 → Radius 2,8.
-       Sie laeuft oben auf dem Ring von −130 bis −50 Grad (±40 um den
-       Scheitel) und zurueck. Die Entladungen haengen an ihr und zeigen
-       in ihrem eigenen Rahmen nach −y — das ist dank rotate="auto"
-       immer „nach aussen". */
-    const bogen = (g) => [50 + Math.cos(g * Math.PI / 180) * R, 50 + Math.sin(g * Math.PI / 180) * R];
-    const [ax, ay] = bogen(-130), [bx, by] = bogen(-50);
-    const weg = "M" + f(ax) + " " + f(ay) + " A" + R + " " + R + " 0 0 1 " + f(bx) + " " + f(by);
-    let entl = "";
-    for (let i = 0; i < 3; i++) {
-      const formen = [];
-      for (let k = 0; k < 6; k++) {
-        const w = -Math.PI / 2 + z(-0.7, 0.7), l = z(4, 8);
-        formen.push(lcBlitzFlaeche(0, -2.2, Math.cos(w) * l, -2.2 + Math.sin(w) * l, 1.2, 1 + Math.floor(Math.random() * 2), 0));
-      }
-      entl += lcBlitzZucken(formen, "url(#lcSk" + n + ")");
-    }
-    const defs = lcStromDefs(n) + '<radialGradient id="lcSk' + n + '"><stop offset="0" stop-color="#FAF5FF"/><stop offset=".5" stop-color="#C4B5FD"/><stop offset="1" stop-color="#60A5FA"/></radialGradient>';
-    return '<svg class="lc-strom-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + defs + "</defs>"
-      + "<g>" + '<animateMotion dur="3.2s" repeatCount="indefinite" rotate="auto" path="' + weg + '" keyPoints="0;1;0" keyTimes="0;.5;1" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/>'
-      + '<circle r="4.6" fill="#A5B4FC" opacity=".35" filter="url(#lcSb' + n + ')"/>'
-      + entl
-      + '<circle r="2.8" fill="url(#lcSk' + n + ')"><animate attributeName="r" dur=".5s" repeatCount="indefinite" values="2.8;3.1;2.7;2.8"/></circle>'
-      + "</g></svg>";
-  }
-  function lcStromCSvg() {
-    const R = 34.7, n = ++lcStromNr, f = lcStromF, z = lcStromZ;
-    /* Der Kaefig: zwoelf Boegen, jeder ueberspannt ein Stueck Ring und
-       beult sich nach AUSSEN — keiner kommt nach innen. */
-    let kaefig = "";
-    const menge = 12;
-    for (let i = 0; i < menge; i++) {
-      const formen = [];
-      for (let k = 0; k < 6; k++) {
-        const w0 = (i / menge) * Math.PI * 2 + z(-0.1, 0.1), w1 = w0 + z(0.45, 0.7);
-        const beule = z(2.5, 5.5), pk = [];
-        for (let j = 0; j <= 8; j++) {
-          const t = j / 8, w = w0 + (w1 - w0) * t;
-          const r = R + 0.8 + Math.sin(t * Math.PI) * beule + (j && j < 8 ? z(-0.9, 0.9) : 0);
-          pk.push(f(50 + Math.cos(w) * r) + " " + f(50 + Math.sin(w) * r));
-        }
-        formen.push("M" + pk.join(" L"));
-      }
-      const dur = 6 * z(0.1, 0.3);
-      kaefig += '<path fill="none" stroke="url(#lcSg' + n + ')" stroke-width="' + f(z(0.5, 0.9)) + '" stroke-linejoin="round" d="' + formen[0] + '">'
-        + '<animate attributeName="d" dur="' + f(dur) + 's" begin="' + f(-z(0, dur)) + 's" repeatCount="indefinite" calcMode="discrete" values="' + formen.join(";") + '"/>'
-        + '<animate attributeName="opacity" dur="' + f(z(0.3, 0.6)) + 's" repeatCount="indefinite" calcMode="discrete" values="1;.4;.9;0;1"/></path>';
-    }
-    return '<svg class="lc-strom-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + lcStromDefs(n).replace('cx="50" cy="50" r="36"', 'cx="50" cy="50" r="42"') + "</defs>"
-      + '<g filter="url(#lcSb' + n + ')" opacity=".8">' + kaefig + "</g>" + kaefig + "</svg>";
-  }
-
   /* Welche Sprechbilder seit dem SCHON-PASS EIN Bild sind statt
      Teilchen oder Rand-Schichten. */
-  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg, blut: lcBlutSvg, eis: lcEisSvg, bluete: lcBlueteSvg,
-    strom: lcStromASvg, stromkugel: lcStromBSvg, strommantel: lcStromCSvg };
+  const LC_SPRECH_SVG = { feuer: lcFeuerSvg, welle: lcWelleSvg, blut: lcBlutSvg, eis: lcEisSvg, bluete: lcBlueteSvg };
 
   function lcSprechFeld(knopf, art) {
     const kreis = knopf.querySelector(".lc-kreis");
@@ -30377,7 +30229,7 @@
     ring: "\ud83d\udfe2", welle: "\ud83c\udf0a", puls: "\ud83d\udc93",
     regenbogen: "\ud83c\udf08", funkeln: "\u2728", magie: "\ud83e\ude84",
     noten: "\ud83c\udfb5", herzen: "\u2764\ufe0f", feuer: "\ud83d\udd25",
-    strom: "\u26a1", stromkugel: "\u26a1", strommantel: "\u26a1", blasen: "\ud83e\uded0", eis: "\u2744\ufe0f",
+    strom: "\u26a1", blasen: "\ud83e\uded0", eis: "\u2744\ufe0f",
     bluete: "\ud83c\udf38", stoerung: "\ud83d\udcfa",
     blut: "\ud83e\ude78", spinnweb: "\ud83d\udd78\ufe0f", aus: "\u2b55"
   };

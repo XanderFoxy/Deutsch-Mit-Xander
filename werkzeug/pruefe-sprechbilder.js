@@ -35,7 +35,7 @@ const pruefe = (was, gut, zusatz) => {
 
 /* SCHON-PASS (Xanders Liste vom 23.09.): das Feuer ist seitdem EIN
    Bild statt Teilchen — es hat unten einen eigenen Abschnitt. */
-const TEILCHEN = ["magie", "noten", "herzen", "strom", "blasen"];
+const TEILCHEN = ["magie", "noten", "herzen", "blasen"]; /* Strom seit SCHON-PASS 7 ein Bild */
 
 (async () => {
   const srv = http.createServer((q, a) => {
@@ -68,7 +68,9 @@ const TEILCHEN = ["magie", "noten", "herzen", "strom", "blasen"];
      läuft, oder Spinnweben. Du musst gucken, ob das als
      Sprecheffekt passt" — nachgesehen, es passt: beides ist ein
      Zustand, kein Wurf. */
-  pruefe("es sind sechzehn Sprechbilder plus „aus“", liste.length === 17,
+  /* SCHON-PASS 7: Strom in drei Arten (Plasmalampe, Kugel, Mantel) —
+     zwei mehr. */
+  pruefe("es sind achtzehn Sprechbilder plus „aus“", liste.length === 19,
     liste.length + ": " + liste.join(", "));
   ["eis", "bluete", "stoerung", "blut", "spinnweb"].forEach((n) => pruefe("„" + n + "“ ist neu dabei", liste.indexOf(n) >= 0));
   TEILCHEN.forEach((t) => pruefe("„" + t + "“ steht dabei", liste.indexOf(t) >= 0));
@@ -271,6 +273,37 @@ const TEILCHEN = ["magie", "noten", "herzen", "strom", "blasen"];
   pruefe("am Ende sind alle offen", offen.every((x) => x >= 0.95), offen.join(" "));
   pruefe("beim Verstummen Blatt fuer Blatt zu", Math.min(...halbZu) < 0.5 && Math.max(...halbZu) > 0.8, halbZu.join(" "));
   pruefe("dann ist der Kelch zu", zu.every((x) => x <= 0.35), zu.join(" "));
+
+  console.log("\nSCHON-PASS 7 — STROM A / B / C\n");
+  const sm = await pg.evaluate(() => {
+    const knopf = document.querySelector(".lc-platz");
+    const erg = {};
+    ["strom", "stromkugel", "strommantel"].forEach((a) => {
+      knopf.dataset.sprechbild = a;
+      window.DMA_PRUEFUNG.sprechFeld(knopf, a);
+      const svg = knopf.querySelector(".lc-sprechfeld .lc-strom-bild");
+      if (!svg) { erg[a] = null; return; }
+      const zucken = [...svg.querySelectorAll('animate[attributeName="d"][calcMode="discrete"]')];
+      const leben = zucken.map((z) => parseFloat(z.getAttribute("dur")) / z.getAttribute("values").split(";").length);
+      /* alle Punkte aller Formen: Abstand zur Mitte */
+      const r = [];
+      zucken.forEach((z) => z.getAttribute("values").split(";").forEach((d) => {
+        const zahlen = (d.match(/-?\d+\.?\d*/g) || []).map(Number);
+        for (let i = 0; i + 1 < zahlen.length; i += 2) r.push(Math.hypot(zahlen[i] - 50, zahlen[i + 1] - 50));
+      }));
+      erg[a] = { linien: zucken.length, lebenMin: Math.min(...leben), lebenMax: Math.max(...leben), rMin: Math.min(...r),
+        kugel: !!svg.querySelector("animateMotion"), weg: (svg.querySelector("animateMotion") || { getAttribute: () => "" }).getAttribute("path") };
+    });
+    return erg;
+  });
+  /* jede Linie steht zweimal da: scharf und darunter weich (Leuchten) */
+  pruefe("Plasmalampe: 5–6 Filamente aus der Mitte", sm.strom && sm.strom.linien >= 10 && sm.strom.linien <= 12 && sm.strom.rMin < 1.5,
+    sm.strom ? sm.strom.linien / 2 + " Filamente" : "fehlt");
+  pruefe("jede Form lebt 0,1–0,3 s", sm.strom && sm.strom.lebenMin >= 0.099 && sm.strom.lebenMax <= 0.301,
+    sm.strom ? sm.strom.lebenMin.toFixed(2) + "–" + sm.strom.lebenMax.toFixed(2) + " s" : "");
+  pruefe("Kugelblitz: eine Kugel wandert auf dem Ring", sm.stromkugel && sm.stromkugel.kugel && / A34\.7 34\.7 /.test(sm.stromkugel.weg), sm.stromkugel ? sm.stromkugel.weg : "fehlt");
+  /* Mantel: kein Punkt naeher an der Mitte als der Ring — „innen leer von Blitzen" */
+  pruefe("Strommantel: Entladungen NUR aussen", sm.strommantel && sm.strommantel.rMin >= 34.7, sm.strommantel ? "naechster Punkt " + sm.strommantel.rMin.toFixed(1) : "fehlt");
 
   console.log("\nUND WENN DAS SPRECHEN AUFHOERT?\n");
   const weg = await pg.evaluate(() => {

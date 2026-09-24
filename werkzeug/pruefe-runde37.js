@@ -253,58 +253,11 @@ const TEILCHENBILDER = ["funkeln", "magie"];
      Spinnennetz von der Feinheit."
      Drei Bedingungen, drei Messungen: keine Schicht mehr AUSSEN,
      ein Netz INNEN, und die Ladungen sitzen auf dem Reifen. */
-  console.log("\nDER STROM — HAARFEIN, INNEN, AUF DEM REIFEN\n");
-  const st = await pg.evaluate(async () => {
-    document.querySelectorAll(".lc-platz").forEach((p) => {
-      p.classList.remove("lc-platz-spricht"); p.removeAttribute("data-sprechbild");
-      p.querySelectorAll(".lc-sprechfeld").forEach((x) => x.remove());
-    });
-    const pl = document.querySelectorAll(".lc-platz")[1];
-    pl.classList.add("lc-platz-spricht");
-    pl.setAttribute("data-sprechbild", "strom");
-    window.DMA_PRUEFUNG.sprechFeld(pl, "strom");
-    await new Promise((f) => setTimeout(f, 320));
-    const kreis = pl.querySelector(".lc-kreis");
-    const kb = kreis.getBoundingClientRect();
-    const aussen = getComputedStyle(pl, "::after");
-    const netz = getComputedStyle(kreis, "::before");
-    const teile = [...pl.querySelectorAll(".lc-teilchen")];
-    const mx = kb.left + kb.width / 2, my = kb.top + kb.height / 2;
-    const abst = teile.map((t) => {
-      const b = t.getBoundingClientRect();
-      return Math.hypot(b.left + b.width / 2 - mx, b.top + b.height / 2 - my);
-    });
-    /* offsetWidth, NICHT getBoundingClientRect().width: die Ladung ist
-       um --wo gedreht, und der Kasten einer gedrehten Form ist immer
-       breiter als die Form selbst. Gemessen werden soll die STRICH-
-       breite, nicht die Diagonale ihres Kastens. */
-    const breiten = teile.map((t) => t.offsetWidth);
-    return {
-      aussen: aussen.display,
-      netzBild: netz.backgroundImage.slice(0, 40),
-      netzAnim: netz.animationName,
-      r: kb.width / 2,
-      anzahl: teile.length,
-      naechster: abst.length ? Math.min.apply(null, abst) : 0,
-      weitester: abst.length ? Math.max.apply(null, abst) : 0,
-      breiteste: breiten.length ? Math.max.apply(null, breiten) : 0
-    };
-  });
-  pruefe("aussen strahlt nichts mehr ab", st.aussen === "none",
-    ".lc-platz-spricht::after display: " + st.aussen);
-  pruefe("innen liegt ein Netz aus Linien",
-    st.netzBild.indexOf("svg") > -1 || st.netzBild.indexOf("url") > -1, st.netzBild);
-  pruefe("und es zuckt", Boolean(st.netzAnim) && st.netzAnim !== "none", st.netzAnim);
-  pruefe("die Ladungen tanzen auf dem Reifen",
-    st.anzahl >= 8 && st.naechster > st.r * 0.85 && st.weitester < st.r * 1.2,
-    st.anzahl + " Stueck, " + Math.round(st.naechster) + "–"
-      + Math.round(st.weitester) + " px bei Bildradius " + Math.round(st.r) + " px");
-  /* „die nie so ne Dicke haben wie du sie hast" — eine Ladung darf
-     hoechstens ein Zwanzigstel des Bildradius breit sein. Vorher war
-     ein Blitzkeil 0,5 rem = 8 px breit, also ein Fuenftel. */
-  pruefe("und sie sind haarfein",
-    st.breiteste > 0 && st.breiteste < st.r * 0.09,
-    st.breiteste.toFixed(1) + " px breit bei Bildradius " + Math.round(st.r) + " px");
+  /* SCHON-PASS 7 (Xanders Liste vom 23.09.): der Strom ist seitdem eine
+     Plasmalampe als Bild — „Elektrode in der Bildmitte, Filamente
+     suchen den Ring … dick am Kern (2–3 px), verjüngt". Die alte
+     Vorgabe „haarfein" gilt damit nicht mehr; gemessen wird die neue
+     in pruefe-sprechbilder. */
 
   /* ---------- 7. Die Teilchen liegen AUSSERHALB des Bildes ----- */
   console.log("\nFEUER, FUNKELN UND MAGIE — TEILCHEN AM RAND\n");

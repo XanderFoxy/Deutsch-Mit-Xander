@@ -1355,11 +1355,7 @@ window.LiveChat = (function () {
     noten:      "Noten — Musik steigt aus dem Bild auf",
     herzen:     "Herzen — kleine Herzen steigen auf",
     feuer:      "Feuer — Flammen züngeln am Rand",
-    /* SCHON-PASS (Xanders Liste vom 23.09.): Strom in drei Arten —
-       A Plasmalampe, B wandernde Kugel, C Mantel. */
-    strom:      "Plasmalampe — Blitze aus der Mitte suchen den Rand",
-    stromkugel: "Kugelblitz — eine Kugel wandert am Rand und entlädt sich nach außen",
-    strommantel:"Strommantel — Entladungen wie ein Käfig außen um den Kreis",
+    strom:      "Strom — Blitze zucken um den Kreis",
     blasen:     "Blasen — Seifenblasen steigen auf",
     /* GEWUENSCHT: „Vielleicht kannst du noch was mit Eis machen, dass
        das Bild gefriert, wenn ich spreche" und „als Sprech-Effekt
