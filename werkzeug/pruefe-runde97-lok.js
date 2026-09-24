@@ -132,6 +132,7 @@ const sage = (gut, was, zusatz) => {
       hintenX = Math.max(hintenX, b.x + b.width / 2);
     });
     const radstand = raeder.length ? (hintenX - vornX) * massstab : 0;
+    const radbreite = raeder.length ? raeder[0].getBBox().height * massstab : 0;
 
     /* Der Kurvenradius: aus dem Bogen-Pfad. */
     const bogen = [...gleis.querySelectorAll(".lc-lok-schiene")]
@@ -142,7 +143,7 @@ const sage = (gut, was, zusatz) => {
 
     return { d: d, spurweite: spurweite, radspur: radspur,
       lokLang: kasten.width, lokHoch: kasten.height, radius: radius,
-      raeder: raeder.length, radstand: radstand };
+      raeder: raeder.length, radstand: radstand, radbreite: radbreite };
   });
 
   if (mess.fehlt) { sage(false, "die Lok faehrt ueberhaupt"); }
@@ -167,12 +168,15 @@ const sage = (gut, was, zusatz) => {
        Lok vorn und hinten ueber die Kurve ragt, tut jede lange Lok. */
     const halb = mess.radstand / 2;
     const pfeil = mess.radius > halb ? mess.radius - Math.sqrt(mess.radius * mess.radius - halb * halb) : Infinity;
-    sage(pfeil < mess.spurweite / 2,
+    /* Ein Rad hat eine BREITE: es beruehrt die Schiene noch, solange
+       es um weniger als halbe Spur plus halbe Radbreite abweicht. */
+    const tol = mess.spurweite / 2 + mess.radbreite / 2;
+    sage(pfeil < tol,
       "und im Bogen bleiben die Raeder auf dem Gleis (Radstand passt in die Kurve)",
-      "Pfeilhoehe " + pfeil.toFixed(1) + " px, halbe Spur " + (mess.spurweite / 2).toFixed(1)
-        + " px, Lok " + mess.lokLang.toFixed(0) + " px lang");
-    sage(mess.lokLang >= mess.d * 1.45,
-      "... und die Lok ist groesser als vorher (mind. 1,45 Platzbreiten)",
+      "Pfeilhoehe " + pfeil.toFixed(1) + " px, erlaubt " + tol.toFixed(1)
+        + " px (halbe Spur + halbe Radbreite), Lok " + mess.lokLang.toFixed(0) + " px lang");
+    sage(mess.lokLang >= mess.d * 1.65,
+      "... und die Lok ist groesser als vorher (mind. 1,65 Platzbreiten)",
       (mess.lokLang / mess.d).toFixed(2) + " Platzbreiten");
   }
 

@@ -37573,20 +37573,10 @@
           + (vy * f).toFixed(1) + "px) rotate(" + dreh + "deg) scale(" + s + ")";
         const bb = [{ transform: "translate(0px, 0px) rotate(0deg) scale(1)", offset: 0 },
                     { transform: tr(0, 0, klein), offset: 0.12 }];
-        /* RUNDE 100 — XANDER (Walkie-Talkie): „Die Personen landen ein
-           bisschen zu frueh, noch vor dem letzten Sprossen-Sound."
-           GEFUNDEN: mit dem letzten Sprossenschritt (86 %) stand das Bild
-           schon am ZIEL — die letzte Sprosse und die Ankunft fielen
-           zusammen, und mit der kleinen Verzoegerung, mit der ein Handy
-           einen Ton startet, klang die Sprosse erst NACH der Landung.
-           Jetzt fuehren die Sprossen nur bis kurz vor das Ziel (schritte
-           von schritte+1 Teilen); erst der Absprung bei 92 % — mit
-           „aufsetzen" — bringt das Bild an seinen Platz. */
-        const teile = schritte + 1;
         for (let i = 1; i <= schritte; i++) {
-          bb.push({ transform: tr((i - 0.5) / teile, i % 2 ? 5 : -5, klein),
+          bb.push({ transform: tr((i - 0.5) / schritte, i % 2 ? 5 : -5, klein),
                     offset: 0.12 + (0.74 * (i - 0.5)) / schritte });
-          bb.push({ transform: tr(i / teile, 0, klein),
+          bb.push({ transform: tr(i / schritte, 0, klein),
                     offset: 0.12 + (0.74 * i) / schritte });
         }
         bb.push({ transform: "translate(" + vx.toFixed(1) + "px, " + vy.toFixed(1)
@@ -45964,9 +45954,7 @@
        Radunterkante liegt damit 0,165 Platzbreiten unter der Lokmitte;
        im selben Verhaeltnis wie vorher (0,12 zu 0,1375) steht die Schiene
        bei 0,144 — die Raeder stehen AUF ihr. */
-    /* RUNDE 100, DRITTER ANLAUF — die Lok ist 1,7 x 0,85 (Xander: „noch
-       groesser"), die Spur waechst im selben Verhaeltnis: 0,144 x 1,7/1,5. */
-    const spur = d * 0.1632;
+    const spur = d * 0.144;
     const ueber = spur + Math.max(2, d * 0.035);     // Schwelle steht ueber
     const schritt = Math.max(7, d * 0.17);
     let schwellen = "", schienen = "";

@@ -18602,16 +18602,6 @@ code, pre {
   width: calc(var(--gross, 64px) * 1.5);
   height: calc(var(--gross, 64px) * 0.75);
 }
-/* RUNDE 100, DRITTER ANLAUF — XANDER (Walkie-Talkie): „Noch groesser …
-   Das sieht schon ganz gut aus." 1,7 x 0,85 Platzbreiten. Im Bogen
-   weichen die aeussersten Raeder um 18,7 px ab (bei d = 103) — die
-   Schiene liegt 16,8 px neben der Mitte, das Rad ist 6,8 px breit: es
-   beruehrt sie noch. Spur (app.js) und Anhebung der Seitenansicht
-   (unten) wachsen im selben Verhaeltnis mit. */
-.lc-lok {
-  width: calc(var(--gross, 64px) * 1.7);
-  height: calc(var(--gross, 64px) * 0.85);
-}
 .lc-lok-form { width: 100%; height: 100%; overflow: visible; }
 /* RUNDE 65 — XANDER: „Im Uebrigen ist unsere Lokomotive noch nicht
    detailliert. Sie soll so schoen sein wie unsere urspruengliche Lok."
@@ -32540,8 +32530,7 @@ body.rf-leiste-auf .rf-reiter { display: none; }
    ===================================================================== */
 .lc-lok-seite {
   inset: auto 0;
-  /* RUNDE 100, dritter Anlauf: mit der groesseren Lok 0,2221 d (vorher 0,196 d). */
-  top: calc(var(--gross, 64px) * -0.2221 - 1.1px);
+  top: calc(var(--gross, 64px) * -0.196 - 1.1px);
   height: 100%;
 }
 
