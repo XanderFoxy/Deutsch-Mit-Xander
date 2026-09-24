@@ -377,9 +377,13 @@ const sage = (gut, was, zusatz) => {
   /* RUNDE 101 — das Aufziehen dauert jetzt je Umdrehung 0,55 s (Funk 67:
      „zieht gar nicht in den benannten Zahlen auf"): bei 3× also
      350 + 3 · 550 = 2000 ms bis zum Loslassen. */
-  sage(tonR("aufziehen") >= 0 && tonR("aufziehen") <= 120 && Math.abs(tonR("luftraus") - 2000) <= 120 && Math.abs(tonR("rennauto") - 2060) <= 120,
-    "Ratschen beim Aufziehen, Zischen beim Loslassen, Motor beim Flitzen",
-    tonR("aufziehen") + " / " + tonR("luftraus") + " / " + tonR("rennauto") + " ms");
+  /* RUNDE 101 — Funk 89: „bei einmal muss man ein Geräusch und bei 3×
+     3 Geräusche" — je Aufziehen EIN Ratsch (aufziehzug) bei 150 + i·550. */
+  const zuege = hr.toene.filter((x) => x[0] === "aufziehzug").map((x) => x[1]);
+  sage(zuege.length === 3 && [150, 700, 1250].every((z, i) => Math.abs(zuege[i] - z) <= 120)
+      && Math.abs(tonR("luftraus") - 2000) <= 120 && Math.abs(tonR("rennauto") - 2060) <= 120,
+    "bei 3× genau drei Ratscher beim Aufziehen, Zischen beim Loslassen, Motor beim Flitzen",
+    "Ratscher " + zuege.join("/") + " · Zischen " + tonR("luftraus") + " · Motor " + tonR("rennauto") + " ms");
 
   await br.close();
   srv.close();

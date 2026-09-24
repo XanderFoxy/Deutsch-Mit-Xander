@@ -30556,7 +30556,8 @@
     ["\ud83e\ude79", "Pflaster",  "pflaster"],
     ["\u2744\ufe0f", "Schnee", "schnee"],
     ["\ud83e\ude83", "Bumerang", "bumerang"],
-    ["\ud83c\udff9", "Pfeil",    "pfeil"],
+    /* RUNDE 101 — „Pfeil" steht jetzt als „Pfeil und Bogen" unter
+       „Schießen" (Funk 89, siehe dort). */
     ["\ud83c\udf66", "Sahne",    "sahne"],
     ["\ud83c\udf00", "Strudel",  "strudel"],
     /* „Da kannst du vielleicht zwei Versionen von der Trommel
@@ -30776,9 +30777,19 @@
        einen einzelnen so anvisiert … und dann soll man den abschießen
        können." Eine Kachel fuers Zielen und Schiessen, die Zwille bleibt
        darin der erste Eintrag. */
+    /* RUNDE 101 — XANDER (Funk 89): „ich sehe noch nicht alle Sachen,
+       z.B. das mit dem Zielfernrohr, das sehe ich nicht … Pfeil und
+       Bogen ist auch nicht unterschieden."
+       GEFUNDEN: die Gruppe „Werfen" und diese Kachel trugen BEIDE das
+       Zeichen 🎯 — man sah zwei gleiche Scheiben und fand das
+       Zielfernrohr nicht. Und „Pfeil" stand einzeln daneben, obwohl
+       es genauso ein Schuss ist. Jetzt: „Werfen" hat sein eigenes
+       Zeichen, und unter „Schießen" stehen alle vier nebeneinander,
+       der Bogen als „Pfeil und Bogen". */
     ["\ud83c\udfaf", "Schie\u00dfen", "zwille", false,
-      [["\ud83e\ude83", "Zwille", "zwille"],
-       ["\ud83c\udfaf", "Zielfernrohr", "zielfernrohr"],
+      [["\ud83c\udff9", "Pfeil und Bogen", "pfeil"],
+       ["\ud83e\ude83", "Zwille", "zwille"],
+       ["\ud83d\udd2d", "Zielfernrohr", "zielfernrohr"],
        /* „wo wir uns mit Laserstrahlen bekriegen können" */
        ["\u26a1", "Laserduell", "laser"]]],
     /* RUNDE 70 — XANDER: „Bei dem Anspucken haben wir das Pusten als
@@ -31130,7 +31141,7 @@
     /* XANDER (Walkie-Talkie, Runde 100): „Ei muss auch da raus, weil
        man das Ei nicht wirft, sondern aufschlaegt." Das Ei steht
        deshalb wieder einzeln in der obersten Ebene. */
-    ["\ud83c\udfaf", "Werfen",
+    ["\ud83e\udd3e", "Werfen",
      ["bumerang", "katapult"]],
     ["\ud83e\udd22", "Eklig",
      ["spucken", "vogelkot", "sabbern"]],
@@ -41323,8 +41334,19 @@
        und die Fahrt ist bei 3× dreimal, bei 5× fuenfmal so kraeftig —
        gerechnet als Fahrzeit 5200 ms / kraft^0,8 (1× 5,2 s, 3× 2,2 s,
        5× 1,4 s). */
+    /* RUNDE 101 — XANDER (Funk 89): „die unterschiedlichen
+       Geschwindigkeiten sind noch nicht spürbar … bei einmal muss man
+       ein Geräusch und bei 3× 3 Geräusche, bei 5× 5 mal, und dann fährt
+       man auch bei einmal so schnell, dreimal so schnell bei dreimal und
+       fünfmal so schnell bei 5 mal."
+       GEMESSEN: der Ton „aufziehen" ist EINE 2-s-Datei mit sechs
+       Ratsch-Stoessen; sie lief einmal und wurde bei AUF abgeschnitten —
+       bei 1× hoerte man also drei Stoesse, bei 3× alle sechs. Und die
+       Fahrzeit sank nur mit kraft^0,8 (5× war 3,7-mal so schnell). Jetzt:
+       genau EIN Ratsch (ton/aufziehzug, 0,36 s) je Aufziehen, auf den
+       sichtbaren Ruck gelegt, und die Fahrzeit ist 5200 ms / kraft. */
     const AUF = 350 + 550 * kraft;
-    const ZOOM = Math.round(5200 / Math.pow(kraft, 0.8));
+    const ZOOM = Math.round(5200 / kraft);
     const DAUER = AUF + ZOOM + 900;
     return lcAmPlatz(wen, "lc-hotrod", (schicht, platz) => {
       const kreis = platz.querySelector(".lc-kreis");
@@ -41395,7 +41417,10 @@
         if (t < AUF) {
           /* Aufziehen: in drei Rucken zurueckgezogen, gegen die Fahrtrichtung. */
           /* je Aufziehen ein Ruck zurueck — so viele Rucke wie Umdrehungen */
-          const k = t / AUF, ruck = Math.min(1, Math.floor(k * kraft) / kraft + Math.min(1, (k * kraft % 1) * 3) / kraft);
+          /* Ruck i beginnt bei 150 + i·550 ms und dauert 180 ms — genau
+             dann ratscht es (siehe unten). */
+          let ruck = 0;
+          for (let i = 0; i < kraft; i++) ruck += Math.max(0, Math.min(1, (t - 150 - i * 550) / 180)) / kraft;
           return { x: S.x - dir0 * gr * (0.08 + 0.03 * kraft) * ruck, y: S.y };
         }
         if (t < AUF + ZOOM) {
@@ -41625,7 +41650,7 @@
       setTimeout(() => { aufraeumen(); buehne.remove(); }, DAUER + 2000);
       /* Die Toene: das Ratschen beim Aufziehen, das Zischen beim
          Loslassen, der Motor waehrend der Fahrt, das Bremsen am Ende. */
-      lcTonSpaeter("aufziehen", 0, 0.6, AUF);
+      for (let i = 0; i < kraft; i++) lcTonSpaeter("aufziehzug", 150 + i * 550, 0.6);
       lcTonSpaeter("luftraus", AUF, 0.55, 900);
       lcTonSpaeter("rennauto", AUF + 60, 0.45, ZOOM);
       /* RUNDE 101: kein Quietschen beim Hot Rod — es quietscht nur an den
