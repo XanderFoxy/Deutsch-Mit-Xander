@@ -23048,187 +23048,6 @@
      fuer alle hoerbar werden." Ohne Namen geht derselbe Abschnitt als
      „/musik 3 1:18-1:53" hinaus.
      ===================================================================== */
-  /* =====================================================================
-     FUNK 104 — FARBIGE LIEDTEILE, DIE WELLENFORM UND ZWEI KLAMMERN
-     ---------------------------------------------------------------------
-     XANDER: „… und dass ich auch diese farbcodierten Lied Teile haben
-     kann bzw nicht codiert aber farblich wie Buttons halt wie ich schon
-     gesagt habe und hast du auch schon den w-form sample Ausschnitt so
-     gewaehlt dass ich die Klammern auf flexibel noch ziehen kann ueber
-     der w-form um so eine einfachere Auswahl fuer ein Lied Teil zu
-     ermoeglichen."
-
-     VORHER (Runde 88/89, lcAusschnittWahl): die Abschnitte standen als
-     graue Listenzeilen untereinander („✂️ Refrain 1:18–1:53"), und ein
-     Ausschnitt liess sich nur ueber zwei Textfelder eintippen. Vom Lied
-     selbst war nichts zu sehen — wo der Refrain liegt, musste man
-     wissen.
-
-     JETZT, in DIESEM Menue (kein zweites daneben):
-       · WELLENFORM: das Lied selbst, mit der Web-Audio-Schnittstelle
-         entschluesselt (decodeAudioData) und auf 160 Balken
-         eingedampft. Einmal gerechnet, dann gemerkt — im Speicher und
-         im Geraet („dma_wellenform"), damit ein Telefon nicht jedes
-         Mal ein ganzes MP3 entschluesseln muss.
-       · ZWEI KLAMMERN [ und ] auf der Wellenform: ziehen mit Finger
-         oder Maus setzt Anfang und Ende, auf die Sekunde. Ein Tipp
-         irgendwo auf die Welle holt die naehere Klammer dorthin.
-       · DIE LIEDTEILE als farbige Knoepfe, jeder in seiner Farbe
-         (Refrain, Strophe, Bridge … haben feste Farben, alles andere
-         bekommt die naechste freie). Ein Tipp legt die Klammern auf
-         diesen Teil und faerbt die Strecke dazwischen in seiner Farbe.
-         Dieselben Farben liegen als schmales Band unter der Welle —
-         so sieht man, WO im Lied welcher Teil steckt.
-       · VORHOEREN: der kleine Abspielknopf spielt genau die Strecke
-         zwischen den Klammern, nur hier auf diesem Geraet.
-     Die beiden Zeitfelder bleiben (wer lieber tippt, tippt) und laufen
-     mit den Klammern mit — in beide Richtungen.
-     ===================================================================== */
-  const LC_WELLE_BALKEN = 160;
-  const lcWelleSpeicher = {};      /* Datei -> { dauer, balken[0..1] } */
-  const lcWelleLaeuft = {};        /* Datei -> Promise, solange gerechnet wird */
-  function lcWelleGemerkt(datei) {
-    if (!datei) return null;
-    if (lcWelleSpeicher[datei]) return lcWelleSpeicher[datei];
-    try {
-      const alles = JSON.parse(localStorage.getItem("dma_wellenform") || "{}");
-      const w = alles && alles[datei];
-      if (w && w.v === 1 && Array.isArray(w.b) && w.b.length && w.d > 0) {
-        lcWelleSpeicher[datei] = { dauer: Number(w.d), balken: w.b.map((x) => (Number(x) || 0) / 99) };
-        return lcWelleSpeicher[datei];
-      }
-    } catch (e) {}
-    return null;
-  }
-  function lcWelleMerken(datei, welle) {
-    lcWelleSpeicher[datei] = welle;
-    try {
-      const alles = JSON.parse(localStorage.getItem("dma_wellenform") || "{}") || {};
-      alles[datei] = { v: 1, d: Math.round(welle.dauer * 100) / 100,
-                       b: welle.balken.map((x) => Math.round(x * 99)) };
-      localStorage.setItem("dma_wellenform", JSON.stringify(alles));
-    } catch (e) {}
-  }
-  /* Entschluesseln. 8000 Hz reichen fuer ein Bild von 160 Balken und
-     brauchen auf dem Telefon ein Fuenftel des Speichers; wer 8000 nicht
-     kann (aeltere Safari), bekommt die naechste Rate. */
-  function lcWelleEntschluesseln(puffer) {
-    const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-    if (!Ctx) return Promise.reject(new Error("kein Web Audio"));
-    const raten = [8000, 22050, 44100];
-    const versuch = (i) => {
-      let ctx;
-      try { ctx = new Ctx(1, 1, raten[i]); }
-      catch (e) { return i + 1 < raten.length ? versuch(i + 1) : Promise.reject(e); }
-      return new Promise((ok, nein) => {
-        let fertig = false;
-        const ja = (b) => { if (!fertig) { fertig = true; ok(b); } };
-        const nee = (e) => { if (!fertig) { fertig = true; nein(e || new Error("decode")); } };
-        /* slice: decodeAudioData nimmt den Puffer mit — fuer den
-           naechsten Versuch muss es eine Kopie sein. */
-        const v = ctx.decodeAudioData(puffer.slice(0), ja, nee);
-        if (v && v.then) v.then(ja, nee);
-      }).catch((e) => (i + 1 < raten.length ? versuch(i + 1) : Promise.reject(e)));
-    };
-    return versuch(0);
-  }
-  function lcWelleHolen(datei) {
-    const da = lcWelleGemerkt(datei);
-    if (da) return Promise.resolve(da);
-    if (lcWelleLaeuft[datei]) return lcWelleLaeuft[datei];
-    lcWelleLaeuft[datei] = fetch("music/" + encodeURIComponent(datei))
-      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.arrayBuffer(); })
-      .then((puffer) => lcWelleEntschluesseln(puffer))
-      .then((ton) => {
-        const n = LC_WELLE_BALKEN;
-        const laenge = ton.length;
-        const kanaele = [];
-        for (let c = 0; c < ton.numberOfChannels; c++) kanaele.push(ton.getChannelData(c));
-        /* Je Balken die mittlere Lautheit (RMS). Die Spitzen allein
-           taugen bei gemasterter Musik nicht — die stehen fast ueberall
-           bei 1, und das Bild waere ein flacher Klotz. */
-        const roh = new Array(n).fill(0);
-        let hoechst = 0;
-        for (let i = 0; i < n; i++) {
-          const von = Math.floor(i * laenge / n);
-          const bis = Math.max(von + 1, Math.floor((i + 1) * laenge / n));
-          let summe = 0, zahl = 0;
-          for (let k = von; k < bis && k < laenge; k++) {
-            let s = 0;
-            for (let c = 0; c < kanaele.length; c++) s += kanaele[c][k];
-            s /= kanaele.length || 1;
-            summe += s * s; zahl++;
-          }
-          roh[i] = zahl ? Math.sqrt(summe / zahl) : 0;
-          if (roh[i] > hoechst) hoechst = roh[i];
-        }
-        /* Gemasterte Musik ist fast ueberall laut — ein Bild von 0 bis
-           zum Hoechstwert waere ein gleichmaessiger Klotz. Deshalb
-           zaehlt der Abstand zur leisesten Zehntel-Stelle: so treten
-           Strophe, Refrain und Pausen deutlich auseinander. Ganz leise
-           bleibt nie ganz leer (4 %), sonst reisst die Welle ab. */
-        const sortiert = roh.slice().sort((a, b) => a - b);
-        const leise = sortiert[Math.floor(n * 0.1)] * 0.75;
-        const spanne = Math.max(1e-6, hoechst - leise);
-        const balken = roh.map((x) => (hoechst > 0
-          ? Math.max(0.04, Math.min(1, Math.pow(Math.max(0, x - leise) / spanne, 1.15))) : 0));
-        const welle = { dauer: ton.duration, balken: balken };
-        lcWelleMerken(datei, welle);
-        if (welle.dauer > 0) lcLiedDauerMerker[datei] = welle.dauer;
-        return welle;
-      })
-      .catch(() => null)
-      .then((w) => { delete lcWelleLaeuft[datei]; return w; });
-    return lcWelleLaeuft[datei];
-  }
-
-  /* DIE FARBEN DER LIEDTEILE — „farblich wie Buttons".
-     Gleiche Art, gleiche Farbe in jedem Lied: der Refrain ist immer
-     himbeerrot, die Strophe immer blau. Kommt eine Art in einem Lied
-     zweimal vor, bekommt der zweite die naechste freie Farbe — jeder
-     Teil soll seine eigene haben. Alle Farben tragen weisse Schrift
-     mit mindestens 4,5 : 1 Kontrast, nur das Gold dunkle. */
-  const LC_STELLEN_ARTEN = [
-    { art: /vor-?refrain|pre-?chorus/i, farbe: "#d9a91e" },
-    { art: /refrain|chorus|hook/i,      farbe: "#c8365f" },
-    { art: /strophe|vers/i,             farbe: "#2f6fbd" },
-    { art: /bridge|brücke|bruecke/i, farbe: "#7a4fc4" },
-    { art: /intro|anfang/i,             farbe: "#18806f" },
-    { art: /outro|schluss|ende/i,       farbe: "#5b6780" },
-    { art: /solo|instrumental/i,        farbe: "#b85a14" }
-  ];
-  const LC_STELLEN_REST = ["#2e7d3a", "#a8432a", "#4152c4", "#a03a98", "#1c7597", "#7a6a12"];
-  function lcStellenFarben(stellen) {
-    const vergeben = {};
-    const alle = LC_STELLEN_ARTEN.map((a) => a.farbe).concat(LC_STELLEN_REST);
-    return (stellen || []).map((st) => {
-      const art = LC_STELLEN_ARTEN.find((a) => a.art.test(String(st.name || "")));
-      let farbe = art && !vergeben[art.farbe] ? art.farbe : "";
-      if (!farbe) farbe = LC_STELLEN_REST.find((f) => !vergeben[f]) || alle.find((f) => !vergeben[f]) || "#5b6780";
-      vergeben[farbe] = true;
-      return farbe;
-    });
-  }
-  function lcFarbeSchrift(hex) {
-    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || "");
-    if (!m) return "#fff";
-    const kanal = (x) => { const v = parseInt(x, 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
-    const L = 0.2126 * kanal(m[1]) + 0.7152 * kanal(m[2]) + 0.0722 * kanal(m[3]);
-    return L > 0.32 ? "#1b1f29" : "#ffffff";
-  }
-  /* Die zwei Klammern als Zeichnung, nicht als Schriftzeichen: ein
-     senkrechter Strich mit zwei Armen, die zur Strecke hin zeigen. */
-  function lcKlammerSvg(rechts) {
-    const arm = rechts ? "M16 3 H7 M16 57 H7" : "M12 3 H21 M12 57 H21";
-    const x = rechts ? 16 : 12;
-    return '<svg viewBox="0 0 28 60" preserveAspectRatio="none" aria-hidden="true">'
-      + '<path d="M' + x + ' 3 V57 ' + arm + '" fill="none" stroke="currentColor"'
-      + ' stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"'
-      + ' vector-effect="non-scaling-stroke"/>'
-      + '<rect x="' + (x - 4) + '" y="24" width="8" height="12" rx="4" fill="currentColor"/>'
-      + "</svg>";
-  }
-
   function lcAusschnittWahl(fuerWen, nr, titel) {
     lcPlatzMenueZu();
     let lieder = [];
@@ -23239,33 +23058,25 @@
 
     const kasten = document.createElement("div");
     kasten.id = "lcPlatzMenue";
-    kasten.className = "lc-platzmenue lc-lesewahl lc-hoererwahl";
+    kasten.className = "lc-platzmenue lc-lesewahl";
     kasten.setAttribute("role", "menu");
     const kopf = document.createElement("p");
     kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = "„" + titel + "“ — welcher Teil?";
+    kopf.textContent = "\u201e" + titel + "\u201c \u2014 welcher Teil?";
     kasten.appendChild(kopf);
-    /* FUNK 104 — alles unter dem Kopf rollt in EINEM Kasten. Die
-       Lesewahl ist eine Spalte mit „overflow: hidden"; mit Welle und
-       Knopfreihe waere der untere Rand auf einem kleinen Telefon sonst
-       einfach abgeschnitten. */
-    const koerper = document.createElement("div");
-    koerper.className = "lc-hoerer-koerper";
-    kasten.appendChild(koerper);
 
     /* Der Rueckweg. Er steht OBEN, weil man ihn dort sucht. */
     const zurueck = document.createElement("button");
     zurueck.type = "button";
     zurueck.className = "lc-lese-text lc-lied-zurueck";
-    zurueck.textContent = "‹  Zurück zu den Liedern";
+    zurueck.textContent = "\u2039  Zur\u00fcck zu den Liedern";
     zurueck.addEventListener("click", (e) => {
       e.preventDefault(); e.stopPropagation();
       lcMusikWaehler(einer);
     });
-    koerper.appendChild(zurueck);
+    kasten.appendChild(zurueck);
 
     const schicken = (zusatz, ab, bis) => {
-      vorhoerenStopp();
       lcPlatzMenueZu();
       const zeile = einer
         ? "/kopfhoerer " + einer + " " + nr + (zusatz ? " " + zusatz : "")
@@ -23291,112 +23102,50 @@
     const ganz = document.createElement("button");
     ganz.type = "button";
     ganz.className = "lc-lese-text";
-    ganz.textContent = "▶️  Ganzes Lied";
+    ganz.textContent = "\u25b6\ufe0f  Ganzes Lied";
     ganz.addEventListener("click", (e) => {
       e.preventDefault(); e.stopPropagation();
       schicken("");
     });
-    koerper.appendChild(ganz);
+    kasten.appendChild(ganz);
 
-    /* ---------------------------------------------------------------
-       DER ZUSTAND: Anfang und Ende in ganzen Sekunden. „bis" = 0
-       heisst „bis zum Ende" — so, wie es auch in der Nachricht steht.
-       --------------------------------------------------------------- */
+    /* DIE ABSCHNITTE ALS KNOEPFE. */
     const stellen = datei ? lcLiedStellen(datei) : [];
-    const farben = lcStellenFarben(stellen);
-    const alt = lcAusschnittHolen(nr) || { ab: 0, bis: 0 };
-    let dauer = 0;
-    let balken = null;
-    let selAb = Math.max(0, Number(alt.ab) || 0);
-    let selBis = Math.max(0, Number(alt.bis) || 0);
-    let gewaehlt = -1;
-    let kopfZeit = -1;                  /* Vorhoeren: wo es gerade steht */
-    const bisEcht = () => (selBis > 0 ? selBis : dauer);
-    const FREI = "#8fb4ff";             /* frei gezogen: kein Liedteil */
-    const farbeJetzt = () => (gewaehlt >= 0 ? farben[gewaehlt] : FREI);
-
-    /* --- DIE WELLE MIT DEN ZWEI KLAMMERN --------------------------- */
-    const welle = document.createElement("div");
-    welle.className = "lc-welle lc-welle-wartet";
-    welle.innerHTML =
-      '<canvas class="lc-welle-bild" aria-hidden="true"></canvas>'
-      + '<p class="lc-welle-hinweis">Wellenform wird berechnet …</p>'
-      + '<button type="button" class="lc-klammer lc-klammer-ab" data-griff="ab"'
-      + ' aria-label="Anfang des Ausschnitts" title="Anfang — ziehen">'
-      + lcKlammerSvg(false) + '<span class="lc-klammer-zeit"></span></button>'
-      + '<button type="button" class="lc-klammer lc-klammer-bis" data-griff="bis"'
-      + ' aria-label="Ende des Ausschnitts" title="Ende — ziehen">'
-      + lcKlammerSvg(true) + '<span class="lc-klammer-zeit"></span></button>';
-    koerper.appendChild(welle);
-    const bild = welle.querySelector("canvas");
-    const griffAb = welle.querySelector(".lc-klammer-ab");
-    const griffBis = welle.querySelector(".lc-klammer-bis");
-
-    /* --- VORHOEREN UND DIE ANZEIGE DER STRECKE ---------------------- */
-    const leiste = document.createElement("div");
-    leiste.className = "lc-welle-leiste";
-    leiste.innerHTML =
-      '<button type="button" class="lc-welle-hoeren" aria-label="Ausschnitt vorhören"'
-      + ' title="Ausschnitt vorhören (nur bei dir)">'
-      + '<svg viewBox="0 0 20 20" aria-hidden="true"><path class="lc-welle-spiel"'
-      + ' d="M6 4 L16 10 L6 16 Z" fill="currentColor"/><rect class="lc-welle-halt"'
-      + ' x="5" y="5" width="10" height="10" rx="1.5" fill="currentColor"/></svg></button>'
-      + '<span class="lc-welle-zeit"></span>';
-    koerper.appendChild(leiste);
-    const hoeren = leiste.querySelector(".lc-welle-hoeren");
-    const anzeige = leiste.querySelector(".lc-welle-zeit");
-
-    /* --- DIE LIEDTEILE ALS FARBIGE KNOEPFE -------------------------- */
-    const knopfReihe = document.createElement("div");
-    knopfReihe.className = "lc-stellen-reihe";
-    const knoepfe = stellen.map((st, i) => {
+    stellen.forEach((st) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "lc-lese-text lc-lied-stelle lc-stelle-farbig";
-      b.style.setProperty("--stelle", farben[i]);
-      b.style.setProperty("--stelle-schrift", lcFarbeSchrift(farben[i]));
-      b.setAttribute("aria-pressed", "false");
-      b.innerHTML = '<span class="lc-stelle-wort">' + escapeHtml(st.name) + "</span>"
+      b.className = "lc-lese-text lc-lied-stelle";
+      b.innerHTML = "\u2702\ufe0f  " + escapeHtml(st.name)
         + '<span class="lc-lied-zeit">' + lcZeitText(st.ab)
-        + (st.bis ? "–" + lcZeitText(st.bis) : " – Ende") + "</span>";
+        + (st.bis ? "\u2013" + lcZeitText(st.bis) : " \u2013 Ende") + "</span>";
       b.addEventListener("click", (e) => {
         e.preventDefault(); e.stopPropagation();
-        /* „Tapping a section": die Klammern springen auf diesen Teil,
-           die Strecke nimmt seine Farbe an. Geschickt wird erst mit dem
-           Knopf darunter — so kann man vorher hineinhoeren. */
-        selAb = st.ab;
-        selBis = st.bis;
-        if (dauer && selBis >= Math.floor(dauer)) selBis = 0;
-        vorhoerenStopp();
-        alles(true);
+        schicken(lcZeitText(st.ab) + (st.bis ? "-" + lcZeitText(st.bis) : ""), st.ab, st.bis);
       });
-      knopfReihe.appendChild(b);
-      return b;
+      kasten.appendChild(b);
     });
-    if (knoepfe.length) koerper.appendChild(knopfReihe);
 
     /* Der Ausschnitt von Hand: zwei Zeiten und ein Name. Vorbelegt mit
        dem, was zuletzt fuer dieses Lied galt. */
+    const alt = lcAusschnittHolen(nr) || { ab: 0, bis: 0 };
     const reihe = document.createElement("div");
     reihe.className = "lc-ausschnitt";
     reihe.innerHTML =
       '<label>ab <input type="text" class="lc-ausschnitt-ab" inputmode="numeric"'
-      + ' placeholder="0:00" value="' + (selAb ? lcZeitText(selAb) : "") + '"></label>'
+      + ' placeholder="0:00" value="' + (alt.ab ? lcZeitText(alt.ab) : "") + '"></label>'
       + '<label>bis <input type="text" class="lc-ausschnitt-bis" inputmode="numeric"'
-      + ' placeholder="Ende" value="' + (selBis ? lcZeitText(selBis) : "") + '"></label>';
-    koerper.appendChild(reihe);
-    const feldAb = reihe.querySelector(".lc-ausschnitt-ab");
-    const feldBis = reihe.querySelector(".lc-ausschnitt-bis");
+      + ' placeholder="Ende" value="' + (alt.bis ? lcZeitText(alt.bis) : "") + '"></label>';
+    kasten.appendChild(reihe);
     const namensfeld = document.createElement("div");
     namensfeld.className = "lc-ausschnitt lc-ausschnitt-name";
     namensfeld.innerHTML =
       '<label>Name <input type="text" class="lc-stelle-name" maxlength="24"'
-      + ' placeholder="Refrain, Bridge, Solo …"></label>';
-    koerper.appendChild(namensfeld);
+      + ' placeholder="Refrain, Bridge, Solo \u2026"></label>';
+    kasten.appendChild(namensfeld);
 
     const zeiten = () => {
-      const ab = lcZeitLesen(feldAb.value);
-      const bis = lcZeitLesen(feldBis.value);
+      const ab = lcZeitLesen(reihe.querySelector(".lc-ausschnitt-ab").value);
+      const bis = lcZeitLesen(reihe.querySelector(".lc-ausschnitt-bis").value);
       if (ab < 0 || bis < 0) { showToast("Zeit bitte als 1:20 oder als Sekunden."); return null; }
       if (bis && bis <= ab) { showToast("Das Ende muss nach dem Anfang liegen."); return null; }
       return { ab: ab, bis: bis };
@@ -23405,24 +23154,22 @@
     const los = document.createElement("button");
     los.type = "button";
     los.className = "lc-lese-text lc-ausschnitt-los";
-    const losWort = einer ? "Diesen Ausschnitt aufsetzen" : "Diesen Ausschnitt für alle";
-    los.innerHTML = '<span class="lc-ausschnitt-los-wort">' + losWort + "</span>"
-      + '<span class="lc-lied-zeit lc-ausschnitt-los-zeit"></span>';
+    los.textContent = einer ? "\u2702\ufe0f  Diesen Ausschnitt aufsetzen"
+                            : "\u2702\ufe0f  Diesen Ausschnitt f\u00fcr alle";
     los.addEventListener("click", (e) => {
       e.preventDefault(); e.stopPropagation();
       const z = zeiten();
       if (!z) return;
       lcAusschnittMerken(nr, z.ab, z.bis);
-      schicken(z.ab || z.bis ? lcZeitText(z.ab) + (z.bis ? "-" + lcZeitText(z.bis) : "") : "",
-               z.ab, z.bis);
+      schicken(lcZeitText(z.ab) + (z.bis ? "-" + lcZeitText(z.bis) : ""), z.ab, z.bis);
     });
-    koerper.appendChild(los);
+    kasten.appendChild(los);
 
     /* UND DER KNOPF, DER DARAUS EINEN KNOPF MACHT. */
     const merken = document.createElement("button");
     merken.type = "button";
     merken.className = "lc-lese-text lc-stelle-merken";
-    merken.textContent = "➕  Merken und benennen";
+    merken.textContent = "\u2795  Merken und benennen";
     merken.addEventListener("click", (e) => {
       e.preventDefault(); e.stopPropagation();
       const z = zeiten();
@@ -23431,270 +23178,16 @@
       if (!name) { showToast("Wie soll der Abschnitt heissen?"); return; }
       if (!datei) { showToast("Das Lied liess sich nicht zuordnen."); return; }
       lcLiedStelleMerken(datei, name, z.ab, z.bis);
-      showToast("🎵 „" + name + "“ gemerkt — ab jetzt als Knopf da.");
-      vorhoerenStopp();
+      showToast("\ud83c\udfb5 \u201e" + name + "\u201c gemerkt \u2014 ab jetzt als Knopf da.");
       lcAusschnittWahl(fuerWen, nr, titel);
     });
-    koerper.appendChild(merken);
-
-    /* ---------------------------------------------------------------
-       ZEICHNEN UND ABGLEICHEN
-       --------------------------------------------------------------- */
-    /* Welcher Liedteil liegt GENAU zwischen den Klammern? */
-    const teilSuchen = () => {
-      gewaehlt = stellen.findIndex((st) => {
-        const b = st.bis && dauer && st.bis >= Math.floor(dauer) ? 0 : st.bis;
-        return st.ab === selAb && (b || 0) === (selBis || 0);
-      });
-    };
-    /* Die Felder schreiben: was die Nachricht spaeter sagt.
-       Wichtig: steht der Anfang NICHT bei 0 und die Endklammer am
-       Schluss, geht das Ende ausdruecklich mit — ohne „bis" spielt
-       lcMusikSpielen nur eine halbe Minute. */
-    const felderSchreiben = () => {
-      feldAb.value = selAb ? lcZeitText(selAb) : "";
-      feldBis.value = selBis ? lcZeitText(selBis)
-        : (selAb && dauer ? lcZeitText(Math.floor(dauer)) : "");
-    };
-    const zeichnen = () => {
-      const breite = Math.max(40, Math.round(welle.clientWidth || 260));
-      const hoehe = Math.max(40, Math.round(welle.clientHeight || 76));
-      const dpr = Math.min(3, window.devicePixelRatio || 1);
-      if (bild.width !== breite * dpr || bild.height !== hoehe * dpr) {
-        bild.width = breite * dpr; bild.height = hoehe * dpr;
-      }
-      const g = bild.getContext && bild.getContext("2d");
-      if (!g) return;
-      g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      g.clearRect(0, 0, breite, hoehe);
-      const band = 5;                      /* das Farbband der Liedteile */
-      const mitte = (hoehe - band - 3) / 2;
-      const farbe = farbeJetzt();
-      const x0 = dauer ? selAb / dauer * breite : 0;
-      const x1 = dauer ? bisEcht() / dauer * breite : breite;
-      /* Die gewaehlte Strecke, leicht getoent. */
-      if (dauer) {
-        g.globalAlpha = 0.2;
-        g.fillStyle = farbe;
-        g.fillRect(x0, 0, Math.max(1, x1 - x0), hoehe - band - 2);
-        g.globalAlpha = 1;
-      }
-      /* Die Balken. Ohne Welle (noch am Rechnen, oder kein Web Audio)
-         eine ruhige Mittellinie. */
-      const n = balken ? balken.length : 0;
-      if (n) {
-        const bw = breite / n;
-        for (let i = 0; i < n; i++) {
-          const x = i * bw;
-          const h = Math.max(1.5, balken[i] * (mitte - 2) * 2);
-          const drin = dauer && x + bw / 2 >= x0 && x + bw / 2 <= x1;
-          g.fillStyle = drin ? farbe : "rgba(255,255,255,.34)";
-          g.fillRect(x + bw * 0.18, mitte - h / 2, Math.max(1, bw * 0.64), h);
-        }
-      } else {
-        g.fillStyle = "rgba(255,255,255,.22)";
-        g.fillRect(0, mitte - 0.75, breite, 1.5);
-      }
-      /* Das Farbband: wo welcher Teil liegt. */
-      if (dauer) {
-        g.fillStyle = "rgba(255,255,255,.08)";
-        g.fillRect(0, hoehe - band, breite, band);
-        stellen.forEach((st, i) => {
-          const a = st.ab / dauer * breite;
-          const b = (st.bis ? Math.min(st.bis, dauer) : dauer) / dauer * breite;
-          g.fillStyle = farben[i];
-          g.fillRect(a, hoehe - band, Math.max(2, b - a), band);
-        });
-      }
-      /* Der Abspielkopf beim Vorhoeren. */
-      if (dauer && kopfZeit >= 0) {
-        g.fillStyle = "#ffffff";
-        g.fillRect(kopfZeit / dauer * breite - 1, 0, 2, hoehe - band - 2);
-      }
-    };
-    const alles = (felderAuch) => {
-      teilSuchen();
-      if (felderAuch) felderSchreiben();
-      const farbe = farbeJetzt();
-      welle.style.setProperty("--strecke", farbe);
-      if (dauer) {
-        welle.classList.remove("lc-welle-wartet");
-        griffAb.style.left = (selAb / dauer * 100).toFixed(3) + "%";
-        griffBis.style.left = (bisEcht() / dauer * 100).toFixed(3) + "%";
-        griffAb.querySelector(".lc-klammer-zeit").textContent = lcZeitText(selAb);
-        griffBis.querySelector(".lc-klammer-zeit").textContent = lcZeitText(bisEcht());
-        /* Liegen die Klammern eng beieinander, weichen ihre Zeiten
-           nach aussen aus — sonst stehen „2:30" und „2:52" uebereinander. */
-        const abstand = (bisEcht() - selAb) / dauer * (welle.clientWidth || 260);
-        welle.classList.toggle("lc-welle-eng", abstand < 46);
-        griffAb.setAttribute("aria-valuetext", lcZeitText(selAb));
-        griffBis.setAttribute("aria-valuetext", lcZeitText(bisEcht()));
-      }
-      const laenge = dauer ? Math.max(0, Math.round(bisEcht() - selAb)) : 0;
-      const spanne = lcZeitText(selAb) + "–" + (dauer || selBis ? lcZeitText(bisEcht()) : "Ende");
-      anzeige.textContent = (gewaehlt >= 0 ? stellen[gewaehlt].name + " · " : "")
-        + spanne + (laenge ? " · " + laenge + " s" : "");
-      los.querySelector(".lc-ausschnitt-los-zeit").textContent = spanne;
-      los.style.setProperty("--stelle", farbe);
-      knoepfe.forEach((b, i) => {
-        b.classList.toggle("lc-stelle-an", i === gewaehlt);
-        b.setAttribute("aria-pressed", i === gewaehlt ? "true" : "false");
-      });
-      zeichnen();
-    };
-
-    /* Getippte Zeiten ziehen die Klammern mit. */
-    const feldGeaendert = () => {
-      const ab = lcZeitLesen(feldAb.value);
-      const bis = lcZeitLesen(feldBis.value);
-      if (ab < 0 || bis < 0 || (bis && bis <= ab)) return;
-      selAb = ab;
-      selBis = dauer && bis >= Math.floor(dauer) ? 0 : bis;
-      alles(false);
-    };
-    feldAb.addEventListener("input", feldGeaendert);
-    feldBis.addEventListener("input", feldGeaendert);
-
-    /* --- ZIEHEN: Finger UND Maus (Pointer Events) ------------------- */
-    const zeitBei = (x) => {
-      const r = bild.getBoundingClientRect();
-      return Math.max(0, Math.min(dauer, (x - r.left) / Math.max(1, r.width) * dauer));
-    };
-    let zug = "";
-    const ziehen = (t) => {
-      const s = Math.round(t);
-      const ende = Math.floor(dauer);
-      if (zug === "ab") {
-        selAb = Math.max(0, Math.min(s, Math.round(bisEcht()) - 1));
-      } else {
-        const b = Math.max(selAb + 1, Math.min(s, ende));
-        selBis = b >= ende ? 0 : b;
-      }
-      alles(true);
-    };
-    welle.addEventListener("pointerdown", (e) => {
-      if (!dauer || (e.button !== undefined && e.button > 0)) return;
-      e.preventDefault(); e.stopPropagation();
-      const t = zeitBei(e.clientX);
-      const k = e.target && e.target.closest ? e.target.closest(".lc-klammer") : null;
-      zug = k ? k.dataset.griff
-        : (Math.abs(t - selAb) <= Math.abs(t - bisEcht()) ? "ab" : "bis");
-      welle.classList.add("lc-welle-zieht");
-      (zug === "ab" ? griffAb : griffBis).classList.add("lc-klammer-gefasst");
-      try { welle.setPointerCapture(e.pointerId); } catch (x) {}
-      vorhoerenStopp();
-      ziehen(t);
-    });
-    welle.addEventListener("pointermove", (e) => {
-      if (!zug) return;
-      e.preventDefault();
-      ziehen(zeitBei(e.clientX));
-    });
-    const loslassen = () => {
-      if (!zug) return;
-      zug = "";
-      welle.classList.remove("lc-welle-zieht");
-      griffAb.classList.remove("lc-klammer-gefasst");
-      griffBis.classList.remove("lc-klammer-gefasst");
-    };
-    welle.addEventListener("pointerup", loslassen);
-    welle.addEventListener("pointercancel", loslassen);
-    welle.addEventListener("lostpointercapture", loslassen);
-    /* Tastatur: Pfeile schieben die Klammer um eine Sekunde, mit
-       Umschalt um fuenf. */
-    [griffAb, griffBis].forEach((g) => {
-      g.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); });
-      g.addEventListener("keydown", (e) => {
-        if (!dauer || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
-        e.preventDefault(); e.stopPropagation();
-        const schritt = (e.shiftKey ? 5 : 1) * (e.key === "ArrowLeft" ? -1 : 1);
-        zug = g.dataset.griff;
-        ziehen((zug === "ab" ? selAb : bisEcht()) + schritt);
-        zug = "";
-      });
-    });
-
-    /* --- VORHOEREN ------------------------------------------------- */
-    let vor = null;
-    let vorLauf = 0;
-    function vorhoerenStopp() {
-      if (vorLauf) { cancelAnimationFrame(vorLauf); vorLauf = 0; }
-      if (vor) { try { vor.pause(); vor.removeAttribute("src"); vor.load(); } catch (x) {} }
-      vor = null;
-      kopfZeit = -1;
-      hoeren.classList.remove("lc-welle-hoeren-an");
-      hoeren.setAttribute("aria-label", "Ausschnitt vorhören");
-      if (kasten.isConnected) zeichnen();
-    }
-    hoeren.addEventListener("click", (e) => {
-      e.preventDefault(); e.stopPropagation();
-      if (vor) { vorhoerenStopp(); return; }
-      if (!datei) return;
-      const a = document.createElement("audio");
-      a.preload = "auto";
-      a.src = "music/" + encodeURIComponent(datei);
-      a.volume = LC_MUSIK_LAUT;
-      const start = selAb;
-      const springen = () => {
-        try { if (Math.abs((a.currentTime || 0) - start) > 0.4) a.currentTime = start; } catch (x) {}
-      };
-      a.addEventListener("loadedmetadata", springen, { once: true });
-      a.addEventListener("playing", springen, { once: true });
-      a.addEventListener("ended", () => vorhoerenStopp());
-      vor = a;
-      hoeren.classList.add("lc-welle-hoeren-an");
-      hoeren.setAttribute("aria-label", "Vorhören anhalten");
-      const p = a.play();
-      if (p && p.catch) p.catch(() => { if (vor === a) vorhoerenStopp(); });
-      const schritt = () => {
-        /* Menue zu? Dann ist auch das Vorhoeren vorbei. */
-        if (!kasten.isConnected || vor !== a) { if (vor === a) vorhoerenStopp(); return; }
-        const t = a.currentTime || 0;
-        if (t >= start - 0.5) kopfZeit = t;
-        if (t >= bisEcht() - 0.05 && t > start) { vorhoerenStopp(); return; }
-        zeichnen();
-        vorLauf = requestAnimationFrame(schritt);
-      };
-      vorLauf = requestAnimationFrame(schritt);
-    });
+    kasten.appendChild(merken);
 
     document.body.appendChild(kasten);
     const platzEl = lcPlatzMitNamen(fuerWen)
       || document.querySelector("#lcPlaetze .lc-platz-ich");
     if (platzEl) lcMenueStellen(kasten, platzEl);
-    else lcMenueStellen(kasten, document.getElementById("lcFeld") || document.body);
     lcMenueSchliessen(kasten);
-
-    /* Die Welle: sofort, wenn sie gemerkt ist; sonst erst die Laenge
-       aus den Kopfdaten (dann lassen sich die Klammern schon ziehen),
-       und die Balken, sobald sie gerechnet sind. */
-    const wellDa = (w) => {
-      if (!w || !kasten.isConnected) return;
-      balken = w.balken;
-      if (w.dauer > 0) dauer = w.dauer;
-      welle.classList.add("lc-welle-fertig");
-      alles(false);
-    };
-    const gemerkt = lcWelleGemerkt(datei);
-    if (gemerkt) wellDa(gemerkt);
-    else {
-      alles(false);
-      if (datei) {
-        lcLiedDauer(datei).then((d) => {
-          if (!kasten.isConnected || dauer || !(d > 0)) return;
-          dauer = d;
-          alles(false);
-        });
-        lcWelleHolen(datei).then((w) => {
-          if (w) wellDa(w);
-          else if (kasten.isConnected) {
-            welle.classList.add("lc-welle-fertig", "lc-welle-ohne");
-            const h = welle.querySelector(".lc-welle-hinweis");
-            if (h) h.textContent = "Keine Wellenform — die Klammern gehen trotzdem.";
-          }
-        });
-      }
-    }
     return true;
   }
 
@@ -25593,18 +25086,6 @@
         + '<g class="lc-bl-blatt" transform="scale(' + zu + ')">'
         + '<animateTransform class="lc-bl-auf" attributeName="transform" type="scale" dur=".55s" begin="indefinite" fill="freeze" values="' + zu + ";1.15 1.12;.97 .98;" + auf + '" keyTimes="0;.45;.75;1" calcMode="spline" keySplines=".15 .75 .35 1;.4 0 .6 1;.4 0 .6 1"/>'
         + '<animateTransform class="lc-bl-zu" attributeName="transform" type="scale" dur=".4s" begin="indefinite" fill="freeze" values="' + auf + ";" + zu + '" calcMode="spline" keySplines=".4 0 .7 1"/>'
-        /* WALKIE #248 — XANDER: „die Blütenblätter sollen sich nach innen
-           zum Kern der Blume hinschließen also da wo das Zentrum der Blüte
-           ist … wenn man nicht mehr spricht sondern es langsam wieder
-           darüber legen und dann ausblenden … wenn man widerspricht dann
-           gehen sie wieder auf".
-           „innen": das Blatt richtet sich auf (von oben gesehen wird es
-           kurz), klappt über den Ansatz nach INNEN und legt sich lang
-           über das Bild bis fast zur Mitte (scale y negativ = zeigt nach
-           innen; 2,55 × Blattlänge ≈ Weg vom Ring zum Kern).
-           „raus": derselbe Weg zurück, mit einem kleinen Überschwingen. */
-        + '<animateTransform class="lc-bl-innen" attributeName="transform" type="scale" dur=".95s" begin="indefinite" fill="freeze" values="1 1;.96 .16;' + f(0.62 + untenFrei * 0.1) + " " + f(untenFrei ? -1.6 : -2.55) + '" keyTimes="0;.42;1" calcMode="spline" keySplines=".45 0 .6 1;.3 .1 .35 1"/>'
-        + '<animateTransform class="lc-bl-raus" attributeName="transform" type="scale" dur=".42s" begin="indefinite" fill="freeze" values="' + f(0.62 + untenFrei * 0.1) + " " + f(untenFrei ? -1.6 : -2.55) + ';.96 .16;1.12 1.08;1 1" keyTimes="0;.38;.72;1" calcMode="spline" keySplines=".3 0 .6 1;.2 .7 .4 1;.4 0 .6 1"/>'
         + '<path d="' + d + '" transform="rotate(' + dreh + ')" fill="url(#lcBb' + n + ')" stroke="#D38C9F" stroke-opacity=".35" stroke-width=".3"/>'
         + '<path d="' + ader + '" transform="rotate(' + dreh + ')" fill="none" stroke="#C07A8E" stroke-opacity=".4" stroke-width=".22" stroke-linecap="round"/>'
         + "</g></g></g>";
@@ -25657,40 +25138,8 @@
     }
     feld._lcBlZeiten = alle.map((a, i) => setTimeout(() => los(a), i * schritt));
   }
-  /* WALKIE #248 — Zugehen heisst jetzt: nach INNEN über das Bild legen
-     (lc-bl-innen), danach ausblenden (lc-bl-blasst). Spricht die Person
-     wieder, bevor alles weg ist, gehen die Blaetter von dort wieder auf
-     (lc-bl-raus) — nicht noch einmal aus der Knospe. */
-  function lcBlueteAuf(feld) {
-    if (feld.dataset.zu === "1") {
-      feld.dataset.zu = "";
-      clearTimeout(feld._lcBlBlass);
-      (feld._lcBlZeiten || []).forEach(clearTimeout);
-      feld.classList.remove("lc-bl-blasst");
-      const los = (a) => { try { a.beginElement(); } catch (e) {} };
-      feld._lcBlZeiten = [...feld.querySelectorAll(".lc-bl-knick")].map((kn, i) => setTimeout(() => {
-        kn.querySelectorAll("animateTransform.lc-bl-raus").forEach(los);
-      }, (i * 23) % 70));
-      return;
-    }
-    feld.dataset.zu = "";
-    lcBlueteStoss(feld, "lc-bl-auf", false);
-  }
-  function lcBlueteZu(feld) {
-    if (feld.dataset.zu === "1") return;
-    feld.dataset.zu = "1";
-    (feld._lcBlZeiten || []).forEach(clearTimeout);
-    clearTimeout(feld._lcBlBlass);
-    const los = (a) => { try { a.beginElement(); } catch (e) {} };
-    const knicke = [...feld.querySelectorAll(".lc-bl-knick")];
-    /* Nicht streng reihum: jedes Blatt mit eigenem kleinen Versatz
-       (bis 0,2 s) — eine Bluete schliesst sich nicht wie ein Uhrzeiger. */
-    feld._lcBlZeiten = knicke.map((kn, i) => setTimeout(() => {
-      kn.querySelectorAll("animateTransform.lc-bl-innen").forEach(los);
-    }, (i * 53) % 210));
-    /* Wenn alle Blaetter liegen: ausblenden (CSS, 0,55 s). */
-    feld._lcBlBlass = setTimeout(() => feld.classList.add("lc-bl-blasst"), 1080);
-  }
+  function lcBlueteAuf(feld) { feld.dataset.zu = ""; lcBlueteStoss(feld, "lc-bl-auf", false); }
+  function lcBlueteZu(feld) { if (feld.dataset.zu === "1") return; feld.dataset.zu = "1"; lcBlueteStoss(feld, "lc-bl-zu", true); }
 
   /* =================================================================
      SCHON-PASS SPRECHBILDER — 7. STROM A / B / C
@@ -25918,7 +25367,7 @@
     const spektren = ["#00E5FF;#00E5FF;#FF2EC4;#FFD400;#00E5FF;#00E5FF", "#FF2EC4;#FF2EC4;#FFD400;#7CFF4F;#FF2EC4;#FF2EC4",
                       "#FFD400;#FFD400;#FFFFFF;#00E5FF;#FFD400;#FFD400", "#7CFF4F;#7CFF4F;#00E5FF;#FF2EC4;#7CFF4F;#7CFF4F"];
     for (let i = 0; i < 230; i++) {
-      const dur = Math.round(z(0.7, 1.6) * 1000) / 1000, blitz = Math.min(0.6, z(0.28, 0.49) / dur) /* 0,49: nach dem Runden (dur auf 2 Stellen) sonst knapp über 0,5 s */, t0 = z(0.05, 0.95 - blitz);
+      const dur = Math.round(z(0.7, 1.6) * 1000) / 1000, blitz = Math.min(0.6, z(0.28, 0.5) / dur), t0 = z(0.05, 0.95 - blitz);
       const orte = [];
       for (let k = 0; k < 5; k++) {
         const w = z(0, Math.PI * 2), r = R + z(0.4, 4.2);
@@ -26516,7 +25965,7 @@
         knopf._lcBlueteZu = setTimeout(() => {
           knopf.classList.remove("lc-sprech-schliesst", "lc-platz-spricht");
           lcSprechFeldWeg(knopf);
-        }, blueteNeu ? 1700 : 900);
+        }, blueteNeu ? 1600 : 900);
       } else if (sprichtJetzt) {
         clearTimeout(knopf._lcBlueteZu);
         knopf.classList.remove("lc-sprech-schliesst");
@@ -31553,12 +31002,11 @@
     /* FUNK 95 — das Spielsystem: Lebenspunkte, Deutsch-Aufgaben,
        Waffen, Schutz, Duell. Die Kachel oeffnet das Spielfenster. */
     ["\u2694\ufe0f", "Spiel", "*spiel"],
-    /* WALKIE #243 — XANDER: „Bitte nicht unter Ohrfeige sammeln das hat
-       nichts mit einer Ohrfeige zu tun das soll als einzelner Effekt
-       sichtbar sein." (Funk 75 hatte das Kratzen unter die Ohrfeige
-       gelegt; deshalb fand er es nicht.) Jetzt zwei eigene Kacheln. */
-    ["\ud83e\udef3", "Ohrfeige",  "ohrfeige"],
-    ["\ud83d\udc85", "Kratzen",   "kratzen"],
+    /* FUNK 75 — das Kratzen steht bei der Ohrfeige: beides tut man
+       jemandem an. So bleibt das Menue so lang, wie es ist. */
+    ["\ud83e\udef3", "Ohrfeige",  "ohrfeige", false,
+      [["\ud83e\udef3", "Ohrfeige", "ohrfeige"],
+       ["\ud83d\udc85", "Kratzen", "kratzen"]]],
     ["\ud83c\udfb0", "Zufall",    "zufall", true],
     /* „Das wäre die witzigste Animation." */
     /* RUNDE 76 — XANDER: „Anziehen-Modul."
@@ -46240,20 +45688,6 @@
          Winkel: +16 Grad oben, -14 Grad unten. */
       const nachRechtsD = ende.x > start.x;
       const spD = " scaleX(" + (nachRechtsD ? -1 : 1) + ")";
-      /* WALKIE #246 — XANDER: „außerdem ist der Delfin manchmal falsch rum
-         animiert wenn er in eine andere Richtung geht dann ist er falsch".
-         GEFUNDEN: die Blickrichtung galt fuer die GANZE Reise und kam nur
-         aus Start und Ziel. Auf einem gemalten Weg, der erst nach links
-         und dann nach rechts laeuft, schwamm er deshalb einen Teil der
-         Strecke mit dem Schwanz voran. Jetzt schaut er in JEDEM Bogen
-         dorthin, wohin dieser Bogen geht (ist ein Bogen fast senkrecht,
-         gilt die Richtung der ganzen Reise). */
-      const richtung = (b) => {
-        const a = bahnAb((b - 1) / 3), z = bahnAb(b / 3);
-        const dx = z.x - a.x;
-        const rechts = Math.abs(dx) < 2 ? nachRechtsD : dx > 0;
-        return { rechts: rechts, sp: " scaleX(" + (rechts ? -1 : 1) + ")" };
-      };
       /* DREI BOEGEN. Die Hoehe ist ein Drittel der Strecke, mindestens
          aber eine halbe Bildhoehe — sonst sieht ein kurzer Sprung aus
          wie ein Zittern. */
@@ -46261,9 +45695,9 @@
       const hochD = Math.max(d * 0.55, weitD / 3);
       const stufen = [];
       const bogen = 3;
-      stufen.push({ transform: "translate(-50%, -50%)" + richtung(1).sp + " scale(.3)",
+      stufen.push({ transform: "translate(-50%, -50%)" + spD + " scale(.3)",
                     opacity: 0, offset: 0 });
-      stufen.push({ transform: "translate(-50%, -50%)" + richtung(1).sp + " scale(1)",
+      stufen.push({ transform: "translate(-50%, -50%)" + spD + " scale(1)",
                     opacity: 1, offset: 0.1 });
       for (let b = 1; b <= bogen; b++) {
         const t = b / bogen;
@@ -46274,52 +45708,81 @@
         const x1 = p1.x, y1 = p1.y;
         const x2 = p2.x, y2 = p2.y;
         /* Oben im Bogen: die Nase zeigt nach oben. */
-        const spB = richtung(b).sp;
         stufen.push({ transform: "translate(" + x1 + "px, " + (y1 - hochD)
-          + "px) translate(-50%, -50%)" + spB + " rotate(16deg) scale(1)",
+          + "px) translate(-50%, -50%)" + spD + " rotate(16deg) scale(1)",
           opacity: 1, offset: 0.1 + (hin / dauer - 0.1) * (vor) });
         /* Unten: die Nase zeigt nach unten — er taucht ein. */
         stufen.push({ transform: "translate(" + x2 + "px, " + y2
-          + "px) translate(-50%, -50%)" + spB + " rotate(-14deg) scale(1)",
+          + "px) translate(-50%, -50%)" + spD + " rotate(-14deg) scale(1)",
           opacity: 1, offset: 0.1 + (hin / dauer - 0.1) * t });
-        /* Das Bild auf seinem Ruecken wird NICHT mitgespiegelt — sonst
-           staende das Gesicht seitenverkehrt da. Die Gegenspiegelung
-           wechselt mit jedem Bogen, und zwar unten beim Eintauchen, wo
-           man es nicht sieht. */
-        const rechtsB = richtung(b).rechts;
-        setTimeout(() => del.classList.toggle("lc-delfin-rechts", rechtsB),
-          Math.max(0, Math.round(dauer * (0.1 + (hin / dauer - 0.1) * ((b - 1) / bogen))) - 30));
       }
       stufen.push({ transform: "translate(" + (ende.x - start.x) + "px, "
-        + (ende.y - start.y) + "px) translate(-50%, -50%)" + richtung(bogen).sp + " scale(.3)",
+        + (ende.y - start.y) + "px) translate(-50%, -50%)" + spD + " scale(.3)",
         opacity: 0, offset: 1 });
-      del.classList.toggle("lc-delfin-rechts", richtung(1).rechts);
       try { del.animate(stufen, { duration: dauer, easing: "ease-in-out", fill: "forwards" }); }
       catch (e) {}
-      /* WALKIE #246 — XANDER: „Bitte nicht diese Wasserlinie geben es soll
-         noch ein temporärer Effekt sein wie bei dem Mississippi Dampfer dass
-         der Fokus nicht auf einer sichtbaren Wasserlinie ist".
-         Das Band entlang der ganzen Strecke (Runde 101 / #222) ist weg.
-         Wasser gibt es jetzt nur dort und nur dann, wo er gerade auf- oder
-         eintaucht: ein weicher Fleck von Weiss nach Hellblau wie unter dem
-         Dampfer (.lc-boot-wasser), der aufgeht, atmet und wieder
-         zerlaeuft. Danach ist dort nichts mehr. */
-      for (let b = 0; b <= bogen; b++) {
-        const wannL = b === 0 ? Math.round(dauer * 0.06)
-          : Math.round(dauer * (0.1 + (hin / dauer - 0.1) * (b / bogen)));
-        const pL = bahnAb(b / bogen);
-        setTimeout(() => {
-          if (!reihe.isConnected) return;
-          const la = document.createElement("span");
-          la.className = "lc-delfin-lache";
-          la.style.left = (start.x + pL.x).toFixed(1) + "px";
-          la.style.top = (start.y + pL.y + d * 0.4).toFixed(1) + "px";
-          la.style.setProperty("--gross", d + "px");
-          reihe.insertBefore(la, del);
-          weg.push(la);
-          setTimeout(() => la.remove(), 1500);
-        }, Math.max(0, wannL - 80));
+      /* RUNDE 101 — XANDER (Funk 89): „die Pfütze, die unter ihm ist,
+         was das Wasser symbolisieren soll … kann realistisch auf der
+         Wegstrecke als Wasser liegen, so dass er dadurch platscht, aber
+         nicht, dass er diesen Kegel immer mitnimmt."
+         Das Wasser liegt jetzt als Band ENTLANG der Strecke (auch dem
+         gemalten Weg) und bleibt, wo es ist; der Delfin taucht hinein.
+         Gespritzt wird dort, wo er eintaucht, und nur dann. */
+      const NSw = "http://www.w3.org/2000/svg";
+      const wasser = document.createElementNS(NSw, "svg");
+      wasser.setAttribute("class", "lc-delfin-see");
+      wasser.setAttribute("aria-hidden", "true");
+      const rrW = reihe.getBoundingClientRect();
+      wasser.setAttribute("width", String(Math.round(rrW.width)));
+      wasser.setAttribute("height", String(Math.round(rrW.height)));
+      /* Das Band liegt am UNTEREN Bildrand, damit die
+         Gesichter frei bleiben, die er ueberquert (0,4 d unter der Mitte). Die Wellenlinie ist
+         eine echte Sinuswelle quer zur Strecke, keine Strichlinie. */
+      const TIEF = d * 0.4;
+      const pkt = [];
+      for (let i = 0; i <= 80; i++) {
+        const p = bahnAb(i / 80);
+        pkt.push({ x: start.x + p.x, y: start.y + p.y + TIEF });
       }
+      let seeWeg = "", welle = "", lauf = 0;
+      pkt.forEach((q, i) => {
+        seeWeg += (i ? " L" : "M") + q.x.toFixed(1) + " " + q.y.toFixed(1);
+        const a = pkt[Math.max(0, i - 1)], b = pkt[Math.min(pkt.length - 1, i + 1)];
+        const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
+        if (i) lauf += Math.hypot(q.x - pkt[i - 1].x, q.y - pkt[i - 1].y);
+        const aus = Math.sin(lauf / (d * 0.16)) * d * 0.035 - d * 0.05;
+        welle += (i ? " L" : "M") + (q.x - dy / l * aus).toFixed(1) + " " + (q.y + dx / l * aus).toFixed(1);
+      });
+      /* WALKIE #222 — XANDER: „das Wasser soll nicht so steif da drüber
+         liegen das soll ähnlich sein wie beim Mississippi Dampfer."
+         GEFUNDEN: zwei harte, gleichmaessig blaue Striche mit runden
+         Enden — ein Balken. Beim Dampfer ist das Wasser ein weicher
+         Verlauf von Weiss nach Hellblau, der am Rand ins Nichts
+         zerlaeuft und atmet. Genau so jetzt hier: dieselbe Strecke
+         (Funk 89 bleibt: das Wasser liegt auf dem Weg, es faehrt nicht
+         mit), aber weichgezeichnet, heller, mit einer Gischtkante und
+         zwei Wellenlinien, die gegeneinander laufen. */
+      const weich = (d * 0.05).toFixed(1);
+      /* Die Filterflaeche in Seitenpixeln: in Objekt-Einheiten waere sie
+         bei einer waagerechten Strecke 0 px hoch (die Strichbreite zaehlt
+         dort nicht mit) — dann verschwindet das ganze Wasser. */
+      wasser.innerHTML = '<defs><filter id="lcDelfinWeich" filterUnits="userSpaceOnUse" x="0" y="0" width="'
+        + Math.round(rrW.width) + '" height="' + Math.round(rrW.height) + '">'
+        + '<feGaussianBlur stdDeviation="' + weich + '"/></filter></defs>'
+        + '<g class="lc-delfin-see-atem" filter="url(#lcDelfinWeich)">'
+        + '<path class="lc-delfin-see-tief" d="' + seeWeg + '" stroke-width="' + (d * 0.36).toFixed(1) + '"/>'
+        + '<path class="lc-delfin-see-flaeche" d="' + seeWeg + '" stroke-width="' + (d * 0.2).toFixed(1) + '"/>'
+        + '<path class="lc-delfin-see-gischt" d="' + seeWeg + '" stroke-width="' + (d * 0.07).toFixed(1) + '"/>'
+        + "</g>"
+        + '<path class="lc-delfin-see-welle" d="' + welle + '" stroke-width="' + (d * 0.024).toFixed(1)
+        + '" stroke-dasharray="' + (d * 0.22).toFixed(1) + " " + (d * 0.14).toFixed(1) + '"/>'
+        + '<path class="lc-delfin-see-welle lc-delfin-see-welle-2" d="' + welle + '" stroke-width="' + (d * 0.018).toFixed(1)
+        + '" stroke-dasharray="' + (d * 0.12).toFixed(1) + " " + (d * 0.26).toFixed(1) + '" transform="translate(0 '
+        + (d * 0.06).toFixed(1) + ')"/>';
+      wasser.style.setProperty("--gross", d + "px");
+      wasser.style.animationDuration = dauer + "ms";
+      reihe.insertBefore(wasser, del);
+      weg.push(wasser);
       /* Und bei jedem Eintauchen platscht es — genau dann, wenn der
          Bogen unten ankommt, und genau DORT. */
       for (let b = 1; b <= bogen; b++) {
@@ -48146,42 +47609,9 @@
         + '<i class="lc-heli-wind"></i>'
         + '<i class="lc-heli-wind lc-heli-wind-2"></i>'
         + '<i class="lc-heli-wind lc-heli-wind-3"></i>'
-        /* WALKIE #240 — XANDER: „Mein Profilbild wird innerhalb dieses
-           Ausschnitts plötzlich größer angezeigt es soll ganz normal
-           angezeigt werden und unterhalb des Profilbild ist geschnitten
-           werden und nicht irgendwie reingezoomt werden es soll noch
-           gestanzt werden dass es in die Form von dem Helikopter Fenster
-           passt oder Helikopter hat doch vorne eine leichte Nase vor
-           diesem Glasfenster."
-           Das Fenster ist jetzt ein eigenes kleines SVG im Koordinatennetz
-           des Hubschraubers (x 11–45, y 17–43): das Bild liegt in
-           NORMALER Groesse darin (so breit wie das Fenster, oben
-           buendig), unten wird es abgeschnitten. Der Umriss folgt der
-           Nase im Abstand von 3,5–4,5 Einheiten — vor dem Glas bleibt
-           ein Streifen Blech, die Nase. Die dunkle Stanzkante und der
-           Glasschimmer liegen genau auf diesem Umriss. */
-        + (() => {
-          const nr = ++lcHeliFensterNr;
-          const umriss = "M20 42.5 L41.5 42.5 Q44.6 42.3 45 39 L45 25 Q44.6 19 38 18 L30 18.3"
-            + " Q22.5 19.5 17.5 24.5 Q14.2 28.5 14.6 33 Q14.9 38.5 17.5 41.2 Q18.6 42.4 20 42.5 Z";
-          const bildTeil = quelle
-            ? '<image href="' + quelle.replace(/["<>]/g, "") + '" x="11" y="17" width="34" height="34"'
-              + ' preserveAspectRatio="xMidYMid slice" clip-path="url(#lcHeliF' + nr + ')"/>'
-            : '<path d="' + umriss + '" fill="#c9d8e8"/><text x="30" y="34.5" text-anchor="middle"'
-              + ' font-size="10" font-weight="800" fill="#1c2029">'
-              + escapeHtml((ab.name || "?").charAt(0).toUpperCase()) + "</text>";
-          return '<span class="lc-heli-kanzel"><svg viewBox="11 17 34 26" aria-hidden="true">'
-            + '<defs><clipPath id="lcHeliF' + nr + '"><path d="' + umriss + '"/></clipPath>'
-            + '<linearGradient id="lcHeliG' + nr + '" x1="0" y1="0" x2="1" y2="1">'
-            + '<stop offset=".18" stop-color="#fff" stop-opacity="0"/><stop offset=".3" stop-color="#fff" stop-opacity=".42"/>'
-            + '<stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".58" stop-color="#fff" stop-opacity=".2"/>'
-            + '<stop offset=".66" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>'
-            + bildTeil
-            + '<path d="' + umriss + '" fill="url(#lcHeliG' + nr + ')"/>'
-            + '<path d="' + umriss + '" fill="none" stroke="#1c2029" stroke-width="1.3"/>'
-            + '<path d="' + umriss + '" fill="none" stroke="#8fa6bf" stroke-width=".5" stroke-opacity=".9"/>'
-            + "</svg></span>";
-        })();
+        + '<span class="lc-heli-kanzel"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
       /* FUNK 75 — die Draufsicht dazu (siehe lcDraufsicht). */
       heli.innerHTML = '<span class="lc-v-seite">' + heli.innerHTML + "</span>"
         + lcDraufsicht("heli", quelle, (ab.name || "?").charAt(0).toUpperCase());
@@ -49081,26 +48511,12 @@
          ============================================================= */
       const katzBein = (vorn, fern) => {
         const P = vorn ? [72, 56] : [40, 55], K = vorn ? [72.6, 69.5] : [37.6, 70.5];
-        /* WALKIE #245 — XANDER hat die Katze mit „Überarbeiten" bewertet:
-           „Beine", „Pfotenschlag", „Kopf und Gesicht".
-           BEINE: vorher gerade Rohre mit eckigem Unterschenkel — wie
-           Holzpfosten. Jetzt verjuengt sich jedes Glied zum Gelenk
-           hin; der Unterarm ist schlank, das Hinterbein hat den
-           typischen Katzen-Knick (Sprunggelenk nach hinten), und die
-           Pfoten sind rund mit drei Zehenfurchen. */
-        const tatze = (x, y) => '<path class="lc-katze-tatze" d="M' + (x - 4.4) + " " + y
-          + " C" + (x - 4.4) + " " + (y - 1.9) + " " + (x - 2.4) + " " + (y - 2.6) + " " + x + " " + (y - 2.6)
-          + " C" + (x + 3.2) + " " + (y - 2.6) + " " + (x + 5) + " " + (y - 1.4) + " " + (x + 4.8) + " " + (y + 0.6)
-          + " C" + (x + 4.6) + " " + (y + 2.4) + " " + (x + 2.4) + " " + (y + 2.8) + " " + x + " " + (y + 2.8)
-          + " C" + (x - 2.6) + " " + (y + 2.8) + " " + (x - 4.4) + " " + (y + 2.2) + " " + (x - 4.4) + " " + y + ' Z"/>'
-          + '<path d="M' + (x - 1.6) + " " + (y + 0.4) + " l0 2.2 M" + (x + 0.6) + " " + (y + 0.2) + " l0 2.5 M"
-          + (x + 2.7) + " " + (y + 0.4) + ' l0 2.1" stroke="rgba(30,25,21,.55)" stroke-width=".7" stroke-linecap="round"/>';
         const ober = vorn
-          ? '<path class="lc-katze-glied" d="M67.5 50 C72 47.5 77.5 49.5 77 55 C76.6 60 75.4 65 75 69.5 C74.6 71.2 70.6 71.2 70.4 69.5 C69.6 64 67 57 67.5 50 Z"/>'
-          : '<path class="lc-katze-glied" d="M31.5 47 C38 42.5 49 45 48 54 C47.4 60 43.6 64.6 40.4 70.6 C39.4 72.4 35.6 72.2 35.2 70.4 C35.2 64 30.4 56.4 31.5 47 Z"/>';
+          ? '<path class="lc-katze-glied" d="M68 50 C72 48 77 49 77 54 L76 69 C76 71.5 69.4 71.5 69.2 69 Z"/>'
+          : '<path class="lc-katze-glied" d="M33 47 C40 44 48 47 47 55 C46 61 42 66 40.4 71 C39.4 72.4 35.6 72.2 35.2 70.6 C34.4 64 31.6 56 33 47 Z"/>';
         const unter = vorn
-          ? '<path class="lc-katze-glied" d="M70.6 69 C70.3 73.5 70.7 77.5 71.2 81.2 L75.2 81.2 C75.5 77.5 75.4 73.5 75 69 Z"/>' + tatze(73.8, 82.2)
-          : '<path class="lc-katze-glied" d="M35.4 70 C35.8 74 37.4 78.4 38.6 81.6 L42.4 81.6 C41.4 77.8 40.6 74 40 70 Z"/>' + tatze(40.8, 82.6);
+          ? '<path class="lc-katze-glied" d="M70.2 69 L75 69 L75.6 82 L70.6 82 Z"/><ellipse class="lc-katze-tatze" cx="74.4" cy="83.4" rx="4.6" ry="2.7"/>'
+          : '<path class="lc-katze-glied" d="M35.4 70 L40 70 L40.6 82 L36 82 Z"/><ellipse class="lc-katze-tatze" cx="39.6" cy="83.4" rx="4.4" ry="2.6"/>';
         const k = (x) => x.toFixed(1);
         return '<g class="lc-katze-bein ' + (vorn ? "lc-katze-vorn" : "lc-katze-hinten") + (fern ? " lc-katze-fern" : " lc-katze-nah")
           + '"' + (fern ? ' transform="translate(' + (vorn ? 5 : -4) + ' -1.5)"' : "") + '>'
@@ -49132,37 +48548,22 @@
         /* Tigerstreifen quer ueber den Ruecken. */
         + '<path d="M44 37.6 C46 43 45.6 49 43.4 53 M53 36.4 C55 42 55 48 53 52.4 M62 36.6 C64 42 64 47.6 62.4 51.6 M71 38.6 C72.6 43 72.4 47 71 50"'
         + ' fill="none" stroke="rgba(40,34,29,.42)" stroke-width="2.8" stroke-linecap="round"/>'
-        /* WALKIE #245 — KOPF UND GESICHT. Vorher ein Kreis mit zwei
-           langen Dreiecksohren, die schraeg abstanden, und Augen so gross
-           wie Muenzen. Ein Katzenkopf ist breiter als hoch (Wangen), die
-           Ohren sitzen OBEN, breit am Ansatz; die Augen sind mandel-
-           foermig und stehen weiter auseinander, darunter eine helle
-           Schnauze mit Nase, Mund und Schnurrhaaren. */
-        + '<path d="M73.6 28.4 L73.2 13 L83.4 21.4 Z" fill="#6d6259" stroke="#4c443d" stroke-width=".6" stroke-linejoin="round"/>'
-        + '<path d="M75.4 26.2 L75.3 17.4 L80.9 22.2 Z" fill="#c69a9a"/>'
-        + '<path d="M92.6 21.4 L102.8 13 L102.4 28.4 Z" fill="#6d6259" stroke="#4c443d" stroke-width=".6" stroke-linejoin="round"/>'
-        + '<path d="M95.1 22.2 L100.7 17.4 L100.6 26.2 Z" fill="#c69a9a"/>'
-        + '<path d="M71.4 37 C71 27.6 78.6 21.4 88 21.4 C97.4 21.4 105 27.6 104.6 37 C104.4 42 102 45.4 99 47.2'
-        + ' C95.6 49.4 91.8 50.2 88 50.2 C84.2 50.2 80.4 49.4 77 47.2 C74 45.4 71.6 42 71.4 37 Z" fill="url(#lcKatzFell)"/>'
-        /* Wangenfell, ein paar Zacken an den Seiten */
-        + '<path d="M72 39.4 L69.6 41.8 L72.6 42.2 L70.8 44.8 L74.4 44.2 M104 39.4 L106.4 41.8 L103.4 42.2 L105.2 44.8 L101.6 44.2"'
-        + ' fill="none" stroke="#6d6259" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'
-        /* Stirnstreifen */
-        + '<path d="M88 22.6 L88 27.4 M84.6 23.2 L85.4 27 M91.4 23.2 L90.6 27" stroke="rgba(40,34,29,.45)" stroke-width="1.3" stroke-linecap="round"/>'
-        /* Augen: Mandel, gruen-gelb, senkrechter Schlitz, Glanzpunkt */
-        + '<path d="M76.4 34.2 C78.4 30.8 83.2 30.6 85.4 33.8 C83.4 36.8 78.6 37.2 76.4 34.2 Z" fill="#cfdc5e" stroke="#2b2420" stroke-width=".8"/>'
-        + '<path d="M90.6 33.8 C92.8 30.6 97.6 30.8 99.6 34.2 C97.4 37.2 92.6 36.8 90.6 33.8 Z" fill="#cfdc5e" stroke="#2b2420" stroke-width=".8"/>'
-        + '<ellipse class="lc-katze-pupille" cx="81" cy="34" rx="1.1" ry="2.9" fill="#231d18"/>'
-        + '<ellipse class="lc-katze-pupille" cx="95" cy="34" rx="1.1" ry="2.9" fill="#231d18"/>'
-        + '<circle cx="82" cy="32.9" r=".6" fill="#fff"/><circle cx="96" cy="32.9" r=".6" fill="#fff"/>'
-        /* Schnauze: zwei helle Polster */
-        + '<ellipse cx="85.2" cy="43.6" rx="3.8" ry="2.9" fill="#b3a79c"/>'
-        + '<ellipse cx="90.8" cy="43.6" rx="3.8" ry="2.9" fill="#b3a79c"/>'
-        + '<path d="M88 42.4 L85.9 40 L90.1 40 Z" fill="#c07c86" stroke="#8c5a62" stroke-width=".4" stroke-linejoin="round"/>'
-        + '<path d="M88 42.4 L88 44.2 M88 44.2 C86.6 45.8 84.8 45.6 84 44.6 M88 44.2 C89.4 45.8 91.2 45.6 92 44.6"'
-        + ' fill="none" stroke="#2b2420" stroke-width="1" stroke-linecap="round"/>'
-        + '<path d="M82 42.6 L66 40.4 M82 44.4 L66.6 45.4 M82.4 45.8 L68.6 49.4 M94 42.6 L110 40.4 M94 44.4 L109.4 45.4 M93.6 45.8 L107.4 49.4"'
-        + ' fill="none" stroke="rgba(255,255,255,.72)" stroke-width=".7"'
+        /* Kopf und Gesicht — wie vorher. */
+        + '<circle cx="86" cy="36" r="17" fill="url(#lcKatzFell)"/>'
+        + '<path d="M72 26 L70 8 L84 20 Z" fill="#6d6259"/>'
+        + '<path d="M73.5 24 L72.5 14 L80 21 Z" fill="#c69a9a"/>'
+        + '<path d="M96 20 L106 6 L104 25 Z" fill="#6d6259"/>'
+        + '<path d="M97.5 21 L103 12 L102 23 Z" fill="#c69a9a"/>'
+        + '<ellipse cx="81" cy="34" rx="5" ry="6" fill="#d8e36a"/>'
+        + '<ellipse cx="95" cy="34" rx="5" ry="6" fill="#d8e36a"/>'
+        + '<ellipse class="lc-katze-pupille" cx="81" cy="34" rx="1.5" ry="5.4" fill="#231d18"/>'
+        + '<ellipse class="lc-katze-pupille" cx="95" cy="34" rx="1.5" ry="5.4" fill="#231d18"/>'
+        + '<path d="M86 43 L82.4 39.6 L89.6 39.6 Z" fill="#c07c86"/>'
+        + '<path d="M86 43 L86 46 M86 46 C83 48.6 80 47.4 79 45.4'
+        + ' M86 46 C89 48.6 92 47.4 93 45.4" fill="none" stroke="#2b2420"'
+        + ' stroke-width="1.5" stroke-linecap="round"/>'
+        + '<path d="M78 41 L64 38 M78 44 L65 45 M94 41 L108 38 M94 44 L107 45"'
+        + ' fill="none" stroke="rgba(255,255,255,.72)" stroke-width="1.2"'
         + ' stroke-linecap="round"/>'
         + "</g>"
         + katzBein(false, false) + katzBein(true, false)
@@ -49261,27 +48662,20 @@
           /* FUNK 75 — das Vorderbein hebt sich weit nach vorn oben
              (Ausholen), die Pfote krummt sich ein, dann schlaegt die Katze
              schraeg nach vorn unten auf den Ball und nimmt das Bein zurueck. */
-          /* WALKIE #245 — „Pfotenschlag". Vorher riss das Bein bis −96°
-             senkrecht hoch und sank langsam zurueck — ein Winken, kein
-             Schlag. Eine Katze holt KURZ aus (Schulter −64°, Pfote
-             eingerollt +72°), zielt einen Moment, schlaegt dann SCHNELL
-             und flach nach vorn unten (Schulter −16°, Pfote gestreckt
-             −18°) — der Treffer liegt bei 0,21, genau wo der Ball
-             losrollt (0,22) —, federt nach und setzt ab. */
-          const pz = (f) => Math.min(1, t0 + (t1 - t0) * f);
-          pfoteRahmen.push({ transform: "rotate(0deg)", offset: pz(0.04), easing: "cubic-bezier(.2,.7,.3,1)" });
-          pfoteRahmen.push({ transform: "rotate(-64deg)", offset: pz(0.11) });
-          pfoteRahmen.push({ transform: "rotate(-58deg)", offset: pz(0.16), easing: "cubic-bezier(.6,0,.9,.5)" });
-          pfoteRahmen.push({ transform: "rotate(-16deg)", offset: pz(0.21), easing: "ease-out" });
-          pfoteRahmen.push({ transform: "rotate(-24deg)", offset: pz(0.25) });
-          pfoteRahmen.push({ transform: "rotate(-8deg)", offset: pz(0.31) });
-          pfoteRahmen.push({ transform: "rotate(0deg)", offset: pz(0.40) });
-          pfoteURahmen.push({ transform: "rotate(0deg)", offset: pz(0.04), easing: "cubic-bezier(.2,.7,.3,1)" });
-          pfoteURahmen.push({ transform: "rotate(72deg)", offset: pz(0.11) });
-          pfoteURahmen.push({ transform: "rotate(78deg)", offset: pz(0.16), easing: "cubic-bezier(.6,0,.9,.5)" });
-          pfoteURahmen.push({ transform: "rotate(-18deg)", offset: pz(0.21), easing: "ease-out" });
-          pfoteURahmen.push({ transform: "rotate(-4deg)", offset: pz(0.25) });
-          pfoteURahmen.push({ transform: "rotate(0deg)", offset: pz(0.40) });
+          pfoteRahmen.push({ transform: "rotate(0deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.04) });
+          pfoteRahmen.push({ transform: "rotate(-96deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.12) });
+          pfoteRahmen.push({ transform: "rotate(-44deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.20) });
+          pfoteRahmen.push({ transform: "rotate(-30deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.28) });
+          pfoteRahmen.push({ transform: "rotate(0deg)",
+                             offset: Math.min(1, t0 + (t1 - t0) * 0.44) });
+          pfoteURahmen.push({ transform: "rotate(0deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.04) });
+          pfoteURahmen.push({ transform: "rotate(62deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.12) });
+          pfoteURahmen.push({ transform: "rotate(-8deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.20) });
+          pfoteURahmen.push({ transform: "rotate(0deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.44) });
           /* Gelaufen wird, waehrend der Ball rollt und sie ihm nachsetzt. */
           laufZeiten.push([t0 + (t1 - t0) * 0.30, t1]);
           const nachPos = bei(1);
@@ -50757,7 +50151,6 @@
 
   /* Die Draufsichten. Alle mit der Nase nach RECHTS; gedreht wird in
      lcBlickwechsel. Das Bild des Reisenden bleibt auch von oben zu sehen. */
-  let lcHeliFensterNr = 0;   /* WALKIE #240: eigene Kennung je Heli-Fenster */
   function lcDraufsicht(art, quelle, buchstabe) {
     const bild = (klasse) => '<span class="' + klasse + '"' + (quelle
       ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
@@ -54882,8 +54275,7 @@
            naechsten Neuzeichnen nicht mehr: sonst legt
            lcBleibendesAuffrischen sie sofort wieder auf. */
         const plE = schicht.closest(".lc-platz");
-        /* FUNK 104 — lcHoererAbnehmen raeumt auch die Lied-Uhr ab. */
-        if (plE) lcHoererAbnehmen(lcPlatzSchluessel(plE), false);
+        if (plE) delete lcHoererListe[lcPlatzSchluessel(plE)];
         schicht.remove();
       });
       /* GEWUENSCHT: „Bei den Kopfhoerern kannst du versuchen, solche
@@ -55024,151 +54416,11 @@
   function lcKopfhoererAnlegen(platzEl) {
     if (!platzEl || platzEl.querySelector(".lc-kopfhoerer")) return false;
     const schicht = document.createElement("div");
-    /* FUNK 104 — „lc-kopfhoerer-still": nach einem Neuzeichnen SITZEN
-       sie schon, sie fliegen nicht noch einmal von oben herein. */
-    schicht.className = "lc-zp lc-kopfhoerer lc-kopfhoerer-still";
+    schicht.className = "lc-zp lc-kopfhoerer";
     schicht.setAttribute("aria-hidden", "true");
     lcKopfhoererZeichnen(schicht, false);
     platzEl.appendChild(schicht);
     return true;
-  }
-
-  /* =================================================================
-     FUNK 104 — DIE KOPFHOERER SIND SO LANGE ZU SEHEN WIE DAS LIED
-     -----------------------------------------------------------------
-     XANDER: „hast du eigentlich auch die Kopfhoerer ueberarbeitet dass
-     sie in der Laenge des Liedes zu sehen sind"
-
-     VORHER GEMESSEN (Chromium, 390 px, Pruefbuehne):
-       · Die Zeichnung lief mit „lcKopfhoererAuf" (3,2 s, fill both),
-         und deren letztes Bild ist opacity 0. Nach 4,5 s stand das
-         Element also noch am Platz — aber UNSICHTBAR (opacity 0,
-         nach oben verschoben). Auf JEDEM Geraet gleich, beim Hoerer
-         wie bei allen anderen. Genau das, was er seit Runde 87
-         meldet: „die Kopfhoerer bleiben nicht auf meinem Kopf".
-       · Unsichtbar oder nicht: abgenommen wurden sie nie von selbst.
-         lcHoererListe hielt sie fest, bis jemand sie antippt oder ein
-         zweites „Nur aufsetzen" schickt; nach zehn Minuten nahm
-         lcAmPlatz die Schicht weg — und beim naechsten Neuzeichnen
-         legte lcBleibendesAuffrischen sie wieder an.
-
-     JETZT: mit einem Lied tragen sie die Laenge des Gehoerten.
-       · Ausschnitt mit Ende (liedAb/liedBis): genau bis - ab Sekunden.
-       · Nur ein Anfang: 30 Sekunden — so lange spielt lcMusikSpielen
-         in diesem Fall, und die Hoerer sollen nicht laenger sitzen
-         als die Musik laeuft.
-       · Das ganze Lied: seine Laenge, auf JEDEM Geraet selbst
-         nachgesehen (lcLiedDauer: Wellenform-Merker, sonst die
-         Kopfdaten der Datei) — die anderen spielen das Lied ja nicht
-         und wuessten sonst nicht, wann es aus ist.
-     Die Rechnung steht nur EINMAL da (lcLiedLaufzeit), damit Musik und
-     Hoerer nie auseinanderlaufen. Ohne Lied („Nur aufsetzen") bleibt
-     alles wie gewuenscht: sie sitzen, bis man sie abnimmt.
-     ================================================================= */
-  const lcHoererUhr = {};          /* Schluessel -> setTimeout-Kennung */
-  const lcLiedDauerMerker = {};    /* Datei -> Sekunden */
-  function lcLiedLaufzeit(ab, bis, dauer) {
-    const a = Math.max(0, Number(ab) || 0);
-    const b = Math.max(0, Number(bis) || 0);
-    const d = Math.max(0, Number(dauer) || 0);
-    if (b > a) return d > a ? Math.min(b, d) - a : b - a;
-    if (a > 0) return d > a ? Math.min(30, d - a) : 30;
-    return d;
-  }
-  /* Wie lang ist ein Lied? Erst die Merker, dann der laufende Spieler,
-     zuletzt nur die Kopfdaten der Datei (preload="metadata" laedt
-     nicht das ganze Lied). */
-  function lcLiedDauer(datei) {
-    if (!datei) return Promise.resolve(0);
-    if (lcLiedDauerMerker[datei] > 0) return Promise.resolve(lcLiedDauerMerker[datei]);
-    const w = lcWelleGemerkt(datei);
-    if (w && w.dauer > 0) { lcLiedDauerMerker[datei] = w.dauer; return Promise.resolve(w.dauer); }
-    try {
-      if (lcMusikSpieler && lcMusikSpieler.src
-          && lcMusikSpieler.src.indexOf(encodeURIComponent(datei)) !== -1
-          && isFinite(lcMusikSpieler.duration) && lcMusikSpieler.duration > 0) {
-        lcLiedDauerMerker[datei] = lcMusikSpieler.duration;
-        return Promise.resolve(lcMusikSpieler.duration);
-      }
-    } catch (e) {}
-    return new Promise((fertig) => {
-      let erledigt = false;
-      const ende = (s) => { if (erledigt) return; erledigt = true; fertig(s || 0); };
-      try {
-        const a = document.createElement("audio");
-        a.preload = "metadata";
-        a.muted = true;
-        a.addEventListener("loadedmetadata", () => {
-          const s = isFinite(a.duration) ? a.duration : 0;
-          if (s > 0) lcLiedDauerMerker[datei] = s;
-          ende(s);
-          try { a.removeAttribute("src"); a.load(); } catch (e) {}
-        }, { once: true });
-        a.addEventListener("error", () => ende(0), { once: true });
-        a.src = "music/" + encodeURIComponent(datei);
-        setTimeout(() => ende(0), 12000);
-      } catch (e) { ende(0); }
-    });
-  }
-  /* Abnehmen — sanft (sie heben sich ab), und so, dass sie auch nach
-     dem naechsten Neuzeichnen nicht wiederkommen. */
-  function lcHoererAbnehmen(schluessel, sanft) {
-    if (!schluessel) return;
-    if (lcHoererUhr[schluessel]) { clearTimeout(lcHoererUhr[schluessel]); delete lcHoererUhr[schluessel]; }
-    delete lcHoererListe[schluessel];
-    document.querySelectorAll(".lc-platz").forEach((pl) => {
-      if (lcPlatzSchluessel(pl) !== schluessel) return;
-      pl.querySelectorAll(".lc-kopfhoerer").forEach((h) => {
-        /* Von Hand abgenommen: sofort weg. Von selbst (Lied zu Ende):
-           sie heben sich in 0,6 s ab — man soll SEHEN, dass sie gehen. */
-        if (!sanft) { h.remove(); return; }
-        h.classList.add("lc-kopfhoerer-ab");
-        h.style.pointerEvents = "none";
-        setTimeout(() => h.remove(), 650);
-      });
-      /* lcAmPlatz hat das Sprechbild fuer die Dauer des Effekts
-         geparkt (zehn Minuten) — mit den Hoerern ist die Pause vorbei. */
-      const geparkt = pl.getAttribute("data-sprechpause");
-      if (geparkt && !pl.getAttribute("data-sprechbild")) {
-        pl.setAttribute("data-sprechbild", geparkt);
-        pl.removeAttribute("data-sprechpause");
-      }
-    });
-  }
-  /* Die Uhr stellen: wann kommen sie wieder herunter? */
-  function lcHoererUhrStellen(schluessel, nachricht) {
-    if (!schluessel) return;
-    if (lcHoererUhr[schluessel]) { clearTimeout(lcHoererUhr[schluessel]); delete lcHoererUhr[schluessel]; }
-    const lied = (nachricht && nachricht.lied) || "";
-    if (!lied) return;                    /* „Nur aufsetzen": sie bleiben */
-    const ab = Number((nachricht && nachricht.liedAb) || 0);
-    const bis = Number((nachricht && nachricht.liedBis) || 0);
-    const los = Date.now();
-    const stellen = (sek) => {
-      /* Kam inzwischen ein neues Lied, gilt dessen Uhr. */
-      if (lcHoererUhr[schluessel] && lcHoererUhr[schluessel] !== marke) return;
-      const rest = Math.max(0.2, sek - (Date.now() - los) / 1000);
-      lcHoererUhr[schluessel] = setTimeout(() => {
-        delete lcHoererUhr[schluessel];
-        lcHoererAbnehmen(schluessel, true);
-      }, rest * 1000);
-    };
-    const marke = {};
-    if (bis > ab) { stellen(bis - ab); return; }
-    /* Laenge noch unbekannt: bis sie da ist, haelt ein Merker den Platz. */
-    lcHoererUhr[schluessel] = marke;
-    lcLiedDauer(lied).then((d) => {
-      if (lcHoererUhr[schluessel] !== marke) return;
-      delete lcHoererUhr[schluessel];
-      /* Ohne messbare Laenge: die alten zehn Minuten als Notnagel. */
-      stellen(d > 0 ? lcLiedLaufzeit(ab, bis, d) : (ab > 0 ? 30 : 600));
-    });
-  }
-  /* Nur zum Nachmessen (werkzeug/pruefe-hoerer-klammern.js). */
-  function lcHoererUhrStand() {
-    const raus = {};
-    Object.keys(lcHoererListe).forEach((k) => { raus[k] = Boolean(lcHoererUhr[k]); });
-    return raus;
   }
 
   function lcKopfhoerer(wen, nachricht) {
@@ -55237,19 +54489,12 @@
        Jetzt gilt: ein neues LIED laesst sie auf dem Kopf, und nur
        das blosse „Nur aufsetzen" ein zweites Mal nimmt sie ab — so
        war es gemeint („bis sie sie von selber abnimmt"). */
-    /* FUNK 104 — ein Paar, das gerade abgenommen wird (es hebt sich
-       noch ab), zaehlt nicht mehr als „schon auf". */
-    if (schonAuf && schonAuf.classList.contains("lc-kopfhoerer-ab")) {
-      schonAuf.remove();
-    } else if (schonAuf) {
-      const plA = schonAuf.closest(".lc-platz");
-      const nmA = plA ? lcPlatzSchluessel(plA) : "";
-      /* FUNK 104 — ein neues Lied stellt die Uhr neu: „in der Laenge
-         des Liedes". */
-      if (lied) { if (nmA) lcHoererUhrStellen(nmA, nachricht); return true; }
+    if (schonAuf) {
+      if (lied) return true;
       /* Abgenommen heisst abgenommen — auch nach dem Neuzeichnen. */
-      if (nmA) lcHoererAbnehmen(nmA);
-      else schonAuf.remove();
+      const plA = schonAuf.closest(".lc-platz");
+      if (plA) delete lcHoererListe[lcPlatzSchluessel(plA)];
+      schonAuf.remove();
       return true;
     }
 
@@ -55259,8 +54504,6 @@
     lcZielPlaetze(wen).forEach((pl) => {
       const nm = lcPlatzSchluessel(pl);
       if (nm) lcHoererListe[nm] = true;
-      /* FUNK 104 — und wie lange: so lange wie das Lied. */
-      if (nm) lcHoererUhrStellen(nm, nachricht);
     });
     return lcAmPlatz(wen, "lc-kopfhoerer",
       (schicht) => lcKopfhoererZeichnen(schicht, true), 600000, "kopfhoerer");
@@ -62413,14 +61656,6 @@
        nachmessen laesst, OB es wirklich losspielt (siehe
        werkzeug/pruefe-runde87-lied.js). */
     musikWaehler: function (fuerWen) { return lcMusikWaehler(fuerWen); },
-    /* FUNK 104 — der Ausschnittwaehler mit Welle und Klammern direkt,
-       die Lied-Uhr der Kopfhoerer und die Welle eines Liedes — damit
-       sich „in der Laenge des Liedes" und „die Klammern ziehen"
-       nachmessen lassen (werkzeug/pruefe-hoerer-klammern.js). */
-    ausschnittWahl: function (fuerWen, nr, titel) { return lcAusschnittWahl(fuerWen, nr, titel); },
-    hoererUhrStand: function () { return lcHoererUhrStand(); },
-    welleHolen: function (datei) { return lcWelleHolen(datei); },
-    liedLaufzeit: function (ab, bis, dauer) { return lcLiedLaufzeit(ab, bis, dauer); },
     musikSpielen: function (d, t, ab, bis, selbst) { return lcMusikSpielen(d, t, ab, bis, selbst); },
     /* RUNDE 98 \u2014 das Lieder-Panel: Verlauf und benannte Abschnitte.
        Damit sich nachmessen laesst, dass die Knoepfe wirklich da sind

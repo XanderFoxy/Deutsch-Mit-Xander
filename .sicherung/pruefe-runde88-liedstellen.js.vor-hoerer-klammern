@@ -165,19 +165,14 @@ const GESAGT = [
       };
       LiveChat.schreiben = probe;
       const zwei = document.getElementById("lcPlatzMenue");
-      /* FUNK 104 — XANDER: „… dass ich die Klammern auf flexibel noch
-         ziehen kann ueber der w-form". Ein Tipp auf den Abschnitt legt
-         seitdem die KLAMMERN auf ihn (und faerbt die Strecke); hinaus
-         geht er mit dem Knopf „Diesen Ausschnitt …" darunter. */
       [...zwei.querySelectorAll(".lc-lied-stelle")]
         .find((x) => /Refrain/.test(x.textContent)).click();
-      zwei.querySelector(".lc-ausschnitt-los").click();
       LiveChat.schreiben = alt;
       return raus;
     })();
   });
   sage(befehl.length === 1 && /^\/musik \d+ 1:18-1:53$/.test(befehl[0]),
-    "Abschnitt antippen, dann „für alle“: es geht „/musik N 1:18-1:53“ hinaus",
+    "ein Tipp auf den Abschnitt schickt „/musik N 1:18-1:53“",
     befehl.join(" | ") || "nichts geschickt");
 
   console.log("\nUND DER BEFEHL VERSTEHT DIE ZEIT\n");

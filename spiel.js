@@ -997,6 +997,9 @@
       var umwandeln = function () {
         var Z = window.DMA_DATEN.ZUSATZ_FRAGEN, aus = [];
         Object.keys(Z).forEach(function (k) {
+          /* FUNK 106 — „Es gibt italienische Aufgaben": das Spiel ist
+             „Deutsch zum Überleben", die it-Kategorien bleiben draußen. */
+          if (/^it-/.test(k)) return;
           (Z[k] || []).forEach(function (q) {
             if (!Array.isArray(q) || q.length < 5 || typeof q[0] !== "string" || q[0].indexOf("___") < 0) return;
             if (typeof q[1] !== "string" || !Array.isArray(q[2]) || q[2].length < 2) return;
