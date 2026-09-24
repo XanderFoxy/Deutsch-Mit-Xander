@@ -30491,14 +30491,6 @@
       kasten.appendChild(b);
     };
     knopf("\ud83e\ude9d", "Angeln", () => lcHebenMenue(platz, name));
-    /* RUNDE 101 — XANDER (Funk #18): „jemand mit seinen Händen … von sich
-       weg schieben … falls einem jemand zu nah kommt". */
-    knopf("\u270b", "Hau ab \u2014 wegschieben", () => {
-      lcPlatzMenueZu();
-      const zeile = "/hauab " + name;
-      try { LiveChat.schreiben(zeile); } catch (e) {}
-      lcNachDemSenden(zeile);
-    });
     knopf("\ud83e\udd20", "Lasso \u2014 zu mir", () => {
       lcPlatzMenueZu();
       const zeile = "/lasso " + name;
@@ -33002,7 +32994,6 @@
        man jemand anderen noch auf einen Platz heben kann." */
     kranheben: { zeichen: ["\ud83c\udfd7\ufe0f"], wie: 4, klasse: "umarmen" },
     bagger:    { zeichen: ["\ud83d\ude9c"], wie: 4, klasse: "umarmen" },
-    hauab:     { zeichen: ["\u270b"], wie: 4, klasse: "umarmen" },
     /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
        ne Luftballon." */
     luftballon: { zeichen: ["\ud83c\udf88"], wie: 4, klasse: "umarmen" },
@@ -39454,228 +39445,6 @@
       lcTonSpaeter("kran", Math.round(DAUER * 0.33), 0.4, 1100);
       lcTonSpaeter("aufsetzen", Math.round(DAUER * 0.80), 0.55);
     }, 3700);
-  }
-
-  /* =====================================================================
-     HAU AB — MIT BEIDEN HAENDEN WEGSCHIEBEN
-     ---------------------------------------------------------------------
-     XANDER (Walkie-Funk #18): „Ich hätte gern noch eine Animation, wo man
-     jemand mit seinen Händen realistisch von sich weg schieben kann, falls
-     einem jemand zu nah kommt. Achte dabei unbedingt auf eine ordentliche
-     und realistische Physik der Hände in jede Richtung, aus der man den
-     anderen von sich weg schiebt. Der andere wandert dabei einen Platz
-     weiter und bleibt dann dort. Du kannst die Animation Hau ab oder
-     Abstand nennen." — (Funk #54) „das wegschicken … als Nächstes."
-
-     DIE PHYSIK, Schritt fuer Schritt (2 s, eine Uhr):
-        0–30 %  die Arme fahren aus dem eigenen Bild, die Haende oeffnen
-                sich (werden gross) und legen sich an das andere Bild
-       30–38 %  Kontakt: das andere Bild wird kurz in Schubrichtung
-                zusammengedrueckt — da steckt Kraft drin
-       38–60 %  der Stoss: Haende und Bild beschleunigen gemeinsam, das
-                eigene Bild lehnt sich mit hinein
-       60 %     die Haende lassen los und bleiben stehen …
-       60–85 %  … das Bild rutscht allein weiter und wird langsamer
-                (Reibung), schiesst ein wenig ueber und federt zurueck
-       60–85 %  die Arme ziehen sich zurueck
-     Die Richtung ist JEDE: gerechnet wird mit dem Vektor von meinem Bild
-     zu seinem. Die Haende stehen immer quer dazu, die Finger zeigen vom
-     Boden weg — so drueckt man wirklich gegen etwas.
-     ===================================================================== */
-  function lcHauAb(wen, nachricht) {
-    const zielNr = Number(nachricht && nachricht.ziel) || 0;
-    const von = (nachricht && (nachricht.name || nachricht.von)) || "";
-    return lcAmPlatz(wen, "lc-hauab", (schicht, platz) => {
-      const kreis = platz.querySelector(".lc-kreis");
-      const reihe = document.getElementById("lcPlaetze");
-      const vonPlatz = von ? lcPlatzMitNamen(von) : null;
-      const zielEl = zielNr
-        ? document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + zielNr + '"]') : null;
-      if (!kreis || !reihe || !zielEl) return;
-      const DAUER = 2000;
-      const gr = kreis.offsetWidth || 64;
-      const rr = reihe.getBoundingClientRect();
-      const lage = (el) => {
-        const r = el.getBoundingClientRect();
-        return { x: r.left + r.width / 2 - rr.left, y: r.top + r.height / 2 - rr.top };
-      };
-      const T = lage(kreis);
-      const C = lage(zielEl.querySelector(".lc-kreis") || zielEl);
-      const vonKreis = vonPlatz && vonPlatz !== platz ? vonPlatz.querySelector(".lc-kreis") : null;
-      /* Ohne sichtbaren Absender (er sitzt nicht auf der Buehne) kommen
-         die Haende aus der Gegenrichtung des Wegs. */
-      const M = vonKreis ? lage(vonKreis)
-        : { x: T.x - (C.x - T.x), y: T.y - (C.y - T.y) };
-      const D = Math.hypot(C.x - T.x, C.y - T.y) || gr;
-      /* u: die Schubrichtung (von mir zu ihm), v: quer dazu, zum
-         „Oben" hin gedreht — dorthin zeigen die Finger. */
-      const mlen = Math.hypot(T.x - M.x, T.y - M.y) || 1;
-      const u = { x: (T.x - M.x) / mlen, y: (T.y - M.y) / mlen };
-      let v = { x: -u.y, y: u.x };
-      if (v.y > 0 || (Math.abs(v.y) < 1e-6 && v.x < 0)) v = { x: -v.x, y: -v.y };
-      /* Der Weg des Bildes: nicht genau entlang u, sondern zum Zielplatz. */
-      const w = { x: (C.x - T.x) / D, y: (C.y - T.y) / D };
-      const phi = Math.atan2(u.y, u.x) * 180 / Math.PI;
-      const glatt = (x) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
-      const zw = (f, a, b) => Math.max(0, Math.min(1, (f - a) / (b - a)));
-      /* Wie weit das Bild gewandert ist (Anteil von D). Stoss: beschleunigt
-         (quadratisch) bis 0,45 D; danach rutscht es mit Reibung aus
-         (Geschwindigkeit nimmt linear ab → Weg 1 - (1-k)²) bis 1,04 D und
-         federt auf 1,0 zurueck. */
-      const weg = (f) => {
-        if (f < 0.38) return 0;
-        if (f < 0.60) { const k = zw(f, 0.38, 0.60); return 0.45 * k * k; }
-        if (f < 0.85) { const k = zw(f, 0.60, 0.85); return 0.45 + 0.59 * (1 - (1 - k) * (1 - k)); }
-        if (f < 0.93) { const k = glatt(zw(f, 0.85, 0.93)); return 1.04 - 0.04 * k; }
-        return 1;
-      };
-      /* Das Zusammendruecken beim Kontakt und das Nachschwingen. */
-      const druck = (f) => {
-        if (f < 0.30) return 1;
-        if (f < 0.38) return 1 - 0.07 * Math.sin(Math.PI * zw(f, 0.30, 0.38) * 0.5);
-        if (f < 0.46) return 0.93 + 0.07 * glatt(zw(f, 0.38, 0.46));
-        return 1;
-      };
-
-      /* Das Bild — fein abgetastet, linear, damit Haende und Bild auf
-         derselben Uhr laufen. */
-      const bildFrames = [];
-      for (let i = 0; i <= 80; i++) {
-        const f = i / 80, s = weg(f) * D, q = druck(f);
-        bildFrames.push({ offset: f, transform: "translate(" + (w.x * s).toFixed(1) + "px, " + (w.y * s).toFixed(1)
-          + "px) rotate(" + phi.toFixed(1) + "deg) scale(" + q.toFixed(3) + ", " + (1 + (1 - q) * 0.5).toFixed(3)
-          + ") rotate(" + (-phi).toFixed(1) + "deg)" });
-      }
-      const altZ = platz.style.zIndex;
-      platz.style.zIndex = "9";
-      let lauf = null;
-      try { lauf = kreis.animate(bildFrames, { duration: DAUER, easing: "linear", fill: "forwards" }); }
-      catch (e) { lauf = null; }
-      /* Ich lehne mich in den Stoss hinein und federe danach zurueck. */
-      let lehnen = null;
-      if (vonKreis) {
-        const vor = (a) => "translate(" + (u.x * a * gr).toFixed(1) + "px, " + (u.y * a * gr).toFixed(1) + "px)";
-        try {
-          lehnen = vonKreis.animate([
-            { transform: "none", offset: 0 },
-            { transform: vor(0.02), offset: 0.30, easing: "ease-in" },
-            { transform: vor(0.1), offset: 0.58, easing: "ease-out" },
-            { transform: vor(-0.02), offset: 0.74, easing: "ease-in-out" },
-            { transform: "none", offset: 0.86 },
-            { transform: "none", offset: 1 }
-          ], { duration: DAUER, easing: "linear", composite: "add" });
-        } catch (e) { lehnen = null; }
-      }
-
-      /* Die Zeichnung: zwei Arme mit Aermel und zwei Haende, in
-         Reihen-Koordinaten, jedes Bild neu gestellt. */
-      const NS = "http://www.w3.org/2000/svg";
-      const buehne = document.createElementNS(NS, "svg");
-      buehne.setAttribute("class", "lc-hauab-buehne");
-      buehne.setAttribute("aria-hidden", "true");
-      const W0 = Math.round(rr.width), H0 = Math.round(rr.height);
-      buehne.setAttribute("width", String(W0));
-      buehne.setAttribute("height", String(H0));
-      buehne.setAttribute("viewBox", "0 0 " + W0 + " " + H0);
-      const haut = lcHaut();
-      const g = gr / 100;
-      const f1 = (x) => x.toFixed(1);
-      /* Eine Hand, von hinten gesehen, in eigenen Koordinaten: die
-         Handflaeche liegt an x = 0 an (dort ist das andere Bild), die
-         Finger zeigen nach -y. Einheit: 1 % des Bildes. */
-      const handPfad = (spiegel) => {
-        const s = spiegel ? -1 : 1;   /* Daumen einmal oben, einmal unten */
-        const fing = [[-5, 20, 6.2], [-11.5, 24, 6.4], [-18, 22.5, 6.2], [-24, 18, 5.6]];
-        let p = '<rect class="lc-ha-handflaeche" x="' + f1(-27 * g) + '" y="' + f1(-9 * g) + '" width="' + f1(27 * g)
-          + '" height="' + f1(22 * g) + '" rx="' + f1(7 * g) + '"/>';
-        fing.forEach(([x, l, b]) => {
-          p += '<rect class="lc-ha-finger" x="' + f1((x - b / 2) * g) + '" y="' + f1((-9 - l + 3) * g) + '" width="' + f1(b * g)
-            + '" height="' + f1(l * g) + '" rx="' + f1(b * 0.5 * g) + '"/>'
-            + '<path class="lc-ha-gelenk" d="M' + f1((x - b * 0.3) * g) + ' ' + f1((-9 - l * 0.45) * g) + ' h' + f1(b * 0.6 * g) + '"/>';
-        });
-        /* Der Daumen liegt schraeg an der Handflaeche. */
-        p += '<rect class="lc-ha-finger" x="' + f1(-30 * g) + '" y="' + f1((s > 0 ? -2 : -2) * g) + '" width="' + f1(7 * g)
-          + '" height="' + f1(17 * g) + '" rx="' + f1(3.5 * g) + '" transform="rotate(' + (s * 38) + ' ' + f1(-26 * g) + ' ' + f1(8 * g) + ')"/>';
-        p += '<path class="lc-ha-knoechel" d="M' + f1(-24 * g) + ' ' + f1(-7 * g) + ' Q' + f1(-13 * g) + ' ' + f1(-10 * g) + ' ' + f1(-2 * g) + ' ' + f1(-7 * g) + '"/>';
-        return p;
-      };
-      buehne.innerHTML =
-        '<path class="lc-ha-arm lc-ha-arm1"/><path class="lc-ha-arm lc-ha-arm2"/>'
-        + '<g class="lc-ha-hand lc-ha-hand1">' + handPfad(false) + '<path class="lc-ha-manschette"/></g>'
-        + '<g class="lc-ha-hand lc-ha-hand2">' + handPfad(true) + '<path class="lc-ha-manschette"/></g>';
-      buehne.style.setProperty("--lc-ha-haut", haut.haut);
-      buehne.style.setProperty("--lc-ha-kante", haut.kante);
-      buehne.style.setProperty("--lc-ha-tief", haut.tief);
-      if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
-      reihe.appendChild(buehne);
-      const arme = [buehne.querySelector(".lc-ha-arm1"), buehne.querySelector(".lc-ha-arm2")];
-      const haende = [buehne.querySelector(".lc-ha-hand1"), buehne.querySelector(".lc-ha-hand2")];
-      /* Die beiden Haende: quer versetzt, beide an der Kreiskante. */
-      const quer = [0.26, -0.22];
-      const anKante = quer.map((q) => Math.sqrt(Math.max(0, 0.25 - q * q)));
-
-      const nameAlt = lcNameVomPlatz(platz);
-      const t0 = performance.now();
-      let fertig = false;
-      const aufraeumen = () => {
-        if (fertig) return;
-        fertig = true;
-        try { if (lauf) lauf.cancel(); } catch (e) {}
-        try { if (lehnen) lehnen.cancel(); } catch (e) {}
-        platz.style.zIndex = altZ;
-      };
-      const bild = () => {
-        if (!buehne.isConnected) { aufraeumen(); return; }
-        const uhr = lauf && !fertig ? lauf.currentTime : null;
-        const t = typeof uhr === "number" ? uhr : performance.now() - t0, f = Math.min(1, t / DAUER);
-        if (!fertig && f > 0.85 && lcNameVomPlatz(platz) !== nameAlt) aufraeumen();
-        /* Wo die Haende anliegen: an der Kante des Bildes, das mitwandert,
-           solange geschoben wird (bis 60 %). */
-        const mitSchub = weg(Math.min(f, 0.60)) * D;
-        const ausfahren = glatt(zw(f, 0.04, 0.30));
-        const zurueck = glatt(zw(f, 0.62, 0.86));
-        /* Der Druck macht den Kontakt um die Stauchung kuerzer. */
-        const stauch = (1 - druck(f)) * gr * 0.5;
-        /* Die Arme kommen vom RAND des eigenen Bildes, nicht aus der Mitte
-           — sonst lagen die Haende am Anfang auf dem eigenen Gesicht
-           (Standbild 0,2 s). */
-        const schulter = 0.47 * gr;
-        haende.forEach((h, i) => {
-          const anlage = { x: T.x + w.x * mitSchub - u.x * (anKante[i] * gr - stauch) + v.x * quer[i] * gr,
-                           y: T.y + w.y * mitSchub - u.y * (anKante[i] * gr - stauch) + v.y * quer[i] * gr };
-          const start = { x: M.x + u.x * schulter + v.x * quer[i] * gr * 0.6,
-                          y: M.y + u.y * schulter + v.y * quer[i] * gr * 0.6 };
-          const k = ausfahren * (1 - zurueck);
-          const p = { x: start.x + (anlage.x - start.x) * k, y: start.y + (anlage.y - start.y) * k };
-          const gross = 0.55 + 0.45 * k;
-          /* Die Hand dreht sich mit u; die Finger zeigen nach v. Im SVG
-             zeigen sie nach -y, also: x-Achse = u, y-Achse = -v. */
-          const a = Math.atan2(u.y, u.x) * 180 / Math.PI;
-          const kipp = (v.x * -u.y + v.y * u.x) > 0 ? -1 : 1;  /* Spiegeln, falls v „unten" ist */
-          h.setAttribute("transform", "translate(" + f1(p.x) + " " + f1(p.y) + ") rotate(" + f1(a) + ") scale("
-            + gross.toFixed(3) + " " + (gross * kipp).toFixed(3) + ")");
-          /* Der Arm: vom Handgelenk (hinten an der Handflaeche) zurueck
-             zur Schulter am eigenen Bild — leicht gebogen, am Ende des
-             Stosses fast gestreckt. */
-          const gelenk = { x: p.x - u.x * 26 * g * gross, y: p.y - u.y * 26 * g * gross };
-          const beuge = (1 - weg(Math.min(f, 0.6)) / 0.45 * 0.8) * gr * 0.06;
-          const mitteA = { x: (gelenk.x + start.x) / 2 + v.x * beuge * (i ? -1 : 1), y: (gelenk.y + start.y) / 2 + v.y * beuge * (i ? -1 : 1) };
-          arme[i].setAttribute("d", "M" + f1(start.x) + " " + f1(start.y) + " Q" + f1(mitteA.x) + " " + f1(mitteA.y)
-            + " " + f1(gelenk.x) + " " + f1(gelenk.y));
-          arme[i].style.strokeWidth = f1(gr * 0.13 * gross);
-          arme[i].style.opacity = String(k > 0.02 ? 1 : 0);
-          h.style.opacity = String(k > 0.02 ? 1 : 0);
-        });
-        buehne.style.opacity = f > 0.8 ? String(Math.max(0, (0.88 - f) / 0.08)) : "1";
-        if (t < DAUER + 1500 && f < 1) requestAnimationFrame(bild);
-        else { aufraeumen(); buehne.remove(); }
-      };
-      requestAnimationFrame(bild);
-      setTimeout(() => { aufraeumen(); buehne.remove(); }, DAUER + 2400);
-      /* Die Toene: das Anlegen der Haende (30 %), das Rutschen (60 %). */
-      lcTonSpaeter("aufsetzen", Math.round(DAUER * 0.30), 0.45);
-      lcTonSpaeter("schlurfen", Math.round(DAUER * 0.60), 0.5, 520);
-    }, 2100);
   }
 
   /* --- DAS LASSO ---------------------------------------------------
@@ -55716,7 +55485,6 @@
     /* RUNDE 98 — der Kran hebt GENAU EINEN auf einen Platz. */
     kranheben: 1,
     bagger: 1,
-    hauab: 1,
     /* RUNDE 88 — das Kaninchen wird aus GENAU EINEM Zylinder
        gezogen; ueber den ganzen Raum zu regnen waere kein Kunststueck
        mehr, sondern ein Unfall. */
@@ -55804,12 +55572,6 @@
        laedt ihn auf einem anderen ab (Funk #39). */
     if (art === "bagger") {
       lcBagger((nachricht && (nachricht.wen || nachricht.an)) || "", nachricht);
-      return;
-    }
-    /* RUNDE 101 — „Hau ab": mit beiden Haenden einen Platz weiter
-       schieben (Funk #18). */
-    if (art === "hauab") {
-      lcHauAb((nachricht && (nachricht.wen || nachricht.an)) || "", nachricht);
       return;
     }
     if (art === "spray") {

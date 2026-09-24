@@ -623,7 +623,6 @@ window.LiveChat = (function () {
      falsch (siehe Runde 74). */
   var kranZieht = false;
   var baggerZieht = false;   /* RUNDE 101 — der Schaufelradbagger */
-  var hauabZieht = false;    /* RUNDE 101 — „Hau ab", wegschieben */
   /* =================================================================
      RUNDE 99 — ZWEI WERFEN GLEICHZEITIG
      -----------------------------------------------------------------
@@ -645,7 +644,7 @@ window.LiveChat = (function () {
     /* Eine Aktion reist als art „text" mit chatArt „aktion" (anAlle). */
     if (!n || (n.art !== "aktion" && n.chatArt !== "aktion")) return;
     if (n.wirkung !== "heber" && n.wirkung !== "lasso" && n.wirkung !== "kranheben"
-        && n.wirkung !== "bagger" && n.wirkung !== "hauab") return;
+        && n.wirkung !== "bagger") return;
     var jetzt = Date.now();
     offeneZuege = offeneZuege.filter(function (z) { return z.bis > jetzt && !z.weg; });
     var werfer = String(n.name || ""), wen = String(n.wen || ""), ziel = Number(n.ziel) || 0;
@@ -10043,8 +10042,6 @@ window.LiveChat = (function () {
        stand der Effekt gezeichnet da, war aber unter seinem eigenen
        Namen nicht aufrufbar. Jetzt heisst der Befehl wie die Wirkung,
        und „/kranheb" bleibt als Kurzform. */
-    { gr: "reden", w: "hauab", kurz: "abstand", nutzt: "/hauab Name",
-      was: "mit beiden H\u00e4nden wegschieben, wer dir zu nah kommt \u2014 er rutscht einen Platz weiter" },
     { gr: "raum", w: "bagger", kurz: "schaufelradbagger", nutzt: "/bagger Name 3",
       was: "der Schaufelradbagger schaufelt jemanden vom Platz und l\u00e4dt ihn auf Platz 3 ab" },
     { gr: "raum", w: "kranheben", kurz: "kranheb", nutzt: "/kranheben Name 3",
@@ -10419,9 +10416,6 @@ window.LiveChat = (function () {
                 tape: "kassette", musikkassette: "kassette", spulen: "kassette",
                 walkman: "kassette", mixtape: "kassette",
                 pac: "pacman", pacmann: "pacman", arcade: "pacman",
-                /* RUNDE 101 — Xander: „Hau ab oder Abstand" und „das
-                   wegschicken". */
-                wegschieben: "hauab", wegschicken: "hauab", schubsen: "hauab",
                 /* „muenze" gehoert NICHT hierher: den Befehl /muenze gibt
                    es schon (der Geldeffekt), und ein Kurzwort, das einen
                    echten Befehl verdeckt, nimmt ihm die Tuer. */
@@ -12062,73 +12056,6 @@ window.LiveChat = (function () {
       finally { baggerZieht = false; }
     }
 
-    /* =================================================================
-       RUNDE 101 — HAU AB / ABSTAND
-       -----------------------------------------------------------------
-       XANDER (Funk #18): „… jemand mit seinen Händen realistisch von
-       sich weg schieben kann, falls einem jemand zu nah kommt … in jede
-       Richtung … Der andere wandert dabei einen Platz weiter und bleibt
-       dann dort. Du kannst die Animation Hau ab oder Abstand nennen."
-       „Einen Platz weiter" heisst: der naechste Platz in SCHUBRICHTUNG
-       (von mir zu ihm), gemessen an der Sitzreihe, wie sie auf diesem
-       Geraet steht. Die Nummer reist mit, also sieht jedes Geraet
-       dasselbe Ziel. Umgesetzt wird an derselben Stelle wie bei /heb. */
-    if (art === "hauab") {
-      if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
-      var nameA = rest.trim();
-      if (!nameA) return systemZeile("So geht es:  /hauab Nickname \u2014 "
-        + "du schiebst ihn mit beiden H\u00e4nden einen Platz weiter weg.");
-      var wenA = personOderIch(nameA);
-      if (!wenA) return systemZeile("Ich finde niemanden mit dem Namen \u201e" + nameA + "\u201c im Raum.");
-      if (wenA.ich) return systemZeile("Dich selbst kannst du nicht wegschieben.");
-      var plA = plaetzeBauen(), meinerA = null, seinerA = null;
-      plA.forEach(function (pl) { if (pl.ich) meinerA = pl; if (pl.id === wenA.id) seinerA = pl; });
-      if (!meinerA) return systemZeile("Du sitzt auf keinem Platz \u2014 von wo aus willst du schieben?");
-      if (!seinerA) return systemZeile(wenA.name + " sitzt gerade auf keinem Platz.");
-      var lagenA = {};
-      try {
-        document.querySelectorAll("#lcPlaetze .lc-platz[data-lc-platz]").forEach(function (el) {
-          var k = el.querySelector(".lc-kreis") || el, r = k.getBoundingClientRect();
-          if (r.width > 0) lagenA[Number(el.getAttribute("data-lc-platz"))] =
-            { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width };
-        });
-      } catch (e) {}
-      var MA = lagenA[meinerA.nummer], TA = lagenA[seinerA.nummer];
-      if (!MA || !TA) return systemZeile("Die Sitzreihe ist gerade nicht zu sehen \u2014 "
-        + "\u00f6ffne das Klassenzimmer und versuch es noch einmal.");
-      var dA = Math.hypot(TA.x - MA.x, TA.y - MA.y) || 1;
-      /* „falls einem jemand zu nah kommt": nur die direkten Nachbarn,
-         auch schraeg. */
-      if (dA > TA.w * 1.9) return systemZeile(wenA.name + " sitzt nicht direkt neben dir \u2014 "
-        + "wegschieben geht nur, wenn dir jemand zu nah kommt.");
-      var uxA = (TA.x - MA.x) / dA, uyA = (TA.y - MA.y) / dA, bestA = 0, kostA = Infinity;
-      Object.keys(lagenA).forEach(function (nr) {
-        nr = Number(nr);
-        if (nr === meinerA.nummer || nr === seinerA.nummer) return;
-        var c = lagenA[nr], vx = c.x - TA.x, vy = c.y - TA.y, lang = Math.hypot(vx, vy) || 1;
-        var vor = vx * uxA + vy * uyA;
-        if (vor < TA.w * 0.3) return;                      /* nicht zurueck, nicht quer */
-        var kost = lang * (1 + 2 * (1 - vor / lang));      /* nah UND in Schubrichtung */
-        if (kost < kostA) { kostA = kost; bestA = nr; }
-      });
-      if (!bestA) {
-        /* Am Rand: dann der naechste Platz, der weiter von mir weg ist. */
-        Object.keys(lagenA).forEach(function (nr) {
-          nr = Number(nr);
-          if (nr === meinerA.nummer || nr === seinerA.nummer) return;
-          var c = lagenA[nr], abMir = Math.hypot(c.x - MA.x, c.y - MA.y);
-          if (abMir <= dA + TA.w * 0.2) return;
-          var kost = Math.hypot(c.x - TA.x, c.y - TA.y);
-          if (kost < kostA) { kostA = kost; bestA = nr; }
-        });
-      }
-      if (!bestA) return systemZeile("Hinter " + wenA.name + " ist kein Platz mehr frei, "
-        + "auf den du schieben k\u00f6nntest.");
-      hauabZieht = true;
-      try { return befehlAusfuehren("/heb " + wenA.name + " " + bestA); }
-      finally { hauabZieht = false; }
-    }
-
     if (art === "heb") {
       if (zustand.lage !== "drin") return systemZeile("Dafuer musst du erst im Raum sein.");
       var teileH = rest.trim().split(/\s+/).filter(Boolean);
@@ -12215,8 +12142,7 @@ window.LiveChat = (function () {
          oder einer tieferen Reihe lag — also immer dann, wenn jemand
          „in der naechsten Naehe" sass. Jetzt gilt: /heb ist die Angel,
          /lasso ist das Lasso. Punkt. */
-      var wieH = lassoZieht ? "lasso" : (kranZieht ? "kranheben" : (baggerZieht ? "bagger"
-        : (hauabZieht ? "hauab" : "heber")));
+      var wieH = lassoZieht ? "lasso" : (kranZieht ? "kranheben" : (baggerZieht ? "bagger" : "heber"));
       /* Runde 100 — hebt man sich selbst, heisst es „sich selbst". */
       var wenNameH = wenH.ich ? "sich selbst" : wenH.name;
       var satzH = zustand.ichName + (wieH === "heber"
@@ -12225,14 +12151,11 @@ window.LiveChat = (function () {
           ? " hebt " + wenNameH + " mit dem Kran auf Platz " + nummerH
           : wieH === "bagger"
           ? " l\u00e4dt " + wenNameH + " mit dem Schaufelradbagger auf Platz " + nummerH + " ab"
-          : wieH === "hauab"
-          ? " schiebt " + wenNameH + " mit beiden H\u00e4nden weg \u2014 Abstand! Auf Platz " + nummerH
           : " zieht " + wenNameH + " mit dem Lasso auf Platz " + nummerH)
         + (dortH ? " \u2014 " + dortH.name + " rutscht auf " + seinerH.nummer : "")
         + "  " + (wieH === "heber" ? "\ud83e\ude9d"
                   : wieH === "kranheben" ? "\ud83c\udfd7\ufe0f"
-                  : wieH === "bagger" ? "\ud83d\ude9c"
-                  : wieH === "hauab" ? "\u270b" : "\ud83e\udd20");
+                  : wieH === "bagger" ? "\ud83d\ude9c" : "\ud83e\udd20");
       /* =================================================================
          RUNDE 76 — ERST DIE ANIMATION, DANN DER PLATZWECHSEL
          -----------------------------------------------------------------
@@ -12292,9 +12215,7 @@ window.LiveChat = (function () {
       /* RUNDE 101 — der Bagger laedt bei 80 % von 3,6 s ab und federt
          bis 86 % (3096 ms) nach; umgesetzt wird danach. */
       var dauerH = wieH === "lasso" ? 2950 : wieH === "kranheben" ? 2420
-        : wieH === "bagger" ? 3150
-        /* „Hau ab": das Bild steht bei 93 % von 2 s still (1860 ms). */
-        : wieH === "hauab" ? 1900 : 3150;
+        : wieH === "bagger" ? 3150 : 3150;
       offeneZuege.push({ werfer: zustand.ichName, wen: wenH.name, ziel: nummerH,
                          bis: Date.now() + dauerH + 200, uhr: setTimeout(schickenH, dauerH) });
       /* Und die Angel braucht das ZIEL: sie zieht dorthin, nicht zu
@@ -14666,8 +14587,6 @@ window.LiveChat = (function () {
       w.push("kranheben");
       /* RUNDE 101 — und „bagger" an /bagger, genauso. */
       w.push("bagger");
-      /* … und „hauab" an /hauab (Kurzform /abstand). */
-      w.push("hauab");
       return w;
     },
     /* Nur zum Nachpruefen: die Sitzordnung von aussen nachstellen und

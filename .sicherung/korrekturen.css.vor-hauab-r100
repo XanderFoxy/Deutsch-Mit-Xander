@@ -33003,24 +33003,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-bg-zahn       { fill: none; stroke: #3f454d; stroke-width: 1.2; }
 .lc-bg-staub circle { fill: rgba(150, 120, 80, .55); }
 .lc-bg-staub      { opacity: 0; }
-
-/* === RUNDE 101: HAU AB — ZWEI HAENDE SCHIEBEN =========================
-   XANDER (Funk #18): „jemand mit seinen Händen realistisch von sich weg
-   schieben". Haut aus derselben Quelle wie jede Hand im Haus (lcHaut),
-   Aermel dunkelblau. Ueber der Sitzreihe (8), unter dem geschobenen
-   Bild (9) — die Haende liegen an seinem Rand an. */
-.lc-hauab-buehne {
-  position: absolute;
-  left: 0; top: 0;
-  z-index: 10;
-  overflow: visible;
-  pointer-events: none;
-}
-.lc-ha-arm { fill: none; stroke: #3b5a86; stroke-linecap: round; }
-.lc-ha-handflaeche, .lc-ha-finger {
-  fill: var(--lc-ha-haut, #eec0a8);
-  stroke: var(--lc-ha-kante, #bf9280);
-  stroke-width: 1.1;
-}
-.lc-ha-gelenk { stroke: var(--lc-ha-kante, #bf9280); stroke-width: .8; fill: none; opacity: .7; }
-.lc-ha-knoechel { stroke: var(--lc-ha-tief, #d9a68c); stroke-width: 1.2; fill: none; }

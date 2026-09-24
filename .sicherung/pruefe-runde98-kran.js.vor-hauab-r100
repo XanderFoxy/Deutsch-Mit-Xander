@@ -42,7 +42,7 @@ const sage = (gut, was, zusatz) => {
   sage(/art === "kranheb"/.test(lc), "der Befehl /kranheb steht in livechat.js");
   sage(/var kranZieht = false;/.test(lc)
     /* RUNDE 101 — der Bagger haengt sich genauso dazwischen. */
-    && /lassoZieht \? "lasso" : \(kranZieht \? "kranheben" : \(baggerZieht \? "bagger"\s*: \(hauabZieht \? "hauab" : "heber"\)\)\)/.test(lc),
+    && /lassoZieht \? "lasso" : \(kranZieht \? "kranheben" : \(baggerZieht \? "bagger" : "heber"\)\)/.test(lc),
     "und das Werkzeug sagt selbst an, welche Animation laeuft");
 
   const srv = http.createServer((q, a) => {
@@ -383,115 +383,6 @@ const sage = (gut, was, zusatz) => {
     sage(Math.abs(ton("aufsetzen") - 2880) <= 150, "   das Aufsetzen klingt beim Aufprall (2,88 s)", ton("aufsetzen") + " ms");
     sage(Math.abs(ton("graben") - 684) <= 150, "   das Graben klingt beim Schaufeln (0,68 s)", ton("graben") + " ms");
   });
-
-  /* =====================================================================
-     8  RUNDE 101 — HAU AB: MIT BEIDEN HAENDEN EINEN PLATZ WEITER
-     XANDER (Funk #18): „… von sich weg schieben … in jede Richtung … Der
-     andere wandert dabei einen Platz weiter und bleibt dann dort."
-     Alex sitzt in der Mitte der oberen Reihe; jeder Nachbar wird einmal
-     geschoben — waagerecht, nach unten und schraeg.
-     ===================================================================== */
-  console.log("\n8  RUNDE 101 — HAU AB\n");
-  const setz8 = async (pg) => {
-    await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
-    await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
-    await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF, { timeout: 25000 });
-    await pg.evaluate(async () => {
-      window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 2150, zuruecksetzen: true,
-        leute: { p0: { id: "p0", name: "Bea", seit: 2000 }, p1: { id: "p1", name: "Cem", seit: 2100 },
-                 p2: { id: "p2", name: "Dana", seit: 2200 }, p3: { id: "p3", name: "Emil", seit: 2300 },
-                 p4: { id: "p4", name: "Fritz", seit: 2400 }, p5: { id: "p5", name: "Gina", seit: 2500 } } });
-      document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
-      let e = document.getElementById("livechatArea");
-      while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
-      window.DMA_PRUEF.neuZeichnen();
-      await new Promise((f) => setTimeout(f, 500));
-    });
-  };
-  const pg8 = await br.newPage({ viewport: { width: 390, height: 844 } });
-  await setz8(pg8);
-  const sitz8 = await pg8.evaluate(() => {
-    const reihe = document.getElementById("lcPlaetze");
-    const out = {};
-    reihe.querySelectorAll(".lc-platz[data-lc-platz]").forEach((p) => {
-      const r = p.querySelector(".lc-kreis").getBoundingClientRect();
-      out[p.getAttribute("data-lc-platz")] = { name: ((p.querySelector(".lc-platz-name") || {}).textContent || "").replace(/\s*\(du\)\s*$/i, "").trim(),
-        x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width };
-    });
-    return out;
-  });
-  const ichNr = Object.keys(sitz8).find((k) => sitz8[k].name === "Alex");
-  const I = sitz8[ichNr];
-  const nachbarn = Object.keys(sitz8).filter((k) => k !== ichNr && sitz8[k].name && !/^frei$/i.test(sitz8[k].name)
-    && Math.hypot(sitz8[k].x - I.x, sitz8[k].y - I.y) <= I.w * 1.9);
-  const fern = Object.keys(sitz8).find((k) => k !== ichNr && sitz8[k].name && !/^frei$/i.test(sitz8[k].name)
-    && Math.hypot(sitz8[k].x - I.x, sitz8[k].y - I.y) > I.w * 1.9);
-  const nein = await pg8.evaluate(async (fernName) => {
-    const letzte = () => { const n = window.LiveChat.lage().nachrichten || []; return (n[n.length - 1] || {}).text || ""; };
-    window.LiveChat.pruefBefehl("/hauab Alex"); await new Promise((f) => setTimeout(f, 60));
-    const selbst = letzte();
-    window.LiveChat.pruefBefehl("/hauab " + fernName); await new Promise((f) => setTimeout(f, 60));
-    const weit = letzte();
-    window.LiveChat.pruefBefehl("/wegschieben " + fernName); await new Promise((f) => setTimeout(f, 60));
-    return { selbst, weit, kurz: letzte() };
-  }, fern ? sitz8[fern].name : "Niemand");
-  await pg8.close();
-  sage(/selbst/.test(nein.selbst), "sich selbst wegschieben geht nicht", nein.selbst.trim());
-  sage(/nicht direkt neben dir/.test(nein.weit), "wer weiter weg sitzt, wird nicht geschoben", nein.weit.trim());
-  sage(/nicht direkt neben dir/.test(nein.kurz), "/wegschieben ist dasselbe wie /hauab", nein.kurz.trim());
-  sage(nachbarn.length >= 3, "Alex hat Nachbarn in mehreren Richtungen", nachbarn.map((k) => sitz8[k].name + " (" + k + ")").join(", "));
-  for (const nr of nachbarn) {
-    const wer = sitz8[nr].name;
-    const pg = await br.newPage({ viewport: { width: 390, height: 844 } });
-    await setz8(pg);
-    const b = await pg.evaluate(async (wer) => {
-      const reihe = document.getElementById("lcPlaetze");
-      const platzVon = (n) => [...reihe.querySelectorAll(".lc-platz")].find((p) =>
-        ((p.querySelector(".lc-platz-name") || {}).textContent || "").replace(/\s*\(du\)\s*$/i, "").trim() === n);
-      const kreis = platzVon(wer).querySelector(".lc-kreis");
-      const mitte = (r) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
-      window.DMA_TONLOG = [];
-      window.LiveChat.pruefBefehl("/hauab " + wer);
-      const t0 = performance.now(), proben = [];
-      while (performance.now() < t0 + 2600) {
-        const t = performance.now() - t0, g = reihe.getBoundingClientRect();
-        const k = mitte(kreis.getBoundingClientRect());
-        const h = [...document.querySelectorAll(".lc-ha-hand")].map((x) => mitte(x.getBoundingClientRect()));
-        proben.push({ t: Math.round(t), bx: k.x - g.left, by: k.y - g.top,
-          hand: h.length ? Math.min(...h.map((p) => Math.hypot(p.x - k.x, p.y - k.y))) : null,
-          da: !!document.querySelector(".lc-hauab-buehne") });
-        await new Promise((f) => requestAnimationFrame(f));
-      }
-      const nachher = platzVon(wer);
-      return { proben, breite: kreis.getBoundingClientRect().width,
-               nach: nachher ? nachher.getAttribute("data-lc-platz") : "",
-               text: ((window.LiveChat.lage().nachrichten || []).slice(-1)[0] || {}).text || "",
-               toene: (window.DMA_TONLOG || []).map((x) => [x.name, Math.round(x.wann - t0)]) };
-    }, wer);
-    await pg.close();
-    const vorher = sitz8[nr], nachher = sitz8[b.nach] || null;
-    const abMirV = Math.hypot(vorher.x - I.x, vorher.y - I.y);
-    const abMirN = nachher ? Math.hypot(nachher.x - I.x, nachher.y - I.y) : 0;
-    const schritt = nachher ? Math.hypot(nachher.x - vorher.x, nachher.y - vorher.y) : 0;
-    sage(/schiebt .* mit beiden H/.test(b.text), wer + " (Platz " + nr + "): die Zeile sagt, was passiert", b.text.trim());
-    sage(nachher && abMirN > abMirV + 5, "   landet weiter weg von Alex", "Platz " + nr + " → " + b.nach
-      + " (" + Math.round(abMirV) + " → " + Math.round(abMirN) + " px)");
-    sage(nachher && schritt <= vorher.w * 1.6, "   und nur EINEN Platz weiter", Math.round(schritt / vorher.w * 100) + " % einer Bildbreite");
-    let sprung = 0;
-    for (let i = 1; i < b.proben.length; i++) {
-      if (b.proben[i].t > 1800) break;
-      sprung = Math.max(sprung, Math.hypot(b.proben[i].bx - b.proben[i - 1].bx, b.proben[i].by - b.proben[i - 1].by));
-    }
-    sage(sprung <= b.breite * 0.25, "   das Bild springt nie", Math.round(sprung) + " px je Bild");
-    const anliegen = b.proben.filter((p) => p.t > 700 && p.t < 1150 && p.hand !== null);
-    sage(anliegen.length && anliegen.every((p) => p.hand > b.breite * 0.35 && p.hand < b.breite * 0.8),
-      "   waehrend des Stosses liegen die Haende am Rand des Bildes",
-      anliegen.length ? Math.round(Math.min(...anliegen.map((p) => p.hand))) + "–" + Math.round(Math.max(...anliegen.map((p) => p.hand))) + " px (Bild " + Math.round(b.breite) + ")" : "keine Haende");
-    sage(b.proben.filter((p) => p.t > 2500).every((p) => !p.da), "   die Haende sind danach wieder weg");
-    const ton = (n) => (b.toene.find((x) => x[0] === n) || [n, -1])[1];
-    sage(Math.abs(ton("aufsetzen") - 600) <= 120 && Math.abs(ton("schlurfen") - 1200) <= 120,
-      "   Anlegen (0,6 s) und Rutschen (1,2 s) sind zu hoeren", ton("aufsetzen") + " / " + ton("schlurfen") + " ms");
-  }
 
   await br.close();
   srv.close();

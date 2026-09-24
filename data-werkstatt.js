@@ -49,20 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "562: Schaufelradbagger",
+  stand: "563: Hau ab / Abstand",
 
   inArbeit: [
-    { seit: "2026-09-24T04:38",
-      text: "Deine Antworten auf die 37 Abnahme-Fragen" },
-    { seit: "2026-09-24T04:38",
+    { seit: "2026-09-24T04:47",
+      text: "Deine Antworten auf die Abnahme-Fragen im Walkie" },
+    { seit: "2026-09-24T04:47",
       text: "Was genau ist mit „die Sprechbilder“ gemeint? (Frage im Walkie)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T04:38",
-      text: "Schaufelradbagger (/bagger Name 3 oder Bild antippen → Bagger → Platz wählen): Er fährt unter der Sitzreihe herein und schaufelt das Bild vom Platz. Dann schwenkt er durch die Lücken zwischen den Plätzen, ohne Gesichter zu verdecken, und lädt das Bild auf dem Zielplatz ab, mit Staub und Aufsetz-Ton. Umgesetzt wird erst danach. Gemessen: landet auf 0 px genau, der Ton passt auf 60 ms." },
-    { seit: "2026-09-24T04:38",
-      text: "Stadt·Land·Fluss-Blatt kompakt: auf einem kleinen Android 256 px statt 500 px hoch." },
+    { seit: "2026-09-24T04:47",
+      text: "Hau ab (/hauab Name, auch /abstand oder /wegschieben; Bild antippen → Hau ab): Zwei Hände fahren aus deinem Bild und drücken gegen den Nachbarn. Er wird angestoßen, rutscht allein weiter und federt aus, genau einen Platz weiter und weg von dir, in jede Richtung, auch schräg. Wer nicht direkt neben dir sitzt, kann nicht geschoben werden." },
+    { seit: "2026-09-24T04:47",
+      text: "Schaufelradbagger (562) und Stadt·Land·Fluss kompakt (561)" },
   ],
 };
