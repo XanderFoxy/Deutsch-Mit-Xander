@@ -400,8 +400,10 @@ const sage = (gut, was, zusatz) => {
       const r = document.querySelector(".lc-rad-rahmen");
       if (!teile && r && Number(r.style.opacity) > 0.9) {
         const hat = (c) => { const e = r.querySelector("." + c); return Boolean(e && (e.getAttribute("d") || e.getAttribute("r"))); };
-        teile = { rohr: hat("lc-rad-rohr"), sattel: hat("lc-rad-sattel"), lenker: hat("lc-rad-lenker"),
-                  pedal: hat("lc-rad-pedal"), blatt: hat("lc-rad-blatt") };
+        /* RUNDE 101 — das Rad ist jetzt ein Mountainbike (lc-mtb-*),
+           dazu gehoeren die Stollenreifen um die Bilder. */
+        teile = { rohr: hat("lc-mtb-rohr"), sattel: hat("lc-mtb-sattel"), lenker: hat("lc-mtb-vorbau"),
+                  pedal: hat("lc-mtb-pedal"), blatt: hat("lc-mtb-blatt"), reifen: hat("lc-mtb-mantel") };
       }
       await new Promise((f) => requestAnimationFrame(f));
     }
@@ -411,8 +413,8 @@ const sage = (gut, was, zusatz) => {
   });
   await pgR.close();
   const tt = fr.teile || {};
-  sage(tt.rohr && tt.sattel && tt.lenker && tt.pedal && tt.blatt,
-    "ein Fahrradrahmen mit Sattel, Lenker, Kettenblatt und Pedalen", JSON.stringify(tt));
+  sage(tt.rohr && tt.sattel && tt.lenker && tt.pedal && tt.blatt && tt.reifen,
+    "ein Fahrradrahmen mit Sattel, Lenker, Kettenblatt, Pedalen und Stollenreifen", JSON.stringify(tt));
   sage(fr.grMin > 0.97 && fr.grMax < 1.03, "beide Raeder sind gleich gross",
     fr.grMin.toFixed(2) + "–" + fr.grMax.toFixed(2));
   sage(fr.abMin > 1.1 && fr.abMax < 1.45, "Radstand wie beim Fahrrad (Luft zwischen den Raedern)",

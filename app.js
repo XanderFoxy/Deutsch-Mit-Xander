@@ -42894,23 +42894,65 @@
      jedes Bild zwischen den beiden Radmitten neu gezeichnet — so passt
      er in jeder Richtung, auch wenn die Seite dabei rutscht.
      ================================================================= */
-  function lcRadRahmen(vorn, hinten, d, ab, bis, dauer) {
+  /* =================================================================
+     RUNDE 101 — EIN MOUNTAINBIKE STATT EINES STRICHRADS
+     -----------------------------------------------------------------
+     XANDER (Funk 75): „das Fahrrad beim zweifachen Reisen kannst du
+     besser gestalten, und es muss ein bisschen natürlicher … da fehlt
+     auch das Geräusch der Mountainbike-Kette mit der Schaltung und das
+     Fahrrad klingeln."
+
+     Die beiden Profilbilder bleiben die Raeder. Neu:
+       - REIFEN mit Stollen AUSSEN um jedes Bild (die Gesichter bleiben
+         frei); die Stollen drehen sich genau so weit, wie das Rad rollt.
+       - Ein Hardtail-Rahmen aus dicken Rohren (Unterrohr am dicksten,
+         Oberrohr abfallend), Federgabel mit blanken Standrohren und
+         schwarzen Tauchrohren, Vorbau mit breitem Lenker und Griff,
+         Sattelstuetze mit geformtem Sattel.
+       - Kettenblatt mit Zaehnen, die Kette LAEUFT (Strichmuster wandert
+         mit der Strecke), Kurbel mit Plattformpedalen.
+       - NATUERLICHER: Kurbel und Kette haengen an der gefahrenen
+         Strecke, nicht an der Uhr. Ab „rollAb" wird nicht mehr
+         getreten — man laesst ausrollen (Freilauf), dann bremst man.
+     Liegt HINTER den Bildern, wie bisher.
+     ================================================================= */
+  function lcRadRahmen(vorn, hinten, d, ab, bis, dauer, rollAb) {
     const reihe = document.getElementById("lcPlaetze");
     if (!reihe || !vorn || !hinten) return null;
     const NS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(NS, "svg");
-    svg.setAttribute("class", "lc-rad-rahmen");
+    svg.setAttribute("class", "lc-rad-rahmen lc-mtb");
     svg.setAttribute("aria-hidden", "true");
-    svg.innerHTML = '<g class="lc-rad-kette"><path class="lc-rad-kettenlinie"/></g>'
-      + '<path class="lc-rad-rohr"/><path class="lc-rad-gabel"/>'
-      + '<path class="lc-rad-sattel"/><path class="lc-rad-lenker"/>'
-      + '<circle class="lc-rad-blatt"/><path class="lc-rad-kurbel"/><path class="lc-rad-pedal"/>';
+    svg.innerHTML =
+      /* Reifen: Mantel und Stollen, je Rad. */
+      '<circle class="lc-mtb-mantel lc-mtb-m1"/><circle class="lc-mtb-stollen lc-mtb-s1"/>'
+      + '<circle class="lc-mtb-mantel lc-mtb-m2"/><circle class="lc-mtb-stollen lc-mtb-s2"/>'
+      /* Kette (unter dem Rahmen), Rahmen doppelt: Rand und Farbe. */
+      + '<path class="lc-mtb-kette"/>'
+      + '<path class="lc-mtb-rohr-rand"/><path class="lc-mtb-rohr"/>'
+      + '<path class="lc-mtb-unterrohr-rand"/><path class="lc-mtb-unterrohr"/>'
+      + '<path class="lc-mtb-streifen"/>'
+      + '<path class="lc-mtb-stand"/><path class="lc-mtb-tauch"/><path class="lc-mtb-krone"/>'
+      + '<path class="lc-mtb-stuetze"/><path class="lc-mtb-sattel"/>'
+      + '<path class="lc-mtb-vorbau"/><path class="lc-mtb-griff"/>'
+      + '<circle class="lc-mtb-blatt"/><circle class="lc-mtb-zaehne"/>'
+      + '<path class="lc-mtb-kurbel"/><path class="lc-mtb-pedal"/><circle class="lc-mtb-achse"/>';
     if (getComputedStyle(reihe).position === "static") reihe.style.position = "relative";
     reihe.appendChild(svg);
     const q = (sel) => svg.querySelector(sel);
     const r = d / 2;
     const t0 = performance.now();
     const f1 = (v) => v.toFixed(1);
+    const M = (p) => f1(p.x) + " " + f1(p.y);
+    /* Reifenmasse (fest), damit die Striche nicht mit jedem Bild neu
+       gerechnet werden muessen. */
+    [".lc-mtb-m1", ".lc-mtb-m2"].forEach((s) => q(s).setAttribute("r", f1(r * 1.06)));
+    [".lc-mtb-s1", ".lc-mtb-s2"].forEach((s) => {
+      q(s).setAttribute("r", f1(r * 1.13));
+      const umfang = 2 * Math.PI * r * 1.13, n = 28;
+      q(s).style.strokeDasharray = f1(umfang / n * 0.45) + " " + f1(umfang / n * 0.55);
+    });
+    let weg = 0, getreten = 0, altF = null;
     const bild = () => {
       if (!svg.isConnected) return;
       const t = performance.now() - t0;
@@ -42919,47 +42961,80 @@
       const a = vorn.getBoundingClientRect(), b = hinten.getBoundingClientRect();
       const F = { x: a.left + a.width / 2 - g.left, y: a.top + a.height / 2 - g.top };
       const R = { x: b.left + b.width / 2 - g.left, y: b.top + b.height / 2 - g.top };
+      /* Gefahrene Strecke: daran haengen Stollen, Kurbel und Kette. */
+      if (altF) {
+        const ds = Math.hypot(F.x - altF.x, F.y - altF.y);
+        weg += ds;
+        if (t < (rollAb || bis)) getreten += ds;
+      }
+      altF = F;
       const L = Math.hypot(F.x - R.x, F.y - R.y) || 1;
       const u = { x: (F.x - R.x) / L, y: (F.y - R.y) / L };
-      /* „oben" ist die Seite der Senkrechten, die auf dem Bildschirm
-         weiter oben liegt — faehrt das Rad senkrecht, die linke. */
       let n = { x: u.y, y: -u.x };
       if (n.y > 0.01 || (Math.abs(n.y) <= 0.01 && n.x > 0)) n = { x: -n.x, y: -n.y };
+      /* Faehrt es nach links, dreht sich alles andersherum. */
+      const vorwaerts = u.x >= 0 ? 1 : -1;
       const P = (s2, h) => ({ x: R.x + u.x * s2 * L + n.x * h * r, y: R.y + u.y * s2 * L + n.y * h * r });
-      const M = (p) => f1(p.x) + " " + f1(p.y);
-      const BB = P(0.47, -0.08), S = P(0.33, 1.02), H = P(0.84, 1.02), HU = P(0.87, 0.62);
-      q(".lc-rad-rohr").setAttribute("d", "M" + M(R) + " L" + M(BB) + " L" + M(S) + " L" + M(R)
-        + " M" + M(S) + " L" + M(H) + " L" + M(HU) + " L" + M(BB));
-      q(".lc-rad-gabel").setAttribute("d", "M" + M(HU) + " L" + M(F));
-      const s1 = P(0.27, 1.22), s2 = P(0.41, 1.22), sp = P(0.335, 1.02);
-      q(".lc-rad-sattel").setAttribute("d", "M" + M(sp) + " L" + M(P(0.335, 1.2))
-        + " M" + M(s1) + " L" + M(s2));
-      const st = P(0.83, 1.32), gr1 = P(0.76, 1.36);
-      q(".lc-rad-lenker").setAttribute("d", "M" + M(H) + " L" + M(st) + " L" + M(gr1));
-      q(".lc-rad-blatt").setAttribute("cx", f1(BB.x));
-      q(".lc-rad-blatt").setAttribute("cy", f1(BB.y));
-      q(".lc-rad-blatt").setAttribute("r", f1(r * 0.2));
-      /* Die Kette: oben und unten vom Kettenblatt zur Hinterradnabe. */
-      const ko = P(0.47, 0.12), ku = P(0.47, -0.28);
-      q(".lc-rad-kettenlinie").setAttribute("d", "M" + M(ko) + " L" + M(P(0, 0.08))
-        + " M" + M(ku) + " L" + M(P(0, -0.08)));
-      /* Die Kurbel dreht sich, solange gefahren wird. */
-      const w = (Math.min(t, bis) / 1000) * Math.PI * 2 * 1.3;
-      const kl = r * 0.34;
+      [[".lc-mtb-m1", ".lc-mtb-s1", F], [".lc-mtb-m2", ".lc-mtb-s2", R]].forEach(([m, s, c]) => {
+        q(m).setAttribute("cx", f1(c.x)); q(m).setAttribute("cy", f1(c.y));
+        q(s).setAttribute("cx", f1(c.x)); q(s).setAttribute("cy", f1(c.y));
+        q(s).style.strokeDashoffset = f1(-vorwaerts * weg * 1.13);
+      });
+      /* Die Punkte des Rahmens (s: Anteil am Radstand, h: in Radien). */
+      const BB = P(0.46, -0.1);
+      const ST = P(0.37, 0.98), STo = P(0.36, 1.1);
+      const HTo = P(0.83, 1.06), HTu = P(0.855, 0.74);
+      const SS = P(0.375, 0.86);
+      q(".lc-mtb-rohr").setAttribute("d",
+        "M" + M(R) + " L" + M(BB) + " L" + M(STo)                /* Kettenstrebe, Sitzrohr */
+        + " M" + M(R) + " L" + M(SS)                             /* Sitzstrebe */
+        + " M" + M(P(0.37, 0.92)) + " L" + M(HTo)                /* Oberrohr, abfallend */
+        + " M" + M(HTo) + " L" + M(HTu));                        /* Steuerrohr */
+      q(".lc-mtb-rohr-rand").setAttribute("d", q(".lc-mtb-rohr").getAttribute("d"));
+      q(".lc-mtb-unterrohr").setAttribute("d", "M" + M(BB) + " L" + M(HTu));
+      q(".lc-mtb-unterrohr-rand").setAttribute("d", q(".lc-mtb-unterrohr").getAttribute("d"));
+      q(".lc-mtb-streifen").setAttribute("d", "M" + M(P(0.56, 0.12)) + " L" + M(P(0.7, 0.45)));
+      /* Federgabel: Krone, blanke Standrohre, schwarze Tauchrohre. */
+      const krone = P(0.865, 0.68), knie = P(0.925, 0.3);
+      q(".lc-mtb-krone").setAttribute("d", "M" + M(HTu) + " L" + M(krone));
+      q(".lc-mtb-stand").setAttribute("d", "M" + M(krone) + " L" + M(knie));
+      q(".lc-mtb-tauch").setAttribute("d", "M" + M(knie) + " L" + M(F));
+      /* Sattel mit Nase nach vorn. */
+      const sp = P(0.345, 1.34);
+      q(".lc-mtb-stuetze").setAttribute("d", "M" + M(STo) + " L" + M(sp));
+      const sa = P(0.25, 1.4), sb = P(0.33, 1.44), sc = P(0.44, 1.37), sd = P(0.32, 1.33);
+      q(".lc-mtb-sattel").setAttribute("d", "M" + M(sa) + " Q" + M(sb) + " " + M(sc) + " Q" + M(sd) + " " + M(sa) + " Z");
+      /* Vorbau und Lenker (seitlich: Lenker ist ein kurzer Riser). */
+      const vo = P(0.87, 1.2), le = P(0.84, 1.36);
+      q(".lc-mtb-vorbau").setAttribute("d", "M" + M(HTo) + " L" + M(P(0.84, 1.16)) + " L" + M(vo) + " L" + M(le));
+      q(".lc-mtb-griff").setAttribute("d", "M" + M(le) + " L" + M(P(0.79, 1.4)));
+      /* Kettenblatt mit Zaehnen. */
+      [".lc-mtb-blatt", ".lc-mtb-zaehne", ".lc-mtb-achse"].forEach((s) => {
+        q(s).setAttribute("cx", f1(BB.x)); q(s).setAttribute("cy", f1(BB.y));
+      });
+      q(".lc-mtb-blatt").setAttribute("r", f1(r * 0.24));
+      q(".lc-mtb-zaehne").setAttribute("r", f1(r * 0.27));
+      q(".lc-mtb-achse").setAttribute("r", f1(r * 0.07));
+      /* Uebersetzung: eine Kurbelumdrehung auf gut zwei Radumdrehungen. */
+      const w = vorwaerts * getreten / (r * 2.2);
+      q(".lc-mtb-zaehne").setAttribute("transform", "rotate(" + f1(w * 57.3) + " " + M(BB) + ")");
+      /* Die Kette: oben vom Kettenblatt zum Ritzel, unten zurueck. */
+      q(".lc-mtb-kette").setAttribute("d", "M" + M(P(0.46, 0.14)) + " L" + M(P(0, 0.12))
+        + " M" + M(P(0.46, -0.34)) + " L" + M(P(0.05, -0.38)) + " L" + M(P(0, -0.12)));
+      q(".lc-mtb-kette").style.strokeDashoffset = f1(-getreten * 0.24 / 1.1);
+      const kl = r * 0.36;
       const k1 = { x: BB.x + (u.x * Math.cos(w) + n.x * Math.sin(w)) * kl,
                    y: BB.y + (u.y * Math.cos(w) + n.y * Math.sin(w)) * kl };
       const k2 = { x: 2 * BB.x - k1.x, y: 2 * BB.y - k1.y };
-      q(".lc-rad-kurbel").setAttribute("d", "M" + M(k1) + " L" + M(k2));
-      const pl = r * 0.14;
-      q(".lc-rad-pedal").setAttribute("d", "M" + f1(k1.x - u.x * pl) + " " + f1(k1.y - u.y * pl)
+      q(".lc-mtb-kurbel").setAttribute("d", "M" + M(k1) + " L" + M(k2));
+      /* Plattformpedale bleiben waagerecht zur Fahrtrichtung. */
+      const pl = r * 0.13;
+      q(".lc-mtb-pedal").setAttribute("d", "M" + f1(k1.x - u.x * pl) + " " + f1(k1.y - u.y * pl)
         + " L" + f1(k1.x + u.x * pl) + " " + f1(k1.y + u.y * pl)
         + " M" + f1(k2.x - u.x * pl) + " " + f1(k2.y - u.y * pl)
         + " L" + f1(k2.x + u.x * pl) + " " + f1(k2.y + u.y * pl));
-      /* Erst sichtbar, wenn er angekuppelt ist; beim Absteigen weg. */
       const sicht = t < ab ? 0 : t < ab + 180 ? (t - ab) / 180
         : t < bis ? 1 : Math.max(0, 1 - (t - bis) / 220);
-      /* Solange die Raeder noch uebereinander liegen (Ankuppeln), kein
-         zusammengestauchter Rahmen: erst ab 0,9 d Radstand. */
       const breit = Math.max(0, Math.min(1, (L - d * 0.9) / (d * 0.3)));
       svg.style.opacity = (sicht * breit).toFixed(2);
       requestAnimationFrame(bild);
@@ -43193,11 +43268,17 @@
       /* Ankuppeln: ich rolle W vor, er rollt auf meinen Platz. */
       bilderA.push({ transform: tr(an(W), vorw * dreh1(W), 0, 0), offset: bei(ankuppeln) });
       bilderM.push({ transform: tr(an(0), drehM, zuM.x, zuM.y) + " scale(1)", offset: bei(ankuppeln) });
-      /* Fahrt: in 24 Schritten, das Hinterrad W dahinter auf der Spur. */
+      /* Fahrt: in 24 Schritten, das Hinterrad W dahinter auf der Spur.
+         RUNDE 101 — XANDER: „es muss ein bisschen natürlicher." Vorher
+         gleich schnell vom ersten bis zum letzten Meter. Jetzt tritt
+         man an, rollt, und laesst am Ende ausrollen: die Strecke folgt
+         einer Sinuskurve ueber die Zeit. Die Raeder drehen sich trotzdem
+         genau so weit, wie sie rollen (dreh1 haengt an der Strecke). */
       const schritte = 24, fahrt = hin - ankuppeln;
+      const sanft = (x) => 0.5 - 0.5 * Math.cos(Math.PI * x);
       let dA = vorw * dreh1(W), dM = drehM, sAlt = W;
       for (let k = 1; k <= schritte; k++) {
-        const sv = W + (S - W) * (k / schritte);
+        const sv = W + (S - W) * sanft(k / schritte);
         const q = an(sv), qh = an(sv - W);
         const rich = q.links ? -1 : 1;
         dA += rich * dreh1(sv - sAlt);
@@ -43273,8 +43354,10 @@
       kreisMit.appendChild(hoerner);
       speichen.push(hoerner);
     }
+    /* Ab hier wird nicht mehr getreten, man rollt aus (Freilauf). */
+    const rollAb = ankuppeln + (hin - ankuppeln) * 0.7;
     if (!ball) {
-      const rahmen = lcRadRahmen(kreisAb, kreisMit, d, ankuppeln * 0.8, hin + 120, dauer);
+      const rahmen = lcRadRahmen(kreisAb, kreisMit, d, ankuppeln * 0.8, hin + 120, dauer, rollAb);
       if (rahmen) speichen.push(rahmen);
     }
     setTimeout(() => speichen.forEach((x) => x.remove()), dauer + 700);
@@ -43285,9 +43368,22 @@
         lcTonSpaeter("federboing", ankuppeln + i * jeFeld, 0.42);
       }
     } else {
-      lcTonZu("fahren");
+      /* RUNDE 101 — XANDER: „da fehlt auch das Geräusch der
+         Mountainbike-Kette mit der Schaltung und das Fahrrad klingeln."
+         Der Reihe nach, auf die Bewegung gelegt:
+           0 ms        die Klingel — „kling kling, steig auf"
+           ankuppeln   die Kette laeuft, solange getreten wird
+           25 % / 50 % der Fahrt: hochschalten (Klick, Kette springt)
+           70 %        Freilauf: es tickert, man rollt aus
+           hin − 700   die Bremse quietscht bis zum Stillstand */
+      lcTonSpaeter("fahrradklingel", 0, 0.55);
+      const fahrt = hin - ankuppeln;
+      lcTonSpaeter("radkette", ankuppeln, 0.5, Math.max(300, rollAb - ankuppeln));
+      lcTonSpaeter("radschaltung", ankuppeln + fahrt * 0.25, 0.55);
+      if (fahrt > 1400) lcTonSpaeter("radschaltung", ankuppeln + fahrt * 0.5, 0.5);
+      lcTonSpaeter("freilauf", rollAb, 0.45, Math.max(300, hin - rollAb));
       /* Auch hier: das Quietschen endet mit dem Stillstand, nicht danach. */
-      lcTonSpaeter("quietschen", Math.max(0, hin - 700), 0.55);
+      lcTonSpaeter("quietschen", Math.max(0, hin - 700), 0.45);
     }
 
     /* Und dann sitzt auch jeder wirklich dort.

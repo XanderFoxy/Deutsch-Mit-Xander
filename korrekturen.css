@@ -33882,3 +33882,30 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-sb-staub circle { fill: rgba(150, 120, 80, .55); }
 .lc-sb-staub  { opacity: 0; }
 .lc-sb-rauch circle { fill: #6d7076; }
+
+/* =====================================================================
+   RUNDE 101 — DAS MOUNTAINBIKE (siehe lcRadRahmen)
+   XANDER (Funk 75): „das Fahrrad … kannst du besser gestalten."
+   Dunkler Rahmen mit oranger Kennung, Stollenreifen AUSSEN um die
+   Bilder, silberne Standrohre, schwarze Tauchrohre, Kette mit Gliedern.
+   ===================================================================== */
+.lc-mtb .lc-mtb-mantel { fill: none; stroke: #1d1f22; stroke-width: 5.5px; }
+.lc-mtb .lc-mtb-stollen { fill: none; stroke: #2c2f33; stroke-width: 3.2px; }
+.lc-mtb .lc-mtb-rohr-rand { fill: none; stroke: #0e1418; stroke-width: 6.6px; stroke-linecap: round; stroke-linejoin: round; }
+.lc-mtb .lc-mtb-rohr { fill: none; stroke: #27404f; stroke-width: 4.4px; stroke-linecap: round; stroke-linejoin: round; }
+.lc-mtb .lc-mtb-unterrohr-rand { fill: none; stroke: #0e1418; stroke-width: 9px; stroke-linecap: round; }
+.lc-mtb .lc-mtb-unterrohr { fill: none; stroke: #2f4d5f; stroke-width: 6.6px; stroke-linecap: round; }
+.lc-mtb .lc-mtb-streifen { fill: none; stroke: #ff7a1a; stroke-width: 3px; stroke-linecap: round; }
+.lc-mtb .lc-mtb-krone { fill: none; stroke: #1b1d20; stroke-width: 5px; stroke-linecap: round; }
+.lc-mtb .lc-mtb-stand { fill: none; stroke: #d7dce1; stroke-width: 3.4px; stroke-linecap: round; }
+.lc-mtb .lc-mtb-tauch { fill: none; stroke: #1b1d20; stroke-width: 4.6px; stroke-linecap: round; }
+.lc-mtb .lc-mtb-stuetze { fill: none; stroke: #9aa2aa; stroke-width: 3px; stroke-linecap: round; }
+.lc-mtb .lc-mtb-sattel { fill: #1b1d20; stroke: #000; stroke-width: .8px; stroke-linejoin: round; }
+.lc-mtb .lc-mtb-vorbau { fill: none; stroke: #1b1d20; stroke-width: 3.4px; stroke-linecap: round; stroke-linejoin: round; }
+.lc-mtb .lc-mtb-griff { fill: none; stroke: #ff7a1a; stroke-width: 4.2px; stroke-linecap: round; }
+.lc-mtb .lc-mtb-blatt { fill: #3a3f45; stroke: #aab1b8; stroke-width: 1.4px; }
+.lc-mtb .lc-mtb-zaehne { fill: none; stroke: #6c737b; stroke-width: 2.2px; stroke-dasharray: 1.6 1.4; }
+.lc-mtb .lc-mtb-achse { fill: #c9ced4; }
+.lc-mtb .lc-mtb-kette { fill: none; stroke: #5b6168; stroke-width: 2.2px; stroke-dasharray: 2 1.2; stroke-linejoin: round; }
+.lc-mtb .lc-mtb-kurbel { fill: none; stroke: #1b1d20; stroke-width: 3.4px; stroke-linecap: round; }
+.lc-mtb .lc-mtb-pedal { fill: none; stroke: #ff7a1a; stroke-width: 3.6px; stroke-linecap: round; }
