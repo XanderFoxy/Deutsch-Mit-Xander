@@ -45436,33 +45436,9 @@
         const aus = Math.sin(lauf / (d * 0.16)) * d * 0.035 - d * 0.05;
         welle += (i ? " L" : "M") + (q.x - dy / l * aus).toFixed(1) + " " + (q.y + dx / l * aus).toFixed(1);
       });
-      /* WALKIE #222 — XANDER: „das Wasser soll nicht so steif da drüber
-         liegen das soll ähnlich sein wie beim Mississippi Dampfer."
-         GEFUNDEN: zwei harte, gleichmaessig blaue Striche mit runden
-         Enden — ein Balken. Beim Dampfer ist das Wasser ein weicher
-         Verlauf von Weiss nach Hellblau, der am Rand ins Nichts
-         zerlaeuft und atmet. Genau so jetzt hier: dieselbe Strecke
-         (Funk 89 bleibt: das Wasser liegt auf dem Weg, es faehrt nicht
-         mit), aber weichgezeichnet, heller, mit einer Gischtkante und
-         zwei Wellenlinien, die gegeneinander laufen. */
-      const weich = (d * 0.05).toFixed(1);
-      /* Die Filterflaeche in Seitenpixeln: in Objekt-Einheiten waere sie
-         bei einer waagerechten Strecke 0 px hoch (die Strichbreite zaehlt
-         dort nicht mit) — dann verschwindet das ganze Wasser. */
-      wasser.innerHTML = '<defs><filter id="lcDelfinWeich" filterUnits="userSpaceOnUse" x="0" y="0" width="'
-        + Math.round(rrW.width) + '" height="' + Math.round(rrW.height) + '">'
-        + '<feGaussianBlur stdDeviation="' + weich + '"/></filter></defs>'
-        + '<g class="lc-delfin-see-atem" filter="url(#lcDelfinWeich)">'
-        + '<path class="lc-delfin-see-tief" d="' + seeWeg + '" stroke-width="' + (d * 0.36).toFixed(1) + '"/>'
-        + '<path class="lc-delfin-see-flaeche" d="' + seeWeg + '" stroke-width="' + (d * 0.2).toFixed(1) + '"/>'
-        + '<path class="lc-delfin-see-gischt" d="' + seeWeg + '" stroke-width="' + (d * 0.07).toFixed(1) + '"/>'
-        + "</g>"
-        + '<path class="lc-delfin-see-welle" d="' + welle + '" stroke-width="' + (d * 0.024).toFixed(1)
-        + '" stroke-dasharray="' + (d * 0.22).toFixed(1) + " " + (d * 0.14).toFixed(1) + '"/>'
-        + '<path class="lc-delfin-see-welle lc-delfin-see-welle-2" d="' + welle + '" stroke-width="' + (d * 0.018).toFixed(1)
-        + '" stroke-dasharray="' + (d * 0.12).toFixed(1) + " " + (d * 0.26).toFixed(1) + '" transform="translate(0 '
-        + (d * 0.06).toFixed(1) + ')"/>';
-      wasser.style.setProperty("--gross", d + "px");
+      wasser.innerHTML = '<path class="lc-delfin-see-tief" d="' + seeWeg + '" stroke-width="' + (d * 0.34).toFixed(1) + '"/>'
+        + '<path class="lc-delfin-see-flaeche" d="' + seeWeg + '" stroke-width="' + (d * 0.22).toFixed(1) + '"/>'
+        + '<path class="lc-delfin-see-welle" d="' + welle + '" stroke-width="' + (d * 0.028).toFixed(1) + '"/>';
       wasser.style.animationDuration = dauer + "ms";
       reihe.insertBefore(wasser, del);
       weg.push(wasser);
@@ -45486,27 +45462,6 @@
           weg.push(sp);
           setTimeout(() => sp.remove(), 900);
         }, Math.max(0, wann - 40));
-      }
-      /* WALKIE #222 — „Es fehlt beim Delfin noch ein bisschen mehr
-         Animation": oben im Bogen perlt Wasser von ihm ab — ein paar
-         Tropfen fallen aus der Hoehe zurueck ins Wasser. */
-      for (let b = 1; b <= bogen; b++) {
-        const wannOben = Math.round(dauer * (0.1 + (hin / dauer - 0.1) * ((b - 0.5) / bogen)));
-        const pO = bahnAb((b - 0.5) / bogen);
-        setTimeout(() => {
-          if (!reihe.isConnected) return;
-          const tr = document.createElement("span");
-          tr.className = "lc-delfin-perlen";
-          tr.style.left = (start.x + pO.x).toFixed(1) + "px";
-          tr.style.top = (start.y + pO.y - hochD + d * 0.2).toFixed(1) + "px";
-          tr.style.setProperty("--gross", d + "px");
-          tr.style.setProperty("--fall", (hochD + d * 0.2).toFixed(1) + "px");
-          tr.innerHTML = Array.from({ length: 6 }, (_, k) => '<i style="--x:' + ((k - 2.5) * 0.09).toFixed(2)
-            + ';--spaet:' + (k * 45) + 'ms"></i>').join("");
-          reihe.appendChild(tr);
-          weg.push(tr);
-          setTimeout(() => tr.remove(), 1100);
-        }, Math.max(0, wannOben - 60));
       }
       lcTonReise("delfin", dauer);
     } else if (art === "kran") {
