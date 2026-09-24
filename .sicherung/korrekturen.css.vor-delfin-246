@@ -34289,28 +34289,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 /* Die Brustfedern waren dunkle Schraegstriche — sie lasen sich wie
    Kratzer. Jetzt helle, feine Saeume wie auf den Fluegeln. */
 .lc-greif .lc-greif-feder { stroke: #9a7a52; stroke-width: .8; opacity: .55; }
-
-/* =====================================================================
-   WALKIE #246 — DELFIN: KEINE WASSERLINIE MEHR
-   „es soll noch ein temporärer Effekt sein wie bei dem Mississippi
-   Dampfer" — ein weicher Wasserfleck beim Auf- und Eintauchen, der
-   wieder zerlaeuft (siehe lcReise, art „delfin"). Das Bild auf dem
-   Ruecken wird gegengespiegelt, wenn er nach rechts schwimmt.
-   ===================================================================== */
-.lc-delfin-see { display: none !important; }
-.lc-delfin-lache {
-  position: absolute; z-index: 3; pointer-events: none;
-  width: calc(var(--gross, 64px) * 1.25); height: calc(var(--gross, 64px) * .3);
-  transform: translate(-50%, -50%); border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, .85),
-              rgba(120, 190, 235, .55) 55%, rgba(120, 190, 235, 0) 78%);
-  animation: lcDelfinLache 1.4s ease-out forwards;
-}
-@keyframes lcDelfinLache {
-  0%   { opacity: 0;   transform: translate(-50%, -50%) scale(.35, .5); }
-  22%  { opacity: .95; transform: translate(-50%, -50%) scale(1, 1); }
-  55%  { opacity: .8;  transform: translate(-50%, -50%) scale(1.12, .92); }
-  100% { opacity: 0;   transform: translate(-50%, -50%) scale(1.35, 1.1); }
-}
-.lc-delfin.lc-delfin-rechts .lc-delfin-reiter { transform: scaleX(-1); }
-@media (prefers-reduced-motion: reduce) { .lc-delfin-lache { animation: none; opacity: .5; } }
