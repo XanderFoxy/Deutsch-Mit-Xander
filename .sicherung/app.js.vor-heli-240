@@ -47639,42 +47639,9 @@
         + '<i class="lc-heli-wind"></i>'
         + '<i class="lc-heli-wind lc-heli-wind-2"></i>'
         + '<i class="lc-heli-wind lc-heli-wind-3"></i>'
-        /* WALKIE #240 — XANDER: „Mein Profilbild wird innerhalb dieses
-           Ausschnitts plötzlich größer angezeigt es soll ganz normal
-           angezeigt werden und unterhalb des Profilbild ist geschnitten
-           werden und nicht irgendwie reingezoomt werden es soll noch
-           gestanzt werden dass es in die Form von dem Helikopter Fenster
-           passt oder Helikopter hat doch vorne eine leichte Nase vor
-           diesem Glasfenster."
-           Das Fenster ist jetzt ein eigenes kleines SVG im Koordinatennetz
-           des Hubschraubers (x 11–45, y 17–43): das Bild liegt in
-           NORMALER Groesse darin (so breit wie das Fenster, oben
-           buendig), unten wird es abgeschnitten. Der Umriss folgt der
-           Nase im Abstand von 3,5–4,5 Einheiten — vor dem Glas bleibt
-           ein Streifen Blech, die Nase. Die dunkle Stanzkante und der
-           Glasschimmer liegen genau auf diesem Umriss. */
-        + (() => {
-          const nr = ++lcHeliFensterNr;
-          const umriss = "M20 42.5 L41.5 42.5 Q44.6 42.3 45 39 L45 25 Q44.6 19 38 18 L30 18.3"
-            + " Q22.5 19.5 17.5 24.5 Q14.2 28.5 14.6 33 Q14.9 38.5 17.5 41.2 Q18.6 42.4 20 42.5 Z";
-          const bildTeil = quelle
-            ? '<image href="' + quelle.replace(/["<>]/g, "") + '" x="11" y="17" width="34" height="34"'
-              + ' preserveAspectRatio="xMidYMid slice" clip-path="url(#lcHeliF' + nr + ')"/>'
-            : '<path d="' + umriss + '" fill="#c9d8e8"/><text x="30" y="34.5" text-anchor="middle"'
-              + ' font-size="10" font-weight="800" fill="#1c2029">'
-              + escapeHtml((ab.name || "?").charAt(0).toUpperCase()) + "</text>";
-          return '<span class="lc-heli-kanzel"><svg viewBox="11 17 34 26" aria-hidden="true">'
-            + '<defs><clipPath id="lcHeliF' + nr + '"><path d="' + umriss + '"/></clipPath>'
-            + '<linearGradient id="lcHeliG' + nr + '" x1="0" y1="0" x2="1" y2="1">'
-            + '<stop offset=".18" stop-color="#fff" stop-opacity="0"/><stop offset=".3" stop-color="#fff" stop-opacity=".42"/>'
-            + '<stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".58" stop-color="#fff" stop-opacity=".2"/>'
-            + '<stop offset=".66" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>'
-            + bildTeil
-            + '<path d="' + umriss + '" fill="url(#lcHeliG' + nr + ')"/>'
-            + '<path d="' + umriss + '" fill="none" stroke="#1c2029" stroke-width="1.3"/>'
-            + '<path d="' + umriss + '" fill="none" stroke="#8fa6bf" stroke-width=".5" stroke-opacity=".9"/>'
-            + "</svg></span>";
-        })();
+        + '<span class="lc-heli-kanzel"' + (quelle
+            ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
+          + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
       /* FUNK 75 — die Draufsicht dazu (siehe lcDraufsicht). */
       heli.innerHTML = '<span class="lc-v-seite">' + heli.innerHTML + "</span>"
         + lcDraufsicht("heli", quelle, (ab.name || "?").charAt(0).toUpperCase());
@@ -50214,7 +50181,6 @@
 
   /* Die Draufsichten. Alle mit der Nase nach RECHTS; gedreht wird in
      lcBlickwechsel. Das Bild des Reisenden bleibt auch von oben zu sehen. */
-  let lcHeliFensterNr = 0;   /* WALKIE #240: eigene Kennung je Heli-Fenster */
   function lcDraufsicht(art, quelle, buchstabe) {
     const bild = (klasse) => '<span class="' + klasse + '"' + (quelle
       ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
