@@ -34115,35 +34115,6 @@ body.rf-leiste-auf .rf-reiter { display: none; }
               0 2px 5px rgba(0, 0, 0, .45);
 }
 
-/* WALKIE #206 — XANDER: „Das Fenster muss besser sein es ist praktisch
-   nur wie mein Profilbild das muss aber angeschnitten und ausgestanzt
-   sein richtig." GEFUNDEN: das ganze Bild war verkleinert in die Form
-   gelegt („cover") — man sah das komplette Profilbild wie einen
-   Aufkleber. Jetzt ist das Bild GROESSER als das Fenster (165 %) und
-   wird vom Fensterrand angeschnitten; der Ausschnitt sitzt auf dem
-   Gesicht. Die Kante ist dunkel wie der Rumpf und wirft oben einen
-   Schatten nach innen — so sieht es aus wie ein Loch im Blech. Ein
-   Lichtstreifen liegt als Glas darueber. */
-.lc-heli .lc-heli-kanzel {
-  background-size: 165%;
-  background-position: 50% 34%;
-  box-shadow: inset 0 0 0 2.2px #1c2029,
-              inset 0 0 0 3.4px rgba(143, 166, 191, .9),
-              inset 0 5px 6px -2px rgba(0, 0, 0, .55),
-              0 0 0 1px rgba(210, 220, 232, .55);
-  overflow: hidden;
-}
-.lc-heli .lc-heli-kanzel::after {
-  content: "";
-  position: absolute; inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(118deg,
-    rgba(255, 255, 255, 0) 18%, rgba(255, 255, 255, .42) 30%,
-    rgba(255, 255, 255, .08) 40%, rgba(255, 255, 255, 0) 46%,
-    rgba(255, 255, 255, .22) 58%, rgba(255, 255, 255, 0) 66%);
-}
-
 /* RUNDE 101 — Funk 89: der Delfin nimmt keine Pfuetze mehr mit. Das
    Wasser liegt als Band entlang der Strecke (.lc-delfin-see), gespritzt
    wird nur beim Eintauchen, und er schwimmt mit Koerper und Schwanz. */

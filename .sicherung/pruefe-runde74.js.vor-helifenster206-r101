@@ -68,17 +68,10 @@ console.log("\nDAS HELIKOPTERFENSTER IST SCHRAEG\n");
 /* RUNDE 80: die Scheibe ist jetzt gewoelbt statt gerade — siehe
    pruefe-runde66. Geneigt nach hinten ist sie weiter, und die
    Kinnscheibe sitzt weiter darunter. */
-/* RUNDE 101 — XANDER (Funk 91): „das Glas, was du hinter dem
-   Profilbild hast, das kann weg, dieses eckige Seitenglas. Da soll
-   dieses kreisrunde sein … aus dem Profilbild herausgestanzt."
-   Frontscheibe und Kinnscheibe sind auf seinen Wunsch entfernt. Und
-   WALKIE #206: „das muss aber angeschnitten und ausgestanzt sein" —
-   das Bild ist groesser als das Fenster und wird vom Rand beschnitten. */
-pruefe("die alte eckige Front- und Kinnscheibe ist weg (Funk 91)",
-  !/d="M12\.2 41\.6/.test(js) && !/d="M11\.8 41\.4/.test(js));
-pruefe("das Bild im Fenster ist angeschnitten, nicht verkleinert (Walkie #206)",
-  /\.lc-heli \.lc-heli-kanzel \{\s*background-size: 1[5-9]\d%;/.test(css)
-  && /\.lc-heli \.lc-heli-kanzel::after \{/.test(css));
+pruefe("die Frontscheibe ist nach hinten geneigt",
+  /d="M12\.2 41\.6/.test(js) && /C13\.8 32 20\.6 23\.4 31\.4 18\.1/.test(js));
+pruefe("darunter sitzt die Kinnscheibe",
+  /d="M11\.8 41\.4/.test(js));
 /* RUNDE 75 — XANDER: „schau mal, dass das bei dem Helikopter oben
    kreisrund abschneidet. Da war noch ne Ecke … rechts ist wirklich vom
    unteren Eckpunkt zum oberen kreisrund in der Form vom Helikopter."

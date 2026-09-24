@@ -49659,30 +49659,6 @@
       if (stueck[i] === null) stueck[i] = vorher; else vorher = stueck[i];
     }
     if (!stueck.length) stueck.push(0);
-    /* WALKIE #208 — der Adler von oben so gross wie moeglich, aber mit
-       beiden Fluegelspitzen auf dem Bildschirm (Funk 84: „dann sollen
-       die Fluegel nicht abgeschnitten sein"). Gemessen wird die halbe
-       Spannweite und der knappste Abstand der Bahn zum Rand. */
-    const adler = oben.querySelector(".lc-go-alles");
-    if (adler) {
-      /* Gemessen in Layout-Pixeln: das Rechteck auf dem Bildschirm ist
-         im ersten Schluesselbild noch klein skaliert (Start bei .3) —
-         nur das VERHAELTNIS Adler/Zeichenflaeche gilt, mal der echten
-         Hoehe der Ansicht. */
-      const r = el.getBoundingClientRect();
-      const fl = (oben.querySelector(".lc-v-form") || oben).getBoundingClientRect();
-      const halb = fl.height > 0
-        ? adler.getBoundingClientRect().height / fl.height * oben.offsetHeight / 2 : 0;
-      const breit = window.innerWidth || document.documentElement.clientWidth;
-      let rand = Infinity;
-      ort.forEach((o) => {
-        const x = r.left + r.width / 2 - ort[0].x + o.x;
-        rand = Math.min(rand, x, breit - x);
-      });
-      const k = halb > 0 && isFinite(rand) ? Math.max(0.6 / 0.85, Math.min(1, (rand - 4) / halb)) : 1;
-      const form = oben.querySelector(".lc-v-form");
-      if (form) form.style.transform = k < 1 ? "scale(" + k.toFixed(3) + ")" : "";
-    }
     const seiteR = [], obenR = [];
     let w = null, spiegel = null;
     /* „hWeiter" ist die Richtung, in die es danach geht: nur solange die
@@ -49938,13 +49914,7 @@
          breit): mit .70 waren es 150 px Spannweite, die Spitze stiess
          an den Bildschirmrand. Mit .60 sind es rund 128 px — der
          Platz selbst ist 96 px breit, seine Mitte 73 px vom Rand. */
-      /* WALKIE #208 — XANDER: „Zu klein". GEFUNDEN: mit .60 schrumpfte
-         nur die Zeichnung, das Bild blieb bei 32 % — der Adler wirkte
-         neben dem Gesicht wie ein Spatz. Jetzt wieder .85; nur wo die
-         Flugbahn nah am Bildschirmrand liegt, zieht lcBlickwechsel ihn
-         so weit zusammen, dass die Fluegel nicht abgeschnitten werden
-         (Funk 84), nie kleiner als die alten .60. */
-      + '<g class="lc-go-alles" transform="translate(102.5 81) scale(.85) translate(-102.5 -81)">'
+      + '<g transform="translate(102.5 81) scale(.60) translate(-102.5 -81)">'
       + '<path class="lc-go-krallen" d="M92 70 l-4 -5 M100 70 l2 -6 M92 92 l-4 5 M100 92 l2 6"/>'
       + fluegel
       /* Schwanz: ein weisser Faecher, das Ende aus runden Federn. */
