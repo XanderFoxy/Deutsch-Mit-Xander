@@ -18592,6 +18592,26 @@ code, pre {
   height: calc(var(--gross, 64px) * 0.625);
   transform: translate(-50%, -50%);
 }
+/* RUNDE 100 — XANDER (Walkie-Talkie): „DIE Lok muss wieder groesser."
+   1,5 x 0,75 Platzbreiten (+20 %). Im Bogen ragt sie damit vorn und
+   hinten etwas ueber das Gleis hinaus — wie jede lange Lok in einer
+   engen Kurve; die Raeder bleiben dabei auf den Schienen (Pfeilhoehe
+   des Radstands 0,11 bei halber Spur 0,144). Die Spur in app.js
+   (lcLokGleise) waechst mit. */
+.lc-lok {
+  width: calc(var(--gross, 64px) * 1.5);
+  height: calc(var(--gross, 64px) * 0.75);
+}
+/* RUNDE 100, DRITTER ANLAUF — XANDER (Walkie-Talkie): „Noch groesser …
+   Das sieht schon ganz gut aus." 1,7 x 0,85 Platzbreiten. Im Bogen
+   weichen die aeussersten Raeder um 18,7 px ab (bei d = 103) — die
+   Schiene liegt 16,8 px neben der Mitte, das Rad ist 6,8 px breit: es
+   beruehrt sie noch. Spur (app.js) und Anhebung der Seitenansicht
+   (unten) wachsen im selben Verhaeltnis mit. */
+.lc-lok {
+  width: calc(var(--gross, 64px) * 1.7);
+  height: calc(var(--gross, 64px) * 0.85);
+}
 .lc-lok-form { width: 100%; height: 100%; overflow: visible; }
 /* RUNDE 65 — XANDER: „Im Uebrigen ist unsere Lokomotive noch nicht
    detailliert. Sie soll so schoen sein wie unsere urspruengliche Lok."
@@ -23032,7 +23052,10 @@ code, pre {
   9%   { transform: translateX(calc(-.45 * var(--laenge, 80px))) rotate(240deg) scale(.85); opacity: 1; }
   /* 14 % = 476 ms: am Ziel — genau dann haengt die andere Schlinge
      ueber ihm. */
-  14%  { transform: translateX(4px) rotate(400deg) scale(1.2); opacity: 1; }
+  /* RUNDE 100: harter Wechsel statt Ueberblenden bis 17 % — sonst
+     sind 14–17 % lang zwei Schlingen zu sehen (gemessen bei 505 ms). */
+  13.9% { transform: translateX(4px) rotate(400deg) scale(1.2); opacity: 1; }
+  14%  { transform: translateX(4px) rotate(400deg) scale(1.2); opacity: 0; }
   17%  { transform: translateX(0) rotate(396deg) scale(1.05); opacity: 0; }
   100% { transform: translateX(0) rotate(396deg) scale(1.05); opacity: 0; }
 }
@@ -32356,3 +32379,426 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   100%    { opacity: 0;
             transform: rotate(calc(var(--klapsdir, 1) * -70deg)) scale(var(--klapsdir, 1), 1); }
 }
+
+/* =====================================================================
+   RUNDE 100 — DER SABBER KOMMT AUS DEM MUND UND LAEUFT UEBER DEN RING
+   ---------------------------------------------------------------------
+   XANDER (Walkie-Talkie): „Der Sabber laeuft noch nicht richtig aus
+   meinem Mund heraus, und er soll ueber den Kreispfad des anderen und
+   ueber das Profilbild drueber laufen."
+   GEMESSEN an Runde 99: Faden und Tropfen begannen bei -14 % ueber dem
+   Bild — der Mund des schwebenden Bildes liegt aber bei -20 % (es
+   schwebt mit 92 % seiner Hoehe ueber dem anderen, der Mund sitzt bei
+   72 % seiner Hoehe: 72 - 92 = -20). Und sie begannen bei 0 s, obwohl
+   das Bild erst nach 12 % (360 ms) oben ankommt: der Speichel hing in
+   der Luft, bevor ein Mund da war. Der Tropfen fiel dann bis zur
+   Bildmitte (+45 %) — ueber den Ring lief nichts.
+   JETZT, alles in Prozent derselben 3 s:
+     14 %      der Speichel quillt aus dem Mund (-20 %)
+     14-34 %   ein Faden mit Tropfen haengt herab
+     34-44 %   er zieht sich lang bis AUF den Ring (+3 %)
+     44 %      Kontakt: ein Klecks liegt auf dem oberen Ring
+     46-90 %   drei Rinnsale laufen vom Ring aus ueber das Bild hinunter
+     70 %      der Faden reisst am Mund ab (das Bild zieht sich zurueck)
+   ===================================================================== */
+.lc-sabber-faden {
+  top: -33%;
+  width: 2.2%; margin-left: -1.1%;
+  animation-name: lcSabberFadenR100;
+}
+/* Mund -33 %, Ring +3 %: der Faden wird bis zu 36 % lang. */
+@keyframes lcSabberFadenR100 {
+  0%, 13% { opacity: 0; height: 0; transform: scaleX(1); }
+  16%     { opacity: .9; height: 4%; transform: scaleX(1.3); }
+  34%     { opacity: .9; height: 14%; transform: scaleX(1); }
+  /* Er zieht sich lang, bis der Tropfen auf dem Ring liegt. */
+  44%     { opacity: .9; height: 34%; transform: scaleX(.55); }
+  62%     { opacity: .85; height: 34%; transform: scaleX(.4); }
+  /* Das Bild zieht sich zurueck: der Faden reisst am Mund ab. */
+  70%     { opacity: .7; height: 34%; transform: scaleX(.22); }
+  74%     { opacity: 0; height: 34%; transform: scaleX(.15); }
+  100%    { opacity: 0; height: 34%; transform: scaleX(.15); }
+}
+/* Der Tropfen haengt am Ende des Fadens. Seine Wege sind in Prozent
+   SEINER Hoehe gerechnet (9 % des Bildes): 1 % Bild = 11,1 % Tropfen.
+     am Mund (Oberkante -33 %)             -> 0 %
+     haengend (Oberkante -21 %, +12 %)     -> 133 %
+     auf dem Ring (Oberkante -3 %, +30 %)  -> 333 % */
+.lc-sabber-tropfen {
+  top: -33%;
+  animation-name: lcSabberTropfenR100;
+}
+@keyframes lcSabberTropfenR100 {
+  0%, 13% { opacity: 0; transform: translateY(0) scale(.2); }
+  16%     { opacity: 1; transform: translateY(8%) scale(.5); }
+  34%     { opacity: 1; transform: translateY(133%) scale(.9); }
+  44%     { opacity: 1; transform: translateY(333%) scale(1.05, .95); }
+  /* Er legt sich auf den Ring und geht in den Klecks ueber. */
+  48%     { opacity: .6; transform: translateY(345%) scale(1.5, .5); }
+  52%     { opacity: 0; transform: translateY(345%) scale(1.6, .4); }
+  100%    { opacity: 0; transform: translateY(345%) scale(1.6, .4); }
+}
+/* Der Klecks liegt OBEN auf dem Ring, nicht in der Bildmitte. */
+.lc-sabber-lache {
+  top: 8%;   /* 15 % hoch, mittig: 0,5 % bis 15,5 % — ganz im Kreis, auf dem Ring */
+  animation-name: lcSabberLacheR100;
+}
+@keyframes lcSabberLacheR100 {
+  0%, 43% { width: 0; height: 0; opacity: 0; }
+  47%     { width: 24%; height: 12%; opacity: .95; }
+  56%     { width: 32%; height: 14%; opacity: .9; }
+  92%     { width: 34%; height: 15%; opacity: .85; }
+  100%    { width: 34%; height: 15%; opacity: 0; }
+}
+/* Die Rinnsale beginnen am Ring (3 %) und laufen ueber das Gesicht. */
+.lc-sabber-rinne {
+  top: 4%;
+  animation: lcSabberRinneR100 1.3s ease-in both;
+}
+@keyframes lcSabberRinneR100 {
+  0%   { opacity: 0; transform: scaleY(0); }
+  25%  { opacity: .9; transform: scaleY(.35); }
+  100% { opacity: .82; transform: scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lc-sabber-faden, .lc-sabber-tropfen { animation: none; opacity: 0; }
+  .lc-sabber-lache { animation: none; width: 34%; height: 15%; opacity: .85; }
+  .lc-sabber-rinne { animation: none; opacity: .82; }
+}
+
+/* RUNDE 100 — zum schmaleren Gleis (siehe lcLokGleise): Schwellen und
+   Schienen etwas feiner, damit das Gleis die Lok nicht mehr ueberragt. */
+.lc-lok-schwelle { stroke-width: 3.6; }
+.lc-lok-schiene  { stroke-width: 2.2; }
+
+/* =====================================================================
+   RUNDE 100 — SPRUEHDOSE: EIGENE BILDER DECKEN DEN KREIS, UND DIE
+   AUSWAHL PASST AUFS KLEINE HANDY
+   ---------------------------------------------------------------------
+   XANDER (Walkie-Talkie): „die animierten GIFs und generell die Fotos
+   koennen so wie wenn sie normal auch reingeladen werden mit deckenden
+   Dimensionen sein, man sieht sie sonst nur angeschnitten. Und das
+   Panel zur Auswahl ist auf dem kleinen Geraet sehr angeschnitten und
+   laesst keine gute Animation zu."
+
+   1. Das eigene Bild steht nicht mehr mit 7 % Rand „contain" im Kreis,
+      sondern fuellt ihn wie ein hochgeladenes Profilbild („cover") —
+      beim Spruehen UND in der bleibenden Schicht.
+   2. GEMESSEN auf 360 x 560 mit voller Sammlung (18 + 18 Bilder): die
+      Vorschaubilder waren nur noch 16 px hoch statt 54 px. Grund: die
+      Bildreihe hatte „min-height: 0" und sitzt im Flex-Rahmen der
+      Lesewahl — sie durfte also schrumpfen und wurde plattgedrueckt.
+      Jetzt schrumpft keine Reihe mehr; der RAHMEN rollt, und jedes
+      Vorschaubild ist quadratisch und zeigt das GANZE Bild.
+   ===================================================================== */
+.lc-spray-lack-bild,
+.lc-sprayfarbe-bild.lc-sprayfarbe-eigen {
+  object-fit: cover;
+  padding: 0;
+}
+.lc-spraywahl {
+  width: min(300px, calc(100vw - 24px));
+  max-height: min(68vh, calc(100dvh - 24px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.lc-spraywahl > * { flex: 0 0 auto; }
+.lc-spraywahl .lc-waehler-gifs {
+  max-height: none;
+  overflow: visible;
+}
+.lc-spraywahl .lc-waehler-gif {
+  aspect-ratio: 1 / 1;
+  background: rgba(255, 255, 255, 0.08);
+}
+.lc-spraywahl .lc-waehler-gif img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* Der Knopf „Sprühen" war dunkel auf dunkel kaum zu lesen. */
+.lc-spraywahl .lc-waehler-reihe .btn-ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* =====================================================================
+   RUNDE 100 — DIE LOK STEHT IN DER SEITENANSICHT AUF DER SCHIENE
+   ---------------------------------------------------------------------
+   XANDER (Walkie-Talkie): „Die Lok sitzt von der Seitenansicht noch
+   nicht richtig auf den Gleisen."
+   GEMESSEN (d = 84 px): die Unterkante der Treibraeder lag 0,34 d unter
+   der Lokmitte, die nahe (untere) Schiene aber nur 0,144 d — die Raeder
+   hingen rund 17 px UNTER dem Gleis. Die Seitenansicht rueckt deshalb um
+   genau diesen Abstand hinauf (0,196 d plus die halbe Schienenstaerke von
+   1,1 px): die Raeder stehen AUF der Schiene, bei 360, 390, 460 und
+   900 px Breite nachgemessen. (Gemessen wird die Radmitte plus Radius
+   ueber die Bildschirm-Matrix — der Kasten eines sich DREHENDEN Rades
+   ist groesser als das Rad, damit lag meine erste Zahl 0,02 d daneben.) Die
+   Draufsicht bleibt, wo sie ist — ihre Radkanten liegen schon ueber den
+   Schienen (Sonde runde97-lok: 0,0 px).
+   „top" statt „transform": die Fahrt spiegelt die Seitenansicht mit
+   einem transform (scaleX), der wuerde eine Verschiebung ueberschreiben.
+   ===================================================================== */
+.lc-lok-seite {
+  inset: auto 0;
+  /* RUNDE 100, dritter Anlauf: mit der groesseren Lok 0,2221 d (vorher 0,196 d). */
+  top: calc(var(--gross, 64px) * -0.2221 - 1.1px);
+  height: 100%;
+}
+
+/* =====================================================================
+   RUNDE 100 — SCHIFFE VERSENKEN: ZEICHEN MITTIG, ANSAGE ALS SCHICHT
+   ---------------------------------------------------------------------
+   XANDER (Walkie-Talkie): „Die Wellen sitzen nicht mittig auf den
+   Positionen … Die Ansage, dass jemand dran ist, verschiebt immer noch
+   das Livestream-Design. Die Ansage ist besser als transparentes
+   Overlay ueber dem Spielfeld."
+   Das Zeichen haengt jetzt im Kreis (siehe DMA_SCHIFFE) und fuellt ihn
+   zu 70 %; die Ansage liegt als halbdurchsichtige Schicht quer ueber
+   der Mitte des Bretts, nimmt keinen Platz ein und laesst Tipps durch.
+   ===================================================================== */
+.lc-kreis > .lc-schiff-zeichen {
+  width: 70%;
+  height: 70%;
+  font-size: 0;
+  display: block;
+}
+.lc-schiff-zeichen svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.lc-sz-welle  { fill: none; stroke: #2f7fc0; stroke-width: 3.2; stroke-linecap: round; }
+.lc-sz-blitz  { fill: #f08a24; stroke: #b3261e; stroke-width: 1.6; stroke-linejoin: round; }
+.lc-sz-kern   { fill: #ffe27a; }
+.lc-sz-rumpf  { fill: #3b4a5a; }
+.lc-sz-aufbau { fill: #e9eef2; stroke: #3b4a5a; stroke-width: 1.2; }
+.lc-sz-schlot { fill: #c0392b; }
+.lc-schiffe-zeile.lc-schiffe-overlay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  margin: 0;
+  max-width: calc(100% - 16px);
+  width: max-content;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: rgba(20, 30, 40, 0.55);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(1.5px);
+  backdrop-filter: blur(1.5px);
+}
+.lc-schiffe-overlay.lc-schiffe-ichdran { background: rgba(160, 90, 20, 0.62); }
+.lc-schiffe-overlay .lc-schiffe-fusszeile:empty { display: none; }
+/* Ton und Bild zusammen („Der Sound muss zur Animation passen"): im Ton
+   „schiffwasser" pfeift erst die Granate, der Einschlag kommt bei 0,3 s,
+   am lautesten bei 0,6 s. Genau dann erscheinen die Wellen — sie
+   spritzen auf und legen sich. Das SVG entsteht nur, wenn sich das
+   Zeichen AENDERT, die Bewegung laeuft also einmal je Schuss. */
+.lc-schiff-zeichen[data-art="daneben"] svg {
+  transform-origin: 50% 60%;
+  animation: lcSzWelleR100 .55s cubic-bezier(.2, 1.4, .4, 1) .28s both;
+}
+@keyframes lcSzWelleR100 {
+  0%   { transform: scale(.15, .6); opacity: 0; }
+  60%  { transform: scale(1.15, 1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* RUNDE 100 — der Knopf, der die Effekt-Toene freischaltet, wenn der
+   Browser ohne Tipp nicht spielen laesst (siehe lcWaSpielen in app.js).
+   Er steht unten mittig, ueber allem, und verschwindet beim ersten Tipp. */
+.lc-tonhinweis {
+  position: fixed;
+  left: 50%;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 9000;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(20, 30, 40, 0.88);
+  color: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+/* =====================================================================
+   RUNDE 100 — DER TURMDREHKRAN: EIN GITTER, EINE STAERKE
+   ---------------------------------------------------------------------
+   XANDER: „sein Geruest ist mal duenner mal dicker, das muss konsistent
+   sein." Turm, Ausleger und Gegenausleger tragen jetzt dieselben Gurte
+   und dieselben Streben (vorher 2,6 / 1,5 / 1,6 px und ein halb
+   durchsichtiger Turm). Dazu Fuehrerhaus, Drehwerk, Gegengewicht und
+   Abspannseile — siehe lcKranHeben in app.js.
+   ===================================================================== */
+.lc-kr-gurt     { stroke: #d9a13a; stroke-width: 2.2; fill: none; stroke-linejoin: round; }
+.lc-kr-strebe   { stroke: #c08c30; stroke-width: 1.2; fill: none; }
+.lc-kr-turm     { stroke: #d9a13a; stroke-width: 2.2; fill: none; opacity: 1; }
+.lc-kr-abspann  { stroke: #6f7784; stroke-width: 1.1; fill: none; }
+.lc-kr-drehwerk { fill: #56606e; }
+.lc-kr-haus     { fill: #e3a93c; stroke: #9c6e1e; stroke-width: 1; }
+.lc-kr-fenster  { fill: #bfe3f2; stroke: #5d7b8a; stroke-width: .8; }
+.lc-kr-gewicht  { fill: #9aa0a8; stroke: #6c727b; stroke-width: 1; }
+
+/* =====================================================================
+   RUNDE 100 — EINE SCHLINGE, NICHT ZWEI
+   ---------------------------------------------------------------------
+   XANDER (Walkie-Talkie, Lasso an der Puppe): „Zwei Schlingen bei
+   einmal Ziehen … das Lasso ist oft leer oder eher oder spaeter da."
+   GEMESSEN (Foto bei 300 ms): die grosse Schlinge am Bild war schon ab
+   5 % sichtbar, die geworfene am Seilende noch bis 17 % — zwei Ringe
+   gleichzeitig, und der am Bild lag schon da, bevor das Seil ankam.
+   Jetzt erscheint die Schlinge am Bild erst bei 14,1 % — genau da, wo
+   die geworfene ankommt (lcSchlingeFliegtR65) — und uebernimmt.
+   ===================================================================== */
+@keyframes lcSchlingeUmR100 {
+  0%, 14% { opacity: 0; transform: translate(0, -16%) rotate(-18deg) scale(1.55); }
+  14.1% { opacity: 1; transform: translate(0, -16%) rotate(-18deg) scale(1.55); }
+  20%  { opacity: 1; transform: translate(0, 0) rotate(-10deg) scale(1.2); }
+  26%  { opacity: 1; transform: translate(0, 0) rotate(-4.5deg) scale(1); }
+  34%  { transform: translate(calc(var(--zux, 0px) * .46), calc(var(--zuy, 0px) * .46)) rotate(-12deg) scale(.95); }
+  40%  { transform: translate(calc(var(--zux, 0px) * .40), calc(var(--zuy, 0px) * .40)) rotate(-3deg) scale(.99); }
+  46%  { transform: translate(calc(var(--zux, 0px) * .43), calc(var(--zuy, 0px) * .43)) rotate(-7deg) scale(1); }
+  54%  { transform: translate(calc(var(--zux, 0px) * .76), calc(var(--zuy, 0px) * .76)) rotate(-12deg) scale(.95); }
+  60%  { transform: translate(calc(var(--zux, 0px) * .70), calc(var(--zuy, 0px) * .70)) rotate(-3deg) scale(.99); }
+  66%  { transform: translate(calc(var(--zux, 0px) * .73), calc(var(--zuy, 0px) * .73)) rotate(-7deg) scale(1); }
+  74%  { transform: translate(var(--zux, 0px), var(--zuy, 0px)) rotate(-13deg) scale(.94); }
+  80%  { transform: translate(calc(var(--zux, 0px) * .92), calc(var(--zuy, 0px) * .92)) rotate(-2deg) scale(.99); }
+  86%  { opacity: 1; transform: translate(calc(var(--zux, 0px) * .95), calc(var(--zuy, 0px) * .95)) rotate(-6deg) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--zux, 0px) * .95), calc(var(--zuy, 0px) * .95)) rotate(-6deg) scale(1); }
+}
+.lc-lasso .lc-lasso-schlinge { animation-name: lcSchlingeUmR100; }
+
+/* =====================================================================
+   RUNDE 100 — DIE PLATZWAHL FUER KRAN UND ANGEL ALS ABBILD DER BUEHNE
+   ---------------------------------------------------------------------
+   XANDER (Walkie #85): „Im Menü möchte ich die Auswahl Plätze logisch
+   untereinander so wie in der Bühnen Ansicht sortiert haben auch beim
+   Android ohne Verschiebung."
+   Gleich viele Spalten wie die Sitzreihe (--spalten kommt aus app.js),
+   jeder Platz an seiner Stelle. Frei = gestrichelt wie auf der Buehne,
+   besetzt = durchgezogen, der eigene und der Platz der Person = grau.
+   ===================================================================== */
+.lc-hebenwahl {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(var(--spalten, 4), minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px 4px 6px;
+}
+.lc-hebenwahl-platz {
+  min-width: 0;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 2px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.07);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.lc-hebenwahl-frei { border-style: dashed; background: transparent; }
+.lc-hebenwahl-gesperrt { opacity: 0.38; cursor: default; }
+.lc-hebenwahl-platz:not(:disabled):hover,
+.lc-hebenwahl-platz:not(:disabled):focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.7);
+  outline: none;
+}
+.lc-hebenwahl-nr { font-size: 1.05rem; font-weight: 700; line-height: 1; }
+.lc-hebenwahl-name {
+  display: block;
+  max-width: 100%;
+  font-size: 0.62rem;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =====================================================================
+   RUNDE 100 — STADT · LAND · FLUSS IM KLASSENZIMMER
+   ---------------------------------------------------------------------
+   XANDER (Walkie #87): „Stadt Land Fluß ist kein eigenes Spiel im
+   Livestream wie geplant. Es läßt mich immer den Livestream verlassen."
+   Das Blatt steht unter der Knopfleiste, ueber dem Chat. Kein Emoji als
+   Bild: der Buchstabe ist das Bild.
+   ===================================================================== */
+.lc-slf-live {
+  margin: 8px 10px 10px;
+  padding: 10px 12px 12px;
+  border-radius: 16px;
+  background: #fffaf0;
+  border: 2px solid #e5d3ac;
+  box-shadow: 0 4px 14px rgba(80, 60, 20, 0.12);
+  color: #2b2418;
+}
+.lc-slf-kopf { display: flex; align-items: center; gap: 10px; }
+.lc-slf-titel { font-weight: 800; font-size: 0.95rem; flex: 1 1 auto; }
+.lc-slf-buchstabe {
+  display: grid; place-items: center;
+  width: 42px; height: 42px; border-radius: 12px;
+  background: #2f6f5e; color: #fff;
+  font-size: 1.6rem; font-weight: 900; line-height: 1;
+}
+.lc-slf-uhr { min-width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.lc-slf-hinweis { margin: 6px 0 8px; font-size: 0.8rem; color: #6d5f45; }
+.lc-slf-hinweis.lc-slf-eilig { color: #b3261e; font-weight: 800; }
+.lc-slf-felder { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.lc-slf-feld { display: flex; flex-direction: column; gap: 3px; font-size: 0.75rem; font-weight: 700; color: #6d5f45; }
+.lc-slf-feld input {
+  font: inherit; font-size: 1rem; font-weight: 600; color: #2b2418;
+  padding: 8px 10px; border-radius: 10px;
+  border: 1.5px solid #d8c7a0; background: #fff;
+  min-width: 0;
+}
+.lc-slf-feld input:focus { outline: none; border-color: #2f6f5e; box-shadow: 0 0 0 3px rgba(47, 111, 94, 0.18); }
+.lc-slf-fertig b { font-size: 1rem; color: #2b2418; }
+.lc-slf-knoepfe { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.lc-slf-knoepfe button {
+  font: inherit; font-weight: 800; border: 0; border-radius: 12px;
+  padding: 9px 16px; cursor: pointer;
+}
+.lc-slf-stopp { background: #b3261e; color: #fff; font-size: 1rem; }
+.lc-slf-aus, .lc-slf-zu { background: #eee3cc; color: #3d3325; }
+.lc-slf-neu { background: #2f6f5e; color: #fff; }
+.lc-slf-tabelle-rahmen { overflow-x: auto; margin-top: 8px; }
+.lc-slf-tabelle { border-collapse: collapse; width: 100%; font-size: 0.8rem; }
+.lc-slf-tabelle th, .lc-slf-tabelle td { padding: 5px 6px; border-bottom: 1px solid #eadfc6; text-align: left; vertical-align: top; }
+.lc-slf-tabelle thead th { font-weight: 800; }
+.lc-slf-tabelle tbody th { color: #6d5f45; font-weight: 700; white-space: nowrap; }
+.lc-slf-tabelle td small { display: block; font-size: 0.68rem; font-weight: 800; }
+.lc-slf-w20 small { color: #1f7a4d; }
+.lc-slf-w10 small { color: #2f6f5e; }
+.lc-slf-w5 small { color: #9a6b00; }
+.lc-slf-w0 { color: #9a8f7a; }
+.lc-slf-summe td { font-weight: 900; font-size: 0.95rem; }
+
+/* =====================================================================
+   RUNDE 100 — DER FAHRRADRAHMEN FUER „ZU ZWEIT" (siehe lcRadRahmen)
+   XANDER (Walkie #82): „Das Rad sieht nicht nach einem Fahrrad aus."
+   Hinter den Bildern (z-index unter den Plaetzen, die beim Fahren auf 7
+   stehen), damit die Gesichter frei bleiben.
+   ===================================================================== */
+.lc-rad-rahmen {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  overflow: visible; pointer-events: none; z-index: 6; opacity: 0;
+}
+.lc-rad-rohr { fill: none; stroke: #c0392b; stroke-width: 4.2; stroke-linejoin: round; stroke-linecap: round; }
+.lc-rad-gabel { fill: none; stroke: #8e8e93; stroke-width: 3.4; stroke-linecap: round; }
+.lc-rad-sattel { fill: none; stroke: #2b2b2b; stroke-width: 3.6; stroke-linecap: round; }
+.lc-rad-lenker { fill: none; stroke: #3a3a3c; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.lc-rad-blatt { fill: #d8d8dc; stroke: #6e6e73; stroke-width: 1.6; }
+.lc-rad-kettenlinie { fill: none; stroke: #4a4a4a; stroke-width: 1.6; stroke-dasharray: 2.2 1.6; }
+.lc-rad-kurbel { fill: none; stroke: #48484a; stroke-width: 2.6; stroke-linecap: round; }
+.lc-rad-pedal { fill: none; stroke: #1c1c1e; stroke-width: 3.2; stroke-linecap: round; }

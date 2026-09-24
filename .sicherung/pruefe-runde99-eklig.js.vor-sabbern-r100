@@ -165,11 +165,7 @@ const sage = (gut, text, dazu) => {
              kinn: Math.round(a.bottom - b.top),
              zurueck: Math.round(Math.hypot(a2.left - a0.left, a2.top - a0.top)) };
   });
-  /* RUNDE 100 — das Bild kippt jetzt bis 15 Grad um den MUND (Xander:
-     „mein Profilbild kann dabei leicht kippen"). Der Mund bleibt ueber
-     Bea, die Mitte des Umrechtecks wandert dabei um bis zu
-     0,22 · Hoehe · sin 15° ≈ 6 px zur Seite — deshalb 8 statt 4 px. */
-  sage(Math.abs(schweb.dx) <= 8 && schweb.kinn >= -4 && schweb.kinn <= 20,
+  sage(Math.abs(schweb.dx) <= 4 && schweb.kinn >= -4 && schweb.kinn <= 20,
     "Alex schwebt genau ueber Bea, sein Kinn am oberen Rand ihres Bildes",
     schweb.dx + " px seitlich, Kinn " + schweb.kinn + " px im Bild");
   sage(schweb.zurueck <= 2, "und ist danach wieder auf seinem Platz", schweb.zurueck + " px daneben");
@@ -204,31 +200,6 @@ const sage = (gut, text, dazu) => {
       "hinunter " + spanne(ys).toFixed(1) + " %, zur Seite " + spanne(xs).toFixed(1) + " %");
   }
 
-  /* RUNDE 100 — XANDER (Walkie #69): „mein Profilbild kann dabei leicht
-     kippen, um es besser und lustiger darzustellen" — und am Mund quillt
-     der Speichel sichtbar auf. Vorher: hoechstens 3 Grad. */
-  {
-    const pgS = await br.newPage({ viewport: { width: 390, height: 844 } });
-    await pgS.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
-    await pgS.waitForFunction(() => window.DMA_PRUEF && window.DMA_PRUEFUNG, { timeout: 25000 });
-    const kip = await pgS.evaluate(async () => {
-      window.DMA_PRUEF.effektBuehne(); await new Promise((f) => setTimeout(f, 300));
-      const ich = document.querySelector(".lc-platz-ich .lc-kreis");
-      window.DMA_PRUEFUNG.wirkung("sabbern", "Emmi", "Alex", {});
-      const t0 = performance.now(); let max = 0, mund = 0;
-      while (performance.now() - t0 < 2900) {
-        const m = new DOMMatrix(getComputedStyle(ich).transform);
-        max = Math.max(max, Math.abs(Math.atan2(m.b, m.a) * 180 / Math.PI));
-        const mu = document.querySelector(".lc-sabber-mund");
-        if (mu) mund = Math.max(mund, Number(getComputedStyle(mu).opacity));
-        await new Promise((f) => requestAnimationFrame(f));
-      }
-      return { max: Math.round(max), mund };
-    });
-    await pgS.close();
-    sage(kip.max >= 10 && kip.max <= 20, "Sabbern: das eigene Bild kippt sichtbar (10–20 Grad)", kip.max + " Grad");
-    sage(kip.mund > 0.9, "Sabbern: am Mund quillt der Speichel auf", "Deckkraft " + kip.mund.toFixed(2));
-  }
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
   process.exit(fehler ? 1 : 0);

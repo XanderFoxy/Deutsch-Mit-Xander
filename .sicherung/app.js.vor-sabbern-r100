@@ -39566,27 +39566,14 @@
         vonPlatz.style.zIndex = "9";
         let lauf = null;
         try {
-          /* RUNDE 100 — XANDER (Walkie #69): „Auch kann mein Profilbild
-             dabei leicht kippen um es besser und lustiger darzustellen."
-             Vorher nur ±3 Grad — man sah es kaum. Jetzt kippt es wie ein
-             Kopf, der sich vorbeugt (bis 15 Grad), und wackelt dabei.
-             Gedreht wird um den MUND (50 % / 72 %), damit der Speichel
-             genau dort bleibt, wo er herauskommt. */
-          const altUr = kreisVon.style.transformOrigin;
-          kreisVon.style.transformOrigin = "50% 72%";
-          setTimeout(() => { kreisVon.style.transformOrigin = altUr; }, 3050);
           lauf = kreisVon.animate([
-            { transform: "translate(0, 0) rotate(0deg)", offset: 0 },
-            { transform: hin + " rotate(-13deg)", offset: 0.12, easing: "ease-in-out" },
-            { transform: hin + " rotate(-8deg)", offset: 0.2, easing: "ease-in-out" },
-            { transform: hin + " rotate(-15deg)", offset: 0.3, easing: "ease-in-out" },
-            { transform: hin + " translateY(2px) rotate(-11deg)", offset: 0.44, easing: "ease-in-out" },
-            { transform: hin + " rotate(-15deg)", offset: 0.58, easing: "ease-in-out" },
-            /* Der Faden reisst: der Kopf zuckt zurueck. */
-            { transform: hin + " translateY(-3px) rotate(-4deg)", offset: 0.72, easing: "ease-out" },
-            { transform: hin + " rotate(-6deg)", offset: 0.8, easing: "ease-in-out" },
-            { transform: "translate(0, 0) rotate(0deg)", offset: 1 }
-          ], { duration: 3000, easing: "linear" });
+            { transform: "translate(0, 0)", offset: 0 },
+            { transform: hin + " rotate(-3deg)", offset: 0.12 },
+            { transform: hin + " rotate(2deg)", offset: 0.3 },
+            { transform: hin + " rotate(-1deg)", offset: 0.6 },
+            { transform: hin, offset: 0.8 },
+            { transform: "translate(0, 0)", offset: 1 }
+          ], { duration: 3000, easing: "ease-in-out" });
         } catch (e) { lauf = null; }
         setTimeout(() => {
           try { if (lauf) lauf.cancel(); } catch (e) {}
@@ -39602,13 +39589,7 @@
       setTimeout(() => { platz.style.zIndex = altZZiel; }, 3050);
       /* Der Tropfen mit seinem Faden — er haengt oben ueber dem Bild. */
       schicht.insertAdjacentHTML("beforeend",
-        /* RUNDE 100 — „wenn es aus meinem Mund sabbert, kann noch
-           besser sein": erst quillt am Mund ein glaenzender Wulst auf,
-           dann haengt der Faden daran, ein duenner Nebenfaden laeuft
-           mit, und beim Abreissen zieht sich der Wulst zurueck. */
-        '<span class="lc-sabber-mund"></span>'
-        + '<span class="lc-sabber-faden"></span>'
-        + '<span class="lc-sabber-faden lc-sabber-faden2"></span>'
+        '<span class="lc-sabber-faden"></span>'
         + '<span class="lc-sabber-tropfen"></span>');
       const blende = lcZpBlende(schicht);
       /* Die Lache und zwei Rinnsale, die spaeter ueber den Rand

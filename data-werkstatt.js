@@ -49,20 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 557: Lasso — nie mehr ein Strick ohne Schlaufe",
+  stand: "Fassung 558: Sabbern — kippen und sichtbar aus dem Mund",
 
   inArbeit: [
-    { seit: "2026-09-24T03:38",
-      text: "Sabbern: Mund lebendiger, Bild leicht kippen" },
-    { seit: "2026-09-24T03:38",
+    { seit: "2026-09-24T03:42",
       text: "Kuss-Stimme (Mann), Vogelkot-Ton" },
-    { seit: "2026-09-24T03:38",
+    { seit: "2026-09-24T03:42",
       text: "Stadt · Land · Fluss: Wörter streichen im Raum" },
+    { seit: "2026-09-24T03:42",
+      text: "Popo-Klaps verbessern" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T03:38",
-      text: "Lasso: Seil und Schlinge enden im selben Augenblick (vorher lief das Seil nach dem Platztausch noch 12 Bilder allein weiter)" },
+    { seit: "2026-09-24T03:42",
+      text: "Sabbern: dein Bild kippt bis 15° und wackelt (vorher 3°), gedreht um den Mund; am Mund quillt ein Speichelwulst auf, dünner Nebenfaden, beim Abreißen zuckt der Kopf zurück" },
   ],
 };
