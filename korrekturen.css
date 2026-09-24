@@ -34114,3 +34114,48 @@ body.rf-leiste-auf .rf-reiter { display: none; }
               inset 0 4px 8px rgba(255, 255, 255, .35),
               0 2px 5px rgba(0, 0, 0, .45);
 }
+
+/* RUNDE 101 — Funk 89: der Delfin nimmt keine Pfuetze mehr mit. Das
+   Wasser liegt als Band entlang der Strecke (.lc-delfin-see), gespritzt
+   wird nur beim Eintauchen, und er schwimmt mit Koerper und Schwanz. */
+.lc-delfin .lc-delfin-wasser, .lc-delfin .lc-delfin-platsch { display: none; }
+.lc-delfin-see {
+  position: absolute; left: 0; top: 0;
+  pointer-events: none; overflow: visible; z-index: 23;
+  animation: lcDelfinSee 3s linear both;
+}
+.lc-delfin-see path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.lc-delfin-see-tief { stroke: rgba(40, 110, 170, .28); }
+.lc-delfin-see-flaeche { stroke: rgba(95, 170, 225, .42); }
+.lc-delfin-see-welle { stroke: rgba(255, 255, 255, .7); }
+@keyframes lcDelfinSee { 0% { opacity: 0; } 8%, 88% { opacity: 1; } 100% { opacity: 0; } }
+.lc-delfin-spritzer {
+  position: absolute; width: 0; height: 0;
+  pointer-events: none; z-index: 25;
+}
+.lc-delfin-ring {
+  position: absolute; left: calc(var(--gross) * -.35); top: calc(var(--gross) * -.1);
+  width: calc(var(--gross) * .7); height: calc(var(--gross) * .2);
+  border-radius: 50%; border: 2px solid rgba(255, 255, 255, .9);
+  animation: lcDelfinRing .8s ease-out both;
+}
+@keyframes lcDelfinRing { 0% { transform: scale(.3); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+.lc-delfin-tropfen {
+  position: absolute; left: -3px; top: -3px; width: 6px; height: 8px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: rgba(200, 235, 255, .95);
+  transform: rotate(var(--w));
+  animation: lcDelfinTropfen .75s cubic-bezier(.2, .7, .4, 1) both;
+}
+@keyframes lcDelfinTropfen {
+  0%   { transform: rotate(var(--w)) translateY(0); opacity: 1; }
+  100% { transform: rotate(var(--w)) translateY(calc(var(--gross) * var(--h) * -1)); opacity: 0; }
+}
+/* Er schwimmt: der Koerper wiegt sich, der Schwanz schlaegt auf und ab. */
+.lc-delfin-koerper { animation: lcDelfinWiegen .62s ease-in-out infinite alternate; transform-origin: 55% 55%; }
+@keyframes lcDelfinWiegen { from { transform: rotate(-3deg) translateY(-1%); } to { transform: rotate(3deg) translateY(1%); } }
+.lc-delfin-schwanz { transform-box: fill-box; transform-origin: 0% 50%; animation: lcDelfinSchlag .31s ease-in-out infinite alternate; }
+@keyframes lcDelfinSchlag { from { transform: rotate(-16deg); } to { transform: rotate(16deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .lc-delfin-koerper, .lc-delfin-schwanz { animation: none; }
+}

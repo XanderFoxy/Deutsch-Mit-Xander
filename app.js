@@ -45347,11 +45347,64 @@
         opacity: 0, offset: 1 });
       try { del.animate(stufen, { duration: dauer, easing: "ease-in-out", fill: "forwards" }); }
       catch (e) {}
+      /* RUNDE 101 — XANDER (Funk 89): „die Pfütze, die unter ihm ist,
+         was das Wasser symbolisieren soll … kann realistisch auf der
+         Wegstrecke als Wasser liegen, so dass er dadurch platscht, aber
+         nicht, dass er diesen Kegel immer mitnimmt."
+         Das Wasser liegt jetzt als Band ENTLANG der Strecke (auch dem
+         gemalten Weg) und bleibt, wo es ist; der Delfin taucht hinein.
+         Gespritzt wird dort, wo er eintaucht, und nur dann. */
+      const NSw = "http://www.w3.org/2000/svg";
+      const wasser = document.createElementNS(NSw, "svg");
+      wasser.setAttribute("class", "lc-delfin-see");
+      wasser.setAttribute("aria-hidden", "true");
+      const rrW = reihe.getBoundingClientRect();
+      wasser.setAttribute("width", String(Math.round(rrW.width)));
+      wasser.setAttribute("height", String(Math.round(rrW.height)));
+      /* Das Band liegt am UNTEREN Bildrand, damit die
+         Gesichter frei bleiben, die er ueberquert (0,4 d unter der Mitte). Die Wellenlinie ist
+         eine echte Sinuswelle quer zur Strecke, keine Strichlinie. */
+      const TIEF = d * 0.4;
+      const pkt = [];
+      for (let i = 0; i <= 80; i++) {
+        const p = bahnAb(i / 80);
+        pkt.push({ x: start.x + p.x, y: start.y + p.y + TIEF });
+      }
+      let seeWeg = "", welle = "", lauf = 0;
+      pkt.forEach((q, i) => {
+        seeWeg += (i ? " L" : "M") + q.x.toFixed(1) + " " + q.y.toFixed(1);
+        const a = pkt[Math.max(0, i - 1)], b = pkt[Math.min(pkt.length - 1, i + 1)];
+        const dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy) || 1;
+        if (i) lauf += Math.hypot(q.x - pkt[i - 1].x, q.y - pkt[i - 1].y);
+        const aus = Math.sin(lauf / (d * 0.16)) * d * 0.035 - d * 0.05;
+        welle += (i ? " L" : "M") + (q.x - dy / l * aus).toFixed(1) + " " + (q.y + dx / l * aus).toFixed(1);
+      });
+      wasser.innerHTML = '<path class="lc-delfin-see-tief" d="' + seeWeg + '" stroke-width="' + (d * 0.34).toFixed(1) + '"/>'
+        + '<path class="lc-delfin-see-flaeche" d="' + seeWeg + '" stroke-width="' + (d * 0.22).toFixed(1) + '"/>'
+        + '<path class="lc-delfin-see-welle" d="' + welle + '" stroke-width="' + (d * 0.028).toFixed(1) + '"/>';
+      wasser.style.animationDuration = dauer + "ms";
+      reihe.insertBefore(wasser, del);
+      weg.push(wasser);
       /* Und bei jedem Eintauchen platscht es — genau dann, wenn der
-         Bogen unten ankommt. */
+         Bogen unten ankommt, und genau DORT. */
       for (let b = 1; b <= bogen; b++) {
         const wann = Math.round(dauer * (0.1 + (hin / dauer - 0.1) * (b / bogen)));
         lcTonSpaeter("platsch", wann, 0.42);
+        const pS = bahnAb(b / bogen);
+        setTimeout(() => {
+          if (!reihe.isConnected) return;
+          const sp = document.createElement("span");
+          sp.className = "lc-delfin-spritzer";
+          sp.style.left = (start.x + pS.x).toFixed(1) + "px";
+          sp.style.top = (start.y + pS.y + d * 0.4).toFixed(1) + "px";
+          sp.style.setProperty("--gross", d + "px");
+          sp.innerHTML = '<i class="lc-delfin-ring"></i>'
+            + Array.from({ length: 7 }, (_, k) => '<i class="lc-delfin-tropfen" style="--w:'
+              + (-70 + k * 23) + 'deg;--h:' + (0.5 + (k % 3) * 0.22).toFixed(2) + '"></i>').join("");
+          reihe.appendChild(sp);
+          weg.push(sp);
+          setTimeout(() => sp.remove(), 900);
+        }, Math.max(0, wann - 40));
       }
       lcTonReise("delfin", dauer);
     } else if (art === "kran") {
