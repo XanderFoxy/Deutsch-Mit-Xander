@@ -33677,3 +33677,12 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-hotrod-buehne .lc-hr-chromlicht { fill: none; stroke: #ffffff; stroke-width: .9; opacity: .75; stroke-linecap: round; }
 .lc-hotrod-buehne .lc-hr-trompete   { fill: #dfe5eb; stroke: #56606b; stroke-width: .8; }
 .lc-hotrod-buehne .lc-hr-schlund    { fill: #15181b; }
+
+/* FUNK 75 — die Katze steht und laeuft (siehe app.js, „mieze"). */
+.lc-katze-glied  { fill: url(#lcKatzFell); }
+.lc-katze-tatze  { fill: #9a8f85; }
+.lc-katze-fern   { filter: brightness(.72); }
+.lc-katze-schwanz { transform-origin: 33px 50px; animation-duration: 1.1s; }
+/* Die alte Regel drehte die Pfote um 62 % / 72 % — jetzt haengt der
+   Drehpunkt direkt an der Schulter (style im SVG). */
+.lc-katze-pfote { transform-origin: 72px 56px; }

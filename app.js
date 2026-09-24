@@ -47246,36 +47246,69 @@
       const katze = document.createElement("span");
       katze.className = "lc-katze";
       katze.style.setProperty("--gross", d + "px");
+      /* =============================================================
+         FUNK 75 (24.09.) — XANDER: „die Katze soll auch verbessert
+         werden, sie soll ein bisschen laufen und nicht nur auf ihrem
+         Arsch sitzen, sie soll ein bisschen realistisch mit ihren
+         Pfoten reagieren, wie die Katze in der Physik ist, wenn sie
+         einen Ball umspielt."
+         Vorher: EIN Umriss einer sitzenden Katze, dazu eine Pfote, die
+         sich drehte. Jetzt steht sie auf vier Beinen mit je zwei
+         Gliedern und laeuft dem Ball hinterher (Kreuzgang: hinten
+         links, vorn links, hinten rechts, vorn rechts). Zum Schlagen
+         hebt sie das nahe Vorderbein hoch, krummt die Pfote ein und
+         schlaegt auf den Ball — der Kopf bleibt dabei ruhig, der
+         Schwanz peitscht. Kopf und Gesicht sind die alten.
+         ============================================================= */
+      const katzBein = (vorn, fern) => {
+        const P = vorn ? [72, 56] : [40, 55], K = vorn ? [72.6, 69.5] : [37.6, 70.5];
+        const ober = vorn
+          ? '<path class="lc-katze-glied" d="M68 50 C72 48 77 49 77 54 L76 69 C76 71.5 69.4 71.5 69.2 69 Z"/>'
+          : '<path class="lc-katze-glied" d="M33 47 C40 44 48 47 47 55 C46 61 42 66 40.4 71 C39.4 72.4 35.6 72.2 35.2 70.6 C34.4 64 31.6 56 33 47 Z"/>';
+        const unter = vorn
+          ? '<path class="lc-katze-glied" d="M70.2 69 L75 69 L75.6 82 L70.6 82 Z"/><ellipse class="lc-katze-tatze" cx="74.4" cy="83.4" rx="4.6" ry="2.7"/>'
+          : '<path class="lc-katze-glied" d="M35.4 70 L40 70 L40.6 82 L36 82 Z"/><ellipse class="lc-katze-tatze" cx="39.6" cy="83.4" rx="4.4" ry="2.6"/>';
+        const k = (x) => x.toFixed(1);
+        return '<g class="lc-katze-bein ' + (vorn ? "lc-katze-vorn" : "lc-katze-hinten") + (fern ? " lc-katze-fern" : " lc-katze-nah")
+          + '"' + (fern ? ' transform="translate(' + (vorn ? 5 : -4) + ' -1.5)"' : "") + '>'
+          + '<g class="lc-katze-o" style="transform-origin:' + k(P[0]) + "px " + k(P[1]) + 'px">'
+          + (vorn && !fern ? '<g class="lc-katze-pfote" style="transform-box:view-box;transform-origin:' + k(P[0]) + "px " + k(P[1]) + 'px">' : "")
+          + ober
+          + '<g class="lc-katze-u" style="transform-origin:' + k(K[0]) + "px " + k(K[1]) + 'px">'
+          + (vorn && !fern ? '<g class="lc-katze-pfote-u" style="transform-box:view-box;transform-origin:' + k(K[0]) + "px " + k(K[1]) + 'px">' : "")
+          + unter
+          + (vorn && !fern ? "</g>" : "")
+          + "</g>"
+          + (vorn && !fern ? "</g>" : "")
+          + "</g></g>";
+      };
       katze.innerHTML =
         '<svg class="lc-katze-form" viewBox="0 0 120 92" aria-hidden="true">'
         + '<defs><linearGradient id="lcKatzFell" x1="0" y1="0" x2="0" y2="1">'
         + '<stop offset="0" stop-color="#8c8279"/><stop offset=".55" stop-color="#6d6259"/>'
         + '<stop offset="1" stop-color="#4c443d"/></linearGradient></defs>'
-        /* Der SCHWANZ liegt hinter dem Koerper — deshalb zuerst. */
-        + '<path class="lc-katze-schwanz" d="M26 70 C6 68 2 50 12 40 C17 35 24 36 25 42"'
-        + ' fill="none" stroke="url(#lcKatzFell)" stroke-width="9" stroke-linecap="round"/>'
-        /* Der KOERPER: eine sitzende Katze ist von der Seite ein
-           Tropfen — hinten breit, vorn schmal. */
-        + '<path d="M30 78 C22 60 28 40 46 34 C62 29 78 36 82 52 C86 66 80 78 72 80 Z"'
+        /* Schwanz: vom Hinterteil in einem S nach oben. */
+        + '<path class="lc-katze-schwanz" d="M33 50 C20 48 14 38 17 27 C19 20 25 17 28 22"'
+        + ' fill="none" stroke="url(#lcKatzFell)" stroke-width="7" stroke-linecap="round"/>'
+        + katzBein(false, true) + katzBein(true, true)
+        + '<g class="lc-katze-leib">'
+        /* Der Rumpf, lang und leicht gewoelbt — eine Katze, die geht. */
+        + '<path class="lc-katze-rumpf" d="M31 51 C30 41 42 36 56 36 C67 36 76 38 80 44 C83 50 81 58 74 61 C64 64 44 64 37 61 C33 59 31 56 31 51 Z"'
         + ' fill="url(#lcKatzFell)"/>'
-        /* Die VORDERPFOTEN — eine steht, eine holt aus. */
-        + '<path class="lc-katze-pfote" d="M74 66 C82 64 92 70 94 78 C95 82 90 84 86 82'
-        + ' C80 79 74 73 74 66 Z" fill="#9a8f85"/>'
-        + '<path d="M62 74 C68 72 74 76 75 80 L60 80 Z" fill="#7d7268"/>'
-        /* Der KOPF. */
+        + '<path d="M40 60 C50 63.4 64 63.4 72 60" fill="none" stroke="#a79c92" stroke-width="2.4" stroke-linecap="round" opacity=".55"/>'
+        /* Tigerstreifen quer ueber den Ruecken. */
+        + '<path d="M44 37.6 C46 43 45.6 49 43.4 53 M53 36.4 C55 42 55 48 53 52.4 M62 36.6 C64 42 64 47.6 62.4 51.6 M71 38.6 C72.6 43 72.4 47 71 50"'
+        + ' fill="none" stroke="rgba(40,34,29,.42)" stroke-width="2.8" stroke-linecap="round"/>'
+        /* Kopf und Gesicht — wie vorher. */
         + '<circle cx="86" cy="36" r="17" fill="url(#lcKatzFell)"/>'
-        /* Die OHREN — spitz, mit heller Innenflaeche. */
         + '<path d="M72 26 L70 8 L84 20 Z" fill="#6d6259"/>'
         + '<path d="M73.5 24 L72.5 14 L80 21 Z" fill="#c69a9a"/>'
         + '<path d="M96 20 L106 6 L104 25 Z" fill="#6d6259"/>'
         + '<path d="M97.5 21 L103 12 L102 23 Z" fill="#c69a9a"/>'
-        /* Die AUGEN mit senkrechter Pupille — daran erkennt man eine
-           Katze sofort. */
         + '<ellipse cx="81" cy="34" rx="5" ry="6" fill="#d8e36a"/>'
         + '<ellipse cx="95" cy="34" rx="5" ry="6" fill="#d8e36a"/>'
         + '<ellipse class="lc-katze-pupille" cx="81" cy="34" rx="1.5" ry="5.4" fill="#231d18"/>'
         + '<ellipse class="lc-katze-pupille" cx="95" cy="34" rx="1.5" ry="5.4" fill="#231d18"/>'
-        /* Nase, Maul und Schnurrhaare. */
         + '<path d="M86 43 L82.4 39.6 L89.6 39.6 Z" fill="#c07c86"/>'
         + '<path d="M86 43 L86 46 M86 46 C83 48.6 80 47.4 79 45.4'
         + ' M86 46 C89 48.6 92 47.4 93 45.4" fill="none" stroke="#2b2420"'
@@ -47283,10 +47316,8 @@
         + '<path d="M78 41 L64 38 M78 44 L65 45 M94 41 L108 38 M94 44 L107 45"'
         + ' fill="none" stroke="rgba(255,255,255,.72)" stroke-width="1.2"'
         + ' stroke-linecap="round"/>'
-        /* Die Streifen auf dem Ruecken. */
-        + '<path d="M44 38 C46 44 46 50 44 56 M54 34 C56 41 56 48 54 55'
-        + ' M64 33 C66 40 66 47 64 54" fill="none" stroke="rgba(40,34,29,.4)"'
-        + ' stroke-width="3" stroke-linecap="round"/>'
+        + "</g>"
+        + katzBein(false, false) + katzBein(true, false)
         + "</svg>";
       reihe.appendChild(katze);
       weg.push(katze);
@@ -47339,6 +47370,8 @@
            sonst dreht sich die Pfote um sich selbst, statt zu
            schlagen. */
         const pfoteRahmen = [{ transform: "rotate(0deg)", offset: 0 }];
+        const pfoteURahmen = [{ transform: "rotate(0deg)", offset: 0 }];
+        const laufZeiten = [];
         /* JEDER SCHLAG. Der Ball legt in jedem Schlag ein Stueck
            zurueck, und die Stuecke werden KUERZER — so laeuft etwas
            aus, das einmal angestossen wurde. Die Summe ist immer
@@ -47377,16 +47410,25 @@
           /* Die Pfote: ausholen, schlagen, zurueck — im Takt des
              Schlags. Die Zeiten liegen zwischen den beiden
              Katzen-Schluesselbildern von oben (0,10 und 0,20). */
+          /* FUNK 75 — das Vorderbein hebt sich weit nach vorn oben
+             (Ausholen), die Pfote krummt sich ein, dann schlaegt die Katze
+             schraeg nach vorn unten auf den Ball und nimmt das Bein zurueck. */
           pfoteRahmen.push({ transform: "rotate(0deg)",
                              offset: Math.min(1, t0 + (t1 - t0) * 0.04) });
-          pfoteRahmen.push({ transform: "rotate(-30deg)",
+          pfoteRahmen.push({ transform: "rotate(-96deg)",
                              offset: Math.min(1, t0 + (t1 - t0) * 0.12) });
-          pfoteRahmen.push({ transform: "rotate(34deg)",
+          pfoteRahmen.push({ transform: "rotate(-44deg)",
                              offset: Math.min(1, t0 + (t1 - t0) * 0.20) });
-          pfoteRahmen.push({ transform: "rotate(6deg)",
+          pfoteRahmen.push({ transform: "rotate(-30deg)",
                              offset: Math.min(1, t0 + (t1 - t0) * 0.28) });
           pfoteRahmen.push({ transform: "rotate(0deg)",
                              offset: Math.min(1, t0 + (t1 - t0) * 0.44) });
+          pfoteURahmen.push({ transform: "rotate(0deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.04) });
+          pfoteURahmen.push({ transform: "rotate(62deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.12) });
+          pfoteURahmen.push({ transform: "rotate(-8deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.20) });
+          pfoteURahmen.push({ transform: "rotate(0deg)", offset: Math.min(1, t0 + (t1 - t0) * 0.44) });
+          /* Gelaufen wird, waehrend der Ball rollt und sie ihm nachsetzt. */
+          laufZeiten.push([t0 + (t1 - t0) * 0.30, t1]);
           const nachPos = bei(1);
           katzRahmen.push({
             transform: "translate(calc(-50% + " + (nachPos.x - dxK * 0.06).toFixed(1) + "px), calc(-50% + "
@@ -47445,7 +47487,44 @@
         if (pfote && pfoteRahmen.length > 1) {
           pfoteRahmen.push({ transform: "rotate(0deg)", offset: 1 });
           pfote.animate(pfoteRahmen, { duration: dauer, easing: "ease-in-out", fill: "both" });
+          const pfoteU = katze.querySelector(".lc-katze-pfote-u");
+          if (pfoteU) {
+            pfoteURahmen.push({ transform: "rotate(0deg)", offset: 1 });
+            pfoteU.animate(pfoteURahmen, { duration: dauer, easing: "ease-in-out", fill: "both" });
+          }
         }
+        /* FUNK 75 — DER GANG. Nur solange sie dem Ball nachsetzt (und am
+           Ende, wenn sie davongeht) bewegen sich die Beine; beim Lauern
+           und Schlagen stehen sie. Kreuzgang: hinten fern, vorn fern,
+           hinten nah, vorn nah, je eine Viertelrunde versetzt. */
+        laufZeiten.push([tAnK + (1 - tAnK) * 0.1, 1]);
+        const laeuft = (o) => laufZeiten.some(([a, b]) => o >= a && o <= b);
+        const schrittMs = 420;
+        const beine = [["lc-katze-hinten.lc-katze-fern", 0], ["lc-katze-vorn.lc-katze-fern", 0.25],
+                       ["lc-katze-hinten.lc-katze-nah", 0.5], ["lc-katze-vorn.lc-katze-nah", 0.75]];
+        beine.forEach(([sel, phase]) => {
+          const bein = katze.querySelector("." + sel);
+          if (!bein) return;
+          const oG = bein.querySelector(":scope > .lc-katze-o");
+          const uG = bein.querySelector(".lc-katze-u");
+          const vorn = /vorn/.test(sel);
+          const oR = [], uR = [];
+          const N = Math.max(24, Math.round(dauer / 50));
+          for (let i = 0; i <= N; i++) {
+            const o = i / N, t = o * dauer;
+            const w = laeuft(o) ? Math.sin(2 * Math.PI * (t / schrittMs + phase)) : 0;
+            /* Vorwaerts greift das Bein mit negativem Winkel; beim
+               Zurueckholen knickt das untere Glied ein (vorn nach hinten,
+               hinten nach vorn). */
+            oR.push({ transform: "rotate(" + (-w * (vorn ? 24 : 22)).toFixed(1) + "deg)", offset: o });
+            const knick = laeuft(o) ? Math.max(0, Math.cos(2 * Math.PI * (t / schrittMs + phase))) : 0;
+            uR.push({ transform: "rotate(" + ((vorn ? 1 : -1) * knick * 38).toFixed(1) + "deg)", offset: o });
+          }
+          try {
+            if (oG) oG.animate(oR, { duration: dauer, easing: "linear", fill: "both" });
+            if (uG) uG.animate(uR, { duration: dauer, easing: "linear", fill: "both" });
+          } catch (e) {}
+        });
         ball.animate(ballRahmen, { duration: dauer, easing: "linear", fill: "both" });
         kreis.animate([
           { opacity: 1, offset: 0 },
