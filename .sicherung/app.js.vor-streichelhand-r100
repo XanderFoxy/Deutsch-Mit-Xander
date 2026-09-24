@@ -27369,7 +27369,6 @@
        3,4 s — die letzten 1,4 Sekunden streichelte man eine stumme
        Katze. „schnurren" ist jetzt 3,40 s lang. */
     streicheln:     { ton: "schnurren", dauer: 3400, laut: 0.4 },
-    wange:          { ton: "schnurren", dauer: 3400, laut: 0.4 },
     /* „das Knutschen — da koenntest du noch einen Sound machen, da haben wir
        naemlich keinen. Da hoert man so ein Schussgeraeusch oder so." */
     /* RUNDE 70 — XANDER: „Vielleicht kannst du beim Sound auch
@@ -30709,7 +30708,6 @@
        tun —, stehen deshalb jetzt unter EINER. */
     ["\ud83d\udc9e", "Lieb sein", "streicheln", false,
       [["\ud83e\udef6", "Streicheln", "streicheln"],
-       ["\ud83e\udef3", "Wange", "wange"],
        ["\ud83d\udc8b", "Kuss", "kuss"],
        ["\u2764\ufe0f", "Herzen", "herz"]]],
     /* RUNDE 99 — XANDER: „die neue Blume … die ist extra, die gehoert
@@ -34238,7 +34236,6 @@
     granate:    { zeichen: ["\ud83e\uddaf"], wie: 5, klasse: "umarmen" },
     lunte:      { zeichen: ["\ud83e\udde8"], wie: 5, klasse: "umarmen" },
     streicheln: { zeichen: ["\ud83e\udef6"], wie: 6, klasse: "herz" },
-    wange: { zeichen: ["\ud83e\udef3"], wie: 6, klasse: "herz" },
     kuss:       { zeichen: ["\ud83d\udc8b"], wie: 6, klasse: "herz" },
     zufall:     { zeichen: ["\ud83c\udfb0"], wie: 5, klasse: "umarmen" },
     boxen:   { zeichen: ["\ud83e\udd4a"], wie: 6, klasse: "umarmen" },
@@ -35163,7 +35160,6 @@
     bombe: 2100,       /* die Null, da platzt es */
     kuss: 520,         /* wenn der Mund ankommt */
     streicheln: 300,
-    wange: 300,
     /* Der erste Pumpenhub ist sofort da. */
     aufblasen: 0
   };
@@ -55100,47 +55096,6 @@
         kreis.classList.add("lc-gestreichelt");
         setTimeout(() => kreis.classList.remove("lc-gestreichelt"), 3400);
       }
-      schicht.innerHTML =
-        '<svg class="lc-streichel-hand" viewBox="0 0 100 80">'
-        + '<path d="M14 66 C4 54 4 36 12 26 L20 36 L20 10 A6 6 0 0 1 32 10 L32 34'
-        + ' L36 6 A6 6 0 0 1 48 6 L48 34 L52 10 A6 6 0 0 1 64 10 L64 36'
-        + ' L70 18 A6 6 0 0 1 82 22 C82 48 72 68 58 76 Z"'
-        + ' fill="' + lcHaut().haut + '" stroke="' + lcHaut().kante + '" stroke-width="2.6" stroke-linejoin="round"/>'
-        + "</svg>";
-      const blende = lcZpBlende(schicht);
-      for (let h = 0; h < 6; h++) {
-        const z = document.createElement("i");
-        z.className = "lc-streichel-herz";
-        z.style.left = (18 + Math.random() * 64).toFixed(0) + "%";
-        z.style.setProperty("--gross", (0.6 + Math.random() * 0.7).toFixed(2));
-        z.style.animationDelay = (0.5 + h * 0.34).toFixed(2) + "s";
-        blende.appendChild(z);
-      }
-    }, 3400, "streicheln");
-  }
-
-  /* =====================================================================
-     RUNDE 101 — ZWEI STREICHELN
-     ---------------------------------------------------------------------
-     XANDER (Funk 70): „Bringe bitte vorher auch noch die originale
-     urspruengliche Streichelhand zurueck, denn was ich urspruenglich
-     meinte damit war ein zweiter alternativer Profilbild-Effekt mit
-     einer typischen seitlich Rueckhand, die die Wange streichelt."
-     Also: /streicheln ist wieder die offene Hand von vorher (unveraendert
-     aus der Fassung vor Runde 99 zurueckgeholt, samt Bahn
-     lcStreichelR19), und die Rueckhand ist ein EIGENER Effekt: /wange.
-     Die Rueckhand kommt jetzt SEITLICH (um 80 Grad gedreht, die
-     eingerollten Finger zeigen zum Gesicht) und faehrt an der Wange
-     hinunter — lcWangeR101 im Stilblatt. */
-  function lcWangeStreicheln(wen) {
-    return lcAmPlatz(wen, "lc-streichel lc-wange", (schicht, platz) => {
-      const kreis = platz.querySelector(".lc-kreis");
-      if (kreis) {
-        kreis.classList.remove("lc-gestreichelt");
-        void kreis.offsetWidth;
-        kreis.classList.add("lc-gestreichelt");
-        setTimeout(() => kreis.classList.remove("lc-gestreichelt"), 3400);
-      }
       /* =============================================================
          RUNDE 99 — MIT DEM HANDRUECKEN AN DER WANGE
          -------------------------------------------------------------
@@ -55157,7 +55112,7 @@
          HINUNTER (siehe lcStreichelR99 im Stilblatt).
          ============================================================= */
       schicht.innerHTML =
-        '<svg class="lc-streichel-hand lc-wange-hand" viewBox="0 0 100 80">'
+        '<svg class="lc-streichel-hand" viewBox="0 0 100 80">'
         /* Der Handruecken. */
         + '<path d="M34 12 C26 22 24 40 30 52 C36 64 58 68 70 60'
         + ' C82 52 84 28 78 16 C72 6 42 4 34 12 Z"'
@@ -55183,7 +55138,7 @@
         z.style.animationDelay = (0.5 + h * 0.34).toFixed(2) + "s";
         blende.appendChild(z);
       }
-    }, 3400, "wange");
+    }, 3400, "streicheln");
   }
 
   /* --- DER KUSS --------------------------------------------------------
@@ -57106,7 +57061,7 @@
     licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
     vogelkot: 1, spucken: 1, sabbern: 1, waschmaschine: 1,
     birneraus: 1,
-    entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, wange: 1, kuss: 1, klaps: 1,
+    entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, kuss: 1, klaps: 1,
     /* RUNDE 76 — die drei Neuen: Telefon und Anziehen gelten genau
        EINEM Platz, sie duerfen nicht ueber den ganzen Raum regnen.
        „frosch" und „zylinder" sind Reisen und stehen schon oben. */
@@ -57391,7 +57346,6 @@
       if (art === "granate" && lcGranate(wenZ)) return;
       if (art === "lunte" && lcBombe(wenZ, true)) return;
       if (art === "streicheln" && lcStreicheln(wenZ)) return;
-      if (art === "wange" && lcWangeStreicheln(wenZ)) return;
       if (art === "kuss" && lcKuss(wenZ, (nachricht && nachricht.eigen)
             ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || ""))) return;
       if (art === "entbloessung" && lcEntbloessung(wenZ, (nachricht && nachricht.eigen)

@@ -174,12 +174,9 @@ const sage = (gut, text, dazu) => {
     schweb.dx + " px seitlich, Kinn " + schweb.kinn + " px im Bild");
   sage(schweb.zurueck <= 2, "und ist danach wieder auf seinem Platz", schweb.zurueck + " px daneben");
 
-  /* RUNDE 101 — XANDER (Funk 70): die Rueckhand an der Wange ist ein
-     EIGENER Effekt (/wange); /streicheln hat seine alte offene Hand
-     zurueck. Gemessen wird deshalb hier /wange. */
-  console.log("\n3  DIE HAND STREICHELT AN DER WANGE, NICHT UEBERS GESICHT (/wange)\n");
-  const str = await abtasten("wange", 3400, `function () {
-    const h = document.querySelector(".lc-wange-hand");
+  console.log("\n3  DIE HAND STREICHELT AN DER WANGE, NICHT UEBERS GESICHT\n");
+  const str = await abtasten("streicheln", 3400, `function () {
+    const h = document.querySelector(".lc-streichel-hand");
     const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="2"] .lc-kreis');
     if (!h || !k) return null;
     const rh = h.getBoundingClientRect(), rk = k.getBoundingClientRect();
