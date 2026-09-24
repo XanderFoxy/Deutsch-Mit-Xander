@@ -27200,6 +27200,8 @@
     muenze:         { ton: "muenze2",  dauer: 5500, laut: 0.55 },
     /* RUNDE 101 — der Muenzwurf: Schnipp, Flug, Aufschlag bei 1,31 s. */
     muenzwurf:      { ton: "muenzwurf", dauer: 1900, laut: 0.6 },
+    /* RUNDE 101 — Zielfernrohr: Fokus 3,4 s, Repetieren 4,6 s, Schuss 5,2 s. */
+    zielfernrohr:   { ton: "zielfernrohr", dauer: 7200, laut: 0.6 },
     /* „er kann quietschen beim Scheiben wischen. Da klingt eher wie
        ein geschaerftes Messer aber nicht wie ein quietschen der
        Scheibenwischer." */
@@ -30652,7 +30654,13 @@
     /* RUNDE 98 — XANDER: „Wir brauchen noch eine Applaus Animation mit
        klatschen den Haenden, wenn jemand etwas schoenes macht." */
     ["\ud83d\udc4f", "Applaus", "applaus"],
-    ["\ud83e\ude83", "Zwille",   "zwille"],
+    /* RUNDE 101 — XANDER (Funk 75): „so ein Zielfernrohr-Effekt, der
+       einen einzelnen so anvisiert … und dann soll man den abschießen
+       können." Eine Kachel fuers Zielen und Schiessen, die Zwille bleibt
+       darin der erste Eintrag. */
+    ["\ud83c\udfaf", "Schie\u00dfen", "zwille", false,
+      [["\ud83e\ude83", "Zwille", "zwille"],
+       ["\ud83c\udfaf", "Zielfernrohr", "zielfernrohr"]]],
     /* RUNDE 70 — XANDER: „Bei dem Anspucken haben wir das Pusten als
        extra Kachel noch uebrig obwohl die rausgenommen werden kann.
        Die ist ja im Strohhalm drin."
@@ -34263,6 +34271,7 @@
     muenze:     { zeichen: ["\ud83e\ude99"], wie: 5, klasse: "umarmen" },
     muenzwurf:  { zeichen: ["\ud83e\ude99"], wie: 5, klasse: "umarmen" },
     muenzkopf:  { zeichen: ["\ud83e\ude99"], wie: 5, klasse: "umarmen" },
+    zielfernrohr: { zeichen: ["\ud83c\udfaf"], wie: 5, klasse: "umarmen" },
     wischer:    { zeichen: ["\ud83e\uddfd"], wie: 5, klasse: "umarmen" },
     zwille:     { zeichen: ["\ud83e\ude83"], wie: 5, klasse: "umarmen" },
     pusterohr:  { zeichen: ["\ud83e\udd64"], wie: 5, klasse: "umarmen" },
@@ -35179,6 +35188,7 @@
        Anfang, nicht ans Ende. */
     muenze: 0,
     muenzwurf: 0,     /* der Schnipp ist der Anfang des Tons */
+    zielfernrohr: 0,  /* der Ton traegt seine Marken selbst */
     /* RUNDE 75: hier steht jetzt der RISS, nicht mehr der Pfiff
        (siehe LC_TON_PLAN.entbloessung). 620 ms ist der Punkt, an dem
        der BH losrutscht — gemessen an der Animation, die bei 786 ms
@@ -55047,6 +55057,180 @@
     }, zurueck ? 2000 : 3600, "muenzwurf");
   }
 
+  /* =====================================================================
+     RUNDE 101 — DAS ZIELFERNROHR
+     ---------------------------------------------------------------------
+     XANDER (Funk 75): „so ein Zielfernrohr-Effekt, der einen einzelnen
+     so anvisiert, und in dem Moment, wo man anvisiert wird, sieht man
+     diesen Teil des Zielfernrohrs … dass das Profilbild darunter wie
+     vergrößert ist wie bei einer Lupe … wenn man dann so von der Seite
+     von links nach rechts geht … wie wenn man mit einem Vergrößerungs-
+     glas über ein Feld geht … und dann soll man den abschießen können,
+     und dann ist er von der Bühne runter. Aber es soll sich wirklich
+     erst so langsam einsortieren, dass man den Fokus auf denjenigen
+     kriegt, und die Animation soll entsprechend langsam sein … und
+     dann soll der Schuss kommen und die Person geht von der Bühne."
+
+     Eine Uhr, 7,2 s:
+        0–0,7 s   das Zielfernrohr taucht LINKS neben dem Bild auf
+        0,7–3,4 s es wandert langsam nach rechts ueber das Bild, mit dem
+                  leichten Zittern einer Hand; im Glas liegt das Bild
+                  2,3-fach vergroessert — wie eine Lupe ueber einem Feld
+        3,4–4,6 s zurueck zur Mitte, das Zittern wird kleiner; im Glas
+                  wird es scharf (Fokus), das Fadenkreuz sitzt
+        4,6 s     das Fadenkreuz wird rot: erfasst. Repetieren.
+        5,2 s     DER SCHUSS: Rueckstoss im Glas, Blitz, das Bild
+                  zuckt, kippt und faellt von der Buehne
+        6,0 s     auf dem Geraet des Getroffenen: von der Buehne
+                  (wie beim Pac-Man, LiveChat.buehneSetzen(false))
+     Der Ton (ton/zielfernrohr) ist auf diese Marken gemischt.
+     ===================================================================== */
+  const LC_ZF = { dauer: 7200, fokusAb: 3400, erfasst: 4600, schuss: 5200, weg: 6000 };
+  function lcZielfernrohr(wen) {
+    const ziele = lcZielPlaetze(wen);
+    if (!ziele.length) return false;
+    const platz = ziele[0];                     /* „einen einzelnen" */
+    const kreis = platz.querySelector(".lc-kreis");
+    if (!kreis) return false;
+    const opferName = lcNameVomPlatz(platz);
+    /* Nur auf dem Geraet des Getroffenen geht es von der Buehne — genau
+       wie beim Pac-Man. */
+    const runter = () => {
+      try {
+        const l = LiveChat.lage() || {};
+        if (String(l.ichName || "").trim().toLowerCase() === String(opferName || "").trim().toLowerCase()
+            && LiveChat.aufDerBuehne && LiveChat.aufDerBuehne()) {
+          LiveChat.buehneSetzen(false);
+          showToast("🎯 Getroffen! Tippe auf einen freien Platz, um wieder hinaufzukommen.");
+        }
+      } catch (e) {}
+    };
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTimeout(runter, 600);
+      return true;
+    }
+    return lcAmPlatz(wen, "lc-zielfernrohr", (schicht, pl) => {
+      /* Mit mehreren Namen zielt es trotzdem nur auf den ersten. */
+      if (pl !== platz) return;
+      const d = kreis.offsetWidth || 64;
+      const L = Math.round(d * 0.62);           /* Durchmesser des Glases */
+      const Z = 2.3;                            /* Vergroesserung */
+      /* DAS GLAS: darin eine Kopie des Bildes, gross. Die Kopie ist der
+         ganze Kreis (Foto, Video oder Buchstabe) — ein laufendes Video
+         bekommt denselben Strom, sonst stuende es still. */
+      const glas = document.createElement("span");
+      glas.className = "lc-zf-glas";
+      glas.style.width = glas.style.height = L + "px";
+      const bild = kreis.cloneNode(true);
+      bild.classList.add("lc-zf-bild");
+      bild.removeAttribute("id");
+      bild.querySelectorAll("[id]").forEach((x) => x.removeAttribute("id"));
+      /* Vergroessert wird mit scale(), nicht ueber die Breite — sonst
+         bliebe ein Buchstabe im Bild gleich gross (feste Schrift). */
+      bild.style.width = bild.style.height = d + "px";
+      const vidAlt = [...kreis.querySelectorAll("video")], vidNeu = [...bild.querySelectorAll("video")];
+      vidNeu.forEach((v, i) => {
+        try { if (vidAlt[i] && vidAlt[i].srcObject) { v.srcObject = vidAlt[i].srcObject; v.muted = true; v.play().catch(() => {}); } }
+        catch (e) {}
+      });
+      const scharf = document.createElement("span");
+      scharf.className = "lc-zf-innen";
+      scharf.appendChild(bild);
+      glas.appendChild(scharf);
+      /* Das Absehen: Duplex-Fadenkreuz mit dicken Balken aussen, duennen
+         Faeden innen und Strichmarken; in der Mitte ein Punkt. */
+      const striche = [-3, -2, -1, 1, 2, 3].map((k) =>
+        '<path d="M' + (50 + k * 6) + ' 48.6 V51.4 M48.6 ' + (50 + k * 6) + ' H51.4"/>').join("");
+      glas.insertAdjacentHTML("beforeend",
+        '<svg class="lc-zf-absehen" viewBox="0 0 100 100" aria-hidden="true">'
+        + '<path class="lc-zf-balken" d="M0 50 H28 M72 50 H100 M50 0 V28 M50 72 V100"/>'
+        + '<path class="lc-zf-faden" d="M28 50 H72 M50 28 V72"/>'
+        + '<g class="lc-zf-marken">' + striche + '</g>'
+        + '<circle class="lc-zf-punkt" cx="50" cy="50" r="1.3"/>'
+        + '</svg><span class="lc-zf-blitz"></span>');
+      schicht.appendChild(glas);
+      /* Rund um das Bild wird es ein wenig dunkler — man schaut durchs Rohr. */
+      const dunkel = document.createElement("span");
+      dunkel.className = "lc-zf-dunkel";
+      schicht.insertBefore(dunkel, glas);
+
+      const altUebergang = kreis.style.transition;
+      kreis.style.transition = "none";
+      const t0 = performance.now();
+      let geschossen = false, fertig = false;
+      const zw = (t, a, b) => Math.max(0, Math.min(1, (t - a) / (b - a)));
+      const glatt = (x) => x * x * (3 - 2 * x);
+      const lauf = () => {
+        if (fertig) return;
+        if (!schicht.isConnected) { fertig = true; kreis.style.transform = ""; kreis.style.transition = altUebergang; return; }
+        const t = performance.now() - t0;
+        /* Wo zeigt das Glas hin? In Bild-Koordinaten (0..d). */
+        let cx, cy;
+        const zittern = 1 - glatt(zw(t, LC_ZF.fokusAb, LC_ZF.erfasst));
+        const zx = (Math.sin(t / 310) * 0.05 + Math.sin(t / 137) * 0.022) * d * (0.25 + 0.75 * zittern);
+        const zy = (Math.cos(t / 270) * 0.045 + Math.sin(t / 181) * 0.02) * d * (0.25 + 0.75 * zittern);
+        if (t < 700) {
+          cx = -0.45 * d; cy = 0.46 * d;
+        } else if (t < LC_ZF.fokusAb) {
+          /* Langsam von links nach rechts ueber das ganze Bild. */
+          const k = glatt(zw(t, 700, LC_ZF.fokusAb));
+          cx = (-0.45 + 1.3 * k) * d; cy = (0.46 + Math.sin(k * Math.PI) * 0.1) * d;
+        } else {
+          const k = glatt(zw(t, LC_ZF.fokusAb, LC_ZF.erfasst));
+          cx = (0.85 - 0.35 * k) * d; cy = (0.46 + 0.02 * k) * d;
+        }
+        if (t < LC_ZF.schuss + 900) { cx += zx; cy += zy; }
+        /* Rueckstoss: das Glas springt nach oben und kommt zurueck. */
+        const rueck = t > LC_ZF.schuss ? Math.exp(-(t - LC_ZF.schuss) / 140) * Math.sin(Math.min(Math.PI, (t - LC_ZF.schuss) / 70)) : 0;
+        cy -= rueck * d * 0.35;
+        glas.style.transform = "translate(" + (cx - L / 2).toFixed(1) + "px, " + (cy - L / 2).toFixed(1) + "px)";
+        bild.style.transform = "translate(" + (L / 2 - cx * Z).toFixed(1) + "px, " + (L / 2 - cy * Z).toFixed(1) + "px) scale(" + Z + ")";
+        /* Fokus: erst unscharf, dann scharf. */
+        const unscharf = t < LC_ZF.fokusAb ? 2.2 : 2.2 * (1 - glatt(zw(t, LC_ZF.fokusAb, LC_ZF.erfasst - 200)));
+        scharf.style.filter = unscharf > 0.05 ? "blur(" + unscharf.toFixed(2) + "px)" : "none";
+        glas.style.opacity = String(t < 700 ? t / 700 : t > LC_ZF.schuss + 700 ? Math.max(0, 1 - (t - LC_ZF.schuss - 700) / 500) : 1);
+        dunkel.style.opacity = String(Math.min(1, t / 900) * (t > LC_ZF.schuss + 700 ? Math.max(0, 1 - (t - LC_ZF.schuss - 700) / 500) : 1));
+        glas.classList.toggle("lc-zf-erfasst", t >= LC_ZF.erfasst);
+        if (!geschossen && t >= LC_ZF.schuss) {
+          geschossen = true;
+          glas.classList.add("lc-zf-schuss");
+          platz.classList.add("lc-zf-getroffen");
+        }
+        /* Das Bild: kurzes Zucken beim Treffer, dann kippt es und faellt
+           nach unten aus dem Platz heraus. */
+        if (t >= LC_ZF.schuss) {
+          const k = t - LC_ZF.schuss;
+          const zuck = k < 160 ? Math.sin(k / 160 * Math.PI) : 0;
+          const fall = zw(k, 260, 1300);
+          const y = fall * fall * d * 1.6;
+          const dreh = -8 * zuck + 70 * glatt(fall);
+          kreis.style.transform = "translate(" + (zuck * d * 0.05 + fall * d * 0.12).toFixed(1) + "px, " + y.toFixed(1) + "px) rotate("
+            + dreh.toFixed(1) + "deg) scale(" + (1 - 0.25 * fall).toFixed(3) + ")";
+          kreis.style.opacity = String(1 - glatt(zw(k, 700, 1300)));
+        }
+        if (t >= LC_ZF.dauer) { fertig = true; return; }
+        requestAnimationFrame(lauf);
+      };
+      requestAnimationFrame(lauf);
+      setTimeout(runter, LC_ZF.weg);
+      /* Aufraeumen: sobald der Platz neu gezeichnet ist (er ist dann
+         leer) oder spaetestens nach 5 s, kommt das Bild zurueck — sonst
+         bliebe es verschwunden, falls der Getroffene gar nicht mehr da
+         ist, um von der Buehne zu gehen. */
+      const zurueck = () => {
+        fertig = true;
+        kreis.style.transform = "";
+        kreis.style.opacity = "";
+        kreis.style.transition = altUebergang;
+        platz.classList.remove("lc-zf-getroffen");
+      };
+      const warte = setInterval(() => {
+        if (!platz.isConnected || lcNameVomPlatz(platz) !== opferName) { clearInterval(warte); zurueck(); }
+      }, 200);
+      setTimeout(() => { clearInterval(warte); zurueck(); }, LC_ZF.dauer + 5000);
+    }, LC_ZF.dauer, "zielfernrohr");
+  }
+
   /* --- DER SCHEIBENWISCHER --------------------------------------------
      GEWUENSCHT: „Vielleicht kannst du noch eine Animation machen, die
      Scheibenwischer-Effekt hat auf dem Profilbild, sodass man halt das
@@ -58806,7 +58990,7 @@
     neunschwanz: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
-    licht: 1, muenze: 1, muenzwurf: 1, muenzkopf: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
+    licht: 1, muenze: 1, muenzwurf: 1, muenzkopf: 1, zielfernrohr: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
     vogelkot: 1, spucken: 1, sabbern: 1, waschmaschine: 1,
     birneraus: 1,
     entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, wange: 1, kratzen: 1, kuss: 1, klaps: 1,
@@ -59089,6 +59273,8 @@
          dieselbe Seite sehen. Zurueckdrehen darf nur, wem die Muenze
          gehoert: „bis man sie selber wiederum dreht". */
       if (art === "muenzwurf" && lcMuenzwurf(wenZ, nachricht && nachricht.los)) return;
+      /* RUNDE 101 — anvisieren, scharf stellen, Schuss, von der Buehne. */
+      if (art === "zielfernrohr" && lcZielfernrohr(wenZ)) return;
       if (art === "muenzkopf") {
         const werDreht = String((nachricht && nachricht.eigen)
           ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || "")).trim().toLowerCase();

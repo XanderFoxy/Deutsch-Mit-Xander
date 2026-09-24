@@ -33909,3 +33909,58 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-mtb .lc-mtb-kette { fill: none; stroke: #5b6168; stroke-width: 2.2px; stroke-dasharray: 2 1.2; stroke-linejoin: round; }
 .lc-mtb .lc-mtb-kurbel { fill: none; stroke: #1b1d20; stroke-width: 3.4px; stroke-linecap: round; }
 .lc-mtb .lc-mtb-pedal { fill: none; stroke: #ff7a1a; stroke-width: 3.6px; stroke-linecap: round; }
+
+/* =====================================================================
+   RUNDE 101 — DAS ZIELFERNROHR (siehe lcZielfernrohr)
+   XANDER (Funk 75): „dass das Profilbild darunter wie vergrößert ist
+   wie bei einer Lupe … wie wenn man mit einem Vergrößerungsglas über
+   ein Feld geht."
+   Das Glas ist rund, mit schwarzem Rohrrand und dunkler Vignette innen;
+   darin liegt eine vergroesserte Kopie des Bildes. Das Absehen ist ein
+   Duplex-Fadenkreuz, das beim Erfassen rot wird.
+   ===================================================================== */
+.lc-zielfernrohr { overflow: visible; z-index: 30; pointer-events: none; }
+.lc-zf-dunkel {
+  position: absolute; left: -45%; top: -45%; width: 190%; height: 190%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 30%, rgba(8,12,16,.28) 52%, rgba(8,12,16,0) 72%);
+  opacity: 0;
+}
+.lc-zf-glas {
+  position: absolute; left: 0; top: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e9e4dc;
+  box-shadow: 0 0 0 3px #111, 0 0 0 5px #3a3d42, 0 6px 16px rgba(0,0,0,.45);
+  opacity: 0;
+  will-change: transform;
+}
+.lc-zf-innen { position: absolute; inset: 0; }
+.lc-zf-glas .lc-zf-bild {
+  position: absolute !important; left: 0 !important; top: 0 !important;
+  margin: 0 !important;
+  transform-origin: 0 0;
+  animation: none !important;
+  transition: none !important;
+  box-shadow: none !important;
+}
+/* Die Vignette des Rohrs, innen am Rand. */
+.lc-zf-glas::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), inset 0 0 14px 6px rgba(0,0,0,.55);
+  pointer-events: none;
+}
+.lc-zf-absehen { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lc-zf-balken { stroke: #0b0b0b; stroke-width: 2.6; fill: none; }
+.lc-zf-faden { stroke: #0b0b0b; stroke-width: .6; fill: none; }
+.lc-zf-marken path { stroke: #0b0b0b; stroke-width: .6; fill: none; }
+.lc-zf-punkt { fill: #0b0b0b; transition: fill .15s; }
+.lc-zf-erfasst .lc-zf-faden, .lc-zf-erfasst .lc-zf-marken path { stroke: #d9141e; }
+.lc-zf-erfasst .lc-zf-punkt { fill: #ff2a2a; filter: drop-shadow(0 0 2px #ff2a2a); }
+.lc-zf-blitz {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,250,220,.95) 0 25%, rgba(255,200,120,.5) 45%, rgba(255,255,255,0) 70%);
+  opacity: 0;
+}
+.lc-zf-schuss .lc-zf-blitz { animation: lcZfBlitz .35s ease-out both; }
+@keyframes lcZfBlitz { 0% { opacity: 1; } 100% { opacity: 0; } }
