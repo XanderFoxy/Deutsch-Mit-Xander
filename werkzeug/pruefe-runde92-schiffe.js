@@ -57,8 +57,12 @@ const sage = (gut, was, zusatz) => {
     const kopf = document.querySelector(".lc-schiffe-kopfzeile");
     const felder = document.querySelectorAll(".lc-platz.lc-schiff-feld").length;
     const meins = document.querySelectorAll(".lc-schiff-meins").length;
+    /* RUNDE 100 — die Zeichen sind gezeichnet statt Emoji (seine Regel:
+       keine Emoji als Grafik). Ihre Art steht in data-art; fuer die
+       Pruefungen unten wird sie in das alte Zeichen zurueckuebersetzt. */
+    const alt = { meins: "🚢", daneben: "🌊", treffer: "💥" };
     const zeichen = [...document.querySelectorAll(".lc-schiff-zeichen")]
-      .map((z) => z.textContent).filter(Boolean);
+      .map((z) => z.textContent || alt[z.dataset.art] || "").filter(Boolean);
     return { kopf: kopf ? kopf.textContent : "",
              felder: felder, meins: meins, zeichen: zeichen,
              still: karte ? karte.classList.contains("lc-schiffe-still") : false,

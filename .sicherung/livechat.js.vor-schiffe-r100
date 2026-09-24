@@ -7473,13 +7473,7 @@ window.LiveChat = (function () {
     return null;
   }
   function schiffeSchuss(nr, vonId, vonName) {
-    /* RUNDE 100 — XANDER (Walkie-Talkie): „Die unteren Reihen sind
-       ueberhaupt nicht anwaehlbar."
-       GEFUNDEN: hier stand „nr > PLAETZE" — und PLAETZE ist 8 (die
-       Sitzreihe). Verstecken durfte man sich auf allen 16 Feldern
-       (schiffeVersteckAn prueft SCHIFFE_FELDER), aber jeder Schuss auf
-       9 bis 16 wurde vom Schiedsrichter stillschweigend verworfen. */
-    if (!schiffeSpiel || nr < 1 || nr > SCHIFFE_FELDER) return;
+    if (!schiffeSpiel || nr < 1 || nr > PLAETZE) return;
     var getroffenId = "", getroffenName = "";
     Object.keys(schiffeSpiel.verstecke).forEach(function (id) {
       if (id === vonId || schiffeSpiel.raus[id]) return;
@@ -7664,9 +7658,6 @@ window.LiveChat = (function () {
     }
     if (d.t === "schuss") {
       schiffeStand.tafel[d.nr] = d.treffer ? "treffer" : "daneben";
-      /* RUNDE 100 — der Ton gehoert zu DIESEM Schuss, nicht zu jedem
-         Neuzeichnen des Bretts (siehe DMA_SCHIFFE in app.js). */
-      schiffeStand.letzter = { nr: Number(d.nr) || 0, treffer: Boolean(d.treffer), zeit: Date.now() };
       schiffeStand.dran = d.dran || "";
       schiffeStand.dranName = d.dranName || "";
       if (d.treffer && d.wen) schiffeStand.raus.push(d.wen);
@@ -14226,21 +14217,6 @@ window.LiveChat = (function () {
     /* RUNDE 99 — die Punktrechnung zum Nachrechnen, ohne Spiel und
        ohne Leitung: dieselbe Formel, die schiffePunkteVerteilen
        benutzt. Ohne das liesse sich „gewichtet" nur behaupten. */
-    /* RUNDE 100 — der Schiedsrichter zum Nachpruefen: auf Feld nr liegt
-       jemand, A schiesst dorthin. Zurueck kommt, was der Schiedsrichter
-       an alle geschickt HAETTE — gesendet wird nichts, und das laufende
-       Spiel bleibt unberuehrt. XANDER: „Die unteren Reihen sind
-       ueberhaupt nicht anwaehlbar." */
-    pruefSchiffeSchuss: function (nr) {
-      var altSpiel = schiffeSpiel, altAn = schiffeAnAlle, raus = [];
-      schiffeAnAlle = function (d) { raus.push(d); };
-      schiffeSpiel = { phase: "schiessen", dran: 0, raus: {}, treffer: {},
-        reihe: [{ id: "a", name: "A" }, { id: "b", name: "B" }, { id: "c", name: "C" }],
-        verstecke: { b: Number(nr) || 0, c: 99 } };
-      try { schiffeSchuss(Number(nr) || 0, "a", "A"); }
-      finally { schiffeAnAlle = altAn; schiffeSpiel = altSpiel; }
-      return raus;
-    },
     pruefSchiffePunkte: function (treffer, gewonnen) {
       return schiffePunkte(treffer, gewonnen);
     },

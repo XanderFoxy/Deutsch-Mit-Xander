@@ -36339,22 +36339,6 @@
     karte.appendChild(leiste);
   };
 
-  /* RUNDE 100 — die drei Zeichen auf dem Brett, gezeichnet (viewBox
-     40 x 40, mittig): Wellen fuer „daneben", ein Einschlag fuer
-     „Treffer", das eigene Schiff fuer „hier liege ich". */
-  const LC_SCHIFF_ZEICHEN = {
-    daneben: '<svg viewBox="0 0 40 40" aria-hidden="true">'
-      + '<path class="lc-sz-welle" d="M5 15 q3.75 -4 7.5 0 t7.5 0 t7.5 0 t7.5 0"/>'
-      + '<path class="lc-sz-welle" d="M5 22 q3.75 -4 7.5 0 t7.5 0 t7.5 0 t7.5 0"/>'
-      + '<path class="lc-sz-welle" d="M5 29 q3.75 -4 7.5 0 t7.5 0 t7.5 0 t7.5 0"/></svg>',
-    treffer: '<svg viewBox="0 0 40 40" aria-hidden="true">'
-      + '<path class="lc-sz-blitz" d="M20 3 L24 14 L36 10 L28 20 L37 29 L25 27 L20 38 L16 27 L4 30 L12 20 L4 10 L16 14 Z"/>'
-      + '<circle class="lc-sz-kern" cx="20" cy="20" r="6"/></svg>',
-    meins: '<svg viewBox="0 0 40 40" aria-hidden="true">'
-      + '<path class="lc-sz-rumpf" d="M4 23 L36 23 L31 31 L9 31 Z"/>'
-      + '<rect class="lc-sz-aufbau" x="13" y="16" width="14" height="7" rx="1"/>'
-      + '<rect class="lc-sz-schlot" x="18" y="10" width="4" height="6"/></svg>'
-  };
   window.DMA_SCHIFFE = function (stand) {
     const karte = document.getElementById("livechatKarte");
     if (!stand) { lcSchiffeAufraeumen(); return; }
@@ -36405,38 +36389,14 @@
       feld.classList.toggle("lc-schiff-treffer", was === "treffer");
       feld.classList.toggle("lc-schiff-daneben", was === "daneben");
       feld.classList.toggle("lc-schiff-meins", stand.meins === nr);
-      /* RUNDE 100 — XANDER (Walkie-Talkie): „Die Wellen sitzen nicht
-         mittig auf den Positionen."
-         GEMESSEN: das Zeichen hing am ganzen Platzknopf — mit dem
-         Namensschild darunter — und stand damit 6 px unter der Mitte
-         des Kreises. Jetzt haengt es IM Kreis. Und es ist gezeichnet
-         statt ein Emoji (seine Regel: keine Emoji als Grafik) — damit
-         sieht es auf jedem Geraet gleich aus und sitzt genau mittig. */
-      const kreisF = feld.querySelector(".lc-kreis") || feld;
       let z = feld.querySelector(".lc-schiff-zeichen");
-      if (z && z.parentElement !== kreisF) { z.remove(); z = null; }
       if (!z) {
         z = document.createElement("span");
         z.className = "lc-schiff-zeichen";
-        kreisF.appendChild(z);
+        feld.appendChild(z);
       }
-      const art = was === "treffer" ? "treffer" : was === "daneben" ? "daneben"
-        : (stand.meins === nr ? "meins" : "");
-      if (z.dataset.art !== art) {
-        z.dataset.art = art;
-        z.innerHTML = LC_SCHIFF_ZEICHEN[art] || "";
-      }
-      /* RUNDE 100 — XANDER: „Es fehlen dazugehoerige Erkennungssounds
-         fuer das Wasser und das Versenken." Der Ton kommt nur zum
-         LETZTEN Schuss (livechat.js merkt ihn sich) und nur einmal —
-         sonst knallte beim Neuzeichnen jeder alte Schuss noch einmal. */
-      const letzter = stand.letzter;
-      if (letzter && letzter.nr === nr && was && feld.dataset.lcSchiffTon !== String(letzter.zeit)) {
-        feld.dataset.lcSchiffTon = String(letzter.zeit);
-        if (Date.now() - letzter.zeit < 4000) {
-          lcTonSpaeter(letzter.treffer ? "schiffversenkt" : "schiffwasser", 0, 0.7);
-        }
-      }
+      z.textContent = was === "treffer" ? "💥" : was === "daneben" ? "🌊"
+        : (stand.meins === nr ? "🚢" : "");
       if (!feld.dataset.lcSchiffGebunden) {
         feld.dataset.lcSchiffGebunden = "1";
         feld.addEventListener("click", (e) => {
@@ -36454,27 +36414,18 @@
        der Sitzreihe. Vorher fielen sie in dem Fall stillschweigend
        aus, und dann stand nirgends, wer dran ist — bei einem Spiel,
        das reihum geht, ist das die wichtigste Zeile ueberhaupt. */
-    /* RUNDE 100 — XANDER (Walkie-Talkie): „Die Ansage, dass jemand dran
-       ist, verschiebt immer noch das Livestream-Design. Die Ansage ist
-       besser als transparentes Overlay ueber dem Spielfeld."
-       GEMESSEN (390 x 844): die Zeile unter der Sitzreihe schob den Chat
-       beim Spielstart um 44 px nach unten und wackelte bei jedem
-       Wechsel „X ist dran" / „Du bist dran" um weitere 6 px. Jetzt
-       liegt sie ALS SCHICHT im Brett (position: absolute) — sie nimmt
-       keinen Platz ein, und Tipps gehen durch sie hindurch. */
     const gitterJetzt = document.getElementById("lcPlaetze")
       || karte.querySelector(".lc-plaetze");
-    if (gitterJetzt) {
+    const grund = document.getElementById("lcGrund") || gitterJetzt;
+    if (grund) {
       let zeile = document.getElementById("lcSchiffeZeile");
-      if (zeile && zeile.parentElement !== gitterJetzt) { zeile.remove(); zeile = null; }
       if (!zeile) {
         zeile = document.createElement("div");
         zeile.id = "lcSchiffeZeile";
-        zeile.className = "lc-schiffe-zeile lc-schiffe-overlay";
-        zeile.setAttribute("aria-live", "polite");
-        gitterJetzt.appendChild(zeile);
+        zeile.className = "lc-schiffe-zeile";
+        if (grund.id === "lcGrund") grund.insertAdjacentElement("afterbegin", zeile);
+        else grund.insertAdjacentElement("afterend", zeile);
       }
-      zeile.classList.toggle("lc-schiffe-ichdran", dranIch);
       /* Wer schon versenkt ist, steht dabei — sonst verliert man den
          Ueberblick, wer noch mitspielt. */
       const raus = (stand.raus || []).filter(Boolean);
