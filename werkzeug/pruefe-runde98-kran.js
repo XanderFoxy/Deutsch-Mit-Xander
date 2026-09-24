@@ -176,6 +176,47 @@ const sage = (gut, was, zusatz) => {
     "das Bild kommt nie ueber den Ausleger hinaus", "hoechster Bildrand y=" + h.hoechstesBild);
   sage(h.nahAmZiel <= 4, "und es kommt genau auf dem Zielplatz an", h.nahAmZiel + " px daneben");
 
+  /* RUNDE 100 — XANDER: „Der Kran ist manchmal langsamer oder schneller
+     als die Person eigentlich am Zielort ist." Gemessen wird, wie weit
+     Laufkatze und Bild waehrend der Querfahrt (48–72 %) waagerecht
+     auseinanderliegen. Vorher bis 52 px (easing ueber die ganze
+     Zeitleiste), jetzt eine gemeinsame Kurve. Und: der Kran hat oben
+     Fuehrerhaus, Turmspitze, Abspannseile und Gegengewicht. */
+  console.log("\n5  RUNDE 100 — KATZE UND BILD IM GLEICHSCHRITT, EIN ECHTER TURMDREHKRAN\n");
+  const gleich = await pg.evaluate(async () => {
+    window.DMA_PRUEF.effektBuehne();
+    await new Promise((f) => setTimeout(f, 300));
+    const k5 = document.querySelector('[data-lc-platz="5"] .lc-kreis');
+    window.DMA_PRUEFUNG.wirkung("kranheben", "Emmi", "Alex", { ziel: 3 });
+    const t0 = performance.now(), ab = [];
+    let teile = null;
+    while (performance.now() < t0 + 2700) {
+      const t = performance.now() - t0, kz = document.querySelector(".lc-kr-katze");
+      if (kz && t > 2800 * 0.49 && t < 2800 * 0.71) {
+        const a = kz.getBoundingClientRect(), b = k5.getBoundingClientRect();
+        ab.push(Math.abs((a.left + a.width / 2) - (b.left + b.width / 2)));
+      }
+      if (!teile && document.querySelector(".lc-kran-buehne")) {
+        const q = (c) => document.querySelectorAll(".lc-kran-buehne ." + c).length;
+        teile = { haus: q("lc-kr-haus"), fenster: q("lc-kr-fenster"), gewicht: q("lc-kr-gewicht"),
+                  abspann: q("lc-kr-abspann"),
+                  staerken: [...new Set([...document.querySelectorAll(".lc-kran-buehne .lc-kr-gurt")]
+                    .map((g) => getComputedStyle(g).strokeWidth))] };
+      }
+      await new Promise((f) => requestAnimationFrame(f));
+    }
+    return { max: ab.length ? Math.max.apply(null, ab) : 999, n: ab.length, teile: teile };
+  });
+  /* 15 px: das Bild pendelt am Haken (±7° um den oberen Rand) — das
+     allein verschiebt seine Mitte um bis zu 6 px. Vorher waren es 52–61. */
+  sage(gleich.n > 5 && gleich.max <= 15, "Katze und Bild fahren im Gleichschritt",
+    "groesster Abstand " + Math.round(gleich.max) + " px (" + gleich.n + " Bilder)");
+  const tl = gleich.teile || {};
+  sage(tl.haus === 1 && tl.fenster === 1 && tl.gewicht === 1 && tl.abspann === 1,
+    "oben: Fuehrerhaus mit Fenster, Gegengewicht, Abspannseile", JSON.stringify(tl));
+  sage(tl.staerken && tl.staerken.length === 1, "Turm und Ausleger: dieselbe Gurtstaerke",
+    tl.staerken ? tl.staerken.join(", ") : "-");
+
   await br.close();
   srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)" : "\nalles gruen");

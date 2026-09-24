@@ -38551,27 +38551,7 @@
          Fehler. Deshalb steht er jetzt IMMER ueber dem hoeheren Bild,
          notfalls ueber der Kopfzeile des Klassenzimmers (die Karte
          schneidet dort nicht ab — overflow: visible, nachgesehen). */
-      /* =============================================================
-         RUNDE 100 — EIN ECHTER TURMDREHKRAN
-         -------------------------------------------------------------
-         XANDER (Walkie-Talkie): „sein Geruest ist mal duenner mal
-         dicker, das muss konsistent sein, und er muss oben wirklich
-         eine Kranfuehrung haben mit Kranhaeuschen und nicht einfach nur
-         eine senkrechte und eine waagerechte Krallenleiste — das sieht
-         so aus, als wenn es zwei zusammengeklebte Sachen sind, die gar
-         keine Verbindung miteinander haben."
-         GEMESSEN vorher: Ausleger-Gurte 2,6 px, Turm 1,6 px und
-         durchscheinend, der Turm 0,9 so breit wie der Ausleger — und
-         oben hoerte der Turm einfach am Ausleger auf.
-         JETZT, wie ein Baukran gebaut ist, von oben nach unten:
-           Turmspitze (Dreieck) mit Abspannseilen zu Ausleger und
-           Gegenausleger · Ausleger und Gegenausleger (mit Gegengewicht)
-           · darunter das Drehwerk mit dem Fuehrerhaus (Fenster zum
-           Ausleger hin) · der Turm bis unter die Sitzreihe.
-         Turm, Ausleger und Gegenausleger sind DASSELBE Gitter: gleiche
-         Breite gw, gleiche Gurte, gleiche Streben, gleiche Feldweite. */
-      const gw = Math.max(8, Math.min(12, gr * 0.12));  /* Gitterbreite, ueberall gleich */
-      const gh = gw;
+      const gh = Math.max(8, gr * 0.12);                /* Hoehe des Gittertraegers */
       const auslegerY = Math.min(S.top, Z.top) - gr * 0.42 - gh;
       const seilMin = gr * 0.16;                        /* Katze bis Haken, ganz oben */
       /* So hoch wird gehoben: bis kurz unter den Ausleger — nie darueber. */
@@ -38579,22 +38559,7 @@
       const hebY = hubTop - S.top;                      /* so weit geht das Bild hoch */
       const links = Math.min(S.x, Z.x) - gr * 0.7;
       const rechts = Math.max(S.x, Z.x) + gr * 0.7;
-      /* Der Turm steht auf der Seite mit mehr Luft bis zum Bildschirmrand
-         — dort hat der Gegenausleger Platz. Stand er immer „hinten",
-         klebte er auf dem Handy am linken Rand, und der Gegenausleger
-         lag ausserhalb des Bildschirms. */
-      const luftLinks = rr.left + links, luftRechts = window.innerWidth - rr.left - rechts;
-      const nachRechts = luftLinks >= luftRechts;       /* Turm links, Ausleger nach rechts */
-      const turmX = nachRechts ? links + gr * 0.12 : rechts - gr * 0.12;
-      const auslegerEnde = nachRechts ? rechts : links;
-      const W0 = Math.round(rr.width);
-      /* Der Gegenausleger zeigt vom Ausleger weg — so lang, wie Platz ist.
-         Die Zeichnung darf ueber die Sitzreihe hinaus (overflow: visible);
-         Grenze ist erst der BILDSCHIRMrand. Mindestens traegt er sein
-         Gegengewicht. */
-      const platzBisRand = nachRechts ? turmX + rr.left : window.innerWidth - rr.left - turmX;
-      const gegenLang = Math.max(gw * 2.2, Math.min(gr * 0.9, platzBisRand - gw / 2 - 4));
-      const gegenEnde = nachRechts ? turmX - gw / 2 - gegenLang : turmX + gw / 2 + gegenLang;
+      const turmX = Z.x >= S.x ? links + gr * 0.12 : rechts - gr * 0.12;
 
       const NS = "http://www.w3.org/2000/svg";
       reihe.querySelectorAll(".lc-kran-buehne").forEach((x) => {
@@ -38604,64 +38569,33 @@
       buehne.setAttribute("class", "lc-kran-buehne");
       buehne.setAttribute("aria-hidden", "true");
       buehne.dataset.platz = platz.getAttribute("data-lc-platz") || "";
-      const W = W0, H = Math.round(rr.height);
+      const W = Math.round(rr.width), H = Math.round(rr.height);
       buehne.setAttribute("width", String(W));
       buehne.setAttribute("height", String(H));
       buehne.setAttribute("viewBox", "0 0 " + W + " " + H);
-      const f1 = (v) => v.toFixed(1);
-      /* Ein waagerechtes Gitter von x1 nach x2 (Gurte + Zickzack). */
-      const feld = gw * 1.1;
-      const waagGitter = (x1, x2, y) => {
-        const a = Math.min(x1, x2), b = Math.max(x1, x2);
-        let gurt = "M" + f1(a) + " " + f1(y) + " H" + f1(b) + " M" + f1(a) + " " + f1(y + gw) + " H" + f1(b) + " ";
-        let str = "";
-        for (let x = a, i = 0; x < b - 0.5; x += feld, i++) {
-          const x2b = Math.min(b, x + feld);
-          str += "M" + f1(x) + " " + f1(i % 2 ? y : y + gw) + " L" + f1(x2b) + " " + f1(i % 2 ? y + gw : y) + " ";
-        }
-        return { gurt: gurt, str: str };
-      };
-      const drehY = auslegerY + gw;                     /* Unterkante des Auslegers */
-      const drehH = gw * 1.2;                           /* das Drehwerk mit dem Fuehrerhaus */
-      const turmOben = drehY + drehH;
-      /* Der Turm: dasselbe Gitter, senkrecht. */
-      let turmGurt = "M" + f1(turmX - gw / 2) + " " + f1(turmOben) + " V" + H
-        + " M" + f1(turmX + gw / 2) + " " + f1(turmOben) + " V" + H + " ";
-      let turmStr = "";
-      for (let y = turmOben, i = 0; y < H - 0.5; y += feld, i++) {
-        const y2 = Math.min(H, y + feld);
-        turmStr += "M" + f1(i % 2 ? turmX - gw / 2 : turmX + gw / 2) + " " + f1(y)
-          + " L" + f1(i % 2 ? turmX + gw / 2 : turmX - gw / 2) + " " + f1(y2) + " ";
+      /* Der Gittertraeger: Ober- und Untergurt, Diagonalen dazwischen. */
+      let streben = "";
+      const feld = gh * 1.1;
+      for (let x = links, i = 0; x < rechts; x += feld, i++) {
+        const x2 = Math.min(rechts, x + feld);
+        streben += "M" + x.toFixed(1) + " " + (i % 2 ? auslegerY : auslegerY + gh).toFixed(1)
+          + " L" + x2.toFixed(1) + " " + (i % 2 ? auslegerY + gh : auslegerY).toFixed(1) + " ";
       }
-      const ausl = waagGitter(turmX, auslegerEnde, auslegerY);
-      const gegen = waagGitter(turmX, gegenEnde, auslegerY);
-      /* Turmspitze und Abspannseile. */
-      const spitzeY = auslegerY - gw * 2.6;
-      const spitze = "M" + f1(turmX - gw / 2) + " " + f1(auslegerY) + " L" + f1(turmX) + " " + f1(spitzeY)
-        + " L" + f1(turmX + gw / 2) + " " + f1(auslegerY)
-        + " M" + f1(turmX - gw * 0.3) + " " + f1(auslegerY - gw * 1.0)
-        + " H" + f1(turmX + gw * 0.3);
-      const ankerA = turmX + (auslegerEnde - turmX) * 0.68;
-      const abspann = "M" + f1(turmX) + " " + f1(spitzeY) + " L" + f1(ankerA) + " " + f1(auslegerY)
-        + " M" + f1(turmX) + " " + f1(spitzeY) + " L" + f1(gegenEnde) + " " + f1(auslegerY);
-      /* Das Fuehrerhaus: auf der Seite des Auslegers, mit Fenster dorthin. */
-      const hausB = gw * 1.7;
-      const hausX = nachRechts ? turmX + gw / 2 : turmX - gw / 2 - hausB;
-      const fensterX = nachRechts ? hausX + hausB * 0.45 : hausX + hausB * 0.1;
-      /* Das Gegengewicht: Betonbloecke am Ende des Gegenauslegers. */
-      const gewB = gw * 1.5;
-      const gewX = nachRechts ? gegenEnde : gegenEnde - gewB;
+      /* Der Turm: vom Ausleger bis unter die Sitzreihe. */
+      const tw = gh * 0.9;
+      let turm = "M" + (turmX - tw / 2).toFixed(1) + " " + auslegerY.toFixed(1) + " V" + H
+        + " M" + (turmX + tw / 2).toFixed(1) + " " + auslegerY.toFixed(1) + " V" + H + " ";
+      for (let y = auslegerY + gh, i = 0; y < H; y += tw * 1.2, i++) {
+        turm += "M" + (turmX - tw / 2).toFixed(1) + " " + y.toFixed(1)
+          + " L" + (turmX + tw / 2).toFixed(1) + " " + Math.min(H, y + tw * 1.2).toFixed(1) + " ";
+      }
       buehne.innerHTML =
-        '<path class="lc-kr-abspann" d="' + abspann + '"/>'
-        + '<path class="lc-kr-strebe" d="' + ausl.str + gegen.str + '"/>'
-        + '<path class="lc-kr-gurt" d="' + ausl.gurt + gegen.gurt + spitze + '"/>'
-        + '<path class="lc-kr-strebe lc-kr-turmstrebe" d="' + turmStr + '"/>'
-        + '<path class="lc-kr-gurt lc-kr-turmgurt" d="' + turmGurt + '"/>'
-        + '<rect class="lc-kr-gewicht" x="' + f1(gewX) + '" y="' + f1(auslegerY + gw * 0.2) + '" width="' + f1(gewB) + '" height="' + f1(gw * 1.8) + '" rx="1.5"/>'
-        + '<rect class="lc-kr-drehwerk" x="' + f1(turmX - gw * 0.7) + '" y="' + f1(drehY) + '" width="' + f1(gw * 1.4) + '" height="' + f1(drehH) + '" rx="1.5"/>'
-        + '<rect class="lc-kr-haus" x="' + f1(hausX) + '" y="' + f1(drehY) + '" width="' + f1(hausB) + '" height="' + f1(drehH + gw * 0.5) + '" rx="2"/>'
-        + '<rect class="lc-kr-fenster" x="' + f1(fensterX) + '" y="' + f1(drehY + gw * 0.25) + '" width="' + f1(hausB * 0.45) + '" height="' + f1(gw * 0.7) + '" rx="1"/>'
-        + '<rect class="lc-kr-katze" width="' + (gr * 0.3).toFixed(1) + '" height="' + (gw * 0.7).toFixed(1) + '" rx="2"/>'
+        '<path class="lc-kr-turm" d="' + turm + '"/>'
+        + '<path class="lc-kr-gurt" d="M' + links.toFixed(1) + " " + auslegerY.toFixed(1)
+        + " H" + rechts.toFixed(1) + " M" + links.toFixed(1) + " " + (auslegerY + gh).toFixed(1)
+        + " H" + rechts.toFixed(1) + '"/>'
+        + '<path class="lc-kr-strebe" d="' + streben + '"/>'
+        + '<rect class="lc-kr-katze" width="' + (gr * 0.3).toFixed(1) + '" height="' + (gh * 0.9).toFixed(1) + '" rx="2"/>'
         + '<path class="lc-kr-seil"/>'
         + '<g class="lc-kr-haken"><rect x="-4" y="-7" width="8" height="6" rx="1.5"/>'
         + '<path d="M0 -1 V4 C0 9 -4.5 10 -4.5 6" fill="none"/></g>';
@@ -38680,32 +38614,20 @@
       const tr = (x, y, dreh) => "translate(" + x.toFixed(1) + "px, " + y.toFixed(1)
         + "px) rotate(" + dreh + "deg)";
       const obenY = Math.min(0, hebY);
-      /* RUNDE 100 — XANDER: „Der Kran ist manchmal langsamer oder
-         schneller als die Person eigentlich am Zielort ist."
-         GEFUNDEN: das Bild lief mit easing „ease-in-out" ueber die GANZE
-         Zeitleiste — das verbiegt jede Marke: „bei 72 % ueber dem Ziel"
-         war in Wahrheit schon bei 63 %, die Katze aber erst bei 72 %.
-         Jetzt laeuft die Zeitleiste linear, und die waagerechte Strecke
-         wird aus DERSELBEN Kurve gerechnet wie die Katze (glatt, 48–72 %)
-         — Bild und Katze sind in jedem Augenblick uebereinander. */
-      const glattK = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
       const bb = [
         { transform: tr(0, 0, 0), offset: 0 },
         { transform: tr(0, 0, 0), offset: 0.30 },
-        { transform: tr(0, -2, 2), offset: 0.33, easing: "ease-out" },
-        { transform: tr(0, obenY, -4), offset: 0.48 }
+        { transform: tr(0, -2, 2), offset: 0.33 },
+        { transform: tr(0, obenY, -4), offset: 0.48 },
+        { transform: tr(dx * 0.3, obenY, 7), offset: 0.56 },
+        { transform: tr(dx * 0.65, obenY, -5), offset: 0.64 },
+        { transform: tr(dx, obenY, 3), offset: 0.72 },
+        { transform: tr(dx, dy - 3, -1), offset: 0.84 },
+        { transform: tr(dx, dy, 0), offset: 0.86 },
+        { transform: tr(dx, dy, 0), offset: 1 }
       ];
-      const schwing = [-4, 5, 7, 1, -5, -3, 3];
-      for (let i = 1; i <= 6; i++) {
-        const u = i / 6;
-        bb.push({ transform: tr(dx * glattK(u), obenY, schwing[i]), offset: 0.48 + 0.24 * u });
-      }
-      bb.push({ transform: tr(dx, dy - 3, -1), offset: 0.84, easing: "ease-out" });
-      bb.push({ transform: tr(dx, dy, 0), offset: 0.86 });
-      bb.push({ transform: tr(dx, dy, 0), offset: 1 });
-      bb[9].easing = "ease-in-out";                    /* 72 → 84 %: absenken */
       let lauf = null;
-      try { lauf = kreis.animate(bb, { duration: DAUER, easing: "linear", fill: "forwards" }); }
+      try { lauf = kreis.animate(bb, { duration: DAUER, easing: "ease-in-out", fill: "forwards" }); }
       catch (e) { lauf = null; }
 
       const nameAlt = lcNameVomPlatz(platz);
@@ -38728,8 +38650,7 @@
         const u = f < 0.48 ? 0 : f > 0.72 ? 1 : glatt((f - 0.48) / 0.24);
         const kx = S.x + dx * u;
         katze.setAttribute("x", (kx - gr * 0.15).toFixed(1));
-        /* Die Katze laeuft UNTER dem Ausleger, am Untergurt. */
-        katze.setAttribute("y", (auslegerY + gh - gh * 0.2).toFixed(1));
+        katze.setAttribute("y", (auslegerY + gh * 0.05).toFixed(1));
         /* Der Haken: vor dem Anschlagen und nach dem Absetzen haengt er
            frei am Seil; dazwischen sitzt er oben am Bild. */
         const k = kreis.getBoundingClientRect();
@@ -38739,16 +38660,11 @@
         if (f < 0.08) hy = frei;
         else if (f < 0.22) hy = frei + (S.top - frei) * glatt((f - 0.08) / 0.14);
         else if (f < 0.86 && !fertig) { hy = amBild.y; hx = amBild.x; }
-        else if (f < 0.86) {
-          /* RUNDE 100 — kam der Platztausch VOR dem Absetzen, sprang der
-             Haken hier (der Anteil unten wurde negativ). Jetzt bleibt er
-             bis zum Absetzen oben am Zielbild. */
-          hy = Z.top + Z.h * 0.04; hx = Z.x;
-        } else {
-          const w = Math.max(0, Math.min(1, (f - 0.86) / 0.12));
+        else {
+          const w = Math.min(1, (f - 0.86) / 0.12);
           hy = Z.top + (frei - Z.top) * glatt(w);
         }
-        seil.setAttribute("d", "M" + kx.toFixed(1) + " " + (auslegerY + gh + gh * 0.5).toFixed(1)
+        seil.setAttribute("d", "M" + kx.toFixed(1) + " " + (auslegerY + gh).toFixed(1)
           + " L" + hx.toFixed(1) + " " + (hy - 7).toFixed(1));
         haken.setAttribute("transform", "translate(" + hx.toFixed(1) + " " + hy.toFixed(1)
           + ") scale(" + (gr / 70).toFixed(2) + ")");

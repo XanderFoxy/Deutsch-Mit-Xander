@@ -32623,21 +32623,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
   cursor: pointer;
 }
-
-/* =====================================================================
-   RUNDE 100 — DER TURMDREHKRAN: EIN GITTER, EINE STAERKE
-   ---------------------------------------------------------------------
-   XANDER: „sein Geruest ist mal duenner mal dicker, das muss konsistent
-   sein." Turm, Ausleger und Gegenausleger tragen jetzt dieselben Gurte
-   und dieselben Streben (vorher 2,6 / 1,5 / 1,6 px und ein halb
-   durchsichtiger Turm). Dazu Fuehrerhaus, Drehwerk, Gegengewicht und
-   Abspannseile — siehe lcKranHeben in app.js.
-   ===================================================================== */
-.lc-kr-gurt     { stroke: #d9a13a; stroke-width: 2.2; fill: none; stroke-linejoin: round; }
-.lc-kr-strebe   { stroke: #c08c30; stroke-width: 1.2; fill: none; }
-.lc-kr-turm     { stroke: #d9a13a; stroke-width: 2.2; fill: none; opacity: 1; }
-.lc-kr-abspann  { stroke: #6f7784; stroke-width: 1.1; fill: none; }
-.lc-kr-drehwerk { fill: #56606e; }
-.lc-kr-haus     { fill: #e3a93c; stroke: #9c6e1e; stroke-width: 1; }
-.lc-kr-fenster  { fill: #bfe3f2; stroke: #5d7b8a; stroke-width: .8; }
-.lc-kr-gewicht  { fill: #9aa0a8; stroke: #6c727b; stroke-width: 1; }
