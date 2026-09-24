@@ -31537,7 +31537,13 @@
   /* Angel, Lasso oder Kran? Die Angel und der Kran fragen danach noch,
      WOHIN; das Lasso zieht immer zu mir — dafuer gibt es nichts zu
      waehlen. */
-  function lcHolenMenue(platz, name) {
+  /* RUNDE 101 — XANDER (Funk 79): „Der Bagger und alle
+     Befoerderungsmittel, die kannst du unter Transport packen, und die
+     kann jeder auch mit sich selbst benutzen — also die logischen."
+     Die Kachel heisst jetzt „Transport". Auf dem EIGENEN Bild (selbst)
+     stehen nur die, die mit einem selbst Sinn ergeben: Kran und beide
+     Bagger. Sich selbst angeln oder zu sich selbst lassoen ist unlogisch. */
+  function lcHolenMenue(platz, name, selbst) {
     lcPlatzMenueZu();
     const kasten = document.createElement("div");
     kasten.id = "lcPlatzMenue";
@@ -31545,7 +31551,8 @@
     kasten.setAttribute("role", "menu");
     const kopf = document.createElement("p");
     kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = name + " holen \u2014 womit?";
+    kopf.textContent = selbst ? "Transport \u2014 womit willst du fahren?"
+      : "Transport f\u00fcr " + name + " \u2014 womit?";
     kasten.appendChild(kopf);
     const knopf = (zeichen, wort, tun) => {
       const b = document.createElement("button");
@@ -31562,8 +31569,8 @@
       kasten.appendChild(b);
       return b;   /* RUNDE 101: der Aufzieh-Knopf schreibt seine Zahl hinein */
     };
-    knopf("\ud83e\ude9d", "Angeln", () => lcHebenMenue(platz, name));
-    knopf("\ud83e\udd20", "Lasso \u2014 zu mir", () => {
+    if (!selbst) knopf("\ud83e\ude9d", "Angeln", () => lcHebenMenue(platz, name));
+    if (!selbst) knopf("\ud83e\udd20", "Lasso \u2014 zu mir", () => {
       lcPlatzMenueZu();
       const zeile = "/lasso " + name;
       try { LiveChat.schreiben(zeile); } catch (e) {}
@@ -32333,7 +32340,9 @@
          nur bei den anderen (sich selbst angeln ergibt keinen Sinn) —
          den Kran aber auf dem eigenen Bild: er hebt einen selbst auf
          den Platz, den man danach waehlt. */
-      knopf("\ud83c\udfd7\ufe0f", "Kran", () => lcHebenMenue(platz, name, "kranheb"));
+      /* RUNDE 101 — Funk 79: statt nur dem Kran die ganze Transport-
+         Kachel, mit allem, was auch mit einem selbst geht. */
+      knopf("\ud83d\ude9a", "Transport", () => lcHolenMenue(platz, name, true));
       /* RUNDE 100 — XANDER (Walkie-Talkie): „ein kleines Lehrer-Panel
          beim Aufrufen meines eigenen Profils … was nur ich als Betreiber
          habe" und „Stadt Land Fluss kann ich ueberhaupt nicht finden, ich
@@ -32422,7 +32431,8 @@
          Bombe und Sport. Seine eigene Ansage von damals passt
          weiterhin: „Das kannst du einfach ‚Holen' nennen oder Haken
          oder Lasso." */
-      knopf("\ud83e\ude9d", "Holen", () => lcHolenMenue(platz, name));
+      /* RUNDE 101 — Funk 79: „unter Transport packen". */
+      knopf("\ud83d\ude9a", "Transport", () => lcHolenMenue(platz, name));
       /* ZWEIMAL KOPFHOERER — GENAU SO GEWUENSCHT:
          „Wenn ich bei jemand anderem die Kopfhoerer aufsetzen soll,
          einmal das normale, der normale Effekt kommen, und einmal

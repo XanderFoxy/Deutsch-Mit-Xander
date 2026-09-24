@@ -464,7 +464,7 @@ const GRUPPEN = {
       window.DMA_PRUEFUNG.platzMenue(platz);
       await new Promise((f) => setTimeout(f, 200));
       const finde = (re) => [...document.querySelectorAll("#lcPlatzMenue button")].find((b) => re.test(b.textContent));
-      if (!finde(/Kran/) && finde(/Holen/)) { finde(/Holen/).click(); await new Promise((f) => setTimeout(f, 250)); }
+      if (!finde(/Kran/) && finde(/Holen|Transport/)) { finde(/Holen|Transport/).click(); await new Promise((f) => setTimeout(f, 250)); }
       if (!finde(/Kran/)) return { fehlt: true };
       finde(/Kran/).click();
       await new Promise((f) => setTimeout(f, 400));

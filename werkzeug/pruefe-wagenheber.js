@@ -258,7 +258,8 @@ const pruefe = (was, gut, zusatz) => {
     const holen = oben ? [...oben.querySelectorAll(".lc-platzmenue-knopf")]
       /* Gesucht wird das WORT der Kachel, nicht ihr ganzer Text: davor
          steht noch das Zeichen (🪝), und mit dem passt kein „^Holen$". */
-      .filter((b) => /^Holen$/i.test(
+      /* RUNDE 101 — die Kachel heisst jetzt „Transport" (Funk 79). */
+      .filter((b) => /^(Holen|Transport)$/i.test(
         ((b.querySelector(".lc-platzmenue-wort") || {}).textContent || "").trim()))[0] : null;
     if (holen) {
       holen.click();
