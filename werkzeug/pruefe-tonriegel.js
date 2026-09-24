@@ -62,5 +62,57 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
       ? "Damit kann ein geblockter Ton den Fokus-Modus nicht mehr festfahren."
       : "FEHLER: liveLaeuftGerade bliebe gesetzt, niemand duerfte mehr sprechen."));
   }
+  /* =================================================================
+     RUNDE 100 — DIE EFFEKT-TOENE, WENN DER BROWSER NICHT SPIELEN LAESST
+     -----------------------------------------------------------------
+     XANDER (Walkie-Talkie): „Die Sounds der Profil-Effekte werden nicht
+     immer bei allen anderen gehoert."
+     Nachgestellt wie auf einem iPhone: jedes play() wird abgelehnt, und
+     Web Audio ist gesperrt, bis jemand tippt. Erwartet:
+       1. vor dem ersten Tipp steht der Knopf „Tippe hier …" da,
+       2. ein Tipp nimmt ihn weg,
+       3. danach klingt der naechste Effekt — ueber Web Audio.
+     GEGENPROBE (Fassung vor 540): kein Knopf, kein Ton, nie.
+     ================================================================= */
+  console.log("\nEFFEKT-TOENE BEI GESPERRTEM ABSPIELEN (wie iPhone)\n");
+  let fehlerWa = 0;
+  const sageWa = (gut, was, dazu) => { if (!gut) fehlerWa++;
+    console.log((gut ? "  ok   " : "  FEHL ") + was + (dazu ? "   " + dazu : "")); };
+  const pg2 = await br.newPage({ viewport: { width: 390, height: 844 } });
+  await pg2.addInitScript(() => {
+    try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {}
+    window.__getippt = false;
+    document.addEventListener("pointerdown", () => { window.__getippt = true; }, true);
+    Object.defineProperty(BaseAudioContext.prototype, "state",
+      { get() { return window.__getippt ? "running" : "suspended"; } });
+    window.__wa = 0;
+    const st = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function () {
+      if (this.buffer && this.buffer.length > 1) window.__wa++;
+      return st.apply(this, arguments);
+    };
+    HTMLMediaElement.prototype.play = function () {
+      return Promise.reject(new DOMException("blocked", "NotAllowedError"));
+    };
+  });
+  await pg2.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
+  await pg2.waitForFunction(() => window.DMA_PRUEF && window.DMA_PRUEFUNG, { timeout: 25000 });
+  await pg2.evaluate(() => window.DMA_PRUEF.effektBuehne());
+  await pg2.waitForTimeout(300);
+  const tritt = async () => {
+    await pg2.evaluate(() => window.DMA_PRUEFUNG.wirkung("tritt", "Bea", "Cem", {}));
+    await pg2.waitForTimeout(1800);
+    return pg2.evaluate(() => ({ wa: window.__wa, knopf: Boolean(document.querySelector(".lc-tonhinweis")) }));
+  };
+  const vor = await tritt();
+  sageWa(vor.knopf && vor.wa === 0, "vor dem ersten Tipp: der Knopf „Tippe hier …“ steht da",
+    vor.knopf ? "Knopf da" : "kein Knopf");
+  const knopf = await pg2.$(".lc-tonhinweis");
+  if (knopf) { await knopf.click(); await pg2.waitForTimeout(300); }
+  sageWa(!(await pg2.$(".lc-tonhinweis")), "ein Tipp nimmt ihn weg");
+  const nach = await tritt();
+  sageWa(nach.wa >= 1, "danach klingt der naechste Effekt (ueber Web Audio)", nach.wa + " Ton(e)");
+  console.log(fehlerWa ? "\n" + fehlerWa + " FEHLER" : "\nalles gruen");
   await br.close(); srv.close();
+  process.exit(fehlerWa ? 1 : 0);
 })();

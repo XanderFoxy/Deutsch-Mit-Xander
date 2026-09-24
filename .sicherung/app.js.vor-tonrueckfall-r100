@@ -26667,97 +26667,6 @@
     lcGeraeuschEndung = kann;
     return kann;
   }
-  /* =================================================================
-     RUNDE 100 — DER RUECKFALL, WENN DER BROWSER NICHT SPIELEN LAESST
-     -----------------------------------------------------------------
-     XANDER (Walkie-Talkie): „Die Sounds der Profil-Effekte werden nicht
-     immer bei allen anderen gehoert."
-     Jeder Ton ist ein eigenes <audio>, und es wird erst angelegt, wenn
-     der Effekt eintrifft — also OHNE dass der Zuschauer gerade getippt
-     hat. Ein iPhone (und jeder Browser, auf dem seit dem Laden noch
-     nicht getippt wurde) lehnt das ab: play() scheitert mit
-     „NotAllowedError", und der Fehler wurde bisher still geschluckt.
-     Nicht immer, nicht bei allen — genau wie gemeldet.
-     Jetzt: scheitert play() so, spielt derselbe Ton ueber Web Audio.
-     Das braucht EINEN Tipp irgendwo auf der Seite (danach gilt es fuer
-     jeden Ton). Fehlt auch der, steht einmal ein kleiner Knopf da:
-     „Tippe hier, damit du die Effekt-Toene hoerst". Wo play() klappt,
-     aendert sich nichts. */
-  let lcWaKontext = null, lcWaHinweis = null;
-  const lcWaPuffer = {};
-  const lcWaLaufend = new Set();
-  function lcWaKontextHolen() {
-    if (lcWaKontext) return lcWaKontext;
-    const K = window.AudioContext || window.webkitAudioContext;
-    if (!K) return null;
-    try { lcWaKontext = new K(); } catch (e) { lcWaKontext = null; }
-    return lcWaKontext;
-  }
-  function lcWaEntsperren() {
-    if (lcWaKontext && lcWaKontext.state === "running") return;
-    const k = lcWaKontextHolen();
-    if (!k) return;
-    try { if (k.resume) k.resume(); } catch (e) {}
-    /* Ein stiller Ton IM Tipp — manche Safaris schalten erst damit frei. */
-    try {
-      const q = k.createBufferSource();
-      q.buffer = k.createBuffer(1, 1, 22050);
-      q.connect(k.destination);
-      q.start(0);
-    } catch (e) {}
-    if (lcWaHinweis) { lcWaHinweis.remove(); lcWaHinweis = null; }
-  }
-  ["pointerdown", "touchend", "keydown"].forEach((t) => {
-    try { document.addEventListener(t, lcWaEntsperren, { capture: true, passive: true }); } catch (e) {}
-  });
-  function lcWaHinweisZeigen() {
-    if (lcWaHinweis || !document.getElementById("livechatKarte")) return;
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "lc-tonhinweis";
-    b.textContent = "\ud83d\udd07 Tippe hier, damit du die Effekt-T\u00f6ne h\u00f6rst";
-    b.addEventListener("click", () => { lcWaEntsperren(); b.remove(); lcWaHinweis = null; });
-    document.body.appendChild(b);
-    lcWaHinweis = b;
-  }
-  function lcWaSpielen(url, laut, schleife, dauerMs) {
-    const k = lcWaKontextHolen();
-    if (!k || !url) return;
-    if (k.state !== "running") { lcWaHinweisZeigen(); return; }
-    const t0 = performance.now();
-    if (!lcWaPuffer[url]) {
-      lcWaPuffer[url] = fetch(url).then((r) => r.arrayBuffer())
-        .then((ab) => new Promise((ok, nein) => k.decodeAudioData(ab, ok, nein)));
-      lcWaPuffer[url].catch(() => { delete lcWaPuffer[url]; });
-    }
-    lcWaPuffer[url].then((puffer) => {
-      /* Kommt der Ton erst viel spaeter, passt er nicht mehr zum Bild. */
-      if (performance.now() - t0 > 1500) return;
-      const q = k.createBufferSource();
-      q.buffer = puffer;
-      q.loop = Boolean(schleife);
-      const g = k.createGain();
-      g.gain.value = laut;
-      q.connect(g);
-      g.connect(k.destination);
-      const eintrag = { q: q, g: g };
-      lcWaLaufend.add(eintrag);
-      q.onended = () => lcWaLaufend.delete(eintrag);
-      q.start(0);
-      if (dauerMs > 0) {
-        const ende = k.currentTime + dauerMs / 1000;
-        const blende = Math.min(0.5, (dauerMs / 1000) * 0.4);
-        g.gain.setValueAtTime(laut, Math.max(k.currentTime, ende - blende));
-        g.gain.linearRampToValueAtTime(0, ende);
-        q.stop(ende + 0.05);
-      }
-    }).catch(() => {});
-  }
-  function lcWaAlleStoppen() {
-    lcWaLaufend.forEach((e) => { try { e.q.stop(); } catch (x) {} });
-    lcWaLaufend.clear();
-  }
-
   /* Spielt ein Geraeusch. „wirkung" ist der Name des EFFEKTS — daraus
      kommt der Plan (Dauer und Schleife). Fehlt er, bleibt es beim
      alten Verhalten: einmal abspielen und fertig. */
@@ -26828,14 +26737,8 @@
       a.volume = SPITZE;
       const plan = LC_TON_PLAN[wirkung || name];
       a.loop = Boolean(plan && plan.schleife);
-      a.__lcWaBis = 0;
       const v = a.play();
-      if (v && v.catch) v.catch((err) => {
-        /* RUNDE 100 — nicht mehr still schlucken, siehe lcWaSpielen. */
-        if (!err || err.name !== "NotAllowedError") return;
-        const bisWa = a.__lcWaBis || (plan && plan.dauer ? Math.max(600, plan.dauer) : 0);
-        lcWaSpielen(a.src, SPITZE, a.loop, bisWa);
-      });
+      if (v && v.catch) v.catch(() => {});
       if (plan && plan.dauer) {
         /* Am Ende ueber eine halbe Sekunde leise drehen. Ein hart
            abgeschnittener Ton klingt kaputt — man hoert den Schnitt. */
@@ -28423,7 +28326,6 @@
      Tonspur mit, und der Geschenk-Jubel darunter war genau das,
      was gemeldet wurde. Angefasst wird nur, was auch laeuft. */
   function lcGeraeuscheStoppen() {
-    lcWaAlleStoppen();
     try {
       Object.keys(lcGeraeuschAblage).forEach((k) => {
         const a = lcGeraeuschAblage[k];
@@ -28515,8 +28417,6 @@
         if (!(bis > 0)) return;
         const a = lcGeraeuschAblage[name];
         if (!a) return;
-        /* Fuer den Web-Audio-Rueckfall: dieselbe Grenze. */
-        a.__lcWaBis = bis;
         if (a.__lcStop) { clearTimeout(a.__lcStop); a.__lcStop = 0; }
         if (a.__lcBlende) { clearInterval(a.__lcBlende); a.__lcBlende = 0; }
         const SPITZE = a.volume;

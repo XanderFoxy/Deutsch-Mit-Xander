@@ -32592,3 +32592,23 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   60%  { transform: scale(1.15, 1.2); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+/* RUNDE 100 — der Knopf, der die Effekt-Toene freischaltet, wenn der
+   Browser ohne Tipp nicht spielen laesst (siehe lcWaSpielen in app.js).
+   Er steht unten mittig, ueber allem, und verschwindet beim ersten Tipp. */
+.lc-tonhinweis {
+  position: fixed;
+  left: 50%;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 9000;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(20, 30, 40, 0.88);
+  color: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
