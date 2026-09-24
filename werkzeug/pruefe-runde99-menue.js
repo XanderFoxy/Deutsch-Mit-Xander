@@ -379,6 +379,50 @@ const GRUPPEN = {
   const nl = await lehrer(false);
   sage(nl.lehrer === false, "Ein normaler Nutzer hat KEIN Lehrer-Panel");
 
+  /* RUNDE 100, ZWEITER SCHRITT — „Wer ist dran – weitergeben /
+     ueberspringen · Alle stumm / Ton an · Buehne leeren". */
+  console.log("\n9  LEHRER-PANEL: DRAN, STUMM, BUEHNE\n");
+  const l2 = await pg.evaluate(async () => {
+    Backend.isOwner = () => true;
+    window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000, zuruecksetzen: true,
+      leute: { r0: { id: "r0", name: "Bea", seit: 2000 }, r1: { id: "r1", name: "Cem", seit: 2100 } } });
+    window.LiveChat.pruefHaeuptling(true);
+    window.DMA_PRUEF.neuZeichnen();
+    await new Promise((f) => setTimeout(f, 400));
+    window.LiveChat.pruefPost(() => {});
+    const ich = document.querySelector("#lcPlaetze .lc-platz-ich");
+    const worte = () => [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-wort")].map((w) => w.textContent.trim());
+    const tipp = (w) => { const b = [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-knopf")]
+      .find((x) => x.querySelector(".lc-platzmenue-wort").textContent.trim().indexOf(w) === 0); if (b) b.click(); return !!b; };
+    window.LiveChat.pruefBefehl("/raten Guten Morgen allerseits");
+    await new Promise((f) => setTimeout(f, 200));
+    const vorher = window.LiveChat.dranStand();
+    window.DMA_PRUEFUNG.platzMenue(ich); tipp("Lehrer");
+    const knopfSkip = worte().find((w) => /\u00fcberspringen/.test(w)) || "";
+    tipp(knopfSkip);
+    await new Promise((f) => setTimeout(f, 150));
+    const nachSkip = window.LiveChat.dranStand().dran;
+    window.DMA_PRUEFUNG.platzMenue(ich); tipp("Lehrer"); tipp("Dran geben an"); tipp("Alex");
+    await new Promise((f) => setTimeout(f, 150));
+    const nachGeben = window.LiveChat.dranStand().dran;
+    window.DMA_PRUEFUNG.platzMenue(ich); tipp("Lehrer"); tipp("Alle stumm");
+    const stumm = window.LiveChat.alleStummStand();
+    window.DMA_PRUEFUNG.platzMenue(ich); tipp("Lehrer"); tipp("Alle d\u00fcrfen sprechen");
+    const wiederLaut = !window.LiveChat.alleStummStand();
+    window.DMA_PRUEFUNG.platzMenue(ich); tipp("Lehrer"); tipp("B\u00fchne frei machen");
+    const zeile = window.LiveChat.pruefZeilen(1)[0] || "";
+    const vor = (window.LiveChat.lage() || {}).buehne;
+    window.LiveChat.pruefPostEmpfangen({ art: "runter", raum: (window.LiveChat.lage() || {}).raum });
+    const nach = (window.LiveChat.lage() || {}).buehne;
+    return { vorher, knopfSkip, nachSkip, nachGeben, stumm, wiederLaut, zeile, vor, nach };
+  });
+  sage(l2.knopfSkip && l2.nachSkip === l2.vorher.naechster,
+    "„… überspringen“ gibt an den Nächsten weiter", l2.vorher.dran + " → " + l2.nachSkip);
+  sage(l2.nachGeben === "Alex", "„Dran geben an …“ gibt genau dem Gewählten die Runde", l2.nachGeben);
+  sage(l2.stumm && l2.wiederLaut, "„Alle stumm“ und zurück „Alle dürfen sprechen“");
+  sage(/B\u00fchne ist frei/.test(l2.zeile), "„Bühne frei machen“ sagt es allen", l2.zeile);
+  sage(l2.vor === true && l2.nach === false, "... und wer die Nachricht bekommt, geht wirklich herunter");
+
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
   process.exit(fehler ? 1 : 0);

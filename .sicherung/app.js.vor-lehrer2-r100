@@ -30220,58 +30220,6 @@
         try { LiveChat.aufgabeBeenden(); } catch (e) {}
       });
     }
-    /* RUNDE 100, ZWEITER SCHRITT — „Wer ist dran – weitergeben /
-       ueberspringen": nur, solange eine Aufgabe mit Reihenfolge laeuft. */
-    let dran = { laeuft: false };
-    try { dran = (LiveChat.dranStand && LiveChat.dranStand()) || dran; } catch (e) {}
-    if (dran.laeuft) {
-      if (dran.naechster && dran.naechster !== dran.dran) {
-        knopf("\u23ed\ufe0f", dran.dran + " \u00fcberspringen \u2192 " + dran.naechster, () => {
-          lcPlatzMenueZu();
-          try { LiveChat.dranGeben(dran.naechster); } catch (e) {}
-        });
-      }
-      knopf("\ud83d\udc49", "Dran geben an \u2026", () => {
-        lcPlatzMenueZu();
-        const k2 = document.createElement("div");
-        k2.id = "lcPlatzMenue";
-        k2.className = "lc-platzmenue lc-lehrerpanel";
-        k2.setAttribute("role", "menu");
-        const kp = document.createElement("p");
-        kp.className = "lc-platzmenue-kopf";
-        kp.textContent = "Wer ist jetzt dran?";
-        k2.appendChild(kp);
-        (dran.namen || []).forEach((nm) => {
-          const b = document.createElement("button");
-          b.type = "button";
-          b.className = "lc-platzmenue-knopf";
-          b.setAttribute("role", "menuitem");
-          b.innerHTML = '<span class="lc-platzmenue-zeichen">' + (nm === dran.dran ? "\u25b6\ufe0f" : "\ud83d\udc64")
-            + '</span><span class="lc-platzmenue-wort"></span>';
-          b.querySelector(".lc-platzmenue-wort").textContent = nm;
-          b.addEventListener("click", (e) => {
-            e.preventDefault(); e.stopPropagation();
-            lcPlatzMenueZu();
-            try { LiveChat.dranGeben(nm); } catch (x) {}
-          });
-          k2.appendChild(b);
-        });
-        document.body.appendChild(k2);
-        lcMenueStellen(k2, platz);
-        lcMenueSchliessen(k2);
-      });
-    }
-    /* „Alle stumm / Ton an" und „Buehne leeren". */
-    let alleStumm = false;
-    try { alleStumm = Boolean(LiveChat.alleStummStand && LiveChat.alleStummStand()); } catch (e) {}
-    knopf(alleStumm ? "\ud83d\udd0a" : "\ud83d\udd07", alleStumm ? "Alle d\u00fcrfen sprechen" : "Alle stumm", () => {
-      lcPlatzMenueZu();
-      try { LiveChat.alleStumm(!alleStumm); } catch (e) {}
-    });
-    knopf("\ud83e\uddf9", "B\u00fchne frei machen", () => {
-      lcPlatzMenueZu();
-      try { LiveChat.buehneLeeren(); } catch (e) {}
-    });
     knopf("\ud83c\udfd9\ufe0f", "Stadt \u00b7 Land \u00b7 Fluss", () => {
       lcPlatzMenueZu();
       try { activateTab("view-learn"); } catch (e) {}

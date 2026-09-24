@@ -11107,14 +11107,6 @@ window.LiveChat = (function () {
        NICHT „stumm" nennen: so heisst im Rundruf schon die Meldung,
        ob jemand sein Mikrofon abgeschaltet hat. Zwei Dinge mit
        demselben Namen laufen irgendwann auseinander. */
-    /* RUNDE 100 — LEHRER-PANEL: „Buehne leeren". Der Lehrer schickt jedem
-       auf der Buehne diese Post; wer sie bekommt, geht selbst herunter —
-       genau wie beim Pac-Man entscheidet jedes Geraet fuer sich. */
-    if (n.art === "runter" && (!n.raum || n.raum === zustand.raum)) {
-      try { buehneSetzen(false); } catch (e) {}
-      systemZeile("Der Lehrer hat die Bühne frei gemacht — tipp auf einen freien Platz, wenn du wieder hinauf möchtest.");
-      return;
-    }
     if (n.art === "redeverbot") {
       stummVon[n.von] = Boolean(n.an_);
       melden();
@@ -14346,46 +14338,6 @@ window.LiveChat = (function () {
        ich ein kleines Lehrer-Panel beim Aufrufen meines eigenen Profils
        finden, was nur ich als Betreiber habe." */
     aufgabeLaeuft: function () { return Boolean(offeneAufgabe); },
-    /* RUNDE 100 — Lehrer-Panel, zweiter Schritt: „Wer ist dran –
-       weitergeben / ueberspringen", „Alle stumm / Ton an",
-       „Buehne leeren". */
-    dranStand: function () {
-      var dranJetzt = offeneAufgabe ? String(offeneAufgabe.dran || "") : "";
-      var namen = rundeNamen().map(function (p) { return p.name; })
-        .filter(function (nm) { return nm && nm !== "Puppe"; });
-      return { laeuft: Boolean(offeneAufgabe && dranJetzt), dran: dranJetzt,
-               naechster: dranJetzt ? naechsterDran(dranJetzt) : "", namen: namen };
-    },
-    dranGeben: function (name) {
-      if (!offeneAufgabe || !name) return false;
-      var ok = dranSetzen(name);
-      if (ok) anAlle("system", "\u25b6\ufe0f Jetzt ist " + name + " dran.");
-      return ok;
-    },
-    alleStummStand: function () { return Boolean(zustand.alleStumm); },
-    alleStumm: function (an) {
-      if (!zustand.haeuptling) return systemZeile("Stummschalten darf nur der Häuptling.");
-      an = an !== false;
-      zustand.alleStumm = an;
-      Object.keys(zustand.leute).forEach(function (id) {
-        if (id === PUPPE_ID) return;
-        zustand.stumm[id] = an;
-        postSenden(id, { art: "redeverbot", an_: an, raum: zustand.raum });
-      });
-      return anAlle("system", an ? "\ud83d\udd07 Alle sind stummgeschaltet — schreiben geht weiter, sprechen nicht."
-                                 : "\ud83d\udd0a Alle dürfen wieder sprechen.");
-    },
-    buehneLeeren: function () {
-      if (!zustand.haeuptling) return systemZeile("Die Bühne frei machen darf nur der Häuptling.");
-      var zahl = 0;
-      plaetzeBauen().forEach(function (pl) {
-        if (pl.leer || pl.ich || pl.id === PUPPE_ID) return;
-        postSenden(pl.id, { art: "runter", raum: zustand.raum });
-        zahl++;
-      });
-      if (!zahl) return systemZeile("Auf der Bühne sitzt außer dir niemand.");
-      return anAlle("system", "\ud83e\uddf9 Die Bühne ist frei — wer hinauf möchte, tippt auf einen freien Platz.");
-    },
     aufgabeBeenden: function () { return offeneAufgabe ? aufgabeFreiStellen("") : false; },
     schiffeLaeuft: function () { return Boolean(schiffeStand); },
     puppe: function () { return puppeUmschalten(); },
