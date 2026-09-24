@@ -33104,31 +33104,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   border-radius: 50%;
   filter: blur(1.6px);
 }
-
-/* =====================================================================
-   SCHON-PASS SPRECHBILDER — 2. FEUER (Xanders Liste vom 23.09.)
-   „der Ring selbst trägt unten/außen eine durchgehende zackige
-   Glutleiste … Ein unterbrochener Glow hinter den Zungen, Lücken
-   lassen, kein zweiter Vollkreis."
-   Das Feuer ist jetzt ein Bild im Feld (.lc-sfeuer, siehe lcFeuerSvg).
-   Deshalb sind die alten Schichten hier AUS: der pulsierende
-   Vollkreis-Schein am Bild (lcFeuerRand), die kreisende Zacken-Scheibe
-   (::after) und das Flammen-Hintergrundbild am Platz (Runde 35).
-   Gesichert in .sicherung/sprechbilder-vor-schonpass-20260924.css.
-   ===================================================================== */
-.lc-platz-spricht[data-sprechbild="feuer"] .lc-kreis {
-  animation: none !important;
-  box-shadow: none !important;
-  border-color: #9A3412 !important;
-}
-.lc-platz-spricht[data-sprechbild="feuer"] .lc-kreis::after,
-.lc-platz-spricht[data-sprechbild="feuer"] .lc-kreis::before,
-.lc-platz-spricht[data-sprechbild="feuer"]::after { display: none !important; }
-.lc-sprechfeld.lc-sfeuer { overflow: visible; }
-.lc-sprechfeld.lc-sfeuer .lc-feuer-bild {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}

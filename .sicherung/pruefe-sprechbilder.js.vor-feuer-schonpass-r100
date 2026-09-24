@@ -33,9 +33,7 @@ const pruefe = (was, gut, zusatz) => {
   console.log((gut ? "  ok   " : "  FEHL ") + was + (zusatz ? "   " + zusatz : ""));
 };
 
-/* SCHON-PASS (Xanders Liste vom 23.09.): das Feuer ist seitdem EIN
-   Bild statt Teilchen — es hat unten einen eigenen Abschnitt. */
-const TEILCHEN = ["magie", "noten", "herzen", "strom", "blasen"];
+const TEILCHEN = ["magie", "noten", "herzen", "feuer", "strom", "blasen"];
 
 (async () => {
   const srv = http.createServer((q, a) => {
@@ -136,42 +134,6 @@ const TEILCHEN = ["magie", "noten", "herzen", "strom", "blasen"];
     pruefe(art + " bleibt beim Profilbild", d.ueber <= 40,
       d.ueber + " px groesser als das Bild");
   }
-
-  console.log("\nSCHON-PASS 2 — DAS FEUER NACH XANDERS LISTE\n");
-  const fe = await pg.evaluate(() => {
-    const knopf = document.querySelector(".lc-platz");
-    knopf.dataset.sprechbild = "feuer";
-    window.DMA_PRUEFUNG.sprechFeld(knopf, "feuer");
-    const feld = knopf.querySelector(".lc-sprechfeld");
-    const svg = feld && feld.querySelector("svg.lc-feuer-bild");
-    if (!svg) return { da: false };
-    const zungen = [...svg.querySelectorAll("g[transform]")];
-    /* „Basis klebt": in allen Formen einer Zunge sind die ersten
-       Punkte (der Fuss) gleich — nur die Spitze bewegt sich. */
-    let fussFest = 0, spitzeLebt = 0;
-    zungen.forEach((g) => {
-      const an = g.querySelector("path > animate");
-      const formen = an.getAttribute("values").split(";").map((v) => v.trim().split(/[ MCZ]+/).filter(Boolean));
-      const fuss = formen.map((z) => z.slice(0, 4).join(",") + "|" + z.slice(10).join(","));
-      if (new Set(fuss).size === 1) fussFest++;
-      if (new Set(formen.map((z) => z[6] + "," + z[7])).size > 1) spitzeLebt++;
-    });
-    const glow = svg.querySelector("circle[stroke-dasharray]");
-    const funken = svg.querySelectorAll("circle:not([stroke-dasharray])").length;
-    const kreis = knopf.querySelector(".lc-kreis").getBoundingClientRect();
-    const fr = feld.getBoundingClientRect();
-    return { da: true, zungen: zungen.length, fussFest, spitzeLebt, luecken: glow ? glow.getAttribute("stroke-dasharray").split(" ").length : 0,
-      funken, teilchen: feld.querySelectorAll(".lc-teilchen").length, ueber: Math.round(fr.width - kreis.width),
-      innen: zungen.filter((g) => g.querySelectorAll("path").length === 2).length };
-  });
-  pruefe("das Feuer ist EIN Bild, keine 30 Aufkleber", fe.da && fe.teilchen === 0, fe.da ? fe.teilchen + " Teilchen" : "kein Bild");
-  pruefe("8 bis 12 Zungen", fe.zungen >= 8 && fe.zungen <= 12, fe.zungen);
-  pruefe("jede Zunge hat eine hellere Innenzacke", fe.innen === fe.zungen, fe.innen + " von " + fe.zungen);
-  pruefe("die Basis klebt — nur die Spitze bewegt sich", fe.fussFest === fe.zungen && fe.spitzeLebt === fe.zungen,
-    "Fuss fest " + fe.fussFest + ", Spitze lebt " + fe.spitzeLebt);
-  pruefe("der Glow hat Luecken, kein zweiter Vollkreis", fe.luecken >= 8, fe.luecken + " Striche/Luecken");
-  pruefe("6 bis 10 Funken", fe.funken >= 6 && fe.funken <= 10, fe.funken);
-  pruefe("Feuer bleibt beim Profilbild", fe.ueber <= 40, fe.ueber + " px groesser als das Bild");
 
   console.log("\nUND WENN DAS SPRECHEN AUFHOERT?\n");
   const weg = await pg.evaluate(() => {
