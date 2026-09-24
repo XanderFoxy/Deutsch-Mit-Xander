@@ -34015,3 +34015,25 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-pferd-zaum { fill: none; stroke: #2e1b0e; stroke-width: 1.1; stroke-linecap: round; }
 .lc-pferd-trense { fill: none; stroke: #c9ced4; stroke-width: .8; }
 .lc-pferd-zuegel { fill: none; stroke: #2e1b0e; stroke-width: .9; stroke-linecap: round; }
+
+/* =====================================================================
+   RUNDE 101 — FLUGZEUG UND ADLER VON OBEN, NEU (Walkie #168)
+   ===================================================================== */
+.lc-flieger-oben .lc-fo-rumpf    { fill: url(#lcFoR); stroke: #8fa1b8; stroke-width: 1.2; }
+.lc-flieger-oben .lc-fo-licht    { fill: #ffffff; opacity: .9; }
+.lc-flieger-oben .lc-fo-fluegel  { fill: url(#lcFoF); stroke: #8395ad; stroke-width: 1.1; stroke-linejoin: round; }
+.lc-flieger-oben .lc-fo-klappen  { fill: none; stroke: #9fb0c4; stroke-width: .8; }
+.lc-flieger-oben .lc-fo-winglet  { fill: none; stroke: #2f6fb3; stroke-width: 2.4; stroke-linecap: round; }
+.lc-flieger-oben .lc-fo-leitwerk { fill: #dfe6ef; stroke: #8395ad; stroke-width: 1; stroke-linejoin: round; }
+.lc-flieger-oben .lc-fo-triebwerk { fill: #aab6c5; stroke: #66768b; stroke-width: 1; }
+.lc-flieger-oben .lc-fo-einlass  { fill: #3a4656; }
+.lc-flieger-oben .lc-fo-seitenruder { stroke: #1f5a9e; stroke-width: 3.4; stroke-linecap: round; }
+.lc-flieger-oben .lc-fo-streifen { stroke: #2f6fb3; stroke-width: 1.2; opacity: .55; }
+.lc-flieger-oben .lc-fo-cockpit  { fill: #1c2f45; }
+.lc-greif-oben .lc-go-arm      { fill: url(#lcGoG); stroke: #22140a; stroke-width: 1; stroke-linejoin: round; }
+.lc-greif-oben .lc-go-decken   { fill: #7a5535; opacity: .85; }
+.lc-greif-oben .lc-go-kiel     { stroke: #2a190d; stroke-width: .7; fill: none; opacity: .55; }
+.lc-greif-oben .lc-go-schwinge { fill: #34200f; stroke: #140a04; stroke-width: .7; stroke-linejoin: round; }
+.lc-greif-oben .lc-go-schaft   { fill: none; stroke: #7a5836; stroke-width: .6; opacity: .75; }
+.lc-greif-oben .lc-go-nacken   { fill: none; stroke: #d8d2c4; stroke-width: 1.2; }
+.lc-greif-oben .lc-go-kopf     { fill: url(#lcGoK); stroke: #c9c2b2; stroke-width: .8; stroke-linejoin: round; }

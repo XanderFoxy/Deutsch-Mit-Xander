@@ -32180,6 +32180,9 @@
     [["\u2708\ufe0f", "Flugzeug", "flug"],
      ["\u26f5", "Segelboot", "boot"],
      ["\ud83d\udea2", "Raddampfer", "dampfer"],
+     /* RUNDE 101 — Walkie #175: der Delfin stand nur unter der Kachel
+        „Reisen" am eigenen Bild; die ist weg, also steht er hier. */
+     ["\ud83d\udc2c", "Delfin", "delfin"],
      ["\ud83d\ude82", "Dampflok", "lok"],
      ["\ud83e\udda1", "Maulwurf", "maulwurf"],
      ["\ud83c\udf00", "Tor", "portal"],
@@ -32191,6 +32194,11 @@
      /* RUNDE 85 — „ich moechte beim Reisen noch eine Fahrstuhltuer." */
      ["\ud83d\udec5", "Fahrstuhl", "fahrstuhl"],
      ["\ud83c\udfd7\ufe0f", "Kran", "kran"],
+     /* RUNDE 101 — Walkie #175: die beiden Bagger fuer die EIGENE
+        Reise gehoeren auch hierher („zusammenfallen"). Sie tragen
+        einen selbst: „:selbst" setzt unten den eigenen Namen ein. */
+     ["\ud83d\ude9c", "Schaufelradbagger", "bagger:selbst"],
+     ["\ud83d\udea7", "Bagger mit Schaufel", "schaufel:selbst"],
      ["\u2728", "Beamen", "beamen"],
      ["\ud83d\udfe2", "R\u00f6hre", "rohr"],
      ["\ud83d\ude81", "Helikopter", "heli"],
@@ -32246,6 +32254,18 @@
            „x3" an — tippte man nach dem Aufziehen aufs Pferd in dieser
            Reihe, ging „/pferd 5" ohne Zahl hinaus, und das Pferd trabte.
            Jetzt faehrt das Aufziehen bei jedem Fahrzeug mit. */
+        if (/:selbst$/.test(befehl)) {
+          /* Die Bagger heben einen Namen auf einen Platz: „/bagger
+             Ich 5" — genau wie aus dem Transport-Menue bei anderen. */
+          let ich = "";
+          try { ich = String((LiveChat.lage() || {}).ichName || "").trim(); } catch (err) {}
+          if (!ich) return;
+          const z = "/" + befehl.replace(/:selbst$/, "") + " " + ich + " " + nr;
+          lcAufzieh = 1;
+          try { LiveChat.schreiben(z); } catch (err) {}
+          lcNachDemSenden(z);
+          return;
+        }
         const zeile = "/" + befehl + " "
           + (gemalt && !ohneWeg[befehl] ? gemalt.join("-") : nr)
           + (lcAufzieh > 1 ? " x" + lcAufzieh : "");
@@ -32466,8 +32486,12 @@
          den Kran aber auf dem eigenen Bild: er hebt einen selbst auf
          den Platz, den man danach waehlt. */
       /* RUNDE 101 — Funk 79: statt nur dem Kran die ganze Transport-
-         Kachel, mit allem, was auch mit einem selbst geht. */
-      knopf("\ud83d\ude9a", "Transport", () => lcHolenMenue(platz, name, true));
+         Kachel, mit allem, was auch mit einem selbst geht.
+         RUNDE 101 — XANDER (Walkie #175): „Nein, die eigenen Reisen
+         sollen mit den anderen Reisen zusammenfallen und alles nur
+         dann aufzurufen sein, wenn man beim Halten in ein leeres Feld
+         das Reisen-Menü aufruft." Die Kachel ist deshalb hier weg;
+         Kran und beide Bagger stehen in lcAnreiseMenue. */
       /* RUNDE 100 — XANDER (Walkie-Talkie): „ein kleines Lehrer-Panel
          beim Aufrufen meines eigenen Profils … was nur ich als Betreiber
          habe" und „Stadt Land Fluss kann ich ueberhaupt nicht finden, ich
@@ -32477,6 +32501,12 @@
       if (chef) knopf("\ud83c\udf93", "Lehrer", () => lcLehrerPanel(platz));
     }
     lcSpielzeugGeordnet().forEach(([zeichen, wort, befehl, ohneNamen, unter]) => {
+      /* RUNDE 101 — Walkie #175: „die eigenen Reisen sollen mit den
+         anderen Reisen zusammenfallen und alles nur dann aufzurufen
+         sein, wenn man beim Halten in ein leeres Feld das Reisen-Menü
+         aufruft." Auf dem EIGENEN Bild steht die Kachel „Reisen"
+         deshalb nicht mehr — bei den anderen bleibt sie. */
+      if (eigen && befehl === "reisen") return;
       /* EIN UNTERMENUE STATT DREI KACHELN.
          GEWUENSCHT: „Mach bei dem Fenster zwei Versionen … kannst du
          auch drei Versionen machen, dass, wenn man ein entsprechendes
@@ -49500,18 +49530,35 @@
       ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
       + ">" + (quelle ? "" : buchstabe) + "</span>";
     if (art === "flug") {
+      /* RUNDE 101 — XANDER (Walkie #168): „Flugzeug von oben noch nicht
+         schön." Vorher: blasse, schmale Fluegel, die weit aus dem Bild
+         ragten, und Triebwerke, die neben dem Fluegel in der Luft
+         hingen. Jetzt ein Verkehrsflugzeug, wie man es von oben sieht:
+         Rumpf mit Licht und Schatten, gepfeilte Fluegel mit Knick in
+         der Hinterkante und Winglets, die Triebwerke haengen unter dem
+         Fluegel und ragen VOR die Vorderkante, hinten das Hoehenleitwerk
+         und die Seitenflosse als Strich, vorn die Cockpitscheiben. */
+      const y = (v, seite) => (46 + seite * v).toFixed(1);
+      let fluegel = "", leitwerk = "", triebwerke = "";
+      [-1, 1].forEach((sg) => {
+        fluegel += '<path class="lc-fo-fluegel" d="M128 ' + y(8, sg) + " L78 " + y(98, sg) + " L66 " + y(100, sg)
+          + " L70 " + y(96, sg) + " L88 " + y(46, sg) + " L100 " + y(9, sg) + ' Z"/>'
+          + '<path class="lc-fo-klappen" d="M72 ' + y(92, sg) + " L89 " + y(47, sg) + " L101 " + y(12, sg) + '"/>'
+          + '<path class="lc-fo-winglet" d="M78 ' + y(98, sg) + " L66 " + y(100, sg) + '"/>';
+        leitwerk += '<path class="lc-fo-leitwerk" d="M40 ' + y(7, sg) + " L20 " + y(34, sg) + " L12 " + y(35, sg) + " L20 " + y(7, sg) + ' Z"/>';
+        triebwerke += '<rect class="lc-fo-triebwerk" x="98" y="' + (46 + sg * 44 - 5).toFixed(1) + '" width="28" height="10" rx="5"/>'
+          + '<ellipse class="lc-fo-einlass" cx="125.5" cy="' + (46 + sg * 44).toFixed(1) + '" rx="1.6" ry="4"/>';
+      });
       return '<span class="lc-v-oben lc-flieger-oben"><svg class="lc-v-form" viewBox="0 0 210 92" aria-hidden="true">'
-        /* Hoehenleitwerk hinten, Fluegel gepfeilt, darunter die Triebwerke. */
-        + '<path class="lc-fo-leitwerk" d="M34 44 L14 16 L6 16 L18 44 Z M34 48 L14 76 L6 76 L18 48 Z"/>'
-        + '<path class="lc-fo-fluegel" d="M132 40 L80 -44 L66 -44 L96 40 Z"/>'
-        + '<path class="lc-fo-fluegel" d="M132 52 L80 136 L66 136 L96 52 Z"/>'
-        + '<path class="lc-fo-kante" d="M126 36 L78 -40 M126 56 L78 132"/>'
-        + '<rect class="lc-fo-triebwerk" x="112" y="7" width="26" height="9" rx="4.5"/>'
-        + '<rect class="lc-fo-triebwerk" x="112" y="76" width="26" height="9" rx="4.5"/>'
-        + '<path class="lc-fo-rumpf" d="M8 46 C8 38 16 34 28 34 L176 34 C192 34 204 40 206 46 C204 52 192 58 176 58 L28 58 C16 58 8 54 8 46 Z"/>'
-        + '<path class="lc-fo-licht" d="M20 38.5 L176 38.5 C188 38.5 197 41 201 44 L20 44 Z"/>'
-        + '<path class="lc-fo-seitenruder" d="M8 46 L36 46"/>'
-        + '<path class="lc-fo-cockpit" d="M188 41 C194 41.5 198 43.5 199.5 46 C198 48.5 194 50.5 188 51 Z"/>'
+        + '<defs><linearGradient id="lcFoR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/>'
+        + '<stop offset=".55" stop-color="#eef2f7"/><stop offset="1" stop-color="#c9d3df"/></linearGradient>'
+        + '<linearGradient id="lcFoF" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#e9eef5"/><stop offset="1" stop-color="#c3cedb"/></linearGradient></defs>'
+        + leitwerk + fluegel + triebwerke
+        + '<path class="lc-fo-rumpf" d="M6 46 C6 40 14 37 26 37 L172 36.5 C188 36.5 202 41 207 46 C202 51 188 55.5 172 55.5 L26 55 C14 55 6 52 6 46 Z"/>'
+        + '<path class="lc-fo-licht" d="M22 40 L172 39.5 C184 39.5 194 41.5 199 44 L22 44 Z"/>'
+        + '<path class="lc-fo-seitenruder" d="M8 46 L40 46"/>'
+        + '<path class="lc-fo-streifen" d="M44 46 L186 46"/>'
+        + '<path class="lc-fo-cockpit" d="M193 41.6 C198 42.4 202 44 203.6 46 C202 48 198 49.6 193 50.4 L195 46 Z"/>'
         + "</svg>" + bild("lc-v-bild lc-flieger-oben-bild") + "</span>";
     }
     if (art === "heli") {
@@ -49532,45 +49579,105 @@
         + '<span class="lc-ho-heckrotor"></span>'
         + "</span>";
     }
-    /* Der Adler von oben: weisser Kopf, weisser Schwanzfaecher, zwei
-       breite Schwingen mit gespreizten Handschwingen. Das Bild haengt
-       in den Faengen UNTER dem Koerper — von oben schaut es rundum
-       hervor. */
+    /* =============================================================
+       RUNDE 101 — DER ADLER VON OBEN, NEU
+       -------------------------------------------------------------
+       XANDER (Walkie #168): „Adler von oben noch nicht schön."
+       Vorher standen die Handschwingen wie Zinken eines Rechens
+       nebeneinander, gerade und gleich. Ein Seeadler von oben hat:
+         · breite, lange Schwingen mit gerundeter Vorderkante,
+         · SECHS gespreizte Handschwingen („Finger"), jede lang, zur
+           Spitze schmaler, rund auslaufend und nach hinten gebogen —
+           die aeusseren kuerzer,
+         · eine leicht gewellte Hinterkante (die Armschwingen),
+         · hellere Deckfedern vorn am Fluegel,
+         · den weissen Kopf mit gelbem Schnabel und den weissen,
+           gefaecherten Schwanz.
+       Das Bild haengt in den Faengen UNTER dem Koerper. */
+    /* Zweiter Anlauf (nach dem Bild der ersten Fassung): die
+       Schwingen waren kurze Klumpen, die Finger duenne Stoecke. Ein
+       Adler von oben ist vor allem FLUEGEL — die Spannweite ist gut
+       doppelt so gross wie der Koerper lang. Also: breite, lange
+       Schwingen („Scheunentor"), die Handschwingen als echte Federn
+       (breit, zur Spitze schmaler, rund, leicht nach hinten gebogen,
+       mit Luecken dazwischen), die Armschwingen als Reihe runder
+       Federenden an der Hinterkante. Der Koerper ist etwas kleiner,
+       damit das Bild darunter besser zu sehen ist. */
     let fluegel = "";
+    const f1 = (v) => v.toFixed(1);
     [-1, 1].forEach((seite) => {
-      const y = (v) => (81 + seite * v).toFixed(1);
+      /* Punkt in (x, Abstand von der Koerperachse). */
+      const P = (x, v) => f1(x) + " " + f1(81 + seite * v);
+      /* Eine Handschwinge: Ansatz (bx, bv), Winkel w (0 = gerade nach
+         aussen, positiv = nach hinten), Laenge L, Breite br. */
+      const feder = (bx, bv, w, L, br) => {
+        const r = w * Math.PI / 180;
+        const dx = -Math.sin(r), dv = Math.cos(r);     /* laengs */
+        const qx = dv, qv = -dx;                       /* quer (nach vorn) */
+        const pt = (s, q) => P(bx + dx * s * L + qx * q, bv + dv * s * L + qv * q);
+        /* Die Feder biegt sich zur Spitze leicht nach hinten. */
+        const bg = (s) => -1.6 * s * s;
+        const pq = (s, q) => P(bx + dx * s * L + qx * (q + bg(s)), bv + dv * s * L + qv * (q + bg(s)));
+        return '<path class="lc-go-schwinge" d="M' + pt(0, br / 2)
+          + " C" + pq(0.35, br * 0.6) + " " + pq(0.72, br * 0.52) + " " + pq(0.9, br * 0.36)
+          + " C" + pq(1.02, br * 0.2) + " " + pq(1.02, -br * 0.2) + " " + pq(0.9, -br * 0.34)
+          + " C" + pq(0.72, -br * 0.46) + " " + pq(0.35, -br * 0.52) + " " + pt(0, -br / 2) + ' Z"/>'
+          + '<path class="lc-go-schaft" d="M' + pt(0.1, 0) + " Q" + pq(0.5, 0.3) + " " + pq(0.9, 0) + '"/>';
+      };
       let finger = "";
-      for (let i = 0; i < 6; i++) {
-        const wurzel = 128 - i * 7, spitze = 150 - i * 11;
-        const tief = 96 + i * 3 - (i > 3 ? (i - 3) * 6 : 0);
-        finger += '<path class="lc-go-schwinge" d="M' + wurzel + " " + y(64 + i * 3) + " L" + (spitze + 3) + " " + y(tief - 2)
-          + " L" + spitze + " " + y(tief + 4) + " L" + (wurzel - 6) + " " + y(66 + i * 3) + ' Z"/>';
+      /* Sieben Handschwingen, von vorn nach hinten; die mittleren sind
+         die laengsten, die Winkel faechern auf. */
+      [[121, 74, -10, 23, 7.2], [116.4, 76, -1, 30, 8], [111.8, 77, 8, 33, 8.4],
+       [107.2, 77, 17, 33, 8.4], [102.6, 76, 26, 30, 8], [98.2, 74, 35, 26, 7.6],
+       [94.2, 71, 44, 21, 7]].forEach((f) => { finger += feder(...f); });
+      /* Armschwingen: runde Federenden an der Hinterkante, vom Hand-
+         gelenk bis zum Koerper. */
+      let hinten = "", kiel = "";
+      const n = 9, ax = 94.5, av = 71, ex = 86, ev = 12;
+      for (let i = 1; i <= n; i++) {
+        const k0 = (i - 1) / n, k1 = i / n;
+        const x0 = ax + (ex - ax) * k0, v0 = av + (ev - av) * k0;
+        const x1 = ax + (ex - ax) * k1, v1 = av + (ev - av) * k1;
+        hinten += " Q" + P((x0 + x1) / 2 - 4.2, (v0 + v1) / 2) + " " + P(x1, v1);
+        if (i < n) kiel += "M" + P(x1 + 1, v1) + " L" + P(x1 + 9, v1 + 1.5) + " ";
       }
       fluegel += '<g class="lc-go-fluegel ' + (seite < 0 ? "lc-go-links" : "lc-go-rechts") + '">'
         + finger
-        /* Armfittich: breite Flaeche von der Schulter bis zur Hand, die
-           Hinterkante mit den Armschwingen gezackt. */
-        + '<path class="lc-go-arm" d="M126 ' + y(10) + " C132 " + y(30) + " 134 " + y(52) + " 128 " + y(70)
-        + " L98 " + y(74) + " L94 " + y(66) + " L88 " + y(70) + " L84 " + y(62) + " L78 " + y(64) + " L76 " + y(52)
-        + " C78 " + y(36) + " 84 " + y(20) + " 88 " + y(10) + ' Z"/>'
-        + '<path class="lc-go-decken" d="M122 ' + y(16) + " C126 " + y(30) + " 126 " + y(46) + " 120 " + y(58)
-        + " L96 " + y(58) + " C92 " + y(44) + " 92 " + y(28) + " 94 " + y(16) + ' Z"/>'
-        + '<path class="lc-go-kiel" d="M112 ' + y(20) + " L108 " + y(56) + " M102 " + y(20) + " L100 " + y(56) + '"/>'
+        /* Arm und Hand: runde Vorderkante bis zum Handgelenk, dann die
+           Hand, an deren Ende die Handschwingen herauskommen. */
+        + '<path class="lc-go-arm" d="M' + P(112, 8)
+        + " C" + P(121, 16) + " " + P(127, 32) + " " + P(127.5, 48)
+        + " C" + P(127.5, 58) + " " + P(125.5, 69) + " " + P(122.5, 78)
+        + " Q" + P(109, 82) + " " + P(ax, av)
+        + hinten + " L" + P(84, 8) + ' Z"/>'
+        /* Die kleinen Deckfedern vorn: heller, goldbraun. */
+        + '<path class="lc-go-decken" d="M' + P(112, 11) + " C" + P(119.5, 18) + " " + P(124.5, 32) + " " + P(125, 47)
+        + " C" + P(125, 55) + " " + P(123.5, 62) + " " + P(121.5, 68)
+        + " Q" + P(114, 64) + " " + P(108, 58) + " Q" + P(104, 40) + " " + P(104, 12) + ' Z"/>'
+        + '<path class="lc-go-kiel" d="' + kiel + '"/>'
         + "</g>";
     });
     return '<span class="lc-v-oben lc-greif-oben">'
       + bild("lc-v-bild lc-greif-oben-bild")
       + '<svg class="lc-v-form" viewBox="0 0 205 162" aria-hidden="true">'
+      + '<defs><linearGradient id="lcGoG" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#5e3d23"/>'
+      + '<stop offset="1" stop-color="#3a2413"/></linearGradient>'
+      + '<radialGradient id="lcGoK" cx=".62" cy=".4" r=".7"><stop offset="0" stop-color="#ffffff"/>'
+      + '<stop offset="1" stop-color="#e6e1d6"/></radialGradient></defs>'
+      + '<g transform="translate(102.5 81) scale(.84) translate(-102.5 -81)">'
       + '<path class="lc-go-krallen" d="M92 70 l-4 -5 M100 70 l2 -6 M92 92 l-4 5 M100 92 l2 6"/>'
       + fluegel
-      /* Schwanzfaecher, Rumpf, Kopf mit gelbem Schnabel. */
-      + '<path class="lc-go-schwanz" d="M72 72 L40 62 C34 72 34 90 40 100 L72 90 Z"/>'
-      + '<path class="lc-go-schwanzlinie" d="M70 76 L42 70 M70 81 L38 81 M70 86 L42 92"/>'
-      + '<ellipse class="lc-go-rumpf" cx="104" cy="81" rx="36" ry="15"/>'
-      + '<path class="lc-go-rueckenlicht" d="M80 77 C94 71 116 71 128 76 C116 75 94 75 80 79 Z"/>'
-      + '<path class="lc-go-kopf" d="M134 81 C134 72 142 69 150 70 C158 71 162 76 162 81 C162 86 158 91 150 92 C142 93 134 90 134 81 Z"/>'
-      + '<path class="lc-go-schnabel" d="M161 77.5 C166 78 170 80 171 81 C170 82 166 84 161 84.5 Z"/>'
-      + "</svg></span>";
+      /* Schwanz: ein weisser Faecher, das Ende aus runden Federn. */
+      + '<path class="lc-go-schwanz" d="M78 72 L48 62 Q44 64 42 68 Q39 70 39 74 Q36 77 37.5 81 Q36 85 39 88 Q39 92 42 94 Q44 98 48 100 L78 90 Z"/>'
+      + '<path class="lc-go-schwanzlinie" d="M76 75 L46 66 M76 78 L41 74 M76 81 L39 81 M76 84 L41 88 M76 87 L46 96"/>'
+      + '<path class="lc-go-rumpf" d="M72 81 C72 72 86 67 104 67 C124 67 136 72 138 81 C136 90 124 95 104 95 C86 95 72 90 72 81 Z"/>'
+      + '<path class="lc-go-rueckenlicht" d="M82 78 C95 72.5 117 72.5 130 77 C117 76 95 76 82 80 Z"/>'
+      /* Weisser Kopf, der weich in den Nacken uebergeht: hinten keine
+         Kante, sondern ein gezackter Federrand. */
+      + '<path class="lc-go-kopf" d="M129 81 Q129.5 77 132 75.5 Q133 73 135.5 72.6 Q137.5 70.4 140.5 70.4 C144 69 148 68.8 152 69.2'
+      + ' C159 70 164 75 164 81 C164 87 159 92 152 92.8 C148 93.2 144 93 140.5 91.6 Q137.5 91.6 135.5 89.4 Q133 89 132 86.5 Q129.5 85 129 81 Z"/>'
+      + '<path class="lc-go-schnabel" d="M163 77 C168 77.6 172 79.6 173.5 81 C172 82.4 168 84.4 163 85 Z"/>'
+      + "</g></svg></span>";
   }
 
   function lcReiseWaagerecht(el, start, ende, dauer, hin, art, kette) {
@@ -55564,7 +55671,7 @@
       requestAnimationFrame(lauf);
       setTimeout(runter, LC_ZF.weg);
       /* Aufraeumen: sobald der Platz neu gezeichnet ist (er ist dann
-         leer) oder spaetestens nach 5 s, kommt das Bild zurueck — sonst
+         leer) oder spaetestens 0,6 s nach dem Ende kommt das Bild zurueck — sonst
          bliebe es verschwunden, falls der Getroffene gar nicht mehr da
          ist, um von der Buehne zu gehen. */
       const zurueck = () => {
@@ -55577,7 +55684,10 @@
       const warte = setInterval(() => {
         if (!platz.isConnected || lcNameVomPlatz(platz) !== opferName) { clearInterval(warte); zurueck(); }
       }, 200);
-      setTimeout(() => { clearInterval(warte); zurueck(); }, LC_ZF.dauer + 5000);
+      /* Sonde runde92-betrieb: wer getroffen ist, aber NICHT von der
+         Buehne geht (etwa weil sein Geraet schlaeft), darf nicht als
+         leerer Kreis sitzen bleiben — nach 7,8 s ist das Bild wieder da. */
+      setTimeout(() => { clearInterval(warte); zurueck(); }, LC_ZF.dauer + 600);
     }, LC_ZF.dauer, "zielfernrohr");
   }
 
