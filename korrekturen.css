@@ -34162,3 +34162,15 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 
 /* RUNDE 101 — Funk 91: Kopfbedeckungen feiner gezeichnet. */
 .lc-kleid-kopf path, .lc-kleid-kopf rect, .lc-kleid-kopf circle { stroke-width: 1.4px; }
+
+/* =====================================================================
+   RUNDE 101 — XANDER (24.09. abends): „Ich hoffe, die Labels mit den
+   Worten sind Extralabels von dir angelegt, weil die verdecken das
+   Gesicht." Ja, es sind eigene Elemente — neun Comic-Woerter, die auf
+   das Bild geschrieben wurden (WUMM, TOCK, PLOPP, BONK, KNALL ×2,
+   KLATSCH, KLAPS, AUA, UPS!). Sie sind weg; der TON bleibt, der sagt
+   dasselbe, ohne das Gesicht zuzudecken.
+   ===================================================================== */
+.lc-tritt-wumms, .lc-bumerang-treffer, .lc-pfeil-platsch, .lc-zhammer-knall,
+.lc-peitsche-knall, .lc-ohrfeige-klatsch, .lc-klaps-wort, .lc-zwille-aua,
+.lc-entbl-wort { display: none !important; }
