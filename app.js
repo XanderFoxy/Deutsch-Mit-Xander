@@ -35513,10 +35513,15 @@
          die Schellen darueber liegen und er dahinter verschwindet. */
       schicht.insertAdjacentHTML("beforeend",
         '<span class="lc-schelle-buegel"><svg viewBox="0 0 120 50">'
-        + '<path d="M8 34 C8 6 112 6 112 34" fill="none" stroke="#c9a638"'
+        /* FUNK 75 — XANDER: „bei dem Wecker fehlt noch, dass der Hügel
+           oben etwas kreisrunder ist." Der Buegel war eine flache Kurve
+           (Scheitel bei y = 13); jetzt ein runder Bogen bis y = 0, und
+           der Kloeppel haengt an einem kurzen Steg darunter. */
+        + '<path d="M8 34 A52 34 0 0 1 112 34" fill="none" stroke="#c9a638"'
         + ' stroke-width="7" stroke-linecap="round"/>'
-        + '<path d="M8 34 C8 9 112 9 112 34" fill="none" stroke="#f3d46e"'
+        + '<path d="M8.6 34 A51.4 31.4 0 0 1 111.4 34" fill="none" stroke="#f3d46e"'
         + ' stroke-width="3" stroke-linecap="round"/>'
+        + '<rect x="58.4" y="1" width="3.2" height="12" rx="1.4" fill="#a98a22"/>'
         /* XANDER: „bei den Wecker musst du diesen Kloeppel da zwischen
            den zwei schallkuppeln hin und her schlaegt."
            Vorher war das Haemmerchen ein 20 Einheiten kurzer Stift, der

@@ -33766,3 +33766,7 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   .lc-kratz-hand, .lc-kreis.lc-gekratzt { animation: none; }
   .lc-kratz-spur path { animation: none; stroke-dashoffset: 0; }
 }
+
+/* FUNK 75 — der runde Buegel ragt ueber die viewBox hinaus nicht, aber
+   seine Strichbreite: nicht abschneiden. */
+.lc-schelle-buegel svg { overflow: visible; }
