@@ -25012,41 +25012,17 @@
       const ader = "M0 -.3 Q" + f(zufall(-0.6, 0.6)) + " " + f(-L * 0.45) + " 0 " + f(-L * 0.8)
         + " M0 " + f(-L * 0.3) + " Q" + f(-B * 0.18) + " " + f(-L * 0.45) + " " + f(-B * 0.3) + " " + f(-L * 0.62)
         + " M0 " + f(-L * 0.36) + " Q" + f(B * 0.18) + " " + f(-L * 0.5) + " " + f(B * 0.3) + " " + f(-L * 0.66);
-      /* FUNK 94 — XANDER: „… am sprechbild der Blume 2 denn dort ist es
-         so dass die Blätter kreisrund aufgehen nacheinander dort soll es
-         mehr wie ein realistisches aufblühen und Aufplatzen der Blüte
-         sein."
-         Vorher wuchs jedes Blatt nur in seiner Richtung (Skalierung),
-         eines nach dem anderen im Kreis. Eine echte Bluete liegt als
-         KNOSPE eingerollt — die Blaetter seitlich an den Ring gelegt,
-         klein und schmal — und PLATZT dann auf: jedes Blatt klappt um
-         seinen Ansatz nach aussen (Knick), schiesst dabei ueber seine
-         Groesse hinaus und setzt sich. Aussen- und Innenkranz gehen
-         leicht versetzt auf, mit etwas Zufall, nicht reihum. */
-      const zu = "0.34 0.2", auf = "1 1", dreh = f(zufall(-6, 6));
-      const knick = f((i % 2 ? -1 : 1) * zufall(64, 80));
+      const zu = "0.3 0.12", auf = "1 1", dreh = f(zufall(-6, 6));
       blaetter += '<g transform="translate(' + f(bx) + " " + f(by) + ") rotate(" + f(w + 90) + ')">'
-        + '<g class="lc-bl-knick" data-kranz="' + (i % 2) + '" transform="rotate(' + knick + ')">'
-        + '<animateTransform class="lc-bl-auf" attributeName="transform" type="rotate" dur=".55s" begin="indefinite" fill="freeze" values="' + knick + ";" + f(-knick * 0.08) + ';0" keyTimes="0;.62;1" calcMode="spline" keySplines=".15 .7 .35 1;.4 0 .6 1"/>'
-        + '<animateTransform class="lc-bl-zu" attributeName="transform" type="rotate" dur=".4s" begin="indefinite" fill="freeze" values="0;' + knick + '" calcMode="spline" keySplines=".4 0 .7 1"/>'
-        + '<g class="lc-bl-blatt" transform="scale(' + zu + ')">'
-        + '<animateTransform class="lc-bl-auf" attributeName="transform" type="scale" dur=".55s" begin="indefinite" fill="freeze" values="' + zu + ";1.15 1.12;.97 .98;" + auf + '" keyTimes="0;.45;.75;1" calcMode="spline" keySplines=".15 .75 .35 1;.4 0 .6 1;.4 0 .6 1"/>'
-        + '<animateTransform class="lc-bl-zu" attributeName="transform" type="scale" dur=".4s" begin="indefinite" fill="freeze" values="' + auf + ";" + zu + '" calcMode="spline" keySplines=".4 0 .7 1"/>'
-        + '<path d="' + d + '" transform="rotate(' + dreh + ')" fill="url(#lcBb' + n + ')" stroke="#D38C9F" stroke-opacity=".35" stroke-width=".3"/>'
-        + '<path d="' + ader + '" transform="rotate(' + dreh + ')" fill="none" stroke="#C07A8E" stroke-opacity=".4" stroke-width=".22" stroke-linecap="round"/>'
-        + "</g></g></g>";
-    }
-    /* Beim Aufplatzen stiebt ein Hauch Bluetenstaub nach aussen. */
-    let pollen = "";
-    for (let k = 0; k < 14; k++) {
-      const wp = zufall(0, 360), r0 = R + zufall(-1, 2), weit = zufall(4, 8);
-      pollen += '<g transform="rotate(' + f(wp) + ' 50 50)"><circle cx="50" cy="' + f(50 - r0) + '" r="' + f(zufall(0.45, 0.8)) + '" fill="#F2C94C" opacity="0">'
-        + '<animate class="lc-bl-pollen" attributeName="cy" dur=".8s" begin="indefinite" fill="freeze" values="' + f(50 - r0) + ";" + f(50 - r0 - weit) + '" calcMode="spline" keySplines=".2 .7 .4 1"/>'
-        + '<animate class="lc-bl-pollen" attributeName="opacity" dur=".8s" begin="indefinite" fill="freeze" values="0;.95;0" keyTimes="0;.25;1"/>'
-        + "</circle></g>";
+        + '<g class="lc-bl-blatt" transform="scale(' + zu + ') rotate(' + dreh + ')">'
+        + '<animateTransform class="lc-bl-auf" attributeName="transform" type="scale" dur=".6s" begin="indefinite" fill="freeze" values="' + zu + ";1.06 1.04;" + auf + '" calcMode="spline" keySplines=".3 0 .4 1;.4 0 .6 1"/>'
+        + '<animateTransform class="lc-bl-zu" attributeName="transform" type="scale" dur=".34s" begin="indefinite" fill="freeze" values="' + auf + ";" + zu + '" calcMode="spline" keySplines=".4 0 .7 1"/>'
+        + '<path d="' + d + '" fill="url(#lcBb' + n + ')" stroke="#D38C9F" stroke-opacity=".35" stroke-width=".3"/>'
+        + '<path d="' + ader + '" fill="none" stroke="#C07A8E" stroke-opacity=".4" stroke-width=".22" stroke-linecap="round"/>'
+        + "</g></g>";
     }
     return '<svg class="lc-bluete-bild" viewBox="0 0 100 100" aria-hidden="true"><defs>' + defs + "</defs>"
-      + blaetter + kelch + pollen + "</svg>";
+      + blaetter + kelch + "</svg>";
   }
   /* Blatt fuer Blatt auf bzw. zu — „wie Zeitraffer", 0,11 s Versatz.
      Zu geht es in umgekehrter Reihenfolge. */
@@ -25060,29 +25036,7 @@
        sich in 0,3 s wie eine Bewegung, mit einem Hauch Welle); beim
        Zugehen bleibt es Blatt fuer Blatt. */
     const schritt = klasse === "lc-bl-auf" ? 25 : 110;
-    const los = (a) => { try { a.beginElement(); } catch (e) {} };
-    if (klasse === "lc-bl-auf") {
-      /* FUNK 94 — Aufplatzen statt reihum: je Blatt starten Knick und
-         Groesse GEMEINSAM; der aeussere Kranz sofort, der innere 95 ms
-         spaeter, jedes Blatt mit etwas eigenem Zufall (bis 45 ms). Kurz
-         nach dem Aufplatzen stiebt der Bluetenstaub. */
-      const knicke = [...feld.querySelectorAll(".lc-bl-knick")];
-      feld._lcBlZeiten = knicke.map((kn, i) => setTimeout(() => {
-        kn.querySelectorAll("animateTransform.lc-bl-auf").forEach(los);
-      }, (kn.dataset.kranz === "1" ? 95 : 0) + ((i * 37) % 46)));
-      feld._lcBlZeiten.push(setTimeout(() => feld.querySelectorAll("animate.lc-bl-pollen").forEach(los), 230));
-      if (knicke.length) return;
-    } else {
-      const knicke = [...feld.querySelectorAll(".lc-bl-knick")];
-      if (knicke.length) {
-        if (rueckwaerts) knicke.reverse();
-        feld._lcBlZeiten = knicke.map((kn, i) => setTimeout(() => {
-          kn.querySelectorAll("animateTransform." + klasse).forEach(los);
-        }, i * schritt));
-        return;
-      }
-    }
-    feld._lcBlZeiten = alle.map((a, i) => setTimeout(() => los(a), i * schritt));
+    feld._lcBlZeiten = alle.map((a, i) => setTimeout(() => { try { a.beginElement(); } catch (e) {} }, i * schritt));
   }
   function lcBlueteAuf(feld) { feld.dataset.zu = ""; lcBlueteStoss(feld, "lc-bl-auf", false); }
   function lcBlueteZu(feld) { if (feld.dataset.zu === "1") return; feld.dataset.zu = "1"; lcBlueteStoss(feld, "lc-bl-zu", true); }

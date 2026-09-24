@@ -34243,38 +34243,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .lc-delfin-see-atem, .lc-delfin-see-welle, .lc-delfin .lc-delfin-brust, .lc-delfin-perlen i { animation: none; }
 }
-
-/* WALKIE #208 — XANDER: „Seitenansicht noch nicht schön".
-   GEFUNDEN (Nahaufnahme bei 2100 ms, im Abschlag): beide Fluegel fallen
-   zu einem dunklen, haarigen Knaeuel zusammen — jede der rund vierzig
-   Federn hatte eine fast schwarze Kontur und einen dunklen Kiel. Beim
-   echten Weisskopfseeadler sind die Federraender HELLER als die Feder
-   (goldbraune Saeume), deshalb liest man dort Federreihen statt
-   Striche. Also: helle, feine Saeume auf den Decken, dunkle Schwingen
-   mit nur leicht hellerem Rand, Kiele kaum sichtbar, und der ferne
-   Fluegel als ruhige, dunkle Silhouette ohne jede Kontur.
-   Mit „.lc-greif" davor — sonst gewinnt die alte Regel
-   „.lc-greif-fluegel path" (Spezifitaet 0,1,1 gegen 0,1,0). */
-.lc-greif .lc-greif-rumpf { stroke-width: .9; }
-.lc-greif .lc-greif-fluegel .lc-greif-arm { fill: #6b4f33; stroke: #4a3520; stroke-width: .8; }
-.lc-greif .lc-greif-fluegel .lc-greif-schwinge { fill: #362413; stroke: #5b4128; stroke-width: .55; }
-.lc-greif .lc-greif-fluegel .lc-greif-armschwinge { fill: #432e1a; stroke: #6d4f31; stroke-width: .55; }
-.lc-greif .lc-greif-fluegel .lc-greif-handdecke { fill: #573d24; stroke: #8f6d46; stroke-width: .55; }
-.lc-greif .lc-greif-fluegel .lc-greif-grossdecke { fill: #61452a; stroke: #9b7850; stroke-width: .55; }
-.lc-greif .lc-greif-fluegel .lc-greif-mitteldecke { fill: #6c4e31; stroke: #a8855b; stroke-width: .5; }
-.lc-greif .lc-greif-fluegel .lc-greif-alula { fill: #4d361f; stroke: #87663f; stroke-width: .5; }
-.lc-greif .lc-greif-fluegel .lc-greif-kleindecke { stroke: #b08d62; stroke-width: .6; opacity: .8; }
-.lc-greif .lc-greif-kiel { opacity: .18; }
-.lc-greif .lc-greif-fluegel.lc-greif-fluegel-fern path { stroke: none; }
-.lc-greif .lc-greif-fluegel.lc-greif-fluegel-fern .lc-greif-schwinge,
-.lc-greif .lc-greif-fluegel.lc-greif-fluegel-fern .lc-greif-armschwinge { fill: #2c1d0f; }
-.lc-greif .lc-greif-fluegel.lc-greif-fluegel-fern .lc-greif-arm,
-.lc-greif .lc-greif-fluegel.lc-greif-fluegel-fern .lc-greif-handdecke,
-.lc-greif .lc-greif-fluegel.lc-greif-fluegel-fern .lc-greif-grossdecke,
-.lc-greif .lc-greif-fluegel.lc-greif-fluegel-fern .lc-greif-mitteldecke,
-.lc-greif .lc-greif-fluegel.lc-greif-fluegel-fern .lc-greif-alula { fill: #3b2815; }
-.lc-greif .lc-greif-fluegel-fern .lc-greif-kiel, .lc-greif .lc-greif-fluegel-fern .lc-greif-kleindecke { display: none; }
-.lc-greif .lc-greif-steuer { stroke: #b3a994; stroke-width: .7; }
-/* Die Brustfedern waren dunkle Schraegstriche — sie lasen sich wie
-   Kratzer. Jetzt helle, feine Saeume wie auf den Fluegeln. */
-.lc-greif .lc-greif-feder { stroke: #9a7a52; stroke-width: .8; opacity: .55; }

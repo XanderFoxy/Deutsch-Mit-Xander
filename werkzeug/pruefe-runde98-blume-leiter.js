@@ -135,9 +135,8 @@ const sage = (gut, was, zusatz) => {
   const stufig = blume && blume.spur
     && blume.spur[0] < blume.spur[blume.spur.length - 1]
     && new Set(blume.spur).size >= 4;
-  sage(blume && blume.versatz <= Math.max(3, blume.kreisGross * 0.06),
-    "die Bluete geht aus der Mitte auf – kein Verrutschen waehrend des Oeffnens",
-    blume ? "groesster Versatz des Schwerpunkts " + blume.versatz + " px" : "-");
+  /* FUNK 94: die Schwerpunkt-Regel aus Fassung 612 ist mit der
+     Aenderung zurueckgenommen — Xander meinte „Blüte 2" (Sprechbild). */
   console.log("  offene Blaetter im Verlauf: " + ((blume && blume.spur) || []).join(" ") + "\n");
   sage(stufig, "sie gehen NACHEINANDER auf, nicht alle auf einen Schlag",
     blume ? new Set(blume.spur).size + " verschiedene Staende gemessen" : "-");

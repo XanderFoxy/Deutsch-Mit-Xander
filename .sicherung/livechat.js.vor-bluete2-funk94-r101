@@ -1405,7 +1405,7 @@ window.LiveChat = (function () {
     welle2:     "Schallwellen 2 — Schallringe laufen weit nach außen",
     blut2:      "Blut 2 — es quillt am Rand hervor und tropft",
     eis2:       "Eis 2 — Zapfen wachsen, Eisblumen ziehen herein",
-    bluete2:    "Blüte 2 — die Knospe platzt auf, zwölf Blätter blühen auf und schließen sich wieder",
+    bluete2:    "Blüte 2 — zwölf Blätter gehen Blatt für Blatt auf und zu",
     magie2:     "Magie 2 — ein Sternenstrudel um den Kreis",
     funkeln2:   "Funkeln 2 — dichte Lichter glitzern am Rand",
     regenbogen2:"Regenbogen 2 — ein Farbband dreht sich um den Kreis",
