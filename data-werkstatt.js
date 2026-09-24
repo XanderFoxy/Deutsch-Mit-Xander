@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 546: Kran einheitlich über allen Feldern, Haken bleibt am Bild (auch Angel)",
+  stand: "Fassung 547: Kran-/Angel-Menü wie die Bühne, kein Überstand am Rand",
 
   inArbeit: [
-    { seit: "2026-09-24T01:44",
-      text: "Kran-Menü: Plätze wie auf der Bühne untereinander, Android ohne Verschiebung" },
-    { seit: "2026-09-24T01:44",
+    { seit: "2026-09-24T01:52",
       text: "Leiter: Namen frei, sobald man den Platz verlässt; Lok-Strecke immer rund schließen" },
-    { seit: "2026-09-24T01:44",
+    { seit: "2026-09-24T01:52",
       text: "Angel: senkrecht heben, Schnur-Physik" },
+    { seit: "2026-09-24T01:52",
+      text: "Probe runde29 (Schneekugel/Platz) seit mind. Fassung 535 rot — prüfen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T01:44",
-      text: "Kran: Turm außen neben der Sitzreihe (Seite nach der gehobenen Person), Ausleger immer gleich hoch über der obersten Reihe" },
-    { seit: "2026-09-24T01:44",
-      text: "Kran und Angel: Haken hing nach dem Chat-Rutschen neben dem Bild (alt bis 103 px, neu ≤17 px)" },
-    { seit: "2026-09-24T01:44",
-      text: "Kran: Katze läuft nach der Uhr des Bildes (alt bis 28 px Vorsprung, neu 6 px)" },
+    { seit: "2026-09-24T01:52",
+      text: "Platzwahl für Kran und Angel als Abbild der Bühne (4×2, Nummer + Name, eigener und Personenplatz grau)" },
+    { seit: "2026-09-24T01:52",
+      text: "Alle Platzmenüs: ragten am Handy rechts bis 12 px über den Rand (gemessen während der Aufklapp-Animation) — jetzt ganz auf dem Bildschirm" },
+    { seit: "2026-09-24T01:52",
+      text: "Im Kran-Menü steht kein „Angeln“ mehr" },
   ],
 };

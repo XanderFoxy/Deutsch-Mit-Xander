@@ -423,56 +423,6 @@ const GRUPPEN = {
   sage(/B\u00fchne ist frei/.test(l2.zeile), "„Bühne frei machen“ sagt es allen", l2.zeile);
   sage(l2.vor === true && l2.nach === false, "... und wer die Nachricht bekommt, geht wirklich herunter");
 
-  console.log("\n10  KRAN-MENUE: PLAETZE WIE AUF DER BUEHNE, NICHTS RAGT UEBER DEN RAND\n");
-  /* XANDER (Walkie #85): „Im Menü möchte ich die Auswahl Plätze logisch
-     untereinander so wie in der Bühnen Ansicht sortiert haben auch beim
-     Android ohne Verschiebung." Gemessen vorher (390 px): Menue bei
-     72–402 px, also 12 px ueber dem Rand; Plaetze in Sechserreihen. */
-  for (const [breite, hoehe, wer] of [[390, 844, "Cem"], [412, 915, "Emil"]]) {
-    const pk = await br.newPage({ viewport: { width: breite, height: hoehe }, isMobile: true, hasTouch: true });
-    await pk.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
-    await pk.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
-    await pk.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF, { timeout: 25000 });
-    const km = await pk.evaluate(async (wer) => {
-      window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000, zuruecksetzen: true,
-        leute: { p0: { id: "p0", name: "Bea", seit: 2000 }, p1: { id: "p1", name: "Cem", seit: 2100 },
-                 p2: { id: "p2", name: "Dana", seit: 2200 }, p3: { id: "p3", name: "Emil", seit: 2300 } } });
-      document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
-      let e = document.getElementById("livechatArea");
-      while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
-      window.DMA_PRUEF.neuZeichnen();
-      await new Promise((f) => setTimeout(f, 500));
-      const plaetze = [...document.querySelectorAll("#lcPlaetze .lc-platz")];
-      const platz = plaetze.find((p) => p.textContent.indexOf(wer) >= 0);
-      window.DMA_PRUEFUNG.platzMenue(platz);
-      await new Promise((f) => setTimeout(f, 200));
-      const finde = (re) => [...document.querySelectorAll("#lcPlatzMenue button")].find((b) => re.test(b.textContent));
-      if (!finde(/Kran/) && finde(/Holen/)) { finde(/Holen/).click(); await new Promise((f) => setTimeout(f, 250)); }
-      if (!finde(/Kran/)) return { fehlt: true };
-      finde(/Kran/).click();
-      await new Promise((f) => setTimeout(f, 400));
-      const m = document.getElementById("lcPlatzMenue"), r = m.getBoundingClientRect();
-      const zellen = [...m.querySelectorAll(".lc-hebenwahl-platz")];
-      const oben0 = plaetze[0].offsetTop;
-      const buehneSpalten = plaetze.filter((p) => Math.abs(p.offsetTop - oben0) < 4).length;
-      const z0 = zellen.length ? zellen[0].getBoundingClientRect().top : 0;
-      const menueSpalten = zellen.filter((z) => Math.abs(z.getBoundingClientRect().top - z0) < 4).length;
-      const nummern = zellen.map((z) => (z.querySelector(".lc-hebenwahl-nr") || {}).textContent).join(",");
-      const buehneNr = plaetze.map((p) => p.dataset.lcPlatz).join(",");
-      return { links: Math.round(r.left), rechts: Math.round(r.right), breite: window.innerWidth,
-               menueSpalten, buehneSpalten, nummern, buehneNr,
-               angeln: Boolean([...m.querySelectorAll("button")].find((b) => /Angeln/.test(b.textContent))) };
-    }, wer);
-    await pk.close();
-    if (km.fehlt) { sage(false, breite + " px: Kran-Menue geht auf"); continue; }
-    sage(km.links >= 8 && km.rechts <= km.breite - 8, breite + " px: das Menue bleibt ganz auf dem Bildschirm",
-      km.links + "–" + km.rechts + " von " + km.breite);
-    sage(km.menueSpalten === km.buehneSpalten && km.nummern === km.buehneNr,
-      breite + " px: Plaetze in derselben Anordnung wie auf der Buehne",
-      km.menueSpalten + " Spalten (Buehne " + km.buehneSpalten + "), " + km.nummern);
-    sage(!km.angeln, breite + " px: im Kran-Menue steht kein „Angeln“");
-  }
-
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles gruen"));
   process.exit(fehler ? 1 : 0);

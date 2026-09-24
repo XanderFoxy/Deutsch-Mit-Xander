@@ -279,9 +279,6 @@ const pruefe = (was, gut, zusatz) => {
     const m = document.getElementById("lcPlatzMenue");
     if (!m) return { keinMenue: true };
     const woerter = [...m.querySelectorAll(".lc-platzmenue-wort")].map((x) => x.textContent);
-    /* RUNDE 100 — die Plaetze stehen jetzt als Abbild der Buehne da
-       (.lc-hebenwahl), mit Nummer und Name statt „Platz N". */
-    const wahlbar = m.querySelectorAll(".lc-hebenwahl-platz:not(:disabled)").length;
     /* „Zu mir" antippen und nachsehen, WAS dabei hinausgeht. */
     /* ALLE Pakete einsammeln, nicht nur das erste: beim Umsetzen gehen
        zwei hinaus — die neue Sitzordnung und die Zeile mit der
@@ -297,7 +294,7 @@ const pruefe = (was, gut, zusatz) => {
     await new Promise((f) => setTimeout(f, 160));
     const mitWirkung = alle.filter((p) => p && /heber|lasso/.test(String(p.wirkung || "")))[0]
                     || alle.filter((p) => /hebt|zieht/.test(String(p.text || "")))[0] || null;
-    return { woerter: woerter, wahlbar: wahlbar, kopf: (m.querySelector(".lc-platzmenue-kopf") || {}).textContent || "",
+    return { woerter: woerter, kopf: (m.querySelector(".lc-platzmenue-kopf") || {}).textContent || "",
              paket: mitWirkung ? { wirkung: mitWirkung.wirkung || "", text: String(mitWirkung.text || "") } : null,
              wieviele: alle.length,
              zu: !document.getElementById("lcPlatzMenue") };
@@ -309,7 +306,8 @@ const pruefe = (was, gut, zusatz) => {
     Array.isArray(menue.woerter) && /Angeln/i.test(menue.woerter[0] || ""),
     (menue.woerter || []).slice(0, 4).join(", "));
   pruefe("es stehen auch die einzelnen Plaetze zur Wahl",
-    (menue.wahlbar || 0) >= 2, (menue.wahlbar || 0) + " Plaetze");
+    (menue.woerter || []).filter((w) => /^Platz \d+$/.test(w)).length >= 2,
+    (menue.woerter || []).filter((w) => /^Platz/.test(w)).length + " Plaetze");
   pruefe("ein Tipp setzt wirklich um, ohne dass man tippt",
     Boolean(menue.paket) && /hebt|zieht/.test(menue.paket.text),
     menue.paket ? (menue.paket.wirkung || "ohne Wirkung") + " · " + menue.paket.text.slice(0, 60)

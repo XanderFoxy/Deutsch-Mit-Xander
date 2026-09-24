@@ -30442,10 +30442,7 @@
       kasten.appendChild(b);
     };
 
-    /* RUNDE 100 — im Kran-Menue stand „Angeln": ein Tipp darauf hob
-       dann mit dem Kran, nicht mit der Angel. Die Abkuerzung gehoert
-       nur ins Angel-Menue. */
-    if (meiner && werkzeug !== "kranheb") {
+    if (meiner) {
       /* Der naechste freie Platz zu meinem — und wenn keiner frei ist,
          der naechste ueberhaupt (dann tauschen die beiden). */
       const naehe = (a, b) => Math.abs(a - b);
@@ -30483,43 +30480,11 @@
           () => setzen(ziel.nummer));
       }
     }
-    /* RUNDE 100 — XANDER (Walkie #85): „Im Menü möchte ich die Auswahl
-       Plätze logisch untereinander so wie in der Bühnen Ansicht sortiert
-       haben." Vorher standen die Plaetze in Sechserreihen (Platz 2, 4,
-       5, 6, 7 — dann 8 allein). Jetzt ein Abbild der Buehne: gleich
-       viele Spalten wie dort, jeder Platz an seiner Stelle; der eigene
-       und der, auf dem die Person sitzt, stehen grau mit drin, damit
-       man sich zurechtfindet. Keine Emoji als Bild — Nummer und Name. */
-    const erstOben = knoten.length ? knoten[0].offsetTop : 0;
-    const spalten = Math.max(1, knoten.filter((el) => Math.abs(el.offsetTop - erstOben) < 4).length);
-    const wahl = document.createElement("div");
-    wahl.className = "lc-hebenwahl";
-    wahl.style.setProperty("--spalten", String(spalten));
-    plaetze.forEach((p) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "lc-hebenwahl-platz";
-      const geht = moeglich.indexOf(p) >= 0;
-      const unter = p.ich ? "du" : p === seiner ? name : p.leer ? "frei" : p.name;
-      b.classList.add(p.leer ? "lc-hebenwahl-frei" : "lc-hebenwahl-besetzt");
-      if (!geht) { b.disabled = true; b.classList.add("lc-hebenwahl-gesperrt"); }
-      else b.setAttribute("role", "menuitem");
-      b.title = !geht ? (p.ich ? "Dein Platz" : name + " sitzt hier")
-        : p.leer ? "Platz " + p.nummer + " ist frei"
-        : p.name + " sitzt dort — ihr tauscht dann";
-      b.innerHTML = '<span class="lc-hebenwahl-nr"></span><span class="lc-hebenwahl-name"></span>';
-      b.querySelector(".lc-hebenwahl-nr").textContent = String(p.nummer);
-      b.querySelector(".lc-hebenwahl-name").textContent = unter + (geht && !p.leer ? " \u21c4" : "");
-      if (geht) {
-        b.addEventListener("click", (e) => {
-          e.preventDefault(); e.stopPropagation();
-          lcPlatzMenueZu();
-          setzen(p.nummer);
-        });
-      }
-      wahl.appendChild(b);
+    moeglich.forEach((p) => {
+      kachel(p.leer ? "\u2b55" : "\ud83d\udd01", "Platz " + p.nummer,
+        p.leer ? "Dieser Platz ist frei" : p.name + " sitzt dort — ihr tauscht dann",
+        () => setzen(p.nummer));
     });
-    kasten.appendChild(wahl);
 
     document.body.appendChild(kasten);
     lcMenueStellen(kasten, platz);
@@ -31277,12 +31242,7 @@
   function lcMenueStellen(kasten, platz) {
     const r = platz.getBoundingClientRect();
     const schirm = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-    /* RUNDE 100 — XANDER (Walkie #85): „… auch beim Android ohne
-       Verschiebung." GEMESSEN: das Menue ragte rechts 12 px ueber den
-       Bildschirm. getBoundingClientRect misst MIT der Aufklapp-Animation
-       (scale 0,94) — 310 statt 330 px breit, also zu weit rechts
-       eingesetzt. offsetWidth/offsetHeight ist die echte Groesse. */
-    const mb = { width: kasten.offsetWidth, height: kasten.offsetHeight };
+    const mb = kasten.getBoundingClientRect();
     let links = r.left + r.width / 2 - mb.width / 2;
     links = Math.max(8, Math.min(links, window.innerWidth - mb.width - 8));
     let oben = r.bottom + 8;
