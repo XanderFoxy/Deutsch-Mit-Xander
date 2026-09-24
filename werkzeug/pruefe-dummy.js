@@ -162,10 +162,12 @@ const sage = (gut, was, zusatz) => {
     const st = await pg.evaluate(() => { const s = window.LiveChat.schiffeStand(); return s ? { n: Object.keys(s.tafel).length, dran: s.dran, phase: s.phase } : null; });
     if (!st || st.phase === "aus") { ende = true; break; }
     zuege = st.n;
-    if (st.dran === "ich" && st.n >= 3) break;
+    if (st.dran === "ich" && st.n >= 2) break;
   }
   sage(/Puppe|Dummy/.test(nachMir), "nach meinem Schuss ist eine Puppe dran", nachMir);
-  sage(ende || zuege >= 3, "Puppe und Dummy schießen selbst (Schüsse auf dem Brett)", ende ? "Spiel schon zu Ende" : zuege + " Schüsse");
+  /* Mindestens ein Puppenschuss, und danach bin ich wieder dran (versenkt
+     eine Puppe die andere, kommt nur EIN Puppenschuss zwischen meine). */
+  sage(ende || zuege >= 2, "Puppe und Dummy schießen selbst (Schüsse auf dem Brett)", ende ? "Spiel schon zu Ende" : zuege + " Schüsse");
   const tafel = await pg.evaluate(() => { const s = window.LiveChat.schiffeStand(); return s ? s.text : "aus"; });
   console.log("       zuletzt: " + tafel);
   await pg.evaluate(() => window.LiveChat.pruefBefehl("/versenken aus"));

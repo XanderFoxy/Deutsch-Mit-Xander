@@ -37,21 +37,8 @@
     { ding: "mauer_stahl", name: "Mauer aus Stahl", preis: 80,  was: "bleibt am Platz, hält 160 Schaden" },
     { ding: "wischer",     name: "Scheibenwischer", preis: 25,  was: "wischt 3× automatisch Dreck weg" },
     { ding: "geschuetz",   name: "Geschütz",        preis: 60,  was: "schießt 5× automatisch zurück" },
-    { ding: "haustier",    name: "Fellmonster",     preis: 120, was: "beißt jeden, der dich angreift" },
-    /* FUNK 106 — XANDER: „Zaubertränke die etwas Besonderes verursachen z.B
-       eine superstärke oder irgendwie eine Zielgenauigkeit … oder
-       Geschwindigkeit". Kaufen mit Punkten, trinken kostet 30 Mana,
-       wirkt 60 s. Gerechnet wird auf dem Server (spiel_trinken,
-       spiel_treffer). */
-    { ding: "trank_kraft", name: "Kraftelixier",    preis: 40,  was: "Superstärke: 60 s lang ×1,5 Schaden (trinken: 30 Mana)" },
-    { ding: "trank_ziel",  name: "Zielwasser",      preis: 35,  was: "60 s lang zieht jeder Schuss zum Kopf hin (trinken: 30 Mana)" },
-    { ding: "trank_tempo", name: "Blitztrank",      preis: 30,  was: "60 s lang doppelt so schnell, kürzere Pause (trinken: 30 Mana)" }
+    { ding: "haustier",    name: "Fellmonster",     preis: 120, was: "beißt jeden, der dich angreift" }
   ];
-  var TRAENKE = [["kraft", "Kraftelixier", "trank_kraft"], ["ziel", "Zielwasser", "trank_ziel"], ["tempo", "Blitztrank", "trank_tempo"]];
-  function wirkt(ich, art) {
-    var bis = ich && ich[art + "_bis"];
-    return bis ? Math.max(0, Math.round((new Date(bis).getTime() - Date.now()) / 1000)) : 0;
-  }
   var NIVEAUS = ["A1", "A2", "B1", "B2", "C1", "C2"];
   var LASERFARBEN = ["#ff2d2d", "#2dff6a", "#2d8bff", "#ff2df1", "#ffd22d"];
 
@@ -63,7 +50,7 @@
     stand: {},              /* spielId → öffentlicher Stand */
     waffe: "", laserfarbe: LASERFARBEN[0],
     duell: null,            /* { id, gegner (spielId), bis } */
-    niveau: "A1", aufgabe: null, mission: null, kategorie: null,
+    niveau: "A1", aufgabe: null, mission: null,
     stillstand: false, letzterAbruf: 0, einspielen: false
   };
   try { S.niveau = localStorage.getItem("dma_spiel_niveau") || "A1"; } catch (e) {}
@@ -165,7 +152,7 @@
     if (!s) return null;
     var o = {};
     ["id", "name", "lp", "lp_max", "kaputt", "schild", "mauer_art", "mauer_lp", "haustier",
-     "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo"].forEach(function (k) { o[k] = s[k]; });
+     "geschuetz", "wischer", "anfaenger", "verdient"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -349,7 +336,7 @@
     if (n.ziel_stand && n.ziel_stand.id) S.stand[n.ziel_stand.id] = n.ziel_stand;
     if (n.ich_stand && n.ich_stand.id) S.stand[n.ich_stand.id] = n.ich_stand;
     if (n.ereignis === "schuss") {
-      geschossZeigen(n.von, n.zielChat, n.waffe, n.dx, n.dy, n.farbe, Boolean(n.schnell));
+      geschossZeigen(n.von, n.zielChat, n.waffe, n.dx, n.dy, n.farbe);
     } else if (n.ereignis === "treffer") {
       trefferZeigen(n.zielChat, n);
       if (n.gegenwehr > 0) zahlZeigen(n.von, -n.gegenwehr, "Gegenwehr");
@@ -429,7 +416,7 @@
     var ichChat = meineChatId();
     var farbe = waffe === "laser" ? S.laserfarbe : "";
     var puppe = istPuppe(p.id);
-    if (!puppe) senden({ ereignis: "schuss", zielChat: p.id, waffe: waffe, dx: dx, dy: dy, farbe: farbe, schnell: wirkt(S.ich, "tempo") > 0 });
+    if (!puppe) senden({ ereignis: "schuss", zielChat: p.id, waffe: waffe, dx: dx, dy: dy, farbe: farbe });
     var dauer = geschossZeigen(ichChat, p.id, waffe, dx, dy, farbe);
     /* Ausweichen (Funk 89: „sie kann ausweichen"): Getroffen wird erst
        beim Einschlag — und nur, wer dann noch auf diesem Platz sitzt. */
@@ -482,11 +469,8 @@
     return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 };
   }
   /* Zeigt das Geschoss; gibt die Flugzeit zurück. */
-  function geschossZeigen(vonChat, zielChat, waffe, dx, dy, farbe, schnell) {
+  function geschossZeigen(vonChat, zielChat, waffe, dx, dy, farbe) {
     var w = WAFFEN[waffe] || WAFFEN.bogen;
-    /* FUNK 106 — Blitztrank: halbe Flugzeit. */
-    if (schnell === undefined) schnell = vonChat === meineChatId() && wirkt(S.ich, "tempo") > 0;
-    if (schnell) w = { name: w.name, schaden: w.schaden, preis: w.preis, flug: Math.round(w.flug / 2), ton: w.ton };
     var a = mittelpunkt(vonChat), z = mittelpunkt(zielChat);
     if (!z) return w.flug;
     if (!a) a = { x: z.x, y: Math.max(0, z.y - 260), r: 0 };
@@ -620,20 +604,6 @@
       var sch = bal.querySelector(".sp-lp-schild");
       sch.style.left = (anteil * 100).toFixed(1) + "%";
       sch.style.width = (schildAnteil * 100).toFixed(1) + "%";
-      /* FUNK 106 — der zweite Balken: Mana, direkt unter den Lebenspunkten. */
-      var mb = el.querySelector(".sp-mana");
-      if (s.mana != null && !istPuppe(chatId)) {
-        if (!mb) { mb = document.createElement("span"); mb.className = "sp-mana"; mb.innerHTML = "<i></i>"; el.appendChild(mb); }
-        mb.style.top = (unterkante + 7) + "px";
-        mb.style.left = bal.style.left; mb.style.width = bal.style.width;
-        mb.firstChild.style.width = Math.max(0, Math.min(100, s.mana)) + "%";
-        mb.title = s.mana + " / 100 Mana";
-      } else if (mb) mb.remove();
-      /* Wirkende Tränke leuchten am Bild: rot = Superstärke, gelb =
-         Zielwasser, blau = Blitztrank. */
-      el.classList.toggle("sp-w-kraft", Boolean(s.kraft));
-      el.classList.toggle("sp-w-ziel", Boolean(s.ziel));
-      el.classList.toggle("sp-w-tempo", Boolean(s.tempo));
       /* Schild-Aura (reist mit) */
       schmuck(el, "sp-aura", s.schild > 0, kreis, "");
       /* Mauer (bleibt am Platz) — unten vor dem Bild, die Mitte bleibt frei */
@@ -651,40 +621,6 @@
       schmuck(el, "sp-waffenmarke", ich && Boolean(S.waffe), kreis, ich && S.waffe ? geschossSvg(S.waffe) : "");
     });
     document.body.classList.toggle("sp-kampf", kampfmodus());
-    modusZeigen();
-  }
-  /* FUNK 106 — XANDER: „wie erkenne ich denn dass ich im Spielmodus bin".
-     Eine feste Leiste oben (sie liegt ÜBER der Seite, schiebt also keinen
-     Platz): Waffe mit Bild, Duell oder Übung mit Restzeit, wirkende
-     Tränke — und ein Knopf, der den Kampfmodus beendet. */
-  var modusEl = null;
-  function modusZeigen() {
-    var teile = [];
-    var duell = S.duell && Date.now() < S.duell.bis;
-    if (S.stillstand) teile.push('<span class="sp-m-teil">Waffenstillstand</span>');
-    if (S.waffe) teile.push('<span class="sp-m-teil"><span class="sp-m-bild">' + geschossSvg(S.waffe, S.laserfarbe) + "</span>" + esc(WAFFEN[S.waffe].name) + "</span>");
-    if (duell) {
-      var sek = Math.max(0, Math.round((S.duell.bis - Date.now()) / 1000));
-      teile.push('<span class="sp-m-teil">' + (S.duell.uebung ? "Übungsduell" : "Duell") + " " + Math.floor(sek / 60) + ":" + ("0" + (sek % 60)).slice(-2) + "</span>");
-    }
-    TRAENKE.forEach(function (t) { var r = wirkt(S.ich, t[0]); if (r) teile.push('<span class="sp-m-teil sp-m-' + t[0] + '">' + t[1] + " " + r + " s</span>"); });
-    var an = drin() && (kampfmodus() || duell || teile.length > 0);
-    if (!an) { if (modusEl) modusEl.hidden = true; return; }
-    if (!modusEl) {
-      modusEl = document.createElement("div");
-      modusEl.className = "sp-modus";
-      modusEl.addEventListener("click", function (ev) {
-        var k = ev.target.closest("button"); if (!k) return;
-        if (k.dataset.tu === "modusaus") { S.waffe = ""; if (S.duell && S.duell.uebung) uebungEnde(); zeichnen(); panelAuffrischen(); }
-        if (k.dataset.tu === "modusspiel") menue("start");
-      });
-      document.body.appendChild(modusEl);
-    }
-    modusEl.hidden = false;
-    var html = '<b>Kampfmodus</b>' + teile.join("") + (kampfmodus() ? '<span class="sp-m-tipp">tippe auf ein Gesicht</span>' : "")
-      + '<button type="button" data-tu="modusspiel">Spiel</button>'
-      + (S.waffe || (S.duell && S.duell.uebung) ? '<button type="button" data-tu="modusaus">Beenden</button>' : "");
-    if (modusEl.dataset.html !== html) { modusEl.innerHTML = html; modusEl.dataset.html = html; }
   }
   function schmuck(el, klasse, an, kreis, html, zusatz) {
     var s = el.querySelector("." + klasse);
@@ -698,8 +634,8 @@
     s.style.height = kreis.offsetHeight + "px";
   }
   function platzLeeren(el) {
-    el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer,.sp-tier,.sp-geschuetz,.sp-risse,.sp-waffenmarke").forEach(function (x) { x.remove(); });
-    el.classList.remove("sp-kaputt", "sp-anfaenger", "sp-w-kraft", "sp-w-ziel", "sp-w-tempo");
+    el.querySelectorAll(".sp-lp,.sp-aura,.sp-mauer,.sp-tier,.sp-geschuetz,.sp-risse,.sp-waffenmarke").forEach(function (x) { x.remove(); });
+    el.classList.remove("sp-kaputt", "sp-anfaenger");
   }
   function mauerSvg(art) {
     /* Eine niedrige Mauer vor dem unteren Bildrand: Holzlatten, Steine
@@ -866,14 +802,6 @@
       + (ich.kaputt ? ' <span class="sp-rot">· kaputt</span>' : "") + (ich.anfaenger ? ' <span class="sp-blau">· Anfängerschutz</span>' : "") + "</div>"
       + '<div class="sp-status-werte"><span>🪙 ' + ich.punkte + " Punkte</span><span>📚 " + ich.verdient + " verdient</span><span>🩹 " + ich.pflaster
       + "</span><span>🧪 " + ich.traenke + "</span><span>🛡️ " + Math.round((ich.ruestung || 0) * 100) + " % Rüstung</span></div>"
-      /* FUNK 106 — der zweite Balken: Mana, nur aus Deutsch (+6 je
-         richtiger Aufgabe), für die Zaubertränke. */
-      + '<div class="sp-status-lp"><span class="sp-status-balken sp-mana-balken"><i style="width:' + Math.max(0, Math.min(100, ich.mana || 0)) + '%"></i></span> <b>' + (ich.mana || 0) + " / 100</b> Mana</div>"
-      + '<div class="sp-traenke">' + TRAENKE.map(function (t) {
-          var n = ich["trank_" + t[0]] || 0, rest = wirkt(ich, t[0]);
-          return '<button type="button" data-tu="trinken" data-t="' + t[0] + '"' + (n > 0 && (ich.mana || 0) >= 30 && !rest ? "" : " disabled") + ">"
-            + '<span class="sp-trank sp-trank-' + t[0] + '"></span>' + t[1] + " (" + n + ")" + (rest ? " · wirkt " + rest + " s" : "") + "</button>";
-        }).join("") + "</div>"
       + (S.stillstand ? '<div class="sp-hinweis">🕊️ Waffenstillstand – die Tafel ist offen.</div>' : "")
       + (S.waffe ? '<div class="sp-hinweis">🎯 ' + esc(WAFFEN[S.waffe].name) + ' ist angelegt – tippe auf ein Gesicht, um zu schießen. <button type="button" data-tu="ablegen">Ablegen</button></div>' : "")
       + (S.duell && Date.now() < S.duell.bis ? '<div class="sp-hinweis">⚔️ Duell läuft – tippe auf deinen Gegner.</div>' : "")
@@ -892,8 +820,7 @@
         + '<div class="sp-knoepfe"><button type="button" data-tab="deutsch">📚 Aufgabe lösen</button>'
         + '<button type="button" data-tu="heilen" data-art="pflaster"' + (ich.pflaster > 0 ? "" : " disabled") + '>🩹 Pflaster (' + ich.pflaster + ')</button>'
         + '<button type="button" data-tu="heilen" data-art="trank"' + (ich.traenke > 0 ? "" : " disabled") + '>🧪 Heiltrank (' + ich.traenke + ')</button></div>'
-        + '<p class="sp-klein">Kampf: Waffe anlegen, dann auf ein Gesicht tippen. Kopf ×2, Herz ×1,6, Körper ×1, Rand ×0,5. Wer vor dem Einschlag den Platz wechselt, weicht aus. Kaputt (0 LP) = kein Reisen bis zum Pflaster. Tafel offen = Waffenstillstand.</p>'
-        + '<p class="sp-klein">Mana (blauer Balken) füllst du nur mit Deutsch: +6 je richtiger Aufgabe. Zaubertränke kaufst du im Laden; Trinken kostet 30 Mana und wirkt 60 s. Solange eine Waffe angelegt ist, steht oben die Leiste „Kampfmodus".</p>';
+        + '<p class="sp-klein">Kampf: Waffe anlegen, dann auf ein Gesicht tippen. Kopf ×2, Herz ×1,6, Körper ×1, Rand ×0,5. Wer vor dem Einschlag den Platz wechselt, weicht aus. Kaputt (0 LP) = kein Reisen bis zum Pflaster. Tafel offen = Waffenstillstand.</p>';
     }
     if (reiter === "deutsch") {
       var chips = NIVEAUS.map(function (n) {
@@ -906,7 +833,7 @@
             var kl = a.ergebnis ? (o === a.ergebnis.loesung ? "sp-richtig" : o === a.gewaehlt ? "sp-falsch" : "") : "";
             return '<button type="button" data-tu="antwort" data-o="' + esc(o) + '" class="' + kl + '"' + (a.ergebnis ? " disabled" : "") + ">" + esc(o) + "</button>";
           }).join("") + "</div>"
-          + (a.ergebnis ? '<div class="sp-erg ' + (a.ergebnis.richtig ? "sp-gruen" : "sp-rot") + '">' + (a.ergebnis.richtig ? "✅ Richtig! +" + (a.ergebnis.gewonnen + (a.ergebnis.bonus || 0)) + " Punkte" + (a.ergebnis.bonus ? " (Mission +" + a.ergebnis.bonus + ")" : "") + (a.ergebnis.mana_plus ? ' <span class="sp-blau">+' + a.ergebnis.mana_plus + " Mana</span>" : "") : "❌ Leider falsch.") + '</div><div class="sp-klein">' + esc(a.ergebnis.erklaerung || "") + '</div><div class="sp-knoepfe"><button type="button" data-tu="aufgabe">Nächste Aufgabe</button></div>' : "")
+          + (a.ergebnis ? '<div class="sp-erg ' + (a.ergebnis.richtig ? "sp-gruen" : "sp-rot") + '">' + (a.ergebnis.richtig ? "✅ Richtig! +" + (a.ergebnis.gewonnen + (a.ergebnis.bonus || 0)) + " Punkte" + (a.ergebnis.bonus ? " (Mission +" + a.ergebnis.bonus + ")" : "") : "❌ Leider falsch.") + '</div><div class="sp-klein">' + esc(a.ergebnis.erklaerung || "") + '</div><div class="sp-knoepfe"><button type="button" data-tu="aufgabe">Nächste Aufgabe</button></div>' : "")
           + (a.hinweis ? '<div class="sp-klein sp-rot">' + esc(a.hinweis) + "</div>" : "")
           + "</div>";
       } else {
@@ -917,13 +844,7 @@
         ? '<div class="sp-hinweis">🗺️ Mission: Setz dich neben <b>' + esc(m.ziel) + '</b> und löse dort eine Aufgabe (+8).'
           + (nebenZiel(m.ziel) ? ' <button type="button" data-tu="missionsaufgabe">Jetzt lösen</button>' : " Du sitzt noch nicht daneben.") + "</div>"
         : '<div class="sp-knoepfe"><button type="button" data-tu="mission">🗺️ Mission holen</button></div>';
-      /* FUNK 106 — „könnte man auch andere Sachen implementieren wie das
-         betonungstraining". Betonung ist eine eigene Aufgabenart
-         (Kategorie „betonung", aus den geprüften Silben des Wörterbuchs). */
-      var arten = '<div class="sp-chips">Art: '
-        + '<button type="button" data-tu="kategorie" data-k="" class="' + (!S.kategorie ? "sp-an" : "") + '">Alles</button>'
-        + '<button type="button" data-tu="kategorie" data-k="betonung" class="' + (S.kategorie === "betonung" ? "sp-an" : "") + '">Betonung</button></div>';
-      return '<div class="sp-chips">' + chips + "</div>" + arten + teil + missionTeil;
+      return '<div class="sp-chips">' + chips + "</div>" + teil + missionTeil;
     }
     if (reiter === "waffen") {
       var liste = WAFFEN_REIHE.map(function (k) {
@@ -987,12 +908,10 @@
     if (tu === "heilen") return heilen(k.dataset.art);
     if (tu === "duell") { duellFordern(k.dataset.id, k.dataset.name); return; }
     if (tu === "mission") return missionHolen();
-    if (tu === "trinken") return trinken(k.dataset.t);
-    if (tu === "kategorie") { S.kategorie = k.dataset.k || null; aufgabeHolen(false); return; }
   }
 
   function aufgabeHolen(mission) {
-    rpc("spiel_aufgabe", { p_niveau: S.niveau, p_mission: Boolean(mission), p_kategorie: S.kategorie || null }).then(function (a) {
+    rpc("spiel_aufgabe", { p_niveau: S.niveau, p_mission: Boolean(mission) }).then(function (a) {
       if (!a || a.ok === false) { S.aufgabe = { frage: "", hinweis: (a && a.grund) || "Keine Aufgabe" }; }
       else S.aufgabe = a;
       reiter = "deutsch"; panelAuffrischen();
@@ -1009,17 +928,6 @@
       if (r.richtig) senden({ ereignis: "stand", stand: oeffentlich(r) });
       panelAuffrischen(); zeichnen();
     }).catch(function (e) { hinweis("Antwort ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  function trinken(art) {
-    rpc("spiel_trinken", { p_trank: art }).then(function (r) {
-      if (!r || !r.ok) { hinweis("🧪 " + ((r && r.grund) || "geht nicht")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      ton("zauberpuff", 0.5);
-      senden({ ereignis: "stand", stand: oeffentlich(r) });
-      var name = { kraft: "Superstärke", ziel: "Zielgenauigkeit", tempo: "Geschwindigkeit" }[art];
-      zahlZeigen(meineChatId(), null, name + " 60 s");
-      panelAuffrischen(); zeichnen();
-    }).catch(function (e) { hinweis("Trinken ging nicht: " + (e && e.message ? e.message : e)); });
   }
   function kaufen(ding) {
     rpc("spiel_kaufen", { p_ding: ding }).then(function (r) {
