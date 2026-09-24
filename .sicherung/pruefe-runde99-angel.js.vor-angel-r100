@@ -166,14 +166,11 @@ const sage = (gut, text, dazu) => {
     await pg.evaluate((f) => {
       window.__pakete = [];
       window.LiveChat.pruefPost((p) => window.__pakete.push(p));
-      /* RUNDE 100 — Cem statt Bea: Bea sitzt direkt neben Alex, und wer
-         schon neben einem sitzt, wird seit Fassung 549 nicht mehr gezogen
-         (XANDER, Walkie #88: „Die Person landet nicht neben mir"). */
-      window.LiveChat.pruefBefehl("/lasso Cem");
-      /* Genau jetzt kommt ein Zug eines anderen dazwischen, der Cem
+      window.LiveChat.pruefBefehl("/lasso Bea");
+      /* Genau jetzt kommt ein Zug eines anderen dazwischen, der Bea
          ebenfalls meint. */
       window.LiveChat.pruefEmpfangen({ von: f, name: "Zora", art: "text", chatArt: "aktion",
-        text: "Zora zieht Cem mit dem Lasso", wirkung: "lasso", wen: "Cem", ziel: 7, id: "z" + f });
+        text: "Zora zieht Bea mit dem Lasso", wirkung: "lasso", wen: "Bea", ziel: 7, id: "z" + f });
     }, fremdId);
     try {
       await pg.waitForFunction(() => (window.__pakete || []).some((p) => p.art === "sitzplatz"),

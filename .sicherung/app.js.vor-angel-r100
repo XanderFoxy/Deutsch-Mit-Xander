@@ -38634,8 +38634,8 @@
       const kurbel = buehne.querySelector(".lc-an-kurbel");
       const haken = hakenLage.querySelector(".lc-an-haken");
       const ringe = [...buehne.querySelectorAll(".lc-an-ring")];
-      let rollePos = { x: fuss.x + seite * Math.cos(w) * rutL * 0.2,
-                       y: fuss.y - Math.sin(w) * rutL * 0.2 + gr * 0.07 };
+      const rollePos = { x: fuss.x + seite * Math.cos(w) * rutL * 0.2,
+                         y: fuss.y - Math.sin(w) * rutL * 0.2 + gr * 0.07 };
       const gw = gr * 0.3, gh = gr * 0.075;
       griff.setAttribute("x", (fuss.x - gw / 2).toFixed(1));
       griff.setAttribute("y", (fuss.y - gh / 2).toFixed(1));
@@ -38702,7 +38702,6 @@
       const ease = (u) => (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
       const lerp = (p, q, u) => ({ x: p.x + (q.x - p.x) * u, y: p.y + (q.y - p.y) * u });
       let letzterHaken = null;
-      let letzteSpitze = null, bildVorher = null, fuehrV = 0;
       const bild = () => {
         if (!buehne.isConnected) { aufraeumen(); return; }
         const t = performance.now() - t0;
@@ -38717,52 +38716,9 @@
         /* Die Rutenspitze biegt sich, sobald Zug auf der Schnur ist. */
         const zug = t < T_BISS ? 0 : t < T_ZUG ? 0.5 + 0.5 * Math.sin((t - T_BISS) / 45) * 0.4
           : t < T_AB ? 0.55 : Math.max(0, 0.55 - (t - T_AB) / 300);
-        /* RUNDE 100 — XANDER (Walkie #59): „Die Physik der Angelschnur
-           paßt überhaupt nicht … Die Angel hebt jemanden mit schräger
-           Leine nach oben."
-           Die Spitze stand fest neben dem Angler; gehoben wurde also
-           immer schraeg. Eine Last haengt aber SENKRECHT unter der
-           Spitze. Deshalb:
-             · beim Anbiss schwenkt die Spitze ueber das Bild,
-             · beim Einholen und Tragen bleibt sie darueber — die Schnur
-               wird dabei kuerzer (die Rolle holt ein),
-             · bewegt sich die Last, eilt die Spitze etwas voraus: die
-               Last pendelt hinterher, die Schnur steht leicht schraeg
-               IN Fahrtrichtung, nie gegen sie,
-             · nach dem Absetzen kehrt die Rute in die Ruhe zurueck. */
-        const jetztT = performance.now();
-        if (bildVorher) {
-          const dt = Math.max(1, jetztT - bildVorher.t);
-          fuehrV = fuehrV * 0.82 + ((amBild.x - bildVorher.x) / dt) * 0.18;
-        }
-        bildVorher = { x: amBild.x, t: jetztT };
-        const fuehr = Math.max(-gr * 0.35, Math.min(gr * 0.35, fuehrV * 110));
-        const einholen = Math.max(0, Math.min(1, (t - T_ZUG) / 350));
-        const haengL = gr * (0.95 - 0.35 * einholen);
-        const ueberBild = { x: amBild.x + fuehr, y: amBild.y - haengL };
-        let spitze;
-        if (t < T_BISS) spitze = { x: spitze0.x, y: spitze0.y };
-        else if (t < T_ZUG) spitze = lerp(spitze0, ueberBild, ease((t - T_BISS) / (T_ZUG - T_BISS)));
-        else if (t < T_AB && !fertig) spitze = ueberBild;
-        else spitze = lerp(letzteSpitze || spitze0, spitze0, ease(Math.min(1, (t - T_AB) / 420)));
-        if (t < T_AB && !fertig) letzteSpitze = spitze;
-        /* Die Rute reicht vom Griff bis zur Spitze (eine Teleskoprute)
-           und woelbt sich unter Zug nach oben. */
-        const rl = Math.hypot(spitze.x - fuss.x, spitze.y - fuss.y) || 1;
-        const ru = { x: (spitze.x - fuss.x) / rl, y: (spitze.y - fuss.y) / rl };
-        let rn = { x: ru.y, y: -ru.x };
-        if (rn.y > 0) rn = { x: -rn.x, y: -rn.y };
-        const woelb = rl * (0.05 + 0.08 * zug);
-        const knick = { x: fuss.x + ru.x * rl * 0.6 + rn.x * woelb, y: fuss.y + ru.y * rl * 0.6 + rn.y * woelb };
-        /* Griff und Rolle drehen mit der Rute mit. */
-        const gWinkel = Math.atan2(knick.y - fuss.y, knick.x - fuss.x) * 180 / Math.PI;
-        griff.setAttribute("transform", "rotate(" + gWinkel.toFixed(1) + " "
-          + fuss.x.toFixed(1) + " " + fuss.y.toFixed(1) + ")");
-        const gu = { x: Math.cos(gWinkel * Math.PI / 180), y: Math.sin(gWinkel * Math.PI / 180) };
-        rollePos = { x: fuss.x + gu.x * rl * 0.2 - rn.x * gr * 0.07,
-                     y: fuss.y + gu.y * rl * 0.2 - rn.y * gr * 0.07 };
-        gehaeuse.setAttribute("cx", rollePos.x.toFixed(1)); gehaeuse.setAttribute("cy", rollePos.y.toFixed(1));
-        spule.setAttribute("cx", rollePos.x.toFixed(1)); spule.setAttribute("cy", rollePos.y.toFixed(1));
+        const spitze = { x: spitze0.x + seite * zug * gr * 0.04, y: spitze0.y + zug * gr * 0.16 };
+        const knick = { x: fuss.x + seite * Math.cos(w) * rutL * 0.62,
+                        y: fuss.y - Math.sin(w) * rutL * 0.62 + zug * gr * 0.03 };
         rute.setAttribute("d", "M" + fuss.x.toFixed(1) + " " + fuss.y.toFixed(1)
           + " Q" + knick.x.toFixed(1) + " " + knick.y.toFixed(1)
           + " " + spitze.x.toFixed(1) + " " + spitze.y.toFixed(1));

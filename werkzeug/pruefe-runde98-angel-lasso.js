@@ -209,11 +209,17 @@ const sage = (gut, was, zusatz) => {
     const reihe = document.getElementById("lcPlaetze"), g0 = reihe.getBoundingClientRect();
     const kreis = [...reihe.querySelectorAll(".lc-platz")].find((p) => p.textContent.indexOf("Cem") >= 0).querySelector(".lc-kreis");
     window.LiveChat.pruefBefehl("/heb Cem 8");
-    const t0 = performance.now(), abst = [];
+    const t0 = performance.now(), abst = [], winkel = [];
     let rutsch = 0;
     while (performance.now() < t0 + 3000) {
       const t = performance.now() - t0;
       rutsch = Math.max(rutsch, Math.abs(reihe.getBoundingClientRect().top - g0.top));
+      /* RUNDE 100 — der Winkel der Schnur von der Spitze zum Haken. */
+      const sch = document.querySelector(".lc-an-schnur");
+      if (sch && t > 1550 && sch.getAttribute("d")) {
+        const z = sch.getAttribute("d").match(/-?[0-9.]+/g).map(Number);
+        winkel.push(Math.abs(Math.atan2(z[z.length - 2] - z[2], z[z.length - 1] - z[3]) * 180 / Math.PI));
+      }
       const h = document.querySelector(".lc-an-haken");
       if (h && t > 1100 && t < 3000) {
         const a = h.getBoundingClientRect(), b = kreis.getBoundingClientRect();
@@ -221,9 +227,15 @@ const sage = (gut, was, zusatz) => {
       }
       await new Promise((f) => requestAnimationFrame(f));
     }
-    return { max: abst.length ? Math.max(...abst) : 999, n: abst.length, rutsch: Math.round(rutsch) };
+    return { max: abst.length ? Math.max(...abst) : 999, n: abst.length, rutsch: Math.round(rutsch),
+             winkel: winkel.length ? Math.round(Math.max(...winkel)) : 999, wn: winkel.length };
   });
   await pg3.close();
+  /* XANDER (Walkie #59): „Die Angel hebt jemanden mit schräger Leine
+     nach oben." Eine Last haengt senkrecht; beim Tragen darf die Schnur
+     leicht in Fahrtrichtung stehen (20 Grad). Vorher: bis 118 Grad. */
+  sage(angel.wn > 10 && angel.winkel <= 20, "Angel: beim Heben und Tragen haengt die Schnur senkrecht",
+    "hoechstens " + angel.winkel + " Grad aus der Senkrechten");
   /* 20 px: Hakengroesse und das Pendeln des Bildes. */
   sage(angel.n > 5 && angel.max <= 20, "Angel: der Haken bleibt am Bild, auch wenn die Seite rutscht",
     "groesster Abstand " + Math.round(angel.max) + " px, Seite um " + angel.rutsch + " px gerutscht");

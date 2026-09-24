@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 552: Zu zweit — sieht aus wie ein Fahrrad",
+  stand: "Fassung 553: Angel — die Schnur hängt senkrecht",
 
   inArbeit: [
-    { seit: "2026-09-24T02:47",
-      text: "Angel: senkrecht heben, Schnur-Physik" },
-    { seit: "2026-09-24T02:47",
+    { seit: "2026-09-24T02:58",
       text: "Stadt · Land · Fluss: Wörter streichen im Raum" },
-    { seit: "2026-09-24T02:47",
-      text: "Zylinder, Sprühdose wischen, Sabbern, Kuss-Stimme, Vogelkot-Ton" },
+    { seit: "2026-09-24T02:58",
+      text: "Zylinder: Bild klitscht vor dem Herauskommen" },
+    { seit: "2026-09-24T02:58",
+      text: "Sprühdose wischen, Sabbern, Kuss-Stimme, Vogelkot-Ton" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T02:47",
-      text: "Zu zweit (Rad): echter Fahrradrahmen hinter den Bildern — Rohre, Gabel, Sattel, Lenker, Kettenblatt, Kette, drehende Pedale" },
-    { seit: "2026-09-24T02:47",
-      text: "Beide Räder gleich groß (vorher 0,84), 1,3 Bildbreiten Radstand (vorher 0,6), beide drehen sich" },
-    { seit: "2026-09-24T02:47",
-      text: "Das Hinterrad rollt auf der Spur hinterher, auch um die Ecke, und bleibt auf der Bühne (vorher 19 von 60 Bildern draußen)" },
+    { seit: "2026-09-24T02:58",
+      text: "Angel: beim Anbiss schwenkt die Rutenspitze über das Bild; beim Heben und Tragen hängt die Schnur senkrecht (höchstens 14° in Fahrtrichtung, vorher bis 118°), die Rolle holt ein, danach zurück in Ruhe" },
+    { seit: "2026-09-24T02:58",
+      text: "Rute, Griff und Rolle drehen mit" },
   ],
 };
