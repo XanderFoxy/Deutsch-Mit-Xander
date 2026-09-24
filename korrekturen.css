@@ -33770,3 +33770,71 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 /* FUNK 75 — der runde Buegel ragt ueber die viewBox hinaus nicht, aber
    seine Strichbreite: nicht abschneiden. */
 .lc-schelle-buegel svg { overflow: visible; }
+
+/* =====================================================================
+   RUNDE 101 — DER MUENZWURF: KOPF ODER ZAHL
+   XANDER: „die man hoch schmeißt und die dann entweder auf Kopf oder
+   Zahl landet — Kopf ist das Profilbild und Zahl … alles andere."
+   Die Rueckseite liegt als eigene Schicht IM Kreis (damit sie rund
+   ist) und deckt das Bild ganz zu, solange die Zahl oben liegt.
+   ===================================================================== */
+.lc-kreis > .lc-muenz-zahl {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+}
+.lc-kreis > .lc-muenz-zahl.lc-mz-an { opacity: 1; }
+.lc-muenz-zahl svg { display: block; width: 100%; height: 100%; }
+.lc-mz-ring { fill: none; stroke: #a8740f; stroke-width: 1.1; opacity: .75; }
+.lc-mz-stern { fill: #b8820f; stroke: #fff2b8; stroke-width: .35; }
+.lc-mz-schrift {
+  font: 700 7.4px/1 Georgia, "Times New Roman", serif;
+  letter-spacing: 1.1px;
+  fill: #8e5f08;
+}
+.lc-mz-eins {
+  font: 700 46px/1 Georgia, "Times New Roman", serif;
+  text-anchor: middle;
+  fill: #e1ad2c;
+}
+.lc-mz-eins.lc-mz-licht { fill: #fff6cf; }
+.lc-mz-eins.lc-mz-tief { fill: #7a4f06; }
+/* Im Flug: ein goldener Rand, damit sie auf der Kante nach Muenze
+   aussieht und nicht nach einem verschwundenen Strich. */
+.lc-kreis.lc-muenz-fliegt {
+  box-shadow: 0 0 0 2px #c8911a, 0 0 0 3px #7a4f06, 0 6px 14px rgba(0,0,0,.28);
+  will-change: transform;
+}
+.lc-muenzwurf { pointer-events: none; }
+.lc-muenzwurf-schatten {
+  position: absolute;
+  left: 50%; top: 86%;
+  width: 72%; height: 13%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.5), transparent 72%);
+  opacity: .55;
+}
+/* „Kopf!" / „Zahl!" — unter dem Bild, nicht auf dem Gesicht. */
+.lc-muenzwurf-wort {
+  position: absolute;
+  left: 50%; top: 80%;
+  transform: translate(-50%, 4px);
+  padding: 2px 9px;
+  border-radius: 999px;
+  font: 800 12px/1.3 system-ui, sans-serif;
+  color: #5a3a02;
+  background: linear-gradient(#ffe68a, #e5b334);
+  box-shadow: 0 1px 0 #fff6cf inset, 0 2px 6px rgba(0,0,0,.25);
+  white-space: nowrap;
+  z-index: 8;
+  animation: lcMuenzWort 2s ease-out both;
+}
+@keyframes lcMuenzWort {
+  0% { opacity: 0; transform: translate(-50%, -2px) scale(.7); }
+  12% { opacity: 1; transform: translate(-50%, 4px) scale(1.08); }
+  22%, 80% { opacity: 1; transform: translate(-50%, 4px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, 4px) scale(1); }
+}

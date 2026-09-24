@@ -27198,6 +27198,8 @@
        laut — kein Verlauf. Die neue Aufnahme hat ihn: Drehen bis
        2 s, Eiern 2–4,2 s, das letzte Klappern bei 4,2–4,7 s. */
     muenze:         { ton: "muenze2",  dauer: 5500, laut: 0.55 },
+    /* RUNDE 101 — der Muenzwurf: Schnipp, Flug, Aufschlag bei 1,31 s. */
+    muenzwurf:      { ton: "muenzwurf", dauer: 1900, laut: 0.6 },
     /* „er kann quietschen beim Scheiben wischen. Da klingt eher wie
        ein geschaerftes Messer aber nicht wie ein quietschen der
        Scheibenwischer." */
@@ -28558,6 +28560,14 @@
         if (!lack) lcSprayBleibt(el, lcSprayListe[nm], lcSprayEigen[nm]);
       } else if (lack) {
         lack.remove();
+      }
+      /* RUNDE 101 — die Zahl bleibt oben liegen, bis die Person selbst
+         auf ihr Bild tippt. */
+      const zahlSeite = el.querySelector(".lc-kreis > .lc-muenz-zahl");
+      if (nm && lcMuenzZahlListe[nm] && !frei) {
+        if (!zahlSeite && !el.querySelector(".lc-muenzwurf")) lcMuenzSeite(el, true);
+      } else if (zahlSeite && !el.querySelector(".lc-muenzwurf")) {
+        zahlSeite.remove();
       }
       /* RUNDE 98 — der liegengebliebene Dreck. */
       const dreck = el.querySelector(".lc-dreckschicht");
@@ -30626,7 +30636,11 @@
        andrehen wie eine Gluehbirne" · „wenn ich direkt neben jemandem
        sitze … so eine witzige Entbloessungs-Animation". */
     ["\ud83c\udf1a", "Licht aus", "licht"],
-    ["\ud83e\ude99", "M\u00fcnze",   "muenze"],
+    /* RUNDE 101 — XANDER: „eine zweite Version, die man hoch
+       schmeisst und die dann entweder auf Kopf oder Zahl landet." */
+    ["\ud83e\ude99", "M\u00fcnze",   "muenze", false,
+      [["\ud83e\ude99", "Drehen", "muenze"],
+       ["\ud83e\ude99", "Hochwerfen: Kopf oder Zahl", "muenzwurf"]]],
     ["\ud83e\uddfd", "Wischer",  "wischer"],
     /* RUNDE 98 — XANDER: „Dann haette ich gern noch alternativen
        Putzlappen … oder mit dem Schwamm … oder alternativ dran spucken
@@ -34240,6 +34254,8 @@
     krumel:     { zeichen: ["\ud83c\udf6a"], wie: 5, klasse: "umarmen" },
     licht:      { zeichen: ["\ud83d\udca1"], wie: 5, klasse: "umarmen" },
     muenze:     { zeichen: ["\ud83e\ude99"], wie: 5, klasse: "umarmen" },
+    muenzwurf:  { zeichen: ["\ud83e\ude99"], wie: 5, klasse: "umarmen" },
+    muenzkopf:  { zeichen: ["\ud83e\ude99"], wie: 5, klasse: "umarmen" },
     wischer:    { zeichen: ["\ud83e\uddfd"], wie: 5, klasse: "umarmen" },
     zwille:     { zeichen: ["\ud83e\ude83"], wie: 5, klasse: "umarmen" },
     pusterohr:  { zeichen: ["\ud83e\udd64"], wie: 5, klasse: "umarmen" },
@@ -35155,6 +35171,7 @@
        ganzen Drehung. Der Ton IST das Drehen — er gehoert an den
        Anfang, nicht ans Ende. */
     muenze: 0,
+    muenzwurf: 0,     /* der Schnipp ist der Anfang des Tons */
     /* RUNDE 75: hier steht jetzt der RISS, nicht mehr der Pfiff
        (siehe LC_TON_PLAN.entbloessung). 620 ms ist der Punkt, an dem
        der BH losrutscht — gemessen an der Animation, die bei 786 ms
@@ -54379,6 +54396,216 @@
     }, 5400, "muenze");
   }
 
+  /* =====================================================================
+     RUNDE 101 — DER MUENZWURF: KOPF ODER ZAHL
+     ---------------------------------------------------------------------
+     XANDER (Funk 75): „bei der Münze habe ich gesagt ich will noch eine
+     zweite Version die man hoch schmeißt und die dann entweder auf Kopf
+     oder Zahl landet. Kopf ist das Profilbild und Zahl es dann halt
+     alles andere … die Zahl … am besten so bis man sie selber wiederum
+     dreht durch einen einfachen Klick aufs Profilbild um das zu
+     resetten."
+
+     Also:
+       - Das Bild fliegt hoch, ueberschlaegt sich (um die waagerechte
+         Achse, wie eine geworfene Muenze) und faellt zurueck auf den
+         Platz. Beim Ueberschlagen sieht man abwechselnd beide Seiten.
+       - KOPF ist das Profilbild. ZAHL ist die Rueckseite: eine goldene
+         Muenze mit einer grossen 1.
+       - Wie sie faellt, entscheidet das „los", das mit der Nachricht
+         reist — damit JEDER dieselbe Seite oben sieht.
+       - Liegt die Zahl oben, BLEIBT sie liegen (auch nach jedem
+         Neuzeichnen), bis die Person selbst auf ihr eigenes Bild tippt.
+         Dann dreht sie die Muenze zurueck auf Kopf.
+
+     Der Ton (ton/muenzwurf) ist gemessen: Daumen schnippt bei 0 s,
+     erster Aufschlag bei 1,31 s, zwei kleine Nachhopser bei 1,41 und
+     1,45 s, ab 1,55 s liegt sie still. Genau darauf ist der Flug
+     gerechnet (LC_MW_LANDUNG).
+     ===================================================================== */
+  const lcMuenzZahlListe = {};   /* Name -> true, solange die Zahl oben liegt */
+  const LC_MW_LANDUNG = 1310;
+  const LC_MW_HOPS = [[1310, 1410, 0.10], [1410, 1450, 0.03]];
+
+  /* Die Rueckseite. Kein Emoji, sondern eine gepraegte Muenze. */
+  function lcMuenzZahlZeichnung() {
+    const stern = (w) => {
+      const r = 41, x = 50 + Math.cos(w) * r, y = 50 + Math.sin(w) * r;
+      const p = [];
+      for (let i = 0; i < 10; i++) {
+        const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 1.25 : 3;
+        p.push((x + Math.cos(a) * rr).toFixed(2) + "," + (y + Math.sin(a) * rr).toFixed(2));
+      }
+      return '<polygon class="lc-mz-stern" points="' + p.join(" ") + '"/>';
+    };
+    let sterne = "";
+    /* Zwoelf Sterne nur auf der unteren Haelfte — oben steht die Schrift. */
+    for (let i = 0; i < 7; i++) sterne += stern(Math.PI * (0.14 + i * 0.12));
+    return '<svg viewBox="0 0 100 100" aria-hidden="true">'
+      + '<defs>'
+      + '<radialGradient id="mzGold" cx="38%" cy="32%" r="75%">'
+      + '<stop offset="0" stop-color="#fff4c2"/><stop offset=".45" stop-color="#f0c63c"/>'
+      + '<stop offset=".8" stop-color="#c8911a"/><stop offset="1" stop-color="#8a5a08"/></radialGradient>'
+      + '<linearGradient id="mzRand" x1="0" y1="0" x2="1" y2="1">'
+      + '<stop offset="0" stop-color="#fff0a8"/><stop offset=".5" stop-color="#b98012"/>'
+      + '<stop offset="1" stop-color="#6e4604"/></linearGradient>'
+      + '<path id="mzBogen" d="M16 50 A34 34 0 0 1 84 50"/>'
+      + '</defs>'
+      + '<circle cx="50" cy="50" r="50" fill="url(#mzRand)"/>'
+      + '<circle cx="50" cy="50" r="46" fill="url(#mzGold)"/>'
+      + '<circle class="lc-mz-ring" cx="50" cy="50" r="37"/>'
+      + sterne
+      + '<text class="lc-mz-schrift"><textPath href="#mzBogen" startOffset="50%" text-anchor="middle">DEUTSCH MIT ALEX</textPath></text>'
+      /* Die 1 gepraegt: ein heller Rand oben links, ein dunkler unten
+         rechts, die Flaeche selbst im Gold. */
+      + '<text class="lc-mz-eins lc-mz-licht" x="49.2" y="68.2">1</text>'
+      + '<text class="lc-mz-eins lc-mz-tief" x="50.8" y="69.8">1</text>'
+      + '<text class="lc-mz-eins" x="50" y="69">1</text>'
+      + '</svg>';
+  }
+
+  /* Die Zahl zeigen (an) oder wegnehmen (aus) — ohne Animation. */
+  function lcMuenzSeite(platz, zahl) {
+    const kreis = platz && platz.querySelector(".lc-kreis");
+    if (!kreis) return null;
+    let seite = kreis.querySelector(":scope > .lc-muenz-zahl");
+    if (zahl && !seite) {
+      seite = document.createElement("span");
+      seite.className = "lc-muenz-zahl";
+      seite.setAttribute("aria-hidden", "true");
+      seite.innerHTML = lcMuenzZahlZeichnung();
+      kreis.appendChild(seite);
+    }
+    if (seite) seite.classList.toggle("lc-mz-an", Boolean(zahl));
+    if (!zahl && seite) seite.remove();
+    return seite;
+  }
+  function lcMuenzZahlBleibt(platz) {
+    const nm = lcPlatzSchluessel(platz);
+    lcMuenzSeite(platz, Boolean(nm && lcMuenzZahlListe[nm]));
+  }
+  function lcMuenzZeigtZahl(platz) {
+    const nm = lcPlatzSchluessel(platz);
+    return Boolean(nm && lcMuenzZahlListe[nm]);
+  }
+
+  /* Welche Seite faellt? Aus dem gemeinsamen Los UND dem Namen — so
+     landen bei „/muenzwurf alle" nicht alle Muenzen gleich. */
+  function lcMuenzFaellt(los, nm) {
+    if (los === undefined || los === null || los === "") return Math.random() < 0.5;
+    const z = lcHammerZufall(lcHammerSaat(String(los) + "|" + String(nm || "")));
+    z();
+    return z() < 0.5;
+  }
+
+  /* wen: Ziel · los: das gemeinsame Los · zurueck: nur zurueck auf Kopf
+     drehen (der eigene Tipp aufs Bild) — ein kleinerer Wurf mit
+     anderthalb Ueberschlaegen, aber mit DEMSELBEN Ton: auch er landet
+     bei 1,31 s. */
+  function lcMuenzwurf(wen, los, zurueck) {
+    /* Ab hier liegt sie still (Ton: 1,55 s). */
+    const ruhe = 1560;
+    return lcAmPlatz(wen, "lc-muenzwurf", (schicht, platz) => {
+      const kreis = platz.querySelector(".lc-kreis");
+      if (!kreis) return;
+      const nm = lcPlatzSchluessel(platz);
+      const vorher = Boolean(nm && lcMuenzZahlListe[nm]);
+      const zahl = zurueck ? false : lcMuenzFaellt(los, nm);
+      const seite = lcMuenzSeite(platz, true);
+      if (seite) seite.classList.toggle("lc-mz-an", vorher);
+
+      /* Der Schatten auf dem Boden: klein und blass, wenn die Muenze
+         hoch oben ist, dunkel und breit, wenn sie aufliegt. */
+      schicht.innerHTML = '<span class="lc-muenzwurf-schatten"></span>';
+      const schatten = schicht.firstChild;
+
+      const rk = kreis.getBoundingClientRect();
+      const hoch = rk.height || 60;
+      /* So hoch, wie ueber dem Platz noch Karte ist — sonst fliegt sie
+         bei der oberen Reihe aus dem Klassenzimmer hinaus (gemessen:
+         bei 1,55 Bildhoehen lag sie ueber der Reiterleiste). Was an
+         Hoehe fehlt, macht die Naehe wett: sie kommt auf einen zu. */
+      const karteOben = ((document.getElementById("livechatKarte") || platz).getBoundingClientRect() || {}).top || 0;
+      const platzOben = Math.max(0, rk.top - karteOben - 6);
+      const H = Math.max(hoch * 0.35, Math.min(zurueck ? hoch * 0.9 : hoch * 1.55, platzOben));
+      const nahe = zurueck ? 0.12 : 0.12 + 0.25 * (1 - H / (hoch * 1.55));
+      const flug = LC_MW_LANDUNG;
+      const runden = zurueck ? 0 : 5;
+      const t0 = Math.PI * (vorher ? 1 : 0);
+      const tEnde = t0 + Math.PI * 2 * runden + ((zahl !== vorher) ? Math.PI : 0)
+        + (zurueck ? Math.PI * 2 : 0);
+
+      const altUebergang = kreis.style.transition;
+      const altZ = platz.style.zIndex;
+      kreis.style.transition = "none";
+      platz.style.zIndex = "40";
+      kreis.classList.add("lc-muenz-fliegt");
+
+      const start = performance.now();
+      let fertig = false;
+      const ende = () => {
+        if (fertig) return;
+        fertig = true;
+        kreis.style.transform = "";
+        kreis.style.transition = altUebergang;
+        platz.style.zIndex = altZ;
+        kreis.classList.remove("lc-muenz-fliegt");
+        if (nm) {
+          if (zahl) lcMuenzZahlListe[nm] = true; else delete lcMuenzZahlListe[nm];
+        }
+        lcMuenzSeite(platz, zahl);
+      };
+      const bild = () => {
+        if (fertig) return;
+        if (!kreis.isConnected) { ende(); return; }
+        const t = performance.now() - start;
+        let y = 0, winkel = tEnde, wippen = 1;
+        if (t < flug) {
+          const u = t / flug;
+          y = -H * 4 * u * (1 - u);
+          /* Schnell aus dem Daumen, gegen Ende etwas langsamer. */
+          const d = 1 - Math.pow(1 - u, 1.35);
+          winkel = t0 + (tEnde - t0) * d;
+        } else {
+          /* Die zwei kleinen Nachhopser, genau auf die Klicks im Ton. */
+          LC_MW_HOPS.forEach(([a, b, h]) => {
+            if (t >= a && t < b) {
+              const u = (t - a) / (b - a);
+              y = -hoch * h * 4 * u * (1 - u);
+              wippen = 1 - 0.22 * Math.sin(u * Math.PI);
+            }
+          });
+        }
+        const c = Math.cos(winkel);
+        /* Die Muenze ist flach — auf der Kante bleibt ein Hauch Rand. */
+        const sy = Math.max(0.07, Math.abs(c)) * wippen;
+        const naeher = 1 + nahe * Math.min(1, -y / (H || 1));
+        kreis.style.transform = "translateY(" + y.toFixed(1) + "px) scale(" + naeher.toFixed(3)
+          + "," + (sy * naeher).toFixed(3) + ")";
+        if (seite) seite.classList.toggle("lc-mz-an", c < 0);
+        if (schatten) {
+          const h = Math.min(1, -y / (H || 1));
+          schatten.style.transform = "translateX(-50%) scale(" + (1 - 0.55 * h).toFixed(3) + ")";
+          schatten.style.opacity = (0.55 - 0.4 * h).toFixed(3);
+        }
+        if (t >= ruhe) {
+          ende();
+          if (!zurueck) {
+            /* Was gefallen ist, kurz in Worten — dann weiss es jeder. */
+            const wort = document.createElement("span");
+            wort.className = "lc-muenzwurf-wort";
+            wort.textContent = zahl ? "Zahl!" : "Kopf!";
+            schicht.appendChild(wort);
+          }
+          return;
+        }
+        requestAnimationFrame(bild);
+      };
+      requestAnimationFrame(bild);
+      setTimeout(ende, ruhe + 400);
+    }, zurueck ? 2000 : 3600, "muenzwurf");
+  }
+
   /* --- DER SCHEIBENWISCHER --------------------------------------------
      GEWUENSCHT: „Vielleicht kannst du noch eine Animation machen, die
      Scheibenwischer-Effekt hat auf dem Profilbild, sodass man halt das
@@ -58138,7 +58365,7 @@
     neunschwanz: 1,
     bowling: 1, billard: 1, kopfhoerer: 1, luke: 1, platte: 1, ohrfeige: 1, lunte: 1,
     basketball: 1, tennis: 1, krumel: 1, zufall: 1,
-    licht: 1, muenze: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
+    licht: 1, muenze: 1, muenzwurf: 1, muenzkopf: 1, wischer: 1, zwille: 1, pusterohr: 1, gluehbirne: 1,
     vogelkot: 1, spucken: 1, sabbern: 1, waschmaschine: 1,
     birneraus: 1,
     entbloessung: 1, hut: 1, bombe: 1, streicheln: 1, wange: 1, kratzen: 1, kuss: 1, klaps: 1,
@@ -58410,6 +58637,16 @@
       if (art === "krumel" && (lcAufessen(wenZ) || lcKrumel(wenZ))) return;
       if (art === "licht" && lcLichtAus(wenZ)) return;
       if (art === "muenze" && lcMuenze(wenZ)) return;
+      /* RUNDE 101 — Kopf oder Zahl. Das Los reist mit, damit alle
+         dieselbe Seite sehen. Zurueckdrehen darf nur, wem die Muenze
+         gehoert: „bis man sie selber wiederum dreht". */
+      if (art === "muenzwurf" && lcMuenzwurf(wenZ, nachricht && nachricht.los)) return;
+      if (art === "muenzkopf") {
+        const werDreht = String((nachricht && nachricht.eigen)
+          ? ((LiveChat.lage() || {}).ichName || "") : ((nachricht && nachricht.name) || "")).trim().toLowerCase();
+        if (werDreht && werDreht === String(wenZ || "").trim().toLowerCase()) lcMuenzwurf(wenZ, "", true);
+        return;
+      }
       if (art === "wischer" && lcWischer(wenZ)) return;
       if (art === "zwille" && lcZwille(wenZ)) return;
       if (art === "pusterohr" && lcPusterohr(wenZ)) return;
@@ -61193,6 +61430,13 @@
              Der eigene Platz tut auf einen kurzen Tipp jetzt nichts.
              Wer sein Bild gross sehen will, haelt gedrueckt — dort
              steht es weiterhin. */
+          /* RUNDE 101 — AUSSER die Muenze liegt auf Zahl. XANDER: „bis
+             man sie selber wiederum dreht durch einen einfachen Klick
+             aufs Profilbild, um das zu resetten." */
+          if (p.ich && lcMuenzZeigtZahl(k)) {
+            try { LiveChat.schreiben("/muenzkopf mich"); } catch (e) {}
+            return;
+          }
           if (p.ich) return;
 
           /* Und der Platz eines anderen: tauschen. */

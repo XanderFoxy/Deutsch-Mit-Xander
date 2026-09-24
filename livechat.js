@@ -1181,6 +1181,11 @@ window.LiveChat = (function () {
        in app.js. */
     licht:      { wirkung: "licht",      satz: "macht das Licht aus bei", emoji: "\ud83c\udf1a" },
     muenze:     { wirkung: "muenze",     satz: "dreht wie eine M\u00fcnze", emoji: "\ud83e\ude99" },
+    /* RUNDE 101 — Kopf oder Zahl. Was gefallen ist, steht NICHT im
+       Satz: das sieht man am Bild (und das Los reist mit). */
+    muenzwurf:  { wirkung: "muenzwurf",  satz: "wirft eine M\u00fcnze f\u00fcr", emoji: "\ud83e\ude99" },
+    kopfzahl:   { wirkung: "muenzwurf",  satz: "wirft eine M\u00fcnze f\u00fcr", emoji: "\ud83e\ude99" },
+    muenzkopf:  { wirkung: "muenzkopf",  satz: "dreht die M\u00fcnze zur\u00fcck auf Kopf bei", emoji: "\ud83e\ude99" },
     wischer:    { wirkung: "wischer",    satz: "putzt mit dem Scheibenwischer", emoji: "\ud83e\uddfd" },
     zwille:     { wirkung: "zwille",     satz: "schiesst mit der Zwille auf", emoji: "\ud83e\ude83" },
     pusterohr:  { wirkung: "pusterohr",  satz: "trifft mit dem Pusterohr", emoji: "\ud83e\udd64" },
@@ -10044,6 +10049,8 @@ window.LiveChat = (function () {
        hier — und pruefe-effekttueren achtet ab sofort darauf. */
     { gr: "reden", w: "licht", kurz: "aus",     nutzt: "/licht Name",     was: "Licht aus \u2014 es flackert, summt und wird dunkel" },
     { gr: "reden", w: "muenze", kurz: "dreh",   nutzt: "/muenze Name",    was: "M\u00fcnze \u2014 das Bild kreiselt und faellt flach hin" },
+    { gr: "reden", w: "muenzkopf", nutzt: "/muenzkopf mich", was: "M\u00fcnze zur\u00fcck auf Kopf \u2014 geht auch mit einem Tipp aufs eigene Bild" },
+    { gr: "reden", w: "muenzwurf", kurz: "kopfzahl", nutzt: "/muenzwurf Name", was: "M\u00fcnzwurf \u2014 Kopf oder Zahl; die Zahl bleibt, bis man selbst auf sein Bild tippt" },
     { gr: "reden", w: "wischer", kurz: "wisch", nutzt: "/wischer Name",   was: "Scheibenwischer \u2014 erst dreckig, dann sauber gewischt" },
     { gr: "reden", w: "zwille", kurz: "zwick",  nutzt: "/zwille Name",    was: "Zwille \u2014 mit dem Gummiband abgeschossen, das tut weh" },
     { gr: "reden", w: "pusterohr", kurz: "puste", nutzt: "/pusterohr Name", was: "Pusterohr \u2014 die Papierkugel klatscht an die Wange" },
