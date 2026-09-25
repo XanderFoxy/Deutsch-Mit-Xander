@@ -1366,6 +1366,3 @@ body.sp-wwahl-offen .sp-meldung { opacity: 0; }
 .sp-schnell .sp-rad-zauber small.sp-zr-kosten { background: #2a78c8; color: #fff; }
 .sp-rad-sektoren text.sp-zr-mana { font-size: 12px; text-transform: none; letter-spacing: 0; }
 .sp-rad-sektoren text.sp-zr-erkl { font-size: 9px; font-weight: 600; text-transform: none; letter-spacing: 0; }
-/* FASSUNG 680 — verstärkte Waffen: Sterne am Namen. */
-.sp-sterne { color: #d9a400; letter-spacing: -1px; }
-.sp-panel .sp-verstaerken { background: #eef3fb; color: #2b3a55; }

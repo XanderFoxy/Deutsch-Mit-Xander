@@ -694,3 +694,11 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
   - Neu: ▾ legt das Fenster ab; in der Schnellleiste liegt dann ein Griff, der es im selben Reiter wieder öffnet. Ein Tipp neben das Fenster legt ebenfalls ab; ✕ schließt ganz. Der Fundstück-Knopf legt ab und zeigt das Säckchen.
 - Scheibenwischer gegen Chat-Dreck gibt es seit Funk 84 (`dreckAbwehren`); aufrüstbar und haltbarere Waffen stehen auf der Liste.
 - Sonden: `pruefe-679-spielsitz.js` (10 Prüfungen); 673 auf das erste Layout + Ablegen angepasst. Alle Spiel-Sonden grün.
+
+## Fassung 680 — Waffen verstärken, Scheibenwischer aufrüsten
+
+- XANDER: „diese Scheibenwischer die man sich kauft im Spiel die soll natürlich auch für den Chat dann funktionieren … und sowas immer upgraden kann ja wie lange das hält und genau auch wie lange die Lebensdauer der Waffen hält, dass man die stabiler bauen kann, dass man die anders fertigen kann oder dass die Zusatzfunktionen bekommen".
+- Waffen (Reiter Waffen, bei jeder gekauften, abnutzbaren Waffe): „Verstärken ★" (30 P + 2 Erz) → hält 100 statt 60 Treffer; „★★" (60 P + 4 Erz) → 140 Treffer und geschliffen: +10 % Schaden. Reparatur (Laden) und Schärfen (Werkstatt) füllen bis zur eigenen Haltbarkeit auf. Verkaufen rechnet weiter mit höchstens 60.
+- Scheibenwischer (Schutz → Werkstatt): wischt Dreck im Chat automatisch weg (seit Funk 84). Stufe 2 (40 P + 1 Erz) spart bei 30 % der Wischer die Ladung, Stufe 3 (80 P + 2 Erz) bei 60 %; jedes Aufrüsten gibt 2 Ladungen.
+- Server: Migration `spiel_680_veredeln_waffen_wischer` – Spalten `waffen_stufe`, `wischer_stufe`, `spiel_halt_max`, `spiel_veredeln`; `spiel_wischer`, `spiel_treffer`, `spiel_kaufen` (Reparatur), `spiel_schmieden` (Schärfen), `spiel_ich` angepasst. Im Rollback geprüft: ★ → ★★ → „schon ganz verstärkt", Reparatur bis 140, Wischer Stufe 3 sparte 22 von 40, Treffer mit ★★-Bazooka läuft (Haltbarkeit 140 → 139).
+- Sonde: `pruefe-680-verstaerken.js` (7 Prüfungen). Alle Spiel-Sonden grün (656/658/667 wackeln nur unter Last).

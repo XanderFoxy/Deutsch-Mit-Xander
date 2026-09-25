@@ -174,13 +174,7 @@
   /* FASSUNG 640 — gekaufte Waffen nutzen sich ab (60 Treffer). */
   var HALTBAR = ["armbrust", "tomahawk", "zielfernrohr", "bazooka", "eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "mg", "lasersalve",
     "weisswurst", "nudelholz", "kuckucksuhr", "doppellaser", "streulaser", "plasmastrahl", "kugelblitz"];
-  /* FASSUNG 680 — XANDER: „wie lange die Lebensdauer der Waffen hält, dass
-     man die stabiler bauen kann, dass man die anders fertigen kann oder
-     dass die Zusatzfunktionen bekommen". Verstärkt hält eine Waffe 100
-     (★) bzw. 140 Treffer (★★); ★★ ist dazu geschliffen: +10 % Schaden. */
-  function waffenStufe(ich, w) { return Math.min(2, Math.max(0, Number(((ich || {}).waffen_stufe || {})[w]) || 0)); }
-  function haltMax(ich, w) { return 60 + 40 * waffenStufe(ich, w); }
-  function haltVon(ich, w) { if (HALTBAR.indexOf(w) < 0) return -1; var h = ((ich || {}).waffen_halt || {})[w]; return h == null ? haltMax(ich, w) : Number(h); }
+  function haltVon(ich, w) { if (HALTBAR.indexOf(w) < 0) return -1; var h = ((ich || {}).waffen_halt || {})[w]; return h == null ? 60 : Number(h); }
   function reparaturNoetig(ich) { return ((ich || {}).waffen || []).some(function (w) { var h = haltVon(ich, w); return h >= 0 && h <= 15; }); }
   /* FASSUNG 648 — Aufgabenarten. [kategorie, Name, erst freigeben?] */
   var ARTEN_KNOEPFE = [["", "Alles"], ["artikel", "Artikel"], ["richtig-falsch", "Stimmt's?", true], ["faelle", "Fälle"],
@@ -1144,7 +1138,7 @@
         trefferZeigen(p.id, n);
         gegenwehrZeigen(p.id, ichChat, n);
         if (erg.stumpf) hinweis("🔧 " + ((WAFFEN[waffe] || {}).name || "Die Waffe") + " ist stumpf – halber Schaden. Reparieren: Schraubenschlüssel in der Leiste.");
-        if (S.ich && HALTBAR.indexOf(waffe) >= 0 && !erg.stumpf) { var wh = Object.assign({}, S.ich.waffen_halt || {}); wh[waffe] = Math.max(0, (wh[waffe] == null ? haltMax(S.ich, waffe) : wh[waffe]) - 1); S.ich.waffen_halt = wh; }
+        if (S.ich && HALTBAR.indexOf(waffe) >= 0 && !erg.stumpf) { var wh = Object.assign({}, S.ich.waffen_halt || {}); wh[waffe] = Math.max(0, (wh[waffe] == null ? 60 : wh[waffe]) - 1); S.ich.waffen_halt = wh; }
         if (erg.lohn > 0) hinweis("🪙 +" + erg.lohn + " Punkte fürs Treffen" + (erg.kaputt ? " – " + (p.name || "") + " ist kaputt!" : ""));
         if (WAFFEN[waffe] && WAFFEN[waffe].vorrat && S.ich) {
           var vr = Object.assign({}, S.ich.vorraete || {}); vr[waffe] = Math.max(0, (Number(vr[waffe]) || 0) - 1); S.ich.vorraete = vr;
@@ -2851,7 +2845,7 @@
   function waffenKnopf(w, extra) {
     var ich = S.ich || {}, hw = haltVon(ich, w), vr = WAFFEN[w] && WAFFEN[w].vorrat ? vorrat(ich, w) : -1;
     return '<button type="button" class="sp-s-waffe' + (S.waffe === w ? " sp-an" : "") + (hw === 0 ? " sp-stumpf" : "") + (extra || "") + '" data-s="waffe" data-w="' + w + '" title="'
-      + esc(WAFFEN[w].name) + " · Schaden " + WAFFEN[w].schaden + (hw >= 0 ? " · hält " + hw + "/" + haltMax(ich, w) : "") + (vr >= 0 ? " · noch " + vr : "") + '">'
+      + esc(WAFFEN[w].name) + " · Schaden " + WAFFEN[w].schaden + (hw >= 0 ? " · hält " + hw + "/60" : "") + (vr >= 0 ? " · noch " + vr : "") + '">'
       + geschossSvg(w, S.laserfarbe) + (vr >= 0 ? "<small>" + vr + "</small>" : "") + "</button>";
   }
   function schnellGesperrt() {
@@ -4765,13 +4759,9 @@
       var liste = WAFFEN_REIHE.map(function (k) {
         var w = WAFFEN[k], hat = (ich.waffen || []).indexOf(k) >= 0;
         var h = hat ? haltVon(ich, k) : -1;
-        var st = hat ? waffenStufe(ich, k) : 0;
-        var verst = hat && h >= 0 && st < 2 ? '<button type="button" class="sp-verstaerken" data-tu="veredeln" data-d="' + k + '"'
-          + ((ich.punkte || 0) >= 30 * (st + 1) && vorrat(ich, "erz") >= 2 * (st + 1) ? "" : " disabled")
-          + ' title="' + (st ? "140 Treffer und geschliffen: +10 % Schaden" : "hält 100 statt 60 Treffer") + '">Verstärken ' + (st ? "★★" : "★") + " · " + 30 * (st + 1) + " P + " + 2 * (st + 1) + " Erz</button>" : "";
-        return '<div class="sp-zeile"><span class="sp-bild">' + geschossSvg(k, S.laserfarbe) + "</span><span><b>" + esc(w.name) + (st ? ' <span class="sp-sterne">' + (st >= 2 ? "★★" : "★") + "</span>" : "") + "</b><br><small>Schaden " + w.schaden + (st >= 2 ? " +10 %" : "") + (k === "zielfernrohr" ? ", langsam" : "") + (w.art ? " · " + esc(w.art) : "")
-          + (h >= 0 ? " · " + (h > 0 ? "hält noch " + h + "/" + haltMax(ich, k) : '<span class="sp-rot">stumpf – halber Schaden</span>') : "") + "</small></span>"
-          + (hat ? '<span class="sp-knopfgruppe">' + (S.waffe === k ? '<button type="button" data-tu="ablegen">Ablegen</button>' : '<button type="button" data-tu="anlegen" data-w="' + k + '">Anlegen</button>') + verst
+        return '<div class="sp-zeile"><span class="sp-bild">' + geschossSvg(k, S.laserfarbe) + "</span><span><b>" + esc(w.name) + "</b><br><small>Schaden " + w.schaden + (k === "zielfernrohr" ? ", langsam" : "") + (w.art ? " · " + esc(w.art) : "")
+          + (h >= 0 ? " · " + (h > 0 ? "hält noch " + h + "/60" : '<span class="sp-rot">stumpf – halber Schaden</span>') : "") + "</small></span>"
+          + (hat ? '<span class="sp-knopfgruppe">' + (S.waffe === k ? '<button type="button" data-tu="ablegen">Ablegen</button>' : '<button type="button" data-tu="anlegen" data-w="' + k + '">Anlegen</button>')
                    + (STARTWAFFEN.indexOf(k) < 0 ? verkaufKnopf(k, Math.max(5, Math.round(w.preis * 0.5 * (h < 0 ? 60 : Math.min(60, h)) / 60))) : "") + "</span>"
                  : w.ab && (ich.level || 1) < w.ab ? '<button type="button" disabled>ab Level ' + w.ab + "</button>"
                  : '<button type="button" data-tu="kaufen" data-d="' + k + '">🔒 ' + w.preis + " Punkte</button>")
@@ -4870,21 +4860,9 @@
     return '<div class="sp-zeile sp-werkstatt"><span><b>Werkstatt</b> · ' + erz + " Erz<br><small>Erz findest du beim Graben (Menü → Mehr → Graben).</small></span>"
       + '<span class="sp-knopfgruppe">'
       + '<button type="button" data-tu="schmieden" data-w="pflaster"' + (erz >= 1 ? "" : " disabled") + ">Pflaster · 1 Erz</button>"
-      + '<button type="button" data-tu="schmieden" data-w="schaerfen"' + (erz >= 2 && (ich.waffen || []).some(function (w) { var h = haltVon(ich, w); return h >= 0 && h < haltMax(ich, w); }) ? "" : " disabled") + ' title="alle Waffen wieder scharf">Schärfen · 2 Erz</button>'
+      + '<button type="button" data-tu="schmieden" data-w="schaerfen"' + (erz >= 2 && (ich.waffen || []).some(function (w) { var h = haltVon(ich, w); return h >= 0 && h < 60; }) ? "" : " disabled") + ' title="alle Waffen wieder scharf">Schärfen · 2 Erz</button>'
       + '<button type="button" data-tu="schmieden" data-w="munition"' + (erz >= 3 && (ich.geschuetz_ladungen > 0 || ich.geschuetz_stufe > 1) ? "" : " disabled") + ' title="Turm voll laden">Turm laden · 3 Erz</button>'
-      + "</span></div>" + wischerZeile(ich);
-  }
-  /* FASSUNG 680 — XANDER: „diese Scheibenwischer … soll natürlich auch für
-     den Chat dann funktionieren … und sowas immer upgraden kann ja wie
-     lange das hält". Der Wischer wischt Dreck im Chat von selbst weg
-     (seit Funk 84). Stufe 2 spart bei 30 % der Wischer die Ladung,
-     Stufe 3 bei 60 %. Aufrüsten gibt dazu 2 Ladungen. */
-  function wischerZeile(ich) {
-    var st = Math.max(1, Number(ich.wischer_stufe) || 1), n = ich.wischer || 0, kp = 40 * st, ke = st;
-    return '<div class="sp-zeile sp-werkstatt"><span><b>Scheibenwischer</b> · Stufe ' + st + " · " + n + " Ladungen<br><small>wischt Dreck im Chat automatisch weg"
-      + (st >= 2 ? " · spart " + (st >= 3 ? "60" : "30") + " % der Ladungen" : "") + (st < 3 ? " · Stufe " + (st + 1) + ": spart " + (st + 1 >= 3 ? "60" : "30") + " %" : "") + "</small></span>"
-      + (st < 3 ? '<button type="button" data-tu="veredeln" data-d="wischer"' + ((ich.punkte || 0) >= kp && vorrat(ich, "erz") >= ke ? "" : " disabled") + ">Aufrüsten · " + kp + " P + " + ke + " Erz</button>" : "<small>höchste Stufe</small>")
-      + "</div>";
+      + "</span></div>";
   }
 
   /* XANDER: „Geschütz … aufwerten können wie bei einem Tower … reparieren".
@@ -4956,17 +4934,6 @@
     if (tu === "mission") return missionHolen();
     if (tu === "graben") { schliessen(); grabenUmschalten(); return; }
     if (tu === "schmieden") return schmieden(k.dataset.w);
-    if (tu === "veredeln") {
-      rpc("spiel_veredeln", { p_ding: k.dataset.d }).then(function (r) {
-        if (!r || r.ok === false) { hinweis("🔨 " + ((r && r.grund) || "Das ging nicht.")); return; }
-        S.ich = r; S.stand[r.id] = oeffentlich(r);
-        ton("hammerschlag", 0.5);
-        hinweis(r.ding === "wischer" ? "🧽 Scheibenwischer Stufe " + r.stufe + ": spart jetzt " + (r.stufe >= 3 ? "60" : "30") + " % der Ladungen (+2 Ladungen)."
-          : "🔨 " + ((WAFFEN[r.ding] || {}).name || r.ding) + " verstärkt " + (r.stufe >= 2 ? "★★ – hält 140 Treffer und ist geschliffen (+10 % Schaden)." : "★ – hält jetzt 100 Treffer."));
-        panelAuffrischen(); schnellZeichnen();
-      }).catch(function () { hinweis("🔨 Das ging gerade nicht."); });
-      return;
-    }
     if (tu === "trinken") return trinken(k.dataset.t);
     if (tu === "trainieren") return trainieren(k.dataset.k);
     if (tu === "essen") return essen(k.dataset.d);
