@@ -143,6 +143,10 @@ const sage = (gut, was, zusatz) => {
   console.log("\nDIE MAUER VERDECKT NICHTS MEHR\n");
   const mauer = await pg.evaluate(() => {
     const el = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]');
+    /* Ab Fassung 687 liegt die Seite ein paar Pixel anders (neue Knopfleiste) –
+       der Messpunkt muss im Bild sein, sonst liefert elementFromPoint nichts. */
+    const vorher = window.scrollY, altVerhalten = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = "auto"; el.scrollIntoView({ block: "center" });
     const k = el.querySelector(".lc-kreis").getBoundingClientRect();
     const m = el.querySelector(".sp-mauer"), lp = el.querySelector(".sp-lp"), t = el.querySelector(".sp-tier");
     const z = (e) => Number(getComputedStyle(e).zIndex);
@@ -160,6 +164,7 @@ const sage = (gut, was, zusatz) => {
        (Radius ≥ 50,5 von 50): gemessen wird die Oberkante der Zeichnung. */
     const sv = m.querySelector("svg"), bb = sv.getBBox(), sr = sv.getBoundingClientRect();
     const mr = { top: sr.top + bb.y * sr.height / 100 };
+    window.scrollTo(0, vorher); document.documentElement.style.scrollBehavior = altVerhalten;
     return { zMauer: z(m), zRing: z(lp), zTier: z(t), ringOben: Boolean(oben && lp.contains(oben)), getroffen: oben ? oben.tagName + "." + (oben.getAttribute("class") || "") : "",
              mauerOben: Math.round((mr.top - k.top) / k.height * 100) };
   });

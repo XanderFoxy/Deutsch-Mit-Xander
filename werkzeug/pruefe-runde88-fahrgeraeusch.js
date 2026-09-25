@@ -58,7 +58,8 @@ const rms = (x, ab, bis) => {
   const js = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
   sage(/fahren: *\{ ton: "fahrt", *dauer: 2600, schleife: true/.test(js),
     "„fahren\" laeuft in der Schleife — sonst hoert der Motor nach einer Datei auf");
-  sage(/lcTonReise\("fahren", hin\);/.test(js),
+  /* Ab Fassung 685 fahren Hot Rod und Monstertruck mit eigenem Ton: lcTonReise(fahrzeug || "fahren", hin). */
+  sage(/lcTonReise\((fahrzeug \|\| )?"fahren", hin\);/.test(js),
     "und die Dauer wird auf die wirkliche Fahrzeit gestreckt");
   sage(/lcTonSpaeter\("quietschen", Math\.max\(0, hin - 700\), 0\.55\);/.test(js),
     "die Bremse kommt 700 ms VOR der Ankunft, nicht danach");

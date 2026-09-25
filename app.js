@@ -31885,8 +31885,9 @@
     /* RUNDE 101 — XANDER: „eine Waschmaschine als Profilbild Effekt wo
        der andere richtig durchgewirbelt wird". */
     ["\ud83e\udee7", "Waschmaschine", "waschmaschine"],
-    /* FASSUNG 685 — FUNK 84: „eine andere Person noch wie ein Feuerwerk anzünden". */
-    ["\ud83c\udf86", "Als Rakete z\u00fcnden", "zuenden"],
+    /* FASSUNG 685 — FUNK 84: „eine andere Person noch wie ein Feuerwerk anzünden".
+       Ab 687 unter der Bombe (Knallkörper zusammen) – als eigene Kachel war das
+       Platzmenü eine Reihe zu lang und musste gerollt werden. */
     /* RUNDE 101 — XANDER (Funk #18): „jemand mit seinen Händen … von sich
        weg schieben … falls einem jemand zu nah kommt". Stand erst unter
        „Holen" — das ist aber das Gegenteil davon. */
@@ -31913,7 +31914,8 @@
        ["\ud83e\uddf5", "Lunte",       "lunte"],
        /* RUNDE 80 — XANDER: „unter der Kategorie Bombe kannst du auch
           noch ne Granate machen." */
-       ["\ud83e\uddaf", "Granate",     "granate"]]],
+       ["\ud83e\uddaf", "Granate",     "granate"],
+       ["\ud83c\udf86", "Als Rakete z\u00fcnden", "zuenden"]]],
     /* RUNDE 98 — XANDER: „ich moechte, dass ein Profileffekt dabei
        ist, dass ich jemanden zur aufbluehenden Blume machen kann oder
        dass ich ueber eine Leiter von unten nach oben klettern kann
@@ -33810,7 +33812,7 @@
      dort. Stuende sie erst hier, waere sie zu diesem Zeitpunkt noch
      nicht angelegt und das ganze Klassenzimmer bliebe schwarz.) */
 
-  function lcMenueSchliessen(kasten) {
+  function lcMenueSchliessen(kasten, ruheMs) {
     /* NACHGEBESSERT — und es war ein echter Fehler, kein Messfehler:
        die Zuhoerer werden mit einem Aufschub (setTimeout 0) ans
        Dokument gehaengt, damit nicht derselbe Fingerdruck, der das
@@ -33877,7 +33879,10 @@
          Menue sich selbst noch zurechtrueckt. */
       if (e && e.type === "scroll") {
         const jetzt = Date.now();
-        if (jetzt - auf < 300) return;
+        /* FASSUNG 687 — die Knöpfe unter den Plätzen: nach dem Tipp richtet sich das
+           Klassenzimmer noch aus (die Seite rollt bis ~600 ms nach). Das Magic-Menü
+           ging dabei sofort wieder zu. Es bekommt deshalb eine längere Ruhezeit. */
+        if (jetzt - auf < (ruheMs || 300)) return;
         if (jetzt - lcLetzteGeste > 700) return;
       }
       abhaengen();
@@ -54588,7 +54593,9 @@
     }
     document.body.appendChild(kasten);
     lcMenueStellen(kasten, knopf);
-    lcMenueSchliessen(kasten);
+    lcMenueSchliessen(kasten, 1400);
+    /* Nach dem Ausrichten der Seite wieder genau an den Knopf rücken. */
+    [350, 800].forEach((ms) => setTimeout(() => { if (kasten.isConnected) lcMenueStellen(kasten, knopf); }, ms));
     return kasten;
   }
   function lcMagicSpiele(knopf) {
@@ -54613,7 +54620,7 @@
     document.body.appendChild(kasten);
     lcMiniBilderSetzen(kasten);
     lcMenueStellen(kasten, knopf);
-    lcMenueSchliessen(kasten);
+    lcMenueSchliessen(kasten, 1400);
   }
   function lcMagicAusloesen(knopf) {
     const a = lcMagicArt();

@@ -37,7 +37,7 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   let fehler = 0;
   const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  ok   " : "  FEHL ") + was + (zusatz ? "   " + zusatz : "")); };
   const tick = (ms) => pg.waitForTimeout(ms);
-  const tippe = async (sel) => { const m = await pg.evaluate((s) => { const e = document.querySelector(s); if (!e) return null; e.scrollIntoView({ block: "center" }); const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(300); return true; };
+  const tippe = async (sel) => { const m = await pg.evaluate((s) => { const e = document.querySelector(s); if (!e) return null; document.documentElement.style.scrollBehavior = "auto"; e.scrollIntoView({ block: "center" }); const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(300); return true; };
   const B = process.env.BILD;
   await tick(500);
 
@@ -57,7 +57,11 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
 
   console.log("\nMAGIC BUTTON FÜR SCHÜLER\n");
   await pg.evaluate(() => { Backend.isOwner = () => false; window.DMA_MAGIC.zeichnen(); window.__zeilen = []; const alt = LiveChat.schreiben; LiveChat.schreiben = (z) => { window.__zeilen.push(z); }; window.__altSchreiben = alt; });
+  if (process.env.DBG) console.log(await pg.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; const e = document.querySelector('[data-lc="magic"]'); e.scrollIntoView({ block: "center" }); const r = e.getBoundingClientRect(); const h = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return JSON.stringify({ r: [r.left, r.top, r.width], hit: h && (h.id || h.className && String(h.className.baseVal != null ? h.className.baseVal : h.className)), tag: h && h.tagName, in: Boolean(h && e.contains(h)) }); }));
+  if (process.env.DBG) await pg.evaluate(() => { window.__mo = []; const t0 = performance.now(); new MutationObserver((ls) => ls.forEach((l) => { l.addedNodes.forEach((n) => { if (n.id === "lcPlatzMenue") window.__mo.push("+" + Math.round(performance.now() - t0)); }); l.removedNodes.forEach((n) => { if (n.id === "lcPlatzMenue") window.__mo.push("-" + Math.round(performance.now() - t0) + new Error().stack.split("\n").slice(1, 4).join("|")); }); })).observe(document.body, { childList: true });
+    ["pointerdown", "pointerup", "click", "touchstart", "touchend", "scroll"].forEach((ev) => document.addEventListener(ev, (e) => window.__mo.push(ev + "@" + Math.round(performance.now() - t0) + ":" + (e.target && e.target.tagName)), true)); });
   await tippe('[data-lc="magic"]'); await tick(300);
+  if (process.env.DBG) console.log(await pg.evaluate(() => window.__mo.join(" ")));
   const m1 = await pg.evaluate(() => { const k = document.getElementById("lcPlatzMenue"); const r = k && k.getBoundingClientRect();
     return { da: Boolean(k), woerter: k ? [...k.querySelectorAll(".lc-platzmenue-wort")].map((w) => w.textContent).join(",") : "", imBild: r ? r.left >= 0 && r.right <= innerWidth && r.top >= 0 : false }; });
   if (B) await pg.screenshot({ path: B + "-magic-schueler.png" });

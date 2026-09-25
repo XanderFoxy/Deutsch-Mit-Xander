@@ -237,7 +237,8 @@ function tonDauer(name) {
     "schritt " + tonDauer("schritt").toFixed(2) + " s");
   sage(/spielzug:       \{ ton: "schritt"/.test(js),
     "und das Laufen benutzt es — nicht mehr den Comic-Boing");
-  sage(/lcTonReise\("fahren", hin\);/.test(js),
+  /* Ab Fassung 685 fahren Hot Rod und Monstertruck mit eigenem Ton: lcTonReise(fahrzeug || "fahren", hin). */
+  sage(/lcTonReise\((fahrzeug \|\| )?"fahren", hin\);/.test(js),
     "das Fahrgeraeusch dauert so lange wie die Fahrt");
   sage(/lcGeraeusch\("slot", "lotto", 0\.55\);/.test(js)
     && /lcTonSpaeter\("bling", wann,/.test(js),
