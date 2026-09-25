@@ -49,34 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 680: Waffen verstärken, Scheibenwischer aufrüsten",
+  stand: "Fassung 681: Siegeslohn",
 
   inArbeit: [
-    { seit: "2026-09-25T19:56",
+    { seit: "2026-09-25T20:07",
       text: "Spielwaffen als Scherz im Chat (groß sichtbar, ohne Platztausch, ohne Punkte, Haupt-/Zweitwaffe)" },
-    { seit: "2026-09-25T19:56",
+    { seit: "2026-09-25T20:07",
       text: "Tiere im Chat: reagieren auf Würfe, lecken Sahne, süß beim Streicheln, spielen in der Pause" },
-    { seit: "2026-09-25T19:56",
+    { seit: "2026-09-25T20:07",
       text: "Mauer als Schutz vor Chat-Effekten" },
-    { seit: "2026-09-25T19:56",
-      text: "Kampfsieg belohnen (maßvoll)" },
-    { seit: "2026-09-25T19:56",
+    { seit: "2026-09-25T20:07",
       text: "Handel unter Spielern: Getreide schenken/verkaufen, Kunden, Beliebtheit, Dünger (Vorbild Anno)" },
-    { seit: "2026-09-25T19:56",
+    { seit: "2026-09-25T20:07",
       text: "Latenz weiter senken" },
-    { seit: "2026-09-25T19:56",
+    { seit: "2026-09-25T20:07",
       text: "Funk 84/85 Rest: Mario-Röhren, Lok-Schranke, Hot-Rod-Weg, Feuerwerk, Monstertruck, Einzug, Knöpfe" },
-    { seit: "2026-09-25T19:56",
+    { seit: "2026-09-25T20:07",
       text: "Rückfrage #256 und Sprechbilder warten auf Xanders Antwort" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T19:56",
-      text: "Waffen verstärken: ★ hält 100 Treffer, ★★ hält 140 und macht +10 % Schaden" },
-    { seit: "2026-09-25T19:56",
-      text: "Scheibenwischer aufrüsten: Stufe 2 spart 30 %, Stufe 3 spart 60 % der Ladungen" },
-    { seit: "2026-09-25T19:56",
-      text: "Eigene Sitzordnung im Spiel, Menü wie zuerst mit Ablegen (Fassung 679)" },
+    { seit: "2026-09-25T20:07",
+      text: "Sieg im Kampf: K.o. +10 Erfahrung, Duellsieg +25 – dazu Punkte, die im Ranking zählen (höchstens 30 am Tag)" },
+    { seit: "2026-09-25T20:07",
+      text: "Waffen verstärken und Scheibenwischer aufrüsten (Fassung 680)" },
   ],
 };
