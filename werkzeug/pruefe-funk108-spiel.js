@@ -129,9 +129,11 @@ const sage = (gut, was, zusatz) => {
       const t = document.querySelector(".sp-tier-sprung.sp-tier-" + tier);
       let abstand = -1;
       if (t) {
-        /* Das Tier sitzt in seiner Zeichnung bei 84 | 84 von 100. */
+        /* Das Tier sitzt in seiner Zeichnung bei 84 | 84 von 100 — der
+           Drache fliegt seit Fassung 638 und sitzt bei 90 | 12. */
         const r = t.getBoundingClientRect();
-        const tx = r.left + r.width * 0.84, ty = r.top + r.height * 0.84;
+        const ax = tier === "drache" ? 0.9 : 0.84, ay = tier === "drache" ? 0.12 : 0.84;
+        const tx = r.left + r.width * ax, ty = r.top + r.height * ay;
         abstand = Math.hypot(tx - ziel.x, ty - ziel.y) / (ichK.width / 2);
       }
       const spur = Boolean(document.querySelector("." + zeichen));

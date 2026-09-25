@@ -197,3 +197,24 @@ Lebenspunkte, Punkte, Inventar und Treffer liegen in der Datenbank. Schreiben da
 - **Das Herz isst zuerst,** wenn wenig fehlt: bis 15 LP eine Bratwurst, bis 10 LP Sauerkraut. Bei mehr nimmt es wie bisher Pflaster oder Heiltrank.
 - **Töne** (ElevenLabs): brezelknack, krugklirr, wurstklatsch, krautmatsch, spaetzlesalve, mampf. Für die Tiere in der nächsten Fassung schon da: chihuahuaknurr, bisszerren.
 - **Sonde:** `werkzeug/pruefe-637-deutsche-waffen.js`. Der Server ist mit einem Probelauf geprüft, der sich selbst zurückrollt.
+
+### Fassung 638 (Xander, 25.09.)
+- **Zwei Tierplätze.**
+  - Am Boden: Fellmonster (120), Stachelmonster (160), Chihuahua (100, neu).
+  - In der Luft: Babydrache (250, neu gezeichnet: großer Kopf, Kulleraugen, rosa Bäckchen, schlagende Flügel) und Eule (150, neu).
+  - Das Flugtier schwebt rechts oben neben dem Bild, das Bodentier sitzt rechts unten.
+  - Wer vorher einen Drachen hatte, hat ihn jetzt auf dem Luft-Platz.
+- **Tiere sterben nicht mehr.** Jede Abwehr kostet 1 Kraft. Bei 0 Kraft ist das Tier schwach (blass, wehrt nicht ab), bleibt aber.
+  - Füttern (`spiel_fuettern`): Bratwurst +12, Sauerkraut +8, nie über voll.
+  - Höchste Kraft: 30 (Stachelmonster 35, Drache 25), dazu +10 je Stufe.
+- **Aufwerten** bis Stufe 3 für 60 × Stufe Punkte: +15 % Gegenwehr je Stufe. Ab Stufe 2 kommt eine zweite Fähigkeit dazu:
+  - Fellmonster kuschelt sein Herrchen (+3 LP)
+  - Stachelmonster fängt 1/3 statt 1/5 ab
+  - Chihuahua lässt nicht los (+2)
+  - Babydrache glüht nach (+2)
+  - Eule warnt (1/10 weniger Schaden)
+- **Gegenwehr:** Chihuahua 25 % (2–9), Eule 25 % (2–8), sonst wie bisher. Beide Tiere wehren ab, zusammen mit dem Geschütz höchstens 4/5 dessen, was der Angreifer anrichtet.
+- **Biss mit Festbeißen und Zerren.** Der Chihuahua springt zum Angreifer, knurrt (chihuahuaknurr), beißt sich unten am Bild fest und zerrt fünfmal hin und her (bisszerren). Das Bild des Angreifers ruckt mit, und es bleibt ein Bissmal.
+- **Flugtiere** holen oben Schwung und stoßen von oben ans Gesicht.
+- **Neuer Reiter „Tiere“:** beide Plätze mit Kraftbalken, Füttern, Aufwerten, Holen und Tauschen.
+- **Sonde:** `werkzeug/pruefe-638-tiere.js`. Der Server ist mit einem Probelauf geprüft, der sich selbst zurückrollt. In `pruefe-funk108-spiel.js` wird der Drache jetzt an seinem neuen Platz gemessen.

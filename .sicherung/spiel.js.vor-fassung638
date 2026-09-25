@@ -68,6 +68,9 @@
        aber … schon eine ganze Weile"). Gerechnet in spiel_treffer. */
     { ding: "geschuetz",   name: "Geschütz",        preis: 60,  was: "12 Schuss: schießt automatisch die Hälfte des Schadens zurück" },
     { ding: "geschuetz_stufe", name: "Geschütz aufrüsten", preis: 70, was: "Stufe 2: 70 %, Stufe 3: 90 % zurück (höchstens 4/5 dessen, was der Angreifer anrichtet)" },
+    { ding: "fellmonster", name: "Fellmonster",     preis: 120, was: "beißt den Angreifer (30 % zurück), hält 30 Angriffe" },
+    { ding: "stachelmonster", name: "Stachelmonster", preis: 160, was: "fängt 1/5 jedes Treffers ab und sticht (20 % zurück), hält 35 Angriffe" },
+    { ding: "drache",      name: "Kleiner Drache",  preis: 250, was: "faucht Feuer (50 % zurück), hält 25 Angriffe" },
     /* FUNK 106 — XANDER: „Zaubertränke die etwas Besonderes verursachen z.B
        eine superstärke oder irgendwie eine Zielgenauigkeit … oder
        Geschwindigkeit". Kaufen mit Punkten, trinken kostet 30 Mana,
@@ -89,15 +92,9 @@
   var TRAENKE = [["kraft", "Kraftelixier", "trank_kraft"], ["ziel", "Zielwasser", "trank_ziel"], ["tempo", "Blitztrank", "trank_tempo"],
                  ["mana", "Manatrank", "trank_mana"], ["eisen", "Eisenhaut", "trank_eisen"], ["tarn", "Tarntrank", "trank_tarn"]];
   var TIERE = {
-    fellmonster:    { name: "Fellmonster",    ton: "monsterbiss", preis: 120, was: "beißt 30 % zurück · Stufe 2: kuschelt dich (+3 LP)" },
-    /* FASSUNG 638 — XANDER: „richtig beißen … fest beißen und … zerren …
-       Chihuahua Knurren". */
-    chihuahua:      { name: "Chihuahua",      ton: "chihuahuaknurr", preis: 100, was: "beißt sich fest und zerrt, 25 % zurück · Stufe 2: +2 (lässt nicht los)" },
-    stachelmonster: { name: "Stachelmonster", ton: "stachelstich", preis: 160, was: "fängt 1/5 ab und sticht 20 % zurück · Stufe 2: fängt 1/3 ab" },
-    /* „diese kleinen Drachen … viel süßer … wie ein kleiner Baby Drachen …
-       eins vom Boden eins für die Luft": der Drache fliegt jetzt. */
-    drache:         { name: "Babydrache",     ton: "drachenfeuer", preis: 250, flug: true, was: "fliegt, faucht Feuer, 50 % zurück · Stufe 2: +2 Glut" },
-    eule:           { name: "Eule",           ton: "fluegelschlag", preis: 150, flug: true, was: "fliegt, stößt herab, 25 % zurück · Stufe 2: warnt dich (1/10 weniger Schaden)" }
+    fellmonster:    { name: "Fellmonster",    ton: "monsterbiss" },
+    stachelmonster: { name: "Stachelmonster", ton: "stachelstich" },
+    drache:         { name: "Kleiner Drache", ton: "drachenfeuer" }
   };
   /* FASSUNG 634 — XANDER: „Bitte das Skill Training noch einbauen. Also
      dass man über die Zeit sich Fähigkeiten aneignen kann".
@@ -113,7 +110,6 @@
     ["ingenieur",  "Ingenieur",   "dein Geschütz schießt je Stufe 10 % stärker zurück"]
   ];
   function komma(x) { return String(Math.round(x * 100) / 100).replace(".", ","); }
-  var TIERE_BODEN = ["fellmonster", "stachelmonster", "chihuahua"], TIERE_LUFT = ["drache", "eule"];
   function wirkt(ich, art) {
     var bis = ich && ich[art + "_bis"];
     return bis ? Math.max(0, Math.round((new Date(bis).getTime() - Date.now()) / 1000)) : 0;
@@ -234,8 +230,7 @@
     ["id", "name", "lp", "lp_max", "kaputt", "schild", "mauer_art", "mauer_lp", "haustier",
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
      "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
-     "level", "skills", "helm", "brust", "ladung", "daemon",
-     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max"].forEach(function (k) { o[k] = s[k]; });
+     "level", "skills", "helm", "brust", "ladung", "daemon"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -650,7 +645,6 @@
         var n = { ereignis: "treffer", zielChat: p.id, schaden: erg.schaden, abgewehrt: erg.abgewehrt,
                   zone: erg.zone, kaputt: erg.kaputt, gegenwehr: erg.gegenwehr,
                   gegen_geschuetz: erg.gegen_geschuetz || 0, gegen_tier: erg.gegen_tier || 0, tier: erg.tier || "", waffe: waffe,
-                  gegen_flug: erg.gegen_flug || 0, flugtier: erg.flugtier || "", tier_heil: erg.tier_heil || 0,
                   ziel_stand: erg.ziel, ich_stand: erg.ich };
         senden(n);
         n.von = ichChat;
@@ -868,17 +862,6 @@
       }, 1400);
     }
   }
-  function fuettern(welches, futter) {
-    rpc("spiel_fuettern", { p_welches: welches, p_futter: futter }).then(function (r) {
-      if (!r || !r.ok) { hinweis("🐾 " + ((r && r.grund) || "geht nicht")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      ton("mampf", 0.45);
-      var art = welches === "boden" ? r.haustier : r.flugtier;
-      hinweis("🐾 " + ((TIERE[art] || {}).name || "Dein Tier") + " frisst: +" + r.plus + " Kraft");
-      senden({ ereignis: "stand", stand: oeffentlich(r) });
-      panelAuffrischen(); zeichnen();
-    }).catch(function (e) { hinweis("Füttern ging nicht: " + (e && e.message ? e.message : e)); });
-  }
   function essen(ding) {
     rpc("spiel_essen", { p_ding: ding }).then(function (r) {
       if (!r || !r.ok) { hinweis((ding === "bratwurst" ? "🌭 " : "🥬 ") + ((r && r.grund) || "geht nicht")); return; }
@@ -934,18 +917,15 @@
      Das läuft auf JEDEM Gerät, das den Treffer bekommt.
      --------------------------------------------------------------- */
   function gegenwehrZeigen(verteidiger, angreifer, n) {
-    if (!n || !(n.gegenwehr > 0 || n.tier_heil > 0)) return;
+    if (!n || !(n.gegenwehr > 0)) return;
     var verzug = 0;
     if (n.gegen_geschuetz > 0) { kugelnFliegen(verteidiger, angreifer); verzug = 260; }
     if (n.gegen_tier > 0) setTimeout(function () { tierAngriff(verteidiger, angreifer, n.tier || "fellmonster"); }, verzug);
-    /* FASSUNG 638 — das Flugtier stößt von oben herab, etwas später. */
-    if (n.gegen_flug > 0) setTimeout(function () { tierAngriff(verteidiger, angreifer, n.flugtier || "drache"); }, verzug + (n.gegen_tier > 0 ? 350 : 0));
-    if (n.tier_heil > 0) setTimeout(function () { zahlZeigen(verteidiger, n.tier_heil, "gekuschelt"); }, verzug + 700);
-    if (n.gegenwehr > 0) setTimeout(function () {
+    setTimeout(function () {
       zahlZeigen(angreifer, -n.gegenwehr, "Gegenwehr");
       var el = platzElVon(angreifer);
       if (el) { el.classList.remove("sp-getroffen"); void el.offsetWidth; el.classList.add("sp-getroffen"); setTimeout(function () { el.classList.remove("sp-getroffen"); }, 500); }
-    }, verzug + (n.tier === "chihuahua" && n.gegen_tier > 0 ? 900 : n.gegen_tier > 0 || n.gegen_flug > 0 ? 520 : 240));
+    }, verzug + (n.gegen_tier > 0 ? 520 : 240));
   }
   function kugelnFliegen(von, zu) {
     var a = mittelpunkt(von), z = mittelpunkt(zu);
@@ -969,10 +949,7 @@
   function tierAngriff(von, zu, art) {
     var a = mittelpunkt(von), z = mittelpunkt(zu);
     if (!a || !z) return;
-    if (art === "chihuahua") return chihuahuaBiss(a, z);
     ton((TIERE[art] || TIERE.fellmonster).ton, 0.55);
-    /* FASSUNG 638 — Flugtiere sitzen oben rechts (90 | 12 von 100). */
-    var flug = Boolean((TIERE[art] || {}).flug), px = flug ? 1.8 : 1.68, py = flug ? 0.24 : 1.68;
     var t = document.createElement("div");
     t.className = "sp-tier-sprung sp-tier-" + art;
     t.style.width = t.style.height = (a.r * 2) + "px";
@@ -985,8 +962,8 @@
        1,68 r vom Ursprung) bei Vergrößerung s genau bei 1,68 · r · s. */
     t.style.transformOrigin = "0 0";
     var ab = { x: a.x - a.r, y: a.y - a.r };
-    var hin = { x: z.x + z.r * 0.25 - a.r * px * 1.4, y: z.y + (flug ? -z.r * 0.1 : z.r * 0.3) - a.r * py * 1.4 };
-    var hoch = Math.min(ab.y, hin.y) - a.r * (flug ? 1.6 : 0.9);
+    var hin = { x: z.x + z.r * 0.25 - a.r * 1.68 * 1.4, y: z.y + z.r * 0.3 - a.r * 1.68 * 1.4 };
+    var hoch = Math.min(ab.y, hin.y) - a.r * 0.9;
     var mitte = { x: (ab.x + hin.x) / 2, y: hoch };
     var f = function (p, s) { return { transform: "translate(" + p.x.toFixed(1) + "px," + p.y.toFixed(1) + "px) scale(" + (s || 1) + ")" }; };
     try {
@@ -1016,50 +993,6 @@
       }, 470);
     }
     setTimeout(function () { t.remove(); }, 1150);
-  }
-  /* XANDER: „richtig beißen … fest beißen und … zerren … Chihuahua
-     Knurren". Der Chihuahua springt hin, beißt sich unten am Bild des
-     Angreifers fest und zerrt fünfmal hin und her (das Bild ruckt mit),
-     knurrend — dann lässt er los und springt zurück. */
-  function chihuahuaBiss(a, z) {
-    ton("chihuahuaknurr", 0.55);
-    var t = document.createElement("div");
-    t.className = "sp-tier-sprung sp-tier-chihuahua";
-    t.style.width = t.style.height = (a.r * 2) + "px";
-    t.innerHTML = tierSvg("chihuahua");
-    document.body.appendChild(t);
-    t.style.transformOrigin = "0 0";
-    var s = 1.3, ab = { x: a.x - a.r, y: a.y - a.r };
-    var hin = { x: z.x + z.r * 0.1 - a.r * 1.68 * s, y: z.y + z.r * 0.55 - a.r * 1.68 * s };
-    var mitte = { x: (ab.x + hin.x) / 2, y: Math.min(ab.y, hin.y) - a.r * 0.8 };
-    var f = function (p, sk, dreh, o) { var k = { transform: "translate(" + p.x.toFixed(1) + "px," + p.y.toFixed(1) + "px) scale(" + sk + ") rotate(" + (dreh || 0) + "deg)" }; if (o != null) k.offset = o; return k; };
-    var bild = [f(ab, 1), f(mitte, 1.15, 0, 0.12), f(hin, s, 0, 0.22)];
-    for (var i = 0; i < 5; i++) {
-      bild.push(f({ x: hin.x - 7, y: hin.y + 2 }, s, -14, 0.28 + i * 0.1));
-      bild.push(f({ x: hin.x + 7, y: hin.y + 2 }, s, 14, 0.33 + i * 0.1));
-    }
-    bild.push(f(hin, s, 0, 0.8), f(mitte, 1.1, 0, 0.9), f(ab, 1));
-    try { t.animate(bild, { duration: 2200, easing: "ease-in-out", fill: "forwards" }); } catch (e) {}
-    setTimeout(function () { ton("bisszerren", 0.55); }, 480);
-    /* Das Bild des Angreifers ruckt beim Zerren mit. */
-    var ziel = null;
-    try { ziel = document.elementFromPoint(z.x, z.y); ziel = ziel && ziel.closest(".lc-platz"); } catch (e) {}
-    var kreis = ziel && ziel.querySelector(".lc-kreis");
-    if (kreis) {
-      setTimeout(function () {
-        try { kreis.animate([{ transform: "translateX(0)" }, { transform: "translateX(-4px) rotate(-3deg)" }, { transform: "translateX(4px) rotate(3deg)" }, { transform: "translateX(0)" }],
-          { duration: 220, iterations: 5 }); } catch (e) {}
-      }, 600);
-    }
-    setTimeout(function () {
-      var kr = document.createElement("div");
-      kr.className = "sp-kratzer sp-bissmal";
-      kr.style.left = z.x + "px"; kr.style.top = (z.y + z.r * 0.6) + "px";
-      kr.innerHTML = '<svg viewBox="-20 -14 40 28"><path d="M-12 -4 L-9 3 L-6 -4 L-3 3 L0 -4 L3 3 L6 -4 L9 3 L12 -4" stroke="#b3151b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
-      document.body.appendChild(kr);
-      setTimeout(function () { kr.remove(); }, 1400);
-    }, 600);
-    setTimeout(function () { t.remove(); }, 2250);
   }
 
   /* ---------------------------------------------------------------
@@ -1361,11 +1294,7 @@
       /* Mauer (bleibt am Platz) — unten vor dem Bild, die Mitte bleibt frei */
       schmuck(el, "sp-mauer", s.mauer_lp > 0, kreis, mauerSvg(s.mauer_art), "sp-mauer-" + (s.mauer_art || "holz"));
       /* Das Fellmonster sitzt rechts unten neben dem Bild */
-      schmuck(el, "sp-tier", Boolean(s.haustier), kreis, tierSvg(s.haustier), "sp-tier-" + (s.haustier || "fellmonster")
-        + (s.haustier && !(s.haustier_leben > 0) ? " sp-tier-schwach" : ""));
-      /* FASSUNG 638 — das Flugtier schwebt rechts oben neben dem Bild. */
-      schmuck(el, "sp-flugtier", Boolean(s.flugtier), kreis, s.flugtier ? tierSvg(s.flugtier) : "", "sp-tier-" + (s.flugtier || "drache")
-        + (s.flugtier && !(s.flugtier_leben > 0) ? " sp-tier-schwach" : ""));
+      schmuck(el, "sp-tier", Boolean(s.haustier), kreis, tierSvg(s.haustier), "sp-tier-" + (s.haustier || "fellmonster"));
       /* Nur ich sehe meine eigenen Fallen — als kleine Markierung. */
       var falle = null, nr = Number(el.dataset.lcPlatz);
       meineFallen().forEach(function (f) { if (f.platz === nr) falle = f.art; });
@@ -1434,7 +1363,7 @@
     s.style.height = kreis.offsetHeight + "px";
   }
   function platzLeeren(el) {
-    el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer,.sp-tier,.sp-flugtier,.sp-geschuetz,.sp-risse,.sp-waffenmarke" + (el.querySelector(".sp-sparring") && Number(el.dataset.lcPlatz) === S.sparring ? "" : ",.sp-sparring")).forEach(function (x) { x.remove(); });
+    el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer,.sp-tier,.sp-geschuetz,.sp-risse,.sp-waffenmarke" + (el.querySelector(".sp-sparring") && Number(el.dataset.lcPlatz) === S.sparring ? "" : ",.sp-sparring")).forEach(function (x) { x.remove(); });
     el.classList.remove("sp-kaputt", "sp-anfaenger", "sp-w-kraft", "sp-w-ziel", "sp-w-tempo", "sp-w-eisen", "sp-w-tarn", "sp-w-daemon");
     /* Die eigene Falle bleibt sichtbar, auch auf einem leeren Platz. */
     var nr = Number(el.dataset.lcPlatz), falle = null;
@@ -1516,50 +1445,18 @@
         + '<ellipse cx="84" cy="86.2" rx="1.8" ry="1.3" fill="#1a1a1a"/>'
         + '<path d="M81.5 89.6 Q84 91.4 86.5 89.6" fill="none" stroke="#3d2610" stroke-width="1"/></g></svg>';
     }
-    if (art === "chihuahua") {
-      /* Klein, hellbraun, riesige Ohren, große Kulleraugen — sitzt unten rechts. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path d="M92 94 C97 92 97 86 94 84" fill="none" stroke="#b9854c" stroke-width="2" stroke-linecap="round"/>'
-        + '<ellipse cx="85" cy="92" rx="8" ry="6" fill="#d9a066" stroke="#8a5a2b" stroke-width="1"/>'
-        + '<path d="M80 97 V99 M84 97.5 V99.5 M88 97.5 V99.5" stroke="#8a5a2b" stroke-width="1.6" stroke-linecap="round"/>'
-        + '<path d="M75 80 L69 64 L80 74 Z M93 80 L99 64 L88 74 Z" fill="#d9a066" stroke="#8a5a2b" stroke-width="1"/>'
-        + '<path d="M75.5 78 L71 67 L79 74 Z M92.5 78 L97 67 L89 74 Z" fill="#f0b8a8"/>'
-        + '<ellipse cx="84" cy="81" rx="10.5" ry="9" fill="#e2ad73" stroke="#8a5a2b" stroke-width="1"/>'
-        + '<circle cx="79.6" cy="80" r="3.1" fill="#1b1410"/><circle cx="88.4" cy="80" r="3.1" fill="#1b1410"/>'
-        + '<circle cx="80.6" cy="78.9" r="1" fill="#fff"/><circle cx="89.4" cy="78.9" r="1" fill="#fff"/>'
-        + '<ellipse cx="84" cy="86" rx="4.4" ry="3.2" fill="#f3d2a8"/><ellipse cx="84" cy="84.8" rx="1.6" ry="1.1" fill="#1b1410"/>'
-        + '<path d="M82 87.6 Q84 88.8 86 87.6" fill="none" stroke="#6b3d1f" stroke-width=".9" stroke-linecap="round"/></g></svg>';
-    }
-    if (art === "eule") {
-      /* Rund, braun, Federohren, große gelbe Augen — schwebt oben rechts. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path class="sp-fluegel-l" d="M81 14 C74 10 70 16 72 22 C75 20 78 19 81 19 Z" fill="#7a5532" stroke="#4a3018" stroke-width=".8"/>'
-        + '<path class="sp-fluegel-r" d="M99 14 C106 10 110 16 108 22 C105 20 102 19 99 19 Z" fill="#7a5532" stroke="#4a3018" stroke-width=".8"/>'
-        + '<ellipse cx="90" cy="15" rx="10" ry="11" fill="#9a6d42" stroke="#4a3018" stroke-width="1"/>'
-        + '<path d="M82 6 L83 1 L86 5 Z M98 6 L97 1 L94 5 Z" fill="#7a5532"/>'
-        + '<ellipse cx="90" cy="20" rx="6" ry="5" fill="#e6cfa8"/>'
-        + '<circle cx="86" cy="12" r="3.6" fill="#fff4c2" stroke="#4a3018" stroke-width=".6"/><circle cx="94" cy="12" r="3.6" fill="#fff4c2" stroke="#4a3018" stroke-width=".6"/>'
-        + '<circle cx="86" cy="12.3" r="1.8" fill="#1a1a1a"/><circle cx="94" cy="12.3" r="1.8" fill="#1a1a1a"/>'
-        + '<circle cx="86.6" cy="11.6" r=".6" fill="#fff"/><circle cx="94.6" cy="11.6" r=".6" fill="#fff"/>'
-        + '<path d="M88.6 15 L90 18 L91.4 15 Z" fill="#f2a82a"/></g></svg>';
-    }
     if (art === "drache") {
-      /* „viel süßer … wie ein kleiner Baby Drachen": großer runder Kopf,
-         Kulleraugen mit Glanzpunkt, Stummelhörnchen, rosa Bäckchen,
-         kleine schlagende Flügel, Bauch hell. Schwebt oben rechts. */
+      /* Ein kleiner grüner Drache: Kopf mit Hörnern, Flügel, Schwanz. */
       return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path class="sp-fluegel-l" d="M82 17 C74 8 68 13 70 20 C73 18 75 21 78 20 C79 22 81 21 82 20 Z" fill="#9fdcc0" stroke="#3c8a6a" stroke-width=".9"/>'
-        + '<path class="sp-fluegel-r" d="M98 17 C106 8 112 13 110 20 C107 18 105 21 102 20 C101 22 99 21 98 20 Z" fill="#9fdcc0" stroke="#3c8a6a" stroke-width=".9"/>'
-        + '<path d="M96 25 C102 27 103 22 100 20" fill="none" stroke="#5cb892" stroke-width="2.2" stroke-linecap="round"/><path d="M100 19.4 l1.6 -1.6 l.4 2.4 z" fill="#f59ab4"/>'
-        + '<ellipse cx="90" cy="22" rx="7" ry="5.4" fill="#6fcaa0" stroke="#3c8a6a" stroke-width=".9"/>'
-        + '<ellipse cx="90" cy="23" rx="4" ry="3.2" fill="#fbeab8"/>'
-        + '<path d="M85 5.5 L84 1.5 L87.6 4.2 Z M95 5.5 L96 1.5 L92.4 4.2 Z" fill="#fbeab8" stroke="#c9a86a" stroke-width=".5"/>'
-        + '<circle cx="90" cy="12" r="8.6" fill="#6fcaa0" stroke="#3c8a6a" stroke-width="1"/>'
-        + '<circle cx="86.6" cy="11" r="2.7" fill="#1b2a24"/><circle cx="93.4" cy="11" r="2.7" fill="#1b2a24"/>'
-        + '<circle cx="87.4" cy="10" r=".95" fill="#fff"/><circle cx="94.2" cy="10" r=".95" fill="#fff"/>'
-        + '<ellipse cx="84.4" cy="14.6" rx="1.6" ry="1" fill="#f59ab4" opacity=".8"/><ellipse cx="95.6" cy="14.6" rx="1.6" ry="1" fill="#f59ab4" opacity=".8"/>'
-        + '<path d="M88.4 15.2 Q90 16.6 91.6 15.2" fill="none" stroke="#2c5a46" stroke-width=".8" stroke-linecap="round"/>'
-        + '<circle cx="89" cy="13.7" r=".35" fill="#2c5a46"/><circle cx="91" cy="13.7" r=".35" fill="#2c5a46"/></g></svg>';
+        + '<path d="M72 92 C66 92 64 86 68 84" fill="none" stroke="#2f7a3a" stroke-width="3" stroke-linecap="round"/><path d="M66 83 l-3 -1 l2 3 z" fill="#2f7a3a"/>'
+        + '<path d="M78 80 L70 68 L80 74 L82 66 L86 76 Z" fill="#7fc98a" stroke="#2f7a3a" stroke-width="1"/>'
+        + '<ellipse cx="84" cy="88" rx="10" ry="8" fill="#3fa64f" stroke="#236b2f" stroke-width="1.1"/>'
+        + '<ellipse cx="84" cy="90.5" rx="5.6" ry="4.6" fill="#b9e3a8"/>'
+        + '<path d="M86 80 C86 72 96 70 98 76 C99 80 96 83 92 83 Z" fill="#3fa64f" stroke="#236b2f" stroke-width="1.1"/>'
+        + '<path d="M89 72 l-1 -5 l3 4 M94 71 l1 -5 l1 5" stroke="#e8d9a0" stroke-width="1.4" stroke-linecap="round" fill="none"/>'
+        + '<circle cx="93" cy="76" r="1.8" fill="#fff"/><circle cx="93.5" cy="76.2" r="1" fill="#c21"/>'
+        + '<circle cx="97" cy="79" r=".6" fill="#1a1a1a"/>'
+        + '<path d="M80 96 l-1 2.4 M84 96.4 l0 2.4 M88 96 l1 2.4" stroke="#236b2f" stroke-width="1.3" stroke-linecap="round"/></g></svg>';
     }
     /* XANDER (Funk 90): „so eine kleine schwarze Fellkugel mit Augen und
        … ein paar Krallen dann an den Händen … sehr bissig". */
@@ -1733,8 +1630,7 @@
       + (vorrat.bratwurst > 0 ? "<span>🌭 " + vorrat.bratwurst + " Bratwurst</span>" : "")
       + (ich.tag_serie > 0 ? "<span>🎁 Serie " + ich.tag_serie + "/7</span>" : "")
       /* FUNK 110 — Abnutzung sichtbar: wie lange hält es noch? */
-      + (ich.haustier ? "<span>" + esc((TIERE[ich.haustier] || TIERE.fellmonster).name) + " " + (ich.haustier_leben || 0) + "/" + (ich.haustier_max || 30) + (ich.haustier_leben > 0 ? "" : " schwach") + "</span>" : "")
-      + (ich.flugtier ? "<span>" + esc((TIERE[ich.flugtier] || TIERE.drache).name) + " " + (ich.flugtier_leben || 0) + "/" + (ich.flugtier_max || 25) + (ich.flugtier_leben > 0 ? "" : " schwach") + "</span>" : "")
+      + (ich.haustier ? "<span>" + esc((TIERE[ich.haustier] || TIERE.fellmonster).name) + ": noch " + (ich.haustier_leben || 0) + "×</span>" : "")
       + (ich.geschuetz_ladungen > 0 ? "<span>Geschütz Stufe " + (ich.geschuetz_stufe || 1) + ": " + ich.geschuetz_ladungen + " Schuss</span>" : "")
       + "</div>"
       /* FUNK 106 — der zweite Balken: Mana, nur aus Deutsch (+6 je
@@ -1751,7 +1647,7 @@
       + (S.waffe ? '<div class="sp-hinweis">🎯 ' + esc(WAFFEN[S.waffe].name) + ' ist angelegt – tippe auf ein Gesicht, um zu schießen. <button type="button" data-tu="ablegen">Ablegen</button></div>' : "")
       + (S.duell && Date.now() < S.duell.bis ? '<div class="sp-hinweis">⚔️ Duell läuft – tippe auf deinen Gegner.</div>' : "")
       + "</div>";
-    var tabs = [["start", "Übersicht"], ["anleitung", "Anleitung"], ["deutsch", "Deutsch"], ["koennen", "Können"], ["tiere", "Tiere"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell & Heilen"], ["rang", "Rangliste"]];
+    var tabs = [["start", "Übersicht"], ["anleitung", "Anleitung"], ["deutsch", "Deutsch"], ["koennen", "Können"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell & Heilen"], ["rang", "Rangliste"]];
     var leiste = '<div class="sp-tabs">' + tabs.map(function (t) {
       return '<button type="button" data-tab="' + t[0] + '" class="' + (reiter === t[0] ? "sp-an" : "") + '">' + t[1] + "</button>";
     }).join("") + "</div>";
@@ -1785,7 +1681,6 @@
         + "<p><b>Tagesgeschenk.</b> Einmal am Tag holt es sich von selbst ab: Punkte, Bratwurst, jeden dritten Tag ein Pflaster. Sieben Tage am Stück geben am meisten. Wer auf der Seite übt, bekommt dafür ebenfalls Spielpunkte (5 Seitenpunkte = 1 Punkt, bis 40 am Tag).</p>"
         + "<p><b>Schutz.</b> Schild (reist mit), Mauer (bleibt am Platz), Geschütz und Monster schlagen zurück – anteilig, nie mehr als 4/5 dessen, was der Angreifer anrichtet. Mana-Tränke kosten 30 Mana. Minen und Falltüren legst du auf einen Platz.</p>"
         + "<p><b>Üben.</b> „Sparring“ in der Leiste stellt eine Strohpuppe auf einen freien Platz – nur bei dir, niemand wird gestört. „Er schießt zurück“ macht ein Übungsduell daraus. Zählt nicht.</p>"
-        + "<p><b>Tiere.</b> Eins am Boden (Fellmonster, Stachelmonster, Chihuahua), eins in der Luft (Babydrache, Eule). Sie wehren Angriffe ab und kosten dabei Kraft. Bei 0 Kraft sind sie schwach, bleiben aber – füttern mit Bratwurst (+12) oder Sauerkraut (+8). Aufwerten bis Stufe 3; ab Stufe 2 hat jedes Tier eine zweite Fähigkeit (Fellmonster kuschelt, Chihuahua lässt nicht los, Babydrache glüht nach, Eule warnt, Stachelmonster fängt mehr ab).</p>"
         + "<p><b>Deutsche Wurfsachen.</b> Brezel, Bierkrug und Spätzle-Kanone (eine Salve aus fünf Spätzle) kauft man einmal. Bratwurst und Sauerkraut sind Vorräte: werfen oder essen (Bratwurst +15 LP, Sauerkraut +10 LP und +10 Mana). Sauerkraut rutscht beim Getroffenen übers Bild und nimmt ihm kurz die Sicht – zweimal tippen wischt es weg, der Scheibenwischer macht es von selbst. Das Herz isst zuerst, wenn nur wenig fehlt.</p>"
         + "<p><b>Waffenstillstand.</b> Solange die Tafel offen ist, trifft niemand.</p></div>";
     }
@@ -1841,36 +1736,6 @@
         + '<p class="sp-klein">Erfahrung: Deutsch (doppelt so viel wie die Punkte), jeder Treffer +1, jemanden heilen +3, Tagesgeschenk +20, Übungen auf der Seite. Trainiertes bleibt für immer.</p>'
         + '<p class="sp-klein"><b>Superkraft:</b> goldener Bogen oben am Bild. Voll (100 %) tippst du die Flamme in der Leiste: 45 s dämonisch, ×1,5 Schaden, nur 70 % einstecken.</p>';
     }
-    if (reiter === "tiere") {
-      /* FASSUNG 638 — „Tiere upgraden … krank oder schwach aber man kann
-         sie wieder aufpäppeln … füttern … mit dem deutschen Essen". */
-      var platz = function (welches, liste, art, kraft, max, stufe) {
-        var titel = welches === "boden" ? "Am Boden" : "In der Luft";
-        var kopfT = '<p class="sp-text"><b>' + titel + "</b></p>";
-        var jetzt = "";
-        if (art) {
-          var anteil = Math.max(0, Math.min(100, Math.round((kraft || 0) / (max || 30) * 100)));
-          jetzt = '<div class="sp-zeile sp-tier-zeile"><span class="sp-tier-bild sp-tier-bild-' + (welches === "luft" ? "luft" : "boden") + (kraft > 0 ? "" : " sp-tier-schwach") + '">' + tierSvg(art) + "</span>"
-            + "<span><b>" + esc(TIERE[art].name) + "</b> · Stufe " + (stufe || 1) + (kraft > 0 ? "" : ' <span class="sp-rot">· schwach – füttern!</span>')
-            + '<br><span class="sp-status-balken sp-kraft-balken"><i style="width:' + anteil + '%"></i></span> <small>' + (kraft || 0) + "/" + (max || 30) + " Kraft · jede Abwehr kostet 1</small></span>"
-            + '<span class="sp-knopfgruppe">'
-            + '<button type="button" data-tu="fuettern" data-w="' + welches + '" data-f="bratwurst"' + (vorrat(ich, "bratwurst") && kraft < max ? "" : " disabled") + ">🌭 +12 (" + vorrat(ich, "bratwurst") + ")</button>"
-            + '<button type="button" data-tu="fuettern" data-w="' + welches + '" data-f="sauerkraut"' + (vorrat(ich, "sauerkraut") && kraft < max ? "" : " disabled") + ">🥬 +8 (" + vorrat(ich, "sauerkraut") + ")</button>"
-            + ((stufe || 1) < 3 ? '<button type="button" data-tu="kaufen" data-d="' + (welches === "boden" ? "tier_stufe" : "flugtier_stufe") + '"' + (ich.punkte >= 60 * (stufe || 1) ? "" : " disabled") + ">Stufe " + ((stufe || 1) + 1) + " · " + 60 * (stufe || 1) + "</button>" : "")
-            + "</span></div>";
-        }
-        var angebot = liste.map(function (k) {
-          var d = TIERE[k], hat = art === k;
-          return '<div class="sp-zeile"><span class="sp-tier-bild sp-tier-bild-' + (welches === "luft" ? "luft" : "boden") + '">' + tierSvg(k) + "</span><span><b>" + esc(d.name) + "</b><br><small>" + esc(d.was) + "</small></span>"
-            + (hat ? "<small>deins</small>" : '<button type="button" data-tu="kaufen" data-d="' + k + '"' + (ich.punkte >= d.preis ? "" : " disabled") + ">" + (art ? "Tauschen · " : "") + d.preis + "</button>")
-            + "</div>";
-        }).join("");
-        return kopfT + jetzt + angebot;
-      };
-      return '<p class="sp-klein">Zwei Plätze: eins am Boden, eins in der Luft. Tiere sterben nicht – bei 0 Kraft sind sie schwach und wehren nicht mehr ab, bis du sie fütterst. Jede Stufe: +15 % Abwehr, +10 Kraft; ab Stufe 2 kommt die zweite Fähigkeit dazu.</p>'
-        + platz("boden", TIERE_BODEN, ich.haustier, ich.haustier_leben, ich.haustier_max, ich.haustier_stufe)
-        + platz("luft", TIERE_LUFT, ich.flugtier, ich.flugtier_leben, ich.flugtier_max, ich.flugtier_stufe);
-    }
     if (reiter === "waffen") {
       var liste = WAFFEN_REIHE.map(function (k) {
         var w = WAFFEN[k], hat = (ich.waffen || []).indexOf(k) >= 0;
@@ -1895,7 +1760,7 @@
       return liste + '<p class="sp-klein"><b>Vorräte</b> – zum Werfen oder Essen (Tagesgeschenk, Seitenübungen, Laden):</p>' + vorr + farben;
     }
     if (reiter === "schutz") {
-      return ruestungZeilen(ich) + '<p class="sp-klein">Tiere (Fellmonster, Chihuahua, Babydrache …) holst, fütterst und stärkst du im Reiter <b>Tiere</b>.</p>' + LADEN.map(function (d) {
+      return ruestungZeilen(ich) + LADEN.map(function (d) {
         return '<div class="sp-zeile"><span><b>' + esc(d.name) + "</b><br><small>" + esc(d.was) + "</small></span>"
           + '<button type="button" data-tu="' + (d.legen ? "legen" : "kaufen") + '" data-d="' + d.ding + '"' + (ich.punkte >= d.preis ? "" : " disabled") + ">" + d.preis + " Punkte</button></div>";
       }).join("") + (meineFallen().length ? '<p class="sp-klein">Deine Fallen: ' + meineFallen().map(function (f) { return (f.art === "mine" ? "Mine" : "Falltür") + " auf Platz " + f.platz; }).join(", ") + " (30 min)</p>" : "");
@@ -1982,7 +1847,6 @@
     if (tu === "trinken") return trinken(k.dataset.t);
     if (tu === "trainieren") return trainieren(k.dataset.k);
     if (tu === "essen") return essen(k.dataset.d);
-    if (tu === "fuettern") return fuettern(k.dataset.w, k.dataset.f);
     if (tu === "kategorie") { S.kategorie = k.dataset.k || null; aufgabeHolen(false); return; }
   }
 
@@ -2159,7 +2023,7 @@
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
       gegenwehrZeigen: gegenwehrZeigen, falleZeigen: falleZeigen, tippAufPlatz: tippAufPlatz, ringSvg: ringSvg,
       schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
-      krautZeigen: krautZeigen, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg,
+      krautZeigen: krautZeigen, essen: essen, geschossSvg: geschossSvg,
       ruestungZeilen: ruestungZeilen, menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {
         var d = Math.hypot(dx, dy);

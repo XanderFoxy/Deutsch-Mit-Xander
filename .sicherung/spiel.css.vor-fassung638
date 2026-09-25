@@ -334,33 +334,3 @@ body.sp-legen #lcPlaetze .lc-kreis { outline: 2px dashed rgba(226, 64, 58, .55);
   .sp-kraut-rutsch { animation: none; transform: translateY(58%); }
   .sp-kraut-faeden { animation: none; }
 }
-/* FASSUNG 638 — Tiere. Das Flugtier schwebt rechts oben neben dem Bild
-   (es sitzt bei 90 | 12 von 100, also außen am Rand), die Flügel
-   schlagen. Schwache Tiere (0 Kraft) sind blass und schlafen. */
-.sp-flugtier { position: absolute; pointer-events: none; z-index: 7; transform: scale(1.35); transform-origin: 90% 12%; }
-.sp-flugtier svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.sp-flugtier .sp-tier-koerper { transform-box: fill-box; transform-origin: 50% 50%; animation: spSchweben 1.6s ease-in-out infinite; }
-@keyframes spSchweben { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-.sp-fluegel-l, .sp-fluegel-r { transform-box: fill-box; animation: spFluegel .32s ease-in-out infinite alternate; }
-.sp-fluegel-l { transform-origin: 100% 60%; }
-.sp-fluegel-r { transform-origin: 0% 60%; }
-@keyframes spFluegel { from { transform: rotate(0deg) scaleY(1); } to { transform: rotate(-18deg) scaleY(.7); } }
-.sp-fluegel-r { animation-name: spFluegelR; }
-@keyframes spFluegelR { from { transform: rotate(0deg) scaleY(1); } to { transform: rotate(18deg) scaleY(.7); } }
-.sp-tier-chihuahua { transform: scale(1.35); transform-origin: 50% 85%; }
-.sp-tier-schwach svg { filter: grayscale(.8) brightness(.9); opacity: .6; }
-.sp-tier-schwach .sp-tier-koerper, .sp-tier-schwach .sp-fluegel-l, .sp-tier-schwach .sp-fluegel-r { animation: none; }
-.sp-flugtier.sp-tier-schwach { transform: scale(1.35) translateY(8%); }
-/* Im Reiter „Tiere": das Tier groß im Kästchen. */
-.sp-tier-bild { flex: 0 0 auto; width: 46px; height: 46px; position: relative; overflow: hidden; border-radius: 10px; background: #efe9dc; }
-.sp-tier-bild svg { position: absolute; width: 230%; height: 230%; }
-.sp-tier-bild-boden svg { right: -8%; bottom: -8%; }
-.sp-tier-bild-luft svg { right: -20%; top: -10%; }
-.sp-tier-bild.sp-tier-schwach svg { filter: grayscale(.8); opacity: .6; }
-.sp-status-balken.sp-kraft-balken { display: inline-block; width: 90px; vertical-align: middle; }
-.sp-status-balken.sp-kraft-balken i { background: linear-gradient(90deg, #c98a00, #7fc98a); }
-.sp-bissmal { width: 34px; height: 22px; margin: -11px 0 0 -17px; }
-.lc-platz-unterwegs > .sp-flugtier { visibility: hidden; }
-@media (prefers-reduced-motion: reduce) {
-  .sp-flugtier .sp-tier-koerper, .sp-fluegel-l, .sp-fluegel-r { animation: none; }
-}
