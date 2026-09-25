@@ -80,20 +80,6 @@
     stachelmonster: { name: "Stachelmonster", ton: "stachelstich" },
     drache:         { name: "Kleiner Drache", ton: "drachenfeuer" }
   };
-  /* FASSUNG 634 — XANDER: „Bitte das Skill Training noch einbauen. Also
-     dass man über die Zeit sich Fähigkeiten aneignen kann".
-     Jedes Level gibt einen Skillpunkt; Training dauert 5 min × Stufe
-     und läuft nebenher. Gerechnet wird auf dem Server (spiel_trainieren,
-     spiel_frisch, spiel_treffer, spiel_heilen). */
-  var SKILLS = [
-    ["zaehigkeit", "Zähigkeit",   "+10 Höchst-Lebenspunkte je Stufe"],
-    ["panzerhaut", "Panzerhaut",  "+3 % Rüstung je Stufe (Rüstung höchstens 45 %)"],
-    ["treffsicher","Treffsicher", "+5 % Schaden je Stufe"],
-    ["heilkunst",  "Heilkunst",   "+10 % Heilung je Stufe – auch wenn du andere heilst"],
-    ["tierfreund", "Tierfreund",  "dein Monster wehrt je Stufe 10 % stärker ab"],
-    ["ingenieur",  "Ingenieur",   "dein Geschütz schießt je Stufe 10 % stärker zurück"]
-  ];
-  function komma(x) { return String(Math.round(x * 100) / 100).replace(".", ","); }
   function wirkt(ich, art) {
     var bis = ich && ich[art + "_bis"];
     return bis ? Math.max(0, Math.round((new Date(bis).getTime() - Date.now()) / 1000)) : 0;
@@ -194,7 +180,6 @@
       senden({ ereignis: "stand", stand: oeffentlich(ich) });
       abrufen(true);
       einspielenWennBetreiber();
-      geschenkePruefen();
       zeichnen();
     }).catch(function (e) {
       S.versucht = false;
@@ -213,8 +198,7 @@
     var o = {};
     ["id", "name", "lp", "lp_max", "kaputt", "schild", "mauer_art", "mauer_lp", "haustier",
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
-     "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
-     "level", "skills", "helm", "brust", "ladung", "daemon"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -259,86 +243,10 @@
       (liste || []).forEach(function (s) { S.stand[s.id] = s; });
       return rpc("spiel_ich", { p_name: null });
     }).then(function (ich) {
-      if (ich) { veraenderungMelden(S.ich, ich); S.ich = ich; S.stand[ich.id] = oeffentlich(ich); }
+      if (ich) { S.ich = ich; S.stand[ich.id] = oeffentlich(ich); }
       zeichnen(); panelAuffrischen();
       fallenHolen();
-      geschenkePruefen();
     }).catch(function () {});
-  }
-  /* Was sich still auf dem Server getan hat, sagen wir an:
-     Training fertig, Helm oder Brustpanzer durchgeschlagen. */
-  function veraenderungMelden(vorher, jetzt) {
-    if (!vorher || !jetzt) return;
-    if (vorher.training && !jetzt.training) {
-      var sk = SKILLS.filter(function (x) { return x[0] === vorher.training.skill; })[0];
-      hinweis("💪 Training fertig: " + (sk ? sk[1] : "Können") + " Stufe " + vorher.training.stufe + " – für immer.");
-      ton("jubel", 0.45);
-    }
-    if (vorher.helm_halt > 0 && jetzt.helm_halt === 0 && jetzt.helm_stufe > 0) hinweis("⛑️ Dein Helm ist durch – Reparatur 10 Punkte (Schutz & Laden).");
-    if (vorher.brust_halt > 0 && jetzt.brust_halt === 0 && jetzt.brust_stufe > 0) hinweis("🛡️ Dein Brustpanzer ist durch – Reparatur 10 Punkte (Schutz & Laden).");
-  }
-  /* XANDER: „tägliche Login … Geschenke" und „wenn man auf der Seite
-     Aufgaben macht … 20 Bratwürste gewinnen … Coins".
-     Das Tagesgeschenk holt sich selbst ab, sobald man im Klassenzimmer
-     ist (einmal je Tag, Serie bis 7). Die Übungspunkte der Seite werden
-     alle 5 Minuten umgetauscht: 5 Seitenpunkte = 1 Spielpunkt, höchstens
-     40 am Tag; je 50 Seitenpunkte eine Bratwurst (höchstens 3). */
-  function geschenkePruefen() {
-    if (!S.bereit || !S.ich || S.geschenkLaeuft) return;
-    var jetzt = Date.now();
-    var geschenk = Boolean(S.ich.geschenk_offen);
-    var seite = !S.seiteZeit || jetzt - S.seiteZeit > 300000;
-    if (!geschenk && !seite) return;
-    S.geschenkLaeuft = true;
-    var kette = Promise.resolve();
-    /* Nur übernehmen, was wirklich ein ganzer Spielstand ist (mit id) —
-       sonst würde eine leere Antwort den eigenen Stand überschreiben. */
-    if (geschenk) kette = rpc("spiel_tagesgeschenk", {}).then(function (r) {
-      if (!r || !r.ok || !r.id) return;
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      ton("geschenk", 0.5);
-      hinweis("🎁 Tagesgeschenk (Tag " + r.serie + " von 7): +" + r.punkte_plus + " Punkte, +" + r.bratwurst_plus + " Bratwurst"
-        + (r.pflaster_plus ? ", +1 Pflaster" : "") + ", +20 Erfahrung");
-    });
-    kette.then(function () {
-      if (!seite) return null;
-      S.seiteZeit = jetzt;
-      return rpc("spiel_seite_abholen", {});
-    }).then(function (r) {
-      S.geschenkLaeuft = false;
-      if (!r || !r.ok || !r.id) return;
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      if (r.muenzen > 0 || r.bratwurst_plus > 0) {
-        setTimeout(function () {
-          hinweis("📚 Für deine Übungen auf der Seite: +" + r.muenzen + " Punkte" + (r.bratwurst_plus ? ", +" + r.bratwurst_plus + " Bratwurst" : ""));
-        }, geschenk ? 3000 : 0);
-      }
-      zeichnen(); panelAuffrischen();
-    }).catch(function () { S.geschenkLaeuft = false; });
-  }
-  /* XANDER: „Superkraft … dämonisch aufgeladen". Die goldene Ladung
-     oben am Bild füllt sich mit Deutsch (+8), Treffern (+2) und
-     Einstecken (+3). Voll: 45 s ×1,5 Schaden, nur 70 % einstecken. */
-  function superkraft() {
-    rpc("spiel_superkraft", {}).then(function (r) {
-      if (!r || !r.ok) { hinweis("🔥 " + ((r && r.grund) || "geht nicht")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      ton("gong", 0.55);
-      senden({ ereignis: "stand", stand: oeffentlich(r) });
-      senden({ ereignis: "daemon" });
-      zahlZeigen(meineChatId(), null, "dämonisch 45 s");
-      zeichnen(); schnellZeichnen(); panelAuffrischen();
-    }).catch(function (e) { hinweis("Superkraft ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  function trainieren(skill) {
-    rpc("spiel_trainieren", { p_skill: skill }).then(function (r) {
-      if (!r || !r.ok) { hinweis("💪 " + ((r && r.grund) || "geht nicht")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      ton("kasse", 0.4);
-      var sk = SKILLS.filter(function (x) { return x[0] === skill; })[0];
-      hinweis("💪 Training läuft: " + (sk ? sk[1] : skill) + " – " + (5 * ((r.training && r.training.stufe) || 1)) + " Minuten. Spiel ruhig weiter.");
-      panelAuffrischen();
-    }).catch(function (e) { hinweis("Training ging nicht: " + (e && e.message ? e.message : e)); });
   }
 
   /* ---------------------------------------------------------------
@@ -512,9 +420,6 @@
       if (n.sorte === "pflaster") { try { if (B().pflaster) B().pflaster(n.zielChat || n.von); } catch (e) {} }
     } else if (n.ereignis === "falle") {
       falleZeigen(n.zielChat, n.sorte, n.schaden);
-    } else if (n.ereignis === "daemon") {
-      ton("gong", 0.45);
-      zahlZeigen(n.von, null, "dämonisch");
     } else if (n.ereignis === "trank") {
       if (n.sorte === "tarn") ton("tarnung", 0.5); else ton("trankschluck", 0.45);
     } else if (n.ereignis === "duell" && n.an === meineChatId()) {
@@ -993,15 +898,6 @@
       + ' title="Heilen – nimmt, was gerade passt, und verschwendet nichts">'
       + '<svg viewBox="0 0 20 20"><path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#e2403a"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>'
       + '<small>' + (ich.pflaster || 0) + "/" + (ich.traenke || 0) + "</small></button>");
-    /* Die Flamme: Superkraft. Zeigt die Ladung, bei 100 % antippbar,
-       während sie wirkt die Restsekunden. */
-    var ladung = Math.max(0, Math.min(100, ich.ladung || 0)), daemonRest = wirkt(ich, "daemon");
-    teile.push('<button type="button" class="sp-s-super' + (daemonRest ? " sp-an" : ladung >= 100 ? " sp-voll" : "") + '" data-s="superkraft"'
-      + (ladung >= 100 && !daemonRest ? "" : " disabled")
-      + ' title="' + (daemonRest ? "Dämonisch – noch " + daemonRest + " s" : ladung >= 100 ? "Superkraft: 45 s dämonisch" : "Superkraft lädt: " + ladung + " % (Deutsch, Treffer)") + '">'
-      + '<svg viewBox="0 0 20 20"><path d="M10 1.5 C11 5 15.5 7 15.5 12 A5.5 5.5 0 0 1 4.5 12 C4.5 9 6.5 7.5 7 5 C8 7 8.5 8 9.5 8.5 C9.5 6 9 4 10 1.5 Z" fill="' + (daemonRest ? "#b0172f" : "#f29d0b") + '"/>'
-      + '<path d="M10 9 C10.5 11 13 12 13 14 A3 3 0 0 1 7 14 C7 12.5 8.5 11.5 10 9 Z" fill="' + (daemonRest ? "#6d1bb3" : "#ffd84a") + '"/></svg>'
-      + "<small>" + (daemonRest ? daemonRest + " s" : ladung + " %") + "</small></button>");
     TRAENKE.forEach(function (tr) {
       var n = ich["trank_" + tr[0]] || 0, rest = wirkt(ich, tr[0]);
       if (!n && !rest) return;
@@ -1011,7 +907,7 @@
     teile.push('<button type="button" class="sp-s-klein' + (S.sparring ? " sp-an" : "") + '" data-s="sparring" title="Sparringspartner (nur bei dir)">Sparring</button>');
     if (S.sparring) teile.push('<button type="button" class="sp-s-klein' + (S.duell && S.duell.uebung ? " sp-an" : "") + '" data-s="gegenfeuer" title="Der Sparringspartner schießt zurück">Er schießt zurück</button>');
     teile.push('<button type="button" class="sp-s-klein" data-s="menue" title="Spielmenü: Laden, Aufgaben, Anleitung">Menü</button>');
-    var html = '<div class="sp-s-lp' + (ich.kaputt ? " sp-rot" : "") + '">Lv ' + (ich.level || 1) + " · " + ich.lp + "/" + ich.lp_max + " LP · " + (ich.punkte || 0) + " P</div>" + teile.join("");
+    var html = '<div class="sp-s-lp' + (ich.kaputt ? " sp-rot" : "") + '">' + ich.lp + "/" + ich.lp_max + " LP · " + (ich.punkte || 0) + " P</div>" + teile.join("");
     if (schnellEl.dataset.html !== html) { schnellEl.innerHTML = html; schnellEl.dataset.html = html; }
   }
   function schnellKlick(ev) {
@@ -1029,8 +925,6 @@
       schnellHeilen(); return;
     } else if (s === "trinken") {
       trinken(k.dataset.t); return;
-    } else if (s === "superkraft") {
-      superkraft(); return;
     } else if (s === "sparring") {
       sparringUmschalten(); return;
     } else if (s === "gegenfeuer") {
@@ -1123,13 +1017,7 @@
       bal.title = (s.mitspielen === false && !istPuppe(chatId) ? "spielt gerade nicht mit · " : "") + (s.name || "") + ": " + s.lp + " / " + s.lp_max + " LP" + (s.schild ? " · Schild " + s.schild : "")
         + (manaAnteil >= 0 ? " · " + s.mana + " Mana" : "");
       var farbe = anteil > 0.6 ? "#3bbf4a" : anteil > 0.3 ? "#e8b923" : "#e2403a";
-      /* FASSUNG 634 — was jeder vom anderen sehen soll („jeder muss den
-         Stand von dem anderen sehen"): oben die goldene Ladung, links
-         die Levelzahl, außen am Rand Helm (oben) und Brustpanzer (unten)
-         in Bronze, Silber, Gold. Alles auf dem Rand, über Hut und
-         Kleidung — die Gesichtsmitte bleibt frei. */
-      var extra = istPuppe(chatId) ? null : { ladung: s.ladung, level: s.level, helm: s.helm, brust: s.brust, daemon: s.daemon };
-      var html = ringSvg(anteil, schildAnteil, farbe, manaAnteil, extra);
+      var html = ringSvg(anteil, schildAnteil, farbe, manaAnteil);
       if (bal.dataset.html !== html) { bal.innerHTML = html; bal.dataset.html = html; }
       var altMana = el.querySelector(".sp-mana"); if (altMana) altMana.remove();
       /* Wirkende Tränke leuchten am Bild: rot = Superstärke, gelb =
@@ -1139,7 +1027,6 @@
       el.classList.toggle("sp-w-tempo", Boolean(s.tempo));
       el.classList.toggle("sp-w-eisen", Boolean(s.eisen));
       el.classList.toggle("sp-w-tarn", Boolean(s.tarn));
-      el.classList.toggle("sp-w-daemon", Boolean(s.daemon));
       /* Schild-Aura (reist mit) */
       schmuck(el, "sp-aura", s.schild > 0, kreis, "");
       /* Mauer (bleibt am Platz) — unten vor dem Bild, die Mitte bleibt frei */
@@ -1215,7 +1102,7 @@
   }
   function platzLeeren(el) {
     el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer,.sp-tier,.sp-geschuetz,.sp-risse,.sp-waffenmarke" + (el.querySelector(".sp-sparring") && Number(el.dataset.lcPlatz) === S.sparring ? "" : ",.sp-sparring")).forEach(function (x) { x.remove(); });
-    el.classList.remove("sp-kaputt", "sp-anfaenger", "sp-w-kraft", "sp-w-ziel", "sp-w-tempo", "sp-w-eisen", "sp-w-tarn", "sp-w-daemon");
+    el.classList.remove("sp-kaputt", "sp-anfaenger", "sp-w-kraft", "sp-w-ziel", "sp-w-tempo", "sp-w-eisen", "sp-w-tarn");
     /* Die eigene Falle bleibt sichtbar, auch auf einem leeren Platz. */
     var nr = Number(el.dataset.lcPlatz), falle = null;
     meineFallen().forEach(function (f) { if (f.platz === nr) falle = f.art; });
@@ -1232,14 +1119,14 @@
   /* Der Ring sitzt auf dem Rand: Radius 45,5 von 50, Strich 7 — also
      42 bis 49, das äußerste Achtel des Bildes. */
   var RING_R = 45.5;
-  function bogen(von, bis, radius) {
+  function bogen(von, bis) {
     /* Winkel in Grad, 0 = rechts, 90 = unten (Bildschirmrichtung). */
-    var r = radius || RING_R, a = von * Math.PI / 180, b = bis * Math.PI / 180;
+    var r = RING_R, a = von * Math.PI / 180, b = bis * Math.PI / 180;
     var gross = Math.abs(bis - von) > 180 ? 1 : 0, dreh = bis > von ? 1 : 0;
     return "M" + (50 + r * Math.cos(a)).toFixed(2) + " " + (50 + r * Math.sin(a)).toFixed(2)
       + " A" + r + " " + r + " 0 " + gross + " " + dreh + " " + (50 + r * Math.cos(b)).toFixed(2) + " " + (50 + r * Math.sin(b)).toFixed(2);
   }
-  function ringSvg(anteil, schild, farbe, mana, extra) {
+  function ringSvg(anteil, schild, farbe, mana) {
     /* Lebenspunkte: links, von 172° (Seite) nach 98° (fast unten).
        Mana: rechts, von 8° nach 82°. Unten in der Mitte eine Lücke. */
     var L0 = 172, L1 = 98, M0 = 8, M1 = 82;
@@ -1251,23 +1138,6 @@
     if (mana >= 0) {
       s += '<path class="sp-ring-spur" d="' + bogen(M0, M1) + '"/>';
       if (mana > 0.005) s += '<path class="sp-mana-voll" d="' + bogen(M0, M0 + (M1 - M0) * mana) + '"/>';
-    }
-    if (extra) {
-      /* Oben: Ladung für die Superkraft, von 200° bis 340°. */
-      var T0 = 200, T1 = 340, ld = Math.max(0, Math.min(1, (extra.ladung || 0) / 100));
-      s += '<path class="sp-ring-spur" d="' + bogen(T0, T1) + '"/>';
-      if (extra.daemon) s += '<path class="sp-ladung-voll sp-ladung-daemon" d="' + bogen(T0, T1) + '"/>';
-      else if (ld > 0.005) s += '<path class="sp-ladung-voll' + (ld >= 1 ? " sp-ladung-bereit" : "") + '" d="' + bogen(T0, T0 + (T1 - T0) * ld) + '"/>';
-      /* Außen: Helm oben, Brustpanzer unten. */
-      if (extra.helm > 0) s += '<path class="sp-ruest sp-ruest-' + Math.min(3, extra.helm) + '" d="' + bogen(215, 325, 52.5) + '"/>';
-      if (extra.brust > 0) s += '<path class="sp-ruest sp-ruest-' + Math.min(3, extra.brust) + '" d="' + bogen(35, 145, 52.5) + '"/>';
-      /* Links: die Levelzahl, zwischen Lebenspunkten und Ladung. */
-      if (extra.level) {
-        /* Etwas nach innen gerückt (Radius 44 statt 45,5, Kreis 8,5):
-           am linken Bühnenrand wurde die Zahl sonst angeschnitten. */
-        var la = 186 * Math.PI / 180, lx = (50 + 44 * Math.cos(la)).toFixed(1), ly = (50 + 44 * Math.sin(la)).toFixed(1);
-        s += '<g class="sp-level"><circle cx="' + lx + '" cy="' + ly + '" r="8.5"/><text x="' + lx + '" y="' + ly + '" dy=".36em">' + Math.min(99, extra.level) + "</text></g>";
-      }
     }
     return s + "</svg>";
   }
@@ -1464,22 +1334,11 @@
       return;
     }
     var anteil = Math.max(0, Math.min(100, Math.round((ich.lp / ich.lp_max) * 100)));
-    var xpSpanne = Math.max(1, (ich.xp_naechste || 100) - (ich.xp_stufe || 0));
-    var xpAnteil = Math.max(0, Math.min(100, Math.round(((ich.xp || 0) - (ich.xp_stufe || 0)) / xpSpanne * 100)));
-    var vorrat = ich.vorraete || {};
     var status = '<div class="sp-status">'
       + '<div class="sp-status-lp"><span class="sp-status-balken"><i style="width:' + anteil + '%"></i></span> <b>' + ich.lp + " / " + ich.lp_max + "</b> LP"
       + (ich.kaputt ? ' <span class="sp-rot">· kaputt</span>' : "") + (ich.anfaenger ? ' <span class="sp-blau">· Anfängerschutz</span>' : "") + "</div>"
-      /* FASSUNG 634 — Level und Erfahrung */
-      + '<div class="sp-status-lp"><span class="sp-status-balken sp-xp-balken"><i style="width:' + xpAnteil + '%"></i></span> <b>Level ' + (ich.level || 1) + "</b> · "
-      + (ich.xp || 0) + " / " + (ich.xp_naechste || 100) + " Erfahrung" + (ich.skill_frei > 0 ? ' <span class="sp-gold">· ' + ich.skill_frei + " Skillpunkt" + (ich.skill_frei > 1 ? "e" : "") + " frei</span>" : "") + "</div>"
       + '<div class="sp-status-werte"><span>🪙 ' + ich.punkte + " Punkte</span><span>📚 " + ich.verdient + " verdient</span><span>🩹 " + ich.pflaster
       + "</span><span>🧪 " + ich.traenke + "</span><span>🛡️ " + Math.round((ich.ruestung || 0) * 100) + " % Rüstung</span>"
-      + "<span>🔥 " + (ich.ladung || 0) + " % Ladung" + (wirkt(ich, "daemon") ? " · dämonisch " + wirkt(ich, "daemon") + " s" : "") + "</span>"
-      + (ich.helm_stufe > 0 ? "<span>⛑️ Helm " + ich.helm_stufe + ": " + (ich.helm_halt || 0) + "/40</span>" : "")
-      + (ich.brust_stufe > 0 ? "<span>Brustpanzer " + ich.brust_stufe + ": " + (ich.brust_halt || 0) + "/40</span>" : "")
-      + (vorrat.bratwurst > 0 ? "<span>🌭 " + vorrat.bratwurst + " Bratwurst</span>" : "")
-      + (ich.tag_serie > 0 ? "<span>🎁 Serie " + ich.tag_serie + "/7</span>" : "")
       /* FUNK 110 — Abnutzung sichtbar: wie lange hält es noch? */
       + (ich.haustier ? "<span>" + esc((TIERE[ich.haustier] || TIERE.fellmonster).name) + ": noch " + (ich.haustier_leben || 0) + "×</span>" : "")
       + (ich.geschuetz_ladungen > 0 ? "<span>Geschütz Stufe " + (ich.geschuetz_stufe || 1) + ": " + ich.geschuetz_ladungen + " Schuss</span>" : "")
@@ -1498,7 +1357,7 @@
       + (S.waffe ? '<div class="sp-hinweis">🎯 ' + esc(WAFFEN[S.waffe].name) + ' ist angelegt – tippe auf ein Gesicht, um zu schießen. <button type="button" data-tu="ablegen">Ablegen</button></div>' : "")
       + (S.duell && Date.now() < S.duell.bis ? '<div class="sp-hinweis">⚔️ Duell läuft – tippe auf deinen Gegner.</div>' : "")
       + "</div>";
-    var tabs = [["start", "Übersicht"], ["anleitung", "Anleitung"], ["deutsch", "Deutsch"], ["koennen", "Können"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell & Heilen"], ["rang", "Rangliste"]];
+    var tabs = [["start", "Übersicht"], ["anleitung", "Anleitung"], ["deutsch", "Deutsch"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell & Heilen"], ["rang", "Rangliste"]];
     var leiste = '<div class="sp-tabs">' + tabs.map(function (t) {
       return '<button type="button" data-tab="' + t[0] + '" class="' + (reiter === t[0] ? "sp-an" : "") + '">' + t[1] + "</button>";
     }).join("") + "</div>";
@@ -1521,13 +1380,9 @@
       return '<div class="sp-anleitung">'
         + "<p><b>Mitspielen.</b> Unten über dem Chat liegt deine eigene Leiste (nur du siehst sie). „Mitspielen“ schaltet dich ein. Wer nicht mitspielt, kann nicht angegriffen werden und greift niemanden an. Mitten im Kampf (1 Minute nach einem Treffer) kann man nicht aussteigen.</p>"
         + "<p><b>Schießen.</b> Waffe in der Leiste antippen (nochmal = ablegen), dann auf ein Gesicht tippen. Wo du hintippst, zählt: Kopf ×2, Herz ×1,6, Körper ×1, Rand ×0,5. Wer vor dem Einschlag den Platz wechselt, weicht aus. Standardwaffe ist die Kartoffel.</p>"
-        + "<p><b>Leben.</b> Der Bogen links unten am Bild sind deine Lebenspunkte, rechts unten dein Mana, oben die Ladung, die Zahl links dein Level. Eine Minute nach dem letzten Treffer erholst du dich von selbst, erst schneller, dann langsamer bis voll. Bei 0 bist du kaputt: kein Reisen, bis ein Pflaster hilft – oder nach 5 Minuten stehst du mit 25 LP wieder auf. Dein Stand liegt auf dem Server: runter von der Bühne und wieder hoch ändert nichts.</p>"
+        + "<p><b>Leben.</b> Der Bogen links unten am Bild sind deine Lebenspunkte, rechts unten dein Mana. Eine Minute nach dem letzten Treffer erholst du dich von selbst, erst schneller, dann langsamer bis voll. Bei 0 bist du kaputt: kein Reisen, bis ein Pflaster hilft – oder nach 5 Minuten stehst du mit 25 LP wieder auf. Dein Stand liegt auf dem Server: runter von der Bühne und wieder hoch ändert nichts.</p>"
         + "<p><b>Heilen.</b> Das Herz in der Leiste nimmt, was passt (kaputt: Pflaster; viel verloren: Heiltrank; sonst Pflaster) und heilt nie, wenn du voll bist. Andere heilst du im Reiter „Duell & Heilen“.</p>"
-        + "<p><b>Stärker werden.</b> Punkte gibt es vor allem für Deutsch. Mit jedem verdienten Punkt steigen deine Höchst-LP (bis 200) und deine Grundrüstung (bis 30 % weniger Schaden) – das bleibt für immer. Punkte gibst du im Laden aus; Treffer kosten keine Punkte.</p>"
-        + "<p><b>Level und Können.</b> Erfahrung sammelst du mit Deutsch (doppelt so viel wie Punkte), Treffern, dem Heilen anderer und dem Tagesgeschenk. Jedes Level gibt einen Skillpunkt. Im Reiter „Können“ trainierst du damit Zähigkeit, Panzerhaut, Treffsicher, Heilkunst, Tierfreund oder Ingenieur – 5 Minuten × Stufe, nebenher, für immer.</p>"
-        + "<p><b>Rüstung kaufen.</b> Helm und Brustpanzer gibt es in „Schutz & Laden“ in drei Stufen (40, 60, 90 Punkte). Der Helm macht Kopftreffer schwächer, der Brustpanzer Herz und Körper. Jeder Treffer auf die geschützte Stelle kostet einen von 40 Haltepunkten; Reparieren kostet 10 Punkte und geht jederzeit, auch mitten im Kampf. Alle sehen deine Rüstung als Bogen außen am Bild: oben Helm, unten Brustpanzer – Bronze, Silber, Gold.</p>"
-        + "<p><b>Superkraft.</b> Der goldene Bogen oben am Bild lädt sich mit Deutsch (+8), Treffern (+2) und wenn du etwas einsteckst (+3). Bei 100 % leuchtet die Flamme in der Leiste: 45 Sekunden dämonisch – ×1,5 Schaden, und du steckst nur 70 % ein.</p>"
-        + "<p><b>Tagesgeschenk.</b> Einmal am Tag holt es sich von selbst ab: Punkte, Bratwurst, jeden dritten Tag ein Pflaster. Sieben Tage am Stück geben am meisten. Wer auf der Seite übt, bekommt dafür ebenfalls Spielpunkte (5 Seitenpunkte = 1 Punkt, bis 40 am Tag).</p>"
+        + "<p><b>Stärker werden.</b> Punkte gibt es nur für Deutsch. Mit jedem verdienten Punkt steigen deine Höchst-LP (bis 200) und deine Rüstung (bis 30 % weniger Schaden) – das bleibt für immer. Punkte gibst du im Laden aus; Treffer kosten keine Punkte.</p>"
         + "<p><b>Schutz.</b> Schild (reist mit), Mauer (bleibt am Platz), Geschütz und Monster schlagen zurück – anteilig, nie mehr als 4/5 dessen, was der Angreifer anrichtet. Mana-Tränke kosten 30 Mana. Minen und Falltüren legst du auf einen Platz.</p>"
         + "<p><b>Üben.</b> „Sparring“ in der Leiste stellt eine Strohpuppe auf einen freien Platz – nur bei dir, niemand wird gestört. „Er schießt zurück“ macht ein Übungsduell daraus. Zählt nicht.</p>"
         + "<p><b>Waffenstillstand.</b> Solange die Tafel offen ist, trifft niemand.</p></div>";
@@ -1543,7 +1398,7 @@
             var kl = a.ergebnis ? (o === a.ergebnis.loesung ? "sp-richtig" : o === a.gewaehlt ? "sp-falsch" : "") : "";
             return '<button type="button" data-tu="antwort" data-o="' + esc(o) + '" class="' + kl + '"' + (a.ergebnis ? " disabled" : "") + ">" + esc(o) + "</button>";
           }).join("") + "</div>"
-          + (a.ergebnis ? '<div class="sp-erg ' + (a.ergebnis.richtig ? "sp-gruen" : "sp-rot") + '">' + (a.ergebnis.richtig ? "✅ Richtig! +" + (a.ergebnis.gewonnen + (a.ergebnis.bonus || 0)) + " Punkte" + (a.ergebnis.bonus ? " (Mission +" + a.ergebnis.bonus + ")" : "") + (a.ergebnis.mana_plus ? ' <span class="sp-blau">+' + a.ergebnis.mana_plus + " Mana</span>" : "") + (a.ergebnis.xp_plus ? ' <span class="sp-gold">+' + a.ergebnis.xp_plus + " Erfahrung</span>" : "") : "❌ Leider falsch.") + '</div><div class="sp-klein">' + esc(a.ergebnis.erklaerung || "") + '</div><div class="sp-knoepfe"><button type="button" data-tu="aufgabe">Nächste Aufgabe</button></div>' : "")
+          + (a.ergebnis ? '<div class="sp-erg ' + (a.ergebnis.richtig ? "sp-gruen" : "sp-rot") + '">' + (a.ergebnis.richtig ? "✅ Richtig! +" + (a.ergebnis.gewonnen + (a.ergebnis.bonus || 0)) + " Punkte" + (a.ergebnis.bonus ? " (Mission +" + a.ergebnis.bonus + ")" : "") + (a.ergebnis.mana_plus ? ' <span class="sp-blau">+' + a.ergebnis.mana_plus + " Mana</span>" : "") : "❌ Leider falsch.") + '</div><div class="sp-klein">' + esc(a.ergebnis.erklaerung || "") + '</div><div class="sp-knoepfe"><button type="button" data-tu="aufgabe">Nächste Aufgabe</button></div>' : "")
           + (a.hinweis ? '<div class="sp-klein sp-rot">' + esc(a.hinweis) + "</div>" : "")
           + "</div>";
       } else {
@@ -1564,25 +1419,8 @@
          wieder drei Punkte … nach einer Zeit lang hab ich null Punkte" */
       var regel = '<p class="sp-klein">Punkte je richtiger Aufgabe nach Niveau: A1 3 · A2 4 · B1 5 · B2 6 · C1 7 · C2 8. '
         + 'Null gibt es bei falscher Antwort, nach mehr als 10 Minuten Bedenkzeit oder wenn du in der letzten Stunde schon 300 Punkte gesammelt hast (Schutz gegen Durchklicken). '
-        + 'Zwischen zwei Antworten liegen mindestens 3 Sekunden. Jede richtige Antwort gibt außerdem +6 Mana, +8 Ladung und doppelt so viel Erfahrung wie Punkte (mindestens 1, auch über der Stundengrenze).</p>';
+        + 'Zwischen zwei Antworten liegen mindestens 3 Sekunden. Jede richtige Antwort gibt außerdem +6 Mana.</p>';
       return '<div class="sp-chips">' + chips + "</div>" + arten + teil + missionTeil + regel;
-    }
-    if (reiter === "koennen") {
-      var tr = ich.training, frei = ich.skill_frei || 0, sks = ich.skills || {};
-      var rest = tr ? Math.max(0, Math.round((new Date(tr.bis).getTime() - Date.now()) / 60000)) : 0;
-      var trName = tr ? (SKILLS.filter(function (x) { return x[0] === tr.skill; })[0] || [0, tr.skill])[1] : "";
-      return '<p class="sp-text">Level <b>' + (ich.level || 1) + "</b> · " + (ich.xp || 0) + " Erfahrung. Jedes Level bringt einen Skillpunkt. Freie Skillpunkte: <b>" + frei + "</b>.</p>"
-        + (tr ? '<div class="sp-hinweis">💪 Training läuft: <b>' + esc(trName) + " Stufe " + tr.stufe + "</b> – noch " + (rest < 1 ? "unter 1" : "etwa " + rest) + " min. Du kannst normal weiterspielen.</div>" : "")
-        + SKILLS.map(function (x) {
-          var st = Number(sks[x[0]] || 0);
-          var punkte = ""; for (var i = 1; i <= 5; i++) punkte += '<i class="' + (i <= st ? "sp-an" : "") + '"></i>';
-          var geht = frei > 0 && !tr && st < 5;
-          return '<div class="sp-zeile"><span><b>' + x[1] + '</b> <span class="sp-stufen">' + punkte + "</span><br><small>" + x[2] + "</small></span>"
-            + (st >= 5 ? "<small>höchste Stufe</small>" : '<button type="button" data-tu="trainieren" data-k="' + x[0] + '"' + (geht ? "" : " disabled") + ">Trainieren · " + (5 * (st + 1)) + " min</button>")
-            + "</div>";
-        }).join("")
-        + '<p class="sp-klein">Erfahrung: Deutsch (doppelt so viel wie die Punkte), jeder Treffer +1, jemanden heilen +3, Tagesgeschenk +20, Übungen auf der Seite. Trainiertes bleibt für immer.</p>'
-        + '<p class="sp-klein"><b>Superkraft:</b> goldener Bogen oben am Bild. Voll (100 %) tippst du die Flamme in der Leiste: 45 s dämonisch, ×1,5 Schaden, nur 70 % einstecken.</p>';
     }
     if (reiter === "waffen") {
       var liste = WAFFEN_REIHE.map(function (k) {
@@ -1598,7 +1436,7 @@
       return liste + farben;
     }
     if (reiter === "schutz") {
-      return ruestungZeilen(ich) + LADEN.map(function (d) {
+      return LADEN.map(function (d) {
         return '<div class="sp-zeile"><span><b>' + esc(d.name) + "</b><br><small>" + esc(d.was) + "</small></span>"
           + '<button type="button" data-tu="' + (d.legen ? "legen" : "kaufen") + '" data-d="' + d.ding + '"' + (ich.punkte >= d.preis ? "" : " disabled") + ">" + d.preis + " Punkte</button></div>";
       }).join("") + (meineFallen().length ? '<p class="sp-klein">Deine Fallen: ' + meineFallen().map(function (f) { return (f.art === "mine" ? "Mine" : "Falltür") + " auf Platz " + f.platz; }).join(", ") + " (30 min)</p>" : "");
@@ -1623,30 +1461,9 @@
     }
     if (reiter === "rang") {
       if (!S.rangliste) { rpc("spiel_rangliste", {}).then(function (r) { S.rangliste = r || []; panelAuffrischen(); setTimeout(function () { S.rangliste = null; }, 30000); }).catch(function () {}); return '<p class="sp-text">Lade …</p>'; }
-      return '<ol class="sp-rang">' + S.rangliste.map(function (r) { return "<li><b>" + esc(r.name) + "</b> – Level " + (r.level || 1) + " · " + r.verdient + " Deutschpunkte · " + r.lp_max + " LP max</li>"; }).join("") + "</ol>";
+      return '<ol class="sp-rang">' + S.rangliste.map(function (r) { return "<li><b>" + esc(r.name) + "</b> – " + r.verdient + " Deutschpunkte · " + r.lp_max + " LP max</li>"; }).join("") + "</ol>";
     }
     return "";
-  }
-
-  /* XANDER: „dass man sich auch ne Rüstung zur Armo kaufen kann …
-     Kopfschutz … Körperschutz" und „Waffen … reparieren, ohne dass man
-     das Spiel unterbrechen muss". Drei Stufen, 40 Haltepunkte,
-     Reparatur 10 Punkte — alles auf dem Server (spiel_kaufen). */
-  function ruestungZeilen(ich) {
-    var PREIS = [40, 60, 90];
-    return [["helm", "Helm", ich.helm_stufe || 0, ich.helm_halt || 0,
-             function (st) { return "Kopftreffer ×" + komma(Math.max(1.25, 2 - 0.25 * st)) + " statt ×2"; }],
-            ["brust", "Brustpanzer", ich.brust_stufe || 0, ich.brust_halt || 0,
-             function (st) { return "Herz ×" + komma(1.6 - 0.15 * st) + ", Körper ×" + komma(1 - 0.07 * st); }]].map(function (r) {
-      var st = r[2], halt = r[3], preis = PREIS[st];
-      var jetzt = st > 0 ? "Stufe " + st + " · hält noch " + halt + "/40" + (halt === 0 ? " – durch, bitte reparieren" : "") + "<br>" : "";
-      return '<div class="sp-zeile"><span><b>' + r[1] + "</b><br><small>" + jetzt
-        + (st < 3 ? "Stufe " + (st + 1) + ": " + r[4](st + 1) + ", hält 40 Treffer" : r[4](st) + " – höchste Stufe") + "</small></span>"
-        + '<span class="sp-knopfgruppe">'
-        + (st > 0 && halt < 40 ? '<button type="button" data-tu="kaufen" data-d="reparatur_' + r[0] + '"' + (ich.punkte >= 10 ? "" : " disabled") + ">Reparieren · 10</button>" : "")
-        + (st < 3 ? '<button type="button" data-tu="kaufen" data-d="' + r[0] + '"' + (ich.punkte >= preis ? "" : " disabled") + ">" + (st ? "Stufe " + (st + 1) : "Kaufen") + " · " + preis + "</button>" : "")
-        + "</span></div>";
-    }).join("");
   }
 
   function nebenZiel(name) {
@@ -1683,7 +1500,6 @@
     if (tu === "duell") { duellFordern(k.dataset.id, k.dataset.name); return; }
     if (tu === "mission") return missionHolen();
     if (tu === "trinken") return trinken(k.dataset.t);
-    if (tu === "trainieren") return trainieren(k.dataset.k);
     if (tu === "kategorie") { S.kategorie = k.dataset.k || null; aufgabeHolen(false); return; }
   }
 
@@ -1702,10 +1518,6 @@
       a.gewaehlt = o; a.ergebnis = r; a.hinweis = "";
       S.ich = r; S.stand[r.id] = oeffentlich(r);
       ton(r.richtig ? "bling" : "gummi", 0.45);
-      if (r.level > r.level_vorher) {
-        setTimeout(function () { ton("jubel", 0.5); }, 400);
-        hinweis("⬆️ Level " + r.level + "! Ein neuer Skillpunkt – trainiere ihn im Reiter „Können“.");
-      }
       if (r.richtig) senden({ ereignis: "stand", stand: oeffentlich(r) });
       panelAuffrischen(); zeichnen();
       /* XANDER: „die Aufgaben können automatisch weiterschalten, da muss
@@ -1737,7 +1549,6 @@
       ton("kasse", 0.45);
       senden({ ereignis: "stand", stand: oeffentlich(r) });
       if (WAFFEN[ding]) S.waffe = ding;
-      if (/^reparatur_/.test(ding)) hinweis("🔧 Repariert – hält wieder 40 Treffer.");
       panelAuffrischen(); zeichnen();
     }).catch(function (e) { hinweis("Kauf ging nicht: " + (e && e.message ? e.message : e)); });
   }
@@ -1859,8 +1670,7 @@
       setzen: function (o) { Object.keys(o || {}).forEach(function (k) { S[k] = o[k]; }); zeichnen(); },
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
       gegenwehrZeigen: gegenwehrZeigen, falleZeigen: falleZeigen, tippAufPlatz: tippAufPlatz, ringSvg: ringSvg,
-      schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
-      ruestungZeilen: ruestungZeilen, menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
+      schnellZeichnen: schnellZeichnen,
       zone: function (dx, dy) {
         var d = Math.hypot(dx, dy);
         if (d > 1) return "daneben";

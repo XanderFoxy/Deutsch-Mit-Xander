@@ -267,38 +267,3 @@ body.sp-legen #lcPlaetze .lc-kreis { outline: 2px dashed rgba(226, 64, 58, .55);
 .lc-platz-unterwegs > .sp-lp, .lc-platz-unterwegs > .sp-tier, .lc-platz-unterwegs > .sp-geschuetz,
 .lc-platz-unterwegs > .sp-aura, .lc-platz-unterwegs > .sp-waffenmarke, .lc-platz-unterwegs > .sp-risse { visibility: hidden; }
 .sp-anleitung p { margin: 0 0 8px; font-size: 13px; line-height: 1.4; }
-/* FASSUNG 634 — Ladung, Level, Rüstung, Superkraft.
-   XANDER: „jeder muss den Stand von dem anderen sehen". Alles auf
-   dem Rand des Bildes (Ring 42–49, Rüstung außen 51–54): die
-   Gesichtsmitte bleibt frei, und der Ring liegt über Hut und
-   Kleidung (z-index 6 gegen 5) — auch mit Hut sichtbar. */
-.sp-lp .sp-ladung-voll { stroke: #f2b705; filter: drop-shadow(0 0 1px rgba(255, 240, 180, .9)); }
-.sp-lp .sp-ladung-bereit { animation: spLadungBereit 1s ease-in-out infinite; }
-.sp-lp .sp-ladung-daemon { stroke: #b0172f; animation: spDaemonRing .6s ease-in-out infinite alternate; }
-@keyframes spLadungBereit { 50% { stroke: #fff3b0; filter: drop-shadow(0 0 4px #f2b705); } }
-@keyframes spDaemonRing { from { stroke: #b0172f; } to { stroke: #7b1fd6; filter: drop-shadow(0 0 4px #b0172f); } }
-.sp-lp .sp-ruest { stroke-width: 3.5; stroke-linecap: round; filter: drop-shadow(0 0 1px rgba(0, 0, 0, .7)); }
-.sp-lp .sp-ruest-1 { stroke: #c07a3c; }
-.sp-lp .sp-ruest-2 { stroke: #d5dde6; }
-.sp-lp .sp-ruest-3 { stroke: #f2c230; }
-.sp-lp .sp-level circle { fill: #1d2330; stroke: #f2b705; stroke-width: 2; }
-.sp-lp .sp-level text { fill: #fff; font: 800 11.5px system-ui, sans-serif; text-anchor: middle; }
-/* Dämonisch: das Bild glüht rot-violett. */
-.sp-w-daemon .lc-kreis { animation: spDaemonGlut .7s ease-in-out infinite alternate; }
-@keyframes spDaemonGlut {
-  from { box-shadow: 0 0 0 3px rgba(176, 23, 47, .9), 0 0 14px 4px rgba(176, 23, 47, .6); }
-  to   { box-shadow: 0 0 0 3px rgba(123, 31, 214, .9), 0 0 20px 7px rgba(123, 31, 214, .55); }
-}
-.sp-schnell .sp-s-super svg { width: 18px; height: 18px; }
-.sp-schnell .sp-s-super.sp-voll { background: #7a4a00; box-shadow: 0 0 0 2px #f2b705; animation: spLadungKnopf 1s ease-in-out infinite; }
-.sp-schnell .sp-s-super.sp-an, .sp-schnell .sp-s-super.sp-an:disabled { opacity: 1; background: #4a0f2a; color: #fff; box-shadow: 0 0 0 2px #b0172f; }
-@keyframes spLadungKnopf { 50% { box-shadow: 0 0 0 2px #fff3b0, 0 0 10px 2px #f2b705; } }
-.sp-status-balken.sp-xp-balken i { background: linear-gradient(90deg, #c98a00, #f2d45c); }
-.sp-gold { color: #b07800; }
-.sp-stufen { display: inline-flex; gap: 2px; vertical-align: middle; }
-.sp-stufen i { width: 7px; height: 7px; border-radius: 50%; background: rgba(0, 0, 0, .15); }
-.sp-stufen i.sp-an { background: #e8a200; }
-@media (prefers-reduced-motion: reduce) {
-  .sp-lp .sp-ladung-bereit, .sp-lp .sp-ladung-daemon, .sp-w-daemon .lc-kreis, .sp-schnell .sp-s-super.sp-voll { animation: none; }
-  .sp-w-daemon .lc-kreis { box-shadow: 0 0 0 3px rgba(176, 23, 47, .9), 0 0 14px 4px rgba(123, 31, 214, .6); }
-}
