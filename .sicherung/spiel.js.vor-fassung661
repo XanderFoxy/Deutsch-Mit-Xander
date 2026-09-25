@@ -911,8 +911,6 @@
   }
   /* Aufgerufen vom Tipp auf einen Platz (app.js). true = erledigt. */
   function tippAufPlatz(knopf, p, ev) {
-    /* FASSUNG 661 — ein Fundstück auf dem Platz: aufheben statt hinsetzen. */
-    if (knopf && knopf.querySelector && knopf.querySelector(".sp-fundsack") && spielSichtbar()) { fundHeben(knopf); return true; }
     if (p && p.ich && spielSichtbar() && !S.legen && !S.graben && !(S.zauber && ZAUBER[S.zauber].freund)) { if (eigenTipp()) return true; }
     /* FUNK 111 — nach „Mine legen" / „Falltür legen" gilt der nächste
        Tipp dem Platz, auf den sie soll. */
@@ -1012,7 +1010,6 @@
       var raum = ""; try { raum = LC().lage().raum || ""; } catch (e) {}
       rpc("spiel_treffer", { p_ziel: zielSid, p_waffe: waffe, p_dx: dx, p_dy: dy, p_raum: raum }).then(function (erg) {
         if (!erg || !erg.ok) { hinweis("🛡️ " + ((erg && erg.grund) || "kein Treffer")); return; }
-        trophaeenBald();
         if (erg.ziel) S.stand[erg.ziel.id] = erg.ziel;
         if (erg.ich) { S.stand[erg.ich.id] = erg.ich; if (S.ich) { S.ich.lp = erg.ich.lp; S.ich.kaputt = erg.ich.kaputt; } }
         var n = { ereignis: "treffer", zielChat: p.id, schaden: erg.schaden, abgewehrt: erg.abgewehrt,
@@ -1389,7 +1386,6 @@
     S.zauber = "";
     rpc("spiel_zaubern", { p_zauber: art, p_ziel: zielSid, p_raum: raum }).then(function (r) {
       if (!r || !r.ok) { hinweis("✨ " + ((r && r.grund) || "der Zauber ging nicht")); schnellZeichnen(); return; }
-      trophaeenBald();
       if (r.ziel) S.stand[r.ziel.id] = r.ziel;
       if (r.ich_voll) { S.ich = r.ich_voll; S.stand[r.ich_voll.id] = oeffentlich(r.ich_voll); }
       var n = { ereignis: "zauber", sorte: art, zielChat: p.id, schaden: r.schaden || 0, abgewehrt: r.abgewehrt || 0, heil: r.heil || 0, heil_ich: r.heil_ich || 0,
@@ -2475,8 +2471,6 @@
         t.push('<button type="button" data-s="trinken" data-t="' + tr[0] + '"' + (rest || !n ? " disabled" : "") + '><span class="sp-trank sp-trank-' + tr[0] + '"></span>' + tr[1] + " <small>" + (rest ? rest + " s" : n) + "</small></button>");
       });
       inhaltM = '<div class="sp-sm-liste">' + t.join("") + "</div>";
-    } else if (r === "trophaeen") {
-      inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + trophaeenHtml();
     } else if (r === "deutsch") {
       inhaltM = '<p class="sp-sm-klein">Richtig antworten bringt <b>Punkte</b>, <b>Mana</b> und <b>Erfahrung</b> (Level).'
         + (missionLaeuft(ich) ? " Mission läuft: " + esc(missionKurz(ich.mission)) + "." : "") + "</p>"
@@ -2522,8 +2516,6 @@
         /* FASSUNG 655 — XANDER: „Warum hab ich da so viele Erdbeben und so
            viele Orkan und so viel Nebel". Die Zauber stehen nur noch im
            Zauberrad, nicht zusätzlich hier als Liste. */
-        + '<button type="button" data-s="trophaeen"><span class="sp-sm-zbild">' + pokalSvg(true) + "</span>Trophäen <small>"
-          + (S.troph ? S.troph.liste.filter(function (t) { return t.hat; }).length + " / " + S.troph.liste.length : "") + "</small></button>"
         + '<button type="button" data-s="zauberrad"><span class="sp-sm-zbild">' + zauberSvg("nebel") + "</span>Zauberrad öffnen</button>"
         + '<button type="button" data-s="platzmenue">Mein Platzmenü <small>Bild, Sprechbild</small></button>'
         + '<button type="button" data-s="tontest">Ton testen</button>'
@@ -2569,9 +2561,6 @@
       hinweis(k.dataset.k === "level"
         ? (zNeu.level ? "⭐ Dein Level sehen jetzt alle – auch wer nicht mitspielt." : "Dein Level sieht jetzt nur, wer mitspielt.")
         : (zNeu.tiere ? "🐾 Deine Tiere sind jetzt immer dabei – friedlich, für alle." : "Deine Tiere zeigen sich nur noch im Spiel."));
-    } else if (s === "trophaeen") {
-      S.schnellReiter = "trophaeen";
-      trophaeenHolen();
     } else if (s === "deutschlos") {
       S.schnellMenue = false; S.kategorie = k.dataset.k || null; S.aufgabe = null;
       menue("deutsch"); aufgabeHolen(false); schnellZeichnen(true); return;
@@ -3852,12 +3841,6 @@
     rpc("spiel_antwort", { p_id: a.id, p_antwort: o }).then(function (r) {
       if (!r || r.ok === false) { a.hinweis = r && r.grund === "zu schnell" ? "Lies in Ruhe – dann noch mal tippen." : ((r && r.grund) || "ging nicht"); panelAuffrischen(); return; }
       a.gewaehlt = o; a.ergebnis = r; a.hinweis = "";
-      if (r.richtig) trophaeenBald();
-      /* FASSUNG 661 — das Fundstück gehört einem, wenn die Aufgabe stimmt. */
-      if (r.fund) { var fw = FUND_LOHN[r.fund] || ["", "etwas"]; setTimeout(function () { hinweis("🎁 Fundstück eingelöst: " + fw[1] + "!"); ton("geschenk", 0.5); }, 500); }
-      else if (S.fundArt && !r.richtig) hinweis("Schade – das Fundstück ist weg. Das nächste kommt bestimmt.");
-      if (S.fundKatMerk) { S.kategorie = S.fundKatAlt; S.fundKatMerk = false; }
-      S.fundArt = "";
       S.ich = r; S.stand[r.id] = oeffentlich(r);
       if (r.richtig && S.zBis.formular[r.id] > Date.now()) { S.zBis.formular[r.id] = 0; hinweis("📋 Formular ausgefüllt – der Behördengang ist erledigt, du darfst wieder schießen!"); senden({ ereignis: "stand", stand: oeffentlich(r) }); }
       ton(r.richtig ? "bling" : "gummi", 0.45);
@@ -4120,148 +4103,6 @@
     });
   }
 
-  /* =================================================================
-     FASSUNG 661 — TROPHÄEN
-     -----------------------------------------------------------------
-     XANDER: „wenn man irgendwie Mission auch zusätzlich erfüllt, indem
-     man den Gegner nur mit Hühnern vernichtet oder irgendwie so
-     Aufgaben, wo man noch Trophäen bekommt … irgendwas raffiniertes".
-     Sechzehn Trophäen, gezählt auf dem Server aus dem Protokoll
-     (spiel_trophaeen) — wer eine schafft, bekommt sie und Punkte dazu,
-     niemand kann sie sich selbst schreiben. Nachgesehen wird kurz nach
-     Treffern, Zaubern und richtigen Antworten (gebündelt) und beim
-     Öffnen der Liste.
-     ================================================================= */
-  S.troph = null;
-  var trophUhr = 0, trophLetzt = 0;
-  function trophaeenBald() {
-    if (trophUhr) return;
-    var warte = Math.max(4000, 20000 - (Date.now() - trophLetzt));
-    trophUhr = setTimeout(function () { trophUhr = 0; trophaeenHolen(); }, warte);
-  }
-  function trophaeenHolen() {
-    if (!S.bereit || S.gast) return Promise.resolve(null);
-    trophLetzt = Date.now();
-    return rpc("spiel_trophaeen", {}).then(function (r) {
-      if (!r || !r.ok || !Array.isArray(r.liste)) return null;
-      S.troph = r;
-      (r.neu || []).forEach(function (t, i) {
-        setTimeout(function () {
-          hinweis("🏆 Trophäe: " + t.name + " – +" + t.lohn + " Punkte!");
-          ton("jubel", 0.55);
-          trophaeFeier(t.name);
-        }, 600 + i * 2600);
-      });
-      if (r.lohn) setTimeout(function () { abrufen(true); }, 400);
-      schnellZeichnen(true);
-      return r;
-    }).catch(function () { return null; });
-  }
-  function pokalSvg(gold) {
-    var f = gold ? "#f2c230" : "#5b6474", d = gold ? "#c9961a" : "#3e4552";
-    return '<svg viewBox="0 0 24 24"><path d="M7 3 H17 V9 C17 13 14.5 15 12 15 C9.5 15 7 13 7 9 Z" fill="' + f + '" stroke="' + d + '" stroke-width="1"/>'
-      + '<path d="M7 5 H4 C4 9 5.5 10.5 7.5 10.8 M17 5 H20 C20 9 18.5 10.5 16.5 10.8" fill="none" stroke="' + d + '" stroke-width="1.3"/>'
-      + '<path d="M10.5 15 H13.5 V18 H10.5 Z" fill="' + d + '"/><rect x="7.5" y="18" width="9" height="3" rx="1" fill="' + f + '" stroke="' + d + '" stroke-width="1"/>'
-      + (gold ? '<path d="M9.5 6 C9.5 9 10.5 11 12 12" fill="none" stroke="#fff6c0" stroke-width="1" stroke-linecap="round"/>' : "") + "</svg>";
-  }
-  /* Ein goldener Pokal steigt über dem eigenen Bild auf und funkelt. */
-  function trophaeFeier(name) {
-    var m = mittelpunkt(meineChatId());
-    if (!m) return;
-    var p = document.createElement("div");
-    p.className = "sp-pokal-feier";
-    p.innerHTML = pokalSvg(true) + '<b></b>';
-    p.querySelector("b").textContent = name;
-    p.style.left = m.x + "px"; p.style.top = m.y + "px";
-    document.body.appendChild(p);
-    setTimeout(function () { p.remove(); }, 2600);
-    flammen(m.x, m.y, m.r * 0.8, "gold", 8);
-  }
-  function trophaeenHtml() {
-    var r = S.troph;
-    if (!r) return '<p class="sp-sm-klein">Einen Moment – ich zähle nach …</p>';
-    var hat = r.liste.filter(function (t) { return t.hat; }).length;
-    return '<p class="sp-sm-klein"><b>' + hat + " von " + r.liste.length + "</b> Trophäen. Jede bringt einmalig Punkte.</p>"
-      + '<div class="sp-troph-liste">' + r.liste.map(function (t) {
-        var anteil = Math.round(100 * Math.min(1, t.stand / t.ziel));
-        return '<div class="sp-troph' + (t.hat ? " sp-troph-hat" : "") + '"><i>' + pokalSvg(t.hat) + "</i><span><b>" + esc(t.name) + "</b>"
-          + "<small>" + esc(t.text) + " · +" + t.lohn + " P</small>"
-          + (t.hat ? "" : '<em><u style="width:' + anteil + '%"></u></em><small>' + t.stand + " / " + t.ziel + "</small>") + "</span></div>";
-      }).join("") + "</div>";
-  }
-
-  /* =================================================================
-     FASSUNG 661 — FUNDSTÜCKE AUF DEM FELD
-     -----------------------------------------------------------------
-     XANDER: „auf dem Feld … das darf man aber nur für sich sehen …
-     zwischendurch ne Artikel Aufgabe, wo man auf dem Feld zwischendurch
-     noch Sachen einsammeln kann, um einfach weiter zu kämpfen".
-     Ab und zu (alle zwei bis vier Minuten) glitzert auf einem freien
-     Platz ein Säckchen — nur auf dem eigenen Gerät. Antippen: eine
-     Artikel-Aufgabe. Richtig gelöst, gehört einem der Fund (Erz,
-     Bratwurst, Mana, Punkte, Pflaster oder Superkraft-Ladung). Der
-     Server entscheidet, was drin ist, und lässt höchstens alle drei
-     Minuten eins aufheben.
-     ================================================================= */
-  var FUND_LOHN = { erz: ["⛏️", "1 Erz"], bratwurst: ["🌭", "1 Bratwurst"], mana: ["💧", "15 Mana"],
-                    punkte: ["🪙", "10 Punkte"], pflaster: ["🩹", "1 Pflaster"], ladung: ["🔥", "20 % Superkraft"] };
-  S.fundNaechst = Date.now() + 60000 + Math.random() * 60000;
-  S.fundPlatz = 0; S.fundBis = 0; S.fundArt = "";
-  function fundSvg() {
-    return '<svg viewBox="0 0 40 40"><ellipse cx="20" cy="34" rx="11" ry="3" fill="rgba(0,0,0,.25)"/>'
-      + '<path d="M12 18 C8 24 9 33 20 33 C31 33 32 24 28 18 Z" fill="#c0873f" stroke="#6b4521" stroke-width="1.4"/>'
-      + '<path d="M13 18 C15 15 25 15 27 18 C25 20 15 20 13 18 Z" fill="#8a5a2e" stroke="#6b4521" stroke-width="1.2"/>'
-      + '<path d="M15 16 C14 12 17 10 20 13 C23 10 26 12 25 16" fill="none" stroke="#e2403a" stroke-width="2" stroke-linecap="round"/>'
-      + '<text x="20" y="29" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="9" fill="#ffe27a">?</text>'
-      + '<g class="sp-fundsack-funkeln" fill="#fff6c0"><path d="M8 8 L9 11 L12 12 L9 13 L8 16 L7 13 L4 12 L7 11 Z"/><path d="M32 6 L32.8 8.2 L35 9 L32.8 9.8 L32 12 L31.2 9.8 L29 9 L31.2 8.2 Z"/><path d="M33 22 L33.6 23.4 L35 24 L33.6 24.6 L33 26 L32.4 24.6 L31 24 L32.4 23.4 Z"/></g></svg>';
-  }
-  function fundPflegen() {
-    var reihe = document.getElementById("lcPlaetze");
-    if (!reihe) return;
-    var jetzt = Date.now(), an = spielSichtbar() && !S.gast && S.bereit;
-    var alt = reihe.querySelector(".sp-fundsack");
-    var altPlatz = alt ? alt.closest(".lc-platz") : null;
-    /* Weg, wenn: nicht mehr mitgespielt, abgelaufen, oder jemand sitzt jetzt dort. */
-    if (alt && (!an || jetzt > S.fundBis || (altPlatz && altPlatz.dataset.lcId) || (S.sparring && altPlatz && Number(altPlatz.dataset.lcPlatz) === S.sparring))) {
-      alt.remove(); alt = null; S.fundPlatz = 0;
-    }
-    if (alt || !an || jetzt < S.fundNaechst) return;
-    var frei = [].filter.call(reihe.querySelectorAll(".lc-platz"), function (q) {
-      return !q.dataset.lcId && !(S.sparring && Number(q.dataset.lcPlatz) === S.sparring) && q.querySelector(".lc-kreis");
-    });
-    S.fundNaechst = jetzt + 120000 + Math.random() * 120000;
-    if (!frei.length) return;
-    var ziel = frei[Math.floor(Math.random() * frei.length)], kreis = ziel.querySelector(".lc-kreis");
-    var f = document.createElement("span");
-    f.className = "sp-fundsack";
-    f.innerHTML = fundSvg();
-    f.title = "Fundstück – antippen";
-    /* Aus den echten Rechtecken gerechnet: bei freien Plätzen ist das
-       offsetParent des Kreises nicht der Platz selbst. */
-    var rz = ziel.getBoundingClientRect(), rk = kreis.getBoundingClientRect();
-    f.style.left = (rk.left - rz.left - ziel.clientLeft) + "px"; f.style.top = (rk.top - rz.top - ziel.clientTop) + "px";
-    f.style.width = rk.width + "px"; f.style.height = rk.height + "px";
-    ziel.appendChild(f);
-    S.fundPlatz = Number(ziel.dataset.lcPlatz); S.fundBis = jetzt + 45000;
-    ton("bling", 0.3);
-  }
-  function fundHeben(knopf) {
-    var f = knopf.querySelector(".sp-fundsack");
-    if (f) f.remove();
-    S.fundPlatz = 0;
-    rpc("spiel_fund_heben", {}).then(function (r) {
-      if (!r || !r.ok) { hinweis("🎁 " + ((r && r.grund) || "Das Fundstück ist zerfallen.")); return; }
-      S.fundArt = r.fund;
-      var w = FUND_LOHN[r.fund] || ["🎁", "etwas"];
-      ton("geschenk", 0.45);
-      hinweis("🎁 Fundstück! Darin: " + w[1] + ". Löse die Artikel-Aufgabe – dann gehört es dir.");
-      /* Nur für diese eine Aufgabe „Artikel" — danach wieder die eigene Wahl. */
-      if (!S.fundKatMerk) { S.fundKatMerk = true; S.fundKatAlt = S.kategorie || null; }
-      S.kategorie = "artikel"; S.aufgabe = null;
-      menue("deutsch"); aufgabeHolen(false);
-    }).catch(function () { hinweis("🎁 Das ging gerade nicht."); });
-  }
-
   /* ---------------------------------------------------------------
      TAKT: beitreten, auffrischen, Plätze schmücken, Tafel beobachten
      --------------------------------------------------------------- */
@@ -4271,8 +4112,6 @@
     abrufen(false);
     tafelPruefen();
     zeichnen();
-    fundPflegen();
-    if (S.bereit && !S.troph && !trophUhr && Date.now() - trophLetzt > 30000) trophaeenBald();
     schnellZeichnen();
   }, 700);
 
@@ -4299,7 +4138,6 @@
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,
-      trophaeenHolen: trophaeenHolen, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
       zauberZeigen: zauberZeigen, zaubern: zaubern, daemonAusbruch: daemonAusbruch, uebungZaubern: uebungZaubern, geschuetzSvg: geschuetzSvg, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
       menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {

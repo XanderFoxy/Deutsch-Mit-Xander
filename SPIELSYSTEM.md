@@ -510,3 +510,12 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - `LC_MINI_BILD` + `lcMiniBilderSetzen` in app.js: zugeordnet über das Wort auf der Kachel, ein Wächter auf den direkten Kindern von body setzt die Bilder in JEDEM Menü, sobald es erscheint. Fehlt ein Bild, bleibt das Emoji (bewusst bei „Ups!" und „Klaps").
 - Höhe genau eine Zeile wie vorher (1em), damit das Menü aufs Telefon passt (Runde-98-Sonden Blume/Leiter und Gesichter wieder grün).
 - Sonde: `pruefe-660-kachelbilder.js` (6 Prüfungen, 360 px).
+
+## Fassung 661 — Trophäen und Fundstücke auf dem Feld
+
+- XANDER: „wenn man irgendwie Mission auch zusätzlich erfüllt, indem man den Gegner nur mit Hühnern vernichtet oder irgendwie so Aufgaben, wo man noch Trophäen bekommt … irgendwas raffiniertes".
+- 16 Trophäen, gezählt auf dem Server (`spiel_trophaeen()`, Tabelle `spiel_trophaeen` mit RLS nur-lesen-eigene): Hühnerbaron (25 Hühnerwerfer-Treffer), Kartoffelkönig, Brezelbäcker, Bierkrug-Held, Scharfschütze (20 Kopftreffer), Unverwüstlich, Musterschüler (50 richtige Aufgaben), Grammatik-Genie (250), Hexenmeister (30 Zauber), Sanitäter, Schatzsucher, Glückspilz (10 Fundstücke), Tierfreund, Stammgast (7 Tage), Auftragsheld (10 Missionen), Deutsch-Profi (Level 10). Jede bringt einmalig 40–150 Punkte.
+- Anzeige: Menü → Mehr → „Trophäen n/16" mit Fortschrittsbalken; eine neue Trophäe steigt als goldener Pokal über dem eigenen Bild auf (Jubel, Goldflammen). Nachgesehen wird gebündelt nach Treffern, Zaubern und richtigen Antworten.
+- XANDER: „auf dem Feld … das darf man aber nur für sich sehen … zwischendurch ne Artikel Aufgabe, wo man auf dem Feld zwischendurch noch Sachen einsammeln kann". Fundstücke: alle 2–4 Minuten glitzert beim Mitspielen auf einem freien Platz ein Säckchen (nur auf dem eigenen Gerät, 45 s lang). Antippen → `spiel_fund_heben()` (höchstens alle 3 Minuten, der Server wählt den Inhalt: Erz, Bratwurst, 15 Mana, 10 Punkte, Pflaster, 20 % Superkraft) → Artikel-Aufgabe; richtig gelöst, schreibt `spiel_antwort` den Fund gut. Danach gilt wieder die eigene Aufgabenwahl.
+- Server im Rollback getestet (6 Trophäen für XanderFox erkannt, Fund-Sperre, Gutschrift bei richtiger Antwort).
+- Sonde: `pruefe-661-trophaeen-funde.js` (13 Prüfungen, 360 px); alle Spiel-Sonden grün.
