@@ -137,8 +137,6 @@ const sage = (gut, was, zusatz) => {
 
   const tick = (ms) => pg.waitForTimeout(ms);
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
-  /* Fassung 671: erst fliegt die Zauberkugel (höchstens 750 ms), dann wirkt der Zauber. */
-  const FLUG = 800;
   const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
   const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
@@ -169,7 +167,7 @@ const sage = (gut, was, zusatz) => {
   await pg.touchscreen.tap(20, 20); await tick(200);
 
   console.log("\nBREZELFLUT\n");
-  await bereit("brezelflut"); await aufBea(); await tick(500 + FLUG);
+  await bereit("brezelflut"); await aufBea(); await tick(500);
   const brezel = await pg.evaluate(() => ({ ruf: (window.__rufe.find((r) => r.name === "spiel_zaubern") || {}).args, regen: document.querySelectorAll(".sp-brezelregen").length,
     bauch: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-brezelbauch')), toene: window.DMA_TONLOG.map((t) => t.name).join(","), raus: (window.__raus.find((x) => x && x.ereignis === "zauber") || {}).sorte }));
   sage(brezel.ruf && brezel.ruf.p_zauber === "brezelflut" && brezel.raus === "brezelflut", "Tipp auf Bea: spiel_zaubern(brezelflut), alle bekommen es", JSON.stringify(brezel.ruf));
@@ -177,7 +175,7 @@ const sage = (gut, was, zusatz) => {
 
   console.log("\nMÜCKENSCHWARM\n");
   await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef; P.zustand().ich.mana = 100; });
-  await bereit("muecken"); await aufBea(); await tick(400 + FLUG);
+  await bereit("muecken"); await aufBea(); await tick(400);
   const muecken = await pg.evaluate(() => ({ n: document.querySelectorAll(".sp-muecke").length, toene: window.DMA_TONLOG.map((t) => t.name).join(",") }));
   await tick(2000);
   const mueckenSpaeter = await pg.evaluate(() => ({ summen: window.DMA_TONLOG.filter((t) => t.name === "muecken").length, zahl: [...document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-zahl')].map((z) => z.textContent).join("|") }));
@@ -189,7 +187,7 @@ const sage = (gut, was, zusatz) => {
   let ichPos = await seite("ich");
   await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(1200);
   ichPos = await seite("ich"); ichPos = { x: ichPos.x, y: Math.max(ichPos.y, Math.min(ichPos.y + ichPos.w * 0.42, 14)) };
-  await bereit("kaffeeklatsch"); await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(900 + FLUG);
+  await bereit("kaffeeklatsch"); await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(900);
   const kaffee = await pg.evaluate(() => ({ ruf: (window.__rufe.find((r) => r.name === "spiel_zaubern") || {}).args, tasse: document.querySelectorAll(".sp-kaffee").length,
     zahl: [...document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-zahl')].map((z) => z.textContent).join("|") }));
   sage(kaffee.ruf && kaffee.ruf.p_zauber === "kaffeeklatsch" && kaffee.ruf.p_ziel === "00000000-0000-4000-8000-000000000000", "Kaffeeklatsch darf auf das eigene Bild", JSON.stringify(kaffee.ruf));
@@ -234,11 +232,11 @@ const sage = (gut, was, zusatz) => {
   /* Das Deutsch-Fenster vom Formular ist noch offen – erst zumachen, sonst
      tippt der Finger auf das Fenster statt auf Bea. */
   await pg.evaluate(() => { const p = document.getElementById("spPanel"); if (p) p.hidden = true; window.__fair = 0.5; const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mana = 100; });
-  await bereit("nebel"); await aufBea(); await tick(600 + FLUG);
+  await bereit("nebel"); await aufBea(); await tick(600);
   sage(/Fair bleiben.*halber Schaden, keine Punkte/.test(await hinweiseAb(h0)), "gegen viel Kleinere: Hinweis auf halben Schaden ohne Punkte", await hinweiseAb(h0));
   h0 = await hinweisSeit();
   await pg.evaluate(() => { window.__fair = 1; window.__rangNeu = true; const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mana = 100; });
-  await bereit("nebel"); await aufBea(); await tick(900 + FLUG);
+  await bereit("nebel"); await aufBea(); await tick(900);
   sage(/Aufgestiegen: Zaubergeselle/.test(await hinweiseAb(h0)), "neuer Zauberer-Rang wird gefeiert", await hinweiseAb(h0));
   if (process.env.BILD) { await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.zrad = true; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300); await pg.screenshot({ path: process.env.BILD }); }
 

@@ -179,12 +179,12 @@ const sage = (gut, was, zusatz) => {
   await tick(250);
   let pu = await seite("uebungspuppe");
   pu = { x: pu.x, y: Math.max(pu.y, Math.min(pu.y + pu.w * 0.42, 14)) };
-  await pg.touchscreen.tap(pu.x, pu.y); await tick(300 + 450); /* Fassung 671: erst fliegt die Zauberkugel (420 ms) */
+  await pg.touchscreen.tap(pu.x, pu.y); await tick(300);
   /* Richtete der erste Tipp nur den Rahmen aus (Zauber noch bereit), tippt man eben nochmal. */
   if (await pg.evaluate(() => window.DMA_SPIEL.pruef.zustand().zauber === "erdbeben")) {
     await tick(900);
     pu = await seite("uebungspuppe"); pu = { x: pu.x, y: Math.max(pu.y, Math.min(pu.y + pu.w * 0.42, 14)) };
-    await pg.touchscreen.tap(pu.x, pu.y); await tick(300 + 450); /* Fassung 671: erst fliegt die Zauberkugel (420 ms) */
+    await pg.touchscreen.tap(pu.x, pu.y); await tick(300);
   }
   const ueb = await pg.evaluate(() => ({ bebt: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="uebungspuppe"].sp-bebt')), ruf: window.__rufe.some((r) => r.name === "spiel_zaubern"),
     mana: window.DMA_SPIEL.pruef.zustand().ich.mana, toene: window.DMA_TONLOG.map((t) => t.name).join(","), hinweis: window.__hinweise.slice(-1)[0] || "" }));

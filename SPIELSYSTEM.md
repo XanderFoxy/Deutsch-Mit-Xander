@@ -614,3 +614,15 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Jedes gekaufte Tier hat eine eigene Signatur: Stachelmonster schießt Stacheln, Schäferhund bellt Schallwellen („Wuff!"), Dackel knurrt („Grrr!"), Füchse und Wolpertinger funkeln, Fellmonster stampft, Eule und Greif verlieren Federn, Storch klappert („Klapper!").
 - Alles läuft über das gemeinsame Teilchen-Budget (Fassung 667), bleibt also auch auf einfachen Android-Geräten flüssig.
 - Sonde: `pruefe-670-tier-effekte.js`. 638, 646, 656, 667 weiter grün.
+
+## Fassung 671 — Zauber und Superkraft, die man spürt; kein Nachhängen beim Zaubern
+
+- XANDER (Funk 132, zweiter Teil): „verbessere dabei auch den Effekt der Schüsse wenn man mit der Superkraft schießt … den Sound zu jeder Superkraft … die Animation von den Zauberkräften … die können wir zehnmal so geil machen dass sie richtig effektiv wird … immersiv … wenn zwei Leute miteinander spielen … dass die Bilder nicht irgendwie eine Sekunde zurückhängen".
+- Superkraft-Schuss: jeder Abschuss knallt (Peitschenknall), lila Mündungsring, dunkle Flammen am eigenen Bild, die Kugel ist größer; beim Aufprall ein lila Krater-Blitz, zwei Druckwellen und ein dumpfer Schlag – genau beim Einschlag (gemessen: Flug 620 ms, Krater bei 627 ms).
+- Jeder Zauber in drei Teilen:
+  1. Beschwören SOFORT beim Tippen: drehender Zauberkreis mit Runen und Sechsstern unter dem eigenen Bild, Ton „feenzauber".
+  2. Eine leuchtende Kugel in der Farbe des Zaubers fliegt mit Funkenschweif zum Ziel – so lange, wie der Server gerade braucht. Die anderen bekommen „zauberstart" sofort und sehen Kreis und Kugel gleichzeitig; die Wartezeit auf den Server ist jetzt Flugzeit statt Stillstand.
+  3. Einschlag: Lichtblitz, zwei Druckwellen, Sterne, das Bild leuchtet in der Zauberfarbe; wer getroffen ist, sieht den Bildschirmrand leuchten, bei Schaden ruckt der Raum. Der Ton des Zaubers beginnt genau beim Einschlag.
+- Zugaben: Erdbeben mit Felsbrocken, Bodenwellen und Nachbeben; Brezelflut 14 Brezeln und „Mahlzeit!"; Mückenschwarm 20 Mücken; Kaffeeklatsch steigende Herzen; Hexenschuss ein lila Blitz und „Aua, mein Rücken!"; Gartenzwerg Zauberstaub und „Plopp!"; Behördengang ein Stempel „ANTRAG!" und wirbelnde Formulare; Nebel dichter.
+- Lehnt der Server ab, verpufft die Kugel – auch bei den anderen („zauberab").
+- Sonde: `pruefe-671-zauber-superkraft.js` (22 Prüfungen). `pruefe-650/654/655` warten jetzt den Flug der Kugel ab. Alle 36 Spiel-Sonden grün.

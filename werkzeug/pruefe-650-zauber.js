@@ -140,6 +140,8 @@ const sage = (gut, was, zusatz) => {
 
   const tick = (ms) => pg.waitForTimeout(ms);
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
+  /* Fassung 671: erst fliegt die Zauberkugel (höchstens 750 ms), dann wirkt der Zauber. */
+  const FLUG = 800;
   const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
   const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
@@ -178,7 +180,7 @@ const sage = (gut, was, zusatz) => {
   sage(bereit.z === "nebel" && !bereit.rad && bereit.an, "Nebel ist bereit, das Rad zu, der Stab leuchtet", JSON.stringify(bereit));
   await pg.evaluate(() => { window.__rufe.length = 0; window.__raus.length = 0; window.DMA_TONLOG.length = 0; });
   const bea0 = await seite("bea");
-  await pg.touchscreen.tap(bea0.x, bea0.y); await tick(900);
+  await pg.touchscreen.tap(bea0.x, bea0.y); await tick(900 + FLUG);
   const nebel = await pg.evaluate(() => {
     const ruf = window.__rufe.find((r) => r.name === "spiel_zaubern"), raus = window.__raus.find((p) => p && p.ereignis === "zauber");
     const n = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-nebel'), k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis');
@@ -196,7 +198,7 @@ const sage = (gut, was, zusatz) => {
 
   console.log("\nERDBEBEN UND ORKAN (Level 8, 100 Mana)\n");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); window.__ich.level = 8; window.__ich.mana = 100; S.ich.level = 8; S.ich.mana = 100; S.zauber = "erdbeben"; window.DMA_TONLOG.length = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await pg.touchscreen.tap(bea0.x, bea0.y); await tick(250);
+  await pg.touchscreen.tap(bea0.x, bea0.y); await tick(250 + FLUG);
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD.replace(/\.png$/, "-beben.png"), clip: { x: 0, y: 0, width: 393, height: 200 } });
   const beben = await pg.evaluate(() => ({ bebt: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"].sp-bebt')), riss: Boolean(document.querySelector(".sp-beben-riss")),
     raum: document.getElementById("lcPlaetze").classList.contains("sp-raum-bebt"), toene: window.DMA_TONLOG.map((t) => t.name).join(",") }));
@@ -210,7 +212,7 @@ const sage = (gut, was, zusatz) => {
   sage(!nachBeben.bebt && !nachBeben.riss && nachBeben.wackel, "nach 3,6 s ist das Beben vorbei, Bea zittert noch (6 s)", JSON.stringify(nachBeben));
 
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.zauber = "orkan"; window.DMA_TONLOG.length = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await pg.touchscreen.tap(bea0.x, bea0.y); await tick(1500);
+  await pg.touchscreen.tap(bea0.x, bea0.y); await tick(1500 + FLUG);
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD.replace(/\.png$/, "-orkan.png"), clip: { x: 0, y: 0, width: 393, height: 200 } });
   const orkan = await pg.evaluate(() => {
     const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis'), r = k.getBoundingClientRect();

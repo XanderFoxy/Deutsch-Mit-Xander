@@ -1,12 +1,24 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 654: DEUTSCHE ZAUBER, ZAUBERER-RÄNGE, FAIRNESS
+   SONDE — FASSUNG 671: ZAUBER UND SUPERKRAFT, DIE MAN SPÜRT
    ---------------------------------------------------------------------
-   XANDER: „ein Mückenschwarm losschicken … jemanden verwandelt in
-   irgendwas anderes … Stopft den Gegner mit Brezeln voll" · „wie können
-   wir … die einzelnen Stufen des Zauberers … entwickeln" · „ob es da so
-   einen Fairnessfaktor gibt".
-   Android-Telefon (393 px), echte Fingertipps.
+   Funk 132, XANDER: „verbessere dabei auch den Effekt der Schüsse wenn
+   man mit der Superkraft schießt … den Sound zu jeder Superkraft … die
+   Animation von den Zauberkräften … zehnmal so geil … immersiv … wenn
+   zwei Leute miteinander spielen … dass die Bilder nicht irgendwie eine
+   Sekunde zurückhängen".
+   Geprüft auf einem Android-Telefon (393 px, Fingertipps):
+     · Zauberkreis und Kugel erscheinen SOFORT beim Tippen, die anderen
+       bekommen „zauberstart" vor der Antwort des Servers
+     · die Kugel fliegt, solange der Server rechnet; der Ton des Zaubers
+       beginnt erst beim Einschlag
+     · Einschlag: Lichtblitz, Druckwellen, Sterne, Bild leuchtet; wer
+       getroffen ist, sieht den Bildschirmrand leuchten
+     · jeder Zauber hat seine Zugabe (Felsbrocken, Herzen, lila Blitz,
+       „Plopp!", Stempel, mehr Brezeln und Mücken)
+     · beim anderen Gerät: Kugel fliegt, der Zauber wartet auf sie
+     · abgelehnt: die Kugel verpufft, auch bei den anderen
+     · Superkraft-Schuss: Knall und lila Mündung, Einschlag mit Krater
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -117,7 +129,9 @@ const sage = (gut, was, zusatz) => {
       else if (name === "spiel_treffer") data = { ok: true, zone: "koerper", schaden: 8, abgewehrt: 0, kaputt: false,
         ziel: Object.assign({}, bea, { lp: 42 }), ich: Object.assign({}, ich, { lp: 94 }), gegenwehr: 6,
         gegen_geschuetz: 4, gegen_tier: 2, tier: "fellmonster", lohn: 1, waffe: args.p_waffe };
-      return Promise.resolve({ data: data, error: null });
+      if (name === "spiel_zaubern" && window.__zauberNein) data = { ok: false, grund: "zu wenig Mana" };
+      /* Fassung 671: der Server braucht messbar Zeit – so sieht man, ob die Kugel so lange fliegt. */
+      return new Promise((ok) => setTimeout(() => ok({ data: data, error: null }), name === "spiel_zaubern" ? (window.__verz || 0) : 0));
     } };
     const cem = { id: cemId, name: "Cem", lp: 100, lp_max: 100, kaputt: false, mitspielen: false };
     window.DMA_SPIEL.pruef.setzen({ klient: klient, bereit: true, versucht: true, uid: ichId, ich: ich,
@@ -154,96 +168,127 @@ const sage = (gut, was, zusatz) => {
   };
   const bereit = (z) => pg.evaluate((z) => { const S = window.DMA_SPIEL.pruef.zustand(); S.zauber = z; window.DMA_TONLOG.length = 0; window.__rufe.length = 0; window.__raus.length = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); }, z);
 
-  console.log("\nDAS ZAUBERRAD MIT NEUN ZAUBERN UND DEM RANG\n");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.level = 12; S.ich.mana = 100; S.ich.zauber_zahl = 12; window.__ich.level = 12; window.__ich.mana = 100; window.__ich.zauber_zahl = 12; S.zrad = true; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tick(300);
-  const rad = await pg.evaluate(() => {
-    const r = document.querySelector(".sp-zauberrad"); if (!r) return { da: false };
-    const rr = r.getBoundingClientRect(), k = [...r.querySelectorAll(".sp-rad-zauber")];
-    const tippbar = k.every((b) => { const q = b.getBoundingClientRect(); const o = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2); return o && (o === b || b.contains(o)); });
-    return { da: true, n: k.length, fest: getComputedStyle(r).position, imBild: rr.left >= 0 && rr.right <= innerWidth && rr.top >= 0, tippbar, rang: (r.querySelector("text") || {}).textContent, reihe: k.map((b) => b.dataset.z).join(",") };
+  const zaehler = () => pg.evaluate(() => {
+    window.__z = {}; window.__zt = {};
+    if (window.__mo) window.__mo.disconnect();
+    const t0 = performance.now();
+    window.__mo = new MutationObserver((l) => l.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType !== 1) return;
+      String(n.className).split(" ").forEach((k) => { if (!k) return; window.__z[k] = (window.__z[k] || 0) + 1; if (!(k in window.__zt)) window.__zt[k] = Math.round(performance.now() - t0); }); })));
+    window.__mo.observe(document.body, { childList: true });
+    window.__t0 = t0;
   });
-  sage(rad.da && rad.n === 9 && rad.fest === "fixed" && rad.imBild && rad.tippbar, "volles Zauberrad: neun Zauber, frei schwebend, ganz im Bild, alle erreichbar", JSON.stringify(rad));
-  sage(rad.reihe === "brezelflut,nebel,kaffeeklatsch,muecken,erdbeben,hexenschuss,orkan,gartenzwerg,behoerdengang", "im Uhrzeigersinn nach Level geordnet", rad.reihe);
-  sage(rad.rang === "Zaubergeselle", "in der Mitte steht der Zauberer-Rang (12 Zauber = Zaubergeselle)", rad.rang);
-  await pg.touchscreen.tap(20, 20); await tick(200);
+  const stand = () => pg.evaluate(() => ({ z: window.__z, zt: window.__zt, toene: window.DMA_TONLOG.map((t) => t.name + "@" + Math.round(t.wann - window.__t0)).join(","),
+    texte: [...document.querySelectorAll(".sp-text-puff,.sp-stempel-gross")].map((e) => e.textContent).join("|") }));
 
-  console.log("\nBREZELFLUT\n");
-  await bereit("brezelflut"); await aufBea(); await tick(500 + FLUG);
-  const brezel = await pg.evaluate(() => ({ ruf: (window.__rufe.find((r) => r.name === "spiel_zaubern") || {}).args, regen: document.querySelectorAll(".sp-brezelregen").length,
-    bauch: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-brezelbauch')), toene: window.DMA_TONLOG.map((t) => t.name).join(","), raus: (window.__raus.find((x) => x && x.ereignis === "zauber") || {}).sorte }));
-  sage(brezel.ruf && brezel.ruf.p_zauber === "brezelflut" && brezel.raus === "brezelflut", "Tipp auf Bea: spiel_zaubern(brezelflut), alle bekommen es", JSON.stringify(brezel.ruf));
-  sage(brezel.regen >= 6 && brezel.bauch && /brezelknack/.test(brezel.toene), "Brezeln regnen auf Bea, danach hat sie einen Brezelbauch; man hört es", JSON.stringify({ regen: brezel.regen, bauch: brezel.bauch, toene: brezel.toene }));
+  console.log("\nSOFORT BESCHWÖREN, DIE KUGEL FLIEGT SO LANGE WIE DER SERVER RECHNET\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.level = 12; S.ich.mana = 100; window.__ich.level = 12; window.__ich.mana = 100; window.__verz = 500; });
+  await bereit("erdbeben"); await zaehler(); await aufBea(); await tick(120);
+  const frueh = await pg.evaluate(() => ({ kreis: Boolean(document.querySelector(".sp-zauberkreis")), kugel: Boolean(document.querySelector(".sp-zauberkugel")),
+    start: (window.__raus.find((p) => p && p.ereignis === "zauberstart") || {}), zauber: Boolean(window.__raus.find((p) => p && p.ereignis === "zauber")),
+    riss: Boolean(document.querySelector(".sp-beben-riss")) }));
+  sage(frueh.kreis && frueh.kugel && !frueh.riss, "120 ms nach dem Tipp: Zauberkreis unter mir, die Kugel fliegt, das Beben wartet noch", JSON.stringify(frueh));
+  sage(frueh.start.sorte === "erdbeben" && frueh.start.zielChat === "bea" && frueh.start.flug >= 380 && !frueh.zauber, "die anderen bekommen „zauberstart“ sofort – vor der Antwort des Servers", JSON.stringify(frueh.start));
+  await tick(1400);
+  const beben = await stand();
+  console.log("   " + JSON.stringify(beben.zt));
+  sage(beben.z["sp-zauberblitz"] >= 1 && beben.z["sp-ring-welle"] >= 2 && beben.z["sp-stern-burst"] >= 6, "Einschlag: Lichtblitz, Druckwellen, Sterne", JSON.stringify(beben.z));
+  sage(beben.zt["sp-zauberblitz"] >= 480 && beben.zt["sp-beben-riss"] >= beben.zt["sp-zauberblitz"], "der Einschlag kommt, wenn der Server fertig ist (500 ms) – nicht vorher", "Blitz bei " + beben.zt["sp-zauberblitz"] + " ms");
+  const tonZeit = (n) => { const m = new RegExp("(^|,)" + n + "@(\\d+)").exec(beben.toene); return m ? Number(m[2]) : -1; };
+  sage(tonZeit("feenzauber") >= 0 && Math.abs(tonZeit("feenzauber") - beben.zt["sp-zauberkreis"]) < 40 && Math.abs(tonZeit("erdbeben") - beben.zt["sp-zauberblitz"]) < 40,
+    "Ton: das Beschwören klingt mit dem Zauberkreis, das Grollen erst mit dem Einschlag", beben.toene + " · Kreis " + beben.zt["sp-zauberkreis"] + " / Blitz " + beben.zt["sp-zauberblitz"]);
+  sage((beben.z["sp-fels"] || 0) >= 5, "Erdbeben: Felsbrocken prasseln herunter", "Felsen: " + beben.z["sp-fels"]);
+  await tick(3500);
+  const aufgeraeumt = await pg.evaluate(() => ({ kugel: document.querySelectorAll(".sp-zauberkugel").length, kreis: document.querySelectorAll(".sp-zauberkreis").length, fels: document.querySelectorAll(".sp-fels").length }));
+  sage(aufgeraeumt.kugel === 0 && aufgeraeumt.kreis === 0 && aufgeraeumt.fels === 0, "danach bleibt nichts liegen", JSON.stringify(aufgeraeumt));
 
-  console.log("\nMÜCKENSCHWARM\n");
-  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef; P.zustand().ich.mana = 100; });
-  await bereit("muecken"); await aufBea(); await tick(400 + FLUG);
-  const muecken = await pg.evaluate(() => ({ n: document.querySelectorAll(".sp-muecke").length, toene: window.DMA_TONLOG.map((t) => t.name).join(",") }));
-  await tick(2000);
-  const mueckenSpaeter = await pg.evaluate(() => ({ summen: window.DMA_TONLOG.filter((t) => t.name === "muecken").length, zahl: [...document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-zahl')].map((z) => z.textContent).join("|") }));
-  sage(muecken.n >= 10 && mueckenSpaeter.summen >= 2, "ein Schwarm kreist um Bea und summt, solange er da ist", JSON.stringify({ muecken: muecken.n, summen: mueckenSpaeter.summen }));
+  console.log("\nJEDER ZAUBER HAT SEINE ZUGABE\n");
+  await pg.evaluate(() => { window.__verz = 0; });
+  const probe = async (z, ms, tipp) => {
+    await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mana = 100; window.__ich.mana = 100; });
+    await bereit(z); await zaehler();
+    if (tipp) await tipp(); else await aufBea();
+    await tick(ms); return stand();
+  };
+  const brezel = await probe("brezelflut", 1900);
+  sage((brezel.z["sp-brezelregen"] || 0) >= 12 && brezel.z["sp-text-puff"] >= 1, "Brezelflut: 14 Brezeln und „Mahlzeit!“", JSON.stringify(brezel.z));
+  await tick(1500);
+  const muecken = await probe("muecken", 1200);
+  sage((muecken.z["sp-muecke"] || 0) >= 18, "Mückenschwarm: 20 Mücken", "Mücken: " + muecken.z["sp-muecke"]);
+  await tick(3000);
+  const ichPos = await seite("ich");
+  const kaffee = await probe("kaffeeklatsch", 1300, async () => { await pg.evaluate(() => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .lc-kreis'); k.scrollIntoView({ block: "center", behavior: "instant" }); }); await tick(80); const p = await seite("ich"); await pg.touchscreen.tap(p.x, p.y); });
+  sage((kaffee.z["sp-herz-steigt"] || 0) >= 6 && kaffee.z["sp-kaffee"] >= 1 && kaffee.z["sp-zauber-schirm"] >= 1, "Kaffeeklatsch auf mich: Herzen steigen auf, der Rand leuchtet warm", JSON.stringify({ herz: kaffee.z["sp-herz-steigt"], schirm: kaffee.z["sp-zauber-schirm"] }));
+  await tick(1500);
 
-  console.log("\nKAFFEEKLATSCH – AUCH AUF SICH SELBST\n");
-  await pg.evaluate(() => document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]').scrollIntoView({ block: "center" }));
-  await tick(200);
-  let ichPos = await seite("ich");
-  await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(1200);
-  ichPos = await seite("ich"); ichPos = { x: ichPos.x, y: Math.max(ichPos.y, Math.min(ichPos.y + ichPos.w * 0.42, 14)) };
-  await bereit("kaffeeklatsch"); await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(900 + FLUG);
-  const kaffee = await pg.evaluate(() => ({ ruf: (window.__rufe.find((r) => r.name === "spiel_zaubern") || {}).args, tasse: document.querySelectorAll(".sp-kaffee").length,
-    zahl: [...document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-zahl')].map((z) => z.textContent).join("|") }));
-  sage(kaffee.ruf && kaffee.ruf.p_zauber === "kaffeeklatsch" && kaffee.ruf.p_ziel === "00000000-0000-4000-8000-000000000000", "Kaffeeklatsch darf auf das eigene Bild", JSON.stringify(kaffee.ruf));
-  sage(kaffee.tasse >= 1 && /\+20 Kaffee/.test(kaffee.zahl), "eine Kaffeetasse erscheint, grüne +20", JSON.stringify(kaffee));
-
-  console.log("\nHEXENSCHUSS, GARTENZWERG, BEHÖRDENGANG – WER VERZAUBERT WIRD\n");
-  let h0 = await hinweisSeit();
+  console.log("\nAUF DEM ANDEREN GERÄT: BEA ZAUBERT AUF MICH\n");
+  await zaehler(); await pg.evaluate(() => { window.DMA_TONLOG.length = 0; });
+  await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "zauberstart", sorte: "hexenschuss", von: "bea", zielChat: "ich", flug: 600 }); });
+  await tick(150);
   await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "zauber", sorte: "hexenschuss", von: "bea", zielChat: "ich", dauer: 20, schaden: 4 }); });
-  await tick(300);
-  const hexe = await pg.evaluate(() => ({ gesperrt: window.DMA_SPIEL.gesperrt(), grund: window.DMA_SPIEL.gesperrtGrund(), schief: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"].sp-w-hexe')) }));
-  sage(hexe.gesperrt && /Hexenschuss/.test(hexe.grund) && hexe.schief, "Hexenschuss: kein Platzwechsel, das Bild sitzt schief", JSON.stringify(hexe));
+  await tick(100);
+  const zwischen = await pg.evaluate(() => ({ ich: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"].sp-zauber-getroffen')), kugel: Boolean(document.querySelector(".sp-zauberkugel")), besen: Boolean(document.querySelector(".sp-besen")), blitz: Boolean(document.querySelector(".sp-zauberblitz")) }));
+  sage(zwischen.kugel && !zwischen.besen && !zwischen.blitz && !zwischen.ich, "die Antwort ist schon da, aber der Zauber wartet, bis Beas Kugel bei mir ist", JSON.stringify(zwischen));
+  await tick(450);
+  const leuchtet = await pg.evaluate(() => Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"].sp-zauber-getroffen')));
+  sage(leuchtet, "mein Bild leuchtet in der Zauberfarbe auf");
+  await tick(1050);
+  const hexe = await stand();
+  sage(hexe.z["sp-zauber-schirm"] >= 1 && hexe.zt["sp-zauber-schirm"] >= 550, "bei mir: der Bildschirmrand leuchtet lila, genau beim Einschlag", "bei " + hexe.zt["sp-zauber-schirm"] + " ms");
+  sage(hexe.z["sp-blitz-hexe"] >= 1 && hexe.z["sp-text-puff"] >= 1, "Hexenschuss: ein lila Blitz fährt in den Rücken, „Aua, mein Rücken!“", JSON.stringify({ blitz: hexe.z["sp-blitz-hexe"], puff: hexe.z["sp-text-puff"] }));
+  await tick(1200);
+
+  await zaehler();
   await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "zauber", sorte: "gartenzwerg", von: "ich", zielChat: "bea", dauer: 12 }); });
-  await tick(700);
-  const zwerg = await pg.evaluate(() => {
-    const el = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]'), z = el && el.querySelector(".sp-zwerg"); if (!z) return { da: false };
-    const k = el.querySelector(".lc-kreis").getBoundingClientRect();
-    const st = document.createElement("style"); st.textContent = ".sp-zwerg, .sp-zwerg * { pointer-events: auto !important; }"; document.head.appendChild(st);
-    const mitte = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2); st.remove();
-    /* Getroffen zählt nur, was gemalt ist (Mütze, Bart) – nicht die leere Hülle. */
-    return { da: true, mitteFrei: !(mitte && z.contains(mitte) && /^(path|circle|ellipse)$/i.test(mitte.tagName)), getroffen: mitte ? mitte.tagName : "" };
-  });
-  sage(zwerg.da && zwerg.mitteFrei, "Bea wird Gartenzwerg: Mütze und Bart, die Gesichtsmitte bleibt frei", JSON.stringify(zwerg));
-  h0 = await hinweisSeit();
-  await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "zauber", sorte: "behoerdengang", von: "bea", zielChat: "ich", dauer: 60 }); });
   await tick(300);
-  const form = await pg.evaluate(() => Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-formular')));
-  sage(form && /Formular/.test(await hinweiseAb(h0)), "Behördengang: ein Formular klebt am Bild, man erfährt, dass eine Deutschaufgabe hilft", await hinweiseAb(h0));
-  /* Eine richtige Antwort erledigt das Formular. */
-  await pg.evaluate(() => window.DMA_SPIEL.aufgabe());
+  const zwerg = await stand();
+  sage(zwerg.z["sp-puff"] >= 1 && zwerg.z["sp-stern-burst"] >= 10 && zwerg.z["sp-text-puff"] >= 1, "Gartenzwerg: Puff, Zauberstaub, „Plopp!“ (auch ohne Kugel – ältere Geräte)", JSON.stringify(zwerg.z));
+  await tick(1500);
+  await zaehler();
+  await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "zauber", sorte: "behoerdengang", von: "bea", zielChat: "ich", dauer: 60 }); });
+  await tick(250);
+  const amt = await stand();
+  sage(/ANTRAG!/.test(amt.texte) && (amt.z["sp-formular-wirbel"] || 0) >= 3, "Behördengang: der Stempel „ANTRAG!“ knallt, Formulare wirbeln", JSON.stringify({ t: amt.texte, w: amt.z["sp-formular-wirbel"] }));
+  await tick(2600);
+
+  console.log("\nABGELEHNT: DIE KUGEL VERPUFFT\n");
+  await pg.evaluate(() => { window.__zauberNein = true; window.__verz = 200; });
+  await bereit("nebel"); await aufBea(); await tick(900);
+  const nein = await pg.evaluate(() => ({ kugel: document.querySelectorAll(".sp-zauberkugel").length, ab: Boolean(window.__raus.find((p) => p && p.ereignis === "zauberab" && p.zielChat === "bea")),
+    zauber: Boolean(window.__raus.find((p) => p && p.ereignis === "zauber")), meldung: window.__hinweise.slice(-1)[0] }));
+  sage(nein.kugel === 0 && nein.ab && !nein.zauber, "der Server sagt nein: die Kugel verpufft, die anderen bekommen „zauberab“", JSON.stringify(nein));
+  await pg.evaluate(() => { window.__zauberNein = false; window.__verz = 0; });
+  await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "zauberstart", sorte: "orkan", von: "bea", zielChat: "cem", flug: 600 }); });
+  await tick(200);
+  await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "zauberab", von: "bea", zielChat: "cem" }); });
   await tick(600);
-  await pg.evaluate(async () => {
-    const p = document.getElementById("spPanel"); let t0 = performance.now();
-    while (performance.now() - t0 < 3000 && !p.querySelector('[data-tu="antwort"]')) await new Promise((r) => setTimeout(r, 50));
-    const b = p.querySelector('[data-tu="antwort"]'); window.__geklickt = Boolean(b); if (b) b.click();
-  });
-  await tick(900);
-  const erledigt = await pg.evaluate(() => { window.DMA_SPIEL.pruef.zeichnen(); return !document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-formular'); });
-  sage(erledigt, "eine richtig gelöste Aufgabe nimmt das Formular weg", await pg.evaluate(() => "geklickt: " + window.__geklickt + " · " + window.__rufe.map((r) => r.name).join(",")));
+  const fremdAb = await pg.evaluate(() => document.querySelectorAll(".sp-zauberkugel").length);
+  sage(fremdAb === 0, "auch Beas abgelehnte Kugel verschwindet bei mir", "Kugeln: " + fremdAb);
 
-  console.log("\nFAIRNESS UND AUFSTIEG\n");
-  h0 = await hinweisSeit();
-  /* Das Deutsch-Fenster vom Formular ist noch offen – erst zumachen, sonst
-     tippt der Finger auf das Fenster statt auf Bea. */
-  await pg.evaluate(() => { const p = document.getElementById("spPanel"); if (p) p.hidden = true; window.__fair = 0.5; const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mana = 100; });
-  await bereit("nebel"); await aufBea(); await tick(600 + FLUG);
-  sage(/Fair bleiben.*halber Schaden, keine Punkte/.test(await hinweiseAb(h0)), "gegen viel Kleinere: Hinweis auf halben Schaden ohne Punkte", await hinweiseAb(h0));
-  h0 = await hinweisSeit();
-  await pg.evaluate(() => { window.__fair = 1; window.__rangNeu = true; const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mana = 100; });
-  await bereit("nebel"); await aufBea(); await tick(900 + FLUG);
-  sage(/Aufgestiegen: Zaubergeselle/.test(await hinweiseAb(h0)), "neuer Zauberer-Rang wird gefeiert", await hinweiseAb(h0));
-  if (process.env.BILD) { await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.zrad = true; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300); await pg.screenshot({ path: process.env.BILD }); }
+  console.log("\nSUPERKRAFT-SCHUSS\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.daemon_bis = new Date(Date.now() + 60000).toISOString(); });
+  await zaehler(); await pg.evaluate(() => { window.DMA_TONLOG.length = 0; });
+  const flugzeit = await pg.evaluate(() => window.DMA_SPIEL.pruef.geschossZeigen("ich", "bea", "bogen", 0, 0));
+  await tick(flugzeit + 500);
+  const dm = await stand();
+  sage(dm.z["sp-daemon-muendung"] >= 1 && /peitschenknall@\d/.test(dm.toene) && dm.z["sp-g-daemon"] >= 1, "Abschuss mit Superkraft: Knall, lila Mündung, lila Kugel", dm.toene);
+  const kraterZeit = dm.zt["sp-daemon-krater"];
+  sage(kraterZeit >= flugzeit - 20 && /minenknall@\d/.test(dm.toene), "Einschlag mit Superkraft: Krater-Blitz und dumpfer Schlag, genau beim Aufprall", "Flug " + flugzeit + " ms, Krater bei " + kraterZeit + " ms · " + dm.toene);
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.daemon_bis = null; });
+  await zaehler(); await pg.evaluate(() => { window.DMA_TONLOG.length = 0; });
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.geschossZeigen("ich", "bea", "bogen", 0, 0));
+  await tick(1200);
+  const normal = await stand();
+  sage(!normal.z["sp-daemon-muendung"] && !normal.z["sp-daemon-krater"] && !/peitschenknall|minenknall/.test(normal.toene), "ohne Superkraft bleibt der Schuss wie er war", JSON.stringify(normal.z));
 
+  if (process.env.BILD) {
+    await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mana = 100; window.__ich.mana = 100; window.__verz = 700; });
+    await bereit("hexenschuss"); await aufBea(); await tick(330);
+    await pg.screenshot({ path: process.env.BILD.replace(/\.png$/, "-flug.png") });
+    await tick(700);
+    await pg.screenshot({ path: process.env.BILD.replace(/\.png$/, "-einschlag.png") });
+  }
+  sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.slice(0, 3).join(" | "));
+  console.log("\n" + (fehler ? "Fassung 671: " + fehler + " rot." : "Fassung 671 auf dem Telefon: alles grün.") + "\n");
   await br.close(); srv.close();
-  if (konsolenFehler.length) { fehler++; console.log("  FEHL Seitenfehler: " + konsolenFehler.join(" | ")); }
-  console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n" : "\nFassung 654 auf dem Telefon: alles grün.\n");
   process.exit(fehler ? 1 : 0);
-})();
+})().catch((e) => { console.error(e); process.exit(2); });

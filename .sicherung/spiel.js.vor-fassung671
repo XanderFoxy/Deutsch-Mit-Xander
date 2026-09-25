@@ -236,8 +236,7 @@
     niveau: "A1", aufgabe: null, mission: null, kategorie: null,
     stillstand: false, letzterAbruf: 0, einspielen: false,
     zauber: "", zrad: false, nebelBis: {}, wackelBis: {},   /* Fassung 650 */
-    zBis: { brezel: {}, hexe: {}, zwerg: {}, formular: {} },  /* Fassung 654 */
-    zauberFlug: {}          /* Fassung 671: Ziel-Platz → fliegende Zauberkugel */
+    zBis: { brezel: {}, hexe: {}, zwerg: {}, formular: {} }  /* Fassung 654 */
   };
   try { S.niveau = localStorage.getItem("dma_spiel_niveau") || "A1"; } catch (e) {}
   try { S.laserfarbe = localStorage.getItem("dma_spiel_laser") || LASERFARBEN[0]; } catch (e) {}
@@ -896,10 +895,6 @@
       if (n.sorte === "pflaster") { try { if (B().pflaster) B().pflaster(n.zielChat || n.von); } catch (e) {} }
     } else if (n.ereignis === "zauber") {
       zauberZeigen(n);
-    } else if (n.ereignis === "zauberstart") {
-      if (ZAUBER[n.sorte] && n.zielChat) zauberStart(n.sorte, n.von, n.zielChat, Math.max(250, Math.min(900, Number(n.flug) || 450)));
-    } else if (n.ereignis === "zauberab") {
-      if (n.zielChat) zauberLanden(n.zielChat, true);
     } else if (n.ereignis === "falle") {
       falleZeigen(n.zielChat, n.sorte, n.schaden);
     } else if (n.ereignis === "essen") {
@@ -1227,7 +1222,6 @@
     var zx = z.x + (Number(dx) || 0) * z.r, zy = z.y + (Number(dy) || 0) * z.r;
     var winkel = Math.atan2(zy - a.y, zx - a.x) * 180 / Math.PI;
     ton(w.ton, 0.5);
-    if (dmn) daemonAbschuss(a, zx, zy);
     if (waffe === "laser") {
       /* Der Strahl: eine Linie vom Schützen zum Ziel, die aufblitzt. */
       var len = Math.hypot(zx - a.x, zy - a.y);
@@ -1239,7 +1233,7 @@
       strahl.style.setProperty("--farbe", farbe || "#ff2d2d");
       document.body.appendChild(strahl);
       setTimeout(function () { strahl.remove(); }, 420);
-      einschlag(zx, zy, waffe, w.flug, dmn);
+      einschlag(zx, zy, waffe, w.flug);
       return w.flug;
     }
     /* FASSUNG 668 — Mehrfachfeuer (gleichzeitig) und Dauerstrahl. */
@@ -1259,7 +1253,7 @@
         document.body.appendChild(b);
         setTimeout(function () { b.remove(); }, 420);
       });
-      einschlag(zx, zy, waffe, w.flug, dmn);
+      einschlag(zx, zy, waffe, w.flug);
       return w.flug;
     }
     if (waffe === "plasmastrahl") {
@@ -1271,7 +1265,7 @@
       pl.style.animationDuration = w.flug + "ms";
       document.body.appendChild(pl);
       setTimeout(function () { pl.remove(); }, w.flug + 60);
-      einschlag(zx, zy, waffe, w.flug, dmn);
+      einschlag(zx, zy, waffe, w.flug);
       return w.flug;
     }
     if (waffe === "kugelblitz") {
@@ -1287,7 +1281,7 @@
       try { kb.animate(bahn, { duration: w.flug, easing: "linear", fill: "forwards" }); } catch (e) {}
       setTimeout(function () { kb.remove(); }, w.flug + 30);
       setTimeout(function () { blitzschlag(zx, zy, z.r); }, w.flug - 40);
-      einschlag(zx, zy, waffe, w.flug, dmn);
+      einschlag(zx, zy, waffe, w.flug);
       return w.flug;
     }
     if (waffe === "zielfernrohr") {
@@ -1299,7 +1293,7 @@
       document.body.appendChild(kreuz);
       setTimeout(function () { kreuz.remove(); }, w.flug + 150);
       setTimeout(function () { ton("schuss", 0.55); }, w.flug - 60);
-      einschlag(zx, zy, waffe, w.flug, dmn);
+      einschlag(zx, zy, waffe, w.flug);
       return w.flug;
     }
     if (waffe === "mg" || waffe === "lasersalve") {
@@ -1323,7 +1317,7 @@
         }, mn * takt);
       })(mn);
       var gesamt = w.flug + (zahl - 1) * takt;
-      einschlag(zx, zy, waffe, gesamt, dmn);
+      einschlag(zx, zy, waffe, gesamt);
       return gesamt;
     }
     if (waffe === "spaetzle") {
@@ -1345,7 +1339,7 @@
           setTimeout(function () { sp.remove(); }, w.flug + 30);
         }, sn * 70);
       })(sn);
-      einschlag(zx, zy, waffe, w.flug + 280, dmn);
+      einschlag(zx, zy, waffe, w.flug + 280);
       return w.flug + 280;
     }
     var g = document.createElement("div");
@@ -1366,52 +1360,29 @@
       ], { duration: w.flug, easing: "linear", fill: "forwards" });
     } catch (e) {}
     setTimeout(function () { g.remove(); }, w.flug + 30);
-    einschlag(zx, zy, waffe, w.flug, dmn);
+    einschlag(zx, zy, waffe, w.flug);
     return w.flug;
   }
   /* FASSUNG 668 — der Kugelblitz schlägt ein: drei gezackte Blitze von
      oben, ein weißer Blitz, Funken. Ton „gewitter" kommt mit dem Treffer. */
-  function blitzschlag(x, y, r, klasse, glut) {
+  function blitzschlag(x, y, r) {
     var b = document.createElement("div");
-    b.className = "sp-blitzschlag" + (klasse || "");
-    var hexe = /hexe/.test(klasse || ""), hell = hexe ? "#f6e8ff" : "#e9f8ff", schein = hexe ? "#b04dff" : "#6fd0ff";
+    b.className = "sp-blitzschlag";
     b.style.left = x + "px"; b.style.top = y + "px"; b.style.width = Math.round(r * 3) + "px"; b.style.height = Math.round(r * 3.2) + "px";
     var pfade = "";
     [-0.45, 0, 0.4].forEach(function (o, i) {
       var px = 50 + o * 60, py = 0, d = "M" + px + " " + py;
       for (var k = 1; k <= 6; k++) { px = 50 + o * 60 * (1 - k / 6) + (k % 2 ? 7 : -7) * (1 - k / 7); py = k * (82 / 6); d += " L" + px.toFixed(1) + " " + py.toFixed(1); }
-      pfade += '<path d="' + d + '" fill="none" stroke="' + hell + '" stroke-width="' + (i === 1 ? 3 : 2) + '" stroke-linejoin="round"/>'
-        + '<path d="' + d + '" fill="none" stroke="' + schein + '" stroke-width="' + (i === 1 ? 7 : 5) + '" stroke-linejoin="round" opacity="' + (hexe ? ".6" : ".35") + '"/>';
+      pfade += '<path d="' + d + '" fill="none" stroke="#e9f8ff" stroke-width="' + (i === 1 ? 3 : 2) + '" stroke-linejoin="round"/>'
+        + '<path d="' + d + '" fill="none" stroke="#6fd0ff" stroke-width="' + (i === 1 ? 7 : 5) + '" stroke-linejoin="round" opacity=".35"/>';
     });
     b.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none">' + pfade + "</svg>";
     document.body.appendChild(b);
     setTimeout(function () { b.remove(); }, 520);
-    try { flammen(x, y, r * 0.6, glut || "gold", 6); } catch (e) {}
+    try { flammen(x, y, r * 0.6, "gold", 6); } catch (e) {}
   }
-  /* FASSUNG 671 — XANDER (Funk 132): „verbessere dabei auch den Effekt
-     der Schüsse wenn man mit der Superkraft schießt dass sich das
-     irgendwie bemerkbar macht vielleicht auch den Sound zu jeder
-     Superkraft und jedem Geschoss in der Superkraft". Mit Superkraft
-     knallt jeder Abschuss (Peitschenknall, lila Mündungsring, dunkle
-     Flammen am eigenen Bild), und jeder Einschlag bekommt einen
-     dumpfen Schlag, einen lila Blitz und zwei Druckwellen. */
-  function daemonAbschuss(a, zx, zy) {
-    if (!a || !a.r) return;
-    ton("peitschenknall", 0.3);
-    var w = Math.atan2(zy - a.y, zx - a.x), mx = a.x + Math.cos(w) * a.r * 0.9, my = a.y + Math.sin(w) * a.r * 0.9;
-    ringWelle(mx, my, a.r * 0.55, "#c04dff", 1);
-    effektTeil("sp-daemon-muendung", mx, my, "", 420, { "--gr": Math.round(a.r * 1.1) + "px" });
-    flammen(a.x, a.y, a.r * 0.55, "daemon", 4);
-  }
-  function daemonEinschlag(x, y) {
-    ton("minenknall", 0.32);
-    effektTeil("sp-daemon-krater", x, y, "", 650, { "--gr": "96px" });
-    ringWelle(x, y, 44, "#b44dff", 2);
-    sterneBurst(x, y, 50, ["#e0a8ff", "#b44dff", "#ff4d6d"], 6);
-  }
-  function einschlag(x, y, waffe, nach, daemon) {
+  function einschlag(x, y, waffe, nach) {
     setTimeout(function () {
-      if (daemon) daemonEinschlag(x, y);
       var e = document.createElement("div");
       e.className = "sp-einschlag" + (waffe === "bazooka" || waffe === "kuckucksuhr" ? " sp-einschlag-gross" : "");
       /* FASSUNG 664 — die Kuckucksuhr ruft beim Einschlag „Kuckuck!“ und sprüht Funken. */
@@ -1589,7 +1560,6 @@
     var st = puppeStand(chatId), schaden = UEBUNG_SCHADEN[art] || 0, heil = z.freund ? 20 : 0;
     st.lp = Math.max(0, Math.min(st.lp_max || 100, st.lp - schaden + heil)); st.kaputt = st.lp <= 0;
     if (st.kaputt) setTimeout(function () { st.lp = st.lp_max || 100; st.kaputt = false; zeichnen(); }, 4000);
-    zauberStart(art, meineChatId(), chatId, 420);
     zauberZeigen({ ereignis: "zauber", sorte: art, zielChat: chatId, von: meineChatId(), schaden: schaden, heil: heil, dauer: z.dauer,
                    mauer_riss: 0, kaputt: st.kaputt, uebung: true });
     hinweis("🎯 Übung: " + z.name + " – kostet kein Mana. Echte Wirkung gibt es nur bei Mitspielern.");
@@ -1604,13 +1574,8 @@
     if (!zielSid) { hinweis("🙈 " + (p.name || "Diese Person") + " spielt (noch) nicht mit."); return; }
     var raum = ""; try { raum = LC().lage().raum || ""; } catch (e) {}
     S.zauber = "";
-    /* FASSUNG 671 — beschwören, sobald getippt ist; alle sehen es sofort. */
-    var flug = zauberFlugzeit();
-    zauberStart(art, meineChatId(), p.id, flug);
-    senden({ ereignis: "zauberstart", sorte: art, zielChat: p.id, flug: flug });
-    var abbruch = function () { zauberLanden(p.id, true); senden({ ereignis: "zauberab", zielChat: p.id }); };
     rpc("spiel_zaubern", { p_zauber: art, p_ziel: zielSid, p_raum: raum }).then(function (r) {
-      if (!r || !r.ok) { abbruch(); hinweis("✨ " + ((r && r.grund) || "der Zauber ging nicht")); schnellZeichnen(); return; }
+      if (!r || !r.ok) { hinweis("✨ " + ((r && r.grund) || "der Zauber ging nicht")); schnellZeichnen(); return; }
       trophaeenBald();
       if (r.ziel) S.stand[r.ziel.id] = r.ziel;
       if (r.ich_voll) { S.ich = r.ich_voll; S.stand[r.ich_voll.id] = oeffentlich(r.ich_voll); }
@@ -1627,135 +1592,11 @@
       else if (r.fair < 1) hinweis("⚖️ Fair bleiben: " + (p.name || "Dein Ziel") + " ist mindestens 5 Level kleiner – halber Schaden, keine Punkte.");
       else if (r.lohn > 0) hinweis("✨ " + z.name + " sitzt – +" + r.lohn + " Punkte" + (r.kaputt ? " – " + (p.name || "") + " ist kaputt!" : ""));
       schnellZeichnen(); abrufen(true);
-    }).catch(function (e) { abbruch(); hinweis("Zauber ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  /* ---------------------------------------------------------------
-     FASSUNG 671 — ZAUBER, DIE MAN SPÜRT
-     XANDER (Funk 132): „die Animation von den Zauberkräften die ganz
-     viel besser aussehen die ist noch so schwach die können wir zehnmal
-     so geil machen dass sie richtig effektiv wird und richtig etwas
-     auslöst … dass sie richtig immersiv ist und … wenn zwei Leute
-     miteinander spielen … dass die Bilder nicht irgendwie eine Sekunde
-     zurückhängen".
-     Jeder Zauber hat jetzt drei Teile:
-       1. Beschwören: unter dem eigenen Bild dreht sich ein Zauberkreis
-          mit Runen und Sechsstern – SOFORT beim Tippen, nicht erst,
-          wenn der Server geantwortet hat.
-       2. Flug: eine leuchtende Kugel in der Farbe des Zaubers fliegt mit
-          Funkenschweif zum Ziel. Sie fliegt so lange, wie der Server
-          gerade braucht (gemessen) – die Wartezeit wird zum Flug. Die
-          anderen im Raum sehen Kreis und Kugel im selben Augenblick
-          („zauberstart"), nicht erst nach der Antwort.
-       3. Einschlag: Lichtblitz, zwei Druckwellen, Sterne; wer getroffen
-          ist, sieht den Bildschirmrand in der Zauberfarbe aufleuchten,
-          bei Schaden ruckt der Raum. Danach die Wirkung des Zaubers –
-          der Ton des Zaubers beginnt genau beim Einschlag.
-     --------------------------------------------------------------- */
-  var ZAUBER_LICHT = { brezelflut: "#ffb347", nebel: "#e3ebf3", kaffeeklatsch: "#ffcf8a", muecken: "#cde86a", erdbeben: "#ff8a3d",
-                       hexenschuss: "#c77dff", orkan: "#8fd3ff", gartenzwerg: "#ff6b6b", behoerdengang: "#7fb2ff" };
-  function zauberLicht(art) { return ZAUBER_LICHT[art] || "#c9b8ff"; }
-  function zauberFlugzeit() { return Math.max(380, Math.min(750, Math.round((S.rpcMs || 350) * 1.05))); }
-  function zauberKreisSvg(licht) {
-    var runen = "";
-    for (var i = 0; i < 12; i++) {
-      var w = i / 12 * Math.PI * 2, x = Math.cos(w) * 40, y = Math.sin(w) * 40, h = i % 2 ? 6 : 3.4;
-      runen += '<path d="M' + (x - 2.4).toFixed(1) + " " + (y - 3).toFixed(1) + " l2.4 " + h + " l2.4 " + (-h) + (i % 3 ? " m-2.4 " + (h - 1.5) + " v-4" : " m-4.8 2 h4.8") + '"'
-        + ' transform="rotate(' + Math.round(w * 180 / Math.PI + 90) + " " + x.toFixed(1) + " " + y.toFixed(1) + ')"/>';
-    }
-    return '<svg viewBox="-50 -50 100 100"><g fill="none" stroke="' + licht + '" stroke-linecap="round" stroke-linejoin="round">'
-      + '<circle r="47" stroke-width="2.4"/><circle r="44" stroke-width=".8" opacity=".7"/><circle r="33" stroke-width="1.2" stroke-dasharray="4 3"/>'
-      + '<g class="sp-zk-runen" stroke-width="1.3">' + runen + "</g>"
-      + '<path class="sp-zk-stern" d="M0 -32 L27.7 16 L-27.7 16 Z M0 32 L-27.7 -16 L27.7 -16 Z" stroke-width="1.5"/></g></svg>';
-  }
-  function zauberStart(art, vonChat, zielChat, flug) {
-    var licht = zauberLicht(art), a = mittelpunkt(vonChat), z = mittelpunkt(zielChat);
-    zauberLanden(zielChat, false);
-    var eintrag = { landet: Date.now() + flug, kugel: null };
-    S.zauberFlug[zielChat] = eintrag;
-    ton("feenzauber", 0.42);
-    if (a) {
-      var k = document.createElement("div");
-      k.className = "sp-zauberkreis";
-      k.style.left = a.x + "px"; k.style.top = a.y + "px"; k.style.width = k.style.height = Math.round(a.r * 2.8) + "px";
-      k.style.setProperty("--licht", licht);
-      k.style.animationDuration = (flug + 650) + "ms";
-      k.innerHTML = zauberKreisSvg(licht);
-      document.body.appendChild(k);
-      setTimeout(function () { k.remove(); }, flug + 700);
-      sterneBurst(a.x, a.y, a.r * 1.1, [licht, "#ffffff"], 5);
-    }
-    if (!z) return eintrag;
-    var sx = a ? a.x : z.x, sy = a ? a.y : z.y - 220;
-    if (a && Math.hypot(z.x - a.x, z.y - a.y) < 4) sy = a.y - a.r * 1.6;   /* auf sich selbst: die Kugel steigt auf und fällt zurück */
-    var mx = (sx + z.x) / 2, my = (sy + z.y) / 2 - Math.min(90, Math.max(30, Math.hypot(z.x - sx, z.y - sy) * 0.25));
-    var kugel = document.createElement("div");
-    kugel.className = "sp-zauberkugel";
-    kugel.style.setProperty("--licht", licht);
-    kugel.style.width = kugel.style.height = Math.round(Math.max(18, Math.min(34, z.r * 0.55))) + "px";
-    document.body.appendChild(kugel);
-    eintrag.kugel = kugel;
-    try {
-      kugel.animate([
-        { transform: "translate(" + sx + "px," + sy + "px) translate(-50%,-50%) scale(.3)" },
-        { transform: "translate(" + mx + "px," + my + "px) translate(-50%,-50%) scale(.95)", offset: 0.5 },
-        { transform: "translate(" + z.x + "px," + z.y + "px) translate(-50%,-50%) scale(1.15)" }
-      ], { duration: flug, easing: "ease-in", fill: "forwards" });
-    } catch (e) {}
-    /* Funkenschweif: dort, wo die Kugel gerade ist. */
-    for (var i = 1; i * 65 < flug; i++) setTimeout(function () {
-      if (!kugel.isConnected) return;
-      var r = kugel.getBoundingClientRect();
-      if (!r.width) return;
-      effektTeil("sp-zauberfunke", r.left + r.width / 2, r.top + r.height / 2, "", 600,
-        { "--licht": licht, "--dx": Math.round((Math.random() - 0.5) * 18) + "px", "--dy": Math.round(6 + Math.random() * 16) + "px" });
-    }, i * 65);
-    /* Kommt nie eine Antwort, verpufft die Kugel. */
-    setTimeout(function () { if (S.zauberFlug[zielChat] === eintrag) zauberLanden(zielChat, true); }, flug + 5000);
-    return eintrag;
-  }
-  function zauberLanden(zielChat, verpufft) {
-    var e = S.zauberFlug[zielChat];
-    if (!e) return;
-    delete S.zauberFlug[zielChat];
-    var k = e.kugel;
-    if (!k) return;
-    if (verpufft) { k.classList.add("sp-zauberkugel-weg"); setTimeout(function () { k.remove(); }, 450); }
-    else k.remove();
-  }
-  function zauberEinschlag(art, zielChat, schaden) {
-    var m = mittelpunkt(zielChat), licht = zauberLicht(art);
-    if (!m) return;
-    effektTeil("sp-zauberblitz", m.x, m.y, "", 700, { "--licht": licht, "--gr": Math.round(m.r * 3.4) + "px" });
-    ringWelle(m.x, m.y, m.r * 1.3, licht, 2);
-    sterneBurst(m.x, m.y, m.r * 1.5, [licht, "#ffffff", licht], 9);
-    var el = platzElVon(zielChat);
-    if (el) {
-      el.style.setProperty("--licht", licht);
-      el.classList.remove("sp-zauber-getroffen"); void el.offsetWidth; el.classList.add("sp-zauber-getroffen");
-      setTimeout(function () { el.classList.remove("sp-zauber-getroffen"); }, 1100);
-    }
-    if (zielChat === meineChatId()) {
-      var sch = document.createElement("div");
-      sch.className = "sp-zauber-schirm";
-      sch.style.setProperty("--licht", licht);
-      document.body.appendChild(sch);
-      setTimeout(function () { sch.remove(); }, 1300);
-      var raum = document.getElementById("lcPlaetze");
-      if (raum && schaden > 0) { raum.classList.remove("sp-zauber-ruck"); void raum.offsetWidth; raum.classList.add("sp-zauber-ruck"); setTimeout(function () { raum.classList.remove("sp-zauber-ruck"); }, 500); }
-    }
+    }).catch(function (e) { hinweis("Zauber ging nicht: " + (e && e.message ? e.message : e)); });
   }
   function zauberZeigen(n) {
     var art = n.sorte, z = ZAUBER[art], zc = n.zielChat;
     if (!z || !zc) return;
-    /* FASSUNG 671 — erst wenn die Kugel angekommen ist. */
-    var flugNoch = S.zauberFlug[zc];
-    if (flugNoch && !n.gelandet) {
-      var rest = flugNoch.landet - Date.now();
-      n.gelandet = true;
-      if (rest > 25) { setTimeout(function () { zauberZeigen(n); }, rest); return; }
-    }
-    zauberLanden(zc, false);
-    zauberEinschlag(art, zc, n.schaden || 0);
     /* FASSUNG 662 — das eigene Dorf wurde getroffen (oder der Graben hat es gerettet). */
     if (zc === meineChatId() && n.von !== meineChatId()) {
       if (n.graben) setTimeout(function () { hinweis("🌊 Dein Wassergraben hat das Beben geschluckt – Mauer und Dorf sind heil."); }, 1200);
@@ -1778,12 +1619,11 @@
     if (art === "nebel") {
       if (sid) S.nebelBis[sid] = jetzt + dauer;
       if (m) {
-        /* 671: zehn Schwaden statt sechs, größer – das Bild verschwindet im Grau. */
-        for (var i = 0; i < 10; i++) {
+        for (var i = 0; i < 6; i++) {
           var w = document.createElement("div");
           w.className = "sp-nebel-schwade";
-          var a = i / 10 * Math.PI * 2;
-          w.style.left = m.x + "px"; w.style.top = m.y + "px"; w.style.width = w.style.height = Math.round(m.r * (i % 2 ? 1.25 : 1.65)) + "px";
+          var a = i / 6 * Math.PI * 2;
+          w.style.left = m.x + "px"; w.style.top = m.y + "px"; w.style.width = w.style.height = Math.round(m.r * 1.3) + "px";
           w.style.setProperty("--nx", Math.cos(a) * m.r * 2.2 + "px"); w.style.setProperty("--ny", Math.sin(a) * m.r * 2.2 + "px");
           w.style.animationDelay = (i * 0.05) + "s";
           document.body.appendChild(w);
@@ -1794,11 +1634,7 @@
     } else if (art === "erdbeben") {
       if (el) { el.classList.remove("sp-bebt"); void el.offsetWidth; el.classList.add("sp-bebt"); setTimeout(function () { el.classList.remove("sp-bebt"); }, 3600); }
       var raumEl = document.getElementById("lcPlaetze");
-      if (raumEl) {
-        raumEl.classList.remove("sp-raum-bebt"); void raumEl.offsetWidth; raumEl.classList.add("sp-raum-bebt"); setTimeout(function () { raumEl.classList.remove("sp-raum-bebt"); }, 900);
-        /* 671: ein Nachbeben, während der Ton noch grollt. */
-        setTimeout(function () { raumEl.classList.remove("sp-raum-bebt"); void raumEl.offsetWidth; raumEl.classList.add("sp-raum-bebt"); setTimeout(function () { raumEl.classList.remove("sp-raum-bebt"); }, 900); }, 1400);
-      }
+      if (raumEl) { raumEl.classList.remove("sp-raum-bebt"); void raumEl.offsetWidth; raumEl.classList.add("sp-raum-bebt"); setTimeout(function () { raumEl.classList.remove("sp-raum-bebt"); }, 900); }
       if (m) {
         var riss = document.createElement("div");
         riss.className = "sp-beben-riss";
@@ -1816,14 +1652,6 @@
           (function (st) { setTimeout(function () { st.remove(); }, 3700); })(st);
         }
         setTimeout(function () { riss.remove(); }, 3700);
-        /* 671: Felsbrocken prasseln herunter, der Boden schlägt zwei Wellen. */
-        for (var fb = 0; fb < 7; fb++) {
-          var fel = effektTeil("sp-fels", m.x + (fb / 6 - 0.5) * m.r * 2.6 + (Math.random() - 0.5) * 10, m.y + m.r * 0.85,
-            '<svg viewBox="-6 -6 12 12"><path d="M-5 1 L-3 -4 L2 -5 L5 -1 L4 4 L-2 5 Z" fill="#7a5a3a" stroke="#3b2a1a" stroke-width="1"/><path d="M-2 -2 L1 -3" stroke="#a88560" stroke-width="1"/></svg>', 1700,
-            { "--fall": -Math.round(m.r * (1.6 + Math.random())) + "px", "--dreh": Math.round((Math.random() - 0.5) * 400) + "deg", "--gr": Math.round(8 + Math.random() * 8) + "px" });
-          if (fel) fel.style.animationDelay = (0.15 + fb * 0.12 + Math.random() * 0.1).toFixed(2) + "s";
-        }
-        [0, 1400].forEach(function (w) { setTimeout(function () { ringWelle(m.x, m.y + m.r * 0.9, m.r * 1.6, "#ff8a3d", 1); }, w); });
       }
       zahlNach(600);
     } else if (art === "orkan") {
@@ -1862,13 +1690,12 @@
     }
     else if (art === "brezelflut") {
       if (sid) S.zBis.brezel[sid] = jetzt + dauer;
-      if (m) { setTimeout(function () { textPuff(m.x, m.y - m.r * 1.9, "Mahlzeit!", "#8a4a12"); sterneBurst(m.x, m.y, m.r * 1.1, ["#c0772a", "#e8b36a", "#fff3d6"], 8); }, 1000); }
-      if (m) for (var b = 0; b < 14; b++) {
+      if (m) for (var b = 0; b < 9; b++) {
         var br = document.createElement("div");
         br.className = "sp-brezelregen";
         br.innerHTML = geschossSvg("brezel");
         br.style.left = (m.x + (Math.random() - 0.5) * m.r * 1.8) + "px"; br.style.top = (m.y + (Math.random() - 0.3) * m.r) + "px";
-        br.style.animationDelay = (b * 0.075).toFixed(2) + "s";
+        br.style.animationDelay = (b * 0.12).toFixed(2) + "s";
         br.style.setProperty("--dreh", Math.round((Math.random() - 0.5) * 540) + "deg");
         document.body.appendChild(br);
         (function (br) { setTimeout(function () { br.remove(); }, 2300); })(br);
@@ -1877,7 +1704,7 @@
     } else if (art === "muecken") {
       /* Der Summton ist 1 s lang, der Schwarm 3,4 s – er summt dreimal. */
       setTimeout(function () { ton("muecken", 0.35); }, 1100); setTimeout(function () { ton("muecken", 0.3); }, 2200);
-      if (m) for (var q = 0; q < 20; q++) {
+      if (m) for (var q = 0; q < 12; q++) {
         var mu = document.createElement("div");
         mu.className = "sp-muecke";
         mu.innerHTML = '<svg viewBox="0 0 12 8"><ellipse cx="6" cy="5" rx="3" ry="1.3" fill="#2f3322"/><ellipse cx="5" cy="3" rx="2" ry="1" fill="#e4f0f8" opacity=".85"/><ellipse cx="7" cy="3" rx="2" ry="1" fill="#e4f0f8" opacity=".85"/><path d="M3 5.4 L.4 6.4" stroke="#2f3322" stroke-width=".6"/></svg>';
@@ -1900,14 +1727,6 @@
         t.style.left = (mm.x + mm.r * 0.55) + "px"; t.style.top = (mm.y - mm.r * 0.75) + "px";
         document.body.appendChild(t);
         setTimeout(function () { t.remove(); }, 2400);
-        /* 671: Herzen steigen auf, warmer Schein. */
-        for (var hz = 0; hz < 6; hz++) {
-          var he = effektTeil("sp-herz-steigt", mm.x + (hz / 5 - 0.5) * mm.r * 1.6, mm.y + mm.r * 0.3,
-            '<svg viewBox="-6 -6 12 12"><path d="M0 4.5 C-6 0 -5 -5 -2 -5 C-1 -5 0 -4 0 -3 C0 -4 1 -5 2 -5 C5 -5 6 0 0 4.5 Z" fill="' + (hz % 2 ? "#ff7a9a" : "#ffb35c") + '"/></svg>', 1900,
-            { "--hoch": -Math.round(mm.r * (1.2 + Math.random() * 0.8)) + "px", "--drift": Math.round((Math.random() - 0.5) * 24) + "px" });
-          if (he) he.style.animationDelay = (hz * 0.13).toFixed(2) + "s";
-        }
-        if (k === 0) textPuff(mm.x, mm.y - mm.r * 1.9, "Kaffee und Kuchen!", "#8a5a2b");
         var plus = k === 0 ? n.heil : n.heil_ich;
         if (plus > 0) setTimeout(function () { zahlZeigen(wer, plus, "Kaffee & Kuchen"); }, 700);
       });
@@ -1920,31 +1739,15 @@
         be.style.left = m.x + "px"; be.style.top = m.y + "px";
         document.body.appendChild(be);
         setTimeout(function () { be.remove(); }, 1000);
-        /* 671: ein lila Blitz fährt in den Rücken. */
-        setTimeout(function () { blitzschlag(m.x, m.y + m.r * 0.3, m.r, " sp-blitz-hexe", "daemon"); textPuff(m.x, m.y - m.r * 1.9, "Aua, mein Rücken!", "#6d3fa0"); }, 620);
       }
       zahlNach(650);
     } else if (art === "gartenzwerg") {
       if (sid) S.zBis.zwerg[sid] = jetzt + dauer;
-      if (m) {
-        var pf = document.createElement("div"); pf.className = "sp-puff"; pf.style.left = m.x + "px"; pf.style.top = m.y + "px"; document.body.appendChild(pf); setTimeout(function () { pf.remove(); }, 900);
-        /* 671: Zauberstaub in Zwergenfarben und ein „Plopp!". */
-        sterneBurst(m.x, m.y, m.r * 1.4, ["#d23b3b", "#ffffff", "#5e8f3a", "#f2c230"], 12);
-        textPuff(m.x, m.y - m.r * 1.9, "Plopp!", "#c0392b");
-      }
+      if (m) { var pf = document.createElement("div"); pf.className = "sp-puff"; pf.style.left = m.x + "px"; pf.style.top = m.y + "px"; document.body.appendChild(pf); setTimeout(function () { pf.remove(); }, 900); }
       setTimeout(function () { zahlZeigen(zc, null, "Gartenzwerg!"); }, 500);
     } else if (art === "behoerdengang") {
       if (sid) S.zBis.formular[sid] = jetzt + dauer;
-      if (m) {
-        var fo = document.createElement("div"); fo.className = "sp-formularflug"; fo.innerHTML = zauberSvg("behoerdengang"); fo.style.left = m.x + "px"; fo.style.top = m.y + "px"; document.body.appendChild(fo); setTimeout(function () { fo.remove(); }, 1100);
-        /* 671: ein Stempel knallt auf („ANTRAG!"), Formulare wirbeln um das Bild. */
-        var stp = effektTeil("sp-stempel-gross", m.x, m.y - m.r * 0.15, "", 1500);
-        if (stp) stp.textContent = "ANTRAG!";
-        for (var fw = 0; fw < 5; fw++) {
-          var fwe = effektTeil("sp-formular-wirbel", m.x, m.y, zauberSvg("behoerdengang"), 2400, { "--bahn": Math.round(m.r * (1.05 + (fw % 2) * 0.3)) + "px" });
-          if (fwe) fwe.style.animationDelay = (-fw * 0.34).toFixed(2) + "s, 0s";
-        }
-      }
+      if (m) { var fo = document.createElement("div"); fo.className = "sp-formularflug"; fo.innerHTML = zauberSvg("behoerdengang"); fo.style.left = m.x + "px"; fo.style.top = m.y + "px"; document.body.appendChild(fo); setTimeout(function () { fo.remove(); }, 1100); }
       setTimeout(function () { zahlZeigen(zc, null, "Formular!"); }, 700);
     }
     if (sid && (art === "erdbeben" || art === "orkan")) S.wackelBis[sid] = jetzt + dauer + (art === "orkan" ? 3800 : 0);

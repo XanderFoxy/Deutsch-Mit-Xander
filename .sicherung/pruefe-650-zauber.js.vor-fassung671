@@ -1,12 +1,18 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 654: DEUTSCHE ZAUBER, ZAUBERER-RÄNGE, FAIRNESS
+   SONDE — FASSUNG 650: DIE ZAUBER (NEBEL, ERDBEBEN, ORKAN)
    ---------------------------------------------------------------------
-   XANDER: „ein Mückenschwarm losschicken … jemanden verwandelt in
-   irgendwas anderes … Stopft den Gegner mit Brezeln voll" · „wie können
-   wir … die einzelnen Stufen des Zauberers … entwickeln" · „ob es da so
-   einen Fairnessfaktor gibt".
-   Android-Telefon (393 px), echte Fingertipps.
+   XANDER: „Zauber oder Erdbeben Orkane … Gegner von der Bildfläche
+   werfen oder durcheinanderbringen … Nebeln" und Funk 125: „Updates ab
+   einem bestimmten Level".
+   Android-Telefon, echte Fingertipps:
+     · Zauberstab in der Leiste öffnet das Zauberrad, ganz im Bild
+     · gesperrte Zauber zeigen ihr Level und sagen es beim Tippen
+     · Zauber wählen, auf ein Gesicht tippen: Server-Aufruf, Ereignis an
+       alle, Ton und Bild am richtigen Platz
+     · Nebel reist mit dem Platz, die Gesichtsmitte bleibt frei
+     · Orkan: das Bild fliegt weg und sitzt danach genau wieder da
+     · wer selbst verzaubert wird, bekommt Bescheid und sieht den Nebel
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -106,13 +112,10 @@ const sage = (gut, was, zusatz) => {
       else if (name === "spiel_aufgabe") data = { ok: true, id: 1000 + window.__rufe.length, frage: "Ich ___ nach Hause.", optionen: ["gehe", "gehst"], niveau: "A1" };
       else if (name === "spiel_antwort") data = Object.assign({}, ich, { ok: true, richtig: true, loesung: "gehe", gewonnen: 3, bonus: 0, mana_plus: 6, xp_plus: 6, level_vorher: 3, level: 4 });
       else if (name === "spiel_zaubern") {
-        const R = { nebel: [25, 0, 0, 15], erdbeben: [35, 10, 25, 6], orkan: [50, 15, 0, 10], brezelflut: [20, 6, 0, 10], muecken: [30, 10, 0, 8],
-                    kaffeeklatsch: [30, 0, 0, 0], hexenschuss: [40, 4, 0, 20], gartenzwerg: [60, 0, 0, 12], behoerdengang: [70, 0, 0, 60] }[args.p_zauber];
-        ich.mana = Math.max(0, ich.mana - R[0]);
-        const fair = window.__fair || 1;
-        data = { ok: true, zauber: args.p_zauber, schaden: Math.round(R[1] * fair), abgewehrt: 0, mauer_riss: R[2], dauer: R[3], kaputt: false, lohn: fair < 1 ? 0 : 1,
-                 heil: args.p_zauber === "kaffeeklatsch" ? 20 : 0, heil_ich: args.p_zauber === "kaffeeklatsch" && args.p_ziel !== ich.id ? 20 : 0, fair, rang_neu: Boolean(window.__rangNeu),
-                 ziel: Object.assign({}, bea, { lp: bea.lp - R[1] }), ich_voll: Object.assign({}, ich, window.__rangNeu ? { zauber_zahl: 10 } : {}) };
+        const R = { nebel: [25, 0, 0, 15], erdbeben: [35, 10, 25, 6], orkan: [50, 15, 0, 10] }[args.p_zauber];
+        ich.mana -= R[0];
+        data = { ok: true, zauber: args.p_zauber, schaden: R[1], abgewehrt: 0, mauer_riss: R[2], dauer: R[3], kaputt: false, lohn: 1,
+                 ziel: Object.assign({}, bea, { lp: bea.lp - R[1] }), ich_voll: Object.assign({}, ich) };
       }
       else if (name === "spiel_treffer") data = { ok: true, zone: "koerper", schaden: 8, abgewehrt: 0, kaputt: false,
         ziel: Object.assign({}, bea, { lp: 42 }), ich: Object.assign({}, ich, { lp: 94 }), gegenwehr: 6,
@@ -137,113 +140,115 @@ const sage = (gut, was, zusatz) => {
 
   const tick = (ms) => pg.waitForTimeout(ms);
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
-  /* Fassung 671: erst fliegt die Zauberkugel (höchstens 750 ms), dann wirkt der Zauber. */
-  const FLUG = 800;
   const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
   const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
   const hinweisSeit = () => pg.evaluate(() => window.__hinweise.length);
   const hinweiseAb = (n) => pg.evaluate((n) => window.__hinweise.slice(n).join(" | "), n);
 
-  /* Erst Bea sicher ins Bild holen (ohne Gleiten), dann tippen – sonst trifft
-     der Finger eine Stelle, an der das Bild gerade noch nicht ist. */
-  const aufBea = async () => {
-    await pg.evaluate(() => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis'); if (k) k.scrollIntoView({ block: "center", behavior: "instant" }); });
-    await tick(80);
-    const b = await seite("bea"); await pg.touchscreen.tap(b.x, b.y);
-  };
-  const bereit = (z) => pg.evaluate((z) => { const S = window.DMA_SPIEL.pruef.zustand(); S.zauber = z; window.DMA_TONLOG.length = 0; window.__rufe.length = 0; window.__raus.length = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); }, z);
-
-  console.log("\nDAS ZAUBERRAD MIT NEUN ZAUBERN UND DEM RANG\n");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.level = 12; S.ich.mana = 100; S.ich.zauber_zahl = 12; window.__ich.level = 12; window.__ich.mana = 100; window.__ich.zauber_zahl = 12; S.zrad = true; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tick(300);
-  const rad = await pg.evaluate(() => {
-    const r = document.querySelector(".sp-zauberrad"); if (!r) return { da: false };
-    const rr = r.getBoundingClientRect(), k = [...r.querySelectorAll(".sp-rad-zauber")];
-    const tippbar = k.every((b) => { const q = b.getBoundingClientRect(); const o = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2); return o && (o === b || b.contains(o)); });
-    return { da: true, n: k.length, fest: getComputedStyle(r).position, imBild: rr.left >= 0 && rr.right <= innerWidth && rr.top >= 0, tippbar, rang: (r.querySelector("text") || {}).textContent, reihe: k.map((b) => b.dataset.z).join(",") };
-  });
-  sage(rad.da && rad.n === 9 && rad.fest === "fixed" && rad.imBild && rad.tippbar, "volles Zauberrad: neun Zauber, frei schwebend, ganz im Bild, alle erreichbar", JSON.stringify(rad));
-  sage(rad.reihe === "brezelflut,nebel,kaffeeklatsch,muecken,erdbeben,hexenschuss,orkan,gartenzwerg,behoerdengang", "im Uhrzeigersinn nach Level geordnet", rad.reihe);
-  sage(rad.rang === "Zaubergeselle", "in der Mitte steht der Zauberer-Rang (12 Zauber = Zaubergeselle)", rad.rang);
-  await pg.touchscreen.tap(20, 20); await tick(200);
-
-  console.log("\nBREZELFLUT\n");
-  await bereit("brezelflut"); await aufBea(); await tick(500 + FLUG);
-  const brezel = await pg.evaluate(() => ({ ruf: (window.__rufe.find((r) => r.name === "spiel_zaubern") || {}).args, regen: document.querySelectorAll(".sp-brezelregen").length,
-    bauch: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-brezelbauch')), toene: window.DMA_TONLOG.map((t) => t.name).join(","), raus: (window.__raus.find((x) => x && x.ereignis === "zauber") || {}).sorte }));
-  sage(brezel.ruf && brezel.ruf.p_zauber === "brezelflut" && brezel.raus === "brezelflut", "Tipp auf Bea: spiel_zaubern(brezelflut), alle bekommen es", JSON.stringify(brezel.ruf));
-  sage(brezel.regen >= 6 && brezel.bauch && /brezelknack/.test(brezel.toene), "Brezeln regnen auf Bea, danach hat sie einen Brezelbauch; man hört es", JSON.stringify({ regen: brezel.regen, bauch: brezel.bauch, toene: brezel.toene }));
-
-  console.log("\nMÜCKENSCHWARM\n");
-  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef; P.zustand().ich.mana = 100; });
-  await bereit("muecken"); await aufBea(); await tick(400 + FLUG);
-  const muecken = await pg.evaluate(() => ({ n: document.querySelectorAll(".sp-muecke").length, toene: window.DMA_TONLOG.map((t) => t.name).join(",") }));
-  await tick(2000);
-  const mueckenSpaeter = await pg.evaluate(() => ({ summen: window.DMA_TONLOG.filter((t) => t.name === "muecken").length, zahl: [...document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-zahl')].map((z) => z.textContent).join("|") }));
-  sage(muecken.n >= 10 && mueckenSpaeter.summen >= 2, "ein Schwarm kreist um Bea und summt, solange er da ist", JSON.stringify({ muecken: muecken.n, summen: mueckenSpaeter.summen }));
-
-  console.log("\nKAFFEEKLATSCH – AUCH AUF SICH SELBST\n");
-  await pg.evaluate(() => document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]').scrollIntoView({ block: "center" }));
+  console.log("\nZAUBERRAD MIT LEVEL-SPERRE (Level 3, 40 Mana)\n");
+  await pg.evaluate(() => { window.DMA_SPIEL.pruef.schnellZeichnen(true); });
   await tick(200);
-  let ichPos = await seite("ich");
-  await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(1200);
-  ichPos = await seite("ich"); ichPos = { x: ichPos.x, y: Math.max(ichPos.y, Math.min(ichPos.y + ichPos.w * 0.42, 14)) };
-  await bereit("kaffeeklatsch"); await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(900 + FLUG);
-  const kaffee = await pg.evaluate(() => ({ ruf: (window.__rufe.find((r) => r.name === "spiel_zaubern") || {}).args, tasse: document.querySelectorAll(".sp-kaffee").length,
-    zahl: [...document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-zahl')].map((z) => z.textContent).join("|") }));
-  sage(kaffee.ruf && kaffee.ruf.p_zauber === "kaffeeklatsch" && kaffee.ruf.p_ziel === "00000000-0000-4000-8000-000000000000", "Kaffeeklatsch darf auf das eigene Bild", JSON.stringify(kaffee.ruf));
-  sage(kaffee.tasse >= 1 && /\+20 Kaffee/.test(kaffee.zahl), "eine Kaffeetasse erscheint, grüne +20", JSON.stringify(kaffee));
-
-  console.log("\nHEXENSCHUSS, GARTENZWERG, BEHÖRDENGANG – WER VERZAUBERT WIRD\n");
+  const stab = await pg.evaluate(() => Boolean(document.querySelector(".sp-schnell .sp-s-zauber")));
+  sage(stab, "der Zauberstab steht in der Leiste");
+  await tippe(".sp-schnell .sp-s-zauber");
+  const zr = await pg.evaluate(() => {
+    const r = document.querySelector(".sp-zauberrad"), stab = document.querySelector(".sp-s-zauber");
+    if (!r) return { da: false };
+    const k = [...r.querySelectorAll(".sp-rad-zauber")];
+    const rr = r.getBoundingClientRect(), sr = stab.getBoundingClientRect();
+    const tippbar = k.every((b) => { const q = b.getBoundingClientRect(); const o = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2); return o && (o === b || b.contains(o)); });
+    return { da: true, n: k.length, imBild: rr.left >= 0 && rr.right <= innerWidth && rr.top >= 0, ueber: rr.bottom <= sr.top + 2, tippbar,
+             zahlen: k.map((b) => b.dataset.z + ":" + b.textContent.trim()).join(" "), zu: k.filter((b) => b.classList.contains("sp-zu")).map((b) => b.dataset.z).join(",") };
+  });
+  /* Ab Fassung 654 sind es neun Zauber (Brezelflut … Behördengang). */
+  sage(zr.da && zr.n === 9, "der Stab öffnet das Zauberrad mit allen neun Zaubern", zr.zahlen);
+  sage(zr.imBild && zr.ueber && zr.tippbar, "das Rad steht über dem Stab, ganz im Bild, jeder Zauber erreichbar", JSON.stringify({ imBild: zr.imBild, ueber: zr.ueber, tippbar: zr.tippbar }));
+  sage(zr.zu === "kaffeeklatsch,muecken,erdbeben,hexenschuss,orkan,gartenzwerg,behoerdengang" && /nebel:25/.test(zr.zahlen) && /brezelflut:20/.test(zr.zahlen) && /erdbeben:Lv5/.test(zr.zahlen) && /orkan:Lv7/.test(zr.zahlen),
+       "Level 3: Brezelflut und Nebel offen, die anderen zeigen ihr Level", zr.zu);
   let h0 = await hinweisSeit();
-  await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "zauber", sorte: "hexenschuss", von: "bea", zielChat: "ich", dauer: 20, schaden: 4 }); });
-  await tick(300);
-  const hexe = await pg.evaluate(() => ({ gesperrt: window.DMA_SPIEL.gesperrt(), grund: window.DMA_SPIEL.gesperrtGrund(), schief: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"].sp-w-hexe')) }));
-  sage(hexe.gesperrt && /Hexenschuss/.test(hexe.grund) && hexe.schief, "Hexenschuss: kein Platzwechsel, das Bild sitzt schief", JSON.stringify(hexe));
-  await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "zauber", sorte: "gartenzwerg", von: "ich", zielChat: "bea", dauer: 12 }); });
-  await tick(700);
-  const zwerg = await pg.evaluate(() => {
-    const el = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]'), z = el && el.querySelector(".sp-zwerg"); if (!z) return { da: false };
-    const k = el.querySelector(".lc-kreis").getBoundingClientRect();
-    const st = document.createElement("style"); st.textContent = ".sp-zwerg, .sp-zwerg * { pointer-events: auto !important; }"; document.head.appendChild(st);
-    const mitte = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2); st.remove();
-    /* Getroffen zählt nur, was gemalt ist (Mütze, Bart) – nicht die leere Hülle. */
-    return { da: true, mitteFrei: !(mitte && z.contains(mitte) && /^(path|circle|ellipse)$/i.test(mitte.tagName)), getroffen: mitte ? mitte.tagName : "" };
-  });
-  sage(zwerg.da && zwerg.mitteFrei, "Bea wird Gartenzwerg: Mütze und Bart, die Gesichtsmitte bleibt frei", JSON.stringify(zwerg));
-  h0 = await hinweisSeit();
-  await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "zauber", sorte: "behoerdengang", von: "bea", zielChat: "ich", dauer: 60 }); });
-  await tick(300);
-  const form = await pg.evaluate(() => Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-formular')));
-  sage(form && /Formular/.test(await hinweiseAb(h0)), "Behördengang: ein Formular klebt am Bild, man erfährt, dass eine Deutschaufgabe hilft", await hinweiseAb(h0));
-  /* Eine richtige Antwort erledigt das Formular. */
-  await pg.evaluate(() => window.DMA_SPIEL.aufgabe());
-  await tick(600);
-  await pg.evaluate(async () => {
-    const p = document.getElementById("spPanel"); let t0 = performance.now();
-    while (performance.now() - t0 < 3000 && !p.querySelector('[data-tu="antwort"]')) await new Promise((r) => setTimeout(r, 50));
-    const b = p.querySelector('[data-tu="antwort"]'); window.__geklickt = Boolean(b); if (b) b.click();
-  });
-  await tick(900);
-  const erledigt = await pg.evaluate(() => { window.DMA_SPIEL.pruef.zeichnen(); return !document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-formular'); });
-  sage(erledigt, "eine richtig gelöste Aufgabe nimmt das Formular weg", await pg.evaluate(() => "geklickt: " + window.__geklickt + " · " + window.__rufe.map((r) => r.name).join(",")));
+  await tippe('.sp-zauberrad .sp-rad-zauber[data-z="erdbeben"]');
+  const gesperrt = await pg.evaluate(() => window.DMA_SPIEL.pruef.zustand().zauber);
+  sage(gesperrt === "" && /ab Level 5/.test(await hinweiseAb(h0)), "Tipp auf einen gesperrten Zauber sagt, ab welchem Level", await hinweiseAb(h0));
 
-  console.log("\nFAIRNESS UND AUFSTIEG\n");
+  console.log("\nNEBEL AUF BEA\n");
+  await tippe('.sp-zauberrad .sp-rad-zauber[data-z="nebel"]');
+  const bereit = await pg.evaluate(() => ({ z: window.DMA_SPIEL.pruef.zustand().zauber, rad: Boolean(document.querySelector(".sp-zauberrad")),
+    an: Boolean(document.querySelector(".sp-s-zauber.sp-an")), kampf: document.body.classList.contains("sp-kampf") }));
+  sage(bereit.z === "nebel" && !bereit.rad && bereit.an, "Nebel ist bereit, das Rad zu, der Stab leuchtet", JSON.stringify(bereit));
+  await pg.evaluate(() => { window.__rufe.length = 0; window.__raus.length = 0; window.DMA_TONLOG.length = 0; });
+  const bea0 = await seite("bea");
+  await pg.touchscreen.tap(bea0.x, bea0.y); await tick(900);
+  const nebel = await pg.evaluate(() => {
+    const ruf = window.__rufe.find((r) => r.name === "spiel_zaubern"), raus = window.__raus.find((p) => p && p.ereignis === "zauber");
+    const n = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-nebel'), k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis');
+    let mitteFrei = false;
+    if (n) { const bg = getComputedStyle(n).backgroundImage; mitteFrei = /rgba\(222, 228, 235, 0\) 40%/.test(bg); }
+    return { ruf: ruf && ruf.args, raus: raus && { sorte: raus.sorte, zielChat: raus.zielChat, dauer: raus.dauer }, nebel: Boolean(n), mitteFrei,
+             toene: window.DMA_TONLOG.map((t) => t.name).join(","), zauber: window.DMA_SPIEL.pruef.zustand().zauber, mana: window.DMA_SPIEL.pruef.zustand().ich.mana };
+  });
+  sage(nebel.ruf && nebel.ruf.p_zauber === "nebel" && nebel.ruf.p_ziel === "11111111-1111-4111-8111-111111111111", "Tipp auf Bea ruft spiel_zaubern mit Nebel und Beas Spiel-Id", JSON.stringify(nebel.ruf));
+  sage(nebel.raus && nebel.raus.sorte === "nebel" && nebel.raus.zielChat === "bea" && nebel.raus.dauer === 15, "alle im Raum bekommen das Zauber-Ereignis", JSON.stringify(nebel.raus));
+  sage(nebel.nebel && nebel.mitteFrei, "Nebel liegt als Ring an Beas Platz, die Gesichtsmitte bleibt frei");
+  sage(/swoosh/.test(nebel.toene), "der Nebel ist zu hören", nebel.toene);
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD.replace(/\.png$/, "-nebel.png"), clip: { x: 0, y: 0, width: 393, height: 200 } });
+  sage(nebel.zauber === "" && nebel.mana === 15, "der Zauber ist verbraucht, Mana 40 → 15", JSON.stringify({ z: nebel.zauber, mana: nebel.mana }));
+
+  console.log("\nERDBEBEN UND ORKAN (Level 8, 100 Mana)\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); window.__ich.level = 8; window.__ich.mana = 100; S.ich.level = 8; S.ich.mana = 100; S.zauber = "erdbeben"; window.DMA_TONLOG.length = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await pg.touchscreen.tap(bea0.x, bea0.y); await tick(250);
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD.replace(/\.png$/, "-beben.png"), clip: { x: 0, y: 0, width: 393, height: 200 } });
+  const beben = await pg.evaluate(() => ({ bebt: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"].sp-bebt')), riss: Boolean(document.querySelector(".sp-beben-riss")),
+    raum: document.getElementById("lcPlaetze").classList.contains("sp-raum-bebt"), toene: window.DMA_TONLOG.map((t) => t.name).join(",") }));
+  await tick(700);
+  const bebenZahl = await pg.evaluate(() => [...document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-zahl')].map((z) => z.textContent).join(" | "));
+  sage(beben.bebt && beben.riss && beben.raum, "Erdbeben: Beas Platz bebt, der Boden reißt, der Raum ruckt kurz", JSON.stringify(beben));
+  sage(/erdbeben/.test(beben.toene), "das Erdbeben ist zu hören", beben.toene);
+  sage(/−10 Erdbeben/.test(bebenZahl), "die rote Zahl kommt mitten im Beben", bebenZahl);
+  await tick(3200);
+  const nachBeben = await pg.evaluate(() => ({ bebt: Boolean(document.querySelector(".sp-bebt")), riss: Boolean(document.querySelector(".sp-beben-riss")), wackel: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"].sp-w-wackel')) }));
+  sage(!nachBeben.bebt && !nachBeben.riss && nachBeben.wackel, "nach 3,6 s ist das Beben vorbei, Bea zittert noch (6 s)", JSON.stringify(nachBeben));
+
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.zauber = "orkan"; window.DMA_TONLOG.length = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await pg.touchscreen.tap(bea0.x, bea0.y); await tick(1500);
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD.replace(/\.png$/, "-orkan.png"), clip: { x: 0, y: 0, width: 393, height: 200 } });
+  const orkan = await pg.evaluate(() => {
+    const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis'), r = k.getBoundingClientRect();
+    return { weg: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"].sp-weggeweht')), wirbel: Boolean(document.querySelector(".sp-orkan")),
+             versetzt: Math.round(Math.abs(r.left + r.width / 2 - innerWidth / 2)), toene: window.DMA_TONLOG.map((t) => t.name).join(",") };
+  });
+  sage(orkan.weg && orkan.wirbel, "Orkan: ein Wirbel steht am Platz, Beas Bild wird vom Platz gerissen", JSON.stringify(orkan));
+  sage(/orkan/.test(orkan.toene), "der Orkan ist zu hören", orkan.toene);
+  await tick(2600);
+  const bea1 = await seite("bea");
+  const reste = await pg.evaluate(() => ({ weg: Boolean(document.querySelector(".sp-weggeweht")), wirbel: Boolean(document.querySelector(".sp-orkan")) }));
+  /* Bea taumelt danach noch (Wackeln: ±1 px, ±0,6°) – deshalb 3 px Spielraum. */
+  sage(!reste.weg && !reste.wirbel && Math.abs(bea1.x - bea0.x) < 3 && Math.abs(bea1.y - bea0.y) < 3, "nach 3,8 s sitzt Bea wieder auf ihrem Platz (nur das Taumeln bleibt), kein Rest",
+       JSON.stringify({ vorher: bea0, nachher: bea1, reste }));
+
+  console.log("\nWER VERZAUBERT WIRD\n");
   h0 = await hinweisSeit();
-  /* Das Deutsch-Fenster vom Formular ist noch offen – erst zumachen, sonst
-     tippt der Finger auf das Fenster statt auf Bea. */
-  await pg.evaluate(() => { const p = document.getElementById("spPanel"); if (p) p.hidden = true; window.__fair = 0.5; const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mana = 100; });
-  await bereit("nebel"); await aufBea(); await tick(600 + FLUG);
-  sage(/Fair bleiben.*halber Schaden, keine Punkte/.test(await hinweiseAb(h0)), "gegen viel Kleinere: Hinweis auf halben Schaden ohne Punkte", await hinweiseAb(h0));
-  h0 = await hinweisSeit();
-  await pg.evaluate(() => { window.__fair = 1; window.__rangNeu = true; const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mana = 100; });
-  await bereit("nebel"); await aufBea(); await tick(900 + FLUG);
-  sage(/Aufgestiegen: Zaubergeselle/.test(await hinweiseAb(h0)), "neuer Zauberer-Rang wird gefeiert", await hinweiseAb(h0));
+  await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "zauber", sorte: "nebel", von: "bea", zielChat: "ich", dauer: 15, schaden: 0 }); });
+  await tick(300);
+  const ich = await pg.evaluate(() => ({ sicht: document.body.classList.contains("sp-ich-nebel"), nebel: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-nebel')),
+    unscharf: getComputedStyle(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis')).filter }));
+  sage(ich.sicht && ich.nebel && /blur/.test(ich.unscharf), "im Nebel: Nebel an meinem Platz, die anderen verschwimmen", JSON.stringify(ich));
+  sage(/Nebel!.*60 %/.test(await hinweiseAb(h0)), "ich bekomme gesagt, was der Nebel macht", await hinweiseAb(h0));
+
+  console.log("\nSPÄTER DAZUGEKOMMEN\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); const id = "22222222-2222-4222-8222-222222222222"; S.stand[id] = Object.assign({}, S.stand[id], { mitspielen: true, nebel_s: 5 }); window.DMA_SPIEL.pruef.zeichnen(); });
+  await tick(200);
+  sage(await pg.evaluate(() => Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="cem"] .sp-nebel'))), "wer später kommt, sieht den laufenden Nebel aus dem Stand (nebel_s)");
+
+  console.log("\nMENÜ „MEHR“\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.level = 5; S.schnellReiter = "mehr"; });
+  const mehr = await pg.evaluate(() => window.DMA_SPIEL.pruef.schnellMenueHtml());
+  /* Ab Fassung 655 stehen die Zauber nur im Zauberrad („so viele Erdbeben …"); „Mehr“ öffnet es und zeigt den Rang. */
+  sage(/data-s="zauberrad"/.test(mehr) && /Zauberlehrling|Zaubergeselle|Magier|Zaubermeister|Erzmagier/.test(mehr) && !/data-s="zauberwahl"/.test(mehr), "„Mehr“ öffnet das Zauberrad und zeigt den Rang – keine doppelte Zauberliste");
   if (process.env.BILD) { await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.zrad = true; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300); await pg.screenshot({ path: process.env.BILD }); }
 
   await br.close(); srv.close();
   if (konsolenFehler.length) { fehler++; console.log("  FEHL Seitenfehler: " + konsolenFehler.join(" | ")); }
-  console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n" : "\nFassung 654 auf dem Telefon: alles grün.\n");
+  console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n" : "\nFassung 650 auf dem Telefon: alles grün.\n");
   process.exit(fehler ? 1 : 0);
 })();
