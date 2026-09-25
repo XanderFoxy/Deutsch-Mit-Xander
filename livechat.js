@@ -2852,8 +2852,16 @@ window.LiveChat = (function () {
 
   function bruecke(anderId, alsAnrufer) {
     if (brueckeJe[anderId]) return brueckeJe[anderId];
-    var pc = new RTCPeerConnection({ iceServers: VERMITTLER });
+    /* FASSUNG 658/659 — XANDER: „die Geschwindigkeit von der Verbindung
+       generell … bei HelloTalk geht es doch auch … optimiere alles was
+       du rausholen kannst damit die Verbindungen in Zukunft schneller
+       steht." iceCandidatePoolSize: der Browser beginnt schon beim
+       Anlegen, Wege zu sammeln — nicht erst beim Angebot. */
+    var pc = new RTCPeerConnection({ iceServers: VERMITTLER, iceCandidatePoolSize: 1 });
     brueckeJe[anderId] = pc;
+    /* Der Spielkanal muss VOR dem Angebot stehen, sonst steht er nicht
+       in der Beschreibung (siehe datenkanalAnlegen). */
+    datenkanalAnlegen(anderId, pc);
     /* Der Platz muss existieren, BEVOR ein Bild eintrifft.
        Sonst kommt der Strom an und findet niemanden, dem er
        gehört — und der Kreis bleibt leer, obwohl die Verbindung
@@ -2901,7 +2909,7 @@ window.LiveChat = (function () {
     if (alsAnrufer) plaetzeAnlegen(anderId, pc);
 
     pc.onicecandidate = function (e) {
-      if (e.candidate) senden({ art: "kerze", an: anderId, kerze: alsDaten(e.candidate) });
+      kerzeRaus(anderId, e.candidate ? alsDaten(e.candidate) : null);
     };
     /* Der Strom wird SELBST zusammengesetzt, Spur für Spur.
        Sich auf e.streams[0] zu verlassen geht schief, sobald die
@@ -2953,6 +2961,10 @@ window.LiveChat = (function () {
          abzureissen. */
       if (pc.iceConnectionState === "disconnected" && pc.restartIce) {
         try { pc.restartIce(); } catch (e) {}
+        /* FASSUNG 659 — restartIce() allein tut nichts: erst ein neues
+           Angebot trägt den Neustart hinüber. Anrufen tut wie immer
+           nur die Seite mit der kleineren Kennung. */
+        if (zustand.ichId < anderId) setTimeout(function () { if (brueckeJe[anderId] === pc) anrufen(anderId); }, 150);
       }
       /* „failed" heisst: es gibt keinen Weg. Genau dann ist ein Relais
          noetig — einmal neu suchen, und wenn das auch nichts wird,
@@ -3729,6 +3741,109 @@ window.LiveChat = (function () {
   }
 
   var kerzenLager = {};
+  /* =========================================================
+     FASSUNG 659 — DIE WEGE GEBÜNDELT STATT EINZELN
+     ---------------------------------------------------------
+     GEMELDET: „Leitung zu Mark Hawkins … connecting · Weg noch keiner"
+     und „es dauert extrem lange".
+     Jeder Browser findet beim Aufbau in einem Rutsch viele mögliche
+     Wege („Kerzen": im Heimnetz, hinter dem Router, über das Relais).
+     Jede ging bisher als EIGENE Nachricht über den Supabase-Kanal —
+     der ist auf 20 Nachrichten je Sekunde eingestellt (klient()), und
+     Firefox mit sieben Vermittlern schickt leicht mehr. Was darüber
+     liegt, kann der Server verwerfen; fehlt ausgerechnet der
+     Relais-Weg, bleibt es bei „connecting".
+     Jetzt werden die Kerzen 90 ms lang gesammelt und als EIN Paket
+     geschickt; das Ende der Suche schickt den Rest sofort. Wer eine
+     ältere Fassung hat, bekommt sie weiter einzeln — erkennbar daran,
+     dass seine Pakete kein „kf" tragen. */
+  var buendelFaehig = {};
+  var kerzenAusgang = {};
+  function kerzeRaus(id, k) {
+    if (!buendelFaehig[id]) { if (k) senden({ art: "kerze", an: id, kerze: k }); return; }
+    var a = kerzenAusgang[id] || (kerzenAusgang[id] = { liste: [], uhr: 0 });
+    if (k) a.liste.push(k);
+    var los = function () {
+      var l = a.liste; a.liste = []; a.uhr = 0;
+      if (l.length) senden({ art: "kerzen", an: id, kerzen: l });
+    };
+    if (!k) { clearTimeout(a.uhr); los(); return; }
+    if (!a.uhr) a.uhr = setTimeout(los, 90);
+  }
+  function kerzeAnnehmen(von, kerze) {
+    if (!kerze) return;
+    var pk = brueckeJe[von];
+    /* Kerzen kommen oft VOR der Antwort an — der Browser wirft
+       sie dann weg, weil er noch nicht weiss, wozu sie gehören.
+       Darum werden sie zwischengelegt und nachgereicht, sobald
+       die Gegenseite beschrieben ist.
+       FASSUNG 642 — auch eine Kerze, die ankam, BEVOR hier die
+       Leitung zu ihm stand, wird aufgehoben (höchstens vierzig). */
+    if (!pk) {
+      var frueh = kerzenLager[von] = kerzenLager[von] || [];
+      if (frueh.length < 40) frueh.push(kerze);
+      return;
+    }
+    if (!pk.remoteDescription || !pk.remoteDescription.type) {
+      (kerzenLager[von] = kerzenLager[von] || []).push(kerze);
+      return;
+    }
+    pk.addIceCandidate(new RTCIceCandidate(kerze)).catch(function () {});
+  }
+
+  /* =========================================================
+     FASSUNG 659 — DAS SPIEL LÄUFT DIREKT VON GERÄT ZU GERÄT
+     ---------------------------------------------------------
+     XANDER: „wie wir mit den Leuten wenn wir mit ihnen zusammen die
+     Verbindung haben auch flüssig spielen können … ganz flüssig".
+     Spielereignisse (Schuss, Treffer, Zauber …) liefen nur über den
+     Supabase-Kanal: Gerät → Server → Gerät. Steht die Leitung zu
+     jemandem, geht es jetzt ZUSÄTZLICH direkt durch sie hindurch
+     (WebRTC-Datenkanal) — der kürzeste Weg, den es gibt. Der
+     Supabase-Weg bleibt als Sicherheit; was zweimal ankommt, wird am
+     Kennzeichen „gid" erkannt und nur einmal gezeigt. Gerechnet wird
+     weiter nur auf dem Server — der Datenkanal zeigt nur schneller.
+     Direkt geschickt wird erst, wenn die Gegenseite über den Kanal
+     „dc-hallo" gesagt hat — eine ältere Fassung bekommt nichts, was
+     sie nicht versteht. */
+  var kanalJe = {}, kanalBereit = {};
+  function datenkanalAnlegen(anderId, pc) {
+    try {
+      var dc = pc.createDataChannel("spiel", { negotiated: true, id: 7, ordered: false, maxRetransmits: 1 });
+      kanalJe[anderId] = dc;
+      dc.onopen = function () { try { dc.send(JSON.stringify({ art: "dc-hallo" })); } catch (e) {} };
+      dc.onmessage = function (e) {
+        var n; try { n = JSON.parse(e.data); } catch (x) { return; }
+        if (!n || typeof n !== "object") return;
+        /* Wer über diesen Kanal spricht, ist sicher der, zu dem er führt. */
+        n.von = anderId;
+        if (n.art === "dc-hallo") { kanalBereit[anderId] = true; return; }
+        if (n.art === "spiel" && n.ereignis) empfangen(n);
+      };
+      dc.onclose = function () { if (kanalJe[anderId] === dc) { delete kanalBereit[anderId]; } };
+    } catch (e) {}
+  }
+  var gidGesehen = {}, gidZahl = 0;
+  function gidNeu(gid) {
+    if (!gid) return true;
+    if (gidGesehen[gid]) return false;
+    gidGesehen[gid] = Date.now();
+    if (++gidZahl > 400) {
+      var grenze = Date.now() - 60000;
+      Object.keys(gidGesehen).forEach(function (k) { if (gidGesehen[k] < grenze) delete gidGesehen[k]; });
+      gidZahl = Object.keys(gidGesehen).length;
+    }
+    return true;
+  }
+  function direktSenden(p) {
+    var raus = 0;
+    Object.keys(kanalBereit).forEach(function (id) {
+      var dc = kanalJe[id];
+      if (!dc || dc.readyState !== "open") return;
+      try { dc.send(JSON.stringify(p)); raus++; } catch (e) {}
+    });
+    return raus;
+  }
   function wartendeKerzenNachreichen(id) {
     var pc = brueckeJe[id], liste = kerzenLager[id];
     if (!pc || !liste) return;
@@ -3744,6 +3859,8 @@ window.LiveChat = (function () {
     var pc = brueckeJe[id];
     if (pc) { try { pc.close(); } catch (e) {} delete brueckeJe[id]; }
     delete kerzenLager[id];
+    delete kanalJe[id]; delete kanalBereit[id];
+    if (kerzenAusgang[id]) { clearTimeout(kerzenAusgang[id].uhr); delete kerzenAusgang[id]; }
     delete spurenJe[id];
   }
 
@@ -3845,6 +3962,7 @@ window.LiveChat = (function () {
   }
   function senden(nutzlast) {
     nutzlast.von = zustand.ichId;
+    nutzlast.kf = 1;     /* Fassung 659: „ich verstehe gebündelte Kerzen" */
     if (spielKennung && !nutzlast.spiel) nutzlast.spiel = spielKennung;
     /* Zum Nachmessen: die Pakete abfangen, ohne dass ein Raum offen
        sein muss. Im Betrieb ist der Haken immer null. */
@@ -3890,7 +4008,10 @@ window.LiveChat = (function () {
        Fassung 618 JEDEN Schiffe-Zug ab — zwischen zwei Geräten lief das
        Spiel nicht mehr (gefunden von pruefe-runde98-schiffe-aus). Ein
        Ereignis des Spielsystems erkennt man an n.ereignis. */
+    if (n.kf) buendelFaehig[n.von] = true;
     if (n.art === "spiel" && n.ereignis) {
+      /* Fassung 659: kam es schon über den Datenkanal? Dann nicht noch einmal. */
+      if (!gidNeu(n.gid)) return;
       try { if (window.DMA_SPIEL && window.DMA_SPIEL.empfangen) window.DMA_SPIEL.empfangen(n); } catch (e) {}
       return;
     }
@@ -4189,33 +4310,9 @@ window.LiveChat = (function () {
       }
       return;
     }
-    if (n.art === "kerze") {
-      var pk = brueckeJe[n.von];
-      /* Kerzen kommen oft VOR der Antwort an — der Browser wirft
-         sie dann weg, weil er noch nicht weiss, wozu sie gehören.
-         Darum werden sie zwischengelegt und nachgereicht, sobald
-         die Gegenseite beschrieben ist. Ohne das kommt die
-         Verbindung manchmal zustande und manchmal nicht, je
-         nachdem, was zuerst da war. */
-      if (!n.kerze) return;
-      /* FASSUNG 642 — „dass man ewig warten muss, bis man miteinander
-         reden kann": Eine Kerze, die ankam, BEVOR hier die Leitung zu
-         ihm stand, wurde bisher weggeworfen. Fehlt so der einzige
-         brauchbare Weg (das Relais), findet die Wegesuche nichts und
-         steht erst nach ihrem Neustart. Jetzt wird sie aufgehoben wie
-         die, die vor der Antwort kommen; wartendeKerzenNachreichen()
-         legt sie nach, sobald die Leitung beschrieben ist. Hoechstens
-         vierzig, damit sich nichts ansammelt. */
-      if (!pk) {
-        var frueh = kerzenLager[n.von] = kerzenLager[n.von] || [];
-        if (frueh.length < 40) frueh.push(n.kerze);
-        return;
-      }
-      if (!pk.remoteDescription || !pk.remoteDescription.type) {
-        (kerzenLager[n.von] = kerzenLager[n.von] || []).push(n.kerze);
-        return;
-      }
-      pk.addIceCandidate(new RTCIceCandidate(n.kerze)).catch(function () {});
+    if (n.art === "kerze") { kerzeAnnehmen(n.von, n.kerze); return; }
+    if (n.art === "kerzen") {
+      (Array.isArray(n.kerzen) ? n.kerzen.slice(0, 60) : []).forEach(function (k) { kerzeAnnehmen(n.von, k); });
       return;
     }
     if (n.art === "umzug") {
@@ -4884,7 +4981,9 @@ window.LiveChat = (function () {
      wächst, damit ein Gerät, das wirklich nicht durchkommt (sehr
      strenge Firmen- oder Landesnetze), nicht ununterbrochen probiert.
      ========================================================= */
-  var WACHE_MS = 4000;
+  /* Fassung 659: alle zwei statt vier Sekunden nachsehen — eine hakende
+     Leitung wird so bis zu zwei Sekunden früher neu angestoßen. */
+  var WACHE_MS = 2000;
   var GEDULD_MS = 6000;        // so lange darf eine Leitung brauchen
   var wacheUhr = null;
   var versuchJe = {};          // Kennung -> { seit, stufe, anlaeufe }
@@ -5489,9 +5588,22 @@ window.LiveChat = (function () {
        das Holen der Kamera ohnehin dauert. Sie laufen nebeneinander,
        also kostet es keine Sekunde extra. Erst danach wird die erste
        Bruecke gebaut, und die nimmt dann die richtigen Server. */
+    /* FASSUNG 659 — höchstens 2,5 s auf das Relais warten. Braucht die
+       Funktion länger (Kaltstart), geht es mit den öffentlichen Wegen
+       los; kommt das Relais danach, bekommen alle Leitungen, die noch
+       nicht stehen, die neue Liste und suchen damit neu. */
+    var relaisSpaet = relaisHolen(false);
+    relaisSpaet.then(function (ok) {
+      if (!ok) return;
+      Object.keys(brueckeJe).forEach(function (id) {
+        var pcx = brueckeJe[id];
+        if (!pcx || steht(pcx)) return;
+        try { pcx.setConfiguration({ iceServers: VERMITTLER, iceCandidatePoolSize: 1 }); } catch (e) {}
+      });
+    });
     return Promise.all([
       stromHolen(o.mitBild === true),
-      relaisHolen(false)
+      Promise.race([relaisSpaet, new Promise(function (r) { setTimeout(function () { r(false); }, 2500); })])
     ]).then(function (beides) {
       var strom = beides[0];
       zustand.eigenerStrom = strom;
@@ -15428,6 +15540,11 @@ window.LiveChat = (function () {
     spielSenden: function (o) {
       var p = {}; Object.keys(o || {}).forEach(function (k) { p[k] = o[k]; });
       p.art = "spiel";
+      /* Fassung 659: erst direkt (schnell), dann über den Server (sicher). */
+      p.gid = String(zustand.ichId || "").slice(0, 6) + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      p.von = zustand.ichId;
+      if (spielKennung && !p.spiel) p.spiel = spielKennung;
+      direktSenden(p);
       senden(p);
     },
     /* Runde 100 — die Uebungspuppe an/aus (Knopf im Walkie-Talkie). */
@@ -15552,6 +15669,10 @@ window.LiveChat = (function () {
     pruefPersonenPost: function (f) { pruefPostHaken = typeof f === "function" ? f : null; },
     /* Was wirklich auf den Kanal ginge — ohne Kanal. */
     pruefAbfangen: function (f) { pruefSenderHaken = typeof f === "function" ? f : null; },
+    /* Fassung 659 — nur zum Nachprüfen: Stand des Spielkanals, und eine
+       Gegenseite wie eine alte Fassung behandeln. */
+    pruefKanal: function () { return { bereit: Object.keys(kanalBereit), offen: Object.keys(kanalJe).filter(function (id) { return kanalJe[id].readyState === "open"; }) }; },
+    pruefBuendelVergessen: function (id) { delete buendelFaehig[id]; },
     pruefWarteschlange: function () { return liveWarteschlange.map(function (w) { return w.id; }); },
     /* Nur zum Nachmessen: Stuecke einsortieren und ansehen, in
        welcher Reihenfolge sie herauskommen. Fasst die echte Reihe

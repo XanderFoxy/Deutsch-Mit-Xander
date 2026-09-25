@@ -492,3 +492,13 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - XANDER: „Irgendwie sieht man aus dem Bürger nicht sofort heraus, dass man die Deutsch Aufgaben machen kann". Eigener grüner Reiter „Deutsch" (Waffen · Heilen · Tiere · Deutsch · Mehr): „Aufgabe lösen" plus alle Aufgabenarten als Knöpfe; unter „Mehr" nicht mehr doppelt.
 - Verbindung (Mark, Firefox/Linux laut spiel_diagnose): Mit eigenem Relais standen sieben Vermittler in der Liste; Firefox wird ab fünf langsam. Jetzt: Cloudflare + ein Google-STUN (`mitRelais` in livechat.js). Ohne eigenes Relais unverändert.
 - Sonde: `pruefe-658-superkraft-feuer-deutsch.js` (20 Prüfungen); alle 22 Spiel-Sonden und Runde 27 (Relais) grün.
+
+## Fassung 659 — Verbindung schneller, Spiel direkt von Gerät zu Gerät
+
+- XANDER: „speziell auch die Geschwindigkeit von der Verbindung generell mit Leuten … bei HelloTalk geht es doch auch … wie wir … auch flüssig spielen können … optimiere alles was du rausholen kannst damit die Verbindungen in Zukunft schneller steht."
+- Kerzen gebündelt (livechat.js `kerzeRaus`/`kerzeAnnehmen`): Die gefundenen Wege gehen 90 ms gesammelt als EIN Paket „kerzen" statt einzeln über den Supabase-Kanal (der steht auf 20 Nachrichten/s). Wer eine ältere Fassung hat (Pakete ohne `kf`), bekommt sie weiter einzeln. Gemessen: Aufbau mit 5 statt bisher 10+ Paketen.
+- `iceCandidatePoolSize: 1`: Der Browser sammelt Wege schon beim Anlegen der Leitung.
+- Wache alle 2 statt 4 s; bei „disconnected" folgt dem restartIce jetzt ein neues Angebot (vorher tat restartIce allein nichts).
+- Relais höchstens 2,5 s abwarten; kommt es später, bekommen noch nicht stehende Leitungen die neue Liste (`setConfiguration`).
+- Spiel-Datenkanal (`datenkanalAnlegen`, negotiated id 7, ungeordnet): Spielereignisse gehen zusätzlich direkt durch die Leitung, der Supabase-Weg bleibt als Sicherheit; Doppel werden an `gid` erkannt. Direkt gesendet wird erst nach „dc-hallo" der Gegenseite. Gerechnet wird weiter nur auf dem Server.
+- Sonde: `pruefe-659-verbindung.js` — zwei echte Browser-Seiten, echte WebRTC-Leitung (steht in ~0,15 s lokal), Bündel, Datenkanal vor dem Server-Weg, keine Doppel, alte Fassung verbindet weiter. Alle 118 Chat-Sonden: gleiche 9 alte Rote wie vorher (2 wechselten, einzeln grün = Zeitlast im Parallellauf).
