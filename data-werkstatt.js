@@ -49,16 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 665 – Tier-Fusion; seit 658: Verbindung schneller, Kachelbilder, Trophäen/Funde, Dorf/Mauern/Graben/Turm, Klassen/Deutschland-Wissen, Meisterwaffen",
+  stand: "Fassung 669 – Extra-Spiele; davor 666–668: Fehler behoben, Kampf ohne Nachhängen, neue Inhalte",
 
   inArbeit: [
-    { seit: "2026-09-25T14:21",
-      text: "Walkie #256 | Runde 100/101 (Waschmaschine, Bagger, Hot Rod) | Funk 84/85 Zeichnungen und Funktionen | Angel, Lasso, Kran, Leiter, Lok, Pferd-Galopp" },
+    { seit: "2026-09-25T15:50",
+      text: "Walkie #256" },
+    { seit: "2026-09-25T15:50",
+      text: "Runde 100/101 (Waschmaschine, Bagger, Hot Rod)" },
+    { seit: "2026-09-25T15:50",
+      text: "Funk 84/85 Zeichnungen und Funktionen" },
+    { seit: "2026-09-25T15:50",
+      text: "Angel, Lasso, Kran, Leiter, Lok, Pferd-Galopp" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T14:21",
-      text: "659 Verbindung: Kerzen gebündelt, Vorbereitung, schnellere Wache, Spiel direkt über Datenkanal | 660 Farbige Mini-Bilder in den Effekt-Kacheln | 661 16 Trophäen, Fundsäcke auf dem Feld | 662 Dorf (Bäckerei, Schule, Schmiede), Titan-/Diamantmauer, Wassergraben, Turm auf freiem Platz | 663 Fünf Klassen ab Level 5, 51 Fragen Deutschland-Wissen | 664 Meisterwaffen: Weißwurst-Bumerang, Nudelholz, Kuckucksuhr-Bombe | 665 Tier-Fusion: Feuerfuchs, Greif, Regenbogendrache" },
+    { seit: "2026-09-25T15:50",
+      text: "666: Effekte nicht mehr links oben, Schaufel geht wieder (lang drücken auf freien Platz), Pokale einzeln, lange Namen, Werkstatt lädt nach, Deutsch-Menü wie früher" },
+    { seit: "2026-09-25T15:50",
+      text: "667: Treffer genau beim Einschlag (465 ms → ~0), weniger Ruckeln, runde Mauern unter dem Ring, neuer Orkan" },
+    { seit: "2026-09-25T15:50",
+      text: "668: Doppel-/Fächerlaser, Plasmastrahl, Kugelblitz, Ziegelmauer, Dackel, Storch, Wolpertinger, Lindwurm, Brauerei, Bibliothek, Rathaus" },
+    { seit: "2026-09-25T15:50",
+      text: "669: Tower Defense „Fehlerteufel-Abwehr“ und Rundenkampf (Strategie) – im Menü unter Mehr" },
   ],
 };
