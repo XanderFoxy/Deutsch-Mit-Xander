@@ -152,7 +152,8 @@ const sage = (gut, was, zusatz) => {
     const zx = ichK.left + ichK.width / 2, zy = ichK.top + ichK.height / 2, r = ichK.width / 2;
     window.DMA_SPIEL.pruef.tierAngriff("bea", "ich", "chihuahua");
     const xs = []; let naechst = 9; const t0 = performance.now(); let ruck = false;
-    while (performance.now() - t0 < 2300) {
+    /* Fassung 646: der Chihuahua beißt jetzt 2,8 s lang. */
+    while (performance.now() - t0 < 2950) {
       const t = document.querySelector(".sp-tier-sprung.sp-tier-chihuahua .sp-tier-koerper");
       if (t) { const b = t.getBoundingClientRect(); const x = b.left + b.width / 2, y = b.top + b.height / 2; xs.push(x); naechst = Math.min(naechst, Math.hypot(x - zx, y - zy) / r); }
       const kk = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .lc-kreis');
@@ -176,7 +177,9 @@ const sage = (gut, was, zusatz) => {
     const zx = ichK.left + ichK.width / 2, zy = ichK.top + ichK.height / 2, r = ichK.width / 2;
     window.DMA_SPIEL.pruef.tierAngriff("bea", "ich", "drache");
     let naechst = 9, hoechst = 1e9; const t0 = performance.now();
-    while (performance.now() - t0 < 1150) {
+    /* Fassung 646: der Drache umkreist das Bild 3,4 s lang (1,3 Radien
+       Abstand) – er kommt nah heran und fliegt dabei auch darüber. */
+    while (performance.now() - t0 < 3500) {
       const t = document.querySelector(".sp-tier-sprung.sp-tier-drache .sp-tier-koerper");
       if (t) { const b = t.getBoundingClientRect(); const x = b.left + b.width / 2, y = b.top + b.height / 2; naechst = Math.min(naechst, Math.hypot(x - zx, y - zy) / r); hoechst = Math.min(hoechst, y); }
       await new Promise((res) => setTimeout(res, 20));
@@ -184,8 +187,8 @@ const sage = (gut, was, zusatz) => {
     return { ton: (window.DMA_TONLOG || []).map((t) => t.name || t).join(","), naechst, ueber: (zy - hoechst) / r };
   });
   sage(/drachenfeuer/.test(flug.ton), "er faucht", flug.ton);
-  sage(flug.naechst < 0.9, "er kommt bis ans Gesicht", flug.naechst.toFixed(2) + " Radien");
-  sage(flug.ueber > 1.2, "er holt oben Schwung (fliegt über die Bildhöhe)", flug.ueber.toFixed(2) + " Radien über der Mitte");
+  sage(flug.naechst < 1.4, "er kommt dicht ans Bild (umkreist es)", flug.naechst.toFixed(2) + " Radien");
+  sage(flug.ueber > 0.9, "er fliegt auch über das Bild hinweg", flug.ueber.toFixed(2) + " Radien über der Mitte");
 
   console.log("\nGEGENWEHR MIT BEIDEN TIEREN, KUSCHELN\n");
   const gw = await pg.evaluate(async () => {

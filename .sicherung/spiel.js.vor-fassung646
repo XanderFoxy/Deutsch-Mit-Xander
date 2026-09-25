@@ -101,17 +101,7 @@
     /* „diese kleinen Drachen … viel süßer … wie ein kleiner Baby Drachen …
        eins vom Boden eins für die Luft": der Drache fliegt jetzt. */
     drache:         { name: "Babydrache",     ton: "drachenfeuer", preis: 250, flug: true, was: "fliegt, faucht Feuer, 50 % zurück · Stufe 2: +2 Glut" },
-    eule:           { name: "Eule",           ton: "fluegelschlag", preis: 150, flug: true, was: "fliegt, stößt herab, 25 % zurück · Stufe 2: warnt dich (1/10 weniger Schaden)" },
-    /* FASSUNG 646 — XANDER: „einen kleinen Schäferhund, also einen deutschen
-       Schäferhund als Tier und einen kleinen Baby Fuchs und ein Fuchs und
-       dann ein paar zauberhafte Wesen noch dazu". Gerechnet wird auf dem
-       Server (spiel_kaufen, spiel_treffer, spiel_tier_max). */
-    schaeferhund:   { name: "Schäferhund",    ton: "hundbellen", preis: 180, was: "packt fest zu, 35 % zurück · Stufe 2: +2 (lässt nicht locker)" },
-    babyfuchs:      { name: "Babyfuchs",      ton: "babyfuchs", preis: 90, was: "zwickt flink, 20 % zurück – klein, aber mutig" },
-    fuchs:          { name: "Fuchs",          ton: "fuchskeckern", preis: 170, was: "schlau und schnell, 30 % zurück" },
-    einhorn:        { name: "Einhorn",        ton: "einhorn", preis: 300, magie: true, was: "sticht mit dem Horn, 35 % zurück · Stufe 2: Regenbogen heilt dich (+2 LP)" },
-    phoenix:        { name: "Phönix",         ton: "phoenix", preis: 340, flug: true, magie: true, was: "fliegt, speit Feuer, 45 % zurück · Stufe 2: heilt dich (+2 LP)" },
-    fee:            { name: "Fee",            ton: "feenzauber", preis: 200, flug: true, magie: true, was: "fliegt, zaubert Funken, 25 % zurück" }
+    eule:           { name: "Eule",           ton: "fluegelschlag", preis: 150, flug: true, was: "fliegt, stößt herab, 25 % zurück · Stufe 2: warnt dich (1/10 weniger Schaden)" }
   };
   /* FASSUNG 634 — XANDER: „Bitte das Skill Training noch einbauen. Also
      dass man über die Zeit sich Fähigkeiten aneignen kann".
@@ -131,7 +121,7 @@
   var HALTBAR = ["armbrust", "tomahawk", "zielfernrohr", "bazooka", "eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "mg", "lasersalve"];
   function haltVon(ich, w) { if (HALTBAR.indexOf(w) < 0) return -1; var h = ((ich || {}).waffen_halt || {})[w]; return h == null ? 60 : Number(h); }
   function reparaturNoetig(ich) { return ((ich || {}).waffen || []).some(function (w) { var h = haltVon(ich, w); return h >= 0 && h <= 15; }); }
-  var TIERE_BODEN = ["fellmonster", "stachelmonster", "chihuahua", "schaeferhund", "babyfuchs", "fuchs", "einhorn"], TIERE_LUFT = ["drache", "eule", "phoenix", "fee"];
+  var TIERE_BODEN = ["fellmonster", "stachelmonster", "chihuahua"], TIERE_LUFT = ["drache", "eule"];
   function wirkt(ich, art) {
     var bis = ich && ich[art + "_bis"];
     return bis ? Math.max(0, Math.round((new Date(bis).getTime() - Date.now()) / 1000)) : 0;
@@ -171,8 +161,7 @@
   var KLANG_VORAB = ["bling", "gummi", "schuss", "knack", "jubel", "mampf", "graben", "hammerschlag", "muenze", "zwille", "pfeilschuss", "pfeiltreffer",
     "laserrot", "lasertreffer", "bonk", "krugklirr", "brezelknack", "wurstklatsch", "krautmatsch", "spaetzlesalve", "katapult4", "doenerklatsch",
     "mgsalve", "lasersalve", "monsterbiss", "drachenfeuer", "chihuahuaknurr", "bisszerren", "stachelstich", "fluegelschlag", "geschuetzfeuer",
-    "zauberpuff", "trankschluck", "gong", "geschenk", "kasse", "wischer", "explosion2", "eiknack", "huhnwurf", "huhntreffer", "axttreffer", "swoosh", "platsch",
-    "hundbellen", "fuchskeckern", "babyfuchs", "einhorn", "phoenix", "feenzauber"];
+    "zauberpuff", "trankschluck", "gong", "geschenk", "kasse", "wischer", "explosion2", "eiknack", "huhnwurf", "huhntreffer", "axttreffer", "swoosh", "platsch"];
   function klangKontext() {
     if (KLANG.ctx) return KLANG.ctx;
     var AC = window.AudioContext || window.webkitAudioContext;
@@ -1190,15 +1179,12 @@
     if (n.gegen_tier > 0) setTimeout(function () { tierAngriff(verteidiger, angreifer, n.tier || "fellmonster"); }, verzug);
     /* FASSUNG 638 — das Flugtier stößt von oben herab, etwas später. */
     if (n.gegen_flug > 0) setTimeout(function () { tierAngriff(verteidiger, angreifer, n.flugtier || "drache"); }, verzug + (n.gegen_tier > 0 ? 350 : 0));
-    /* FASSUNG 646 — die Zahl erscheint im Moment des ersten Bisses bzw.
-       des ersten Feuerstoßes (die Angriffe dauern jetzt länger). */
     if (n.tier_heil > 0) setTimeout(function () { zahlZeigen(verteidiger, n.tier_heil, "gekuschelt"); }, verzug + 700);
     if (n.gegenwehr > 0) setTimeout(function () {
       zahlZeigen(angreifer, -n.gegenwehr, "Gegenwehr");
       var el = platzElVon(angreifer);
       if (el) { el.classList.remove("sp-getroffen"); void el.offsetWidth; el.classList.add("sp-getroffen"); setTimeout(function () { el.classList.remove("sp-getroffen"); }, 500); }
-    }, verzug + (n.tier === "chihuahua" && n.gegen_tier > 0 ? Math.round(TIER_DAUER.chihuahua * 0.22) : n.gegen_tier > 0 ? Math.round(TIER_DAUER.boden * 0.24)
-                 : n.gegen_flug > 0 ? Math.round(TIER_DAUER.flug * 0.3) : 240));
+    }, verzug + (n.tier === "chihuahua" && n.gegen_tier > 0 ? 900 : n.gegen_tier > 0 || n.gegen_flug > 0 ? 520 : 240));
   }
   function kugelnFliegen(von, zu) {
     var a = mittelpunkt(von), z = mittelpunkt(zu);
@@ -1219,186 +1205,81 @@
       }, warte);
     });
   }
-  /* ---------------------------------------------------------------
-     FASSUNG 646 — TIERE GREIFEN RICHTIG AN
-     XANDER: „wenn meine Tiere auf den Gegner losgehen, dann bleiben sie
-     gleichzeitig mit an ihrem Platz, was sehr komisch aussieht … der
-     Kleine muss sich richtig fest beißen … bisschen länger … der Drache
-     … um den rumfliegen rumtänzeln und von allen Seiten mit seinem
-     Feuer da einsprühen … nicht so kurz. Das sieht so lieblos aus."
-     · Das Tier VERLÄSST seinen Platz (dort ist es so lange weg) und
-       kommt am Ende genau dorthin zurück.
-     · Bodentiere springen hin, beißen sich unten am Bild fest und
-       zerren – 2,6 s, mit Kratzern und ruckendem Bild.
-     · Flugtiere fliegen hin, umkreisen das Bild einmal ganz und greifen
-       dreimal von verschiedenen Seiten an – der Drache und der Phönix
-       mit Feuerstrahlen, Eule und Fee mit Stößen und Funken – 3,4 s.
-     Der Ton kommt jeweils im Moment des Bisses bzw. Feuerstoßes.
-     --------------------------------------------------------------- */
-  var TIER_DAUER = { boden: 2600, flug: 3400, chihuahua: 2800 };
-  function tierAusSetzen(chatId, flug, ms) {
-    S.tierAus = S.tierAus || {};
-    var k = chatId + (flug ? "|luft" : "|boden");
-    S.tierAus[k] = Date.now() + ms;
-    tierAusAnwenden();
-    setTimeout(tierAusAnwenden, ms + 30);
-  }
-  function tierAusAnwenden() {
-    var aus = S.tierAus || {}, jetzt = Date.now();
-    document.querySelectorAll("#lcPlaetze .lc-platz").forEach(function (el) {
-      var id = el.dataset.lcId || (Number(el.dataset.lcPlatz) === S.sparring ? "sparring:" + S.sparring : "");
-      el.classList.toggle("sp-boden-aus", Boolean(id && aus[id + "|boden"] > jetzt));
-      el.classList.toggle("sp-luft-aus", Boolean(id && aus[id + "|luft"] > jetzt));
-    });
-  }
-  /* Wo das Tier am Platz sitzt (Bildschirmpunkt seines Ankers). */
-  function tierAnker(chatId, flug) {
-    var el = platzElVon(chatId), t = el && el.querySelector(flug ? ".sp-flugtier" : ".sp-tier");
-    if (t) {
-      var r = t.getBoundingClientRect();
-      if (r.width > 0) return { x: r.left + r.width * (flug ? 0.9 : 0.84), y: r.top + r.height * (flug ? 0.12 : 0.84), w: flug ? r.width / 1.35 : r.width, s: flug ? 1.35 : 1 };
-    }
-    var a = mittelpunkt(chatId);
-    if (!a) return null;
-    return flug ? { x: a.x + a.r * 0.8, y: a.y - a.r * 0.76, w: a.r * 2, s: 1.35 } : { x: a.x + a.r * 0.68, y: a.y + a.r * 0.68, w: a.r * 2, s: 1 };
-  }
   function tierAngriff(von, zu, art) {
-    var z = mittelpunkt(zu);
-    if (!z) return;
-    var flug = Boolean((TIERE[art] || {}).flug);
-    var anker = tierAnker(von, flug);
-    if (!anker) return;
-    if (art === "chihuahua") { tierAusSetzen(von, false, TIER_DAUER.chihuahua); return chihuahuaBiss(anker, z); }
-    var dauer = flug ? TIER_DAUER.flug : TIER_DAUER.boden;
-    tierAusSetzen(von, flug, dauer);
+    var a = mittelpunkt(von), z = mittelpunkt(zu);
+    if (!a || !z) return;
+    if (art === "chihuahua") return chihuahuaBiss(a, z);
+    ton((TIERE[art] || TIERE.fellmonster).ton, 0.55);
+    /* FASSUNG 638 — Flugtiere sitzen oben rechts (90 | 12 von 100). */
+    var flug = Boolean((TIERE[art] || {}).flug), px = flug ? 1.8 : 1.68, py = flug ? 0.24 : 1.68;
     var t = document.createElement("div");
     t.className = "sp-tier-sprung sp-tier-" + art;
-    t.style.width = t.style.height = anker.w + "px";
+    t.style.width = t.style.height = (a.r * 2) + "px";
     t.innerHTML = tierSvg(art);
-    /* Der Anker des Tiers (84|84 bzw. 90|12 von 100) ist der Drehpunkt:
-       dann liegt er bei jeder Größe genau auf dem gewünschten Punkt. */
-    var ax = anker.w * (flug ? 0.9 : 0.84), ay = anker.w * (flug ? 0.12 : 0.84);
-    t.style.transformOrigin = ax + "px " + ay + "px";
     document.body.appendChild(t);
-    var bild = function (x, y, sk, dreh, o) {
-      var k = { transform: "translate(" + (x - ax).toFixed(1) + "px," + (y - ay).toFixed(1) + "px) scale(" + sk.toFixed(2) + ") rotate(" + (dreh || 0) + "deg)" };
-      if (o != null) k.offset = o;
-      return k;
-    };
-    var heim = { x: anker.x, y: anker.y }, s0 = anker.s, sG = s0 * 1.35;
-    var el = platzElVon(zu), kreis = el && el.querySelector(".lc-kreis");
-    var schuetteln = function (wann, n) {
+    /* Das Tier sitzt rechts unten (84 | 84 von 100) — von dort springt es
+       auf das Gesicht des Angreifers (etwas unter die Mitte, damit man
+       den Biss sieht), rüttelt kurz und springt zurück. */
+    /* Ursprung oben links: dann liegt das Tier (84 | 84 von 100, also
+       1,68 r vom Ursprung) bei Vergrößerung s genau bei 1,68 · r · s. */
+    t.style.transformOrigin = "0 0";
+    var ab = { x: a.x - a.r, y: a.y - a.r };
+    var hin = { x: z.x + z.r * 0.25 - a.r * px * 1.4, y: z.y + (flug ? -z.r * 0.1 : z.r * 0.3) - a.r * py * 1.4 };
+    var hoch = Math.min(ab.y, hin.y) - a.r * (flug ? 1.6 : 0.9);
+    var mitte = { x: (ab.x + hin.x) / 2, y: hoch };
+    var f = function (p, s) { return { transform: "translate(" + p.x.toFixed(1) + "px," + p.y.toFixed(1) + "px) scale(" + (s || 1) + ")" }; };
+    try {
+      t.animate([f(ab), Object.assign(f(mitte, 1.25), { offset: 0.22 }), Object.assign(f(hin, 1.4), { offset: 0.4 }),
+        Object.assign({ transform: "translate(" + (hin.x - 3) + "px," + hin.y + "px) scale(1.4) rotate(-8deg)" }, { offset: 0.5 }),
+        Object.assign({ transform: "translate(" + (hin.x + 3) + "px," + hin.y + "px) scale(1.4) rotate(8deg)" }, { offset: 0.6 }),
+        Object.assign(f(hin, 1.4), { offset: 0.66 }), Object.assign(f(mitte, 1.2), { offset: 0.84 }), f(ab)],
+        { duration: 1100, easing: "ease-in-out", fill: "forwards" });
+    } catch (e) {}
+    if (art === "drache") {
+      /* Der Drache spuckt Feuer, statt zu beißen. */
       setTimeout(function () {
-        try { if (kreis) kreis.animate([{ transform: "translateX(0)" }, { transform: "translateX(-4px) rotate(-3deg)" }, { transform: "translateX(4px) rotate(3deg)" }, { transform: "translateX(0)" }], { duration: 200, iterations: n || 2 }); } catch (e) {}
-      }, wann);
-    };
-    if (!flug) {
-      /* Sprung, Festbeißen unten am Bild (die Gesichtsmitte bleibt
-         frei), Zerren, zurück. */
-      var biss = { x: z.x + z.r * 0.3, y: z.y + z.r * 0.95 };
-      var bogen = { x: (heim.x + biss.x) / 2, y: Math.min(heim.y, biss.y) - z.r * 1.1 };
-      var bb = [bild(heim.x, heim.y, s0, 0, 0), bild(bogen.x, bogen.y, s0 * 1.2, -10, 0.12), bild(biss.x, biss.y, sG, 0, 0.22)];
-      for (var i = 0; i < 6; i++) {
-        bb.push(bild(biss.x - 5, biss.y + 1, sG, -12, 0.27 + i * 0.075));
-        bb.push(bild(biss.x + 5, biss.y + 1, sG, 12, 0.305 + i * 0.075));
-      }
-      bb.push(bild(biss.x, biss.y, sG, 0, 0.76), bild(bogen.x, bogen.y, s0 * 1.15, 10, 0.88), bild(heim.x, heim.y, s0, 0, 1));
-      try { t.animate(bb, { duration: dauer, easing: "ease-in-out", fill: "forwards" }); } catch (e) {}
-      var tonName = (TIERE[art] || TIERE.fellmonster).ton;
-      setTimeout(function () { ton(tonName, 0.6); }, dauer * 0.2);
-      [0.26, 0.45, 0.64].forEach(function (o, j) {
-        setTimeout(function () {
-          var kr = document.createElement("div");
-          kr.className = "sp-kratzer";
-          kr.style.left = (z.x + (j - 1) * z.r * 0.28) + "px"; kr.style.top = (z.y + z.r * 0.5) + "px";
-          kr.innerHTML = art === "einhorn"
-            ? '<svg viewBox="-20 -14 40 28"><path d="M-12 8 Q0 -14 12 8" fill="none" stroke="#f59ab4" stroke-width="2.4"/><path d="M-9 8 Q0 -9 9 8" fill="none" stroke="#ffd76a" stroke-width="2"/><path d="M-6 8 Q0 -4 6 8" fill="none" stroke="#9fd3f5" stroke-width="1.8"/></svg>'
-            : '<svg viewBox="-20 -14 40 28"><path d="M-14 -10 L-4 8 M-6 -12 L4 8 M2 -12 L12 6" stroke="#b3151b" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg>';
-          document.body.appendChild(kr);
-          setTimeout(function () { kr.remove(); }, 900);
-        }, dauer * o);
-      });
-      schuetteln(dauer * 0.27, 6);
+        var fl = document.createElement("div");
+        fl.className = "sp-feuer";
+        fl.style.left = z.x + "px"; fl.style.top = z.y + "px";
+        document.body.appendChild(fl);
+        setTimeout(function () { fl.remove(); }, 700);
+      }, 430);
     } else {
-      /* Hin, einmal ganz ums Bild herum, dreimal angreifen, zurück. */
-      var R = z.r * 1.3;
-      var w0 = Math.atan2(heim.y - z.y, heim.x - z.x);
-      var punkt = function (w) { return { x: z.x + Math.cos(w) * R, y: z.y + Math.sin(w) * R * 0.8 }; };
-      var fb = [bild(heim.x, heim.y, s0, 0, 0)];
-      var SCHRITTE = 14;
-      for (var j2 = 0; j2 <= SCHRITTE; j2++) {
-        var w = w0 + (j2 / SCHRITTE) * Math.PI * 2, p = punkt(w);
-        fb.push(bild(p.x, p.y + Math.sin(j2 * 1.7) * 3, s0 * 1.15, Math.sin(j2) * 8, 0.14 + (j2 / SCHRITTE) * 0.66));
-      }
-      fb.push(bild(heim.x, heim.y, s0, 0, 1));
-      try { t.animate(fb, { duration: dauer, easing: "linear", fill: "forwards" }); } catch (e) {}
-      var feuer = art === "drache" || art === "phoenix";
-      [0.3, 0.52, 0.74].forEach(function (o) {
-        setTimeout(function () {
-          /* Wo das Tier in diesem Moment ist: gleiche Rechnung wie oben. */
-          var w = w0 + ((o - 0.14) / 0.66) * Math.PI * 2, p = punkt(w);
-          ton((TIERE[art] || {}).ton || "zauberpuff", 0.55);
-          if (feuer) feuerStrahl(p, z, art === "phoenix");
-          else funkenStoss(p, z, art === "fee");
-          schuetteln(120, 2);
-        }, dauer * o);
-      });
+      setTimeout(function () {
+        var kr = document.createElement("div");
+        kr.className = "sp-kratzer";
+        kr.style.left = z.x + "px"; kr.style.top = (z.y + z.r * 0.35) + "px";
+        kr.innerHTML = '<svg viewBox="-20 -14 40 28"><path d="M-14 -10 L-4 8 M-6 -12 L4 8 M2 -12 L12 6" stroke="#b3151b" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg>';
+        document.body.appendChild(kr);
+        setTimeout(function () { kr.remove(); }, 900);
+      }, 470);
     }
-    setTimeout(function () { t.remove(); tierAusAnwenden(); }, dauer + 40);
-  }
-  /* Ein Feuerstrahl vom Maul des Tiers bis ins Bild, dazu der Feuerball. */
-  function feuerStrahl(von, z, gold) {
-    var dx = z.x - von.x, dy = z.y - von.y, l = Math.hypot(dx, dy);
-    var f = document.createElement("div");
-    f.className = "sp-feuerstrahl" + (gold ? " sp-feuerstrahl-gold" : "");
-    f.style.left = von.x + "px"; f.style.top = von.y + "px"; f.style.width = Math.max(10, l - z.r * 0.2) + "px";
-    f.style.transform = "rotate(" + Math.atan2(dy, dx) + "rad)";
-    document.body.appendChild(f);
-    var fl = document.createElement("div");
-    fl.className = "sp-feuer";
-    fl.style.left = z.x + "px"; fl.style.top = z.y + "px";
-    document.body.appendChild(fl);
-    setTimeout(function () { f.remove(); }, 520);
-    setTimeout(function () { fl.remove(); }, 700);
-  }
-  /* Eule stößt, Fee zaubert: ein Funkenstoß aus der Richtung des Tiers. */
-  function funkenStoss(von, z, zauber) {
-    for (var i = 0; i < 7; i++) {
-      var f = document.createElement("div");
-      f.className = "sp-funke" + (zauber ? " sp-funke-zauber" : "");
-      f.style.left = z.x + "px"; f.style.top = z.y + "px";
-      var w = Math.atan2(von.y - z.y, von.x - z.x) + (Math.random() - 0.5) * 1.6, d = z.r * (0.5 + Math.random() * 0.6);
-      f.style.setProperty("--fx", Math.cos(w) * d + "px"); f.style.setProperty("--fy", Math.sin(w) * d + "px");
-      document.body.appendChild(f);
-      (function (f) { setTimeout(function () { f.remove(); }, 700); })(f);
-    }
+    setTimeout(function () { t.remove(); }, 1150);
   }
   /* XANDER: „richtig beißen … fest beißen und … zerren … Chihuahua
      Knurren". Der Chihuahua springt hin, beißt sich unten am Bild des
      Angreifers fest und zerrt fünfmal hin und her (das Bild ruckt mit),
      knurrend — dann lässt er los und springt zurück. */
-  function chihuahuaBiss(anker, z) {
-    /* FASSUNG 646 — länger festgebissen (2,8 s), vom eigenen Platz aus. */
-    var dauer = TIER_DAUER.chihuahua;
+  function chihuahuaBiss(a, z) {
     ton("chihuahuaknurr", 0.55);
     var t = document.createElement("div");
     t.className = "sp-tier-sprung sp-tier-chihuahua";
-    t.style.width = t.style.height = anker.w + "px";
+    t.style.width = t.style.height = (a.r * 2) + "px";
     t.innerHTML = tierSvg("chihuahua");
-    var ax = anker.w * 0.84, ay = anker.w * 0.84;
-    t.style.transformOrigin = ax + "px " + ay + "px";
     document.body.appendChild(t);
-    var s = 1.3, heim = { x: anker.x, y: anker.y }, hin = { x: z.x + z.r * 0.25, y: z.y + z.r * 0.95 };
-    var mitte = { x: (heim.x + hin.x) / 2, y: Math.min(heim.y, hin.y) - z.r * 0.8 };
-    var f = function (p, sk, dreh, o) { var k = { transform: "translate(" + (p.x - ax).toFixed(1) + "px," + (p.y - ay).toFixed(1) + "px) scale(" + sk + ") rotate(" + (dreh || 0) + "deg)" }; if (o != null) k.offset = o; return k; };
-    var bild = [f(heim, 1, 0, 0), f(mitte, 1.15, 0, 0.1), f(hin, s, 0, 0.18)];
-    for (var i = 0; i < 7; i++) {
-      bild.push(f({ x: hin.x - 7, y: hin.y + 2 }, s, -14, 0.23 + i * 0.08));
-      bild.push(f({ x: hin.x + 7, y: hin.y + 2 }, s, 14, 0.27 + i * 0.08));
+    t.style.transformOrigin = "0 0";
+    var s = 1.3, ab = { x: a.x - a.r, y: a.y - a.r };
+    var hin = { x: z.x + z.r * 0.1 - a.r * 1.68 * s, y: z.y + z.r * 0.55 - a.r * 1.68 * s };
+    var mitte = { x: (ab.x + hin.x) / 2, y: Math.min(ab.y, hin.y) - a.r * 0.8 };
+    var f = function (p, sk, dreh, o) { var k = { transform: "translate(" + p.x.toFixed(1) + "px," + p.y.toFixed(1) + "px) scale(" + sk + ") rotate(" + (dreh || 0) + "deg)" }; if (o != null) k.offset = o; return k; };
+    var bild = [f(ab, 1), f(mitte, 1.15, 0, 0.12), f(hin, s, 0, 0.22)];
+    for (var i = 0; i < 5; i++) {
+      bild.push(f({ x: hin.x - 7, y: hin.y + 2 }, s, -14, 0.28 + i * 0.1));
+      bild.push(f({ x: hin.x + 7, y: hin.y + 2 }, s, 14, 0.33 + i * 0.1));
     }
-    bild.push(f(hin, s, 0, 0.82), f(mitte, 1.1, 0, 0.91), f(heim, 1, 0, 1));
-    try { t.animate(bild, { duration: dauer, easing: "ease-in-out", fill: "forwards" }); } catch (e) {}
-    setTimeout(function () { ton("bisszerren", 0.55); }, dauer * 0.2);
+    bild.push(f(hin, s, 0, 0.8), f(mitte, 1.1, 0, 0.9), f(ab, 1));
+    try { t.animate(bild, { duration: 2200, easing: "ease-in-out", fill: "forwards" }); } catch (e) {}
+    setTimeout(function () { ton("bisszerren", 0.55); }, 480);
     /* Das Bild des Angreifers ruckt beim Zerren mit. */
     var ziel = null;
     try { ziel = document.elementFromPoint(z.x, z.y); ziel = ziel && ziel.closest(".lc-platz"); } catch (e) {}
@@ -1406,8 +1287,8 @@
     if (kreis) {
       setTimeout(function () {
         try { kreis.animate([{ transform: "translateX(0)" }, { transform: "translateX(-4px) rotate(-3deg)" }, { transform: "translateX(4px) rotate(3deg)" }, { transform: "translateX(0)" }],
-          { duration: 220, iterations: 7 }); } catch (e) {}
-      }, dauer * 0.22);
+          { duration: 220, iterations: 5 }); } catch (e) {}
+      }, 600);
     }
     setTimeout(function () {
       var kr = document.createElement("div");
@@ -1415,9 +1296,9 @@
       kr.style.left = z.x + "px"; kr.style.top = (z.y + z.r * 0.6) + "px";
       kr.innerHTML = '<svg viewBox="-20 -14 40 28"><path d="M-12 -4 L-9 3 L-6 -4 L-3 3 L0 -4 L3 3 L6 -4 L9 3 L12 -4" stroke="#b3151b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
       document.body.appendChild(kr);
-      setTimeout(function () { kr.remove(); }, 1600);
-    }, dauer * 0.22);
-    setTimeout(function () { t.remove(); tierAusAnwenden(); }, dauer + 40);
+      setTimeout(function () { kr.remove(); }, 1400);
+    }, 600);
+    setTimeout(function () { t.remove(); }, 2250);
   }
 
   /* ---------------------------------------------------------------
@@ -1799,7 +1680,7 @@
         var draussen = a === ich.haustier || a === ich.flugtier;
         var kraft = a === ich.haustier ? ich.haustier_leben : a === ich.flugtier ? ich.flugtier_leben : ((ich.tiere[a] || {}).kraft || 0);
         return '<button type="button" data-s="tierraus" data-a="' + a + '"' + (draussen ? ' class="sp-an"' : "") + ">"
-          + '<span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + ((TIERE[a] || {}).flug ? "luft" : "boden") + '">' + tierSvg(a, true) + "</span>"
+          + '<span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + ((TIERE[a] || {}).flug ? "luft" : "boden") + '">' + tierSvg(a) + "</span>"
           + esc((TIERE[a] || {}).name || a) + " <small>" + (draussen ? "draußen · " : "") + kraft + " Kraft</small></button>";
       }).join("") + "</div><p class=\"sp-sm-klein\">Tippen holt das Tier raus – eins am Boden, eins in der Luft. Keins geht verloren.</p>";
     } else {
@@ -1964,51 +1845,10 @@
   /* ---------------------------------------------------------------
      DIE PLÄTZE SCHMÜCKEN: Lebensbalken, Schild, Mauer, Tier, Kaputt
      --------------------------------------------------------------- */
-  /* FASSUNG 646 — XANDER: „das soll an mir kleben. Das darf niemals
-     irgendwie nachziehen oder nachspringen … die Tiere … sollen immer
-     schnell mitkommen und nicht hinterher hängen".
-     GEFUNDEN: Ring, Tiere und Turm wurden nur im 0,7-s-Takt neu
-     gezeichnet. Nach einem Platzwechsel saßen sie deshalb bis zu 0,7 s
-     noch am alten Platz (wie fremde Angreifer) und fehlten am neuen.
-     Jetzt wird im SELBEN Bild neu gezeichnet, in dem der Platz wechselt:
-     ein MutationObserver sieht, wenn sich die Besetzung eines Platzes
-     ändert oder eine Reise endet, und zeichnet vor dem nächsten Bild. */
-  var platzWaechter = null, platzWaechterReihe = null, platzKinderWaechter = null;
-  function platzWaechterSetzen(reihe) {
-    if (platzWaechterReihe === reihe || !window.MutationObserver) return;
-    if (platzWaechter) platzWaechter.disconnect();
-    platzWaechterReihe = reihe;
-    platzWaechter = new MutationObserver(function (liste) {
-      var neu = false;
-      for (var i = 0; i < liste.length && !neu; i++) {
-        var m = liste[i];
-        if (!m.target.classList || !m.target.classList.contains("lc-platz")) continue;
-        if (m.attributeName === "data-lc-id") neu = true;
-        else if (m.attributeName === "class") {
-          var vorher = /\blc-platz-unterwegs\b/.test(m.oldValue || ""), jetzt = m.target.classList.contains("lc-platz-unterwegs");
-          if (vorher !== jetzt) neu = true;
-        }
-      }
-      if (neu) {
-        zeichnen();
-        /* Was zeichnen() selbst verändert hat, ist kein Platzwechsel. */
-        platzWaechter.takeRecords();
-        if (platzKinderWaechter) platzKinderWaechter.takeRecords();
-      }
-    });
-    /* Attribute der Plätze (Besetzung, Reise) … */
-    platzWaechter.observe(reihe, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ["class", "data-lc-id"] });
-    /* … und nur die Plätze selbst, nicht ihr Inhalt (den ändert zeichnen()). */
-    if (platzKinderWaechter) platzKinderWaechter.disconnect();
-    platzKinderWaechter = new MutationObserver(function () { zeichnen(); platzWaechter.takeRecords(); platzKinderWaechter.takeRecords(); });
-    platzKinderWaechter.observe(reihe, { childList: true });
-  }
   function zeichnen() {
     var reihe = document.getElementById("lcPlaetze");
     if (!reihe) return;
-    platzWaechterSetzen(reihe);
     missionPruefen();
-    tierAusAnwenden();
     /* Der Sparringspartner braucht einen FREIEN Platz. Setzt sich dort
        jemand hin, wandert er auf den nächsten freien. */
     if (S.sparring) {
@@ -2216,125 +2056,7 @@
     if (art === "mine") return '<svg viewBox="0 0 100 100"><g transform="translate(50 93)"><ellipse rx="10" ry="4" fill="#3c4148" stroke="#1e2226" stroke-width="1.2"/><rect x="-2" y="-6" width="4" height="4" fill="#c8312b"/></g></svg>';
     return '<svg viewBox="0 0 100 100"><g transform="translate(50 93)"><rect x="-12" y="-4" width="24" height="8" rx="1.5" fill="#8a5a2e" stroke="#4d3016" stroke-width="1.2"/><path d="M-4 -4 V4 M4 -4 V4" stroke="#4d3016" stroke-width="1"/><circle cx="8" cy="0" r="1.2" fill="#d6c08a"/></g></svg>';
   }
-  /* FASSUNG 646 — „die Tiere sind nicht richtig präsentiert in ihren
-     Kacheln": eine Kachel zeigt nur den Ausschnitt um das Tier. */
-  function tierSvg(art, kachel) {
-    var roh = tierSvgRoh(art);
-    if (!kachel) return roh;
-    var box = (TIERE[art] || {}).flug ? "66 -7 48 46" : "63 60 42 42";
-    return roh.replace('<svg viewBox="0 0 100 100">', '<svg class="sp-kachel-svg" viewBox="' + box + '">');
-  }
-  function tierSvgRoh(art) {
-    if (art === "schaeferhund") {
-      /* Deutscher Schäferhund: sitzt, Stehohren, schwarzer Sattel und
-         schwarze Schnauze, lohfarben, Zunge draußen. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path d="M95 95 C101 92 100 85 97 83" fill="none" stroke="#6b4423" stroke-width="3" stroke-linecap="round"/>'
-        + '<ellipse cx="85" cy="93" rx="10" ry="6.5" fill="#c9893f" stroke="#5a3a1a" stroke-width="1"/>'
-        + '<path d="M78 89 Q85 84 92 89 L92 92 Q85 88 78 92 Z" fill="#2b2118"/>'
-        + '<path d="M80 98 V100 M84 98.5 V100 M88 98.5 V100" stroke="#5a3a1a" stroke-width="1.8" stroke-linecap="round"/>'
-        + '<path d="M75.5 78 L73 64 L81.5 72 Z M92.5 78 L95 64 L86.5 72 Z" fill="#2b2118" stroke="#1a130d" stroke-width=".8"/>'
-        + '<path d="M76.2 75.5 L74.6 67 L80 72 Z M91.8 75.5 L93.4 67 L88 72 Z" fill="#d7a063"/>'
-        + '<ellipse cx="84" cy="79" rx="10" ry="9" fill="#c9893f" stroke="#5a3a1a" stroke-width="1"/>'
-        + '<path d="M76 76 Q84 70 92 76 Q88 73 84 73 Q80 73 76 76 Z" fill="#2b2118"/>'
-        + '<ellipse cx="84" cy="85" rx="5.2" ry="4.2" fill="#2b2118"/><ellipse cx="84" cy="83" rx="1.9" ry="1.3" fill="#0d0907"/>'
-        + '<path d="M82.6 87.2 Q84 90.6 85.4 87.2 Z" fill="#e8667a"/>'
-        + '<circle cx="80" cy="78.5" r="2" fill="#1b1410"/><circle cx="88" cy="78.5" r="2" fill="#1b1410"/>'
-        + '<circle cx="80.6" cy="77.8" r=".7" fill="#fff"/><circle cx="88.6" cy="77.8" r=".7" fill="#fff"/>'
-        + '<path d="M77.5 76 l2.5 .6 M90.5 76 l-2.5 .6" stroke="#e0b070" stroke-width=".7" stroke-linecap="round"/></g></svg>';
-    }
-    if (art === "fuchs") {
-      /* Rotfuchs: buschiger Schwanz mit weißer Spitze, spitze Ohren mit
-         schwarzen Spitzen, weiße Wangen, schmale Mandelaugen. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path d="M93 96 C104 96 104 82 97 80 C99 86 97 90 92 91 Z" fill="#e8742a" stroke="#8a3d12" stroke-width=".9"/>'
-        + '<path d="M97 80 C100 81 101 84 100 86 C98 84 97 82 97 80 Z" fill="#fff"/>'
-        + '<ellipse cx="84" cy="93" rx="8.5" ry="6" fill="#e8742a" stroke="#8a3d12" stroke-width="1"/>'
-        + '<ellipse cx="84" cy="94.5" rx="4.5" ry="3.8" fill="#fff6ea"/>'
-        + '<path d="M80 98 V100 M88 98 V100" stroke="#2b1a10" stroke-width="2" stroke-linecap="round"/>'
-        + '<path d="M76 79 L74.5 65 L82 73 Z M92 79 L93.5 65 L86 73 Z" fill="#e8742a" stroke="#8a3d12" stroke-width=".9"/>'
-        + '<path d="M74.5 65 L75.3 69.5 L77.2 68.5 Z M93.5 65 L92.7 69.5 L90.8 68.5 Z" fill="#2b1a10"/>'
-        + '<path d="M76.8 76 L75.8 69.5 L80.5 73.5 Z M91.2 76 L92.2 69.5 L87.5 73.5 Z" fill="#fff0e0"/>'
-        + '<path d="M74.5 77 Q84 69 93.5 77 Q93 83 84 90 Q75 83 74.5 77 Z" fill="#ef8237" stroke="#8a3d12" stroke-width="1"/>'
-        + '<path d="M75.5 79 Q80 83 84 90 Q80 88 77 84 Z M92.5 79 Q88 83 84 90 Q88 88 91 84 Z" fill="#fff6ea"/>'
-        + '<ellipse cx="84" cy="88.4" rx="1.5" ry="1.1" fill="#1b1410"/>'
-        + '<path d="M78.6 79.4 q1.8 -1.6 3.4 0 q-1.7 1.1 -3.4 0 Z M86 79.4 q1.8 -1.6 3.4 0 q-1.7 1.1 -3.4 0 Z" fill="#1b1410"/>'
-        + '<circle cx="80.8" cy="78.9" r=".45" fill="#fff"/><circle cx="88.2" cy="78.9" r=".45" fill="#fff"/></g></svg>';
-    }
-    if (art === "babyfuchs") {
-      /* Babyfuchs: runder Kopf, riesige Kulleraugen, Stummelbeinchen. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path d="M91 96 C99 97 100 88 95 87 C96 91 94 93 90 93 Z" fill="#f08a3e" stroke="#8a3d12" stroke-width=".8"/>'
-        + '<path d="M95 87 C97 88 98 90 97.6 91.4 C96.4 90 95.6 88.6 95 87 Z" fill="#fff"/>'
-        + '<ellipse cx="84" cy="94" rx="7" ry="5" fill="#f08a3e" stroke="#8a3d12" stroke-width=".9"/>'
-        + '<ellipse cx="84" cy="95" rx="3.6" ry="3" fill="#fff6ea"/>'
-        + '<path d="M76.5 80 L75.5 70 L81.5 75.5 Z M91.5 80 L92.5 70 L86.5 75.5 Z" fill="#f08a3e" stroke="#8a3d12" stroke-width=".8"/>'
-        + '<path d="M77.6 78 L77 72.6 L80.4 75.8 Z M90.4 78 L91 72.6 L87.6 75.8 Z" fill="#ffd9c0"/>'
-        + '<circle cx="84" cy="83" r="9" fill="#f5953f" stroke="#8a3d12" stroke-width=".9"/>'
-        + '<path d="M75.8 84 Q80 88.5 84 90.8 Q79 90.5 76.6 87 Z M92.2 84 Q88 88.5 84 90.8 Q89 90.5 91.4 87 Z" fill="#fff6ea"/>'
-        + '<circle cx="80.4" cy="82.4" r="2.5" fill="#1b1410"/><circle cx="87.6" cy="82.4" r="2.5" fill="#1b1410"/>'
-        + '<circle cx="81.2" cy="81.5" r=".9" fill="#fff"/><circle cx="88.4" cy="81.5" r=".9" fill="#fff"/>'
-        + '<ellipse cx="84" cy="87.3" rx="1.2" ry=".9" fill="#1b1410"/></g></svg>';
-    }
-    if (art === "einhorn") {
-      /* Einhorn: weiß, Regenbogenmähne, goldenes gedrehtes Horn,
-         Bäckchen, Funkeln drumherum. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path d="M93 92 C99 90 100 96 97 99" fill="none" stroke="#f59ab4" stroke-width="2" stroke-linecap="round"/>'
-        + '<path d="M93.5 93.5 C98 92.5 98.5 97 96 99.5" fill="none" stroke="#9fd3f5" stroke-width="1.6" stroke-linecap="round"/>'
-        + '<ellipse cx="85" cy="93" rx="9.5" ry="6" fill="#fdfbff" stroke="#9b8fb8" stroke-width="1"/>'
-        + '<path d="M80 98 V100 M84 98.5 V100 M88 98.5 V100" stroke="#b6a9d6" stroke-width="2" stroke-linecap="round"/>'
-        + '<ellipse cx="83" cy="80" rx="9.5" ry="8.5" fill="#fdfbff" stroke="#9b8fb8" stroke-width="1"/>'
-        + '<ellipse cx="83" cy="85.5" rx="5.5" ry="3.8" fill="#fbe3ef"/>'
-        + '<circle cx="81.2" cy="85.6" r=".6" fill="#b07aa0"/><circle cx="84.8" cy="85.6" r=".6" fill="#b07aa0"/>'
-        + '<path d="M88 74 L91.5 67.5 L91.6 75.5 Z" fill="#fdfbff" stroke="#9b8fb8" stroke-width=".8"/>'
-        + '<path d="M80.5 73 L82.2 60 L84.6 73 Z" fill="#ffd76a" stroke="#c99a1e" stroke-width=".6"/>'
-        + '<path d="M81 70.5 l3 -1.2 M81.4 67.5 l2.4 -1 M81.8 64.5 l1.8 -.8" stroke="#c99a1e" stroke-width=".5"/>'
-        + '<path d="M88 73 C95 74 95 82 91 86" fill="none" stroke="#f59ab4" stroke-width="2.4" stroke-linecap="round"/>'
-        + '<path d="M89.5 75 C94 77 93.5 82 91.5 85" fill="none" stroke="#ffd76a" stroke-width="1.6" stroke-linecap="round"/>'
-        + '<path d="M76 74 C73 72 74 77 76.5 77" fill="none" stroke="#9fd3f5" stroke-width="2" stroke-linecap="round"/>'
-        + '<ellipse cx="79.6" cy="79.2" rx="1.9" ry="2.3" fill="#2a1f3d"/><ellipse cx="86.2" cy="79.2" rx="1.9" ry="2.3" fill="#2a1f3d"/>'
-        + '<circle cx="80.2" cy="78.4" r=".7" fill="#fff"/><circle cx="86.8" cy="78.4" r=".7" fill="#fff"/>'
-        + '<path d="M77.8 77.5 l-1 -.9 M88 77.5 l1 -.9" stroke="#2a1f3d" stroke-width=".5" stroke-linecap="round"/>'
-        + '<ellipse cx="77.6" cy="82.6" rx="1.5" ry=".9" fill="#f59ab4" opacity=".7"/><ellipse cx="88.4" cy="82.6" rx="1.5" ry=".9" fill="#f59ab4" opacity=".7"/>'
-        + '<g class="sp-funkeln"><path d="M72 70 l.8 -2 l.8 2 l2 .8 l-2 .8 l-.8 2 l-.8 -2 l-2 -.8 z" fill="#ffe27a"/>'
-        + '<path d="M96 71 l.5 -1.3 l.5 1.3 l1.3 .5 l-1.3 .5 l-.5 1.3 l-.5 -1.3 l-1.3 -.5 z" fill="#c9b8ff"/></g></g></svg>';
-    }
-    if (art === "phoenix") {
-      /* Phönix: Feuervogel mit Flammenflügeln, goldenem Schopf und
-         langen Flammenfedern; Glutfunken fallen. Schwebt oben rechts. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path d="M95 18 C103 24 104 30 99 34 C100 29 97 25 94 22 Z" fill="#ff8a1e"/>'
-        + '<path d="M93 19 C98 27 96 33 92 35 C94 29 92 24 91 21 Z" fill="#ffd23a"/>'
-        + '<path class="sp-fluegel-l" d="M84 14 C76 4 68 8 69 16 C72 14 74 17 77 16 C77 19 80 19 83 17 Z" fill="#ff6a1e" stroke="#b3300c" stroke-width=".8"/>'
-        + '<path class="sp-fluegel-r" d="M96 14 C104 4 112 8 111 16 C108 14 106 17 103 16 C103 19 100 19 97 17 Z" fill="#ff6a1e" stroke="#b3300c" stroke-width=".8"/>'
-        + '<path class="sp-fluegel-l" d="M83 15 C78 9 73 10 73 14 C76 13 79 15 83 16 Z" fill="#ffd23a"/>'
-        + '<path class="sp-fluegel-r" d="M97 15 C102 9 107 10 107 14 C104 13 101 15 97 16 Z" fill="#ffd23a"/>'
-        + '<ellipse cx="90" cy="16" rx="7" ry="8" fill="#e8401c" stroke="#9a2a0c" stroke-width=".9"/>'
-        + '<ellipse cx="90" cy="19" rx="4" ry="4.5" fill="#ffb347"/>'
-        + '<circle cx="90" cy="8.5" r="5.5" fill="#f0501f" stroke="#9a2a0c" stroke-width=".8"/>'
-        + '<path d="M87 3.5 C86 0 88 -1 89 1.5 C89.5 -1 92 -1 91.5 2 C93 0 95 1 93 4 Z" fill="#ffd23a" stroke="#d98a0c" stroke-width=".4"/>'
-        + '<path d="M88.8 10 L90 13 L91.2 10 Z" fill="#ffcf3a" stroke="#b37a0c" stroke-width=".4"/>'
-        + '<circle cx="87.8" cy="8" r="1.4" fill="#2a0e05"/><circle cx="92.2" cy="8" r="1.4" fill="#2a0e05"/>'
-        + '<circle cx="88.2" cy="7.5" r=".5" fill="#fff"/><circle cx="92.6" cy="7.5" r=".5" fill="#fff"/>'
-        + '<g class="sp-funkeln"><circle cx="99" cy="30" r=".8" fill="#ffd23a"/><circle cx="96" cy="34" r=".6" fill="#ff8a1e"/><circle cx="101" cy="26" r=".5" fill="#fff3a0"/></g></g></svg>';
-    }
-    if (art === "fee") {
-      /* Fee: kleine Glühfee mit Libellenflügeln, lila Kleidchen,
-         Zauberstab mit Stern und Glitzerspur. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<circle cx="90" cy="13" r="11" fill="#fff6b0" opacity=".35"/>'
-        + '<path class="sp-fluegel-l" d="M88 12 C80 3 74 7 77 13 C80 15 85 14 88 13 Z M88 15 C81 17 79 23 84 22 C86 21 88 18 88 15 Z" fill="#cdeeff" stroke="#8cc6e8" stroke-width=".6" opacity=".9"/>'
-        + '<path class="sp-fluegel-r" d="M92 12 C100 3 106 7 103 13 C100 15 95 14 92 13 Z M92 15 C99 17 101 23 96 22 C94 21 92 18 92 15 Z" fill="#cdeeff" stroke="#8cc6e8" stroke-width=".6" opacity=".9"/>'
-        + '<path d="M86.5 14 L93.5 14 L96 23 Q90 25 84 23 Z" fill="#c58cf0" stroke="#8a55b8" stroke-width=".6"/>'
-        + '<circle cx="90" cy="9" r="4.8" fill="#ffe0c8" stroke="#c9967a" stroke-width=".6"/>'
-        + '<path d="M85.4 8.4 C85 3 95 3 94.6 8.4 C93.5 6 90 5.4 88 6.6 C87 7.2 86 7.8 85.4 8.4 Z" fill="#ffcf5a"/>'
-        + '<circle cx="88.3" cy="9.4" r=".9" fill="#2a1f3d"/><circle cx="91.7" cy="9.4" r=".9" fill="#2a1f3d"/>'
-        + '<path d="M88.9 11.3 Q90 12.2 91.1 11.3" fill="none" stroke="#b0605a" stroke-width=".5" stroke-linecap="round"/>'
-        + '<path d="M95 16 L100 12" stroke="#8a55b8" stroke-width=".8" stroke-linecap="round"/>'
-        + '<path d="M100 9.6 l.7 1.6 l1.7 .2 l-1.3 1.1 l.4 1.7 l-1.5 -.9 l-1.5 .9 l.4 -1.7 l-1.3 -1.1 l1.7 -.2 z" fill="#ffe27a" stroke="#d9a90c" stroke-width=".3"/>'
-        + '<g class="sp-funkeln"><circle cx="82" cy="24" r=".7" fill="#fff6b0"/><circle cx="98" cy="25" r=".6" fill="#e6d0ff"/><circle cx="85" cy="3" r=".5" fill="#fff"/></g></g></svg>';
-    }
+  function tierSvg(art) {
     if (art === "stachelmonster") {
       /* FUNK 110 — „mach noch ein anderes Monster dazu": ein braunes
          Stachelmonster, rund, mit Stacheln rundum und kleiner Nase. */
@@ -2719,7 +2441,7 @@
         var jetzt = "";
         if (art) {
           var anteil = Math.max(0, Math.min(100, Math.round((kraft || 0) / (max || 30) * 100)));
-          jetzt = '<div class="sp-zeile sp-tier-zeile"><span class="sp-tier-bild sp-tier-bild-' + (welches === "luft" ? "luft" : "boden") + (kraft > 0 ? "" : " sp-tier-schwach") + '">' + tierSvg(art, true) + "</span>"
+          jetzt = '<div class="sp-zeile sp-tier-zeile"><span class="sp-tier-bild sp-tier-bild-' + (welches === "luft" ? "luft" : "boden") + (kraft > 0 ? "" : " sp-tier-schwach") + '">' + tierSvg(art) + "</span>"
             + "<span><b>" + esc(TIERE[art].name) + "</b> · Stufe " + (stufe || 1) + (kraft > 0 ? "" : ' <span class="sp-rot">· schwach – füttern!</span>')
             + '<br><span class="sp-status-balken sp-kraft-balken"><i style="width:' + anteil + '%"></i></span> <small>' + (kraft || 0) + "/" + (max || 30) + " Kraft · jede Abwehr kostet 1</small></span>"
             + '<span class="sp-knopfgruppe">'
@@ -2728,18 +2450,11 @@
             + ((stufe || 1) < 3 ? '<button type="button" data-tu="kaufen" data-d="' + (welches === "boden" ? "tier_stufe" : "flugtier_stufe") + '"' + (ich.punkte >= 60 * (stufe || 1) ? "" : " disabled") + ">Stufe " + ((stufe || 1) + 1) + " · " + 60 * (stufe || 1) + "</button>" : "")
             + "</span></div>";
         }
-        /* FASSUNG 646 — XANDER: „die Tiere die ich schon gekauft hab die
-           brauchen nicht doppelt in der Tiere Liste stehen". Das Tier,
-           das draußen ist, steht nur oben; darunter erst die eigenen,
-           dann die zum Kaufen. */
-        var eigene = liste.filter(function (k) { return k !== art && (ich.tiere || {})[k]; });
-        var kaufbar = liste.filter(function (k) { return k !== art && !(ich.tiere || {})[k]; });
-        var angebot = (eigene.length ? '<p class="sp-klein sp-tier-gruppe">Deine Tiere</p>' : "") + eigene.concat(kaufbar.length ? ["__kaufen"] : [], kaufbar).map(function (k) {
-          if (k === "__kaufen") return '<p class="sp-klein sp-tier-gruppe">Zu kaufen</p>';
+        var angebot = liste.map(function (k) {
           /* FASSUNG 641 — „die Monster die ich gekauft habe immer noch
              verfügbar … wechseln können": wer es besitzt, holt es raus. */
           var d = TIERE[k], hat = art === k, besitzt = Boolean((ich.tiere || {})[k]);
-          return '<div class="sp-zeile' + (d.magie ? " sp-tier-magisch" : "") + '"><span class="sp-tier-bild sp-tier-bild-' + (welches === "luft" ? "luft" : "boden") + '">' + tierSvg(k, true) + "</span><span><b>" + esc(d.name) + "</b>" + (d.magie ? ' <small class="sp-magie">magisch</small>' : "") + "<br><small>" + esc(d.was) + (besitzt && !hat ? " · deins, " + ((ich.tiere[k] || {}).kraft || 0) + " Kraft" : "") + "</small></span>"
+          return '<div class="sp-zeile"><span class="sp-tier-bild sp-tier-bild-' + (welches === "luft" ? "luft" : "boden") + '">' + tierSvg(k) + "</span><span><b>" + esc(d.name) + "</b><br><small>" + esc(d.was) + (besitzt && !hat ? " · deins, " + ((ich.tiere[k] || {}).kraft || 0) + " Kraft" : "") + "</small></span>"
             + (hat ? "<small>draußen</small>" : besitzt ? '<button type="button" data-tu="tierraus" data-a="' + k + '">Rausholen</button>'
                    : '<button type="button" data-tu="kaufen" data-d="' + k + '"' + (ich.punkte >= d.preis ? "" : " disabled") + ">Kaufen · " + d.preis + "</button>")
             + "</div>";

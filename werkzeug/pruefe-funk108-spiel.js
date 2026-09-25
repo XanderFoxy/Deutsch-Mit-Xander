@@ -130,9 +130,12 @@ const sage = (gut, was, zusatz) => {
          seit 638 von oben heran, ein einzelner Zeitpunkt traf je nach
          Takt mal 0,33, mal 1,25 Radien. Gemessen wird die Mitte des
          gezeichneten Körpers (.sp-tier-koerper), nicht der Rahmen. */
-      await new Promise((r) => setTimeout(r, 260 + 440 - 120));
-      let abstand = -1, t = null;
-      const bis = performance.now() + 290;
+      /* Fassung 646: die Angriffe dauern jetzt 2,6 s (Boden, festbeißen
+         von 22 bis 76 %) bzw. 3,4 s (Luft, einmal ums Bild herum mit
+         drei Feuerstößen). Abgetastet wird das ganze Angriffsfenster. */
+      await new Promise((r) => setTimeout(r, 260 + 300 - 120));
+      let abstand = -1, t = null, spurDa = false; const zahlen = [];
+      const bis = performance.now() + (tier === "drache" ? 2600 : 1500);
       while (performance.now() < bis) {
         t = document.querySelector(".sp-tier-sprung.sp-tier-" + tier) || t;
         const k = t && t.querySelector(".sp-tier-koerper");
@@ -141,15 +144,20 @@ const sage = (gut, was, zusatz) => {
           const d = Math.hypot(r.left + r.width / 2 - ziel.x, r.top + r.height / 2 - ziel.y) / (ichK.width / 2);
           abstand = abstand < 0 ? d : Math.min(abstand, d);
         }
+        if (document.querySelector("." + zeichen + ", .sp-feuerstrahl")) spurDa = true;
+        /* Die rote Zahl steigt im Moment des ersten Bisses auf und ist
+           1,45 s zu sehen – also während des Angriffs mitlesen. */
+        document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-zahl').forEach((z) => { if (zahlen.indexOf(z.textContent) < 0) zahlen.push(z.textContent); });
         await new Promise((r) => setTimeout(r, 16));
       }
-      const spur = Boolean(document.querySelector("." + zeichen));
-      await new Promise((r) => setTimeout(r, 700));
-      const zahl = [...document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-zahl')].map((z) => z.textContent).join(" | ");
+      const spur = spurDa;
+      await new Promise((r) => setTimeout(r, 300));
+      const zahl = zahlen.join(" | ");
       return { kugel, da: Boolean(t), abstand, spur, zahl, log: window.DMA_TONLOG.map((x) => x.name) };
     }, { tier, zeichen });
     sage(m.kugel && m.log.includes("geschuetzfeuer"), tier + ": das Geschütz feuert sichtbar und hörbar", m.log.join(", "));
-    sage(m.da && m.abstand >= 0 && m.abstand < 1.0, tier + " springt bis ans Bild des Angreifers",
+    /* Der Drache umkreist das Bild (1,3 Radien) und speit Feuer hinein. */
+    sage(m.da && m.abstand >= 0 && m.abstand < (tier === "drache" ? 1.5 : 1.0), tier + (tier === "drache" ? " fliegt dicht ums Bild des Angreifers" : " springt bis ans Bild des Angreifers"),
       m.da ? "Abstand " + m.abstand.toFixed(2) + " Radien" : "kein Tier zu sehen");
     sage(m.spur, tier + (tier === "drache" ? " faucht Feuer" : " hinterlässt Kratzer"));
     sage(m.log.includes(tonName), tier + " klingt nach „" + tonName + "“");
