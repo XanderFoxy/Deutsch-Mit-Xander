@@ -2938,9 +2938,6 @@
     if (S.graben) teile.splice(1, 0, '<button type="button" class="sp-s-graben sp-an sp-wz-' + S.werkzeug + '" data-s="graben" title="' + WERKZEUGE[S.werkzeug].name + ' weglegen">' + werkzeugSvg(S.werkzeug) + "</button>"
       + '<button type="button" class="sp-s-wwahl' + (S.wwahl ? " sp-an" : "") + '" data-s="werkzeug" title="Werkzeug wechseln">'
       + '<svg viewBox="0 0 20 20"><path d="M4 7 H15 L12 4 M16 13 H5 L8 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>');
-    /* FASSUNG 679 — das abgelegte Spielfenster liegt griffbereit in der Leiste. */
-    if (S.panelAbgelegt) teile.splice(1, 0, '<button type="button" class="sp-s-fenster sp-an" data-s="fensterauf" title="Spielfenster wieder öffnen">'
-      + '<svg viewBox="0 0 20 20"><rect x="3" y="9" width="14" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 6 L10 2.8 L13.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>');
     /* FASSUNG 673 — liegt ein Fundstück auf dem Feld, steht es auch hier. */
     if (fundKnopfHtml()) teile.push('<button type="button" class="sp-s-fund" data-s="fund" title="Zeigen, wo das Fundstück liegt">' + fundSvg() + "</button>");
     var burger = '<button type="button" class="sp-s-burger sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Spielmenü: Waffen, Heilen, Tiere, Mehr">'
@@ -3318,8 +3315,6 @@
     } else if (s === "gegenfeuer") {
       if (S.duell && S.duell.uebung) uebungEnde(); else uebungStarten("sparring:" + S.sparring);
       zu = true;
-    } else if (s === "fensterauf") {
-      S.schnellMenue = false; menue(S.panelAbgelegt || "start"); schnellZeichnen(true); return;
     } else if (s === "fund") {
       fundAmPlatzZeigen(); return;
     } else if (s === "graben") {
@@ -4490,19 +4485,10 @@
       });
     }
     if (tab) reiter = tab;
-    S.panelAbgelegt = null;
     panel.hidden = false;
     panelAuffrischen();
   }
   function schliessen() { if (panel) panel.hidden = true; }
-  /* FASSUNG 679 — Ablegen: das Fenster verschwindet, in der Schnellleiste
-     liegt ein Knopf, der es genau so wieder aufmacht (gleicher Reiter). */
-  function fensterAblegen() {
-    if (!panel || panel.hidden) return;
-    S.panelAbgelegt = reiter || "start";
-    schliessen();
-    schnellZeichnen(true);
-  }
   /* FASSUNG 673 — XANDER: „vielleicht könnte man beim klicken auf das leere
      im Hintergrund sowieso gleich zum einsammeln kommen, dass man nichts
      verpasst". Ein Tipp NEBEN das Fenster schließt es – und der Tipp
@@ -4512,8 +4498,7 @@
     var t = ev.target;
     if (!t || !t.closest || panel.contains(t)) return;
     if ((schnellEl && schnellEl.contains(t)) || t.closest(".sp-extra,.sp-meldung,.sp-schnellmenue,.sp-rad,.lc-platzmenue,[role=dialog]")) return;
-    /* FASSUNG 679 — ein Tipp daneben legt ab (statt ganz zu schließen). */
-    fensterAblegen();
+    schliessen();
   }, true);
 
   function panelAuffrischen() {
@@ -4528,11 +4513,7 @@
     /* FASSUNG 678 — XANDER: „das Bürger Menü in diesem Deutsch Ding das hat
        glaub ich gar keine Funktion … ein ablegen auch gereicht". Das ☰ ist
        weg; ✕ legt das Fenster ab. */
-    /* FASSUNG 679 — „nur mit der Möglichkeit das … temporär abzulegen":
-       ▾ legt das Fenster ab (unten in der Leiste liegt es griffbereit),
-       ✕ schließt es. */
     var kopf = '<div class="sp-kopf"><b>⚔️ Deutsch zum Überleben</b><span class="sp-kopf-knoepfe">' + fundKnopfHtml()
-      + '<button type="button" class="sp-zu sp-ab" data-tu="fensterab" aria-label="Ablegen" title="Ablegen – unten in der Leiste liegt es bereit">▾</button>'
       + '<button type="button" class="sp-zu" data-tu="zu" aria-label="Schließen">✕</button></span></div>';
     if (!ich) {
       panel.innerHTML = kopf + '<div class="sp-leer">' + esc(S.fehler || (S.versucht ? "Einen Moment – ich melde dich im Spiel an …" : "Das Spiel geht im Klassenzimmer.")) + "</div>";
@@ -4542,17 +4523,20 @@
     var xpSpanne = Math.max(1, (ich.xp_naechste || 100) - (ich.xp_stufe || 0));
     var xpAnteil = Math.max(0, Math.min(100, Math.round(((ich.xp || 0) - (ich.xp_stufe || 0)) / xpSpanne * 100)));
     var vorrat = ich.vorraete || {};
-    /* FASSUNG 679 — XANDER: „Mache bitte wieder die erste Version von vorher
-       … das Layout was wir zuerst hatten, wo die Punkte und das alles
-       untereinander steht … das war das Beste Design". Der Statusblock ist
-       wieder der von vor Fassung 673 (Balken untereinander, Werte
-       umbrechend); nur die „… ist angelegt"-Zeile bleibt weg (Fassung 673). */
-    var status = '<div class="sp-status">'
-      + '<div class="sp-status-lp"><span class="sp-status-balken"><i style="width:' + anteil + '%"></i></span> <b>' + ich.lp + " / " + ich.lp_max + "</b> LP"
-      + (ich.kaputt ? ' <span class="sp-rot">· kaputt</span>' : "") + (ich.anfaenger ? ' <span class="sp-blau">· Anfängerschutz</span>' : "") + "</div>"
+    /* FASSUNG 673 — XANDER: „das ist dann so groß … vielleicht kannst du
+       was komprimieren, dass das ein bisschen runter rutscht und man
+       schneller Zugriff auf die Spielfeldfläche hat". Lebenspunkte, Level
+       und Mana stehen jetzt in EINER Zeile, die Werte darunter in einer
+       Zeile zum Wischen. */
+    var status = '<div class="sp-status sp-status-kompakt">'
+      + '<div class="sp-status-zeile">'
+      + '<span class="sp-status-lp"><span class="sp-status-balken"><i style="width:' + anteil + '%"></i></span> <b>' + ich.lp + "/" + ich.lp_max + "</b> LP"
+      + (ich.kaputt ? ' <span class="sp-rot">kaputt</span>' : "") + (ich.anfaenger ? ' <span class="sp-blau">Schutz</span>' : "") + "</span>"
       /* FASSUNG 634 — Level und Erfahrung */
-      + '<div class="sp-status-lp"><span class="sp-status-balken sp-xp-balken"><i style="width:' + xpAnteil + '%"></i></span> <b>Level ' + (ich.level || 1) + "</b> · "
-      + (ich.xp || 0) + " / " + (ich.xp_naechste || 100) + " Erfahrung" + (ich.skill_frei > 0 ? ' <span class="sp-gold">· ' + ich.skill_frei + " Skillpunkt" + (ich.skill_frei > 1 ? "e" : "") + " frei</span>" : "") + "</div>"
+      + '<span class="sp-status-lp"><span class="sp-status-balken sp-xp-balken"><i style="width:' + xpAnteil + '%"></i></span> <b>Level ' + (ich.level || 1) + "</b>"
+      + (ich.skill_frei > 0 ? ' <span class="sp-gold">+' + ich.skill_frei + "</span>" : "") + "</span>"
+      + '<span class="sp-status-lp"><span class="sp-status-balken sp-mana-balken"><i style="width:' + Math.max(0, Math.min(100, ich.mana || 0)) + '%"></i></span> <b>' + (ich.mana || 0) + "</b> Mana</span>"
+      + "</div>"
       + '<div class="sp-status-werte"><span>🪙 ' + ich.punkte + " Punkte</span><span>📚 " + (ich.verdient || 0) + " verdient</span><span>🩹 " + ich.pflaster
       + "</span><span>🧪 " + ich.traenke + "</span>" + (vorrat.erz > 0 ? "<span>⛏️ " + vorrat.erz + " Erz</span>" : "") + "<span>🛡️ " + Math.round((ich.ruestung || 0) * 100) + " % Rüstung</span>"
       + "<span>🔥 " + (ich.ladung || 0) + " % Ladung" + (wirkt(ich, "daemon") ? " · dämonisch " + wirkt(ich, "daemon") + " s" : "") + "</span>"
@@ -4565,9 +4549,7 @@
       + (ich.flugtier ? "<span>" + esc((TIERE[ich.flugtier] || TIERE.drache).name) + " " + (ich.flugtier_leben || 0) + "/" + (ich.flugtier_max || 25) + (ich.flugtier_leben > 0 ? "" : " schwach") + "</span>" : "")
       + (ich.geschuetz_ladungen > 0 ? "<span>Turm Stufe " + (ich.geschuetz_stufe || 1) + ": " + ich.geschuetz_ladungen + "/" + (ich.geschuetz_max || 12) + " Schuss</span>" : "")
       + "</div>"
-      /* FUNK 106 — der zweite Balken: Mana, nur aus Deutsch (+6 je
-         richtiger Aufgabe), für die Zaubertränke. */
-      + '<div class="sp-status-lp"><span class="sp-status-balken sp-mana-balken"><i style="width:' + Math.max(0, Math.min(100, ich.mana || 0)) + '%"></i></span> <b>' + (ich.mana || 0) + " / 100</b> Mana</div>"
+      /* FUNK 106 — Mana (steht seit 673 oben in der Zeile) und Tränke. */
       + '<div class="sp-traenke">' + TRAENKE.map(function (t) {
           var n = ich["trank_" + t[0]] || 0, rest = wirkt(ich, t[0]);
           var mana = t[0] === "mana" ? 0 : 30;
@@ -4576,6 +4558,9 @@
             + '<span class="sp-trank sp-trank-' + t[0] + '"></span>' + t[1] + " (" + n + ")" + (rest ? " · wirkt " + rest + " s" : "") + "</button>";
         }).join("") + "</div>"
       + (S.stillstand ? '<div class="sp-hinweis">🕊️ Waffenstillstand – die Tafel ist offen.</div>' : "")
+      /* FASSUNG 673 — XANDER: „zum Beispiel dass die Kartoffel angelegt ist.
+         Das muss dort gar nicht sichtbar sein. Diese Zeile könnte man
+         rausnehmen". Die angelegte Waffe steht im Waffenrad und im Reiter. */
       + (S.duell && Date.now() < S.duell.bis ? '<div class="sp-hinweis">⚔️ Duell läuft – tippe auf deinen Gegner.</div>' : "")
       + "</div>";
     var tabs = [["start", "Übersicht"], ["anleitung", "Anleitung"], ["deutsch", "Deutsch"], ["koennen", "Können"], ["tiere", "Tiere"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell & Heilen"], ["rang", "Rangliste"]];
@@ -4691,10 +4676,9 @@
         + 'Null gibt es nur bei falscher Antwort oder nach mehr als 10 Minuten Bedenkzeit – eine Stundengrenze gibt es nicht mehr. '
         + '<b>Alles, was du hier verdienst, zählt auch im Ranking der Seite</b> (Heute, Gesamt, Fuchs des Tages). '
         + 'Zwischen zwei Antworten liegen mindestens 3 Sekunden. Jede richtige Antwort gibt außerdem +6 Mana, +8 Ladung und doppelt so viel Erfahrung wie Punkte (mindestens 1, auch über der Stundengrenze).</p>';
-      /* FASSUNG 679 — XANDER: „das oben über der Aufgabe die Niveau standen
-         und die Aufgaben und die Mission auch in Griffweite". Wieder wie
-         zuerst: Niveau, Arten, Aufgabe, Mission. */
-      return '<div class="sp-chips">' + chips + "</div>" + arten + teil + missionTeil + regel;
+      /* FASSUNG 673 — die Aufgabe steht OBEN: sofort antworten, ohne erst
+         an Niveau- und Kategorieknöpfen vorbei zu scrollen. */
+      return teil + '<div class="sp-chips">' + chips + "</div>" + arten + missionTeil + regel;
     }
     if (reiter === "koennen") {
       var tr = ich.training, frei = ich.skill_frei || 0, sks = ich.skills || {};
@@ -4898,8 +4882,7 @@
     if (!k || k.disabled) return;
     if (k.dataset.tab) { reiter = k.dataset.tab; if (reiter === "deutsch" && !S.aufgabe) aufgabeHolen(false); panelAuffrischen(); return; }
     var tu = k.dataset.tu;
-    if (tu === "zu") { S.panelAbgelegt = null; schliessen(); schnellZeichnen(true); return; }
-    if (tu === "fensterab") { fensterAblegen(); return; }
+    if (tu === "zu") return schliessen();
     if (tu === "haupt") { schliessen(); S.schnellMenue = true; schnellZeichnen(true); return; }
     if (tu === "fund") { fundAmPlatzZeigen(); return; }
     if (tu === "niveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} aufgabeHolen(false); return; }
@@ -5839,7 +5822,7 @@
      Moment dieses Dialogfenster ablegt". Der Knopf legt das Fenster ab
      und zeigt, WO das Fundstück liegt – aufheben muss man es selbst. */
   function fundAmPlatzZeigen() {
-    fensterAblegen(); S.schnellMenue = false; S.rad = null; S.zrad = false;
+    schliessen(); S.schnellMenue = false; S.rad = null; S.zrad = false;
     var q = fundPlatzEl(), f = q && q.querySelector(".sp-fundsack");
     schnellZeichnen(true);
     if (!f) return;
@@ -5878,9 +5861,6 @@
     fundKnopfPflegen();
     ackerPflegen();
     erinnerungPruefen();
-    /* FASSUNG 679 — wechselt, wer mitspielt, wird die Spiel-Sitzordnung neu angewendet. */
-    var sitzZeichen = spielSichtbar() + "|" + Object.keys(S.stand).filter(function (k) { return S.stand[k] && S.stand[k].mitspielen; }).sort().join(",");
-    if (sitzZeichen !== S.sitzZeichen) { S.sitzZeichen = sitzZeichen; try { if (LC() && LC().spielSitzeNeu) LC().spielSitzeNeu(); } catch (e) {} }
     if (S.bereit && !S.troph && !trophUhr && Date.now() - trophLetzt > 30000) trophaeenBald();
     schnellZeichnen();
   }, 700);
@@ -6230,14 +6210,6 @@
 
   window.DMA_SPIEL = {
     menue: menue, schliessen: schliessen,
-    /* FASSUNG 679 — für die eigene Spiel-Sitzordnung in livechat.js */
-    imSpiel: function () { return spielSichtbar(); },
-    spieltMit: function (chatId) {
-      if (!chatId) return false;
-      if (chatId === meineChatId()) return spielSichtbar();
-      var s = S.stand[spielIdVon(chatId)];
-      return Boolean(s && s.mitspielen);
-    },
     tippAufPlatz: tippAufPlatz, gesperrt: gesperrt, gesperrtGrund: gesperrtGrund, langAufEigen: langAufEigen, langAufLeer: langAufLeer,
     empfangen: empfangen, dreckAbwehren: dreckAbwehren, platzGewechselt: platzGewechselt,
     lehrerNote: lehrerNote, kampfmodus: kampfmodus, anmeldungDa: anmeldungDa,

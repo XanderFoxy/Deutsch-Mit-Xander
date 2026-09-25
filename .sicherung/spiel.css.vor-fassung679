@@ -1351,12 +1351,25 @@ body.sp-wwahl-offen .sp-meldung { opacity: 0; }
 /* Die Lager-Kärtchen sind <span> in einer Gruppe – nicht wie deren Überschrift (volle Breite, Großbuchstaben) setzen. */
 .sp-sm-gruppe.sp-lager > .sp-ware { width: auto; text-transform: none; letter-spacing: 0; font: 500 11.5px/1.2 system-ui, sans-serif; color: #dfe6f0; }
 
-/* FASSUNG 679 — XANDER: „Mache bitte wieder die erste Version von vorher".
-   Die flache Fassung 678 (58 %, nur der Inhalt scrollt) ist zurückgenommen;
-   das Fenster ist wieder das erste. Neu ist nur ▾ Ablegen. */
-.sp-kopf .sp-ab { font-size: 17px; line-height: 1; }
-.sp-schnell .sp-s-fenster { background: #2b3a55; color: #fff; }
-.sp-schnell .sp-s-fenster svg { width: 20px; height: 20px; }
+/* =========================================================
+   FASSUNG 678 — das Spielfenster wie vorher, aber flach und unten
+   XANDER: „Das Menü vorher war besser … nimmt noch mehr Sicht auf den
+   Chat weg … man muss durch die Werte scrollen … Die Werte sollen im
+   Auge bleiben … bei der Rangliste ist es im Prinzip fast so wie ich es
+   bräuchte … Es kann gern über die Bedienknöpfe vom Livestream drüber
+   gehen". Das Fenster ist höchstens so hoch wie bei der Rangliste
+   (58 % der Höhe, unten angeklebt). Kopf, Werte und Reiter bleiben
+   stehen; nur der Inhalt (Laden, Aufgaben …) scrollt. Die Werte brechen
+   wieder um – nichts mehr zur Seite wischen.
+   ========================================================= */
+.sp-panel:not([hidden]) { display: flex; flex-direction: column; overflow: hidden; max-height: 58vh; }
+@supports (height: 1dvh) { .sp-panel:not([hidden]) { max-height: 58dvh; } }
+.sp-panel > .sp-kopf, .sp-panel > .sp-status, .sp-panel > .sp-tabs { flex: none; }
+.sp-panel > .sp-inhalt, .sp-panel > .sp-leer { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.sp-panel > .sp-kopf { margin-bottom: 4px; }
+.sp-panel > .sp-tabs { margin: 6px 0 6px; }
+.sp-status-kompakt .sp-status-werte { flex-wrap: wrap; overflow: visible; white-space: normal; font-size: 12px; gap: 2px 9px; }
+.sp-status-kompakt .sp-status-werte > span { white-space: nowrap; }
 /* Das Fundstück zeigt sich, wenn man auf „Fundstück!" tippt. */
 .sp-fundsack.sp-fund-zeigen::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 3px solid #ffd84a;
   box-shadow: 0 0 14px rgba(255, 216, 74, .9); animation: spFundZeigen .8s ease-out 3; pointer-events: none; }

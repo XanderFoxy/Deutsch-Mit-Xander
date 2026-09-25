@@ -682,3 +682,15 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
   - Leichter Treffer: kurzer Laut, nicht jedes Mal; schwer (ab 15 oder Kopf): Schrei oder „Aua!"; jeder 4. Treffer in Folge: „Hör auf!"/„Hau ab!"; unter 25 % LP: Stöhnen/Hilfe (je Person höchstens alle 20 s); kaputt: „das war's". Höchstens eine Stimme je Person und 1,1 s. Auch bei Zaubern und Gegenwehr.
 - XANDER: „dass man erinnert wird, wenn man Medizin braucht … Hunger … aber nicht jetzt alle 5 Sekunden … die Tiere … Drachen Grummeln". Nur für einen selbst, frühestens nach 1 Minute, höchstens alle 90 s eine: Medizin (unter 30 % LP, 4 min Pause), Hunger (unter 60 % und Essen da, 6 min), kein Mana (8 min), Tier fast ohne Kraft: Hund winselt, Drache/Phönix grummelt (5 min) – jeweils mit Hinweis, wo es Hilfe gibt.
 - Sonden: `pruefe-678-schmerz-stimmen.js` (19 Prüfungen); 666 und 673 auf das neue Verhalten angepasst. Alle 41 Spiel-Sonden grün (665 wackelt nur unter Last).
+
+## Fassung 679 — Eigene Sitzordnung im Spiel, Menü wie zuerst, Ablegen
+
+- XANDER: „Sie soll noch nicht meinen Platzwechsel sehen. Im Chat bin ich immer noch auf der Position wo ich auf dem Chat bin … das muss getrennt voneinander behandelt werden".
+  - GEFUNDEN: ein Platzwechsel im Spiel war ein echter Chat-Platzwechsel (Chat-Sitzordnung + Zeile „… setzt sich auf Platz …") – alle sahen ihn.
+  - Jetzt gibt es in `livechat.js` eine eigene Spiel-Sitzordnung (`spielSitz`, Nachricht `spielsitz`, still, fährt im Puls mit). Wer mitspielt und im Spiel den Platz wechselt oder tauscht, ändert NUR sie. Angewendet wird sie nur auf Geräten, die selbst mitspielen, und nur für Mitspieler. Wer nicht mitspielt (oder Pause macht), sieht alle auf ihren Chat-Plätzen.
+  - Kämpfe, Schüsse, Tiere im Angriff sieht ohnehin nur, wer mitspielt (seit 652). In der Datenbank steht bei XanderFox „Tiere auch ohne Spiel zeigen" an – dann sieht jeder die Tiere friedlich am Platz (abschaltbar: Mehr → „Auch ohne Spiel zeigen").
+- XANDER: „Mache bitte wieder die erste Version von vorher … wo die Punkte und das alles untereinander steht … das oben über der Aufgabe die Niveau standen und die Aufgaben und die Mission auch in Griffweite … mit der Möglichkeit das … temporär abzulegen".
+  - Statusblock wieder wie vor Fassung 673 (LP, Level, Werte, Mana untereinander); das flache 58-%-Fenster aus 678 ist zurückgenommen. Deutsch: Niveau → Arten → Aufgabe → Mission.
+  - Neu: ▾ legt das Fenster ab; in der Schnellleiste liegt dann ein Griff, der es im selben Reiter wieder öffnet. Ein Tipp neben das Fenster legt ebenfalls ab; ✕ schließt ganz. Der Fundstück-Knopf legt ab und zeigt das Säckchen.
+- Scheibenwischer gegen Chat-Dreck gibt es seit Funk 84 (`dreckAbwehren`); aufrüstbar und haltbarere Waffen stehen auf der Liste.
+- Sonden: `pruefe-679-spielsitz.js` (10 Prüfungen); 673 auf das erste Layout + Ablegen angepasst. Alle Spiel-Sonden grün.

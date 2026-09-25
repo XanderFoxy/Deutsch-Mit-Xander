@@ -1,15 +1,10 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 673: WASSERGRABEN NUR EINMAL, DEUTSCH-FENSTER KOMPAKT,
-   FUNDSTÜCK IMMER ERREICHBAR
+   SONDE — FASSUNG 679: EIGENE SITZORDNUNG IM SPIEL
    ---------------------------------------------------------------------
-   XANDER: „der Wassergraben … egal wo ich mich hinsetze, taucht der
-   plötzlich auf … ich hab den hier zweimal" · „wenn ich im Deutsch
-   Lernmenü bin und dann taucht oben plötzlich was zum einsammeln auf
-   dann komme ich nicht schnell genug auf die Oberfläche zurück" ·
-   „beim klicken auf das leere im Hintergrund" · „direkt auf das
-   Hauptmenü" · „dass die Kartoffel angelegt ist … Diese Zeile könnte man
-   rausnehmen" · „komprimieren".
+   XANDER: „Sie soll noch nicht meinen Platzwechsel sehen. Im Chat bin
+   ich immer noch auf der Position wo ich auf dem Chat bin … das muss
+   getrennt voneinander behandelt werden".
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -80,6 +75,7 @@ const sage = (gut, was, zusatz) => {
     const klient = { rpc: (name, args) => {
       window.__rufe.push({ name: name, args: args || {} });
       let data = { ok: true };
+      if (window.__extra && window.__extra[name]) return Promise.resolve({ data: window.__extra[name](args || {}, ich), error: null });
       if (name === "spiel_ich") data = ich;
       else if (name === "spiel_stand") data = [ich, bea];
       else if (name === "spiel_meine_fallen") data = window.__fallen;
@@ -87,6 +83,7 @@ const sage = (gut, was, zusatz) => {
       else if (name === "spiel_falle_pruefen") data = window.__falleAntwort;
       else if (name === "spiel_heilen") data = Object.assign({}, ich, { ok: true, geheilt: 25, fremd: Boolean(args.p_ziel), geheilter: Object.assign({}, bea, { lp: 75 }) });
       else if (name === "spiel_trophaeen") data = window.__troph || { ok: true, liste: [], neu: [], lohn: 0 };
+      else if (name === "spiel_verkaufen") { ich.waffen = ich.waffen.filter((w) => w !== args.p_ding); ich.punkte += 27; data = Object.assign({ ok: true, verkauft: args.p_ding, erloes: 27 }, ich); }
       else if (name === "spiel_fund_heben") data = window.__fundAntwort || { ok: true, fund: "erz" };
       else if (name === "spiel_bauen") { if (args.p_was === "reparatur") { ich.dorf.schmiede.lp = 20; ich.vorraete.erz -= 1; data = Object.assign({ ok: true, gebaut: "reparatur" }, ich); }
         else { const st = ((ich.dorf || {})[args.p_was] || {}).stufe || 0; ich.dorf = Object.assign({}, ich.dorf, { [args.p_was]: { stufe: st + 1, lp: 20 * (st + 1) } }); data = Object.assign({ ok: true, gebaut: args.p_was, stufe: st + 1 }, ich); } }
@@ -146,88 +143,52 @@ const sage = (gut, was, zusatz) => {
 
   const tick = (ms) => pg.waitForTimeout(ms);
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
-  const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
+  const tippe = async (sel) => { await pg.evaluate((s) => { const e = document.querySelector(s); if (e) e.scrollIntoView({ block: "nearest" }); }, sel); const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
   const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
 
-  console.log("\nWASSERGRABEN NUR AM EIGENEN PLATZ\n");
-  const graben = await pg.evaluate(async () => {
-    const S = window.DMA_SPIEL.pruef.zustand(); S.ich.graben = 3; S.stand[S.ich.id].graben = 3;
-    /* Ein Rest vom alten Platz, wie er bis 672 liegen blieb. */
-    const leer = [...document.querySelectorAll("#lcPlaetze .lc-platz")].find((p) => !p.dataset.lcId && p.querySelector(".lc-kreis"));
-    const rest = document.createElement("span"); rest.className = "sp-wassergraben"; leer.appendChild(rest);
-    window.DMA_SPIEL.pruef.zeichnen();
-    await new Promise((r) => setTimeout(r, 200));
-    const ruhig = { alle: document.querySelectorAll("#lcPlaetze .sp-wassergraben").length, restDa: rest.isConnected };
-    /* FASSUNG 678 — XANDER: „immer noch diesen Fluss … egal wo ich hingehe". Er zeigt sich nur, wenn er ein Beben schluckt. */
-    S.grabenBis = { [S.ich.id]: Date.now() + 6000 };
-    window.DMA_SPIEL.pruef.zeichnen();
-    await new Promise((r) => setTimeout(r, 200));
-    return { ruhig, alle: document.querySelectorAll("#lcPlaetze .sp-wassergraben").length,
-             eigen: document.querySelectorAll("#lcPlaetze .lc-platz-ich .sp-wassergraben").length };
-  });
-  sage(graben.ruhig.alle === 0 && !graben.ruhig.restDa, "ohne Beben liegt KEIN Graben am Platz (auch kein Rest am alten Platz)", JSON.stringify(graben));
-  sage(graben.alle === 1 && graben.eigen === 1, "schluckt er ein Beben, zeigt er sich einmal – an meinem Platz", JSON.stringify(graben));
 
-  console.log("\nDAS DEUTSCH-FENSTER\n");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.waffe = "kartoffel"; window.DMA_SPIEL.menue("deutsch"); });
+  const platzVon = (id) => pg.evaluate((id) => { const p = window.LiveChat.lage().plaetze.find((x) => x.id === id); return p ? p.nummer : 0; }, id);
+  const domPlatz = (id) => pg.evaluate((id) => { const e = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + id + '"]'); return e ? Number(e.dataset.lcPlatz) : 0; }, id);
+  const frei = await pg.evaluate(() => window.LiveChat.lage().plaetze.filter((p) => p.leer).map((p) => p.nummer));
+  const chatVorher = await platzVon("ich");
+
+  console.log("\nIM SPIEL DEN PLATZ WECHSELN\n");
+  await pg.evaluate(() => { window.__raus.length = 0; });
+  const erg = await pg.evaluate((n) => window.LiveChat.platzNehmen(n), frei[1]);
   await tick(400);
-  const fenster = await pg.evaluate(() => {
-    const p = document.getElementById("spPanel"), st = p.querySelector(".sp-status");
-    const w = p.querySelector(".sp-status-werte");
-    return { text: st.textContent, statusHoch: Math.round(st.getBoundingClientRect().height), zeilen: p.querySelectorAll(".sp-status-zeile").length,
-             haupt: Boolean(p.querySelector('[data-tu="haupt"]')), umbruch: getComputedStyle(w).flexWrap, quer: w.scrollWidth - w.clientWidth,
-             balken: p.querySelectorAll(".sp-status > .sp-status-lp").length, ab: Boolean(p.querySelector('[data-tu="fensterab"]')),
-             reihenfolge: (() => { const inh = p.querySelector(".sp-inhalt"), c = inh.querySelector(".sp-chips"), a = inh.querySelector('[data-tu="aufgabe"], .sp-aufgabe'); return Boolean(c && a && (c.compareDocumentPosition(a) & 4)); })(),
-             fensterHoch: Math.round(p.getBoundingClientRect().height), bild: innerHeight, inhaltScrollt: getComputedStyle(p.querySelector(".sp-inhalt")).overflowY };
-  });
-  sage(!/angelegt/.test(fenster.text), "die Zeile „Kartoffel ist angelegt“ ist weg");
-  /* FASSUNG 679 — XANDER: „Mache bitte wieder die erste Version von vorher … wo die Punkte und das alles untereinander steht". */
-  sage(fenster.balken === 3 && fenster.umbruch === "wrap" && fenster.quer <= 1, "wie zuerst: LP, Level, Mana als Balken untereinander, die Werte brechen um", JSON.stringify(fenster));
-  sage(!fenster.haupt && fenster.ab, "kein ☰; oben ▾ zum Ablegen und ✕ zum Schließen", JSON.stringify(fenster));
-  sage(fenster.reihenfolge, "Deutsch: Niveau und Arten stehen ÜBER der Aufgabe", JSON.stringify(fenster));
+  const nach = { spiel: await platzVon("ich"), dom: await domPlatz("ich"),
+    raus: await pg.evaluate(() => window.__raus.map((m) => m.art)), zeile: await pg.evaluate(() => (window.LiveChat.lage().nachrichten || []).slice(-3).map((m) => m.text || "").join(" | ")) };
+  sage(erg.ok && nach.spiel === frei[1] && nach.dom === frei[1], "wer mitspielt, sitzt im Spiel auf dem neuen Platz (auch auf dem Bildschirm)", JSON.stringify({ erg, nach }));
+  sage(nach.raus.includes("spielsitz") && !nach.raus.includes("sitzplatz"), "hinaus geht nur die Spiel-Sitzordnung, keine Chat-Sitzordnung", JSON.stringify(nach.raus));
+  sage(!/setzt sich auf Platz/.test(nach.zeile), "im Chat steht keine Zeile „… setzt sich auf Platz …“", nach.zeile);
+  const tab = await pg.evaluate(() => window.LiveChat.pruefSitz({}).tausch);
+  sage(!(tab.ich != null && tab.ich === frei[1] - 1), "die Chat-Sitzordnung ist unverändert", JSON.stringify(tab));
 
-  console.log("\nFUNDSTÜCK, WÄHREND DAS FENSTER OFFEN IST\n");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.fundNaechst = 0; });
-  await tick(1600);
-  const fund = await pg.evaluate(() => ({ sack: Boolean(document.querySelector("#lcPlaetze .sp-fundsack")), panel: !document.getElementById("spPanel").hidden,
-    knopf: Boolean(document.querySelector("#spPanel .sp-fund-knopf")), leiste: Boolean(document.querySelector('[data-s="fund"]')) }));
-  sage(fund.sack && fund.panel && fund.knopf, "ein Fundstück erscheint – oben im offenen Deutsch-Fenster leuchtet sofort „Fundstück“", JSON.stringify(fund));
-  await pg.evaluate(() => { window.__rufe.length = 0; });
-  await tippe("#spPanel .sp-fund-knopf");
+  console.log("\nWER NICHT MITSPIELT, SIEHT DEN CHAT-PLATZ\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mitspielen = false; S.stand[S.ich.id] = Object.assign({}, S.stand[S.ich.id], { mitspielen: false }); });
+  await tick(900);
+  const ohne = { lage: await platzVon("ich"), dom: await domPlatz("ich") };
+  sage(ohne.lage === chatVorher && ohne.dom === chatVorher, "Pause (nicht mitspielen): ich sitze wieder auf meinem Chat-Platz – so sehen es alle, die nicht spielen", JSON.stringify({ chatVorher, ohne }));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mitspielen = true; S.stand[S.ich.id] = Object.assign({}, S.stand[S.ich.id], { mitspielen: true }); });
+  await tick(900);
+  sage(await platzVon("ich") === frei[1], "wieder mitspielen: zurück auf dem Spielplatz", String(await platzVon("ich")));
+
+  console.log("\nSPIELPLÄTZE DER ANDEREN\n");
+  const beaVorher = await platzVon("bea");
+  await pg.evaluate((n) => window.LiveChat.pruefEmpfangen({ art: "spielsitz", von: "bea", ordnung: { bea: n - 1 } }), frei[2]);
   await tick(300);
-  const geholt = await pg.evaluate(() => ({ ruf: window.__rufe.some((r) => r.name === "spiel_fund_heben"), sack: Boolean(document.querySelector("#lcPlaetze .sp-fundsack")),
-    panel: !document.getElementById("spPanel").hidden, aufgabe: window.__rufe.some((r) => r.name === "spiel_aufgabe") }));
-  geholt.zeigt = await pg.evaluate(() => Boolean(document.querySelector("#lcPlaetze .sp-fundsack.sp-fund-zeigen")));
-  /* FASSUNG 678 — XANDER: „man soll es nicht so einfach haben nur auf den Knopf zu drücken … Nur dass der Button … dieses Dialogfenster ablegt". */
-  geholt.griff = await pg.evaluate(() => Boolean(document.querySelector('.sp-schnell [data-s="fensterauf"]')));
-  sage(!geholt.ruf && geholt.sack && !geholt.panel && geholt.zeigt && geholt.griff, "der Knopf hebt NICHT auf: er legt das Fenster ab (Griff in der Leiste) und zeigt das Säckchen", JSON.stringify(geholt));
-  await tippe('.sp-schnell [data-s="fensterauf"]');
+  sage(await platzVon("bea") === frei[2], "Bea spielt mit und wechselt im Spiel: ich (Mitspieler) sehe sie dort", String(await platzVon("bea")));
+  const cemVorher = await platzVon("cem");
+  await pg.evaluate((n) => window.LiveChat.pruefEmpfangen({ art: "spielsitz", von: "cem", ordnung: { cem: n - 1 } }), frei[3]);
   await tick(300);
-  const wieder = await pg.evaluate(() => ({ offen: !document.getElementById("spPanel").hidden, deutsch: Boolean(document.querySelector('#spPanel .sp-tabs [data-tab="deutsch"].sp-an')), griff: Boolean(document.querySelector('.sp-schnell [data-s="fensterauf"]')) }));
-  sage(wieder.offen && wieder.deutsch && !wieder.griff, "ein Tipp auf den Griff holt das Fenster zurück – im selben Reiter", JSON.stringify(wieder));
+  sage(await platzVon("cem") === cemVorher, "Cem spielt nicht mit: eine Spiel-Sitzordnung für ihn gilt nicht", String(await platzVon("cem")));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mitspielen = false; S.stand[S.ich.id] = Object.assign({}, S.stand[S.ich.id], { mitspielen: false }); });
+  await tick(900);
+  sage(await platzVon("bea") === beaVorher, "spiele ICH nicht mit, sehe ich auch Bea auf ihrem Chat-Platz", String(await platzVon("bea")));
 
-  console.log("\nTIPP NEBEN DAS FENSTER, HAUPTMENÜ\n");
-  await pg.evaluate(() => window.DMA_SPIEL.menue("deutsch"));
-  await tick(1200);   /* das weiche Scrollen zum Fundstück muss erst stehen */
-  /* Das Säckchen weg: sonst hebt der Tipp daneben es womöglich auf (und das öffnet zu Recht die Artikel-Aufgabe). */
-  await pg.evaluate(() => { document.querySelectorAll(".sp-fundsack").forEach((x) => x.remove()); const S = window.DMA_SPIEL.pruef.zustand(); S.fundPlatz = 0; S.fundNaechst = Date.now() + 999999; });
-  const panelOben = await pg.evaluate(() => Math.round(document.getElementById("spPanel").getBoundingClientRect().top));
-  await pg.touchscreen.tap(180, Math.max(10, panelOben - 30));
-  await tick(300);
-  const abgelegt = await pg.evaluate(() => ({ zu: document.getElementById("spPanel").hidden, griff: Boolean(document.querySelector('.sp-schnell [data-s="fensterauf"]')),
-    ab: window.DMA_SPIEL.pruef.zustand().panelAbgelegt || "", leiste: (document.querySelector(".sp-schnell") || {}).hidden, fund: window.DMA_SPIEL.pruef.zustand().fundPlatz}));
-  sage(abgelegt.zu && abgelegt.griff, "ein Tipp über dem Fenster legt es ab (Griff liegt in der Leiste)", JSON.stringify(abgelegt));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-
-  /* Fundstück auch in der Schnellleiste. */
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.fundNaechst = 0; S.fundBis = 0; });
-  await tick(1600);
-  sage(await pg.evaluate(() => Boolean(document.querySelector('[data-s="fund"]'))), "liegt ein Fundstück da, steht es auch in der Schnellleiste");
-
-  if (process.env.BILD) { await pg.evaluate(() => window.DMA_SPIEL.menue("deutsch")); await tick(400); await pg.screenshot({ path: process.env.BILD }); }
   sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.slice(0, 3).join(" | "));
-  console.log("\n" + (fehler ? "Fassung 673: " + fehler + " rot." : "Fassung 673 auf dem Telefon: alles grün.") + "\n");
+  console.log("\n" + (fehler ? "Fassung 679: " + fehler + " rot." : "Fassung 679 auf dem Telefon: alles grün.") + "\n");
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

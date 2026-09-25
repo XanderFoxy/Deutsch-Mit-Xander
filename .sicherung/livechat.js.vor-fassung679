@@ -624,41 +624,6 @@ window.LiveChat = (function () {
      und sie faehrt im Puls mit — damit auch der, der spaeter
      dazukommt, dieselbe Sitzordnung sieht. */
   var sitzTausch = {};
-  /* FASSUNG 679 — DIE SITZORDNUNG IM SPIEL IST EINE EIGENE.
-     XANDER: „Sie soll noch nicht meinen Platzwechsel sehen. Im Chat bin
-     ich immer noch auf der Position wo ich auf dem Chat bin … das muss
-     getrennt voneinander behandelt werden". Wer mitspielt und im Spiel
-     den Platz wechselt, ändert NUR diese Tabelle. Angewendet wird sie
-     nur auf Geräten, die selbst mitspielen, und nur für Mitspieler –
-     alle anderen sehen weiter die Chat-Sitzordnung. */
-  var spielSitz = {};
-  function spielSicht() {
-    try { return Boolean(window.DMA_SPIEL && window.DMA_SPIEL.imSpiel && window.DMA_SPIEL.imSpiel()); } catch (e) { return false; }
-  }
-  function spieltMit(id) {
-    try { return Boolean(window.DMA_SPIEL && window.DMA_SPIEL.spieltMit && window.DMA_SPIEL.spieltMit(id)); } catch (e) { return false; }
-  }
-  /* Das Spiel fragt beim Antworten selbst nach der Lage (meineChatId,
-     spielIdVon) – ohne diese Sperre fragten sich beide im Kreis. */
-  var spielOrdnungLaeuft = false;
-  function spielOrdnungAnwenden(raus) {
-    if (spielOrdnungLaeuft || !Object.keys(spielSitz).length) return raus;
-    spielOrdnungLaeuft = true;
-    try { return spielOrdnungRechnen(raus); } finally { spielOrdnungLaeuft = false; }
-  }
-  function spielOrdnungRechnen(raus) {
-    if (!spielSicht()) return raus;
-    Object.keys(spielSitz).sort().forEach(function (id) {
-      var ziel = spielSitz[id];
-      if (typeof ziel !== "number" || ziel < 0 || ziel >= raus.length || !(id === zustand.ichId || spieltMit(id))) return;
-      var a = -1;
-      for (var i = 0; i < raus.length; i++) if (raus[i].id === id) a = i;
-      if (a < 0 || a === ziel) return;
-      var t = raus[a]; raus[a] = raus[ziel]; raus[ziel] = t;
-      raus[a].nummer = a + 1; raus[ziel].nummer = ziel + 1;
-    });
-    return raus;
-  }
   /* RUNDE 74 — welches Werkzeug gerade umsetzt: die Angel (/heb) oder
      das Lasso (/lasso). Das Lasso ruft /heb auf, damit das Umsetzen
      nur an EINER Stelle steht; ohne diese Merkung koennte /heb nicht
@@ -731,12 +696,6 @@ window.LiveChat = (function () {
       if (id && typeof sitzTausch[id] === "number") teil[id] = sitzTausch[id];
     });
     senden({ art: "sitzplatz", ordnung: teil, text: text });
-  }
-
-  function spielSitzSchicken(ids) {
-    var teil = {};
-    ids.forEach(function (id) { if (id && typeof spielSitz[id] === "number") teil[id] = spielSitz[id]; });
-    senden({ art: "spielsitz", ordnung: teil });
   }
 
   function plaetzeBauen() {
@@ -825,7 +784,7 @@ window.LiveChat = (function () {
       } : { nummer: i + 1, id: "", name: "", ich: false, strom: null,
             bild: "", spricht: false, leer: true });
     }
-    return spielOrdnungAnwenden(raus);
+    return raus;
   }
 
   function moeglich() {
@@ -4071,11 +4030,6 @@ window.LiveChat = (function () {
             neuerSitz = true;
           }
         });
-        if (n.spielsitz && typeof n.spielsitz === "object") {
-          Object.keys(n.spielsitz).forEach(function (id) {
-            if (spielSitz[id] == null && typeof n.spielsitz[id] === "number") { spielSitz[id] = n.spielsitz[id]; neuerSitz = true; }
-          });
-        }
         if (neuerSitz) melden();
       }
       var neuDa = !zustand.leute[n.von];
@@ -4253,16 +4207,6 @@ window.LiveChat = (function () {
       if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
       personEintragen(n);
       if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
-      melden();
-      return;
-    }
-    if (n.art === "spielsitz") {
-      /* FASSUNG 679 — still: keine Zeile im Chat, nur die Spiel-Tabelle. */
-      if (n.ordnung && typeof n.ordnung === "object") {
-        Object.keys(n.ordnung).forEach(function (id) {
-          if (typeof n.ordnung[id] === "number") spielSitz[id] = n.ordnung[id];
-        });
-      }
       melden();
       return;
     }
@@ -4883,7 +4827,6 @@ window.LiveChat = (function () {
     [PUPPE_ID, PUPPE2_ID].forEach(function (id) {
       delete zustand.leute[id];
       delete sitzTausch[id];
-      delete spielSitz[id];
       if (platzJe[id] != null) delete platzJe[id];
     });
     if (grund) systemZeile(grund);
@@ -4975,7 +4918,6 @@ window.LiveChat = (function () {
                sprechbild: zustand.sprechbild || "",
                /* Damit Spaeterkommende dieselbe Sitzordnung sehen. */
                sitz: sitzTausch,
-               spielsitz: spielSitz,
                /* RUNDE 73 — XANDER: „Der Neuankoemmling soll auch den
                   naechsten freien Platz bekommen. Und nicht auf dem
                   ersten Platz landen."
@@ -5546,7 +5488,6 @@ window.LiveChat = (function () {
     zustand.buehne = o.buehne !== false;
     platzJe = {};                 // neuer Raum, neue Sitzordnung
     sitzTausch = {};              // und kein Tausch aus dem alten Raum
-    spielSitz = {};
     zustand.seit = Date.now();
     zustand.spricht = false;
     zustand.thema = gemerktesThema(zustand.raum);
@@ -7466,13 +7407,6 @@ window.LiveChat = (function () {
       if (ziel.id === zustand.ichId) return { ok: false, warum: "Da sitzt du schon." };
       return platzTauschenMit(ziel.id);
     }
-    if (spielSicht()) {
-      spielSitz[zustand.ichId] = n - 1;
-      spielGewechselt();
-      spielSitzSchicken([zustand.ichId]);
-      melden();
-      return { ok: true, text: "Im Spiel sitzt du jetzt auf Platz " + n + " – im Chat bleibst du, wo du warst." };
-    }
     sitzTausch[zustand.ichId] = n - 1;
     spielGewechselt();
     sitzSchicken([zustand.ichId], zustand.ichName + " setzt sich auf Platz " + n + ".");
@@ -7496,17 +7430,6 @@ window.LiveChat = (function () {
          kann sich daneben setzen. Das ist das, was gemeint ist,
          wenn jemand von unten auf einen Platz tippt. */
       return { ok: false, warum: "Geh erst auf die Bühne, dann könnt ihr tauschen." };
-    }
-    if (spielSicht()) {
-      /* Im Spiel: nur die Spiel-Sitzordnung. Wer nicht mitspielt, rückt
-         dabei nur für die Mitspieler auf meinen alten Platz. */
-      spielSitz[zustand.ichId] = seiner.nummer - 1;
-      var beide = [zustand.ichId];
-      if (spieltMit(id)) { spielSitz[id] = meiner.nummer - 1; beide.push(id); }
-      spielGewechselt();
-      spielSitzSchicken(beide);
-      melden();
-      return { ok: true, text: "Im Spiel habt ihr getauscht – im Chat sitzt ihr weiter wie vorher." };
     }
     sitzTausch[zustand.ichId] = seiner.nummer - 1;
     sitzTausch[id] = meiner.nummer - 1;
@@ -15580,7 +15503,7 @@ window.LiveChat = (function () {
         if (lage.leute) zustand.leute = lage.leute;
         if (lage.seit) zustand.seit = lage.seit;
         if (lage.zuruecksetzen) {
-          platzJe = {}; sitzTausch = {}; spielSitz = {};
+          platzJe = {}; sitzTausch = {};
           /* Auch die Zeilen leeren: sonst haelt der Doppel-Schutz eine
              Nachricht fuer schon dagewesen, nur weil sie in derselben
              Seite vorher schon einmal entstanden ist. */
@@ -15614,9 +15537,6 @@ window.LiveChat = (function () {
     /* FUNK 95 — Spielsystem (spiel.js) */
     spielKennungSetzen: function (k) { spielKennung = /^[0-9a-f-]{36}$/i.test(String(k || "")) ? String(k) : ""; },
     spielIdVon: spielIdVon,
-    /* FASSUNG 679 — das Spiel meldet: wer mitspielt, hat sich geändert → Sitzordnung neu. */
-    spielSitzeNeu: function () { melden(); },
-    spielSitzTabelle: function () { return Object.assign({}, spielSitz); },
     spielSenden: function (o) {
       var p = {}; Object.keys(o || {}).forEach(function (k) { p[k] = o[k]; });
       p.art = "spiel";
