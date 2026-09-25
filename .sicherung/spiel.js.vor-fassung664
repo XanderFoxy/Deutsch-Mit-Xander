@@ -54,15 +54,9 @@
        Turrican-mäßig". */
     doener:       { name: "Döner-Katapult",  schaden: 13, preis: 70,  flug: 860, ton: "katapult4",       treffer: "doenerklatsch" },
     mg:           { name: "Maschinengewehr", schaden: 12, preis: 110, flug: 300, ton: "mgsalve",         treffer: "knack" },
-    /* FASSUNG 664 — XANDER: „Updates ab einem bestimmten Level irgendwelche
-       Sachen, die dann freigeschaltet werden können, die wir sonst nicht
-       haben". Drei Meisterwaffen, typisch deutsch, erst ab einem Level. */
-    weisswurst:   { name: "Weißwurst-Bumerang", schaden: 14, preis: 85,  flug: 820, ton: "bumerang2", treffer: "wurstklatsch", ab: 6 },
-    nudelholz:    { name: "Nudelholz",          schaden: 18, preis: 110, flug: 700, ton: "swoosh",    treffer: "holzklopf",    ab: 8 },
-    kuckucksuhr:  { name: "Kuckucksuhr-Bombe",  schaden: 24, preis: 160, flug: 900, ton: "ticken",    treffer: "explosion2",   ab: 10 },
     lasersalve:   { name: "Laser-Salve",     schaden: 10, preis: 80,  flug: 240, ton: "lasersalve",      treffer: "lasertreffer" }
   };
-  var WAFFEN_REIHE = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "brezel", "armbrust", "huehnerwerfer", "bierkrug", "tomahawk", "spaetzle", "doener", "lasersalve", "mg", "zielfernrohr", "bazooka", "weisswurst", "nudelholz", "kuckucksuhr"];
+  var WAFFEN_REIHE = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "brezel", "armbrust", "huehnerwerfer", "bierkrug", "tomahawk", "spaetzle", "doener", "lasersalve", "mg", "zielfernrohr", "bazooka"];
   var VORRAT_WAFFEN = ["bratwurst", "sauerkraut"];
   function vorrat(ich, ding) { return Math.max(0, Number(((ich || {}).vorraete || {})[ding]) || 0); }
   var LADEN = [
@@ -1064,19 +1058,6 @@
      DIE GESCHOSSE — gezeichnet, keine Emoji
      --------------------------------------------------------------- */
   function geschossSvg(waffe, farbe) {
-    /* FASSUNG 664 — die Meisterwaffen */
-    if (waffe === "weisswurst") return '<svg viewBox="-12 -8 24 16"><path d="M-10 2 C-8 -6 8 -6 10 2" fill="none" stroke="#f4efe4" stroke-width="5.5" stroke-linecap="round"/>'
-      + '<path d="M-10 2 C-8 -6 8 -6 10 2" fill="none" stroke="#b9ad96" stroke-width="5.5" stroke-linecap="round" opacity=".35" stroke-dasharray="1 3"/>'
-      + '<path d="M-10 2 C-8 -6 8 -6 10 2" fill="none" stroke="#8f8470" stroke-width=".8" transform="translate(0 2.6)"/><circle cx="-10.5" cy="2.5" r="1.4" fill="#d9cfbb"/><circle cx="10.5" cy="2.5" r="1.4" fill="#d9cfbb"/>'
-      + '<g fill="#6cc46c"><circle cx="-3" cy="-2.4" r=".5"/><circle cx="2" cy="-3" r=".5"/><circle cx="5" cy="-1.6" r=".5"/></g></svg>';
-    if (waffe === "nudelholz") return '<svg viewBox="-16 -5 32 10"><rect x="-8" y="-3.6" width="16" height="7.2" rx="3" fill="#e0b27a" stroke="#8a5a2e" stroke-width=".9"/>'
-      + '<path d="M-5 -3.4 V3.4 M0 -3.6 V3.6 M5 -3.4 V3.4" stroke="#c99459" stroke-width=".5"/><rect x="-15" y="-1.5" width="7.4" height="3" rx="1.4" fill="#b07a45" stroke="#6b4521" stroke-width=".7"/>'
-      + '<rect x="7.6" y="-1.5" width="7.4" height="3" rx="1.4" fill="#b07a45" stroke="#6b4521" stroke-width=".7"/><path d="M-7 -2.2 H7" stroke="#f6d9ad" stroke-width=".9" stroke-linecap="round"/></svg>';
-    if (waffe === "kuckucksuhr") return '<svg viewBox="-10 -12 20 24"><path d="M-8 -3 L0 -10 L8 -3 Z" fill="#6b4521" stroke="#3e2712" stroke-width=".8"/><rect x="-7" y="-3" width="14" height="12" rx="1" fill="#8a5a2e" stroke="#3e2712" stroke-width=".8"/>'
-      + '<circle cx="0" cy="3" r="3.6" fill="#f4efe4" stroke="#3e2712" stroke-width=".6"/><path d="M0 3 V0.8 M0 3 L1.6 3.8" stroke="#1d2330" stroke-width=".7" stroke-linecap="round"/>'
-      + '<rect x="-1.4" y="-6.4" width="2.8" height="2.4" fill="#1d2330"/><path d="M-0.6 -5.6 C1 -6.6 2.6 -5.8 2.8 -4.8 L1 -4.8 Z" fill="#f2c230"/>'
-      + '<path d="M-3 9 V11.5 M3 9 V11.5" stroke="#c9961a" stroke-width=".8"/><circle cx="-3" cy="11.8" r=".9" fill="#c9961a"/><circle cx="3" cy="11.8" r=".9" fill="#c9961a"/>'
-      + '<path d="M6 -8 C8 -10 9 -11 10 -11" fill="none" stroke="#ff7a18" stroke-width=".9"/></svg>';
     if (waffe === "zwille") return '<svg viewBox="-6 -6 12 12"><ellipse rx="4.6" ry="3.8" fill="#7d7a73" stroke="#3f3d38" stroke-width="1"/><ellipse cx="-1.4" cy="-1.3" rx="1.4" ry=".9" fill="#b9b5ab"/></svg>';
     if (waffe === "bogen") return '<svg viewBox="-22 -5 44 10"><path d="M-18 0 H14" stroke="#8a5a2b" stroke-width="1.8"/><path d="M14 -3.6 L21 0 L14 3.6 Z" fill="#6b7078"/><path d="M-18 0 L-22 -4 M-18 0 L-22 4 M-15 0 L-19 -4 M-15 0 L-19 4" stroke="#d23b3b" stroke-width="1.6"/></svg>';
     if (waffe === "armbrust") return '<svg viewBox="-14 -5 28 10"><path d="M-11 0 H8" stroke="#3b3f45" stroke-width="3"/><path d="M8 -4 L14 0 L8 4 Z" fill="#9aa0a8" stroke="#3b3f45" stroke-width=".8"/><path d="M-11 0 L-14 -3 M-11 0 L-14 3" stroke="#2f7d32" stroke-width="2"/></svg>';
@@ -1222,11 +1203,10 @@
     g.className = "sp-geschoss sp-g-" + waffe + dmn;
     g.innerHTML = geschossSvg(waffe);
     document.body.appendChild(g);
-    var bogen = waffe === "weisswurst" ? -95 : waffe === "kuckucksuhr" ? -120 : waffe === "nudelholz" ? -45
-      : waffe === "zwille" || waffe === "tomahawk" || waffe === "eierwerfer" || waffe === "kartoffel" || waffe === "brezel" ? -40
+    var bogen = waffe === "zwille" || waffe === "tomahawk" || waffe === "eierwerfer" || waffe === "kartoffel" || waffe === "brezel" ? -40
       : waffe === "huehnerwerfer" || waffe === "bierkrug" || waffe === "sauerkraut" ? -70 : waffe === "doener" ? -110 : waffe === "bratwurst" ? -55 : waffe === "bogen" ? -24 : 0;
     var mx = (a.x + zx) / 2, my = (a.y + zy) / 2 + bogen;
-    var drehung = waffe === "weisswurst" ? 1080 : waffe === "nudelholz" ? 720 : waffe === "kuckucksuhr" ? 90 : waffe === "tomahawk" ? 900 : waffe === "huehnerwerfer" || waffe === "bierkrug" ? 540 : waffe === "brezel" ? 720
+    var drehung = waffe === "tomahawk" ? 900 : waffe === "huehnerwerfer" || waffe === "bierkrug" ? 540 : waffe === "brezel" ? 720
       : waffe === "eierwerfer" || waffe === "kartoffel" || waffe === "bratwurst" || waffe === "doener" ? 360 : waffe === "sauerkraut" ? 180 : 0;
     try {
       g.animate([
@@ -1242,16 +1222,7 @@
   function einschlag(x, y, waffe, nach) {
     setTimeout(function () {
       var e = document.createElement("div");
-      e.className = "sp-einschlag" + (waffe === "bazooka" || waffe === "kuckucksuhr" ? " sp-einschlag-gross" : "");
-      /* FASSUNG 664 — die Kuckucksuhr ruft beim Einschlag „Kuckuck!“ und sprüht Funken. */
-      if (waffe === "kuckucksuhr") {
-        var kk = document.createElement("div");
-        kk.className = "sp-kuckuck"; kk.textContent = "Kuckuck!";
-        kk.style.left = x + "px"; kk.style.top = y + "px";
-        document.body.appendChild(kk);
-        setTimeout(function () { kk.remove(); }, 1300);
-        try { flammen(x, y - 10, 28, "gold", 7); } catch (e2) {}
-      }
+      e.className = "sp-einschlag" + (waffe === "bazooka" ? " sp-einschlag-gross" : "");
       e.style.left = x + "px"; e.style.top = y + "px";
       document.body.appendChild(e);
       var tt = (WAFFEN[waffe] || {}).treffer;
@@ -2432,8 +2403,7 @@
     ["Standard", "#3c6e9e", ["kartoffel", "zwille", "bogen", "laser"]],
     ["Lustig",   "#c0772a", ["eierwerfer", "brezel", "sauerkraut", "bratwurst", "huehnerwerfer", "bierkrug", "doener", "spaetzle"]],
     ["Arcade",   "#7a3fa0", ["lasersalve", "mg"]],
-    ["Stark",    "#a33a3a", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]],
-    ["Meister",  "#b8860b", ["weisswurst", "nudelholz", "kuckucksuhr"]]
+    ["Stark",    "#a33a3a", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]]
   ];
   function radHtml(nr) {
     var ich = S.ich || {}, s = slots();
@@ -2513,7 +2483,7 @@
       inhaltM = '<div class="sp-sm-slots"><button type="button" data-s="slot" data-n="0" class="' + (nr === 0 ? "sp-an" : "") + '">Waffe 1</button>'
         + '<button type="button" data-s="slot" data-n="1" class="' + (nr === 1 ? "sp-an" : "") + '">Waffe 2</button></div>';
       var gruppen = [["Standard", ["kartoffel", "zwille", "bogen", "laser"]], ["Lustig", ["eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "bratwurst", "sauerkraut"]],
-                     ["Arcade", ["lasersalve", "mg"]], ["Stark", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]], ["Meister", ["weisswurst", "nudelholz", "kuckucksuhr"]]];
+                     ["Arcade", ["lasersalve", "mg"]], ["Stark", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]]];
       gruppen.forEach(function (g) {
         var knoepfe = g[1].filter(function (w) { return WAFFEN[w] && ((ich.waffen || []).indexOf(w) >= 0 || (WAFFEN[w].vorrat && vorrat(ich, w) > 0)); })
           .map(function (w) { return waffenKnopf(w, (s[nr] === w ? " sp-slot-drin" : "")).replace('data-s="waffe"', 'data-s="waehle"'); }).join("");
@@ -3798,7 +3768,6 @@
         return '<div class="sp-zeile"><span class="sp-bild">' + geschossSvg(k, S.laserfarbe) + "</span><span><b>" + esc(w.name) + "</b><br><small>Schaden " + w.schaden + (k === "zielfernrohr" ? ", langsam" : "")
           + (h >= 0 ? " · " + (h > 0 ? "hält noch " + h + "/60" : '<span class="sp-rot">stumpf – halber Schaden</span>') : "") + "</small></span>"
           + (hat ? (S.waffe === k ? '<button type="button" data-tu="ablegen">Ablegen</button>' : '<button type="button" data-tu="anlegen" data-w="' + k + '">Anlegen</button>')
-                 : w.ab && (ich.level || 1) < w.ab ? '<button type="button" disabled>ab Level ' + w.ab + "</button>"
                  : '<button type="button" data-tu="kaufen" data-d="' + k + '">🔒 ' + w.preis + " Punkte</button>")
           + "</div>";
       }).join("");

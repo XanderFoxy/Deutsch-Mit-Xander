@@ -543,3 +543,11 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Deutschland-Wissen: 51 geprüfte Landeskunde-Fragen (A1–B2: Hauptstadt, Flüsse, Bundesländer, Feiertage, Geschichte, Politik, berühmte Deutsche, Alltag wie Pfand und Sonntagsruhe), Kategorie „deutschland", im Deutsch-Reiter als eigener Knopf.
 - Im Rollback getestet (Wahl, Wechsel-Sperre, Wissenschaftler +2 Punkte/doppelte EP bei einer Deutschland-Frage).
 - Sonde: `pruefe-663-klassen-deutschland.js` (9 Prüfungen); Spiel-Sonden einzeln grün.
+
+## Fassung 664 — Meisterwaffen ab einem Level
+
+- XANDER: „Updates ab einem bestimmten Level irgendwelche Sachen, die dann freigeschaltet werden können, die wir sonst nicht haben".
+- Drei typisch deutsche Meisterwaffen: Weißwurst-Bumerang (ab Level 6, 85 P, 14 Schaden, hoher Bogen und dreifache Drehung), Nudelholz (ab Level 8, 110 P, 18 Schaden, rotiert, „Holzklopf"), Kuckucksuhr-Bombe (ab Level 10, 160 P, 24 Schaden, tickt im Flug, großer Einschlag mit „Kuckuck!" und Goldfunken).
+- Im Laden bis zum Level gesperrt („ab Level N"), im Waffenrad als eigener goldener Sektor „Meister", im Waffen-Menü als Gruppe „Meister".
+- Server: `spiel_waffe_schaden`, `spiel_treffer` (Abnutzung), `spiel_kaufen` (Preis, Level-Sperre). Im Rollback getestet (Kauf, Treffer mit Fairness-Faktor).
+- Sonde: `pruefe-664-meisterwaffen.js` (5 Prüfungen); alle Spiel-Sonden grün (auch parallel).
