@@ -665,3 +665,20 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
   - Mein Dorf zeigt Lager, laufende Aufträge („fertig um …") und den Markt: Getreide 1, Mehl 3, Brot 6, Kuchen 14 Punkte. Brot +12 LP, Kuchen +30 LP und +10 Mana (auch im Heilen-Menü).
   - Server: `spiel_ernten`, `spiel_saeen`, `spiel_beliefern`, `spiel_werk_abholen`, `spiel_markt` (Migrationen `spiel_677_*`), im Rollback geprüft. XANDER: „Nicht nur durch die Deutsch Aufgaben, sondern auch durch solche Sachen … bisschen bemerkbar machen": Marktgeld zählt bis 40 Punkte je Tag auch im Ranking der Seite (`spiel_677_markt_zaehlt_im_ranking`, im Rollback geprüft: 28 + 12, dann Schluss); der Rest nur als Spielpunkte.
 - Sonde: `pruefe-677-feld-muehle-markt.js` (30 Prüfungen, Android-Telefon mit Fingertipps). Alle 40 Spiel-Sonden grün.
+
+## Fassung 678 — Menü wie vorher (flach), Schmerzstimmen, Erinnerungen, Graben, Zauberrad
+
+- XANDER: „Das Menü vorher war besser … nimmt noch mehr Sicht auf den Chat weg … durch die Werte scrollen … Die Werte sollen im Auge bleiben … bei der Rangliste ist es im Prinzip fast so wie ich es bräuchte".
+  - Das Spielfenster ist höchstens 58 % hoch und klebt unten. Kopf, Werte und Reiter bleiben stehen, nur der Inhalt scrollt. Die Werte brechen wieder um (kein Seitwärts-Wischen).
+  - Das ☰ im Fenster ist weg (✕ legt ab).
+  - „Fundstück!" hebt nicht mehr auf: der Knopf legt das Fenster ab und lässt das Säckchen am Platz aufleuchten – aufheben muss man selbst.
+- XANDER: „immer noch diesen Fluss graben egal wo ich hingehe". Der Wassergraben schützt das Dorf, nicht den Platz: er zeigt sich nur noch 6 Sekunden, wenn er gerade ein Beben schluckt.
+- XANDER: „der Sound von magische Menü … klingt so verspielt, kommt auch zweimal". Eigener ruhiger Zauberklang (`ton/zauberrad`), nur einmal je Öffnen.
+- XANDER: „der Amtsweg das sind 70 bei mir. Ich kann die fast endlos einsetzen". Die Zahl ist der Mana-Preis, kein Vorrat (sein Mana: 5). Das Rad zeigt jetzt blau „Mana N" und „Zahl = Mana-Preis". Auf Puppe und Sparringspartner ist Zaubern kostenlose Übung (seit 655).
+- XANDER: „Wenn ich Schätze auf der Platzkarte einsammle dann geht das nicht in meine Punkte über". Münzen, Truhe und Schatz beim Graben zählen jetzt auch als „verdient" → Ranking (`spiel_678_schaetze_ins_ranking`).
+- XANDER: „gar kein Schmerzgeräusche … zwischen Frau und Mann … schlimm getroffen … leicht … bei mehr Beschuss … ausrasten … kurz vom Ende … Stöhnen … ich brauche Hilfe … das tut weh oder hör auf oder hau ab … nicht übertrieben".
+  - GEFUNDEN: die App rechnete den Namen des Schmerzlauts nur aus und spielte ihn nie ab.
+  - 24 neue Stimmdateien (Mann „Harry", Frau „Sarah", ElevenLabs v3, Deutsch, per Spracherkennung geprüft): Au, Autsch, Ah, Schrei, „Aua! Das tut weh!", „Hör auf!", Stöhnen „mir geht's gar nicht gut", „Hilfe! Ich brauche Hilfe!", „Ich brauche Medizin", „Ich habe Hunger", „Ich habe keine Kraft mehr", „das war's". Dazu das vorhandene „Hau ab!".
+  - Leichter Treffer: kurzer Laut, nicht jedes Mal; schwer (ab 15 oder Kopf): Schrei oder „Aua!"; jeder 4. Treffer in Folge: „Hör auf!"/„Hau ab!"; unter 25 % LP: Stöhnen/Hilfe (je Person höchstens alle 20 s); kaputt: „das war's". Höchstens eine Stimme je Person und 1,1 s. Auch bei Zaubern und Gegenwehr.
+- XANDER: „dass man erinnert wird, wenn man Medizin braucht … Hunger … aber nicht jetzt alle 5 Sekunden … die Tiere … Drachen Grummeln". Nur für einen selbst, frühestens nach 1 Minute, höchstens alle 90 s eine: Medizin (unter 30 % LP, 4 min Pause), Hunger (unter 60 % und Essen da, 6 min), kein Mana (8 min), Tier fast ohne Kraft: Hund winselt, Drache/Phönix grummelt (5 min) – jeweils mit Hinweis, wo es Hilfe gibt.
+- Sonden: `pruefe-678-schmerz-stimmen.js` (19 Prüfungen); 666 und 673 auf das neue Verhalten angepasst. Alle 41 Spiel-Sonden grün (665 wackelt nur unter Last).

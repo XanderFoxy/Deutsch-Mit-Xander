@@ -260,7 +260,7 @@
   var KLANG_VORAB = ["bling", "gummi", "schuss", "knack", "jubel", "mampf", "graben", "hammerschlag", "muenze", "zwille", "pfeilschuss", "pfeiltreffer",
     "laserrot", "lasertreffer", "bonk", "krugklirr", "brezelknack", "wurstklatsch", "krautmatsch", "spaetzlesalve", "katapult4", "doenerklatsch",
     "mgsalve", "lasersalve", "monsterbiss", "drachenfeuer", "chihuahuaknurr", "bisszerren", "stachelstich", "fluegelschlag", "geschuetzfeuer",
-    "zauberpuff", "zauberrad", "schmerzaumann", "schmerzaufrau", "schmerzautschmann", "schmerzautschfrau", "trankschluck", "gong", "geschenk", "kasse", "wischer", "explosion2", "eiknack", "huhnwurf", "huhntreffer", "axttreffer", "swoosh", "platsch",
+    "zauberpuff", "trankschluck", "gong", "geschenk", "kasse", "wischer", "explosion2", "eiknack", "huhnwurf", "huhntreffer", "axttreffer", "swoosh", "platsch",
     "hundbellen", "fuchskeckern", "babyfuchs", "einhorn", "phoenix", "feenzauber", "monsterbiss2", "drachenpuste", "erdbeben", "orkan", "brezelknack", "muecken", "kaffeeklatsch", "hexenschuss", "gartenzwerg", "stempel"];
   function klangKontext() {
     if (KLANG.ctx) return KLANG.ctx;
@@ -967,20 +967,10 @@
     if (!S.graben) hinweis((WERKZEUGE[S.werkzeug] || WERKZEUGE.schaufel).name + " weggelegt.");
     return true;
   }
-  /* FASSUNG 678 — XANDER: „der Sound von magische Menü wenn man das
-     aufmacht, der klingt so verspielt, kommt auch zweimal … Das könnte
-     ein magischer Sound sein, der impliziert, dass man grad dieses Menü
-     geöffnet hat". Ein eigener, ruhiger Zauberklang – und nur EINMAL,
-     auch wenn Druck und Loslassen beide ankommen. */
-  function zauberradTon() {
-    if (Date.now() - (S.zradTonZeit || 0) < 900) return;
-    S.zradTonZeit = Date.now();
-    ton("zauberrad", 0.4);
-  }
   function langAufEigen(platz) {
     if (eigenLangFrei || !spielSichtbar()) return false;
     S.zrad = true; S.rad = null; S.schnellMenue = false; S.radOffenSeit = Date.now();
-    zauberradTon();
+    ton("zauberpuff", 0.3);
     schnellZeichnen(true);
     return true;
   }
@@ -1747,7 +1737,6 @@
   function zauberEinschlag(art, zielChat, schaden) {
     var m = mittelpunkt(zielChat), licht = zauberLicht(art);
     if (!m) return;
-    if (schaden > 0) setTimeout(function () { schmerzStimme(zielChat, { schaden: schaden }); }, 260);
     effektTeil("sp-zauberblitz", m.x, m.y, "", 700, { "--licht": licht, "--gr": Math.round(m.r * 3.4) + "px" });
     ringWelle(m.x, m.y, m.r * 1.3, licht, 2);
     sterneBurst(m.x, m.y, m.r * 1.5, [licht, "#ffffff", licht], 9);
@@ -1785,7 +1774,6 @@
       else if (n.dorf_riss && DORF[n.dorf_riss]) setTimeout(function () { hinweis("🏚️ Deine " + DORF[n.dorf_riss].name + " hat einen Riss – Mehr → Mein Dorf → Reparieren (1 Erz)."); }, 1200);
     }
     var sid = spielIdVon(zc), el = platzElVon(zc), m = mittelpunkt(zc), jetzt = Date.now();
-    if (n.graben && sid) { S.grabenBis = S.grabenBis || {}; S.grabenBis[sid] = jetzt + 6000; }
     var dauer = Math.max(1, Math.min(30, Number(n.dauer) || z.dauer)) * 1000;
     ton(z.ton, art === "nebel" ? 0.4 : 0.45);
     var zahlNach = function (ms) {
@@ -1998,84 +1986,12 @@
       if (el) {
         el.classList.remove("sp-getroffen"); void el.offsetWidth; el.classList.add("sp-getroffen");
         setTimeout(function () { el.classList.remove("sp-getroffen"); }, 500);
-        /* FASSUNG 678 — B().schmerz rechnete nur den Namen des Lauts aus und
-           spielte ihn nie ab. Jetzt spricht das Spiel selbst (schmerzStimme). */
+        try { if (B().schmerz) B().schmerz(el); } catch (e) {}
       }
-      schmerzStimme(zielChat, n);
     } else if (n.abgewehrt > 0) {
       zahlZeigen(zielChat, null, "abgewehrt");
     }
     if (n.kaputt) ton("glasbruch", 0.55);
-  }
-
-  /* ---------------------------------------------------------------
-     FASSUNG 678 — SCHMERZ, STIMMEN UND ERINNERUNGEN
-     XANDER: „die Spieler, wenn sie beschossen werden gar kein
-     Schmerzgeräusche … variieren, wenn sie zum Beispiel schlimm getroffen
-     werden oder leicht … bei mehr Beschuss … bisschen mehr ausrasten …
-     kurz vom Ende … Stöhnen … ich brauche Hilfe … das tut weh oder hör
-     auf oder hau ab … zwischen Frau und Mann … nicht übertrieben … das
-     Spiel soll ja nicht nerven".
-     Die Stimme passt zum Platz (data-lc-geschlecht). Leichter Treffer:
-     kurzes „Au/Autsch/Ah" (nicht jedes Mal); schwer (ab 15 oder Kopf):
-     Schrei oder „Aua, das tut weh!"; viele Treffer in Folge: „Hör auf!"
-     oder „Hau ab!"; fast am Ende: Stöhnen oder „Hilfe!"; kaputt: „das
-     war's". Höchstens eine Stimme je Person und 1,1 s.
-     --------------------------------------------------------------- */
-  var SCHMERZ = { zuletzt: {}, serie: {}, schwach: {}, erinnert: {}, erinnertJe: 0, start: Date.now() };
-  function stimmeVon(el) {
-    return /^(w|f)/.test(String((el && el.dataset && el.dataset.lcGeschlecht) || "").trim().toLowerCase()) ? "frau" : "mann";
-  }
-  function schmerzStimme(zielChat, n) {
-    var el = platzElVon(zielChat);
-    if (!el || !n || !(n.schaden > 0)) return;
-    var jetzt = Date.now(), alt = SCHMERZ.serie[zielChat];
-    var serie = SCHMERZ.serie[zielChat] = alt && jetzt - alt.t < 5000 ? { t: jetzt, n: alt.n + 1 } : { t: jetzt, n: 1 };
-    if (jetzt - (SCHMERZ.zuletzt[zielChat] || 0) < 1100) return;
-    var st = n.ziel_stand || S.stand[spielIdVon(zielChat)] || {};
-    var anteil = st.lp_max ? Math.max(0, st.lp || 0) / st.lp_max : 1, name;
-    if (n.kaputt) name = "schmerzkaputt";
-    else if (anteil <= 0.25 && jetzt - (SCHMERZ.schwach[zielChat] || 0) > 20000) { SCHMERZ.schwach[zielChat] = jetzt; name = Math.random() < 0.5 ? "schmerzstoehnen" : "schmerzhilfe"; }
-    else if (serie.n >= 4 && serie.n % 4 === 0) name = Math.random() < 0.5 ? "schmerzhoerauf" : "hauab";
-    else if (!n.leicht && (n.schaden >= 15 || n.zone === "kopf")) name = Math.random() < 0.5 ? "schmerzschrei" : "schmerztutweh";
-    else { if (Math.random() < 0.3) return; name = ["schmerzau", "schmerzautsch", "schmerzah"][Math.floor(Math.random() * 3)]; }
-    SCHMERZ.zuletzt[zielChat] = jetzt;
-    ton(name + stimmeVon(el), n.schaden >= 15 ? 0.55 : 0.42);
-  }
-  /* XANDER: „dass man erinnert wird, wenn man Medizin braucht … wenn man
-     nichts gegessen hat keine Energie hat, dass dann kommt ich habe
-     Hunger … aber nicht jetzt alle 5 Sekunden … die Tiere … gequältes
-     Geräusch, wenn sie zur Neige gehen … Drachen Grummeln". Nur für
-     mich selbst, frühestens nach einer Minute im Spiel, höchstens alle
-     90 Sekunden eine Erinnerung, jede Art mit eigener langer Pause. */
-  var TIER_DRACHIG = /drach|phoenix|feuer/;
-  function erinnerungPruefen() {
-    var ich = S.ich, jetzt = Date.now();
-    if (!ich || !ich.mitspielen || !spielSichtbar() || ich.kaputt) return;
-    if (jetzt - SCHMERZ.start < 60000 || jetzt - SCHMERZ.erinnertJe < 90000) return;
-    var mein = platzElVon(meineChatId()), anteil = ich.lp_max ? ich.lp / ich.lp_max : 1;
-    var essbar = ["bratwurst", "sauerkraut", "brot", "kuchen"].some(function (d) { return vorrat(ich, d) > 0; });
-    var wahl = null;
-    var frei = function (k, ms) { return jetzt - (SCHMERZ.erinnert[k] || 0) > ms; };
-    if (anteil < 0.3 && (ich.pflaster > 0 || ich.traenke > 0) && frei("medizin", 240000))
-      wahl = ["medizin", "schmerzmedizin" + stimmeVon(mein), "🩹 Du bist schwach – nimm ein Pflaster oder einen Heiltrank (Menü → Heilen)."];
-    else if (anteil < 0.6 && essbar && frei("hunger", 360000))
-      wahl = ["hunger", "schmerzhunger" + stimmeVon(mein), "🍞 Hunger? Essen heilt dich (Menü → Heilen)."];
-    else if ((ich.mana || 0) < 10 && frei("kraft", 480000))
-      wahl = ["kraft", "schmerzkraft" + stimmeVon(mein), "✨ Kein Mana mehr – richtige Deutsch-Aufgaben laden es wieder auf."];
-    else {
-      [["haustier", "haustier_leben", "haustier_max"], ["flugtier", "flugtier_leben", "flugtier_max"]].some(function (t) {
-        var art = ich[t[0]], max = ich[t[2]] || 30;
-        if (!art || (ich[t[1]] || 0) > max * 0.3 || !frei("tier", 300000)) return false;
-        wahl = ["tier", TIER_DRACHIG.test(art) ? "drachengrummeln" : "tierwinseln",
-          "🐾 " + ((TIERE[art] || {}).name || "Dein Tier") + " hat Hunger und kaum noch Kraft – füttern (Menü → Tiere)."];
-        return true;
-      });
-    }
-    if (!wahl) return;
-    SCHMERZ.erinnert[wahl[0]] = jetzt; SCHMERZ.erinnertJe = jetzt;
-    ton(wahl[1], 0.4);
-    hinweis(wahl[2]);
   }
 
   /* ---------------------------------------------------------------
@@ -2100,7 +2016,6 @@
     if (n.tier_heil > 0) setTimeout(function () { zahlZeigen(verteidiger, n.tier_heil, "gekuschelt"); }, verzug + 700);
     if (n.gegenwehr > 0) setTimeout(function () {
       zahlZeigen(angreifer, -n.gegenwehr, "Gegenwehr");
-      schmerzStimme(angreifer, { schaden: n.gegenwehr, leicht: true });
       var el = platzElVon(angreifer);
       if (el) { el.classList.remove("sp-getroffen"); void el.offsetWidth; el.classList.add("sp-getroffen"); setTimeout(function () { el.classList.remove("sp-getroffen"); }, 500); }
     }, verzug + (n.tier === "chihuahua" && n.gegen_tier > 0 ? Math.round(TIER_DAUER.chihuahua * 0.22) : n.gegen_tier > 0 ? Math.round(TIER_DAUER.boden * 0.24)
@@ -2939,7 +2854,7 @@
       + '<button type="button" class="sp-s-wwahl' + (S.wwahl ? " sp-an" : "") + '" data-s="werkzeug" title="Werkzeug wechseln">'
       + '<svg viewBox="0 0 20 20"><path d="M4 7 H15 L12 4 M16 13 H5 L8 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>');
     /* FASSUNG 673 — liegt ein Fundstück auf dem Feld, steht es auch hier. */
-    if (fundKnopfHtml()) teile.push('<button type="button" class="sp-s-fund" data-s="fund" title="Zeigen, wo das Fundstück liegt">' + fundSvg() + "</button>");
+    if (fundKnopfHtml()) teile.push('<button type="button" class="sp-s-fund" data-s="fund" title="Fundstück einsammeln">' + fundSvg() + "</button>");
     var burger = '<button type="button" class="sp-s-burger sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Spielmenü: Waffen, Heilen, Tiere, Mehr">'
       + '<svg viewBox="0 0 20 20"><path d="M4 6 H16 M4 10 H16 M4 14 H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
     var html = burger + '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (S.rad != null && ich.mitspielen ? radHtml(S.rad) : "")
@@ -3059,18 +2974,12 @@
       var x = M + Math.cos(w) * R, y = M + Math.sin(w) * R, zu = (ich.level || 1) < z.level, arm = !zu && (ich.mana || 0) < z.mana;
       html += '<button type="button" class="sp-rad-waffe sp-rad-zauber' + (S.zauber === a ? " sp-an" : "") + (zu ? " sp-zu" : arm ? " sp-stumpf" : "") + '" data-s="zauberwahl" data-z="' + a
         + '" style="left:' + (x - 20).toFixed(0) + "px;top:" + (y - 20).toFixed(0) + "px;--klasse:" + z.farbe + '" title="' + esc(z.name + " · " + z.mana + " Mana · ab Level " + z.level + " · " + z.was) + '">'
-        + zauberSvg(a) + "<small" + (zu ? "" : ' class="sp-zr-kosten"') + ">" + (zu ? "Lv" + z.level : z.mana) + "</small></button>";
+        + zauberSvg(a) + "<small>" + (zu ? "Lv" + z.level : z.mana) + "</small></button>";
     });
     var rg = zauberRang(ich);
     return '<div class="sp-rad sp-rad-voll sp-zauberrad" style="width:' + B + "px;height:" + B + 'px">'
       + '<svg class="sp-rad-sektoren" viewBox="0 0 ' + B + " " + B + '"><circle cx="' + M + '" cy="' + M + '" r="' + (R + 24) + '" class="sp-rad-scheibe"/>'
-      + '<text x="' + M + '" y="' + (M - 34) + '" fill="#c9b8ff">' + rg.name + "</text>"
-      /* FASSUNG 678 — XANDER: „warum sind das immer noch so viele Nummern …
-         der Amtsweg das sind 70 bei mir. Ich kann die fast endlos
-         einsetzen". Die Zahl ist KEIN Vorrat, sondern der Mana-Preis. Das
-         steht jetzt in der Mitte, mit dem eigenen Mana daneben. */
-      + '<text x="' + M + '" y="' + (M + 38) + '" fill="#8fd3ff" class="sp-zr-mana">Mana ' + (ich.mana || 0) + "</text>"
-      + '<text x="' + M + '" y="' + (M + 52) + '" fill="#9aa6b8" class="sp-zr-erkl">Zahl = Mana-Preis</text></svg>'
+      + '<text x="' + M + '" y="' + (M - 34) + '" fill="#c9b8ff">' + rg.name + "</text></svg>"
       + html + '<button type="button" class="sp-rad-mitte" data-s="zauberab" style="left:' + (M - 20) + "px;top:" + (M - 20) + 'px" title="Zauber weglegen"><svg viewBox="0 0 20 20"><path d="M5 5 L15 15 M15 5 L5 15" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></button></div>';
   }
   function schnellMenueHtml() {
@@ -3264,7 +3173,6 @@
       try { var eig = document.querySelector("#lcPlaetze .lc-platz-ich"); if (eig && window.DMA_PRUEFUNG && window.DMA_PRUEFUNG.platzMenue) { eigenLangFrei = true; window.DMA_PRUEFUNG.platzMenue(eig); eigenLangFrei = false; } } catch (e) { eigenLangFrei = false; }
     } else if (s === "zauberrad") {
       S.zrad = !S.zrad; S.rad = null; S.schnellMenue = false;
-      if (S.zrad) zauberradTon();
     } else if (s === "zauberwahl") {
       var zg = zauberGesperrt(k.dataset.z);
       if (zg) { hinweis("✨ " + zg); }
@@ -3316,7 +3224,7 @@
       if (S.duell && S.duell.uebung) uebungEnde(); else uebungStarten("sparring:" + S.sparring);
       zu = true;
     } else if (s === "fund") {
-      fundAmPlatzZeigen(); return;
+      var fk = fundPlatzEl(); if (fk) fundHeben(fk); return;
     } else if (s === "graben") {
       S.schnellMenue = false; S.wwahl = false;
       /* Aus dem Menü „Graben (Schaufel)“ bei anderem Werkzeug in der Hand: zur Schaufel wechseln. */
@@ -3708,13 +3616,8 @@
       schmuck(el, "sp-falle-marke", Boolean(falle), kreis, falle ? falleSvg(falle) : "");
       /* Das Geschütz links unten */
       schmuck(el, "sp-geschuetz", Boolean(s.geschuetz) && !turmDraussen(s), kreis, geschuetzSvg(s.geschuetz_stufe), "sp-turm-" + Math.min(5, s.geschuetz_stufe || 1));
-      /* FASSUNG 662 — der Wassergraben liegt als blaues Band unter der Mauer.
-         FASSUNG 678 — XANDER: „dann hab ich immer noch diesen Fluss graben
-         egal wo ich hingehe im Spiel hab ich diesen Fluss". Der Graben
-         schützt das DORF, nicht den Platz: er zeigt sich nur noch, wenn er
-         gerade ein Beben schluckt (6 s). Wie viele Beben er noch hält, steht
-         in Mein Dorf und im Laden. */
-      schmuck(el, "sp-wassergraben", (s.graben || 0) > 0 && Boolean(sid && ((S.grabenBis || {})[sid] || 0) > Date.now()), kreis, grabenSvg(), "");
+      /* FASSUNG 662 — der Wassergraben liegt als blaues Band unter der Mauer. */
+      schmuck(el, "sp-wassergraben", (s.graben || 0) > 0, kreis, grabenSvg(), "");
       /* Kaputt: Risse und Grau */
       el.classList.toggle("sp-kaputt", Boolean(s.kaputt));
       schmuck(el, "sp-risse", Boolean(s.kaputt), kreis, risseSvg());
@@ -4510,10 +4413,8 @@
        Geschenk kommt, dass ich das immer sichtbar habe … direkt auf das
        Hauptmenü kommen". Oben im Fenster: das Fundstück (ein Tipp holt
        es), das Hauptmenü (☰) und Schließen. */
-    /* FASSUNG 678 — XANDER: „das Bürger Menü in diesem Deutsch Ding das hat
-       glaub ich gar keine Funktion … ein ablegen auch gereicht". Das ☰ ist
-       weg; ✕ legt das Fenster ab. */
     var kopf = '<div class="sp-kopf"><b>⚔️ Deutsch zum Überleben</b><span class="sp-kopf-knoepfe">' + fundKnopfHtml()
+      + '<button type="button" class="sp-zu sp-haupt" data-tu="haupt" aria-label="Hauptmenü" title="Hauptmenü">☰</button>'
       + '<button type="button" class="sp-zu" data-tu="zu" aria-label="Schließen">✕</button></span></div>';
     if (!ich) {
       panel.innerHTML = kopf + '<div class="sp-leer">' + esc(S.fehler || (S.versucht ? "Einen Moment – ich melde dich im Spiel an …" : "Das Spiel geht im Klassenzimmer.")) + "</div>";
@@ -4884,7 +4785,7 @@
     var tu = k.dataset.tu;
     if (tu === "zu") return schliessen();
     if (tu === "haupt") { schliessen(); S.schnellMenue = true; schnellZeichnen(true); return; }
-    if (tu === "fund") { fundAmPlatzZeigen(); return; }
+    if (tu === "fund") { var fk = fundPlatzEl(); if (fk) fundHeben(fk); return; }
     if (tu === "niveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} aufgabeHolen(false); return; }
     if (tu === "aufgabe") return aufgabeHolen(false);
     if (tu === "missionsaufgabe") return aufgabeHolen(true);
@@ -5807,7 +5708,7 @@
   }
   function fundKnopfHtml() {
     return S.fundPlatz && fundPlatzEl() && fundPlatzEl().querySelector(".sp-fundsack")
-      ? '<button type="button" class="sp-fund-knopf" data-tu="fund" title="Fenster ablegen und zeigen, wo das Fundstück liegt">' + fundSvg() + "<span>Fundstück!</span></button>" : "";
+      ? '<button type="button" class="sp-fund-knopf" data-tu="fund" title="Fundstück einsammeln">' + fundSvg() + "<span>Fundstück</span></button>" : "";
   }
   function fundKnopfPflegen() {
     if (!panel || panel.hidden) return;
@@ -5815,21 +5716,6 @@
     if (!knoepfe) return;
     if (soll && !alt) knoepfe.insertAdjacentHTML("afterbegin", soll);
     else if (!soll && alt) alt.remove();
-  }
-  /* FASSUNG 678 — XANDER: „in dem Moment, wo angezeigt wird, kann man das
-     nicht automatisch mit dem Knopf einsammeln … Ich muss mir die Mühe
-     machen auf das richtige Feld zu klicken … Nur dass der Button in dem
-     Moment dieses Dialogfenster ablegt". Der Knopf legt das Fenster ab
-     und zeigt, WO das Fundstück liegt – aufheben muss man es selbst. */
-  function fundAmPlatzZeigen() {
-    schliessen(); S.schnellMenue = false; S.rad = null; S.zrad = false;
-    var q = fundPlatzEl(), f = q && q.querySelector(".sp-fundsack");
-    schnellZeichnen(true);
-    if (!f) return;
-    try { q.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {}
-    f.classList.remove("sp-fund-zeigen"); void f.offsetWidth; f.classList.add("sp-fund-zeigen");
-    setTimeout(function () { f.classList.remove("sp-fund-zeigen"); }, 2600);
-    hinweis("🎁 Da liegt es – tippe selbst auf das Säckchen.");
   }
   function fundHeben(knopf) {
     var f = knopf.querySelector(".sp-fundsack");
@@ -5860,7 +5746,6 @@
     fundPflegen();
     fundKnopfPflegen();
     ackerPflegen();
-    erinnerungPruefen();
     if (S.bereit && !S.troph && !trophUhr && Date.now() - trophLetzt > 30000) trophaeenBald();
     schnellZeichnen();
   }, 700);
@@ -6231,7 +6116,7 @@
       eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,
       krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
-      ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
+      ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,
       trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, klassenHtml: klassenHtml, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
       zauberZeigen: zauberZeigen, zaubern: zaubern, daemonAusbruch: daemonAusbruch, uebungZaubern: uebungZaubern, geschuetzSvg: geschuetzSvg, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,

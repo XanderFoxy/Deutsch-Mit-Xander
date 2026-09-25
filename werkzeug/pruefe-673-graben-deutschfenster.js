@@ -158,22 +158,32 @@ const sage = (gut, was, zusatz) => {
     const rest = document.createElement("span"); rest.className = "sp-wassergraben"; leer.appendChild(rest);
     window.DMA_SPIEL.pruef.zeichnen();
     await new Promise((r) => setTimeout(r, 200));
-    return { alle: document.querySelectorAll("#lcPlaetze .sp-wassergraben").length,
-             eigen: document.querySelectorAll("#lcPlaetze .lc-platz-ich .sp-wassergraben").length, restDa: rest.isConnected };
+    const ruhig = { alle: document.querySelectorAll("#lcPlaetze .sp-wassergraben").length, restDa: rest.isConnected };
+    /* FASSUNG 678 — XANDER: „immer noch diesen Fluss … egal wo ich hingehe". Er zeigt sich nur, wenn er ein Beben schluckt. */
+    S.grabenBis = { [S.ich.id]: Date.now() + 6000 };
+    window.DMA_SPIEL.pruef.zeichnen();
+    await new Promise((r) => setTimeout(r, 200));
+    return { ruhig, alle: document.querySelectorAll("#lcPlaetze .sp-wassergraben").length,
+             eigen: document.querySelectorAll("#lcPlaetze .lc-platz-ich .sp-wassergraben").length };
   });
-  sage(graben.alle === 1 && graben.eigen === 1 && !graben.restDa, "der Graben liegt nur einmal da – an meinem Platz; der Rest am alten Platz ist weg", JSON.stringify(graben));
+  sage(graben.ruhig.alle === 0 && !graben.ruhig.restDa, "ohne Beben liegt KEIN Graben am Platz (auch kein Rest am alten Platz)", JSON.stringify(graben));
+  sage(graben.alle === 1 && graben.eigen === 1, "schluckt er ein Beben, zeigt er sich einmal – an meinem Platz", JSON.stringify(graben));
 
   console.log("\nDAS DEUTSCH-FENSTER\n");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.waffe = "kartoffel"; window.DMA_SPIEL.menue("deutsch"); });
   await tick(400);
   const fenster = await pg.evaluate(() => {
     const p = document.getElementById("spPanel"), st = p.querySelector(".sp-status");
+    const w = p.querySelector(".sp-status-werte");
     return { text: st.textContent, statusHoch: Math.round(st.getBoundingClientRect().height), zeilen: p.querySelectorAll(".sp-status-zeile").length,
-             haupt: Boolean(p.querySelector('[data-tu="haupt"]')), wischbar: getComputedStyle(p.querySelector(".sp-status-werte")).flexWrap };
+             haupt: Boolean(p.querySelector('[data-tu="haupt"]')), umbruch: getComputedStyle(w).flexWrap, quer: w.scrollWidth - w.clientWidth,
+             fensterHoch: Math.round(p.getBoundingClientRect().height), bild: innerHeight, inhaltScrollt: getComputedStyle(p.querySelector(".sp-inhalt")).overflowY };
   });
   sage(!/angelegt/.test(fenster.text), "die Zeile „Kartoffel ist angelegt“ ist weg");
-  sage(fenster.zeilen === 1 && fenster.wischbar === "nowrap" && fenster.statusHoch <= 90, "Lebenspunkte, Level und Mana in einer Zeile, die Werte in einer Wischzeile – Statusblock höchstens 90 px", fenster.statusHoch + " px");
-  sage(fenster.haupt, "oben im Fenster gibt es ☰ zum Hauptmenü");
+  /* FASSUNG 678 — XANDER: „Jetzt zwingst du die Leute … dass man das jetzt nach rechts alles scrollen muss … Die Werte sollen im Auge bleiben". */
+  sage(fenster.zeilen === 1 && fenster.umbruch === "wrap" && fenster.quer <= 1, "LP, Level und Mana in einer Zeile, die Werte brechen um – nichts zur Seite wischen", JSON.stringify(fenster));
+  sage(fenster.fensterHoch <= Math.round(fenster.bild * 0.59) && fenster.inhaltScrollt === "auto", "das Fenster ist flach (höchstens 58 % der Höhe), nur der Inhalt scrollt", fenster.fensterHoch + " von " + fenster.bild + " px");
+  sage(!fenster.haupt, "kein ☰ mehr im Fenster (✕ legt ab)");
 
   console.log("\nFUNDSTÜCK, WÄHREND DAS FENSTER OFFEN IST\n");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.fundNaechst = 0; });
@@ -186,18 +196,17 @@ const sage = (gut, was, zusatz) => {
   await tick(300);
   const geholt = await pg.evaluate(() => ({ ruf: window.__rufe.some((r) => r.name === "spiel_fund_heben"), sack: Boolean(document.querySelector("#lcPlaetze .sp-fundsack")),
     panel: !document.getElementById("spPanel").hidden, aufgabe: window.__rufe.some((r) => r.name === "spiel_aufgabe") }));
-  sage(geholt.ruf && !geholt.sack && geholt.panel && geholt.aufgabe, "ein Tipp darauf hebt es auf – ohne zu schließen, die Artikel-Aufgabe kommt gleich im Fenster", JSON.stringify(geholt));
+  geholt.zeigt = await pg.evaluate(() => Boolean(document.querySelector("#lcPlaetze .sp-fundsack.sp-fund-zeigen")));
+  /* FASSUNG 678 — XANDER: „man soll es nicht so einfach haben nur auf den Knopf zu drücken … Nur dass der Button … dieses Dialogfenster ablegt". */
+  sage(!geholt.ruf && geholt.sack && !geholt.panel && geholt.zeigt, "der Knopf hebt NICHT auf: er legt das Fenster ab und zeigt das Säckchen am Platz", JSON.stringify(geholt));
 
   console.log("\nTIPP NEBEN DAS FENSTER, HAUPTMENÜ\n");
+  await pg.evaluate(() => window.DMA_SPIEL.menue("deutsch"));
+  await tick(300);
   const panelOben = await pg.evaluate(() => Math.round(document.getElementById("spPanel").getBoundingClientRect().top));
   await pg.touchscreen.tap(180, Math.max(10, panelOben - 30));
   await tick(300);
   sage(await pg.evaluate(() => document.getElementById("spPanel").hidden), "ein Tipp über dem Fenster schließt es");
-  await pg.evaluate(() => window.DMA_SPIEL.menue("deutsch"));
-  await tick(300);
-  await tippe('#spPanel [data-tu="haupt"]');
-  const haupt = await pg.evaluate(() => ({ panel: !document.getElementById("spPanel").hidden, menue: window.DMA_SPIEL.pruef.zustand().schnellMenue }));
-  sage(!haupt.panel && haupt.menue, "☰ schließt das Fenster und öffnet das Hauptmenü", JSON.stringify(haupt));
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
 
   /* Fundstück auch in der Schnellleiste. */
