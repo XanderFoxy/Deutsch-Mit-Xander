@@ -163,6 +163,10 @@ const ExerciseData = (function () {
   // Silbentrennung mit Betonung (Großbuchstaben = betonte Silbe) für dieselben 105 Wörter —
   // Grundlage für die sitweite Betonungs-Anzeige. Regel: einfache deutsche Wörter betonen die
   // erste (Stamm-)Silbe; Fremdwörter/Lehnwörter (Fotografie, Museum …) folgen ihrem eigenen Muster.
+  /* Runde 636 — Betonung geprüft. Xander: „Scanne Betonung seitenweit … Hör auf,
+     sinnvolle Wörter zu zerstören … recherchiere … Duden.“ Maßstab ist die
+     Duden-Betonung; Regeln K1–K3 prüft werkzeug/pruefe-betonung-regeln.js.
+     Geändert nur in WORD_SYL und FIRST_STEPS_SYLLABLES. */
   const WORD_SYL = {
     "Frauenkirche": "FRAU-en-kir-che",
     "Hauptstadt": "HAUPT-stadt",
@@ -175,7 +179,7 @@ const ExerciseData = (function () {
     "Waschmaschinen": "WASCH-ma-schi-nen",
     "Weihnachtsmarkt": "WEIH-nachts-markt",
     "attraktiv": "at-trak-TIV",
-    "aufgeregt": "auf-ge-REGT",
+    "aufgeregt": "AUF-ge-regt",
     "aufregend": "AUF-re-gend",
     "bedeutend": "be-DEU-tend",
     "bedürftig": "be-DÜRF-tig",
@@ -6952,13 +6956,13 @@ const ExerciseData = (function () {
     "sauber / schmutzig": "SAU-ber / SCHMUT-zig", "nass / trocken": "nass / TRO-cken", "hell / dunkel": "hell / DUN-kel", "stark / schwach": "stark / schwach",
     // Kapitel 11
     "der Cousin / die Cousine": "der Cou-SIN / die Cou-SI-ne", "der Papa": "PA-pa", "versuchen": "ver-SU-chen", "mieten": "MIE-ten",
-    "bringen": "BRIN-gen", "vorziehen": "VOR-zie-hen", "wählen": "WÄH-len", "hinlegen": "HIN-le-gen", "unterrichten": "UN-ter-rich-ten",
+    "bringen": "BRIN-gen", "vorziehen": "VOR-zie-hen", "wählen": "WÄH-len", "hinlegen": "HIN-le-gen", "unterrichten": "un-ter-RICH-ten",
     "weniger": "WE-ni-ger", "der Monat": "der MO-nat", "während": "WÄH-rend", "wünschen": "WÜN-schen", "bekommen": "be-KOM-men",
     "vergessen": "ver-GES-sen", "jeder / jede / jedes": "JE-der", "fühlen": "FÜH-len", "nächste(r/s)": "NÄCHS-te", "die Person": "die Per-SON",
     "vor / hinter": "vor / HIN-ter", "das Restaurant": "das Res-tau-RANT", "die Toilette": "die Toi-LET-te",
-    "Auf Wiedersehen": "auf WIE-der-se-hen", "einschließlich": "ein-SCHLIESS-lich", "halten": "HAL-ten", "prüfen": "PRÜ-fen", "viel / viele": "viel / VIE-le",
+    "Auf Wiedersehen": "auf WIE-der-se-hen", "einschließlich": "EIN-schließ-lich", "halten": "HAL-ten", "prüfen": "PRÜ-fen", "viel / viele": "viel / VIE-le",
     // Kapitel 12
-    "in": "in", "das Auto": "das Au-TO", "noch": "noch", "aber": "A-ber", "weit / weg": "weit / weg", "ähnlich": "ÄHN-lich",
+    "in": "in", "das Auto": "das AU-to", "noch": "noch", "aber": "A-ber", "weit / weg": "weit / weg", "ähnlich": "ÄHN-lich",
     "anderer / andere / anderes": "AN-de-rer", "die Seite": "die SEI-te", "bis": "bis", "gestern": "GES-tern", "seit": "seit",
     "der Tag": "der Tag", "vorher": "VOR-her", "leicht": "leicht", "nahe / nah": "NA-he / nah", "warten": "WAR-ten",
     "verkaufen": "ver-KAU-fen", "gebrauchen": "ge-BRAU-chen", "entscheiden": "ent-SCHEI-den", "zwischen": "ZWI-schen", "fertig": "FER-tig",

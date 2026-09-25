@@ -2,6 +2,9 @@
    DATA — VOKABELN, KOMPASS, MATERIALIEN, LINKS
    ========================================================= */
 
+/* Runde 636 — Betonung geprüft. Xander: „Scanne Betonung seitenweit … Hör auf,
+   sinnvolle Wörter zu zerstören … recherchiere … Duden.“ Maßstab ist die
+   Duden-Betonung; Regeln K1–K3 prüft werkzeug/pruefe-betonung-regeln.js. */
 const VocabData = (function () {
   "use strict";
 
@@ -343,10 +346,10 @@ const VocabData = (function () {
     "Japanisch": "Ja-PA-nisch", "Koreanisch": "Ko-re-A-nisch", "Hindi": "HIN-di", "Schwedisch": "SCHWE-disch",
     "Norwegisch": "Nor-WE-gisch", "Dänisch": "DÄ-nisch", "Finnisch": "FIN-nisch", "Rumänisch": "Ru-MÄ-nisch",
     "Bulgarisch": "Bul-GA-risch", "Tschechisch": "TSCHE-chisch", "Serbisch/Kroatisch": "SER-bisch/Kro-A-tisch",
-    "Albanisch": "Al-BA-nisch", "Vietnamesisch": "Viet-na-ME-sisch", "Thailändisch": "Thai-LÄN-disch",
-    "Suaheli": "Sua-HE-li", "Urdu": "Ur-DU",
+    "Albanisch": "Al-BA-nisch", "Vietnamesisch": "Viet-na-ME-sisch", "Thailändisch": "THAI-län-disch",
+    "Suaheli": "Sua-HE-li", "Urdu": "UR-du",
     "Dari": "DA-ri", "Paschtu": "PASCH-tu", "Somali": "So-MA-li", "Tigrinya": "Ti-GRIN-ya",
-    "Amharisch": "Am-HA-risch", "Bengalisch": "Ben-GA-lisch", "Panjabi": "PAN-ja-bi", "Tamil": "TA-mil",
+    "Amharisch": "Am-HA-risch", "Bengalisch": "Ben-GA-lisch", "Panjabi": "Pan-JA-bi", "Tamil": "TA-mil",
     "Indonesisch": "In-do-NE-sisch", "Tagalog/Filipino": "Ta-GA-log/Fi-li-PI-no", "Georgisch": "GEOR-gisch",
     "Armenisch": "Ar-ME-nisch", "Aserbaidschanisch": "A-ser-bai-DSCHA-nisch", "Mongolisch": "Mon-GO-lisch",
     "Ungarisch": "UN-ga-risch", "Slowakisch": "Slo-WA-kisch", "Slowenisch": "Slo-WE-nisch",

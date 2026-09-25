@@ -14,13 +14,16 @@
      level   A1 | A2 | B1 | B2 | C1 | C2
      theme   Themenbereich für den Filter
    ============================================================ */
+/* Runde 636 — Betonung geprüft. Xander: „Scanne Betonung seitenweit … Hör auf,
+   sinnvolle Wörter zu zerstören … recherchiere … Duden.“ Maßstab ist die
+   Duden-Betonung; Regeln K1–K3 prüft werkzeug/pruefe-betonung-regeln.js. */
 window.VOCAB_STAND = "2026-09-04T12:55";
 
 window.VOCAB_EXTRA = [
   /* ---------- Denken & Argumentieren ---------- */
   { word: "die These", syl: "THE-se", de: "eine Behauptung, die man begründen will", en: "thesis, claim", example: "Seine These überzeugt mich nicht.", level: "C1", theme: "Denken & Argumentieren" },
   { word: "der Einwand", syl: "EIN-wand", de: "ein Gegenargument gegen eine Aussage", en: "objection", example: "Dein Einwand ist berechtigt.", level: "C1", theme: "Denken & Argumentieren" },
-  { word: "die Voraussetzung", syl: "VOR-aus-set-zung", de: "etwas, das erfüllt sein muss, damit etwas anderes möglich ist", en: "prerequisite", example: "Vertrauen ist die Voraussetzung für jede Zusammenarbeit.", level: "C1", theme: "Denken & Argumentieren" },
+  { word: "die Voraussetzung", syl: "Vor-AUS-set-zung", de: "etwas, das erfüllt sein muss, damit etwas anderes möglich ist", en: "prerequisite", example: "Vertrauen ist die Voraussetzung für jede Zusammenarbeit.", level: "C1", theme: "Denken & Argumentieren" },
   { word: "der Widerspruch", syl: "WI-der-spruch", de: "zwei Aussagen, die sich gegenseitig ausschließen", en: "contradiction", example: "Das ist ein Widerspruch in sich.", level: "C1", theme: "Denken & Argumentieren" },
   { word: "die Schlussfolgerung", syl: "SCHLUSS-fol-ge-rung", de: "das, was sich logisch aus etwas ergibt", en: "conclusion", example: "Aus den Zahlen lässt sich nur eine Schlussfolgerung ziehen.", level: "C1", theme: "Denken & Argumentieren" },
   { word: "die Ambivalenz", syl: "Am-bi-va-LENZ", de: "das gleichzeitige Vorhandensein gegensätzlicher Gefühle oder Bewertungen", en: "ambivalence", example: "Seine Haltung ist von großer Ambivalenz geprägt.", level: "C2", theme: "Denken & Argumentieren" },

@@ -25,6 +25,11 @@
    Kopf geschrieben von scratchpad/kopf-auffrischen.py, zusammengefuehrt von
    scratchpad/zusammenfuehren.py.
 */
+/* Runde 636 — Betonung geprüft. Xander: „Scanne Betonung seitenweit … Hör auf,
+   sinnvolle Wörter zu zerstören … recherchiere … Duden.“ Maßstab ist die
+   Duden-Betonung; Regeln K1–K3 prüft werkzeug/pruefe-betonung-regeln.js.
+   Achtung: Korrekturen hinter der Marke ANFANG ERZEUGTER TEIL gehen beim
+   Neuerzeugen mit scratchpad/bau-teil9.py verloren — dort nachziehen. */
 window.DMA_VOKABELN = window.DMA_VOKABELN || {};
 window.DMA_VOKABELN["Länder & Welt"] = [
   /* Grundwortschatz, von Hand gepflegt (kam aus dem alten Sammelteil teil-6.js) — 353 Eintraege. */
@@ -486,7 +491,7 @@ window.DMA_VOKABELN_ZUSATZ["Länder & Welt"] = (window.DMA_VOKABELN_ZUSATZ["Län
   {"word": "Bangkok", "de": "die Hauptstadt Thailands", "syl": "BANG-kok", "en": "Bangkok", "example": "In Bangkok ist es heiß und feucht.", "level": "A2", "theme": "Länder & Welt"},
   {"word": "Bankenberlin", "de": "zusammengesetzt aus „Banken\" und „Berlin\"", "syl": "BAN-ken-ber-lin", "en": "bank Berlin", "example": "„Bankenberlin\" ist aus „Banken\" und „Berlin\" zusammengesetzt.", "level": "A2", "theme": "Länder & Welt"},
   {"word": "Bavaria", "de": "der lateinische Name Bayerns; auch die große Statue in München", "syl": "Ba-VA-ri-a", "en": "Bavaria", "example": "Die Bavaria blickt über die Theresienwiese.", "level": "C1", "theme": "Länder & Welt"},
-  {"word": "beiwohnen", "de": "steht in einer Übung als falsche Antwort zur Auswahl — gesucht war dort „bewohnen\". Über die Schreibweise dieses Wortes sagt das nichts.", "syl": "bei-WOH-nen", "en": "wrong answer option in an exercise (the right answer there is “bewohnen”)", "example": "In der Übung ist „beiwohnen\" die falsche Antwort; richtig ist dort „bewohnen\".", "level": "B1", "theme": "Länder & Welt"},
+  {"word": "beiwohnen", "de": "steht in einer Übung als falsche Antwort zur Auswahl — gesucht war dort „bewohnen\". Über die Schreibweise dieses Wortes sagt das nichts.", "syl": "BEI-woh-nen", "en": "wrong answer option in an exercise (the right answer there is “bewohnen”)", "example": "In der Übung ist „beiwohnen\" die falsche Antwort; richtig ist dort „bewohnen\".", "level": "B1", "theme": "Länder & Welt"},
   {"word": "der Bodensee", "de": "der große See zwischen Deutschland, Österreich und der Schweiz", "syl": "BO-den-see", "en": "Lake Constance", "example": "Im Sommer fahren viele Menschen an den Bodensee.", "level": "A2", "theme": "Länder & Welt"},
   {"word": "Boston", "de": "eine Stadt an der Ostküste der USA", "syl": "BOS-ton", "en": "Boston", "example": "Von Boston kam die erste E-Mail nach Deutschland.", "level": "B1", "theme": "Länder & Welt"},
   {"word": "British", "de": "steht in einer Übung als falsche Antwort zur Auswahl — gesucht war dort „britisch\". Über die Schreibweise dieses Wortes sagt das nichts.", "syl": "BRI-tish", "en": "wrong answer option in an exercise (the right answer there is “britisch”)", "example": "In der Übung ist „British\" die falsche Antwort; richtig ist dort „britisch\".", "level": "B1", "theme": "Länder & Welt"},
@@ -526,7 +531,7 @@ window.DMA_VOKABELN_ZUSATZ["Länder & Welt"] = (window.DMA_VOKABELN_ZUSATZ["Län
   {"word": "Italienischen", "de": "großgeschriebene (substantivierte) Form von „italienisch\" — zu Italien gehörend", "syl": "i-ta-li-E-ni-schen", "en": "Italian (nominalised form)", "example": "Die Form „Italienischen\" gehört zu „italienisch\" (großgeschriebene (substantivierte) Form).", "level": "A2", "theme": "Länder & Welt"},
   {"word": "italienischen", "de": "gebeugte Form von „italienisch\" — zu Italien gehörend", "syl": "i-ta-li-E-ni-schen", "en": "Italian (inflected form)", "example": "Die Form „italienischen\" gehört zu „italienisch\" (gebeugte Form).", "level": "A2", "theme": "Länder & Welt"},
   {"word": "Izmir", "de": "eine Hafenstadt in der Türkei", "syl": "IZ-mir", "en": "Izmir", "example": "Izmir liegt an der Ägäis.", "level": "B1", "theme": "Länder & Welt"},
-  {"word": "Japanisch", "de": "von „Japan\" abgeleitet, mit der Nachsilbe -isch (Eigenschaftswort)", "syl": "JA-pa-nisch", "en": "Japan (-isch form)", "example": "„Japanisch\" ist von „Japan\" abgeleitet.", "level": "A2", "theme": "Länder & Welt"},
+  {"word": "Japanisch", "de": "von „Japan\" abgeleitet, mit der Nachsilbe -isch (Eigenschaftswort)", "syl": "Ja-PA-nisch", "en": "Japan (-isch form)", "example": "„Japanisch\" ist von „Japan\" abgeleitet.", "level": "A2", "theme": "Länder & Welt"},
   {"word": "japanische", "de": "steht in einer Übung als falsche Antwort zur Auswahl — gesucht war dort „Japanisch\". Über die Schreibweise dieses Wortes sagt das nichts.", "syl": "JA-pa-ni-sche", "en": "wrong answer option in an exercise (the right answer there is “Japanisch”)", "example": "In der Übung ist „japanische\" die falsche Antwort; richtig ist dort „Japanisch\".", "level": "A2", "theme": "Länder & Welt"},
   {"word": "Jerusalem", "de": "eine Stadt, die drei Weltreligionen heilig ist", "syl": "Je-RU-sa-lem", "en": "Jerusalem", "example": "In Jerusalem fand der Eichmann-Prozess statt.", "level": "B1", "theme": "Länder & Welt"},
   {"word": "Kalifornien", "de": "ein Bundesstaat im Westen der USA", "syl": "Ka-li-FOR-ni-en", "en": "California", "example": "In Kalifornien liegt das Silicon Valley.", "level": "A2", "theme": "Länder & Welt"},

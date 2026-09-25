@@ -33,6 +33,9 @@
    sind. Hier steht nur, was im ganzen Sprachgebiet als lockere Form
    gilt (plus ein paar wenige, die man überall versteht).
    ===================================================================== */
+/* Runde 636 — Betonung geprüft. Xander: „Scanne Betonung seitenweit … Hör auf,
+   sinnvolle Wörter zu zerstören … recherchiere … Duden.“ Maßstab ist die
+   Duden-Betonung; Regeln K1–K3 prüft werkzeug/pruefe-betonung-regeln.js. */
 window.DMA_UMGANGSSPRACHE = {
 
   /* ---- Haushalt, Wohnung, Dinge des Tages ------------------------ */
@@ -256,7 +259,7 @@ window.DMA_UMGANGSSPRACHE = {
   "das Samenbläschen": { wort: "das Samenbläschen", syl: "SA-men-bläs-chen", stil: "" },
   "der Muttermund": { wort: "der Muttermund", syl: "MUT-ter-mund", stil: "" },
   "der Gebärmutterhals": { wort: "die Zervix", syl: "ZER-vix", stil: "", wo: "Im Krankenhaus und im Mutterpass steht „Zervix“." },
-  "der Eierstock": { wort: "das Ovar", syl: "O-var", stil: "", wo: "„Eierstock“ ist das normale Wort; „Ovar“ steht im Befund." },
+  "der Eierstock": { wort: "das Ovar", syl: "o-VAR", stil: "", wo: "„Eierstock“ ist das normale Wort; „Ovar“ steht im Befund." },
   "die Harnröhre": { wort: "die Harnröhre", syl: "HARN-röh-re", stil: "" },
 
   "der Schnupfen": { wort: "die Erkältung", syl: "Er-KÄL-tung", stil: "", wo: "Streng genommen ist Schnupfen nur die laufende Nase, Erkältung das Ganze." },

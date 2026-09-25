@@ -20,6 +20,9 @@
    sonntags. „Brauch" heißt: normaler Arbeitstag, aber alle
    machen mit.
    ========================================================= */
+/* Runde 636 — Betonung geprüft. Xander: „Scanne Betonung seitenweit … Hör auf,
+   sinnvolle Wörter zu zerstören … recherchiere … Duden.“ Maßstab ist die
+   Duden-Betonung; Regeln K1–K3 prüft werkzeug/pruefe-betonung-regeln.js. */
 window.DMA_FESTE = (() => {
 
   const F = (id, name, syl, wann, art, monat, worum, ablauf, woerter, saetze, hinweis) =>
@@ -57,7 +60,7 @@ window.DMA_FESTE = (() => {
        "Man verkleidet sich — auch Erwachsene, auch im Büro.",
        "In Köln ruft man „Kölle Alaaf“, in Düsseldorf und Mainz „Helau“."],
       [w("der Umzug", "UM-zug", "der Zug durch die Stadt"),
-       w("die Verkleidung", "VER-klei-dung", "das Kostüm"),
+       w("die Verkleidung", "Ver-KLEI-dung", "das Kostüm"),
        w("der Wagen", "WA-gen", "der geschmückte Anhänger im Umzug"),
        w("die Süßigkeiten", "SÜ-ßig-kei-ten", "was ins Publikum geworfen wird")],
       ["Als was gehst du?", "Ich gehe als Fuchs.", "Helau!", "Kölle Alaaf!"],
@@ -72,12 +75,12 @@ window.DMA_FESTE = (() => {
       ["Alles Liebe zum Valentinstag!"],
       "In Deutschland ist der Tag deutlich kleiner als in den USA oder in Italien."),
 
-    F("karfreitag", "Karfreitag", "KAR-frei-tag", "Freitag vor Ostern", "gesetzlich", 4,
+    F("karfreitag", "Karfreitag", "Kar-FREI-tag", "Freitag vor Ostern", "gesetzlich", 4,
       "Der stillste Tag des Jahres. Christlich: der Todestag von Jesus.",
       ["Ein „stiller Feiertag“: In vielen Bundesländern sind Tanzveranstaltungen und laute Musik in der Öffentlichkeit verboten.",
        "Traditionell isst man kein Fleisch, sondern Fisch.",
        "Läden zu, wie an jedem Feiertag."],
-      [w("der Karfreitag", "KAR-frei-tag", "der stille Freitag vor Ostern"),
+      [w("der Karfreitag", "Kar-FREI-tag", "der stille Freitag vor Ostern"),
        w("das Tanzverbot", "TANZ-ver-bot", "an stillen Feiertagen gilt es in vielen Bundesländern"),
        w("der Fisch", "FISCH", "was traditionell auf den Tisch kommt")],
       ["Am Karfreitag haben die Geschäfte zu.", "Gibt es heute Fisch?"],
@@ -632,7 +635,7 @@ window.DMA_FESTE = (() => {
        "Sagen, dass man noch lernt, hilft: „Ich lerne noch Deutsch, könnten Sie bitte langsamer sprechen?“ Fast alle machen es dann.",
        "Fernsehen mit deutschen Untertiteln, nicht mit Untertiteln in der Muttersprache.",
        "Fehler machen ist der Weg, nicht das Hindernis. Wer schweigt, um keinen Fehler zu machen, lernt am langsamsten."],
-      [w("der Integrationskurs", "In-te-gra-TI-ons-kurs", "Sprach- und Orientierungskurs zusammen"),
+      [w("der Integrationskurs", "In-te-gra-ti-ONS-kurs", "Sprach- und Orientierungskurs zusammen"),
        w("die Volkshochschule", "VOLKS-hoch-schu-le", "die günstige Abendschule für alle"),
        w("das Sprachniveau", "SPRACH-ni-veau", "A1 bis C2"),
        w("die Einbürgerung", "EIN-bür-ge-rung", "wenn man deutscher Staatsbürger wird")],

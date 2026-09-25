@@ -22,6 +22,11 @@
      BUENDEL       — Konsonanten am Stück, ohne Zwischenvokal
      TRICKS        — wie man einen Laut körperlich herstellt
    ========================================================= */
+/* Runde 636 — Betonung geprüft. Xander: „Scanne Betonung seitenweit … Hör auf,
+   sinnvolle Wörter zu zerstören … recherchiere … Duden.“ Maßstab ist die
+   Duden-Betonung; Regeln K1–K3 prüft werkzeug/pruefe-betonung-regeln.js.
+   Deutschkurs neutral formuliert: keine Vergleiche mehr mit dem Italienischen
+   („diese italienischen Sachen dürfen auch nicht mehr auftauchen“). */
 window.DMA_AUSSPRACHE = (() => {
 
   /* ---------------------------------------------------------
@@ -212,17 +217,17 @@ window.DMA_AUSSPRACHE = (() => {
      DEUTSCH — DAS ALPHABET
      ========================================================= */
   const ALPHABET_DE = [
-    { b: "A a", name: "a", ipa: "aː", laut: "Offen und klar, wie im Italienischen oder Arabischen.", bsp: "der Apfel", syl: "AP-fel", hinweis: "Kurz in „Apfel“, lang in „Abend“." },
+    { b: "A a", name: "a", ipa: "aː", laut: "Offen und klar, mit weit geöffnetem Mund.", bsp: "der Apfel", syl: "AP-fel", hinweis: "Kurz in „Apfel“, lang in „Abend“." },
     { b: "B b", name: "be", ipa: "beː", laut: "Wie im Englischen.", bsp: "das Buch", syl: "BUCH", hinweis: "Am Wortende wird daraus ein p: „halb“ klingt wie „halp“." },
     { b: "C c", name: "ze", ipa: "tseː", laut: "Allein fast nur in Fremdwörtern. Meist steckt es in ch, sch oder ck.", bsp: "der Chor", syl: "CHOR", hinweis: "Vor e und i oft wie z: „Cent“, „Celsius“." },
     { b: "D d", name: "de", ipa: "deː", laut: "Wie im Englischen.", bsp: "das Dach", syl: "DACH", hinweis: "Am Wortende wird daraus ein t: „Kind“ klingt wie „Kint“." },
     { b: "E e", name: "e", ipa: "eː", laut: "Geschlossen wie in „gehen“.", bsp: "der Esel", syl: "E-sel", hinweis: "Am Wortende nur gemurmelt: „bitte“ endet nicht auf ein klares e." },
     { b: "F f", name: "ef", ipa: "ɛf", laut: "Wie f.", bsp: "der Fuchs", syl: "FUCHS", hinweis: "Das v klingt in deutschen Wörtern genauso." },
-    { b: "G g", name: "ge", ipa: "geː", laut: "Immer hart wie in „gut“ — nie wie im italienischen „gelato“.", bsp: "gut", syl: "GUT", hinweis: "Am Wortende wird daraus ein k: „Tag“ klingt wie „Tak“." },
+    { b: "G g", name: "ge", ipa: "geː", laut: "Immer hart wie in „gut“ — auch vor e und i („gehen“, „Gift“), nie weich wie „dsch“.", bsp: "gut", syl: "GUT", hinweis: "Am Wortende wird daraus ein k: „Tag“ klingt wie „Tak“." },
     { b: "H h", name: "ha", ipa: "haː", laut: "Am Wortanfang gehaucht.", bsp: "das Haus", syl: "HAUS", hinweis: "Nach einem Vokal ist es stumm und macht ihn nur lang: „gehen“, „fahren“." },
     { b: "I i", name: "i", ipa: "iː", laut: "Wie i.", bsp: "der Igel", syl: "I-gel", hinweis: "Geschrieben als „ie“ ist es immer lang: „Liebe“." },
     { b: "J j", name: "jott", ipa: "jɔt", laut: "Wie das j in „ja“.", bsp: "ja", syl: "JA", hinweis: "Nicht wie das englische j in „job“ und nicht wie das spanische j." },
-    { b: "K k", name: "ka", ipa: "kaː", laut: "Mit einem kleinen Hauch danach.", bsp: "die Katze", syl: "KAT-ze", hinweis: "Der Hauch fehlt im Italienischen — daran hört man den Unterschied." },
+    { b: "K k", name: "ka", ipa: "kaː", laut: "Mit einem kleinen Hauch danach.", bsp: "die Katze", syl: "KAT-ze", hinweis: "In vielen Sprachen fehlt dieser Hauch — daran hört man den Unterschied." },
     { b: "L l", name: "el", ipa: "ɛl", laut: "Hell, die Zungenspitze liegt an den oberen Zähnen.", bsp: "laufen", syl: "LAU-fen", hinweis: "Nie dumpf wie das englische „well“." },
     { b: "M m", name: "em", ipa: "ɛm", laut: "Wie m.", bsp: "die Mutter", syl: "MUT-ter", hinweis: "" },
     { b: "N n", name: "en", ipa: "ɛn", laut: "Wie n.", bsp: "die Nacht", syl: "NACHT", hinweis: "Vor k und g wird daraus der ng-Laut: „danke“, „singen“." },
@@ -348,14 +353,14 @@ window.DMA_AUSSPRACHE = (() => {
     },
     {
       id: "doppelkons", titel: "Doppelkonsonant → der Vokal davor ist kurz",
-      text: "Der doppelte Konsonant ist das Gegenstück zum Dehnungs-h: Er zeigt an, dass der Vokal KURZ ist. Gesprochen wird der Konsonant nur einmal — anders als im Italienischen.",
+      text: "Der doppelte Konsonant ist das Gegenstück zum Dehnungs-h: Er zeigt an, dass der Vokal KURZ ist. Gesprochen wird der Konsonant nur einmal — er wird nicht länger gehalten.",
       beispiele: [
         { wort: "kommen", syl: "KOM-men" }, { wort: "die Sonne", syl: "SON-ne" },
         { wort: "der Hammer", syl: "HAM-mer" }, { wort: "bitte", syl: "BIT-te" },
         { wort: "alle", syl: "AL-le" }, { wort: "immer", syl: "IM-mer" },
         { wort: "der Fluss", syl: "FLUSS" }, { wort: "wissen", syl: "WIS-sen" },
       ],
-      ausnahmen: { text: "Im Italienischen hält man den Doppelkonsonanten wirklich länger — im Deutschen nicht. „Sonne“ ist kein „Son-ne“ mit Pause.", woerter: [] },
+      ausnahmen: { text: "In manchen Sprachen hält man einen Doppelkonsonanten wirklich länger — im Deutschen nicht. „Sonne“ ist kein „Son-ne“ mit Pause.", woerter: [] },
     },
     {
       id: "offen", titel: "Vokal am Silbenende (offene Silbe) → lang",
@@ -413,7 +418,7 @@ window.DMA_AUSSPRACHE = (() => {
         { wort: "beobachten", syl: "be-OB-ach-ten", hinweis: "auch mitten im Wort" },
         { wort: "vereinbaren", syl: "ver-EIN-ba-ren" },
       ],
-      ausnahmen: { text: "Im Französischen und im Italienischen bindet man genau umgekehrt — dort fließen die Wörter ineinander. Das ist der auffälligste Unterschied.", woerter: [] },
+      ausnahmen: { text: "In vielen Sprachen, etwa im Französischen, bindet man genau umgekehrt — dort fließen die Wörter ineinander. Das ist der auffälligste Unterschied.", woerter: [] },
     },
     {
       id: "wortbetonung", titel: "Wo liegt die Betonung?",
@@ -425,7 +430,7 @@ window.DMA_AUSSPRACHE = (() => {
         { wort: "verstehen", syl: "ver-STE-hen", hinweis: "nie betont" },
         { wort: "aufstehen", syl: "AUF-ste-hen", hinweis: "trennbare Vorsilben sind IMMER betont" },
         { wort: "einkaufen", syl: "EIN-kau-fen", hinweis: "trennbar, also betont" },
-        { wort: "die Situation", syl: "Si-tu-a-TI-on", hinweis: "-ion, -ität, -ieren betonen hinten" },
+        { wort: "die Situation", syl: "Si-tu-a-ti-ON", hinweis: "-ion, -ität, -ieren betonen hinten" },
         { wort: "die Universität", syl: "U-ni-ver-si-TÄT", hinweis: "hinten betont" },
         { wort: "telefonieren", syl: "te-le-fo-NIE-ren", hinweis: "hinten betont" },
       ],
@@ -483,7 +488,7 @@ window.DMA_AUSSPRACHE = (() => {
   const TRICKS_DE = [
     {
       id: "ue", titel: "Ü holst du dir aus dem I", svg: SVG_UE,
-      worum: "Im Arabischen, Englischen, Italienischen, Spanischen, Russischen und Polnischen gibt es kein ü. (Im Türkischen und im Französischen schon.) Man muss den Laut auch nicht suchen — man baut ihn aus einem i.",
+      worum: "Im Arabischen, Englischen, Spanischen, Russischen und Polnischen gibt es kein ü. (Im Türkischen und im Französischen schon.) Man muss den Laut auch nicht suchen — man baut ihn aus einem i.",
       schritte: [
         "Sag ein langes „iiiii“ und halte es.",
         "Lass die Zunge genau dort, wo sie ist. Sie bewegt sich in diesem ganzen Trick kein Stück.",
@@ -572,7 +577,7 @@ window.DMA_AUSSPRACHE = (() => {
     },
     {
       id: "r", titel: "Das R sitzt hinten, nicht vorne",
-      worum: "Wer Italienisch, Spanisch, Russisch, Türkisch oder Arabisch spricht, rollt das r mit der Zungenspitze. Im Deutschen entsteht es ganz hinten.",
+      worum: "Wer Spanisch, Russisch, Türkisch oder Arabisch spricht, rollt das r mit der Zungenspitze. Im Deutschen entsteht es ganz hinten.",
       schritte: [
         "Gurgle ohne Wasser und mach daraus einen Ton — das ist schon fast das deutsche r.",
         "Die Zungenspitze bleibt dabei unten liegen und rührt sich nicht.",
@@ -609,7 +614,7 @@ window.DMA_AUSSPRACHE = (() => {
     },
     {
       id: "hauch", titel: "P, T, K haben einen Hauch",
-      worum: "Im Italienischen, Spanischen, Französischen und Arabischen kommen p, t, k ohne Luftstoß. Im Deutschen mit — und daran erkennt das Ohr, dass es nicht b, d, g war.",
+      worum: "Im Spanischen, Französischen und Arabischen kommen p, t, k ohne Luftstoß. Im Deutschen mit — und daran erkennt das Ohr, dass es nicht b, d, g war.",
       schritte: [
         "Halte ein Blatt Papier locker vor den Mund.",
         "Sag „Papier“, „Tisch“, „Kind“ — das Blatt muss sich sichtbar bewegen.",
@@ -940,7 +945,7 @@ window.DMA_AUSSPRACHE = (() => {
     { teil: "Vokallänge", frage: "Warum ist das a in „fahren“ lang?", richtig: "Wegen des Dehnungs-h — es wird nicht gesprochen", falsch: ["Weil ein h gesprochen wird", "Weil r folgt", "Weil das Wort zwei Silben hat"], erkl: "Das Dehnungs-h ist stumm. Es ist nur ein Längenzeichen: „faaren“." },
     { teil: "Vokallänge", frage: "Wie lang ist das i in „die Liebe“?", richtig: "lang — „ie“ ist immer ein langes i", falsch: ["kurz", "man spricht i und e getrennt", "wie ein ü"], erkl: "Das e hinter dem i wird nicht gesprochen, es macht das i nur lang." },
     { teil: "Vokallänge", frage: "Was verrät „ß“ über den Vokal davor?", richtig: "Er ist lang", falsch: ["Er ist kurz", "Nichts", "Er ist betont"], erkl: "ß steht nach langem Vokal („die Straße“), ss nach kurzem („der Fluss“)." },
-    { teil: "Vokallänge", frage: "Was verrät ein Doppelkonsonant wie in „die Sonne“?", richtig: "Der Vokal davor ist kurz", falsch: ["Der Vokal davor ist lang", "Der Konsonant wird länger gehalten", "Das Wort ist ein Fremdwort"], erkl: "Der doppelte Konsonant zeigt die Kürze an. Gesprochen wird er nur einmal — anders als im Italienischen." },
+    { teil: "Vokallänge", frage: "Was verrät ein Doppelkonsonant wie in „die Sonne“?", richtig: "Der Vokal davor ist kurz", falsch: ["Der Vokal davor ist lang", "Der Konsonant wird länger gehalten", "Das Wort ist ein Fremdwort"], erkl: "Der doppelte Konsonant zeigt die Kürze an. Gesprochen wird er nur einmal — nicht länger gehalten." },
     { teil: "Vokallänge", frage: "Welches Wort ist eine Ausnahme: kurz, obwohl nur ein Konsonant folgt?", richtig: "das", falsch: ["der Tag", "gut", "lesen"], erkl: "„das“, „was“, „man“, „hat“, „ab“, „in“, „mit“ und ein paar weitere kleine Wörter sind kurz — trotz nur einem Konsonanten." },
     { teil: "Vokallänge", frage: "Welches Wort ist eine Ausnahme: lang, obwohl mehrere Konsonanten folgen?", richtig: "der Mond", falsch: ["der Kopf", "kalt", "die Wurst"], erkl: "Mond, Obst, Papst, Magd, Jagd, Trost, Erde, Pferd, Arzt und Art sind lang — trotz Konsonantenhäufung." },
 
