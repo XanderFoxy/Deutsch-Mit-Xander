@@ -127,16 +127,27 @@ const sage = (gut, was, zusatz) => {
   const leiste = () => pg.evaluate(() => {
     const s = document.querySelector(".sp-schnell");
     return s ? { da: !s.hidden, vorForm: s.nextElementSibling && s.nextElementSibling.id === "lcForm",
-                 waffen: [...s.querySelectorAll('[data-s="waffe"]')].map((b) => b.dataset.w + (b.classList.contains("sp-an") ? "*" : "")),
-                 mit: (s.querySelector('[data-s="mitspielen"]') || {}).textContent || "" } : { da: false };
+                 waffen: [...s.querySelectorAll('.sp-s-reihe [data-s="waffe"]')].map((b) => b.dataset.w + (b.classList.contains("sp-an") ? "*" : "")),
+                 mit: (s.querySelector('[data-s="mitspielen"]') || {}).className || "",
+                 schwebt: getComputedStyle(s).position === "absolute",
+                 knoepfe: s.querySelectorAll(".sp-s-reihe button").length,
+                 scrollt: (() => { const r = s.querySelector(".sp-s-reihe"); return r ? r.scrollWidth > r.clientWidth + 1 : false; })() } : { da: false };
   });
   const tippe = (sel) => pg.evaluate((sel) => { const b = document.querySelector(".sp-schnell " + sel); if (b) b.click(); return Boolean(b); }, sel);
+  /* FASSUNG 641 — Sparring & Co. liegen jetzt im Menü (Reiter „Mehr"). */
+  const menueTippe = async (reiter, sel) => {
+    await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); if (!S.schnellMenue) document.querySelector('.sp-schnell [data-s="klappe"]').click(); });
+    await pg.evaluate((r) => { const b = document.querySelector('.sp-schnell [data-s="reiter"][data-r="' + r + '"]'); if (b) b.click(); }, reiter);
+    return tippe(sel);
+  };
 
   console.log("\nDIE SCHNELLLEISTE — NUR FÜR MICH, ÜBER DEM CHAT\n");
   await pg.waitForTimeout(900);
   let l = await leiste();
   sage(l.da && l.vorForm, "sie sitzt direkt über der Chat-Eingabe");
-  sage(l.waffen && l.waffen.join(",").replace(/\*/g, "") === "kartoffel,zwille,bogen,laser,huehnerwerfer", "alle eigenen Waffen, Kartoffel zuerst", (l.waffen || []).join(","));
+  /* FASSUNG 641 — „das kann ja ruhig über den Chat liegen … nicht lang scrollen" */
+  sage(l.schwebt && !l.scrollt, "sie schwebt über dem Chat (nimmt keine Zeile) und scrollt nicht");
+  sage(l.waffen.length === 0, "ohne Mitspielen: nur „Spielen“ und das Menü", l.knoepfe + " Knöpfe");
   const rausBeimZeichnen = await pg.evaluate(() => window.__raus.length);
   sage(rausBeimZeichnen === 0, "nichts davon geht an den Raum", rausBeimZeichnen + " Pakete");
 
@@ -154,8 +165,9 @@ const sage = (gut, was, zusatz) => {
   await pg.waitForTimeout(300);
   l = await leiste();
   const mitRuf = await pg.evaluate(() => (window.__rufe.find((r) => r.name === "spiel_mitspielen") || {}).args);
-  sage(Boolean(mitRuf && mitRuf.p_an === true) && /Im Spiel/.test(l.mit), "„Mitspielen“ schaltet ein", JSON.stringify(mitRuf) + " · " + l.mit);
-  sage((l.waffen || []).includes("kartoffel*"), "danach ist die Kartoffel angelegt", (l.waffen || []).join(","));
+  sage(Boolean(mitRuf && mitRuf.p_an === true) && /sp-an/.test(l.mit), "„Mitspielen“ schaltet ein", JSON.stringify(mitRuf) + " · " + l.mit);
+  sage((l.waffen || []).join(",") === "kartoffel*,huehnerwerfer", "zwei Waffen: Kartoffel (angelegt) und die stärkste eigene", (l.waffen || []).join(","));
+  sage(l.knoepfe <= 7 && !l.scrollt, "höchstens sieben Knöpfe, kein Scrollen", l.knoepfe + " Knöpfe");
   const cem = await pg.evaluate(async () => {
     window.__rufe.length = 0;
     const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="cem"]');
@@ -198,7 +210,7 @@ const sage = (gut, was, zusatz) => {
   sage(heil.wenig.art === "pflaster", "20 LP verloren → Pflaster", heil.wenig.art);
 
   console.log("\nSPARRINGSPARTNER\n");
-  await tippe('[data-s="sparring"]');
+  await menueTippe("mehr", '[data-s="sparring"]');
   await pg.waitForTimeout(800);
   const spar = await pg.evaluate(async () => {
     const S = window.DMA_SPIEL.pruef.zustand();
@@ -220,11 +232,14 @@ const sage = (gut, was, zusatz) => {
   sage(spar.sitze === spar.sitzeVorher, "sie belegt keinen Sitz – niemand sonst merkt etwas", spar.sitzeVorher + " → " + spar.sitze + " besetzt");
   sage(/Streifschuss|Körper|−|Kopfschuss/.test(spar.zahl), "Tipp auf sie trifft (rote Zahl)", spar.zahl || "-");
   sage(!spar.rufe.includes("spiel_treffer") && spar.raus === 0, "kein Server, nichts an den Raum", spar.rufe.join(",") + " · " + spar.raus);
-  await tippe('[data-s="gegenfeuer"]');
-  const duell = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return Boolean(S.duell && S.duell.uebung && /^sparring:/.test(S.duell.gegnerChat)); });
-  sage(duell, "„Er schießt zurück“ startet das Übungsduell");
-  await tippe('[data-s="gegenfeuer"]');
-  await tippe('[data-s="sparring"]');
+  /* FASSUNG 641 — „das soll eingeloggt bleiben": er schießt von selbst
+     zurück, bis man ihn ausschaltet. */
+  const duell = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return Boolean(S.duell && S.duell.uebung && /^sparring:/.test(S.duell.gegnerChat) && S.duell.bis - Date.now() > 3600e3); });
+  sage(duell, "er schießt gleich von selbst zurück – und hört nicht nach 3 Minuten auf");
+  await menueTippe("mehr", '[data-s="gegenfeuer"]');
+  const aus = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return !(S.duell && S.duell.uebung); });
+  sage(aus, "im Menü lässt es sich ausschalten");
+  await menueTippe("mehr", '[data-s="sparring"]');
 
   console.log("\nAUFGABEN SCHALTEN VON SELBST WEITER\n");
   const auf = await pg.evaluate(async () => {

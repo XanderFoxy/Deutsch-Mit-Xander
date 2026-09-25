@@ -71,13 +71,13 @@
        Geschwindigkeit". Kaufen mit Punkten, trinken kostet 30 Mana,
        wirkt 60 s. Gerechnet wird auf dem Server (spiel_trinken,
        spiel_treffer). */
-    { ding: "trank_kraft", name: "Kraftelixier",    preis: 40,  was: "Superstärke: 3 Minuten ×1,5 Schaden (trinken: 30 Mana)" },
-    { ding: "trank_ziel",  name: "Zielwasser",      preis: 35,  was: "3 Minuten lang zieht jeder Schuss zum Kopf hin (trinken: 30 Mana)" },
-    { ding: "trank_tempo", name: "Blitztrank",      preis: 30,  was: "3 Minuten doppelt so schnell, kürzere Pause (trinken: 30 Mana)" },
+    { ding: "trank_kraft", name: "Kraftelixier",    preis: 40,  was: "Superstärke: 60 s lang ×1,5 Schaden (trinken: 30 Mana)" },
+    { ding: "trank_ziel",  name: "Zielwasser",      preis: 35,  was: "60 s lang zieht jeder Schuss zum Kopf hin (trinken: 30 Mana)" },
+    { ding: "trank_tempo", name: "Blitztrank",      preis: 30,  was: "60 s lang doppelt so schnell, kürzere Pause (trinken: 30 Mana)" },
     /* FUNK 110 — „sämtliche Arten von Tränke". */
     { ding: "trank_mana",  name: "Manatrank",       preis: 25,  was: "+50 Mana sofort (kostet kein Mana)" },
-    { ding: "trank_eisen", name: "Eisenhaut",       preis: 45,  was: "3 Minuten nur halber Schaden (trinken: 30 Mana)" },
-    { ding: "trank_tarn",  name: "Tarntrank",       preis: 50,  was: "45 s unsichtbar, niemand kann dich treffen – bis du selbst schießt (trinken: 30 Mana)" },
+    { ding: "trank_eisen", name: "Eisenhaut",       preis: 45,  was: "60 s lang nur halber Schaden (trinken: 30 Mana)" },
+    { ding: "trank_tarn",  name: "Tarntrank",       preis: 50,  was: "20 s unsichtbar, niemand kann dich treffen – bis du selbst schießt (trinken: 30 Mana)" },
     /* FUNK 111 — „dass man irgendwo noch Falltüren und Minen legen kann
        für den anderen". Gelegt wird auf einen Platz; wer dort ankommt,
        löst sie aus. Nur du siehst deine eigenen Fallen. */
@@ -349,7 +349,7 @@
       ton("gong", 0.55);
       senden({ ereignis: "stand", stand: oeffentlich(r) });
       senden({ ereignis: "daemon" });
-      zahlZeigen(meineChatId(), null, "dämonisch 90 s");
+      zahlZeigen(meineChatId(), null, "dämonisch 45 s");
       zeichnen(); schnellZeichnen(); panelAuffrischen();
     }).catch(function (e) { hinweis("Superkraft ging nicht: " + (e && e.message ? e.message : e)); });
   }
@@ -423,7 +423,8 @@
     if (!S.uebungGesagt) { S.uebungGesagt = true; hinweis("🧍 Übung mit " + st.name + " – zählt nicht, keine Punkte."); }
     if (st.kaputt) {
       if (S.duell && S.duell.uebung && S.duell.gegnerChat === p.id) {
-        hinweis("🏆 Runde gewonnen – " + st.name + " steht gleich wieder auf.");
+        hinweis("🏆 Übungsduell gewonnen – " + st.name + " ist kaputt.");
+        uebungEnde();
       }
       setTimeout(function () {
         st.lp = st.lp_max; st.kaputt = false;
@@ -444,11 +445,8 @@
     st.lp = st.lp_max; st.kaputt = false;
     var max = (S.ich && S.ich.lp_max) || 100;
     S.uebung = { lp: max, max: max };
-    /* FASSUNG 641 — XANDER: „der Sparring Partner der schießt immer nur
-       zurück wenn ich wieder neu auf … geht, das soll eingeloggt bleiben".
-       Das Übungsduell läuft, bis man es ausschaltet (vorher: 3 Minuten). */
-    S.duell = { id: "uebung", gegner: "puppe:" + chatId, gegnerChat: chatId, bis: Date.now() + 36e6, uebung: true };
-    hinweis("⚔️ Übung mit " + st.name + ": sie schießt zurück, bis du es ausschaltest (Menü → Mehr). Deine Tiere und dein Turm wehren sich mit. Zählt nicht.");
+    S.duell = { id: "uebung", gegner: "puppe:" + chatId, gegnerChat: chatId, bis: Date.now() + 180000, uebung: true };
+    hinweis("⚔️ Übungsduell mit " + st.name + ": tippe auf sie, um zu treffen. Sie schießt zurück – weich aus, indem du den Platz wechselst. Zählt nicht.");
     schliessen();
     puppeSchussPlanen();
     zeichnen();
@@ -460,29 +458,6 @@
     S.uebung = null;
     zeichnen();
     panelAuffrischen();
-  }
-  /* Die eigene Gegenwehr, lokal gerechnet wie spiel_treffer (für die Übung). */
-  function eigeneGegenwehr(roh) {
-    var ich = S.ich || {}, tf = 1 + 0.1 * Number(((ich.skills || {}).tierfreund) || 0), ing = 1 + 0.1 * Number(((ich.skills || {}).ingenieur) || 0);
-    var st = Math.max(1, Math.min(5, ich.geschuetz_stufe || 1)), gg = 0, gt = 0, gf = 0, heil = 0;
-    if ((ich.geschuetz_ladungen || 0) > 0) gg = Math.max(2, Math.min(st >= 5 ? 26 : st >= 4 ? 22 : 18, Math.round(roh * (0.3 + 0.2 * Math.min(3, st)) * ing)));
-    if (ich.haustier && ich.haustier_leben > 0) {
-      var hs = 1 + 0.15 * (Math.max(1, Math.min(3, ich.haustier_stufe || 1)) - 1);
-      var b = ich.haustier === "stachelmonster" ? Math.max(1, Math.min(8, Math.round(roh * 0.2)))
-        : ich.haustier === "chihuahua" ? Math.max(2, Math.min(9, Math.round(roh * 0.25))) + ((ich.haustier_stufe || 1) >= 2 ? 2 : 0)
-        : Math.max(2, Math.min(10, Math.round(roh * 0.3)));
-      gt = Math.round(b * hs * tf);
-      if (ich.haustier === "fellmonster" && (ich.haustier_stufe || 1) >= 2) heil = 3;
-    }
-    if (ich.flugtier && ich.flugtier_leben > 0) {
-      var fs = 1 + 0.15 * (Math.max(1, Math.min(3, ich.flugtier_stufe || 1)) - 1);
-      var fb = ich.flugtier === "drache" ? Math.max(3, Math.min(16, Math.round(roh * 0.5))) + ((ich.flugtier_stufe || 1) >= 2 ? 2 : 0)
-        : Math.max(2, Math.min(8, Math.round(roh * 0.25)));
-      gf = Math.round(fb * fs * tf);
-    }
-    var gesamt = Math.min(gg + gt + gf, Math.max(2, Math.round(roh * 0.8)));
-    if (!(gg + gt + gf)) gesamt = 0;
-    return { gegenwehr: gesamt, gegen_geschuetz: gg, gegen_tier: gt, tier: gt ? ich.haustier : "", gegen_flug: gf, flugtier: gf ? ich.flugtier : "", tier_heil: heil };
   }
   function puppeSchussPlanen() {
     clearTimeout(S.puppeUhr);
@@ -519,27 +494,10 @@
       var zone = zoneRechnen(dx, dy), schaden = schadenRechnen(waffe, zone);
       S.uebung.lp = Math.max(0, S.uebung.lp - schaden);
       trefferZeigen(ich, { zone: zone, schaden: schaden, abgewehrt: 0, kaputt: S.uebung.lp <= 0 });
-      /* XANDER: „mein Drachen macht übrigens gar nix … wenn ich gegen den
-         Sparring Partner kämpfe, sehe ich nicht, dass der … reagiert".
-         Jetzt wehren sich die eigenen Tiere und der Turm auch in der
-         Übung — gerechnet wie auf dem Server (spiel_treffer). */
-      if (schaden > 0) {
-        var gw = eigeneGegenwehr(schaden);
-        if (gw.gegenwehr > 0 || gw.tier_heil > 0) {
-          st.lp = Math.max(0, st.lp - gw.gegenwehr); st.kaputt = st.lp <= 0;
-          if (gw.tier_heil > 0) S.uebung.lp = Math.min(S.uebung.max, S.uebung.lp + gw.tier_heil);
-          gegenwehrZeigen(ich, gegner, gw);
-        }
-      }
       zeichnen();
-      if (S.uebung.lp <= 0 || st.kaputt) {
-        var ichVerloren = S.uebung.lp <= 0;
-        hinweis(ichVerloren ? "💔 " + st.name + " hat die Runde gewonnen – weiter geht's." : "🏆 Runde gewonnen – " + st.name + " steht gleich wieder auf.");
-        setTimeout(function () {
-          if (!S.uebung) return;
-          S.uebung.lp = S.uebung.max; st.lp = st.lp_max; st.kaputt = false;
-          zeichnen(); puppeSchussPlanen();
-        }, 2500);
+      if (S.uebung.lp <= 0) {
+        hinweis("💔 " + st.name + " hat das Übungsduell gewonnen – in echt wärst du jetzt kaputt.");
+        setTimeout(uebungEnde, 2500);
         return;
       }
       puppeSchussPlanen();
@@ -1200,10 +1158,8 @@
     if (!frei) { hinweis("Kein freier Platz für den Sparringspartner."); return; }
     S.sparring = Number(frei.dataset.lcPlatz);
     if (!S.waffe) S.waffe = "kartoffel";
-    hinweis("🎯 Sparringspartner steht auf Platz " + S.sparring + " – nur bei dir. Er schießt zurück, bis du ihn wegstellst. Zählt nicht.");
+    hinweis("🎯 Sparringspartner steht auf Platz " + S.sparring + " – nur bei dir. Tippen = treffen. „Er schießt zurück“ startet ein Übungsduell. Zählt nicht.");
     zeichnen(); schnellZeichnen();
-    var nr = S.sparring;
-    setTimeout(function () { if (S.sparring === nr && !(S.duell && S.duell.uebung)) uebungStarten("sparring:" + nr); }, 300);
   }
 
   /* ---------------------------------------------------------------
@@ -1219,221 +1175,92 @@
      eigenen Gerät gebaut; nichts davon geht an den Raum.
      --------------------------------------------------------------- */
   var schnellEl = null;
-  /* ---------------------------------------------------------------
-     FASSUNG 641 — DIE LEISTE, NEU GEDACHT
-     ---------------------------------------------------------------
-     XANDER (25.09.): „das Menü unten … sprengt das Layout, weil es den
-     Chat irgendwie nach unten erweitert … das kann ja ruhig über den
-     Chat liegen … ich möchte nicht, dass man da unten lang scrollt …
-     Favoriten Waffen … nicht mehr als drei Knöpfe … primär, sekundär …
-     Menü … Waffen, Rüstung, Heilung … Reiter … anwählen und zurück …
-     beim Weiterspielen schließt sich sowieso wieder".
-     Die Leiste schwebt jetzt ÜBER dem Chat (sie nimmt keine Zeile weg)
-     und hat nur noch: Spiel an/aus · Waffe 1 · Waffe 2 · Herz · Flamme
-     · Menü. Das Menü klappt nach oben auf, mit den Reitern Waffen,
-     Heilen, Tiere und Mehr. Wer eine Sache wählt, dem geht es zu. */
-  var SLOT_SCHLUESSEL = "dma_spiel_slots";
-  function slots() {
-    var ich = S.ich || {}, hat = function (w) { return (ich.waffen || []).indexOf(w) >= 0 || (WAFFEN[w] && WAFFEN[w].vorrat && vorrat(ich, w) > 0); };
-    if (!S.slots) { try { S.slots = JSON.parse(localStorage.getItem(SLOT_SCHLUESSEL) || "null"); } catch (e) { S.slots = null; } }
-    var s = Array.isArray(S.slots) ? S.slots.slice(0, 2) : [];
-    if (!s[0] || !hat(s[0])) s[0] = "kartoffel";
-    if (!s[1] || !hat(s[1]) || s[1] === s[0]) {
-      /* Zweitwaffe: die stärkste eigene, die nicht schon Slot 1 ist. */
-      var beste = "";
-      (ich.waffen || []).forEach(function (w) { if (WAFFEN[w] && w !== s[0] && (!beste || WAFFEN[w].schaden > WAFFEN[beste].schaden)) beste = w; });
-      s[1] = beste || (s[0] === "kartoffel" ? "zwille" : "kartoffel");
-    }
-    S.slots = s;
-    return s;
-  }
-  function slotSetzen(nr, w) {
-    var s = slots().slice();
-    if (s[1 - nr] === w) s[1 - nr] = s[nr];
-    s[nr] = w; S.slots = s;
-    try { localStorage.setItem(SLOT_SCHLUESSEL, JSON.stringify(s)); } catch (e) {}
-  }
-  function waffenKnopf(w, extra) {
-    var ich = S.ich || {}, hw = haltVon(ich, w), vr = WAFFEN[w] && WAFFEN[w].vorrat ? vorrat(ich, w) : -1;
-    return '<button type="button" class="sp-s-waffe' + (S.waffe === w ? " sp-an" : "") + (hw === 0 ? " sp-stumpf" : "") + (extra || "") + '" data-s="waffe" data-w="' + w + '" title="'
-      + esc(WAFFEN[w].name) + " · Schaden " + WAFFEN[w].schaden + (hw >= 0 ? " · hält " + hw + "/60" : "") + (vr >= 0 ? " · noch " + vr : "") + '">'
-      + geschossSvg(w, S.laserfarbe) + (vr >= 0 ? "<small>" + vr + "</small>" : "") + "</button>";
-  }
   function schnellZeichnen() {
     var form = document.getElementById("lcForm");
     var an = drin() && S.bereit && S.ich && form && form.style.display !== "none";
     if (!an) { if (schnellEl) schnellEl.hidden = true; return; }
-    if (!schnellEl || !schnellEl.isConnected || schnellEl.parentNode !== form.parentNode) {
+    if (!schnellEl || !schnellEl.isConnected || schnellEl.nextElementSibling !== form) {
       if (!schnellEl) {
         schnellEl = document.createElement("div");
         schnellEl.className = "sp-schnell";
         schnellEl.addEventListener("click", schnellKlick);
       }
       form.parentNode.insertBefore(schnellEl, form);
-      /* Die Leiste liegt über dem Chat: ihr Elternteil wird der Anker. */
-      try { if (getComputedStyle(form.parentNode).position === "static") form.parentNode.style.position = "relative"; } catch (e) {}
     }
     schnellEl.hidden = false;
-    /* Genau über der Eingabezeile schweben: Abstand vom unteren Rand des
-       Elternteils bis zur Oberkante der Eingabe. */
-    try {
-      var eltern = form.parentNode;
-      var unten = eltern.clientHeight - form.offsetTop + 4;
-      if (form.offsetParent !== eltern) { var er = eltern.getBoundingClientRect(), fr = form.getBoundingClientRect(); unten = er.bottom - fr.top + 4; }
-      schnellEl.style.bottom = Math.max(0, Math.round(unten)) + "px";
-    } catch (e) {}
-    var ich = S.ich, teile = [], s = slots();
+    var ich = S.ich, teile = [];
     teile.push('<button type="button" class="sp-s-mit' + (ich.mitspielen ? " sp-an" : "") + '" data-s="mitspielen" title="'
       + (ich.mitspielen ? "Du spielst mit – tippen für Pause (dann bist du nicht angreifbar)" : "Tippen zum Mitspielen") + '">'
-      + (ich.mitspielen ? '<i class="sp-s-punkt"></i>' : "Spielen") + "</button>");
-    if (ich.mitspielen) {
-      teile.push(waffenKnopf(s[0], " sp-s-slot"), waffenKnopf(s[1], " sp-s-slot"));
-      var voll = !ich.kaputt && ich.lp >= ich.lp_max;
-      var zuEssen = vorrat(ich, "bratwurst") + vorrat(ich, "sauerkraut");
-      teile.push('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke && !zuEssen) ? " disabled" : "")
-        + ' title="Heilen – nimmt, was gerade passt, und verschwendet nichts">'
-        + '<svg viewBox="0 0 20 20"><path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#e2403a"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>');
-      var ladung = Math.max(0, Math.min(100, ich.ladung || 0)), daemonRest = wirkt(ich, "daemon");
-      teile.push('<button type="button" class="sp-s-super' + (daemonRest ? " sp-an" : ladung >= 100 ? " sp-voll" : "") + '" data-s="superkraft"'
-        + (ladung >= 100 && !daemonRest ? "" : " disabled")
-        + ' title="' + (daemonRest ? "Dämonisch – noch " + daemonRest + " s" : ladung >= 100 ? "Superkraft: 90 s dämonisch" : "Superkraft lädt: " + ladung + " %") + '">'
-        + '<svg viewBox="0 0 20 20"><path d="M10 1.5 C11 5 15.5 7 15.5 12 A5.5 5.5 0 0 1 4.5 12 C4.5 9 6.5 7.5 7 5 C8 7 8.5 8 9.5 8.5 C9.5 6 9 4 10 1.5 Z" fill="' + (daemonRest ? "#b0172f" : "#f29d0b") + '"/>'
-        + '<path d="M10 9 C10.5 11 13 12 13 14 A3 3 0 0 1 7 14 C7 12.5 8.5 11.5 10 9 Z" fill="' + (daemonRest ? "#6d1bb3" : "#ffd84a") + '"/></svg>'
-        + "<small>" + (daemonRest ? daemonRest + "s" : ladung + "%") + "</small></button>");
-      if (reparaturNoetig(ich)) teile.push('<button type="button" class="sp-s-repar" data-s="reparieren" title="Alle Waffen reparieren (15 Punkte)">'
-        + '<svg viewBox="0 0 20 20"><path d="M13.5 2.5 a4 4 0 0 0 -4.8 5.3 L2.8 13.7 a1.8 1.8 0 0 0 2.5 2.5 L11.2 10.3 a4 4 0 0 0 5.3 -4.8 L14 8 L12 6 Z" fill="#cfd6de" stroke="#5b636c" stroke-width="1"/></svg></button>');
-    }
-    teile.push('<button type="button" class="sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Waffen, Heilen, Tiere, Mehr">'
-      + '<svg viewBox="0 0 20 20"><path d="M4 6 H16 M4 10 H16 M4 14 H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>');
-    var html = '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "");
+      + (ich.mitspielen ? "Im Spiel" : "Mitspielen") + "</button>");
+    (ich.waffen || []).slice().sort(function (a, b) { return WAFFEN_REIHE.indexOf(a) - WAFFEN_REIHE.indexOf(b); }).forEach(function (w) {
+      if (!WAFFEN[w]) return;
+      var hw = haltVon(ich, w);
+      teile.push('<button type="button" class="sp-s-waffe' + (S.waffe === w ? " sp-an" : "") + (hw === 0 ? " sp-stumpf" : "") + '" data-s="waffe" data-w="' + w + '" title="'
+        + esc(WAFFEN[w].name) + " · Schaden " + WAFFEN[w].schaden + (hw >= 0 ? " · hält " + hw + "/60" : "") + '">' + geschossSvg(w, S.laserfarbe) + "</button>");
+    });
+    VORRAT_WAFFEN.forEach(function (w) {
+      var n = vorrat(ich, w);
+      if (!n) return;
+      teile.push('<button type="button" class="sp-s-waffe sp-s-vorrat' + (S.waffe === w ? " sp-an" : "") + '" data-s="waffe" data-w="' + w + '" title="'
+        + WAFFEN[w].name + " werfen · Schaden " + WAFFEN[w].schaden + " · noch " + n + '">' + geschossSvg(w) + "<small>" + n + "</small></button>");
+    });
+    var voll = !ich.kaputt && ich.lp >= ich.lp_max;
+    var zuEssen = vorrat(ich, "bratwurst") + vorrat(ich, "sauerkraut");
+    teile.push('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke && !zuEssen) ? " disabled" : "")
+      + ' title="Heilen – nimmt, was gerade passt, und verschwendet nichts">'
+      + '<svg viewBox="0 0 20 20"><path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#e2403a"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>'
+      + '<small>' + (ich.pflaster || 0) + "/" + (ich.traenke || 0) + "</small></button>");
+    /* Die Flamme: Superkraft. Zeigt die Ladung, bei 100 % antippbar,
+       während sie wirkt die Restsekunden. */
+    var ladung = Math.max(0, Math.min(100, ich.ladung || 0)), daemonRest = wirkt(ich, "daemon");
+    teile.push('<button type="button" class="sp-s-super' + (daemonRest ? " sp-an" : ladung >= 100 ? " sp-voll" : "") + '" data-s="superkraft"'
+      + (ladung >= 100 && !daemonRest ? "" : " disabled")
+      + ' title="' + (daemonRest ? "Dämonisch – noch " + daemonRest + " s" : ladung >= 100 ? "Superkraft: 45 s dämonisch" : "Superkraft lädt: " + ladung + " % (Deutsch, Treffer)") + '">'
+      + '<svg viewBox="0 0 20 20"><path d="M10 1.5 C11 5 15.5 7 15.5 12 A5.5 5.5 0 0 1 4.5 12 C4.5 9 6.5 7.5 7 5 C8 7 8.5 8 9.5 8.5 C9.5 6 9 4 10 1.5 Z" fill="' + (daemonRest ? "#b0172f" : "#f29d0b") + '"/>'
+      + '<path d="M10 9 C10.5 11 13 12 13 14 A3 3 0 0 1 7 14 C7 12.5 8.5 11.5 10 9 Z" fill="' + (daemonRest ? "#6d1bb3" : "#ffd84a") + '"/></svg>'
+      + "<small>" + (daemonRest ? daemonRest + " s" : ladung + " %") + "</small></button>");
+    TRAENKE.forEach(function (tr) {
+      var n = ich["trank_" + tr[0]] || 0, rest = wirkt(ich, tr[0]);
+      if (!n && !rest) return;
+      teile.push('<button type="button" class="sp-s-trank" data-s="trinken" data-t="' + tr[0] + '" title="' + tr[1] + (rest ? " – wirkt noch " + rest + " s" : "") + '"'
+        + (rest ? " disabled" : "") + '><span class="sp-trank sp-trank-' + tr[0] + '"></span><small>' + n + "</small></button>");
+    });
+    /* „reparieren, ohne dass man das Spiel unterbrechen muss": ein Tipp. */
+    if (reparaturNoetig(ich)) teile.push('<button type="button" class="sp-s-repar" data-s="reparieren" title="Alle Waffen reparieren (15 Punkte)">'
+      + '<svg viewBox="0 0 20 20"><path d="M13.5 2.5 a4 4 0 0 0 -4.8 5.3 L2.8 13.7 a1.8 1.8 0 0 0 2.5 2.5 L11.2 10.3 a4 4 0 0 0 5.3 -4.8 L14 8 L12 6 Z" fill="#cfd6de" stroke="#5b636c" stroke-width="1"/></svg><small>15</small></button>');
+    teile.push('<button type="button" class="sp-s-klein' + (S.sparring ? " sp-an" : "") + '" data-s="sparring" title="Sparringspartner (nur bei dir)">Sparring</button>');
+    if (S.sparring) teile.push('<button type="button" class="sp-s-klein' + (S.duell && S.duell.uebung ? " sp-an" : "") + '" data-s="gegenfeuer" title="Der Sparringspartner schießt zurück">Er schießt zurück</button>');
+    teile.push('<button type="button" class="sp-s-klein" data-s="menue" title="Spielmenü: Laden, Aufgaben, Anleitung">Menü</button>');
+    var html = '<div class="sp-s-lp' + (ich.kaputt ? " sp-rot" : "") + '">Lv ' + (ich.level || 1) + " · " + ich.lp + "/" + ich.lp_max + " LP · " + (ich.punkte || 0) + " P</div>" + teile.join("");
     if (schnellEl.dataset.html !== html) { schnellEl.innerHTML = html; schnellEl.dataset.html = html; }
-  }
-  function schnellMenueHtml() {
-    var ich = S.ich || {}, r = S.schnellReiter || "waffen", s = slots();
-    var reiter = [["waffen", "Waffen"], ["heilen", "Heilen"], ["tiere", "Tiere"], ["mehr", "Mehr"]].map(function (t) {
-      return '<button type="button" data-s="reiter" data-r="' + t[0] + '" class="' + (r === t[0] ? "sp-an" : "") + '">' + t[1] + "</button>";
-    }).join("");
-    var kopf = '<div class="sp-sm-kopf">Lv ' + (ich.level || 1) + " · " + ich.lp + "/" + ich.lp_max + " LP · " + (ich.punkte || 0) + " P"
-      + (ich.mana != null ? " · " + ich.mana + " Mana" : "") + "</div>";
-    var inhaltM = "";
-    if (r === "waffen") {
-      var nr = S.schnellSlot || 0;
-      inhaltM = '<div class="sp-sm-slots"><button type="button" data-s="slot" data-n="0" class="' + (nr === 0 ? "sp-an" : "") + '">Waffe 1</button>'
-        + '<button type="button" data-s="slot" data-n="1" class="' + (nr === 1 ? "sp-an" : "") + '">Waffe 2</button></div>';
-      var gruppen = [["Standard", ["kartoffel", "zwille", "bogen", "laser"]], ["Lustig", ["eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "bratwurst", "sauerkraut"]],
-                     ["Stark", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]]];
-      gruppen.forEach(function (g) {
-        var knoepfe = g[1].filter(function (w) { return WAFFEN[w] && ((ich.waffen || []).indexOf(w) >= 0 || (WAFFEN[w].vorrat && vorrat(ich, w) > 0)); })
-          .map(function (w) { return waffenKnopf(w, (s[nr] === w ? " sp-slot-drin" : "")).replace('data-s="waffe"', 'data-s="waehle"'); }).join("");
-        if (knoepfe) inhaltM += '<div class="sp-sm-gruppe"><span>' + g[0] + "</span>" + knoepfe + "</div>";
-      });
-      inhaltM += '<p class="sp-sm-klein">Tippe eine Waffe: sie kommt auf ' + (nr === 0 ? "Waffe 1" : "Waffe 2") + " und ist angelegt. Kaufen: Menü → Mehr → Laden.</p>";
-    } else if (r === "heilen") {
-      var t = [];
-      t.push('<button type="button" data-s="heil" data-art="pflaster"' + (ich.pflaster > 0 ? "" : " disabled") + ">Pflaster <small>" + (ich.pflaster || 0) + "</small></button>");
-      t.push('<button type="button" data-s="heil" data-art="trank"' + (ich.traenke > 0 ? "" : " disabled") + ">Heiltrank <small>" + (ich.traenke || 0) + "</small></button>");
-      t.push('<button type="button" data-s="iss" data-d="bratwurst"' + (vorrat(ich, "bratwurst") ? "" : " disabled") + ">Bratwurst essen <small>" + vorrat(ich, "bratwurst") + "</small></button>");
-      t.push('<button type="button" data-s="iss" data-d="sauerkraut"' + (vorrat(ich, "sauerkraut") ? "" : " disabled") + ">Sauerkraut essen <small>" + vorrat(ich, "sauerkraut") + "</small></button>");
-      TRAENKE.forEach(function (tr) {
-        var n = ich["trank_" + tr[0]] || 0, rest = wirkt(ich, tr[0]);
-        if (!n && !rest) return;
-        t.push('<button type="button" data-s="trinken" data-t="' + tr[0] + '"' + (rest || !n ? " disabled" : "") + '><span class="sp-trank sp-trank-' + tr[0] + '"></span>' + tr[1] + " <small>" + (rest ? rest + " s" : n) + "</small></button>");
-      });
-      inhaltM = '<div class="sp-sm-liste">' + t.join("") + "</div>";
-    } else if (r === "tiere") {
-      var besitz = Object.keys(ich.tiere || {});
-      [ich.haustier, ich.flugtier].forEach(function (a) { if (a && besitz.indexOf(a) < 0) besitz.push(a); });
-      if (!besitz.length) inhaltM = '<p class="sp-sm-klein">Noch kein Tier. Holen: Menü → Mehr → Tiere.</p>';
-      else inhaltM = '<div class="sp-sm-liste">' + besitz.map(function (a) {
-        var draussen = a === ich.haustier || a === ich.flugtier;
-        var kraft = a === ich.haustier ? ich.haustier_leben : a === ich.flugtier ? ich.flugtier_leben : ((ich.tiere[a] || {}).kraft || 0);
-        return '<button type="button" data-s="tierraus" data-a="' + a + '"' + (draussen ? ' class="sp-an"' : "") + ">"
-          + '<span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + ((TIERE[a] || {}).flug ? "luft" : "boden") + '">' + tierSvg(a) + "</span>"
-          + esc((TIERE[a] || {}).name || a) + " <small>" + (draussen ? "draußen · " : "") + kraft + " Kraft</small></button>";
-      }).join("") + "</div><p class=\"sp-sm-klein\">Tippen holt das Tier raus – eins am Boden, eins in der Luft. Keins geht verloren.</p>";
-    } else {
-      inhaltM = '<div class="sp-sm-liste">'
-        + '<button type="button" data-s="sparring" class="' + (S.sparring ? "sp-an" : "") + '">Sparringspartner ' + (S.sparring ? "weg" : "aufstellen") + "</button>"
-        + (S.sparring ? '<button type="button" data-s="gegenfeuer" class="' + (S.duell && S.duell.uebung ? "sp-an" : "") + '">' + (S.duell && S.duell.uebung ? "Er schießt zurück – aus" : "Er schießt zurück – an") + "</button>" : "")
-        + '<button type="button" data-s="tontest">Ton testen</button>'
-        + '<button type="button" data-s="gross" data-r="schutz">Laden (Schutz, Rüstung, Turm)</button>'
-        + '<button type="button" data-s="gross" data-r="tiere">Tiere holen und füttern</button>'
-        + '<button type="button" data-s="gross" data-r="deutsch">Deutsch-Aufgaben</button>'
-        + '<button type="button" data-s="gross" data-r="start">Großes Menü</button></div>';
-    }
-    return '<div class="sp-schnellmenue">' + kopf + '<div class="sp-sm-reiter">' + reiter + "</div>" + inhaltM + "</div>";
   }
   function schnellKlick(ev) {
     var k = ev.target.closest("button");
     if (!k || k.disabled) return;
-    ev.preventDefault(); ev.stopPropagation();
-    var s = k.dataset.s, zu = false;
+    ev.preventDefault();
+    var s = k.dataset.s;
     if (s === "waffe") {
       /* Nochmal auf die angelegte Waffe = ablegen. */
       S.waffe = S.waffe === k.dataset.w ? "" : k.dataset.w;
       if (S.waffe) hinweis("🎯 " + WAFFEN[S.waffe].name + " – tippe auf ein Gesicht.");
-    } else if (s === "klappe") {
-      S.schnellMenue = !S.schnellMenue;
-    } else if (s === "reiter") {
-      S.schnellReiter = k.dataset.r;
-    } else if (s === "slot") {
-      S.schnellSlot = Number(k.dataset.n) || 0;
-    } else if (s === "waehle") {
-      slotSetzen(S.schnellSlot || 0, k.dataset.w); S.waffe = k.dataset.w; zu = true;
-      hinweis("🎯 " + WAFFEN[S.waffe].name + " angelegt.");
     } else if (s === "mitspielen") {
       mitspielenSetzen(!S.ich.mitspielen); return;
     } else if (s === "heilen") {
       schnellHeilen(); return;
-    } else if (s === "heil") {
-      heilen(k.dataset.art, ""); zu = true;
-    } else if (s === "iss") {
-      essen(k.dataset.d); zu = true;
     } else if (s === "trinken") {
-      trinken(k.dataset.t); zu = true;
+      trinken(k.dataset.t); return;
     } else if (s === "superkraft") {
       superkraft(); return;
     } else if (s === "reparieren") {
       kaufen("waffen_reparatur"); return;
-    } else if (s === "tierraus") {
-      tierWechseln(k.dataset.a); zu = true;
     } else if (s === "sparring") {
-      sparringUmschalten(); zu = true;
+      sparringUmschalten(); return;
     } else if (s === "gegenfeuer") {
       if (S.duell && S.duell.uebung) uebungEnde(); else uebungStarten("sparring:" + S.sparring);
-      zu = true;
-    } else if (s === "tontest") {
-      tonTesten(); return;
-    } else if (s === "gross") {
-      S.schnellMenue = false; menue(k.dataset.r || "start"); schnellZeichnen(); return;
+    } else if (s === "menue") {
+      menue("start"); return;
     }
-    if (zu) S.schnellMenue = false;
     zeichnen(); schnellZeichnen();
-  }
-  /* „beim Weiterspielen schließt sich sowieso wieder": ein Tipp
-     irgendwo anders klappt das Menü zu. */
-  document.addEventListener("click", function (ev) {
-    if (!S.schnellMenue || !schnellEl) return;
-    if (schnellEl.contains(ev.target)) return;
-    S.schnellMenue = false; schnellZeichnen();
-  }, true);
-  function tierWechseln(art) {
-    rpc("spiel_tier_wechseln", { p_art: art }).then(function (r) {
-      if (!r || !r.ok) { hinweis("🐾 " + ((r && r.grund) || "geht nicht")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      ton((TIERE[art] || {}).ton || "zauberpuff", 0.45);
-      hinweis("🐾 " + ((TIERE[art] || {}).name || art) + " ist draußen.");
-      senden({ ereignis: "stand", stand: oeffentlich(r) });
-      zeichnen(); schnellZeichnen(); panelAuffrischen();
-    }).catch(function (e) { hinweis("Wechseln ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  /* XANDER: „ich höre übrigens immer noch keine Sounds". Der Knopf spielt
-     einen Ton und sagt auf dem Gerät, woran es liegt: Töne aus, Datei
-     fehlt, Browser lässt nicht abspielen — oder: es klingt. */
-  function tonTesten() {
-    var b = B();
-    if (!b.tonTest) { ton("bling", 0.7); hinweis("🔊 Ton gespielt (bling)."); return; }
-    b.tonTest("krugklirr").then(function (r) { hinweis("🔊 " + r); }).catch(function (e) { hinweis("🔊 " + (e && e.message ? e.message : e)); });
   }
   function mitspielenSetzen(an) {
     rpc("spiel_mitspielen", { p_an: Boolean(an) }).then(function (r) {
@@ -1649,11 +1476,11 @@
     var lpBis = L0 - (L0 - L1) * anteil, schBis = lpBis - (L0 - L1) * schild;
     var s = '<svg viewBox="0 0 100 100" aria-hidden="true">'
       + '<path class="sp-ring-spur" d="' + bogen(L0, L1) + '"/>';
-    if (anteil > 0.005) s += '<path class="sp-lp-voll" d="' + bogen(L0, lpBis) + '" stroke="' + farbe + '"/><path class="sp-flut" d="' + bogen(L0, lpBis) + '"/>';
+    if (anteil > 0.005) s += '<path class="sp-lp-voll" d="' + bogen(L0, lpBis) + '" stroke="' + farbe + '"/>';
     if (schild > 0.005) s += '<path class="sp-lp-schild" d="' + bogen(lpBis, schBis) + '"/>';
     if (mana >= 0) {
       s += '<path class="sp-ring-spur" d="' + bogen(M0, M1) + '"/>';
-      if (mana > 0.005) s += '<path class="sp-mana-voll" d="' + bogen(M0, M0 + (M1 - M0) * mana) + '"/><path class="sp-flut" d="' + bogen(M0, M0 + (M1 - M0) * mana) + '"/>';
+      if (mana > 0.005) s += '<path class="sp-mana-voll" d="' + bogen(M0, M0 + (M1 - M0) * mana) + '"/>';
     }
     if (extra) {
       /* Oben: Ladung für die Superkraft, von 200° bis 340°. */
@@ -1960,7 +1787,7 @@
         + '<button type="button" data-tu="essen" data-d="bratwurst"' + (vorrat(ich, "bratwurst") ? "" : " disabled") + '>🌭 Bratwurst essen (' + vorrat(ich, "bratwurst") + ')</button>'
         + '<button type="button" data-tu="essen" data-d="sauerkraut"' + (vorrat(ich, "sauerkraut") ? "" : " disabled") + '>🥬 Sauerkraut essen (' + vorrat(ich, "sauerkraut") + ')</button></div>'
         + '<p class="sp-klein">Kampf: Waffe anlegen, dann auf ein Gesicht tippen. Kopf ×2, Herz ×1,6, Körper ×1, Rand ×0,5. Wer vor dem Einschlag den Platz wechselt, weicht aus. Kaputt (0 LP) = kein Reisen bis zum Pflaster. Tafel offen = Waffenstillstand.</p>'
-        + '<p class="sp-klein">Mana (blauer Balken) füllst du nur mit Deutsch: +6 je richtiger Aufgabe. Zaubertränke kaufst du im Laden; Trinken kostet 30 Mana und wirkt 3 Minuten. Solange eine Waffe angelegt ist, steht oben die Leiste „Kampfmodus".</p>';
+        + '<p class="sp-klein">Mana (blauer Balken) füllst du nur mit Deutsch: +6 je richtiger Aufgabe. Zaubertränke kaufst du im Laden; Trinken kostet 30 Mana und wirkt 60 s. Solange eine Waffe angelegt ist, steht oben die Leiste „Kampfmodus".</p>';
     }
     if (reiter === "anleitung") {
       /* XANDER: „gibt's da eine Art Spielanleitung, wo man das versteht,
@@ -1973,7 +1800,7 @@
         + "<p><b>Stärker werden.</b> Punkte gibt es vor allem für Deutsch. Mit jedem verdienten Punkt steigen deine Höchst-LP (bis 200) und deine Grundrüstung (bis 30 % weniger Schaden) – das bleibt für immer. Punkte gibst du im Laden aus; Treffer kosten keine Punkte.</p>"
         + "<p><b>Level und Können.</b> Erfahrung sammelst du mit Deutsch (doppelt so viel wie Punkte), Treffern, dem Heilen anderer und dem Tagesgeschenk. Jedes Level gibt einen Skillpunkt. Im Reiter „Können“ trainierst du damit Zähigkeit, Panzerhaut, Treffsicher, Heilkunst, Tierfreund oder Ingenieur – 5 Minuten × Stufe, nebenher, für immer.</p>"
         + "<p><b>Rüstung kaufen.</b> Helm und Brustpanzer gibt es in „Schutz & Laden“ in drei Stufen (40, 60, 90 Punkte). Der Helm macht Kopftreffer schwächer, der Brustpanzer Herz und Körper. Jeder Treffer auf die geschützte Stelle kostet einen von 40 Haltepunkten; Reparieren kostet 10 Punkte und geht jederzeit, auch mitten im Kampf. Alle sehen deine Rüstung als Bogen außen am Bild: oben Helm, unten Brustpanzer – Bronze, Silber, Gold.</p>"
-        + "<p><b>Superkraft.</b> Der goldene Bogen oben am Bild lädt sich mit Deutsch (+8), Treffern (+2) und wenn du etwas einsteckst (+3). Bei 100 % leuchtet die Flamme in der Leiste: 90 Sekunden dämonisch – ×1,5 Schaden, und du steckst nur 70 % ein.</p>"
+        + "<p><b>Superkraft.</b> Der goldene Bogen oben am Bild lädt sich mit Deutsch (+8), Treffern (+2) und wenn du etwas einsteckst (+3). Bei 100 % leuchtet die Flamme in der Leiste: 45 Sekunden dämonisch – ×1,5 Schaden, und du steckst nur 70 % ein.</p>"
         + "<p><b>Tagesgeschenk.</b> Einmal am Tag holt es sich von selbst ab: Punkte, Bratwurst, jeden dritten Tag ein Pflaster. Sieben Tage am Stück geben am meisten. Wer auf der Seite übt, bekommt dafür ebenfalls Spielpunkte (5 Seitenpunkte = 1 Punkt, bis 40 am Tag).</p>"
         + "<p><b>Schutz.</b> Schild und Mauer (beide ziehen mit), Geschütz-Turm und Monster schlagen zurück – anteilig, nie mehr als 4/5 dessen, was der Angreifer anrichtet. Mana-Tränke kosten 30 Mana. Minen und Falltüren legst du auf einen Platz.</p>"
         + "<p><b>Üben.</b> „Sparring“ in der Leiste stellt eine Strohpuppe auf einen freien Platz – nur bei dir, niemand wird gestört. „Er schießt zurück“ macht ein Übungsduell daraus. Zählt nicht.</p>"
@@ -2013,9 +1840,7 @@
       /* XANDER: „sind die Punkte irgendwie getimet … jetzt krieg ich
          wieder drei Punkte … nach einer Zeit lang hab ich null Punkte" */
       var regel = '<p class="sp-klein">Punkte je richtiger Aufgabe nach Niveau: A1 3 · A2 4 · B1 5 · B2 6 · C1 7 · C2 8. '
-        /* FASSUNG 641 — XANDER: „ich will ja immer Punkte verdienen": die
-           Grenze von 300 Punkten je Stunde ist weg. */
-        + 'Null gibt es nur bei falscher Antwort oder nach mehr als 10 Minuten Bedenkzeit – eine Stundengrenze gibt es nicht mehr. '
+        + 'Null gibt es bei falscher Antwort, nach mehr als 10 Minuten Bedenkzeit oder wenn du in der letzten Stunde schon 300 Punkte gesammelt hast (Schutz gegen Durchklicken). '
         + 'Zwischen zwei Antworten liegen mindestens 3 Sekunden. Jede richtige Antwort gibt außerdem +6 Mana, +8 Ladung und doppelt so viel Erfahrung wie Punkte (mindestens 1, auch über der Stundengrenze).</p>';
       return '<div class="sp-chips">' + chips + "</div>" + arten + teil + missionTeil + regel;
     }
@@ -2034,7 +1859,7 @@
             + "</div>";
         }).join("")
         + '<p class="sp-klein">Erfahrung: Deutsch (doppelt so viel wie die Punkte), jeder Treffer +1, jemanden heilen +3, Tagesgeschenk +20, Übungen auf der Seite. Trainiertes bleibt für immer.</p>'
-        + '<p class="sp-klein"><b>Superkraft:</b> goldener Bogen oben am Bild. Voll (100 %) tippst du die Flamme in der Leiste: 90 s dämonisch, ×1,5 Schaden, nur 70 % einstecken.</p>';
+        + '<p class="sp-klein"><b>Superkraft:</b> goldener Bogen oben am Bild. Voll (100 %) tippst du die Flamme in der Leiste: 45 s dämonisch, ×1,5 Schaden, nur 70 % einstecken.</p>';
     }
     if (reiter === "tiere") {
       /* FASSUNG 638 — „Tiere upgraden … krank oder schwach aber man kann
@@ -2055,17 +1880,14 @@
             + "</span></div>";
         }
         var angebot = liste.map(function (k) {
-          /* FASSUNG 641 — „die Monster die ich gekauft habe immer noch
-             verfügbar … wechseln können": wer es besitzt, holt es raus. */
-          var d = TIERE[k], hat = art === k, besitzt = Boolean((ich.tiere || {})[k]);
-          return '<div class="sp-zeile"><span class="sp-tier-bild sp-tier-bild-' + (welches === "luft" ? "luft" : "boden") + '">' + tierSvg(k) + "</span><span><b>" + esc(d.name) + "</b><br><small>" + esc(d.was) + (besitzt && !hat ? " · deins, " + ((ich.tiere[k] || {}).kraft || 0) + " Kraft" : "") + "</small></span>"
-            + (hat ? "<small>draußen</small>" : besitzt ? '<button type="button" data-tu="tierraus" data-a="' + k + '">Rausholen</button>'
-                   : '<button type="button" data-tu="kaufen" data-d="' + k + '"' + (ich.punkte >= d.preis ? "" : " disabled") + ">Kaufen · " + d.preis + "</button>")
+          var d = TIERE[k], hat = art === k;
+          return '<div class="sp-zeile"><span class="sp-tier-bild sp-tier-bild-' + (welches === "luft" ? "luft" : "boden") + '">' + tierSvg(k) + "</span><span><b>" + esc(d.name) + "</b><br><small>" + esc(d.was) + "</small></span>"
+            + (hat ? "<small>deins</small>" : '<button type="button" data-tu="kaufen" data-d="' + k + '"' + (ich.punkte >= d.preis ? "" : " disabled") + ">" + (art ? "Tauschen · " : "") + d.preis + "</button>")
             + "</div>";
         }).join("");
         return kopfT + jetzt + angebot;
       };
-      return '<p class="sp-klein">Zwei Plätze: eins am Boden, eins in der Luft. Alles, was du kaufst, bleibt deins – wechseln kostet nichts. Tiere sterben nicht – bei 0 Kraft sind sie schwach und wehren nicht mehr ab, bis du sie fütterst. Jede Stufe: +15 % Abwehr, +10 Kraft; ab Stufe 2 kommt die zweite Fähigkeit dazu.</p>'
+      return '<p class="sp-klein">Zwei Plätze: eins am Boden, eins in der Luft. Tiere sterben nicht – bei 0 Kraft sind sie schwach und wehren nicht mehr ab, bis du sie fütterst. Jede Stufe: +15 % Abwehr, +10 Kraft; ab Stufe 2 kommt die zweite Fähigkeit dazu.</p>'
         + platz("boden", TIERE_BODEN, ich.haustier, ich.haustier_leben, ich.haustier_max, ich.haustier_stufe)
         + platz("luft", TIERE_LUFT, ich.flugtier, ich.flugtier_leben, ich.flugtier_max, ich.flugtier_stufe);
     }
@@ -2201,7 +2023,6 @@
     if (tu === "trainieren") return trainieren(k.dataset.k);
     if (tu === "essen") return essen(k.dataset.d);
     if (tu === "fuettern") return fuettern(k.dataset.w, k.dataset.f);
-    if (tu === "tierraus") return tierWechseln(k.dataset.a);
     if (tu === "kategorie") { S.kategorie = k.dataset.k || null; aufgabeHolen(false); return; }
   }
 
@@ -2242,8 +2063,8 @@
       ton(art === "tarn" ? "tarnung" : "trankschluck", 0.5);
       senden({ ereignis: "stand", stand: oeffentlich(r) });
       senden({ ereignis: "trank", sorte: art });
-      var name = { kraft: "Superstärke 3 min", ziel: "Zielgenauigkeit 3 min", tempo: "Geschwindigkeit 3 min",
-                   mana: "+50 Mana", eisen: "Eisenhaut 3 min", tarn: "getarnt 45 s" }[art];
+      var name = { kraft: "Superstärke 60 s", ziel: "Zielgenauigkeit 60 s", tempo: "Geschwindigkeit 60 s",
+                   mana: "+50 Mana", eisen: "Eisenhaut 60 s", tarn: "getarnt 20 s" }[art];
       zahlZeigen(meineChatId(), null, name);
       panelAuffrischen(); zeichnen();
     }).catch(function (e) { hinweis("Trinken ging nicht: " + (e && e.message ? e.message : e)); });
@@ -2382,7 +2203,6 @@
       gegenwehrZeigen: gegenwehrZeigen, falleZeigen: falleZeigen, tippAufPlatz: tippAufPlatz, ringSvg: ringSvg,
       schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
       turmZeile: turmZeile, platzGewechselt: platzGewechselt,
-      eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,
       krautZeigen: krautZeigen, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg,
       ruestungZeilen: ruestungZeilen, menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {

@@ -177,7 +177,10 @@ const sage = (gut, was, zusatz) => {
     const S = window.DMA_SPIEL.pruef.zustand();
     S.ich.ladung = 40; S.ich.daemon = false; S.ich.daemon_bis = null;
     window.DMA_SPIEL.pruef.schnellZeichnen();
-    const lp = (document.querySelector(".sp-s-lp") || {}).textContent || "";
+    /* FASSUNG 641 — Level und LP stehen jetzt im aufgeklappten Menü, nicht mehr in der Leiste. */
+    document.querySelector('.sp-schnell [data-s="klappe"]').click();
+    const lp = (document.querySelector(".sp-sm-kopf") || {}).textContent || "";
+    document.querySelector('.sp-schnell [data-s="klappe"]').click();
     const b40 = document.querySelector('.sp-schnell [data-s="superkraft"]');
     const aus40 = { da: Boolean(b40), gesperrt: b40 && b40.disabled, text: b40 ? b40.textContent : "" };
     S.ich.ladung = 100; window.__ich.ladung = 100;
@@ -194,13 +197,13 @@ const sage = (gut, was, zusatz) => {
     return { lp, aus40, bei100, rufe: window.__rufe.map((r) => r.name), raus: window.__raus.map((p) => p.ereignis),
              glut, ringD, nachText: nach ? nach.textContent : "", ton: (window.DMA_TONLOG || []).map((t) => t.name || t) };
   });
-  sage(/^Lv 3 /.test(sk.lp), "die Leiste zeigt das Level", sk.lp);
-  sage(sk.aus40.da && sk.aus40.gesperrt && /40 %/.test(sk.aus40.text), "Flamme bei 40 % gesperrt, zeigt die Ladung", JSON.stringify(sk.aus40));
+  sage(/^Lv 3 /.test(sk.lp), "das Menü der Leiste zeigt das Level", sk.lp);
+  sage(sk.aus40.da && sk.aus40.gesperrt && /40 ?%/.test(sk.aus40.text), "Flamme bei 40 % gesperrt, zeigt die Ladung", JSON.stringify(sk.aus40));
   sage(!sk.bei100.gesperrt && sk.bei100.voll, "bei 100 % leuchtet sie und ist antippbar", JSON.stringify(sk.bei100));
   sage(sk.rufe.includes("spiel_superkraft"), "Tipp → spiel_superkraft", sk.rufe.join(","));
   sage(sk.raus.includes("daemon"), "der Raum erfährt es (Ton bei allen)", sk.raus.join(","));
   sage(sk.glut && sk.ringD, "das eigene Bild glüht dämonisch, der Ring oben auch", "Glut " + sk.glut + " · Ring " + sk.ringD);
-  sage(/\d+ s/.test(sk.nachText), "die Flamme zählt die Sekunden herunter", sk.nachText);
+  sage(/\d+ ?s/.test(sk.nachText), "die Flamme zählt die Sekunden herunter", sk.nachText);
 
   console.log("\nREITER „KÖNNEN“: TRAINING\n");
   const kn = await pg.evaluate(async () => {

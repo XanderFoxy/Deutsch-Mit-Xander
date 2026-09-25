@@ -28428,12 +28428,6 @@
   const LC_TON_GRUNDMASS = 0.78;
 
   function lcGeraeuschDa(name) {
-    /* FASSUNG 641 — XANDER: „ich höre übrigens immer noch keine Sounds".
-       Die Liste wurde beim ERSTEN Aufruf fest gemerkt. Kam der Aufruf,
-       bevor data-geraeusche.js gelaufen war, blieb sie für immer leer —
-       und kein einziges Geräusch klang mehr. Eine leere Liste wird
-       deshalb nie gemerkt, sondern beim nächsten Mal neu gelesen. */
-    if (lcGeraeuschListe !== null && lcGeraeuschListe.size === 0) lcGeraeuschListe = null;
     if (lcGeraeuschListe === null) {
       lcGeraeuschListe = new Set(String(window.DMA_GERAEUSCHE || "")
         .split("|").filter(Boolean));
@@ -94988,20 +94982,6 @@ An einem Morgen lief ein kleiner Fuchs los…
        schon fertig gebaut; das Spiel ruft sie nur auf. */
     window.DMA_SPIEL_BRUECKE = {
       ton: (name, laut) => { try { lcTonSpaeter(name, 0, laut == null ? 0.5 : laut); } catch (e) {} },
-      /* FASSUNG 641 — „Ton testen" im Spielmenü: sagt auf dem Gerät,
-         woran es liegt, statt still zu bleiben. */
-      tonTest: (name) => new Promise((fertig) => {
-        if (!lcToeneAn()) { fertig("Die Töne sind in deinen Einstellungen AUS – ich schalte sie jetzt ein. Tipp gleich noch einmal auf „Ton testen“."); try { lcToeneSetzen(true); } catch (e) {} return; }
-        if (!lcGeraeuschDa(name)) { fertig("Die Tonliste ist nicht geladen (" + String(window.DMA_GERAEUSCHE || "").length + " Zeichen). Bitte die Seite neu laden."); return; }
-        try {
-          const a = new Audio("ton/" + name + lcGeraeuschArt() + (window.DMA_V ? DMA_V("ton/") : ""));
-          a.volume = 0.9;
-          const v = a.play();
-          if (v && v.then) v.then(() => fertig("Ton läuft (" + lcGeraeuschArt() + "). Hörst du nichts: Lautstärke am Gerät, Stummschalter, oder ein Gespräch mit Mikrofon macht es leise."))
-            .catch((err) => { try { lcWaSpielen(a.src, 0.9, false, 900); } catch (e) {} fertig("Der Browser hat das Abspielen blockiert (" + (err && err.name ? err.name : "unbekannt") + ") – Ersatzweg versucht. Einmal irgendwo auf die Seite tippen hilft oft."); });
-          else fertig("Ton gestartet.");
-        } catch (e) { fertig("Ton ging nicht: " + (e && e.message ? e.message : e)); }
-      }),
       toast: (text) => { try { showToast(text); } catch (e) {} },
       schmerz: (platz) => { try { lcSchmerzTon(platz); } catch (e) {} },
       wischer: (platz) => { try { const nm = lcNameVomPlatz(platz); if (nm) lcWischer(nm); } catch (e) {} },

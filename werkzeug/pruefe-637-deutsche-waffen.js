@@ -143,11 +143,15 @@ const sage = (gut, was, zusatz) => {
   sage(salve === 5, "fünf Spätzle fliegen", salve + " gleichzeitig gesehen");
 
   console.log("\nVORRÄTE IN DER LEISTE, BRATWURST WERFEN\n");
+  /* FASSUNG 641 — alle Waffen samt Vorräten stehen im Menü (Reiter Waffen). */
   const leiste = await pg.evaluate(() => {
+    const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = true; S.schnellReiter = "waffen";
     window.DMA_SPIEL.pruef.schnellZeichnen();
-    return [...document.querySelectorAll('.sp-schnell [data-s="waffe"]')].map((b) => b.dataset.w + (b.querySelector("small") ? "(" + b.querySelector("small").textContent + ")" : ""));
+    const l = [...document.querySelectorAll('.sp-schnellmenue [data-s="waehle"]')].map((b) => b.dataset.w + (b.querySelector("small") ? "(" + b.querySelector("small").textContent + ")" : ""));
+    S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen();
+    return l;
   });
-  sage(leiste.includes("bratwurst(2)") && leiste.includes("sauerkraut(1)"), "Bratwurst 2 und Sauerkraut 1 stehen in der Leiste", leiste.join(","));
+  sage(leiste.includes("bratwurst(2)") && leiste.includes("sauerkraut(1)"), "Bratwurst 2 und Sauerkraut 1 stehen im Waffen-Menü", leiste.join(","));
   sage(["brezel", "bierkrug", "spaetzle"].every((w) => leiste.includes(w)), "gekaufte Brezel, Bierkrug, Spätzle-Kanone auch");
   const wurf = await pg.evaluate(async () => {
     window.__rufe.length = 0; window.__raus.length = 0;
