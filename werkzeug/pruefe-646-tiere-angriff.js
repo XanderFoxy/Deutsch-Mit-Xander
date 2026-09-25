@@ -176,10 +176,10 @@ const sage = (gut, was, zusatz) => {
     /* Gesamtdrehung aufaddieren. */
     let dreh = 0;
     for (let i = 1; i < winkel.length; i++) { let d = winkel[i] - winkel[i - 1]; if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; dreh += d; }
-    return { grad: Math.round(Math.abs(dreh) * 180 / Math.PI), strahlen, weg, toene: window.DMA_TONLOG.filter((t) => t.name === "drachenfeuer").length };
+    return { grad: Math.round(Math.abs(dreh) * 180 / Math.PI), strahlen, weg, toene: window.DMA_TONLOG.filter((t) => t.name === "drachenpuste").length };
   });
   sage(drache.grad >= 300, "der Drache fliegt einmal ganz um das Bild herum", drache.grad + "°");
-  sage(drache.strahlen === 3 && drache.toene >= 3, "drei Feuerstrahlen von verschiedenen Seiten, jeder mit Feuerton", JSON.stringify(drache));
+  sage(drache.strahlen === 3 && drache.toene >= 3, "drei Feuerstrahlen von verschiedenen Seiten, jeder mit (weichem) Feuerton", JSON.stringify(drache));
   sage(drache.weg, "der Drache ist dabei nicht mehr an seinem Platz");
 
   console.log("\nNEUE TIERE UND KACHELN\n");
@@ -197,7 +197,7 @@ const sage = (gut, was, zusatz) => {
     const box = document.createElement("div"); box.innerHTML = html;
     const namen = [...box.querySelectorAll(".sp-zeile b")].map((b) => b.textContent);
     return { fell: namen.filter((n) => n === "Fellmonster").length, drache: namen.filter((n) => n === "Babydrache").length,
-             neu: ["Schäferhund", "Babyfuchs", "Fuchs", "Einhorn", "Phönix", "Fee"].filter((n) => namen.indexOf(n) >= 0).length,
+             neu: ["Schäferhund", "Kleiner Fuchs", "Fuchs", "Einhorn", "Phönix", "Fee"].filter((n) => namen.indexOf(n) >= 0).length,
              gruppen: [...box.querySelectorAll(".sp-tier-gruppe")].map((g) => g.textContent).join("|"), kacheln: box.querySelectorAll("svg.sp-kachel-svg").length };
   });
   sage(liste.fell === 1 && liste.drache === 1, "das Tier draußen steht nur EINMAL in der Liste", JSON.stringify(liste));

@@ -93,21 +93,24 @@
   var TRAENKE = [["kraft", "Kraftelixier", "trank_kraft"], ["ziel", "Zielwasser", "trank_ziel"], ["tempo", "Blitztrank", "trank_tempo"],
                  ["mana", "Manatrank", "trank_mana"], ["eisen", "Eisenhaut", "trank_eisen"], ["tarn", "Tarntrank", "trank_tarn"]];
   var TIERE = {
-    fellmonster:    { name: "Fellmonster",    ton: "monsterbiss", preis: 120, was: "beißt 30 % zurück · Stufe 2: kuschelt dich (+3 LP)" },
+    /* FASSUNG 646 — XANDER: „die Sounds sind ein bisschen eigenartig …
+       das ist alles so ohrenbetäubt": weichere, runde Töne. */
+    fellmonster:    { name: "Fellmonster",    ton: "monsterbiss2", preis: 120, was: "beißt 30 % zurück · Stufe 2: kuschelt dich (+3 LP)" },
     /* FASSUNG 638 — XANDER: „richtig beißen … fest beißen und … zerren …
        Chihuahua Knurren". */
     chihuahua:      { name: "Chihuahua",      ton: "chihuahuaknurr", preis: 100, was: "beißt sich fest und zerrt, 25 % zurück · Stufe 2: +2 (lässt nicht los)" },
     stachelmonster: { name: "Stachelmonster", ton: "stachelstich", preis: 160, was: "fängt 1/5 ab und sticht 20 % zurück · Stufe 2: fängt 1/3 ab" },
     /* „diese kleinen Drachen … viel süßer … wie ein kleiner Baby Drachen …
        eins vom Boden eins für die Luft": der Drache fliegt jetzt. */
-    drache:         { name: "Babydrache",     ton: "drachenfeuer", preis: 250, flug: true, was: "fliegt, faucht Feuer, 50 % zurück · Stufe 2: +2 Glut" },
+    drache:         { name: "Babydrache",     ton: "drachenpuste", preis: 250, flug: true, was: "fliegt, faucht Feuer, 50 % zurück · Stufe 2: +2 Glut" },
     eule:           { name: "Eule",           ton: "fluegelschlag", preis: 150, flug: true, was: "fliegt, stößt herab, 25 % zurück · Stufe 2: warnt dich (1/10 weniger Schaden)" },
     /* FASSUNG 646 — XANDER: „einen kleinen Schäferhund, also einen deutschen
        Schäferhund als Tier und einen kleinen Baby Fuchs und ein Fuchs und
        dann ein paar zauberhafte Wesen noch dazu". Gerechnet wird auf dem
        Server (spiel_kaufen, spiel_treffer, spiel_tier_max). */
     schaeferhund:   { name: "Schäferhund",    ton: "hundbellen", preis: 180, was: "packt fest zu, 35 % zurück · Stufe 2: +2 (lässt nicht locker)" },
-    babyfuchs:      { name: "Babyfuchs",      ton: "babyfuchs", preis: 90, was: "zwickt flink, 20 % zurück – klein, aber mutig" },
+    /* XANDER: „den kleinen Fuchs brauchst du nicht Baby Fuchs nennen". */
+    babyfuchs:      { name: "Kleiner Fuchs",  ton: "babyfuchs", preis: 90, was: "zwickt flink, 20 % zurück – klein, aber mutig" },
     fuchs:          { name: "Fuchs",          ton: "fuchskeckern", preis: 170, was: "schlau und schnell, 30 % zurück" },
     einhorn:        { name: "Einhorn",        ton: "einhorn", preis: 300, magie: true, was: "sticht mit dem Horn, 35 % zurück · Stufe 2: Regenbogen heilt dich (+2 LP)" },
     phoenix:        { name: "Phönix",         ton: "phoenix", preis: 340, flug: true, magie: true, was: "fliegt, speit Feuer, 45 % zurück · Stufe 2: heilt dich (+2 LP)" },
@@ -172,12 +175,21 @@
     "laserrot", "lasertreffer", "bonk", "krugklirr", "brezelknack", "wurstklatsch", "krautmatsch", "spaetzlesalve", "katapult4", "doenerklatsch",
     "mgsalve", "lasersalve", "monsterbiss", "drachenfeuer", "chihuahuaknurr", "bisszerren", "stachelstich", "fluegelschlag", "geschuetzfeuer",
     "zauberpuff", "trankschluck", "gong", "geschenk", "kasse", "wischer", "explosion2", "eiknack", "huhnwurf", "huhntreffer", "axttreffer", "swoosh", "platsch",
-    "hundbellen", "fuchskeckern", "babyfuchs", "einhorn", "phoenix", "feenzauber"];
+    "hundbellen", "fuchskeckern", "babyfuchs", "einhorn", "phoenix", "feenzauber", "monsterbiss2", "drachenpuste"];
   function klangKontext() {
     if (KLANG.ctx) return KLANG.ctx;
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) { KLANG.fehler = "kein Web Audio"; return null; }
     try { KLANG.ctx = new AC({ latencyHint: "interactive" }); } catch (e) { try { KLANG.ctx = new AC(); } catch (x) { KLANG.fehler = String(x && x.message || x); return null; } }
+    /* FASSUNG 646 — XANDER: „das ist alles so ohrenbetäubt". Alle
+       Spieltöne laufen über einen Kompressor (laute Spitzen werden
+       abgefangen) und eine gemeinsame, leisere Grundlautstärke. */
+    try {
+      var k = KLANG.ctx, komp = k.createDynamicsCompressor();
+      komp.threshold.value = -24; komp.knee.value = 18; komp.ratio.value = 6; komp.attack.value = 0.004; komp.release.value = 0.2;
+      KLANG.master = k.createGain(); KLANG.master.gain.value = 0.62;
+      KLANG.master.connect(komp); komp.connect(k.destination);
+    } catch (e) { KLANG.master = null; }
     return KLANG.ctx;
   }
   function klangWecken() {
@@ -237,8 +249,8 @@
     try {
       var g = k.createGain(), q = k.createBufferSource();
       var redet = false; try { redet = Boolean(LC() && LC().redetJemand && LC().redetJemand()); } catch (e) {}
-      g.gain.value = Math.max(0, Math.min(1, (laut == null ? 0.5 : laut) * 1.5 * (redet ? 0.45 : 1)));
-      q.buffer = p; q.connect(g); g.connect(k.destination); q.start(0);
+      g.gain.value = Math.max(0, Math.min(1, (laut == null ? 0.5 : laut) * (redet ? 0.45 : 1)));
+      q.buffer = p; q.connect(g); g.connect(KLANG.master || k.destination); q.start(0);
       KLANG.gespielt++; KLANG.letzter = name;
       return true;
     } catch (e) { KLANG.fehler = String(e && e.message || e); return false; }
@@ -2778,9 +2790,22 @@
       return rep + liste + '<p class="sp-klein"><b>Vorräte</b> – zum Werfen oder Essen (Tagesgeschenk, Seitenübungen, Laden):</p>' + vorr + farben;
     }
     if (reiter === "schutz") {
-      return ruestungZeilen(ich) + turmZeile(ich) + werkstattZeilen(ich) + '<p class="sp-klein">Tiere (Fellmonster, Chihuahua, Babydrache …) holst, fütterst und stärkst du im Reiter <b>Tiere</b>.</p>' + LADEN.map(function (d) {
-        return '<div class="sp-zeile"><span><b>' + esc(d.name) + "</b><br><small>" + esc(d.was) + "</small></span>"
-          + '<button type="button" data-tu="' + (d.legen ? "legen" : "kaufen") + '" data-d="' + d.ding + '"' + (ich.punkte >= d.preis ? "" : " disabled") + ">" + d.preis + " Punkte</button></div>";
+      /* FASSUNG 646 — XANDER: „warum habe ich meine Mauer immer noch nicht
+         zurück". Die Mauer war da; jeder neue Kauf hat sie ersetzt. Jetzt
+         steht oben, welche Mauer man hat, und eine bessere kostet nur den
+         Unterschied (Server: halber Punkt je verbliebenem Haltepunkt). */
+      var mauerMax = { holz: 40, stein: 90, stahl: 160 }, hatMauer = ich.mauer_lp > 0 ? ich.mauer_art || "holz" : "";
+      var mauerZeile = hatMauer ? '<div class="sp-zeile sp-mauer-besitz"><span><b>Deine Mauer: ' + ({ holz: "Holz", stein: "Stein", stahl: "Stahl" }[hatMauer] || hatMauer)
+        + "</b> · hält noch " + ich.mauer_lp + "/" + (mauerMax[hatMauer] || ich.mauer_lp) + "<br><small>zieht mit dir um · eine bessere wird angerechnet</small></span></div>" : "";
+      return ruestungZeilen(ich) + turmZeile(ich) + mauerZeile + werkstattZeilen(ich) + '<p class="sp-klein">Tiere holst, fütterst und stärkst du im Reiter <b>Tiere</b>.</p>' + LADEN.map(function (d) {
+        var preis = d.preis, gesperrt = false, zusatz = "";
+        if (/^mauer_/.test(d.ding) && ich.mauer_lp > 0) {
+          var neuMax = mauerMax[d.ding.slice(6)] || 0;
+          if (neuMax <= ich.mauer_lp) { gesperrt = true; zusatz = " · hast du schon (oder besser)"; }
+          else { preis = Math.max(5, d.preis - Math.round(ich.mauer_lp * 0.5)); zusatz = " · deine Mauer wird angerechnet"; }
+        }
+        return '<div class="sp-zeile"><span><b>' + esc(d.name) + "</b><br><small>" + esc(d.was) + zusatz + "</small></span>"
+          + '<button type="button" data-tu="' + (d.legen ? "legen" : "kaufen") + '" data-d="' + d.ding + '"' + (!gesperrt && ich.punkte >= preis ? "" : " disabled") + ">" + (gesperrt ? "hast du" : preis + " Punkte") + "</button></div>";
       }).join("") + (meineFallen().length ? '<p class="sp-klein">Deine Fallen: ' + meineFallen().map(function (f) { return (f.art === "mine" ? "Mine" : "Falltür") + " auf Platz " + f.platz; }).join(", ") + " (30 min)</p>" : "");
     }
     if (reiter === "duell") {

@@ -186,7 +186,7 @@ const sage = (gut, was, zusatz) => {
     }
     return { ton: (window.DMA_TONLOG || []).map((t) => t.name || t).join(","), naechst, ueber: (zy - hoechst) / r };
   });
-  sage(/drachenfeuer/.test(flug.ton), "er faucht", flug.ton);
+  sage(/drachenpuste/.test(flug.ton), "er faucht", flug.ton);
   sage(flug.naechst < 1.4, "er kommt dicht ans Bild (umkreist es)", flug.naechst.toFixed(2) + " Radien");
   sage(flug.ueber > 0.9, "er fliegt auch über das Bild hinweg", flug.ueber.toFixed(2) + " Radien über der Mitte");
 
@@ -198,7 +198,7 @@ const sage = (gut, was, zusatz) => {
     const zahlen = [...document.querySelectorAll(".sp-zahl")].map((z) => z.textContent);
     return { ton: (window.DMA_TONLOG || []).map((t) => t.name || t).join(","), zahlen };
   });
-  sage(/chihuahuaknurr/.test(gw.ton) && /drachenfeuer/.test(gw.ton), "beide Tiere greifen an", gw.ton);
+  sage(/chihuahuaknurr/.test(gw.ton) && /drachenpuste/.test(gw.ton), "beide Tiere greifen an", gw.ton);
   sage(gw.zahlen.some((z) => /gekuschelt/.test(z)), "das Kuscheln zeigt grüne Punkte", gw.zahlen.join(" | "));
 
   console.log("\nREITER „TIERE“\n");

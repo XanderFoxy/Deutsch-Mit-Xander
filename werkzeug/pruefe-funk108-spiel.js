@@ -116,7 +116,7 @@ const sage = (gut, was, zusatz) => {
   }
 
   console.log("\nGEGENWEHR — DAS MONSTER SPRINGT WIRKLICH ZUM ANGREIFER\n");
-  for (const [tier, tonName, zeichen] of [["fellmonster", "monsterbiss", "sp-kratzer"], ["stachelmonster", "stachelstich", "sp-kratzer"], ["drache", "drachenfeuer", "sp-feuer"]]) {
+  for (const [tier, tonName, zeichen] of [["fellmonster", "monsterbiss2", "sp-kratzer"], ["stachelmonster", "stachelstich", "sp-kratzer"], ["drache", "drachenpuste", "sp-feuer"]]) {
     const m = await pg.evaluate(async ({ tier, zeichen }) => {
       window.DMA_TONLOG.length = 0;
       const ichK = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .lc-kreis').getBoundingClientRect();
@@ -179,7 +179,7 @@ const sage = (gut, was, zusatz) => {
   sage(schuss.rufe.includes("spiel_treffer"), "der Server rechnet den Treffer", schuss.rufe.join(","));
   sage(Boolean(schuss.treffer && schuss.treffer.gegen_geschuetz === 4 && schuss.treffer.gegen_tier === 2 && schuss.treffer.tier === "fellmonster"),
     "das Paket trägt Geschütz, Tier und Art mit", schuss.treffer ? JSON.stringify({ g: schuss.treffer.gegen_geschuetz, t: schuss.treffer.gegen_tier, a: schuss.treffer.tier }) : "kein Paket");
-  sage(schuss.log.includes("pfeiltreffer") && schuss.log.includes("monsterbiss") && schuss.log.includes("geschuetzfeuer"),
+  sage(schuss.log.includes("pfeiltreffer") && schuss.log.includes("monsterbiss2") && schuss.log.includes("geschuetzfeuer"),
     "Abschuss, Treffer und Gegenwehr klingen", schuss.log.join(", "));
   await pg.evaluate(() => window.DMA_SPIEL.pruef.setzen({ waffe: "" }));
 

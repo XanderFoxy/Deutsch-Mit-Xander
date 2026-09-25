@@ -161,7 +161,7 @@ const sage = (gut, was, zusatz) => {
     const st = S.stand["puppe:sparring:" + S.sparring];
     return { ton: (window.DMA_TONLOG || []).map((t) => t.name || t).join(","), lp: st ? st.lp : -1, max: st ? st.lp_max : -1, laeuft: Boolean(S.duell && S.duell.uebung) };
   });
-  sage(/monsterbiss/.test(spar.ton) && /drachenfeuer/.test(spar.ton), "Fellmonster beißt, Drache faucht zurück", spar.ton);
+  sage(/monsterbiss/.test(spar.ton) && /drachenpuste/.test(spar.ton), "Fellmonster beißt, Drache faucht zurück", spar.ton);
   sage(spar.lp >= 0 && spar.lp < spar.max, "der Sparringspartner verliert dabei Lebenspunkte", spar.lp + "/" + spar.max);
   sage(spar.laeuft, "die Übung läuft weiter");
   await pg.evaluate(() => window.DMA_SPIEL.uebungEnde());
