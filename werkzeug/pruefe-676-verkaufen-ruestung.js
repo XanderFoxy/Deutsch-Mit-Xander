@@ -175,14 +175,15 @@ const sage = (gut, was, zusatz) => {
   console.log("\nRÜSTUNG SICHTBAR\n");
   const ruest = await pg.evaluate(() => {
     const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]');
-    const h = k && k.querySelector(".sp-helm .sp-helm-schale"), b = k && k.querySelector(".sp-brust .sp-brust-platten");
+    const h = k && k.querySelector(".sp-helm .sp-helm-schale"), b = k && k.querySelector(".sp-brust .sp-kuerass");
     const kr = k.querySelector(".lc-kreis").getBoundingClientRect();
     const hr = h && h.getBoundingClientRect(), br = b && b.getBoundingClientRect();
     return { helm: Boolean(h), brust: Boolean(b), helmStufe: k.querySelector(".sp-helm") ? k.querySelector(".sp-helm").getAttribute("class") : "",
              helmOben: hr ? Math.round(hr.bottom - kr.top) : null, helmBreit: hr ? Math.round(hr.width / kr.width * 100) : 0, brustUnten: br ? Math.round(br.top - kr.top - kr.height / 2) : null };
   });
   sage(ruest.helm && /sp-helm-2/.test(ruest.helmStufe) && ruest.helmBreit >= 60, "Bea trägt einen Helm (Stufe 2 = Stahl) als Kuppel über dem Bild", JSON.stringify(ruest));
-  sage(ruest.brust && ruest.brustUnten > 0, "und einen Brustpanzer aus Platten unter dem Bild", JSON.stringify(ruest));
+  if (process.env.BILD) { await pg.evaluate(() => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]'); if (k) k.scrollIntoView({ block: "center" }); }); await pg.waitForTimeout(300); await pg.screenshot({ path: process.env.BILD + "-ruestung.png" }); }
+  sage(ruest.brust && ruest.brustUnten > 0, "und einen Brustpanzer (Kürass mit Schulterstücken) unten am Bild", JSON.stringify(ruest));
   sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.slice(0, 3).join(" | "));
   console.log("\n" + (fehler ? "Fassung 676: " + fehler + " rot." : "Fassung 676 auf dem Telefon: alles grün.") + "\n");
   await br.close(); srv.close();

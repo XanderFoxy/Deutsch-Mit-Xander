@@ -1538,13 +1538,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-schnell .sp-s-reihe.sp-eng > button { min-width: 26px; padding: 2px 2px; }
 .sp-schnell .sp-s-reihe.sp-eng > button svg { max-width: 20px; max-height: 20px; }
 .sp-werkzeugwahl { width: min(calc(100vw - 40px), 320px); }
-
-/* FASSUNG 684 — der Brustpanzer als echter Kürass (Bronze, Stahl, Gold) */
-.sp-lp .sp-kuerass, .sp-lp .sp-kuerass-schulter { stroke: #2b2016; stroke-width: .9; stroke-linejoin: round; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .45)); }
-.sp-lp .sp-kuerass-grat { fill: none; stroke: rgba(255, 255, 255, .55); stroke-width: .9; stroke-linecap: round; }
-.sp-lp .sp-kuerass-reif, .sp-lp .sp-kuerass-kragen { fill: none; stroke: #2b2016; stroke-width: .8; opacity: .75; }
-.sp-lp .sp-kuerass-glanz { fill: none; stroke: rgba(255, 255, 255, .8); stroke-width: 1.1; stroke-linecap: round; }
-.sp-lp .sp-kuerass-adler { fill: #7a1f14; stroke: #2b2016; stroke-width: .3; }
-.sp-lp .sp-brust-1 .sp-bg-dunkel { stop-color: #7a4a1c; } .sp-lp .sp-brust-1 .sp-bg-hell { stop-color: #d99a52; }
-.sp-lp .sp-brust-2 .sp-bg-dunkel { stop-color: #6d7884; } .sp-lp .sp-brust-2 .sp-bg-hell { stop-color: #eef3f7; }
-.sp-lp .sp-brust-3 .sp-bg-dunkel { stop-color: #9a7410; } .sp-lp .sp-brust-3 .sp-bg-hell { stop-color: #fff0a0; }

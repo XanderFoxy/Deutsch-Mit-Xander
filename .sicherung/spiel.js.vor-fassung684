@@ -4109,20 +4109,9 @@
       if (extra.brust > 0) {
         var bs = Math.min(3, extra.brust);
         s += '<path class="sp-ruest sp-ruest-' + bs + '" d="' + bogen(35, 145, 52.5) + '"/>'
-          /* FASSUNG 684 — XANDER: „Brustpanzer realistisch angelegt". Ein echter Kürass unten am Bild:
-             Halsberge, gewölbte Brustplatte mit Mittelgrat, zwei geschobene Bauchreifen, Schulterstücke
-             mit Nieten. Er sitzt auf Brust und Schultern – das Gesicht bleibt frei. */
-          + '<g class="sp-brust sp-brust-' + bs + '"><defs><linearGradient id="spBrustG' + bs + '" x1="0" y1="0" x2="1" y2="0">'
-          + '<stop offset="0" class="sp-bg-dunkel"/><stop offset=".42" class="sp-bg-hell"/><stop offset=".58" class="sp-bg-hell"/><stop offset="1" class="sp-bg-dunkel"/></linearGradient></defs>'
-          + '<path class="sp-kuerass" style="fill:url(#spBrustG' + bs + ')" d="M22 83 C30 78 36 79 41 82 C45 85 55 85 59 82 C64 79 70 78 78 83 L80 90 C68 99.5 32 99.5 20 90 Z"/>'
-          + '<path class="sp-kuerass-grat" d="M50 85 C50.6 90 50.6 94 50 98.4"/>'
-          + '<path class="sp-kuerass-reif" d="M24.5 90.5 C36 96.6 64 96.6 75.5 90.5"/>'
-          + '<path class="sp-kuerass-kragen" d="M40.5 81.6 C45 84.8 55 84.8 59.5 81.6"/>'
-          + '<ellipse class="sp-kuerass-schulter" style="fill:url(#spBrustG' + bs + ')" cx="20" cy="84" rx="8.5" ry="5.2" transform="rotate(-28 20 84)"/>'
-          + '<ellipse class="sp-kuerass-schulter" style="fill:url(#spBrustG' + bs + ')" cx="80" cy="84" rx="8.5" ry="5.2" transform="rotate(28 80 84)"/>'
-          + '<path class="sp-kuerass-glanz" d="M30 86 C33 83.5 36 83 38.5 84"/>'
-          + [[29, 88], [71, 88], [18, 83], [82, 83], [44, 93.5], [56, 93.5]].map(function (q) { return '<circle class="sp-niete" cx="' + q[0] + '" cy="' + q[1] + '" r=".9"/>'; }).join("")
-          + (bs >= 3 ? '<path class="sp-kuerass-adler" d="M50 87.5 L47.6 90 L49 90 L48.4 92.5 L50 91.4 L51.6 92.5 L51 90 L52.4 90 Z"/>' : "")
+          + '<g class="sp-brust sp-brust-' + bs + '"><path class="sp-brust-grund" d="' + bogen(40, 140, 55.5) + '"/>'
+          + '<path class="sp-brust-platten" d="' + bogen(40, 140, 55.5) + '"/>'
+          + [60, 90, 120].map(function (w) { return '<circle class="sp-niete" cx="' + pkt(w, 55.5).split(" ")[0] + '" cy="' + pkt(w, 55.5).split(" ")[1] + '" r="1"/>'; }).join("")
           + "</g>";
       }
       /* Links: die Levelzahl, zwischen Lebenspunkten und Ladung. */

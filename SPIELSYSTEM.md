@@ -735,3 +735,8 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Volk: je Gebäudestufe 2 Arbeiter, dazu bis 5 Ritter (40 P). Je Ernte essen sie (Fisch, Brot, Bratwurst, Kuchen, Torte) und bekommen Lohn. Zufriedenheit = 40 % satt + 20 % bezahlt + 40 % Deutsch-Quote der letzten 7 Tage (falsche Antworten werden ab jetzt mitgezählt) → Ertrag × 0,5 bis × 1,5.
 - Server: `spiel_683_dorf_wirtschaft` (+ `spiel_683_pluendern_lp_fix`, `spiel_683_ich_dorf_ab`), alles im Rollback geprüft (Bau, Eier, Milch, Holz, Angeln, Torte, Silizium, Chip, Ernte mit Volk 80 %, Plündern 30 % mit Ritter, 4-h-Schutz, ★★★, Reparatur mit Holz, Krankenhaus-Heilung 13 statt 10 LP in 200 s).
 - Sonde: `pruefe-683-dorf-wirtschaft.js` (29 Prüfungen); 677 an die Werkzeugwahl mit 6 Werkzeugen angepasst (zweispaltig, bleibt im Rahmen).
+
+## Fassung 684 — Brustpanzer als echter Kürass
+
+- XANDER: „Brustpanzer realistisch angelegt". Statt eines Plattenbogens sitzt jetzt ein Kürass unten am Bild: Halsberge, gewölbte Brustplatte mit Mittelgrat und Glanzlicht, zwei Bauchreifen, Schulterstücke, Nieten; Bronze (Stufe 1), Stahl (2), Gold mit rotem Adler (3). Das Gesicht bleibt frei.
+- Sonde 676 prüft den Kürass.
