@@ -137,9 +137,8 @@
   /* FASSUNG 648 — Aufgabenarten. [kategorie, Name, erst freigeben?] */
   var ARTEN_KNOEPFE = [["", "Alles"], ["artikel", "Artikel"], ["richtig-falsch", "Stimmt's?", true], ["faelle", "Fälle"],
     ["praepositionen", "Präpositionen"], ["das-dass", "das/dass"], ["ss-eszett", "ss/ß"], ["betonung", "Betonung"], ["aussprache", "Aussprache"]];
-  /* „Stimmt's?" erst, wenn jeder falsche Satz einzeln geprüft ist. Geprüft (648): 804 falsche und
-     1386 richtige Sätze aktiv, 193 gesperrt (Grammatik, Erklärung, doppelte Wörter, Unsinn). */
-  var ARTEN_FREI = { "richtig-falsch": true };
+  /* „Stimmt's?" erst, wenn jeder falsche Satz einzeln geprüft ist. */
+  var ARTEN_FREI = { "richtig-falsch": false };
   var ARTEN_WEITERE = [["jedesto", "je … desto"], ["relativsatz", "Relativsätze"], ["konnektoren", "Konnektoren"], ["als-wie", "als/wie"],
     ["nebensatz", "Nebensätze"], ["praefixverben", "Präfixverben"], ["kennen-wissen", "kennen/wissen"], ["sinn-trainer", "Sinn"],
     ["wortpaare", "Wortpaare"], ["wenn-ob", "wenn/ob"], ["fragen", "Fragen"], ["infinitivsatz", "Infinitiv mit zu"], ["verneinung", "Verneinung"],
@@ -1745,8 +1744,7 @@
       + (ich.mitspielen ? "Du spielst mit – tippen für Pause (dann bist du nicht angreifbar)" : "Tippen zum Mitspielen") + '">'
       + (ich.mitspielen ? '<i class="sp-s-punkt"></i>' : "Spielen") + "</button>");
     if (ich.mitspielen) {
-      teile.push(waffenKnopf(s[0], " sp-s-slot").replace('data-s="waffe"', 'data-s="waffe" data-n="0"'),
-                 waffenKnopf(s[1], " sp-s-slot").replace('data-s="waffe"', 'data-s="waffe" data-n="1"'));
+      teile.push(waffenKnopf(s[0], " sp-s-slot"), waffenKnopf(s[1], " sp-s-slot"));
       var voll = !ich.kaputt && ich.lp >= ich.lp_max;
       var zuEssen = vorrat(ich, "bratwurst") + vorrat(ich, "sauerkraut");
       teile.push('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke && !zuEssen) ? " disabled" : "")
@@ -1767,7 +1765,7 @@
     if (S.graben) teile.push('<button type="button" class="sp-s-graben sp-an" data-s="graben" title="Schaufel weglegen">' + grabSvg() + "</button>");
     teile.push('<button type="button" class="sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Waffen, Heilen, Tiere, Mehr">'
       + '<svg viewBox="0 0 20 20"><path d="M4 6 H16 M4 10 H16 M4 14 H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>');
-    var html = '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (S.rad != null && ich.mitspielen ? radHtml(S.rad) : "");
+    var html = '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "");
     if (sofort !== true && schnellGesperrt()) { clearTimeout(S.schnellNach); S.schnellNach = setTimeout(schnellZeichnen, 380); return; }
     S.schnellDruck = 0;
     if (schnellEl.dataset.html !== html) { schnellEl.innerHTML = html; schnellEl.dataset.html = html; }
@@ -1781,44 +1779,7 @@
         sm.style.maxHeight = Math.max(160, Math.round(unterkante - oben - 10)) + "px";
       } catch (e) {}
     }
-    /* Das Rad steht über seinem Waffenplatz. */
-    var rad = schnellEl.querySelector(".sp-rad"), slot = rad && schnellEl.querySelector('.sp-s-slot[data-n="' + S.rad + '"]');
-    if (rad && slot) {
-      /* Über dem Platz – aber nie aus dem Bild heraus. */
-      var breite = schnellEl.parentNode.clientWidth || window.innerWidth, links = slot.offsetLeft + slot.offsetWidth / 2 - rad.offsetWidth / 2;
-      var basis = schnellEl.offsetLeft || 0;
-      links = Math.max(4 - basis, Math.min(breite - basis - rad.offsetWidth - 4, links));
-      rad.style.left = Math.round(links) + "px";
-    }
     meldungSetzen();
-  }
-  /* Das Waffenrad: alle eigenen Waffen im Halbkreis, nur Bilder und die
-     Schadenszahl; in der Mitte „ablegen". Gruppen liegen nebeneinander
-     (Standard links, Stark rechts), damit die Hand sie wiederfindet. */
-  function radHtml(nr) {
-    var ich = S.ich || {}, s = slots();
-    var reihe = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "bratwurst", "sauerkraut",
-      "spaetzle", "doener", "lasersalve", "mg", "armbrust", "tomahawk", "zielfernrohr", "bazooka"];
-    var da = reihe.filter(function (w) { return WAFFEN[w] && ((ich.waffen || []).indexOf(w) >= 0 || (WAFFEN[w].vorrat && vorrat(ich, w) > 0)); });
-    /* Zwei Ringe, damit nichts überlappt: innen bis 7 (Radius 88),
-       außen der Rest (Radius 146) – Abstand je Waffe mindestens 44 px. */
-    var ringe = [da.slice(0, 7), da.slice(7)], RADIEN = [88, 146], html = "";
-    var R = ringe[1].length ? RADIEN[1] : RADIEN[0];
-    ringe.forEach(function (ring, r) {
-      var n = ring.length, rad = RADIEN[r];
-      ring.forEach(function (w, i) {
-        /* von links (180°) über oben nach rechts (360°), mit Rand */
-        var a = Math.PI + 0.12 + (n === 1 ? (Math.PI - 0.24) / 2 : (i / (n - 1)) * (Math.PI - 0.24));
-        var x = Math.cos(a) * rad, y = -Math.sin(a) * rad;
-        var hw = haltVon(ich, w), vr = WAFFEN[w].vorrat ? vorrat(ich, w) : -1;
-        html += '<button type="button" class="sp-rad-waffe' + (s[nr] === w ? " sp-an" : "") + (hw === 0 ? " sp-stumpf" : "") + '" data-s="radwahl" data-n="' + nr + '" data-w="' + w
-          + '" style="left:calc(50% + ' + (x - 20).toFixed(0) + "px);bottom:" + (y + 4).toFixed(0) + 'px" title="' + esc(WAFFEN[w].name) + '">'
-          + geschossSvg(w, S.laserfarbe) + "<small>" + (vr >= 0 ? "×" + vr : WAFFEN[w].schaden) + "</small></button>";
-      });
-    });
-    var B = 2 * R + 48;
-    return '<div class="sp-rad" style="width:' + B + "px;height:" + (R + 48) + 'px"><div class="sp-rad-bogen" style="width:' + B + "px;height:" + B + 'px"></div>'
-      + html + '<button type="button" class="sp-rad-mitte" data-s="radab" title="Waffe ablegen"><svg viewBox="0 0 20 20"><path d="M5 11 V7 a1.5 1.5 0 0 1 3 0 V10 M8 9 V5.5 a1.5 1.5 0 0 1 3 0 V9.5 M11 9 V6.5 a1.5 1.5 0 0 1 3 0 V11 C14 15 12 17 9.5 17 C7 17 5.5 15.5 5 13 Z" fill="#fff"/></svg></button></div>';
   }
   function schnellMenueHtml() {
     var ich = S.ich || {}, r = S.schnellReiter || "waffen", s = slots();
@@ -1886,20 +1847,11 @@
     ev.preventDefault(); ev.stopPropagation();
     var s = k.dataset.s, zu = false;
     if (s === "waffe") {
-      /* FASSUNG 649 — XANDER: „das Waffen Menü vielleicht so klassisch,
-         wie man das so bei Diablo … so ne Art Tachometer … ganz schnell
-         wechseln … ohne viel Text lesen zu müssen". Ein Tipp auf die
-         angelegte Waffe öffnet das Waffenrad für diesen Platz; ein Tipp
-         auf eine andere legt sie an. */
-      if (S.waffe === k.dataset.w && k.dataset.n != null) { S.rad = S.rad === Number(k.dataset.n) ? null : Number(k.dataset.n); S.schnellMenue = false; }
-      else { S.waffe = k.dataset.w; S.rad = null; hinweis("🎯 " + WAFFEN[S.waffe].name + " – tippe auf ein Gesicht."); }
-    } else if (s === "radwahl") {
-      slotSetzen(Number(k.dataset.n) || 0, k.dataset.w); S.waffe = k.dataset.w; S.rad = null;
-      ton("swoosh", 0.3);
-    } else if (s === "radab") {
-      S.waffe = ""; S.rad = null;
+      /* Nochmal auf die angelegte Waffe = ablegen. */
+      S.waffe = S.waffe === k.dataset.w ? "" : k.dataset.w;
+      if (S.waffe) hinweis("🎯 " + WAFFEN[S.waffe].name + " – tippe auf ein Gesicht.");
     } else if (s === "klappe") {
-      S.schnellMenue = !S.schnellMenue; S.rad = null;
+      S.schnellMenue = !S.schnellMenue;
     } else if (s === "reiter") {
       S.schnellReiter = k.dataset.r;
     } else if (s === "slot") {
@@ -1947,9 +1899,9 @@
   /* „beim Weiterspielen schließt sich sowieso wieder": ein Tipp
      irgendwo anders klappt das Menü zu. */
   document.addEventListener("click", function (ev) {
-    if ((!S.schnellMenue && S.rad == null) || !schnellEl) return;
+    if (!S.schnellMenue || !schnellEl) return;
     if (schnellEl.contains(ev.target)) return;
-    S.schnellMenue = false; S.rad = null; schnellZeichnen();
+    S.schnellMenue = false; schnellZeichnen();
   }, true);
   function tierWechseln(art) {
     rpc("spiel_tier_wechseln", { p_art: art }).then(function (r) {

@@ -183,9 +183,12 @@ const sage = (gut, was, zusatz) => {
   await tippe('[data-w="huehnerwerfer"]');
   l = await leiste();
   sage((l.waffen || []).includes("huehnerwerfer*"), "Hühnerwerfer angelegt", (l.waffen || []).join(","));
-  await tippe('[data-w="huehnerwerfer"]');
+  /* Fassung 649: nochmal tippen öffnet das Waffenrad; seine Mitte legt ab. */
+  await tippe('.sp-s-reihe [data-w="huehnerwerfer"]');
+  const radAuf = await pg.evaluate(() => Boolean(document.querySelector(".sp-rad")));
+  await tippe(".sp-rad .sp-rad-mitte");
   l = await leiste();
-  sage(!(l.waffen || []).some((w) => /\*$/.test(w)), "nochmal getippt = abgelegt", (l.waffen || []).join(","));
+  sage(radAuf && !(l.waffen || []).some((w) => /\*$/.test(w)), "nochmal getippt = Waffenrad, dessen Mitte legt ab", (l.waffen || []).join(","));
 
   console.log("\nHEILEN, OHNE ZU VERSCHWENDEN\n");
   const heil = await pg.evaluate(async () => {

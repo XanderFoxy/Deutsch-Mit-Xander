@@ -376,3 +376,13 @@ Lebenspunkte, Punkte, Inventar und Treffer liegen in der Datenbank. Schreiben da
   - `spiel_aussprache_fertig`: ab 60 % 2 (A1/A2) bzw. 3 Punkte, +EP, +4 Mana. Jedes Wort nur einmal, höchstens 40 je Stunde.
   - Die Note meldet der Browser, deshalb gibt es wenige Punkte und eine feste Grenze.
 - **Sonde:** `werkzeug/pruefe-648-aufgabenarten.js`.
+
+## Fassung 649 — Waffenrad („Tachometer") und „Stimmt's?" freigegeben
+
+XANDER: „das Waffen Menü vielleicht so klassisch, wie man das so bei Diablo … so ne Art Tachometer … ganz schnell wechseln … ohne vier Text lesen zu müssen"
+
+- Nochmal auf die gewählte Waffe in der Schnellleiste tippen öffnet das Rad: ein Halbkreis über dem Knopf, zwei Ringe (innen höchstens 7, Rest außen), nur Bilder, keine Texte.
+- Tippen auf ein Bild rüstet diese Waffe aus und schließt das Rad; die Mitte legt die Waffe ab; ein Tipp daneben schließt.
+- Das Rad bleibt immer ganz im Bild (seitlich eingeklemmt), Knöpfe überlappen nicht.
+- „Stimmt's?" (Richtig/Falsch) ist jetzt freigegeben: jeder Satz einzeln geprüft — 804 falsche und 1386 richtige aktiv, 193 gesperrt (grammatisch648, erklaerung648, kaputt648, richtigfalsch648).
+- Sonden: pruefe-649-waffenrad.js (neu), pruefe-633-schnellleiste.js (Rad statt Ablegen beim zweiten Tipp), pruefe-648-aufgabenarten.js (Stimmt's sichtbar).
