@@ -178,10 +178,7 @@
      man die stabiler bauen kann, dass man die anders fertigen kann oder
      dass die Zusatzfunktionen bekommen". Verstärkt hält eine Waffe 100
      (★) bzw. 140 Treffer (★★); ★★ ist dazu geschliffen: +10 % Schaden. */
-  /* FASSUNG 683 — XANDER: „Silizium und Computerchips … dass man unser Laser Waffen verbessern kann".
-     ★★★ gibt es nur für Energiewaffen: Labor + 2 Chips, hält 180 Treffer, +20 % Schaden. */
-  var ENERGIE = ["lasersalve", "doppellaser", "streulaser", "plasmastrahl", "kugelblitz"];
-  function waffenStufe(ich, w) { return Math.min(3, Math.max(0, Number(((ich || {}).waffen_stufe || {})[w]) || 0)); }
+  function waffenStufe(ich, w) { return Math.min(2, Math.max(0, Number(((ich || {}).waffen_stufe || {})[w]) || 0)); }
   function haltMax(ich, w) { return 60 + 40 * waffenStufe(ich, w); }
   function haltVon(ich, w) { if (HALTBAR.indexOf(w) < 0) return -1; var h = ((ich || {}).waffen_halt || {})[w]; return h == null ? haltMax(ich, w) : Number(h); }
   function reparaturNoetig(ich) { return ((ich || {}).waffen || []).some(function (w) { var h = haltVon(ich, w); return h >= 0 && h <= 15; }); }
@@ -571,13 +568,7 @@
     });
     if (S.uid && ids.indexOf(S.uid) < 0) ids.push(S.uid);
     rpc("spiel_stand", { p_ids: ids }).then(function (liste) {
-      (liste || []).forEach(function (s) {
-        /* FASSUNG 683 — XANDER: „diese kleinen Zahlen, die Gesundheitspunkte, wenn er einfach steht und
-           nichts macht und sich regeneriert". Grüne Zahl und ein sanftes Leuchten am Bild. */
-        var vorher = S.stand[s.id];
-        if (vorher && !vorher.kaputt && !s.kaputt && s.lp > vorher.lp && spielSichtbar()) erholtZeigen(s, s.lp - vorher.lp);
-        S.stand[s.id] = s;
-      });
+      (liste || []).forEach(function (s) { S.stand[s.id] = s; });
       return rpc("spiel_ich", { p_name: null });
     }).then(function (ich) {
       if (ich) { veraenderungMelden(S.ich, ich); S.ich = ich; S.stand[ich.id] = oeffentlich(ich); }
@@ -904,16 +895,6 @@
     } else if (n.ereignis === "geschenk_ware") {
       /* FASSUNG 682 — jemand hat mir Ware geschenkt. */
       if (n.zielChat === meineChatId()) { ton("geschenk", 0.45); hinweis("🎁 " + (n.name || "Jemand") + " hat dir " + n.menge + " " + (WAREN[n.ware] || n.ware) + " geschenkt!"); abrufen(true); }
-    } else if (n.ereignis === "gepluendert") {
-      /* FASSUNG 683 — mein Gebäude wurde geplündert: es steht noch, ist nur beschädigt. */
-      pluenderZeigen(n.zielChat, n.gebaeude);
-      if (n.zielChat === meineChatId()) {
-        ton("hammerschlag", 0.45);
-        var weg = Object.keys(n.beute || {}).map(function (w) { return n.beute[w] + " " + (WAREN[w] || w); }).join(", ");
-        hinweis("⚔️ " + (n.name || "Jemand") + " hat deine " + ((DORF[n.gebaeude] || {}).name || "Gebäude") + " geplündert" + (weg ? " (" + weg + ")" : "")
-          + ". Sie steht noch – reparieren: Mein Dorf (1 Erz oder 2 Holz). Ritter schützen dich.");
-        abrufen(true);
-      }
     } else if (n.ereignis === "ausgewichen") {
       zahlZeigen(n.zielChat, null, "ausgewichen");
     } else if (n.ereignis === "heilung") {
@@ -1020,8 +1001,6 @@
     if (S.chatWaffe && S.bereit && !spielSichtbar() && p && !p.leer && !p.ich && p.id && !istPuppe(p.id)) { chatWaffeSchiessen(p.id); return true; }
     /* FASSUNG 661 — ein Fundstück auf dem Platz: aufheben statt hinsetzen. */
     if (knopf && knopf.querySelector && knopf.querySelector(".sp-fundsack") && spielSichtbar()) { fundHeben(knopf); return true; }
-    /* FASSUNG 683 — XANDER: „dass die Hühner, wenn sie auf dem Feld Eier legen, dass man die Eier einsammeln kann". */
-    if (knopf && knopf.querySelector && knopf.querySelector(".sp-ei-feld:not(.sp-ei-weg)") && spielSichtbar()) { eiSammeln(knopf); return true; }
     if (S.turmSetzen && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
       /* Ein besetzter Platz bricht nicht ab – man tippt einfach noch einmal auf einen freien. */
       if (p && !p.leer) { hinweis("🗼 Der Platz ist besetzt – tippe auf einen freien (gestrichelten)."); return true; }
@@ -1583,7 +1562,7 @@
       if (!r || !r.ok) { hinweis((ding === "bratwurst" ? "🌭 " : ding === "sauerkraut" ? "🥬 " : "🍞 ") + ((r && r.grund) || "geht nicht")); return; }
       S.ich = r; S.stand[r.id] = oeffentlich(r);
       ton("mampf", 0.5);
-      zahlZeigen(meineChatId(), r.geheilt, ({ bratwurst: "Bratwurst", sauerkraut: "Sauerkraut", brot: "Brot", kuchen: "Kuchen", fisch: "Fisch", torte: "Torte" })[ding] || ding);
+      zahlZeigen(meineChatId(), r.geheilt, ({ bratwurst: "Bratwurst", sauerkraut: "Sauerkraut", brot: "Brot", kuchen: "Kuchen" })[ding] || ding);
       senden({ ereignis: "essen", sorte: ding, plus: r.geheilt, stand: oeffentlich(r) });
       panelAuffrischen(); zeichnen(); schnellZeichnen();
     }).catch(function (e) { hinweis("Essen ging nicht: " + (e && e.message ? e.message : e)); });
@@ -1594,14 +1573,6 @@
      Sie steigen ÜBER dem Kreis auf: die Gesichtsmitte bleibt frei.
      --------------------------------------------------------------- */
   var ZONEN = { kopf: "Kopfschuss", herz: "Herz", koerper: "", streif: "Streifschuss", daneben: "daneben" };
-  function erholtZeigen(s, plus) {
-    var chatId = chatVonSpiel(s.id), el = chatId && platzElVon(chatId);
-    if (!el) return;
-    var kh = s.dorf && s.dorf.krankenhaus && s.dorf.krankenhaus.lp > 0;
-    zahlZeigen(chatId, plus, kh ? "Krankenhaus" : "erholt", "sp-zahl-erholt");
-    el.classList.remove("sp-erholt"); void el.offsetWidth; el.classList.add("sp-erholt");
-    setTimeout(function () { el.classList.remove("sp-erholt"); }, 1500);
-  }
   function zahlZeigen(chatId, wert, text, klasse) {
     var el = platzElVon(chatId);
     if (!el) return;
@@ -2966,7 +2937,7 @@
         + ' title="Heilen – nimmt, was gerade passt, und verschwendet nichts">'
         + '<svg viewBox="0 0 20 20"><path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#e2403a"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>');
       var ladung = Math.max(0, Math.min(100, ich.ladung || 0)), daemonRest = wirkt(ich, "daemon");
-      teile.push('<button type="button" class="sp-s-super' + (daemonRest ? " sp-an" : ladung >= 100 ? " sp-voll" : "") + '" style="--ladung:' + ladung + '%" data-s="superkraft"'
+      teile.push('<button type="button" class="sp-s-super' + (daemonRest ? " sp-an" : ladung >= 100 ? " sp-voll" : "") + '" data-s="superkraft"'
         + (ladung >= 100 && !daemonRest ? "" : " disabled")
         + ' title="' + (daemonRest ? "Dämonisch – noch " + daemonRest + " s" : ladung >= 100 ? "Superkraft: 90 s dämonisch" : "Superkraft lädt: " + ladung + " %") + '">'
         + '<svg viewBox="0 0 20 20"><path d="M10 1.5 C11 5 15.5 7 15.5 12 A5.5 5.5 0 0 1 4.5 12 C4.5 9 6.5 7.5 7 5 C8 7 8.5 8 9.5 8.5 C9.5 6 9 4 10 1.5 Z" fill="' + (daemonRest ? "#b0172f" : "#f29d0b") + '"/>'
@@ -2980,11 +2951,6 @@
         + (S.zauber ? zauberSvg(S.zauber) : '<svg viewBox="0 0 20 20"><path d="M3 17 L12 8" stroke="#c9a46a" stroke-width="2.4" stroke-linecap="round"/>'
           + '<path d="M14 2 L15 5 L18 6 L15 7 L14 10 L13 7 L10 6 L13 5 Z" fill="#ffe27a"/><circle cx="17" cy="11" r="1" fill="#bfe3ff"/><circle cx="9" cy="3.5" r=".9" fill="#bfe3ff"/></svg>')
         + "</button>");
-      /* FASSUNG 683 — XANDER: „Mein Dorf hätte ich gern zusätzlich … in dem Shortcut Menü unten bei den Waffen …
-         dass der letzte wie ein Makroknopf ist, dass ich dort entweder das Dorf hin machen kann … oder dass ich
-         selber bestimmen kann, was dort unten für Symbole zu sehen sind." Belegen: Menü → Mehr → „Letzter Knopf". */
-      teile.push('<button type="button" class="sp-s-makro' + (S.schnellMenue && (S.schnellReiter === "dorfblick" || S.schnellReiter === "handelblick") ? " sp-an" : "")
-        + '" data-s="makro" title="' + MAKROS[S.makro] + ' (belegen: Menü → Mehr → Letzter Knopf)">' + makroSvg(S.makro) + "</button>");
       if (reparaturNoetig(ich)) teile.push('<button type="button" class="sp-s-repar" data-s="reparieren" title="Alle Waffen reparieren (15 Punkte)">'
         + '<svg viewBox="0 0 20 20"><path d="M13.5 2.5 a4 4 0 0 0 -4.8 5.3 L2.8 13.7 a1.8 1.8 0 0 0 2.5 2.5 L11.2 10.3 a4 4 0 0 0 5.3 -4.8 L14 8 L12 6 Z" fill="#cfd6de" stroke="#5b636c" stroke-width="1"/></svg></button>');
     }
@@ -3017,8 +2983,6 @@
       var frei = Math.max(200, (schnellEl.parentNode.clientWidth || window.innerWidth) - (schnellEl.offsetLeft || 0) - 6);
       var reiheB = schnellEl.querySelector(".sp-s-reihe");
       if (reiheB) reiheB.style.maxWidth = frei + "px";
-      /* FASSUNG 683 — mit dem Makroknopf wird es eng: dann rücken die Knöpfe zusammen, statt rechts abgeschnitten zu werden. */
-      if (reiheB) { reiheB.classList.remove("sp-eng"); if (reiheB.scrollWidth > reiheB.clientWidth + 1) reiheB.classList.add("sp-eng"); }
       var smB = schnellEl.querySelector(".sp-schnellmenue");
       if (smB) smB.style.width = Math.min(340, frei) + "px";
     } catch (e) {}
@@ -3028,20 +2992,6 @@
         var platz = schnellEl.parentNode.getBoundingClientRect(), reiheEl = schnellEl.querySelector(".sp-s-burger") || schnellEl.querySelector(".sp-s-reihe");
         var oben = Math.max(platz.top, 0), unterkante = reiheEl.getBoundingClientRect().top;
         sm.style.maxHeight = Math.max(160, Math.round(unterkante - oben - 10)) + "px";
-      } catch (e) {}
-    }
-    /* FASSUNG 683 — die (breitere) Werkzeugwahl bleibt ganz im Bild: links und oben nie hinaus. */
-    var wwEl = schnellEl.querySelector(".sp-werkzeugwahl");
-    if (wwEl) {
-      try {
-        wwEl.style.transform = "";
-        var rahmen = schnellEl.parentNode.getBoundingClientRect();
-        wwEl.style.width = Math.max(220, Math.min(320, Math.round(Math.min(window.innerWidth, rahmen.right) - Math.max(0, rahmen.left) - 8))) + "px";
-        var wr = wwEl.getBoundingClientRect(), dx = 0, dy = 0;
-        var li = Math.max(4, rahmen.left + 4), re = Math.min(window.innerWidth, rahmen.right) - 4, ob = Math.max(4, rahmen.top + 4);
-        if (wr.left < li) dx = li - wr.left; else if (wr.right > re) dx = re - wr.right;
-        if (wr.top < ob) dy = ob - wr.top;
-        if (dx || dy) wwEl.style.transform = "translate(" + Math.round(dx) + "px," + Math.round(dy) + "px)";
       } catch (e) {}
     }
     /* FASSUNG 652 — das volle Waffenrad schwebt fest über dem Chat:
@@ -3184,9 +3134,6 @@
       /* FASSUNG 677 — Selbstgebackenes aus der Bäckerei. */
       if (vorrat(ich, "brot")) t.push('<button type="button" data-s="iss" data-d="brot">Brot essen <small>' + vorrat(ich, "brot") + "</small></button>");
       if (vorrat(ich, "kuchen")) t.push('<button type="button" data-s="iss" data-d="kuchen">Kuchen essen <small>' + vorrat(ich, "kuchen") + "</small></button>");
-      /* FASSUNG 683 — Fisch vom Angeln, Torte aus der Bäckerei. */
-      if (vorrat(ich, "fisch")) t.push('<button type="button" data-s="iss" data-d="fisch">Fisch essen <small>' + vorrat(ich, "fisch") + "</small></button>");
-      if (vorrat(ich, "torte")) t.push('<button type="button" data-s="iss" data-d="torte">Torte essen <small>' + vorrat(ich, "torte") + "</small></button>");
       TRAENKE.forEach(function (tr) {
         var n = ich["trank_" + tr[0]] || 0, rest = wirkt(ich, tr[0]);
         if (!n && !rest) return;
@@ -3197,10 +3144,6 @@
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + klassenHtml(ich);
     } else if (r === "dorf") {
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + dorfHtml(ich);
-    } else if (r === "dorfblick") {
-      inhaltM = dorfBlickHtml(ich);
-    } else if (r === "handelblick") {
-      inhaltM = lagerHtml(ich, true) + marktHtml(ich) + handelHtml(ich);
     } else if (r === "trophaeen") {
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + trophaeenHtml();
     } else if (r === "deutsch") {
@@ -3241,10 +3184,7 @@
           /* FASSUNG 682 — Chat-Mauer und Spaßwaffen */
           + '<div class="sp-sm-laut sp-sm-zeigen"><span>Im Chat</span>'
           + '<button type="button" data-s="zeigen" data-k="schutz" class="' + (z.schutz ? "sp-an" : "") + '" title="unfreundliche Chat-Effekte prallen an einer Mauer ab">Chat-Mauer</button>'
-          + '<button type="button" data-s="chatwaffe" class="' + (S.chatWaffe ? "sp-an" : "") + '" title="ohne Mitspielen: Tipp aufs Bild schießt zum Spaß mit deiner Waffe">Spaßwaffen</button></div>'
-          /* FASSUNG 683 — der letzte Knopf der Leiste ist frei belegbar. */
-          + '<div class="sp-sm-laut sp-sm-zeigen sp-sm-makro"><span>Letzter Knopf</span>' + Object.keys(MAKROS).map(function (m) {
-              return '<button type="button" data-s="makrowahl" data-m="' + m + '" class="' + (S.makro === m ? "sp-an" : "") + '">' + MAKROS[m] + "</button>"; }).join("") + "</div>"; })()
+          + '<button type="button" data-s="chatwaffe" class="' + (S.chatWaffe ? "sp-an" : "") + '" title="ohne Mitspielen: Tipp aufs Bild schießt zum Spaß mit deiner Waffe">Spaßwaffen</button></div>'; })()
         + '<p class="sp-sm-klein">Aufs eigene Bild: <b>2× tippen</b> wechselt die Waffe, <b>lang drücken</b> öffnet das Zauberrad.</p>'
         + '<div class="sp-sm-liste">'
         + '<button type="button" data-s="sparring" class="' + (S.sparring ? "sp-an" : "") + '">Sparringspartner ' + (S.sparring ? "weg" : "aufstellen") + "</button>"
@@ -3272,11 +3212,6 @@
         /* FASSUNG 669 — die Extra-Spiele */
         + '<div class="sp-sm-gruppe sp-sm-extra"><span>Extra-Spiele</span><button type="button" data-s="extra" data-e="td">Tower Defense <small>Fehlerteufel</small></button>'
         + '<button type="button" data-s="extra" data-e="strat">Strategie <small>Rundenkampf</small></button></div>';
-    }
-    /* FASSUNG 683 — der Makroknopf zeigt NUR das Dorf (bzw. den Markt): keine Reiter, oben ✕. */
-    if (r === "dorfblick" || r === "handelblick") {
-      return '<div class="sp-schnellmenue sp-sm-blick"><div class="sp-sm-kopf sp-sm-kopf-blick"><b>' + (r === "dorfblick" ? "Mein Dorf" : "Markt & Handel") + "</b> · " + (ich.punkte || 0) + " P · " + (ich.mana || 0) + " Mana"
-        + '<button type="button" data-s="klappe" class="sp-sm-zu" aria-label="Schließen">✕</button></div>' + inhaltM + "</div>";
     }
     return '<div class="sp-schnellmenue">' + kopf + '<div class="sp-sm-reiter">' + reiter + "</div>" + inhaltM + "</div>";
   }
@@ -3364,36 +3299,12 @@
         handelLaden(true);
       });
       return;
-    } else if (s === "makro") {
-      makroAusloesen(); return;
-    } else if (s === "makrowahl") {
-      /* FASSUNG 683 — „dass ich selber bestimmen kann, was dort unten für Symbole zu sehen sind". */
-      S.makro = k.dataset.m; try { localStorage.setItem("dma_spiel_makro", S.makro); } catch (e) {}
-      ton("swoosh", 0.25); hinweis("⭐ Der letzte Knopf in der Leiste ist jetzt: " + MAKROS[S.makro] + ".");
-    } else if (s === "dorfteil") {
-      S.dorfTeil = S.dorfTeil === k.dataset.t ? "" : k.dataset.t;
-      if (S.dorfTeil === "markt") handelLaden(false);
-    } else if (s === "ritter") {
-      var rn = Number(k.dataset.n) || 0;
-      wirtschaft("spiel_ritter", { p_menge: rn }, function (r) {
-        ton(rn > 0 ? "marschtrommel" : "swoosh", 0.4);
-        hinweis(rn > 0 ? "🛡️ Ein Ritter zieht für dich ins Feld (" + r.ritter + " Ritter). Er isst mit und will 3 P Lohn je Ernte – dafür plünderst du mehr und wirst weniger geplündert."
-                       : "🛡️ Ein Ritter geht nach Hause (" + r.ritter + " Ritter).");
-      });
-      return;
-    } else if (s === "melken") {
-      wirtschaft("spiel_melken", {}, function (r) { ton("eimerfuellen", 0.45); hinweis("🥛 +" + r.menge + " Milch gemolken (" + vorrat(r, "milch") + " im Lager) – für Torten in der Bäckerei."); });
-      return;
-    } else if (s === "eier") {
-      eierAlle(); return;
-    } else if (s === "pluendern") {
-      pluendern(k.dataset.z, k.dataset.c, k.dataset.g); return;
     } else if (s === "bauen") {
       rpc("spiel_bauen", { p_was: k.dataset.w }).then(function (r) {
         if (!r || r.ok === false) { hinweis("🏗️ " + ((r && r.grund) || "Das ging nicht.")); return; }
         S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) });
         ton(r.gebaut === "reparatur" ? "hammerschlag" : "jubel", 0.5);
-        hinweis(r.gebaut === "reparatur" ? "🔧 Alles repariert" + (r.mit === "holz" ? " (mit 2 Holz)" : " (mit 1 Erz)") + " – das Dorf arbeitet wieder." : "🏗️ " + DORF[r.gebaut].name + " steht – Stufe " + r.stufe + "!");
+        hinweis(r.gebaut === "reparatur" ? "🔧 Alles repariert – das Dorf arbeitet wieder." : "🏗️ " + DORF[r.gebaut].name + " steht – Stufe " + r.stufe + "!");
         schnellZeichnen(true);
       }).catch(function () { hinweis("🏗️ Das ging gerade nicht."); });
     } else if (s === "ernte") {
@@ -3405,10 +3316,7 @@
         S.ich = r; S.stand[r.id] = oeffentlich(r);
         ton("geschenk", 0.5);
         var teile = []; if (r.bratwurst) teile.push(r.bratwurst + " Bratwurst"); if (r.erz) teile.push(r.erz + " Erz"); if (r.xp) teile.push(r.xp + " Erfahrung"); if (r.mana) teile.push(r.mana + " Mana"); if (r.punkte_plus) teile.push(r.punkte_plus + " Punkte");
-        if (r.quarz) teile.push(r.quarz + " Quarz"); if (r.gold) teile.push(r.gold + " Gold"); if (r.oel) teile.push(r.oel + " Öl");
-        /* FASSUNG 683 — das Volk isst, wird bezahlt und freut sich über gutes Deutsch. */
-        hinweis("🧺 Ernte: " + (teile.join(", ") || "nichts – alles kaputt? Erst reparieren.") + "." + (r.goldader ? " ⛏️ Goldader!" : "")
-          + (r.zufrieden != null ? " Dein Volk ist " + r.zufrieden + " % zufrieden (satt " + r.satt + "/" + r.bedarf + ", Lohn " + r.bezahlt + " P, Deutsch-Quote " + r.quote + " %)." : ""));
+        hinweis("🧺 Ernte: " + (teile.join(", ") || "nichts – alles kaputt? Erst reparieren.") + ".");
         schnellZeichnen(true);
       }).catch(function () { hinweis("🧺 Das ging gerade nicht."); });
     } else if (s === "trophaeen") {
@@ -3490,7 +3398,7 @@
     } else if (s === "liefern") {
       wirtschaft("spiel_beliefern", { p_gebaeude: k.dataset.g, p_ware: k.dataset.w, p_menge: Number(k.dataset.n) || 0 }, function (r) {
         ton("hammerschlag", 0.4);
-        hinweis(({ muehle: "🌬️ Die Mühle mahlt ", baeckerei: "🔥 Die Bäckerei backt ", schmiede: "🔥 Die Schmiede schmilzt ", labor: "🔬 Das Labor baut " })[r.gebaeude] + r.menge + " " + (WAREN[r.ware] || r.ware) + " – fertig in " + r.minuten + " min. Dann: Mein Dorf → Abholen.");
+        hinweis((r.gebaeude === "muehle" ? "🌬️ Die Mühle mahlt " : "🔥 Die Bäckerei backt ") + r.menge + " " + (WAREN[r.ware] || r.ware) + " – fertig in " + r.minuten + " min. Dann: Mein Dorf → Abholen.");
       });
       return;
     } else if (s === "abholen") {
@@ -4936,12 +4844,8 @@
         var st = hat ? waffenStufe(ich, k) : 0;
         var verst = hat && h >= 0 && st < 2 ? '<button type="button" class="sp-verstaerken" data-tu="veredeln" data-d="' + k + '"'
           + ((ich.punkte || 0) >= 30 * (st + 1) && vorrat(ich, "erz") >= 2 * (st + 1) ? "" : " disabled")
-          + ' title="' + (st ? "140 Treffer und geschliffen: +10 % Schaden" : "hält 100 statt 60 Treffer") + '">Verstärken ' + (st ? "★★" : "★") + " · " + 30 * (st + 1) + " P + " + 2 * (st + 1) + " Erz</button>"
-          /* FASSUNG 683 — ★★★ für Energiewaffen: Forschung im Labor, 2 Chips. */
-          : hat && h >= 0 && st === 2 && ENERGIE.indexOf(k) >= 0 ? '<button type="button" class="sp-verstaerken" data-tu="veredeln" data-d="' + k + '"'
-          + ((ich.punkte || 0) >= 100 && vorrat(ich, "chip") >= 2 && dorfSteht(ich, "labor") ? "" : " disabled")
-          + ' title="' + (dorfSteht(ich, "labor") ? "Hochleistung: 180 Treffer, +20 % Schaden" : "braucht ein Labor (ab Level 10)") + '">Verstärken ★★★ · 100 P + 2 Chips</button>' : "";
-        return '<div class="sp-zeile"><span class="sp-bild">' + geschossSvg(k, S.laserfarbe) + "</span><span><b>" + esc(w.name) + (st ? ' <span class="sp-sterne">' + (st >= 3 ? "★★★" : st >= 2 ? "★★" : "★") + "</span>" : "") + "</b><br><small>Schaden " + w.schaden + (st >= 3 ? " +20 %" : st >= 2 ? " +10 %" : "") + (k === "zielfernrohr" ? ", langsam" : "") + (w.art ? " · " + esc(w.art) : "")
+          + ' title="' + (st ? "140 Treffer und geschliffen: +10 % Schaden" : "hält 100 statt 60 Treffer") + '">Verstärken ' + (st ? "★★" : "★") + " · " + 30 * (st + 1) + " P + " + 2 * (st + 1) + " Erz</button>" : "";
+        return '<div class="sp-zeile"><span class="sp-bild">' + geschossSvg(k, S.laserfarbe) + "</span><span><b>" + esc(w.name) + (st ? ' <span class="sp-sterne">' + (st >= 2 ? "★★" : "★") + "</span>" : "") + "</b><br><small>Schaden " + w.schaden + (st >= 2 ? " +10 %" : "") + (k === "zielfernrohr" ? ", langsam" : "") + (w.art ? " · " + esc(w.art) : "")
           + (h >= 0 ? " · " + (h > 0 ? "hält noch " + h + "/" + haltMax(ich, k) : '<span class="sp-rot">stumpf – halber Schaden</span>') : "") + "</small></span>"
           + (hat ? '<span class="sp-knopfgruppe">' + (S.waffe === k ? '<button type="button" data-tu="ablegen">Ablegen</button>' : '<button type="button" data-tu="anlegen" data-w="' + k + '">Anlegen</button>') + verst
                    + (STARTWAFFEN.indexOf(k) < 0 ? verkaufKnopf(k, Math.max(5, Math.round(w.preis * 0.5 * (h < 0 ? 60 : Math.min(60, h)) / 60))) : "") + "</span>"
@@ -5522,33 +5426,14 @@
   var DORF = {
     baeckerei: { name: "Bäckerei", preis: 100, gibt: "2 Bratwürste je Stufe" },
     schule:    { name: "Schule",   preis: 150, gibt: "20 Erfahrung je Stufe", ab: 4 },
-    schmiede:  { name: "Schmiede", preis: 120, gibt: "1 Erz je Stufe · schmilzt Silizium" },
+    schmiede:  { name: "Schmiede", preis: 120, gibt: "1 Erz je Stufe" },
     /* FASSUNG 668 — XANDER: „Wir brauchen noch mehr Gebäude." */
     brauerei:   { name: "Brauerei",   preis: 130, gibt: "15 Mana je Stufe", ab: 5 },
     bibliothek: { name: "Bibliothek", preis: 160, gibt: "30 Erfahrung je Stufe", ab: 6 },
     rathaus:    { name: "Rathaus",    preis: 200, gibt: "15 Punkte je Stufe", ab: 8 },
     /* FASSUNG 677 — die Mühle liefert nichts von selbst: sie mahlt, was man ihr bringt. */
-    muehle:     { name: "Mühle",      preis: 90,  gibt: "mahlt Getreide zu Mehl (5 je Stufe)", ab: 3 },
-    /* FASSUNG 683 — XANDER: „Krankenhaus bauen, wo derjenige sich schneller heilen kann … Hühner … Eier einsammeln …
-       Kuh melken … Bergwerk … Goldader … Öl … Silizium und Computerchips … Laser Waffen verbessern". */
-    huehnerstall: { name: "Hühnerstall", preis: 60,  gibt: "Hühner legen Eier aufs Feld", ab: 2 },
-    kuhstall:     { name: "Kuhstall",    preis: 80,  gibt: "Milch zum Melken", ab: 3 },
-    krankenhaus:  { name: "Krankenhaus", preis: 140, gibt: "du heilst schneller (+35 % je Stufe)", ab: 5 },
-    bergwerk:     { name: "Bergwerk",    preis: 180, gibt: "Erz, Quarz, Gold, manchmal Öl", ab: 7 },
-    labor:        { name: "Labor",       preis: 250, gibt: "Forschung: Chips für ★★★-Laser", ab: 10 }
+    muehle:     { name: "Mühle",      preis: 90,  gibt: "mahlt Getreide zu Mehl (5 je Stufe)", ab: 3 }
   };
-  /* Steht das Gebäude (gebaut und nicht kaputt)? */
-  function dorfSteht(ich, k) { var g = ((ich || {}).dorf || {})[k]; return Boolean(g && g.stufe > 0 && g.lp > 0); }
-  /* Hühner und Kühe: wie viel liegt bereit (so rechnet auch der Server). */
-  function stallBereit(ich, art) {
-    var g = ((ich || {}).dorf || {})[art];
-    if (!g || !(g.stufe > 0) || !(g.lp > 0)) return null;
-    var takt = (art === "huehnerstall" ? 900000 : 1200000) / g.stufe, mx = 3 * g.stufe, jetzt = Date.now();
-    var stand = g.stand ? Date.parse(g.stand) : jetzt - takt;
-    stand = Math.max(stand, jetzt - takt * mx);
-    var bereit = Math.min(mx, Math.floor((jetzt - stand) / takt));
-    return { bereit: bereit, max: mx, naechst: takt - ((jetzt - stand) % takt), stufe: g.stufe };
-  }
   function dorfSvg(art, stufe) {
     var dach = stufe >= 3 ? "#c9961a" : stufe === 2 ? "#b0402f" : "#8a4f22";
     var haus = '<path d="M4 13 L12 5 L20 13" fill="' + dach + '" stroke="#2d2418" stroke-width="1.1" stroke-linejoin="round"/>'
@@ -5568,59 +5453,30 @@
       + '<circle cx="12" cy="6.4" r="2" fill="#fff" stroke="#2d2418" stroke-width=".6"/><path d="M12 6.4 V5.2 M12 6.4 L13 6.8" stroke="#2d2418" stroke-width=".5"/>'
       + '<rect x="3.6" y="11.4" width="16.8" height="10" fill="#f4e7cf" stroke="#2d2418" stroke-width="1"/><path d="M3 11.6 L12 8.6 L21 11.6" fill="none" stroke="' + dach + '" stroke-width="1.4"/>'
       + '<rect x="10.4" y="16" width="3.2" height="5.4" rx="1.6" fill="#8a5a2e"/><rect x="5.6" y="13.6" width="2.6" height="2.8" fill="#8fd3ff"/><rect x="15.8" y="13.6" width="2.6" height="2.8" fill="#8fd3ff"/></svg>';
-    /* FASSUNG 683 — Krankenhaus (rotes Kreuz), Hühnerstall (Henne, Ei), Kuhstall (rote Scheune),
-       Bergwerk (Stollen im Berg mit Lore), Labor (Glas, Antenne, Kolben). */
-    if (art === "krankenhaus") return '<svg viewBox="0 0 24 24"><rect x="3.5" y="8" width="17" height="13.5" fill="#fbfbfb" stroke="#2d2418" stroke-width="1"/>'
-      + '<path d="M3 8 H21 L19 5 H5 Z" fill="' + dach + '" stroke="#2d2418" stroke-width=".9"/><path d="M10.4 10 H13.6 V12.4 H16 V15.6 H13.6 V18 H10.4 V15.6 H8 V12.4 H10.4 Z" fill="#e2403a"/>'
-      + '<rect x="5" y="17.5" width="2.4" height="4" fill="#8fd3ff"/><rect x="16.6" y="17.5" width="2.4" height="4" fill="#8fd3ff"/></svg>';
-    if (art === "huehnerstall") return '<svg viewBox="0 0 24 24"><path d="M3 12 L10 6 L17 12" fill="' + dach + '" stroke="#2d2418" stroke-width="1" stroke-linejoin="round"/>'
-      + '<rect x="4.5" y="11.5" width="11" height="8" fill="#c8894a" stroke="#2d2418" stroke-width="1"/><path d="M8.5 19.5 V15 A1.5 1.5 0 0 1 11.5 15 V19.5 Z" fill="#3a2a1a"/>'
-      + '<path d="M11 19.5 L13.5 21.8" stroke="#8a5a2e" stroke-width="1"/><ellipse cx="19" cy="18.4" rx="3" ry="2.4" fill="#fff" stroke="#6b4521" stroke-width=".7"/>'
-      + '<circle cx="21" cy="15.8" r="1.3" fill="#fff" stroke="#6b4521" stroke-width=".7"/><path d="M20.4 14.6 l.5 -1 l.5 1 l.5 -1 l.4 1" fill="#e2403a"/><path d="M22.2 15.9 l1.2 .3 l-1.2 .4 Z" fill="#f2a20b"/>'
-      + '<circle cx="21.3" cy="15.6" r=".3" fill="#222"/><ellipse cx="16" cy="21.4" rx="1" ry="1.3" fill="#fff4dc" stroke="#b09060" stroke-width=".5"/></svg>';
-    if (art === "kuhstall") return '<svg viewBox="0 0 24 24"><path d="M2.5 12 L6 6.5 H18 L21.5 12" fill="' + dach + '" stroke="#2d2418" stroke-width="1" stroke-linejoin="round"/>'
-      + '<rect x="3.5" y="11.5" width="17" height="10" fill="#b0402f" stroke="#2d2418" stroke-width="1"/><rect x="9" y="14" width="6" height="7.5" fill="#7a2a1f" stroke="#fff" stroke-width=".8"/>'
-      + '<path d="M9 14 L15 21.5 M15 14 L9 21.5" stroke="#fff" stroke-width=".8"/><circle cx="12" cy="9.3" r="1.3" fill="#fff" stroke="#2d2418" stroke-width=".6"/>'
-      + '<rect x="4.6" y="13.6" width="2.6" height="2.4" fill="#fff" opacity=".85"/><rect x="16.8" y="13.6" width="2.6" height="2.4" fill="#fff" opacity=".85"/></svg>';
-    if (art === "bergwerk") return '<svg viewBox="0 0 24 24"><path d="M1 21.5 C3 11 8 5 12 5 C16 5 21 11 23 21.5 Z" fill="#8a7a5a" stroke="#2d2418" stroke-width="1"/>'
-      + '<path d="M4 17 L6 15 M18 12 L20 14 M15 8 L16.5 9" stroke="#6b5e44" stroke-width=".8"/><path d="M8 21.5 V14 A4 4 0 0 1 16 14 V21.5 Z" fill="#1c1812"/>'
-      + '<path d="M7.4 21.5 V13.6 M16.6 21.5 V13.6" stroke="#8a5a2b" stroke-width="1.4"/><path d="M6.8 13.4 H17.2" stroke="#6b4521" stroke-width="1.7"/>'
-      + '<path d="M10 19 H14.5 L14 21 H10.5 Z" fill="#5b636c"/><circle cx="11" cy="21.3" r=".6" fill="#222"/><circle cx="13.6" cy="21.3" r=".6" fill="#222"/>'
-      + '<circle cx="11.5" cy="18.6" r=".8" fill="#f2c230"/><circle cx="13" cy="18.5" r=".7" fill="#dfe6ee"/></svg>';
-    if (art === "labor") return '<svg viewBox="0 0 24 24"><rect x="3.5" y="9" width="17" height="12.5" fill="#dfe8f2" stroke="#2d2418" stroke-width="1"/>'
-      + '<path d="M3 9 H21" stroke="' + dach + '" stroke-width="1.6"/><rect x="5.5" y="11.5" width="13" height="3" fill="#8fd3ff" stroke="#2d2418" stroke-width=".6"/>'
-      + '<path d="M10.5 17 H13.5 V21.5 H10.5 Z" fill="#3a4152"/><path d="M17.5 9 V3.8 M16 3.8 H19" stroke="#2d2418" stroke-width=".9"/><circle cx="17.5" cy="3.3" r=".9" fill="#e2403a"/>'
-      + '<path d="M6.2 3 H8.2 V5 L9.8 8.4 H4.6 L6.2 5 Z" fill="#8ee06a" stroke="#2d2418" stroke-width=".7"/></svg>';
     if (art === "schule") return '<svg viewBox="0 0 24 24">' + haus + '<rect x="10" y="2" width="4" height="5" fill="#f4e7cf" stroke="#2d2418" stroke-width=".9"/><circle cx="12" cy="4.5" r="1" fill="#f2c230"/>'
       + '<rect x="7.5" y="14.5" width="3" height="2.6" fill="#8fd3ff"/><rect x="13.5" y="14.5" width="3" height="2.6" fill="#8fd3ff"/><rect x="10.5" y="17.5" width="3" height="4" fill="#3a8dde"/></svg>';
     return '<svg viewBox="0 0 24 24">' + haus + '<rect x="15" y="4" width="2.6" height="6" fill="#6b4521" stroke="#2d2418" stroke-width=".8"/>'
       + '<path d="M16.3 3 C15 1.5 17.5 .5 17.8 2" fill="none" stroke="#9aa6b8" stroke-width=".9"/><path d="M8 17 H16 L15 19 H9 Z M10.5 19 H13.5 V21 H10.5 Z" fill="#3a4152"/><circle cx="16.5" cy="15.5" r="1" fill="#ff7a18"/></svg>';
   }
-  function dorfBauListe(ich) {
-    var d = ich.dorf || {}, lv = ich.level || 1;
-    return Object.keys(DORF).map(function (k) {
+  function dorfHtml(ich) {
+    var d = ich.dorf || {}, hat = Object.keys(d).length, lv = ich.level || 1;
+    var kaputt = Object.keys(d).some(function (k) { return (d[k].lp || 0) < 20 * (d[k].stufe || 1); });
+    var zeilen = Object.keys(DORF).map(function (k) {
       var g = d[k], st = g ? g.stufe : 0, lp = g ? g.lp : 0, mx = 20 * st, D = DORF[k];
       var preis = D.preis * (st + 1), gesperrt = D.ab && lv < D.ab;
       return '<div class="sp-troph sp-dorf' + (st ? " sp-troph-hat" : "") + (st && lp <= 0 ? " sp-dorf-kaputt" : "") + '"><i>' + dorfSvg(k, st || 1) + "</i><span><b>" + D.name + (st ? " · Stufe " + st : "") + "</b>"
-        + "<small>" + D.gibt + (st ? " · " + (lp <= 0 ? "kaputt – liefert nichts" : "hält " + lp + "/" + mx) : "")
-        + (g && g.gepl && Date.now() - Date.parse(g.gepl) < 4 * 3600000 ? " · geplündert von " + esc(g.von || "?") + " (4 h Schutz)" : "") + "</small>"
+        + "<small>" + D.gibt + (st ? " · " + (lp <= 0 ? "kaputt – liefert nichts" : "hält " + lp + "/" + mx) : "") + "</small>"
         + (st ? '<em><u style="width:' + Math.round(100 * lp / Math.max(1, mx)) + '%"></u></em>' : "") + "</span>"
         + (st >= 3 ? "" : '<button type="button" data-s="bauen" data-w="' + k + '"' + (gesperrt || (ich.punkte || 0) < preis ? " disabled" : "") + ">"
           + (gesperrt ? "Lv " + D.ab : (st ? "Stufe " + (st + 1) : "Bauen") + " · " + preis) + "</button>")
         + "</div>";
     }).join("");
-  }
-  function dorfHtml(ich) {
-    var d = ich.dorf || {}, hat = Object.keys(d).length;
-    var kaputt = Object.keys(d).some(function (k) { return (d[k].lp || 0) < 20 * (d[k].stufe || 1); });
-    var zeilen = dorfBauListe(ich);
-    return '<p class="sp-sm-klein">Alle 4 Stunden erntest du, was dein Dorf herstellt. Erdbeben und Plünderer beschädigen es – der Wassergraben (Laden) schützt vor Beben, Ritter vor Plünderern.</p>'
-      + volkHtml(ich)
+    return '<p class="sp-sm-klein">Alle 4 Stunden erntest du, was dein Dorf herstellt. Erdbeben beschädigen es – der Wassergraben (Laden) schützt.</p>'
       + werkHtml(ich)
       + '<div class="sp-troph-liste">' + zeilen + "</div>"
       + '<div class="sp-sm-liste">'
       + (hat ? '<button type="button" data-s="ernte">Ernten</button>' : "")
-      + (kaputt ? '<button type="button" data-s="bauen" data-w="reparatur"' + (vorrat(ich, "erz") || vorrat(ich, "holz") >= 2 ? "" : " disabled") + ">Reparieren <small>1 Erz oder 2 Holz · du hast " + vorrat(ich, "erz") + " Erz, " + vorrat(ich, "holz") + " Holz</small></button>" : "")
+      + (kaputt ? '<button type="button" data-s="bauen" data-w="reparatur"' + (vorrat(ich, "erz") ? "" : " disabled") + ">Reparieren <small>1 Erz · du hast " + vorrat(ich, "erz") + "</small></button>" : "")
       + (ich.graben ? '<p class="sp-sm-klein">🌊 Wassergraben: fängt noch ' + ich.graben + " Beben.</p>" : "")
       + "</div>";
   }
@@ -5647,10 +5503,7 @@
     sense:    { name: "Sense", tut: "Getreide ernten" },
     saat:     { name: "Saatbeutel", tut: "säen: 1 Getreide → 5" },
     /* FASSUNG 682 — Dünger: ein wachsendes Feld ist 2 Minuten früher reif. */
-    duenger:  { name: "Dünger", tut: "wachsendes Feld 2 min früher reif" },
-    /* FASSUNG 683 — XANDER: „Vielleicht können wir auch angeln gehen … Wälder abholzen, dass man Bäume fällen kann". */
-    axt:      { name: "Axt", tut: "Bäume fällen: 2 Holz" },
-    angel:    { name: "Angel", tut: "angeln: Fisch" }
+    duenger:  { name: "Dünger", tut: "wachsendes Feld 2 min früher reif" }
   };
   var ACKER_MS = 240000;
   try { var wzMerk = localStorage.getItem("dma_spiel_werkzeug"); if (WERKZEUGE[wzMerk]) S.werkzeug = wzMerk; } catch (e) {}
@@ -5678,25 +5531,11 @@
       + '<path d="M11 12 L14 7 H26 L29 12" fill="#89ad4c" stroke="#3f5a1c" stroke-width="1.1"/><path d="M20 17 C15 21 16 27 20 29 C24 27 25 21 20 17 Z" fill="#dff0b0"/>'
       + '<path d="M20 29 V20" stroke="#3f5a1c" stroke-width="1"/></svg>';
   }
-  function axtSvg() {
-    /* Axt: Holzstiel, keilförmiger Stahlkopf mit blanker Schneide. */
-    return '<svg class="sp-axt-svg" viewBox="0 0 40 40" aria-hidden="true"><path d="M12 36 L27 7" stroke="#8a5a2b" stroke-width="3.4" stroke-linecap="round"/>'
-      + '<path d="M22.5 6.5 L33 10.5 C34.5 15 33 19.5 29.5 21.5 L24.5 14.5 Z" fill="#9aa6b2" stroke="#3f4850" stroke-width="1.1" stroke-linejoin="round"/>'
-      + '<path d="M31.5 11.5 C32.5 15 31.6 18 29.6 19.6" stroke="#f4f7fa" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M13 33 L15.6 34.4" stroke="#6b4521" stroke-width="3"/></svg>';
-  }
-  function angelSvg() {
-    /* Angel: biegsame Rute mit Rolle und Schnur. */
-    return '<svg class="sp-angel-svg" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 36 C14 26 22 14 34 4" stroke="#6b4521" stroke-width="2.2" fill="none" stroke-linecap="round"/>'
-      + '<circle cx="13" cy="29" r="3" fill="#cfd8df" stroke="#3f4850" stroke-width="1"/><path d="M13 29 L15.5 27" stroke="#3f4850" stroke-width="1"/>'
-      + '<path d="M34 4 C36 14 35 24 33 32" stroke="#dfe6ee" stroke-width=".7" fill="none"/><circle cx="33" cy="33" r="1.8" fill="#e2403a" stroke="#fff" stroke-width=".7"/></svg>';
-  }
-  function werkzeugSvg(w) { return w === "sense" ? senseSvg() : w === "saat" ? saatSvg() : w === "duenger" ? duengerSvg() : w === "axt" ? axtSvg() : w === "angel" ? angelSvg() : grabSvg(); }
+  function werkzeugSvg(w) { return w === "sense" ? senseSvg() : w === "saat" ? saatSvg() : w === "duenger" ? duengerSvg() : grabSvg(); }
   function werkzeugHinweis() {
     var w = S.werkzeug;
     if (w === "sense") return "🌾 Sense in der Hand: tippe auf einen freien Platz – reifes Getreide wird gemäht. 2× auf einen Platz: Werkzeug wechseln.";
     if (w === "saat") return "🌱 Saatbeutel in der Hand: tippe auf ein gemähtes Feld – 1 Getreide wird zu 5. 2× auf einen Platz: Werkzeug wechseln.";
-    if (w === "axt") return "🪓 Axt in der Hand: tippe auf einen Baum – 2 Holz, nach 6 Minuten ist er nachgewachsen. 2× auf einen Platz: Werkzeug wechseln.";
-    if (w === "angel") return "🎣 Angel in der Hand: tippe auf einen Teich und warte, bis etwas anbeißt (alle 8 s). 2× auf einen Platz: Werkzeug wechseln.";
     return "⛏️ Schaufel in der Hand: tippe auf einen Platz zum Graben. 2× auf einen Platz: Werkzeug wechseln. Weglegen: Werkzeug in der Leiste.";
   }
   function werkzeugSetzen(w) {
@@ -5709,8 +5548,7 @@
   }
   function werkzeugWahlHtml() {
     return '<div class="sp-werkzeugwahl" role="menu"><span class="sp-ww-titel">Werkzeug</span>' + Object.keys(WERKZEUGE).map(function (w) {
-      var extra = w === "schaufel" ? vorrat(S.ich, "erz") + " Erz" : w === "duenger" ? vorrat(S.ich, "duenger") + " Dünger"
-        : w === "axt" ? vorrat(S.ich, "holz") + " Holz" : w === "angel" ? vorrat(S.ich, "fisch") + " Fisch" : vorrat(S.ich, "getreide") + " Getreide";
+      var extra = w === "schaufel" ? vorrat(S.ich, "erz") + " Erz" : w === "duenger" ? vorrat(S.ich, "duenger") + " Dünger" : vorrat(S.ich, "getreide") + " Getreide";
       return '<button type="button" data-s="werkzeugsetzen" data-w="' + w + '" class="' + (S.graben && S.werkzeug === w ? "sp-an" : "") + '">'
         + werkzeugSvg(w) + "<b>" + WERKZEUGE[w].name + "</b><small>" + WERKZEUGE[w].tut + " · " + extra + "</small></button>";
     }).join("") + (S.graben ? '<button type="button" data-s="graben" class="sp-ww-weg">Weglegen</button>' : "") + "</div>";
@@ -5721,8 +5559,7 @@
        unabhängig davon, ob da jemand sitzt oder nicht, dass man die Erde
        umgraben kann, dass man Getreide ernten kann … man muss nicht erst den
        anderen bitten, dass er darunter geht". Kein Sperren mehr. */
-    if (S.werkzeug === "sense") ernten(knopf, nr); else if (S.werkzeug === "duenger") duengen(knopf, nr);
-    else if (S.werkzeug === "axt") holzen(knopf, nr); else if (S.werkzeug === "angel") angeln(knopf, nr); else saeen(knopf, nr);
+    if (S.werkzeug === "sense") ernten(knopf, nr); else if (S.werkzeug === "duenger") duengen(knopf, nr); else saeen(knopf, nr);
   }
   function ackerStand(nr) {
     var f = ((S.ich && S.ich.acker) || {})[String(nr)] || {}, ab = f.ab ? Date.parse(f.ab) : 0;
@@ -5772,9 +5609,6 @@
     var an = S.graben && S.werkzeug !== "schaufel" && spielSichtbar() && S.bereit;
     document.body.classList.toggle("sp-wz-sense", Boolean(S.graben && S.werkzeug === "sense"));
     document.body.classList.toggle("sp-wz-saat", Boolean(S.graben && S.werkzeug === "saat"));
-    document.body.classList.toggle("sp-wz-axt", Boolean(S.graben && S.werkzeug === "axt"));
-    document.body.classList.toggle("sp-wz-angel", Boolean(S.graben && S.werkzeug === "angel"));
-    var wz = S.werkzeug;
     var plaetze = [].slice.call(reihe.querySelectorAll(".lc-platz")), plan = [];
     plaetze.forEach(function (q) {
       var kreis = q.querySelector(".lc-kreis"), nr = Number(q.dataset.lcPlatz);
@@ -5786,9 +5620,7 @@
     plan.forEach(function (p) {
       var alt = p.q.querySelector(".sp-acker");
       if (p.weg) { if (alt) alt.remove(); return; }
-      /* FASSUNG 683 — mit der Axt stehen Bäume auf den Plätzen, mit der Angel liegt dort ein Teich. */
-      var st = wz === "axt" ? baumStand(p.nr) : wz === "angel" ? { reif: true, anteil: 1, rest: 0 } : ackerStand(p.nr);
-      var schl = wz + (st.reif ? "reif" : "w" + Math.floor(st.anteil * 8)) + (st.saat ? "s" : "") + (p.besetzt ? "b" : "");
+      var st = ackerStand(p.nr), schl = (st.reif ? "reif" : "w" + Math.floor(st.anteil * 8)) + (st.saat ? "s" : "") + (p.besetzt ? "b" : "");
       if (!alt) {
         alt = document.createElement("span");
         alt.innerHTML = '<span class="sp-acker-bild"></span><b class="sp-acker-uhr"></b>';
@@ -5802,11 +5634,10 @@
       if (alt.dataset.s !== schl) {
         alt.dataset.s = schl;
         /* Sitzt dort jemand, liegt das Feld nur unten am Bild – die Gesichtsmitte bleibt frei. */
-        alt.className = "sp-acker sp-acker-" + (st.reif ? "reif" : "waechst") + (st.saat ? " sp-acker-saat" : "") + (p.besetzt ? " sp-acker-besetzt" : "")
-          + (wz === "axt" ? " sp-acker-wald" : wz === "angel" ? " sp-acker-teich" : "");
-        alt.firstChild.innerHTML = wz === "axt" ? baumSvg(st) : wz === "angel" ? teichSvg() : ackerSvg(st);
+        alt.className = "sp-acker sp-acker-" + (st.reif ? "reif" : "waechst") + (st.saat ? " sp-acker-saat" : "") + (p.besetzt ? " sp-acker-besetzt" : "");
+        alt.firstChild.innerHTML = ackerSvg(st);
       }
-      var uhr = wz === "angel" ? "" : st.reif ? "+" + (st.saat ? 5 : 2) : uhrText(st.rest);
+      var uhr = st.reif ? "+" + (st.saat ? 5 : 2) : uhrText(st.rest);
       if (alt.lastChild.textContent !== uhr) alt.lastChild.textContent = uhr;
     });
   }
@@ -5872,134 +5703,6 @@
       }, Math.max(0, 450 - (Date.now() - start)));
     }).catch(function (e) { S.ernteLaeuft = false; hinweis("Ernten ging nicht: " + (e && e.message ? e.message : e)); });
   }
-  /* ---------------------------------------------------------------
-     FASSUNG 683 — HOLZ UND FISCH
-     Mit der Axt: auf jedem Platz ein kleiner Wald; gefällt bringt er
-     2 Holz (manchmal ein Vogelnest mit Ei) und wächst in 6 Minuten nach.
-     Mit der Angel: ein Teich; alle 8 Sekunden auswerfen, die Pose
-     wippt, dann wird eingeholt: Fisch (60 %), ein alter Stiefel oder
-     eine Münze. Ton und Bild laufen zusammen.
-     --------------------------------------------------------------- */
-  var BAUM_MS = 360000;
-  function baumStand(nr) {
-    var f = ((S.ich && S.ich.acker) || {})["w" + nr] || {}, ab = f.ab ? Date.parse(f.ab) : 0;
-    var rest = ab ? ab + BAUM_MS - Date.now() : 0;
-    return { reif: rest <= 0, rest: Math.max(0, rest), anteil: ab ? Math.max(0, Math.min(1, 1 - rest / BAUM_MS)) : 1 };
-  }
-  function baumSvg(st) {
-    var h = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="66" width="100" height="34" fill="#5f9e3a"/><path d="M0 74 H100" stroke="#4a8a2c" stroke-width="2"/>';
-    if (st.reif) {
-      h += '<rect x="14" y="58" width="5" height="18" fill="#7a4a22"/><path d="M16.5 30 L6 62 H27 Z" fill="#2a6b35"/>'
-        + '<rect x="82" y="60" width="5" height="16" fill="#7a4a22"/><path d="M84.5 36 L75 64 H94 Z" fill="#2a6b35"/>'
-        + '<rect x="45" y="44" width="10" height="34" fill="#7a4a22"/><path d="M45 60 L38 52 M55 56 L62 48" stroke="#7a4a22" stroke-width="4" stroke-linecap="round"/>'
-        + '<ellipse cx="50" cy="34" rx="30" ry="24" fill="#2f7d32"/><ellipse cx="40" cy="28" rx="16" ry="12" fill="#3f9a3f"/><ellipse cx="62" cy="38" rx="14" ry="10" fill="#276b2a"/>';
-    } else {
-      var hoch = 6 + st.anteil * 30;
-      h += '<ellipse cx="50" cy="71" rx="9" ry="3.4" fill="#c9a36a" stroke="#7a4a22" stroke-width="1.5"/><rect x="41" y="71" width="18" height="7" fill="#9a6a3a"/>'
-        + '<path d="M50 70 V' + (70 - hoch) + '" stroke="#5a8a2c" stroke-width="2.4"/><ellipse cx="50" cy="' + (70 - hoch) + '" rx="' + (3 + st.anteil * 9) + '" ry="' + (2 + st.anteil * 6) + '" fill="#4caf50"/>';
-    }
-    return h + "</svg>";
-  }
-  function teichSvg() {
-    return '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="58" width="100" height="42" fill="#2f7fc4"/>'
-      + '<path d="M0 58 C20 54 40 62 60 57 C75 54 90 60 100 57 V64 H0 Z" fill="#5aa6e0"/>'
-      + '<g class="sp-teich-welle" fill="none" stroke="#bfe6ff" stroke-width="1.6"><path d="M10 74 C16 71 22 77 28 74"/><path d="M58 84 C64 81 70 87 76 84"/><path d="M36 92 C42 89 48 95 54 92"/></g>'
-      + '<path class="sp-teich-fisch" d="M60 72 C66 68 74 68 78 72 C74 76 66 76 60 72 Z M78 72 L84 68 V76 Z" fill="#1d5a8c" opacity=".7"/>'
-      + '<path d="M4 58 C8 50 10 48 12 58 M88 57 C90 49 93 47 95 57" stroke="#4a8a2c" stroke-width="2.4" fill="none"/></svg>';
-  }
-  function stiefelSvg() {
-    return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 2 H11 V11 L17 13 V17 H5 Z" fill="#5a4a3a" stroke="#2a2018" stroke-width="1"/><path d="M5 15 H17" stroke="#2a2018" stroke-width="1"/><path d="M8 5 C9 6 9 7 8 8" stroke="#3a8dde" stroke-width="1" fill="none"/></svg>';
-  }
-  function wareZahl(knopf, ware, text) {
-    var kreis = knopf.querySelector(".lc-kreis") || knopf;
-    var z = document.createElement("span");
-    z.className = "sp-fund sp-fund-getreide";
-    z.innerHTML = wareSvg(ware) + "<b>" + text + "</b>";
-    z.style.top = Math.max(0, (kreis.offsetTop || 0) - 4) + "px";
-    knopf.appendChild(z);
-    setTimeout(function () { z.remove(); }, 1800);
-  }
-  function axtZeigen(knopf) {
-    var kreis = knopf.querySelector(".lc-kreis") || knopf;
-    var w = document.createElement("span");
-    w.className = "sp-holzen";
-    w.style.top = Math.round((kreis.offsetTop || 0) + (kreis.offsetHeight || 40) * 0.45) + "px";
-    var spaene = "";
-    for (var i = 0; i < 7; i++) spaene += '<i class="sp-span" style="--sx:' + Math.round((Math.random() - 0.3) * 50) + "px;--sy:" + Math.round(-10 - Math.random() * 24) + "px;--sr:" + Math.round(Math.random() * 360) + 'deg"></i>';
-    w.innerHTML = '<span class="sp-holzen-axt">' + axtSvg() + "</span>" + spaene;
-    knopf.appendChild(w);
-    setTimeout(function () { w.remove(); }, 1100);
-  }
-  function holzen(knopf, nr) {
-    if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
-    if (S.ich.kaputt) { hinweis(gesperrtGrund()); return; }
-    var st = baumStand(nr);
-    if (!st.reif) { hinweis("🌳 Der Baum wächst noch – groß in " + uhrText(st.rest) + "."); return; }
-    if (S.ernteLaeuft) return;
-    var warte = (S.ernteFrei || 0) - Date.now();
-    if (warte > 0) { S.ernteLaeuft = true; setTimeout(function () { S.ernteLaeuft = false; holzen(knopf, nr); }, warte); return; }
-    S.ernteLaeuft = true;
-    var start = Date.now();
-    /* Ton und Bild zusammen: die Axt schlägt ein, während „axttreffer“ klingt. */
-    axtZeigen(knopf);
-    setTimeout(function () { ton("axttreffer", 0.5); }, 180);
-    rpc("spiel_holzen", { p_platz: nr }).then(function (r) {
-      setTimeout(function () {
-        S.ernteLaeuft = false;
-        if (!r || !r.ok) { hinweis("🌳 " + ((r && r.grund) || "geht nicht") + (r && r.sek ? " – groß in " + uhrText(r.sek * 1000) : "")); return; }
-        S.ernteFrei = Date.now() + 1550;
-        if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-        wareZahl(knopf, "holz", "+" + r.menge);
-        hinweis("🪵 +" + r.menge + " Holz (" + vorrat(r, "holz") + " im Lager)." + (r.nest ? " Ein Vogelnest: +1 Ei!" : "") + " Holz braucht man zum Reparieren und in der Schmiede.");
-        ackerPflegen(); schnellZeichnen(); panelAuffrischen();
-      }, Math.max(0, 600 - (Date.now() - start)));
-    }).catch(function (e) { S.ernteLaeuft = false; hinweis("Holzen ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  function angelZeigen(knopf) {
-    var kreis = knopf.querySelector(".lc-kreis") || knopf;
-    var w = document.createElement("span");
-    w.className = "sp-angeln";
-    w.style.top = Math.round((kreis.offsetTop || 0) + (kreis.offsetHeight || 40) * 0.2) + "px";
-    w.innerHTML = '<span class="sp-angeln-rute">' + angelSvg() + '</span><i class="sp-angeln-pose"></i><span class="sp-angeln-fang"></span>';
-    knopf.appendChild(w);
-    return {
-      fang: function (art) {
-        var f = w.querySelector(".sp-angeln-fang");
-        f.innerHTML = art === "fisch" ? wareSvg("fisch") : art === "stiefel" ? stiefelSvg() : art === "muenze" ? fundSvg("muenzen") : "";
-        w.classList.add("sp-angeln-zieht");
-        setTimeout(function () { w.remove(); }, 1200);
-      }
-    };
-  }
-  function angeln(knopf, nr) {
-    if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
-    if (S.ich.kaputt) { hinweis(gesperrtGrund()); return; }
-    if (S.angelLaeuft) return;
-    var warte = (S.angelFrei || 0) - Date.now();
-    if (warte > 0) { hinweis("🎣 Die Angel ist noch im Wasser – noch " + Math.ceil(warte / 1000) + " s."); return; }
-    S.angelLaeuft = true;
-    var start = Date.now(), bild = angelZeigen(knopf), antwort = null, fertig = false;
-    /* Auswerfen (swoosh), die Pose klatscht nach 0,45 s ins Wasser (platsch), wippt, dann wird eingeholt (Kurbel). */
-    ton("swoosh", 0.35);
-    setTimeout(function () { ton("platsch", 0.35); }, 450);
-    function einholen() {
-      if (fertig || !antwort || Date.now() - start < 1700) return;
-      fertig = true;
-      S.angelLaeuft = false; S.angelFrei = start + 8000;
-      var r = antwort;
-      if (!r.ok) { bild.fang(""); hinweis("🎣 " + (r.grund || "geht nicht") + (r.sek ? " – noch " + r.sek + " s" : "")); return; }
-      if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-      ton("angelkurbel", 0.4);
-      bild.fang(r.fang);
-      if (r.fang === "fisch") setTimeout(function () { wareZahl(knopf, "fisch", "+" + r.menge); }, 500);
-      hinweis(r.fang === "fisch" ? "🐟 +" + r.menge + " Fisch (" + vorrat(r, "fisch") + " im Lager) – essen (+10 LP) oder dein Volk satt machen."
-        : r.fang === "stiefel" ? "🥾 Ein alter Stiefel. Wirf ihn zurück!" : r.fang === "muenze" ? "🪙 Eine Münze am Haken: +" + r.menge + " Punkte!" : "🎣 Nichts gebissen – gleich nochmal.");
-      schnellZeichnen(); panelAuffrischen();
-    }
-    setTimeout(einholen, 1700);
-    rpc("spiel_angeln", { p_platz: nr }).then(function (r) { antwort = r || { ok: false }; einholen(); })
-      .catch(function () { antwort = { ok: false, grund: "Das ging gerade nicht." }; einholen(); });
-  }
   function saeen(knopf, nr) {
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
     if (S.ich.kaputt) { hinweis(gesperrtGrund()); return; }
@@ -6032,7 +5735,6 @@
   var WAREN = { getreide: "Getreide", mehl: "Mehl", brot: "Brot", kuchen: "Kuchen" };
   var MARKT = { getreide: 1, mehl: 3, brot: 6, kuchen: 14 };
   function wareSvg(w) {
-    if (typeof WARE_BILDER !== "undefined" && WARE_BILDER[w]) return '<svg viewBox="0 0 20 20" aria-hidden="true">' + WARE_BILDER[w] + "</svg>";
     if (w === "duenger") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 6 H15 L14 18 H6 Z" fill="#6d8f3a" stroke="#3f5a1c" stroke-width="1"/><path d="M10 9 C7.5 11 8 14 10 15 C12 14 12.5 11 10 9 Z" fill="#dff0b0"/></svg>';
     if (w === "mehl") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7 C3 11 3.5 18 10 18 C16.5 18 17 11 15 7 Z" fill="#f4f1ea" stroke="#8a7a5a" stroke-width="1"/><path d="M5.5 7 C7 5 13 5 14.5 7" fill="#e2dccd" stroke="#8a7a5a" stroke-width=".9"/><path d="M8 11.5 H12 M10 9.5 V13.5" stroke="#c9a23a" stroke-width="1.1"/></svg>';
     if (w === "brot") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 13 C2.5 7 17.5 7 17.5 13 C17.5 15 2.5 15 2.5 13 Z" fill="#c8843e" stroke="#6b4521" stroke-width="1"/><path d="M6 9.5 L7.5 12 M9.5 9 L11 11.5 M13 9.5 L14.5 12" stroke="#f1c98a" stroke-width="1.1" stroke-linecap="round"/></svg>';
@@ -6042,277 +5744,43 @@
       + '<ellipse cx="8.2" cy="10.4" rx="1.5" ry="2.6" transform="rotate(-25 8.2 10.4)"/><ellipse cx="11.8" cy="10.4" rx="1.5" ry="2.6" transform="rotate(25 11.8 10.4)"/><ellipse cx="10" cy="3.8" rx="1.4" ry="2.4"/></g></svg>';
   }
   function uhrzeit(ms) { var d = new Date(ms); return d.getHours() + ":" + ("0" + d.getMinutes()).slice(-2); }
-  /* FASSUNG 683 — Rezepte der Werkstätten (so rechnet der Server: spiel_beliefern). */
-  var REZEPTE = {
-    muehle:    { name: "Mühle", tut: "mahlt", liste: [["mehl", { getreide: 1 }, 8]] },
-    baeckerei: { name: "Bäckerei", tut: "backt", liste: [["brot", { mehl: 1 }, 10], ["kuchen", { mehl: 2 }, 10], ["torte", { mehl: 2, ei: 2, milch: 1 }, 14]] },
-    schmiede:  { name: "Schmiede", tut: "schmilzt", liste: [["silizium", { quarz: 2, holz: 1 }, 12]] },
-    labor:     { name: "Labor", tut: "baut", liste: [["chip", { silizium: 1, gold: 1 }, 15]] }
-  };
-  function rezeptMenge(ich, st, roh) {
-    var n = 5 * st;
-    Object.keys(roh).forEach(function (k) { n = Math.min(n, Math.floor(vorrat(ich, k) / roh[k])); });
-    return Math.max(0, n);
-  }
-  function lagerHtml(ich, knapp) {
-    var basis = ["getreide", "mehl", "brot", "kuchen"];
-    if (knapp && !Object.keys(WAREN).some(function (x) { return vorrat(ich, x) > 0; })) return "";
-    return '<div class="sp-sm-gruppe sp-lager"><span>Lager</span>' + Object.keys(WAREN).filter(function (x) { return knapp ? vorrat(ich, x) > 0 : basis.indexOf(x) >= 0 || vorrat(ich, x) > 0; })
-      .map(function (x) { return '<span class="sp-ware">' + wareSvg(x) + "<b>" + vorrat(ich, x) + "</b> " + WAREN[x] + "</span>"; }).join("") + "</div>";
-  }
-  function werkZeilenHtml(ich) {
+  function werkHtml(ich) {
     var d = ich.dorf || {}, w = ich.werk || {}, t = [];
-    Object.keys(REZEPTE).forEach(function (k) {
-      var st = d[k] ? d[k].stufe : 0, R = REZEPTE[k];
+    [["muehle", "Mühle"], ["baeckerei", "Bäckerei"]].forEach(function (g) {
+      var k = g[0], st = d[k] ? d[k].stufe : 0;
       if (!st) return;
-      var a = w[k], z = '<div class="sp-troph sp-werk"><i>' + dorfSvg(k, st) + "</i><span><b>" + R.name + " arbeitet</b>";
+      var a = w[k], z = '<div class="sp-troph sp-werk"><i>' + dorfSvg(k, st) + "</i><span><b>" + g[1] + " arbeitet</b>";
       if (a) {
         var fertig = Date.parse(a.fertig), rest = fertig - Date.now();
         z += "<small>" + a.menge + " " + (WAREN[a.ware] || a.ware) + (rest > 0 ? " · fertig um " + uhrzeit(fertig) : " · fertig!") + "</small></span>"
           + '<button type="button" data-s="abholen" data-g="' + k + '"' + (rest > 0 ? ' class="sp-werk-wartet"' : "") + ">Abholen</button>";
       } else if (k === "muehle") {
-        var n = rezeptMenge(ich, st, { getreide: 1 });
+        var n = Math.min(5 * st, vorrat(ich, "getreide"));
         z += "<small>Getreide → Mehl · 8 min · höchstens " + (5 * st) + "</small></span>"
           + '<button type="button" data-s="liefern" data-g="muehle" data-w="mehl" data-n="' + n + '"' + (n ? "" : " disabled") + ">Mahlen <small>" + n + " Getreide</small></button>";
-      } else if (k === "baeckerei") {
-        var nb = rezeptMenge(ich, st, { mehl: 1 }), nk = rezeptMenge(ich, st, { mehl: 2 }), nt = rezeptMenge(ich, st, { mehl: 2, ei: 2, milch: 1 });
-        z += "<small>Mehl → Brot (1) oder Kuchen (2) · 10 min · Torte: 2 Mehl, 2 Eier, 1 Milch · 14 min</small></span>"
-          + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="brot" data-n="' + nb + '"' + (nb ? "" : " disabled") + ">Brot <small>" + nb + " Mehl</small></button>"
-          + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="kuchen" data-n="' + nk + '"' + (nk ? "" : " disabled") + ">Kuchen <small>" + (2 * nk) + " Mehl</small></button>"
-          + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="torte" data-n="' + nt + '"' + (nt ? "" : " disabled") + ">Torte <small>" + nt + " Stück</small></button>";
       } else {
-        var r = R.liste[0], nr = rezeptMenge(ich, st, r[1]);
-        z += "<small>" + Object.keys(r[1]).map(function (x) { return r[1][x] + " " + WAREN[x]; }).join(" + ") + " → 1 " + WAREN[r[0]] + " · " + r[2] + " min</small></span>"
-          + '<button type="button" data-s="liefern" data-g="' + k + '" data-w="' + r[0] + '" data-n="' + nr + '"' + (nr ? "" : " disabled") + ">" + WAREN[r[0]] + " <small>" + nr + " Stück</small></button>";
+        var nb = Math.min(5 * st, vorrat(ich, "mehl")), nk = Math.min(5 * st, Math.floor(vorrat(ich, "mehl") / 2));
+        z += "<small>Mehl → Brot (1) oder Kuchen (2) · 10 min</small></span>"
+          + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="brot" data-n="' + nb + '"' + (nb ? "" : " disabled") + ">Brot <small>" + nb + " Mehl</small></button>"
+          + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="kuchen" data-n="' + nk + '"' + (nk ? "" : " disabled") + ">Kuchen <small>" + (2 * nk) + " Mehl</small></button>";
       }
       t.push(z + "</div>");
     });
-    /* Hühner legen Eier auf freie Plätze; die Kühe gibt man mit „Melken". */
-    var hs = stallBereit(ich, "huehnerstall"), ks = stallBereit(ich, "kuhstall");
-    if (hs) t.push('<div class="sp-troph sp-werk"><i>' + dorfSvg("huehnerstall", hs.stufe) + "</i><span><b>Hühnerstall</b><small>"
-      + (hs.bereit ? hs.bereit + " Ei" + (hs.bereit > 1 ? "er liegen" : " liegt") + " auf freien Plätzen – antippen" : "nächstes Ei in " + uhrText(hs.naechst)) + "</small></span>"
-      + '<button type="button" data-s="eier"' + (hs.bereit ? "" : " disabled") + ">Einsammeln <small>" + hs.bereit + "</small></button></div>");
-    if (ks) t.push('<div class="sp-troph sp-werk"><i>' + dorfSvg("kuhstall", ks.stufe) + "</i><span><b>Kuhstall</b><small>"
-      + (ks.bereit ? ks.bereit + " Milch bereit" : "Milch in " + uhrText(ks.naechst)) + " · höchstens " + ks.max + "</small></span>"
-      + '<button type="button" data-s="melken"' + (ks.bereit ? "" : " disabled") + ">Melken <small>" + ks.bereit + "</small></button></div>");
-    return t;
-  }
-  function marktHtml(ich) {
+    var lager = Object.keys(WAREN).map(function (x) { return '<span class="sp-ware">' + wareSvg(x) + "<b>" + vorrat(ich, x) + "</b> " + WAREN[x] + "</span>"; }).join("");
     var markt = Object.keys(WAREN).filter(function (x) { return vorrat(ich, x) > 0; }).map(function (x) {
       var n = Math.min(50, vorrat(ich, x)), pr = marktPreis(x);
       return '<button type="button" data-s="markt" data-w="' + x + '">' + WAREN[x] + " verkaufen <small>" + n + " × " + komma2(pr) + " = +" + Math.max(1, Math.round(n * pr)) + "</small></button>";
     }).join("");
-    var essenK = ["brot", "kuchen", "fisch", "torte"].filter(function (x) { return vorrat(ich, x) > 0; }).map(function (x) {
-      return '<button type="button" data-s="iss" data-d="' + x + '">' + WAREN[x] + " essen <small>" + ({ brot: "+12 LP", kuchen: "+30 LP, +10 Mana", fisch: "+10 LP", torte: "+40 LP, +15 Mana" })[x] + "</small></button>";
+    var essenK = ["brot", "kuchen"].filter(function (x) { return vorrat(ich, x) > 0; }).map(function (x) {
+      return '<button type="button" data-s="iss" data-d="' + x + '">' + WAREN[x] + " essen <small>" + (x === "brot" ? "+12 LP" : "+30 LP, +10 Mana") + "</small></button>";
     }).join("");
-    return markt || essenK ? '<div class="sp-sm-gruppe sp-markt"><span>Markt</span>' + markt + essenK + "</div>" : "";
-  }
-  function werkHtml(ich) {
-    var t = werkZeilenHtml(ich);
-    return lagerHtml(ich)
+    return '<div class="sp-sm-gruppe sp-lager"><span>Lager</span>' + lager + "</div>"
       + '<div class="sp-sm-liste">'
       + '<button type="button" data-s="werkzeugsetzen" data-w="sense" class="' + (S.graben && S.werkzeug === "sense" ? "sp-an" : "") + '">Sense <small>Getreide mähen</small></button>'
-      + '<button type="button" data-s="werkzeugsetzen" data-w="saat" class="' + (S.graben && S.werkzeug === "saat" ? "sp-an" : "") + '">Säen <small>1 Getreide → 5</small></button>'
-      + '<button type="button" data-s="werkzeugsetzen" data-w="axt" class="' + (S.graben && S.werkzeug === "axt" ? "sp-an" : "") + '">Axt <small>Bäume fällen</small></button>'
-      + '<button type="button" data-s="werkzeugsetzen" data-w="angel" class="' + (S.graben && S.werkzeug === "angel" ? "sp-an" : "") + '">Angel <small>Fische fangen</small></button></div>'
+      + '<button type="button" data-s="werkzeugsetzen" data-w="saat" class="' + (S.graben && S.werkzeug === "saat" ? "sp-an" : "") + '">Säen <small>1 Getreide → 5</small></button></div>'
       + (t.length ? '<div class="sp-troph-liste">' + t.join("") + "</div>" : '<p class="sp-sm-klein">Bau eine Mühle (ab Level 3), dann mahlt sie dein Getreide zu Mehl – die Bäckerei backt daraus Brot und Kuchen.</p>')
-      + marktHtml(ich)
+      + (markt || essenK ? '<div class="sp-sm-gruppe sp-markt"><span>Markt</span>' + markt + essenK + "</div>" : "")
       + handelHtml(ich);
-  }
-  /* ---------------------------------------------------------------
-     FASSUNG 683 — DAS VOLK
-     XANDER: „Arbeiter oder Ritter, die mit in den Krieg ziehen … Handwerker,
-     Bauern, die wollen alle auch leben. Die wollen gut leben. Die müssen
-     irgendwie versorgt werden, bezahlt werden … die Glückseligkeit der
-     Menschen … wenn du deine Deutsch-Aufgaben von der Quote her öfter
-     richtig hast … das macht deine Leute glücklich, dass du gut Deutsch
-     lernst, dann wächst Deutschland."
-     Je Gebäudestufe arbeiten 2 Leute. Bei jeder Dorf-Ernte (alle 4 h)
-     essen sie (1 Portion je 4 Leute, 1 je Ritter: Fisch, Brot, Bratwurst,
-     Kuchen, Torte) und bekommen Lohn (1 Punkt je Arbeiter, 3 je Ritter).
-     Zufriedenheit = 40 % satt + 20 % bezahlt + 40 % Deutsch-Quote (7 Tage).
-     Der Ertrag wächst mit: × 0,5 (unglücklich) bis × 1,5 (glücklich).
-     --------------------------------------------------------------- */
-  function volkHtml(ich) {
-    var v = ich.volk || {}, arbeiter = Number(v.arbeiter) || 0, ritter = Number(v.ritter) || 0, quote = v.quote == null ? 70 : Number(v.quote);
-    if (!arbeiter && !ritter) return "";
-    var bedarf = Math.ceil(arbeiter / 4) + ritter, essen = ["fisch", "brot", "bratwurst", "kuchen", "torte"].reduce(function (n, x) { return n + vorrat(ich, x); }, 0);
-    var lohn = arbeiter + 3 * ritter;
-    var satt = bedarf ? Math.min(1, essen / bedarf) : 1, bezahlt = lohn ? Math.min(1, (ich.punkte || 0) / lohn) : 1;
-    var zuf = Math.round(40 * satt + 20 * bezahlt + 40 * quote / 100);
-    var gesicht = zuf >= 75 ? "#3aa655" : zuf >= 50 ? "#e0a020" : "#d8261f";
-    return '<div class="sp-volk"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="' + gesicht + '"/><circle cx="7" cy="8" r="1.2" fill="#fff"/><circle cx="13" cy="8" r="1.2" fill="#fff"/>'
-      + '<path d="' + (zuf >= 75 ? "M6 12 C8 15 12 15 14 12" : zuf >= 50 ? "M6.5 13 H13.5" : "M6 14.5 C8 11.5 12 11.5 14 14.5") + '" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>'
-      + "<span><b>" + zuf + " % zufrieden</b> · Ertrag ×" + komma2(0.5 + zuf / 100) + "<small>" + arbeiter + " Arbeiter · " + ritter + " Ritter · Deutsch-Quote " + quote + " %"
-      + " · je Ernte " + bedarf + " Portionen (du hast " + essen + ") und " + lohn + " P Lohn</small></span>"
-      + '<span class="sp-volk-knoepfe"><button type="button" data-s="ritter" data-n="1"' + ((ich.level || 1) >= 4 && ritter < 5 && (ich.punkte || 0) >= 40 ? "" : " disabled") + ">Ritter + <small>40 P</small></button>"
-      + (ritter ? '<button type="button" data-s="ritter" data-n="-1">Ritter −</button>' : "") + "</span></div>";
-  }
-  /* Nachbardörfer im Raum: plündern (so wie in Clash of Clans und Forge
-     of Empires): das Gebäude bleibt stehen, ist nur beschädigt; du nimmst
-     20 % der passenden Vorräte (je Ritter +5 %, ihre Ritter −5 %). */
-  var PLUENDERBAR = ["baeckerei", "muehle", "schmiede", "huehnerstall", "kuhstall", "bergwerk", "labor", "brauerei", "rathaus"];
-  function nachbarnHtml() {
-    var zeilen = plaetze().filter(function (p) { return !p.leer && !p.ich && p.id && !istPuppe(p.id); }).map(function (p) {
-      var sid = spielIdVon(p.id), st = sid && S.stand[sid];
-      if (!st || !st.dorf) return "";
-      var knoepfe = Object.keys(st.dorf).filter(function (k) { return DORF[k] && PLUENDERBAR.indexOf(k) >= 0; }).map(function (k) {
-        var g = st.dorf[k] || {}, gepl = g.gepl && Date.now() - Date.parse(g.gepl) < 4 * 3600000, kaputt = !(g.lp > 0);
-        return '<button type="button" class="sp-pl-knopf" data-s="pluendern" data-z="' + esc(sid) + '" data-c="' + esc(p.id) + '" data-g="' + k + '"'
-          + (kaputt || gepl || !st.mitspielen ? " disabled" : "") + ' title="' + DORF[k].name + (gepl ? " – 4 h geschützt" : kaputt ? " – kaputt" : "") + '">'
-          + dorfSvg(k, g.stufe || 1) + "<small>" + DORF[k].name + "</small></button>";
-      }).join("");
-      return knoepfe ? '<div class="sp-nachbar"><b>' + esc(p.name || "?") + "</b><small>" + (st.mitspielen ? (st.ritter ? st.ritter + " Ritter" : "keine Ritter") : "spielt gerade nicht") + "</small>"
-        + '<div class="sp-nachbar-reihe">' + knoepfe + "</div></div>" : "";
-    }).join("");
-    return '<div class="sp-sm-gruppe sp-nachbarn"><span>Nachbardörfer plündern · 10 Mana</span></div>'
-      + (zeilen || '<p class="sp-sm-klein">Gerade kein Dorf im Raum.</p>')
-      + (zeilen ? '<p class="sp-sm-klein">Du nimmst 20 % der Vorräte (je Ritter +5 %, ihre Ritter −5 %). Das Gebäude bleibt stehen und ist nur beschädigt – der Besitzer repariert es mit Erz oder Holz. Danach 4 Stunden Schutz. Schule, Bibliothek und Krankenhaus plündert man nicht.</p>' : "");
-  }
-  var MAKROS = { dorf: "Mein Dorf", handel: "Markt & Handel", werkzeug: "Werkzeug", deutsch: "Deutsch-Aufgabe", tiere: "Tiere", heilen: "Heilen" };
-  try { var makroMerk = localStorage.getItem("dma_spiel_makro"); if (MAKROS[makroMerk]) S.makro = makroMerk; } catch (e) {}
-  if (!S.makro) S.makro = "dorf";
-  function makroSvg(m) {
-    if (m === "dorf") return dorfSvg("baeckerei", 2);
-    if (m === "handel") return wareSvg("gold");
-    if (m === "werkzeug") return werkzeugSvg(S.werkzeug);
-    if (m === "deutsch") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4 H9 C10 4 10 5 10 5 V17 C10 16 9 15.5 8 15.5 H3 Z" fill="#fff" stroke="#2d6a2d" stroke-width="1.2"/>'
-      + '<path d="M17 4 H11 C10 4 10 5 10 5 V17 C10 16 11 15.5 12 15.5 H17 Z" fill="#eaf6e6" stroke="#2d6a2d" stroke-width="1.2"/><path d="M4.5 7.5 H8 M4.5 10 H8 M12 7.5 H15.5 M12 10 H15.5" stroke="#2d6a2d" stroke-width=".9"/></svg>';
-    if (m === "tiere") return '<svg viewBox="0 0 20 20" aria-hidden="true"><ellipse cx="10" cy="13" rx="4" ry="3.4" fill="#8a5a2b"/><circle cx="5" cy="8.5" r="1.8" fill="#8a5a2b"/><circle cx="8.2" cy="5.6" r="1.8" fill="#8a5a2b"/><circle cx="11.8" cy="5.6" r="1.8" fill="#8a5a2b"/><circle cx="15" cy="8.5" r="1.8" fill="#8a5a2b"/></svg>';
-    return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#3aa655"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>';
-  }
-  function makroAusloesen() {
-    var m = S.makro;
-    S.rad = null; S.zrad = false;
-    if (m === "werkzeug") { S.wwahl = !S.wwahl; S.schnellMenue = false; S.radOffenSeit = Date.now(); ton("zauberpuff", 0.25); schnellZeichnen(true); return; }
-    if (m === "deutsch") { S.schnellMenue = false; S.kategorie = null; S.aufgabe = null; menue("deutsch"); aufgabeHolen(false); schnellZeichnen(true); return; }
-    var r = m === "dorf" ? "dorfblick" : m === "handel" ? "handelblick" : m;
-    S.schnellMenue = !(S.schnellMenue && S.schnellReiter === r);
-    S.schnellReiter = r;
-    if (S.schnellMenue && (r === "dorfblick" || r === "handelblick")) { handelLaden(false); abrufen(true); }
-    ton("swoosh", 0.2);
-    schnellZeichnen(true);
-  }
-  function chatVonSpiel(sid) {
-    if (!sid) return "";
-    if (sid === S.uid) return meineChatId();
-    var p = plaetze().filter(function (x) { return !x.leer && x.id && spielIdVon(x.id) === sid; })[0];
-    return p ? p.id : "";
-  }
-  function pluenderZeigen(chatId, geb) {
-    var el = platzElVon(chatId);
-    if (!el || !DORF[geb]) return;
-    var kreis = el.querySelector(".lc-kreis"), w = document.createElement("span");
-    w.className = "sp-pluender";
-    w.innerHTML = dorfSvg(geb, 1) + '<i></i><i></i><i></i>';
-    w.style.top = Math.max(0, (kreis ? kreis.offsetTop : 0) - 6) + "px";
-    el.appendChild(w);
-    setTimeout(function () { w.remove(); }, 1500);
-  }
-  function pluendern(sid, chatId, geb) {
-    if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
-    if (S.pluenderLaeuft) return;
-    S.pluenderLaeuft = true;
-    rpc("spiel_pluendern", { p_ziel: sid, p_gebaeude: geb }).then(function (r) {
-      S.pluenderLaeuft = false;
-      if (!r || r.ok === false) { hinweis("⚔️ " + ((r && r.grund) || "Das ging nicht.")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      var beute = Object.keys(r.beute || {}).map(function (w) { return r.beute[w] + " " + (WAREN[w] || w); });
-      if (r.mana) beute.push(r.mana + " Mana"); if (r.punkte_beute) beute.push(r.punkte_beute + " Punkte");
-      /* Ton und Bild zusammen: das Gebäude wackelt beim Schlag, dann klingelt die Beute. */
-      pluenderZeigen(chatId, geb);
-      ton("hammerschlag", 0.5);
-      if (beute.length) setTimeout(function () { ton("kasse", 0.4); }, 650);
-      hinweis("⚔️ " + DORF[geb].name + " von " + r.an + " geplündert: " + (beute.join(", ") || "leer – nichts zu holen") + " (" + r.anteil + " %). Das Gebäude bleibt stehen – "
-        + r.an + " kann es reparieren.");
-      senden({ ereignis: "gepluendert", zielChat: chatId, gebaeude: geb, beute: r.beute || {}, name: (S.ich || {}).name || "" });
-      setTimeout(function () { abrufen(true); }, 400);
-      schnellZeichnen(true);
-    }).catch(function () { S.pluenderLaeuft = false; hinweis("⚔️ Das ging gerade nicht."); });
-  }
-  /* Eier auf dem Feld: auf freien Plätzen, immer an derselben Stelle (bis eins geholt ist). */
-  function hashZahl(t) { var h = 0; for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return h; }
-  function eierPflegen() {
-    var reihe = document.getElementById("lcPlaetze");
-    if (!reihe) return;
-    var h = S.bereit && spielSichtbar() && !S.gast ? stallBereit(S.ich, "huehnerstall") : null, n = h ? h.bereit : 0;
-    /* Liegende Eier bleiben, wo sie sind (nicht auf besetzten Plätzen); nur die Differenz kommt dazu oder geht weg. */
-    var liegen = [].filter.call(reihe.querySelectorAll(".sp-ei-feld:not(.sp-ei-weg)"), function (e) {
-      var q = e.parentNode;
-      if (!q || q.dataset.lcId || q.querySelector(".sp-fundsack")) { e.remove(); return false; }
-      return true;
-    });
-    while (liegen.length > n) liegen.pop().remove();
-    if (liegen.length >= n) return;
-    var frei = [].filter.call(reihe.querySelectorAll(".lc-platz"), function (q) {
-      return !q.dataset.lcId && !(S.sparring && Number(q.dataset.lcPlatz) === S.sparring) && q.querySelector(".lc-kreis") && !q.querySelector(".sp-fundsack") && !q.querySelector(".sp-ei-feld");
-    }).sort(function (a, b) { return hashZahl(a.dataset.lcPlatz + "ei") - hashZahl(b.dataset.lcPlatz + "ei"); });
-    frei.slice(0, n - liegen.length).forEach(function (q) {
-      var kreis = q.querySelector(".lc-kreis"), rz = q.getBoundingClientRect(), rk = kreis.getBoundingClientRect();
-      var e = document.createElement("span");
-      e.className = "sp-ei-feld"; e.title = "Ei – antippen";
-      e.innerHTML = '<svg viewBox="0 0 20 20" aria-hidden="true">' + WARE_BILDER.ei + "</svg>";
-      e.style.left = (rk.left - rz.left - q.clientLeft) + "px"; e.style.top = (rk.top - rz.top - q.clientTop) + "px";
-      e.style.width = rk.width + "px"; e.style.height = rk.height + "px";
-      q.appendChild(e);
-    });
-  }
-  function eiSammeln(knopf) {
-    var e = knopf.querySelector(".sp-ei-feld");
-    if (!e || S.eiLaeuft) return;
-    S.eiLaeuft = true;
-    e.classList.add("sp-ei-weg");
-    ton("bling", 0.35);
-    rpc("spiel_ei_sammeln", { p_platz: Number(knopf.dataset.lcPlatz) || 0 }).then(function (r) {
-      S.eiLaeuft = false;
-      setTimeout(function () { e.remove(); }, 450);
-      if (!r || r.ok === false) { hinweis("🥚 " + ((r && r.grund) || "Das ging nicht.")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      hinweis("🥚 +1 Ei (" + vorrat(r, "ei") + " im Lager) – für Torten in der Bäckerei.");
-      eierPflegen(); schnellZeichnen();
-    }).catch(function () { S.eiLaeuft = false; e.remove(); hinweis("🥚 Das ging gerade nicht."); });
-  }
-  function eierAlle() {
-    var h = stallBereit(S.ich, "huehnerstall"), n = h ? h.bereit : 0, geholt = 0;
-    if (!n) { hinweis("🥚 Noch kein Ei."); return; }
-    (function eins() {
-      rpc("spiel_ei_sammeln", { p_platz: 0 }).then(function (r) {
-        if (r && r.ok && r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); geholt++; }
-        if (r && r.ok && --n > 0) { eins(); return; }
-        ton("bling", 0.35); hinweis("🥚 +" + geholt + " Ei" + (geholt === 1 ? "" : "er") + " eingesammelt (" + vorrat(S.ich, "ei") + " im Lager).");
-        eierPflegen(); schnellZeichnen(true);
-      }).catch(function () { hinweis("🥚 Das ging gerade nicht."); });
-    })();
-  }
-  /* FASSUNG 683 — XANDER: „dass ich schnell Zugriff auf das Dorf habe und
-     dann ist auch wirklich nur das Layout von dem Dorf da und was in dem
-     Dorf grad passiert". Die Dorf-Ansicht des Makroknopfs. */
-  function dorfBlickHtml(ich) {
-    var d = ich.dorf || {}, ab = ich.dorf_ab ? Date.parse(ich.dorf_ab) : 0;
-    var hat = Object.keys(d).length;
-    var gebaut = Object.keys(DORF).filter(function (k) { return d[k] && d[k].stufe > 0; });
-    var szene = '<div class="sp-dorfszene">' + (gebaut.length ? gebaut.map(function (k) {
-      var g = d[k], w = (ich.werk || {})[k], kaputt = !(g.lp > 0), rest = w ? Date.parse(w.fertig) - Date.now() : 0;
-      var stall = k === "huehnerstall" || k === "kuhstall" ? stallBereit(ich, k) : null;
-      var zeichen = kaputt ? '<em class="sp-ds-kaputt">kaputt</em>' : w ? '<em class="' + (rest > 0 ? "sp-ds-laeuft" : "sp-ds-fertig") + '">' + (rest > 0 ? uhrText(rest) : "fertig") + "</em>"
-        : stall && stall.bereit ? '<em class="sp-ds-fertig">' + stall.bereit + (k === "kuhstall" ? " Milch" : " Eier") + "</em>" : "";
-      return '<span class="sp-ds-haus' + (kaputt ? " sp-ds-aus" : "") + '"><i>' + dorfSvg(k, g.stufe) + "</i><small>" + DORF[k].name + (g.stufe > 1 ? " " + g.stufe : "") + "</small>" + zeichen + "</span>";
-    }).join("") : '<p class="sp-sm-klein">Noch kein Gebäude – tippe unten auf „Bauen".</p>') + "</div>";
-    var ernte = hat ? (function () {
-      var bis = ab ? ab + 4 * 3600000 - Date.now() : 0;
-      return '<div class="sp-sm-liste"><button type="button" data-s="ernte"' + (bis > 0 ? ' class="sp-werk-wartet"' : "") + ">Dorf-Ernte <small>" + (bis > 0 ? "in " + Math.ceil(bis / 60000) + " min" : "bereit") + "</small></button>"
-        + (Object.keys(d).some(function (k) { return (d[k].lp || 0) < 20 * (d[k].stufe || 1); })
-          ? '<button type="button" data-s="bauen" data-w="reparatur"' + (vorrat(ich, "erz") || vorrat(ich, "holz") >= 2 ? "" : " disabled") + ">Reparieren <small>1 Erz oder 2 Holz</small></button>" : "") + "</div>";
-    })() : "";
-    var t = werkZeilenHtml(ich);
-    return szene + volkHtml(ich) + ernte
-      + (t.length ? '<div class="sp-troph-liste">' + t.join("") + "</div>" : "")
-      + lagerHtml(ich, true)
-      + nachbarnHtml()
-      + '<div class="sp-sm-liste sp-dorf-auf">'
-      + '<button type="button" data-s="dorfteil" data-t="bau" class="' + (S.dorfTeil === "bau" ? "sp-an" : "") + '">Bauen &amp; ausbauen ' + (S.dorfTeil === "bau" ? "▴" : "▾") + "</button>"
-      + '<button type="button" data-s="dorfteil" data-t="markt" class="' + (S.dorfTeil === "markt" ? "sp-an" : "") + '">Markt &amp; Handel ' + (S.dorfTeil === "markt" ? "▴" : "▾") + "</button></div>"
-      + (S.dorfTeil === "bau" ? '<div class="sp-troph-liste">' + dorfBauListe(ich) + "</div>" : S.dorfTeil === "markt" ? marktHtml(ich) + handelHtml(ich) : "");
   }
   function wirtschaft(name, args, fertig) {
     rpc(name, args).then(function (r) {
@@ -6341,26 +5809,6 @@
      --------------------------------------------------------------- */
   var HANDEL = { preise: null, preiseZeit: 0, angebote: null, angeboteZeit: 0, wahl: { ware: "getreide", menge: "5", preis: "2", an: "" } };
   WAREN.duenger = "Dünger"; MARKT.duenger = 4;
-  /* FASSUNG 683 — XANDER: „Wenn wir aus Getreide Mehl machen müsste das ja auch teurer im Verkauf sein …
-     Schau mal, dass die Preiskategorien wirklich stimmen." Jede Stufe ist mehr wert als ihre Zutaten
-     (echtes Leben: Weizen ~0,25 €/kg, Mehl ~0,60–1 €/kg, Brot ~3–4 €/kg; in Anno genauso):
-     Getreide 1 → Mehl 3 → Brot 6 · Kuchen 14 (2 Mehl) · Torte 30 (2 Mehl + 2 Eier + 1 Milch = 12)
-     Quarz 2 ×2 + Holz 2 → Silizium 15 · Silizium 15 + Gold 25 → Chip 60. */
-  [["torte", "Torte", 30], ["ei", "Eier", 2], ["milch", "Milch", 2], ["fisch", "Fisch", 4], ["holz", "Holz", 2], ["quarz", "Quarz", 2],
-   ["gold", "Gold", 25], ["oel", "Öl", 12], ["silizium", "Silizium", 15], ["chip", "Chips", 60], ["erz", "Erz", 5]].forEach(function (x) { WAREN[x[0]] = x[1]; MARKT[x[0]] = x[2]; });
-  var WARE_BILDER = {
-    ei: '<ellipse cx="10" cy="11" rx="5" ry="6.5" fill="#fff4dc" stroke="#b09060" stroke-width="1"/><ellipse cx="8.2" cy="8.4" rx="1.3" ry="2" fill="#fff" opacity=".8"/>',
-    milch: '<path d="M7.5 3 H12.5 V6 L14.5 9 V17.5 H5.5 V9 L7.5 6 Z" fill="#fdfdfd" stroke="#6a7a8a" stroke-width="1"/><rect x="7" y="2" width="6" height="1.8" rx=".6" fill="#3a8dde"/><rect x="5.5" y="11" width="9" height="3.5" fill="#3a8dde"/>',
-    fisch: '<path d="M2.5 10 C5 5.5 11 5.5 14 10 C11 14.5 5 14.5 2.5 10 Z" fill="#5a9fd4" stroke="#2a5a80" stroke-width="1"/><path d="M14 10 L18 6.5 V13.5 Z" fill="#5a9fd4" stroke="#2a5a80" stroke-width="1"/><circle cx="6" cy="9.3" r=".9" fill="#1a2a3a"/>',
-    holz: '<rect x="3" y="11" width="14" height="4.5" rx="2.2" fill="#a86e3a" stroke="#5a3616" stroke-width="1"/><rect x="5" y="6" width="12" height="4.5" rx="2.2" fill="#b67a42" stroke="#5a3616" stroke-width="1"/><circle cx="5.2" cy="13.2" r="1.6" fill="#e3c08a" stroke="#5a3616" stroke-width=".7"/><circle cx="7.2" cy="8.2" r="1.6" fill="#e3c08a" stroke="#5a3616" stroke-width=".7"/>',
-    quarz: '<path d="M6 17 L4.5 9 L7 5 L9 9 L8 17 Z" fill="#e8eef5" stroke="#8a9aaa" stroke-width=".9"/><path d="M9.5 17 L9 7 L12 3 L14.5 7 L13 17 Z" fill="#f4f7fb" stroke="#8a9aaa" stroke-width=".9"/><path d="M13.5 17 L14 10 L16 8 L17 11 L16 17 Z" fill="#dfe6ee" stroke="#8a9aaa" stroke-width=".9"/>',
-    gold: '<path d="M3 14 L6 8 H14 L17 14 Z" fill="#f2c230" stroke="#9a7410" stroke-width="1"/><path d="M6 8 L8 11 H12 L14 8" fill="none" stroke="#fff3b0" stroke-width=".8"/>',
-    oel: '<rect x="5" y="3.5" width="10" height="14" rx="1.5" fill="#2a2e36" stroke="#111" stroke-width="1"/><path d="M5 7.5 H15 M5 13.5 H15" stroke="#6a7280" stroke-width="1"/><path d="M10 9 C8.8 10.6 8.6 11.6 10 12.4 C11.4 11.6 11.2 10.6 10 9 Z" fill="#f2c230"/>',
-    silizium: '<circle cx="10" cy="10" r="7" fill="#5a6a8a" stroke="#2a3040" stroke-width="1"/><path d="M5 10 H15 M10 5 V15 M6.5 6.5 L13.5 13.5 M13.5 6.5 L6.5 13.5" stroke="#9fb4d8" stroke-width=".5"/><path d="M6.5 15.5 H13.5" stroke="#2a3040" stroke-width="1"/>',
-    chip: '<rect x="5" y="5" width="10" height="10" rx="1" fill="#1f2a1f" stroke="#0c120c" stroke-width="1"/><rect x="7.5" y="7.5" width="5" height="5" fill="#c9a23a"/><path d="M7 3 V5 M10 3 V5 M13 3 V5 M7 15 V17 M10 15 V17 M13 15 V17 M3 7 H5 M3 10 H5 M3 13 H5 M15 7 H17 M15 10 H17 M15 13 H17" stroke="#d4b44a" stroke-width="1"/>',
-    torte: '<path d="M3 9 H17 V16 H3 Z" fill="#f7d6e0" stroke="#6b4521" stroke-width="1"/><path d="M3 12.5 H17" stroke="#b0402f" stroke-width="1.2"/><path d="M3 9 C4 7 16 7 17 9" fill="#fff" stroke="#6b4521" stroke-width=".8"/><circle cx="7" cy="6.8" r="1.2" fill="#e2403a"/><circle cx="13" cy="6.8" r="1.2" fill="#e2403a"/><path d="M10 7 V3.6" stroke="#f2c230" stroke-width="1"/><path d="M10 3.2 C9.4 2.4 10.6 1.6 10 1" stroke="#ff8a18" stroke-width=".9" fill="none"/>',
-    erz: '<path d="M3 15 L5 8 L10 5 L15 7 L17 14 L12 17 Z" fill="#7a7f88" stroke="#3a3f48" stroke-width="1"/><circle cx="8" cy="10" r="1" fill="#c96a3a"/><circle cx="12" cy="12" r="1.1" fill="#c96a3a"/><circle cx="11" cy="8.4" r=".7" fill="#e0a070"/>'
-  };
   function handelLaden(zwingend) {
     var jetzt = Date.now();
     if (zwingend || jetzt - HANDEL.preiseZeit > 30000) {
@@ -6803,7 +6251,6 @@
     tafelPruefen();
     zeichnen();
     fundPflegen();
-    eierPflegen();
     fundKnopfPflegen();
     ackerPflegen();
     erinnerungPruefen();
@@ -7192,7 +6639,6 @@
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, chatWaffeZeigen: chatWaffeZeigen, tierReagiert: tierReagiert, tiereSpielen: tiereSpielen, handelLaden: handelLaden, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,
-      abrufen: abrufen, eierPflegen: eierPflegen, makroAusloesen: makroAusloesen, dorfBlickHtml: dorfBlickHtml, stallBereit: stallBereit, baumStand: baumStand, pluendern: pluendern, holzen: holzen, angeln: angeln,
       trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, klassenHtml: klassenHtml, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
       zauberZeigen: zauberZeigen, zaubern: zaubern, daemonAusbruch: daemonAusbruch, uebungZaubern: uebungZaubern, geschuetzSvg: geschuetzSvg, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
       menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },

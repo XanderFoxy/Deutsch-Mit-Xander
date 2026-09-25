@@ -266,10 +266,10 @@ const sage = (gut, was, zusatz) => {
     const w = document.querySelector(".sp-schnell .sp-werkzeugwahl");
     const r = w && w.getBoundingClientRect();
     return { da: Boolean(w), knoepfe: w ? [...w.querySelectorAll('[data-s="werkzeugsetzen"]')].map((b) => b.dataset.w).join(",") : "", weg: Boolean(w && w.querySelector(".sp-ww-weg")),
-      imBild: r ? r.left >= 0 && r.right <= innerWidth && r.top >= 0 : false, ernten: window.__rufe.filter((x) => x.name === "spiel_ernten").length };
+      rect: r ? [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)] : null, imBild: r ? r.left >= 0 && r.right <= innerWidth && r.top >= 0 : false, ernten: window.__rufe.filter((x) => x.name === "spiel_ernten").length };
   });
-  sage(wahl.da && wahl.knoepfe === "schaufel,sense,saat,duenger" && wahl.weg, "2× schnell auf denselben Platz öffnet die Werkzeugwahl (Schaufel, Sense, Saat, Dünger, Weglegen)", JSON.stringify(wahl));
-  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-wahl.png" });
+  sage(wahl.da && wahl.knoepfe === "schaufel,sense,saat,duenger,axt,angel" && wahl.weg, "2× schnell auf denselben Platz öffnet die Werkzeugwahl (Schaufel, Sense, Saat, Dünger, Axt, Angel, Weglegen)", JSON.stringify(wahl));
+  if (process.env.BILD) { await tick(700); console.log("   (Bild) " + await pg.evaluate(() => { const w = document.querySelector(".sp-schnell .sp-werkzeugwahl"); if (!w) return "weg"; const r = w.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top), Math.round(r.right), getComputedStyle(w).opacity, w.style.transform].join(" "); })); await pg.screenshot({ path: process.env.BILD + "-wahl.png" }); }
   sage(wahl.imBild, "die Werkzeugwahl passt ganz auf den Bildschirm (360 px)", JSON.stringify(wahl));
   sage(wahl.ernten === 1, "der erste Tipp hat trotzdem sofort gemäht (keine Wartezeit)", String(wahl.ernten));
   await tippe('.sp-werkzeugwahl [data-w="saat"]');
