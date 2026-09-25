@@ -1655,238 +1655,63 @@ window.LiveChat = (function () {
      liegende Bilder hat, wer dabei war, ohnehin im eigenen Lager —
      und wer nicht dabei war, liest den Text, um den es geht. */
   var BILDER_ZURUECK = 200;
-  /* =================================================================
-     FASSUNG 642 — DER VERLAUF KOMMT IN HAPPEN, NICHT IN EINEM ZUG
-     -----------------------------------------------------------------
-     GEMELDET (Xander, 25.09.): „Jetzt steht irgendwas im Chat: der
-     gemeinsame Verlauf ließ sich nicht laden. Du siehst gerade nur was
-     auf diesem Gerät liegt. Kannst du das reparieren und kannst du
-     generell das Laden etwas optimieren, weil manchmal dauert die
-     Verbindung zwischen Leuten so lange, dass man ewig warten muss, bis
-     man miteinander reden kann."
-
-     NACHGESEHEN — drei Dinge kamen hier zusammen:
-
-     1. DAS PROFILBILD FUHR IN JEDER ZEILE MIT. Die Abfrage holte die
-        Spalte „bild" — das Profilbild des Schreibers, als Datenadresse
-        bis zu 140 000 Zeichen — fuer bis zu ZWANZIGTAUSEND Zeilen. Seit
-        dem 18.09. wird die Tabelle wirklich beschrieben (siehe
-        serverSichern, farbe_name); eine Woche Unterricht mit Foto im
-        Profil sind schnell ein paar tausend Zeilen mal hundert Kilobyte.
-        Das ist keine Abfrage mehr, das ist ein Umzug: die Datenbank
-        bricht ihn nach ihrer Zeitgrenze ab (statement_timeout), oder
-        das Telefon laedt und laedt — und genau in dieser Zeit verstopft
-        der Download die Leitung, ueber die gleichzeitig das Gespraech
-        aufgebaut werden soll.
-     2. EIN FEHLER SAH AUS WIE EIN LEERER RAUM. serverLaden() gab bei
-        jedem Fehler still eine leere Liste zurueck. Wer den Verlauf
-        holte, konnte nicht unterscheiden zwischen „hier wurde noch
-        nichts geschrieben" und „die Abfrage ist gescheitert" — und hat
-        nach vier leeren Antworten geklagt, auch in einem Raum, der
-        einfach noch leer war.
-     3. KEIN ZWEITER VERSUCH GLEICH DANACH. Ging der erste Anlauf
-        schief, kam der naechste erst Sekunden spaeter.
-
-     Jetzt:
-       * Zuerst nur das juengste Stueck (VERLAUF_ERST Zeilen, ohne
-         Profilbild) — das steht nach einem Wimpernschlag da. Der Rest
-         kommt danach im Hintergrund in Seiten zu VERLAUF_SEITE Zeilen,
-         jede Seite ein eigener, kleiner Zugriff ueber den Index
-         (raum, erstellt desc). Zwanzigtausend Zeilen zum Hochscrollen
-         bleiben es trotzdem (CHAT_SICHT).
-       * Die Profilbilder einmal je PERSON, nicht einmal je Zeile.
-       * Ein Fehler ist ein Fehler (die Zusage wird abgelehnt), eine
-         leere Liste ist ein leerer Raum.
-       * Jeder Zugriff hat eine Zeitgrenze, damit nichts ewig haengt.
-     ================================================================= */
-  var VERLAUF_ERST = 300;             // so viele Zeilen stehen sofort da
-  var VERLAUF_SEITE = 2000;           // so viele je Nachhol-Zugriff
-  var VERLAUF_ZEITGRENZE = 12000;     // laenger wartet kein Zugriff
-  var BILDER_ERST = 40;               // Chatbilder im ersten Zugriff
-  var PROFILBILDER_HOECHST = 16;      // Personen je Nachhol-Runde
-  var VERLAUF_SPALTEN = "id,raum,autor,name,text,art,farbe,farbe_name,quelle_id,erstellt";
-  var profilbildJe = {};              // Konto -> juengstes Profilbild
-
-  /* Eine Abfrage an die Tabelle, als ehrliche Zusage: Daten oder
-     Ablehnung, und nie laenger als VERLAUF_ZEITGRENZE. */
-  function tabellenFrage(bau) {
-    return new Promise(function (ok, schief) {
-      var abbruch = null, q;
-      try {
-        q = bau();
-        if (q && typeof q.abortSignal === "function" && typeof AbortController !== "undefined") {
-          abbruch = new AbortController();
-          q = q.abortSignal(abbruch.signal);
-        }
-      } catch (e) { schief(e); return; }
-      var uhr = setTimeout(function () {
-        try { if (abbruch) abbruch.abort(); } catch (e) {}
-        schief(new Error("Zeitgrenze erreicht"));
-      }, VERLAUF_ZEITGRENZE);
-      Promise.resolve(q).then(function (a) {
-        clearTimeout(uhr);
-        if (!a) { schief(new Error("keine Antwort")); return; }
-        if (a.error) { schief(a.error); return; }
-        ok(a.data || []);
-      }, function (f) {
-        clearTimeout(uhr);
-        schief(f || new Error("abgelehnt"));
-      });
-    });
-  }
-
-  function zeileAusTabelle(r) {
-    return {
-      /* Die Kennung vom Absender gewinnt — siehe serverSichern. */
-      id: r.quelle_id || ("s" + r.id),
-      von: r.autor ? "k" + String(r.autor).replace(/[^a-z0-9]/gi, "").slice(0, 22).toLowerCase() : "",
-      name: r.name || "Gast",
-      text: r.text || "",
-      bild: "",
-      bildImChat: "",
-      farbe: r.farbe || "",
-      farbeName: r.farbe_name || "",
-      art: r.art || "text",
-      zeit: new Date(r.erstellt).getTime(),
-      eigen: false
-    };
-  }
-
-  /* Eine Seite des offenen Verlaufs, juengste zuerst geholt, in
-     zeitlicher Reihenfolge zurueck. „vor" ist die Zeit der aeltesten
-     Zeile der vorigen Seite. */
-  function serverSeite(z, raum, vor, anzahl) {
-    return tabellenFrage(function () {
-      var q = z.from(TISCH).select(VERLAUF_SPALTEN)
-        .eq("raum", raum)
-        /* Eine gefluesterte Zeile gehoert nicht in den offenen Verlauf —
-           sie kommt getrennt, und nur bei den beiden, die sie angeht. */
-        .is("an_id", null);
-      if (vor) q = q.lt("erstellt", vor);
-      return q.order("erstellt", { ascending: false }).limit(anzahl);
-    }).then(function (daten) {
-      var roh = daten.slice().reverse();
-      return {
-        zeilen: roh.map(zeileAusTabelle),
-        autoren: roh.map(function (r) { return r.autor || ""; }),
-        aeltestes: roh.length ? roh[0].erstellt : "",
-        voll: daten.length >= anzahl
-      };
-    });
-  }
-
-  /* Das Profilbild einmal je Person — ueber den Index (autor,
-     erstellt desc) ist das je Person EIN kleiner Griff. Scheitert er,
-     bleibt die Zeile eben ohne Bild; der Verlauf haengt nicht daran. */
-  function profilbilderEinsetzen(z, seite) {
-    var fehlen = [];
-    for (var i = seite.autoren.length - 1; i >= 0 && fehlen.length < PROFILBILDER_HOECHST; i--) {
-      var a = seite.autoren[i];
-      if (a && !Object.prototype.hasOwnProperty.call(profilbildJe, a) && fehlen.indexOf(a) < 0) fehlen.push(a);
-    }
-    return Promise.all(fehlen.map(function (a) {
-      return tabellenFrage(function () {
-        return z.from(TISCH).select("bild").eq("autor", a).is("an_id", null)
-          .order("erstellt", { ascending: false }).limit(1);
-      }).then(function (d) { profilbildJe[a] = (d[0] && d[0].bild) || ""; },
-              function () {});
-    })).then(function () {
-      seite.zeilen.forEach(function (n, j) {
-        var a = seite.autoren[j];
-        if (a && profilbildJe[a]) n.bild = profilbildJe[a];
-      });
-      return seite;
-    });
-  }
-
-  /* Die Bilder IM Chat — nur die juengsten, in einer eigenen Abfrage.
-     quelle_id MUSS mitkommen: die Zeilen tragen die Kennung des
-     Absenders, nicht die Nummer der Tabelle — ohne sie fände kein
-     einziges Bild seine Zeile. */
-  function chatBilderHolen(z, raum, vor, anzahl) {
-    return tabellenFrage(function () {
-      var q = z.from(TISCH).select("id,quelle_id,bild_im_chat,erstellt")
-        .eq("raum", raum)
-        .neq("bild_im_chat", "");
-      if (vor) q = q.lt("erstellt", vor);
-      return q.order("erstellt", { ascending: false }).limit(anzahl);
-    }).then(function (daten) {
-      var nach = {};
-      daten.forEach(function (r) {
-        if (r.bild_im_chat) nach[r.quelle_id || ("s" + r.id)] = r.bild_im_chat;
-      });
-      return { nach: nach, anzahl: daten.length,
-               aeltestes: daten.length ? daten[daten.length - 1].erstellt : "" };
-    });
-  }
-  function bilderAnwenden(nach, liste) {
-    var wieviel = 0;
-    if (!nach) return 0;
-    (liste || []).forEach(function (n) {
-      if (n && n.id && nach[n.id] && !n.bildImChat) {
-        n.bildImChat = nach[n.id];
-        n.bildWeg = false;
-        wieviel += 1;
-      }
-    });
-    return wieviel;
-  }
-
-  /* Holt den offenen Verlauf eines Raums.
-       o.erst      — hoechstens so viele Zeilen (sonst CHAT_SICHT)
-       o.bilder    — so viele Chatbilder dazu (0 = keine)
-       o.fluestern — die eigenen Flüsterzeilen dazu
-     Liefert null, wenn es (noch) keinen Zugang gibt; lehnt ab, wenn
-     die Tabelle nicht antwortet. */
-  function serverVerlauf(raum, o) {
-    var z = angemeldeterZugang();
-    if (!z) return Promise.resolve(null);
-    o = o || {};
-    var ziel = Math.max(1, Math.min(o.erst || CHAT_SICHT, CHAT_SICHT));
-    var seiten = [], geholt = 0;
-    function seite(vor) {
-      return serverSeite(z, raum, vor, Math.min(VERLAUF_SEITE, ziel - geholt)).then(function (s) {
-        seiten.unshift(s);
-        geholt += s.zeilen.length;
-        if (s.voll && s.aeltestes && geholt < ziel) return seite(s.aeltestes);
-        return s;
-      });
-    }
-    return seite("").then(function (letzte) {
-      var v = { zeilen: [], autoren: [], anzahl: geholt, voll: letzte.voll,
-                aeltestes: letzte.aeltestes || "", bilder: null };
-      seiten.forEach(function (s) {
-        v.zeilen = v.zeilen.concat(s.zeilen);
-        v.autoren = v.autoren.concat(s.autoren);
-      });
-      return profilbilderEinsetzen(z, v);
-    }).then(function (v) {
-      if (!o.bilder) return v;
-      return chatBilderHolen(z, raum, "", o.bilder).then(function (b) {
-        v.bilder = b;
-        bilderAnwenden(b.nach, v.zeilen);
-        return v;
-      }, function () { return v; });
-    }).then(function (v) {
-      if (!o.fluestern) return v;
-      /* Auch das Fluestern bekommt eine Zeitgrenze — haengt es, soll der
-         offene Verlauf trotzdem erscheinen. */
-      var bremse = new Promise(function (fertig) {
-        setTimeout(function () { fertig([]); }, VERLAUF_ZEITGRENZE);
-      });
-      return Promise.race([fluesternLaden(), bremse]).then(function (geheim) {
-        v.zeilen = v.zeilen.concat(geheim);
-        return v;
-      }, function () { return v; });
-    });
-  }
-
-  /* Der ganze Verlauf in einem Stueck (zum Nachlesen im Archiv und
-     fuer die Sonden). Lehnt ab, wenn die Tabelle nicht antwortet. */
   function serverLaden(raum) {
-    return serverVerlauf(raum, { bilder: BILDER_ZURUECK, fluestern: true })
-      .then(function (v) { return v ? v.zeilen : []; });
+    var z = angemeldeterZugang();
+    if (!z) return Promise.resolve([]);
+    return z.from(TISCH)
+      .select("id,raum,autor,name,text,art,farbe,farbe_name,bild,quelle_id,erstellt")
+      .eq("raum", raum)
+      /* Eine gefluesterte Zeile gehoert nicht in den offenen Verlauf —
+         sie kommt gleich getrennt, und nur bei den beiden, die sie
+         angeht. */
+      .is("an_id", null)
+      .order("erstellt", { ascending: false })
+      .limit(CHAT_SICHT)
+      .then(function (a) {
+        if (!a || a.error || !a.data) return [];
+        var zeilen = a.data.slice().reverse().map(function (r) {
+          return {
+            /* Die Kennung vom Absender gewinnt — siehe serverSichern. */
+            id: r.quelle_id || ("s" + r.id),
+            von: r.autor ? "k" + String(r.autor).replace(/[^a-z0-9]/gi, "").slice(0, 22).toLowerCase() : "",
+            name: r.name || "Gast",
+            text: r.text || "",
+            bild: r.bild || "",
+            bildImChat: "",
+            farbe: r.farbe || "",
+            farbeName: r.farbe_name || "",
+            art: r.art || "text",
+            zeit: new Date(r.erstellt).getTime(),
+            eigen: false
+          };
+        });
+        /* Und jetzt die Bilder — nur die der juengsten Zeilen. */
+        return z.from(TISCH)
+          /* quelle_id MUSS mitkommen: die Zeilen tragen jetzt die
+             Kennung des Absenders, nicht die Nummer der Tabelle — ohne
+             sie fände kein einziges Bild mehr seine Zeile. */
+          .select("id,quelle_id,bild_im_chat")
+          .eq("raum", raum)
+          .neq("bild_im_chat", "")
+          .order("erstellt", { ascending: false })
+          .limit(BILDER_ZURUECK)
+          .then(function (b) {
+            if (b && !b.error && b.data) {
+              var nach = {};
+              b.data.forEach(function (r) { nach[r.quelle_id || ("s" + r.id)] = r.bild_im_chat || ""; });
+              zeilen.forEach(function (n) { if (nach[n.id]) n.bildImChat = nach[n.id]; });
+            }
+            return zeilen;
+          }, function () { return zeilen; })
+          .then(function (mitBildern) {
+            return fluesternLaden().then(function (geheim) {
+              return mitBildern.concat(geheim);
+            }, function () { return mitBildern; });
+          });
+      })
+      .catch(function () { return []; });
   }
+
   /* =========================================================
      FLUESTERN FOLGT DER PERSON, NICHT DEM RAUM
      ---------------------------------------------------------
@@ -2110,39 +1935,16 @@ window.LiveChat = (function () {
     var hatBild = function (n) {
       return Boolean(n.bildImChat || n.bildImLager || n.bildWeg);
     };
-    /* FASSUNG 642 — „kannst du generell das Laden etwas optimieren"
-       Hier suchte JEDE Zeile ihren Zwilling in ALLEN schon genommenen
-       Zeilen. Bei zwanzigtausend Zeilen aus der Tabelle plus
-       zwanzigtausend aus dem Geraet sind das Hunderte Millionen
-       Vergleiche — das Telefon steht dabei sekundenlang still, genau
-       beim Betreten, wenn gleichzeitig die Leitung zu den anderen
-       aufgebaut werden soll.
-       Jetzt: die Kennung ueber ein Verzeichnis (ein Griff), und der
-       Vergleich ueber Name, Text und Zeit nur noch rueckwaerts bis
-       vier Sekunden zurueck — die Liste ist ja nach Zeit sortiert,
-       weiter hinten kann kein Zwilling liegen. Das Ergebnis ist
-       dasselbe. */
-    var nachKennung = Object.create(null);
     alles.forEach(function (n) {
       var zwilling = null;
-      if (n.id) {
-        var gleich = nachKennung[n.id];
-        if (gleich && gleich.id === n.id) zwilling = gleich;
-      }
-      if (!zwilling) {
-        for (var i = raus.length - 1; i >= 0; i--) {
-          var m = raus[i];
-          if ((n.zeit || 0) - (m.zeit || 0) >= 4000) break;
-          if (m.name === n.name && m.text === n.text
-              && Math.abs((m.zeit || 0) - (n.zeit || 0)) < 4000
-              && hatBild(m) === hatBild(n)) { zwilling = m; break; }
-        }
-      }
-      if (!zwilling) {
-        raus.push(n);
-        if (n.id && !nachKennung[n.id]) nachKennung[n.id] = n;
-        return;
-      }
+      raus.some(function (m) {
+        if (m.id && n.id && m.id === n.id) { zwilling = m; return true; }
+        if (m.name === n.name && m.text === n.text
+            && Math.abs((m.zeit || 0) - (n.zeit || 0)) < 4000
+            && hatBild(m) === hatBild(n)) { zwilling = m; return true; }
+        return false;
+      });
+      if (!zwilling) { raus.push(n); return; }
       /* Von zwei Ausfertigungen derselben Zeile gewinnt die, die das
          Bild wirklich dabei hat — sonst ginge es beim Verschmelzen
          verloren, je nachdem welche zufällig zuerst kam. */
@@ -2152,9 +1954,6 @@ window.LiveChat = (function () {
       }
       if (!zwilling.wirkung && n.wirkung) zwilling.wirkung = n.wirkung;
       if (!zwilling.farbe && n.farbe) zwilling.farbe = n.farbe;
-      /* Das Profilbild reist nicht mehr in jeder Zeile mit (Fassung
-         642) — hat die eine Ausfertigung es, bekommt es die andere. */
-      if (!zwilling.bild && n.bild) zwilling.bild = n.bild;
     });
     /* DIE OBERGRENZE DARF KEINE AUFNAHME FRESSEN.
        GEMELDET: „Ich kann meine Sprachnachrichten nicht mehr sehen,
@@ -4183,20 +3982,7 @@ window.LiveChat = (function () {
          die Gegenseite beschrieben ist. Ohne das kommt die
          Verbindung manchmal zustande und manchmal nicht, je
          nachdem, was zuerst da war. */
-      if (!n.kerze) return;
-      /* FASSUNG 642 — „dass man ewig warten muss, bis man miteinander
-         reden kann": Eine Kerze, die ankam, BEVOR hier die Leitung zu
-         ihm stand, wurde bisher weggeworfen. Fehlt so der einzige
-         brauchbare Weg (das Relais), findet die Wegesuche nichts und
-         steht erst nach ihrem Neustart. Jetzt wird sie aufgehoben wie
-         die, die vor der Antwort kommen; wartendeKerzenNachreichen()
-         legt sie nach, sobald die Leitung beschrieben ist. Hoechstens
-         vierzig, damit sich nichts ansammelt. */
-      if (!pk) {
-        var frueh = kerzenLager[n.von] = kerzenLager[n.von] || [];
-        if (frueh.length < 40) frueh.push(n.kerze);
-        return;
-      }
+      if (!pk || !n.kerze) return;
       if (!pk.remoteDescription || !pk.remoteDescription.type) {
         (kerzenLager[n.von] = kerzenLager[n.von] || []).push(n.kerze);
         return;
@@ -4539,92 +4325,45 @@ window.LiveChat = (function () {
 
   /* Den eigenen Verlauf an eine Person schicken. Bilder werden dabei
      weggelassen, wenn es zu viel würde — ein Kanalpaket ist begrenzt,
-     und ein Verlauf mit zwanzig Fotos passt nicht hinein.
-     (Seit Fassung 642 nur noch das juengste Stueck — den vollstaendigen
-     Text bringt die Tabelle, siehe unten.) */
-  /* FASSUNG 642: 24 000 statt 140 000 — dieselbe Groesse, die sich
-     bei der Sprachnachricht auf langsamen Leitungen bewaehrt hat
-     (PAKET_BYTES). */
-  var VERLAUF_PAKET = 24000;
-  var VERLAUF_LUFT = 600;
+     und ein Verlauf mit zwanzig Fotos passt nicht hinein. Der TEXT
+     kommt immer vollständig an. */
+  var VERLAUF_PAKET = 140000;
   function verlaufNachreichen(anId) {
     if (!zustand.nachrichten.length) return;
     /* Wer die kleinste Kennung hat, schickt zuerst — die anderen
        sehen die Antwort und lassen es bleiben. */
-    /* FASSUNG 642: dazu 600 ms Luft — erst gehen Angebot und Kerzen
-       fuer die Tonleitung hinaus, dann der Verlauf (siehe unten). */
-    var vorsprung = 250 + Math.min(1400, zustand.ichId.charCodeAt(0) % 7 * 180) + VERLAUF_LUFT;
+    var vorsprung = 250 + Math.min(1400, zustand.ichId.charCodeAt(0) % 7 * 180);
     setTimeout(function () {
       if (verlaufSchonGeschickt[anId]) return;
       verlaufSchonGeschickt[anId] = true;
-      /* =============================================================
-         FASSUNG 642 — DER VERLAUF DARF DIE LEITUNG NICHT VERSTOPFEN
-         -------------------------------------------------------------
-         XANDER (25.09.): „manchmal dauert die Verbindung zwischen
-         Leuten so lange, dass man ewig warten muss, bis man
-         miteinander reden kann."
-
-         NACHGESEHEN: Genau in der Sekunde, in der ein Neuer kommt,
-         geht ueber DENSELBEN Kanal auch alles, was die Tonleitung
-         braucht — das Angebot, die Antwort und die Kerzen. Und genau
-         dann schickte hier jeder im Raum seinen Verlauf hinterher:
-         bis zu 140 000 Zeichen, und wenn nach dem Herausnehmen der
-         Fotos immer noch zu viel war, die letzten zwanzig Zeilen —
-         MIT dem Profilbild in jeder Zeile (je bis zu 140 000 Zeichen),
-         also leicht zwei, drei Megabyte in einem Paket. Bei der
-         Sprachnachricht war schon gemessen worden, dass so grosse
-         Pakete auf langsamen Leitungen verworfen werden (PAKET_BYTES);
-         geht dabei eine Kerze mit verloren, steht der Ton erst nach
-         dem naechsten Neustart der Wegesuche. Obendrein wurde der
-         ganze Verlauf fuer jedes herausgenommene Foto NEU in Text
-         verwandelt — bei zwanzigtausend Zeilen stand das Geraet
-         dessen, der schon drin sass, dabei sekundenlang still.
-
-         Den ganzen Verlauf holt sich der Neue heute aus der Tabelle
-         (verlaufFrischHolen). Hier geht deshalb nur noch das juengste
-         Stueck hinaus, in einem Paket von hoechstens VERLAUF_PAKET
-         Zeichen, von hinten nach vorn einmal abgezaehlt, ohne
-         Profilbilder als Datenadresse. */
-      var paket = [], groesse = 2;
-      for (var i = zustand.nachrichten.length - 1; i >= 0; i--) {
-        var n = zustand.nachrichten[i];
-        if (!n || n.art === "fluester" || n.art === "system" || n.art === "kommen") continue;
-        var zeile = verlaufZeile(n);
-        var laenge = JSON.stringify(zeile).length + 1;
-        if (zeile.bildImChat && groesse + laenge > VERLAUF_PAKET) {
-          zeile.bildImChat = "";
-          zeile.bildWeg = true;
-          laenge = JSON.stringify(zeile).length + 1;
-        }
-        if (laenge > VERLAUF_PAKET) continue;      // eine Riesenzeile allein
-        if (groesse + laenge > VERLAUF_PAKET) break;
-        groesse += laenge;
-        paket.push(zeile);
+      var liste = zustand.nachrichten.filter(function (n) {
+        return n.art !== "fluester" && n.art !== "system" && n.art !== "kommen";
+      }).slice(-CHAT_VERLAUF);
+      var paket = liste.map(function (n) {
+        /* „wen" MUSS mit. Es ist der Name dessen, den eine Wirkung
+           trifft — ohne ihn steht beim Nachzuegler zwar „Bert drueckt
+           Emmi" im Text, die Zeile selbst weiss aber nicht mehr, wen.
+           Beim Umbenennen von „an" auf „wen" (weil „an" eine Kennung
+           ist und jedes fremde Geraet die Nachricht deshalb wegwarf)
+           war genau diese eine Stelle uebersehen worden. */
+        /* Auch hier: ALLE Zusatzfelder aus EINER Liste. Fehlte eines,
+           sah ein Nachzuegler die Aufgabe nicht — „jede Aufgabe soll
+           auf beiden Seiten ueberall sichtbar sein". */
+        return zusatzUebernehmen({
+          id: n.id, von: n.von, name: n.name, text: n.text, art: n.art || "text",
+          bild: n.bild || "", bildImChat: n.bildImChat || "", farbe: n.farbe || "",
+          zeit: n.zeit
+        }, n);
+      });
+      /* Zu gross? Dann die Bilder herausnehmen, aeltester zuerst. */
+      while (JSON.stringify(paket).length > VERLAUF_PAKET) {
+        var raus = paket.findIndex(function (n) { return n.bildImChat; });
+        if (raus < 0) { paket = paket.slice(-20); break; }
+        paket[raus].bildImChat = "";
+        paket[raus].bildWeg = true;
       }
-      if (!paket.length) return;
-      paket.reverse();
       senden({ art: "verlauf", an: anId, zeilen: paket });
     }, vorsprung);
-  }
-  /* Ein Profilbild, das eine Adresse ist (oder ein Aufkleber), reist
-     mit; ein Foto als Datenadresse nicht — das kennt der Neue aus der
-     Begruessung oder aus der Tabelle. */
-  function kurzesProfilbild(b) {
-    var s = String(b || "");
-    return s.length <= 600 ? s : "";
-  }
-  function verlaufZeile(n) {
-    /* „wen" MUSS mit. Es ist der Name dessen, den eine Wirkung
-       trifft — ohne ihn steht beim Nachzuegler zwar „Bert drueckt
-       Emmi" im Text, die Zeile selbst weiss aber nicht mehr, wen.
-       Auch hier: ALLE Zusatzfelder aus EINER Liste. Fehlte eines,
-       sah ein Nachzuegler die Aufgabe nicht — „jede Aufgabe soll
-       auf beiden Seiten ueberall sichtbar sein". */
-    return zusatzUebernehmen({
-      id: n.id, von: n.von, name: n.name, text: n.text, art: n.art || "text",
-      bild: kurzesProfilbild(n.bild), bildImChat: n.bildImChat || "", farbe: n.farbe || "",
-      zeit: n.zeit
-    }, n);
   }
   var verlaufSchonGeschickt = {};
 
@@ -5116,145 +4855,10 @@ window.LiveChat = (function () {
   var verlaufVersuche = 0;
   var verlaufGeklagt = false;
   var verlaufUhren = [];
-  /* =================================================================
-     FASSUNG 642 — ERST NOCH ZWEIMAL VERSUCHEN, DANN LEISE SAGEN
-     -----------------------------------------------------------------
-     GEMELDET (Xander, 25.09.): „Jetzt steht irgendwas im Chat: der
-     gemeinsame Verlauf ließ sich nicht laden. Du siehst gerade nur was
-     auf diesem Gerät liegt."
-
-     Die Zeile kam, sobald vier Anlaeufe eine LEERE Liste gebracht
-     hatten — und leer war sie bei jedem Fehler, aber eben auch in
-     jedem Raum, in dem noch nie etwas geschrieben wurde. Dort war die
-     Meldung schlicht falsch. Und dort, wo die Tabelle wirklich nicht
-     antwortete, lag es an der viel zu grossen Abfrage (siehe
-     serverVerlauf) — ein zweiter Versuch gleich hinterher gab es nicht.
-
-     Jetzt:
-       * Jeder Anlauf versucht es bis zu dreimal (Pausen VERLAUF_PAUSEN
-         dazwischen, jede laenger als die vorige). Ein kurzer Wackler
-         ist damit weg, bevor ihn jemand bemerkt.
-       * Eine leere Antwort ist eine ANTWORT: der Raum ist leer, und
-         das ist in Ordnung — kein Hinweis.
-       * Gesagt wird es nur, wenn WIRKLICH alle Anlaeufe gescheitert
-         sind (auch die Nachfass-Termine), und dann dezent als
-         Einblendung statt als Zeile, die im Verlauf stehen bleibt.
-         Danach wird im Hintergrund weiter versucht; klappt es, steht
-         der Verlauf einfach da.
-     ================================================================= */
-  var VERLAUF_PAUSEN = [700, 2000];              // zwei weitere Versuche
-  var VERLAUF_NACHFASSEN = [2500, 8000, 20000];  // weitere Anlaeufe
-  var VERLAUF_SPAETER = [60000, 180000];         // nach dem Hinweis
-  var verlaufUhrenOffen = 0;
-  var verlaufFehlAnlaeufe = 0;
-  var verlaufLauf = null;
-  var verlaufLaufRaum = "";
-  var verlaufHierGeklagt = false;
 
   function verlaufUhrenStoppen() {
     verlaufUhren.forEach(function (u) { clearTimeout(u); });
     verlaufUhren = [];
-    verlaufUhrenOffen = 0;
-  }
-  function verlaufNachfassenPlanen(raum, liste) {
-    liste.forEach(function (ms) {
-      verlaufUhrenOffen += 1;
-      verlaufUhren.push(setTimeout(function () {
-        verlaufUhrenOffen = Math.max(0, verlaufUhrenOffen - 1);
-        if (verlaufVomServer) return;
-        if (zustand.raum !== raum) return;
-        /* Laeuft noch einer, wird sein Ergebnis abgewartet — er zaehlt
-           fuer diesen Termin mit. */
-        if (verlaufLauf && verlaufLaufRaum === raum) return;
-        verlaufFrischHolen(false);
-      }, ms));
-    });
-  }
-
-  /* Ein Anlauf: bis zu drei Versuche mit wachsender Pause. */
-  function verlaufVersuchen(raum) {
-    var nr = 0;
-    function einmal() {
-      verlaufVersuche += 1;
-      return serverVerlauf(raum, { erst: VERLAUF_ERST, bilder: BILDER_ERST, fluestern: true })
-        .then(null, function (fehler) {
-          if (nr >= VERLAUF_PAUSEN.length || zustand.raum !== raum) throw fehler;
-          var pause = VERLAUF_PAUSEN[nr];
-          nr += 1;
-          return new Promise(function (weiter) { setTimeout(weiter, pause); }).then(einmal);
-        });
-    }
-    return einmal();
-  }
-
-  function verlaufKlagen(raum) {
-    if (verlaufGeklagt) return;
-    verlaufGeklagt = true;
-    verlaufHierGeklagt = true;
-    var satz = "Der gemeinsame Verlauf kommt gerade nicht durch — du siehst, "
-      + "was auf diesem Gerät liegt. Es wird im Hintergrund weiter versucht.";
-    if (typeof hinweisRuf === "function") hinweisZeigen(satz);
-    else fluechtigeZeile("ℹ️ " + satz, 12000);
-    verlaufNachfassenPlanen(raum, VERLAUF_SPAETER);
-  }
-
-  function eigeneMarkieren(liste) {
-    liste.forEach(function (n) { n.eigen = n.von && n.von === zustand.ichId; });
-  }
-
-  /* Was nach dem ersten Stueck noch fehlt, kommt im Hintergrund:
-     aeltere Seiten zum Hochscrollen und die weiteren Chatbilder. Das
-     Betreten wartet darauf nicht, und jede Seite ist ein eigener,
-     kleiner Zugriff. */
-  /* Nur beim ERSTEN Holen eines Raums geht es ganz nach hinten. Jedes
-     weitere Holen (Zurueckkommen auf die Seite, Nachfassen) schliesst
-     nur die Luecke bis zu dem, was schon vom Server da ist — sonst
-     wuerden bei jedem Zurueckkommen zwanzigtausend Zeilen neu geholt. */
-  var verlaufRestFuer = "";
-  var verlaufBekanntBis = 0;
-  function verlaufRestHolen(raum, v, bis) {
-    var z = angemeldeterZugang();
-    if (!z || !v) return Promise.resolve(0);
-    var geholt = v.anzahl || 0, dazu = 0, geaendert = false;
-    var reichtBis = function (zeilen) {
-      return Boolean(bis && zeilen.length && (zeilen[0].zeit || 0) <= bis);
-    };
-    function seite(vor) {
-      if (zustand.raum !== raum || geholt >= CHAT_SICHT) return Promise.resolve();
-      return serverSeite(z, raum, vor, Math.min(VERLAUF_SEITE, CHAT_SICHT - geholt))
-        .then(function (s) { return profilbilderEinsetzen(z, s); })
-        .then(function (s) {
-          if (zustand.raum !== raum) return;
-          geholt += s.zeilen.length;
-          dazu += s.zeilen.length;
-          if (s.zeilen.length) {
-            geaendert = true;
-            eigeneMarkieren(s.zeilen);
-            zustand.nachrichten = verschmelzen(s.zeilen, zustand.nachrichten);
-            if (v.bilder) bilderAnwenden(v.bilder.nach, zustand.nachrichten);
-            melden();
-          }
-          if (s.voll && s.aeltestes && !reichtBis(s.zeilen)) return seite(s.aeltestes);
-        });
-    }
-    var ersteOffene = v.zeilen.slice(0, v.anzahl || 0);
-    var zeilenLauf = (v.voll && v.aeltestes && !reichtBis(ersteOffene))
-      ? seite(v.aeltestes) : Promise.resolve();
-    return zeilenLauf.then(function () {
-      if (zustand.raum !== raum) return;
-      if (bis) return;                 // die aelteren Bilder kamen schon beim ersten Mal
-      if (!v.bilder || v.bilder.anzahl < BILDER_ERST || !v.bilder.aeltestes) return;
-      return chatBilderHolen(z, raum, v.bilder.aeltestes, Math.max(0, BILDER_ZURUECK - BILDER_ERST))
-        .then(function (b) {
-          if (zustand.raum !== raum) return;
-          if (bilderAnwenden(b.nach, zustand.nachrichten)) geaendert = true;
-        });
-    }).then(null, function (fehler) {
-      try { console.warn("Klassenzimmer: aelterer Verlauf nicht vollstaendig geholt —", fehler); } catch (e) {}
-    }).then(function () {
-      if (geaendert && zustand.raum === raum) { chatSichern(); melden(); }
-      return dazu;
-    });
   }
 
   function verlaufFrischHolen(ersterAnlauf) {
@@ -5264,64 +4868,43 @@ window.LiveChat = (function () {
     if (ersterAnlauf) {
       verlaufVomServer = false;
       verlaufVersuche = 0;
-      verlaufFehlAnlaeufe = 0;
-      verlaufHierGeklagt = false;
       verlaufUhrenStoppen();
-      /* Nachfassen, falls die Anmeldung noch nicht stand oder die
-         Tabelle nicht antwortete. Die Uhren laufen nur weiter, solange
-         nichts angekommen ist. */
-      verlaufNachfassenPlanen(raum, VERLAUF_NACHFASSEN);
-    }
-    if (verlaufLauf && verlaufLaufRaum === raum) return verlaufLauf;
-    if (!angemeldeterZugang()) {
-      /* Die Anmeldung (backend.js) steht noch nicht — das ist kein
-         Fehler, das Nachfassen holt es gleich nach. */
-      verlaufVersuche += 1;
-      return Promise.resolve(false);
-    }
-    verlaufLaufRaum = raum;
-    var lauf = verlaufLauf = verlaufVersuchen(raum).then(function (v) {
-      if (verlaufLauf === lauf) verlaufLauf = null;
-      if (zustand.raum !== raum) return false;
-      if (!v) return false;
-      /* Die Tabelle hat geantwortet — auch wenn sie nichts hatte. */
-      verlaufVomServer = true;
-      verlaufUhrenStoppen();
-      if (verlaufHierGeklagt) {
-        verlaufHierGeklagt = false;
-        if (typeof hinweisRuf === "function") hinweisZeigen("Der gemeinsame Verlauf ist jetzt da.");
-      }
-      var vomServer = v.zeilen;
-      if (vomServer.length) {
-        eigeneMarkieren(vomServer);
-        zustand.nachrichten = verschmelzen(vomServer, zustand.nachrichten);
-        chatSichern();
-        melden();
-        /* Was vom Server kam, kann Bilder haben, die hier noch fehlen —
-           und was hier lag, kann Bilder haben, die der Server nicht
-           kennt. Beides zusammenfuehren, dann ist der Verlauf komplett. */
-        bilderNachreichen(zustand.nachrichten).then(function (etwas) {
-          if (etwas) melden();
-        });
-      }
-      var bis = verlaufRestFuer === raum ? verlaufBekanntBis : 0;
-      if (verlaufRestFuer !== raum) { verlaufRestFuer = raum; verlaufBekanntBis = 0; }
-      v.zeilen.slice(0, v.anzahl || 0).forEach(function (n) {
-        if ((n.zeit || 0) > verlaufBekanntBis) verlaufBekanntBis = n.zeit || 0;
+      /* Nachfassen, falls die Anmeldung noch nicht stand. Die Uhren
+         laufen nur weiter, solange nichts angekommen ist — siehe
+         unten. */
+      [2500, 8000, 20000].forEach(function (ms) {
+        verlaufUhren.push(setTimeout(function () {
+          if (verlaufVomServer) return;
+          if (zustand.raum !== raum) return;
+          verlaufFrischHolen(false);
+        }, ms));
       });
-      verlaufRestHolen(raum, v, bis);
-      return vomServer.length > 0;
-    }, function (fehler) {
-      if (verlaufLauf === lauf) verlaufLauf = null;
+    }
+    verlaufVersuche += 1;
+    return serverLaden(raum).then(function (vomServer) {
       if (zustand.raum !== raum) return false;
-      verlaufFehlAnlaeufe += 1;
-      try { console.warn("Klassenzimmer: gemeinsamer Verlauf nicht geholt —", fehler); } catch (e) {}
-      /* Nur wenn wirklich nichts mehr aussteht: kein Nachfass-Termin
-         mehr offen, und nie etwas vom Server bekommen. */
-      if (!verlaufVomServer && !verlaufGeklagt && verlaufUhrenOffen === 0) verlaufKlagen(raum);
-      return false;
-    });
-    return lauf;
+      if (!vomServer.length) {
+        if (!ersterAnlauf && verlaufVersuche >= 4 && !verlaufVomServer && !verlaufGeklagt
+            && angemeldeterZugang()) {
+          verlaufGeklagt = true;
+          systemZeile("\u26a0\ufe0f Der gemeinsame Verlauf liess sich nicht laden \u2014 "
+            + "du siehst gerade nur, was auf diesem Ger\u00e4t liegt.");
+        }
+        return false;
+      }
+      verlaufVomServer = true;
+      vomServer.forEach(function (n) { n.eigen = n.von && n.von === zustand.ichId; });
+      zustand.nachrichten = verschmelzen(vomServer, zustand.nachrichten);
+      chatSichern();
+      melden();
+      /* Was vom Server kam, kann Bilder haben, die hier noch fehlen —
+         und was hier lag, kann Bilder haben, die der Server nicht
+         kennt. Beides zusammenfuehren, dann ist der Verlauf komplett. */
+      bilderNachreichen(zustand.nachrichten).then(function (etwas) {
+        if (etwas) melden();
+      });
+      return true;
+    }, function () { return false; });
   }
 
   /* Zurueck auf der Seite? Dann nachholen, was inzwischen geschrieben
@@ -15120,9 +14703,7 @@ window.LiveChat = (function () {
   function archivLaden(raum) {
     var r = raum || zustand.raum || HAUPTRAUM;
     var hier = chatLaden(r);
-    /* Seit Fassung 642 lehnt serverLaden() ab, wenn die Tabelle nicht
-       antwortet — zum Nachlesen reicht dann, was im Geraet liegt. */
-    return serverLaden(r).then(null, function () { return []; }).then(function (dort) {
+    return serverLaden(r).then(function (dort) {
       var alles = dort.length ? verschmelzen(dort, hier) : hier;
       return bilderNachreichen(alles).then(function () {
         return alles.filter(function (n) {
@@ -15936,20 +15517,8 @@ window.LiveChat = (function () {
     },
     pruefVerlaufStand: function () {
       return { vomServer: verlaufVomServer, versuche: verlaufVersuche,
-               uhren: verlaufUhren.length, geklagt: verlaufGeklagt,
-               fehlAnlaeufe: verlaufFehlAnlaeufe, uhrenOffen: verlaufUhrenOffen };
+               uhren: verlaufUhren.length, geklagt: verlaufGeklagt };
     },
-    /* Nur zum Nachmessen (Fassung 642): die Takte des Nachholens
-       verkuerzen, damit die Sonde nicht zwanzig Sekunden warten muss.
-       Setzt auch „schon geklagt" zurueck. */
-    pruefVerlaufTakt: function (pausen, nachfassen, spaeter) {
-      if (Array.isArray(pausen)) VERLAUF_PAUSEN = pausen.slice();
-      if (Array.isArray(nachfassen)) VERLAUF_NACHFASSEN = nachfassen.slice();
-      if (Array.isArray(spaeter)) VERLAUF_SPAETER = spaeter.slice();
-      verlaufGeklagt = false;
-      return { pausen: VERLAUF_PAUSEN, nachfassen: VERLAUF_NACHFASSEN, spaeter: VERLAUF_SPAETER };
-    },
-    pruefVerlaufNachreichen: function (anId) { verlaufSchonGeschickt = {}; verlaufNachreichen(anId); },
     pruefFluesternSichern: function (ziel, txt, kennung) { return fluesternSichern(ziel, txt, kennung); },
     /* Nur zum Nachpruefen: den Verlauf eines Raums ablegen und wieder
        hervorholen — genau die Wege, die das Verlassen und das
