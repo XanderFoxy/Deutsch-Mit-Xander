@@ -502,3 +502,11 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Relais höchstens 2,5 s abwarten; kommt es später, bekommen noch nicht stehende Leitungen die neue Liste (`setConfiguration`).
 - Spiel-Datenkanal (`datenkanalAnlegen`, negotiated id 7, ungeordnet): Spielereignisse gehen zusätzlich direkt durch die Leitung, der Supabase-Weg bleibt als Sicherheit; Doppel werden an `gid` erkannt. Direkt gesendet wird erst nach „dc-hallo" der Gegenseite. Gerechnet wird weiter nur auf dem Server.
 - Sonde: `pruefe-659-verbindung.js` — zwei echte Browser-Seiten, echte WebRTC-Leitung (steht in ~0,15 s lokal), Bündel, Datenkanal vor dem Server-Weg, keine Doppel, alte Fassung verbindet weiter. Alle 118 Chat-Sonden: gleiche 9 alte Rote wie vorher (2 wechselten, einzeln grün = Zeitlast im Parallellauf).
+
+## Fassung 660 — Kleine farbige Bilder auf allen Kacheln
+
+- XANDER: „hast du mal die kleinen SVG Grafiken gemacht für unseren Bagger und Schaufelradbagger und alle Sachen, die wir bei uns in den Profileffekten haben, dass die auf den Kacheln so ihre großen Version in ganz kleinen Miniatur sind auch in Farbe … damit das schöner aussieht und auch Wiedererkennungswert hat".
+- 193 eigene Mini-Zeichnungen (32×32, farbig, gleiche Farben wie die großen Fassungen): Platzmenü (66/66), Transport (Schaufelradbagger, Bagger, Kran, Angel, Lasso), Reisen, alle Untermenüs (Werfen, Trommeln, Sport, Anziehen, Putzen, Bombe, Gesichter, Aufziehen …) und die Sprechbilder. „… 2"-Fassungen tragen das Bild ihres Vorbilds.
+- `LC_MINI_BILD` + `lcMiniBilderSetzen` in app.js: zugeordnet über das Wort auf der Kachel, ein Wächter auf den direkten Kindern von body setzt die Bilder in JEDEM Menü, sobald es erscheint. Fehlt ein Bild, bleibt das Emoji (bewusst bei „Ups!" und „Klaps").
+- Höhe genau eine Zeile wie vorher (1em), damit das Menü aufs Telefon passt (Runde-98-Sonden Blume/Leiter und Gesichter wieder grün).
+- Sonde: `pruefe-660-kachelbilder.js` (6 Prüfungen, 360 px).

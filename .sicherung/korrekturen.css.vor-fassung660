@@ -34546,9 +34546,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   .lc-kopfhoerer .lc-kopfhoerer-bild,
   .lc-kopfhoerer.lc-kopfhoerer-ab .lc-kopfhoerer-bild { animation: none; }
 }
-
-/* FASSUNG 660 — kleine farbige Bilder auf den Kacheln (statt Emoji). */
-/* Optisch so groß wie nötig, in der Höhe aber genau eine Zeile wie das
-   Emoji vorher (1em) — sonst wächst das Menü und ragt unten hinaus. */
-.lc-platzmenue-zeichen svg { display: block; width: 1.4em; height: 1.4em; margin: -.2em auto; overflow: visible; }
-.lc-anreise-knopf svg { display: block; width: 26px; height: 26px; margin: 0 auto; }
