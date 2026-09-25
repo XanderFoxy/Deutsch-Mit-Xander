@@ -36,23 +36,9 @@
     /* FUNK 110 — „andere Waffen die lustig sind z.B in hühnerwerfer oder
        ein Eierwerfer … und die Sounds müssen dafür da sein". */
     eierwerfer:   { name: "Eierwerfer",      schaden: 5,  preis: 20,  flug: 600, ton: "swoosh",          treffer: "eiknack" },
-    huehnerwerfer:{ name: "Hühnerwerfer",    schaden: 10, preis: 55,  flug: 760, ton: "huhnwurf",        treffer: "huhntreffer" },
-    /* FASSUNG 637 — XANDER (Funk 113): „Bierkrug Und Bretzeln Die Man Nach
-       Dem Anderen Schießen Kann Und Typisch Deutsche Sachen Bratwurst Und
-       Sauerkraut Einmal Zum Essen Und Einmal Zum Werfen Mit Entsprechenden
-       Geräuschen". Und (25.09.): „Spätzle-Kanone … Sauerkraut … runterrutschen
-       und dann ist seine Sicht ein bisschen beeinträchtigt".
-       Bratwurst und Sauerkraut sind Vorräte (vorrat: true): jeder Wurf
-       verbraucht eins, man kann sie auch essen. */
-    brezel:       { name: "Brezel",          schaden: 5,  preis: 20,  flug: 640, ton: "swoosh",          treffer: "brezelknack" },
-    bierkrug:     { name: "Bierkrug",        schaden: 11, preis: 45,  flug: 720, ton: "swoosh",          treffer: "krugklirr" },
-    spaetzle:     { name: "Spätzle-Kanone",  schaden: 14, preis: 90,  flug: 480, ton: "spaetzlesalve",   treffer: "platsch" },
-    bratwurst:    { name: "Bratwurst",       schaden: 9,  preis: 0,   flug: 660, ton: "swoosh",          treffer: "wurstklatsch", vorrat: true },
-    sauerkraut:   { name: "Sauerkraut",      schaden: 4,  preis: 0,   flug: 680, ton: "swoosh",          treffer: "krautmatsch",  vorrat: true }
+    huehnerwerfer:{ name: "Hühnerwerfer",    schaden: 10, preis: 55,  flug: 760, ton: "huhnwurf",        treffer: "huhntreffer" }
   };
-  var WAFFEN_REIHE = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "brezel", "armbrust", "huehnerwerfer", "bierkrug", "tomahawk", "spaetzle", "zielfernrohr", "bazooka"];
-  var VORRAT_WAFFEN = ["bratwurst", "sauerkraut"];
-  function vorrat(ich, ding) { return Math.max(0, Number(((ich || {}).vorraete || {})[ding]) || 0); }
+  var WAFFEN_REIHE = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "armbrust", "huehnerwerfer", "tomahawk", "zielfernrohr", "bazooka"];
   var LADEN = [
     { ding: "pflaster",    name: "Pflaster",        preis: 15,  was: "repariert, wenn du kaputt bist (dann 40 LP), sonst +25 LP" },
     { ding: "trank",       name: "Heiltrank",       preis: 30,  was: "+60 Lebenspunkte" },
@@ -60,9 +46,7 @@
     { ding: "mauer_holz",  name: "Mauer aus Holz",  preis: 20,  was: "bleibt am Platz, hält 40 Schaden" },
     { ding: "mauer_stein", name: "Mauer aus Stein", preis: 45,  was: "bleibt am Platz, hält 90 Schaden" },
     { ding: "mauer_stahl", name: "Mauer aus Stahl", preis: 80,  was: "bleibt am Platz, hält 160 Schaden" },
-    { ding: "wischer",     name: "Scheibenwischer", preis: 25,  was: "wischt 3× automatisch Dreck und Sauerkraut weg" },
-    { ding: "bratwurst_3", name: "3 Bratwürste",    preis: 15,  was: "essen: +15 LP · werfen: 9 Schaden, klatscht" },
-    { ding: "sauerkraut_3",name: "3× Sauerkraut",   preis: 12,  was: "essen: +10 LP und +10 Mana · werfen: rutscht beim anderen übers Bild und nimmt ihm kurz die Sicht" },
+    { ding: "wischer",     name: "Scheibenwischer", preis: 25,  was: "wischt 3× automatisch Dreck weg" },
     /* FUNK 109/110 — Gegenwehr jetzt ANTEILIG am Angriff (vorher immer
        6 bzw. 4), und alles nutzt sich ab („dass man das nicht ewig hat
        aber … schon eine ganze Weile"). Gerechnet in spiel_treffer. */
@@ -528,9 +512,6 @@
       if (n.sorte === "pflaster") { try { if (B().pflaster) B().pflaster(n.zielChat || n.von); } catch (e) {} }
     } else if (n.ereignis === "falle") {
       falleZeigen(n.zielChat, n.sorte, n.schaden);
-    } else if (n.ereignis === "essen") {
-      ton("mampf", 0.4);
-      zahlZeigen(n.von, n.plus, n.sorte === "bratwurst" ? "Bratwurst" : "Sauerkraut");
     } else if (n.ereignis === "daemon") {
       ton("gong", 0.45);
       zahlZeigen(n.von, null, "dämonisch");
@@ -644,18 +625,13 @@
         if (erg.ich) { S.stand[erg.ich.id] = erg.ich; if (S.ich) { S.ich.lp = erg.ich.lp; S.ich.kaputt = erg.ich.kaputt; } }
         var n = { ereignis: "treffer", zielChat: p.id, schaden: erg.schaden, abgewehrt: erg.abgewehrt,
                   zone: erg.zone, kaputt: erg.kaputt, gegenwehr: erg.gegenwehr,
-                  gegen_geschuetz: erg.gegen_geschuetz || 0, gegen_tier: erg.gegen_tier || 0, tier: erg.tier || "", waffe: waffe,
+                  gegen_geschuetz: erg.gegen_geschuetz || 0, gegen_tier: erg.gegen_tier || 0, tier: erg.tier || "",
                   ziel_stand: erg.ziel, ich_stand: erg.ich };
         senden(n);
         n.von = ichChat;
         trefferZeigen(p.id, n);
         gegenwehrZeigen(p.id, ichChat, n);
         if (erg.lohn > 0) hinweis("🪙 +" + erg.lohn + " Punkte fürs Treffen" + (erg.kaputt ? " – " + (p.name || "") + " ist kaputt!" : ""));
-        if (WAFFEN[waffe] && WAFFEN[waffe].vorrat && S.ich) {
-          var vr = Object.assign({}, S.ich.vorraete || {}); vr[waffe] = Math.max(0, (Number(vr[waffe]) || 0) - 1); S.ich.vorraete = vr;
-          if (!vr[waffe] && S.waffe === waffe) { S.waffe = "kartoffel"; hinweis("Das war die letzte " + WAFFEN[waffe].name + " – Kartoffel ist angelegt."); }
-          schnellZeichnen();
-        }
         if (erg.kaputt && S.duell && S.duell.gegnerChat === p.id) { hinweis("🏆 Duell gewonnen!"); S.duell = null; }
         abrufen(true);
       }).catch(function (e) { hinweis("Treffer ging nicht: " + (e && e.message ? e.message : e)); });
@@ -682,20 +658,6 @@
       + '<path d="M6.8 -2.6 C7.6 -1.6 7.4 -.4 6.6 .2" fill="none" stroke="#e23b2e" stroke-width="1.4" stroke-linecap="round"/>'
       + '<path d="M-6 0 C-3 -3 1 -2 2 1 C-1 3 -4 3 -6 0 Z" fill="#efe6d2" stroke="#9c8f78" stroke-width=".8"/>'
       + '<path d="M-3 8 L-4 11 M-3 11 L-5 11 M1 8 L1 11 M0 11 L2 11" stroke="#f4b02a" stroke-width="1" stroke-linecap="round"/></svg>';
-    if (waffe === "brezel") return '<svg viewBox="-9 -8 18 16"><path d="M0 5.5 C-3 7 -8 5 -7.6 0 C-7.2 -4.6 -2.6 -6.2 0 -3 C2.6 -6.2 7.2 -4.6 7.6 0 C8 5 3 7 0 5.5 Z M0 5.5 L-2.4 -.4 M0 5.5 L2.4 -.4" fill="none" stroke="#8a4b1c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
-      + '<path d="M0 5.5 C-3 7 -8 5 -7.6 0 C-7.2 -4.6 -2.6 -6.2 0 -3 C2.6 -6.2 7.2 -4.6 7.6 0 C8 5 3 7 0 5.5" fill="none" stroke="#c07a36" stroke-width="1.4" stroke-linecap="round"/>'
-      + '<g fill="#fff"><circle cx="-5" cy="-2" r=".5"/><circle cx="4.6" cy="-2.6" r=".5"/><circle cx="-1" cy="4.6" r=".45"/><circle cx="6" cy="2" r=".45"/></g></svg>';
-    if (waffe === "bierkrug") return '<svg viewBox="-9 -10 18 20"><path d="M5 -3 C9 -3 9 5 5 5" fill="none" stroke="#b9c4cc" stroke-width="1.8"/>'
-      + '<rect x="-6" y="-5" width="11" height="13" rx="1.6" fill="#f2b632" stroke="#8a6a1c" stroke-width=".9"/>'
-      + '<path d="M-3 -3 V6 M0 -3 V6 M3 -3 V6" stroke="#ffd96a" stroke-width=".8" opacity=".8"/>'
-      + '<path d="M-7 -5 C-7 -9 -3 -9.4 -1.6 -7.6 C0 -9.6 4 -9 4 -7 C6.4 -7 6.6 -4.6 5.4 -4.4 L-6.4 -4.4 C-7.4 -4.4 -7.6 -4.8 -7 -5 Z" fill="#fffaf0" stroke="#d6cdb8" stroke-width=".7"/></svg>';
-    if (waffe === "spaetzle") return '<svg viewBox="-6 -4 12 8"><path d="M-4.6 .6 C-3 -2 -1 1.8 .6 -.4 C2 -2 3.4 .6 4.6 -.8" fill="none" stroke="#f1cf55" stroke-width="2.2" stroke-linecap="round"/><path d="M-4.6 .6 C-3 -2 -1 1.8 .6 -.4" fill="none" stroke="#fff3b8" stroke-width=".7" stroke-linecap="round"/></svg>';
-    if (waffe === "bratwurst") return '<svg viewBox="-13 -5 26 10"><rect x="-11" y="-3.4" width="22" height="6.8" rx="3.4" fill="#b8592a" stroke="#6e2f12" stroke-width=".9"/>'
-      + '<path d="M-6 -3.2 L-4 3.2 M-1 -3.2 L1 3.2 M4 -3.2 L6 3.2" stroke="#5e2a10" stroke-width="1" opacity=".75"/>'
-      + '<path d="M-9 -1.6 H8" stroke="#e39a63" stroke-width=".9" stroke-linecap="round" opacity=".8"/></svg>';
-    if (waffe === "sauerkraut") return '<svg viewBox="-9 -8 18 16"><g fill="none" stroke="#e9dc8c" stroke-width="1.3" stroke-linecap="round">'
-      + '<path d="M-7 -2 C-4 -6 -1 2 2 -3 C4 -6 6 -2 7 -4"/><path d="M-6 2 C-3 -1 0 5 3 1 C5 -1 6 3 7 1"/><path d="M-5 5 C-2 3 1 7 4 4"/><path d="M-4 -5 C-1 -7 2 -4 4 -6"/></g>'
-      + '<g fill="none" stroke="#c9b75e" stroke-width=".8" stroke-linecap="round"><path d="M-6 0 C-2 -3 1 3 5 -1"/><path d="M-3 3 C0 1 2 5 5 3"/></g></svg>';
     return "";
   }
   function mittelpunkt(chatId) {
@@ -743,37 +705,14 @@
       einschlag(zx, zy, waffe, w.flug);
       return w.flug;
     }
-    if (waffe === "spaetzle") {
-      /* FASSUNG 637 — die Spätzle-Kanone schießt eine Salve: fünf Spätzle
-         kurz nacheinander, leicht gestreut (Funk 117: „Salven"). */
-      for (var sn = 0; sn < 5; sn++) (function (sn) {
-        setTimeout(function () {
-          var sp = document.createElement("div");
-          sp.className = "sp-geschoss sp-g-spaetzle";
-          sp.innerHTML = geschossSvg("spaetzle");
-          document.body.appendChild(sp);
-          var sx = zx + (sn - 2) * z.r * 0.12, sy = zy + ((sn * 37) % 5 - 2) * z.r * 0.08;
-          try {
-            sp.animate([
-              { transform: "translate(" + a.x + "px," + a.y + "px) translate(-50%,-50%) rotate(" + winkel + "deg)" },
-              { transform: "translate(" + sx + "px," + sy + "px) translate(-50%,-50%) rotate(" + (winkel + 200) + "deg)" }
-            ], { duration: w.flug, easing: "linear", fill: "forwards" });
-          } catch (e) {}
-          setTimeout(function () { sp.remove(); }, w.flug + 30);
-        }, sn * 70);
-      })(sn);
-      einschlag(zx, zy, waffe, w.flug + 280);
-      return w.flug + 280;
-    }
     var g = document.createElement("div");
     g.className = "sp-geschoss sp-g-" + waffe;
     g.innerHTML = geschossSvg(waffe);
     document.body.appendChild(g);
-    var bogen = waffe === "zwille" || waffe === "tomahawk" || waffe === "eierwerfer" || waffe === "kartoffel" || waffe === "brezel" ? -40
-      : waffe === "huehnerwerfer" || waffe === "bierkrug" || waffe === "sauerkraut" ? -70 : waffe === "bratwurst" ? -55 : waffe === "bogen" ? -24 : 0;
+    var bogen = waffe === "zwille" || waffe === "tomahawk" || waffe === "eierwerfer" || waffe === "kartoffel" ? -40
+      : waffe === "huehnerwerfer" ? -70 : waffe === "bogen" ? -24 : 0;
     var mx = (a.x + zx) / 2, my = (a.y + zy) / 2 + bogen;
-    var drehung = waffe === "tomahawk" ? 900 : waffe === "huehnerwerfer" || waffe === "bierkrug" ? 540 : waffe === "brezel" ? 720
-      : waffe === "eierwerfer" || waffe === "kartoffel" || waffe === "bratwurst" ? 360 : waffe === "sauerkraut" ? 180 : 0;
+    var drehung = waffe === "tomahawk" ? 900 : waffe === "huehnerwerfer" ? 540 : waffe === "eierwerfer" || waffe === "kartoffel" ? 360 : 0;
     try {
       g.animate([
         { transform: "translate(" + a.x + "px," + a.y + "px) translate(-50%,-50%) rotate(" + winkel + "deg)" },
@@ -798,82 +737,6 @@
   }
 
   /* ---------------------------------------------------------------
-     FASSUNG 637 — SAUERKRAUT RUTSCHT, BRATWURST WIRD GEGESSEN
-     ---------------------------------------------------------------
-     XANDER: „Sauerkraut und dann soll das richtig eklig … runterrutschen
-     und dann ist seine Sicht ein bisschen beeinträchtigt".
-     · Alle sehen: das Kraut klatscht aufs Bild, rutscht langsam nach
-       unten und bleibt am unteren Rand hängen, bis es nach 20 s abfällt.
-     · Wer getroffen ist, sieht auf dem EIGENEN Gerät Krautfäden über der
-       Bühne herunterlaufen. Wegwischen: zweimal darauf tippen — oder der
-       gekaufte Scheibenwischer macht es von selbst.
-     --------------------------------------------------------------- */
-  function krautSvg(dichte) {
-    var s = '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g fill="none" stroke-linecap="round">';
-    for (var i = 0; i < dichte; i++) {
-      var x = 6 + (i * 53) % 88, y = 4 + (i * 29) % 40, l = 10 + (i * 17) % 16;
-      s += '<path d="M' + x + " " + y + " c" + (i % 2 ? 4 : -4) + " " + (l / 3) + " " + (i % 2 ? -3 : 3) + " " + (l / 1.6) + " " + (i % 3 - 1) * 2 + " " + l + '" stroke="' + (i % 3 ? "#e9dc8c" : "#cdbb62") + '" stroke-width="' + (1.4 + (i % 3) * 0.5) + '"/>';
-    }
-    return s + "</g></svg>";
-  }
-  function krautZeigen(chatId) {
-    var el = platzElVon(chatId), kreis = el && el.querySelector(".lc-kreis");
-    if (kreis) {
-      var alt = el.querySelector(".sp-kraut"); if (alt) alt.remove();
-      var k = document.createElement("span");
-      k.className = "sp-kraut";
-      k.style.left = kreis.offsetLeft + "px"; k.style.top = kreis.offsetTop + "px";
-      k.style.width = kreis.offsetWidth + "px"; k.style.height = kreis.offsetHeight + "px";
-      k.innerHTML = '<span class="sp-kraut-rutsch">' + krautSvg(9) + "</span>";
-      el.appendChild(k);
-      setTimeout(function () { k.classList.add("sp-kraut-ab"); }, 20000);
-      setTimeout(function () { k.remove(); }, 21200);
-    }
-    if (chatId !== meineChatId()) return;
-    /* Mein eigener Blick: Fäden über der Bühne. */
-    var buehne = document.getElementById("lcPlaetze");
-    if (!buehne) return;
-    var r = buehne.getBoundingClientRect();
-    var alt2 = document.querySelector(".sp-kraut-sicht"); if (alt2) alt2.remove();
-    var sicht = document.createElement("div");
-    sicht.className = "sp-kraut-sicht";
-    sicht.style.left = r.left + "px"; sicht.style.top = r.top + "px";
-    sicht.style.width = r.width + "px"; sicht.style.height = r.height + "px";
-    sicht.innerHTML = '<div class="sp-kraut-faeden">' + krautSvg(22) + '</div><span class="sp-kraut-tipp">zweimal tippen zum Wegwischen</span>';
-    var wisch = 0;
-    var weg = function () { sicht.classList.add("sp-kraut-weg"); setTimeout(function () { sicht.remove(); }, 450); };
-    sicht.addEventListener("click", function () {
-      wisch++;
-      ton("wischer", 0.4);
-      sicht.classList.toggle("sp-kraut-halb", wisch === 1);
-      if (wisch >= 2) weg();
-    });
-    document.body.appendChild(sicht);
-    setTimeout(weg, 15000);
-    /* Der Scheibenwischer (gekauft) wischt von selbst. */
-    if (S.ich && S.ich.wischer > 0) {
-      setTimeout(function () {
-        if (!sicht.isConnected) return;
-        S.ich.wischer -= 1;
-        rpc("spiel_wischer", {}).then(function () { abrufen(true); }).catch(function () {});
-        try { if (B().wischer) B().wischer(platzElVon(chatId)); } catch (e) {}
-        ton("wischer", 0.45);
-        weg();
-      }, 1400);
-    }
-  }
-  function essen(ding) {
-    rpc("spiel_essen", { p_ding: ding }).then(function (r) {
-      if (!r || !r.ok) { hinweis((ding === "bratwurst" ? "🌭 " : "🥬 ") + ((r && r.grund) || "geht nicht")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      ton("mampf", 0.5);
-      zahlZeigen(meineChatId(), r.geheilt, ding === "bratwurst" ? "Bratwurst" : "Sauerkraut");
-      senden({ ereignis: "essen", sorte: ding, plus: r.geheilt, stand: oeffentlich(r) });
-      panelAuffrischen(); zeichnen(); schnellZeichnen();
-    }).catch(function (e) { hinweis("Essen ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-
-  /* ---------------------------------------------------------------
      ZAHLEN AM BILD — rot bei Treffern, grün bei Heilung (Funk 84)
      Sie steigen ÜBER dem Kreis auf: die Gesichtsmitte bleibt frei.
      --------------------------------------------------------------- */
@@ -891,7 +754,6 @@
   }
   function trefferZeigen(zielChat, n) {
     if (n.zone === "daneben") { zahlZeigen(zielChat, null, "daneben"); return; }
-    if (n.waffe === "sauerkraut" && n.schaden > 0) krautZeigen(zielChat);
     if (n.schaden > 0) {
       zahlZeigen(zielChat, -n.schaden, ZONEN[n.zone] || "");
       var el = platzElVon(zielChat);
@@ -1126,15 +988,8 @@
       teile.push('<button type="button" class="sp-s-waffe' + (S.waffe === w ? " sp-an" : "") + '" data-s="waffe" data-w="' + w + '" title="'
         + esc(WAFFEN[w].name) + " · Schaden " + WAFFEN[w].schaden + '">' + geschossSvg(w, S.laserfarbe) + "</button>");
     });
-    VORRAT_WAFFEN.forEach(function (w) {
-      var n = vorrat(ich, w);
-      if (!n) return;
-      teile.push('<button type="button" class="sp-s-waffe sp-s-vorrat' + (S.waffe === w ? " sp-an" : "") + '" data-s="waffe" data-w="' + w + '" title="'
-        + WAFFEN[w].name + " werfen · Schaden " + WAFFEN[w].schaden + " · noch " + n + '">' + geschossSvg(w) + "<small>" + n + "</small></button>");
-    });
     var voll = !ich.kaputt && ich.lp >= ich.lp_max;
-    var zuEssen = vorrat(ich, "bratwurst") + vorrat(ich, "sauerkraut");
-    teile.push('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke && !zuEssen) ? " disabled" : "")
+    teile.push('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke) ? " disabled" : "")
       + ' title="Heilen – nimmt, was gerade passt, und verschwendet nichts">'
       + '<svg viewBox="0 0 20 20"><path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#e2403a"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>'
       + '<small>' + (ich.pflaster || 0) + "/" + (ich.traenke || 0) + "</small></button>");
@@ -1207,10 +1062,6 @@
     var ich = S.ich || {};
     var fehlt = (ich.lp_max || 100) - (ich.lp || 0);
     if (!ich.kaputt && fehlt <= 0) { hinweis("💚 Du bist voll – nichts verschwendet."); return; }
-    /* FASSUNG 637 — wenig verloren: erst essen (Bratwurst +15,
-       Sauerkraut +10), das spart Pflaster und Tränke. */
-    if (!ich.kaputt && fehlt <= 15 && vorrat(ich, "bratwurst") > 0) { essen("bratwurst"); return; }
-    if (!ich.kaputt && fehlt <= 10 && vorrat(ich, "sauerkraut") > 0) { essen("sauerkraut"); return; }
     var art = ich.kaputt ? (ich.pflaster > 0 ? "pflaster" : "trank")
       : (fehlt >= 45 && ich.traenke > 0) || !(ich.pflaster > 0) ? "trank" : "pflaster";
     if (art === "trank" && !(ich.traenke > 0)) art = "pflaster";
@@ -1660,9 +1511,7 @@
       return '<p class="sp-text">Punkte gibt es <b>nur für Deutsch</b>. Damit kaufst du Pflaster, Schutz und Waffen. Wer mehr Deutsch lernt, wird stärker (mehr LP, mehr Rüstung).</p>'
         + '<div class="sp-knoepfe"><button type="button" data-tab="deutsch">📚 Aufgabe lösen</button>'
         + '<button type="button" data-tu="heilen" data-art="pflaster"' + (ich.pflaster > 0 ? "" : " disabled") + '>🩹 Pflaster (' + ich.pflaster + ')</button>'
-        + '<button type="button" data-tu="heilen" data-art="trank"' + (ich.traenke > 0 ? "" : " disabled") + '>🧪 Heiltrank (' + ich.traenke + ')</button>'
-        + '<button type="button" data-tu="essen" data-d="bratwurst"' + (vorrat(ich, "bratwurst") ? "" : " disabled") + '>🌭 Bratwurst essen (' + vorrat(ich, "bratwurst") + ')</button>'
-        + '<button type="button" data-tu="essen" data-d="sauerkraut"' + (vorrat(ich, "sauerkraut") ? "" : " disabled") + '>🥬 Sauerkraut essen (' + vorrat(ich, "sauerkraut") + ')</button></div>'
+        + '<button type="button" data-tu="heilen" data-art="trank"' + (ich.traenke > 0 ? "" : " disabled") + '>🧪 Heiltrank (' + ich.traenke + ')</button></div>'
         + '<p class="sp-klein">Kampf: Waffe anlegen, dann auf ein Gesicht tippen. Kopf ×2, Herz ×1,6, Körper ×1, Rand ×0,5. Wer vor dem Einschlag den Platz wechselt, weicht aus. Kaputt (0 LP) = kein Reisen bis zum Pflaster. Tafel offen = Waffenstillstand.</p>'
         + '<p class="sp-klein">Mana (blauer Balken) füllst du nur mit Deutsch: +6 je richtiger Aufgabe. Zaubertränke kaufst du im Laden; Trinken kostet 30 Mana und wirkt 60 s. Solange eine Waffe angelegt ist, steht oben die Leiste „Kampfmodus".</p>';
     }
@@ -1681,7 +1530,6 @@
         + "<p><b>Tagesgeschenk.</b> Einmal am Tag holt es sich von selbst ab: Punkte, Bratwurst, jeden dritten Tag ein Pflaster. Sieben Tage am Stück geben am meisten. Wer auf der Seite übt, bekommt dafür ebenfalls Spielpunkte (5 Seitenpunkte = 1 Punkt, bis 40 am Tag).</p>"
         + "<p><b>Schutz.</b> Schild (reist mit), Mauer (bleibt am Platz), Geschütz und Monster schlagen zurück – anteilig, nie mehr als 4/5 dessen, was der Angreifer anrichtet. Mana-Tränke kosten 30 Mana. Minen und Falltüren legst du auf einen Platz.</p>"
         + "<p><b>Üben.</b> „Sparring“ in der Leiste stellt eine Strohpuppe auf einen freien Platz – nur bei dir, niemand wird gestört. „Er schießt zurück“ macht ein Übungsduell daraus. Zählt nicht.</p>"
-        + "<p><b>Deutsche Wurfsachen.</b> Brezel, Bierkrug und Spätzle-Kanone (eine Salve aus fünf Spätzle) kauft man einmal. Bratwurst und Sauerkraut sind Vorräte: werfen oder essen (Bratwurst +15 LP, Sauerkraut +10 LP und +10 Mana). Sauerkraut rutscht beim Getroffenen übers Bild und nimmt ihm kurz die Sicht – zweimal tippen wischt es weg, der Scheibenwischer macht es von selbst. Das Herz isst zuerst, wenn nur wenig fehlt.</p>"
         + "<p><b>Waffenstillstand.</b> Solange die Tafel offen ist, trifft niemand.</p></div>";
     }
     if (reiter === "deutsch") {
@@ -1747,17 +1595,7 @@
       var farben = '<div class="sp-chips">Laserfarbe: ' + LASERFARBEN.map(function (f) {
         return '<button type="button" data-tu="farbe" data-f="' + f + '" class="sp-farbe' + (S.laserfarbe === f ? " sp-an" : "") + '" style="background:' + f + '" aria-label="Farbe"></button>';
       }).join("") + "</div>";
-      var vorr = VORRAT_WAFFEN.map(function (k) {
-        var n = vorrat(ich, k);
-        return '<div class="sp-zeile"><span class="sp-bild">' + geschossSvg(k) + "</span><span><b>" + WAFFEN[k].name + "</b> · noch " + n + "<br><small>Schaden " + WAFFEN[k].schaden
-          + (k === "sauerkraut" ? ", rutscht beim anderen übers Bild" : "") + " · jeder Wurf verbraucht eins</small></span>"
-          + '<span class="sp-knopfgruppe">'
-          + (n ? (S.waffe === k ? '<button type="button" data-tu="ablegen">Ablegen</button>' : '<button type="button" data-tu="anlegen" data-w="' + k + '">Werfen</button>')
-               + '<button type="button" data-tu="essen" data-d="' + k + '">Essen</button>' : "")
-          + '<button type="button" data-tu="kaufen" data-d="' + k + '_3"' + (ich.punkte >= (k === "bratwurst" ? 15 : 12) ? "" : " disabled") + ">3 für " + (k === "bratwurst" ? 15 : 12) + "</button>"
-          + "</span></div>";
-      }).join("");
-      return liste + '<p class="sp-klein"><b>Vorräte</b> – zum Werfen oder Essen (Tagesgeschenk, Seitenübungen, Laden):</p>' + vorr + farben;
+      return liste + farben;
     }
     if (reiter === "schutz") {
       return ruestungZeilen(ich) + LADEN.map(function (d) {
@@ -1846,7 +1684,6 @@
     if (tu === "mission") return missionHolen();
     if (tu === "trinken") return trinken(k.dataset.t);
     if (tu === "trainieren") return trainieren(k.dataset.k);
-    if (tu === "essen") return essen(k.dataset.d);
     if (tu === "kategorie") { S.kategorie = k.dataset.k || null; aufgabeHolen(false); return; }
   }
 
@@ -2023,7 +1860,6 @@
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
       gegenwehrZeigen: gegenwehrZeigen, falleZeigen: falleZeigen, tippAufPlatz: tippAufPlatz, ringSvg: ringSvg,
       schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
-      krautZeigen: krautZeigen, essen: essen, geschossSvg: geschossSvg,
       ruestungZeilen: ruestungZeilen, menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {
         var d = Math.hypot(dx, dy);
