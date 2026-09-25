@@ -978,21 +978,3 @@ body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: bl
 @keyframes spFundHuepf { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9%); } }
 @keyframes spFundFunkeln { from { opacity: .25; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .sp-fundsack svg, .sp-fundsack .sp-fundsack-funkeln, .sp-pokal-feier { animation-duration: .01s; } }
-
-/* =========================================================
-   FASSUNG 662 — Dorf, Titan-/Diamantmauer, Wassergraben, Turm auf freiem Platz
-   ========================================================= */
-.sp-graben { position: absolute; pointer-events: none; z-index: 4; }
-.sp-graben svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.sp-graben-welle { animation: spGrabenWelle 2.6s ease-in-out infinite alternate; }
-@keyframes spGrabenWelle { from { transform: translateX(-2%); } to { transform: translateX(2%); } }
-.sp-diamant-funkeln { animation: spFundFunkeln 1.3s ease-in-out infinite alternate; }
-.sp-mauer-diamant svg { filter: drop-shadow(0 0 2px rgba(155, 231, 255, .9)); }
-/* Ein Turm, der auf einem freien Platz steht, sitzt in dessen Mitte. */
-/* Das Turm-Bild sitzt sonst links unten am Bild (um 18 % / 82 %). Auf dem
-   freien Platz rückt es in die Mitte und wird größer. */
-.sp-geschuetz.sp-vorposten { transform: translate(32%, -30%) scale(1.8); transform-origin: 18% 82%; z-index: 7; }
-.sp-dorf > button { flex: 0 0 auto; font-size: 11.5px; padding: 4px 7px; min-height: 30px; white-space: nowrap; }
-.sp-dorf-kaputt > i { filter: grayscale(.9); opacity: .6; }
-.sp-dorf-kaputt b::after { content: " · kaputt"; color: #ff8a80; font-weight: 700; }
-@media (prefers-reduced-motion: reduce) { .sp-graben-welle, .sp-diamant-funkeln { animation: none; } }

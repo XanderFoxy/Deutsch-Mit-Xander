@@ -66,13 +66,6 @@
     { ding: "mauer_holz",  name: "Mauer aus Holz",  preis: 20,  was: "gehört dir, bis sie zerstört ist – zieht beim Platzwechsel mit (8 s Aufbau), hält 40 Schaden" },
     { ding: "mauer_stein", name: "Mauer aus Stein", preis: 45,  was: "gehört dir, bis sie zerstört ist – zieht beim Platzwechsel mit (8 s Aufbau), hält 90 Schaden" },
     { ding: "mauer_stahl", name: "Mauer aus Stahl", preis: 80,  was: "gehört dir, bis sie zerstört ist – zieht beim Platzwechsel mit (8 s Aufbau), hält 160 Schaden" },
-    /* FASSUNG 662 — XANDER: „kann mir noch ne Titanium Mauer machen irgendwie
-       oder Diamanten". Stärker als Stahl, dafür erst ab einem Level. */
-    { ding: "mauer_titan", name: "Titanmauer",      preis: 130, ab: 8,  was: "ab Level 8 · hält 260 Schaden, zieht mit dir um" },
-    { ding: "mauer_diamant", name: "Diamantmauer",  preis: 200, ab: 12, was: "ab Level 12 · hält 400 Schaden, glitzert, zieht mit dir um" },
-    /* FASSUNG 662 — der Wassergraben: ein Erdbeben läuft sich darin tot –
-       Mauer und Dorf bleiben heil. Hält 5 Beben. */
-    { ding: "graben",      name: "Wassergraben",    preis: 60,  was: "fängt 5 Erdbeben ab – deine Mauer und dein Dorf bleiben heil" },
     { ding: "wischer",     name: "Scheibenwischer", preis: 25,  was: "wischt 3× automatisch Dreck und Sauerkraut weg" },
     { ding: "bratwurst_3", name: "3 Bratwürste",    preis: 15,  was: "essen: +15 LP · werfen: 9 Schaden, klatscht" },
     { ding: "sauerkraut_3",name: "3× Sauerkraut",   preis: 12,  was: "essen: +10 LP und +10 Mana · werfen: rutscht beim anderen übers Bild und nimmt ihm kurz die Sicht" },
@@ -474,7 +467,7 @@
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
      "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
      "level", "skills", "helm", "brust", "ladung", "daemon",
-     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -920,13 +913,6 @@
   function tippAufPlatz(knopf, p, ev) {
     /* FASSUNG 661 — ein Fundstück auf dem Platz: aufheben statt hinsetzen. */
     if (knopf && knopf.querySelector && knopf.querySelector(".sp-fundsack") && spielSichtbar()) { fundHeben(knopf); return true; }
-    if (S.turmSetzen && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
-      /* Ein besetzter Platz bricht nicht ab – man tippt einfach noch einmal auf einen freien. */
-      if (p && !p.leer) { hinweis("🗼 Der Platz ist besetzt – tippe auf einen freien (gestrichelten)."); return true; }
-      S.turmSetzen = false;
-      turmPlatz(Number(knopf.dataset.lcPlatz));
-      return true;
-    }
     if (p && p.ich && spielSichtbar() && !S.legen && !S.graben && !(S.zauber && ZAUBER[S.zauber].freund)) { if (eigenTipp()) return true; }
     /* FUNK 111 — nach „Mine legen" / „Falltür legen" gilt der nächste
        Tipp dem Platz, auf den sie soll. */
@@ -1408,13 +1394,10 @@
       if (r.ich_voll) { S.ich = r.ich_voll; S.stand[r.ich_voll.id] = oeffentlich(r.ich_voll); }
       var n = { ereignis: "zauber", sorte: art, zielChat: p.id, schaden: r.schaden || 0, abgewehrt: r.abgewehrt || 0, heil: r.heil || 0, heil_ich: r.heil_ich || 0,
                 mauer_riss: r.mauer_riss || 0, dauer: r.dauer || z.dauer, kaputt: Boolean(r.kaputt), name: (S.ich || {}).name || "",
-                graben: Boolean(r.graben), dorf_riss: r.dorf_riss || "",
                 ziel_stand: r.ziel, stand: r.ich_voll ? oeffentlich(r.ich_voll) : null };
       senden(n);
       n.von = meineChatId();
       zauberZeigen(n);
-      if (r.graben) hinweis("🌊 " + (p.name || "Dein Ziel") + " hat einen Wassergraben – das Beben läuft sich darin tot.");
-      else if (r.dorf_riss) hinweis("🏚️ Das Beben hat bei " + (p.name || "deinem Ziel") + " die " + (DORF[r.dorf_riss] || {}).name + " beschädigt.");
       if (r.rang_neu) { var rg = zauberRang(S.ich); setTimeout(function () { ton("jubel", 0.5); }, 500); hinweis("🎓 Aufgestiegen: " + rg.name + "! Zauber kosten weniger Mana und wirken stärker."); }
       else if (r.fair < 1) hinweis("⚖️ Fair bleiben: " + (p.name || "Dein Ziel") + " ist mindestens 5 Level kleiner – halber Schaden, keine Punkte.");
       else if (r.lohn > 0) hinweis("✨ " + z.name + " sitzt – +" + r.lohn + " Punkte" + (r.kaputt ? " – " + (p.name || "") + " ist kaputt!" : ""));
@@ -1424,11 +1407,6 @@
   function zauberZeigen(n) {
     var art = n.sorte, z = ZAUBER[art], zc = n.zielChat;
     if (!z || !zc) return;
-    /* FASSUNG 662 — das eigene Dorf wurde getroffen (oder der Graben hat es gerettet). */
-    if (zc === meineChatId() && n.von !== meineChatId()) {
-      if (n.graben) setTimeout(function () { hinweis("🌊 Dein Wassergraben hat das Beben geschluckt – Mauer und Dorf sind heil."); }, 1200);
-      else if (n.dorf_riss && DORF[n.dorf_riss]) setTimeout(function () { hinweis("🏚️ Deine " + DORF[n.dorf_riss].name + " hat einen Riss – Mehr → Mein Dorf → Reparieren (1 Erz)."); }, 1200);
-    }
     var sid = spielIdVon(zc), el = platzElVon(zc), m = mittelpunkt(zc), jetzt = Date.now();
     var dauer = Math.max(1, Math.min(30, Number(n.dauer) || z.dauer)) * 1000;
     ton(z.ton, art === "nebel" ? 0.4 : 0.45);
@@ -1631,10 +1609,7 @@
     /* FASSUNG 652 — XANDER: „die Kanone feuert nicht … das ist nicht
        animiert". Der Turm dreht sich zum Angreifer, ruckt bei jedem
        Schuss zurück, und an der Mündung blitzt es. */
-    var turm = document.querySelector('#lcPlaetze .sp-geschuetz[data-besitzer="' + String(von).replace(/"/g, "") + '"]')
-      || (platzElVon(von) || document.createElement("i")).querySelector(".sp-geschuetz");
-    /* FASSUNG 662 — steht der Turm auf einem freien Platz, schießt er von dort. */
-    if (turm && turm.dataset.besitzer) { var tr0 = turm.getBoundingClientRect(); sx = tr0.left + tr0.width * 0.2; sy = tr0.top + tr0.height * 0.8; }
+    var turm = (platzElVon(von) || document.createElement("i")).querySelector(".sp-geschuetz");
     if (turm) {
       /* Das Rohr dreht sich zum Angreifer; die Kugeln fliegen aus seiner Spitze. */
       var dreh = turm.querySelector(".sp-rohr"), spitze = turm.querySelector(".sp-rohr-spitze");
@@ -2500,8 +2475,6 @@
         t.push('<button type="button" data-s="trinken" data-t="' + tr[0] + '"' + (rest || !n ? " disabled" : "") + '><span class="sp-trank sp-trank-' + tr[0] + '"></span>' + tr[1] + " <small>" + (rest ? rest + " s" : n) + "</small></button>");
       });
       inhaltM = '<div class="sp-sm-liste">' + t.join("") + "</div>";
-    } else if (r === "dorf") {
-      inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + dorfHtml(ich);
     } else if (r === "trophaeen") {
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + trophaeenHtml();
     } else if (r === "deutsch") {
@@ -2549,8 +2522,6 @@
         /* FASSUNG 655 — XANDER: „Warum hab ich da so viele Erdbeben und so
            viele Orkan und so viel Nebel". Die Zauber stehen nur noch im
            Zauberrad, nicht zusätzlich hier als Liste. */
-        + '<button type="button" data-s="dorf"><span class="sp-sm-zbild">' + dorfSvg("baeckerei", 1) + "</span>Mein Dorf <small>"
-          + Object.keys(ich.dorf || {}).length + " / 3</small></button>"
         + '<button type="button" data-s="trophaeen"><span class="sp-sm-zbild">' + pokalSvg(true) + "</span>Trophäen <small>"
           + (S.troph ? S.troph.liste.filter(function (t) { return t.hat; }).length + " / " + S.troph.liste.length : "") + "</small></button>"
         + '<button type="button" data-s="zauberrad"><span class="sp-sm-zbild">' + zauberSvg("nebel") + "</span>Zauberrad öffnen</button>"
@@ -2598,28 +2569,6 @@
       hinweis(k.dataset.k === "level"
         ? (zNeu.level ? "⭐ Dein Level sehen jetzt alle – auch wer nicht mitspielt." : "Dein Level sieht jetzt nur, wer mitspielt.")
         : (zNeu.tiere ? "🐾 Deine Tiere sind jetzt immer dabei – friedlich, für alle." : "Deine Tiere zeigen sich nur noch im Spiel."));
-    } else if (s === "dorf") {
-      S.schnellReiter = "dorf";
-    } else if (s === "bauen") {
-      rpc("spiel_bauen", { p_was: k.dataset.w }).then(function (r) {
-        if (!r || r.ok === false) { hinweis("🏗️ " + ((r && r.grund) || "Das ging nicht.")); return; }
-        S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) });
-        ton(r.gebaut === "reparatur" ? "hammerschlag" : "jubel", 0.5);
-        hinweis(r.gebaut === "reparatur" ? "🔧 Alles repariert – das Dorf arbeitet wieder." : "🏗️ " + DORF[r.gebaut].name + " steht – Stufe " + r.stufe + "!");
-        schnellZeichnen(true);
-      }).catch(function () { hinweis("🏗️ Das ging gerade nicht."); });
-    } else if (s === "ernte") {
-      rpc("spiel_dorf_abholen", {}).then(function (r) {
-        if (!r || r.ok === false) {
-          var m = r && r.sek ? " – fertig in " + Math.ceil(r.sek / 60) + " min" : "";
-          hinweis("🧺 " + ((r && r.grund) || "Das ging nicht.") + m); return;
-        }
-        S.ich = r; S.stand[r.id] = oeffentlich(r);
-        ton("geschenk", 0.5);
-        var teile = []; if (r.bratwurst) teile.push(r.bratwurst + " Bratwurst"); if (r.erz) teile.push(r.erz + " Erz"); if (r.xp) teile.push(r.xp + " Erfahrung");
-        hinweis("🧺 Ernte: " + (teile.join(", ") || "nichts – alles kaputt? Erst reparieren.") + ".");
-        schnellZeichnen(true);
-      }).catch(function () { hinweis("🧺 Das ging gerade nicht."); });
     } else if (s === "trophaeen") {
       S.schnellReiter = "trophaeen";
       trophaeenHolen();
@@ -2858,16 +2807,7 @@
          (Menü → Mehr → „Auch ohne Spiel zeigen"): die Levelzahl und die
          Tiere, friedlich, ohne Ringe, Mauer und Kampf. */
       var schau = Boolean(s && kreis && !spielSichtbar() && !uebungIch && !istPuppe(chatId) && s.zeigen && (s.zeigen.level || s.zeigen.tiere));
-      /* FASSUNG 662 — ein Turm, der auf diesem freien Platz steht. */
-      var vp = !chatId && kreis && spielSichtbar() ? vorposten(Number(el.dataset.lcPlatz)) : null;
-      if (!s || !kreis || (!spielSichtbar() && !uebungIch && !istPuppe(chatId))) {
-        platzLeeren(el, schau, Boolean(vp)); if (schau) schaufenster(el, s, kreis);
-        if (vp) {
-          schmuck(el, "sp-geschuetz", true, kreis, geschuetzSvg(vp.s.geschuetz_stufe), "sp-turm-" + Math.min(5, vp.s.geschuetz_stufe || 1) + " sp-vorposten");
-          var vpe = el.querySelector(".sp-geschuetz"); if (vpe) { vpe.dataset.besitzer = vp.chatId; vpe.title = "Turm von " + (vp.s.name || "jemandem"); }
-        }
-        return;
-      }
+      if (!s || !kreis || (!spielSichtbar() && !uebungIch && !istPuppe(chatId))) { platzLeeren(el, schau); if (schau) schaufenster(el, s, kreis); return; }
       var altSchau = el.querySelector(".sp-schau"); if (altSchau) altSchau.remove();
       /* FUNK 110 — XANDER: „überleg mal ob du Mana und die Lebensanzeige
          vielleicht unten in das Kreisrund von der Profilanzeige so bauen
@@ -2951,9 +2891,7 @@
       meineFallen().forEach(function (f) { if (f.platz === nr) falle = f.art; });
       schmuck(el, "sp-falle-marke", Boolean(falle), kreis, falle ? falleSvg(falle) : "");
       /* Das Geschütz links unten */
-      schmuck(el, "sp-geschuetz", Boolean(s.geschuetz) && !turmDraussen(s), kreis, geschuetzSvg(s.geschuetz_stufe), "sp-turm-" + Math.min(5, s.geschuetz_stufe || 1));
-      /* FASSUNG 662 — der Wassergraben liegt als blaues Band unter der Mauer. */
-      schmuck(el, "sp-graben", (s.graben || 0) > 0, kreis, grabenSvg(), "");
+      schmuck(el, "sp-geschuetz", Boolean(s.geschuetz), kreis, geschuetzSvg(s.geschuetz_stufe), "sp-turm-" + Math.min(5, s.geschuetz_stufe || 1));
       /* Kaputt: Risse und Grau */
       el.classList.toggle("sp-kaputt", Boolean(s.kaputt));
       schmuck(el, "sp-risse", Boolean(s.kaputt), kreis, risseSvg());
@@ -3050,8 +2988,8 @@
     schmuck(el, "sp-tier", boden, kreis, boden ? tierSvg(s.haustier) : "", "sp-tier-" + (s.haustier || "fellmonster") + " sp-tier-friedlich");
     schmuck(el, "sp-flugtier", luft, kreis, luft ? tierSvg(s.flugtier) : "", "sp-tier-" + (s.flugtier || "drache") + " sp-tier-friedlich");
   }
-  function platzLeeren(el, schau, turmBleibt) {
-    el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer,.sp-graben," + (schau ? "" : ".sp-tier,.sp-flugtier,.sp-schau,") + (turmBleibt ? "" : ".sp-geschuetz,") + ".sp-risse,.sp-waffenmarke" + (el.querySelector(".sp-sparring") && Number(el.dataset.lcPlatz) === S.sparring ? "" : ",.sp-sparring")).forEach(function (x) { x.remove(); });
+  function platzLeeren(el, schau) {
+    el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer," + (schau ? "" : ".sp-tier,.sp-flugtier,.sp-schau,") + ".sp-geschuetz,.sp-risse,.sp-waffenmarke" + (el.querySelector(".sp-sparring") && Number(el.dataset.lcPlatz) === S.sparring ? "" : ",.sp-sparring")).forEach(function (x) { x.remove(); });
     el.querySelectorAll(".sp-nebel,.sp-zwerg,.sp-formular,.sp-brezelbauch").forEach(function (x) { x.remove(); });
     el.classList.remove("sp-w-hexe");
     el.classList.remove("sp-kaputt", "sp-anfaenger", "sp-w-kraft", "sp-w-ziel", "sp-w-tempo", "sp-w-eisen", "sp-w-tarn", "sp-w-daemon", "sp-w-wackel");
@@ -3062,16 +3000,6 @@
     if (kreis) schmuck(el, "sp-falle-marke", Boolean(falle), kreis, falle ? falleSvg(falle) : "");
   }
   function mauerSvg(art) {
-    /* FASSUNG 662 — Titan: gebürstete blaugraue Platten mit Nieten; Diamant: Kristallblöcke, die funkeln. */
-    if (art === "titan") return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="spTitan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9c7d6"/><stop offset=".5" stop-color="#7f93a8"/><stop offset="1" stop-color="#5b6d80"/></linearGradient></defs>'
-      + '<rect x="2" y="87" width="96" height="13" rx="2" fill="url(#spTitan)" stroke="#34414f" stroke-width="1.3"/><path d="M26 87 V100 M50 87 V100 M74 87 V100" stroke="#34414f" stroke-width="1.1"/>'
-      + '<g fill="#dbe6f1"><circle cx="6" cy="90" r="1.1"/><circle cx="22" cy="90" r="1.1"/><circle cx="30" cy="90" r="1.1"/><circle cx="46" cy="90" r="1.1"/><circle cx="54" cy="90" r="1.1"/><circle cx="70" cy="90" r="1.1"/><circle cx="78" cy="90" r="1.1"/><circle cx="94" cy="90" r="1.1"/></g>'
-      + '<path d="M4 88.6 H96" stroke="#eaf2fb" stroke-width=".9" opacity=".8"/></svg>';
-    if (art === "diamant") return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g stroke="#2b6f8f" stroke-width=".9">'
-      + '<path d="M2 100 L2 90 L8 86 L20 86 L26 90 L26 100 Z" fill="#9be7ff"/><path d="M26 100 L26 90 L32 86 L44 86 L50 90 L50 100 Z" fill="#c9f3ff"/>'
-      + '<path d="M50 100 L50 90 L56 86 L68 86 L74 90 L74 100 Z" fill="#9be7ff"/><path d="M74 100 L74 90 L80 86 L92 86 L98 90 L98 100 Z" fill="#c9f3ff"/></g>'
-      + '<g stroke="#fff" stroke-width=".7" opacity=".85"><path d="M8 86 L14 100 M20 86 L14 100 M32 86 L38 100 M44 86 L38 100 M56 86 L62 100 M68 86 L62 100 M80 86 L86 100 M92 86 L86 100"/></g>'
-      + '<g class="sp-diamant-funkeln" fill="#fff"><path d="M14 88 L15 90 L17 91 L15 92 L14 94 L13 92 L11 91 L13 90 Z"/><path d="M62 88 L63 90 L65 91 L63 92 L62 94 L61 92 L59 91 L61 90 Z"/></g></svg>';
     /* FASSUNG 651 — XANDER: „die Mauer verdeckt unseren Lebensstand …
        und unser kleines Fellmonster". Die Mauer ist jetzt halb so hoch
        (88–100 statt 78–98) und liegt HINTER den Ringen und den Tieren:
@@ -3777,21 +3705,18 @@
          zurück". Die Mauer war da; jeder neue Kauf hat sie ersetzt. Jetzt
          steht oben, welche Mauer man hat, und eine bessere kostet nur den
          Unterschied (Server: halber Punkt je verbliebenem Haltepunkt). */
-      var mauerMax = { holz: 40, stein: 90, stahl: 160, titan: 260, diamant: 400 }, hatMauer = ich.mauer_lp > 0 ? ich.mauer_art || "holz" : "";
-      var mauerZeile = hatMauer ? '<div class="sp-zeile sp-mauer-besitz"><span><b>Deine Mauer: ' + ({ holz: "Holz", stein: "Stein", stahl: "Stahl", titan: "Titan", diamant: "Diamant" }[hatMauer] || hatMauer)
+      var mauerMax = { holz: 40, stein: 90, stahl: 160 }, hatMauer = ich.mauer_lp > 0 ? ich.mauer_art || "holz" : "";
+      var mauerZeile = hatMauer ? '<div class="sp-zeile sp-mauer-besitz"><span><b>Deine Mauer: ' + ({ holz: "Holz", stein: "Stein", stahl: "Stahl" }[hatMauer] || hatMauer)
         + "</b> · hält noch " + ich.mauer_lp + "/" + (mauerMax[hatMauer] || ich.mauer_lp) + "<br><small>zieht mit dir um · eine bessere wird angerechnet</small></span></div>" : "";
       return ruestungZeilen(ich) + turmZeile(ich) + mauerZeile + werkstattZeilen(ich) + '<p class="sp-klein">Tiere holst, fütterst und stärkst du im Reiter <b>Tiere</b>.</p>' + LADEN.map(function (d) {
         var preis = d.preis, gesperrt = false, zusatz = "";
-        if (d.ab && (ich.level || 1) < d.ab) { gesperrt = true; zusatz = " · erst ab Level " + d.ab; }
-        else if (d.ding === "graben" && (ich.graben || 0) >= 5) { gesperrt = true; zusatz = " · dein Graben ist voll (" + ich.graben + "/5)"; }
-        else if (d.ding === "graben" && ich.graben > 0) zusatz = " · hält noch " + ich.graben + " Beben";
-        else if (/^mauer_/.test(d.ding) && ich.mauer_lp > 0) {
+        if (/^mauer_/.test(d.ding) && ich.mauer_lp > 0) {
           var neuMax = mauerMax[d.ding.slice(6)] || 0;
           if (neuMax <= ich.mauer_lp) { gesperrt = true; zusatz = " · hast du schon (oder besser)"; }
           else { preis = Math.max(5, d.preis - Math.round(ich.mauer_lp * 0.5)); zusatz = " · deine Mauer wird angerechnet"; }
         }
         return '<div class="sp-zeile"><span><b>' + esc(d.name) + "</b><br><small>" + esc(d.was) + zusatz + "</small></span>"
-          + '<button type="button" data-tu="' + (d.legen ? "legen" : "kaufen") + '" data-d="' + d.ding + '"' + (!gesperrt && ich.punkte >= preis ? "" : " disabled") + ">" + (gesperrt ? (d.ab && (ich.level || 1) < d.ab ? "Lv " + d.ab : "hast du") : preis + " Punkte") + "</button></div>";
+          + '<button type="button" data-tu="' + (d.legen ? "legen" : "kaufen") + '" data-d="' + d.ding + '"' + (!gesperrt && ich.punkte >= preis ? "" : " disabled") + ">" + (gesperrt ? "hast du" : preis + " Punkte") + "</button></div>";
       }).join("") + (meineFallen().length ? '<p class="sp-klein">Deine Fallen: ' + meineFallen().map(function (f) { return (f.art === "mine" ? "Mine" : "Falltür") + " auf Platz " + f.platz; }).join(", ") + " (30 min)</p>" : "");
     }
     if (reiter === "duell") {
@@ -3865,9 +3790,6 @@
       + (n > 0 ? (n < mx ? '<button type="button" data-tu="kaufen" data-d="geschuetz_nachladen"' + (ich.punkte >= 20 ? "" : " disabled") + ">Nachladen · 20</button>" : "")
                : '<button type="button" data-tu="kaufen" data-d="geschuetz"' + (ich.punkte >= 60 ? "" : " disabled") + ">Kaufen · 60</button>")
       + (st < 5 ? '<button type="button" data-tu="kaufen" data-d="geschuetz_stufe"' + (ich.punkte >= preisStufe ? "" : " disabled") + ">Stufe " + (st + 1) + " · " + preisStufe + "</button>" : "")
-      /* FASSUNG 662 — XANDER: „extra Turm auf einem freien Platz". */
-      + (n > 0 ? (turmDraussen(ich) ? '<button type="button" data-tu="turmzurueck">Zurück ans Bild</button>'
-                                    : '<button type="button" data-tu="turmsetzen">Auf freien Platz</button>') : "")
       + "</span></div>";
   }
 
@@ -3894,8 +3816,6 @@
     if (tu === "ablegen") { S.waffe = ""; zeichnen(); panelAuffrischen(); return; }
     if (tu === "farbe") { S.laserfarbe = k.dataset.f; try { localStorage.setItem("dma_spiel_laser", S.laserfarbe); } catch (e) {} panelAuffrischen(); return; }
     if (tu === "kaufen") return kaufen(k.dataset.d);
-    if (tu === "turmsetzen") { S.turmSetzen = true; setTimeout(function () { S.turmSetzen = false; }, 30000); schliessen(); hinweis("🗼 Tippe auf einen freien Platz – dort steht dann dein Turm."); return; }
-    if (tu === "turmzurueck") return turmPlatz(null);
     if (tu === "heilen") return heilen(k.dataset.art, k.dataset.ziel || "");
     if (tu === "legen") {
       S.legen = k.dataset.d;
@@ -4201,83 +4121,6 @@
   }
 
   /* =================================================================
-     FASSUNG 662 — DAS DORF, DER GRABEN, DER TURM AUF FREIEM PLATZ
-     -----------------------------------------------------------------
-     XANDER: „was man für Gebäude bauen kann um welche Sachen zu machen
-     für Ausbildung oder für Lebensmittel … uns irgendwie auch so ein
-     kleines Dorf bauen können, was vielleicht auch angegriffen werden
-     kann von dem anderen, dass unsere Infrastruktur geschädigt wird …
-     so dass der andere sich wehren muss … oder seine Sachen … repariert
-     werden können."
-     Drei Gebäude (je bis Stufe 3): Bäckerei (Bratwurst), Schmiede (Erz),
-     Schule (Erfahrung, ab Level 4). Alle vier Stunden wird geerntet. Ein
-     Erdbeben reißt ein Gebäude an (−10), ein kaputtes liefert nichts,
-     bis man es mit 1 Erz repariert. Der Wassergraben fängt Beben ab.
-     Gerechnet wird alles auf dem Server (spiel_bauen, spiel_dorf_abholen,
-     spiel_zaubern).
-     ================================================================= */
-  var DORF = {
-    baeckerei: { name: "Bäckerei", preis: 100, gibt: "2 Bratwürste je Stufe" },
-    schule:    { name: "Schule",   preis: 150, gibt: "20 Erfahrung je Stufe", ab: 4 },
-    schmiede:  { name: "Schmiede", preis: 120, gibt: "1 Erz je Stufe" }
-  };
-  function dorfSvg(art, stufe) {
-    var dach = stufe >= 3 ? "#c9961a" : stufe === 2 ? "#b0402f" : "#8a4f22";
-    var haus = '<path d="M4 13 L12 5 L20 13" fill="' + dach + '" stroke="#2d2418" stroke-width="1.1" stroke-linejoin="round"/>'
-      + '<rect x="6" y="12.5" width="12" height="9" fill="#f4e7cf" stroke="#2d2418" stroke-width="1.1"/>';
-    if (art === "baeckerei") return '<svg viewBox="0 0 24 24">' + haus + '<rect x="10" y="16" width="4" height="5.5" fill="#8a5a2e"/>'
-      + '<path d="M8 3.5 C6 3.5 6 6.5 8 6.5 C9 6.5 9.8 5 10.2 4.2 C10.6 5 11.4 6.5 12.4 6.5 C14.4 6.5 14.4 3.5 12.4 3.5 C10.8 3.5 10.2 6.5 10.2 6.5" fill="none" stroke="#c0703a" stroke-width="1.3" transform="translate(4 -1)"/></svg>';
-    if (art === "schule") return '<svg viewBox="0 0 24 24">' + haus + '<rect x="10" y="2" width="4" height="5" fill="#f4e7cf" stroke="#2d2418" stroke-width=".9"/><circle cx="12" cy="4.5" r="1" fill="#f2c230"/>'
-      + '<rect x="7.5" y="14.5" width="3" height="2.6" fill="#8fd3ff"/><rect x="13.5" y="14.5" width="3" height="2.6" fill="#8fd3ff"/><rect x="10.5" y="17.5" width="3" height="4" fill="#3a8dde"/></svg>';
-    return '<svg viewBox="0 0 24 24">' + haus + '<rect x="15" y="4" width="2.6" height="6" fill="#6b4521" stroke="#2d2418" stroke-width=".8"/>'
-      + '<path d="M16.3 3 C15 1.5 17.5 .5 17.8 2" fill="none" stroke="#9aa6b8" stroke-width=".9"/><path d="M8 17 H16 L15 19 H9 Z M10.5 19 H13.5 V21 H10.5 Z" fill="#3a4152"/><circle cx="16.5" cy="15.5" r="1" fill="#ff7a18"/></svg>';
-  }
-  function dorfHtml(ich) {
-    var d = ich.dorf || {}, hat = Object.keys(d).length, lv = ich.level || 1;
-    var kaputt = Object.keys(d).some(function (k) { return (d[k].lp || 0) < 20 * (d[k].stufe || 1); });
-    var zeilen = Object.keys(DORF).map(function (k) {
-      var g = d[k], st = g ? g.stufe : 0, lp = g ? g.lp : 0, mx = 20 * st, D = DORF[k];
-      var preis = D.preis * (st + 1), gesperrt = D.ab && lv < D.ab;
-      return '<div class="sp-troph sp-dorf' + (st ? " sp-troph-hat" : "") + (st && lp <= 0 ? " sp-dorf-kaputt" : "") + '"><i>' + dorfSvg(k, st || 1) + "</i><span><b>" + D.name + (st ? " · Stufe " + st : "") + "</b>"
-        + "<small>" + D.gibt + (st ? " · " + (lp <= 0 ? "kaputt – liefert nichts" : "hält " + lp + "/" + mx) : "") + "</small>"
-        + (st ? '<em><u style="width:' + Math.round(100 * lp / Math.max(1, mx)) + '%"></u></em>' : "") + "</span>"
-        + (st >= 3 ? "" : '<button type="button" data-s="bauen" data-w="' + k + '"' + (gesperrt || (ich.punkte || 0) < preis ? " disabled" : "") + ">"
-          + (gesperrt ? "Lv " + D.ab : (st ? "Stufe " + (st + 1) : "Bauen") + " · " + preis) + "</button>")
-        + "</div>";
-    }).join("");
-    return '<p class="sp-sm-klein">Alle 4 Stunden erntest du, was dein Dorf herstellt. Erdbeben beschädigen es – der Wassergraben (Laden) schützt.</p>'
-      + '<div class="sp-troph-liste">' + zeilen + "</div>"
-      + '<div class="sp-sm-liste">'
-      + (hat ? '<button type="button" data-s="ernte">Ernten</button>' : "")
-      + (kaputt ? '<button type="button" data-s="bauen" data-w="reparatur"' + (vorrat(ich, "erz") ? "" : " disabled") + ">Reparieren <small>1 Erz · du hast " + vorrat(ich, "erz") + "</small></button>" : "")
-      + (ich.graben ? '<p class="sp-sm-klein">🌊 Wassergraben: fängt noch ' + ich.graben + " Beben.</p>" : "")
-      + "</div>";
-  }
-  function grabenSvg() {
-    return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M-4 99 C10 96 22 101 36 98 C50 95 62 101 76 98 C88 96 98 100 104 98 L104 104 L-4 104 Z" fill="#3a8dde" opacity=".85"/>'
-      + '<path class="sp-graben-welle" d="M0 99.5 C8 98 14 100.5 22 99 C30 97.6 36 100.5 44 99 C52 97.6 58 100.5 66 99 C74 97.6 80 100.5 88 99 C94 98 98 99.5 100 99" fill="none" stroke="#bfe6ff" stroke-width="1"/></svg>';
-  }
-  function turmDraussen(s) { return Boolean(s && s.turm_platz && (s.turm_raum || "") === raumName()); }
-  function vorposten(nr) {
-    var raus = null;
-    plaetze().forEach(function (p) {
-      if (raus || p.leer || istPuppe(p.id)) return;
-      var s = S.stand[spielIdVon(p.id)];
-      if (s && s.geschuetz && s.mitspielen !== false && Number(s.turm_platz) === nr && (s.turm_raum || "") === raumName()) raus = { chatId: p.id, s: s };
-    });
-    return raus;
-  }
-  function turmPlatz(nr) {
-    rpc("spiel_turm_platz", { p_platz: nr, p_raum: raumName() }).then(function (r) {
-      if (!r || r.ok === false) { hinweis("🗼 " + ((r && r.grund) || "Das ging nicht.")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) });
-      ton("hammerschlag", 0.4);
-      hinweis(nr ? "🗼 Dein Turm steht jetzt auf Platz " + nr + " und schießt von dort zurück." : "🗼 Dein Turm ist wieder an deinem Bild.");
-      zeichnen(); panelAuffrischen();
-    }).catch(function () { hinweis("🗼 Das ging gerade nicht."); });
-  }
-
-  /* =================================================================
      FASSUNG 661 — TROPHÄEN
      -----------------------------------------------------------------
      XANDER: „wenn man irgendwie Mission auch zusätzlich erfüllt, indem
@@ -4456,7 +4299,7 @@
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,
-      trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
+      trophaeenHolen: trophaeenHolen, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
       zauberZeigen: zauberZeigen, zaubern: zaubern, daemonAusbruch: daemonAusbruch, uebungZaubern: uebungZaubern, geschuetzSvg: geschuetzSvg, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
       menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {

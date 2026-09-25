@@ -519,3 +519,14 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - XANDER: „auf dem Feld … das darf man aber nur für sich sehen … zwischendurch ne Artikel Aufgabe, wo man auf dem Feld zwischendurch noch Sachen einsammeln kann". Fundstücke: alle 2–4 Minuten glitzert beim Mitspielen auf einem freien Platz ein Säckchen (nur auf dem eigenen Gerät, 45 s lang). Antippen → `spiel_fund_heben()` (höchstens alle 3 Minuten, der Server wählt den Inhalt: Erz, Bratwurst, 15 Mana, 10 Punkte, Pflaster, 20 % Superkraft) → Artikel-Aufgabe; richtig gelöst, schreibt `spiel_antwort` den Fund gut. Danach gilt wieder die eigene Aufgabenwahl.
 - Server im Rollback getestet (6 Trophäen für XanderFox erkannt, Fund-Sperre, Gutschrift bei richtiger Antwort).
 - Sonde: `pruefe-661-trophaeen-funde.js` (13 Prüfungen, 360 px); alle Spiel-Sonden grün.
+
+## Fassung 662 — Das Dorf, Titan- und Diamantmauer, Wassergraben, Turm auf freiem Platz
+
+- XANDER: „was man für Gebäude bauen kann um welche Sachen zu machen für Ausbildung oder für Lebensmittel … uns irgendwie auch so ein kleines Dorf bauen können, was vielleicht auch angegriffen werden kann von dem anderen, dass unsere Infrastruktur geschädigt wird … oder seine Sachen … repariert werden können."
+- Mehr → „Mein Dorf": Bäckerei (100/200/300 P, 2 Bratwürste je Stufe), Schule (ab Level 4, 150/300/450 P, 20 Erfahrung je Stufe), Schmiede (120/240/360 P, 1 Erz je Stufe). Alle 4 Stunden „Ernten" (`spiel_dorf_abholen`). Jedes Gebäude hält 20 je Stufe.
+- Angreifbar: Ein Erdbeben reißt ein zufälliges Gebäude an (−10). Ein kaputtes liefert nichts, bis es mit 1 Erz repariert ist. Der Getroffene wird gewarnt, der Angreifer erfährt, was er getroffen hat.
+- XANDER: „kann mir noch ne Titanium Mauer machen irgendwie oder Diamanten". Titanmauer (ab Level 8, 130 P, hält 260) und Diamantmauer (ab Level 12, 200 P, hält 400), eigene Zeichnungen (Titanplatten mit Nieten, funkelnde Kristallblöcke).
+- Wassergraben (60 P): fängt 5 Erdbeben ab, Mauer und Dorf bleiben heil; liegt als blaues, welliges Band unter dem Bild.
+- Turm auf freiem Platz: Laden → Geschütz-Turm → „Auf freien Platz", dann auf einen freien Platz tippen (`spiel_turm_platz`, gilt nur im aktuellen Raum). Der Turm steht dort groß in der Mitte, schießt von dort zurück; setzt sich jemand hin, steht er wieder am eigenen Bild. „Zurück ans Bild" holt ihn heim.
+- Server: Spalten `dorf`, `dorf_ab`, `graben_lp`, `turm_platz`, `turm_raum`; `spiel_bauen`, `spiel_dorf_abholen`, `spiel_turm_platz`; `spiel_kaufen` (Titan, Diamant, Graben, Level-Sperre), `spiel_zaubern` (Graben, Dorf-Riss), `spiel_oeffentlich` (graben, turm_platz, turm_raum, dorf). Im Rollback getestet.
+- Sonde: `pruefe-662-dorf-mauern-turm.js` (15 Prüfungen, 360 px); alle Spiel-Sonden grün (652/656 einzeln, im Parallellauf zeitweise zu langsam).
