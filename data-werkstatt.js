@@ -49,28 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 669 – Extra-Spiele; davor 666–668: Fehler behoben, Kampf ohne Nachhängen, neue Inhalte",
+  stand: "Fassung 670 – jedes Tier mit eigenem starken Effekt, Einhorn als Deluxe",
 
   inArbeit: [
-    { seit: "2026-09-25T15:50",
+    { seit: "2026-09-25T16:29",
       text: "Walkie #256" },
-    { seit: "2026-09-25T15:50",
+    { seit: "2026-09-25T16:29",
       text: "Runde 100/101 (Waschmaschine, Bagger, Hot Rod)" },
-    { seit: "2026-09-25T15:50",
+    { seit: "2026-09-25T16:29",
       text: "Funk 84/85 Zeichnungen und Funktionen" },
-    { seit: "2026-09-25T15:50",
+    { seit: "2026-09-25T16:29",
       text: "Angel, Lasso, Kran, Leiter, Lok, Pferd-Galopp" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T15:50",
-      text: "666: Effekte nicht mehr links oben, Schaufel geht wieder (lang drücken auf freien Platz), Pokale einzeln, lange Namen, Werkstatt lädt nach, Deutsch-Menü wie früher" },
-    { seit: "2026-09-25T15:50",
-      text: "667: Treffer genau beim Einschlag (465 ms → ~0), weniger Ruckeln, runde Mauern unter dem Ring, neuer Orkan" },
-    { seit: "2026-09-25T15:50",
-      text: "668: Doppel-/Fächerlaser, Plasmastrahl, Kugelblitz, Ziegelmauer, Dackel, Storch, Wolpertinger, Lindwurm, Brauerei, Bibliothek, Rathaus" },
-    { seit: "2026-09-25T15:50",
+    { seit: "2026-09-25T16:29",
+      text: "670: Einhorn mit Regenbogenstrahl aus dem Horn, Farbringen, Sternenregen und Glanz" },
+    { seit: "2026-09-25T16:29",
+      text: "670: Jedes gekaufte Tier mit eigenem Effekt – Stacheln, Bellen, Knurren, Funkeln, Federn, Klappern" },
+    { seit: "2026-09-25T16:29",
       text: "669: Tower Defense „Fehlerteufel-Abwehr“ und Rundenkampf (Strategie) – im Menü unter Mehr" },
+    { seit: "2026-09-25T16:29",
+      text: "668: Doppel-/Fächerlaser, Plasmastrahl, Kugelblitz, Ziegelmauer, Dackel, Storch, Wolpertinger, Lindwurm, Brauerei, Bibliothek, Rathaus" },
   ],
 };
