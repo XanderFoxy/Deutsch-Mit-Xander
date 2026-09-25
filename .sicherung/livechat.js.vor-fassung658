@@ -162,21 +162,6 @@ window.LiveChat = (function () {
       username: "openrelayproject", credential: "openrelayproject" }
   ];
   var VERMITTLER = (window.DMA_TURN && window.DMA_TURN.length ? window.DMA_TURN : NOTVERMITTLER);
-  /* =========================================================
-     FASSUNG 658 — WENIGER IST SCHNELLER
-     ---------------------------------------------------------
-     GEMELDET: „die Leitung zu Mark Hawkins steht noch nicht — es wird
-     weiter versucht … es dauert extrem lange" und „das Spiel hat
-     extrem gehangen".
-     NACHGESEHEN: Mark war mit Firefox am Linux-Rechner da (spiel_diagnose).
-     Die Liste der Vermittler hatte mit dem eigenen Relais SIEBEN Einträge
-     (Cloudflare + sechs öffentliche). Firefox warnt ab fünf, dass die
-     Wegesuche dadurch langsam wird, und jeder tote Eintrag (die
-     Open-Relay-Server antworten oft nicht mehr) kostet Wartezeit.
-     Steht das eigene Relais, genügen deshalb: Cloudflare (das bringt
-     STUN, TURN über UDP, TCP und TLS schon mit) und EIN Google-STUN als
-     Reserve. Ohne eigenes Relais bleibt alles wie bisher. */
-  function mitRelais(server) { return server.concat(NOTVERMITTLER.slice(0, 1)); }
 
   /* =========================================================
      DAS EIGENE RELAIS — Cloudflare Realtime
@@ -347,7 +332,7 @@ window.LiveChat = (function () {
         relaisStand.quelle = "cloudflare";
         relaisStand.grund = "";
         relaisStand.ausGeraet = true;
-        VERMITTLER = mitRelais(da.server);
+        VERMITTLER = da.server.concat(NOTVERMITTLER);
         return Promise.resolve(true);
       }
     }
@@ -370,9 +355,10 @@ window.LiveChat = (function () {
       /* Und ins Geraet, damit das naechste Neuladen keinen neuen
          Abruf kostet. */
       relaisInsGeraet(a.server);
-      /* Die eigenen Server ZUERST, dahinter nur noch ein STUN als
-         Reserve (Fassung 658, siehe mitRelais). */
-      VERMITTLER = mitRelais(a.server);
+      /* Die eigenen Server ZUERST, die oeffentlichen als Reserve
+         dahinter — faellt Cloudflare aus, ist trotzdem noch ein
+         Weg da. */
+      VERMITTLER = a.server.concat(NOTVERMITTLER);
       return true;
     }).catch(function () {
       relaisLaeuft = null;

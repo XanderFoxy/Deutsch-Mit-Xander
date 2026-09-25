@@ -482,3 +482,13 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Wer mitspielt, sieht wie bisher das volle Spiel; das Schaufenster verschwindet dort.
 - Server: Spalte `spiel_spieler.zeigen` (jsonb), Funktion `spiel_zeigen(p_level, p_tiere)` (SECURITY DEFINER, nur angemeldet), `spiel_oeffentlich` liefert `zeigen` mit. Im Rollback getestet.
 - Sonde: `pruefe-657-zeigen-ohne-spiel.js` (15 Prüfungen); alle 21 Spiel-Sonden grün.
+
+## Fassung 658 — Superkraft am Gegner sichtbar, Feuer filigran, Deutsch-Reiter, erschöpfte Tiere, weniger Vermittler
+
+- XANDER: „ich sehe keinen Effekt den es macht durch das Feuer, was ich auf den Gegner schicke, ob das irgendein Einfluss auf den Gegner hat". Hat es (×1,5 Schaden). Jetzt sichtbar: Mit Superkraft fliegt jede Kugel mit lila Feuerschweif (auch bei anderen, deren Stand `daemon` trägt); beim Treffer züngeln 14 lila Flammen in der unteren Bildhälfte des Gegners hoch, Glutfunken steigen, sein Bild glüht kurz lila, dazu das Drachenfeuer-Geräusch.
+- XANDER: „mein Fell … irgendwie schwächer dargestellt. Woran liegt das? Verliert es an Leben". Ja: jeder Gegenbiss kostet das Tier 1 Kraft (spiel_treffer), bei 0 wehrt es nicht mehr ab. Erschöpft = grau mit aufsteigendem „Zzz"; im Tiere-Reiter steht der Grund und „Jetzt füttern".
+- XANDER: „die Blasen … einfach nur Punkte die hoch und runter wandern — kann man das schöner gestalten". In den Ringen gleitet statt der Punkte ein weicher Lichtglanz durch die Flüssigkeit.
+- XANDER: „diese Feuereffekte noch filigran … effektvoll". Drache und Phönix: zusätzlich zum Glutball schmale Flammenzungen (rot bzw. gold) und Glutfunken; der Feuerstrahl flackert an den Rändern. Die Flammen entstehen nur in der unteren Bildhälfte, das Gesicht bleibt frei.
+- XANDER: „Irgendwie sieht man aus dem Bürger nicht sofort heraus, dass man die Deutsch Aufgaben machen kann". Eigener grüner Reiter „Deutsch" (Waffen · Heilen · Tiere · Deutsch · Mehr): „Aufgabe lösen" plus alle Aufgabenarten als Knöpfe; unter „Mehr" nicht mehr doppelt.
+- Verbindung (Mark, Firefox/Linux laut spiel_diagnose): Mit eigenem Relais standen sieben Vermittler in der Liste; Firefox wird ab fünf langsam. Jetzt: Cloudflare + ein Google-STUN (`mitRelais` in livechat.js). Ohne eigenes Relais unverändert.
+- Sonde: `pruefe-658-superkraft-feuer-deutsch.js` (20 Prüfungen); alle 22 Spiel-Sonden und Runde 27 (Relais) grün.

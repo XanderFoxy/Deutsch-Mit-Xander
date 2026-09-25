@@ -1101,9 +1101,6 @@
     if (schnell) w = { name: w.name, schaden: w.schaden, preis: w.preis, flug: Math.round(w.flug / 2), ton: w.ton, treffer: w.treffer };
     var a = mittelpunkt(vonChat), z = mittelpunkt(zielChat);
     if (!z) return w.flug;
-    /* FASSUNG 658 — mit Superkraft fliegt jede Kugel mit lila Feuerschweif. */
-    var dmn = "";
-    try { dmn = (vonChat === meineChatId() ? wirkt(S.ich, "daemon") > 0 : Boolean((S.stand[spielIdVon(vonChat)] || {}).daemon)) ? " sp-g-daemon" : ""; } catch (e) {}
     if (!a) a = { x: z.x, y: Math.max(0, z.y - 260), r: 0 };
     var zx = z.x + (Number(dx) || 0) * z.r, zy = z.y + (Number(dy) || 0) * z.r;
     var winkel = Math.atan2(zy - a.y, zx - a.x) * 180 / Math.PI;
@@ -1112,7 +1109,7 @@
       /* Der Strahl: eine Linie vom Schützen zum Ziel, die aufblitzt. */
       var len = Math.hypot(zx - a.x, zy - a.y);
       var strahl = document.createElement("div");
-      strahl.className = "sp-laser" + dmn;
+      strahl.className = "sp-laser";
       strahl.style.left = a.x + "px"; strahl.style.top = a.y + "px";
       strahl.style.width = len + "px";
       strahl.style.transform = "rotate(" + winkel + "deg)";
@@ -1141,7 +1138,7 @@
       for (var mn = 0; mn < zahl; mn++) (function (mn) {
         setTimeout(function () {
           var kg = document.createElement("div");
-          kg.className = "sp-geschoss sp-g-" + waffe + dmn;
+          kg.className = "sp-geschoss sp-g-" + waffe;
           kg.innerHTML = geschossSvg(waffe, farbe || S.laserfarbe);
           document.body.appendChild(kg);
           var sx = zx + ((mn * 29) % 5 - 2) * z.r * 0.06, sy = zy + ((mn * 17) % 5 - 2) * z.r * 0.06;
@@ -1164,7 +1161,7 @@
       for (var sn = 0; sn < 5; sn++) (function (sn) {
         setTimeout(function () {
           var sp = document.createElement("div");
-          sp.className = "sp-geschoss sp-g-spaetzle" + dmn;
+          sp.className = "sp-geschoss sp-g-spaetzle";
           sp.innerHTML = geschossSvg("spaetzle");
           document.body.appendChild(sp);
           var sx = zx + (sn - 2) * z.r * 0.12, sy = zy + ((sn * 37) % 5 - 2) * z.r * 0.08;
@@ -1181,7 +1178,7 @@
       return w.flug + 280;
     }
     var g = document.createElement("div");
-    g.className = "sp-geschoss sp-g-" + waffe + dmn;
+    g.className = "sp-geschoss sp-g-" + waffe;
     g.innerHTML = geschossSvg(waffe);
     document.body.appendChild(g);
     var bogen = waffe === "zwille" || waffe === "tomahawk" || waffe === "eierwerfer" || waffe === "kartoffel" || waffe === "brezel" ? -40
@@ -1556,7 +1553,6 @@
     if (n.waffe === "sauerkraut" && n.schaden > 0) krautZeigen(zielChat);
     if (n.schaden > 0) {
       zahlZeigen(zielChat, -n.schaden, (ZONEN[n.zone] || "") + (n.daemon ? " ×1,5" : ""), n.daemon ? "sp-zahl-daemon" : "");
-      if (n.daemon) daemonBrand(zielChat);
       var el = platzElVon(zielChat);
       if (el) {
         el.classList.remove("sp-getroffen"); void el.offsetWidth; el.classList.add("sp-getroffen");
@@ -1801,7 +1797,6 @@
           fl.className = "sp-feuer sp-feuer-gold";
           fl.style.left = z.x + "px"; fl.style.top = z.y + "px";
           document.body.appendChild(fl);
-          flammen(z.x, z.y, z.r, "gold", 8);
           setTimeout(function () { fl.remove(); }, 700);
           schuetteln(60, 2);
         }, dauer * o);
@@ -1846,54 +1841,6 @@
     }
     setTimeout(function () { t.remove(); tierAusAnwenden(); }, dauer + 40);
   }
-  /* FASSUNG 658 — XANDER: „Vielleicht kann man diese Feuereffekte noch
-     filigran gestalten, noch ein bisschen effektvoll." Statt nur eines
-     Glutballs züngeln jetzt einzelne schmale Flammen in der unteren
-     Bildhälfte hoch und flackern aus, dazu steigen Glutfunken.
-     art: "rot" (Drache), "gold" (Phönix), "daemon" (Superkraft). */
-  function flammen(x, y, r, art, zahl) {
-    var n = zahl || 11, sorte = art || "rot";
-    for (var i = 0; i < n; i++) {
-      var f = document.createElement("div");
-      f.className = "sp-zunge sp-zunge-" + sorte;
-      f.style.left = (x + (Math.random() - 0.5) * r * 1.5) + "px";
-      f.style.top = (y + r * (0.15 + Math.random() * 0.45)) + "px";
-      f.style.setProperty("--hoch", Math.round(r * (0.7 + Math.random() * 0.8)) + "px");
-      f.style.setProperty("--drift", Math.round((Math.random() - 0.5) * r * 0.35) + "px");
-      f.style.setProperty("--gr", (0.6 + Math.random() * 0.8).toFixed(2));
-      f.style.animationDelay = Math.round(Math.random() * 260) + "ms";
-      f.style.animationDuration = Math.round(620 + Math.random() * 420) + "ms";
-      document.body.appendChild(f);
-      (function (f) { setTimeout(function () { f.remove(); }, 1400); })(f);
-    }
-    for (var j = 0; j < Math.round(n * 0.7); j++) {
-      var g = document.createElement("div");
-      g.className = "sp-glutfunke sp-zunge-" + sorte;
-      g.style.left = (x + (Math.random() - 0.5) * r * 1.6) + "px";
-      g.style.top = (y + r * 0.3) + "px";
-      g.style.setProperty("--hoch", Math.round(r * (1 + Math.random() * 1.2)) + "px");
-      g.style.setProperty("--drift", Math.round((Math.random() - 0.5) * r * 0.9) + "px");
-      g.style.animationDelay = Math.round(80 + Math.random() * 400) + "ms";
-      document.body.appendChild(g);
-      (function (g) { setTimeout(function () { g.remove(); }, 1700); })(g);
-    }
-  }
-  /* FASSUNG 658 — XANDER: „ich sehe keinen Effekt den es macht durch das
-     Feuer, was ich auf den Gegner schicke, ob das irgendein Einfluss auf
-     den Gegner hat". Hat es: dämonische Treffer machen ×1,5 Schaden. Jetzt
-     sieht man es auch: das Bild des Getroffenen brennt kurz lila, und die
-     Kugel fliegt schon mit lila Feuerschweif. */
-  function daemonBrand(zielChat) {
-    var z = mittelpunkt(zielChat);
-    if (!z) return;
-    flammen(z.x, z.y, z.r, "daemon", 14);
-    ton("drachenfeuer", 0.35);
-    var el = platzElVon(zielChat);
-    if (el) {
-      el.classList.remove("sp-daemon-brand"); void el.offsetWidth; el.classList.add("sp-daemon-brand");
-      setTimeout(function () { el.classList.remove("sp-daemon-brand"); }, 1300);
-    }
-  }
   /* Ein Feuerstrahl vom Maul des Tiers bis ins Bild, dazu der Feuerball. */
   function feuerStrahl(von, z, gold) {
     var dx = z.x - von.x, dy = z.y - von.y, l = Math.hypot(dx, dy);
@@ -1906,7 +1853,6 @@
     fl.className = "sp-feuer";
     fl.style.left = z.x + "px"; fl.style.top = z.y + "px";
     document.body.appendChild(fl);
-    flammen(z.x, z.y, z.r, gold ? "gold" : "rot", 9);
     setTimeout(function () { f.remove(); }, 520);
     setTimeout(function () { fl.remove(); }, 700);
   }
@@ -2436,11 +2382,8 @@
   }
   function schnellMenueHtml() {
     var ich = S.ich || {}, r = S.schnellReiter || "waffen", s = slots();
-    /* FASSUNG 658 — XANDER: „Irgendwie sieht man aus dem Bürger nicht sofort
-       heraus, dass man die Deutsch Aufgaben machen kann." Deutsch hat jetzt
-       einen eigenen, grün markierten Reiter statt eines Knopfs unter „Mehr". */
-    var reiter = [["waffen", "Waffen"], ["heilen", "Heilen"], ["tiere", "Tiere"], ["deutsch", "Deutsch"], ["mehr", "Mehr"]].map(function (t) {
-      return '<button type="button" data-s="reiter" data-r="' + t[0] + '" class="' + (r === t[0] ? "sp-an" : "") + (t[0] === "deutsch" ? " sp-sm-deutsch" : "") + '">' + t[1] + "</button>";
+    var reiter = [["waffen", "Waffen"], ["heilen", "Heilen"], ["tiere", "Tiere"], ["mehr", "Mehr"]].map(function (t) {
+      return '<button type="button" data-s="reiter" data-r="' + t[0] + '" class="' + (r === t[0] ? "sp-an" : "") + '">' + t[1] + "</button>";
     }).join("");
     var mm = S.menueMeldung && S.menueMeldung.bis > Date.now() ? S.menueMeldung.text : "";
     var kopf = mm ? '<div class="sp-sm-kopf sp-sm-kopf-meldung">' + esc(mm) + "</div>"
@@ -2471,12 +2414,6 @@
         t.push('<button type="button" data-s="trinken" data-t="' + tr[0] + '"' + (rest || !n ? " disabled" : "") + '><span class="sp-trank sp-trank-' + tr[0] + '"></span>' + tr[1] + " <small>" + (rest ? rest + " s" : n) + "</small></button>");
       });
       inhaltM = '<div class="sp-sm-liste">' + t.join("") + "</div>";
-    } else if (r === "deutsch") {
-      inhaltM = '<p class="sp-sm-klein">Richtig antworten bringt <b>Punkte</b>, <b>Mana</b> und <b>Erfahrung</b> (Level).'
-        + (missionLaeuft(ich) ? " Mission läuft: " + esc(missionKurz(ich.mission)) + "." : "") + "</p>"
-        + '<div class="sp-sm-liste"><button type="button" class="sp-sm-los" data-s="deutschlos" data-k="">Aufgabe lösen</button></div>'
-        + '<div class="sp-sm-gruppe sp-sm-arten"><span>Oder gezielt</span>' + ARTEN_KNOEPFE.filter(function (x) { return x[0] && (!x[2] || ARTEN_FREI[x[0]]); })
-          .map(function (x) { return '<button type="button" data-s="deutschlos" data-k="' + x[0] + '">' + x[1] + "</button>"; }).join("") + "</div>";
     } else if (r === "tiere") {
       var besitz = Object.keys(ich.tiere || {});
       [ich.haustier, ich.flugtier].forEach(function (a) { if (a && besitz.indexOf(a) < 0) besitz.push(a); });
@@ -2487,14 +2424,7 @@
         return '<button type="button" data-s="tierraus" data-a="' + a + '"' + (draussen ? ' class="sp-an"' : "") + ">"
           + '<span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + ((TIERE[a] || {}).flug ? "luft" : "boden") + '">' + tierSvg(a, true) + "</span>"
           + esc((TIERE[a] || {}).name || a) + " <small>" + (draussen ? "draußen · " : "") + kraft + " Kraft</small></button>";
-      }).join("") + "</div><p class=\"sp-sm-klein\">Tippen holt das Tier raus – eins am Boden, eins in der Luft. Keins geht verloren.</p>"
-        /* FASSUNG 658 — XANDER: „mein Fell … irgendwie schwächer dargestellt.
-           Woran liegt das? Verliert es an Leben". Ja: jeder Gegenbiss kostet
-           das Tier 1 Kraft; bei 0 ist es grau, schläft („Zzz") und wehrt
-           nicht mehr ab, bis man es füttert. */
-        + ([ich.haustier, ich.flugtier].some(function (a, i) { return a && !((i ? ich.flugtier_leben : ich.haustier_leben) > 0); })
-          ? '<p class="sp-sm-klein sp-sm-warn">Grau mit „Zzz" = erschöpft: jeder Gegenbiss kostet 1 Kraft, bei 0 wehrt es nicht mehr ab.</p>'
-            + '<div class="sp-sm-liste"><button type="button" data-s="gross" data-r="tiere">Jetzt füttern</button></div>' : "");
+      }).join("") + "</div><p class=\"sp-sm-klein\">Tippen holt das Tier raus – eins am Boden, eins in der Luft. Keins geht verloren.</p>";
     } else {
       var lautJetzt = toeneAn() ? lautStufe() : 0;
       inhaltM = '<div class="sp-sm-laut"><span>Töne</span>' + LAUT_STUFEN.map(function (l, i) {
@@ -2521,6 +2451,7 @@
         + '<button type="button" data-s="tontest">Ton testen</button>'
         + '<button type="button" data-s="gross" data-r="schutz">Laden (Schutz, Rüstung, Turm)</button>'
         + '<button type="button" data-s="gross" data-r="tiere">Tiere holen und füttern</button>'
+        + '<button type="button" data-s="gross" data-r="deutsch">Deutsch-Aufgaben</button>'
         + '<button type="button" data-s="gross" data-r="start">Großes Menü</button></div>';
     }
     return '<div class="sp-schnellmenue">' + kopf + '<div class="sp-sm-reiter">' + reiter + "</div>" + inhaltM + "</div>";
@@ -2561,9 +2492,6 @@
       hinweis(k.dataset.k === "level"
         ? (zNeu.level ? "⭐ Dein Level sehen jetzt alle – auch wer nicht mitspielt." : "Dein Level sieht jetzt nur, wer mitspielt.")
         : (zNeu.tiere ? "🐾 Deine Tiere sind jetzt immer dabei – friedlich, für alle." : "Deine Tiere zeigen sich nur noch im Spiel."));
-    } else if (s === "deutschlos") {
-      S.schnellMenue = false; S.kategorie = k.dataset.k || null; S.aufgabe = null;
-      menue("deutsch"); aufgabeHolen(false); schnellZeichnen(true); return;
     } else if (s === "platzmenue") {
       S.schnellMenue = false;
       try { var eig = document.querySelector("#lcPlaetze .lc-platz-ich"); if (eig && window.DMA_PRUEFUNG && window.DMA_PRUEFUNG.platzMenue) { eigenLangFrei = true; window.DMA_PRUEFUNG.platzMenue(eig); eigenLangFrei = false; } } catch (e) { eigenLangFrei = false; }
@@ -4137,7 +4065,6 @@
       krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
-      flammen: flammen, daemonBrand: daemonBrand,
       zauberZeigen: zauberZeigen, zaubern: zaubern, daemonAusbruch: daemonAusbruch, uebungZaubern: uebungZaubern, geschuetzSvg: geschuetzSvg, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
       menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {
