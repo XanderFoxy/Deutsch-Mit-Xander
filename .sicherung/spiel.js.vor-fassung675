@@ -4504,7 +4504,6 @@
         /* FASSUNG 641 — XANDER: „ich will ja immer Punkte verdienen": die
            Grenze von 300 Punkten je Stunde ist weg. */
         + 'Null gibt es nur bei falscher Antwort oder nach mehr als 10 Minuten Bedenkzeit – eine Stundengrenze gibt es nicht mehr. '
-        + '<b>Alles, was du hier verdienst, zählt auch im Ranking der Seite</b> (Heute, Gesamt, Fuchs des Tages). '
         + 'Zwischen zwei Antworten liegen mindestens 3 Sekunden. Jede richtige Antwort gibt außerdem +6 Mana, +8 Ladung und doppelt so viel Erfahrung wie Punkte (mindestens 1, auch über der Stundengrenze).</p>';
       /* FASSUNG 673 — die Aufgabe steht OBEN: sofort antworten, ohne erst
          an Niveau- und Kategorieknöpfen vorbei zu scrollen. */

@@ -635,3 +635,12 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
   - Ein Tipp neben das Fenster schließt es (und wirkt dort, wo er landet); ☰ oben führt direkt ins Hauptmenü.
   - Status in einer Zeile (LP, Level, Mana), Werte in einer Wischzeile; die „… ist angelegt"-Zeile ist weg. Im Deutsch-Reiter steht die Aufgabe oben, Niveau und Arten darunter.
 - Sonde: `pruefe-673-graben-deutschfenster.js` (9 Prüfungen). Alle 37 Spiel-Sonden grün.
+
+## Fassung 675 — Ein Punktesystem: Klassenzimmer-Spiel zählt im Ranking der Seite
+
+- XANDER: „Das, was die Leute in dem Livestream Spiel machen muss Ihnen alles belohnt werden in ihrem ganz normalen Rankings. So können Sie auch Fuchs des Tages werden … ich bin schon Level 14, und es macht sich in meiner Gesamtpunktzahl irgendwie überhaupt noch nicht bemerkbar … Alles was wir jetzt bisher schon verdient haben, dass das alles mit angerechnet wird".
+- Datenbank (Migrationen `spiel_675_*`): Trigger `spiel_verdient_ins_ranking` auf `spiel_spieler.verdient`. Jeder echte Spielgewinn (Deutschaufgaben, Aussprache, Missionen, Trophäen, Lehrernoten, Extra-Spiele) geht 1:1 in `profiles.points` (Gesamt), `results` (eine Zeile „Klassenzimmer-Spiel" je Tag → Heute-Ranking und Fuchs des Tages/Woche/…) und `daily_ranking`. `seiten_stand` steigt mit, damit `spiel_seite_abholen` nichts zurücktauscht. `spiel_seite_gutschrift` ist für Browser gesperrt.
+- Nachgebucht (aus `spiel_protokoll`, tageweise): XanderFox 5290 (Profil 5831 → 11121), Maram 4292, Emy 162. Geprüft: Spielzeilen = verdient bei allen drei.
+- Extra-Spiele: `spiel_extra_lohn` am Ende von Tower Defense und Rundenkampf – aus den richtigen, vom Server geprüften Antworten seit Spielbeginn (2 je Antwort + Ergebnis), je Spiel höchstens 25, je Tag 60, jeder Spielbeginn nur einmal. Ohne richtige Antwort kein Lohn.
+- Seite: der Fuchs-Bonus las einen veralteten Punktestand und hätte Spielpunkte überschrieben – er liest jetzt frisch.
+- Sonde: `pruefe-675-punkte-ranking.js` (5 Prüfungen); Datenbank im Rollback geprüft (Profil +10, seiten_stand +10, Heute +10, Tagesstand +10, Extra-Lohn +6 und nur einmal, kein Rücktausch).

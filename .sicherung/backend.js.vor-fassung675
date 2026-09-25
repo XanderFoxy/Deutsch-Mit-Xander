@@ -3644,16 +3644,9 @@ const Backend = (function () {
     if (fox.total < 10) return null;
     await updateExtraProfileField("foxOfDayClaimedDate", todayKey);
     const bonus = 30;
-    /* FASSUNG 675 — seit das Klassenzimmer-Spiel seine Punkte direkt im Profil
-       gutschreibt (Datenbank-Trigger), kann der Stand hier im Browser veraltet
-       sein. Erst frisch lesen, dann addieren – sonst würden Spielpunkte, die
-       inzwischen dazugekommen sind, überschrieben. */
+    demo.profile.points = (demo.profile.points || 0) + bonus;
     if (client) {
-      const { data: frisch } = await client.from("profiles").select("points").eq("id", demo.user.id).maybeSingle();
-      demo.profile.points = ((frisch && frisch.points) || demo.profile.points || 0) + bonus;
       await client.from("profiles").update({ points: demo.profile.points }).eq("id", demo.user.id);
-    } else {
-      demo.profile.points = (demo.profile.points || 0) + bonus;
     }
     await sendSystemMessage(demo.user.id, `🦊 Herzlichen Glückwunsch — du bist heute "Fuchs des Tages"! Für deinen besonderen Fleiß gibt's ${bonus} Bonuspunkte obendrauf. 🎉`);
     await addActivity(`${demo.profile.name} ist heute Fuchs des Tages! 🦊🎉`);
