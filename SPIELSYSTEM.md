@@ -386,3 +386,19 @@ XANDER: „das Waffen Menü vielleicht so klassisch, wie man das so bei Diablo �
 - Das Rad bleibt immer ganz im Bild (seitlich eingeklemmt), Knöpfe überlappen nicht.
 - „Stimmt's?" (Richtig/Falsch) ist jetzt freigegeben: jeder Satz einzeln geprüft — 804 falsche und 1386 richtige aktiv, 193 gesperrt (grammatisch648, erklaerung648, kaputt648, richtigfalsch648).
 - Sonden: pruefe-649-waffenrad.js (neu), pruefe-633-schnellleiste.js (Rad statt Ablegen beim zweiten Tipp), pruefe-648-aufgabenarten.js (Stimmt's sichtbar).
+
+## Fassung 650 — Zauber: Nebel, Erdbeben, Orkan (ab Level)
+
+XANDER: „Zauber oder Erdbeben Orkane … Gegner von der Bildfläche werfen oder durcheinanderbringen … Nebeln" · Funk 125: „Updates ab einem bestimmten Level"
+
+| Zauber | ab Level | Mana | Wirkung (Server: `spiel_zaubern`, Regeln in `spiel_zauber_regel`) |
+|---|---|---|---|
+| Nebel | 3 | 25 | 15 s `nebel_bis`: Schüsse streuen stark (±1,2), nur 60 % Schaden |
+| Erdbeben | 5 | 35 | 10 Schaden an der Mauer vorbei, reißt 25 an der Mauer, 6 s `wackel_bis` |
+| Orkan | 7 | 50 | 15 Schaden (Mauer fängt), Schild weg, 10 s `wackel_bis` |
+
+- Ein Zauber je 20 s, Mana nötig, Schutzregeln wie beim Treffer (Mitspielen, Anfängerschutz, Tarnung, kaputt, Waffenstillstand, Duell, 60 je Minute). Magie geht an der Rüstung vorbei; Eisenhaut halbiert, Dämonisch zählt.
+- `spiel_treffer` liest `wackel_bis`/`nebel_bis` des Schützen; `spiel_oeffentlich` liefert `nebel_s`/`wackel_s` (Restsekunden), damit Nachzügler den Nebel sehen.
+- Client: Zauberstab in der Schnellleiste → Zauberrad (gesperrte zeigen „Lv N"), Zauber wählen → Tipp auf ein Gesicht. Ereignis `zauber` an alle. Nebel als Ring ums Bild (Mitte frei), eigener Nebel macht die anderen unscharf. Erdbeben 3,6 s, Orkan 3,8 s – so lang wie die Töne `erdbeben`/`orkan` (4 s, vorgeladen).
+- Meldungen rücken über ein offenes Rad, statt es zu verdecken.
+- Sonde: `pruefe-650-zauber.js` (22 Prüfungen, Telefon mit Fingertipps); Server im Rollback getestet.
