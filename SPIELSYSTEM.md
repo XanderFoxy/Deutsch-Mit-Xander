@@ -606,3 +606,11 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Strategie „Rundenkampf": Zug um Zug gegen Professor Grammatikus (Computer) oder gegen jemanden im Raum (Einladung, Annehmen/Ablehnen). Aktionen Angriff (12), Schild (+10), Heilen (+12), Donnerwort (22, kostet 2 Sterne) – jede wirkt nur mit richtiger Antwort, jede richtige Antwort bringt einen Stern. Züge laufen als Ereignisse zwischen den Geräten (doppelt angekommen zählt einmal); wer schließt, gibt auf.
 - Nichts davon zählt in der Datenbank (außer den echten Deutschaufgaben selbst) – so lässt sich nichts schummeln. Meldungen erscheinen im Spielfenster.
 - Sonde: `pruefe-669-extraspiele.js` (15 Prüfungen). Alle 32 Spiel-Sonden grün.
+
+## Fassung 670 — Jedes Tier mit eigenem, starkem Effekt (Einhorn als Deluxe)
+
+- XANDER (Funk 132): „Verbessere bitte mal das Einhorn und das Effekt vom Einhorn es ist sein Deluxe Tier … die Tiere die so teuer sind die müssen irgendwie glänzen … die Tiere die man kauft die sollen alle einen individuellen schönen starken Effekt".
+- Einhorn: Regenbogenstrahl aus dem Horn, drei Farbringe, Sternenregen, „Glitzer!"-Puff und ein Glanz um das Tier beim Sprung (ebenso der Regenbogendrache).
+- Jedes gekaufte Tier hat eine eigene Signatur: Stachelmonster schießt Stacheln, Schäferhund bellt Schallwellen („Wuff!"), Dackel knurrt („Grrr!"), Füchse und Wolpertinger funkeln, Fellmonster stampft, Eule und Greif verlieren Federn, Storch klappert („Klapper!").
+- Alles läuft über das gemeinsame Teilchen-Budget (Fassung 667), bleibt also auch auf einfachen Android-Geräten flüssig.
+- Sonde: `pruefe-670-tier-effekte.js`. 638, 646, 656, 667 weiter grün.
