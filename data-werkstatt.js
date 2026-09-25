@@ -49,28 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 671 – Zauber und Superkraft; Funk #128 (Geschütz) geprüft: schießt zurück",
+  stand: "Fassung 672 – Zauberer-Reise wie in Funk 85; als Nächstes der Rest aus Funk 84/85",
 
   inArbeit: [
-    { seit: "2026-09-25T17:27",
+    { seit: "2026-09-25T17:44",
+      text: "Funk 84: Mario-Röhren, Lok-Schranke mit Überfahren, Hot-Rod-Weg, Person als Feuerwerk" },
+    { seit: "2026-09-25T17:44",
+      text: "Funk 85: Monstertruck, eigener Einzug/Abgang, Knöpfe unter den Plätzen, Magic Button" },
+    { seit: "2026-09-25T17:44",
       text: "Rückfrage #256 (Ups-Effekt) – wartet auf deine Antwort" },
-    { seit: "2026-09-25T17:27",
+    { seit: "2026-09-25T17:44",
       text: "Sprechbilder (Runde 101) – wartet auf deine Antwort, was gemeint ist" },
-    { seit: "2026-09-25T17:27",
-      text: "Funk 84/85 Zeichnungen und Funktionen" },
-    { seit: "2026-09-25T17:27",
-      text: "Angel, Lasso, Kran, Leiter, Lok, Pferd-Galopp" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T17:27",
-      text: "Funk #128: Geschütz geprüft – schießt zurück, wenn du getroffen wirst (zuletzt 17:02: 5 eingesteckt, 4 zurück)" },
-    { seit: "2026-09-25T17:27",
-      text: "671: Zauber sofort beim Tippen – Zauberkreis, Kugel, Einschlag; jeder Zauber mit Zugabe" },
-    { seit: "2026-09-25T17:27",
-      text: "671: Superkraft-Schuss knallt – lila Mündung, Krater-Einschlag" },
-    { seit: "2026-09-25T17:27",
-      text: "Runde 101 war schon fertig: Waschmaschine 560, Bagger 562, Wegschicken 563, Hot Rod 564" },
+    { seit: "2026-09-25T17:44",
+      text: "672: Zauberer stülpt den Zylinder mit beiden Händen über dein Bild und klopft mit dem Zauberstab darauf" },
+    { seit: "2026-09-25T17:44",
+      text: "672: Er hebt ihn an (Platz leer) und zeigt ihn kopfüber mit der Öffnung zum Publikum" },
+    { seit: "2026-09-25T17:44",
+      text: "672: Er stellt ihn langsam mit beiden Händen aufs Ziel und zieht dich als Kaninchen heraus" },
+    { seit: "2026-09-25T17:44",
+      text: "671: Zauber und Superkraft-Schüsse, die man spürt" },
   ],
 };
