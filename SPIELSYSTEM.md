@@ -432,3 +432,25 @@ XANDER: „überarbeite mal den Baby Fuchs und den Schäferhund … nicht alle n
 - Phönix: schlanker Feuervogel im Flug (Hakenschnabel, Flammenschopf, erhobene Flammenschwingen rot → orange → gelb, drei lange Schwanzfedern mit Pfauenaugen, Glut).
 - Kacheln mit etwas mehr Luft (Stehohren, Horn). `schmuck()` lässt beim Neuzeichnen die Klasse `sp-feuert` stehen (sonst brach das Turmfeuer ab, gefunden von Sonde 652).
 - Bildprobe: `pruefe-653-tiergalerie.js` (BILD=… für ein Bild von Kacheln und Tieren am Platz).
+
+## Fassung 654 — deutsche Zauber, Zauberer-Ränge, Fairness
+
+XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … jemanden verwandelt in irgendwas anderes … Stopft den Gegner mit Brezeln voll" · „wie können wir den Zauberlehrling oder die einzelnen Stufen des Zauberers … entwickeln" · „ob es da so einen Fairnessfaktor gibt".
+
+| Zauber | Level | Mana | Wirkung (Server `spiel_zaubern`) |
+|---|---|---|---|
+| Brezelflut | 2 | 20 | 6 Schaden (Mauer fängt), 10 s vollgestopft: nur alle 6 s ein Schuss (`brezel_bis`) |
+| Nebel | 3 | 25 | 15 s Schüsse streuen, 60 % Schaden |
+| Kaffeeklatsch | 4 | 30 | +20 LP für den Eingeladenen und für einen selbst; auch auf sich selbst |
+| Mückenschwarm | 4 | 30 | 10 Schaden, über jede Mauer |
+| Erdbeben | 5 | 35 | 10 Schaden an der Mauer vorbei, −25 Mauer, 6 s Zittern |
+| Hexenschuss | 6 | 40 | 4 Schaden, 20 s kein Platzwechsel (`spiel_platzwechsel` darf=false, Client `gesperrt()`), Bild sitzt schief |
+| Orkan | 7 | 50 | 15 Schaden, Schild weg, wirbelt vom Platz |
+| Gartenzwerg | 9 | 60 | 12 s kein Schuss, kein Zauber; Zipfelmütze und Bart (Gesichtsmitte frei) |
+| Behördengang | 12 | 70 | kein Schuss, bis eine Deutschaufgabe richtig gelöst ist (höchstens 60 s; `spiel_antwort` löscht `formular_bis`) |
+
+- Zauberer-Ränge aus der Zahl gelungener Zauber: Zauberlehrling (0), Zaubergeselle (10), Magier (30), Zaubermeister (75), Erzmagier (150). Je Rang −5 % Mana, +10 % Wirkung und Dauer. Rang steht in der Mitte des Zauberrads und in „Mehr"; ein Aufstieg wird gefeiert.
+- Fairness (`spiel_fair`): ab 5 Level Abstand macht der Stärkere halben Schaden und bekommt keine Punkte; der Kleinere macht 25 % mehr. Gilt für Treffer und Zauber.
+- Zauberrad: volles Rad wie das Waffenrad, neun Zauber nach Level im Uhrzeigersinn, gesperrte mit „Lv N".
+- Töne neu (ElevenLabs, weich): muecken, kaffeeklatsch, hexenschuss, gartenzwerg, stempel; Brezelflut nutzt brezelknack. 329 Geräusche.
+- Sonde: `pruefe-654-deutsche-zauber.js` (15 Prüfungen); 650 und 651 angepasst; 18 Spiel-Sonden grün. Server im Rollback getestet (Fairness 0,5, Mauer, Hexenschuss-Sperre, Zwerg- und Formular-Sperre, Kaffeeklatsch +20/+20).

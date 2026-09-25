@@ -136,7 +136,8 @@ const sage = (gut, was, zusatz) => {
 
   const tick = (ms) => pg.waitForTimeout(ms);
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
-  const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
+  /* Im längeren „Mehr" (Töne, 3×-Tipp, Zauberer-Rang) wird erst hingescrollt, dann getippt. */
+  const tippe = async (sel) => { await pg.evaluate((sel) => { const e = document.querySelector(sel); if (e && e.closest(".sp-schnellmenue")) e.scrollIntoView({ block: "nearest" }); }, sel); const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
 
   console.log("\nDIE MAUER VERDECKT NICHTS MEHR\n");
