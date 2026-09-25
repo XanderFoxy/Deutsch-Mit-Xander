@@ -832,27 +832,3 @@ body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: bl
   display: flex; align-items: center; justify-content: center; }
 .sp-schnell .sp-rad-waffe .sp-haken svg { width: 11px; height: 11px; }
 @media (prefers-reduced-motion: reduce) { .sp-daemonflammen .sp-flamme, .sp-turmglut { animation: none; } }
-
-/* =========================================================
-   FASSUNG 656 — Biss mit Zähnen, Phönix-Sturzflug
-   ========================================================= */
-.sp-bisszaehne { position: fixed; z-index: 9993; margin: 0; pointer-events: none; transform: translate(-50%, -50%); }
-.sp-bisszaehne svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 1px 2px rgba(0,0,0,.45)); }
-.sp-bisszaehne .sp-kiefer-oben { animation: spKieferOben .5s ease-in-out infinite alternate; }
-.sp-bisszaehne .sp-kiefer-unten { animation: spKieferUnten .5s ease-in-out infinite alternate; }
-@keyframes spKieferOben { from { transform: translateY(-5px); } to { transform: translateY(1px); } }
-@keyframes spKieferUnten { from { transform: translateY(5px); } to { transform: translateY(-1px); } }
-.sp-phoenix-glut svg { filter: drop-shadow(0 0 4px rgba(255, 140, 30, .95)) drop-shadow(0 0 10px rgba(255, 90, 20, .6)); }
-.sp-glutspur { position: fixed; z-index: 9990; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, #fff3a0, #ff8a1e 45%, rgba(232, 64, 28, 0) 72%); animation: spGlutspur .7s ease-out forwards; }
-@keyframes spGlutspur { from { transform: scale(1); opacity: .95; } to { transform: scale(.2) translateY(10px); opacity: 0; } }
-.sp-feuer.sp-feuer-gold { filter: hue-rotate(-10deg) saturate(1.4) brightness(1.15); }
-.sp-goldfeder { position: fixed; z-index: 9991; width: 9px; height: 20px; margin: -10px 0 0 -4px; pointer-events: none; opacity: 0;
-  animation: spGoldfeder 1.8s ease-in forwards; }
-.sp-goldfeder svg { width: 100%; height: 100%; }
-@keyframes spGoldfeder { 0% { opacity: 0; transform: translate(0, 0) rotate(0); } 12% { opacity: 1; }
-  50% { transform: translate(var(--pendel), calc(var(--fall) * .5)) rotate(40deg); } 100% { opacity: 0; transform: translate(calc(var(--pendel) * -.5), var(--fall)) rotate(-30deg); } }
-.sp-phoenix-schwanz path { animation: spSchwanzWehen 1.4s ease-in-out infinite alternate; transform-box: view-box; transform-origin: 96px 19px; }
-@keyframes spSchwanzWehen { from { transform: rotate(-3deg); } to { transform: rotate(4deg); } }
-.sp-phoenix-augen { animation: spSchwanzWehen 1.4s ease-in-out infinite alternate; transform-box: view-box; transform-origin: 96px 19px; }
-@media (prefers-reduced-motion: reduce) { .sp-bisszaehne g, .sp-phoenix-schwanz path, .sp-phoenix-augen { animation: none; } }

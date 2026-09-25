@@ -1713,36 +1713,11 @@
          frei), Zerren, zurück. */
       var biss = { x: z.x + z.r * 0.3, y: z.y + z.r * 0.95 };
       var bogen = { x: (heim.x + biss.x) / 2, y: Math.min(heim.y, biss.y) - z.r * 1.1 };
-      /* FASSUNG 656 — XANDER: „der kleine Fellkerl kann sich richtig fest
-         beißen mit seinen Zähnen, so dass man sieht, dass er da dran reißt".
-         Er zerrt jetzt nach hinten (weg vom Bild) und wieder vor, sechsmal;
-         das Bild wird bei jedem Ruck ein Stück mitgezogen, und am Bissort
-         schnappen Zähne zu. */
-      var zx = heim.x - biss.x, zy = heim.y - biss.y, zl = Math.hypot(zx, zy) || 1;
-      zx /= zl; zy /= zl;
       var bb = [bild(heim.x, heim.y, s0, 0, 0), bild(bogen.x, bogen.y, s0 * 1.2, -10, 0.12), bild(biss.x, biss.y, sG, 0, 0.22)];
       for (var i = 0; i < 6; i++) {
-        bb.push(bild(biss.x + zx * 9, biss.y + zy * 9, sG, i % 2 ? -14 : 14, 0.27 + i * 0.075));
-        bb.push(bild(biss.x - zx * 1.5, biss.y - zy * 1.5, sG, 0, 0.305 + i * 0.075));
+        bb.push(bild(biss.x - 5, biss.y + 1, sG, -12, 0.27 + i * 0.075));
+        bb.push(bild(biss.x + 5, biss.y + 1, sG, 12, 0.305 + i * 0.075));
       }
-      if (kreis) setTimeout(function () {
-        var zug = [];
-        for (var q = 0; q < 6; q++) {
-          zug.push({ transform: "translate(" + (zx * 7).toFixed(1) + "px," + (zy * 7).toFixed(1) + "px) rotate(" + (q % 2 ? -3 : 3) + "deg)", offset: (q * 2 + 1) / 13 });
-          zug.push({ transform: "translate(0,0)", offset: (q * 2 + 2) / 13 });
-        }
-        zug.unshift({ transform: "translate(0,0)", offset: 0 });
-        try { kreis.animate(zug, { duration: dauer * 0.5, easing: "ease-in-out" }); } catch (e) {}
-      }, dauer * 0.25);
-      if (art !== "einhorn") setTimeout(function () {
-        var zh = document.createElement("div");
-        zh.className = "sp-bisszaehne";
-        zh.style.left = biss.x + "px"; zh.style.top = (biss.y - z.r * 0.12) + "px"; zh.style.width = zh.style.height = Math.round(z.r * 0.9) + "px";
-        zh.innerHTML = '<svg viewBox="-20 -20 40 40"><g class="sp-kiefer-oben"><path d="M-16 -2 C-10 -12 10 -12 16 -2 Z" fill="#7a1f24"/><path d="M-13 -3 L-10.5 4 L-8 -3 L-5.5 4.5 L-3 -3 L-.5 4.5 L2 -3 L4.5 4.5 L7 -3 L9.5 4 L12 -3 Z" fill="#fffdf6" stroke="#c9c2b0" stroke-width=".6"/></g>'
-          + '<g class="sp-kiefer-unten"><path d="M-15 2 C-9 12 9 12 15 2 Z" fill="#7a1f24"/><path d="M-12 3 L-9.5 -4 L-7 3 L-4.5 -4.5 L-2 3 L.5 -4.5 L3 3 L5.5 -4.5 L8 3 L10.5 -4 L12 3 Z" fill="#fffdf6" stroke="#c9c2b0" stroke-width=".6"/></g></svg>';
-        document.body.appendChild(zh);
-        setTimeout(function () { zh.remove(); }, dauer * 0.52);
-      }, dauer * 0.21);
       bb.push(bild(biss.x, biss.y, sG, 0, 0.76), bild(bogen.x, bogen.y, s0 * 1.15, 10, 0.88), bild(heim.x, heim.y, s0, 0, 1));
       try { t.animate(bb, { duration: dauer, easing: "ease-in-out", fill: "forwards" }); } catch (e) {}
       var tonName = (TIERE[art] || TIERE.fellmonster).ton;
@@ -1760,56 +1735,6 @@
         }, dauer * o);
       });
       schuetteln(dauer * 0.27, 6);
-    } else if (art === "phoenix") {
-      /* FASSUNG 656 — XANDER: „ich möchte, dass der Phoenix eine eigene
-         Effekt-Animation hat, dass das nicht gleich aussieht mit dem von
-         dem Baby-Drachen". Der Phönix steigt hoch über das Bild und stürzt
-         dreimal als Feuerschweif hindurch – über Kreuz –, hinter sich eine
-         Glutspur, am Ende regnen goldene Federn. */
-      var hoch = z.r * 2.1, weit = z.r * 1.7;
-      var pb = [bild(heim.x, heim.y, s0, 0, 0), bild(z.x, z.y - hoch, s0 * 1.2, 0, 0.12)];
-      [[-1, 0.2, 0.36], [1, 0.42, 0.58], [-1, 0.64, 0.8]].forEach(function (d) {
-        pb.push(bild(z.x - d[0] * weit, z.y - hoch * 0.8, s0 * 1.2, d[0] * -25, d[1]));
-        pb.push(bild(z.x, z.y, s0 * 1.35, d[0] * 35, (d[1] + d[2]) / 2));
-        pb.push(bild(z.x + d[0] * weit, z.y - hoch * 0.7, s0 * 1.2, d[0] * 25, d[2]));
-      });
-      pb.push(bild(heim.x, heim.y, s0, 0, 1));
-      try { t.animate(pb, { duration: dauer, easing: "ease-in-out", fill: "forwards" }); } catch (e) {}
-      t.classList.add("sp-phoenix-glut");
-      var spur = setInterval(function () {
-        var r = t.getBoundingClientRect();
-        if (!r.width) return;
-        var g = document.createElement("div");
-        g.className = "sp-glutspur";
-        g.style.left = (r.left + r.width * 0.9) + "px"; g.style.top = (r.top + r.height * 0.14) + "px";
-        document.body.appendChild(g);
-        setTimeout(function () { g.remove(); }, 700);
-      }, 55);
-      setTimeout(function () { clearInterval(spur); }, dauer * 0.86);
-      [0.28, 0.5, 0.72].forEach(function (o) {
-        setTimeout(function () {
-          ton((TIERE[art] || {}).ton || "zauberpuff", 0.5);
-          var fl = document.createElement("div");
-          fl.className = "sp-feuer sp-feuer-gold";
-          fl.style.left = z.x + "px"; fl.style.top = z.y + "px";
-          document.body.appendChild(fl);
-          setTimeout(function () { fl.remove(); }, 700);
-          schuetteln(60, 2);
-        }, dauer * o);
-      });
-      setTimeout(function () {
-        for (var f = 0; f < 7; f++) {
-          var fe = document.createElement("div");
-          fe.className = "sp-goldfeder";
-          fe.innerHTML = '<svg viewBox="0 0 10 24"><path d="M5 1 C9 6 9 16 5 23 C1 16 1 6 5 1 Z" fill="#ffc83a" stroke="#e8741c" stroke-width=".8"/><path d="M5 3 V22" stroke="#e8741c" stroke-width=".6"/></svg>';
-          fe.style.left = (z.x + (Math.random() - 0.5) * z.r * 2.4) + "px"; fe.style.top = (z.y - z.r * 1.2) + "px";
-          fe.style.setProperty("--fall", Math.round(z.r * (1.6 + Math.random())) + "px");
-          fe.style.setProperty("--pendel", Math.round((Math.random() - 0.5) * 40) + "px");
-          fe.style.animationDelay = (Math.random() * 0.4).toFixed(2) + "s";
-          document.body.appendChild(fe);
-          (function (fe) { setTimeout(function () { fe.remove(); }, 2300); })(fe);
-        }
-      }, dauer * 0.8);
     } else {
       /* Hin, einmal ganz ums Bild herum, dreimal angreifen, zurück. */
       var R = z.r * 1.3;
@@ -1823,7 +1748,7 @@
       }
       fb.push(bild(heim.x, heim.y, s0, 0, 1));
       try { t.animate(fb, { duration: dauer, easing: "linear", fill: "forwards" }); } catch (e) {}
-      var feuer = art === "drache";
+      var feuer = art === "drache" || art === "phoenix";
       [0.3, 0.52, 0.74].forEach(function (o) {
         setTimeout(function () {
           /* Wo das Tier in diesem Moment ist: gleiche Rechnung wie oben. */
@@ -3050,20 +2975,10 @@
          erhobene Schwingen aus Flammenfedern (rot → orange → gelb) und
          drei lange geschwungene Schwanzfedern mit Pfauenaugen; Glut fällt. */
       return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        /* FASSUNG 656 — „den Schwanz … feiner … filigraner, nicht so weit
-           auseinander": fünf dünne, dicht geführte Schleppfedern, die
-           zum Ende hin in kleinen Flammenaugen auslaufen. */
-        + '<g class="sp-phoenix-schwanz" fill="none" stroke-linecap="round">'
-        + '<path d="M95 19.5 C100 24 103 30 104.5 38" stroke="#e8401c" stroke-width="1.1"/>'
-        + '<path d="M95.6 19 C101.4 23 105.4 28.4 107.4 36.6" stroke="#ff6a1e" stroke-width="1"/>'
-        + '<path d="M96.2 18.6 C102.6 21.8 107.2 26.6 110 34.4" stroke="#ff8a1e" stroke-width=".95"/>'
-        + '<path d="M96.6 18.2 C103.6 20.4 108.6 24.4 112 31.6" stroke="#ffb02e" stroke-width=".9"/>'
-        + '<path d="M96.8 17.8 C104 18.8 109.4 21.8 113.4 28.2" stroke="#ffd23a" stroke-width=".85"/></g>'
-        + '<g class="sp-phoenix-augen"><ellipse cx="104.6" cy="38.6" rx="1.1" ry="1.6" fill="#ffd23a" stroke="#e8401c" stroke-width=".5" transform="rotate(-10 104.6 38.6)"/>'
-        + '<ellipse cx="107.6" cy="37.2" rx="1" ry="1.5" fill="#ffe36a" stroke="#ff6a1e" stroke-width=".5" transform="rotate(-20 107.6 37.2)"/>'
-        + '<ellipse cx="110.3" cy="35" rx=".95" ry="1.45" fill="#ffe36a" stroke="#ff8a1e" stroke-width=".5" transform="rotate(-30 110.3 35)"/>'
-        + '<ellipse cx="112.3" cy="32.2" rx=".9" ry="1.35" fill="#fff3a0" stroke="#ffb02e" stroke-width=".45" transform="rotate(-40 112.3 32.2)"/>'
-        + '<ellipse cx="113.6" cy="28.8" rx=".85" ry="1.3" fill="#fff3a0" stroke="#ffd23a" stroke-width=".45" transform="rotate(-50 113.6 28.8)"/></g>'
+        + '<path d="M95 20 C101 25 106 29 110 36 C105 33 100 30 96 27 Z" fill="#ff8a1e"/>'
+        + '<path d="M96 19 C103 22 108 23 113 27 C107 27 101 25 96 23 Z" fill="#ffb02e"/>'
+        + '<path d="M94 21 C98 28 100 34 99 40 C96 35 94 30 92 25 Z" fill="#e8401c"/>'
+        + '<circle cx="109.6" cy="35.4" r="1.6" fill="#ffd23a" stroke="#e8401c" stroke-width=".6"/><circle cx="112.4" cy="26.8" r="1.5" fill="#ffd23a" stroke="#e8401c" stroke-width=".6"/><circle cx="99" cy="39.4" r="1.5" fill="#ffd23a" stroke="#b3300c" stroke-width=".6"/>'
         + '<path class="sp-fluegel-r" d="M92 13 C94 5 99 -1 106 -3 C104 1 103 3 104 4 C101 4 100 6 101 8 C98 8 96 10 95.6 13 Z" fill="#b3300c" opacity=".85"/>'
         + '<path d="M80 15 C82 11 87 10 92 11 C96 12 98 15 97 18 C96 21 92 22 88 21.4 C84 21 81 19 80 15 Z" fill="#e8401c" stroke="#9a2a0c" stroke-width=".7"/>'
         + '<path d="M83 17.6 C85 19.6 88.6 20.4 92 20 C89 21.6 85 21 83 17.6 Z" fill="#ffb347"/>'

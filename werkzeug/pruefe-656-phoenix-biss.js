@@ -1,13 +1,11 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 655: SUPERKRAFT SPÜRBAR, KANONENROHR ZIELT, ZAUBERN
-   AN DER PUPPE, RAD ZEIGT „ANGELEGT"
+   SONDE — FASSUNG 656: PHÖNIX MIT EIGENEM ANGRIFF, FELLMONSTER BEISST FEST
    ---------------------------------------------------------------------
-   XANDER: „wo meine Superkraft aufgeladen ist, hat sich nicht das Gefühl,
-   dass irgendwas passiert" · „diese kleine Kanonenrohr richtet sich nicht
-   aus … Es ist so, als wenn es mich selber anschießen will" · „mit der
-   Gummipuppe probiere ich das. Ich sehe kein Erdbeben" · „was bedeutet
-   das grüne Symbol … das muss man besser verstehen können".
+   XANDER: „ich möchte, dass der Phoenix eine eigene Effekt-Animation hat,
+   dass das nicht gleich aussieht mit dem von dem Baby-Drachen" · „der
+   kleine Fellkerl kann sich richtig fest beißen mit seinen Zähnen, so
+   dass man sieht, dass er da dran reißt".
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -140,67 +138,36 @@ const sage = (gut, was, zusatz) => {
   const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
 
 
-  console.log("\nSUPERKRAFT\n");
-  await pg.evaluate(() => { window.DMA_TONLOG.length = 0; window.DMA_SPIEL.pruef.daemonAusbruch("ich", true); });
-  await tick(150);
-  const sk = await pg.evaluate(() => ({ welle: document.querySelectorAll(".sp-daemon-welle").length, schirm: Boolean(document.querySelector(".sp-daemon-schirm")),
-    toene: window.DMA_TONLOG.map((t) => t.name).join(","), hinweis: window.__hinweise.slice(-1)[0] || "" }));
-  sage(sk.welle >= 1 && sk.schirm && /gong/.test(sk.toene) && /×1,5/.test(sk.hinweis), "Superkraft: lila Welle vom Bild, der Rand glüht lila, Gong, man erfährt, was sie tut", JSON.stringify(sk));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.stand[S.ich.id] = Object.assign({}, S.stand[S.ich.id], { daemon: true }); window.DMA_SPIEL.pruef.zeichnen(); });
-  await tick(150);
-  const flamme = await pg.evaluate(() => document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-daemonflammen .sp-flamme').length);
-  sage(flamme >= 10, "solange sie wirkt, lodern Flammen um das eigene Bild", flamme + " Flammen");
-  await pg.evaluate(() => window.DMA_SPIEL.pruef.trefferZeigen("bea", { zone: "kopf", schaden: 18, daemon: true }));
-  await tick(80);
-  const dz = await pg.evaluate(() => { const z = [...document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-zahl-daemon')][0]; return z ? z.textContent : ""; });
-  sage(/−18.*×1,5/.test(dz), "dämonische Treffer: große lila Zahl mit ×1,5", dz);
 
-  console.log("\nDIE KANONE: NUR DAS ROHR ZIELT\n");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.stand[S.ich.id] = Object.assign({}, S.stand[S.ich.id], { geschuetz: true, geschuetz_stufe: 3, daemon: false }); window.DMA_SPIEL.pruef.zeichnen(); });
-  await tick(200);
-  const vorSchuss = await pg.evaluate(() => { const t = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-geschuetz'); return { punkte: t.querySelectorAll('rect[fill="#f2c230"]').length, rohr: Boolean(t.querySelector(".sp-rohr")) }; });
-  sage(vorSchuss.rohr && vorSchuss.punkte === 0, "Turm mit eigenem Rohr, keine rätselhaften gelben Punkte mehr (Stufe = Farbe)", JSON.stringify(vorSchuss));
-  await pg.evaluate(() => window.DMA_SPIEL.pruef.kugelnFliegen("ich", "bea"));
-  await tick(30);
-  const kan = await pg.evaluate(() => {
-    const t = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-geschuetz'), spitze = t.querySelector(".sp-rohr-spitze").getBoundingClientRect();
-    const svgDreh = getComputedStyle(t.querySelector("svg")).transform, blitz = document.querySelector(".sp-muendung").getBoundingClientRect();
-    const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis').getBoundingClientRect();
-    const zielW = Math.atan2(k.top + k.height / 2 - spitze.top, k.left + k.width / 2 - spitze.left) * 180 / Math.PI;
-    const rohrW = parseFloat(t.style.getPropertyValue("--zielwinkel"));
-    return { svgDreh, rohrW: Math.round(rohrW), zielW: Math.round(zielW), abstand: Math.round(Math.hypot(blitz.left + blitz.width / 2 - spitze.left, blitz.top + blitz.height / 2 - spitze.top)) };
-  });
-  sage(kan.svgDreh === "none" && Math.abs(kan.rohrW - kan.zielW) <= 8, "nur das Rohr dreht sich – genau zum Angreifer, der Turm selbst bleibt stehen", JSON.stringify(kan));
-  sage(kan.abstand <= 4, "das Mündungsfeuer blitzt an der Rohrspitze", kan.abstand + " px");
-
-  console.log("\nZAUBERN AN DER PUPPE\n");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.level = 8; S.ich.mana = 60; S.zauber = "erdbeben"; window.__rufe.length = 0; window.DMA_TONLOG.length = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await pg.evaluate(() => document.querySelector('#lcPlaetze .lc-platz[data-lc-id="uebungspuppe"]').scrollIntoView({ block: "center" }));
-  await tick(250);
-  let pu = await seite("uebungspuppe");
-  pu = { x: pu.x, y: Math.max(pu.y, Math.min(pu.y + pu.w * 0.42, 14)) };
-  await pg.touchscreen.tap(pu.x, pu.y); await tick(300);
-  /* Richtete der erste Tipp nur den Rahmen aus (Zauber noch bereit), tippt man eben nochmal. */
-  if (await pg.evaluate(() => window.DMA_SPIEL.pruef.zustand().zauber === "erdbeben")) {
-    await tick(900);
-    pu = await seite("uebungspuppe"); pu = { x: pu.x, y: Math.max(pu.y, Math.min(pu.y + pu.w * 0.42, 14)) };
-    await pg.touchscreen.tap(pu.x, pu.y); await tick(300);
-  }
-  const ueb = await pg.evaluate(() => ({ bebt: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="uebungspuppe"].sp-bebt')), ruf: window.__rufe.some((r) => r.name === "spiel_zaubern"),
-    mana: window.DMA_SPIEL.pruef.zustand().ich.mana, toene: window.DMA_TONLOG.map((t) => t.name).join(","), hinweis: window.__hinweise.slice(-1)[0] || "" }));
-  sage(ueb.bebt && /erdbeben/.test(ueb.toene), "Erdbeben auf die Puppe: man sieht und hört es", JSON.stringify(ueb));
-  sage(!ueb.ruf && ueb.mana === 60 && /Übung/.test(ueb.hinweis), "Übung: kein Server, kein Mana", ueb.hinweis);
-
-  console.log("\nDAS RAD SAGT, WAS ANGELEGT IST\n");
-  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = P.slots()[0]; S.rad = 0; P.schnellZeichnen(true); });
+  console.log("\nPHÖNIX: EIGENER STURZFLUG\n");
+  await pg.evaluate(() => document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]').scrollIntoView({ block: "center" }));
   await tick(300);
-  const rad = await pg.evaluate(() => { const r = document.querySelector(".sp-rad-voll"); const a = r.querySelector(".sp-angelegt");
-    return { an: (r.querySelector(".sp-rad-an") || {}).textContent, name: (r.querySelector(".sp-rad-an-name") || {}).textContent, haken: Boolean(a && a.querySelector(".sp-haken")), wer: a ? a.dataset.w : "" }; });
-  sage(rad.an === "angelegt" && rad.name && rad.haken, "in der Mitte „angelegt: …“, die angelegte Waffe hat Goldring und Haken", JSON.stringify(rad));
-  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD });
+  await pg.evaluate(() => { window.DMA_TONLOG.length = 0; window.DMA_SPIEL.pruef.tierAngriff("ich", "bea", "phoenix"); });
+  await tick(1000);
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD.replace(/\.png$/, "-phoenix.png") });
+  const ph = await pg.evaluate(() => ({ spur: document.querySelectorAll(".sp-glutspur").length, gold: document.querySelectorAll(".sp-feuer-gold").length,
+    strahl: document.querySelectorAll(".sp-feuerstrahl").length, glut: Boolean(document.querySelector(".sp-tier-sprung.sp-phoenix-glut")), toene: window.DMA_TONLOG.map((t) => t.name).join(",") }));
+  sage(ph.glut && ph.spur >= 5 && ph.gold >= 1 && ph.strahl === 0, "Phönix: glühender Sturzflug mit Glutspur und Goldfeuer – kein Feuerstrahl wie beim Drachen", JSON.stringify(ph));
+  sage(/phoenix/.test(ph.toene), "man hört den Phönix", ph.toene);
+  await tick(1900);
+  sage(await pg.evaluate(() => document.querySelectorAll(".sp-goldfeder").length >= 5), "am Ende regnen goldene Federn");
+  await tick(900);
+  await pg.evaluate(() => { window.DMA_SPIEL.pruef.tierAngriff("ich", "bea", "drache"); });
+  await tick(1100);
+  sage(await pg.evaluate(() => document.querySelectorAll(".sp-feuerstrahl").length >= 1 && !document.querySelector(".sp-glutspur")), "der Drache bleibt beim Kreisen und Feuerstrahl – beide sehen verschieden aus");
+  await tick(2600);
+
+  console.log("\nFELLMONSTER: FESTBEISSEN UND ZERREN\n");
+  await pg.evaluate(() => { window.DMA_SPIEL.pruef.tierAngriff("ich", "bea", "fellmonster"); });
+  await tick(900);
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD.replace(/\.png$/, "-biss.png") });
+  const fb = await pg.evaluate(() => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis'); return { zaehne: Boolean(document.querySelector(".sp-bisszaehne")), gezogen: k.getAnimations().length > 0 }; });
+  sage(fb.zaehne && fb.gezogen, "Zähne schnappen am Bissort zu, Beas Bild wird ruckweise mitgezogen", JSON.stringify(fb));
+  await tick(2000);
+  sage(await pg.evaluate(() => !document.querySelector(".sp-bisszaehne") && !document.querySelector(".sp-tier-sprung")), "danach ist alles wieder weg, das Tier sitzt wieder am Platz");
 
   await br.close(); srv.close();
   if (konsolenFehler.length) { fehler++; console.log("  FEHL Seitenfehler: " + konsolenFehler.join(" | ")); }
-  console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n" : "\nFassung 655 auf dem Telefon: alles grün.\n");
+  console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n" : "\nFassung 656 auf dem Telefon: alles grün.\n");
   process.exit(fehler ? 1 : 0);
 })();

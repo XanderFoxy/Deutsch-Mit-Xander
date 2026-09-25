@@ -466,3 +466,10 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - XANDER: „diese kleine Kanonenrohr richtet sich nicht aus … zwei gelbe Punkte darunter". Der Sockel steht, nur das Rohr dreht sich zum Angreifer und ruckt zurück; Kugeln und Mündungsfeuer kommen aus der Rohrspitze. Die Stufe zeigt die Farbe (Eisen, Bronze, Silber, Gold mit Doppelrohr, Gold mit Glut) statt der gelben Punkte.
 - XANDER: „was bedeutet das grüne Symbol". Waffenrad: kräftigere Klassenfarben, in der Mitte „angelegt: Name", die angelegte Waffe mit Goldring und Haken.
 - Sonde: `pruefe-655-superkraft-kanone.js` (10 Prüfungen); 650, 651, 652, spielsystem an den neuen Aufbau angepasst; 19 Spiel-Sonden grün.
+
+## Fassung 656 — Phönix mit eigenem Sturzflug, Fellmonster beißt fest und zerrt
+
+- XANDER: „den Schwanz von dem Phoenix … feiner … filigraner, nicht so weit auseinander". Fünf dünne, dicht geführte Schleppfedern (rot → gelb) mit kleinen Flammenaugen, die leicht wehen.
+- XANDER: „ich möchte, dass der Phoenix eine eigene Effekt-Animation hat, dass das nicht gleich aussieht mit dem von dem Baby-Drachen". Der Phönix steigt über das Bild und stürzt dreimal über Kreuz als Feuerschweif hindurch, mit Glutspur und Goldfeuer; am Ende regnen goldene Federn. Der Drache kreist weiter mit Feuerstrahl.
+- XANDER: „der kleine Fellkerl kann sich richtig fest beißen mit seinen Zähnen, so dass man sieht, dass er da dran reißt". Beim Biss schnappen Zähne am Bissort zu; das Tier zerrt sechsmal nach hinten, und das Bild des Gegners wird bei jedem Ruck mitgezogen (alle Bodentiere außer dem Einhorn, das mit dem Horn sticht).
+- Sonde: `pruefe-656-phoenix-biss.js` (6 Prüfungen); 655 tippt ein zweites Mal, falls der erste Tipp nur den Rahmen ausrichtet.
