@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 644: Graben mit Schaufel, fünf Missionsarten, Erz-Werkstatt; gemeinsamer Verlauf lädt in Happen (300 Zeilen ohne Foto zuerst), Meldung nur bei echtem Ausfall; Döner-Katapult, MG, Laser-Salve (642).",
+  stand: "Fassung 649: Waffenrad (Tachometer) und Stimmt's? freigegeben",
 
   inArbeit: [
-    { seit: "2026-09-25T03:40",
-      text: "Ton-Test-Ergebnis von Xander; Leiter-Mission; Festungen bauen; Arcade von unten; Upgrades unterwegs einsammeln; eigene Spielebene für Nicht-Spieler; Kanalbeitritt parallel zu Mikrofon/Relais; Walkie #256" },
+    { seit: "2026-09-25T05:23",
+      text: "Zauber Erdbeben/Orkan/Nebel ab Level; Spezialwaffen nach Level; Tier-Fusion und Spezialfähigkeiten; Feld-Einsammeln; Spielpunkte in Tageswertung; Strategie- und 16-Platz-Modus" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T03:40",
-      text: "Graben und Funde (spiel_graben); Missionen neben/Schatz/Serie/Heiler/Seite; Werkstatt Pflaster/Schärfen/Turm aus Erz; Turm-Nachladen nur mit Turm; Verlauf-Laden repariert + Teilindizes" },
+    { seit: "2026-09-25T05:23",
+      text: "645 Ton + Menü tippbar; 646 Tiere verlassen den Platz, neue Tiere; 647 Töne weicher; 648 Artikel, Stimmt's?, Aussprache im Spiel; 649 Waffenrad" },
   ],
 };
