@@ -13532,22 +13532,6 @@
     }).catch(() => null);
   }
 
-  /* FASSUNG 651 — XANDER: „Schau mal, ob wir den Aussprachekurs mit
-     verwenden können" und „was meinst du mit Alex Aufnahmen? Wir haben
-     die doch rausgenommen … die verwirren die Leute doch nur unnötig,
-     weil sie teilweise englisch ausgesprochen wurden."
-     Das Spiel (spiel.js) holte für seine kleine Aussprache-Karte genau
-     diese Aufnahmen. Jetzt fragt es hier: dieselbe saubere Stimme wie
-     der Aussprachekurs — erst die Sammeldatei, sonst Azure. */
-  window.DMA_AUSSPR_BRUECKE = {
-    original: function (wort) {
-      const ziel = String(wort || "").trim().toLowerCase();
-      let eintrag = null;
-      try { eintrag = buildDictionaryEntries().find((e) => aussprSprechtext(e).toLowerCase() === ziel) || null; } catch (e) {}
-      return aussprSpriteLadenOderAzure(eintrag || { word: wort });
-    }
-  };
-
   /* --- Die Laut-Anzeige. Das ist der Kern der ganzen Sache. ---
      Wort für Wort, und in jedem Wort Laut für Laut. Eingefärbt,
      und darunter in Klartext, was danebenlag. Der Gesamtwert

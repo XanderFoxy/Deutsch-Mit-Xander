@@ -679,28 +679,3 @@ body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: bl
   .sp-nebel, .sp-nebel::before, .sp-nebel::after, .lc-platz.sp-w-wackel .lc-kreis, .lc-platz.sp-bebt .lc-kreis, #lcPlaetze.sp-raum-bebt,
   .lc-platz.sp-weggeweht .lc-kreis, .sp-orkan-dreh, .sp-schnell .sp-s-zauber.sp-an { animation: none; }
 }
-
-/* =========================================================
-   FASSUNG 651 — Mauer hinter Ringen und Tieren
-   XANDER: „die Mauer verdeckt … unseren Lebensstand … und
-   unser kleines Fellmonster". Reihenfolge von hinten nach
-   vorn: Mauer (5) · Ringe (6) · Tiere und Turm (9).
-   ========================================================= */
-.sp-mauer { z-index: 5; }
-.sp-lp { z-index: 6; }
-.sp-tier, .sp-geschuetz, .sp-flugtier { z-index: 9; }
-
-/* Controller-Ei, Menü links, nichts ragt rechts hinaus (Fassung 651) */
-.sp-schnell .sp-s-reihe { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
-.sp-schnell .sp-s-reihe::-webkit-scrollbar { display: none; }
-.sp-schnell .sp-s-ei { padding: 1px 3px; background: rgba(255, 255, 255, .08); }
-.sp-schnell .sp-s-ei svg { width: 22px; height: 22px; }
-.sp-schnell .sp-s-ei.sp-an { background: #f0e6c8; box-shadow: 0 0 0 2px #e8b923; }
-.sp-schnell .sp-s-ei.sp-s-ei-zu { animation: spEiWippen 2.4s ease-in-out infinite; }
-@keyframes spEiWippen { 0%, 80%, 100% { transform: none; } 86% { transform: rotate(-9deg); } 93% { transform: rotate(7deg); } }
-.sp-schnell .sp-s-slot { position: relative; }
-.sp-schnell .sp-s-tacho { position: absolute; left: 50%; top: -5px; width: 14px; height: 9px; margin-left: -7px; border-radius: 7px 7px 0 0;
-  background: #3c7a55; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-.sp-schnell .sp-s-tacho svg { width: 11px; height: 7px; }
-.sp-schnellmenue { max-width: calc(100vw - 16px); box-sizing: border-box; }
-@media (prefers-reduced-motion: reduce) { .sp-schnell .sp-s-ei.sp-s-ei-zu { animation: none; } }

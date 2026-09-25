@@ -402,3 +402,12 @@ XANDER: „Zauber oder Erdbeben Orkane … Gegner von der Bildfläche werfen ode
 - Client: Zauberstab in der Schnellleiste → Zauberrad (gesperrte zeigen „Lv N"), Zauber wählen → Tipp auf ein Gesicht. Ereignis `zauber` an alle. Nebel als Ring ums Bild (Mitte frei), eigener Nebel macht die anderen unscharf. Erdbeben 3,6 s, Orkan 3,8 s – so lang wie die Töne `erdbeben`/`orkan` (4 s, vorgeladen).
 - Meldungen rücken über ein offenes Rad, statt es zu verdecken.
 - Sonde: `pruefe-650-zauber.js` (22 Prüfungen, Telefon mit Fingertipps); Server im Rollback getestet.
+
+## Fassung 651 — Aussprache mit sauberer Stimme, Mauer, Android-Menü, Controller-Ei
+
+- XANDER: „was meinst du mit Alex Aufnahmen? Wir haben die doch rausgenommen … weil sie teilweise englisch ausgesprochen wurden." Die Aussprache-Karte im Spiel (648) spielte die eigenen Aufnahmen (`aussprache/…mp3`). Jetzt spricht dieselbe saubere Stimme wie im Aussprachekurs vor: `window.DMA_AUSSPR_BRUECKE.original(wort)` in app.js → `aussprSpriteLadenOderAzure` (Sammeldatei, sonst Azure). Verglichen wird mit `freieBewertungAusPuffern`. Die Sonde 648 prüft, dass keine eigene Aufnahme mehr geladen wird.
+- XANDER: „die Mauer verdeckt … unseren Lebensstand … und unser kleines Fellmonster". Die Mauer ist halb so hoch (unterstes Siebtel) und liegt hinter Ringen und Tieren (z: Mauer 5 · Ringe 6 · Tiere/Turm 9).
+- XANDER: „im Android immer noch abgeschnitten rechts … ein kleines Ei mit dem Gaming Controller … das Burger Menü eher oben drüber". Das Controller-Ei ganz links ist der Menüknopf, das Menü klappt darüber auf. Leiste und Menü sind höchstens so breit wie der Chat-Rahmen. „Mehr → Leiste einklappen" lässt nur das Ei stehen.
+- XANDER: „ich habe immer noch nicht das Tacho Menü". Die angelegte Waffe trägt einen kleinen Tacho; der Hinweis beim Anlegen sagt „Nochmal auf die Waffe tippen: Waffenrad".
+- XANDER: „Schutz und Laden … springt der Link wieder hinter den Frame". Die Reiterleiste im großen Menü behält ihre Stelle, der gewählte Reiter steht immer ganz im Bild.
+- Sonde: `pruefe-651-mauer-menue.js` (15 Prüfungen, 360 px Android, echte Fingertipps; auf dem alten Stand 11 rot).

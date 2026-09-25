@@ -1900,30 +1900,12 @@
       schnellEl.style.bottom = Math.max(0, Math.round(unten)) + "px";
     } catch (e) {}
     var ich = S.ich, teile = [], s = slots();
-    /* FASSUNG 651 — XANDER: „ich habe gesagt du solltest so ein kleines
-       Ei haben mit dem Gaming Controller … und das Burger Menü eher oben
-       drüber". Das Ei IST der Menüknopf: ganz links (nie mehr am rechten
-       Rand, wo Android abschnitt), das Menü klappt darüber auf. „Mehr →
-       Leiste einklappen" lässt nur das Ei stehen; ein Tipp holt sie zurück. */
-    if (S.leisteZu == null) { try { S.leisteZu = localStorage.getItem("dma_spiel_leiste_zu") === "1"; } catch (e) { S.leisteZu = false; } }
-    teile.push('<button type="button" class="sp-s-ei sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + (S.leisteZu ? " sp-s-ei-zu" : "") + '" data-s="' + (S.leisteZu ? "ei" : "klappe") + '" title="' + (S.leisteZu ? "Spielleiste öffnen" : "Spielmenü: Waffen, Heilen, Tiere, Mehr") + '">'
-      + '<svg viewBox="0 0 24 24"><path d="M12 2.5 C7.2 2.5 4 9 4 14.2 C4 18.8 7.6 21.5 12 21.5 C16.4 21.5 20 18.8 20 14.2 C20 9 16.8 2.5 12 2.5 Z" fill="#f4ecd8" stroke="#c9b48a" stroke-width="1"/>'
-      + '<path d="M6.6 12.4 H17.4 A2.4 2.4 0 0 1 19.3 16.2 L18.4 17.3 A1.8 1.8 0 0 1 15.6 17 L14.6 15.6 H9.4 L8.4 17 A1.8 1.8 0 0 1 5.6 17.3 L4.7 16.2 A2.4 2.4 0 0 1 6.6 12.4 Z" fill="#2f3749"/>'
-      + '<path d="M8.4 13.4 V15.4 M7.4 14.4 H9.4" stroke="#fff" stroke-width=".9" stroke-linecap="round"/><circle cx="15.3" cy="13.9" r=".75" fill="#e2403a"/><circle cx="16.7" cy="15" r=".75" fill="#3bbf4a"/></svg></button>');
-    if (S.leisteZu) { S.schnellMenue = false; S.rad = null; S.zrad = false; }
-    else {
     teile.push('<button type="button" class="sp-s-mit' + (ich.mitspielen ? " sp-an" : "") + '" data-s="mitspielen" title="'
       + (ich.mitspielen ? "Du spielst mit – tippen für Pause (dann bist du nicht angreifbar)" : "Tippen zum Mitspielen") + '">'
       + (ich.mitspielen ? '<i class="sp-s-punkt"></i>' : "Spielen") + "</button>");
     if (ich.mitspielen) {
-      /* Ein kleiner Tacho auf der angelegten Waffe zeigt: nochmal tippen
-         öffnet das Waffenrad (XANDER: „ich habe immer noch nicht das
-         Tacho Menü"). */
-      var tacho = '<i class="sp-s-tacho"><svg viewBox="0 0 12 8"><path d="M1.5 7 A4.5 4.5 0 0 1 10.5 7" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M6 7 L8.4 3.6" stroke="#f2c230" stroke-width="1.4" stroke-linecap="round"/></svg></i>';
-      teile.push([0, 1].map(function (n) {
-        var h = waffenKnopf(s[n], " sp-s-slot").replace('data-s="waffe"', 'data-s="waffe" data-n="' + n + '"');
-        return S.waffe === s[n] ? h.replace(/<\/button>$/, tacho + "</button>") : h;
-      }).join(""));
+      teile.push(waffenKnopf(s[0], " sp-s-slot").replace('data-s="waffe"', 'data-s="waffe" data-n="0"'),
+                 waffenKnopf(s[1], " sp-s-slot").replace('data-s="waffe"', 'data-s="waffe" data-n="1"'));
       var voll = !ich.kaputt && ich.lp >= ich.lp_max;
       var zuEssen = vorrat(ich, "bratwurst") + vorrat(ich, "sauerkraut");
       teile.push('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke && !zuEssen) ? " disabled" : "")
@@ -1950,7 +1932,8 @@
     if (!toeneAn()) teile.push('<button type="button" class="sp-s-stumm" data-s="toenean" title="Töne sind aus – tippen schaltet sie ein">'
       + '<svg viewBox="0 0 20 20"><path d="M3 8 H6 L10 4.5 V15.5 L6 12 H3 Z" fill="#fff"/><path d="M13 7.5 L17.5 12.5 M17.5 7.5 L13 12.5" stroke="#ff8a80" stroke-width="2" stroke-linecap="round"/></svg></button>');
     if (S.graben) teile.push('<button type="button" class="sp-s-graben sp-an" data-s="graben" title="Schaufel weglegen">' + grabSvg() + "</button>");
-    }
+    teile.push('<button type="button" class="sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Waffen, Heilen, Tiere, Mehr">'
+      + '<svg viewBox="0 0 20 20"><path d="M4 6 H16 M4 10 H16 M4 14 H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>');
     var html = '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (S.rad != null && ich.mitspielen ? radHtml(S.rad) : "")
       + (S.zrad && ich.mitspielen ? zauberRadHtml() : "");
     if (sofort !== true && schnellGesperrt()) { clearTimeout(S.schnellNach); S.schnellNach = setTimeout(schnellZeichnen, 380); return; }
@@ -1958,15 +1941,6 @@
     if (schnellEl.dataset.html !== html) { schnellEl.innerHTML = html; schnellEl.dataset.html = html; }
     /* Das Menü darf nie über den oberen Rand hinaus (dort schnitt der
        Rahmen es ab): höchstens so hoch wie der Platz über der Leiste. */
-    /* FASSUNG 651 — nichts ragt rechts aus dem Chat-Rahmen: Leiste und
-       Menü sind höchstens so breit wie der Platz ab ihrer linken Kante. */
-    try {
-      var frei = Math.max(200, (schnellEl.parentNode.clientWidth || window.innerWidth) - (schnellEl.offsetLeft || 0) - 6);
-      var reiheB = schnellEl.querySelector(".sp-s-reihe");
-      if (reiheB) reiheB.style.maxWidth = frei + "px";
-      var smB = schnellEl.querySelector(".sp-schnellmenue");
-      if (smB) smB.style.width = Math.min(340, frei) + "px";
-    } catch (e) {}
     var sm = schnellEl.querySelector(".sp-schnellmenue");
     if (sm) {
       try {
@@ -2085,7 +2059,6 @@
           return '<button type="button" data-s="zauberwahl" data-z="' + a + '"' + (zu ? ' class="sp-zu"' : S.zauber === a ? ' class="sp-an"' : "") + ">"
             + '<span class="sp-sm-zbild">' + zauberSvg(a) + "</span>" + z.name + " <small>" + (zu ? "ab Level " + z.level : z.mana + " Mana") + "</small></button>";
         }).join("")
-        + '<button type="button" data-s="ei">Leiste einklappen <small>nur das Ei bleibt</small></button>'
         + '<button type="button" data-s="tontest">Ton testen</button>'
         + '<button type="button" data-s="gross" data-r="schutz">Laden (Schutz, Rüstung, Turm)</button>'
         + '<button type="button" data-s="gross" data-r="tiere">Tiere holen und füttern</button>'
@@ -2107,15 +2080,12 @@
          angelegte Waffe öffnet das Waffenrad für diesen Platz; ein Tipp
          auf eine andere legt sie an. */
       if (S.waffe === k.dataset.w && k.dataset.n != null) { S.rad = S.rad === Number(k.dataset.n) ? null : Number(k.dataset.n); S.schnellMenue = false; }
-      else { S.waffe = k.dataset.w; S.rad = null; hinweis("🎯 " + WAFFEN[S.waffe].name + " – tippe auf ein Gesicht. Nochmal auf die Waffe tippen: Waffenrad."); }
+      else { S.waffe = k.dataset.w; S.rad = null; hinweis("🎯 " + WAFFEN[S.waffe].name + " – tippe auf ein Gesicht."); }
     } else if (s === "radwahl") {
       slotSetzen(Number(k.dataset.n) || 0, k.dataset.w); S.waffe = k.dataset.w; S.rad = null;
       ton("swoosh", 0.3);
     } else if (s === "radab") {
       S.waffe = ""; S.rad = null;
-    } else if (s === "ei") {
-      S.leisteZu = !S.leisteZu; S.schnellMenue = false;
-      try { localStorage.setItem("dma_spiel_leiste_zu", S.leisteZu ? "1" : "0"); } catch (e) {}
     } else if (s === "zauberrad") {
       S.zrad = !S.zrad; S.rad = null; S.schnellMenue = false;
     } else if (s === "zauberwahl") {
@@ -2480,14 +2450,11 @@
     if (kreis) schmuck(el, "sp-falle-marke", Boolean(falle), kreis, falle ? falleSvg(falle) : "");
   }
   function mauerSvg(art) {
-    /* FASSUNG 651 — XANDER: „die Mauer verdeckt unseren Lebensstand …
-       und unser kleines Fellmonster". Die Mauer ist jetzt halb so hoch
-       (88–100 statt 78–98) und liegt HINTER den Ringen und den Tieren:
-       Lebens- und Manaring und das Tier stehen davor, die Gesichtsmitte
-       und der Name bleiben frei. */
-    if (art === "stahl") return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><rect x="2" y="88" width="96" height="12" rx="2" fill="#8d97a3" stroke="#4b525c" stroke-width="1.4"/><path d="M34 88 V100 M66 88 V100" stroke="#4b525c" stroke-width="1.4"/><g fill="#5c646e"><circle cx="8" cy="93" r="1.3"/><circle cx="28" cy="93" r="1.3"/><circle cx="40" cy="93" r="1.3"/><circle cx="60" cy="93" r="1.3"/><circle cx="72" cy="93" r="1.3"/><circle cx="92" cy="93" r="1.3"/></g><path d="M4 89.6 H96" stroke="#c9d1da" stroke-width="1" opacity=".7"/></svg>';
-    if (art === "stein") return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g fill="#a39a8c" stroke="#5e574d" stroke-width="1.1"><rect x="2" y="88" width="24" height="6" rx="1.4"/><rect x="26" y="88" width="24" height="6" rx="1.4"/><rect x="50" y="88" width="24" height="6" rx="1.4"/><rect x="74" y="88" width="24" height="6" rx="1.4"/><rect x="2" y="94" width="12" height="6" rx="1.4"/><rect x="14" y="94" width="24" height="6" rx="1.4"/><rect x="38" y="94" width="24" height="6" rx="1.4"/><rect x="62" y="94" width="24" height="6" rx="1.4"/><rect x="86" y="94" width="12" height="6" rx="1.4"/></g></svg>';
-    return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g fill="#b07a45" stroke="#6b4521" stroke-width="1.1"><rect x="4" y="86" width="11" height="14" rx="1"/><rect x="18" y="88" width="11" height="12" rx="1"/><rect x="32" y="86" width="11" height="14" rx="1"/><rect x="46" y="88" width="11" height="12" rx="1"/><rect x="60" y="86" width="11" height="14" rx="1"/><rect x="74" y="88" width="11" height="12" rx="1"/><rect x="88" y="86" width="9" height="14" rx="1"/></g><rect x="2" y="92" width="96" height="3" fill="#8a5a2e"/></svg>';
+    /* Eine niedrige Mauer vor dem unteren Bildrand: Holzlatten, Steine
+       oder Stahlplatten — die Gesichtsmitte bleibt frei. */
+    if (art === "stahl") return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><rect x="2" y="80" width="96" height="18" rx="2" fill="#8d97a3" stroke="#4b525c" stroke-width="1.5"/><path d="M34 80 V98 M66 80 V98" stroke="#4b525c" stroke-width="1.5"/><g fill="#5c646e"><circle cx="8" cy="85" r="1.4"/><circle cx="28" cy="85" r="1.4"/><circle cx="40" cy="85" r="1.4"/><circle cx="60" cy="85" r="1.4"/><circle cx="72" cy="85" r="1.4"/><circle cx="92" cy="85" r="1.4"/></g><path d="M4 82 H96" stroke="#c9d1da" stroke-width="1" opacity=".7"/></svg>';
+    if (art === "stein") return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g fill="#a39a8c" stroke="#5e574d" stroke-width="1.2"><rect x="2" y="80" width="24" height="9" rx="1.5"/><rect x="26" y="80" width="24" height="9" rx="1.5"/><rect x="50" y="80" width="24" height="9" rx="1.5"/><rect x="74" y="80" width="24" height="9" rx="1.5"/><rect x="2" y="89" width="12" height="9" rx="1.5"/><rect x="14" y="89" width="24" height="9" rx="1.5"/><rect x="38" y="89" width="24" height="9" rx="1.5"/><rect x="62" y="89" width="24" height="9" rx="1.5"/><rect x="86" y="89" width="12" height="9" rx="1.5"/></g></svg>';
+    return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g fill="#b07a45" stroke="#6b4521" stroke-width="1.2"><rect x="4" y="78" width="11" height="20" rx="1"/><rect x="18" y="80" width="11" height="18" rx="1"/><rect x="32" y="78" width="11" height="20" rx="1"/><rect x="46" y="80" width="11" height="18" rx="1"/><rect x="60" y="78" width="11" height="20" rx="1"/><rect x="74" y="80" width="11" height="18" rx="1"/><rect x="88" y="78" width="9" height="20" rx="1"/></g><rect x="2" y="86" width="96" height="4" fill="#8a5a2e"/></svg>';
   }
   /* Der Ring sitzt auf dem Rand: Radius 45,5 von 50, Strich 7 — also
      42 bis 49, das äußerste Achtel des Bildes. */
@@ -2937,22 +2904,7 @@
     var leiste = '<div class="sp-tabs">' + tabs.map(function (t) {
       return '<button type="button" data-tab="' + t[0] + '" class="' + (reiter === t[0] ? "sp-an" : "") + '">' + t[1] + "</button>";
     }).join("") + "</div>";
-    /* FASSUNG 651 — XANDER: „wenn man … eine Kategorie anwählt, die
-       weiter hinten liegt, weil man dahin scrollen muss, Schutz und Laden
-       zum Beispiel, dann springt der Link wieder … hinter den Frame".
-       Die Reiterleiste behält ihre Stelle, und der gewählte Reiter steht
-       immer ganz im Bild. */
-    var altTabs = panel.querySelector(".sp-tabs"), altLinks = altTabs ? altTabs.scrollLeft : 0;
     panel.innerHTML = kopf + status + leiste + '<div class="sp-inhalt">' + inhalt() + "</div>";
-    var neuTabs = panel.querySelector(".sp-tabs"), an = neuTabs && neuTabs.querySelector(".sp-an");
-    if (neuTabs) {
-      neuTabs.scrollLeft = altLinks;
-      if (an) {
-        var l = an.offsetLeft - neuTabs.offsetLeft, r = l + an.offsetWidth;
-        if (l < neuTabs.scrollLeft + 6) neuTabs.scrollLeft = Math.max(0, l - 12);
-        else if (r > neuTabs.scrollLeft + neuTabs.clientWidth - 6) neuTabs.scrollLeft = r - neuTabs.clientWidth + 12;
-      }
-    }
   }
 
   function inhalt() {

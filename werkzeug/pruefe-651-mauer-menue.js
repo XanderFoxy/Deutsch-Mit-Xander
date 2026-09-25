@@ -1,20 +1,14 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 648: MEHR AUFGABENARTEN, AUSSPRACHE IM SPIEL
+   SONDE — FASSUNG 651: MAUER, MENÜ AUF ANDROID, CONTROLLER-EI, REITER
    ---------------------------------------------------------------------
-   XANDER (25.09.): „hier braucht auf jeden Fall noch mehr Spiele bei Art
-   alles Betonung … Artikel Trainer … Aussage Check ob etwas richtig oder
-   falsch ist … den Aussprache Trainer ganz klein mit einbringen … dafür
-   Punkte kriegt".
-   Server (Rollback-Test): spiel_aussprache_wort / _fertig (fremdes Wort
-   abgelehnt, jedes Wort einmal, +2/+3 ab 60 %); „Stimmt der Satz?" aus
-   Formfehlern, jeder „falsch"-Satz einzeln geprüft, halbe Punkte.
-   Hier der BROWSER:
-     · Knöpfe: Alles, Artikel, Fälle, Präpositionen, das/dass, ss/ß,
-       Betonung, Aussprache; „Weitere …" mit allen übrigen Arten
-     · ein Knopf / die Liste fragt die Aufgabe mit dieser Kategorie an
-     · Aussprache: Wort mit der sauberen Stimme des Aussprachekurses
-       (Fassung 651 – nie die eigenen Aufnahmen), Nachsprechen → Note → Punkte
+   XANDER (25.09.): „die Mauer verdeckt … unseren Lebensstand … und unser
+   kleines Fellmonster" · „die Anzeige des Aufklappmenüs wird im Android
+   immer noch abgeschnitten rechts … so ein kleines Ei mit dem Gaming
+   Controller … das Burger Menü eher oben drüber" · „ich habe immer noch
+   nicht das Tacho Menü" · „Schutz und Laden … springt der Link wieder
+   hinter den Frame".
+   Schmales Android-Telefon (360 px), echte Fingertipps.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -41,12 +35,14 @@ const sage = (gut, was, zusatz) => {
   }).listen(0);
 
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--autoplay-policy=no-user-gesture-required"] });
-  const pg = await br.newPage({ viewport: { width: 460, height: 900 } });
+  /* Ein Android-Telefon: Fingertipps statt Programm-Klicks — sonst merkt
+     die Sonde nicht, wenn etwas über dem Knopf liegt. */
+  const ctx = await br.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2.75,
+    userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36" });
+  const pg = await ctx.newPage();
   const konsolenFehler = [];
   pg.on("pageerror", (e) => konsolenFehler.push(String(e.message || e)));
   await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
-  const eigeneAufnahmen = [];
-  pg.on("request", (q) => { if (/\/aussprache\/[a-c][12]\/|data-aussprache-ton\.js/.test(q.url())) eigeneAufnahmen.push(q.url()); });
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF && window.DMA_SPIEL, { timeout: 25000 });
 
@@ -63,7 +59,7 @@ const sage = (gut, was, zusatz) => {
     window.DMA_PRUEF.neuZeichnen();
     const ichId = "00000000-0000-4000-8000-000000000000", beaId = "11111111-1111-4111-8111-111111111111";
     const cemId = "22222222-2222-4222-8222-222222222222";
-    window.LiveChat.spielIdVon = (id) => (id === "bea" ? beaId : id === "cem" ? cemId : "");
+    window.LiveChat.spielIdVon = (id) => (id === "bea" ? beaId : id === "cem" ? cemId : id === "ich" ? ichId : "");
     const ich = { id: ichId, name: "Alex", lp: 100, lp_max: 100, kaputt: false, schild: 0, mauer_lp: 0, punkte: 200,
                   pflaster: 3, traenke: 1, waffen: ["kartoffel", "zwille", "bogen", "laser", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "mg", "lasersalve"], mission: null, mana: 40, mana_max: 100, mitspielen: true,
                   level: 3, xp: 260, xp_stufe: 300 - 200, xp_naechste: 300, skill_frei: 1, skills: { zaehigkeit: 1 }, training: null,
@@ -108,11 +104,15 @@ const sage = (gut, was, zusatz) => {
       else if (name === "spiel_mission") { ich.mission = window.__mission; data = { ok: true, mission: window.__mission }; }
       else if (name === "spiel_schmieden") { ich.vorraete = Object.assign({}, ich.vorraete, { erz: ich.vorraete.erz - 1 }); ich.pflaster++; data = Object.assign({ ok: true, geschmiedet: args.p_was }, ich); }
       else if (name === "spiel_diagnose_senden") data = { ok: true };
-      else if (name === "spiel_aussprache_wort") data = { ok: true, wort: "Abend", silben: "A-bend", niveau: "A1" };
-      else if (name === "spiel_aussprache_fertig") data = Object.assign({}, ich, { ok: true, gewonnen: args.p_prozent >= 60 ? 2 : 0, prozent: args.p_prozent });
       else if (name === "spiel_kaufen") data = Object.assign({}, ich, { ok: true, gekauft: args.p_ding });
       else if (name === "spiel_aufgabe") data = { ok: true, id: 1000 + window.__rufe.length, frage: "Ich ___ nach Hause.", optionen: ["gehe", "gehst"], niveau: "A1" };
       else if (name === "spiel_antwort") data = Object.assign({}, ich, { ok: true, richtig: true, loesung: "gehe", gewonnen: 3, bonus: 0, mana_plus: 6, xp_plus: 6, level_vorher: 3, level: 4 });
+      else if (name === "spiel_zaubern") {
+        const R = { nebel: [25, 0, 0, 15], erdbeben: [35, 10, 25, 6], orkan: [50, 15, 0, 10] }[args.p_zauber];
+        ich.mana -= R[0];
+        data = { ok: true, zauber: args.p_zauber, schaden: R[1], abgewehrt: 0, mauer_riss: R[2], dauer: R[3], kaputt: false, lohn: 1,
+                 ziel: Object.assign({}, bea, { lp: bea.lp - R[1] }), ich_voll: Object.assign({}, ich) };
+      }
       else if (name === "spiel_treffer") data = { ok: true, zone: "koerper", schaden: 8, abgewehrt: 0, kaputt: false,
         ziel: Object.assign({}, bea, { lp: 42 }), ich: Object.assign({}, ich, { lp: 94 }), gegenwehr: 6,
         gegen_geschuetz: 4, gegen_tier: 2, tier: "fellmonster", lohn: 1, waffe: args.p_waffe };
@@ -135,67 +135,86 @@ const sage = (gut, was, zusatz) => {
   await pg.waitForTimeout(800);
 
   const tick = (ms) => pg.waitForTimeout(ms);
+  const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
+  const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
-  console.log("\nAUFGABENARTEN\n");
-  const arten = await pg.evaluate(async () => {
-    window.DMA_SPIEL.aufgabe();
-    await new Promise((r) => setTimeout(r, 300));
-    const p = document.getElementById("spPanel");
-    const knoepfe = [...p.querySelectorAll('.sp-arten [data-tu="kategorie"]')].map((b) => b.textContent);
-    const liste = [...p.querySelectorAll(".sp-arten-mehr option")].length;
-    window.__rufe = [];
-    const art = [...p.querySelectorAll('.sp-arten [data-tu="kategorie"]')].find((b) => b.textContent === "Artikel"); art.click();
-    await new Promise((r) => setTimeout(r, 200));
-    const r1 = (window.__rufe.find((x) => x.name === "spiel_aufgabe") || {}).args;
-    window.__rufe = [];
-    const sel = p.querySelector(".sp-arten-mehr"); sel.value = "relativsatz"; sel.dispatchEvent(new Event("change", { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 200));
-    const r2 = (window.__rufe.find((x) => x.name === "spiel_aufgabe") || {}).args;
-    return { knoepfe, liste, r1, r2 };
-  });
-  sage(["Alles", "Artikel", "Fälle", "Präpositionen", "das/dass", "ss/ß", "Betonung", "Aussprache"].every((k) => arten.knoepfe.indexOf(k) >= 0), "die wichtigsten Arten als Knöpfe", arten.knoepfe.join(" · "));
-  sage(arten.liste >= 25, "„Weitere …“ bietet alle übrigen Arten", arten.liste + " Einträge");
-  sage(arten.r1 && arten.r1.p_kategorie === "artikel" && arten.r2 && arten.r2.p_kategorie === "relativsatz", "Knopf und Liste holen die Aufgabe dieser Art", JSON.stringify([arten.r1, arten.r2]));
-  sage(arten.knoepfe.indexOf("Stimmt's?") >= 0, "„Stimmt's?“ ist freigegeben – alle Sätze einzeln geprüft", arten.knoepfe.join(" · "));
 
-  console.log("\nAUSSPRACHE IM SPIEL\n");
-  const sprech = await pg.evaluate(async () => {
-    /* Mikrofon und Vergleich nachgestellt – die echte Aufnahme braucht ein Gerät. */
-    window.AusspracheP = window.AusspracheP || {};
-    window.AusspracheP.mikrofonDa = () => true;
-    window.AusspracheP.aufnahmeStarten = (o) => Promise.resolve({ stoppen: () => Promise.resolve({ blob: new Blob(["x"]) }), abbrechen() {} , _o: o });
-    window.AusspracheP.tonLesen = () => Promise.resolve({ eigen: true });
-    window.AusspracheP.freieBewertungAusPuffern = (a, b) => Promise.resolve({ prozent: b && b.__sauber ? 77 : 0 });
-    /* Die Brücke gibt es wirklich (app.js); nur ihr Ergebnis wird hier nachgestellt. */
-    window.__brueckeEcht = typeof (window.DMA_AUSSPR_BRUECKE || {}).original === "function";
-    window.__gefragt = [];
-    window.DMA_AUSSPR_BRUECKE.original = (w) => { window.__gefragt.push(w); const k = new AudioContext(); const b = k.createBuffer(1, 4800, 48000); b.__sauber = true; return Promise.resolve({ puffer: b, art: "sprite" }); };
-    window.__rufe = []; window.DMA_TONLOG = [];
-    const p = document.getElementById("spPanel");
-    [...p.querySelectorAll('.sp-arten [data-tu="kategorie"]')].find((b) => b.textContent === "Aussprache").click();
-    let t0 = performance.now();
-    while (performance.now() - t0 < 4000 && !p.querySelector(".sp-sprech-wort:not(:empty)")?.textContent.match(/Abend/)) await new Promise((r) => setTimeout(r, 50));
-    const wort = (p.querySelector(".sp-sprech-wort") || {}).textContent;
-    const hoeren = p.querySelector('[data-tu="sprechhoeren"]');
-    const url = window.DMA_SPIEL.pruef.zustand().sprech.original ? window.DMA_SPIEL.pruef.zustand().sprech.original.art : "";
-    const h1 = Math.round(p.querySelector(".sp-erg-platz").getBoundingClientRect().height);
-    p.querySelector('[data-tu="sprechen"]').click();
-    t0 = performance.now();
-    while (performance.now() - t0 < 6000 && !(window.DMA_SPIEL.pruef.zustand().sprech || {}).ergebnis) await new Promise((r) => setTimeout(r, 50));
-    await new Promise((r) => setTimeout(r, 100));
-    const erg = (p.querySelector(".sp-erg-platz") || {}).textContent;
-    const h2 = Math.round(p.querySelector(".sp-erg-platz").getBoundingClientRect().height);
-    const ruf = window.__rufe.find((x) => x.name === "spiel_aussprache_fertig");
-    return { echt: window.__brueckeEcht, gefragt: window.__gefragt.join(","), wort, url, hoerenAn: hoeren && !hoeren.disabled, erg, ruf: ruf && ruf.args, h1, h2, ton: window.DMA_TONLOG.map((t) => t.name).join(",") };
+  console.log("\nDIE MAUER VERDECKT NICHTS MEHR\n");
+  const mauer = await pg.evaluate(() => {
+    const el = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]');
+    const k = el.querySelector(".lc-kreis").getBoundingClientRect();
+    const m = el.querySelector(".sp-mauer"), lp = el.querySelector(".sp-lp"), t = el.querySelector(".sp-tier");
+    const z = (e) => Number(getComputedStyle(e).zIndex);
+    /* Punkt auf dem Lebensbogen links unten (Winkel 135°) */
+    const a = 135 * Math.PI / 180, R = 45.5 / 100 * k.width;
+    const px = k.left + k.width / 2 + Math.cos(a) * R, py = k.top + k.height / 2 + Math.sin(a) * R;
+    /* Ringe und Mauer lassen Tipps durch (pointer-events: none) – für die
+       Messung kurz „anfassbar" machen, dann zählt nur die Stapelung. */
+    const st = document.createElement("style");
+    st.textContent = ".sp-lp, .sp-lp *, .sp-mauer, .sp-mauer * { pointer-events: auto !important; }";
+    document.head.appendChild(st);
+    const oben = document.elementFromPoint(px, py);
+    st.remove();
+    const mr = m.querySelector("rect").getBoundingClientRect();
+    return { zMauer: z(m), zRing: z(lp), zTier: z(t), ringOben: Boolean(oben && lp.contains(oben)), getroffen: oben ? oben.tagName + "." + (oben.getAttribute("class") || "") : "",
+             mauerOben: Math.round((mr.top - k.top) / k.height * 100) };
   });
-  sage(sprech.echt && sprech.gefragt === "Abend" && sprech.wort === "Abend" && sprech.url === "sprite" && sprech.hoerenAn, "das Wort kommt mit der sauberen Stimme des Aussprachekurses", JSON.stringify({ echt: sprech.echt, gefragt: sprech.gefragt, art: sprech.url }));
-  sage(!eigeneAufnahmen.length, "keine einzige eigene Aufnahme (aussprache/…mp3, data-aussprache-ton.js) wird geladen", eigeneAufnahmen.slice(0, 3).join(" "));
-  sage(sprech.ruf && sprech.ruf.p_wort === "Abend" && sprech.ruf.p_prozent === 77, "nach dem Nachsprechen geht die Note an den Server", JSON.stringify(sprech.ruf));
-  sage(/77 % ähnlich/.test(sprech.erg) && /\+2 Punkte/.test(sprech.erg), "Ergebnis mit Punkten im festen Platz", sprech.erg);
-  sage(sprech.h1 === sprech.h2 && sprech.h1 > 0, "der Ergebnisplatz springt nicht", sprech.h1 + " → " + sprech.h2);
+  sage(mauer.zMauer < mauer.zRing && mauer.zRing < mauer.zTier, "Reihenfolge: Mauer hinten, Ringe davor, Tiere ganz vorn", JSON.stringify(mauer));
+  sage(mauer.ringOben, "auf dem Lebensbogen liegt der Ring oben, nicht die Mauer", mauer.getroffen);
+  sage(mauer.mauerOben >= 85, "die Mauer beginnt erst im untersten Siebtel des Bildes", mauer.mauerOben + " %");
+
+  console.log("\nMENÜ AUF 360 PX\n");
+  for (const r of ["waffen", "mehr"]) {
+    await pg.evaluate((r) => { const S = window.DMA_SPIEL.pruef.zustand(); S.leisteZu = false; S.schnellMenue = true; S.schnellReiter = r; window.DMA_SPIEL.pruef.schnellZeichnen(true); }, r);
+    await tick(250);
+    const m = await pg.evaluate(() => {
+      const sm = document.querySelector(".sp-schnellmenue").getBoundingClientRect(), rahmen = document.querySelector(".sp-schnell").parentNode.getBoundingClientRect();
+      const knoepfe = [...document.querySelectorAll(".sp-schnellmenue button")];
+      const abgeschnitten = knoepfe.filter((b) => b.getBoundingClientRect().right > rahmen.right + 0.5).length;
+      return { rechts: Math.round(sm.right), rahmen: Math.round(rahmen.right), abgeschnitten };
+    });
+    sage(m.rechts <= m.rahmen && m.abgeschnitten === 0, "Reiter „" + r + "“: das Menü endet im Rahmen, kein Knopf abgeschnitten", JSON.stringify(m));
+  }
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await tick(150);
+  const reihe = await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-s-reihe > button")]; return { erster: b[0].className + "|" + b[0].dataset.s, burger: b.filter((x) => x.dataset.s === "klappe").length, n: b.filter((x) => x.dataset.s !== "reparieren").length }; });
+  sage(/sp-s-ei/.test(reihe.erster) && /\|klappe$/.test(reihe.erster) && reihe.burger === 1 && reihe.n <= 7, "ganz links das Controller-Ei – es ist der Menüknopf, kein zweiter Burger; höchstens 7 Knöpfe (ohne den Schraubenschlüssel, der nur bei Bedarf kommt)", JSON.stringify(reihe));
+  await tippe(".sp-schnell .sp-s-ei");
+  const ueber = await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"), e = document.querySelector(".sp-s-ei"); return m ? m.getBoundingClientRect().bottom <= e.getBoundingClientRect().top : false; });
+  sage(ueber, "das Ei öffnet das Menü darüber");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellReiter = "mehr"; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await tick(200);
+  await tippe('.sp-schnellmenue [data-s="ei"]');
+  const zu = await pg.evaluate(() => ({ knoepfe: document.querySelectorAll(".sp-s-reihe > button").length, menue: Boolean(document.querySelector(".sp-schnellmenue")), gemerkt: localStorage.getItem("dma_spiel_leiste_zu") }));
+  sage(zu.knoepfe === 1 && !zu.menue && zu.gemerkt === "1", "das Ei klappt die Leiste ein (nur das Ei bleibt) und merkt es sich", JSON.stringify(zu));
+  await tippe(".sp-schnell .sp-s-ei");
+  sage(await pg.evaluate(() => document.querySelectorAll(".sp-s-reihe > button").length > 5), "nochmal aufs Ei: die Leiste ist wieder da");
+
+  console.log("\nDAS TACHO-ZEICHEN\n");
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = P.slots()[0]; P.schnellZeichnen(true); });
+  await tick(150);
+  sage(await pg.evaluate(() => Boolean(document.querySelector('.sp-s-slot[data-n="0"] .sp-s-tacho')) && !document.querySelector('.sp-s-slot[data-n="1"] .sp-s-tacho')), "die angelegte Waffe trägt einen kleinen Tacho – nochmal tippen öffnet das Rad");
+  await tippe('.sp-schnell .sp-s-slot[data-n="0"]');
+  sage(await pg.evaluate(() => Boolean(document.querySelector(".sp-rad"))), "Tipp auf die Waffe mit dem Tacho öffnet das Waffenrad");
+  await pg.touchscreen.tap(30, 60); await tick(250);
+
+  console.log("\nGROSSES MENÜ: DER GEWÄHLTE REITER BLEIBT IM BILD\n");
+  await pg.evaluate(() => window.DMA_SPIEL.menue("start"));
+  await tick(300);
+  for (const tab of ["schutz", "rang", "duell"]) {
+    await pg.evaluate((t) => { const b = document.querySelector('#spPanel .sp-tabs [data-tab="' + t + '"]'); b.scrollIntoView({ inline: "center", block: "nearest" }); b.click(); }, tab);
+    await tick(250);
+    const r = await pg.evaluate((t) => {
+      const leiste = document.querySelector("#spPanel .sp-tabs"), b = leiste.querySelector('[data-tab="' + t + '"]');
+      const lr = leiste.getBoundingClientRect(), br = b.getBoundingClientRect();
+      return { an: b.classList.contains("sp-an"), drin: br.left >= lr.left - 0.5 && br.right <= lr.right + 0.5, l: Math.round(br.left), r: Math.round(br.right), ll: Math.round(lr.left), lrr: Math.round(lr.right) };
+    }, tab);
+    sage(r.an && r.drin, "Reiter „" + tab + "“ gewählt und ganz sichtbar", JSON.stringify(r));
+  }
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD });
 
   await br.close(); srv.close();
   if (konsolenFehler.length) { fehler++; console.log("  FEHL Seitenfehler: " + konsolenFehler.join(" | ")); }
-  console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n" : "\nFassung 648 im Browser: alles grün.\n");
+  console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n" : "\nFassung 651 auf dem Telefon: alles grün.\n");
   process.exit(fehler ? 1 : 0);
 })();
