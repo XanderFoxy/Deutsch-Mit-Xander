@@ -233,14 +233,11 @@ function tonMessen(name) {
     sage(trick.zauber.breit > trick.feld[0] * 0.2 && trick.zauber.breit < trick.feld[0] * 0.45,
       "und ist relativ zum Feld bemessen, nicht fest",
       trick.zauber.breit.toFixed(0) + " px bei " + trick.feld[0].toFixed(0) + " px Feldbreite");
-    /* Die Ohren wachsen, BEVOR die Person hochgezogen wird.
-       FASSUNG 672 (Funk 85): gezogen wird jetzt am ZIEL – „dort holt
-       er ihn als Kaninchen raus"; am Start wird der Hut ueber das Bild
-       gestuelpt. */
+    /* Die Ohren wachsen, BEVOR die Person hochgezogen wird. */
     const ohrenAb = trick.proben.find((p) => p.ohren > 0.5);
-    const hochAb = trick.proben.find((p) => p.deck > 0.5 && p.person[1] < p8.y - 12 && Math.abs(p.person[0] - p8.x) < 40);
-    sage(ohrenAb && hochAb && ohrenAb.t <= hochAb.t,
-      "erst wachsen die Hasenohren, dann wird gezogen (am Ziel, als Kaninchen)",
+    const hochAb = trick.proben.find((p) => p.deck > 0.5 && p.person[1] < p1.y - 12);
+    sage(ohrenAb && hochAb && ohrenAb.t < hochAb.t,
+      "erst wachsen die Hasenohren, dann wird gezogen",
       ohrenAb ? "Ohren ab " + ohrenAb.t + ", Zug ab " + (hochAb ? hochAb.t : "nie") : "keine Ohren");
     /* Die Person verschwindet, und zwar dort, wo der Hut ist. */
     const weg2 = trick.proben.find((p) => p.t > 0.3 && p.deck < 0.1);

@@ -29311,49 +29311,6 @@ code, pre {
 @media (prefers-reduced-motion: reduce) {
   .lc-zauberer, .lc-zauberhut, .lc-zauber-last, .lc-zauber-ohren { animation: none; }
 }
-/* FASSUNG 672 — Funk 85: „dort holt er ihn als Kaninchen raus". Der
-   Hasenkoerper haengt UNTER dem Bild (die Gesichtsmitte bleibt frei);
-   sichtbar wird er nur beim Herausziehen (Web-Animation in app.js). */
-.lc-zauber-hase {
-  position: absolute;
-  left: 50%;
-  top: 74%;
-  width: 92%;
-  height: 76%;
-  transform: translate(-50%, 0);
-  opacity: 0;
-  pointer-events: none;
-  z-index: -1;
-}
-.lc-zauber-hase > svg { width: 100%; height: 100%; overflow: visible; }
-/* Funken, wo der Zauberstab auf den Hut klopft. */
-.lc-zauber-funken {
-  position: absolute;
-  width: var(--gross, 70px);
-  height: var(--gross, 70px);
-  margin: calc(var(--gross, 70px) * -.5) 0 0 calc(var(--gross, 70px) * -.5);
-  pointer-events: none;
-  z-index: 12;
-}
-.lc-zauber-funken > i {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 12%;
-  height: 12%;
-  margin: -6% 0 0 -6%;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff 0%, #fff6b0 40%, rgba(255, 214, 90, 0) 72%);
-  box-shadow: 0 0 6px 2px rgba(255, 230, 140, .8);
-  opacity: 0;
-  animation: lcZauberFunken .6s ease-out var(--spaet, 0ms) both;
-}
-@keyframes lcZauberFunken {
-  0%   { opacity: 0; transform: rotate(var(--wo, 0deg)) translateX(0) scale(.4); }
-  15%  { opacity: 1; }
-  100% { opacity: 0; transform: rotate(var(--wo, 0deg)) translateX(calc(var(--gross, 70px) * .55)) scale(1); }
-}
-@media (prefers-reduced-motion: reduce) { .lc-zauber-funken > i { animation-duration: .01s; } }
 
 /* =====================================================================
    RUNDE 87 — STADT · LAND · FLUSS: DAS LAUFENDE ALPHABET

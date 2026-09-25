@@ -202,59 +202,6 @@ const sage = (gut, text, dazu) => {
     sicht.map((s) => s.toFixed(1)).join(" "));
 
   /* =================================================================
-     2b. FASSUNG 672 — FUNK 85: UEBERSTUELPEN, KLOPFEN, LEER ZEIGEN,
-         ALS KANINCHEN HERAUS
-     XANDER: „mit dem Zylinder … umzingelt also dass … er praktisch
-     unter dem Zylinder ist da mit deinem Zauberstab da drauf klopfst
-     … den leeren Zylinder mit der Öffnung zum Publikum … zeigst …
-     und dort holt [er] ihn als Kaninchen raus".
-     Die Zeiten im Code sind Anteile der REISEzeit; der Faktor zur
-     Animationsdauer steht im dritten Schluesselbild des Huts (0,17).
-     ================================================================= */
-  console.log("\nFUNK 85 — UEBERSTUELPEN, KLOPFEN, LEER ZEIGEN, KANINCHEN\n");
-  const faktor = await pg.evaluate(() => {
-    const a = document.querySelector(".lc-zauberhut").getAnimations()[0];
-    return a.effect.getKeyframes()[2].offset / 0.17;
-  });
-  const bei2 = async (t) => {
-    const m = await bei(t * faktor);
-    const mehr = await pg.evaluate(() => {
-      const hut = document.querySelector(".lc-zauberhut"), r = hut.getBoundingClientRect();
-      const innen = document.querySelector(".lc-zauberhut-innen");
-      const hase = document.querySelector(".lc-zauber-hase");
-      hase.getAnimations().forEach((an) => { try { an.pause(); } catch (e) {} });
-      const tr = getComputedStyle(hut).transform, z = tr && tr !== "none" ? tr.slice(tr.indexOf("(") + 1, -1).split(",").map(Number) : [1, 0];
-      return { hutBreit: r.width, hutDreh: Math.round(Math.atan2(z[1], z[0]) * 180 / Math.PI),
-               innen: innen ? Number(getComputedStyle(innen).opacity) : -1, hase: Number(getComputedStyle(hase).opacity) };
-    });
-    return Object.assign(m, mehr);
-  };
-  /* Die Kinder (Oeffnung, Hasenkoerper) muessen mit angehalten werden. */
-  await pg.evaluate(() => { window.__teile = [".lc-zauberhut-innen", ".lc-zauber-hase"]; });
-  const setzeKinder = (A) => pg.evaluate((A) => window.__teile.forEach((w) => document.querySelectorAll(w).forEach((el) =>
-    el.getAnimations().forEach((an) => { try { an.pause(); an.currentTime = A * (an.effect.getTiming().duration || 0); } catch (e) {} }))), A);
-  await setzeKinder(0.36 * faktor);
-  const zu = await bei2(0.36);
-  sage(zu.hut && zu.p1 && Math.hypot(zu.hut.x - zu.p1.x, zu.hut.y - zu.p1.y) < zu.p1.b * 0.4 && zu.hutBreit > zu.p1.b * 1.4 && zu.last.sicht < 0.1,
-    "der Zylinder ist UEBER das Bild gestuelpt – breiter als das Bild, die Person darunter verschwunden",
-    "Hut " + Math.round(zu.hutBreit) + " px breit, Bild " + Math.round(zu.p1.b) + " px, Person " + zu.last.sicht);
-  const stab = await pg.evaluate(() => Boolean(document.querySelector(".lc-zauberer-arm-rechts .lc-zauberstab")));
-  sage(stab && Math.abs(zu.armR) > 40, "er hat einen Zauberstab in der rechten Hand und klopft damit oben auf den Hut", "Arm " + zu.armR + " Grad");
-  const funken = await pg.evaluate(() => document.querySelectorAll(".lc-zauber-funken").length);
-  sage(funken >= 3, "wo der Stab aufschlaegt, sprühen Funken (zweimal am Start, einmal am Ziel)", funken + " Funkenstellen");
-  await setzeKinder(0.57 * faktor);
-  const zeigen = await bei2(0.57);
-  sage(Math.abs(zeigen.hutDreh) > 150 && zeigen.innen > 0.9 && zeigen.last.sicht < 0.1,
-    "danach zeigt er den Hut kopfueber, die Oeffnung zum Publikum – er ist leer", "Drehung " + zeigen.hutDreh + " Grad, Oeffnung " + zeigen.innen);
-  await setzeKinder(0.87 * faktor);
-  const hase = await bei2(0.87);
-  sage(hase.hase > 0.8 && hase.last.sicht > 0.8 && hase.p8 && Math.abs(hase.last.x - hase.p8.x) < hase.p8.b * 0.4,
-    "am Ziel zieht er die Person heraus – als Kaninchen, mit Hasenkoerper", "Hase " + hase.hase + ", Person " + hase.last.sicht);
-  await setzeKinder(0.99 * faktor);
-  const ende = await bei2(0.99);
-  sage(ende.hase < 0.1, "und am Ende sitzt wieder nur das Bild da, ohne Hasenkoerper", "Hase " + ende.hase);
-
-  /* =================================================================
      3. DIE AERMEL SIND VOM UMHANG ZU UNTERSCHEIDEN
      ================================================================= */
   console.log("\nUND MAN SIEHT DIE ARME AUCH\n");

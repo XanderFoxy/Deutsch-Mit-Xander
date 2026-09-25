@@ -47749,12 +47749,6 @@
         + '<path d="M91.6 80.6 L104.4 80.6" stroke="#f2efe6" stroke-width="4.2"'
         + ' stroke-linecap="round"/>'
         + '<circle cx="98" cy="88" r="6.4" fill="#e8c39a" stroke="#c39a72" stroke-width="1.4"/>'
-        /* FASSUNG 672 — der ZAUBERSTAB (Funk 85: „mit deinem Zauberstab
-           da drauf klopfst"). Er liegt in der Verlaengerung des Arms,
-           dreht also mit der Schulter und zeigt dorthin, wohin die
-           Hand zeigt. */
-        + '<path class="lc-zauberstab" d="M99 90 L110 110" stroke="#16181d" stroke-width="3.4" stroke-linecap="round"/>'
-        + '<path d="M107.6 105.6 L110 110" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round"/>'
         + "</g>"
         /* Und der LINKE, der bis Runde 88 ein starrer Strich war.
            XANDER: „mit der anderen Hand das Profilbild packen" und
@@ -47785,16 +47779,8 @@
         + '<ellipse class="lc-zauberhut-loch" cx="50" cy="9" rx="20" ry="6" fill="#07080c"/>'
         + '<path d="M30 9 v34 q0 6 20 6 q20 0 20 -6 V9 Z" fill="#1b1d24"/>'
         + '<rect x="30" y="30" width="40" height="9" fill="#8f2033"/>'
-        /* FASSUNG 672 — die Krempe war mehr als doppelt so breit wie der
-           Zylinder (92 zu 40); ueber ein Bild gestuelpt ragte sie ueber
-           den Bildschirmrand. Ein echter Zylinder hat etwa das
-           Anderthalbfache: jetzt 66 zu 40. */
-        + '<ellipse cx="50" cy="50" rx="33" ry="9" fill="#1b1d24"/>'
-        + '<ellipse cx="50" cy="48" rx="33" ry="8" fill="#2a2d36"/>'
-        /* FASSUNG 672 — die Oeffnung an der Krempe. Man sieht sie nur,
-           wenn er den Hut kopfueber dem Publikum zeigt: „den leeren
-           Zylinder mit der Oeffnung zum Publikum". */
-        + '<ellipse class="lc-zauberhut-innen" cx="50" cy="48" rx="18" ry="5.5" fill="#07080c" opacity="0"/>'
+        + '<ellipse cx="50" cy="50" rx="46" ry="11" fill="#1b1d24"/>'
+        + '<ellipse cx="50" cy="48" rx="46" ry="10" fill="#2a2d36"/>'
         + "</svg>";
       reihe.appendChild(hut);
       weg.push(hut);
@@ -47820,22 +47806,6 @@
         + '<ellipse cx="39" cy="27" rx="3" ry="16" fill="#e8a6ac" transform="rotate(10 39 27)"/>'
         + "</svg>";
       last.appendChild(ohren);
-      /* FASSUNG 672 — „dort holt er ihn als Kaninchen raus": unter dem
-         Bild ein weisser Hasenkoerper mit Pfoten und Stummelschwanz.
-         Er haengt am Bild und kommt nur beim Herausziehen zum
-         Vorschein; die Gesichtsmitte bleibt frei. */
-      const hase = document.createElement("i");
-      hase.className = "lc-zauber-hase";
-      hase.innerHTML =
-        '<svg viewBox="0 0 60 50">'
-        + '<ellipse cx="30" cy="22" rx="19" ry="17" fill="#f7f4ec" stroke="#cbc4b4" stroke-width="1.4"/>'
-        + '<circle cx="50" cy="30" r="6" fill="#ffffff" stroke="#cbc4b4" stroke-width="1.2"/>'
-        + '<ellipse cx="20" cy="41" rx="8" ry="4.2" fill="#f7f4ec" stroke="#cbc4b4" stroke-width="1.2"/>'
-        + '<ellipse cx="40" cy="41" rx="8" ry="4.2" fill="#f7f4ec" stroke="#cbc4b4" stroke-width="1.2"/>'
-        + '<ellipse cx="22" cy="14" rx="4" ry="6" fill="#f7f4ec" stroke="#cbc4b4" stroke-width="1.1" transform="rotate(-25 22 14)"/>'
-        + '<ellipse cx="38" cy="14" rx="4" ry="6" fill="#f7f4ec" stroke="#cbc4b4" stroke-width="1.1" transform="rotate(25 38 14)"/>'
-        + "</svg>";
-      last.appendChild(hase);
       reihe.appendChild(last);
       weg.push(last);
       setzen(last, 0, 0);
@@ -47857,253 +47827,194 @@
       const beiZ = (t) => Math.max(0, Math.min(1, (t * hin) / dauer));
       const wo = (q, extra) => "translate(" + q.x.toFixed(1) + "px, " + q.y.toFixed(1)
         + "px) translate(-50%, -50%)" + (extra || "");
-      /* =============================================================
-         FASSUNG 672 — DER TRICK, WIE XANDER IHN BESCHREIBT (Funk 85)
-         -------------------------------------------------------------
-         XANDER: „dass er mit beiden Händen den Zylinder auf dem Platz
-         stellt wo derjenige losreisen will ihn dann mit dem Zylinder
-         … umzingelt also dass … er praktisch unter dem Zylinder ist da
-         mit deinem Zauberstab da drauf klopfst deine Zylinder wieder
-         aufnimmst den Publikum den leeren Zylinder mit der Öffnung zum
-         Publikum … zeigst … dann stellst Du ihn mit beiden Händen
-         danach wieder langsam auf den Zielplatz und dort holt [er] ihn
-         als Kaninchen raus … so wie ich das schon mehrmals beschrieben
-         habe du das aber immer noch nicht umgesetzt hast".
-         Bis Fassung 671 wurde die Person an den Ohren HOCHGEZOGEN und
-         in einen offenen Hut geworfen. Jetzt, Anteil der Reisezeit:
-           0,00–0,17  erscheinen, Hut vom Kopf in die Hand
-           0,17–0,29  mit BEIDEN Haenden ueber das Bild stuelpen
-           0,31–0,42  mit dem Zauberstab zweimal draufklopfen, Funken
-           0,42–0,47  Hut anheben: der Platz ist leer, Rauch
-           0,47–0,64  kopfueber drehen, die Oeffnung zum Publikum: leer
-           0,64–0,75  mit beiden Haenden LANGSAM auf den Zielplatz
-           0,75–0,79  noch einmal draufklopfen
-           0,79–0,92  an den Ohren herausziehen – als Kaninchen
-           0,92–1,00  Hut zurueck auf den Kopf, verbeugen, weg
-         Der Hut deckt das Bild ganz zu: sein Zylinderteil ist so gross
-         wie das Bild (kDeck), nur fuer diesen Abschnitt.
-         ============================================================= */
-      const amPlatz = { x: start.x, y: start.y + versatzZ0 };
-      /* Der Zylinderteil wird 0,82 Bilder breit; das Bild schrumpft
-         unter dem Hut ein wenig mit (Zauberei), so bleibt die Krempe
-         (1,35 Bilder) auf dem Feld. */
-      const kDeck = Math.max(1, (d * 0.82) / (hutGr * 0.40));
-      /* Zum Vorzeigen haelt er den Hut gross neben sich, nicht hinter
-         dem Arm. */
-      const zeigen = { x: zMitte.x + zBreit * 0.66, y: zMitte.y - zHoch * 0.08 };
-      /* Der Zylinderteil reicht in der Zeichnung von y 9 bis 49 (von
-         80): seine Mitte liegt 0,1375 Huthoehen ueber der Hutmitte.
-         Damit sitzt er genau auf dem Bild. */
-      const deckt = { x: amPlatz.x, y: amPlatz.y + 0.11 * hutGr * kDeck };
-      const ueberDeck = { x: amPlatz.x, y: deckt.y - d * 0.95 };
-      const deckOben = { x: amPlatz.x, y: deckt.y - 0.31 * hutGr * kDeck };
-      const zielOben = { x: amZiel.x, y: amZiel.y - hutGr * 0.34 };
-      const hutMundZiel = { x: amZiel.x, y: amZiel.y - hutGr * 0.30 };
-      const sk = (a, b) => " scale(" + (kDeck * a).toFixed(3) + "," + (kDeck * (b == null ? a : b)).toFixed(3) + ")";
+      /* Der Hut: Kopf -> Hand -> ueber den Startplatz -> kippen ->
+         Zielplatz -> zurueck auf den Kopf. */
+      /* RUNDE 88 — DIE HUTBAHN FOLGT JETZT SEINEM SATZ.
+         „an den Platz desjenigen stellen" heisst ABSTELLEN, nicht
+         darueber halten — der Hut steht von 0,26 bis 0,46 auf dem
+         Startplatz und von 0,70 bis 0,88 auf dem Zielplatz. */
       try {
         hut.animate([
           { transform: wo(aufKopf, " scale(.92)"), opacity: 0, offset: 0, easing: "ease-in-out" },
           { transform: wo(aufKopf, " scale(.92)"), opacity: 1, offset: beiZ(0.10), easing: "ease-in-out" },
-          { transform: wo(inHand),                 opacity: 1, offset: beiZ(0.17), easing: "ease-in-out" },
-          /* Mit beiden Haenden hoch ueber das Bild … */
-          { transform: wo(ueberDeck, sk(1)),       opacity: 1, offset: beiZ(0.23), easing: "ease-in" },
-          /* … und darueber gestuelpt. */
-          { transform: wo(deckt, sk(1)),           opacity: 1, offset: beiZ(0.29), easing: "ease-out" },
-          { transform: wo(deckt, sk(1.04, 0.95)),  opacity: 1, offset: beiZ(0.31), easing: "ease-out" },
-          { transform: wo(deckt, sk(1)),           opacity: 1, offset: beiZ(0.33), easing: "ease-in-out" },
-          /* Klopf — klopf. */
-          { transform: wo(deckt, sk(1.03, 0.96)),  opacity: 1, offset: beiZ(0.35), easing: "ease-out" },
-          { transform: wo(deckt, sk(1)),           opacity: 1, offset: beiZ(0.37), easing: "ease-in-out" },
-          { transform: wo(deckt, sk(1.03, 0.96)),  opacity: 1, offset: beiZ(0.39), easing: "ease-out" },
-          { transform: wo(deckt, sk(1)),           opacity: 1, offset: beiZ(0.42), easing: "ease-in" },
-          /* Anheben: der Platz darunter ist leer. */
-          { transform: wo(ueberDeck, sk(1)),       opacity: 1, offset: beiZ(0.47), easing: "ease-in-out" },
-          /* Kopfueber, Oeffnung zum Publikum. */
-          { transform: wo(zeigen, " rotate(165deg) scale(1.6)"), opacity: 1, offset: beiZ(0.55), easing: "ease-in-out" },
-          { transform: wo(zeigen, " rotate(172deg) scale(1.6)"), opacity: 1, offset: beiZ(0.60), easing: "ease-in-out" },
-          { transform: wo(inHand, " rotate(0deg) scale(1)"),     opacity: 1, offset: beiZ(0.65), easing: "ease-in-out" },
-          /* Langsam, mit beiden Haenden, auf den Zielplatz. */
-          { transform: wo(amZiel),                 opacity: 1, offset: beiZ(0.75), easing: "ease-out" },
-          { transform: wo(amZiel, " scale(1.04,.95)"), opacity: 1, offset: beiZ(0.77), easing: "ease-out" },
-          { transform: wo(amZiel),                 opacity: 1, offset: beiZ(0.79), easing: "ease-in-out" },
-          { transform: wo(amZiel),                 opacity: 1, offset: beiZ(0.90), easing: "ease-in-out" },
+          { transform: wo(inHand),                 opacity: 1, offset: beiZ(0.18), easing: "ease-in-out" },
+          /* Mit beiden Haenden auf den Platz des Reisenden gestellt. */
+          { transform: wo(aufAb),                  opacity: 1, offset: beiZ(0.26), easing: "ease-in-out" },
+          { transform: wo(aufAb),                  opacity: 1, offset: beiZ(0.40), easing: "ease-in-out" },
+          /* Person faellt hinein — der Hut wippt vom Gewicht. */
+          { transform: wo(aufAb, " rotate(-5deg)"), opacity: 1, offset: beiZ(0.46), easing: "ease-in-out" },
+          /* Dem Publikum zeigen: er kippt die Oeffnung nach vorn. */
+          { transform: wo(inHand, " rotate(-38deg) scale(1.08)"), opacity: 1, offset: beiZ(0.56), easing: "ease-in-out" },
+          { transform: wo(inHand, " rotate(-38deg) scale(1.08)"), opacity: 1, offset: beiZ(0.62), easing: "ease-in-out" },
+          /* Und mit beiden Haenden abstellen, wo die Reise hingeht. */
+          { transform: wo(amZiel),                 opacity: 1, offset: beiZ(0.72), easing: "ease-in-out" },
+          { transform: wo(amZiel),                 opacity: 1, offset: beiZ(0.88), easing: "ease-in-out" },
           { transform: wo(aufKopf, " scale(.92)"), opacity: 1, offset: beiZ(0.97), easing: "ease-in-out" },
           { transform: wo(aufKopf, " scale(.92)"), opacity: 0, offset: 1, easing: "ease-in-out" }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
-      try {
-        const innen = hut.querySelector(".lc-zauberhut-innen");
-        if (innen) innen.animate([
-          { opacity: 0, offset: 0 }, { opacity: 0, offset: beiZ(0.50) },
-          { opacity: 1, offset: beiZ(0.54) }, { opacity: 1, offset: beiZ(0.61) },
-          { opacity: 0, offset: beiZ(0.65) }, { opacity: 0, offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "forwards" });
-      } catch (e) {}
 
-      /* Die Arme zeigen gerechnet dorthin, wo die Hand sein muss (wie
-         seit Runde 88): Schulter -> Ziel, begrenzt wie ein Gelenk. */
+      /* =============================================================
+         RUNDE 88 — BEIDE ARME, UND SIE ZEIGEN WIRKLICH HIN
+         -------------------------------------------------------------
+         Die Arme bekommen keine ausgedachten Winkel mehr, sondern
+         gerechnete: fuer jeden Zeitpunkt wird der Winkel von der
+         Schulter zu dem Punkt bestimmt, auf den die Hand zeigen soll
+         (Hut oder Profilbild), und davon der RUHEWINKEL des Arms
+         abgezogen. Nur so zeigt die Hand auch dann noch hin, wenn der
+         Platz ganz links oder ganz rechts liegt — mit festen Werten
+         zeigte der Arm einmal hin und einmal daneben.
+         DIE GRENZEN SIND NICHT SYMMETRISCH, und das ist der Punkt.
+         Ein Schultergelenk laesst den Arm nach AUSSEN und nach OBEN
+         weit schwingen, nach INNEN aber kaum — wer den rechten Arm
+         quer vor den Bauch dreht, hat keinen Arm mehr, sondern eine
+         Hand auf der Brust. Genau das war beim ersten Versuch zu
+         sehen: mit einer Grenze von 75 Grad in beide Richtungen
+         klappten beide Arme vor den Umhang, und der Zauberer sah aus
+         wie ohne Arme.
+         Der rechte Arm ruht bei 60,6 Grad (nach rechts unten); gerade
+         nach unten sind 90 Grad, also +29. Er darf deshalb von -85
+         (weit nach oben aussen) bis +32 (knapp ueber senkrecht).
+         Der linke ruht spiegelbildlich bei 113,4 Grad und darf von
+         -32 bis +85. Innerhalb dieser Grenzen zeigt die Hand so weit
+         zum Hut, wie eine Schulter es zulaesst.
+         ============================================================= */
       const zPunkt = (sx, sy) => ({ x: zMitte.x + (sx / 100 - 0.5) * zBreit,
                                     y: zMitte.y + (sy / 122 - 0.5) * zHoch });
       const schulterR = zPunkt(80, 56);
       const schulterL = zPunkt(20, 56);
+      /* Die Ruhelage: vom Schulterpunkt zur Hand, so wie gezeichnet. */
       const ruheR = Math.atan2(88 - 56, 98 - 80) * 180 / Math.PI;
       const ruheL = Math.atan2(86 - 56, 7 - 20) * 180 / Math.PI;
       const zeigt = (schulter, ruhe, ziel, min, max) => {
         const w = Math.atan2(ziel.y - schulter.y, ziel.x - schulter.x) * 180 / Math.PI - ruhe;
         return Math.max(min, Math.min(max, w)).toFixed(1);
       };
-      const armBild = (schulter, ruhe, min, max) => (t, ziel, dazu) => ({
-        transform: "rotate(" + (ziel ? (Number(zeigt(schulter, ruhe, ziel, min, max)) + (dazu || 0)).toFixed(1) : "0") + "deg)",
+      const armBild = (schulter, ruhe, min, max) => (t, ziel) => ({
+        transform: "rotate(" + (ziel ? zeigt(schulter, ruhe, ziel, min, max) : "0") + "deg)",
         offset: beiZ(t), easing: "ease-in-out"
       });
+      const amPlatzZ = { x: start.x, y: start.y + versatzZ0 };
       const amZielZ = { x: ende.x, y: ende.y + versatzZ1 };
-      const ausZiel = { x: ende.x, y: ende.y + versatzZ1 - d * 0.82 };
-      /* Mit beiden Haenden heisst: jede Hand fasst die Krempe an IHRER
-         Seite – die rechte rechts, die linke links. */
-      const krempe = (q, k, seite) => ({ x: q.x + seite * hutGr * (k || 1) * 0.40, y: q.y + hutGr * (k || 1) * 0.12 });
-      const aufZiel = { x: ende.x, y: ende.y + versatzZ1 };
-      /* Der Zauberstab holt aus (−9 Grad) und schlaegt auf (0). */
       try {
         const armR = zauber.querySelector(".lc-zauberer-arm-rechts");
         const bR = armBild(schulterR, ruheR, -85, 32);
         if (armR) armR.animate([
           bR(0, null),
+          /* Er nimmt den Hut vom Kopf … */
           bR(0.14, aufKopf),
-          bR(0.17, inHand),
-          bR(0.23, krempe(ueberDeck, kDeck, 1)),
-          bR(0.29, krempe(deckt, kDeck, 1)),
-          bR(0.32, deckOben, -9),
-          bR(0.35, deckOben),
-          bR(0.37, deckOben, -9),
-          bR(0.39, deckOben),
-          bR(0.42, deckOben, -6),
-          bR(0.47, krempe(ueberDeck, kDeck, 1)),
-          bR(0.55, zeigen),
-          bR(0.61, zeigen),
-          bR(0.71, krempe(amZiel, 1, 1)),
-          bR(0.75, krempe(amZiel, 1, 1)),
-          bR(0.76, zielOben, -9),
-          bR(0.77, zielOben),
-          /* Er greift die Ohren und zieht. */
-          bR(0.81, hutMundZiel),
-          bR(0.88, ausZiel),
-          bR(0.95, aufKopf),
+          /* … und stellt ihn MIT BEIDEN HAENDEN auf den Startplatz. */
+          bR(0.26, aufAb),
+          bR(0.40, aufAb),
+          /* Dann hebt er ihn und zeigt dem Publikum, dass er leer ist. */
+          bR(0.56, inHand),
+          bR(0.62, inHand),
+          /* Und stellt ihn, wieder mit beiden Haenden, ans Ziel. */
+          bR(0.72, amZiel),
+          /* Dort zieht er die Person heraus. */
+          bR(0.84, amZielZ),
+          bR(0.94, aufKopf),
           bR(1, null)
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
       try {
         const armL = zauber.querySelector(".lc-zauberer-arm-links");
         const bL = armBild(schulterL, ruheL, -32, 85);
-        const publikum = { x: zMitte.x - zBreit * 1.2, y: zMitte.y + zHoch * 0.35 };
         if (armL) armL.animate([
           bL(0, null),
-          bL(0.17, null),
-          /* „mit beiden Händen": die linke fasst mit an. */
-          bL(0.23, krempe(ueberDeck, kDeck, -1)),
-          bL(0.29, krempe(deckt, kDeck, -1)),
-          /* Beim Klopfen haelt sie still. */
-          bL(0.32, null),
-          bL(0.42, null),
-          bL(0.47, krempe(ueberDeck, kDeck, -1)),
-          /* Beim Vorzeigen weist sie zum Publikum. */
-          bL(0.55, publikum),
-          bL(0.61, publikum),
-          bL(0.66, krempe(amZiel, 1, -1)),
-          bL(0.75, krempe(amZiel, 1, -1)),
-          /* Sie haelt den Hut fest, waehrend die rechte klopft. */
-          bL(0.80, krempe(amZiel, 1, -1)),
-          bL(0.84, null),
+          bL(0.14, null),
+          /* „mit beiden Haenden … stellen" — also fasst er mit an. */
+          bL(0.26, aufAb),
+          /* „mit der ANDEREN Hand das Profilbild packen und in den
+             Zylinder rein tun": waehrend die rechte den Hut haelt,
+             greift die linke die Person an den Ohren. */
+          bL(0.34, amPlatzZ),
+          bL(0.44, aufAb),
+          /* Beim Vorzeigen haelt die rechte allein; die linke weist
+             zum Publikum, wie es ein Zauberer tut. */
+          bL(0.58, null),
+          /* Und wieder mit beiden Haenden abstellen. */
+          bL(0.72, amZiel),
+          bL(0.86, amZiel),
           bL(1, null)
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
-      /* Die Person: sichtbar, dann unter dem Hut (der liegt darueber),
-         weg, und am Ziel an den Ohren wieder heraus. */
+      /* Die Person: am Platz -> an den Ohren hoch -> in den Hut ->
+         weg -> am Ziel wieder heraus -> auf den Platz. */
+      const amPlatz = { x: start.x, y: start.y + versatzZ0 };
+      const ausZiel = { x: ende.x, y: ende.y + versatzZ1 - d * 0.82 };
+      const aufZiel = { x: ende.x, y: ende.y + versatzZ1 };
+      /* RUNDE 88 — der Weg der Person folgt jetzt dem Hut, und der
+         steht ab 0,26 auf dem Platz. „in den Zylinder rein tun"
+         heisst also: hoch an den Ohren, ueber die Oeffnung, und
+         hinein FALLEN — nicht wie vorher nach oben wegziehen, wo gar
+         kein Hut mehr war. Die Oeffnung liegt bei „aufAb.y" minus
+         drei Zehntel der Huthoehe; dort verschwindet das Bild. */
+      const hutMund = { x: aufAb.x, y: aufAb.y - hutGr * 0.30 };
       try {
         last.animate([
           { transform: wo(amPlatz, " scale(1)"), opacity: 0, offset: 0, easing: "ease-in-out" },
           { transform: wo(amPlatz, " scale(1)"), opacity: 1, offset: beiZ(0.17), easing: "ease-in-out" },
-          { transform: wo(amPlatz, " scale(1)"), opacity: 1, offset: beiZ(0.25), easing: "ease-in-out" },
-          { transform: wo(amPlatz, " scale(.8)"), opacity: 1, offset: beiZ(0.29), easing: "ease-in-out" },
-          { transform: wo(amPlatz, " scale(.7)"), opacity: 0, offset: beiZ(0.31) },
-          { transform: wo(hutMundZiel, " scale(.3)"), opacity: 0, offset: beiZ(0.75), easing: "ease-out" },
-          { transform: wo(hutMundZiel, " scale(.35)"), opacity: .9, offset: beiZ(0.78), easing: "ease-out" },
-          { transform: wo(hutMundZiel, " scale(.4)"), opacity: 1, offset: beiZ(0.79), easing: "ease-out" },
-          { transform: wo(hutMundZiel, " scale(.6)"), opacity: 1, offset: beiZ(0.81), easing: "ease-out" },
-          /* Zappelnd an den Ohren heraus. */
-          { transform: wo(ausZiel, " scale(.95) rotate(-5deg)"), opacity: 1, offset: beiZ(0.86), easing: "ease-in-out" },
-          { transform: wo(ausZiel, " scale(.95) rotate(5deg)"), opacity: 1, offset: beiZ(0.89), easing: "ease-in-out" },
+          /* Gezogen: erst zappelt es, dann geht es hoch. */
+          { transform: wo({ x: amPlatz.x, y: amPlatz.y - d * 0.10 }, " scale(1) rotate(-5deg)"),
+            opacity: 1, offset: beiZ(0.30), easing: "ease-in-out" },
+          { transform: wo({ x: amPlatz.x, y: amPlatz.y - d * 0.20 }, " scale(1) rotate(5deg)"),
+            opacity: 1, offset: beiZ(0.34), easing: "ease-in-out" },
+          { transform: wo(ueberAb, " scale(.9)"), opacity: 1, offset: beiZ(0.39), easing: "ease-in-out" },
+          /* In den Hut: klein werden und verschwinden. */
+          { transform: wo(hutMund, " scale(.28)"), opacity: 0, offset: beiZ(0.45) },
+          { transform: wo(amZiel, " scale(.28)"), opacity: 0, offset: beiZ(0.76), easing: "ease-in-out" },
+          /* Und heraus. */
+          { transform: wo(ausZiel, " scale(.95)"), opacity: 1, offset: beiZ(0.86), easing: "ease-in-out" },
           { transform: wo(aufZiel, " scale(1)"), opacity: 1, offset: beiZ(0.95), easing: "ease-in-out" },
           { transform: wo(aufZiel, " scale(1)"), opacity: 1, offset: 1, easing: "ease-in-out" }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
-      /* Hasenohren und Hasenkoerper nur beim Herausziehen. */
+      /* Die Ohren: sie wachsen, kurz bevor er zupackt, und sind
+         wieder weg, sobald die Person steht. */
       try {
         ohren.animate([
-          { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: 0 },
-          /* Erst lugen die Ohren aus dem Hut, dann zieht er daran. */
-          { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: beiZ(0.75) },
-          { transform: "translate(-50%, 0) scaleY(1)", opacity: 1, offset: beiZ(0.78), easing: "ease-out" },
-          { transform: "translate(-50%, 0) scaleY(1)", opacity: 1, offset: beiZ(0.91), easing: "ease-in-out" },
-          { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: beiZ(0.96) },
-          { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: 1 }
-        ], { duration: dauer, easing: "linear", fill: "forwards" });
-        hase.animate([
-          { opacity: 0, transform: "translate(-50%, -20%) scale(.6)", offset: 0 },
-          { opacity: 0, transform: "translate(-50%, -20%) scale(.6)", offset: beiZ(0.81) },
-          { opacity: 1, transform: "translate(-50%, 0) scale(1)", offset: beiZ(0.85), easing: "ease-out" },
-          { opacity: 1, transform: "translate(-50%, 0) scale(1)", offset: beiZ(0.91) },
-          { opacity: 0, transform: "translate(-50%, -30%) scale(.5)", offset: beiZ(0.95) },
-          { opacity: 0, transform: "translate(-50%, -30%) scale(.5)", offset: 1 }
+          { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: 0, easing: "ease-in-out" },
+          { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: beiZ(0.16), easing: "ease-in-out" },
+          { transform: "translate(-50%, 0) scaleY(1)", opacity: 1, offset: beiZ(0.21), easing: "ease-in-out" },
+          { transform: "translate(-50%, 0) scaleY(1)", opacity: 1, offset: beiZ(0.88), easing: "ease-in-out" },
+          { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: beiZ(0.95), easing: "ease-in-out" }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
+      /* Der Zauberer selbst: erscheinen, am Ende verbeugen und weg. */
       try {
         zauber.animate([
           { transform: "translate(-50%, -50%) translateY(26%) scale(.86)", opacity: 0, offset: 0, easing: "ease-in-out" },
           { transform: "translate(-50%, -50%) translateY(0) scale(1)", opacity: 1, offset: beiZ(0.12), easing: "ease-in-out" },
-          { transform: "translate(-50%, -50%) translateY(0) scale(1)", opacity: 1, offset: beiZ(0.92), easing: "ease-in-out" },
-          { transform: "translate(-50%, -50%) translateY(4%) scale(1)", opacity: 1, offset: beiZ(0.96), easing: "ease-in-out" },
+          { transform: "translate(-50%, -50%) translateY(0) scale(1)", opacity: 1, offset: beiZ(0.90), easing: "ease-in-out" },
+          { transform: "translate(-50%, -50%) translateY(4%) scale(1)", opacity: 1, offset: beiZ(0.95), easing: "ease-in-out" },
           { transform: "translate(-50%, -50%) translateY(26%) scale(.9)", opacity: 0, offset: 1, easing: "ease-in-out" }
         ], { duration: dauer, easing: "linear", fill: "forwards" });
       } catch (e) {}
+      /* Der Rauch bleibt — er ist es, was das Verschwinden und das
+         Auftauchen erklaert. */
       const zRauch = (woher, spaet) => {
         const r = document.createElement("span");
         r.className = "lc-zyl-rauch";
         r.style.setProperty("--gross", (d * 1.6) + "px");
-        /* FASSUNG 672 — GEFUNDEN: die Verzoegerung stand am Rahmen, der
-           selbst keine Animation hat; die Woelkchen pufften deshalb
-           schon beim Start. Jetzt traegt jedes Woelkchen sie selbst. */
+        r.style.animationDelay = Math.round(spaet) + "ms";
         let w = "";
         for (let i = 0; i < 9; i++) {
           w += '<i style="--wo:' + (i * 40) + "deg;--weit:"
-             + (52 + ((i * 29) % 46)) + "%;--spaet:" + (Math.round(spaet) + (i % 5) * 42) + 'ms"></i>';
+             + (52 + ((i * 29) % 46)) + "%;--spaet:" + ((i % 5) * 42) + 'ms"></i>';
         }
         r.innerHTML = w;
         reihe.appendChild(r);
         weg.push(r);
         setzen(r, woher.x, woher.y);
       };
-      /* Funken, wo der Stab aufschlaegt. */
-      const zFunken = (woher, spaet) => {
-        const f = document.createElement("span");
-        f.className = "lc-zauber-funken";
-        f.style.setProperty("--gross", (d * 1.1) + "px");
-        let w = "";
-        for (let i = 0; i < 8; i++) w += '<i style="--wo:' + (i * 45 + 10) + 'deg;--spaet:' + (Math.round(spaet) + (i % 3) * 40) + 'ms"></i>';
-        f.innerHTML = w;
-        reihe.appendChild(f);
-        weg.push(f);
-        setzen(f, woher.x, woher.y);
-      };
-      zFunken(deckOben, hin * 0.35);
-      zFunken(deckOben, hin * 0.39);
-      zFunken(zielOben, hin * 0.77);
-      zRauch(amPlatz, hin * 0.43);
-      zRauch(ausZiel, hin * 0.83);
-      /* Der Ton: Feenstaub beim Klopfen (1,0 s), das Puff-ta-daa beim
-         Herausziehen („zauberpuff": zweiter Puff bei 1,55 s). */
-      lcTonSpaeter("feenzauber", Math.round(hin * 0.35), 0.55);
-      lcTonSpaeter("feenzauber", Math.round(hin * 0.77), 0.5);
-      lcTonSpaeter("zauberpuff", Math.max(0, Math.round(hin * 0.83 - 1550)), 0.7);
+      zRauch(ueberAb, hin * 0.40);
+      zRauch(ausZiel, hin * 0.80);
+      /* Der Ton: der erste Puff beim Verschwinden, das ta-daa beim
+         Auftauchen. „zauberpuff" ist 2,40 s lang (gemessen), der
+         zweite Puff liegt darin bei 1,55 s — deshalb faengt er so an,
+         dass der zweite Puff auf das Herausziehen faellt. */
+      lcTonSpaeter("zauberpuff", Math.max(0, Math.round(hin * 0.80 - 1550)), 0.7);
     } else if (art === "fahrstuhl") {
       /* =================================================================
          RUNDE 85 — DER FAHRSTUHL
