@@ -2077,10 +2077,6 @@
   opacity: 1;
   transform: translate(-50%, 0);
 }
-/* FASSUNG 645 — eine unsichtbare (ein- oder ausblendende) Blase fing
-   Tipps ab, die dem Knopf darunter galten. Nur eine sichtbare Blase
-   nimmt noch Tipps an. */
-.toast-popup:not(.toast-visible) { pointer-events: none; }
 .toast-clickable { cursor: pointer; border-color: var(--amber-400); }
 .toast-clickable:active { transform: translate(-50%, 0) scale(0.97); }
 

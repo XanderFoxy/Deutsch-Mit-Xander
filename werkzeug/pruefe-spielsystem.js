@@ -239,7 +239,7 @@ const sage = (gut, was, zusatz) => {
     const der = [...p.querySelectorAll(".sp-optionen button")].find((b) => b.textContent === "der");
     if (der) der.click();
     await new Promise((f) => setTimeout(f, 200));
-    const erg = (p.querySelector(".sp-erg") || {}).textContent || "";
+    const erg = (p.querySelector(".sp-erg-platz") || p.querySelector(".sp-erg") || {}).textContent || ""; /* Fassung 645: fester Platz */
     const r = window.__rufe.find((x) => x.name === "spiel_antwort");
     window.DMA_SPIEL.schliessen();
     return { da: Boolean(p), tabs, frage, opt, erg, antwort: r ? r.args : null };

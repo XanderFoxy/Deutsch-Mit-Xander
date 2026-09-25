@@ -6176,20 +6176,15 @@
   // nicht ungefragt aus einem Timer heraus (sonst bleibt der Ton stumm). Deshalb wird der
   // Audio-Kontext einmalig beim allerersten Antippen der Seite "entsperrt" und danach wiederverwendet.
   let sharedAudioCtx = null;
-  /* FASSUNG 645 — XANDER: „die Sounds sind immer noch nicht da". Auf
-     Android zählt touchstart NICHT als Nutzergeste: der Kontext entstand
-     dort gesperrt, und weil der Horcher nur einmal lief („once"), blieb
-     er für immer stumm. Jetzt wird bei jedem Tipp nachgesehen und, wenn
-     nötig, wieder freigeschaltet. */
   function unlockAudioOnce() {
+    if (sharedAudioCtx) return;
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
-    if (!sharedAudioCtx) { try { sharedAudioCtx = new AudioCtx(); } catch (e) { return; } }
-    if (sharedAudioCtx.state !== "running") { try { const v = sharedAudioCtx.resume(); if (v && v.catch) v.catch(() => {}); } catch (e) {} }
+    sharedAudioCtx = new AudioCtx();
+    if (sharedAudioCtx.state === "suspended") sharedAudioCtx.resume();
   }
-  ["click", "touchend", "keydown"].forEach((a) => {
-    try { document.addEventListener(a, unlockAudioOnce, { capture: true, passive: true }); } catch (e) {}
-  });
+  document.addEventListener("click", unlockAudioOnce, { once: true });
+  document.addEventListener("touchstart", unlockAudioOnce, { once: true });
 
   // Stummschaltung für Benachrichtigungs-Ton + roten Ring — im Profil gespeichert, damit sie auf
   // jedem Gerät gleich bleibt, statt bei jedem Browser-Wechsel verloren zu gehen.
@@ -95008,10 +95003,6 @@ An einem Morgen lief ein kleiner Fuchs los…
         } catch (e) { fertig("Ton ging nicht: " + (e && e.message ? e.message : e)); }
       }),
       toast: (text) => { try { showToast(text); } catch (e) {} },
-      /* FASSUNG 645 — das Spiel spielt seine Töne selbst (Web Audio) und
-         fragt hier nur, ob die Töne an sind. */
-      toeneAn: () => { try { return lcToeneAn(); } catch (e) { return true; } },
-      toeneSetzen: (an) => { try { lcToeneSetzen(an); } catch (e) {} },
       schmerz: (platz) => { try { lcSchmerzTon(platz); } catch (e) {} },
       wischer: (platz) => { try { const nm = lcNameVomPlatz(platz); if (nm) lcWischer(nm); } catch (e) {} },
       pflaster: (chatId) => {

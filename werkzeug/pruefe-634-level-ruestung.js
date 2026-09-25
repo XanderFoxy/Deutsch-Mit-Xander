@@ -255,7 +255,8 @@ const sage = (gut, was, zusatz) => {
     return { ton: (window.DMA_TONLOG || []).map((t) => t.name || t), text: document.getElementById("spPanel").textContent };
   });
   sage(lv.ton.some((t) => /jubel/.test(JSON.stringify(t))), "Aufstieg auf Level 4 klingt (Jubel)", JSON.stringify(lv.ton));
-  sage(/\+6 Erfahrung/.test(lv.text), "das Ergebnis zeigt die Erfahrung", (lv.text.match(/\+\d+ Erfahrung/) || [""])[0]);
+  /* Fassung 645: im festen Ergebnisplatz heißt es kurz „EP". */
+  sage(/\+6 (Erfahrung|EP)/.test(lv.text), "das Ergebnis zeigt die Erfahrung", (lv.text.match(/\+\d+ (Erfahrung|EP)/) || [""])[0]);
 
   await br.close(); srv.close();
   if (konsolenFehler.length) { fehler++; console.log("  FEHL Seitenfehler: " + konsolenFehler.join(" | ")); }

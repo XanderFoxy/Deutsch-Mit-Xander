@@ -174,12 +174,15 @@ const sage = (gut, was, zusatz) => {
     const p = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]');
     const k = p.querySelector(".lc-kreis").getBoundingClientRect();
     const m = p.querySelector(".sp-waffenmarke svg"), d = p.querySelector(".sp-flugtier .sp-tier-koerper");
-    if (!m || !d) return { fehlt: true };
+    if (!m || !d) return { fehlt: true, ohneMarke: !m && Boolean(d) };
     const a = m.getBoundingClientRect(), b = d.getBoundingClientRect();
     const ueber = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
     return { links: a.left + a.width / 2 < k.left + k.width / 2, ueber };
   });
-  sage(!marke.fehlt && marke.links && marke.ueber === 0, "das Abzeichen sitzt links oben und deckt den Drachen nicht", JSON.stringify(marke));
+  /* Fassung 645 — XANDER: „der Bierkrug … so riesig … da ist doch zum
+     einen die Waffe angezeigt": das Abzeichen am Bild ist ganz weg, die
+     Waffe steht in der Leiste. Also: kein Abzeichen, nichts verdeckt. */
+  sage(marke.fehlt && marke.ohneMarke, "kein Waffen-Abzeichen mehr am Bild – der Drache ist frei", JSON.stringify(marke));
 
   console.log("\nTON TESTEN UND MENÜ ZUKLAPPEN\n");
   const ton = await pg.evaluate(async () => {

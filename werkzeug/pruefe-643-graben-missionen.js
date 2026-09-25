@@ -123,6 +123,8 @@ const sage = (gut, was, zusatz) => {
     window.DMA_SPIEL_BRUECKE = window.DMA_SPIEL_BRUECKE || {};
     const altToast = window.DMA_SPIEL_BRUECKE.toast;
     window.DMA_SPIEL_BRUECKE.toast = (t) => { window.__hinweise.push(t); try { if (altToast) altToast(t); } catch (e) {} };
+    /* Ab Fassung 645 meldet sich das Spiel in einer eigenen Zeile. */
+    window.__spielMeldungen = window.__hinweise;
   });
   await pg.waitForTimeout(800);
 

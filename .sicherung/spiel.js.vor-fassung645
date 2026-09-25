@@ -145,144 +145,10 @@
 
   function LC() { return window.LiveChat || null; }
   function B() { return window.DMA_SPIEL_BRUECKE || {}; }
-  /* ---------------------------------------------------------------
-     FASSUNG 645 — DIE TONMASCHINE DES SPIELS
-     XANDER: „die Sounds sind immer noch nicht da … wie kriegen wir den
-     Sound jetzt hin? Ich möchte das unbedingt hören."
-     Bisher lief jeder Spielton als eigenes <audio>-Element über die
-     App. Jetzt spielt das Spiel selbst über Web Audio: die Töne werden
-     einmal geladen und dekodiert, dann klingen sie ohne Verzögerung
-     und beliebig oft übereinander – genau im Takt der Animation.
-     Freigeschaltet wird bei JEDEM Tipp (pointerup/touchend/click):
-     auf Android zählt ein pointerdown noch nicht als Nutzergeste.
-     Klappt Web Audio nicht, übernimmt der alte Weg der App.
-     --------------------------------------------------------------- */
-  var KLANG = { ctx: null, puffer: {}, laedt: {}, kaputt: {}, fehler: "", gespielt: 0, ersatz: 0, letzter: "" };
-  var KLANG_VORAB = ["bling", "gummi", "schuss", "knack", "jubel", "mampf", "graben", "hammerschlag", "muenze", "zwille", "pfeilschuss", "pfeiltreffer",
-    "laserrot", "lasertreffer", "bonk", "krugklirr", "brezelknack", "wurstklatsch", "krautmatsch", "spaetzlesalve", "katapult4", "doenerklatsch",
-    "mgsalve", "lasersalve", "monsterbiss", "drachenfeuer", "chihuahuaknurr", "bisszerren", "stachelstich", "fluegelschlag", "geschuetzfeuer",
-    "zauberpuff", "trankschluck", "gong", "geschenk", "kasse", "wischer", "explosion2", "eiknack", "huhnwurf", "huhntreffer", "axttreffer", "swoosh", "platsch"];
-  function klangKontext() {
-    if (KLANG.ctx) return KLANG.ctx;
-    var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) { KLANG.fehler = "kein Web Audio"; return null; }
-    try { KLANG.ctx = new AC({ latencyHint: "interactive" }); } catch (e) { try { KLANG.ctx = new AC(); } catch (x) { KLANG.fehler = String(x && x.message || x); return null; } }
-    return KLANG.ctx;
-  }
-  function klangWecken() {
-    var k = klangKontext();
-    if (!k) return;
-    if (k.state !== "running") {
-      try { var v = k.resume(); if (v && v.catch) v.catch(function () {}); } catch (e) {}
-      /* Ein stiller Mini-Ton IM Tipp – manche Geräte schalten erst damit frei. */
-      try { var q = k.createBufferSource(); q.buffer = k.createBuffer(1, 1, 22050); q.connect(k.destination); q.start(0); } catch (e) {}
-    }
-    if (!KLANG.vorab) {
-      KLANG.vorab = true;
-      KLANG_VORAB.forEach(function (n, i) { setTimeout(function () { klangLaden(n); }, 200 + i * 60); });
-      /* Einmal je Sitzung, nach einer Minute Spiel: was die Tonmaschine
-         auf diesem Gerät wirklich getan hat – für den Betreiber. */
-      setTimeout(function () {
-        if (!S.bereit) return;
-        rpc("spiel_diagnose_senden", { p_art: "tonstand", p_daten: { ua: navigator.userAgent.slice(0, 160), ctx: KLANG.ctx ? KLANG.ctx.state : "keiner",
-          geladen: Object.keys(KLANG.puffer).length, gespielt: KLANG.gespielt, ersatz: KLANG.ersatz, toene: toeneAn(), fehler: KLANG.fehler,
-          kaputt: Object.keys(KLANG.kaputt).slice(0, 6).map(function (n) { return n + ":" + KLANG.kaputt[n]; }) } }).catch(function () {});
-      }, 60000);
-    }
-  }
-  ["pointerup", "touchend", "click", "keydown"].forEach(function (a) {
-    try { document.addEventListener(a, klangWecken, { capture: true, passive: true }); } catch (e) {}
-  });
-  function klangEndung() {
-    if (KLANG.endung) return KLANG.endung;
-    var e = ".m4a";
-    try { var t = document.createElement("audio"); if (t.canPlayType && t.canPlayType('audio/ogg; codecs="opus"')) e = ".opus"; } catch (x) {}
-    return (KLANG.endung = e);
-  }
-  function klangDa(name) { return String(window.DMA_GERAEUSCHE || "").split("|").indexOf(name) >= 0; }
-  function klangUrl(name) { return "ton/" + name + klangEndung() + (window.DMA_V ? window.DMA_V("ton/") : ""); }
-  function klangLaden(name) {
-    if (KLANG.puffer[name]) return Promise.resolve(KLANG.puffer[name]);
-    if (KLANG.laedt[name]) return KLANG.laedt[name];
-    if (KLANG.kaputt[name] || !klangDa(name)) return Promise.resolve(null);
-    var k = klangKontext();
-    if (!k || !window.fetch) return Promise.resolve(null);
-    KLANG.laedt[name] = fetch(klangUrl(name)).then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.arrayBuffer();
-    }).then(function (roh) {
-      return new Promise(function (ok, nein) {
-        var v = k.decodeAudioData(roh, ok, nein);
-        if (v && v.then) v.then(ok, nein);
-      });
-    }).then(function (p) { KLANG.puffer[name] = p; delete KLANG.laedt[name]; return p; })
-      .catch(function (e) { KLANG.kaputt[name] = String(e && e.message || e || "Fehler"); delete KLANG.laedt[name]; return null; });
-    return KLANG.laedt[name];
-  }
-  function toeneAn() { try { var b = B(); return b.toeneAn ? b.toeneAn() !== false : true; } catch (e) { return true; } }
-  function klangSpielen(name, laut) {
-    var k = KLANG.ctx, p = KLANG.puffer[name];
-    if (!k || !p || k.state !== "running") return false;
-    try {
-      var g = k.createGain(), q = k.createBufferSource();
-      var redet = false; try { redet = Boolean(LC() && LC().redetJemand && LC().redetJemand()); } catch (e) {}
-      g.gain.value = Math.max(0, Math.min(1, (laut == null ? 0.5 : laut) * 1.5 * (redet ? 0.45 : 1)));
-      q.buffer = p; q.connect(g); g.connect(k.destination); q.start(0);
-      KLANG.gespielt++; KLANG.letzter = name;
-      return true;
-    } catch (e) { KLANG.fehler = String(e && e.message || e); return false; }
-  }
-  function ton(name, laut) {
-    if (!name || !toeneAn()) return;
-    if (klangSpielen(name, laut)) { try { if (window.DMA_TONLOG) window.DMA_TONLOG.push({ name: name, wann: Math.round(performance.now()), weg: "webaudio" }); } catch (e) {} return; }
-    /* Noch nicht geladen oder nicht frei: diesmal der alte Weg, für das
-       nächste Mal wird geladen. */
-    KLANG.ersatz++;
-    klangLaden(name);
-    try { if (B().ton) B().ton(name, laut); } catch (e) {}
-  }
-  /* FASSUNG 645 — Meldungen des Spiels. XANDER: „ich kann ja nicht mal
-     auf Laden und Schutz drücken aus diesem Android Menü raus". Die
-     App-Blasen (Toasts) lagen fest unten über dem Menü, ganz oben in
-     der Ebene, und fingen jeden Tipp ab. Das Spiel meldet sich jetzt in
-     einer eigenen, durchklickbaren Zeile über der Leiste. */
-  var meldungEl = null, meldungUhr = 0;
+  function ton(name, laut) { try { if (B().ton) B().ton(name, laut); } catch (e) {} }
   function hinweis(text) {
+    try { if (B().toast) { B().toast(text); return; } } catch (e) {}
     try { console.log("[Spiel]", text); } catch (e) {}
-    try { if (window.__spielMeldungen) window.__spielMeldungen.push(String(text)); } catch (e) {}
-    var form = document.getElementById("lcForm");
-    if (!form || !form.parentNode || !drin()) { try { if (B().toast) B().toast(text); } catch (e) {} return; }
-    /* Menü offen: die Meldung steht in seiner Kopfzeile, nicht auf den Knöpfen. */
-    if (S.schnellMenue && schnellEl && schnellEl.querySelector(".sp-sm-kopf")) {
-      S.menueMeldung = { text: String(text || ""), bis: Date.now() + 3800 };
-      if (meldungEl) meldungEl.hidden = true;
-      schnellZeichnen(true);
-      clearTimeout(meldungUhr);
-      meldungUhr = setTimeout(function () { schnellZeichnen(); }, 3900);
-      return;
-    }
-    if (!meldungEl || !meldungEl.isConnected) {
-      meldungEl = document.createElement("div");
-      meldungEl.className = "sp-meldung";
-      meldungEl.setAttribute("role", "status");
-      form.parentNode.insertBefore(meldungEl, form);
-    }
-    meldungEl.textContent = String(text || "");
-    meldungEl.classList.remove("sp-meldung-weg");
-    meldungEl.hidden = false;
-    meldungSetzen();
-    clearTimeout(meldungUhr);
-    meldungUhr = setTimeout(function () { if (meldungEl) meldungEl.classList.add("sp-meldung-weg"); }, 3800);
-  }
-  /* Die Zeile sitzt über der Leiste (und über dem offenen Menü). */
-  function meldungSetzen() {
-    if (!meldungEl || meldungEl.hidden) return;
-    var unten = 60;
-    try {
-      if (schnellEl && !schnellEl.hidden) unten = (parseFloat(schnellEl.style.bottom) || 0) + schnellEl.offsetHeight + 6;
-      else { var f = document.getElementById("lcForm"); unten = f.parentNode.clientHeight - f.offsetTop + 6; }
-    } catch (e) {}
-    meldungEl.style.bottom = Math.round(unten) + "px";
   }
   function drin() { var l = LC(); try { return Boolean(l && l.lage && l.lage().lage === "drin"); } catch (e) { return false; } }
 
@@ -1557,13 +1423,7 @@
       + esc(WAFFEN[w].name) + " · Schaden " + WAFFEN[w].schaden + (hw >= 0 ? " · hält " + hw + "/60" : "") + (vr >= 0 ? " · noch " + vr : "") + '">'
       + geschossSvg(w, S.laserfarbe) + (vr >= 0 ? "<small>" + vr + "</small>" : "") + "</button>";
   }
-  function schnellGesperrt() {
-    var d = S.schnellDruck || 0;
-    if (d > 0) return Date.now() - d < 4000;        /* Finger liegt (höchstens 4 s) */
-    if (d < 0) return Date.now() + d < 350;         /* gerade losgelassen */
-    return false;
-  }
-  function schnellZeichnen(sofort) {
+  function schnellZeichnen() {
     var form = document.getElementById("lcForm");
     var an = drin() && S.bereit && S.ich && form && form.style.display !== "none";
     if (!an) { if (schnellEl) schnellEl.hidden = true; return; }
@@ -1572,16 +1432,6 @@
         schnellEl = document.createElement("div");
         schnellEl.className = "sp-schnell";
         schnellEl.addEventListener("click", schnellKlick);
-        /* FASSUNG 645 — solange ein Finger auf der Leiste liegt, wird sie
-           nicht neu gezeichnet: sonst verschwindet der Knopf unter dem
-           Finger (der Sekundenzähler zeichnet laufend neu) und der Tipp
-           geht ins Leere. */
-        schnellEl.addEventListener("pointerdown", function () { S.schnellDruck = Date.now(); }, true);
-        /* Nach dem Loslassen kommt der Klick; bis dahin (höchstens 0,35 s)
-           zeichnet nur der Klick selbst neu, kein Zeitgeber. */
-        ["pointerup", "pointercancel"].forEach(function (a) {
-          schnellEl.addEventListener(a, function () { S.schnellDruck = -Date.now(); }, true);
-        });
       }
       form.parentNode.insertBefore(schnellEl, form);
       /* Die Leiste liegt über dem Chat: ihr Elternteil wird der Anker. */
@@ -1617,35 +1467,18 @@
       if (reparaturNoetig(ich)) teile.push('<button type="button" class="sp-s-repar" data-s="reparieren" title="Alle Waffen reparieren (15 Punkte)">'
         + '<svg viewBox="0 0 20 20"><path d="M13.5 2.5 a4 4 0 0 0 -4.8 5.3 L2.8 13.7 a1.8 1.8 0 0 0 2.5 2.5 L11.2 10.3 a4 4 0 0 0 5.3 -4.8 L14 8 L12 6 Z" fill="#cfd6de" stroke="#5b636c" stroke-width="1"/></svg></button>');
     }
-    if (!toeneAn()) teile.push('<button type="button" class="sp-s-stumm" data-s="toenean" title="Töne sind aus – tippen schaltet sie ein">'
-      + '<svg viewBox="0 0 20 20"><path d="M3 8 H6 L10 4.5 V15.5 L6 12 H3 Z" fill="#fff"/><path d="M13 7.5 L17.5 12.5 M17.5 7.5 L13 12.5" stroke="#ff8a80" stroke-width="2" stroke-linecap="round"/></svg></button>');
     if (S.graben) teile.push('<button type="button" class="sp-s-graben sp-an" data-s="graben" title="Schaufel weglegen">' + grabSvg() + "</button>");
     teile.push('<button type="button" class="sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Waffen, Heilen, Tiere, Mehr">'
       + '<svg viewBox="0 0 20 20"><path d="M4 6 H16 M4 10 H16 M4 14 H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>');
     var html = '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "");
-    if (sofort !== true && schnellGesperrt()) { clearTimeout(S.schnellNach); S.schnellNach = setTimeout(schnellZeichnen, 380); return; }
-    S.schnellDruck = 0;
     if (schnellEl.dataset.html !== html) { schnellEl.innerHTML = html; schnellEl.dataset.html = html; }
-    /* Das Menü darf nie über den oberen Rand hinaus (dort schnitt der
-       Rahmen es ab): höchstens so hoch wie der Platz über der Leiste. */
-    var sm = schnellEl.querySelector(".sp-schnellmenue");
-    if (sm) {
-      try {
-        var platz = schnellEl.parentNode.getBoundingClientRect(), reiheEl = schnellEl.querySelector(".sp-s-reihe");
-        var oben = Math.max(platz.top, 0), unterkante = reiheEl.getBoundingClientRect().top;
-        sm.style.maxHeight = Math.max(160, Math.round(unterkante - oben - 10)) + "px";
-      } catch (e) {}
-    }
-    meldungSetzen();
   }
   function schnellMenueHtml() {
     var ich = S.ich || {}, r = S.schnellReiter || "waffen", s = slots();
     var reiter = [["waffen", "Waffen"], ["heilen", "Heilen"], ["tiere", "Tiere"], ["mehr", "Mehr"]].map(function (t) {
       return '<button type="button" data-s="reiter" data-r="' + t[0] + '" class="' + (r === t[0] ? "sp-an" : "") + '">' + t[1] + "</button>";
     }).join("");
-    var mm = S.menueMeldung && S.menueMeldung.bis > Date.now() ? S.menueMeldung.text : "";
-    var kopf = mm ? '<div class="sp-sm-kopf sp-sm-kopf-meldung">' + esc(mm) + "</div>"
-      : '<div class="sp-sm-kopf">Lv ' + (ich.level || 1) + " · " + ich.lp + "/" + ich.lp_max + " LP · " + (ich.punkte || 0) + " P"
+    var kopf = '<div class="sp-sm-kopf">Lv ' + (ich.level || 1) + " · " + ich.lp + "/" + ich.lp_max + " LP · " + (ich.punkte || 0) + " P"
       + (ich.mana != null ? " · " + ich.mana + " Mana" : "") + "</div>";
     var inhaltM = "";
     if (r === "waffen") {
@@ -1698,7 +1531,6 @@
     return '<div class="sp-schnellmenue">' + kopf + '<div class="sp-sm-reiter">' + reiter + "</div>" + inhaltM + "</div>";
   }
   function schnellKlick(ev) {
-    S.schnellDruck = 0;   /* der Klick beendet die Geste: ab jetzt darf gezeichnet werden */
     var k = ev.target.closest("button");
     if (!k || k.disabled) return;
     ev.preventDefault(); ev.stopPropagation();
@@ -1740,18 +1572,14 @@
     } else if (s === "graben") {
       S.schnellMenue = false; grabenUmschalten(); return;
     } else if (s === "mission") {
-      S.schnellMenue = false; missionHolen(); schnellZeichnen(true); return;
+      S.schnellMenue = false; missionHolen(); schnellZeichnen(); return;
     } else if (s === "tontest") {
       tonTesten(); return;
-    } else if (s === "toenean") {
-      try { if (B().toeneSetzen) B().toeneSetzen(true); } catch (e) {}
-      klangWecken(); setTimeout(function () { ton("bling", 0.7); }, 60);
-      hinweis("🔊 Töne sind an.");
     } else if (s === "gross") {
-      S.schnellMenue = false; menue(k.dataset.r || "start"); schnellZeichnen(true); return;
+      S.schnellMenue = false; menue(k.dataset.r || "start"); schnellZeichnen(); return;
     }
     if (zu) S.schnellMenue = false;
-    zeichnen(); schnellZeichnen(true);
+    zeichnen(); schnellZeichnen();
   }
   /* „beim Weiterspielen schließt sich sowieso wieder": ein Tipp
      irgendwo anders klappt das Menü zu. */
@@ -1773,41 +1601,10 @@
   /* XANDER: „ich höre übrigens immer noch keine Sounds". Der Knopf spielt
      einen Ton und sagt auf dem Gerät, woran es liegt: Töne aus, Datei
      fehlt, Browser lässt nicht abspielen — oder: es klingt. */
-  /* FASSUNG 645 — „Ton testen" misst jetzt jeden Schritt selbst und
-     schickt das Ergebnis an den Betreiber (spiel_diagnose). XANDER:
-     „Ich kann dir nicht sagen woran es liegt, du musst es selber
-     rausfinden." */
   function tonTesten() {
-    var d = { ua: navigator.userAgent.slice(0, 160), endung: klangEndung(), liste: String(window.DMA_GERAEUSCHE || "").length,
-              toene: toeneAn(), vorher: KLANG.ctx ? KLANG.ctx.state : "keiner", gespielt: KLANG.gespielt, ersatz: KLANG.ersatz,
-              kaputt: Object.keys(KLANG.kaputt).slice(0, 6).map(function (n) { return n + ":" + KLANG.kaputt[n]; }) };
-    try { d.redet = Boolean(LC() && LC().redetJemand && LC().redetJemand()); } catch (e) {}
-    if (!d.toene) { try { if (B().toeneSetzen) B().toeneSetzen(true); } catch (e) {} d.eingeschaltet = true; }
-    klangWecken();
-    var t0 = Date.now();
-    klangLaden("krugklirr").then(function (p) {
-      d.dekodiert = Boolean(p); d.ladezeit = Date.now() - t0;
-      if (!p) d.ladefehler = KLANG.kaputt.krugklirr || KLANG.fehler || "?";
-      d.nachher = KLANG.ctx ? KLANG.ctx.state : "keiner";
-      d.webaudio = klangSpielen("krugklirr", 0.8);
-      /* Zur Sicherheit auch der alte Weg (<audio>), wenn Web Audio nicht lief. */
-      var fertig = function (alt) {
-        d.audio = alt;
-        var satz = d.webaudio ? "Ton läuft (Web Audio). Hörst du ihn jetzt nicht: Lautstärke-Taste für MEDIEN hochdrehen, Stummschaltung aus."
-          : d.dekodiert ? "Web Audio ist noch gesperrt (" + d.nachher + ") – tipp noch einmal auf „Ton testen“." + (alt === "ok" ? " Der Ersatzweg lief." : "")
-          : "Die Tondatei ließ sich nicht laden (" + (d.ladefehler || "?") + ").";
-        if (d.eingeschaltet) satz = "Deine Töne waren AUS – jetzt sind sie an. " + satz;
-        hinweis("🔊 " + satz);
-        rpc("spiel_diagnose_senden", { p_art: "tontest", p_daten: d }).catch(function () {});
-      };
-      if (d.webaudio) { fertig("nicht nötig"); return; }
-      try {
-        var a = new Audio(klangUrl("krugklirr")); a.volume = 0.9;
-        var v = a.play();
-        if (v && v.then) v.then(function () { fertig("ok"); }).catch(function (e) { fertig((e && e.name) || "Fehler"); });
-        else fertig("gestartet");
-      } catch (e) { fertig(String(e && e.message || e)); }
-    });
+    var b = B();
+    if (!b.tonTest) { ton("bling", 0.7); hinweis("🔊 Ton gespielt (bling)."); return; }
+    b.tonTest("krugklirr").then(function (r) { hinweis("🔊 " + r); }).catch(function (e) { hinweis("🔊 " + (e && e.message ? e.message : e)); });
   }
   function mitspielenSetzen(an) {
     rpc("spiel_mitspielen", { p_an: Boolean(an) }).then(function (r) {
@@ -1936,10 +1733,7 @@
       el.classList.toggle("sp-anfaenger", Boolean(s.anfaenger));
       /* Meine aktive Waffe als kleines Abzeichen am eigenen Platz */
       var ich = chatId === meineChatId();
-      /* FASSUNG 645 — XANDER: „der Bierkrug … so riesig dargestellt als
-         Element links … da ist doch zum einen die Waffe angezeigt".
-         Die Waffe steht in der Leiste; am Bild bleibt nichts mehr. */
-      schmuck(el, "sp-waffenmarke", false, kreis, "");
+      schmuck(el, "sp-waffenmarke", ich && Boolean(S.waffe), kreis, ich && S.waffe ? geschossSvg(S.waffe) : "");
     });
     document.body.classList.toggle("sp-kampf", kampfmodus());
     modusZeigen();
@@ -2382,19 +2176,8 @@
             var kl = a.ergebnis ? (o === a.ergebnis.loesung ? "sp-richtig" : o === a.gewaehlt ? "sp-falsch" : "") : "";
             return '<button type="button" data-tu="antwort" data-o="' + esc(o) + '" class="' + kl + '"' + (a.ergebnis ? " disabled" : "") + ">" + esc(o) + "</button>";
           }).join("") + "</div>"
-          /* FASSUNG 645 — XANDER: „danach ist immer die Auswertung die das
-             Ganze nach unten drückt und da muss man immer scrollen". Die
-             Auswertung hat einen festen Platz, der schon vor der Antwort
-             da ist: nichts springt, nichts muss gescrollt werden. */
-          + '<div class="sp-erg-platz' + (a.ergebnis ? (a.ergebnis.richtig ? " sp-erg-gut" : " sp-erg-schlecht") : "") + '">'
-          + (a.ergebnis ? '<div class="sp-erg-zeile"><b>' + (a.ergebnis.richtig ? "Richtig! +" + (a.ergebnis.gewonnen + (a.ergebnis.bonus || 0)) : "Leider falsch") + "</b>"
-              + (a.ergebnis.richtig && a.ergebnis.mana_plus ? ' <span class="sp-blau">+' + a.ergebnis.mana_plus + " Mana</span>" : "")
-              + (a.ergebnis.richtig && a.ergebnis.xp_plus ? ' <span class="sp-gold">+' + a.ergebnis.xp_plus + " EP</span>" : "")
-              + (a.ergebnis.bonus ? ' <span class="sp-gold">Mission +' + a.ergebnis.bonus + "</span>" : "")
-              + '<button type="button" data-tu="aufgabe">Weiter</button></div>'
-              + '<div class="sp-erg-erkl">' + esc(a.ergebnis.erklaerung || "") + "</div>"
-            : a.hinweis ? '<div class="sp-klein sp-rot">' + esc(a.hinweis) + "</div>" : '<div class="sp-erg-leer">Tippe die richtige Antwort.</div>')
-          + "</div>"
+          + (a.ergebnis ? '<div class="sp-erg ' + (a.ergebnis.richtig ? "sp-gruen" : "sp-rot") + '">' + (a.ergebnis.richtig ? "✅ Richtig! +" + (a.ergebnis.gewonnen + (a.ergebnis.bonus || 0)) + " Punkte" + (a.ergebnis.bonus ? " (Mission +" + a.ergebnis.bonus + ")" : "") + (a.ergebnis.mana_plus ? ' <span class="sp-blau">+' + a.ergebnis.mana_plus + " Mana</span>" : "") + (a.ergebnis.xp_plus ? ' <span class="sp-gold">+' + a.ergebnis.xp_plus + " Erfahrung</span>" : "") : "❌ Leider falsch.") + '</div><div class="sp-klein">' + esc(a.ergebnis.erklaerung || "") + '</div><div class="sp-knoepfe"><button type="button" data-tu="aufgabe">Nächste Aufgabe</button></div>' : "")
+          + (a.hinweis ? '<div class="sp-klein sp-rot">' + esc(a.hinweis) + "</div>" : "")
           + "</div>";
       } else {
         teil = '<div class="sp-knoepfe"><button type="button" data-tu="aufgabe">📚 Aufgabe holen</button></div>';
@@ -2835,7 +2618,6 @@
       turmZeile: turmZeile, platzGewechselt: platzGewechselt,
       eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,
       krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg,
-      klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {
