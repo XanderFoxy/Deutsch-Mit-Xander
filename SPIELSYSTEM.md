@@ -626,3 +626,12 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Zugaben: Erdbeben mit Felsbrocken, Bodenwellen und Nachbeben; Brezelflut 14 Brezeln und „Mahlzeit!"; Mückenschwarm 20 Mücken; Kaffeeklatsch steigende Herzen; Hexenschuss ein lila Blitz und „Aua, mein Rücken!"; Gartenzwerg Zauberstaub und „Plopp!"; Behördengang ein Stempel „ANTRAG!" und wirbelnde Formulare; Nebel dichter.
 - Lehnt der Server ab, verpufft die Kugel – auch bei den anderen („zauberab").
 - Sonde: `pruefe-671-zauber-superkraft.js` (22 Prüfungen). `pruefe-650/654/655` warten jetzt den Flug der Kugel ab. Alle 36 Spiel-Sonden grün.
+
+## Fassung 673 — Wassergraben nur einmal, Deutsch-Fenster kompakt, Fundstück immer erreichbar
+
+- XANDER: „der Wassergraben … egal wo ich mich hinsetze, taucht der plötzlich auf … ich hab den hier zweimal". GEFUNDEN: seit 666 heißt er `sp-wassergraben`, beim Aufräumen verlassener Plätze wurde aber noch `sp-graben` gesucht – er blieb an jedem alten Platz liegen. Ebenso die Dämonenflammen. Beides wird jetzt weggeräumt.
+- XANDER: „wenn ich im Deutsch Lernmenü bin und dann taucht oben plötzlich was zum einsammeln auf dann komme ich nicht schnell genug … beim klicken auf das leere im Hintergrund … direkt auf das Hauptmenü … Kartoffel angelegt … Diese Zeile könnte man rausnehmen … komprimieren".
+  - Liegt ein Fundstück auf dem Feld, leuchtet oben im Deutsch-Fenster „Fundstück" und in der Schnellleiste ein Säckchen; ein Tipp hebt es auf, die Artikel-Aufgabe kommt gleich im Fenster.
+  - Ein Tipp neben das Fenster schließt es (und wirkt dort, wo er landet); ☰ oben führt direkt ins Hauptmenü.
+  - Status in einer Zeile (LP, Level, Mana), Werte in einer Wischzeile; die „… ist angelegt"-Zeile ist weg. Im Deutsch-Reiter steht die Aufgabe oben, Niveau und Arten darunter.
+- Sonde: `pruefe-673-graben-deutschfenster.js` (9 Prüfungen). Alle 37 Spiel-Sonden grün.

@@ -2837,8 +2837,6 @@
     if (!toeneAn()) teile.push('<button type="button" class="sp-s-stumm" data-s="toenean" title="Töne sind aus – tippen schaltet sie ein">'
       + '<svg viewBox="0 0 20 20"><path d="M3 8 H6 L10 4.5 V15.5 L6 12 H3 Z" fill="#fff"/><path d="M13 7.5 L17.5 12.5 M17.5 7.5 L13 12.5" stroke="#ff8a80" stroke-width="2" stroke-linecap="round"/></svg></button>');
     if (S.graben) teile.push('<button type="button" class="sp-s-graben sp-an" data-s="graben" title="Schaufel weglegen">' + grabSvg() + "</button>");
-    /* FASSUNG 673 — liegt ein Fundstück auf dem Feld, steht es auch hier. */
-    if (fundKnopfHtml()) teile.push('<button type="button" class="sp-s-fund" data-s="fund" title="Fundstück einsammeln">' + fundSvg() + "</button>");
     var burger = '<button type="button" class="sp-s-burger sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Spielmenü: Waffen, Heilen, Tiere, Mehr">'
       + '<svg viewBox="0 0 20 20"><path d="M4 6 H16 M4 10 H16 M4 14 H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
     var html = burger + '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (S.rad != null && ich.mitspielen ? radHtml(S.rad) : "")
@@ -3201,8 +3199,6 @@
     } else if (s === "gegenfeuer") {
       if (S.duell && S.duell.uebung) uebungEnde(); else uebungStarten("sparring:" + S.sparring);
       zu = true;
-    } else if (s === "fund") {
-      var fk = fundPlatzEl(); if (fk) fundHeben(fk); return;
     } else if (s === "graben") {
       S.schnellMenue = false; grabenUmschalten(); return;
     } else if (s === "mission") {
@@ -3667,12 +3663,8 @@
     schmuck(el, "sp-flugtier", luft, kreis, luft ? tierSvg(s.flugtier) : "", "sp-tier-" + (s.flugtier || "drache") + " sp-tier-friedlich");
   }
   function platzLeeren(el, schau, turmBleibt) {
-    /* FASSUNG 673 — XANDER: „der Wassergraben … egal wo ich mich
-       hinsetze, taucht der plötzlich auf … ich hab den hier zweimal".
-       GEFUNDEN: seit 666 heißt er „sp-wassergraben", hier wurde aber
-       noch „sp-graben" weggeräumt – am verlassenen Platz blieb er liegen. */
-    el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer,.sp-wassergraben," + (schau ? "" : ".sp-tier,.sp-flugtier,.sp-schau,") + (turmBleibt ? "" : ".sp-geschuetz,") + ".sp-risse,.sp-waffenmarke" + (el.querySelector(".sp-sparring") && Number(el.dataset.lcPlatz) === S.sparring ? "" : ",.sp-sparring")).forEach(function (x) { x.remove(); });
-    el.querySelectorAll(".sp-nebel,.sp-zwerg,.sp-formular,.sp-brezelbauch,.sp-daemonflammen").forEach(function (x) { x.remove(); });
+    el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer,.sp-graben," + (schau ? "" : ".sp-tier,.sp-flugtier,.sp-schau,") + (turmBleibt ? "" : ".sp-geschuetz,") + ".sp-risse,.sp-waffenmarke" + (el.querySelector(".sp-sparring") && Number(el.dataset.lcPlatz) === S.sparring ? "" : ",.sp-sparring")).forEach(function (x) { x.remove(); });
+    el.querySelectorAll(".sp-nebel,.sp-zwerg,.sp-formular,.sp-brezelbauch").forEach(function (x) { x.remove(); });
     el.classList.remove("sp-w-hexe");
     el.classList.remove("sp-kaputt", "sp-anfaenger", "sp-w-kraft", "sp-w-ziel", "sp-w-tempo", "sp-w-eisen", "sp-w-tarn", "sp-w-daemon", "sp-w-wackel");
     /* Die eigene Falle bleibt sichtbar, auch auf einem leeren Platz. */
@@ -4321,30 +4313,11 @@
     panelAuffrischen();
   }
   function schliessen() { if (panel) panel.hidden = true; }
-  /* FASSUNG 673 — XANDER: „vielleicht könnte man beim klicken auf das leere
-     im Hintergrund sowieso gleich zum einsammeln kommen, dass man nichts
-     verpasst". Ein Tipp NEBEN das Fenster schließt es – und der Tipp
-     wirkt gleich dort, wo er landet (Fundstück, Platz, Gesicht). */
-  document.addEventListener("pointerdown", function (ev) {
-    if (!panel || panel.hidden) return;
-    var t = ev.target;
-    if (!t || !t.closest || panel.contains(t)) return;
-    if ((schnellEl && schnellEl.contains(t)) || t.closest(".sp-extra,.sp-meldung,.sp-schnellmenue,.sp-rad,.lc-platzmenue,[role=dialog]")) return;
-    schliessen();
-  }, true);
 
   function panelAuffrischen() {
     if (!panel || panel.hidden) return;
     var ich = S.ich;
-    /* FASSUNG 673 — XANDER: „wenn ich im Deutsch Lernmenü bin und dann
-       taucht oben plötzlich was zum einsammeln auf dann komme ich nicht
-       schnell genug auf die Oberfläche zurück … Auf jeden Fall wenn ein
-       Geschenk kommt, dass ich das immer sichtbar habe … direkt auf das
-       Hauptmenü kommen". Oben im Fenster: das Fundstück (ein Tipp holt
-       es), das Hauptmenü (☰) und Schließen. */
-    var kopf = '<div class="sp-kopf"><b>⚔️ Deutsch zum Überleben</b><span class="sp-kopf-knoepfe">' + fundKnopfHtml()
-      + '<button type="button" class="sp-zu sp-haupt" data-tu="haupt" aria-label="Hauptmenü" title="Hauptmenü">☰</button>'
-      + '<button type="button" class="sp-zu" data-tu="zu" aria-label="Schließen">✕</button></span></div>';
+    var kopf = '<div class="sp-kopf"><b>⚔️ Deutsch zum Überleben</b><button type="button" class="sp-zu" data-tu="zu" aria-label="Schließen">✕</button></div>';
     if (!ich) {
       panel.innerHTML = kopf + '<div class="sp-leer">' + esc(S.fehler || (S.versucht ? "Einen Moment – ich melde dich im Spiel an …" : "Das Spiel geht im Klassenzimmer.")) + "</div>";
       return;
@@ -4353,21 +4326,13 @@
     var xpSpanne = Math.max(1, (ich.xp_naechste || 100) - (ich.xp_stufe || 0));
     var xpAnteil = Math.max(0, Math.min(100, Math.round(((ich.xp || 0) - (ich.xp_stufe || 0)) / xpSpanne * 100)));
     var vorrat = ich.vorraete || {};
-    /* FASSUNG 673 — XANDER: „das ist dann so groß … vielleicht kannst du
-       was komprimieren, dass das ein bisschen runter rutscht und man
-       schneller Zugriff auf die Spielfeldfläche hat". Lebenspunkte, Level
-       und Mana stehen jetzt in EINER Zeile, die Werte darunter in einer
-       Zeile zum Wischen. */
-    var status = '<div class="sp-status sp-status-kompakt">'
-      + '<div class="sp-status-zeile">'
-      + '<span class="sp-status-lp"><span class="sp-status-balken"><i style="width:' + anteil + '%"></i></span> <b>' + ich.lp + "/" + ich.lp_max + "</b> LP"
-      + (ich.kaputt ? ' <span class="sp-rot">kaputt</span>' : "") + (ich.anfaenger ? ' <span class="sp-blau">Schutz</span>' : "") + "</span>"
+    var status = '<div class="sp-status">'
+      + '<div class="sp-status-lp"><span class="sp-status-balken"><i style="width:' + anteil + '%"></i></span> <b>' + ich.lp + " / " + ich.lp_max + "</b> LP"
+      + (ich.kaputt ? ' <span class="sp-rot">· kaputt</span>' : "") + (ich.anfaenger ? ' <span class="sp-blau">· Anfängerschutz</span>' : "") + "</div>"
       /* FASSUNG 634 — Level und Erfahrung */
-      + '<span class="sp-status-lp"><span class="sp-status-balken sp-xp-balken"><i style="width:' + xpAnteil + '%"></i></span> <b>Level ' + (ich.level || 1) + "</b>"
-      + (ich.skill_frei > 0 ? ' <span class="sp-gold">+' + ich.skill_frei + "</span>" : "") + "</span>"
-      + '<span class="sp-status-lp"><span class="sp-status-balken sp-mana-balken"><i style="width:' + Math.max(0, Math.min(100, ich.mana || 0)) + '%"></i></span> <b>' + (ich.mana || 0) + "</b> Mana</span>"
-      + "</div>"
-      + '<div class="sp-status-werte"><span>🪙 ' + ich.punkte + " Punkte</span><span>📚 " + (ich.verdient || 0) + " verdient</span><span>🩹 " + ich.pflaster
+      + '<div class="sp-status-lp"><span class="sp-status-balken sp-xp-balken"><i style="width:' + xpAnteil + '%"></i></span> <b>Level ' + (ich.level || 1) + "</b> · "
+      + (ich.xp || 0) + " / " + (ich.xp_naechste || 100) + " Erfahrung" + (ich.skill_frei > 0 ? ' <span class="sp-gold">· ' + ich.skill_frei + " Skillpunkt" + (ich.skill_frei > 1 ? "e" : "") + " frei</span>" : "") + "</div>"
+      + '<div class="sp-status-werte"><span>🪙 ' + ich.punkte + " Punkte</span><span>📚 " + ich.verdient + " verdient</span><span>🩹 " + ich.pflaster
       + "</span><span>🧪 " + ich.traenke + "</span>" + (vorrat.erz > 0 ? "<span>⛏️ " + vorrat.erz + " Erz</span>" : "") + "<span>🛡️ " + Math.round((ich.ruestung || 0) * 100) + " % Rüstung</span>"
       + "<span>🔥 " + (ich.ladung || 0) + " % Ladung" + (wirkt(ich, "daemon") ? " · dämonisch " + wirkt(ich, "daemon") + " s" : "") + "</span>"
       + (ich.helm_stufe > 0 ? "<span>⛑️ Helm " + ich.helm_stufe + ": " + (ich.helm_halt || 0) + "/40</span>" : "")
@@ -4379,7 +4344,9 @@
       + (ich.flugtier ? "<span>" + esc((TIERE[ich.flugtier] || TIERE.drache).name) + " " + (ich.flugtier_leben || 0) + "/" + (ich.flugtier_max || 25) + (ich.flugtier_leben > 0 ? "" : " schwach") + "</span>" : "")
       + (ich.geschuetz_ladungen > 0 ? "<span>Turm Stufe " + (ich.geschuetz_stufe || 1) + ": " + ich.geschuetz_ladungen + "/" + (ich.geschuetz_max || 12) + " Schuss</span>" : "")
       + "</div>"
-      /* FUNK 106 — Mana (steht seit 673 oben in der Zeile) und Tränke. */
+      /* FUNK 106 — der zweite Balken: Mana, nur aus Deutsch (+6 je
+         richtiger Aufgabe), für die Zaubertränke. */
+      + '<div class="sp-status-lp"><span class="sp-status-balken sp-mana-balken"><i style="width:' + Math.max(0, Math.min(100, ich.mana || 0)) + '%"></i></span> <b>' + (ich.mana || 0) + " / 100</b> Mana</div>"
       + '<div class="sp-traenke">' + TRAENKE.map(function (t) {
           var n = ich["trank_" + t[0]] || 0, rest = wirkt(ich, t[0]);
           var mana = t[0] === "mana" ? 0 : 30;
@@ -4388,9 +4355,7 @@
             + '<span class="sp-trank sp-trank-' + t[0] + '"></span>' + t[1] + " (" + n + ")" + (rest ? " · wirkt " + rest + " s" : "") + "</button>";
         }).join("") + "</div>"
       + (S.stillstand ? '<div class="sp-hinweis">🕊️ Waffenstillstand – die Tafel ist offen.</div>' : "")
-      /* FASSUNG 673 — XANDER: „zum Beispiel dass die Kartoffel angelegt ist.
-         Das muss dort gar nicht sichtbar sein. Diese Zeile könnte man
-         rausnehmen". Die angelegte Waffe steht im Waffenrad und im Reiter. */
+      + (S.waffe ? '<div class="sp-hinweis">🎯 ' + esc(WAFFEN[S.waffe].name) + ' ist angelegt – tippe auf ein Gesicht, um zu schießen. <button type="button" data-tu="ablegen">Ablegen</button></div>' : "")
       + (S.duell && Date.now() < S.duell.bis ? '<div class="sp-hinweis">⚔️ Duell läuft – tippe auf deinen Gegner.</div>' : "")
       + "</div>";
     var tabs = [["start", "Übersicht"], ["anleitung", "Anleitung"], ["deutsch", "Deutsch"], ["koennen", "Können"], ["tiere", "Tiere"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell & Heilen"], ["rang", "Rangliste"]];
@@ -4505,9 +4470,7 @@
            Grenze von 300 Punkten je Stunde ist weg. */
         + 'Null gibt es nur bei falscher Antwort oder nach mehr als 10 Minuten Bedenkzeit – eine Stundengrenze gibt es nicht mehr. '
         + 'Zwischen zwei Antworten liegen mindestens 3 Sekunden. Jede richtige Antwort gibt außerdem +6 Mana, +8 Ladung und doppelt so viel Erfahrung wie Punkte (mindestens 1, auch über der Stundengrenze).</p>';
-      /* FASSUNG 673 — die Aufgabe steht OBEN: sofort antworten, ohne erst
-         an Niveau- und Kategorieknöpfen vorbei zu scrollen. */
-      return teil + '<div class="sp-chips">' + chips + "</div>" + arten + missionTeil + regel;
+      return '<div class="sp-chips">' + chips + "</div>" + arten + teil + missionTeil + regel;
     }
     if (reiter === "koennen") {
       var tr = ich.training, frei = ich.skill_frei || 0, sks = ich.skills || {};
@@ -4709,8 +4672,6 @@
     if (k.dataset.tab) { reiter = k.dataset.tab; if (reiter === "deutsch" && !S.aufgabe) aufgabeHolen(false); panelAuffrischen(); return; }
     var tu = k.dataset.tu;
     if (tu === "zu") return schliessen();
-    if (tu === "haupt") { schliessen(); S.schnellMenue = true; schnellZeichnen(true); return; }
-    if (tu === "fund") { var fk = fundPlatzEl(); if (fk) fundHeben(fk); return; }
     if (tu === "niveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} aufgabeHolen(false); return; }
     if (tu === "aufgabe") return aufgabeHolen(false);
     if (tu === "missionsaufgabe") return aufgabeHolen(true);
@@ -5290,22 +5251,6 @@
     S.fundPlatz = Number(ziel.dataset.lcPlatz); S.fundBis = jetzt + 45000;
     ton("bling", 0.3);
   }
-  /* FASSUNG 673 — das Fundstück ist immer erreichbar: als Knopf oben im
-     Deutsch-Fenster und in der Schnellleiste, ohne erst zu schließen. */
-  function fundPlatzEl() {
-    return S.fundPlatz ? document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + S.fundPlatz + '"]') : null;
-  }
-  function fundKnopfHtml() {
-    return S.fundPlatz && fundPlatzEl() && fundPlatzEl().querySelector(".sp-fundsack")
-      ? '<button type="button" class="sp-fund-knopf" data-tu="fund" title="Fundstück einsammeln">' + fundSvg() + "<span>Fundstück</span></button>" : "";
-  }
-  function fundKnopfPflegen() {
-    if (!panel || panel.hidden) return;
-    var knoepfe = panel.querySelector(".sp-kopf-knoepfe"), alt = panel.querySelector(".sp-fund-knopf"), soll = fundKnopfHtml();
-    if (!knoepfe) return;
-    if (soll && !alt) knoepfe.insertAdjacentHTML("afterbegin", soll);
-    else if (!soll && alt) alt.remove();
-  }
   function fundHeben(knopf) {
     var f = knopf.querySelector(".sp-fundsack");
     if (f) f.remove();
@@ -5333,7 +5278,6 @@
     tafelPruefen();
     zeichnen();
     fundPflegen();
-    fundKnopfPflegen();
     if (S.bereit && !S.troph && !trophUhr && Date.now() - trophLetzt > 30000) trophaeenBald();
     schnellZeichnen();
   }, 700);
