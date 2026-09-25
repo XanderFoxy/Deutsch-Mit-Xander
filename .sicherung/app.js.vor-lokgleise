@@ -51290,7 +51290,7 @@
       const c = ecke[k % n];
       if (Math.hypot(c.A.x - hier.x, c.A.y - hier.y) > 0.5) {
         mod.push({ art: "gerade", a: { x: hier.x, y: hier.y }, b: { x: c.A.x, y: c.A.y },
-                   rund: k - 1 >= fahrt, bis: k % n });
+                   rund: k - 1 >= fahrt });
       }
       pt.push({ x: hier.x, y: hier.y }, { x: c.A.x, y: c.A.y });
       if (c.r > 0.5) {
@@ -51301,7 +51301,7 @@
         while (dw < -Math.PI) dw += 2 * Math.PI;
         const ek = k % n;
         mod.push({ art: "bogen", c: C, r: c.r, a: c.A, b: c.B, w0: w0, dw: dw,
-                   rund: !(ek >= 1 && ek <= fahrt - 1), ecke: ek });
+                   rund: !(ek >= 1 && ek <= fahrt - 1) });
         for (let j = 1; j <= 4; j++) {
           const w = w0 + dw * j / 4;
           pt.push({ x: C.x + c.r * Math.cos(w), y: C.y + c.r * Math.sin(w) });
@@ -51570,240 +51570,20 @@
     return beste;
   }
 
-  /* =====================================================================
-     LOKGLEISE (25.09.) — NUR GERADE WEGE, NUR RUNDE KURVEN, NIE SCHRAEG
-     ---------------------------------------------------------------------
-     XANDER: „übrigens solltest du der Lok auch noch die Möglichkeit
-     geben, dass sie in Sequenzen fahren kann und die darf niemals
-     schräg mit dem Gleis irgendwo unter. Die muss immer so geradlinige
-     Sachen fahren. Also Kurven schon aber auf der Basis, dass man gerade
-     Wege zieht und selbst wenn man einen Weg nicht komplett voll gezogen
-     hat, dann soll ich nicht schräg zurückfahren. Es soll niemals
-     unterbrochene Gleise dargestellt werden … wenn ich jetzt auf der
-     sieben sitze und ich zieh meinen Weg nur bis zur zwei. Dann könnte
-     das ja schräg ne schräge Kurve machen aber es darf dann niemals so
-     wie übereinander gelegte Gleise sein und die müssen wirklich
-     verbunden sein."
-
-     GEMESSEN (werkzeug/pruefe-lok-gleise.js), VORHER:
-       · „/lok 7-2", „/lok 7-1", „/lok 1-12": die Kette wurde Punkt fuer
-         Punkt mit geraden Linien verbunden — wo zwei Stationen nicht in
-         derselben Reihe oder Spalte liegen, lief das Gleis SCHRAEG quer
-         uebers Feld (bis 559 px aus der Waagerechten), und die
-         Tunnelstuecke lagen in derselben Schraege.
-         Genau Xanders „schräg zurückfahren".
-       · Eine Kette, die nicht am eigenen Platz beginnt („/lok 6-2" von
-         der 7), ersetzte ihren ersten Punkt durch den eigenen Platz —
-         auch das ergab eine Schraege.
-       · Der geschlossene Kreis („/lok 1-2-6-5"): das Gleis hat an JEDER
-         Ecke eine Kurve, auch am Start; die Lok fuhr aber vom Eckpunkt
-         los — 22 px neben ihrem eigenen Gleis.
-
-     JETZT wird jede Kette in eine rechtwinklige Gleisfolge umgerechnet:
-       1. Die Stationen werden auf das Sitzraster gelegt (Spalten-x und
-          Reihen-y gemittelt), damit „waagerecht" auch auf den Pixel
-          waagerecht ist.
-       2. Die Kette beginnt IMMER am eigenen Platz — eine Sequenz, die
-          woanders anfaengt, wird von dort aus angefahren („in Sequenzen
-          fahren": Station fuer Station, in genau dieser Reihenfolge).
-       3. Liegen zwei Stationen schraeg zueinander, bekommt die Strecke
-          eine Ecke: erst waagerecht, dann senkrecht — es sei denn, das
-          fuehrte zurueck auf das Stueck, von dem sie kommt, oder ueber
-          ein schon gelegtes Gleis; dann erst senkrecht, dann waagerecht.
-          Kreuzt nur die eine Ecke ein gelegtes Gleis, gewinnt die andere.
-       4. Ein Stueck, das genau zurueckfuehrt (Spitzkehre), wird
-          herausgenommen: auf einem Gleis kann eine Lok nicht umdrehen,
-          ohne dass zwei Gleise uebereinander laegen.
-       5. Punkte mitten auf einer Geraden fallen weg — die Kurven werden
-          dadurch so weit, wie die Gerade es hergibt.
-     Die Kurven selbst setzt lcLokBahn: an jeder Ecke ein Viertelkreis,
-     der genau dort beginnt, wo die Gerade endet, in derselben Richtung.
-     ===================================================================== */
-  /* Deckt die Strecke a–b ein Stueck einer der Strecken in „zug"
-     (Punkte hintereinander) oder in „extra" (einzelne Paare)?
-     Beruehren an einem Punkt oder Kreuzen ist erlaubt — nur
-     uebereinander liegen nicht. */
-  function lcLokDeckt(a, b, zug, extra) {
-    const la = Math.hypot(b.x - a.x, b.y - a.y);
-    if (la < 1) return false;
-    const ux = (b.x - a.x) / la, uy = (b.y - a.y) / la;
-    const quer = (q) => Math.abs(-uy * (q.x - a.x) + ux * (q.y - a.y));
-    const t = (q) => (q.x - a.x) * ux + (q.y - a.y) * uy;
-    const paare = [];
-    for (let i = 1; i < (zug || []).length; i++) paare.push([zug[i - 1], zug[i]]);
-    (extra || []).forEach((p) => paare.push(p));
-    return paare.some(([p, q]) => {
-      if (quer(p) > 1 || quer(q) > 1) return false;
-      const t0 = t(p), t1 = t(q);
-      return Math.min(la, Math.max(t0, t1)) - Math.max(0, Math.min(t0, t1)) > 1;
-    });
-  }
-
-  /* Wie oft KREUZT die Strecke a–b eine der anderen? Eine Kreuzung ist
-     erlaubt (auf der Platte gibt es dafuer das Kreuzungsstueck), aber
-     wo es ohne geht, geht es ohne — zwei Gleise, die sich schneiden,
-     sehen schnell aus wie „übereinander gelegte Gleise". */
-  function lcLokKreuzt(a, b, zug, extra) {
-    const paare = [];
-    for (let i = 1; i < (zug || []).length; i++) paare.push([zug[i - 1], zug[i]]);
-    (extra || []).forEach((p) => paare.push(p));
-    const rx = b.x - a.x, ry = b.y - a.y;
-    const la = Math.hypot(rx, ry);
-    if (la < 1) return 0;
-    return paare.filter(([p, q]) => {
-      const sx = q.x - p.x, sy = q.y - p.y;
-      const nenner = rx * sy - ry * sx;
-      const ls = Math.hypot(sx, sy);
-      if (ls < 1 || Math.abs(nenner) < 1e-6 * la * ls) return false;
-      const t = ((p.x - a.x) * sy - (p.y - a.y) * sx) / nenner;
-      const u = ((p.x - a.x) * ry - (p.y - a.y) * rx) / nenner;
-      return t * la > 1 && (1 - t) * la > 1 && u * ls > 1 && (1 - u) * ls > 1;
-    }).length;
-  }
-
-  function lcLokStrecke(ab, zu, bahn, gitter, mitte, d) {
-    let stationen = (bahn && bahn.length > 1) ? bahn.slice() : lcWegSuchen(gitter, ab.nr, zu.nr, true);
-    if (!stationen || !stationen.length) return null;
-    /* 2. Die Sequenz beginnt am eigenen Platz. */
-    if (stationen[0].nr !== ab.nr) stationen = [ab].concat(stationen);
-    /* 1. Das Sitzraster: Plaetze, deren Mitten weniger als 0,3 Platz-
-       breiten auseinanderliegen, gehoeren zu derselben Spalte (Reihe). */
-    const raster = (werte) => {
-      const gruppen = [];
-      werte.slice().sort((a, b) => a - b).forEach((v) => {
-        const g = gruppen[gruppen.length - 1];
-        if (g && v - g.letzt < d * 0.3) { g.summe += v; g.n++; g.letzt = v; }
-        else gruppen.push({ summe: v, n: 1, letzt: v });
-      });
-      return (v) => {
-        let beste = v, weit = d * 0.3;
-        gruppen.forEach((g) => {
-          const m = g.summe / g.n;
-          if (Math.abs(v - m) < weit) { weit = Math.abs(v - m); beste = m; }
-        });
-        return beste;
-      };
-    };
-    const alle = gitter.map(mitte);
-    const aufX = raster(alle.map((q) => q.x)), aufY = raster(alle.map((q) => q.y));
-    const punkte = stationen.map((g) => {
-      const q = mitte(g);
-      return { x: aufX(q.x), y: aufY(q.y) };
-    });
-    const gleich = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) < 2;
-    const gerade = (a, b) => Math.abs(a.x - b.x) < 2 || Math.abs(a.y - b.y) < 2;
-    const richtung = (a, b) => ({ x: Math.abs(b.x - a.x) < 2 ? 0 : Math.sign(b.x - a.x),
-                                  y: Math.abs(b.y - a.y) < 2 ? 0 : Math.sign(b.y - a.y) });
-    const zurueck = (u, v) => Boolean((u.x || u.y) && u.x === -v.x && u.y === -v.y);
-    /* 3. Von Station zu Station — schraeg nur ueber eine Ecke. */
-    const zug = [punkte[0]];
-    for (let i = 1; i < punkte.length; i++) {
-      const C = zug[zug.length - 1], Q = punkte[i];
-      if (gleich(C, Q)) continue;
-      if (gerade(C, Q)) { zug.push(Q); continue; }
-      const vor = zug.length > 1 ? richtung(zug[zug.length - 2], C) : null;
-      const N = punkte[i + 1];
-      const wahl = [{ x: Q.x, y: C.y }, { x: C.x, y: Q.y }].map((K, j) => {
-        /* j = 0 ist „erst waagerecht" — bei Gleichstand gewinnt es. */
-        let strafe = j;
-        if (vor && zurueck(vor, richtung(C, K))) strafe += 100;
-        if (lcLokDeckt(C, K, zug) || lcLokDeckt(K, Q, zug, [[C, K]])) strafe += 50;
-        strafe += 5 * (lcLokKreuzt(C, K, zug) + lcLokKreuzt(K, Q, zug));
-        if (N && !gleich(N, Q) && gerade(Q, N) && zurueck(richtung(K, Q), richtung(Q, N))) strafe += 20;
-        return { K: K, strafe: strafe };
-      }).sort((a, b) => a.strafe - b.strafe)[0];
-      zug.push(wahl.K, Q);
-    }
-    /* 4. und 5. Doppelte Punkte, Spitzkehren und Punkte mitten auf der
-       Geraden heraus — so lange, bis sich nichts mehr aendert. Der
-       erste und der letzte Punkt bleiben immer stehen. */
-    let anders = true;
-    while (anders && zug.length > 1) {
-      anders = false;
-      for (let i = zug.length - 1; i > 0 && !anders; i--) {
-        if (!gleich(zug[i], zug[i - 1])) continue;
-        zug.splice(i === zug.length - 1 ? i - 1 : i, 1);
-        anders = zug.length > 1;
-      }
-      for (let i = 1; i < zug.length - 1 && !anders; i++) {
-        const u = richtung(zug[i - 1], zug[i]), v = richtung(zug[i], zug[i + 1]);
-        if ((u.x === v.x && u.y === v.y) || zurueck(u, v)) { zug.splice(i, 1); anders = true; }
-      }
-    }
-    return zug.length > 1 ? zug : null;
-  }
-
-  /* Die Fahrstationen aus fertigen Gleismodulen — fuer den Kreis, damit
-     die Lok GENAU auf den Stuecken faehrt, die auch gezeichnet sind.
-     Ein Bogen darf nur zum Teil befahren werden (f0 … f1): die Lok
-     steigt mitten in der Startkurve ein und haelt mitten in der
-     Zielkurve — dort, wo das Gleis dem Platz am naechsten kommt. */
-  function lcLokBahnAusModulen(mods) {
-    const pt = [];
-    let letzter = null;
-    const setze = (x, y, w, bogen) => {
-      letzter = letzter === null ? w : lcWinkelFolge(w, letzter);
-      pt.push({ x: x, y: y, winkel: letzter, bogen: bogen });
-    };
-    mods.forEach((m) => {
-      if (m.art === "gerade") {
-        const w = Math.atan2(m.b.y - m.a.y, m.b.x - m.a.x) * 180 / Math.PI;
-        if (!pt.length) setze(m.a.x, m.a.y, w, -1);
-        setze(m.b.x, m.b.y, w, -1);
-        return;
-      }
-      const f0 = m.f0 || 0, f1 = m.f1 === undefined ? 1 : m.f1;
-      const stufen = Math.max(2, Math.round(8 * (f1 - f0)));
-      for (let k = pt.length ? 1 : 0; k <= stufen; k++) {
-        const f = f0 + (f1 - f0) * k / stufen;
-        const w = m.w0 + m.dw * f;
-        setze(m.c.x + m.r * Math.cos(w), m.c.y + m.r * Math.sin(w),
-              (w + (m.dw > 0 ? Math.PI / 2 : -Math.PI / 2)) * 180 / Math.PI, f);
-      }
-    });
-    let s = 0;
-    if (pt.length) pt[0].s = 0;
-    for (let i = 1; i < pt.length; i++) {
-      s += Math.hypot(pt[i].x - pt[i - 1].x, pt[i].y - pt[i - 1].y);
-      pt[i].s = s;
-    }
-    return { mod: mods, pt: pt, gesamt: s || 1 };
-  }
-
-  /* Der Teil des geschlossenen Kreises, den die Lok selbst faehrt: von
-     der Mitte der Startecke (Ecke 0) bis zur Mitte der Zielecke. Hat
-     eine Ecke keine Kurve (die Gerade laeuft dort durch), liegt der
-     Platz ohnehin auf dem Gleis. Die Module in „rund.mod" beginnen
-     HINTER der Kurve an Ecke 0 und enden mit ihr (lcLokBahnRund). */
-  function lcLokKreisFahrt(rund, kurs) {
-    const n = kurs.P.length, ziel = kurs.fahrt % n;
-    const mods = rund.mod, fahrt = [];
-    const erste = mods.find((m) => m.art === "bogen" && m.ecke === 0);
-    if (erste) fahrt.push(Object.assign({}, erste, { f0: 0.5, f1: 1 }));
-    for (let i = 0; i < mods.length; i++) {
-      const m = mods[i];
-      if (m.art === "bogen" && m.ecke === ziel) {
-        fahrt.push(Object.assign({}, m, { f0: 0, f1: 0.5 }));
-        break;
-      }
-      fahrt.push(m);
-      const weiter = mods[i + 1];
-      if (m.art === "gerade" && m.bis === ziel
-          && !(weiter && weiter.art === "bogen" && weiter.ecke === ziel)) break;
-    }
-    return lcLokBahnAusModulen(fahrt);
-  }
-
   function lcLokPlan(ab, zu, bahn, rk, d, start, ende, los) {
     const gitter = lcPlatzGitter() || [];
+    const weg = (bahn && bahn.length > 1) ? bahn : lcWegSuchen(gitter, ab.nr, zu.nr, true);
+    if (!weg || weg.length < 2) return null;
     const mitte = (g) => ({ x: g.x - rk.left, y: g.y - rk.top + lcBildVersatz(g.el) });
-    /* LOKGLEISE (25.09.) — frueher wurden die Stationen der Kette hier
-       einfach der Reihe nach verbunden, auch schraeg. Jetzt rechnet
-       lcLokStrecke daraus eine rechtwinklige Folge (siehe dort). Das
-       Zusammenlegen doppelter Punkte („5-1-2" vom Platz 1 aus — der
-       Tunnel landete sonst AUF dem Platz) steckt mit darin. */
-    const pk = lcLokStrecke(ab, zu, bahn, gitter, mitte, d);
-    if (!pk || pk.length < 2) return null;
+    const pk = weg.map(mitte);
+    pk[0] = { x: start.x, y: start.y + lcBildVersatz(ab.el) };
+    pk[pk.length - 1] = { x: ende.x, y: ende.y + lcBildVersatz(zu.el) };
+    /* Zweimal derselbe Punkt hintereinander (etwa „5-1-2" vom Platz 1
+       aus) hat keine Richtung — der Tunnel landete dann AUF dem Platz. */
+    for (let i = pk.length - 1; i > 0; i--) {
+      if (Math.hypot(pk[i].x - pk[i - 1].x, pk[i].y - pk[i - 1].y) < 2) pk.splice(i === pk.length - 1 ? i - 1 : i, 1);
+    }
+    if (pk.length < 2) return null;
     const sitze = gitter.map((g) => Object.assign(mitte(g), { g: g }));
     /* Der echte Nachbarabstand: waagerecht und senkrecht getrennt. */
     let sx = Infinity, sy = Infinity;
@@ -51822,19 +51602,9 @@
     };
     const plan = { pk: pk, d: d, rund: null, tunnel: null, schranke: null, wagen: false };
     const n = pk.length;
-    let fahrPk = pk, vorlauf = 0, nachlauf = 0, bahnF = null;
+    let fahrPk = pk, vorlauf = 0, nachlauf = 0;
     if (kurs && kurs.geschlossen) {
       plan.rund = kurs;
-      /* LOKGLEISE (25.09.) — der Kreis hat an JEDER Ecke eine Kurve, auch
-         an der Start- und an der Zielecke. Gefahren wurde aber auf einer
-         eigenen Strecke von Eckpunkt zu Eckpunkt: dort stand die Lok bis
-         zu 22 px NEBEN dem Gleis („die müssen wirklich verbunden sein").
-         Jetzt faehrt sie auf genau den Modulen, die gezeichnet werden. */
-      const rundBahn = lcLokBahnRund(kurs, d * 0.62);
-      if (rundBahn && rundBahn.mod.length) {
-        plan.rundBahn = rundBahn;
-        bahnF = lcLokKreisFahrt(rundBahn, kurs);
-      }
     } else {
       /* DER TUNNEL sitzt ausserhalb der Sitzreihen, in Verlaengerung des
          ersten und des letzten Stuecks — dort, wo die Strecke offen ist. */
@@ -51854,29 +51624,8 @@
         const t = Math.max(d * 0.75, ts.length ? Math.min.apply(null, ts) : rand);
         return { x: P.x + u.x * t, y: P.y + u.y * t, ux: u.x, uy: u.y, lauf: t };
       };
-      /* LOKGLEISE (25.09.) — „es darf dann niemals so wie übereinander
-         gelegte Gleise sein". Das Tunnelstueck laeuft geradeaus weiter
-         bis in den Berg — und dabei unter anderen Plaetzen hindurch.
-         Liegt dort schon ein Stueck der Strecke (etwa bei einer Spirale,
-         die neben ihrem Anfang endet), biegt es statt dessen mit einer
-         runden Kurve nach links oder rechts ab — zu der Seite, auf der
-         es kein anderes Gleis kreuzt. Kreuzen darf es notfalls, wie auf
-         der Platte; auf einem anderen Gleis liegen darf es nie. */
-      const beinWeit = d * (LC_ZUG_ABSTAND.schwanz + 3) + Math.max(rk.width, rk.height);
-      const bein = (P, u, andere) => {
-        /* Geradeaus hat Vorrang; dann die Seite, die nichts kreuzt. */
-        const wahl = [u, { x: -u.y, y: u.x }, { x: u.y, y: -u.x }].map((v, j) => {
-          const Z = { x: P.x + v.x * beinWeit, y: P.y + v.y * beinWeit };
-          return { v: v, strafe: (lcLokDeckt(P, Z, pk, andere) ? 100 : 0)
-                                 + 5 * lcLokKreuzt(P, Z, pk, andere) + j };
-        }).sort((a, b) => a.strafe - b.strafe)[0];
-        return wahl.strafe < 100 ? wahl.v : u;
-      };
-      const uA = bein(pk[0], einheit(pk[1], pk[0]), []);
-      const TA = portal(pk[0], uA);
-      const uB = bein(pk[n - 1], einheit(pk[n - 2], pk[n - 1]),
-                      [[pk[0], { x: pk[0].x + uA.x * beinWeit, y: pk[0].y + uA.y * beinWeit }]]);
-      const TB = portal(pk[n - 1], uB);
+      const TA = portal(pk[0], einheit(pk[1], pk[0]));
+      const TB = portal(pk[n - 1], einheit(pk[n - 2], pk[n - 1]));
       plan.tunnel = [TA, TB];
       plan.wagen = true;
       /* Die Lok steht am Anfang GANZ im Tunnel (ihre halbe Laenge plus
@@ -51892,26 +51641,11 @@
       plan.gleisPk = [{ x: TA.x + TA.ux * zugTief, y: TA.y + TA.uy * zugTief }]
         .concat(pk, [{ x: TB.x + TB.ux * hinein, y: TB.y + TB.uy * hinein }]);
     }
-    if (!bahnF) bahnF = lcLokBahn(fahrPk, d * 0.62);
+    const bahnF = lcLokBahn(fahrPk, d * 0.62);
     plan.bahnF = bahnF;
     plan.sA = vorlauf;
     plan.sB = bahnF.gesamt - nachlauf;
     plan.sPortalA = plan.tunnel ? vorlauf - plan.tunnel[0].lauf : -Infinity;
-    /* Biegt ein Tunnelstueck am Platz ab, liegt dort eine Kurve: der
-       Platz ist dann nicht mehr genau „vorlauf" weit weg. Gezaehlt wird
-       dort, wo das Gleis dem Platz am naechsten kommt. */
-    if (plan.tunnel) {
-      const nahe = (q, s0) => {
-        const pt = bahnF.pt;
-        let i0 = 0;
-        while (i0 < pt.length - 1 && pt[i0 + 1].s < s0 - d * 2) i0++;
-        let i1 = i0;
-        while (i1 < pt.length - 1 && pt[i1].s <= s0 + d * 2) i1++;
-        return lcLokLot(pt.slice(i0, i1 + 1), q).s;
-      };
-      plan.sA = nahe(pk[0], plan.sA);
-      plan.sB = nahe(pk[n - 1], plan.sB);
-    }
 
     /* DIE SCHRANKE — „nicht immer, das kann mal so zufaellig mit dabei
        sein". Gewuerfelt wird EINMAL beim Absender („los" reist mit der
@@ -52371,8 +52105,7 @@
     let gleisPlan = bahn;
     try {
       if (plan.rund) {
-        /* LOKGLEISE — dieselben Module, auf denen die Lok faehrt. */
-        const rund = plan.rundBahn || lcLokBahnRund(plan.rund, d * 0.62);
+        const rund = lcLokBahnRund(plan.rund, d * 0.62);
         if (rund && rund.mod.length) gleisPlan = rund;
       } else if (plan.gleisPk) {
         gleisPlan = lcLokBahn(plan.gleisPk, d * 0.62);
