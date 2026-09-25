@@ -49,28 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 672 – Zauberer-Reise wie in Funk 85; als Nächstes der Rest aus Funk 84/85",
+  stand: "Fassung 675 – Spielpunkte im Ranking; jetzt: Waffen verkaufen, Rüstung sichtbar, dann Felder/Bäckerei/Markt",
 
   inArbeit: [
-    { seit: "2026-09-25T17:44",
-      text: "Funk 84: Mario-Röhren, Lok-Schranke mit Überfahren, Hot-Rod-Weg, Person als Feuerwerk" },
-    { seit: "2026-09-25T17:44",
-      text: "Funk 85: Monstertruck, eigener Einzug/Abgang, Knöpfe unter den Plätzen, Magic Button" },
-    { seit: "2026-09-25T17:44",
-      text: "Rückfrage #256 (Ups-Effekt) – wartet auf deine Antwort" },
-    { seit: "2026-09-25T17:44",
-      text: "Sprechbilder (Runde 101) – wartet auf deine Antwort, was gemeint ist" },
+    { seit: "2026-09-25T18:08",
+      text: "Waffen und Sachen verkaufen, Rüstung sichtbar angelegt" },
+    { seit: "2026-09-25T18:08",
+      text: "Felder mit Sense, Getreide, Bäckerei backt, Verarbeitung über Zeit, Markt" },
+    { seit: "2026-09-25T18:08",
+      text: "Latenz weiter senken" },
+    { seit: "2026-09-25T18:08",
+      text: "Funk 84/85 Rest (Mario-Röhren, Lok-Schranke, Hot-Rod-Weg, Feuerwerk, Monstertruck, Einzug, Knöpfe)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T17:44",
-      text: "672: Zauberer stülpt den Zylinder mit beiden Händen über dein Bild und klopft mit dem Zauberstab darauf" },
-    { seit: "2026-09-25T17:44",
-      text: "672: Er hebt ihn an (Platz leer) und zeigt ihn kopfüber mit der Öffnung zum Publikum" },
-    { seit: "2026-09-25T17:44",
-      text: "672: Er stellt ihn langsam mit beiden Händen aufs Ziel und zieht dich als Kaninchen heraus" },
-    { seit: "2026-09-25T17:44",
-      text: "671: Zauber und Superkraft-Schüsse, die man spürt" },
+    { seit: "2026-09-25T18:08",
+      text: "675: Alles, was du im Klassenzimmer-Spiel verdienst, zählt im Ranking (Heute, Gesamt, Fuchs des Tages)" },
+    { seit: "2026-09-25T18:08",
+      text: "675: Alte Spielpunkte nachgebucht – dein Profil: 5831 → 11121" },
+    { seit: "2026-09-25T18:08",
+      text: "675: Tower Defense und Rundenkampf geben Lohn (aus richtigen Antworten)" },
+    { seit: "2026-09-25T18:08",
+      text: "673: Wassergraben nur einmal; Deutsch-Fenster kompakt, Fundstück oben und in der Leiste, Tipp daneben schließt" },
   ],
 };
