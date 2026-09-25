@@ -227,7 +227,8 @@ const sage = (gut, was, zusatz) => {
   sage(t.filter((n) => n === "zauberrad").length === 1 && !t.includes("zauberpuff"), "Rad öffnen (lang drücken, gleich danach Knopf): genau ein ruhiger Zauberklang", t.join(","));
   const rad = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.zrad = true; window.DMA_SPIEL.pruef.schnellZeichnen(true);
     const b = document.querySelector('.sp-zauberrad [data-z="formular"] small'); return { preis: b ? b.textContent : "", klasse: b ? b.className : "", mana: (document.querySelector(".sp-zauberrad .sp-zr-mana") || {}).textContent || "", erkl: (document.querySelector(".sp-zauberrad .sp-zr-erkl") || {}).textContent || "" }; });
-  sage(/Mana/.test(rad.mana) && /Mana-Preis/.test(rad.erkl), "im Zauberrad steht: das eigene Mana und „Zahl = Mana-Preis“", JSON.stringify(rad));
+  /* Ab Fassung 686 steht beides in einer Zeile („Mana 50 · Zahl = Preis“), darunter Torte und Manatrank. */
+  sage(/Mana/.test(rad.mana) && /Preis/.test(rad.mana + rad.erkl), "im Zauberrad steht: das eigene Mana und „Zahl = Mana-Preis“", JSON.stringify(rad));
 
   sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.slice(0, 3).join(" | "));
   console.log("\n" + (fehler ? "Fassung 678: " + fehler + " rot." : "Fassung 678 auf dem Telefon: alles grün.") + "\n");

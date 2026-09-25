@@ -167,7 +167,7 @@ const sage = (gut, was, zusatz) => {
   const mitRuf = await pg.evaluate(() => (window.__rufe.find((r) => r.name === "spiel_mitspielen") || {}).args);
   sage(Boolean(mitRuf && mitRuf.p_an === true) && /sp-an/.test(l.mit), "„Mitspielen“ schaltet ein", JSON.stringify(mitRuf) + " · " + l.mit);
   sage((l.waffen || []).join(",") === "kartoffel*,huehnerwerfer", "zwei Waffen: Kartoffel (angelegt) und die stärkste eigene", (l.waffen || []).join(","));
-  sage(l.knoepfe <= 7 && !l.scrollt, "höchstens sieben Knöpfe, kein Scrollen", l.knoepfe + " Knöpfe");
+  sage(l.knoepfe <= 8 && !l.scrollt, "höchstens acht Knöpfe (ab 686 mit Trank-Flasche), kein Scrollen", l.knoepfe + " Knöpfe");
   const cem = await pg.evaluate(async () => {
     window.__rufe.length = 0;
     const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="cem"]');

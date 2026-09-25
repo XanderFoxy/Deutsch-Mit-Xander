@@ -186,7 +186,7 @@ const sage = (gut, was, zusatz) => {
   const reihe = await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-s-reihe > button")]; const bu = document.querySelector(".sp-s-burger");
     return { erster: b[0].className + "|" + b[0].dataset.s, gruenerPunkt: document.querySelectorAll(".sp-s-punkt").length, n: b.filter((x) => x.dataset.s !== "reparieren").length,
              burgerUeber: bu ? bu.getBoundingClientRect().bottom <= b[0].getBoundingClientRect().top + 1 && Math.abs(bu.getBoundingClientRect().left - b[0].getBoundingClientRect().left) < 8 : false }; });
-  sage(/sp-s-ei/.test(reihe.erster) && /\|mitspielen$/.test(reihe.erster) && /sp-an/.test(reihe.erster) && !reihe.gruenerPunkt && reihe.n <= 7, "ganz links der Controller = Mitspielen (grün), kein extra grüner Punkt; höchstens 7 Knöpfe", JSON.stringify(reihe));
+  sage(/sp-s-ei/.test(reihe.erster) && /\|mitspielen$/.test(reihe.erster) && /sp-an/.test(reihe.erster) && !reihe.gruenerPunkt && reihe.n <= 8, "ganz links der Controller = Mitspielen (grün), kein extra grüner Punkt; höchstens 8 Knöpfe (ab 686 mit Trank-Flasche)", JSON.stringify(reihe));
   sage(reihe.burgerUeber, "das Menü (☰) sitzt direkt über dem Controller");
   await tippe(".sp-schnell .sp-s-burger");
   const ueber = await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"), e = document.querySelector(".sp-s-burger"); return m ? m.getBoundingClientRect().bottom <= e.getBoundingClientRect().top + 1 : false; });

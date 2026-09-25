@@ -1009,10 +1009,7 @@
   }
   function langAufEigen(platz) {
     if (eigenLangFrei || !spielSichtbar()) return false;
-    /* FASSUNG 686 — XANDER: „wenn ich lange auf mein Profilbild gedrückt halte … wo ich erst mal die zwei
-       Optionen habe Zauber und Waffen und dann dort noch mal wechseln kann also zwei Räder in sich".
-       Erst die Wahl (Zauber | Waffen), dann das Rad; oben im Rad wechselt ⇄ ins andere. */
-    S.langWahl = true; S.zrad = false; S.rad = null; S.schnellMenue = false; S.trankAuf = false; S.radOffenSeit = Date.now();
+    S.zrad = true; S.rad = null; S.schnellMenue = false; S.radOffenSeit = Date.now();
     zauberradTon();
     schnellZeichnen(true);
     return true;
@@ -2908,8 +2905,6 @@
     return false;
   }
   function schnellZeichnen(sofort) {
-    /* FASSUNG 686 — die Dorf-/Markt-Ansicht des Makroknopfs ist ein eigenes Fenster; ist das Menü zu, ist sie es auch. */
-    if (!S.schnellMenue) S.blick = null;
     var form = document.getElementById("lcForm");
     var an = drin() && S.bereit && S.ich && form && form.style.display !== "none";
     if (!an) { if (schnellEl) schnellEl.hidden = true; return; }
@@ -2970,13 +2965,6 @@
       teile.push('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke && !zuEssen) ? " disabled" : "")
         + ' title="Heilen – nimmt, was gerade passt, und verschwendet nichts">'
         + '<svg viewBox="0 0 20 20"><path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#e2403a"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>');
-      /* FASSUNG 686 — XANDER: „unten in der Hauptschnellleiste meine Manatränke, die ich habe, dass ich sofort
-         darauf zugreifen kann". Die Flasche zeigt, wie viele Tränke da sind; ein Tipp öffnet sie alle. */
-      var trankZahl = trankVorrat(ich);
-      if (trankZahl) teile.push('<button type="button" class="sp-s-trank' + (S.trankAuf ? " sp-an" : "") + '" data-s="trankauf" title="Tränke und Mana-Essen">'
-        + '<svg viewBox="0 0 20 20"><path d="M8 2.5 H12 V6 C15 7.2 16.4 9.6 16.4 12.2 A6.4 6.4 0 0 1 3.6 12.2 C3.6 9.6 5 7.2 8 6 Z" fill="#dfe8ff" opacity=".35" stroke="#fff" stroke-width="1"/>'
-        + '<path d="M4.4 12 C6.4 11 8.4 13 10.4 12 C12.4 11 14 12.4 15.6 12 A5.6 5.6 0 0 1 4.4 12 Z" fill="#5a7bff"/><rect x="7.4" y="1.4" width="5.2" height="2" rx=".8" fill="#b07a45"/>'
-        + '<circle cx="7.4" cy="14" r=".9" fill="#fff" opacity=".7"/></svg><small>' + trankZahl + "</small></button>");
       var ladung = Math.max(0, Math.min(100, ich.ladung || 0)), daemonRest = wirkt(ich, "daemon");
       teile.push('<button type="button" class="sp-s-super' + (daemonRest ? " sp-an" : ladung >= 100 ? " sp-voll" : "") + '" style="--ladung:' + ladung + '%" data-s="superkraft"'
         + (ladung >= 100 && !daemonRest ? "" : " disabled")
@@ -2995,7 +2983,7 @@
       /* FASSUNG 683 — XANDER: „Mein Dorf hätte ich gern zusätzlich … in dem Shortcut Menü unten bei den Waffen …
          dass der letzte wie ein Makroknopf ist, dass ich dort entweder das Dorf hin machen kann … oder dass ich
          selber bestimmen kann, was dort unten für Symbole zu sehen sind." Belegen: Menü → Mehr → „Letzter Knopf". */
-      teile.push('<button type="button" class="sp-s-makro' + (S.schnellMenue && S.blick ? " sp-an" : "")
+      teile.push('<button type="button" class="sp-s-makro' + (S.schnellMenue && (S.schnellReiter === "dorfblick" || S.schnellReiter === "handelblick") ? " sp-an" : "")
         + '" data-s="makro" title="' + MAKROS[S.makro] + ' (belegen: Menü → Mehr → Letzter Knopf)">' + makroSvg(S.makro) + "</button>");
       if (reparaturNoetig(ich)) teile.push('<button type="button" class="sp-s-repar" data-s="reparieren" title="Alle Waffen reparieren (15 Punkte)">'
         + '<svg viewBox="0 0 20 20"><path d="M13.5 2.5 a4 4 0 0 0 -4.8 5.3 L2.8 13.7 a1.8 1.8 0 0 0 2.5 2.5 L11.2 10.3 a4 4 0 0 0 5.3 -4.8 L14 8 L12 6 Z" fill="#cfd6de" stroke="#5b636c" stroke-width="1"/></svg></button>');
@@ -3015,8 +3003,7 @@
     var burger = '<button type="button" class="sp-s-burger sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Spielmenü: Waffen, Heilen, Tiere, Mehr">'
       + '<svg viewBox="0 0 20 20"><path d="M4 6 H16 M4 10 H16 M4 14 H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
     var html = burger + '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (S.rad != null && ich.mitspielen ? radHtml(S.rad) : "")
-      + (S.zrad && ich.mitspielen ? zauberRadHtml() : "") + (S.wwahl && ich.mitspielen ? werkzeugWahlHtml() : "")
-      + (S.langWahl && ich.mitspielen ? langWahlHtml() : "") + (S.trankAuf && ich.mitspielen ? trankWahlHtml() : "");
+      + (S.zrad && ich.mitspielen ? zauberRadHtml() : "") + (S.wwahl && ich.mitspielen ? werkzeugWahlHtml() : "");
     if (sofort !== true && schnellGesperrt()) { clearTimeout(S.schnellNach); S.schnellNach = setTimeout(schnellZeichnen, 380); return; }
     S.schnellDruck = 0;
     if (schnellEl.dataset.html !== html) { schnellEl.innerHTML = html; schnellEl.dataset.html = html; }
@@ -3129,7 +3116,6 @@
     return '<div class="sp-rad sp-rad-voll" style="width:' + B + "px;height:" + B + 'px">'
       + '<svg class="sp-rad-sektoren" viewBox="0 0 ' + B + " " + B + '"><circle cx="' + M + '" cy="' + M + '" r="' + (R + 24) + '" class="sp-rad-scheibe"/>' + bogen
       + '<text class="sp-rad-an" x="' + M + '" y="' + (M + 28) + '">angelegt</text><text class="sp-rad-an-name" x="' + M + '" y="' + (M + 39) + '">' + esc(an) + "</text></svg>"
-      + ((S.ich || {}).mitspielen && ZAUBER_REIHE.some(function (a) { return ((S.ich || {}).level || 1) >= ZAUBER[a].level; }) ? radTauschHtml(M, "Zauber") : "")
       + knoepfe + '<button type="button" class="sp-rad-mitte" data-s="radab" style="left:' + (M - 20) + "px;top:" + (M - 20) + 'px" title="Waffe ablegen"><svg viewBox="0 0 20 20"><path d="M5 11 V7 a1.5 1.5 0 0 1 3 0 V10 M8 9 V5.5 a1.5 1.5 0 0 1 3 0 V9.5 M11 9 V6.5 a1.5 1.5 0 0 1 3 0 V11 C14 15 12 17 9.5 17 C7 17 5.5 15.5 5 13 Z" fill="#fff"/></svg></button></div>';
   }
   /* FASSUNG 654 — das Zauberrad als volles Rad wie das Waffenrad: neun
@@ -3140,50 +3126,6 @@
     ZAUBER_RAENGE.forEach(function (x, i) { if (n >= x[1]) r = i; });
     var naechst = ZAUBER_RAENGE[r + 1];
     return { nr: r, name: ZAUBER_RAENGE[r][0], zahl: n, bis: naechst ? naechst[1] - n : 0, naechst: naechst ? naechst[0] : "" };
-  }
-  function bogenUm(M, r, von, bis) {
-    var a = von * Math.PI / 180, b = bis * Math.PI / 180, gross = Math.abs(bis - von) > 180 ? 1 : 0;
-    return "M" + (M + r * Math.cos(a)).toFixed(1) + " " + (M + r * Math.sin(a)).toFixed(1) + " A" + r + " " + r + " 0 " + gross + " 1 " + (M + r * Math.cos(b)).toFixed(1) + " " + (M + r * Math.sin(b)).toFixed(1);
-  }
-  function radTauschHtml(M, zu) {
-    return '<button type="button" class="sp-rad-tausch" data-s="radtausch" style="left:' + (M - 34) + "px;top:" + (M - 66) + 'px" title="Zum ' + zu + 'rad wechseln">⇄ ' + zu + "</button>";
-  }
-  /* Tränke und Mana-Essen, die man gerade hat (für den Knopf in der Leiste und das Zauberrad). */
-  function trankVorrat(ich) {
-    var n = (ich.traenke || 0) + vorrat(ich, "torte") + vorrat(ich, "kuchen");
-    TRAENKE.forEach(function (t) { n += ich["trank_" + t[0]] || 0; });
-    return n;
-  }
-  function manaKnoepfeHtml(ich, M) {
-    var k = [];
-    if (vorrat(ich, "torte")) k.push('<button type="button" data-s="iss" data-d="torte" title="Torte essen: +40 LP, +15 Mana">' + wareSvg("torte") + "<small>" + vorrat(ich, "torte") + "</small></button>");
-    if (ich.trank_mana) k.push('<button type="button" data-s="trinken" data-t="mana" title="Manatrank: +50 Mana"' + (wirkt(ich, "mana") ? " disabled" : "") + '><span class="sp-trank sp-trank-mana"></span><small>' + ich.trank_mana + "</small></button>");
-    if (vorrat(ich, "kuchen")) k.push('<button type="button" data-s="iss" data-d="kuchen" title="Kuchen essen: +30 LP, +10 Mana">' + wareSvg("kuchen") + "<small>" + vorrat(ich, "kuchen") + "</small></button>");
-    if (!k.length) return '<span class="sp-zr-leer" style="left:' + (M - 60) + "px;top:" + (M + 40) + 'px">Torte backen = Mana</span>';
-    var breite = k.length * 34;
-    return '<span class="sp-zr-mana-knoepfe" style="left:' + (M - breite / 2) + "px;top:" + (M + 38) + "px;width:" + breite + 'px">' + k.join("") + "</span>";
-  }
-  function langWahlHtml() {
-    var ich = S.ich || {}, zOffen = ZAUBER_REIHE.some(function (a) { return (ich.level || 1) >= ZAUBER[a].level; }), w = S.waffe || slots()[0];
-    return '<div class="sp-rad sp-rad-voll sp-langwahl" style="width:236px;height:236px">'
-      + '<svg class="sp-rad-sektoren" viewBox="0 0 236 236"><circle cx="118" cy="118" r="114" class="sp-rad-scheibe"/></svg>'
-      + '<button type="button" class="sp-lw-zauber" data-s="langzauber"' + (zOffen ? "" : " disabled") + ">" + zauberSvg(S.zauber || "nebel") + "<b>Zauber</b><small>"
-        + (zOffen ? "Mana " + (ich.mana || 0) : "ab Level 3") + "</small></button>"
-      + '<button type="button" class="sp-lw-waffen" data-s="langwaffen">' + (WAFFEN[w] ? geschossSvg(w, S.laserfarbe) : "") + "<b>Waffen</b><small>" + esc(WAFFEN[w] ? WAFFEN[w].name : "") + "</small></button>"
-      + '<button type="button" class="sp-rad-mitte" data-s="langzu" style="left:98px;top:98px" title="Schließen"><svg viewBox="0 0 20 20"><path d="M5 5 L15 15 M15 5 L5 15" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></button></div>';
-  }
-  function trankWahlHtml() {
-    var ich = S.ich || {}, t = [];
-    if (ich.traenke) t.push('<button type="button" data-s="heil" data-art="trank"><span class="sp-trank sp-trank-heil"></span><b>Heiltrank</b><small>' + ich.traenke + " · +LP</small></button>");
-    TRAENKE.forEach(function (tr) {
-      var n = ich["trank_" + tr[0]] || 0, rest = wirkt(ich, tr[0]);
-      if (!n) return;
-      t.push('<button type="button" data-s="trinken" data-t="' + tr[0] + '"' + (rest ? " disabled" : "") + '><span class="sp-trank sp-trank-' + tr[0] + '"></span><b>' + tr[1] + "</b><small>" + (rest ? "wirkt noch " + rest + " s" : n + " Stück") + "</small></button>");
-    });
-    ["torte", "kuchen"].forEach(function (x) {
-      if (vorrat(ich, x)) t.push('<button type="button" data-s="iss" data-d="' + x + '">' + wareSvg(x) + "<b>" + WAREN[x] + "</b><small>" + vorrat(ich, x) + " · " + (x === "torte" ? "+40 LP, +15 Mana" : "+30 LP, +10 Mana") + "</small></button>");
-    });
-    return '<div class="sp-werkzeugwahl sp-trankwahl" role="menu"><span class="sp-ww-titel">Tränke &amp; Mana · ' + (ich.mana || 0) + " Mana</span>" + t.join("") + "</div>";
   }
   function zauberRadHtml() {
     var ich = S.ich || {}, n = ZAUBER_REIHE.length;
@@ -3203,22 +3145,12 @@
          der Amtsweg das sind 70 bei mir. Ich kann die fast endlos
          einsetzen". Die Zahl ist KEIN Vorrat, sondern der Mana-Preis. Das
          steht jetzt in der Mitte, mit dem eigenen Mana daneben. */
-      + '<text x="' + M + '" y="' + (M + 30) + '" fill="#8fd3ff" class="sp-zr-mana">Mana ' + (ich.mana || 0) + " · Zahl = Preis</text>"
-      /* FASSUNG 686 — „bei dem Zauberer vielleicht auch gleichzeitig das Mana mit drin, dass ich Torten Shortcut habe".
-         Ein Mana-Balken als Bogen innen, darunter Torte, Kuchen und Manatrank zum sofortigen Auffüllen. */
-      + '<path class="sp-zr-manabogen-spur" d="' + bogenUm(M, R - 30, 150, 390) + '"/>'
-      + ((ich.mana || 0) > 0 ? '<path class="sp-zr-manabogen" d="' + bogenUm(M, R - 30, 150, 150 + 240 * Math.min(1, (ich.mana || 0) / (ich.mana_max || 100))) + '"/>' : "")
-      + "</svg>"
-      + manaKnoepfeHtml(ich, M) + radTauschHtml(M, "Waffen")
+      + '<text x="' + M + '" y="' + (M + 38) + '" fill="#8fd3ff" class="sp-zr-mana">Mana ' + (ich.mana || 0) + "</text>"
+      + '<text x="' + M + '" y="' + (M + 52) + '" fill="#9aa6b8" class="sp-zr-erkl">Zahl = Mana-Preis</text></svg>'
       + html + '<button type="button" class="sp-rad-mitte" data-s="zauberab" style="left:' + (M - 20) + "px;top:" + (M - 20) + 'px" title="Zauber weglegen"><svg viewBox="0 0 20 20"><path d="M5 5 L15 15 M15 5 L5 15" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></button></div>';
   }
   function schnellMenueHtml() {
-    /* FASSUNG 686 — XANDER: „ich wollte das nicht im Hauptmenü haben. Das Hauptmenü soll so sein wie vorher".
-       Bis 685 setzte der Makroknopf den Reiter des Hauptmenüs auf „dorfblick" – danach öffnete auch ☰ nur noch
-       das Dorf, ohne Reiter. Jetzt hat die Dorf-Ansicht ihren eigenen Zustand (S.blick); ☰ zeigt immer das
-       Hauptmenü mit Waffen, Heilen, Tiere, Deutsch, Mehr. */
-    if (S.schnellReiter === "dorfblick" || S.schnellReiter === "handelblick") S.schnellReiter = "waffen";
-    var ich = S.ich || {}, r = S.blick || S.schnellReiter || "waffen", s = slots();
+    var ich = S.ich || {}, r = S.schnellReiter || "waffen", s = slots();
     /* FASSUNG 658 — XANDER: „Irgendwie sieht man aus dem Bürger nicht sofort
        heraus, dass man die Deutsch Aufgaben machen kann." Deutsch hat jetzt
        einen eigenen, grün markierten Reiter statt eines Knopfs unter „Mehr". */
@@ -3313,7 +3245,7 @@
           /* FASSUNG 683 — der letzte Knopf der Leiste ist frei belegbar. */
           + '<div class="sp-sm-laut sp-sm-zeigen sp-sm-makro"><span>Letzter Knopf</span>' + Object.keys(MAKROS).map(function (m) {
               return '<button type="button" data-s="makrowahl" data-m="' + m + '" class="' + (S.makro === m ? "sp-an" : "") + '">' + MAKROS[m] + "</button>"; }).join("") + "</div>"; })()
-        + '<p class="sp-sm-klein">Aufs eigene Bild: <b>2× tippen</b> wechselt die Waffe, <b>lang drücken</b>: Zauber oder Waffen (im Rad mit ⇄ wechseln).</p>'
+        + '<p class="sp-sm-klein">Aufs eigene Bild: <b>2× tippen</b> wechselt die Waffe, <b>lang drücken</b> öffnet das Zauberrad.</p>'
         + '<div class="sp-sm-liste">'
         + '<button type="button" data-s="sparring" class="' + (S.sparring ? "sp-an" : "") + '">Sparringspartner ' + (S.sparring ? "weg" : "aufstellen") + "</button>"
         + (S.sparring ? '<button type="button" data-s="gegenfeuer" class="' + (S.duell && S.duell.uebung ? "sp-an" : "") + '">' + (S.duell && S.duell.uebung ? "Er schießt zurück – aus" : "Er schießt zurück – an") + "</button>" : "")
@@ -3344,7 +3276,7 @@
     /* FASSUNG 683 — der Makroknopf zeigt NUR das Dorf (bzw. den Markt): keine Reiter, oben ✕. */
     if (r === "dorfblick" || r === "handelblick") {
       return '<div class="sp-schnellmenue sp-sm-blick"><div class="sp-sm-kopf sp-sm-kopf-blick"><b>' + (r === "dorfblick" ? "Mein Dorf" : "Markt & Handel") + "</b> · " + (ich.punkte || 0) + " P · " + (ich.mana || 0) + " Mana"
-        + '<button type="button" data-s="blickzu" class="sp-sm-zu" aria-label="Schließen">✕</button></div>' + inhaltM + "</div>";
+        + '<button type="button" data-s="klappe" class="sp-sm-zu" aria-label="Schließen">✕</button></div>' + inhaltM + "</div>";
     }
     return '<div class="sp-schnellmenue">' + kopf + '<div class="sp-sm-reiter">' + reiter + "</div>" + inhaltM + "</div>";
   }
@@ -3438,27 +3370,6 @@
       /* FASSUNG 683 — „dass ich selber bestimmen kann, was dort unten für Symbole zu sehen sind". */
       S.makro = k.dataset.m; try { localStorage.setItem("dma_spiel_makro", S.makro); } catch (e) {}
       ton("swoosh", 0.25); hinweis("⭐ Der letzte Knopf in der Leiste ist jetzt: " + MAKROS[S.makro] + ".");
-    } else if (s === "langzauber") {
-      S.langWahl = false; S.zrad = true; S.rad = null; S.radOffenSeit = Date.now(); ton("zauberpuff", 0.25);
-    } else if (s === "langwaffen") {
-      S.langWahl = false; S.zrad = false; S.rad = Math.max(0, slots().indexOf(S.waffe)); S.radOffenSeit = Date.now(); ton("swoosh", 0.25);
-    } else if (s === "langzu") {
-      S.langWahl = false;
-    } else if (s === "radtausch") {
-      /* ⇄ im Rad: vom Zauberrad ins Waffenrad und zurück. */
-      if (S.zrad) { S.zrad = false; S.rad = Math.max(0, slots().indexOf(S.waffe)); ton("swoosh", 0.25); }
-      else { S.rad = null; S.zrad = true; ton("zauberpuff", 0.25); }
-      S.radOffenSeit = Date.now();
-    } else if (s === "trankauf") {
-      S.trankAuf = !S.trankAuf; S.langWahl = false; S.zrad = false; S.rad = null; S.schnellMenue = false; S.wwahl = false; S.radOffenSeit = Date.now();
-    } else if (s === "dorfwahl") {
-      /* FASSUNG 686 — Tipp auf ein Gebäude im Dorfbild: seine Station öffnet sich im Bild. */
-      S.dorfWahl = k.dataset.g && S.dorfWahl !== k.dataset.g ? k.dataset.g : ""; S.dorfTippWeg = true;
-      ton(S.dorfWahl ? "holzklopf" : "swoosh", 0.25);
-      schnellZeichnen(true);
-      /* Die Knöpfe der Station sollen gleich zu sehen sein, ohne selbst zu scrollen. */
-      if (S.dorfWahl) setTimeout(function () { try { var st = schnellEl.querySelector(".sp-dl-station"); if (st) st.scrollIntoView({ block: "nearest" }); } catch (e) {} }, 60);
-      return;
     } else if (s === "dorfteil") {
       S.dorfTeil = S.dorfTeil === k.dataset.t ? "" : k.dataset.t;
       if (S.dorfTeil === "markt") handelLaden(false);
@@ -3524,13 +3435,8 @@
     } else if (s === "zauberab") {
       S.zauber = ""; S.zrad = false;
     } else if (s === "klappe") {
-      /* ☰ bei offener Dorf-Ansicht: gleich ins Hauptmenü wechseln. */
-      if (S.blick) { S.blick = null; S.schnellMenue = true; } else S.schnellMenue = !S.schnellMenue;
-      S.rad = null; S.zrad = false; S.langWahl = false; S.trankAuf = false;
-    } else if (s === "blickzu") {
-      S.blick = null; S.schnellMenue = false; S.dorfWahl = "";
+      S.schnellMenue = !S.schnellMenue; S.rad = null; S.zrad = false;
     } else if (s === "reiter") {
-      S.blick = null;
       /* FASSUNG 666 — XANDER: „das mit diesem Deutsch Menü das hätte ich
          wieder, wie das vorher war". Der grüne Reiter bleibt sichtbar, führt
          aber wie früher direkt ins große Deutsch-Menü (Niveau, alle
@@ -3613,17 +3519,17 @@
     } else if (s === "gross") {
       S.schnellMenue = false; menue(k.dataset.r || "start"); if (k.dataset.r === "deutsch" && !S.aufgabe) aufgabeHolen(false); schnellZeichnen(true); return;
     }
-    if (zu) { S.schnellMenue = false; S.trankAuf = false; }
+    if (zu) S.schnellMenue = false;
     zeichnen(); schnellZeichnen(true);
   }
   /* „beim Weiterspielen schließt sich sowieso wieder": ein Tipp
      irgendwo anders klappt das Menü zu. */
   document.addEventListener("click", function (ev) {
-    if ((!S.schnellMenue && S.rad == null && !S.zrad && !S.wwahl && !S.langWahl && !S.trankAuf) || !schnellEl) return;
+    if ((!S.schnellMenue && S.rad == null && !S.zrad && !S.wwahl) || !schnellEl) return;
     if (schnellEl.contains(ev.target)) return;
     /* Der Klick beim Loslassen nach dem langen Druck schließt das eben geöffnete Rad nicht gleich wieder. */
     if (Date.now() - (S.radOffenSeit || 0) < 700) return;
-    S.schnellMenue = false; S.rad = null; S.zrad = false; S.wwahl = false; S.langWahl = false; S.trankAuf = false; schnellZeichnen();
+    S.schnellMenue = false; S.rad = null; S.zrad = false; S.wwahl = false; schnellZeichnen();
   }, true);
   function tierWechseln(art) {
     rpc("spiel_tier_wechseln", { p_art: art }).then(function (r) {
@@ -4190,13 +4096,9 @@
          Bild – Bronze, Stahl, Gold. Beides liegt außerhalb des Rings, die
          Gesichtsmitte bleibt frei. Der alte Bogen bleibt als Krempe. */
       var pkt = function (w, r) { var t = w * Math.PI / 180; return (50 + r * Math.cos(t)).toFixed(1) + " " + (50 + r * Math.sin(t)).toFixed(1); };
-      /* FASSUNG 686 — XANDER: „die Rüstung muss die Level Anzeige und die Magie oben drüber haben, dass diese
-         Sachen nicht verdeckt werden". Helm und Kürass kommen jetzt ZUERST ins Bild (ganz unten in der
-         Zeichnung); Lebenspunkte, Mana, Ladung und die Levelzahl liegen darüber. */
-      var unter = "";
       if (extra.helm > 0) {
         var hs = Math.min(3, extra.helm);
-        unter += '<path class="sp-ruest sp-ruest-' + hs + '" d="' + bogen(215, 325, 52.5) + '"/>'
+        s += '<path class="sp-ruest sp-ruest-' + hs + '" d="' + bogen(215, 325, 52.5) + '"/>'
           + '<g class="sp-helm sp-helm-' + hs + '"><path class="sp-helm-schale" d="M' + pkt(212, 52.5) + " A52.5 52.5 0 0 1 " + pkt(328, 52.5) + ' C 92 -30, 8 -30, ' + pkt(212, 52.5) + ' Z"/>'
           + '<path class="sp-helm-glanz" d="M' + pkt(236, 57) + ' Q 36 -9, 50 -12"/>'
           + '<path class="sp-helm-kamm" d="M50 -14.5 V' + (50 - 53.5).toFixed(1) + '"/>'
@@ -4206,7 +4108,7 @@
       }
       if (extra.brust > 0) {
         var bs = Math.min(3, extra.brust);
-        unter += '<path class="sp-ruest sp-ruest-' + bs + '" d="' + bogen(35, 145, 52.5) + '"/>'
+        s += '<path class="sp-ruest sp-ruest-' + bs + '" d="' + bogen(35, 145, 52.5) + '"/>'
           /* FASSUNG 684 — XANDER: „Brustpanzer realistisch angelegt". Ein echter Kürass unten am Bild:
              Halsberge, gewölbte Brustplatte mit Mittelgrat, zwei geschobene Bauchreifen, Schulterstücke
              mit Nieten. Er sitzt auf Brust und Schultern – das Gesicht bleibt frei. */
@@ -4230,7 +4132,6 @@
         var la = 186 * Math.PI / 180, lx = (50 + 44 * Math.cos(la)).toFixed(1), ly = (50 + 44 * Math.sin(la)).toFixed(1);
         s += '<g class="sp-level"><circle cx="' + lx + '" cy="' + ly + '" r="8.5"/><text x="' + lx + '" y="' + ly + '" dy=".36em">' + Math.min(99, extra.level) + "</text></g>";
       }
-      if (unter) { var kopfEnde = s.indexOf(">") + 1; s = s.slice(0, kopfEnde) + unter + s.slice(kopfEnde); }
     }
     return s + "</svg>";
   }
@@ -6170,11 +6071,11 @@
     return '<div class="sp-sm-gruppe sp-lager"><span>Lager</span>' + Object.keys(WAREN).filter(function (x) { return knapp ? vorrat(ich, x) > 0 : basis.indexOf(x) >= 0 || vorrat(ich, x) > 0; })
       .map(function (x) { return '<span class="sp-ware">' + wareSvg(x) + "<b>" + vorrat(ich, x) + "</b> " + WAREN[x] + "</span>"; }).join("") + "</div>";
   }
-  function werkZeilenHtml(ich, nur) {
+  function werkZeilenHtml(ich) {
     var d = ich.dorf || {}, w = ich.werk || {}, t = [];
     Object.keys(REZEPTE).forEach(function (k) {
       var st = d[k] ? d[k].stufe : 0, R = REZEPTE[k];
-      if (!st || (nur && nur !== k)) return;
+      if (!st) return;
       var a = w[k], z = '<div class="sp-troph sp-werk"><i>' + dorfSvg(k, st) + "</i><span><b>" + R.name + " arbeitet</b>";
       if (a) {
         var fertig = Date.parse(a.fertig), rest = fertig - Date.now();
@@ -6198,7 +6099,7 @@
       t.push(z + "</div>");
     });
     /* Hühner legen Eier auf freie Plätze; die Kühe gibt man mit „Melken". */
-    var hs = !nur || nur === "huehnerstall" ? stallBereit(ich, "huehnerstall") : null, ks = !nur || nur === "kuhstall" ? stallBereit(ich, "kuhstall") : null;
+    var hs = stallBereit(ich, "huehnerstall"), ks = stallBereit(ich, "kuhstall");
     if (hs) t.push('<div class="sp-troph sp-werk"><i>' + dorfSvg("huehnerstall", hs.stufe) + "</i><span><b>Hühnerstall</b><small>"
       + (hs.bereit ? hs.bereit + " Ei" + (hs.bereit > 1 ? "er liegen" : " liegt") + " auf freien Plätzen – antippen" : "nächstes Ei in " + uhrText(hs.naechst)) + "</small></span>"
       + '<button type="button" data-s="eier"' + (hs.bereit ? "" : " disabled") + ">Einsammeln <small>" + hs.bereit + "</small></button></div>");
@@ -6297,16 +6198,9 @@
     if (m === "werkzeug") { S.wwahl = !S.wwahl; S.schnellMenue = false; S.radOffenSeit = Date.now(); ton("zauberpuff", 0.25); schnellZeichnen(true); return; }
     if (m === "deutsch") { S.schnellMenue = false; S.kategorie = null; S.aufgabe = null; menue("deutsch"); aufgabeHolen(false); schnellZeichnen(true); return; }
     var r = m === "dorf" ? "dorfblick" : m === "handel" ? "handelblick" : m;
-    S.langWahl = false; S.trankAuf = false;
-    if (r === "dorfblick" || r === "handelblick") {
-      var auf = !(S.schnellMenue && S.blick === r);
-      S.blick = auf ? r : null; S.schnellMenue = auf; S.dorfWahl = "";
-      if (auf) { handelLaden(false); abrufen(true); }
-    } else {
-      S.blick = null;
-      S.schnellMenue = !(S.schnellMenue && S.schnellReiter === r);
-      S.schnellReiter = r;
-    }
+    S.schnellMenue = !(S.schnellMenue && S.schnellReiter === r);
+    S.schnellReiter = r;
+    if (S.schnellMenue && (r === "dorfblick" || r === "handelblick")) { handelLaden(false); abrufen(true); }
     ton("swoosh", 0.2);
     schnellZeichnen(true);
   }
@@ -6401,281 +6295,20 @@
       }).catch(function () { hinweis("🥚 Das ging gerade nicht."); });
     })();
   }
-  /* ---------------------------------------------------------------
-     FASSUNG 686 — DAS DORF ALS BILD
-     XANDER: „diese grafischen Sachen … die kannst du klickbar machen,
-     dass sie zu den jeweiligen Station kommen, wo man dann weiter
-     aufrüsten kann oder innerhalb des Bildes sogar … viel hübscher …
-     mit vielen Details so wie bei Anno so richtig schön detailverliebt,
-     richtig schöne organische Strukturen".
-     Eine Landschaft (Berge, Wald, Fluss mit Brücke, Felder, Weide,
-     Wege) und jedes Gebäude an seinem festen Ort als eigene, große
-     Zeichnung: Fachwerk mit Balken, Fensterläden, Blumenkästen und
-     Ziegeln; Mühle mit drehenden Flügeln; Bergwerk mit Lore; Scheune;
-     Hühnerstall; Labor mit Kuppel. Ein Tipp auf ein Gebäude öffnet
-     seine Station IM Bild: Ausbauen, Reparieren, Beliefern, Abholen,
-     Melken, Eier. Noch nicht gebaute Gebäude stehen als Bauplatz da.
-     --------------------------------------------------------------- */
-  var DORF_LAGE = {
-    muehle: [50, 74], bergwerk: [292, 62], rathaus: [160, 96], schule: [214, 86], baeckerei: [110, 114],
-    kuhstall: [30, 118], krankenhaus: [282, 108], schmiede: [222, 138], huehnerstall: [70, 150],
-    brauerei: [126, 166], bibliothek: [186, 164], labor: [272, 182]
-  };
-  var dorfLandCache = "";
-  function dorfZufall(n) { var x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
-  function dorfBaum(x, y, g, n) {
-    /* Laubbaum aus mehreren Kronenballen, Licht von rechts oben. */
-    var c = ["#3f7a2e", "#4d8c34", "#5e9e3c"], h = "";
-    h += '<path d="M' + x + " " + y + " l-.9 -" + (5 * g).toFixed(1) + " h1.8 Z" + '" fill="#5a3b1e"/>';
-    h += '<ellipse cx="' + x + '" cy="' + (y + .6) + '" rx="' + (4.2 * g).toFixed(1) + '" ry="1.2" fill="#2d4f1f" opacity=".35"/>';
-    [[-2.2, -7, 3.4], [2.1, -7.4, 3.2], [0, -9.6, 3.8], [-.6, -6, 3]].forEach(function (b, i) {
-      h += '<circle cx="' + (x + b[0] * g).toFixed(1) + '" cy="' + (y + b[1] * g).toFixed(1) + '" r="' + (b[2] * g).toFixed(1) + '" fill="' + c[(i + n) % 3] + '"/>';
-    });
-    h += '<circle cx="' + (x + 1.2 * g).toFixed(1) + '" cy="' + (y - 10.4 * g).toFixed(1) + '" r="' + (1.6 * g).toFixed(1) + '" fill="#7cbf52" opacity=".8"/>';
-    return h;
-  }
-  function dorfTanne(x, y, g) {
-    return '<path d="M' + x + " " + (y - 13 * g).toFixed(1) + " L" + (x - 4.4 * g).toFixed(1) + " " + (y - 3 * g).toFixed(1) + " H" + (x + 4.4 * g).toFixed(1) + ' Z" fill="#2f5e3a"/>'
-      + '<path d="M' + x + " " + (y - 13 * g).toFixed(1) + " L" + (x + 4.4 * g).toFixed(1) + " " + (y - 3 * g).toFixed(1) + " H" + x + ' Z" fill="#244b2e"/>'
-      + '<rect x="' + (x - .6 * g).toFixed(1) + '" y="' + (y - 3 * g).toFixed(1) + '" width="' + (1.2 * g).toFixed(1) + '" height="' + (3 * g).toFixed(1) + '" fill="#4a2f18"/>';
-  }
-  function dorfLandSvg() {
-    if (dorfLandCache) return dorfLandCache;
-    var h = '<svg class="sp-dl-land" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>'
-      + '<linearGradient id="spDlHimmel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ecbf0"/><stop offset=".55" stop-color="#cfeaf8"/><stop offset="1" stop-color="#f3f7e6"/></linearGradient>'
-      + '<linearGradient id="spDlBerg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8d97ad"/><stop offset="1" stop-color="#6f7b8f"/></linearGradient>'
-      + '<linearGradient id="spDlHuegel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a9d470"/><stop offset="1" stop-color="#7fb54c"/></linearGradient>'
-      + '<linearGradient id="spDlWiese" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#95c95b"/><stop offset="1" stop-color="#6ea742"/></linearGradient>'
-      + '<linearGradient id="spDlWasser" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6cb8e6"/><stop offset="1" stop-color="#3b86c2"/></linearGradient>'
-      + '<radialGradient id="spDlSonne"><stop offset="0" stop-color="#fff7c2"/><stop offset=".4" stop-color="#ffe98a" stop-opacity=".9"/><stop offset="1" stop-color="#ffe98a" stop-opacity="0"/></radialGradient>'
-      + '<pattern id="spDlKorn" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)"><rect width="4" height="4" fill="#e3c25a"/><path d="M0 1 H4" stroke="#c9a23a" stroke-width="1.1"/></pattern>'
-      + '<pattern id="spDlGruen" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(12)"><rect width="4" height="4" fill="#8cc454"/><path d="M0 1 H4" stroke="#6fa83e" stroke-width="1.1"/></pattern>'
-      + "</defs>"
-      + '<rect width="320" height="200" fill="url(#spDlHimmel)"/>'
-      + '<circle cx="270" cy="24" r="26" fill="url(#spDlSonne)"/><circle cx="270" cy="24" r="8" fill="#fff4b0"/>'
-      /* Wolken ziehen langsam. */
-      + '<g class="sp-dl-wolke"><ellipse cx="60" cy="22" rx="16" ry="5.5" fill="#fff" opacity=".92"/><ellipse cx="70" cy="18" rx="10" ry="6" fill="#fff"/><ellipse cx="52" cy="19" rx="7" ry="4.6" fill="#fff"/></g>'
-      + '<g class="sp-dl-wolke sp-dl-wolke2"><ellipse cx="190" cy="14" rx="13" ry="4.2" fill="#fff" opacity=".85"/><ellipse cx="198" cy="11" rx="8" ry="4.6" fill="#fff" opacity=".95"/></g>'
-      + '<path class="sp-dl-vogel" d="M120 30 q3 -2.6 5.4 0 q2.4 -2.6 5.4 0 M136 24 q2 -1.8 3.8 0 q1.8 -1.8 3.8 0" fill="none" stroke="#3a4152" stroke-width=".8" stroke-linecap="round"/>'
-      /* Berge mit Schneekappen, hinten grau-blau. */
-      + '<path d="M0 64 L28 40 L46 52 L74 26 L102 50 L120 44 L150 60 L0 70 Z" fill="#a6b0c2" opacity=".8"/>'
-      + '<path d="M170 60 L206 34 L226 46 L258 14 L288 36 L304 28 L320 38 V74 H170 Z" fill="url(#spDlBerg)"/>'
-      + '<path d="M258 14 L250 24 L256 22 L260 27 L265 21 L270 24 Z M206 34 L200 40 L206 39 L210 42 Z M74 26 L68 33 L74 31 L78 35 L82 31 Z" fill="#f6f8fb"/>'
-      + '<path d="M258 14 L288 36 L304 28 L320 38 V74 H270 Z" fill="#5f6a7e" opacity=".35"/>'
-      /* Hügelkette mit Wald. */
-      + '<path d="M0 78 C30 60 60 62 92 70 C120 77 150 62 186 64 C220 66 250 58 280 64 C300 68 312 66 320 64 V110 H0 Z" fill="url(#spDlHuegel)"/>';
-    var i, x, y;
-    for (i = 0; i < 26; i++) { x = 6 + i * 12.2 + dorfZufall(i) * 6; y = 70 + Math.sin(i * .9) * 4 + dorfZufall(i + 50) * 3; if (x > 240) h += dorfTanne(x, y + 2, .75 + dorfZufall(i + 9) * .25); else h += dorfBaum(x, y + 3, .6 + dorfZufall(i + 7) * .25, i); }
-    /* Die große Wiese mit sanften Wellen. */
-    h += '<path d="M0 96 C40 84 80 90 120 92 C170 95 210 84 250 88 C285 91 305 86 320 84 V200 H0 Z" fill="url(#spDlWiese)"/>'
-      + '<path d="M0 132 C50 124 90 132 140 128 C200 124 250 134 320 126 V200 H0 Z" fill="#78b247" opacity=".55"/>'
-      /* Felder: gold (reif) und grün, schräg gepflügt, mit Feldrain. */
-      + '<path d="M4 176 L44 164 L60 188 L14 198 Z" fill="url(#spDlKorn)" stroke="#9c7c2a" stroke-width=".6"/>'
-      + '<path d="M46 163 L84 156 L100 178 L62 187 Z" fill="url(#spDlGruen)" stroke="#5b8a30" stroke-width=".6"/>'
-      + '<path d="M292 132 L318 128 L320 150 L298 154 Z" fill="url(#spDlKorn)" stroke="#9c7c2a" stroke-width=".6"/>'
-      /* Weide mit Zaun beim Kuhstall. */
-      + '<path d="M4 124 C14 120 40 120 52 126 L50 138 C36 134 16 134 4 138 Z" fill="#8fce5c" opacity=".7"/>'
-      + '<path d="M4 124 C14 120 40 120 52 126 M4 138 C16 134 36 134 50 138" fill="none" stroke="#8a5a2b" stroke-width=".8"/>'
-      + [8, 16, 24, 32, 40, 48].map(function (q) { return '<path d="M' + q + " " + (q < 28 ? 121.4 : 122) + " v4 M" + q + " " + (q < 28 ? 134.6 : 135) + ' v4" stroke="#6b4521" stroke-width="1"/>'; }).join("")
-      /* Der Fluss: aus den Bergen, unter der Brücke durch, zum Teich. */
-      + '<path d="M150 62 C146 76 132 80 136 96 C140 112 164 116 160 132 C156 146 136 150 142 166 C146 178 168 184 176 200 H196 C188 184 166 176 162 166 C158 152 178 146 180 132 C182 114 158 108 154 96 C150 82 162 76 158 62 Z" fill="url(#spDlWasser)"/>'
-      + '<path class="sp-dl-glanz" d="M152 70 C148 82 140 86 144 98 C148 110 168 116 166 132 C164 146 146 152 150 166 C153 176 170 184 184 198" fill="none" stroke="#dff3ff" stroke-width="1.1" stroke-dasharray="3 7" opacity=".85"/>'
-      + '<path d="M140 100 q2 3 0 6 M166 134 q-2 3 0 6 M146 168 q2 3 0 5" stroke="#9fd6f5" stroke-width=".8" fill="none"/>'
-      /* Wege aus gestampfter Erde, zu allen Plätzen. */
-      + '<path d="M110 118 C130 112 150 104 160 100 C180 94 200 92 214 90 M160 100 C166 118 176 128 186 160 M110 118 C100 130 84 142 70 152 M110 118 C92 118 60 116 32 120 M214 90 C236 96 256 104 272 112 M186 160 C212 150 222 144 232 138 M186 160 C200 170 240 176 272 184 M126 168 C150 164 164 162 186 162 M160 100 C150 88 120 80 52 76 M214 90 C240 80 270 70 292 64"'
-        + ' fill="none" stroke="#c7a978" stroke-width="4.2" stroke-linecap="round" opacity=".9"/>'
-      + '<path d="M110 118 C130 112 150 104 160 100 C180 94 200 92 214 90 M160 100 C166 118 176 128 186 160 M110 118 C100 130 84 142 70 152 M110 118 C92 118 60 116 32 120 M214 90 C236 96 256 104 272 112 M186 160 C212 150 222 144 232 138 M186 160 C200 170 240 176 272 184 M126 168 C150 164 164 162 186 162 M160 100 C150 88 120 80 52 76 M214 90 C240 80 270 70 292 64"'
-        + ' fill="none" stroke="#e3cc9f" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1.4 2.2"/>'
-      /* Steinbrücke über den Fluss. */
-      + '<path d="M150 101 C154 95 162 95 166 101 L168 104 H148 Z" fill="#b9b2a4" stroke="#6f6758" stroke-width=".7"/><path d="M152 104 C154 100 162 100 164 104" fill="#3b86c2"/>'
-      + '<path d="M149 101 H167" stroke="#8a826f" stroke-width="1"/>'
-      /* Teich mit Schilf, Seerosen. */
-      + '<ellipse cx="212" cy="186" rx="20" ry="7" fill="url(#spDlWasser)"/><ellipse cx="208" cy="185" rx="3" ry="1.2" fill="#5fae4a"/><circle cx="209" cy="184.8" r=".8" fill="#ff9ec4"/>'
-      + '<path d="M194 184 v-6 M196 185 v-8 M198 184 v-5 M228 184 v-6 M230 185 v-7" stroke="#4d7a2a" stroke-width=".8"/><path d="M196 177 v-2 M230 178 v-2" stroke="#6b4521" stroke-width="1.4" stroke-linecap="round"/>';
-    /* Blumen, Steine, einzelne Bäume, Büsche – überall ein bisschen Leben. */
-    for (i = 0; i < 70; i++) {
-      x = dorfZufall(i + 200) * 320; y = 100 + dorfZufall(i + 400) * 98;
-      if (Math.abs(x - 160 - Math.sin(y / 20) * 14) < 16) continue;
-      h += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (.6 + dorfZufall(i + 3) * .6).toFixed(2) + '" fill="' + ["#ffe066", "#ff7aa8", "#ffffff", "#b58cff", "#ff9a3c"][i % 5] + '"/>';
-    }
-    [[98, 190], [300, 196], [248, 150], [18, 160], [140, 196]].forEach(function (q, n) { h += dorfBaum(q[0], q[1], .9, n); });
-    [[236, 196], [82, 104], [300, 118]].forEach(function (q) { h += '<ellipse cx="' + q[0] + '" cy="' + q[1] + '" rx="4" ry="2.4" fill="#9a9589"/><ellipse cx="' + (q[0] - 1) + '" cy="' + (q[1] - .8) + '" rx="2" ry="1" fill="#c8c3b6"/>'; });
-    /* Kühe auf der Weide. */
-    h += '<g transform="translate(18 130)"><ellipse rx="3.4" ry="2" fill="#fff"/><circle cx="-1" cy="-.4" r=".9" fill="#222"/><circle cx="3.2" cy="-1.2" r="1.2" fill="#fff"/><path d="M-2 1.6 v1.6 M2 1.6 v1.6" stroke="#222" stroke-width=".6"/></g>'
-      + '<g transform="translate(38 128) scale(-1 1)"><ellipse rx="3" ry="1.8" fill="#8a5a2b"/><circle cx="2.8" cy="-1" r="1.1" fill="#8a5a2b"/><path d="M-1.6 1.4 v1.5 M1.6 1.4 v1.5" stroke="#3a2a1a" stroke-width=".6"/></g>';
-    return (dorfLandCache = h + "</svg>");
-  }
-  /* Ein Fachwerkhaus nach Maß: Steinsockel, Balken mit Andreaskreuzen,
-     Fenster mit Läden und Blumenkasten, Ziegeldach, Schornstein. */
-  function fachwerk(o) {
-    var w = o.w || 26, hh = o.h || 14, x0 = 24 - w / 2, y0 = 42 - hh, dachH = o.dachH || 12, g = "";
-    var dach = o.dach, balken = o.balken || "#5a3620";
-    g += '<ellipse cx="24" cy="45" rx="' + (w / 2 + 5) + '" ry="2.4" fill="#2d4f1f" opacity=".28"/>';
-    g += '<rect x="' + (x0 - .6) + '" y="42" width="' + (w + 1.2) + '" height="3.4" fill="#a39c8e" stroke="#5f584b" stroke-width=".5"/>';
-    for (var sx = x0 + 1.5; sx < x0 + w; sx += 4.2) g += '<path d="M' + sx.toFixed(1) + " 42 v3.4" + '" stroke="#7a7366" stroke-width=".4"/>';
-    g += '<rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="' + hh + '" fill="' + (o.wand || "#f3e6c9") + '"/>';
-    /* Balken: Rahmen, Riegel in der Mitte, Ständer, Andreaskreuze. */
-    var mitte = y0 + hh / 2, felder = Math.max(2, Math.round(w / 7)), fb = w / felder;
-    g += '<rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="' + hh + '" fill="none" stroke="' + balken + '" stroke-width="1.3"/>';
-    g += '<path d="M' + x0 + " " + mitte.toFixed(1) + " H" + (x0 + w) + '" stroke="' + balken + '" stroke-width="1.1"/>';
-    for (var f = 1; f < felder; f++) g += '<path d="M' + (x0 + f * fb).toFixed(1) + " " + y0 + " V42" + '" stroke="' + balken + '" stroke-width="1"/>';
-    [0, felder - 1].forEach(function (f) {
-      var a = x0 + f * fb;
-      g += '<path d="M' + a.toFixed(1) + " " + mitte.toFixed(1) + " L" + (a + fb).toFixed(1) + " 42 M" + (a + fb).toFixed(1) + " " + mitte.toFixed(1) + " L" + a.toFixed(1) + ' 42" stroke="' + balken + '" stroke-width=".8" opacity=".9"/>';
-    });
-    /* Fenster oben mit Läden und Blumen. */
-    for (f = 0; f < felder; f++) {
-      if (o.ohneFenster && o.ohneFenster.indexOf(f) >= 0) continue;
-      var fx = x0 + f * fb + fb / 2 - 2, fy = y0 + 1.8;
-      g += '<rect x="' + (fx - 1.3).toFixed(1) + '" y="' + fy.toFixed(1) + '" width="1.2" height="3.6" fill="#3f7a4a"/><rect x="' + (fx + 4.1).toFixed(1) + '" y="' + fy.toFixed(1) + '" width="1.2" height="3.6" fill="#3f7a4a"/>'
-        + '<rect x="' + fx.toFixed(1) + '" y="' + fy.toFixed(1) + '" width="4" height="3.6" fill="' + (o.licht ? "#ffe59a" : "#9fd3f2") + '" stroke="#4a2f18" stroke-width=".4"/>'
-        + '<path d="M' + (fx + 2).toFixed(1) + " " + fy.toFixed(1) + " v3.6 M" + fx.toFixed(1) + " " + (fy + 1.8).toFixed(1) + ' h4" stroke="#fff" stroke-width=".35"/>'
-        + '<rect x="' + (fx - .4).toFixed(1) + '" y="' + (fy + 3.6).toFixed(1) + '" width="4.8" height="1" fill="#7a4a24"/>'
-        + '<circle cx="' + (fx + .6).toFixed(1) + '" cy="' + (fy + 3.5).toFixed(1) + '" r=".6" fill="#e2403a"/><circle cx="' + (fx + 2).toFixed(1) + '" cy="' + (fy + 3.3).toFixed(1) + '" r=".6" fill="#ffd23c"/><circle cx="' + (fx + 3.4).toFixed(1) + '" cy="' + (fy + 3.5).toFixed(1) + '" r=".6" fill="#e2403a"/>';
-    }
-    /* Tür mit Bogen, Laterne. */
-    var tx = o.tuerX != null ? o.tuerX : 24;
-    g += '<path d="M' + (tx - 2.4) + " 42 V" + (mitte + 2.4).toFixed(1) + " a2.4 2.4 0 0 1 4.8 0 V42 Z" + '" fill="#6b4521" stroke="#3a2412" stroke-width=".5"/><circle cx="' + (tx + 1.2) + '" cy="' + (mitte + 4.6).toFixed(1) + '" r=".35" fill="#f2c230"/>';
-    g += '<path d="M' + (tx - 3.4) + " 42 h6.8 v.8 h-6.8 Z" + '" fill="#8a826f"/>';
-    /* Dach mit Ziegelreihen und Überstand; Stufe 2: Gaube, Stufe 3: goldene Wetterfahne. */
-    var dl = x0 - 3, dr = x0 + w + 3, dy = y0 - dachH;
-    g += '<path d="M' + dl + " " + (y0 + .6) + " L24 " + dy + " L" + dr + " " + (y0 + .6) + ' Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".7" stroke-linejoin="round"/>';
-    for (var r = 1; r < 4; r++) {
-      var ry = dy + dachH * r / 4, halb = (dr - dl) / 2 * r / 4;
-      g += '<path d="M' + (24 - halb).toFixed(1) + " " + ry.toFixed(1) + " H" + (24 + halb).toFixed(1) + '" stroke="#000" stroke-opacity=".18" stroke-width=".6"/>';
-    }
-    g += '<path d="M24 ' + dy + " L" + dr + " " + (y0 + .6) + " H24 Z" + '" fill="#000" opacity=".12"/>';
-    if (o.stufe >= 2) g += '<path d="M' + (24 - 3.4) + " " + (y0 - dachH * .3).toFixed(1) + " l3.4 -3 l3.4 3 v3 h-6.8 Z" + '" fill="' + dach + '" stroke="#3a2412" stroke-width=".5"/><rect x="22.6" y="' + (y0 - dachH * .3 + .4).toFixed(1) + '" width="2.8" height="2.2" fill="#ffe59a"/>';
-    if (o.schorn !== false) {
-      var sxx = o.schornX || 30;
-      g += '<rect x="' + sxx + '" y="' + (dy + dachH * .3).toFixed(1) + '" width="2.6" height="' + (dachH * .5).toFixed(1) + '" fill="#9a4a32" stroke="#3a2412" stroke-width=".4"/>'
-        + '<g class="sp-dh-rauch"><circle cx="' + (sxx + 1.3) + '" cy="' + (dy + dachH * .3 - 2).toFixed(1) + '" r="1.6" fill="' + (o.rauch || "#e8ecf0") + '"/><circle cx="' + (sxx + 2.6) + '" cy="' + (dy + dachH * .3 - 5).toFixed(1) + '" r="2" fill="' + (o.rauch || "#e8ecf0") + '" opacity=".7"/></g>';
-    }
-    if (o.stufe >= 3) g += '<path d="M24 ' + dy + " v-5" + '" stroke="#6b4521" stroke-width=".6"/><path d="M24 ' + (dy - 5) + ' l4 1.2 l-4 1.4 Z" fill="#f2c230" stroke="#9a7410" stroke-width=".3"/>';
-    return g + (o.extra || "");
-  }
-  function dorfHausGross(k, st) {
-    st = st || 1;
-    var dach = st >= 3 ? "#9c3b2a" : st === 2 ? "#b8492f" : "#9a5a30", h = "";
-    if (k === "baeckerei") h = fachwerk({ w: 26, h: 15, dach: dach, stufe: st, licht: true, schornX: 28, extra:
-      '<path d="M36 25 h5" stroke="#4a2f18" stroke-width=".8"/><path d="M38.2 25 v1.4" stroke="#4a2f18" stroke-width=".5"/>'
-      + '<path d="M36.4 29.4 C35 26 39 25.6 38.6 28.2 C38.2 25.6 42.2 26 40.8 29.4 C40 31 37.2 31 36.4 29.4 Z M37.6 28.8 L39.8 28.8" fill="none" stroke="#b86a2c" stroke-width="1.2"/>'
-      + '<ellipse cx="14" cy="43" rx="2.4" ry="1.3" fill="#d9a35a"/><rect x="11" y="39.4" width="5" height="3" rx=".6" fill="#8a5a2b"/>' });
-    else if (k === "schule") h = fachwerk({ w: 28, h: 15, dach: dach, stufe: st, schorn: false, extra:
-      '<rect x="21.6" y="4" width="4.8" height="8" fill="#f3e6c9" stroke="#5a3620" stroke-width=".7"/><path d="M20.8 4.4 L24 .4 L27.2 4.4 Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".5"/>'
-      + '<path d="M22.6 10 a1.4 1.4 0 0 1 2.8 0 v1 h-2.8 Z" fill="#f2c230"/><rect x="31" y="35.4" width="6" height="4" fill="#2f4a3a" stroke="#6b4521" stroke-width=".5"/><path d="M32 37 h3 M32 38.3 h2" stroke="#fff" stroke-width=".4"/>' });
-    else if (k === "schmiede") h = fachwerk({ w: 26, h: 14, dach: "#6c6f76", stufe: st, rauch: "#9aa0a8", schornX: 16, ohneFenster: [0], extra:
-      '<rect x="12.5" y="34" width="7" height="8" fill="#2a1a10"/><path d="M13.4 42 C14 37.6 18 37.6 18.6 42 Z" fill="#ff7a1a"/><path d="M14.6 42 C15 39.6 17 39.6 17.4 42 Z" fill="#ffd23c" class="sp-dh-glut"/>'
-      + '<path d="M34 43 h8 l-1.4 -2.4 h-6 Z M36.4 40.6 h3.6 l.6 -1.4 h-5 Z" fill="#3a3f48"/><path d="M40 37 l3 -3" stroke="#8a5a2b" stroke-width="1"/><path d="M42.4 33.2 l1.8 1.8" stroke="#5b636c" stroke-width="1.6"/>' });
-    else if (k === "brauerei") h = fachwerk({ w: 26, h: 15, dach: dach, stufe: st, schornX: 29, extra:
-      '<g fill="#b07a45" stroke="#5a3616" stroke-width=".5"><ellipse cx="8" cy="41.6" rx="3" ry="2.4"/><ellipse cx="13.4" cy="41.6" rx="3" ry="2.4"/><ellipse cx="10.7" cy="37.8" rx="3" ry="2.4"/></g>'
-      + '<path d="M5.4 41.6 h5.2 M10.8 41.6 h5.2 M8.1 37.8 h5.2" stroke="#3a4152" stroke-width=".4"/>'
-      + '<path d="M13 26.6 C16 25 20 25 22 26.6" fill="none" stroke="#5a8a2a" stroke-width=".7"/><circle cx="15" cy="27" r=".9" fill="#9fd06a"/><circle cx="18" cy="26.2" r=".9" fill="#9fd06a"/><circle cx="21" cy="27" r=".9" fill="#9fd06a"/>' });
-    else if (k === "krankenhaus") h = fachwerk({ w: 30, h: 16, dach: "#5a7a9a", wand: "#fbfbfb", balken: "#8a9aaa", stufe: st, schorn: false, extra:
-      '<rect x="20.4" y="11.4" width="7.2" height="7.2" rx="1" fill="#fff" stroke="#8a9aaa" stroke-width=".4"/><path d="M22.8 12.4 h2.4 v2.2 h2.2 v2.4 h-2.2 v2.2 h-2.4 v-2.2 h-2.2 v-2.4 h2.2 Z" fill="#e2403a"/>'
-      + '<path d="M40 44 V22" stroke="#6b6f76" stroke-width=".6"/><path d="M40 22 h6 v4 h-6 Z" fill="#fff" stroke="#aaa" stroke-width=".3"/><path d="M42.4 22.8 h1.2 v1 h1 v1.2 h-1 v1 h-1.2 v-1 h-1 v-1.2 h1 Z" fill="#e2403a"/>' });
-    else if (k === "rathaus") h = fachwerk({ w: 34, h: 17, dach: dach, stufe: st, dachH: 11, schornX: 34, extra:
-      '<rect x="20" y="3" width="8" height="13" fill="#f3e6c9" stroke="#5a3620" stroke-width=".8"/><path d="M19 3.4 L24 -3 L29 3.4 Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".6"/>'
-      + '<circle cx="24" cy="8.6" r="2.8" fill="#fff" stroke="#3a2412" stroke-width=".5"/><path d="M24 8.6 V6.6 M24 8.6 L25.4 9.2" stroke="#3a2412" stroke-width=".5"/>'
-      + '<path d="M24 -3 v-3" stroke="#6b4521" stroke-width=".5"/><path d="M24 -6 l3 1 l-3 1 Z" fill="#2f6fd6"/>'
-      + '<path d="M10 26 h28" stroke="#b8492f" stroke-width=".6" stroke-dasharray="1.4 1"/>' });
-    else if (k === "muehle") h = '<ellipse cx="24" cy="45" rx="11" ry="2.2" fill="#2d4f1f" opacity=".3"/>'
-      + '<path d="M16 44 L19 16 H29 L32 44 Z" fill="#e8dcc2" stroke="#6b5e44" stroke-width=".8"/>'
-      + [22, 28, 34, 40].map(function (y, i) { return '<path d="M' + (16.6 + i * .2) + " " + y + " H" + (31.4 - i * .2) + '" stroke="#b9ab8c" stroke-width=".5"/>'; }).join("")
-      + '<path d="M18 16 C18 9 30 9 30 16 Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".7"/><rect x="21.8" y="36" width="4.4" height="8" rx="2.2" fill="#6b4521"/>'
-      + '<rect x="22.4" y="23" width="3.2" height="3.2" fill="#9fd3f2" stroke="#4a2f18" stroke-width=".4"/>'
-      + '<g class="sp-dh-fluegel"><g fill="#fdf6e6" stroke="#6b4521" stroke-width=".45">'
-      + [0, 90, 180, 270].map(function (a) { return '<g transform="rotate(' + a + ')"><path d="M-.5 0 L-.5 -17 H3 L3 -3 Z"/><path d="M-.5 -5 H3 M-.5 -9 H3 M-.5 -13 H3 M1.2 -17 V-3" stroke-width=".35"/></g>'; }).join("")
-      + '</g><circle r="1.4" fill="#6b4521"/></g>';
-    else if (k === "bergwerk") h = '<path d="M1 45 C4 26 12 12 24 10 C36 12 44 26 47 45 Z" fill="#8a7c62" stroke="#4a4030" stroke-width=".8"/>'
-      + '<path d="M6 34 C12 30 18 32 22 28 M30 22 C34 24 38 22 42 26 M8 42 C14 38 20 40 26 37" fill="none" stroke="#6b5e48" stroke-width=".8"/>'
-      + '<path d="M16 18 C20 12 28 12 32 18 C28 16 20 16 16 18 Z" fill="#6a9c3c" opacity=".8"/>'
-      + '<path d="M16 45 V32 A8 8 0 0 1 32 32 V45 Z" fill="#17130d"/><path d="M15 45 V31.4 M33 45 V31.4" stroke="#8a5a2b" stroke-width="1.8"/><path d="M14 31 C18 27 30 27 34 31" fill="none" stroke="#6b4521" stroke-width="2"/>'
-      + '<path d="M18 45 L30 45 M20 45 L22 38 M28 45 L26 38 M21 42 H27" stroke="#8a8f96" stroke-width=".7"/>'
-      + '<path d="M29 40.2 H40 L39 44 H30 Z" fill="#5b636c" stroke="#2d3238" stroke-width=".5"/><circle cx="31.6" cy="44.4" r="1" fill="#222"/><circle cx="37.6" cy="44.4" r="1" fill="#222"/>'
-      + '<circle cx="32" cy="39.6" r="1.3" fill="#f2c230"/><circle cx="34.6" cy="39.2" r="1.2" fill="#dfe6ee"/><circle cx="37.2" cy="39.6" r="1.3" fill="#c96a3a"/>'
-      + '<path d="M13 30 v4" stroke="#3a2a1a" stroke-width=".5"/><circle cx="13" cy="35" r="1.1" fill="#ffd23c" class="sp-dh-glut"/>'
-      + (st >= 2 ? '<path d="M40 30 L44 22 M42 26 l3 1" stroke="#6b4521" stroke-width=".8"/>' : "") + (st >= 3 ? '<path d="M6 44 C8 40 10 40 12 44 Z" fill="#1c1812"/><circle cx="9" cy="43" r=".8" fill="#f2c230"/>' : "");
-    else if (k === "kuhstall") h = '<ellipse cx="24" cy="45" rx="20" ry="2.4" fill="#2d4f1f" opacity=".3"/>'
-      + '<path d="M6 44 V26 L10 18 L24 12 L38 18 L42 26 V44 Z" fill="#b53b2c" stroke="#5a1a12" stroke-width=".8"/>'
-      + '<path d="M4.6 26.6 L10 17.4 L24 11 L38 17.4 L43.4 26.6" fill="none" stroke="#4a3a34" stroke-width="2.4" stroke-linejoin="round"/>'
-      + [30, 34, 38, 42].map(function (y) { return '<path d="M6 ' + y + ' H42" stroke="#8e2a1f" stroke-width=".4"/>'; }).join("")
-      + '<rect x="17" y="30" width="14" height="14" fill="#7a2a1f" stroke="#fff" stroke-width="1"/><path d="M17 30 L31 44 M31 30 L17 44 M24 30 V44" stroke="#fff" stroke-width=".8"/>'
-      + '<rect x="21" y="19" width="6" height="6" fill="#e3c25a" stroke="#fff" stroke-width=".8"/><path d="M21.6 24 l1.4 -3 l1 2.4 l1.2 -3 l1.6 3.4" stroke="#b08a2a" stroke-width=".4" fill="none"/>'
-      + '<rect x="42.6" y="22" width="4.6" height="22" rx="2.3" fill="#cfd6de" stroke="#6b737c" stroke-width=".5"/><path d="M42.6 24.4 a2.3 1.4 0 0 1 4.6 0" fill="#8a929c"/>'
-      + (st >= 2 ? '<rect x="8.4" y="32" width="4" height="3.4" fill="#fff" opacity=".9"/><rect x="35.6" y="32" width="4" height="3.4" fill="#fff" opacity=".9"/>' : "")
-      + (st >= 3 ? '<path d="M24 12 v-5" stroke="#6b4521" stroke-width=".5"/><path d="M24 7 l4 1.2 l-4 1.4 Z" fill="#f2c230"/>' : "");
-    else if (k === "huehnerstall") h = '<ellipse cx="24" cy="45" rx="18" ry="2.2" fill="#2d4f1f" opacity=".3"/>'
-      + '<path d="M11 44 V40 M27 44 V40" stroke="#6b4521" stroke-width="1.2"/>'
-      + '<rect x="9" y="28" width="20" height="12" fill="#c8894a" stroke="#5a3616" stroke-width=".8"/>'
-      + [11, 14, 17, 20, 23, 26].map(function (x) { return '<path d="M' + x + ' 28 V40" stroke="#a86e3a" stroke-width=".4"/>'; }).join("")
-      + '<path d="M7 29 L19 20 L31 29 Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".7" stroke-linejoin="round"/>'
-      + '<path d="M16.4 40 V35.4 a2.6 2.6 0 0 1 5.2 0 V40 Z" fill="#2a1a10"/><path d="M19 40 L25 44.4" stroke="#8a5a2b" stroke-width="1.6"/><path d="M20.4 41 l.8 -.6 M22 42.1 l.8 -.6 M23.6 43.2 l.8 -.6" stroke="#5a3616" stroke-width=".4"/>'
-      + '<path d="M31 44 V36 M36 44 V36 M41 44 V36 M46 44 V36 M30 38 H47 M30 41.4 H47" stroke="#a86e3a" stroke-width=".6"/>'
-      + '<g transform="translate(35 42)"><ellipse rx="2.6" ry="2" fill="#fff" stroke="#b0a090" stroke-width=".3"/><circle cx="2" cy="-1.8" r="1.1" fill="#fff"/><path d="M1.6 -3 l.4 -.8 l.4 .8" fill="#e2403a"/><path d="M3 -1.8 l1 .3 l-1 .3 Z" fill="#f2a20b"/></g>'
-      + '<g transform="translate(42 43) scale(-1 1)"><ellipse rx="2.2" ry="1.7" fill="#c67a3a"/><circle cx="1.7" cy="-1.5" r=".95" fill="#c67a3a"/><path d="M1.4 -2.5 l.3 -.7 l.3 .7" fill="#e2403a"/></g>'
-      + '<ellipse cx="13" cy="44" rx=".9" ry="1.2" fill="#fff4dc" stroke="#b09060" stroke-width=".3"/>';
-    else if (k === "labor") h = '<ellipse cx="24" cy="45" rx="18" ry="2.2" fill="#2d4f1f" opacity=".3"/>'
-      + '<rect x="8" y="26" width="32" height="18" fill="#e6edf4" stroke="#5a6a7a" stroke-width=".8"/><path d="M8 26 H40" stroke="#3a86c4" stroke-width="1.6"/>'
-      + '<path d="M16 26 C16 16 32 16 32 26 Z" fill="#b8dcf5" stroke="#5a6a7a" stroke-width=".7"/><path d="M24 17.4 V26 M18 21 C22 20 26 20 30 21" stroke="#fff" stroke-width=".5" fill="none"/>'
-      + '<rect x="11" y="30" width="26" height="5" fill="#8fd3ff" stroke="#3a4152" stroke-width=".5"/><path d="M17.5 30 v5 M24 30 v5 M30.5 30 v5" stroke="#3a4152" stroke-width=".4"/>'
-      + '<rect x="21" y="37" width="6" height="7" fill="#3a4152"/><path d="M38 26 V12" stroke="#3a4152" stroke-width=".7"/><path d="M34.6 12 H41.4" stroke="#3a4152" stroke-width=".7"/><circle class="sp-dh-blink" cx="38" cy="11" r="1.1" fill="#e2403a"/>'
-      + '<path d="M2 44 L6 36 H14 L10 44 Z" fill="#23407a" stroke="#101c38" stroke-width=".4"/><path d="M4 40 H12 M8 36 L6 44" stroke="#5a86d4" stroke-width=".3"/>'
-      + (st >= 2 ? '<path d="M44 44 V34 l2 -2 l2 2 V44 Z" fill="#dfe6ee" stroke="#5a6a7a" stroke-width=".4"/>' : "") + (st >= 3 ? '<circle cx="24" cy="21.6" r="1.2" fill="#8ee06a" class="sp-dh-blink"/>' : "");
-    else if (k === "bibliothek") h = '<ellipse cx="24" cy="45" rx="19" ry="2.2" fill="#2d4f1f" opacity=".3"/>'
-      + '<path d="M5 44 H43 V42 H5 Z M7 42 H41 V40.4 H7 Z" fill="#d9d2c0" stroke="#6f6758" stroke-width=".4"/>'
-      + '<path d="M8 24 H40 V26 H8 Z" fill="#e8e0cc" stroke="#6f6758" stroke-width=".5"/><path d="M6 24 L24 14 L42 24 Z" fill="#e8e0cc" stroke="#6f6758" stroke-width=".7"/>'
-      + '<path d="M13 22.6 L24 16.4 L35 22.6 Z" fill="none" stroke="#c9b58a" stroke-width=".5"/><path d="M21.6 20.6 h4.8 v2 h-4.8 Z M22 20.6 v2 M23.2 20.6 v2 M24.4 20.6 v2 M25.6 20.6 v2" stroke="#8a3a2a" stroke-width=".35" fill="#b0402f"/>'
-      + [10.5, 16.5, 22.5, 28.5, 34.5].map(function (x) { return '<rect x="' + x + '" y="26" width="3" height="14.4" fill="#f4efe2" stroke="#8a826f" stroke-width=".35"/><path d="M' + (x + 1) + " 26.6 V39.8 M" + (x + 2) + ' 26.6 V39.8" stroke="#cfc6b0" stroke-width=".3"/>'; }).join("")
-      + (st >= 3 ? '<path d="M24 14 v-4" stroke="#6b4521" stroke-width=".5"/><path d="M24 10 l3.4 1 l-3.4 1.2 Z" fill="#f2c230"/>' : "");
-    else return dorfSvg(k, st);
-    return '<svg class="sp-dh sp-dh-' + k + '" viewBox="0 -8 48 54" aria-hidden="true">' + h + "</svg>";
-  }
-  function dorfStationHtml(ich, k) {
-    var D = DORF[k], g = (ich.dorf || {})[k], st = g ? g.stufe : 0, lp = g ? g.lp : 0, mx = 20 * Math.max(1, st), lv = ich.level || 1;
-    var preis = D.preis * (st + 1), gesperrt = D.ab && lv < D.ab;
-    var knoepfe = "";
-    if (st < 3) knoepfe += '<button type="button" data-s="bauen" data-w="' + k + '"' + (gesperrt || (ich.punkte || 0) < preis ? " disabled" : "") + ">"
-      + (gesperrt ? "ab Level " + D.ab : (st ? "Ausbauen auf Stufe " + (st + 1) : "Bauen")) + (gesperrt ? "" : " <small>" + preis + " P</small>") + "</button>";
-    if (st && lp < mx) knoepfe += '<button type="button" data-s="bauen" data-w="reparatur"' + (vorrat(ich, "erz") || vorrat(ich, "holz") >= 2 ? "" : " disabled") + ">Reparieren <small>1 Erz oder 2 Holz</small></button>";
-    var werk = st ? werkZeilenHtml(ich, k).join("") : "";
-    var geplant = g && g.gepl && Date.now() - Date.parse(g.gepl) < 4 * 3600000;
-    return '<div class="sp-dl-station" role="dialog" aria-label="' + esc(D.name) + '"><div class="sp-dl-st-kopf"><i>' + dorfHausGross(k, st || 1) + "</i><span><b>" + D.name + "</b>"
-      + "<small>" + (st ? "Stufe " + st + " · " + (lp <= 0 ? "kaputt – liefert nichts" : "hält " + lp + "/" + mx) : "noch nicht gebaut") + "</small>"
-      + (st ? '<em><u style="width:' + Math.round(100 * lp / Math.max(1, mx)) + '%"></u></em>' : "") + "</span>"
-      + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Station schließen">✕</button></div>'
-      + '<p class="sp-sm-klein">' + D.gibt + (geplant ? " · geplündert von " + esc(g.von || "?") + " (4 h Schutz)" : "") + "</p>"
-      + (werk ? '<div class="sp-dl-st-werk">' + werk + "</div>" : "")
-      + (knoepfe ? '<div class="sp-sm-liste sp-dl-st-knoepfe">' + knoepfe + "</div>" : '<p class="sp-sm-klein">Höchste Stufe erreicht.</p>') + "</div>";
-  }
-  function dorfBildHtml(ich) {
-    var d = ich.dorf || {}, lv = ich.level || 1, wahl = S.dorfWahl && DORF[S.dorfWahl] ? S.dorfWahl : "";
-    /* Weiter vorne (weiter unten im Bild) liegt über dem, was dahinter steht. */
-    var haeuser = Object.keys(DORF_LAGE).sort(function (a, b) { return DORF_LAGE[a][1] - DORF_LAGE[b][1]; }).map(function (k) {
-      if (!DORF[k]) return "";
-      var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = DORF_LAGE[k];
-      var w = (ich.werk || {})[k], kaputt = st && !(g.lp > 0), rest = w ? Date.parse(w.fertig) - Date.now() : 0;
-      var stall = st && (k === "huehnerstall" || k === "kuhstall") ? stallBereit(ich, k) : null;
-      var zeichen = kaputt ? '<em class="sp-ds-kaputt">kaputt</em>' : w ? '<em class="' + (rest > 0 ? "sp-ds-laeuft" : "sp-ds-fertig") + '">' + (rest > 0 ? uhrText(rest) : "fertig") + "</em>"
-        : stall && stall.bereit ? '<em class="sp-ds-fertig">' + stall.bereit + (k === "kuhstall" ? " Milch" : " Eier") + "</em>" : "";
-      var zu = !st && DORF[k].ab && lv < DORF[k].ab;
-      return '<button type="button" class="sp-dl-haus' + (st ? "" : " sp-dl-bauplatz") + (kaputt ? " sp-ds-aus" : "") + (zu ? " sp-dl-zu" : "") + (wahl === k ? " sp-an" : "")
-        + '" data-s="dorfwahl" data-g="' + k + '" style="left:' + (q[0] / 3.2).toFixed(2) + "%;top:" + (q[1] / 2).toFixed(2) + '%" title="' + DORF[k].name + (st ? " · Stufe " + st : " · Bauplatz") + '">'
-        + (st ? dorfHausGross(k, st) : '<span class="sp-dl-pflock"><svg viewBox="0 0 48 30" aria-hidden="true"><ellipse cx="24" cy="24" rx="17" ry="5" fill="#c7a978" opacity=".55" stroke="#8a6a3a" stroke-width=".7" stroke-dasharray="2 1.6"/>'
-          + '<path d="M24 24 V8" stroke="#6b4521" stroke-width="1.4"/><rect x="16" y="6" width="16" height="7" rx="1" fill="#e8d3a6" stroke="#6b4521" stroke-width=".7"/><path d="M19 9.6 H29" stroke="#8a6a3a" stroke-width=".8"/></svg></span>')
-        + "<small>" + DORF[k].name + (st > 1 ? " " + st : "") + "</small>" + zeichen + "</button>";
-    }).join("");
-    /* Die Station hängt unten am Bild (ragt hinein), das Bild selbst bleibt stehen – so springt kein Haus. */
-    return '<div class="sp-dorfland">' + dorfLandSvg() + haeuser
-      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp">Tippe auf ein Gebäude</span>') + "</div>" + (wahl ? dorfStationHtml(ich, wahl) : "");
-  }
   /* FASSUNG 683 — XANDER: „dass ich schnell Zugriff auf das Dorf habe und
      dann ist auch wirklich nur das Layout von dem Dorf da und was in dem
      Dorf grad passiert". Die Dorf-Ansicht des Makroknopfs. */
   function dorfBlickHtml(ich) {
     var d = ich.dorf || {}, ab = ich.dorf_ab ? Date.parse(ich.dorf_ab) : 0;
     var hat = Object.keys(d).length;
-    var szene = dorfBildHtml(ich);
+    var gebaut = Object.keys(DORF).filter(function (k) { return d[k] && d[k].stufe > 0; });
+    var szene = '<div class="sp-dorfszene">' + (gebaut.length ? gebaut.map(function (k) {
+      var g = d[k], w = (ich.werk || {})[k], kaputt = !(g.lp > 0), rest = w ? Date.parse(w.fertig) - Date.now() : 0;
+      var stall = k === "huehnerstall" || k === "kuhstall" ? stallBereit(ich, k) : null;
+      var zeichen = kaputt ? '<em class="sp-ds-kaputt">kaputt</em>' : w ? '<em class="' + (rest > 0 ? "sp-ds-laeuft" : "sp-ds-fertig") + '">' + (rest > 0 ? uhrText(rest) : "fertig") + "</em>"
+        : stall && stall.bereit ? '<em class="sp-ds-fertig">' + stall.bereit + (k === "kuhstall" ? " Milch" : " Eier") + "</em>" : "";
+      return '<span class="sp-ds-haus' + (kaputt ? " sp-ds-aus" : "") + '"><i>' + dorfSvg(k, g.stufe) + "</i><small>" + DORF[k].name + (g.stufe > 1 ? " " + g.stufe : "") + "</small>" + zeichen + "</span>";
+    }).join("") : '<p class="sp-sm-klein">Noch kein Gebäude – tippe unten auf „Bauen".</p>') + "</div>";
     var ernte = hat ? (function () {
       var bis = ab ? ab + 4 * 3600000 - Date.now() : 0;
       return '<div class="sp-sm-liste"><button type="button" data-s="ernte"' + (bis > 0 ? ' class="sp-werk-wartet"' : "") + ">Dorf-Ernte <small>" + (bis > 0 ? "in " + Math.ceil(bis / 60000) + " min" : "bereit") + "</small></button>"

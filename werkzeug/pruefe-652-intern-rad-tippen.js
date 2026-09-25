@@ -225,8 +225,9 @@ const sage = (gut, was, zusatz) => {
   sage(await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef; return P.zustand().waffe === P.slots()[0]; }), "noch einmal 2×: zurück zu Waffe 1");
   /* Fassung 655: lang drücken aufs eigene Bild = Zauberrad (statt Platzmenü). */
   await pg.mouse.move(ichPos.x, ichPos.y); await pg.mouse.down(); await tick(700); await pg.mouse.up(); await tick(300);
-  const lang = await pg.evaluate(() => ({ zrad: Boolean(document.querySelector(".sp-zauberrad")), platzmenue: Boolean(document.getElementById("lcPlatzMenue") && !document.getElementById("lcPlatzMenue").hidden && document.getElementById("lcPlatzMenue").offsetParent) }));
-  sage(lang.zrad && !lang.platzmenue, "lang drücken aufs eigene Bild öffnet das Zauberrad, nicht das Platzmenü", JSON.stringify(lang));
+  /* Ab Fassung 686 kommt zuerst die Wahl „Zauber | Waffen“ (XANDER: „erst mal die zwei Optionen"). */
+  const lang = await pg.evaluate(() => ({ zrad: Boolean(document.querySelector(".sp-zauberrad") || document.querySelector(".sp-langwahl [data-s=\"langzauber\"]")), platzmenue: Boolean(document.getElementById("lcPlatzMenue") && !document.getElementById("lcPlatzMenue").hidden && document.getElementById("lcPlatzMenue").offsetParent) }));
+  sage(lang.zrad && !lang.platzmenue, "lang drücken aufs eigene Bild öffnet die Zauber/Waffen-Wahl, nicht das Platzmenü", JSON.stringify(lang));
   /* Zum Schließen mitten in den Chat tippen – (20, 20) läge am Rand des eigenen Platzes. */
   await pg.touchscreen.tap(180, 430); await tick(600);
   const einfach = await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef; return P.zustand().waffe; });
