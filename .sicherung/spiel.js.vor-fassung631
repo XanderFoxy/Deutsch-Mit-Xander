@@ -19,24 +19,15 @@
   /* XANDER (Funk 89): „verschiedene Schusstechniken richten
      unterschiedlichen Schaden an". Preise und Schaden: SPIELSYSTEM.md. */
   var WAFFEN = {
-    /* FUNK 108 — XANDER: „Die Sounds für die Waffen und die dazugehörigen
-       Treffergeräusche sind noch nicht da." GEMESSEN (Tonprotokoll): der
-       Abschuss klang bei allen sieben, beim Einschlag nur die Bazooka.
-       Jede Waffe hat jetzt auch ihren Treffer („treffer"). Er klingt in
-       einschlag() — also auf JEDEM Gerät, das den Schuss sieht. */
-    zwille:       { name: "Zwille",          schaden: 6,  preis: 0,   flug: 520, ton: "zwille",          treffer: "bonk" },
-    bogen:        { name: "Pfeil und Bogen", schaden: 8,  preis: 0,   flug: 620, ton: "pfeilschuss",     treffer: "pfeiltreffer" },
-    laser:        { name: "Laser",           schaden: 7,  preis: 0,   flug: 260, ton: "laserrot",        treffer: "lasertreffer" },
-    armbrust:     { name: "Armbrust",        schaden: 12, preis: 40,  flug: 460, ton: "schuss",          treffer: "pfeiltreffer" },
-    tomahawk:     { name: "Tomahawk",        schaden: 15, preis: 60,  flug: 720, ton: "swoosh",          treffer: "axttreffer" },
-    zielfernrohr: { name: "Zielfernrohr",    schaden: 35, preis: 100, flug: 950, ton: "zielfernrohr",    treffer: "knack" },
-    bazooka:      { name: "Bazooka",         schaden: 28, preis: 150, flug: 820, ton: "granatenpfeifen", treffer: "explosion2" },
-    /* FUNK 110 — „andere Waffen die lustig sind z.B in hühnerwerfer oder
-       ein Eierwerfer … und die Sounds müssen dafür da sein". */
-    eierwerfer:   { name: "Eierwerfer",      schaden: 5,  preis: 20,  flug: 600, ton: "swoosh",          treffer: "eiknack" },
-    huehnerwerfer:{ name: "Hühnerwerfer",    schaden: 10, preis: 55,  flug: 760, ton: "huhnwurf",        treffer: "huhntreffer" }
+    zwille:       { name: "Zwille",          schaden: 6,  preis: 0,   flug: 520, ton: "zwille" },
+    bogen:        { name: "Pfeil und Bogen", schaden: 8,  preis: 0,   flug: 620, ton: "pfeilschuss" },
+    laser:        { name: "Laser",           schaden: 7,  preis: 0,   flug: 260, ton: "laserrot" },
+    armbrust:     { name: "Armbrust",        schaden: 12, preis: 40,  flug: 460, ton: "schuss" },
+    tomahawk:     { name: "Tomahawk",        schaden: 15, preis: 60,  flug: 720, ton: "swoosh" },
+    zielfernrohr: { name: "Zielfernrohr",    schaden: 35, preis: 100, flug: 950, ton: "zielfernrohr" },
+    bazooka:      { name: "Bazooka",         schaden: 28, preis: 150, flug: 820, ton: "granatenpfeifen" }
   };
-  var WAFFEN_REIHE = ["zwille", "bogen", "laser", "eierwerfer", "armbrust", "huehnerwerfer", "tomahawk", "zielfernrohr", "bazooka"];
+  var WAFFEN_REIHE = ["zwille", "bogen", "laser", "armbrust", "tomahawk", "zielfernrohr", "bazooka"];
   var LADEN = [
     { ding: "pflaster",    name: "Pflaster",        preis: 15,  was: "repariert, wenn du kaputt bist (dann 40 LP), sonst +25 LP" },
     { ding: "trank",       name: "Heiltrank",       preis: 30,  was: "+60 Lebenspunkte" },
@@ -45,14 +36,8 @@
     { ding: "mauer_stein", name: "Mauer aus Stein", preis: 45,  was: "bleibt am Platz, hält 90 Schaden" },
     { ding: "mauer_stahl", name: "Mauer aus Stahl", preis: 80,  was: "bleibt am Platz, hält 160 Schaden" },
     { ding: "wischer",     name: "Scheibenwischer", preis: 25,  was: "wischt 3× automatisch Dreck weg" },
-    /* FUNK 109/110 — Gegenwehr jetzt ANTEILIG am Angriff (vorher immer
-       6 bzw. 4), und alles nutzt sich ab („dass man das nicht ewig hat
-       aber … schon eine ganze Weile"). Gerechnet in spiel_treffer. */
-    { ding: "geschuetz",   name: "Geschütz",        preis: 60,  was: "12 Schuss: schießt automatisch die Hälfte des Schadens zurück" },
-    { ding: "geschuetz_stufe", name: "Geschütz aufrüsten", preis: 70, was: "Stufe 2: 70 %, Stufe 3: 90 % zurück (höchstens 4/5 dessen, was der Angreifer anrichtet)" },
-    { ding: "fellmonster", name: "Fellmonster",     preis: 120, was: "beißt den Angreifer (30 % zurück), hält 30 Angriffe" },
-    { ding: "stachelmonster", name: "Stachelmonster", preis: 160, was: "fängt 1/5 jedes Treffers ab und sticht (20 % zurück), hält 35 Angriffe" },
-    { ding: "drache",      name: "Kleiner Drache",  preis: 250, was: "faucht Feuer (50 % zurück), hält 25 Angriffe" },
+    { ding: "geschuetz",   name: "Geschütz",        preis: 60,  was: "schießt 5× automatisch zurück" },
+    { ding: "haustier",    name: "Fellmonster",     preis: 120, was: "beißt jeden, der dich angreift" },
     /* FUNK 106 — XANDER: „Zaubertränke die etwas Besonderes verursachen z.B
        eine superstärke oder irgendwie eine Zielgenauigkeit … oder
        Geschwindigkeit". Kaufen mit Punkten, trinken kostet 30 Mana,
@@ -60,24 +45,9 @@
        spiel_treffer). */
     { ding: "trank_kraft", name: "Kraftelixier",    preis: 40,  was: "Superstärke: 60 s lang ×1,5 Schaden (trinken: 30 Mana)" },
     { ding: "trank_ziel",  name: "Zielwasser",      preis: 35,  was: "60 s lang zieht jeder Schuss zum Kopf hin (trinken: 30 Mana)" },
-    { ding: "trank_tempo", name: "Blitztrank",      preis: 30,  was: "60 s lang doppelt so schnell, kürzere Pause (trinken: 30 Mana)" },
-    /* FUNK 110 — „sämtliche Arten von Tränke". */
-    { ding: "trank_mana",  name: "Manatrank",       preis: 25,  was: "+50 Mana sofort (kostet kein Mana)" },
-    { ding: "trank_eisen", name: "Eisenhaut",       preis: 45,  was: "60 s lang nur halber Schaden (trinken: 30 Mana)" },
-    { ding: "trank_tarn",  name: "Tarntrank",       preis: 50,  was: "20 s unsichtbar, niemand kann dich treffen – bis du selbst schießt (trinken: 30 Mana)" },
-    /* FUNK 111 — „dass man irgendwo noch Falltüren und Minen legen kann
-       für den anderen". Gelegt wird auf einen Platz; wer dort ankommt,
-       löst sie aus. Nur du siehst deine eigenen Fallen. */
-    { ding: "mine",        name: "Mine legen",      preis: 30,  was: "auf einen Platz legen: wer sich dorthin setzt, verliert 20 LP", legen: true },
-    { ding: "falltuer",    name: "Falltür legen",   preis: 25,  was: "auf einen Platz legen: wer sich dorthin setzt, fällt hinein (12 LP)", legen: true }
+    { ding: "trank_tempo", name: "Blitztrank",      preis: 30,  was: "60 s lang doppelt so schnell, kürzere Pause (trinken: 30 Mana)" }
   ];
-  var TRAENKE = [["kraft", "Kraftelixier", "trank_kraft"], ["ziel", "Zielwasser", "trank_ziel"], ["tempo", "Blitztrank", "trank_tempo"],
-                 ["mana", "Manatrank", "trank_mana"], ["eisen", "Eisenhaut", "trank_eisen"], ["tarn", "Tarntrank", "trank_tarn"]];
-  var TIERE = {
-    fellmonster:    { name: "Fellmonster",    ton: "monsterbiss" },
-    stachelmonster: { name: "Stachelmonster", ton: "stachelstich" },
-    drache:         { name: "Kleiner Drache", ton: "drachenfeuer" }
-  };
+  var TRAENKE = [["kraft", "Kraftelixier", "trank_kraft"], ["ziel", "Zielwasser", "trank_ziel"], ["tempo", "Blitztrank", "trank_tempo"]];
   function wirkt(ich, art) {
     var bis = ich && ich[art + "_bis"];
     return bis ? Math.max(0, Math.round((new Date(bis).getTime() - Date.now()) / 1000)) : 0;
@@ -195,8 +165,7 @@
     if (!s) return null;
     var o = {};
     ["id", "name", "lp", "lp_max", "kaputt", "schild", "mauer_art", "mauer_lp", "haustier",
-     "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
-     "haustier_leben", "geschuetz_stufe", "eisen", "tarn"].forEach(function (k) { o[k] = s[k]; });
+     "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -237,7 +206,6 @@
     }).then(function (ich) {
       if (ich) { S.ich = ich; S.stand[ich.id] = oeffentlich(ich); }
       zeichnen(); panelAuffrischen();
-      fallenHolen();
     }).catch(function () {});
   }
 
@@ -263,9 +231,8 @@
     var sid = "puppe:" + chatId;
     if (!S.stand[sid]) {
       S.stand[sid] = { id: sid, name: chatId === "uebungspuppe2" ? "Dummy" : "Puppe", lp: 100, lp_max: 100,
-                       kaputt: false, schild: 0, mauer_art: null, mauer_lp: 0,
-                       haustier: chatId === "uebungspuppe" ? "fellmonster" : null,
-                       geschuetz: chatId === "uebungspuppe2", wischer: 0, anfaenger: false, verdient: 0, uebung: true };
+                       kaputt: false, schild: 0, mauer_art: null, mauer_lp: 0, haustier: false,
+                       geschuetz: false, wischer: 0, anfaenger: false, verdient: 0, uebung: true };
     }
     return S.stand[sid];
   }
@@ -287,16 +254,6 @@
     st.lp = Math.max(0, st.lp - schaden);
     st.kaputt = st.lp <= 0;
     trefferZeigen(p.id, { zone: zone, schaden: schaden, abgewehrt: 0, kaputt: st.kaputt });
-    /* FUNK 109/110 — Gegenwehr zum Ausprobieren: die Puppe hat ein
-       Fellmonster, der Dummy ein Geschütz. Gerechnet wie auf dem Server
-       (spiel_treffer); die Lebenspunkte zählen nur im Übungsduell. */
-    if (schaden > 0) {
-      var gg = p.id === "uebungspuppe2" ? Math.max(2, Math.min(18, Math.round(schaden * 0.5))) : 0;
-      var gt = p.id === "uebungspuppe" ? Math.max(2, Math.min(10, Math.round(schaden * 0.3))) : 0;
-      var gw = Math.min(gg + gt, Math.max(2, Math.round(schaden * 0.8)));
-      if (S.uebung) S.uebung.lp = Math.max(0, S.uebung.lp - gw);
-      gegenwehrZeigen(p.id, meineChatId(), { gegenwehr: gw, gegen_geschuetz: gg, gegen_tier: gt, tier: gt ? "fellmonster" : "" });
-    }
     if (!S.uebungGesagt) { S.uebungGesagt = true; hinweis("🧍 Übung mit " + st.name + " – zählt nicht, keine Punkte."); }
     if (st.kaputt) {
       if (S.duell && S.duell.uebung && S.duell.gegnerChat === p.id) {
@@ -395,7 +352,7 @@
       geschossZeigen(n.von, n.zielChat, n.waffe, n.dx, n.dy, n.farbe, Boolean(n.schnell));
     } else if (n.ereignis === "treffer") {
       trefferZeigen(n.zielChat, n);
-      gegenwehrZeigen(n.zielChat, n.von, n);
+      if (n.gegenwehr > 0) zahlZeigen(n.von, -n.gegenwehr, "Gegenwehr");
       if (n.zielChat === meineChatId()) {
         /* Ich wurde getroffen — mein Stand kommt vom Server nach. */
         setTimeout(function () { abrufen(true); }, 300);
@@ -403,17 +360,8 @@
     } else if (n.ereignis === "ausgewichen") {
       zahlZeigen(n.zielChat, null, "ausgewichen");
     } else if (n.ereignis === "heilung") {
-      /* FUNK 108 — wer einen ANDEREN heilt, schickt dessen Platz mit;
-         die grüne Zahl steigt dort auf, wo geheilt wurde. */
-      zahlZeigen(n.zielChat || n.von, n.plus, n.zielChat && n.zielChat !== n.von ? "von " + (n.name || "") : "");
+      zahlZeigen(n.von, n.plus, "");
       ton("zauberpuff", 0.4);
-      /* „sorte", nicht „art": spielSenden überschreibt „art" mit
-         „spiel" (livechat.js) — so ging die Unterscheidung verloren. */
-      if (n.sorte === "pflaster") { try { if (B().pflaster) B().pflaster(n.zielChat || n.von); } catch (e) {} }
-    } else if (n.ereignis === "falle") {
-      falleZeigen(n.zielChat, n.sorte, n.schaden);
-    } else if (n.ereignis === "trank") {
-      if (n.sorte === "tarn") ton("tarnung", 0.5); else ton("trankschluck", 0.45);
     } else if (n.ereignis === "duell" && n.an === meineChatId()) {
       duellFrage(n);
     } else if (n.ereignis === "duellstart") {
@@ -449,12 +397,6 @@
 
   /* Aufgerufen vom Tipp auf einen Platz (app.js). true = erledigt. */
   function tippAufPlatz(knopf, p, ev) {
-    /* FUNK 111 — nach „Mine legen" / „Falltür legen" gilt der nächste
-       Tipp dem Platz, auf den sie soll. */
-    if (S.legen && S.bereit && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
-      falleLegen(S.legen, Number(knopf.dataset.lcPlatz));
-      return true;
-    }
     if (!S.bereit && !(p && istPuppe(p.id) && (S.waffe || imDuellMit(p.id)))) return false;
     var ich = S.ich || {};
     if (p && !p.leer && !p.ich && (S.waffe || imDuellMit(p.id))) {
@@ -507,12 +449,11 @@
         if (erg.ich) { S.stand[erg.ich.id] = erg.ich; if (S.ich) { S.ich.lp = erg.ich.lp; S.ich.kaputt = erg.ich.kaputt; } }
         var n = { ereignis: "treffer", zielChat: p.id, schaden: erg.schaden, abgewehrt: erg.abgewehrt,
                   zone: erg.zone, kaputt: erg.kaputt, gegenwehr: erg.gegenwehr,
-                  gegen_geschuetz: erg.gegen_geschuetz || 0, gegen_tier: erg.gegen_tier || 0, tier: erg.tier || "",
                   ziel_stand: erg.ziel, ich_stand: erg.ich };
         senden(n);
         n.von = ichChat;
         trefferZeigen(p.id, n);
-        gegenwehrZeigen(p.id, ichChat, n);
+        if (erg.gegenwehr > 0) zahlZeigen(ichChat, -erg.gegenwehr, "Gegenwehr");
         if (erg.lohn > 0) hinweis("🪙 +" + erg.lohn + " Punkte fürs Treffen" + (erg.kaputt ? " – " + (p.name || "") + " ist kaputt!" : ""));
         if (erg.kaputt && S.duell && S.duell.gegnerChat === p.id) { hinweis("🏆 Duell gewonnen!"); S.duell = null; }
         abrufen(true);
@@ -531,12 +472,6 @@
     if (waffe === "bazooka") return '<svg viewBox="-18 -7 36 14"><path d="M-12 -4 H8 Q14 -4 16 0 Q14 4 8 4 H-12 Z" fill="#5d6b3a" stroke="#2f3620" stroke-width="1"/><path d="M-12 -4 L-16 -7 L-14 0 L-16 7 L-12 4 Z" fill="#434d29"/><path d="M-16 -2 Q-24 0 -16 2 Z" fill="#ffb02e"/><rect x="0" y="-4" width="3" height="8" fill="#c9c14a"/></svg>';
     if (waffe === "laser") return '<svg viewBox="-20 -5 40 10"><path d="M-18 0 H18" stroke="' + (farbe || "#ff2d2d") + '" stroke-width="3" stroke-linecap="round"/><path d="M-18 0 H18" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity=".8"/></svg>';
     if (waffe === "zielfernrohr") return '<svg viewBox="-5 -3 10 6"><ellipse rx="4" ry="1.6" fill="#caa53a" stroke="#6d5a1c" stroke-width=".6"/></svg>';
-    if (waffe === "eierwerfer") return '<svg viewBox="-6 -7 12 14"><path d="M0 -6 C3.6 -6 5 -1 5 1.6 C5 4.6 2.8 6.4 0 6.4 C-2.8 6.4 -5 4.6 -5 1.6 C-5 -1 -3.6 -6 0 -6 Z" fill="#fbf4e4" stroke="#a8977a" stroke-width=".9"/><ellipse cx="-1.6" cy="-2.4" rx="1.1" ry="1.8" fill="#fff" opacity=".9"/></svg>';
-    if (waffe === "huehnerwerfer") return '<svg viewBox="-13 -12 26 24"><path d="M-9 3 C-10 -4 -4 -7 1 -6 C3 -9 7 -9 8 -6 C9 -4 8 -2 7 -1 C9 2 7 7 1 8 C-5 9 -9 7 -9 3 Z" fill="#fffdf6" stroke="#9c8f78" stroke-width="1"/>'
-      + '<path d="M3 -9 C3.5 -11 5 -11 5 -9.5 C6 -11 7.5 -10.5 7 -8.6 Z" fill="#e23b2e"/><path d="M8 -5.4 L11.6 -4.6 L8.2 -3.4 Z" fill="#f4b02a"/><circle cx="5.6" cy="-5.6" r=".9" fill="#222"/>'
-      + '<path d="M6.8 -2.6 C7.6 -1.6 7.4 -.4 6.6 .2" fill="none" stroke="#e23b2e" stroke-width="1.4" stroke-linecap="round"/>'
-      + '<path d="M-6 0 C-3 -3 1 -2 2 1 C-1 3 -4 3 -6 0 Z" fill="#efe6d2" stroke="#9c8f78" stroke-width=".8"/>'
-      + '<path d="M-3 8 L-4 11 M-3 11 L-5 11 M1 8 L1 11 M0 11 L2 11" stroke="#f4b02a" stroke-width="1" stroke-linecap="round"/></svg>';
     return "";
   }
   function mittelpunkt(chatId) {
@@ -551,7 +486,7 @@
     var w = WAFFEN[waffe] || WAFFEN.bogen;
     /* FUNK 106 — Blitztrank: halbe Flugzeit. */
     if (schnell === undefined) schnell = vonChat === meineChatId() && wirkt(S.ich, "tempo") > 0;
-    if (schnell) w = { name: w.name, schaden: w.schaden, preis: w.preis, flug: Math.round(w.flug / 2), ton: w.ton, treffer: w.treffer };
+    if (schnell) w = { name: w.name, schaden: w.schaden, preis: w.preis, flug: Math.round(w.flug / 2), ton: w.ton };
     var a = mittelpunkt(vonChat), z = mittelpunkt(zielChat);
     if (!z) return w.flug;
     if (!a) a = { x: z.x, y: Math.max(0, z.y - 260), r: 0 };
@@ -588,10 +523,9 @@
     g.className = "sp-geschoss sp-g-" + waffe;
     g.innerHTML = geschossSvg(waffe);
     document.body.appendChild(g);
-    var bogen = waffe === "zwille" || waffe === "tomahawk" || waffe === "eierwerfer" ? -40
-      : waffe === "huehnerwerfer" ? -70 : waffe === "bogen" ? -24 : 0;
+    var bogen = waffe === "zwille" || waffe === "tomahawk" ? -40 : waffe === "bogen" ? -24 : 0;
     var mx = (a.x + zx) / 2, my = (a.y + zy) / 2 + bogen;
-    var drehung = waffe === "tomahawk" ? 900 : waffe === "huehnerwerfer" ? 540 : waffe === "eierwerfer" ? 360 : 0;
+    var drehung = waffe === "tomahawk" ? 900 : 0;
     try {
       g.animate([
         { transform: "translate(" + a.x + "px," + a.y + "px) translate(-50%,-50%) rotate(" + winkel + "deg)" },
@@ -609,8 +543,7 @@
       e.className = "sp-einschlag" + (waffe === "bazooka" ? " sp-einschlag-gross" : "");
       e.style.left = x + "px"; e.style.top = y + "px";
       document.body.appendChild(e);
-      var tt = (WAFFEN[waffe] || {}).treffer;
-      if (tt) ton(tt, waffe === "bazooka" ? 0.6 : 0.5);
+      if (waffe === "bazooka") ton("explosion2", 0.6);
       setTimeout(function () { e.remove(); }, 650);
     }, nach);
   }
@@ -648,164 +581,6 @@
   }
 
   /* ---------------------------------------------------------------
-     FUNK 109/110 — DIE GEGENWEHR SIEHT UND HÖRT MAN
-     ---------------------------------------------------------------
-     XANDER: „Prüfe bitte ob das Fellmonster auch wirklich den Angreifer
-     attackiert und ein richtiges Reißgeräusch hat". Bisher stand beim
-     Angreifer nur eine rote Zahl. Jetzt springt das Monster vom Bild
-     seines Herrchens hinüber zum Angreifer und zurück (mit seinem
-     eigenen Ton), und das Geschütz feuert sichtbar zwei Kugeln.
-     Das läuft auf JEDEM Gerät, das den Treffer bekommt.
-     --------------------------------------------------------------- */
-  function gegenwehrZeigen(verteidiger, angreifer, n) {
-    if (!n || !(n.gegenwehr > 0)) return;
-    var verzug = 0;
-    if (n.gegen_geschuetz > 0) { kugelnFliegen(verteidiger, angreifer); verzug = 260; }
-    if (n.gegen_tier > 0) setTimeout(function () { tierAngriff(verteidiger, angreifer, n.tier || "fellmonster"); }, verzug);
-    setTimeout(function () {
-      zahlZeigen(angreifer, -n.gegenwehr, "Gegenwehr");
-      var el = platzElVon(angreifer);
-      if (el) { el.classList.remove("sp-getroffen"); void el.offsetWidth; el.classList.add("sp-getroffen"); setTimeout(function () { el.classList.remove("sp-getroffen"); }, 500); }
-    }, verzug + (n.gegen_tier > 0 ? 520 : 240));
-  }
-  function kugelnFliegen(von, zu) {
-    var a = mittelpunkt(von), z = mittelpunkt(zu);
-    if (!a || !z) return;
-    ton("geschuetzfeuer", 0.5);
-    /* Das Geschütz sitzt links unten am Bild (geschuetzSvg). */
-    var sx = a.x - a.r * 0.62, sy = a.y + a.r * 0.62;
-    [0, 150].forEach(function (warte) {
-      setTimeout(function () {
-        var k = document.createElement("div");
-        k.className = "sp-kugel";
-        document.body.appendChild(k);
-        try {
-          k.animate([{ transform: "translate(" + sx + "px," + sy + "px)" }, { transform: "translate(" + z.x + "px," + z.y + "px)" }],
-            { duration: 240, easing: "linear", fill: "forwards" });
-        } catch (e) {}
-        setTimeout(function () { k.remove(); }, 260);
-      }, warte);
-    });
-  }
-  function tierAngriff(von, zu, art) {
-    var a = mittelpunkt(von), z = mittelpunkt(zu);
-    if (!a || !z) return;
-    ton((TIERE[art] || TIERE.fellmonster).ton, 0.55);
-    var t = document.createElement("div");
-    t.className = "sp-tier-sprung sp-tier-" + art;
-    t.style.width = t.style.height = (a.r * 2) + "px";
-    t.innerHTML = tierSvg(art);
-    document.body.appendChild(t);
-    /* Das Tier sitzt rechts unten (84 | 84 von 100) — von dort springt es
-       auf das Gesicht des Angreifers (etwas unter die Mitte, damit man
-       den Biss sieht), rüttelt kurz und springt zurück. */
-    /* Ursprung oben links: dann liegt das Tier (84 | 84 von 100, also
-       1,68 r vom Ursprung) bei Vergrößerung s genau bei 1,68 · r · s. */
-    t.style.transformOrigin = "0 0";
-    var ab = { x: a.x - a.r, y: a.y - a.r };
-    var hin = { x: z.x + z.r * 0.25 - a.r * 1.68 * 1.4, y: z.y + z.r * 0.3 - a.r * 1.68 * 1.4 };
-    var hoch = Math.min(ab.y, hin.y) - a.r * 0.9;
-    var mitte = { x: (ab.x + hin.x) / 2, y: hoch };
-    var f = function (p, s) { return { transform: "translate(" + p.x.toFixed(1) + "px," + p.y.toFixed(1) + "px) scale(" + (s || 1) + ")" }; };
-    try {
-      t.animate([f(ab), Object.assign(f(mitte, 1.25), { offset: 0.22 }), Object.assign(f(hin, 1.4), { offset: 0.4 }),
-        Object.assign({ transform: "translate(" + (hin.x - 3) + "px," + hin.y + "px) scale(1.4) rotate(-8deg)" }, { offset: 0.5 }),
-        Object.assign({ transform: "translate(" + (hin.x + 3) + "px," + hin.y + "px) scale(1.4) rotate(8deg)" }, { offset: 0.6 }),
-        Object.assign(f(hin, 1.4), { offset: 0.66 }), Object.assign(f(mitte, 1.2), { offset: 0.84 }), f(ab)],
-        { duration: 1100, easing: "ease-in-out", fill: "forwards" });
-    } catch (e) {}
-    if (art === "drache") {
-      /* Der Drache spuckt Feuer, statt zu beißen. */
-      setTimeout(function () {
-        var fl = document.createElement("div");
-        fl.className = "sp-feuer";
-        fl.style.left = z.x + "px"; fl.style.top = z.y + "px";
-        document.body.appendChild(fl);
-        setTimeout(function () { fl.remove(); }, 700);
-      }, 430);
-    } else {
-      setTimeout(function () {
-        var kr = document.createElement("div");
-        kr.className = "sp-kratzer";
-        kr.style.left = z.x + "px"; kr.style.top = (z.y + z.r * 0.35) + "px";
-        kr.innerHTML = '<svg viewBox="-20 -14 40 28"><path d="M-14 -10 L-4 8 M-6 -12 L4 8 M2 -12 L12 6" stroke="#b3151b" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg>';
-        document.body.appendChild(kr);
-        setTimeout(function () { kr.remove(); }, 900);
-      }, 470);
-    }
-    setTimeout(function () { t.remove(); }, 1150);
-  }
-
-  /* ---------------------------------------------------------------
-     FUNK 111 — MINEN UND FALLTÜREN
-     ---------------------------------------------------------------
-     XANDER: „dass man irgendwo noch Falltüren und Minen legen kann für
-     den anderen". Gelegt wird auf einen PLATZ (spiel_falle_legen).
-     Ausgelöst wird auf dem Gerät dessen, der dort ankommt
-     (spiel_falle_pruefen) — so kann niemand eine Falle auf jemanden
-     abfeuern, der gar nicht dort sitzt. Nur wer sie gelegt hat, sieht
-     sie (spiel_meine_fallen).
-     --------------------------------------------------------------- */
-  function raumName() { try { return LC().lage().raum || ""; } catch (e) { return ""; } }
-  function falleLegen(art, platz) {
-    S.legen = "";
-    document.body.classList.remove("sp-legen");
-    if (!platz) return;
-    rpc("spiel_falle_legen", { p_raum: raumName(), p_platz: platz, p_art: art }).then(function (r) {
-      if (!r || !r.ok) { hinweis("🪤 " + ((r && r.grund) || "geht nicht")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      ton(art === "mine" ? "lunte" : "holzklopf", 0.4);
-      hinweis((art === "mine" ? "💣 Mine" : "🕳️ Falltür") + " liegt auf Platz " + platz + " – nur du siehst sie.");
-      fallenHolen();
-      panelAuffrischen();
-    }).catch(function (e) { hinweis("Legen ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  function meineFallen() { return Array.isArray(S.fallen) ? S.fallen : []; }
-  function fallenHolen() {
-    if (!S.bereit) return;
-    rpc("spiel_meine_fallen", { p_raum: raumName() }).then(function (l) { S.fallen = Array.isArray(l) ? l : []; zeichnen(); }).catch(function () {});
-  }
-  function fallePruefen() {
-    var nr = meinPlatzNummer();
-    if (!S.bereit || !nr) return;
-    rpc("spiel_falle_pruefen", { p_raum: raumName(), p_platz: nr }).then(function (r) {
-      if (!r || !r.falle) return;
-      if (r.ich) { S.stand[r.ich.id] = r.ich; if (S.ich) { S.ich.lp = r.ich.lp; S.ich.kaputt = r.ich.kaputt; } }
-      var ich = meineChatId();
-      falleZeigen(ich, r.art, r.schaden);
-      senden({ ereignis: "falle", zielChat: ich, sorte: r.art, schaden: r.schaden, stand: r.ich });
-      hinweis(r.art === "mine" ? "💥 Auf eine Mine getreten!" : "🕳️ In eine Falltür gefallen!");
-      abrufen(true);
-    }).catch(function () {});
-  }
-  function falleZeigen(chatId, art, schaden) {
-    var el = platzElVon(chatId);
-    var kreis = el && el.querySelector(".lc-kreis");
-    if (!kreis) return;
-    if (art === "mine") {
-      ton("minenknall", 0.6);
-      var m = mittelpunkt(chatId);
-      var e = document.createElement("div");
-      e.className = "sp-einschlag sp-einschlag-gross";
-      e.style.left = m.x + "px"; e.style.top = (m.y + m.r * 0.5) + "px";
-      document.body.appendChild(e);
-      setTimeout(function () { e.remove(); }, 700);
-      el.classList.remove("sp-mine-wurf"); void el.offsetWidth; el.classList.add("sp-mine-wurf");
-      setTimeout(function () { el.classList.remove("sp-mine-wurf"); }, 900);
-    } else {
-      ton("falltuer", 0.6);
-      var loch = document.createElement("span");
-      loch.className = "sp-loch";
-      loch.style.left = kreis.offsetLeft + "px"; loch.style.top = kreis.offsetTop + "px";
-      loch.style.width = kreis.offsetWidth + "px"; loch.style.height = kreis.offsetHeight + "px";
-      el.appendChild(loch);
-      el.classList.remove("sp-fallen"); void el.offsetWidth; el.classList.add("sp-fallen");
-      setTimeout(function () { el.classList.remove("sp-fallen"); loch.remove(); }, 1500);
-    }
-    if (schaden > 0) setTimeout(function () { zahlZeigen(chatId, -schaden, art === "mine" ? "Mine" : "Falltür"); }, 250);
-  }
-
-  /* ---------------------------------------------------------------
      DIE PLÄTZE SCHMÜCKEN: Lebensbalken, Schild, Mauer, Tier, Kaputt
      --------------------------------------------------------------- */
   function zeichnen() {
@@ -821,50 +596,50 @@
       var uebungIch = Boolean(S.uebung && chatId && chatId === meineChatId());
       if (uebungIch) s = Object.assign({}, s || { name: "Du", schild: 0 }, { lp: S.uebung.lp, lp_max: S.uebung.max, kaputt: S.uebung.lp <= 0 });
       if (!s || !kreis || (!S.bereit && !uebungIch && !istPuppe(chatId))) { platzLeeren(el); return; }
-      /* FUNK 110 — XANDER: „überleg mal ob du Mana und die Lebensanzeige
-         vielleicht unten in das Kreisrund von der Profilanzeige so bauen
-         kannst dass du unten den Platz nicht wegnimmst".
-         Vorher lagen zwei Balken unter dem Namen. Jetzt zwei Bögen auf
-         dem RAND des Bildes, unten links die Lebenspunkte (mit dem
-         Schild hellblau dahinter), unten rechts das Mana. Sie liegen auf
-         dem äußersten Achtel des Kreises — die Gesichtsmitte bleibt
-         frei, und unter dem Namen braucht es keinen Platz mehr. */
+      /* Unter dem NAMEN: zwischen Kreis und Name ist kein Platz, der
+         Balken laege sonst auf der Schrift (Bild 24.09.). */
+      var nameEl = el.querySelector(".lc-platz-name");
+      var unterkante = nameEl ? nameEl.offsetTop + nameEl.offsetHeight : kreis.offsetTop + kreis.offsetHeight;
+      /* Der Balken */
       var bal = el.querySelector(".sp-lp");
       if (!bal) {
         bal = document.createElement("span");
         bal.className = "sp-lp";
+        bal.innerHTML = '<i class="sp-lp-voll"></i><i class="sp-lp-schild"></i>';
         el.appendChild(bal);
       }
       var anteil = Math.max(0, Math.min(1, (s.lp || 0) / (s.lp_max || 100)));
       var schildAnteil = Math.max(0, Math.min(1 - anteil, (s.schild || 0) / (s.lp_max || 100)));
-      var manaAnteil = s.mana != null && !istPuppe(chatId) ? Math.max(0, Math.min(1, s.mana / (s.mana_max || 100))) : -1;
-      bal.dataset.anteil = (anteil * 100).toFixed(1);
-      bal.dataset.radius = String(RING_R / 50);
-      bal.style.left = kreis.offsetLeft + "px"; bal.style.top = kreis.offsetTop + "px";
-      bal.style.width = kreis.offsetWidth + "px"; bal.style.height = kreis.offsetHeight + "px";
-      bal.title = (s.name || "") + ": " + s.lp + " / " + s.lp_max + " LP" + (s.schild ? " · Schild " + s.schild : "")
-        + (manaAnteil >= 0 ? " · " + s.mana + " Mana" : "");
-      var farbe = anteil > 0.6 ? "#3bbf4a" : anteil > 0.3 ? "#e8b923" : "#e2403a";
-      var html = ringSvg(anteil, schildAnteil, farbe, manaAnteil);
-      if (bal.dataset.html !== html) { bal.innerHTML = html; bal.dataset.html = html; }
-      var altMana = el.querySelector(".sp-mana"); if (altMana) altMana.remove();
+      bal.style.top = (unterkante + 1) + "px";
+      bal.style.left = (kreis.offsetLeft + kreis.offsetWidth * 0.18) + "px";
+      bal.style.width = (kreis.offsetWidth * 0.64) + "px";
+      bal.title = (s.name || "") + ": " + s.lp + " / " + s.lp_max + " LP" + (s.schild ? " · Schild " + s.schild : "");
+      var voll = bal.querySelector(".sp-lp-voll");
+      voll.style.width = (anteil * 100).toFixed(1) + "%";
+      voll.style.background = anteil > 0.6 ? "#3bbf4a" : anteil > 0.3 ? "#e8b923" : "#e2403a";
+      var sch = bal.querySelector(".sp-lp-schild");
+      sch.style.left = (anteil * 100).toFixed(1) + "%";
+      sch.style.width = (schildAnteil * 100).toFixed(1) + "%";
+      /* FUNK 106 — der zweite Balken: Mana, direkt unter den Lebenspunkten. */
+      var mb = el.querySelector(".sp-mana");
+      if (s.mana != null && !istPuppe(chatId)) {
+        if (!mb) { mb = document.createElement("span"); mb.className = "sp-mana"; mb.innerHTML = "<i></i>"; el.appendChild(mb); }
+        mb.style.top = (unterkante + 7) + "px";
+        mb.style.left = bal.style.left; mb.style.width = bal.style.width;
+        mb.firstChild.style.width = Math.max(0, Math.min(100, s.mana)) + "%";
+        mb.title = s.mana + " / 100 Mana";
+      } else if (mb) mb.remove();
       /* Wirkende Tränke leuchten am Bild: rot = Superstärke, gelb =
          Zielwasser, blau = Blitztrank. */
       el.classList.toggle("sp-w-kraft", Boolean(s.kraft));
       el.classList.toggle("sp-w-ziel", Boolean(s.ziel));
       el.classList.toggle("sp-w-tempo", Boolean(s.tempo));
-      el.classList.toggle("sp-w-eisen", Boolean(s.eisen));
-      el.classList.toggle("sp-w-tarn", Boolean(s.tarn));
       /* Schild-Aura (reist mit) */
       schmuck(el, "sp-aura", s.schild > 0, kreis, "");
       /* Mauer (bleibt am Platz) — unten vor dem Bild, die Mitte bleibt frei */
       schmuck(el, "sp-mauer", s.mauer_lp > 0, kreis, mauerSvg(s.mauer_art), "sp-mauer-" + (s.mauer_art || "holz"));
       /* Das Fellmonster sitzt rechts unten neben dem Bild */
-      schmuck(el, "sp-tier", Boolean(s.haustier), kreis, tierSvg(s.haustier), "sp-tier-" + (s.haustier || "fellmonster"));
-      /* Nur ich sehe meine eigenen Fallen — als kleine Markierung. */
-      var falle = null, nr = Number(el.dataset.lcPlatz);
-      meineFallen().forEach(function (f) { if (f.platz === nr) falle = f.art; });
-      schmuck(el, "sp-falle-marke", Boolean(falle), kreis, falle ? falleSvg(falle) : "");
+      schmuck(el, "sp-tier", Boolean(s.haustier), kreis, tierSvg());
       /* Das Geschütz links unten */
       schmuck(el, "sp-geschuetz", Boolean(s.geschuetz), kreis, geschuetzSvg());
       /* Kaputt: Risse und Grau */
@@ -893,7 +668,6 @@
       teile.push('<span class="sp-m-teil">' + (S.duell.uebung ? "Übungsduell" : "Duell") + " " + Math.floor(sek / 60) + ":" + ("0" + (sek % 60)).slice(-2) + "</span>");
     }
     TRAENKE.forEach(function (t) { var r = wirkt(S.ich, t[0]); if (r) teile.push('<span class="sp-m-teil sp-m-' + t[0] + '">' + t[1] + " " + r + " s</span>"); });
-    if (S.legen) teile.unshift('<span class="sp-m-teil">' + (S.legen === "mine" ? "Mine" : "Falltür") + ': tippe auf einen Platz</span>');
     var an = drin() && (kampfmodus() || duell || teile.length > 0);
     if (!an) { if (modusEl) modusEl.hidden = true; return; }
     if (!modusEl) {
@@ -901,7 +675,7 @@
       modusEl.className = "sp-modus";
       modusEl.addEventListener("click", function (ev) {
         var k = ev.target.closest("button"); if (!k) return;
-        if (k.dataset.tu === "modusaus") { S.waffe = ""; S.legen = ""; document.body.classList.remove("sp-legen"); if (S.duell && S.duell.uebung) uebungEnde(); zeichnen(); panelAuffrischen(); }
+        if (k.dataset.tu === "modusaus") { S.waffe = ""; if (S.duell && S.duell.uebung) uebungEnde(); zeichnen(); panelAuffrischen(); }
         if (k.dataset.tu === "modusspiel") menue("start");
       });
       document.body.appendChild(modusEl);
@@ -909,7 +683,7 @@
     modusEl.hidden = false;
     var html = '<b>Kampfmodus</b>' + teile.join("") + (kampfmodus() ? '<span class="sp-m-tipp">tippe auf ein Gesicht</span>' : "")
       + '<button type="button" data-tu="modusspiel">Spiel</button>'
-      + (S.waffe || S.legen || (S.duell && S.duell.uebung) ? '<button type="button" data-tu="modusaus">' + (S.legen && !S.waffe ? "Abbrechen" : "Beenden") + "</button>" : "");
+      + (S.waffe || (S.duell && S.duell.uebung) ? '<button type="button" data-tu="modusaus">Beenden</button>' : "");
     if (modusEl.dataset.html !== html) { modusEl.innerHTML = html; modusEl.dataset.html = html; }
   }
   function schmuck(el, klasse, an, kreis, html, zusatz) {
@@ -925,12 +699,7 @@
   }
   function platzLeeren(el) {
     el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer,.sp-tier,.sp-geschuetz,.sp-risse,.sp-waffenmarke").forEach(function (x) { x.remove(); });
-    el.classList.remove("sp-kaputt", "sp-anfaenger", "sp-w-kraft", "sp-w-ziel", "sp-w-tempo", "sp-w-eisen", "sp-w-tarn");
-    /* Die eigene Falle bleibt sichtbar, auch auf einem leeren Platz. */
-    var nr = Number(el.dataset.lcPlatz), falle = null;
-    meineFallen().forEach(function (f) { if (f.platz === nr) falle = f.art; });
-    var kreis = el.querySelector(".lc-kreis");
-    if (kreis) schmuck(el, "sp-falle-marke", Boolean(falle), kreis, falle ? falleSvg(falle) : "");
+    el.classList.remove("sp-kaputt", "sp-anfaenger", "sp-w-kraft", "sp-w-ziel", "sp-w-tempo");
   }
   function mauerSvg(art) {
     /* Eine niedrige Mauer vor dem unteren Bildrand: Holzlatten, Steine
@@ -939,69 +708,7 @@
     if (art === "stein") return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g fill="#a39a8c" stroke="#5e574d" stroke-width="1.2"><rect x="2" y="80" width="24" height="9" rx="1.5"/><rect x="26" y="80" width="24" height="9" rx="1.5"/><rect x="50" y="80" width="24" height="9" rx="1.5"/><rect x="74" y="80" width="24" height="9" rx="1.5"/><rect x="2" y="89" width="12" height="9" rx="1.5"/><rect x="14" y="89" width="24" height="9" rx="1.5"/><rect x="38" y="89" width="24" height="9" rx="1.5"/><rect x="62" y="89" width="24" height="9" rx="1.5"/><rect x="86" y="89" width="12" height="9" rx="1.5"/></g></svg>';
     return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g fill="#b07a45" stroke="#6b4521" stroke-width="1.2"><rect x="4" y="78" width="11" height="20" rx="1"/><rect x="18" y="80" width="11" height="18" rx="1"/><rect x="32" y="78" width="11" height="20" rx="1"/><rect x="46" y="80" width="11" height="18" rx="1"/><rect x="60" y="78" width="11" height="20" rx="1"/><rect x="74" y="80" width="11" height="18" rx="1"/><rect x="88" y="78" width="9" height="20" rx="1"/></g><rect x="2" y="86" width="96" height="4" fill="#8a5a2e"/></svg>';
   }
-  /* Der Ring sitzt auf dem Rand: Radius 45,5 von 50, Strich 7 — also
-     42 bis 49, das äußerste Achtel des Bildes. */
-  var RING_R = 45.5;
-  function bogen(von, bis) {
-    /* Winkel in Grad, 0 = rechts, 90 = unten (Bildschirmrichtung). */
-    var r = RING_R, a = von * Math.PI / 180, b = bis * Math.PI / 180;
-    var gross = Math.abs(bis - von) > 180 ? 1 : 0, dreh = bis > von ? 1 : 0;
-    return "M" + (50 + r * Math.cos(a)).toFixed(2) + " " + (50 + r * Math.sin(a)).toFixed(2)
-      + " A" + r + " " + r + " 0 " + gross + " " + dreh + " " + (50 + r * Math.cos(b)).toFixed(2) + " " + (50 + r * Math.sin(b)).toFixed(2);
-  }
-  function ringSvg(anteil, schild, farbe, mana) {
-    /* Lebenspunkte: links, von 172° (Seite) nach 98° (fast unten).
-       Mana: rechts, von 8° nach 82°. Unten in der Mitte eine Lücke. */
-    var L0 = 172, L1 = 98, M0 = 8, M1 = 82;
-    var lpBis = L0 - (L0 - L1) * anteil, schBis = lpBis - (L0 - L1) * schild;
-    var s = '<svg viewBox="0 0 100 100" aria-hidden="true">'
-      + '<path class="sp-ring-spur" d="' + bogen(L0, L1) + '"/>';
-    if (anteil > 0.005) s += '<path class="sp-lp-voll" d="' + bogen(L0, lpBis) + '" stroke="' + farbe + '"/>';
-    if (schild > 0.005) s += '<path class="sp-lp-schild" d="' + bogen(lpBis, schBis) + '"/>';
-    if (mana >= 0) {
-      s += '<path class="sp-ring-spur" d="' + bogen(M0, M1) + '"/>';
-      if (mana > 0.005) s += '<path class="sp-mana-voll" d="' + bogen(M0, M0 + (M1 - M0) * mana) + '"/>';
-    }
-    return s + "</svg>";
-  }
-  function falleSvg(art) {
-    if (art === "mine") return '<svg viewBox="0 0 100 100"><g transform="translate(50 93)"><ellipse rx="10" ry="4" fill="#3c4148" stroke="#1e2226" stroke-width="1.2"/><rect x="-2" y="-6" width="4" height="4" fill="#c8312b"/></g></svg>';
-    return '<svg viewBox="0 0 100 100"><g transform="translate(50 93)"><rect x="-12" y="-4" width="24" height="8" rx="1.5" fill="#8a5a2e" stroke="#4d3016" stroke-width="1.2"/><path d="M-4 -4 V4 M4 -4 V4" stroke="#4d3016" stroke-width="1"/><circle cx="8" cy="0" r="1.2" fill="#d6c08a"/></g></svg>';
-  }
-  function tierSvg(art) {
-    if (art === "stachelmonster") {
-      /* FUNK 110 — „mach noch ein anderes Monster dazu": ein braunes
-         Stachelmonster, rund, mit Stacheln rundum und kleiner Nase. */
-      var st = "";
-      for (var j = 0; j < 16; j++) {
-        var v = (j * 22.5 - 90) * Math.PI / 180;
-        var bx = 84 + Math.cos(v) * 10, by = 84 + Math.sin(v) * 10;
-        var sx = 84 + Math.cos(v) * 16.5, sy = 84 + Math.sin(v) * 16.5;
-        var qx = Math.cos(v + Math.PI / 2) * 2.4, qy = Math.sin(v + Math.PI / 2) * 2.4;
-        st += "M" + (bx + qx).toFixed(1) + " " + (by + qy).toFixed(1) + " L" + sx.toFixed(1) + " " + sy.toFixed(1)
-          + " L" + (bx - qx).toFixed(1) + " " + (by - qy).toFixed(1) + " Z ";
-      }
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper"><path d="' + st + '" fill="#5b3a1f" stroke="#2f1d0e" stroke-width=".8"/>'
-        + '<circle cx="84" cy="84" r="11.5" fill="#8a5a31" stroke="#3d2610" stroke-width="1"/>'
-        + '<ellipse cx="84" cy="87.5" rx="7" ry="5" fill="#d9b48a"/>'
-        + '<circle cx="80" cy="82" r="2.2" fill="#fff"/><circle cx="88" cy="82" r="2.2" fill="#fff"/>'
-        + '<circle cx="80.6" cy="82.4" r="1.1" fill="#1a1a1a"/><circle cx="88.6" cy="82.4" r="1.1" fill="#1a1a1a"/>'
-        + '<ellipse cx="84" cy="86.2" rx="1.8" ry="1.3" fill="#1a1a1a"/>'
-        + '<path d="M81.5 89.6 Q84 91.4 86.5 89.6" fill="none" stroke="#3d2610" stroke-width="1"/></g></svg>';
-    }
-    if (art === "drache") {
-      /* Ein kleiner grüner Drache: Kopf mit Hörnern, Flügel, Schwanz. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path d="M72 92 C66 92 64 86 68 84" fill="none" stroke="#2f7a3a" stroke-width="3" stroke-linecap="round"/><path d="M66 83 l-3 -1 l2 3 z" fill="#2f7a3a"/>'
-        + '<path d="M78 80 L70 68 L80 74 L82 66 L86 76 Z" fill="#7fc98a" stroke="#2f7a3a" stroke-width="1"/>'
-        + '<ellipse cx="84" cy="88" rx="10" ry="8" fill="#3fa64f" stroke="#236b2f" stroke-width="1.1"/>'
-        + '<ellipse cx="84" cy="90.5" rx="5.6" ry="4.6" fill="#b9e3a8"/>'
-        + '<path d="M86 80 C86 72 96 70 98 76 C99 80 96 83 92 83 Z" fill="#3fa64f" stroke="#236b2f" stroke-width="1.1"/>'
-        + '<path d="M89 72 l-1 -5 l3 4 M94 71 l1 -5 l1 5" stroke="#e8d9a0" stroke-width="1.4" stroke-linecap="round" fill="none"/>'
-        + '<circle cx="93" cy="76" r="1.8" fill="#fff"/><circle cx="93.5" cy="76.2" r="1" fill="#c21"/>'
-        + '<circle cx="97" cy="79" r=".6" fill="#1a1a1a"/>'
-        + '<path d="M80 96 l-1 2.4 M84 96.4 l0 2.4 M88 96 l1 2.4" stroke="#236b2f" stroke-width="1.3" stroke-linecap="round"/></g></svg>';
-    }
+  function tierSvg() {
     /* XANDER (Funk 90): „so eine kleine schwarze Fellkugel mit Augen und
        … ein paar Krallen dann an den Händen … sehr bissig". */
     var fell = "";
@@ -1065,9 +772,6 @@
      NACH DEM PLATZWECHSEL: die Mauer bleibt zurück (Funk 84)
      --------------------------------------------------------------- */
   function platzGewechselt() {
-    /* FUNK 111 — wer ankommt, prüft, ob dort eine Falle liegt. Kurz
-       warten: der neue Platz muss erst in der Liste stehen. */
-    setTimeout(fallePruefen, 350);
     if (!S.bereit || !S.ich || !(S.ich.mauer_lp > 0)) return;
     rpc("spiel_platzwechsel", {}).then(function (r) {
       if (r && r.mauer_weg) hinweis("🧱 Deine Mauer bleibt am alten Platz zurück.");
@@ -1161,26 +865,20 @@
       + '<div class="sp-status-lp"><span class="sp-status-balken"><i style="width:' + anteil + '%"></i></span> <b>' + ich.lp + " / " + ich.lp_max + "</b> LP"
       + (ich.kaputt ? ' <span class="sp-rot">· kaputt</span>' : "") + (ich.anfaenger ? ' <span class="sp-blau">· Anfängerschutz</span>' : "") + "</div>"
       + '<div class="sp-status-werte"><span>🪙 ' + ich.punkte + " Punkte</span><span>📚 " + ich.verdient + " verdient</span><span>🩹 " + ich.pflaster
-      + "</span><span>🧪 " + ich.traenke + "</span><span>🛡️ " + Math.round((ich.ruestung || 0) * 100) + " % Rüstung</span>"
-      /* FUNK 110 — Abnutzung sichtbar: wie lange hält es noch? */
-      + (ich.haustier ? "<span>" + esc((TIERE[ich.haustier] || TIERE.fellmonster).name) + ": noch " + (ich.haustier_leben || 0) + "×</span>" : "")
-      + (ich.geschuetz_ladungen > 0 ? "<span>Geschütz Stufe " + (ich.geschuetz_stufe || 1) + ": " + ich.geschuetz_ladungen + " Schuss</span>" : "")
-      + "</div>"
+      + "</span><span>🧪 " + ich.traenke + "</span><span>🛡️ " + Math.round((ich.ruestung || 0) * 100) + " % Rüstung</span></div>"
       /* FUNK 106 — der zweite Balken: Mana, nur aus Deutsch (+6 je
          richtiger Aufgabe), für die Zaubertränke. */
       + '<div class="sp-status-lp"><span class="sp-status-balken sp-mana-balken"><i style="width:' + Math.max(0, Math.min(100, ich.mana || 0)) + '%"></i></span> <b>' + (ich.mana || 0) + " / 100</b> Mana</div>"
       + '<div class="sp-traenke">' + TRAENKE.map(function (t) {
           var n = ich["trank_" + t[0]] || 0, rest = wirkt(ich, t[0]);
-          var mana = t[0] === "mana" ? 0 : 30;
-          if (!n && !rest) return "";
-          return '<button type="button" data-tu="trinken" data-t="' + t[0] + '"' + (n > 0 && (ich.mana || 0) >= mana && !rest ? "" : " disabled") + ">"
+          return '<button type="button" data-tu="trinken" data-t="' + t[0] + '"' + (n > 0 && (ich.mana || 0) >= 30 && !rest ? "" : " disabled") + ">"
             + '<span class="sp-trank sp-trank-' + t[0] + '"></span>' + t[1] + " (" + n + ")" + (rest ? " · wirkt " + rest + " s" : "") + "</button>";
         }).join("") + "</div>"
       + (S.stillstand ? '<div class="sp-hinweis">🕊️ Waffenstillstand – die Tafel ist offen.</div>' : "")
       + (S.waffe ? '<div class="sp-hinweis">🎯 ' + esc(WAFFEN[S.waffe].name) + ' ist angelegt – tippe auf ein Gesicht, um zu schießen. <button type="button" data-tu="ablegen">Ablegen</button></div>' : "")
       + (S.duell && Date.now() < S.duell.bis ? '<div class="sp-hinweis">⚔️ Duell läuft – tippe auf deinen Gegner.</div>' : "")
       + "</div>";
-    var tabs = [["start", "Übersicht"], ["deutsch", "Deutsch"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell & Heilen"], ["rang", "Rangliste"]];
+    var tabs = [["start", "Übersicht"], ["deutsch", "Deutsch"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell"], ["rang", "Rangliste"]];
     var leiste = '<div class="sp-tabs">' + tabs.map(function (t) {
       return '<button type="button" data-tab="' + t[0] + '" class="' + (reiter === t[0] ? "sp-an" : "") + '">' + t[1] + "</button>";
     }).join("") + "</div>";
@@ -1243,26 +941,18 @@
     if (reiter === "schutz") {
       return LADEN.map(function (d) {
         return '<div class="sp-zeile"><span><b>' + esc(d.name) + "</b><br><small>" + esc(d.was) + "</small></span>"
-          + '<button type="button" data-tu="' + (d.legen ? "legen" : "kaufen") + '" data-d="' + d.ding + '"' + (ich.punkte >= d.preis ? "" : " disabled") + ">" + d.preis + " Punkte</button></div>";
-      }).join("") + (meineFallen().length ? '<p class="sp-klein">Deine Fallen: ' + meineFallen().map(function (f) { return (f.art === "mine" ? "Mine" : "Falltür") + " auf Platz " + f.platz; }).join(", ") + " (30 min)</p>" : "");
+          + '<button type="button" data-tu="kaufen" data-d="' + d.ding + '"' + (ich.punkte >= d.preis ? "" : " disabled") + ">" + d.preis + " Punkte</button></div>";
+      }).join("");
     }
     if (reiter === "duell") {
       var leute = plaetze().filter(function (p) { return !p.leer && !p.ich; });
-      /* Wer das Duell nicht findet: hier ist auch das Heilen. */
       if (!leute.length) return '<p class="sp-text">Gerade sitzt niemand sonst auf der Bühne.</p>';
       return leute.map(function (p) {
         var s = S.stand[spielIdVon(p.id)];
         return '<div class="sp-zeile"><span><b>' + esc(p.name) + "</b><br><small>" + (s ? s.lp + " / " + s.lp_max + " LP" : "spielt nicht mit") + "</small></span>"
-          + '<span class="sp-knopfgruppe">'
           + (s ? '<button type="button" data-tu="duell" data-id="' + esc(p.id) + '" data-name="' + esc(p.name) + '">'
-            + (istPuppe(p.id) ? (S.duell && S.duell.uebung && S.duell.gegnerChat === p.id ? "Läuft …" : "Übungsduell") : "Herausfordern") + "</button>" : "")
-          /* FUNK 108 — „gib mir auch die Möglichkeit, dass ich jemand
-             anderen heilen kann". Bezahlt wird mit dem eigenen Pflaster
-             oder Heiltrank. */
-          + (s && !istPuppe(p.id) ? '<button type="button" data-tu="heilen" data-art="pflaster" data-ziel="' + esc(p.id) + '"' + (ich.pflaster > 0 ? "" : " disabled") + ' title="mit deinem Pflaster heilen">🩹</button>'
-            + '<button type="button" data-tu="heilen" data-art="trank" data-ziel="' + esc(p.id) + '"' + (ich.traenke > 0 ? "" : " disabled") + ' title="mit deinem Heiltrank heilen">🧪</button>' : "")
-          + "</span></div>";
-      }).join("") + '<p class="sp-klein">Im Duell trefft ihr euch gegenseitig per Tipp; Unbeteiligte bleiben außen vor. Es endet, wenn einer kaputt ist, oder nach 3 Minuten. Sieg: +5 Punkte. 🩹/🧪 heilt die Person mit deinem eigenen Pflaster oder Heiltrank.</p>';
+            + (istPuppe(p.id) ? (S.duell && S.duell.uebung && S.duell.gegnerChat === p.id ? "Läuft …" : "Übungsduell") : "Herausfordern") + "</button>" : "") + "</div>";
+      }).join("") + '<p class="sp-klein">Im Duell trefft ihr euch gegenseitig per Tipp; Unbeteiligte bleiben außen vor. Es endet, wenn einer kaputt ist, oder nach 3 Minuten. Sieg: +5 Punkte.</p>';
     }
     if (reiter === "rang") {
       if (!S.rangliste) { rpc("spiel_rangliste", {}).then(function (r) { S.rangliste = r || []; panelAuffrischen(); setTimeout(function () { S.rangliste = null; }, 30000); }).catch(function () {}); return '<p class="sp-text">Lade …</p>'; }
@@ -1294,14 +984,7 @@
     if (tu === "ablegen") { S.waffe = ""; zeichnen(); panelAuffrischen(); return; }
     if (tu === "farbe") { S.laserfarbe = k.dataset.f; try { localStorage.setItem("dma_spiel_laser", S.laserfarbe); } catch (e) {} panelAuffrischen(); return; }
     if (tu === "kaufen") return kaufen(k.dataset.d);
-    if (tu === "heilen") return heilen(k.dataset.art, k.dataset.ziel || "");
-    if (tu === "legen") {
-      S.legen = k.dataset.d;
-      document.body.classList.add("sp-legen");
-      hinweis((S.legen === "mine" ? "💣 Mine" : "🕳️ Falltür") + ": tippe jetzt auf den Platz, auf den sie soll.");
-      schliessen(); zeichnen();
-      return;
-    }
+    if (tu === "heilen") return heilen(k.dataset.art);
     if (tu === "duell") { duellFordern(k.dataset.id, k.dataset.name); return; }
     if (tu === "mission") return missionHolen();
     if (tu === "trinken") return trinken(k.dataset.t);
@@ -1331,12 +1014,10 @@
     rpc("spiel_trinken", { p_trank: art }).then(function (r) {
       if (!r || !r.ok) { hinweis("🧪 " + ((r && r.grund) || "geht nicht")); return; }
       S.ich = r; S.stand[r.id] = oeffentlich(r);
-      ton(art === "tarn" ? "tarnung" : "trankschluck", 0.5);
+      ton("zauberpuff", 0.5);
       senden({ ereignis: "stand", stand: oeffentlich(r) });
-      senden({ ereignis: "trank", sorte: art });
-      var name = { kraft: "Superstärke 60 s", ziel: "Zielgenauigkeit 60 s", tempo: "Geschwindigkeit 60 s",
-                   mana: "+50 Mana", eisen: "Eisenhaut 60 s", tarn: "getarnt 20 s" }[art];
-      zahlZeigen(meineChatId(), null, name);
+      var name = { kraft: "Superstärke", ziel: "Zielgenauigkeit", tempo: "Geschwindigkeit" }[art];
+      zahlZeigen(meineChatId(), null, name + " 60 s");
       panelAuffrischen(); zeichnen();
     }).catch(function (e) { hinweis("Trinken ging nicht: " + (e && e.message ? e.message : e)); });
   }
@@ -1350,26 +1031,17 @@
       panelAuffrischen(); zeichnen();
     }).catch(function (e) { hinweis("Kauf ging nicht: " + (e && e.message ? e.message : e)); });
   }
-  function heilen(art, zielChat) {
-    var args = { p_art: art };
-    var zielSid = zielChat ? spielIdVon(zielChat) : "";
-    if (zielChat && !zielSid) { hinweis("Diese Person spielt (noch) nicht mit."); return; }
-    if (zielSid) args.p_ziel = zielSid;
-    rpc("spiel_heilen", args).then(function (r) {
+  function heilen(art) {
+    rpc("spiel_heilen", { p_art: art }).then(function (r) {
       if (!r || !r.ok) { hinweis((r && r.grund) || "geht nicht"); return; }
       S.ich = r; S.stand[r.id] = oeffentlich(r);
-      var wo = zielChat || meineChatId();
-      if (r.geheilter && r.geheilter.id) S.stand[r.geheilter.id] = r.geheilter;
       ton("zauberpuff", 0.45);
-      zahlZeigen(wo, r.geheilt, "");
-      var ichName = ""; try { ichName = LC().lage().ichName || ""; } catch (e) {}
-      senden({ ereignis: "heilung", plus: r.geheilt, zielChat: wo, sorte: art, name: ichName,
-               stand: r.geheilter || oeffentlich(r), ich_stand: oeffentlich(r) });
+      zahlZeigen(meineChatId(), r.geheilt, "");
+      senden({ ereignis: "heilung", plus: r.geheilt, stand: oeffentlich(r) });
       /* Das Pflaster klebt sichtbar (die vorhandene Animation). */
-      if (art === "pflaster") { try { if (B().pflaster) B().pflaster(wo); } catch (e) {} }
-      if (zielChat) hinweis("💚 " + (r.geheilt > 0 ? "+" + r.geheilt + " LP geschenkt" : "geheilt"));
+      if (art === "pflaster") { try { if (B().pflaster) B().pflaster(meineChatId()); } catch (e) {} }
       panelAuffrischen(); zeichnen();
-    }).catch(function (e) { hinweis("Heilen ging nicht: " + (e && e.message ? e.message : e)); });
+    }).catch(function () {});
   }
   function missionHolen() {
     var leute = plaetze().filter(function (p) { return !p.leer && !p.ich; });
@@ -1466,7 +1138,6 @@
       zustand: function () { return S; },
       setzen: function (o) { Object.keys(o || {}).forEach(function (k) { S[k] = o[k]; }); zeichnen(); },
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
-      gegenwehrZeigen: gegenwehrZeigen, falleZeigen: falleZeigen, tippAufPlatz: tippAufPlatz, ringSvg: ringSvg,
       zone: function (dx, dy) {
         var d = Math.hypot(dx, dy);
         if (d > 1) return "daneben";

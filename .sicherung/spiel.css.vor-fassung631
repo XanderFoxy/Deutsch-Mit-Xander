@@ -3,16 +3,13 @@
    Alles am Platz liegt ABSOLUT über dem Platz: nichts verschiebt die
    Sitzreihe (keine Sitz-Glitches), und die Gesichtsmitte bleibt frei.
    ===================================================================== */
-/* FUNK 110 — Lebenspunkte und Mana als zwei Bögen AUF dem Rand des
-   Bildes (siehe ringSvg in spiel.js): links unten LP, rechts unten Mana.
-   Sie nehmen unter dem Namen keinen Platz mehr weg. */
-.sp-lp { position: absolute; pointer-events: none; z-index: 6; }
-.sp-lp svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.sp-lp path { fill: none; stroke-width: 7; stroke-linecap: round; }
-.sp-lp .sp-ring-spur { stroke: rgba(15, 18, 24, .55); stroke-width: 8.4; }
-.sp-lp .sp-lp-schild { stroke: #5ab4ff; }
-.sp-lp .sp-mana-voll { stroke: #5a7bff; }
-.sp-lp .sp-lp-voll, .sp-lp .sp-mana-voll { filter: drop-shadow(0 0 1px rgba(255, 255, 255, .8)); }
+.sp-lp {
+  position: absolute; height: 5px; border-radius: 3px;
+  background: rgba(20, 20, 20, .35); overflow: hidden;
+  pointer-events: none; z-index: 6; box-shadow: 0 0 0 1px rgba(255, 255, 255, .7);
+}
+.sp-lp-voll, .sp-lp-schild { position: absolute; top: 0; bottom: 0; left: 0; transition: width .35s ease, background .35s; }
+.sp-lp-schild { background: #5ab4ff; }
 
 .sp-aura, .sp-mauer, .sp-tier, .sp-geschuetz, .sp-risse, .sp-waffenmarke {
   position: absolute; pointer-events: none; z-index: 7;
@@ -27,7 +24,7 @@
 @keyframes spTier { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.06, .94); } }
 .sp-waffenmarke svg { position: absolute; right: -8%; top: -6%; width: 34%; height: auto; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
 .sp-kaputt .lc-kreis { filter: grayscale(.85) brightness(.85); transform: rotate(-4deg); transition: filter .4s, transform .4s; }
-.sp-anfaenger .sp-lp .sp-ring-spur { stroke: rgba(90, 180, 255, .55); }
+.sp-anfaenger .sp-lp { box-shadow: 0 0 0 1px rgba(90, 180, 255, .9); }
 
 /* Getroffen: kurzes Zucken und ein roter Blitz am Rand */
 .sp-getroffen .lc-kreis { animation: spZucken .45s ease-out; }
@@ -182,53 +179,3 @@ button:disabled { opacity: .45; cursor: default; }
 .sp-waffenmarke svg { right: -10%; top: -12%; width: 46%; }
 .sp-tier, .sp-geschuetz { transform: scale(1.35); transform-origin: 50% 85%; }
 .sp-aura { box-shadow: 0 0 0 4px rgba(90, 180, 255, .8), 0 0 18px 7px rgba(90, 180, 255, .5); }
-
-
-/* =====================================================================
-   FUNK 108–111 (Fassung 631) — Gegenwehr, Monster, Fallen, Tränke
-   ===================================================================== */
-/* Das Geschütz schießt zurück: kleine glühende Kugeln. */
-.sp-kugel { position: fixed; left: 0; top: 0; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #fff6c8, #f2a531 55%, #b25b12); box-shadow: 0 0 6px 2px rgba(255, 170, 60, .7);
-  z-index: 9992; pointer-events: none; }
-/* Das Monster springt hinüber und beißt. */
-.sp-tier-sprung { position: fixed; left: 0; top: 0; z-index: 9992; pointer-events: none; }
-.sp-tier-sprung svg { width: 100%; height: 100%; overflow: visible; }
-.sp-kratzer { position: fixed; width: 44px; height: 30px; margin: -15px 0 0 -22px; z-index: 9993; pointer-events: none;
-  animation: spKratzer .9s ease-out forwards; }
-.sp-kratzer svg { width: 100%; height: 100%; }
-@keyframes spKratzer { 0% { opacity: 0; transform: scale(.6); } 15% { opacity: 1; transform: scale(1.1); } 70% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } }
-/* Der Drache faucht Feuer. */
-.sp-feuer { position: fixed; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; z-index: 9993; pointer-events: none;
-  background: radial-gradient(circle, rgba(255, 245, 190, .95) 0 18%, rgba(255, 170, 40, .85) 38%, rgba(230, 60, 20, .55) 62%, rgba(230, 60, 20, 0) 72%);
-  animation: spFeuer .7s ease-out forwards; }
-@keyframes spFeuer { 0% { transform: scale(.3); opacity: 0; } 25% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
-/* Minen und Falltüren */
-.sp-falle-marke { position: absolute; pointer-events: none; z-index: 7; opacity: .85; }
-.sp-falle-marke svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.sp-loch { position: absolute; z-index: 5; pointer-events: none; border-radius: 50%;
-  background: radial-gradient(ellipse 50% 22% at 50% 82%, #0b0907 0 70%, rgba(11, 9, 7, 0) 100%);
-  animation: spLoch 1.5s ease-in-out forwards; }
-@keyframes spLoch { 0% { transform: scaleX(.1); opacity: 0; } 15% { transform: scaleX(1); opacity: 1; } 75% { opacity: 1; } 100% { transform: scaleX(.1); opacity: 0; } }
-.sp-fallen .lc-kreis { animation: spFallen 1.5s ease-in-out; }
-@keyframes spFallen { 0% { transform: none; } 18% { transform: translateY(6%) scale(.96); }
-  45% { transform: translateY(38%) scale(.45); opacity: 0; } 70% { transform: translateY(-14%) scale(.85); opacity: 1; }
-  85% { transform: translateY(4%) scale(1.03); } 100% { transform: none; } }
-.sp-mine-wurf .lc-kreis { animation: spMineWurf .9s ease-out; }
-@keyframes spMineWurf { 0% { transform: none; } 20% { transform: translateY(-26%) rotate(-10deg); filter: brightness(1.8); }
-  45% { transform: translateY(-8%) rotate(6deg); filter: brightness(.7) sepia(.6); } 100% { transform: none; filter: none; } }
-body.sp-legen #lcPlaetze .lc-platz { cursor: crosshair; }
-body.sp-legen #lcPlaetze .lc-kreis { outline: 2px dashed rgba(226, 64, 58, .55); outline-offset: 2px; }
-/* Eisenhaut: metallischer Rand. Tarnung: fast durchsichtig. */
-.sp-w-eisen .lc-kreis { box-shadow: 0 0 0 3px #9aa3ad, 0 0 0 5px #5b636c, 0 0 10px 3px rgba(160, 170, 180, .6) !important; }
-.sp-w-tarn .lc-kreis { opacity: .35; filter: blur(.6px) saturate(.4); transition: opacity .4s, filter .4s; }
-.sp-trank-mana { background: #5a7bff; }
-.sp-trank-eisen { background: #8d97a3; }
-.sp-trank-tarn { background: linear-gradient(135deg, #d9d2ff, #9f8cff); }
-.sp-m-eisen { background: rgba(141, 151, 163, .45); }
-.sp-m-tarn { background: rgba(159, 140, 255, .4); }
-.sp-knopfgruppe { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
-.sp-tier-stachelmonster, .sp-tier-drache { transform: scale(1.35); transform-origin: 50% 85%; }
-@media (prefers-reduced-motion: reduce) {
-  .sp-kratzer, .sp-feuer, .sp-loch, .sp-fallen .lc-kreis, .sp-mine-wurf .lc-kreis { animation: none; }
-}

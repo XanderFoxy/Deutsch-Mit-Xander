@@ -49,22 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 618 – Spielsystem „Deutsch zum Überleben“ (Funk 95) als ein Paket",
+  stand: "Fassung 630: Flugzeug und Greifvogel fliegen senkrecht ohne Kehre (Walkie 207), Wangenhand neu im Profil (Walkie 204). Spielpaket Funk 108–111 in Arbeit: Server fertig (andere heilen, verhältnismäßige Gegenwehr, drei Monster, Abnutzung, Eier- und Hühnerwerfer, drei neue Tränke, Minen und Falltüren), 12 neue Töne erzeugt.",
 
   inArbeit: [
-    { seit: "2026-09-24T22:21",
-      text: "Aufgabenbank: Klassenzimmer einmal angemeldet öffnen, dann lädt dein Gerät alle 28.000 Aufgaben hoch" },
-    { seit: "2026-09-24T22:21",
-      text: "Deine Antworten im Walkie zum Spiel (Punkte, Schaden, Preise, Gäste)" },
+    { seit: "2026-09-25T00:39",
+      text: "Spiel-Oberfläche für Funk 108–111 mit Tönen" },
+    { seit: "2026-09-25T00:39",
+      text: "Anziehen alle: 0 von 5 Plätzen (war schon vor 630 rot)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-24T22:21",
-      text: "Spielsystem: Lebenspunkte, Waffen, Treffer-Zonen, Ausweichen, kaputt + Pflaster, Schutz (Aura, Mauer, Wischer, Geschütz, Fellmonster), Duell, Waffenstillstand an der Tafel, Deutsch-Aufgaben mit Serverprüfung, Rangliste (Fassung 618)" },
-    { seit: "2026-09-24T22:21",
-      text: "Blüte 2 platzt realistisch auf, Blume zurück (Fassung 617)" },
-    { seit: "2026-09-24T22:21",
-      text: "Delfin mit Wasser, Bombe synchron, Hot-Rod-Rohre vorn, Adler größer (Fassungen 612–616)" },
+    { seit: "2026-09-25T00:39",
+      text: "Flugzeug senkrecht ohne Ruck" },
+    { seit: "2026-09-25T00:39",
+      text: "Wangenhand von der Seite" },
+    { seit: "2026-09-25T00:39",
+      text: "Server: Heilen, Gegenwehr, Monster, Fallen" },
   ],
 };

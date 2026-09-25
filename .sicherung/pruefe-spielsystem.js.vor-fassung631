@@ -102,17 +102,10 @@ const sage = (gut, was, zusatz) => {
       besetzt: besetzt.length,
       mitBalken: besetzt.filter((p) => p.querySelector(".sp-lp")).length,
       freiOhne: pl.filter((p) => !p.dataset.lcId && p.querySelector(".sp-lp")).length,
-      /* FUNK 110 — der Balken ist jetzt ein Ring AUF dem Rand des Bildes
-         („unten in das Kreisrund … dass du unten den Platz nicht
-         wegnimmst"). Geprüft wird: er deckt genau den Kreis, und seine
-         Bögen liegen im äußersten Achtel — die Gesichtsmitte bleibt frei. */
+      /* Der Balken liegt UNTER dem Kreis, nicht über dem Gesicht. */
       unterDemKreis: besetzt.every((p) => {
         const b = p.querySelector(".sp-lp"), k = p.querySelector(".lc-kreis");
-        if (!b) return true;
-        const rb = b.getBoundingClientRect(), rk = k.getBoundingClientRect();
-        const deckt = Math.abs(rb.left - rk.left) < 1.5 && Math.abs(rb.width - rk.width) < 1.5;
-        const innen = Number(b.dataset.radius) - 7 / 2 / 50;
-        return deckt && innen >= 0.83;
+        return !b || b.getBoundingClientRect().top >= k.getBoundingClientRect().bottom - 1;
       }),
       aura: Boolean(document.querySelector('.lc-platz[data-lc-id="p1"] .sp-aura')),
       mauer: Boolean(document.querySelector('.lc-platz[data-lc-id="p2"] .sp-mauer-stein')),
@@ -121,7 +114,7 @@ const sage = (gut, was, zusatz) => {
   });
   sage(balken.besetzt >= 6 && balken.mitBalken === balken.besetzt, "jeder Spieler hat einen Lebensbalken", balken.mitBalken + " von " + balken.besetzt);
   sage(balken.freiOhne === 0, "freie Plätze haben keinen Balken");
-  sage(balken.unterDemKreis, "der Lebensring liegt auf dem Rand des Bildes, die Gesichtsmitte bleibt frei");
+  sage(balken.unterDemKreis, "der Balken liegt unter dem Bild, die Gesichtsmitte bleibt frei");
   sage(balken.aura && balken.mauer && balken.tier, "Schild-Aura, Steinmauer und Fellmonster sind zu sehen",
     "Aura " + balken.aura + ", Mauer " + balken.mauer + ", Tier " + balken.tier);
 

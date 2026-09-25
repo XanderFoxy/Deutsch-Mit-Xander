@@ -92,9 +92,8 @@ const sage = (gut, was, zusatz) => {
   await pg.waitForTimeout(900);
   const nachTreffer = await pg.evaluate(() => {
     const st = window.DMA_SPIEL.pruef.zustand().stand["puppe:uebungspuppe"];
-    /* FUNK 110 — Lebensring statt Balken: der Anteil steht in data-anteil. */
-    const bal = document.querySelector('.lc-platz[data-lc-id="uebungspuppe"] .sp-lp');
-    return { lp: st && st.lp, balken: bal ? bal.dataset.anteil : "", rufe: window.__rufe.slice(), raus: window.__raus.map((p) => p.art + ":" + (p.ereignis || "")) };
+    const bal = document.querySelector('.lc-platz[data-lc-id="uebungspuppe"] .sp-lp-voll');
+    return { lp: st && st.lp, balken: bal ? bal.style.width : "", rufe: window.__rufe.slice(), raus: window.__raus.map((p) => p.art + ":" + (p.ereignis || "")) };
   });
   const zahlDanach = await pg.evaluate(() => [...document.querySelectorAll('.sp-zahl')].map((z) => z.textContent).join(" | "));
   sage(nachTreffer.lp === 84, "Kopfschuss auf die Puppe: 100 → 84", "LP " + nachTreffer.lp + ", Zahl „" + (zahlText || zahlDanach) + "“");
