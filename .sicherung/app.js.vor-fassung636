@@ -10373,14 +10373,7 @@
     };
     if (ExerciseData.alleRohfragen && (!ExerciseData.getLernraum || ExerciseData.getLernraum() !== "it")) {
       // Der billige Weg: die Rohzeilen, ohne Mischen und ohne Objektbau.
-      /* XANDER: „diese italienischen Sachen dürfen auch nicht mehr
-         auftauchen". Ohne diesen Filter landeten 1.067 italienische
-         Wörter (famiglia, ragazzo, buonasera …) im deutschen Wörterbuch,
-         mit geratener deutscher Betonung (Prüfbericht 25.09.) — derselbe
-         Filter wie beim Tagesauftrag. */
-      ExerciseData.alleRohfragen()
-        .filter((z) => !String(z.categoryId || "").startsWith("it-"))
-        .forEach((z) => sammle((z.prompt || "") + " " + (z.explain || "")));
+      ExerciseData.alleRohfragen().forEach((z) => sammle((z.prompt || "") + " " + (z.explain || "")));
     } else {
       ExerciseData.activeCategories().forEach((cat) => {
         try { cat.getBank().forEach((q) => sammle(`${q.prompt || ""} ${q.explain || ""}`)); }
@@ -67720,11 +67713,6 @@
     if (sbkAnsicht === "beispiele") {
       const kat = sbkKategorie === "alle" ? "alltag" : sbkKategorie;
       const liste = S.beispieleFuer(kat, sbkNiveau);
-      /* XANDER: „diese italienischen Sachen dürfen auch nicht mehr
-         auftauchen". Unter jedem deutschen Beispielsatz stand auch im
-         Deutsch-Raum die italienische Übersetzung (Prüfbericht 25.09.).
-         Sie bleibt nur im Italienisch-Kurs. */
-      const mitItalienisch = zielId === "satzbaukastenItArea" || imItalienischraum();
       const artName = { aussage: "Aussage", frage: "Frage", nebensatz: "mit Nebensatz" };
       area.innerHTML = kopf + bereichsReihe + `
         <p class="empty-note" style="margin-top:14px;">${liste.length} Sätze auf ${sbkNiveau} — jeder einzeln geschrieben und durchgesehen, keiner aus Bausteinen zusammengesetzt.</p>
@@ -67732,7 +67720,7 @@
           ${liste.map((b) => `
             <div class="beispiel-satz">
               <p class="beispiel-de">${b.de}</p>
-              ${mitItalienisch ? `<p class="beispiel-it">${b.it}</p>` : ""}
+              <p class="beispiel-it">${b.it}</p>
               <span class="beispiel-art">${artName[b.art] || b.art}</span>
             </div>`).join("") || '<p class="empty-note">Für dieses Niveau sind hier noch keine Beispiele hinterlegt.</p>'}
         </div>`;
