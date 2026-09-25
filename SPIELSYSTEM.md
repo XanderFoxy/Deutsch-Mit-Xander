@@ -702,3 +702,12 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Scheibenwischer (Schutz → Werkstatt): wischt Dreck im Chat automatisch weg (seit Funk 84). Stufe 2 (40 P + 1 Erz) spart bei 30 % der Wischer die Ladung, Stufe 3 (80 P + 2 Erz) bei 60 %; jedes Aufrüsten gibt 2 Ladungen.
 - Server: Migration `spiel_680_veredeln_waffen_wischer` – Spalten `waffen_stufe`, `wischer_stufe`, `spiel_halt_max`, `spiel_veredeln`; `spiel_wischer`, `spiel_treffer`, `spiel_kaufen` (Reparatur), `spiel_schmieden` (Schärfen), `spiel_ich` angepasst. Im Rollback geprüft: ★ → ★★ → „schon ganz verstärkt", Reparatur bis 140, Wischer Stufe 3 sparte 22 von 40, Treffer mit ★★-Bazooka läuft (Haltbarkeit 140 → 139).
 - Sonde: `pruefe-680-verstaerken.js` (7 Prüfungen). Alle Spiel-Sonden grün (656/658/667 wackeln nur unter Last).
+
+## Fassung 681 — Siegeslohn
+
+- XANDER: „wenn ich gegen jemanden kämpfe und ich gewinne, dass da auch ne Punktzahl kommt und ich da auch irgendwie Geld verdienen, wovon ich mir wieder was kaufen kann. Das muss aber alles im Verhältnis stehen … nicht zu reich wird … man nimmt dem anderen auch nichts weg … stärke Punkte vielleicht oder Erfahrungspunkte".
+- Vorher: 1 Punkt je Treffer (höchstens 20 je Stunde), K.o. +3, Duellsieg +5 – nur Geld, nichts im Ranking, keine Erfahrung extra.
+- Jetzt zusätzlich (nur in fairen Kämpfen, nicht gegen 5+ Level Kleinere): K.o. +10 Erfahrung und +2 Punkte, Duellsieg +25 Erfahrung und +8 Punkte. Diese Siegespunkte zählen auch im Ranking der Seite, höchstens 30 am Tag. Dem Verlierer wird nichts abgezogen.
+- Meldung: „🏆 Bea ist K.o.! +6 Punkte, +10 Erfahrung – 2 davon zählen im Ranking." mit Jubel.
+- Server: `spiel_681_siegeslohn` (in `spiel_treffer`), im Rollback geprüft (K.o.: Erfahrung +11 = Treffer +1 und Sieg +10, verdient +2).
+- Sonde: `pruefe-681-siegeslohn.js`. Alle Spiel-Sonden grün (656/658/665 wackeln nur unter Last).

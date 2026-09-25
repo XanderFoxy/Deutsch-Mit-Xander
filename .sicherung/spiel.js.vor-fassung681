@@ -1145,21 +1145,13 @@
         gegenwehrZeigen(p.id, ichChat, n);
         if (erg.stumpf) hinweis("🔧 " + ((WAFFEN[waffe] || {}).name || "Die Waffe") + " ist stumpf – halber Schaden. Reparieren: Schraubenschlüssel in der Leiste.");
         if (S.ich && HALTBAR.indexOf(waffe) >= 0 && !erg.stumpf) { var wh = Object.assign({}, S.ich.waffen_halt || {}); wh[waffe] = Math.max(0, (wh[waffe] == null ? haltMax(S.ich, waffe) : wh[waffe]) - 1); S.ich.waffen_halt = wh; }
-        /* FASSUNG 681 — XANDER: „wenn ich gegen jemanden kämpfe und ich gewinne,
-           dass da auch ne Punktzahl kommt … Erfahrungspunkte … man nimmt dem
-           anderen auch nichts weg". Der Server gibt beim K.o. (fair) +10
-           Erfahrung, beim Duellsieg +25, dazu bis 30 „verdient" am Tag. */
-        if (erg.sieg_xp > 0) {
-          setTimeout(function () { ton("jubel", 0.5); }, 350);
-          hinweis("🏆 " + (p.name || "Dein Gegner") + " ist K.o.! +" + (erg.lohn + (erg.sieg || 0)) + " Punkte, +" + erg.sieg_xp + " Erfahrung"
-            + (erg.sieg > 0 ? " – " + erg.sieg + " davon zählen im Ranking." : "."));
-        } else if (erg.lohn > 0) hinweis("🪙 +" + erg.lohn + " Punkte fürs Treffen" + (erg.kaputt ? " – " + (p.name || "") + " ist kaputt!" : ""));
+        if (erg.lohn > 0) hinweis("🪙 +" + erg.lohn + " Punkte fürs Treffen" + (erg.kaputt ? " – " + (p.name || "") + " ist kaputt!" : ""));
         if (WAFFEN[waffe] && WAFFEN[waffe].vorrat && S.ich) {
           var vr = Object.assign({}, S.ich.vorraete || {}); vr[waffe] = Math.max(0, (Number(vr[waffe]) || 0) - 1); S.ich.vorraete = vr;
           if (!vr[waffe] && S.waffe === waffe) { S.waffe = "kartoffel"; hinweis("Das war die letzte " + WAFFEN[waffe].name + " – Kartoffel ist angelegt."); }
           schnellZeichnen();
         }
-        if (erg.kaputt && S.duell && S.duell.gegnerChat === p.id) { hinweis("🏆 Duell gewonnen!" + (erg.sieg_xp > 0 ? " +" + erg.sieg_xp + " Erfahrung" + (erg.sieg > 0 ? ", +" + erg.sieg + " fürs Ranking" : "") + "." : "")); S.duell = null; }
+        if (erg.kaputt && S.duell && S.duell.gegnerChat === p.id) { hinweis("🏆 Duell gewonnen!"); S.duell = null; }
         abrufen(true);
       })();
     }
