@@ -364,16 +364,3 @@ body.sp-legen #lcPlaetze .lc-kreis { outline: 2px dashed rgba(226, 64, 58, .55);
 @media (prefers-reduced-motion: reduce) {
   .sp-flugtier .sp-tier-koerper, .sp-fluegel-l, .sp-fluegel-r { animation: none; }
 }
-/* FASSUNG 640 — die Mauer zieht mit und wächst am neuen Platz in 8 s
-   wieder hoch (solange schützt sie noch nicht). */
-.sp-mauer.sp-mauer-aufbau svg { transform-origin: 50% 100%; animation: spMauerAufbau 8s linear forwards; opacity: .65; }
-@keyframes spMauerAufbau { from { transform: scaleY(.1); } to { transform: scaleY(1); } }
-/* Der Turm wird mit jeder Stufe etwas größer. */
-.sp-geschuetz.sp-turm-2 { transform: scale(1.42); } .sp-geschuetz.sp-turm-3 { transform: scale(1.5); }
-.sp-geschuetz.sp-turm-4 { transform: scale(1.58); } .sp-geschuetz.sp-turm-5 { transform: scale(1.66); }
-/* Stumpfe Waffe: grau, mit Riss-Strich. */
-.sp-schnell .sp-stumpf svg { filter: grayscale(1) brightness(.8); }
-.sp-schnell .sp-stumpf { box-shadow: inset 0 0 0 1px #c62f2a; }
-.sp-schnell .sp-s-repar { background: #3b4450; }
-.sp-schnell .sp-s-repar svg { width: 18px; height: 18px; }
-@media (prefers-reduced-motion: reduce) { .sp-mauer.sp-mauer-aufbau svg { animation: none; } }

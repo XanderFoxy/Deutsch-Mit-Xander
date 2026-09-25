@@ -57,15 +57,17 @@
     { ding: "pflaster",    name: "Pflaster",        preis: 15,  was: "repariert, wenn du kaputt bist (dann 40 LP), sonst +25 LP" },
     { ding: "trank",       name: "Heiltrank",       preis: 30,  was: "+60 Lebenspunkte" },
     { ding: "schild",      name: "Schutzschild",    preis: 50,  was: "Aura, reist mit, fängt 60 Schaden ab (10 min)" },
-    { ding: "mauer_holz",  name: "Mauer aus Holz",  preis: 20,  was: "gehört dir, bis sie zerstört ist – zieht beim Platzwechsel mit (8 s Aufbau), hält 40 Schaden" },
-    { ding: "mauer_stein", name: "Mauer aus Stein", preis: 45,  was: "gehört dir, bis sie zerstört ist – zieht beim Platzwechsel mit (8 s Aufbau), hält 90 Schaden" },
-    { ding: "mauer_stahl", name: "Mauer aus Stahl", preis: 80,  was: "gehört dir, bis sie zerstört ist – zieht beim Platzwechsel mit (8 s Aufbau), hält 160 Schaden" },
+    { ding: "mauer_holz",  name: "Mauer aus Holz",  preis: 20,  was: "bleibt am Platz, hält 40 Schaden" },
+    { ding: "mauer_stein", name: "Mauer aus Stein", preis: 45,  was: "bleibt am Platz, hält 90 Schaden" },
+    { ding: "mauer_stahl", name: "Mauer aus Stahl", preis: 80,  was: "bleibt am Platz, hält 160 Schaden" },
     { ding: "wischer",     name: "Scheibenwischer", preis: 25,  was: "wischt 3× automatisch Dreck und Sauerkraut weg" },
     { ding: "bratwurst_3", name: "3 Bratwürste",    preis: 15,  was: "essen: +15 LP · werfen: 9 Schaden, klatscht" },
     { ding: "sauerkraut_3",name: "3× Sauerkraut",   preis: 12,  was: "essen: +10 LP und +10 Mana · werfen: rutscht beim anderen übers Bild und nimmt ihm kurz die Sicht" },
     /* FUNK 109/110 — Gegenwehr jetzt ANTEILIG am Angriff (vorher immer
        6 bzw. 4), und alles nutzt sich ab („dass man das nicht ewig hat
        aber … schon eine ganze Weile"). Gerechnet in spiel_treffer. */
+    { ding: "geschuetz",   name: "Geschütz",        preis: 60,  was: "12 Schuss: schießt automatisch die Hälfte des Schadens zurück" },
+    { ding: "geschuetz_stufe", name: "Geschütz aufrüsten", preis: 70, was: "Stufe 2: 70 %, Stufe 3: 90 % zurück (höchstens 4/5 dessen, was der Angreifer anrichtet)" },
     /* FUNK 106 — XANDER: „Zaubertränke die etwas Besonderes verursachen z.B
        eine superstärke oder irgendwie eine Zielgenauigkeit … oder
        Geschwindigkeit". Kaufen mit Punkten, trinken kostet 30 Mana,
@@ -111,10 +113,6 @@
     ["ingenieur",  "Ingenieur",   "dein Geschütz schießt je Stufe 10 % stärker zurück"]
   ];
   function komma(x) { return String(Math.round(x * 100) / 100).replace(".", ","); }
-  /* FASSUNG 640 — gekaufte Waffen nutzen sich ab (60 Treffer). */
-  var HALTBAR = ["armbrust", "tomahawk", "zielfernrohr", "bazooka", "eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle"];
-  function haltVon(ich, w) { if (HALTBAR.indexOf(w) < 0) return -1; var h = ((ich || {}).waffen_halt || {})[w]; return h == null ? 60 : Number(h); }
-  function reparaturNoetig(ich) { return ((ich || {}).waffen || []).some(function (w) { var h = haltVon(ich, w); return h >= 0 && h <= 15; }); }
   var TIERE_BODEN = ["fellmonster", "stachelmonster", "chihuahua"], TIERE_LUFT = ["drache", "eule"];
   function wirkt(ich, art) {
     var bis = ich && ich[art + "_bis"];
@@ -237,7 +235,7 @@
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
      "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
      "level", "skills", "helm", "brust", "ladung", "daemon",
-     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -658,8 +656,6 @@
         n.von = ichChat;
         trefferZeigen(p.id, n);
         gegenwehrZeigen(p.id, ichChat, n);
-        if (erg.stumpf) hinweis("🔧 " + ((WAFFEN[waffe] || {}).name || "Die Waffe") + " ist stumpf – halber Schaden. Reparieren: Schraubenschlüssel in der Leiste.");
-        if (S.ich && HALTBAR.indexOf(waffe) >= 0 && !erg.stumpf) { var wh = Object.assign({}, S.ich.waffen_halt || {}); wh[waffe] = Math.max(0, (wh[waffe] == null ? 60 : wh[waffe]) - 1); S.ich.waffen_halt = wh; }
         if (erg.lohn > 0) hinweis("🪙 +" + erg.lohn + " Punkte fürs Treffen" + (erg.kaputt ? " – " + (p.name || "") + " ist kaputt!" : ""));
         if (WAFFEN[waffe] && WAFFEN[waffe].vorrat && S.ich) {
           var vr = Object.assign({}, S.ich.vorraete || {}); vr[waffe] = Math.max(0, (Number(vr[waffe]) || 0) - 1); S.ich.vorraete = vr;
@@ -1194,9 +1190,8 @@
       + (ich.mitspielen ? "Im Spiel" : "Mitspielen") + "</button>");
     (ich.waffen || []).slice().sort(function (a, b) { return WAFFEN_REIHE.indexOf(a) - WAFFEN_REIHE.indexOf(b); }).forEach(function (w) {
       if (!WAFFEN[w]) return;
-      var hw = haltVon(ich, w);
-      teile.push('<button type="button" class="sp-s-waffe' + (S.waffe === w ? " sp-an" : "") + (hw === 0 ? " sp-stumpf" : "") + '" data-s="waffe" data-w="' + w + '" title="'
-        + esc(WAFFEN[w].name) + " · Schaden " + WAFFEN[w].schaden + (hw >= 0 ? " · hält " + hw + "/60" : "") + '">' + geschossSvg(w, S.laserfarbe) + "</button>");
+      teile.push('<button type="button" class="sp-s-waffe' + (S.waffe === w ? " sp-an" : "") + '" data-s="waffe" data-w="' + w + '" title="'
+        + esc(WAFFEN[w].name) + " · Schaden " + WAFFEN[w].schaden + '">' + geschossSvg(w, S.laserfarbe) + "</button>");
     });
     VORRAT_WAFFEN.forEach(function (w) {
       var n = vorrat(ich, w);
@@ -1225,9 +1220,6 @@
       teile.push('<button type="button" class="sp-s-trank" data-s="trinken" data-t="' + tr[0] + '" title="' + tr[1] + (rest ? " – wirkt noch " + rest + " s" : "") + '"'
         + (rest ? " disabled" : "") + '><span class="sp-trank sp-trank-' + tr[0] + '"></span><small>' + n + "</small></button>");
     });
-    /* „reparieren, ohne dass man das Spiel unterbrechen muss": ein Tipp. */
-    if (reparaturNoetig(ich)) teile.push('<button type="button" class="sp-s-repar" data-s="reparieren" title="Alle Waffen reparieren (15 Punkte)">'
-      + '<svg viewBox="0 0 20 20"><path d="M13.5 2.5 a4 4 0 0 0 -4.8 5.3 L2.8 13.7 a1.8 1.8 0 0 0 2.5 2.5 L11.2 10.3 a4 4 0 0 0 5.3 -4.8 L14 8 L12 6 Z" fill="#cfd6de" stroke="#5b636c" stroke-width="1"/></svg><small>15</small></button>');
     teile.push('<button type="button" class="sp-s-klein' + (S.sparring ? " sp-an" : "") + '" data-s="sparring" title="Sparringspartner (nur bei dir)">Sparring</button>');
     if (S.sparring) teile.push('<button type="button" class="sp-s-klein' + (S.duell && S.duell.uebung ? " sp-an" : "") + '" data-s="gegenfeuer" title="Der Sparringspartner schießt zurück">Er schießt zurück</button>');
     teile.push('<button type="button" class="sp-s-klein" data-s="menue" title="Spielmenü: Laden, Aufgaben, Anleitung">Menü</button>');
@@ -1251,8 +1243,6 @@
       trinken(k.dataset.t); return;
     } else if (s === "superkraft") {
       superkraft(); return;
-    } else if (s === "reparieren") {
-      kaufen("waffen_reparatur"); return;
     } else if (s === "sparring") {
       sparringUmschalten(); return;
     } else if (s === "gegenfeuer") {
@@ -1368,8 +1358,8 @@
       el.classList.toggle("sp-w-daemon", Boolean(s.daemon));
       /* Schild-Aura (reist mit) */
       schmuck(el, "sp-aura", s.schild > 0, kreis, "");
-      /* Mauer (gehört dir, zieht mit, Fassung 640) — unten vor dem Bild, die Mitte bleibt frei */
-      schmuck(el, "sp-mauer", s.mauer_lp > 0, kreis, mauerSvg(s.mauer_art), "sp-mauer-" + (s.mauer_art || "holz") + (s.mauer_aufbau ? " sp-mauer-aufbau" : ""));
+      /* Mauer (bleibt am Platz) — unten vor dem Bild, die Mitte bleibt frei */
+      schmuck(el, "sp-mauer", s.mauer_lp > 0, kreis, mauerSvg(s.mauer_art), "sp-mauer-" + (s.mauer_art || "holz"));
       /* Das Fellmonster sitzt rechts unten neben dem Bild */
       schmuck(el, "sp-tier", Boolean(s.haustier), kreis, tierSvg(s.haustier), "sp-tier-" + (s.haustier || "fellmonster")
         + (s.haustier && !(s.haustier_leben > 0) ? " sp-tier-schwach" : ""));
@@ -1381,7 +1371,7 @@
       meineFallen().forEach(function (f) { if (f.platz === nr) falle = f.art; });
       schmuck(el, "sp-falle-marke", Boolean(falle), kreis, falle ? falleSvg(falle) : "");
       /* Das Geschütz links unten */
-      schmuck(el, "sp-geschuetz", Boolean(s.geschuetz), kreis, geschuetzSvg(s.geschuetz_stufe), "sp-turm-" + Math.min(5, s.geschuetz_stufe || 1));
+      schmuck(el, "sp-geschuetz", Boolean(s.geschuetz), kreis, geschuetzSvg());
       /* Kaputt: Risse und Grau */
       el.classList.toggle("sp-kaputt", Boolean(s.kaputt));
       schmuck(el, "sp-risse", Boolean(s.kaputt), kreis, risseSvg());
@@ -1586,14 +1576,8 @@
       + '<path d="M78 89 L80 91 L82 89 L84 91 L86 89 L88 91 L90 89" fill="none" stroke="#fff" stroke-width="1"/>'
       + '<path d="M71 90 l-3 2 M71 88 l-3.5 0 M97 90 l3 2 M97 88 l3.5 0" stroke="#e9e1c8" stroke-width="1.2" stroke-linecap="round"/></g></svg>';
   }
-  function geschuetzSvg(stufe) {
-    /* FASSUNG 640 — „aufwerten … wie bei einem Tower": je Stufe ein
-       goldener Ring am Sockel, ab Stufe 4 ein zweites Rohr. */
-    var st = Math.max(1, Math.min(5, Number(stufe) || 1)), ringe = "";
-    for (var i = 1; i < st; i++) ringe += '<rect x="' + (5 + (i - 1) * 4.6) + '" y="97" width="3.4" height="2" rx=".8" fill="#f2c230"/>';
-    return '<svg viewBox="0 0 100 100"><rect x="6" y="88" width="16" height="8" rx="2" fill="#4a5058"/>' + ringe
-      + '<circle cx="14" cy="86" r="6" fill="#626a73" stroke="#30353b"/><path d="M14 86 L27 78" stroke="#30353b" stroke-width="4" stroke-linecap="round"/>'
-      + (st >= 4 ? '<path d="M14 88 L28 82" stroke="#30353b" stroke-width="3" stroke-linecap="round"/>' : "") + "</svg>";
+  function geschuetzSvg() {
+    return '<svg viewBox="0 0 100 100"><rect x="6" y="88" width="16" height="8" rx="2" fill="#4a5058"/><circle cx="14" cy="86" r="6" fill="#626a73" stroke="#30353b"/><path d="M14 86 L27 78" stroke="#30353b" stroke-width="4" stroke-linecap="round"/></svg>';
   }
   function risseSvg() {
     return '<svg viewBox="0 0 100 100"><g fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.6" stroke-linejoin="round"><path d="M50 8 L46 30 L56 44 L44 62 L52 92"/><path d="M46 30 L24 22 M56 44 L80 36 M44 62 L20 70 M52 78 L74 84"/></g><g fill="none" stroke="rgba(0,0,0,.45)" stroke-width=".8"><path d="M51 8 L47 30 L57 44 L45 62 L53 92"/></g></svg>';
@@ -1645,10 +1629,7 @@
     setTimeout(fallePruefen, 350);
     if (!S.bereit || !S.ich || !(S.ich.mauer_lp > 0)) return;
     rpc("spiel_platzwechsel", {}).then(function (r) {
-      /* FASSUNG 640 — XANDER (Funk 112): „Die Mauer … Muß Einem So Lange
-         Gehören … Wieder Aufstellbar Sein Bis Sie Zerstört Wird". Sie
-         zieht mit um und baut sich am neuen Platz in 8 s wieder auf. */
-      if (r && r.mauer_aufbau) hinweis("🧱 Deine Mauer zieht mit – in 8 Sekunden steht sie wieder.");
+      if (r && r.mauer_weg) hinweis("🧱 Deine Mauer bleibt am alten Platz zurück.");
       abrufen(true);
     }).catch(function () {});
   }
@@ -1754,7 +1735,7 @@
       /* FUNK 110 — Abnutzung sichtbar: wie lange hält es noch? */
       + (ich.haustier ? "<span>" + esc((TIERE[ich.haustier] || TIERE.fellmonster).name) + " " + (ich.haustier_leben || 0) + "/" + (ich.haustier_max || 30) + (ich.haustier_leben > 0 ? "" : " schwach") + "</span>" : "")
       + (ich.flugtier ? "<span>" + esc((TIERE[ich.flugtier] || TIERE.drache).name) + " " + (ich.flugtier_leben || 0) + "/" + (ich.flugtier_max || 25) + (ich.flugtier_leben > 0 ? "" : " schwach") + "</span>" : "")
-      + (ich.geschuetz_ladungen > 0 ? "<span>Turm Stufe " + (ich.geschuetz_stufe || 1) + ": " + ich.geschuetz_ladungen + "/" + (ich.geschuetz_max || 12) + " Schuss</span>" : "")
+      + (ich.geschuetz_ladungen > 0 ? "<span>Geschütz Stufe " + (ich.geschuetz_stufe || 1) + ": " + ich.geschuetz_ladungen + " Schuss</span>" : "")
       + "</div>"
       /* FUNK 106 — der zweite Balken: Mana, nur aus Deutsch (+6 je
          richtiger Aufgabe), für die Zaubertränke. */
@@ -1802,9 +1783,8 @@
         + "<p><b>Rüstung kaufen.</b> Helm und Brustpanzer gibt es in „Schutz & Laden“ in drei Stufen (40, 60, 90 Punkte). Der Helm macht Kopftreffer schwächer, der Brustpanzer Herz und Körper. Jeder Treffer auf die geschützte Stelle kostet einen von 40 Haltepunkten; Reparieren kostet 10 Punkte und geht jederzeit, auch mitten im Kampf. Alle sehen deine Rüstung als Bogen außen am Bild: oben Helm, unten Brustpanzer – Bronze, Silber, Gold.</p>"
         + "<p><b>Superkraft.</b> Der goldene Bogen oben am Bild lädt sich mit Deutsch (+8), Treffern (+2) und wenn du etwas einsteckst (+3). Bei 100 % leuchtet die Flamme in der Leiste: 45 Sekunden dämonisch – ×1,5 Schaden, und du steckst nur 70 % ein.</p>"
         + "<p><b>Tagesgeschenk.</b> Einmal am Tag holt es sich von selbst ab: Punkte, Bratwurst, jeden dritten Tag ein Pflaster. Sieben Tage am Stück geben am meisten. Wer auf der Seite übt, bekommt dafür ebenfalls Spielpunkte (5 Seitenpunkte = 1 Punkt, bis 40 am Tag).</p>"
-        + "<p><b>Schutz.</b> Schild und Mauer (beide ziehen mit), Geschütz-Turm und Monster schlagen zurück – anteilig, nie mehr als 4/5 dessen, was der Angreifer anrichtet. Mana-Tränke kosten 30 Mana. Minen und Falltüren legst du auf einen Platz.</p>"
+        + "<p><b>Schutz.</b> Schild (reist mit), Mauer (bleibt am Platz), Geschütz und Monster schlagen zurück – anteilig, nie mehr als 4/5 dessen, was der Angreifer anrichtet. Mana-Tränke kosten 30 Mana. Minen und Falltüren legst du auf einen Platz.</p>"
         + "<p><b>Üben.</b> „Sparring“ in der Leiste stellt eine Strohpuppe auf einen freien Platz – nur bei dir, niemand wird gestört. „Er schießt zurück“ macht ein Übungsduell daraus. Zählt nicht.</p>"
-        + "<p><b>Abnutzung und Turm.</b> Gekaufte Waffen halten 60 Treffer, danach sind sie stumpf (halber Schaden). Der Schraubenschlüssel in der Leiste repariert alle für 15 Punkte – mitten im Kampf. Das Geschütz ist ein Turm: einmal kaufen, nachladen für 20, aufwerten bis Stufe 5. Die Mauer gehört dir, bis sie zerstört ist: wechselst du den Platz, zieht sie mit und steht nach 8 Sekunden wieder.</p>"
         + "<p><b>Tiere.</b> Eins am Boden (Fellmonster, Stachelmonster, Chihuahua), eins in der Luft (Babydrache, Eule). Sie wehren Angriffe ab und kosten dabei Kraft. Bei 0 Kraft sind sie schwach, bleiben aber – füttern mit Bratwurst (+12) oder Sauerkraut (+8). Aufwerten bis Stufe 3; ab Stufe 2 hat jedes Tier eine zweite Fähigkeit (Fellmonster kuschelt, Chihuahua lässt nicht los, Babydrache glüht nach, Eule warnt, Stachelmonster fängt mehr ab).</p>"
         + "<p><b>Deutsche Wurfsachen.</b> Brezel, Bierkrug und Spätzle-Kanone (eine Salve aus fünf Spätzle) kauft man einmal. Bratwurst und Sauerkraut sind Vorräte: werfen oder essen (Bratwurst +15 LP, Sauerkraut +10 LP und +10 Mana). Sauerkraut rutscht beim Getroffenen übers Bild und nimmt ihm kurz die Sicht – zweimal tippen wischt es weg, der Scheibenwischer macht es von selbst. Das Herz isst zuerst, wenn nur wenig fehlt.</p>"
         + "<p><b>Waffenstillstand.</b> Solange die Tafel offen ist, trifft niemand.</p></div>";
@@ -1894,9 +1874,7 @@
     if (reiter === "waffen") {
       var liste = WAFFEN_REIHE.map(function (k) {
         var w = WAFFEN[k], hat = (ich.waffen || []).indexOf(k) >= 0;
-        var h = hat ? haltVon(ich, k) : -1;
-        return '<div class="sp-zeile"><span class="sp-bild">' + geschossSvg(k, S.laserfarbe) + "</span><span><b>" + esc(w.name) + "</b><br><small>Schaden " + w.schaden + (k === "zielfernrohr" ? ", langsam" : "")
-          + (h >= 0 ? " · " + (h > 0 ? "hält noch " + h + "/60" : '<span class="sp-rot">stumpf – halber Schaden</span>') : "") + "</small></span>"
+        return '<div class="sp-zeile"><span class="sp-bild">' + geschossSvg(k, S.laserfarbe) + "</span><span><b>" + esc(w.name) + "</b><br><small>Schaden " + w.schaden + (k === "zielfernrohr" ? ", langsam" : "") + "</small></span>"
           + (hat ? (S.waffe === k ? '<button type="button" data-tu="ablegen">Ablegen</button>' : '<button type="button" data-tu="anlegen" data-w="' + k + '">Anlegen</button>')
                  : '<button type="button" data-tu="kaufen" data-d="' + k + '">🔒 ' + w.preis + " Punkte</button>")
           + "</div>";
@@ -1914,12 +1892,10 @@
           + '<button type="button" data-tu="kaufen" data-d="' + k + '_3"' + (ich.punkte >= (k === "bratwurst" ? 15 : 12) ? "" : " disabled") + ">3 für " + (k === "bratwurst" ? 15 : 12) + "</button>"
           + "</span></div>";
       }).join("");
-      var kaputtW = (ich.waffen || []).filter(function (w) { var hh = haltVon(ich, w); return hh >= 0 && hh < 60; }).length;
-      var rep = kaputtW ? '<div class="sp-hinweis">🔧 ' + kaputtW + " Waffe(n) abgenutzt. <button type=\"button\" data-tu=\"kaufen\" data-d=\"waffen_reparatur\"" + (ich.punkte >= 15 ? "" : " disabled") + ">Alle reparieren · 15</button></div>" : "";
-      return rep + liste + '<p class="sp-klein"><b>Vorräte</b> – zum Werfen oder Essen (Tagesgeschenk, Seitenübungen, Laden):</p>' + vorr + farben;
+      return liste + '<p class="sp-klein"><b>Vorräte</b> – zum Werfen oder Essen (Tagesgeschenk, Seitenübungen, Laden):</p>' + vorr + farben;
     }
     if (reiter === "schutz") {
-      return ruestungZeilen(ich) + turmZeile(ich) + '<p class="sp-klein">Tiere (Fellmonster, Chihuahua, Babydrache …) holst, fütterst und stärkst du im Reiter <b>Tiere</b>.</p>' + LADEN.map(function (d) {
+      return ruestungZeilen(ich) + '<p class="sp-klein">Tiere (Fellmonster, Chihuahua, Babydrache …) holst, fütterst und stärkst du im Reiter <b>Tiere</b>.</p>' + LADEN.map(function (d) {
         return '<div class="sp-zeile"><span><b>' + esc(d.name) + "</b><br><small>" + esc(d.was) + "</small></span>"
           + '<button type="button" data-tu="' + (d.legen ? "legen" : "kaufen") + '" data-d="' + d.ding + '"' + (ich.punkte >= d.preis ? "" : " disabled") + ">" + d.preis + " Punkte</button></div>";
       }).join("") + (meineFallen().length ? '<p class="sp-klein">Deine Fallen: ' + meineFallen().map(function (f) { return (f.art === "mine" ? "Mine" : "Falltür") + " auf Platz " + f.platz; }).join(", ") + " (30 min)</p>" : "");
@@ -1968,22 +1944,6 @@
         + (st < 3 ? '<button type="button" data-tu="kaufen" data-d="' + r[0] + '"' + (ich.punkte >= preis ? "" : " disabled") + ">" + (st ? "Stufe " + (st + 1) : "Kaufen") + " · " + preis + "</button>" : "")
         + "</span></div>";
     }).join("");
-  }
-
-  /* XANDER: „Geschütz … aufwerten können wie bei einem Tower … reparieren".
-     Einmal kaufen, dann nachladen (20) statt neu kaufen; Stufen bis 5:
-     mehr Schuss und stärkere Schüsse. */
-  function turmZeile(ich) {
-    var st = ich.geschuetz_stufe || 1, n = ich.geschuetz_ladungen || 0, mx = ich.geschuetz_max || (12 + 4 * (st - 1));
-    var preisStufe = 50 + 20 * st;
-    return '<div class="sp-zeile"><span><b>Geschütz-Turm</b> · Stufe ' + st + "<br><small>"
-      + (n > 0 ? n + "/" + mx + " Schuss · " : "") + "schießt zurück, wenn du getroffen wirst (" + [50, 70, 90, 90, 90][st - 1] + " %, bis "
-      + (st >= 5 ? 26 : st >= 4 ? 22 : 18) + " je Schuss)" + (st < 5 ? " · Stufe " + (st + 1) + ": " + (12 + 4 * st) + " Schuss" : "") + "</small></span>"
-      + '<span class="sp-knopfgruppe">'
-      + (n > 0 ? (n < mx ? '<button type="button" data-tu="kaufen" data-d="geschuetz_nachladen"' + (ich.punkte >= 20 ? "" : " disabled") + ">Nachladen · 20</button>" : "")
-               : '<button type="button" data-tu="kaufen" data-d="geschuetz"' + (ich.punkte >= 60 ? "" : " disabled") + ">Kaufen · 60</button>")
-      + (st < 5 ? '<button type="button" data-tu="kaufen" data-d="geschuetz_stufe"' + (ich.punkte >= preisStufe ? "" : " disabled") + ">Stufe " + (st + 1) + " · " + preisStufe + "</button>" : "")
-      + "</span></div>";
   }
 
   function nebenZiel(name) {
@@ -2077,9 +2037,6 @@
       senden({ ereignis: "stand", stand: oeffentlich(r) });
       if (WAFFEN[ding]) S.waffe = ding;
       if (/^reparatur_/.test(ding)) hinweis("🔧 Repariert – hält wieder 40 Treffer.");
-      if (ding === "waffen_reparatur") hinweis("🔧 Alle Waffen repariert – je 60 Treffer.");
-      if (ding === "geschuetz_nachladen") hinweis("🔫 Turm nachgeladen.");
-      schnellZeichnen();
       panelAuffrischen(); zeichnen();
     }).catch(function (e) { hinweis("Kauf ging nicht: " + (e && e.message ? e.message : e)); });
   }
@@ -2202,7 +2159,6 @@
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
       gegenwehrZeigen: gegenwehrZeigen, falleZeigen: falleZeigen, tippAufPlatz: tippAufPlatz, ringSvg: ringSvg,
       schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
-      turmZeile: turmZeile, platzGewechselt: platzGewechselt,
       krautZeigen: krautZeigen, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg,
       ruestungZeilen: ruestungZeilen, menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {

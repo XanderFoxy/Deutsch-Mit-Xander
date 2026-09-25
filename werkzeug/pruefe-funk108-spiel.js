@@ -124,17 +124,24 @@ const sage = (gut, was, zusatz) => {
       window.DMA_SPIEL.pruef.gegenwehrZeigen("bea", "ich", { gegenwehr: 9, gegen_geschuetz: 5, gegen_tier: 4, tier: tier });
       await new Promise((r) => setTimeout(r, 120));
       const kugel = Boolean(document.querySelector(".sp-kugel"));
-      /* Am Scheitel des Angriffs (40–66 % von 1100 ms, 260 ms nach den Kugeln) */
-      await new Promise((r) => setTimeout(r, 260 + 520 - 120));
-      const t = document.querySelector(".sp-tier-sprung.sp-tier-" + tier);
-      let abstand = -1;
-      if (t) {
-        /* Das Tier sitzt in seiner Zeichnung bei 84 | 84 von 100 — der
-           Drache fliegt seit Fassung 638 und sitzt bei 90 | 12. */
-        const r = t.getBoundingClientRect();
-        const ax = tier === "drache" ? 0.9 : 0.84, ay = tier === "drache" ? 0.12 : 0.84;
-        const tx = r.left + r.width * ax, ty = r.top + r.height * ay;
-        abstand = Math.hypot(tx - ziel.x, ty - ziel.y) / (ichK.width / 2);
+      /* Am Scheitel des Angriffs (40–66 % von 1100 ms, 260 ms nach den
+         Kugeln). Fassung 640: statt EINES Bildes wird das ganze Fenster
+         abgetastet und der kleinste Abstand genommen — der Drache fliegt
+         seit 638 von oben heran, ein einzelner Zeitpunkt traf je nach
+         Takt mal 0,33, mal 1,25 Radien. Gemessen wird die Mitte des
+         gezeichneten Körpers (.sp-tier-koerper), nicht der Rahmen. */
+      await new Promise((r) => setTimeout(r, 260 + 440 - 120));
+      let abstand = -1, t = null;
+      const bis = performance.now() + 290;
+      while (performance.now() < bis) {
+        t = document.querySelector(".sp-tier-sprung.sp-tier-" + tier) || t;
+        const k = t && t.querySelector(".sp-tier-koerper");
+        if (k) {
+          const r = k.getBoundingClientRect();
+          const d = Math.hypot(r.left + r.width / 2 - ziel.x, r.top + r.height / 2 - ziel.y) / (ichK.width / 2);
+          abstand = abstand < 0 ? d : Math.min(abstand, d);
+        }
+        await new Promise((r) => setTimeout(r, 16));
       }
       const spur = Boolean(document.querySelector("." + zeichen));
       await new Promise((r) => setTimeout(r, 700));
