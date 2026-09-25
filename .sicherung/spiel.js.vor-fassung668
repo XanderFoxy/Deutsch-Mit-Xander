@@ -60,19 +60,9 @@
     weisswurst:   { name: "Weißwurst-Bumerang", schaden: 14, preis: 85,  flug: 820, ton: "bumerang2", treffer: "wurstklatsch", ab: 6 },
     nudelholz:    { name: "Nudelholz",          schaden: 18, preis: 110, flug: 700, ton: "swoosh",    treffer: "holzklopf",    ab: 8 },
     kuckucksuhr:  { name: "Kuckucksuhr-Bombe",  schaden: 24, preis: 160, flug: 900, ton: "ticken",    treffer: "explosion2",   ab: 10 },
-    lasersalve:   { name: "Laser-Salve",     schaden: 10, preis: 80,  flug: 240, ton: "lasersalve",      treffer: "lasertreffer" },
-    /* FASSUNG 668 — XANDER: „mehr Laser Arten, die man anlegen kann … wie
-       kann man zwischen diesen Salven und multiple Feuern unterscheiden?
-       Dann könnte es mehr Arten geben. Kugelblitz". Die Energie-Waffen:
-       SALVE = mehrere Schüsse NACHEINANDER (Laser-Salve, MG, Spätzle);
-       MEHRFACHFEUER = mehrere Strahlen GLEICHZEITIG (Doppellaser, Fächerlaser);
-       DAUERSTRAHL = ein Strahl, der anhält (Plasmastrahl); dazu der Kugelblitz. */
-    doppellaser:  { name: "Doppellaser",     schaden: 15, preis: 70,  flug: 260, ton: "laserblau",   treffer: "lasertreffer", ab: 4,  art: "Mehrfachfeuer: zwei Strahlen gleichzeitig" },
-    streulaser:   { name: "Fächerlaser",     schaden: 17, preis: 120, flug: 280, ton: "lasersalve",  treffer: "lasertreffer", ab: 6,  art: "Mehrfachfeuer: fünf Strahlen im Fächer" },
-    plasmastrahl: { name: "Plasmastrahl",    schaden: 20, preis: 150, flug: 700, ton: "dunkelbrumm", treffer: "lasertreffer", ab: 8,  art: "Dauerstrahl, der anschwillt" },
-    kugelblitz:   { name: "Kugelblitz",      schaden: 26, preis: 190, flug: 1100, ton: "dunkelbrumm", treffer: "gewitter",    ab: 11, art: "knisternde Kugel, beim Einschlag Blitzschlag" }
+    lasersalve:   { name: "Laser-Salve",     schaden: 10, preis: 80,  flug: 240, ton: "lasersalve",      treffer: "lasertreffer" }
   };
-  var WAFFEN_REIHE = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "brezel", "armbrust", "huehnerwerfer", "bierkrug", "tomahawk", "spaetzle", "doener", "lasersalve", "mg", "zielfernrohr", "bazooka", "weisswurst", "nudelholz", "kuckucksuhr", "doppellaser", "streulaser", "plasmastrahl", "kugelblitz"];
+  var WAFFEN_REIHE = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "brezel", "armbrust", "huehnerwerfer", "bierkrug", "tomahawk", "spaetzle", "doener", "lasersalve", "mg", "zielfernrohr", "bazooka", "weisswurst", "nudelholz", "kuckucksuhr"];
   var VORRAT_WAFFEN = ["bratwurst", "sauerkraut"];
   function vorrat(ich, ding) { return Math.max(0, Number(((ich || {}).vorraete || {})[ding]) || 0); }
   var LADEN = [
@@ -80,8 +70,6 @@
     { ding: "trank",       name: "Heiltrank",       preis: 30,  was: "+60 Lebenspunkte" },
     { ding: "schild",      name: "Schutzschild",    preis: 50,  was: "Aura, reist mit, fängt 60 Schaden ab (10 min)" },
     { ding: "mauer_holz",  name: "Mauer aus Holz",  preis: 20,  was: "gehört dir, bis sie zerstört ist – zieht beim Platzwechsel mit (8 s Aufbau), hält 40 Schaden" },
-    /* FASSUNG 668 — XANDER: „die Ziegelmauer durchgängige Ziegel". */
-    { ding: "mauer_ziegel", name: "Mauer aus Ziegeln", preis: 32, was: "gehört dir, bis sie zerstört ist – zieht beim Platzwechsel mit (8 s Aufbau), hält 65 Schaden" },
     { ding: "mauer_stein", name: "Mauer aus Stein", preis: 45,  was: "gehört dir, bis sie zerstört ist – zieht beim Platzwechsel mit (8 s Aufbau), hält 90 Schaden" },
     { ding: "mauer_stahl", name: "Mauer aus Stahl", preis: 80,  was: "gehört dir, bis sie zerstört ist – zieht beim Platzwechsel mit (8 s Aufbau), hält 160 Schaden" },
     /* FASSUNG 662 — XANDER: „kann mir noch ne Titanium Mauer machen irgendwie
@@ -146,16 +134,10 @@
        spiel_treffer, spiel_tier_max). */
     feuerfuchs:       { name: "Feuerfuchs",       ton: "fuchskeckern", fusion: true, magie: true, was: "beißt mit Glut, 45 % zurück · Stufe 2: +2 Glut" },
     greif:            { name: "Greif",            ton: "fluegelschlag", fusion: true, flug: true, was: "Adlerkopf, Löwenleib: stößt herab, 50 % zurück · Stufe 2: warnt dich (1/10 weniger Schaden)" },
-    regenbogendrache: { name: "Regenbogendrache", ton: "drachenpuste", fusion: true, flug: true, magie: true, was: "faucht Regenbogenfeuer, 55 % zurück · Stufe 2: heilt dich (+3 LP)" },
-    /* FASSUNG 668 — XANDER: „mehr Fusionen noch mehr Tiere". */
-    dackel:           { name: "Dackel",           ton: "hundbellen", preis: 110, was: "zerrt am Hosenbein, 25 % zurück · Stufe 2: +2" },
-    storch:           { name: "Storch",           ton: "fluegelschlag", preis: 170, flug: true, was: "klappert und pickt von oben, 35 % zurück" },
-    wolpertinger:     { name: "Wolpertinger",     ton: "fuchskeckern", fusion: true, magie: true, was: "bayerisches Fabelwesen: Hasenleib, Geweih, Flügel – 50 % zurück · Stufe 2: +2" },
-    lindwurm:         { name: "Lindwurm",         ton: "drachenpuste", fusion: true, flug: true, magie: true, was: "Drache mit Schlangenleib, speit Feuer, 60 % zurück" }
+    regenbogendrache: { name: "Regenbogendrache", ton: "drachenpuste", fusion: true, flug: true, magie: true, was: "faucht Regenbogenfeuer, 55 % zurück · Stufe 2: heilt dich (+3 LP)" }
   };
   /* [neues Tier, Zutat 1, Zutat 2] – beide Zutaten gehen in das neue Tier auf. */
-  var FUSIONEN = [["feuerfuchs", "fuchs", "phoenix"], ["greif", "eule", "schaeferhund"], ["regenbogendrache", "drache", "einhorn"],
-                  ["wolpertinger", "dackel", "fee"], ["lindwurm", "drache", "stachelmonster"]];
+  var FUSIONEN = [["feuerfuchs", "fuchs", "phoenix"], ["greif", "eule", "schaeferhund"], ["regenbogendrache", "drache", "einhorn"]];
   var FUSION_PREIS = 200, FUSION_LEVEL = 6;
   /* FASSUNG 634 — XANDER: „Bitte das Skill Training noch einbauen. Also
      dass man über die Zeit sich Fähigkeiten aneignen kann".
@@ -172,8 +154,7 @@
   ];
   function komma(x) { return String(Math.round(x * 100) / 100).replace(".", ","); }
   /* FASSUNG 640 — gekaufte Waffen nutzen sich ab (60 Treffer). */
-  var HALTBAR = ["armbrust", "tomahawk", "zielfernrohr", "bazooka", "eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "mg", "lasersalve",
-    "weisswurst", "nudelholz", "kuckucksuhr", "doppellaser", "streulaser", "plasmastrahl", "kugelblitz"];
+  var HALTBAR = ["armbrust", "tomahawk", "zielfernrohr", "bazooka", "eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "mg", "lasersalve"];
   function haltVon(ich, w) { if (HALTBAR.indexOf(w) < 0) return -1; var h = ((ich || {}).waffen_halt || {})[w]; return h == null ? 60 : Number(h); }
   function reparaturNoetig(ich) { return ((ich || {}).waffen || []).some(function (w) { var h = haltVon(ich, w); return h >= 0 && h <= 15; }); }
   /* FASSUNG 648 — Aufgabenarten. [kategorie, Name, erst freigeben?] */
@@ -217,7 +198,7 @@
     ["reflexiv", "Reflexiv"], ["modalverben", "Modalverben"], ["modalpartikeln", "Modalpartikeln"], ["konjunktiv", "Konjunktiv"],
     ["possessiv", "Possessiv"], ["passiv", "Passiv"], ["lueckentext", "Lückentext"], ["essen", "Wortschatz: Essen"], ["tiere", "Wortschatz: Tiere"],
     ["werkzeug", "Wortschatz: Werkzeug"], ["koerper", "Wortschatz: Körper"], ["stil", "Stil"], ["homophone", "Gleich klingend"]];
-  var TIERE_BODEN = ["fellmonster", "stachelmonster", "chihuahua", "schaeferhund", "dackel", "babyfuchs", "fuchs", "einhorn"], TIERE_LUFT = ["drache", "eule", "storch", "phoenix", "fee"];
+  var TIERE_BODEN = ["fellmonster", "stachelmonster", "chihuahua", "schaeferhund", "babyfuchs", "fuchs", "einhorn"], TIERE_LUFT = ["drache", "eule", "phoenix", "fee"];
   function wirkt(ich, art) {
     var bis = ich && ich[art + "_bis"];
     return bis ? Math.max(0, Math.round((new Date(bis).getTime() - Date.now()) / 1000)) : 0;
@@ -1118,12 +1099,6 @@
      DIE GESCHOSSE — gezeichnet, keine Emoji
      --------------------------------------------------------------- */
   function geschossSvg(waffe, farbe) {
-    /* FASSUNG 668 — Energie-Waffen */
-    if (waffe === "doppellaser") return '<svg viewBox="-20 -6 40 12"><path d="M-18 -2.6 H18 M-18 2.6 H18" stroke="' + (farbe || "#39c6ff") + '" stroke-width="2.4" stroke-linecap="round"/><path d="M-18 -2.6 H18 M-18 2.6 H18" stroke="#fff" stroke-width=".8" stroke-linecap="round" opacity=".85"/></svg>';
-    if (waffe === "streulaser") return '<svg viewBox="-20 -12 40 24"><g stroke-linecap="round" stroke-width="1.8"><path d="M-18 0 L18 -9" stroke="#ff4fd8"/><path d="M-18 0 L18 -4.5" stroke="#9b6bff"/><path d="M-18 0 L18 0" stroke="#39c6ff"/><path d="M-18 0 L18 4.5" stroke="#3be38a"/><path d="M-18 0 L18 9" stroke="#ffd23a"/></g><circle cx="-18" cy="0" r="2.2" fill="#fff"/></svg>';
-    if (waffe === "plasmastrahl") return '<svg viewBox="-20 -7 40 14"><rect x="-19" y="-4.5" width="38" height="9" rx="4.5" fill="#7b2cff" opacity=".45"/><rect x="-19" y="-2.6" width="38" height="5.2" rx="2.6" fill="#c07bff"/><rect x="-19" y="-1" width="38" height="2" rx="1" fill="#fff"/></svg>';
-    if (waffe === "kugelblitz") return '<svg viewBox="-10 -10 20 20"><circle r="8.5" fill="#bfe8ff" opacity=".35"/><circle r="5.6" fill="#e9f8ff" stroke="#6fd0ff" stroke-width="1"/>'
-      + '<path d="M-7 -2 L-3 -1 L-4 2 L1 1 L0 4 L5 2 M3 -6 L1 -2 L4 -1 L2 3" fill="none" stroke="#2f9fe8" stroke-width=".9" stroke-linejoin="round"/><circle r="2" fill="#fff"/></svg>';
     /* FASSUNG 664 — die Meisterwaffen */
     if (waffe === "weisswurst") return '<svg viewBox="-12 -8 24 16"><path d="M-10 2 C-8 -6 8 -6 10 2" fill="none" stroke="#f4efe4" stroke-width="5.5" stroke-linecap="round"/>'
       + '<path d="M-10 2 C-8 -6 8 -6 10 2" fill="none" stroke="#b9ad96" stroke-width="5.5" stroke-linecap="round" opacity=".35" stroke-dasharray="1 3"/>'
@@ -1226,54 +1201,6 @@
       einschlag(zx, zy, waffe, w.flug);
       return w.flug;
     }
-    /* FASSUNG 668 — Mehrfachfeuer (gleichzeitig) und Dauerstrahl. */
-    if (waffe === "doppellaser" || waffe === "streulaser") {
-      var lenM = Math.hypot(zx - a.x, zy - a.y), rad = winkel * Math.PI / 180;
-      var strahlen = waffe === "doppellaser"
-        ? [[0, -1, farbe || "#39c6ff"], [0, 1, farbe || "#39c6ff"]]
-        : [[-14, 0, "#ff4fd8"], [-7, 0, "#9b6bff"], [0, 0, "#39c6ff"], [7, 0, "#3be38a"], [14, 0, "#ffd23a"]];
-      strahlen.forEach(function (st) {
-        var b = document.createElement("div");
-        b.className = "sp-laser sp-laser-" + waffe + dmn;
-        var ver = st[1] * Math.max(3, z.r * 0.14);
-        b.style.left = (a.x - Math.sin(rad) * ver) + "px"; b.style.top = (a.y + Math.cos(rad) * ver) + "px";
-        b.style.width = (lenM * (1 - Math.abs(st[0]) / 90)) + "px";
-        b.style.transform = "rotate(" + (winkel + st[0]) + "deg)";
-        b.style.setProperty("--farbe", st[2]);
-        document.body.appendChild(b);
-        setTimeout(function () { b.remove(); }, 420);
-      });
-      einschlag(zx, zy, waffe, w.flug);
-      return w.flug;
-    }
-    if (waffe === "plasmastrahl") {
-      var lenP = Math.hypot(zx - a.x, zy - a.y);
-      var pl = document.createElement("div");
-      pl.className = "sp-plasma" + dmn;
-      pl.style.left = a.x + "px"; pl.style.top = a.y + "px"; pl.style.width = lenP + "px";
-      pl.style.transform = "rotate(" + winkel + "deg)";
-      pl.style.animationDuration = w.flug + "ms";
-      document.body.appendChild(pl);
-      setTimeout(function () { pl.remove(); }, w.flug + 60);
-      einschlag(zx, zy, waffe, w.flug);
-      return w.flug;
-    }
-    if (waffe === "kugelblitz") {
-      var kb = document.createElement("div");
-      kb.className = "sp-geschoss sp-g-kugelblitz" + dmn;
-      kb.innerHTML = geschossSvg("kugelblitz");
-      document.body.appendChild(kb);
-      var bahn = [];
-      for (var bi = 0; bi <= 8; bi++) {
-        var f = bi / 8, zick = Math.sin(bi * 2.1) * z.r * 0.18 * (1 - f);
-        bahn.push({ transform: "translate(" + (a.x + (zx - a.x) * f - Math.sin(winkel * Math.PI / 180) * zick) + "px," + (a.y + (zy - a.y) * f + Math.cos(winkel * Math.PI / 180) * zick) + "px) translate(-50%,-50%) scale(" + (0.8 + 0.3 * Math.abs(Math.sin(bi))) + ")" });
-      }
-      try { kb.animate(bahn, { duration: w.flug, easing: "linear", fill: "forwards" }); } catch (e) {}
-      setTimeout(function () { kb.remove(); }, w.flug + 30);
-      setTimeout(function () { blitzschlag(zx, zy, z.r); }, w.flug - 40);
-      einschlag(zx, zy, waffe, w.flug);
-      return w.flug;
-    }
     if (waffe === "zielfernrohr") {
       /* Erst das Fadenkreuz, das sich auf den Punkt einpendelt, dann der Schuss. */
       var kreuz = document.createElement("div");
@@ -1352,24 +1279,6 @@
     setTimeout(function () { g.remove(); }, w.flug + 30);
     einschlag(zx, zy, waffe, w.flug);
     return w.flug;
-  }
-  /* FASSUNG 668 — der Kugelblitz schlägt ein: drei gezackte Blitze von
-     oben, ein weißer Blitz, Funken. Ton „gewitter" kommt mit dem Treffer. */
-  function blitzschlag(x, y, r) {
-    var b = document.createElement("div");
-    b.className = "sp-blitzschlag";
-    b.style.left = x + "px"; b.style.top = y + "px"; b.style.width = Math.round(r * 3) + "px"; b.style.height = Math.round(r * 3.2) + "px";
-    var pfade = "";
-    [-0.45, 0, 0.4].forEach(function (o, i) {
-      var px = 50 + o * 60, py = 0, d = "M" + px + " " + py;
-      for (var k = 1; k <= 6; k++) { px = 50 + o * 60 * (1 - k / 6) + (k % 2 ? 7 : -7) * (1 - k / 7); py = k * (82 / 6); d += " L" + px.toFixed(1) + " " + py.toFixed(1); }
-      pfade += '<path d="' + d + '" fill="none" stroke="#e9f8ff" stroke-width="' + (i === 1 ? 3 : 2) + '" stroke-linejoin="round"/>'
-        + '<path d="' + d + '" fill="none" stroke="#6fd0ff" stroke-width="' + (i === 1 ? 7 : 5) + '" stroke-linejoin="round" opacity=".35"/>';
-    });
-    b.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none">' + pfade + "</svg>";
-    document.body.appendChild(b);
-    setTimeout(function () { b.remove(); }, 520);
-    try { flammen(x, y, r * 0.6, "gold", 6); } catch (e) {}
   }
   function einschlag(x, y, waffe, nach) {
     setTimeout(function () {
@@ -2043,7 +1952,7 @@
       }
       fb.push(bild(heim.x, heim.y, s0, 0, 1));
       try { t.animate(fb, { duration: dauer, easing: "linear", fill: "forwards" }); } catch (e) {}
-      var feuer = art === "drache" || art === "regenbogendrache" || art === "lindwurm";
+      var feuer = art === "drache" || art === "regenbogendrache";
       [0.3, 0.52, 0.74].forEach(function (o) {
         setTimeout(function () {
           /* Wo das Tier in diesem Moment ist: gleiche Rechnung wie oben. */
@@ -2618,8 +2527,7 @@
     ["Lustig",   "#c0772a", ["eierwerfer", "brezel", "sauerkraut", "bratwurst", "huehnerwerfer", "bierkrug", "doener", "spaetzle"]],
     ["Arcade",   "#7a3fa0", ["lasersalve", "mg"]],
     ["Stark",    "#a33a3a", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]],
-    ["Meister",  "#b8860b", ["weisswurst", "nudelholz", "kuckucksuhr"]],
-    ["Energie",  "#1f8fbf", ["doppellaser", "streulaser", "plasmastrahl", "kugelblitz"]]
+    ["Meister",  "#b8860b", ["weisswurst", "nudelholz", "kuckucksuhr"]]
   ];
   function radHtml(nr) {
     var ich = S.ich || {}, s = slots();
@@ -2699,8 +2607,7 @@
       inhaltM = '<div class="sp-sm-slots"><button type="button" data-s="slot" data-n="0" class="' + (nr === 0 ? "sp-an" : "") + '">Waffe 1</button>'
         + '<button type="button" data-s="slot" data-n="1" class="' + (nr === 1 ? "sp-an" : "") + '">Waffe 2</button></div>';
       var gruppen = [["Standard", ["kartoffel", "zwille", "bogen", "laser"]], ["Lustig", ["eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "bratwurst", "sauerkraut"]],
-                     ["Arcade", ["lasersalve", "mg"]], ["Stark", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]], ["Meister", ["weisswurst", "nudelholz", "kuckucksuhr"]],
-                     ["Energie", ["doppellaser", "streulaser", "plasmastrahl", "kugelblitz"]]];
+                     ["Arcade", ["lasersalve", "mg"]], ["Stark", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]], ["Meister", ["weisswurst", "nudelholz", "kuckucksuhr"]]];
       gruppen.forEach(function (g) {
         var knoepfe = g[1].filter(function (w) { return WAFFEN[w] && ((ich.waffen || []).indexOf(w) >= 0 || (WAFFEN[w].vorrat && vorrat(ich, w) > 0)); })
           .map(function (w) { return waffenKnopf(w, (s[nr] === w ? " sp-slot-drin" : "")).replace('data-s="waffe"', 'data-s="waehle"'); }).join("");
@@ -2773,7 +2680,7 @@
         + '<button type="button" data-s="klasse"><span class="sp-sm-zbild">' + klassenSvg(ich.klasse || "abenteurer") + "</span>Klasse <small>"
           + (ich.klasse && KLASSEN[ich.klasse] ? esc(KLASSEN[ich.klasse].name) : (ich.level || 1) >= 5 ? "wählen" : "ab Lv 5") + "</small></button>"
         + '<button type="button" data-s="dorf"><span class="sp-sm-zbild">' + dorfSvg("baeckerei", 1) + "</span>Mein Dorf <small>"
-          + Object.keys(ich.dorf || {}).length + " / " + Object.keys(DORF).length + "</small></button>"
+          + Object.keys(ich.dorf || {}).length + " / 3</small></button>"
         + '<button type="button" data-s="trophaeen"><span class="sp-sm-zbild">' + pokalSvg(true) + "</span>Trophäen <small>"
           + (S.troph ? S.troph.liste.filter(function (t) { return t.hat; }).length + " / " + S.troph.liste.length : "") + "</small></button>"
         + '<button type="button" data-s="zauberrad"><span class="sp-sm-zbild">' + zauberSvg("nebel") + "</span>Zauberrad öffnen</button>"
@@ -2850,7 +2757,7 @@
         }
         S.ich = r; S.stand[r.id] = oeffentlich(r);
         ton("geschenk", 0.5);
-        var teile = []; if (r.bratwurst) teile.push(r.bratwurst + " Bratwurst"); if (r.erz) teile.push(r.erz + " Erz"); if (r.xp) teile.push(r.xp + " Erfahrung"); if (r.mana) teile.push(r.mana + " Mana"); if (r.punkte_plus) teile.push(r.punkte_plus + " Punkte");
+        var teile = []; if (r.bratwurst) teile.push(r.bratwurst + " Bratwurst"); if (r.erz) teile.push(r.erz + " Erz"); if (r.xp) teile.push(r.xp + " Erfahrung");
         hinweis("🧺 Ernte: " + (teile.join(", ") || "nichts – alles kaputt? Erst reparieren.") + ".");
         schnellZeichnen(true);
       }).catch(function () { hinweis("🧺 Das ging gerade nicht."); });
@@ -3426,14 +3333,6 @@
         for (w = A0 + schritt / 2, n = 0; w < A1 - 0.1; w += schritt, n++) t += '<path d="' + ringStueck(w + .5, Math.min(A1, w + schritt) - .5, mitte + .2, R2) + '" fill="' + (n % 2 ? "#b3aa9b" : "#9c9384") + '"/>';
         return '<g stroke="#5e574d" stroke-width=".45">' + t + "</g>";
       }
-      if (art === "ziegel") {
-        /* Ziegel: zwei Reihen kleiner, versetzter roter Steine mit hellen Fugen. */
-        var zs = 7.3;
-        for (w = A0; w < A1 - 0.1; w += zs, n++) t += '<path d="' + ringStueck(w + .35, Math.min(A1, w + zs) - .35, R1, mitte - .15) + '" fill="' + (n % 3 === 1 ? "#a8452a" : "#bf5a34") + '"/>';
-        t += '<path d="' + ringStueck(A0 + .35, A0 + zs / 2 - .35, mitte + .15, R2) + '" fill="#b44f2f"/>';
-        for (w = A0 + zs / 2, n = 0; w < A1 - 0.1; w += zs, n++) t += '<path d="' + ringStueck(w + .35, Math.min(A1, w + zs) - .35, mitte + .15, R2) + '" fill="' + (n % 3 === 2 ? "#a8452a" : "#c86a3e") + '"/>';
-        return '<g stroke="#e8d9c4" stroke-width=".4">' + t + "</g>";
-      }
       if (art === "diamant") {
         for (w = A0; w < A1 - 0.1; w += 10.33, n++) {
           var e = Math.min(A1, w + 10.33);
@@ -3549,64 +3448,6 @@
           + '<path d="M97.8 10.6 C98.6 11.4 98.6 12.6 98 13.2 Z" fill="#9fd3f5"/>'
           + '<g class="sp-funkeln"><path d="M80 4 l.6 -1.5 l.6 1.5 l1.5 .6 l-1.5 .6 l-.6 1.5 l-.6 -1.5 l-1.5 -.6 z" fill="#ffe27a"/><circle cx="104" cy="24" r=".6" fill="#c9a8ff"/><circle cx="76" cy="20" r=".5" fill="#9fd3f5"/></g>'
           + '<g class="sp-blinzeln">');
-    }
-    if (art === "dackel") {
-      /* FASSUNG 668 — Dackel: langer, tiefer Leib, Schlappohr, kurze Beine,
-         rotes Halsband – schaut zum Bild hin (nach links). */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path d="M99 86 C103 83 104 79 102 76" fill="none" stroke="#8a4a1e" stroke-width="2" stroke-linecap="round"/>'
-        + '<path d="M78 96 V100 M83 96.5 V100 M94 96.5 V100 M99 96 V100" stroke="#6b3814" stroke-width="2.6" stroke-linecap="round"/>'
-        + '<path d="M76 88 C77 83 84 82 92 82 C99 82 102 85 101.6 89 C101.2 94 97 96.6 90 96.6 L82 96.6 C78 96.6 75.6 93 76 88 Z" fill="#a0561f" stroke="#5a2c0c" stroke-width=".8"/>'
-        + '<path d="M80 94 C85 96 93 96.2 98 94" fill="none" stroke="#c9844a" stroke-width="1.4" stroke-linecap="round"/>'
-        + '<path d="M78.2 86.6 C79.4 88.2 80 90 79.6 91.6" fill="none" stroke="#c0392b" stroke-width="2.2" stroke-linecap="round"/><circle cx="79.8" cy="91.8" r=".9" fill="#f2c230"/>'
-        + '<path d="M79 86 C79 80 75 77.6 71 78.2 C67.6 78.8 66.4 81 64.2 82.6 C62.8 83.6 63 85.8 64.8 86.2 C67.4 86.8 70 86.8 72 87.8 C75 89.2 79 89.4 79 86 Z" fill="#a0561f" stroke="#5a2c0c" stroke-width=".8"/>'
-        + '<path d="M75.6 79.2 C79.6 79.6 81 84 79.4 88.6 C78.4 91 76 90.4 75.6 88.2 C75.2 85.2 74.2 82 75.6 79.2 Z" fill="#6b3814"/>'
-        + '<ellipse cx="64.4" cy="84.2" rx="1.5" ry="1.2" fill="#1a0f08"/><circle cx="71.4" cy="81.6" r="1.25" fill="#1a0f08"/><circle cx="71.8" cy="81.2" r=".4" fill="#fff"/>'
-        + '<path d="M66 86.4 Q68 87.4 70 86.6" fill="none" stroke="#3a1c08" stroke-width=".6" stroke-linecap="round"/></g></svg>';
-    }
-    if (art === "storch") {
-      /* FASSUNG 668 — Storch im Flug: weißer Leib, schwarze Schwungfedern,
-         langer roter Schnabel zum Bild hin, rote Beine hinten. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path d="M98 15 L112 21 M97 16.4 L110.4 23.6" stroke="#e0452e" stroke-width="1.1" stroke-linecap="round"/>'
-        + '<path class="sp-fluegel-r" d="M93 10 C97 1 104 -4 112 -5 C108 0 106 4 104 8 C101 10 97 11 93 10 Z" fill="#2a2a2a" opacity=".85"/>'
-        + '<path d="M83 10 C85 7 92 6.4 99 8.4 C103 9.6 106 11 107 13 C103 15.4 97 16.4 91 15.8 C86 15.2 83 13 83 10 Z" fill="#fbfbf7" stroke="#8d8d86" stroke-width=".6"/>'
-        + '<path d="M101 10.4 L108 11.6 L106 14 Z" fill="#2a2a2a"/>'
-        + '<path d="M85 10.6 C82.6 8.6 81 6.4 80.4 4" fill="none" stroke="#fbfbf7" stroke-width="3.4" stroke-linecap="round"/><path d="M85 10.6 C82.6 8.6 81 6.4 80.4 4" fill="none" stroke="#8d8d86" stroke-width=".4" stroke-dasharray="1 2"/>'
-        + '<circle cx="79.6" cy="3.4" r="2.8" fill="#fbfbf7" stroke="#8d8d86" stroke-width=".5"/>'
-        + '<path d="M77.6 3 L66.4 6.6 L77.4 4.8 Z" fill="#e0452e" stroke="#a82c1a" stroke-width=".4" stroke-linejoin="round"/>'
-        + '<circle cx="79" cy="2.6" r=".75" fill="#1a1a1a"/>'
-        + '<path class="sp-fluegel-l" d="M88 9 C87 1 91 -5 98 -8 C99 -4 100 -2 102 -1 C104 -5 108 -7 112 -7 C110 -2 107 3 103 6.6 C98 9.6 92 10.4 88 9 Z" fill="#fbfbf7" stroke="#8d8d86" stroke-width=".6" stroke-linejoin="round"/>'
-        + '<path class="sp-fluegel-l" d="M102 -1 C104 -5 108 -7 112 -7 C110 -2 107 3 103 6.6 C102.4 4 102.2 1.4 102 -1 Z" fill="#2a2a2a"/></g></svg>';
-    }
-    if (art === "wolpertinger") {
-      /* FASSUNG 668 — Wolpertinger (Fusion aus Dackel und Fee): sitzender
-         Hase mit kleinem Rehgeweih, Flügelchen, zwei Zähnchen – funkelt. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path class="sp-fluegel-r" d="M91 82 C96 76 103 76 105 80 C101 80 99 82 98 85 C96 84 93 84 91 82 Z" fill="#e8f3ff" stroke="#8aa4c4" stroke-width=".6"/>'
-        + '<path d="M78 99.6 C75 95 76 86 84 83.6 C92 82 97 88 96 94 C95.6 98 92 99.8 88 99.8 Z" fill="#a8784c" stroke="#5a3a1a" stroke-width=".8"/>'
-        + '<path d="M95.6 92 C99 91 100.6 93.6 99 95.6 C97.6 97 95.6 96 95.6 94 Z" fill="#fffaf2"/>'
-        + '<ellipse cx="84" cy="98.6" rx="4" ry="1.6" fill="#8a5c34"/>'
-        + '<path d="M79 72 C77 64 78.6 58 80.6 58 C82.6 58 82.4 65 81.6 72 Z M84.4 72 C84.6 64 87.4 58.6 89.2 59.4 C91 60.2 89 66.4 86.6 72.4 Z" fill="#a8784c" stroke="#5a3a1a" stroke-width=".7"/>'
-        + '<path d="M79.8 70 C79 65 79.8 61 80.6 61 M86 70 C86.6 65.6 88 62 88.8 62" fill="none" stroke="#e8b8a8" stroke-width="1.2" stroke-linecap="round"/>'
-        + '<path d="M76.8 73.4 L74.4 67.4 L72.4 68.6 M75.6 70.2 L73.4 70 M88.6 72.8 L92.2 67.6 L94.4 68.4 M90.6 70 L92.8 70.4" fill="none" stroke="#6b4a2a" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>'
-        + '<path d="M73 80 C73 74.6 77.6 71.6 82.4 71.6 C87.6 71.6 91 75 91 80 C91 85 87 87.6 82 87.6 C76.6 87.6 73 85 73 80 Z" fill="#b8875a" stroke="#5a3a1a" stroke-width=".8"/>'
-        + '<ellipse cx="77.6" cy="79" rx="1.7" ry="1.9" fill="#1a0f08"/><circle cx="78.1" cy="78.4" r=".6" fill="#fff"/><ellipse cx="85.2" cy="79" rx="1.7" ry="1.9" fill="#1a0f08"/><circle cx="85.7" cy="78.4" r=".6" fill="#fff"/>'
-        + '<path d="M80.4 82.6 C80.4 81.6 83 81.6 83 82.6 C83 83.4 82.2 83.8 81.7 83.8 C81.2 83.8 80.4 83.4 80.4 82.6 Z" fill="#e88a9a"/>'
-        + '<path d="M80.6 85 H82.8 V86.8 H80.6 Z" fill="#fff" stroke="#b8b0a0" stroke-width=".3"/><path d="M81.7 85 V86.8" stroke="#b8b0a0" stroke-width=".3"/>'
-        + '<g class="sp-funkeln"><path d="M70 72 l.6 -1.5 l.6 1.5 l1.5 .6 l-1.5 .6 l-.6 1.5 l-.6 -1.5 l-1.5 -.6 z" fill="#ffe27a"/><circle cx="98" cy="74" r=".6" fill="#c9b8ff"/></g></g></svg>';
-    }
-    if (art === "lindwurm") {
-      /* FASSUNG 668 — Lindwurm (Fusion aus Babydrache und Stachelmonster):
-         dunkelgrüner Drache mit goldenen Flügeln, Stachelkamm und langem,
-         geschwungenem Schlangenschwanz. */
-      return farbenTauschen(tierSvgRoh("drache"), [["#6fcaa0", "#4f9a5c"], ["#3c8a6a", "#24552f"], ["#9fdcc0", "#d9b24a"], ["#5cb892", "#4f9a5c"],
-        ["#4fae86", "#3a7a45"], ["#8fd9b8", "#e0b84a"], ["#2c5a46", "#1d3a22"], ["#f59ab4", "#e07a4a"]])
-        .replace('<path d="M96 25 C102 27 103 22 100 20"', '<path d="M95 24 C101 29 110 27 112 32 C114 37 108 40 104 37 C101 35 103 32 106 33" fill="none" stroke="#24552f" stroke-width="3.6" stroke-linecap="round"/>'
-          + '<path d="M95 24 C101 29 110 27 112 32 C114 37 108 40 104 37 C101 35 103 32 106 33" fill="none" stroke="#4f9a5c" stroke-width="2.4" stroke-linecap="round"/>'
-          + '<path d="M104 30 l1.6 -2 l.6 2.4 M109 29 l1.8 -1.6 l.3 2.4" fill="#e0b84a" stroke="#8a6a18" stroke-width=".3"/>'
-          + '<path d="M96 25 C102 27 103 22 100 20"')
-        .replace('<g class="sp-blinzeln">', '<path d="M84.2 5 L81.4 -1.4 L86.4 3.4 Z M95.8 5 L98.6 -1.4 L93.6 3.4 Z" fill="#e0b84a" stroke="#8a6a18" stroke-width=".45"/><g class="sp-blinzeln">');
     }
     if (art === "greif") {
       /* FASSUNG 665 — Fusion aus Eule und Schäferhund: der Greif. Weißer
@@ -4248,7 +4089,7 @@
       var liste = WAFFEN_REIHE.map(function (k) {
         var w = WAFFEN[k], hat = (ich.waffen || []).indexOf(k) >= 0;
         var h = hat ? haltVon(ich, k) : -1;
-        return '<div class="sp-zeile"><span class="sp-bild">' + geschossSvg(k, S.laserfarbe) + "</span><span><b>" + esc(w.name) + "</b><br><small>Schaden " + w.schaden + (k === "zielfernrohr" ? ", langsam" : "") + (w.art ? " · " + esc(w.art) : "")
+        return '<div class="sp-zeile"><span class="sp-bild">' + geschossSvg(k, S.laserfarbe) + "</span><span><b>" + esc(w.name) + "</b><br><small>Schaden " + w.schaden + (k === "zielfernrohr" ? ", langsam" : "")
           + (h >= 0 ? " · " + (h > 0 ? "hält noch " + h + "/60" : '<span class="sp-rot">stumpf – halber Schaden</span>') : "") + "</small></span>"
           + (hat ? (S.waffe === k ? '<button type="button" data-tu="ablegen">Ablegen</button>' : '<button type="button" data-tu="anlegen" data-w="' + k + '">Anlegen</button>')
                  : w.ab && (ich.level || 1) < w.ab ? '<button type="button" disabled>ab Level ' + w.ab + "</button>"
@@ -4759,11 +4600,7 @@
   var DORF = {
     baeckerei: { name: "Bäckerei", preis: 100, gibt: "2 Bratwürste je Stufe" },
     schule:    { name: "Schule",   preis: 150, gibt: "20 Erfahrung je Stufe", ab: 4 },
-    schmiede:  { name: "Schmiede", preis: 120, gibt: "1 Erz je Stufe" },
-    /* FASSUNG 668 — XANDER: „Wir brauchen noch mehr Gebäude." */
-    brauerei:   { name: "Brauerei",   preis: 130, gibt: "15 Mana je Stufe", ab: 5 },
-    bibliothek: { name: "Bibliothek", preis: 160, gibt: "30 Erfahrung je Stufe", ab: 6 },
-    rathaus:    { name: "Rathaus",    preis: 200, gibt: "15 Punkte je Stufe", ab: 8 }
+    schmiede:  { name: "Schmiede", preis: 120, gibt: "1 Erz je Stufe" }
   };
   function dorfSvg(art, stufe) {
     var dach = stufe >= 3 ? "#c9961a" : stufe === 2 ? "#b0402f" : "#8a4f22";
@@ -4771,15 +4608,6 @@
       + '<rect x="6" y="12.5" width="12" height="9" fill="#f4e7cf" stroke="#2d2418" stroke-width="1.1"/>';
     if (art === "baeckerei") return '<svg viewBox="0 0 24 24">' + haus + '<rect x="10" y="16" width="4" height="5.5" fill="#8a5a2e"/>'
       + '<path d="M8 3.5 C6 3.5 6 6.5 8 6.5 C9 6.5 9.8 5 10.2 4.2 C10.6 5 11.4 6.5 12.4 6.5 C14.4 6.5 14.4 3.5 12.4 3.5 C10.8 3.5 10.2 6.5 10.2 6.5" fill="none" stroke="#c0703a" stroke-width="1.3" transform="translate(4 -1)"/></svg>';
-    if (art === "brauerei") return '<svg viewBox="0 0 24 24">' + haus + '<ellipse cx="12" cy="18" rx="4" ry="3.2" fill="#b07a45" stroke="#5a3616" stroke-width=".8"/><path d="M8.4 16.6 H15.6 M8.4 19.4 H15.6" stroke="#3a4152" stroke-width=".8"/>'
-      + '<path d="M16.6 3.6 C18.6 2.6 20 4.4 18.8 5.8 C20.4 6.4 19.6 8.6 17.8 8 C17.4 9.4 15.4 9 15.6 7.6 C14 7.4 14.4 5 16 5.2 C15.6 4.4 16 3.8 16.6 3.6 Z" fill="#7cc242" stroke="#3d6e1c" stroke-width=".5"/></svg>';
-    if (art === "bibliothek") return '<svg viewBox="0 0 24 24"><path d="M3 9 L12 3.5 L21 9 Z" fill="#d9cdb0" stroke="#2d2418" stroke-width="1"/><rect x="4" y="9" width="16" height="2" fill="#e8dfc8" stroke="#2d2418" stroke-width=".8"/>'
-      + '<path d="M6 11 V19 M10 11 V19 M14 11 V19 M18 11 V19" stroke="#f4ecd6" stroke-width="2.2"/><path d="M6 11 V19 M10 11 V19 M14 11 V19 M18 11 V19" stroke="#8a7a5a" stroke-width=".4"/>'
-      + '<rect x="3.4" y="19" width="17.2" height="2.4" fill="#d9cdb0" stroke="#2d2418" stroke-width=".8"/><path d="M10.4 6.6 L12 5.6 L13.6 6.6 V8 L12 7.2 L10.4 8 Z" fill="#b0402f"/></svg>';
-    if (art === "rathaus") return '<svg viewBox="0 0 24 24"><rect x="9" y="2.6" width="6" height="10" fill="#f4e7cf" stroke="#2d2418" stroke-width=".9"/><path d="M8.4 3 L12 .6 L15.6 3 Z" fill="' + dach + '" stroke="#2d2418" stroke-width=".8"/>'
-      + '<circle cx="12" cy="6.4" r="2" fill="#fff" stroke="#2d2418" stroke-width=".6"/><path d="M12 6.4 V5.2 M12 6.4 L13 6.8" stroke="#2d2418" stroke-width=".5"/>'
-      + '<rect x="3.6" y="11.4" width="16.8" height="10" fill="#f4e7cf" stroke="#2d2418" stroke-width="1"/><path d="M3 11.6 L12 8.6 L21 11.6" fill="none" stroke="' + dach + '" stroke-width="1.4"/>'
-      + '<rect x="10.4" y="16" width="3.2" height="5.4" rx="1.6" fill="#8a5a2e"/><rect x="5.6" y="13.6" width="2.6" height="2.8" fill="#8fd3ff"/><rect x="15.8" y="13.6" width="2.6" height="2.8" fill="#8fd3ff"/></svg>';
     if (art === "schule") return '<svg viewBox="0 0 24 24">' + haus + '<rect x="10" y="2" width="4" height="5" fill="#f4e7cf" stroke="#2d2418" stroke-width=".9"/><circle cx="12" cy="4.5" r="1" fill="#f2c230"/>'
       + '<rect x="7.5" y="14.5" width="3" height="2.6" fill="#8fd3ff"/><rect x="13.5" y="14.5" width="3" height="2.6" fill="#8fd3ff"/><rect x="10.5" y="17.5" width="3" height="4" fill="#3a8dde"/></svg>';
     return '<svg viewBox="0 0 24 24">' + haus + '<rect x="15" y="4" width="2.6" height="6" fill="#6b4521" stroke="#2d2418" stroke-width=".8"/>'

@@ -1064,20 +1064,3 @@ body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: bl
 @keyframes spTrummX { from { translate: calc(var(--weite) * -1) 0; scale: .8; } to { translate: var(--weite) -4px; scale: 1.15; } }
 @keyframes spTrummDreh { to { rotate: 360deg; } }
 @media (prefers-reduced-motion: reduce) { .sp-orkan-strudel, .sp-orkan-schwanken, .sp-orkan-truemmer { animation: none; } }
-
-/* =================================================================
-   FASSUNG 668 — Energie-Waffen: Mehrfachfeuer, Dauerstrahl, Kugelblitz
-   ================================================================= */
-.sp-laser.sp-laser-streulaser { height: 2px; }
-.sp-plasma { position: fixed; height: 10px; margin-top: -5px; z-index: 9990; pointer-events: none; transform-origin: 0 50%; border-radius: 6px;
-  background: linear-gradient(180deg, rgba(123,44,255,0) 0, rgba(160,90,255,.85) 25%, #fff 50%, rgba(160,90,255,.85) 75%, rgba(123,44,255,0) 100%);
-  box-shadow: 0 0 10px 3px rgba(150, 80, 255, .7); animation: spPlasma .7s ease-in-out forwards; }
-@keyframes spPlasma { 0% { opacity: 0; clip-path: inset(0 100% 0 0); } 20% { opacity: 1; clip-path: inset(0 0 0 0); }
-  40% { height: 14px; margin-top: -7px; } 60% { height: 9px; margin-top: -4.5px; } 80% { height: 13px; margin-top: -6.5px; opacity: 1; } 100% { opacity: 0; } }
-.sp-g-kugelblitz { width: 30px; height: 30px; filter: drop-shadow(0 0 6px #6fd0ff); }
-.sp-g-kugelblitz svg { width: 100%; height: 100%; animation: spKnistern .12s steps(2) infinite; }
-@keyframes spKnistern { from { transform: rotate(0deg) scale(1); } to { transform: rotate(40deg) scale(1.08); } }
-.sp-blitzschlag { position: fixed; z-index: 9993; pointer-events: none; transform: translate(-50%, -100%); animation: spBlitzschlag .52s steps(1) forwards; }
-.sp-blitzschlag svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 5px #bfe8ff); }
-@keyframes spBlitzschlag { 0% { opacity: 1; } 18% { opacity: .15; } 30% { opacity: 1; } 55% { opacity: .3; } 70% { opacity: .9; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .sp-g-kugelblitz svg, .sp-plasma, .sp-blitzschlag { animation-duration: .01s; } }

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 665: TIER-FUSION
+   SONDE — FASSUNG 668: ENERGIE-WAFFEN, ZIEGELMAUER, NEUE TIERE, DORF
    ---------------------------------------------------------------------
-   Funk: „Fusion". Zwei eigene Tiere (beide ab Stufe 2) verschmelzen zu
-   einem neuen: Feuerfuchs (Fuchs + Phönix), Greif (Eule + Schäferhund),
-   Regenbogendrache (Babydrache + Einhorn).
+   XANDER: „Wir brauchen noch mehr Gebäude … mehr Fusionen noch mehr Tiere
+   und mehr Super Waffen auch mehr Laser Arten … wie kann man zwischen
+   diesen Salven und multiple Feuern unterscheiden? … Kugelblitz".
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -144,82 +144,110 @@ const sage = (gut, was, zusatz) => {
   const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
   const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
-
   pg.on("dialog", (d) => d.accept());
+  const P = "window.DMA_SPIEL.pruef";
 
-  console.log("\nIM REITER TIERE\n");
-  await pg.evaluate(() => {
-    const ich = window.__ich;
-    ich.level = 7; ich.punkte = 260;
-    ich.tiere = { fellmonster: { kraft: 30, stufe: 2 }, fuchs: { kraft: 20, stufe: 2 }, phoenix: { kraft: 28, stufe: 3 }, drache: { kraft: 25, stufe: 1 } };
-    window.DMA_SPIEL.menue("tiere");
-  });
-  await tick(400);
-  const rt = await pg.evaluate(() => {
-    const knopf = (k) => { const b = document.querySelector('#spPanel [data-tu="fusion"][data-k="' + k + '"]'); return b ? (b.disabled ? "zu:" : "auf:") + b.textContent.trim() : "fehlt"; };
-    const kaufen = [...document.querySelectorAll('#spPanel [data-tu="kaufen"]')].map((b) => b.dataset.d);
-    return { ff: knopf("feuerfuchs"), gr: knopf("greif"), rd: knopf("regenbogendrache"), kaufen: kaufen.join(","),
-             kopf: !!document.querySelector("#spPanel .sp-fusion-kopf"), rezepte: document.querySelectorAll("#spPanel .sp-fusion").length };
-  });
-  sage(rt.kopf && rt.rezepte === 5, "Abschnitt „Fusion“ mit fünf Rezepten", JSON.stringify(rt));
-  sage(/^auf:Verschmelzen · 200/.test(rt.ff), "Feuerfuchs: Fuchs St. 2 + Phönix St. 3 → Knopf frei", rt.ff);
-  sage(/^zu:dir fehlt Eule/.test(rt.gr) && /^zu:dir fehlt Einhorn/.test(rt.rd), "Greif und Regenbogendrache sagen, was fehlt", rt.gr + " | " + rt.rd);
-  sage(!/feuerfuchs|greif|regenbogendrache/.test(rt.kaufen), "Fusionstiere stehen nicht zum Kaufen da", rt.kaufen);
+  console.log("\nLADEN: ENERGIE-WAFFEN UND ZIEGELMAUER\n");
+  await pg.evaluate(() => { window.__ich.level = 6; window.__ich.punkte = 500; window.DMA_SPIEL.menue("waffen"); });
+  await tick(300);
+  const la = await pg.evaluate(() => { const z = (d) => { const b = document.querySelector('#spPanel [data-d="' + d + '"]'); if (b) return (b.disabled ? "zu:" : "auf:") + b.textContent.trim();
+      const zeile = [...document.querySelectorAll("#spPanel .sp-zeile")].find((r) => r.textContent.indexOf({ plasmastrahl: "Plasmastrahl", kugelblitz: "Kugelblitz" }[d] || "§") >= 0); return zeile ? "zu:" + zeile.querySelector("button").textContent : "fehlt"; };
+    const art = [...document.querySelectorAll("#spPanel .sp-zeile")].find((r) => /Fächerlaser/.test(r.textContent));
+    return { doppel: z("doppellaser"), faecher: z("streulaser"), plasma: z("plasmastrahl"), blitz: z("kugelblitz"), art: art ? art.textContent : "" }; });
+  sage(/auf:.*70/.test(la.doppel) && /auf:.*120/.test(la.faecher) && /ab Level 8/.test(la.plasma) && /ab Level 11/.test(la.blitz), "Level 6: Doppel- und Fächerlaser kaufbar, Plasmastrahl ab 8, Kugelblitz ab 11", JSON.stringify(la).slice(0, 200));
+  sage(/Mehrfachfeuer/.test(la.art), "im Laden steht, was es ist: Mehrfachfeuer (gleichzeitig) statt Salve (nacheinander)", la.art.slice(0, 90));
+  await pg.evaluate(() => window.DMA_SPIEL.menue("schutz"));
+  await tick(250);
+  const ziegel = await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-d="mauer_ziegel"]'); return b ? b.closest(".sp-zeile").textContent : ""; });
+  sage(/Ziegeln/.test(ziegel) && /65 Schaden/.test(ziegel), "Ziegelmauer im Laden (hält 65)", ziegel.slice(0, 80));
+  await pg.evaluate(() => { const p = document.getElementById("spPanel"); if (p) p.hidden = true; });
 
-  /* Zeichnungen: jedes neue Tier ist in seiner Kachel ganz zu sehen. */
+  console.log("\nENERGIE-WAFFEN IM FLUG\n");
+  await pg.evaluate(() => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis'); k.scrollIntoView({ block: "center", behavior: "instant" }); });
+  const flug = {};
+  for (const w of ["doppellaser", "streulaser", "plasmastrahl", "kugelblitz"]) {
+    flug[w] = await pg.evaluate(async (w) => {
+      window.DMA_TONLOG = [];
+      const dauer = window.DMA_SPIEL.pruef.geschossZeigen("ich", "bea", w, 0, 0);
+      await new Promise((r) => setTimeout(r, 90));
+      const z = { strahlen: document.querySelectorAll(".sp-laser-" + w).length, plasma: document.querySelectorAll(".sp-plasma").length, kugel: document.querySelectorAll(".sp-g-kugelblitz").length };
+      await new Promise((r) => setTimeout(r, dauer + 60));
+      z.blitz = document.querySelectorAll(".sp-blitzschlag").length;
+      z.toene = window.DMA_TONLOG.map((t) => t.name).join(",");
+      z.dauer = dauer;
+      return z;
+    }, w);
+    if (w === "kugelblitz") {
+      await pg.evaluate(() => window.DMA_SPIEL.pruef.geschossZeigen("ich", "bea", "kugelblitz", 0, 0));
+      await tick(550);
+      const box = await pg.evaluate(() => { const r = document.querySelector('#lcPlaetze').getBoundingClientRect(); return { x: 0, y: Math.max(0, r.top), width: innerWidth, height: Math.min(360, r.height) }; });
+      await pg.screenshot({ path: "/tmp/claude-0/p-668-kugelblitz.png", clip: box });
+      await tick(700);
+    }
+    if (w === "streulaser") {
+      await pg.evaluate(() => window.DMA_SPIEL.pruef.geschossZeigen("ich", "bea", "streulaser", 0, 0));
+      await tick(60);
+      const box = await pg.evaluate(() => { const r = document.querySelector('#lcPlaetze').getBoundingClientRect(); return { x: 0, y: Math.max(0, r.top), width: innerWidth, height: Math.min(360, r.height) }; });
+      await pg.screenshot({ path: "/tmp/claude-0/p-668-faecher.png", clip: box });
+      await tick(500);
+    }
+  }
+  console.log("   " + JSON.stringify(flug));
+  sage(flug.doppellaser.strahlen === 2 && /laserblau/.test(flug.doppellaser.toene), "Doppellaser: zwei Strahlen gleichzeitig, eigener Ton", JSON.stringify(flug.doppellaser));
+  sage(flug.streulaser.strahlen === 5, "Fächerlaser: fünf Strahlen gleichzeitig im Fächer", JSON.stringify(flug.streulaser));
+  sage(flug.plasmastrahl.plasma === 1 && /dunkelbrumm/.test(flug.plasmastrahl.toene), "Plasmastrahl: ein anhaltender Strahl, brummt", JSON.stringify(flug.plasmastrahl));
+  sage(flug.kugelblitz.kugel === 1 && flug.kugelblitz.blitz >= 1 && /gewitter/.test(flug.kugelblitz.toene), "Kugelblitz: knisternde Kugel, Blitzschlag und Donner beim Einschlag", JSON.stringify(flug.kugelblitz));
+
+  console.log("\nWAFFENRAD: EIGENER SEKTOR „ENERGIE“\n");
+  await pg.evaluate(() => { window.__ich.waffen = window.__ich.waffen.concat(["doppellaser", "streulaser", "plasmastrahl", "kugelblitz"]); const Q = window.DMA_SPIEL.pruef, S = Q.zustand(); S.ich = window.__ich; S.waffe = Q.slots()[0]; S.rad = 0; Q.schnellZeichnen(true); });
+  await tick(300);
+  const rad = await pg.evaluate(() => [...document.querySelectorAll(".sp-rad-voll .sp-rad-sektoren text.sp-rad-klasse")].map((t) => t.textContent).join(","));
+  sage(/Energie/.test(rad), "im Waffenrad gibt es den Sektor „Energie“", rad);
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.rad = null; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+
+  console.log("\nTIERE, FUSIONEN, MAUER, DORF\n");
   const bilder = await pg.evaluate(() => {
     const aus = {};
-    ["feuerfuchs", "greif", "regenbogendrache"].forEach((a) => {
+    ["dackel", "storch", "wolpertinger", "lindwurm"].forEach((a) => {
       const d = document.createElement("div"); d.style.cssText = "position:fixed;left:0;top:0;width:100px;height:100px";
       d.innerHTML = window.DMA_SPIEL.pruef.tierSvg(a, true); document.body.appendChild(d);
       const svg = d.querySelector("svg"), vb = svg.viewBox.baseVal, bb = svg.querySelector(".sp-tier-koerper").getBBox();
-      aus[a] = { teile: svg.querySelectorAll("path,circle,ellipse").length, drin: bb.x >= vb.x - 1 && bb.y >= vb.y - 1 && bb.x + bb.width <= vb.x + vb.width + 1 && bb.y + bb.height <= vb.y + vb.height + 1,
+      aus[a] = { teile: svg.querySelectorAll("path,circle,ellipse").length, drin: bb.x >= vb.x - 1.5 && bb.y >= vb.y - 1.5 && bb.x + bb.width <= vb.x + vb.width + 1.5 && bb.y + bb.height <= vb.y + vb.height + 1.5,
                  bb: [bb.x, bb.y, bb.width, bb.height].map((n) => Math.round(n)).join(" "), vb: [vb.x, vb.y, vb.width, vb.height].join(" ") };
       d.remove();
     });
     return aus;
   });
-  sage(Object.values(bilder).every((b) => b.teile >= 12 && b.drin), "drei eigene Zeichnungen, jede ganz in ihrer Kachel", JSON.stringify(bilder));
-  await pg.evaluate(() => { const p = document.querySelector("#spPanel .sp-fusion-kopf"); if (p) p.scrollIntoView({ block: "start" }); });
-  await tick(200);
-  await pg.screenshot({ path: "/tmp/claude-0/p-665-reiter.png" });
+  sage(Object.values(bilder).every((b) => b.teile >= 10 && b.drin), "Dackel, Storch, Wolpertinger, Lindwurm: eigene Zeichnungen, ganz in der Kachel", JSON.stringify(bilder));
+  await pg.evaluate(() => { const ich = window.__ich; ich.level = 9; ich.tiere = Object.assign({}, ich.tiere, { dackel: { kraft: 20, stufe: 2 }, fee: { kraft: 20, stufe: 2 }, stachelmonster: { kraft: 20, stufe: 2 } }); window.DMA_SPIEL.menue("tiere"); });
+  await tick(300);
+  const tr = await pg.evaluate(() => ({ rezepte: document.querySelectorAll("#spPanel .sp-fusion").length, wolp: (document.querySelector('#spPanel [data-tu="fusion"][data-k="wolpertinger"]') || {}).textContent || "",
+    kaufen: [...document.querySelectorAll('#spPanel [data-tu="kaufen"]')].map((b) => b.dataset.d).join(",") }));
+  sage(tr.rezepte === 5 && /Verschmelzen/.test(tr.wolp) && /storch/.test(tr.kaufen), "5 Fusionen (Wolpertinger bereit), Storch zu kaufen, Dackel ist schon deins", JSON.stringify(tr));
+  await pg.evaluate(() => { const p = document.querySelector("#spPanel .sp-fusion"); if (p) p.scrollIntoView({ block: "start" }); });
+  await tick(150);
+  await pg.screenshot({ path: "/tmp/claude-0/p-668-tiere.png" });
+  await pg.evaluate(() => { const p = document.getElementById("spPanel"); if (p) p.hidden = true; });
 
-  console.log("\nVERSCHMELZEN\n");
-  await pg.evaluate(() => { window.DMA_TONLOG = []; window.__t0 = performance.now(); });
-  await tippe('#spPanel [data-tu="fusion"][data-k="feuerfuchs"]');
-  await tick(1400);
-  const mitten = await pg.evaluate(() => ({ args: window.__fusionArgs, feier: !!document.querySelector(".sp-fusion-feier"), teile: document.querySelectorAll(".sp-fusion-teil").length,
-    toene: (window.DMA_TONLOG || []).map((t) => (t.name || t) + "").join(",") }));
-  sage(mitten.args && mitten.args.p_rezept === "feuerfuchs", "Server-Aufruf spiel_fusion mit dem Rezept", JSON.stringify(mitten.args));
-  sage(mitten.feier && mitten.teile === 2, "Fuchs und Phönix fliegen zusammen", JSON.stringify(mitten));
-  await pg.screenshot({ path: "/tmp/claude-0/p-665-blitz.png" });
-  await tick(800);
-  const neu = await pg.evaluate(() => { const n = document.querySelector(".sp-fusion-neu"); return n ? Number(getComputedStyle(n).opacity) : -1; });
-  sage(neu > 0.5, "das neue Tier erscheint nach dem Blitz", String(neu));
-  await pg.screenshot({ path: "/tmp/claude-0/p-665-neu.png" });
-  await tick(1400);
-  const nach = await pg.evaluate(() => ({ weg: !document.querySelector(".sp-fusion-feier"), sitz: document.querySelectorAll(".sp-tier.sp-tier-feuerfuchs").length,
-    meldung: (window.__hinweise || []).join(" | "), toene: (window.DMA_TONLOG || []).map((t) => (t.name || t) + "").join(",") }));
-  sage(nach.weg, "die Feier räumt sich auf", "");
-  sage(nach.sitz >= 1, "der Feuerfuchs sitzt am eigenen Platz", String(nach.sitz));
-  sage(/Feuerfuchs ist geboren/.test(nach.meldung), "Meldung „Feuerfuchs ist geboren“", nach.meldung.slice(-120));
+  const zg = await pg.evaluate(() => { const svg = window.DMA_SPIEL.pruef.mauerSvg("ziegel", false); const d = document.createElement("div"); d.innerHTML = svg; return { steine: d.querySelectorAll("path").length, fuge: /#e8d9c4/.test(svg) }; });
+  sage(zg.steine >= 30 && zg.fuge, "Ziegelmauer: viele kleine Ziegel mit hellen Fugen", JSON.stringify(zg));
 
-  console.log("\nANGRIFFE\n");
-  await pg.evaluate(() => { window.DMA_SPIEL.pruef.tierAngriff("ich", "bea", "regenbogendrache"); });
-  await tick(1400);
-  const rb = await pg.evaluate(() => document.querySelectorAll(".sp-feuerstrahl-regenbogen").length);
-  sage(rb >= 1, "Regenbogendrache faucht Regenbogenfeuer", String(rb));
-  await tick(2600);
-  await pg.evaluate(() => { window.__zungen = 0; const mo = new MutationObserver((l) => l.forEach((m) => m.addedNodes.forEach((n) => { if (n.classList && n.classList.contains("sp-zunge")) window.__zungen++; }))); mo.observe(document.body, { childList: true }); window.DMA_SPIEL.pruef.tierAngriff("ich", "bea", "feuerfuchs"); });
-  await tick(2800);
-  const zu = await pg.evaluate(() => window.__zungen);
-  sage(zu >= 5, "Feuerfuchs beißt mit Glut (Flammen am Biss)", String(zu));
-  await pg.evaluate(() => { window.DMA_SPIEL.pruef.tierAngriff("ich", "bea", "greif"); });
-  await tick(1500);
-  await pg.screenshot({ path: "/tmp/claude-0/p-665-greif.png" });
+  await pg.evaluate(() => { const ich = window.__ich; ich.level = 9; ich.punkte = 900; ich.dorf = { baeckerei: { stufe: 1, lp: 20 } }; const Q = window.DMA_SPIEL.pruef, S = Q.zustand(); S.ich = ich; S.schnellMenue = true; S.schnellReiter = "dorf"; Q.schnellZeichnen(true);
+    const m = document.querySelector(".sp-schnellmenue"); if (m) m.scrollIntoView({ block: "center" }); });
+  await tick(300);
+  const dorf = await pg.evaluate(() => ({ namen: [...document.querySelectorAll(".sp-schnellmenue .sp-dorf b")].map((b) => b.textContent.replace(/ ·.*/, "")).join(","),
+    bauen: [...document.querySelectorAll('.sp-schnellmenue [data-s="bauen"]')].filter((b) => !b.disabled).map((b) => b.dataset.w).join(",") }));
+  sage(/Brauerei/.test(dorf.namen) && /Bibliothek/.test(dorf.namen) && /Rathaus/.test(dorf.namen) && /rathaus/.test(dorf.bauen), "Dorf: Brauerei, Bibliothek, Rathaus dazu (Level 9: alle baubar)", JSON.stringify(dorf));
+  await pg.screenshot({ path: "/tmp/claude-0/p-668-dorf.png" });
+  await pg.evaluate(() => { window.__ernte = Object.assign({}, window.__ich, { ok: true, bratwurst: 2, erz: 0, xp: 30, mana: 15, punkte_plus: 15 }); window.__hinweise.length = 0;
+    const Q = window.DMA_SPIEL.pruef, S = Q.zustand(); S.schnellMenue = true; S.schnellReiter = "dorf"; Q.schnellZeichnen(true);
+    const k = document.querySelector('.sp-schnellmenue [data-s="ernte"]'); if (k) k.click(); });
+  await tick(400);
+  const ernte = await pg.evaluate(() => window.__hinweise.join(" | ") + " §rufe:" + window.__rufe.filter((r) => /dorf/.test(r.name)).length + " §knopf:" + !!document.querySelector('.sp-schnellmenue [data-s="ernte"]') + " §meld:" + ((window.DMA_SPIEL.pruef.zustand().menueMeldung || {}).text || ""));
+  sage(/15 Mana/.test(ernte) && /15 Punkte/.test(ernte), "die Ernte nennt auch Mana und Punkte", ernte.slice(0, 120));
 
   sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.slice(0, 3).join(" | "));
-  console.log("\n" + (fehler ? "Fassung 665: " + fehler + " rot." : "Fassung 665 auf dem Telefon: alles grün.") + "\n");
+  console.log("\n" + (fehler ? "Fassung 668: " + fehler + " rot." : "Fassung 668 auf dem Telefon: alles grün.") + "\n");
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

@@ -584,3 +584,17 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Mauern als filigraner Bogen unter dem Ring (XANDER: „Holzstriche … Diamant … Gläser … glitzert … Titan durchgängig … Steinmauer durchgängige Blöcke"): Holz = Lattenzaun, Stein = versetzte Blöcke, Stahl = Band mit Nieten, Titan = gebürstetes Band, Diamant = Glasfacetten, die funkeln. Mit Brustpanzer rückt der Bogen nach außen und lässt unten Platz für den Namen.
 - Orkan (XANDER: „sieht nicht aus wie ein Orkan und … wirbelt … nicht herum"): Trichter aus 11 drehenden Luftringen, schwankend, mit kreisenden Blättern und Staub; der Getroffene wird sichtbar hochgehoben, dreimal herumgewirbelt und landet federnd wieder.
 - Sonde: `pruefe-667-latenz.js` (7 Prüfungen). `pruefe-651` misst die Mauer als Bogen; `pruefe-654` schließt vor dem Tippen das Deutsch-Fenster. Alle Spiel-Sonden grün.
+
+## Fassung 668 — Energie-Waffen, Ziegelmauer, neue Tiere und Fusionen, mehr Gebäude
+
+- XANDER: „mehr Laser Arten … wie kann man zwischen diesen Salven und multiple Feuern unterscheiden? … Kugelblitz". Neue Klasse „Energie" (eigener Sektor im Waffenrad), im Laden steht jeweils die Art:
+  - SALVE = mehrere Schüsse nacheinander (Laser-Salve, MG, Spätzle – wie bisher)
+  - Doppellaser (Lv 4, 70 P, 15 Schaden): MEHRFACHFEUER – zwei Strahlen gleichzeitig, Ton „laserblau"
+  - Fächerlaser (Lv 6, 120 P, 17): MEHRFACHFEUER – fünf bunte Strahlen im Fächer
+  - Plasmastrahl (Lv 8, 150 P, 20): DAUERSTRAHL, der anschwillt und brummt
+  - Kugelblitz (Lv 11, 190 P, 26): knisternde Elektrokugel im Zickzack, beim Einschlag drei Blitze und Donner („gewitter")
+- Ziegelmauer (32 P, hält 65): viele kleine rote Ziegel mit hellen Fugen, als Bogen unter dem Ring.
+- Neue Tiere: Dackel (Boden, 110 P, zerrt, 25 %) und Storch (Luft, 170 P, pickt, 35 %). Neue Fusionen: Wolpertinger (Dackel + Fee: Hasenleib, Geweih, Flügel, 50 %) und Lindwurm (Babydrache + Stachelmonster: Schlangenschwanz, goldene Flügel, speit Feuer, 60 %).
+- Dorf (XANDER: „Wir brauchen noch mehr Gebäude"): Brauerei (Lv 5, 15 Mana je Stufe), Bibliothek (Lv 6, 30 Erfahrung je Stufe), Rathaus (Lv 8, 15 Punkte je Stufe); die Ernte nennt alles.
+- Server: `spiel_waffe_schaden`, `spiel_treffer` (Abnutzung, Tiere), `spiel_kaufen` (Preise, Level-Sperren, Ziegel, Tiere), `spiel_tier_max`, `spiel_tier_wechseln`, `spiel_fusion`, `spiel_bauen`, `spiel_dorf_abholen`. Im Rollback getestet (Kugelblitz, Ziegelmauer 65, Dackel, Wolpertinger, Lindwurm, Rathaus-Ernte +15).
+- Sonde: `pruefe-668-energie-tiere-dorf.js` (15 Prüfungen); `pruefe-665` erwartet jetzt 5 Rezepte. Alle Spiel-Sonden grün.
