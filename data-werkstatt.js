@@ -49,22 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 630: Flugzeug und Greifvogel fliegen senkrecht ohne Kehre (Walkie 207), Wangenhand neu im Profil (Walkie 204). Spielpaket Funk 108–111 in Arbeit: Server fertig (andere heilen, verhältnismäßige Gegenwehr, drei Monster, Abnutzung, Eier- und Hühnerwerfer, drei neue Tränke, Minen und Falltüren), 12 neue Töne erzeugt.",
+  stand: "Fassung 632: /anziehen alle trifft wieder alle (war 0 von 5). 631: Spiel mit Treffertönen, anderen heilen, verhältnismäßiger Gegenwehr, Stachelmonster, Drache, Eier- und Hühnerwerfer, neuen Tränken, Minen und Falltüren, Lebens- und Manaring. Aufgabenbank: 1.834 unbrauchbare Aufgaben abgeschaltet, 12.325 aktiv.",
 
   inArbeit: [
-    { seit: "2026-09-25T00:39",
-      text: "Spiel-Oberfläche für Funk 108–111 mit Tönen" },
-    { seit: "2026-09-25T00:39",
-      text: "Anziehen alle: 0 von 5 Plätzen (war schon vor 630 rot)" },
+    { seit: "2026-09-25T01:08",
+      text: "Walkie 264–270 abwarten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T00:39",
-      text: "Flugzeug senkrecht ohne Ruck" },
-    { seit: "2026-09-25T00:39",
-      text: "Wangenhand von der Seite" },
-    { seit: "2026-09-25T00:39",
-      text: "Server: Heilen, Gegenwehr, Monster, Fallen" },
+    { seit: "2026-09-25T01:08",
+      text: "Flugzeug senkrecht ohne Ruck (630)" },
+    { seit: "2026-09-25T01:08",
+      text: "Wangenhand von der Seite (630)" },
+    { seit: "2026-09-25T01:08",
+      text: "Spielpaket Funk 108–111 (631)" },
+    { seit: "2026-09-25T01:08",
+      text: "Aufgabenbank gesäubert" },
+    { seit: "2026-09-25T01:08",
+      text: "Anziehen alle (632)" },
   ],
 };

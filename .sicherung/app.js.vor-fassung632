@@ -29541,13 +29541,7 @@
        schlichten Namen zaehlt deshalb nur ein Platz, der auch so heisst
        (oder die eine nachsichtige Schreibweise, „Emmi" fuer „Emmy"). */
     const suche = String(wen || "").trim().toLowerCase();
-    /* FASSUNG 632 — „alle" ist kein Name. GEMESSEN (pruefe-runde98-
-       alle-telefon): „/anziehen alle krone" traf 0 von 5 Plätzen, weil
-       die Zeile oben „alle" wie einen Namen behandelte, den niemand
-       trägt. Die Sammelwörter gehen deshalb wie „*" an alle. */
-    const sammel = suche === "*" || /^(alle|allen|jeden|jeder|jede)$/.test(suche);
-    const schlicht = suche && !sammel && !/^\d+$/.test(suche) && suche.indexOf(",") < 0;
-    if (sammel) ziele = lcZielPlaetze("*");
+    const schlicht = suche && suche !== "*" && !/^\d+$/.test(suche) && suche.indexOf(",") < 0;
     const passt = (pl) => {
       const n = lcPlatzSchluessel(pl);
       if (!n) return false;
