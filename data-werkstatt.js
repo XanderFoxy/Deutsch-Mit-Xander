@@ -49,34 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 686 online: Hauptmenü wie vorher, Dorf als Bild mit Stationen, Trank-Knopf, Zauber oder Waffen beim langen Druck, Rüstung unter Level/Mana, Rakete zünden (685)",
+  stand: "Fassung 688 online: eigener Auftritt beim Kommen und Gehen, neue Knöpfe unter den Plätzen mit Magic Button, Menü-Fix",
 
   inArbeit: [
-    { seit: "2026-09-25T22:24",
-      text: "Einzugs-/Abschiedsanimation je Person (z. B. Ferrari)" },
-    { seit: "2026-09-25T22:24",
-      text: "Knöpfe unter den Plätzen neu gestalten, Magic Button in der Mitte" },
+    { seit: "2026-09-25T23:52",
+      text: "6 alte Prüfungen waren schon vor 685 rot (dummy, namensvorschlaege, runde69, runde87-strichlinien, runde88-pac, runde92-betrieb/grundebene)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T22:24",
-      text: "Hauptmenü bleibt Hauptmenü – Dorf ist ein eigenes Fenster" },
-    { seit: "2026-09-25T22:24",
-      text: "Dorfbild mit 12 detaillierten Gebäuden, antippbar" },
-    { seit: "2026-09-25T22:24",
-      text: "Station im Bild: Bauen, Ausbauen, Reparieren, Beliefern, Abholen" },
-    { seit: "2026-09-25T22:24",
-      text: "Trank-Flasche in der Leiste" },
-    { seit: "2026-09-25T22:24",
-      text: "Langer Druck: Zauber | Waffen, im Rad umschalten, Mana und Torte im Zauberrad" },
-    { seit: "2026-09-25T22:24",
-      text: "Helm und Kürass unter Level und Mana" },
-    { seit: "2026-09-25T22:24",
-      text: "Mario-Röhre von oben, Gleisspuren, Schranke am Ziel (685)" },
-    { seit: "2026-09-25T22:24",
-      text: "Hot Rod und Monstertruck als Reise (685)" },
-    { seit: "2026-09-25T22:24",
-      text: "Als Rakete zünden mit Feuerwerk (685)" },
+    { seit: "2026-09-25T23:52",
+      text: "Mein Auftritt: Roter Sportwagen, Hot Rod, Monstertruck, Rakete, Zauberwolke – alle sehen es" },
+    { seit: "2026-09-25T23:52",
+      text: "Knöpfe unter den Plätzen: Glasknöpfe, Magic Button in der Mitte (Betreiber belegt: Alles, Bilder, Tafel, Lehrer-Menü)" },
+    { seit: "2026-09-25T23:52",
+      text: "Platz verlassen nur für die, die oben sitzen; Buch im Magic Button" },
+    { seit: "2026-09-25T23:52",
+      text: "Magic-Menü bleibt nach dem Tipp offen" },
+    { seit: "2026-09-25T23:52",
+      text: "Als Rakete zünden steht unter Bombe" },
   ],
 };
