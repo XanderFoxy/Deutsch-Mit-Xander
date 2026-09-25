@@ -243,7 +243,8 @@ const sage = (gut, was, zusatz) => {
   console.log("\nMENÜ „MEHR“\n");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.level = 5; S.schnellReiter = "mehr"; });
   const mehr = await pg.evaluate(() => window.DMA_SPIEL.pruef.schnellMenueHtml());
-  sage(/Nebel <small>25 Mana/.test(mehr) && /Erdbeben <small>35 Mana/.test(mehr) && /Orkan <small>ab Level 7/.test(mehr), "„Mehr“ zeigt alle Zauber mit Mana oder Level");
+  /* Ab Fassung 655 stehen die Zauber nur im Zauberrad („so viele Erdbeben …"); „Mehr“ öffnet es und zeigt den Rang. */
+  sage(/data-s="zauberrad"/.test(mehr) && /Zauberlehrling|Zaubergeselle|Magier|Zaubermeister|Erzmagier/.test(mehr) && !/data-s="zauberwahl"/.test(mehr), "„Mehr“ öffnet das Zauberrad und zeigt den Rang – keine doppelte Zauberliste");
   if (process.env.BILD) { await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.zrad = true; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300); await pg.screenshot({ path: process.env.BILD }); }
 
   await br.close(); srv.close();

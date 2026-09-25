@@ -33313,11 +33313,6 @@
   function lcPlatzMenue(platz) {
     lcPlatzMenueZu();
     const eigen = platz.classList.contains("lc-platz-ich");
-    /* FASSUNG 655 — XANDER: „ein langes Drücken würde … das Zaubermenü
-       aufrufen". Wer mitspielt, bekommt beim langen Druck aufs EIGENE
-       Bild das Zauberrad; das Platzmenü steht dann im Spielmenü unter
-       „Mehr → Mein Platzmenü". */
-    try { if (eigen && window.DMA_SPIEL && window.DMA_SPIEL.langAufEigen && window.DMA_SPIEL.langAufEigen(platz)) return true; } catch (e) {}
     const leer = platz.classList.contains("lc-platz-frei");
     const nameKnoten = platz.querySelector(".lc-platz-name");
     /* Erst der echte Name vom Platz, die Beschriftung nur als

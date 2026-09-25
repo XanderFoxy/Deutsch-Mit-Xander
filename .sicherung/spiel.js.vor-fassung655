@@ -357,7 +357,7 @@
     var unten = 60;
     try {
       if (schnellEl && !schnellEl.hidden) {
-        unten = (parseFloat(schnellEl.style.bottom) || 0) + schnellEl.offsetHeight + 6 + (schnellEl.querySelector(".sp-s-burger") ? 36 : 0);
+        unten = (parseFloat(schnellEl.style.bottom) || 0) + schnellEl.offsetHeight + 6;
         /* FASSUNG 650 — ein offenes Rad (Waffen oder Zauber) steht über
            der Leiste: die Meldung rückt darüber, statt es zu verdecken. */
         var radOffen = schnellEl.querySelector(".sp-rad");
@@ -576,40 +576,12 @@
     rpc("spiel_superkraft", {}).then(function (r) {
       if (!r || !r.ok) { hinweis("🔥 " + ((r && r.grund) || "geht nicht")); return; }
       S.ich = r; S.stand[r.id] = oeffentlich(r);
+      ton("gong", 0.55);
       senden({ ereignis: "stand", stand: oeffentlich(r) });
       senden({ ereignis: "daemon" });
-      daemonAusbruch(meineChatId(), true);
+      zahlZeigen(meineChatId(), null, "dämonisch 90 s");
       zeichnen(); schnellZeichnen(); panelAuffrischen();
     }).catch(function (e) { hinweis("Superkraft ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  /* FASSUNG 655 — XANDER: „wo meine Superkraft aufgeladen ist, hat sich
-     nicht das Gefühl, dass irgendwas passiert … da müsste eine andere
-     Animation kommen, dass man das fühlt". Der Ausbruch: eine lila Welle
-     vom eigenen Bild, der Bildschirmrand glüht lila, Flammen lodern um
-     das Bild, so lange es wirkt; jeder Treffer zeigt eine große lila
-     Zahl mit „×1,5". */
-  function daemonAusbruch(chatId, ich) {
-    ton("gong", 0.5); setTimeout(function () { ton("explosion2", 0.3); }, 180);
-    var m = mittelpunkt(chatId);
-    if (m) {
-      [0, 260].forEach(function (warte) {
-        setTimeout(function () {
-          var w = document.createElement("div");
-          w.className = "sp-daemon-welle";
-          w.style.left = m.x + "px"; w.style.top = m.y + "px"; w.style.width = w.style.height = Math.round(m.r * 2) + "px";
-          document.body.appendChild(w);
-          setTimeout(function () { w.remove(); }, 1300);
-        }, warte);
-      });
-    }
-    if (ich) {
-      var schirm = document.createElement("div");
-      schirm.className = "sp-daemon-schirm";
-      document.body.appendChild(schirm);
-      setTimeout(function () { schirm.remove(); }, 1800);
-      hinweis("🔥 Dämonisch! 90 s lang: du teilst ×1,5 Schaden aus und steckst nur 70 % ein.");
-    }
-    zahlZeigen(chatId, null, "dämonisch");
   }
   function trainieren(skill) {
     rpc("spiel_trainieren", { p_skill: skill }).then(function (r) {
@@ -843,7 +815,8 @@
       ton("mampf", 0.4);
       zahlZeigen(n.von, n.plus, n.sorte === "bratwurst" ? "Bratwurst" : "Sauerkraut");
     } else if (n.ereignis === "daemon") {
-      daemonAusbruch(n.von, false);
+      ton("gong", 0.45);
+      zahlZeigen(n.von, null, "dämonisch");
     } else if (n.ereignis === "trank") {
       if (n.sorte === "tarn") ton("tarnung", 0.5); else ton("trankschluck", 0.45);
     } else if (n.ereignis === "duell" && n.an === meineChatId()) {
@@ -879,35 +852,40 @@
   }
   function kampfmodus() { return S.bereit && (Boolean(S.waffe) || Boolean(S.zauber) || Boolean(S.duell && Date.now() < S.duell.bis)); }
 
-  /* FASSUNG 652/655 — XANDER: „Doppelklick ist Waffe umschalten. Das
-     könnte aber bisschen schneller reagieren … im Kampf nicht schnell
-     genug" und „ein langes Drücken würde … das Zaubermenü aufrufen".
-     Früher wartete der zweite Tipp noch 430 ms, ob ein dritter kommt.
-     Jetzt wechselt der zweite Tipp SOFORT; lang drücken aufs eigene Bild
-     öffnet im Spiel das Zauberrad (app.js fragt vorher hier nach). */
-  var eigenLangFrei = false;
+  /* FASSUNG 652 — XANDER: „wenn man sich selbst doppelt antippt … dass
+     ich dann die Waffe wechselt … bei zweimal tippen irgendwas … und bei
+     dreimal tippen irgendwas anderes, was ich mir vorher einstelle".
+     Ein Tipp aufs eigene Bild tut sonst nichts (app.js); der erste geht
+     also weiter wie immer, erst der zweite und dritte gehören dem Spiel.
+     2× = Waffe 1 ↔ Waffe 2, 3× = das Makro aus „Mehr". */
+  var MAKROS = [["heilen", "Heilen"], ["superkraft", "Superkraft"], ["zauber", "Zauberrad"]];
+  function makro3() { try { var m = localStorage.getItem("dma_spiel_makro3"); return MAKROS.some(function (x) { return x[0] === m; }) ? m : "heilen"; } catch (e) { return "heilen"; } }
   function eigenTipp() {
     var jetzt = Date.now();
-    var zweiter = jetzt - (S.eigenZeit || 0) < 380;
-    S.eigenZeit = zweiter ? 0 : jetzt;
-    if (!zweiter) return false;
-    var sl = slots(), neu = S.waffe === sl[0] ? sl[1] : sl[0];
-    S.waffe = neu; S.rad = null;
-    ton("swoosh", 0.3);
-    zahlZeigen(meineChatId(), null, WAFFEN[neu].name);
-    zeichnen(); schnellZeichnen(true);
-    return true;
-  }
-  function langAufEigen(platz) {
-    if (eigenLangFrei || !spielSichtbar()) return false;
-    S.zrad = true; S.rad = null; S.schnellMenue = false; S.radOffenSeit = Date.now();
-    ton("zauberpuff", 0.3);
-    schnellZeichnen(true);
+    S.eigenTipps = jetzt - (S.eigenZeit || 0) < 420 ? (S.eigenTipps || 1) + 1 : 1;
+    S.eigenZeit = jetzt;
+    clearTimeout(S.eigenUhr);
+    if (S.eigenTipps < 2) return false;
+    S.eigenUhr = setTimeout(function () {
+      var n = S.eigenTipps; S.eigenTipps = 0;
+      if (n === 2) {
+        var sl = slots(), neu = S.waffe === sl[0] ? sl[1] : sl[0];
+        S.waffe = neu; S.rad = null;
+        ton("swoosh", 0.3);
+        hinweis("🔁 " + WAFFEN[neu].name + " angelegt (2× aufs eigene Bild tippen wechselt).");
+      } else {
+        var m = makro3();
+        if (m === "heilen") schnellHeilen();
+        else if (m === "superkraft") superkraft();
+        else { S.zrad = true; S.rad = null; S.schnellMenue = false; }
+      }
+      zeichnen(); schnellZeichnen(true);
+    }, 430);
     return true;
   }
   /* Aufgerufen vom Tipp auf einen Platz (app.js). true = erledigt. */
   function tippAufPlatz(knopf, p, ev) {
-    if (p && p.ich && spielSichtbar() && !S.legen && !S.graben && !(S.zauber && ZAUBER[S.zauber].freund)) { if (eigenTipp()) return true; }
+    if (p && p.ich && spielSichtbar() && !S.legen && !S.graben && !S.zauber) { if (eigenTipp()) return true; }
     /* FUNK 111 — nach „Mine legen" / „Falltür legen" gilt der nächste
        Tipp dem Platz, auf den sie soll. */
     if (S.legen && S.bereit && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
@@ -923,12 +901,6 @@
     }
     /* FASSUNG 650 — ein bereiter Zauber gilt dem nächsten Gesicht. */
     if (S.zauber && S.bereit && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
-      /* FASSUNG 655 — XANDER: „mit der Gummipuppe probiere ich das. Ich
-         sehe kein Erdbeben". Auf Puppe und Sparringspartner wird geübt:
-         gleiches Bild, gleicher Ton, kein Mana, nur auf dem eigenen Gerät. */
-      var nrZ = Number(knopf.dataset.lcPlatz);
-      if (S.sparring && nrZ === S.sparring) { uebungZaubern("sparring:" + S.sparring); return true; }
-      if (p && istPuppe(p.id)) { uebungZaubern(p.id); return true; }
       if (!p || p.leer) { hinweis("✨ Tippe auf ein Gesicht – der Platz ist leer."); return true; }
       if (p.ich && !ZAUBER[S.zauber].freund) { hinweis("✨ Nicht auf dich selbst – tippe auf jemand anderen."); return true; }
       if (istPuppe(p.id) || /^sparring:/.test(p.id)) { hinweis("✨ Zauber wirken nur auf echte Mitspieler."); return true; }
@@ -1011,7 +983,7 @@
         var n = { ereignis: "treffer", zielChat: p.id, schaden: erg.schaden, abgewehrt: erg.abgewehrt,
                   zone: erg.zone, kaputt: erg.kaputt, gegenwehr: erg.gegenwehr,
                   gegen_geschuetz: erg.gegen_geschuetz || 0, gegen_tier: erg.gegen_tier || 0, tier: erg.tier || "", waffe: waffe,
-                  gegen_flug: erg.gegen_flug || 0, flugtier: erg.flugtier || "", tier_heil: erg.tier_heil || 0, daemon: Boolean(erg.daemon),
+                  gegen_flug: erg.gegen_flug || 0, flugtier: erg.flugtier || "", tier_heil: erg.tier_heil || 0,
                   ziel_stand: erg.ziel, ich_stand: erg.ich };
         senden(n);
         n.von = ichChat;
@@ -1304,12 +1276,12 @@
      Sie steigen ÜBER dem Kreis auf: die Gesichtsmitte bleibt frei.
      --------------------------------------------------------------- */
   var ZONEN = { kopf: "Kopfschuss", herz: "Herz", koerper: "", streif: "Streifschuss", daneben: "daneben" };
-  function zahlZeigen(chatId, wert, text, klasse) {
+  function zahlZeigen(chatId, wert, text) {
     var el = platzElVon(chatId);
     if (!el) return;
     var kreis = el.querySelector(".lc-kreis");
     var z = document.createElement("span");
-    z.className = "sp-zahl " + (wert == null ? "sp-zahl-grau" : wert < 0 ? "sp-zahl-rot" : "sp-zahl-gruen") + (klasse ? " " + klasse : "");
+    z.className = "sp-zahl " + (wert == null ? "sp-zahl-grau" : wert < 0 ? "sp-zahl-rot" : "sp-zahl-gruen");
     z.textContent = (wert == null ? "" : (wert > 0 ? "+" : "−") + Math.abs(wert)) + (text ? (wert == null ? "" : " ") + text : "");
     z.style.top = Math.max(0, (kreis ? kreis.offsetTop : 0) - 4) + "px";
     el.appendChild(z);
@@ -1354,19 +1326,6 @@
     if ((ich.level || 1) < z.level) return z.name + " gibt es ab Level " + z.level + " – du bist Level " + (ich.level || 1) + ".";
     if ((ich.mana || 0) < z.mana) return z.name + " braucht " + z.mana + " Mana – du hast " + (ich.mana || 0) + ". Deutschaufgaben füllen Mana.";
     return "";
-  }
-  var UEBUNG_SCHADEN = { brezelflut: 6, muecken: 10, erdbeben: 10, hexenschuss: 4, orkan: 15 };
-  function uebungZaubern(chatId) {
-    var art = S.zauber, z = ZAUBER[art];
-    if (!z) return;
-    S.zauber = "";
-    var st = puppeStand(chatId), schaden = UEBUNG_SCHADEN[art] || 0, heil = z.freund ? 20 : 0;
-    st.lp = Math.max(0, Math.min(st.lp_max || 100, st.lp - schaden + heil)); st.kaputt = st.lp <= 0;
-    if (st.kaputt) setTimeout(function () { st.lp = st.lp_max || 100; st.kaputt = false; zeichnen(); }, 4000);
-    zauberZeigen({ ereignis: "zauber", sorte: art, zielChat: chatId, von: meineChatId(), schaden: schaden, heil: heil, dauer: z.dauer,
-                   mauer_riss: 0, kaputt: st.kaputt, uebung: true });
-    hinweis("🎯 Übung: " + z.name + " – kostet kein Mana. Echte Wirkung gibt es nur bei Mitspielern.");
-    schnellZeichnen(true);
   }
   function zaubern(p) {
     var art = S.zauber, z = ZAUBER[art];
@@ -1548,7 +1507,7 @@
     if (n.zone === "daneben") { zahlZeigen(zielChat, null, "daneben"); return; }
     if (n.waffe === "sauerkraut" && n.schaden > 0) krautZeigen(zielChat);
     if (n.schaden > 0) {
-      zahlZeigen(zielChat, -n.schaden, (ZONEN[n.zone] || "") + (n.daemon ? " ×1,5" : ""), n.daemon ? "sp-zahl-daemon" : "");
+      zahlZeigen(zielChat, -n.schaden, ZONEN[n.zone] || "");
       var el = platzElVon(zielChat);
       if (el) {
         el.classList.remove("sp-getroffen"); void el.offsetWidth; el.classList.add("sp-getroffen");
@@ -1599,17 +1558,7 @@
        Schuss zurück, und an der Mündung blitzt es. */
     var turm = (platzElVon(von) || document.createElement("i")).querySelector(".sp-geschuetz");
     if (turm) {
-      /* Das Rohr dreht sich zum Angreifer; die Kugeln fliegen aus seiner Spitze. */
-      var dreh = turm.querySelector(".sp-rohr"), spitze = turm.querySelector(".sp-rohr-spitze");
-      if (dreh) {
-        dreh.style.transition = "none";
-        turm.style.setProperty("--zielwinkel", (Math.atan2(z.y - sy, z.x - sx) * 180 / Math.PI).toFixed(1) + "deg");
-        void dreh.getBoundingClientRect();
-        if (spitze) { var sr = spitze.getBoundingClientRect(); if (sr.width >= 0 && sr.left) { sx = sr.left + sr.width / 2; sy = sr.top + sr.height / 2; } }
-        dreh.style.transition = "";
-        clearTimeout(turm.zielUhr);
-        turm.zielUhr = setTimeout(function () { turm.style.removeProperty("--zielwinkel"); }, 1600);
-      }
+      turm.style.setProperty("--zielwinkel", Math.max(-60, Math.min(60, Math.atan2(z.y - sy, z.x - sx) * 180 / Math.PI + 45)) + "deg");
       turm.classList.remove("sp-feuert"); void turm.offsetWidth; turm.classList.add("sp-feuert");
       setTimeout(function () { turm.classList.remove("sp-feuert"); }, 700);
     }
@@ -2132,17 +2081,23 @@
       schnellEl.style.bottom = Math.max(0, Math.round(unten)) + "px";
     } catch (e) {}
     var ich = S.ich, teile = [], s = slots();
-    /* FASSUNG 655 — XANDER: „Der Gaming Controller bedeutet doch schon
-       spielen … Wenn der Gaming Controller angeschaltet ist, dann leuchtet
-       er schon grün … über dem Controller im Burger Menü, was dann alles
-       aufruft." Der Controller IST „Mitspielen" (grün = an, nochmal
-       tippen = Pause); der grüne Punkt entfällt. Das Menü (☰) sitzt
-       direkt über dem Controller und klappt darüber auf. */
-    teile.push('<button type="button" class="sp-s-ei sp-s-mit' + (ich.mitspielen ? " sp-an" : "") + '" data-s="mitspielen" title="'
+    /* FASSUNG 651 — XANDER: „ich habe gesagt du solltest so ein kleines
+       Ei haben mit dem Gaming Controller … und das Burger Menü eher oben
+       drüber". Das Ei IST der Menüknopf: ganz links (nie mehr am rechten
+       Rand, wo Android abschnitt), das Menü klappt darüber auf. „Mehr →
+       Leiste einklappen" lässt nur das Ei stehen; ein Tipp holt sie zurück. */
+    if (S.leisteZu == null) { try { S.leisteZu = localStorage.getItem("dma_spiel_leiste_zu") === "1"; } catch (e) { S.leisteZu = false; } }
+    teile.push('<button type="button" class="sp-s-ei sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + (S.leisteZu ? " sp-s-ei-zu" : "") + '" data-s="' + (S.leisteZu ? "ei" : "klappe") + '" title="' + (S.leisteZu ? "Spielleiste öffnen" : "Spielmenü: Waffen, Heilen, Tiere, Mehr") + '">'
+      /* FASSUNG 652 — „nicht so ein queren Symbol, sondern einfach ein
+         kleines viereckiges Symbol mit dem Game Controller". */
+      + '<svg viewBox="0 0 24 24"><path d="M6.2 7.5 H17.8 C20.6 7.5 22.4 10.4 22.8 14.2 C23.2 17.6 21.4 19.4 19.4 18.4 L16.4 15.8 H7.6 L4.6 18.4 C2.6 19.4 .8 17.6 1.2 14.2 C1.6 10.4 3.4 7.5 6.2 7.5 Z" fill="#eef1f7"/>'
+      + '<path d="M7 10.2 V14.2 M5 12.2 H9" stroke="#2f3749" stroke-width="1.7" stroke-linecap="round"/>'
+      + '<circle cx="16.4" cy="10.9" r="1.15" fill="#e2403a"/><circle cx="18.6" cy="13.1" r="1.15" fill="#3bbf4a"/><circle cx="14.2" cy="13.1" r="1.15" fill="#f2c230"/><circle cx="16.4" cy="15.2" r="1.15" fill="#3a8dde"/></svg></button>');
+    if (S.leisteZu) { S.schnellMenue = false; S.rad = null; S.zrad = false; }
+    else {
+    teile.push('<button type="button" class="sp-s-mit' + (ich.mitspielen ? " sp-an" : "") + '" data-s="mitspielen" title="'
       + (ich.mitspielen ? "Du spielst mit – tippen für Pause (dann bist du nicht angreifbar)" : "Tippen zum Mitspielen") + '">'
-      + '<svg viewBox="0 0 24 24"><path d="M6.2 6.5 H17.8 C20.6 6.5 22.4 9.4 22.8 13.2 C23.2 16.6 21.4 18.4 19.4 17.4 L16.4 14.8 H7.6 L4.6 17.4 C2.6 18.4 .8 16.6 1.2 13.2 C1.6 9.4 3.4 6.5 6.2 6.5 Z" fill="' + (ich.mitspielen ? "#eafff0" : "#eef1f7") + '"/>'
-      + '<path d="M7 9.2 V13.2 M5 11.2 H9" stroke="#2f3749" stroke-width="1.7" stroke-linecap="round"/>'
-      + '<circle cx="16.4" cy="9.9" r="1.15" fill="#e2403a"/><circle cx="18.6" cy="12.1" r="1.15" fill="#3bbf4a"/><circle cx="14.2" cy="12.1" r="1.15" fill="#f2c230"/><circle cx="16.4" cy="14.2" r="1.15" fill="#3a8dde"/></svg></button>');
+      + (ich.mitspielen ? '<i class="sp-s-punkt"></i>' : "Spielen") + "</button>");
     if (ich.mitspielen) {
       /* Ein kleiner Tacho auf der angelegten Waffe zeigt: nochmal tippen
          öffnet das Waffenrad (XANDER: „ich habe immer noch nicht das
@@ -2178,9 +2133,8 @@
     if (!toeneAn()) teile.push('<button type="button" class="sp-s-stumm" data-s="toenean" title="Töne sind aus – tippen schaltet sie ein">'
       + '<svg viewBox="0 0 20 20"><path d="M3 8 H6 L10 4.5 V15.5 L6 12 H3 Z" fill="#fff"/><path d="M13 7.5 L17.5 12.5 M17.5 7.5 L13 12.5" stroke="#ff8a80" stroke-width="2" stroke-linecap="round"/></svg></button>');
     if (S.graben) teile.push('<button type="button" class="sp-s-graben sp-an" data-s="graben" title="Schaufel weglegen">' + grabSvg() + "</button>");
-    var burger = '<button type="button" class="sp-s-burger sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Spielmenü: Waffen, Heilen, Tiere, Mehr">'
-      + '<svg viewBox="0 0 20 20"><path d="M4 6 H16 M4 10 H16 M4 14 H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
-    var html = burger + '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (S.rad != null && ich.mitspielen ? radHtml(S.rad) : "")
+    }
+    var html = '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (S.rad != null && ich.mitspielen ? radHtml(S.rad) : "")
       + (S.zrad && ich.mitspielen ? zauberRadHtml() : "");
     if (sofort !== true && schnellGesperrt()) { clearTimeout(S.schnellNach); S.schnellNach = setTimeout(schnellZeichnen, 380); return; }
     S.schnellDruck = 0;
@@ -2199,7 +2153,7 @@
     var sm = schnellEl.querySelector(".sp-schnellmenue");
     if (sm) {
       try {
-        var platz = schnellEl.parentNode.getBoundingClientRect(), reiheEl = schnellEl.querySelector(".sp-s-burger") || schnellEl.querySelector(".sp-s-reihe");
+        var platz = schnellEl.parentNode.getBoundingClientRect(), reiheEl = schnellEl.querySelector(".sp-s-reihe");
         var oben = Math.max(platz.top, 0), unterkante = reiheEl.getBoundingClientRect().top;
         sm.style.maxHeight = Math.max(160, Math.round(unterkante - oben - 10)) + "px";
       } catch (e) {}
@@ -2255,25 +2209,19 @@
       var a0 = a + schritt * 0.25, a1 = a0 + g.waffen.length * schritt;
       var p0 = punkt(a0, R), p1 = punkt(a1, R), gross = a1 - a0 > Math.PI ? 1 : 0;
       bogen += '<path d="M' + p0[0] + " " + p0[1] + " A" + R + " " + R + " 0 " + gross + " 1 " + p1[0] + " " + p1[1] + '" stroke="' + g.farbe + '" />';
-      var lm = (a0 + a1) / 2, lp = punkt(lm, R - 42);
-      bogen += '<text class="sp-rad-klasse" x="' + lp[0] + '" y="' + lp[1] + '" fill="' + g.farbe + '">' + g.name + "</text>";
+      var lm = (a0 + a1) / 2, lp = punkt(lm, R - 52);
+      bogen += '<text x="' + lp[0] + '" y="' + lp[1] + '" fill="' + g.farbe + '">' + g.name + "</text>";
       g.waffen.forEach(function (w, i) {
         var wa = a0 + (i + 0.5) * schritt, p = punkt(wa, R);
         var hw = haltVon(ich, w), vr = WAFFEN[w].vorrat ? vorrat(ich, w) : -1;
-        knoepfe += '<button type="button" class="sp-rad-waffe' + (s[nr] === w ? " sp-an sp-angelegt" : "") + (hw === 0 ? " sp-stumpf" : "") + '" data-s="radwahl" data-n="' + nr + '" data-w="' + w
+        knoepfe += '<button type="button" class="sp-rad-waffe' + (s[nr] === w ? " sp-an" : "") + (hw === 0 ? " sp-stumpf" : "") + '" data-s="radwahl" data-n="' + nr + '" data-w="' + w
           + '" style="left:' + (p[0] - 20) + "px;top:" + (p[1] - 20) + "px;--klasse:" + g.farbe + '" title="' + esc(WAFFEN[w].name + " · " + g.name) + '">'
-          + geschossSvg(w, S.laserfarbe) + "<small>" + (vr >= 0 ? "×" + vr : WAFFEN[w].schaden) + "</small>"
-          + (s[nr] === w ? '<i class="sp-haken"><svg viewBox="0 0 10 10"><path d="M2 5.2 L4.2 7.4 L8 2.8" fill="none" stroke="#1d2330" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>' : "") + "</button>";
+          + geschossSvg(w, S.laserfarbe) + "<small>" + (vr >= 0 ? "×" + vr : WAFFEN[w].schaden) + "</small></button>";
       });
       a = a1 + schritt * 0.25;
     });
-    /* FASSUNG 655 — „das könnte ein bisschen deutlicher sein … was bedeutet
-       das grüne Symbol": in der Mitte steht, was angelegt ist; die
-       angelegte Waffe trägt einen goldenen Ring mit Haken. */
-    var an = WAFFEN[s[nr]] ? WAFFEN[s[nr]].name : "";
     return '<div class="sp-rad sp-rad-voll" style="width:' + B + "px;height:" + B + 'px">'
-      + '<svg class="sp-rad-sektoren" viewBox="0 0 ' + B + " " + B + '"><circle cx="' + M + '" cy="' + M + '" r="' + (R + 24) + '" class="sp-rad-scheibe"/>' + bogen
-      + '<text class="sp-rad-an" x="' + M + '" y="' + (M + 28) + '">angelegt</text><text class="sp-rad-an-name" x="' + M + '" y="' + (M + 39) + '">' + esc(an) + "</text></svg>"
+      + '<svg class="sp-rad-sektoren" viewBox="0 0 ' + B + " " + B + '"><circle cx="' + M + '" cy="' + M + '" r="' + (R + 24) + '" class="sp-rad-scheibe"/>' + bogen + "</svg>"
       + knoepfe + '<button type="button" class="sp-rad-mitte" data-s="radab" style="left:' + (M - 20) + "px;top:" + (M - 20) + 'px" title="Waffe ablegen"><svg viewBox="0 0 20 20"><path d="M5 11 V7 a1.5 1.5 0 0 1 3 0 V10 M8 9 V5.5 a1.5 1.5 0 0 1 3 0 V9.5 M11 9 V6.5 a1.5 1.5 0 0 1 3 0 V11 C14 15 12 17 9.5 17 C7 17 5.5 15.5 5 13 Z" fill="#fff"/></svg></button></div>';
   }
   /* FASSUNG 654 — das Zauberrad als volles Rad wie das Waffenrad: neun
@@ -2351,18 +2299,22 @@
       inhaltM = '<div class="sp-sm-laut"><span>Töne</span>' + LAUT_STUFEN.map(function (l, i) {
           return '<button type="button" data-s="laut" data-n="' + i + '" class="' + (lautJetzt === i ? "sp-an" : "") + '">' + l[0] + "</button>";
         }).join("") + "</div>"
-        + '<p class="sp-sm-klein">Aufs eigene Bild: <b>2× tippen</b> wechselt die Waffe, <b>lang drücken</b> öffnet das Zauberrad.</p>'
+        + '<div class="sp-sm-laut"><span>3× Bild</span>' + MAKROS.map(function (m) {
+          return '<button type="button" data-s="makro" data-m="' + m[0] + '" class="' + (makro3() === m[0] ? "sp-an" : "") + '">' + m[1] + "</button>";
+        }).join("") + "</div>"
+        + '<p class="sp-sm-klein">Aufs eigene Bild: 2× tippen wechselt die Waffe, 3× tippen löst das hier aus.</p>'
         + '<div class="sp-sm-liste">'
         + '<button type="button" data-s="sparring" class="' + (S.sparring ? "sp-an" : "") + '">Sparringspartner ' + (S.sparring ? "weg" : "aufstellen") + "</button>"
         + (S.sparring ? '<button type="button" data-s="gegenfeuer" class="' + (S.duell && S.duell.uebung ? "sp-an" : "") + '">' + (S.duell && S.duell.uebung ? "Er schießt zurück – aus" : "Er schießt zurück – an") + "</button>" : "")
         + '<button type="button" data-s="graben" class="' + (S.graben ? "sp-an" : "") + '">' + (S.graben ? "Schaufel weglegen" : "Graben (Schaufel)") + " <small>" + vorrat(ich, "erz") + " Erz</small></button>"
         + '<button type="button" data-s="mission">' + (missionLaeuft(ich) ? "Mission: " + missionKurz(ich.mission) : "Mission holen") + "</button>"
         + (function () { var rg = zauberRang(ich); return '<p class="sp-sm-klein">🎓 <b>' + rg.name + "</b> · " + rg.zahl + " Zauber" + (rg.naechst ? " · noch " + rg.bis + " bis " + rg.naechst : " · höchster Rang") + "</p>"; })()
-        /* FASSUNG 655 — XANDER: „Warum hab ich da so viele Erdbeben und so
-           viele Orkan und so viel Nebel". Die Zauber stehen nur noch im
-           Zauberrad, nicht zusätzlich hier als Liste. */
-        + '<button type="button" data-s="zauberrad"><span class="sp-sm-zbild">' + zauberSvg("nebel") + "</span>Zauberrad öffnen</button>"
-        + '<button type="button" data-s="platzmenue">Mein Platzmenü <small>Bild, Sprechbild</small></button>'
+        + ZAUBER_REIHE.map(function (a) {
+          var z = ZAUBER[a], zu = (ich.level || 1) < z.level;
+          return '<button type="button" data-s="zauberwahl" data-z="' + a + '"' + (zu ? ' class="sp-zu"' : S.zauber === a ? ' class="sp-an"' : "") + ">"
+            + '<span class="sp-sm-zbild">' + zauberSvg(a) + "</span>" + z.name + " <small>" + (zu ? "ab Level " + z.level : z.mana + " Mana") + "</small></button>";
+        }).join("")
+        + '<button type="button" data-s="ei">Leiste einklappen <small>nur das Ei bleibt</small></button>'
         + '<button type="button" data-s="tontest">Ton testen</button>'
         + '<button type="button" data-s="gross" data-r="schutz">Laden (Schutz, Rüstung, Turm)</button>'
         + '<button type="button" data-s="gross" data-r="tiere">Tiere holen und füttern</button>'
@@ -2390,14 +2342,17 @@
       ton("swoosh", 0.3);
     } else if (s === "radab") {
       S.waffe = ""; S.rad = null;
+    } else if (s === "makro") {
+      try { localStorage.setItem("dma_spiel_makro3", k.dataset.m); } catch (e) {}
+      hinweis("👆 3× aufs eigene Bild: " + (MAKROS.filter(function (x) { return x[0] === k.dataset.m; })[0] || [])[1] + ".");
     } else if (s === "laut") {
       var ln = Number(k.dataset.n) || 0;
       lautSetzen(ln);
       if (ln > 0) { try { if (B().toeneSetzen) B().toeneSetzen(true); } catch (e) {} klangWecken(); setTimeout(function () { ton("bling", 0.6); }, 60); }
       hinweis(ln > 0 ? "🔊 Spieltöne: " + LAUT_STUFEN[ln][0] + "." : "🔇 Spieltöne sind aus.");
-    } else if (s === "platzmenue") {
-      S.schnellMenue = false;
-      try { var eig = document.querySelector("#lcPlaetze .lc-platz-ich"); if (eig && window.DMA_PRUEFUNG && window.DMA_PRUEFUNG.platzMenue) { eigenLangFrei = true; window.DMA_PRUEFUNG.platzMenue(eig); eigenLangFrei = false; } } catch (e) { eigenLangFrei = false; }
+    } else if (s === "ei") {
+      S.leisteZu = !S.leisteZu; S.schnellMenue = false;
+      try { localStorage.setItem("dma_spiel_leiste_zu", S.leisteZu ? "1" : "0"); } catch (e) {}
     } else if (s === "zauberrad") {
       S.zrad = !S.zrad; S.rad = null; S.schnellMenue = false;
     } else if (s === "zauberwahl") {
@@ -2462,8 +2417,6 @@
   document.addEventListener("click", function (ev) {
     if ((!S.schnellMenue && S.rad == null && !S.zrad) || !schnellEl) return;
     if (schnellEl.contains(ev.target)) return;
-    /* Der Klick beim Loslassen nach dem langen Druck schließt das eben geöffnete Rad nicht gleich wieder. */
-    if (Date.now() - (S.radOffenSeit || 0) < 700) return;
     S.schnellMenue = false; S.rad = null; S.zrad = false; schnellZeichnen();
   }, true);
   function tierWechseln(art) {
@@ -2662,7 +2615,6 @@
       el.classList.toggle("sp-w-eisen", Boolean(s.eisen));
       el.classList.toggle("sp-w-tarn", Boolean(s.tarn));
       el.classList.toggle("sp-w-daemon", Boolean(s.daemon));
-      schmuck(el, "sp-daemonflammen", Boolean(s.daemon) && !istPuppe(chatId), kreis, daemonFlammenSvg());
       /* FASSUNG 650 — Zauber reisen mit dem Platz. Wer später dazukommt,
          liest die Restsekunden aus dem Stand (einmal je Stand). */
       if (sid && !ZAUBER_GESEHEN.has(s)) {
@@ -2760,15 +2712,6 @@
   var ZAUBER_GESEHEN2 = typeof WeakSet === "function" ? new WeakSet() : { has: function () { return true; }, add: function () {} };
   /* Der Gartenzwerg: rote Zipfelmütze oben, weißer Rauschebart unten –
      die Gesichtsmitte bleibt frei. */
-  /* Lila-rote Flammenzungen rund um den Rand – die Gesichtsmitte bleibt frei. */
-  function daemonFlammenSvg() {
-    var z = "";
-    for (var i = 0; i < 12; i++) {
-      var w = i * 30, h = i % 2 ? 11 : 15;
-      z += '<path class="sp-flamme" style="animation-delay:' + (-(i * 0.13)).toFixed(2) + 's" transform="rotate(' + w + ' 50 50)" d="M46 4 C47 -' + h + ' 53 -' + h + ' 54 4 C52 1 48 1 46 4 Z" fill="' + (i % 2 ? "#b0172f" : "#7b1fd6") + '"/>';
-    }
-    return '<svg viewBox="0 0 100 100">' + z + "</svg>";
-  }
   function zwergSvg() {
     return '<svg viewBox="0 0 100 100"><path d="M50 -38 C58 -20 70 0 80 10 C62 4 38 4 20 10 C30 0 42 -20 50 -38 Z" fill="#d23b3b" stroke="#8a1f1f" stroke-width="1.6" stroke-linejoin="round"/>'
       + '<path d="M50 -38 C47 -44 55 -46 54 -40" fill="none" stroke="#8a1f1f" stroke-width="1.4"/><circle cx="53" cy="-41" r="4" fill="#fdfdfd"/>'
@@ -3099,21 +3042,13 @@
       + '<path d="M71 90 l-3 2 M71 88 l-3.5 0 M97 90 l3 2 M97 88 l3.5 0" stroke="#e9e1c8" stroke-width="1.2" stroke-linecap="round"/></g></svg>';
   }
   function geschuetzSvg(stufe) {
-    /* FASSUNG 655 — XANDER: „dann dreht sich das Icon insgesamt, aber
-       dieses kleine Kanonenrohr richtet sich nicht aus … Das sind auch
-       zwei gelbe Punkte darunter, wo ich gar nicht weiß, was die
-       bedeuten". Jetzt steht der Sockel fest, nur das Rohr (.sp-rohr)
-       dreht sich zum Ziel und ruckt beim Schuss zurück. Die Stufe zeigt
-       die Farbe: 1 Eisen, 2 Bronze, 3 Silber, 4 Gold mit Doppelrohr,
-       5 Gold mit Doppelrohr und Glut – statt der kleinen gelben Punkte. */
-    var st = Math.max(1, Math.min(5, Number(stufe) || 1));
-    var farbe = ["#626a73", "#b0743a", "#c9d1da", "#e8b923", "#f2c230"][st - 1], rand = ["#30353b", "#6b4521", "#6b7580", "#8a6a10", "#8a6a10"][st - 1];
-    var rohr = '<rect x="14" y="83.4" width="15" height="5.2" rx="1.6" fill="' + rand + '"/><rect x="27" y="82.6" width="3.4" height="6.8" rx="1" fill="' + rand + '"/>'
-      + (st >= 4 ? '<rect x="14" y="88.6" width="13" height="3.6" rx="1.2" fill="' + rand + '"/>' : "");
-    return '<svg viewBox="0 0 100 100"><path d="M5 97 L8 89 H20 L23 97 Z" fill="#4a5058" stroke="#2a2e33" stroke-width=".8"/>'
-      + '<g class="sp-rohr"><g class="sp-rohr-rueck">' + rohr + '<circle class="sp-rohr-spitze" cx="30.4" cy="86" r=".5" fill="none"/></g></g>'
-      + '<circle cx="14" cy="86" r="6" fill="' + farbe + '" stroke="' + rand + '" stroke-width="1.2"/>'
-      + (st >= 5 ? '<circle cx="14" cy="86" r="2.2" fill="#ff8a1e" class="sp-turmglut"/>' : '<circle cx="14" cy="86" r="1.6" fill="' + rand + '"/>') + "</svg>";
+    /* FASSUNG 640 — „aufwerten … wie bei einem Tower": je Stufe ein
+       goldener Ring am Sockel, ab Stufe 4 ein zweites Rohr. */
+    var st = Math.max(1, Math.min(5, Number(stufe) || 1)), ringe = "";
+    for (var i = 1; i < st; i++) ringe += '<rect x="' + (5 + (i - 1) * 4.6) + '" y="97" width="3.4" height="2" rx=".8" fill="#f2c230"/>';
+    return '<svg viewBox="0 0 100 100"><rect x="6" y="88" width="16" height="8" rx="2" fill="#4a5058"/>' + ringe
+      + '<circle cx="14" cy="86" r="6" fill="#626a73" stroke="#30353b"/><path d="M14 86 L27 78" stroke="#30353b" stroke-width="4" stroke-linecap="round"/>'
+      + (st >= 4 ? '<path d="M14 88 L28 82" stroke="#30353b" stroke-width="3" stroke-linecap="round"/>' : "") + "</svg>";
   }
   function risseSvg() {
     return '<svg viewBox="0 0 100 100"><g fill="none" stroke="rgba(255,255,255,.85)" stroke-width="1.6" stroke-linejoin="round"><path d="M50 8 L46 30 L56 44 L44 62 L52 92"/><path d="M46 30 L24 22 M56 44 L80 36 M44 62 L20 70 M52 78 L74 84"/></g><g fill="none" stroke="rgba(0,0,0,.45)" stroke-width=".8"><path d="M51 8 L47 30 L57 44 L45 62 L53 92"/></g></svg>';
@@ -3919,7 +3854,7 @@
 
   window.DMA_SPIEL = {
     menue: menue, schliessen: schliessen,
-    tippAufPlatz: tippAufPlatz, gesperrt: gesperrt, gesperrtGrund: gesperrtGrund, langAufEigen: langAufEigen,
+    tippAufPlatz: tippAufPlatz, gesperrt: gesperrt, gesperrtGrund: gesperrtGrund,
     empfangen: empfangen, dreckAbwehren: dreckAbwehren, platzGewechselt: platzGewechselt,
     lehrerNote: lehrerNote, kampfmodus: kampfmodus, anmeldungDa: anmeldungDa,
     waffeAblegen: function () { if (S.waffe) { S.waffe = ""; zeichnen(); } },
@@ -3939,7 +3874,7 @@
       krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
-      zauberZeigen: zauberZeigen, zaubern: zaubern, daemonAusbruch: daemonAusbruch, uebungZaubern: uebungZaubern, geschuetzSvg: geschuetzSvg, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
+      zauberZeigen: zauberZeigen, zaubern: zaubern, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
       menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {
         var d = Math.hypot(dx, dy);

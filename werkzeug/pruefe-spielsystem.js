@@ -252,7 +252,12 @@ const sage = (gut, was, zusatz) => {
   console.log("\nKACHEL IM PLATZMENÜ\n");
   const kachel = await pg.evaluate(async () => {
     const ich = document.querySelector("#lcPlaetze .lc-platz.lc-platz-ich");
+    /* Ab Fassung 655 gibt der lange Druck aufs eigene Bild beim Mitspielen
+       das Zauberrad; die Kachel „Spiel" ist für die, die (noch) nicht spielen. */
+    const S = window.DMA_SPIEL.pruef.zustand(), vorher = S.ich && S.ich.mitspielen;
+    if (S.ich) S.ich.mitspielen = false;
     window.DMA_PRUEFUNG.platzMenue(ich);
+    if (S.ich) S.ich.mitspielen = vorher;
     await new Promise((f) => setTimeout(f, 200));
     const worte = [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-wort")].map((w) => w.textContent);
     const m = document.getElementById("lcPlatzMenue");

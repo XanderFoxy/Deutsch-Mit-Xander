@@ -163,9 +163,12 @@ const sage = (gut, was, zusatz) => {
   console.log("\nDER CONTROLLER-KNOPF\n");
   const knopf = await pg.evaluate(() => { const b = document.querySelector(".sp-s-reihe > button"); const r = b.getBoundingClientRect(); return { klasse: b.className, w: Math.round(r.width), h: Math.round(r.height), radius: parseFloat(getComputedStyle(b).borderRadius) }; });
   sage(/sp-s-ei/.test(knopf.klasse) && Math.abs(knopf.w - knopf.h) <= 3 && knopf.radius <= 10, "ganz links ein kleiner viereckiger Knopf mit Controller", JSON.stringify(knopf));
+  const zentriert = await pg.evaluate(() => { const b = document.querySelector(".sp-s-ei"), v = b.querySelector("svg"); const r = b.getBoundingClientRect(), q = v.getBoundingClientRect();
+    return { dx: Math.round((q.left + q.width / 2) - (r.left + r.width / 2)), dy: Math.round((q.top + q.height / 2) - (r.top + r.height / 2)) }; });
+  sage(Math.abs(zentriert.dx) <= 1 && Math.abs(zentriert.dy) <= 1, "der Controller sitzt mittig im Knopf", JSON.stringify(zentriert));
 
   console.log("\nTÖNE REGELN\n");
-  await tippe(".sp-schnell .sp-s-ei");
+  await tippe(".sp-schnell .sp-s-burger");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellReiter = "mehr"; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
   await tick(200);
   const stufen = await pg.evaluate(() => [...document.querySelectorAll('.sp-schnellmenue [data-s="laut"]')].map((b) => b.textContent).join(","));
@@ -186,7 +189,7 @@ const sage = (gut, was, zusatz) => {
   await tick(300);
   const rad = await pg.evaluate(() => {
     const r = document.querySelector(".sp-rad-voll"), rr = r.getBoundingClientRect(), M = { x: rr.left + rr.width / 2, y: rr.top + rr.height / 2 };
-    const namen = [...r.querySelectorAll(".sp-rad-sektoren text")].map((t) => t.textContent);
+    const namen = [...r.querySelectorAll(".sp-rad-sektoren text.sp-rad-klasse")].map((t) => t.textContent);
     const knoepfe = [...r.querySelectorAll(".sp-rad-waffe")].map((b) => { const q = b.getBoundingClientRect(); let w = Math.atan2(q.top + q.height / 2 - M.y, q.left + q.width / 2 - M.x) + Math.PI / 2; if (w < 0) w += 2 * Math.PI; return { w, k: getComputedStyle(b).getPropertyValue("--klasse").trim() }; }).sort((a, b) => a.w - b.w);
     /* Jede Klasse liegt am Stück: die Farbe wechselt nur so oft, wie es Klassen gibt. */
     let wechsel = 0; knoepfe.forEach((x, i) => { if (i && x.k !== knoepfe[i - 1].k) wechsel++; });
@@ -212,15 +215,20 @@ const sage = (gut, was, zusatz) => {
   ichPos = { x: ichPos.x, y: Math.max(ichPos.y, Math.min(ichPos.y + ichPos.w * 0.42, 14)) };
   await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = P.slots()[0]; S.rad = null; S.schnellMenue = false; P.schnellZeichnen(true); });
   const vorher = await pg.evaluate(() => window.DMA_SPIEL.pruef.zustand().waffe);
-  await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(120); await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(700);
+  await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(120); await pg.touchscreen.tap(ichPos.x, ichPos.y);
+  /* Fassung 655: „der Doppelklick muss schnell die Waffe wechseln" – sofort beim zweiten Tipp, nicht erst nach 430 ms. */
+  await tick(40);
   const nachher = await pg.evaluate(() => ({ waffe: window.DMA_SPIEL.pruef.zustand().waffe, slots: window.DMA_SPIEL.pruef.slots() }));
-  sage(vorher === nachher.slots[0] && nachher.waffe === nachher.slots[1], "2× aufs eigene Bild: Waffe 1 → Waffe 2", vorher + " → " + nachher.waffe);
+  sage(vorher === nachher.slots[0] && nachher.waffe === nachher.slots[1], "2× aufs eigene Bild: Waffe 1 → Waffe 2, sofort (40 ms)", vorher + " → " + nachher.waffe);
+  await tick(600);
   await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(120); await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(700);
   sage(await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef; return P.zustand().waffe === P.slots()[0]; }), "noch einmal 2×: zurück zu Waffe 1");
-  await pg.evaluate(() => { window.__ich.lp = 60; const S = window.DMA_SPIEL.pruef.zustand(); S.ich.lp = 60; window.__rufe.length = 0; localStorage.setItem("dma_spiel_makro3", "heilen"); });
-  await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(110); await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(110); await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(900);
-  const drei = await pg.evaluate(() => window.__rufe.map((r) => r.name).join(","));
-  sage(/spiel_heilen/.test(drei), "3× aufs eigene Bild: das eingestellte Makro (Heilen) läuft", drei);
+  /* Fassung 655: lang drücken aufs eigene Bild = Zauberrad (statt Platzmenü). */
+  await pg.mouse.move(ichPos.x, ichPos.y); await pg.mouse.down(); await tick(700); await pg.mouse.up(); await tick(300);
+  const lang = await pg.evaluate(() => ({ zrad: Boolean(document.querySelector(".sp-zauberrad")), platzmenue: Boolean(document.getElementById("lcPlatzMenue") && !document.getElementById("lcPlatzMenue").hidden && document.getElementById("lcPlatzMenue").offsetParent) }));
+  sage(lang.zrad && !lang.platzmenue, "lang drücken aufs eigene Bild öffnet das Zauberrad, nicht das Platzmenü", JSON.stringify(lang));
+  /* Zum Schließen mitten in den Chat tippen – (20, 20) läge am Rand des eigenen Platzes. */
+  await pg.touchscreen.tap(180, 430); await tick(600);
   const einfach = await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef; return P.zustand().waffe; });
   await pg.touchscreen.tap(ichPos.x, ichPos.y); await tick(700);
   sage(await pg.evaluate((w) => window.DMA_SPIEL.pruef.zustand().waffe === w, einfach), "ein einzelner Tipp ändert nichts");

@@ -454,3 +454,15 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Zauberrad: volles Rad wie das Waffenrad, neun Zauber nach Level im Uhrzeigersinn, gesperrte mit „Lv N".
 - Töne neu (ElevenLabs, weich): muecken, kaffeeklatsch, hexenschuss, gartenzwerg, stempel; Brezelflut nutzt brezelknack. 329 Geräusche.
 - Sonde: `pruefe-654-deutsche-zauber.js` (15 Prüfungen); 650 und 651 angepasst; 18 Spiel-Sonden grün. Server im Rollback getestet (Fairness 0,5, Mauer, Hexenschuss-Sperre, Zwerg- und Formular-Sperre, Kaffeeklatsch +20/+20).
+
+## Fassung 655 — Controller = Mitspielen, Doppeltipp sofort, lang drücken = Zauberrad, Superkraft spürbar, Kanonenrohr zielt
+
+- XANDER: „Der Gaming Controller bedeutet doch schon spielen … leuchtet er schon grün … über dem Controller im Burger Menü". Der Controller-Knopf IST „Mitspielen" (grün = an, Tipp = Pause); der grüne Punkt ist weg; ☰ sitzt direkt darüber, das Menü klappt darüber auf. Das Einklappen der Leiste entfällt.
+- XANDER: „Doppelklick ist Waffe umschalten. Das könnte aber bisschen schneller reagieren". Der zweite Tipp aufs eigene Bild wechselt SOFORT (vorher wartete er 430 ms auf einen dritten). Der Dreifachtipp entfällt.
+- XANDER: „ein langes Drücken würde … das Zaubermenü aufrufen". Langer Druck aufs eigene Bild öffnet beim Mitspielen das Zauberrad (app.js `lcPlatzMenue` fragt `DMA_SPIEL.langAufEigen`); das Platzmenü gibt es dann unter „Mehr → Mein Platzmenü". Der Loslass-Klick schließt das Rad nicht mehr sofort.
+- XANDER: „wo meine Superkraft aufgeladen ist, hat sich nicht das Gefühl, dass irgendwas passiert". Beim Auslösen: lila Doppelwelle vom Bild, der Bildschirmrand glüht lila, Gong + Knall, Erklärung (×1,5 austeilen, 70 % einstecken). Solange sie wirkt: lila-rote Flammen um das Bild; Treffer zeigen große lila Zahlen „×1,5".
+- XANDER: „mit der Gummipuppe probiere ich das. Ich sehe kein Erdbeben". Zauber auf Puppe und Sparringspartner: Übung, gleiches Bild und gleicher Ton, kein Mana, kein Server.
+- XANDER: „Warum hab ich da so viele Erdbeben und so viele Orkan". Die Zauber stehen nur noch im Zauberrad, nicht zusätzlich als Liste in „Mehr".
+- XANDER: „diese kleine Kanonenrohr richtet sich nicht aus … zwei gelbe Punkte darunter". Der Sockel steht, nur das Rohr dreht sich zum Angreifer und ruckt zurück; Kugeln und Mündungsfeuer kommen aus der Rohrspitze. Die Stufe zeigt die Farbe (Eisen, Bronze, Silber, Gold mit Doppelrohr, Gold mit Glut) statt der gelben Punkte.
+- XANDER: „was bedeutet das grüne Symbol". Waffenrad: kräftigere Klassenfarben, in der Mitte „angelegt: Name", die angelegte Waffe mit Goldring und Haken.
+- Sonde: `pruefe-655-superkraft-kanone.js` (10 Prüfungen); 650, 651, 652, spielsystem an den neuen Aufbau angepasst; 19 Spiel-Sonden grün.

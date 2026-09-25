@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 651: MAUER, MENÜ AUF ANDROID, CONTROLLER-EI, REITER
+   SONDE — FASSUNG 655: SUPERKRAFT SPÜRBAR, KANONENROHR ZIELT, ZAUBERN
+   AN DER PUPPE, RAD ZEIGT „ANGELEGT"
    ---------------------------------------------------------------------
-   XANDER (25.09.): „die Mauer verdeckt … unseren Lebensstand … und unser
-   kleines Fellmonster" · „die Anzeige des Aufklappmenüs wird im Android
-   immer noch abgeschnitten rechts … so ein kleines Ei mit dem Gaming
-   Controller … das Burger Menü eher oben drüber" · „ich habe immer noch
-   nicht das Tacho Menü" · „Schutz und Laden … springt der Link wieder
-   hinter den Frame".
-   Schmales Android-Telefon (360 px), echte Fingertipps.
+   XANDER: „wo meine Superkraft aufgeladen ist, hat sich nicht das Gefühl,
+   dass irgendwas passiert" · „diese kleine Kanonenrohr richtet sich nicht
+   aus … Es ist so, als wenn es mich selber anschießen will" · „mit der
+   Gummipuppe probiere ich das. Ich sehe kein Erdbeben" · „was bedeutet
+   das grüne Symbol … das muss man besser verstehen können".
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -136,91 +135,66 @@ const sage = (gut, was, zusatz) => {
 
   const tick = (ms) => pg.waitForTimeout(ms);
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
-  /* Im längeren „Mehr" (Töne, 3×-Tipp, Zauberer-Rang) wird erst hingescrollt, dann getippt. */
-  const tippe = async (sel) => { await pg.evaluate((sel) => { const e = document.querySelector(sel); if (e && e.closest(".sp-schnellmenue")) e.scrollIntoView({ block: "nearest" }); }, sel); const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
+  const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
+
+  const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
 
 
-  console.log("\nDIE MAUER VERDECKT NICHTS MEHR\n");
-  const mauer = await pg.evaluate(() => {
-    const el = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]');
-    const k = el.querySelector(".lc-kreis").getBoundingClientRect();
-    const m = el.querySelector(".sp-mauer"), lp = el.querySelector(".sp-lp"), t = el.querySelector(".sp-tier");
-    const z = (e) => Number(getComputedStyle(e).zIndex);
-    /* Punkt auf dem Lebensbogen links unten (Winkel 135°) */
-    const a = 135 * Math.PI / 180, R = 45.5 / 100 * k.width;
-    const px = k.left + k.width / 2 + Math.cos(a) * R, py = k.top + k.height / 2 + Math.sin(a) * R;
-    /* Ringe und Mauer lassen Tipps durch (pointer-events: none) – für die
-       Messung kurz „anfassbar" machen, dann zählt nur die Stapelung. */
-    const st = document.createElement("style");
-    st.textContent = ".sp-lp, .sp-lp *, .sp-mauer, .sp-mauer * { pointer-events: auto !important; }";
-    document.head.appendChild(st);
-    const oben = document.elementFromPoint(px, py);
-    st.remove();
-    const mr = m.querySelector("rect").getBoundingClientRect();
-    return { zMauer: z(m), zRing: z(lp), zTier: z(t), ringOben: Boolean(oben && lp.contains(oben)), getroffen: oben ? oben.tagName + "." + (oben.getAttribute("class") || "") : "",
-             mauerOben: Math.round((mr.top - k.top) / k.height * 100) };
+  console.log("\nSUPERKRAFT\n");
+  await pg.evaluate(() => { window.DMA_TONLOG.length = 0; window.DMA_SPIEL.pruef.daemonAusbruch("ich", true); });
+  await tick(150);
+  const sk = await pg.evaluate(() => ({ welle: document.querySelectorAll(".sp-daemon-welle").length, schirm: Boolean(document.querySelector(".sp-daemon-schirm")),
+    toene: window.DMA_TONLOG.map((t) => t.name).join(","), hinweis: window.__hinweise.slice(-1)[0] || "" }));
+  sage(sk.welle >= 1 && sk.schirm && /gong/.test(sk.toene) && /×1,5/.test(sk.hinweis), "Superkraft: lila Welle vom Bild, der Rand glüht lila, Gong, man erfährt, was sie tut", JSON.stringify(sk));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.stand[S.ich.id] = Object.assign({}, S.stand[S.ich.id], { daemon: true }); window.DMA_SPIEL.pruef.zeichnen(); });
+  await tick(150);
+  const flamme = await pg.evaluate(() => document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-daemonflammen .sp-flamme').length);
+  sage(flamme >= 10, "solange sie wirkt, lodern Flammen um das eigene Bild", flamme + " Flammen");
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.trefferZeigen("bea", { zone: "kopf", schaden: 18, daemon: true }));
+  await tick(80);
+  const dz = await pg.evaluate(() => { const z = [...document.querySelectorAll('#lcPlaetze .lc-platz[data-lc-id="bea"] .sp-zahl-daemon')][0]; return z ? z.textContent : ""; });
+  sage(/−18.*×1,5/.test(dz), "dämonische Treffer: große lila Zahl mit ×1,5", dz);
+
+  console.log("\nDIE KANONE: NUR DAS ROHR ZIELT\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.stand[S.ich.id] = Object.assign({}, S.stand[S.ich.id], { geschuetz: true, geschuetz_stufe: 3, daemon: false }); window.DMA_SPIEL.pruef.zeichnen(); });
+  await tick(200);
+  const vorSchuss = await pg.evaluate(() => { const t = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-geschuetz'); return { punkte: t.querySelectorAll('rect[fill="#f2c230"]').length, rohr: Boolean(t.querySelector(".sp-rohr")) }; });
+  sage(vorSchuss.rohr && vorSchuss.punkte === 0, "Turm mit eigenem Rohr, keine rätselhaften gelben Punkte mehr (Stufe = Farbe)", JSON.stringify(vorSchuss));
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.kugelnFliegen("ich", "bea"));
+  await tick(30);
+  const kan = await pg.evaluate(() => {
+    const t = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-geschuetz'), spitze = t.querySelector(".sp-rohr-spitze").getBoundingClientRect();
+    const svgDreh = getComputedStyle(t.querySelector("svg")).transform, blitz = document.querySelector(".sp-muendung").getBoundingClientRect();
+    const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis').getBoundingClientRect();
+    const zielW = Math.atan2(k.top + k.height / 2 - spitze.top, k.left + k.width / 2 - spitze.left) * 180 / Math.PI;
+    const rohrW = parseFloat(t.style.getPropertyValue("--zielwinkel"));
+    return { svgDreh, rohrW: Math.round(rohrW), zielW: Math.round(zielW), abstand: Math.round(Math.hypot(blitz.left + blitz.width / 2 - spitze.left, blitz.top + blitz.height / 2 - spitze.top)) };
   });
-  sage(mauer.zMauer < mauer.zRing && mauer.zRing < mauer.zTier, "Reihenfolge: Mauer hinten, Ringe davor, Tiere ganz vorn", JSON.stringify(mauer));
-  sage(mauer.ringOben, "auf dem Lebensbogen liegt der Ring oben, nicht die Mauer", mauer.getroffen);
-  sage(mauer.mauerOben >= 85, "die Mauer beginnt erst im untersten Siebtel des Bildes", mauer.mauerOben + " %");
+  sage(kan.svgDreh === "none" && Math.abs(kan.rohrW - kan.zielW) <= 8, "nur das Rohr dreht sich – genau zum Angreifer, der Turm selbst bleibt stehen", JSON.stringify(kan));
+  sage(kan.abstand <= 4, "das Mündungsfeuer blitzt an der Rohrspitze", kan.abstand + " px");
 
-  console.log("\nMENÜ AUF 360 PX\n");
-  for (const r of ["waffen", "mehr"]) {
-    await pg.evaluate((r) => { const S = window.DMA_SPIEL.pruef.zustand(); S.leisteZu = false; S.schnellMenue = true; S.schnellReiter = r; window.DMA_SPIEL.pruef.schnellZeichnen(true); }, r);
-    await tick(250);
-    const m = await pg.evaluate(() => {
-      const sm = document.querySelector(".sp-schnellmenue").getBoundingClientRect(), rahmen = document.querySelector(".sp-schnell").parentNode.getBoundingClientRect();
-      const knoepfe = [...document.querySelectorAll(".sp-schnellmenue button")];
-      const abgeschnitten = knoepfe.filter((b) => b.getBoundingClientRect().right > rahmen.right + 0.5).length;
-      return { rechts: Math.round(sm.right), rahmen: Math.round(rahmen.right), abgeschnitten };
-    });
-    sage(m.rechts <= m.rahmen && m.abgeschnitten === 0, "Reiter „" + r + "“: das Menü endet im Rahmen, kein Knopf abgeschnitten", JSON.stringify(m));
-  }
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tick(150);
-  /* Fassung 655 — XANDER: „Der Gaming Controller bedeutet doch schon spielen … leuchtet er schon grün …
-     über dem Controller im Burger Menü". Controller = Mitspielen, das Menü (☰) sitzt darüber. */
-  const reihe = await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-s-reihe > button")]; const bu = document.querySelector(".sp-s-burger");
-    return { erster: b[0].className + "|" + b[0].dataset.s, gruenerPunkt: document.querySelectorAll(".sp-s-punkt").length, n: b.filter((x) => x.dataset.s !== "reparieren").length,
-             burgerUeber: bu ? bu.getBoundingClientRect().bottom <= b[0].getBoundingClientRect().top + 1 && Math.abs(bu.getBoundingClientRect().left - b[0].getBoundingClientRect().left) < 8 : false }; });
-  sage(/sp-s-ei/.test(reihe.erster) && /\|mitspielen$/.test(reihe.erster) && /sp-an/.test(reihe.erster) && !reihe.gruenerPunkt && reihe.n <= 7, "ganz links der Controller = Mitspielen (grün), kein extra grüner Punkt; höchstens 7 Knöpfe", JSON.stringify(reihe));
-  sage(reihe.burgerUeber, "das Menü (☰) sitzt direkt über dem Controller");
-  await tippe(".sp-schnell .sp-s-burger");
-  const ueber = await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"), e = document.querySelector(".sp-s-burger"); return m ? m.getBoundingClientRect().bottom <= e.getBoundingClientRect().top + 1 : false; });
-  sage(ueber, "☰ öffnet das Menü darüber");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); window.__rufe.length = 0; });
-  await tick(150);
-  await tippe(".sp-schnell .sp-s-ei");
-  const aus = await pg.evaluate(() => ({ ruf: (window.__rufe.find((r) => r.name === "spiel_mitspielen") || {}).args, gruen: Boolean(document.querySelector(".sp-s-ei.sp-an")) }));
-  sage(aus.ruf && aus.ruf.p_an === false && !aus.gruen, "Tipp auf den grünen Controller: Pause (nicht mehr grün)", JSON.stringify(aus));
-  await tippe(".sp-schnell .sp-s-ei");
-  sage(await pg.evaluate(() => Boolean(document.querySelector(".sp-s-ei.sp-an")) && document.querySelectorAll(".sp-s-reihe > button").length > 5), "noch ein Tipp: wieder grün, die Leiste ist da");
+  console.log("\nZAUBERN AN DER PUPPE\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.level = 8; S.ich.mana = 60; S.zauber = "erdbeben"; window.__rufe.length = 0; window.DMA_TONLOG.length = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await pg.evaluate(() => document.querySelector('#lcPlaetze .lc-platz[data-lc-id="uebungspuppe"]').scrollIntoView({ block: "center" }));
+  await tick(250);
+  let pu = await seite("uebungspuppe");
+  pu = { x: pu.x, y: Math.max(pu.y, Math.min(pu.y + pu.w * 0.42, 14)) };
+  await pg.touchscreen.tap(pu.x, pu.y); await tick(300);
+  const ueb = await pg.evaluate(() => ({ bebt: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="uebungspuppe"].sp-bebt')), ruf: window.__rufe.some((r) => r.name === "spiel_zaubern"),
+    mana: window.DMA_SPIEL.pruef.zustand().ich.mana, toene: window.DMA_TONLOG.map((t) => t.name).join(","), hinweis: window.__hinweise.slice(-1)[0] || "" }));
+  sage(ueb.bebt && /erdbeben/.test(ueb.toene), "Erdbeben auf die Puppe: man sieht und hört es", JSON.stringify(ueb));
+  sage(!ueb.ruf && ueb.mana === 60 && /Übung/.test(ueb.hinweis), "Übung: kein Server, kein Mana", ueb.hinweis);
 
-  console.log("\nDAS TACHO-ZEICHEN\n");
-  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = P.slots()[0]; P.schnellZeichnen(true); });
-  await tick(150);
-  sage(await pg.evaluate(() => Boolean(document.querySelector('.sp-s-slot[data-n="0"] .sp-s-tacho')) && !document.querySelector('.sp-s-slot[data-n="1"] .sp-s-tacho')), "die angelegte Waffe trägt einen kleinen Tacho – nochmal tippen öffnet das Rad");
-  await tippe('.sp-schnell .sp-s-slot[data-n="0"]');
-  sage(await pg.evaluate(() => Boolean(document.querySelector(".sp-rad"))), "Tipp auf die Waffe mit dem Tacho öffnet das Waffenrad");
-  await pg.touchscreen.tap(30, 60); await tick(250);
-
-  console.log("\nGROSSES MENÜ: DER GEWÄHLTE REITER BLEIBT IM BILD\n");
-  await pg.evaluate(() => window.DMA_SPIEL.menue("start"));
+  console.log("\nDAS RAD SAGT, WAS ANGELEGT IST\n");
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = P.slots()[0]; S.rad = 0; P.schnellZeichnen(true); });
   await tick(300);
-  for (const tab of ["schutz", "rang", "duell"]) {
-    await pg.evaluate((t) => { const b = document.querySelector('#spPanel .sp-tabs [data-tab="' + t + '"]'); b.scrollIntoView({ inline: "center", block: "nearest" }); b.click(); }, tab);
-    await tick(250);
-    const r = await pg.evaluate((t) => {
-      const leiste = document.querySelector("#spPanel .sp-tabs"), b = leiste.querySelector('[data-tab="' + t + '"]');
-      const lr = leiste.getBoundingClientRect(), br = b.getBoundingClientRect();
-      return { an: b.classList.contains("sp-an"), drin: br.left >= lr.left - 0.5 && br.right <= lr.right + 0.5, l: Math.round(br.left), r: Math.round(br.right), ll: Math.round(lr.left), lrr: Math.round(lr.right) };
-    }, tab);
-    sage(r.an && r.drin, "Reiter „" + tab + "“ gewählt und ganz sichtbar", JSON.stringify(r));
-  }
+  const rad = await pg.evaluate(() => { const r = document.querySelector(".sp-rad-voll"); const a = r.querySelector(".sp-angelegt");
+    return { an: (r.querySelector(".sp-rad-an") || {}).textContent, name: (r.querySelector(".sp-rad-an-name") || {}).textContent, haken: Boolean(a && a.querySelector(".sp-haken")), wer: a ? a.dataset.w : "" }; });
+  sage(rad.an === "angelegt" && rad.name && rad.haken, "in der Mitte „angelegt: …“, die angelegte Waffe hat Goldring und Haken", JSON.stringify(rad));
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD });
 
   await br.close(); srv.close();
   if (konsolenFehler.length) { fehler++; console.log("  FEHL Seitenfehler: " + konsolenFehler.join(" | ")); }
-  console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n" : "\nFassung 651 auf dem Telefon: alles grün.\n");
+  console.log(fehler ? "\nROT: " + fehler + " Abweichung(en)\n" : "\nFassung 655 auf dem Telefon: alles grün.\n");
   process.exit(fehler ? 1 : 0);
 })();
