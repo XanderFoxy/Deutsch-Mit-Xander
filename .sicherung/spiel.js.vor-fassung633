@@ -24,8 +24,6 @@
        Abschuss klang bei allen sieben, beim Einschlag nur die Bazooka.
        Jede Waffe hat jetzt auch ihren Treffer („treffer"). Er klingt in
        einschlag() — also auf JEDEM Gerät, das den Schuss sieht. */
-    /* XANDER (25.09.): „die Standard Arten soll immer Kartoffeln sein". */
-    kartoffel:    { name: "Kartoffel",       schaden: 6,  preis: 0,   flug: 560, ton: "swoosh",          treffer: "bonk" },
     zwille:       { name: "Zwille",          schaden: 6,  preis: 0,   flug: 520, ton: "zwille",          treffer: "bonk" },
     bogen:        { name: "Pfeil und Bogen", schaden: 8,  preis: 0,   flug: 620, ton: "pfeilschuss",     treffer: "pfeiltreffer" },
     laser:        { name: "Laser",           schaden: 7,  preis: 0,   flug: 260, ton: "laserrot",        treffer: "lasertreffer" },
@@ -38,7 +36,7 @@
     eierwerfer:   { name: "Eierwerfer",      schaden: 5,  preis: 20,  flug: 600, ton: "swoosh",          treffer: "eiknack" },
     huehnerwerfer:{ name: "Hühnerwerfer",    schaden: 10, preis: 55,  flug: 760, ton: "huhnwurf",        treffer: "huhntreffer" }
   };
-  var WAFFEN_REIHE = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "armbrust", "huehnerwerfer", "tomahawk", "zielfernrohr", "bazooka"];
+  var WAFFEN_REIHE = ["zwille", "bogen", "laser", "eierwerfer", "armbrust", "huehnerwerfer", "tomahawk", "zielfernrohr", "bazooka"];
   var LADEN = [
     { ding: "pflaster",    name: "Pflaster",        preis: 15,  was: "repariert, wenn du kaputt bist (dann 40 LP), sonst +25 LP" },
     { ding: "trank",       name: "Heiltrank",       preis: 30,  was: "+60 Lebenspunkte" },
@@ -198,7 +196,7 @@
     var o = {};
     ["id", "name", "lp", "lp_max", "kaputt", "schild", "mauer_art", "mauer_lp", "haustier",
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
-     "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_leben", "geschuetz_stufe", "eisen", "tarn"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -216,12 +214,6 @@
     } catch (e) { return ""; }
   }
   function platzElVon(chatId) {
-    /* XANDER (25.09.): „kannst du mir vielleicht nur ein Sparringspartner
-       machen, mit dem ich trainieren kann" — der Sparringspartner steht
-       über einem FREIEN Platz, nur auf dem eigenen Gerät. Er ist kein
-       Mensch im Raum und belegt keinen Sitz. */
-    var sp = /^sparring:(\d+)$/.exec(String(chatId || ""));
-    if (sp) return document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + sp[1] + '"]');
     return document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + String(chatId).replace(/"/g, "") + '"]');
   }
 
@@ -266,11 +258,11 @@
          deines Bildes. Deine Lebenspunkte zählen nur in der Übung —
          in der Datenbank ändert sich nichts, Punkte gibt es keine.
      --------------------------------------------------------------- */
-  function istPuppe(chatId) { return /^(uebungspuppe2?|sparring:\d+)$/.test(String(chatId || "")); }
+  function istPuppe(chatId) { return /^uebungspuppe2?$/.test(String(chatId || "")); }
   function puppeStand(chatId) {
     var sid = "puppe:" + chatId;
     if (!S.stand[sid]) {
-      S.stand[sid] = { id: sid, name: chatId === "uebungspuppe2" ? "Dummy" : /^sparring/.test(chatId) ? "Sparring" : "Puppe", lp: 100, lp_max: 100,
+      S.stand[sid] = { id: sid, name: chatId === "uebungspuppe2" ? "Dummy" : "Puppe", lp: 100, lp_max: 100,
                        kaputt: false, schild: 0, mauer_art: null, mauer_lp: 0,
                        haustier: chatId === "uebungspuppe" ? "fellmonster" : null,
                        geschuetz: chatId === "uebungspuppe2", wischer: 0, anfaenger: false, verdient: 0, uebung: true };
@@ -463,23 +455,9 @@
       falleLegen(S.legen, Number(knopf.dataset.lcPlatz));
       return true;
     }
-    /* Der Sparringspartner steht auf einem freien Platz: mit Waffe trifft
-       der Tipp ihn, ohne Waffe bleibt der Platz, was er ist. */
-    if (S.sparring && knopf && Number(knopf.dataset && knopf.dataset.lcPlatz) === S.sparring && (S.waffe || imDuellMit("sparring:" + S.sparring))) {
-      schiessen(knopf, { id: "sparring:" + S.sparring, name: "Sparring", nummer: S.sparring, leer: false }, ev);
-      return true;
-    }
     if (!S.bereit && !(p && istPuppe(p.id) && (S.waffe || imDuellMit(p.id)))) return false;
     var ich = S.ich || {};
     if (p && !p.leer && !p.ich && (S.waffe || imDuellMit(p.id))) {
-      /* XANDER: „wenn sie da gar nicht dabei sein möchte, dass ich
-         trotzdem auf sie schießen kann" — wer nicht mitspielt, wird
-         nicht beschossen; der Tipp sagt es nur. */
-      if (!istPuppe(p.id)) {
-        var st = S.stand[spielIdVon(p.id)];
-        if (!ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return true; }
-        if (st && st.mitspielen === false) { hinweis("💤 " + (p.name || "Diese Person") + " spielt gerade nicht mit – nicht angreifbar."); return true; }
-      }
       schiessen(knopf, p, ev);
       return true;
     }
@@ -489,7 +467,7 @@
     }
     return false;
   }
-  function gesperrt() { return Boolean(S.bereit && S.ich && S.ich.kaputt && S.ich.mitspielen); }
+  function gesperrt() { return Boolean(S.bereit && S.ich && S.ich.kaputt); }
   function gesperrtGrund() { return "💔 Du bist kaputt – du kannst nicht reisen oder wechseln. Nimm ein Pflaster (⚔️ Spiel)."; }
 
   function schiessen(knopf, p, ev) {
@@ -516,7 +494,6 @@
     var nummer = Number(knopf.dataset.lcPlatz);
     setTimeout(function () {
       var jetzt = plaetze().find(function (q) { return q.nummer === nummer; });
-      if (/^sparring:/.test(p.id)) jetzt = S.sparring === nummer ? { id: p.id } : null;
       if (!jetzt || jetzt.id !== p.id) {
         if (!puppe) senden({ ereignis: "ausgewichen", zielChat: p.id });
         zahlZeigen(p.id, null, "ausgewichen");
@@ -554,9 +531,6 @@
     if (waffe === "bazooka") return '<svg viewBox="-18 -7 36 14"><path d="M-12 -4 H8 Q14 -4 16 0 Q14 4 8 4 H-12 Z" fill="#5d6b3a" stroke="#2f3620" stroke-width="1"/><path d="M-12 -4 L-16 -7 L-14 0 L-16 7 L-12 4 Z" fill="#434d29"/><path d="M-16 -2 Q-24 0 -16 2 Z" fill="#ffb02e"/><rect x="0" y="-4" width="3" height="8" fill="#c9c14a"/></svg>';
     if (waffe === "laser") return '<svg viewBox="-20 -5 40 10"><path d="M-18 0 H18" stroke="' + (farbe || "#ff2d2d") + '" stroke-width="3" stroke-linecap="round"/><path d="M-18 0 H18" stroke="#fff" stroke-width="1" stroke-linecap="round" opacity=".8"/></svg>';
     if (waffe === "zielfernrohr") return '<svg viewBox="-5 -3 10 6"><ellipse rx="4" ry="1.6" fill="#caa53a" stroke="#6d5a1c" stroke-width=".6"/></svg>';
-    if (waffe === "kartoffel") return '<svg viewBox="-8 -6 16 12"><path d="M-6.5 .5 C-7 -3 -3.5 -5 .5 -4.6 C4.6 -4.2 7.2 -2 6.8 1.4 C6.4 4.4 3 5.4 -.6 5 C-4.4 4.6 -6.2 3.2 -6.5 .5 Z" fill="#c69a5b" stroke="#7a5528" stroke-width=".9"/>'
-      + '<g fill="#8a6230"><circle cx="-2.6" cy="-1.4" r=".7"/><circle cx="2.2" cy="-2" r=".6"/><circle cx="1" cy="2.4" r=".7"/><circle cx="-3.6" cy="2" r=".5"/></g>'
-      + '<path d="M-4 -2.6 C-2 -3.8 1 -3.8 3 -3" fill="none" stroke="#e3c48f" stroke-width=".8" stroke-linecap="round"/></svg>';
     if (waffe === "eierwerfer") return '<svg viewBox="-6 -7 12 14"><path d="M0 -6 C3.6 -6 5 -1 5 1.6 C5 4.6 2.8 6.4 0 6.4 C-2.8 6.4 -5 4.6 -5 1.6 C-5 -1 -3.6 -6 0 -6 Z" fill="#fbf4e4" stroke="#a8977a" stroke-width=".9"/><ellipse cx="-1.6" cy="-2.4" rx="1.1" ry="1.8" fill="#fff" opacity=".9"/></svg>';
     if (waffe === "huehnerwerfer") return '<svg viewBox="-13 -12 26 24"><path d="M-9 3 C-10 -4 -4 -7 1 -6 C3 -9 7 -9 8 -6 C9 -4 8 -2 7 -1 C9 2 7 7 1 8 C-5 9 -9 7 -9 3 Z" fill="#fffdf6" stroke="#9c8f78" stroke-width="1"/>'
       + '<path d="M3 -9 C3.5 -11 5 -11 5 -9.5 C6 -11 7.5 -10.5 7 -8.6 Z" fill="#e23b2e"/><path d="M8 -5.4 L11.6 -4.6 L8.2 -3.4 Z" fill="#f4b02a"/><circle cx="5.6" cy="-5.6" r=".9" fill="#222"/>'
@@ -614,10 +588,10 @@
     g.className = "sp-geschoss sp-g-" + waffe;
     g.innerHTML = geschossSvg(waffe);
     document.body.appendChild(g);
-    var bogen = waffe === "zwille" || waffe === "tomahawk" || waffe === "eierwerfer" || waffe === "kartoffel" ? -40
+    var bogen = waffe === "zwille" || waffe === "tomahawk" || waffe === "eierwerfer" ? -40
       : waffe === "huehnerwerfer" ? -70 : waffe === "bogen" ? -24 : 0;
     var mx = (a.x + zx) / 2, my = (a.y + zy) / 2 + bogen;
-    var drehung = waffe === "tomahawk" ? 900 : waffe === "huehnerwerfer" ? 540 : waffe === "eierwerfer" || waffe === "kartoffel" ? 360 : 0;
+    var drehung = waffe === "tomahawk" ? 900 : waffe === "huehnerwerfer" ? 540 : waffe === "eierwerfer" ? 360 : 0;
     try {
       g.animate([
         { transform: "translate(" + a.x + "px," + a.y + "px) translate(-50%,-50%) rotate(" + winkel + "deg)" },
@@ -831,159 +805,14 @@
     if (schaden > 0) setTimeout(function () { zahlZeigen(chatId, -schaden, art === "mine" ? "Mine" : "Falltür"); }, 250);
   }
 
-  /* Der Sparringspartner: eine Strohpuppe auf einem Pfahl, mit einer
-     Zielscheibe auf der Brust — deutlich KEIN Mensch. */
-  function sparringSvg() {
-    return '<svg viewBox="0 0 100 100" aria-hidden="true">'
-      + '<rect x="47" y="58" width="6" height="40" rx="2" fill="#8a5a2e"/>'
-      + '<path d="M22 44 L78 44" stroke="#c9a05a" stroke-width="7" stroke-linecap="round"/>'
-      + '<ellipse cx="50" cy="56" rx="17" ry="20" fill="#e2c27a" stroke="#a37e3a" stroke-width="2"/>'
-      + '<circle cx="50" cy="58" r="10" fill="#fff" stroke="#c8312b" stroke-width="3"/><circle cx="50" cy="58" r="4" fill="#c8312b"/>'
-      + '<circle cx="50" cy="26" r="13" fill="#e8cb88" stroke="#a37e3a" stroke-width="2"/>'
-      + '<path d="M40 22 l5 3 M60 22 l-5 3 M44 32 Q50 35 56 32" stroke="#6d4f1e" stroke-width="2" fill="none" stroke-linecap="round"/>'
-      + '<path d="M36 18 l-4 -4 M40 14 l-2 -5 M50 12 l0 -5 M60 14 l2 -5 M64 18 l4 -4" stroke="#c9a05a" stroke-width="2" stroke-linecap="round"/></svg>';
-  }
-  function sparringUmschalten() {
-    if (S.sparring) {
-      var weg = S.sparring;
-      if (S.duell && S.duell.uebung && S.duell.gegnerChat === "sparring:" + weg) uebungEnde();
-      S.sparring = 0; delete S.stand["puppe:sparring:" + weg];
-      hinweis("🎯 Sparringspartner ist weg."); zeichnen(); schnellZeichnen(); return;
-    }
-    var frei = [].find.call(document.querySelectorAll("#lcPlaetze .lc-platz"), function (q) { return !q.dataset.lcId; });
-    if (!frei) { hinweis("Kein freier Platz für den Sparringspartner."); return; }
-    S.sparring = Number(frei.dataset.lcPlatz);
-    if (!S.waffe) S.waffe = "kartoffel";
-    hinweis("🎯 Sparringspartner steht auf Platz " + S.sparring + " – nur bei dir. Tippen = treffen. „Er schießt zurück“ startet ein Übungsduell. Zählt nicht.");
-    zeichnen(); schnellZeichnen();
-  }
-
-  /* ---------------------------------------------------------------
-     DIE SCHNELLLEISTE — NUR FÜR MICH
-     ---------------------------------------------------------------
-     XANDER (25.09.): „ich hätte gern ne Art Waffen-Menü zur Shortcuts,
-     wo ich zwischen meinen Waffen, die ich gekauft hab, hin und her
-     aussuchen kann, dass ich nicht immer erst mein Profilbild gedrückt
-     halten muss … da wo die Chat-Suchleiste ist … dass meine Leiste
-     nicht bei dem anderen sichtbar ist" — und „über so ein Quick-Menü
-     … easy sich on the fly heilen können".
-     Sie sitzt direkt über der Chat-Eingabe und wird nur auf dem
-     eigenen Gerät gebaut; nichts davon geht an den Raum.
-     --------------------------------------------------------------- */
-  var schnellEl = null;
-  function schnellZeichnen() {
-    var form = document.getElementById("lcForm");
-    var an = drin() && S.bereit && S.ich && form && form.style.display !== "none";
-    if (!an) { if (schnellEl) schnellEl.hidden = true; return; }
-    if (!schnellEl || !schnellEl.isConnected || schnellEl.nextElementSibling !== form) {
-      if (!schnellEl) {
-        schnellEl = document.createElement("div");
-        schnellEl.className = "sp-schnell";
-        schnellEl.addEventListener("click", schnellKlick);
-      }
-      form.parentNode.insertBefore(schnellEl, form);
-    }
-    schnellEl.hidden = false;
-    var ich = S.ich, teile = [];
-    teile.push('<button type="button" class="sp-s-mit' + (ich.mitspielen ? " sp-an" : "") + '" data-s="mitspielen" title="'
-      + (ich.mitspielen ? "Du spielst mit – tippen für Pause (dann bist du nicht angreifbar)" : "Tippen zum Mitspielen") + '">'
-      + (ich.mitspielen ? "Im Spiel" : "Mitspielen") + "</button>");
-    (ich.waffen || []).slice().sort(function (a, b) { return WAFFEN_REIHE.indexOf(a) - WAFFEN_REIHE.indexOf(b); }).forEach(function (w) {
-      if (!WAFFEN[w]) return;
-      teile.push('<button type="button" class="sp-s-waffe' + (S.waffe === w ? " sp-an" : "") + '" data-s="waffe" data-w="' + w + '" title="'
-        + esc(WAFFEN[w].name) + " · Schaden " + WAFFEN[w].schaden + '">' + geschossSvg(w, S.laserfarbe) + "</button>");
-    });
-    var voll = !ich.kaputt && ich.lp >= ich.lp_max;
-    teile.push('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke) ? " disabled" : "")
-      + ' title="Heilen – nimmt, was gerade passt, und verschwendet nichts">'
-      + '<svg viewBox="0 0 20 20"><path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#e2403a"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>'
-      + '<small>' + (ich.pflaster || 0) + "/" + (ich.traenke || 0) + "</small></button>");
-    TRAENKE.forEach(function (tr) {
-      var n = ich["trank_" + tr[0]] || 0, rest = wirkt(ich, tr[0]);
-      if (!n && !rest) return;
-      teile.push('<button type="button" class="sp-s-trank" data-s="trinken" data-t="' + tr[0] + '" title="' + tr[1] + (rest ? " – wirkt noch " + rest + " s" : "") + '"'
-        + (rest ? " disabled" : "") + '><span class="sp-trank sp-trank-' + tr[0] + '"></span><small>' + n + "</small></button>");
-    });
-    teile.push('<button type="button" class="sp-s-klein' + (S.sparring ? " sp-an" : "") + '" data-s="sparring" title="Sparringspartner (nur bei dir)">Sparring</button>');
-    if (S.sparring) teile.push('<button type="button" class="sp-s-klein' + (S.duell && S.duell.uebung ? " sp-an" : "") + '" data-s="gegenfeuer" title="Der Sparringspartner schießt zurück">Er schießt zurück</button>');
-    teile.push('<button type="button" class="sp-s-klein" data-s="menue" title="Spielmenü: Laden, Aufgaben, Anleitung">Menü</button>');
-    var html = '<div class="sp-s-lp' + (ich.kaputt ? " sp-rot" : "") + '">' + ich.lp + "/" + ich.lp_max + " LP · " + (ich.punkte || 0) + " P</div>" + teile.join("");
-    if (schnellEl.dataset.html !== html) { schnellEl.innerHTML = html; schnellEl.dataset.html = html; }
-  }
-  function schnellKlick(ev) {
-    var k = ev.target.closest("button");
-    if (!k || k.disabled) return;
-    ev.preventDefault();
-    var s = k.dataset.s;
-    if (s === "waffe") {
-      /* Nochmal auf die angelegte Waffe = ablegen. */
-      S.waffe = S.waffe === k.dataset.w ? "" : k.dataset.w;
-      if (S.waffe) hinweis("🎯 " + WAFFEN[S.waffe].name + " – tippe auf ein Gesicht.");
-    } else if (s === "mitspielen") {
-      mitspielenSetzen(!S.ich.mitspielen); return;
-    } else if (s === "heilen") {
-      schnellHeilen(); return;
-    } else if (s === "trinken") {
-      trinken(k.dataset.t); return;
-    } else if (s === "sparring") {
-      sparringUmschalten(); return;
-    } else if (s === "gegenfeuer") {
-      if (S.duell && S.duell.uebung) uebungEnde(); else uebungStarten("sparring:" + S.sparring);
-    } else if (s === "menue") {
-      menue("start"); return;
-    }
-    zeichnen(); schnellZeichnen();
-  }
-  function mitspielenSetzen(an) {
-    rpc("spiel_mitspielen", { p_an: Boolean(an) }).then(function (r) {
-      if (!r || !r.ok) { hinweis("🎮 " + ((r && r.grund) || "geht gerade nicht")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      senden({ ereignis: "stand", stand: oeffentlich(r) });
-      if (an && !S.waffe) S.waffe = "kartoffel";
-      if (!an) { S.waffe = ""; }
-      hinweis(an ? "🎮 Du spielst mit – Kartoffel ist angelegt. Wechseln geht in der Leiste über dem Chat."
-                 : "💤 Pause: du bist jetzt nicht angreifbar. Dein Stand bleibt, wie er ist.");
-      zeichnen(); schnellZeichnen(); panelAuffrischen();
-    }).catch(function (e) { hinweis("Ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  /* XANDER: „wenn man Heiltränke trinkt und man ist praktisch schon
-     geheilt, dann sollen sie prozentual nur so viel geben, wie man
-     Heilung braucht … keine Heilung verschwendet werden". Der Server
-     lehnt Heilen bei vollen LP ab; hier wird das Passende gewählt:
-     kaputt → Pflaster (40 LP), viel verloren → Heiltrank (+60), sonst
-     Pflaster (+25). */
-  function schnellHeilen() {
-    var ich = S.ich || {};
-    var fehlt = (ich.lp_max || 100) - (ich.lp || 0);
-    if (!ich.kaputt && fehlt <= 0) { hinweis("💚 Du bist voll – nichts verschwendet."); return; }
-    var art = ich.kaputt ? (ich.pflaster > 0 ? "pflaster" : "trank")
-      : (fehlt >= 45 && ich.traenke > 0) || !(ich.pflaster > 0) ? "trank" : "pflaster";
-    if (art === "trank" && !(ich.traenke > 0)) art = "pflaster";
-    if (art === "pflaster" && !(ich.pflaster > 0)) { hinweis("Kein Pflaster und kein Heiltrank – im Laden gibt es beides."); return; }
-    heilen(art, "");
-  }
-
   /* ---------------------------------------------------------------
      DIE PLÄTZE SCHMÜCKEN: Lebensbalken, Schild, Mauer, Tier, Kaputt
      --------------------------------------------------------------- */
   function zeichnen() {
     var reihe = document.getElementById("lcPlaetze");
     if (!reihe) return;
-    /* Der Sparringspartner braucht einen FREIEN Platz. Setzt sich dort
-       jemand hin, wandert er auf den nächsten freien. */
-    if (S.sparring) {
-      var sfrei = reihe.querySelector('.lc-platz[data-lc-platz="' + S.sparring + '"]');
-      if (!sfrei || sfrei.dataset.lcId) {
-        var neu = [].find.call(reihe.querySelectorAll(".lc-platz"), function (q) { return !q.dataset.lcId; });
-        if (neu) { var alt = S.stand["puppe:sparring:" + S.sparring]; S.sparring = Number(neu.dataset.lcPlatz); if (alt) { alt.id = "puppe:sparring:" + S.sparring; S.stand[alt.id] = alt; } }
-        else { S.sparring = 0; }
-      }
-    }
     reihe.querySelectorAll(".lc-platz").forEach(function (el) {
       var chatId = el.dataset.lcId || "";
-      var sparHier = Boolean(S.sparring && !chatId && Number(el.dataset.lcPlatz) === S.sparring);
-      if (sparHier) chatId = "sparring:" + S.sparring;
-      schmuck(el, "sp-sparring", sparHier, el.querySelector(".lc-kreis") || el, sparHier ? sparringSvg() : "");
       var sid = chatId ? spielIdVon(chatId) : "";
       var s = sid ? S.stand[sid] : null;
       var kreis = el.querySelector(".lc-kreis");
@@ -1013,8 +842,7 @@
       bal.dataset.radius = String(RING_R / 50);
       bal.style.left = kreis.offsetLeft + "px"; bal.style.top = kreis.offsetTop + "px";
       bal.style.width = kreis.offsetWidth + "px"; bal.style.height = kreis.offsetHeight + "px";
-      bal.classList.toggle("sp-pause", s.mitspielen === false && !istPuppe(chatId));
-      bal.title = (s.mitspielen === false && !istPuppe(chatId) ? "spielt gerade nicht mit · " : "") + (s.name || "") + ": " + s.lp + " / " + s.lp_max + " LP" + (s.schild ? " · Schild " + s.schild : "")
+      bal.title = (s.name || "") + ": " + s.lp + " / " + s.lp_max + " LP" + (s.schild ? " · Schild " + s.schild : "")
         + (manaAnteil >= 0 ? " · " + s.mana + " Mana" : "");
       var farbe = anteil > 0.6 ? "#3bbf4a" : anteil > 0.3 ? "#e8b923" : "#e2403a";
       var html = ringSvg(anteil, schildAnteil, farbe, manaAnteil);
@@ -1066,12 +894,7 @@
     }
     TRAENKE.forEach(function (t) { var r = wirkt(S.ich, t[0]); if (r) teile.push('<span class="sp-m-teil sp-m-' + t[0] + '">' + t[1] + " " + r + " s</span>"); });
     if (S.legen) teile.unshift('<span class="sp-m-teil">' + (S.legen === "mine" ? "Mine" : "Falltür") + ': tippe auf einen Platz</span>');
-    /* FASSUNG 633 — die Leiste oben lag über der ersten Sitzreihe und
-       verdeckte Gesichter (Bildschirmfoto). Die Schnellleiste über dem
-       Chat zeigt dasselbe (angelegte Waffe, Tränke, Übung) — solange sie
-       da ist, bleibt die obere weg. */
-    var schnellDa = Boolean(schnellEl && !schnellEl.hidden && schnellEl.isConnected);
-    var an = !schnellDa && drin() && (kampfmodus() || duell || teile.length > 0);
+    var an = drin() && (kampfmodus() || duell || teile.length > 0);
     if (!an) { if (modusEl) modusEl.hidden = true; return; }
     if (!modusEl) {
       modusEl = document.createElement("div");
@@ -1101,7 +924,7 @@
     s.style.height = kreis.offsetHeight + "px";
   }
   function platzLeeren(el) {
-    el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer,.sp-tier,.sp-geschuetz,.sp-risse,.sp-waffenmarke" + (el.querySelector(".sp-sparring") && Number(el.dataset.lcPlatz) === S.sparring ? "" : ",.sp-sparring")).forEach(function (x) { x.remove(); });
+    el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer,.sp-tier,.sp-geschuetz,.sp-risse,.sp-waffenmarke").forEach(function (x) { x.remove(); });
     el.classList.remove("sp-kaputt", "sp-anfaenger", "sp-w-kraft", "sp-w-ziel", "sp-w-tempo", "sp-w-eisen", "sp-w-tarn");
     /* Die eigene Falle bleibt sichtbar, auch auf einem leeren Platz. */
     var nr = Number(el.dataset.lcPlatz), falle = null;
@@ -1357,7 +1180,7 @@
       + (S.waffe ? '<div class="sp-hinweis">🎯 ' + esc(WAFFEN[S.waffe].name) + ' ist angelegt – tippe auf ein Gesicht, um zu schießen. <button type="button" data-tu="ablegen">Ablegen</button></div>' : "")
       + (S.duell && Date.now() < S.duell.bis ? '<div class="sp-hinweis">⚔️ Duell läuft – tippe auf deinen Gegner.</div>' : "")
       + "</div>";
-    var tabs = [["start", "Übersicht"], ["anleitung", "Anleitung"], ["deutsch", "Deutsch"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell & Heilen"], ["rang", "Rangliste"]];
+    var tabs = [["start", "Übersicht"], ["deutsch", "Deutsch"], ["waffen", "Waffen"], ["schutz", "Schutz & Laden"], ["duell", "Duell & Heilen"], ["rang", "Rangliste"]];
     var leiste = '<div class="sp-tabs">' + tabs.map(function (t) {
       return '<button type="button" data-tab="' + t[0] + '" class="' + (reiter === t[0] ? "sp-an" : "") + '">' + t[1] + "</button>";
     }).join("") + "</div>";
@@ -1373,19 +1196,6 @@
         + '<button type="button" data-tu="heilen" data-art="trank"' + (ich.traenke > 0 ? "" : " disabled") + '>🧪 Heiltrank (' + ich.traenke + ')</button></div>'
         + '<p class="sp-klein">Kampf: Waffe anlegen, dann auf ein Gesicht tippen. Kopf ×2, Herz ×1,6, Körper ×1, Rand ×0,5. Wer vor dem Einschlag den Platz wechselt, weicht aus. Kaputt (0 LP) = kein Reisen bis zum Pflaster. Tafel offen = Waffenstillstand.</p>'
         + '<p class="sp-klein">Mana (blauer Balken) füllst du nur mit Deutsch: +6 je richtiger Aufgabe. Zaubertränke kaufst du im Laden; Trinken kostet 30 Mana und wirkt 60 s. Solange eine Waffe angelegt ist, steht oben die Leiste „Kampfmodus".</p>';
-    }
-    if (reiter === "anleitung") {
-      /* XANDER: „gibt's da eine Art Spielanleitung, wo man das versteht,
-         wie man das macht, was passiert wenn man nicht im Spielmodus ist". */
-      return '<div class="sp-anleitung">'
-        + "<p><b>Mitspielen.</b> Unten über dem Chat liegt deine eigene Leiste (nur du siehst sie). „Mitspielen“ schaltet dich ein. Wer nicht mitspielt, kann nicht angegriffen werden und greift niemanden an. Mitten im Kampf (1 Minute nach einem Treffer) kann man nicht aussteigen.</p>"
-        + "<p><b>Schießen.</b> Waffe in der Leiste antippen (nochmal = ablegen), dann auf ein Gesicht tippen. Wo du hintippst, zählt: Kopf ×2, Herz ×1,6, Körper ×1, Rand ×0,5. Wer vor dem Einschlag den Platz wechselt, weicht aus. Standardwaffe ist die Kartoffel.</p>"
-        + "<p><b>Leben.</b> Der Bogen links unten am Bild sind deine Lebenspunkte, rechts unten dein Mana. Eine Minute nach dem letzten Treffer erholst du dich von selbst, erst schneller, dann langsamer bis voll. Bei 0 bist du kaputt: kein Reisen, bis ein Pflaster hilft – oder nach 5 Minuten stehst du mit 25 LP wieder auf. Dein Stand liegt auf dem Server: runter von der Bühne und wieder hoch ändert nichts.</p>"
-        + "<p><b>Heilen.</b> Das Herz in der Leiste nimmt, was passt (kaputt: Pflaster; viel verloren: Heiltrank; sonst Pflaster) und heilt nie, wenn du voll bist. Andere heilst du im Reiter „Duell & Heilen“.</p>"
-        + "<p><b>Stärker werden.</b> Punkte gibt es nur für Deutsch. Mit jedem verdienten Punkt steigen deine Höchst-LP (bis 200) und deine Rüstung (bis 30 % weniger Schaden) – das bleibt für immer. Punkte gibst du im Laden aus; Treffer kosten keine Punkte.</p>"
-        + "<p><b>Schutz.</b> Schild (reist mit), Mauer (bleibt am Platz), Geschütz und Monster schlagen zurück – anteilig, nie mehr als 4/5 dessen, was der Angreifer anrichtet. Mana-Tränke kosten 30 Mana. Minen und Falltüren legst du auf einen Platz.</p>"
-        + "<p><b>Üben.</b> „Sparring“ in der Leiste stellt eine Strohpuppe auf einen freien Platz – nur bei dir, niemand wird gestört. „Er schießt zurück“ macht ein Übungsduell daraus. Zählt nicht.</p>"
-        + "<p><b>Waffenstillstand.</b> Solange die Tafel offen ist, trifft niemand.</p></div>";
     }
     if (reiter === "deutsch") {
       var chips = NIVEAUS.map(function (n) {
@@ -1415,12 +1225,7 @@
       var arten = '<div class="sp-chips">Art: '
         + '<button type="button" data-tu="kategorie" data-k="" class="' + (!S.kategorie ? "sp-an" : "") + '">Alles</button>'
         + '<button type="button" data-tu="kategorie" data-k="betonung" class="' + (S.kategorie === "betonung" ? "sp-an" : "") + '">Betonung</button></div>';
-      /* XANDER: „sind die Punkte irgendwie getimet … jetzt krieg ich
-         wieder drei Punkte … nach einer Zeit lang hab ich null Punkte" */
-      var regel = '<p class="sp-klein">Punkte je richtiger Aufgabe nach Niveau: A1 3 · A2 4 · B1 5 · B2 6 · C1 7 · C2 8. '
-        + 'Null gibt es bei falscher Antwort, nach mehr als 10 Minuten Bedenkzeit oder wenn du in der letzten Stunde schon 300 Punkte gesammelt hast (Schutz gegen Durchklicken). '
-        + 'Zwischen zwei Antworten liegen mindestens 3 Sekunden. Jede richtige Antwort gibt außerdem +6 Mana.</p>';
-      return '<div class="sp-chips">' + chips + "</div>" + arten + teil + missionTeil + regel;
+      return '<div class="sp-chips">' + chips + "</div>" + arten + teil + missionTeil;
     }
     if (reiter === "waffen") {
       var liste = WAFFEN_REIHE.map(function (k) {
@@ -1520,13 +1325,6 @@
       ton(r.richtig ? "bling" : "gummi", 0.45);
       if (r.richtig) senden({ ereignis: "stand", stand: oeffentlich(r) });
       panelAuffrischen(); zeichnen();
-      /* XANDER: „die Aufgaben können automatisch weiterschalten, da muss
-         man nicht erst klicken". Richtig: nach 1,6 s die nächste; falsch:
-         nach 3,5 s — Zeit genug, die richtige Lösung zu lesen. */
-      var diese = a;
-      setTimeout(function () {
-        if (S.aufgabe === diese && panel && !panel.hidden && reiter === "deutsch") aufgabeHolen(false);
-      }, r.richtig ? 1600 : 3500);
     }).catch(function (e) { hinweis("Antwort ging nicht: " + (e && e.message ? e.message : e)); });
   }
   function trinken(art) {
@@ -1646,12 +1444,11 @@
      TAKT: beitreten, auffrischen, Plätze schmücken, Tafel beobachten
      --------------------------------------------------------------- */
   setInterval(function () {
-    if (!drin()) { if (schnellEl) schnellEl.hidden = true; return; }
+    if (!drin()) return;
     if (!S.bereit) beitreten();
     abrufen(false);
     tafelPruefen();
     zeichnen();
-    schnellZeichnen();
   }, 700);
 
   window.DMA_SPIEL = {
@@ -1670,7 +1467,6 @@
       setzen: function (o) { Object.keys(o || {}).forEach(function (k) { S[k] = o[k]; }); zeichnen(); },
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
       gegenwehrZeigen: gegenwehrZeigen, falleZeigen: falleZeigen, tippAufPlatz: tippAufPlatz, ringSvg: ringSvg,
-      schnellZeichnen: schnellZeichnen,
       zone: function (dx, dy) {
         var d = Math.hypot(dx, dy);
         if (d > 1) return "daneben";

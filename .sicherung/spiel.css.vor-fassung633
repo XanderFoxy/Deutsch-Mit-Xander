@@ -232,38 +232,3 @@ body.sp-legen #lcPlaetze .lc-kreis { outline: 2px dashed rgba(226, 64, 58, .55);
 @media (prefers-reduced-motion: reduce) {
   .sp-kratzer, .sp-feuer, .sp-loch, .sp-fallen .lc-kreis, .sp-mine-wurf .lc-kreis { animation: none; }
 }
-
-/* =====================================================================
-   FASSUNG 633 — Schnellleiste (nur für mich), Sparring, Pause
-   ===================================================================== */
-/* XANDER: „da wo die Chat-Suchleiste ist … dass meine Leiste nicht bei
-   dem anderen sichtbar ist". Eine Zeile direkt über der Chat-Eingabe,
-   waagerecht scrollbar statt umzubrechen — sie schiebt nichts weg. */
-.sp-schnell { display: flex; align-items: center; gap: 5px; overflow-x: auto; overscroll-behavior-x: contain;
-  padding: 4px 6px; margin: 0 0 4px; border-radius: 12px; background: rgba(24, 28, 40, .9);
-  scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.sp-schnell::-webkit-scrollbar { display: none; }
-.sp-schnell[hidden] { display: none; }
-.sp-schnell button { flex: 0 0 auto; border: 0; border-radius: 9px; min-height: 32px; min-width: 34px; padding: 3px 7px;
-  background: rgba(255, 255, 255, .12); color: #fff; font: 700 12px/1.1 system-ui, sans-serif; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 4px; }
-.sp-schnell button:disabled { opacity: .4; cursor: default; }
-.sp-schnell button.sp-an { background: #f0e6c8; color: #1d2330; box-shadow: 0 0 0 2px #e8b923; }
-.sp-schnell .sp-s-mit { background: #3a7d44; }
-.sp-schnell .sp-s-mit.sp-an { background: #3bbf4a; color: #fff; box-shadow: none; }
-.sp-schnell .sp-s-waffe svg { width: 26px; height: 18px; }
-.sp-schnell .sp-s-heil svg { width: 18px; height: 18px; }
-.sp-schnell small { font-size: 10px; opacity: .85; }
-.sp-s-lp { flex: 0 0 auto; color: #cfe8d2; font: 700 11px/1.1 system-ui, sans-serif; padding: 0 4px; white-space: nowrap; }
-.sp-s-lp.sp-rot { color: #ff8a80; }
-/* Die Strohpuppe über einem freien Platz. */
-.sp-sparring { position: absolute; pointer-events: none; z-index: 6; }
-.sp-sparring svg { position: absolute; inset: 4%; width: 92%; height: 92%; }
-/* Wer gerade nicht mitspielt: Ring grau und blass. */
-.sp-lp.sp-pause svg { opacity: .35; filter: grayscale(1); }
-/* „dass das nicht so hängt … eine Kapsel, die immer automatisch mit
-   einem wandert": auf der Reise verschwinden Ring, Tier, Geschütz und
-   Aura am verlassenen Platz und tauchen am Ziel wieder auf. */
-.lc-platz-unterwegs > .sp-lp, .lc-platz-unterwegs > .sp-tier, .lc-platz-unterwegs > .sp-geschuetz,
-.lc-platz-unterwegs > .sp-aura, .lc-platz-unterwegs > .sp-waffenmarke, .lc-platz-unterwegs > .sp-risse { visibility: hidden; }
-.sp-anleitung p { margin: 0 0 8px; font-size: 13px; line-height: 1.4; }

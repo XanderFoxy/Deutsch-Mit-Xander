@@ -67,9 +67,7 @@ const sage = (gut, was, zusatz) => {
     window.LiveChat.spielIdVon = (chatId) => ids[chatId] || "";
     const stand = {};
     Object.keys(ids).forEach((k, i) => {
-      stand[ids[k]] = { id: ids[k], name: k, lp: 100 - i * 10, lp_max: 100, kaputt: false, schild: 0, mauer_lp: 0, haustier: null, geschuetz: false, wischer: 0, anfaenger: false, verdient: 0,
-        /* Fassung 633: Mitspielen ist freiwillig; hier spielen alle mit. */
-        mitspielen: true };
+      stand[ids[k]] = { id: ids[k], name: k, lp: 100 - i * 10, lp_max: 100, kaputt: false, schild: 0, mauer_lp: 0, haustier: null, geschuetz: false, wischer: 0, anfaenger: false, verdient: 0 };
     });
     stand[ids.p1].schild = 30;
     stand[ids.p2].mauer_lp = 90; stand[ids.p2].mauer_art = "stein";

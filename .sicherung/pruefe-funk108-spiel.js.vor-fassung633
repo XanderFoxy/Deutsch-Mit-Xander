@@ -74,9 +74,9 @@ const sage = (gut, was, zusatz) => {
     const ichId = "00000000-0000-4000-8000-000000000000", beaId = "11111111-1111-4111-8111-111111111111";
     window.LiveChat.spielIdVon = (id) => (id === "bea" ? beaId : "");
     const ich = { id: ichId, name: "Alex", lp: 100, lp_max: 100, kaputt: false, schild: 0, mauer_lp: 0, punkte: 200,
-                  pflaster: 3, traenke: 1, waffen: ["zwille", "bogen", "laser"], mission: null, mana: 40, mana_max: 100, mitspielen: true };
+                  pflaster: 3, traenke: 1, waffen: ["zwille", "bogen", "laser"], mission: null, mana: 40, mana_max: 100 };
     const bea = { id: beaId, name: "Bea", lp: 50, lp_max: 100, kaputt: false, schild: 0, mauer_lp: 0, haustier: "fellmonster",
-                  haustier_leben: 30, geschuetz: true, mana: 10, mana_max: 100, mitspielen: true };
+                  haustier_leben: 30, geschuetz: true, mana: 10, mana_max: 100 };
     window.__rufe = [];
     window.__raus = [];
     window.__fallen = [];
