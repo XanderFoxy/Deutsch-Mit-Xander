@@ -49,24 +49,34 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 632: /anziehen alle trifft wieder alle (war 0 von 5). 631: Spiel mit Treffertönen, anderen heilen, verhältnismäßiger Gegenwehr, Stachelmonster, Drache, Eier- und Hühnerwerfer, neuen Tränken, Minen und Falltüren, Lebens- und Manaring. Aufgabenbank: 1.834 unbrauchbare Aufgaben abgeschaltet, 12.325 aktiv.",
+  stand: "Fassung 636: Level, Können, Rüstung, Superkraft, Tagesgeschenk (634), Lok-Gleise gerade und verbunden (635), kein Italienisch im Deutschkurs (636)",
 
   inArbeit: [
-    { seit: "2026-09-25T01:08",
-      text: "Walkie 264–270 abwarten" },
+    { seit: "2026-09-25T02:20",
+      text: "811 falsche Betonungen korrigieren (läuft)" },
+    { seit: "2026-09-25T02:20",
+      text: "Aufgaben mit zwei richtigen Antworten reparieren (läuft)" },
+    { seit: "2026-09-25T02:20",
+      text: "Tiere füttern und aufwerten, Babydrache, Flugtier, Biss mit Knurren" },
+    { seit: "2026-09-25T02:20",
+      text: "Geschütz als Turm, deutsche Wurfwaffen, Salven, Mauer bleibt deine" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T01:08",
-      text: "Flugzeug senkrecht ohne Ruck (630)" },
-    { seit: "2026-09-25T01:08",
-      text: "Wangenhand von der Seite (630)" },
-    { seit: "2026-09-25T01:08",
-      text: "Spielpaket Funk 108–111 (631)" },
-    { seit: "2026-09-25T01:08",
-      text: "Aufgabenbank gesäubert" },
-    { seit: "2026-09-25T01:08",
-      text: "Anziehen alle (632)" },
+    { seit: "2026-09-25T02:20",
+      text: "Level und Erfahrung, sechs Fertigkeiten mit Training" },
+    { seit: "2026-09-25T02:20",
+      text: "Helm und Brustpanzer mit Abnutzung und Reparatur" },
+    { seit: "2026-09-25T02:20",
+      text: "Superkraft dämonisch bei voller Ladung" },
+    { seit: "2026-09-25T02:20",
+      text: "Tagesgeschenk automatisch, Seitenübungen werden Spielpunkte" },
+    { seit: "2026-09-25T02:20",
+      text: "Ladung, Level und Rüstung am Bildrand für alle sichtbar" },
+    { seit: "2026-09-25T02:20",
+      text: "Lok nur auf geraden, verbundenen Gleisen" },
+    { seit: "2026-09-25T02:20",
+      text: "1.067 italienische Wörter raus aus dem deutschen Wörterbuch, Satzbaukasten ohne Italienisch" },
   ],
 };
