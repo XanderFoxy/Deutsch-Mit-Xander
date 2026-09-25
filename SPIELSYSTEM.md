@@ -411,3 +411,13 @@ XANDER: „Zauber oder Erdbeben Orkane … Gegner von der Bildfläche werfen ode
 - XANDER: „ich habe immer noch nicht das Tacho Menü". Die angelegte Waffe trägt einen kleinen Tacho; der Hinweis beim Anlegen sagt „Nochmal auf die Waffe tippen: Waffenrad".
 - XANDER: „Schutz und Laden … springt der Link wieder hinter den Frame". Die Reiterleiste im großen Menü behält ihre Stelle, der gewählte Reiter steht immer ganz im Bild.
 - Sonde: `pruefe-651-mauer-menue.js` (15 Prüfungen, 360 px Android, echte Fingertipps; auf dem alten Stand 11 rot).
+
+## Fassung 652 — Spiel nur für Mitspieler, Töne, Controller-Knopf, Waffenrad nach Klassen, Doppeltipp, Kanone
+
+- XANDER: „bist du dir sicher, dass die anderen normalen Chat Teilnehmer die spielenden nicht sehen … wirklich so intern". Bisher sah jeder Angemeldete Ringe, Mauern, Tiere, Schüsse und Zauber. Jetzt gilt `spielSichtbar()` = eingeloggt UND „Mitspielen" an: sonst keine Spielbilder an den Plätzen, keine Ereignisbilder, keine Töne (Ausnahme: man bedient gerade selbst das Spielmenü). Offen: Das Platzwechseln (Ausweichen) sehen alle – dafür braucht es eigene Spielplätze.
+- XANDER: „ein Menü, wo man die Sounds … regeln kann". „Mehr" → Töne: aus / leise / mittel / laut (gemerkt, `dma_spiel_laut`; Master-Gain 0,62 × Stufe).
+- XANDER: „ein kleines viereckiges Symbol mit dem Game Controller". Der Menüknopf ganz links ist ein eckiger Controller-Knopf; das Menü klappt darüber auf.
+- XANDER: „welcher Regelung folgt das?" Waffenrad neu: volles Rad (position: fixed, nie abgeschnitten), vier farbige, beschriftete Sektoren im Uhrzeigersinn ab oben – Standard, Lustig, Arcade, Stark –, in jedem Sektor stärker werdend.
+- XANDER: „wenn man sich selbst doppelt antippt … die Waffe wechselt … dreimal tippen irgendwas anderes". 2× aufs eigene Bild = Waffe 1 ↔ 2; 3× = Makro nach Wahl („Mehr": Heilen / Superkraft / Zauberrad). Der erste Tipp geht wie immer an die App (dort tut er auf dem eigenen Bild nichts).
+- XANDER: „die Kanone feuert nicht … nicht animiert". Sie feuert als Gegenwehr, wenn man selbst getroffen wird (20 Schuss auf Stufe 3 bei Xander). Jetzt sichtbar: der Turm dreht sich zum Angreifer, ruckt zurück, Mündungsfeuer.
+- Sonden: `pruefe-652-intern-rad-tippen.js` (15 Prüfungen, Android 360 px); 645 scrollt im längeren „Mehr" wie ein Mensch; 17 Spiel-Sonden grün.

@@ -211,7 +211,7 @@
     try {
       var k = KLANG.ctx, komp = k.createDynamicsCompressor();
       komp.threshold.value = -24; komp.knee.value = 18; komp.ratio.value = 6; komp.attack.value = 0.004; komp.release.value = 0.2;
-      KLANG.master = k.createGain(); KLANG.master.gain.value = 0.62 * lautFaktor();
+      KLANG.master = k.createGain(); KLANG.master.gain.value = 0.62;
       KLANG.master.connect(komp); komp.connect(k.destination);
     } catch (e) { KLANG.master = null; }
     return KLANG.ctx;
@@ -266,16 +266,6 @@
       .catch(function (e) { KLANG.kaputt[name] = String(e && e.message || e || "Fehler"); delete KLANG.laedt[name]; return null; });
     return KLANG.laedt[name];
   }
-  /* FASSUNG 652 — XANDER: „ein Menü, wo man die Sounds noch irgendwie
-     regeln kann, die Lautstärke oder die Sounds ausstellt". Drei Stufen,
-     gemerkt auf dem Gerät; 0 = aus. */
-  var LAUT_STUFEN = [["aus", 0], ["leise", 0.45], ["mittel", 0.75], ["laut", 1]];
-  function lautStufe() { try { var v = localStorage.getItem("dma_spiel_laut"); return v == null ? 2 : Math.max(0, Math.min(3, Number(v) || 0)); } catch (e) { return 2; } }
-  function lautFaktor() { return LAUT_STUFEN[lautStufe()][1]; }
-  function lautSetzen(n) {
-    try { localStorage.setItem("dma_spiel_laut", String(n)); } catch (e) {}
-    if (KLANG.master) try { KLANG.master.gain.value = 0.62 * lautFaktor(); } catch (e) {}
-  }
   function toeneAn() { try { var b = B(); return b.toeneAn ? b.toeneAn() !== false : true; } catch (e) { return true; } }
   function klangSpielen(name, laut) {
     var k = KLANG.ctx, p = KLANG.puffer[name];
@@ -290,16 +280,13 @@
     } catch (e) { KLANG.fehler = String(e && e.message || e); return false; }
   }
   function ton(name, laut) {
-    if (!name || !toeneAn() || lautStufe() === 0) return;
-    /* FASSUNG 652 — wer nicht mitspielt, hört das Spiel nicht. */
-    /* (Ausnahme: man bedient gerade selbst das Spielmenü.) */
-    if (!spielSichtbar() && !S.schnellMenue && !(panel && !panel.hidden)) return;
+    if (!name || !toeneAn()) return;
     if (klangSpielen(name, laut)) { try { if (window.DMA_TONLOG) window.DMA_TONLOG.push({ name: name, wann: Math.round(performance.now()), weg: "webaudio" }); } catch (e) {} return; }
     /* Noch nicht geladen oder nicht frei: diesmal der alte Weg, für das
        nächste Mal wird geladen. */
     KLANG.ersatz++;
     klangLaden(name);
-    try { if (B().ton) B().ton(name, (laut == null ? 0.5 : laut) * lautFaktor()); } catch (e) {}
+    try { if (B().ton) B().ton(name, laut); } catch (e) {}
   }
   /* FASSUNG 645 — Meldungen des Spiels. XANDER: „ich kann ja nicht mal
      auf Laden und Schutz drücken aus diesem Android Menü raus". Die
@@ -350,13 +337,6 @@
     } catch (e) {}
     meldungEl.style.bottom = Math.round(unten) + "px";
   }
-  /* FASSUNG 652 — XANDER: „bist du dir sicher, dass die anderen normalen
-     Chat Teilnehmer die spielenden nicht sehen … Das wäre mir noch sehr
-     wichtig, dass das wirklich so intern ist … wie mit den
-     Sprachnachrichten". Das Spiel ist nur für die da, die mitspielen:
-     Ringe, Mauern, Tiere, Schüsse, Zauber und Töne sieht und hört nur,
-     wer selbst „Mitspielen" an hat. */
-  function spielSichtbar() { return Boolean(S.bereit && S.ich && S.ich.mitspielen); }
   function drin() { var l = LC(); try { return Boolean(l && l.lage && l.lage().lage === "drin"); } catch (e) { return false; } }
 
   /* ---------------------------------------------------------------
@@ -769,8 +749,6 @@
     if (n.stand && n.stand.id) S.stand[n.stand.id] = n.stand;
     if (n.ziel_stand && n.ziel_stand.id) S.stand[n.ziel_stand.id] = n.ziel_stand;
     if (n.ich_stand && n.ich_stand.id) S.stand[n.ich_stand.id] = n.ich_stand;
-    /* Wer nicht mitspielt, bekommt nur den Stand – keine Bilder, keine Töne. */
-    if (!spielSichtbar() && n.ereignis !== "duell" && n.ereignis !== "duellnein") return;
     if (n.ereignis === "schuss") {
       geschossZeigen(n.von, n.zielChat, n.waffe, n.dx, n.dy, n.farbe, Boolean(n.schnell));
     } else if (n.ereignis === "treffer") {
@@ -835,40 +813,8 @@
   }
   function kampfmodus() { return S.bereit && (Boolean(S.waffe) || Boolean(S.zauber) || Boolean(S.duell && Date.now() < S.duell.bis)); }
 
-  /* FASSUNG 652 — XANDER: „wenn man sich selbst doppelt antippt … dass
-     ich dann die Waffe wechselt … bei zweimal tippen irgendwas … und bei
-     dreimal tippen irgendwas anderes, was ich mir vorher einstelle".
-     Ein Tipp aufs eigene Bild tut sonst nichts (app.js); der erste geht
-     also weiter wie immer, erst der zweite und dritte gehören dem Spiel.
-     2× = Waffe 1 ↔ Waffe 2, 3× = das Makro aus „Mehr". */
-  var MAKROS = [["heilen", "Heilen"], ["superkraft", "Superkraft"], ["zauber", "Zauberrad"]];
-  function makro3() { try { var m = localStorage.getItem("dma_spiel_makro3"); return MAKROS.some(function (x) { return x[0] === m; }) ? m : "heilen"; } catch (e) { return "heilen"; } }
-  function eigenTipp() {
-    var jetzt = Date.now();
-    S.eigenTipps = jetzt - (S.eigenZeit || 0) < 420 ? (S.eigenTipps || 1) + 1 : 1;
-    S.eigenZeit = jetzt;
-    clearTimeout(S.eigenUhr);
-    if (S.eigenTipps < 2) return false;
-    S.eigenUhr = setTimeout(function () {
-      var n = S.eigenTipps; S.eigenTipps = 0;
-      if (n === 2) {
-        var sl = slots(), neu = S.waffe === sl[0] ? sl[1] : sl[0];
-        S.waffe = neu; S.rad = null;
-        ton("swoosh", 0.3);
-        hinweis("🔁 " + WAFFEN[neu].name + " angelegt (2× aufs eigene Bild tippen wechselt).");
-      } else {
-        var m = makro3();
-        if (m === "heilen") schnellHeilen();
-        else if (m === "superkraft") superkraft();
-        else { S.zrad = true; S.rad = null; S.schnellMenue = false; }
-      }
-      zeichnen(); schnellZeichnen(true);
-    }, 430);
-    return true;
-  }
   /* Aufgerufen vom Tipp auf einen Platz (app.js). true = erledigt. */
   function tippAufPlatz(knopf, p, ev) {
-    if (p && p.ich && spielSichtbar() && !S.legen && !S.graben && !S.zauber) { if (eigenTipp()) return true; }
     /* FUNK 111 — nach „Mine legen" / „Falltür legen" gilt der nächste
        Tipp dem Platz, auf den sie soll. */
     if (S.legen && S.bereit && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
@@ -1444,24 +1390,6 @@
     ton("geschuetzfeuer", 0.5);
     /* Das Geschütz sitzt links unten am Bild (geschuetzSvg). */
     var sx = a.x - a.r * 0.62, sy = a.y + a.r * 0.62;
-    /* FASSUNG 652 — XANDER: „die Kanone feuert nicht … das ist nicht
-       animiert". Der Turm dreht sich zum Angreifer, ruckt bei jedem
-       Schuss zurück, und an der Mündung blitzt es. */
-    var turm = (platzElVon(von) || document.createElement("i")).querySelector(".sp-geschuetz");
-    if (turm) {
-      turm.style.setProperty("--zielwinkel", Math.max(-60, Math.min(60, Math.atan2(z.y - sy, z.x - sx) * 180 / Math.PI + 45)) + "deg");
-      turm.classList.remove("sp-feuert"); void turm.offsetWidth; turm.classList.add("sp-feuert");
-      setTimeout(function () { turm.classList.remove("sp-feuert"); }, 700);
-    }
-    [0, 150].forEach(function (warte) {
-      setTimeout(function () {
-        var blitz = document.createElement("div");
-        blitz.className = "sp-muendung";
-        blitz.style.left = sx + "px"; blitz.style.top = sy + "px";
-        document.body.appendChild(blitz);
-        setTimeout(function () { blitz.remove(); }, 260);
-      }, warte);
-    });
     [0, 150].forEach(function (warte) {
       setTimeout(function () {
         var k = document.createElement("div");
@@ -1979,11 +1907,9 @@
        Leiste einklappen" lässt nur das Ei stehen; ein Tipp holt sie zurück. */
     if (S.leisteZu == null) { try { S.leisteZu = localStorage.getItem("dma_spiel_leiste_zu") === "1"; } catch (e) { S.leisteZu = false; } }
     teile.push('<button type="button" class="sp-s-ei sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + (S.leisteZu ? " sp-s-ei-zu" : "") + '" data-s="' + (S.leisteZu ? "ei" : "klappe") + '" title="' + (S.leisteZu ? "Spielleiste öffnen" : "Spielmenü: Waffen, Heilen, Tiere, Mehr") + '">'
-      /* FASSUNG 652 — „nicht so ein queren Symbol, sondern einfach ein
-         kleines viereckiges Symbol mit dem Game Controller". */
-      + '<svg viewBox="0 0 24 24"><path d="M6.2 7.5 H17.8 C20.6 7.5 22.4 10.4 22.8 14.2 C23.2 17.6 21.4 19.4 19.4 18.4 L16.4 15.8 H7.6 L4.6 18.4 C2.6 19.4 .8 17.6 1.2 14.2 C1.6 10.4 3.4 7.5 6.2 7.5 Z" fill="#eef1f7"/>'
-      + '<path d="M7 10.2 V14.2 M5 12.2 H9" stroke="#2f3749" stroke-width="1.7" stroke-linecap="round"/>'
-      + '<circle cx="16.4" cy="10.9" r="1.15" fill="#e2403a"/><circle cx="18.6" cy="13.1" r="1.15" fill="#3bbf4a"/><circle cx="14.2" cy="13.1" r="1.15" fill="#f2c230"/><circle cx="16.4" cy="15.2" r="1.15" fill="#3a8dde"/></svg></button>');
+      + '<svg viewBox="0 0 24 24"><path d="M12 2.5 C7.2 2.5 4 9 4 14.2 C4 18.8 7.6 21.5 12 21.5 C16.4 21.5 20 18.8 20 14.2 C20 9 16.8 2.5 12 2.5 Z" fill="#f4ecd8" stroke="#c9b48a" stroke-width="1"/>'
+      + '<path d="M6.6 12.4 H17.4 A2.4 2.4 0 0 1 19.3 16.2 L18.4 17.3 A1.8 1.8 0 0 1 15.6 17 L14.6 15.6 H9.4 L8.4 17 A1.8 1.8 0 0 1 5.6 17.3 L4.7 16.2 A2.4 2.4 0 0 1 6.6 12.4 Z" fill="#2f3749"/>'
+      + '<path d="M8.4 13.4 V15.4 M7.4 14.4 H9.4" stroke="#fff" stroke-width=".9" stroke-linecap="round"/><circle cx="15.3" cy="13.9" r=".75" fill="#e2403a"/><circle cx="16.7" cy="15" r=".75" fill="#3bbf4a"/></svg></button>');
     if (S.leisteZu) { S.schnellMenue = false; S.rad = null; S.zrad = false; }
     else {
     teile.push('<button type="button" class="sp-s-mit' + (ich.mitspielen ? " sp-an" : "") + '" data-s="mitspielen" title="'
@@ -2049,19 +1975,8 @@
         sm.style.maxHeight = Math.max(160, Math.round(unterkante - oben - 10)) + "px";
       } catch (e) {}
     }
-    /* FASSUNG 652 — das volle Waffenrad schwebt fest über dem Chat:
-       mittig im Rahmen, Unterkante über der Leiste, nie aus dem Bild. */
-    var voll = schnellEl.querySelector(".sp-rad-voll");
-    if (voll) {
-      try {
-        var rr = schnellEl.parentNode.getBoundingClientRect(), leiste = schnellEl.querySelector(".sp-s-reihe").getBoundingClientRect();
-        var gr = voll.offsetWidth, lx = Math.round(rr.left + rr.width / 2 - gr / 2), ty = Math.round(leiste.top - 8 - gr);
-        lx = Math.max(4, Math.min(window.innerWidth - gr - 4, lx)); ty = Math.max(4, ty);
-        voll.style.left = lx + "px"; voll.style.top = ty + "px";
-      } catch (e) {}
-    }
     /* Das Rad steht über seinem Waffenplatz (das Zauberrad über dem Zauberstab). */
-    var rad = schnellEl.querySelector(".sp-rad:not(.sp-rad-voll)"), slot = rad && schnellEl.querySelector(S.zrad ? ".sp-s-zauber" : '.sp-s-slot[data-n="' + S.rad + '"]');
+    var rad = schnellEl.querySelector(".sp-rad"), slot = rad && schnellEl.querySelector(S.zrad ? ".sp-s-zauber" : '.sp-s-slot[data-n="' + S.rad + '"]');
     if (rad && slot) {
       /* Über dem Platz – aber nie aus dem Bild heraus. */
       var breite = schnellEl.parentNode.clientWidth || window.innerWidth, links = slot.offsetLeft + slot.offsetWidth / 2 - rad.offsetWidth / 2;
@@ -2071,49 +1986,33 @@
     }
     meldungSetzen();
   }
-  /* FASSUNG 652 — DAS WAFFENRAD, NEU GEORDNET
-     XANDER: „das Waffenrad wird irgendwie abgeschnitten dargestellt …
-     ich verstehe auch nicht die Logik … warum sind außen die Waffen, die
-     außen sind? Welcher Regelung folgt das?" Ehrlich: keiner – innen
-     lagen einfach die ersten sieben. Jetzt ein volles Rad wie bei GTA
-     oder Diablo: vier farbige Sektoren nach Klasse, im Uhrzeigersinn ab
-     oben – Standard (blau), Lustig (orange), Arcade (lila), Stark (rot);
-     in jedem Sektor stärker werdend. Das Rad schwebt frei über dem Chat
-     (position: fixed), so schneidet kein Rahmen es ab. */
-  var RAD_KLASSEN = [
-    ["Standard", "#3c6e9e", ["kartoffel", "zwille", "bogen", "laser"]],
-    ["Lustig",   "#c0772a", ["eierwerfer", "brezel", "sauerkraut", "bratwurst", "huehnerwerfer", "bierkrug", "doener", "spaetzle"]],
-    ["Arcade",   "#7a3fa0", ["lasersalve", "mg"]],
-    ["Stark",    "#a33a3a", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]]
-  ];
+  /* Das Waffenrad: alle eigenen Waffen im Halbkreis, nur Bilder und die
+     Schadenszahl; in der Mitte „ablegen". Gruppen liegen nebeneinander
+     (Standard links, Stark rechts), damit die Hand sie wiederfindet. */
   function radHtml(nr) {
     var ich = S.ich || {}, s = slots();
-    var hat = function (w) { return WAFFEN[w] && ((ich.waffen || []).indexOf(w) >= 0 || (WAFFEN[w].vorrat && vorrat(ich, w) > 0)); };
-    var gruppen = RAD_KLASSEN.map(function (k) { return { name: k[0], farbe: k[1], waffen: k[2].filter(hat) }; }).filter(function (g) { return g.waffen.length; });
-    var n = 0; gruppen.forEach(function (g) { n += g.waffen.length; });
-    /* Jede Waffe 44 px Bogen, zwischen den Klassen eine halbe Lücke. */
-    var einheiten = n + gruppen.length * 0.5;
-    var R = Math.max(100, Math.ceil(einheiten * 44 / (2 * Math.PI))), B = 2 * R + 52, M = B / 2;
-    var schritt = 2 * Math.PI / einheiten, a = -Math.PI / 2, bogen = "", knoepfe = "";
-    var punkt = function (w, r) { return [(M + Math.cos(w) * r).toFixed(1), (M + Math.sin(w) * r).toFixed(1)]; };
-    gruppen.forEach(function (g) {
-      var a0 = a + schritt * 0.25, a1 = a0 + g.waffen.length * schritt;
-      var p0 = punkt(a0, R), p1 = punkt(a1, R), gross = a1 - a0 > Math.PI ? 1 : 0;
-      bogen += '<path d="M' + p0[0] + " " + p0[1] + " A" + R + " " + R + " 0 " + gross + " 1 " + p1[0] + " " + p1[1] + '" stroke="' + g.farbe + '" />';
-      var lm = (a0 + a1) / 2, lp = punkt(lm, R - 52);
-      bogen += '<text x="' + lp[0] + '" y="' + lp[1] + '" fill="' + g.farbe + '">' + g.name + "</text>";
-      g.waffen.forEach(function (w, i) {
-        var wa = a0 + (i + 0.5) * schritt, p = punkt(wa, R);
+    var reihe = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "bratwurst", "sauerkraut",
+      "spaetzle", "doener", "lasersalve", "mg", "armbrust", "tomahawk", "zielfernrohr", "bazooka"];
+    var da = reihe.filter(function (w) { return WAFFEN[w] && ((ich.waffen || []).indexOf(w) >= 0 || (WAFFEN[w].vorrat && vorrat(ich, w) > 0)); });
+    /* Zwei Ringe, damit nichts überlappt: innen bis 7 (Radius 88),
+       außen der Rest (Radius 146) – Abstand je Waffe mindestens 44 px. */
+    var ringe = [da.slice(0, 7), da.slice(7)], RADIEN = [88, 146], html = "";
+    var R = ringe[1].length ? RADIEN[1] : RADIEN[0];
+    ringe.forEach(function (ring, r) {
+      var n = ring.length, rad = RADIEN[r];
+      ring.forEach(function (w, i) {
+        /* von links (180°) über oben nach rechts (360°), mit Rand */
+        var a = Math.PI + 0.12 + (n === 1 ? (Math.PI - 0.24) / 2 : (i / (n - 1)) * (Math.PI - 0.24));
+        var x = Math.cos(a) * rad, y = -Math.sin(a) * rad;
         var hw = haltVon(ich, w), vr = WAFFEN[w].vorrat ? vorrat(ich, w) : -1;
-        knoepfe += '<button type="button" class="sp-rad-waffe' + (s[nr] === w ? " sp-an" : "") + (hw === 0 ? " sp-stumpf" : "") + '" data-s="radwahl" data-n="' + nr + '" data-w="' + w
-          + '" style="left:' + (p[0] - 20) + "px;top:" + (p[1] - 20) + "px;--klasse:" + g.farbe + '" title="' + esc(WAFFEN[w].name + " · " + g.name) + '">'
+        html += '<button type="button" class="sp-rad-waffe' + (s[nr] === w ? " sp-an" : "") + (hw === 0 ? " sp-stumpf" : "") + '" data-s="radwahl" data-n="' + nr + '" data-w="' + w
+          + '" style="left:calc(50% + ' + (x - 20).toFixed(0) + "px);bottom:" + (y + 4).toFixed(0) + 'px" title="' + esc(WAFFEN[w].name) + '">'
           + geschossSvg(w, S.laserfarbe) + "<small>" + (vr >= 0 ? "×" + vr : WAFFEN[w].schaden) + "</small></button>";
       });
-      a = a1 + schritt * 0.25;
     });
-    return '<div class="sp-rad sp-rad-voll" style="width:' + B + "px;height:" + B + 'px">'
-      + '<svg class="sp-rad-sektoren" viewBox="0 0 ' + B + " " + B + '"><circle cx="' + M + '" cy="' + M + '" r="' + (R + 24) + '" class="sp-rad-scheibe"/>' + bogen + "</svg>"
-      + knoepfe + '<button type="button" class="sp-rad-mitte" data-s="radab" style="left:' + (M - 20) + "px;top:" + (M - 20) + 'px" title="Waffe ablegen"><svg viewBox="0 0 20 20"><path d="M5 11 V7 a1.5 1.5 0 0 1 3 0 V10 M8 9 V5.5 a1.5 1.5 0 0 1 3 0 V9.5 M11 9 V6.5 a1.5 1.5 0 0 1 3 0 V11 C14 15 12 17 9.5 17 C7 17 5.5 15.5 5 13 Z" fill="#fff"/></svg></button></div>';
+    var B = 2 * R + 48;
+    return '<div class="sp-rad" style="width:' + B + "px;height:" + (R + 48) + 'px"><div class="sp-rad-bogen" style="width:' + B + "px;height:" + B + 'px"></div>'
+      + html + '<button type="button" class="sp-rad-mitte" data-s="radab" title="Waffe ablegen"><svg viewBox="0 0 20 20"><path d="M5 11 V7 a1.5 1.5 0 0 1 3 0 V10 M8 9 V5.5 a1.5 1.5 0 0 1 3 0 V9.5 M11 9 V6.5 a1.5 1.5 0 0 1 3 0 V11 C14 15 12 17 9.5 17 C7 17 5.5 15.5 5 13 Z" fill="#fff"/></svg></button></div>';
   }
   /* FASSUNG 650 — das Zauberrad: drei Zauber im Halbkreis, Bild und
      Manakosten; gesperrte zeigen ihr Level. Mitte: Zauber weglegen. */
@@ -2176,15 +2075,7 @@
           + esc((TIERE[a] || {}).name || a) + " <small>" + (draussen ? "draußen · " : "") + kraft + " Kraft</small></button>";
       }).join("") + "</div><p class=\"sp-sm-klein\">Tippen holt das Tier raus – eins am Boden, eins in der Luft. Keins geht verloren.</p>";
     } else {
-      var lautJetzt = toeneAn() ? lautStufe() : 0;
-      inhaltM = '<div class="sp-sm-laut"><span>Töne</span>' + LAUT_STUFEN.map(function (l, i) {
-          return '<button type="button" data-s="laut" data-n="' + i + '" class="' + (lautJetzt === i ? "sp-an" : "") + '">' + l[0] + "</button>";
-        }).join("") + "</div>"
-        + '<div class="sp-sm-laut"><span>3× Bild</span>' + MAKROS.map(function (m) {
-          return '<button type="button" data-s="makro" data-m="' + m[0] + '" class="' + (makro3() === m[0] ? "sp-an" : "") + '">' + m[1] + "</button>";
-        }).join("") + "</div>"
-        + '<p class="sp-sm-klein">Aufs eigene Bild: 2× tippen wechselt die Waffe, 3× tippen löst das hier aus.</p>'
-        + '<div class="sp-sm-liste">'
+      inhaltM = '<div class="sp-sm-liste">'
         + '<button type="button" data-s="sparring" class="' + (S.sparring ? "sp-an" : "") + '">Sparringspartner ' + (S.sparring ? "weg" : "aufstellen") + "</button>"
         + (S.sparring ? '<button type="button" data-s="gegenfeuer" class="' + (S.duell && S.duell.uebung ? "sp-an" : "") + '">' + (S.duell && S.duell.uebung ? "Er schießt zurück – aus" : "Er schießt zurück – an") + "</button>" : "")
         + '<button type="button" data-s="graben" class="' + (S.graben ? "sp-an" : "") + '">' + (S.graben ? "Schaufel weglegen" : "Graben (Schaufel)") + " <small>" + vorrat(ich, "erz") + " Erz</small></button>"
@@ -2222,14 +2113,6 @@
       ton("swoosh", 0.3);
     } else if (s === "radab") {
       S.waffe = ""; S.rad = null;
-    } else if (s === "makro") {
-      try { localStorage.setItem("dma_spiel_makro3", k.dataset.m); } catch (e) {}
-      hinweis("👆 3× aufs eigene Bild: " + (MAKROS.filter(function (x) { return x[0] === k.dataset.m; })[0] || [])[1] + ".");
-    } else if (s === "laut") {
-      var ln = Number(k.dataset.n) || 0;
-      lautSetzen(ln);
-      if (ln > 0) { try { if (B().toeneSetzen) B().toeneSetzen(true); } catch (e) {} klangWecken(); setTimeout(function () { ton("bling", 0.6); }, 60); }
-      hinweis(ln > 0 ? "🔊 Spieltöne: " + LAUT_STUFEN[ln][0] + "." : "🔇 Spieltöne sind aus.");
     } else if (s === "ei") {
       S.leisteZu = !S.leisteZu; S.schnellMenue = false;
       try { localStorage.setItem("dma_spiel_leiste_zu", S.leisteZu ? "1" : "0"); } catch (e) {}
@@ -2426,7 +2309,6 @@
   function zeichnen() {
     var reihe = document.getElementById("lcPlaetze");
     if (!reihe) return;
-    if (!spielSichtbar()) document.body.classList.remove("sp-ich-nebel");
     platzWaechterSetzen(reihe);
     missionPruefen();
     tierAusAnwenden();
@@ -2452,7 +2334,7 @@
          Übungs-Lebenspunkte (die echten bleiben unberührt). */
       var uebungIch = Boolean(S.uebung && chatId && chatId === meineChatId());
       if (uebungIch) s = Object.assign({}, s || { name: "Du", schild: 0 }, { lp: S.uebung.lp, lp_max: S.uebung.max, kaputt: S.uebung.lp <= 0 });
-      if (!s || !kreis || (!spielSichtbar() && !uebungIch && !istPuppe(chatId))) { platzLeeren(el); return; }
+      if (!s || !kreis || (!S.bereit && !uebungIch && !istPuppe(chatId))) { platzLeeren(el); return; }
       /* FUNK 110 — XANDER: „überleg mal ob du Mana und die Lebensanzeige
          vielleicht unten in das Kreisrund von der Profilanzeige so bauen
          kannst dass du unten den Platz nicht wegnimmst".
@@ -3693,7 +3575,7 @@
       krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
-      zauberZeigen: zauberZeigen, zaubern: zaubern, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
+      zauberZeigen: zauberZeigen, zaubern: zaubern, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
       menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {
         var d = Math.hypot(dx, dy);

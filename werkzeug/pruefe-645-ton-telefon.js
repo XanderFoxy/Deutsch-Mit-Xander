@@ -140,9 +140,11 @@ const sage = (gut, was, zusatz) => {
 
   const tick = (ms) => pg.waitForTimeout(ms);
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
-  const trifft = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return "fehlt"; const r = e.getBoundingClientRect();
+  /* Ab Fassung 652 ist „Mehr" länger (Töne, 3×-Tipp) und scrollt im
+     Menü – wie ein Mensch wird erst hingescrollt, dann getippt. */
+  const trifft = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return "fehlt"; e.scrollIntoView({ block: "nearest" }); const r = e.getBoundingClientRect();
     const oben = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return oben && (oben === e || e.contains(oben)) ? "ja" : (oben ? oben.className || oben.tagName : "nichts"); }, sel);
-  const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
+  const tippe = async (sel) => { await pg.evaluate((sel) => { const e = document.querySelector(sel); if (e && e.closest(".sp-schnellmenue")) e.scrollIntoView({ block: "nearest" }); }, sel); const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
   console.log("\nMELDUNGEN OHNE TOAST\n");
   await pg.evaluate(() => { window.__toasts = 0; const alt = window.DMA_SPIEL_BRUECKE.toast; window.DMA_SPIEL_BRUECKE.toast = (t) => { window.__toasts++; alt(t); }; });
