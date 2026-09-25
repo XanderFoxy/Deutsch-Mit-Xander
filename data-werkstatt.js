@@ -49,28 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 670 – jedes Tier mit eigenem starken Effekt, Einhorn als Deluxe",
+  stand: "Fassung 671 – Zauber und Superkraft-Schüsse, die man spürt; beim Zaubern kein Nachhängen",
 
   inArbeit: [
-    { seit: "2026-09-25T16:29",
+    { seit: "2026-09-25T16:49",
       text: "Walkie #256" },
-    { seit: "2026-09-25T16:29",
+    { seit: "2026-09-25T16:49",
       text: "Runde 100/101 (Waschmaschine, Bagger, Hot Rod)" },
-    { seit: "2026-09-25T16:29",
+    { seit: "2026-09-25T16:49",
       text: "Funk 84/85 Zeichnungen und Funktionen" },
-    { seit: "2026-09-25T16:29",
+    { seit: "2026-09-25T16:49",
       text: "Angel, Lasso, Kran, Leiter, Lok, Pferd-Galopp" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T16:29",
-      text: "670: Einhorn mit Regenbogenstrahl aus dem Horn, Farbringen, Sternenregen und Glanz" },
-    { seit: "2026-09-25T16:29",
-      text: "670: Jedes gekaufte Tier mit eigenem Effekt – Stacheln, Bellen, Knurren, Funkeln, Federn, Klappern" },
-    { seit: "2026-09-25T16:29",
-      text: "669: Tower Defense „Fehlerteufel-Abwehr“ und Rundenkampf (Strategie) – im Menü unter Mehr" },
-    { seit: "2026-09-25T16:29",
-      text: "668: Doppel-/Fächerlaser, Plasmastrahl, Kugelblitz, Ziegelmauer, Dackel, Storch, Wolpertinger, Lindwurm, Brauerei, Bibliothek, Rathaus" },
+    { seit: "2026-09-25T16:49",
+      text: "671: Superkraft-Schuss knallt – lila Mündung, größere Kugel, Krater-Einschlag mit dumpfem Schlag" },
+    { seit: "2026-09-25T16:49",
+      text: "671: Zauber sofort beim Tippen – Zauberkreis, leuchtende Kugel fliegt, alle sehen es gleichzeitig" },
+    { seit: "2026-09-25T16:49",
+      text: "671: Zauber-Einschlag mit Lichtblitz, Wellen, leuchtendem Bildschirmrand; jeder Zauber mit eigener Zugabe" },
+    { seit: "2026-09-25T16:49",
+      text: "670: Einhorn mit Regenbogenstrahl, jedes gekaufte Tier mit eigenem Effekt" },
   ],
 };
