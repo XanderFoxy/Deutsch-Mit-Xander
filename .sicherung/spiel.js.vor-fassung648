@@ -134,18 +134,6 @@
   var HALTBAR = ["armbrust", "tomahawk", "zielfernrohr", "bazooka", "eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "mg", "lasersalve"];
   function haltVon(ich, w) { if (HALTBAR.indexOf(w) < 0) return -1; var h = ((ich || {}).waffen_halt || {})[w]; return h == null ? 60 : Number(h); }
   function reparaturNoetig(ich) { return ((ich || {}).waffen || []).some(function (w) { var h = haltVon(ich, w); return h >= 0 && h <= 15; }); }
-  /* FASSUNG 648 — Aufgabenarten. [kategorie, Name, erst freigeben?] */
-  var ARTEN_KNOEPFE = [["", "Alles"], ["artikel", "Artikel"], ["richtig-falsch", "Stimmt's?", true], ["faelle", "Fälle"],
-    ["praepositionen", "Präpositionen"], ["das-dass", "das/dass"], ["ss-eszett", "ss/ß"], ["betonung", "Betonung"], ["aussprache", "Aussprache"]];
-  /* „Stimmt's?" erst, wenn jeder falsche Satz einzeln geprüft ist. */
-  var ARTEN_FREI = { "richtig-falsch": false };
-  var ARTEN_WEITERE = [["jedesto", "je … desto"], ["relativsatz", "Relativsätze"], ["konnektoren", "Konnektoren"], ["als-wie", "als/wie"],
-    ["nebensatz", "Nebensätze"], ["praefixverben", "Präfixverben"], ["kennen-wissen", "kennen/wissen"], ["sinn-trainer", "Sinn"],
-    ["wortpaare", "Wortpaare"], ["wenn-ob", "wenn/ob"], ["fragen", "Fragen"], ["infinitivsatz", "Infinitiv mit zu"], ["verneinung", "Verneinung"],
-    ["funktionsverben", "Funktionsverben"], ["wortstellung", "Wortstellung"], ["partizip", "Partizip"], ["wortbildung", "Wortbildung"],
-    ["reflexiv", "Reflexiv"], ["modalverben", "Modalverben"], ["modalpartikeln", "Modalpartikeln"], ["konjunktiv", "Konjunktiv"],
-    ["possessiv", "Possessiv"], ["passiv", "Passiv"], ["lueckentext", "Lückentext"], ["essen", "Wortschatz: Essen"], ["tiere", "Wortschatz: Tiere"],
-    ["werkzeug", "Wortschatz: Werkzeug"], ["koerper", "Wortschatz: Körper"], ["stil", "Stil"], ["homophone", "Gleich klingend"]];
   var TIERE_BODEN = ["fellmonster", "stachelmonster", "chihuahua", "schaeferhund", "babyfuchs", "fuchs", "einhorn"], TIERE_LUFT = ["drache", "eule", "phoenix", "fee"];
   function wirkt(ich, art) {
     var bis = ich && ich[art + "_bis"];
@@ -2581,12 +2569,6 @@
       panel.className = "sp-panel";
       document.body.appendChild(panel);
       panel.addEventListener("click", panelKlick);
-      /* Die Liste „Weitere …" meldet sich mit change, nicht mit click. */
-      panel.addEventListener("change", function (ev) {
-        var w = ev.target && ev.target.closest && ev.target.closest(".sp-arten-mehr");
-        if (!w) return;
-        S.kategorie = w.value || null; aufgabeHolen(false);
-      });
     }
     if (tab) reiter = tab;
     panel.hidden = false;
@@ -2684,9 +2666,7 @@
         return '<button type="button" data-tu="niveau" data-n="' + n + '" class="' + (S.niveau === n ? "sp-an" : "") + '">' + n + "</button>";
       }).join("");
       var a = S.aufgabe, teil = "";
-      if (S.kategorie === "aussprache") {
-        teil = sprechKarte();
-      } else if (a && a.frage) {
+      if (a && a.frage) {
         teil = '<div class="sp-aufgabe"><div class="sp-frage-satz">' + frageHtml(a.frage) + "</div>"
           + '<div class="sp-optionen">' + (a.optionen || []).map(function (o) {
             var kl = a.ergebnis ? (o === a.ergebnis.loesung ? "sp-richtig" : o === a.gewaehlt ? "sp-falsch" : "") : "";
@@ -2713,18 +2693,9 @@
       /* FUNK 106 — „könnte man auch andere Sachen implementieren wie das
          betonungstraining". Betonung ist eine eigene Aufgabenart
          (Kategorie „betonung", aus den geprüften Silben des Wörterbuchs). */
-      /* FASSUNG 648 — XANDER: „hier braucht auf jeden Fall noch mehr Spiele
-         bei Art … Artikel Trainer … Aussage Check ob etwas richtig oder
-         falsch ist … Vielfalt … in vielen Sachen trainiert". Die Datenbank
-         hat fast 50 Arten; die häufigsten stehen als Knöpfe da, alle
-         anderen in der Liste daneben. */
-      var knopfArt = function (k, name) {
-        return '<button type="button" data-tu="kategorie" data-k="' + k + '" class="' + ((S.kategorie || "") === k ? "sp-an" : "") + '">' + name + "</button>";
-      };
-      var weitere = ARTEN_WEITERE.map(function (x) { return '<option value="' + x[0] + '"' + (S.kategorie === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("");
-      var arten = '<div class="sp-chips sp-arten">' + ARTEN_KNOEPFE.filter(function (x) { return !x[2] || ARTEN_FREI[x[0]]; })
-          .map(function (x) { return knopfArt(x[0], x[1]); }).join("")
-        + '<select class="sp-arten-mehr" data-tu="kategoriewahl" aria-label="weitere Arten"><option value="">Weitere …</option>' + weitere + "</select></div>";
+      var arten = '<div class="sp-chips">Art: '
+        + '<button type="button" data-tu="kategorie" data-k="" class="' + (!S.kategorie ? "sp-an" : "") + '">Alles</button>'
+        + '<button type="button" data-tu="kategorie" data-k="betonung" class="' + (S.kategorie === "betonung" ? "sp-an" : "") + '">Betonung</button></div>';
       /* XANDER: „sind die Punkte irgendwie getimet … jetzt krieg ich
          wieder drei Punkte … nach einer Zeit lang hab ich null Punkte" */
       var regel = '<p class="sp-klein">Punkte je richtiger Aufgabe nach Niveau: A1 3 · A2 4 · B1 5 · B2 6 · C1 7 · C2 8. '
@@ -2951,10 +2922,7 @@
     if (tu === "essen") return essen(k.dataset.d);
     if (tu === "fuettern") return fuettern(k.dataset.w, k.dataset.f);
     if (tu === "tierraus") return tierWechseln(k.dataset.a);
-    if (tu === "kategorie") { S.kategorie = k.dataset.k || null; if (S.kategorie === "aussprache") { sprechWortHolen(0); return; } aufgabeHolen(false); return; }
-    if (tu === "sprechhoeren") return sprechHoeren();
-    if (tu === "sprechen") return sprechAufnehmen();
-    if (tu === "sprechneu") return sprechWortHolen(0);
+    if (tu === "kategorie") { S.kategorie = k.dataset.k || null; aufgabeHolen(false); return; }
   }
 
   function aufgabeHolen(mission) {
@@ -3039,103 +3007,6 @@
      würfelt eine von fünf: neben jemandem lösen (nur wenn jemand da
      ist), Schatz ausgraben, drei richtige Aufgaben am Stück, jemand
      anderen heilen, 20 Punkte in den Übungen der Seite sammeln. */
-  /* ---------------------------------------------------------------
-     FASSUNG 648 — AUSSPRACHE IM SPIEL
-     XANDER: „vielleicht könntest du in dem Modul noch den Aussprache
-     Trainer ganz klein mit einbringen, dass man kurz und knapp irgendwie
-     mit seiner Stimme Aussprache löst dafür Punkte kriegt".
-     Das Wort kommt vom Server (spiel_aussprache_wort, aus den geprüften
-     Betonungs-Wörtern), nur solche mit Alex' Aufnahme. Man hört Alex,
-     spricht nach, der Browser vergleicht (AusspracheP, freies Verfahren)
-     und meldet die Note; ab 60 % gibt es 2–3 Punkte (Server: jedes Wort
-     einmal, höchstens 40 je Stunde).
-     --------------------------------------------------------------- */
-  function sprechStamm(t) {
-    return String(t || "").toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 34);
-  }
-  function sprechUrl(wort) {
-    var T = window.DMA_TON || {}, st = sprechStamm(wort);
-    if (!st) return "";
-    var stufen = Object.keys(T);
-    for (var i = 0; i < stufen.length; i++) {
-      if (("|" + T[stufen[i]] + "|").indexOf("|" + st + "|") >= 0) return "aussprache/" + stufen[i] + "/" + st + ".mp3";
-    }
-    return "";
-  }
-  /* Die Liste der Aufnahmen lädt die App erst bei Bedarf – hier auch. */
-  function sprechListe() {
-    if (window.DMA_TON) return Promise.resolve();
-    if (S.sprechListe) return S.sprechListe;
-    S.sprechListe = new Promise(function (ok) {
-      var sk = document.createElement("script");
-      sk.src = "data-aussprache-ton.js" + (window.DMA_V ? window.DMA_V("data-aussprache-ton.js") : "");
-      sk.onload = sk.onerror = function () { ok(); };
-      document.head.appendChild(sk);
-    });
-    return S.sprechListe;
-  }
-  function sprechWortHolen(versuch) {
-    S.sprech = { laedt: true };
-    panelAuffrischen();
-    sprechListe().then(function () { return rpc("spiel_aussprache_wort", { p_niveau: S.niveau }); }).then(function (r) {
-      if (!r || !r.ok) { S.sprech = { fehler: (r && r.grund) || "geht gerade nicht" }; panelAuffrischen(); return; }
-      var url = sprechUrl(r.wort);
-      /* Nur Wörter, zu denen es Alex' Aufnahme gibt. */
-      if (!url && (versuch || 0) < 6) return sprechWortHolen((versuch || 0) + 1);
-      S.sprech = { wort: r.wort, silben: r.silben, url: url };
-      panelAuffrischen();
-    }).catch(function (e) { S.sprech = { fehler: String(e && e.message || e) }; panelAuffrischen(); });
-  }
-  function sprechHoeren() {
-    var sp = S.sprech || {};
-    if (!sp.url) return;
-    try { var a = new Audio(sp.url); a.volume = 0.9; var v = a.play(); if (v && v.catch) v.catch(function () {}); } catch (e) {}
-  }
-  function sprechAufnehmen() {
-    var sp = S.sprech || {}, AP = window.AusspracheP;
-    if (!sp.wort || sp.laeuft) return;
-    if (!AP || !AP.mikrofonDa || !AP.mikrofonDa()) { sp.hinweis = "Kein Mikrofon auf diesem Gerät."; panelAuffrischen(); return; }
-    sp.laeuft = true; sp.hinweis = "Sprich jetzt …"; sp.ergebnis = null; panelAuffrischen();
-    var griff = null, fertig = false;
-    var auswerten = function () {
-      if (fertig || !griff) return; fertig = true;
-      griff.stoppen().then(function (auf) {
-        if (!auf || !auf.blob) throw new Error((auf && auf.fehler) || "keine Aufnahme");
-        sp.hinweis = "Ich höre zu …"; panelAuffrischen();
-        return AP.freieBewertung(auf.blob, sp.url);
-      }).then(function (erg) {
-        var prozent = erg && typeof erg.prozent === "number" ? erg.prozent : 0;
-        return rpc("spiel_aussprache_fertig", { p_wort: sp.wort, p_prozent: prozent }).then(function (r) {
-          sp.laeuft = false;
-          if (r && r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-          sp.ergebnis = { prozent: prozent, gewonnen: (r && r.gewonnen) || 0, grenze: r && r.grenze };
-          sp.hinweis = "";
-          ton(sp.ergebnis.gewonnen > 0 ? "bling" : "gummi", 0.45);
-          panelAuffrischen(); zeichnen(); schnellZeichnen();
-        });
-      }).catch(function (e) { sp.laeuft = false; sp.hinweis = "Das ging nicht: " + (e && e.message ? e.message : e); panelAuffrischen(); });
-    };
-    AP.aufnahmeStarten({ beiStille: auswerten, stilleMs: 800, mindestdauerMs: 500, hoechstdauer: 5000, beiZeitablauf: auswerten })
-      .then(function (g) { griff = g; setTimeout(auswerten, 4000); })
-      .catch(function () { sp.laeuft = false; sp.hinweis = "Das Mikrofon ist nicht freigegeben."; panelAuffrischen(); });
-  }
-  function sprechKarte() {
-    var sp = S.sprech;
-    if (!sp || sp.laedt) return '<div class="sp-sprech"><div class="sp-sprech-wort">…</div></div>';
-    if (sp.fehler) return '<div class="sp-sprech"><div class="sp-klein sp-rot">' + esc(sp.fehler) + '</div><div class="sp-knoepfe"><button type="button" data-tu="sprechneu">Neues Wort</button></div></div>';
-    var e = sp.ergebnis;
-    return '<div class="sp-sprech"><div class="sp-sprech-wort">' + esc(sp.wort) + '</div><div class="sp-sprech-silben">' + esc(sp.silben || "") + "</div>"
-      + '<div class="sp-knoepfe"><button type="button" data-tu="sprechhoeren"' + (sp.url ? "" : " disabled") + ">Alex hören</button>"
-      + '<button type="button" data-tu="sprechen" class="sp-sprech-mik' + (sp.laeuft ? " sp-an" : "") + '"' + (sp.laeuft || e ? " disabled" : "") + ">" + (sp.laeuft ? "Ich höre …" : "Nachsprechen") + "</button>"
-      + '<button type="button" data-tu="sprechneu">Neues Wort</button></div>'
-      + '<div class="sp-erg-platz' + (e ? (e.gewonnen > 0 ? " sp-erg-gut" : " sp-erg-schlecht") : "") + '">'
-      + (e ? '<div class="sp-erg-zeile"><b>' + e.prozent + " % ähnlich</b>" + (e.gewonnen > 0 ? ' <span class="sp-gold">+' + e.gewonnen + " Punkte</span>" : "")
-          + '<button type="button" data-tu="sprechneu">Weiter</button></div><div class="sp-erg-erkl">'
-          + (e.gewonnen > 0 ? "Gut gesprochen!" : e.grenze ? "Für diese Stunde sind die Aussprache-Punkte aufgebraucht." : "Ab 60 % gibt es Punkte – hör noch einmal hin und versuch das nächste Wort.") + "</div>"
-        : '<div class="sp-erg-leer">' + esc(sp.hinweis || "Erst hören, dann nachsprechen.") + "</div>")
-      + "</div></div>";
-  }
   function missionLaeuft(ich) {
     var m = ich && ich.mission;
     return Boolean(m && m.art && new Date(m.bis).getTime() > Date.now());

@@ -564,13 +564,3 @@ body.sp-graben #lcPlaetze .lc-kreis { outline: 2px dashed rgba(138, 90, 43, .6);
 .sp-magie { color: #7a4fc0; font-weight: 700; }
 .sp-tier-gruppe { margin: 8px 0 2px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 @media (prefers-reduced-motion: reduce) { .sp-funkeln, .sp-feuerstrahl, .sp-funke { animation-duration: .01s; } }
-
-/* FASSUNG 648 — Aufgabenarten und Aussprache */
-.sp-arten { flex-wrap: wrap; gap: 4px; }
-.sp-arten button { min-height: 28px; padding: 2px 9px; font-size: 12px; }
-.sp-arten-mehr { min-height: 28px; border-radius: 8px; border: 1px solid #d4d9e0; background: #fff; font-size: 12px; padding: 0 6px; max-width: 140px; }
-.sp-sprech { padding: 8px 4px 2px; text-align: center; }
-.sp-sprech-wort { font: 800 26px/1.2 system-ui, sans-serif; color: #1f2a38; }
-.sp-sprech-silben { font-size: 13px; color: #6a7382; letter-spacing: .04em; margin: 2px 0 6px; }
-.sp-sprech .sp-knoepfe { justify-content: center; }
-.sp-sprech-mik.sp-an { background: #e2403a; color: #fff; }
