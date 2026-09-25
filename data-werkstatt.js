@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 650: Zauber Nebel/Erdbeben/Orkan ab Level",
+  stand: "Fassung 654: deutsche Zauber, Ränge, Fairness",
 
   inArbeit: [
-    { seit: "2026-09-25T05:54",
-      text: "Spezialwaffen nach Level; Tier-Fusion und Spezialfähigkeiten (Eisstrahl); Feld-Einsammeln; Spielpunkte in Tageswertung; Profilbild-Effekte schneller folgen (Funk 124); Strategie- und 16-Platz-Modus" },
+    { seit: "2026-09-25T06:42",
+      text: "Trophäen und Verstecktes auf dem Feld; Dorf mit Gebäuden und Turm auf freiem Platz, Titan-/Diamantmauer, Graben; Klassen je nach Deutschstärke; Tier-Fusion; eigene Spielplätze für Ausweichen; Level/Tiere im normalen Chat (Schalter); Effekt-Kacheln mit Mini-Zeichnungen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T05:54",
-      text: "649 Waffenrad; 648 Stimmt's? freigegeben (1386 richtig, 804 falsch geprüft); 650 Zauber mit Level-Sperre, Mana, Nebel/Beben/Orkan für alle sichtbar" },
+    { seit: "2026-09-25T06:42",
+      text: "651 saubere Stimme in der Aussprache, Mauer hinter Ringen, Menü passt auf Android; 652 Spiel nur für Mitspieler, Töne regeln, Controller-Knopf, Waffenrad nach Klassen, 2×/3× aufs eigene Bild, Kanone feuert sichtbar; 653 Fuchs, Schäferhund, Einhorn, Phönix neu; 654 neun Zauber, Zauberer-Ränge, Fairness" },
   ],
 };
