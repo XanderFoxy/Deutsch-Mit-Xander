@@ -143,9 +143,7 @@
   function reparaturNoetig(ich) { return ((ich || {}).waffen || []).some(function (w) { var h = haltVon(ich, w); return h >= 0 && h <= 15; }); }
   /* FASSUNG 648 — Aufgabenarten. [kategorie, Name, erst freigeben?] */
   var ARTEN_KNOEPFE = [["", "Alles"], ["artikel", "Artikel"], ["richtig-falsch", "Stimmt's?", true], ["faelle", "Fälle"],
-    ["praepositionen", "Präpositionen"], ["das-dass", "das/dass"], ["ss-eszett", "ss/ß"], ["betonung", "Betonung"], ["aussprache", "Aussprache"],
-    /* FASSUNG 663 — Deutschland-Wissen: 51 geprüfte Fragen (Landeskunde). */
-    ["deutschland", "Deutschland"]];
+    ["praepositionen", "Präpositionen"], ["das-dass", "das/dass"], ["ss-eszett", "ss/ß"], ["betonung", "Betonung"], ["aussprache", "Aussprache"]];
   /* „Stimmt's?" erst, wenn jeder falsche Satz einzeln geprüft ist. Geprüft (648): 804 falsche und
      1386 richtige Sätze aktiv, 193 gesperrt (Grammatik, Erklärung, doppelte Wörter, Unsinn). */
   var ARTEN_FREI = { "richtig-falsch": true };
@@ -476,7 +474,7 @@
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
      "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
      "level", "skills", "helm", "brust", "ladung", "daemon",
-     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -2475,7 +2473,7 @@
     }).join("");
     var mm = S.menueMeldung && S.menueMeldung.bis > Date.now() ? S.menueMeldung.text : "";
     var kopf = mm ? '<div class="sp-sm-kopf sp-sm-kopf-meldung">' + esc(mm) + "</div>"
-      : '<div class="sp-sm-kopf">Lv ' + (ich.level || 1) + (ich.klasse && KLASSEN[ich.klasse] ? " " + KLASSEN[ich.klasse].name : "") + " · " + ich.lp + "/" + ich.lp_max + " LP · " + (ich.punkte || 0) + " P"
+      : '<div class="sp-sm-kopf">Lv ' + (ich.level || 1) + " · " + ich.lp + "/" + ich.lp_max + " LP · " + (ich.punkte || 0) + " P"
       + (ich.mana != null ? " · " + ich.mana + " Mana" : "") + "</div>";
     var inhaltM = "";
     if (r === "waffen") {
@@ -2502,8 +2500,6 @@
         t.push('<button type="button" data-s="trinken" data-t="' + tr[0] + '"' + (rest || !n ? " disabled" : "") + '><span class="sp-trank sp-trank-' + tr[0] + '"></span>' + tr[1] + " <small>" + (rest ? rest + " s" : n) + "</small></button>");
       });
       inhaltM = '<div class="sp-sm-liste">' + t.join("") + "</div>";
-    } else if (r === "klasse") {
-      inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + klassenHtml(ich);
     } else if (r === "dorf") {
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + dorfHtml(ich);
     } else if (r === "trophaeen") {
@@ -2553,8 +2549,6 @@
         /* FASSUNG 655 — XANDER: „Warum hab ich da so viele Erdbeben und so
            viele Orkan und so viel Nebel". Die Zauber stehen nur noch im
            Zauberrad, nicht zusätzlich hier als Liste. */
-        + '<button type="button" data-s="klasse"><span class="sp-sm-zbild">' + klassenSvg(ich.klasse || "abenteurer") + "</span>Klasse <small>"
-          + (ich.klasse && KLASSEN[ich.klasse] ? esc(KLASSEN[ich.klasse].name) : (ich.level || 1) >= 5 ? "wählen" : "ab Lv 5") + "</small></button>"
         + '<button type="button" data-s="dorf"><span class="sp-sm-zbild">' + dorfSvg("baeckerei", 1) + "</span>Mein Dorf <small>"
           + Object.keys(ich.dorf || {}).length + " / 3</small></button>"
         + '<button type="button" data-s="trophaeen"><span class="sp-sm-zbild">' + pokalSvg(true) + "</span>Trophäen <small>"
@@ -2604,16 +2598,6 @@
       hinweis(k.dataset.k === "level"
         ? (zNeu.level ? "⭐ Dein Level sehen jetzt alle – auch wer nicht mitspielt." : "Dein Level sieht jetzt nur, wer mitspielt.")
         : (zNeu.tiere ? "🐾 Deine Tiere sind jetzt immer dabei – friedlich, für alle." : "Deine Tiere zeigen sich nur noch im Spiel."));
-    } else if (s === "klasse") {
-      S.schnellReiter = "klasse";
-    } else if (s === "klassewahl") {
-      rpc("spiel_klasse", { p_klasse: k.dataset.k }).then(function (r) {
-        if (!r || r.ok === false) { hinweis("🛡️ " + ((r && r.grund) || "Das ging nicht.")); return; }
-        S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) });
-        ton("jubel", 0.5);
-        hinweis("🛡️ Du bist jetzt " + KLASSEN[r.klasse].name + ": " + KLASSEN[r.klasse].plus + ".");
-        schnellZeichnen(true);
-      }).catch(function () { hinweis("🛡️ Das ging gerade nicht."); });
     } else if (s === "dorf") {
       S.schnellReiter = "dorf";
     } else if (s === "bauen") {
@@ -2907,7 +2891,7 @@
       bal.style.left = kreis.offsetLeft + "px"; bal.style.top = kreis.offsetTop + "px";
       bal.style.width = kreis.offsetWidth + "px"; bal.style.height = kreis.offsetHeight + "px";
       bal.classList.toggle("sp-pause", s.mitspielen === false && !istPuppe(chatId));
-      bal.title = (s.mitspielen === false && !istPuppe(chatId) ? "spielt gerade nicht mit · " : "") + (s.name || "") + (s.klasse && KLASSEN[s.klasse] ? " (" + KLASSEN[s.klasse].name + ")" : "") + ": " + s.lp + " / " + s.lp_max + " LP" + (s.schild ? " · Schild " + s.schild : "")
+      bal.title = (s.mitspielen === false && !istPuppe(chatId) ? "spielt gerade nicht mit · " : "") + (s.name || "") + ": " + s.lp + " / " + s.lp_max + " LP" + (s.schild ? " · Schild " + s.schild : "")
         + (manaAnteil >= 0 ? " · " + s.mana + " Mana" : "");
       var farbe = anteil > 0.6 ? "#3bbf4a" : anteil > 0.3 ? "#e8b923" : "#e2403a";
       /* FASSUNG 634 — was jeder vom anderen sehen soll („jeder muss den
@@ -4232,45 +4216,6 @@
      Gerechnet wird alles auf dem Server (spiel_bauen, spiel_dorf_abholen,
      spiel_zaubern).
      ================================================================= */
-  /* =================================================================
-     FASSUNG 663 — KLASSEN
-     -----------------------------------------------------------------
-     XANDER: „kann man in anderen Klassen spielen? … wie wir das in
-     unserem Hauptsystem haben auf der Webseite, dass man als Deutsch
-     Profi spielt". Wie auf der Webseite heißen die Klassen nach der
-     Stärke im Deutschen: Grammatik-Profi, Sprachkünstler, Logiker,
-     Wissenschaftler, Abenteurer. Ab Level 5 wählbar; die erste Wahl ist
-     frei, ein Wechsel kostet 50 Punkte (einmal am Tag). Gerechnet auf dem
-     Server (spiel_klasse, spiel_antwort, spiel_zaubern, spiel_fund_heben).
-     ================================================================= */
-  var KLASSEN = {
-    grammatik:       { name: "Grammatik-Profi", farbe: "#3a8dde", gut: "Artikel, Fälle, Präpositionen, das/dass, ss/ß …", plus: "+50 % Erfahrung und +1 Punkt bei Grammatik" },
-    kuenstler:       { name: "Sprachkünstler",  farbe: "#d04cd4", gut: "Aussprache, Betonung, Stimmt's?, Wortpaare …",   plus: "+50 % Erfahrung und +4 Mana bei Sprache und Klang" },
-    logiker:         { name: "Logiker",         farbe: "#3bbf4a", gut: "je … desto, Relativsätze, Konnektoren, als/wie …", plus: "+50 % Erfahrung bei Satzlogik · Zauber 10 % billiger" },
-    wissenschaftler: { name: "Wissenschaftler", farbe: "#f29d0b", gut: "Deutschland-Wissen",                            plus: "doppelte Erfahrung und +2 Punkte bei Deutschland-Fragen" },
-    abenteurer:      { name: "Abenteurer",      farbe: "#e2403a", gut: "alles ein bisschen",                             plus: "+20 % Erfahrung überall · Fundstücke schon nach 2 statt 3 Minuten" }
-  };
-  function klassenSvg(k) {
-    var f = (KLASSEN[k] || {}).farbe || "#9aa6b8";
-    var wappen = '<path d="M12 2 L21 5 V11 C21 17 17 21 12 22.5 C7 21 3 17 3 11 V5 Z" fill="' + f + '" stroke="#1d2330" stroke-width="1.2"/>';
-    var zeichen = k === "grammatik" ? '<path d="M8 17 L16 7 M14.5 6 L17.5 9 M8 17 L7.5 18.5 L9 18" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>'
-      : k === "kuenstler" ? '<path d="M10.5 16 V7.5 L16 6 V14" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><ellipse cx="9" cy="16.2" rx="2" ry="1.5" fill="#fff"/><ellipse cx="14.5" cy="14.3" rx="2" ry="1.5" fill="#fff"/>'
-      : k === "logiker" ? '<path d="M9 9 A3 3 0 1 1 12 12 V14 M12 16.5 V17" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/>'
-      : k === "wissenschaftler" ? '<path d="M10 6 V11 L7 17 H17 L14 11 V6 M9 6 H15" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.5 15 H15.5" stroke="#fff" stroke-width="1.2"/>'
-      : '<circle cx="12" cy="12" r="5" fill="none" stroke="#fff" stroke-width="1.4"/><path d="M12 8 L13.5 12 L12 16 L10.5 12 Z" fill="#fff"/>';
-    return '<svg viewBox="0 0 24 24">' + wappen + zeichen + "</svg>";
-  }
-  function klassenHtml(ich) {
-    var lv = ich.level || 1, jetzt = ich.klasse || "";
-    return '<p class="sp-sm-klein">' + (lv < 5 ? "Klassen gibt es ab <b>Level 5</b> – du bist Level " + lv + "."
-        : jetzt ? "Du bist <b>" + esc(KLASSEN[jetzt].name) + "</b>. Wechseln kostet 50 Punkte (einmal am Tag)." : "Wähle deine Klasse – die erste Wahl ist frei.") + "</p>"
-      + '<div class="sp-troph-liste">' + Object.keys(KLASSEN).map(function (k) {
-        var K = KLASSEN[k], ist = k === jetzt;
-        return '<div class="sp-troph sp-klasse' + (ist ? " sp-troph-hat" : "") + '"><i>' + klassenSvg(k) + "</i><span><b>" + K.name + "</b><small>stark in: " + esc(K.gut) + "</small><small>" + esc(K.plus) + "</small></span>"
-          + (ist ? '<strong class="sp-klasse-ist">du</strong>' : '<button type="button" data-s="klassewahl" data-k="' + k + '"' + (lv < 5 ? " disabled" : "") + ">" + (jetzt ? "Wechseln · 50" : "Wählen") + "</button>") + "</div>";
-      }).join("") + "</div>";
-  }
-
   var DORF = {
     baeckerei: { name: "Bäckerei", preis: 100, gibt: "2 Bratwürste je Stufe" },
     schule:    { name: "Schule",   preis: 150, gibt: "20 Erfahrung je Stufe", ab: 4 },
@@ -4511,7 +4456,7 @@
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,
-      trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, klassenHtml: klassenHtml, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
+      trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
       zauberZeigen: zauberZeigen, zaubern: zaubern, daemonAusbruch: daemonAusbruch, uebungZaubern: uebungZaubern, geschuetzSvg: geschuetzSvg, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
       menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {

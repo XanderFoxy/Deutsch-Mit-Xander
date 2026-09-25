@@ -530,3 +530,16 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Turm auf freiem Platz: Laden → Geschütz-Turm → „Auf freien Platz", dann auf einen freien Platz tippen (`spiel_turm_platz`, gilt nur im aktuellen Raum). Der Turm steht dort groß in der Mitte, schießt von dort zurück; setzt sich jemand hin, steht er wieder am eigenen Bild. „Zurück ans Bild" holt ihn heim.
 - Server: Spalten `dorf`, `dorf_ab`, `graben_lp`, `turm_platz`, `turm_raum`; `spiel_bauen`, `spiel_dorf_abholen`, `spiel_turm_platz`; `spiel_kaufen` (Titan, Diamant, Graben, Level-Sperre), `spiel_zaubern` (Graben, Dorf-Riss), `spiel_oeffentlich` (graben, turm_platz, turm_raum, dorf). Im Rollback getestet.
 - Sonde: `pruefe-662-dorf-mauern-turm.js` (15 Prüfungen, 360 px); alle Spiel-Sonden grün (652/656 einzeln, im Parallellauf zeitweise zu langsam).
+
+## Fassung 663 — Klassen wie auf der Webseite, Deutschland-Wissen
+
+- XANDER: „kann man in anderen Klassen spielen? … wie wir das in unserem Hauptsystem haben auf der Webseite, dass man als Deutsch Profi spielt". Fünf Klassen nach der Stärke im Deutschen, benannt wie die Charaktere der Webseite:
+  - Grammatik-Profi (Artikel, Fälle, Präpositionen, das/dass, ss/ß …): +50 % Erfahrung und +1 Punkt
+  - Sprachkünstler (Aussprache, Betonung, Stimmt's?, Wortpaare …): +50 % Erfahrung und +4 Mana
+  - Logiker (je…desto, Relativsätze, Konnektoren, als/wie …): +50 % Erfahrung, Zauber 10 % billiger
+  - Wissenschaftler (Deutschland-Wissen): doppelte Erfahrung und +2 Punkte
+  - Abenteurer: +20 % Erfahrung überall, Fundstücke nach 2 statt 3 Minuten
+- Ab Level 5 in Mehr → Klasse; erste Wahl frei, Wechsel 50 Punkte, einmal am Tag. Die Klasse steht oben im Menü neben dem Level und im Ring-Tooltip bei den anderen. Gerechnet auf dem Server (`spiel_klasse`, `spiel_antwort`, `spiel_zaubern`, `spiel_fund_heben`).
+- Deutschland-Wissen: 51 geprüfte Landeskunde-Fragen (A1–B2: Hauptstadt, Flüsse, Bundesländer, Feiertage, Geschichte, Politik, berühmte Deutsche, Alltag wie Pfand und Sonntagsruhe), Kategorie „deutschland", im Deutsch-Reiter als eigener Knopf.
+- Im Rollback getestet (Wahl, Wechsel-Sperre, Wissenschaftler +2 Punkte/doppelte EP bei einer Deutschland-Frage).
+- Sonde: `pruefe-663-klassen-deutschland.js` (9 Prüfungen); Spiel-Sonden einzeln grün.

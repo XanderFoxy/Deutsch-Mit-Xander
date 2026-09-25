@@ -996,7 +996,3 @@ body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: bl
 .sp-dorf-kaputt > i { filter: grayscale(.9); opacity: .6; }
 .sp-dorf-kaputt b::after { content: " · kaputt"; color: #ff8a80; font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .sp-graben-welle, .sp-diamant-funkeln { animation: none; } }
-
-/* FASSUNG 663 — Klassen */
-.sp-klasse > button { flex: 0 0 auto; font-size: 11.5px; padding: 4px 8px; min-height: 30px; white-space: nowrap; }
-.sp-klasse-ist { flex: 0 0 auto; font: 800 11px system-ui, sans-serif; font-style: normal; color: #10301c; background: #ffe27a; border-radius: 8px; padding: 3px 8px; }
