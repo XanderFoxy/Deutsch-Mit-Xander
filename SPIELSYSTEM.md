@@ -421,3 +421,14 @@ XANDER: „Zauber oder Erdbeben Orkane … Gegner von der Bildfläche werfen ode
 - XANDER: „wenn man sich selbst doppelt antippt … die Waffe wechselt … dreimal tippen irgendwas anderes". 2× aufs eigene Bild = Waffe 1 ↔ 2; 3× = Makro nach Wahl („Mehr": Heilen / Superkraft / Zauberrad). Der erste Tipp geht wie immer an die App (dort tut er auf dem eigenen Bild nichts).
 - XANDER: „die Kanone feuert nicht … nicht animiert". Sie feuert als Gegenwehr, wenn man selbst getroffen wird (20 Schuss auf Stufe 3 bei Xander). Jetzt sichtbar: der Turm dreht sich zum Angreifer, ruckt zurück, Mündungsfeuer.
 - Sonden: `pruefe-652-intern-rad-tippen.js` (15 Prüfungen, Android 360 px); 645 scrollt im längeren „Mehr" wie ein Mensch; 17 Spiel-Sonden grün.
+
+## Fassung 653 — Tiere neu gezeichnet
+
+XANDER: „überarbeite mal den Baby Fuchs und den Schäferhund … nicht alle nur so Dreiecks oder Kreisköpfe" · „das Einhorn und den Phoenix besser gestalten … die Form bisschen realistischer … richtig süß und liebreizend".
+
+- Kleiner Fuchs: sitzendes Fuchsjunges mit Fuchskopf (breite Wangen, spitze Schnauze, weiße Maske), großen Ohren mit schwarzen Spitzen, Lätzchen, dunklen Söckchen, Schwanz mit weißer Spitze um die Pfoten.
+- Schäferhund: von vorn sitzend, Stehohren, langer Fang mit schwarzer Maske, Brauenflecken, schwarzer Sattel, heller Brustlatz, Zunge, buschige Rute.
+- Einhorn: kleines Pony im Profil (Pferdekopf, weiche Schnauze, Wimpern, gedrehtes Goldhorn, Regenbogenmähne und -schweif, schlanke Beine, Goldhufe).
+- Phönix: schlanker Feuervogel im Flug (Hakenschnabel, Flammenschopf, erhobene Flammenschwingen rot → orange → gelb, drei lange Schwanzfedern mit Pfauenaugen, Glut).
+- Kacheln mit etwas mehr Luft (Stehohren, Horn). `schmuck()` lässt beim Neuzeichnen die Klasse `sp-feuert` stehen (sonst brach das Turmfeuer ab, gefunden von Sonde 652).
+- Bildprobe: `pruefe-653-tiergalerie.js` (BILD=… für ein Bild von Kacheln und Tieren am Platz).

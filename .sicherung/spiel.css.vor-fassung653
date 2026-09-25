@@ -1,0 +1,741 @@
+/* =====================================================================
+   SPIELSYSTEM „DEUTSCH ZUM ÜBERLEBEN" — Aussehen (siehe spiel.js)
+   Alles am Platz liegt ABSOLUT über dem Platz: nichts verschiebt die
+   Sitzreihe (keine Sitz-Glitches), und die Gesichtsmitte bleibt frei.
+   ===================================================================== */
+/* FUNK 110 — Lebenspunkte und Mana als zwei Bögen AUF dem Rand des
+   Bildes (siehe ringSvg in spiel.js): links unten LP, rechts unten Mana.
+   Sie nehmen unter dem Namen keinen Platz mehr weg. */
+.sp-lp { position: absolute; pointer-events: none; z-index: 6; }
+.sp-lp svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sp-lp path { fill: none; stroke-width: 7; stroke-linecap: round; }
+.sp-lp .sp-ring-spur { stroke: rgba(15, 18, 24, .55); stroke-width: 8.4; }
+.sp-lp .sp-lp-schild { stroke: #5ab4ff; }
+.sp-lp .sp-mana-voll { stroke: #5a7bff; }
+.sp-lp .sp-lp-voll, .sp-lp .sp-mana-voll { filter: drop-shadow(0 0 1px rgba(255, 255, 255, .8)); }
+
+.sp-aura, .sp-mauer, .sp-tier, .sp-geschuetz, .sp-risse, .sp-waffenmarke {
+  position: absolute; pointer-events: none; z-index: 7;
+}
+.sp-aura { border-radius: 50%; box-shadow: 0 0 0 3px rgba(90, 180, 255, .75), 0 0 14px 5px rgba(90, 180, 255, .45);
+  animation: spAura 1.8s ease-in-out infinite alternate; }
+@keyframes spAura { from { box-shadow: 0 0 0 2px rgba(90,180,255,.6), 0 0 10px 3px rgba(90,180,255,.35); }
+                    to   { box-shadow: 0 0 0 4px rgba(120,200,255,.85), 0 0 18px 7px rgba(90,180,255,.5); } }
+.sp-mauer svg, .sp-tier svg, .sp-geschuetz svg, .sp-risse svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sp-mauer { z-index: 8; }
+.sp-tier .sp-tier-koerper { transform-box: fill-box; transform-origin: 50% 100%; animation: spTier 1.1s ease-in-out infinite; }
+@keyframes spTier { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.06, .94); } }
+.sp-waffenmarke svg { position: absolute; right: -8%; top: -6%; width: 34%; height: auto; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+.sp-kaputt .lc-kreis { filter: grayscale(.85) brightness(.85); transform: rotate(-4deg); transition: filter .4s, transform .4s; }
+.sp-anfaenger .sp-lp .sp-ring-spur { stroke: rgba(90, 180, 255, .55); }
+
+/* Getroffen: kurzes Zucken und ein roter Blitz am Rand */
+.sp-getroffen .lc-kreis { animation: spZucken .45s ease-out; }
+@keyframes spZucken { 0% { transform: translateX(0); box-shadow: 0 0 0 0 rgba(226,64,58,.9); }
+  25% { transform: translateX(-4px); } 50% { transform: translateX(3px); box-shadow: 0 0 0 5px rgba(226,64,58,.35); }
+  100% { transform: translateX(0); box-shadow: 0 0 0 0 rgba(226,64,58,0); } }
+
+/* Zahlen steigen ÜBER dem Kreis auf */
+.sp-zahl {
+  position: absolute; left: 50%; z-index: 12; pointer-events: none; white-space: nowrap;
+  font: 800 14px/1 system-ui, sans-serif; transform: translate(-50%, 0);
+  text-shadow: 0 1px 0 #fff, 0 0 3px #fff; animation: spZahl 1.45s ease-out forwards;
+}
+.sp-zahl-rot { color: #d8261f; }
+.sp-zahl-gruen { color: #1f9d33; }
+.sp-zahl-grau { color: #5a6270; font-size: 12px; }
+@keyframes spZahl { 0% { opacity: 0; transform: translate(-50%, 6px) scale(.8); }
+  15% { opacity: 1; transform: translate(-50%, -4px) scale(1.12); }
+  100% { opacity: 0; transform: translate(-50%, -30px) scale(1); } }
+
+/* Geschosse fliegen über allem */
+.sp-geschoss { position: fixed; left: 0; top: 0; width: 34px; height: 12px; z-index: 9990; pointer-events: none; }
+.sp-geschoss svg { width: 100%; height: 100%; overflow: visible; }
+.sp-g-zwille { width: 12px; height: 12px; }
+.sp-g-tomahawk { width: 26px; height: 26px; }
+.sp-g-bazooka { width: 40px; height: 16px; }
+.sp-laser {
+  position: fixed; height: 3px; z-index: 9990; pointer-events: none; transform-origin: 0 50%;
+  background: var(--farbe, #f22); border-radius: 2px;
+  box-shadow: 0 0 6px 2px var(--farbe, #f22), 0 0 14px 4px var(--farbe, #f22);
+  animation: spLaser .42s ease-out forwards;
+}
+@keyframes spLaser { 0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+.sp-fadenkreuz { position: fixed; width: 60px; height: 60px; margin: -30px 0 0 -30px; z-index: 9991; pointer-events: none;
+  animation: spKreuz .95s ease-out forwards; }
+.sp-fadenkreuz svg { width: 100%; height: 100%; }
+@keyframes spKreuz { 0% { transform: translate(18px, -14px) scale(1.6); opacity: 0; } 30% { opacity: 1; }
+  70% { transform: translate(-2px, 2px) scale(1); } 100% { transform: translate(0, 0) scale(1); opacity: 1; } }
+.sp-einschlag { position: fixed; width: 22px; height: 22px; margin: -11px 0 0 -11px; z-index: 9991; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(circle, #fff6c8 0%, #ffb03a 45%, rgba(255,90,20,0) 70%); animation: spKnall .6s ease-out forwards; }
+.sp-einschlag-gross { width: 70px; height: 70px; margin: -35px 0 0 -35px; }
+@keyframes spKnall { 0% { transform: scale(.2); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+
+body.sp-kampf #lcPlaetze .lc-platz:not(.lc-platz-ich):not(.lc-platz-frei) .lc-kreis { cursor: crosshair; }
+
+/* Die Duell-Frage */
+.sp-frage { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 9995;
+  background: #fff; color: #1d2330; border-radius: 14px; padding: 14px 16px; width: min(92vw, 360px);
+  box-shadow: 0 10px 40px rgba(0,0,0,.35); font: 15px/1.4 system-ui, sans-serif; }
+.sp-frage-knoepfe { display: flex; gap: 8px; margin-top: 10px; }
+.sp-frage-knoepfe button { flex: 1; padding: 9px; border-radius: 10px; border: 0; font-weight: 700; cursor: pointer; }
+.sp-frage-knoepfe button[data-ja="1"] { background: #2f7d32; color: #fff; }
+.sp-frage-knoepfe button[data-ja="0"] { background: #e7e9ee; color: #1d2330; }
+
+/* Das Spielfenster (unten, wie ein Blatt) */
+.sp-panel { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 9994;
+  width: min(100vw, 480px); max-height: 78vh; overflow: auto; background: #fbfaf7; color: #1d2330;
+  border-radius: 16px 16px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.28); padding: 10px 12px 16px;
+  font: 14px/1.4 system-ui, sans-serif; }
+/* FUNK 104 — „ob man diesen Intro Screen auf dem Android nicht komplett
+   sieht weil ich nicht weiß ob das wieder unten abgeschnitten ist".
+   78vh rechnet auf Android mit der Höhe OHNE Adressleiste; steht die
+   Leiste da, rutscht der untere Teil aus dem Bild. dvh ist die wirklich
+   sichtbare Höhe; dazu der Abstand zur Gestenleiste. */
+@supports (height: 1dvh) { .sp-panel { max-height: 78dvh; } }
+.sp-panel { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); overscroll-behavior: contain; }
+.sp-panel[hidden] { display: none; }
+.sp-kopf { display: flex; align-items: center; justify-content: space-between; font-size: 16px; margin-bottom: 6px; }
+.sp-zu { border: 0; background: #eceae4; border-radius: 50%; width: 30px; height: 30px; font-size: 15px; cursor: pointer; }
+.sp-status { background: #fff; border-radius: 12px; padding: 8px 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.sp-status-balken { display: inline-block; width: 120px; height: 8px; border-radius: 4px; background: #ddd; vertical-align: middle; overflow: hidden; }
+.sp-status-balken i { display: block; height: 100%; background: linear-gradient(90deg, #e2403a, #e8b923 40%, #3bbf4a 70%); }
+.sp-status-werte { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; color: #3b4353; font-size: 13px; }
+.sp-tabs { display: flex; gap: 4px; overflow-x: auto; margin: 10px 0 8px; }
+.sp-tabs button, .sp-chips button, .sp-knoepfe button, .sp-zeile button, .sp-hinweis button, .sp-optionen button {
+  border: 0; border-radius: 10px; padding: 7px 10px; background: #eceae4; color: #1d2330; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.sp-tabs button.sp-an, .sp-chips button.sp-an { background: #2b3a55; color: #fff; }
+.sp-knoepfe { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.sp-knoepfe button { background: #2b3a55; color: #fff; }
+button:disabled { opacity: .45; cursor: default; }
+.sp-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; }
+.sp-farbe { width: 26px; height: 26px; padding: 0 !important; border-radius: 50% !important; }
+.sp-farbe.sp-an { box-shadow: 0 0 0 3px #2b3a55; }
+.sp-zeile { display: flex; align-items: center; gap: 10px; justify-content: space-between; background: #fff; border-radius: 10px; padding: 7px 9px; margin: 5px 0; }
+.sp-zeile > span:nth-child(2) { flex: 1; }
+.sp-zeile small { color: #5a6270; }
+.sp-bild { width: 38px; height: 20px; display: inline-flex; align-items: center; justify-content: center; }
+.sp-bild svg { width: 100%; height: 100%; }
+.sp-aufgabe { background: #fff; border-radius: 12px; padding: 10px; margin: 6px 0; }
+.sp-frage-satz { font-size: 16px; margin-bottom: 8px; }
+.sp-optionen { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sp-optionen button { padding: 10px 8px; white-space: normal; }
+.sp-optionen .sp-richtig { background: #2f7d32; color: #fff; }
+.sp-optionen .sp-falsch { background: #c62f2a; color: #fff; }
+.sp-erg { font-weight: 800; margin-top: 8px; }
+.sp-gruen { color: #1f8a30; } .sp-rot { color: #c62f2a; } .sp-blau { color: #2b6fd0; }
+.sp-hinweis { background: #fff6dc; border-radius: 10px; padding: 6px 9px; margin-top: 6px; font-size: 13px; }
+.sp-text { margin: 6px 0; } .sp-klein { font-size: 12px; color: #5a6270; margin: 6px 0; }
+.sp-leer { padding: 18px 6px; color: #5a6270; }
+.sp-rang { margin: 6px 0; padding-left: 22px; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-aura, .sp-tier .sp-tier-koerper, .sp-getroffen .lc-kreis { animation: none; }
+}
+
+/* =====================================================================
+   FUNK 106 — MANA, ZAUBERTRÄNKE, SICHTBARER KAMPFMODUS, GRÖSSERE AUSRÜSTUNG
+   XANDER: „wie erkenne ich denn dass ich im Spielmodus bin dann gibt es
+   noch einen zweiten Balken der irgendwie Mana … Zaubertränke … könnte man
+   die angelegten Sachen ein bisschen größer darstellen".
+   Alles liegt absolut bzw. fest über der Seite: kein Platz verrutscht.
+   ===================================================================== */
+.sp-mana {
+  position: absolute; height: 4px; border-radius: 2px; overflow: hidden;
+  background: rgba(20, 20, 40, .3); box-shadow: 0 0 0 1px rgba(255, 255, 255, .7);
+  pointer-events: none; z-index: 6;
+}
+.sp-mana i { position: absolute; top: 0; bottom: 0; left: 0; background: linear-gradient(90deg, #5a4bff, #45b3ff); transition: width .35s ease; }
+.sp-status-balken.sp-mana-balken i { background: linear-gradient(90deg, #5a4bff, #45b3ff); }
+.sp-traenke { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.sp-traenke button { border: 0; border-radius: 10px; padding: 6px 9px; background: #2b3a55; color: #fff; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.sp-trank { width: 12px; height: 16px; border-radius: 3px 3px 6px 6px; display: inline-block; box-shadow: inset 0 -7px 0 rgba(0,0,0,.18), 0 0 0 1.5px rgba(255,255,255,.85); }
+.sp-trank-kraft { background: #e2403a; }
+.sp-trank-ziel { background: #e8b923; }
+.sp-trank-tempo { background: #45b3ff; }
+
+/* Wirkende Tränke leuchten am Bild */
+.sp-w-kraft .lc-kreis { box-shadow: 0 0 0 3px rgba(226, 64, 58, .85), 0 0 16px 4px rgba(226, 64, 58, .55) !important; }
+.sp-w-ziel .lc-kreis { outline: 2px dashed rgba(232, 185, 35, .95); outline-offset: 3px; }
+.sp-w-tempo .lc-kreis { filter: drop-shadow(-6px 0 0 rgba(69, 179, 255, .45)) drop-shadow(-12px 0 0 rgba(69, 179, 255, .22)); }
+
+/* Die Leiste „Kampfmodus" — fest oben, über allem */
+.sp-modus {
+  position: fixed; left: 50%; top: 44px; transform: translateX(-50%); z-index: 9993;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
+  width: max-content; max-width: min(94vw, 440px); padding: 5px 8px; border-radius: 14px;
+  background: rgba(24, 28, 40, .92); color: #fff; font: 700 12px/1.2 system-ui, sans-serif; row-gap: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .35); border: 1.5px solid rgba(226, 64, 58, .8);
+}
+.sp-modus[hidden] { display: none; }
+.sp-modus b { color: #ff8a80; letter-spacing: .02em; }
+.sp-m-teil { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .1); }
+.sp-m-bild { width: 34px; height: 14px; display: inline-flex; background: rgba(255, 255, 255, .88); border-radius: 6px; padding: 1px 3px; }
+.sp-m-bild svg { width: 100%; height: 100%; }
+.sp-m-kraft { background: rgba(226, 64, 58, .35); }
+.sp-m-ziel { background: rgba(232, 185, 35, .35); }
+.sp-m-tempo { background: rgba(69, 179, 255, .35); }
+.sp-m-tipp { font-weight: 500; opacity: .8; }
+@media (max-width: 420px) { .sp-m-tipp { display: none; } }
+.sp-modus button { border: 0; border-radius: 999px; padding: 4px 10px; font-weight: 700; cursor: pointer; background: #eceae4; color: #1d2330; }
+
+/* Größere Ausrüstung: Waffe am eigenen Bild, Fellmonster, Geschütz, Aura */
+.sp-waffenmarke svg { right: -10%; top: -12%; width: 46%; }
+.sp-tier, .sp-geschuetz { transform: scale(1.35); transform-origin: 50% 85%; }
+.sp-aura { box-shadow: 0 0 0 4px rgba(90, 180, 255, .8), 0 0 18px 7px rgba(90, 180, 255, .5); }
+
+
+/* =====================================================================
+   FUNK 108–111 (Fassung 631) — Gegenwehr, Monster, Fallen, Tränke
+   ===================================================================== */
+/* Das Geschütz schießt zurück: kleine glühende Kugeln. */
+.sp-kugel { position: fixed; left: 0; top: 0; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff6c8, #f2a531 55%, #b25b12); box-shadow: 0 0 6px 2px rgba(255, 170, 60, .7);
+  z-index: 9992; pointer-events: none; }
+/* Das Monster springt hinüber und beißt. */
+.sp-tier-sprung { position: fixed; left: 0; top: 0; z-index: 9992; pointer-events: none; }
+.sp-tier-sprung svg { width: 100%; height: 100%; overflow: visible; }
+.sp-kratzer { position: fixed; width: 44px; height: 30px; margin: -15px 0 0 -22px; z-index: 9993; pointer-events: none;
+  animation: spKratzer .9s ease-out forwards; }
+.sp-kratzer svg { width: 100%; height: 100%; }
+@keyframes spKratzer { 0% { opacity: 0; transform: scale(.6); } 15% { opacity: 1; transform: scale(1.1); } 70% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } }
+/* Der Drache faucht Feuer. */
+.sp-feuer { position: fixed; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; z-index: 9993; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 245, 190, .95) 0 18%, rgba(255, 170, 40, .85) 38%, rgba(230, 60, 20, .55) 62%, rgba(230, 60, 20, 0) 72%);
+  animation: spFeuer .7s ease-out forwards; }
+@keyframes spFeuer { 0% { transform: scale(.3); opacity: 0; } 25% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+/* Minen und Falltüren */
+.sp-falle-marke { position: absolute; pointer-events: none; z-index: 7; opacity: .85; }
+.sp-falle-marke svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sp-loch { position: absolute; z-index: 5; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(ellipse 50% 22% at 50% 82%, #0b0907 0 70%, rgba(11, 9, 7, 0) 100%);
+  animation: spLoch 1.5s ease-in-out forwards; }
+@keyframes spLoch { 0% { transform: scaleX(.1); opacity: 0; } 15% { transform: scaleX(1); opacity: 1; } 75% { opacity: 1; } 100% { transform: scaleX(.1); opacity: 0; } }
+.sp-fallen .lc-kreis { animation: spFallen 1.5s ease-in-out; }
+@keyframes spFallen { 0% { transform: none; } 18% { transform: translateY(6%) scale(.96); }
+  45% { transform: translateY(38%) scale(.45); opacity: 0; } 70% { transform: translateY(-14%) scale(.85); opacity: 1; }
+  85% { transform: translateY(4%) scale(1.03); } 100% { transform: none; } }
+.sp-mine-wurf .lc-kreis { animation: spMineWurf .9s ease-out; }
+@keyframes spMineWurf { 0% { transform: none; } 20% { transform: translateY(-26%) rotate(-10deg); filter: brightness(1.8); }
+  45% { transform: translateY(-8%) rotate(6deg); filter: brightness(.7) sepia(.6); } 100% { transform: none; filter: none; } }
+body.sp-legen #lcPlaetze .lc-platz { cursor: crosshair; }
+body.sp-legen #lcPlaetze .lc-kreis { outline: 2px dashed rgba(226, 64, 58, .55); outline-offset: 2px; }
+/* Eisenhaut: metallischer Rand. Tarnung: fast durchsichtig. */
+.sp-w-eisen .lc-kreis { box-shadow: 0 0 0 3px #9aa3ad, 0 0 0 5px #5b636c, 0 0 10px 3px rgba(160, 170, 180, .6) !important; }
+.sp-w-tarn .lc-kreis { opacity: .35; filter: blur(.6px) saturate(.4); transition: opacity .4s, filter .4s; }
+.sp-trank-mana { background: #5a7bff; }
+.sp-trank-eisen { background: #8d97a3; }
+.sp-trank-tarn { background: linear-gradient(135deg, #d9d2ff, #9f8cff); }
+.sp-m-eisen { background: rgba(141, 151, 163, .45); }
+.sp-m-tarn { background: rgba(159, 140, 255, .4); }
+.sp-knopfgruppe { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.sp-tier-stachelmonster, .sp-tier-drache { transform: scale(1.35); transform-origin: 50% 85%; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-kratzer, .sp-feuer, .sp-loch, .sp-fallen .lc-kreis, .sp-mine-wurf .lc-kreis { animation: none; }
+}
+
+/* =====================================================================
+   FASSUNG 633 — Schnellleiste (nur für mich), Sparring, Pause
+   ===================================================================== */
+/* XANDER: „da wo die Chat-Suchleiste ist … dass meine Leiste nicht bei
+   dem anderen sichtbar ist". Eine Zeile direkt über der Chat-Eingabe,
+   waagerecht scrollbar statt umzubrechen — sie schiebt nichts weg. */
+.sp-schnell { display: flex; align-items: center; gap: 5px; overflow-x: auto; overscroll-behavior-x: contain;
+  padding: 4px 6px; margin: 0 0 4px; border-radius: 12px; background: rgba(24, 28, 40, .9);
+  scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.sp-schnell::-webkit-scrollbar { display: none; }
+.sp-schnell[hidden] { display: none; }
+.sp-schnell button { flex: 0 0 auto; border: 0; border-radius: 9px; min-height: 32px; min-width: 34px; padding: 3px 7px;
+  background: rgba(255, 255, 255, .12); color: #fff; font: 700 12px/1.1 system-ui, sans-serif; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px; }
+.sp-schnell button:disabled { opacity: .4; cursor: default; }
+.sp-schnell button.sp-an { background: #f0e6c8; color: #1d2330; box-shadow: 0 0 0 2px #e8b923; }
+.sp-schnell .sp-s-mit { background: #3a7d44; }
+.sp-schnell .sp-s-mit.sp-an { background: #3bbf4a; color: #fff; box-shadow: none; }
+.sp-schnell .sp-s-waffe svg { width: 26px; height: 18px; }
+.sp-schnell .sp-s-heil svg { width: 18px; height: 18px; }
+.sp-schnell small { font-size: 10px; opacity: .85; }
+.sp-s-lp { flex: 0 0 auto; color: #cfe8d2; font: 700 11px/1.1 system-ui, sans-serif; padding: 0 4px; white-space: nowrap; }
+.sp-s-lp.sp-rot { color: #ff8a80; }
+/* Die Strohpuppe über einem freien Platz. */
+.sp-sparring { position: absolute; pointer-events: none; z-index: 6; }
+.sp-sparring svg { position: absolute; inset: 4%; width: 92%; height: 92%; }
+/* Wer gerade nicht mitspielt: Ring grau und blass. */
+.sp-lp.sp-pause svg { opacity: .35; filter: grayscale(1); }
+/* „dass das nicht so hängt … eine Kapsel, die immer automatisch mit
+   einem wandert": auf der Reise verschwinden Ring, Tier, Geschütz und
+   Aura am verlassenen Platz und tauchen am Ziel wieder auf. */
+.lc-platz-unterwegs > .sp-lp, .lc-platz-unterwegs > .sp-tier, .lc-platz-unterwegs > .sp-geschuetz,
+.lc-platz-unterwegs > .sp-aura, .lc-platz-unterwegs > .sp-waffenmarke, .lc-platz-unterwegs > .sp-risse { visibility: hidden; }
+.sp-anleitung p { margin: 0 0 8px; font-size: 13px; line-height: 1.4; }
+/* FASSUNG 634 — Ladung, Level, Rüstung, Superkraft.
+   XANDER: „jeder muss den Stand von dem anderen sehen". Alles auf
+   dem Rand des Bildes (Ring 42–49, Rüstung außen 51–54): die
+   Gesichtsmitte bleibt frei, und der Ring liegt über Hut und
+   Kleidung (z-index 6 gegen 5) — auch mit Hut sichtbar. */
+.sp-lp .sp-ladung-voll { stroke: #f2b705; filter: drop-shadow(0 0 1px rgba(255, 240, 180, .9)); }
+.sp-lp .sp-ladung-bereit { animation: spLadungBereit 1s ease-in-out infinite; }
+.sp-lp .sp-ladung-daemon { stroke: #b0172f; animation: spDaemonRing .6s ease-in-out infinite alternate; }
+@keyframes spLadungBereit { 50% { stroke: #fff3b0; filter: drop-shadow(0 0 4px #f2b705); } }
+@keyframes spDaemonRing { from { stroke: #b0172f; } to { stroke: #7b1fd6; filter: drop-shadow(0 0 4px #b0172f); } }
+.sp-lp .sp-ruest { stroke-width: 3.5; stroke-linecap: round; filter: drop-shadow(0 0 1px rgba(0, 0, 0, .7)); }
+.sp-lp .sp-ruest-1 { stroke: #c07a3c; }
+.sp-lp .sp-ruest-2 { stroke: #d5dde6; }
+.sp-lp .sp-ruest-3 { stroke: #f2c230; }
+.sp-lp .sp-level circle { fill: #1d2330; stroke: #f2b705; stroke-width: 2; }
+.sp-lp .sp-level text { fill: #fff; font: 800 11.5px system-ui, sans-serif; text-anchor: middle; }
+/* Dämonisch: das Bild glüht rot-violett. */
+.sp-w-daemon .lc-kreis { animation: spDaemonGlut .7s ease-in-out infinite alternate; }
+@keyframes spDaemonGlut {
+  from { box-shadow: 0 0 0 3px rgba(176, 23, 47, .9), 0 0 14px 4px rgba(176, 23, 47, .6); }
+  to   { box-shadow: 0 0 0 3px rgba(123, 31, 214, .9), 0 0 20px 7px rgba(123, 31, 214, .55); }
+}
+.sp-schnell .sp-s-super svg { width: 18px; height: 18px; }
+.sp-schnell .sp-s-super.sp-voll { background: #7a4a00; box-shadow: 0 0 0 2px #f2b705; animation: spLadungKnopf 1s ease-in-out infinite; }
+.sp-schnell .sp-s-super.sp-an, .sp-schnell .sp-s-super.sp-an:disabled { opacity: 1; background: #4a0f2a; color: #fff; box-shadow: 0 0 0 2px #b0172f; }
+@keyframes spLadungKnopf { 50% { box-shadow: 0 0 0 2px #fff3b0, 0 0 10px 2px #f2b705; } }
+.sp-status-balken.sp-xp-balken i { background: linear-gradient(90deg, #c98a00, #f2d45c); }
+.sp-gold { color: #b07800; }
+.sp-stufen { display: inline-flex; gap: 2px; vertical-align: middle; }
+.sp-stufen i { width: 7px; height: 7px; border-radius: 50%; background: rgba(0, 0, 0, .15); }
+.sp-stufen i.sp-an { background: #e8a200; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-lp .sp-ladung-bereit, .sp-lp .sp-ladung-daemon, .sp-w-daemon .lc-kreis, .sp-schnell .sp-s-super.sp-voll { animation: none; }
+  .sp-w-daemon .lc-kreis { box-shadow: 0 0 0 3px rgba(176, 23, 47, .9), 0 0 14px 4px rgba(123, 31, 214, .6); }
+}
+/* FASSUNG 637 — Sauerkraut: XANDER „runterrutschen und dann ist seine
+   Sicht ein bisschen beeinträchtigt". Am Bild klatscht es oben auf,
+   rutscht in 4 s nach unten und hängt dann am unteren Rand — die
+   Gesichtsmitte ist nur im Vorbeirutschen bedeckt. */
+.sp-kraut { position: absolute; pointer-events: none; z-index: 7; overflow: hidden; border-radius: 50%; }
+.sp-kraut-rutsch { position: absolute; left: 0; right: 0; top: 0; height: 100%;
+  animation: spKrautRutsch 4s cubic-bezier(.4, .05, .6, 1) forwards; }
+.sp-kraut-rutsch svg { width: 100%; height: 100%; filter: drop-shadow(0 1px 1px rgba(60, 50, 10, .6)); }
+@keyframes spKrautRutsch {
+  0% { transform: translateY(-40%) scaleY(.6); opacity: 0; }
+  8% { transform: translateY(-30%) scaleY(1.1); opacity: 1; }
+  100% { transform: translateY(58%); opacity: .95; }
+}
+.sp-kraut.sp-kraut-ab .sp-kraut-rutsch { animation: spKrautAb 1.1s ease-in forwards; }
+@keyframes spKrautAb { from { transform: translateY(58%); opacity: .95; } to { transform: translateY(120%); opacity: 0; } }
+/* Der eigene Blick: Fäden über der Bühne, zum Wegwischen. */
+.sp-kraut-sicht { position: fixed; z-index: 9989; cursor: pointer; overflow: hidden; border-radius: 12px;
+  transition: opacity .4s, transform .4s; }
+.sp-kraut-faeden { position: absolute; inset: -10% 0 0 0; opacity: .82;
+  animation: spKrautFaeden 12s linear forwards; }
+.sp-kraut-faeden svg { width: 100%; height: 100%; filter: drop-shadow(0 2px 2px rgba(60, 50, 10, .5)); }
+@keyframes spKrautFaeden { from { transform: translateY(-30%); } to { transform: translateY(35%); } }
+.sp-kraut-tipp { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); padding: 3px 9px; border-radius: 10px;
+  background: rgba(40, 36, 14, .78); color: #f4ecc0; font: 700 11px/1.2 system-ui, sans-serif; white-space: nowrap; }
+.sp-kraut-sicht.sp-kraut-halb .sp-kraut-faeden { opacity: .4; clip-path: inset(0 0 0 50%); }
+.sp-kraut-sicht.sp-kraut-weg { opacity: 0; transform: translateX(40%); }
+.sp-schnell .sp-s-vorrat svg { width: 22px; height: 16px; }
+.lc-platz-unterwegs > .sp-kraut { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-kraut-rutsch { animation: none; transform: translateY(58%); }
+  .sp-kraut-faeden { animation: none; }
+}
+/* FASSUNG 638 — Tiere. Das Flugtier schwebt rechts oben neben dem Bild
+   (es sitzt bei 90 | 12 von 100, also außen am Rand), die Flügel
+   schlagen. Schwache Tiere (0 Kraft) sind blass und schlafen. */
+.sp-flugtier { position: absolute; pointer-events: none; z-index: 7; transform: scale(1.35); transform-origin: 90% 12%; }
+.sp-flugtier svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sp-flugtier .sp-tier-koerper { transform-box: fill-box; transform-origin: 50% 50%; animation: spSchweben 1.6s ease-in-out infinite; }
+@keyframes spSchweben { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.sp-fluegel-l, .sp-fluegel-r { transform-box: fill-box; animation: spFluegel .32s ease-in-out infinite alternate; }
+.sp-fluegel-l { transform-origin: 100% 60%; }
+.sp-fluegel-r { transform-origin: 0% 60%; }
+@keyframes spFluegel { from { transform: rotate(0deg) scaleY(1); } to { transform: rotate(-18deg) scaleY(.7); } }
+.sp-fluegel-r { animation-name: spFluegelR; }
+@keyframes spFluegelR { from { transform: rotate(0deg) scaleY(1); } to { transform: rotate(18deg) scaleY(.7); } }
+.sp-tier-chihuahua { transform: scale(1.35); transform-origin: 50% 85%; }
+.sp-tier-schwach svg { filter: grayscale(.8) brightness(.9); opacity: .6; }
+.sp-tier-schwach .sp-tier-koerper, .sp-tier-schwach .sp-fluegel-l, .sp-tier-schwach .sp-fluegel-r { animation: none; }
+.sp-flugtier.sp-tier-schwach { transform: scale(1.35) translateY(8%); }
+/* Im Reiter „Tiere": das Tier groß im Kästchen. */
+.sp-tier-bild { flex: 0 0 auto; width: 46px; height: 46px; position: relative; overflow: hidden; border-radius: 10px; background: #efe9dc; }
+.sp-tier-bild svg { position: absolute; width: 230%; height: 230%; }
+.sp-tier-bild-boden svg { right: -8%; bottom: -8%; }
+.sp-tier-bild-luft svg { right: -20%; top: -10%; }
+.sp-tier-bild.sp-tier-schwach svg { filter: grayscale(.8); opacity: .6; }
+.sp-status-balken.sp-kraft-balken { display: inline-block; width: 90px; vertical-align: middle; }
+.sp-status-balken.sp-kraft-balken i { background: linear-gradient(90deg, #c98a00, #7fc98a); }
+.sp-bissmal { width: 34px; height: 22px; margin: -11px 0 0 -17px; }
+.lc-platz-unterwegs > .sp-flugtier { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-flugtier .sp-tier-koerper, .sp-fluegel-l, .sp-fluegel-r { animation: none; }
+}
+/* FASSUNG 640 — die Mauer zieht mit und wächst am neuen Platz in 8 s
+   wieder hoch (solange schützt sie noch nicht). */
+.sp-mauer.sp-mauer-aufbau svg { transform-origin: 50% 100%; animation: spMauerAufbau 8s linear forwards; opacity: .65; }
+@keyframes spMauerAufbau { from { transform: scaleY(.1); } to { transform: scaleY(1); } }
+/* Der Turm wird mit jeder Stufe etwas größer. */
+.sp-geschuetz.sp-turm-2 { transform: scale(1.42); } .sp-geschuetz.sp-turm-3 { transform: scale(1.5); }
+.sp-geschuetz.sp-turm-4 { transform: scale(1.58); } .sp-geschuetz.sp-turm-5 { transform: scale(1.66); }
+/* Stumpfe Waffe: grau, mit Riss-Strich. */
+.sp-schnell .sp-stumpf svg { filter: grayscale(1) brightness(.8); }
+.sp-schnell .sp-stumpf { box-shadow: inset 0 0 0 1px #c62f2a; }
+.sp-schnell .sp-s-repar { background: #3b4450; }
+.sp-schnell .sp-s-repar svg { width: 18px; height: 18px; }
+@media (prefers-reduced-motion: reduce) { .sp-mauer.sp-mauer-aufbau svg { animation: none; } }
+/* =====================================================================
+   FASSUNG 641 — die Leiste schwebt über dem Chat
+   XANDER: „es sprengt das Layout, weil es den Chat nach unten erweitert
+   … das kann ja ruhig über den Chat liegen … ich möchte nicht, dass man
+   da unten lang scrollt". Die Leiste liegt jetzt absolut über der
+   Eingabe (nimmt keine Zeile weg), hat höchstens sieben kleine Knöpfe
+   und scrollt nicht. Das Menü klappt darüber nach oben auf.
+   ===================================================================== */
+.sp-schnell { position: absolute; left: 6px; bottom: 60px; z-index: 30; margin: 0; padding: 0;
+  display: block; overflow: visible; background: none; border-radius: 0; pointer-events: none; }
+.sp-schnell .sp-s-reihe { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 14px;
+  background: rgba(20, 24, 34, .82); box-shadow: 0 2px 10px rgba(0, 0, 0, .3); pointer-events: auto;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.sp-schnell button { min-height: 30px; min-width: 30px; padding: 2px 5px; border-radius: 10px; }
+.sp-schnell .sp-s-waffe svg { width: 24px; height: 17px; }
+.sp-schnell .sp-s-mit { padding: 2px 8px; }
+.sp-schnell .sp-s-mit.sp-an { background: rgba(59, 191, 74, .25); min-width: 22px; padding: 2px 6px; }
+.sp-schnell .sp-s-punkt { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #3bbf4a; box-shadow: 0 0 6px #3bbf4a; }
+.sp-schnell .sp-s-menue svg { width: 18px; height: 18px; }
+.sp-schnell .sp-s-waffe small { position: relative; top: 5px; margin-left: -3px; }
+.sp-schnellmenue { position: absolute; left: 0; bottom: calc(100% + 6px); width: min(92vw, 340px); max-height: 46vh; overflow-y: auto;
+  padding: 8px; border-radius: 14px; background: rgba(20, 24, 34, .96); color: #fff; box-shadow: 0 6px 24px rgba(0, 0, 0, .45);
+  pointer-events: auto; font: 13px/1.3 system-ui, sans-serif; overscroll-behavior: contain; }
+.sp-sm-kopf { font: 700 11px/1.2 system-ui, sans-serif; color: #cfe8d2; margin: 0 0 6px; }
+.sp-sm-reiter, .sp-sm-slots { display: flex; gap: 4px; margin: 0 0 6px; }
+.sp-sm-reiter button, .sp-sm-slots button { flex: 1; min-height: 28px; }
+.sp-sm-gruppe { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0 0 5px; }
+.sp-sm-gruppe > span { width: 100%; font: 700 10px/1 system-ui, sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #9aa6b8; }
+.sp-schnell .sp-slot-drin { box-shadow: 0 0 0 2px #5ab4ff; }
+.sp-sm-liste { display: flex; flex-direction: column; gap: 4px; }
+.sp-sm-liste button { justify-content: flex-start; text-align: left; min-height: 32px; width: 100%; }
+.sp-sm-liste small { margin-left: auto; }
+.sp-sm-klein { margin: 4px 0 0; font-size: 11px; color: #9aa6b8; }
+.sp-tier-bild.sp-tier-bild-mini { width: 26px; height: 26px; border-radius: 7px; }
+/* Das Waffen-Abzeichen am eigenen Bild saß oben rechts — genau dort,
+   wo jetzt der Babydrache schwebt („wenn da ne Waffe drüber liegt …
+   verdeckt die Waffe den kleinen Helfer"). Es sitzt jetzt links oben. */
+.sp-waffenmarke svg { right: auto !important; left: -12% !important; top: -12% !important; width: 40% !important; }
+/* Die Bögen am Bild wirken wie Flüssigkeit: ein dunkler Saum für jeden
+   Hintergrund, darin fließen kleine helle Bläschen.
+   XANDER: „dass es echte Flüssigkeiten sind, die da animiert fließen …
+   dass es immer gut erkennbar bleibt". */
+.sp-lp .sp-ring-spur { stroke: rgba(8, 10, 16, .72); stroke-width: 9.4; }
+.sp-lp .sp-lp-voll, .sp-lp .sp-mana-voll, .sp-lp .sp-ladung-voll { filter: drop-shadow(0 0 1.2px rgba(255, 255, 255, .9)); }
+.sp-lp .sp-flut { fill: none; stroke: rgba(255, 255, 255, .55); stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: .1 9;
+  animation: spFlut 1.8s linear infinite; }
+@keyframes spFlut { to { stroke-dashoffset: -18.2; } }
+@media (prefers-reduced-motion: reduce) { .sp-lp .sp-flut { animation: none; } }
+/* FASSUNG 642 — der Babydrache blinzelt: die Lider (in Hautfarbe)
+   klappen alle paar Sekunden kurz über die Augen. */
+.sp-blinzeln ellipse { transform-box: fill-box; transform-origin: 50% 0; transform: scaleY(0); animation: spBlinzeln 4.2s ease-in-out infinite; }
+.sp-blinzeln ellipse:nth-child(2) { animation-delay: .04s; }
+@keyframes spBlinzeln { 0%, 92%, 100% { transform: scaleY(0); } 95% { transform: scaleY(1); } }
+.sp-geschoss.sp-g-mg { width: 12px; height: 6px; }
+.sp-geschoss.sp-g-lasersalve { width: 22px; height: 7px; filter: drop-shadow(0 0 3px rgba(120, 255, 170, .9)); }
+.sp-geschoss.sp-g-doener { width: 40px; height: 30px; }
+@media (prefers-reduced-motion: reduce) { .sp-blinzeln ellipse { animation: none; } }
+
+/* =========================================================
+   FASSUNG 643 — GRABEN, FUNDE, MISSIONEN, WERKSTATT
+   XANDER: „Schatzsuche … Schaufel … in den Plätzen graben".
+   Alles sitzt am UNTEREN Rand des Platzes: die Gesichtsmitte
+   bleibt frei. Die Schaufel sticht zweimal, während „graben"
+   klingt (0,9 s), dann fliegen Krumen und der Fund steigt auf.
+   ========================================================= */
+body.sp-graben #lcPlaetze .lc-platz { cursor: pointer; }
+body.sp-graben #lcPlaetze .lc-kreis { outline: 2px dashed rgba(138, 90, 43, .6); outline-offset: 2px; }
+.sp-grab {
+  position: absolute; left: 50%; z-index: 11; width: 44px; height: 30px;
+  transform: translate(-50%, 0); pointer-events: none;
+}
+.sp-grab-haufen {
+  position: absolute; left: 6px; right: 6px; bottom: 2px; height: 0;
+  border-radius: 50% 50% 40% 40% / 100% 100% 30% 30%;
+  background: radial-gradient(ellipse at 45% 30%, #9b7653, #6b4a2e 60%, #4d331d);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .25);
+  animation: spHaufen .9s ease-out forwards, spWeg .4s ease-in 1.1s forwards;
+}
+.sp-grab-schaufel {
+  position: absolute; right: -4px; bottom: 0; width: 28px; height: 28px;
+  transform-origin: 78% 10%;
+  animation: spStechen .45s ease-in-out 2, spWeg .3s ease-in .95s forwards;
+}
+.sp-grab-krume {
+  position: absolute; left: 50%; bottom: 6px; width: 4px; height: 3px; border-radius: 40%;
+  background: #6b4a2e; opacity: 0;
+  animation: spKrume .55s ease-out forwards; animation-delay: calc(var(--kd) + 250ms);
+}
+.sp-grab-krume:nth-child(odd) { background: #8a6444; width: 3px; }
+@keyframes spHaufen { 0% { height: 0; } 40% { height: 5px; } 100% { height: 9px; } }
+@keyframes spStechen {
+  0% { transform: rotate(-8deg) translateY(-4px); }
+  45% { transform: rotate(14deg) translateY(3px); }
+  100% { transform: rotate(-8deg) translateY(-4px); }
+}
+@keyframes spKrume {
+  0% { opacity: 1; transform: translate(0, 0); }
+  60% { opacity: 1; transform: translate(var(--kx), var(--ky)); }
+  100% { opacity: 0; transform: translate(calc(var(--kx) * 1.2), 2px); }
+}
+@keyframes spWeg { to { opacity: 0; } }
+.sp-fund {
+  position: absolute; left: 50%; z-index: 12; pointer-events: none; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 3px; transform: translate(-50%, 0);
+  font: 800 13px/1 system-ui, sans-serif; color: #5a3b1c;
+  text-shadow: 0 1px 0 #fff, 0 0 3px #fff; animation: spZahl 1.75s ease-out forwards;
+}
+.sp-fund svg { width: 18px; height: 18px; }
+.sp-fund-truhe, .sp-fund-schatz { color: #b07a00; font-size: 15px; }
+.sp-fund-truhe svg, .sp-fund-schatz svg { width: 24px; height: 24px; filter: drop-shadow(0 0 4px rgba(255, 216, 74, .9)); }
+.sp-fund-nichts { color: #6b5a4e; font-size: 12px; }
+.sp-schnell .sp-s-graben { background: #7a5230; }
+.sp-schnell .sp-s-graben svg { width: 20px; height: 20px; }
+.sp-mission .sp-klein { display: inline; }
+.sp-mission-schatz { background: #fbecd2; }
+.sp-werkstatt { background: #f3ede6; border-radius: 8px; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-grab-schaufel, .sp-grab-krume { animation-duration: .01s; }
+}
+
+/* =========================================================
+   FASSUNG 645 — MENÜ FÜR DAS TELEFON, MELDUNGSZEILE, TON AUS
+   XANDER: „das Layout auf Android von dem Shortcut Menü ist
+   unmöglich … nicht mal auf Laden und Schutz drücken".
+   · Listen als zwei Spalten: halb so hoch, kein Scrollen.
+   · Die Höhe setzt schnellZeichnen() auf den Platz über der
+     Leiste — nichts wird mehr oben abgeschnitten.
+   · Meldungen stehen in einer eigenen Zeile, die Tipps
+     durchlässt (pointer-events: none).
+   ========================================================= */
+.sp-sm-liste { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.sp-sm-liste button { min-height: 40px; padding: 4px 7px; font-size: 12px; line-height: 1.15; white-space: normal; }
+.sp-sm-liste small { margin-left: auto; opacity: .8; }
+.sp-schnellmenue { overscroll-behavior: contain; touch-action: pan-y; }
+.sp-sm-reiter button { min-height: 34px; font-size: 13px; }
+.sp-meldung {
+  position: absolute; left: 8px; right: 8px; z-index: 31; pointer-events: none;
+  margin: 0 auto; max-width: 360px; padding: 5px 10px; border-radius: 10px;
+  background: rgba(24, 28, 40, .88); color: #fff; font: 600 12px/1.3 system-ui, sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  transition: opacity .4s ease, transform .4s ease;
+}
+.sp-meldung.sp-meldung-weg { opacity: 0; transform: translateY(4px); }
+.sp-meldung[hidden] { display: none; }
+.sp-schnell .sp-s-stumm { background: #7a2a2a; }
+.sp-schnell .sp-s-stumm svg { width: 18px; height: 18px; }
+/* Auswertung mit festem Platz (Fassung 645): zwei Zeilen, immer gleich hoch. */
+.sp-erg-platz { min-height: 54px; max-height: 54px; margin-top: 6px; padding: 5px 8px; border-radius: 10px; background: #f3f5f8; overflow: hidden;
+  transition: background .25s ease; }
+.sp-erg-platz.sp-erg-gut { background: #e3f6e6; }
+.sp-erg-platz.sp-erg-schlecht { background: #fde8e6; }
+.sp-erg-zeile { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.sp-erg-zeile button { margin-left: auto; min-height: 26px; padding: 2px 10px; }
+.sp-erg-erkl { font-size: 11.5px; line-height: 1.3; color: #4a5260; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.sp-erg-leer { font-size: 12px; color: #8a93a2; line-height: 44px; text-align: center; }
+.sp-sm-kopf-meldung { color: #ffe9a8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* =========================================================
+   FASSUNG 646 — TIERE: ANGRIFF, NEUE TIERE, KACHELN
+   ========================================================= */
+/* Wer angreift, ist nicht mehr zuhause: kein Doppel. */
+.sp-boden-aus > .sp-tier, .sp-luft-aus > .sp-flugtier { visibility: hidden; }
+/* Feuerstrahl von Drache und Phönix: vom Maul bis ins Bild. */
+.sp-feuerstrahl { position: fixed; height: 14px; margin-top: -7px; transform-origin: 0 50%; z-index: 9993; pointer-events: none;
+  border-radius: 0 50% 50% 0 / 0 50% 50% 0;
+  background: linear-gradient(90deg, rgba(255,247,190,.95), #ffd23a 18%, #ff8a1e 55%, rgba(226,54,20,.85) 85%, rgba(226,54,20,0));
+  filter: blur(.4px) drop-shadow(0 0 6px rgba(255,140,30,.8));
+  animation: spStrahl .5s ease-out forwards; }
+.sp-feuerstrahl-gold { background: linear-gradient(90deg, rgba(255,255,230,.95), #ffe27a 20%, #ffb347 55%, rgba(255,90,30,.8) 85%, rgba(255,90,30,0)); }
+@keyframes spStrahl { 0% { clip-path: inset(0 100% 0 0); opacity: 1; } 35% { clip-path: inset(0 0 0 0); opacity: 1; }
+  100% { clip-path: inset(0 0 0 0); opacity: 0; } }
+/* Funken der Eule (Stoß) und der Fee (Zauber). */
+.sp-funke { position: fixed; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; z-index: 9993; pointer-events: none;
+  background: #fff3c4; box-shadow: 0 0 6px 2px rgba(255,220,120,.8); animation: spFunke .65s ease-out forwards; }
+.sp-funke-zauber { background: #f3e6ff; box-shadow: 0 0 7px 2px rgba(200,150,255,.85); }
+@keyframes spFunke { from { transform: translate(0, 0) scale(1); opacity: 1; } to { transform: translate(var(--fx), var(--fy)) scale(.3); opacity: 0; } }
+/* Magische Tiere funkeln leise. */
+.sp-funkeln { animation: spFunkeln 1.8s ease-in-out infinite; }
+@keyframes spFunkeln { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+/* Kacheln: nur der Ausschnitt um das Tier, groß und mittig. */
+.sp-tier-bild svg.sp-kachel-svg { left: 0; top: 0; right: auto; bottom: auto; width: 100%; height: 100%; }
+.sp-tier-bild { background: radial-gradient(circle at 50% 60%, #fbf6ea, #ece3cf); }
+.sp-tier-magisch .sp-tier-bild { background: radial-gradient(circle at 50% 55%, #fdf6ff, #e6dcf7); }
+.sp-magie { color: #7a4fc0; font-weight: 700; }
+.sp-tier-gruppe { margin: 8px 0 2px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+@media (prefers-reduced-motion: reduce) { .sp-funkeln, .sp-feuerstrahl, .sp-funke { animation-duration: .01s; } }
+
+/* FASSUNG 648 — Aufgabenarten und Aussprache */
+.sp-arten { flex-wrap: wrap; gap: 4px; }
+.sp-arten button { min-height: 28px; padding: 2px 9px; font-size: 12px; }
+.sp-arten-mehr { min-height: 28px; border-radius: 8px; border: 1px solid #d4d9e0; background: #fff; font-size: 12px; padding: 0 6px; max-width: 140px; }
+.sp-sprech { padding: 8px 4px 2px; text-align: center; }
+.sp-sprech-wort { font: 800 26px/1.2 system-ui, sans-serif; color: #1f2a38; }
+.sp-sprech-silben { font-size: 13px; color: #6a7382; letter-spacing: .04em; margin: 2px 0 6px; }
+.sp-sprech .sp-knoepfe { justify-content: center; }
+.sp-sprech-mik.sp-an { background: #e2403a; color: #fff; }
+
+/* =========================================================
+   FASSUNG 649 — DAS WAFFENRAD
+   XANDER: „so ne Art Tachometer … ganz schnell wechseln …
+   ohne viel Text lesen zu müssen". Halbkreis über dem
+   Waffenplatz, zwei Ringe, nur Bilder und die Schadenszahl.
+   (Selektoren mit .sp-schnell davor – sonst gewinnt die
+   allgemeine Knopf-Regel der Leiste.)
+   ========================================================= */
+.sp-schnell .sp-rad { position: absolute; bottom: calc(100% + 6px); z-index: 33; pointer-events: none; overflow: visible; animation: spRadAuf .18s ease-out; }
+.sp-schnell .sp-rad-bogen { position: absolute; left: 0; top: 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(24,28,40,0) 22%, rgba(24,28,40,.82) 23%, rgba(24,28,40,.82) 70%, rgba(24,28,40,0) 71%);
+  clip-path: inset(0 0 50% 0); }
+.sp-schnell .sp-rad-waffe, .sp-schnell .sp-rad-mitte { position: absolute; width: 40px; height: 40px; min-width: 0; min-height: 0; border-radius: 50%;
+  border: 0; background: #2f3749; color: #fff; pointer-events: auto; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4); padding: 0; margin: 0; }
+.sp-schnell .sp-rad-waffe svg { width: 26px; height: 26px; }
+.sp-schnell .sp-rad-waffe small { position: absolute; right: -3px; bottom: -3px; min-width: 15px; padding: 0 3px; border-radius: 8px;
+  background: #f2c230; color: #2a1f05; font: 800 9px/13px system-ui, sans-serif; }
+.sp-schnell .sp-rad-waffe.sp-an { background: #3c7a55; box-shadow: 0 0 0 2px #9fe0b5, 0 2px 6px rgba(0,0,0,.4); }
+.sp-schnell .sp-rad-mitte { background: #59627a; width: 34px; height: 34px; left: calc(50% - 17px); bottom: 2px; }
+.sp-schnell .sp-rad-mitte svg { width: 18px; height: 18px; }
+@keyframes spRadAuf { from { opacity: 0; transform: scale(.85); transform-origin: 50% 100%; } to { opacity: 1; transform: none; } }
+
+/* =========================================================
+   FASSUNG 650 — ZAUBER: Nebel, Erdbeben, Orkan
+   XANDER: „Zauber oder Erdbeben Orkane … Gegner von der
+   Bildfläche werfen oder durcheinanderbringen … Nebeln".
+   Nebel liegt als Ring ums Bild – die Gesichtsmitte bleibt
+   frei. Beben und Orkan laufen 3,6–3,8 s, wie ihre Töne.
+   ========================================================= */
+.sp-schnell .sp-s-zauber svg { width: 20px; height: 20px; }
+.sp-schnell .sp-s-zauber.sp-an { background: #3b2a66; box-shadow: 0 0 0 2px #b79cff; animation: spZauberBereit 1.2s ease-in-out infinite; }
+.sp-schnell .sp-s-zauber.sp-offen { background: #3b2a66; }
+.sp-schnell .sp-s-zauber.sp-zu { opacity: .55; }
+@keyframes spZauberBereit { 50% { box-shadow: 0 0 0 3px #d9c9ff, 0 0 10px #b79cff; } }
+.sp-schnell .sp-rad-zauber { background: #3b2a66; }
+.sp-schnell .sp-rad-zauber small { background: #7fb6ff; color: #0d2240; }
+.sp-schnell .sp-rad-zauber.sp-zu { background: #474b57; opacity: .75; }
+.sp-schnell .sp-rad-zauber.sp-zu svg { filter: grayscale(1); opacity: .6; }
+.sp-schnell .sp-rad-zauber.sp-zu small { background: #9aa0ab; color: #1c1f26; }
+.sp-schnell .sp-rad-zauber.sp-stumpf small { background: #e2403a; color: #fff; }
+.sp-sm-liste .sp-zu { opacity: .6; }
+.sp-sm-zbild { display: inline-flex; width: 20px; height: 20px; vertical-align: middle; margin-right: 6px; }
+.sp-sm-zbild svg { width: 20px; height: 20px; }
+body.sp-kampf #lcPlaetze .lc-platz.sp-w-wackel .lc-kreis { cursor: crosshair; }
+
+/* Nebel am Platz: ein grauer Ring, innen frei */
+.sp-nebel { position: absolute; pointer-events: none; z-index: 4; border-radius: 50%; transform: scale(1.55);
+  background: radial-gradient(circle, rgba(222,228,235,0) 40%, rgba(150,162,176,.78) 52%, rgba(170,180,192,.6) 62%, rgba(190,198,208,0) 72%);
+  animation: spNebelWabern 3.2s ease-in-out infinite alternate; }
+.sp-nebel::before, .sp-nebel::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(160,172,186,.85), rgba(160,172,186,0) 70%); }
+.sp-nebel::before { width: 46%; height: 30%; left: -8%; top: 58%; animation: spNebelZiehen 4.5s ease-in-out infinite alternate; }
+.sp-nebel::after { width: 40%; height: 26%; right: -6%; top: 8%; animation: spNebelZiehen 5.2s ease-in-out infinite alternate-reverse; }
+@keyframes spNebelWabern { from { transform: scale(1.5) rotate(0deg); opacity: .85; } to { transform: scale(1.62) rotate(14deg); opacity: 1; } }
+@keyframes spNebelZiehen { from { transform: translate(0, 0); } to { transform: translate(18%, -12%); } }
+.sp-nebel-schwade { position: fixed; z-index: 60; pointer-events: none; margin: 0; border-radius: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(150,162,176,.9), rgba(150,162,176,0) 70%); animation: spSchwadeRein 1.2s ease-out forwards; }
+@keyframes spSchwadeRein { from { transform: translate(calc(-50% + var(--nx)), calc(-50% + var(--ny))) scale(.6); opacity: 0; }
+  40% { opacity: 1; } to { transform: translate(-50%, -50%) scale(1.1); opacity: 0; } }
+/* Wer selbst im Nebel steckt, sieht den Raum verschleiert. */
+body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: blur(1.6px) grayscale(.5) brightness(1.08); transition: filter .6s; }
+
+/* Wackeln nach Beben und Orkan: die Hand zittert */
+.lc-platz.sp-w-wackel .lc-kreis { animation: spWackeln .22s linear infinite; }
+@keyframes spWackeln { 25% { transform: translate(1px, -1px) rotate(.6deg); } 75% { transform: translate(-1px, 1px) rotate(-.6deg); } }
+
+/* Erdbeben */
+.lc-platz.sp-bebt .lc-kreis { animation: spBeben 3.6s ease-out; }
+@keyframes spBeben {
+  0% { transform: none; } 4% { transform: translate(-6px, 2px) rotate(-3deg); } 8% { transform: translate(6px, -2px) rotate(3deg); }
+  12% { transform: translate(-7px, 1px) rotate(-2deg); } 16% { transform: translate(7px, 2px) rotate(2deg); } 22% { transform: translate(-5px, -2px) rotate(-2deg); }
+  30% { transform: translate(5px, 1px) rotate(1.5deg); } 40% { transform: translate(-4px, 1px) rotate(-1deg); } 52% { transform: translate(3px, -1px) rotate(1deg); }
+  66% { transform: translate(-2px, 1px); } 80% { transform: translate(1px, 0); } 100% { transform: none; } }
+#lcPlaetze.sp-raum-bebt { animation: spRaumBeben .9s ease-out; }
+@keyframes spRaumBeben { 10% { transform: translate(-3px, 1px); } 25% { transform: translate(3px, -1px); } 40% { transform: translate(-2px, 1px); } 60% { transform: translate(2px, 0); } 100% { transform: none; } }
+.sp-beben-riss { position: fixed; z-index: 60; pointer-events: none; height: 14px; transform: translate(-50%, -50%); animation: spRissWeg 3.6s ease-in forwards; }
+.sp-beben-riss svg { width: 100%; height: 100%; overflow: visible; }
+.sp-beben-riss path { stroke-dasharray: 100; stroke-dashoffset: 100; animation: spRissAuf .7s ease-out .1s forwards; }
+@keyframes spRissAuf { to { stroke-dashoffset: 0; } }
+@keyframes spRissWeg { 0%, 75% { opacity: 1; } 100% { opacity: 0; } }
+.sp-beben-staub { position: fixed; z-index: 61; pointer-events: none; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, rgba(160,120,80,.85), rgba(160,120,80,0) 70%); animation: spStaub 1.3s ease-out forwards; }
+@keyframes spStaub { 0% { opacity: 0; transform: none; } 20% { opacity: .9; } 100% { opacity: 0; transform: translateY(var(--sy)) scale(2.4); } }
+
+/* Orkan: der Wirbel hebt das Bild vom Platz und setzt es wieder ab */
+.lc-platz.sp-weggeweht .lc-kreis { animation: spWeggeweht 3.8s cubic-bezier(.45, 0, .4, 1); z-index: 5; }
+@keyframes spWeggeweht {
+  0% { transform: none; opacity: 1; }
+  18% { transform: translateY(-6px) rotate(-200deg) scale(.92); opacity: 1; }
+  36% { transform: translate(-42vw, -40px) rotate(-620deg) scale(.55); opacity: .0; }
+  58% { transform: translate(42vw, -30px) rotate(-760deg) scale(.55); opacity: 0; }
+  80% { transform: translate(0, -8px) rotate(-1040deg) scale(.95); opacity: 1; }
+  100% { transform: rotate(-1080deg); opacity: 1; } }
+.sp-orkan { position: fixed; z-index: 60; pointer-events: none; transform: translate(-50%, -58%); animation: spOrkan 3.8s ease-in-out forwards; }
+.sp-orkan svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 1.5px rgba(30,45,70,.9)) drop-shadow(0 2px 4px rgba(30,45,70,.45)); }
+.sp-orkan-dreh { animation: spOrkanDreh .5s linear infinite; transform-origin: 0 0; }
+@keyframes spOrkanDreh { from { transform: scaleX(1); } 50% { transform: scaleX(-1); } to { transform: scaleX(1); } }
+@keyframes spOrkan { 0% { opacity: 0; transform: translate(-50%, -58%) scale(.3); } 15% { opacity: 1; transform: translate(-50%, -58%) scale(1); }
+  45% { transform: translate(-58%, -60%) scale(1.08); } 70% { transform: translate(-44%, -57%) scale(1.02); opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -62%) scale(.6); } }
+@media (prefers-reduced-motion: reduce) {
+  .sp-nebel, .sp-nebel::before, .sp-nebel::after, .lc-platz.sp-w-wackel .lc-kreis, .lc-platz.sp-bebt .lc-kreis, #lcPlaetze.sp-raum-bebt,
+  .lc-platz.sp-weggeweht .lc-kreis, .sp-orkan-dreh, .sp-schnell .sp-s-zauber.sp-an { animation: none; }
+}
+
+/* =========================================================
+   FASSUNG 651 — Mauer hinter Ringen und Tieren
+   XANDER: „die Mauer verdeckt … unseren Lebensstand … und
+   unser kleines Fellmonster". Reihenfolge von hinten nach
+   vorn: Mauer (5) · Ringe (6) · Tiere und Turm (9).
+   ========================================================= */
+.sp-mauer { z-index: 5; }
+.sp-lp { z-index: 6; }
+.sp-tier, .sp-geschuetz, .sp-flugtier { z-index: 9; }
+
+/* Controller-Ei, Menü links, nichts ragt rechts hinaus (Fassung 651) */
+.sp-schnell .sp-s-reihe { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+.sp-schnell .sp-s-reihe::-webkit-scrollbar { display: none; }
+.sp-schnell .sp-s-ei { padding: 1px 3px; background: rgba(255, 255, 255, .08); }
+.sp-schnell .sp-s-ei svg { width: 22px; height: 22px; }
+.sp-schnell .sp-s-ei.sp-an { background: #f0e6c8; box-shadow: 0 0 0 2px #e8b923; }
+.sp-schnell .sp-s-ei.sp-s-ei-zu { animation: spEiWippen 2.4s ease-in-out infinite; }
+@keyframes spEiWippen { 0%, 80%, 100% { transform: none; } 86% { transform: rotate(-9deg); } 93% { transform: rotate(7deg); } }
+.sp-schnell .sp-s-slot { position: relative; }
+.sp-schnell .sp-s-tacho { position: absolute; left: 50%; top: -5px; width: 14px; height: 9px; margin-left: -7px; border-radius: 7px 7px 0 0;
+  background: #3c7a55; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.sp-schnell .sp-s-tacho svg { width: 11px; height: 7px; }
+.sp-schnellmenue { max-width: calc(100vw - 16px); box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) { .sp-schnell .sp-s-ei.sp-s-ei-zu { animation: none; } }
+
+/* =========================================================
+   FASSUNG 652 — Töne regeln, eckiger Controller-Knopf
+   XANDER: „ein Menü, wo man die Sounds … regeln kann" und
+   „nicht so ein queren Symbol, sondern einfach ein kleines
+   viereckiges Symbol mit dem Game Controller".
+   ========================================================= */
+.sp-sm-laut { display: flex; align-items: center; gap: 4px; margin: 0 0 6px; }
+.sp-sm-laut span { color: #cfd6e4; font: 700 12px system-ui, sans-serif; margin-right: 4px; }
+.sp-schnell .sp-sm-laut button { flex: 1 1 0; min-width: 0; min-height: 30px; padding: 2px 4px; font-size: 12px; }
+.sp-schnell .sp-s-ei { width: 34px; height: 32px; min-width: 34px; padding: 0; border-radius: 8px; background: #3a4358; }
+.sp-schnell .sp-s-ei svg { width: 24px; height: 24px; }
+
+/* Das volle Waffenrad (Fassung 652): Sektoren nach Klasse */
+.sp-schnell .sp-rad.sp-rad-voll { position: fixed; bottom: auto; z-index: 9990; animation: spRadVollAuf .18s ease-out; }
+@keyframes spRadVollAuf { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+.sp-rad-sektoren { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.sp-rad-sektoren .sp-rad-scheibe { fill: rgba(20, 24, 34, .88); stroke: rgba(255, 255, 255, .12); stroke-width: 1; }
+.sp-rad-sektoren path { fill: none; stroke-width: 46; stroke-linecap: round; opacity: .38; }
+.sp-rad-sektoren text { font: 800 10px/1 system-ui, sans-serif; text-anchor: middle; dominant-baseline: middle; letter-spacing: .04em; text-transform: uppercase;
+  paint-order: stroke; stroke: rgba(20, 24, 34, .9); stroke-width: 3px; filter: brightness(1.5); }
+.sp-schnell .sp-rad-voll .sp-rad-waffe { box-shadow: 0 0 0 2px var(--klasse, #59627a), 0 2px 6px rgba(0,0,0,.45); }
+.sp-schnell .sp-rad-voll .sp-rad-waffe.sp-an { background: #3c7a55; box-shadow: 0 0 0 3px #9fe0b5, 0 2px 6px rgba(0,0,0,.45); }
+.sp-schnell .sp-rad-voll .sp-rad-mitte { width: 40px; height: 40px; bottom: auto; }
+
+/* Die Kanone feuert sichtbar (Fassung 652) */
+.sp-geschuetz.sp-feuert svg { transform-origin: 40% 70%; animation: spTurmFeuer .7s ease-out; }
+@keyframes spTurmFeuer {
+  0% { transform: rotate(0); } 12% { transform: rotate(var(--zielwinkel, 0deg)); }
+  20% { transform: rotate(var(--zielwinkel, 0deg)) translate(-2px, 2px); } 30% { transform: rotate(var(--zielwinkel, 0deg)); }
+  40% { transform: rotate(var(--zielwinkel, 0deg)) translate(-2px, 2px); } 55% { transform: rotate(var(--zielwinkel, 0deg)); } 100% { transform: rotate(0); } }
+.sp-muendung { position: fixed; z-index: 9993; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, #fff7c2 0%, #ffcc3a 35%, rgba(255, 110, 20, .8) 60%, rgba(255, 110, 20, 0) 72%); animation: spMuendung .26s ease-out forwards; }
+@keyframes spMuendung { from { transform: scale(.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .sp-geschuetz.sp-feuert svg { animation: none; } }
