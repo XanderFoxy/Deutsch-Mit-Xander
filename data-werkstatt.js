@@ -49,34 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 636: Level, Können, Rüstung, Superkraft, Tagesgeschenk (634), Lok-Gleise gerade und verbunden (635), kein Italienisch im Deutschkurs (636)",
+  stand: "Fassung 644: Graben mit Schaufel, fünf Missionsarten, Erz-Werkstatt; gemeinsamer Verlauf lädt in Happen (300 Zeilen ohne Foto zuerst), Meldung nur bei echtem Ausfall; Döner-Katapult, MG, Laser-Salve (642).",
 
   inArbeit: [
-    { seit: "2026-09-25T02:20",
-      text: "811 falsche Betonungen korrigieren (läuft)" },
-    { seit: "2026-09-25T02:20",
-      text: "Aufgaben mit zwei richtigen Antworten reparieren (läuft)" },
-    { seit: "2026-09-25T02:20",
-      text: "Tiere füttern und aufwerten, Babydrache, Flugtier, Biss mit Knurren" },
-    { seit: "2026-09-25T02:20",
-      text: "Geschütz als Turm, deutsche Wurfwaffen, Salven, Mauer bleibt deine" },
+    { seit: "2026-09-25T03:40",
+      text: "Ton-Test-Ergebnis von Xander; Leiter-Mission; Festungen bauen; Arcade von unten; Upgrades unterwegs einsammeln; eigene Spielebene für Nicht-Spieler; Kanalbeitritt parallel zu Mikrofon/Relais; Walkie #256" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T02:20",
-      text: "Level und Erfahrung, sechs Fertigkeiten mit Training" },
-    { seit: "2026-09-25T02:20",
-      text: "Helm und Brustpanzer mit Abnutzung und Reparatur" },
-    { seit: "2026-09-25T02:20",
-      text: "Superkraft dämonisch bei voller Ladung" },
-    { seit: "2026-09-25T02:20",
-      text: "Tagesgeschenk automatisch, Seitenübungen werden Spielpunkte" },
-    { seit: "2026-09-25T02:20",
-      text: "Ladung, Level und Rüstung am Bildrand für alle sichtbar" },
-    { seit: "2026-09-25T02:20",
-      text: "Lok nur auf geraden, verbundenen Gleisen" },
-    { seit: "2026-09-25T02:20",
-      text: "1.067 italienische Wörter raus aus dem deutschen Wörterbuch, Satzbaukasten ohne Italienisch" },
+    { seit: "2026-09-25T03:40",
+      text: "Graben und Funde (spiel_graben); Missionen neben/Schatz/Serie/Heiler/Seite; Werkstatt Pflaster/Schärfen/Turm aus Erz; Turm-Nachladen nur mit Turm; Verlauf-Laden repariert + Teilindizes" },
   ],
 };
