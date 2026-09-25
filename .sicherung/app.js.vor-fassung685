@@ -27638,9 +27638,6 @@
        Ende aus (Anfang 0,049 RMS, Ende 0,000) und haette im Kreis
        im Sekundentakt gepumpt. */
     fahren:         { ton: "fahrt",    dauer: 2600, schleife: true, laut: 0.5 },
-    /* FASSUNG 685 — Hot Rod (V8, röhrt) und Monstertruck (schwerer Diesel). */
-    hotrodfahrt:    { ton: "rennauto", dauer: 2600, laut: 0.5 },
-    monstertruck:   { ton: "bagger",   dauer: 2600, laut: 0.6 },
     bremse:         { ton: "bremse",   dauer: 1600, laut: 0.55 },
     /* RUNDE 85 — XANDER: „ich glaube, man hoert auch kein
        Laufgeraeusch, wenn man bloss laeuft, beziehungsweise klingt
@@ -29496,51 +29493,6 @@
     return true;
   }
 
-  /* =====================================================================
-     FASSUNG 685 — GLEISSPUREN IM GESICHT
-     ---------------------------------------------------------------------
-     FUNK 84, XANDER: „wenn die Schranke dann hoch geht und derjenige
-     sitzt immer noch da, wird der überfahren. Er hat dann auch die
-     Gleisspuren im Gesicht, auch wenn er danach den Platz wechselt, und
-     dann muss er das Pflaster nehmen."
-     Wie der Dreck: eine eigene Schicht am Bild, gemerkt am Namen, sie
-     reist mit und überlebt jedes Neuzeichnen. Weg nur mit dem Pflaster.
-     ===================================================================== */
-  const lcGleisListe = {};   /* Name -> Winkel der Spur in Grad */
-  function lcGleisBleibt(platzEl) {
-    if (!platzEl) return false;
-    const nm = lcPlatzSchluessel(platzEl);
-    platzEl.querySelectorAll(".lc-gleisschicht").forEach((x) => x.remove());
-    if (!nm || lcGleisListe[nm] == null) return false;
-    const w = Number(lcGleisListe[nm]) || 0;
-    const schicht = document.createElement("span");
-    schicht.className = "lc-zp lc-gleisschicht";
-    schicht.setAttribute("aria-hidden", "true");
-    const blende = lcZpBlende(schicht);
-    let schwellen = "";
-    for (let x = -14; x <= 114; x += 9) schwellen += '<rect x="' + x + '" y="33" width="4.2" height="34" rx="1"/>';
-    blende.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><g transform="rotate(' + w.toFixed(0) + ' 50 50)">'
-      + '<g class="lc-gleis-schwellen">' + schwellen + "</g>"
-      + '<path class="lc-gleis-schiene" d="M-20 38 H120 M-20 62 H120"/>'
-      + '<path class="lc-gleis-glanz" d="M-20 37 H120 M-20 61 H120"/></g></svg>';
-    (platzEl.querySelector(".lc-kreis") || platzEl).appendChild(schicht);
-    return true;
-  }
-  function lcGleisDazu(platzEl, winkel) {
-    const nm = platzEl && lcPlatzSchluessel(platzEl);
-    if (!nm) return false;
-    lcGleisListe[nm] = Math.round(Number(winkel) || 0);
-    return lcGleisBleibt(platzEl);
-  }
-  function lcGleisHeilen(name) {
-    const nm = String(name || "").trim().toLowerCase();
-    if (lcGleisListe[nm] == null) return;
-    delete lcGleisListe[nm];
-    const karte = document.getElementById("livechatKarte");
-    if (!karte) return;
-    karte.querySelectorAll(".lc-platz").forEach((pl) => { if (lcPlatzSchluessel(pl) === nm) pl.querySelectorAll(".lc-gleisschicht").forEach((x) => x.remove()); });
-  }
-
   function lcBleibendesAuffrischen() {
     const karte = document.getElementById("livechatKarte");
     if (!karte) return;
@@ -29574,13 +29526,6 @@
         if (!zahlSeite && !el.querySelector(".lc-muenzwurf")) lcMuenzSeite(el, true);
       } else if (zahlSeite && !el.querySelector(".lc-muenzwurf")) {
         zahlSeite.remove();
-      }
-      /* FASSUNG 685 — die Gleisspuren (bis zum Pflaster). */
-      const gleis = el.querySelector(".lc-gleisschicht");
-      if (nm && lcGleisListe[nm] != null && !frei) {
-        if (!gleis) lcGleisBleibt(el);
-      } else if (gleis) {
-        gleis.remove();
       }
       /* RUNDE 98 — der liegengebliebene Dreck. */
       const dreck = el.querySelector(".lc-dreckschicht");
@@ -31862,8 +31807,6 @@
     /* RUNDE 101 — XANDER: „eine Waschmaschine als Profilbild Effekt wo
        der andere richtig durchgewirbelt wird". */
     ["\ud83e\udee7", "Waschmaschine", "waschmaschine"],
-    /* FASSUNG 685 — FUNK 84: „eine andere Person noch wie ein Feuerwerk anzünden". */
-    ["\ud83c\udf86", "Als Rakete z\u00fcnden", "zuenden"],
     /* RUNDE 101 — XANDER (Funk #18): „jemand mit seinen Händen … von sich
        weg schieben … falls einem jemand zu nah kommt". Stand erst unter
        „Holen" — das ist aber das Gegenteil davon. */
@@ -33185,9 +33128,6 @@
       }
     }, true);
     knopf("\ud83d\ude97", "Fahren", () => schicken("fahren"));
-    /* FASSUNG 685 — FUNK 84/85: Hot Rod mit gemaltem Weg, und ein Monstertruck. */
-    knopf("\ud83c\udfce\ufe0f", "Hot Rod", () => schicken("hotrodfahrt"));
-    knopf("\ud83d\udefb", "Monstertruck", () => schicken("monstertruck"));
     knopf("\ud83d\udc63", "Laufen", () => schicken("laufen"));
     /* ALLE REISEN GEHOEREN HIERHER.
        GEWUENSCHT: „die Reisen sollen mit bei dem Fahren drin sein.
@@ -35324,8 +35264,6 @@
     /* RUNDE 86 — der Luftballon: „dass man jemand aufblasen kann wie
        ne Luftballon." */
     luftballon: { zeichen: ["\ud83c\udf88"], wie: 4, klasse: "umarmen" },
-    /* FASSUNG 685 — als Rakete anzünden (Funk 84). */
-    zuenden:    { zeichen: ["\ud83c\udf86"], wie: 4, klasse: "umarmen" },
     /* RUNDE 88 — das Kaninchen aus dem Zylinder. XANDER: „Der
        Zauberer mit Kaninchen, das sollte ein Profilbild-Effekt sein,
        keine Reise." Ohne Eintrag HIER steigt lcWirkung gleich in der
@@ -35494,9 +35432,6 @@
     paintfleck: { zeichen: ["\ud83c\udfa8"], wie: 5, klasse: "umarmen" },
     ei:         { zeichen: ["\ud83e\udd5a"], wie: 5, klasse: "umarmen" },
     fahren:     { zeichen: ["\ud83d\ude97"], wie: 5, klasse: "umarmen" },
-    /* FASSUNG 685 — Hot Rod und Monstertruck als Reise (siehe lcReisewagen). */
-    hotrodfahrt:  { zeichen: ["\ud83c\udfce\ufe0f"], wie: 5, klasse: "umarmen" },
-    monstertruck: { zeichen: ["\ud83d\udefb"], wie: 5, klasse: "umarmen" },
     spielzug:   { zeichen: ["\ud83c\udfb2"], wie: 5, klasse: "umarmen" },
     pacjagd:    { zeichen: ["\ud83d\udc7e"], wie: 6, klasse: "umarmen" },
     mariolauf:  { zeichen: ["\ud83c\udf44"], wie: 6, klasse: "umarmen" },
@@ -39961,7 +39896,6 @@
       setTimeout(() => {
         lcKaputtHeilen(name);
         lcHammerHeilen(name);
-        lcGleisHeilen(name);
       }, 2300);
     }, 3400, "pflaster");
   }
@@ -44020,77 +43954,6 @@
      gibt, die sie brauchen: den gerechneten (Breitensuche) und den
      mit dem Finger gemalten. Zweimal dasselbe zu schreiben hiesse,
      es beim naechsten Mal an einer Stelle zu vergessen. */
-  /* =====================================================================
-     FASSUNG 685 — HOT ROD UND MONSTERTRUCK ALS REISE
-     ---------------------------------------------------------------------
-     FUNK 84: „der Hot Rod braucht eine Wegzeichnung, er kann auch mit
-     unter Transport". FUNK 85: „bei den Autos irgendwie noch ein
-     Monstertruck". Das Bild sitzt im Wagen (Gesicht frei), der Wagen
-     fährt denselben gemalten Weg, dreht sich in Fahrtrichtung, die
-     Räder drehen, der Hot Rod spuckt Flammen aus dem Auspuff, der
-     Truck federt. Beim Ankommen parkt er und verschwindet.
-     ===================================================================== */
-  const LC_REISEWAGEN = {
-    hotrodfahrt: { hoch: 150, anker: 62, svg: '<svg viewBox="0 0 240 150" aria-hidden="true">'
-      + '<defs><linearGradient id="lcRwLack" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3243b"/><stop offset=".55" stop-color="#b30f28"/><stop offset="1" stop-color="#6d0716"/></linearGradient></defs>'
-      + '<g class="lc-rw-flamme"><path d="M20 99 C8 93 2 100 -10 97 C0 104 6 103 20 107 Z" fill="#ffb020"/><path d="M20 101 C12 98 8 102 0 101 C8 105 12 104 20 105 Z" fill="#fff3a0"/></g>'
-      + '<path d="M18 104 C18 94 26 88 40 88 C52 70 76 70 88 88 L150 90 L212 96 C222 98 228 104 226 110 L20 112 Z" fill="url(#lcRwLack)" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>'
-      + '<path d="M150 96 C165 92 172 98 186 95 C176 102 170 100 160 103 C170 104 177 107 188 105 C175 111 160 110 150 107 Z" fill="#ff9a1a" stroke="#ffd23c" stroke-width="1"/>'
-      + '<path d="M150 99 C130 99 112 104 92 103 M150 103 C132 103 114 108 92 107" fill="none" stroke="#e6ebf0" stroke-width="3.2" stroke-linecap="round"/>'
-      + '<path d="M170 74 L198 74 L194 63 L174 63 Z" fill="#2a2a2a"/><rect x="172" y="74" width="24" height="16" rx="3" fill="#c3cad2" stroke="#555" stroke-width="1.5"/>'
-      + '<path d="M176 78 H192 M176 82 H192 M176 86 H192" stroke="#7a828c" stroke-width="1.2"/>'
-      + '<path d="M162 91 L171 60" stroke="#bfe6ff" stroke-width="3.5" stroke-linecap="round" opacity=".85"/>'
-      + '<circle cx="222" cy="102" r="4" fill="#fff6c0" stroke="#555" stroke-width="1"/>'
-      + '<g class="lc-rw-rad" style="transform-origin:62px 118px"><circle cx="62" cy="118" r="26" fill="#161616"/><circle cx="62" cy="118" r="14" fill="#d8dde3" stroke="#6d747c" stroke-width="2"/>'
-      + '<path d="M62 105 V131 M49 118 H75 M53 109 L71 127 M71 109 L53 127" stroke="#6d747c" stroke-width="2"/><circle cx="62" cy="118" r="4" fill="#444"/></g>'
-      + '<g class="lc-rw-rad" style="transform-origin:196px 124px"><circle cx="196" cy="124" r="18" fill="#161616"/><circle cx="196" cy="124" r="9" fill="#d8dde3" stroke="#6d747c" stroke-width="1.6"/>'
-      + '<path d="M196 115 V133 M187 124 H205" stroke="#6d747c" stroke-width="1.6"/></g></svg>' },
-    monstertruck: { hoch: 190, anker: 58, svg: '<svg viewBox="0 0 240 190" aria-hidden="true">'
-      + '<defs><linearGradient id="lcRwTruck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f86d8"/><stop offset=".6" stop-color="#1f5fa8"/><stop offset="1" stop-color="#113a6b"/></linearGradient></defs>'
-      + '<g class="lc-rw-feder"><path d="M50 122 L62 128 L50 134 L62 140 L50 146 M190 122 L178 128 L190 134 L178 140 L190 146" fill="none" stroke="#f2c230" stroke-width="4" stroke-linejoin="round"/>'
-      + '<g class="lc-rw-aufbau"><path d="M68 94 L72 34 C80 4 160 4 168 34 L172 94" fill="none" stroke="#1f5fa8" stroke-width="8" stroke-linejoin="round"/>'
-      + '<path d="M72 36 C80 10 160 10 166 36" fill="none" stroke="#6fb0f0" stroke-width="2"/>'
-      + '<path d="M16 92 H224 C228 92 232 96 232 100 V116 C232 120 228 124 224 124 H18 C14 124 10 120 10 116 V100 C10 96 12 92 16 92 Z" fill="url(#lcRwTruck)" stroke="#0b2447" stroke-width="2"/>'
-      + '<path d="M24 100 C40 96 46 104 60 100 C52 108 44 106 34 110 C46 110 52 114 64 112 C48 120 34 118 24 116 Z" fill="#ff9a1a" stroke="#ffd23c" stroke-width="1"/>'
-      + '<rect x="222" y="98" width="8" height="8" rx="2" fill="#fff6c0" stroke="#333" stroke-width="1"/><rect x="200" y="58" width="6" height="36" rx="2" fill="#d8dde3" stroke="#6d747c" stroke-width="1.5"/>'
-      + '<path d="M40 124 H200" stroke="#0b2447" stroke-width="3"/></g></g>'
-      + [58, 182].map(function (x) { return '<g class="lc-rw-rad" style="transform-origin:' + x + 'px 152px"><circle cx="' + x + '" cy="152" r="36" fill="#1b1b1b"/>'
-        + '<circle cx="' + x + '" cy="152" r="33" fill="none" stroke="#3a3a3a" stroke-width="6" stroke-dasharray="7 5"/>'
-        + '<circle cx="' + x + '" cy="152" r="16" fill="#c9ccd1" stroke="#6d747c" stroke-width="2"/>'
-        + [0, 72, 144, 216, 288].map(function (w) { var t = w * Math.PI / 180; return '<circle cx="' + (x + 9 * Math.cos(t)).toFixed(1) + '" cy="' + (152 + 9 * Math.sin(t)).toFixed(1) + '" r="2" fill="#555"/>'; }).join("")
-        + "</g>"; }).join("") + "</svg>" }
-  };
-  function lcReisewagen(platzEl, kreis, punkte, art, jeFeld, hin, dauer) {
-    const W = LC_REISEWAGEN[art];
-    if (!W || !punkte.length) return null;
-    const wagen = document.createElement("span");
-    wagen.className = "lc-reisewagen lc-reisewagen-" + art;
-    wagen.setAttribute("aria-hidden", "true");
-    wagen.innerHTML = W.svg;
-    const rz = platzEl.getBoundingClientRect(), rk = kreis.getBoundingClientRect();
-    const d = rk.width || 64, breite = d * 2.4;
-    wagen.style.width = breite.toFixed(1) + "px";
-    wagen.style.height = (breite * W.hoch / 240).toFixed(1) + "px";
-    wagen.style.left = (rk.left - rz.left - platzEl.clientLeft + rk.width / 2).toFixed(1) + "px";
-    wagen.style.top = (rk.top - rz.top - platzEl.clientTop + rk.height / 2).toFixed(1) + "px";
-    platzEl.appendChild(wagen);
-    const anker = "translate(-50%, -" + (W.anker / W.hoch * 100).toFixed(1) + "%)";
-    const richt = (i) => {
-      const a = punkte[Math.max(0, i === 0 ? 0 : i - 1)], b = punkte[Math.min(punkte.length - 1, i === 0 ? 1 : i)];
-      return b && a && b.x - a.x < -1 ? -1 : 1;
-    };
-    const bei = (ms) => Math.min(1, Math.max(0, ms / dauer));
-    const bilder = punkte.map((p, i) => ({ transform: anker + " translate(" + p.x.toFixed(1) + "px, " + p.y.toFixed(1) + "px) scaleX(" + richt(i) + ")",
-      opacity: 1, offset: bei(i * jeFeld) }));
-    const letzt = bilder[bilder.length - 1];
-    bilder.push(Object.assign({}, letzt, { opacity: 1, offset: Math.max(letzt.offset, bei(hin + 60)) }));
-    bilder.push(Object.assign({}, letzt, { opacity: 0, offset: Math.max(letzt.offset, bei(hin + 260)) }));
-    bilder.push(Object.assign({}, letzt, { opacity: 0, offset: 1 }));
-    try { wagen.animate(bilder, { duration: dauer, easing: "ease-in-out", fill: "forwards" }); } catch (e) {}
-    setTimeout(() => wagen.remove(), dauer + 800);
-    return wagen;
-  }
-
   function lcFahrtLauf(ab, weg, art, zu, tempo) {
     const kreis = ab.el.querySelector(".lc-kreis");
     if (!kreis) return false;
@@ -44114,9 +43977,7 @@
        dreimal so schnell — schneller waere nur noch ein Zucken. */
     const zug = Math.max(1, Math.min(5, Number(tempo) || 1));
     const schnell = 1 + (zug - 1) * 0.5;
-    /* FASSUNG 685 — im Hot Rod oder Monstertruck rollt das Bild nicht, es SITZT im Wagen. */
-    const fahrzeug = art === "hotrodfahrt" || art === "monstertruck" ? art : "";
-    const jeFeld = Math.round((art === "spielzug" ? 420 : art === "hotrodfahrt" ? 380 : art === "monstertruck" ? 600 : 520) / schnell);
+    const jeFeld = Math.round((art === "spielzug" ? 420 : 520) / schnell);
     if (zug > 1) {
       kreis.classList.remove("lc-aufgezogen");
       void kreis.offsetWidth;
@@ -44157,7 +44018,7 @@
       } else {
         /* Rollen: so weit, wie ein Rad dieses Durchmessers auf diesem
            Stueck wirklich abrollen wuerde. */
-        if (vor && !fahrzeug) {
+        if (vor) {
           const stueck = Math.hypot(p.x - vor.x, p.y - vor.y);
           dreh += (stueck / (Math.PI * durchmesser)) * 360 * (p.x < vor.x ? -1 : 1);
         }
@@ -44191,7 +44052,6 @@
       lauf.oncancel = zurueck;
     } catch (e) { zurueck(); return false; }
     setTimeout(abraeumen, dauer + 700);
-    if (fahrzeug) lcReisewagen(ab.el, kreis, punkte, fahrzeug, jeFeld, hin, dauer);
 
     if (art === "spielzug") {
       /* „dann hört man immer bei dem Aufspringen auf ein Feld dieses
@@ -44205,7 +44065,7 @@
          vorbei, bevor das Bild ankam, und was blieb, war die Bremse.
          lcTonReise streckt ihn auf die wirkliche Fahrzeit, genau wie
          bei Schiff, Lok und Flugzeug. */
-      lcTonReise(fahrzeug || "fahren", hin);
+      lcTonReise("fahren", hin);
       /* NACHGEBESSERT: „der Bremssound ist nicht synchron. Er muss
          etwas vorher kommen — das muessen zwei getrennte Sounds sein.
          Wenn er wirklich auf dem Platz landet, muss das quietschen
@@ -48923,15 +48783,6 @@
          9,25 px zu tief heraus und sprang beim Platzwechsel auf die
          richtige Hoehe — DAS ist die Doppelung. */
       const versatzR = lcBildVersatz(ab.el);
-      /* FASSUNG 685 — FUNK 84, XANDER: „bei Mario noch die Roehren …
-         wenn er unten in eine Roehre reingeht und oben wieder aus einer
-         Roehre rausfaellt". Am Ziel haengt die Roehre jetzt VON OBEN
-         herab (Mund nach unten, genau an der Oberkante des Bildes), und
-         das Bild faellt heraus: erst verdeckt, dann mit Schwerkraft
-         herunter, zweimal kurz nachgefedert. Beim Tausch (beide reisen)
-         bleibt es wie bisher: beide Roehren von unten. */
-      const vonOben = !tausch;
-      const OBEN_HOCH = 0.34;   /* kurz: darüber sitzt schon die nächste Reihe */
       /* Ein Schluesselbild, in dem Absinken und Zuschnitt aus
          DERSELBEN Zahl kommen. */
       const rohrBild = (v, vorne, zeit) => ({
@@ -48943,11 +48794,9 @@
       });
       [start, ende].forEach((wo, i) => {
         const roehre = document.createElement("span");
-        const oben = vonOben && i === 1;
-        roehre.className = "lc-roehre" + (i ? " lc-roehre-raus" : " lc-roehre-rein") + (oben ? " lc-roehre-oben" : "");
+        roehre.className = "lc-roehre" + (i ? " lc-roehre-raus" : " lc-roehre-rein");
         roehre.style.setProperty("--gross", d + "px");
-        roehre.style.height = (d * (oben ? OBEN_HOCH : ROHR_HOCH)).toFixed(1) + "px";
-        if (oben) roehre.style.transformOrigin = "top center";
+        roehre.style.height = (d * ROHR_HOCH).toFixed(1) + "px";
         /* Die Zeiten setzt jetzt das JavaScript unmittelbar, nicht
            mehr die CSS-Regel mit ihren eigenen Schluesselbildern:
            deren 55/70/88 % liessen sich auf diese Abschnitte nicht
@@ -48968,9 +48817,7 @@
         roehre.innerHTML = '<i class="lc-roehre-rand"></i><i class="lc-roehre-rohr"></i>';
         reihe.appendChild(roehre);
         weg.push(roehre);
-        /* Die obere Roehre: ihr Mund liegt genau an der Oberkante des Zielbildes. */
-        if (oben) setzen(roehre, wo.x, wo.y + lcBildVersatz(zu.el) - d * (0.5 + OBEN_HOCH / 2));
-        else setzen(roehre, wo.x, wo.y + versatzR + d * ROHR_MITTE);
+        setzen(roehre, wo.x, wo.y + versatzR + d * ROHR_MITTE);
       });
       /* Das Bild am STARTPLATZ: hinein, und dann bleibt es weg.
          Der Zuschnitt setzt erst bei 0,075 ein — vorher steht die
@@ -49017,27 +48864,7 @@
          kommt. Uebergang ohne Blende: ein Ueberblenden waere wieder
          eine Doppelung, nur eine durchsichtige. */
       const schnittR = Math.min(0.98, (hin + 120) / dauer);
-      /* Von oben: das Bild steckt um v seiner Hoehe in der Roehre, der
-         Zuschnitt nimmt genau diesen Teil oben weg (Mund = Bildoberkante). */
-      const obenBild = (v, zeit) => ({
-        transform: "translate(-50%, -50%) translateY(" + (-v * 100).toFixed(1) + "%)",
-        clipPath: "inset(" + Math.min(100, v * 100).toFixed(1) + "% 0 0 0)", offset: zeit
-      });
-      if (vonOben) {
-        try {
-          doppel.animate([
-            obenBild(1, 0), obenBild(1, 0.557),
-            obenBild(0.93, 0.585), obenBild(0.74, 0.612), obenBild(0.42, 0.64), obenBild(0, 0.668),
-            { transform: "translate(-50%, -50%) translateY(-7%)", clipPath: "inset(0% 0 0 0)", offset: 0.693 },
-            { transform: "translate(-50%, -50%)", clipPath: "inset(0% 0 0 0)", offset: 0.718 },
-            { transform: "translate(-50%, -50%) translateY(-2.5%)", clipPath: "inset(0% 0 0 0)", offset: 0.736 },
-            { transform: "translate(-50%, -50%)", clipPath: "inset(0% 0 0 0)", offset: 0.754 },
-            { transform: "translate(-50%, -50%)", clipPath: "inset(0% 0 0 0)", opacity: 1, offset: Math.max(0.76, schnittR - 0.004) },
-            { transform: "translate(-50%, -50%)", clipPath: "inset(0% 0 0 0)", opacity: 0, offset: Math.max(0.765, schnittR) },
-            { transform: "translate(-50%, -50%)", clipPath: "inset(0% 0 0 0)", opacity: 0, offset: 1 }
-          ], { duration: dauer, easing: "linear", fill: "forwards" });
-        } catch (e) {}
-      } else try {
+      try {
         doppel.animate([
           rohrBild(0.62, true, 0),
           rohrBild(0.62, true, 0.557),
@@ -49170,8 +48997,6 @@
          Ausspucken, wenn es heraussteigt (0,557). */
       lcTonSpaeter("rohrsog", taktR(0.08), 0.7);
       lcTonSpaeter("rohrspuck", taktR(0.557), 0.7);
-      /* Von oben: das Aufkommen auf dem Platz hoert man (0,668). */
-      if (vonOben) lcTonSpaeter("aufsetzen", taktR(0.668), 0.45);
     } else if (art === "untertasse") {
       /* =============================================================
          RUNDE 75 — DAS UFO
@@ -52285,19 +52110,7 @@
        sein". Gewuerfelt wird EINMAL beim Absender („los" reist mit der
        Zeile), damit alle dieselbe Schranke an derselben Stelle sehen. */
     const r = Number(los);
-    /* FASSUNG 685 — FUNK 84: „dass wenn man auf einen Platz fährt, wo
-       jemand sitzt, dass man vorher die Möglichkeit hat, an der Schranke
-       zu warten, und wenn die Schranke dann hoch geht und derjenige sitzt
-       immer noch da, wird der überfahren". Am BESETZTEN Ziel steht immer
-       eine Schranke: sie blinkt und läutet, schließt, die Lok wartet –
-       wer weggeht, ist gerettet; dann geht sie hoch und die Lok fährt ein. */
-    const zielQ = sitze.filter((q) => q.g.nr === zu.nr && !q.g.frei)[0];
-    const zielLot = zielQ ? lcLokLot(bahnF.pt, zielQ) : null;
-    const zielHalt = zielLot ? zielLot.s - d * (LC_ZUG.lok / 2 + 0.6) : -1;
-    const zielFrei = plan.tunnel ? plan.sPortalA + d * (LC_ZUG.lok / 2 + 0.1) : d * 0.4;
-    if (zielLot && zielHalt >= zielFrei) {
-      plan.schranke = { q: zielQ, s: zielLot.s, sHalt: zielHalt, winkel: zielLot.winkel, ziel: true };
-    } else if (isFinite(r) && r > 0 && r < 0.5) {
+    if (isFinite(r) && r > 0 && r < 0.5) {
       const kand = [];
       sitze.forEach((q) => {
         if (q.g.nr === ab.nr || q.g.nr === zu.nr || q.g.frei) return;
@@ -52792,9 +52605,7 @@
       }, Math.max(0, tAn - 1500)));
       const smil = (wahl) => el.querySelectorAll(wahl).forEach((a) => { try { a.beginElement(); } catch (e) {} });
       uhren.push(setTimeout(() => smil(".lc-sr-ab"), Math.max(0, tAn - 1000)));
-      /* Am Ziel geht sie hoch, BEVOR die Lok einfährt (nach der Wartezeit). */
-      const tAuf = sr.ziel ? Math.min(tDurch, tAn + 2600) : tDurch;
-      uhren.push(setTimeout(() => { el.classList.remove("lc-sr-blinkt"); smil(".lc-sr-auf"); }, Math.max(0, tAuf)));
+      uhren.push(setTimeout(() => { el.classList.remove("lc-sr-blinkt"); smil(".lc-sr-auf"); }, Math.max(0, tDurch)));
       uhren.push(setTimeout(() => el.classList.remove("lc-sr-da"), Math.max(0, tDurch + 700)));
     }
 
@@ -52829,8 +52640,6 @@
           setTimeout(() => k.classList.remove("lc-ueberfahren"), 900);
         }
         lcGeraeusch(lcSchmerzTon(g.el), "lokopfer", 0.5);
-        /* FASSUNG 685 — die Spur bleibt im Gesicht, schräg wie die Bahn. */
-        setTimeout(() => { if (g.el.isConnected) lcGleisDazu(g.el, lot.winkel); }, 450);
       }, Math.max(0, wann)));
     });
     return { gleis: gleis, buehne: null, weitere: weitere, uhren: uhren };
@@ -54180,90 +53989,6 @@
      „helium": nach dem dritten Hub steigt er auf, schaukelt, treibt
      zur Seite und geht oben aus dem Bild — und kommt danach wieder
      herunter, damit der Platz nicht leer bleibt. */
-  /* =====================================================================
-     FASSUNG 685 — JEMANDEN WIE EIN FEUERWERK ANZÜNDEN
-     ---------------------------------------------------------------------
-     FUNK 84, XANDER: „dann könnte man eine andere Person noch wie ein
-     Feuerwerk anzünden, und das fliegt dann in den Himmel und explodiert
-     wie ein Feuerwerk".
-     Ablauf (5,4 s), Ton und Bild auf denselben Zeiten:
-       0,0 s  Raketenhülse mit Leitstab und Lunte erscheint unter dem Bild
-       0,6 s  die Lunte brennt (knistert) bis zur Hülse
-       1,8 s  Zündung: Bild und Rakete steigen mit Funkenschweif auf (Zischen)
-       2,7 s  oben: Feuerwerk – bunte Sterne in alle Richtungen (Knall)
-       3,3 s  das Bild segelt zurück, landet mit Wippen – rußig im Gesicht
-     ===================================================================== */
-  function lcZuenden(wen) {
-    const DAUER = 5400;
-    return lcAmPlatz(wen, "lc-zuenden", (schicht, platz) => {
-      const kreis = platz.querySelector(".lc-kreis");
-      if (!kreis) return;
-      const rakete = document.createElement("span");
-      rakete.className = "lc-zuenden-rakete";
-      rakete.innerHTML = '<svg viewBox="0 0 60 120" aria-hidden="true">'
-        + '<path d="M29 40 L31 40 L31 118 L29 118 Z" fill="#b9854e"/>'
-        + '<rect x="18" y="20" width="24" height="44" rx="3" fill="#d2232a" stroke="#7a0f14" stroke-width="1.6"/>'
-        + '<path d="M18 30 H42 M18 54 H42" stroke="#f2c230" stroke-width="3"/>'
-        + '<path d="M18 22 L30 6 L42 22 Z" fill="#f2c230" stroke="#9a7410" stroke-width="1.2"/>'
-        + '<path d="M18 64 L12 74 L18 70 Z M42 64 L48 74 L42 70 Z" fill="#7a0f14"/>'
-        + '<path class="lc-zuenden-lunte" d="M30 64 C33 70 26 74 30 80" fill="none" stroke="#3a2a1a" stroke-width="1.6"/>'
-        + '<circle class="lc-zuenden-funke" cx="30" cy="80" r="3.2" fill="#ffd23c"/>'
-        + '<g class="lc-zuenden-schweif"><path d="M30 66 C22 84 24 100 30 118 C36 100 38 84 30 66 Z" fill="#ff9a1a" opacity=".9"/>'
-        + '<path d="M30 68 C26 82 27 94 30 106 C33 94 34 82 30 68 Z" fill="#fff3a0"/></g></svg>';
-      schicht.appendChild(rakete);
-      const knall = document.createElement("span");
-      knall.className = "lc-zuenden-knall";
-      const farben = ["#ff4d6d", "#ffd23c", "#4dd2ff", "#7cff6b", "#c77dff", "#ff9a1a"];
-      let sterne = "";
-      for (let i = 0; i < 24; i++) {
-        sterne += '<i style="--w:' + (i * 15) + "deg;--f:" + farben[i % farben.length] + ";--weit:" + (140 + (i % 3) * 45) + '"></i>';
-      }
-      knall.innerHTML = sterne;
-      schicht.appendChild(knall);
-      /* Bild und Rakete fliegen gemeinsam (dieselben Stützstellen). */
-      /* Nur so hoch, wie über dem Bild noch Platz im Fenster ist –
-         sonst platzt das Feuerwerk unsichtbar über dem Rand. */
-      let HOCH = -250;
-      try { const rk = kreis.getBoundingClientRect(); HOCH = -Math.round(Math.min(250, Math.max(70, (rk.top - 70) / Math.max(1, rk.height) * 100))); } catch (e) {}
-      const bahn = [
-        { offset: 0, transform: "translateY(0)" },
-        { offset: 0.325, transform: "translateY(0)" },
-        { offset: 0.345, transform: "translateY(3%)" },
-        { offset: 0.42, transform: "translateY(" + (HOCH * 0.35) + "%) rotate(-4deg)", easing: "ease-in" },
-        { offset: 0.5, transform: "translateY(" + HOCH + "%) rotate(3deg)", easing: "ease-out" },
-        { offset: 0.61, transform: "translateY(" + HOCH + "%) scale(.2)", easing: "ease-in" },
-        { offset: 0.66, transform: "translateY(" + (HOCH * 0.9) + "%) scale(.9) rotate(-160deg)" },
-        { offset: 0.86, transform: "translateY(4%) scale(1) rotate(-360deg)", easing: "ease-in" },
-        { offset: 0.91, transform: "translateY(-6%) rotate(-360deg)", easing: "ease-out" },
-        { offset: 0.96, transform: "translateY(2%) rotate(-360deg)" },
-        { offset: 1, transform: "translateY(0) rotate(-360deg)" }
-      ];
-      try { kreis.animate(bahn, { duration: DAUER, easing: "linear", fill: "none" }); } catch (e) {}
-      try {
-        rakete.animate([
-          { offset: 0, transform: "translateX(-50%) scale(0)", opacity: 0 },
-          { offset: 0.08, transform: "translateX(-50%) scale(1)", opacity: 1 },
-          { offset: 0.325, transform: "translateX(-50%) translateY(0)", opacity: 1 },
-          { offset: 0.42, transform: "translateX(-50%) translateY(" + (HOCH * 0.35) + "%)", opacity: 1, easing: "ease-in" },
-          { offset: 0.5, transform: "translateX(-50%) translateY(" + HOCH + "%)", opacity: 1 },
-          { offset: 0.51, transform: "translateX(-50%) translateY(" + HOCH + "%)", opacity: 0 },
-          { offset: 1, transform: "translateX(-50%) translateY(" + HOCH + "%)", opacity: 0 }
-        ], { duration: DAUER, easing: "linear", fill: "forwards" });
-      } catch (e) {}
-      knall.style.top = HOCH + "%";
-      setTimeout(() => { if (knall.isConnected) knall.classList.add("lc-zuenden-bumm"); }, Math.round(0.5 * DAUER));
-      setTimeout(() => { if (rakete.isConnected) rakete.classList.add("lc-zuenden-brennt"); }, 600);
-      setTimeout(() => { if (rakete.isConnected) rakete.classList.add("lc-zuenden-fliegt"); }, Math.round(0.325 * DAUER));
-      /* Die Töne: Knistern der Lunte, Zischen beim Start, Knall oben, Aufsetzen unten. */
-      lcTonSpaeter("lunte", 600, 0.55, 1150);
-      lcTonSpaeter("granatenpfeifen", Math.round(0.33 * DAUER), 0.45, 900);
-      lcTonSpaeter("feuerwerk", Math.round(0.5 * DAUER), 0.6, 1800);
-      lcTonSpaeter("aufsetzen", Math.round(0.86 * DAUER), 0.45);
-      /* Und rußig ist das Gesicht danach – bis jemand wischt. */
-      setTimeout(() => { if (platz.isConnected) lcDreckDazu(platz, "russ", 4); }, Math.round(0.9 * DAUER));
-    }, DAUER);
-  }
-
   function lcLuftballon(wen, art) {
     const helium = String(art || "").toLowerCase() === "helium";
     return lcAmPlatz(wen, "lc-ballon", (schicht, platz) => {
@@ -61786,7 +61511,7 @@
     tritt: 1, zherz: 1, eimer: 1, wecker: 1, regenwolke: 1, donnerwolke: 1,
     reichtum: 1, zucker: 1, hammer: 1, heber: 1, lasso: 1,
     schneeball: 1, bumerang: 1, saugpfeil: 1, sahne: 1, sog: 1, trommel: 1,
-    paintfleck: 1, ei: 1, fahren: 1, spielzug: 1, pacjagd: 1, stoerung: 1, hotrodfahrt: 1, monstertruck: 1,
+    paintfleck: 1, ei: 1, fahren: 1, spielzug: 1, pacjagd: 1, stoerung: 1,
     aufessen: 1, lotto: 1, sanduhr: 1, katapult: 1, strohhalm: 1, blubbern: 1,
     knuell: 1, rollo: 1, lamellen: 1, peitsche: 1, gemeinsam: 1, schneekugel: 1,
     flug: 1, maulwurf: 1, portal: 1, boot: 1, kran: 1, brennen: 1, zorro: 1,
@@ -61807,7 +61532,7 @@
     telefon: 1, anziehen: 1, frosch: 1, zylinder: 1,
     /* RUNDE 86 — die Spruehdose gilt genau EINEM Platz, und der
        Luftballon blaest genau EINEN auf. */
-    spray: 1, luftballon: 1, zuenden: 1,
+    spray: 1, luftballon: 1,
     /* RUNDE 98 — das Pflaster klebt auf GENAU EINEM Bild, und geputzt
        wird ebenfalls genau eine Scheibe. */
     pflaster: 1, putzen: 1,
@@ -62028,8 +61753,6 @@
       if (art === "katapult" && lcKatapult(wenZ)) return;
       if (art === "luftballon"
           && lcLuftballon(wenZ, (nachricht && nachricht.stueck) || "")) return;
-      /* FASSUNG 685 — jemanden wie ein Feuerwerk anzünden. */
-      if (art === "zuenden" && lcZuenden(wenZ)) return;
       /* RUNDE 88 — „ein einfacher Profil-Effekt … und dass ich andere
          damit beeinflussen kann." */
       if (art === "kaninchen" && lcKaninchen(wenZ)) return;
@@ -62173,7 +61896,7 @@
       }
       if (lcTelefon(wenT, vonT)) return;
     }
-    if (art === "fahren" || art === "spielzug" || art === "hotrodfahrt" || art === "monstertruck") {
+    if (art === "fahren" || art === "spielzug") {
       const wenF = nachricht && (nachricht.wen || nachricht.an);
       let vonF = (nachricht && nachricht.name) || "";
       if (nachricht && nachricht.eigen) {
@@ -63186,7 +62909,7 @@
       } catch (e) { return []; }
     },
     reiseArten: function () {
-      return ["fahren", "hotrodfahrt", "monstertruck", "fahrstuhl", "frosch", "zylinder", "flug", "maulwurf",
+      return ["fahren", "fahrstuhl", "frosch", "zylinder", "flug", "maulwurf",
               "boot", "delfin", "kran", "dampfer", "lok", "liane", "feder", "beamen",
               "rohr", "heli", "portal", "pferd", "greifvogel", "turm",
               "untertasse", "mieze", "gotteshand", "pranke", "frisbee",

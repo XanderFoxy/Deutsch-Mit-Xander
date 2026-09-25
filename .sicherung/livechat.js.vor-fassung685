@@ -1086,12 +1086,6 @@ window.LiveChat = (function () {
        der Satz sagt das auch so. */
     ei:       { wirkung: "ei",         satz: "schl\u00e4gt ein Ei auf dem Kopf auf von", emoji: "\ud83e\udd5a" },
     fahren:   { wirkung: "fahren",     satz: "f\u00e4hrt hin\u00fcber zu", emoji: "\ud83d\ude97" },
-    /* FASSUNG 685 — FUNK 84/85: „der Hot Rod braucht eine Wegzeichnung, er kann auch mit unter Transport"
-       und „bei den Autos irgendwie noch ein Monstertruck". Beide fahren wie „fahren" (Kette = gemalter Weg). */
-    hotrodfahrt:  { wirkung: "hotrodfahrt",  satz: "f\u00e4hrt im Hot Rod zu", emoji: "\ud83c\udfce\ufe0f" },
-    monstertruck: { wirkung: "monstertruck", satz: "donnert im Monstertruck zu", emoji: "\ud83d\udefb" },
-    /* FASSUNG 685 — FUNK 85: „Feuerwerk: jemanden als Rakete zünden". */
-    zuenden: { wirkung: "zuenden", satz: "zündet eine Rakete unter", emoji: "\ud83c\udf86" },
     /* GEWUENSCHT: „wenn ich mit jemandem gemeinsam fahren will, dann
        kriege ich sein Profilbild an und sage dann Fahrrad oder so und
        dann fahren wir einfach weg." */
@@ -10620,9 +10614,6 @@ window.LiveChat = (function () {
     { gr: "reden", w: "ei",       kurz: "ei",    nutzt: "/ei Name",          was: "Ei auf dem Kopf — es wird aufgeschlagen und laeuft herunter" },
     { gr: "reden", w: "stoerung", kurz: "tv",  nutzt: "/stoerung Name",    was: "Bildstoerung — schlechter Empfang, das Bild zerreisst" },
     { gr: "reden", w: "fahren",  kurz: "fahrt", nutzt: "/fahren Name",      was: "hinfahren \u2014 dein Bild rollt zum freien Platz daneben und bleibt dort" },
-    { gr: "reden", w: "hotrodfahrt", kurz: "hotrodfahrt", nutzt: "/hotrodfahrt 5", was: "im Hot Rod zu Platz 5 fahren \u2014 auch mit gemaltem Weg (/hotrodfahrt 1-5-6)" },
-    { gr: "reden", w: "monstertruck", kurz: "monstertruck", nutzt: "/monstertruck 5", was: "im Monstertruck zu Platz 5 donnern \u2014 auch mit gemaltem Weg" },
-    { gr: "reden", w: "zuenden", kurz: "zuenden", nutzt: "/zuenden Name", was: "jemanden als Rakete z\u00fcnden: Lunte, Start, Feuerwerk oben, ru\u00dfig zur\u00fcck" },
     { gr: "reden", w: "flug", kurz: "fliegen", nutzt: "/flug 5",
       was: "Flugzeug \u2014 dein Bild sitzt hinter dem Fenster und wird auf Platz 5 abgesetzt; mit gemaltem Weg auch \u00fcber Umwege (/flug 1-5-6)" },
     { gr: "reden", w: "maulwurf", kurz: "graben", nutzt: "/maulwurf 5",
@@ -13440,7 +13431,7 @@ window.LiveChat = (function () {
                     + "  " + satzR[1], { wirkung: art, wen: wenR,
                                          los: Math.random().toFixed(4) });
     }
-    if ((art === "fahren" || art === "huepfen" || art === "laufen" || art === "hotrodfahrt" || art === "monstertruck")
+    if ((art === "fahren" || art === "huepfen" || art === "laufen")
         && /^\s*\d+(\s*-\s*\d+)*(\s*[x\u00d7]\d)?\s*$/i.test(rest)) {
       /* EINE KETTE STATT EINER ZAHL.
          Seit man den Weg mit dem Finger malen kann („wie bei einer
@@ -13468,12 +13459,6 @@ window.LiveChat = (function () {
       var platzNr = stationen[stationen.length - 1];
       var ueber = stationen.length > 2
         ? " \u00fcber " + stationen.slice(1, -1).join(", ") : "";
-      if (art === "hotrodfahrt" || art === "monstertruck") {
-        return anAlle("aktion", zustand.ichName
-          + (art === "hotrodfahrt" ? " f\u00e4hrt im Hot Rod zu Platz " : " donnert im Monstertruck zu Platz ")
-          + platzNr + ueber + "  " + (art === "hotrodfahrt" ? "\ud83c\udfce\ufe0f" : "\ud83d\udefb"),
-          { wirkung: art, wen: kette, tempo: String(tempoF) });
-      }
       return anAlle("aktion", zustand.ichName
         + (art === "fahren" ? " f\u00e4hrt zu Platz " : " l\u00e4uft zu Platz ")
         + platzNr + ueber + "  " + (art === "fahren" ? "\ud83d\ude97" : "\ud83d\udc63"),
