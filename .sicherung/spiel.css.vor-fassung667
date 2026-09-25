@@ -662,19 +662,13 @@ body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: bl
 
 /* Orkan: der Wirbel hebt das Bild vom Platz und setzt es wieder ab */
 .lc-platz.sp-weggeweht .lc-kreis { animation: spWeggeweht 3.8s cubic-bezier(.45, 0, .4, 1); z-index: 5; }
-/* FASSUNG 667 — der Getroffene bleibt sichtbar: hoch, dreimal im Kreis
-   um den Trichter herum, dann federnd zurück auf seinen Platz. */
 @keyframes spWeggeweht {
-  0% { transform: none; }
-  10% { transform: translate(0, -10px) rotate(-60deg) scale(.96); }
-  22% { transform: translate(22px, -30px) rotate(-330deg) scale(.9); }
-  34% { transform: translate(-22px, -44px) rotate(-600deg) scale(.86); }
-  46% { transform: translate(20px, -54px) rotate(-870deg) scale(.84); }
-  58% { transform: translate(-18px, -58px) rotate(-1140deg) scale(.84); }
-  70% { transform: translate(14px, -46px) rotate(-1380deg) scale(.88); }
-  82% { transform: translate(0, 6px) rotate(-1440deg) scale(1.04, .94); }
-  90% { transform: translate(0, -7px) rotate(-1440deg) scale(.98, 1.03); }
-  100% { transform: rotate(-1440deg); } }
+  0% { transform: none; opacity: 1; }
+  18% { transform: translateY(-6px) rotate(-200deg) scale(.92); opacity: 1; }
+  36% { transform: translate(-42vw, -40px) rotate(-620deg) scale(.55); opacity: .0; }
+  58% { transform: translate(42vw, -30px) rotate(-760deg) scale(.55); opacity: 0; }
+  80% { transform: translate(0, -8px) rotate(-1040deg) scale(.95); opacity: 1; }
+  100% { transform: rotate(-1080deg); opacity: 1; } }
 .sp-orkan { position: fixed; z-index: 60; pointer-events: none; transform: translate(-50%, -58%); animation: spOrkan 3.8s ease-in-out forwards; }
 .sp-orkan svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 1.5px rgba(30,45,70,.9)) drop-shadow(0 2px 4px rgba(30,45,70,.45)); }
 .sp-orkan-dreh { animation: spOrkanDreh .5s linear infinite; transform-origin: 0 0; }
@@ -1047,20 +1041,3 @@ body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: bl
 .sp-fusion-neu { opacity: 0; animation: spFusionNeu 3.3s ease-out forwards; filter: drop-shadow(0 0 6px rgba(255,215,106,.9)); }
 @keyframes spFusionNeu { 0%, 52% { opacity: 0; transform: translate(-50%, -50%) scale(.2); } 64% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); } 72% { transform: translate(-50%, -50%) scale(1); } 88% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .sp-feuerfuchs-flamme { animation: none; } }
-
-/* FASSUNG 667 — fliegende Tiere auf eigener Ebene: die schlagenden Flügel
-   zeichnen nur das Tier neu, nicht die Seite darunter. */
-.sp-tier-sprung { will-change: transform; }
-
-/* FASSUNG 667 — der neue Orkan-Trichter */
-.sp-orkan svg { filter: none; }
-.sp-orkan-strudel { animation: spStrudel .5s linear infinite; }
-@keyframes spStrudel { to { stroke-dashoffset: -100; } }
-.sp-orkan-schwanken { transform-origin: 0 52px; animation: spTrichterSchwanken 1.1s ease-in-out infinite alternate; }
-@keyframes spTrichterSchwanken { from { transform: skewX(-7deg); } to { transform: skewX(7deg); } }
-.sp-orkan-truemmer { position: absolute; left: 50%; width: 5px; height: 3px; margin-left: -2.5px; border-radius: 1px; background: #6b5a44;
-  animation: spTrummX .55s ease-in-out infinite alternate, spTrummDreh .4s linear infinite; }
-.sp-orkan-blatt { width: 7px; height: 4px; border-radius: 0 60% 0 60%; background: #6e9a3c; }
-@keyframes spTrummX { from { translate: calc(var(--weite) * -1) 0; scale: .8; } to { translate: var(--weite) -4px; scale: 1.15; } }
-@keyframes spTrummDreh { to { rotate: 360deg; } }
-@media (prefers-reduced-motion: reduce) { .sp-orkan-strudel, .sp-orkan-schwanken, .sp-orkan-truemmer { animation: none; } }

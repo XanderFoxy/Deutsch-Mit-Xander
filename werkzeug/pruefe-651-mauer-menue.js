@@ -156,13 +156,16 @@ const sage = (gut, was, zusatz) => {
     document.head.appendChild(st);
     const oben = document.elementFromPoint(px, py);
     st.remove();
-    const mr = m.querySelector("rect").getBoundingClientRect();
+    /* FASSUNG 667 — die Mauer ist jetzt ein Bogen außen unter dem Ring
+       (Radius ≥ 50,5 von 50): gemessen wird die Oberkante der Zeichnung. */
+    const sv = m.querySelector("svg"), bb = sv.getBBox(), sr = sv.getBoundingClientRect();
+    const mr = { top: sr.top + bb.y * sr.height / 100 };
     return { zMauer: z(m), zRing: z(lp), zTier: z(t), ringOben: Boolean(oben && lp.contains(oben)), getroffen: oben ? oben.tagName + "." + (oben.getAttribute("class") || "") : "",
              mauerOben: Math.round((mr.top - k.top) / k.height * 100) };
   });
   sage(mauer.zMauer < mauer.zRing && mauer.zRing < mauer.zTier, "Reihenfolge: Mauer hinten, Ringe davor, Tiere ganz vorn", JSON.stringify(mauer));
   sage(mauer.ringOben, "auf dem Lebensbogen liegt der Ring oben, nicht die Mauer", mauer.getroffen);
-  sage(mauer.mauerOben >= 85, "die Mauer beginnt erst im untersten Siebtel des Bildes", mauer.mauerOben + " %");
+  sage(mauer.mauerOben >= 70, "die Mauer liegt als Bogen außen unten am Ring (Oberkante unter 70 % des Bildes)", mauer.mauerOben + " %");
 
   console.log("\nMENÜ AUF 360 PX\n");
   for (const r of ["waffen", "mehr"]) {

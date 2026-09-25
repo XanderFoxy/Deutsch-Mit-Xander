@@ -143,7 +143,13 @@ const sage = (gut, was, zusatz) => {
   const hinweisSeit = () => pg.evaluate(() => window.__hinweise.length);
   const hinweiseAb = (n) => pg.evaluate((n) => window.__hinweise.slice(n).join(" | "), n);
 
-  const aufBea = async () => { const b = await seite("bea"); await pg.touchscreen.tap(b.x, b.y); };
+  /* Erst Bea sicher ins Bild holen (ohne Gleiten), dann tippen – sonst trifft
+     der Finger eine Stelle, an der das Bild gerade noch nicht ist. */
+  const aufBea = async () => {
+    await pg.evaluate(() => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis'); if (k) k.scrollIntoView({ block: "center", behavior: "instant" }); });
+    await tick(80);
+    const b = await seite("bea"); await pg.touchscreen.tap(b.x, b.y);
+  };
   const bereit = (z) => pg.evaluate((z) => { const S = window.DMA_SPIEL.pruef.zustand(); S.zauber = z; window.DMA_TONLOG.length = 0; window.__rufe.length = 0; window.__raus.length = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); }, z);
 
   console.log("\nDAS ZAUBERRAD MIT NEUN ZAUBERN UND DEM RANG\n");
@@ -223,7 +229,9 @@ const sage = (gut, was, zusatz) => {
 
   console.log("\nFAIRNESS UND AUFSTIEG\n");
   h0 = await hinweisSeit();
-  await pg.evaluate(() => { window.__fair = 0.5; const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mana = 100; });
+  /* Das Deutsch-Fenster vom Formular ist noch offen – erst zumachen, sonst
+     tippt der Finger auf das Fenster statt auf Bea. */
+  await pg.evaluate(() => { const p = document.getElementById("spPanel"); if (p) p.hidden = true; window.__fair = 0.5; const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mana = 100; });
   await bereit("nebel"); await aufBea(); await tick(600);
   sage(/Fair bleiben.*halber Schaden, keine Punkte/.test(await hinweiseAb(h0)), "gegen viel Kleinere: Hinweis auf halben Schaden ohne Punkte", await hinweiseAb(h0));
   h0 = await hinweisSeit();

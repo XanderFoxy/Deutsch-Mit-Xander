@@ -1038,16 +1038,6 @@
     /* Ausweichen (Funk 89: „sie kann ausweichen"): Getroffen wird erst
        beim Einschlag — und nur, wer dann noch auf diesem Platz sitzt. */
     var nummer = Number(knopf.dataset.lcPlatz);
-    /* FASSUNG 667 — XANDER: „Die Latenz ist noch schwierig … ohne dass die
-       Effekte hinterher hängen". Gemessen: die Treffer-Zahl kam 465 ms NACH
-       dem Einschlag – eine volle Server-Runde, weil erst beim Einschlag
-       gefragt wurde. Jetzt geht die Frage schon im Flug los, so früh, wie
-       der Server gerade braucht (gemessen, gleitender Mittelwert); die
-       Antwort wird genau im Moment des Einschlags gezeigt. Ausweichen gilt
-       bis zu diesem Moment der Frage. */
-    var abschuss = Date.now();
-    var vorlauf = Math.min(Math.round(dauer * 0.7), Math.round((S.rpcMs || 300) + 60));
-    var zeigenBeiEinschlag = function (f) { var rest = abschuss + dauer - Date.now(); if (rest > 8) setTimeout(f, rest); else f(); };
     setTimeout(function () {
       var jetzt = plaetze().find(function (q) { return q.nummer === nummer; });
       if (/^sparring:/.test(p.id)) jetzt = S.sparring === nummer ? { id: p.id } : null;
@@ -1056,16 +1046,9 @@
         zahlZeigen(p.id, null, "ausgewichen");
         return;
       }
-      if (puppe) { zeigenBeiEinschlag(function () { puppeGetroffen(p, waffe, dx, dy); }); return; }
+      if (puppe) { puppeGetroffen(p, waffe, dx, dy); return; }
       var raum = ""; try { raum = LC().lage().raum || ""; } catch (e) {}
-      var gefragt = Date.now();
       rpc("spiel_treffer", { p_ziel: zielSid, p_waffe: waffe, p_dx: dx, p_dy: dy, p_raum: raum }).then(function (erg) {
-        S.rpcMs = Math.min(900, Math.round((S.rpcMs || 300) * 0.6 + (Date.now() - gefragt) * 0.4));
-        zeigenBeiEinschlag(function () { trefferVerarbeiten(erg); });
-      }).catch(function (e) { hinweis("Treffer ging nicht: " + (e && e.message ? e.message : e)); });
-    }, Math.max(0, dauer - vorlauf));
-    function trefferVerarbeiten(erg) {
-      (function () {
         if (!erg || !erg.ok) { hinweis("🛡️ " + ((erg && erg.grund) || "kein Treffer")); return; }
         trophaeenBald();
         if (erg.ziel) S.stand[erg.ziel.id] = erg.ziel;
@@ -1075,8 +1058,6 @@
                   gegen_geschuetz: erg.gegen_geschuetz || 0, gegen_tier: erg.gegen_tier || 0, tier: erg.tier || "", waffe: waffe,
                   gegen_flug: erg.gegen_flug || 0, flugtier: erg.flugtier || "", tier_heil: erg.tier_heil || 0, daemon: Boolean(erg.daemon),
                   ziel_stand: erg.ziel, ich_stand: erg.ich };
-        /* Gesendet wird im Moment des Einschlags: bei den anderen landet ihr
-           Geschoss (das mit „schuss" losflog) genau dann, wenn dies ankommt. */
         senden(n);
         n.von = ichChat;
         trefferZeigen(p.id, n);
@@ -1091,8 +1072,8 @@
         }
         if (erg.kaputt && S.duell && S.duell.gegnerChat === p.id) { hinweis("🏆 Duell gewonnen!"); S.duell = null; }
         abrufen(true);
-      })();
-    }
+      }).catch(function (e) { hinweis("Treffer ging nicht: " + (e && e.message ? e.message : e)); });
+    }, dauer);
   }
 
   /* ---------------------------------------------------------------
@@ -1556,32 +1537,15 @@
     } else if (art === "orkan") {
       if (el) { el.classList.remove("sp-weggeweht"); void el.offsetWidth; el.classList.add("sp-weggeweht"); setTimeout(function () { el.classList.remove("sp-weggeweht"); }, 3800); }
       if (m) {
-        /* FASSUNG 667 — XANDER: „Der Orkan der sieht nicht aus wie ein Orkan
-           und der wirbelt auch nicht den Angreifer herum". Jetzt ein echter
-           Trichter: oben breit, unten spitz, aus elf Luftringen, deren
-           Streifen sich sichtbar drehen (jeder Ring etwas schneller als der
-           darüber); drumherum kreisen Blätter und Staub. Der Getroffene wird
-           hochgehoben, dreimal herumgewirbelt und fällt federnd zurück. */
         var o = document.createElement("div");
         o.className = "sp-orkan";
-        o.style.left = m.x + "px"; o.style.top = m.y + "px"; o.style.width = Math.round(m.r * 3) + "px"; o.style.height = Math.round(m.r * 3.6) + "px";
-        var ringe = '<path d="M-44 -54 C-30 -20 -10 10 -3 52 L3 52 C10 10 30 -20 44 -54 Z" fill="url(#spOrkanTrichter)" opacity=".55"/>';
-        for (var k = 0; k < 11; k++) {
-          var ry = -52 + k * 10, rx = 44 - k * 3.9;
-          ringe += '<ellipse class="sp-orkan-strudel" pathLength="100" cx="' + (Math.sin(k * 0.9) * 2.2).toFixed(1) + '" cy="' + ry + '" rx="' + rx.toFixed(1) + '" ry="' + (5.2 - k * 0.38).toFixed(1)
-            + '" fill="none" stroke="rgba(' + (k % 2 ? "96,122,156," : "214,232,250,") + (0.95 - k * 0.04).toFixed(2) + ')" stroke-width="' + (2.4 - k * 0.14).toFixed(1)
-            + '" stroke-dasharray="' + (k % 2 ? "34 16" : "22 12 10 6") + '" style="animation-duration:' + (0.62 - k * 0.035).toFixed(2) + 's"/>';
+        o.style.left = m.x + "px"; o.style.top = m.y + "px"; o.style.width = Math.round(m.r * 2.8) + "px"; o.style.height = Math.round(m.r * 3.4) + "px";
+        var ringe = "";
+        for (var k = 0; k < 7; k++) {
+          var ry = -40 + k * 12, rx = 34 - k * 4.2;
+          ringe += '<ellipse cx="0" cy="' + ry + '" rx="' + rx.toFixed(1) + '" ry="' + (4 - k * 0.3).toFixed(1) + '" fill="none" stroke="rgba(' + (k % 2 ? "120,150,185," : "205,228,250,") + (0.95 - k * 0.06).toFixed(2) + ')" stroke-width="' + (2.6 - k * 0.2).toFixed(1) + '" stroke-dasharray="' + (rx * 2.2).toFixed(0) + ' ' + (rx * 1.2).toFixed(0) + '"/>';
         }
-        o.innerHTML = '<svg viewBox="-50 -60 100 120"><defs><linearGradient id="spOrkanTrichter" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fb4cc"/><stop offset="1" stop-color="#46586f"/></linearGradient></defs>'
-          + '<g class="sp-orkan-schwanken">' + ringe + "</g></svg>";
-        for (var tr = 0; tr < 9; tr++) {
-          var bit = document.createElement("i");
-          bit.className = "sp-orkan-truemmer" + (tr % 3 === 0 ? " sp-orkan-blatt" : "");
-          bit.style.setProperty("--weite", Math.round(m.r * (0.5 + (tr % 4) * 0.28)) + "px");
-          bit.style.top = (12 + tr * 8) + "%";
-          bit.style.animationDelay = (-tr * 0.13).toFixed(2) + "s, " + (-tr * 0.21).toFixed(2) + "s";
-          o.appendChild(bit);
-        }
+        o.innerHTML = '<svg viewBox="-40 -50 80 100"><g class="sp-orkan-dreh">' + ringe + "</g></svg>";
         document.body.appendChild(o);
         setTimeout(function () { o.remove(); }, 3800);
       }
@@ -1904,15 +1868,14 @@
       try { t.animate(pb, { duration: dauer, easing: "ease-in-out", fill: "forwards" }); } catch (e) {}
       t.classList.add("sp-phoenix-glut");
       var spur = setInterval(function () {
-        if (!teilchenErlaubt(1)) return;
         var r = t.getBoundingClientRect();
         if (!r.width) return;
         var g = document.createElement("div");
         g.className = "sp-glutspur";
         g.style.left = (r.left + r.width * 0.9) + "px"; g.style.top = (r.top + r.height * 0.14) + "px";
         document.body.appendChild(g);
-        teilchenWeg(g, 700);
-      }, 80);
+        setTimeout(function () { g.remove(); }, 700);
+      }, 55);
       setTimeout(function () { clearInterval(spur); }, dauer * 0.86);
       [0.28, 0.5, 0.72].forEach(function (o) {
         setTimeout(function () {
@@ -1971,42 +1934,8 @@
      Glutballs züngeln jetzt einzelne schmale Flammen in der unteren
      Bildhälfte hoch und flackern aus, dazu steigen Glutfunken.
      art: "rot" (Drache), "gold" (Phönix), "daemon" (Superkraft). */
-  /* FASSUNG 667 — XANDER: „wenn ich gegen jemanden spiele, dann ruckelt es
-     der Art, dass die Tiere nicht mitziehen". Gemessen (CPU achtfach
-     gedrosselt, wie ein einfaches Android): Phönix und Drache halbierten
-     die Bildrate, und zwar durch die Feuerteilchen (ohne sie: flüssig).
-     Deshalb: ein gemeinsames Budget für gleichzeitig lebende Teilchen, und
-     die Seite misst selbst, ob Bilder zu lange brauchen – dann nur halb so
-     viele Teilchen, bis es wieder ruhig läuft. */
-  var TEILCHEN_MAX = 30, TEILCHEN_SPARSAM = 14, teilchenLebend = 0;
-  function teilchenGrenze() { return takt.sparsam ? TEILCHEN_SPARSAM : TEILCHEN_MAX; }
-  var takt = { sparsam: false, langsam: 0, uhr: 0, letzt: 0, bis: 0 };
-  function taktMessen() {
-    takt.bis = Date.now() + 2500;
-    if (takt.uhr) return;
-    takt.letzt = 0;
-    var schritt = function (t) {
-      if (takt.letzt) {
-        var d = t - takt.letzt;
-        takt.langsam = takt.langsam * 0.8 + (d > 34 ? 1 : 0) * 0.2;
-        if (takt.langsam > 0.45) { takt.sparsam = true; takt.ruhigAb = Date.now() + 10000; }
-        else if (takt.sparsam && takt.langsam < 0.1 && Date.now() > (takt.ruhigAb || 0)) takt.sparsam = false;
-      }
-      takt.letzt = t;
-      if (Date.now() < takt.bis) takt.uhr = requestAnimationFrame(schritt); else { takt.uhr = 0; takt.letzt = 0; }
-    };
-    takt.uhr = requestAnimationFrame(schritt);
-  }
-  function teilchenErlaubt(n) {
-    taktMessen();
-    var soll = takt.sparsam ? Math.ceil(n / 2) : n;
-    return Math.max(0, Math.min(soll, teilchenGrenze() - teilchenLebend));
-  }
-  function teilchenWeg(el, ms) { teilchenLebend++; setTimeout(function () { el.remove(); teilchenLebend--; }, ms); }
   function flammen(x, y, r, art, zahl) {
-    var sorte = art || "rot";
-    var n = teilchenErlaubt(zahl || 11);
-    if (!n) return;
+    var n = zahl || 11, sorte = art || "rot";
     for (var i = 0; i < n; i++) {
       var f = document.createElement("div");
       f.className = "sp-zunge sp-zunge-" + sorte;
@@ -2018,9 +1947,9 @@
       f.style.animationDelay = Math.round(Math.random() * 260) + "ms";
       f.style.animationDuration = Math.round(620 + Math.random() * 420) + "ms";
       document.body.appendChild(f);
-      teilchenWeg(f, 1400);
+      (function (f) { setTimeout(function () { f.remove(); }, 1400); })(f);
     }
-    for (var j = 0; j < Math.min(Math.round(n * 0.7), teilchenGrenze() - teilchenLebend); j++) {
+    for (var j = 0; j < Math.round(n * 0.7); j++) {
       var g = document.createElement("div");
       g.className = "sp-glutfunke sp-zunge-" + sorte;
       g.style.left = (x + (Math.random() - 0.5) * r * 1.6) + "px";
@@ -2029,7 +1958,7 @@
       g.style.setProperty("--drift", Math.round((Math.random() - 0.5) * r * 0.9) + "px");
       g.style.animationDelay = Math.round(80 + Math.random() * 400) + "ms";
       document.body.appendChild(g);
-      teilchenWeg(g, 1700);
+      (function (g) { setTimeout(function () { g.remove(); }, 1700); })(g);
     }
   }
   /* FASSUNG 658 — XANDER: „ich sehe keinen Effekt den es macht durch das
@@ -3172,7 +3101,7 @@
       /* Schild-Aura (reist mit) */
       schmuck(el, "sp-aura", s.schild > 0, kreis, "");
       /* Mauer (gehört dir, zieht mit, Fassung 640) — unten vor dem Bild, die Mitte bleibt frei */
-      schmuck(el, "sp-mauer", s.mauer_lp > 0, kreis, mauerSvg(s.mauer_art, (s.brust || 0) > 0), "sp-mauer-" + (s.mauer_art || "holz") + (s.mauer_aufbau ? " sp-mauer-aufbau" : ""));
+      schmuck(el, "sp-mauer", s.mauer_lp > 0, kreis, mauerSvg(s.mauer_art), "sp-mauer-" + (s.mauer_art || "holz") + (s.mauer_aufbau ? " sp-mauer-aufbau" : ""));
       /* Das Fellmonster sitzt rechts unten neben dem Bild */
       schmuck(el, "sp-tier", Boolean(s.haustier), kreis, tierSvg(s.haustier), "sp-tier-" + (s.haustier || "fellmonster")
         + (s.haustier && !(s.haustier_leben > 0) ? " sp-tier-schwach" : ""));
@@ -3294,69 +3223,25 @@
     var kreis = el.querySelector(".lc-kreis");
     if (kreis) schmuck(el, "sp-falle-marke", Boolean(falle), kreis, falle ? falleSvg(falle) : "");
   }
-  /* FASSUNG 667 — XANDER: „können wir jetzt nicht so machen, dass wir
-     Mauer oder Zaun … unterhalb des Profils auch so kreisrund gestalten,
-     so dass der Zaun … so ne Holzstriche Linie ist … Diamant … Gläser …
-     glitzert … die Titan einfach durchgängig ist, die Steinmauer
-     durchgängige Blöcke … dass es trotzdem ganz filigran unter dem Ring
-     gezeigt wird." Jede Mauer ist jetzt ein schmaler Bogen direkt außen
-     unter dem Ring (von 28° bis 152°, Radius 50,5–55): Gesicht, Ringe und
-     Name bleiben frei. */
-  /* Mit Brustpanzer (Bogen auf Radius 51–54) rückt die Mauer nach außen
-     (54,8–58,6) und lässt unten in der Mitte eine Lücke für den Namen. */
-  function kreisPunkt(w, r) { var a = w * Math.PI / 180; return (50 + r * Math.cos(a)).toFixed(2) + " " + (50 + r * Math.sin(a)).toFixed(2); }
-  function ringStueck(a0, a1, r1, r2) {
-    var g = Math.abs(a1 - a0) > 180 ? 1 : 0;
-    return "M" + kreisPunkt(a0, r2) + " A" + r2 + " " + r2 + " 0 " + g + " 1 " + kreisPunkt(a1, r2)
-      + " L" + kreisPunkt(a1, r1) + " A" + r1 + " " + r1 + " 0 " + g + " 0 " + kreisPunkt(a0, r1) + " Z";
-  }
-  function kreisBogen(a0, a1, r) { return "M" + kreisPunkt(a0, r) + " A" + r + " " + r + " 0 0 1 " + kreisPunkt(a1, r); }
-  function mauerSvg(art, mitPanzer) {
-    var R1 = mitPanzer ? 54.8 : 50.5, R2 = mitPanzer ? 58.6 : 55;
-    var teile = mitPanzer ? [[26, 74], [106, 154]] : [[28, 152]];
-    var kopf = '<svg viewBox="0 0 100 100" class="sp-mauer-bogen">', mitte = (R1 + R2) / 2;
-    var stueck = function (A0, A1) {
-      var t = "", w, n = 0;
-      if (art === "titan") return '<path d="' + ringStueck(A0, A1, R1, R2) + '" fill="url(#spTitan)" stroke="#34414f" stroke-width=".6"/>'
-        + '<path d="' + kreisBogen(A0 + 2, A1 - 2, R1 + 1) + '" fill="none" stroke="#eef5fc" stroke-width=".5" opacity=".9"/>'
-        + '<path d="' + kreisBogen(A0 + 4, A1 - 4, R2 - 1.1) + '" fill="none" stroke="#9fb2c6" stroke-width=".35" stroke-dasharray="6 2" opacity=".8"/>';
-      if (art === "stahl") {
-        t = '<path d="' + ringStueck(A0, A1, R1, R2) + '" fill="#8d97a3" stroke="#4b525c" stroke-width=".6"/>';
-        for (w = A0 + 31; w < A1 - 2; w += 31) t += '<path d="M' + kreisPunkt(w, R1) + " L" + kreisPunkt(w, R2) + '" stroke="#4b525c" stroke-width=".55"/>';
-        for (w = A0 + 6; w < A1; w += 12.4) { var p = kreisPunkt(w, mitte).split(" "); t += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r=".55" fill="#d6dde5"/>'; }
-        return t + '<path d="' + kreisBogen(A0 + 1, A1 - 1, R1 + .8) + '" fill="none" stroke="#c9d1da" stroke-width=".4" opacity=".8"/>';
-      }
-      if (art === "stein") {
-        var schritt = 12.4;
-        for (w = A0; w < A1 - 0.1; w += schritt, n++) t += '<path d="' + ringStueck(w + .5, Math.min(A1, w + schritt) - .5, R1, mitte - .2) + '" fill="' + (n % 2 ? "#a39a8c" : "#b3aa9b") + '"/>';
-        t += '<path d="' + ringStueck(A0 + .5, A0 + schritt / 2 - .5, mitte + .2, R2) + '" fill="#aaa192"/>';
-        for (w = A0 + schritt / 2, n = 0; w < A1 - 0.1; w += schritt, n++) t += '<path d="' + ringStueck(w + .5, Math.min(A1, w + schritt) - .5, mitte + .2, R2) + '" fill="' + (n % 2 ? "#b3aa9b" : "#9c9384") + '"/>';
-        return '<g stroke="#5e574d" stroke-width=".45">' + t + "</g>";
-      }
-      if (art === "diamant") {
-        for (w = A0; w < A1 - 0.1; w += 10.33, n++) {
-          var e = Math.min(A1, w + 10.33);
-          t += '<path d="' + ringStueck(w + .3, e - .3, R1, R2) + '" fill="' + (n % 2 ? "#9be7ff" : "#d4f6ff") + '" fill-opacity=".88"/>'
-            + '<path d="M' + kreisPunkt(w + .6, R1 + .3) + " L" + kreisPunkt((w + e) / 2, R2 - .2) + " L" + kreisPunkt(e - .6, R1 + .3) + '" fill="none" stroke="#fff" stroke-width=".35" opacity=".9"/>';
-        }
-        return '<g stroke="#2b6f8f" stroke-width=".35">' + t + "</g>";
-      }
-      /* Holz: ein Lattenzaun – spitze Latten, zwei Querlatten. */
-      for (w = A0 + 2; w <= A1 - 1; w += 6.2) {
-        t += '<path d="M' + kreisPunkt(w, R1 - .3) + " L" + kreisPunkt(w, R2 + .2) + '" stroke="#b07a45" stroke-width="1.5"/>'
-          + '<path d="M' + kreisPunkt(w - .9, R2 + .2) + " L" + kreisPunkt(w, R2 + 1.3) + " L" + kreisPunkt(w + .9, R2 + .2) + ' Z" fill="#b07a45"/>';
-      }
-      return t + '<path d="' + kreisBogen(A0, A1, R1 + 1.1) + '" fill="none" stroke="#8a5a2e" stroke-width=".9"/>'
-        + '<path d="' + kreisBogen(A0, A1, R2 - 1) + '" fill="none" stroke="#8a5a2e" stroke-width=".9"/>';
-    };
-    var inhalt = teile.map(function (t) { return stueck(t[0], t[1]); }).join("");
-    if (art === "titan") inhalt = '<defs><linearGradient id="spTitan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9d6e3"/><stop offset=".55" stop-color="#8397ab"/><stop offset="1" stop-color="#5b6d80"/></linearGradient></defs>' + inhalt;
-    if (art === "diamant") {
-      var fk = function (wk) { var p = kreisPunkt(wk, mitte).split(" "), x = +p[0], y = +p[1];
-        return '<path d="M' + x + " " + (y - 1.8) + " L" + (x + .5) + " " + (y - .5) + " L" + (x + 1.8) + " " + y + " L" + (x + .5) + " " + (y + .5) + " L" + x + " " + (y + 1.8) + " L" + (x - .5) + " " + (y + .5) + " L" + (x - 1.8) + " " + y + " L" + (x - .5) + " " + (y - .5) + ' Z"/>'; };
-      inhalt += '<g class="sp-diamant-funkeln" fill="#fff">' + fk(50) + fk(mitPanzer ? 130 : 96) + fk(140) + "</g>";
-    }
-    return kopf + inhalt + "</svg>";
+  function mauerSvg(art) {
+    /* FASSUNG 662 — Titan: gebürstete blaugraue Platten mit Nieten; Diamant: Kristallblöcke, die funkeln. */
+    if (art === "titan") return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="spTitan" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9c7d6"/><stop offset=".5" stop-color="#7f93a8"/><stop offset="1" stop-color="#5b6d80"/></linearGradient></defs>'
+      + '<rect x="2" y="87" width="96" height="13" rx="2" fill="url(#spTitan)" stroke="#34414f" stroke-width="1.3"/><path d="M26 87 V100 M50 87 V100 M74 87 V100" stroke="#34414f" stroke-width="1.1"/>'
+      + '<g fill="#dbe6f1"><circle cx="6" cy="90" r="1.1"/><circle cx="22" cy="90" r="1.1"/><circle cx="30" cy="90" r="1.1"/><circle cx="46" cy="90" r="1.1"/><circle cx="54" cy="90" r="1.1"/><circle cx="70" cy="90" r="1.1"/><circle cx="78" cy="90" r="1.1"/><circle cx="94" cy="90" r="1.1"/></g>'
+      + '<path d="M4 88.6 H96" stroke="#eaf2fb" stroke-width=".9" opacity=".8"/></svg>';
+    if (art === "diamant") return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g stroke="#2b6f8f" stroke-width=".9">'
+      + '<path d="M2 100 L2 90 L8 86 L20 86 L26 90 L26 100 Z" fill="#9be7ff"/><path d="M26 100 L26 90 L32 86 L44 86 L50 90 L50 100 Z" fill="#c9f3ff"/>'
+      + '<path d="M50 100 L50 90 L56 86 L68 86 L74 90 L74 100 Z" fill="#9be7ff"/><path d="M74 100 L74 90 L80 86 L92 86 L98 90 L98 100 Z" fill="#c9f3ff"/></g>'
+      + '<g stroke="#fff" stroke-width=".7" opacity=".85"><path d="M8 86 L14 100 M20 86 L14 100 M32 86 L38 100 M44 86 L38 100 M56 86 L62 100 M68 86 L62 100 M80 86 L86 100 M92 86 L86 100"/></g>'
+      + '<g class="sp-diamant-funkeln" fill="#fff"><path d="M14 88 L15 90 L17 91 L15 92 L14 94 L13 92 L11 91 L13 90 Z"/><path d="M62 88 L63 90 L65 91 L63 92 L62 94 L61 92 L59 91 L61 90 Z"/></g></svg>';
+    /* FASSUNG 651 — XANDER: „die Mauer verdeckt unseren Lebensstand …
+       und unser kleines Fellmonster". Die Mauer ist jetzt halb so hoch
+       (88–100 statt 78–98) und liegt HINTER den Ringen und den Tieren:
+       Lebens- und Manaring und das Tier stehen davor, die Gesichtsmitte
+       und der Name bleiben frei. */
+    if (art === "stahl") return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><rect x="2" y="88" width="96" height="12" rx="2" fill="#8d97a3" stroke="#4b525c" stroke-width="1.4"/><path d="M34 88 V100 M66 88 V100" stroke="#4b525c" stroke-width="1.4"/><g fill="#5c646e"><circle cx="8" cy="93" r="1.3"/><circle cx="28" cy="93" r="1.3"/><circle cx="40" cy="93" r="1.3"/><circle cx="60" cy="93" r="1.3"/><circle cx="72" cy="93" r="1.3"/><circle cx="92" cy="93" r="1.3"/></g><path d="M4 89.6 H96" stroke="#c9d1da" stroke-width="1" opacity=".7"/></svg>';
+    if (art === "stein") return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g fill="#a39a8c" stroke="#5e574d" stroke-width="1.1"><rect x="2" y="88" width="24" height="6" rx="1.4"/><rect x="26" y="88" width="24" height="6" rx="1.4"/><rect x="50" y="88" width="24" height="6" rx="1.4"/><rect x="74" y="88" width="24" height="6" rx="1.4"/><rect x="2" y="94" width="12" height="6" rx="1.4"/><rect x="14" y="94" width="24" height="6" rx="1.4"/><rect x="38" y="94" width="24" height="6" rx="1.4"/><rect x="62" y="94" width="24" height="6" rx="1.4"/><rect x="86" y="94" width="12" height="6" rx="1.4"/></g></svg>';
+    return '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><g fill="#b07a45" stroke="#6b4521" stroke-width="1.1"><rect x="4" y="86" width="11" height="14" rx="1"/><rect x="18" y="88" width="11" height="12" rx="1"/><rect x="32" y="86" width="11" height="14" rx="1"/><rect x="46" y="88" width="11" height="12" rx="1"/><rect x="60" y="86" width="11" height="14" rx="1"/><rect x="74" y="88" width="11" height="12" rx="1"/><rect x="88" y="86" width="9" height="14" rx="1"/></g><rect x="2" y="92" width="96" height="3" fill="#8a5a2e"/></svg>';
   }
   /* Der Ring sitzt auf dem Rand: Radius 45,5 von 50, Strich 7 — also
      42 bis 49, das äußerste Achtel des Bildes. */
@@ -4840,7 +4725,6 @@
       setzen: function (o) { Object.keys(o || {}).forEach(function (k) { S[k] = o[k]; }); zeichnen(); },
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
       gegenwehrZeigen: gegenwehrZeigen, falleZeigen: falleZeigen, tippAufPlatz: tippAufPlatz, ringSvg: ringSvg,
-      flugzeit: function (w) { return (WAFFEN[w] || {}).flug || 0; }, takt: function () { return { sparsam: takt.sparsam, lebend: teilchenLebend }; },
       schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
       turmZeile: turmZeile, platzGewechselt: platzGewechselt,
       eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,

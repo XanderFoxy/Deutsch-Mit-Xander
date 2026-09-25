@@ -575,3 +575,12 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - **Werkstatt**: holt `data-werkstatt.js` frisch nach – beim Öffnen, beim Zurückkehren in den Tab und alle drei Minuten.
 - **Deutsch-Menü wie vorher**: der grüne Reiter führt direkt ins große Deutsch-Menü; unter „Mehr" steht wieder „Deutsch-Aufgaben".
 - Sonde: `pruefe-666-fehler.js` (13 Prüfungen, 360 px); `pruefe-658` auf das alte Deutsch-Menü umgestellt. Alle Spiel-Sonden grün (642/656 unter Last bei Tönen zeitweise zu langsam, einzeln grün).
+
+## Fassung 667 — Kampf ohne Nachhängen, flüssige Tiere, runde Mauern, echter Orkan
+
+- XANDER: „Die Latenz ist noch schwierig … ohne dass die Effekte hinterher hängen … die Tiere nicht mitziehen man gar nicht weiß, wohin man schießt".
+  - Gemessen (Server 400 ms): die Treffer-Zahl kam 465 ms NACH dem Einschlag – gefragt wurde erst beim Einschlag. Jetzt geht die Frage schon im Flug los (so früh, wie der Server gerade braucht; gleitender Mittelwert), gezeigt wird genau beim Einschlag: 465 → ~0 ms (erster Schuss ~90 ms, bis die Messung eingeschwungen ist). Die Treffer-Meldung geht im Moment des Einschlags an die anderen – dort landet ihr Geschoss gleichzeitig.
+  - Ruckeln (CPU achtfach gedrosselt, wie ein einfaches Android): Phönix und Drache halbierten die Bildrate, und zwar durch die Feuerteilchen. Jetzt ein gemeinsames Teilchen-Budget (30, bei Rucklern 14 – das Spiel misst es selbst), die Phönix-Glutspur seltener, fliegende Tiere auf eigener Ebene. Gleiche Szene: ~73 → ~110 Bilder; schnelle Geräte bleiben bei 60 Bildern pro Sekunde mit allen Teilchen.
+- Mauern als filigraner Bogen unter dem Ring (XANDER: „Holzstriche … Diamant … Gläser … glitzert … Titan durchgängig … Steinmauer durchgängige Blöcke"): Holz = Lattenzaun, Stein = versetzte Blöcke, Stahl = Band mit Nieten, Titan = gebürstetes Band, Diamant = Glasfacetten, die funkeln. Mit Brustpanzer rückt der Bogen nach außen und lässt unten Platz für den Namen.
+- Orkan (XANDER: „sieht nicht aus wie ein Orkan und … wirbelt … nicht herum"): Trichter aus 11 drehenden Luftringen, schwankend, mit kreisenden Blättern und Staub; der Getroffene wird sichtbar hochgehoben, dreimal herumgewirbelt und landet federnd wieder.
+- Sonde: `pruefe-667-latenz.js` (7 Prüfungen). `pruefe-651` misst die Mauer als Bogen; `pruefe-654` schließt vor dem Tippen das Deutsch-Fenster. Alle Spiel-Sonden grün.
