@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 657: Level und Tiere auch ohne Spiel zeigen",
+  stand: "Fassung 658: Superkraft am Gegner, Feuer filigran, Deutsch-Reiter",
 
   inArbeit: [
-    { seit: "2026-09-25T07:26",
+    { seit: "2026-09-25T07:51",
       text: "Effekt-Kacheln mit farbigen Mini-Zeichnungen; Trophäen und Funde; Gebäude, Fusion" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T07:26",
-      text: "657: Schalter Level/Tiere für den normalen Chat und Livestream" },
+    { seit: "2026-09-25T07:51",
+      text: "658: lila Brand am Gegner, feinere Flammen, Deutsch-Reiter, Zzz für müde Tiere, schnellere Verbindung für Firefox" },
   ],
 };
