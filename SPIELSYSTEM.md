@@ -598,3 +598,11 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Dorf (XANDER: „Wir brauchen noch mehr Gebäude"): Brauerei (Lv 5, 15 Mana je Stufe), Bibliothek (Lv 6, 30 Erfahrung je Stufe), Rathaus (Lv 8, 15 Punkte je Stufe); die Ernte nennt alles.
 - Server: `spiel_waffe_schaden`, `spiel_treffer` (Abnutzung, Tiere), `spiel_kaufen` (Preise, Level-Sperren, Ziegel, Tiere), `spiel_tier_max`, `spiel_tier_wechseln`, `spiel_fusion`, `spiel_bauen`, `spiel_dorf_abholen`. Im Rollback getestet (Kugelblitz, Ziegelmauer 65, Dackel, Wolpertinger, Lindwurm, Rathaus-Ernte +15).
 - Sonde: `pruefe-668-energie-tiere-dorf.js` (15 Prüfungen); `pruefe-665` erwartet jetzt 5 Rezepte. Alle Spiel-Sonden grün.
+
+## Fassung 669 — Extra-Spiele: Tower Defense und Rundenkampf
+
+- XANDER: „du solltest einen Strategie Modus einbauen, wo wir dann mit Zügen so spielen kann und ein Tower Defense Modus. Das extra Spiele". Menü → Mehr → Extra-Spiele.
+- Tower Defense „Fehlerteufel-Abwehr": Fehlerteufel mit typischen Fehlern („der Mädchen", „seid 3 Jahren", „wegen dem" …) laufen einen Weg zum Tor. Türme: Kartoffelkanone (2 BP), Laserturm (3 BP), Brezel-Bremse (3 BP, bremst). Baupunkte für richtige Deutsch-Antworten (+3, vom Server geprüft), jeden zweiten Teufel (+1) und jede geschaffte Welle (+2). 10 Wellen, 10 Leben, Rekord im Gerät.
+- Strategie „Rundenkampf": Zug um Zug gegen Professor Grammatikus (Computer) oder gegen jemanden im Raum (Einladung, Annehmen/Ablehnen). Aktionen Angriff (12), Schild (+10), Heilen (+12), Donnerwort (22, kostet 2 Sterne) – jede wirkt nur mit richtiger Antwort, jede richtige Antwort bringt einen Stern. Züge laufen als Ereignisse zwischen den Geräten (doppelt angekommen zählt einmal); wer schließt, gibt auf.
+- Nichts davon zählt in der Datenbank (außer den echten Deutschaufgaben selbst) – so lässt sich nichts schummeln. Meldungen erscheinen im Spielfenster.
+- Sonde: `pruefe-669-extraspiele.js` (15 Prüfungen). Alle 32 Spiel-Sonden grün.
