@@ -127,18 +127,8 @@
     fuchs:          { name: "Fuchs",          ton: "fuchskeckern", preis: 170, was: "schlau und schnell, 30 % zurück" },
     einhorn:        { name: "Einhorn",        ton: "einhorn", preis: 300, magie: true, was: "sticht mit dem Horn, 35 % zurück · Stufe 2: Regenbogen heilt dich (+2 LP)" },
     phoenix:        { name: "Phönix",         ton: "phoenix", preis: 340, flug: true, magie: true, was: "fliegt, speit Feuer, 45 % zurück · Stufe 2: heilt dich (+2 LP)" },
-    fee:            { name: "Fee",            ton: "feenzauber", preis: 200, flug: true, magie: true, was: "fliegt, zaubert Funken, 25 % zurück" },
-    /* FASSUNG 665 — Tier-Fusion (Funk: „Fusion"): zwei eigene Tiere, beide
-       ab Stufe 2, verschmelzen zu einem neuen. Nicht zu kaufen, nur zu
-       verschmelzen. Gerechnet wird auf dem Server (spiel_fusion,
-       spiel_treffer, spiel_tier_max). */
-    feuerfuchs:       { name: "Feuerfuchs",       ton: "fuchskeckern", fusion: true, magie: true, was: "beißt mit Glut, 45 % zurück · Stufe 2: +2 Glut" },
-    greif:            { name: "Greif",            ton: "fluegelschlag", fusion: true, flug: true, was: "Adlerkopf, Löwenleib: stößt herab, 50 % zurück · Stufe 2: warnt dich (1/10 weniger Schaden)" },
-    regenbogendrache: { name: "Regenbogendrache", ton: "drachenpuste", fusion: true, flug: true, magie: true, was: "faucht Regenbogenfeuer, 55 % zurück · Stufe 2: heilt dich (+3 LP)" }
+    fee:            { name: "Fee",            ton: "feenzauber", preis: 200, flug: true, magie: true, was: "fliegt, zaubert Funken, 25 % zurück" }
   };
-  /* [neues Tier, Zutat 1, Zutat 2] – beide Zutaten gehen in das neue Tier auf. */
-  var FUSIONEN = [["feuerfuchs", "fuchs", "phoenix"], ["greif", "eule", "schaeferhund"], ["regenbogendrache", "drache", "einhorn"]];
-  var FUSION_PREIS = 200, FUSION_LEVEL = 6;
   /* FASSUNG 634 — XANDER: „Bitte das Skill Training noch einbauen. Also
      dass man über die Zeit sich Fähigkeiten aneignen kann".
      Jedes Level gibt einen Skillpunkt; Training dauert 5 min × Stufe
@@ -1830,7 +1820,6 @@
           var kr = document.createElement("div");
           kr.className = "sp-kratzer";
           kr.style.left = (z.x + (j - 1) * z.r * 0.28) + "px"; kr.style.top = (z.y + z.r * 0.5) + "px";
-          if (art === "feuerfuchs") flammen(z.x + (j - 1) * z.r * 0.28, z.y + z.r * 0.55, z.r * 0.45, "rot", 5);
           kr.innerHTML = art === "einhorn"
             ? '<svg viewBox="-20 -14 40 28"><path d="M-12 8 Q0 -14 12 8" fill="none" stroke="#f59ab4" stroke-width="2.4"/><path d="M-9 8 Q0 -9 9 8" fill="none" stroke="#ffd76a" stroke-width="2"/><path d="M-6 8 Q0 -4 6 8" fill="none" stroke="#9fd3f5" stroke-width="1.8"/></svg>'
             : '<svg viewBox="-20 -14 40 28"><path d="M-14 -10 L-4 8 M-6 -12 L4 8 M2 -12 L12 6" stroke="#b3151b" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg>';
@@ -1903,13 +1892,13 @@
       }
       fb.push(bild(heim.x, heim.y, s0, 0, 1));
       try { t.animate(fb, { duration: dauer, easing: "linear", fill: "forwards" }); } catch (e) {}
-      var feuer = art === "drache" || art === "regenbogendrache";
+      var feuer = art === "drache";
       [0.3, 0.52, 0.74].forEach(function (o) {
         setTimeout(function () {
           /* Wo das Tier in diesem Moment ist: gleiche Rechnung wie oben. */
           var w = w0 + ((o - 0.14) / 0.66) * Math.PI * 2, p = punkt(w);
           ton((TIERE[art] || {}).ton || "zauberpuff", 0.55);
-          if (feuer) feuerStrahl(p, z, art === "phoenix", art === "regenbogendrache");
+          if (feuer) feuerStrahl(p, z, art === "phoenix");
           else funkenStoss(p, z, art === "fee");
           schuetteln(120, 2);
         }, dauer * o);
@@ -1966,10 +1955,10 @@
     }
   }
   /* Ein Feuerstrahl vom Maul des Tiers bis ins Bild, dazu der Feuerball. */
-  function feuerStrahl(von, z, gold, bunt) {
+  function feuerStrahl(von, z, gold) {
     var dx = z.x - von.x, dy = z.y - von.y, l = Math.hypot(dx, dy);
     var f = document.createElement("div");
-    f.className = "sp-feuerstrahl" + (gold ? " sp-feuerstrahl-gold" : "") + (bunt ? " sp-feuerstrahl-regenbogen" : "");
+    f.className = "sp-feuerstrahl" + (gold ? " sp-feuerstrahl-gold" : "");
     f.style.left = von.x + "px"; f.style.top = von.y + "px"; f.style.width = Math.max(10, l - z.r * 0.2) + "px";
     f.style.transform = "rotate(" + Math.atan2(dy, dx) + "rad)";
     document.body.appendChild(f);
@@ -2565,7 +2554,7 @@
         return '<button type="button" data-s="tierraus" data-a="' + a + '"' + (draussen ? ' class="sp-an"' : "") + ">"
           + '<span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + ((TIERE[a] || {}).flug ? "luft" : "boden") + '">' + tierSvg(a, true) + "</span>"
           + esc((TIERE[a] || {}).name || a) + " <small>" + (draussen ? "draußen · " : "") + kraft + " Kraft</small></button>";
-      }).join("") + "</div><p class=\"sp-sm-klein\">Tippen holt das Tier raus – eins am Boden, eins in der Luft. Keins geht verloren (nur bei einer Fusion gehen zwei in einem neuen auf).</p>"
+      }).join("") + "</div><p class=\"sp-sm-klein\">Tippen holt das Tier raus – eins am Boden, eins in der Luft. Keins geht verloren.</p>"
         /* FASSUNG 658 — XANDER: „mein Fell … irgendwie schwächer dargestellt.
            Woran liegt das? Verliert es an Leben". Ja: jeder Gegenbiss kostet
            das Tier 1 Kraft; bei 0 ist es grau, schläft („Zzz") und wehrt
@@ -2763,89 +2752,6 @@
       senden({ ereignis: "stand", stand: oeffentlich(r) });
       zeichnen(); schnellZeichnen(); panelAuffrischen();
     }).catch(function (e) { hinweis("Wechseln ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  /* FASSUNG 665 — TIER-FUSION. */
-  function fusionsTiere(luft) {
-    return FUSIONEN.map(function (f) { return f[0]; }).filter(function (k) { return Boolean(TIERE[k].flug) === luft; });
-  }
-  function tierStufe(ich, a) {
-    if (a === ich.haustier) return ich.haustier_stufe || 1;
-    if (a === ich.flugtier) return ich.flugtier_stufe || 1;
-    var t = (ich.tiere || {})[a];
-    return t ? (t.stufe || 1) : 0;
-  }
-  function fusionHtml(ich) {
-    var lv = ich.level || 1;
-    return '<p class="sp-text sp-fusion-kopf"><b>Fusion</b></p>'
-      + '<p class="sp-klein">Zwei eigene Tiere, beide ab Stufe 2, verschmelzen zu einem neuen, stärkeren Tier. Die beiden gehen dabei im neuen auf. '
-      + FUSION_PREIS + " Punkte, ab Level " + FUSION_LEVEL + ".</p>"
-      + FUSIONEN.map(function (f) {
-        var neu = TIERE[f[0]], hat = tierStufe(ich, f[0]) > 0;
-        var sa = tierStufe(ich, f[1]), sb = tierStufe(ich, f[2]);
-        var fehlt = lv < FUSION_LEVEL ? "ab Level " + FUSION_LEVEL
-          : !sa || !sb ? "dir fehlt " + TIERE[!sa ? f[1] : f[2]].name
-          : sa < 2 || sb < 2 ? TIERE[sa < 2 ? f[1] : f[2]].name + " braucht Stufe 2"
-          : (ich.punkte || 0) < FUSION_PREIS ? FUSION_PREIS + " Punkte nötig" : "";
-        var zutat = function (a, st) {
-          return '<span class="sp-fusion-zutat' + (st >= 2 ? " sp-an" : "") + '"><span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + (TIERE[a].flug ? "luft" : "boden") + '">'
-            + tierSvg(a, true) + "</span><small>" + esc(TIERE[a].name) + (st ? " · St. " + st : "") + "</small></span>";
-        };
-        return '<div class="sp-zeile sp-fusion' + (neu.magie ? " sp-tier-magisch" : "") + '">'
-          + '<span class="sp-fusion-rezept">' + zutat(f[1], sa) + '<i class="sp-fusion-plus">+</i>' + zutat(f[2], sb) + '<i class="sp-fusion-pfeil">→</i>'
-          + '<span class="sp-tier-bild sp-tier-bild-' + (neu.flug ? "luft" : "boden") + '">' + tierSvg(f[0], true) + "</span></span>"
-          + "<span><b>" + esc(neu.name) + "</b>" + (neu.flug ? " <small>(Luft)</small>" : " <small>(Boden)</small>") + "<br><small>" + esc(neu.was) + "</small></span>"
-          + (hat ? "<small>deins</small>" : '<button type="button" data-tu="fusion" data-k="' + f[0] + '"' + (fehlt ? " disabled" : "") + ">"
-            + (fehlt ? esc(fehlt) : "Verschmelzen · " + FUSION_PREIS) + "</button>")
-          + "</div>";
-      }).join("");
-  }
-  function fusionieren(neu) {
-    var f = FUSIONEN.filter(function (x) { return x[0] === neu; })[0];
-    if (!f) return;
-    if (!window.confirm(TIERE[f[1]].name + " und " + TIERE[f[2]].name + " verschmelzen zum " + TIERE[neu].name + "? Die beiden gehen dabei im neuen Tier auf.")) return;
-    rpc("spiel_fusion", { p_rezept: neu }).then(function (r) {
-      if (!r || !r.ok) { hinweis("🐾 " + ((r && r.grund) || "Fusion ging nicht")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      schliessen();
-      fusionFeier(f);
-      hinweis("✨ " + TIERE[neu].name + " ist geboren und draußen.");
-      senden({ ereignis: "stand", stand: oeffentlich(r) });
-      zeichnen(); schnellZeichnen();
-    }).catch(function (e) { hinweis("Fusion ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  /* Beide Tiere fliegen von links und rechts in die Bildmitte des eigenen
-     Platzes, drehen sich umeinander, ein Lichtblitz – und das neue Tier
-     steht da. Ton und Blitz genau im Moment der Verschmelzung. */
-  function fusionFeier(f) {
-    var m = mittelpunkt(meineChatId());
-    if (!m) return;
-    var DAUER = 2400, BLITZ = 0.55;
-    var box = document.createElement("div");
-    box.className = "sp-fusion-feier";
-    var w = Math.max(56, m.r * 1.3);
-    /* Über dem Bild, aber nie über den oberen Bildschirmrand hinaus. */
-    var oben = Math.max(w * 0.9, m.y - m.r * 1.6);
-    box.style.left = m.x + "px"; box.style.top = oben + "px";
-    box.innerHTML = [f[1], f[2]].map(function (a, i) {
-      return '<span class="sp-fusion-teil sp-fusion-teil-' + i + '" style="width:' + w + "px;height:" + w + 'px">' + tierSvg(a, true) + "</span>";
-    }).join("") + '<span class="sp-fusion-blitz"></span><span class="sp-fusion-neu" style="width:' + w * 1.3 + "px;height:" + w * 1.3 + 'px">' + tierSvg(f[0], true) + "</span>";
-    document.body.appendChild(box);
-    [0, 1].forEach(function (i) {
-      var t = box.querySelector(".sp-fusion-teil-" + i), sx = (i ? 1 : -1) * w * 1.4;
-      try {
-        t.animate([
-          { transform: "translate(calc(-50% + " + sx + "px), -50%) scale(1) rotate(0deg)", opacity: 0, offset: 0 },
-          { transform: "translate(calc(-50% + " + sx + "px), -50%) scale(1) rotate(0deg)", opacity: 1, offset: 0.1 },
-          { transform: "translate(calc(-50% + " + (sx * 0.4) + "px), calc(-50% + " + (i ? 12 : -12) + "px)) scale(.9) rotate(" + (i ? 180 : -180) + "deg)", opacity: 1, offset: 0.35 },
-          { transform: "translate(-50%, -50%) scale(.3) rotate(" + (i ? 400 : -400) + "deg)", opacity: 0.2, offset: BLITZ },
-          { transform: "translate(-50%, -50%) scale(0)", opacity: 0, offset: 1 }
-        ], { duration: DAUER, easing: "ease-in", fill: "forwards" });
-      } catch (e) {}
-    });
-    ton("zauberpuff", 0.5);
-    setTimeout(function () { ton("feenzauber", 0.6); flammen(m.x, oben, w * 0.6, "gold", 10); }, DAUER * BLITZ);
-    setTimeout(function () { ton((TIERE[f[0]] || {}).ton || "jubel", 0.55); }, DAUER * 0.8);
-    setTimeout(function () { box.remove(); }, DAUER + 900);
   }
   /* XANDER: „ich höre übrigens immer noch keine Sounds". Der Knopf spielt
      einen Ton und sagt auf dem Gerät, woran es liegt: Töne aus, Datei
@@ -3267,10 +3173,6 @@
     if (art === "mine") return '<svg viewBox="0 0 100 100"><g transform="translate(50 93)"><ellipse rx="10" ry="4" fill="#3c4148" stroke="#1e2226" stroke-width="1.2"/><rect x="-2" y="-6" width="4" height="4" fill="#c8312b"/></g></svg>';
     return '<svg viewBox="0 0 100 100"><g transform="translate(50 93)"><rect x="-12" y="-4" width="24" height="8" rx="1.5" fill="#8a5a2e" stroke="#4d3016" stroke-width="1.2"/><path d="M-4 -4 V4 M4 -4 V4" stroke="#4d3016" stroke-width="1"/><circle cx="8" cy="0" r="1.2" fill="#d6c08a"/></g></svg>';
   }
-  function farbenTauschen(svg, paare) {
-    paare.forEach(function (p) { svg = svg.split(p[0]).join(p[1]); });
-    return svg;
-  }
   /* FASSUNG 646 — „die Tiere sind nicht richtig präsentiert in ihren
      Kacheln": eine Kachel zeigt nur den Ausschnitt um das Tier. */
   function tierSvg(art, kachel) {
@@ -3282,61 +3184,6 @@
     return roh.replace('<svg viewBox="0 0 100 100">', '<svg class="sp-kachel-svg" viewBox="' + box + '">');
   }
   function tierSvgRoh(art) {
-    if (art === "feuerfuchs") {
-      /* FASSUNG 665 — Fusion aus Fuchs und Phönix: der Fuchs in Glutrot,
-         die Schwanzspitze brennt, ein Flammenschopf zwischen den Ohren,
-         goldene Augen, Glutfunken. */
-      return farbenTauschen(tierSvgRoh("fuchs"), [["#e8742a", "#d9381a"], ["#ef8237", "#e84f1c"], ["#8a3d12", "#7a1c08"], ["#fff6ea", "#ffe3a6"], ["#fff0e0", "#ffb02e"],
-        ['<path d="M97 80 C100 81 101 84 100 86 C98 84 97 82 97 80 Z" fill="#fff"/>', '<path d="M97 80 C100 81 101 84 100 86 C98 84 97 82 97 80 Z" fill="#ffd23a"/>']])
-        .replace("</g></svg>", '<g class="sp-feuerfuchs-flamme">'
-          + '<path d="M96.4 81.6 C94.6 77 96.4 72.6 99 70.4 C98.8 73.4 100.6 74.6 101.6 76.4 C102.4 73.6 103.8 72.4 105.4 71.6 C105.2 75.6 104 79.4 100.4 82.4 Z" fill="#ff6a1e" opacity=".9"/>'
-          + '<path d="M97.8 81.2 C96.8 78 98 75.2 99.6 73.8 C99.8 76 101 77 101.6 78.4 C102.2 76.8 103 76 103.8 75.6 C103.4 78.4 102.2 80.4 100 81.8 Z" fill="#ffd23a"/>'
-          + '<path d="M81.6 73.6 C80.8 70.8 82.2 68.4 84 66.4 C84.2 68.4 85.6 69.2 86.4 70.8 C86.8 72.4 85.8 74 84 74 C82.8 74 81.9 74 81.6 73.6 Z" fill="#ff8a1e"/>'
-          + '<path d="M82.8 73.4 C82.6 71.8 83.4 70.4 84.2 69.4 C84.4 70.6 85.2 71.2 85.4 72.2 C85.4 73.2 84.8 73.8 84 73.8 Z" fill="#ffe36a"/></g>'
-          + '<circle cx="80.3" cy="79" r=".75" fill="#ffb02e"/><circle cx="87.7" cy="79" r=".75" fill="#ffb02e"/>'
-          + '<g class="sp-funkeln"><circle cx="102" cy="68" r=".7" fill="#ffd23a"/><circle cx="72" cy="86" r=".6" fill="#ff8a1e"/><circle cx="94" cy="72" r=".5" fill="#fff3a0"/></g></g></svg>');
-    }
-    if (art === "regenbogendrache") {
-      /* FASSUNG 665 — Fusion aus Babydrache und Einhorn: derselbe süße
-         Drache in Perlweiß, Regenbogenflügel, goldenes Horn, bunte Mähne
-         und Rückenzacken. */
-      return farbenTauschen(tierSvgRoh("drache"), [["#6fcaa0", "#f1e9ff"], ["#3c8a6a", "#8a6cc8"], ["#9fdcc0", "url(#sp-rgb-fluegel)"], ["#5cb892", "#c9a8ff"],
-        ["#4fae86", "#b89ae8"], ["#8fd9b8", "#ffd76a"], ["#2c5a46", "#5a3a8a"], ["#1b2a24", "#2a1f3d"]])
-        .replace('<svg viewBox="0 0 100 100">', '<svg viewBox="0 0 100 100"><defs><linearGradient id="sp-rgb-fluegel" x1="0" y1="0" x2="0" y2="1">'
-          + '<stop offset="0" stop-color="#ff9ab4"/><stop offset=".3" stop-color="#ffd76a"/><stop offset=".55" stop-color="#9fe0a8"/><stop offset=".8" stop-color="#9fd3f5"/><stop offset="1" stop-color="#c9a8ff"/></linearGradient></defs>')
-        .replace('<g class="sp-blinzeln">', '<path d="M88.9 4.4 L90 -3.6 L91.1 4.4 Z" fill="#ffd76a" stroke="#c99a1e" stroke-width=".45" stroke-linejoin="round"/>'
-          + '<path d="M89.3 2.4 L90.7 2 M89.5 .4 L90.5 .1 M89.7 -1.5 L90.3 -1.7" stroke="#c99a1e" stroke-width=".35" stroke-linecap="round"/>'
-          + '<path d="M97.2 7.4 C100.2 6.6 101.6 9 100.2 10.6 C102.4 11.4 102 14.4 99.6 14.6 C100.6 16.6 98.8 18.4 97 17.4 C97.8 14 97.8 10.6 97.2 7.4 Z" fill="#f59ab4"/>'
-          + '<path d="M97.6 8.8 C99.4 8.8 100 10.4 99 11.4 C100.2 12.4 99.6 14 98.4 14.2 C98.6 12.4 98.4 10.6 97.6 8.8 Z" fill="#ffd76a"/>'
-          + '<path d="M97.8 10.6 C98.6 11.4 98.6 12.6 98 13.2 Z" fill="#9fd3f5"/>'
-          + '<g class="sp-funkeln"><path d="M80 4 l.6 -1.5 l.6 1.5 l1.5 .6 l-1.5 .6 l-.6 1.5 l-.6 -1.5 l-1.5 -.6 z" fill="#ffe27a"/><circle cx="104" cy="24" r=".6" fill="#c9a8ff"/><circle cx="76" cy="20" r=".5" fill="#9fd3f5"/></g>'
-          + '<g class="sp-blinzeln">');
-    }
-    if (art === "greif") {
-      /* FASSUNG 665 — Fusion aus Eule und Schäferhund: der Greif. Weißer
-         Adlerkopf mit goldenem Hakenschnabel und Federohren, Löwenleib
-         mit Quastenschwanz, Adlerkrallen vorn, große Schwingen. Blickt
-         wie Phönix und Drache zum Bild hin. */
-      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
-        + '<path d="M103.6 18.6 C108.4 19.6 110.4 16 109.2 12.2" fill="none" stroke="#c89048" stroke-width="1.6" stroke-linecap="round"/>'
-        + '<path d="M109.2 12.6 C107.2 10.6 108 7.4 110.6 7.8 C112.8 8.2 112.8 11.4 110.6 12.8 Z" fill="#7a4a1c"/>'
-        + '<path class="sp-fluegel-r" d="M92 12 C94 4 99 -2 106 -4 C104 0 104 2 105 3 C102 3.5 101 5.5 101.5 7.5 C99 7.5 97 9.5 96.6 12 Z" fill="#8a5a2a" opacity=".85"/>'
-        + '<path d="M99 21.4 L100 26.6 M103 20.6 L104.4 25.6" stroke="#b27a3a" stroke-width="2.4" stroke-linecap="round"/>'
-        + '<path d="M82 15 C83 11 89 10 95 10.5 C101 11 105 13.5 104.5 17.5 C104 21.5 99 23 93 23 C87 23 82.5 20.5 82 15 Z" fill="#d9a55a" stroke="#8a5a22" stroke-width=".7"/>'
-        + '<path d="M86.4 20.4 C90 22 96 22.4 100.6 21.2" fill="none" stroke="#f0cf8f" stroke-width="1.3" stroke-linecap="round"/>'
-        + '<path d="M85 20 L84.2 25.8 M89 21 L88.6 26.4" stroke="#e8b84a" stroke-width="1.8" stroke-linecap="round"/>'
-        + '<path d="M83 26.4 l-.9 1.2 M84.2 26.4 l0 1.5 M85.4 26.4 l.9 1.2 M87.4 27 l-.9 1.2 M88.6 27 l0 1.5 M89.8 27 l.9 1.2" stroke="#3a2a1a" stroke-width=".6" stroke-linecap="round"/>'
-        + '<path d="M79.4 10.4 C80 14 82.6 17.4 86.6 17 C86 14 85.6 11.6 86 9 C84 8 81.4 8.4 79.4 10.4 Z" fill="#f7f1e4" stroke="#b9ab8e" stroke-width=".5"/>'
-        + '<path d="M81 13 l1.4 -.4 M82.4 15 l1.4 -.6 M83.2 11 l1.4 -.2" stroke="#d8ccb2" stroke-width=".45" stroke-linecap="round"/>'
-        + '<circle cx="80.6" cy="6.6" r="4" fill="#fbf7ee" stroke="#b9ab8e" stroke-width=".6"/>'
-        + '<path d="M83.4 4 L86.8 1.2 L85.2 4.8 Z M83.8 6 L87.6 5 L84.8 7.4 Z" fill="#f7f1e4" stroke="#b9ab8e" stroke-width=".4" stroke-linejoin="round"/>'
-        + '<path d="M77.2 5.2 C75 5 73.4 6.1 73 7.9 C72.9 9 73.6 9.6 74.2 9.3 C74.2 8.5 74.8 8.1 75.6 8.1 L77.4 8.4 Z" fill="#f2b21e" stroke="#a8720c" stroke-width=".45" stroke-linejoin="round"/>'
-        + '<circle cx="79.3" cy="5.9" r="1.1" fill="#f2a01e"/><circle cx="79.2" cy="5.9" r=".55" fill="#1a1208"/><circle cx="79.5" cy="5.6" r=".22" fill="#fff"/>'
-        + '<path d="M77.9 4.6 C78.9 4 80.3 4 81.1 4.6" fill="none" stroke="#6b5a3a" stroke-width=".55" stroke-linecap="round"/>'
-        + '<path class="sp-fluegel-l" d="M86 13 C84 5 86.5 -2 92 -6 C92 -2.6 93 -.6 94 .4 C94.4 -3 96.8 -5.6 100 -6.6 C99 -3 99.4 -.4 100.4 1.4 C101.6 -1.2 104 -2.6 106.8 -2.6 C105 1 103.6 5 101.6 7.6 C98.6 11.6 92.6 13.8 86 13 Z" fill="#b8793a" stroke="#6b4318" stroke-width=".7" stroke-linejoin="round"/>'
-        + '<path class="sp-fluegel-l" d="M87.6 11.8 C87.2 6.6 88.8 2 92 -1 C92.4 2 93.6 3.8 94.8 4.8 C95 1.6 97 -.8 99.4 -1.8 C98.8 1.8 99.4 4 100.6 5.6 C98 9.4 93.2 12 87.6 11.8 Z" fill="#e0b060"/>'
-        + '<path class="sp-fluegel-l" d="M89 10.4 L92.2 1.4 M91.6 10.6 L96 2.8 M94.4 9.8 L99.2 3.8" stroke="#8a5a22" stroke-width=".4" fill="none"/></g></svg>';
-    }
     if (art === "schaeferhund") {
       /* FASSUNG 653 — XANDER: „überarbeite mal … den Schäferhund. Das
          soll wirklich nach dem aussehen, was es aussagt". Deutscher
@@ -3927,7 +3774,7 @@
            das draußen ist, steht nur oben; darunter erst die eigenen,
            dann die zum Kaufen. */
         var eigene = liste.filter(function (k) { return k !== art && (ich.tiere || {})[k]; });
-        var kaufbar = liste.filter(function (k) { return k !== art && !(ich.tiere || {})[k] && !TIERE[k].fusion; });
+        var kaufbar = liste.filter(function (k) { return k !== art && !(ich.tiere || {})[k]; });
         var angebot = (eigene.length ? '<p class="sp-klein sp-tier-gruppe">Deine Tiere</p>' : "") + eigene.concat(kaufbar.length ? ["__kaufen"] : [], kaufbar).map(function (k) {
           if (k === "__kaufen") return '<p class="sp-klein sp-tier-gruppe">Zu kaufen</p>';
           /* FASSUNG 641 — „die Monster die ich gekauft habe immer noch
@@ -3941,9 +3788,8 @@
         return kopfT + jetzt + angebot;
       };
       return '<p class="sp-klein">Zwei Plätze: eins am Boden, eins in der Luft. Alles, was du kaufst, bleibt deins – wechseln kostet nichts. Tiere sterben nicht – bei 0 Kraft sind sie schwach und wehren nicht mehr ab, bis du sie fütterst. Jede Stufe: +15 % Abwehr, +10 Kraft; ab Stufe 2 kommt die zweite Fähigkeit dazu.</p>'
-        + platz("boden", TIERE_BODEN.concat(fusionsTiere(false)), ich.haustier, ich.haustier_leben, ich.haustier_max, ich.haustier_stufe)
-        + platz("luft", TIERE_LUFT.concat(fusionsTiere(true)), ich.flugtier, ich.flugtier_leben, ich.flugtier_max, ich.flugtier_stufe)
-        + fusionHtml(ich);
+        + platz("boden", TIERE_BODEN, ich.haustier, ich.haustier_leben, ich.haustier_max, ich.haustier_stufe)
+        + platz("luft", TIERE_LUFT, ich.flugtier, ich.flugtier_leben, ich.flugtier_max, ich.flugtier_stufe);
     }
     if (reiter === "waffen") {
       var liste = WAFFEN_REIHE.map(function (k) {
@@ -4114,7 +3960,6 @@
     if (tu === "essen") return essen(k.dataset.d);
     if (tu === "fuettern") return fuettern(k.dataset.w, k.dataset.f);
     if (tu === "tierraus") return tierWechseln(k.dataset.a);
-    if (tu === "fusion") return fusionieren(k.dataset.k);
     if (tu === "kategorie") { S.kategorie = k.dataset.k || null; if (S.kategorie === "aussprache") { sprechWortHolen(0); return; } aufgabeHolen(false); return; }
     if (tu === "sprechhoeren") return sprechHoeren();
     if (tu === "sprechen") return sprechAufnehmen();
@@ -4693,7 +4538,7 @@
       schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
       turmZeile: turmZeile, platzGewechselt: platzGewechselt,
       eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,
-      krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
+      krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,

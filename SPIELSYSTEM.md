@@ -551,3 +551,15 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Im Laden bis zum Level gesperrt („ab Level N"), im Waffenrad als eigener goldener Sektor „Meister", im Waffen-Menü als Gruppe „Meister".
 - Server: `spiel_waffe_schaden`, `spiel_treffer` (Abnutzung), `spiel_kaufen` (Preis, Level-Sperre). Im Rollback getestet (Kauf, Treffer mit Fairness-Faktor).
 - Sonde: `pruefe-664-meisterwaffen.js` (5 Prüfungen); alle Spiel-Sonden grün (auch parallel).
+
+## Fassung 665 — Tier-Fusion
+
+- Funk: „Fusion". Zwei eigene Tiere, beide ab Stufe 2, verschmelzen zu einem neuen, stärkeren Tier (200 Punkte, ab Level 6). Die beiden Zutaten gehen im neuen Tier auf; das neue startet mit Stufe 1 und voller Kraft und kommt sofort raus.
+  - Feuerfuchs (Boden) = Fuchs + Phönix: beißt mit Glut, 45 % zurück, ab Stufe 2 +2 Glut; Flammen am Biss.
+  - Greif (Luft) = Eule + Schäferhund: Adlerkopf, Löwenleib, 50 % zurück, ab Stufe 2 warnt er (1/10 weniger Schaden).
+  - Regenbogendrache (Luft) = Babydrache + Einhorn: Regenbogenfeuer, 55 % zurück, ab Stufe 2 heilt er (+3 LP).
+- Reiter Tiere → Abschnitt „Fusion": jedes Rezept mit Bildern der Zutaten (grau, solange sie fehlen oder zu schwach sind), der Knopf sagt, was fehlt. Nachfrage vor dem Verschmelzen. Fusionstiere stehen nicht zum Kaufen da.
+- Feier: beide Tiere fliegen über dem eigenen Bild zusammen, drehen sich umeinander, Lichtblitz mit Ton genau im Moment der Verschmelzung, dann erscheint das neue Tier.
+- Drei neue Zeichnungen, jede ganz in ihrer Kachel (geprüft mit getBBox).
+- Server: `spiel_fusion(p_rezept)` (neu), `spiel_tier_max`, `spiel_tier_wechseln` (Greif/Regenbogendrache fliegen), `spiel_treffer` (Gegenwehr, Warnung, Heilung). Im Rollback getestet (Fuchs draußen + Phönix im Besitz → Feuerfuchs draußen, beide Zutaten weg, 200 Punkte abgezogen; fehlende Stufe 2 wird abgelehnt).
+- Sonde: `pruefe-665-tier-fusion.js` (14 Prüfungen, 360 px). Alle Spiel-Sonden grün (in Vierergruppen; 28 gleichzeitig sind dem Rechner zu viel). `pruefe-658` misst jetzt vor dem Foto (das Glühen hält nur 1,3 s).
