@@ -247,3 +247,14 @@ Lebenspunkte, Punkte, Inventar und Treffer liegen in der Datenbank. Schreiben da
   - Die Liste der vorhandenen Töne wurde beim ersten Aufruf fest gemerkt. War sie da noch leer, klang kein einziges Geräusch mehr. Eine leere Liste wird jetzt nie gemerkt.
   - „Ton testen“ (Menü → Mehr) sagt auf dem Gerät, woran es liegt: Töne aus (schaltet ein), Liste nicht geladen, Browser blockiert (Ersatzweg) oder Ton läuft.
 - **Sonde:** `werkzeug/pruefe-641-tiere-sparring-leiste.js`. Die Sonden 633, 634 und 637 sind an die neue Leiste angepasst.
+
+### Fassung 642 (Xander, 25.09. nachts)
+- **Döner-Katapult** (13 Schaden, 70 Punkte): eine echte Dönertasche (Brot mit Sesam, Fleisch, Salat, Tomate, rote Zwiebel, weiße Soße). Sie fliegt im hohen Bogen; Töne katapult4 und doenerklatsch.
+- **Arcade-Waffen**, Turrican-artig:
+  - Maschinengewehr (12, 110): Salve aus sechs Kugeln (mgsalve).
+  - Laser-Salve (10, 80): drei farbige Blitze (lasersalve).
+  - Beide nutzen sich ab wie die anderen gekauften Waffen.
+- **Menü → Waffen** in Gruppen: Standard, Lustig, Arcade, Stark.
+- **Sauerkraut feiner:** viele dünne, gewellte Fäden (0,5–1 breit) mit Saftspur und Kümmel statt breiter Streifen.
+- **Babydrache:** gleiche Form, dazu Schuppen, Flügeladern, Bauchstreifen und Rückenzacken; er blinzelt alle paar Sekunden.
+- **Sonde:** `werkzeug/pruefe-642-doener-salven.js`.

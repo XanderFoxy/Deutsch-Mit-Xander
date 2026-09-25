@@ -425,12 +425,3 @@ body.sp-legen #lcPlaetze .lc-kreis { outline: 2px dashed rgba(226, 64, 58, .55);
   animation: spFlut 1.8s linear infinite; }
 @keyframes spFlut { to { stroke-dashoffset: -18.2; } }
 @media (prefers-reduced-motion: reduce) { .sp-lp .sp-flut { animation: none; } }
-/* FASSUNG 642 — der Babydrache blinzelt: die Lider (in Hautfarbe)
-   klappen alle paar Sekunden kurz über die Augen. */
-.sp-blinzeln ellipse { transform-box: fill-box; transform-origin: 50% 0; transform: scaleY(0); animation: spBlinzeln 4.2s ease-in-out infinite; }
-.sp-blinzeln ellipse:nth-child(2) { animation-delay: .04s; }
-@keyframes spBlinzeln { 0%, 92%, 100% { transform: scaleY(0); } 95% { transform: scaleY(1); } }
-.sp-geschoss.sp-g-mg { width: 12px; height: 6px; }
-.sp-geschoss.sp-g-lasersalve { width: 22px; height: 7px; filter: drop-shadow(0 0 3px rgba(120, 255, 170, .9)); }
-.sp-geschoss.sp-g-doener { width: 40px; height: 30px; }
-@media (prefers-reduced-motion: reduce) { .sp-blinzeln ellipse { animation: none; } }
