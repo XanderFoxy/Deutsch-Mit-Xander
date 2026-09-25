@@ -644,3 +644,11 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Extra-Spiele: `spiel_extra_lohn` am Ende von Tower Defense und Rundenkampf – aus den richtigen, vom Server geprüften Antworten seit Spielbeginn (2 je Antwort + Ergebnis), je Spiel höchstens 25, je Tag 60, jeder Spielbeginn nur einmal. Ohne richtige Antwort kein Lohn.
 - Seite: der Fuchs-Bonus las einen veralteten Punktestand und hätte Spielpunkte überschrieben – er liest jetzt frisch.
 - Sonde: `pruefe-675-punkte-ranking.js` (5 Prüfungen); Datenbank im Rollback geprüft (Profil +10, seiten_stand +10, Heute +10, Tagesstand +10, Extra-Lohn +6 und nur einmal, kein Rücktausch).
+
+## Fassung 676 — Verkaufen und sichtbare Rüstung
+
+- XANDER: „Wenn man sich Dinge kauft und die nicht mehr haben möchte, weil man sich etwas anderes Besseres kaufen möchte, dann gib den Benutzern die Möglichkeiten die Waffen zu zerstören und das Geld dafür zu bekommen".
+  - Server `spiel_verkaufen`: Waffe = halber Kaufpreis × Zustand (mindestens 5), Tier = halber Preis (Fusionstiere 100), Helm/Brustpanzer = eine Stufe zurück für den halben Stufenpreis. Startwaffen bleiben. Der Erlös geht auf die Spielpunkte, NICHT auf „verdient" – kein Punkten im Ranking durch Kaufen und Verkaufen. Im Rollback geprüft (Bazooka +74, Drache +125, Helm Stufe 3 +45, verdient und Profil unverändert).
+  - In den Reitern Waffen, Tiere und Schutz: „Verkaufen · +N"; erster Tipp fragt „Wirklich?", zweiter verkauft.
+- XANDER: „dass die Rüstung, die wir uns kaufen sichtbar ist, dass sie angelegt wird". Statt eines dünnen Bogens: ein Helm als Kuppel über dem Bild (Nieten, Glanz, ab Stufe 3 roter Federbusch) und ein Brustpanzer aus Plattenreihen unter dem Bild – Bronze, Stahl, Gold. Gesichtsmitte bleibt frei (Sonde 634).
+- Sonde: `pruefe-676-verkaufen-ruestung.js` (8 Prüfungen). Alle Spiel-Sonden grün.

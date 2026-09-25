@@ -3783,31 +3783,8 @@
       if (extra.daemon) s += '<path class="sp-ladung-voll sp-ladung-daemon" d="' + bogen(T0, T1) + '"/>';
       else if (ld > 0.005) s += '<path class="sp-ladung-voll' + (ld >= 1 ? " sp-ladung-bereit" : "") + '" d="' + bogen(T0, T0 + (T1 - T0) * ld) + '"/>';
       /* Außen: Helm oben, Brustpanzer unten. */
-      /* FASSUNG 676 — XANDER: „dass die Rüstung, die wir uns kaufen sichtbar
-         ist, dass sie angelegt wird". Bis 675 war sie nur ein dünner Bogen.
-         Jetzt: ein HELM als Kuppel über dem Bild (mit Nieten, ab Stufe 3
-         mit Federbusch) und ein BRUSTPANZER aus Plattenreihen unter dem
-         Bild – Bronze, Stahl, Gold. Beides liegt außerhalb des Rings, die
-         Gesichtsmitte bleibt frei. Der alte Bogen bleibt als Krempe. */
-      var pkt = function (w, r) { var t = w * Math.PI / 180; return (50 + r * Math.cos(t)).toFixed(1) + " " + (50 + r * Math.sin(t)).toFixed(1); };
-      if (extra.helm > 0) {
-        var hs = Math.min(3, extra.helm);
-        s += '<path class="sp-ruest sp-ruest-' + hs + '" d="' + bogen(215, 325, 52.5) + '"/>'
-          + '<g class="sp-helm sp-helm-' + hs + '"><path class="sp-helm-schale" d="M' + pkt(212, 52.5) + " A52.5 52.5 0 0 1 " + pkt(328, 52.5) + ' C 92 -30, 8 -30, ' + pkt(212, 52.5) + ' Z"/>'
-          + '<path class="sp-helm-glanz" d="M' + pkt(236, 57) + ' Q 36 -9, 50 -12"/>'
-          + '<path class="sp-helm-kamm" d="M50 -14.5 V' + (50 - 53.5).toFixed(1) + '"/>'
-          + [228, 250, 290, 312].map(function (w) { return '<circle class="sp-niete" cx="' + pkt(w, 55.5).split(" ")[0] + '" cy="' + pkt(w, 55.5).split(" ")[1] + '" r="1.1"/>'; }).join("")
-          + (hs >= 3 ? '<path class="sp-helm-busch" d="M50 -14 C 44 -26, 58 -30, 66 -24 C 60 -24, 56 -20, 54 -14 Z"/>' : "")
-          + "</g>";
-      }
-      if (extra.brust > 0) {
-        var bs = Math.min(3, extra.brust);
-        s += '<path class="sp-ruest sp-ruest-' + bs + '" d="' + bogen(35, 145, 52.5) + '"/>'
-          + '<g class="sp-brust sp-brust-' + bs + '"><path class="sp-brust-grund" d="' + bogen(40, 140, 55.5) + '"/>'
-          + '<path class="sp-brust-platten" d="' + bogen(40, 140, 55.5) + '"/>'
-          + [60, 90, 120].map(function (w) { return '<circle class="sp-niete" cx="' + pkt(w, 55.5).split(" ")[0] + '" cy="' + pkt(w, 55.5).split(" ")[1] + '" r="1"/>'; }).join("")
-          + "</g>";
-      }
+      if (extra.helm > 0) s += '<path class="sp-ruest sp-ruest-' + Math.min(3, extra.helm) + '" d="' + bogen(215, 325, 52.5) + '"/>';
+      if (extra.brust > 0) s += '<path class="sp-ruest sp-ruest-' + Math.min(3, extra.brust) + '" d="' + bogen(35, 145, 52.5) + '"/>';
       /* Links: die Levelzahl, zwischen Lebenspunkten und Ladung. */
       if (extra.level) {
         /* Etwas nach innen gerückt (Radius 44 statt 45,5, Kreis 8,5):
@@ -4566,7 +4543,6 @@
             + '<button type="button" data-tu="fuettern" data-w="' + welches + '" data-f="bratwurst"' + (vorrat(ich, "bratwurst") && kraft < max ? "" : " disabled") + ">🌭 +12 (" + vorrat(ich, "bratwurst") + ")</button>"
             + '<button type="button" data-tu="fuettern" data-w="' + welches + '" data-f="sauerkraut"' + (vorrat(ich, "sauerkraut") && kraft < max ? "" : " disabled") + ">🥬 +8 (" + vorrat(ich, "sauerkraut") + ")</button>"
             + ((stufe || 1) < 3 ? '<button type="button" data-tu="kaufen" data-d="' + (welches === "boden" ? "tier_stufe" : "flugtier_stufe") + '"' + (ich.punkte >= 60 * (stufe || 1) ? "" : " disabled") + ">Stufe " + ((stufe || 1) + 1) + " · " + 60 * (stufe || 1) + "</button>" : "")
-            + verkaufKnopf(art, tierErloes(art))
             + "</span></div>";
         }
         /* FASSUNG 646 — XANDER: „die Tiere die ich schon gekauft hab die
@@ -4581,7 +4557,7 @@
              verfügbar … wechseln können": wer es besitzt, holt es raus. */
           var d = TIERE[k], hat = art === k, besitzt = Boolean((ich.tiere || {})[k]);
           return '<div class="sp-zeile' + (d.magie ? " sp-tier-magisch" : "") + '"><span class="sp-tier-bild sp-tier-bild-' + (welches === "luft" ? "luft" : "boden") + '">' + tierSvg(k, true) + "</span><span><b>" + esc(d.name) + "</b>" + (d.magie ? ' <small class="sp-magie">magisch</small>' : "") + "<br><small>" + esc(d.was) + (besitzt && !hat ? " · deins, " + ((ich.tiere[k] || {}).kraft || 0) + " Kraft" : "") + "</small></span>"
-            + (hat ? "<small>draußen</small>" : besitzt ? '<span class="sp-knopfgruppe"><button type="button" data-tu="tierraus" data-a="' + k + '">Rausholen</button>' + verkaufKnopf(k, tierErloes(k)) + "</span>"
+            + (hat ? "<small>draußen</small>" : besitzt ? '<button type="button" data-tu="tierraus" data-a="' + k + '">Rausholen</button>'
                    : '<button type="button" data-tu="kaufen" data-d="' + k + '"' + (ich.punkte >= d.preis ? "" : " disabled") + ">Kaufen · " + d.preis + "</button>")
             + "</div>";
         }).join("");
@@ -4598,8 +4574,7 @@
         var h = hat ? haltVon(ich, k) : -1;
         return '<div class="sp-zeile"><span class="sp-bild">' + geschossSvg(k, S.laserfarbe) + "</span><span><b>" + esc(w.name) + "</b><br><small>Schaden " + w.schaden + (k === "zielfernrohr" ? ", langsam" : "") + (w.art ? " · " + esc(w.art) : "")
           + (h >= 0 ? " · " + (h > 0 ? "hält noch " + h + "/60" : '<span class="sp-rot">stumpf – halber Schaden</span>') : "") + "</small></span>"
-          + (hat ? '<span class="sp-knopfgruppe">' + (S.waffe === k ? '<button type="button" data-tu="ablegen">Ablegen</button>' : '<button type="button" data-tu="anlegen" data-w="' + k + '">Anlegen</button>')
-                   + (STARTWAFFEN.indexOf(k) < 0 ? verkaufKnopf(k, Math.max(5, Math.round(w.preis * 0.5 * (h < 0 ? 60 : Math.min(60, h)) / 60))) : "") + "</span>"
+          + (hat ? (S.waffe === k ? '<button type="button" data-tu="ablegen">Ablegen</button>' : '<button type="button" data-tu="anlegen" data-w="' + k + '">Anlegen</button>')
                  : w.ab && (ich.level || 1) < w.ab ? '<button type="button" disabled>ab Level ' + w.ab + "</button>"
                  : '<button type="button" data-tu="kaufen" data-d="' + k + '">🔒 ' + w.preis + " Punkte</button>")
           + "</div>";
@@ -4685,7 +4660,6 @@
         + '<span class="sp-knopfgruppe">'
         + (st > 0 && halt < 40 ? '<button type="button" data-tu="kaufen" data-d="reparatur_' + r[0] + '"' + (ich.punkte >= 10 ? "" : " disabled") + ">Reparieren · 10</button>" : "")
         + (st < 3 ? '<button type="button" data-tu="kaufen" data-d="' + r[0] + '"' + (ich.punkte >= preis ? "" : " disabled") + ">" + (st ? "Stufe " + (st + 1) : "Kaufen") + " · " + preis + "</button>" : "")
-        + (st > 0 ? verkaufKnopf(r[0], Math.round(PREIS[st - 1] / 2)) : "")
         + "</span></div>";
     }).join("");
   }
@@ -4746,16 +4720,6 @@
     if (tu === "ablegen") { S.waffe = ""; zeichnen(); panelAuffrischen(); return; }
     if (tu === "farbe") { S.laserfarbe = k.dataset.f; try { localStorage.setItem("dma_spiel_laser", S.laserfarbe); } catch (e) {} panelAuffrischen(); return; }
     if (tu === "kaufen") return kaufen(k.dataset.d);
-    if (tu === "verkaufen") {
-      /* Erst fragen, dann verkaufen – ein Tipp daneben bricht ab. */
-      if (!k.classList.contains("sp-sicher")) {
-        panel.querySelectorAll(".sp-verkauf.sp-sicher").forEach(function (x) { x.classList.remove("sp-sicher"); x.textContent = "Verkaufen · +" + x.dataset.e; });
-        k.classList.add("sp-sicher"); k.textContent = "Wirklich? +" + k.dataset.e;
-        setTimeout(function () { if (k.isConnected && k.classList.contains("sp-sicher")) { k.classList.remove("sp-sicher"); k.textContent = "Verkaufen · +" + k.dataset.e; } }, 3500);
-        return;
-      }
-      return verkaufen(k.dataset.d);
-    }
     if (tu === "turmsetzen") { S.turmSetzen = true; setTimeout(function () { S.turmSetzen = false; }, 30000); schliessen(); hinweis("🗼 Tippe auf einen freien Platz – dort steht dann dein Turm."); return; }
     if (tu === "turmzurueck") return turmPlatz(null);
     if (tu === "heilen") return heilen(k.dataset.art, k.dataset.ziel || "");
@@ -4831,29 +4795,6 @@
       zahlZeigen(meineChatId(), null, name);
       panelAuffrischen(); zeichnen();
     }).catch(function (e) { hinweis("Trinken ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  /* FASSUNG 676 — XANDER: „Wenn man sich Dinge kauft und die nicht mehr
-     haben möchte, weil man sich etwas anderes Besseres kaufen möchte, dann
-     gib den Benutzern die Möglichkeiten die Waffen zu zerstören und das
-     Geld dafür zu bekommen". Waffe: halber Preis × Zustand, Tier: halber
-     Preis, Rüstung: eine Stufe zurück. Zweimal tippen (Sicherheit). Der
-     Erlös zählt nicht im Ranking – er ist nicht verdient. */
-  var STARTWAFFEN = ["kartoffel", "zwille", "bogen", "laser"];
-  function tierErloes(art) { var d = TIERE[art] || {}; return Math.round((d.fusion ? 200 : d.preis || 200) * 0.5); }
-  function verkaufKnopf(ding, erloes) {
-    return '<button type="button" class="sp-verkauf" data-tu="verkaufen" data-d="' + ding + '" data-e="' + erloes + '">Verkaufen · +' + erloes + "</button>";
-  }
-  function verkaufen(ding) {
-    rpc("spiel_verkaufen", { p_ding: ding }).then(function (r) {
-      if (!r || !r.ok) { hinweis("💰 " + ((r && r.grund) || "geht nicht")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
-      if (S.waffe === ding) S.waffe = "";
-      ton("kasse", 0.45);
-      senden({ ereignis: "stand", stand: oeffentlich(r) });
-      var name = (WAFFEN[ding] || TIERE[ding] || {}).name || (ding === "helm" ? "Helm-Stufe" : ding === "brust" ? "Brustpanzer-Stufe" : ding);
-      hinweis("💰 " + name + " verkauft: +" + r.erloes + " Punkte.");
-      schnellZeichnen(); panelAuffrischen(); zeichnen();
-    }).catch(function (e) { hinweis("Verkauf ging nicht: " + (e && e.message ? e.message : e)); });
   }
   function kaufen(ding) {
     rpc("spiel_kaufen", { p_ding: ding }).then(function (r) {
