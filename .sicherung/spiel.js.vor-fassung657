@@ -467,7 +467,7 @@
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
      "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
      "level", "skills", "helm", "brust", "ladung", "daemon",
-     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -815,11 +815,7 @@
     if (n.ziel_stand && n.ziel_stand.id) S.stand[n.ziel_stand.id] = n.ziel_stand;
     if (n.ich_stand && n.ich_stand.id) S.stand[n.ich_stand.id] = n.ich_stand;
     /* Wer nicht mitspielt, bekommt nur den Stand – keine Bilder, keine Töne. */
-    if (!spielSichtbar() && n.ereignis !== "duell" && n.ereignis !== "duellnein") {
-      /* FASSUNG 657 — nur ein freigegebenes Schaufenster (Level, Tiere) neu zeichnen. */
-      if (n.ereignis === "stand" && n.stand && n.stand.zeigen) zeichnen();
-      return;
-    }
+    if (!spielSichtbar() && n.ereignis !== "duell" && n.ereignis !== "duellnein") return;
     if (n.ereignis === "schuss") {
       geschossZeigen(n.von, n.zielChat, n.waffe, n.dx, n.dy, n.farbe, Boolean(n.schnell));
     } else if (n.ereignis === "treffer") {
@@ -2430,12 +2426,6 @@
       inhaltM = '<div class="sp-sm-laut"><span>Töne</span>' + LAUT_STUFEN.map(function (l, i) {
           return '<button type="button" data-s="laut" data-n="' + i + '" class="' + (lautJetzt === i ? "sp-an" : "") + '">' + l[0] + "</button>";
         }).join("") + "</div>"
-        /* FASSUNG 657 — „Können wir da irgendwie über den Schalter
-           entscheiden, was wir anzeigen wollen". Zwei Schalter: sie gelten
-           für ALLE im Raum, auch für die, die nicht mitspielen. */
-        + (function () { var z = ich.zeigen || {}; return '<div class="sp-sm-laut sp-sm-zeigen"><span>Auch ohne Spiel zeigen</span>'
-          + '<button type="button" data-s="zeigen" data-k="level" class="' + (z.level ? "sp-an" : "") + '">Level</button>'
-          + '<button type="button" data-s="zeigen" data-k="tiere" class="' + (z.tiere ? "sp-an" : "") + '">Tiere</button></div>'; })()
         + '<p class="sp-sm-klein">Aufs eigene Bild: <b>2× tippen</b> wechselt die Waffe, <b>lang drücken</b> öffnet das Zauberrad.</p>'
         + '<div class="sp-sm-liste">'
         + '<button type="button" data-s="sparring" class="' + (S.sparring ? "sp-an" : "") + '">Sparringspartner ' + (S.sparring ? "weg" : "aufstellen") + "</button>"
@@ -2480,18 +2470,6 @@
       lautSetzen(ln);
       if (ln > 0) { try { if (B().toeneSetzen) B().toeneSetzen(true); } catch (e) {} klangWecken(); setTimeout(function () { ton("bling", 0.6); }, 60); }
       hinweis(ln > 0 ? "🔊 Spieltöne: " + LAUT_STUFEN[ln][0] + "." : "🔇 Spieltöne sind aus.");
-    } else if (s === "zeigen") {
-      var zAlt = (S.ich && S.ich.zeigen) || {}, zNeu = { level: Boolean(zAlt.level), tiere: Boolean(zAlt.tiere) };
-      zNeu[k.dataset.k] = !zNeu[k.dataset.k];
-      if (S.ich) S.ich.zeigen = zNeu;
-      rpc("spiel_zeigen", { p_level: zNeu.level, p_tiere: zNeu.tiere }).then(function (r) {
-        if (r && r.ok === false) { if (S.ich) S.ich.zeigen = zAlt; hinweis(r.grund || "Das ging gerade nicht."); }
-        else if (r) { S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) }); }
-        zeichnen(); schnellZeichnen(true);
-      }).catch(function () { if (S.ich) S.ich.zeigen = zAlt; hinweis("Das ging gerade nicht – gleich noch mal."); schnellZeichnen(true); });
-      hinweis(k.dataset.k === "level"
-        ? (zNeu.level ? "⭐ Dein Level sehen jetzt alle – auch wer nicht mitspielt." : "Dein Level sieht jetzt nur, wer mitspielt.")
-        : (zNeu.tiere ? "🐾 Deine Tiere sind jetzt immer dabei – friedlich, für alle." : "Deine Tiere zeigen sich nur noch im Spiel."));
     } else if (s === "platzmenue") {
       S.schnellMenue = false;
       try { var eig = document.querySelector("#lcPlaetze .lc-platz-ich"); if (eig && window.DMA_PRUEFUNG && window.DMA_PRUEFUNG.platzMenue) { eigenLangFrei = true; window.DMA_PRUEFUNG.platzMenue(eig); eigenLangFrei = false; } } catch (e) { eigenLangFrei = false; }
@@ -2716,16 +2694,7 @@
          Übungs-Lebenspunkte (die echten bleiben unberührt). */
       var uebungIch = Boolean(S.uebung && chatId && chatId === meineChatId());
       if (uebungIch) s = Object.assign({}, s || { name: "Du", schild: 0 }, { lp: S.uebung.lp, lp_max: S.uebung.max, kaputt: S.uebung.lp <= 0 });
-      /* FASSUNG 657 — XANDER: „kann man da unsere Level auch anzeigen wenn
-         man mit normalen Leuten chatten oder Livestream machen ohne dass
-         wir spielen … die [Tiere] find ich schon ganz süß … wenn die immer
-         mit dabei sind". Wer nicht mitspielt, sieht vom Spiel nichts —
-         außer dem, was jemand selbst zum Zeigen freigegeben hat
-         (Menü → Mehr → „Auch ohne Spiel zeigen"): die Levelzahl und die
-         Tiere, friedlich, ohne Ringe, Mauer und Kampf. */
-      var schau = Boolean(s && kreis && !spielSichtbar() && !uebungIch && !istPuppe(chatId) && s.zeigen && (s.zeigen.level || s.zeigen.tiere));
-      if (!s || !kreis || (!spielSichtbar() && !uebungIch && !istPuppe(chatId))) { platzLeeren(el, schau); if (schau) schaufenster(el, s, kreis); return; }
-      var altSchau = el.querySelector(".sp-schau"); if (altSchau) altSchau.remove();
+      if (!s || !kreis || (!spielSichtbar() && !uebungIch && !istPuppe(chatId))) { platzLeeren(el); return; }
       /* FUNK 110 — XANDER: „überleg mal ob du Mana und die Lebensanzeige
          vielleicht unten in das Kreisrund von der Profilanzeige so bauen
          kannst dass du unten den Platz nicht wegnimmst".
@@ -2895,18 +2864,8 @@
     s.style.width = kreis.offsetWidth + "px";
     s.style.height = kreis.offsetHeight + "px";
   }
-  /* FASSUNG 657 — das Schaufenster: nur Levelzahl und Tiere, sonst nichts. */
-  function schaufenster(el, s, kreis) {
-    var z = s.zeigen || {};
-    var lv = z.level && s.level ? Math.min(99, s.level) : 0;
-    var la = 186 * Math.PI / 180, lx = (50 + 44 * Math.cos(la)).toFixed(1), ly = (50 + 44 * Math.sin(la)).toFixed(1);
-    schmuck(el, "sp-schau", Boolean(lv), kreis, lv ? '<svg viewBox="0 0 100 100"><g class="sp-level"><circle cx="' + lx + '" cy="' + ly + '" r="8.5"/><text x="' + lx + '" y="' + ly + '" dy=".36em">' + lv + "</text></g></svg>" : "");
-    var boden = Boolean(z.tiere && s.haustier), luft = Boolean(z.tiere && s.flugtier);
-    schmuck(el, "sp-tier", boden, kreis, boden ? tierSvg(s.haustier) : "", "sp-tier-" + (s.haustier || "fellmonster") + " sp-tier-friedlich");
-    schmuck(el, "sp-flugtier", luft, kreis, luft ? tierSvg(s.flugtier) : "", "sp-tier-" + (s.flugtier || "drache") + " sp-tier-friedlich");
-  }
-  function platzLeeren(el, schau) {
-    el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer," + (schau ? "" : ".sp-tier,.sp-flugtier,.sp-schau,") + ".sp-geschuetz,.sp-risse,.sp-waffenmarke" + (el.querySelector(".sp-sparring") && Number(el.dataset.lcPlatz) === S.sparring ? "" : ",.sp-sparring")).forEach(function (x) { x.remove(); });
+  function platzLeeren(el) {
+    el.querySelectorAll(".sp-lp,.sp-mana,.sp-aura,.sp-mauer,.sp-tier,.sp-flugtier,.sp-geschuetz,.sp-risse,.sp-waffenmarke" + (el.querySelector(".sp-sparring") && Number(el.dataset.lcPlatz) === S.sparring ? "" : ",.sp-sparring")).forEach(function (x) { x.remove(); });
     el.querySelectorAll(".sp-nebel,.sp-zwerg,.sp-formular,.sp-brezelbauch").forEach(function (x) { x.remove(); });
     el.classList.remove("sp-w-hexe");
     el.classList.remove("sp-kaputt", "sp-anfaenger", "sp-w-kraft", "sp-w-ziel", "sp-w-tempo", "sp-w-eisen", "sp-w-tarn", "sp-w-daemon", "sp-w-wackel");

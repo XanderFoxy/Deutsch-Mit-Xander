@@ -473,3 +473,12 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - XANDER: „ich möchte, dass der Phoenix eine eigene Effekt-Animation hat, dass das nicht gleich aussieht mit dem von dem Baby-Drachen". Der Phönix steigt über das Bild und stürzt dreimal über Kreuz als Feuerschweif hindurch, mit Glutspur und Goldfeuer; am Ende regnen goldene Federn. Der Drache kreist weiter mit Feuerstrahl.
 - XANDER: „der kleine Fellkerl kann sich richtig fest beißen mit seinen Zähnen, so dass man sieht, dass er da dran reißt". Beim Biss schnappen Zähne am Bissort zu; das Tier zerrt sechsmal nach hinten, und das Bild des Gegners wird bei jedem Ruck mitgezogen (alle Bodentiere außer dem Einhorn, das mit dem Horn sticht).
 - Sonde: `pruefe-656-phoenix-biss.js` (6 Prüfungen); 655 tippt ein zweites Mal, falls der erste Tipp nur den Rahmen ausrichtet.
+
+## Fassung 657 — Level und Tiere auch ohne Spiel (Schalter)
+
+- XANDER: „Wie ist es denn im normalen Modus? Können wir da irgendwie über den Schalter entscheiden, was wir anzeigen wollen kann man da unsere Level auch anzeigen wenn man mit normalen Leuten chatten oder Livestream machen ohne dass wir spielen … die find ich schon ganz süß … wenn die immer mit dabei sind".
+- Menü → Mehr → „Auch ohne Spiel zeigen": zwei Schalter, **Level** und **Tiere**. Sie gelten für alle im Raum, auch für die, die nicht mitspielen. Standard: beide aus.
+- Wer nicht mitspielt, sieht bei so jemandem nur das Schaufenster: die Levelzahl am linken Rand (wie im Ring, Gesichtsmitte frei) und die Tiere, friedlich atmend. Kein Ring, keine Mauer, kein Turm, keine Angriffe, keine Töne.
+- Wer mitspielt, sieht wie bisher das volle Spiel; das Schaufenster verschwindet dort.
+- Server: Spalte `spiel_spieler.zeigen` (jsonb), Funktion `spiel_zeigen(p_level, p_tiere)` (SECURITY DEFINER, nur angemeldet), `spiel_oeffentlich` liefert `zeigen` mit. Im Rollback getestet.
+- Sonde: `pruefe-657-zeigen-ohne-spiel.js` (15 Prüfungen); alle 21 Spiel-Sonden grün.

@@ -856,22 +856,3 @@ body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: bl
 @keyframes spSchwanzWehen { from { transform: rotate(-3deg); } to { transform: rotate(4deg); } }
 .sp-phoenix-augen { animation: spSchwanzWehen 1.4s ease-in-out infinite alternate; transform-box: view-box; transform-origin: 96px 19px; }
 @media (prefers-reduced-motion: reduce) { .sp-bisszaehne g, .sp-phoenix-schwanz path, .sp-phoenix-augen { animation: none; } }
-
-/* =========================================================
-   FASSUNG 657 — Schaufenster ohne Spiel
-   XANDER: „kann man da unsere Level auch anzeigen wenn man mit normalen
-   Leuten chatten oder Livestream machen ohne dass wir spielen … die
-   [Tiere] find ich schon ganz süß … wenn die immer mit dabei sind".
-   Nur Levelzahl und Tiere, am Rand — die Gesichtsmitte bleibt frei.
-   ========================================================= */
-.sp-schau { position: absolute; pointer-events: none; z-index: 6; }
-.sp-schau svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.sp-schau .sp-level circle { fill: #1d2330; stroke: #f2b705; stroke-width: 2; }
-.sp-schau .sp-level text { fill: #fff; font: 800 11.5px system-ui, sans-serif; text-anchor: middle; }
-/* Friedlich: keine Kampfhaltung, nur leises Atmen. */
-.sp-tier.sp-tier-friedlich, .sp-flugtier.sp-tier-friedlich { pointer-events: none; }
-.sp-tier-friedlich svg { animation: sp-friedlich-atmen 3.2s ease-in-out infinite; transform-origin: 50% 90%; }
-@keyframes sp-friedlich-atmen { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035, .975); } }
-.sp-sm-zeigen { flex-wrap: wrap; }
-.sp-sm-zeigen span { flex-basis: 100%; margin-bottom: 2px; }
-@media (prefers-reduced-motion: reduce) { .sp-tier-friedlich svg { animation: none; } }
