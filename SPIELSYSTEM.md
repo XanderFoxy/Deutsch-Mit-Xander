@@ -652,3 +652,16 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
   - In den Reitern Waffen, Tiere und Schutz: „Verkaufen · +N"; erster Tipp fragt „Wirklich?", zweiter verkauft.
 - XANDER: „dass die Rüstung, die wir uns kaufen sichtbar ist, dass sie angelegt wird". Statt eines dünnen Bogens: ein Helm als Kuppel über dem Bild (Nieten, Glanz, ab Stufe 3 roter Federbusch) und ein Brustpanzer aus Plattenreihen unter dem Bild – Bronze, Stahl, Gold. Gesichtsmitte bleibt frei (Sonde 634).
 - Sonde: `pruefe-676-verkaufen-ruestung.js` (8 Prüfungen). Alle Spiel-Sonden grün.
+
+## Fassung 677 — Feld, Sense, Saat, Mühle, Bäckerei, Markt
+
+- XANDER: „dass wir auf dem Feld arbeiten ernten können genauso wie mit der Schaufel … mit einer Sense arbeite und das Getreide, eben Absen … überall auf jeden Platz Getreide … pflanzen … dass ich das Werkzeug wechseln kann, indem ich zweimal … auf den Festplatz klicke".
+  - Werkzeug in der Hand: Schaufel, Sense oder Saatbeutel (gemerkt). Die Leiste zeigt es direkt hinter dem Controller (Tipp = weglegen) und daneben ⇄ für die Werkzeugwahl. 2× schnell auf denselben Platz öffnet die Wahl ebenfalls; der erste Tipp arbeitet trotzdem sofort.
+  - Mit Sense oder Saat wächst auf JEDEM freien Platz Getreide (im Kreis des Platzes): reif = goldene Ähren und „+2", sonst Stoppeln bzw. grüne Halme mit Uhr.
+  - Sense: schwingt mit „swoosh", Halme fliegen, +2 Getreide (gesät +5). Nach 4 Minuten ist das Feld wieder reif. Wer schneller tippt als die Sense (1,5 s), dessen Schnitt wartet kurz.
+  - Saat: nur auf gemähte Felder (ein reifes wird nicht verschenkt), 1 Getreide → nach 4 Minuten 5.
+- XANDER: „in der Bäckerei irgendwas backen … Stationen … beliefern, damit sie die Sachen verarbeiten … einsammeln … verkaufen … auf dem Markt".
+  - Neues Gebäude Mühle (ab Level 3, 90 × Stufe): Getreide → Mehl in 8 Minuten. Bäckerei: Mehl → Brot (1 Mehl) oder Kuchen (2 Mehl) in 10 Minuten. Je Gebäude ein Auftrag, höchstens 5 × Stufe. „Abholen", wenn fertig.
+  - Mein Dorf zeigt Lager, laufende Aufträge („fertig um …") und den Markt: Getreide 1, Mehl 3, Brot 6, Kuchen 14 Punkte. Brot +12 LP, Kuchen +30 LP und +10 Mana (auch im Heilen-Menü).
+  - Server: `spiel_ernten`, `spiel_saeen`, `spiel_beliefern`, `spiel_werk_abholen`, `spiel_markt` (Migrationen `spiel_677_*`), im Rollback geprüft. XANDER: „Nicht nur durch die Deutsch Aufgaben, sondern auch durch solche Sachen … bisschen bemerkbar machen": Marktgeld zählt bis 40 Punkte je Tag auch im Ranking der Seite (`spiel_677_markt_zaehlt_im_ranking`, im Rollback geprüft: 28 + 12, dann Schluss); der Rest nur als Spielpunkte.
+- Sonde: `pruefe-677-feld-muehle-markt.js` (30 Prüfungen, Android-Telefon mit Fingertipps). Alle 40 Spiel-Sonden grün.
