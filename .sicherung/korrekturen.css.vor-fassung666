@@ -34552,16 +34552,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
    Emoji vorher (1em) — sonst wächst das Menü und ragt unten hinaus. */
 .lc-platzmenue-zeichen svg { display: block; width: 1.4em; height: 1.4em; margin: -.2em auto; overflow: visible; }
 .lc-anreise-knopf svg { display: block; width: 26px; height: 26px; margin: 0 auto; }
-
-/* FASSUNG 666 — XANDER: „Wenn jetzt jemand ein längeren Namen hat, dann
-   gibt es Zeilen und Brüche, die das Design zerstören." Der Name unter dem
-   Platz bleibt immer eine Zeile; was nicht passt, endet mit „…". Der volle
-   Name steht weiter im Text (andere Teile lesen ihn dort). */
-#lcPlaetze .lc-platz-name, .lc-plaetze .lc-platz-name {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  overflow-wrap: normal;
-  max-width: 100%;
-}

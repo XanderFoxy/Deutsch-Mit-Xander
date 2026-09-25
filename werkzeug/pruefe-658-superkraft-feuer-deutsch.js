@@ -152,21 +152,17 @@ const sage = (gut, was, zusatz) => {
   sage(reiter.namen === "Waffen,Heilen,Tiere,Deutsch,Mehr", "fünf Reiter, Deutsch dazwischen", reiter.namen);
   sage(reiter.passt, "alle fünf passen aufs Telefon, Text nicht abgeschnitten, tippbar", JSON.stringify(await pg.evaluate(() => [...document.querySelectorAll(".sp-sm-reiter button")].map((b) => { const r = b.getBoundingClientRect(); const o = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return [b.textContent, Math.round(r.left), Math.round(r.right), b.scrollWidth, b.clientWidth, o === b || b.contains(o) ? "" : (o && o.className)]; }))));
   sage(/rgb\(31, 107, 58\)/.test(reiter.gruen), "der Deutsch-Reiter ist grün markiert", reiter.gruen);
+  /* FASSUNG 666 — XANDER: „das mit diesem Deutsch Menü das hätte ich wieder,
+     wie das vorher war". Der grüne Reiter führt direkt ins große Deutsch-Menü. */
+  await pg.evaluate(() => { window.__rufe.length = 0; });
   await tippe('.sp-sm-reiter [data-r="deutsch"]');
-  await pg.locator(".sp-schnellmenue").screenshot({ path: "/tmp/claude-0/p-658-menue.png" }).catch(() => {});
-  const dInhalt = await pg.evaluate(() => ({ los: !!document.querySelector('.sp-schnellmenue [data-s="deutschlos"][data-k=""]'),
-    arten: [...document.querySelectorAll('.sp-schnellmenue .sp-sm-arten [data-s="deutschlos"]')].map((b) => b.textContent).join(","),
-    text: (document.querySelector(".sp-schnellmenue .sp-sm-klein") || {}).textContent || "" }));
-  sage(dInhalt.los && /Punkte.*Mana.*Erfahrung/.test(dInhalt.text), "„Aufgabe lösen“ und was es bringt (Punkte, Mana, Erfahrung)", dInhalt.text);
-  sage(/Artikel/.test(dInhalt.arten) && /Aussprache/.test(dInhalt.arten), "gezielt: die Aufgabenarten als Knöpfe", dInhalt.arten);
-  await tippe('.sp-schnellmenue .sp-sm-arten [data-k="artikel"]');
   await tick(300);
   const auf = await pg.evaluate(() => ({ ruf: window.__rufe.filter((r) => r.name === "spiel_aufgabe").pop(), panel: !!(document.getElementById("spPanel") && !document.getElementById("spPanel").hidden),
-    frage: (document.querySelector("#spPanel .sp-frage-satz") || {}).textContent || "" }));
-  sage(auf.ruf && auf.ruf.args.p_kategorie === "artikel" && auf.panel && /nach Hause/.test(auf.frage), "„Artikel“ öffnet sofort eine Artikel-Aufgabe", JSON.stringify(auf.ruf && auf.ruf.args));
+    frage: (document.querySelector("#spPanel .sp-frage-satz") || {}).textContent || "", zu: !document.querySelector(".sp-schnellmenue") }));
+  sage(auf.ruf && auf.panel && /nach Hause/.test(auf.frage) && auf.zu, "Deutsch-Reiter öffnet direkt das große Deutsch-Menü mit Aufgabe", JSON.stringify(auf));
   await pg.evaluate(() => { const p = document.getElementById("spPanel"); if (p) p.hidden = true; const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = true; S.schnellReiter = "mehr"; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
   await tick(150);
-  sage(await pg.evaluate(() => !document.querySelector('.sp-schnellmenue [data-s="gross"][data-r="deutsch"]')), "unter „Mehr“ steht es nicht doppelt");
+  sage(await pg.evaluate(() => !!document.querySelector('.sp-schnellmenue [data-s="gross"][data-r="deutsch"]')), "unter „Mehr“ steht wieder „Deutsch-Aufgaben“");
 
   console.log("\nDAS TIER IST ERSCHÖPFT\n");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.haustier_leben = 0; S.stand[S.ich.id].haustier_leben = 0; S.schnellReiter = "tiere"; window.DMA_SPIEL.pruef.zeichnen(); window.DMA_SPIEL.pruef.schnellZeichnen(true); });

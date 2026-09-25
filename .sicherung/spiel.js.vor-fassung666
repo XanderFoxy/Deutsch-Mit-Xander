@@ -927,12 +927,6 @@
     zeichnen(); schnellZeichnen(true);
     return true;
   }
-  function langAufLeer(platz) {
-    if (!spielSichtbar()) return false;
-    grabenUmschalten();
-    if (!S.graben) hinweis("⛏️ Schaufel weggelegt.");
-    return true;
-  }
   function langAufEigen(platz) {
     if (eigenLangFrei || !spielSichtbar()) return false;
     S.zrad = true; S.rad = null; S.schnellMenue = false; S.radOffenSeit = Date.now();
@@ -1145,12 +1139,6 @@
     if (!el) return null;
     var k = el.querySelector(".lc-kreis") || el;
     var r = k.getBoundingClientRect();
-    /* FASSUNG 666 — XANDER: „Es werden irgendwelche Effekte, die offenbar
-       zum Spiel gehören, links oben beim Android angezeigt … da wo Deutsch
-       mit Alex steht". Ist das Klassenzimmer gerade nicht zu sehen (anderer
-       Bereich offen), hat jeder Platz die Größe 0 an der Stelle 0|0 – dann
-       wird nichts gezeichnet. */
-    if (!r.width || !r.height) return null;
     return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 };
   }
   /* Zeigt das Geschoss; gibt die Flugzeit zurück. */
@@ -2089,7 +2077,7 @@
     S.graben = an == null ? !S.graben : Boolean(an);
     if (S.graben) { S.legen = ""; S.zauber = ""; document.body.classList.remove("sp-legen"); }
     document.body.classList.toggle("sp-graben", Boolean(S.graben));
-    if (S.graben) hinweis("⛏️ Schaufel in der Hand: tippe auf einen Platz zum Graben. Weglegen: Schaufel in der Leiste oder lange auf einen freien Platz drücken.");
+    if (S.graben) hinweis("⛏️ Schaufel in der Hand: tippe auf einen Platz zum Graben. Die Schaufel in der Leiste legt sie wieder weg.");
     zeichnen(); schnellZeichnen();
   }
   function grabSvg() {
@@ -2616,7 +2604,6 @@
         + '<button type="button" data-s="platzmenue">Mein Platzmenü <small>Bild, Sprechbild</small></button>'
         + '<button type="button" data-s="tontest">Ton testen</button>'
         + '<button type="button" data-s="gross" data-r="schutz">Laden (Schutz, Rüstung, Turm)</button>'
-        + '<button type="button" data-s="gross" data-r="deutsch">Deutsch-Aufgaben</button>'
         + '<button type="button" data-s="gross" data-r="tiere">Tiere holen und füttern</button>'
         + '<button type="button" data-s="gross" data-r="start">Großes Menü</button></div>';
     }
@@ -2715,15 +2702,6 @@
     } else if (s === "klappe") {
       S.schnellMenue = !S.schnellMenue; S.rad = null; S.zrad = false;
     } else if (s === "reiter") {
-      /* FASSUNG 666 — XANDER: „das mit diesem Deutsch Menü das hätte ich
-         wieder, wie das vorher war". Der grüne Reiter bleibt sichtbar, führt
-         aber wie früher direkt ins große Deutsch-Menü (Niveau, alle
-         Aufgabenarten, die Aufgabe selbst) – ohne Zwischenmenü. */
-      if (k.dataset.r === "deutsch") {
-        S.schnellMenue = false;
-        menue("deutsch"); if (!S.aufgabe) aufgabeHolen(false);
-        schnellZeichnen(true); return;
-      }
       S.schnellReiter = k.dataset.r;
     } else if (s === "slot") {
       S.schnellSlot = Number(k.dataset.n) || 0;
@@ -2762,7 +2740,7 @@
       klangWecken(); setTimeout(function () { ton("bling", 0.7); }, 60);
       hinweis("🔊 Töne sind an.");
     } else if (s === "gross") {
-      S.schnellMenue = false; menue(k.dataset.r || "start"); if (k.dataset.r === "deutsch" && !S.aufgabe) aufgabeHolen(false); schnellZeichnen(true); return;
+      S.schnellMenue = false; menue(k.dataset.r || "start"); schnellZeichnen(true); return;
     }
     if (zu) S.schnellMenue = false;
     zeichnen(); schnellZeichnen(true);
@@ -3115,7 +3093,7 @@
       /* Das Geschütz links unten */
       schmuck(el, "sp-geschuetz", Boolean(s.geschuetz) && !turmDraussen(s), kreis, geschuetzSvg(s.geschuetz_stufe), "sp-turm-" + Math.min(5, s.geschuetz_stufe || 1));
       /* FASSUNG 662 — der Wassergraben liegt als blaues Band unter der Mauer. */
-      schmuck(el, "sp-wassergraben", (s.graben || 0) > 0, kreis, grabenSvg(), "");
+      schmuck(el, "sp-graben", (s.graben || 0) > 0, kreis, grabenSvg(), "");
       /* Kaputt: Risse und Grau */
       el.classList.toggle("sp-kaputt", Boolean(s.kaputt));
       schmuck(el, "sp-risse", Boolean(s.kaputt), kreis, risseSvg());
@@ -3829,10 +3807,7 @@
         + '<button type="button" data-tu="heilen" data-art="trank"' + (ich.traenke > 0 ? "" : " disabled") + '>🧪 Heiltrank (' + ich.traenke + ')</button>'
         + '<button type="button" data-tu="essen" data-d="bratwurst"' + (vorrat(ich, "bratwurst") ? "" : " disabled") + '>🌭 Bratwurst essen (' + vorrat(ich, "bratwurst") + ')</button>'
         + '<button type="button" data-tu="essen" data-d="sauerkraut"' + (vorrat(ich, "sauerkraut") ? "" : " disabled") + '>🥬 Sauerkraut essen (' + vorrat(ich, "sauerkraut") + ')</button></div>'
-        /* FASSUNG 666 — XANDER: „Obwohl ich meine Waffen angelegt habe, steht
-           im Hauptmenü, dass ich sie anlegen soll." Der Satz richtet sich
-           jetzt danach, ob eine Waffe angelegt ist. */
-        + '<p class="sp-klein">Kampf: ' + (S.waffe ? "deine Waffe ist angelegt – auf ein Gesicht tippen." : "Waffe anlegen (Leiste unten oder Waffenrad), dann auf ein Gesicht tippen.") + ' Kopf ×2, Herz ×1,6, Körper ×1, Rand ×0,5. Wer vor dem Einschlag den Platz wechselt, weicht aus. Kaputt (0 LP) = kein Reisen bis zum Pflaster. Tafel offen = Waffenstillstand.</p>'
+        + '<p class="sp-klein">Kampf: Waffe anlegen, dann auf ein Gesicht tippen. Kopf ×2, Herz ×1,6, Körper ×1, Rand ×0,5. Wer vor dem Einschlag den Platz wechselt, weicht aus. Kaputt (0 LP) = kein Reisen bis zum Pflaster. Tafel offen = Waffenstillstand.</p>'
         + '<p class="sp-klein">Mana (blauer Balken) füllst du nur mit Deutsch: +6 je richtiger Aufgabe. Zaubertränke kaufst du im Laden; Trinken kostet 30 Mana und wirkt 3 Minuten. Solange eine Waffe angelegt ist, steht oben die Leiste „Kampfmodus".</p>';
     }
     if (reiter === "anleitung") {
@@ -4562,33 +4537,23 @@
     var warte = Math.max(4000, 20000 - (Date.now() - trophLetzt));
     trophUhr = setTimeout(function () { trophUhr = 0; trophaeenHolen(); }, warte);
   }
-  var trophLaeuft = null;
   function trophaeenHolen() {
     if (!S.bereit || S.gast) return Promise.resolve(null);
-    /* FASSUNG 666 — eine Abfrage zur Zeit: Menü und Uhr fragten sonst
-       gleichzeitig, und jede Antwort feierte dieselben Pokale. */
-    if (trophLaeuft) return trophLaeuft;
     trophLetzt = Date.now();
-    trophLaeuft = rpc("spiel_trophaeen", {}).then(function (r) {
-      trophLaeuft = null;
+    return rpc("spiel_trophaeen", {}).then(function (r) {
       if (!r || !r.ok || !Array.isArray(r.liste)) return null;
       S.troph = r;
-      /* FASSUNG 666 — XANDER: „ganz viele eigenartige Symbole. Die sehen aus
-         wie Pokale … die versperren … alle aufeinander geklatscht". Beim
-         ersten Mal kamen 6 Trophäen auf einmal – das waren 6 Feiern
-         hintereinander über dem Bild. Jetzt: EIN Pokal, EINE Meldung. */
-      var neu = r.neu || [];
-      if (neu.length) setTimeout(function () {
-        var summe = neu.reduce(function (a, t) { return a + (Number(t.lohn) || 0); }, 0);
-        hinweis("🏆 " + (neu.length === 1 ? "Trophäe: " + neu[0].name : neu.length + " Trophäen: " + neu.map(function (t) { return t.name; }).join(", ")) + " – +" + summe + " Punkte!");
-        ton("jubel", 0.55);
-        trophaeFeier(neu.length === 1 ? neu[0].name : neu.length + " Trophäen");
-      }, 600);
+      (r.neu || []).forEach(function (t, i) {
+        setTimeout(function () {
+          hinweis("🏆 Trophäe: " + t.name + " – +" + t.lohn + " Punkte!");
+          ton("jubel", 0.55);
+          trophaeFeier(t.name);
+        }, 600 + i * 2600);
+      });
       if (r.lohn) setTimeout(function () { abrufen(true); }, 400);
       schnellZeichnen(true);
       return r;
-    }).catch(function () { trophLaeuft = null; return null; });
-    return trophLaeuft;
+    }).catch(function () { return null; });
   }
   function pokalSvg(gold) {
     var f = gold ? "#f2c230" : "#5b6474", d = gold ? "#c9961a" : "#3e4552";
@@ -4711,7 +4676,7 @@
 
   window.DMA_SPIEL = {
     menue: menue, schliessen: schliessen,
-    tippAufPlatz: tippAufPlatz, gesperrt: gesperrt, gesperrtGrund: gesperrtGrund, langAufEigen: langAufEigen, langAufLeer: langAufLeer,
+    tippAufPlatz: tippAufPlatz, gesperrt: gesperrt, gesperrtGrund: gesperrtGrund, langAufEigen: langAufEigen,
     empfangen: empfangen, dreckAbwehren: dreckAbwehren, platzGewechselt: platzGewechselt,
     lehrerNote: lehrerNote, kampfmodus: kampfmodus, anmeldungDa: anmeldungDa,
     waffeAblegen: function () { if (S.waffe) { S.waffe = ""; zeichnen(); } },

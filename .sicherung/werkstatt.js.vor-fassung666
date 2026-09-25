@@ -226,28 +226,10 @@ window.Werkstatt = (function () {
     document.getElementById("wkKnopf").addEventListener("click", function () {
       offen = !offen;
       zeichnen();
-      if (offen) frischHolen();
     });
     document.getElementById("wkZu")?.addEventListener("click", function () {
       offen = false; zeichnen();
     });
-  }
-
-  /* FASSUNG 666 — XANDER: „die Werkstatt aktualisiert sich nicht".
-     HIER LAG ES: data-werkstatt.js kam genau einmal mit der Seite. Wer
-     das Klassenzimmer den ganzen Tag offen hat, sah nie einen neuen
-     Stand. Jetzt wird die Datei frisch geholt (am Zwischenspeicher
-     vorbei): beim Öffnen der Blase, beim Zurückkehren in den Tab und
-     alle drei Minuten, solange die Seite sichtbar ist. */
-  var holtGerade = false;
-  function frischHolen() {
-    if (holtGerade) return;
-    holtGerade = true;
-    var s = document.createElement("script");
-    s.src = "data-werkstatt.js?frisch=" + Date.now();
-    s.async = true;
-    s.onload = s.onerror = function () { holtGerade = false; s.remove(); zeichnen(); };
-    document.head.appendChild(s);
   }
 
   function start() {
@@ -278,11 +260,9 @@ window.Werkstatt = (function () {
     ["dma-anmeldung", "dma-profil", "dma-login"].forEach(function (e) {
       document.addEventListener(e, zeichnen);
     });
-    window.addEventListener("focus", function () { zeichnen(); frischHolen(); });
-    document.addEventListener("visibilitychange", function () { if (!document.hidden) frischHolen(); });
-    setInterval(function () { if (!document.hidden) frischHolen(); }, 180000);
+    window.addEventListener("focus", zeichnen);
   }
 
-  return { start: start, zeichnen: zeichnen, baustellen: baustellen, fertiges: fertiges, frischHolen: frischHolen };
+  return { start: start, zeichnen: zeichnen, baustellen: baustellen, fertiges: fertiges };
 })();
 window.Werkstatt.start();

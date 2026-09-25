@@ -963,7 +963,7 @@ body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: bl
 .sp-troph em { display: block; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .1); overflow: hidden; margin-top: 2px; }
 .sp-troph em u { display: block; height: 100%; background: linear-gradient(90deg, #3bbf4a, #f2c230); }
 
-.sp-pokal-feier { position: fixed; z-index: 60; pointer-events: none; width: 54px; margin-left: -27px; text-align: center;
+.sp-pokal-feier { position: fixed; z-index: 9995; pointer-events: none; width: 54px; margin-left: -27px; text-align: center;
   animation: spPokal 2.5s cubic-bezier(.2, .8, .3, 1) forwards; }
 .sp-pokal-feier svg { width: 54px; height: 54px; filter: drop-shadow(0 0 6px rgba(255, 210, 80, .9)); }
 .sp-pokal-feier b { display: block; white-space: nowrap; margin-left: 50%; transform: translateX(-50%); width: max-content;
@@ -982,13 +982,8 @@ body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: bl
 /* =========================================================
    FASSUNG 662 — Dorf, Titan-/Diamantmauer, Wassergraben, Turm auf freiem Platz
    ========================================================= */
-/* FASSUNG 666 — hieß erst „.sp-graben": dieselbe Klasse bekommt aber der
-   body, wenn man die Schaufel nimmt – dann war die ganze Seite nicht mehr
-   tippbar. XANDER: „Die Schaufel funktioniert nicht … liegt über dem Gaming
-   Controller, der sich verschiebt … nicht auf die Felder klicke, passiert
-   gar nix". */
-.sp-wassergraben { position: absolute; pointer-events: none; z-index: 4; }
-.sp-wassergraben svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sp-graben { position: absolute; pointer-events: none; z-index: 4; }
+.sp-graben svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .sp-graben-welle { animation: spGrabenWelle 2.6s ease-in-out infinite alternate; }
 @keyframes spGrabenWelle { from { transform: translateX(-2%); } to { transform: translateX(2%); } }
 .sp-diamant-funkeln { animation: spFundFunkeln 1.3s ease-in-out infinite alternate; }

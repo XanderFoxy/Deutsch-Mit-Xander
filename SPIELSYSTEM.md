@@ -563,3 +563,15 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Drei neue Zeichnungen, jede ganz in ihrer Kachel (geprüft mit getBBox).
 - Server: `spiel_fusion(p_rezept)` (neu), `spiel_tier_max`, `spiel_tier_wechseln` (Greif/Regenbogendrache fliegen), `spiel_treffer` (Gegenwehr, Warnung, Heilung). Im Rollback getestet (Fuchs draußen + Phönix im Besitz → Feuerfuchs draußen, beide Zutaten weg, 200 Punkte abgezogen; fehlende Stufe 2 wird abgelehnt).
 - Sonde: `pruefe-665-tier-fusion.js` (14 Prüfungen, 360 px). Alle Spiel-Sonden grün (in Vierergruppen; 28 gleichzeitig sind dem Rechner zu viel). `pruefe-658` misst jetzt vor dem Foto (das Glühen hält nur 1,3 s).
+
+## Fassung 666 — Xanders Fehlerliste vom 25.09. nachmittags
+
+- **Effekte links oben** („da wo Deutsch mit Alex steht"): Lief ein Angriff, während das Klassenzimmer nicht zu sehen war (anderer Bereich offen), hatte jeder Platz die Größe 0 an der Stelle 0|0 – Geschoss, Flammen, Einschlag, Tier und Kratzer landeten links oben. `mittelpunkt()` gibt dann nichts mehr zurück; es wird nicht gezeichnet. Nachgestellt und geprüft.
+- **Schaufel ging nicht**: Der Wassergraben (662) hieß `.sp-graben` – dieselbe Klasse bekommt der `body`, wenn man die Schaufel nimmt. Die ganze Seite war dann `pointer-events: none` und `position: absolute` (nichts tippbar, Leiste verrutscht). Der Graben heißt jetzt `.sp-wassergraben`.
+- **Schaufel schneller**: lange auf einen freien Platz drücken = Schaufel nehmen, noch einmal lange drücken = weglegen (statt des Reise-Menüs, solange man mitspielt).
+- **„Waffe anlegen" trotz angelegter Waffe**: Der Satz in der Übersicht richtet sich jetzt danach, ob eine Waffe angelegt ist.
+- **Pokale übereinander**: Beim ersten Mal kamen 6 Trophäen auf einmal (Server: 13:40) – das waren 6 Feiern hintereinander über dem Bild und dem Menü. Jetzt ein Pokal und eine Meldung („6 Trophäen: …"); nur eine Abfrage zur Zeit.
+- **Lange Namen**: unter dem Platz immer eine Zeile, Ende mit „…" (der volle Name bleibt im Text).
+- **Werkstatt**: holt `data-werkstatt.js` frisch nach – beim Öffnen, beim Zurückkehren in den Tab und alle drei Minuten.
+- **Deutsch-Menü wie vorher**: der grüne Reiter führt direkt ins große Deutsch-Menü; unter „Mehr" steht wieder „Deutsch-Aufgaben".
+- Sonde: `pruefe-666-fehler.js` (13 Prüfungen, 360 px); `pruefe-658` auf das alte Deutsch-Menü umgestellt. Alle Spiel-Sonden grün (642/656 unter Last bei Tönen zeitweise zu langsam, einzeln grün).

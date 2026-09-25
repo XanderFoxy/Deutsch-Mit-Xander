@@ -33372,12 +33372,6 @@
        „Mehr → Mein Platzmenü". */
     try { if (eigen && window.DMA_SPIEL && window.DMA_SPIEL.langAufEigen && window.DMA_SPIEL.langAufEigen(platz)) return true; } catch (e) {}
     const leer = platz.classList.contains("lc-platz-frei");
-    /* FASSUNG 666 — XANDER: „kann ich irgendwie schneller auf die Schaufel
-       zugreifen … auf ein leeres Feld klicke und gedrückt halte, weil es
-       reisen brauche ich ja eh nicht … und wie werde ich sie dann wieder
-       ab … noch mal lange auf dieses Feld". Wer mitspielt: langer Druck
-       auf einen freien Platz nimmt die Schaufel, der nächste legt sie weg. */
-    try { if (leer && !eigen && window.DMA_SPIEL && window.DMA_SPIEL.langAufLeer && window.DMA_SPIEL.langAufLeer(platz)) return true; } catch (e) {}
     const nameKnoten = platz.querySelector(".lc-platz-name");
     /* Erst der echte Name vom Platz, die Beschriftung nur als
        Rueckfall — und dann ohne das angehaengte „(du)". */
