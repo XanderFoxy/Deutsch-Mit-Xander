@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 658: Superkraft am Gegner, Feuer filigran, Deutsch-Reiter",
+  stand: "Fassung 665 – Tier-Fusion; seit 658: Verbindung schneller, Kachelbilder, Trophäen/Funde, Dorf/Mauern/Graben/Turm, Klassen/Deutschland-Wissen, Meisterwaffen",
 
   inArbeit: [
-    { seit: "2026-09-25T07:51",
-      text: "Effekt-Kacheln mit farbigen Mini-Zeichnungen; Trophäen und Funde; Gebäude, Fusion" },
+    { seit: "2026-09-25T14:21",
+      text: "Walkie #256 | Runde 100/101 (Waschmaschine, Bagger, Hot Rod) | Funk 84/85 Zeichnungen und Funktionen | Angel, Lasso, Kran, Leiter, Lok, Pferd-Galopp" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T07:51",
-      text: "658: lila Brand am Gegner, feinere Flammen, Deutsch-Reiter, Zzz für müde Tiere, schnellere Verbindung für Firefox" },
+    { seit: "2026-09-25T14:21",
+      text: "659 Verbindung: Kerzen gebündelt, Vorbereitung, schnellere Wache, Spiel direkt über Datenkanal | 660 Farbige Mini-Bilder in den Effekt-Kacheln | 661 16 Trophäen, Fundsäcke auf dem Feld | 662 Dorf (Bäckerei, Schule, Schmiede), Titan-/Diamantmauer, Wassergraben, Turm auf freiem Platz | 663 Fünf Klassen ab Level 5, 51 Fragen Deutschland-Wissen | 664 Meisterwaffen: Weißwurst-Bumerang, Nudelholz, Kuckucksuhr-Bombe | 665 Tier-Fusion: Feuerfuchs, Greif, Regenbogendrache" },
   ],
 };
