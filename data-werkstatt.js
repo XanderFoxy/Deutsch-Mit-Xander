@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 649: Waffenrad (Tachometer) und Stimmt's? freigegeben",
+  stand: "Fassung 650: Zauber Nebel/Erdbeben/Orkan ab Level",
 
   inArbeit: [
-    { seit: "2026-09-25T05:23",
-      text: "Zauber Erdbeben/Orkan/Nebel ab Level; Spezialwaffen nach Level; Tier-Fusion und Spezialfähigkeiten; Feld-Einsammeln; Spielpunkte in Tageswertung; Strategie- und 16-Platz-Modus" },
+    { seit: "2026-09-25T05:54",
+      text: "Spezialwaffen nach Level; Tier-Fusion und Spezialfähigkeiten (Eisstrahl); Feld-Einsammeln; Spielpunkte in Tageswertung; Profilbild-Effekte schneller folgen (Funk 124); Strategie- und 16-Platz-Modus" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T05:23",
-      text: "645 Ton + Menü tippbar; 646 Tiere verlassen den Platz, neue Tiere; 647 Töne weicher; 648 Artikel, Stimmt's?, Aussprache im Spiel; 649 Waffenrad" },
+    { seit: "2026-09-25T05:54",
+      text: "649 Waffenrad; 648 Stimmt's? freigegeben (1386 richtig, 804 falsch geprüft); 650 Zauber mit Level-Sperre, Mana, Nebel/Beben/Orkan für alle sichtbar" },
   ],
 };
