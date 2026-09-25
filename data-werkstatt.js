@@ -49,28 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 675 – Spielpunkte im Ranking; jetzt: Waffen verkaufen, Rüstung sichtbar, dann Felder/Bäckerei/Markt",
+  stand: "Fassung 677: Feld, Sense, Saat, Mühle, Bäckerei, Markt",
 
   inArbeit: [
-    { seit: "2026-09-25T18:08",
-      text: "Waffen und Sachen verkaufen, Rüstung sichtbar angelegt" },
-    { seit: "2026-09-25T18:08",
-      text: "Felder mit Sense, Getreide, Bäckerei backt, Verarbeitung über Zeit, Markt" },
-    { seit: "2026-09-25T18:08",
-      text: "Latenz weiter senken" },
-    { seit: "2026-09-25T18:08",
-      text: "Funk 84/85 Rest (Mario-Röhren, Lok-Schranke, Hot-Rod-Weg, Feuerwerk, Monstertruck, Einzug, Knöpfe)" },
+    { seit: "2026-09-25T18:51",
+      text: "Latenz weiter senken (Datenkanal ungeordnet)" },
+    { seit: "2026-09-25T18:51",
+      text: "Funk 84/85 Rest: Mario-Röhren, Lok-Schranke, Hot-Rod-Weg, Feuerwerk, Monstertruck, Einzug, Knöpfe" },
+    { seit: "2026-09-25T18:51",
+      text: "Rückfrage #256 (Ups-BH) wartet auf Xanders Antwort" },
+    { seit: "2026-09-25T18:51",
+      text: "Sprechbilder: wartet auf Xanders Antwort" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T18:08",
-      text: "675: Alles, was du im Klassenzimmer-Spiel verdienst, zählt im Ranking (Heute, Gesamt, Fuchs des Tages)" },
-    { seit: "2026-09-25T18:08",
-      text: "675: Alte Spielpunkte nachgebucht – dein Profil: 5831 → 11121" },
-    { seit: "2026-09-25T18:08",
-      text: "675: Tower Defense und Rundenkampf geben Lohn (aus richtigen Antworten)" },
-    { seit: "2026-09-25T18:08",
-      text: "673: Wassergraben nur einmal; Deutsch-Fenster kompakt, Fundstück oben und in der Leiste, Tipp daneben schließt" },
+    { seit: "2026-09-25T18:51",
+      text: "Werkzeug wechseln: ⇄ in der Leiste oder 2× auf denselben Platz" },
+    { seit: "2026-09-25T18:51",
+      text: "Getreide auf jedem freien Platz – mähen mit der Sense (+2, gesät +5), säen, nach 4 Minuten wieder reif" },
+    { seit: "2026-09-25T18:51",
+      text: "Mühle (ab Level 3) mahlt Getreide zu Mehl, Bäckerei backt Brot und Kuchen – Aufträge mit Zeit, dann abholen" },
+    { seit: "2026-09-25T18:51",
+      text: "Markt: Getreide, Mehl, Brot, Kuchen verkaufen – bis 40 Punkte je Tag zählen im Ranking" },
+    { seit: "2026-09-25T18:51",
+      text: "Brot und Kuchen essen (+12 / +30 LP)" },
   ],
 };
