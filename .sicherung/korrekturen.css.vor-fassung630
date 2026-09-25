@@ -33709,13 +33709,6 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   margin-left: 0;
   left: 60%;
   top: -26%;
-  /* WALKIE #204 — die neue Hand im Profil (100 x 175, siehe app.js)
-     ist hoeher und breiter; ihre Fingerruecken liegen bei 19-23 % der
-     Breite. So liegen sie auf der rechten Wange (etwa 70 % des Bildes),
-     die Mitte des Gesichts bleibt frei. */
-  width: 58%;
-  left: 50%;
-  top: -32%;
   overflow: visible;
   transform-origin: 30% 80%;
   /* Der Unterarm laeuft nach oben weich aus, statt hart abzubrechen. */
