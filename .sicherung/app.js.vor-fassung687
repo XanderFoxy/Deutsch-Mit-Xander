@@ -21929,20 +21929,6 @@
       </details>`).join("");
   }
 
-  /* FASSUNG 687 — die gezeichneten Zeichen der Knöpfe unter den Plätzen (siehe lcMagicBinden). */
-  const LC_LK = {
-    mikro: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5.5 11 a6.5 6.5 0 0 0 13 0 M12 17.5 V21 M8.5 21 H15.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
-    mikroAus: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" opacity=".55"/><path d="M5.5 11 a6.5 6.5 0 0 0 13 0 M12 17.5 V21 M8.5 21 H15.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" opacity=".55"/><path d="M4 3.5 L20 20.5" stroke="#ff5a4f" stroke-width="2.4" stroke-linecap="round"/></svg>',
-    kamera: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="13.5" height="11" rx="3" fill="currentColor"/><path d="M16 10.5 L21.5 7.5 V16.5 L16 13.5 Z" fill="currentColor"/></svg>',
-    kameraAus: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6.5" width="13.5" height="11" rx="3" fill="currentColor" opacity=".55"/><path d="M16 10.5 L21.5 7.5 V16.5 L16 13.5 Z" fill="currentColor" opacity=".55"/><path d="M3.5 3.5 L20.5 20.5" stroke="#ff5a4f" stroke-width="2.4" stroke-linecap="round"/></svg>',
-    /* Platz verlassen: ein Stuhl, daneben der Pfeil nach unten. */
-    runter: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 3.5 V12.5 H13 M5.5 12.5 V20.5 M13 12.5 V20.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 16 H13" stroke="currentColor" stroke-width="1.5"/><path d="M18.5 4.5 V17 M15.3 13.8 L18.5 17 L21.7 13.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    tuer: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3.5 H6.5 A1.5 1.5 0 0 0 5 5 V19 A1.5 1.5 0 0 0 6.5 20.5 H13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M10 12 H20.5 M17 8.5 L20.5 12 L17 15.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    alles: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="currentColor"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="currentColor" opacity=".8"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="currentColor" opacity=".8"/><path d="M17 13 L18.1 15.9 L21 17 L18.1 18.1 L17 21 L15.9 18.1 L13 17 L15.9 15.9 Z" fill="#ffe27a"/></svg>',
-    bilder: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M4 18 L9.5 12 L13.5 16 L16 13.5 L20 18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><circle cx="16" cy="9" r="1.8" fill="#ffe27a"/></svg>',
-    tafel: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12.5" rx="1.8" fill="#2f5e44" stroke="currentColor" stroke-width="1.7"/><path d="M6.5 9 C8 7.5 9.5 10.5 11 9 M13 12.5 H17.5" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M8 16.5 L6 21 M16 16.5 L18 21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
-    lehrer: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9.5 L12 4.5 L22 9.5 L12 14.5 Z" fill="currentColor"/><path d="M6.5 11.8 V16 C8 17.8 16 17.8 17.5 16 V11.8" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M21 10 V15.5" stroke="#ffe27a" stroke-width="1.8" stroke-linecap="round"/><circle cx="21" cy="16.3" r="1.2" fill="#ffe27a"/></svg>'
-  };
   function livechatGeruestHtml() {
     const plaetze = [];
     for (let i = 1; i <= LiveChat.PLAETZE; i++) {
@@ -22047,22 +22033,21 @@
         <div class="lc-plaetze" id="lcPlaetze">${plaetze.join("")}</div>
 
         <div class="lc-leiste" id="lcLeiste">
-          <!-- FASSUNG 687 — fünf gleiche Glasknöpfe mit gezeichneten Zeichen;
-               in der Mitte der Magic Button (siehe lcMagicBinden). Das alte
-               Bild-Symbol steckt jetzt im Magic Button („Bilder"). -->
-          <button type="button" class="lc-rundknopf lc-lk" data-lc="ton" title="Mikrofon an oder aus" aria-label="Mikrofon an oder aus"></button>
-          <button type="button" class="lc-rundknopf lc-lk" data-lc="bild" title="Kamera an oder aus" aria-label="Kamera an oder aus"></button>
-          <button type="button" class="lc-rundknopf lc-lk lc-magic" data-lc="magic" title="Alles auf einen Griff" aria-label="Alles auf einen Griff"></button>
+          <button type="button" class="lc-rundknopf" data-lc="ton" title="Mikrofon an oder aus" aria-label="Mikrofon an oder aus">🎤</button>
+          <button type="button" class="lc-rundknopf" data-lc="bild" title="Kamera an oder aus" aria-label="Kamera an oder aus">📷</button>
+          <button type="button" class="lc-rundknopf" data-lc="profilbild"
+                  title="Bild und Raum: eigenes Bild, Hintergrund, Nachlesen"
+                  aria-label="Bildmenü: eigenes Bild, Hintergrundbild, Nachlesen, Verlauf löschen">🖼️</button>
           <!-- Das Räume-Symbol stand hier und ist weiter unten in die
                Kopfzeile des Chats gewandert, neben „Befehle & Schrift".
                GEMELDET: „Das Räume-Symbol kannst du da rausnehmen und
                lieber bei Befehle und Schrift mit reinmachen." Die
                Rundknopfreihe ist damit wieder das, was sie sein soll:
                Mikrofon, Kamera, Bild, Bühne, Hinaus. -->
-          <button type="button" class="lc-rundknopf lc-lk lc-buehnenknopf" data-lc="buehne"
-                  title="Platz verlassen — nur noch mitschreiben"
-                  aria-label="Platz verlassen"></button>
-          <button type="button" class="lc-rundknopf lc-lk lc-weg" data-lc="weg" title="Raum verlassen" aria-label="Raum verlassen"></button>
+          <button type="button" class="lc-rundknopf lc-buehnenknopf" data-lc="buehne"
+                  title="Auf die Bühne oder wieder herunter"
+                  aria-label="Auf die Bühne oder wieder herunter"></button>
+          <button type="button" class="lc-rundknopf lc-weg" data-lc="weg" title="Raum verlassen" aria-label="Raum verlassen">✕</button>
         </div>
         <div id="lcGrund"></div>
 
@@ -26706,10 +26691,9 @@
       /* Der Pfeil selbst wird gezeichnet (siehe .lc-buehnenknopf in
          korrekturen.css) — als Schriftzeichen war er je nach Schrift
          ein duenner Strich, den man nicht erkennen konnte. */
-      /* FASSUNG 687 — nur noch „Platz verlassen"; hinauf geht es mit einem Tipp auf einen freien Platz. */
-      if (!bk.querySelector("svg")) bk.innerHTML = LC_LK.runter;
-      bk.title = drauf ? "Platz verlassen — nur noch mitschreiben"
-                       : "Auf die Bühne — tippe auf einen freien Platz";
+      bk.textContent = "";
+      bk.title = drauf ? "Von der Bühne herunter — nur noch mitschreiben"
+                       : "Auf die Bühne — Ton und Bild wieder hinaus";
       bk.setAttribute("aria-label", bk.title);
       bk.classList.toggle("ist-unten", !drauf);
     }
@@ -26757,14 +26741,12 @@
     const bildK = document.querySelector('[data-lc="bild"]');
     if (tonK) {
       tonK.classList.toggle("lc-aus", !l.tonAn);
-      const tonZ = l.tonAn ? "an" : "aus";
-      if (tonK.dataset.z !== tonZ) { tonK.dataset.z = tonZ; tonK.innerHTML = l.tonAn ? LC_LK.mikro : LC_LK.mikroAus; }
+      tonK.textContent = l.tonAn ? "🎤" : "🔇";
       tonK.disabled = !l.hatBild && !l.tonAn;
     }
     if (bildK) {
       bildK.classList.toggle("lc-aus", !l.bildAn);
-      const bildZ = l.bildAn ? "an" : "aus";
-      if (bildK.dataset.z !== bildZ) { bildK.dataset.z = bildZ; bildK.innerHTML = l.bildAn ? LC_LK.kamera : LC_LK.kameraAus; }
+      bildK.textContent = l.bildAn ? "📷" : "🚫";
       bildK.title = l.hatKamera
         ? (l.bildAn ? "Kamera ausschalten" : "Kamera einschalten")
         : "Kamera einschalten — der Browser fragt dann danach";
@@ -33574,8 +33556,6 @@
          den Sprechbildern; ein Tipp darauf setzt es sofort und
          speichert es mit dem Profil. */
       knopf("\ud83c\udf99\ufe0f", "Sprechbild", () => lcSprechbildMenue(platz));
-      /* FASSUNG 687 — „personalisierter Effekt, wie er ankommt" – hier gewählt, im Gruß mitgeschickt. */
-      knopf("\ud83c\udfce\ufe0f", "Mein Auftritt", () => lcAuftrittMenue(platz));
       /* RUNDE 100 — XANDER (Walkie-Talkie, zum Kran): „Der Effekt soll
          ausserdem auch immer mit mir selbst gehen." Das „Holen" gibt es
          nur bei den anderen (sich selbst angeln ergibt keinen Sinn) —
@@ -54289,360 +54269,6 @@
     }, DAUER);
   }
 
-  /* =================================================================
-     FASSUNG 687 — DER EIGENE AUFTRITT
-     -----------------------------------------------------------------
-     XANDER (Funk 85): „jemand kann eine Einstiegs Animation oder eine
-     Abschiedsanimation haben z.B wenn er den Livestream verlässt dass
-     er dann mit einem gewissen Effekt rausgeht oder wenn er ankommt
-     dass jeder so einen personalisierten Effekt hat wie er ankommt …
-     z.B wenn ich in den Chat komme dass ich dann mit einem Ferrari
-     reinkomme".
-     Jede Person wählt im eigenen Platzmenü „Mein Auftritt". Die Wahl
-     fährt im Gruß („hallo") und im Abschied („tschuess") mit; alle im
-     Raum sehen sie an genau dem Platz. Das Bild fährt im Wagen mit,
-     hüpft beim Ankommen auf den Platz und beim Gehen wieder hinein.
-     Die Bühne liegt fest über allem (position: fixed), damit der Wagen
-     von außerhalb des Bildschirms kommen kann; das echte Bild bleibt
-     so lange unsichtbar, bis das mitfahrende gelandet ist.
-     ================================================================= */
-  LC_REISEWAGEN.sportwagen = { hoch: 100, anker: 44, svg: '<svg viewBox="0 0 240 100" aria-hidden="true">'
-    + '<defs><linearGradient id="lcRwSport" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff3b30"/><stop offset=".5" stop-color="#d0101c"/><stop offset="1" stop-color="#7a0610"/></linearGradient>'
-    + '<linearGradient id="lcRwSportGlas" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bfe6ff"/><stop offset="1" stop-color="#3a5a78"/></linearGradient></defs>'
-    + '<ellipse cx="122" cy="92" rx="112" ry="6" fill="#000" opacity=".22"/>'
-    /* Die Karosserie: lang, flach, der Bug tief, das Heck mit Spoilerkante – ein offener Sportwagen (Cabrio). */
-    + '<path d="M10 70 C8 60 16 54 34 52 L92 50 C100 50 104 56 112 56 L134 56 C140 50 150 46 160 46 C176 46 196 50 214 56 L230 62 C236 64 238 70 236 76 L232 82 L14 84 C10 80 10 76 10 70 Z" fill="url(#lcRwSport)" stroke="#3a0408" stroke-width="2" stroke-linejoin="round"/>'
-    + '<path d="M16 58 L36 54 L32 50 L12 53 Z" fill="#1a1a1a"/>'
-    + '<path d="M30 62 C80 58 150 58 226 64" fill="none" stroke="#ff8a80" stroke-width="2.2" opacity=".7"/>'
-    + '<path d="M120 60 C118 68 120 76 126 80 M88 60 L86 80" fill="none" stroke="#5a0610" stroke-width="1.4"/>'
-    + '<path d="M150 66 C160 64 170 64 178 67 L176 74 C168 72 160 72 152 73 Z" fill="#1a1a1a"/>'
-    /* Windschutzscheibe, Sitz, Lenkrad – das Bild sitzt vor dem Sitz. */
-    + '<path d="M138 56 L148 38 L153 39 L146 56 Z" fill="url(#lcRwSportGlas)" stroke="#222" stroke-width="1.4" stroke-linejoin="round"/>'
-    + '<path d="M100 56 C100 44 106 38 112 38 L116 40 L114 56 Z" fill="#2a2a2a"/><circle cx="136" cy="50" r="4" fill="none" stroke="#222" stroke-width="2"/>'
-    + '<path d="M150 44 L158 42" stroke="#222" stroke-width="2.4" stroke-linecap="round"/>'
-    + '<path d="M222 60 L234 64 L232 68 L220 66 Z" fill="#fff8c8" stroke="#555" stroke-width="1"/><path d="M12 62 L20 60 L20 66 L12 67 Z" fill="#ff4d4d" stroke="#5a0610" stroke-width="1"/>'
-    + [[58, 80], [192, 80]].map(function (q) { return '<g class="lc-rw-rad" style="transform-origin:' + q[0] + 'px ' + q[1] + 'px"><circle cx="' + q[0] + '" cy="' + q[1] + '" r="17" fill="#141414"/>'
-      + '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="10.5" fill="#d8dde3" stroke="#6d747c" stroke-width="1.6"/>'
-      + [0, 72, 144, 216, 288].map(function (w) { var t = w * Math.PI / 180; return '<path d="M' + q[0] + " " + q[1] + " L" + (q[0] + 9.5 * Math.cos(t)).toFixed(1) + " " + (q[1] + 9.5 * Math.sin(t)).toFixed(1) + '" stroke="#6d747c" stroke-width="2.4"/>'; }).join("")
-      + '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="3" fill="#f2c230"/></g>'; }).join("") + "</svg>" };
-  const LC_AUFTRITTE = {
-    sportwagen:   { name: "Roter Sportwagen", wagen: "sportwagen", ton: "rennauto", laut: 0.5 },
-    hotrod:       { name: "Hot Rod", wagen: "hotrodfahrt", ton: "rennauto", laut: 0.5 },
-    monstertruck: { name: "Monstertruck", wagen: "monstertruck", ton: "bagger", laut: 0.55 },
-    rakete:       { name: "Rakete", ton: "granatenpfeifen", laut: 0.45 },
-    zauber:       { name: "Zauberwolke", ton: "zauberpuff", laut: 0.5 }
-  };
-  function lcAuftrittBild(kreis, rk) {
-    /* Ein eigenes Abbild: dieselbe Größe, dasselbe Foto (oder der Anfangsbuchstabe). */
-    const b = document.createElement("span");
-    b.className = "lc-auftritt-bild";
-    const st = getComputedStyle(kreis);
-    b.style.width = rk.width + "px"; b.style.height = rk.height + "px";
-    b.style.left = rk.left + "px"; b.style.top = rk.top + "px";
-    b.style.background = st.backgroundColor || "#3a2e44";
-    b.style.borderColor = st.borderTopColor || "rgba(0,0,0,.2)";
-    const img = kreis.querySelector("img.lc-avatar");
-    if (img && img.src && img.style.display !== "none") { const i = document.createElement("img"); i.src = img.src; i.alt = ""; b.appendChild(i); }
-    else { const t = document.createElement("b"); t.textContent = ((kreis.querySelector(".lc-initial") || {}).textContent || "·").trim(); b.appendChild(t); }
-    return b;
-  }
-  function lcAuftritt(id, art, richtung, versuch) {
-    const A = LC_AUFTRITTE[art];
-    if (!A || !id) return false;
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
-    const sel = '#lcPlaetze .lc-platz[data-lc-id="' + String(id).replace(/["\\]/g, "") + '"]';
-    const platz = document.querySelector(sel), kreis = platz && platz.querySelector(".lc-kreis");
-    const rk = kreis ? kreis.getBoundingClientRect() : null;
-    if (!rk || !rk.width) {
-      /* Wer gerade erst kommt, hat vielleicht noch keinen Platz – kurz nachsehen. */
-      if (richtung === "rein" && (versuch || 0) < 6) { setTimeout(() => lcAuftritt(id, art, richtung, (versuch || 0) + 1), 250); return true; }
-      return false;
-    }
-    const rein = richtung !== "raus", D = A.wagen ? 3600 : 2600;
-    const buehne = document.createElement("div");
-    buehne.className = "lc-auftritt lc-auftritt-" + art + (rein ? " lc-auftritt-rein" : " lc-auftritt-raus");
-    buehne.setAttribute("aria-hidden", "true");
-    /* Die Bühne liegt auf der SEITE (nicht am Fenster): scrollt die Seite
-       während der Fahrt, bleibt der Wagen trotzdem am Platz. */
-    const sx = window.scrollX || 0, sy = window.scrollY || 0, doc = document.documentElement;
-    buehne.style.width = doc.clientWidth + "px";
-    buehne.style.height = Math.max(doc.scrollHeight, rk.bottom + sy + 40) + "px";
-    const rs = { left: rk.left + sx, top: rk.top + sy, width: rk.width, height: rk.height, bottom: rk.bottom + sy };
-    const bild = lcAuftrittBild(kreis, rs);
-    buehne.appendChild(bild);
-    let versteck = null;
-    /* Das echte Bild ist unsichtbar, solange das mitfahrende unterwegs ist (auch beim Gehen, falls der Platz noch kurz steht). */
-    {
-      versteck = document.createElement("style");
-      versteck.textContent = sel + " .lc-kreis { visibility: hidden !important; }";
-      document.head.appendChild(versteck);
-    }
-    document.body.appendChild(buehne);
-    const fertig = () => { buehne.remove(); if (versteck) versteck.remove(); };
-    const cx = rs.left + rs.width / 2, cy = rs.top + rs.height / 2, B = doc.clientWidth;
-    const an = (el, bilder, d, e) => { try { el.animate(bilder, { duration: d || D, easing: e || "linear", fill: "forwards" }); } catch (x) {} };
-    if (A.wagen) {
-      const W = LC_REISEWAGEN[A.wagen];
-      const wagen = document.createElement("span");
-      wagen.className = "lc-reisewagen lc-reisewagen-" + A.wagen + " lc-auftritt-wagen";
-      wagen.innerHTML = W.svg;
-      const breite = rk.width * 2.4, hoch = breite * W.hoch / 240;
-      wagen.style.width = breite.toFixed(1) + "px"; wagen.style.height = hoch.toFixed(1) + "px";
-      wagen.style.left = cx + "px"; wagen.style.top = cy + "px";
-      buehne.insertBefore(wagen, bild);
-      const anker = "translate(-50%, -" + (W.anker / W.hoch * 100).toFixed(1) + "%)";
-      const links = -(cx + breite), rechts = B - cx + breite;
-      const w = (x, s) => ({ transform: "translateX(" + x.toFixed(0) + "px) " + anker + " scaleX(" + s + ")" });
-      const k = (x, sc, y) => ({ transform: "translateX(" + x.toFixed(0) + "px) translateY(" + (y || 0) + "%) scale(" + sc + ")" });
-      const MIT = 0.6;   /* so groß sitzt das Bild im Wagen */
-      if (rein) {
-        /* Von links heran, bremsen, das Bild hüpft auf den Platz, der Wagen fährt rechts davon. */
-        an(wagen, [Object.assign(w(links, 1), { offset: 0, easing: "cubic-bezier(.2,.7,.3,1)" }), Object.assign(w(0, 1), { offset: 0.42 }),
-          Object.assign(w(0, 1), { offset: 0.64, easing: "cubic-bezier(.6,0,.9,.6)" }), Object.assign(w(rechts, 1), { offset: 1 })]);
-        an(bild, [Object.assign(k(links, MIT), { offset: 0, easing: "cubic-bezier(.2,.7,.3,1)" }), Object.assign(k(0, MIT), { offset: 0.42 }),
-          Object.assign(k(0, MIT), { offset: 0.5 }), Object.assign(k(0, 0.9, -34), { offset: 0.6, easing: "ease-in" }), Object.assign(k(0, 1.05, 0), { offset: 0.68 }),
-          Object.assign(k(0, 1, 0), { offset: 0.74 }), Object.assign(k(0, 1, 0), { offset: 1 })]);
-        lcTonSpaeter(A.ton, 0, A.laut, 1500);
-        lcTonSpaeter("bremse", Math.round(0.34 * D), 0.35, 700);
-        lcTonSpaeter("aufsetzen", Math.round(0.66 * D), 0.35);
-        lcTonSpaeter(A.ton, Math.round(0.64 * D), A.laut * 0.8, 1300);
-      } else {
-        /* Von rechts heran, das Bild hüpft hinein, alle fahren links davon. */
-        an(wagen, [Object.assign(w(rechts, -1), { offset: 0, easing: "cubic-bezier(.2,.7,.3,1)" }), Object.assign(w(0, -1), { offset: 0.38 }),
-          Object.assign(w(0, -1), { offset: 0.6, easing: "cubic-bezier(.6,0,.9,.6)" }), Object.assign(w(links, -1), { offset: 1 })]);
-        an(bild, [Object.assign(k(0, 1), { offset: 0 }), Object.assign(k(0, 1), { offset: 0.4 }), Object.assign(k(0, 0.9, -34), { offset: 0.48, easing: "ease-in" }),
-          Object.assign(k(0, MIT), { offset: 0.56 }), Object.assign(k(0, MIT), { offset: 0.6, easing: "cubic-bezier(.6,0,.9,.6)" }), Object.assign(k(links, MIT), { offset: 1 })]);
-        lcTonSpaeter(A.ton, 0, A.laut * 0.8, 1300);
-        lcTonSpaeter("bremse", Math.round(0.3 * D), 0.35, 700);
-        lcTonSpaeter(A.ton, Math.round(0.58 * D), A.laut, 1500);
-      }
-    } else if (art === "rakete") {
-      const flamme = document.createElement("span");
-      flamme.className = "lc-auftritt-flamme";
-      flamme.style.left = cx + "px"; flamme.style.top = (rs.bottom - 4) + "px"; flamme.style.width = (rk.width * 0.34) + "px"; flamme.style.height = (rk.height * 0.8) + "px";
-      buehne.insertBefore(flamme, bild);
-      const oben = -(rk.bottom + 20);   /* von oberhalb des sichtbaren Bereichs */
-      const y = (v) => ({ transform: "translateY(" + v.toFixed(0) + "px)" });
-      if (rein) {
-        an(bild, [Object.assign(y(oben), { offset: 0, easing: "cubic-bezier(.25,.8,.35,1)" }), Object.assign(y(0), { offset: 0.62 }), Object.assign({ transform: "translateY(0) scale(1.06,.92)" }, { offset: 0.68 }), Object.assign(y(0), { offset: 0.76 }), Object.assign(y(0), { offset: 1 })]);
-        an(flamme, [Object.assign({ transform: "translate(-50%, " + oben.toFixed(0) + "px) scaleY(1)", opacity: 1 }, { offset: 0, easing: "cubic-bezier(.25,.8,.35,1)" }),
-          { transform: "translate(-50%, 0) scaleY(.5)", opacity: 1, offset: 0.62 }, { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: 0.72 }, { transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: 1 }]);
-        lcTonSpaeter("granatenpfeifen", 0, 0.4, 1500);
-        lcTonSpaeter("aufsetzen", Math.round(0.62 * D), 0.45);
-        setTimeout(() => { const st = document.createElement("span"); st.className = "lc-auftritt-staub"; st.style.left = cx + "px"; st.style.top = rs.bottom + "px"; buehne.appendChild(st); }, Math.round(0.6 * D));
-      } else {
-        an(bild, [Object.assign(y(0), { offset: 0 }), Object.assign({ transform: "translateY(3%) scale(1.04,.94)" }, { offset: 0.3 }), Object.assign(y(0), { offset: 0.38, easing: "cubic-bezier(.6,0,.9,.5)" }), Object.assign(y(oben), { offset: 1 })]);
-        an(flamme, [{ transform: "translate(-50%, 0) scaleY(0)", opacity: 0, offset: 0 }, { transform: "translate(-50%, 0) scaleY(.6)", opacity: 1, offset: 0.2 },
-          { transform: "translate(-50%, 0) scaleY(1)", opacity: 1, offset: 0.38, easing: "cubic-bezier(.6,0,.9,.5)" }, { transform: "translate(-50%, " + oben.toFixed(0) + "px) scaleY(1.3)", opacity: 1, offset: 1 }]);
-        lcTonSpaeter("lunte", 0, 0.45, 900);
-        lcTonSpaeter("granatenpfeifen", Math.round(0.36 * D), 0.4, 1400);
-      }
-    } else {
-      /* Zauberwolke: lila Rauch, Funken, das Bild erscheint (verschwindet) im Wirbel. */
-      const wolke = document.createElement("span");
-      wolke.className = "lc-auftritt-wolke";
-      wolke.style.left = cx + "px"; wolke.style.top = cy + "px"; wolke.style.width = (rk.width * 1.7) + "px"; wolke.style.height = (rk.width * 1.7) + "px";
-      let funken = "";
-      for (let i = 0; i < 14; i++) funken += '<i style="--w:' + (i * 360 / 14).toFixed(0) + "deg;--f:" + ["#c77dff", "#ffd23c", "#7ad7ff", "#ff9ec4"][i % 4] + '"></i>';
-      wolke.innerHTML = funken;
-      buehne.appendChild(wolke);
-      if (rein) {
-        an(bild, [{ transform: "scale(0) rotate(-200deg)", opacity: 0, offset: 0 }, { transform: "scale(0) rotate(-200deg)", opacity: 0, offset: 0.25, easing: "cubic-bezier(.3,1.4,.5,1)" },
-          { transform: "scale(1) rotate(0deg)", opacity: 1, offset: 0.6 }, { transform: "scale(1) rotate(0deg)", opacity: 1, offset: 1 }]);
-        lcTonSpaeter("zauberpuff", 0, 0.5);
-        lcTonSpaeter("feenzauber", Math.round(0.28 * D), 0.35, 1400);
-      } else {
-        an(bild, [{ transform: "scale(1) rotate(0)", opacity: 1, offset: 0 }, { transform: "scale(1.08) rotate(0)", opacity: 1, offset: 0.2, easing: "ease-in" },
-          { transform: "scale(0) rotate(240deg)", opacity: 0, offset: 0.55 }, { transform: "scale(0)", opacity: 0, offset: 1 }]);
-        lcTonSpaeter("feenzauber", 0, 0.35, 1200);
-        lcTonSpaeter("zauberpuff", Math.round(0.4 * D), 0.5);
-      }
-    }
-    setTimeout(fertig, D + 80);
-    return true;
-  }
-  window.DMA_AUFTRITT = lcAuftritt;
-  window.DMA_AUFTRITTE = LC_AUFTRITTE;
-  function lcAuftrittMenue(platz) {
-    lcPlatzMenueZu();
-    let jetzt = "";
-    try { jetzt = (window.LiveChat && LiveChat.auftritt) ? LiveChat.auftritt() : ""; } catch (e) {}
-    const kasten = document.createElement("div");
-    kasten.id = "lcPlatzMenue";
-    kasten.className = "lc-platzmenue";
-    kasten.setAttribute("role", "menu");
-    const kopf = document.createElement("p");
-    kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = "Mein Auftritt — beim Kommen und Gehen";
-    kasten.appendChild(kopf);
-    [["", "Ohne"]].concat(Object.keys(LC_AUFTRITTE).map((k) => [k, LC_AUFTRITTE[k].name])).forEach((x) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "lc-platzmenue-knopf" + (x[0] === jetzt ? " ist-da" : "");
-      b.setAttribute("role", "menuitemradio");
-      b.setAttribute("aria-checked", x[0] === jetzt ? "true" : "false");
-      b.innerHTML = '<span class="lc-platzmenue-zeichen">' + (LC_AUFTRITT_ZEICHEN[x[0] || "ohne"] || "\u00b7") + '</span><span class="lc-platzmenue-wort"></span>';
-      b.querySelector(".lc-platzmenue-wort").textContent = x[1];
-      b.addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        lcPlatzMenueZu();
-        try { LiveChat.auftrittSetzen(x[0]); } catch (y) {}
-        /* Gleich vorführen – so sieht man, was die anderen sehen werden. */
-        const id = platz && platz.dataset ? platz.dataset.lcId : "";
-        if (x[0] && id) lcAuftritt(id, x[0], "rein");
-        showToast(x[0] ? "Dein Auftritt: " + x[1] + " – alle sehen ihn, wenn du kommst und gehst." : "Kein Auftritt mehr.");
-      });
-      kasten.appendChild(b);
-    });
-    document.body.appendChild(kasten);
-    lcMenueStellen(kasten, platz);
-    lcMenueSchliessen(kasten);
-    return true;
-  }
-  const LC_AUFTRITT_ZEICHEN = {
-    ohne: '<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="10" fill="#f6f1e7" stroke="#2d2418" stroke-width="2"/><path d="M9 23 L23 9" stroke="#b0402f" stroke-width="2.4" stroke-linecap="round"/></svg>',
-    sportwagen: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 21 C3 18 5 17 9 16.6 L13 16 C15 13 20 12.6 23 14 L28 16.4 C29.6 17 30 18.6 29.6 20.4 L29 22 L4 22.4 Z" fill="#d0101c" stroke="#2d2418" stroke-width="1.6" stroke-linejoin="round"/><path d="M17.5 16 L19.5 13" stroke="#2d2418" stroke-width="1.6"/><circle cx="9" cy="22" r="3.4" fill="#222" stroke="#2d2418" stroke-width="1.2"/><circle cx="24" cy="22" r="3.4" fill="#222" stroke="#2d2418" stroke-width="1.2"/><circle cx="9" cy="22" r="1.3" fill="#d8dde3"/><circle cx="24" cy="22" r="1.3" fill="#d8dde3"/></svg>',
-    hotrod: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 20 C3 17 5 16 8 16 C10 12 14 12 16 16 L27 17 C29 17.4 30 19 29.4 21 L4 21.6 Z" fill="#b30f28" stroke="#2d2418" stroke-width="1.6" stroke-linejoin="round"/><path d="M19 17 C21 16 23 18 25 17" fill="none" stroke="#ff9a1a" stroke-width="1.6"/><circle cx="9" cy="22" r="5" fill="#222" stroke="#2d2418" stroke-width="1.2"/><circle cx="26" cy="23" r="3.4" fill="#222"/><circle cx="9" cy="22" r="2" fill="#d8dde3"/></svg>',
-    monstertruck: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 12 H27 V18 H5 Z" fill="#1f5fa8" stroke="#2d2418" stroke-width="1.6" stroke-linejoin="round"/><path d="M11 12 L12 7 H21 L22 12" fill="none" stroke="#1f5fa8" stroke-width="2.2"/><circle cx="9" cy="23" r="6" fill="#222" stroke="#2d2418" stroke-width="1.2"/><circle cx="23" cy="23" r="6" fill="#222" stroke="#2d2418" stroke-width="1.2"/><circle cx="9" cy="23" r="2.4" fill="#c9ccd1"/><circle cx="23" cy="23" r="2.4" fill="#c9ccd1"/></svg>',
-    rakete: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 C21 7 22 13 21 20 H11 C10 13 11 7 16 3 Z" fill="#f6f1e7" stroke="#2d2418" stroke-width="1.6" stroke-linejoin="round"/><circle cx="16" cy="12" r="2.6" fill="#7ad7ff" stroke="#2d2418" stroke-width="1.2"/><path d="M11 16 L7 22 L11 21 Z M21 16 L25 22 L21 21 Z" fill="#d2232a" stroke="#2d2418" stroke-width="1.2"/><path d="M13 21 C13 26 16 29 16 29 C16 29 19 26 19 21 Z" fill="#ff9a1a"/></svg>',
-    zauber: '<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="12" cy="18" r="6.5" fill="#c9b8ff" stroke="#2d2418" stroke-width="1.4"/><circle cx="20" cy="17" r="7" fill="#b39bff" stroke="#2d2418" stroke-width="1.4"/><circle cx="16" cy="22" r="6" fill="#d9ccff" stroke="#2d2418" stroke-width="1.4"/><path d="M24 4 L25 7 L28 8 L25 9 L24 12 L23 9 L20 8 L23 7 Z" fill="#ffd23c" stroke="#2d2418" stroke-width=".8"/></svg>'
-  };
-
-  LC_MINI_BILD["Mein Auftritt"] = LC_AUFTRITT_ZEICHEN.sportwagen;
-  /* =================================================================
-     FASSUNG 687 — DIE KNÖPFE UNTER DEN PLÄTZEN, NEU
-     -----------------------------------------------------------------
-     XANDER (Funk 85): „die sehen aus wie irgendwie so Behelfsknöpfe
-     aber nicht wie ein schönes Layout … ganz hässlich ist dieser
-     Runterhol-Knopf oder Hochhol-Knopf und der Chat-beenden-Knopf …
-     hochgehen kann ja jeder mit dem Klick auf den Platz … ein bisschen
-     mehr so Apple-Logik … als Betreiber … was ich in der Mitte sehen
-     will … die Bilder … die Tafel … mein Lehrer-Menü … oder ein Menü
-     für alles … dieser Magic Button … für die Schüler … dann könnte
-     nämlich auch das Buch dorthin verschwinden".
-     Fünf gleiche runde Glasknöpfe mit gezeichneten Zeichen: Mikrofon,
-     Kamera, in der Mitte der größere Magic Button, „Platz verlassen"
-     (nur wer oben sitzt – hinauf geht es mit einem Tipp auf den
-     Platz) und eine dezente Tür zum Hinausgehen. Der Betreiber belegt
-     die Mitte (lang drücken): Bilder, Tafel, Lehrer-Menü oder „Alles".
-     Für alle anderen ist die Mitte „Alles": Bilder, Lesetext (das
-     Buch aus der Eingabezeile), Spiele.
-     ================================================================= */
-  const LC_MAGIC_NAMEN = { alles: "Alles", bilder: "Bilder", tafel: "Tafel", lehrer: "Lehrer-Menü" };
-  function lcBinBetreiber() { try { return Boolean(Backend.isOwner && Backend.isOwner()); } catch (e) { return false; } }
-  function lcMagicArt() {
-    if (!lcBinBetreiber()) return "alles";
-    let a = "alles";
-    try { a = localStorage.getItem("dma_magic") || "alles"; } catch (e) {}
-    return LC_MAGIC_NAMEN[a] ? a : "alles";
-  }
-  function lcMagicZeichnen() {
-    const m = document.querySelector('[data-lc="magic"]');
-    if (!m) return;
-    const a = lcMagicArt();
-    if (m.dataset.art !== a) { m.dataset.art = a; m.innerHTML = LC_LK[a]; }
-    m.title = (a === "alles" ? "Alles auf einen Griff: Bilder, Lesetext, Spiele" : LC_MAGIC_NAMEN[a]) + (lcBinBetreiber() ? " — lang drücken: die Mitte belegen" : "");
-    m.setAttribute("aria-label", m.title);
-  }
-  function lcEigenerPlatz() { return document.querySelector("#lcPlaetze .lc-platz-ich"); }
-  function lcMagicMenue(knopf, nurBelegen) {
-    lcPlatzMenueZu();
-    const kasten = document.createElement("div");
-    kasten.id = "lcPlatzMenue";
-    kasten.className = "lc-platzmenue lc-magicmenue";
-    kasten.setAttribute("role", "menu");
-    const kopf = document.createElement("p");
-    kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = nurBelegen ? "Was soll die Mitte für dich sein?" : "Alles auf einen Griff";
-    kasten.appendChild(kopf);
-    const knopfBauen = (zeichen, wort, tun, an) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "lc-platzmenue-knopf" + (an ? " ist-da" : "");
-      b.innerHTML = '<span class="lc-platzmenue-zeichen lc-lk-zeichen">' + zeichen + '</span><span class="lc-platzmenue-wort"></span>';
-      b.querySelector(".lc-platzmenue-wort").textContent = wort;
-      b.dataset.mini = "1";
-      b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); lcPlatzMenueZu(); tun(); });
-      kasten.appendChild(b);
-    };
-    const chef = lcBinBetreiber();
-    let lehrer = chef;
-    try { lehrer = lehrer || Boolean(LiveChat.binLehrer && LiveChat.binLehrer()); } catch (e) {}
-    if (nurBelegen) {
-      const jetzt = lcMagicArt();
-      Object.keys(LC_MAGIC_NAMEN).forEach((a) => knopfBauen(LC_LK[a], LC_MAGIC_NAMEN[a], () => {
-        try { localStorage.setItem("dma_magic", a); } catch (e) {}
-        lcMagicZeichnen();
-        showToast("✨ Die Mitte ist jetzt: " + LC_MAGIC_NAMEN[a]);
-      }, a === jetzt));
-    } else {
-      knopfBauen(LC_LK.bilder, "Bilder", () => livechatBildWaehler());
-      knopfBauen('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5 C6 4 9.5 4 12 6 C14.5 4 18 4 21 5.5 V19 C18 17.5 14.5 17.5 12 19.5 C9.5 17.5 6 17.5 3 19 Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 6 V19.5" stroke="currentColor" stroke-width="1.6"/></svg>',
-        "Lesetext", () => lcLeseWaehler());
-      if (lehrer) knopfBauen(LC_LK.tafel, "Tafel", () => { try { LiveChat.schreiben("/tafel"); } catch (e) {} });
-      knopfBauen('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.2 7.5 H17.8 C20.6 7.5 22.4 10.4 22.8 14.2 C23.2 17.6 21.4 19.4 19.4 18.4 L16.4 15.8 H7.6 L4.6 18.4 C2.6 19.4 .8 17.6 1.2 14.2 C1.6 10.4 3.4 7.5 6.2 7.5 Z" fill="currentColor"/><path d="M7 10.4 V14.2 M5.1 12.3 H8.9" stroke="#1d2330" stroke-width="1.6" stroke-linecap="round"/><circle cx="16.4" cy="11" r="1.1" fill="#e2403a"/><circle cx="18.4" cy="13" r="1.1" fill="#3bbf4a"/></svg>',
-        "Spiele", () => lcMagicSpiele(knopf));
-      if (chef) knopfBauen(LC_LK.lehrer, "Lehrer-Menü", () => { const p = lcEigenerPlatz(); if (p) lcLehrerPanel(p); });
-      if (chef) knopfBauen('<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 2.5 V5.5 M12 18.5 V21.5 M2.5 12 H5.5 M18.5 12 H21.5 M5.3 5.3 L7.4 7.4 M16.6 16.6 L18.7 18.7 M5.3 18.7 L7.4 16.6 M16.6 7.4 L18.7 5.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
-        "Belegen", () => lcMagicMenue(knopf, true));
-    }
-    document.body.appendChild(kasten);
-    lcMenueStellen(kasten, knopf);
-    lcMenueSchliessen(kasten);
-    return kasten;
-  }
-  function lcMagicSpiele(knopf) {
-    lcPlatzMenueZu();
-    const kasten = document.createElement("div");
-    kasten.id = "lcPlatzMenue";
-    kasten.className = "lc-platzmenue lc-magicmenue";
-    kasten.setAttribute("role", "menu");
-    const kopf = document.createElement("p");
-    kopf.className = "lc-platzmenue-kopf";
-    kopf.textContent = "Spiele im Raum";
-    kasten.appendChild(kopf);
-    [["🌍", "Stadt, Land, Fluss", "/slf"], ["🚢", "Schiffe versenken", "/versenken"], ["🔤", "Aufdecken", "/raten"]].forEach((x) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "lc-platzmenue-knopf";
-      b.innerHTML = '<span class="lc-platzmenue-zeichen">' + x[0] + '</span><span class="lc-platzmenue-wort"></span>';
-      b.querySelector(".lc-platzmenue-wort").textContent = x[1];
-      b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); lcPlatzMenueZu(); try { LiveChat.schreiben(x[2]); } catch (y) {} });
-      kasten.appendChild(b);
-    });
-    document.body.appendChild(kasten);
-    lcMiniBilderSetzen(kasten);
-    lcMenueStellen(kasten, knopf);
-    lcMenueSchliessen(kasten);
-  }
-  function lcMagicAusloesen(knopf) {
-    const a = lcMagicArt();
-    if (a === "bilder") livechatBildWaehler();
-    else if (a === "tafel") { try { LiveChat.schreiben("/tafel"); } catch (e) {} }
-    else if (a === "lehrer") { const p = lcEigenerPlatz(); if (p) lcLehrerPanel(p); else lcMagicMenue(knopf); }
-    else lcMagicMenue(knopf);
-  }
-  function lcMagicBinden(area) {
-    const m = area.querySelector('[data-lc="magic"]');
-    if (!m || m.dataset.gebunden) return;
-    m.dataset.gebunden = "1";
-    lcMagicZeichnen();
-    let uhr = 0, lang = false;
-    const los = () => { clearTimeout(uhr); };
-    m.addEventListener("pointerdown", () => {
-      lang = false; clearTimeout(uhr);
-      if (!lcBinBetreiber()) return;
-      uhr = setTimeout(() => { lang = true; lcMagicMenue(m, true); }, 550);
-    });
-    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => m.addEventListener(ev, los));
-    m.addEventListener("contextmenu", (e) => { if (lcBinBetreiber()) e.preventDefault(); });
-    m.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (lang) { lang = false; return; }
-      lcMagicAusloesen(m);
-    });
-  }
-  window.DMA_MAGIC = { art: lcMagicArt, menue: lcMagicMenue, zeichnen: lcMagicZeichnen };
   function lcLuftballon(wen, art) {
     const helium = String(art || "").toLowerCase() === "helium";
     return lcAmPlatz(wen, "lc-ballon", (schicht, platz) => {
@@ -65342,9 +64968,6 @@
          alte Sonderweg „nur Platz 1, nur Bildauswahl" ist damit
          überholt; das Menü kann beides. */
       lcPlatzMenueBinden(area);
-      lcMagicBinden(area);
-      const wegK = area.querySelector('[data-lc="weg"]');
-      if (wegK && !wegK.querySelector("svg")) wegK.innerHTML = LC_LK.tuer;
       area.querySelector('[data-lc="profilbild"]')?.addEventListener("click", () => livechatBildWaehler());
       /* Der Schalter fuer die Buehnenansicht — klassisch oder
          Gegenueber (siehe lcAnsicht weiter oben). */

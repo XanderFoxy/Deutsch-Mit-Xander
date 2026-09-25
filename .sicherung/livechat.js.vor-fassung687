@@ -4126,8 +4126,6 @@ window.LiveChat = (function () {
       personMerken(n.von, n.name, n.bild);
       personEintragen(n);
       if (!warSchonDa) kommtUndGeht(n.name || "Jemand", true);
-      /* FASSUNG 687 — der eigene Auftritt des Ankömmlings (Sportwagen, Rakete …). */
-      if (!warSchonDa && n.auftritt) auftrittZeigen(n.von, n.auftritt, "rein");
       /* GEWÜNSCHT: „Wenn ich den Hintergrund einstelle, dass der für
          alle sichtbar ist."
 
@@ -4354,8 +4352,6 @@ window.LiveChat = (function () {
       return;
     }
     if (n.art === "tschuess") {
-      /* FASSUNG 687 — der Abschied fährt los, solange das Bild noch auf seinem Platz sitzt. */
-      if (zustand.leute[n.von] && n.auftritt) auftrittZeigen(n.von, n.auftritt, "raus");
       if (zustand.leute[n.von]) {
         kommtUndGeht(zustand.leute[n.von].name || "Jemand", false,
                      n.wohinName || (n.wohin ? raumKlartext(n.wohin) : ""));
@@ -4700,24 +4696,6 @@ window.LiveChat = (function () {
   /* Mit „wohin" steht da, wohin jemand gegangen ist — das ist etwas
      anderes als Weggehen, und im Unterricht ein Unterschied: wer in
      einen anderen Raum wechselt, ist ja noch da. */
-  /* =========================================================
-     FASSUNG 687 — DER EIGENE AUFTRITT
-     XANDER: „jeder so einen personalisierten Effekt hat wie er
-     ankommt … wenn ich in den Chat komme dass ich dann mit einem
-     Ferrari reinkomme". Gewählt im eigenen Platzmenü, gemerkt auf dem
-     Gerät, mitgeschickt im „hallo" und im „tschuess". Gezeichnet wird
-     in app.js (window.DMA_AUFTRITT).
-     ========================================================= */
-  var AUFTRITTE = { sportwagen: 1, hotrod: 1, monstertruck: 1, rakete: 1, zauber: 1 };
-  function eigenerAuftritt() {
-    try { var a = localStorage.getItem("dma_auftritt") || ""; return AUFTRITTE[a] ? a : ""; } catch (e) { return ""; }
-  }
-  function auftrittZeigen(id, art, richtung) {
-    if (!AUFTRITTE[art] || !id) return;
-    var los = function () { try { if (window.DMA_AUFTRITT) window.DMA_AUFTRITT(id, art, richtung); } catch (e) {} };
-    /* Beim Kommen erst den Platz zeichnen lassen, beim Gehen sofort. */
-    if (richtung === "rein") setTimeout(los, 300); else los();
-  }
   function kommtUndGeht(name, kommt, wohin) {
     var ziel = String(wohin || "").trim();
     nachrichtAnhaengen({
@@ -5134,7 +5112,7 @@ window.LiveChat = (function () {
           }, 400);
         } else {
           /* Die andere Seite ruft an — ihr sagen, dass sie es soll. */
-          senden({ art: "hallo", auftritt: eigenerAuftritt(), name: zustand.ichName, tonAn: zustand.tonAn,
+          senden({ art: "hallo", name: zustand.ichName, tonAn: zustand.tonAn,
                    bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
                    seit: zustand.seit, buehne: zustand.buehne,
                    geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
@@ -5726,14 +5704,12 @@ window.LiveChat = (function () {
                Jetzt faehrt sie schon dort mit, und zwar in beide
                Richtungen (auch in der Antwort weiter unten). Damit
                stimmt es vom ersten Herzschlag an. */
-            senden({ art: "hallo", auftritt: eigenerAuftritt(), name: zustand.ichName, bild: zustand.ichBild,
+            senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
                      tonAn: zustand.tonAn, bildAn: zustand.bildAn,
                      seit: zustand.seit, buehne: zustand.buehne,
                      sprechbild: zustand.sprechbild || "",
                      spricht: Boolean(zustand.spricht),
                      geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
-            /* FASSUNG 687 — den eigenen Auftritt sieht man auch selbst, einmal je Betreten. */
-            if (zustand.auftrittRaum !== zustand.raum) { zustand.auftrittRaum = zustand.raum; auftrittZeigen(zustand.ichId, eigenerAuftritt(), "rein"); }
             /* Und alles, was waehrend der Funkstille geschrieben
                wurde, geht jetzt hinaus (siehe senden). */
             paketeNachschicken();
@@ -5807,7 +5783,7 @@ window.LiveChat = (function () {
                 if (e && e.raum === zustand.raum && k !== praesenzIch) andereDa = true;
               });
               if (!andereDa) return;
-              senden({ art: "hallo", auftritt: eigenerAuftritt(), name: zustand.ichName, bild: zustand.ichBild,
+              senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild,
                        tonAn: zustand.tonAn, bildAn: zustand.bildAn,
                        seit: zustand.seit, buehne: zustand.buehne,
                        geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
@@ -5886,10 +5862,9 @@ window.LiveChat = (function () {
        prueft selbst, ob eine Leitung steht. So laesst es sich auch
        nachmessen. */
     var zielRaum = String(wohin || "").trim();
-    zustand.auftrittRaum = "";
     senden(zielRaum
-      ? { art: "tschuess", wohin: zielRaum, wohinName: raumKlartext(zielRaum), auftritt: eigenerAuftritt() }
-      : { art: "tschuess", auftritt: eigenerAuftritt() });
+      ? { art: "tschuess", wohin: zielRaum, wohinName: raumKlartext(zielRaum) }
+      : { art: "tschuess" });
     if (kanal) {
       var alterKanal = kanal;
       kanal = null;
@@ -16005,12 +15980,6 @@ window.LiveChat = (function () {
       melden();
       return true;
     },
-    auftritt: function () { return eigenerAuftritt(); },
-    auftrittSetzen: function (x) {
-      try { if (AUFTRITTE[x]) localStorage.setItem("dma_auftritt", x); else localStorage.removeItem("dma_auftritt"); } catch (e) {}
-      return true;
-    },
-    auftrittZeigen: auftrittZeigen,
     sprechbildSetzen: function (x) {
       if (!SPRECHBILDER[x]) return false;
       zustand.sprechbild = x;
