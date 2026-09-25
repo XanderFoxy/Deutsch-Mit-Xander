@@ -711,3 +711,14 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Meldung: „🏆 Bea ist K.o.! +6 Punkte, +10 Erfahrung – 2 davon zählen im Ranking." mit Jubel.
 - Server: `spiel_681_siegeslohn` (in `spiel_treffer`), im Rollback geprüft (K.o.: Erfahrung +11 = Treffer +1 und Sieg +10, verdient +2).
 - Sonde: `pruefe-681-siegeslohn.js`. Alle Spiel-Sonden grün (656/658/665 wackeln nur unter Last).
+
+## Fassung 682 — Schatzpunkte, Felder überall, Deutsch-Fenster, Handel, Spaß im Chat
+
+- XANDER: „Die Punkte, die ich bei den normalen Schätzen einsammeln, sehe ich nicht in meinen Münzen". Vorher gab es Punkte erst nach der Artikel-Aufgabe (und nur bei 1 von 6 Inhalten). Jetzt: Heben +3 Punkte sofort (zählen im Ranking), nach der Aufgabe +5 dazu. Server: `spiel_682_fundstueck_punkte`.
+- XANDER: „überall auf jeden Platz unabhängig davon, ob da jemand sitzt … Erde umgraben … Getreide ernten … Saat sehen". Graben, Mähen, Säen gehen auf jedem Platz; auf besetzten Plätzen sieht man das Feld unten am Bild (Gesicht bleibt frei).
+- Deutsch-Fenster: die Aufgabe steht oben; statt „Tippe die richtige Antwort" links „Mission holen", rechts „📚 Neue Aufgabe ▾". Niveau/Arten klappen darunter auf; nach der Wahl springt das Fenster wieder nach oben.
+- Skillpunkte: Status zeigt „Skillpunkte: alle N verteilt", wenn keiner frei ist.
+- Glitch: das Schatz-Symbol in der Leiste wurde riesig (`width:100%`) – jetzt feste 22 px.
+- Handel (Mein Dorf): Markt-Tagespreis = Grundpreis × Laune des Tages × Nachfrage (je mehr heute verkauft, desto billiger) × Beliebtheit (wer viel angreift, bekommt weniger, bis −30 %). Schenken an Mitspieler (höchstens 50 Stück am Tag), eigene Angebote (bis 5, Preis 1–99, der Käufer zahlt dem Verkäufer), Dünger (8 Punkte, ein Feld wird 2 Minuten schneller reif). Server: `spiel_682_handel_markt_duenger` (Tabelle `spiel_angebote` nur über Server-Funktionen).
+- Im Chat (Mehr → „Im Chat"): Spaßwaffen (Tipp auf eine Person schießt zum Spaß, ohne Schaden, ohne Platzwechsel), Chat-Mauer (hält Effekte auf meinen Platz ab), Tiere reagieren auf Treffer und Streicheln (lecken, kuscheln, hüpfen) und spielen in Pausen miteinander. Server: `spiel_682_zeigen_chatschutz`.
+- Sonden: `pruefe-682-handel-chat.js` (21 Prüfungen); 673 und 677 an das neue Verhalten angepasst.

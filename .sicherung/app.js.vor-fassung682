@@ -36419,12 +36419,6 @@
     if (!ziele.length) return false;
     ziele.forEach((platz, i) => setTimeout(() => {
       if (!platz.isConnected) return;
-      /* FASSUNG 682 — XANDER: „die Mauer, dass man sich im Chat schützen
-         kann … damit man nicht mehr so leicht genervt wird" und „dass die
-         Tiere im Chat aktiv sind … entsprechend drauf reagieren". Das
-         Spiel darf hier mitreden: Chat-Mauer (der Effekt prallt ab) und
-         die Tiere am Platz (springen, lecken Sahne, kuscheln). */
-      try { if (window.DMA_SPIEL && window.DMA_SPIEL.chatEffekt && window.DMA_SPIEL.chatEffekt(platz, klasse)) return; } catch (e) {}
       platz.querySelectorAll("." + klasse).forEach((x) => x.remove());
       /* =============================================================
          RUNDE 77 — EIN EFFEKT LAEUFT WEITER, AUCH WENN JEMAND SPRICHT

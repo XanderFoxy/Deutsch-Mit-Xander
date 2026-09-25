@@ -1242,12 +1242,7 @@ body.sp-ich-nebel #lcPlaetze .lc-platz:not(.lc-platz-ich) .lc-kreis { filter: bl
   box-shadow: 0 0 0 2px #e8b923, 0 0 12px rgba(255, 200, 60, .8); animation: spFundKnopf 1.1s ease-in-out infinite alternate; }
 .sp-fund-knopf svg { width: 26px; height: 26px; }
 @keyframes spFundKnopf { from { transform: scale(1); } to { transform: scale(1.06); } }
-/* FASSUNG 682 — XANDER: „wenn ein Schatz auf dem Spielfeld auftaucht … wird
-   [die Leiste] plötzlich groß und an der Seite ist … so ein riesengroßes
-   Symbol … ein Sternsymbol was da blinkt". 100 % hieß: so breit wie die
-   Leiste. Jetzt feste Knopfgröße wie alle anderen. */
-.sp-schnell .sp-s-fund svg { width: 22px; height: 22px; flex: none; }
-.sp-schnell .sp-s-fund { background: #fff3c4; box-shadow: 0 0 0 2px #e8b923; }
+.sp-s-fund svg { width: 100%; height: 100%; }
 .sp-s-fund { animation: spFundKnopf 1.1s ease-in-out infinite alternate; }
 .sp-status.sp-status-kompakt { padding: 6px 8px; }
 .sp-status-zeile { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; font-size: 13px; }
@@ -1374,48 +1369,3 @@ body.sp-wwahl-offen .sp-meldung { opacity: 0; }
 /* FASSUNG 680 — verstärkte Waffen: Sterne am Namen. */
 .sp-sterne { color: #d9a400; letter-spacing: -1px; }
 .sp-panel .sp-verstaerken { background: #eef3fb; color: #2b3a55; }
-/* FASSUNG 682 — Feld unter einem besetzten Platz: nur das untere Drittel des Kreises. */
-.sp-acker.sp-acker-besetzt { clip-path: inset(64% 0 0 0 round 0 0 50% 50%); box-shadow: none; opacity: .95; }
-.sp-acker.sp-acker-besetzt .sp-acker-uhr { top: auto; bottom: 4%; }
-/* FASSUNG 682 — Deutsch: Aufgabe oben, darunter „Mission holen" | „Neue Aufgabe", die Wahl eingeklappt. */
-.sp-deutsch-knoepfe { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 6px 0; }
-.sp-deutsch-knoepfe button { flex: 1 1 0; min-height: 36px; border: 0; border-radius: 10px; background: #2b3a55; color: #fff; font: 700 14px/1.1 system-ui, sans-serif; cursor: pointer; }
-.sp-deutsch-knoepfe button.sp-an { background: #4a5f86; }
-.sp-deutsch-knoepfe > .sp-klein { flex: 1 1 0; text-align: center; }
-.sp-deutsch-wahl { display: none; margin-top: 6px; padding: 8px; border-radius: 12px; background: #f1efe9; }
-.sp-deutsch-wahl.sp-offen { display: block; }
-.sp-wahl-titel { margin-bottom: 4px; }
-/* FASSUNG 682 — Handel im Dorf-Menü */
-.sp-handel { gap: 4px; }
-.sp-handel .sp-sm-klein { width: 100%; margin: 4px 0 0; }
-.sp-handel-form { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; align-items: center; }
-.sp-handel-wahl { flex: 1 1 auto; min-width: 0; max-width: 46%; min-height: 32px; border-radius: 8px; border: 1px solid #3a4152; background: #262c3a; color: #fff; font: 600 12.5px system-ui, sans-serif; padding: 0 4px; }
-.sp-handel-angebot { display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 6px; border-radius: 9px; background: rgba(255, 255, 255, .06); font: 500 12px/1.25 system-ui, sans-serif; color: #dfe6f0; }
-.sp-handel-angebot svg { width: 20px; height: 20px; flex: none; }
-.sp-handel-angebot > span { flex: 1; min-width: 0; }
-.sp-handel-angebot button { flex: none; }
-/* FASSUNG 682 — Spaßwaffen im Chat: die Waffe groß am Schützen, das Ziel verschwindet kurz. */
-.sp-chatwaffe { position: fixed; z-index: 9990; width: var(--gr); height: var(--gr); margin: calc(var(--gr) / -2) 0 0 calc(var(--gr) / -2); pointer-events: none;
-  transform: rotate(var(--dreh)) scale(.3); animation: spChatWaffe .32s cubic-bezier(.2, 1.4, .4, 1) forwards; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .45)); }
-.sp-chatwaffe svg { width: 100%; height: 100%; overflow: visible; }
-.sp-chatwaffe.sp-chatwaffe-weg { transition: opacity .35s, transform .35s; opacity: 0; transform: rotate(var(--dreh)) scale(.6); }
-@keyframes spChatWaffe { to { transform: rotate(var(--dreh)) scale(1); } }
-.lc-kreis.sp-chat-weg { animation: spChatWeg 1.4s ease-in-out; }
-@keyframes spChatWeg { 0% { transform: scale(1); opacity: 1; } 18% { transform: scale(.2) rotate(40deg); opacity: 0; } 70% { transform: scale(.2); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-/* Chat-Mauer: drei Ziegelreihen schießen hoch und fallen wieder. */
-.sp-chatmauer { position: absolute; z-index: 12; pointer-events: none; transform-origin: 50% 100%; animation: spChatMauer 1.5s ease-in-out forwards; }
-.sp-chatmauer svg { width: 100%; height: 100%; display: block; }
-@keyframes spChatMauer { 0% { transform: scaleY(0); } 18% { transform: scaleY(1.08); } 26% { transform: scaleY(1); } 80% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(0); opacity: 0; } }
-/* Tiere im Chat */
-.sp-tier.sp-tier-hops, .sp-flugtier.sp-tier-hops { animation: spTierHops .5s ease-out 2; }
-@keyframes spTierHops { 0%, 100% { translate: 0 0; } 40% { translate: 0 -30%; } }
-.sp-tier.sp-tier-leckt, .sp-flugtier.sp-tier-leckt { animation: spTierLeckt .4s ease-in-out 4; }
-@keyframes spTierLeckt { 0%, 100% { rotate: 0deg; } 50% { rotate: -14deg; translate: -8% -6%; } }
-.sp-tier.sp-tier-kuschelt, .sp-flugtier.sp-tier-kuschelt { animation: spTierKuschel .8s ease-in-out 2; }
-@keyframes spTierKuschel { 0%, 100% { scale: 1; } 50% { scale: 1.12; rotate: 6deg; } }
-.sp-tier.sp-tier-spielt { animation: spTierSpielt 2.4s ease-in-out; }
-@keyframes spTierSpielt { 0%, 100% { translate: 0 0; } 30% { translate: var(--spiel-x) calc(var(--spiel-y) - 12px); } 45% { translate: var(--spiel-x) var(--spiel-y); } 55% { translate: var(--spiel-x) calc(var(--spiel-y) - 10px); } 70% { translate: calc(var(--spiel-x) * .5) 0; } }
-.sp-tier-herz { position: absolute; z-index: 13; width: 16px; height: 16px; pointer-events: none; opacity: 0; animation: spTierHerz 1.4s ease-out forwards; }
-.sp-tier-herz svg { width: 100%; height: 100%; }
-@keyframes spTierHerz { 0% { opacity: 0; transform: translateY(0) scale(.5); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-34px) scale(1.1); } }
-@media (prefers-reduced-motion: reduce) { .sp-chatwaffe, .lc-kreis.sp-chat-weg, .sp-chatmauer, .sp-tier-hops, .sp-tier-leckt, .sp-tier-kuschelt, .sp-tier-spielt, .sp-tier-herz { animation-duration: .01s; } }

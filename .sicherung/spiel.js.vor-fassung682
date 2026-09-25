@@ -361,7 +361,7 @@
     if (!name || !toeneAn() || lautStufe() === 0) return;
     /* FASSUNG 652 — wer nicht mitspielt, hört das Spiel nicht. */
     /* (Ausnahme: man bedient gerade selbst das Spielmenü.) */
-    if (!spielSichtbar() && !S.chatTonFrei && !S.schnellMenue && !(panel && !panel.hidden)) return;
+    if (!spielSichtbar() && !S.schnellMenue && !(panel && !panel.hidden)) return;
     if (klangSpielen(name, laut)) { try { if (window.DMA_TONLOG) window.DMA_TONLOG.push({ name: name, wann: Math.round(performance.now()), weg: "webaudio" }); } catch (e) {} return; }
     /* Noch nicht geladen oder nicht frei: diesmal der alte Weg, für das
        nächste Mal wird geladen. */
@@ -876,8 +876,6 @@
     /* Wer nicht mitspielt, bekommt nur den Stand – keine Bilder, keine Töne. */
     /* FASSUNG 669 — der Rundenkampf braucht kein „Mitspielen". */
     if (n.ereignis === "strat") { stratEmpfangen(n); return; }
-    /* FASSUNG 682 — Spaßwaffen im Chat sehen ALLE (sie kosten nichts und zählen nichts). */
-    if (n.ereignis === "chatwaffe") { chatWaffeZeigen(n); return; }
     if (!spielSichtbar() && n.ereignis !== "duell" && n.ereignis !== "duellnein") {
       /* FASSUNG 657 — nur ein freigegebenes Schaufenster (Level, Tiere) neu zeichnen. */
       if (n.ereignis === "stand" && n.stand && n.stand.zeigen) zeichnen();
@@ -892,9 +890,6 @@
         /* Ich wurde getroffen — mein Stand kommt vom Server nach. */
         setTimeout(function () { abrufen(true); }, 300);
       }
-    } else if (n.ereignis === "geschenk_ware") {
-      /* FASSUNG 682 — jemand hat mir Ware geschenkt. */
-      if (n.zielChat === meineChatId()) { ton("geschenk", 0.45); hinweis("🎁 " + (n.name || "Jemand") + " hat dir " + n.menge + " " + (WAREN[n.ware] || n.ware) + " geschenkt!"); abrufen(true); }
     } else if (n.ereignis === "ausgewichen") {
       zahlZeigen(n.zielChat, null, "ausgewichen");
     } else if (n.ereignis === "heilung") {
@@ -997,8 +992,6 @@
   }
   /* Aufgerufen vom Tipp auf einen Platz (app.js). true = erledigt. */
   function tippAufPlatz(knopf, p, ev) {
-    /* FASSUNG 682 — Spaßwaffen im Chat: wer nicht mitspielt, schießt – kein Platztausch. */
-    if (S.chatWaffe && S.bereit && !spielSichtbar() && p && !p.leer && !p.ich && p.id && !istPuppe(p.id)) { chatWaffeSchiessen(p.id); return true; }
     /* FASSUNG 661 — ein Fundstück auf dem Platz: aufheben statt hinsetzen. */
     if (knopf && knopf.querySelector && knopf.querySelector(".sp-fundsack") && spielSichtbar()) { fundHeben(knopf); return true; }
     if (S.turmSetzen && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
@@ -2884,8 +2877,6 @@
         schnellEl = document.createElement("div");
         schnellEl.className = "sp-schnell";
         schnellEl.addEventListener("click", schnellKlick);
-        /* FASSUNG 682 — die Auswahlen im Handel bleiben stehen, auch wenn die Leiste neu gezeichnet wird. */
-        schnellEl.addEventListener("change", function (ev) { var h = ev.target && ev.target.dataset && ev.target.dataset.h; if (h) HANDEL.wahl[h] = ev.target.value; });
         /* FASSUNG 645 — solange ein Finger auf der Leiste liegt, wird sie
            nicht neu gezeichnet: sonst verschwindet der Knopf unter dem
            Finger (der Sekundenzähler zeichnet laufend neu) und der Tipp
@@ -3180,11 +3171,7 @@
            für ALLE im Raum, auch für die, die nicht mitspielen. */
         + (function () { var z = ich.zeigen || {}; return '<div class="sp-sm-laut sp-sm-zeigen"><span>Auch ohne Spiel zeigen</span>'
           + '<button type="button" data-s="zeigen" data-k="level" class="' + (z.level ? "sp-an" : "") + '">Level</button>'
-          + '<button type="button" data-s="zeigen" data-k="tiere" class="' + (z.tiere ? "sp-an" : "") + '">Tiere</button></div>'
-          /* FASSUNG 682 — Chat-Mauer und Spaßwaffen */
-          + '<div class="sp-sm-laut sp-sm-zeigen"><span>Im Chat</span>'
-          + '<button type="button" data-s="zeigen" data-k="schutz" class="' + (z.schutz ? "sp-an" : "") + '" title="unfreundliche Chat-Effekte prallen an einer Mauer ab">Chat-Mauer</button>'
-          + '<button type="button" data-s="chatwaffe" class="' + (S.chatWaffe ? "sp-an" : "") + '" title="ohne Mitspielen: Tipp aufs Bild schießt zum Spaß mit deiner Waffe">Spaßwaffen</button></div>'; })()
+          + '<button type="button" data-s="zeigen" data-k="tiere" class="' + (z.tiere ? "sp-an" : "") + '">Tiere</button></div>'; })()
         + '<p class="sp-sm-klein">Aufs eigene Bild: <b>2× tippen</b> wechselt die Waffe, <b>lang drücken</b> öffnet das Zauberrad.</p>'
         + '<div class="sp-sm-liste">'
         + '<button type="button" data-s="sparring" class="' + (S.sparring ? "sp-an" : "") + '">Sparringspartner ' + (S.sparring ? "weg" : "aufstellen") + "</button>"
@@ -3240,23 +3227,17 @@
       if (ln > 0) { try { if (B().toeneSetzen) B().toeneSetzen(true); } catch (e) {} klangWecken(); setTimeout(function () { ton("bling", 0.6); }, 60); }
       hinweis(ln > 0 ? "🔊 Spieltöne: " + LAUT_STUFEN[ln][0] + "." : "🔇 Spieltöne sind aus.");
     } else if (s === "zeigen") {
-      var zAlt = (S.ich && S.ich.zeigen) || {}, zNeu = { level: Boolean(zAlt.level), tiere: Boolean(zAlt.tiere), schutz: Boolean(zAlt.schutz) };
+      var zAlt = (S.ich && S.ich.zeigen) || {}, zNeu = { level: Boolean(zAlt.level), tiere: Boolean(zAlt.tiere) };
       zNeu[k.dataset.k] = !zNeu[k.dataset.k];
       if (S.ich) S.ich.zeigen = zNeu;
-      rpc("spiel_zeigen", { p_level: zNeu.level, p_tiere: zNeu.tiere, p_schutz: zNeu.schutz }).then(function (r) {
+      rpc("spiel_zeigen", { p_level: zNeu.level, p_tiere: zNeu.tiere }).then(function (r) {
         if (r && r.ok === false) { if (S.ich) S.ich.zeigen = zAlt; hinweis(r.grund || "Das ging gerade nicht."); }
         else if (r) { S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) }); }
         zeichnen(); schnellZeichnen(true);
       }).catch(function () { if (S.ich) S.ich.zeigen = zAlt; hinweis("Das ging gerade nicht – gleich noch mal."); schnellZeichnen(true); });
-      hinweis(k.dataset.k === "schutz"
-        ? (zNeu.schutz ? "🧱 Chat-Mauer steht: unfreundliche Effekte prallen ab – Streicheln, Umarmen & Co. kommen durch." : "Die Chat-Mauer ist weg.")
-        : k.dataset.k === "level"
+      hinweis(k.dataset.k === "level"
         ? (zNeu.level ? "⭐ Dein Level sehen jetzt alle – auch wer nicht mitspielt." : "Dein Level sieht jetzt nur, wer mitspielt.")
         : (zNeu.tiere ? "🐾 Deine Tiere sind jetzt immer dabei – friedlich, für alle." : "Deine Tiere zeigen sich nur noch im Spiel."));
-    } else if (s === "chatwaffe") {
-      S.chatWaffe = !S.chatWaffe;
-      try { localStorage.setItem("dma_spiel_chatwaffe", S.chatWaffe ? "1" : "0"); } catch (e) {}
-      hinweis(S.chatWaffe ? "🎯 Spaßwaffen an: ohne Mitspielen schießt ein Tipp aufs Bild mit deiner angelegten Waffe – nur zum Spaß, ohne Punkte, kein Platztausch." : "Spaßwaffen aus – ein Tipp aufs Bild tauscht wieder den Platz.");
     } else if (s === "klasse") {
       S.schnellReiter = "klasse";
     } else if (s === "klassewahl") {
@@ -3269,36 +3250,6 @@
       }).catch(function () { hinweis("🛡️ Das ging gerade nicht."); });
     } else if (s === "dorf") {
       S.schnellReiter = "dorf";
-      handelLaden(false);
-    } else if (s === "duengerkauf") {
-      wirtschaft("spiel_duenger_kaufen", { p_menge: 1 }, function () { ton("kasse", 0.4); hinweis("🧪 Dünger gekauft (8 P). Nimm „Düngen“ und tippe auf ein wachsendes Feld."); });
-      return;
-    } else if (s === "schenken") {
-      var an = HANDEL.wahl.an, leuteS = mitspielerListe(), wen = leuteS.filter(function (x) { return x.sid === an; })[0];
-      if (!wen) { hinweis("🎁 Wähle, wem du etwas schenkst."); return; }
-      wirtschaft("spiel_schenken", { p_ziel: an, p_ware: HANDEL.wahl.ware, p_menge: Number(HANDEL.wahl.menge) || 1 }, function (r) {
-        ton("geschenk", 0.45);
-        hinweis("🎁 " + r.menge + " " + (WAREN[r.ware] || r.ware) + " an " + r.an + " verschenkt.");
-        senden({ ereignis: "geschenk_ware", zielChat: wen.chatId, ware: r.ware, menge: r.menge, name: (S.ich || {}).name || "" });
-      });
-      return;
-    } else if (s === "anbieten") {
-      wirtschaft("spiel_angebot", { p_ware: HANDEL.wahl.ware, p_menge: Number(HANDEL.wahl.menge) || 1, p_preis: Number(HANDEL.wahl.preis) || 1 }, function (r) {
-        ton("kasse", 0.35);
-        hinweis("🏷️ Angebot steht: " + r.menge + " " + (WAREN[r.ware] || r.ware) + " je " + r.preis + " P.");
-        handelLaden(true);
-      });
-      return;
-    } else if (s === "angebotweg") {
-      wirtschaft("spiel_angebot_weg", { p_id: Number(k.dataset.id) }, function (r) { hinweis("🏷️ Zurückgezogen: " + r.menge + " " + (WAREN[r.ware] || r.ware) + " sind wieder im Lager."); handelLaden(true); });
-      return;
-    } else if (s === "angebotkauf") {
-      wirtschaft("spiel_angebot_kaufen", { p_id: Number(k.dataset.id), p_menge: Number(k.dataset.n) || null }, function (r) {
-        ton("kasse", 0.45);
-        hinweis("🛒 Gekauft: " + r.menge + " " + (WAREN[r.ware] || r.ware) + " von " + r.von + " für " + r.kosten + " P.");
-        handelLaden(true);
-      });
-      return;
     } else if (s === "bauen") {
       rpc("spiel_bauen", { p_was: k.dataset.w }).then(function (r) {
         if (!r || r.ok === false) { hinweis("🏗️ " + ((r && r.grund) || "Das ging nicht.")); return; }
@@ -3411,7 +3362,6 @@
       wirtschaft("spiel_markt", { p_ware: k.dataset.w, p_menge: 0 }, function (r) {
         ton("kasse", 0.45);
         hinweis("🏪 Markt: " + r.menge + " " + (WAREN[r.ware] || r.ware) + " verkauft – +" + r.erloes + " Punkte." + (r.rang ? " " + r.rang + " davon zählen im Ranking." : ""));
-        handelLaden(true);
       });
       return;
     } else if (s === "mission") {
@@ -4550,7 +4500,7 @@
       panel.addEventListener("change", function (ev) {
         var w = ev.target && ev.target.closest && ev.target.closest(".sp-arten-mehr");
         if (!w) return;
-        S.kategorie = w.value || null; deutschNachOben(); aufgabeHolen(false);
+        S.kategorie = w.value || null; aufgabeHolen(false);
       });
     }
     if (tab) reiter = tab;
@@ -4559,11 +4509,6 @@
     panelAuffrischen();
   }
   function schliessen() { if (panel) panel.hidden = true; }
-  /* Nach der Wahl klappt die Wahl zu und das Fenster springt zur Aufgabe hoch. */
-  function deutschNachOben() {
-    S.deutschWahl = false;
-    setTimeout(function () { if (!panel) return; var auf = panel.querySelector(".sp-inhalt"); if (auf) try { auf.scrollIntoView({ block: "start", behavior: "smooth" }); } catch (e) { panel.scrollTop = 0; } }, 60);
-  }
   /* FASSUNG 679 — Ablegen: das Fenster verschwindet, in der Schnellleiste
      liegt ein Knopf, der es genau so wieder aufmacht (gleicher Reiter). */
   function fensterAblegen() {
@@ -4621,9 +4566,7 @@
       + (ich.kaputt ? ' <span class="sp-rot">· kaputt</span>' : "") + (ich.anfaenger ? ' <span class="sp-blau">· Anfängerschutz</span>' : "") + "</div>"
       /* FASSUNG 634 — Level und Erfahrung */
       + '<div class="sp-status-lp"><span class="sp-status-balken sp-xp-balken"><i style="width:' + xpAnteil + '%"></i></span> <b>Level ' + (ich.level || 1) + "</b> · "
-      + (ich.xp || 0) + " / " + (ich.xp_naechste || 100) + " Erfahrung" + (ich.skill_frei > 0 ? ' <span class="sp-gold">· ' + ich.skill_frei + " Skillpunkt" + (ich.skill_frei > 1 ? "e" : "") + " frei</span>"
-        /* FASSUNG 682 — „Die Skillpunkte werden offenbar nicht mehr angezeigt": bei 0 freien stand nichts da. */
-        : (ich.level || 1) > 1 ? ' <span class="sp-klein">· Skillpunkte: alle ' + ((ich.level || 1) - 1) + " verteilt</span>" : "") + "</div>"
+      + (ich.xp || 0) + " / " + (ich.xp_naechste || 100) + " Erfahrung" + (ich.skill_frei > 0 ? ' <span class="sp-gold">· ' + ich.skill_frei + " Skillpunkt" + (ich.skill_frei > 1 ? "e" : "") + " frei</span>" : "") + "</div>"
       + '<div class="sp-status-werte"><span>🪙 ' + ich.punkte + " Punkte</span><span>📚 " + (ich.verdient || 0) + " verdient</span><span>🩹 " + ich.pflaster
       + "</span><span>🧪 " + ich.traenke + "</span>" + (vorrat.erz > 0 ? "<span>⛏️ " + vorrat.erz + " Erz</span>" : "") + "<span>🛡️ " + Math.round((ich.ruestung || 0) * 100) + " % Rüstung</span>"
       + "<span>🔥 " + (ich.ladung || 0) + " % Ladung" + (wirkt(ich, "daemon") ? " · dämonisch " + wirkt(ich, "daemon") + " s" : "") + "</span>"
@@ -4732,22 +4675,13 @@
               + (a.ergebnis.bonus ? ' <span class="sp-gold">Mission +' + a.ergebnis.bonus + "</span>" : "")
               + '<button type="button" data-tu="aufgabe">Weiter</button></div>'
               + '<div class="sp-erg-erkl">' + esc(a.ergebnis.erklaerung || "") + "</div>"
-            : a.hinweis ? '<div class="sp-klein sp-rot">' + esc(a.hinweis) + "</div>" : deutschKnoepfe())
+            : a.hinweis ? '<div class="sp-klein sp-rot">' + esc(a.hinweis) + "</div>" : '<div class="sp-erg-leer">Tippe die richtige Antwort.</div>')
           + "</div>"
           + "</div>";
       } else {
         teil = '<div class="sp-knoepfe"><button type="button" data-tu="aufgabe">📚 Aufgabe holen</button></div>';
       }
-      /* FASSUNG 682 — XANDER: „das Panel mit dem Niveau und den Aufgaben unten
-         hinlegen die eigentliche Aufgabe oben … da wo dieser Balken steht,
-         tippe die richtige Antwort. Das ist verschenkter Platz … links
-         Mission holen und rechts neue Aufgabe holen. Wenn wir dann auf neue
-         Aufgabe klicken, können wir die Aufgabe, die wir spielen wollen
-         auswählen und … springt es wieder nach oben". Die Wahl (Niveau,
-         Arten) liegt eingeklappt unter der Aufgabe; „Neue Aufgabe" klappt
-         sie auf, eine Wahl lädt die Aufgabe und springt nach oben. */
-      var hatAufgabe = Boolean(S.kategorie === "aussprache" || (a && a.frage));
-      var missionTeil = missionLaeuft(S.ich) || !hatAufgabe ? missionHtml(S.ich) : "";
+      var missionTeil = missionHtml(S.ich);
       /* FUNK 106 — „könnte man auch andere Sachen implementieren wie das
          betonungstraining". Betonung ist eine eigene Aufgabenart
          (Kategorie „betonung", aus den geprüften Silben des Wörterbuchs). */
@@ -4774,9 +4708,7 @@
       /* FASSUNG 679 — XANDER: „das oben über der Aufgabe die Niveau standen
          und die Aufgaben und die Mission auch in Griffweite". Wieder wie
          zuerst: Niveau, Arten, Aufgabe, Mission. */
-      var wahl = '<div class="sp-deutsch-wahl' + (S.deutschWahl || !hatAufgabe ? " sp-offen" : "") + '"><div class="sp-klein sp-wahl-titel">Niveau und Art wählen – die Aufgabe kommt sofort:</div>'
-        + '<div class="sp-chips">' + chips + "</div>" + arten + "</div>";
-      return teil + (hatAufgabe && !(a && a.frage && !a.ergebnis && !a.hinweis) ? deutschKnoepfe() : "") + missionTeil + wahl + regel;
+      return '<div class="sp-chips">' + chips + "</div>" + arten + teil + missionTeil + regel;
     }
     if (reiter === "koennen") {
       var tr = ich.training, frei = ich.skill_frei || 0, sks = ich.skills || {};
@@ -5000,10 +4932,7 @@
     if (tu === "fensterab") { fensterAblegen(); return; }
     if (tu === "haupt") { schliessen(); S.schnellMenue = true; schnellZeichnen(true); return; }
     if (tu === "fund") { fundAmPlatzZeigen(); return; }
-    if (tu === "neuwahl") { S.deutschWahl = !S.deutschWahl; panelAuffrischen();
-      if (S.deutschWahl) { var wz = panel.querySelector(".sp-deutsch-wahl"); if (wz) try { wz.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }
-      return; }
-    if (tu === "niveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} deutschNachOben(); aufgabeHolen(false); return; }
+    if (tu === "niveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} aufgabeHolen(false); return; }
     if (tu === "aufgabe") return aufgabeHolen(false);
     if (tu === "missionsaufgabe") return aufgabeHolen(true);
     if (tu === "antwort") return antworten(k.dataset.o);
@@ -5052,7 +4981,7 @@
     if (tu === "fuettern") return fuettern(k.dataset.w, k.dataset.f);
     if (tu === "tierraus") return tierWechseln(k.dataset.a);
     if (tu === "fusion") return fusionieren(k.dataset.k);
-    if (tu === "kategorie") { S.kategorie = k.dataset.k || null; deutschNachOben(); if (S.kategorie === "aussprache") { sprechWortHolen(0); return; } aufgabeHolen(false); return; }
+    if (tu === "kategorie") { S.kategorie = k.dataset.k || null; if (S.kategorie === "aussprache") { sprechWortHolen(0); return; } aufgabeHolen(false); return; }
     if (tu === "sprechhoeren") return sprechHoeren();
     if (tu === "sprechen") return sprechAufnehmen();
     if (tu === "sprechneu") return sprechWortHolen(0);
@@ -5073,7 +5002,7 @@
       a.gewaehlt = o; a.ergebnis = r; a.hinweis = "";
       if (r.richtig) trophaeenBald();
       /* FASSUNG 661 — das Fundstück gehört einem, wenn die Aufgabe stimmt. */
-      if (r.fund) { var fw = FUND_LOHN[r.fund] || ["", "etwas"]; setTimeout(function () { hinweis("🎁 Fundstück eingelöst: " + fw[1] + " und +5 Punkte!"); ton("geschenk", 0.5); }, 500); }
+      if (r.fund) { var fw = FUND_LOHN[r.fund] || ["", "etwas"]; setTimeout(function () { hinweis("🎁 Fundstück eingelöst: " + fw[1] + "!"); ton("geschenk", 0.5); }, 500); }
       else if (S.fundArt && !r.richtig) hinweis("Schade – das Fundstück ist weg. Das nächste kommt bestimmt.");
       if (S.fundKatMerk) { S.kategorie = S.fundKatAlt; S.fundKatMerk = false; }
       S.fundArt = "";
@@ -5276,12 +5205,6 @@
     if (m.art === "heiler") return "Heile jemand anderen – Pflaster oder Trank über sein Bild (+" + m.lohn + ").";
     if (m.art === "seite") return "Sammle <b>" + m.ziel + " Punkte</b> in den Übungen der Seite, außerhalb des Spiels (+" + m.lohn + "). Wird alle 5 Minuten gutgeschrieben.";
     return "";
-  }
-  /* FASSUNG 682 — die Zeile unter der Aufgabe: links Mission, rechts neue Aufgabe. */
-  function deutschKnoepfe() {
-    return '<div class="sp-deutsch-knoepfe">'
-      + (missionLaeuft(S.ich) ? '<span class="sp-klein">🗺️ Mission läuft</span>' : '<button type="button" data-tu="mission">🗺️ Mission holen</button>')
-      + '<button type="button" data-tu="neuwahl" class="' + (S.deutschWahl ? "sp-an" : "") + '">📚 Neue Aufgabe ' + (S.deutschWahl ? "▴" : "▾") + "</button></div>";
   }
   function missionHtml(ich) {
     if (!missionLaeuft(ich)) return '<div class="sp-knoepfe"><button type="button" data-tu="mission">🗺️ Mission holen</button></div>';
@@ -5501,9 +5424,7 @@
   var WERKZEUGE = {
     schaufel: { name: "Schaufel", tut: "graben" },
     sense:    { name: "Sense", tut: "Getreide ernten" },
-    saat:     { name: "Saatbeutel", tut: "säen: 1 Getreide → 5" },
-    /* FASSUNG 682 — Dünger: ein wachsendes Feld ist 2 Minuten früher reif. */
-    duenger:  { name: "Dünger", tut: "wachsendes Feld 2 min früher reif" }
+    saat:     { name: "Saatbeutel", tut: "säen: 1 Getreide → 5" }
   };
   var ACKER_MS = 240000;
   try { var wzMerk = localStorage.getItem("dma_spiel_werkzeug"); if (WERKZEUGE[wzMerk]) S.werkzeug = wzMerk; } catch (e) {}
@@ -5526,12 +5447,7 @@
       + '<g fill="#f2c230" stroke="#9a7410" stroke-width=".4"><ellipse cx="17" cy="27" rx="1.5" ry="2.4" transform="rotate(-20 17 27)"/>'
       + '<ellipse cx="22.5" cy="28" rx="1.5" ry="2.4" transform="rotate(18 22.5 28)"/><ellipse cx="20" cy="31.5" rx="1.4" ry="2.2"/></g></svg>';
   }
-  function duengerSvg() {
-    return '<svg class="sp-saat-svg" viewBox="0 0 40 40" aria-hidden="true"><path d="M11 12 H29 L27 35 H13 Z" fill="#6d8f3a" stroke="#3f5a1c" stroke-width="1.3"/>'
-      + '<path d="M11 12 L14 7 H26 L29 12" fill="#89ad4c" stroke="#3f5a1c" stroke-width="1.1"/><path d="M20 17 C15 21 16 27 20 29 C24 27 25 21 20 17 Z" fill="#dff0b0"/>'
-      + '<path d="M20 29 V20" stroke="#3f5a1c" stroke-width="1"/></svg>';
-  }
-  function werkzeugSvg(w) { return w === "sense" ? senseSvg() : w === "saat" ? saatSvg() : w === "duenger" ? duengerSvg() : grabSvg(); }
+  function werkzeugSvg(w) { return w === "sense" ? senseSvg() : w === "saat" ? saatSvg() : grabSvg(); }
   function werkzeugHinweis() {
     var w = S.werkzeug;
     if (w === "sense") return "🌾 Sense in der Hand: tippe auf einen freien Platz – reifes Getreide wird gemäht. 2× auf einen Platz: Werkzeug wechseln.";
@@ -5548,18 +5464,16 @@
   }
   function werkzeugWahlHtml() {
     return '<div class="sp-werkzeugwahl" role="menu"><span class="sp-ww-titel">Werkzeug</span>' + Object.keys(WERKZEUGE).map(function (w) {
-      var extra = w === "schaufel" ? vorrat(S.ich, "erz") + " Erz" : w === "duenger" ? vorrat(S.ich, "duenger") + " Dünger" : vorrat(S.ich, "getreide") + " Getreide";
+      var extra = w === "schaufel" ? vorrat(S.ich, "erz") + " Erz" : vorrat(S.ich, "getreide") + " Getreide";
       return '<button type="button" data-s="werkzeugsetzen" data-w="' + w + '" class="' + (S.graben && S.werkzeug === w ? "sp-an" : "") + '">'
         + werkzeugSvg(w) + "<b>" + WERKZEUGE[w].name + "</b><small>" + WERKZEUGE[w].tut + " · " + extra + "</small></button>";
     }).join("") + (S.graben ? '<button type="button" data-s="graben" class="sp-ww-weg">Weglegen</button>' : "") + "</div>";
   }
   function werkzeugNutzen(knopf, nr, p) {
     if (S.werkzeug === "schaufel") { graben(knopf, nr); return; }
-    /* FASSUNG 682 — XANDER: „ich möchte, dass man überall auf jeden Platz
-       unabhängig davon, ob da jemand sitzt oder nicht, dass man die Erde
-       umgraben kann, dass man Getreide ernten kann … man muss nicht erst den
-       anderen bitten, dass er darunter geht". Kein Sperren mehr. */
-    if (S.werkzeug === "sense") ernten(knopf, nr); else if (S.werkzeug === "duenger") duengen(knopf, nr); else saeen(knopf, nr);
+    /* Besetzt ist, wo jemand sitzt (data-lc-id) – dieselbe Regel wie beim Zeichnen der Felder. */
+    if ((knopf.dataset && knopf.dataset.lcId) || (p && p.id) || (S.sparring && nr === S.sparring)) { hinweis("🌾 Da sitzt jemand – Getreide wächst nur auf freien Plätzen."); return; }
+    if (S.werkzeug === "sense") ernten(knopf, nr); else saeen(knopf, nr);
   }
   function ackerStand(nr) {
     var f = ((S.ich && S.ich.acker) || {})[String(nr)] || {}, ab = f.ab ? Date.parse(f.ab) : 0;
@@ -5612,15 +5526,15 @@
     var plaetze = [].slice.call(reihe.querySelectorAll(".lc-platz")), plan = [];
     plaetze.forEach(function (q) {
       var kreis = q.querySelector(".lc-kreis"), nr = Number(q.dataset.lcPlatz);
-      var soll = an && kreis && !q.querySelector(".sp-fundsack");
+      var soll = an && kreis && !q.dataset.lcId && !(S.sparring && nr === S.sparring) && !q.querySelector(".sp-fundsack");
       if (!soll) { plan.push({ q: q, weg: true }); return; }
       var rz = q.getBoundingClientRect(), rk = kreis.getBoundingClientRect();
-      plan.push({ q: q, nr: nr, besetzt: Boolean(q.dataset.lcId) || Boolean(S.sparring && nr === S.sparring), l: (rk.left - rz.left - q.clientLeft), t: (rk.top - rz.top - q.clientTop), w: rk.width, h: rk.height });
+      plan.push({ q: q, nr: nr, l: (rk.left - rz.left - q.clientLeft), t: (rk.top - rz.top - q.clientTop), w: rk.width, h: rk.height });
     });
     plan.forEach(function (p) {
       var alt = p.q.querySelector(".sp-acker");
       if (p.weg) { if (alt) alt.remove(); return; }
-      var st = ackerStand(p.nr), schl = (st.reif ? "reif" : "w" + Math.floor(st.anteil * 8)) + (st.saat ? "s" : "") + (p.besetzt ? "b" : "");
+      var st = ackerStand(p.nr), schl = (st.reif ? "reif" : "w" + Math.floor(st.anteil * 8)) + (st.saat ? "s" : "");
       if (!alt) {
         alt = document.createElement("span");
         alt.innerHTML = '<span class="sp-acker-bild"></span><b class="sp-acker-uhr"></b>';
@@ -5633,8 +5547,7 @@
       }
       if (alt.dataset.s !== schl) {
         alt.dataset.s = schl;
-        /* Sitzt dort jemand, liegt das Feld nur unten am Bild – die Gesichtsmitte bleibt frei. */
-        alt.className = "sp-acker sp-acker-" + (st.reif ? "reif" : "waechst") + (st.saat ? " sp-acker-saat" : "") + (p.besetzt ? " sp-acker-besetzt" : "");
+        alt.className = "sp-acker sp-acker-" + (st.reif ? "reif" : "waechst") + (st.saat ? " sp-acker-saat" : "");
         alt.firstChild.innerHTML = ackerSvg(st);
       }
       var uhr = st.reif ? "+" + (st.saat ? 5 : 2) : uhrText(st.rest);
@@ -5735,7 +5648,6 @@
   var WAREN = { getreide: "Getreide", mehl: "Mehl", brot: "Brot", kuchen: "Kuchen" };
   var MARKT = { getreide: 1, mehl: 3, brot: 6, kuchen: 14 };
   function wareSvg(w) {
-    if (w === "duenger") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 6 H15 L14 18 H6 Z" fill="#6d8f3a" stroke="#3f5a1c" stroke-width="1"/><path d="M10 9 C7.5 11 8 14 10 15 C12 14 12.5 11 10 9 Z" fill="#dff0b0"/></svg>';
     if (w === "mehl") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7 C3 11 3.5 18 10 18 C16.5 18 17 11 15 7 Z" fill="#f4f1ea" stroke="#8a7a5a" stroke-width="1"/><path d="M5.5 7 C7 5 13 5 14.5 7" fill="#e2dccd" stroke="#8a7a5a" stroke-width=".9"/><path d="M8 11.5 H12 M10 9.5 V13.5" stroke="#c9a23a" stroke-width="1.1"/></svg>';
     if (w === "brot") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 13 C2.5 7 17.5 7 17.5 13 C17.5 15 2.5 15 2.5 13 Z" fill="#c8843e" stroke="#6b4521" stroke-width="1"/><path d="M6 9.5 L7.5 12 M9.5 9 L11 11.5 M13 9.5 L14.5 12" stroke="#f1c98a" stroke-width="1.1" stroke-linecap="round"/></svg>';
     if (w === "kuchen") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10 L17 10 L17 16 L3 16 Z" fill="#e8b36a" stroke="#6b4521" stroke-width="1"/><path d="M3 12.5 H17" stroke="#b0402f" stroke-width="1.4"/><path d="M3 10 C4 7.5 16 7.5 17 10" fill="#fff6f0" stroke="#6b4521" stroke-width=".9"/><circle cx="10" cy="6.4" r="1.6" fill="#e2403a"/></svg>';
@@ -5768,8 +5680,8 @@
     });
     var lager = Object.keys(WAREN).map(function (x) { return '<span class="sp-ware">' + wareSvg(x) + "<b>" + vorrat(ich, x) + "</b> " + WAREN[x] + "</span>"; }).join("");
     var markt = Object.keys(WAREN).filter(function (x) { return vorrat(ich, x) > 0; }).map(function (x) {
-      var n = Math.min(50, vorrat(ich, x)), pr = marktPreis(x);
-      return '<button type="button" data-s="markt" data-w="' + x + '">' + WAREN[x] + " verkaufen <small>" + n + " × " + komma2(pr) + " = +" + Math.max(1, Math.round(n * pr)) + "</small></button>";
+      var n = Math.min(50, vorrat(ich, x));
+      return '<button type="button" data-s="markt" data-w="' + x + '">' + WAREN[x] + " verkaufen <small>" + n + " × " + MARKT[x] + " = +" + (n * MARKT[x]) + "</small></button>";
     }).join("");
     var essenK = ["brot", "kuchen"].filter(function (x) { return vorrat(ich, x) > 0; }).map(function (x) {
       return '<button type="button" data-s="iss" data-d="' + x + '">' + WAREN[x] + " essen <small>" + (x === "brot" ? "+12 LP" : "+30 LP, +10 Mana") + "</small></button>";
@@ -5779,8 +5691,7 @@
       + '<button type="button" data-s="werkzeugsetzen" data-w="sense" class="' + (S.graben && S.werkzeug === "sense" ? "sp-an" : "") + '">Sense <small>Getreide mähen</small></button>'
       + '<button type="button" data-s="werkzeugsetzen" data-w="saat" class="' + (S.graben && S.werkzeug === "saat" ? "sp-an" : "") + '">Säen <small>1 Getreide → 5</small></button></div>'
       + (t.length ? '<div class="sp-troph-liste">' + t.join("") + "</div>" : '<p class="sp-sm-klein">Bau eine Mühle (ab Level 3), dann mahlt sie dein Getreide zu Mehl – die Bäckerei backt daraus Brot und Kuchen.</p>')
-      + (markt || essenK ? '<div class="sp-sm-gruppe sp-markt"><span>Markt</span>' + markt + essenK + "</div>" : "")
-      + handelHtml(ich);
+      + (markt || essenK ? '<div class="sp-sm-gruppe sp-markt"><span>Markt</span>' + markt + essenK + "</div>" : "");
   }
   function wirtschaft(name, args, fertig) {
     rpc(name, args).then(function (r) {
@@ -5791,248 +5702,6 @@
       fertig(r);
       schnellZeichnen(true); panelAuffrischen();
     }).catch(function () { hinweis("🏭 Das ging gerade nicht."); });
-  }
-  /* ---------------------------------------------------------------
-     FASSUNG 682 — HANDEL
-     XANDER: „Ich kann jemanden auch Getreide geben oder irgendwas
-     ausliefern … je nach Kundschaft … Preis senken … Wettbewerb …
-     Zufallsmechanik … Sympathiefaktor … Aggressivität … die Leute
-     können auch von mir Getreide abkaufen … Dünger von mir kaufen …
-     günstiger … damit ihr Getreide schneller wächst".
-     Markt: der Tagespreis hängt ab von der Nachfrage (je mehr heute alle
-     verkauft haben, desto weniger), einer Tageslaune (±15 %) und der
-     eigenen Beliebtheit (wer viel angreift, hat bis zu 30 % weniger
-     Kundschaft). Schenken: bis 50 Stück am Tag. Angebote: eigene Ware
-     zum eigenen Preis – andere kaufen sie, das Geld geht an dich.
-     Dünger: beim Händler 8 P, bei Mitspielern oft billiger; ein
-     gedüngtes Feld ist zwei Minuten früher reif.
-     --------------------------------------------------------------- */
-  var HANDEL = { preise: null, preiseZeit: 0, angebote: null, angeboteZeit: 0, wahl: { ware: "getreide", menge: "5", preis: "2", an: "" } };
-  WAREN.duenger = "Dünger"; MARKT.duenger = 4;
-  function handelLaden(zwingend) {
-    var jetzt = Date.now();
-    if (zwingend || jetzt - HANDEL.preiseZeit > 30000) {
-      HANDEL.preiseZeit = jetzt;
-      rpc("spiel_markt_preise", {}).then(function (r) { if (r && r.ok) { HANDEL.preise = r.preise || {}; schnellZeichnen(true); } }).catch(function () {});
-    }
-    if (zwingend || jetzt - HANDEL.angeboteZeit > 15000) {
-      HANDEL.angeboteZeit = jetzt;
-      rpc("spiel_angebote_liste", {}).then(function (r) { if (r && r.ok) { HANDEL.angebote = r.angebote || []; schnellZeichnen(true); } }).catch(function () {});
-    }
-  }
-  function marktPreis(ware) {
-    var p = HANDEL.preise && HANDEL.preise[ware];
-    return p && p.preis != null ? Number(p.preis) : MARKT[ware] || 1;
-  }
-  function komma2(x) { return String(Math.round(x * 100) / 100).replace(".", ","); }
-  function mitspielerListe() {
-    return plaetze().filter(function (p) { return !p.leer && !p.ich && !istPuppe(p.id); }).map(function (p) {
-      return { chatId: p.id, name: p.name || "?", sid: spielIdVon(p.id) };
-    }).filter(function (x) { return x.sid && S.stand[x.sid]; });
-  }
-  function auswahl(key, werte) {
-    var ist = HANDEL.wahl[key];
-    return '<select class="sp-handel-wahl" data-h="' + key + '">' + werte.map(function (w) {
-      return '<option value="' + esc(w[0]) + '"' + (String(w[0]) === String(ist) ? " selected" : "") + ">" + esc(w[1]) + "</option>";
-    }).join("") + "</select>";
-  }
-  function handelHtml(ich) {
-    var p = HANDEL.preise && HANDEL.preise.getreide;
-    var info = p ? '<p class="sp-sm-klein">Heute: Nachfrage ×' + komma2(p.nachfrage) + " · Tageslaune ×" + komma2(p.laune) + " · deine Beliebtheit ×" + komma2(p.beliebt)
-      + (p.beliebt < 1 ? " (wer viel angreift, hat weniger Kundschaft)" : "") + "</p>" : '<p class="sp-sm-klein">Preise werden geladen …</p>';
-    var leute = mitspielerListe();
-    if (!HANDEL.wahl.an && leute[0]) HANDEL.wahl.an = leute[0].sid;
-    var waren = Object.keys(WAREN).map(function (w) { return [w, WAREN[w] + " (" + vorrat(ich, w) + ")"]; });
-    var schenken = leute.length
-      ? '<div class="sp-handel-form">' + auswahl("ware", waren) + auswahl("menge", [["1", "1"], ["5", "5"], ["10", "10"], ["20", "20"]])
-        + auswahl("an", leute.map(function (x) { return [x.sid, "an " + x.name]; })) + '<button type="button" data-s="schenken">Schenken</button></div>'
-      : '<p class="sp-sm-klein">Schenken geht, sobald jemand Mitspielendes im Raum sitzt.</p>';
-    var anbieten = '<div class="sp-handel-form">' + auswahl("ware", waren) + auswahl("menge", [["1", "1"], ["5", "5"], ["10", "10"], ["20", "20"]])
-      + auswahl("preis", [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20].map(function (n) { return [String(n), "je " + n + " P"]; }))
-      + '<button type="button" data-s="anbieten">Anbieten</button></div>';
-    var liste = HANDEL.angebote == null ? '<p class="sp-sm-klein">Angebote werden geladen …</p>'
-      : !HANDEL.angebote.length ? '<p class="sp-sm-klein">Noch keine Angebote – sei die oder der Erste.</p>'
-      : HANDEL.angebote.map(function (a) {
-          var markt = marktPreis(a.ware), billig = a.preis < MARKT[a.ware] ? ' <span class="sp-gold">billiger als beim Händler</span>' : "";
-          return '<div class="sp-handel-angebot">' + wareSvg(a.ware) + "<span><b>" + a.menge + " " + (WAREN[a.ware] || a.ware) + "</b> je " + a.preis + " P · " + esc(a.von) + billig + "</span>"
-            + (a.eigen ? '<button type="button" data-s="angebotweg" data-id="' + a.id + '">Zurückziehen</button>'
-                       : '<button type="button" data-s="angebotkauf" data-id="' + a.id + '" data-n="' + a.menge + '"' + ((ich.punkte || 0) >= a.preis * a.menge ? "" : " disabled") + ">Kaufen · " + a.preis * a.menge + "</button>")
-            + "</div>";
-        }).join("");
-    return '<div class="sp-sm-gruppe sp-handel"><span>Handel</span>' + info
-      + '<div class="sp-sm-liste"><button type="button" data-s="duengerkauf"' + ((ich.punkte || 0) >= 8 ? "" : " disabled") + ">Dünger beim Händler <small>8 P · du hast " + vorrat(ich, "duenger") + "</small></button>"
-      + '<button type="button" data-s="werkzeugsetzen" data-w="duenger">Düngen <small>Feld 2 min früher reif</small></button></div>'
-      + '<p class="sp-sm-klein"><b>Schenken</b> (bis 50 am Tag):</p>' + schenken
-      + '<p class="sp-sm-klein"><b>Eigenes Angebot</b> – andere kaufen, das Geld geht an dich:</p>' + anbieten
-      + '<p class="sp-sm-klein"><b>Angebote im Spiel</b>:</p>' + liste + "</div>";
-  }
-  function duengen(knopf, nr) {
-    if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an."); return; }
-    var st = ackerStand(nr);
-    if (st.reif) { hinweis("🌾 Das Feld ist reif – erst mähen, dann säen und düngen."); return; }
-    if (vorrat(S.ich, "duenger") < 1) { hinweis("🧪 Kein Dünger – im Dorf-Menü (Handel) kaufen, beim Händler oder billiger bei Mitspielern."); return; }
-    saatZeigen(knopf);
-    ton("platsch", 0.3);
-    rpc("spiel_duengen", { p_platz: nr }).then(function (r) {
-      if (!r || !r.ok) { hinweis("🧪 " + ((r && r.grund) || "geht nicht")); return; }
-      if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-      hinweis("🧪 Gedüngt – das Feld ist zwei Minuten früher reif.");
-      ackerPflegen(); schnellZeichnen();
-    }).catch(function () { hinweis("🧪 Das ging gerade nicht."); });
-  }
-  /* ---------------------------------------------------------------
-     FASSUNG 682 — DAS SPIEL IM CHAT: SPASSWAFFEN, CHAT-MAUER, TIERE
-     --------------------------------------------------------------- */
-  /* XANDER: „dass man die Sachen, die man sich im Spiel hat, so als
-     Gimmick … auf dem Chat Platz auch benutzen kann … mit seinen eigenen
-     Waffen abschießen … Die sollen … nicht als kleines Symbol … sondern
-     man soll richtig ne Bazooka haben … dass der andere sieht, was auf ihn
-     zukommt … dann tauschen wir keine Plätze … ohne dass das Punkte von
-     Ihnen abzieht … dann verschwinden Sie kurz und sind aber direkt
-     wieder am Platz". An: Mehr → „Spaßwaffen im Chat". Wer gerade NICHT
-     mitspielt, schießt mit einem Tipp aufs Bild mit der angelegten Waffe
-     (Waffe 1 / Waffe 2 wie im Spiel). Alle im Raum sehen es. */
-  try { S.chatWaffe = localStorage.getItem("dma_spiel_chatwaffe") === "1"; } catch (e) {}
-  /* Was durch die Mauer darf: alles Liebe, Heilende, Putzende und Harmlose
-     (Klassen aus lcAmPlatz in app.js). Alles andere prallt ab. */
-  var CHAT_FREUNDLICH = /applaus|ballon|blume|kuss|streichel|zherz|herz|pflaster|putzen|wisch|wasch|muenz|zgeld|zzucker|kopfhoerer|lc-hut|gong|bongo|birne|zaubertrick|schneekugel|gesicht|lc-zei|sobri|umarm|geschenk|wohlig|konfetti|krone/;
-  function chatWaffeZeigen(n) {
-    var a = mittelpunkt(n.von), z = mittelpunkt(n.zielChat), w = WAFFEN[n.waffe] ? n.waffe : "kartoffel";
-    if (!z) return;
-    var zielEl = platzElVon(n.zielChat);
-    S.chatTonFrei = true;
-    try {
-      /* Die Waffe groß am Schützen – sie zielt, dann geht der Schuss los. */
-      if (a) {
-        var g = document.createElement("div");
-        g.className = "sp-chatwaffe";
-        g.style.left = a.x + "px"; g.style.top = a.y + "px";
-        g.style.setProperty("--gr", Math.round(a.r * 2.6) + "px");
-        g.style.setProperty("--dreh", Math.round(Math.atan2(z.y - a.y, z.x - a.x) * 180 / Math.PI) + "deg");
-        g.innerHTML = geschossSvg(w, n.farbe || S.laserfarbe);
-        document.body.appendChild(g);
-        setTimeout(function () { g.classList.add("sp-chatwaffe-weg"); }, 1300);
-        setTimeout(function () { g.remove(); }, 1700);
-      }
-      if (chatSchutzAn(n.zielChat)) {
-        setTimeout(function () { mauerAbwehr(zielEl); }, 420);
-        setTimeout(function () { geschossZeigen(n.von, n.zielChat, w, 0, -1.4, n.farbe, false); }, 380);
-        return;
-      }
-      var flug = 0;
-      setTimeout(function () { flug = geschossZeigen(n.von, n.zielChat, w, 0, 0, n.farbe, false) || 600;
-        setTimeout(function () {
-          /* „verschwinden kurz und sind direkt wieder am Platz" */
-          if (zielEl) { var k = zielEl.querySelector(".lc-kreis"); if (k) { k.classList.remove("sp-chat-weg"); void k.offsetWidth; k.classList.add("sp-chat-weg"); setTimeout(function () { k.classList.remove("sp-chat-weg"); }, 1500); } }
-          tierReagiert(zielEl, "wurf");
-          try { schmerzStimme(n.zielChat, { schaden: w === "bazooka" ? 20 : 6, ziel_stand: { lp: 100, lp_max: 100 } }); } catch (e) {}
-        }, flug);
-      }, 380);
-    } finally { setTimeout(function () { S.chatTonFrei = false; }, 3000); }
-  }
-  function chatWaffeSchiessen(zielChat) {
-    var jetzt = Date.now();
-    if (jetzt - (S.chatWaffeZeit || 0) < 1400) return;
-    S.chatWaffeZeit = jetzt;
-    var ich = S.ich || {}, sl = slots(), w = S.waffe || sl[0] || "kartoffel";
-    if ((ich.waffen || []).indexOf(w) < 0 && !(WAFFEN[w] && WAFFEN[w].vorrat && vorrat(ich, w) > 0)) w = "kartoffel";
-    var n = { ereignis: "chatwaffe", von: meineChatId(), zielChat: zielChat, waffe: w, farbe: S.laserfarbe };
-    senden(n);
-    chatWaffeZeigen(n);
-  }
-  /* XANDER: „die Mauer, dass man sich im Chat schützen kann … damit man
-     nicht mehr so leicht genervt wird … es beeinflusst keine Punkte".
-     Wer Mehr → „Chat-Mauer" anschaltet, dem prallen unfreundliche
-     Chat-Effekte an einer Mauer ab (Streicheln, Umarmen, Küsse, Blumen,
-     Herzen … kommen weiter durch). Jedes Gerät sieht es gleich, weil der
-     Schalter im öffentlichen Stand steht. */
-  function chatSchutzAn(chatId) {
-    var s = chatId === meineChatId() ? S.ich : S.stand[spielIdVon(chatId)];
-    return Boolean(s && s.zeigen && s.zeigen.schutz);
-  }
-  function mauerAbwehr(platz) {
-    if (!platz) return;
-    var kreis = platz.querySelector(".lc-kreis") || platz;
-    var m = document.createElement("span");
-    m.className = "sp-chatmauer";
-    m.innerHTML = '<svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">'
-      + [0, 1, 2].map(function (r) {
-          var y = 28 - r * 12, off = r % 2 ? 10 : 0, s = "";
-          for (var x = -off; x < 100; x += 20) s += '<rect x="' + (x + 1) + '" y="' + y + '" width="18" height="11" rx="1.5" fill="#b5652e" stroke="#6b3a17" stroke-width="1"/>';
-          return s;
-        }).join("") + "</svg>";
-    m.style.left = kreis.offsetLeft + "px"; m.style.top = (kreis.offsetTop + kreis.offsetHeight * 0.55) + "px";
-    m.style.width = kreis.offsetWidth + "px"; m.style.height = Math.round(kreis.offsetHeight * 0.5) + "px";
-    platz.appendChild(m);
-    S.chatTonFrei = true; ton("hammerbonk", 0.4); setTimeout(function () { S.chatTonFrei = false; }, 400);
-    setTimeout(function () { m.remove(); }, 1500);
-  }
-  /* Der Haken für app.js (lcAmPlatz): true = der Effekt prallt ab. */
-  function chatEffekt(platz, klasse) {
-    try {
-      var chatId = platz && platz.dataset ? platz.dataset.lcId : "";
-      var k = String(klasse || "").toLowerCase();
-      var freundlich = CHAT_FREUNDLICH.test(k);
-      if (chatId && !freundlich && chatSchutzAn(chatId)) { mauerAbwehr(platz); return true; }
-      tierReagiert(platz, /sahne/.test(k) ? "sahne" : freundlich ? "lieb" : "wurf");
-    } catch (e) {}
-    return false;
-  }
-  /* XANDER: „dass die Tiere im Chat aktiv sind … wenn die Sprühsahne kommt
-     können die Tiere das vielleicht ablecken und aufessen dann freuen Sie
-     sich … wenn man jemanden streichelt … geben die Tiere auch niedliche
-     Geräusche von sich". Die Tiere, die am Platz sichtbar sind (im Spiel
-     oder freigegeben), reagieren: Wurf → sie springen auf und bellen bzw.
-     fauchen; Sahne → sie lecken sie ab (Herzchen); Liebes → sie kuscheln
-     und schnurren. */
-  function tierReagiert(platz, art) {
-    if (!platz) return;
-    var tiere = platz.querySelectorAll(".sp-tier, .sp-flugtier");
-    if (!tiere.length) return;
-    var jetzt = Date.now();
-    if (jetzt - (Number(platz.dataset.tierZeit) || 0) < 2500) return;
-    platz.dataset.tierZeit = jetzt;
-    var drachig = /sp-tier-(drache|babydrache|phoenix|lindwurm|regenbogendrache|feuerfuchs)/.test(tiere[0].className);
-    [].forEach.call(tiere, function (t, i) {
-      setTimeout(function () {
-        t.classList.remove("sp-tier-hops", "sp-tier-leckt", "sp-tier-kuschelt"); void t.offsetWidth;
-        t.classList.add(art === "sahne" ? "sp-tier-leckt" : art === "lieb" ? "sp-tier-kuschelt" : "sp-tier-hops");
-        setTimeout(function () { t.classList.remove("sp-tier-hops", "sp-tier-leckt", "sp-tier-kuschelt"); }, 1600);
-      }, 250 + i * 180);
-    });
-    if (art !== "wurf") setTimeout(function () { herzchen(platz); }, 500);
-    S.chatTonFrei = true;
-    setTimeout(function () { ton(art === "sahne" ? "lecken" : art === "lieb" ? "schnurren" : drachig ? "drachenpuste" : "hundbellen", 0.35); S.chatTonFrei = false; }, 280);
-  }
-  function herzchen(platz) {
-    var kreis = platz.querySelector(".lc-kreis") || platz;
-    for (var i = 0; i < 3; i++) {
-      var h = document.createElement("span");
-      h.className = "sp-tier-herz";
-      h.style.left = (kreis.offsetLeft + kreis.offsetWidth * (0.7 + i * 0.1)) + "px";
-      h.style.top = (kreis.offsetTop + kreis.offsetHeight * 0.7) + "px";
-      h.style.animationDelay = (i * 160) + "ms";
-      h.innerHTML = '<svg viewBox="0 0 20 20"><path d="M10 17 C3 12 1 8 4 5 C6 3 9 4 10 6 C11 4 14 3 16 5 C19 8 17 12 10 17 Z" fill="#ff5a8a"/></svg>';
-      platz.appendChild(h);
-      (function (x) { setTimeout(function () { x.remove(); }, 1600); })(h);
-    }
-  }
-  /* XANDER: „manchmal, wenn wir uns nicht angreifen … in diesem
-     Pausenmodus wenn wir einfach nur chatten … dass die Tiere miteinander
-     spielen das wär auch Mega niedlich". Alle 25–45 s hüpfen zwei
-     friedliche Tiere zueinander hin und zurück. Im Kampf nie. */
-  var tierSpielZeit = Date.now() + 20000;
-  function tiereSpielen() {
-    if (Date.now() < tierSpielZeit || (S.duell && Date.now() < S.duell.bis)) return;
-    tierSpielZeit = Date.now() + 25000 + Math.random() * 20000;
-    var t = [].slice.call(document.querySelectorAll("#lcPlaetze .sp-tier.sp-tier-friedlich"));
-    if (t.length < 2) return;
-    var a = t[Math.floor(Math.random() * t.length)], b = t.filter(function (x) { return x !== a; })[Math.floor(Math.random() * (t.length - 1))];
-    var ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-    var dx = (rb.left - ra.left) * 0.35, dy = (rb.top - ra.top) * 0.35;
-    a.style.setProperty("--spiel-x", Math.round(dx) + "px"); a.style.setProperty("--spiel-y", Math.round(dy) + "px");
-    b.style.setProperty("--spiel-x", Math.round(-dx) + "px"); b.style.setProperty("--spiel-y", Math.round(-dy) + "px");
-    [a, b].forEach(function (x) { x.classList.remove("sp-tier-spielt"); void x.offsetWidth; x.classList.add("sp-tier-spielt"); setTimeout(function () { x.classList.remove("sp-tier-spielt"); }, 2600); });
   }
   function turmDraussen(s) { return Boolean(s && s.turm_platz && (s.turm_raum || "") === raumName()); }
   function vorposten(nr) {
@@ -6227,13 +5896,9 @@
     rpc("spiel_fund_heben", {}).then(function (r) {
       if (!r || !r.ok) { hinweis("🎁 " + ((r && r.grund) || "Das Fundstück ist zerfallen.")); return; }
       S.fundArt = r.fund;
-      /* FASSUNG 682 — XANDER: „ich hab 116 Punkte. Ich sammle jetzt ein Schatz
-         ein … Es sind immer noch 116 Punkte". Beim Aufheben gibt es jetzt
-         sofort +3 Punkte; nach der Artikel-Aufgabe +5 und den Inhalt. */
-      if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); schnellZeichnen(); }
       var w = FUND_LOHN[r.fund] || ["🎁", "etwas"];
       ton("geschenk", 0.45);
-      hinweis("🎁 Fundstück! +" + (r.sofort || 3) + " Punkte sofort. Darin: " + w[1] + " – löse die Artikel-Aufgabe, dann gehört es dir (+5 Punkte dazu).");
+      hinweis("🎁 Fundstück! Darin: " + w[1] + ". Löse die Artikel-Aufgabe – dann gehört es dir.");
       /* Nur für diese eine Aufgabe „Artikel" — danach wieder die eigene Wahl. */
       if (!S.fundKatMerk) { S.fundKatMerk = true; S.fundKatAlt = S.kategorie || null; }
       S.kategorie = "artikel"; S.aufgabe = null;
@@ -6254,7 +5919,6 @@
     fundKnopfPflegen();
     ackerPflegen();
     erinnerungPruefen();
-    tiereSpielen();
     /* FASSUNG 679 — wechselt, wer mitspielt, wird die Spiel-Sitzordnung neu angewendet. */
     var sitzZeichen = spielSichtbar() + "|" + Object.keys(S.stand).filter(function (k) { return S.stand[k] && S.stand[k].mitspielen; }).sort().join(",");
     if (sitzZeichen !== S.sitzZeichen) { S.sitzZeichen = sitzZeichen; try { if (LC() && LC().spielSitzeNeu) LC().spielSitzeNeu(); } catch (e) {} }
@@ -6609,7 +6273,6 @@
     menue: menue, schliessen: schliessen,
     /* FASSUNG 679 — für die eigene Spiel-Sitzordnung in livechat.js */
     imSpiel: function () { return spielSichtbar(); },
-    chatEffekt: chatEffekt,
     spieltMit: function (chatId) {
       if (!chatId) return false;
       if (chatId === meineChatId()) return spielSichtbar();
@@ -6637,7 +6300,7 @@
       eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,
       krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
-      ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, chatWaffeZeigen: chatWaffeZeigen, tierReagiert: tierReagiert, tiereSpielen: tiereSpielen, handelLaden: handelLaden, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
+      ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,
       trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, klassenHtml: klassenHtml, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
       zauberZeigen: zauberZeigen, zaubern: zaubern, daemonAusbruch: daemonAusbruch, uebungZaubern: uebungZaubern, geschuetzSvg: geschuetzSvg, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,

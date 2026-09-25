@@ -178,14 +178,17 @@ const sage = (gut, was, zusatz) => {
     return { text: st.textContent, statusHoch: Math.round(st.getBoundingClientRect().height), zeilen: p.querySelectorAll(".sp-status-zeile").length,
              haupt: Boolean(p.querySelector('[data-tu="haupt"]')), umbruch: getComputedStyle(w).flexWrap, quer: w.scrollWidth - w.clientWidth,
              balken: p.querySelectorAll(".sp-status > .sp-status-lp").length, ab: Boolean(p.querySelector('[data-tu="fensterab"]')),
-             reihenfolge: (() => { const inh = p.querySelector(".sp-inhalt"), c = inh.querySelector(".sp-chips"), a = inh.querySelector('[data-tu="aufgabe"], .sp-aufgabe'); return Boolean(c && a && (c.compareDocumentPosition(a) & 4)); })(),
+             /* FASSUNG 682 — XANDER: „das Panel mit dem Niveau und den Aufgaben unten hinlegen, die eigentliche Aufgabe oben". Mit Aufgabe: Aufgabe zuerst, Wahl eingeklappt; ohne Aufgabe: Wahl offen. */
+             reihenfolge: (() => { const inh = p.querySelector(".sp-inhalt"), c = inh.querySelector(".sp-chips"), a = inh.querySelector(".sp-aufgabe"), w = inh.querySelector(".sp-deutsch-wahl");
+               if (a) return Boolean(c && (a.compareDocumentPosition(c) & 4) && w && !w.classList.contains("sp-offen") && inh.querySelector('[data-tu="neuwahl"]'));
+               return Boolean(w && w.classList.contains("sp-offen") && c); })(),
              fensterHoch: Math.round(p.getBoundingClientRect().height), bild: innerHeight, inhaltScrollt: getComputedStyle(p.querySelector(".sp-inhalt")).overflowY };
   });
   sage(!/angelegt/.test(fenster.text), "die Zeile „Kartoffel ist angelegt“ ist weg");
   /* FASSUNG 679 — XANDER: „Mache bitte wieder die erste Version von vorher … wo die Punkte und das alles untereinander steht". */
   sage(fenster.balken === 3 && fenster.umbruch === "wrap" && fenster.quer <= 1, "wie zuerst: LP, Level, Mana als Balken untereinander, die Werte brechen um", JSON.stringify(fenster));
   sage(!fenster.haupt && fenster.ab, "kein ☰; oben ▾ zum Ablegen und ✕ zum Schließen", JSON.stringify(fenster));
-  sage(fenster.reihenfolge, "Deutsch: Niveau und Arten stehen ÜBER der Aufgabe", JSON.stringify(fenster));
+  sage(fenster.reihenfolge, "Deutsch: die Aufgabe steht oben, Niveau und Arten darunter (ohne Aufgabe offen)", JSON.stringify(fenster));
 
   console.log("\nFUNDSTÜCK, WÄHREND DAS FENSTER OFFEN IST\n");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.fundNaechst = 0; });

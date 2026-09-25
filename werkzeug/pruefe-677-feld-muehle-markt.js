@@ -209,12 +209,14 @@ const sage = (gut, was, zusatz) => {
   const frei = await leerePlaetze();
   const felder = await pg.evaluate(() => {
     const a = [...document.querySelectorAll("#lcPlaetze .sp-acker")];
-    const falsch = a.filter((x) => x.closest(".lc-platz").dataset.lcId).length;
+    const falsch = a.filter((x) => x.closest(".lc-platz").dataset.lcId && !x.classList.contains("sp-acker-besetzt")).length;
+    const alle = document.querySelectorAll("#lcPlaetze .lc-platz .lc-kreis").length, besetzt = a.filter((x) => x.classList.contains("sp-acker-besetzt")).length;
     const e = a[0], k = e && e.closest(".lc-platz").querySelector(".lc-kreis"), r1 = e && e.getBoundingClientRect(), r2 = k && k.getBoundingClientRect();
-    return { zahl: a.length, falsch, reif: a.filter((x) => x.classList.contains("sp-acker-reif")).length, uhr: e ? e.textContent : "",
+    return { zahl: a.length, alle, besetzt, falsch, reif: a.filter((x) => x.classList.contains("sp-acker-reif")).length, uhr: e ? e.textContent : "",
       deckung: r1 ? Math.round(Math.abs(r1.left - r2.left) + Math.abs(r1.top - r2.top) + Math.abs(r1.width - r2.width)) : -1, aehren: e ? e.querySelectorAll("ellipse").length : 0 };
   });
-  sage(felder.zahl === frei.length && frei.length > 0 && felder.falsch === 0, "Getreide steht auf JEDEM freien Platz, nie auf einem besetzten", felder.zahl + " Felder / " + frei.length + " frei");
+  /* FASSUNG 682 — XANDER: „überall auf jeden Platz unabhängig davon, ob da jemand sitzt oder nicht". */
+  sage(felder.zahl === felder.alle && felder.besetzt === felder.alle - frei.length && frei.length > 0 && felder.falsch === 0, "Getreide steht auf JEDEM Platz – bei besetzten nur unten am Bild", JSON.stringify({ zahl: felder.zahl, alle: felder.alle, besetzt: felder.besetzt, frei: frei.length }));
   sage(felder.reif === felder.zahl && felder.uhr === "+2" && felder.aehren >= 20, "wild gewachsen: reif, goldene Ähren, Zeichen „+2“", JSON.stringify(felder));
   sage(felder.deckung >= 0 && felder.deckung <= 3, "das Feld liegt genau im Kreis des Platzes", felder.deckung + " px Abweichung");
 
@@ -247,9 +249,11 @@ const sage = (gut, was, zusatz) => {
   sage(m3.rufe === 0 && /wächst noch – reif in [34]:\d\d/.test(m3.meld), "gemähtes Feld: kein Server-Ruf, Meldung mit Restzeit", JSON.stringify(m3));
   await pg.evaluate(() => { window.__rufe.length = 0; });
   const besetzt = await pg.evaluate(() => Number(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]').dataset.lcPlatz));
-  await tippePlatz(besetzt, 400);
-  const m4 = await pg.evaluate(() => ({ rufe: window.__rufe.filter((r) => /spiel_(saeen|ernten)/.test(r.name)).length, meld: window.__hinweise.slice(-3).filter((h) => !/Tagesgeschenk|Übungen auf der Seite/.test(h)).slice(-1)[0] || "" }));
-  sage(m4.rufe === 0 && /Da sitzt jemand/.test(m4.meld), "Sense auf einem besetzten Platz: nichts passiert, kurze Erklärung", JSON.stringify(m4));
+  await tick(1700);
+  await tippePlatz(besetzt, 900);
+  const m4 = await pg.evaluate((nr) => ({ rufe: window.__rufe.filter((r) => r.name === "spiel_ernten").map((r) => r.args.p_platz),
+    klip: getComputedStyle(document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + nr + '"] .sp-acker')).clipPath, meld: window.__hinweise.slice(-3).filter((h) => !/Tagesgeschenk|Übungen auf der Seite/.test(h)).slice(-1)[0] || "" }), besetzt);
+  sage(m4.rufe.length === 1 && m4.rufe[0] === besetzt && /inset/.test(m4.klip) && /Getreide/.test(m4.meld), "Sense auf einem besetzten Platz mäht auch – das Feld liegt nur unten, das Gesicht bleibt frei", JSON.stringify(m4));
 
   console.log("\nWERKZEUG WECHSELN: 2× AUF DEN PLATZ\n");
   await tick(1600);
@@ -264,7 +268,7 @@ const sage = (gut, was, zusatz) => {
     return { da: Boolean(w), knoepfe: w ? [...w.querySelectorAll('[data-s="werkzeugsetzen"]')].map((b) => b.dataset.w).join(",") : "", weg: Boolean(w && w.querySelector(".sp-ww-weg")),
       imBild: r ? r.left >= 0 && r.right <= innerWidth && r.top >= 0 : false, ernten: window.__rufe.filter((x) => x.name === "spiel_ernten").length };
   });
-  sage(wahl.da && wahl.knoepfe === "schaufel,sense,saat" && wahl.weg, "2× schnell auf denselben Platz öffnet die Werkzeugwahl (Schaufel, Sense, Saat, Weglegen)", JSON.stringify(wahl));
+  sage(wahl.da && wahl.knoepfe === "schaufel,sense,saat,duenger" && wahl.weg, "2× schnell auf denselben Platz öffnet die Werkzeugwahl (Schaufel, Sense, Saat, Dünger, Weglegen)", JSON.stringify(wahl));
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-wahl.png" });
   sage(wahl.imBild, "die Werkzeugwahl passt ganz auf den Bildschirm (360 px)", JSON.stringify(wahl));
   sage(wahl.ernten === 1, "der erste Tipp hat trotzdem sofort gemäht (keine Wartezeit)", String(wahl.ernten));

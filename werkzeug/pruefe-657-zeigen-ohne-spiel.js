@@ -171,7 +171,8 @@ const sage = (gut, was, zusatz) => {
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = true; S.schnellReiter = "mehr"; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
   await tick(200);
   const chips = await pg.evaluate(() => [...document.querySelectorAll('.sp-schnellmenue [data-s="zeigen"]')].map((b) => b.textContent + (b.classList.contains("sp-an") ? "*" : "")).join(","));
-  sage(chips === "Level,Tiere", "„Auch ohne Spiel zeigen“: Level und Tiere, beide zuerst aus", chips);
+  /* FASSUNG 682 — dazu die Chat-Mauer (XANDER: „Mauer … Schutz im Chat"). */
+  sage(chips === "Level,Tiere,Chat-Mauer", "„Auch ohne Spiel zeigen“: Level und Tiere (dazu Chat-Mauer), alle zuerst aus", chips);
   const imBild = await pg.evaluate(() => [...document.querySelectorAll('.sp-schnellmenue [data-s="zeigen"]')].every((b) => { const r = b.getBoundingClientRect(); const o = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.right <= innerWidth && (o === b || b.contains(o)); }));
   sage(imBild, "beide Knöpfe liegen ganz im Bild und sind tippbar");
   await tippe('.sp-schnellmenue [data-s="zeigen"][data-k="level"]');
