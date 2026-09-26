@@ -260,9 +260,10 @@ const sage = (gut, was, zusatz) => {
   const t1 = await pg.evaluate(() => { const pl = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]'); pl.dataset.tierZeit = 0; window.DMA_SPIEL.chatEffekt(pl, "lc-sahne"); return new Promise((ok) => setTimeout(() => ok({ leckt: Boolean(pl.querySelector(".sp-tier-leckt")), herz: pl.querySelectorAll(".sp-tier-herz").length, ton: window.DMA_TONLOG.map((t) => t.name) }), 700)); });
   sage(t1.leckt && t1.herz >= 1 && t1.ton.includes("lecken"), "Sprühsahne auf Bea: ihr Tier leckt sie ab (Herzchen, „lecken“)", JSON.stringify(t1));
   const t2 = await pg.evaluate(() => { const pl = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]'); pl.dataset.tierZeit = 0; window.DMA_TONLOG.length = 0; window.DMA_SPIEL.chatEffekt(pl, "lc-streichel"); return new Promise((ok) => setTimeout(() => ok({ kuschelt: Boolean(pl.querySelector(".sp-tier-kuschelt")), ton: window.DMA_TONLOG.map((t) => t.name) }), 700)); });
-  sage(t2.kuschelt && t2.ton.includes("schnurren"), "Streicheln: das Tier kuschelt und schnurrt", JSON.stringify(t2));
+  /* FASSUNG 690 — Funk 137: „beim Streicheln hechelt das Fellmonster wie ein Hund, der Babydrache macht ein süßes ‚mmmh'". */
+  sage(t2.kuschelt && (t2.ton.includes("stimme:mmh") || t2.ton.includes("stimme:hecheln")), "Streicheln: das Tier kuschelt und hechelt bzw. macht „mmmh“", JSON.stringify(t2));
   const hk = await pg.evaluate(() => /DMA_SPIEL\.chatEffekt\(platz, klasse\)/.test(document.documentElement.outerHTML) || true);
-  const appHaken = require("fs").readFileSync(require("path").join(__dirname, "..", "app.js"), "utf8").includes("window.DMA_SPIEL.chatEffekt(platz, klasse)");
+  const appHaken = require("fs").readFileSync(require("path").join(__dirname, "..", "app.js"), "utf8").includes("window.DMA_SPIEL.chatEffekt(platz, klasse, lcEffektVon)");
   sage(appHaken, "app.js fragt bei jedem Profil-Effekt das Spiel (lcAmPlatz)");
 
   sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.slice(0, 3).join(" | "));

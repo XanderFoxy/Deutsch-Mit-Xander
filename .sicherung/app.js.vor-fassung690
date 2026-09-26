@@ -36681,7 +36681,7 @@
          Tiere im Chat aktiv sind … entsprechend drauf reagieren". Das
          Spiel darf hier mitreden: Chat-Mauer (der Effekt prallt ab) und
          die Tiere am Platz (springen, lecken Sahne, kuscheln). */
-      try { if (window.DMA_SPIEL && window.DMA_SPIEL.chatEffekt && window.DMA_SPIEL.chatEffekt(platz, klasse, lcEffektVon)) return; } catch (e) {}
+      try { if (window.DMA_SPIEL && window.DMA_SPIEL.chatEffekt && window.DMA_SPIEL.chatEffekt(platz, klasse)) return; } catch (e) {}
       platz.querySelectorAll("." + klasse).forEach((x) => x.remove());
       /* =============================================================
          RUNDE 77 — EIN EFFEKT LAEUFT WEITER, AUCH WENN JEMAND SPRICHT
@@ -54625,10 +54625,6 @@
         lcTonSpaeter("zauberpuff", Math.round(0.4 * D), 0.5);
       }
     }
-    /* FASSUNG 690 — XANDER: „bei der Einstiegs-Animation sitzen die Tiere
-       auf dem Rücksitz … bei der Magie kommen sie nach mir raus." Das
-       Spiel kennt die Tiere; es bekommt das mitfahrende Bild. */
-    try { if (window.DMA_SPIEL && window.DMA_SPIEL.tierAuftritt) window.DMA_SPIEL.tierAuftritt(platz, bild, art, rein, D); } catch (x) {}
     setTimeout(fertig, D + 80);
     return true;
   }
@@ -62383,20 +62379,9 @@
     kaninchen: 1
   };
 
-  /* FASSUNG 690 — wer hat den Effekt ausgeloest? Die Tiere am Platz
-     brauchen das: „dass sie das aufsaugen und dem, der gespuckt hat,
-     auf den Kopf zurueckspucken". lcWurfVon wird erst weiter unten und
-     nicht fuer jede Art gesetzt; dieser Wert steht fuer JEDE Wirkung
-     fest, bevor irgendein Effekt laeuft. */
-  let lcEffektVon = "";
   function lcWirkung(art, anZeile, nachricht) {
     const e = LC_EFFEKTE[art];
     if (!e) return;
-    try {
-      lcEffektVon = (nachricht && nachricht.eigen)
-        ? ((LiveChat.lage() || {}).ichName || (nachricht && nachricht.name) || "")
-        : ((nachricht && nachricht.name) || "");
-    } catch (x) { lcEffektVon = (nachricht && nachricht.name) || ""; }
     /* MUSIK ZUERST: sie zeichnet nichts, sie klingt nur. Wuerde sie
        weiter unten landen, regnete zu jedem Lied ein Notenschauer
        ueber den Chat — und genau das war bei den Platz-Effekten

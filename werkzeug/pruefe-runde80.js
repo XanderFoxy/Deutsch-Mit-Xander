@@ -232,7 +232,9 @@ function tonMessen(name) {
     && /knopf\(z, w, \(\) => schicken\("\/" \+ c \+ " alle"\)\);/.test(app)
     && !/B\\u00fchne leeren/.test(app),
     "die Kachel heisst „Bombe legen\u201c und schickt /bombe alle");
-  sage(/\["\\ud83e\\uddaf", "Granate",     "granate"\]\]\],/.test(app),
+  /* FASSUNG 688 hängte die Rakete (zünden) mit ins Bomben-Untermenü —
+     die Granate steht dort weiter, nur nicht mehr als letzte Kachel. */
+  sage(/\["\\ud83e\\uddaf", "Granate",     "granate"\],?\s*(\[[^\]]*\]\s*)*\]\],/.test(app),
     "die Granate steht im Bomben-Untermenue");
 
   /* „Das Pferd hat immer noch hinten diese Wulst … die Beine sind so
