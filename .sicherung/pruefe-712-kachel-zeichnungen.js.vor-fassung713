@@ -44,8 +44,8 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     const kr = mus ? mus.getBoundingClientRect() : { left: 0, right: 0 };
     return { hoerer: k.some((b) => wort(b) === "H\u00f6rer"), musik: !!mus,
       echt: !!(s && s.classList.contains("lc-mini-echt")),
-      apm: !!(s && s.querySelector("#apmLK") && s.querySelector("#apmBlauK")),
-      buegel: s ? s.querySelectorAll('path[stroke="url(#apmStahlK)"]').length : 0,
+      apm: !!(s && s.querySelector("#apmKL") && s.querySelector("#apmKBlau")),
+      buegel: s ? s.querySelectorAll('path[stroke="url(#apmKStahl)"]').length : 0,
       w: Math.round(r.width), h: Math.round(r.height),
       drin: s ? r.left >= kr.left - 1 && r.right <= kr.right + 1 : false,
       kannWeg: !!(s && getComputedStyle(s).position === "static") };
@@ -103,52 +103,6 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   await pg.waitForTimeout(100);
   await pg.screenshot({ path: "/tmp/claude-0/p-712-lupe.png", clip: { x: 0, y: 0, width: 360, height: 180 } });
   await pg.evaluate(() => document.getElementById("lupe712").remove());
-
-  console.log("\nALLE KACHELN MIT ECHTER ZEICHNUNG\n");
-  const echt = await pg.evaluate(() => {
-    const M = Object.assign({}, window.DMA_PRUEF.miniBilder());
-    const A = window.DMA_PRUEF.auftrittBilder();
-    Object.keys(A).forEach((k) => { if (/lc-mini-echt/.test(A[k])) M["Auftritt " + k] = A[k]; });
-    const namen = Object.keys(M).filter((k) => /lc-mini-echt/.test(M[k]));
-    const g = document.createElement("div"); g.id = "galerie712";
-    g.style.cssText = "position:fixed;left:0;top:0;z-index:99999;width:360px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;background:#1b2130";
-    namen.forEach((n) => {
-      const b = document.createElement("button"); b.className = "lc-platzmenue-knopf";
-      b.style.cssText = "font-size:26px;height:auto;padding:6px 0";
-      b.innerHTML = '<span class="lc-platzmenue-zeichen">' + M[n] + '</span><span class="lc-platzmenue-wort" style="font-size:10px;color:#fff">' + n.replace(/^\S+ /, "") + "</span>";
-      b.querySelectorAll(".lc-frosch-hbein").forEach((x) => x.dataset.x = 1);
-      g.appendChild(b);
-    });
-    document.body.appendChild(g);
-    /* leer gezeichnete Bilder finden: ein SVG ohne sichtbare Flaeche */
-    const leer = [...g.querySelectorAll("svg")].filter((s) => { const r = s.getBBox ? s.getBBox() : { width: 0 }; return r.width < 5; })
-      .map((s) => s.closest("button").textContent);
-    return { namen, leer, h: g.getBoundingClientRect().height };
-  });
-  sage(echt.namen.length >= 24, "Kacheln mit echter Zeichnung", echt.namen.length + ": " + echt.namen.join(", "));
-  sage(echt.leer.length === 0, "keine davon ist leer", echt.leer.join(", "));
-  await pg.screenshot({ path: "/tmp/claude-0/p-712-galerie.png", clip: { x: 0, y: 0, width: 360, height: Math.min(740, Math.ceil(echt.h)) } });
-  await pg.evaluate(() => document.getElementById("galerie712").remove());
-
-  console.log("\nVIPER UND K.I.T.T. NACH DEM ORIGINAL (FASSUNG 713)\n");
-  const autos = await pg.evaluate(() => {
-    const R = window.DMA_PRUEF.reisewagen();
-    const k = R.kitt.svg, v = R.viper.svg;
-    return { kittRad: (k.match(/lc-rw-rad/g) || []).length, kittScanner: /lc-rw-scanner/.test(k), kittTueren: (k.match(/stroke="#000" stroke-width="1"\/>/g) || []).length,
-      viperRad: (v.match(/lc-rw-rad/g) || []).length, viperKiemen: /M153 50 L170 47.5/.test(v), viperAuspuff: /lcRwViperChrom/.test(v) };
-  });
-  sage(autos.kittRad === 2 && autos.kittScanner, "K.I.T.T.: zwei drehende Räder und das rote Lauflicht bleiben", JSON.stringify(autos));
-  sage(autos.viperRad === 2 && autos.viperKiemen && autos.viperAuspuff, "Viper: Kiemen, Seitenauspuff, drehende Räder");
-  await pg.evaluate(() => {
-    const R = window.DMA_PRUEF.reisewagen();
-    const g = document.createElement("div"); g.id = "autos713";
-    g.style.cssText = "position:fixed;left:0;top:0;z-index:99999;width:360px;background:#cfd8e0";
-    ["kitt", "viper"].forEach((n) => { const d = document.createElement("div"); d.className = "lc-reisewagen"; d.style.cssText = "position:static;display:block;width:360px;height:138px"; d.innerHTML = R[n].svg.replace("<svg ", '<svg width="360" height="138" '); g.appendChild(d); });
-    document.body.appendChild(g);
-  });
-  await pg.waitForTimeout(150);
-  await pg.screenshot({ path: "/tmp/claude-0/p-713-autos.png", clip: { x: 0, y: 0, width: 360, height: 276 } });
-  await pg.evaluate(() => document.getElementById("autos713").remove());
 
   console.log("\nDIE ANIMATIONEN NEHMEN WEITER IHRE ZEICHNUNG\n");
   const a = await pg.evaluate(() => ({

@@ -34913,14 +34913,12 @@ body.rf-leiste-auf .rf-reiter { display: none; }
    Farben); deren Lage-, Groessen- und Bewegungsregeln gelten hier nicht. */
 .lc-platzmenue-zeichen svg.lc-mini-echt {
   position: static; inset: auto; transform: none; opacity: 1;
-  width: 2.1em; height: 1.5em; margin: -.25em auto; overflow: hidden;
+  width: 2.1em; height: 1.5em; margin: -.25em auto; overflow: visible;
   animation: none; filter: none;
 }
 .lc-anreise-knopf svg.lc-mini-echt {
   position: static; inset: auto; transform: none; opacity: 1;
-  width: 34px; height: 26px; margin: 0 auto; overflow: hidden; animation: none; filter: none;
+  width: 34px; height: 26px; margin: 0 auto; overflow: visible; animation: none; filter: none;
 }
 .lc-platzmenue-zeichen svg.lc-mini-echt *, .lc-anreise-knopf svg.lc-mini-echt * { animation: none !important; }
 svg.lc-mini-echt .lc-delfin-leib { filter: none; }
-/* Der Glanz der Sonnenbrille wandert in der Animation darueber — stehend waere er ein grauer Balken. */
-svg.lc-mini-echt .lc-sobri-blitz, svg.lc-mini-echt .lc-eimer-strahl { display: none; }

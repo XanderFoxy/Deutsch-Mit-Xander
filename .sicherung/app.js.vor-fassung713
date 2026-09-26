@@ -31871,35 +31871,14 @@
      sie sich nicht mit denen am Platz beissen. „Musik" heisst auch eine
      Spruehdosen-Kachel — deshalb gilt dieses Bild nur zusammen mit dem
      Kopfhoerer-Zeichen davor. */
-  const lcMiniEcht = (svg, vb) => {
-    /* Jede id bekommt ein „K" (Kachel): dieselbe Zeichnung darf am Platz
-       und im Menue gleichzeitig stehen, ohne dass sich die Verlaeufe
-       gegenseitig ueberschreiben. */
-    (svg.match(/\bid="[^"]+"/g) || []).forEach((a) => {
-      const i = a.slice(4, -1);
-      svg = svg.split('id="' + i + '"').join('id="' + i + 'K"')
-        .split("#" + i + ")").join("#" + i + "K)")
-        .split('"#' + i + '"').join('"#' + i + 'K"');
-    });
-    svg = svg.replace(/<svg class="/, '<svg class="lc-mini-echt ');
-    return vb ? svg.replace(/viewBox="[^"]*"/, 'viewBox="' + vb + '"') : svg;
-  };
-  LC_MINI_BILD["\ud83c\udfa7 Musik"] = lcMiniEcht(lcApmSvg(), "-3 -6 168 112");
+  const lcMiniEcht = (svg, vb) => svg
+    .replace(/<svg class="/, '<svg class="lc-mini-echt ')
+    .replace(/viewBox="[^"]*"/, 'viewBox="' + vb + '"');
+  LC_MINI_BILD["\ud83c\udfa7 Musik"] = lcMiniEcht(
+    lcApmSvg().replace(/(id="|#)apm/g, "$1apmK"), "-3 -6 168 112");
   LC_MINI_BILD["Dampflok"] = lcMiniEcht(lcLokSeiteSvg(), "0 -4 120 62");
   LC_MINI_BILD["Delfin"] = lcMiniEcht(lcDelfinFormSvg(), "-2 -4 144 76");
   LC_MINI_BILD["Frosch"] = lcMiniEcht(lcFroschBildSvg(), "2 6 98 70");
-  /* Die weiteren Zeichnungen: Name der Kachel → Bild (und, wo die
-     Zeichnung Luft fuer die Animation hat, ein engerer Ausschnitt). */
-  [["Flugzeug", lcFliegerSvg], ["Segelboot", lcBootSvg], ["Boot", lcBootSvg],
-   ["Raddampfer", lcDampferSvg], ["Helikopter", lcHeliSvg], ["UFO", lcUfoSvg],
-   /* „Wecker" bleibt beim alten Kachelbild: die Animation zeichnet nur
-      das Zifferblatt als SVG, der rote Wecker drumherum ist CSS. */
-   ["Hut", lcHutSvg], ["Bumerang", lcBumerangSvg], ["Eimer", lcEimerSvg],
-   ["Zwille", lcZwilleSvg], ["Hammer", lcZhammerSvg], ["Waschmaschine", lcWaschSvg],
-   ["Tennis", lcTennisSvg], ["Sonnenbrille", lcSobriSvg], ["Gong", lcGongSvg],
-   ["Tritt", lcTrittSvg], ["Katze", lcKatzeFormSvg]].forEach(([wort, bild, vb]) => {
-    LC_MINI_BILD[wort] = lcMiniEcht(bild(), vb);
-  });
   function lcMiniBilderSetzen(kasten) {
     if (!kasten || !kasten.querySelectorAll) return;
     kasten.querySelectorAll(".lc-platzmenue-knopf").forEach((b) => {
@@ -37023,7 +37002,34 @@
          Rand oben. Genau das steht hier, und die Spitze zeigt nach
          rechts — dorthin, wohin getreten wird. */
       schicht.innerHTML =
-        lcTrittSvg()
+        '<svg class="lc-tritt-schuh" viewBox="0 0 100 60">'
+        /* Das Obermaterial: hinten hoch, vorn flach. */
+        + '<path d="M10 44 L10 22 C10 16 15 12 22 12 L31 12 C35 21 41 26 51 30'
+        + ' C66 36 81 41 91 45 L93 47 L12 47 Z" fill="#2f3b52"/>'
+        /* Die Zehenkappe, eine Spur heller. */
+        + '<path d="M66 37 C76 40 86 44 93 47 L70 47 Z" fill="#41506e"/>'
+        /* Der gepolsterte Rand oben an der Ferse. */
+        + '<path d="M10 22 C10 16 15 12 22 12 L31 12 L33 17 L14 19 Z" fill="#54627d"/>'
+        /* Die Schnuersenkel mit ihren Oesen. */
+        + [[22, 20], [28, 25], [34, 30]].map(function (p) {
+            return '<line x1="' + p[0] + '" y1="' + p[1] + '" x2="' + (p[0] + 13)
+                 + '" y2="' + (p[1] + 3) + '" stroke="#f2f4f8" stroke-width="2.6"'
+                 + ' stroke-linecap="round" opacity=".85"/>'
+                 + '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="1.5" fill="#c8d2e2"/>';
+          }).join("")
+        /* Der Streifen an der Seite — daran erkennt man einen
+           Sportschuh auf den ersten Blick. */
+        + '<path d="M24 41 C38 36 54 38 74 45" fill="none" stroke="#f2f4f8"'
+        + ' stroke-width="4" stroke-linecap="round" opacity=".9"/>'
+        /* Die Sohle, mit Absatz hinten und Profil darunter. */
+        + '<path d="M8 47 L94 47 C98 47 99 51 96 53 L12 53 C7 53 5 50 8 47 Z"'
+        + ' fill="#e8ecf3"/>'
+        + '<path d="M8 50 L96 50" stroke="#aab4c6" stroke-width="1.4"/>'
+        + [16, 26, 36, 46, 56, 66, 76, 86].map(function (x) {
+            return '<line x1="' + x + '" y1="50.6" x2="' + x + '" y2="53"'
+                 + ' stroke="#aab4c6" stroke-width="1.6"/>';
+          }).join("")
+        + "</svg>"
         + '<span class="lc-tritt-wumms">WUMM</span>';
       for (let t = 0; t < 5; t++) {
         const st = document.createElement("i");
@@ -37095,7 +37101,51 @@
         blende.appendChild(bl);
       }
       schicht.insertAdjacentHTML("beforeend",
-        lcEimerSvg());
+        '<svg class="lc-eimer-bild" viewBox="0 0 70 60">'
+        + '<path d="M14 10 L56 10 L50 44 C49 50 45 52 35 52 C25 52 21 50 20 44 Z"'
+        + ' fill="#7fb3d5" stroke="#3d6e92" stroke-width="2.5"/>'
+        + '<ellipse cx="35" cy="10" rx="21" ry="6" fill="#a9cfe8" stroke="#3d6e92" stroke-width="2.5"/>'
+        + '<path d="M16 12 C22 -2 48 -2 54 12" fill="none" stroke="#3d6e92" stroke-width="2.5"/>'
+        /* GEMELDET: „der Wassereimer ist zwar drüber, aber der
+           Wasserstrahl passt nicht zum Wassereimer, kommt nicht aus
+           dem Wassereimer heraus. Das macht keinen Sinn."
+
+           Er hatte recht: der Strahl war ein eigenes Kaestchen in der
+           Bildmitte, waehrend der Eimer sich um 118 Grad kippte. Wo
+           seine Tuelle dabei landete, wusste das Kaestchen nicht.
+
+           Jetzt haengt der Strahl IM Eimer, an der Ausgusskante bei
+           (14, 10). Er dreht sich in der Animation genau
+           GEGENLAEUFIG zum Eimer (siehe .lc-eimer-quelle in
+           korrekturen.css) — dadurch bleibt er senkrecht wie
+           Wasser, waehrend sein Ursprung am Eimerrand klebt. Kein
+           Schaetzen, kein Nachmessen: er kann gar nicht woanders
+           herauskommen. */
+        /* GEMELDET: „Der Strahl des Wassers, da wo er ausgeschuettet
+           wird, ist an der oberen Kante vom Eimer, nicht an der
+           unteren Kante, wo er von der Physik realistisch rauskommen
+           wuerde."
+
+           NACHGERECHNET, mit den Zahlen aus dem Stilblatt: der Eimer
+           dreht um 118 Grad um den Punkt (22 %, 80 %) seines Kastens,
+           in viewBox-Einheiten also um (15,4 | 48). Die beiden Ecken
+           des Randes liegen bei (14 | 10) und (56 | 10). Nach der
+           Drehung landen sie bei (49,6 | 64,6) und (29,9 | 101,7) —
+           die ZWEITE liegt also 37 Einheiten tiefer. Sie ist die
+           Ausgusskante, nicht die erste. Der Strahl hing an der
+           falschen. Jetzt haengt er an (56 | 10). */
+        + '<g class="lc-eimer-quelle">'
+        /* GEMELDET: „ausserdem soll der Strahl des Wassers im
+           Profilbild bleiben und nicht ausserhalb des Profilbilds."
+           NACHGEMESSEN im Browser: das Bild reicht von y=225 bis
+           y=328, der Strahl ging bis y=347 — er stand 19 Pixel
+           unten heraus. 130 Einheiten waren 141 Pixel, also ist
+           eine Einheit 1,085 Pixel. Auf 90 Einheiten gekuerzt endet
+           er rund 25 Pixel ueber der Unterkante und damit sicher
+           im runden Bild. */
+        + '<rect class="lc-eimer-strahl" x="49" y="9" width="14" height="68" rx="7"/>'
+        + "</g>"
+        + "</svg>");
       for (let i = 0; i < 22; i++) {
         const t = document.createElement("i");
         t.className = "lc-eimer-tropfen";
@@ -37136,7 +37186,23 @@
       /* Das Zifferblatt liegt INNEN — es gehoert auf das Bild. */
       const blende = lcZpBlende(schicht);
       blende.innerHTML =
-        lcWeckerBlattSvg();
+        '<svg class="lc-wecker-blatt" viewBox="0 0 100 100">'
+        + '<circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>'
+        + Array.from({ length: 12 }, (_, i) => {
+            const w = (i * 30 * Math.PI) / 180;
+            const r1 = i % 3 === 0 ? 33 : 37, r2 = 43;
+            return '<line x1="' + (50 + Math.sin(w) * r1).toFixed(1)
+                 + '" y1="' + (50 - Math.cos(w) * r1).toFixed(1)
+                 + '" x2="' + (50 + Math.sin(w) * r2).toFixed(1)
+                 + '" y2="' + (50 - Math.cos(w) * r2).toFixed(1)
+                 + '" stroke="currentColor" stroke-width="' + (i % 3 === 0 ? 3.4 : 2) + '"'
+                 + ' stroke-linecap="round"/>';
+          }).join("")
+        /* Beide Zeiger auf zwoelf — es schlaegt gerade. */
+        + '<line x1="50" y1="50" x2="50" y2="22" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>'
+        + '<line x1="50" y1="50" x2="50" y2="14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>'
+        + '<circle cx="50" cy="50" r="3.2" fill="currentColor"/>'
+        + "</svg>";
 
       /* GEWUENSCHT: „Kannst du die noch so verbinden, diese beiden
          Schellen? Die sind doch beim normalen Wecker auch so
@@ -37742,7 +37808,13 @@
         /* Das Stueck Holz war mit einem kaputten Attribut gezeichnet
            (stroke="#e0b externally") — ein Rest, der nie etwas malte.
            Er ist raus; stattdessen eine Maserung, die man sieht. */
-        lcBumerangSvg()
+        '<svg class="lc-bumerang-bild" viewBox="0 0 60 60">'
+        + '<path d="M8 50 C8 26 20 10 40 8 C34 18 30 26 30 32 '
+        + 'C30 38 34 44 44 50 C30 54 16 54 8 50 Z" fill="#b5762f" stroke="#7a4d18" stroke-width="2.5"'
+        + ' stroke-linejoin="round"/>'
+        + '<path d="M15 45 C15 29 23 18 33 14" fill="none" stroke="#e0b070"'
+        + ' stroke-width="2" stroke-linecap="round" opacity=".7"/>'
+        + "</svg>"
         + '<span class="lc-bumerang-treffer">TOCK</span>';
       /* „dann musst du auch ausrechnen, dass in dem Moment, wo der
          Bumerang auf prallt, das SWOOSH Geraeusch auch zu Ende ist."
@@ -39763,7 +39835,26 @@
         setTimeout(() => kreis.classList.remove("lc-gonghallt"), 3600);
       }
       schicht.insertAdjacentHTML("beforeend",
-        lcGongSvg()
+        '<svg class="lc-gong-scheibe" viewBox="0 0 120 140">'
+        + '<defs><radialGradient id="lcGongBronze" cx="0.38" cy="0.32" r="0.78">'
+        + '<stop offset="0" stop-color="#f6d98a"/>'
+        + '<stop offset="0.55" stop-color="#c79a3c"/>'
+        + '<stop offset="1" stop-color="#8a6416"/></radialGradient></defs>'
+        /* Der Rahmen, an dem er haengt. */
+        + '<path d="M14 10 H106" stroke="#6b4a22" stroke-width="5" stroke-linecap="round"/>'
+        + '<path d="M40 12 L52 30 M80 12 L68 30" stroke="#c9b48e" stroke-width="2.6"'
+        + ' stroke-linecap="round"/>'
+        /* Die Scheibe. */
+        + '<circle cx="60" cy="78" r="46" fill="url(#lcGongBronze)"'
+        + ' stroke="#7a5713" stroke-width="3"/>'
+        /* Der gehaemmerte Rand und der Buckel in der Mitte — beides
+           hat ein echter Gong, und beides sieht man von weitem. */
+        + '<circle cx="60" cy="78" r="37" fill="none" stroke="rgba(122,87,19,.45)" stroke-width="1.6"/>'
+        + '<circle cx="60" cy="78" r="26" fill="none" stroke="rgba(122,87,19,.3)" stroke-width="1.3"/>'
+        + '<circle cx="60" cy="78" r="13" fill="#e0b455" stroke="#8a6416" stroke-width="2.4"/>'
+        + '<path d="M34 56 C40 46 50 40 60 38" fill="none" stroke="rgba(255,247,214,.6)"'
+        + ' stroke-width="4" stroke-linecap="round"/>'
+        + "</svg>"
         + '<svg class="lc-gong-schlaegel" viewBox="0 0 70 26">'
         + '<rect x="24" y="11" width="44" height="4.4" rx="2.2" fill="#c79a5b"/>'
         + '<ellipse cx="14" cy="13" rx="13" ry="11.5" fill="#e8d2ad"'
@@ -40854,7 +40945,11 @@
         setTimeout(() => kreis.classList.remove("lc-gestaucht"), 1500);
       }
       schicht.innerHTML =
-        lcZhammerSvg()
+        '<svg class="lc-zhammer-bild" viewBox="0 0 70 70">'
+        + '<rect x="30" y="26" width="9" height="40" rx="4" fill="#a9702f"/>'
+        + '<rect x="12" y="10" width="46" height="20" rx="5" fill="#8b93a3"/>'
+        + '<rect x="12" y="10" width="46" height="8" rx="4" fill="#b9c1cf"/>'
+        + "</svg>"
         + '<span class="lc-zhammer-knall">BONK</span>';
 
       /* GEMELDET: „Der Hammer scheint mehrmals auf den Kopf zu schlagen,
@@ -43612,7 +43707,34 @@
          ist jetzt 142 statt 186 breit und 172 statt 217 hoch (ein Viertel
          kleiner); das Bullauge bleibt genau das Bild. */
       const gehaeuse =
-        lcWaschSvg();
+        '<svg class="lc-wasch-gehaeuse" viewBox="0 0 190 225" aria-hidden="true">'
+        + '<defs>'
+        + '<linearGradient id="lcWaschBlech" x1="0" y1="0" x2="1" y2="1">'
+        + '<stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#eef1f5"/>'
+        + '<stop offset="1" stop-color="#cfd6df"/></linearGradient>'
+        + '<radialGradient id="lcWaschManschette" cx=".5" cy=".5" r=".5">'
+        + '<stop offset=".86" stop-color="#8d96a3"/><stop offset="1" stop-color="#c3c9d2"/></radialGradient>'
+        + '</defs>'
+        /* Der Korpus mit dem Loch fuer die Tuer (evenodd). */
+        + '<path fill="url(#lcWaschBlech)" stroke="#aeb7c3" stroke-width="1.6" fill-rule="evenodd"'
+        + ' d="M30 32 H160 Q166 32 166 38 V198 Q166 204 160 204 H30 Q24 204 24 198 V38 Q24 32 30 32 Z'
+        + ' M95 72 A50 50 0 1 0 95 172 A50 50 0 1 0 95 72 Z"/>'
+        /* Die Gummimanschette direkt am Bild. */
+        + '<circle cx="95" cy="122" r="53" fill="none" stroke="url(#lcWaschManschette)" stroke-width="6"/>'
+        /* Die Bedienleiste oben: Waschmittelfach, Anzeige, Drehknopf. */
+        + '<path d="M24 62 H166" stroke="#b9c1cc" stroke-width="1.2"/>'
+        + '<rect x="30" y="38" width="30" height="17" rx="2.5" fill="#e6eaf0" stroke="#b3bcc8" stroke-width="1"/>'
+        + '<rect x="34" y="49" width="22" height="2.4" rx="1.2" fill="#b3bcc8"/>'
+        + '<rect x="68" y="39" width="40" height="15" rx="2.5" fill="#1d2733"/>'
+        + '<text class="lc-wasch-anzeige" x="88" y="50.5" text-anchor="middle">1:20</text>'
+        + '<circle cx="116" cy="46.5" r="2" class="lc-wasch-lampe"/>'
+        + '<circle cx="146" cy="47" r="10" fill="#dfe4ea" stroke="#9aa4b1" stroke-width="1.4"/>'
+        + '<g class="lc-wasch-knopf"><rect x="144.8" y="38.5" width="2.4" height="7" rx="1.2" fill="#6b7686"/></g>'
+        /* Sockelblende und Fuesse. */
+        + '<path d="M24 192 H166" stroke="#c2c9d3" stroke-width="1"/>'
+        + '<rect x="32" y="204" width="13" height="5" rx="2" fill="#8a93a0"/>'
+        + '<rect x="145" y="204" width="13" height="5" rx="2" fill="#8a93a0"/>'
+        + '</svg>';
       /* Die Tuer: Chromring und Glas, Scharnier links. Das Glas ist in
          der Mitte ganz klar, nur zum Rand hin leicht blaeulich, und oben
          links liegt ein Lichtbogen — so sieht man, dass Glas davor ist,
@@ -45531,7 +45653,58 @@
            waagerechte Hoehenleitwerk am Heck, ein Triebwerk unter dem
            Fluegel und eine Nase, die vorne spitz zulaeuft statt rund
            abzuschliessen. Die sind jetzt alle da. */
-        lcFliegerSvg()
+        '<svg class="lc-flieger-form" viewBox="0 0 120 52" aria-hidden="true">'
+        /* RUNDE 73 — XANDER: „Das Flugzeug ist nahezu perfekt bis auf
+           die Position der Fluegel. Der seitliche Fluegel ist nicht
+           so gut zu sehen beziehungsweise beide Fluegel sind nicht
+           gleichzeitig zu sehen."
+           NACHGESEHEN: der nahe Fluegel lief von y 26 nach OBEN auf
+           y 6, der ferne von y 24 nach UNTEN auf y 40. Einer zeigte
+           also nach oben, der andere nach unten — das ist kein
+           Flugzeug, das ist ein Kreuz. Ein Verkehrsflugzeug hat
+           TIEFDECKER-Fluegel: beide gehen nach hinten und unten weg,
+           der nahe tiefer und laenger, der ferne darueber ein Stueck
+           weit sichtbar. So sieht man beide auf einmal. */
+        /* Der ferne Fluegel — er liegt HINTER dem Rumpf, also zuerst. */
+        + '<path class="lc-flieger-fluegel lc-flieger-fluegel-fern"'
+        + ' d="M62 28 L36 38 L52 40 L80 30 Z"/>'
+        /* Das waagerechte Hoehenleitwerk am Heck. */
+        + '<path class="lc-flieger-fluegel lc-flieger-fluegel-fern"'
+        + ' d="M16 26 L6 20 L20 20 L30 26 Z"/>'
+        + '<path class="lc-flieger-rumpf" d="M8 30 Q16 18 44 16 L92 16'
+        + ' Q110 17 117 26 Q110 35 92 36 L30 36 Q12 36 8 30 Z"/>'
+        /* Die Seitenflosse. */
+        + '<path class="lc-flieger-leit" d="M14 28 L6 6 L18 6 L28 26 Z"/>'
+        /* Der nahe Fluegel — tiefer und laenger als der ferne. */
+        + '<path class="lc-flieger-fluegel" d="M66 31 L30 46 L50 48 L86 33 Z"/>'
+        /* Das Triebwerk haengt UNTER dem nahen Fluegel. */
+        + '<rect class="lc-flieger-triebwerk" x="44" y="38" width="19" height="8" rx="4"/>'
+        /* RUNDE 71 — XANDER: „beim Reisen hat das Flugzeug immer noch
+           keine Details."
+           Dazu kommen jetzt die Sachen, an denen man ein Verkehrs-
+           flugzeug von der Seite wirklich erkennt:
+           · eine REIHE KLEINER KABINENFENSTER laengs des Rumpfs,
+           · das COCKPITFENSTER vorn, schraeg wie eine Windschutz-
+             scheibe,
+           · zwei TUERLINIEN (vorn und hinten),
+           · der ZIERSTREIFEN, der den Rumpf der Laenge nach teilt,
+           · ein zweites, dunkleres Triebwerk am fernen Fluegel,
+           · das FAHRWERK unter Nase und Fluegel.
+           Die Zahlen sind aus der Rumpfkontur abgelesen: der Rumpf
+           liegt zwischen y=16 und y=36, seine Mitte also auf 26. */
+        + '<rect class="lc-flieger-triebwerk lc-flieger-fern2" x="41" y="32.5" width="15" height="6.5" rx="3.2"/>'
+        + '<path class="lc-flieger-streifen" d="M14 29.4 L112 29.4"/>'
+        + '<path class="lc-flieger-kabinenfenster" d="M28 24 h3 M35 24 h3 M42 24 h3'
+        + ' M49 24 h3 M56 24 h3 M63 24 h3 M70 24 h3 M96 24 h3 M103 24 h3"/>'
+        + '<path class="lc-flieger-cockpit" d="M104 21 Q111 22 114.5 25.4 L107 25.4 Z"/>'
+        + '<path class="lc-flieger-tuer" d="M92 17 L92 35 M34 18 L34 35"/>'
+        + '<path class="lc-flieger-fahrwerk" d="M100 36 L100 41 M58 38.5 L58 42"/>'
+        + '<circle class="lc-flieger-rad" cx="100" cy="42" r="2"/>'
+        + '<circle class="lc-flieger-rad" cx="58" cy="43" r="2.2"/>'
+        /* Das Fenster, hinter dem er sitzt — eines von vielen, nicht
+           der halbe Rumpf. */
+        + '<circle class="lc-flieger-luke" cx="84" cy="26" r="6.6"/>'
+        + "</svg>"
         + '<span class="lc-flieger-fenster"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>";
@@ -46597,7 +46770,12 @@
       schiff.innerHTML =
         '<i class="lc-boot-wasser"></i>'
         + '<span class="lc-boot-schaukel">'
-        + lcBootSvg()
+        + '<svg class="lc-boot-form" viewBox="0 0 120 70" aria-hidden="true">'
+        + '<path class="lc-boot-mast" d="M57 8 L61 8 L61 48 L57 48 Z"/>'
+        + '<path class="lc-boot-segel" d="M63 11 L63 46 L99 46 Z"/>'
+        + '<path class="lc-boot-rumpf" d="M8 47 L112 47 L97 65 L23 65 Z"/>'
+        + '<path class="lc-boot-streifen" d="M11 52 L109 52 L106 56 L14 56 Z"/>'
+        + "</svg>"
         /* GEWUENSCHT: „Ich will bei dem Segelboot, dass ich
            zusaetzlich paddle."
            Also ein echtes Stechpaddel: Griffknauf oben, ein langer
@@ -46945,7 +47123,48 @@
         + '<b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b>'
         + '<u></u></i>'
         + '<i class="lc-dampfer-spritzer"></i>'
-        + lcDampferSvg()
+        + '<svg class="lc-boot-form lc-dampfer-form" viewBox="0 0 200 110" aria-hidden="true">'
+        /* --- DIE SCHORNSTEINE, ganz hinten in der Tiefe --- */
+        + '<g class="lc-dampfer-schlot">'
+        + '<rect x="70" y="6" width="9" height="26" rx="1"/>'
+        + '<rect x="86" y="6" width="9" height="26" rx="1"/>'
+        /* Die gezackte Krone — daran erkennt man einen Raddampfer. */
+        + '<path d="M67 6 L82 6 L79.5 11 L69.5 11 Z"/>'
+        + '<path d="M83 6 L98 6 L95.5 11 L85.5 11 Z"/>'
+        + "</g>"
+        + '<path class="lc-dampfer-ring" d="M70 14 L79 14 L79 17 L70 17 Z"/>'
+        + '<path class="lc-dampfer-ring" d="M86 14 L95 14 L95 17 L86 17 Z"/>'
+        /* --- DAS STEUERHAUS --- */
+        + '<rect class="lc-dampfer-haus" x="104" y="16" width="34" height="16" rx="1.5"/>'
+        + '<path class="lc-dampfer-dach" d="M100 13 L142 13 L142 17 L100 17 Z"/>'
+        + '<rect class="lc-dampfer-fenster" x="108" y="20" width="8" height="7" rx="1"/>'
+        + '<rect class="lc-dampfer-fenster" x="119" y="20" width="8" height="7" rx="1"/>'
+        + '<rect class="lc-dampfer-fenster" x="130" y="20" width="5" height="7" rx="1"/>'
+        /* --- DAS STURMDECK (oben) --- */
+        + '<rect class="lc-dampfer-haus" x="52" y="32" width="112" height="18" rx="1.5"/>'
+        + '<path class="lc-dampfer-dach" d="M46 30 L170 30 L170 34 L46 34 Z"/>'
+        + [58, 70, 82, 94, 106, 118, 130, 142, 152].map(function (x) {
+            return '<rect class="lc-dampfer-fenster" x="' + x + '" y="36" width="7" height="9" rx="1"/>';
+          }).join("")
+        /* --- DAS KESSELDECK (unten), mit Saeulen und Gelaender --- */
+        + '<rect class="lc-dampfer-haus" x="40" y="52" width="132" height="20" rx="1.5"/>'
+        + '<path class="lc-dampfer-dach" d="M34 50 L178 50 L178 54 L34 54 Z"/>'
+        + '<g class="lc-dampfer-saeule">'
+        + [38, 50, 62, 74, 86, 98, 110, 122, 134, 146, 158, 170].map(function (x) {
+            return '<path d="M' + x + ' 54 L' + x + ' 72"/>';
+          }).join("")
+        + "</g>"
+        + '<g class="lc-dampfer-gelaender">'
+        + '<path d="M34 62 L178 62"/><path d="M46 42 L170 42"/>'
+        + "</g>"
+        /* --- DER RUMPF: flach, lang, mit vorgezogenem Bug --- */
+        + '<path class="lc-boot-rumpf" d="M26 72 L168 72 L188 78 L192 88'
+        + ' L34 88 Q24 88 22 80 Z"/>'
+        + '<path class="lc-boot-streifen" d="M23 82 L192 82 L192 86 L28 86 Z"/>'
+        /* --- FLAGGENSTOCK AM BUG --- */
+        + '<path class="lc-dampfer-stock" d="M186 78 L186 44"/>'
+        + '<path class="lc-dampfer-fahne" d="M186 44 L200 48 L186 53 Z"/>'
+        + "</svg>"
         /* DER RADKASTEN — das halbrunde Haus ueber dem Seitenrad, mit
            dem Namensschild darauf. Ohne ihn sieht ein Seitenrad aus
            wie ein Muehlrad, das jemand ans Schiff geschraubt hat. */
@@ -48401,7 +48620,78 @@
            ein sichtbarer ROTORKOPF auf dem Mast. Dazu ein schlankerer
            Ausleger — der alte war ein Keil, ein Heckausleger ist ein
            duennes Rohr. */
-        + lcHeliSvg()
+        + '<svg class="lc-heli-form" viewBox="0 0 130 70" aria-hidden="true">'
+        /* RUNDE 71 — XANDER: „der Helikopter kann nicht so laenglich
+           sein vom Koerper … die Farbe kann man auch ein bisschen
+           verbessern … mehr tiefer … ins Schwarze … mit Licht und
+           Schatten."
+           GERECHNET: die Zelle lief von x=10 bis 95 bei einer Hoehe
+           von 19 bis 45 — 85 lang, 26 hoch, Verhaeltnis 3,3 : 1. Das
+           ist laenglich. Jetzt 10 bis 82 bei 16 bis 48: 72 lang,
+           32 hoch, Verhaeltnis 2,3 : 1 — kuerzer und oben dicker.
+           Der Ausleger faengt dafuer frueher an (78 statt 92) und
+           bleibt genauso lang, damit der Heckrotor an seinem
+           gemessenen Platz bleibt.
+           Licht und Schatten kommen aus zwei zusaetzlichen Flaechen:
+           ein heller Streifen auf der Oberseite, ein dunkler Bauch
+           darunter. Die Farben selbst stehen in korrekturen.css. */
+        /* Der Heckausleger: duennes Rohr statt Keil. */
+        + '<path class="lc-heli-ausleger" d="M78 31 L120 30.5 L120 35.5 L78 39 Z"/>'
+        /* Die Seitenflosse und der waagerechte Stabilisator. */
+        + '<path class="lc-heli-flosse" d="M116 32 L126 10 L120 9 L110 31 Z"/>'
+        + '<path class="lc-heli-flosse" d="M108 30 L108 26 L120 26 L120 30 Z"/>'
+        /* Die Zelle: vorn rund und hoch, hinten kurz auslaufend. */
+        + '<path class="lc-heli-rumpf" d="M10 40 Q8 21 30 16 L60 16'
+        + ' Q78 19 82 31 Q84 41 74 48 L26 48 Q11 47 10 40 Z"/>'
+        /* LICHT: ein heller Streifen auf der Oberseite. */
+        + '<path class="lc-heli-licht" d="M14 27 Q15 19 31 17 L59 17'
+        + ' Q72 19.5 77 27 Q60 22 38 22 Q22 22 14 27 Z"/>'
+        /* SCHATTEN: der Bauch liegt im Dunkeln. */
+        + '<path class="lc-heli-schatten" d="M12 41 Q26 48 50 48 L74 48'
+        + ' Q82 44 83 37 Q70 44 46 44 Q24 44 12 41 Z"/>'
+        /* DIE KANZEL — RUNDE 74.
+           XANDER: „Das Helikopterfenster ist immer noch nicht
+           abgeschrägt vorne. Das ist keine schräge Scheibe."
+           NACHGESEHEN an dem, was hier stand: der Umriss lief von
+           (11|39) mit einem Bogen nach (30|18), dann nach (42|18)
+           und mit einem zweiten Bogen bis (30|45) hinunter — das
+           ergab einen Klumpen, der vorn UND unten rund war. Eine
+           Hubschrauberkanzel besteht aber aus ZWEI geraden Scheiben:
+           der stark nach hinten geneigten Frontscheibe und der
+           Kinnscheibe darunter, mit einem Rahmen dazwischen.
+           Die Nase liegt links (x = 10), also neigt sich die Front
+           nach RECHTS oben: von (11,5|41) auf (33|17,5). Das sind
+           23,5 Einheiten hoch auf 21,5 nach hinten — eine Neigung
+           von 47 Grad, genau die Lage einer echten Frontscheibe. */
+        /* RUNDE 80 — XANDER: „Beim Helikopter gibt es im Hintergrund
+           vom Bild noch so Erweiterung von dem Glas … das ist noch
+           viel zu eckig und viel zu undefiniert."
+
+           Er hat recht: die Frontscheibe war ein Viereck aus vier
+           GERADEN Strecken (11,5|41 – 33|17,5 – 44|17,5 – 24|43).
+           Eine Hubschrauberkanzel ist aber ein GEWOELBTES Glas; sie
+           hat keine geraden Kanten, sondern eine nach aussen
+           gebogene Vorderkante und abgerundete Ecken. Genau so ist
+           sie jetzt gezeichnet — dieselbe Lage, dieselbe Neigung von
+           47 Grad, aber mit Woelbung. Dazu ein Lichtstreifen auf dem
+           Glas: ohne Spiegelung sieht Glas nach Farbe aus, und das
+           war das „undefiniert". */
+        /* RUNDE 101 — XANDER (Funk 91): „das Glas, was du hinter dem
+           Profilbild hast, das kann weg, dieses eckige Seitenglas. Da
+           soll dieses kreisrunde sein, was typisch für einen
+           Helikopter ist, und das soll aus dem Profilbild
+           herausgestanzt sein." Frontscheibe, Kinnscheibe, Saeule und
+           Spiegelung (Runden 74/80) sind deshalb weg — das Fenster IST
+           jetzt das Bild selbst (.lc-heli-kanzel, korrekturen.css). */
+        + '<path class="lc-heli-tuer" d="M46 18.5 L46 47 M62 17 L62 48"/>'
+        /* Der Rotorkopf auf dem Mast. */
+        + '<path class="lc-heli-mast" d="M50 16 L53 8 L61 8 L58 16 Z"/>'
+        + '<circle class="lc-heli-kopf" cx="57" cy="7.5" r="4.2"/>'
+        /* Die Kufen mit ihren Streben. */
+        + '<path class="lc-heli-kufe" d="M16 60 L86 60" stroke-width="3.6" stroke-linecap="round"/>'
+        + '<path class="lc-heli-strebe" d="M32 48 L27 60 M72 48 L78 60"'
+        + ' stroke-width="3" stroke-linecap="round"/>'
+        + "</svg>"
         /* DER HECKROTOR. Er dreht schneller als der Hauptrotor und
            steht senkrecht — deshalb ein eigenes, rundes Element mit
            zwei Blaettern darin. */
@@ -49133,7 +49423,43 @@
       ufo.style.setProperty("--gross", d + "px");
       ufo.innerHTML =
         '<i class="lc-ufo-strahl"></i>'
-        + lcUfoSvg();
+        + '<svg class="lc-ufo-form" viewBox="0 0 160 62" aria-hidden="true">'
+        + '<defs>'
+        + '<linearGradient id="lcUfoRumpf" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#d8e6f2"/><stop offset=".45" stop-color="#8fa8bd"/>'
+        + '<stop offset="1" stop-color="#4a5f74"/></linearGradient>'
+        + '<linearGradient id="lcUfoKuppel" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="rgba(190,246,255,.95)"/>'
+        + '<stop offset="1" stop-color="rgba(60,150,190,.55)"/></linearGradient>'
+        + '</defs>'
+        /* Die KUPPEL zuerst — sie liegt hinter dem Rumpf, sonst
+           schwebt sie darueber wie ein Deckel. */
+        + '<path class="lc-ufo-kuppel" d="M54 32 C56 9 104 9 106 32 Z"'
+        + ' fill="url(#lcUfoKuppel)" stroke="#3d6d87" stroke-width="1.6"/>'
+        /* Ein Lichtreflex auf dem Glas — ohne ihn ist die Kuppel
+           eine Scheibe, keine Kugel. */
+        + '<path d="M63 28 C64 15 76 12 84 13 C74 16 68 21 67 29 Z"'
+        + ' fill="rgba(255,255,255,.55)"/>'
+        /* Der RUMPF: eine flache Linse, oben schmaler als unten. */
+        + '<ellipse cx="80" cy="34" rx="78" ry="11" fill="url(#lcUfoRumpf)"/>'
+        /* Die Unterseite liegt im Schatten und ist kleiner — daran
+           sieht man, dass man von schraeg unten hinsieht. */
+        + '<ellipse cx="80" cy="40" rx="56" ry="9" fill="#38495c"/>'
+        + '<ellipse cx="80" cy="41.5" rx="30" ry="5.4" fill="#22303f"/>'
+        /* Der helle Grat auf der Oberkante. */
+        + '<path d="M8 32 C26 25 134 25 152 32" fill="none"'
+        + ' stroke="rgba(255,255,255,.55)" stroke-width="1.8"/>'
+        /* DIE LAMPEN am Rand — sieben, und sie blinken nacheinander. */
+        + (function () {
+            let l = "";
+            for (let i = 0; i < 7; i++) {
+              const x = 26 + i * 18;
+              l += '<circle class="lc-ufo-lampe" cx="' + x + '" cy="38.6" r="4.2"'
+                 + ' style="animation-delay:' + (i * 120) + 'ms"/>';
+            }
+            return l;
+          })()
+        + "</svg>";
       reihe.appendChild(ufo);
       weg.push(ufo);
       setzen(ufo, start.x, startY - schweb);
@@ -49348,8 +49674,94 @@
          schlaegt auf den Ball — der Kopf bleibt dabei ruhig, der
          Schwanz peitscht. Kopf und Gesicht sind die alten.
          ============================================================= */
+      const katzBein = (vorn, fern) => {
+        const P = vorn ? [72, 56] : [40, 55], K = vorn ? [72.6, 69.5] : [37.6, 70.5];
+        /* WALKIE #245 — XANDER hat die Katze mit „Überarbeiten" bewertet:
+           „Beine", „Pfotenschlag", „Kopf und Gesicht".
+           BEINE: vorher gerade Rohre mit eckigem Unterschenkel — wie
+           Holzpfosten. Jetzt verjuengt sich jedes Glied zum Gelenk
+           hin; der Unterarm ist schlank, das Hinterbein hat den
+           typischen Katzen-Knick (Sprunggelenk nach hinten), und die
+           Pfoten sind rund mit drei Zehenfurchen. */
+        const tatze = (x, y) => '<path class="lc-katze-tatze" d="M' + (x - 4.4) + " " + y
+          + " C" + (x - 4.4) + " " + (y - 1.9) + " " + (x - 2.4) + " " + (y - 2.6) + " " + x + " " + (y - 2.6)
+          + " C" + (x + 3.2) + " " + (y - 2.6) + " " + (x + 5) + " " + (y - 1.4) + " " + (x + 4.8) + " " + (y + 0.6)
+          + " C" + (x + 4.6) + " " + (y + 2.4) + " " + (x + 2.4) + " " + (y + 2.8) + " " + x + " " + (y + 2.8)
+          + " C" + (x - 2.6) + " " + (y + 2.8) + " " + (x - 4.4) + " " + (y + 2.2) + " " + (x - 4.4) + " " + y + ' Z"/>'
+          + '<path d="M' + (x - 1.6) + " " + (y + 0.4) + " l0 2.2 M" + (x + 0.6) + " " + (y + 0.2) + " l0 2.5 M"
+          + (x + 2.7) + " " + (y + 0.4) + ' l0 2.1" stroke="rgba(30,25,21,.55)" stroke-width=".7" stroke-linecap="round"/>';
+        const ober = vorn
+          ? '<path class="lc-katze-glied" d="M67.5 50 C72 47.5 77.5 49.5 77 55 C76.6 60 75.4 65 75 69.5 C74.6 71.2 70.6 71.2 70.4 69.5 C69.6 64 67 57 67.5 50 Z"/>'
+          : '<path class="lc-katze-glied" d="M31.5 47 C38 42.5 49 45 48 54 C47.4 60 43.6 64.6 40.4 70.6 C39.4 72.4 35.6 72.2 35.2 70.4 C35.2 64 30.4 56.4 31.5 47 Z"/>';
+        const unter = vorn
+          ? '<path class="lc-katze-glied" d="M70.6 69 C70.3 73.5 70.7 77.5 71.2 81.2 L75.2 81.2 C75.5 77.5 75.4 73.5 75 69 Z"/>' + tatze(73.8, 82.2)
+          : '<path class="lc-katze-glied" d="M35.4 70 C35.8 74 37.4 78.4 38.6 81.6 L42.4 81.6 C41.4 77.8 40.6 74 40 70 Z"/>' + tatze(40.8, 82.6);
+        const k = (x) => x.toFixed(1);
+        return '<g class="lc-katze-bein ' + (vorn ? "lc-katze-vorn" : "lc-katze-hinten") + (fern ? " lc-katze-fern" : " lc-katze-nah")
+          + '"' + (fern ? ' transform="translate(' + (vorn ? 5 : -4) + ' -1.5)"' : "") + '>'
+          + '<g class="lc-katze-o" style="transform-origin:' + k(P[0]) + "px " + k(P[1]) + 'px">'
+          + (vorn && !fern ? '<g class="lc-katze-pfote" style="transform-box:view-box;transform-origin:' + k(P[0]) + "px " + k(P[1]) + 'px">' : "")
+          + ober
+          + '<g class="lc-katze-u" style="transform-origin:' + k(K[0]) + "px " + k(K[1]) + 'px">'
+          + (vorn && !fern ? '<g class="lc-katze-pfote-u" style="transform-box:view-box;transform-origin:' + k(K[0]) + "px " + k(K[1]) + 'px">' : "")
+          + unter
+          + (vorn && !fern ? "</g>" : "")
+          + "</g>"
+          + (vorn && !fern ? "</g>" : "")
+          + "</g></g>";
+      };
       katze.innerHTML =
-        lcKatzeFormSvg();
+        '<svg class="lc-katze-form" viewBox="0 0 120 92" aria-hidden="true">'
+        + '<defs><linearGradient id="lcKatzFell" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#8c8279"/><stop offset=".55" stop-color="#6d6259"/>'
+        + '<stop offset="1" stop-color="#4c443d"/></linearGradient></defs>'
+        /* Schwanz: vom Hinterteil in einem S nach oben. */
+        + '<path class="lc-katze-schwanz" d="M33 50 C20 48 14 38 17 27 C19 20 25 17 28 22"'
+        + ' fill="none" stroke="url(#lcKatzFell)" stroke-width="7" stroke-linecap="round"/>'
+        + katzBein(false, true) + katzBein(true, true)
+        + '<g class="lc-katze-leib">'
+        /* Der Rumpf, lang und leicht gewoelbt — eine Katze, die geht. */
+        + '<path class="lc-katze-rumpf" d="M31 51 C30 41 42 36 56 36 C67 36 76 38 80 44 C83 50 81 58 74 61 C64 64 44 64 37 61 C33 59 31 56 31 51 Z"'
+        + ' fill="url(#lcKatzFell)"/>'
+        + '<path d="M40 60 C50 63.4 64 63.4 72 60" fill="none" stroke="#a79c92" stroke-width="2.4" stroke-linecap="round" opacity=".55"/>'
+        /* Tigerstreifen quer ueber den Ruecken. */
+        + '<path d="M44 37.6 C46 43 45.6 49 43.4 53 M53 36.4 C55 42 55 48 53 52.4 M62 36.6 C64 42 64 47.6 62.4 51.6 M71 38.6 C72.6 43 72.4 47 71 50"'
+        + ' fill="none" stroke="rgba(40,34,29,.42)" stroke-width="2.8" stroke-linecap="round"/>'
+        /* WALKIE #245 — KOPF UND GESICHT. Vorher ein Kreis mit zwei
+           langen Dreiecksohren, die schraeg abstanden, und Augen so gross
+           wie Muenzen. Ein Katzenkopf ist breiter als hoch (Wangen), die
+           Ohren sitzen OBEN, breit am Ansatz; die Augen sind mandel-
+           foermig und stehen weiter auseinander, darunter eine helle
+           Schnauze mit Nase, Mund und Schnurrhaaren. */
+        + '<path d="M73.6 28.4 L73.2 13 L83.4 21.4 Z" fill="#6d6259" stroke="#4c443d" stroke-width=".6" stroke-linejoin="round"/>'
+        + '<path d="M75.4 26.2 L75.3 17.4 L80.9 22.2 Z" fill="#c69a9a"/>'
+        + '<path d="M92.6 21.4 L102.8 13 L102.4 28.4 Z" fill="#6d6259" stroke="#4c443d" stroke-width=".6" stroke-linejoin="round"/>'
+        + '<path d="M95.1 22.2 L100.7 17.4 L100.6 26.2 Z" fill="#c69a9a"/>'
+        + '<path d="M71.4 37 C71 27.6 78.6 21.4 88 21.4 C97.4 21.4 105 27.6 104.6 37 C104.4 42 102 45.4 99 47.2'
+        + ' C95.6 49.4 91.8 50.2 88 50.2 C84.2 50.2 80.4 49.4 77 47.2 C74 45.4 71.6 42 71.4 37 Z" fill="url(#lcKatzFell)"/>'
+        /* Wangenfell, ein paar Zacken an den Seiten */
+        + '<path d="M72 39.4 L69.6 41.8 L72.6 42.2 L70.8 44.8 L74.4 44.2 M104 39.4 L106.4 41.8 L103.4 42.2 L105.2 44.8 L101.6 44.2"'
+        + ' fill="none" stroke="#6d6259" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'
+        /* Stirnstreifen */
+        + '<path d="M88 22.6 L88 27.4 M84.6 23.2 L85.4 27 M91.4 23.2 L90.6 27" stroke="rgba(40,34,29,.45)" stroke-width="1.3" stroke-linecap="round"/>'
+        /* Augen: Mandel, gruen-gelb, senkrechter Schlitz, Glanzpunkt */
+        + '<path d="M76.4 34.2 C78.4 30.8 83.2 30.6 85.4 33.8 C83.4 36.8 78.6 37.2 76.4 34.2 Z" fill="#cfdc5e" stroke="#2b2420" stroke-width=".8"/>'
+        + '<path d="M90.6 33.8 C92.8 30.6 97.6 30.8 99.6 34.2 C97.4 37.2 92.6 36.8 90.6 33.8 Z" fill="#cfdc5e" stroke="#2b2420" stroke-width=".8"/>'
+        + '<ellipse class="lc-katze-pupille" cx="81" cy="34" rx="1.1" ry="2.9" fill="#231d18"/>'
+        + '<ellipse class="lc-katze-pupille" cx="95" cy="34" rx="1.1" ry="2.9" fill="#231d18"/>'
+        + '<circle cx="82" cy="32.9" r=".6" fill="#fff"/><circle cx="96" cy="32.9" r=".6" fill="#fff"/>'
+        /* Schnauze: zwei helle Polster */
+        + '<ellipse cx="85.2" cy="43.6" rx="3.8" ry="2.9" fill="#b3a79c"/>'
+        + '<ellipse cx="90.8" cy="43.6" rx="3.8" ry="2.9" fill="#b3a79c"/>'
+        + '<path d="M88 42.4 L85.9 40 L90.1 40 Z" fill="#c07c86" stroke="#8c5a62" stroke-width=".4" stroke-linejoin="round"/>'
+        + '<path d="M88 42.4 L88 44.2 M88 44.2 C86.6 45.8 84.8 45.6 84 44.6 M88 44.2 C89.4 45.8 91.2 45.6 92 44.6"'
+        + ' fill="none" stroke="#2b2420" stroke-width="1" stroke-linecap="round"/>'
+        + '<path d="M82 42.6 L66 40.4 M82 44.4 L66.6 45.4 M82.4 45.8 L68.6 49.4 M94 42.6 L110 40.4 M94 44.4 L109.4 45.4 M93.6 45.8 L107.4 49.4"'
+        + ' fill="none" stroke="rgba(255,255,255,.72)" stroke-width=".7"'
+        + ' stroke-linecap="round"/>'
+        + "</g>"
+        + katzBein(false, false) + katzBein(true, false)
+        + "</svg>";
       reihe.appendChild(katze);
       weg.push(katze);
       setzen(katze, start.x, startYK);
@@ -51173,739 +51585,6 @@
       + '<rect x="152.85" y="64.74" width="9" height="4.2" rx="2.1" fill="#c3d2e0"/>'
       + '<path d="M154.65 65.54 V68.34 M156.65 65.54 V68.34'
       + ' M158.65 65.54 V68.34" stroke="#8098ad" stroke-width="0.7"/>'
-      + "</svg>";
-  }
-
-  /* FASSUNG 712 — weitere Zeichnungen, die Animation und Kachel teilen
-     (Funk 158: „bei sämtlichen Sachen wo wir das Bild dazu haben"). */
-  function lcFliegerSvg() {
-    return '<svg class="lc-flieger-form" viewBox="0 0 120 52" aria-hidden="true">'
-      /* RUNDE 73 — XANDER: „Das Flugzeug ist nahezu perfekt bis auf
-         die Position der Fluegel. Der seitliche Fluegel ist nicht
-         so gut zu sehen beziehungsweise beide Fluegel sind nicht
-         gleichzeitig zu sehen."
-         NACHGESEHEN: der nahe Fluegel lief von y 26 nach OBEN auf
-         y 6, der ferne von y 24 nach UNTEN auf y 40. Einer zeigte
-         also nach oben, der andere nach unten — das ist kein
-         Flugzeug, das ist ein Kreuz. Ein Verkehrsflugzeug hat
-         TIEFDECKER-Fluegel: beide gehen nach hinten und unten weg,
-         der nahe tiefer und laenger, der ferne darueber ein Stueck
-         weit sichtbar. So sieht man beide auf einmal. */
-      /* Der ferne Fluegel — er liegt HINTER dem Rumpf, also zuerst. */
-      + '<path class="lc-flieger-fluegel lc-flieger-fluegel-fern"'
-      + ' d="M62 28 L36 38 L52 40 L80 30 Z"/>'
-      /* Das waagerechte Hoehenleitwerk am Heck. */
-      + '<path class="lc-flieger-fluegel lc-flieger-fluegel-fern"'
-      + ' d="M16 26 L6 20 L20 20 L30 26 Z"/>'
-      + '<path class="lc-flieger-rumpf" d="M8 30 Q16 18 44 16 L92 16'
-      + ' Q110 17 117 26 Q110 35 92 36 L30 36 Q12 36 8 30 Z"/>'
-      /* Die Seitenflosse. */
-      + '<path class="lc-flieger-leit" d="M14 28 L6 6 L18 6 L28 26 Z"/>'
-      /* Der nahe Fluegel — tiefer und laenger als der ferne. */
-      + '<path class="lc-flieger-fluegel" d="M66 31 L30 46 L50 48 L86 33 Z"/>'
-      /* Das Triebwerk haengt UNTER dem nahen Fluegel. */
-      + '<rect class="lc-flieger-triebwerk" x="44" y="38" width="19" height="8" rx="4"/>'
-      /* RUNDE 71 — XANDER: „beim Reisen hat das Flugzeug immer noch
-         keine Details."
-         Dazu kommen jetzt die Sachen, an denen man ein Verkehrs-
-         flugzeug von der Seite wirklich erkennt:
-         · eine REIHE KLEINER KABINENFENSTER laengs des Rumpfs,
-         · das COCKPITFENSTER vorn, schraeg wie eine Windschutz-
-           scheibe,
-         · zwei TUERLINIEN (vorn und hinten),
-         · der ZIERSTREIFEN, der den Rumpf der Laenge nach teilt,
-         · ein zweites, dunkleres Triebwerk am fernen Fluegel,
-         · das FAHRWERK unter Nase und Fluegel.
-         Die Zahlen sind aus der Rumpfkontur abgelesen: der Rumpf
-         liegt zwischen y=16 und y=36, seine Mitte also auf 26. */
-      + '<rect class="lc-flieger-triebwerk lc-flieger-fern2" x="41" y="32.5" width="15" height="6.5" rx="3.2"/>'
-      + '<path class="lc-flieger-streifen" d="M14 29.4 L112 29.4"/>'
-      + '<path class="lc-flieger-kabinenfenster" d="M28 24 h3 M35 24 h3 M42 24 h3'
-      + ' M49 24 h3 M56 24 h3 M63 24 h3 M70 24 h3 M96 24 h3 M103 24 h3"/>'
-      + '<path class="lc-flieger-cockpit" d="M104 21 Q111 22 114.5 25.4 L107 25.4 Z"/>'
-      + '<path class="lc-flieger-tuer" d="M92 17 L92 35 M34 18 L34 35"/>'
-      + '<path class="lc-flieger-fahrwerk" d="M100 36 L100 41 M58 38.5 L58 42"/>'
-      + '<circle class="lc-flieger-rad" cx="100" cy="42" r="2"/>'
-      + '<circle class="lc-flieger-rad" cx="58" cy="43" r="2.2"/>'
-      /* Das Fenster, hinter dem er sitzt — eines von vielen, nicht
-         der halbe Rumpf. */
-      + '<circle class="lc-flieger-luke" cx="84" cy="26" r="6.6"/>'
-      + "</svg>";
-  }
-  function lcBootSvg() {
-    return '<svg class="lc-boot-form" viewBox="0 0 120 70" aria-hidden="true">'
-      + '<path class="lc-boot-mast" d="M57 8 L61 8 L61 48 L57 48 Z"/>'
-      + '<path class="lc-boot-segel" d="M63 11 L63 46 L99 46 Z"/>'
-      + '<path class="lc-boot-rumpf" d="M8 47 L112 47 L97 65 L23 65 Z"/>'
-      + '<path class="lc-boot-streifen" d="M11 52 L109 52 L106 56 L14 56 Z"/>'
-      + "</svg>";
-  }
-  function lcDampferSvg() {
-    return '<svg class="lc-boot-form lc-dampfer-form" viewBox="0 0 200 110" aria-hidden="true">'
-      /* --- DIE SCHORNSTEINE, ganz hinten in der Tiefe --- */
-      + '<g class="lc-dampfer-schlot">'
-      + '<rect x="70" y="6" width="9" height="26" rx="1"/>'
-      + '<rect x="86" y="6" width="9" height="26" rx="1"/>'
-      /* Die gezackte Krone — daran erkennt man einen Raddampfer. */
-      + '<path d="M67 6 L82 6 L79.5 11 L69.5 11 Z"/>'
-      + '<path d="M83 6 L98 6 L95.5 11 L85.5 11 Z"/>'
-      + "</g>"
-      + '<path class="lc-dampfer-ring" d="M70 14 L79 14 L79 17 L70 17 Z"/>'
-      + '<path class="lc-dampfer-ring" d="M86 14 L95 14 L95 17 L86 17 Z"/>'
-      /* --- DAS STEUERHAUS --- */
-      + '<rect class="lc-dampfer-haus" x="104" y="16" width="34" height="16" rx="1.5"/>'
-      + '<path class="lc-dampfer-dach" d="M100 13 L142 13 L142 17 L100 17 Z"/>'
-      + '<rect class="lc-dampfer-fenster" x="108" y="20" width="8" height="7" rx="1"/>'
-      + '<rect class="lc-dampfer-fenster" x="119" y="20" width="8" height="7" rx="1"/>'
-      + '<rect class="lc-dampfer-fenster" x="130" y="20" width="5" height="7" rx="1"/>'
-      /* --- DAS STURMDECK (oben) --- */
-      + '<rect class="lc-dampfer-haus" x="52" y="32" width="112" height="18" rx="1.5"/>'
-      + '<path class="lc-dampfer-dach" d="M46 30 L170 30 L170 34 L46 34 Z"/>'
-      + [58, 70, 82, 94, 106, 118, 130, 142, 152].map(function (x) {
-          return '<rect class="lc-dampfer-fenster" x="' + x + '" y="36" width="7" height="9" rx="1"/>';
-        }).join("")
-      /* --- DAS KESSELDECK (unten), mit Saeulen und Gelaender --- */
-      + '<rect class="lc-dampfer-haus" x="40" y="52" width="132" height="20" rx="1.5"/>'
-      + '<path class="lc-dampfer-dach" d="M34 50 L178 50 L178 54 L34 54 Z"/>'
-      + '<g class="lc-dampfer-saeule">'
-      + [38, 50, 62, 74, 86, 98, 110, 122, 134, 146, 158, 170].map(function (x) {
-          return '<path d="M' + x + ' 54 L' + x + ' 72"/>';
-        }).join("")
-      + "</g>"
-      + '<g class="lc-dampfer-gelaender">'
-      + '<path d="M34 62 L178 62"/><path d="M46 42 L170 42"/>'
-      + "</g>"
-      /* --- DER RUMPF: flach, lang, mit vorgezogenem Bug --- */
-      + '<path class="lc-boot-rumpf" d="M26 72 L168 72 L188 78 L192 88'
-      + ' L34 88 Q24 88 22 80 Z"/>'
-      + '<path class="lc-boot-streifen" d="M23 82 L192 82 L192 86 L28 86 Z"/>'
-      /* --- FLAGGENSTOCK AM BUG --- */
-      + '<path class="lc-dampfer-stock" d="M186 78 L186 44"/>'
-      + '<path class="lc-dampfer-fahne" d="M186 44 L200 48 L186 53 Z"/>'
-      + "</svg>";
-  }
-  function lcHeliSvg() {
-    return '<svg class="lc-heli-form" viewBox="0 0 130 70" aria-hidden="true">'
-      /* RUNDE 71 — XANDER: „der Helikopter kann nicht so laenglich
-         sein vom Koerper … die Farbe kann man auch ein bisschen
-         verbessern … mehr tiefer … ins Schwarze … mit Licht und
-         Schatten."
-         GERECHNET: die Zelle lief von x=10 bis 95 bei einer Hoehe
-         von 19 bis 45 — 85 lang, 26 hoch, Verhaeltnis 3,3 : 1. Das
-         ist laenglich. Jetzt 10 bis 82 bei 16 bis 48: 72 lang,
-         32 hoch, Verhaeltnis 2,3 : 1 — kuerzer und oben dicker.
-         Der Ausleger faengt dafuer frueher an (78 statt 92) und
-         bleibt genauso lang, damit der Heckrotor an seinem
-         gemessenen Platz bleibt.
-         Licht und Schatten kommen aus zwei zusaetzlichen Flaechen:
-         ein heller Streifen auf der Oberseite, ein dunkler Bauch
-         darunter. Die Farben selbst stehen in korrekturen.css. */
-      /* Der Heckausleger: duennes Rohr statt Keil. */
-      + '<path class="lc-heli-ausleger" d="M78 31 L120 30.5 L120 35.5 L78 39 Z"/>'
-      /* Die Seitenflosse und der waagerechte Stabilisator. */
-      + '<path class="lc-heli-flosse" d="M116 32 L126 10 L120 9 L110 31 Z"/>'
-      + '<path class="lc-heli-flosse" d="M108 30 L108 26 L120 26 L120 30 Z"/>'
-      /* Die Zelle: vorn rund und hoch, hinten kurz auslaufend. */
-      + '<path class="lc-heli-rumpf" d="M10 40 Q8 21 30 16 L60 16'
-      + ' Q78 19 82 31 Q84 41 74 48 L26 48 Q11 47 10 40 Z"/>'
-      /* LICHT: ein heller Streifen auf der Oberseite. */
-      + '<path class="lc-heli-licht" d="M14 27 Q15 19 31 17 L59 17'
-      + ' Q72 19.5 77 27 Q60 22 38 22 Q22 22 14 27 Z"/>'
-      /* SCHATTEN: der Bauch liegt im Dunkeln. */
-      + '<path class="lc-heli-schatten" d="M12 41 Q26 48 50 48 L74 48'
-      + ' Q82 44 83 37 Q70 44 46 44 Q24 44 12 41 Z"/>'
-      /* DIE KANZEL — RUNDE 74.
-         XANDER: „Das Helikopterfenster ist immer noch nicht
-         abgeschrägt vorne. Das ist keine schräge Scheibe."
-         NACHGESEHEN an dem, was hier stand: der Umriss lief von
-         (11|39) mit einem Bogen nach (30|18), dann nach (42|18)
-         und mit einem zweiten Bogen bis (30|45) hinunter — das
-         ergab einen Klumpen, der vorn UND unten rund war. Eine
-         Hubschrauberkanzel besteht aber aus ZWEI geraden Scheiben:
-         der stark nach hinten geneigten Frontscheibe und der
-         Kinnscheibe darunter, mit einem Rahmen dazwischen.
-         Die Nase liegt links (x = 10), also neigt sich die Front
-         nach RECHTS oben: von (11,5|41) auf (33|17,5). Das sind
-         23,5 Einheiten hoch auf 21,5 nach hinten — eine Neigung
-         von 47 Grad, genau die Lage einer echten Frontscheibe. */
-      /* RUNDE 80 — XANDER: „Beim Helikopter gibt es im Hintergrund
-         vom Bild noch so Erweiterung von dem Glas … das ist noch
-         viel zu eckig und viel zu undefiniert."
-
-         Er hat recht: die Frontscheibe war ein Viereck aus vier
-         GERADEN Strecken (11,5|41 – 33|17,5 – 44|17,5 – 24|43).
-         Eine Hubschrauberkanzel ist aber ein GEWOELBTES Glas; sie
-         hat keine geraden Kanten, sondern eine nach aussen
-         gebogene Vorderkante und abgerundete Ecken. Genau so ist
-         sie jetzt gezeichnet — dieselbe Lage, dieselbe Neigung von
-         47 Grad, aber mit Woelbung. Dazu ein Lichtstreifen auf dem
-         Glas: ohne Spiegelung sieht Glas nach Farbe aus, und das
-         war das „undefiniert". */
-      /* RUNDE 101 — XANDER (Funk 91): „das Glas, was du hinter dem
-         Profilbild hast, das kann weg, dieses eckige Seitenglas. Da
-         soll dieses kreisrunde sein, was typisch für einen
-         Helikopter ist, und das soll aus dem Profilbild
-         herausgestanzt sein." Frontscheibe, Kinnscheibe, Saeule und
-         Spiegelung (Runden 74/80) sind deshalb weg — das Fenster IST
-         jetzt das Bild selbst (.lc-heli-kanzel, korrekturen.css). */
-      + '<path class="lc-heli-tuer" d="M46 18.5 L46 47 M62 17 L62 48"/>'
-      /* Der Rotorkopf auf dem Mast. */
-      + '<path class="lc-heli-mast" d="M50 16 L53 8 L61 8 L58 16 Z"/>'
-      + '<circle class="lc-heli-kopf" cx="57" cy="7.5" r="4.2"/>'
-      /* Die Kufen mit ihren Streben. */
-      + '<path class="lc-heli-kufe" d="M16 60 L86 60" stroke-width="3.6" stroke-linecap="round"/>'
-      + '<path class="lc-heli-strebe" d="M32 48 L27 60 M72 48 L78 60"'
-      + ' stroke-width="3" stroke-linecap="round"/>'
-      + "</svg>";
-  }
-  function lcUfoSvg() {
-    return '<svg class="lc-ufo-form" viewBox="0 0 160 62" aria-hidden="true">'
-      + '<defs>'
-      + '<linearGradient id="lcUfoRumpf" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0" stop-color="#d8e6f2"/><stop offset=".45" stop-color="#8fa8bd"/>'
-      + '<stop offset="1" stop-color="#4a5f74"/></linearGradient>'
-      + '<linearGradient id="lcUfoKuppel" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0" stop-color="rgba(190,246,255,.95)"/>'
-      + '<stop offset="1" stop-color="rgba(60,150,190,.55)"/></linearGradient>'
-      + '</defs>'
-      /* Die KUPPEL zuerst — sie liegt hinter dem Rumpf, sonst
-         schwebt sie darueber wie ein Deckel. */
-      + '<path class="lc-ufo-kuppel" d="M54 32 C56 9 104 9 106 32 Z"'
-      + ' fill="url(#lcUfoKuppel)" stroke="#3d6d87" stroke-width="1.6"/>'
-      /* Ein Lichtreflex auf dem Glas — ohne ihn ist die Kuppel
-         eine Scheibe, keine Kugel. */
-      + '<path d="M63 28 C64 15 76 12 84 13 C74 16 68 21 67 29 Z"'
-      + ' fill="rgba(255,255,255,.55)"/>'
-      /* Der RUMPF: eine flache Linse, oben schmaler als unten. */
-      + '<ellipse cx="80" cy="34" rx="78" ry="11" fill="url(#lcUfoRumpf)"/>'
-      /* Die Unterseite liegt im Schatten und ist kleiner — daran
-         sieht man, dass man von schraeg unten hinsieht. */
-      + '<ellipse cx="80" cy="40" rx="56" ry="9" fill="#38495c"/>'
-      + '<ellipse cx="80" cy="41.5" rx="30" ry="5.4" fill="#22303f"/>'
-      /* Der helle Grat auf der Oberkante. */
-      + '<path d="M8 32 C26 25 134 25 152 32" fill="none"'
-      + ' stroke="rgba(255,255,255,.55)" stroke-width="1.8"/>'
-      /* DIE LAMPEN am Rand — sieben, und sie blinken nacheinander. */
-      + (function () {
-          let l = "";
-          for (let i = 0; i < 7; i++) {
-            const x = 26 + i * 18;
-            l += '<circle class="lc-ufo-lampe" cx="' + x + '" cy="38.6" r="4.2"'
-               + ' style="animation-delay:' + (i * 120) + 'ms"/>';
-          }
-          return l;
-        })()
-      + "</svg>";
-  }
-  function lcHutSvg() {
-    return '<svg class="lc-hut-bild" viewBox="0 0 140 76">'
-      /* RUNDE 58 — XANDER: „Der Cowboy Hut sieht aus wie ein
-         Abenteuerhut, so richtig wie ein Cowboyhut aussehen."
-
-         Er hatte recht, und man kann genau sagen, woran es lag:
-         · Die Krempe war eine FLACHE Ellipse — ein Teller. Ein
-           Cowboyhut ist daran zu erkennen, dass die Krempe an den
-           SEITEN steil hochgerollt ist und vorn und hinten
-           durchhaengt. Von vorn gesehen ist sie deshalb kein
-           Oval, sondern eine Sichel mit zwei hohen Spitzen.
-         · Die Krone war eine glatte Kuppel mit einer einzigen
-           Laengsdelle — das ist ein Fedora, also genau der
-           Abenteuerhut, den er nicht wollte. Ein Stetson hat die
-           „Cattleman"-Falte: eine Delle in der Mitte UND je eine
-           an den Seiten, also von vorn zwei hohe Grate mit einer
-           Senke dazwischen.
-         Beides ist jetzt so gezeichnet. */
-      + '<defs><linearGradient id="hut1" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0" stop-color="#c08f4a"/><stop offset="1" stop-color="#7a5322"/>'
-      + '</linearGradient>'
-      + '<linearGradient id="hut2" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0" stop-color="#6b4619"/><stop offset="1" stop-color="#a97b3c"/>'
-      + "</linearGradient></defs>"
-      /* DIE KREMPE, an den Seiten hochgerollt: die Oberkante steigt
-         von der Mitte zu beiden Spitzen steil an, die Unterkante
-         haengt in der Mitte durch. */
-      /* RUNDE 76 — XANDER: „Der Hut vom Cowboy sieht auch noch
-         nicht realistisch aus."
-         NACHGESEHEN an dem, was hier stand: die Krempe lief an
-         beiden Seiten in einen PUNKT aus (Ober- und Unterkante
-         trafen sich bei x = 5 bzw. 135). Ein Filzhut hat aber
-         ueberall dieselbe Dicke — auch an der Spitze. Von vorn
-         sieht man dort die KANTE des Filzes, und die ist rund.
-         Jetzt laeuft die Unterkante nicht mehr in die Oberkante
-         hinein, sondern beide werden an den Spitzen mit einem
-         eigenen Bogen verbunden: 7 Einheiten dick, so dick wie in
-         der Mitte. Dazu sind die Spitzen hoeher gezogen (38 statt
-         41) und die Krempe haengt in der Mitte tiefer durch — das
-         ist die starke Rollung, an der man einen Cowboyhut von
-         vorn erkennt. */
-      + '<path class="lc-hut-krempe" d="M8 38 C26 58 50 64 70 64'
-      + ' C90 64 114 58 132 38 C136 41 137 45 134 48'
-      + ' C116 68 98 74 70 74 C42 74 24 68 6 48 C3 45 4 41 8 38 Z"'
-      + ' fill="url(#hut2)" stroke="#4e310f" stroke-width="2.2"'
-      + ' stroke-linejoin="round"/>'
-      /* Die Oberseite der Krempe ist heller als die Unterseite —
-         daran sieht man die Rollung. */
-      + '<path d="M8 38 C26 58 50 64 70 64 C90 64 114 58 132 38'
-      + ' C118 52 98 58 70 58 C42 58 22 52 8 38 Z" fill="url(#hut1)"/>'
-      /* DIE KRONE mit der Cattleman-Falte: links ein Grat, in der
-         Mitte die Senke, rechts wieder ein Grat. */
-      /* Die Grate sind RUND, nicht spitz — zwei Spitzen saehen aus
-         wie Ohren. Gemessen an einem Stetson ist die Falte etwa ein
-         Drittel der Kronenhoehe tief, nicht die Haelfte. */
-      /* RUNDE 75 — XANDER: „der Cowboyhut sieht auch noch nicht
-         gut aus."
-         NACHGESEHEN an dem, was hier stand: die Mitte der Krone lag
-         bei y = 24,5 und damit HOEHER als die Schultern daneben
-         (y = 30). Von vorn ergab das DREI Buckel — links ein Grat,
-         in der Mitte ein zweiter, rechts der dritte. Eine
-         Cattleman-Falte ist aber genau umgekehrt: in der Mitte eine
-         DELLE, die tiefer liegt als alles daneben, und links und
-         rechts je ein Grat. Jetzt liegt die Mitte bei y = 33,6, die
-         Schultern bei 28,4 und die Grate bei 14 — die Delle ist
-         damit der tiefste Punkt der Oberkante.
-         Und die Krone ist hoeher: die Grate standen bei 18,6, jetzt
-         bei 14. Ein Stetson hat eine hohe Krone; bei einer flachen
-         sieht er aus wie ein Hut zum Wandern. */
-      /* RUNDE 80 — XANDER: „diese Hoecker sind noch zu duenn."
-         NACHGEMESSEN an der alten Linie: ein Grat lief von x = 46
-         bis x = 54,5 — 8,5 Einheiten breit bei einer Krone von 60.
-         Das ist ein Zacken, kein Hoecker. Jetzt laeuft er von 44 bis
-         55, also 11 Einheiten, und die Senke dazwischen ist von
-         15,0 auf 17,0 Einheiten geschrumpft: die Grate nehmen den
-         Platz ein, den vorher die Luecke hatte. Sie stehen ausserdem
-         einen Zehntel hoeher (13 statt 14) — ein Stetson traegt
-         seine Cattleman-Falte hoch. Die Werte sind um x = 70
-         gespiegelt, damit der Hut symmetrisch bleibt:
-         44/96, 55/85, 61,5/78,5. */
-      + '<path class="lc-hut-krone" d="M40 60 C37 36 40 18 44 13'
-      + ' C47.5 10.4 52 11.4 55 15 C57.5 18 59.5 23.5 61.5 27.6'
-      + ' C64 31.4 66.8 33.2 70 33.2 C73.2 33.2 76 31.4 78.5 27.6'
-      + ' C80.5 23.5 82.5 18 85 15 C88 11.4 92.5 10.4 96 13'
-      + ' C100 18 103 36 100 60 C86 64 54 64 40 60 Z"'
-      + ' fill="url(#hut1)" stroke="#4e310f" stroke-width="2.2"'
-      + ' stroke-linejoin="round"/>'
-      /* Die drei Falten als Schattenlinien — ohne sie sieht die
-         Krone wieder glatt aus. */
-      + '<path d="M70 34 C69 41 69 49 70 56" fill="none" stroke="#5e3c17"'
-      + ' stroke-width="2.2" opacity=".6"/>'
-      /* Die Seitenfalten sitzen auf den Graten — die stehen seit
-         Runde 80 bei 49,5 und 90,5 statt bei 55 und 85. */
-      + '<path d="M49.5 25 C48.5 35 48.5 47 49.5 56" fill="none" stroke="#5e3c17"'
-      + ' stroke-width="1.8" opacity=".4"/>'
-      + '<path d="M90.5 25 C91.5 35 91.5 47 90.5 56" fill="none" stroke="#5e3c17"'
-      + ' stroke-width="1.8" opacity=".4"/>'
-      /* DAS HUTBAND, am Kronenfuss und der Krempe folgend. */
-      + '<path d="M40.6 52 C54 57 86 57 99.4 52 L100 60 C86 64 54 64 40 60 Z"'
-      + ' fill="#3f2a12"/>'
-      /* Die Schnalle sitzt seitlich, nicht mittig — so traegt man es. */
-      + '<rect x="90" y="53.5" width="9" height="6" rx="1.4" fill="#d9c07a"'
-      + ' stroke="#8c6f1c" stroke-width="1.4"/>'
-      + '<rect x="93.2" y="55.4" width="2.6" height="2.4" rx="0.6" fill="#3f2a12"/>'
-      /* RUNDE 64 — „und auch den Cowboyhut wieder ein bisschen
-         besser gestaltest."
-         Drei Sachen, die ein echter Filzhut hat und die hier
-         fehlten:
-         · die STEPPNAHT dicht am Krempenrand — sie laeuft parallel
-           zur Kante und macht aus der Flaeche ein Stueck Filz,
-         · ein weiches Licht auf der Krone, damit sie gewoelbt
-           aussieht und nicht wie ausgeschnitten,
-         · und der Schatten unter der Krempe, der zeigt, dass sie
-           ueber dem Kopf steht. */
-      + '<path d="M12.5 41.5 C29 57 51 61.6 70 61.6 C89 61.6 111 57 127.5 41.5"'
-      + ' fill="none" stroke="rgba(255,236,196,.55)" stroke-width="1.1"'
-      + ' stroke-dasharray="3 3.2" stroke-linecap="round"/>'
-      + '<path d="M47 20 C52 15.2 60 14.2 66 16.4 C59 17.8 52 20.8 49 25.8 Z"'
-      + ' fill="rgba(255,240,206,.34)"/>'
-      + '<path d="M40.6 60 C54 64 86 64 99.4 60 C86 67 54 67 40.6 60 Z"'
-      + ' fill="rgba(40,24,6,.35)"/>'
-      + "</svg>";
-  }
-  function lcBumerangSvg() {
-    return '<svg class="lc-bumerang-bild" viewBox="0 0 60 60">'
-      + '<path d="M8 50 C8 26 20 10 40 8 C34 18 30 26 30 32 '
-      + 'C30 38 34 44 44 50 C30 54 16 54 8 50 Z" fill="#b5762f" stroke="#7a4d18" stroke-width="2.5"'
-      + ' stroke-linejoin="round"/>'
-      + '<path d="M15 45 C15 29 23 18 33 14" fill="none" stroke="#e0b070"'
-      + ' stroke-width="2" stroke-linecap="round" opacity=".7"/>'
-      + "</svg>";
-  }
-  function lcEimerSvg() {
-    return '<svg class="lc-eimer-bild" viewBox="0 0 70 60">'
-      + '<path d="M14 10 L56 10 L50 44 C49 50 45 52 35 52 C25 52 21 50 20 44 Z"'
-      + ' fill="#7fb3d5" stroke="#3d6e92" stroke-width="2.5"/>'
-      + '<ellipse cx="35" cy="10" rx="21" ry="6" fill="#a9cfe8" stroke="#3d6e92" stroke-width="2.5"/>'
-      + '<path d="M16 12 C22 -2 48 -2 54 12" fill="none" stroke="#3d6e92" stroke-width="2.5"/>'
-      /* GEMELDET: „der Wassereimer ist zwar drüber, aber der
-         Wasserstrahl passt nicht zum Wassereimer, kommt nicht aus
-         dem Wassereimer heraus. Das macht keinen Sinn."
-
-         Er hatte recht: der Strahl war ein eigenes Kaestchen in der
-         Bildmitte, waehrend der Eimer sich um 118 Grad kippte. Wo
-         seine Tuelle dabei landete, wusste das Kaestchen nicht.
-
-         Jetzt haengt der Strahl IM Eimer, an der Ausgusskante bei
-         (14, 10). Er dreht sich in der Animation genau
-         GEGENLAEUFIG zum Eimer (siehe .lc-eimer-quelle in
-         korrekturen.css) — dadurch bleibt er senkrecht wie
-         Wasser, waehrend sein Ursprung am Eimerrand klebt. Kein
-         Schaetzen, kein Nachmessen: er kann gar nicht woanders
-         herauskommen. */
-      /* GEMELDET: „Der Strahl des Wassers, da wo er ausgeschuettet
-         wird, ist an der oberen Kante vom Eimer, nicht an der
-         unteren Kante, wo er von der Physik realistisch rauskommen
-         wuerde."
-
-         NACHGERECHNET, mit den Zahlen aus dem Stilblatt: der Eimer
-         dreht um 118 Grad um den Punkt (22 %, 80 %) seines Kastens,
-         in viewBox-Einheiten also um (15,4 | 48). Die beiden Ecken
-         des Randes liegen bei (14 | 10) und (56 | 10). Nach der
-         Drehung landen sie bei (49,6 | 64,6) und (29,9 | 101,7) —
-         die ZWEITE liegt also 37 Einheiten tiefer. Sie ist die
-         Ausgusskante, nicht die erste. Der Strahl hing an der
-         falschen. Jetzt haengt er an (56 | 10). */
-      + '<g class="lc-eimer-quelle">'
-      /* GEMELDET: „ausserdem soll der Strahl des Wassers im
-         Profilbild bleiben und nicht ausserhalb des Profilbilds."
-         NACHGEMESSEN im Browser: das Bild reicht von y=225 bis
-         y=328, der Strahl ging bis y=347 — er stand 19 Pixel
-         unten heraus. 130 Einheiten waren 141 Pixel, also ist
-         eine Einheit 1,085 Pixel. Auf 90 Einheiten gekuerzt endet
-         er rund 25 Pixel ueber der Unterkante und damit sicher
-         im runden Bild. */
-      + '<rect class="lc-eimer-strahl" x="49" y="9" width="14" height="68" rx="7"/>'
-      + "</g>"
-      + "</svg>";
-  }
-  function lcZwilleSvg() {
-    return '<svg class="lc-zwille-bild" viewBox="0 0 70 90">'
-      /* Die Gabel aus Holz. */
-      + '<path d="M22 88 L22 52 L8 20 M48 88 L48 52 L62 20" fill="none" stroke="#8a5a28"'
-      + ' stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>'
-      + '<rect x="21" y="60" width="28" height="28" rx="8" fill="#6b4a22"/>'
-      /* Das Gummi, das sich spannt und losschnellt. */
-      + '<path class="lc-zwille-gummi" d="M8 20 L35 40 L62 20" fill="none"'
-      + ' stroke="#3f3f46" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'
-      /* RUNDE 80 — XANDER: „Man soll auch sehen, wie das Gummiband
-         aufgezogen wird."
-         Bisher dehnte sich zwar das Gummi (scaleY von 1 auf 2,6),
-         aber es zog NICHTS: die Kugel lag erst beim Getroffenen und
-         erschien auch erst beim Einschlag. Man sah also ein Band,
-         das sich von selbst laenger machte. Jetzt haengt die
-         Ledertasche mit der Kugel darin am Band und wandert beim
-         Aufziehen mit — genau so weit, wie das Band lang wird:
-         die Spitze des Gummis liegt bei y = 40, sein Ansatz bei
-         y = 20; mal 2,6 wird daraus y = 72, also 32 Einheiten
-         weiter unten. Um genau 32 wandert die Tasche. */
-      + '<g class="lc-zwille-tasche">'
-      + '<path d="M28.5 37 L41.5 37 L39.5 49 L30.5 49 Z" fill="#5a4326"'
-      + ' stroke="#3a2a16" stroke-width="1.4" stroke-linejoin="round"/>'
-      + '<circle cx="35" cy="43" r="4.6" fill="#8d95a4"'
-      + ' stroke="#3a3f49" stroke-width="1"/>'
-      + '<circle cx="33.4" cy="41.4" r="1.5" fill="#cfd6e2" opacity=".85"/>'
-      + "</g>"
-      + "</svg>";
-  }
-  function lcZhammerSvg() {
-    return '<svg class="lc-zhammer-bild" viewBox="0 0 70 70">'
-      + '<rect x="30" y="26" width="9" height="40" rx="4" fill="#a9702f"/>'
-      + '<rect x="12" y="10" width="46" height="20" rx="5" fill="#8b93a3"/>'
-      + '<rect x="12" y="10" width="46" height="8" rx="4" fill="#b9c1cf"/>'
-      + "</svg>";
-  }
-  function lcWaschSvg() {
-    return '<svg class="lc-wasch-gehaeuse" viewBox="0 0 190 225" aria-hidden="true">'
-      + '<defs>'
-      + '<linearGradient id="lcWaschBlech" x1="0" y1="0" x2="1" y2="1">'
-      + '<stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#eef1f5"/>'
-      + '<stop offset="1" stop-color="#cfd6df"/></linearGradient>'
-      + '<radialGradient id="lcWaschManschette" cx=".5" cy=".5" r=".5">'
-      + '<stop offset=".86" stop-color="#8d96a3"/><stop offset="1" stop-color="#c3c9d2"/></radialGradient>'
-      + '</defs>'
-      /* Der Korpus mit dem Loch fuer die Tuer (evenodd). */
-      + '<path fill="url(#lcWaschBlech)" stroke="#aeb7c3" stroke-width="1.6" fill-rule="evenodd"'
-      + ' d="M30 32 H160 Q166 32 166 38 V198 Q166 204 160 204 H30 Q24 204 24 198 V38 Q24 32 30 32 Z'
-      + ' M95 72 A50 50 0 1 0 95 172 A50 50 0 1 0 95 72 Z"/>'
-      /* Die Gummimanschette direkt am Bild. */
-      + '<circle cx="95" cy="122" r="53" fill="none" stroke="url(#lcWaschManschette)" stroke-width="6"/>'
-      /* Die Bedienleiste oben: Waschmittelfach, Anzeige, Drehknopf. */
-      + '<path d="M24 62 H166" stroke="#b9c1cc" stroke-width="1.2"/>'
-      + '<rect x="30" y="38" width="30" height="17" rx="2.5" fill="#e6eaf0" stroke="#b3bcc8" stroke-width="1"/>'
-      + '<rect x="34" y="49" width="22" height="2.4" rx="1.2" fill="#b3bcc8"/>'
-      + '<rect x="68" y="39" width="40" height="15" rx="2.5" fill="#1d2733"/>'
-      + '<text class="lc-wasch-anzeige" x="88" y="50.5" text-anchor="middle">1:20</text>'
-      + '<circle cx="116" cy="46.5" r="2" class="lc-wasch-lampe"/>'
-      + '<circle cx="146" cy="47" r="10" fill="#dfe4ea" stroke="#9aa4b1" stroke-width="1.4"/>'
-      + '<g class="lc-wasch-knopf"><rect x="144.8" y="38.5" width="2.4" height="7" rx="1.2" fill="#6b7686"/></g>'
-      /* Sockelblende und Fuesse. */
-      + '<path d="M24 192 H166" stroke="#c2c9d3" stroke-width="1"/>'
-      + '<rect x="32" y="204" width="13" height="5" rx="2" fill="#8a93a0"/>'
-      + '<rect x="145" y="204" width="13" height="5" rx="2" fill="#8a93a0"/>'
-      + '</svg>';
-  }
-  function lcTennisSvg() {
-    return '<svg class="lc-tennisschlaeger" viewBox="0 0 120 210">'
-        /* GEMELDET: „Der Tennisschlaeger sieht aus wie so ein
-           elektrischer Fliegentoeter."
-           Er hatte recht, und der Grund war genau EINE Sache: die
-           Bespannung lief als volles Rechteck ueber das Bild
-           hinaus. Ein Fliegentoeter ist ein Gitter in einem Rahmen;
-           ein Schlaeger ist ein Gitter, das AM Rahmen endet.
-           Deshalb liegt die Bespannung jetzt in einer Blende
-           (clipPath) und hoert genau an der Ellipse auf. Dazu das,
-           woran man einen Tennisschlaeger sonst erkennt: ein Kopf,
-           der hoeher als breit ist, ein Herz aus zwei Streben
-           zwischen Kopf und Griff, und ein umwickelter Griff mit
-           Knauf.
-           Die Groesse bleibt: „so soll der Tennisschlaeger eine
-           relative Groesse zu diesem Kreis haben, der dann den Ball
-           darstellt" — der Kopf ist doppelt so breit wie das
-           Profilbild. */
-        + '<defs><clipPath id="lcTennisNetz">'
-        + '<ellipse cx="60" cy="60" rx="44" ry="52"/>'
-        + "</clipPath></defs>"
-        /* Das Herz: zwei Streben vom Kopf zum Griff. */
-        /* XANDER: „mach den Tennisschlaeger bitte rot mit schwarzem
-           Griff." Rahmen und Herz sind ab jetzt rot, Griff und Knauf
-           schwarz. */
-        + '<path d="M30 96 C36 122 46 132 52 140 L68 140 C74 132 84 122 90 96"'
-        + ' fill="none" stroke="#d1232b" stroke-width="8" stroke-linecap="round"/>'
-        /* Die Bespannung — innerhalb der Blende, also nur im Kopf. */
-        + '<g clip-path="url(#lcTennisNetz)">'
-        + '<rect x="14" y="6" width="92" height="108" fill="rgba(255,255,255,.14)"/>'
-        + [20, 28, 36, 44, 52, 60, 68, 76, 84, 92, 100].map(function (x) {
-            return '<line x1="' + x + '" y1="4" x2="' + x + '" y2="116"'
-                 + ' stroke="rgba(255,255,255,.62)" stroke-width="1.6"/>';
-          }).join("")
-        + [14, 22, 30, 38, 46, 54, 62, 70, 78, 86, 94, 102].map(function (y) {
-            return '<line x1="8" y1="' + y + '" x2="112" y2="' + y + '"'
-                 + ' stroke="rgba(255,255,255,.62)" stroke-width="1.6"/>';
-          }).join("")
-        + "</g>"
-        /* Der Rahmen kommt UEBER die Bespannung — so sieht man, dass
-           die Saiten darin eingespannt sind. */
-        + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none" stroke="#d1232b" stroke-width="9"/>'
-        + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none"'
-        + ' stroke="#8d1218" stroke-width="2" stroke-dasharray="0"/>'
-        + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none"'
-        + ' stroke="rgba(255,255,255,.22)" stroke-width="2.5"/>'
-        /* Der Griff, umwickelt, mit Knauf. */
-        + '<rect x="51" y="136" width="18" height="66" rx="8" fill="#16181d"/>'
-        + [146, 156, 166, 176, 186].map(function (y) {
-            return '<line x1="51" y1="' + y + '" x2="69" y2="' + (y - 6) + '"'
-                 + ' stroke="rgba(255,255,255,.2)" stroke-width="2"/>';
-          }).join("")
-        + '<rect x="47" y="196" width="26" height="10" rx="5" fill="#0b0c0f"/>'
-        + "</svg>";
-  }
-  function lcSobriSvg() {
-    return '<svg class="lc-sobri-bild" viewBox="0 0 140 54" aria-hidden="true">'
-      + '<defs>'
-      + '<linearGradient id="lcSobriGlas" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0" stop-color="#3d4a5c"/>'
-      + '<stop offset=".5" stop-color="#1b2430"/>'
-      + '<stop offset="1" stop-color="#0d1218"/></linearGradient>'
-      + '<linearGradient id="lcSobriRahmen" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0" stop-color="#5a6270"/>'
-      + '<stop offset=".4" stop-color="#2b3038"/>'
-      + '<stop offset="1" stop-color="#14171c"/></linearGradient>'
-      + "</defs>"
-      /* DIE BUEGEL zuerst — sie liegen hinter den Glaesern. Sie
-         laufen nach hinten und leicht nach unten, so wie ein
-         Buegel ueber dem Ohr sitzt. */
-      + '<path d="M6 20 L1 15 L1 22 L6 25 Z" fill="#14171c"/>'
-      + '<path d="M134 20 L139 15 L139 22 L134 25 Z" fill="#14171c"/>'
-      /* DIE GLAESER. Eine Pilotenbrille ist oben breit und laeuft
-         nach unten aussen spitz zu — das ist die Form, an der man
-         sie erkennt. */
-      + '<path class="lc-sobri-glas" d="M8 14 L62 14 L60 34 C58 44 44 48 32 46'
-      + ' C18 44 10 34 8 22 Z" fill="url(#lcSobriGlas)"'
-      + ' stroke="url(#lcSobriRahmen)" stroke-width="3.4"'
-      + ' stroke-linejoin="round"/>'
-      + '<path class="lc-sobri-glas" d="M132 14 L78 14 L80 34 C82 44 96 48 108 46'
-      + ' C122 44 130 34 132 22 Z" fill="url(#lcSobriGlas)"'
-      + ' stroke="url(#lcSobriRahmen)" stroke-width="3.4"'
-      + ' stroke-linejoin="round"/>'
-      /* DER STEG zwischen den Glaesern — eine Doppelbruecke, wie
-         bei einer Fliegerbrille. */
-      + '<path d="M62 17 C68 14 72 14 78 17" fill="none"'
-      + ' stroke="url(#lcSobriRahmen)" stroke-width="3.2"'
-      + ' stroke-linecap="round"/>'
-      + '<path d="M62 24 C68 21 72 21 78 24" fill="none"'
-      + ' stroke="url(#lcSobriRahmen)" stroke-width="2.4"'
-      + ' stroke-linecap="round"/>'
-      /* Die obere Kante des Rahmens ist heller — dort faellt das
-         Licht auf das Metall. */
-      + '<path d="M8 14 L62 14 M78 14 L132 14" fill="none"'
-      + ' stroke="rgba(255,255,255,.4)" stroke-width="1.6"'
-      + ' stroke-linecap="round"/>'
-      /* ZWEI feste Reflexe im Glas — eine Brille ohne Spiegelung
-         ist ein schwarzes Loch. */
-      + '<path d="M16 19 L30 19 L20 33 L12 27 Z" fill="rgba(255,255,255,.18)"/>'
-      + '<path d="M86 19 L100 19 L90 33 L82 27 Z" fill="rgba(255,255,255,.18)"/>'
-      /* UND DER WANDERNDE GLANZ, der spaeter darueberlaeuft. */
-      + '<rect class="lc-sobri-blitz" x="-30" y="6" width="16" height="44"'
-      + ' rx="5" fill="rgba(255,255,255,.75)"/>'
-      + "</svg>";
-  }
-  function lcGongSvg() {
-    return '<svg class="lc-gong-scheibe" viewBox="0 0 120 140">'
-      + '<defs><radialGradient id="lcGongBronze" cx="0.38" cy="0.32" r="0.78">'
-      + '<stop offset="0" stop-color="#f6d98a"/>'
-      + '<stop offset="0.55" stop-color="#c79a3c"/>'
-      + '<stop offset="1" stop-color="#8a6416"/></radialGradient></defs>'
-      /* Der Rahmen, an dem er haengt. */
-      + '<path d="M14 10 H106" stroke="#6b4a22" stroke-width="5" stroke-linecap="round"/>'
-      + '<path d="M40 12 L52 30 M80 12 L68 30" stroke="#c9b48e" stroke-width="2.6"'
-      + ' stroke-linecap="round"/>'
-      /* Die Scheibe. */
-      + '<circle cx="60" cy="78" r="46" fill="url(#lcGongBronze)"'
-      + ' stroke="#7a5713" stroke-width="3"/>'
-      /* Der gehaemmerte Rand und der Buckel in der Mitte — beides
-         hat ein echter Gong, und beides sieht man von weitem. */
-      + '<circle cx="60" cy="78" r="37" fill="none" stroke="rgba(122,87,19,.45)" stroke-width="1.6"/>'
-      + '<circle cx="60" cy="78" r="26" fill="none" stroke="rgba(122,87,19,.3)" stroke-width="1.3"/>'
-      + '<circle cx="60" cy="78" r="13" fill="#e0b455" stroke="#8a6416" stroke-width="2.4"/>'
-      + '<path d="M34 56 C40 46 50 40 60 38" fill="none" stroke="rgba(255,247,214,.6)"'
-      + ' stroke-width="4" stroke-linecap="round"/>'
-      + "</svg>";
-  }
-  function lcWeckerBlattSvg() {
-    return '<svg class="lc-wecker-blatt" viewBox="0 0 100 100">'
-      + '<circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="2.5"/>'
-      + Array.from({ length: 12 }, (_, i) => {
-          const w = (i * 30 * Math.PI) / 180;
-          const r1 = i % 3 === 0 ? 33 : 37, r2 = 43;
-          return '<line x1="' + (50 + Math.sin(w) * r1).toFixed(1)
-               + '" y1="' + (50 - Math.cos(w) * r1).toFixed(1)
-               + '" x2="' + (50 + Math.sin(w) * r2).toFixed(1)
-               + '" y2="' + (50 - Math.cos(w) * r2).toFixed(1)
-               + '" stroke="currentColor" stroke-width="' + (i % 3 === 0 ? 3.4 : 2) + '"'
-               + ' stroke-linecap="round"/>';
-        }).join("")
-      /* Beide Zeiger auf zwoelf — es schlaegt gerade. */
-      + '<line x1="50" y1="50" x2="50" y2="22" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>'
-      + '<line x1="50" y1="50" x2="50" y2="14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>'
-      + '<circle cx="50" cy="50" r="3.2" fill="currentColor"/>'
-      + "</svg>";
-  }
-  function lcTrittSvg() {
-    return '<svg class="lc-tritt-schuh" viewBox="0 0 100 60">'
-      /* Das Obermaterial: hinten hoch, vorn flach. */
-      + '<path d="M10 44 L10 22 C10 16 15 12 22 12 L31 12 C35 21 41 26 51 30'
-      + ' C66 36 81 41 91 45 L93 47 L12 47 Z" fill="#2f3b52"/>'
-      /* Die Zehenkappe, eine Spur heller. */
-      + '<path d="M66 37 C76 40 86 44 93 47 L70 47 Z" fill="#41506e"/>'
-      /* Der gepolsterte Rand oben an der Ferse. */
-      + '<path d="M10 22 C10 16 15 12 22 12 L31 12 L33 17 L14 19 Z" fill="#54627d"/>'
-      /* Die Schnuersenkel mit ihren Oesen. */
-      + [[22, 20], [28, 25], [34, 30]].map(function (p) {
-          return '<line x1="' + p[0] + '" y1="' + p[1] + '" x2="' + (p[0] + 13)
-               + '" y2="' + (p[1] + 3) + '" stroke="#f2f4f8" stroke-width="2.6"'
-               + ' stroke-linecap="round" opacity=".85"/>'
-               + '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="1.5" fill="#c8d2e2"/>';
-        }).join("")
-      /* Der Streifen an der Seite — daran erkennt man einen
-         Sportschuh auf den ersten Blick. */
-      + '<path d="M24 41 C38 36 54 38 74 45" fill="none" stroke="#f2f4f8"'
-      + ' stroke-width="4" stroke-linecap="round" opacity=".9"/>'
-      /* Die Sohle, mit Absatz hinten und Profil darunter. */
-      + '<path d="M8 47 L94 47 C98 47 99 51 96 53 L12 53 C7 53 5 50 8 47 Z"'
-      + ' fill="#e8ecf3"/>'
-      + '<path d="M8 50 L96 50" stroke="#aab4c6" stroke-width="1.4"/>'
-      + [16, 26, 36, 46, 56, 66, 76, 86].map(function (x) {
-          return '<line x1="' + x + '" y1="50.6" x2="' + x + '" y2="53"'
-               + ' stroke="#aab4c6" stroke-width="1.6"/>';
-        }).join("")
-      + "</svg>";
-  }
-
-  function lcKatzeFormSvg() {
-    const katzBein = (vorn, fern) => {
-      const P = vorn ? [72, 56] : [40, 55], K = vorn ? [72.6, 69.5] : [37.6, 70.5];
-      /* WALKIE #245 — XANDER hat die Katze mit „Überarbeiten" bewertet:
-         „Beine", „Pfotenschlag", „Kopf und Gesicht".
-         BEINE: vorher gerade Rohre mit eckigem Unterschenkel — wie
-         Holzpfosten. Jetzt verjuengt sich jedes Glied zum Gelenk
-         hin; der Unterarm ist schlank, das Hinterbein hat den
-         typischen Katzen-Knick (Sprunggelenk nach hinten), und die
-         Pfoten sind rund mit drei Zehenfurchen. */
-      const tatze = (x, y) => '<path class="lc-katze-tatze" d="M' + (x - 4.4) + " " + y
-        + " C" + (x - 4.4) + " " + (y - 1.9) + " " + (x - 2.4) + " " + (y - 2.6) + " " + x + " " + (y - 2.6)
-        + " C" + (x + 3.2) + " " + (y - 2.6) + " " + (x + 5) + " " + (y - 1.4) + " " + (x + 4.8) + " " + (y + 0.6)
-        + " C" + (x + 4.6) + " " + (y + 2.4) + " " + (x + 2.4) + " " + (y + 2.8) + " " + x + " " + (y + 2.8)
-        + " C" + (x - 2.6) + " " + (y + 2.8) + " " + (x - 4.4) + " " + (y + 2.2) + " " + (x - 4.4) + " " + y + ' Z"/>'
-        + '<path d="M' + (x - 1.6) + " " + (y + 0.4) + " l0 2.2 M" + (x + 0.6) + " " + (y + 0.2) + " l0 2.5 M"
-        + (x + 2.7) + " " + (y + 0.4) + ' l0 2.1" stroke="rgba(30,25,21,.55)" stroke-width=".7" stroke-linecap="round"/>';
-      const ober = vorn
-        ? '<path class="lc-katze-glied" d="M67.5 50 C72 47.5 77.5 49.5 77 55 C76.6 60 75.4 65 75 69.5 C74.6 71.2 70.6 71.2 70.4 69.5 C69.6 64 67 57 67.5 50 Z"/>'
-        : '<path class="lc-katze-glied" d="M31.5 47 C38 42.5 49 45 48 54 C47.4 60 43.6 64.6 40.4 70.6 C39.4 72.4 35.6 72.2 35.2 70.4 C35.2 64 30.4 56.4 31.5 47 Z"/>';
-      const unter = vorn
-        ? '<path class="lc-katze-glied" d="M70.6 69 C70.3 73.5 70.7 77.5 71.2 81.2 L75.2 81.2 C75.5 77.5 75.4 73.5 75 69 Z"/>' + tatze(73.8, 82.2)
-        : '<path class="lc-katze-glied" d="M35.4 70 C35.8 74 37.4 78.4 38.6 81.6 L42.4 81.6 C41.4 77.8 40.6 74 40 70 Z"/>' + tatze(40.8, 82.6);
-      const k = (x) => x.toFixed(1);
-      return '<g class="lc-katze-bein ' + (vorn ? "lc-katze-vorn" : "lc-katze-hinten") + (fern ? " lc-katze-fern" : " lc-katze-nah")
-        + '"' + (fern ? ' transform="translate(' + (vorn ? 5 : -4) + ' -1.5)"' : "") + '>'
-        + '<g class="lc-katze-o" style="transform-origin:' + k(P[0]) + "px " + k(P[1]) + 'px">'
-        + (vorn && !fern ? '<g class="lc-katze-pfote" style="transform-box:view-box;transform-origin:' + k(P[0]) + "px " + k(P[1]) + 'px">' : "")
-        + ober
-        + '<g class="lc-katze-u" style="transform-origin:' + k(K[0]) + "px " + k(K[1]) + 'px">'
-        + (vorn && !fern ? '<g class="lc-katze-pfote-u" style="transform-box:view-box;transform-origin:' + k(K[0]) + "px " + k(K[1]) + 'px">' : "")
-        + unter
-        + (vorn && !fern ? "</g>" : "")
-        + "</g>"
-        + (vorn && !fern ? "</g>" : "")
-        + "</g></g>";
-    };
-    return '<svg class="lc-katze-form" viewBox="0 0 120 92" aria-hidden="true">'
-      + '<defs><linearGradient id="lcKatzFell" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0" stop-color="#8c8279"/><stop offset=".55" stop-color="#6d6259"/>'
-      + '<stop offset="1" stop-color="#4c443d"/></linearGradient></defs>'
-      /* Schwanz: vom Hinterteil in einem S nach oben. */
-      + '<path class="lc-katze-schwanz" d="M33 50 C20 48 14 38 17 27 C19 20 25 17 28 22"'
-      + ' fill="none" stroke="url(#lcKatzFell)" stroke-width="7" stroke-linecap="round"/>'
-      + katzBein(false, true) + katzBein(true, true)
-      + '<g class="lc-katze-leib">'
-      /* Der Rumpf, lang und leicht gewoelbt — eine Katze, die geht. */
-      + '<path class="lc-katze-rumpf" d="M31 51 C30 41 42 36 56 36 C67 36 76 38 80 44 C83 50 81 58 74 61 C64 64 44 64 37 61 C33 59 31 56 31 51 Z"'
-      + ' fill="url(#lcKatzFell)"/>'
-      + '<path d="M40 60 C50 63.4 64 63.4 72 60" fill="none" stroke="#a79c92" stroke-width="2.4" stroke-linecap="round" opacity=".55"/>'
-      /* Tigerstreifen quer ueber den Ruecken. */
-      + '<path d="M44 37.6 C46 43 45.6 49 43.4 53 M53 36.4 C55 42 55 48 53 52.4 M62 36.6 C64 42 64 47.6 62.4 51.6 M71 38.6 C72.6 43 72.4 47 71 50"'
-      + ' fill="none" stroke="rgba(40,34,29,.42)" stroke-width="2.8" stroke-linecap="round"/>'
-      /* WALKIE #245 — KOPF UND GESICHT. Vorher ein Kreis mit zwei
-         langen Dreiecksohren, die schraeg abstanden, und Augen so gross
-         wie Muenzen. Ein Katzenkopf ist breiter als hoch (Wangen), die
-         Ohren sitzen OBEN, breit am Ansatz; die Augen sind mandel-
-         foermig und stehen weiter auseinander, darunter eine helle
-         Schnauze mit Nase, Mund und Schnurrhaaren. */
-      + '<path d="M73.6 28.4 L73.2 13 L83.4 21.4 Z" fill="#6d6259" stroke="#4c443d" stroke-width=".6" stroke-linejoin="round"/>'
-      + '<path d="M75.4 26.2 L75.3 17.4 L80.9 22.2 Z" fill="#c69a9a"/>'
-      + '<path d="M92.6 21.4 L102.8 13 L102.4 28.4 Z" fill="#6d6259" stroke="#4c443d" stroke-width=".6" stroke-linejoin="round"/>'
-      + '<path d="M95.1 22.2 L100.7 17.4 L100.6 26.2 Z" fill="#c69a9a"/>'
-      + '<path d="M71.4 37 C71 27.6 78.6 21.4 88 21.4 C97.4 21.4 105 27.6 104.6 37 C104.4 42 102 45.4 99 47.2'
-      + ' C95.6 49.4 91.8 50.2 88 50.2 C84.2 50.2 80.4 49.4 77 47.2 C74 45.4 71.6 42 71.4 37 Z" fill="url(#lcKatzFell)"/>'
-      /* Wangenfell, ein paar Zacken an den Seiten */
-      + '<path d="M72 39.4 L69.6 41.8 L72.6 42.2 L70.8 44.8 L74.4 44.2 M104 39.4 L106.4 41.8 L103.4 42.2 L105.2 44.8 L101.6 44.2"'
-      + ' fill="none" stroke="#6d6259" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'
-      /* Stirnstreifen */
-      + '<path d="M88 22.6 L88 27.4 M84.6 23.2 L85.4 27 M91.4 23.2 L90.6 27" stroke="rgba(40,34,29,.45)" stroke-width="1.3" stroke-linecap="round"/>'
-      /* Augen: Mandel, gruen-gelb, senkrechter Schlitz, Glanzpunkt */
-      + '<path d="M76.4 34.2 C78.4 30.8 83.2 30.6 85.4 33.8 C83.4 36.8 78.6 37.2 76.4 34.2 Z" fill="#cfdc5e" stroke="#2b2420" stroke-width=".8"/>'
-      + '<path d="M90.6 33.8 C92.8 30.6 97.6 30.8 99.6 34.2 C97.4 37.2 92.6 36.8 90.6 33.8 Z" fill="#cfdc5e" stroke="#2b2420" stroke-width=".8"/>'
-      + '<ellipse class="lc-katze-pupille" cx="81" cy="34" rx="1.1" ry="2.9" fill="#231d18"/>'
-      + '<ellipse class="lc-katze-pupille" cx="95" cy="34" rx="1.1" ry="2.9" fill="#231d18"/>'
-      + '<circle cx="82" cy="32.9" r=".6" fill="#fff"/><circle cx="96" cy="32.9" r=".6" fill="#fff"/>'
-      /* Schnauze: zwei helle Polster */
-      + '<ellipse cx="85.2" cy="43.6" rx="3.8" ry="2.9" fill="#b3a79c"/>'
-      + '<ellipse cx="90.8" cy="43.6" rx="3.8" ry="2.9" fill="#b3a79c"/>'
-      + '<path d="M88 42.4 L85.9 40 L90.1 40 Z" fill="#c07c86" stroke="#8c5a62" stroke-width=".4" stroke-linejoin="round"/>'
-      + '<path d="M88 42.4 L88 44.2 M88 44.2 C86.6 45.8 84.8 45.6 84 44.6 M88 44.2 C89.4 45.8 91.2 45.6 92 44.6"'
-      + ' fill="none" stroke="#2b2420" stroke-width="1" stroke-linecap="round"/>'
-      + '<path d="M82 42.6 L66 40.4 M82 44.4 L66.6 45.4 M82.4 45.8 L68.6 49.4 M94 42.6 L110 40.4 M94 44.4 L109.4 45.4 M93.6 45.8 L107.4 49.4"'
-      + ' fill="none" stroke="rgba(255,255,255,.72)" stroke-width=".7"'
-      + ' stroke-linecap="round"/>'
-      + "</g>"
-      + katzBein(false, false) + katzBein(true, false)
       + "</svg>";
   }
 
@@ -55090,26 +54769,14 @@
       + '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="10.5" fill="#d8dde3" stroke="#6d747c" stroke-width="1.6"/>'
       + [0, 72, 144, 216, 288].map(function (w) { var t = w * Math.PI / 180; return '<path d="M' + q[0] + " " + q[1] + " L" + (q[0] + 9.5 * Math.cos(t)).toFixed(1) + " " + (q[1] + 9.5 * Math.sin(t)).toFixed(1) + '" stroke="#6d747c" stroke-width="2.4"/>'; }).join("")
       + '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="3" fill="#f2c230"/></g>'; }).join("") + "</svg>" };
-  /* FASSUNG 713 — XANDER (Funk 158): „mein Dodge Viper übrigens recherchieren noch mal das
-     sieht nicht aus wie ein Dodge Viber der Firebird … sieht auch nicht aus … mach sie so nah
-     wie möglich am Original". Beide neu nach den Serienwagen gezeichnet (Seitenansicht):
-     K.I.T.T. = Pontiac Firebird Trans Am 1982 — ZWEI Türen (vorher sah er aus wie eine
-     viertürige Limousine), flache Keilnase mit dem Lauflicht, lange flache Haube mit
-     Klappscheinwerfer-Fuge, steile Scheibe, T-Top, die große gewölbte Heckscheibe bis fast
-     ans Heck, kurze Heckkante mit Lippe, Seitensicke, Turbinen-Felgen.
-     Viper = Dodge Viper SRT GTS (5. Generation): sehr lange Haube mit hochgezogenen
-     Kotflügel-Buckeln, die Kabine weit hinten mit Doppelbuckel-Dach, die Kiemen hinter dem
-     Vorderrad, Seitenauspuff im Schweller vor dem Hinterrad, kräftige Hüfte über dem
-     Hinterrad, Entenbürzel, Fünf-Doppelspeichen-Felgen mit rotem Bremssattel.
-     Proportionen aus den Maßen gerechnet (Länge, Radstand, Höhe, Überhänge). */
   /* FASSUNG 696 — XANDER: „Kit … Pontiac Firebird … diese Lichtleiste" · „Dodge Viper …
      einen richtig schönen roten". Beide in der Seitenansicht, Fahrtrichtung rechts. KITT:
      schwarzer Keil, lange Haube, flache Scheibe, Fließheck, Turbo-Felgen, in der Nase das
      rote Lauflicht (acht Kammern, ein wandernder Schein — spiel über korrekturen.css).
      Viper: lange gewölbte Haube mit Kiemen, Kabine weit hinten mit Doppelbuckel, Schweller-
      Auspuff in Chrom, Fünfspeichen-Felgen, glänzendes Rot. */
-  LC_REISEWAGEN.kitt = { hoch: 92, anker: 44, svg: "<svg viewBox=\"0 0 240 92\" aria-hidden=\"true\"><defs><linearGradient id=\"lcRwKittLack\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#4a5159\"/><stop offset=\".18\" stop-color=\"#15181c\"/><stop offset=\".55\" stop-color=\"#060708\"/><stop offset=\".85\" stop-color=\"#121418\"/><stop offset=\"1\" stop-color=\"#26292e\"/></linearGradient><linearGradient id=\"lcRwKittGlas\" x1=\"0\" y1=\"0\" x2=\".4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#7d93a8\"/><stop offset=\".45\" stop-color=\"#26323e\"/><stop offset=\"1\" stop-color=\"#0a0e13\"/></linearGradient><radialGradient id=\"lcRwKittFelge\" cx=\".4\" cy=\".35\" r=\".75\"><stop offset=\"0\" stop-color=\"#e3e7ea\"/><stop offset=\".65\" stop-color=\"#9aa2aa\"/><stop offset=\"1\" stop-color=\"#5b626a\"/></radialGradient><radialGradient id=\"lcRwKittRot\"><stop offset=\"0\" stop-color=\"#fff2f0\"/><stop offset=\".3\" stop-color=\"#ff2a1a\"/><stop offset=\"1\" stop-color=\"#ff2a1a\" stop-opacity=\"0\"/></radialGradient></defs><ellipse cx=\"120\" cy=\"87\" rx=\"114\" ry=\"4\" fill=\"#000\" opacity=\".3\"/><path d=\"M231 74 C235 72 237.5 68 237.5 63.5 L236.6 60 C230 58.6 220 56.6 206 54 C184 50 162 47.4 141 46 C133 39 124 33.6 115 31.2 C106 29.8 98 29.8 91 30.6 C74 33.4 56 38.4 40 43 C30 43.6 22 43.8 15 43.8 L11.5 41.6 L9 44 C7.6 50 7.6 57 8.8 63 C9.6 67.6 11 71 14 73 L39 73 A21 21 0 0 1 81 73 L159 73 A21 21 0 0 1 201 73 Z\" fill=\"url(#lcRwKittLack)\" stroke=\"#000\" stroke-width=\"1.6\" stroke-linejoin=\"round\"/><path d=\"M235 60.4 C220 57.4 190 51.6 160 48.6 C152 47.8 146 47.2 141.5 46.8\" fill=\"none\" stroke=\"#8b949e\" stroke-width=\"1.1\" stroke-linecap=\"round\" opacity=\".85\"/><path d=\"M40 44.4 C30 45 21 45.2 15 45\" fill=\"none\" stroke=\"#6f7780\" stroke-width=\"1\" opacity=\".8\"/><path d=\"M226 60.6 C190 56 140 55.4 96 55.6 C66 55.8 36 56.6 11 57.4\" fill=\"none\" stroke=\"#5c646d\" stroke-width=\"1.2\" opacity=\".9\"/><path d=\"M226 62 C190 57.6 140 57 96 57.2 C66 57.4 36 58.2 11 59\" fill=\"none\" stroke=\"#000\" stroke-width=\".8\" opacity=\".9\"/><path d=\"M137.5 47 C131 41 123 35.6 115 33.2 C106 31.8 99 31.8 92.5 32.6 C80 35 68 38.8 58 42.4 C84 44.6 111 46 137.5 47 Z\" fill=\"url(#lcRwKittGlas)\" stroke=\"#000\" stroke-width=\"1\"/><path d=\"M90 33 C88.6 37 88 41 88.4 44.8\" fill=\"none\" stroke=\"#000\" stroke-width=\"2.4\"/><path d=\"M126 38.6 C120 35.4 112 34.2 104 34.4\" fill=\"none\" stroke=\"rgba(255,255,255,.35)\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><path d=\"M114 31.4 C106 30.2 98 30.2 92 30.8\" fill=\"none\" stroke=\"#2c3c4c\" stroke-width=\"1.6\"/><path d=\"M136 44.6 C137.6 42.2 141.6 42.2 142.4 44.4 L139 46.2 Z\" fill=\"#0b0c0e\" stroke=\"#000\" stroke-width=\".7\"/><path d=\"M138.5 47.6 C139.5 56 140 64 140.5 72 M89 45.6 C88 54 87.8 63 88.4 72\" fill=\"none\" stroke=\"#000\" stroke-width=\"1\"/><rect x=\"96\" y=\"52\" width=\"7\" height=\"1.8\" rx=\".9\" fill=\"#5c646d\"/><path d=\"M214 56 L228 58.6\" stroke=\"#000\" stroke-width=\"1\"/><rect x=\"203\" y=\"60\" width=\"31\" height=\"5.2\" rx=\"2.2\" fill=\"#150303\" stroke=\"#000\" stroke-width=\".8\"/><g fill=\"#3a0606\"><rect x=\"205.0\" y=\"61.2\" width=\"2.6\" height=\"2.8\" rx=\".5\"/><rect x=\"208.3\" y=\"61.2\" width=\"2.6\" height=\"2.8\" rx=\".5\"/><rect x=\"211.6\" y=\"61.2\" width=\"2.6\" height=\"2.8\" rx=\".5\"/><rect x=\"214.9\" y=\"61.2\" width=\"2.6\" height=\"2.8\" rx=\".5\"/><rect x=\"218.2\" y=\"61.2\" width=\"2.6\" height=\"2.8\" rx=\".5\"/><rect x=\"221.5\" y=\"61.2\" width=\"2.6\" height=\"2.8\" rx=\".5\"/><rect x=\"224.8\" y=\"61.2\" width=\"2.6\" height=\"2.8\" rx=\".5\"/><rect x=\"228.1\" y=\"61.2\" width=\"2.6\" height=\"2.8\" rx=\".5\"/></g><ellipse class=\"lc-rw-scanner\" cx=\"205\" cy=\"62.6\" rx=\"5\" ry=\"3.4\" fill=\"url(#lcRwKittRot)\"/><path d=\"M204 74 L231 74 C233 74 234 75 232.4 76 L204 76 Z\" fill=\"#050505\"/><path d=\"M8.8 47 L14 46.2 L14 52.4 L8.6 53.4 Z\" fill=\"#6a0808\" stroke=\"#000\" stroke-width=\".7\"/><g class=\"lc-rw-rad\" style=\"transform-origin:60px 70px\"><circle cx=\"60\" cy=\"70\" r=\"16.0\" fill=\"#0c0c0c\"/><circle cx=\"60\" cy=\"70\" r=\"11.5\" fill=\"#1c1f23\" stroke=\"#3a3f45\" stroke-width=\".8\"/><circle cx=\"60\" cy=\"70\" r=\"10.6\" fill=\"url(#lcRwKittFelge)\"/><path d=\"M65.1 70.0 Q68.6 71.7 69.0 75.5 M64.4 72.6 Q66.6 75.8 65.0 79.3 M62.6 74.4 Q62.8 78.3 59.7 80.6 M60.0 75.1 Q58.3 78.6 54.5 79.0 M57.4 74.4 Q54.2 76.6 50.7 75.0 M55.6 72.6 Q51.7 72.8 49.4 69.7 M54.9 70.0 Q51.4 68.3 51.0 64.5 M55.6 67.4 Q53.4 64.2 55.0 60.7 M57.4 65.6 Q57.2 61.7 60.3 59.4 M60.0 64.9 Q61.7 61.4 65.5 61.0 M62.6 65.6 Q65.8 63.4 69.3 65.0 M64.4 67.4 Q68.3 67.2 70.6 70.3 \" fill=\"none\" stroke=\"#2c3036\" stroke-width=\"1.5\" stroke-linecap=\"round\"/><circle cx=\"60\" cy=\"70\" r=\"3.2\" fill=\"#c9ced4\" stroke=\"#50565d\" stroke-width=\".7\"/></g><g class=\"lc-rw-rad\" style=\"transform-origin:180px 70px\"><circle cx=\"180\" cy=\"70\" r=\"16.0\" fill=\"#0c0c0c\"/><circle cx=\"180\" cy=\"70\" r=\"11.5\" fill=\"#1c1f23\" stroke=\"#3a3f45\" stroke-width=\".8\"/><circle cx=\"180\" cy=\"70\" r=\"10.6\" fill=\"url(#lcRwKittFelge)\"/><path d=\"M185.1 70.0 Q188.6 71.7 189.0 75.5 M184.4 72.6 Q186.6 75.8 185.0 79.3 M182.6 74.4 Q182.8 78.3 179.7 80.6 M180.0 75.1 Q178.3 78.6 174.5 79.0 M177.4 74.4 Q174.2 76.6 170.7 75.0 M175.6 72.6 Q171.7 72.8 169.4 69.7 M174.9 70.0 Q171.4 68.3 171.0 64.5 M175.6 67.4 Q173.4 64.2 175.0 60.7 M177.4 65.6 Q177.2 61.7 180.3 59.4 M180.0 64.9 Q181.7 61.4 185.5 61.0 M182.6 65.6 Q185.8 63.4 189.3 65.0 M184.4 67.4 Q188.3 67.2 190.6 70.3 \" fill=\"none\" stroke=\"#2c3036\" stroke-width=\"1.5\" stroke-linecap=\"round\"/><circle cx=\"180\" cy=\"70\" r=\"3.2\" fill=\"#c9ced4\" stroke=\"#50565d\" stroke-width=\".7\"/></g></svg>" };
-  LC_REISEWAGEN.viper = { hoch: 92, anker: 44, svg: "<svg viewBox=\"0 0 240 92\" aria-hidden=\"true\"><defs><linearGradient id=\"lcRwViperLack\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ff7a66\"/><stop offset=\".22\" stop-color=\"#e8160d\"/><stop offset=\".62\" stop-color=\"#b10808\"/><stop offset=\"1\" stop-color=\"#5a0303\"/></linearGradient><linearGradient id=\"lcRwViperGlas\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#6d8497\"/><stop offset=\".5\" stop-color=\"#1e2a35\"/><stop offset=\"1\" stop-color=\"#0b1117\"/></linearGradient><linearGradient id=\"lcRwViperChrom\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f4f6f8\"/><stop offset=\".5\" stop-color=\"#9aa4ae\"/><stop offset=\"1\" stop-color=\"#5d666f\"/></linearGradient><radialGradient id=\"lcRwViperFelge\" cx=\".4\" cy=\".35\" r=\".7\"><stop offset=\"0\" stop-color=\"#e9edf1\"/><stop offset=\".6\" stop-color=\"#9ea7b0\"/><stop offset=\"1\" stop-color=\"#4b535b\"/></radialGradient></defs><ellipse cx=\"120\" cy=\"87\" rx=\"112\" ry=\"4\" fill=\"rgba(0,0,0,.28)\"/><path d=\"M231 72 C236.5 70 238 64.5 236.4 60 C235 56.5 231 55 225 54 C213 52 203 46.5 192 44 C180 42 168 42.8 156 44 C148 44.8 140 44.8 134 44.4 C126 36 118 29 110 25 C101 22.4 91 22.2 83 23.4 C73 26 64 31.5 56 35.5 C46 34.5 36 34.8 26 36 C19 36.8 14 37.8 10.5 39.5 L8 44.5 C5.8 50 6.2 57 9.6 62.4 C12.4 66.8 17 70.2 24 72 L37 72 A21.5 21.5 0 0 1 79.5 72 L162.5 72 A21 21 0 0 1 205 72 Z\" fill=\"url(#lcRwViperLack)\" stroke=\"#2b0303\" stroke-width=\"1.6\" stroke-linejoin=\"round\"/><path d=\"M10.5 39.5 C14 36.8 20 36 26 36\" fill=\"none\" stroke=\"#ff9d8c\" stroke-width=\"1.2\" stroke-linecap=\"round\" opacity=\".8\"/><path d=\"M226 55 C214 52.6 203 47 191.5 45.2 C180 43.4 168 44 156 45.4 C148 46.2 140 46 134.5 45.6\" fill=\"none\" stroke=\"#ffb3a6\" stroke-width=\"1.4\" stroke-linecap=\"round\" opacity=\".85\"/><path d=\"M24 44 C36 38 56 37.5 72 42 C88 46.5 108 49 132 50\" fill=\"none\" stroke=\"#ff8f7e\" stroke-width=\"1.1\" opacity=\".6\"/><path d=\"M26 48.5 C40 43.5 58 43 74 47\" fill=\"none\" stroke=\"#6b0404\" stroke-width=\"1\" opacity=\".55\"/><path d=\"M131 44 C124 37 117 31 110.5 27 C101 24.4 91 24.4 84.5 25.6 C77 28 71 31.6 65 35.6 C86 40 108 42.6 131 44 Z\" fill=\"url(#lcRwViperGlas)\" stroke=\"#140202\" stroke-width=\"1\"/><path d=\"M92 22.4 C94 20.8 98 20.8 100 22.3\" fill=\"none\" stroke=\"#ff9d8c\" stroke-width=\"1\" opacity=\".7\"/><path d=\"M118 31 C112 27.6 104 26.6 96 26.8\" fill=\"none\" stroke=\"rgba(255,255,255,.35)\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><path d=\"M132 42.5 C134 39.5 139 39.5 140 42 L136 44 Z\" fill=\"#b10808\" stroke=\"#2b0303\" stroke-width=\".8\"/><path d=\"M135 46 C137 54 139 62 140.5 70.5 M88 41 C86 50 85.5 60 86.5 70.5\" fill=\"none\" stroke=\"#4d0202\" stroke-width=\".9\" opacity=\".8\"/><path d=\"M153 50 L170 47.5 C171 52 171 57 169.5 61.5 L156 63 C155 58 154 54 153 50 Z\" fill=\"#1a0404\" stroke=\"#2b0303\" stroke-width=\".8\"/><path d=\"M157 51 L158.6 61.8 M161 50.3 L162.4 61.4 M165 49.4 L166.2 61\" stroke=\"#c20b0b\" stroke-width=\"1.3\"/><path d=\"M80 69 L162 69 L161 73 L80.5 73 Z\" fill=\"#161616\"/><ellipse cx=\"96\" cy=\"71\" rx=\"7.5\" ry=\"2.6\" fill=\"url(#lcRwViperChrom)\" stroke=\"#3a3f44\" stroke-width=\".6\"/><ellipse cx=\"96\" cy=\"71\" rx=\"5\" ry=\"1.3\" fill=\"#111\"/><path d=\"M222 53.5 C227 54.3 232 55.6 234.6 58 C230 58.4 225 57.6 220.5 55.8 Z\" fill=\"#f4f1dc\" stroke=\"#4a4a4a\" stroke-width=\".6\"/><path d=\"M206 73 L233 72.5 C234 74 232 75 229 75 L206 75 Z\" fill=\"#141414\"/><path d=\"M8.2 44.6 C10 41.8 13 40.6 16 40.4 L15.4 45 C13 45.4 10.4 46.6 8 48.4 Z\" fill=\"#ff2a1a\" stroke=\"#4b0000\" stroke-width=\".6\"/><path d=\"M12 65.5 C15 68.8 19 70.8 24 71.6 L36 71.6\" fill=\"none\" stroke=\"#1a1a1a\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><g class=\"lc-rw-rad\" style=\"transform-origin:58px 68px\"><circle cx=\"58\" cy=\"68\" r=\"17.5\" fill=\"#101010\"/><circle cx=\"58\" cy=\"68\" r=\"12.6\" fill=\"url(#lcRwViperFelge)\" stroke=\"#2c2c2c\" stroke-width=\".8\"/><path d=\"M58 68 L58 56.2 M58 68 L69.2 64.4 M58 68 L64.9 77.6 M58 68 L51.1 77.6 M58 68 L46.8 64.4\" stroke=\"#3a4148\" stroke-width=\"3.2\" stroke-linecap=\"round\"/><path d=\"M58 68 L58 56.2 M58 68 L69.2 64.4 M58 68 L64.9 77.6 M58 68 L51.1 77.6 M58 68 L46.8 64.4\" stroke=\"#dfe4e8\" stroke-width=\"1.3\" stroke-linecap=\"round\"/><path d=\"M48.5 60 A12 12 0 0 1 55 56.6\" fill=\"none\" stroke=\"#d11\" stroke-width=\"2.4\"/><circle cx=\"58\" cy=\"68\" r=\"2.4\" fill=\"#2a2a2a\"/></g><g class=\"lc-rw-rad\" style=\"transform-origin:184px 69px\"><circle cx=\"184\" cy=\"69\" r=\"16.5\" fill=\"#101010\"/><circle cx=\"184\" cy=\"69\" r=\"12\" fill=\"url(#lcRwViperFelge)\" stroke=\"#2c2c2c\" stroke-width=\".8\"/><path d=\"M184 69 L184 57.8 M184 69 L194.7 65.5 M184 69 L190.6 78.1 M184 69 L177.4 78.1 M184 69 L173.3 65.5\" stroke=\"#3a4148\" stroke-width=\"3.1\" stroke-linecap=\"round\"/><path d=\"M184 69 L184 57.8 M184 69 L194.7 65.5 M184 69 L190.6 78.1 M184 69 L177.4 78.1 M184 69 L173.3 65.5\" stroke=\"#dfe4e8\" stroke-width=\"1.2\" stroke-linecap=\"round\"/><path d=\"M175 61.4 A11.5 11.5 0 0 1 181 57.9\" fill=\"none\" stroke=\"#d11\" stroke-width=\"2.3\"/><circle cx=\"184\" cy=\"69\" r=\"2.3\" fill=\"#2a2a2a\"/></g></svg>" };
+  LC_REISEWAGEN.kitt = { hoch: 92, anker: 44, svg: "<svg viewBox=\"0 0 240 92\" aria-hidden=\"true\"><defs><linearGradient id=\"lcRwKittLack\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#3a3f46\"/><stop offset=\".35\" stop-color=\"#101216\"/><stop offset=\".7\" stop-color=\"#050506\"/><stop offset=\"1\" stop-color=\"#1c1f24\"/></linearGradient><linearGradient id=\"lcRwKittGlas\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#6a7f93\"/><stop offset=\"1\" stop-color=\"#0c1016\"/></linearGradient><radialGradient id=\"lcRwKittRot\"><stop offset=\"0\" stop-color=\"#fff2f0\"/><stop offset=\".3\" stop-color=\"#ff2a1a\"/><stop offset=\"1\" stop-color=\"#ff2a1a\" stop-opacity=\"0\"/></radialGradient></defs><ellipse cx=\"120\" cy=\"88\" rx=\"114\" ry=\"4\" fill=\"#000\" opacity=\".3\"/><path d=\"M8 58 C8 54 12 52 18 51 L44 49 C58 42 76 34 92 33 L128 32 C136 32 142 35 150 41 C168 44.6 196 50.6 224 57 C231 58.6 235 61 236.6 64 L237 66 C236 70 232 72 228 72 L14 74 C10 73 8 70 8 66 Z\" fill=\"url(#lcRwKittLack)\" stroke=\"#000\" stroke-width=\"1.6\" stroke-linejoin=\"round\"/><path d=\"M50 48 C62 41 78 36 92 35.4 L126 34.4 C132 34.4 138 37 146 42 L152 47 Z\" fill=\"url(#lcRwKittGlas)\" stroke=\"#000\" stroke-width=\"1.2\"/><path d=\"M96 35.4 V47 M118 34.8 V47\" stroke=\"#000\" stroke-width=\"2.2\"/><path d=\"M58 45 C70 40 82 37.6 94 37 M124 37 C130 37.4 136 40 142 44\" stroke=\"#9fb3c6\" stroke-width=\"1\" opacity=\".7\"/><path d=\"M20 56 C80 52 160 52 228 58\" fill=\"none\" stroke=\"#6b737d\" stroke-width=\"1.2\" opacity=\".8\"/><path d=\"M160 50 C190 51 212 53 230 57\" fill=\"none\" stroke=\"#9aa3ad\" stroke-width=\"1\" opacity=\".7\"/><path d=\"M14 66 H232\" stroke=\"#2a2d33\" stroke-width=\"1.4\"/><path d=\"M104 49 V70 M150 50 V70\" stroke=\"#000\" stroke-width=\"1.2\"/><rect x=\"138\" y=\"54\" width=\"8\" height=\"2\" rx=\"1\" fill=\"#6b737d\"/><rect x=\"200\" y=\"60\" width=\"32\" height=\"5\" rx=\"2\" fill=\"#150303\" stroke=\"#000\" stroke-width=\".8\"/><g fill=\"#3a0606\"><rect x=\"201.4\" y=\"61\" width=\"3\" height=\"3\" rx=\".6\"/><rect x=\"205.20000000000002\" y=\"61\" width=\"3\" height=\"3\" rx=\".6\"/><rect x=\"209\" y=\"61\" width=\"3\" height=\"3\" rx=\".6\"/><rect x=\"212.8\" y=\"61\" width=\"3\" height=\"3\" rx=\".6\"/><rect x=\"216.6\" y=\"61\" width=\"3\" height=\"3\" rx=\".6\"/><rect x=\"220.4\" y=\"61\" width=\"3\" height=\"3\" rx=\".6\"/><rect x=\"224.2\" y=\"61\" width=\"3\" height=\"3\" rx=\".6\"/><rect x=\"228\" y=\"61\" width=\"3\" height=\"3\" rx=\".6\"/></g><ellipse class=\"lc-rw-scanner\" cx=\"204\" cy=\"62.5\" rx=\"5\" ry=\"3.4\" fill=\"url(#lcRwKittRot)\"/><path d=\"M10 58 L20 57 L20 62 L10 63 Z\" fill=\"#8a0c0c\" stroke=\"#000\" stroke-width=\".8\"/><g class=\"lc-rw-rad\" style=\"transform-origin:56px 72px\"><circle cx=\"56\" cy=\"72\" r=\"15\" fill=\"#0d0d0d\"/><circle cx=\"56\" cy=\"72\" r=\"10.200000000000001\" fill=\"#2b2f35\" stroke=\"#555b63\" stroke-width=\"1.2\"/><circle cx=\"62.9\" cy=\"72.0\" r=\"1.8\" fill=\"#111\"/><circle cx=\"61.6\" cy=\"76.1\" r=\"1.8\" fill=\"#111\"/><circle cx=\"58.1\" cy=\"78.6\" r=\"1.8\" fill=\"#111\"/><circle cx=\"53.9\" cy=\"78.6\" r=\"1.8\" fill=\"#111\"/><circle cx=\"50.4\" cy=\"76.1\" r=\"1.8\" fill=\"#111\"/><circle cx=\"49.1\" cy=\"72.0\" r=\"1.8\" fill=\"#111\"/><circle cx=\"50.4\" cy=\"67.9\" r=\"1.8\" fill=\"#111\"/><circle cx=\"53.9\" cy=\"65.4\" r=\"1.8\" fill=\"#111\"/><circle cx=\"58.1\" cy=\"65.4\" r=\"1.8\" fill=\"#111\"/><circle cx=\"61.6\" cy=\"67.9\" r=\"1.8\" fill=\"#111\"/><circle cx=\"56\" cy=\"72\" r=\"3\" fill=\"#8a9098\"/></g><g class=\"lc-rw-rad\" style=\"transform-origin:194px 72px\"><circle cx=\"194\" cy=\"72\" r=\"15\" fill=\"#0d0d0d\"/><circle cx=\"194\" cy=\"72\" r=\"10.200000000000001\" fill=\"#2b2f35\" stroke=\"#555b63\" stroke-width=\"1.2\"/><circle cx=\"200.9\" cy=\"72.0\" r=\"1.8\" fill=\"#111\"/><circle cx=\"199.6\" cy=\"76.1\" r=\"1.8\" fill=\"#111\"/><circle cx=\"196.1\" cy=\"78.6\" r=\"1.8\" fill=\"#111\"/><circle cx=\"191.9\" cy=\"78.6\" r=\"1.8\" fill=\"#111\"/><circle cx=\"188.4\" cy=\"76.1\" r=\"1.8\" fill=\"#111\"/><circle cx=\"187.1\" cy=\"72.0\" r=\"1.8\" fill=\"#111\"/><circle cx=\"188.4\" cy=\"67.9\" r=\"1.8\" fill=\"#111\"/><circle cx=\"191.9\" cy=\"65.4\" r=\"1.8\" fill=\"#111\"/><circle cx=\"196.1\" cy=\"65.4\" r=\"1.8\" fill=\"#111\"/><circle cx=\"199.6\" cy=\"67.9\" r=\"1.8\" fill=\"#111\"/><circle cx=\"194\" cy=\"72\" r=\"3\" fill=\"#8a9098\"/></g></svg>" };
+  LC_REISEWAGEN.viper = { hoch: 92, anker: 44, svg: "<svg viewBox=\"0 0 240 92\" aria-hidden=\"true\"><defs><linearGradient id=\"lcRwViperLack\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ff6a5a\"/><stop offset=\".25\" stop-color=\"#e3120b\"/><stop offset=\".7\" stop-color=\"#a80606\"/><stop offset=\"1\" stop-color=\"#5c0202\"/></linearGradient><linearGradient id=\"lcRwViperGlas\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#b8dcf5\"/><stop offset=\"1\" stop-color=\"#1c2d3c\"/></linearGradient><linearGradient id=\"lcRwChrom2\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#fbfdff\"/><stop offset=\".5\" stop-color=\"#8f98a2\"/><stop offset=\"1\" stop-color=\"#e6ebf0\"/></linearGradient></defs><ellipse cx=\"120\" cy=\"88\" rx=\"114\" ry=\"4\" fill=\"#000\" opacity=\".28\"/><path d=\"M10 62 C10 56 14 54 20 53 L30 52 C34 47 38 45 44 45 L62 44 C72 36 84 32 96 32 C104 32 110 33 116 36 C124 33 132 33 138 38 L150 46 C170 47 196 49 218 54 C228 56 234 60 236 64 L236 68 C234 72 230 73 226 73 L16 74 C12 73 10 70 10 66 Z\" fill=\"url(#lcRwViperLack)\" stroke=\"#3a0000\" stroke-width=\"1.6\" stroke-linejoin=\"round\"/><path d=\"M74 44 C80 38 88 35.4 96 35 C102 35 106 36 110 38 L112 44 Z M114 44 L116 38.6 C122 36 128 36 134 40 L144 46 Z\" fill=\"url(#lcRwViperGlas)\" stroke=\"#2a0000\" stroke-width=\"1.1\"/><path d=\"M80 40 C86 37 92 36 98 36\" stroke=\"#e8f4ff\" stroke-width=\"1\" opacity=\".7\"/><path d=\"M86 33.4 C92 31.6 100 31.6 106 33.4 M112 34.6 C118 33 126 33.4 132 36\" stroke=\"#ff9a8a\" stroke-width=\"1.2\" fill=\"none\" opacity=\".8\"/><path d=\"M156 47 C176 46 200 48 222 54\" stroke=\"#ff8a7a\" stroke-width=\"1.4\" fill=\"none\" opacity=\".75\"/><path d=\"M176 50 L186 50.6 M178 52.4 L188 53 M180 54.8 L190 55.4\" stroke=\"#4a0000\" stroke-width=\"1.3\" stroke-linecap=\"round\"/><path d=\"M152 56 L158 66 M156 56 L162 66 M160 56 L166 66\" stroke=\"#3a0000\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><rect x=\"72\" y=\"68\" width=\"92\" height=\"5\" rx=\"2.5\" fill=\"url(#lcRwChrom2)\" stroke=\"#5a5f66\" stroke-width=\".8\"/><path d=\"M76 70.5 H160\" stroke=\"#5a5f66\" stroke-width=\".6\" stroke-dasharray=\"2 2\"/><path d=\"M14 52 L30 50 L28 47 L12 49 Z\" fill=\"#2a0000\"/><path d=\"M226 60 L235 62 L234 65 L224 63 Z\" fill=\"#fff4c8\" stroke=\"#555\" stroke-width=\".8\"/><path d=\"M11 57 L18 56 L18 60 L11 61 Z\" fill=\"#ff3a2a\" stroke=\"#3a0000\" stroke-width=\".8\"/><path d=\"M60 48 V70 M144 47 V68\" stroke=\"#6a0000\" stroke-width=\"1\"/><rect x=\"120\" y=\"50\" width=\"8\" height=\"2\" rx=\"1\" fill=\"#6a0000\"/><g class=\"lc-rw-rad\" style=\"transform-origin:52px 72px\"><circle cx=\"52\" cy=\"72\" r=\"16\" fill=\"#111\"/><circle cx=\"52\" cy=\"72\" r=\"10.56\" fill=\"#d9dee4\" stroke=\"#7c848d\" stroke-width=\"1.4\"/><path d=\"M52 72 L49.8 62.3 L54.2 62.3 Z\" fill=\"#9aa2ab\"/><path d=\"M52 72 L60.5 66.9 L61.9 71.1 Z\" fill=\"#9aa2ab\"/><path d=\"M52 72 L59.4 78.6 L55.9 81.1 Z\" fill=\"#9aa2ab\"/><path d=\"M52 72 L48.1 81.1 L44.6 78.6 Z\" fill=\"#9aa2ab\"/><path d=\"M52 72 L42.1 71.1 L43.5 66.9 Z\" fill=\"#9aa2ab\"/><circle cx=\"52\" cy=\"72\" r=\"2.72\" fill=\"#c0392b\"/></g><g class=\"lc-rw-rad\" style=\"transform-origin:196px 72px\"><circle cx=\"196\" cy=\"72\" r=\"16\" fill=\"#111\"/><circle cx=\"196\" cy=\"72\" r=\"10.56\" fill=\"#d9dee4\" stroke=\"#7c848d\" stroke-width=\"1.4\"/><path d=\"M196 72 L193.8 62.3 L198.2 62.3 Z\" fill=\"#9aa2ab\"/><path d=\"M196 72 L204.5 66.9 L205.9 71.1 Z\" fill=\"#9aa2ab\"/><path d=\"M196 72 L203.4 78.6 L199.9 81.1 Z\" fill=\"#9aa2ab\"/><path d=\"M196 72 L192.1 81.1 L188.6 78.6 Z\" fill=\"#9aa2ab\"/><path d=\"M196 72 L186.1 71.1 L187.5 66.9 Z\" fill=\"#9aa2ab\"/><circle cx=\"196\" cy=\"72\" r=\"2.72\" fill=\"#c0392b\"/></g></svg>" };
   /* Der Transformer: Teile des Autos und ihre Stellung im Roboter (spiel über lcAuftritt). */
   const LC_TRAFO_SVG = "<svg viewBox=\"0 0 240 240\" aria-hidden=\"true\" class=\"\"><defs><linearGradient id=\"lcTrLack\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#6a9ae8\"/><stop offset=\".45\" stop-color=\"#2f63b8\"/><stop offset=\"1\" stop-color=\"#16346a\"/></linearGradient><linearGradient id=\"lcTrGlas\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#cfe9ff\"/><stop offset=\"1\" stop-color=\"#2d4a66\"/></linearGradient></defs><ellipse cx=\"120\" cy=\"238\" rx=\"110\" ry=\"3\" fill=\"#000\" opacity=\".25\"/><g class=\"lc-tr-tuerL\" style=\"transform-box:fill-box;transform-origin:50% 50%\"><rect x=\"88\" y=\"198\" width=\"24\" height=\"24\" rx=\"3\" fill=\"#2f63b8\" stroke=\"#0c1d3a\" stroke-width=\"1.4\"/><rect x=\"92\" y=\"202\" width=\"7\" height=\"2.4\" rx=\"1.2\" fill=\"#c9d0d8\"/><path class=\"lc-tr-hand\" d=\"M92 222 h16 v6 h-16 Z\" fill=\"#8a96a4\" stroke=\"#0c1d3a\" stroke-width=\"1\" opacity=\"0\"/></g><g class=\"lc-tr-tuerR\" style=\"transform-box:fill-box;transform-origin:50% 50%\"><rect x=\"124\" y=\"198\" width=\"24\" height=\"24\" rx=\"3\" fill=\"#2f63b8\" stroke=\"#0c1d3a\" stroke-width=\"1.4\"/><rect x=\"137\" y=\"202\" width=\"7\" height=\"2.4\" rx=\"1.2\" fill=\"#c9d0d8\"/><path class=\"lc-tr-hand\" d=\"M128 222 h16 v6 h-16 Z\" fill=\"#8a96a4\" stroke=\"#0c1d3a\" stroke-width=\"1\" opacity=\"0\"/></g><g class=\"lc-tr-heck\" style=\"transform-box:fill-box;transform-origin:50% 50%\"><path d=\"M14 214 C12 206 18 200 30 198 L86 196 V224 L18 226 C14 224 14 220 14 214 Z\" fill=\"url(#lcTrLack)\" stroke=\"#0c1d3a\" stroke-width=\"1.6\" stroke-linejoin=\"round\"/><path d=\"M16 206 L28 204 V210 L16 211 Z\" fill=\"#ff3a2a\"/><path d=\"M22 214 H84\" stroke=\"#9fb6d8\" stroke-width=\"1.4\"/><circle cx=\"48\" cy=\"226\" r=\"13\" fill=\"#141414\"/><circle cx=\"48\" cy=\"226\" r=\"8\" fill=\"#c9d0d8\" stroke=\"#6d747c\" stroke-width=\"1.4\"/><path d=\"M48 219 V233 M41 226 H55\" stroke=\"#6d747c\" stroke-width=\"1.6\"/><circle cx=\"48\" cy=\"226\" r=\"2.2\" fill=\"#e8742a\"/></g><g class=\"lc-tr-front\" style=\"transform-box:fill-box;transform-origin:50% 50%\"><path d=\"M150 196 L204 200 C218 202 228 206 230 212 C231 218 228 224 222 225 L150 226 Z\" fill=\"url(#lcTrLack)\" stroke=\"#0c1d3a\" stroke-width=\"1.6\" stroke-linejoin=\"round\"/><path d=\"M216 206 L229 210 L228 214 L214 211 Z\" fill=\"#fff4c8\" stroke=\"#555\" stroke-width=\".7\"/><path d=\"M152 214 H222\" stroke=\"#9fb6d8\" stroke-width=\"1.4\"/><circle cx=\"192\" cy=\"226\" r=\"13\" fill=\"#141414\"/><circle cx=\"192\" cy=\"226\" r=\"8\" fill=\"#c9d0d8\" stroke=\"#6d747c\" stroke-width=\"1.4\"/><path d=\"M192 219 V233 M185 226 H199\" stroke=\"#6d747c\" stroke-width=\"1.6\"/><circle cx=\"192\" cy=\"226\" r=\"2.2\" fill=\"#e8742a\"/></g><g class=\"lc-tr-kabine\" style=\"transform-box:fill-box;transform-origin:50% 50%\"><path d=\"M86 196 L96 176 C98 172 102 170 106 170 L132 170 C136 170 140 172 142 176 L150 196 V226 H86 Z\" fill=\"url(#lcTrLack)\" stroke=\"#0c1d3a\" stroke-width=\"1.6\" stroke-linejoin=\"round\"/><path d=\"M96 194 L104 176 H134 L142 194 Z\" fill=\"url(#lcTrGlas)\" stroke=\"#0c1d3a\" stroke-width=\"1.2\"/><path d=\"M104 204 H132 L128 216 H108 Z\" fill=\"#c9d0d8\" stroke=\"#0c1d3a\" stroke-width=\"1\"/><path d=\"M118 204 V216\" stroke=\"#0c1d3a\" stroke-width=\"1\"/><path d=\"M92 222 H144\" stroke=\"#e8742a\" stroke-width=\"2\"/></g><g class=\"lc-tr-kopf\" style=\"transform-box:fill-box;transform-origin:50% 50%;transform:translate(0px,60px) scale(0.01)\"><path d=\"M108 150 L110 136 L116 132 H124 L130 136 L132 150 L126 156 H114 Z\" fill=\"#c9d0d8\" stroke=\"#0c1d3a\" stroke-width=\"1.4\" stroke-linejoin=\"round\"/><path d=\"M112 132 L110 124 L116 130 M128 130 L130 124 L128 132\" fill=\"#2f63b8\" stroke=\"#0c1d3a\" stroke-width=\"1\"/><path class=\"lc-tr-augen\" d=\"M113 142 L119 144 M121 144 L127 142\" stroke=\"#5ad7ff\" stroke-width=\"2.6\" stroke-linecap=\"round\"/><path d=\"M115 150 H125\" stroke=\"#0c1d3a\" stroke-width=\"1.2\"/></g></svg>";
   const LC_TRAFO_TEILE = {"heck": {"auto": "none", "robot": "translate(44px,-16px) rotate(90deg)"}, "front": {"auto": "none", "robot": "translate(-44px,-16px) rotate(-90deg)"}, "kabine": {"auto": "none", "robot": "translate(0px,-72px)"}, "tuerL": {"auto": "none", "robot": "translate(-26px,-84px) rotate(8deg)"}, "tuerR": {"auto": "none", "robot": "translate(26px,-84px) rotate(-8deg)"}, "kopf": {"auto": "translate(0px,60px) scale(0.01)", "robot": "translate(0px,-56px)"}};
@@ -55479,13 +55146,6 @@
     rakete: '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 C21 7 22 13 21 20 H11 C10 13 11 7 16 3 Z" fill="#f6f1e7" stroke="#2d2418" stroke-width="1.6" stroke-linejoin="round"/><circle cx="16" cy="12" r="2.6" fill="#7ad7ff" stroke="#2d2418" stroke-width="1.2"/><path d="M11 16 L7 22 L11 21 Z M21 16 L25 22 L21 21 Z" fill="#d2232a" stroke="#2d2418" stroke-width="1.2"/><path d="M13 21 C13 26 16 29 16 29 C16 29 19 26 19 21 Z" fill="#ff9a1a"/></svg>',
     zauber: '<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="12" cy="18" r="6.5" fill="#c9b8ff" stroke="#2d2418" stroke-width="1.4"/><circle cx="20" cy="17" r="7" fill="#b39bff" stroke="#2d2418" stroke-width="1.4"/><circle cx="16" cy="22" r="6" fill="#d9ccff" stroke="#2d2418" stroke-width="1.4"/><path d="M24 4 L25 7 L28 8 L25 9 L24 12 L23 9 L20 8 L23 7 Z" fill="#ffd23c" stroke="#2d2418" stroke-width=".8"/></svg>'
   };
-  /* FASSUNG 713 — Funk 158: „bei sämtlichen Sachen wo wir das Bild dazu haben". Die Wagen
-     im Auftritt-Menü zeigen jetzt dieselbe Zeichnung, mit der sie vorfahren. */
-  [["kitt", "kitt", "4 24 234 66"], ["viper", "viper", "4 18 234 74"],
-   ["monstertruck", "monstertruck", null], ["hotrod", "hotrodfahrt", null], ["sportwagen", "sportwagen", null]].forEach(([k, w, vb]) => {
-    const W = LC_REISEWAGEN[w];
-    if (W && W.svg) LC_AUFTRITT_ZEICHEN[k] = lcMiniEcht(W.svg.replace("<svg ", '<svg class="lc-rw-mini" '), vb);
-  });
 
   LC_MINI_BILD["Mein Auftritt"] = LC_AUFTRITT_ZEICHEN.sportwagen;
   /* =================================================================
@@ -58339,7 +57999,59 @@
         lcTonSpaeter("tennisflop", 1903, 0.6);
       }
       schicht.innerHTML = art === "tennis"
-        ? lcTennisSvg()
+        ? '<svg class="lc-tennisschlaeger" viewBox="0 0 120 210">'
+          /* GEMELDET: „Der Tennisschlaeger sieht aus wie so ein
+             elektrischer Fliegentoeter."
+             Er hatte recht, und der Grund war genau EINE Sache: die
+             Bespannung lief als volles Rechteck ueber das Bild
+             hinaus. Ein Fliegentoeter ist ein Gitter in einem Rahmen;
+             ein Schlaeger ist ein Gitter, das AM Rahmen endet.
+             Deshalb liegt die Bespannung jetzt in einer Blende
+             (clipPath) und hoert genau an der Ellipse auf. Dazu das,
+             woran man einen Tennisschlaeger sonst erkennt: ein Kopf,
+             der hoeher als breit ist, ein Herz aus zwei Streben
+             zwischen Kopf und Griff, und ein umwickelter Griff mit
+             Knauf.
+             Die Groesse bleibt: „so soll der Tennisschlaeger eine
+             relative Groesse zu diesem Kreis haben, der dann den Ball
+             darstellt" — der Kopf ist doppelt so breit wie das
+             Profilbild. */
+          + '<defs><clipPath id="lcTennisNetz">'
+          + '<ellipse cx="60" cy="60" rx="44" ry="52"/>'
+          + "</clipPath></defs>"
+          /* Das Herz: zwei Streben vom Kopf zum Griff. */
+          /* XANDER: „mach den Tennisschlaeger bitte rot mit schwarzem
+             Griff." Rahmen und Herz sind ab jetzt rot, Griff und Knauf
+             schwarz. */
+          + '<path d="M30 96 C36 122 46 132 52 140 L68 140 C74 132 84 122 90 96"'
+          + ' fill="none" stroke="#d1232b" stroke-width="8" stroke-linecap="round"/>'
+          /* Die Bespannung — innerhalb der Blende, also nur im Kopf. */
+          + '<g clip-path="url(#lcTennisNetz)">'
+          + '<rect x="14" y="6" width="92" height="108" fill="rgba(255,255,255,.14)"/>'
+          + [20, 28, 36, 44, 52, 60, 68, 76, 84, 92, 100].map(function (x) {
+              return '<line x1="' + x + '" y1="4" x2="' + x + '" y2="116"'
+                   + ' stroke="rgba(255,255,255,.62)" stroke-width="1.6"/>';
+            }).join("")
+          + [14, 22, 30, 38, 46, 54, 62, 70, 78, 86, 94, 102].map(function (y) {
+              return '<line x1="8" y1="' + y + '" x2="112" y2="' + y + '"'
+                   + ' stroke="rgba(255,255,255,.62)" stroke-width="1.6"/>';
+            }).join("")
+          + "</g>"
+          /* Der Rahmen kommt UEBER die Bespannung — so sieht man, dass
+             die Saiten darin eingespannt sind. */
+          + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none" stroke="#d1232b" stroke-width="9"/>'
+          + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none"'
+          + ' stroke="#8d1218" stroke-width="2" stroke-dasharray="0"/>'
+          + '<ellipse cx="60" cy="60" rx="50" ry="58" fill="none"'
+          + ' stroke="rgba(255,255,255,.22)" stroke-width="2.5"/>'
+          /* Der Griff, umwickelt, mit Knauf. */
+          + '<rect x="51" y="136" width="18" height="66" rx="8" fill="#16181d"/>'
+          + [146, 156, 166, 176, 186].map(function (y) {
+              return '<line x1="51" y1="' + y + '" x2="69" y2="' + (y - 6) + '"'
+                   + ' stroke="rgba(255,255,255,.2)" stroke-width="2"/>';
+            }).join("")
+          + '<rect x="47" y="196" width="26" height="10" rx="5" fill="#0b0c0f"/>'
+          + "</svg>"
         /* DIE HAND — gross genug, dass ein Profilbild darunter ein
            Ball ist. Sie pumpt im Takt des Dribbelns. */
         : '<svg class="lc-basket-hand" viewBox="0 0 120 90">'
@@ -59451,7 +59163,33 @@
          Schuetzen, zielt dorthin, wo es hingeht, und schnellt dort
          los. */
       lcBeimSchuetzen(platz, "lc-zwille-halt",
-        lcZwilleSvg(), 2600);
+        '<svg class="lc-zwille-bild" viewBox="0 0 70 90">'
+        /* Die Gabel aus Holz. */
+        + '<path d="M22 88 L22 52 L8 20 M48 88 L48 52 L62 20" fill="none" stroke="#8a5a28"'
+        + ' stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>'
+        + '<rect x="21" y="60" width="28" height="28" rx="8" fill="#6b4a22"/>'
+        /* Das Gummi, das sich spannt und losschnellt. */
+        + '<path class="lc-zwille-gummi" d="M8 20 L35 40 L62 20" fill="none"'
+        + ' stroke="#3f3f46" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'
+        /* RUNDE 80 — XANDER: „Man soll auch sehen, wie das Gummiband
+           aufgezogen wird."
+           Bisher dehnte sich zwar das Gummi (scaleY von 1 auf 2,6),
+           aber es zog NICHTS: die Kugel lag erst beim Getroffenen und
+           erschien auch erst beim Einschlag. Man sah also ein Band,
+           das sich von selbst laenger machte. Jetzt haengt die
+           Ledertasche mit der Kugel darin am Band und wandert beim
+           Aufziehen mit — genau so weit, wie das Band lang wird:
+           die Spitze des Gummis liegt bei y = 40, sein Ansatz bei
+           y = 20; mal 2,6 wird daraus y = 72, also 32 Einheiten
+           weiter unten. Um genau 32 wandert die Tasche. */
+        + '<g class="lc-zwille-tasche">'
+        + '<path d="M28.5 37 L41.5 37 L39.5 49 L30.5 49 Z" fill="#5a4326"'
+        + ' stroke="#3a2a16" stroke-width="1.4" stroke-linejoin="round"/>'
+        + '<circle cx="35" cy="43" r="4.6" fill="#8d95a4"'
+        + ' stroke="#3a3f49" stroke-width="1"/>'
+        + '<circle cx="33.4" cy="41.4" r="1.5" fill="#cfd6e2" opacity=".85"/>'
+        + "</g>"
+        + "</svg>", 2600);
       /* „man hoert wirklich das quietschen von diesem dehnen
          Gummiband ... und derjenige, der getroffen wird ... macht dann
          auch so ein Au Geraeusch." Drei Toene, drei Zeitpunkte:
@@ -60203,7 +59941,54 @@
   function lcSonnenbrille(wen) {
     return lcAmPlatz(wen, "lc-sobri", (schicht) => {
       schicht.innerHTML =
-        lcSobriSvg();
+        '<svg class="lc-sobri-bild" viewBox="0 0 140 54" aria-hidden="true">'
+        + '<defs>'
+        + '<linearGradient id="lcSobriGlas" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#3d4a5c"/>'
+        + '<stop offset=".5" stop-color="#1b2430"/>'
+        + '<stop offset="1" stop-color="#0d1218"/></linearGradient>'
+        + '<linearGradient id="lcSobriRahmen" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#5a6270"/>'
+        + '<stop offset=".4" stop-color="#2b3038"/>'
+        + '<stop offset="1" stop-color="#14171c"/></linearGradient>'
+        + "</defs>"
+        /* DIE BUEGEL zuerst — sie liegen hinter den Glaesern. Sie
+           laufen nach hinten und leicht nach unten, so wie ein
+           Buegel ueber dem Ohr sitzt. */
+        + '<path d="M6 20 L1 15 L1 22 L6 25 Z" fill="#14171c"/>'
+        + '<path d="M134 20 L139 15 L139 22 L134 25 Z" fill="#14171c"/>'
+        /* DIE GLAESER. Eine Pilotenbrille ist oben breit und laeuft
+           nach unten aussen spitz zu — das ist die Form, an der man
+           sie erkennt. */
+        + '<path class="lc-sobri-glas" d="M8 14 L62 14 L60 34 C58 44 44 48 32 46'
+        + ' C18 44 10 34 8 22 Z" fill="url(#lcSobriGlas)"'
+        + ' stroke="url(#lcSobriRahmen)" stroke-width="3.4"'
+        + ' stroke-linejoin="round"/>'
+        + '<path class="lc-sobri-glas" d="M132 14 L78 14 L80 34 C82 44 96 48 108 46'
+        + ' C122 44 130 34 132 22 Z" fill="url(#lcSobriGlas)"'
+        + ' stroke="url(#lcSobriRahmen)" stroke-width="3.4"'
+        + ' stroke-linejoin="round"/>'
+        /* DER STEG zwischen den Glaesern — eine Doppelbruecke, wie
+           bei einer Fliegerbrille. */
+        + '<path d="M62 17 C68 14 72 14 78 17" fill="none"'
+        + ' stroke="url(#lcSobriRahmen)" stroke-width="3.2"'
+        + ' stroke-linecap="round"/>'
+        + '<path d="M62 24 C68 21 72 21 78 24" fill="none"'
+        + ' stroke="url(#lcSobriRahmen)" stroke-width="2.4"'
+        + ' stroke-linecap="round"/>'
+        /* Die obere Kante des Rahmens ist heller — dort faellt das
+           Licht auf das Metall. */
+        + '<path d="M8 14 L62 14 M78 14 L132 14" fill="none"'
+        + ' stroke="rgba(255,255,255,.4)" stroke-width="1.6"'
+        + ' stroke-linecap="round"/>'
+        /* ZWEI feste Reflexe im Glas — eine Brille ohne Spiegelung
+           ist ein schwarzes Loch. */
+        + '<path d="M16 19 L30 19 L20 33 L12 27 Z" fill="rgba(255,255,255,.18)"/>'
+        + '<path d="M86 19 L100 19 L90 33 L82 27 Z" fill="rgba(255,255,255,.18)"/>'
+        /* UND DER WANDERNDE GLANZ, der spaeter darueberlaeuft. */
+        + '<rect class="lc-sobri-blitz" x="-30" y="6" width="16" height="44"'
+        + ' rx="5" fill="rgba(255,255,255,.75)"/>'
+        + "</svg>";
       /* „bling" sitzt auf dem Glanz: der Streifen laeuft bei 52 bis
          74 % der 2,6 s ueber die Glaeser, also ab 1350 ms. */
       lcTonSpaeter("bling", 1350, 0.5);
@@ -60251,7 +60036,127 @@
          man so ruft. Jetzt 2,36 s statt 1,86 s, und er verklingt
          von -24 dB bei 1,72 s auf -60 dB bei 2,20 s. */
       schicht.innerHTML =
-        lcHutSvg()
+        '<svg class="lc-hut-bild" viewBox="0 0 140 76">'
+        /* RUNDE 58 — XANDER: „Der Cowboy Hut sieht aus wie ein
+           Abenteuerhut, so richtig wie ein Cowboyhut aussehen."
+
+           Er hatte recht, und man kann genau sagen, woran es lag:
+           · Die Krempe war eine FLACHE Ellipse — ein Teller. Ein
+             Cowboyhut ist daran zu erkennen, dass die Krempe an den
+             SEITEN steil hochgerollt ist und vorn und hinten
+             durchhaengt. Von vorn gesehen ist sie deshalb kein
+             Oval, sondern eine Sichel mit zwei hohen Spitzen.
+           · Die Krone war eine glatte Kuppel mit einer einzigen
+             Laengsdelle — das ist ein Fedora, also genau der
+             Abenteuerhut, den er nicht wollte. Ein Stetson hat die
+             „Cattleman"-Falte: eine Delle in der Mitte UND je eine
+             an den Seiten, also von vorn zwei hohe Grate mit einer
+             Senke dazwischen.
+           Beides ist jetzt so gezeichnet. */
+        + '<defs><linearGradient id="hut1" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#c08f4a"/><stop offset="1" stop-color="#7a5322"/>'
+        + '</linearGradient>'
+        + '<linearGradient id="hut2" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#6b4619"/><stop offset="1" stop-color="#a97b3c"/>'
+        + "</linearGradient></defs>"
+        /* DIE KREMPE, an den Seiten hochgerollt: die Oberkante steigt
+           von der Mitte zu beiden Spitzen steil an, die Unterkante
+           haengt in der Mitte durch. */
+        /* RUNDE 76 — XANDER: „Der Hut vom Cowboy sieht auch noch
+           nicht realistisch aus."
+           NACHGESEHEN an dem, was hier stand: die Krempe lief an
+           beiden Seiten in einen PUNKT aus (Ober- und Unterkante
+           trafen sich bei x = 5 bzw. 135). Ein Filzhut hat aber
+           ueberall dieselbe Dicke — auch an der Spitze. Von vorn
+           sieht man dort die KANTE des Filzes, und die ist rund.
+           Jetzt laeuft die Unterkante nicht mehr in die Oberkante
+           hinein, sondern beide werden an den Spitzen mit einem
+           eigenen Bogen verbunden: 7 Einheiten dick, so dick wie in
+           der Mitte. Dazu sind die Spitzen hoeher gezogen (38 statt
+           41) und die Krempe haengt in der Mitte tiefer durch — das
+           ist die starke Rollung, an der man einen Cowboyhut von
+           vorn erkennt. */
+        + '<path class="lc-hut-krempe" d="M8 38 C26 58 50 64 70 64'
+        + ' C90 64 114 58 132 38 C136 41 137 45 134 48'
+        + ' C116 68 98 74 70 74 C42 74 24 68 6 48 C3 45 4 41 8 38 Z"'
+        + ' fill="url(#hut2)" stroke="#4e310f" stroke-width="2.2"'
+        + ' stroke-linejoin="round"/>'
+        /* Die Oberseite der Krempe ist heller als die Unterseite —
+           daran sieht man die Rollung. */
+        + '<path d="M8 38 C26 58 50 64 70 64 C90 64 114 58 132 38'
+        + ' C118 52 98 58 70 58 C42 58 22 52 8 38 Z" fill="url(#hut1)"/>'
+        /* DIE KRONE mit der Cattleman-Falte: links ein Grat, in der
+           Mitte die Senke, rechts wieder ein Grat. */
+        /* Die Grate sind RUND, nicht spitz — zwei Spitzen saehen aus
+           wie Ohren. Gemessen an einem Stetson ist die Falte etwa ein
+           Drittel der Kronenhoehe tief, nicht die Haelfte. */
+        /* RUNDE 75 — XANDER: „der Cowboyhut sieht auch noch nicht
+           gut aus."
+           NACHGESEHEN an dem, was hier stand: die Mitte der Krone lag
+           bei y = 24,5 und damit HOEHER als die Schultern daneben
+           (y = 30). Von vorn ergab das DREI Buckel — links ein Grat,
+           in der Mitte ein zweiter, rechts der dritte. Eine
+           Cattleman-Falte ist aber genau umgekehrt: in der Mitte eine
+           DELLE, die tiefer liegt als alles daneben, und links und
+           rechts je ein Grat. Jetzt liegt die Mitte bei y = 33,6, die
+           Schultern bei 28,4 und die Grate bei 14 — die Delle ist
+           damit der tiefste Punkt der Oberkante.
+           Und die Krone ist hoeher: die Grate standen bei 18,6, jetzt
+           bei 14. Ein Stetson hat eine hohe Krone; bei einer flachen
+           sieht er aus wie ein Hut zum Wandern. */
+        /* RUNDE 80 — XANDER: „diese Hoecker sind noch zu duenn."
+           NACHGEMESSEN an der alten Linie: ein Grat lief von x = 46
+           bis x = 54,5 — 8,5 Einheiten breit bei einer Krone von 60.
+           Das ist ein Zacken, kein Hoecker. Jetzt laeuft er von 44 bis
+           55, also 11 Einheiten, und die Senke dazwischen ist von
+           15,0 auf 17,0 Einheiten geschrumpft: die Grate nehmen den
+           Platz ein, den vorher die Luecke hatte. Sie stehen ausserdem
+           einen Zehntel hoeher (13 statt 14) — ein Stetson traegt
+           seine Cattleman-Falte hoch. Die Werte sind um x = 70
+           gespiegelt, damit der Hut symmetrisch bleibt:
+           44/96, 55/85, 61,5/78,5. */
+        + '<path class="lc-hut-krone" d="M40 60 C37 36 40 18 44 13'
+        + ' C47.5 10.4 52 11.4 55 15 C57.5 18 59.5 23.5 61.5 27.6'
+        + ' C64 31.4 66.8 33.2 70 33.2 C73.2 33.2 76 31.4 78.5 27.6'
+        + ' C80.5 23.5 82.5 18 85 15 C88 11.4 92.5 10.4 96 13'
+        + ' C100 18 103 36 100 60 C86 64 54 64 40 60 Z"'
+        + ' fill="url(#hut1)" stroke="#4e310f" stroke-width="2.2"'
+        + ' stroke-linejoin="round"/>'
+        /* Die drei Falten als Schattenlinien — ohne sie sieht die
+           Krone wieder glatt aus. */
+        + '<path d="M70 34 C69 41 69 49 70 56" fill="none" stroke="#5e3c17"'
+        + ' stroke-width="2.2" opacity=".6"/>'
+        /* Die Seitenfalten sitzen auf den Graten — die stehen seit
+           Runde 80 bei 49,5 und 90,5 statt bei 55 und 85. */
+        + '<path d="M49.5 25 C48.5 35 48.5 47 49.5 56" fill="none" stroke="#5e3c17"'
+        + ' stroke-width="1.8" opacity=".4"/>'
+        + '<path d="M90.5 25 C91.5 35 91.5 47 90.5 56" fill="none" stroke="#5e3c17"'
+        + ' stroke-width="1.8" opacity=".4"/>'
+        /* DAS HUTBAND, am Kronenfuss und der Krempe folgend. */
+        + '<path d="M40.6 52 C54 57 86 57 99.4 52 L100 60 C86 64 54 64 40 60 Z"'
+        + ' fill="#3f2a12"/>'
+        /* Die Schnalle sitzt seitlich, nicht mittig — so traegt man es. */
+        + '<rect x="90" y="53.5" width="9" height="6" rx="1.4" fill="#d9c07a"'
+        + ' stroke="#8c6f1c" stroke-width="1.4"/>'
+        + '<rect x="93.2" y="55.4" width="2.6" height="2.4" rx="0.6" fill="#3f2a12"/>'
+        /* RUNDE 64 — „und auch den Cowboyhut wieder ein bisschen
+           besser gestaltest."
+           Drei Sachen, die ein echter Filzhut hat und die hier
+           fehlten:
+           · die STEPPNAHT dicht am Krempenrand — sie laeuft parallel
+             zur Kante und macht aus der Flaeche ein Stueck Filz,
+           · ein weiches Licht auf der Krone, damit sie gewoelbt
+             aussieht und nicht wie ausgeschnitten,
+           · und der Schatten unter der Krempe, der zeigt, dass sie
+             ueber dem Kopf steht. */
+        + '<path d="M12.5 41.5 C29 57 51 61.6 70 61.6 C89 61.6 111 57 127.5 41.5"'
+        + ' fill="none" stroke="rgba(255,236,196,.55)" stroke-width="1.1"'
+        + ' stroke-dasharray="3 3.2" stroke-linecap="round"/>'
+        + '<path d="M47 20 C52 15.2 60 14.2 66 16.4 C59 17.8 52 20.8 49 25.8 Z"'
+        + ' fill="rgba(255,240,206,.34)"/>'
+        + '<path d="M40.6 60 C54 64 86 64 99.4 60 C86 67 54 67 40.6 60 Z"'
+        + ' fill="rgba(40,24,6,.35)"/>'
+        + "</svg>"
         /* RUNDE 73 — DIE HAND, DIE DEN HUT ZURECHTRUECKT.
            XANDER: „Der Cowboyhut ist noch zu comichaft, ich haette
            gern eine Hand, die ihn zurechtrueckt."
@@ -63579,11 +63484,7 @@
      Mensch mit einem Tipp auch öffnen würde. */
   window.DMA_PRUEF = Object.assign(window.DMA_PRUEF || {}, {
     /* FASSUNG 712 — die Zeichnungen, die Animation und Kachel teilen. */
-    zeichnungen: { lok: lcLokSeiteSvg, delfin: lcDelfinFormSvg, frosch: lcFroschBildSvg, apm: lcApmSvg,
-      katze: lcKatzeFormSvg, flieger: lcFliegerSvg, heli: lcHeliSvg, ufo: lcUfoSvg, wasch: lcWaschSvg },
-    miniBilder: () => LC_MINI_BILD,
-    auftrittBilder: () => LC_AUFTRITT_ZEICHEN,
-    reisewagen: () => LC_REISEWAGEN,
+    zeichnungen: { lok: lcLokSeiteSvg, delfin: lcDelfinFormSvg, frosch: lcFroschBildSvg, apm: lcApmSvg },
     /* GEFRAGT: „Hast du schon das bei der Online-Anzeige gemacht, dass
        wenn jemand sein Land angegeben hat, dort seine Flagge zu sehen
        ist — und auch, ob er gerade im Klassenzimmer ist?"
