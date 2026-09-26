@@ -49,28 +49,32 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 713: alle Kacheln mit echter Zeichnung, Dodge Viper und K.I.T.T. nach Vorbild neu gezeichnet",
+  stand: "Fassung 715: Dorf natürlicher gemalt, Neuschwanstein nach dem Original, Schnee, Fuhrwerk mit Leuten; Optimus Prime (714)",
 
   inArbeit: [
-    { seit: "2026-09-26T22:32",
-      text: "Transformer als Optimus Prime: setzt das Bild mit den Händen ab und geht als Roboter weiter" },
-    { seit: "2026-09-26T22:32",
-      text: "Dorf-Maler: organische Häuser, Berge, Wiese, Neuschwanstein" },
-    { seit: "2026-09-26T22:32",
-      text: "Eisenbahn im Dorf, Angeln am See, kleine Menschen und Kutsche" },
-    { seit: "2026-09-26T22:32",
+    { seit: "2026-09-26T22:53",
+      text: "Eisenbahn im Dorf für Export und Import" },
+    { seit: "2026-09-26T22:53",
+      text: "Angeln am See im Dorf" },
+    { seit: "2026-09-26T22:53",
       text: "Funk 155: Meldungen mit Sprung-Knopf" },
-    { seit: "2026-09-26T22:32",
+    { seit: "2026-09-26T22:53",
       text: "Funk 152 und 153" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T22:32",
-      text: "20 Effekt-Kacheln und 5 Auftritt-Kacheln zeigen die echte Zeichnung" },
-    { seit: "2026-09-26T22:32",
-      text: "Dodge Viper GTS neu nach dem Original" },
-    { seit: "2026-09-26T22:32",
-      text: "K.I.T.T. als Pontiac Firebird Trans Am 1982 neu" },
+    { seit: "2026-09-26T22:53",
+      text: "Optimus Prime setzt dein Bild mit den Händen ab und geht als Roboter davon" },
+    { seit: "2026-09-26T22:53",
+      text: "Häuser, Wege und Ufer ohne Lineal-Kanten" },
+    { seit: "2026-09-26T22:53",
+      text: "Berge mit Rinnen und Geröll, gemalte Wiese" },
+    { seit: "2026-09-26T22:53",
+      text: "Neuschwanstein nach dem Original" },
+    { seit: "2026-09-26T22:53",
+      text: "Schnee auf Dächern und Wiese bei Schneewetter" },
+    { seit: "2026-09-26T22:53",
+      text: "Fuhrwerk: Räder rollen, Leute beladen" },
   ],
 };

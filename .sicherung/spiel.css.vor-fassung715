@@ -2297,30 +2297,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-dl-nacht .sp-dl-ueber, .sp-dl-nacht .sp-dl-mensch, .sp-dl-nacht .sp-dl-fuhrwerk { filter: brightness(.5) saturate(.7); }
 /* Die feste Zeile unten darf nichts verdecken: was ins Bild geholt wird, bleibt über ihr stehen. */
 .sp-schnellmenue.sp-sm-blick { scroll-padding-bottom: 56px; }
-
-/* FASSUNG 715 — XANDER (Funk 158): „die Kutsche … so richtig sehen dass die kleinen Räder rollen und das ist wieder
-   zurückkommt … und man soll auch die Leute sehen die das gerade beladen". Die Räder drehen sich nur, während der
-   Wagen fährt (vier Umdrehungen je Strecke, auf demselben 18-s-Takt wie die Fahrt), das Pferd trabt nur in Fahrt;
-   an der Mühle lädt der Müller einen Sack auf, an der Bäckerei trägt der Bäcker ihn hinein. */
-.sp-dl-fuhrwerk .sp-fw-rad { transform-box: fill-box; transform-origin: 50% 50%; animation: spFwRad 18s linear infinite; }
-@keyframes spFwRad { 0% { transform: rotate(0deg); } 42%, 50% { transform: rotate(1440deg); } 92%, 100% { transform: rotate(2880deg); } }
-.sp-dl-fuhrwerk .sp-fw-bein { transform-box: fill-box; transform-origin: 50% 0%; animation: spFwBein 18s steps(1) infinite; }
-@keyframes spFwBein { 0% { transform: skewX(-14deg); } 1% { transform: skewX(14deg); } 2% { transform: skewX(-14deg); } 3% { transform: skewX(14deg); } 4% { transform: skewX(-14deg); } 5% { transform: skewX(14deg); } 6% { transform: skewX(-14deg); } 7% { transform: skewX(14deg); } 8% { transform: skewX(-14deg); } 9% { transform: skewX(14deg); } 10% { transform: skewX(-14deg); } 11% { transform: skewX(14deg); } 12% { transform: skewX(-14deg); } 13% { transform: skewX(14deg); } 14% { transform: skewX(-14deg); } 15% { transform: skewX(14deg); } 16% { transform: skewX(-14deg); } 17% { transform: skewX(14deg); } 18% { transform: skewX(-14deg); } 19% { transform: skewX(14deg); } 20% { transform: skewX(-14deg); } 21% { transform: skewX(14deg); } 22% { transform: skewX(-14deg); } 23% { transform: skewX(14deg); } 24% { transform: skewX(-14deg); } 25% { transform: skewX(14deg); } 26% { transform: skewX(-14deg); } 27% { transform: skewX(14deg); } 28% { transform: skewX(-14deg); } 29% { transform: skewX(14deg); } 30% { transform: skewX(-14deg); } 31% { transform: skewX(14deg); } 32% { transform: skewX(-14deg); } 33% { transform: skewX(14deg); } 34% { transform: skewX(-14deg); } 35% { transform: skewX(14deg); } 36% { transform: skewX(-14deg); } 37% { transform: skewX(14deg); } 38% { transform: skewX(-14deg); } 39% { transform: skewX(14deg); } 40% { transform: skewX(-14deg); } 41% { transform: skewX(14deg); } 42% { transform: skewX(0deg); } 43% { transform: skewX(0deg); } 44% { transform: skewX(0deg); } 45% { transform: skewX(0deg); } 46% { transform: skewX(0deg); } 47% { transform: skewX(0deg); } 48% { transform: skewX(0deg); } 49% { transform: skewX(0deg); } 50% { transform: skewX(-14deg); } 51% { transform: skewX(14deg); } 52% { transform: skewX(-14deg); } 53% { transform: skewX(14deg); } 54% { transform: skewX(-14deg); } 55% { transform: skewX(14deg); } 56% { transform: skewX(-14deg); } 57% { transform: skewX(14deg); } 58% { transform: skewX(-14deg); } 59% { transform: skewX(14deg); } 60% { transform: skewX(-14deg); } 61% { transform: skewX(14deg); } 62% { transform: skewX(-14deg); } 63% { transform: skewX(14deg); } 64% { transform: skewX(-14deg); } 65% { transform: skewX(14deg); } 66% { transform: skewX(-14deg); } 67% { transform: skewX(14deg); } 68% { transform: skewX(-14deg); } 69% { transform: skewX(14deg); } 70% { transform: skewX(-14deg); } 71% { transform: skewX(14deg); } 72% { transform: skewX(-14deg); } 73% { transform: skewX(14deg); } 74% { transform: skewX(-14deg); } 75% { transform: skewX(14deg); } 76% { transform: skewX(-14deg); } 77% { transform: skewX(14deg); } 78% { transform: skewX(-14deg); } 79% { transform: skewX(14deg); } 80% { transform: skewX(-14deg); } 81% { transform: skewX(14deg); } 82% { transform: skewX(-14deg); } 83% { transform: skewX(14deg); } 84% { transform: skewX(-14deg); } 85% { transform: skewX(14deg); } 86% { transform: skewX(-14deg); } 87% { transform: skewX(14deg); } 88% { transform: skewX(-14deg); } 89% { transform: skewX(14deg); } 90% { transform: skewX(-14deg); } 91% { transform: skewX(14deg); } 92% { transform: skewX(0deg); } 93% { transform: skewX(0deg); } 94% { transform: skewX(0deg); } 95% { transform: skewX(0deg); } 96% { transform: skewX(0deg); } 97% { transform: skewX(0deg); } 98% { transform: skewX(0deg); } 99% { transform: skewX(0deg); } 100% { transform: skewX(0deg); } }
-.sp-dl-lader { position: absolute; z-index: 3; pointer-events: none; display: block; width: 3.4%; aspect-ratio: 1; opacity: 0; animation: spDlLadenM 18s linear infinite; will-change: transform, opacity; }
-.sp-dl-lader svg { width: 100%; height: 100%; display: block; }
-.sp-dl-lader-baeckerei { animation-name: spDlLadenB; }
-/* Mühle: kurz vor der Abfahrt (90–100 % und 0–3 %) trägt der Müller den Sack von der Tür zum Wagen. */
-@keyframes spDlLadenM {
-  0% { opacity: 1; transform: translate(70%, 0); } 3% { opacity: 0; transform: translate(90%, 0); }
-  88% { opacity: 0; transform: translate(0, 0); } 90% { opacity: 1; transform: translate(0, 0); }
-  94% { opacity: 1; transform: translate(35%, -6%); } 96% { transform: translate(55%, 0); } 98% { transform: translate(35%, -6%); }
-  100% { opacity: 1; transform: translate(70%, 0); }
-}
-/* Bäckerei: sobald der Wagen steht (43–49 %), trägt der Bäcker den Sack vom Wagen zur Tür. */
-@keyframes spDlLadenB {
-  0%, 42% { opacity: 0; transform: translate(0, 0); } 43% { opacity: 1; transform: translate(0, 0); }
-  45% { transform: translate(40%, -6%); } 47% { transform: translate(80%, 0); } 49% { opacity: 1; transform: translate(110%, -4%); }
-  50%, 100% { opacity: 0; transform: translate(120%, 0); }
-}
-.sp-dl-nacht .sp-dl-lader { filter: brightness(.5) saturate(.7); }
-@media (prefers-reduced-motion: reduce) { .sp-dl-fuhrwerk .sp-fw-rad, .sp-dl-fuhrwerk .sp-fw-bein, .sp-dl-lader { animation: none; } }

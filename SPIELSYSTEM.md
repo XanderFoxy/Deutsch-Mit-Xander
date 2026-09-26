@@ -1003,3 +1003,12 @@ Sonde: `werkzeug/pruefe-714-optimus.js` (Android, 360 px, Bildschirmfotos der Ve
 - **Ablauf beim Kommen**: der Truck fährt vor, das Bild sitzt im Seitenfenster → Verwandlung (Beine fahren aus, Arme klappen heraus, der Kopf steigt aus der Brust) → er hält das Bild zwischen beiden Händen → geht in die Knie und setzt es auf den Platz → richtet sich auf, nickt, grüßt → **geht als Roboter davon** (sechs Schritte, Beine im Wechsel, der Körper wippt, jeder Schritt hörbar).
 - **Beim Gehen**: er kommt zu Fuß, nimmt das Bild in die Hände, verwandelt sich zurück und fährt mit dem Bild im Fenster davon.
 - Die Auftritt-Kachel „Transformer" zeigt Optimus Prime als Roboter.
+
+### Fassung 715 (Funk 158, Teil 5: das Dorf natürlicher gemalt, Neuschwanstein, Fuhrwerk mit Leuten)
+Sonden: 704, 708, 709, 711, 702, 703, 700, 686, 683 grün; Malzeit 1232 px bei 4× gedrosselter CPU: 479 ms (Grenze 1,5 s).
+- **Keine Lineal-Kanten** („die Häuser sollen keine perfekten Vektor Geometrien sein … es soll ganz natürlich sein"): nach dem Malen geht ein Pinsel über das Bild und verschiebt jede Stelle um einen Hauch (weiches Rauschen, höchstens ±0,35 Welt-Einheiten). Mauern stehen minimal schief, Dachkanten, Wege und Ufer werden unregelmäßig.
+- **Berge** („die Struktur der Berge sollte verbessert werden"): Licht und Schatten der Flanken laufen nach unten weich aus (vorher harte Streifen bis zum Fuß); kurze, schräge Rinnen unter den Graten mit belichteter Rippe daneben, Geröllkegel am Fuß.
+- **Wiese** („dass die Wiese nicht so gerendert aussieht"): gemalte Halme in fünf Grüntönen, in Büscheln gehäuft, nach hinten kleiner.
+- **Neuschwanstein** („muss viel echter am Original sein"): neu nach dem Blick von der Marienbrücke — weißer Palas mit Steildach und Rundbogenfenstern, Balkon, der schlanke Treppenturm als höchster Punkt, Ecktürme mit spitzen Hauben, der Ritterhaus-Flügel, der rötliche Torbau mit Zinnen, der Fels mit Nadelwald.
+- **Schnee** (aus Funk 150/152): schneit es draußen, bekommt das Dorf ein eigenes Bild — Schneedecken auf den Dächern (unten an der Traufe unregelmäßig), verschneite Wiese und Äcker; die Wege bleiben ausgetreten.
+- **Fuhrwerk** („so richtig sehen dass die kleinen Räder rollen … und man soll auch die Leute sehen die das gerade beladen"): die Räder drehen sich nur während der Fahrt, das Pferd trabt nur in Fahrt; an der Mühle trägt der Müller einen Sack zum Wagen, an der Bäckerei trägt der Bäcker ihn hinein — auf demselben 18-s-Takt wie die Fahrt.
