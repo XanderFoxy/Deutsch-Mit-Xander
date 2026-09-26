@@ -1026,7 +1026,7 @@ Sonde: `werkzeug/pruefe-716-bahn-see.js` (Android, 360 px, echte Finger, verstel
 - Bahnhof und See sind keine Gebäude des Dorfs: sie haben eine eigene Tippfläche (`sp-dl-ort`) und zählen nicht zu den zwölf Bauplätzen. Die Zug-Ebene rechnet höchstens 25 Bilder je Sekunde und im Leerlauf (kein Zug, kein Rauch, niemand angelt) nur fünf – beim ersten Lauf war das Gewitter im Dorf sonst unter 40 Bilder/s gefallen.
 
 ### Fassung 717 (Funk 165: die Lok fährt hinten durch die Stadt, Menschen kleiner als die Lok)
-Sonde: `werkzeug/pruefe-716-bahn-see.js` (erweitert).
+Sonde: `werkzeug/pruefe-716-bahn-see.js` (erweitert). Gegengeprüft: 683, 686, 692, 700, 702, 703, 704, 707, 708, 709, 711 grün.
 - XANDER (wörtlich): „die Lok soll aber mehr hinten lang fahren hinten in der Stadt nicht vorne wo man sie kam noch sieht unten ein Bild hat und es soll die originale Lok sein die wir eh schon gebaut haben" und „die Lok muss auch in Relation sein die größten Relation müssen stimmen die die Leute können nicht größer sein als die Lokomotive die Menschen sollen klein sein".
 - **Strecke hinten**: sie folgt dem hinteren Rand der Wiese vor den bewaldeten Vorbergen (tiefster Punkt y = 67 von 200 statt vorher 197). Der Bahnhof steht hinter dem Gleis zwischen Mühle und Rathaus; die Lok bleibt dieselbe wie am Platz.
 - **Verdecken**: der Waldrand, die Mühle, das Bergwerk und die Türme von Rathaus und Schule stehen vor der Strecke. Der Zug verschwindet genau hinter ihren Umrissen: die Zug-Ebene bekommt eine Maske, die mit denselben Malfunktionen aus diesen Bäumen und Gebäuden ausgespart wird.
