@@ -88,9 +88,9 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   sage(!R.ende.buehne, "danach aufgeräumt");
 
   console.log("\nGEHEN\n");
-  const G = await lauf("raus", [0.15, 0.45, 0.62, 0.9]);
+  const G = await lauf("raus", [0.15, 0.45, 0.7, 0.9]);
   sage(G.aus[0.15] && G.aus[0.15].robo > 0.9, "beim Gehen kommt erst der Roboter zu Fuß", JSON.stringify(G.aus[0.15] && [G.aus[0.15].robo, G.aus[0.15].truck]));
-  sage(G.aus[0.62] && G.aus[0.62].truck > 0.9, "dann wird er wieder zum Truck", JSON.stringify(G.aus[0.62] && [G.aus[0.62].robo, G.aus[0.62].truck]));
+  sage(G.aus[0.7] && G.aus[0.7].truck > 0.9, "dann wird er wieder zum Truck", JSON.stringify(G.aus[0.7] && [G.aus[0.7].robo, G.aus[0.7].truck]));
   sage(G.aus[0.9] && (Math.abs(G.aus[0.9].bild.dx) > 40 || G.aus[0.9].bild.gr < 0.7), "und fährt mit dem Bild davon", JSON.stringify(G.aus[0.9] && G.aus[0.9].bild));
   sage(!G.ende.buehne, "danach aufgeräumt");
 
