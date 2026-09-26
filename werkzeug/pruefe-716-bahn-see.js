@@ -197,16 +197,15 @@ const sage = (gut, was, zusatz) => {
     const Q = window.DMA_SPIEL.pruef, B = Q.bahn, lw = document.createElement("canvas");
     const t0 = performance.now(); Q.dorfMalen(lw, window.__ich.dorf, Q.DORF_LAGE, 960, false, false); const dauer = performance.now() - t0;
     const g = lw.getContext("2d"), k = 960 / 320, px = (x, y) => [...g.getImageData(Math.round(x * k), Math.round(y * k), 1, 1).data];
-    let gleis = 0, n = 0;
-    for (let x = 10; x <= 310; x += 5) { const p = B.an(B.beiX(x)), c = px(p.x + p.nx * 1.15, p.y + p.ny * 1.15); n++; if (!(c[1] > c[0] + 12 && c[1] > c[2] + 12)) gleis++; }
-    const h = B.an(B.beiX(88)), haus = px(h.x - 4, h.y - 13);
-    const bm = B.an(B.beiX(186)), fluss = px(bm.x - bm.nx * 7.5, bm.y - bm.ny * 7.5), bruest = px(bm.x - bm.nx * 3.45, bm.y - bm.ny * 3.45);
+    let gleis = 0, n = 0, tief = 0;
+    for (let x = 10; x <= 310; x += 5) { const p = B.an(B.beiX(x)), c = px(p.x + p.nx * 1.15, p.y + p.ny * 1.15); n++; tief = Math.max(tief, p.y); if (!(c[1] > c[0] + 12 && c[1] > c[2] + 12)) gleis++; }
+    const h = B.an(B.beiX(98)), haus = px(h.x - 4, h.y - 8.4 - 3.5);
     let schnee = "ok"; try { Q.dorfMalen(document.createElement("canvas"), window.__ich.dorf, Q.DORF_LAGE, 480, true, true); } catch (e) { schnee = String(e); }
-    return { gleis, n, haus, fluss, bruest, dauer: Math.round(dauer), schnee };
+    return { gleis, n, tief: Math.round(tief), haus, dauer: Math.round(dauer), schnee };
   });
-  sage(r.gleis >= r.n * .9, "die Schienen liegen quer durchs ganze Bild (keine Wiese an der Schiene)", r.gleis + "/" + r.n);
+  sage(r.tief < 76, "die Strecke läuft hinten durch die Stadt (Funk 165), nicht vorn am Bildrand", "tiefster Punkt y = " + r.tief + " von 200");
+  sage(r.gleis >= r.n * .6, "die Schienen liegen quer durchs Bild (nur Bäume und Mühle stehen davor)", r.gleis + "/" + r.n);
   sage(r.haus[0] > r.haus[1] + 20, "das Bahnhofsgebäude steht da (Backstein)", JSON.stringify(r.haus));
-  sage(r.fluss[2] > r.fluss[0] + 20 && Math.abs(r.bruest[0] - r.bruest[2]) < 40 && r.bruest[0] > 120, "über den Fluss führt eine Brücke mit steinerner Brüstung (der Fluss bleibt davor sichtbar)", JSON.stringify({ wasser: r.fluss, bruestung: r.bruest }));
   sage(r.schnee === "ok", "auch bei Nacht und Schnee malt es ohne Fehler", r.schnee);
   console.log("        Malzeit mit Strecke: " + r.dauer + " ms");
 
@@ -217,7 +216,21 @@ const sage = (gut, was, zusatz) => {
     return { svg: !!svg, teile: svg ? svg.querySelectorAll(".sp-bz-f").length : 0, lack: k ? getComputedStyle(k).fill : "", lok: !!(svg && svg.querySelector("svg.sp-bz-lok")) }; });
   sage(r.svg && r.teile === 5 && r.lok, "über dem Bild: die Lok vom Platz, Tender und drei Güterwagen", JSON.stringify(r));
   sage(/url\(.*lokLackD/.test(r.lack), "der Kessel ist schwarz lackiert (Verlauf gefunden, nicht nur ein Umriss)", r.lack);
+  r = await pg.evaluate(async () => {
+    const svg = document.querySelector("svg.sp-dl-bahn"), u = (svg.style.webkitMaskImage || svg.style.maskImage || "").replace(/^url\("?|"?\)$/g, "");
+    if (!/^data:image\/png/.test(u)) return { maske: false };
+    const img = new Image(); img.src = u; await img.decode();
+    const c = document.createElement("canvas"); c.width = 640; c.height = 400; const g = c.getContext("2d"); g.drawImage(img, 0, 0);
+    const B = window.DMA_SPIEL.pruef.bahn, a = (x, y) => g.getImageData(Math.round(x * 2), Math.round(y * 2), 1, 1).data[3];
+    const m = B.an(B.beiX(50));
+    const mensch = document.querySelector(".sp-dl-mensch"), lok = svg.querySelector("svg.sp-bz-lok");
+    return { maske: true, muehle: a(50, m.y - 4), himmel: a(160, 12), mensch: mensch ? Math.round(mensch.getBoundingClientRect().height * 10) / 10 : null, lokH: lok ? Math.round(lok.getBoundingClientRect().height * 10) / 10 : null };
+  });
+  sage(r.maske && r.muehle === 0 && r.himmel === 255, "der Zug fährt hinter der Mühle vorbei (sie verdeckt ihn), am Himmel ist nichts verdeckt", JSON.stringify(r));
   let a = await bahn(), b;
+  const groesse = await pg.evaluate(() => { const svg = document.querySelector("svg.sp-dl-bahn"), lok = svg.querySelector("svg.sp-bz-lok"), m = [...document.querySelectorAll(".sp-dl-mensch svg")].map((e) => e.getBoundingClientRect().height);
+    return { lok: Math.round(lok.getBoundingClientRect().height * 10) / 10, menschen: m.map((h) => Math.round(h * 10) / 10) }; });
+  sage(groesse.menschen.length > 0 && Math.max(...groesse.menschen) * .75 < groesse.lok, "die Leute sind kleiner als die Lokomotive (Funk 165)", JSON.stringify(groesse));
   const halt = await pg.evaluate(() => { const B = window.DMA_SPIEL.pruef.bahn, p = B.plan(), m = B.an(p.sHalt + 9); return { x: m.x + m.nx, y: m.y + m.ny }; });
   sage(a && a.da && Math.abs(a.x - halt.x) < .6, "der Zug hält am Bahnhof", JSON.stringify({ x: a && a.x, soll: halt.x }));
   await tick(500); b = await bahn();

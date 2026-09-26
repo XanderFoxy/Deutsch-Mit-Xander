@@ -7233,8 +7233,9 @@
     /* Start an der Mühle (56|80); der Punkt unten in der Mitte des Wagens (10|15) fährt den Mühlweg. */
     if (faehrt) h += '<span class="sp-dl-fuhrwerk" style="left:' + ((56 - 10) / 3.2).toFixed(3) + "%;top:" + ((80 - 15) / 2).toFixed(3) + '%" aria-hidden="true">' + fuhrwerkSvg() + "</span>";
     /* FASSUNG 715 — die Leute, die beladen: der Müller an der Mühle, der Bäcker an der Bäckerei (je ein Sack). */
-    if (faehrt) h += '<span class="sp-dl-lader sp-dl-lader-muehle" style="left:' + ((48 - 5) / 3.2).toFixed(3) + "%;top:" + ((82 - 10) / 2).toFixed(3) + '%" aria-hidden="true">' + laderSvg("mueller") + "</span>"
-      + '<span class="sp-dl-lader sp-dl-lader-baeckerei" style="left:' + ((112 - 5) / 3.2).toFixed(3) + "%;top:" + ((120 - 10) / 2).toFixed(3) + '%" aria-hidden="true">' + laderSvg("baecker") + "</span>";
+    /* FASSUNG 717 — die Figur ist jetzt 6 statt 10,9 Einheiten groß (Funk 165: „die Menschen sollen klein sein"). */
+    if (faehrt) h += '<span class="sp-dl-lader sp-dl-lader-muehle" style="left:' + ((48 - 3) / 3.2).toFixed(3) + "%;top:" + ((82 - 6) / 2).toFixed(3) + '%" aria-hidden="true">' + laderSvg("mueller") + "</span>"
+      + '<span class="sp-dl-lader sp-dl-lader-baeckerei" style="left:' + ((112 - 3) / 3.2).toFixed(3) + "%;top:" + ((120 - 6) / 2).toFixed(3) + '%" aria-hidden="true">' + laderSvg("baecker") + "</span>";
     return h;
   }
   /* Der Takt der Automatik: beim Öffnen des Dorfs sofort, danach alle 30 s
@@ -8412,8 +8413,10 @@
       for (var bj = 0; bj < 7; bj++) { g.fillStyle = bf; g.globalAlpha = .8; g.beginPath(); g.arc(bx + (dmHash(bj, i, 166) - .5) * 5, by + (dmHash(bj, i, 167) - .5) * 2.4, .35, 0, 7); g.fill(); } }
     g.globalAlpha = 1;
     g.restore();
+    /* FASSUNG 717 — die Bahnstrecke am hinteren Wiesenrand, VOR dem Waldrand gemalt: die Bäume stehen davor. */
+    dmBahn(g, K, s);
     /* Waldrand an den Hügeln. */
-    for (i = 0; i < 26; i++) { var wx = dmHash(i, 1, 171) * 330 - 5, wy = 60 + dmHash(i, 2, 171) * 8 - (wx > 150 && wx < 250 ? 4 : 0); if (wx > 128 && wx < 186) continue; dmBaum(g, wx, wy, 3 + dmHash(i, 3, 171) * 1.6, i + 400, dmHash(i, 4, 171) > .45); }
+    dmWaldrand(g);
     /* Äcker. */
     [[[4, 176], [44, 164], [60, 188], [14, 198]], [[292, 132], [318, 128], [320, 150], [298, 154]]].forEach(function (a) {
       dmWeich(g, a, .25, 1.4); g.fillStyle = dmMuster(g, K.acker, .08 / s); dmPfad(g, a); g.fill(); g.strokeStyle = "rgba(90,70,20,.55)"; g.lineWidth = .6; g.stroke();
@@ -8496,8 +8499,6 @@
       if (st) punkte[k] = dmGebaeude(g, K, s, k, q[0], q[1], st, !(d.lp > 0));
       else dmBauplatz(g, K, s, q[0], q[1]);
     });
-    /* FASSUNG 716 — die Bahnstrecke vorn am Bildrand (vor allem anderen). */
-    dmBahn(g, K, s);
     dmLaternen(g);
     dmPinsel(leinwand, s);
     if (nacht) { dmNacht(g, dorf, lage); return punkte; }
@@ -8587,12 +8588,13 @@
       var ds = lw.getAttribute("data-sig") || "";
       var punkte = dorfMalen(neu, S.ich.dorf || {}, DORF_LAGE, breite, /N$/.test(ds), /SN?$/.test(ds));
       DM.zeit = Math.round(performance.now() - t0);
-      fertig = DM.bilder[sig] = { bild: neu, punkte: punkte };
+      fertig = DM.bilder[sig] = { bild: neu, punkte: punkte, maske: dmBahnMaske(S.ich.dorf || {}, DORF_LAGE) };
       var alle = Object.keys(DM.bilder); if (alle.length > 3) delete DM.bilder[alle[0]];
     }
     lw.width = fertig.bild.width; lw.height = fertig.bild.height;
     lw.getContext("2d").drawImage(fertig.bild, 0, 0);
     lw.dataset.gemalt = sig;
+    bahnMaskeSetzen(fertig.maske);
     /* Beim ersten Mal auf die Dorfmitte (Rathaus) schauen. */
     var fenster = lw.parentNode.parentNode;
     if (fenster && fenster.classList.contains("sp-dl-fenster") && !fenster._mitte && dorfNah()) {
@@ -8724,9 +8726,8 @@
      oder Import das da waren behandelt werden und dass wir die beliefern müssen und und rausschicken müssen und dann können
      wir ja die Eisenbahn nehmen die wir schon haben mit realistischen schönen Rauch" und „dass man irgendwo angeln kann im
      Dorf einfach auf den See klickt und die Angler dann Angeln".
-     Die Strecke läuft vorn am unteren Bildrand durchs Dorf: dort steht der Zug vor allem anderen, nichts muss ihn verdecken.
-     Sie geht auf einer Steinbrücke über den Fluss und unten am See entlang; der Bahnhof steht rechts neben den Feldern.
-     Gemalt (Rasterbild) sind Schotter, Schwellen, Schienen, Brücke, Bahnsteig, Bahnhofsgebäude und Signal. Darüber fährt
+     (Fassung 716 legte die Strecke vorn an den unteren Bildrand; Fassung 717 legt sie nach hinten, siehe BAHN_SEG.)
+     Gemalt (Rasterbild) sind Schotter, Schwellen, Schienen, Bahnsteig, Bahnhofsgebäude und Signal. Darüber fährt
      der Zug: die Lok vom Platz (DMA_ZEICHNUNG aus app.js), Tender und drei Güterwagen. Er fährt nach der Uhr (alle 60 s,
      für alle gleich), bremst am Bahnhof, hält, pfeift und fährt wieder an. Die Räder drehen sich genau so schnell, wie der
      Zug rollt; der Rauch kommt Stoß für Stoß aus dem Schlot (beim Anfahren im Takt des „lokstampf"-Tons), steigt auf,
@@ -8735,8 +8736,13 @@
      Punkte) und ein Import-Angebot (Waren aus der Stadt kaufen). Am See stehen zwei Angler; ein Tipp auf den See: beide
      werfen aus, die Posen landen im Wasser, und einer holt ein, was gebissen hat (spiel_angeln, Platz 99).
      --------------------------------------------------------------- */
-  var BAHN_SEG = [[[-120, 196], [-40, 195], [40, 192.4], [100, 192.6]], [[100, 192.6], [140, 192.73], [180, 196.4], [212, 196.6]],
-                  [[212, 196.6], [244, 196.8], [300, 196.6], [370, 195.5]]];
+  /* FASSUNG 717 — XANDER (Funk 165): „die Lok soll aber mehr hinten lang fahren hinten in der Stadt nicht vorne wo man sie
+     kam noch sieht unten ein Bild hat und es soll die originale Lok sein die wir eh schon gebaut haben". Die Strecke folgt
+     jetzt dem hinteren Rand der Wiese (dieselbe Kurve wie der Wiesenrand in dmLandschaft, 2,2 Einheiten davor), vor den
+     bewaldeten Vorbergen. Links und rechts läuft sie aus dem Bild hinaus. Was davor steht – der Waldrand, die Mühle,
+     die Türme von Rathaus und Schule, das Bergwerk – verdeckt den Zug (siehe dmBahnMaske). */
+  var BAHN_SEG = [[[-125, 76.2], [-85, 75.2], [-45, 74.2], [-5, 72.2]], [[-5, 72.2], [40, 54.2], [90, 62.2], [130, 60.2]],
+                  [[130, 60.2], [180, 57.2], [230, 52.2], [325, 64.2]], [[325, 64.2], [360, 65.4], [400, 66.4], [440, 67.2]]];
   /* Fahrplan in Sekunden je Umlauf: einrollen, bremsen, halten, anfahren, ausrollen. */
   var BAHN_TAKT = 60, BAHN_V = 20, BAHN_BREMS = 4, BAHN_ANFAHR = 3, BAHN_HALT = 14;
   /* Die Wagen hinter der Lok: Art und Länge (Welt-Einheiten). */
@@ -8774,7 +8780,7 @@
   function bahnPlan() {
     if (BAHN.plan) return BAHN.plan;
     var zugLaenge = BAHN_WAGEN.reduce(function (n, w) { return n + w[1] + BAHN_LUECKE; }, 0);
-    var sIn = bahnBeiX(334), sHalt = bahnBeiX(64), sAus = bahnBeiX(-6) - zugLaenge - 2;
+    var sIn = bahnBeiX(334), sHalt = bahnBeiX(72), sAus = bahnBeiX(-6) - zugLaenge - 2;
     var bremsWeg = BAHN_V * BAHN_V / (2 * BAHN_BREMS), bremsZeit = BAHN_V / BAHN_BREMS, anfZeit = BAHN_V / BAHN_ANFAHR, anfWeg = BAHN_V * anfZeit / 2;
     var t1 = (sIn - sHalt - bremsWeg) / BAHN_V, tAn = t1 + bremsZeit, tAb = tAn + BAHN_HALT;
     var tEnde = tAb + anfZeit + Math.max(0, sHalt - anfWeg - sAus) / BAHN_V;
@@ -8793,6 +8799,28 @@
   }
 
   /* --- Gemalt: Strecke, Brücke, Bahnsteig, Bahnhof, Signal ---------------------------------------- */
+  /* Der Waldrand an den Hügeln (eigene Funktion: die Zug-Maske braucht dieselben Bäume). */
+  function dmWaldrand(g) {
+    for (var i = 0; i < 26; i++) { var wx = dmHash(i, 1, 171) * 330 - 5, wy = 60 + dmHash(i, 2, 171) * 8 - (wx > 150 && wx < 250 ? 4 : 0); if (wx > 128 && wx < 186) continue; dmBaum(g, wx, wy, 3 + dmHash(i, 3, 171) * 1.6, i + 400, dmHash(i, 4, 171) > .45); }
+  }
+  /* Die Maske der Zug-Ebene: überall sichtbar, nur dort nicht, wo etwas VOR der Strecke steht – die Bäume des Waldrands
+     und die Gebäude, die bis über die Strecke hinaufragen (Mühle, Bergwerk, Rathausturm, Schulturm). Gemalt mit
+     denselben Funktionen wie das Bild, nur als Aussparung; so verschwindet der Zug genau hinter ihren Umrissen. */
+  function dmBahnMaske(dorf, lage) {
+    var m = document.createElement("canvas"); m.width = 640; m.height = 400;
+    var g = m.getContext("2d"), K = DM.kacheln || (DM.kacheln = dmKachelnMachen());
+    g.fillStyle = "#fff"; g.fillRect(0, 0, 640, 400);
+    g.globalCompositeOperation = "destination-out";
+    g.setTransform(2, 0, 0, 2, 0, 0);
+    dmWaldrand(g);
+    [[90, 62, 0], [196, 70, 1]].forEach(function (b, n) { dmBaum(g, b[0], b[1], 4 + ((n + 10) % 3), n + 610, !!b[2]); });
+    Object.keys(lage).sort(function (a, b) { return lage[a][1] - lage[b][1]; }).forEach(function (k) {
+      var q = lage[k], d = (dorf || {})[k], st = d && d.stufe > 0 ? d.stufe : 0;
+      if (!st || q[1] + dmUmriss(k, st)[1] > 70) return;
+      try { dmGebaeude(g, K, 2, k, q[0], q[1], st, !(d.lp > 0)); } catch (e) {}
+    });
+    try { return m.toDataURL("image/png"); } catch (e) { return ""; }
+  }
   function dmBahn(g, K, s) {
     g.save();
     try { dmBahnMalen(g, K, s); } finally { g.restore(); }
@@ -8808,12 +8836,6 @@
       g.closePath();
     }
     function linie(a, s0, s1) { g.beginPath(); for (var k = s0; k <= s1; k++) { var p = bahnAn(k); g[k === s0 ? "moveTo" : "lineTo"](p.x + p.nx * a, p.y + p.ny * a); } }
-    /* Brücke über den Fluss: Steinbogen, Brüstungen, Schatten aufs Wasser dahinter. */
-    var b0 = Math.floor(bahnBeiX(166)), b1 = Math.ceil(bahnBeiX(200));
-    band(-3.6, -6.2, b0, b1); g.fillStyle = "rgba(10,22,40,.32)"; g.fill();
-    /* Vorn läuft das Wasser unter der Brücke weiter; dort liegt nur ein schmaler Schatten der Brückenkante. */
-    band(3.7, 5, b0, b1); g.fillStyle = "rgba(10,22,40,.22)"; g.fill();
-    band(-3.7, 3.7, b0, b1); g.fillStyle = dmMuster(g, K.feldstein, .045 / s); g.fill(); g.fillStyle = "rgba(60,50,40,.18)"; g.fill();
     /* Schotterbett: erst ein weicher dunkler Rand (Erde), dann der Schotter selbst. */
     band(-4, 4, von, bis); g.fillStyle = "rgba(40,32,22,.28)"; g.fill();
     band(-3.1, 3.1, von, bis); g.fillStyle = dmMuster(g, K.feldstein, .028 / s); g.fill(); g.fillStyle = "rgba(92,84,74,.42)"; g.fill();
@@ -8823,8 +8845,6 @@
       g.fillRect(sp.x + sp.nx * off, sp.y + sp.ny * off, .35, .28);
     }
     if (DM.schneeJetzt) { band(-3.1, 3.1, von, bis); g.fillStyle = "rgba(240,244,250,.55)"; g.fill(); }
-    /* Brüstungen der Brücke (über dem Schotter, damit man sie sieht). */
-    band(-3.8, -3.1, b0, b1); g.fillStyle = "#b9b1a2"; g.fill(); band(3.1, 3.8, b0, b1); g.fillStyle = "#a79e8e"; g.fill();
     /* Schwellen (Holz), dann die Schienen: dunkler Steg, heller Kopf. */
     for (var sw = von; sw <= bis; sw += 1.7) {
       var p1 = bahnAn(sw);
@@ -8838,21 +8858,21 @@
       linie(a - .14, von, bis); g.strokeStyle = "rgba(214,218,224,.85)"; g.lineWidth = .18; g.stroke();
     });
     /* Bahnsteig hinter dem Gleis (Pflaster, weiße Kante, Stirnseite zum Gleis). */
-    var h0 = Math.floor(bahnBeiX(62)), h1 = Math.ceil(bahnBeiX(126));
+    var h0 = Math.floor(bahnBeiX(70)), h1 = Math.ceil(bahnBeiX(132));
     band(-3.5, -8.4, h0, h1); g.fillStyle = dmMuster(g, K.feldstein, .03 / s); g.fill(); g.fillStyle = "rgba(170,160,140,.28)"; g.fill();
     if (DM.schneeJetzt) { g.fillStyle = "rgba(242,246,252,.7)"; g.fill(); }
     band(-3.5, -4.1, h0, h1); g.fillStyle = "rgba(236,232,220,.9)"; g.fill();
     band(-2.9, -3.5, h0, h1); g.fillStyle = "rgba(60,52,44,.55)"; g.fill();
     /* Das Bahnhofsgebäude: Backstein, Schieferdach, drei Fenster, Tür in der Mitte. */
-    var hp = bahnAn(bahnBeiX(90));
+    var hp = bahnAn(bahnBeiX(98));
     dmHaus(g, K, s, hp.x, hp.y - 8.4, { w: 21, d: 7, h: 8.2, rh: 4.6, wand: "backstein", dach: "schiefer", fenster: 4, tuerX: .5, schornX: .78, licht: DM.nachtJetzt });
     /* Stationsschild auf zwei Pfosten (weiß, schwarze Schrift – wie an deutschen Bahnhöfen). */
-    var sp2 = bahnAn(bahnBeiX(70)), sx = sp2.x, sy = sp2.y - 6.2;
+    var sp2 = bahnAn(bahnBeiX(78)), sx = sp2.x, sy = sp2.y - 6.2;
     g.fillStyle = "#3a3a3a"; g.fillRect(sx - 3.6, sy - 3.6, .35, 3.6); g.fillRect(sx + 3.25, sy - 3.6, .35, 3.6);
     g.fillStyle = "#f4f2ea"; g.fillRect(sx - 4.2, sy - 5.6, 8.4, 2.3); g.strokeStyle = "#222"; g.lineWidth = .22; g.strokeRect(sx - 4.2, sy - 5.6, 8.4, 2.3);
     g.fillStyle = "#1c1c1c"; g.font = "bold 1.55px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("Bahnhof", sx, sy - 4.42);
     /* Güter auf dem Bahnsteig: Kisten und Säcke, die auf den Zug warten. */
-    var gp = bahnAn(bahnBeiX(112));
+    var gp = bahnAn(bahnBeiX(120));
     [[0, 0, 2.6, 2], [2.8, .2, 2.2, 1.8], [1.2, -1.9, 2.2, 1.8]].forEach(function (k2) {
       var kx = gp.x + k2[0] - 1, ky = gp.y - 6 + k2[1] - k2[3];
       g.fillStyle = dmMuster(g, K.bretter, .04 / s); g.fillRect(kx, ky, k2[2], k2[3]); g.fillStyle = "rgba(60,35,15,.25)"; g.fillRect(kx, ky, k2[2], k2[3]);
@@ -8951,8 +8971,9 @@
       + '<linearGradient id="spBzDach" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b7bcc2"/><stop offset="1" stop-color="#6d7278"/></linearGradient>'
       + '<linearGradient id="spBzKessel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9edf1"/><stop offset=".35" stop-color="#b9c0c8"/><stop offset="1" stop-color="#6d747c"/></linearGradient>'
       + "</defs>"
-      + '<g class="sp-see-angler" data-i="0" transform="translate(193.6 186.6)">' + seeAnglerSvg(0) + "</g>"
-      + '<g class="sp-see-angler" data-i="1" transform="translate(230.8 186.4) scale(-1 1)">' + seeAnglerSvg(1) + "</g>"
+      /* Die Angler in Menschengröße: kleiner als die Lok (Funk 165: „die Leute können nicht größer sein als die Lokomotive"). */
+      + '<g class="sp-see-angler" data-i="0" transform="translate(193.6 186.6) scale(.68)">' + seeAnglerSvg(0) + "</g>"
+      + '<g class="sp-see-angler" data-i="1" transform="translate(230.8 186.4) scale(-.68 .68)">' + seeAnglerSvg(1) + "</g>"
       + '<g class="sp-bz-zug" style="display:none">' + zug + "</g>"
       + '<g class="sp-bz-rauch"></g></svg>';
   }
@@ -8963,7 +8984,18 @@
       return '<button type="button" class="sp-dl-ort sp-dl-' + k + (wahl === k ? " sp-an" : "") + '" data-s="' + s0 + '" data-g="' + k + '" style="left:' + (x0 / 3.2).toFixed(2) + "%;top:" + (y0 / 2).toFixed(2)
         + "%;width:" + ((x1 - x0) / 3.2).toFixed(2) + "%;height:" + ((y1 - y0) / 2).toFixed(2) + '%" title="' + name + '"><small>' + dorfPin(k) + "<span>" + name + "</span></small></button>";
     }
-    return knopf("bahnhof", "dorfwahl", 66, 168, 124, 190, "Bahnhof") + knopf("see", "dorfsee", 194, 180, 231, 195, "See");
+    var hy = bahnAn(bahnBeiX(98)).y;
+    return knopf("bahnhof", "dorfwahl", 74, hy - 24, 122, hy - 2, "Bahnhof") + knopf("see", "dorfsee", 194, 180, 231, 195, "See");
+  }
+
+  /* Die Maske auf die Zug-Ebene legen (Bäume und hohe Gebäude verdecken den Zug). */
+  function bahnMaskeSetzen(url) {
+    var svg = schnellEl && schnellEl.querySelector("svg.sp-dl-bahn");
+    if (!svg || !url || svg.__maske === url) return;
+    svg.__maske = url;
+    svg.style.webkitMaskImage = svg.style.maskImage = "url(" + url + ")";
+    svg.style.webkitMaskSize = svg.style.maskSize = "100% 100%";
+    svg.style.webkitMaskRepeat = svg.style.maskRepeat = "no-repeat";
   }
 
   /* --- Bewegung: ein Bild je Anzeige-Takt, nur solange das Dorf offen ist ------------------------- */
@@ -9217,7 +9249,7 @@
       if (!r || !r.ok) { hinweis("🚂 " + ((r && r.grund) || "Das ging nicht.")); schnellZeichnen(true); return; }
       if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
       /* Bild und Ton zusammen: die Ware steigt über dem Bahnhof auf, die Kasse klingelt (Export) bzw. die Kisten poltern (Import). */
-      bahnWareZeigen(r.ware, (art === "export" ? "−" : "+") + r.menge, 96, 170);
+      bahnWareZeigen(r.ware, (art === "export" ? "−" : "+") + r.menge, 104, bahnAn(bahnBeiX(98)).y - 22);
       ton(art === "export" ? "kasse" : "holzklopf", 0.4);
       hinweis(art === "export" ? "🚂 " + r.menge + " " + wareName(r.ware) + " verladen – der Zug bringt sie in die Stadt: +" + r.erloes + " Punkte."
         : "🚂 " + r.menge + " " + wareName(r.ware) + " aus der Stadt ausgeladen (−" + r.kosten + " P) – jetzt " + vorrat(r, r.ware) + " im Lager.");
