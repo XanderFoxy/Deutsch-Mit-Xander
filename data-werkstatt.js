@@ -49,22 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 697 – Auftritte und Spiellogik fertig",
+  stand: "Arbeite an Funk 139–142 (Fassung 698)",
 
   inArbeit: [
-    { seit: "2026-09-26T06:08",
-      text: "ElevenLabs-Schlüssel erneuern (stand im Chat)" },
+    { seit: "2026-09-26T06:34",
+      text: "Update-Blase oben wie vorher (Funk 142)" },
+    { seit: "2026-09-26T06:34",
+      text: "Auftritt: Gesicht nicht mehr abschneiden (Funk 140)" },
+    { seit: "2026-09-26T06:34",
+      text: "Wetter: echtes Symbol, Mond nachts, Ort wählbar (Funk 141)" },
+    { seit: "2026-09-26T06:34",
+      text: "Schraubenschlüssel + Mauern je Waffenart (Funk 141)" },
+    { seit: "2026-09-26T06:34",
+      text: "Schiffe versenken ohne Sprechbild, Stadt-Land-Fluss als Overlay (Funk 139)" },
+    { seit: "2026-09-26T06:34",
+      text: "Große Spiel-Liste aus Funk 139 (danach, in Runden)" },
+    { seit: "2026-09-26T06:34",
+      text: "ElevenLabs-Schlüssel erneuern" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T06:08",
-      text: "694 Leistung: min/-Dateien, Zwischenspeicher sw.js, Video-Bremse bei 3–4 Leuten" },
-    { seit: "2026-09-26T06:08",
-      text: "695 Tiere: Stimmen statt Sprechblasen, echtes Sahne-Ablecken, Hunger/Müde, Fähigkeiten, Wolpertinger neu" },
-    { seit: "2026-09-26T06:08",
-      text: "696 Auftritte: Colt-Seavers-Truck (Sprung), KITT mit Lauflicht, rote Viper, Liane, Transformer" },
-    { seit: "2026-09-26T06:08",
-      text: "697 Spiellogik: Waffenschaden nach Preis, Turm-Lücke zu, Gebäudestufe = schneller, Übungspuppe mit allen Tieren" },
+    { seit: "2026-09-26T06:34",
+      text: "694–697 hochgeladen: Leistung, Tiere, Auftritte, Spiellogik" },
   ],
 };

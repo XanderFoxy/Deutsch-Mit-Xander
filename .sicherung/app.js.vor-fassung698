@@ -95958,10 +95958,6 @@ An einem Morgen lief ein kleiner Fuchs los…
   }
 
   function neueFassungZeigen(nummer) {
-    /* FASSUNG 698 — XANDER (Funk 142): „diese updateanzeige oben mit dieser Bubble wie wir
-       das zuletzt hatten". Die Blase aus index.html (↻ Neue Fassung … – jetzt laden) hat
-       Vorrang; die breite Leiste bleibt nur für den Fall, dass es sie nicht gibt. */
-    if (typeof window.dmaFassungKnopf === "function") { neueFassungGesagt = true; window.dmaFassungKnopf(String(nummer)); return; }
     if (document.getElementById("dmaNeueFassung")) return;
     neueFassungGesagt = true;
     const bar = document.createElement("div");

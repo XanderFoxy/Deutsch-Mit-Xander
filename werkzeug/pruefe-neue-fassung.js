@@ -67,9 +67,10 @@ const HIER = Number((/DMA_VERSION = "(\d+)"/.exec(
     const b = document.getElementById("dmaNeueFassung");
     if (!b) return null;
     const s = getComputedStyle(b), r = b.getBoundingClientRect();
-    return { text: b.querySelector(".dma-neuestand-text")?.textContent.replace(/\s+/g, " ").trim() || "",
-             knopf: Boolean(b.querySelector("#dmaNeueFassungLaden")),
-             zu: Boolean(b.querySelector("#dmaNeueFassungZu")),
+    /* FASSUNG 698 — XANDER (Funk 142): wieder die kleine Blase oben („↻ Neue Fassung … – jetzt laden"),
+       ein Knopf für sich, nicht mehr die breite Leiste. */
+    return { text: b.textContent.replace(/\s+/g, " ").trim(), knopf: b.tagName === "BUTTON", oben: Math.round(r.top),
+             rund: parseFloat(s.borderTopLeftRadius) >= 12,
              sichtbar: s.display !== "none" && r.width > 100 && r.height > 20,
              breite: Math.round(r.width), hoehe: Math.round(r.height),
              unten: Math.round(window.innerHeight - r.bottom) };
@@ -78,9 +79,8 @@ const HIER = Number((/DMA_VERSION = "(\d+)"/.exec(
   if (leiste) {
     ok(leiste.sichtbar, "und sie ist wirklich zu sehen", leiste.breite + "×" + leiste.hoehe + " Pixel, "
       + leiste.unten + " px über dem unteren Rand");
-    ok(leiste.text.indexOf(String(HIER + 7)) >= 0 && leiste.text.indexOf(String(HIER)) >= 0,
-       "sie nennt beide Nummern", "„" + leiste.text.slice(0, 96) + "…“");
-    ok(leiste.knopf && leiste.zu, "mit einem Knopf zum Laden und einem zum Wegklicken");
+    ok(/Neue Fassung \d+ – jetzt laden/.test(leiste.text), "sie sagt „Neue Fassung … – jetzt laden“", "„" + leiste.text + "“");
+    ok(leiste.knopf && leiste.rund && leiste.oben < 40, "eine runde Blase oben (ein Tipp lädt)", "oben " + leiste.oben + " px");
   }
   ok(frischGefragt >= 1, "gefragt wurde am Zwischenspeicher vorbei", frischGefragt + "× nachgefragt");
 
@@ -107,10 +107,10 @@ const HIER = Number((/DMA_VERSION = "(\d+)"/.exec(
     });
     await Promise.all([
       pg.waitForNavigation({ timeout: 8000 }).catch(() => null),
-      pg.click("#dmaNeueFassungLaden")
+      pg.click("#dmaNeueFassung")
     ]);
     await pg.waitForTimeout(600);
-    const mitFrisch = geholt.filter((u) => /frisch=\d+/.test(u));
+    const mitFrisch = geholt.filter((u) => /[?&](frisch|f)=\d+/.test(u));
     ok(mitFrisch.length >= 1, "der Knopf lädt mit einer frischen Adresse neu",
        (mitFrisch[0] || geholt[0] || "gar nichts geholt").replace(/^http:\/\/[^/]+/, ""));
   }
