@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 688 online: eigener Auftritt beim Kommen und Gehen, neue Knöpfe unter den Plätzen mit Magic Button, Menü-Fix",
+  stand: "Fassung 689: Knöpfe im Profildesign, Liedausschnitt endet, Liedteile löschen",
 
   inArbeit: [
-    { seit: "2026-09-25T23:52",
-      text: "6 alte Prüfungen waren schon vor 685 rot (dummy, namensvorschlaege, runde69, runde87-strichlinien, runde88-pac, runde92-betrieb/grundebene)" },
+    { seit: "2026-09-26T00:37",
+      text: "Funk 137: Tiere reagieren auf alle Profileffekte (in Arbeit)" },
+    { seit: "2026-09-26T00:37",
+      text: "Altlasten rot: dummy, namensvorschlaege, runde69, runde88-pac, runde87-strichlinien, runde92-betrieb, runde92-grundebene" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-25T23:52",
-      text: "Mein Auftritt: Roter Sportwagen, Hot Rod, Monstertruck, Rakete, Zauberwolke – alle sehen es" },
-    { seit: "2026-09-25T23:52",
-      text: "Knöpfe unter den Plätzen: Glasknöpfe, Magic Button in der Mitte (Betreiber belegt: Alles, Bilder, Tafel, Lehrer-Menü)" },
-    { seit: "2026-09-25T23:52",
-      text: "Platz verlassen nur für die, die oben sitzen; Buch im Magic Button" },
-    { seit: "2026-09-25T23:52",
-      text: "Magic-Menü bleibt nach dem Tipp offen" },
-    { seit: "2026-09-25T23:52",
-      text: "Als Rakete zünden steht unter Bombe" },
+    { seit: "2026-09-26T00:37",
+      text: "Rundknöpfe unter den Plätzen in den Farben des Profildesigns (Galaxie usw.)" },
+    { seit: "2026-09-26T00:37",
+      text: "Liedausschnitt spielt danach nicht mehr das ganze Lied von vorn" },
+    { seit: "2026-09-26T00:37",
+      text: "Liedteile löschbar (Mülleimer, zwei Tipps) im Wähler und in „Meine Abschnitte“" },
   ],
 };
