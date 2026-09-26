@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 700: DAS DORF-MENÜ HÄLT STILL (Funk 144)
+   SONDE — FASSUNG 704: DAS DORF GEMALT (Funk 145/146/148)
    ---------------------------------------------------------------------
-   XANDER: „das Aufrufen des dorfmenüs ruckelt auch noch extrem wenn man
-   irgendwo hin will kann man manchmal gar nicht vernünftig scrollen weil
-   es immer noch zurückspringt … wenn man ein Haus ein Gebäude aufruft
-   dann glitscht das immer so dass es an und aus und an und aus geht".
-   Gemessen mit echten Fingergesten (Wischen über CDP, Tipp aufs Haus):
-   bis 699 wurde das Menü jede Sekunde als NEUES Element geschrieben.
-   Geprüft: Menü, Häuser und Station bleiben dieselben Elemente, die
-   Scrollposition bleibt, keine Einblend-Animation startet neu.
-   Aufbau (Sitzplätze, Server-Attrappe) wie pruefe-692.
+   XANDER (Funk 146): „nicht glatt wie Vektor Grafiken sondern richtig
+   schön … wie bei einer Bitmap … weiche strukturierte natürliche Texturen
+   bei den Häuserwänden oder bei den Dächern". Funk 148: „dass man auf
+   einem Klick in das leere dieses kleine Panel wieder schließt".
+   Geprüft auf einem Android-Telefon (360 px, echte Finger): das Dorf ist
+   ein gemaltes Rasterbild (viele Farben, keine Vektorhäuser mehr), doppelt
+   so groß wie das Fenster und mit dem Finger verschiebbar, Tipp aufs
+   gemalte Haus öffnet es, Tipp in die Landschaft schließt es, beim
+   Neuzeichnen wird NICHT neu gemalt, beim Ausbau schon, Rauch und
+   Mühlenflügel bewegen sich, Leistung, Rückfall auf Vektor.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -142,6 +143,8 @@ const sage = (gut, was, zusatz) => {
     window.DMA_SPIEL_BRUECKE = window.DMA_SPIEL_BRUECKE || {};
     const altToast = window.DMA_SPIEL_BRUECKE.toast;
     window.DMA_SPIEL_BRUECKE.toast = (t) => { window.__hinweise.push(t); try { if (altToast) altToast(t); } catch (e) {} };
+    const altTon = window.DMA_SPIEL_BRUECKE.ton;
+    window.DMA_SPIEL_BRUECKE.ton = (n, l) => { window.DMA_TONLOG.push({ name: n, wann: Math.round(performance.now()), weg: "ersatz" }); try { if (altTon) altTon(n, l); } catch (e) {} };
     /* Ab Fassung 645 meldet sich das Spiel in einer eigenen Zeile. */
     window.__spielMeldungen = window.__hinweise;
   });
@@ -158,95 +161,100 @@ const sage = (gut, was, zusatz) => {
 
 
   const zuletzt = () => pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
+
   await pg.evaluate(() => {
     const ich = window.__ich, jetzt = Date.now();
-    ich.level = 10; ich.punkte = 500; ich.mana = 60;
-    ich.dorf = { baeckerei: { stufe: 1, lp: 20 }, huehnerstall: { stufe: 1, lp: 20, stand: new Date(jetzt - 2 * 900000 - 5000).toISOString() },
-                 kuhstall: { stufe: 1, lp: 20, stand: new Date(jetzt - 1300000).toISOString() }, krankenhaus: { stufe: 1, lp: 0 },
-                 schmiede: { stufe: 1, lp: 20 }, labor: { stufe: 1, lp: 20 } };
-    ich.werk = { baeckerei: { ware: "brot", menge: 3, fertig: new Date(jetzt + 300000).toISOString() } };
-    ich.dorf_ab = new Date(jetzt - 5 * 3600000).toISOString();
-    ich.volk = { arbeiter: 12, ritter: 1, quote: 90 };
-    ich.vorraete = Object.assign({}, ich.vorraete, { mehl: 6, ei: 2, milch: 1, fisch: 2, quarz: 4, holz: 3, silizium: 1, gold: 1, chip: 2 });
-    ich.waffen_stufe = { lasersalve: 2 };
-    const bea = window.DMA_SPIEL.pruef.zustand().stand["11111111-1111-4111-8111-111111111111"];
-    bea.dorf = { baeckerei: { stufe: 1, lp: 20 }, schule: { stufe: 1, lp: 20 }, muehle: { stufe: 1, lp: 20, gepl: new Date(jetzt - 60000).toISOString() } };
-    bea.ritter = 2;
-    window.__extra = Object.assign({}, window.__extra || {}, {
-      spiel_markt_preise: () => ({ ok: true, preise: {} }),
-      spiel_angebote_liste: () => ({ ok: true, angebote: [] }),
-      spiel_pluendern: (a) => { ich.mana -= 10; ich.vorraete = Object.assign({}, ich.vorraete, { brot: (ich.vorraete.brot || 0) + 2 }); return Object.assign({}, ich, { ok: true, gebaeude: a.p_gebaeude, an: "Bea", beute: { brot: 2 }, mana: 0, punkte_beute: 0, anteil: 25, schaden: 10 }); },
-      spiel_ritter: (a) => { ich.volk = Object.assign({}, ich.volk, { ritter: ich.volk.ritter + a.p_menge }); ich.punkte -= 40; return Object.assign({}, ich, { ok: true, ritter: ich.volk.ritter, preis: 40 }); },
-      spiel_melken: () => { ich.vorraete = Object.assign({}, ich.vorraete, { milch: ich.vorraete.milch + 1 }); ich.dorf.kuhstall.stand = new Date().toISOString(); return Object.assign({}, ich, { ok: true, menge: 1 }); },
-      spiel_ei_sammeln: () => { ich.vorraete = Object.assign({}, ich.vorraete, { ei: ich.vorraete.ei + 1 }); ich.dorf.huehnerstall.stand = new Date(Date.parse(ich.dorf.huehnerstall.stand) + 900000).toISOString(); return Object.assign({}, ich, { ok: true, menge: 1, rest: 0 }); },
-      spiel_holzen: (a) => { ich.vorraete = Object.assign({}, ich.vorraete, { holz: ich.vorraete.holz + 2 }); ich.acker = Object.assign({}, ich.acker, { ["w" + a.p_platz]: { ab: new Date().toISOString() } }); return Object.assign({}, ich, { ok: true, menge: 2, nest: false }); },
-      spiel_angeln: () => { ich.vorraete = Object.assign({}, ich.vorraete, { fisch: ich.vorraete.fisch + 1 }); return Object.assign({}, ich, { ok: true, fang: "fisch", menge: 1 }); }
-    });
-    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = Object.assign({}, ich); S.schnellMenue = false; S.graben = false;
+    ich.level = 12; ich.punkte = 900;
+    ich.dorf = { muehle: { stufe: 2, lp: 40 }, baeckerei: { stufe: 2, lp: 40 }, schule: { stufe: 1, lp: 20 }, rathaus: { stufe: 3, lp: 60 }, schmiede: { stufe: 1, lp: 0 },
+                 kuhstall: { stufe: 1, lp: 20 }, brauerei: { stufe: 2, lp: 40 } };
+    ich.werk = {}; ich.volk = { arbeiter: 20, ritter: 0, quote: 80, berufe: { bauer: 2, mueller: 1 } };
+    ich.dorf_ab = new Date(jetzt - 3600000).toISOString();
+    window.__extra = Object.assign({}, window.__extra || {}, { spiel_markt_preise: () => ({ ok: true, preise: {} }), spiel_angebote_liste: () => ({ ok: true, angebote: [] }) });
+    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false; S.dorfTeil = ""; S.dorfWahl = "";
     try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
-  console.log("\nDORF-MENÜ: WISCHEN UND WARTEN\n");
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(600);
-  await pg.evaluate(() => { window.__log = []; const t0 = performance.now();
-    window.__menue0 = document.querySelector(".sp-schnellmenue"); window.__haus0 = document.querySelector('.sp-dorfland .sp-dl-haus[data-g="baeckerei"]');
-    const f = () => { const m = document.querySelector(".sp-schnellmenue"); if (!m) return requestAnimationFrame(f);
-      const neu = m !== window.__m; window.__m = m; const last = window.__log[window.__log.length - 1]; const top = Math.round(m.scrollTop);
-      if (!last || neu || Math.abs(last.top - top) > 3) window.__log.push({ t: Math.round(performance.now() - t0), top, neu });
-      requestAnimationFrame(f); }; f(); });
+
+  console.log("\nGEMALT STATT VEKTOR\n");
+  await tippe('.sp-schnell [data-s="makro"]'); await tick(900);
+  let r = await pg.evaluate(() => { const lw = document.querySelector(".sp-dl-fenster canvas.sp-dl-mal"); if (!lw) return null;
+    const g = lw.getContext("2d"), d = g.getImageData(0, 0, lw.width, lw.height).data, farben = new Set();
+    for (let i = 0; i < d.length; i += 4 * 97) farben.add((d[i] >> 3) + "," + (d[i + 1] >> 3) + "," + (d[i + 2] >> 3));
+    return { breite: lw.width, hoehe: lw.height, css: Math.round(lw.clientWidth), gemalt: lw.dataset.gemalt || "", farben: farben.size, vektorHaeuser: document.querySelectorAll(".sp-dorfland .sp-dl-haus > svg").length, zeit: window.DMA_SPIEL.pruef.dmZeit ? window.DMA_SPIEL.pruef.dmZeit() : null }; });
+  sage(r && r.gemalt && r.farben > 800, "das Dorf ist ein gemaltes Rasterbild (viele Farbtöne, nicht flach)", JSON.stringify(r));
+  sage(r && r.vektorHaeuser === 0, "keine Vektor-Häuser mehr im Bild");
+  sage(r && r.breite >= 2 * r.css * .95, "scharf: das Bild hat mindestens doppelt so viele Pixel wie es breit ist", r && r.breite + " px auf " + r.css + " CSS-px");
+  r = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"), l = f.querySelector(".sp-dorfland"); return { fenster: f.clientWidth, bild: l.clientWidth, links: Math.round(f.scrollLeft), oben: Math.round(f.scrollTop) }; });
+  sage(r.bild >= r.fenster * 1.9, "das Dorf ist doppelt so groß wie sein Fenster (Häuser gut zu erkennen)", JSON.stringify(r));
+  sage(r.links > 0 && r.oben > 0, "am Anfang schaut man auf die Dorfmitte", JSON.stringify(r));
+  const bak = await pg.evaluate(() => { const b = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]').getBoundingClientRect(); return { w: Math.round(b.width), h: Math.round(b.height) }; });
+  sage(bak.w >= 40, "ein Haus ist auf dem Telefon mindestens 40 px breit (vorher etwa 25)", JSON.stringify(bak));
+
+  console.log("\nWISCHEN, TIPPEN, SCHLIESSEN (Funk 148)\n");
   const cdp = await ctx.newCDPSession(pg);
-  const m = await pg.evaluate(() => { const r = document.querySelector(".sp-schnellmenue").getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height * 0.8, h: r.height }; });
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: m.x, y: m.y }] });
-  for (let i = 1; i <= 8; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: m.x, y: m.y - m.h * 0.5 * i / 8 }] }); await tick(16); }
+  const vor = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); window.__fenster = f; const b = f.getBoundingClientRect(); return { x: b.left + b.width * .7, y: b.top + b.height * .5, l: f.scrollLeft }; });
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: vor.x, y: vor.y }] });
+  for (let i = 1; i <= 8; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: vor.x - 12 * i, y: vor.y }] }); await tick(16); }
   await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await tick(700);
-  const nachWisch = await pg.evaluate(() => Math.round(document.querySelector(".sp-schnellmenue").scrollTop));
-  await tick(3200);
-  let r = await pg.evaluate(() => ({ top: Math.round(document.querySelector(".sp-schnellmenue").scrollTop), gleich: document.querySelector(".sp-schnellmenue") === window.__menue0,
-    neu: window.__log.filter((x, i) => i > 0 && x.neu).length, haus: document.querySelector('.sp-dorfland .sp-dl-haus[data-g="baeckerei"]') === window.__haus0 }));
-  sage(nachWisch > 40, "der Finger scrollt das Menü", nachWisch + " px");
-  sage(r.top === nachWisch, "nach 3 Sekunden steht es noch an derselben Stelle (kein Zurückspringen)", nachWisch + " → " + r.top);
-  sage(r.gleich && r.neu === 0, "das Menü bleibt dasselbe Element (vorher jede Sekunde neu geschrieben)", r.neu + "× neu");
-  sage(r.haus, "die Häuser bleiben dieselben Elemente (keine neu startende Animation)");
-
-  console.log("\nHAUS ANTIPPEN: GEHT AUF UND BLEIBT AUF\n");
-  await pg.evaluate(() => { const e = document.querySelector('.sp-dorfland .sp-dl-haus[data-g="baeckerei"]'); e.scrollIntoView({ block: "nearest" }); });
+  await tick(900);
+  const nach = await pg.evaluate(() => Math.round(document.querySelector(".sp-dl-fenster").scrollLeft));
+  await tick(1600);
+  r = await pg.evaluate(() => ({ l: Math.round(document.querySelector(".sp-dl-fenster").scrollLeft), gleich: document.querySelector(".sp-dl-fenster") === window.__fenster }));
+  sage(nach > vor.l + 30, "mit dem Finger nach links wischen schiebt das Dorf", Math.round(vor.l) + " → " + nach);
+  sage(r.l === nach && r.gleich, "nach 1,6 s steht es noch da (kein Zurückspringen)", nach + " → " + r.l);
+  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"), b = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]'); f.scrollLeft = b.offsetLeft - 40; f.scrollTop = Math.max(0, b.offsetTop - 30); });
   await tick(300);
-  const h = await pg.evaluate(() => { const r = document.querySelector('.sp-dorfland .sp-dl-haus[data-g="baeckerei"]').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
-  await pg.evaluate(() => { window.__st = []; const t0 = performance.now(); const f = () => { const st = document.querySelector(".sp-dl-station"); const last = window.__st[window.__st.length - 1];
-    const k = st ? (st === window.__stEl ? "gleich" : "neu") : "zu"; window.__stEl = st; if (!last || last.k !== k) window.__st.push({ t: Math.round(performance.now() - t0), k }); if (performance.now() - t0 < 3500) requestAnimationFrame(f); }; f(); });
-  await pg.touchscreen.tap(h.x, h.y); await tick(3600);
-  r = await pg.evaluate(() => ({ st: window.__st.map((x) => x.k).join(" "), wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl,
-    anim: (() => { const st = document.querySelector(".sp-dl-station"); return st ? st.getAnimations({ subtree: true }).filter((a) => a.playState === "running" && a.currentTime < 400).length : -1; })() }));
-  sage(r.wahl === "baeckerei" && /^zu neu( gleich)*$/.test(r.st), "die Station geht einmal auf und bleibt dasselbe Element (kein an/aus)", r.st);
-  sage(r.anim <= 0, "nach 3 s startet keine Einblend-Animation neu", r.anim + " frische Animationen");
+  const hb = await pg.evaluate(() => { const b = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]').getBoundingClientRect(); return { x: b.left + b.width * .45, y: b.top + b.height * .6 }; });
+  await pg.touchscreen.tap(hb.x, hb.y); await tick(700);
+  r = await pg.evaluate(() => ({ wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl, station: Boolean(document.querySelector(".sp-dl-station")), ring: getComputedStyle(document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]'), "::after").opacity }));
+  sage(r.wahl === "baeckerei" && r.station && r.ring === "1", "Tipp aufs gemalte Haus öffnet die Bäckerei, goldener Ring am Boden", JSON.stringify(r));
+  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); f.scrollIntoView({ block: "nearest" }); }); await tick(300);
+  const leer = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster").getBoundingClientRect(); const hs = [...document.querySelectorAll(".sp-dl-haus-gemalt")].map((e) => e.getBoundingClientRect());
+    for (let y = f.top + 8; y < f.bottom - 8; y += 9) for (let x = f.left + 8; x < f.right - 8; x += 9) { if (!hs.some((b) => x >= b.left - 4 && x <= b.right + 4 && y >= b.top - 4 && y <= b.bottom + 14)) { const e = document.elementFromPoint(x, y); if (e && e.matches("canvas.sp-dl-mal")) return { x, y }; } } return null; });
+  if (leer) { await pg.touchscreen.tap(leer.x, leer.y); await tick(600); }
+  r = await pg.evaluate(() => ({ wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl, station: Boolean(document.querySelector(".sp-dl-station")) }));
+  sage(leer && r.wahl === "" && !r.station, "Tipp in die leere Landschaft schließt das Haus wieder", JSON.stringify(r) + " " + JSON.stringify(leer));
 
-  console.log("\nFUNK 143: DAS DORF ORGANISCH – UND TROTZDEM FLÜSSIG\n");
-  /* FASSUNG 704 — das Dorf ist jetzt gemalt (pruefe-704); die Vektor-Einzelheiten gelten weiter für die Rückfallansicht (dma_dorf_vektor). */
-  await pg.evaluate(() => { try { localStorage.setItem("dma_dorf_vektor", "1"); } catch (e) {} window.DMA_SPIEL.pruef.dmNeu(); window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  r = await pg.evaluate(() => { const d = document.querySelector(".sp-dorfland");
-    return { defs: Boolean(d.querySelector(".sp-dl-defs #spDhPutz")), ziegel: d.querySelectorAll('.sp-dl-haus path[stroke-opacity=".3"]').length,
-      steine: d.querySelectorAll('.sp-dl-haus rect[rx=".9"]').length, licht: d.querySelectorAll('[fill="url(#spDhLichtWand)"]').length,
-      filter: d.querySelectorAll("[filter]").length, knoten: d.querySelectorAll("*").length }; });
-  sage(r.defs && r.ziegel >= 3 && r.steine >= 20 && r.licht >= 6, "Rückfallansicht (Vektor): Häuser mit Ziegelreihen, Feldsteinen, Putz und Licht", JSON.stringify(r));
-  sage(r.filter === 0, "kein SVG-Filter im Bild (der liefe bei jedem Rauchwölkchen mit)");
-  await pg.evaluate(() => { try { localStorage.removeItem("dma_dorf_vektor"); } catch (e) {} window.DMA_SPIEL.pruef.dmNeu(); window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  console.log("\nNUR NEU MALEN, WENN SICH DAS DORF ÄNDERT\n");
+  r = await pg.evaluate(async () => { const lw = document.querySelector("canvas.sp-dl-mal"); lw.__merk = 1; const g0 = lw.dataset.gemalt; const S = window.DMA_SPIEL.pruef.zustand();
+    for (let i = 0; i < 5; i++) { S.ich = Object.assign({}, S.ich, { punkte: S.ich.punkte + 1 }); window.DMA_SPIEL.pruef.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 50)); }
+    const lw2 = document.querySelector("canvas.sp-dl-mal"); return { gleich: lw2 === lw && lw2.__merk === 1, sig: lw2.dataset.gemalt === g0 }; });
+  sage(r.gleich && r.sig, "5× neu zeichnen (Punkte ändern sich): dieselbe Leinwand, nicht neu gemalt", JSON.stringify(r));
+  r = await pg.evaluate(async () => { const lw = document.querySelector("canvas.sp-dl-mal"); const g0 = lw.dataset.gemalt; const S = window.DMA_SPIEL.pruef.zustand();
+    S.ich = Object.assign({}, S.ich, { dorf: Object.assign({}, S.ich.dorf, { schule: { stufe: 2, lp: 40 } }) }); window.DMA_SPIEL.pruef.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 100));
+    const lw2 = document.querySelector("canvas.sp-dl-mal"); return { vorher: g0, nachher: lw2.dataset.gemalt }; });
+  sage(r.nachher && r.nachher !== r.vorher && /sch2/.test(r.nachher), "Schule ausgebaut: das Bild wird neu gemalt (Stufe 2 mit Gaube)", r.vorher + " → " + r.nachher);
+  r = await pg.evaluate(() => { const u = document.querySelector(".sp-dl-ueber"); return { qualm: u.querySelectorAll(".sp-dl-qualm").length, fluegel: u.querySelectorAll(".sp-dl-fluegel").length,
+    dreht: [...u.querySelectorAll(".sp-dl-fluegel svg")].some((e) => e.getAnimations().some((a) => a.playState === "running")) }; });
+  sage(r.qualm >= 6 && r.fluegel === 1 && r.dreht, "Rauch aus den Schornsteinen, die Mühlenflügel drehen sich (die kaputte Schmiede raucht nicht)", JSON.stringify(r));
+  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); f.scrollLeft = f.scrollWidth * 150 / 320 - f.clientWidth / 2; f.scrollTop = f.scrollHeight * 105 / 200 - f.clientHeight / 2; f.scrollIntoView({ block: "start" }); }); await tick(500);
+  await (await pg.$(".sp-dl-fenster")).screenshot({ path: (process.env.BILD || "/tmp/d704.png") });
+  await pg.evaluate(() => { const lw = document.querySelector("canvas.sp-dl-mal"); const c = document.createElement("canvas"); c.id = "__voll"; c.width = lw.width; c.height = lw.height; c.getContext("2d").drawImage(lw, 0, 0);
+    c.style.cssText = "position:fixed;left:0;top:0;width:" + Math.round(lw.width / 2) + "px;z-index:99999"; document.body.appendChild(c); });
+  await (await pg.$("#__voll")).screenshot({ path: (process.env.BILD || "/tmp/d704.png").replace(/\.png$/, "-voll.png") });
+  await pg.evaluate(() => document.getElementById("__voll").remove());
+
+  console.log("\nLEISTUNG\n");
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-  const leistung = await pg.evaluate(() => new Promise((ok) => {
-    /* FASSUNG 703 — ein einzelnes Neuzeichnen schwankte bei gleichem Code zwischen 71 und 143 ms (4× gedrosselt);
-       gemessen wird jetzt der Median aus 9 Durchgängen. */
+  const malen = await pg.evaluate(() => { const c = document.createElement("canvas"); const t0 = performance.now(); window.DMA_SPIEL.pruef.dorfMalen(c, window.DMA_SPIEL.pruef.zustand().ich.dorf, window.DMA_SPIEL.pruef.DORF_LAGE, 1232); return Math.round(performance.now() - t0); });
+  const leistung = await pg.evaluate(async () => {
     const S = window.DMA_SPIEL.pruef.zustand(); const z = [];
-    for (let i = 0; i < 9; i++) { const t0 = performance.now(); S.ich = Object.assign({}, S.ich, { punkte: (S.ich.punkte || 0) + 1 }); window.DMA_SPIEL.pruef.schnellZeichnen(true); z.push(performance.now() - t0); }
-    z.sort((x, y) => x - y); const zeichnen = z[4];
+    for (let i = 0; i < 9; i++) { await new Promise((o) => setTimeout(o, 60)); const t0 = performance.now(); S.ich = Object.assign({}, S.ich, { punkte: (S.ich.punkte || 0) + 1 }); window.DMA_SPIEL.pruef.schnellZeichnen(true); z.push(performance.now() - t0); }
+    z.sort((a, b) => a - b);
     const bilder = []; let letzt = performance.now(); const ende = letzt + 3000;
-    const f = (t) => { bilder.push(t - letzt); letzt = t; if (t < ende) requestAnimationFrame(f); else ok({ zeichnen: Math.round(zeichnen), bilder: bilder.length, lang: bilder.filter((x) => x > 50).length, max: Math.round(Math.max(...bilder)) }); };
-    requestAnimationFrame(f); }));
+    await new Promise((ok) => { const f = (t) => { bilder.push(t - letzt); letzt = t; if (t < ende) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
+    return { zeichnen: Math.round(z[4]), bilder: bilder.length, lang: bilder.filter((x) => x > 50).length }; });
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
-  /* Gegenprobe mit dem flachen Dorf von 699 (gleiche Sonde, 2 Läufe): Neuzeichnen 67–102 ms, 3 Bilder über 50 ms. */
-  sage(leistung.zeichnen < 120 && leistung.lang <= 5, "4× gedrosselte CPU: Neuzeichnen (Median aus 9) unter 120 ms, höchstens 5 Bilder über 50 ms in 3 s (flaches Dorf: 3)", JSON.stringify(leistung));
+  sage(malen < 1500, "einmal malen (1232 px, 4× gedrosselt, wie ein mittleres Telefon) unter 1,5 s – danach aus dem Speicher", malen + " ms");
+  sage(leistung.zeichnen < 120 && leistung.lang <= 5, "danach: Neuzeichnen (Median) unter 120 ms, höchstens 5 lange Bilder in 3 s", JSON.stringify(leistung));
+
+  console.log("\nRÜCKFALL OHNE MALEN\n");
+  r = await pg.evaluate(() => { try { localStorage.setItem("dma_dorf_vektor", "1"); } catch (e) {} window.DMA_SPIEL.pruef.dmNeu(); window.DMA_SPIEL.pruef.schnellZeichnen(true);
+    const n = document.querySelectorAll(".sp-dorfland .sp-dl-haus > svg").length, lw = document.querySelector("canvas.sp-dl-mal"); try { localStorage.removeItem("dma_dorf_vektor"); } catch (e) {} window.DMA_SPIEL.pruef.dmNeu(); window.DMA_SPIEL.pruef.schnellZeichnen(true); return { vektor: n, leinwand: Boolean(lw) }; });
+  sage(r.vektor > 5 && !r.leinwand, "mit dem Schalter dma_dorf_vektor kommt das alte Vektorbild (Rückfall)", JSON.stringify(r));
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
-  console.log("\nFassung 700 (Dorf): " + (fehler ? fehler + " rot." : "alles grün."));
+  console.log("\nFassung 704 (Dorf gemalt): " + (fehler ? fehler + " rot." : "alles grün."));
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
