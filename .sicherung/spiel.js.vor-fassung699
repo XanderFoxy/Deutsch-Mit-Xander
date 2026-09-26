@@ -535,7 +535,7 @@
      "geschuetz", "wischer", "anfaenger", "verdient", "mana", "mana_max", "kraft", "ziel", "tempo",
      "haustier_leben", "geschuetz_stufe", "eisen", "tarn", "mitspielen",
      "level", "skills", "helm", "brust", "ladung", "daemon",
-     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s", "kampfklasse", "kampf_stufe"].forEach(function (k) { o[k] = s[k]; });
+     "haustier_stufe", "haustier_max", "flugtier", "flugtier_leben", "flugtier_stufe", "flugtier_max", "mauer_aufbau", "zeigen", "klasse", "graben", "turm_platz", "turm_raum", "dorf", "nebel_s", "wackel_s", "brezel_s", "hexe_s", "zwerg_s", "formular_s"].forEach(function (k) { o[k] = s[k]; });
     return o;
   }
 
@@ -975,8 +975,6 @@
       if (ZAUBER[n.sorte] && n.zielChat) zauberStart(n.sorte, n.von, n.zielChat, Math.max(250, Math.min(900, Number(n.flug) || 450)));
     } else if (n.ereignis === "faehigkeit") {
       if (FAEHIG[n.sorte]) faehigZeigen(n);
-    } else if (n.ereignis === "kampfklasse") {
-      if (KAMPF[n.sorte]) kampfZeigen(n);
     } else if (n.ereignis === "zauberab") {
       if (n.zielChat) zauberLanden(n.zielChat, true);
     } else if (n.ereignis === "falle") {
@@ -1081,7 +1079,7 @@
       turmPlatz(Number(knopf.dataset.lcPlatz));
       return true;
     }
-    if (p && p.ich && spielSichtbar() && !S.legen && !S.graben && !S.kampfZiel && !(S.zauber && ZAUBER[S.zauber].freund)) { if (eigenTipp()) return true; }
+    if (p && p.ich && spielSichtbar() && !S.legen && !S.graben && !(S.zauber && ZAUBER[S.zauber].freund)) { if (eigenTipp()) return true; }
     /* FUNK 111 — nach „Mine legen" / „Falltür legen" gilt der nächste
        Tipp dem Platz, auf den sie soll. */
     if (S.legen && S.bereit && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
@@ -1105,19 +1103,6 @@
       }
       S.werkTipp = { nr: nrW, t: jetztW };
       werkzeugNutzen(knopf, nrW, p);
-      return true;
-    }
-    /* FASSUNG 699 — eine bereite Klassenkraft gilt dem nächsten Gesicht
-       (der Segen des Heilers auch dem eigenen). */
-    if (S.kampfZiel && S.bereit && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
-      var kzK = KAMPF[(S.ich || {}).kampfklasse];
-      if (!kzK) { S.kampfZiel = false; return true; }
-      if (!p || p.leer) { hinweis("⚔️ Tippe auf ein Gesicht – der Platz ist leer."); return true; }
-      if (p.ich) { if (kzK.auf === "wahl") kampfNutzen(null); else hinweis("⚔️ Nicht auf dich selbst – tippe auf jemand anderen."); return true; }
-      if (istPuppe(p.id) || /^sparring:/.test(p.id)) { hinweis("⚔️ Klassenkräfte wirken nur auf echte Mitspieler."); S.kampfZiel = false; schnellZeichnen(); return true; }
-      var zstK = S.stand[spielIdVon(p.id)];
-      if (zstK && zstK.mitspielen === false) { hinweis("💤 " + (p.name || "Diese Person") + " spielt gerade nicht mit."); return true; }
-      kampfNutzen(p);
       return true;
     }
     /* FASSUNG 695 — eine bereite Tier-Fähigkeit gilt dem nächsten Gesicht. */
@@ -1848,7 +1833,7 @@
     if (rest > 0) { hinweis("🐾 " + ((TIERE[f.art] || {}).name || "Dein Tier") + " ruht sich noch " + rest + " s aus."); return; }
     if ((S.ich || {}).mana < 15) { hinweis("🐾 " + d[0] + " braucht 15 Mana – Deutschaufgaben füllen Mana."); return; }
     if (d[1] === "ziel") {
-      S.faehigZiel = !S.faehigZiel; S.zauber = ""; S.kampfZiel = false;
+      S.faehigZiel = !S.faehigZiel; S.zauber = "";
       if (S.faehigZiel) hinweis("🐾 " + d[0] + " bereit – tippe auf ein Gesicht.");
       schnellZeichnen(true);
       return;
@@ -1935,182 +1920,6 @@
     }
     else sterneBurst(m.x, m.y, m.r, [farbe, "#fff"], 8);
     ton("zauberpuff", 0.35);
-  }
-
-  /* ---------------------------------------------------------------
-     FASSUNG 699 — KÄMPFERKLASSEN
-     XANDER (Funk 139): „möchtest du noch irgendwelche kämpferklassen
-     Abenteuer Zauberer also Magier oder Dieb oder oder Titan … wo die
-     Leute halt so ihre Klasse auswählen können als was sie kämpfen …
-     dass man das in verschiedenen Klassen auf leveln kann ja und dann
-     zwischen diesen Klassen hin und her schalten kann … dann sind aber
-     auch die Skills von diesen unterschiedlichen Charakteren oder
-     kämpferklassen dann entsprechend dass man wirklich das sieht".
-     Walkie 278: alle sechs (Magier, Dieb, Titan, Heiler, Ingenieur,
-     Deutsch-Gelehrter). Jede Klasse hat eine Kraft (20 Mana, 2 Minuten
-     Pause), eine Dauerstärke und eine eigene Stufe 1–10; die Erfahrung
-     jeder Klasse bleibt beim Wechseln. Gerechnet auf dem Server
-     (spiel_kampfklasse_waehlen, spiel_klassen_schlag, dazu die Stärken in
-     spiel_treffer, spiel_zaubern, spiel_heilen, spiel_antwort).
-     Sichtbar nur mit dem Schalter „kampfklassen_neu" (Betreiber und
-     Beta-Tester sehen es sofort).
-     --------------------------------------------------------------- */
-  var KAMPF = {
-    magier:    { name: "Magier",           farbe: "#8a5ad8", kraft: "Arkanblitz",       auf: "ziel", text: "10 Schaden (+2 je Stufe), geht durch den Schild",            passiv: "Zauber kosten 15 % weniger Mana (+1 % je Stufe)" },
-    dieb:      { name: "Dieb",             farbe: "#4a5568", kraft: "Taschendiebstahl", auf: "ziel", text: "5 Schaden, klaut 4 Punkte (+1 je Stufe), 8 s im Schatten",   passiv: "greift beim Treffen manchmal in die Tasche (Punkte)" },
-    titan:     { name: "Titan",            farbe: "#b0772b", kraft: "Bollwerk",         auf: "ich",  text: "Eisenhaut 9 s und +12 Schild (+2 je Stufe)",                 passiv: "steckt 15 % weniger ein (+1 % je Stufe)" },
-    heiler:    { name: "Heiler",           farbe: "#2fae62", kraft: "Segen",            auf: "wahl", text: "+23 LP (+3 je Stufe) für dich oder andere; ab Stufe 5 belebt er wieder", passiv: "Pflaster und Tränke heilen 25 % mehr" },
-    ingenieur: { name: "Ingenieur",        farbe: "#e07b1a", kraft: "Schnellbau",       auf: "ich",  text: "Turm voll geladen und Mauer +13 (+3 je Stufe)",              passiv: "der Turm schießt 25 % stärker zurück" },
-    gelehrter: { name: "Deutsch-Gelehrter", farbe: "#2f6fd6", kraft: "Wortgewalt",      auf: "ziel", text: "8 Schaden (+2 je Stufe), 10 s wackelt die Hand",              passiv: "+1 Punkt je richtiger Antwort · teilt 2 % mehr aus je Stufe" }
-  };
-  var KAMPF_REIHE = ["magier", "dieb", "titan", "heiler", "ingenieur", "gelehrter"];
-  function kampfFrei() {
-    var be = BE();
-    try { return Boolean(be && be.isFeatureOn && be.isFeatureOn("kampfklassen_neu")); } catch (e) { return false; }
-  }
-  /* Stufe aus der Erfahrung – dieselbe Rechnung wie spiel_kampf_stufe. */
-  function kampfStufe(xp) { return Math.min(10, 1 + Math.floor(Math.sqrt(Math.max(0, Number(xp) || 0) / 15))); }
-  function kampfXp(ich, k) { return Math.max(0, Number(((ich || {}).klassen_xp || {})[k]) || 0); }
-  function kampfSvg(k) {
-    var f = (KAMPF[k] || {}).farbe || "#9aa6b8";
-    var grund = '<circle cx="12" cy="12" r="10.6" fill="' + f + '" stroke="#1d2330" stroke-width="1.1"/>';
-    var z = k === "magier" ? '<path d="M12 3.6 L14.2 9.8 L20.4 12 L14.2 14.2 L12 20.4 L9.8 14.2 L3.6 12 L9.8 9.8 Z" fill="#f4ecff"/><circle cx="12" cy="12" r="1.8" fill="' + f + '"/>'
-      : k === "dieb" ? '<path d="M4.6 10.4 C7 8.4 17 8.4 19.4 10.4 L18.6 13.4 C16.6 14.8 14 14.4 12 12.8 C10 14.4 7.4 14.8 5.4 13.4 Z" fill="#11151d"/><ellipse cx="8.7" cy="11.4" rx="1.5" ry=".9" fill="#fff"/><ellipse cx="15.3" cy="11.4" rx="1.5" ry=".9" fill="#fff"/>'
-      : k === "titan" ? '<path d="M12 4.4 L18.4 6.6 V11.6 C18.4 15.6 15.6 18.4 12 19.6 C8.4 18.4 5.6 15.6 5.6 11.6 V6.6 Z" fill="#d7dde6" stroke="#5b6472" stroke-width="1"/><path d="M12 6.4 V17.6 M7.6 10.6 H16.4" stroke="#5b6472" stroke-width="1.2"/>'
-      : k === "heiler" ? '<path d="M10 5.4 H14 V10 H18.6 V14 H14 V18.6 H10 V14 H5.4 V10 H10 Z" fill="#fff"/>'
-      : k === "ingenieur" ? '<g fill="#fff"><circle cx="12" cy="12" r="4.6"/>' + [0, 45, 90, 135, 180, 225, 270, 315].map(function (w) { return '<rect x="10.9" y="4.6" width="2.2" height="3.2" rx=".4" transform="rotate(' + w + ' 12 12)"/>'; }).join("") + '</g><circle cx="12" cy="12" r="1.9" fill="' + f + '"/>'
-      : '<path d="M5 7 C7.6 6 10 6.4 12 7.8 C14 6.4 16.4 6 19 7 V17.4 C16.4 16.4 14 16.8 12 18.2 C10 16.8 7.6 16.4 5 17.4 Z" fill="#fff"/><path d="M12 7.8 V18.2" stroke="' + f + '" stroke-width="1"/><path d="M7 10 H10 M7 12.4 H10 M14 10 H17 M14 12.4 H17" stroke="' + f + '" stroke-width=".8"/>';
-    return '<svg viewBox="0 0 24 24">' + grund + z + "</svg>";
-  }
-  function kampfRest() {
-    var ich = S.ich || {};
-    if (S.kampfBis == null && ich.klassen_bereit_s != null) S.kampfBis = Date.now() + ich.klassen_bereit_s * 1000;
-    return Math.max(0, Math.ceil(((S.kampfBis || 0) - Date.now()) / 1000));
-  }
-  function kampfHtml(ich) {
-    var jetzt = ich.kampfklasse || "";
-    return '<p class="sp-sm-klein">' + (jetzt ? "Du kämpfst als <b>" + esc(KAMPF[jetzt].name) + "</b>. " : "Wähle, als was du kämpfst. ")
-        + "Jede Klasse hat eine <b>Kraft</b> (20 Mana, 2 Minuten Pause) und eine <b>Stärke</b>, die immer wirkt. Jede Klasse steigt für sich auf (Stufe 1–10); wechseln kannst du alle 10 Minuten, die Erfahrung bleibt.</p>"
-      + '<div class="sp-troph-liste">' + KAMPF_REIHE.map(function (k) {
-        var K = KAMPF[k], ist = k === jetzt, xp = kampfXp(ich, k), st = kampfStufe(xp);
-        var von = 15 * (st - 1) * (st - 1), bis = 15 * st * st, anteil = st >= 10 ? 100 : Math.round((xp - von) / Math.max(1, bis - von) * 100);
-        return '<div class="sp-troph sp-klasse sp-kampf-zeile' + (ist ? " sp-troph-hat" : "") + '"><i>' + kampfSvg(k) + "</i><span><b>" + K.name + " <em>Stufe " + st + "</em></b>"
-          + '<small class="sp-kampf-balken" style="--anteil:' + anteil + '%" title="' + xp + " Klassen-Erfahrung" + (st < 10 ? " · Stufe " + (st + 1) + " ab " + bis : "") + '"></small>'
-          + "<small>Kraft: <b>" + K.kraft + "</b> – " + esc(K.text) + "</small><small>Stärke: " + esc(K.passiv) + "</small></span>"
-          + (ist ? '<strong class="sp-klasse-ist">du</strong>' : '<button type="button" data-s="kampfwahl" data-k="' + k + '">' + (jetzt ? "Wechseln" : "Wählen") + "</button>") + "</div>";
-      }).join("") + "</div>";
-  }
-  function kampfKnopf() {
-    var ich = S.ich || {}, k = ich.kampfklasse, K = KAMPF[k];
-    if (!K || !kampfFrei()) return "";
-    klangLaden("klasse-" + k);
-    var rest = kampfRest();
-    return '<button type="button" class="sp-s-faehig sp-s-kampf' + (S.kampfZiel ? " sp-an" : "") + (rest ? " sp-ruht" : "") + '" data-s="kampfkraft" style="--rest:' + Math.round(rest / 120 * 100) + '%"'
-      + ' title="' + esc(K.kraft + " (" + K.name + ", Stufe " + (ich.kampf_stufe || kampfStufe(kampfXp(ich, k))) + ") – " + K.text + (rest ? " · lädt noch " + rest + " s" : " · 20 Mana")) + '">'
-      + kampfSvg(k) + (rest ? "<small>" + rest + "s</small>" : "") + "</button>";
-  }
-  function kampfLos() {
-    var ich = S.ich || {}, k = ich.kampfklasse, K = KAMPF[k];
-    if (!K) { S.schnellReiter = "kampfklasse"; schnellZeichnen(true); return; }
-    var rest = kampfRest();
-    if (rest > 0) { hinweis("⚔️ " + K.kraft + " lädt noch " + rest + " s."); return; }
-    if ((ich.mana || 0) < 20) { hinweis("⚔️ " + K.kraft + " braucht 20 Mana – Deutschaufgaben füllen Mana."); return; }
-    if (!ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an."); return; }
-    if (K.auf === "ich") { kampfNutzen(null); return; }
-    S.kampfZiel = !S.kampfZiel; S.zauber = ""; S.faehigZiel = false;
-    if (S.kampfZiel) hinweis("⚔️ " + K.kraft + " bereit – tippe auf " + (K.auf === "wahl" ? "ein Gesicht (auch dein eigenes)." : "ein Gesicht."));
-    schnellZeichnen(true);
-  }
-  function kampfNutzen(p) {
-    var ich = S.ich || {}, k = ich.kampfklasse, K = KAMPF[k];
-    if (!K) return;
-    S.kampfZiel = false;
-    var zielSid = p ? spielIdVon(p.id) : null;
-    if (p && !zielSid) { hinweis("🙈 " + (p.name || "Diese Person") + " spielt (noch) nicht mit."); return; }
-    var raum = ""; try { raum = LC().lage().raum || ""; } catch (e) {}
-    /* Wie bei den Tieren: das Bild startet sofort, auf allen Geräten gleich. */
-    var n = { ereignis: "kampfklasse", sorte: k, von: meineChatId(), zielChat: p ? p.id : meineChatId(), start: true };
-    kampfZeigen(n);
-    senden(n);
-    rpc("spiel_klassen_schlag", { p_ziel: zielSid, p_raum: raum || null }).then(function (r) {
-      if (!r || !r.ok) {
-        hinweis("⚔️ " + ((r && r.grund) || "ging nicht"));
-        if (r && r.bereit_s) S.kampfBis = Date.now() + r.bereit_s * 1000;
-        schnellZeichnen(); return;
-      }
-      S.kampfBis = Date.now() + (r.bereit_s || 120) * 1000;
-      if (r.ziel) S.stand[r.ziel.id] = r.ziel;
-      if (r.ich_voll) { S.ich = r.ich_voll; S.stand[r.ich_voll.id] = oeffentlich(r.ich_voll); }
-      var w = { ereignis: "kampfklasse", sorte: k, von: meineChatId(), zielChat: n.zielChat, schaden: r.schaden || 0, heil: r.heil || 0, klau: r.klau || 0,
-                turm: r.turm || 0, mauer: r.mauer || 0, wieder: Boolean(r.wieder), kaputt: Boolean(r.kaputt), ziel_stand: r.ziel, stand: r.ich_voll ? oeffentlich(r.ich_voll) : null };
-      senden(w);
-      kampfZeigen(w);
-      hinweis("⚔️ " + K.kraft + (r.schaden ? " – " + r.schaden + " Schaden" : "") + (r.heil ? " – +" + r.heil + " LP" : "") + (r.wieder ? " – wiederbelebt!" : "")
-        + (r.klau ? " – " + r.klau + " Punkte geklaut" : "") + (r.turm ? " – Turm +" + r.turm : "") + (r.mauer ? " – Mauer +" + r.mauer : "")
-        + (r.lohn ? " · +" + r.lohn + " Punkte" : "") + (r.kaputt ? " – kaputt!" : ""));
-      schnellZeichnen(); abrufen(true);
-    }).catch(function (e) { hinweis("Ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  /* Bild und Ton je Klasse. „start": die Kraft wird gewirkt (Ton, Anlauf,
-     Flug); ohne „start": die Zahlen vom Server. */
-  /* Ringe, die AM Bildrand beginnen und nach außen laufen – nicht aus der
-     Bildmitte heraus wie ringWelle, damit das Gesicht frei bleibt. */
-  function kampfRing(x, y, r, farbe, anzahl) {
-    for (var i = 0; i < (anzahl || 1); i++) effektTeil("sp-kampf-ring", x, y, "", 820, { "--gr": Math.round(r * 2) + "px", "--farbe": farbe, "animation-delay": (i * 150) + "ms" });
-  }
-  function kampfZeigen(n) {
-    var k = n.sorte, K = KAMPF[k];
-    if (!K) return;
-    var m = mittelpunkt(n.von), z = n.zielChat && n.zielChat !== n.von ? mittelpunkt(n.zielChat) : null;
-    if (!n.start) {
-      if (n.schaden > 0) zahlZeigen(n.zielChat, -n.schaden, K.kraft);
-      if (n.heil > 0) zahlZeigen(n.zielChat || n.von, n.heil, n.wieder ? "wiederbelebt" : K.kraft);
-      if (n.turm > 0) zahlZeigen(n.von, n.turm, "Turm geladen");
-      else if (n.mauer > 0) zahlZeigen(n.von, n.mauer, "Mauer");
-      if (n.klau > 0 && z && m) for (var i = 0; i < Math.min(5, n.klau); i++) (function (i) { setTimeout(function () {
-        flugbahn("sp-faehig-muenze", { x: z.x, y: z.y }, { x: m.x, y: m.y }, '<svg viewBox="-6 -6 12 12"><circle r="5" fill="#f2c230" stroke="#a87a10" stroke-width="1"/><path d="M-1.4 -2.4 H1.8 M-1.4 0 H1.4 M-.6 -3 V3" stroke="#a87a10" stroke-width=".9"/></svg>', 620, 40);
-        if (i === 0) ton("muenze", 0.4);
-      }, i * 110); })(i);
-      return;
-    }
-    if (!m) return;
-    ton("klasse-" + k, 0.55);
-    /* Der Anlauf: ein leuchtender Ring in der Klassenfarbe um das eigene Bild,
-       das Wappen darunter – die Gesichtsmitte bleibt frei. */
-    effektTeil("sp-kampf-wappen", m.x, m.y, kampfSvg(k), 1100, { "--gr": Math.round(m.r * 2.3) + "px", "--farbe": K.farbe });
-    if (k === "magier" && z) {
-      flugbahn("sp-kampf-kugel", { x: m.x, y: m.y }, { x: z.x, y: z.y }, '<svg viewBox="-10 -10 20 20"><circle r="8.5" fill="#c9a8ff" opacity=".45"/><circle r="5.4" fill="#f4ecff"/><circle r="2.6" fill="#fff"/></svg>', 520, 50);
-      setTimeout(function () {
-        effektTeil("sp-kampf-blitz", z.x + z.r * 1.0, z.y, '<svg viewBox="0 0 40 80"><path d="M22 0 L8 36 H19 L12 80 L34 30 H22 L30 0 Z" fill="#f4ecff" stroke="#8a5ad8" stroke-width="2" stroke-linejoin="round"/></svg>', 520, { "--gr": Math.round(z.r * 1.6) + "px" });
-        kampfRing(z.x, z.y, z.r * 1.2, "#b48cff", 3); sterneBurst(z.x + z.r * 1.0, z.y + z.r * 0.9, z.r * 0.8, ["#8a5ad8", "#c9a8ff", "#fff"], 10);
-      }, 520);
-    } else if (k === "dieb" && z) {
-      for (var r = 0; r < 8; r++) { var wr = r / 8 * Math.PI * 2;
-        effektTeil("sp-kampf-rauch", m.x + Math.cos(wr) * m.r * 1.05, m.y + Math.sin(wr) * m.r * 1.05, "", 1300,
-          { "--gr": Math.round(m.r * (0.55 + Math.random() * 0.35)) + "px", "animation-delay": (r * 50) + "ms" }); }
-      flugbahn("sp-kampf-hand", { x: m.x, y: m.y }, { x: z.x + z.r * 0.5, y: z.y + z.r * 0.75 }, '<svg viewBox="0 0 30 30"><path d="M6 20 C4 14 6 9 9 9 V16 V6 C9 4 12 4 12 6 V15 V4.4 C12 2.4 15 2.4 15 4.4 V15 V5.4 C15 3.4 18 3.4 18 5.4 V16 C19 13 22 12 23 14 C21 18 20 22 17 25 C14 28 8 27 6 20 Z" fill="#2b313c" stroke="#11151d" stroke-width="1"/></svg>', 460, 30);
-      setTimeout(function () { kampfRing(z.x, z.y, z.r * 1.05, "#4a5568", 2); }, 460);
-    } else if (k === "titan") {
-      effektTeil("sp-kampf-schild", m.x, m.y, '<svg viewBox="0 0 100 110"><path d="M50 4 L94 18 V52 C94 80 74 98 50 106 C26 98 6 80 6 52 V18 Z" fill="none" stroke="#e8c26a" stroke-width="6"/><path d="M50 14 L84 25 V52 C84 74 69 88 50 95 C31 88 16 74 16 52 V25 Z" fill="none" stroke="#fff3cf" stroke-width="2" opacity=".8"/></svg>', 1600, { "--gr": Math.round(m.r * 2.6) + "px" });
-      kampfRing(m.x, m.y, m.r * 1.3, "#e8c26a", 2);
-    } else if (k === "heiler") {
-      var h = z || m;
-      effektTeil("sp-kampf-segen", h.x, h.y, "", 1500, { "--gr": Math.round(h.r * 1.5) + "px" });
-      for (var c = 0; c < 8; c++) effektTeil("sp-kampf-kreuz", h.x + (c % 2 ? 1 : -1) * h.r * (0.95 + Math.random() * 0.3), h.y + h.r * (0.2 + Math.random() * 0.4), '<svg viewBox="0 0 10 10"><path d="M3.6 0 H6.4 V3.6 H10 V6.4 H6.4 V10 H3.6 V6.4 H0 V3.6 H3.6 Z" fill="#7de3a3"/></svg>', 1400,
-        { "--hoch": Math.round(h.r * (1.2 + Math.random())) + "px", "animation-delay": (c * 90) + "ms" });
-      kampfRing(h.x, h.y, h.r * 1.15, "#2fae62", 2);
-    } else if (k === "ingenieur") {
-      effektTeil("sp-kampf-zahnrad", m.x - m.r * 0.5, m.y - m.r * 1.05, kampfSvg("ingenieur"), 1400, { "--gr": Math.round(m.r * 0.9) + "px" });
-      effektTeil("sp-kampf-zahnrad sp-kampf-zahnrad-klein", m.x + m.r * 0.35, m.y - m.r * 1.25, kampfSvg("ingenieur"), 1400, { "--gr": Math.round(m.r * 0.55) + "px" });
-      setTimeout(function () { sterneBurst(m.x - m.r * 0.1, m.y - m.r * 1.3, m.r * 0.55, ["#ffd36b", "#ff9a2e", "#fff"], 10); }, 700);
-    } else if (k === "gelehrter" && z) {
-      effektTeil("sp-kampf-buch", m.x, m.y - m.r * 1.1, kampfSvg("gelehrter"), 1200, { "--gr": Math.round(m.r * 1.1) + "px" });
-      ["Ä", "ß", "Ö", "Ü", "Der", "Die", "Das"].forEach(function (b, i) { setTimeout(function () {
-        var e = flugbahn("sp-kampf-buchstabe", { x: m.x, y: m.y - m.r * 1.1 }, { x: z.x + Math.cos(i * 0.9) * z.r * 0.95, y: z.y + Math.sin(i * 0.9) * z.r * 0.95 }, "", 560, 40 + i * 6);
-        if (e) e.textContent = b;
-      }, 200 + i * 70); });
-      setTimeout(function () { kampfRing(z.x, z.y, z.r, "#2f6fd6", 2); }, 900);
-    }
   }
 
   /* ---------------------------------------------------------------
@@ -3508,9 +3317,6 @@
       /* FASSUNG 695 — die ausgerüstete Tier-Fähigkeit. */
       var fk = faehigKnopf();
       if (fk) teile.push(fk);
-      /* FASSUNG 699 — die Kraft der Kämpferklasse. */
-      var kk = kampfKnopf();
-      if (kk) teile.push(kk);
       /* FASSUNG 650 — der Zauberstab: öffnet das Zauberrad; ein bereiter
          Zauber leuchtet hier mit seinem Bild. */
       var zOffen = ZAUBER_REIHE.some(function (a) { return (ich.level || 1) >= ZAUBER[a].level; });
@@ -3820,8 +3626,6 @@
       inhaltM = '<div class="sp-sm-liste">' + t.join("") + "</div>";
     } else if (r === "klasse") {
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + klassenHtml(ich);
-    } else if (r === "kampfklasse") {
-      inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + kampfHtml(ich);
     } else if (r === "dorf") {
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + dorfHtml(ich);
     } else if (r === "dorfblick") {
@@ -3892,8 +3696,6 @@
            Zauberrad, nicht zusätzlich hier als Liste. */
         + '<button type="button" data-s="klasse"><span class="sp-sm-zbild">' + klassenSvg(ich.klasse || "abenteurer") + "</span>Klasse <small>"
           + (ich.klasse && KLASSEN[ich.klasse] ? esc(KLASSEN[ich.klasse].name) : (ich.level || 1) >= 5 ? "wählen" : "ab Lv 5") + "</small></button>"
-        + (kampfFrei() ? '<button type="button" data-s="kampfklasse"><span class="sp-sm-zbild">' + kampfSvg(ich.kampfklasse || "titan") + "</span>Kämpferklasse <small>"
-          + (KAMPF[ich.kampfklasse] ? esc(KAMPF[ich.kampfklasse].name) + " · Stufe " + (ich.kampf_stufe || 1) : "wählen") + "</small></button>" : "")
         + '<button type="button" data-s="dorf"><span class="sp-sm-zbild">' + dorfSvg("baeckerei", 1) + "</span>Mein Dorf <small>"
           + Object.keys(ich.dorf || {}).length + " / " + Object.keys(DORF).length + "</small></button>"
         + '<button type="button" data-s="trophaeen"><span class="sp-sm-zbild">' + pokalSvg(true) + "</span>Trophäen <small>"
@@ -3961,17 +3763,6 @@
       hinweis(S.chatWaffe ? "🎯 Spaßwaffen an: ohne Mitspielen schießt ein Tipp aufs Bild mit deiner angelegten Waffe – nur zum Spaß, ohne Punkte, kein Platztausch." : "Spaßwaffen aus – ein Tipp aufs Bild tauscht wieder den Platz.");
     } else if (s === "klasse") {
       S.schnellReiter = "klasse";
-    } else if (s === "kampfklasse") {
-      S.schnellReiter = "kampfklasse";
-    } else if (s === "kampfwahl") {
-      rpc("spiel_kampfklasse_waehlen", { p_klasse: k.dataset.k }).then(function (r) {
-        if (!r || r.ok === false) { hinweis("⚔️ " + ((r && r.grund) || "Das ging nicht.") + (r && r.bereit_s ? " (noch " + Math.ceil(r.bereit_s / 60) + " min)" : "")); return; }
-        S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) });
-        S.kampfBis = Date.now() + (r.klassen_bereit_s || 0) * 1000; S.kampfZiel = false;
-        ton("klasse-" + r.kampfklasse, 0.5);
-        hinweis("⚔️ Du kämpfst jetzt als " + KAMPF[r.kampfklasse].name + " – Kraft: " + KAMPF[r.kampfklasse].kraft + ". Der Knopf steht in der Leiste.");
-        schnellZeichnen(true);
-      }).catch(function () { hinweis("⚔️ Das ging gerade nicht."); });
     } else if (s === "klassewahl") {
       rpc("spiel_klasse", { p_klasse: k.dataset.k }).then(function (r) {
         if (!r || r.ok === false) { hinweis("🛡️ " + ((r && r.grund) || "Das ging nicht.")); return; }
@@ -4096,7 +3887,7 @@
       var zg = zauberGesperrt(k.dataset.z);
       if (zg) { hinweis("✨ " + zg); }
       else {
-        S.zauber = k.dataset.z; S.zrad = false; S.schnellMenue = false; S.kampfZiel = false; S.faehigZiel = false;
+        S.zauber = k.dataset.z; S.zrad = false; S.schnellMenue = false;
         if (S.graben) grabenUmschalten(false);
         ton("zauberpuff", 0.3);
         hinweis("✨ " + ZAUBER[S.zauber].name + " bereit (" + ZAUBER[S.zauber].mana + " Mana) – tippe auf ein Gesicht.");
@@ -4156,8 +3947,6 @@
       tierWechseln(k.dataset.a); zu = true;
     } else if (s === "faehigkeit") {
       faehigLos(); return;
-    } else if (s === "kampfkraft") {
-      kampfLos(); return;
     } else if (s === "faehig") {
       faehigAusruesten(k.dataset.a); return;
     } else if (s === "sparring") {
@@ -4500,7 +4289,7 @@
       bal.style.left = kreis.offsetLeft + "px"; bal.style.top = kreis.offsetTop + "px";
       bal.style.width = kreis.offsetWidth + "px"; bal.style.height = kreis.offsetHeight + "px";
       bal.classList.toggle("sp-pause", s.mitspielen === false && !istPuppe(chatId));
-      bal.title = (s.mitspielen === false && !istPuppe(chatId) ? "spielt gerade nicht mit · " : "") + (s.name || "") + (s.klasse && KLASSEN[s.klasse] ? " (" + KLASSEN[s.klasse].name + ")" : "") + (KAMPF[s.kampfklasse] && kampfFrei() ? " · " + KAMPF[s.kampfklasse].name + " St. " + (s.kampf_stufe || 1) : "") + ": " + s.lp + " / " + s.lp_max + " LP" + (s.schild ? " · Schild " + s.schild : "")
+      bal.title = (s.mitspielen === false && !istPuppe(chatId) ? "spielt gerade nicht mit · " : "") + (s.name || "") + (s.klasse && KLASSEN[s.klasse] ? " (" + KLASSEN[s.klasse].name + ")" : "") + ": " + s.lp + " / " + s.lp_max + " LP" + (s.schild ? " · Schild " + s.schild : "")
         + (manaAnteil >= 0 ? " · " + s.mana + " Mana" : "");
       var farbe = anteil > 0.6 ? "#3bbf4a" : anteil > 0.3 ? "#e8b923" : "#e2403a";
       /* FASSUNG 634 — was jeder vom anderen sehen soll („jeder muss den
@@ -9417,7 +9206,7 @@
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, chatWaffeZeigen: chatWaffeZeigen, tierReagiert: tierReagiert, tiereSpielen: tiereSpielen, handelLaden: handelLaden, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,
       abrufen: abrufen, eierPflegen: eierPflegen, makroAusloesen: makroAusloesen, dorfBlickHtml: dorfBlickHtml, stallBereit: stallBereit, baumStand: baumStand, pluendern: pluendern, holzen: holzen, angeln: angeln,
-      trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, klassenHtml: klassenHtml, KAMPF: KAMPF, kampfHtml: kampfHtml, kampfStufe: kampfStufe, kampfZeigen: kampfZeigen, kampfKnopf: kampfKnopf, kampfFrei: kampfFrei, kampfSvg: kampfSvg, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
+      trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, klassenHtml: klassenHtml, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
       zauberZeigen: zauberZeigen, zaubern: zaubern, daemonAusbruch: daemonAusbruch, uebungZaubern: uebungZaubern, geschuetzSvg: geschuetzSvg, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
       menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {

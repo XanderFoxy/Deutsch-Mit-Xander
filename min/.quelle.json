@@ -44,12 +44,12 @@
  "ton-liste.js": "831b0bb2765251f631db9fe99ea48fc0c46de9c8",
  "werkstatt.css": "5983b13d12f52bb27f26c3a2e174a726ea496e96",
  "werkstatt.js": "6b16574f10d08259b581e0e9f4d0c0e0cbdbf42d",
- "spiel.css": "4c541a9d6627325ad5e86efee8822d2269c08af4",
- "data-geraeusche.js": "0b684f47d0bb8c5a7ee70d09c6b9bce7da785e44",
  "rueckfrage.js": "9a2e8f5135f2d9db9b8fc1e3b3fe23b4e58637db",
- "spiel.js": "4c90625239e5079faa1541ed26251d6050e18306",
  "korrekturen.css": "1d97e110faaf15ed6aa6146f4ca5ee9d7bce2068",
- "app.js": "450534cddc26107776fc619f9f247c8ee45174ce",
- "data-werkstatt.js": "dd4b466a6a39dd6523cb352c46f0b4b7f1ea91a7",
- "livechat.js": "aa9ff16ef45e3f7e7dd232aa012fe96072a38bb3"
+ "livechat.js": "aa9ff16ef45e3f7e7dd232aa012fe96072a38bb3",
+ "app.js": "f63800082d607f3e73a310ea48ce58b11a014a27",
+ "data-geraeusche.js": "ed2494bb6bf9dfed6b43fd69905837622ba4b1b4",
+ "spiel.css": "f99a42bb4c83c0d1c23152658e5b952ff873014b",
+ "spiel.js": "b724c83b7d5cc3e9d11336ccff2e30216e7dc0bd",
+ "data-werkstatt.js": "879c3194fbcc8077f51ee9b1856c6be9c33d2d71"
 }

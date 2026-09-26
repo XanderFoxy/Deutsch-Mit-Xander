@@ -206,14 +206,6 @@ const GERAEUSCHE = [
   { name: "tier-muede-drache", dauer: 1.6, text: "A baby dragon yawning sleepily with a small puff of smoke, cute, close microphone, no music" },
   { name: "tier-schlecken", dauer: 1.4, text: "A small animal eagerly licking whipped cream with its tongue, wet lapping licks, cute, close microphone, no music" },
   { name: "tier-hops", dauer: 0.8, text: "A tiny cartoon bounce, soft springy boing of a small rabbit hopping, no music" },
-  /* FASSUNG 699 — Kämpferklassen aus Funk 139: jede Klasse hat ihren eigenen Klang für die Klassenkraft.
-     1,5 Sekunden je Geräusch (30 Credits). */
-  { name: "klasse-magier", dauer: 1.5, text: "An arcane magic bolt: a rising crystalline shimmer charging up, then a bright electric zap release, fantasy spell, no music, no voices" },
-  { name: "klasse-dieb", dauer: 1.5, text: "A quick sneaky pickpocket: a soft cloth whoosh, a few coins jingling as they are snatched, then a faint puff of smoke, no music, no voices" },
-  { name: "klasse-titan", dauer: 1.5, text: "A heavy steel tower shield slammed down on stone: deep metallic clang with a resonant armored boom, no music, no voices" },
-  { name: "klasse-heiler", dauer: 1.5, text: "A gentle healing blessing: warm soft choir-like pad swelling with delicate chimes and a sparkle, calm, no words, no music beat" },
-  { name: "klasse-ingenieur", dauer: 1.5, text: "An engineer's quick repair: a ratchet wrench clicking fast, a gear whirring up and a mechanical clunk locking into place, no music, no voices" },
-  { name: "klasse-gelehrter", dauer: 1.5, text: "A powerful spell from an old book: pages flipping rapidly in a gust, then a deep resonant magical thump, no music, no voices" },
 ];
 
 function schlafen(ms) { return new Promise((f) => setTimeout(f, ms)); }
