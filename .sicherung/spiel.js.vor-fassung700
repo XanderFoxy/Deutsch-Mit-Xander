@@ -3413,35 +3413,6 @@
       + esc(WAFFEN[w].name) + " · Schaden " + WAFFEN[w].schaden + (hw >= 0 ? " · hält " + hw + "/" + haltMax(ich, w) : "") + (vr >= 0 ? " · noch " + vr : "") + '">'
       + geschossSvg(w, S.laserfarbe) + (vr >= 0 ? "<small>" + vr + "</small>" : "") + "</button>";
   }
-  /* FASSUNG 700 — das bestehende DOM an neues HTML angleichen, statt es zu
-     ersetzen (Funk 144). Gleiche Stelle + gleicher Tag = dasselbe Element
-     bleibt (Scrollstand, Animation, Fokus); Text und Attribute werden
-     angepasst. Ein „style", das nur per Programm gesetzt wurde (Breite, Höhe
-     des Menüs), bleibt stehen, wenn das neue HTML keins vorgibt. */
-  function domAngleichen(ziel, html) {
-    var vorlage = document.createElement(ziel.tagName === "svg" ? "div" : ziel.tagName);
-    vorlage.innerHTML = html;
-    kinderAngleichen(ziel, vorlage);
-  }
-  function kinderAngleichen(alt, neu) {
-    var a = alt.firstChild, n = neu.firstChild;
-    while (n) {
-      var naechstes = n.nextSibling;
-      if (!a) { alt.appendChild(n); n = naechstes; continue; }
-      var gleich = a.nodeType === n.nodeType && (a.nodeType !== 1 || a.tagName === n.tagName);
-      if (!gleich) { alt.replaceChild(n, a); a = n.nextSibling; n = naechstes; continue; }
-      if (a.nodeType === 1) {
-        var attA = a.attributes, attN = n.attributes, i;
-        for (i = attA.length - 1; i >= 0; i--) { var nm = attA[i].name; if (!n.hasAttribute(nm) && nm !== "style") a.removeAttribute(nm); }
-        for (i = 0; i < attN.length; i++) { if (a.getAttribute(attN[i].name) !== attN[i].value) a.setAttribute(attN[i].name, attN[i].value); }
-        /* Eingaben behalten, was der Mensch gerade gewählt oder getippt hat. */
-        if (a.tagName === "SELECT") { var wert = a.value; kinderAngleichen(a, n); if ([].some.call(a.options, function (o) { return o.value === wert; })) a.value = wert; }
-        else if (a.tagName !== "TEXTAREA") kinderAngleichen(a, n);
-      } else if (a.nodeValue !== n.nodeValue) a.nodeValue = n.nodeValue;
-      a = a.nextSibling; n = naechstes;
-    }
-    while (a) { var weg = a; a = a.nextSibling; alt.removeChild(weg); }
-  }
   function schnellGesperrt() {
     var d = S.schnellDruck || 0;
     if (d > 0) return Date.now() - d < 4000;        /* Finger liegt (höchstens 4 s) */
@@ -3595,17 +3566,7 @@
       [].forEach.call(schnellEl.querySelectorAll(".sp-schnellmenue, .sp-schnellmenue *"), function (e) {
         if (e.scrollTop > 0 || e.scrollLeft > 0) { var key = e.className && e.className.baseVal == null ? String(e.className).split(" ")[0] : ""; if (key && !rollPos[key]) rollPos[key] = [e.scrollTop, e.scrollLeft]; }
       });
-      /* FASSUNG 700 — XANDER (Funk 144): „das Aufrufen des dorfmenüs ruckelt
-         auch noch extrem … kann man manchmal gar nicht vernünftig scrollen weil
-         es immer noch zurückspringt … wenn man ein Haus ein Gebäude aufruft dann
-         glitscht das immer so dass es an und aus und an und aus geht".
-         GEMESSEN (Wischen mit dem Finger): das ganze Menü wurde jede Sekunde als
-         NEUES Element geschrieben (innerHTML) – das bricht das Nachgleiten auf dem
-         Telefon ab, und jedes Haus startete seine Einblend-Animation neu (an/aus).
-         Jetzt wird das Bestehende nur angeglichen: gleiche Elemente bleiben, nur
-         geänderte Zahlen und Attribute werden ersetzt. */
-      try { domAngleichen(schnellEl, html); } catch (e) { schnellEl.innerHTML = html; }
-      schnellEl.dataset.html = html;
+      schnellEl.innerHTML = html; schnellEl.dataset.html = html;
     }
     /* Die offene Werkzeugwahl verdeckt keine Meldung – die Meldung weicht. */
     document.body.classList.toggle("sp-wwahl-offen", Boolean(S.wwahl && ich.mitspielen));
@@ -3630,12 +3591,9 @@
         sm.style.maxHeight = Math.max(160, Math.round(unterkante - oben - 10)) + "px";
       } catch (e) {}
     }
-    /* Nur zurücksetzen, wenn es wirklich abweicht – jedes Setzen hält ein
-       laufendes Nachgleiten an. */
     Object.keys(rollPos).forEach(function (key) {
       var e = schnellEl.querySelector("." + key);
-      if (e && e.scrollTop !== rollPos[key][0]) e.scrollTop = rollPos[key][0];
-      if (e && e.scrollLeft !== rollPos[key][1]) e.scrollLeft = rollPos[key][1];
+      if (e) { e.scrollTop = rollPos[key][0]; e.scrollLeft = rollPos[key][1]; }
     });
     /* FASSUNG 683 — die (breitere) Werkzeugwahl bleibt ganz im Bild: links und oben nie hinaus. */
     var wwEl = schnellEl.querySelector(".sp-werkzeugwahl");
@@ -7076,72 +7034,21 @@
   };
   var dorfLandCache = "";
   function dorfZufall(n) { var x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
-  /* FASSUNG 700 — XANDER (Funk 143): „das Dorf schöner ausarbeiten dass das
-     nicht so alt glatt wie bei vektorgrafing aussieht sondern ein bisschen
-     schöne organische … mach das bisschen mit Struktur und alles das ist
-     wirklich eine Liebreiz bekommt und sich nach Natur und echten Häusern
-     anfühlt mit ein bisschen mehr Grafikpower dahinter bitte".
-     Ohne teure Filter (die müssten bei jedem Rauchwölkchen neu gerechnet
-     werden): die Formen selbst sind jetzt wie von Hand – leicht krumme
-     Kanten, einzelne Feldsteine, Ziegelreihen, Putzkörnung und Wetterflecken,
-     Holzglanz, Moos und Efeu; das Licht kommt von der Sonne rechts oben, die
-     Schatten fallen nach links; über allem liegt ein feines Papierkorn. */
-  function dhF(v) { return String(Math.round(v * 100) / 100); }
-  /* Eine Linie von Hand gezogen: in der Mitte ein wenig aus der Bahn. */
-  function dhL(x1, y1, x2, y2, amp, n) {
-    return "M" + dhF(x1) + " " + dhF(y1) + " Q" + dhF((x1 + x2) / 2 + (dorfZufall(n) - .5) * amp) + " " + dhF((y1 + y2) / 2 + (dorfZufall(n + 1) - .5) * amp) + " " + dhF(x2) + " " + dhF(y2);
-  }
-  /* Ein Vieleck mit leicht welligen Kanten. */
-  function dhV(pts, amp, n) {
-    var d = "M" + dhF(pts[0][0]) + " " + dhF(pts[0][1]);
-    for (var i = 0; i < pts.length; i++) {
-      var a = pts[i], b = pts[(i + 1) % pts.length];
-      d += " Q" + dhF((a[0] + b[0]) / 2 + (dorfZufall(n + i * 3) - .5) * amp) + " " + dhF((a[1] + b[1]) / 2 + (dorfZufall(n + i * 3 + 1) - .5) * amp) + " " + dhF(b[0]) + " " + dhF(b[1]);
-    }
-    return d + " Z";
-  }
-  /* Farben, Muster und Licht für alle Häuser – einmal im Dorfbild, von jedem Haus benutzt. */
-  function dorfDefsSvg() {
-    return '<svg class="sp-dl-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs>'
-      + '<linearGradient id="spDhLichtWand" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2b1a0a" stop-opacity=".28"/><stop offset=".55" stop-color="#2b1a0a" stop-opacity="0"/><stop offset="1" stop-color="#fff6d8" stop-opacity=".24"/></linearGradient>'
-      + '<linearGradient id="spDhTraufe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0f05" stop-opacity=".4"/><stop offset="1" stop-color="#1a0f05" stop-opacity="0"/></linearGradient>'
-      + '<linearGradient id="spDhGlas" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2f4ff"/><stop offset=".45" stop-color="#8cc4e6"/><stop offset="1" stop-color="#3f7399"/></linearGradient>'
-      + '<radialGradient id="spDhLampe"><stop offset="0" stop-color="#fff6cf"/><stop offset=".65" stop-color="#ffd36b"/><stop offset="1" stop-color="#e39a32"/></radialGradient>'
-      + '<radialGradient id="spDhSchatten"><stop offset="0" stop-color="#1f3a12" stop-opacity=".5"/><stop offset=".6" stop-color="#1f3a12" stop-opacity=".22"/><stop offset="1" stop-color="#1f3a12" stop-opacity="0"/></radialGradient>'
-      + '<linearGradient id="spDhDachLicht" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".26"/><stop offset=".49" stop-color="#000" stop-opacity=".06"/><stop offset=".51" stop-color="#fff" stop-opacity=".05"/><stop offset="1" stop-color="#fff" stop-opacity=".16"/></linearGradient>'
-      + '<pattern id="spDhPutz" width="6" height="5" patternUnits="userSpaceOnUse"><circle cx="1" cy="1.2" r=".22" fill="#6b5a3a" fill-opacity=".3"/><circle cx="4.2" cy="3.4" r=".18" fill="#6b5a3a" fill-opacity=".26"/><circle cx="2.6" cy="4.2" r=".24" fill="#fff" fill-opacity=".45"/><circle cx="5.2" cy=".6" r=".15" fill="#fff" fill-opacity=".4"/><path d="M3 2 l.6 .3 l.3 .5" stroke="#6b5a3a" stroke-opacity=".2" stroke-width=".16" fill="none"/></pattern>'
-      + '<pattern id="spDhBretter" width="2.2" height="12" patternUnits="userSpaceOnUse"><path d="M.05 0 V12" stroke="#000" stroke-opacity=".3" stroke-width=".3"/><path d="M1.1 2 q.3 1.5 0 3 M1.4 7 q-.3 1.2 0 2.6" stroke="#000" stroke-opacity=".13" stroke-width=".18" fill="none"/><ellipse cx="1.2" cy="9.6" rx=".25" ry=".4" fill="#000" fill-opacity=".2"/><path d="M.4 0 V12" stroke="#fff" stroke-opacity=".12" stroke-width=".2"/></pattern>'
-      + '<pattern id="spDhSchindel" width="2.6" height="4" patternUnits="userSpaceOnUse"><path d="M0 2 a1.3 1.3 0 0 0 2.6 0 M-1.3 4 a1.3 1.3 0 0 0 2.6 0 M1.3 4 a1.3 1.3 0 0 0 2.6 0" fill="none" stroke="#000" stroke-opacity=".32" stroke-width=".3"/><path d="M.5 1.1 h1.2 M1.8 3.1 h1.1" stroke="#fff" stroke-opacity=".22" stroke-width=".25"/></pattern>'
-      + '<pattern id="spDhStein" width="7" height="4.4" patternUnits="userSpaceOnUse"><path d="M0 2.2 H7 M0 4.4 H7 M2.6 0 V2.2 M5.8 0 V2.2 M1.2 2.2 V4.4 M4.4 2.2 V4.4" stroke="#000" stroke-opacity=".22" stroke-width=".3"/><path d="M.4 .5 h1.6 M3.2 2.7 h1" stroke="#fff" stroke-opacity=".28" stroke-width=".3"/></pattern>'
-      + '<pattern id="spDhFels" width="9" height="8" patternUnits="userSpaceOnUse"><path d="M1 2 l2 1 l1 -1.4 M5 6 l1.6 -.6 l1.4 1.2 M2 7 l.8 -1" stroke="#000" stroke-opacity=".25" stroke-width=".35" fill="none"/><circle cx="7" cy="2" r=".5" fill="#fff" fill-opacity=".2"/><circle cx="3.4" cy="5" r=".35" fill="#000" fill-opacity=".15"/></pattern>'
-      + "</defs></svg>";
-  }
   function dorfBaum(x, y, g, n) {
-    /* Laubbaum: Stamm mit Astgabel, Krone aus vielen Ballen – unten dunkel,
-       oben rechts im Licht, mit einzelnen Blattsprenkeln. Schatten nach links. */
-    var h = "", i, dunkel = ["#2f6424", "#356d28"], mittel = ["#4a8a33", "#539437", "#46822f"], hell = ["#78b64c", "#86c257"];
-    h += '<ellipse cx="' + dhF(x - 2.2 * g) + '" cy="' + dhF(y + .7) + '" rx="' + dhF(5 * g) + '" ry="' + dhF(1.4 * g) + '" fill="#244a18" opacity=".32"/>';
-    h += '<path d="M' + dhF(x - .9 * g) + " " + dhF(y) + " Q" + dhF(x - .4 * g) + " " + dhF(y - 3 * g) + " " + dhF(x - .2 * g) + " " + dhF(y - 5.5 * g) + " L" + dhF(x + .5 * g) + " " + dhF(y - 5.5 * g) + " Q" + dhF(x + .5 * g) + " " + dhF(y - 3 * g) + " " + dhF(x + 1 * g) + " " + dhF(y) + ' Z" fill="#5a3b1e"/>'
-      + '<path d="M' + dhF(x) + " " + dhF(y - 4 * g) + " l" + dhF(-1.6 * g) + " " + dhF(-1.8 * g) + " M" + dhF(x + .2 * g) + " " + dhF(y - 4.6 * g) + " l" + dhF(1.5 * g) + " " + dhF(-1.6 * g) + '" stroke="#5a3b1e" stroke-width="' + dhF(.6 * g) + '" stroke-linecap="round"/>';
-    var ballen = [[-2.6, -6.4, 3], [2.4, -6.6, 2.9], [0, -6, 3.2], [-1.6, -8.8, 3.1], [1.9, -9, 3], [0, -11, 2.8], [-3.2, -8.4, 2.2], [3.3, -8.2, 2.1]];
-    for (i = 0; i < ballen.length; i++) { var bq = ballen[i], r = bq[2] * g * (.9 + dorfZufall(n * 7 + i) * .2);
-      h += '<circle cx="' + dhF(x + bq[0] * g) + '" cy="' + dhF(y + bq[1] * g) + '" r="' + dhF(r) + '" fill="' + (i < 3 ? dunkel[(i + n) % 2] : mittel[(i + n) % 3]) + '"/>'; }
-    [[1.6, -10.6, 1.8], [2.8, -8.6, 1.4], [-.6, -12, 1.4]].forEach(function (q, j) {
-      h += '<circle cx="' + dhF(x + q[0] * g) + '" cy="' + dhF(y + q[1] * g) + '" r="' + dhF(q[2] * g) + '" fill="' + hell[(j + n) % 2] + '" opacity=".85"/>'; });
-    for (i = 0; i < 5; i++) h += '<circle cx="' + dhF(x + (dorfZufall(n * 13 + i) - .45) * 7 * g) + '" cy="' + dhF(y - (6 + dorfZufall(n * 17 + i) * 6) * g) + '" r="' + dhF(.45 * g) + '" fill="' + (i % 2 ? "#a4d672" : "#2a5a20") + '" opacity=".8"/>';
+    /* Laubbaum aus mehreren Kronenballen, Licht von rechts oben. */
+    var c = ["#3f7a2e", "#4d8c34", "#5e9e3c"], h = "";
+    h += '<path d="M' + x + " " + y + " l-.9 -" + (5 * g).toFixed(1) + " h1.8 Z" + '" fill="#5a3b1e"/>';
+    h += '<ellipse cx="' + x + '" cy="' + (y + .6) + '" rx="' + (4.2 * g).toFixed(1) + '" ry="1.2" fill="#2d4f1f" opacity=".35"/>';
+    [[-2.2, -7, 3.4], [2.1, -7.4, 3.2], [0, -9.6, 3.8], [-.6, -6, 3]].forEach(function (b, i) {
+      h += '<circle cx="' + (x + b[0] * g).toFixed(1) + '" cy="' + (y + b[1] * g).toFixed(1) + '" r="' + (b[2] * g).toFixed(1) + '" fill="' + c[(i + n) % 3] + '"/>';
+    });
+    h += '<circle cx="' + (x + 1.2 * g).toFixed(1) + '" cy="' + (y - 10.4 * g).toFixed(1) + '" r="' + (1.6 * g).toFixed(1) + '" fill="#7cbf52" opacity=".8"/>';
     return h;
   }
   function dorfTanne(x, y, g) {
-    /* Tanne in drei gezackten Stufen, die Sonnenseite heller. */
-    var h = '<ellipse cx="' + dhF(x - 1.8 * g) + '" cy="' + dhF(y + .4) + '" rx="' + dhF(3.6 * g) + '" ry="' + dhF(1 * g) + '" fill="#1f3a14" opacity=".3"/>'
-      + '<rect x="' + dhF(x - .6 * g) + '" y="' + dhF(y - 3 * g) + '" width="' + dhF(1.2 * g) + '" height="' + dhF(3 * g) + '" fill="#4a2f18"/>';
-    [[0, 4.8, 6.4], [3.2, 3.9, 5.2], [6.2, 3, 4.4]].forEach(function (s) {
-      var b = y - 2.4 * g - s[0] * g, bw = s[1] * g, sh = s[2] * g;
-      h += '<path d="M' + dhF(x) + " " + dhF(b - sh) + " L" + dhF(x - bw) + " " + dhF(b) + " l" + dhF(bw * .3) + " " + dhF(-.5 * g) + " l" + dhF(bw * .35) + " " + dhF(.4 * g) + " l" + dhF(bw * .35) + " " + dhF(-.5 * g)
-        + " l" + dhF(bw * .35) + " " + dhF(.5 * g) + " l" + dhF(bw * .3) + " " + dhF(-.4 * g) + " L" + dhF(x + bw) + " " + dhF(b) + ' Z" fill="#2c5a36"/>'
-        + '<path d="M' + dhF(x) + " " + dhF(b - sh) + " L" + dhF(x + bw) + " " + dhF(b) + " H" + dhF(x + bw * .15) + ' Z" fill="#3f7a48" opacity=".75"/>';
-    });
-    return h;
+    return '<path d="M' + x + " " + (y - 13 * g).toFixed(1) + " L" + (x - 4.4 * g).toFixed(1) + " " + (y - 3 * g).toFixed(1) + " H" + (x + 4.4 * g).toFixed(1) + ' Z" fill="#2f5e3a"/>'
+      + '<path d="M' + x + " " + (y - 13 * g).toFixed(1) + " L" + (x + 4.4 * g).toFixed(1) + " " + (y - 3 * g).toFixed(1) + " H" + x + ' Z" fill="#244b2e"/>'
+      + '<rect x="' + (x - .6 * g).toFixed(1) + '" y="' + (y - 3 * g).toFixed(1) + '" width="' + (1.2 * g).toFixed(1) + '" height="' + (3 * g).toFixed(1) + '" fill="#4a2f18"/>';
   }
   function dorfLandSvg() {
     if (dorfLandCache) return dorfLandCache;
@@ -7154,38 +7061,24 @@
       + '<radialGradient id="spDlSonne"><stop offset="0" stop-color="#fff7c2"/><stop offset=".4" stop-color="#ffe98a" stop-opacity=".9"/><stop offset="1" stop-color="#ffe98a" stop-opacity="0"/></radialGradient>'
       + '<pattern id="spDlKorn" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)"><rect width="4" height="4" fill="#e3c25a"/><path d="M0 1 H4" stroke="#c9a23a" stroke-width="1.1"/></pattern>'
       + '<pattern id="spDlGruen" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(12)"><rect width="4" height="4" fill="#8cc454"/><path d="M0 1 H4" stroke="#6fa83e" stroke-width="1.1"/></pattern>'
-      /* FASSUNG 700 — Gras, Kies, Sonnenlicht, Dunst über den Bergen. */
-      + '<pattern id="spDlGras" width="7" height="5" patternUnits="userSpaceOnUse"><path d="M1 5 q.2 -1.4 .7 -2.2 M1.6 5 q0 -1.2 -.5 -1.9 M4.4 3 q.3 -1.3 .8 -2 M5 3 q-.1 -1 -.6 -1.6" stroke="#4f8a2c" stroke-opacity=".55" stroke-width=".35" fill="none"/><path d="M2.8 1.6 q.2 -.9 .5 -1.3" stroke="#c5ec8a" stroke-opacity=".6" stroke-width=".3" fill="none"/><circle cx="6.2" cy="4.4" r=".25" fill="#3e6f22" fill-opacity=".4"/></pattern>'
-      + '<pattern id="spDlKies" width="4" height="4" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".45" fill="#9c8358"/><circle cx="3" cy="2.6" r=".35" fill="#fff5dc"/><circle cx="2" cy="3.6" r=".3" fill="#8a7248"/></pattern>'
-      + '<linearGradient id="spDlDunst" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8f3fb" stop-opacity="0"/><stop offset="1" stop-color="#e8f3fb" stop-opacity=".55"/></linearGradient>'
-      + '<radialGradient id="spDlLicht" cx=".86" cy=".1" r=".95"><stop offset="0" stop-color="#fff2b8" stop-opacity=".42"/><stop offset=".45" stop-color="#fff2b8" stop-opacity=".12"/><stop offset="1" stop-color="#3a2a10" stop-opacity=".14"/></radialGradient>'
       + "</defs>"
       + '<rect width="320" height="200" fill="url(#spDlHimmel)"/>'
       + '<circle cx="270" cy="24" r="26" fill="url(#spDlSonne)"/><circle cx="270" cy="24" r="8" fill="#fff4b0"/>'
       /* Wolken ziehen langsam. */
-      + '<g class="sp-dl-wolke"><ellipse cx="60" cy="22" rx="16" ry="5.5" fill="#fff" opacity=".92"/><ellipse cx="70" cy="18" rx="10" ry="6" fill="#fff"/><ellipse cx="52" cy="19" rx="7" ry="4.6" fill="#fff"/><ellipse cx="60" cy="25.4" rx="14" ry="2.2" fill="#c9d7e6" opacity=".75"/><ellipse cx="72" cy="15.6" rx="5" ry="2.4" fill="#fffdf2"/></g>'
-      + '<g class="sp-dl-wolke sp-dl-wolke2"><ellipse cx="190" cy="14" rx="13" ry="4.2" fill="#fff" opacity=".85"/><ellipse cx="198" cy="11" rx="8" ry="4.6" fill="#fff" opacity=".95"/><ellipse cx="191" cy="16.6" rx="11" ry="1.6" fill="#c9d7e6" opacity=".7"/><ellipse cx="200" cy="9.4" rx="4" ry="2" fill="#fffdf2"/></g>'
+      + '<g class="sp-dl-wolke"><ellipse cx="60" cy="22" rx="16" ry="5.5" fill="#fff" opacity=".92"/><ellipse cx="70" cy="18" rx="10" ry="6" fill="#fff"/><ellipse cx="52" cy="19" rx="7" ry="4.6" fill="#fff"/></g>'
+      + '<g class="sp-dl-wolke sp-dl-wolke2"><ellipse cx="190" cy="14" rx="13" ry="4.2" fill="#fff" opacity=".85"/><ellipse cx="198" cy="11" rx="8" ry="4.6" fill="#fff" opacity=".95"/></g>'
       + '<path class="sp-dl-vogel" d="M120 30 q3 -2.6 5.4 0 q2.4 -2.6 5.4 0 M136 24 q2 -1.8 3.8 0 q1.8 -1.8 3.8 0" fill="none" stroke="#3a4152" stroke-width=".8" stroke-linecap="round"/>'
       /* Berge mit Schneekappen, hinten grau-blau. */
       + '<path d="M0 64 L28 40 L46 52 L74 26 L102 50 L120 44 L150 60 L0 70 Z" fill="#a6b0c2" opacity=".8"/>'
       + '<path d="M170 60 L206 34 L226 46 L258 14 L288 36 L304 28 L320 38 V74 H170 Z" fill="url(#spDlBerg)"/>'
       + '<path d="M258 14 L250 24 L256 22 L260 27 L265 21 L270 24 Z M206 34 L200 40 L206 39 L210 42 Z M74 26 L68 33 L74 31 L78 35 L82 31 Z" fill="#f6f8fb"/>'
-      /* FASSUNG 700 — die Sonne steht rechts: Westhänge im Schatten, Osthänge im Licht. */
-      + '<path d="M206 34 L170 60 L170 74 L203 74 Z M258 14 L226 46 L229 74 L254 74 Z M304 28 L288 36 L291 74 L302 74 Z" fill="#46506a" opacity=".32"/>'
-      + '<path d="M258 14 L288 36 L292 74 L262 74 Z M206 34 L226 46 L228 74 L208 74 Z" fill="#fff" opacity=".1"/>'
-      + '<path d="M28 40 L0 64 L0 70 L26 68 Z M74 26 L46 52 L50 68 L72 66 Z M120 44 L102 50 L104 66 L118 64 Z" fill="#5a6478" opacity=".22"/>'
-      + '<path d="M74 26 L102 50 L100 66 L76 66 Z M28 40 L46 52 L44 68 L30 68 Z" fill="#fff" opacity=".12"/>'
-      + '<path d="M212 42 l7 8 l-2 6 M232 40 l6 9 M250 26 l-3 10 l4 8 M270 22 l7 12 l-3 9 M292 38 l5 9 M84 34 l6 10 M40 48 l5 7 M110 48 l-3 6" fill="none" stroke="#4f5a6e" stroke-opacity=".4" stroke-width=".8" stroke-linecap="round"/>'
-      + '<path d="M258 14 L265 21 L270 24 L262 23 Z M74 26 L78 35 L82 31 Z" fill="#b9c8dc" opacity=".8"/>'
-      + '<rect x="0" y="44" width="320" height="30" fill="url(#spDlDunst)"/>'
+      + '<path d="M258 14 L288 36 L304 28 L320 38 V74 H270 Z" fill="#5f6a7e" opacity=".35"/>'
       /* Hügelkette mit Wald. */
-      + '<path d="M0 78 C30 60 60 62 92 70 C120 77 150 62 186 64 C220 66 250 58 280 64 C300 68 312 66 320 64 V110 H0 Z" fill="url(#spDlHuegel)"/>'
-      + '<path d="M0 78 C30 60 60 62 92 70 C120 77 150 62 186 64 C220 66 250 58 280 64 C300 68 312 66 320 64 V110 H0 Z" fill="url(#spDlGras)" opacity=".7"/>';
+      + '<path d="M0 78 C30 60 60 62 92 70 C120 77 150 62 186 64 C220 66 250 58 280 64 C300 68 312 66 320 64 V110 H0 Z" fill="url(#spDlHuegel)"/>';
     var i, x, y;
     for (i = 0; i < 26; i++) { x = 6 + i * 12.2 + dorfZufall(i) * 6; y = 70 + Math.sin(i * .9) * 4 + dorfZufall(i + 50) * 3; if (x > 240) h += dorfTanne(x, y + 2, .75 + dorfZufall(i + 9) * .25); else h += dorfBaum(x, y + 3, .6 + dorfZufall(i + 7) * .25, i); }
     /* Die große Wiese mit sanften Wellen. */
     h += '<path d="M0 96 C40 84 80 90 120 92 C170 95 210 84 250 88 C285 91 305 86 320 84 V200 H0 Z" fill="url(#spDlWiese)"/>'
-      + '<path d="M0 96 C40 84 80 90 120 92 C170 95 210 84 250 88 C285 91 305 86 320 84 V200 H0 Z" fill="url(#spDlGras)" opacity=".5"/>'
       + '<path d="M0 132 C50 124 90 132 140 128 C200 124 250 134 320 126 V200 H0 Z" fill="#78b247" opacity=".55"/>'
       /* Felder: gold (reif) und grün, schräg gepflügt, mit Feldrain. */
       + '<path d="M4 176 L44 164 L60 188 L14 198 Z" fill="url(#spDlKorn)" stroke="#9c7c2a" stroke-width=".6"/>'
@@ -7197,8 +7090,6 @@
       + [8, 16, 24, 32, 40, 48].map(function (q) { return '<path d="M' + q + " " + (q < 28 ? 121.4 : 122) + " v4 M" + q + " " + (q < 28 ? 134.6 : 135) + ' v4" stroke="#6b4521" stroke-width="1"/>'; }).join("")
       /* Der Fluss: aus den Bergen, unter der Brücke durch, zum Teich. */
       + '<path d="M150 62 C146 76 132 80 136 96 C140 112 164 116 160 132 C156 146 136 150 142 166 C146 178 168 184 176 200 H196 C188 184 166 176 162 166 C158 152 178 146 180 132 C182 114 158 108 154 96 C150 82 162 76 158 62 Z" fill="url(#spDlWasser)"/>'
-      + '<path d="M150 62 C146 76 132 80 136 96 C140 112 164 116 160 132 C156 146 136 150 142 166 C146 178 168 184 176 200 M196 200 C188 184 166 176 162 166 C158 152 178 146 180 132 C182 114 158 108 154 96 C150 82 162 76 158 62" fill="none" stroke="#56743a" stroke-opacity=".55" stroke-width="1.6"/>'
-      + '<path d="M150 62 C146 76 132 80 136 96 C140 112 164 116 160 132 C156 146 136 150 142 166 C146 178 168 184 176 200 M196 200 C188 184 166 176 162 166 C158 152 178 146 180 132 C182 114 158 108 154 96 C150 82 162 76 158 62" fill="none" stroke="#c9b48a" stroke-opacity=".5" stroke-width=".7" stroke-dasharray="1 1.6" transform="translate(-1.2 0)"/>'
       + '<path class="sp-dl-glanz" d="M152 70 C148 82 140 86 144 98 C148 110 168 116 166 132 C164 146 146 152 150 166 C153 176 170 184 184 198" fill="none" stroke="#dff3ff" stroke-width="1.1" stroke-dasharray="3 7" opacity=".85"/>'
       + '<path d="M140 100 q2 3 0 6 M166 134 q-2 3 0 6 M146 168 q2 3 0 5" stroke="#9fd6f5" stroke-width=".8" fill="none"/>'
       /* Wege aus gestampfter Erde, zu allen Plätzen. */
@@ -7206,7 +7097,6 @@
         + ' fill="none" stroke="#c7a978" stroke-width="4.2" stroke-linecap="round" opacity=".9"/>'
       + '<path d="M110 118 C130 112 150 104 160 100 C180 94 200 92 214 90 M160 100 C166 118 176 128 186 160 M110 118 C100 130 84 142 70 152 M110 118 C92 118 60 116 32 120 M214 90 C236 96 256 104 272 112 M186 160 C212 150 222 144 232 138 M186 160 C200 170 240 176 272 184 M126 168 C150 164 164 162 186 162 M160 100 C150 88 120 80 52 76 M214 90 C240 80 270 70 292 64"'
         + ' fill="none" stroke="#e3cc9f" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1.4 2.2"/>'
-      + '<path d="M110 118 C130 112 150 104 160 100 C180 94 200 92 214 90 M160 100 C166 118 176 128 186 160 M110 118 C100 130 84 142 70 152 M110 118 C92 118 60 116 32 120 M214 90 C236 96 256 104 272 112 M186 160 C212 150 222 144 232 138 M186 160 C200 170 240 176 272 184 M126 168 C150 164 164 162 186 162 M160 100 C150 88 120 80 52 76 M214 90 C240 80 270 70 292 64" fill="none" stroke="url(#spDlKies)" stroke-width="3.6" stroke-linecap="round" opacity=".55"/>'
       /* Steinbrücke über den Fluss. */
       + '<path d="M150 101 C154 95 162 95 166 101 L168 104 H148 Z" fill="#b9b2a4" stroke="#6f6758" stroke-width=".7"/><path d="M152 104 C154 100 162 100 164 104" fill="#3b86c2"/>'
       + '<path d="M149 101 H167" stroke="#8a826f" stroke-width="1"/>'
@@ -7224,135 +7114,91 @@
     /* Kühe auf der Weide. */
     h += '<g transform="translate(18 130)"><ellipse rx="3.4" ry="2" fill="#fff"/><circle cx="-1" cy="-.4" r=".9" fill="#222"/><circle cx="3.2" cy="-1.2" r="1.2" fill="#fff"/><path d="M-2 1.6 v1.6 M2 1.6 v1.6" stroke="#222" stroke-width=".6"/></g>'
       + '<g transform="translate(38 128) scale(-1 1)"><ellipse rx="3" ry="1.8" fill="#8a5a2b"/><circle cx="2.8" cy="-1" r="1.1" fill="#8a5a2b"/><path d="M-1.6 1.4 v1.5 M1.6 1.4 v1.5" stroke="#3a2a1a" stroke-width=".6"/></g>';
-    /* Heuhaufen am Feld, ein Ziehbrunnen am Dorfplatz, Hecken am Feldrain. */
-    [[24, 158, 1], [92, 196, .9]].forEach(function (q) { h += '<g transform="translate(' + q[0] + " " + q[1] + ") scale(" + q[2] + ')"><ellipse cx="-1.6" cy=".6" rx="6" ry="1.4" fill="#244a18" opacity=".3"/><path d="M-5 .6 C-5 -5 5 -5 5 .6 Z" fill="#e0bb54"/><path d="M-3.6 -1 q1.4 -2.6 3 -3 M-1 .2 q.6 -3 2.4 -3.6 M1.6 .4 q.8 -2 2 -2.4" stroke="#b08a2a" stroke-width=".4" fill="none"/><path d="M0 -3.4 C2 -3.6 4 -1.6 5 .6 H2 Z" fill="#f2d57a" opacity=".6"/></g>'; });
-    h += '<g transform="translate(134 124)"><ellipse cx="-1.4" cy="3.4" rx="4.6" ry="1.1" fill="#244a18" opacity=".3"/><rect x="-3" y="0" width="6" height="3.6" rx="1" fill="#a39c8e" stroke="#5f584b" stroke-width=".4"/><path d="M-3 1.3 h6 M-1.2 0 v1.3 M1.4 1.3 v2.3" stroke="#5f584b" stroke-width=".3"/>'
-      + '<path d="M-2.6 0 V-5 M2.6 0 V-5" stroke="#6b4521" stroke-width=".7"/><path d="M-3.6 -4.6 L0 -7 L3.6 -4.6 Z" fill="#9c3b2a" stroke="#3a2412" stroke-width=".3"/><path d="M0 -4.6 V-1.6" stroke="#444" stroke-width=".25"/><rect x="-.7" y="-1.8" width="1.4" height="1.2" fill="#8a5a2b"/></g>';
-    for (i = 0; i < 9; i++) h += '<ellipse cx="' + (44 + i * 6.4).toFixed(1) + '" cy="' + (158 - i * .9 + dorfZufall(i + 900) * 1.2).toFixed(1) + '" rx="3.4" ry="2.2" fill="' + ["#3f7a2e", "#4d8c34", "#467f30"][i % 3] + '"/>';
-    /* Warmes Licht von der Sonne rechts oben, zum Rand hin etwas dunkler. */
-    h += '<rect width="320" height="200" fill="url(#spDlLicht)"/>';
     return (dorfLandCache = h + "</svg>");
   }
-  /* Ein Fachwerkhaus nach Maß – FASSUNG 700 wie von Hand gebaut: Sockel aus
-     einzelnen Feldsteinen, Putz mit Körnung und Wetterflecken, Balken mit
-     Holzglanz und leichtem Durchhang, Fenster mit Glanz und Blumenkasten,
-     Bohlentür mit Beschlägen, Ziegel in Reihen, Moos, Efeu, Traufschatten;
-     Licht von rechts oben, Schatten nach links. */
+  /* Ein Fachwerkhaus nach Maß: Steinsockel, Balken mit Andreaskreuzen,
+     Fenster mit Läden und Blumenkasten, Ziegeldach, Schornstein. */
   function fachwerk(o) {
-    var w = o.w || 26, hh = o.h || 14, x0 = 24 - w / 2, y0 = 42 - hh, dachH = o.dachH || 12, g = "", i, f;
-    var dach = o.dach, balken = o.balken || "#5a3620", n = Math.round(w * 7 + hh * 13 + dachH * 3) + (o.stufe || 1);
-    g += '<ellipse cx="20.5" cy="45.2" rx="' + dhF(w / 2 + 8) + '" ry="3.2" fill="url(#spDhSchatten)"/>';
-    /* Wand: Putz, Körnung, Wetterflecken unten. */
-    var wand = dhV([[x0, y0], [x0 + w, y0], [x0 + w, 42.4], [x0, 42.4]], .6, n);
-    g += '<path d="' + wand + '" fill="' + (o.wand || "#f3e6c9") + '"/><path d="' + wand + '" fill="url(#spDhPutz)"/>'
-      + '<ellipse cx="' + dhF(x0 + w * .26) + '" cy="41.2" rx="' + dhF(w * .17) + '" ry="1.7" fill="#8a7a4a" opacity=".17"/>'
-      + '<ellipse cx="' + dhF(x0 + w * .74) + '" cy="41.5" rx="' + dhF(w * .11) + '" ry="1.2" fill="#8a7a4a" opacity=".13"/>';
-    /* Balken: Rähm, Riegel, Ständer, Andreaskreuze – mit Holzglanz. */
-    var mitte = y0 + hh / 2, felder = Math.max(2, Math.round(w / 7)), fb = w / felder, bk = [];
-    bk.push(dhL(x0, y0 + .4, x0 + w, y0 + .4, .5, n + 5), dhL(x0, mitte, x0 + w, mitte, .7, n + 7), dhL(x0 + .4, y0, x0 + .4, 42.2, .4, n + 9), dhL(x0 + w - .4, y0, x0 + w - .4, 42.2, .4, n + 11));
-    for (f = 1; f < felder; f++) bk.push(dhL(x0 + f * fb, y0, x0 + f * fb + (dorfZufall(n + f) - .5) * .4, 42.2, .5, n + 20 + f * 2));
-    [0, felder - 1].forEach(function (fi, j) { var q = x0 + fi * fb; bk.push(dhL(q + .3, mitte, q + fb - .3, 42, .4, n + 40 + j * 4), dhL(q + fb - .3, mitte, q + .3, 42, .4, n + 42 + j * 4)); });
-    var bd = bk.join(" ");
-    g += '<path d="' + bd + '" fill="none" stroke="' + balken + '" stroke-width="1.3" stroke-linecap="round"/>'
-      + '<path d="' + bd + '" fill="none" stroke="#fff" stroke-opacity=".17" stroke-width=".35" transform="translate(.3 -.25)"/>';
-    /* Fenster oben: Läden aus Brettern, Glas mit Glanz, Blumenkasten. */
-    var blumen = ["#e2403a", "#ffd23c", "#ff7aa8", "#fff", "#b58cff"];
+    var w = o.w || 26, hh = o.h || 14, x0 = 24 - w / 2, y0 = 42 - hh, dachH = o.dachH || 12, g = "";
+    var dach = o.dach, balken = o.balken || "#5a3620";
+    g += '<ellipse cx="24" cy="45" rx="' + (w / 2 + 5) + '" ry="2.4" fill="#2d4f1f" opacity=".28"/>';
+    g += '<rect x="' + (x0 - .6) + '" y="42" width="' + (w + 1.2) + '" height="3.4" fill="#a39c8e" stroke="#5f584b" stroke-width=".5"/>';
+    for (var sx = x0 + 1.5; sx < x0 + w; sx += 4.2) g += '<path d="M' + sx.toFixed(1) + " 42 v3.4" + '" stroke="#7a7366" stroke-width=".4"/>';
+    g += '<rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="' + hh + '" fill="' + (o.wand || "#f3e6c9") + '"/>';
+    /* Balken: Rahmen, Riegel in der Mitte, Ständer, Andreaskreuze. */
+    var mitte = y0 + hh / 2, felder = Math.max(2, Math.round(w / 7)), fb = w / felder;
+    g += '<rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="' + hh + '" fill="none" stroke="' + balken + '" stroke-width="1.3"/>';
+    g += '<path d="M' + x0 + " " + mitte.toFixed(1) + " H" + (x0 + w) + '" stroke="' + balken + '" stroke-width="1.1"/>';
+    for (var f = 1; f < felder; f++) g += '<path d="M' + (x0 + f * fb).toFixed(1) + " " + y0 + " V42" + '" stroke="' + balken + '" stroke-width="1"/>';
+    [0, felder - 1].forEach(function (f) {
+      var a = x0 + f * fb;
+      g += '<path d="M' + a.toFixed(1) + " " + mitte.toFixed(1) + " L" + (a + fb).toFixed(1) + " 42 M" + (a + fb).toFixed(1) + " " + mitte.toFixed(1) + " L" + a.toFixed(1) + ' 42" stroke="' + balken + '" stroke-width=".8" opacity=".9"/>';
+    });
+    /* Fenster oben mit Läden und Blumen. */
     for (f = 0; f < felder; f++) {
       if (o.ohneFenster && o.ohneFenster.indexOf(f) >= 0) continue;
       var fx = x0 + f * fb + fb / 2 - 2, fy = y0 + 1.8;
-      g += '<rect x="' + dhF(fx - 1.4) + '" y="' + dhF(fy) + '" width="1.25" height="3.7" rx=".2" fill="#3f7a4a"/><rect x="' + dhF(fx + 4.15) + '" y="' + dhF(fy) + '" width="1.25" height="3.7" rx=".2" fill="#3f7a4a"/>'
-        + '<path d="M' + dhF(fx - .8) + " " + dhF(fy + .2) + " v3.3 M" + dhF(fx + 4.8) + " " + dhF(fy + .2) + ' v3.3" stroke="#2a5634" stroke-width=".25"/>'
-        + '<rect x="' + dhF(fx) + '" y="' + dhF(fy) + '" width="4" height="3.7" rx=".35" fill="' + (o.licht ? "url(#spDhLampe)" : "url(#spDhGlas)") + '" stroke="#4a2f18" stroke-width=".45"/>'
-        + '<path d="M' + dhF(fx + 2) + " " + dhF(fy) + " v3.7 M" + dhF(fx) + " " + dhF(fy + 1.85) + ' h4" stroke="#f6efe2" stroke-width=".35"/>'
-        + '<path d="M' + dhF(fx + .5) + " " + dhF(fy + 1.5) + ' l1 -1.1" stroke="#fff" stroke-opacity=".7" stroke-width=".35" stroke-linecap="round"/>'
-        + '<rect x="' + dhF(fx - .5) + '" y="' + dhF(fy + 3.6) + '" width="5" height="1.05" rx=".3" fill="#7a4a24"/>'
-        + '<ellipse cx="' + dhF(fx + 2) + '" cy="' + dhF(fy + 3.5) + '" rx="2.4" ry=".75" fill="#4d8c34"/>';
-      for (i = 0; i < 4; i++) g += '<circle cx="' + dhF(fx + .3 + i * 1.15) + '" cy="' + dhF(fy + 3.25 - dorfZufall(n + f * 5 + i) * .4) + '" r=".5" fill="' + blumen[(n + f + i) % 5] + '"/>';
+      g += '<rect x="' + (fx - 1.3).toFixed(1) + '" y="' + fy.toFixed(1) + '" width="1.2" height="3.6" fill="#3f7a4a"/><rect x="' + (fx + 4.1).toFixed(1) + '" y="' + fy.toFixed(1) + '" width="1.2" height="3.6" fill="#3f7a4a"/>'
+        + '<rect x="' + fx.toFixed(1) + '" y="' + fy.toFixed(1) + '" width="4" height="3.6" fill="' + (o.licht ? "#ffe59a" : "#9fd3f2") + '" stroke="#4a2f18" stroke-width=".4"/>'
+        + '<path d="M' + (fx + 2).toFixed(1) + " " + fy.toFixed(1) + " v3.6 M" + fx.toFixed(1) + " " + (fy + 1.8).toFixed(1) + ' h4" stroke="#fff" stroke-width=".35"/>'
+        + '<rect x="' + (fx - .4).toFixed(1) + '" y="' + (fy + 3.6).toFixed(1) + '" width="4.8" height="1" fill="#7a4a24"/>'
+        + '<circle cx="' + (fx + .6).toFixed(1) + '" cy="' + (fy + 3.5).toFixed(1) + '" r=".6" fill="#e2403a"/><circle cx="' + (fx + 2).toFixed(1) + '" cy="' + (fy + 3.3).toFixed(1) + '" r=".6" fill="#ffd23c"/><circle cx="' + (fx + 3.4).toFixed(1) + '" cy="' + (fy + 3.5).toFixed(1) + '" r=".6" fill="#e2403a"/>';
     }
-    /* Bohlentür mit Bogen, Beschlägen, Stufe und einem Blumentopf. */
+    /* Tür mit Bogen, Laterne. */
     var tx = o.tuerX != null ? o.tuerX : 24;
-    g += '<path d="M' + dhF(tx - 2.5) + " 42 V" + dhF(mitte + 2.4) + " a2.5 2.5 0 0 1 5 0 V42 Z" + '" fill="#6b4521" stroke="#3a2412" stroke-width=".5"/>'
-      + '<path d="M' + dhF(tx - .85) + " 42 V" + dhF(mitte + .5) + " M" + dhF(tx + .85) + " 42 V" + dhF(mitte + .5) + '" stroke="#4a2c14" stroke-width=".3"/>'
-      + '<path d="M' + dhF(tx - 2.4) + " " + dhF(mitte + 3.6) + " h2 M" + dhF(tx - 2.4) + ' 40.6 h2" stroke="#2b2622" stroke-width=".55"/>'
-      + '<circle cx="' + dhF(tx + 1.4) + '" cy="' + dhF(mitte + 4.8) + '" r=".38" fill="#f2c230"/>'
-      + '<path d="M' + dhF(tx - 3.5) + " 42 h7 l-.4 1 h-6.2 Z" + '" fill="#9a9284" stroke="#5f584b" stroke-width=".25"/>';
-    if (o.topf !== false) g += '<path d="M' + dhF(tx + 3.3) + " 42.2 l.35 -1.6 h2 l.35 1.6 Z" + '" fill="#b5652f" stroke="#6b3a1a" stroke-width=".2"/><circle cx="' + dhF(tx + 4.35) + '" cy="39.7" r="1.3" fill="#4d8c34"/><circle cx="' + dhF(tx + 4) + '" cy="39.2" r=".45" fill="#e2403a"/><circle cx="' + dhF(tx + 4.8) + '" cy="39.6" r=".4" fill="#ffd23c"/>';
-    /* Efeu klettert an einer Ecke hoch. */
-    if (o.efeu) {
-      var ex = o.efeu === "r" ? x0 + w - 1 : x0 + 1, ed = o.efeu === "r" ? -1 : 1;
-      g += '<path d="M' + dhF(ex) + " 42 q" + dhF(ed * 1.2) + " -" + dhF(hh * .3) + " 0 -" + dhF(hh * .55) + '" fill="none" stroke="#3d6e1c" stroke-width=".3"/>';
-      for (i = 0; i < 9; i++) g += '<ellipse cx="' + dhF(ex + ed * Math.sin(i * 1.3) * .9) + '" cy="' + dhF(42 - i * hh * .065) + '" rx=".85" ry=".55" transform="rotate(' + Math.round(dorfZufall(n + i * 7) * 80 - 40) + " " + dhF(ex + ed * Math.sin(i * 1.3) * .9) + " " + dhF(42 - i * hh * .065) + ')" fill="' + (i % 3 ? "#3f7a2e" : "#5e9e3c") + '"/>';
+    g += '<path d="M' + (tx - 2.4) + " 42 V" + (mitte + 2.4).toFixed(1) + " a2.4 2.4 0 0 1 4.8 0 V42 Z" + '" fill="#6b4521" stroke="#3a2412" stroke-width=".5"/><circle cx="' + (tx + 1.2) + '" cy="' + (mitte + 4.6).toFixed(1) + '" r=".35" fill="#f2c230"/>';
+    g += '<path d="M' + (tx - 3.4) + " 42 h6.8 v.8 h-6.8 Z" + '" fill="#8a826f"/>';
+    /* Dach mit Ziegelreihen und Überstand; Stufe 2: Gaube, Stufe 3: goldene Wetterfahne. */
+    var dl = x0 - 3, dr = x0 + w + 3, dy = y0 - dachH;
+    g += '<path d="M' + dl + " " + (y0 + .6) + " L24 " + dy + " L" + dr + " " + (y0 + .6) + ' Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".7" stroke-linejoin="round"/>';
+    for (var r = 1; r < 4; r++) {
+      var ry = dy + dachH * r / 4, halb = (dr - dl) / 2 * r / 4;
+      g += '<path d="M' + (24 - halb).toFixed(1) + " " + ry.toFixed(1) + " H" + (24 + halb).toFixed(1) + '" stroke="#000" stroke-opacity=".18" stroke-width=".6"/>';
     }
-    /* Sockel aus Feldsteinen. */
-    var sx = x0 - .8;
-    for (i = 0; sx < x0 + w + .6 && i < 30; i++) {
-      var sw = Math.min(2.2 + dorfZufall(n + i * 3) * 2.2, x0 + w + .9 - sx);
-      g += '<rect x="' + dhF(sx) + '" y="' + dhF(42.2 + dorfZufall(n + i + 40) * .3) + '" width="' + dhF(Math.max(.6, sw - .3)) + '" height="' + dhF(3.1 - dorfZufall(n + i + 80) * .5) + '" rx=".9" fill="' + ["#a8a092", "#9a9284", "#b5ad9d", "#8f887a"][i % 4] + '" stroke="#5f584b" stroke-width=".3"/>';
-      sx += sw;
-    }
-    /* Licht auf der Wand, Schatten unter der Traufe. */
-    g += '<path d="' + wand + '" fill="url(#spDhLichtWand)"/><rect x="' + dhF(x0) + '" y="' + dhF(y0) + '" width="' + dhF(w) + '" height="2.6" fill="url(#spDhTraufe)"/>';
-    /* Dach mit Durchhang, Ziegelreihen, Moos; links im Schatten. */
-    var dl = x0 - 3, dr = x0 + w + 3, dy = y0 - dachH, yu = y0 + .6;
-    var dachPfad = "M" + dhF(dl) + " " + dhF(yu) + " Q" + dhF((dl + 24) / 2 + .5) + " " + dhF((yu + dy) / 2 + .9) + " 24 " + dhF(dy) + " Q" + dhF((24 + dr) / 2 - .5) + " " + dhF((yu + dy) / 2 + .9) + " " + dhF(dr) + " " + dhF(yu) + " Q24 " + dhF(yu + .8) + " " + dhF(dl) + " " + dhF(yu) + " Z";
-    g += '<path d="' + dachPfad + '" fill="' + dach + '" stroke="#3a2412" stroke-width=".7" stroke-linejoin="round"/>';
-    var ziegel = "", hell = "";
-    for (var ry = dy + 2.3, reihe = 0; ry < yu - .2; ry += 1.9, reihe++) {
-      var halb = (ry - dy) / (yu - dy) * (dr - dl) / 2 - .9;
-      for (var zx = 24 - halb + (reihe % 2); zx + 2 <= 24 + halb; zx += 2) {
-        ziegel += "M" + dhF(zx) + " " + dhF(ry) + " a1 .9 0 0 0 2 0 ";
-        if (dorfZufall(n + reihe * 31 + Math.round(zx * 3)) > .78) hell += "M" + dhF(zx) + " " + dhF(ry) + " a1 .9 0 0 0 2 0 Z ";
-      }
-    }
-    g += '<path d="' + ziegel + '" fill="none" stroke="#000" stroke-opacity=".3" stroke-width=".3"/>' + (hell ? '<path d="' + hell + '" fill="#fff" fill-opacity=".13"/>' : "");
-    g += '<ellipse cx="' + dhF(dl + 5) + '" cy="' + dhF(yu - 1.6) + '" rx="2.2" ry=".8" fill="#6d8f3a" opacity=".6"/><ellipse cx="' + dhF(dl + 8.4) + '" cy="' + dhF(yu - 3.6) + '" rx="1.2" ry=".5" fill="#6d8f3a" opacity=".5"/>'
-      + '<path d="' + dachPfad + '" fill="url(#spDhDachLicht)"/>'
-      + '<path d="M24 ' + dhF(dy) + " Q" + dhF((24 + dr) / 2 - .5) + " " + dhF((yu + dy) / 2 + .9) + " " + dhF(dr) + " " + dhF(yu) + '" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width=".45"/>';
-    if (o.stufe >= 2) g += '<path d="M' + dhF(24 - 3.4) + " " + dhF(y0 - dachH * .3) + " l3.4 -3 l3.4 3 v3 h-6.8 Z" + '" fill="' + dach + '" stroke="#3a2412" stroke-width=".5"/><rect x="22.6" y="' + dhF(y0 - dachH * .3 + .4) + '" width="2.8" height="2.2" rx=".3" fill="' + (o.licht ? "url(#spDhLampe)" : "url(#spDhGlas)") + '" stroke="#4a2f18" stroke-width=".3"/>';
+    g += '<path d="M24 ' + dy + " L" + dr + " " + (y0 + .6) + " H24 Z" + '" fill="#000" opacity=".12"/>';
+    if (o.stufe >= 2) g += '<path d="M' + (24 - 3.4) + " " + (y0 - dachH * .3).toFixed(1) + " l3.4 -3 l3.4 3 v3 h-6.8 Z" + '" fill="' + dach + '" stroke="#3a2412" stroke-width=".5"/><rect x="22.6" y="' + (y0 - dachH * .3 + .4).toFixed(1) + '" width="2.8" height="2.2" fill="#ffe59a"/>';
     if (o.schorn !== false) {
-      var sxx = o.schornX || 30, sy = dy + dachH * .3;
-      g += '<rect x="' + sxx + '" y="' + dhF(sy) + '" width="2.6" height="' + dhF(dachH * .5) + '" fill="#9a4a32" stroke="#3a2412" stroke-width=".4"/>'
-        + '<path d="M' + sxx + " " + dhF(sy + 1.2) + " h2.6 M" + sxx + " " + dhF(sy + 2.5) + " h2.6 M" + (sxx + 1.3) + " " + dhF(sy) + " v1.2 M" + (sxx + .6) + " " + dhF(sy + 1.2) + ' v1.3" stroke="#6a2e1c" stroke-width=".25"/>'
-        + '<rect x="' + dhF(sxx - .3) + '" y="' + dhF(sy - .5) + '" width="3.2" height=".7" fill="#7a3a26"/>'
-        + '<g class="sp-dh-rauch"><circle cx="' + (sxx + 1.3) + '" cy="' + dhF(sy - 2) + '" r="1.6" fill="' + (o.rauch || "#e8ecf0") + '"/><circle cx="' + (sxx + 2.6) + '" cy="' + dhF(sy - 5) + '" r="2" fill="' + (o.rauch || "#e8ecf0") + '"/></g>';
+      var sxx = o.schornX || 30;
+      g += '<rect x="' + sxx + '" y="' + (dy + dachH * .3).toFixed(1) + '" width="2.6" height="' + (dachH * .5).toFixed(1) + '" fill="#9a4a32" stroke="#3a2412" stroke-width=".4"/>'
+        + '<g class="sp-dh-rauch"><circle cx="' + (sxx + 1.3) + '" cy="' + (dy + dachH * .3 - 2).toFixed(1) + '" r="1.6" fill="' + (o.rauch || "#e8ecf0") + '"/><circle cx="' + (sxx + 2.6) + '" cy="' + (dy + dachH * .3 - 5).toFixed(1) + '" r="2" fill="' + (o.rauch || "#e8ecf0") + '" opacity=".7"/></g>';
     }
-    if (o.stufe >= 3) g += '<path d="M24 ' + dhF(dy) + " v-5" + '" stroke="#6b4521" stroke-width=".6"/><path d="M24 ' + dhF(dy - 5) + ' l4 1.2 l-4 1.4 Z" fill="#f2c230" stroke="#9a7410" stroke-width=".3"/>';
+    if (o.stufe >= 3) g += '<path d="M24 ' + dy + " v-5" + '" stroke="#6b4521" stroke-width=".6"/><path d="M24 ' + (dy - 5) + ' l4 1.2 l-4 1.4 Z" fill="#f2c230" stroke="#9a7410" stroke-width=".3"/>';
     return g + (o.extra || "");
   }
   function dorfHausGross(k, st) {
     st = st || 1;
     var dach = st >= 3 ? "#9c3b2a" : st === 2 ? "#b8492f" : "#9a5a30", h = "";
-    if (k === "baeckerei") h = fachwerk({ w: 26, h: 15, dach: dach, stufe: st, licht: true, schornX: 28, efeu: "r", topf: false, extra:
+    if (k === "baeckerei") h = fachwerk({ w: 26, h: 15, dach: dach, stufe: st, licht: true, schornX: 28, extra:
       '<path d="M36 25 h5" stroke="#4a2f18" stroke-width=".8"/><path d="M38.2 25 v1.4" stroke="#4a2f18" stroke-width=".5"/>'
       + '<path d="M36.4 29.4 C35 26 39 25.6 38.6 28.2 C38.2 25.6 42.2 26 40.8 29.4 C40 31 37.2 31 36.4 29.4 Z M37.6 28.8 L39.8 28.8" fill="none" stroke="#b86a2c" stroke-width="1.2"/>'
       + '<ellipse cx="14" cy="43" rx="2.4" ry="1.3" fill="#d9a35a"/><rect x="11" y="39.4" width="5" height="3" rx=".6" fill="#8a5a2b"/>' });
-    else if (k === "schule") h = fachwerk({ w: 28, h: 15, dach: dach, stufe: st, schorn: false, efeu: "l", extra:
+    else if (k === "schule") h = fachwerk({ w: 28, h: 15, dach: dach, stufe: st, schorn: false, extra:
       '<rect x="21.6" y="4" width="4.8" height="8" fill="#f3e6c9" stroke="#5a3620" stroke-width=".7"/><path d="M20.8 4.4 L24 .4 L27.2 4.4 Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".5"/>'
       + '<path d="M22.6 10 a1.4 1.4 0 0 1 2.8 0 v1 h-2.8 Z" fill="#f2c230"/><rect x="31" y="35.4" width="6" height="4" fill="#2f4a3a" stroke="#6b4521" stroke-width=".5"/><path d="M32 37 h3 M32 38.3 h2" stroke="#fff" stroke-width=".4"/>' });
-    else if (k === "schmiede") h = fachwerk({ w: 26, h: 14, dach: "#6c6f76", stufe: st, rauch: "#9aa0a8", schornX: 16, ohneFenster: [0], topf: false, extra:
+    else if (k === "schmiede") h = fachwerk({ w: 26, h: 14, dach: "#6c6f76", stufe: st, rauch: "#9aa0a8", schornX: 16, ohneFenster: [0], extra:
       '<rect x="12.5" y="34" width="7" height="8" fill="#2a1a10"/><path d="M13.4 42 C14 37.6 18 37.6 18.6 42 Z" fill="#ff7a1a"/><path d="M14.6 42 C15 39.6 17 39.6 17.4 42 Z" fill="#ffd23c" class="sp-dh-glut"/>'
       + '<path d="M34 43 h8 l-1.4 -2.4 h-6 Z M36.4 40.6 h3.6 l.6 -1.4 h-5 Z" fill="#3a3f48"/><path d="M40 37 l3 -3" stroke="#8a5a2b" stroke-width="1"/><path d="M42.4 33.2 l1.8 1.8" stroke="#5b636c" stroke-width="1.6"/>' });
-    else if (k === "brauerei") h = fachwerk({ w: 26, h: 15, dach: dach, stufe: st, schornX: 29, efeu: "r", extra:
+    else if (k === "brauerei") h = fachwerk({ w: 26, h: 15, dach: dach, stufe: st, schornX: 29, extra:
       '<g fill="#b07a45" stroke="#5a3616" stroke-width=".5"><ellipse cx="8" cy="41.6" rx="3" ry="2.4"/><ellipse cx="13.4" cy="41.6" rx="3" ry="2.4"/><ellipse cx="10.7" cy="37.8" rx="3" ry="2.4"/></g>'
       + '<path d="M5.4 41.6 h5.2 M10.8 41.6 h5.2 M8.1 37.8 h5.2" stroke="#3a4152" stroke-width=".4"/>'
       + '<path d="M13 26.6 C16 25 20 25 22 26.6" fill="none" stroke="#5a8a2a" stroke-width=".7"/><circle cx="15" cy="27" r=".9" fill="#9fd06a"/><circle cx="18" cy="26.2" r=".9" fill="#9fd06a"/><circle cx="21" cy="27" r=".9" fill="#9fd06a"/>' });
-    else if (k === "krankenhaus") h = fachwerk({ w: 30, h: 16, dach: "#5a7a9a", wand: "#fbfbfb", balken: "#8a9aaa", stufe: st, schorn: false, efeu: "l", extra:
+    else if (k === "krankenhaus") h = fachwerk({ w: 30, h: 16, dach: "#5a7a9a", wand: "#fbfbfb", balken: "#8a9aaa", stufe: st, schorn: false, extra:
       '<rect x="20.4" y="11.4" width="7.2" height="7.2" rx="1" fill="#fff" stroke="#8a9aaa" stroke-width=".4"/><path d="M22.8 12.4 h2.4 v2.2 h2.2 v2.4 h-2.2 v2.2 h-2.4 v-2.2 h-2.2 v-2.4 h2.2 Z" fill="#e2403a"/>'
       + '<path d="M40 44 V22" stroke="#6b6f76" stroke-width=".6"/><path d="M40 22 h6 v4 h-6 Z" fill="#fff" stroke="#aaa" stroke-width=".3"/><path d="M42.4 22.8 h1.2 v1 h1 v1.2 h-1 v1 h-1.2 v-1 h-1 v-1.2 h1 Z" fill="#e2403a"/>' });
-    else if (k === "rathaus") h = fachwerk({ w: 34, h: 17, dach: dach, stufe: st, dachH: 11, schornX: 34, efeu: "l", extra:
+    else if (k === "rathaus") h = fachwerk({ w: 34, h: 17, dach: dach, stufe: st, dachH: 11, schornX: 34, extra:
       '<rect x="20" y="3" width="8" height="13" fill="#f3e6c9" stroke="#5a3620" stroke-width=".8"/><path d="M19 3.4 L24 -3 L29 3.4 Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".6"/>'
       + '<circle cx="24" cy="8.6" r="2.8" fill="#fff" stroke="#3a2412" stroke-width=".5"/><path d="M24 8.6 V6.6 M24 8.6 L25.4 9.2" stroke="#3a2412" stroke-width=".5"/>'
       + '<path d="M24 -3 v-3" stroke="#6b4521" stroke-width=".5"/><path d="M24 -6 l3 1 l-3 1 Z" fill="#2f6fd6"/>'
       + '<path d="M10 26 h28" stroke="#b8492f" stroke-width=".6" stroke-dasharray="1.4 1"/>' });
-    else if (k === "muehle") h = '<ellipse cx="20.5" cy="45.2" rx="17" ry="3" fill="url(#spDhSchatten)"/>'
-      + '<path d="M16 44 L19 16 H29 L32 44 Z" fill="#e8dcc2" stroke="#6b5e44" stroke-width=".8"/><path d="M16 44 L19 16 H29 L32 44 Z" fill="url(#spDhStein)"/><path d="M16 44 L19 16 H29 L32 44 Z" fill="url(#spDhLichtWand)"/>'
+    else if (k === "muehle") h = '<ellipse cx="24" cy="45" rx="11" ry="2.2" fill="#2d4f1f" opacity=".3"/>'
+      + '<path d="M16 44 L19 16 H29 L32 44 Z" fill="#e8dcc2" stroke="#6b5e44" stroke-width=".8"/>'
       + [22, 28, 34, 40].map(function (y, i) { return '<path d="M' + (16.6 + i * .2) + " " + y + " H" + (31.4 - i * .2) + '" stroke="#b9ab8c" stroke-width=".5"/>'; }).join("")
-      + '<path d="M18 16 C18 9 30 9 30 16 Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".7"/><path d="M18 16 C18 9 30 9 30 16 Z" fill="url(#spDhSchindel)"/><path d="M18 16 C18 9 30 9 30 16 Z" fill="url(#spDhDachLicht)"/><rect x="21.8" y="36" width="4.4" height="8" rx="2.2" fill="#6b4521"/>'
+      + '<path d="M18 16 C18 9 30 9 30 16 Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".7"/><rect x="21.8" y="36" width="4.4" height="8" rx="2.2" fill="#6b4521"/>'
       + '<rect x="22.4" y="23" width="3.2" height="3.2" fill="#9fd3f2" stroke="#4a2f18" stroke-width=".4"/>'
       + '<g class="sp-dh-fluegel"><g fill="#fdf6e6" stroke="#6b4521" stroke-width=".45">'
       + [0, 90, 180, 270].map(function (a) { return '<g transform="rotate(' + a + ')"><path d="M-.5 0 L-.5 -17 H3 L3 -3 Z"/><path d="M-.5 -5 H3 M-.5 -9 H3 M-.5 -13 H3 M1.2 -17 V-3" stroke-width=".35"/></g>'; }).join("")
       + '</g><circle r="1.4" fill="#6b4521"/></g>';
-    else if (k === "bergwerk") h = '<path d="M1 45 C4 26 12 12 24 10 C36 12 44 26 47 45 Z" fill="#8a7c62" stroke="#4a4030" stroke-width=".8"/><path d="M1 45 C4 26 12 12 24 10 C36 12 44 26 47 45 Z" fill="url(#spDhFels)"/><path d="M1 45 C4 26 12 12 24 10 C36 12 44 26 47 45 Z" fill="url(#spDhLichtWand)"/>'
+    else if (k === "bergwerk") h = '<path d="M1 45 C4 26 12 12 24 10 C36 12 44 26 47 45 Z" fill="#8a7c62" stroke="#4a4030" stroke-width=".8"/>'
       + '<path d="M6 34 C12 30 18 32 22 28 M30 22 C34 24 38 22 42 26 M8 42 C14 38 20 40 26 37" fill="none" stroke="#6b5e48" stroke-width=".8"/>'
       + '<path d="M16 18 C20 12 28 12 32 18 C28 16 20 16 16 18 Z" fill="#6a9c3c" opacity=".8"/>'
       + '<path d="M16 45 V32 A8 8 0 0 1 32 32 V45 Z" fill="#17130d"/><path d="M15 45 V31.4 M33 45 V31.4" stroke="#8a5a2b" stroke-width="1.8"/><path d="M14 31 C18 27 30 27 34 31" fill="none" stroke="#6b4521" stroke-width="2"/>'
@@ -7361,8 +7207,8 @@
       + '<circle cx="32" cy="39.6" r="1.3" fill="#f2c230"/><circle cx="34.6" cy="39.2" r="1.2" fill="#dfe6ee"/><circle cx="37.2" cy="39.6" r="1.3" fill="#c96a3a"/>'
       + '<path d="M13 30 v4" stroke="#3a2a1a" stroke-width=".5"/><circle cx="13" cy="35" r="1.1" fill="#ffd23c" class="sp-dh-glut"/>'
       + (st >= 2 ? '<path d="M40 30 L44 22 M42 26 l3 1" stroke="#6b4521" stroke-width=".8"/>' : "") + (st >= 3 ? '<path d="M6 44 C8 40 10 40 12 44 Z" fill="#1c1812"/><circle cx="9" cy="43" r=".8" fill="#f2c230"/>' : "");
-    else if (k === "kuhstall") h = '<ellipse cx="20.5" cy="45.2" rx="26" ry="3" fill="url(#spDhSchatten)"/>'
-      + '<path d="M6 44 V26 L10 18 L24 12 L38 18 L42 26 V44 Z" fill="#b53b2c" stroke="#5a1a12" stroke-width=".8"/><path d="M6 44 V26 L10 18 L24 12 L38 18 L42 26 V44 Z" fill="url(#spDhBretter)"/><path d="M6 44 V26 L10 18 L24 12 L38 18 L42 26 V44 Z" fill="url(#spDhLichtWand)"/>'
+    else if (k === "kuhstall") h = '<ellipse cx="24" cy="45" rx="20" ry="2.4" fill="#2d4f1f" opacity=".3"/>'
+      + '<path d="M6 44 V26 L10 18 L24 12 L38 18 L42 26 V44 Z" fill="#b53b2c" stroke="#5a1a12" stroke-width=".8"/>'
       + '<path d="M4.6 26.6 L10 17.4 L24 11 L38 17.4 L43.4 26.6" fill="none" stroke="#4a3a34" stroke-width="2.4" stroke-linejoin="round"/>'
       + [30, 34, 38, 42].map(function (y) { return '<path d="M6 ' + y + ' H42" stroke="#8e2a1f" stroke-width=".4"/>'; }).join("")
       + '<rect x="17" y="30" width="14" height="14" fill="#7a2a1f" stroke="#fff" stroke-width="1"/><path d="M17 30 L31 44 M31 30 L17 44 M24 30 V44" stroke="#fff" stroke-width=".8"/>'
@@ -7370,26 +7216,26 @@
       + '<rect x="42.6" y="22" width="4.6" height="22" rx="2.3" fill="#cfd6de" stroke="#6b737c" stroke-width=".5"/><path d="M42.6 24.4 a2.3 1.4 0 0 1 4.6 0" fill="#8a929c"/>'
       + (st >= 2 ? '<rect x="8.4" y="32" width="4" height="3.4" fill="#fff" opacity=".9"/><rect x="35.6" y="32" width="4" height="3.4" fill="#fff" opacity=".9"/>' : "")
       + (st >= 3 ? '<path d="M24 12 v-5" stroke="#6b4521" stroke-width=".5"/><path d="M24 7 l4 1.2 l-4 1.4 Z" fill="#f2c230"/>' : "");
-    else if (k === "huehnerstall") h = '<ellipse cx="20.5" cy="45.2" rx="24" ry="3" fill="url(#spDhSchatten)"/>'
+    else if (k === "huehnerstall") h = '<ellipse cx="24" cy="45" rx="18" ry="2.2" fill="#2d4f1f" opacity=".3"/>'
       + '<path d="M11 44 V40 M27 44 V40" stroke="#6b4521" stroke-width="1.2"/>'
       + '<rect x="9" y="28" width="20" height="12" fill="#c8894a" stroke="#5a3616" stroke-width=".8"/>'
       + [11, 14, 17, 20, 23, 26].map(function (x) { return '<path d="M' + x + ' 28 V40" stroke="#a86e3a" stroke-width=".4"/>'; }).join("")
-      + '<rect x="9" y="28" width="20" height="12" fill="url(#spDhLichtWand)"/><path d="M7 29 L19 20 L31 29 Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".7" stroke-linejoin="round"/><path d="M7 29 L19 20 L31 29 Z" fill="url(#spDhSchindel)"/><path d="M7 29 L19 20 L31 29 Z" fill="url(#spDhDachLicht)"/>'
+      + '<path d="M7 29 L19 20 L31 29 Z" fill="' + dach + '" stroke="#3a2412" stroke-width=".7" stroke-linejoin="round"/>'
       + '<path d="M16.4 40 V35.4 a2.6 2.6 0 0 1 5.2 0 V40 Z" fill="#2a1a10"/><path d="M19 40 L25 44.4" stroke="#8a5a2b" stroke-width="1.6"/><path d="M20.4 41 l.8 -.6 M22 42.1 l.8 -.6 M23.6 43.2 l.8 -.6" stroke="#5a3616" stroke-width=".4"/>'
       + '<path d="M31 44 V36 M36 44 V36 M41 44 V36 M46 44 V36 M30 38 H47 M30 41.4 H47" stroke="#a86e3a" stroke-width=".6"/>'
       + '<g transform="translate(35 42)"><ellipse rx="2.6" ry="2" fill="#fff" stroke="#b0a090" stroke-width=".3"/><circle cx="2" cy="-1.8" r="1.1" fill="#fff"/><path d="M1.6 -3 l.4 -.8 l.4 .8" fill="#e2403a"/><path d="M3 -1.8 l1 .3 l-1 .3 Z" fill="#f2a20b"/></g>'
       + '<g transform="translate(42 43) scale(-1 1)"><ellipse rx="2.2" ry="1.7" fill="#c67a3a"/><circle cx="1.7" cy="-1.5" r=".95" fill="#c67a3a"/><path d="M1.4 -2.5 l.3 -.7 l.3 .7" fill="#e2403a"/></g>'
       + '<ellipse cx="13" cy="44" rx=".9" ry="1.2" fill="#fff4dc" stroke="#b09060" stroke-width=".3"/>';
-    else if (k === "labor") h = '<ellipse cx="20.5" cy="45.2" rx="24" ry="3" fill="url(#spDhSchatten)"/>'
-      + '<rect x="8" y="26" width="32" height="18" fill="#e6edf4" stroke="#5a6a7a" stroke-width=".8"/><rect x="8" y="26" width="32" height="18" fill="url(#spDhPutz)"/><rect x="8" y="26" width="32" height="18" fill="url(#spDhLichtWand)"/><path d="M8 26 H40" stroke="#3a86c4" stroke-width="1.6"/>'
+    else if (k === "labor") h = '<ellipse cx="24" cy="45" rx="18" ry="2.2" fill="#2d4f1f" opacity=".3"/>'
+      + '<rect x="8" y="26" width="32" height="18" fill="#e6edf4" stroke="#5a6a7a" stroke-width=".8"/><path d="M8 26 H40" stroke="#3a86c4" stroke-width="1.6"/>'
       + '<path d="M16 26 C16 16 32 16 32 26 Z" fill="#b8dcf5" stroke="#5a6a7a" stroke-width=".7"/><path d="M24 17.4 V26 M18 21 C22 20 26 20 30 21" stroke="#fff" stroke-width=".5" fill="none"/>'
       + '<rect x="11" y="30" width="26" height="5" fill="#8fd3ff" stroke="#3a4152" stroke-width=".5"/><path d="M17.5 30 v5 M24 30 v5 M30.5 30 v5" stroke="#3a4152" stroke-width=".4"/>'
       + '<rect x="21" y="37" width="6" height="7" fill="#3a4152"/><path d="M38 26 V12" stroke="#3a4152" stroke-width=".7"/><path d="M34.6 12 H41.4" stroke="#3a4152" stroke-width=".7"/><circle class="sp-dh-blink" cx="38" cy="11" r="1.1" fill="#e2403a"/>'
       + '<path d="M2 44 L6 36 H14 L10 44 Z" fill="#23407a" stroke="#101c38" stroke-width=".4"/><path d="M4 40 H12 M8 36 L6 44" stroke="#5a86d4" stroke-width=".3"/>'
       + (st >= 2 ? '<path d="M44 44 V34 l2 -2 l2 2 V44 Z" fill="#dfe6ee" stroke="#5a6a7a" stroke-width=".4"/>' : "") + (st >= 3 ? '<circle cx="24" cy="21.6" r="1.2" fill="#8ee06a" class="sp-dh-blink"/>' : "");
-    else if (k === "bibliothek") h = '<ellipse cx="20.5" cy="45.2" rx="25" ry="3" fill="url(#spDhSchatten)"/>'
+    else if (k === "bibliothek") h = '<ellipse cx="24" cy="45" rx="19" ry="2.2" fill="#2d4f1f" opacity=".3"/>'
       + '<path d="M5 44 H43 V42 H5 Z M7 42 H41 V40.4 H7 Z" fill="#d9d2c0" stroke="#6f6758" stroke-width=".4"/>'
-      + '<path d="M8 24 H40 V26 H8 Z" fill="#e8e0cc" stroke="#6f6758" stroke-width=".5"/><path d="M6 24 L24 14 L42 24 Z" fill="#e8e0cc" stroke="#6f6758" stroke-width=".7"/><path d="M6 24 L24 14 L42 24 Z" fill="url(#spDhStein)"/><path d="M6 24 L24 14 L42 24 Z" fill="url(#spDhDachLicht)"/>'
+      + '<path d="M8 24 H40 V26 H8 Z" fill="#e8e0cc" stroke="#6f6758" stroke-width=".5"/><path d="M6 24 L24 14 L42 24 Z" fill="#e8e0cc" stroke="#6f6758" stroke-width=".7"/>'
       + '<path d="M13 22.6 L24 16.4 L35 22.6 Z" fill="none" stroke="#c9b58a" stroke-width=".5"/><path d="M21.6 20.6 h4.8 v2 h-4.8 Z M22 20.6 v2 M23.2 20.6 v2 M24.4 20.6 v2 M25.6 20.6 v2" stroke="#8a3a2a" stroke-width=".35" fill="#b0402f"/>'
       + [10.5, 16.5, 22.5, 28.5, 34.5].map(function (x) { return '<rect x="' + x + '" y="26" width="3" height="14.4" fill="#f4efe2" stroke="#8a826f" stroke-width=".35"/><path d="M' + (x + 1) + " 26.6 V39.8 M" + (x + 2) + ' 26.6 V39.8" stroke="#cfc6b0" stroke-width=".3"/>'; }).join("")
       + (st >= 3 ? '<path d="M24 14 v-4" stroke="#6b4521" stroke-width=".5"/><path d="M24 10 l3.4 1 l-3.4 1.2 Z" fill="#f2c230"/>' : "");
@@ -7431,7 +7277,7 @@
         + "<small>" + DORF[k].name + (st > 1 ? " " + st : "") + "</small>" + zeichen + "</button>";
     }).join("");
     /* Die Station hängt unten am Bild (ragt hinein), das Bild selbst bleibt stehen – so springt kein Haus. */
-    return '<div class="sp-dorfland">' + dorfDefsSvg() + dorfLandSvg() + haeuser
+    return '<div class="sp-dorfland">' + dorfLandSvg() + haeuser
       + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp">Tippe auf ein Gebäude</span>') + "</div>" + (wahl ? dorfStationHtml(ich, wahl) : "");
   }
   /* FASSUNG 683 — XANDER: „dass ich schnell Zugriff auf das Dorf habe und

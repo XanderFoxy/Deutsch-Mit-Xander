@@ -49,26 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 699: Kämpferklassen (Beta) fertig – als Nächstes Strategie gegen Mitspieler",
+  stand: "Fassung 700: Dorf-Menü ruhig (Funk 144) und Dorf organisch gezeichnet (Funk 143) – als Nächstes Strategie gegen Mitspieler",
 
   inArbeit: [
-    { seit: "2026-09-26T09:39",
+    { seit: "2026-09-26T09:58",
       text: "Strategie gegen Mitspieler sichtbar (Street-Fighter-Züge, Fairness)" },
-    { seit: "2026-09-26T09:39",
+    { seit: "2026-09-26T09:58",
       text: "Dorf: Berufe + Ausbildung, Wissenschaft/geheime Forschung, Sehenswürdigkeiten + Besucher, Automatik Getreide→Mühle→Bäckerei, Hunger ernster" },
-    { seit: "2026-09-26T09:39",
+    { seit: "2026-09-26T09:58",
       text: "Premium: Stripe braucht deine Freigabe (claude.ai → Connectors), GoFundMe-Link" },
-    { seit: "2026-09-26T09:39",
+    { seit: "2026-09-26T09:58",
       text: "Rest Funk 139: Superwaffen je Level, Zauber-Wirkungen, Lenkrakete, deutsche Sachen, TD-Wellen, Tiere bei Beamen/Lok, Rüstung/Helm sichtbar, Waffen in der Hand, Android-Knöpfe, Aufgaben-Pool, Profil-Effekte, Kostüme, Quests" },
-    { seit: "2026-09-26T09:39",
+    { seit: "2026-09-26T09:58",
       text: "ElevenLabs-Schlüssel bitte erneuern (stand im Chat)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T09:39",
-      text: "699 Kämpferklassen: Magier, Dieb, Titan, Heiler, Ingenieur, Deutsch-Gelehrter – eigene Kraft, Stärke, Stufe 1–10, Ton und Animation; Wechsel alle 10 min, Erfahrung bleibt; nur Betreiber + Beta (Schalter kampfklassen_neu)" },
-    { seit: "2026-09-26T09:39",
-      text: "695 nachgezogen: fliegende Münzen und Storch der Tier-Fähigkeiten sichtbar" },
+    { seit: "2026-09-26T09:58",
+      text: "144: Dorf-Menü springt nicht mehr, Gebäude flackert nicht mehr (Menü wird angeglichen statt jede Sekunde neu geschrieben)" },
+    { seit: "2026-09-26T09:58",
+      text: "143: Dorf wie von Hand – Putz, Ziegel, Feldsteine, Holz, Efeu, Moos, Licht und Schatten, Bäume, Gras, Kies, Ufer, Berge" },
+    { seit: "2026-09-26T09:58",
+      text: "699 Kämpferklassen (Beta)" },
   ],
 };

@@ -1952,17 +1952,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
   border: 3px solid var(--farbe); box-shadow: 0 0 10px var(--farbe); pointer-events: none; opacity: 0; animation: spKampfRing .82s ease-out forwards; }
 @keyframes spKampfRing { 0% { transform: scale(.9); opacity: 0; } 15% { opacity: 1; } 100% { transform: scale(1.55); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .sp-kampf-ring { animation-duration: .01s; } }
-
-/* =========================================================
-   FASSUNG 700 — DAS DORF ORGANISCH (Funk 143)
-   Ein feines Papierkorn und ein weicher Rand über dem ganzen Bild –
-   ein einmal gerechnetes Kachelbild, kein Filter, der mitläuft.
-   ========================================================= */
-.sp-dl-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
-.sp-dorfland::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .24 0 0 0 0 .17 0 0 0 0 .07 3.2 0 0 0 -1.45'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23k)'/%3E%3C/svg%3E"),
-    radial-gradient(ellipse at 55% 45%, rgba(0, 0, 0, 0) 58%, rgba(46, 32, 10, .3) 100%);
-  background-size: 180px 180px, 100% 100%; opacity: .17; }
-/* Die Häuser liegen über dem Korn – sie haben ihre eigene Struktur. */
-.sp-schnellmenue .sp-dorfland .sp-dl-haus, .sp-dorfland .sp-dl-haus { z-index: 2; }
-.sp-dl-tipp { z-index: 3; }
