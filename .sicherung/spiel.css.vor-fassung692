@@ -1773,16 +1773,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 @media (prefers-reduced-motion: reduce) {
   .sp-tier-schwindelig, .sp-tz-sterne, .sp-tier-nickt, .sp-tz-brille, .sp-tz-hut, .sp-tier-versteckt, .sp-tier-kratzt, .sp-tier-pustet, .sp-tier-ekelt, .sp-tier-beamsaeule { animation-duration: .01s !important; animation-iteration-count: 1 !important; }
 }
-
-/* FASSUNG 692 — Taschen modular: + und − klein übereinander hinter den Waffen. */
-.sp-schnell .sp-s-taschen { display: inline-flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
-.sp-schnell .sp-s-taschen button { min-height: 14px; min-width: 18px; height: 14px; padding: 0 3px; border-radius: 6px;
-  font: 800 12px/1 system-ui, sans-serif; color: #eaf0ff; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22); }
-.sp-schnell .sp-s-taschen button:disabled { opacity: .3; }
-.sp-schnell .sp-s-taschen button:not(:disabled):active { background: rgba(255, 255, 255, .3); }
-/* FASSUNG 692 — hinter dem Zug her: galoppieren (auf und ab, leicht nach vorn geneigt). */
-.sp-tier-begleiter.sp-tier-rennt svg { animation: spTierRennt .26s ease-in-out infinite; transform-origin: 84% 90%; }
-.sp-flugtier.sp-tier-begleiter.sp-tier-rennt svg { animation-name: spTierFliegtHinterher; transform-origin: 90% 12%; }
-.sp-tier-begleiter.sp-tier-rennt.sp-tier-links svg { scale: -1 1; }
-@keyframes spTierRennt { 0%, 100% { translate: 0 0; rotate: 6deg; } 50% { translate: 0 -9%; rotate: -4deg; } }
-@keyframes spTierFliegtHinterher { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6%; } }

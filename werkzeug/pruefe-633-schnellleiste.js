@@ -130,7 +130,7 @@ const sage = (gut, was, zusatz) => {
                  waffen: [...s.querySelectorAll('.sp-s-reihe [data-s="waffe"]')].map((b) => b.dataset.w + (b.classList.contains("sp-an") ? "*" : "")),
                  mit: (s.querySelector('[data-s="mitspielen"]') || {}).className || "",
                  schwebt: getComputedStyle(s).position === "absolute",
-                 knoepfe: s.querySelectorAll(".sp-s-reihe button").length,
+                 knoepfe: s.querySelectorAll(".sp-s-reihe > button").length,   /* FASSUNG 692: + und − der Taschen zählen nicht mit */
                  scrollt: (() => { const r = s.querySelector(".sp-s-reihe"); return r ? r.scrollWidth > r.clientWidth + 1 : false; })() } : { da: false };
   });
   const tippe = (sel) => pg.evaluate((sel) => { const b = document.querySelector(".sp-schnell " + sel); if (b) b.click(); return Boolean(b); }, sel);

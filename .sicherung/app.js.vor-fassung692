@@ -26578,7 +26578,6 @@
   }
 
   function livechatPlaetzeAuffrischen(l) {
-    const lcUmzug = [];
     lcAnsichtZeichnen(l);
     lcAufgabeZeichnen();
     /* RUNDE 76 — was jemand anhat, ueberlebt das Neuzeichnen. Steht
@@ -26721,13 +26720,7 @@
       knopf.dataset.lcGeschlecht = p.leer ? "" : (p.geschlecht || "");
       /* Die Kennung dazu: das Menue braucht sie, um das grosse Bild
          aufzurufen — der Name allein genuegt dafuer nicht. */
-      const idVorher = knopf.dataset.lcId || "";
       knopf.dataset.lcId = p.leer ? "" : (p.id || "");
-      if (idVorher && idVorher !== knopf.dataset.lcId) {
-        knopf.querySelectorAll(':scope > [data-lc-fuer]').forEach((sch) => {
-          if (sch.dataset.lcFuer === idVorher) lcUmzug.push([sch, idVorher, knopf]);
-        });
-      }
 
       /* =========================================================
          HIER KAM DIE STIMMDOPPELUNG HER — UND ZWAR JEDES MAL
@@ -26802,17 +26795,6 @@
         }
       }
       stumm.style.display = (!p.leer && p.tonAn === false) ? "grid" : "none";
-    });
-    /* FASSUNG 692 — die Effekte ziehen mit ihrem Menschen um (siehe lcAmPlatz). */
-    lcUmzug.forEach(([sch, id, alt]) => {
-      const neu = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + String(id).replace(/["\\]/g, "") + '"]');
-      const kk = (sch.dataset.lcKreisKlassen || "").split(" ").filter(Boolean);
-      const kAlt = alt.querySelector(".lc-kreis");
-      if (kAlt) kk.forEach((c) => kAlt.classList.remove(c));
-      if (!neu || Number(sch.dataset.lcBis || 0) < Date.now()) { sch.remove(); return; }
-      neu.appendChild(sch);
-      const kNeu = neu.querySelector(".lc-kreis");
-      if (kNeu) kk.forEach((c) => kNeu.classList.add(c));
     });
   }
 
@@ -36745,21 +36727,7 @@
       const schicht = document.createElement("div");
       schicht.className = "lc-zp " + klasse;
       schicht.setAttribute("aria-hidden", "true");
-      /* FASSUNG 692 — XANDER: „die Effekte sollen auch mitreisen, wenn irgendjemand
-         den Platz wechselt, dass alle … Profilbild-Effekte flüssig mitgehen, so wie
-         wir das im Kampf auch haben." Die Plätze sind feste Kästen; wer umzieht,
-         bekommt einen anderen Kasten. Die Schicht merkt sich deshalb, WEM sie
-         gehört, und welche Klassen der Effekt am Bild selbst gesetzt hat —
-         livechatPlaetzeAuffrischen zieht beides beim Platzwechsel mit um. */
-      const kreisVorher = platz.querySelector(".lc-kreis");
-      const kreisKlassenVorher = kreisVorher ? new Set(kreisVorher.classList) : new Set();
-      if (platz.dataset.lcId) schicht.dataset.lcFuer = platz.dataset.lcId;
-      schicht.dataset.lcBis = String(Date.now() + dauer);
       bauen(schicht, platz);
-      if (kreisVorher) {
-        const neu = [...kreisVorher.classList].filter((c) => !kreisKlassenVorher.has(c));
-        if (neu.length) schicht.dataset.lcKreisKlassen = neu.join(" ");
-      }
       /* AN DEN PLATZ, NICHT IN DEN KREIS — UND WARUM DAS VORHER
          ANDERSHERUM WAR.
          -----------------------------------------------------------
@@ -36785,16 +36753,7 @@
          Was INNEN bleiben muss, bringt seine eigene runde Blende
          mit (lcZpBlende) — der Wasserstand zum Beispiel. */
       platz.appendChild(schicht);
-      setTimeout(() => {
-        /* Umgezogen? Dann die Bildklassen am NEUEN Bild abnehmen. */
-        const zuhause = schicht.parentNode;
-        const kk = (schicht.dataset.lcKreisKlassen || "").split(" ").filter(Boolean);
-        if (zuhause && zuhause !== platz && kk.length) {
-          const k2 = zuhause.querySelector(".lc-kreis");
-          if (k2) kk.forEach((c) => k2.classList.remove(c));
-        }
-        schicht.remove();
-      }, dauer);
+      setTimeout(() => schicht.remove(), dauer);
     }, i * 80));
     /* Und der Ton genau dann, wenn es trifft — siehe LC_TREFFER. */
     if (ton) {

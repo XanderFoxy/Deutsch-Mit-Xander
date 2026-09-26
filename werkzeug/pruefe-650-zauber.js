@@ -151,9 +151,12 @@ const sage = (gut, was, zusatz) => {
   console.log("\nZAUBERRAD MIT LEVEL-SPERRE (Level 3, 40 Mana)\n");
   await pg.evaluate(() => { window.DMA_SPIEL.pruef.schnellZeichnen(true); });
   await tick(200);
-  const stab = await pg.evaluate(() => Boolean(document.querySelector(".sp-schnell .sp-s-zauber")));
-  sage(stab, "der Zauberstab steht in der Leiste");
-  await tippe(".sp-schnell .sp-s-zauber");
+  /* FASSUNG 692 — XANDER: „den Zauberstab unten kannst du eigentlich wegmachen". Er steht nur noch
+     da, wenn ein Zauber bereitliegt; das Rad öffnet der Makroknopf „Zauber" (oder langer Druck aufs Bild). */
+  const stab = await pg.evaluate(() => !document.querySelector(".sp-schnell .sp-s-zauber"));
+  sage(stab, "ohne bereiten Zauber: kein Zauberstab in der Leiste");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.makro = "zauber"; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await tippe('.sp-schnell [data-s="makro"]');
   const zr = await pg.evaluate(() => {
     const r = document.querySelector(".sp-zauberrad"), stab = document.querySelector(".sp-s-zauber");
     if (!r) return { da: false };

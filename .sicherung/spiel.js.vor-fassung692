@@ -984,7 +984,7 @@
     var zweiter = jetzt - (S.eigenZeit || 0) < 380;
     S.eigenZeit = zweiter ? 0 : jetzt;
     if (!zweiter) return false;
-    var sl = slots(), neu = sl[(Math.max(-1, sl.indexOf(S.waffe)) + 1) % sl.length];
+    var sl = slots(), neu = S.waffe === sl[0] ? sl[1] : sl[0];
     S.waffe = neu; S.rad = null;
     ton("swoosh", 0.3);
     zahlZeigen(meineChatId(), null, WAFFEN[neu].name);
@@ -1769,22 +1769,13 @@
     kugel.style.width = kugel.style.height = Math.round(Math.max(18, Math.min(34, z.r * 0.55))) + "px";
     document.body.appendChild(kugel);
     eintrag.kugel = kugel;
-    /* FASSUNG 692 — XANDER: „wenn ich auf jemanden Zauber lege und ich hab
-       den korrekt anvisiert, dann soll der Zauber den auch erreichen und nicht
-       ins Leere gehen." Die Kugel flog bisher zu der Stelle, an der das Ziel
-       beim Tippen saß. Jetzt misst sie ihr Ziel in jedem Bild neu (es kann
-       umziehen, gehoben werden, reisen) und biegt ihre Bahn dorthin. */
-    var los = performance.now(), letztZ = z;
-    (function schritt() {
-      if (!kugel.isConnected) return;
-      var t = Math.min(1, (performance.now() - los) / flug), e = t * t;   /* ease-in */
-      var jz = mittelpunkt(zielChat) || letztZ; letztZ = jz;
-      var cx = (sx + jz.x) / 2, cy = (sy + jz.y) / 2 - Math.min(90, Math.max(30, Math.hypot(jz.x - sx, jz.y - sy) * 0.25));
-      var x = (1 - e) * (1 - e) * sx + 2 * (1 - e) * e * cx + e * e * jz.x;
-      var y = (1 - e) * (1 - e) * sy + 2 * (1 - e) * e * cy + e * e * jz.y;
-      kugel.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) translate(-50%,-50%) scale(" + (0.3 + 0.85 * e).toFixed(2) + ")";
-      if (t < 1) requestAnimationFrame(schritt);
-    })();
+    try {
+      kugel.animate([
+        { transform: "translate(" + sx + "px," + sy + "px) translate(-50%,-50%) scale(.3)" },
+        { transform: "translate(" + mx + "px," + my + "px) translate(-50%,-50%) scale(.95)", offset: 0.5 },
+        { transform: "translate(" + z.x + "px," + z.y + "px) translate(-50%,-50%) scale(1.15)" }
+      ], { duration: flug, easing: "ease-in", fill: "forwards" });
+    } catch (e) {}
     /* Funkenschweif: dort, wo die Kugel gerade ist. */
     for (var i = 1; i * 65 < flug; i++) setTimeout(function () {
       if (!kugel.isConnected) return;
@@ -2898,45 +2889,25 @@
      · Menü. Das Menü klappt nach oben auf, mit den Reitern Waffen,
      Heilen, Tiere und Mehr. Wer eine Sache wählt, dem geht es zu. */
   var SLOT_SCHLUESSEL = "dma_spiel_slots";
-  /* FASSUNG 692 — XANDER: „mach es lieber so, dass ich bei den Taschen, die
-     unten angezeigt werden … selber bestimmen kann, wie viele Taschen sichtbar
-     sind und mit einem + die hinzufügen kann oder mit einem Zeichen die wieder
-     wegnehmen kann, dass das modular aufgebaut ist." Bisher waren es fest zwei.
-     Jetzt 1 bis 6, gemerkt auf dem Gerät; jede Tasche hält eine andere eigene
-     Waffe (fehlt eine, rückt die stärkste noch freie nach). */
-  var SLOT_MAX = 6;
-  function slotZahl() {
-    if (!S.slotZahl) { try { S.slotZahl = Number(localStorage.getItem("dma_spiel_slotzahl")) || 2; } catch (e) { S.slotZahl = 2; } }
-    return Math.max(1, Math.min(SLOT_MAX, S.slotZahl));
-  }
-  function eigeneWaffen() {
-    var ich = S.ich || {};
-    return Object.keys(WAFFEN).filter(function (w) { return (ich.waffen || []).indexOf(w) >= 0 || (WAFFEN[w].vorrat && vorrat(ich, w) > 0); })
-      .concat(["kartoffel"]).filter(function (w, i, a) { return a.indexOf(w) === i; });
-  }
   function slots() {
-    var hatListe = eigeneWaffen(), hat = function (w) { return hatListe.indexOf(w) >= 0; };
+    var ich = S.ich || {}, hat = function (w) { return (ich.waffen || []).indexOf(w) >= 0 || (WAFFEN[w] && WAFFEN[w].vorrat && vorrat(ich, w) > 0); };
     if (!S.slots) { try { S.slots = JSON.parse(localStorage.getItem(SLOT_SCHLUESSEL) || "null"); } catch (e) { S.slots = null; } }
-    var n = Math.min(slotZahl(), Math.max(1, hatListe.length)), alt = Array.isArray(S.slots) ? S.slots : [], s = [];
-    for (var i = 0; i < n; i++) { var w = alt[i]; if (w && hat(w) && s.indexOf(w) < 0) s[i] = w; }
-    if (!s[0] && hat("kartoffel") && s.indexOf("kartoffel") < 0) s[0] = "kartoffel";
-    /* Leere Taschen: die stärkste noch freie eigene Waffe. */
-    var frei = hatListe.filter(function (w) { return s.indexOf(w) < 0; }).sort(function (a, b) { return (WAFFEN[b].schaden || 0) - (WAFFEN[a].schaden || 0); });
-    for (var j = 0; j < n; j++) if (!s[j]) s[j] = frei.shift() || "kartoffel";
+    var s = Array.isArray(S.slots) ? S.slots.slice(0, 2) : [];
+    if (!s[0] || !hat(s[0])) s[0] = "kartoffel";
+    if (!s[1] || !hat(s[1]) || s[1] === s[0]) {
+      /* Zweitwaffe: die stärkste eigene, die nicht schon Slot 1 ist. */
+      var beste = "";
+      (ich.waffen || []).forEach(function (w) { if (WAFFEN[w] && w !== s[0] && (!beste || WAFFEN[w].schaden > WAFFEN[beste].schaden)) beste = w; });
+      s[1] = beste || (s[0] === "kartoffel" ? "zwille" : "kartoffel");
+    }
     S.slots = s;
     return s;
   }
   function slotSetzen(nr, w) {
-    var s = slots().slice(), da = s.indexOf(w);
-    if (da >= 0 && da !== nr) s[da] = s[nr];
+    var s = slots().slice();
+    if (s[1 - nr] === w) s[1 - nr] = s[nr];
     s[nr] = w; S.slots = s;
     try { localStorage.setItem(SLOT_SCHLUESSEL, JSON.stringify(s)); } catch (e) {}
-  }
-  function slotZahlSetzen(n) {
-    S.slotZahl = Math.max(1, Math.min(SLOT_MAX, n));
-    try { localStorage.setItem("dma_spiel_slotzahl", String(S.slotZahl)); } catch (e) {}
-    S.slots = null; slots();
-    try { localStorage.setItem(SLOT_SCHLUESSEL, JSON.stringify(S.slots)); } catch (e) {}
   }
   function waffenKnopf(w, extra) {
     var ich = S.ich || {}, hw = haltVon(ich, w), vr = WAFFEN[w] && WAFFEN[w].vorrat ? vorrat(ich, w) : -1;
@@ -2948,9 +2919,6 @@
     var d = S.schnellDruck || 0;
     if (d > 0) return Date.now() - d < 4000;        /* Finger liegt (höchstens 4 s) */
     if (d < 0) return Date.now() + d < 350;         /* gerade losgelassen */
-    /* FASSUNG 692 — wer gerade im Menü scrollt (auch das Nachgleiten nach
-       dem Loslassen), dem wird nichts unter dem Finger weggezeichnet. */
-    if (Date.now() - (S.schnellScroll || 0) < 900) return true;
     return false;
   }
   function schnellZeichnen(sofort) {
@@ -2971,8 +2939,6 @@
            Finger (der Sekundenzähler zeichnet laufend neu) und der Tipp
            geht ins Leere. */
         schnellEl.addEventListener("pointerdown", function () { S.schnellDruck = Date.now(); }, true);
-        /* FASSUNG 692 — scroll blubbert nicht, deshalb in der Fangphase. */
-        schnellEl.addEventListener("scroll", function () { S.schnellScroll = Date.now(); }, true);
         /* Nach dem Loslassen kommt der Klick; bis dahin (höchstens 0,35 s)
            zeichnet nur der Klick selbst neu, kein Zeitgeber. */
         ["pointerup", "pointercancel"].forEach(function (a) {
@@ -3009,14 +2975,10 @@
          öffnet das Waffenrad (XANDER: „ich habe immer noch nicht das
          Tacho Menü"). */
       var tacho = '<i class="sp-s-tacho"><svg viewBox="0 0 12 8"><path d="M1.5 7 A4.5 4.5 0 0 1 10.5 7" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M6 7 L8.4 3.6" stroke="#f2c230" stroke-width="1.4" stroke-linecap="round"/></svg></i>';
-      teile.push(s.map(function (w, n) {
-        var h = waffenKnopf(w, " sp-s-slot").replace('data-s="waffe"', 'data-s="waffe" data-n="' + n + '"');
-        return S.waffe === w ? h.replace(/<\/button>$/, tacho + "</button>") : h;
+      teile.push([0, 1].map(function (n) {
+        var h = waffenKnopf(s[n], " sp-s-slot").replace('data-s="waffe"', 'data-s="waffe" data-n="' + n + '"');
+        return S.waffe === s[n] ? h.replace(/<\/button>$/, tacho + "</button>") : h;
       }).join(""));
-      /* + und − für die Taschen, klein übereinander. */
-      var mehrGeht = s.length < SLOT_MAX && eigeneWaffen().length > s.length;
-      teile.push('<span class="sp-s-taschen"><button type="button" data-s="slotplus"' + (mehrGeht ? "" : " disabled") + ' title="Eine Tasche mehr" aria-label="Tasche hinzufügen">+</button>'
-        + '<button type="button" data-s="slotminus"' + (s.length > 1 ? "" : " disabled") + ' title="Eine Tasche weniger" aria-label="Tasche entfernen">\u2212</button></span>');
       var voll = !ich.kaputt && ich.lp >= ich.lp_max;
       var zuEssen = vorrat(ich, "bratwurst") + vorrat(ich, "sauerkraut");
       teile.push('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke && !zuEssen) ? " disabled" : "")
@@ -3039,12 +3001,7 @@
       /* FASSUNG 650 — der Zauberstab: öffnet das Zauberrad; ein bereiter
          Zauber leuchtet hier mit seinem Bild. */
       var zOffen = ZAUBER_REIHE.some(function (a) { return (ich.level || 1) >= ZAUBER[a].level; });
-      /* FASSUNG 692 — XANDER: „den Zauberstab unten kannst du eigentlich
-         wegmachen". Er steht nur noch da, solange ein Zauber bereitliegt (dann
-         zeigt er ihn und ein Tipp nimmt ihn zurück) oder das Zauberrad offen ist.
-         Das Rad selbst: langer Druck aufs eigene Bild oder der Makroknopf
-         „Zauber". */
-      if (S.zauber || S.zrad) teile.push('<button type="button" class="sp-s-zauber' + (S.zauber ? " sp-an" : "") + (S.zrad ? " sp-offen" : "") + (zOffen ? "" : " sp-zu") + '" data-s="zauberrad" title="'
+      teile.push('<button type="button" class="sp-s-zauber' + (S.zauber ? " sp-an" : "") + (S.zrad ? " sp-offen" : "") + (zOffen ? "" : " sp-zu") + '" data-s="zauberrad" title="'
         + (S.zauber ? ZAUBER[S.zauber].name + " bereit – tippe auf ein Gesicht" : zOffen ? "Zauber" : "Zauber ab Level 3") + '">'
         + (S.zauber ? zauberSvg(S.zauber) : '<svg viewBox="0 0 20 20"><path d="M3 17 L12 8" stroke="#c9a46a" stroke-width="2.4" stroke-linecap="round"/>'
           + '<path d="M14 2 L15 5 L18 6 L15 7 L14 10 L13 7 L10 6 L13 5 Z" fill="#ffe27a"/><circle cx="17" cy="11" r="1" fill="#bfe3ff"/><circle cx="9" cy="3.5" r=".9" fill="#bfe3ff"/></svg>')
@@ -3076,23 +3033,7 @@
       + (S.langWahl && ich.mitspielen ? langWahlHtml() : "") + (S.trankAuf && ich.mitspielen ? trankWahlHtml() : "");
     if (sofort !== true && schnellGesperrt()) { clearTimeout(S.schnellNach); S.schnellNach = setTimeout(schnellZeichnen, 380); return; }
     S.schnellDruck = 0;
-    /* FASSUNG 692 — XANDER: „Das Dorf spinnt manchmal rum … wenn man aus dem
-       Mehr-Menü dahin scrollen will, dann springt es meistens zurück … Man
-       kriegt ein Haus, dann wählt sich das sofort wieder ab. Es geht zwar auf,
-       aber es geht dann gleich wieder zu."
-       GEMESSEN: die Leiste wird jede Sekunde neu geschrieben, sobald sich ein
-       Countdown ändert (innerHTML). Dabei fiel das Menü auf Scrollposition 0
-       zurück — nach dem Tipp aufs Haus war die Station unten schon offen, rutschte
-       aber nach ~1 s wieder aus dem Blick. Jetzt merken wir uns die Position jedes
-       rollbaren Teils (nach seiner Klasse) und setzen sie nach dem Neuschreiben
-       zurück. */
-    var rollPos = {};
-    if (schnellEl.dataset.html !== html) {
-      [].forEach.call(schnellEl.querySelectorAll(".sp-schnellmenue, .sp-schnellmenue *"), function (e) {
-        if (e.scrollTop > 0 || e.scrollLeft > 0) { var key = e.className && e.className.baseVal == null ? String(e.className).split(" ")[0] : ""; if (key && !rollPos[key]) rollPos[key] = [e.scrollTop, e.scrollLeft]; }
-      });
-      schnellEl.innerHTML = html; schnellEl.dataset.html = html;
-    }
+    if (schnellEl.dataset.html !== html) { schnellEl.innerHTML = html; schnellEl.dataset.html = html; }
     /* Die offene Werkzeugwahl verdeckt keine Meldung – die Meldung weicht. */
     document.body.classList.toggle("sp-wwahl-offen", Boolean(S.wwahl && ich.mitspielen));
     /* Das Menü darf nie über den oberen Rand hinaus (dort schnitt der
@@ -3116,10 +3057,6 @@
         sm.style.maxHeight = Math.max(160, Math.round(unterkante - oben - 10)) + "px";
       } catch (e) {}
     }
-    Object.keys(rollPos).forEach(function (key) {
-      var e = schnellEl.querySelector("." + key);
-      if (e) { e.scrollTop = rollPos[key][0]; e.scrollLeft = rollPos[key][1]; }
-    });
     /* FASSUNG 683 — die (breitere) Werkzeugwahl bleibt ganz im Bild: links und oben nie hinaus. */
     var wwEl = schnellEl.querySelector(".sp-werkzeugwahl");
     if (wwEl) {
@@ -3236,8 +3173,6 @@
     if (vorrat(ich, "torte")) k.push('<button type="button" data-s="iss" data-d="torte" title="Torte essen: +40 LP, +15 Mana">' + wareSvg("torte") + "<small>" + vorrat(ich, "torte") + "</small></button>");
     if (ich.trank_mana) k.push('<button type="button" data-s="trinken" data-t="mana" title="Manatrank: +50 Mana"' + (wirkt(ich, "mana") ? " disabled" : "") + '><span class="sp-trank sp-trank-mana"></span><small>' + ich.trank_mana + "</small></button>");
     if (vorrat(ich, "kuchen")) k.push('<button type="button" data-s="iss" data-d="kuchen" title="Kuchen essen: +30 LP, +10 Mana">' + wareSvg("kuchen") + "<small>" + vorrat(ich, "kuchen") + "</small></button>");
-    /* FASSUNG 692 — Manatrank gleich hier kaufen (25 P). */
-    if ((ich.mana || 0) < (ich.mana_max || 100)) k.push('<button type="button" data-s="manakauf" title="Manatrank kaufen: 25 P, +50 Mana"' + ((ich.punkte || 0) >= 25 ? "" : " disabled") + '><span class="sp-trank sp-trank-mana"></span><small>+</small></button>');
     if (!k.length) return '<span class="sp-zr-leer" style="left:' + (M - 60) + "px;top:" + (M + 40) + 'px">Torte backen = Mana</span>';
     var breite = k.length * 34;
     return '<span class="sp-zr-mana-knoepfe" style="left:' + (M - breite / 2) + "px;top:" + (M + 38) + "px;width:" + breite + 'px">' + k.join("") + "</span>";
@@ -3262,7 +3197,6 @@
     ["torte", "kuchen"].forEach(function (x) {
       if (vorrat(ich, x)) t.push('<button type="button" data-s="iss" data-d="' + x + '">' + wareSvg(x) + "<b>" + WAREN[x] + "</b><small>" + vorrat(ich, x) + " · " + (x === "torte" ? "+40 LP, +15 Mana" : "+30 LP, +10 Mana") + "</small></button>");
     });
-    t.push('<button type="button" data-s="manakauf"' + ((ich.punkte || 0) >= 25 ? "" : " disabled") + '><span class="sp-trank sp-trank-mana"></span><b>Manatrank kaufen</b><small>25 P · +50 Mana</small></button>');
     return '<div class="sp-werkzeugwahl sp-trankwahl" role="menu"><span class="sp-ww-titel">Tränke &amp; Mana · ' + (ich.mana || 0) + " Mana</span>" + t.join("") + "</div>";
   }
   function zauberRadHtml() {
@@ -3311,8 +3245,9 @@
       + (ich.mana != null ? " · " + ich.mana + " Mana" : "") + "</div>";
     var inhaltM = "";
     if (r === "waffen") {
-      var nr = Math.min(S.schnellSlot || 0, s.length - 1);
-      inhaltM = '<div class="sp-sm-slots">' + s.map(function (w, i) { return '<button type="button" data-s="slot" data-n="' + i + '" class="' + (nr === i ? "sp-an" : "") + '">Tasche ' + (i + 1) + "</button>"; }).join("") + "</div>";
+      var nr = S.schnellSlot || 0;
+      inhaltM = '<div class="sp-sm-slots"><button type="button" data-s="slot" data-n="0" class="' + (nr === 0 ? "sp-an" : "") + '">Waffe 1</button>'
+        + '<button type="button" data-s="slot" data-n="1" class="' + (nr === 1 ? "sp-an" : "") + '">Waffe 2</button></div>';
       var gruppen = [["Standard", ["kartoffel", "zwille", "bogen", "laser"]], ["Lustig", ["eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "bratwurst", "sauerkraut"]],
                      ["Arcade", ["lasersalve", "mg"]], ["Stark", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]], ["Meister", ["weisswurst", "nudelholz", "kuckucksuhr"]],
                      ["Energie", ["doppellaser", "streulaser", "plasmastrahl", "kugelblitz"]]];
@@ -3339,9 +3274,6 @@
         if (!n && !rest) return;
         t.push('<button type="button" data-s="trinken" data-t="' + tr[0] + '"' + (rest || !n ? " disabled" : "") + '><span class="sp-trank sp-trank-' + tr[0] + '"></span>' + tr[1] + " <small>" + (rest ? rest + " s" : n) + "</small></button>");
       });
-      /* FASSUNG 692 — XANDER: „Es gibt keine Art, generelles Mana zu kaufen … diese Leiste an sich nicht
-         auffüllen." Den Manatrank gab es nur im großen Laden; jetzt auch hier, mit einem Tipp. */
-      t.push('<button type="button" data-s="manakauf"' + ((ich.punkte || 0) >= 25 ? "" : " disabled") + '><span class="sp-trank sp-trank-mana"></span>Manatrank kaufen <small>25 P · +50 Mana</small></button>');
       inhaltM = '<div class="sp-sm-liste">' + t.join("") + "</div>";
     } else if (r === "klasse") {
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + klassenHtml(ich);
@@ -3432,7 +3364,6 @@
   }
   function schnellKlick(ev) {
     S.schnellDruck = 0;   /* der Klick beendet die Geste: ab jetzt darf gezeichnet werden */
-    S.schnellScroll = 0;  /* FASSUNG 692 — und auch das Scrollen: ein Tipp ist eine Entscheidung */
     var k = ev.target.closest("button");
     if (!k || k.disabled) return;
     ev.preventDefault(); ev.stopPropagation();
@@ -3626,18 +3557,6 @@
       S.schnellReiter = k.dataset.r;
     } else if (s === "slot") {
       S.schnellSlot = Number(k.dataset.n) || 0;
-    } else if (s === "manakauf") {
-      /* Kaufen und sofort trinken: das ist, was man in diesem Moment will. */
-      rpc("spiel_kaufen", { p_ding: "trank_mana" }).then(function (r) {
-        if (!r || !r.ok) { hinweis("🪙 " + ((r && r.grund) || "geht nicht")); return; }
-        S.ich = r; S.stand[r.id] = oeffentlich(r); ton("kasse", 0.4);
-        trinken("mana");
-      }).catch(function () { hinweis("🪙 Das ging gerade nicht."); });
-      return;
-    } else if (s === "slotplus" || s === "slotminus") {
-      slotZahlSetzen(slots().length + (s === "slotplus" ? 1 : -1));
-      if (slots().indexOf(S.waffe) < 0) S.waffe = slots()[0];
-      ton(s === "slotplus" ? "bling" : "swoosh", 0.25);
     } else if (s === "waehle") {
       slotSetzen(S.schnellSlot || 0, k.dataset.w); S.waffe = k.dataset.w; zu = true;
       hinweis("🎯 " + WAFFEN[S.waffe].name + " angelegt.");
@@ -3679,13 +3598,13 @@
     } else if (s === "liefern") {
       wirtschaft("spiel_beliefern", { p_gebaeude: k.dataset.g, p_ware: k.dataset.w, p_menge: Number(k.dataset.n) || 0 }, function (r) {
         ton("hammerschlag", 0.4);
-        hinweis(({ muehle: "🌬️ Die Mühle mahlt ", baeckerei: "🔥 Die Bäckerei backt ", schmiede: "🔥 Die Schmiede schmilzt ", labor: "🔬 Das Labor baut ", brauerei: "🍺 Die Brauerei braut " })[r.gebaeude] + r.menge + " " + wareName(r.ware) + " – fertig in " + r.minuten + " min. Dann: Mein Dorf → Abholen.");
+        hinweis(({ muehle: "🌬️ Die Mühle mahlt ", baeckerei: "🔥 Die Bäckerei backt ", schmiede: "🔥 Die Schmiede schmilzt ", labor: "🔬 Das Labor baut " })[r.gebaeude] + r.menge + " " + (WAREN[r.ware] || r.ware) + " – fertig in " + r.minuten + " min. Dann: Mein Dorf → Abholen.");
       });
       return;
     } else if (s === "abholen") {
       wirtschaft("spiel_werk_abholen", { p_gebaeude: k.dataset.g }, function (r) {
         ton("geschenk", 0.45);
-        hinweis("🧺 +" + r.menge + " " + wareName(r.ware) + " abgeholt." + (r.ware === "trank_mana" ? " Trinken: Flasche in der Leiste." : ""));
+        hinweis("🧺 +" + r.menge + " " + (WAREN[r.ware] || r.ware) + " abgeholt.");
       });
       return;
     } else if (s === "markt") {
@@ -5734,7 +5653,7 @@
     schule:    { name: "Schule",   preis: 150, gibt: "20 Erfahrung je Stufe", ab: 4 },
     schmiede:  { name: "Schmiede", preis: 120, gibt: "1 Erz je Stufe · schmilzt Silizium" },
     /* FASSUNG 668 — XANDER: „Wir brauchen noch mehr Gebäude." */
-    brauerei:   { name: "Brauerei",   preis: 130, gibt: "braut Manatränke · 15 Mana je Stufe zur Ernte", ab: 5 },
+    brauerei:   { name: "Brauerei",   preis: 130, gibt: "15 Mana je Stufe", ab: 5 },
     bibliothek: { name: "Bibliothek", preis: 160, gibt: "30 Erfahrung je Stufe", ab: 6 },
     rathaus:    { name: "Rathaus",    preis: 200, gibt: "15 Punkte je Stufe", ab: 8 },
     /* FASSUNG 677 — die Mühle liefert nichts von selbst: sie mahlt, was man ihr bringt. */
@@ -6257,13 +6176,8 @@
     muehle:    { name: "Mühle", tut: "mahlt", liste: [["mehl", { getreide: 1 }, 8]] },
     baeckerei: { name: "Bäckerei", tut: "backt", liste: [["brot", { mehl: 1 }, 10], ["kuchen", { mehl: 2 }, 10], ["torte", { mehl: 2, ei: 2, milch: 1 }, 14]] },
     schmiede:  { name: "Schmiede", tut: "schmilzt", liste: [["silizium", { quarz: 2, holz: 1 }, 12]] },
-    labor:     { name: "Labor", tut: "baut", liste: [["chip", { silizium: 1, gold: 1 }, 15]] },
-    /* FASSUNG 692 — XANDER: „… oder sogar herstellen in der Brauerei". Manatränke
-       brauen: 3 Getreide + 1 Holz je Trank, 15 min (spiel_beliefern). */
-    brauerei:  { name: "Brauerei", tut: "braut", liste: [["trank_mana", { getreide: 3, holz: 1 }, 15]] }
+    labor:     { name: "Labor", tut: "baut", liste: [["chip", { silizium: 1, gold: 1 }, 15]] }
   };
-  /* Namen für Dinge, die keine Handelsware sind (sie stehen nicht im Lager). */
-  function wareName(x) { return WAREN[x] || ({ trank_mana: "Manatränke" })[x] || x; }
   function rezeptMenge(ich, st, roh) {
     var n = 5 * st;
     Object.keys(roh).forEach(function (k) { n = Math.min(n, Math.floor(vorrat(ich, k) / roh[k])); });
@@ -6283,7 +6197,7 @@
       var a = w[k], z = '<div class="sp-troph sp-werk"><i>' + dorfSvg(k, st) + "</i><span><b>" + R.name + " arbeitet</b>";
       if (a) {
         var fertig = Date.parse(a.fertig), rest = fertig - Date.now();
-        z += "<small>" + a.menge + " " + wareName(a.ware) + (rest > 0 ? " · fertig um " + uhrzeit(fertig) : " · fertig!") + "</small></span>"
+        z += "<small>" + a.menge + " " + (WAREN[a.ware] || a.ware) + (rest > 0 ? " · fertig um " + uhrzeit(fertig) : " · fertig!") + "</small></span>"
           + '<button type="button" data-s="abholen" data-g="' + k + '"' + (rest > 0 ? ' class="sp-werk-wartet"' : "") + ">Abholen</button>";
       } else if (k === "muehle") {
         var n = rezeptMenge(ich, st, { getreide: 1 });
@@ -6297,8 +6211,8 @@
           + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="torte" data-n="' + nt + '"' + (nt ? "" : " disabled") + ">Torte <small>" + nt + " Stück</small></button>";
       } else {
         var r = R.liste[0], nr = rezeptMenge(ich, st, r[1]);
-        z += "<small>" + Object.keys(r[1]).map(function (x) { return r[1][x] + " " + wareName(x); }).join(" + ") + " → 1 " + wareName(r[0]).replace(/tränke$/, "trank") + " · " + r[2] + " min</small></span>"
-          + '<button type="button" data-s="liefern" data-g="' + k + '" data-w="' + r[0] + '" data-n="' + nr + '"' + (nr ? "" : " disabled") + ">" + (k === "brauerei" ? "Brauen" : wareName(r[0])) + " <small>" + nr + " Stück</small></button>";
+        z += "<small>" + Object.keys(r[1]).map(function (x) { return r[1][x] + " " + WAREN[x]; }).join(" + ") + " → 1 " + WAREN[r[0]] + " · " + r[2] + " min</small></span>"
+          + '<button type="button" data-s="liefern" data-g="' + k + '" data-w="' + r[0] + '" data-n="' + nr + '"' + (nr ? "" : " disabled") + ">" + WAREN[r[0]] + " <small>" + nr + " Stück</small></button>";
       }
       t.push(z + "</div>");
     });
@@ -6384,7 +6298,7 @@
       + (zeilen || '<p class="sp-sm-klein">Gerade kein Dorf im Raum.</p>')
       + (zeilen ? '<p class="sp-sm-klein">Du nimmst 20 % der Vorräte (je Ritter +5 %, ihre Ritter −5 %). Das Gebäude bleibt stehen und ist nur beschädigt – der Besitzer repariert es mit Erz oder Holz. Danach 4 Stunden Schutz. Schule, Bibliothek und Krankenhaus plündert man nicht.</p>' : "");
   }
-  var MAKROS = { dorf: "Mein Dorf", handel: "Markt & Handel", werkzeug: "Werkzeug", deutsch: "Deutsch-Aufgabe", tiere: "Tiere", heilen: "Heilen", zauber: "Zauber" };
+  var MAKROS = { dorf: "Mein Dorf", handel: "Markt & Handel", werkzeug: "Werkzeug", deutsch: "Deutsch-Aufgabe", tiere: "Tiere", heilen: "Heilen" };
   try { var makroMerk = localStorage.getItem("dma_spiel_makro"); if (MAKROS[makroMerk]) S.makro = makroMerk; } catch (e) {}
   if (!S.makro) S.makro = "dorf";
   function makroSvg(m) {
@@ -6393,15 +6307,12 @@
     if (m === "werkzeug") return werkzeugSvg(S.werkzeug);
     if (m === "deutsch") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4 H9 C10 4 10 5 10 5 V17 C10 16 9 15.5 8 15.5 H3 Z" fill="#fff" stroke="#2d6a2d" stroke-width="1.2"/>'
       + '<path d="M17 4 H11 C10 4 10 5 10 5 V17 C10 16 11 15.5 12 15.5 H17 Z" fill="#eaf6e6" stroke="#2d6a2d" stroke-width="1.2"/><path d="M4.5 7.5 H8 M4.5 10 H8 M12 7.5 H15.5 M12 10 H15.5" stroke="#2d6a2d" stroke-width=".9"/></svg>';
-    if (m === "zauber") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17 L12 8" stroke="#c9a46a" stroke-width="2.4" stroke-linecap="round"/><path d="M14 2 L15 5 L18 6 L15 7 L14 10 L13 7 L10 6 L13 5 Z" fill="#ffe27a"/><circle cx="17" cy="11" r="1" fill="#bfe3ff"/><circle cx="9" cy="3.5" r=".9" fill="#bfe3ff"/></svg>';
     if (m === "tiere") return '<svg viewBox="0 0 20 20" aria-hidden="true"><ellipse cx="10" cy="13" rx="4" ry="3.4" fill="#8a5a2b"/><circle cx="5" cy="8.5" r="1.8" fill="#8a5a2b"/><circle cx="8.2" cy="5.6" r="1.8" fill="#8a5a2b"/><circle cx="11.8" cy="5.6" r="1.8" fill="#8a5a2b"/><circle cx="15" cy="8.5" r="1.8" fill="#8a5a2b"/></svg>';
     return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#3aa655"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>';
   }
   function makroAusloesen() {
     var m = S.makro;
-    S.rad = null;
-    if (m === "zauber") { S.zrad = !S.zrad; S.schnellMenue = false; S.langWahl = false; S.radOffenSeit = Date.now(); if (S.zrad) zauberradTon(); schnellZeichnen(true); return; }
-    S.zrad = false;
+    S.rad = null; S.zrad = false;
     if (m === "werkzeug") { S.wwahl = !S.wwahl; S.schnellMenue = false; S.radOffenSeit = Date.now(); ton("zauberpuff", 0.25); schnellZeichnen(true); return; }
     if (m === "deutsch") { S.schnellMenue = false; S.kategorie = null; S.aufgabe = null; menue("deutsch"); aufgabeHolen(false); schnellZeichnen(true); return; }
     var r = m === "dorf" ? "dorfblick" : m === "handel" ? "handelblick" : m;
@@ -7804,7 +7715,7 @@
   /* Was sich gerade bewegt, wenn nicht das Profilbild selbst. */
   var TIER_FAHRZEUG = /(^|\s)lc-(boot|lok|lift|kran|zylinder|beam|reise|kata-last|ufo|untertasse|mieze|frisbee|maulwurf|rohr|wagen|reisewagen)/;
   var tierNeu = [];
-  function fahrzeugRechteck(platz, seit, merk) {
+  function fahrzeugRechteck(platz, seit) {
     var kreis = platz.querySelector(".lc-kreis");
     if (sichtbar(kreis) && !platz.classList.contains("lc-platz-bildweg")) {
       var r = kreis.getBoundingClientRect();
@@ -7817,19 +7728,7 @@
       if (innen && sichtbar(innen)) { var ri = innen.getBoundingClientRect(); return { left: ri.left, top: ri.top, width: ri.width, height: ri.height }; }
     }
     if (!kandidaten.length || !kreis) return null;
-    var fz = kandidaten[kandidaten.length - 1].el, f = fz.getBoundingClientRect(), g = kreis.offsetWidth * 0.8;
-    /* FASSUNG 692 — XANDER: „wenn ich … den Zug fahren lasse, dann folgen die
-       Tiere nicht komplett im Zug. Die sollen richtig hinter ihm her rennen, die
-       ganze Fahrt über." Bei Lok (und Boot) laufen sie HINTER dem Fahrzeug her:
-       Fahrtrichtung aus der letzten Position, dahinter ein Stück Abstand. */
-    if (/lc-(lok|boot|reisewagen)/.test(fz.getAttribute("class") || "") && merk) {
-      var mitte = f.left + f.width / 2;
-      if (merk.x != null && Math.abs(mitte - merk.x) > 0.5) merk.richtung = mitte > merk.x ? 1 : -1;
-      merk.x = mitte; merk.rennt = true;
-      var ri = merk.richtung || 1, hinten = ri > 0 ? f.left - g * 0.9 : f.right - g * 0.1;
-      return { left: hinten, top: f.bottom - g * 0.95, width: g, height: g };
-    }
-    if (merk) merk.rennt = false;
+    var f = kandidaten[kandidaten.length - 1].el.getBoundingClientRect(), g = kreis.offsetWidth * 0.8;
     return { left: f.left + f.width / 2 - g / 2, top: f.top + f.height / 2 - g * 0.75, width: g, height: g };
   }
   /* Die Wache: wer gerade unterwegs ist, wer überfahren wird, was neu
@@ -7855,16 +7754,7 @@
             var seit = performance.now(), key = el.dataset.lcId || "";
             var beam = function () { return tierNeu.some(function (n) { return n.wann >= seit - 200 && /lc-beam/.test(n.el.getAttribute("class") || ""); }); };
             var lift = function () { return tierNeu.some(function (n) { return n.wann >= seit - 200 && /lc-lift/.test(n.el.getAttribute("class") || ""); }); };
-            var merk = {};
-            var lauf = tierReiseLauf(el, function () {
-              var r = fahrzeugRechteck(el, seit, merk);
-              [].forEach.call(document.querySelectorAll(".sp-tier-begleiter"), function (d) {
-                d.classList.toggle("sp-tier-rennt", Boolean(merk.rennt));
-                d.classList.toggle("sp-tier-links", merk.rennt && merk.richtung < 0);
-              });
-              return r;
-            }, { klasse: "sp-tier-haelt", wackeln: true });
-            if (lauf) setTimeout(function () { if (merk.rennt) { chatTon(zufall(["hundbellen", "chihuahuaknurr"]), 0.25); } }, 900);
+            var lauf = tierReiseLauf(el, function () { return fahrzeugRechteck(el, seit); }, { klasse: "sp-tier-haelt", wackeln: true });
             if (lauf) {
               tierLaeufe[key] = lauf;
               setTimeout(function () {
@@ -8641,7 +8531,7 @@
       schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
       turmZeile: turmZeile, platzGewechselt: platzGewechselt,
       eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,
-      krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, zauberStart: zauberStart, fuettern: fuettern, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
+      krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, fuettern: fuettern, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, chatWaffeZeigen: chatWaffeZeigen, tierReagiert: tierReagiert, tiereSpielen: tiereSpielen, handelLaden: handelLaden, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,

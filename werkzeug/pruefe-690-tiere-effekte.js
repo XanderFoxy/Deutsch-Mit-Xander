@@ -286,6 +286,34 @@ const sage = (gut, was, zusatz) => {
       setTimeout(() => { erg.weg = !document.querySelector(".sp-tier-begleiter"); ok(erg); }, 2600); }, 600);
   }));
   sage(magie.doppel === 2 && magie.zauber && magie.frueh.every((o) => o < 0.2) && magie.spaeter.every((o) => o > 0.8) && magie.weg, "Magie: die Tiere kommen NACH mir aus dem Zauber", JSON.stringify(magie));
+  console.log("\nFASSUNG 692: HINTER DEM ZUG HER, ZAUBER ERREICHT SEIN ZIEL\n");
+  const zug = await pg.evaluate(() => new Promise((ok) => {
+    const pl = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]');
+    pl.classList.add("lc-platz-unterwegs", "lc-platz-bildweg");
+    const lok = document.createElement("span"); lok.className = "lc-lok"; lok.style.cssText = "position:fixed;left:0;top:200px;width:160px;height:50px;background:#333";
+    document.getElementById("lcPlaetze").appendChild(lok);
+    lok.animate([{ transform: "translateX(0px)" }, { transform: "translateX(220px)" }], { duration: 1400, fill: "forwards" });
+    setTimeout(() => {
+      const lr = lok.getBoundingClientRect(), d = [...document.querySelectorAll(".sp-tier-begleiter")];
+      const erg = { doppel: d.length, rennt: d.every((e) => e.classList.contains("sp-tier-rennt")),
+        dahinter: d.every((e) => { const r = e.getBoundingClientRect(); return r.left + r.width * 0.5 < lr.left + 4; }) };
+      pl.classList.remove("lc-platz-unterwegs", "lc-platz-bildweg"); lok.remove();
+      setTimeout(() => ok(erg), 700);
+    }, 900);
+  }));
+  sage(zug.doppel === 2 && zug.rennt && zug.dahinter, "Lok: die Tiere rennen die ganze Fahrt hinter dem Zug her", JSON.stringify(zug));
+  const ziel = await pg.evaluate(() => new Promise((ok) => {
+    const Q = window.DMA_SPIEL.pruef, bea = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"] .lc-kreis');
+    Q.zauberStart("nebel", "ich", "bea", 900);
+    /* Bea wird mitten im Flug 90 px weggehoben. */
+    setTimeout(() => { bea.style.transform = "translate(90px, 40px)"; }, 300);
+    setTimeout(() => {
+      const k = document.querySelector(".sp-zauberkugel"), kr = k ? k.getBoundingClientRect() : null, br = bea.getBoundingClientRect();
+      const d = kr ? Math.hypot(kr.left + kr.width / 2 - (br.left + br.width / 2), kr.top + kr.height / 2 - (br.top + br.height / 2)) : 999;
+      bea.style.transform = ""; ok({ abstand: Math.round(d) });
+    }, 980);
+  }));
+  sage(ziel.abstand < 25, "Zauber: das Ziel wird mitten im Flug weggehoben – die Kugel erreicht es trotzdem", JSON.stringify(ziel));
   console.log("\nFELLMONSTER-BISS: DIE ZÄHNE GEHEN MIT DEM MONSTER\n");
   const biss = await pg.evaluate(() => new Promise((ok) => {
     const Q = window.DMA_SPIEL.pruef; Q.tierAngriff("ich", "bea", "fellmonster");
