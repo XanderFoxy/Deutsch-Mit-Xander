@@ -34890,15 +34890,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-auftritt .lc-auftritt-bild { z-index: 4; }
 .lc-auftritt .lc-auftritt-bild.lc-auftritt-nachbar { z-index: 2; box-shadow: none; }
 .lc-auftritt .lc-auftritt-wolke { z-index: 1; }
-
-/* =================================================================
-   FASSUNG 705 — XANDER (Funk 147): die ursprünglichen Wetterbilder (Emojis)
-   wieder, nachts mit Mond. Gleiche Größe wie vor 698.
-   ================================================================= */
-.weather-bar .weather-icon { line-height: 1; }
-.weather-bar .weather-icon .w-emoji { display: inline-block; font-size: 1.2rem; line-height: 1; }
-/* Auf der Grundlinie wie ein einzelnes Emoji: der Mond, die Wolke schiebt sich rechts unten halb davor. */
-.weather-bar .weather-icon .w-nacht { display: inline-flex; align-items: baseline; justify-content: flex-start; width: 1.3em; flex: 0 0 auto; }
-.weather-bar .weather-icon .w-nacht .w-mond { font-size: .82em; line-height: 1; }
-.weather-bar .weather-icon .w-nacht .w-wolke { font-size: .7em; line-height: 1; margin-left: -.5em; transform: translateY(.14em); }
-.weather-bar .weather-icon .w-nacht .w-wolke.w-gross { font-size: .8em; margin-left: -.55em; }

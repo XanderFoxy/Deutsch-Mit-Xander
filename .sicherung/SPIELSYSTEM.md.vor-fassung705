@@ -919,8 +919,3 @@ Sonde: `werkzeug/pruefe-704-dorf-gemalt.js` (Android, 360 px, echte Finger). `pr
 - **Leistung**: gemalt wird einmal je Dorfzustand (Stufen, kaputt) und im Speicher behalten; beim Neuzeichnen (jede Sekunde die Uhren) bleibt die Leinwand unangetastet (`data-sig`). Rauch und Mühlenflügel bewegen sich darüber nur per transform. Neuzeichnen (Median, 4× gedrosselt) 29–40 ms statt ~80 ms mit Vektorhäusern.
 - **Rückfall**: `localStorage.dma_dorf_vektor = "1"` (oder ein Browser ohne Canvas) zeigt das bisherige Vektorbild.
 - **Funk 148**: ein Tipp in die leere Landschaft schließt das offene Haus. Die Hausstation hat eigene, feste Farben (dunkle Holzknöpfe mit heller Schrift, „Abholen" grün, gesperrt deutlich grau, ✕ dunkel) – vorher weiße Schrift auf fast weißem Glas, im Galaxie-Design unlesbar.
-
-### Fassung 705 (Funk 147: Wetter mit den ursprünglichen Bildern, nachts Mond)
-Sonde: `werkzeug/pruefe-698-funk139-142.js` (angepasst: Tag = ursprüngliches Bild, Nacht = Mond statt Sonne, Regen bleibt).
-- **Nachgesehen im Verlauf**: bis Fassung 697 waren die Wettersymbole Emojis (`WEATHER_ICONS`, seit dem ersten Hochladen am 10.09.; im Kopf stand anfangs „⛅"). 698 hatte sie durch eigene Zeichnungen ersetzt – die sind wieder raus.
-- **Jetzt**: tagsüber genau die ursprünglichen Bilder (☀️ 🌤️ ⛅ ☁️ 🌫️ 🌦️ 🌧️ ⛈️ 🌨️ ❄️). Nachts nur dort, wo eine Sonne zu sehen wäre, der Mond an ihrer Stelle: klar 🌙, leicht/halb bewölkt der Mond mit einer Wolke davor, Schauer/Niesel der Mond hinter der Regenwolke. Tag oder Nacht sagt weiter der Dienst (`is_day`). Die Ortswahl (Berlin, Döbeln, Standort) bleibt.

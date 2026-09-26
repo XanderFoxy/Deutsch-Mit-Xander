@@ -7465,23 +7465,38 @@
      Emojis, und die gibt es nur mit Sonne (☀️ ⛅ 🌤️) — nachts stand also eine Sonne da, und
      jedes Telefon malt Emojis anders (Samsung u. a. als Kachel). Jetzt: eigene Zeichnungen,
      gewählt nach Code UND is_day — tagsüber Sonne in den Wolken, nachts der Mond dahinter. */
-  /* FASSUNG 705 — XANDER (Funk 147): „Wenn der Wetterdienst keine eigenen Bilder liefert so wie du
-     gesagt hast dann möchte ich unsere ursprungsbilder haben … nur mit dem Unterschied dass du
-     diesmal einen Mond mit dazu machst für die Nacht Situation des Wetters".
-     NACHGESEHEN im Verlauf: bis Fassung 697 waren die Symbole genau diese Emojis (WEATHER_ICONS,
-     seit dem ersten Hochladen am 10.09.; im Kopf stand anfangs „⛅"). 698 hatte sie durch eigene
-     Zeichnungen ersetzt – die sind wieder raus. Tagsüber stehen die ursprünglichen Bilder; nachts
-     tritt nur dort, wo eine Sonne zu sehen wäre, der Mond an ihre Stelle: klar 🌙, leicht oder
-     halb bewölkt der Mond mit einer Wolke davor, Schauer der Mond hinter der Regenwolke. */
+  let wetterSymbolNr = 0;
   function wetterSymbol(code, tag) {
-    const c = Number(code), e = WEATHER_ICONS[c] || "🌡️";
-    if (tag) return `<span class="w-emoji">${e}</span>`;
-    if (c === 0) return `<span class="w-emoji">🌙</span>`;
-    if (c === 1 || c === 2) return `<span class="w-emoji w-nacht"><span class="w-mond">🌙</span><span class="w-wolke${c === 2 ? " w-gross" : ""}">☁️</span></span>`;
-    if (c === 51 || c === 53 || c === 80) return `<span class="w-emoji w-nacht"><span class="w-mond">🌙</span><span class="w-wolke">🌧️</span></span>`;
-    return `<span class="w-emoji">${e}</span>`;
+    const n = ++wetterSymbolNr, c = Number(code);
+    const himmel = (x, y, r) => tag
+      ? `<g><g stroke="#ffb31a" stroke-width="1.6" stroke-linecap="round">${[0, 45, 90, 135, 180, 225, 270, 315].map((w) => { const a = w * Math.PI / 180;
+          return `<path d="M${(x + Math.cos(a) * (r + 2)).toFixed(1)} ${(y + Math.sin(a) * (r + 2)).toFixed(1)} L${(x + Math.cos(a) * (r + 4.6)).toFixed(1)} ${(y + Math.sin(a) * (r + 4.6)).toFixed(1)}"/>`; }).join("")}</g>`
+        + `<circle cx="${x}" cy="${y}" r="${r}" fill="#ffc93c" stroke="#f0a100" stroke-width=".8"/></g>`
+      : `<g><mask id="wsm${n}"><rect x="0" y="0" width="32" height="32" fill="#fff"/><circle cx="${x + r * 0.62}" cy="${y - r * 0.42}" r="${r * 0.92}" fill="#000"/></mask>`
+        + `<circle cx="${x}" cy="${y}" r="${r}" fill="#f6ecc0" stroke="#d8c98a" stroke-width=".7" mask="url(#wsm${n})"/>`
+        + `<circle cx="${x - r * 0.35}" cy="${y + r * 0.25}" r="${r * 0.14}" fill="#e2d59d"/></g>`;
+    const wolke = (dunkel, dx, dy, sk) => `<path transform="translate(${dx || 0} ${dy || 0}) scale(${sk || 1})" d="M8.6 26 H23.6 A5.4 5.4 0 0 0 24.1 15.3 A7.6 7.6 0 0 0 9.8 13.6 A6.2 6.2 0 0 0 8.6 26 Z"`
+      + ` fill="${dunkel ? (tag ? "#9aa6b4" : "#5d6b80") : (tag ? "#ffffff" : "#aab6c8")}" stroke="${tag ? "#8e9aa8" : "#3e4a5e"}" stroke-width=".9" stroke-linejoin="round"/>`;
+    const tropfen = (k) => Array.from({ length: k }, (_, i) => `<path d="M${11 + i * 4.2} 27.6 l-1.3 3" stroke="#3b8fe0" stroke-width="1.7" stroke-linecap="round"/>`).join("");
+    const flocken = (k) => Array.from({ length: k }, (_, i) => { const x = 11 + i * 4.6, y = 29.2;
+      return `<g stroke="${tag ? "#7fb3e6" : "#e8f2ff"}" stroke-width="1" stroke-linecap="round"><path d="M${x - 1.6} ${y} H${x + 1.6} M${x} ${y - 1.6} V${y + 1.6} M${x - 1.1} ${y - 1.1} L${x + 1.1} ${y + 1.1} M${x + 1.1} ${y - 1.1} L${x - 1.1} ${y + 1.1}"/></g>`; }).join("");
+    const blitz = `<path d="M17.5 24 L13.6 29.4 H16.6 L14.4 32 L20.4 26.6 H17.2 L19.4 24 Z" fill="#ffd21a" stroke="#c99a00" stroke-width=".6" stroke-linejoin="round"/>`;
+    const nebel = `<g stroke="${tag ? "#9aa6b4" : "#8c98ab"}" stroke-width="1.8" stroke-linecap="round"><path d="M6 17 H26"/><path d="M4 21.5 H22"/><path d="M9 26 H28"/></g>`;
+    let inhalt;
+    if (c === 0) inhalt = himmel(16, 16, tag ? 6.4 : 8.2);
+    else if (c === 1) inhalt = himmel(12.5, 12, tag ? 5.2 : 6.6) + wolke(false, 7, 7.4, 0.72);
+    else if (c === 2) inhalt = himmel(11.5, 11, tag ? 5.2 : 6.6) + wolke(false, 3.5, 3.2, 0.86);
+    else if (c === 3) inhalt = wolke(true, -2.4, -5.4, 0.9) + wolke(false, 1.4, 0.2, 0.92);
+    else if (c === 45 || c === 48) inhalt = wolke(true, 0, -6.6, 0.9) + nebel;
+    else if (c >= 51 && c <= 57) inhalt = himmel(11, 9.5, tag ? 4.4 : 5.6) + wolke(false, 2, -2.2, 0.9) + tropfen(2);
+    else if (c >= 61 && c <= 67) inhalt = wolke(true, 1.2, -3.8, 0.94) + tropfen(c >= 65 ? 4 : 3);
+    else if ((c >= 71 && c <= 77) || c === 85 || c === 86) inhalt = wolke(false, 1.2, -3.8, 0.94) + flocken(c === 75 || c === 86 ? 4 : 3);
+    else if (c >= 80 && c <= 82) inhalt = himmel(10.5, 9, tag ? 4.6 : 5.8) + wolke(true, 2.4, -2.6, 0.9) + tropfen(c === 82 ? 4 : 3);
+    else if (c >= 95) inhalt = wolke(true, 1.2, -4.6, 0.94) + blitz + (c > 95 ? tropfen(2) : "");
+    else inhalt = wolke(false, 1, -2, 0.9);
+    return `<svg class="w-symbol" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true" focusable="false">${inhalt}</svg>`;
   }
-  // Niedliche, klar unterscheidbare Symbole je Wetterlage (WMO-Code -> Emoji) — die ursprünglichen Bilder (seit 705 wieder)
+  // Niedliche, klar unterscheidbare Symbole je Wetterlage (WMO-Code -> Emoji) — seit 698 nur noch Rückfall
   const WEATHER_ICONS = {
     0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
     45: "🌫️", 48: "🌫️",

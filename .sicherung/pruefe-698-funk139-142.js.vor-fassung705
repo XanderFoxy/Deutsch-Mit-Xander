@@ -26,7 +26,7 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
 
   console.log("\nWETTER: SONNE AM TAG, MOND IN DER NACHT, ORT WÄHLBAR\n");
   /* NUR_AUFTRITT=1 prüft nur den letzten Teil (für die Gegenprobe mit einem alten Stand). */
-  for (const [tag, code] of (process.env.NUR_AUFTRITT ? [] : [[1, 2], [0, 2], [0, 0], [1, 0], [0, 1], [0, 61]])) {
+  for (const [tag, code] of (process.env.NUR_AUFTRITT ? [] : [[1, 2], [0, 2], [0, 0], [1, 0]])) {
     const ctx = await br.newContext({ viewport: { width: 390, height: 800 }, isMobile: true, hasTouch: true });
     const pg = await ctx.newPage(); pg.on("pageerror", (e) => kf.push(String(e.message || e)));
     const anfragen = [];
@@ -35,11 +35,8 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
     await pg.waitForFunction(() => document.querySelector("#weatherIcon")?.dataset.code != null, { timeout: 20000 });
     const s = await pg.evaluate(() => { const i = document.getElementById("weatherIcon"); return { tag: i.dataset.tag, html: i.innerHTML, emoji: /[☀-➿\u{1F300}-\u{1FAFF}]/u.test(i.textContent) }; });
-    /* FASSUNG 705 — XANDER (Funk 147): die ursprünglichen Bilder (Emojis) wieder, nachts mit Mond statt Sonne. */
-    const t = await pg.evaluate(() => document.getElementById("weatherIcon").textContent);
-    const ursprung = { 0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 61: "🌧️" }[code];
-    const sonne = /[☀🌤⛅🌦]/u.test(t), mond = /🌙/u.test(t);
-    sage(s.emoji && (tag ? t === ursprung && !mond : code === 61 ? t === ursprung && !mond : mond && !sonne) && !/<svg/.test(s.html), (tag ? "Tag" : "Nacht") + ", Code " + code + ": " + (tag ? "das ursprüngliche Bild " + ursprung : code === 61 ? "Regen ohne Sonne bleibt " + ursprung : "Mond statt Sonne"), JSON.stringify({ t, sonne, mond }));
+    const sonne = /#ffc93c/.test(s.html), mond = /#f6ecc0/.test(s.html);
+    sage(!s.emoji && (tag ? sonne && !mond : mond && !sonne), (tag ? "Tag" : "Nacht") + ", Code " + code + ": " + (tag ? "Sonne" : "Mond") + " gezeichnet, kein Emoji", JSON.stringify({ sonne, mond, emoji: s.emoji }));
     if (tag === 1 && code === 2) {
       sage(anfragen.some((u) => /is_day/.test(u) && /latitude=52\.52/.test(u)), "gefragt wird mit is_day, zuerst für Berlin", (anfragen[0] || "").replace(/^.*\?/, "").slice(0, 90));
       await pg.click(".weather-readout");
