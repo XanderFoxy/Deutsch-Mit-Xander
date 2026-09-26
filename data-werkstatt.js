@@ -49,20 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 691: Eigene Tier-Reaktionen für alle übrigen Effekte",
+  stand: "Fassung 692 ist drauf. Als Nächstes: Ladezeit (694), dann Tiere, Auftritte, Spiellogik.",
 
   inArbeit: [
-    { seit: "2026-09-26T02:10",
-      text: "Altlasten rot: dummy, namensvorschlaege, runde69, runde88-pac, runde87-strichlinien, runde92-betrieb, runde92-grundebene" },
+    { seit: "2026-09-26T04:19",
+      text: "Schneller laden (kleinere Dateien, Zwischenspeicher)" },
+    { seit: "2026-09-26T04:19",
+      text: "Tiere: Stimmen, Sahne ablecken, Fähigkeiten, Hunger/Müde" },
+    { seit: "2026-09-26T04:19",
+      text: "4 neue Auftritte + Monstertruck neu" },
+    { seit: "2026-09-26T04:19",
+      text: "Spiellogik: Waffen und Ausbau stimmig" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T02:10",
-      text: "Schwindelig, Sonnenbrille, Kuckuck, Blitzblank, Jucken, Feuer auspusten, Bäh, bunte Punkte, Cowboyhüte, Lachen, Tanzen, Olé" },
-    { seit: "2026-09-26T02:10",
-      text: "Klaps: das Fellmonster klapst zurück" },
-    { seit: "2026-09-26T02:10",
-      text: "Beamen: eigene Transporter-Säule je Tier" },
+    { seit: "2026-09-26T04:19",
+      text: "Dorf-Menü springt nicht mehr zurück" },
+    { seit: "2026-09-26T04:19",
+      text: "Taschen unten mit + und −" },
+    { seit: "2026-09-26T04:19",
+      text: "Manatrank im Shop und aus der Brauerei" },
+    { seit: "2026-09-26T04:19",
+      text: "Zauber treffen ihr Ziel, Effekte ziehen beim Platzwechsel mit" },
+    { seit: "2026-09-26T04:19",
+      text: "Tiere rennen hinter dem Zug her" },
   ],
 };
