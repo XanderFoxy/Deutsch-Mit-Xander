@@ -201,9 +201,14 @@ const sage = (gut, was, zusatz) => {
   await tick(300);
   const geholt = await pg.evaluate(() => ({ ruf: window.__rufe.some((r) => r.name === "spiel_fund_heben"), sack: Boolean(document.querySelector("#lcPlaetze .sp-fundsack")),
     panel: !document.getElementById("spPanel").hidden, aufgabe: window.__rufe.some((r) => r.name === "spiel_aufgabe") }));
-  /* Seit 707 — XANDER (Funk 146) über den Knopf: „das nutzlose Zeiger-Symbol … soll etwas tun". Er sammelt jetzt ein;
-     das Deutsch-Fenster bleibt dabei offen, wie es war, und es wird keine Aufgabe geholt. */
-  sage(geholt.ruf && !geholt.sack && geholt.panel && !geholt.aufgabe, "der Knopf sammelt das Fundstück ein – das Fenster bleibt offen, keine Aufgabe", JSON.stringify(geholt));
+  geholt.zeigt = await pg.evaluate(() => Boolean(document.querySelector("#lcPlaetze .sp-fundsack.sp-fund-zeigen")));
+  /* FASSUNG 678 — XANDER: „man soll es nicht so einfach haben nur auf den Knopf zu drücken … Nur dass der Button … dieses Dialogfenster ablegt". */
+  geholt.griff = await pg.evaluate(() => Boolean(document.querySelector('.sp-schnell [data-s="fensterauf"]')));
+  sage(!geholt.ruf && geholt.sack && !geholt.panel && geholt.zeigt && geholt.griff, "der Knopf hebt NICHT auf: er legt das Fenster ab (Griff in der Leiste) und zeigt das Säckchen", JSON.stringify(geholt));
+  await tippe('.sp-schnell [data-s="fensterauf"]');
+  await tick(300);
+  const wieder = await pg.evaluate(() => ({ offen: !document.getElementById("spPanel").hidden, deutsch: Boolean(document.querySelector('#spPanel .sp-tabs [data-tab="deutsch"].sp-an')), griff: Boolean(document.querySelector('.sp-schnell [data-s="fensterauf"]')) }));
+  sage(wieder.offen && wieder.deutsch && !wieder.griff, "ein Tipp auf den Griff holt das Fenster zurück – im selben Reiter", JSON.stringify(wieder));
 
   console.log("\nTIPP NEBEN DAS FENSTER, HAUPTMENÜ\n");
   await pg.evaluate(() => window.DMA_SPIEL.menue("deutsch"));

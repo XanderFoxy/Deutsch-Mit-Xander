@@ -194,12 +194,9 @@ const sage = (gut, was, zusatz) => {
     weg: !document.querySelector("#lcPlaetze .sp-fundsack"), panel: !!(document.getElementById("spPanel") && !document.getElementById("spPanel").hidden),
     platzwechsel: window.__rufe.some((r) => r.name === "spiel_platzwechsel"), meldung: window.__hinweise.slice(-1)[0] || "" }));
   sage(auf.heben && auf.weg && !auf.platzwechsel, "Antippen hebt es auf (man setzt sich nicht auf den Platz)", JSON.stringify({ heben: auf.heben, weg: auf.weg, platzwechsel: auf.platzwechsel }));
-  sage(auf.panel && auf.aufgabe && auf.aufgabe.p_kategorie === "artikel" && /Erz/.test(auf.meldung), "es kommt eine Artikel-Aufgabe, und man weiß, was drin ist", auf.meldung);
-  await pg.evaluate(() => { window.__fundLohn = "erz"; window.__hinweise.length = 0; });
-  await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="antwort"]'); if (b) b.click(); });
-  await tick(900);
-  const lo = await pg.evaluate(() => ({ m: window.__hinweise.join(" | "), kat: window.DMA_SPIEL.pruef.zustand().kategorie }));
-  sage(/Fundstück eingelöst: 1 Erz/.test(lo.m), "richtig gelöst: der Fund gehört einem", lo.m);
+  /* Seit 707 (Funk 146: „Schatz ohne das Deutsch-Menü"): kein Deutsch-Fenster, keine Aufgabe – der Inhalt kommt sofort. */
+  sage(!auf.panel && !auf.aufgabe && /eingesammelt.*Erz/.test(auf.meldung), "keine Aufgabe, kein Fenster: der Inhalt gehört sofort einem, und man weiß, was drin war", auf.meldung);
+  const lo = await pg.evaluate(() => ({ kat: window.DMA_SPIEL.pruef.zustand().kategorie }));
   sage(lo.kat === null || lo.kat === undefined || lo.kat === "", "danach gilt wieder die eigene Aufgabenwahl (nicht mehr nur Artikel)", String(lo.kat));
 
   console.log("\nNUR FÜR MICH, NUR BEIM MITSPIELEN\n");

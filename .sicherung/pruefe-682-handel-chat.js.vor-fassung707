@@ -178,8 +178,7 @@ const sage = (gut, was, zusatz) => {
   await tippe("#lcPlaetze .sp-fundsack");
   await tick(500);
   const fund = await pg.evaluate(() => ({ punkte: window.DMA_SPIEL.pruef.zustand().ich.punkte, meld: window.__hinweise.join(" | ") }));
-  /* Seit 707 (Funk 146): keine Aufgabe mehr danach – die Meldung nennt Punkte und Inhalt. */
-  sage(fund.punkte === 119 && /eingesammelt: \+3 Punkte und/.test(fund.meld) && !/nach der Aufgabe|Punkte dazu/.test(fund.meld), "Säckchen aufheben: 116 → 119 Punkte sofort, Meldung nennt Punkte und Inhalt (keine Aufgabe mehr)", JSON.stringify(fund));
+  sage(fund.punkte === 119 && /\+3 Punkte sofort/.test(fund.meld) && /\+5 Punkte dazu/.test(fund.meld), "Säckchen aufheben: 116 → 119 Punkte sofort, Meldung nennt +5 nach der Aufgabe", JSON.stringify(fund));
 
   console.log("\nDEUTSCH: AUFGABE OBEN, MISSION | NEUE AUFGABE, WAHL EINGEKLAPPT\n");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.kategorie = null; S.aufgabe = { id: 5, frage: "Ich ___ nach Hause.", optionen: ["gehe", "gehst"], niveau: "A1" }; S.deutschWahl = false; window.DMA_SPIEL.menue("deutsch"); });

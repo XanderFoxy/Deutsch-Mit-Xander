@@ -1042,6 +1042,11 @@
   }
   function langAufLeer(platz) {
     if (!spielSichtbar()) return false;
+    /* FASSUNG 707 — XANDER (Funk 146): „wenn man einmal lange auf einen positionsfeld gedrückt hält dann soll das
+       voreingestellte Werkzeug auch damit verbunden sein und nicht glitchen". Auf manchen Telefonen kommt der lange
+       Druck zweimal an (Zeitgeber und Kontextmenü) – dann schaltete das Werkzeug an und gleich wieder aus. */
+    if (Date.now() - (S.langLeerZeit || 0) < 900) return true;
+    S.langLeerZeit = Date.now();
     grabenUmschalten();
     if (!S.graben) hinweis((WERKZEUGE[S.werkzeug] || WERKZEUGE.schaufel).name + " weggelegt.");
     return true;
@@ -3209,10 +3214,12 @@
     return "";
   }
   function graben(knopf, nr) {
-    if (S.grabLaeuft) return;
+    /* FASSUNG 707 — je Platz eine Sperre (Funk 146: „niemals hängen"): man gräbt Platz für Platz zügig hintereinander. */
+    S.grabAn = S.grabAn || {};
+    if (S.grabAn[nr]) return;
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
     if (S.ich.kaputt) { hinweis(gesperrtGrund()); return; }
-    S.grabLaeuft = true;
+    S.grabAn[nr] = 1;
     var start = Date.now();
     /* Ton und Bild zusammen: die Schaufel sticht, während „graben“ läuft. */
     grabZeigen(knopf);
@@ -3221,7 +3228,7 @@
     rpc("spiel_graben", { p_raum: raumName(), p_platz: nr }).then(function (r) {
       /* Der Fund zeigt sich erst, wenn die Schaufel fertig ist (0,9 s). */
       setTimeout(function () {
-        S.grabLaeuft = false;
+        delete S.grabAn[nr];
         if (!r || !r.ok) { hinweis("⛏️ " + ((r && r.grund) || "geht nicht")); return; }
         if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
         fundZeigen(knopf, r.fund, r.menge);
@@ -3239,7 +3246,7 @@
         if (r.fund === "schatz") { S.missionAlt = null; senden({ ereignis: "stand", stand: oeffentlich(r) }); }
         zeichnen(); schnellZeichnen(); panelAuffrischen();
       }, Math.max(0, 900 - (Date.now() - start)));
-    }).catch(function (e) { S.grabLaeuft = false; hinweis("Graben ging nicht: " + (e && e.message ? e.message : e)); });
+    }).catch(function (e) { delete S.grabAn[nr]; hinweis("Graben ging nicht: " + (e && e.message ? e.message : e)); });
   }
   /* Schatzsuche: „heiß“ und „kalt“, wie beim Kinderspiel. */
   function waermeHinweis(m, nr) {
@@ -3513,10 +3520,8 @@
         var h = waffenKnopf(w, " sp-s-slot").replace('data-s="waffe"', 'data-s="waffe" data-n="' + n + '"');
         return S.waffe === w ? h.replace(/<\/button>$/, tacho + "</button>") : h;
       }).join(""));
-      /* + und − für die Taschen, klein übereinander. */
-      var mehrGeht = s.length < SLOT_MAX && eigeneWaffen().length > s.length;
-      teile.push('<span class="sp-s-taschen"><button type="button" data-s="slotplus"' + (mehrGeht ? "" : " disabled") + ' title="Eine Tasche mehr" aria-label="Tasche hinzufügen">+</button>'
-        + '<button type="button" data-s="slotminus"' + (s.length > 1 ? "" : " disabled") + ' title="Eine Tasche weniger" aria-label="Tasche entfernen">\u2212</button></span>');
+      /* FASSUNG 707 — XANDER (Funk 146): „das Hinzufügen der Taschen ist nicht sinnvoll diese Symbole sind sehr klein
+         außerdem möchte ich das innerhalb des Menüs steuern". + und − stehen jetzt groß im Menü (Waffen), nicht mehr hier. */
       var voll = !ich.kaputt && ich.lp >= ich.lp_max;
       var zuEssen = vorrat(ich, "bratwurst") + vorrat(ich, "sauerkraut");
       teile.push('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke && !zuEssen) ? " disabled" : "")
@@ -3833,7 +3838,17 @@
     var inhaltM = "";
     if (r === "waffen") {
       var nr = Math.min(S.schnellSlot || 0, s.length - 1);
-      inhaltM = '<div class="sp-sm-slots">' + s.map(function (w, i) { return '<button type="button" data-s="slot" data-n="' + i + '" class="' + (nr === i ? "sp-an" : "") + '">Tasche ' + (i + 1) + "</button>"; }).join("") + "</div>";
+      /* FASSUNG 707 — XANDER (Funk 146): „ich möchte das frei entscheiden was ich links haben möchte was ich rechts haben
+         möchte". Die Taschen so, wie sie unten in der Leiste liegen (links nach rechts), mit ihrer Waffe; eine antippen,
+         dann mit ◀ ▶ verschieben oder eine Waffe hineinlegen; + und − für mehr oder weniger Taschen. */
+      inhaltM = '<div class="sp-taschen-ed">' + s.map(function (w, i) {
+        return '<button type="button" data-s="slot" data-n="' + i + '" class="sp-tasche' + (nr === i ? " sp-an" : "") + '">' + geschossSvg(w, S.laserfarbe)
+          + "<small>" + (i + 1) + ". " + esc(WAFFEN[w] ? WAFFEN[w].name : w) + "</small></button>"; }).join("") + "</div>"
+        + '<div class="sp-sm-liste sp-taschen-knoepfe">'
+        + '<button type="button" data-s="slotschieb" data-r="-1"' + (nr > 0 ? "" : " disabled") + '>◀ nach links</button>'
+        + '<button type="button" data-s="slotschieb" data-r="1"' + (nr < s.length - 1 ? "" : " disabled") + '>nach rechts ▶</button>'
+        + '<button type="button" data-s="slotplus"' + (s.length < SLOT_MAX && eigeneWaffen().length > s.length ? "" : " disabled") + '>+ Tasche</button>'
+        + '<button type="button" data-s="slotminus"' + (s.length > 1 ? "" : " disabled") + '>− Tasche</button></div>';
       var gruppen = [["Standard", ["kartoffel", "zwille", "bogen", "laser"]], ["Lustig", ["eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "bratwurst", "sauerkraut"]],
                      ["Arcade", ["lasersalve", "mg"]], ["Stark", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]], ["Meister", ["weisswurst", "nudelholz", "kuckucksuhr"]],
                      ["Energie", ["doppellaser", "streulaser", "plasmastrahl", "kugelblitz"]]];
@@ -3842,7 +3857,7 @@
           .map(function (w) { return waffenKnopf(w, (s[nr] === w ? " sp-slot-drin" : "")).replace('data-s="waffe"', 'data-s="waehle"'); }).join("");
         if (knoepfe) inhaltM += '<div class="sp-sm-gruppe"><span>' + g[0] + "</span>" + knoepfe + "</div>";
       });
-      inhaltM += '<p class="sp-sm-klein">Tippe eine Waffe: sie kommt auf ' + (nr === 0 ? "Waffe 1" : "Waffe 2") + " und ist angelegt. Kaufen: Menü → Mehr → Laden.</p>";
+      inhaltM += '<p class="sp-sm-klein">Tippe eine Waffe: sie kommt in Tasche ' + (nr + 1) + " und ist angelegt. Kaufen: Menü → Mehr → Laden.</p>";
     } else if (r === "heilen") {
       var t = [];
       t.push('<button type="button" data-s="heil" data-art="pflaster"' + (ich.pflaster > 0 ? "" : " disabled") + ">Pflaster <small>" + (ich.pflaster || 0) + "</small></button>");
@@ -4227,6 +4242,14 @@
         trinken("mana");
       }).catch(function () { hinweis("🪙 Das ging gerade nicht."); });
       return;
+    } else if (s === "slotschieb") {
+      /* FASSUNG 707 — die gewählte Tasche nach links oder rechts tauschen; die Auswahl wandert mit. */
+      var sl = slots().slice(), von = Math.min(S.schnellSlot || 0, sl.length - 1), nach = von + (Number(k.dataset.r) || 0);
+      if (nach >= 0 && nach < sl.length) {
+        var tmp = sl[von]; sl[von] = sl[nach]; sl[nach] = tmp; S.slots = sl; S.schnellSlot = nach;
+        try { localStorage.setItem(SLOT_SCHLUESSEL, JSON.stringify(sl)); } catch (e) {}
+        ton("swoosh", 0.2);
+      }
     } else if (s === "slotplus" || s === "slotminus") {
       slotZahlSetzen(slots().length + (s === "slotplus" ? 1 : -1));
       if (slots().indexOf(S.waffe) < 0) S.waffe = slots()[0];
@@ -4264,7 +4287,7 @@
     } else if (s === "fensterauf") {
       S.schnellMenue = false; menue(S.panelAbgelegt || "start"); schnellZeichnen(true); return;
     } else if (s === "fund") {
-      fundAmPlatzZeigen(); return;
+      fundAusLeiste(); return;
     } else if (s === "graben") {
       S.schnellMenue = false; S.wwahl = false;
       /* Aus dem Menü „Graben (Schaufel)“ bei anderem Werkzeug in der Hand: zur Schaufel wechseln. */
@@ -5901,7 +5924,7 @@
     if (tu === "zu") { S.panelAbgelegt = null; schliessen(); schnellZeichnen(true); return; }
     if (tu === "fensterab") { fensterAblegen(); return; }
     if (tu === "haupt") { schliessen(); S.schnellMenue = true; schnellZeichnen(true); return; }
-    if (tu === "fund") { fundAmPlatzZeigen(); return; }
+    if (tu === "fund") { fundAusLeiste(); return; }
     if (tu === "neuwahl") { S.deutschWahl = !S.deutschWahl; panelAuffrischen();
       if (S.deutschWahl) { var wz = panel.querySelector(".sp-deutsch-wahl"); if (wz) try { wz.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }
       return; }
@@ -6652,33 +6675,47 @@
     knopf.appendChild(z);
     setTimeout(function () { z.remove(); }, 1800);
   }
+  /* FASSUNG 707 — XANDER (Funk 146): „wenn man ganz schnell auf den Feldern so nacheinander alle abgrast also von 1
+     bis 8 … dann soll das ganz flüssig ab ernten … das soll immer flüssig vonstatten gehen und niemals hängen".
+     Bisher verwarf ein Tipp während des Ausholens (1,5 s) still den nächsten. Jetzt kommt jeder Tipp in eine
+     Schlange; der Server lässt alle 0,25 s einen Schnitt zu. Jedes Feld nur einmal in der Schlange. */
+  var FELD_SCHLANGE = [];
+  function feldArbeit(schluessel, fn) {
+    S.feldWartet = S.feldWartet || {};
+    if (S.feldWartet[schluessel]) return;
+    S.feldWartet[schluessel] = 1;
+    FELD_SCHLANGE.push({ k: schluessel, fn: fn });
+    if (FELD_SCHLANGE.length === 1) feldWeiter();
+  }
+  function feldWeiter() {
+    var a = FELD_SCHLANGE[0];
+    if (!a) return;
+    setTimeout(function () {
+      a.fn(function () { delete S.feldWartet[a.k]; FELD_SCHLANGE.shift(); S.ernteFrei = Date.now() + 260; feldWeiter(); });
+    }, Math.max(0, (S.ernteFrei || 0) - Date.now()));
+  }
   function ernten(knopf, nr) {
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
     if (S.ich.kaputt) { hinweis(gesperrtGrund()); return; }
     var st = ackerStand(nr);
     if (!st.reif) { hinweis("🌱 Das Korn wächst noch – reif in " + uhrText(st.rest) + "."); return; }
-    if (S.ernteLaeuft) return;
-    /* Der Server lässt die Sense nur alle 1,5 s ausholen: wer schneller
-       tippt, dessen Schnitt wartet kurz statt abgelehnt zu werden. */
-    var warte = (S.ernteFrei || 0) - Date.now();
-    if (warte > 0) { S.ernteLaeuft = true; setTimeout(function () { S.ernteLaeuft = false; ernten(knopf, nr); }, warte); return; }
-    S.ernteLaeuft = true;
+    feldArbeit("e" + nr, function (weiter) {
     var start = Date.now();
     /* Ton und Bild zusammen: die Sense schwingt, während „swoosh“ läuft. */
     senseZeigen(knopf);
     ton("swoosh", 0.45);
     rpc("spiel_ernten", { p_platz: nr }).then(function (r) {
+      weiter();
       setTimeout(function () {
-        S.ernteLaeuft = false;
         if (!r || !r.ok) { hinweis("🌾 " + ((r && r.grund) || "geht nicht") + (r && r.sek ? " – reif in " + uhrText(r.sek * 1000) : "")); return; }
-        S.ernteFrei = Date.now() + 1550;
         if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
         ernteZahl(knopf, "+" + r.menge);
         ton("geschenk", 0.3);
         hinweis("🌾 +" + r.menge + " Getreide (" + vorrat(r, "getreide") + " im Lager)." + (r.besaet ? " Gesätes Feld – volle Ernte!" : " Tipp: säen bringt 5 statt 2."));
         ackerPflegen(); schnellZeichnen(); panelAuffrischen();
       }, Math.max(0, 450 - (Date.now() - start)));
-    }).catch(function (e) { S.ernteLaeuft = false; hinweis("Ernten ging nicht: " + (e && e.message ? e.message : e)); });
+    }).catch(function (e) { weiter(); hinweis("Ernten ging nicht: " + (e && e.message ? e.message : e)); });
+    });
   }
   /* ---------------------------------------------------------------
      FASSUNG 683 — HOLZ UND FISCH
@@ -6743,25 +6780,22 @@
     if (S.ich.kaputt) { hinweis(gesperrtGrund()); return; }
     var st = baumStand(nr);
     if (!st.reif) { hinweis("🌳 Der Baum wächst noch – groß in " + uhrText(st.rest) + "."); return; }
-    if (S.ernteLaeuft) return;
-    var warte = (S.ernteFrei || 0) - Date.now();
-    if (warte > 0) { S.ernteLaeuft = true; setTimeout(function () { S.ernteLaeuft = false; holzen(knopf, nr); }, warte); return; }
-    S.ernteLaeuft = true;
+    feldArbeit("h" + nr, function (weiter) {
     var start = Date.now();
     /* Ton und Bild zusammen: die Axt schlägt ein, während „axttreffer“ klingt. */
     axtZeigen(knopf);
     setTimeout(function () { ton("axttreffer", 0.5); }, 180);
     rpc("spiel_holzen", { p_platz: nr }).then(function (r) {
+      weiter();
       setTimeout(function () {
-        S.ernteLaeuft = false;
         if (!r || !r.ok) { hinweis("🌳 " + ((r && r.grund) || "geht nicht") + (r && r.sek ? " – groß in " + uhrText(r.sek * 1000) : "")); return; }
-        S.ernteFrei = Date.now() + 1550;
         if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
         wareZahl(knopf, "holz", "+" + r.menge);
         hinweis("🪵 +" + r.menge + " Holz (" + vorrat(r, "holz") + " im Lager)." + (r.nest ? " Ein Vogelnest: +1 Ei!" : "") + " Holz braucht man zum Reparieren und in der Schmiede.");
         ackerPflegen(); schnellZeichnen(); panelAuffrischen();
       }, Math.max(0, 600 - (Date.now() - start)));
-    }).catch(function (e) { S.ernteLaeuft = false; hinweis("Holzen ging nicht: " + (e && e.message ? e.message : e)); });
+    }).catch(function (e) { weiter(); hinweis("Holzen ging nicht: " + (e && e.message ? e.message : e)); });
+    });
   }
   function angelZeigen(knopf) {
     var kreis = knopf.querySelector(".lc-kreis") || knopf;
@@ -6782,10 +6816,13 @@
   function angeln(knopf, nr) {
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
     if (S.ich.kaputt) { hinweis(gesperrtGrund()); return; }
-    if (S.angelLaeuft) return;
-    var warte = (S.angelFrei || 0) - Date.now();
-    if (warte > 0) { hinweis("🎣 Die Angel ist noch im Wasser – noch " + Math.ceil(warte / 1000) + " s."); return; }
-    S.angelLaeuft = true;
+    /* FASSUNG 707 — XANDER (Funk 146): „die Angel soll man in jeden einzelnen Teilbereich der Teiche hängen … dann soll
+       man die sofort überall reinhängen können … nicht auf die erste Angel warten". Jeder Teich hat seine eigene Angel
+       (auch auf dem Server): in allen Teichen gleichzeitig angeln, in jedem alle 12 s neu. */
+    S.angelAn = S.angelAn || {};
+    var warte = (S.angelAn[nr] || 0) - Date.now();
+    if (warte > 0) { hinweis("🎣 In diesem Teich ist die Angel noch im Wasser – noch " + Math.ceil(warte / 1000) + " s. Die anderen Teiche sind frei."); return; }
+    S.angelAn[nr] = Date.now() + 12000;
     var start = Date.now(), bild = angelZeigen(knopf), antwort = null, fertig = false;
     /* Auswerfen (swoosh), die Pose klatscht nach 0,45 s ins Wasser (platsch), wippt, dann wird eingeholt (Kurbel). */
     ton("swoosh", 0.35);
@@ -6793,9 +6830,8 @@
     function einholen() {
       if (fertig || !antwort || Date.now() - start < 1700) return;
       fertig = true;
-      S.angelLaeuft = false; S.angelFrei = start + 8000;
       var r = antwort;
-      if (!r.ok) { bild.fang(""); hinweis("🎣 " + (r.grund || "geht nicht") + (r.sek ? " – noch " + r.sek + " s" : "")); return; }
+      if (!r.ok) { bild.fang(""); if (r.sek) S.angelAn[nr] = Date.now() + r.sek * 1000; else delete S.angelAn[nr]; hinweis("🎣 " + (r.grund || "geht nicht") + (r.sek ? " – noch " + r.sek + " s" : "")); return; }
       if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
       ton("angelkurbel", 0.4);
       bild.fang(r.fang);
@@ -6815,20 +6851,22 @@
     if (st.saat) { hinweis("🌱 Hier ist schon gesät – reif in " + uhrText(st.rest) + "."); return; }
     if (st.reif) { hinweis("🌾 Das Feld ist reif – erst mit der Sense mähen, dann säen."); return; }
     if (vorrat(S.ich, "getreide") < 1) { hinweis("🌾 Keine Saat – erst mit der Sense Getreide ernten."); return; }
-    if (S.saatLaeuft) return;
-    S.saatLaeuft = true;
+    /* FASSUNG 707 — je Feld eine Sperre, nicht für alle: man kann Feld für Feld zügig säen. */
+    S.saatAn = S.saatAn || {};
+    if (S.saatAn[nr]) return;
+    S.saatAn[nr] = 1;
     var start = Date.now();
     saatZeigen(knopf);
     ton("graben", 0.3);
     rpc("spiel_saeen", { p_platz: nr }).then(function (r) {
       setTimeout(function () {
-        S.saatLaeuft = false;
+        delete S.saatAn[nr];
         if (!r || !r.ok) { hinweis("🌱 " + ((r && r.grund) || "geht nicht")); return; }
         if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
         hinweis("🌱 Gesät! In 4 Minuten ist das Feld reif – dann bringt es 5 Getreide.");
         ackerPflegen(); schnellZeichnen(); panelAuffrischen();
       }, Math.max(0, 500 - (Date.now() - start)));
-    }).catch(function (e) { S.saatLaeuft = false; hinweis("Säen ging nicht: " + (e && e.message ? e.message : e)); });
+    }).catch(function (e) { delete S.saatAn[nr]; hinweis("Säen ging nicht: " + (e && e.message ? e.message : e)); });
   }
 
   /* XANDER: „in der Bäckerei irgendwas backen … diese einzelnen
@@ -7347,6 +7385,10 @@
     var reihe = document.getElementById("lcPlaetze");
     if (!reihe) return;
     var h = S.bereit && spielSichtbar() && !S.gast ? stallBereit(S.ich, "huehnerstall") : null, n = h ? h.bereit : 0;
+    /* FASSUNG 707 — XANDER (Funk 146): „verrutscht manchmal ein Ei plötzlich auf eine andere Position … muss meistens
+       mehrfach auf ein Feld klicken". Eier, die gerade eingesammelt werden, zählen noch mit – sonst legte der Takt
+       währenddessen ein Ersatz-Ei auf einen anderen Platz (das sah aus wie ein Sprung). */
+    n = Math.max(0, n - Object.keys(S.eiUnterwegs || {}).length);
     /* Liegende Eier bleiben, wo sie sind (nicht auf besetzten Plätzen); nur die Differenz kommt dazu oder geht weg. */
     var liegen = [].filter.call(reihe.querySelectorAll(".sp-ei-feld:not(.sp-ei-weg)"), function (e) {
       var q = e.parentNode;
@@ -7369,19 +7411,22 @@
     });
   }
   function eiSammeln(knopf) {
-    var e = knopf.querySelector(".sp-ei-feld");
-    if (!e || S.eiLaeuft) return;
-    S.eiLaeuft = true;
+    var e = knopf.querySelector(".sp-ei-feld:not(.sp-ei-weg)"), platz = Number(knopf.dataset.lcPlatz) || 0;
+    if (!e) return;
+    /* Jedes Ei für sich: ein zweites Ei darf man sofort tippen, während das erste noch unterwegs ist. */
+    S.eiUnterwegs = S.eiUnterwegs || {};
+    var marke = platz + ":" + Date.now();
+    S.eiUnterwegs[marke] = 1;
     e.classList.add("sp-ei-weg");
     ton("bling", 0.35);
-    rpc("spiel_ei_sammeln", { p_platz: Number(knopf.dataset.lcPlatz) || 0 }).then(function (r) {
-      S.eiLaeuft = false;
+    function fertig() { delete S.eiUnterwegs[marke]; }
+    rpc("spiel_ei_sammeln", { p_platz: platz }).then(function (r) {
       setTimeout(function () { e.remove(); }, 450);
-      if (!r || r.ok === false) { hinweis("🥚 " + ((r && r.grund) || "Das ging nicht.")); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r);
+      if (!r || r.ok === false) { fertig(); hinweis("🥚 " + ((r && r.grund) || "Das ging nicht.")); return; }
+      S.ich = r; S.stand[r.id] = oeffentlich(r); fertig();
       hinweis("🥚 +1 Ei (" + vorrat(r, "ei") + " im Lager) – für Torten in der Bäckerei.");
-      eierPflegen(); schnellZeichnen();
-    }).catch(function () { S.eiLaeuft = false; e.remove(); hinweis("🥚 Das ging gerade nicht."); });
+      schnellZeichnen();
+    }).catch(function () { fertig(); e.remove(); hinweis("🥚 Das ging gerade nicht."); });
   }
   function eierAlle() {
     var h = stallBereit(S.ich, "huehnerstall"), n = h ? h.bereit : 0, geholt = 0;
@@ -10049,6 +10094,10 @@
     });
     S.fundNaechst = jetzt + 120000 + Math.random() * 120000;
     if (!frei.length) return;
+    /* FASSUNG 707 — XANDER (Funk 146): „verrutscht manchmal ein Ei plötzlich auf eine andere Position". Landete das
+       Fundstück auf einem Ei, musste das Ei weichen und tauchte woanders auf. Jetzt meidet das Fundstück Eier. */
+    var ohneEi = frei.filter(function (q) { return !q.querySelector(".sp-ei-feld"); });
+    if (ohneEi.length) frei = ohneEi;
     var ziel = frei[Math.floor(Math.random() * frei.length)], kreis = ziel.querySelector(".lc-kreis");
     var f = document.createElement("span");
     f.className = "sp-fundsack";
@@ -10070,7 +10119,7 @@
   }
   function fundKnopfHtml() {
     return S.fundPlatz && fundPlatzEl() && fundPlatzEl().querySelector(".sp-fundsack")
-      ? '<button type="button" class="sp-fund-knopf" data-tu="fund" title="Fenster ablegen und zeigen, wo das Fundstück liegt">' + fundSvg() + "<span>Fundstück!</span></button>" : "";
+      ? '<button type="button" class="sp-fund-knopf" data-tu="fund" title="Fundstück einsammeln">' + fundSvg() + "<span>Einsammeln!</span></button>" : "";
   }
   function fundKnopfPflegen() {
     if (!panel || panel.hidden) return;
@@ -10094,6 +10143,13 @@
     setTimeout(function () { f.classList.remove("sp-fund-zeigen"); }, 2600);
     hinweis("🎁 Da liegt es – tippe selbst auf das Säckchen.");
   }
+  /* FASSUNG 707 — XANDER (Funk 146): „dann sieht man unten so ein Zeichen noch in den Taschen dafür das überhaupt keine
+     Funktion hat weil er irgendwo hin pointet". Der Knopf in der Leiste (und oben im Fenster) sammelt jetzt selbst ein. */
+  function fundAusLeiste() {
+    var q = fundPlatzEl();
+    if (q && q.querySelector(".sp-fundsack")) fundHeben(q); else hinweis("🎁 Das Fundstück ist schon weg.");
+    schnellZeichnen(true);
+  }
   function fundHeben(knopf) {
     var f = knopf.querySelector(".sp-fundsack");
     if (f) f.remove();
@@ -10106,12 +10162,12 @@
          sofort +3 Punkte; nach der Artikel-Aufgabe +5 und den Inhalt. */
       if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); schnellZeichnen(); }
       var w = FUND_LOHN[r.fund] || ["🎁", "etwas"];
+      /* FASSUNG 707 — XANDER (Funk 146): „Beim Einsammeln eines Schatzes soll nicht immer der
+         vollständige deutsch-menü Bildschirm aufgehen das möchte ich nicht möchte den Schatz einfach
+         nur einsammeln". Der Inhalt gehört einem sofort (spiel_fund_heben), kein Fenster geht auf. */
       ton("geschenk", 0.45);
-      hinweis("🎁 Fundstück! +" + (r.sofort || 3) + " Punkte sofort. Darin: " + w[1] + " – löse die Artikel-Aufgabe, dann gehört es dir (+5 Punkte dazu).");
-      /* Nur für diese eine Aufgabe „Artikel" — danach wieder die eigene Wahl. */
-      if (!S.fundKatMerk) { S.fundKatMerk = true; S.fundKatAlt = S.kategorie || null; }
-      S.kategorie = "artikel"; S.aufgabe = null;
-      menue("deutsch"); aufgabeHolen(false);
+      hinweis("🎁 Fundstück eingesammelt: +" + (r.sofort || 3) + " Punkte und " + w[1] + ".");
+      panelAuffrischen();
     }).catch(function () { hinweis("🎁 Das ging gerade nicht."); });
   }
 

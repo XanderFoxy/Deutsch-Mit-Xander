@@ -166,7 +166,7 @@ const sage = (gut, was, zusatz) => {
     const plus = (w, n) => { ich.vorraete = Object.assign({}, ich.vorraete, { [w]: (ich.vorraete[w] || 0) + n }); };
     window.__extra = {
       spiel_ernten: (a) => {
-        if (Date.now() - letzte < 250) return { ok: false, grund: "langsam – die Sense muss erst ausholen" };
+        if (Date.now() - letzte < 1500) return { ok: false, grund: "langsam – die Sense muss erst ausholen" };
         const f = ich.acker[a.p_platz] || {}; const reif = (f.ab ? Date.parse(f.ab) : 0) + 240000;
         if (reif > Date.now()) return { ok: false, grund: "das Korn wächst noch", sek: Math.ceil((reif - Date.now()) / 1000) };
         const menge = f.saat ? 5 : 2; letzte = Date.now(); plus("getreide", menge);
@@ -236,13 +236,13 @@ const sage = (gut, was, zusatz) => {
   sage(m1.ruf.length === 1 && m1.ruf[0] === nr1 && !m1.hingesetzt, "Tipp auf ein Feld mäht dort (Server-Ruf mit dem Platz), setzt nicht hin", JSON.stringify(m1.ruf));
   sage(m1.tonAbstand !== null && m1.tonAbstand < 60, "„swoosh“ startet mit dem Sensenschwung", m1.tonAbstand + " ms");
   sage(/sp-acker-waechst/.test(m1.klasse) && /^[34]:\d\d$/.test(m1.uhr) && m1.getreide === 2 && /\+2 Getreide/.test(m1.meld), "danach: Stoppeln mit Uhr (4 min), +2 Getreide im Lager, Meldung", JSON.stringify(m1));
-  /* Sofort das nächste Feld: seit 707 kommt jeder Tipp in die Schlange; der Server lässt alle 0,25 s einen Schnitt zu. */
+  /* Sofort das nächste Feld: die Sense wartet die 1,5 s ab statt abgelehnt zu werden. */
   await tippePlatz(nr2, 250);
   const zwischen = await pg.evaluate(() => window.__rufe.filter((r) => r.name === "spiel_ernten").length);
   await tick(1500);
   const m2 = await pg.evaluate(() => ({ rufe: window.__rufe.filter((r) => r.name === "spiel_ernten").length, getreide: window.DMA_SPIEL.pruef.zustand().ich.vorraete.getreide,
     abgelehnt: window.__hinweise.some((h) => /langsam/.test(h)) }));
-  sage(zwischen >= 1 && m2.rufe === 2 && m2.getreide === 4 && !m2.abgelehnt, "schnell das nächste Feld: der Schnitt wartet kurz, kein „langsam“", JSON.stringify(m2));
+  sage(zwischen === 1 && m2.rufe === 2 && m2.getreide === 4 && !m2.abgelehnt, "schnell das nächste Feld: der Schnitt wartet kurz, kein „langsam“", JSON.stringify(m2));
   await pg.evaluate(() => { window.__rufe.length = 0; });
   await tippePlatz(nr1, 400);
   const m3 = await pg.evaluate(() => ({ rufe: window.__rufe.filter((r) => r.name === "spiel_ernten").length, meld: window.__hinweise.slice(-3).filter((h) => !/Tagesgeschenk|Übungen auf der Seite/.test(h)).slice(-1)[0] || "" }));

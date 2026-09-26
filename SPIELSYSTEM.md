@@ -929,3 +929,14 @@ Sonde: `werkzeug/pruefe-698-funk139-142.js` (angepasst: Tag = ursprüngliches Bi
 - **Berge**: statt glatter Dreiecke gebrochene Grate (jede Strecke viermal geteilt und zufällig verschoben); jede kleine Flanke wird nach ihrer Neigung belichtet (der Sonne rechts oben zugewandt hell, abgewandt blau-dunkel) – so entstehen Rinnen und Rippen wie in den Alpen. Schnee nur über der Schneegrenze, unten kurz zerfranst. Davor bewaldete Vorberge im Dunst.
 - **Wiese**: gedämpftes Sommergrün mit Oliv; großflächig dunkle, satte Mulden und trockene, gelbliche Kuppen statt eines gleichmäßigen Grüns.
 - Malen bleibt einmalig je Dorfzustand; `pruefe-704` grün (Neuzeichnen Median 24 ms bei 4× gedrosselter CPU).
+
+### Fassung 707 (Funk 146: Schatz, Eier, langer Druck, schnelles Ernten, 8 Angeln, Taschen im Menü)
+Sonde: `werkzeug/pruefe-707-funk146.js` (Android, 360 px, echte Finger, jede Server-Antwort 180 ms verzögert). Angepasst an das neue Verhalten: `pruefe-661`, `-673`, `-677`, `-682`, `-692`. Server: Migration `spiel_707_fluessig_schatz_angeln`, vorher zurückgerollt mit Xanders Konto geprüft.
+- **Schatz ohne Deutsch-Menü**: `spiel_fund_heben` gibt den Inhalt sofort (Erz/Bratwurst +1, Mana +15, Pflaster +1, Ladung +20 oder 10 Punkte) plus 3 Punkte; es wird keine Aufgabe mehr geholt, kein Fenster geht auf. Meldung: „🎁 Fundstück eingesammelt: +3 Punkte und 1 Erz."
+- **Der Zeiger-Knopf tut etwas**: der Fundstück-Knopf in der Leiste und oben im Deutsch-Fenster („Einsammeln!") sammelt selbst ein, statt nur hinzuzeigen.
+- **Eier springen nicht mehr**: jedes Ei für sich (keine gemeinsame Sperre, die den zweiten Tipp schluckte); Eier, die gerade eingesammelt werden, zählen weiter mit, damit kein Ersatz-Ei woanders auftaucht; das Fundstück landet nicht mehr auf einem Ei (sonst musste das Ei weichen – das sah aus wie ein Sprung).
+- **Langer Druck**: Zeitgeber und Kontextmenü lösten beide aus (an und gleich wieder aus). Jetzt zählt derselbe lange Druck innerhalb von 0,9 s nur einmal; es kommt das vorgewählte Werkzeug (Schaufel, wenn nichts gewählt).
+- **Schnell ernten**: jeder Tipp auf ein Feld kommt in eine Schlange (jedes Feld nur einmal), der Server lässt alle 0,25 s einen Schnitt zu (vorher 1,5 s, und der Tipp dazwischen ging still verloren). Holzen genauso; Säen und Graben sperren nur noch das eigene Feld.
+- **Angeln**: in jedem Teich eine eigene Angel (Server: je Teich 12 s), mehrere Teiche gleichzeitig. Derselbe Teich zu früh: „In diesem Teich ist die Angel noch im Wasser – noch X s. Die anderen Teiche sind frei."
+- **Dünger**: hatte keine Sperre; unverändert.
+- **Taschen**: die winzigen + / − (18×14 px) sind aus der Leiste raus. Im Waffen-Menü stehen die Taschen groß (Waffenbild und „1. Name"); darunter „◀ nach links", „nach rechts ▶", „+ Tasche", „− Tasche". Die gewählte Tasche wandert mit, die Reihenfolge wird auf dem Gerät gemerkt, die Leiste unten zeigt dieselbe Reihenfolge.

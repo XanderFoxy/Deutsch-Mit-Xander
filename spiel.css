@@ -2155,3 +2155,15 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-schnellmenue .sp-dl-station .sp-werk button:not(.sp-werk-wartet):not(:disabled)[data-s="abholen"], .sp-dl-station .sp-werk button:not(.sp-werk-wartet):not(:disabled)[data-s="abholen"] { background: #2f7a3a; border-color: #1f5226; }
 .sp-schnellmenue .sp-dl-station .sp-troph b, .sp-dl-station .sp-troph b, .sp-dl-station .sp-troph span { color: #2d2418; }
 .sp-schnellmenue .sp-dl-station .sp-dl-st-zu, .sp-dl-station .sp-dl-st-zu { background: #5a3a1e; color: #fff8e6; font-size: 15px; font-weight: 800; }
+
+/* =================================================================
+   FASSUNG 707 — Funk 146: Taschen im Menü frei ordnen (groß, gut zu treffen)
+   ================================================================= */
+.sp-taschen-ed { display: flex; gap: 6px; margin: 0 0 6px; overflow-x: auto; padding-bottom: 2px; }
+.sp-schnellmenue .sp-taschen-ed .sp-tasche, .sp-taschen-ed .sp-tasche { flex: 1 0 64px; min-width: 64px; min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  padding: 6px 4px; border-radius: 10px; }
+.sp-taschen-ed .sp-tasche svg { width: 34px; height: 24px; display: block; }
+.sp-taschen-ed .sp-tasche small { font: 700 10px/1.15 system-ui, sans-serif; text-align: center; overflow-wrap: anywhere; }
+.sp-taschen-ed .sp-tasche.sp-an { box-shadow: 0 0 0 2px #f2c230, 0 0 10px rgba(242, 194, 48, .6); }
+.sp-taschen-knoepfe { margin-bottom: 6px; }
+.sp-taschen-knoepfe button { min-height: 34px; font-size: 13px; }
