@@ -1743,33 +1743,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 @media (prefers-reduced-motion: reduce) { .sp-tier-begleiter, .sp-tier-begleiter svg, .sp-tier-sucht { animation-duration: .01s !important; } }
 /* FASSUNG 690 — die Bisszähne sitzen im Monster (siehe tierAngriff). */
 .sp-tier-sprung .sp-bisszaehne-am-tier { position: absolute; z-index: 2; transform: translate(-50%, -50%); opacity: 0; }
-
-/* FASSUNG 691 — weitere Tier-Reaktionen und die Beam-Säulen der Tiere. */
-.sp-tier.sp-tier-schwindelig, .sp-flugtier.sp-tier-schwindelig { animation: spTierSchwindel .55s ease-in-out 4; }
-@keyframes spTierSchwindel { 0%, 100% { rotate: 0deg; translate: 0 0; } 25% { rotate: -14deg; translate: -3% 0; } 75% { rotate: 14deg; translate: 3% 0; } }
-.sp-tz-sterne { transform-box: view-box; animation: spTzSterne .9s linear infinite; }
-@keyframes spTzSterne { to { transform: rotate(360deg); } }
-.sp-tier.sp-tier-nickt, .sp-flugtier.sp-tier-nickt { animation: spTierNickt .45s ease-in-out 4; }
-@keyframes spTierNickt { 0%, 100% { translate: 0 0; } 50% { translate: 0 4%; } }
-.sp-tz-brille, .sp-tz-hut { animation: spTzRunter .35s cubic-bezier(.3, 1.5, .5, 1); }
-@keyframes spTzRunter { from { transform: translateY(-12px); opacity: 0; } to { transform: none; opacity: 1; } }
-.sp-tier.sp-tier-versteckt, .sp-flugtier.sp-tier-versteckt { animation: spTierVersteckt 2.4s ease-in-out forwards; }
-@keyframes spTierVersteckt { 0%, 100% { scale: 1; opacity: 1; } 12%, 62% { scale: .35; opacity: .35; } 72% { scale: 1.15; opacity: 1; } }
-.sp-tier.sp-tier-glaenzt svg, .sp-flugtier.sp-tier-glaenzt svg { animation: spTierGlaenzt 1.8s ease-in-out; }
-@keyframes spTierGlaenzt { 0%, 100% { filter: none; } 40% { filter: brightness(1.45) drop-shadow(0 0 4px #fff); } }
-.sp-tier.sp-tier-kratzt, .sp-flugtier.sp-tier-kratzt { animation: spTierKratzt .12s linear 12; }
-@keyframes spTierKratzt { 0%, 100% { rotate: 0deg; } 50% { rotate: 7deg; translate: 1% -1%; } }
-.sp-tier.sp-tier-pustet, .sp-flugtier.sp-tier-pustet { animation: spTierPustet .3s ease-in-out 4; }
-@keyframes spTierPustet { 0%, 100% { scale: 1; } 50% { scale: 1.1 .94; translate: -3% 0; } }
-.sp-tier-pustewolke { position: fixed; z-index: 9994; pointer-events: none; width: 12px; height: 12px; border-radius: 50%;
-  background: radial-gradient(circle at 40% 40%, #ffffff, rgba(190, 225, 255, .5)); }
-.sp-tier.sp-tier-ekelt, .sp-flugtier.sp-tier-ekelt { animation: spTierEkelt .2s ease-in-out 7; }
-@keyframes spTierEkelt { 0%, 100% { rotate: 0deg; } 50% { rotate: -10deg; translate: 2% 0; } }
-.sp-tier.sp-tier-ekelt svg, .sp-flugtier.sp-tier-ekelt svg { filter: hue-rotate(60deg) saturate(1.3); }
-.sp-tier-beamsaeule { position: absolute; width: 22%; height: 46%; transform: translate(-50%, -50%); pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(127, 243, 255, .55) 35%, rgba(255, 255, 255, .8) 50%, rgba(127, 243, 255, .55) 65%, transparent);
-  border-radius: 40%; animation: spBeamSaeule .35s ease-in-out infinite alternate; }
-@keyframes spBeamSaeule { from { opacity: .35; scale: .8 1; } to { opacity: .95; scale: 1.1 1.08; } }
-@media (prefers-reduced-motion: reduce) {
-  .sp-tier-schwindelig, .sp-tz-sterne, .sp-tier-nickt, .sp-tz-brille, .sp-tz-hut, .sp-tier-versteckt, .sp-tier-kratzt, .sp-tier-pustet, .sp-tier-ekelt, .sp-tier-beamsaeule { animation-duration: .01s !important; animation-iteration-count: 1 !important; }
-}

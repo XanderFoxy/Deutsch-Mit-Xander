@@ -156,7 +156,7 @@ const sage = (gut, was, zusatz) => {
     pl.dataset.tierZeit = 0; window.DMA_TONLOG.length = 0; window.__tierReaktionen.length = 0;
     const gesehen = {};
     const merk = () => {
-      pl.querySelectorAll(".sp-tier, .sp-flugtier").forEach((t) => t.classList.forEach((c) => { if (/^sp-tier-(saugt|spuckt|schnappt|lacht|hechelt|nass|schuettelt|wundert|hochgucken|schnueffelt|tanzt|guckt|schreck|zittert|hops|leckt|kuschelt|sucht)$/.test(c)) gesehen[c] = 1; }));
+      pl.querySelectorAll(".sp-tier, .sp-flugtier").forEach((t) => t.classList.forEach((c) => { if (/^sp-tier-(saugt|spuckt|schnappt|lacht|hechelt|nass|schuettelt|wundert|hochgucken|schnueffelt|tanzt|guckt|schreck|zittert|hops|leckt|kuschelt|sucht|schwindelig|nickt|versteckt|glaenzt|kratzt|pustet|ekelt)$/.test(c)) gesehen[c] = 1; }));
       pl.querySelectorAll(".sp-tier-zusatz").forEach((z) => z.classList.forEach((c) => { if (c !== "sp-tier-zusatz") gesehen["zusatz:" + c] = 1; }));
       if (pl.querySelector(".sp-tier-zusatz .sp-tz-zunge")) gesehen["zunge"] = 1;
       if (pl.querySelector(".sp-tier-zusatz .sp-tz-glas")) gesehen["glas"] = 1;
@@ -198,8 +198,8 @@ const sage = (gut, was, zusatz) => {
   sage(laute.size >= 2, "Pflaster: die Laute variieren", [...laute].join(" | "));
   r = await probe("ich", "lc-blume", "Bea", 2400);
   sage(r.art === "blume" && hat(r, "sp-tier-schnueffelt", "stimme:schnueffeln", "stimme:mmh"), "Blume: schnüffeln, zufrieden", JSON.stringify(r));
-  r = await probe("ich", "lc-klaps", "Bea", 4400);
-  sage(r.art === "klaps" && hat(r, "sp-tier-wundert", "popoklatsch", "stimme:kichern", "sp-tier-lacht") && sagt(r, /\?/) && sagt(r, /Au!/) && sagt(r, /Hi|He|Bwa/), "Klaps: erst verwundert, der Drache klapst dem Fellmonster auf den Po, dann lachen", JSON.stringify(r));
+  r = await probe("ich", "lc-klaps", "Bea", 5800);
+  sage(r.art === "klaps" && hat(r, "sp-tier-wundert", "popoklatsch", "stimme:kichern", "sp-tier-lacht") && sagt(r, /\?/) && sagt(r, /Au!/) && sagt(r, /Autsch/) && sagt(r, /Hi|He|Bwa/), "Klaps: erst verwundert, der Drache klapst dem Fellmonster auf den Po, das Fellmonster klapst zurück, dann lachen", JSON.stringify(r));
   await pg.evaluate(() => { const pl = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]'); const h = document.createElement("span"); h.className = "lc-kopfhoerer"; pl.appendChild(h); window.__hoerer = h; });
   r = await probe("ich", "lc-kopfhoerer", "Bea", 1200);
   sage(r.art === "tanz" && hat(r, "sp-tier-tanzt", "zusatz:sp-tz-tanz"), "Kopfhörer: die Tiere tanzen", JSON.stringify(r));
@@ -215,6 +215,25 @@ const sage = (gut, was, zusatz) => {
   sage(r.art === "frieren" && hat(r, "sp-tier-zittert"), "Schnee: sie zittern", JSON.stringify(r));
   r = await probe("ich", "lc-ohrfeige", "Bea", 900);
   sage(r.art === "wurf" && hat(r, "sp-tier-hops"), "Ohrfeige: aufspringen und knurren", JSON.stringify(r));
+  console.log("\nFASSUNG 691: EIGENE REAKTIONEN FÜR DIE ÜBRIGEN EFFEKTE\n");
+  for (const [klasse, art, merkmal, was] of [
+    ["lc-wasch", "schwindelig", "sp-tier-schwindelig", "Waschmaschine: den Tieren wird schwindelig (Sterne)"],
+    ["lc-sobri", "cool", "sp-tier-nickt", "Sonnenbrille: die Tiere bekommen auch eine und nicken cool"],
+    ["lc-rollo", "kuckuck", "sp-tier-versteckt", "Rollo: verstecken, dann „Kuckuck!“"],
+    ["lc-putzen", "blank", "sp-tier-glaenzt", "Putzen: die Tiere glänzen mit"],
+    ["lc-kratzen", "jucken", "sp-tier-kratzt", "Kratzen: den Tieren juckt es auch"],
+    ["lc-brand", "loeschen", "sp-tier-pustet", "Feuer: „Feuer!“, dann pusten sie es aus"],
+    ["lc-vogelkot", "ekel", "sp-tier-ekelt", "Vogelkot: „Bäh!“"],
+    ["lc-paintfleck", "farbe", "sp-tier-hops", "Farbklecks: die Tiere werden auch bunt"],
+    ["lc-hut", "hut", "sp-tier-nickt", "Cowboyhut: die Tiere bekommen kleine Hüte"],
+    ["lc-gesicht", "lachen", "sp-tier-lacht", "Grimasse: die Tiere lachen"],
+    ["lc-platte", "tanzkurz", "sp-tier-tanzt", "Schallplatte: kurz tanzen"],
+    ["lc-zorro", "zorro", "sp-tier-schreck", "Zorro: erst erschrecken, dann „Olé!“"],
+    ["lc-zei", "schlecken", "sp-tier-leckt", "Ei auf dem Kopf: die Tiere schlecken es ab"],
+    ["lc-zhammer", "schwindelig", "sp-tier-schwindelig", "Hammer: Sterne vor den Augen"]]) {
+    const q = await probe("ich", klasse, "Bea", 2300);
+    sage(q.art === art && hat(q, merkmal) && q.gesehen.some((g) => g.startsWith("sagt:")), was, JSON.stringify(q).slice(0, 260));
+  }
   console.log("\nDIE TIERE KOMMEN MIT\n");
   r = await probe("ich", "lc-heber", "Bea", 900);
   const mit = await pg.evaluate(() => { const pl = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]'); const k = pl.querySelector(".lc-kreis").getBoundingClientRect();
@@ -242,7 +261,7 @@ const sage = (gut, was, zusatz) => {
     setTimeout(() => {
       const kr = k.getBoundingClientRect(), d = [...document.querySelectorAll(".sp-tier-begleiter")];
       const boden = d.find((e) => e.classList.contains("sp-tier")), br = boden ? boden.getBoundingClientRect() : null;
-      const erg = { doppel: d.length, folgt: br ? Math.abs(br.left - kr.left) < 12 && Math.abs(br.top - kr.top) < 12 : false, beamt: d.some((e) => e.classList.contains("sp-tier-beamt")) };
+      const erg = { doppel: d.length, folgt: br ? Math.abs(br.left - kr.left) < 12 && Math.abs(br.top - kr.top) < 12 : false, beamt: d.some((e) => e.classList.contains("sp-tier-beamt")), saeulen: document.querySelectorAll(".sp-tier-begleiter .sp-tier-beamsaeule").length };
       k.getAnimations().forEach((a) => a.cancel());
       pl.classList.remove("lc-platz-unterwegs");
       setTimeout(() => { erg.tausch = [...document.querySelectorAll(".sp-tier-sagt")].map((e) => e.textContent).filter((t) => /Hä|\?!/.test(t)); }, 900);
@@ -250,7 +269,7 @@ const sage = (gut, was, zusatz) => {
     }, 900);
   }));
   sage(reise.doppel === 2 && reise.folgt, "unterwegs: die Tiere hängen am fahrenden Bild (folgen Bild für Bild)", JSON.stringify(reise));
-  sage(reise.beamt && reise.tausch.length >= 1 && reise.weg, "Beamen: eigene Beam-Wirkung, kurz vertauscht, merken es, tauschen zurück", JSON.stringify(reise));
+  sage(reise.beamt && reise.saeulen === 2 && reise.tausch.length >= 1 && reise.weg, "Beamen: eigene Beam-Wirkung, kurz vertauscht, merken es, tauschen zurück", JSON.stringify(reise));
   const einzug = await pg.evaluate(() => new Promise((ok) => {
     window.DMA_AUFTRITT("ich", "sportwagen", "rein");
     setTimeout(() => { const d = [...document.querySelectorAll(".sp-tier-begleiter")], w = document.querySelector(".lc-auftritt-wagen");
@@ -289,6 +308,12 @@ const sage = (gut, was, zusatz) => {
     await pg.evaluate(() => { const pl = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]'); pl.dataset.tierZeit = 0; window.DMA_SPIEL.chatEffekt(pl, "lc-klaps", "Bea"); });
     await tick(2450);
     await pg.screenshot({ path: process.env.BILD + "-klaps.png", clip: k });
+    for (const [kl, name, ms] of [["lc-sobri", "brille", 1400], ["lc-hut", "hut", 1300], ["lc-wasch", "schwindel", 900]]) {
+      await tick(2600);
+      await pg.evaluate((kl) => { const pl = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]'); pl.dataset.tierZeit = 0; window.DMA_SPIEL.chatEffekt(pl, kl, "Bea"); }, kl);
+      await tick(ms);
+      await pg.screenshot({ path: process.env.BILD + "-" + name + ".png", clip: k });
+    }
   }
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | ").slice(0, 300));
   await br.close(); srv.close();

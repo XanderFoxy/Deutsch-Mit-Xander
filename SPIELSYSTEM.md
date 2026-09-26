@@ -763,3 +763,20 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Fellmonster-Biss: „manchmal bleiben nur die Zähne sichtbar, während das Monster schon weg ist". Die Zähne lagen fest auf der Seite und hingen an zwei setTimeout-Uhren, das Monster an einer Browser-Animation; unter Last liefen die Uhren nach. Jetzt sitzen die Zähne im Monster und laufen auf derselben Zeitleiste.
 - `schmuck()` bewahrt beim Neuzeichnen die laufenden Reaktionsklassen (vorher löschte das sekündliche Neuzeichnen z. B. das Hecheln mittendrin).
 - Sonde: `pruefe-690-tiere-effekte.js` (29 Prüfungen); 682 an das neue Streicheln (Hecheln/„mmmh" statt Schnurren) angepasst.
+
+## Fassung 691 — Eigene Tier-Reaktionen für die übrigen Effekte
+
+- XANDER (Funk 137, Schluss): „für alle anderen Profil-Effekte auch noch eigene Animationen einfallen lassen". Bisher fielen viele Effekte auf „kuscheln" oder „knurren" zurück. Jetzt:
+  - Waschmaschine, Strudel, Hammer: schwindelig mit kreisenden Sternchen.
+  - Sonnenbrille: die Tiere bekommen selbst eine (heller Rand, damit man sie auf dem schwarzen Fellmonster sieht) und nicken cool.
+  - Rollo, Lamellen: verstecken sich, dann „Kuckuck!".
+  - Scheibenwischer, Putzen: glänzen blitzblank.
+  - Kratzen: es juckt sie auch.
+  - Feuer: „Feuer!", dann pusten sie es aus.
+  - Vogelkot: „Bäh!", Kopfschütteln.
+  - Farbklecks: sie bekommen bunte Punkte ab.
+  - Cowboyhut: eigene kleine Hüte, „Yeehaw!".
+  - Grimasse: lachen. Schallplatte, Bongo: kurz tanzen. Zorro: erschrecken, dann „Olé!". Ei: abschlecken.
+- Klaps wie gewünscht: „der untere gibt ihm auch einen Klaps auf seinen Po" — nach dem Klaps des Drachen springt das Fellmonster hoch und klapst zurück („Autsch!"), dann lachen beide.
+- Beamen: jedes Tier bekommt eine eigene kleine Transporter-Säule („kleine Transporterstrahlen zusätzlich für die Tiere").
+- Sonde `pruefe-690-tiere-effekte.js` um 14 Prüfungen erweitert (jetzt 43).

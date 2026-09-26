@@ -6964,28 +6964,14 @@
        · Die Gesichtsmitte des Profilbilds bleibt frei: alles sitzt am
          Tier, nicht auf dem Gesicht.
      ================================================================= */
-  var TIER_FLUECHTIG = /^sp-tier-(saugt|spuckt|schnappt|lacht|hechelt|nass|schuettelt|wundert|hochgucken|schnueffelt|tanzt|guckt|schreck|zittert|hops|leckt|kuschelt|sucht|schwindelig|nickt|versteckt|glaenzt|kratzt|pustet|ekelt)$/;
+  var TIER_FLUECHTIG = /^sp-tier-(saugt|spuckt|schnappt|lacht|hechelt|nass|schuettelt|wundert|hochgucken|schnueffelt|tanzt|guckt|schreck|zittert|hops|leckt|kuschelt|sucht)$/;
   var TIER_REAKTION = [
     [/sabber/, "zurueckspucken"],
     [/spucke/, "schlucken"],
-    [/sahne|zzucker|aufessen|krumel|keks|torte|lc-zei/, "schlecken"],
+    [/sahne|zzucker|aufessen|krumel|keks|torte/, "schlecken"],
     [/streichel|kuss|zherz|herz|umarm|wange|wohlig/, "lieb"],
     [/muenz|zgeld|geld|reichtum/, "geld"],
-    /* FASSUNG 691 — „für alle anderen Profil-Effekte auch noch eigene
-       Animationen einfallen lassen": */
-    [/lc-wasch|lc-sog|zhammer/, "schwindelig"],
-    [/sobri/, "cool"],
-    [/rollo|lamellen/, "kuckuck"],
-    [/wischer|putzen/, "blank"],
-    [/kratzen/, "jucken"],
-    [/brand/, "loeschen"],
-    [/vogelkot/, "ekel"],
-    [/paintfleck/, "farbe"],
-    [/lc-hut/, "hut"],
-    [/gesicht/, "lachen"],
-    [/platte|bongo/, "tanzkurz"],
-    [/zorro/, "zorro"],
-    [/eimer/, "nass"],
+    [/eimer|wasch|wischer|putzen/, "nass"],
     [/strohhalm/, "strohhalm"],
     [/blubber/, "blubber"],
     [/pflaster/, "pflaster"],
@@ -6995,8 +6981,8 @@
     [/heber|kranheb|lasso|leiter|baggerzug|schaufelzug|hauab|zuenden|ballon/, "mitreisen"],
     [/katapult|tritt|zielfernrohr/, "suchen"],
     [/billard|bowling|bumerang|knuell|hotrod/, "zuschauen"],
-    [/zaubertrick|birne|pumpe|schneekugel|luke/, "staunen"],
-    [/wecker|stoerung|gong|lichtaus/, "erschrecken"],
+    [/zaubertrick|lc-hut|birne|pumpe|schneekugel|luke|platte|sobri/, "staunen"],
+    [/wecker|stoerung|gong|bongo|lichtaus|brand|zuenden|lc-sog|lamellen|rollo/, "erschrecken"],
     [/schnee/, "frieren"],
     [/applaus/, "freuen"]
   ];
@@ -7365,26 +7351,7 @@
           sterneBurst(b.x, b.y, 14, ["#ffd23a", "#ff8a3a"], 5);
         }, 780);
       }, 1700);
-      /* „und der untere gibt ihm auch einen Klaps auf seinen Po": das
-         Fellmonster springt hoch und klapst zurück. */
-      setTimeout(function () {
-        var gl = tierGesicht(luft), gb = tierGesicht(boden);
-        var a = tierPunkt(boden, gb.m), b = tierPunkt(luft, [gl.m[0] + 4, gl.m[1] + 9]);
-        var dx = Math.round(b.x - a.x), dy = Math.round(b.y - a.y);
-        try {
-          boden.animate([
-            { translate: "0px 0px" }, { translate: (dx * 0.5) + "px " + (dy * 0.5 - 10) + "px", offset: 0.3 },
-            { translate: dx + "px " + dy + "px", offset: 0.5 }, { translate: "0px 0px" }
-          ], { duration: 1000, easing: "ease-in-out" });
-        } catch (x) {}
-        setTimeout(function () {
-          chatTon("popoklatsch", 0.3);
-          tierKlasse(luft, "sp-tier-hops", 600);
-          tierSagt(luft, "Autsch!", "#c0492b");
-          sterneBurst(b.x, b.y, 12, ["#ffd23a", "#ff8a3a"], 4);
-        }, 500);
-      }, 3300);
-      lachen(4500);
+      lachen(2900);
     } else {
       lachen(1700);
     }
@@ -7450,121 +7417,12 @@
       }, 200 + i * 180);
     });
   }
-
-  /* --- FASSUNG 691: eigene Reaktionen für die übrigen Effekte --------- */
-  function reaktionSchwindelig(platz, tiere) {
-    tiere.forEach(function (t, i) {
-      var g = tierGesicht(t);
-      setTimeout(function () {
-        tierKlasse(t, "sp-tier-schwindelig", 2200);
-        tierZusatz(t, '<g class="sp-tz-sterne" style="transform-origin:' + g.m[0] + "px " + (g.a[0][1] - 7) + 'px">'
-          + [0, 1, 2].map(function (n) { var w = n * 2.1, x = g.m[0] + Math.cos(w) * 7, y = g.a[0][1] - 7 + Math.sin(w) * 2.2;
-            return '<path d="M' + x.toFixed(1) + " " + (y - 2).toFixed(1) + " l.6 1.4 1.5 .1 -1.2 .9 .4 1.5 -1.3 -.8 -1.3 .8 .4 -1.5 -1.2 -.9 1.5 -.1 Z\" fill=\"#ffd23a\" stroke=\"#b8860b\" stroke-width=\".25\"/>"; }).join("") + "</g>", 2200);
-        tierStimme("frage", tierFliegt(t));
-        tierSagt(t, zufall(["Schwindelig …", "Alles dreht sich!", "Uiuiui …"]), "#6a3fd0");
-      }, 500 + i * 250);
-    });
-  }
-  function reaktionCool(platz, tiere) {
-    tiere.forEach(function (t, i) {
-      var g = tierGesicht(t), r = g.r * 1.25, y = (g.a[0][1] + g.a[1][1]) / 2;
-      var brille = '<g><rect x="' + (g.a[0][0] - r) + '" y="' + (y - r * 0.7) + '" width="' + (r * 2) + '" height="' + (r * 1.4) + '" rx="' + (r * 0.5) + '" fill="#141414" stroke="#d9d9d9" stroke-width=".5"/>'
-        + '<rect x="' + (g.a[1][0] - r) + '" y="' + (y - r * 0.7) + '" width="' + (r * 2) + '" height="' + (r * 1.4) + '" rx="' + (r * 0.5) + '" fill="#141414" stroke="#d9d9d9" stroke-width=".5"/>'
-        + '<path d="M' + (g.a[0][0] + r) + " " + (y - r * 0.3) + " H" + (g.a[1][0] - r) + '" stroke="#141414" stroke-width=".7"/>'
-        + '<path d="M' + (g.a[0][0] - r * 0.6) + " " + (y - r * 0.35) + " l" + (r * 0.6) + " " + (-r * 0.1) + '" stroke="rgba(255,255,255,.7)" stroke-width=".45"/></g>';
-      setTimeout(function () {
-        tierZusatz(t, brille, 4200, "sp-tz-brille");
-        tierKlasse(t, "sp-tier-nickt", 1800);
-        tierSagt(t, zufall(["Cool!", "Yeah.", "Läuft!"]), "#1d2330");
-        tierStimme("mmh", tierFliegt(t));
-      }, 700 + i * 300);
-    });
-  }
-  function reaktionKuckuck(platz, tiere) {
-    tiere.forEach(function (t, i) {
-      setTimeout(function () { tierKlasse(t, "sp-tier-versteckt", 2400); tierSagt(t, "Huch!", "#3a2350"); }, 300 + i * 150);
-      setTimeout(function () { tierStimme("kichern", tierFliegt(t)); tierSagt(t, "Kuckuck!", "#c0492b"); }, 1900 + i * 250);
-    });
-  }
-  function reaktionBlank(platz, tiere) {
-    tiere.forEach(function (t, i) {
-      setTimeout(function () {
-        tierKlasse(t, "sp-tier-glaenzt", 1800);
-        var g = tierGesicht(t), p = tierPunkt(t, [g.m[0] + 6, g.a[0][1] - 4]);
-        sterneBurst(p.x, p.y, 12, ["#ffffff", "#bfe9ff"], 4);
-        tierSagt(t, zufall(["Blitzblank!", "Sauber!", "Glänzt!"]), "#1d5f94");
-        chatTon("bling", 0.22);
-      }, 900 + i * 300);
-    });
-  }
-  function reaktionJucken(platz, tiere) {
-    tiere.forEach(function (t, i) {
-      setTimeout(function () { tierKlasse(t, "sp-tier-kratzt", 1500); tierSagt(t, zufall(["Juckt!", "Kratz kratz!", "Da auch!"]), "#6b3e12"); tierStimme("schnueffeln"); }, 700 + i * 300);
-    });
-  }
-  function reaktionLoeschen(platz, tiere) {
-    var kr = (platz.querySelector(".lc-kreis") || platz).getBoundingClientRect();
-    tiere.forEach(function (t, i) {
-      setTimeout(function () {
-        tierKlasse(t, "sp-tier-schreck", 1000);
-        tierSagt(t, "Feuer!", "#c0492b");
-        if (tierFliegt(t)) chatTon("drachenpuste", 0.3); else chatTon("hundbellen", 0.28);
-      }, 200 + i * 150);
-      setTimeout(function () {
-        tierKlasse(t, "sp-tier-pustet", 1200);
-        var g = tierGesicht(t), m = tierPunkt(t, g.m);
-        for (var n = 0; n < 5; n++) flugbahn("sp-tier-pustewolke", m, { x: kr.left + kr.width * (0.35 + n * 0.08), y: kr.top + kr.height * (0.45 + (n % 2) * 0.1) }, "", 520 + n * 60, 6);
-        tierStimme("schuetteln");
-        tierSagt(t, "Pust!", "#1d5f94");
-      }, 1200 + i * 300);
-    });
-  }
-  function reaktionEkel(platz, tiere) {
-    tiere.forEach(function (t, i) {
-      setTimeout(function () { tierKlasse(t, "sp-tier-ekelt", 1400); tierSagt(t, zufall(["Bäh!", "Iiiih!", "Igitt!"]), "#4d7a1f"); tierStimme("frage", tierFliegt(t)); }, 500 + i * 250);
-    });
-  }
-  function reaktionFarbe(platz, tiere) {
-    var farben = ["#ff4d6d", "#ffd23a", "#3fb4ff", "#7ad957", "#b98cff"];
-    tiere.forEach(function (t, i) {
-      var g = tierGesicht(t), klekse = "";
-      for (var n = 0; n < 3; n++) klekse += '<circle cx="' + (g.m[0] - 6 + n * 5 + Math.random() * 2).toFixed(1) + '" cy="' + (g.m[1] - 4 + Math.random() * 6).toFixed(1) + '" r="' + (1.2 + Math.random()).toFixed(1) + '" fill="' + farben[(n + i) % farben.length] + '" opacity=".92"/>';
-      setTimeout(function () { tierZusatz(t, klekse, 4000); tierKlasse(t, "sp-tier-hops", 700); tierSagt(t, zufall(["Bunt!", "Hey, ich auch!", "Farbe!"]), "#c0492b"); tierStimme("kichern", tierFliegt(t)); }, 500 + i * 200);
-    });
-  }
-  function reaktionHut(platz, tiere) {
-    tiere.forEach(function (t, i) {
-      var g = tierGesicht(t), x = (g.a[0][0] + g.a[1][0]) / 2, y = g.a[0][1] - g.r * 2.4, b = g.r * 3.2;
-      var hut = '<g class="sp-tz-hut"><ellipse cx="' + x + '" cy="' + y + '" rx="' + b + '" ry="' + (b * 0.28) + '" fill="#8a5a2b" stroke="#4d2f12" stroke-width=".4"/>'
-        + '<path d="M' + (x - b * 0.55) + " " + y + " C" + (x - b * 0.6) + " " + (y - b * 0.8) + " " + (x + b * 0.6) + " " + (y - b * 0.8) + " " + (x + b * 0.55) + " " + y
-        + ' Z" fill="#a0692f" stroke="#4d2f12" stroke-width=".4"/><path d="M' + (x - b * 0.55) + " " + (y - b * 0.12) + " H" + (x + b * 0.55) + '" stroke="#3b2410" stroke-width=".8"/></g>';
-      setTimeout(function () { tierZusatz(t, hut, 4400); tierKlasse(t, "sp-tier-nickt", 1400); tierSagt(t, zufall(["Yeehaw!", "Howdy!", "Hüa!"]), "#8a5a2b"); tierStimme("wow", tierFliegt(t)); }, 600 + i * 300);
-    });
-  }
-  function reaktionLachen(platz, tiere) {
-    tiere.forEach(function (t, i) {
-      setTimeout(function () { tierKlasse(t, "sp-tier-lacht", 1300); tierStimme("kichern", tierFliegt(t)); tierSagt(t, zufall(["Hahaha!", "Hihihi!", "Lustig!"]), "#c0492b"); }, 500 + i * 220);
-    });
-  }
-  function reaktionTanzKurz(platz, tiere) {
-    tiere.forEach(function (t) { tierKlasse(t, "sp-tier-tanzt", 3200); });
-    tierSagt(tiere[0], zufall(["♪ ♫", "Groovy!", "Musik!"]), "#6a3fd0");
-  }
-  function reaktionZorro(platz, tiere) {
-    tiere.forEach(function (t, i) {
-      setTimeout(function () { tierKlasse(t, "sp-tier-schreck", 1000); tierSagt(t, "!", "#c0492b"); }, 300 + i * 150);
-      setTimeout(function () { tierKlasse(t, "sp-tier-hops", 800); tierSagt(t, zufall(["Olé!", "Zorro!", "Wow!"]), "#1d2330"); tierStimme("wow", tierFliegt(t)); }, 2000 + i * 250);
-    });
-  }
   var TIER_REAKTIONEN = {
     zurueckspucken: reaktionZurueckspucken, schlucken: reaktionSchlucken, schlecken: reaktionSchlecken, lieb: reaktionLieb,
     geld: reaktionGeld, nass: reaktionNass, strohhalm: reaktionStrohhalm, blubber: reaktionBlubber, pflaster: reaktionPflaster,
     blume: reaktionBlume, klaps: reaktionKlaps, tanz: reaktionTanz, zuschauen: reaktionZuschauen, staunen: reaktionStaunen,
     erschrecken: reaktionErschrecken, frieren: reaktionFrieren, freuen: reaktionFreuen, wurf: reaktionWurf,
-    mitreisen: function (p, t, v, k) { reaktionMitreisen(p, t, v, k); }, suchen: function (p, t, v, k) { reaktionSuchen(p, t, v, k); },
-    schwindelig: reaktionSchwindelig, cool: reaktionCool, kuckuck: reaktionKuckuck, blank: reaktionBlank, jucken: reaktionJucken,
-    loeschen: reaktionLoeschen, ekel: reaktionEkel, farbe: reaktionFarbe, hut: reaktionHut, lachen: reaktionLachen,
-    tanzkurz: reaktionTanzKurz, zorro: reaktionZorro
+    mitreisen: function (p, t, v, k) { reaktionMitreisen(p, t, v, k); }, suchen: function (p, t, v, k) { reaktionSuchen(p, t, v, k); }
   };
   function tierReagiert(platz, art, von, klasse) {
     if (!platz) return "";
@@ -7758,17 +7616,7 @@
             if (lauf) {
               tierLaeufe[key] = lauf;
               setTimeout(function () {
-                /* „extra Beam-Animation … kleine Transporterstrahlen zusätzlich
-                   für die Tiere": jedes Tier bekommt seine eigene Säule. */
-                if (beam()) [].forEach.call(document.querySelectorAll(".sp-tier-begleiter"), function (d) {
-                  d.classList.add("sp-tier-beamt");
-                  if (!d.querySelector(".sp-tier-beamsaeule")) {
-                    var fl = d.classList.contains("sp-flugtier");
-                    var sa = document.createElement("span"); sa.className = "sp-tier-beamsaeule";
-                    sa.style.left = (fl ? 80 : 72) + "%"; sa.style.top = (fl ? -14 : 58) + "%";
-                    d.appendChild(sa);
-                  }
-                });
+                if (beam()) [].forEach.call(document.querySelectorAll(".sp-tier-begleiter"), function (d) { d.classList.add("sp-tier-beamt"); });
                 if (lift()) [].forEach.call(document.querySelectorAll(".sp-tier-begleiter"), function (d) { d.classList.add("sp-tier-quetscht"); });
                 if (beam() || lift()) chatTon(beam() ? "beamen" : "quietschen", 0.18);
               }, 220);
