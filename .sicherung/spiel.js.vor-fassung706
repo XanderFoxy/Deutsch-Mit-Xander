@@ -7818,7 +7818,7 @@
   function dmKachelnMachen() {
     var K = {}, c, x, i, j, n;
     /* Gras: fleckiges Grün, darauf Halme hell und dunkel. */
-    c = dmFlaeche(256, "#536f2c", "#8a9f4c", 2, 6, 11, 1.3); x = c.getContext("2d");
+    c = dmFlaeche(256, "#517f2d", "#83ad4a", 2, 6, 11, 1.25); x = c.getContext("2d");
     for (i = 0; i < 2600; i++) {
       var gx = dmHash(i, 1, 21) * 256, gy = dmHash(i, 2, 21) * 256, gl = 1.5 + dmHash(i, 3, 21) * 3, gw = (dmHash(i, 4, 21) - .5) * 1.6, hell = dmHash(i, 5, 21) > .55;
       x.strokeStyle = hell ? "rgba(214,240,150,.45)" : "rgba(40,70,20,.4)"; x.lineWidth = .7;
@@ -8147,51 +8147,20 @@
     var i;
     var him = g.createLinearGradient(0, 0, 0, 90); him.addColorStop(0, "#7fbde6"); him.addColorStop(.6, "#c6e3f3"); him.addColorStop(1, "#eef3e0"); g.fillStyle = him; g.fillRect(0, 0, 320, 200);
     var so = g.createRadialGradient(272, 22, 2, 272, 22, 60); so.addColorStop(0, "rgba(255,248,210,.95)"); so.addColorStop(.25, "rgba(255,240,190,.45)"); so.addColorStop(1, "rgba(255,240,190,0)"); g.fillStyle = so; g.fillRect(180, 0, 140, 90);
-    /* Ferne Berge: gebrochene Grate (jede Strecke mehrfach geteilt und verschoben), jede Flanke nach ihrer
-       Neigung belichtet (Sonne rechts oben), Schnee nur oben und in Rinnen, Fels als Stoff. */
-    function grat(pts, rau, seed) {
-      var p = pts.slice();
-      for (var runde = 0; runde < 4; runde++) {
-        var neu = [p[0]];
-        for (var j = 1; j < p.length; j++) { var a0 = p[j - 1], b0 = p[j], mx = (a0[0] + b0[0]) / 2, my = (a0[1] + b0[1]) / 2 + (dmHash(j, runde, seed) - .5) * rau * Math.abs(b0[0] - a0[0]) * .35; neu.push([mx, my], b0); }
-        p = neu;
-      }
-      return p;
-    }
-    function berg(kontrolle, hell, dunkel, schnee, seed, fuss) {
-      var p = grat(kontrolle, 1, seed), rand = [[-10, fuss]].concat(p, [[330, fuss]]);
-      g.save(); dmPfad(g, rand); g.clip();
-      g.fillStyle = dmMuster(g, K.fels, .1 / s); g.fillRect(-10, 0, 340, fuss);
-      var bg = g.createLinearGradient(0, 10, 0, fuss); bg.addColorStop(0, hell); bg.addColorStop(1, dunkel); g.globalAlpha = .7; g.fillStyle = bg; g.fillRect(-10, 0, 340, fuss); g.globalAlpha = 1;
-      for (var j = 1; j < p.length; j++) {
-        var a0 = p[j - 1], b0 = p[j], steig = (b0[1] - a0[1]) / Math.max(.1, b0[0] - a0[0]);
-        /* fällt nach rechts ab = der Sonne zugewandt; steigt nach rechts = im Schatten */
-        var licht = steig > 0 ? Math.min(.28, steig * .35) : 0, schatten = steig < 0 ? Math.min(.45, -steig * .5) : 0;
-        if (licht) { g.fillStyle = "rgba(255,240,215," + licht.toFixed(3) + ")"; }
-        else { g.fillStyle = "rgba(20,28,60," + schatten.toFixed(3) + ")"; }
-        g.beginPath(); g.moveTo(a0[0], a0[1]); g.lineTo(b0[0], b0[1]); g.lineTo(b0[0] - 2, fuss); g.lineTo(a0[0] - 2, fuss); g.closePath(); g.fill();
-      }
-      /* Schnee: nur was höher liegt als die Schneegrenze, unten zerfranst. */
-      g.fillStyle = "rgba(248,251,255,.93)";
-      for (j = 1; j < p.length - 1; j++) {
-        var q = p[j]; if (q[1] > schnee - 2) continue;
-        var tief = (schnee - q[1]) * (.25 + dmHash(j, 5, seed) * .35);
-        g.beginPath(); g.moveTo(p[j - 1][0], Math.max(p[j - 1][1], q[1])); g.lineTo(q[0], q[1]); g.lineTo(p[j + 1][0], Math.max(p[j + 1][1], q[1]));
-        g.lineTo(q[0] + 1.2, q[1] + tief); g.lineTo(q[0] - .6, q[1] + tief * .7); g.closePath(); g.fill();
-      }
+    /* Ferne Berge mit Fels, Schnee und Dunst. */
+    function berg(pts, hell, dunkel, schnee, seed) {
+      g.save(); dmPfad(g, pts); g.clip();
+      g.fillStyle = dmMuster(g, K.fels, .12 / s); g.fillRect(0, 0, 320, 90);
+      var bg = g.createLinearGradient(0, 10, 0, 80); bg.addColorStop(0, hell); bg.addColorStop(1, dunkel); g.globalAlpha = .72; g.fillStyle = bg; g.fillRect(0, 0, 320, 90); g.globalAlpha = 1;
+      /* Jede Bergflanke links im Schatten, rechts im Licht. */
+      for (i = 1; i < pts.length - 1; i++) { var pk = pts[i], vl = pts[i - 1], vr = pts[i + 1]; if (pk[1] > vl[1] || pk[1] > vr[1]) continue;
+        g.fillStyle = "rgba(25,35,70,.4)"; g.beginPath(); g.moveTo(pk[0], pk[1]); g.lineTo(vl[0], vl[1]); g.lineTo(vl[0] + (pk[0] - vl[0]) * .4, 90); g.lineTo(pk[0] + 3, 90); g.closePath(); g.fill();
+        g.fillStyle = "rgba(255,240,215,.2)"; g.beginPath(); g.moveTo(pk[0], pk[1]); g.lineTo(vr[0], vr[1]); g.lineTo(vr[0], 90); g.lineTo(pk[0] + 3, 90); g.closePath(); g.fill(); }
+      for (i = 1; i < pts.length - 2; i++) { var p = pts[i]; if (p[1] < schnee) { g.fillStyle = "rgba(250,252,255,.9)"; g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(p[0] - 6 - dmHash(i, 1, seed) * 4, p[1] + 6 + dmHash(i, 2, seed) * 3); g.lineTo(p[0] - 2, p[1] + 4); g.lineTo(p[0] + 1, p[1] + 7); g.lineTo(p[0] + 5 + dmHash(i, 3, seed) * 3, p[1] + 5); g.closePath(); g.fill(); } }
+      var ls = g.createLinearGradient(0, 0, 320, 0); ls.addColorStop(0, "rgba(0,0,30,.18)"); ls.addColorStop(1, "rgba(255,240,210,.1)"); g.fillStyle = ls; g.fillRect(0, 0, 320, 90);
       g.restore();
-      /* Ein Hauch Licht auf der Gratlinie. */
-      g.strokeStyle = "rgba(255,250,235,.35)"; g.lineWidth = .35; g.beginPath(); g.moveTo(p[0][0], p[0][1]); for (j = 1; j < p.length; j++) g.lineTo(p[j][0], p[j][1]); g.stroke();
     }
-    berg([[-10, 58], [12, 40], [34, 26], [52, 38], [74, 20], [98, 34], [122, 27], [150, 46], [172, 36], [202, 24], [230, 14], [258, 30], [286, 22], [310, 38], [330, 32]], "#a4aec2", "#6c778d", 34, 3, 88);
-    var du0 = g.createLinearGradient(0, 30, 0, 80); du0.addColorStop(0, "rgba(225,236,246,0)"); du0.addColorStop(1, "rgba(225,236,246,.55)"); g.fillStyle = du0; g.fillRect(0, 30, 320, 50);
-    /* Bewaldete Vorberge davor, bläulich im Dunst. */
-    var vor = grat([[-10, 64], [30, 52], [70, 58], [110, 50], [150, 58], [190, 50], [230, 54], [270, 46], [330, 56]], .8, 9);
-    g.save(); dmPfad(g, [[-10, 80]].concat(vor, [[330, 80]])); g.clip();
-    var vg = g.createLinearGradient(0, 45, 0, 80); vg.addColorStop(0, "#5f7d68"); vg.addColorStop(1, "#6f8d62"); g.fillStyle = vg; g.fillRect(-10, 40, 340, 42);
-    for (var vb = 0; vb < 140; vb++) { var tx = dmHash(vb, 1, 177) * 340 - 10, ty = 48 + dmHash(vb, 2, 177) * 30, tr = .9 + dmHash(vb, 3, 177) * 1.2;
-      g.fillStyle = dmHash(vb, 4, 177) > .5 ? "rgba(40,70,50,.55)" : "rgba(110,140,100,.45)"; g.beginPath(); g.moveTo(tx, ty - tr * 2.2); g.lineTo(tx + tr, ty); g.lineTo(tx - tr, ty); g.closePath(); g.fill(); }
-    g.restore();
+    berg([[-10, 80], [10, 44], [30, 30], [48, 40], [70, 22], [96, 38], [120, 30], [150, 50], [170, 40], [200, 28], [228, 18], [256, 34], [284, 26], [310, 42], [330, 36], [330, 80]], "#9aa6bc", "#6f7b90", 36, 3);
     var du = g.createLinearGradient(0, 30, 0, 72); du.addColorStop(0, "rgba(230,240,248,0)"); du.addColorStop(1, "rgba(230,240,248,.75)"); g.fillStyle = du; g.fillRect(0, 30, 320, 44);
     /* Hügel und Wiese. */
     g.save(); g.beginPath(); g.moveTo(-5, 70); g.bezierCurveTo(40, 52, 90, 60, 130, 58); g.bezierCurveTo(180, 55, 230, 50, 325, 62); g.lineTo(325, 205); g.lineTo(-5, 205); g.closePath(); g.clip();
@@ -8200,8 +8169,7 @@
     /* Großflächig ungleichmäßig: dunklere und sonnige Stellen, damit die Kachel nicht zu sehen ist. */
     if (!DM.flecken) {
       var fl = dmKachel(64), flg = fl.getContext("2d"), fb = flg.createImageData(64, 64), fr = dmRauschen(64, 3, 3, 163);
-      /* Dunkle, satte Mulden und trockene, gelbliche Kuppen – wie eine echte Wiese im Spätsommer. */
-      for (i = 0; i < fr.length; i++) { var t = (fr[i] - .5) * 2.4; if (t < 0) { fb.data[i * 4] = 18; fb.data[i * 4 + 1] = 42; fb.data[i * 4 + 2] = 8; fb.data[i * 4 + 3] = Math.min(255, -t * 170); } else { fb.data[i * 4] = 214; fb.data[i * 4 + 1] = 196; fb.data[i * 4 + 2] = 110; fb.data[i * 4 + 3] = Math.min(255, t * 120); } }
+      for (i = 0; i < fr.length; i++) { var t = (fr[i] - .5) * 2.2; if (t < 0) { fb.data[i * 4] = 20; fb.data[i * 4 + 1] = 45; fb.data[i * 4 + 2] = 5; fb.data[i * 4 + 3] = Math.min(255, -t * 150); } else { fb.data[i * 4] = 255; fb.data[i * 4 + 1] = 240; fb.data[i * 4 + 2] = 170; fb.data[i * 4 + 3] = Math.min(255, t * 95); } }
       flg.putImageData(fb, 0, 0); DM.flecken = fl;
     }
     g.drawImage(DM.flecken, 0, 50, 320, 150);

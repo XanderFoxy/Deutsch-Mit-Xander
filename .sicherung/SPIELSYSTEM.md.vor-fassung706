@@ -924,8 +924,3 @@ Sonde: `werkzeug/pruefe-704-dorf-gemalt.js` (Android, 360 px, echte Finger). `pr
 Sonde: `werkzeug/pruefe-698-funk139-142.js` (angepasst: Tag = ursprüngliches Bild, Nacht = Mond statt Sonne, Regen bleibt).
 - **Nachgesehen im Verlauf**: bis Fassung 697 waren die Wettersymbole Emojis (`WEATHER_ICONS`, seit dem ersten Hochladen am 10.09.; im Kopf stand anfangs „⛅"). 698 hatte sie durch eigene Zeichnungen ersetzt – die sind wieder raus.
 - **Jetzt**: tagsüber genau die ursprünglichen Bilder (☀️ 🌤️ ⛅ ☁️ 🌫️ 🌦️ 🌧️ ⛈️ 🌨️ ❄️). Nachts nur dort, wo eine Sonne zu sehen wäre, der Mond an ihrer Stelle: klar 🌙, leicht/halb bewölkt der Mond mit einer Wolke davor, Schauer/Niesel der Mond hinter der Regenwolke. Tag oder Nacht sagt weiter der Dienst (`is_day`). Die Ortswahl (Berlin, Döbeln, Standort) bleibt.
-
-### Fassung 706 (Dorf: Berge und Wiese natürlicher)
-- **Berge**: statt glatter Dreiecke gebrochene Grate (jede Strecke viermal geteilt und zufällig verschoben); jede kleine Flanke wird nach ihrer Neigung belichtet (der Sonne rechts oben zugewandt hell, abgewandt blau-dunkel) – so entstehen Rinnen und Rippen wie in den Alpen. Schnee nur über der Schneegrenze, unten kurz zerfranst. Davor bewaldete Vorberge im Dunst.
-- **Wiese**: gedämpftes Sommergrün mit Oliv; großflächig dunkle, satte Mulden und trockene, gelbliche Kuppen statt eines gleichmäßigen Grüns.
-- Malen bleibt einmalig je Dorfzustand; `pruefe-704` grün (Neuzeichnen Median 24 ms bei 4× gedrosselter CPU).

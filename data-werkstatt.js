@@ -49,18 +49,18 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 705: Wetter wieder mit den ursprünglichen Bildern, nachts mit Mond",
+  stand: "Fassung 706: Dorf mit natürlichen Alpenbergen und Sommerwiese – als Nächstes die Fehler aus Funk 146",
 
   inArbeit: [
-    { seit: "2026-09-26T17:16",
+    { seit: "2026-09-26T17:36",
       text: "Funk 146: Schatz einsammeln ohne Deutsch-Fenster, Eier verrutschen, Werkzeug beim Langdruck, 8 Angeln gleichzeitig, schnelles Ernten, Taschen frei anordnen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T17:16",
-      text: "Funk 147: ursprüngliche Wetterbilder zurück, nachts der Mond statt der Sonne" },
-    { seit: "2026-09-26T17:16",
-      text: "Fassung 704: Dorf gemalt, doppelt so groß, Haus schließen per Tipp daneben, lesbare Knöpfe" },
+    { seit: "2026-09-26T17:36",
+      text: "Berge mit gebrochenen Graten, Licht- und Schattenflanken, Schnee oben, Vorberge im Dunst" },
+    { seit: "2026-09-26T17:36",
+      text: "Wiese in gedämpftem Sommergrün mit dunklen Mulden und trockenen Kuppen" },
   ],
 };
