@@ -111,6 +111,93 @@ const GERAEUSCHE = [
   { name: "lecken",    dauer: 2, text: "A wet playful lick sound, short and silly, cartoon style, no music" },
   { name: "schlitten", dauer: 4, text: "Sleigh bells jingling rhythmically while a sleigh glides over snow, festive, no music" },
 
+  /* FASSUNG 695 — XANDER: „Die Tiere sollen individuelle Sounds haben nicht
+     immer wiederholt … das sagen sie gar nicht, sie sollen das in einer süßen
+     Tierstimme machen … jedes Tier seinen eigenen Sound“.
+     Je Tier vier Laute (Freude/Ruf, Frage, Schreck/Schmerz, Genuss), dazu
+     Hunger (Magenknurren) und Müdigkeit (Gähnen). 20 Credits je Sekunde –
+     deshalb kurz. Die Seite verstimmt jeden Laut beim Abspielen ein wenig,
+     damit er nie zweimal gleich klingt. */
+  { name: "tier-fellmonster-ruf", dauer: 1.2, text: "a cute small furry gremlin-like monster: happy bubbly gurgling giggle. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-fellmonster-frage", dauer: 1.2, text: "a cute small furry gremlin-like monster: curious rising questioning grunt 'hrrm?'. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-fellmonster-au", dauer: 1.2, text: "a cute small furry gremlin-like monster: short startled whimper yelp. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-fellmonster-genuss", dauer: 1.2, text: "a cute small furry gremlin-like monster: contented low rumbling purr. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-chihuahua-ruf", dauer: 1.2, text: "a tiny chihuahua dog: two high excited happy yips. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-chihuahua-frage", dauer: 1.2, text: "a tiny chihuahua dog: confused whine rising at the end. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-chihuahua-au", dauer: 1.2, text: "a tiny chihuahua dog: sharp short yelp. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-chihuahua-genuss", dauer: 1.2, text: "a tiny chihuahua dog: contented little sigh with a soft whine. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-stachelmonster-ruf", dauer: 1.2, text: "a small hedgehog: happy squeaky chattering. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-stachelmonster-frage", dauer: 1.2, text: "a small hedgehog: curious sniffing snuffle and a small squeak. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-stachelmonster-au", dauer: 1.2, text: "a small hedgehog: startled huffing hiss. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-stachelmonster-genuss", dauer: 1.2, text: "a small hedgehog: contented snuffling grunts. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-drache-ruf", dauer: 1.2, text: "a cute baby dragon: happy chirpy little roar. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-drache-frage", dauer: 1.2, text: "a cute baby dragon: curious trilling chirp rising. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-drache-au", dauer: 1.2, text: "a cute baby dragon: hurt high squeal. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-drache-genuss", dauer: 1.2, text: "a cute baby dragon: contented purr with a tiny puff of smoke. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-eule-ruf", dauer: 1.2, text: "an owl: soft hooting hoo hoo. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-eule-frage", dauer: 1.2, text: "an owl: single curious rising hoot. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-eule-au", dauer: 1.2, text: "an owl: short startled screech. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-eule-genuss", dauer: 1.2, text: "an owl: soft contented cooing trill. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-schaeferhund-ruf", dauer: 1.2, text: "a German shepherd dog: single happy deep bark. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-schaeferhund-frage", dauer: 1.2, text: "a German shepherd dog: curious whine with a head tilt. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-schaeferhund-au", dauer: 1.2, text: "a German shepherd dog: short loud yelp. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-schaeferhund-genuss", dauer: 1.2, text: "a German shepherd dog: contented deep groan and sigh. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-babyfuchs-ruf", dauer: 1.2, text: "a tiny fox kit: playful high squeak. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-babyfuchs-frage", dauer: 1.2, text: "a tiny fox kit: curious little chirp. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-babyfuchs-au", dauer: 1.2, text: "a tiny fox kit: small whimper. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-babyfuchs-genuss", dauer: 1.2, text: "a tiny fox kit: sleepy contented squeak. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-fuchs-ruf", dauer: 1.2, text: "a red fox: happy gekkering chatter. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-fuchs-frage", dauer: 1.2, text: "a red fox: curious short 'wow' bark. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-fuchs-au", dauer: 1.2, text: "a red fox: short yelping scream. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-fuchs-genuss", dauer: 1.2, text: "a red fox: soft contented whine. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-einhorn-ruf", dauer: 1.2, text: "a magical unicorn: gentle whinny with a sparkling chime. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-einhorn-frage", dauer: 1.2, text: "a magical unicorn: curious soft nicker. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-einhorn-au", dauer: 1.2, text: "a magical unicorn: short high squeal. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-einhorn-genuss", dauer: 1.2, text: "a magical unicorn: contented snort and soft blow with a faint chime. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-phoenix-ruf", dauer: 1.2, text: "a phoenix fire bird: melodic bright trill with a soft fire whoosh. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-phoenix-frage", dauer: 1.2, text: "a phoenix fire bird: curious two-note chirp. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-phoenix-au", dauer: 1.2, text: "a phoenix fire bird: short sharp screech. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-phoenix-genuss", dauer: 1.2, text: "a phoenix fire bird: soft warm warbling. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-fee-ruf", dauer: 1.2, text: "a tiny fairy creature: tiny tinkling giggle with little bells. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-fee-frage", dauer: 1.2, text: "a tiny fairy creature: curious 'hmm?' with a glass chime. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-fee-au", dauer: 1.2, text: "a tiny fairy creature: tiny surprised squeak. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-fee-genuss", dauer: 1.2, text: "a tiny fairy creature: soft humming with twinkles. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-feuerfuchs-ruf", dauer: 1.2, text: "a fire fox: fox chatter with crackling embers. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-feuerfuchs-frage", dauer: 1.2, text: "a fire fox: curious fox yip with a crackle. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-feuerfuchs-au", dauer: 1.2, text: "a fire fox: hurt fox yelp with a fizzle. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-feuerfuchs-genuss", dauer: 1.2, text: "a fire fox: soft fox whine with warm crackling. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-greif-ruf", dauer: 1.2, text: "a griffin, eagle head and lion body: eagle screech blending into a lion growl. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-greif-frage", dauer: 1.2, text: "a griffin, eagle head and lion body: curious eagle chirp. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-greif-au", dauer: 1.2, text: "a griffin, eagle head and lion body: piercing eagle scream. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-greif-genuss", dauer: 1.2, text: "a griffin, eagle head and lion body: deep big cat purr. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-regenbogendrache-ruf", dauer: 1.2, text: "a rainbow baby dragon: sparkling magical little roar with shimmering chimes. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-regenbogendrache-frage", dauer: 1.2, text: "a rainbow baby dragon: curious chirp with a rising glitter chime. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-regenbogendrache-au", dauer: 1.2, text: "a rainbow baby dragon: hurt squeal with a sad chime. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-regenbogendrache-genuss", dauer: 1.2, text: "a rainbow baby dragon: contented purr with soft harp glissando. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-dackel-ruf", dauer: 1.2, text: "a dachshund dog: two playful medium barks. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-dackel-frage", dauer: 1.2, text: "a dachshund dog: curious whining 'hmm'. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-dackel-au", dauer: 1.2, text: "a dachshund dog: small dog yelp. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-dackel-genuss", dauer: 1.2, text: "a dachshund dog: contented snort and sigh. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-storch-ruf", dauer: 1.2, text: "a white stork: loud bill clattering. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-storch-frage", dauer: 1.2, text: "a white stork: short hiss followed by a light clatter. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-storch-au", dauer: 1.2, text: "a white stork: hoarse squawk. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-storch-genuss", dauer: 1.2, text: "a white stork: soft slow bill clattering. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-wolpertinger-ruf", dauer: 1.2, text: "a cute mythical Bavarian creature, a rabbit with tiny antlers and small wings: playful squeaky yodel-like chirp 'hoo-lee'. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-wolpertinger-frage", dauer: 1.2, text: "a cute mythical Bavarian creature, a rabbit with tiny antlers and small wings: curious squeak with a quick wing flutter. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-wolpertinger-au", dauer: 1.2, text: "a cute mythical Bavarian creature, a rabbit with tiny antlers and small wings: short rabbit squeal. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-wolpertinger-genuss", dauer: 1.2, text: "a cute mythical Bavarian creature, a rabbit with tiny antlers and small wings: soft rabbit tooth purring. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-lindwurm-ruf", dauer: 1.2, text: "a giant serpent dragon: long hiss rising into a deep rumble. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-lindwurm-frage", dauer: 1.2, text: "a giant serpent dragon: curious rising snake hiss. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-lindwurm-au", dauer: 1.2, text: "a giant serpent dragon: shrieking hiss. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-lindwurm-genuss", dauer: 1.2, text: "a giant serpent dragon: deep contented rumbling purr. Short, cute, close microphone, no music, no background, no human voice" },
+  { name: "tier-hunger-klein", dauer: 1.4, text: "A small animal belly growling loudly with hunger, gurgling stomach rumble, cartoon, close microphone, no music" },
+  { name: "tier-hunger-gross", dauer: 1.6, text: "A big hungry stomach rumbling deeply and long, gurgling, close microphone, no music" },
+  { name: "tier-muede-klein", dauer: 1.6, text: "A tiny cute animal doing a long sleepy yawn that ends in a squeak, close microphone, no music" },
+  { name: "tier-muede-hund", dauer: 1.6, text: "A dog doing a long wide yawn with a soft squeaky whine at the end, close microphone, no music" },
+  { name: "tier-muede-vogel", dauer: 1.4, text: "A sleepy bird fluffing its feathers with a soft drowsy chirp, close microphone, no music" },
+  { name: "tier-muede-drache", dauer: 1.6, text: "A baby dragon yawning sleepily with a small puff of smoke, cute, close microphone, no music" },
+  { name: "tier-schlecken", dauer: 1.4, text: "A small animal eagerly licking whipped cream with its tongue, wet lapping licks, cute, close microphone, no music" },
+  { name: "tier-hops", dauer: 0.8, text: "A tiny cartoon bounce, soft springy boing of a small rabbit hopping, no music" },
 ];
 
 function schlafen(ms) { return new Promise((f) => setTimeout(f, ms)); }
@@ -135,7 +222,7 @@ async function holen(g) {
      angleichen, damit nicht ein Geraeusch brüllt und das naechste
      fluestert. */
   execFileSync(FFMPEG, ["-y", "-i", zwischen,
-    "-af", "loudnorm=I=-18:TP=-2:LRA=11",
+    "-af", (g.name.startsWith("tier-") ? "silenceremove=start_periods=1:start_threshold=-45dB," : "") + "loudnorm=I=-18:TP=-2:LRA=11",
     "-c:a", "libopus", "-b:a", "24k", "-ac", "1", "-ar", "24000",
     fertig], { stdio: "pipe" });
   /* ZWEITE FASSUNG IN AAC — und die ist kein Luxus: Safari auf dem
@@ -143,7 +230,7 @@ async function holen(g) {
      baut eine Datei, die ausgerechnet auf seinem Geraet stumm
      bleibt. Die Seite fragt den Browser und nimmt, was er kann. */
   execFileSync(FFMPEG, ["-y", "-i", zwischen,
-    "-af", "loudnorm=I=-18:TP=-2:LRA=11",
+    "-af", (g.name.startsWith("tier-") ? "silenceremove=start_periods=1:start_threshold=-45dB," : "") + "loudnorm=I=-18:TP=-2:LRA=11",
     "-c:a", "aac", "-b:a", "40k", "-ac", "1", "-ar", "24000",
     fertigAac], { stdio: "pipe" });
   fs.unlinkSync(zwischen);
@@ -158,7 +245,8 @@ async function holen(g) {
   const nur = process.argv[2];
   let neu = 0, fehler = 0;
   for (const g of GERAEUSCHE) {
-    if (nur && g.name !== nur) continue;
+    /* Fassung 695: „tier-" holt alle, deren Name so anfängt. */
+    if (nur && g.name !== nur && !(nur.endsWith("-") && g.name.startsWith(nur))) continue;
     const r = await holen(g);
     if (r === "neu") { neu++; await schlafen(900); }
     if (r === "fehler") fehler++;

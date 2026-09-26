@@ -66311,7 +66311,7 @@
     if (logikGeladen) return logikGeladen;
     logikGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-logik.js" + (window.DMA_V ? DMA_V("data-logik.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = (window.DMA_Q ? DMA_Q("data-logik.js") : "data-logik.js") + (window.DMA_V ? DMA_V("data-logik.js") : "?v=" + (window.DMA_VERSION || "1"));
       s.onload = () => fertig(true);
       s.onerror = () => { logikGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -66497,7 +66497,7 @@
     if (ausspracheKursGeladen) return ausspracheKursGeladen;
     ausspracheKursGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-aussprache.js" + (window.DMA_V ? DMA_V("data-aussprache.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = (window.DMA_Q ? DMA_Q("data-aussprache.js") : "data-aussprache.js") + (window.DMA_V ? DMA_V("data-aussprache.js") : "?v=" + (window.DMA_VERSION || "1"));
       s.onload = () => fertig(true);
       s.onerror = () => { ausspracheKursGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -66925,7 +66925,7 @@
     if (dialogeGeladen) return dialogeGeladen;
     dialogeGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-dialoge.js" + (window.DMA_V ? DMA_V("data-dialoge.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = (window.DMA_Q ? DMA_Q("data-dialoge.js") : "data-dialoge.js") + (window.DMA_V ? DMA_V("data-dialoge.js") : "?v=" + (window.DMA_VERSION || "1"));
       s.onload = () => fertig(true);
       s.onerror = () => { dialogeGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -67264,7 +67264,7 @@
     if (festeGeladen) return festeGeladen;
     festeGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-feste.js" + (window.DMA_V ? DMA_V("data-feste.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = (window.DMA_Q ? DMA_Q("data-feste.js") : "data-feste.js") + (window.DMA_V ? DMA_V("data-feste.js") : "?v=" + (window.DMA_VERSION || "1"));
       s.onload = () => fertig(true);
       s.onerror = () => { festeGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -73992,7 +73992,7 @@
     beitraegeGeladen = new Promise((fertig) => {
       if (window.DMA_DATEN && window.DMA_DATEN.EIGENE_BEITRAEGE) { fertig(true); return; }
       const sk = document.createElement("script");
-      sk.src = "data-beitraege.js" + (window.DMA_V ? DMA_V("data-beitraege.js") : "?v=" + (window.DMA_VERSION || "1"));
+      sk.src = (window.DMA_Q ? DMA_Q("data-beitraege.js") : "data-beitraege.js") + (window.DMA_V ? DMA_V("data-beitraege.js") : "?v=" + (window.DMA_VERSION || "1"));
       sk.async = true;
       sk.onload = () => fertig(true);
       sk.onerror = () => { console.warn("Beiträge konnten nicht geladen werden."); fertig(false); };
@@ -74415,7 +74415,7 @@
     if (witzeGeladen) return witzeGeladen;
     witzeGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-witze.js" + (window.DMA_V ? DMA_V("data-witze.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = (window.DMA_Q ? DMA_Q("data-witze.js") : "data-witze.js") + (window.DMA_V ? DMA_V("data-witze.js") : "?v=" + (window.DMA_VERSION || "1"));
       s.onload = () => fertig(true);
       s.onerror = () => { witzeGeladen = null; fertig(false); };
       document.head.appendChild(s);
@@ -81359,7 +81359,7 @@
     if (window.DMA_WORTKATEGORIEN) { wortKatGeladen = Promise.resolve(true); return wortKatGeladen; }
     wortKatGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-wortkategorien.js" + (window.DMA_V ? DMA_V("data-wortkategorien.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = (window.DMA_Q ? DMA_Q("data-wortkategorien.js") : "data-wortkategorien.js") + (window.DMA_V ? DMA_V("data-wortkategorien.js") : "?v=" + (window.DMA_VERSION || "1"));
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { wortKatGeladen = null; fertig(false); };
@@ -86041,7 +86041,7 @@
     if (window.DMA_WORTSPRACHEN) { sprachenGeladen = Promise.resolve(true); return sprachenGeladen; }
     sprachenGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "wortsprachen.js" + (window.DMA_V ? DMA_V("wortsprachen.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = (window.DMA_Q ? DMA_Q("wortsprachen.js") : "wortsprachen.js") + (window.DMA_V ? DMA_V("wortsprachen.js") : "?v=" + (window.DMA_VERSION || "1"));
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { sprachenGeladen = null; fertig(false); };
@@ -86074,7 +86074,7 @@
     if (window.DMA_SZENEN) { szenenGeladen = Promise.resolve(true); return szenenGeladen; }
     szenenGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-szenen.js" + (window.DMA_V ? DMA_V("data-szenen.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = (window.DMA_Q ? DMA_Q("data-szenen.js") : "data-szenen.js") + (window.DMA_V ? DMA_V("data-szenen.js") : "?v=" + (window.DMA_VERSION || "1"));
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { szenenGeladen = null; fertig(false); };
@@ -87387,7 +87387,7 @@
     if (window.DMA_LERNWEG) { lernwegGeladen = Promise.resolve(true); return lernwegGeladen; }
     lernwegGeladen = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = "data-lernweg.js" + (window.DMA_V ? DMA_V("data-lernweg.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = (window.DMA_Q ? DMA_Q("data-lernweg.js") : "data-lernweg.js") + (window.DMA_V ? DMA_V("data-lernweg.js") : "?v=" + (window.DMA_VERSION || "1"));
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { lernwegGeladen = null; fertig(false); };
@@ -94519,7 +94519,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (brDateien[weg]) return brDateien[weg];
     brDateien[weg] = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = weg + (window.DMA_V ? DMA_V(weg) : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = (window.DMA_Q ? DMA_Q(weg) : weg) + (window.DMA_V ? DMA_V(weg) : "?v=" + (window.DMA_VERSION || "1"));
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { brDateien[weg] = null; fertig(false); };
@@ -95802,11 +95802,13 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (neueFassungGesagt) return Promise.resolve(0);
     neueFassungZuletzt = Date.now();
     try {
-      return fetch("index.html?frisch=" + Date.now(), { cache: "no-store" })
-        .then((a) => (a && a.ok ? a.text() : ""))
-        .then((t) => {
-          const treffer = /DMA_VERSION\s*=\s*"(\d+)"/.exec(String(t || ""));
-          const draussen = treffer ? Number(treffer[1]) : 0;
+      /* Fassung 694 — XANDER: „wenn die Ladl nicht so groß wäre".
+         Gefragt wird fassung.json (60 Byte) statt der ganzen index.html
+         (69 KB). */
+      return fetch("fassung.json?t=" + Date.now(), { cache: "no-store" })
+        .then((a) => (a && a.ok ? a.json() : null))
+        .then((d) => {
+          const draussen = d && d.fassung ? Number(d.fassung) : 0;
           const hier = Number(window.DMA_VERSION || 0);
           if (!draussen || !hier || draussen <= hier) return 0;
           neueFassungGesagt = true;
@@ -95833,6 +95835,7 @@ An einem Morgen lief ein kleiner Fuchs los…
 
   function neueFassungZeigen(nummer) {
     if (document.getElementById("dmaNeueFassung")) return;
+    neueFassungGesagt = true;
     const bar = document.createElement("div");
     bar.id = "dmaNeueFassung";
     bar.className = "dma-neuestand";
@@ -95850,6 +95853,11 @@ An einem Morgen lief ein kleiner Fuchs los…
 
   /* Kurz nach dem Start — aber nicht sofort, das Laden hat Wichtigeres
      zu tun. Danach im Takt. */
+  /* Fassung 694 — der Wächter in index.html fragt schon im Takt; er
+     zeigt seine Meldung über diese Leiste. */
+  window.dmaFassungZeigen = (neu) => {
+    if (Number(neu) > Number(window.DMA_VERSION || 0)) neueFassungZeigen(Number(neu));
+  };
   setTimeout(neueFassungPruefen, 12000);
   setInterval(neueFassungPruefen, NEUE_FASSUNG_TAKT);
   document.addEventListener("visibilitychange", () => {

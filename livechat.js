@@ -3787,6 +3787,49 @@ window.LiveChat = (function () {
     });
   }
 
+  /* =========================================================
+     FASSUNG 694 — BEI DREI, VIER LEUTEN WIRD ES SCHWER
+     ---------------------------------------------------------
+     XANDER: „sobald ich drei oder vier Mitspieler hab wird das
+     alles ganz schwer und manchmal bricht das ab"
+
+     DER GRUND: Hier gibt es keinen Server, der die Bilder verteilt
+     — jedes Gerät schickt sein Kamerabild an JEDEN anderen einzeln
+     (ein „Netz" statt eines „Sterns"). Bei vier Leuten schickt also
+     jedes Telefon drei Bilder gleichzeitig hinaus, und der Browser
+     gibt jedem davon bis zu 1–2,5 Mbit/s. Das ist mehr, als viele
+     Mobilfunk-Leitungen nach oben schaffen — dann stockt erst das
+     Bild, dann der Ton, dann reißt die Leitung.
+
+     JETZT: je mehr Leute, desto weniger Bit je Bild. Das Bild ist
+     auf den Plätzen klein (ein Profilkreis); 450 kbit/s bei 480 px
+     sehen dort genauso aus. Zwei Leute: keine Grenze wie bisher.
+     Der Ton bleibt unangetastet — er ist das Wichtigste. */
+  function bildBremse() {
+    var ids = Object.keys(spurenJe).filter(function (id) { return spurenJe[id]; });
+    var n = ids.length;
+    var ziel = n >= 4 ? 350000 : n === 3 ? 450000 : n === 2 ? 800000 : 0;
+    var bilder = n >= 3 ? 20 : 0;
+    ids.forEach(function (id) {
+      var s = spurenJe[id];
+      var sender = s && s.bild && s.bild.sender;
+      if (!sender || !sender.getParameters || !sender.setParameters) return;
+      if (sender.dmaBremse === ziel + "/" + bilder) return;
+      try {
+        var p = sender.getParameters();
+        if (!p.encodings || !p.encodings.length) return;
+        p.encodings.forEach(function (e) {
+          if (ziel) e.maxBitrate = ziel; else delete e.maxBitrate;
+          if (bilder) e.maxFramerate = bilder; else delete e.maxFramerate;
+        });
+        sender.setParameters(p).then(function () {
+          sender.dmaBremse = ziel + "/" + bilder;
+        }).catch(function () {});
+      } catch (e) {}
+    });
+  }
+  setInterval(bildBremse, 4000);
+
   var kerzenLager = {};
   /* =========================================================
      FASSUNG 659 — DIE WEGE GEBÜNDELT STATT EINZELN

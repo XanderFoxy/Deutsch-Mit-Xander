@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="bastelheft">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- WICHTIG: Verhindert, dass der Browser diese HTML-Datei selbst zwischenspeichert. Ohne das
+     konnte eine einmal geladene, alte Version der Seite dauerhaft aus dem Browser-Cache kommen,
+     OHNE dass die neuen ?v=-Nummern der CSS/JS-Dateien je gesehen wurden — das war vermutlich die
+     eigentliche Ursache dafür, dass Aktualisierungen im normalen Tab nicht ankamen, im privaten
+     Fenster (das nie einen alten Cache hat) aber schon. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<title>Deutsch mit Alex</title>
+<meta name="description" content="Deutsch mit Alex — Grammatik üben, Vokabeln lernen und Deutschland entdecken. Locker, spaßig, kostenlos." />
+<meta name="theme-color" content="#FDF8F0" />
+
+<!-- Social-Media-Vorschau (Facebook, WhatsApp, Twitter/X, Discord ...) -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Deutsch mit Alex" />
+<meta property="og:description" content="Deutsch lernen mit Übungen, Vokabeltrainer & mehr — locker, spaßig, kostenlos." />
+<meta property="og:image" content="https://xanderfoxy.github.io/Deutsch-Mit-Xander/social-preview.png" />
+<meta property="og:url" content="https://xanderfoxy.github.io/Deutsch-Mit-Xander/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Deutsch mit Alex" />
+<meta name="twitter:description" content="Deutsch lernen mit Übungen, Vokabeltrainer & mehr — locker, spaßig, kostenlos." />
+<meta name="twitter:image" content="https://xanderfoxy.github.io/Deutsch-Mit-Xander/social-preview.png" />
+
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" id="mainFavicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A6%8A%3C/text%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<!-- RUNDE 87 — XANDER: „Ich habe auch noch immer nicht den Modus, dass oben die
+     Adresszeile ausgeblendet wird beim Klassenzimmer."
+     Auf Android und am Rechner macht das die Vollbild-Schnittstelle (siehe
+     lcKinoAn() in app.js). Auf dem iPhone gibt es die fuer normale Elemente
+     NICHT — dort faellt die Adresszeile nur weg, wenn die Seite ueber „Zum
+     Home-Bildschirm" abgelegt wurde. Genau dafuer sind diese beiden Zeilen da:
+     ohne sie oeffnet iOS auch das Symbol vom Home-Bildschirm wieder in Safari,
+     mitsamt Adresszeile. Das manifest allein (display: standalone) reicht dem
+     iPhone nicht, es liest diese Angabe. -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Deutsch mit Alex" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Pacifico&family=Bebas+Neue&family=Caveat:wght@600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+
+<script>window.DMA_VERSION = "692";</script>
+<script>window.DMA_STEMPEL = {"app-styles.css":"3220d1a844","app.js":"c2b3feafcd","aussprache-kreisel.css":"637f90838c","aussprache-kreisel.js":"b84915102e","aussprache-pruefung.js":"bc7015f869","aussprache-tabelle.js":"0a910d5671","backend.js":"59eff5194c","baukasten.js":"8599c60212","bildverwaltung.js":"7826bca845","core.js":"1521d97382","data-aussprache-ton.js":"1594c4f349","data-aussprache.js":"68c12c733a","data-beitraege.js":"dc2277c6fd","data-dialekt.js":"d0957b47a3","data-dialoge.js":"0990ba60d4","data-exercises.js":"1b0782a0da","data-feste.js":"2bfbeea38d","data-geraeusche.js":"3d92241cc0","data-grossgeschenke.js":"11c032bdea","data-history-extra.js":"2396d882d6","data-kalender-index.js":"3a91e7b957","data-lernweg.js":"6931ed8dda","data-liedstellen.js":"f512d59f21","data-logik.js":"81f3f46684","data-plaetze.js":"61824c9636","data-refrain.js":"0fd3da1fe3","data-szenen.js":"facd9322aa","data-tutor.js":"1fe129af3d","data-tutorvideo.js":"c020dab3ca","data-uebungen.js":"a613b7fc8f","data-umgangssprache.js":"6f66e75a4f","data-vocab-extra.js":"3a4af25e41","data-vocab.js":"fb59dfb37d","data-wegweiser.js":"29bb752227","data-werkstatt.js":"0809f79a19","data-witze.js":"e1cbf7185f","data-wortkategorien.js":"198133cbea","filmspieler.js":"a83f87e66b","klassenzimmer.js":"71e58a3925","korrekturen.css":"afd6c059d8","livechat.css":"00c0b7b090","livechat.js":"f836a3d6ab","quiz.js":"7884e008f3","rueckfrage.js":"c3a14f5a0b","satzbau.js":"6a17d2e3d3","spiel.css":"965099292d","spiel.js":"348b63cdb7","styles.css":"6d9def5b08","supabase-config.js":"825bb26f42","themes.css":"9529740c81","ton-liste.js":"831b0bb276","werkstatt.css":"5983b13d12","werkstatt.js":"6b16574f10","ton/":"ef4932ba07","tutor/":"ca0a26c036","szenen/":"0cdd5aa0b0","aussprache/":"a271134ba9"};</script>
+<script>
+/* =================================================================
+   DIE SEITE MERKT SELBST, DASS SIE VERALTET IST
+   -----------------------------------------------------------------
+   XANDER: „Ich weiss nicht, ob du die Adressen richtig aufgesetzt
+   hast. Alles, was du mir in dem Update beschreibst, ist nirgendswo
+   sichtbar … ich kriege in keinem Update irgendwie eine
+   grossartige Aenderung."
+
+   DAS WAR KEINE EINBILDUNG, UND ES LAG NICHT AN DEN ADRESSEN.
+   Jede Datei haengt an „?v=" + DMA_VERSION — das wirkt aber nur,
+   wenn die index.html SELBST neu geholt wird. Genau das tut ein
+   Browser nicht von sich aus: GitHub Pages schickt eigene
+   Cache-Kopfzeilen mit, und die drei <meta http-equiv=
+   "Cache-Control">-Zeilen weiter oben beachtet kein Browser fuer
+   das Dokument selbst — sie sind wirkungslos. Wer die Seite einmal
+   geladen hatte, bekam also weiter die ALTE index.html, mit der
+   alten Fassungsnummer und damit dem alten Javascript, dem alten
+   Aussehen und den alten Toenen. Im privaten Fenster ging es, weil
+   das nie einen Cache hat.
+
+   Hier steht deshalb die Gegenprobe: „fassung.json" ist winzig und
+   wird mit „cache: no-store" geholt — das umgeht jeden
+   Zwischenspeicher, auch den von GitHub Pages. Steht dort eine
+   andere Zahl als die geladene, holt sich die Seite EINMAL eine
+   frische Adresse (index.html?f=…) und ist damit auf dem Stand.
+   Der Merker in sessionStorage sorgt dafuer, dass daraus keine
+   Schleife wird, falls die Zahl einmal nicht stimmen sollte.
+   ================================================================= */
+/* RUNDE 101 — XANDER (24.09.): „ich sehe seit Stunden keine Veränderung
+   mehr". GEFUNDEN: geprueft wurde nur beim allerersten Laden. Holt der
+   Browser die Seite aus dem Zwischenspeicher zurueck (Android: Zurueck-
+   Taste, App-Wechsel — „bfcache"), laeuft dieses Skript NICHT noch
+   einmal; und wer die Seite stundenlang offen hat (Livestream), bekam
+   ohnehin nie etwas mit. Jetzt wird zusaetzlich geprueft, wenn die
+   Seite wieder sichtbar wird, wenn sie aus dem Zwischenspeicher kommt,
+   und alle zwei Minuten. Beim ersten Laden laedt sie wie bisher selbst
+   neu; spaeter erscheint oben ein kleiner Knopf „Neue Fassung – laden"
+   (mitten im Livestream soll nichts von selbst neu laden). */
+(function () {
+  var jetzt = String(window.DMA_VERSION || "");
+  var merker = "dma-neu-geladen";
+  function neuLaden(neu) {
+    var adresse = location.pathname + "?f=" + encodeURIComponent(neu) + location.hash;
+    location.replace(adresse);
+  }
+  function knopf(neu) {
+    if (document.getElementById("dmaNeueFassung")) {
+      document.getElementById("dmaNeueFassung").dataset.f = neu;
+      return;
+    }
+    var b = document.createElement("button");
+    b.id = "dmaNeueFassung";
+    b.type = "button";
+    b.dataset.f = neu;
+    b.textContent = "\u21bb Neue Fassung " + neu + " \u2013 jetzt laden";
+    b.style.cssText = "position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:2147483000;"
+      + "border:0;border-radius:999px;padding:6px 14px;font:700 13px/1.2 system-ui,sans-serif;"
+      + "background:#2f6d5a;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:pointer;max-width:92vw";
+    b.addEventListener("click", function () { neuLaden(b.dataset.f); });
+    (document.body || document.documentElement).appendChild(b);
+  }
+  function pruefen(erstesMal) {
+    try {
+      fetch("fassung.json?t=" + Date.now(), { cache: "no-store" })
+        .then(function (a) { return a.ok ? a.json() : null; })
+        .then(function (d) {
+          if (!d || !d.fassung) return;
+          var neu = String(d.fassung);
+          if (neu === jetzt) return;
+          if (!erstesMal) { knopf(neu); return; }
+          var schon = "";
+          try { schon = sessionStorage.getItem(merker) || ""; } catch (e) {}
+          /* Schon einmal versucht und trotzdem alt? Dann kein zweites
+             Mal von selbst (keine Schleife) — aber den Knopf zeigen. */
+          if (schon === neu) { knopf(neu); return; }
+          try { sessionStorage.setItem(merker, neu); } catch (e) {}
+          neuLaden(neu);
+        })
+        .catch(function () {});
+    } catch (e) {}
+  }
+  pruefen(true);
+  window.addEventListener("pageshow", function (e) { if (e.persisted) pruefen(false); });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") pruefen(false);
+  });
+  setInterval(function () { if (document.visibilityState !== "hidden") pruefen(false); }, 120000);
+})();
+</script>
+<script>
+/* Auch die Stilblätter hängen an der laufenden Fassung — sonst
+   kommt das neue Javascript, aber das alte Aussehen dazu. Genau wie
+   bei den Skripten weiter unten: EINE Zahl, nicht zwei. */
+(function () {
+  /* FUNK 101 — jede Datei mit ihrem eigenen Stempel (siehe unten bei
+     den Skripten und werkzeug/fassung-setzen.js). */
+  var st = window.DMA_STEMPEL || {};
+  function v(d) { return "?v=" + (st[d] || window.DMA_VERSION || "1"); }
+  [
+    "styles.css",
+    "app-styles.css",
+    "themes.css",
+    "aussprache-kreisel.css",
+    "livechat.css",
+    "werkstatt.css",
+    "korrekturen.css",
+    /* FUNK 95 — das Spielsystem „Deutsch zum Überleben" */
+    "spiel.css"
+  ].forEach(function (d) {
+    document.write('<link rel="stylesheet" href="' + d + v(d) + '" />');
+  });
+})();
+</script>
+
+<!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist)
+     FUNK 101 — „defer": vorher hielt diese eine fremde Datei das Zeichnen
+     der ganzen Seite an, bis sie vom CDN da war. Mit defer läuft sie
+     trotzdem VOR allen eigenen Skripten (die stehen weiter unten und
+     sind ebenfalls defer; defer-Skripte laufen in Dokumentreihenfolge). -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+</head>
+<body>
+
+<div class="sticky-head-group">
+<header class="site-header">
+  <div class="brand">
+    <div class="brand-mark" id="brandMark" aria-hidden="true"></div>
+    <span class="brand-name">Deutsch mit <span>Alex</span></span>
+  </div>
+
+  <div class="header-spacer"></div>
+
+  <div class="header-actions">
+    <!-- Der Betonungsschalter stand hier früher als kleines „ȧ".
+         Er ist weg: er saß deplatziert in der Kopfzeile, und man musste
+         erst erraten, was er tut. Stattdessen genügt jetzt ein Tippen
+         mitten in einen Textkasten — dann stehen dort die Punkte und
+         Striche, noch einmal tippen und sie sind wieder weg.
+         Siehe betonungTippen() in app.js. -->
+    <button class="btn btn-ghost btn-icon-only calendar-page-btn" type="button" id="calendarPageBtn" aria-label="Tageskalender">
+      <span class="cal-page-mini">
+        <span class="cal-page-mini-month" id="calMiniMonth">—</span>
+        <span class="cal-page-mini-day" id="calMiniDay">–</span>
+        <span class="cal-page-mini-corner"></span>
+      </span>
+    </button>
+    <button class="btn btn-ghost btn-icon-only" type="button" id="loginBtn" aria-label="Profil">
+      <span aria-hidden="true" id="loginBtnIcon" class="header-avatar-wrap"><span id="loginBtnIconInner">👤</span></span><span class="btn-label" id="loginBtnLabel">Anmelden</span>
+      <span id="loginBtnBadge" class="notify-badge" style="display:none;"></span>
+    </button>
+    <a class="btn btn-coffee btn-icon-only" href="https://www.paypal.com/paypalme/XanderFox" target="_blank" rel="noopener" aria-label="Unterstützen" title="Unterstützen">
+      <span aria-hidden="true">☕</span>
+    </a>
+  </div>
+</header>
+
+<div class="calendar-modal-overlay" id="calendarModalOverlay" style="display:none;">
+  <button class="cal-close-btn" id="calCloseBtn" aria-label="Schließen">✕</button>
+  <div class="calendar-modal-page" id="calendarModalPage">
+    <div class="cal-face cal-front" id="calFrontFace">
+      <span class="cal-corner-big"></span>
+      <span class="cal-month-big" id="calModalMonth">AUGUST</span>
+      <span class="cal-day-big" id="calModalDay">28</span>
+      <span class="cal-weekday" id="calModalWeekday">Freitag</span>
+      <p class="cal-hint">👆 Antippen zum Abreißen</p>
+    </div>
+    <div class="cal-face cal-back" id="calBackFace"><div class="cal-back-scroll">
+      <p class="cal-tip-title">💡 Tipp des Tages</p>
+      <p class="cal-tip-text" id="calTipText"></p>
+      <button type="button" class="btn btn-ghost" id="calAnotherBtn" style="margin-top:14px;">🔄 Noch einen Tipp</button>
+    </div></div>
+  </div>
+</div>
+
+<div class="weather-bar" id="deckDisplay">
+  <span class="weather-readout">
+    <span class="weather-icon" id="weatherIcon">⛅</span>
+    <span id="weatherOut">—°</span>
+  </span>
+  <span class="weather-dot">·</span>
+  <svg class="analog-clock" id="analogClock" viewBox="0 0 40 40" aria-hidden="true">
+    <circle cx="20" cy="20" r="18" class="clock-face" />
+    <circle cx="20" cy="8" r="1.4" class="clock-tick" />
+    <circle cx="20" cy="32" r="1.4" class="clock-tick" />
+    <circle cx="8" cy="20" r="1.4" class="clock-tick" />
+    <circle cx="32" cy="20" r="1.4" class="clock-tick" />
+    <line x1="20" y1="20" x2="20" y2="11" id="clockHour" class="clock-hand hand-hour" />
+    <line x1="20" y1="20" x2="20" y2="7" id="clockMinute" class="clock-hand hand-minute" />
+    <circle cx="20" cy="20" r="1.6" class="clock-center" />
+  </svg>
+  <span id="clockOut" class="visually-hidden">--:--</span>
+  <span id="specialDayOut" class="special-day"></span>
+  <div class="stars" id="starsLayer" aria-hidden="true">
+    <span class="star" style="top:15%; left:10%; animation-delay:0s;"></span>
+    <span class="star" style="top:30%; left:25%; animation-delay:0.6s;"></span>
+    <span class="star" style="top:60%; left:15%; animation-delay:1.2s;"></span>
+    <span class="star" style="top:20%; left:70%; animation-delay:0.3s;"></span>
+    <span class="star" style="top:70%; left:80%; animation-delay:1.6s;"></span>
+    <span class="star" style="top:45%; left:90%; animation-delay:0.9s;"></span>
+    <span class="star" style="top:75%; left:45%; animation-delay:2s;"></span>
+  </div>
+</div>
+
+<div class="ticker-bar" id="tickerBar">
+  <button type="button" class="ticker-toggle" id="tickerToggle" aria-label="Ticker ein/aus">👁️</button>
+  <!-- Das Sende-Zeichen: ein Punkt mit Klammern, die links und rechts
+       abstrahlen. Es blinkt in der Farbe der App, bei der Alex gerade
+       live ist. WICHTIG: der Platz ist IMMER da (nur leer, wenn niemand
+       live ist) — dadurch verschiebt sich die Leiste nicht, wenn die
+       Anzeige angeht. Das Auge links behält seine Aufgabe. -->
+  <button type="button" class="live-zeichen" id="liveZeichen" aria-label="Live" title="Live" hidden>
+    <svg viewBox="0 0 28 16" aria-hidden="true" focusable="false">
+      <circle cx="14" cy="8" r="3.1" class="live-kern"/>
+      <path d="M8.6 3.4A7 7 0 0 0 8.6 12.6" class="live-welle live-welle-1"/>
+      <path d="M19.4 3.4A7 7 0 0 1 19.4 12.6" class="live-welle live-welle-1"/>
+      <path d="M4.6 1.2A10.6 10.6 0 0 0 4.6 14.8" class="live-welle live-welle-2"/>
+      <path d="M23.4 1.2A10.6 10.6 0 0 1 23.4 14.8" class="live-welle live-welle-2"/>
+    </svg>
+  </button>
+  <div class="ticker-track-wrap">
+    <div class="ticker-track" id="tickerTrack">Willkommen! Hier siehst du gleich, was auf der Seite passiert …</div>
+  </div>
+  <button class="online-jetzt-btn" type="button" id="onlineJetztBtn" aria-label="Wer ist gerade online" title="Wer ist gerade online" style="display:none;">
+    <span class="online-dot" aria-hidden="true"></span><span id="onlineJetztZahl">0</span>
+  </button>
+</div>
+
+<nav class="tape-nav" aria-label="Hauptnavigation">
+  <button class="tape-tab" data-target="view-about" aria-selected="true" type="button"><span class="dot"></span>Über mich</button>
+  <button class="tape-tab" data-target="view-learn" aria-selected="false" type="button"><span class="dot"></span>Lernen</button>
+  <button class="tape-tab" data-target="view-knowledge" aria-selected="false" type="button"><span class="dot"></span>Wissen</button>
+  <button class="tape-tab" data-target="view-profile" aria-selected="false" type="button"><span class="dot"></span>Profil &amp; Rang</button>
+</nav>
+</div>
+
+<main>
+
+  <!-- ÜBER MICH ================================================= -->
+  <section class="view" id="view-about" data-active="true">
+    <div class="about-card about-card-compact">
+      <div class="about-top">
+        <div class="avatar-wrap">
+          <div class="tape-piece" aria-hidden="true"></div>
+          <img src="https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/9ob2nzt2.jpeg?raw=true" alt="Alex, Gründer von Deutsch mit Alex" loading="lazy" />
+        </div>
+        <div class="about-body-col">
+          <h2>Hallo, ich bin Alex!</h2>
+          <p class="role">Musiker &amp; Deutschlehrer, 46</p>
+          <p class="about-text-short">Ich begleite dich Schritt für Schritt beim Deutschlernen — mit kurzen, kurzweiligen Übungen statt trockenem Frontalunterricht.</p>
+          <p class="about-support-note">Diese Seite entsteht in meiner Freizeit mit Herzblut. Freu mich immer, wenn's gefällt — muss aber nicht. ☕</p>
+          <div class="about-links">
+            <a class="link-chip" href="https://m.youtube.com/playlist?list=PLza1DhjwP_bew29ZGGnpEuq-vgugL0dhR" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:-3px; margin-right:2px;"><rect x="1" y="4" width="22" height="16" rx="5" fill="#FF0000"/><path d="M10 8.5 L16.5 12 L10 15.5 Z" fill="#fff"/></svg> YouTube</a>
+            <a class="link-chip" href="https://www.tiktok.com/@xander_fox_official" target="_blank" rel="noopener"><svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:-3px; margin-right:2px;"><path d="M16.5 3c.4 2 1.8 3.4 3.8 3.7v2.9c-1.4 0-2.7-.4-3.8-1.2v6.2c0 3.1-2.5 5.4-5.5 5.4S5.5 17.7 5.5 14.6c0-3 2.5-5.4 5.5-5.4.4 0 .7 0 1 .1v3c-.3-.1-.6-.2-1-.2-1.4 0-2.5 1.1-2.5 2.5s1.1 2.5 2.5 2.5 2.6-1.1 2.6-2.5V3Z" fill="#000"/></svg> TikTok</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LERNEN ===================================================== -->
+  <section class="view" id="view-learn" data-active="false">
+    <p class="eyebrow">Übungen, Vokabeln &amp; Memory — spielerisch Deutsch üben</p>
+    <div class="subnav" id="learnSubnav">
+      <button class="subnav-pill" data-sub="sub-exercises" aria-selected="true">📝 Übungen</button>
+      <button class="subnav-pill" data-sub="sub-games" aria-selected="false">🎮 Spiele</button>
+      <button class="subnav-pill" data-sub="sub-erste-schritte" aria-selected="false">🌉 Erste Schritte</button>
+      <button class="subnav-pill" data-sub="sub-vocab" aria-selected="false" style="display:none;">🗂️ Vokabel- &amp; Aussprache-Trainer</button>
+      <button class="subnav-pill" data-sub="sub-grammatik" aria-selected="false">📐 Grammatik</button>
+      <button class="subnav-pill nur-deutsch" data-sub="sub-satzbaukasten-de" aria-selected="false">🧱 Satzbaukasten</button>
+      <button class="subnav-pill nur-italienisch" data-sub="sub-italienischkurs" aria-selected="false">🎓 Kurs</button>
+      <button class="subnav-pill nur-italienisch" data-sub="sub-satzbaukasten-it" aria-selected="false">🧱 Satzbaukasten</button>
+      <button class="subnav-pill" data-sub="sub-logik" aria-selected="false">🧠 Logik-Trainer<span class="subnav-info-icon" data-info="Wörter auseinandernehmen statt auswendig lernen: Welches Wort steckt in „Verkäuferin“? Welches Glied bestimmt bei „Krankenhaus“ den Artikel? Und was sagt die Vorsilbe von „abholen“ über die Richtung?">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-dictionary" aria-selected="false">📖 Wörterbuch</button>
+      <button class="subnav-pill" data-sub="sub-aussprache" aria-selected="false">🎤 Aussprache<span class="subnav-info-icon" data-info="Sprich ein Wort ins Mikrofon und sieh, ob es ankommt. Du kannst mit deinem eigenen gemerkten Wortschatz üben, mit einem Themenbereich oder mit einem Niveau.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-alphabet" aria-selected="false">🗣️ Aussprache-Kurs<span class="subnav-info-icon" data-info="Das komplette Alphabet mit Umlauten und ß, die Regeln zur Vokallänge (Dehnungs-h, ie, ein Konsonant lang / mehrere kurz, mit Ausnahmen), Konsonanten am Stück (Straße statt Se-tra-ße) und die Tricks für ü, ö, ng und ch — auf Deutsch und auf Italienisch.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-dialoge" aria-selected="false">💬 Dialoge<span class="subnav-info-icon" data-info="Wie kommt man mit jemandem ins Gespräch? Das Formular zeigt die Schritte — begrüßen, Anliegen nennen, nachfragen, danken, verabschieden — mit fertigen Sätzen in der Sie-Form und in der du-Form. Danach spielst du echte Situationen durch: Amt, Arzt, Wohnungsbesichtigung, Nachbarn, Sprachkurs.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-missions" aria-selected="false">🦊 Missionen</button>
+      <!-- Die einzelnen Spiel-Knöpfe stehen bewusst weiterhin HIER im DOM (nur unsichtbar) statt
+           komplett entfernt zu werden — mehrere Spiele haben eigene, direkte Klick-Listener genau
+           auf diese Knöpfe registriert (nicht nur die allgemeine Subnav-Logik). Die neue
+           Spiele-Übersicht (siehe gamesOverviewArea) simuliert bei Bedarf einen Klick auf den
+           passenden dieser versteckten Knöpfe, statt jeden einzelnen Listener umzubauen. -->
+      <button class="subnav-pill" data-sub="sub-artikelgarten" aria-selected="false" style="display:none;">🌷 Artikel-Garten <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-katzenzimmer" aria-selected="false" style="display:none;">🐈 Wo ist die Katze? <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortschmiede" aria-selected="false" style="display:none;">🔨 Wortschmiede <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-satzbruecke" aria-selected="false" style="display:none;">🌉 Satzbrücke <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
+      <button class="subnav-pill" data-sub="sub-stresstrainer" aria-selected="false" style="display:none;">🎯 Betonungs-Trainer <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-memory" aria-selected="false" style="display:none;">🧩 Memory <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-wordbuild" aria-selected="false" style="display:none;">🔤 Wortbaustelle <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-wordsearch" aria-selected="false" style="display:none;">🔍 Buchstabensalat <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-crossword" aria-selected="false" style="display:none;">✏️ Kreuzworträtsel <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-satzpuzzle" aria-selected="false" style="display:none;">🧩 Satzpuzzle <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-wackelturm" aria-selected="false" style="display:none;">🗼 Wackelturm <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortarten" aria-selected="false" style="display:none;">🔤 Wort-Typ <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-kanone" aria-selected="false" style="display:none;">🎯 Wort-Kanone <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-bubbles" aria-selected="false" style="display:none;">🫧 Wortblasen <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-vokabelmeister" aria-selected="false" style="display:none;">🔤 Vokabelmeister <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-korrektour" aria-selected="false" style="display:none;">🚂 Korrektour <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-werbinich" aria-selected="false" style="display:none;">❓ Wer bin ich? <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
+      <button class="subnav-pill" data-sub="sub-blitzrunde" aria-selected="false" style="display:none;">⚡ Blitzrunde <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortangler" aria-selected="false" style="display:none;">🎣 Wortangler <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortleiter" aria-selected="false" style="display:none;">🧗 Wortleiter <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-silbenturm" aria-selected="false" style="display:none;">🧱 Silbenturm <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-flussfuchs" aria-selected="false" style="display:none;">🦊 Der Fuchs am Fluss <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-lernweg" aria-selected="false">🧭 Lernweg</button>
+      <button class="subnav-pill" data-sub="sub-bilderwelt" aria-selected="false">🖼️ Bilderwelt</button>
+      <button class="subnav-pill" data-sub="sub-bilderraetsel" aria-selected="false" style="display:none;">🖼️ Das Bilderrätsel <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
+      <button class="subnav-pill" data-sub="sub-fuchsuhr" aria-selected="false" style="display:none;">🕰️ Die Fuchsuhr <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
+      <button class="subnav-pill" data-sub="sub-setzerei" aria-selected="false" style="display:none;">🅰️ Die Setzerei <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortkette" aria-selected="false" style="display:none;">⛓️ Die Wortkette <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-augenblick" aria-selected="false" style="display:none;">👁️ Augenblick! <span class="subnav-cat-tag" data-persona="Gemischt" title="Gemischt"></span></button>
+      <button class="subnav-pill" data-sub="sub-umzug" aria-selected="false" style="display:none;">📦 Der Umzug <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-marktstand" aria-selected="false" style="display:none;">🥕 Der Marktstand <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortwaage" aria-selected="false" style="display:none;">⚖️ Die Wortwaage <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-maskenball" aria-selected="false" style="display:none;">🎭 Der Maskenball <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-sprachatlas" aria-selected="false" style="display:none;">🗺️ Der Sprachatlas <span class="subnav-cat-tag" data-persona="Logiker" title="Logiker"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortbaum" aria-selected="false" style="display:none;">🌳 Der Wortbaum <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-zwillinge" aria-selected="false" style="display:none;">👂 Die Zwillinge <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-backstube" aria-selected="false" style="display:none;">🥐 Die Backstube <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-wetterkarte" aria-selected="false" style="display:none;">🌦️ Die Wetterkarte <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-baustelle" aria-selected="false" style="display:none;">🏗️ Die Baustelle <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-flohmarkt" aria-selected="false" style="display:none;">🏷️ Der Flohmarkt <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-zug" aria-selected="false" style="display:none;">🚆 Der verpasste Zug <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-schatzkarte" aria-selected="false" style="display:none;">🗺️ Die Schatzkarte <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-fundbuero" aria-selected="false" style="display:none;">🧳 Das Fundbüro <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-gewitter" aria-selected="false" style="display:none;">⛈️ Das Gewitter <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-arzt" aria-selected="false" style="display:none;">🩺 Beim Arzt <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-erbschaft" aria-selected="false" style="display:none;">🗝️ Die Erbschaft <span class="subnav-cat-tag" data-persona="Grammatik-Profi" title="Grammatik-Profi"></span></button>
+      <button class="subnav-pill" data-sub="sub-meinesaetze" aria-selected="false" style="display:none;">🧩 Meine Sätze <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+      <button class="subnav-pill" data-sub="sub-stadtlandfluss" aria-selected="false" style="display:none;">🏙️ Stadt · Land · Fluss <span class="subnav-cat-tag" data-persona="Abenteurer" title="Abenteurer"></span></button>
+      <button class="subnav-pill" data-sub="sub-wortlisten" aria-selected="false">📋 Meine Wortlisten</button>
+      <button class="subnav-pill" data-sub="sub-sortierer" aria-selected="false" style="display:none;">🧺 Wörter-Sortierer <span class="subnav-cat-tag" data-persona="Sprachkünstler" title="Sprachkünstler"></span></button>
+    </div>
+
+    <div class="subview" id="sub-games" data-active="false">
+      <!-- Alle einzelnen Spiele waren bisher als eigene Punkte im Hauptmenü aufgelistet — bei so
+           vielen Spielen wurde das Menü selbst unübersichtlich lang. Jetzt gebündelt: dieser
+           Bereich zeigt eine Kachel-Übersicht, von der aus man das gewünschte Spiel antippt. -->
+      <div id="gamesOverviewArea"></div>
+    </div>
+
+    <div class="subview" id="sub-blitzrunde" data-active="false">
+      <div id="blitzrundeArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wortangler" data-active="false">
+      <div id="wortanglerArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wortleiter" data-active="false">
+      <div id="wortleiterArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-silbenturm" data-active="false">
+      <div id="silbenturmArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-flussfuchs" data-active="false">
+      <div id="flussfuchsArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-fuchsuhr" data-active="false">
+      <div id="fuchsuhrArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-setzerei" data-active="false">
+      <div id="setzereiArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wortkette" data-active="false">
+      <div id="wortketteArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-augenblick" data-active="false">
+      <div id="augenblickArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-umzug" data-active="false">
+      <div id="umzugArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-marktstand" data-active="false">
+      <div id="marktstandArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wortwaage" data-active="false">
+      <div id="wortwaageArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-maskenball" data-active="false">
+      <div id="maskenballArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-sprachatlas" data-active="false">
+      <div id="sprachatlasArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wortbaum" data-active="false">
+      <div id="wortbaumArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-zwillinge" data-active="false">
+      <div id="zwillingeArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-backstube" data-active="false">
+      <div id="backstubeArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wetterkarte" data-active="false">
+      <div id="wetterkarteArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-baustelle" data-active="false">
+      <div id="baustelleArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-flohmarkt" data-active="false">
+      <div id="flohmarktArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-zug" data-active="false">
+      <div id="zugArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-lernweg" data-active="false">
+      <div id="lernwegArea"></div>
+    </div>
+
+    <div class="subview" id="sub-bilderwelt" data-active="false">
+      <div id="bilderweltArea"></div>
+    </div>
+
+    <div class="subview" id="sub-schatzkarte" data-active="false">
+      <div id="schatzkarteArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-fundbuero" data-active="false">
+      <div id="fundbueroArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-gewitter" data-active="false">
+      <div id="gewitterArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-arzt" data-active="false">
+      <div id="arztArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-erbschaft" data-active="false">
+      <div id="erbschaftArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-meinesaetze" data-active="false">
+      <div id="meineSaetzeArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-stadtlandfluss" data-active="false">
+      <div id="stadtlandflussArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wortlisten" data-active="false">
+      <div id="wortlistenArea"></div>
+    </div>
+
+    <div class="subview" id="sub-sortierer" data-active="false">
+      <div id="sortiererArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-werbinich" data-active="false">
+      <div id="werbinichArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-kanone" data-active="false">
+      <div id="kanoneArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-bubbles" data-active="false">
+      <div id="bubblesArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-vokabelmeister" data-active="false">
+      <div id="vokabelmeisterArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-korrektour" data-active="false">
+      <div id="korrektourArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wortarten" data-active="false">
+      <div id="wortartenArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wackelturm" data-active="false">
+      <div id="wackelturmArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-erste-schritte" data-active="false">
+      <div id="firstStepsArea"></div>
+    </div>
+
+    <div class="subview" id="sub-exercises" data-active="true">
+      <div id="exerciseSetup"></div>
+      <div id="exercisePlay" style="display:none;"></div>
+      <div id="exerciseResults" style="display:none;"></div>
+    </div>
+
+    <div class="subview" id="sub-satzpuzzle" data-active="false">
+      <div id="satzpuzzleArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-missions" data-active="false">
+      <div id="missionsArea"></div>
+    </div>
+
+    <div class="subview" id="sub-vocab" data-active="false">
+      <div id="vocabArea"></div>
+    </div>
+
+    <div class="subview" id="sub-stresstrainer" data-active="false">
+      <div id="stressTrainerArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-artikelgarten" data-active="false">
+      <div id="artikelgartenArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-katzenzimmer" data-active="false">
+      <div id="katzenzimmerArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wortschmiede" data-active="false">
+      <div id="wortschmiedeArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-satzbruecke" data-active="false">
+      <div id="satzbrueckeArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-grammatik" data-active="false">
+      <div id="grammatikArea"></div>
+    </div>
+
+    <div class="subview" id="sub-satzbaukasten-de" data-active="false">
+      <div id="satzbaukastenDeArea"></div>
+    </div>
+
+    <div class="subview" id="sub-italienischkurs" data-active="false">
+      <div id="italienischkursArea"></div>
+    </div>
+
+    <!-- Nur im Italienisch-Raum sichtbar (siehe .lernraum-it in app-styles.css). -->
+    <div class="subview" id="sub-satzbaukasten-it" data-active="false">
+      <div id="satzbaukastenItArea"></div>
+    </div>
+
+    <div class="subview" id="sub-logik" data-active="false">
+      <div id="logikArea"></div>
+    </div>
+
+    <div class="subview" id="sub-dictionary" data-active="false">
+      <div id="dictionaryArea"></div>
+    </div>
+
+    <div class="subview" id="sub-aussprache" data-active="false">
+      <div id="ausspracheArea"></div>
+    </div>
+
+    <div class="subview" id="sub-alphabet" data-active="false">
+      <div id="ausspracheKursArea"></div>
+    </div>
+
+    <div class="subview" id="sub-dialoge" data-active="false">
+      <div id="dialogeArea"></div>
+    </div>
+
+    <div class="subview" id="sub-memory" data-active="false">
+      <div id="memoryArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wordbuild" data-active="false">
+      <div id="wordbuildArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-wordsearch" data-active="false">
+      <div id="wordsearchArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-crossword" data-active="false">
+      <div id="crosswordArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+
+    <div class="subview" id="sub-bilderraetsel" data-active="false">
+      <div id="bilderraetselArea"></div>
+      <div class="quiz-actions" style="justify-content:flex-start; margin-top:14px;"><button type="button" class="btn btn-ghost" data-zur-spieleliste="1">← Zurück zur Spieleübersicht</button></div>
+    </div>
+  </section>
+
+  <!-- WISSEN ====================================================== -->
+  <section class="view" id="view-knowledge" data-active="false">
+    <p class="eyebrow">Kompass, Materialien &amp; weiterführende Links</p>
+    <div class="subnav" id="knowledgeSubnav">
+      <button class="subnav-pill" data-sub="sub-kompass" aria-selected="true">🧭 Kompass<span class="subnav-info-icon" data-info="Dein Überblick: Was du gerade übst, deine Stärken/Schwächen, und „Es war einmal in Deutschland“ — die Geschichte zum heutigen Tag.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-howitworks" aria-selected="false">❓ So funktioniert's</button>
+      <button class="subnav-pill" data-sub="sub-materials" aria-selected="false">📚 Materialien</button>
+      <button class="subnav-pill community-tab-highlight" data-sub="sub-community" aria-selected="false">✍️ Eigene Beiträge</button>
+      <button class="subnav-pill" data-sub="sub-intro" aria-selected="false">👋 Vorstellungsrunde<span class="subnav-info-icon" data-info="Stell dich der Community kurz vor — wer du bist, warum du hier bist. Auch andere können sich hier vorstellen, damit ihr euch gegenseitig kennenlernt.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-links" aria-selected="false">🔗 Weiterführende Links</button>
+      <button class="subnav-pill" data-sub="sub-tips" aria-selected="false">💡 Schwarmwissen<span class="subnav-info-icon" data-info="Tipps, Links und Erfahrungen von anderen Lernenden — was bei ihnen beim Deutschlernen funktioniert hat.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-wegweiser" aria-selected="false">🧭 Wegweiser<span class="subnav-info-icon" data-info="Wo muss ich hin? Zwei Wege: eine Übersicht über alles, was es auf dieser Seite gibt — jeder Eintrag springt direkt dorthin — und die ersten Wochen in Deutschland in der richtigen Reihenfolge, mit allem, was man dafür braucht.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-feste" aria-selected="false">🎄 Feste &amp; Kultur<span class="subnav-info-icon" data-info="Der Jahreslauf mit allen Festen — Weihnachten, Ostern, Karneval, Sankt Martin, Tag der Deutschen Einheit — und dazu das Ungeschriebene: Pünktlichkeit, Ruhezeiten, Mülltrennung, Pfand, Behörden, Vereine.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-dialekt" aria-selected="false">🗺️ Dialekte<span class="subnav-info-icon" data-info="Dasselbe Ding heißt nicht überall gleich: Brötchen, Semmel, Schrippe, Weck. Hier steht zu über fünfzig Alltagswörtern, wie sie in Bayern, Schwaben, Sachsen, im Ruhrgebiet, in Berlin, in Österreich und in der Schweiz heißen.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-kosten" aria-selected="false">💶 Was die App kostet<span class="subnav-info-icon" data-info="Offen gerechnet: was der Betrieb dieser Seite kostet, was eine gute Sprachausgabe kostet, ab wann die Datenbank Geld kostet — und warum Premium so wenig ist.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-witze" aria-selected="false">😄 Witze<span class="subnav-info-icon" data-info="Deutsche Witze mit Erklärung: zu jedem steht dabei, an welchem Wort er hängt und welche zwei Bedeutungen dieses Wort hat. Humor ist das Letzte, was man in einer fremden Sprache versteht — hier kann man es üben.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-livechat" aria-selected="false">🎓 Klassenzimmer<span class="subnav-info-icon" data-info="Acht runde Plätze mit Gesichtern und ein Chat zum Schreiben. Antippen, Kamera erlauben, drin. Ein Gesicht anklicken zeigt es größer. Der Link lädt andere in denselben Raum ein.">ⓘ</span></button>
+      <button class="subnav-pill" style="display:none;" data-sub="sub-klassenzimmer" aria-selected="false">🎓 Klassenzimmer<span class="subnav-info-icon" data-info="Ton und Bild zusammen, während du in der App weiterblätterst. Der Raum bleibt als kleine Leiste am Rand offen — du kannst gleichzeitig üben und reden. Der Betreiber öffnet den Raum, du kommst per Link oder Knopf dazu.">ⓘ</span></button>
+      <button class="subnav-pill" data-sub="sub-music" aria-selected="false">🎵 Musik</button>
+      <button class="subnav-pill" data-sub="sub-news" aria-selected="false">📰 Nachrichten</button>
+    </div>
+    <div class="subview" id="sub-livechat" data-active="false"><div id="livechatArea"></div></div>
+    <div class="subview" id="sub-klassenzimmer" data-active="false"><div id="klassenzimmerArea"></div></div>
+    <div class="subview" id="sub-kompass" data-active="true"><div id="kompassArea"></div></div>
+    <div class="subview" id="sub-wegweiser" data-active="false"><div id="wegweiserArea"></div></div>
+    <div class="subview" id="sub-feste" data-active="false"><div id="festeArea"></div></div>
+    <div class="subview" id="sub-howitworks" data-active="false"><div id="howItWorksArea"></div></div>
+    <div class="subview" id="sub-materials" data-active="false"><div id="materialsArea"></div></div>
+    <div class="subview" id="sub-community" data-active="false"><div id="communityStandaloneArea"></div></div>
+    <div class="subview" id="sub-intro" data-active="false"><div id="introRoundArea"></div></div>
+    <div class="subview" id="sub-links" data-active="false"><div id="linksArea"></div></div>
+    <div class="subview" id="sub-tips" data-active="false"><div id="tipsArea"></div></div>
+    <div class="subview" id="sub-dialekt" data-active="false"><div id="dialektArea"></div></div>
+    <div class="subview" id="sub-kosten" data-active="false"><div id="kostenArea"></div></div>
+    <div class="subview" id="sub-witze" data-active="false"><div id="witzeArea"></div></div>
+    <div class="subview" id="sub-music" data-active="false"><div id="musicArea"></div></div>
+    <div class="subview" id="sub-news" data-active="false"><div id="newsArea"></div></div>
+  </section>
+
+
+  <!-- Versteckter YouTube-Player fürs Musik-Modul -- steuert nur Ton, kein sichtbares Video.
+       Startet bewusst mit display:none: erst JavaScript macht es sichtbar, sobald es wirklich an
+       seinem endgültigen Platz (Reiter oder schwebende Leiste) eingesetzt wurde — sonst könnte es
+       kurz an seiner rohen, unpositionierten HTML-Stelle als schwarzes Kästchen aufblitzen. -->
+  <div class="music-video-square" id="musicVideoSquare" style="display:none;"><div id="musicYtHost"></div></div>
+  <audio id="musicAudioNative" style="display:none;"></audio>
+  <!-- Schwebende Mini-Player-Leiste — sichtbar auf der GANZEN Seite, egal welcher Reiter gerade
+       aktiv ist, solange ein Song läuft/pausiert ist. Bewusst außerhalb des Reiter-Systems, damit
+       sie beim Wechseln nicht verschwindet. -->
+  <div id="musicFloatingBar" style="display:none;"></div>
+
+  <!-- IMPRESSUM ==================================================== -->
+  <section class="view" id="view-impressum" data-active="false">
+    <p class="eyebrow">Rechtliches</p>
+    <div class="about-card about-card-compact" style="display:block;">
+      <h2>Impressum</h2>
+      <p class="about-text-short" style="margin-top:10px;">
+        <strong>⚠️ Noch auszufüllen:</strong> Als Betreiber dieser Seite bist du in Deutschland
+        gesetzlich verpflichtet, hier deine Kontaktdaten anzugeben (§ 5 TMG / § 18 MStV).
+      </p>
+      <p class="about-text-short">
+        Angaben gemäß § 5 TMG:<br>
+        [Dein vollständiger Name]<br>
+        [Deine Anschrift: Straße, PLZ, Ort]<br><br>
+        Kontakt:<br>
+        E-Mail: [deine@email.de]<br><br>
+        Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:<br>
+        [Dein Name, Anschrift wie oben]
+      </p>
+    </div>
+  </section>
+
+  <!-- PROFIL & RANG =============================================== -->
+  <section class="view" id="view-profile" data-active="false">
+    <p class="eyebrow">Dein Fortschritt, deine Freunde &amp; dein Style</p>
+    <div class="subnav" id="profileSubnav">
+      <button class="subnav-pill" data-sub="sub-account" aria-selected="true">👤 Profil</button>
+      <button class="subnav-pill" data-sub="sub-friends" aria-selected="false" style="position:relative;">👥 Freunde<span id="friendsTabBadge" class="notify-badge" style="display:none;"></span></button>
+      <button class="subnav-pill" data-sub="sub-ranking" aria-selected="false">🏆 Ranking</button>
+      <button class="subnav-pill" data-sub="sub-inbox" aria-selected="false" style="position:relative;">✉️ Postfach<span id="inboxTabBadge" class="notify-badge" style="display:none;"></span></button>
+      <button class="subnav-pill" data-sub="sub-guestbook" aria-selected="false">📖 Gästebuch</button>
+      <button class="subnav-pill" data-sub="sub-interview" aria-selected="false">🎤 Interview</button>
+      <button class="subnav-pill" data-sub="sub-album" aria-selected="false">📔 Sticker-Album</button>
+      <button class="subnav-pill" data-sub="sub-design" aria-selected="false">🎨 Design</button>
+      <button class="subnav-pill" data-sub="sub-settings" aria-selected="false">⚙️ Einstellungen</button>
+      <button class="subnav-pill" data-sub="sub-premium" aria-selected="false">✨ Premium</button>
+    </div>
+    <div class="subview" id="sub-account" data-active="true"><div id="accountArea"></div></div>
+    <div class="subview" id="sub-friends" data-active="false"><div id="friendsArea"></div></div>
+    <div class="subview" id="sub-inbox" data-active="false"><div id="inboxArea"></div></div>
+    <div class="subview" id="sub-ranking" data-active="false"><div id="rankingArea"></div></div>
+    <div class="subview" id="sub-guestbook" data-active="false"><div id="guestbookArea"></div></div>
+    <div class="subview" id="sub-interview" data-active="false"><div id="interviewArea"></div></div>
+    <div class="subview" id="sub-album" data-active="false"><div id="albumArea"></div></div>
+    <div class="subview" id="sub-premium" data-active="false"><div id="premiumArea"></div></div>
+    <div class="subview" id="sub-design" data-active="false"><div id="designArea"></div></div>
+    <div class="subview" id="sub-settings" data-active="false"><div id="settingsArea"></div></div>
+  </section>
+
+</main>
+
+<footer>Deutsch mit Alex · <a href="#view-impressum" id="impressumLink" style="color:inherit;">Impressum</a> · <a href="#" id="tourReplayLink" style="color:inherit;">Kurze Tour ansehen</a></footer>
+
+<!-- Die Fassungsnummer auch für die Datenteile, die erst bei Bedarf
+     nachgeladen werden (Kalender, Übungen) — sonst käme dort eine alte
+     Fassung aus dem Zwischenspeicher des Browsers. -->
+<script>
+/* Fassungs-Wächter: liegt auf dem Server eine neuere Seite als die hier
+   geladene, sagt die App Bescheid, statt still eine alte Fassung zu
+   zeigen. Ohne Zwischenspeicher gefragt, sonst käme dieselbe alte
+   Antwort noch einmal. */
+(function () {
+  var LAUF = window.DMA_VERSION;
+  function pruefen() {
+    fetch("index.html?frisch=" + Date.now(), { cache: "no-store" })
+      .then(function (a) { return a.ok ? a.text() : null; })
+      .then(function (text) {
+        if (!text) return;
+        var treffer = text.match(/DMA_VERSION\s*=\s*"([^"]+)"/);
+        if (!treffer || treffer[1] === LAUF) return;
+        window.DMA_NEUE_FASSUNG = treffer[1];
+        if (typeof window.dmaNeueFassungMelden === "function") window.dmaNeueFassungMelden(treffer[1]);
+      })
+      .catch(function () { /* offline: dann eben nicht */ });
+  }
+  setTimeout(pruefen, 6000);
+  // Und jedes Mal, wenn die App aus dem Hintergrund zurückkommt.
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) pruefen(); });
+})();
+</script>
+<script>
+/* =====================================================================
+   DIE SKRIPTE WERDEN MIT DER LAUFENDEN FASSUNG GELADEN
+   ---------------------------------------------------------------------
+   GEMELDET, und lange nicht gefunden: „Ich sehe auf meinem iPhone noch
+   das alte Update."
+
+   HIER LAG ES. Die Fassungsnummer oben (DMA_VERSION) wurde bei jeder
+   Änderung hochgezählt, die Zahl an den Skripten aber NICHT — sie stand
+   fest bei 182. Der Fassungs-Wächter meldete also richtig „es gibt was
+   Neues", und der Browser holte trotzdem dieselben alten Dateien aus
+   seinem Zwischenspeicher, weil sich deren Adresse nicht geändert hatte.
+   Zwei Zahlen, die dasselbe bedeuten sollen, laufen früher oder später
+   auseinander — und genau das war passiert.
+
+   Jetzt gibt es nur noch EINE Zahl. Die Adressen werden hier aus
+   DMA_VERSION gebaut, also kann nichts mehr auseinanderlaufen.
+
+   document.write ist hier kein Notbehelf, sondern das Richtige: es
+   behält die Reihenfolge bei. Die Dateien bauen aufeinander auf
+   (core vor app, backend vor app), und ein nachträglich eingehängtes
+   <script> liefe in beliebiger Reihenfolge.
+   ===================================================================== */
+(function () {
+  /* FUNK 101 — XANDER: „warum es im Chat manchmal so extrem lange lädt
+     … liegt das an diesen Updates … bitte mach das der Chat immer
+     flüssig bleibt und dass er von den Updates nicht beeinträchtigt
+     ist."
+     JA, ES LAG AUCH AN DEN UPDATES. Jede Adresse hing an der
+     Fassungsnummer, also holte jedes Gerät nach jedem Update alle
+     Skripte neu (gemessen 3,1 MB), auch die unveränderten. Jetzt hat
+     jede Datei ihren eigenen Stempel aus ihrem Inhalt
+     (window.DMA_STEMPEL, gesetzt von werkzeug/fassung-setzen.js).
+     Was sich nicht geändert hat, kommt aus dem Zwischenspeicher. Die
+     EINE Zahl bleibt die Quelle: der Stempel wird aus dem Inhalt
+     gerechnet, niemand setzt ihn von Hand. */
+  var st = window.DMA_STEMPEL || {};
+  function v(d) { return "?v=" + (st[d] || window.DMA_VERSION || "1"); }
+  /* Für alles, was später nachgeladen wird (Töne, Tutor, Datendateien):
+     erst der Stempel der Datei, dann der ihres Ordners, sonst die
+     Fassung. */
+  window.DMA_V = function (d) {
+    d = String(d || "");
+    var ordner = d.indexOf("/") > 0 ? d.slice(0, d.indexOf("/") + 1) : "";
+    return "?v=" + (st[d] || (ordner && st[ordner]) || window.DMA_VERSION || "1");
+  };
+  var dateien = [
+    "core.js",
+    "ton-liste.js",
+    "aussprache-tabelle.js",
+    "aussprache-pruefung.js",
+    "aussprache-kreisel.js",
+    "klassenzimmer.js",
+    "livechat.js",
+    "bildverwaltung.js",
+    "supabase-config.js",
+    "satzbau.js",
+    "data-exercises.js",
+    "data-vocab.js",
+    "data-wegweiser.js",
+    "data-umgangssprache.js",
+    "data-dialekt.js",
+    "backend.js",
+    "quiz.js",
+    ["baukasten.js", true],
+    "app.js",
+    /* Die Werkstatt zuletzt — sie fragt backend.js, ob hier der
+       Betreiber sitzt. Stand sie davor, gab es diese Antwort beim
+       ersten Zeichnen noch gar nicht. */
+    "data-werkstatt.js",
+    "werkstatt.js",
+    /* RUNDE 99 — das Walkie-Talkie: Rueckfragen von Claude, nur fuer
+       den Betreiber sichtbar. Nach backend.js, weil es fragt, ob hier
+       der Betreiber sitzt. */
+    "rueckfrage.js",
+    /* FUNK 95 — das Spielsystem „Deutsch zum Überleben" (SPIELSYSTEM.md).
+       Nach livechat.js und app.js: es haengt sich an beide an. */
+    "spiel.js",
+    /* Welche echten Geraeusche es gibt — eine Zeile Text, kein Ton.
+       Die Dateien selbst holt der Browser erst, wenn ein Effekt
+       wirklich laeuft. */
+    "data-geraeusche.js",
+    /* Wo in jedem Lied der Refrain anfaengt — gemessen von
+       werkzeug/refrain-messen.js, eine Zeile Zahlen. /noten mit einem
+       Liednamen springt dorthin. */
+    "data-refrain.js",
+    "data-liedstellen.js",
+    /* Zu welchen Tutor-Stuecken es einen Film gibt. Eine Zeile Text;
+       die Filme selbst holt der Browser erst, wenn der Tutor
+       wirklich spricht. */
+    "data-tutorvideo.js"
+  ];
+  /* =================================================================
+     ALLE SKRIPTE MIT „defer" — DAS IST DER EIGENTLICHE HEBEL
+     -----------------------------------------------------------------
+     GEFRAGT: „Muss die App-JS sofort alles laden, oder kann man das
+     schlanker machen? Wie wuerde man das professionell umsetzen,
+     damit es schlanker sein wuerde?"
+
+     NACHGEMESSEN, mit gedrosselter Leitung (1,6 Mbit/s) und
+     vierfach gebremstem Rechner — also ungefaehr ein Telefon im
+     Mobilfunknetz:
+         erstes Bild   5,9 s
+         Seite fertig 39,4 s
+     Ein normales Skript HAELT DAS ZEICHNEN AN: der Browser liest
+     die Seite, stoesst auf ein Skript, laedt es, fuehrt es aus, und
+     erst danach liest er weiter. Bei 22 Dateien hintereinander wird
+     daraus eine Kette, in der fast nichts gleichzeitig passiert.
+
+     „defer" sagt: lade JETZT, aber fuehre erst aus, wenn die Seite
+     gelesen ist — und zwar in der Reihenfolge, in der die Dateien
+     hier stehen. Damit faellt die Kette weg: alle 22 werden
+     gleichzeitig geholt, die Seite ist sofort da, und die
+     Reihenfolge bleibt trotzdem erhalten (core vor app, backend vor
+     app). Genau deshalb steht hier nicht „async" — das wuerde die
+     Reihenfolge aufgeben, und dann faende app.js sein backend.js
+     nicht mehr.
+
+     Was „defer" NICHT tut: es laedt keine Datei weniger. Die 7,6 MB
+     bleiben 7,6 MB. Weniger zu laden hiesse, app.js und die
+     Datendateien aufzuteilen und nachzuladen, sobald ein Bereich
+     geoeffnet wird — dafuer gibt es hier schon das Werkzeug
+     (brDatei() in app.js laedt data-grossgeschenke.js und
+     filmspieler.js genau so). Das ist der naechste Schritt und
+     steht als offener Punkt in der Werkstatt; er will sorgfaeltig
+     gemacht werden, weil jede Datei wissen muss, wer auf sie
+     wartet. */
+  dateien.forEach(function (d) {
+    var name = Array.isArray(d) ? d[0] : d;
+    document.write('<scr' + 'ipt src="' + name + v(name) + '" defer><\/scr' + 'ipt>');
+  });
+})();
+</script>
+</body>
+</html>

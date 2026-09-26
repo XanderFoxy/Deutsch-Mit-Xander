@@ -49,7 +49,7 @@ function server(welche) {
     let p = decodeURIComponent(q.url.split("?")[0]);
     if (p === "/") p = "/index.html";
     let f = path.join(WURZEL, p);
-    if (welche === "alt" && p === "/livechat.js") f = ALT;
+    if (welche === "alt" && (p === "/livechat.js" || p === "/min/livechat.js")) f = ALT;   /* Fassung 694: auch die verkleinerte Kopie */
     if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
     a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream" });
     fs.createReadStream(f).pipe(a);

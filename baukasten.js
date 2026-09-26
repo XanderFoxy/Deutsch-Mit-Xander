@@ -583,7 +583,8 @@ const Baukasten = (function () {
     if (geladen[weg]) return geladen[weg];
     geladen[weg] = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = weg + "?v=" + (window.DMA_VERSION || "1");
+      /* Fassung 694: verkleinerte Kopie und eigener Stempel, wenn es sie gibt. */
+      s.src = (window.DMA_Q ? DMA_Q(weg) : weg) + (window.DMA_V ? DMA_V(weg) : "?v=" + (window.DMA_VERSION || "1"));
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => { geladen[weg] = null; fertig(false); };

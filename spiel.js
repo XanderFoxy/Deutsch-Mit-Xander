@@ -5667,7 +5667,7 @@
       };
       if (da) return umwandeln();
       var s = document.createElement("script");
-      s.src = "data-uebungen.js" + (window.DMA_V ? DMA_V("data-uebungen.js") : "?v=" + (window.DMA_VERSION || "1"));
+      s.src = (window.DMA_Q ? DMA_Q("data-uebungen.js") : "data-uebungen.js") + (window.DMA_V ? DMA_V("data-uebungen.js") : "?v=" + (window.DMA_VERSION || "1"));
       s.onload = function () { if (window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN) umwandeln(); else fehler(new Error("leer")); };
       s.onerror = fehler;
       document.head.appendChild(s);

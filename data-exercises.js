@@ -7372,7 +7372,8 @@ const ExerciseData = (function () {
     if (nachgeladen[datei]) return nachgeladen[datei];
     nachgeladen[datei] = new Promise((fertig) => {
       const s = document.createElement("script");
-      s.src = datei + "?v=" + (window.DMA_VERSION || "1");
+      /* Fassung 694: verkleinerte Kopie und eigener Stempel, wenn es sie gibt. */
+      s.src = (window.DMA_Q ? DMA_Q(datei) : datei) + (window.DMA_V ? DMA_V(datei) : "?v=" + (window.DMA_VERSION || "1"));
       s.async = true;
       s.onload = () => fertig(true);
       s.onerror = () => {

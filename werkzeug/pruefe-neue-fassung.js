@@ -22,7 +22,7 @@ const HIER = Number((/DMA_VERSION = "(\d+)"/.exec(
   fs.readFileSync(path.join(WURZEL, "index.html"), "utf8")) || [])[1] || 0);
 
 (async () => {
-  let frischGefragt = 0;
+  let frischGefragt = 0, hoeher = false;
   const srv = http.createServer((q, a) => {
     const adresse = q.url.split("?")[0];
     const anhang = q.url.slice(adresse.length);
@@ -32,12 +32,12 @@ const HIER = Number((/DMA_VERSION = "(\d+)"/.exec(
     /* Die Nachfrage der Seite („index.html?frisch=…") bekommt eine
        HÖHERE Nummer — so sieht es aus, wenn im Netz eine neuere
        Fassung liegt und das Gerät noch die alte zeigt. */
-    if (/index\.html$/.test(p) && /frisch=/.test(anhang)) {
+    /* Fassung 694: gefragt wird jetzt fassung.json (60 Byte) statt der
+       ganzen index.html. Ab dem Moment „hoeher" liegt im Netz HIER + 7. */
+    if (/fassung\.json$/.test(p) && hoeher) {
       frischGefragt += 1;
-      const roh = fs.readFileSync(f, "utf8")
-        .replace(/DMA_VERSION = "\d+"/, 'DMA_VERSION = "' + (HIER + 7) + '"');
-      a.writeHead(200, { "Content-Type": "text/html" });
-      return a.end(roh);
+      a.writeHead(200, { "Content-Type": "application/json" });
+      return a.end(JSON.stringify({ fassung: String(HIER + 7) }));
     }
     a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream" });
     fs.createReadStream(f).pipe(a);
@@ -59,6 +59,7 @@ const HIER = Number((/DMA_VERSION = "(\d+)"/.exec(
   /* Die Nachfrage kommt von selbst nach zwölf Sekunden — so lange
      wartet hier niemand. Sie wird deshalb angestossen, wie es der
      Wechsel in den Vordergrund auch tut. */
+  hoeher = true;
   await pg.evaluate(() => { document.dispatchEvent(new Event("visibilitychange")); });
   await pg.waitForTimeout(1200);
 

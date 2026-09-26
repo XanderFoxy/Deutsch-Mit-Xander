@@ -40,7 +40,9 @@ const sage = (gut, was, zusatz) => {
     if (p === "/index.html" && update) {
       inhalt = Buffer.from(String(inhalt)
         .replace(/DMA_VERSION = "(\d+)"/, (m, z) => 'DMA_VERSION = "' + (Number(z) + 1) + '"')
-        .replace(/"livechat\.js":"[0-9a-f]+"/, '"livechat.js":"neu0000000"'));
+        .replace(/"livechat\.js":"[0-9a-f]+"/, '"livechat.js":"neu0000000"')
+        /* Fassung 694: geladen wird die verkleinerte Kopie — ihr Stempel ändert sich mit. */
+        .replace(/"min\/livechat\.js":"[0-9a-f]+"/, '"min/livechat.js":"neu0000000"'));
     }
     if (p === "/fassung.json" && update) {
       inhalt = Buffer.from(String(inhalt).replace(/"fassung": "(\d+)"/, (m, z) => '"fassung": "' + (Number(z) + 1) + '"'));

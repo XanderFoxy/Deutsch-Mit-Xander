@@ -34727,6 +34727,63 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 @keyframes lcMagicGlanz { from { background-position: 0 0, 0% 50%; } to { background-position: 0 0, 100% 50%; } }
 @keyframes lcMagicAtmen { 0%, 100% { box-shadow: 0 1px 1px rgba(255, 255, 255, .6) inset, 0 4px 14px color-mix(in srgb, var(--amber-400) 35%, transparent); }
   50% { box-shadow: 0 1px 1px rgba(255, 255, 255, .6) inset, 0 4px 22px color-mix(in srgb, var(--amber-400) 65%, transparent); } }
+/* FASSUNG 694 — XANDER: „Alles was dahingehend optimiert werden kann,
+   sollst du optimieren … ohne dass jemand ne Grafikeinbuße"
+   GEMESSEN (werkzeug/pruefe-694-leistung.js): Glanz und Atmen dieses
+   einen Knopfs kosteten im Leerlauf zusammen mit dem Chat-Hintergrund
+   ~50 ms Rechenzeit JEDE Sekunde — der Browser musste den Knopf 60-mal
+   in der Sekunde neu malen (background-position und box-shadow lassen
+   sich nicht auf der Grafikkarte verschieben). Ohne sie: 2 ms.
+   Jetzt dasselbe Bild mit zwei festen Schichten, von denen nur die
+   Deckkraft wandert — das macht die Grafikkarte allein:
+   ::after = der Verlauf in der Endstellung, blendet langsam über;
+   ::before = der größere Schein, atmet ein und aus. */
+.lc-leiste .lc-rundknopf.lc-lk.lc-magic {
+  position: relative;
+  isolation: isolate;
+  background-position: 0 0, 0% 50%;
+  box-shadow: 0 1px 1px rgba(255, 255, 255, .6) inset, 0 4px 14px color-mix(in srgb, var(--amber-400) 35%, transparent);
+  animation: none;
+}
+.lc-leiste .lc-rundknopf.lc-lk.lc-magic::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .5), rgba(255, 255, 255, 0) 45%),
+              linear-gradient(135deg, var(--coral-400), var(--amber-400) 50%, var(--teal-400));
+  background-size: 100% 100%, 220% 220%;
+  background-position: 0 0, 100% 50%;
+  opacity: 0;
+  animation: lcMagicGlanzBlende 7s ease-in-out infinite alternate;
+}
+.lc-leiste .lc-rundknopf.lc-lk.lc-magic::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 4px 22px color-mix(in srgb, var(--amber-400) 50%, transparent);
+  opacity: 0;
+  animation: lcMagicAtmenBlende 3.2s ease-in-out infinite;
+}
+@keyframes lcMagicGlanzBlende { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lcMagicAtmenBlende { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .lc-leiste .lc-rundknopf.lc-lk.lc-magic::before,
+  .lc-leiste .lc-rundknopf.lc-lk.lc-magic::after { animation: none; }
+}
+/* Der wandernde Farbschein hinter dem Chat (lcHintergrund) läuft weiter
+   — aber nicht, wenn drei oder mehr Leute auf den Plätzen sitzen. Dann
+   braucht das Telefon jede Millisekunde für Bilder, Ton und Effekte;
+   ein Farbfleck, der in 42 Sekunden einmal hin- und herwandert, fällt
+   im Stillstand niemandem auf. */
+.livechat:has(.lc-platz-belegt ~ .lc-platz-belegt ~ .lc-platz-belegt) .lc-chat-verlauf::before {
+  animation-play-state: paused;
+}
 /* Platz verlassen: dieselbe Glasform; unten sitzend unsichtbar. */
 .lc-leiste .lc-rundknopf.lc-lk.lc-buehnenknopf { font-size: inherit; background: linear-gradient(180deg, color-mix(in srgb, var(--plum-700) 88%, #fff 12%), var(--plum-800)); border-color: color-mix(in srgb, var(--cream-200) 38%, transparent); }
 .lc-leiste .lc-rundknopf.lc-lk.lc-buehnenknopf::before { content: none; }

@@ -61,7 +61,7 @@ const HAENDE = [
     let p = decodeURIComponent(q.url.split("?")[0]);
     if (p === "/") p = "/index.html";
     /* Der Schalter fuer den Vorher-Nachher-Vergleich. */
-    let f = (alteFassung && p === "/app.js" && fs.existsSync(ALT_APP))
+    let f = (alteFassung && (p === "/app.js" || p === "/min/app.js") && fs.existsSync(ALT_APP))
       ? ALT_APP : path.join(WURZEL, p);
     if (!f.startsWith(WURZEL) && f !== ALT_APP) { a.writeHead(404); return a.end(); }
     if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
