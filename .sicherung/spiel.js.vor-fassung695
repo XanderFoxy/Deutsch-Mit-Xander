@@ -144,14 +144,14 @@
        ab Stufe 2, verschmelzen zu einem neuen. Nicht zu kaufen, nur zu
        verschmelzen. Gerechnet wird auf dem Server (spiel_fusion,
        spiel_treffer, spiel_tier_max). */
-    feuerfuchs:       { name: "Feuerfuchs",       ton: "tier-feuerfuchs-ruf", fusion: true, magie: true, was: "beißt mit Glut, 45 % zurück · Stufe 2: +2 Glut" },
-    greif:            { name: "Greif",            ton: "tier-greif-ruf", fusion: true, flug: true, was: "Adlerkopf, Löwenleib: stößt herab, 50 % zurück · Stufe 2: warnt dich (1/10 weniger Schaden)" },
-    regenbogendrache: { name: "Regenbogendrache", ton: "tier-regenbogendrache-ruf", fusion: true, flug: true, magie: true, was: "faucht Regenbogenfeuer, 55 % zurück · Stufe 2: heilt dich (+3 LP)" },
+    feuerfuchs:       { name: "Feuerfuchs",       ton: "fuchskeckern", fusion: true, magie: true, was: "beißt mit Glut, 45 % zurück · Stufe 2: +2 Glut" },
+    greif:            { name: "Greif",            ton: "fluegelschlag", fusion: true, flug: true, was: "Adlerkopf, Löwenleib: stößt herab, 50 % zurück · Stufe 2: warnt dich (1/10 weniger Schaden)" },
+    regenbogendrache: { name: "Regenbogendrache", ton: "drachenpuste", fusion: true, flug: true, magie: true, was: "faucht Regenbogenfeuer, 55 % zurück · Stufe 2: heilt dich (+3 LP)" },
     /* FASSUNG 668 — XANDER: „mehr Fusionen noch mehr Tiere". */
-    dackel:           { name: "Dackel",           ton: "tier-dackel-ruf", preis: 110, was: "zerrt am Hosenbein, 25 % zurück · Stufe 2: +2" },
-    storch:           { name: "Storch",           ton: "tier-storch-ruf", preis: 170, flug: true, was: "klappert und pickt von oben, 35 % zurück" },
-    wolpertinger:     { name: "Wolpertinger",     ton: "tier-wolpertinger-ruf", fusion: true, magie: true, was: "bayerisches Fabelwesen: Hasenleib, Geweih, Flügel – 50 % zurück · Stufe 2: +2" },
-    lindwurm:         { name: "Lindwurm",         ton: "tier-lindwurm-ruf", fusion: true, flug: true, magie: true, was: "Drache mit Schlangenleib, speit Feuer, 60 % zurück" }
+    dackel:           { name: "Dackel",           ton: "hundbellen", preis: 110, was: "zerrt am Hosenbein, 25 % zurück · Stufe 2: +2" },
+    storch:           { name: "Storch",           ton: "fluegelschlag", preis: 170, flug: true, was: "klappert und pickt von oben, 35 % zurück" },
+    wolpertinger:     { name: "Wolpertinger",     ton: "fuchskeckern", fusion: true, magie: true, was: "bayerisches Fabelwesen: Hasenleib, Geweih, Flügel – 50 % zurück · Stufe 2: +2" },
+    lindwurm:         { name: "Lindwurm",         ton: "drachenpuste", fusion: true, flug: true, magie: true, was: "Drache mit Schlangenleib, speit Feuer, 60 % zurück" }
   };
   /* [neues Tier, Zutat 1, Zutat 2] – beide Zutaten gehen in das neue Tier auf. */
   var FUSIONEN = [["feuerfuchs", "fuchs", "phoenix"], ["greif", "eule", "schaeferhund"], ["regenbogendrache", "drache", "einhorn"],
@@ -348,17 +348,14 @@
     if (KLANG.master) try { KLANG.master.gain.value = 0.62 * lautFaktor(); } catch (e) {}
   }
   function toeneAn() { try { var b = B(); return b.toeneAn ? b.toeneAn() !== false : true; } catch (e) { return true; } }
-  function klangSpielen(name, laut, tempo) {
+  function klangSpielen(name, laut) {
     var k = KLANG.ctx, p = KLANG.puffer[name];
     if (!k || !p || k.state !== "running") return false;
     try {
       var g = k.createGain(), q = k.createBufferSource();
       var redet = false; try { redet = Boolean(LC() && LC().redetJemand && LC().redetJemand()); } catch (e) {}
       g.gain.value = Math.max(0, Math.min(1, (laut == null ? 0.5 : laut) * (redet ? 0.45 : 1)));
-      q.buffer = p;
-      /* Fassung 695: Tierstimmen klingen nie zweimal gleich (etwas höher/tiefer). */
-      if (tempo && tempo !== 1) try { q.playbackRate.value = tempo; } catch (e) {}
-      q.connect(g); g.connect(KLANG.master || k.destination); q.start(0);
+      q.buffer = p; q.connect(g); g.connect(KLANG.master || k.destination); q.start(0);
       KLANG.gespielt++; KLANG.letzter = name;
       return true;
     } catch (e) { KLANG.fehler = String(e && e.message || e); return false; }
@@ -931,8 +928,6 @@
       zauberZeigen(n);
     } else if (n.ereignis === "zauberstart") {
       if (ZAUBER[n.sorte] && n.zielChat) zauberStart(n.sorte, n.von, n.zielChat, Math.max(250, Math.min(900, Number(n.flug) || 450)));
-    } else if (n.ereignis === "faehigkeit") {
-      if (FAEHIG[n.sorte]) faehigZeigen(n);
     } else if (n.ereignis === "zauberab") {
       if (n.zielChat) zauberLanden(n.zielChat, true);
     } else if (n.ereignis === "falle") {
@@ -1061,17 +1056,6 @@
       }
       S.werkTipp = { nr: nrW, t: jetztW };
       werkzeugNutzen(knopf, nrW, p);
-      return true;
-    }
-    /* FASSUNG 695 — eine bereite Tier-Fähigkeit gilt dem nächsten Gesicht. */
-    if (S.faehigZiel && S.bereit && knopf && knopf.dataset && knopf.dataset.lcPlatz) {
-      if (!p || p.leer) { hinweis("🐾 Tippe auf ein Gesicht – der Platz ist leer."); return true; }
-      if (p.ich) { hinweis("🐾 Nicht auf dich selbst – tippe auf jemand anderen."); return true; }
-      if (istPuppe(p.id) || /^sparring:/.test(p.id)) { hinweis("🐾 Fähigkeiten wirken nur auf echte Mitspieler."); S.faehigZiel = false; schnellZeichnen(); return true; }
-      if (!(S.ich || {}).mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return true; }
-      var zstF = S.stand[spielIdVon(p.id)];
-      if (zstF && zstF.mitspielen === false) { hinweis("💤 " + (p.name || "Diese Person") + " spielt gerade nicht mit – nicht angreifbar."); return true; }
-      faehigNutzen(p);
       return true;
     }
     /* FASSUNG 650 — ein bereiter Zauber gilt dem nächsten Gesicht. */
@@ -1721,162 +1705,6 @@
     }).catch(function (e) { abbruch(); hinweis("Zauber ging nicht: " + (e && e.message ? e.message : e)); });
   }
   /* ---------------------------------------------------------------
-     FASSUNG 695 — JEDES TIER HAT SEINE FÄHIGKEIT
-     XANDER: „dass jedes Tier seinen eigenen Sound hat und seine
-     Spezialfähigkeit … die man auch ausrüsten kann … mit einem
-     grafischen Effekt und einem eigenen Sound".
-     Ausgerüstet wird EINE (Menü → Tiere: „Fähigkeit ausrüsten"); dann
-     steht in der Leiste ein Knopf mit dem Tier. Kosten 15 Mana, danach
-     ruht das Tier 90 Sekunden. Gerechnet wird auf dem Server
-     (spiel_tier_faehigkeit) — hier nur Knopf, Bild und Ton. Was auf
-     jemand anderen wirkt, braucht ein Ziel: Knopf, dann aufs Gesicht.
-     --------------------------------------------------------------- */
-  var FAEHIG = {
-    fellmonster: ["Kuschelpanzer", "ich", "+15 Schild für 60 s"],
-    chihuahua: ["Knöchelbiss", "ziel", "8 Schaden, 6 s zittert die Hand"],
-    stachelmonster: ["Stachelkugel", "ich", "20 s Eisenhaut (halber Schaden)"],
-    drache: ["Glutatem", "ziel", "12 Schaden mit Feuer"],
-    eule: ["Eulenblick", "ich", "30 s Zielwasser (triffst besser)"],
-    schaeferhund: ["Wachhund", "ich", "10 s kann dich niemand angreifen"],
-    babyfuchs: ["Flinke Pfote", "ziel", "klaut 5 Punkte"],
-    fuchs: ["Schlaue List", "ich", "15 s getarnt"],
-    einhorn: ["Regenbogenheilung", "ich", "+20 LP"],
-    phoenix: ["Aus der Asche", "ich", "+12 LP, deine Tiere +10 Kraft"],
-    fee: ["Feenstaub", "ich", "+25 Mana"],
-    feuerfuchs: ["Glutbiss", "ziel", "14 Schaden mit Glut"],
-    greif: ["Sturzflug", "ziel", "16 Schaden, geht durch den Schild"],
-    regenbogendrache: ["Regenbogenfeuer", "ziel", "12 Schaden, du +8 LP"],
-    dackel: ["Hosenbein", "ziel", "4 Schaden, 12 s kommt man nicht vom Stuhl"],
-    storch: ["Storchenpost", "ich", "bringt dir ein Pflaster"],
-    wolpertinger: ["Wolpi-Wirrwarr", "ziel", "3 Schaden, 12 s Nebel vor den Augen"],
-    lindwurm: ["Würgegriff", "ziel", "10 Schaden, 8 s träge"]
-  };
-  function faehigStand() {
-    if (!S.faehig && S.bereit && S.ich) {
-      S.faehig = { art: "", bereitBis: 0, laedt: true };
-      rpc("spiel_faehigkeit_setzen", { p_art: null }).then(function (r) {
-        if (r && r.ok) { S.faehig = { art: r.faehigkeit || "", bereitBis: Date.now() + (r.bereit_s || 0) * 1000 }; schnellZeichnen(); }
-        else S.faehig = { art: "", bereitBis: 0 };
-      }).catch(function () { S.faehig = null; });
-    }
-    return S.faehig || { art: "", bereitBis: 0 };
-  }
-  function faehigAusruesten(art) {
-    if (!FAEHIG[art]) return;
-    rpc("spiel_faehigkeit_setzen", { p_art: art }).then(function (r) {
-      if (!r || !r.ok) { hinweis("🐾 " + ((r && r.grund) || "ging nicht")); return; }
-      S.faehig = { art: r.faehigkeit, bereitBis: Date.now() + (r.bereit_s || 0) * 1000 };
-      tierLaut(art, "ruf", 0.45);
-      hinweis("🐾 " + FAEHIG[art][0] + " ausgerüstet – der Knopf mit " + ((TIERE[art] || {}).name || art) + " steht jetzt in der Leiste.");
-      schnellZeichnen(true); panelAuffrischen();
-    }).catch(function (e) { hinweis("Ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  function faehigKnopf() {
-    var f = faehigStand();
-    if (!f.art || !FAEHIG[f.art]) return "";
-    var rest = Math.max(0, Math.ceil((f.bereitBis - Date.now()) / 1000)), d = FAEHIG[f.art];
-    return '<button type="button" class="sp-s-faehig' + (S.faehigZiel ? " sp-an" : "") + (rest ? " sp-ruht" : "") + '" data-s="faehigkeit" style="--rest:' + Math.round(rest / 90 * 100) + '%"'
-      + ' title="' + esc(d[0] + " – " + d[2] + (rest ? " (ruht noch " + rest + " s)" : " · 15 Mana")) + '">'
-      + '<span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + ((TIERE[f.art] || {}).flug ? "luft" : "boden") + '">' + tierSvg(f.art, true) + "</span>"
-      + (rest ? "<small>" + rest + "s</small>" : "") + "</button>";
-  }
-  function faehigLos() {
-    var f = faehigStand(), d = FAEHIG[f.art];
-    if (!d) { hinweis("🐾 Rüste erst eine Tier-Fähigkeit aus (Menü → Tiere)."); return; }
-    var rest = Math.ceil((f.bereitBis - Date.now()) / 1000);
-    if (rest > 0) { hinweis("🐾 " + ((TIERE[f.art] || {}).name || "Dein Tier") + " ruht sich noch " + rest + " s aus."); return; }
-    if ((S.ich || {}).mana < 15) { hinweis("🐾 " + d[0] + " braucht 15 Mana – Deutschaufgaben füllen Mana."); return; }
-    if (d[1] === "ziel") {
-      S.faehigZiel = !S.faehigZiel; S.zauber = "";
-      if (S.faehigZiel) hinweis("🐾 " + d[0] + " bereit – tippe auf ein Gesicht.");
-      schnellZeichnen(true);
-      return;
-    }
-    faehigNutzen(null);
-  }
-  function faehigNutzen(p) {
-    var f = faehigStand(), art = f.art, d = FAEHIG[art];
-    if (!d) return;
-    S.faehigZiel = false;
-    var zielSid = p ? spielIdVon(p.id) : null;
-    if (p && !zielSid) { hinweis("🙈 " + (p.name || "Diese Person") + " spielt (noch) nicht mit."); return; }
-    var raum = ""; try { raum = LC().lage().raum || ""; } catch (e) {}
-    /* Das Tier legt sofort los — alle sehen es im selben Augenblick. */
-    var n = { ereignis: "faehigkeit", sorte: art, von: meineChatId(), zielChat: p ? p.id : meineChatId(), start: true };
-    faehigZeigen(n);
-    senden(n);
-    rpc("spiel_tier_faehigkeit", { p_ziel: zielSid, p_raum: raum || null }).then(function (r) {
-      if (!r || !r.ok) {
-        hinweis("🐾 " + ((r && r.grund) || "ging nicht"));
-        if (r && r.bereit_s) S.faehig.bereitBis = Date.now() + r.bereit_s * 1000;
-        schnellZeichnen(); return;
-      }
-      S.faehig.bereitBis = Date.now() + (r.bereit_s || 90) * 1000;
-      if (r.ziel) S.stand[r.ziel.id] = r.ziel;
-      if (r.ich_voll) { S.ich = r.ich_voll; S.stand[r.ich_voll.id] = oeffentlich(r.ich_voll); }
-      var w = { ereignis: "faehigkeit", sorte: art, von: meineChatId(), zielChat: n.zielChat, schaden: r.schaden || 0, heil: r.heil || 0, klau: r.klau || 0,
-                kaputt: Boolean(r.kaputt), ziel_stand: r.ziel, stand: r.ich_voll ? oeffentlich(r.ich_voll) : null };
-      senden(w);
-      faehigZeigen(w);
-      hinweis("🐾 " + d[0] + (r.schaden ? " – " + r.schaden + " Schaden" : "") + (r.heil ? " – +" + r.heil + " LP" : "") + (r.klau ? " – " + r.klau + " Punkte geklaut" : "")
-        + (r.lohn ? " · +" + r.lohn + " Punkte" : "") + (r.kaputt ? " – kaputt!" : ""));
-      schnellZeichnen(); abrufen(true);
-    }).catch(function (e) { hinweis("Ging nicht: " + (e && e.message ? e.message : e)); });
-  }
-  /* Bild und Ton — auf jedem Gerät gleich. „start": das Tier legt los;
-     ohne „start": das Ergebnis vom Server (Zahlen). */
-  function faehigZeigen(n) {
-    var art = n.sorte, d = FAEHIG[art];
-    if (!d) return;
-    if (!n.start) {
-      if (n.schaden > 0) zahlZeigen(n.zielChat, -n.schaden, d[0]);
-      if (n.heil > 0) setTimeout(function () { zahlZeigen(n.von, n.heil, d[0]); }, 400);
-      if (n.klau > 0) { var zk = mittelpunkt(n.zielChat), mk = mittelpunkt(n.von);
-        if (zk && mk) for (var i = 0; i < Math.min(5, n.klau); i++) (function (i) { setTimeout(function () {
-          flugbahn("sp-faehig-muenze", { x: zk.x, y: zk.y }, { x: mk.x, y: mk.y }, '<svg viewBox="-6 -6 12 12"><circle r="5" fill="#f2c230" stroke="#a87a10" stroke-width="1"/><path d="M-1.4 -2.4 H1.8 M-1.4 0 H1.4 M-.6 -3 V3" stroke="#a87a10" stroke-width=".9"/></svg>', 620, 40);
-          if (i === 0) ton("muenze", 0.4);
-        }, i * 110); })(i); }
-      return;
-    }
-    tierLaut(art, "ruf", 0.5);
-    if (d[1] === "ziel" && n.zielChat && n.zielChat !== n.von) {
-      tierAngriff(n.von, n.zielChat, art);
-      var z = mittelpunkt(n.zielChat);
-      if (!z) return;
-      setTimeout(function () {
-        if (/drache|lindwurm|feuerfuchs/.test(art)) flammen(z.x, z.y, z.r * 0.7, art === "regenbogendrache" ? "regenbogen" : "rot", 8);
-        else if (art === "greif") { federRegen(z.x, z.y, z.r, "#e0b060", 5); ringWelle(z.x, z.y, z.r * 1.1, "#d9a55a", 2); }
-        else if (art === "wolpertinger") { ringWelle(z.x, z.y, z.r, "#c9b8ff", 3); sterneBurst(z.x, z.y, z.r * 1.2, ["#c9b8ff", "#e8f3ff", "#ffe27a"], 10); }
-        else if (art === "dackel") { ringWelle(z.x, z.y + z.r * 0.8, z.r * 0.6, "#a0561f", 2); }
-        else if (art === "chihuahua") ringWelle(z.x, z.y, z.r * 0.8, "#c9893f", 2);
-        else if (art === "babyfuchs") sterneBurst(z.x, z.y, z.r * 0.7, ["#ef8436", "#f2c230"], 6);
-        if (art === "regenbogendrache") { var m0 = mittelpunkt(n.von); if (m0) regenbogenStrahl(z, m0); }
-      }, 700);
-      return;
-    }
-    /* Auf sich selbst: der Zauber des Tiers umgibt das eigene Bild. */
-    var m = mittelpunkt(n.von);
-    if (!m) return;
-    var farbe = { fellmonster: "#8a5ad8", stachelmonster: "#8a5a2b", eule: "#f2c230", schaeferhund: "#c9893f", fuchs: "#ef8436",
-      einhorn: "#f59ab4", phoenix: "#ff8a1e", fee: "#c9b8ff", storch: "#ffffff" }[art] || "#c9b8ff";
-    ringWelle(m.x, m.y, m.r * 1.15, farbe, 3);
-    if (art === "stachelmonster") for (var k = 0; k < 12; k++) { var w = k / 12 * Math.PI * 2;
-      effektTeil("sp-stachel-flug", m.x, m.y, '<svg viewBox="-6 -2 12 4"><path d="M-6 -1.4 L6 0 L-6 1.4 Z" fill="#5b3a1f"/></svg>', 700,
-        { "--sx": Math.round(Math.cos(w) * m.r * 1.2) + "px", "--sy": Math.round(Math.sin(w) * m.r * 1.2) + "px", "--dreh": Math.round(w * 180 / Math.PI) + "deg" }); }
-    else if (art === "einhorn") { sterneBurst(m.x, m.y, m.r * 1.3, ["#ffd76a", "#f59ab4", "#9fd3f5", "#c9b8ff"], 12); herzchen(platzElVon(n.von)); }
-    else if (art === "phoenix") { flammen(m.x, m.y + m.r * 0.6, m.r * 0.8, "rot", 9); federRegen(m.x, m.y, m.r, "#ffb02e", 5); }
-    else if (art === "fee") sterneBurst(m.x, m.y, m.r * 1.4, ["#c9b8ff", "#ffe27a", "#9fd3f5", "#fff"], 16);
-    else if (art === "eule") sterneBurst(m.x, m.y - m.r * 0.3, m.r * 0.9, ["#f2c230", "#fff3a0"], 8);
-    else if (art === "storch") {
-      var von = { x: -40, y: m.y - m.r * 2 };
-      flugbahn("sp-faehig-storch", von, { x: m.x, y: m.y - m.r * 1.1 }, '<svg viewBox="0 0 60 40"><path d="M10 18 C18 10 32 9 44 14 C40 18 30 22 18 22 Z" fill="#fbfbf7" stroke="#8d8d86" stroke-width="1"/><path d="M20 15 C22 4 34 0 44 2 C40 8 34 12 26 16 Z" fill="#2a2a2a"/><path d="M44 14 L58 18 L44 17 Z" fill="#e0452e"/><path d="M28 22 V30" stroke="#8d8d86"/><path d="M22 30 H34 L32 38 H24 Z" fill="#f4efe6" stroke="#b8ae98"/></svg>', 900, 30);
-      setTimeout(function () { ton("geschenk", 0.4); }, 900);
-    }
-    else sterneBurst(m.x, m.y, m.r, [farbe, "#fff"], 8);
-    ton("zauberpuff", 0.35);
-  }
-
-  /* ---------------------------------------------------------------
      FASSUNG 671 — ZAUBER, DIE MAN SPÜRT
      XANDER (Funk 132): „die Animation von den Zauberkräften die ganz
      viel besser aussehen die ist noch so schwach die können wir zehnmal
@@ -2313,48 +2141,6 @@
   }
 
   /* ---------------------------------------------------------------
-     FASSUNG 695 — HUNGER UND MÜDIGKEIT SIEHT UND HÖRT MAN
-     XANDER: „wenn die Tiere Hunger haben, dass man dann so Magen …
-     Knurren … und wenn sie müde sind, erschöpft".
-     Unter 40 % Kraft ist ein Tier hungrig: der Bauch zieht sich
-     zusammen, Knurrwellen am Bauch, ab und zu hört man den Magen.
-     Unter 20 % ist es müde: die Augen sinken, eine Schlafblase an der
-     Nase, es atmet langsam und gähnt manchmal hörbar. Bei 0 schläft es
-     (grau, wie bisher). Zu SEHEN ist das bei jedem Tier im Raum; zu
-     HÖREN nur bei den eigenen — sonst knurrt bei vier Leuten dauernd
-     irgendein Magen.
-     --------------------------------------------------------------- */
-  function tierZustand(leben, max) {
-    var a = (Number(leben) || 0) / (Number(max) || 30);
-    return a <= 0.2 ? " sp-tier-muede" : a <= 0.4 ? " sp-tier-hungrig" : "";
-  }
-  var TIER_GAEHNEN = function (art) {
-    return TIER_HUND.test(art) ? "tier-muede-hund" : /eule|storch|greif|phoenix|fee/.test(art) ? "tier-muede-vogel"
-      : /drache|lindwurm/.test(art) ? "tier-muede-drache" : "tier-muede-klein";
-  };
-  function tierZustandPflegen() {
-    var ich = S.ich, jetzt = Date.now();
-    if (!ich || !spielSichtbar() || !toeneAn()) return;
-    var mein = platzElVon(meineChatId());
-    if (!mein) return;
-    [].forEach.call(mein.querySelectorAll(".sp-tier-hungrig, .sp-tier-muede"), function (t) {
-      var art = tierArtVon(t), muede = t.classList.contains("sp-tier-muede");
-      if (jetzt - (t.zustandZeit || 0) < (muede ? 80000 : 70000) || Math.random() > 0.2) return;
-      t.zustandZeit = jetzt;
-      if (muede) {
-        tierKlasse(t, "sp-tier-gaehnt", 1800);
-        S.chatTonFrei = true; try { ton(TIER_GAEHNEN(art), 0.38); } finally { S.chatTonFrei = false; }
-      } else {
-        tierKlasse(t, "sp-tier-magen", 1600);
-        var gross = /schaeferhund|greif|drache|lindwurm|einhorn|fellmonster/.test(art);
-        S.chatTonFrei = true; try { ton(gross ? "tier-hunger-gross" : "tier-hunger-klein", 0.4); } finally { S.chatTonFrei = false; }
-        var p = tierPunkt(t, tierFliegt(t) ? [90, 18] : [86, 94]);
-        lautZeichen(p.x, p.y, "knurren", "#b0781a", Math.max(12, p.s * 16), 1400);
-      }
-    });
-  }
-
-  /* ---------------------------------------------------------------
      FUNK 109/110 — DIE GEGENWEHR SIEHT UND HÖRT MAN
      ---------------------------------------------------------------
      XANDER: „Prüfe bitte ob das Fellmonster auch wirklich den Angreifer
@@ -2525,7 +2311,7 @@
       if (j === 0 && wo) regenbogenStrahl(wo, z);
       ringWelle(z.x, z.y, z.r * (1 + j * 0.25), ["#f59ab4", "#ffd76a", "#9fd3f5"][j], 1);
       sterneBurst(z.x, z.y, z.r * 1.2, ["#ffd76a", "#f59ab4", "#9fd3f5", "#c9b8ff", "#fff"], j === 2 ? 12 : 7);
-      if (j === 2) lautZeichen(z.x, z.y - z.r * 1.1, "ruf", "#b0478a", z.r * 0.7);
+      if (j === 2) textPuff(z.x, z.y - z.r * 1.1, "✦ Regenbogen ✦", "#b0478a");
       return true;
     }
     if (art === "stachelmonster") {
@@ -2534,16 +2320,16 @@
           { "--sx": Math.round(Math.cos(w) * z.r * 0.9) + "px", "--sy": Math.round(Math.sin(w) * z.r * 0.9) + "px", "--dreh": Math.round(w * 180 / Math.PI) + "deg" }); }
       return false;
     }
-    if (art === "schaeferhund") { ringWelle(x, y, z.r * 0.9, "#c9893f", 2); if (j === 0) lautZeichen(x, y - z.r * 0.9, "ruf", "#5a3a1a", z.r * 0.7); return false; }
-    if (art === "dackel") { if (j !== 1) lautZeichen(x, y - z.r * 0.7, "knurren", "#6b3814", z.r * 0.7); return false; }
+    if (art === "schaeferhund") { ringWelle(x, y, z.r * 0.9, "#c9893f", 2); if (j === 0) textPuff(x, y - z.r * 0.9, "Wuff!", "#5a3a1a"); return false; }
+    if (art === "dackel") { if (j !== 1) textPuff(x, y - z.r * 0.7, "Grrr", "#6b3814"); return false; }
     if (art === "fuchs" || art === "babyfuchs") { sterneBurst(x, y, z.r * 0.5, ["#ef8436", "#fffaf2"], 4); return false; }
-    if (art === "wolpertinger") { sterneBurst(x, y, z.r * 0.8, ["#c9b8ff", "#ffe27a", "#e8f3ff"], 6); if (j === 1) lautZeichen(x, y - z.r * 0.8, "ruf", "#6d3fa0", z.r * 0.7); return false; }
-    if (art === "fellmonster") { if (j === 2) lautZeichen(x, y - z.r * 0.7, "knurren", "#1a1a1a", z.r * 0.7); return false; }
+    if (art === "wolpertinger") { sterneBurst(x, y, z.r * 0.8, ["#c9b8ff", "#ffe27a", "#e8f3ff"], 6); if (j === 1) textPuff(x, y - z.r * 0.8, "Wolpi!", "#6d3fa0"); return false; }
+    if (art === "fellmonster") { if (j === 2) textPuff(x, y - z.r * 0.7, "Rrrr!", "#1a1a1a"); return false; }
     return false;
   }
   function flugSignatur(art, p, z, j) {
-    if (art === "eule") { federRegen(z.x, z.y, z.r, "#9a6d42", 3); if (j === 0) lautZeichen(z.x, z.y - z.r * 1.1, "ruf", "#4a3018", z.r * 0.7); return true; }
-    if (art === "storch") { ringWelle(z.x, z.y - z.r * 0.3, z.r * 0.6, "#e0452e", 1); lautZeichen(z.x + z.r * 0.5, z.y - z.r * 0.8, "ruf", "#a82c1a", z.r * 0.7); return true; }
+    if (art === "eule") { federRegen(z.x, z.y, z.r, "#9a6d42", 3); if (j === 0) textPuff(z.x, z.y - z.r * 1.1, "Huhu!", "#4a3018"); return true; }
+    if (art === "storch") { ringWelle(z.x, z.y - z.r * 0.3, z.r * 0.6, "#e0452e", 1); textPuff(z.x + z.r * 0.5, z.y - z.r * 0.8, "klapper", "#a82c1a"); return true; }
     if (art === "greif") { federRegen(z.x, z.y, z.r, "#e0b060", 4); ringWelle(z.x, z.y, z.r, "#d9a55a", 1); return true; }
     return false;
   }
@@ -2590,20 +2376,6 @@
       var zx = heim.x - biss.x, zy = heim.y - biss.y, zl = Math.hypot(zx, zy) || 1;
       zx /= zl; zy /= zl;
       var bb = [bild(heim.x, heim.y, s0, 0, 0), bild(bogen.x, bogen.y, s0 * 1.2, -10, 0.12), bild(biss.x, biss.y, sG, 0, 0.22)];
-      /* FASSUNG 695 — der Wolpertinger springt nicht, er HOPPELT: drei
-         Hasensprünge, jeder landet kurz geduckt, der letzte mit dem Geweih
-         voran. */
-      if (art === "wolpertinger") {
-        var hx = function (f) { return heim.x + (biss.x - heim.x) * f; }, hy = function (f) { return heim.y + (biss.y - heim.y) * f; };
-        var hoch = z.r * 0.55;
-        bb = [bild(heim.x, heim.y, s0, 0, 0),
-              bild(hx(0.17), hy(0.17) - hoch, s0 * 1.08, -8, 0.04), bild(hx(0.34), hy(0.34), s0 * 1.1, 4, 0.08),
-              bild(hx(0.52), hy(0.52) - hoch, s0 * 1.16, -8, 0.12), bild(hx(0.7), hy(0.7), s0 * 1.2, 4, 0.16),
-              bild(hx(0.86), hy(0.86) - hoch * 0.8, s0 * 1.28, -14, 0.19), bild(biss.x, biss.y, sG, 10, 0.22)];
-        setTimeout(function () { ton("tier-hops", 0.35); }, dauer * 0.07);
-        setTimeout(function () { ton("tier-hops", 0.3); }, dauer * 0.15);
-        setTimeout(function () { ringWelle(biss.x, biss.y, z.r * 0.5, "#c9b8ff", 2); sterneBurst(biss.x, biss.y, z.r * 0.5, ["#ffe27a", "#c9b8ff"], 5); }, dauer * 0.22);
-      }
       for (var i = 0; i < 6; i++) {
         bb.push(bild(biss.x + zx * 9, biss.y + zy * 9, sG, i % 2 ? -14 : 14, 0.27 + i * 0.075));
         bb.push(bild(biss.x - zx * 1.5, biss.y - zy * 1.5, sG, 0, 0.305 + i * 0.075));
@@ -2632,11 +2404,7 @@
         zh.className = "sp-bisszaehne sp-bisszaehne-am-tier";
         var zg = z.r * 0.9 / sG;
         zh.style.left = ax + "px"; zh.style.top = (ay - z.r * 0.12 / sG) + "px"; zh.style.width = zh.style.height = Math.round(zg) + "px";
-        /* Der Wolpertinger hat SEINEN Zahn: zwei große Hasen-Schneidezähne. */
-        if (art === "wolpertinger") zh.innerHTML = '<svg viewBox="-20 -20 40 40"><g class="sp-kiefer-oben"><path d="M-12 -4 C-8 -12 8 -12 12 -4 Z" fill="#b98a5c" stroke="#5a3a1a" stroke-width=".8"/>'
-          + '<path d="M-5.6 -4.6 H5.6 V7.6 C5.6 9.4 4.6 10 0 10 C-4.6 10 -5.6 9.4 -5.6 7.6 Z" fill="#fffef8" stroke="#b8ae98" stroke-width=".8"/><path d="M0 -4.6 V9.8" stroke="#c9c0aa" stroke-width=".8"/></g>'
-          + '<g class="sp-kiefer-unten"><path d="M-9 8 C-5 14 5 14 9 8 Z" fill="#9a6a3e"/></g></svg>';
-        else zh.innerHTML = '<svg viewBox="-20 -20 40 40"><g class="sp-kiefer-oben"><path d="M-16 -2 C-10 -12 10 -12 16 -2 Z" fill="#7a1f24"/><path d="M-13 -3 L-10.5 4 L-8 -3 L-5.5 4.5 L-3 -3 L-.5 4.5 L2 -3 L4.5 4.5 L7 -3 L9.5 4 L12 -3 Z" fill="#fffdf6" stroke="#c9c2b0" stroke-width=".6"/></g>'
+        zh.innerHTML = '<svg viewBox="-20 -20 40 40"><g class="sp-kiefer-oben"><path d="M-16 -2 C-10 -12 10 -12 16 -2 Z" fill="#7a1f24"/><path d="M-13 -3 L-10.5 4 L-8 -3 L-5.5 4.5 L-3 -3 L-.5 4.5 L2 -3 L4.5 4.5 L7 -3 L9.5 4 L12 -3 Z" fill="#fffdf6" stroke="#c9c2b0" stroke-width=".6"/></g>'
           + '<g class="sp-kiefer-unten"><path d="M-15 2 C-9 12 9 12 15 2 Z" fill="#7a1f24"/><path d="M-12 3 L-9.5 -4 L-7 3 L-4.5 -4.5 L-2 3 L.5 -4.5 L3 3 L5.5 -4.5 L8 3 L10.5 -4 L12 3 Z" fill="#fffdf6" stroke="#c9c2b0" stroke-width=".6"/></g></svg>';
         t.appendChild(zh);
         try {
@@ -3268,9 +3036,6 @@
         + '<svg viewBox="0 0 20 20"><path d="M10 1.5 C11 5 15.5 7 15.5 12 A5.5 5.5 0 0 1 4.5 12 C4.5 9 6.5 7.5 7 5 C8 7 8.5 8 9.5 8.5 C9.5 6 9 4 10 1.5 Z" fill="' + (daemonRest ? "#b0172f" : "#f29d0b") + '"/>'
         + '<path d="M10 9 C10.5 11 13 12 13 14 A3 3 0 0 1 7 14 C7 12.5 8.5 11.5 10 9 Z" fill="' + (daemonRest ? "#6d1bb3" : "#ffd84a") + '"/></svg>'
         + "<small>" + (daemonRest ? daemonRest + "s" : ladung + "%") + "</small></button>");
-      /* FASSUNG 695 — die ausgerüstete Tier-Fähigkeit. */
-      var fk = faehigKnopf();
-      if (fk) teile.push(fk);
       /* FASSUNG 650 — der Zauberstab: öffnet das Zauberrad; ein bereiter
          Zauber leuchtet hier mit seinem Bild. */
       var zOffen = ZAUBER_REIHE.some(function (a) { return (ich.level || 1) >= ZAUBER[a].level; });
@@ -3604,20 +3369,13 @@
         return '<button type="button" data-s="tierraus" data-a="' + a + '"' + (draussen ? ' class="sp-an"' : "") + ">"
           + '<span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + ((TIERE[a] || {}).flug ? "luft" : "boden") + '">' + tierSvg(a, true) + "</span>"
           + esc((TIERE[a] || {}).name || a) + " <small>" + (draussen ? "draußen · " : "") + kraft + " Kraft</small></button>";
-      }).join("") + "</div>"
-        /* FASSUNG 695 — die Fähigkeiten: eine ausrüsten. */
-        + '<p class="sp-sm-klein"><b>Fähigkeit ausrüsten</b> (15 Mana, dann 90 s Pause)'
-        + (FAEHIG[faehigStand().art] ? ": ★ " + esc(FAEHIG[faehigStand().art][0]) + " – " + esc(FAEHIG[faehigStand().art][2]) : "") + '</p><div class="sp-faehig-liste">' + besitz.filter(function (a) { return FAEHIG[a]; }).map(function (a) {
-          var an = faehigStand().art === a;
-          return '<button type="button" data-s="faehig" data-a="' + a + '"' + (an ? ' class="sp-an"' : "") + ' title="' + esc(FAEHIG[a][2]) + '">'
-            + '<span class="sp-tier-bild sp-tier-bild-mini sp-tier-bild-' + ((TIERE[a] || {}).flug ? "luft" : "boden") + '">' + tierSvg(a, true) + "</span>" + esc(FAEHIG[a][0]) + "</button>";
-        }).join("") + "</div><p class=\"sp-sm-klein\">Tippen holt das Tier raus – eins am Boden, eins in der Luft. Keins geht verloren (nur bei einer Fusion gehen zwei in einem neuen auf).</p>"
+      }).join("") + "</div><p class=\"sp-sm-klein\">Tippen holt das Tier raus – eins am Boden, eins in der Luft. Keins geht verloren (nur bei einer Fusion gehen zwei in einem neuen auf).</p>"
         /* FASSUNG 658 — XANDER: „mein Fell … irgendwie schwächer dargestellt.
            Woran liegt das? Verliert es an Leben". Ja: jeder Gegenbiss kostet
            das Tier 1 Kraft; bei 0 ist es grau, schläft („Zzz") und wehrt
            nicht mehr ab, bis man es füttert. */
         + ([ich.haustier, ich.flugtier].some(function (a, i) { return a && !((i ? ich.flugtier_leben : ich.haustier_leben) > 0); })
-          ? '<p class="sp-sm-klein sp-sm-warn">Grau mit Schlafblase = erschöpft: jeder Gegenbiss kostet 1 Kraft, bei 0 wehrt es nicht mehr ab.</p>'
+          ? '<p class="sp-sm-klein sp-sm-warn">Grau mit „Zzz" = erschöpft: jeder Gegenbiss kostet 1 Kraft, bei 0 wehrt es nicht mehr ab.</p>'
             + '<div class="sp-sm-liste"><button type="button" data-s="gross" data-r="tiere">Jetzt füttern</button></div>' : "");
     } else {
       var lautJetzt = toeneAn() ? lautStufe() : 0;
@@ -3899,10 +3657,6 @@
       kaufen("waffen_reparatur"); return;
     } else if (s === "tierraus") {
       tierWechseln(k.dataset.a); zu = true;
-    } else if (s === "faehigkeit") {
-      faehigLos(); return;
-    } else if (s === "faehig") {
-      faehigAusruesten(k.dataset.a); return;
     } else if (s === "sparring") {
       sparringUmschalten(); zu = true;
     } else if (s === "gegenfeuer") {
@@ -4294,12 +4048,10 @@
       schmuck(el, "sp-mauer", s.mauer_lp > 0, kreis, mauerSvg(s.mauer_art, (s.brust || 0) > 0), "sp-mauer-" + (s.mauer_art || "holz") + (s.mauer_aufbau ? " sp-mauer-aufbau" : ""));
       /* Das Fellmonster sitzt rechts unten neben dem Bild */
       schmuck(el, "sp-tier", Boolean(s.haustier), kreis, tierSvg(s.haustier), "sp-tier-" + (s.haustier || "fellmonster")
-        + (s.haustier && !(s.haustier_leben > 0) ? " sp-tier-schwach" : tierZustand(s.haustier_leben, s.haustier_max)));
-      if (s.haustier) tierLauteVorladen(s.haustier);
-      if (s.flugtier) tierLauteVorladen(s.flugtier);
+        + (s.haustier && !(s.haustier_leben > 0) ? " sp-tier-schwach" : ""));
       /* FASSUNG 638 — das Flugtier schwebt rechts oben neben dem Bild. */
       schmuck(el, "sp-flugtier", Boolean(s.flugtier), kreis, s.flugtier ? tierSvg(s.flugtier) : "", "sp-tier-" + (s.flugtier || "drache")
-        + (s.flugtier && !(s.flugtier_leben > 0) ? " sp-tier-schwach" : tierZustand(s.flugtier_leben, s.flugtier_max)));
+        + (s.flugtier && !(s.flugtier_leben > 0) ? " sp-tier-schwach" : ""));
       /* Nur ich sehe meine eigenen Fallen — als kleine Markierung. */
       var falle = null, nr = Number(el.dataset.lcPlatz);
       meineFallen().forEach(function (f) { if (f.platz === nr) falle = f.art; });
@@ -4661,12 +4413,21 @@
         + '<path class="sp-fluegel-l" d="M102 -1 C104 -5 108 -7 112 -7 C110 -2 107 3 103 6.6 C102.4 4 102.2 1.4 102 -1 Z" fill="#2a2a2a"/></g></svg>';
     }
     if (art === "wolpertinger") {
-      /* FASSUNG 695 — XANDER: „der Wolpertinger, der bewegt sich kaum … hat keinen
-         eigenen Zahn". Neu gezeichnet und größer: sitzender Hase mit langen
-         Ohren, Rehgeweih vor den Ohren, ZWEI Federflügeln (einer hinten, einer
-         vorn), Puschelschwanz und einem großen Hasenzahn. Er hoppelt (spiel.css:
-         spWolpiHops), die Ohren zucken, die Flügel schlagen. */
-      return "<svg viewBox=\"0 0 100 100\"><g class=\"sp-tier-koerper sp-wolpi\"><path class=\"sp-fluegel-r\" d=\"M92 80 C95 71 103 67 110 68 C108 71 107 73 107.6 75.4 C105 74.8 103.4 76.4 103.6 78.6 C101 77.8 98.4 79.4 98.4 82 C96 81.6 93.6 81.4 92 80 Z\" fill=\"#dfe9ff\" stroke=\"#7d8fc0\" stroke-width=\".6\" stroke-linejoin=\"round\"/><path d=\"M99.4 72.6 C101.6 71.4 104.4 70.8 106.8 71.2 M97.4 76.6 C99.4 75.6 101.6 75.4 103.4 75.8\" fill=\"none\" stroke=\"#9aa9d6\" stroke-width=\".45\"/><ellipse cx=\"86\" cy=\"99.4\" rx=\"13\" ry=\"1.6\" fill=\"rgba(0,0,0,.18)\"/><circle class=\"sp-wolpi-schwanz\" cx=\"98.8\" cy=\"93.6\" r=\"3.2\" fill=\"#fffaf4\" stroke=\"#cbb89c\" stroke-width=\".5\"/><path d=\"M76 99.4 C72.6 93 74.6 84.6 83 82.6 C92.4 80.6 99.4 86.8 98.6 93.8 C98.2 97.8 95 99.8 90 99.8 Z\" fill=\"#a9794b\" stroke=\"#5a3a1a\" stroke-width=\".8\"/><path d=\"M78.6 97.6 C77.4 92.6 79.4 88.2 83.6 87.4 C86.8 86.8 88.6 89.6 88 93 C87.6 95.6 86 97.8 83 98.4 Z\" fill=\"#ecd8b8\"/><path d=\"M88.6 99.8 C88.4 96.4 91 94.6 94.6 95 C97.8 95.4 99 97.6 98.4 99.8 Z\" fill=\"#8d6038\" stroke=\"#5a3a1a\" stroke-width=\".7\"/><path d=\"M77.6 99.8 C77.4 97.6 78.8 96.6 80.6 96.6 C82.4 96.6 83.2 98 83 99.8 Z\" fill=\"#8d6038\" stroke=\"#5a3a1a\" stroke-width=\".6\"/><path class=\"sp-fluegel-l\" d=\"M86 84 C84.6 76.4 88.6 70.4 96 68.8 C95.4 71.4 95.6 73.4 97 75 C94.6 75.6 93.8 77.6 94.8 79.4 C92.4 79.6 91 81.4 91.4 83.8 C89.6 83.4 87.6 83.6 86 84 Z\" fill=\"#f4f8ff\" stroke=\"#7d8fc0\" stroke-width=\".6\" stroke-linejoin=\"round\"/><path d=\"M88 80.4 C89 77.4 91.2 75 94 73.8 M89.2 83 C90 81 91.6 79.6 93.4 79\" fill=\"none\" stroke=\"#b9c6ea\" stroke-width=\".45\"/><g class=\"sp-wolpi-kopf\"><path class=\"sp-wolpi-ohr-r\" d=\"M83.4 72.4 C84.2 64.4 87.6 57.6 90.4 58 C93 58.4 91.2 65.8 87.6 73 Z\" fill=\"#a9794b\" stroke=\"#5a3a1a\" stroke-width=\".7\"/><path d=\"M85 71.4 C86 65.6 88.2 61.2 89.8 61.2\" fill=\"none\" stroke=\"#e8b0a0\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><path d=\"M70.6 80.4 C70.2 74.6 74.8 71.2 80.2 71.2 C85.8 71.2 89.6 74.8 89.4 80.2 C89.2 85.4 85.2 88.4 79.8 88.4 C74.2 88.4 70.8 85.6 70.6 80.4 Z\" fill=\"#b98a5c\" stroke=\"#5a3a1a\" stroke-width=\".8\"/><path class=\"sp-wolpi-ohr-l\" d=\"M76.2 73.2 C73.6 66 73.6 58.6 76.4 57.8 C79.2 57 80.4 65 79.8 72.6 Z\" fill=\"#b98a5c\" stroke=\"#5a3a1a\" stroke-width=\".7\"/><path d=\"M77 71.4 C75.6 66 75.8 61.2 77 60.6\" fill=\"none\" stroke=\"#e8b0a0\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><g class=\"sp-wolpi-geweih\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M77.4 72.8 C75.6 69.4 73.4 66.8 70.4 65.6 M74.8 69.2 C73.4 69.6 71.6 69.4 70.2 68.6 M73.2 67.2 C73.4 65.4 72.8 63.6 71.6 62.4 M82.6 72.6 C84.6 69.2 87 66.6 90.2 65.4 M85.4 69 C86.8 69.6 88.6 69.4 90 68.8 M87.2 67 C87 65.2 87.6 63.4 88.8 62.2\" stroke=\"#5a3a1a\" stroke-width=\"2.3\"/><path d=\"M77.4 72.8 C75.6 69.4 73.4 66.8 70.4 65.6 M74.8 69.2 C73.4 69.6 71.6 69.4 70.2 68.6 M73.2 67.2 C73.4 65.4 72.8 63.6 71.6 62.4 M82.6 72.6 C84.6 69.2 87 66.6 90.2 65.4 M85.4 69 C86.8 69.6 88.6 69.4 90 68.8 M87.2 67 C87 65.2 87.6 63.4 88.8 62.2\" stroke=\"#b58a5a\" stroke-width=\"1.2\"/><circle cx=\"70.4\" cy=\"65.6\" r=\".6\" fill=\"#f3e6c8\"/><circle cx=\"71.6\" cy=\"62.4\" r=\".6\" fill=\"#f3e6c8\"/><circle cx=\"90.2\" cy=\"65.4\" r=\".6\" fill=\"#f3e6c8\"/><circle cx=\"88.8\" cy=\"62.2\" r=\".6\" fill=\"#f3e6c8\"/></g><path d=\"M71.6 83 C72.6 86.2 76 88 79.6 88 C82 88 83.6 87.2 84.4 85.8 C81.6 86.6 77.8 86.4 75 84.6 Z\" fill=\"#ecd8b8\"/><g class=\"sp-blinzeln\"><ellipse cx=\"75.6\" cy=\"78.6\" rx=\"2.1\" ry=\"2.5\" fill=\"#1a0f08\"/><circle cx=\"76.3\" cy=\"77.8\" r=\".8\" fill=\"#fff\"/><circle cx=\"75\" cy=\"79.6\" r=\".35\" fill=\"#fff\"/><ellipse cx=\"83.4\" cy=\"78.8\" rx=\"1.9\" ry=\"2.3\" fill=\"#1a0f08\"/><circle cx=\"84\" cy=\"78\" r=\".7\" fill=\"#fff\"/></g><path d=\"M78.2 82.2 C78.2 81.2 80.8 81.2 80.8 82.2 C80.8 83 80 83.4 79.5 83.4 C79 83.4 78.2 83 78.2 82.2 Z\" fill=\"#e8849a\"/><path d=\"M79.5 83.4 V84.2 M79.5 84.2 C78.6 85 77.6 85 77 84.4 M79.5 84.2 C80.4 85 81.4 85 82 84.4\" fill=\"none\" stroke=\"#5a3a1a\" stroke-width=\".45\" stroke-linecap=\"round\"/><g class=\"sp-wolpi-zahn\"><path d=\"M78.2 84.6 H80.8 V87.6 C80.8 88.2 80.3 88.4 79.5 88.4 C78.7 88.4 78.2 88.2 78.2 87.6 Z\" fill=\"#fffef8\" stroke=\"#b8ae98\" stroke-width=\".35\"/><path d=\"M79.5 84.6 V88.2\" stroke=\"#c9c0aa\" stroke-width=\".35\"/></g><path d=\"M76.6 82.8 L71.4 81.8 M76.6 83.6 L71.6 84.2 M82.4 82.8 L87 81.8 M82.4 83.6 L86.8 84.4\" stroke=\"#6b4a2a\" stroke-width=\".3\" stroke-linecap=\"round\"/><ellipse cx=\"73.6\" cy=\"82.4\" rx=\"1.3\" ry=\".8\" fill=\"#f2a0a8\" opacity=\".55\"/><ellipse cx=\"85.6\" cy=\"82.6\" rx=\"1.2\" ry=\".7\" fill=\"#f2a0a8\" opacity=\".55\"/></g><g class=\"sp-funkeln\"><path d=\"M68 70 l.6 -1.5 l.6 1.5 l1.5 .6 l-1.5 .6 l-.6 1.5 l-.6 -1.5 l-1.5 -.6 z\" fill=\"#ffe27a\"/><circle cx=\"101\" cy=\"66\" r=\".7\" fill=\"#c9b8ff\"/><circle cx=\"96\" cy=\"62\" r=\".5\" fill=\"#ffe27a\"/></g></g></svg>";
+      /* FASSUNG 668 — Wolpertinger (Fusion aus Dackel und Fee): sitzender
+         Hase mit kleinem Rehgeweih, Flügelchen, zwei Zähnchen – funkelt. */
+      return '<svg viewBox="0 0 100 100"><g class="sp-tier-koerper">'
+        + '<path class="sp-fluegel-r" d="M91 82 C96 76 103 76 105 80 C101 80 99 82 98 85 C96 84 93 84 91 82 Z" fill="#e8f3ff" stroke="#8aa4c4" stroke-width=".6"/>'
+        + '<path d="M78 99.6 C75 95 76 86 84 83.6 C92 82 97 88 96 94 C95.6 98 92 99.8 88 99.8 Z" fill="#a8784c" stroke="#5a3a1a" stroke-width=".8"/>'
+        + '<path d="M95.6 92 C99 91 100.6 93.6 99 95.6 C97.6 97 95.6 96 95.6 94 Z" fill="#fffaf2"/>'
+        + '<ellipse cx="84" cy="98.6" rx="4" ry="1.6" fill="#8a5c34"/>'
+        + '<path d="M79 72 C77 64 78.6 58 80.6 58 C82.6 58 82.4 65 81.6 72 Z M84.4 72 C84.6 64 87.4 58.6 89.2 59.4 C91 60.2 89 66.4 86.6 72.4 Z" fill="#a8784c" stroke="#5a3a1a" stroke-width=".7"/>'
+        + '<path d="M79.8 70 C79 65 79.8 61 80.6 61 M86 70 C86.6 65.6 88 62 88.8 62" fill="none" stroke="#e8b8a8" stroke-width="1.2" stroke-linecap="round"/>'
+        + '<path d="M76.8 73.4 L74.4 67.4 L72.4 68.6 M75.6 70.2 L73.4 70 M88.6 72.8 L92.2 67.6 L94.4 68.4 M90.6 70 L92.8 70.4" fill="none" stroke="#6b4a2a" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>'
+        + '<path d="M73 80 C73 74.6 77.6 71.6 82.4 71.6 C87.6 71.6 91 75 91 80 C91 85 87 87.6 82 87.6 C76.6 87.6 73 85 73 80 Z" fill="#b8875a" stroke="#5a3a1a" stroke-width=".8"/>'
+        + '<ellipse cx="77.6" cy="79" rx="1.7" ry="1.9" fill="#1a0f08"/><circle cx="78.1" cy="78.4" r=".6" fill="#fff"/><ellipse cx="85.2" cy="79" rx="1.7" ry="1.9" fill="#1a0f08"/><circle cx="85.7" cy="78.4" r=".6" fill="#fff"/>'
+        + '<path d="M80.4 82.6 C80.4 81.6 83 81.6 83 82.6 C83 83.4 82.2 83.8 81.7 83.8 C81.2 83.8 80.4 83.4 80.4 82.6 Z" fill="#e88a9a"/>'
+        + '<path d="M80.6 85 H82.8 V86.8 H80.6 Z" fill="#fff" stroke="#b8b0a0" stroke-width=".3"/><path d="M81.7 85 V86.8" stroke="#b8b0a0" stroke-width=".3"/>'
+        + '<g class="sp-funkeln"><path d="M70 72 l.6 -1.5 l.6 1.5 l1.5 .6 l-1.5 .6 l-.6 1.5 l-.6 -1.5 l-1.5 -.6 z" fill="#ffe27a"/><circle cx="98" cy="74" r=".6" fill="#c9b8ff"/></g></g></svg>';
     }
     if (art === "lindwurm") {
       /* FASSUNG 668 — Lindwurm (Fusion aus Babydrache und Stachelmonster):
@@ -5353,7 +5114,6 @@
             + '<button type="button" data-tu="fuettern" data-w="' + welches + '" data-f="sauerkraut"' + (vorrat(ich, "sauerkraut") && kraft < max ? "" : " disabled") + ">🥬 +8 (" + vorrat(ich, "sauerkraut") + ")</button>"
             + ((stufe || 1) < 3 ? '<button type="button" data-tu="kaufen" data-d="' + (welches === "boden" ? "tier_stufe" : "flugtier_stufe") + '"' + (ich.punkte >= 60 * (stufe || 1) ? "" : " disabled") + ">Stufe " + ((stufe || 1) + 1) + " · " + 60 * (stufe || 1) + "</button>" : "")
             + verkaufKnopf(art, tierErloes(art))
-            + (FAEHIG[art] ? '<button type="button" data-tu="faehig" data-a="' + art + '"' + (faehigStand().art === art ? ' class="sp-an"' : "") + ' title="' + esc(FAEHIG[art][2]) + '">' + (faehigStand().art === art ? "★ " : "Fähigkeit: ") + esc(FAEHIG[art][0]) + "</button>" : "")
             + "</span></div>";
         }
         /* FASSUNG 646 — XANDER: „die Tiere die ich schon gekauft hab die
@@ -5597,7 +5357,6 @@
     if (tu === "essen") return essen(k.dataset.d);
     if (tu === "fuettern") return fuettern(k.dataset.w, k.dataset.f);
     if (tu === "tierraus") return tierWechseln(k.dataset.a);
-    if (tu === "faehig") return faehigAusruesten(k.dataset.a);
     if (tu === "fusion") return fusionieren(k.dataset.k);
     if (tu === "kategorie") { S.kategorie = k.dataset.k || null; deutschNachOben(); if (S.kategorie === "aussprache") { sprechWortHolen(0); return; } aufgabeHolen(false); return; }
     if (tu === "sprechhoeren") return sprechHoeren();
@@ -7294,7 +7053,7 @@
        · Die Gesichtsmitte des Profilbilds bleibt frei: alles sitzt am
          Tier, nicht auf dem Gesicht.
      ================================================================= */
-  var TIER_FLUECHTIG = /^sp-tier-(saugt|spuckt|schnappt|lacht|hechelt|nass|schuettelt|wundert|hochgucken|schnueffelt|tanzt|guckt|schreck|zittert|hops|leckt|kuschelt|sucht|schwindelig|nickt|versteckt|glaenzt|kratzt|pustet|ekelt|gaehnt|magen|klettert)$/;
+  var TIER_FLUECHTIG = /^sp-tier-(saugt|spuckt|schnappt|lacht|hechelt|nass|schuettelt|wundert|hochgucken|schnueffelt|tanzt|guckt|schreck|zittert|hops|leckt|kuschelt|sucht|schwindelig|nickt|versteckt|glaenzt|kratzt|pustet|ekelt)$/;
   var TIER_REAKTION = [
     [/sabber/, "zurueckspucken"],
     [/spucke/, "schlucken"],
@@ -7367,105 +7126,25 @@
     clearTimeout(t["uhr_" + klasse]);
     t["uhr_" + klasse] = setTimeout(function () { t.classList.remove(klasse); }, ms);
   }
-  /* =================================================================
-     FASSUNG 695 — DIE TIERE SPRECHEN NICHT, SIE MACHEN LAUTE
-     -----------------------------------------------------------------
-     XANDER: „Dann haben die Tiere in den Profilbild-Effekten immer
-     Sprechblasen … diese Sprechblasen sollen auch verschwinden. Die
-     Tiere sollen individuelle Sounds haben, nicht immer wiederholt …
-     auch grafisch sichtbar … dieses Olé, was sie bei einem Zorro-Zeichen
-     machen. Das sagen sie gar nicht, sie sollen das in einer süßen
-     Tierstimme machen … jedes Tier seinen eigenen Sound."
-
-     tierSagt(t, text) bleibt als Aufruf stehen (60 Stellen), zeigt aber
-     KEINEN Text mehr: aus dem Wort wird eine Stimmung (Freude, Frage,
-     Schreck, Genuss, Ekel, Knurren), das Tier gibt SEINEN Laut dazu
-     (ton/tier-<art>-<laut>, je Tier vier eigene Aufnahmen) und neben
-     seinem Maul erscheint ein gezeichnetes Zeichen: Schallbögen, ein
-     Fragehaken, ein Schreckstern, Herzchen, Stinkwellen, Zackenlinien.
-     Jeder Laut wird beim Abspielen zufällig etwas höher oder tiefer
-     gestimmt und verschieden laut — so klingt er nie zweimal gleich.
-     ================================================================= */
-  var TIER_STIMMUNG = [
-    [/Rülps|Gulp|Schluck/i, "still"],
-    [/\?|Hä|Wohin|Hallo|Wo bist|Weg|Leer|Alles weg/i, "frage"],
-    [/Grr|Rrr|Hmpf|Halt|Beim nächsten/i, "knurren"],
-    [/Iiih|Bäh|Igitt|Pfui/i, "ekel"],
-    [/Au|Autsch|Huch|^!$|Schwindel|dreht|Uiui|Brrr|Nass|Pfff/i, "au"],
-    [/Mm+h|Hm+|Lecker|Mjam|Schmatz|Danke|Besser|Ahh|♥/i, "genuss"]
-  ];
-  function tierStimmungVon(text) {
-    for (var i = 0; i < TIER_STIMMUNG.length; i++) if (TIER_STIMMUNG[i][0].test(String(text || ""))) return TIER_STIMMUNG[i][1];
-    return "ruf";
-  }
-  var TIER_HUND = /chihuahua|dackel|schaeferhund|fuchs|babyfuchs|feuerfuchs/, TIER_DRACHE = /drache|lindwurm/;
-  var TIER_FARBE = { fellmonster: "#6a3fd0", chihuahua: "#c9893f", stachelmonster: "#8a5a2b", drache: "#2f9a6a", eule: "#8a6a3a",
-    schaeferhund: "#8a5a2b", babyfuchs: "#e8742a", fuchs: "#d9601a", einhorn: "#d45a9a", phoenix: "#e0501a", fee: "#7a5ad8",
-    feuerfuchs: "#d9381a", greif: "#b8862a", regenbogendrache: "#9a5ad8", dackel: "#a0561f", storch: "#c0392b", wolpertinger: "#7a5ad8", lindwurm: "#2f6a3a" };
-  /* Der Laut eines Tiers. t = das Tier (Element) oder seine Art. */
-  function tierLaut(t, laut, lautstaerke) {
-    var art = typeof t === "string" ? t : tierArtVon(t);
-    if (!toeneAn() || lautStufe() === 0) return "";
-    var jetzt = Date.now();
-    if (t && typeof t !== "string") {
-      if (jetzt - (t.lautZeit || 0) < 420) return "";
-      t.lautZeit = jetzt;
-    }
-    var name = "tier-" + art + "-" + laut, tempo = 0.9 + Math.random() * 0.22;
-    if (laut === "knurren") {
-      name = TIER_HUND.test(art) ? "chihuahuaknurr" : TIER_DRACHE.test(art) ? "drachengrummeln" : "tier-" + art + "-au";
-      tempo = art === "schaeferhund" ? 0.78 : art === "chihuahua" ? 1.12 : 0.95 + Math.random() * 0.1;
-    }
-    if (!klangDa(name)) return "";
-    var l = (lautstaerke == null ? 0.42 : lautstaerke) * (0.85 + Math.random() * 0.3);
-    S.chatTonFrei = true;
-    try {
-      if (klangSpielen(name, l, tempo)) {
-        try { if (window.DMA_TONLOG) window.DMA_TONLOG.push({ name: name, wann: Math.round(performance.now()), weg: "webaudio" }); } catch (e) {}
-      } else {
-        /* Noch nicht geladen: laden und SOFORT danach spielen (die Dateien
-           sind 3–5 KB) — kommt sie zu spät, lieber still als versetzt. */
-        var start = jetzt;
-        klangLaden(name).then(function (p) { if (p && Date.now() - start < 450) { S.chatTonFrei = true; try { klangSpielen(name, l, tempo); } finally { S.chatTonFrei = false; } } });
-        try { if (window.DMA_TONLOG) window.DMA_TONLOG.push({ name: name, wann: Math.round(performance.now()), weg: "laden" }); } catch (e) {}
-      }
-    } finally { S.chatTonFrei = false; }
-    return name;
-  }
-  /* Die Laute der Tiere, die an einem Platz sitzen, schon einmal laden. */
-  function tierLauteVorladen(art) {
-    if (!art || tierLauteVorladen[art]) return;
-    tierLauteVorladen[art] = true;
-    ["ruf", "frage", "au", "genuss"].forEach(function (l, i) { setTimeout(function () { klangLaden("tier-" + art + "-" + l); }, 400 + i * 150); });
-  }
-  /* Die gezeichneten Zeichen — kein Buchstabe, keine Sprechblase. */
-  function lautZeichenSvg(laut, f) {
-    if (laut === "frage") return '<svg viewBox="-10 -12 20 24"><path d="M-4.6 -4.8 C-4.6 -9.4 4.8 -9.6 4.8 -4.2 C4.8 -0.6 0.4 0 0.2 3.6" fill="none" stroke="' + f + '" stroke-width="2.8" stroke-linecap="round"/><circle cx="0.2" cy="8.6" r="1.9" fill="' + f + '"/></svg>';
-    if (laut === "au") return '<svg viewBox="-12 -12 24 24"><path d="M0 -10 L2.6 -3.4 L9.6 -4.6 L4.6 0.6 L8.4 7.6 L1.2 4.6 L-3.2 10 L-3 3 L-10 1.4 L-4 -2.2 L-6.6 -8.6 L-1 -4.4 Z" fill="#ffd23a" stroke="#e2403a" stroke-width="1.4" stroke-linejoin="round"/></svg>';
-    if (laut === "genuss") return '<svg viewBox="-12 -12 24 24"><path d="M-3 4 C-9 -0.6 -9 -6 -5.4 -6.6 C-3.6 -7 -3 -5.6 -3 -4.6 C-3 -5.6 -2.4 -7 -0.6 -6.6 C3 -6 3 -0.6 -3 4 Z" fill="#ff5c8a"/><path d="M5.6 9.6 C2.6 7.4 2.6 4.6 4.4 4.2 C5.2 4 5.6 4.8 5.6 5.2 C5.6 4.8 6 4 6.8 4.2 C8.6 4.6 8.6 7.4 5.6 9.6 Z" fill="#ff8aa8"/></svg>';
-    if (laut === "ekel") return '<svg viewBox="-12 -12 24 24"><g fill="none" stroke="#6a9a2a" stroke-width="1.8" stroke-linecap="round"><path d="M-6 8 C-9 4 -3 1 -6 -3 C-8 -6 -5 -9 -5 -10"/><path d="M0 8 C-3 4 3 1 0 -3 C-2 -6 1 -9 1 -10"/><path d="M6 8 C3 4 9 1 6 -3 C4 -6 7 -9 7 -10"/></g></svg>';
-    if (laut === "knurren") return '<svg viewBox="-12 -12 24 24"><g fill="none" stroke="' + f + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M-10 -5 L-6 -8 L-2 -4 L2 -8 L6 -4 L10 -7"/><path d="M-10 2 L-6 -1 L-2 3 L2 -1 L6 3 L10 0"/><path d="M-8 9 L-4 6 L0 10 L4 6 L8 9"/></g></svg>';
-    return '<svg viewBox="-12 -12 24 24"><g fill="none" stroke="' + f + '" stroke-width="2.2" stroke-linecap="round"><path d="M-6 -5 A7 7 0 0 1 -6 5"/><path d="M-1 -8.4 A11 11 0 0 1 -1 8.4"/><path d="M4.2 -11 A14.6 14.6 0 0 1 4.2 11"/></g><path d="M-10.4 -2 l.9 -2.2 l.9 2.2 l2.2 .9 l-2.2 .9 l-.9 2.2 l-.9 -2.2 l-2.2 -.9 z" fill="#ffe27a"/></svg>';
-  }
-  function lautZeichen(x, y, laut, farbe, groesse, ms) {
-    var e = effektTeil("sp-laut-zeichen sp-laut-" + laut, x, y, lautZeichenSvg(laut, farbe || "#3a2350"), ms || 1100);
-    if (e && groesse) e.style.width = e.style.height = Math.round(groesse) + "px";
-    return e;
-  }
-  /* Früher eine Sprechblase — jetzt Laut und Zeichen neben dem Maul.
-     Mehrere Zeichen desselben Tiers stapeln sich nach oben. */
+  /* Was ein Tier „sagt", steht als kleine Blase NEBEN ihm und läuft nach
+     außen — nie über die Gesichtsmitte des Profilbilds. Mehrere Blasen
+     eines Tiers stapeln sich nach oben statt übereinander. */
   function tierSagt(t, text, farbe) {
-    var laut = tierStimmungVon(text), art = tierArtVon(t);
-    if (laut !== "still") tierLaut(t, laut === "ekel" ? "au" : laut);
     if (!teilchenErlaubt(1)) return;
-    var p = tierPunkt(t, tierFliegt(t) ? [102, 6] : [100, 80]);
+    var p = tierPunkt(t, tierFliegt(t) ? [104, 4] : [103, 90]);
     var jetzt = Date.now();
     if (jetzt - (t.sagtZeit || 0) < 700) t.sagtStufe = (t.sagtStufe || 0) + 1; else t.sagtStufe = 0;
     t.sagtZeit = jetzt;
-    var gr = Math.max(14, Math.min(28, p.s * 22));
-    var x = Math.min(window.innerWidth - gr * 0.6, p.x + gr * 0.2), y = p.y - (t.sagtStufe % 3) * gr * 0.8;
-    lautZeichen(x, y, laut === "still" ? "genuss" : laut, TIER_FARBE[art] || farbe, gr);
-    try { if (window.__tierLaute) window.__tierLaute.push({ art: art, laut: laut, text: String(text || "") }); } catch (e) {}
+    var e = document.createElement("div");
+    e.className = "sp-tier-sagt";
+    e.textContent = text;
+    e.style.setProperty("--farbe", farbe || "#3a2350");
+    e.style.left = Math.round(p.x) + "px";
+    e.style.top = Math.round(p.y - (t.sagtStufe % 3) * 17) + "px";
+    document.body.appendChild(e);
+    var b = e.getBoundingClientRect();
+    if (b.right > window.innerWidth - 4) e.style.left = Math.max(4, Math.round(window.innerWidth - 4 - b.width)) + "px";
+    teilchenWeg(e, 1250);
   }
   function chatTon(name, laut) { S.chatTonFrei = true; try { ton(name, laut); } finally { S.chatTonFrei = false; } }
   function zufall(liste) { return liste[Math.floor(Math.random() * liste.length)]; }
@@ -7473,11 +7152,6 @@
   /* --- Die Tierstimmen, erzeugt statt aufgenommen -------------------- */
   function tierStimme(typ, hoch) {
     if (!toeneAn() || lautStufe() === 0) return;
-    /* Fassung 695: gesprochene Laute (mmh, wow, ooh, kichern, frage) kommen
-       jetzt aus der eigenen Stimme jedes Tiers (tierSagt/tierLaut) — hier
-       bleiben nur die Geräusche ohne Stimme: Hecheln, Schnüffeln,
-       Schütteln, Schlucken. */
-    if (/^(mmh|wow|ooh|kichern|frage)$/.test(typ)) return;
     try { if (window.DMA_TONLOG) window.DMA_TONLOG.push({ name: "stimme:" + typ, wann: Math.round(performance.now()) }); } catch (e) {}
     var k = klangKontext();
     if (!k || k.state !== "running") return;
@@ -7619,183 +7293,7 @@
       if (Math.random() < 0.5) setTimeout(function () { chatTon("ruelps", 0.3); tierSagt(t, "Rülps!", "#6b3e12"); tierKlasse(t, "sp-tier-lacht", 800); }, 1600 + i * 300);
     });
   }
-  /* =================================================================
-     FASSUNG 695 — DIE SAHNE WIRD WIRKLICH ABGELECKT
-     -----------------------------------------------------------------
-     XANDER: „Sie sollen zum Beispiel die Sahne ablecken, wenn oben Sahne
-     drauf gesprüht wird. Das soll realistisch mit der Animation sein,
-     die Tiere, die das wirklich mit ihrer Zunge ablecken … lass dir Zeit
-     für die Details."
-
-     Der Ablauf, an der Uhr der Sahne (lcSahne, 4,2 s) ausgerichtet:
-       0–2,9 s  die Dose sprüht, die Haube wächst, die Kirsche fällt —
-                die Tiere schauen hoch (sie haben es gerochen);
-       2,9 s    die fertige Haube wird „übernommen": eine ruhende Kopie
-                an genau derselben Stelle, das Original blendet aus.
-                Sonst wäre sie nach 4,2 s weg, mitten im Lecken;
-       3,0 s    das Bodentier klettert am Rand des Profilbilds hoch —
-                in Bögen, leicht geneigt, wie auf einem Hügel —, das
-                Flugtier fliegt auf die andere Seite der Haube;
-       3,8 s    sie lecken: die Zunge schnellt vor, rollt sich ein,
-                bringt Sahne mit; nach jedem Zungenschlag ist die Haube
-                sichtbar kleiner (erst die Spitze, dann der obere Ring,
-                dann der mittlere, zuletzt schmilzt der untere). Die
-                Kirsche schnappt sich das erste Tier mit dem Maul;
-       ~7 s     Schnauze ablecken, zufriedener Laut, zurück an den Platz.
-     Jedes Tier leckt mit SEINEM Maul (TIER_GESICHT / tierGesicht) — der
-     Punkt, an dem die Zunge ansetzt, ist der Punkt, an dem das Tier ist.
-     ================================================================= */
-  var LECKZUNGE = function (m) {
-    var x = m[0], y = m[1];
-    return '<g class="sp-tz-leck" style="transform-origin:' + x + 'px ' + y + 'px">'
-      + '<path d="M' + x + " " + (y - 1.3) + " C" + (x - 3.4) + " " + (y - 3.6) + " " + (x - 8.2) + " " + (y - 4) + " " + (x - 9.6) + " " + (y - 1.4)
-      + " C" + (x - 9.4) + " " + (y + 1.2) + " " + (x - 4.2) + " " + (y + 1.8) + " " + x + " " + (y + 1.2) + ' Z" fill="#ff7aa2" stroke="#b83a64" stroke-width=".5"/>'
-      + '<path d="M' + (x - 1) + " " + y + " C" + (x - 4) + " " + (y - 1.4) + " " + (x - 6.4) + " " + (y - 1.8) + " " + (x - 8) + " " + (y - 1.4) + '" fill="none" stroke="#d9537e" stroke-width=".45"/>'
-      + '<circle class="sp-tz-sahne" cx="' + (x - 8.4) + '" cy="' + (y - 1.8) + '" r="1.5" fill="#fffdf8" stroke="#e6ddcc" stroke-width=".3"/></g>';
-  };
-  /* Punkte auf dem Rand des Profilbilds (im 100er-Raum des Kreises). */
-  function randPunkt(grad) { var w = grad * Math.PI / 180; return [50 + 50 * Math.cos(w), 50 + 50 * Math.sin(w)]; }
-  function reaktionSchlecken(platz, tiere, von, klasse) {
-    /* Die Haube entsteht erst NACH diesem Aufruf (lcAmPlatz baut die Schicht
-       danach) — geprüft wird deshalb erst, wenn sie fertig ist. */
-    if (!/sahne/.test(klasse || "")) return reaktionSchleckenKurz(platz, tiere);
-    /* Erst einmal: Nase hoch, schnuppern — die Sahne ist noch nicht fertig. */
-    tiere.forEach(function (t, i) {
-      setTimeout(function () { tierKlasse(t, "sp-tier-hochgucken", 1500); tierStimme("schnueffeln"); }, 500 + i * 250);
-      setTimeout(function () { tierSagt(t, "Wow"); }, 1700 + i * 300);
-    });
-    setTimeout(function () { sahneAblecken(platz, tiere); }, 2900);
-  }
-  function sahneAblecken(platz, tiere) {
-    var haube = platz.querySelector(".lc-sahne-haube"), kreis = platz.querySelector(".lc-kreis");
-    if (!haube || !kreis || !platz.isConnected) { reaktionSchleckenKurz(platz, tiere); return; }
-    var schicht = haube.parentNode, sr = schicht.getBoundingClientRect(), kr = kreis.getBoundingClientRect();
-    if (!sr.width || !kr.width) return;
-    /* Die Haube übernehmen: dieselben Teile, ruhend, an derselben Stelle. */
-    var kopie = document.createElement("div");
-    kopie.className = "sp-sahne-kopie";
-    kopie.style.left = sr.left + "px"; kopie.style.top = sr.top + "px"; kopie.style.width = sr.width + "px"; kopie.style.height = sr.height + "px";
-    [".lc-sahne-haube", ".lc-sahne-kirsche"].forEach(function (sel) { var e = schicht.querySelector(sel); if (e) kopie.appendChild(e.cloneNode(true)); });
-    document.body.appendChild(kopie);
-    schicht.style.visibility = "hidden";
-    var teile = [kopie.querySelector(".lc-sahne-spitze"), kopie.querySelector(".lc-sahne-3"), kopie.querySelector(".lc-sahne-2"), kopie.querySelector(".lc-sahne-1")];
-    var kirsche = kopie.querySelector(".lc-sahne-kirsche");
-    var bisse = 0, BISSE = 7;
-    var weniger = function () {
-      bisse++;
-      /* 7 Zungenschläge: Spitze (1), Ring 3 (2), Ring 2 (3–4), Ring 1 (5–7). */
-      var stand = [[0, 1, 1, 1], [0, 0.35, 1, 1], [0, 0, 0.8, 1], [0, 0, 0.45, 1], [0, 0, 0, 0.8], [0, 0, 0, 0.5], [0, 0, 0, 0]][Math.min(bisse, BISSE) - 1];
-      teile.forEach(function (e, i) {
-        if (!e) return;
-        var sk = stand[i];
-        e.style.transition = "transform .22s ease-out, opacity .22s";
-        e.style.transform = "translateX(-50%) scale(" + Math.max(0.001, sk).toFixed(2) + "," + Math.max(0.001, sk * (i === 3 ? 0.8 + 0.2 * sk : 1)).toFixed(2) + ")";
-        if (sk <= 0) e.style.opacity = "0";
-      });
-      /* Kleine Sahnetupfer fliegen weg. */
-      if (teilchenErlaubt(2)) for (var n = 0; n < 2; n++) {
-        var r = kopie.getBoundingClientRect();
-        effektTeil("sp-sahne-tupfer", r.left + r.width * (0.35 + Math.random() * 0.3), r.top + r.height * (0.1 + Math.random() * 0.2), "", 700,
-          { "--sx": Math.round((Math.random() - 0.5) * 30) + "px", "--sy": Math.round(-8 - Math.random() * 14) + "px" });
-      }
-    };
-    var boden = tiere.filter(function (t) { return !tierFliegt(t); })[0], luft = tiere.filter(function (t) { return tierFliegt(t); })[0];
-    var fertig = 0, alle = (boden ? 1 : 0) + (luft ? 1 : 0);
-    var ende = function () { if (++fertig < alle) return; setTimeout(function () { kopie.remove(); }, 250); };
-    if (boden) sahneTier(boden, kr, true, weniger, kirsche, ende, 0);
-    if (luft) sahneTier(luft, kr, false, weniger, boden ? null : kirsche, ende, 380);
-    if (!alle) kopie.remove();
-  }
-  /* Ein Tier klettert (oder fliegt) zur Haube, leckt und kommt zurück. */
-  function sahneTier(t, kr, klettert, weniger, kirsche, ende, verzug) {
-    var g = tierGesicht(t), fliegt = !klettert;
-    var d = t.cloneNode(true);
-    d.classList.add("sp-tier-begleiter", "sp-tier-leckt-oben");
-    [].slice.call(d.classList).forEach(function (c) { if (TIER_FLUECHTIG.test(c) && c !== "sp-tier-leckt-oben") d.classList.remove(c); });
-    [].forEach.call(d.querySelectorAll(".sp-tier-zusatz"), function (z) { z.remove(); });
-    d.style.left = d.style.top = "0px"; d.style.width = kr.width + "px"; d.style.height = kr.height + "px";
-    /* Drehpunkt = die Füße (Boden) bzw. die Brust (Flug): darum neigt es sich. */
-    d.style.transformOrigin = fliegt ? "90% 14%" : "84% 99%";
-    document.body.appendChild(d);
-    t.style.visibility = "hidden";
-    var e = kr.width / 100, sk = fliegt ? " scale(1.35)" : "";
-    /* Verschiebung in Kreis-Einheiten, damit das Maul bei (mx|my) liegt. */
-    var zum = function (mx, my, dreh) {
-      return "translate(" + (kr.left + (mx - g.m[0]) * e).toFixed(1) + "px," + (kr.top + (my - g.m[1]) * e).toFixed(1) + "px) rotate(" + (dreh || 0) + "deg)" + sk;
-    };
-    var heim = "translate(" + kr.left.toFixed(1) + "px," + kr.top.toFixed(1) + "px) rotate(0deg)" + sk;
-    var weg;
-    if (klettert) {
-      /* Die Füße wandern über den Rand: 20° → −12° → −38° (rechts oben). */
-      var fuss = function (grad) { var p = randPunkt(grad); return [p[0] + (g.m[0] - 84), p[1] + (g.m[1] - 99)]; };
-      var a = fuss(22), b = fuss(-12), c = fuss(-38), oben1 = [c[0] - 5, c[1] - 3], oben2 = [c[0] - 12, c[1] - 7];
-      weg = [
-        { transform: heim, offset: 0 },
-        { transform: zum(a[0], a[1] - 6, -10), offset: 0.06 },
-        { transform: zum(a[0], a[1], -18), offset: 0.1 },
-        { transform: zum(b[0], b[1] - 5, -30), offset: 0.16 },
-        { transform: zum(b[0], b[1], -40), offset: 0.2 },
-        { transform: zum(c[0], c[1] - 3, -28), offset: 0.26 },
-        { transform: zum(oben1[0], oben1[1], -18), offset: 0.3 },
-        /* lecken — es rückt dabei zweimal nach, weil die Sahne weniger wird */
-        { transform: zum(oben1[0], oben1[1], -18), offset: 0.48 },
-        { transform: zum(oben2[0], oben2[1], -10), offset: 0.52 },
-        { transform: zum(oben2[0], oben2[1], -10), offset: 0.76 },
-        /* zurück, in zwei Sprüngen */
-        { transform: zum(b[0], b[1] - 8, -30), offset: 0.86 },
-        { transform: zum(a[0], a[1] - 4, -14), offset: 0.93 },
-        { transform: heim, offset: 1 }
-      ];
-    } else {
-      /* Das Flugtier schwebt über dem kletternden an die obere Flanke der
-         Haube (es schaut wie alle Tiere nach links, zur Sahne hin). */
-      weg = [
-        { transform: heim, offset: 0 },
-        { transform: zum(80, -38, -6), offset: 0.14 },
-        { transform: zum(76, -20, 6), offset: 0.26 },
-        { transform: zum(76, -20, 6), offset: 0.5 },
-        { transform: zum(70, -13, 4), offset: 0.54 },
-        { transform: zum(70, -13, 4), offset: 0.76 },
-        { transform: zum(84, -30, -8), offset: 0.88 },
-        { transform: heim, offset: 1 }
-      ];
-    }
-    /* 5,6 s: Hochklettern ~1,7 s, Lecken ~2,5 s (sieben Zungenschläge,
-       dazwischen schlucken), Schnauze ablecken und zurück ~1,4 s. */
-    var DAUER = 5600;
-    setTimeout(function () {
-      if (klettert) { tierKlasse(d, "sp-tier-klettert", DAUER * 0.3); tierLaut(t, "frage", 0.3); }
-      try { d.animate(weg, { duration: DAUER, easing: "ease-in-out", fill: "forwards" }); } catch (x) {}
-      /* Die Zungenschläge: ab 30 % der Zeit, bis 76 %. */
-      var schlaege = klettert ? [0.32, 0.37, 0.42, 0.55, 0.61, 0.67, 0.72] : [0.29, 0.35, 0.41, 0.57, 0.64, 0.71];
-      schlaege.forEach(function (o, i) {
-        setTimeout(function () {
-          tierZusatz(d, LECKZUNGE(g.m), 380, "sp-tz-leckt");
-          S.chatTonFrei = true; try { klangSpielen("tier-schlecken", 0.28 + Math.random() * 0.08, 0.9 + Math.random() * 0.25) || ton("lecken", 0.3); } finally { S.chatTonFrei = false; }
-          weniger();
-          /* Die Kirsche: beim zweiten Zungenschlag mit dem Maul geschnappt. */
-          if (i === 1 && kirsche && kirsche.isConnected) {
-            var km = tierPunkt(d, g.m);
-            var kr2 = kirsche.getBoundingClientRect();
-            kirsche.style.transition = "transform .3s ease-in, opacity .3s";
-            kirsche.style.transform = "translate(" + (km.x - (kr2.left + kr2.width / 2)).toFixed(1) + "px," + (km.y - (kr2.top + kr2.height / 2)).toFixed(1) + "px) scale(.5)";
-            kirsche.style.opacity = "0";
-            setTimeout(function () { tierKlasse(d, "sp-tier-schnappt", 500); chatTon("mampf", 0.3); }, 280);
-          }
-        }, DAUER * o);
-      });
-      /* Schnauze ablecken, zufrieden. */
-      setTimeout(function () { tierZusatz(d, ZUNGE(g, 4), 600, "sp-tz-lippen"); tierSagt(d, "Mmmh"); }, DAUER * 0.79);
-      setTimeout(function () {
-        d.remove(); t.style.visibility = "";
-        if (Math.random() < 0.4) setTimeout(function () { chatTon("ruelps", 0.26); tierKlasse(t, "sp-tier-lacht", 700); }, 350);
-        ende();
-      }, DAUER + 40);
-    }, verzug);
-    setTimeout(function () { herzchen(platzVonTier(t)); }, verzug + DAUER * 0.8);
-  }
-  function platzVonTier(t) { var p = t; while (p && !(p.classList && p.classList.contains("lc-platz"))) p = p.parentNode; return p || t; }
-  function reaktionSchleckenKurz(platz, tiere) {
+  function reaktionSchlecken(platz, tiere) {
     tiere.forEach(function (t, i) {
       var g = tierGesicht(t);
       setTimeout(function () {
@@ -8261,7 +7759,7 @@
           try { d.el.animate([{ transform: d.el.style.transform }, { transform: nach + " translateY(-" + Math.round(zr.height * 0.18) + "px)" + sk, offset: 0.5 }, { transform: nach + sk }], { duration: 480, easing: "ease-in-out", fill: "forwards" }); } catch (e) {}
           d.el.style.transform = nach + sk;
         });
-        doppel.forEach(function (d, i) { setTimeout(function () { tierLaut(d.el, "ruf", 0.36); }, i * 160); });
+        tierStimme("kichern");
       }, 1500);
       setTimeout(ende, 2050);
     } else {
@@ -8762,7 +8260,6 @@
     ackerPflegen();
     erinnerungPruefen();
     tiereSpielen();
-    tierZustandPflegen();
     /* FASSUNG 679 — wechselt, wer mitspielt, wird die Spiel-Sitzordnung neu angewendet. */
     var sitzZeichen = spielSichtbar() + "|" + Object.keys(S.stand).filter(function (k) { return S.stand[k] && S.stand[k].mitspielen; }).sort().join(",");
     if (sitzZeichen !== S.sitzZeichen) { S.sitzZeichen = sitzZeichen; try { if (LC() && LC().spielSitzeNeu) LC().spielSitzeNeu(); } catch (e) {} }
@@ -9144,7 +8641,7 @@
       schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
       turmZeile: turmZeile, platzGewechselt: platzGewechselt,
       eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,
-      krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, zauberStart: zauberStart, fuettern: fuettern, tierZustandPflegen: tierZustandPflegen, faehigZeigen: faehigZeigen, FAEHIG: FAEHIG, tierLaut: tierLaut, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
+      krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, zauberStart: zauberStart, fuettern: fuettern, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, chatWaffeZeigen: chatWaffeZeigen, tierReagiert: tierReagiert, tiereSpielen: tiereSpielen, handelLaden: handelLaden, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,

@@ -168,9 +168,10 @@ const sage = (gut, was, zusatz) => {
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.haustier_leben = 0; S.stand[S.ich.id].haustier_leben = 0; S.schnellReiter = "tiere"; window.DMA_SPIEL.pruef.zeichnen(); window.DMA_SPIEL.pruef.schnellZeichnen(true); });
   await tick(200);
   const muede = await pg.evaluate(() => { const t = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-tier');
-    return { schwach: t && t.classList.contains("sp-tier-schwach"), zzz: t ? getComputedStyle(t, "::after").content : "",
+    return { schwach: t && t.classList.contains("sp-tier-schwach"), zzz: t ? getComputedStyle(t, "::after").content : "", blase: t ? getComputedStyle(t, "::after").animationName : "",
       warn: (document.querySelector(".sp-schnellmenue .sp-sm-warn") || {}).textContent || "", fuettern: !!document.querySelector('.sp-schnellmenue [data-s="gross"][data-r="tiere"]') }; });
-  sage(muede.schwach && /Zzz/.test(muede.zzz), "0 Kraft: das Fellmonster ist grau und schläft („Zzz“)", muede.zzz);
+  /* Fassung 695 — XANDER: keine Schrift an den Tieren; statt „Zzz“ eine Schlafblase an der Nase. */
+  sage(muede.schwach && !/Zzz/.test(muede.zzz) && /spSchlafblase/.test(muede.blase), "0 Kraft: das Fellmonster ist grau und schläft (Schlafblase)", muede.zzz + " " + muede.blase);
   sage(/Gegenbiss kostet 1 Kraft/.test(muede.warn) && muede.fuettern, "im Tiere-Reiter steht warum – und „Jetzt füttern“", muede.warn);
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich.haustier_leben = 30; S.stand[S.ich.id].haustier_leben = 30; S.schnellMenue = false; window.DMA_SPIEL.pruef.zeichnen(); window.DMA_SPIEL.pruef.schnellZeichnen(true); });
 

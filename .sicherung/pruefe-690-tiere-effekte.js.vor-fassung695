@@ -153,7 +153,7 @@ const sage = (gut, was, zusatz) => {
   await tick(500);
   const probe = (chat, klasse, von, warte, blick) => pg.evaluate(([chat, klasse, von, warte, blick]) => new Promise((ok) => {
     const pl = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + chat + '"]');
-    pl.dataset.tierZeit = 0; window.DMA_TONLOG.length = 0; window.__tierReaktionen.length = 0; window.__tierLaute = [];
+    pl.dataset.tierZeit = 0; window.DMA_TONLOG.length = 0; window.__tierReaktionen.length = 0;
     const gesehen = {};
     const merk = () => {
       pl.querySelectorAll(".sp-tier, .sp-flugtier").forEach((t) => t.classList.forEach((c) => { if (/^sp-tier-(saugt|spuckt|schnappt|lacht|hechelt|nass|schuettelt|wundert|hochgucken|schnueffelt|tanzt|guckt|schreck|zittert|hops|leckt|kuschelt|sucht|schwindelig|nickt|versteckt|glaenzt|kratzt|pustet|ekelt)$/.test(c)) gesehen[c] = 1; }));
@@ -168,14 +168,9 @@ const sage = (gut, was, zusatz) => {
     };
     const uhr = setInterval(merk, 60);
     window.DMA_SPIEL.chatEffekt(pl, klasse, von);
-    /* Fassung 695: was ein Tier „sagt", ist jetzt ein Laut mit gezeichnetem
-       Zeichen — die Worte stehen in __tierLaute (keine Blase mehr). */
-    setTimeout(() => { clearInterval(uhr); (window.__tierLaute || []).forEach((l) => { gesehen["sagt:" + l.text] = 1; gesehen["laut:" + l.laut] = 1; }); ok({ art: (window.__tierReaktionen[0] || {}).art, gesehen: Object.keys(gesehen), ton: window.DMA_TONLOG.map((t) => t.name) }); }, warte);
+    setTimeout(() => { clearInterval(uhr); ok({ art: (window.__tierReaktionen[0] || {}).art, gesehen: Object.keys(gesehen), ton: window.DMA_TONLOG.map((t) => t.name) }); }, warte);
   }), [chat, klasse, von, warte, blick]);
-  /* Fassung 695: die gesprochenen Laute kommen aus der eigenen Stimme des Tiers
-     (ton/tier-<art>-<laut>) statt aus dem gerechneten Ton. */
-  const STIMME = { "stimme:mmh": /^tier-.+-genuss$/, "stimme:frage": /^tier-.+-frage$/, "stimme:wow": /^tier-.+-ruf$/, "stimme:kichern": /^tier-.+-ruf$/, "stimme:ooh": /^tier-.+-(frage|ruf)$/ };
-  const hat = (r, ...w) => w.every((x) => r.gesehen.includes(x) || r.ton.includes(x) || (STIMME[x] && r.ton.some((t) => STIMME[x].test(t))));
+  const hat = (r, ...w) => w.every((x) => r.gesehen.includes(x) || r.ton.includes(x));
   const sagt = (r, re) => r.gesehen.some((g) => g.startsWith("sagt:") && re.test(g.slice(5)));
 
   console.log("\nFUNK 137: TIERE REAGIEREN AUF DIE PROFILEFFEKTE\n");
@@ -184,10 +179,8 @@ const sage = (gut, was, zusatz) => {
   const fleck = await pg.evaluate(() => true);
   r = await probe("ich", "lc-spucke", "Bea", 2600);
   sage(r.art === "schlucken" && hat(r, "sp-tier-schnappt", "zunge", "mampf", "stimme:schluck"), "Spucke: fangen und schlucken", JSON.stringify(r));
-  /* Fassung 695: erst schauen sie hoch und schnuppern, bis die Sahne fertig ist;
-     ohne echte Haube (hier nur der Effekt-Aufruf) lecken sie dann am Platz. */
-  r = await probe("ich", "lc-sahne", "Bea", 5600);
-  sage(r.art === "schlecken" && hat(r, "sp-tier-hochgucken", "sp-tier-leckt", "zunge", "lecken", "mampf", "ruelps", "herz") && sagt(r, /Rülps/), "Sahne: hochschauen, lecken, schmatzen, rülpsen", JSON.stringify(r));
+  r = await probe("ich", "lc-sahne", "Bea", 3000);
+  sage(r.art === "schlecken" && hat(r, "sp-tier-leckt", "zunge", "lecken", "mampf", "ruelps", "herz") && sagt(r, /Rülps/), "Sahne: lecken, schmatzen, rülpsen", JSON.stringify(r));
   r = await probe("ich", "lc-streichel", "Bea", 1800);
   sage(r.art === "lieb" && hat(r, "sp-tier-hechelt", "zusatz:sp-tz-hechel", "stimme:hecheln", "stimme:mmh", "sp-tier-kuschelt") && sagt(r, /Mm|Hm/), "Streicheln: Fellmonster hechelt wie ein Hund, Babydrache macht „mmmh“", JSON.stringify(r));
   r = await probe("ich", "lc-muenze", "Bea", 1600);
@@ -253,14 +246,14 @@ const sage = (gut, was, zusatz) => {
   sage(r.art === "suchen" && hat(r, "sp-tier-sucht") && sagt(r, /Wo|Hallo|Weg/), "Katapult: die Tiere bleiben und suchen auf dem Platz", JSON.stringify(r));
   await tick(2600);
   /* Die Lok fährt über Bea: die Tiere jagen hinterher. */
-  const jagd = await pg.evaluate(() => new Promise((ok) => { window.DMA_TONLOG.length = 0; window.__tierLaute = [];
+  const jagd = await pg.evaluate(() => new Promise((ok) => { window.DMA_TONLOG.length = 0;
     const pl = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]'); pl.dataset.tierJagd = 0; const k = pl.querySelector(".lc-kreis");
     k.classList.add("lc-ueberfahren"); setTimeout(() => k.classList.remove("lc-ueberfahren"), 900);
-    setTimeout(() => ok({ bewegt: [...pl.querySelectorAll(".sp-tier, .sp-flugtier")].some((t) => t.getAnimations().length > 0), sagt: (window.__tierLaute || []).map((l) => l.text), /* Fassung 695: Laute statt Blasen */ ton: window.DMA_TONLOG.map((t) => t.name) }), 700); }));
+    setTimeout(() => ok({ bewegt: [...pl.querySelectorAll(".sp-tier, .sp-flugtier")].some((t) => t.getAnimations().length > 0), sagt: [...document.querySelectorAll(".sp-tier-sagt")].map((e) => e.textContent), ton: window.DMA_TONLOG.map((t) => t.name) }), 700); }));
   sage(jagd.bewegt && jagd.sagt.some((t) => /Wuff|Grrr|Halt|Rrrr/.test(t)) && jagd.ton.some((t) => /bellen|knurr|grummeln/.test(t)), "Fahrzeug fährt drüber: die Tiere jagen hinterher und knurren", JSON.stringify(jagd));
   await tick(1800);
   /* Reisen: der Platz ist unterwegs, das Bild bewegt sich — die Doppelgänger hängen dran; mit Beamen kommen sie kurz vertauscht an. */
-  const reise = await pg.evaluate(() => new Promise((ok) => { window.__tierLaute = [];
+  const reise = await pg.evaluate(() => new Promise((ok) => {
     const pl = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]'), k = pl.querySelector(".lc-kreis");
     const beam = document.createElement("span"); beam.className = "lc-beam"; beam.style.cssText = "position:absolute;left:0;top:0;width:30px;height:60px"; document.getElementById("lcPlaetze").appendChild(beam);
     pl.classList.add("lc-platz-unterwegs");
@@ -271,7 +264,7 @@ const sage = (gut, was, zusatz) => {
       const erg = { doppel: d.length, folgt: br ? Math.abs(br.left - kr.left) < 12 && Math.abs(br.top - kr.top) < 12 : false, beamt: d.some((e) => e.classList.contains("sp-tier-beamt")), saeulen: document.querySelectorAll(".sp-tier-begleiter .sp-tier-beamsaeule").length };
       k.getAnimations().forEach((a) => a.cancel());
       pl.classList.remove("lc-platz-unterwegs");
-      setTimeout(() => { erg.tausch = (window.__tierLaute || []).map((l) => l.text).filter((t) => /Hä|\?!/.test(t)); /* Fassung 695 */ }, 900);
+      setTimeout(() => { erg.tausch = [...document.querySelectorAll(".sp-tier-sagt")].map((e) => e.textContent).filter((t) => /Hä|\?!/.test(t)); }, 900);
       setTimeout(() => { erg.weg = !document.querySelector(".sp-tier-begleiter"); beam.remove(); ok(erg); }, 2400);
     }, 900);
   }));

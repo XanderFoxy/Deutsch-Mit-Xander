@@ -43,13 +43,13 @@
  "quiz.js": "7884e008f38ef069fe65c18b2ddbaeb1ef9ba444",
  "rueckfrage.js": "c3a14f5a0bc3bff4a2917e20d49c30a87c4dba3a",
  "satzbau.js": "6a17d2e3d36b61372c95a00cc9dd7cec361d30f9",
- "spiel.css": "965099292d7166bbb6a61f46e585ed5931901ac6",
- "spiel.js": "88646228edd03347d258e8cf339a79cbc71086ef",
  "styles.css": "6d9def5b08d90b41aa69a36db9adb3f20c33dd1f",
  "supabase-config.js": "825bb26f42e6feef78258e774112d4d7c05f4d54",
  "themes.css": "9529740c81dcc59ed2e16beebf5b22404b14c625",
  "ton-liste.js": "831b0bb2765251f631db9fe99ea48fc0c46de9c8",
  "werkstatt.css": "5983b13d12f52bb27f26c3a2e174a726ea496e96",
  "werkstatt.js": "6b16574f10d08259b581e0e9f4d0c0e0cbdbf42d",
- "data-geraeusche.js": "d3011440640adc9a80a74e25e06037b117305586"
+ "spiel.css": "4c541a9d6627325ad5e86efee8822d2269c08af4",
+ "spiel.js": "76d721a17ca28084c486943a2c773b79931f9bd8",
+ "data-geraeusche.js": "0b684f47d0bb8c5a7ee70d09c6b9bce7da785e44"
 }

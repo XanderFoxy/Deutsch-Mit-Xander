@@ -158,8 +158,8 @@ const sage = (gut, was, zusatz) => {
     return { zaehl, glanz };
   });
   const z = einhorn.zaehl;
-  sage(einhorn.glanz && z["sp-regenbogen-strahl"] >= 1 && z["sp-ring-welle"] >= 3 && z["sp-stern-burst"] >= 15 && z["sp-text-puff"] >= 1,
-    "Einhorn: glänzt in Regenbogenfarben, Regenbogenstrahl vom Horn, drei Farbringe, Sternenregen, „Regenbogen“", JSON.stringify(einhorn));
+  sage(einhorn.glanz && z["sp-regenbogen-strahl"] >= 1 && z["sp-ring-welle"] >= 3 && z["sp-stern-burst"] >= 15 && (z["sp-laut-zeichen"] || 0) >= 1,
+    "Einhorn: glänzt in Regenbogenfarben, Regenbogenstrahl vom Horn, drei Farbringe, Sternenregen, Laut-Zeichen (Fassung 695: keine Schrift mehr)", JSON.stringify(einhorn));
   await pg.evaluate(() => window.DMA_SPIEL.pruef.tierAngriff("ich", "bea", "einhorn"));
   await tick(950);
   const box = await pg.evaluate(() => { const r = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]').getBoundingClientRect(); return { x: Math.max(0, r.left - 140), y: Math.max(0, r.top - 90), width: Math.min(360, r.width + 200), height: r.height + 150 }; });
@@ -167,8 +167,8 @@ const sage = (gut, was, zusatz) => {
   await tick(2600);
 
   console.log("\nJEDES TIER HAT SEINE HANDSCHRIFT\n");
-  const merkmal = { stachelmonster: "sp-stachel-flug", schaeferhund: "sp-ring-welle", dackel: "sp-text-puff", fuchs: "sp-stern-burst", babyfuchs: "sp-stern-burst",
-                    wolpertinger: "sp-stern-burst", fellmonster: "sp-text-puff", eule: "sp-goldfeder", storch: "sp-text-puff", greif: "sp-goldfeder" };
+  const merkmal = { stachelmonster: "sp-stachel-flug", schaeferhund: "sp-ring-welle", dackel: "sp-laut-zeichen", fuchs: "sp-stern-burst", babyfuchs: "sp-stern-burst",
+                    wolpertinger: "sp-stern-burst", fellmonster: "sp-laut-zeichen", eule: "sp-goldfeder", storch: "sp-laut-zeichen", greif: "sp-goldfeder" };
   const erg = {};
   for (const art of Object.keys(merkmal)) {
     erg[art] = await pg.evaluate(async ([art, kl]) => {

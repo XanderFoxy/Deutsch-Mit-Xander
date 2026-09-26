@@ -118,6 +118,14 @@ const GERAEUSCHE = [
      Hunger (Magenknurren) und Müdigkeit (Gähnen). 20 Credits je Sekunde –
      deshalb kurz. Die Seite verstimmt jeden Laut beim Abspielen ein wenig,
      damit er nie zweimal gleich klingt. */
+  /* FASSUNG 696 — XANDER: „bei den Ankunftsanimationen kannst du noch vier
+     unterschiedliche Sachen machen … den Truck an den Colt Seavers … Kit …
+     Pontiac Firebird … Lichtleiste … Dodge Viper … Liane … Transformers". */
+  { name: "auftritt-colt", dauer: 3.5, text: "A lifted 1980s pickup truck with a big V8 engine roaring, jumping off a ramp, flying briefly and landing hard with a heavy suspension thud and rattling, no music, no voices" },
+  { name: "auftritt-kitt", dauer: 3, text: "A futuristic black sports car gliding in: a pulsing electronic scanner whoosh sweeping left and right repeatedly over a smooth turbine engine hum, no music, no voices" },
+  { name: "auftritt-viper", dauer: 3, text: "A V10 sports car engine roaring, revving hard and accelerating past, deep aggressive exhaust burble, no music, no voices" },
+  { name: "auftritt-liane", dauer: 3, text: "Swinging on a jungle vine: a long whoosh through the air, rustling leaves, creaking vine, a few exotic bird calls, playful, no voices, no music" },
+  { name: "auftritt-trafo", dauer: 3, text: "A giant robot transforming from a car: rapid mechanical clicks, whirring servos, metal plates sliding and locking into place, ending with a heavy clunk, no music, no voices" },
   { name: "tier-fellmonster-ruf", dauer: 1.2, text: "a cute small furry gremlin-like monster: happy bubbly gurgling giggle. Short, cute, close microphone, no music, no background, no human voice" },
   { name: "tier-fellmonster-frage", dauer: 1.2, text: "a cute small furry gremlin-like monster: curious rising questioning grunt 'hrrm?'. Short, cute, close microphone, no music, no background, no human voice" },
   { name: "tier-fellmonster-au", dauer: 1.2, text: "a cute small furry gremlin-like monster: short startled whimper yelp. Short, cute, close microphone, no music, no background, no human voice" },
