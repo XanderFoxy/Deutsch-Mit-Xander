@@ -4166,22 +4166,11 @@
       if (hq) dorfZoom(true, hq[0] / 320, Math.max(0, hq[1] - 10) / 200); else schnellZeichnen(true);
       if (S.dorfWahl) setTimeout(function () { try { var st = schnellEl.querySelector(".sp-dl-station"); if (st) st.scrollIntoView({ block: "nearest" }); } catch (e) {} }, 60);
       return;
-    } else if (s === "dorfzeichen") {
-      /* FASSUNG 711 — Funk 158: „Das Dorf soll in der kleinen Sicht ohne die Symbole sein man kann die Symbole … optional dazu schalten". */
-      S.dorfZeichen = !dorfZeichen(); try { localStorage.setItem("dma_dorf_zeichen", S.dorfZeichen ? "1" : "0"); } catch (e) {}
-      ton("holzklopf", 0.2); schnellZeichnen(true); return;
-    } else if (s === "dorfnachoben") {
-      try { var dr = schnellEl.querySelector(".sp-dl-rahmen"); if (dr) dr.scrollIntoView({ block: "start", behavior: "smooth" }); } catch (e) {}
-      return;
     } else if (s === "dorfzoom") {
       S.dorfKarte = false; ton("swoosh", 0.25);
       dorfZoom(k.dataset.n === "1");
       return;
     } else if (s === "dorfwahl") {
-      /* FASSUNG 711 — XANDER (Funk 158): „wenn man die Sachen einsammelt dass man die per Klick einfach automatisch einsammelt
-         dort wo fertig steht … ohne dass man da extra noch diesen Knopf braucht". Steht an einem Haus „fertig" (oder liegen
-         Eier/Milch bereit), sammelt ein Tipp darauf gleich ein; der nächste Tipp öffnet es wie gewohnt. */
-      if (dorfFertigSammeln(k.dataset.g)) { S.dorfTippWeg = true; return; }
       /* FASSUNG 686 — Tipp auf ein Gebäude im Dorfbild: seine Station öffnet sich im Bild. */
       S.dorfWahl = k.dataset.g && S.dorfWahl !== k.dataset.g ? k.dataset.g : ""; S.dorfTippWeg = true;
       ton(S.dorfWahl ? "holzklopf" : "swoosh", 0.25);
@@ -4398,7 +4387,10 @@
       });
       return;
     } else if (s === "abholen") {
-      werkAbholen(k.dataset.g);
+      wirtschaft("spiel_werk_abholen", { p_gebaeude: k.dataset.g }, function (r) {
+        ton("geschenk", 0.45);
+        hinweis("🧺 +" + r.menge + " " + wareName(r.ware) + " abgeholt." + (r.ware === "trank_mana" ? " Trinken: Flasche in der Leiste." : ""));
+      });
       return;
     } else if (s === "markt") {
       wirtschaft("spiel_markt", { p_ware: k.dataset.w, p_menge: 0 }, function (r) {
@@ -8282,17 +8274,8 @@
   /* ------------ Die Landschaft ------------ */
   function dmLandschaft(g, K, s) {
     var i;
-    if (DM.nachtJetzt) {
-      /* FASSUNG 711 — XANDER (Funk 158): „nicht so ein hellblauer übertinteter schwarzer Himmel sondern ein realistischer Himmel
-         der wie Nacht aussieht". Tiefschwarzblau oben, zum Horizont ein Hauch Licht, Sterne und Mond (vor den Bergen gemalt). */
-      var nh = g.createLinearGradient(0, 0, 0, 80); nh.addColorStop(0, "#02040c"); nh.addColorStop(.55, "#0a1226"); nh.addColorStop(1, "#1d2a44"); g.fillStyle = nh; g.fillRect(0, 0, 320, 200);
-      for (i = 0; i < 90; i++) { var sx0 = dmHash(i, 1, 991) * 320, sy0 = dmHash(i, 2, 991) * 46, sr = .18 + dmHash(i, 3, 991) * .35; g.fillStyle = "rgba(255,255,255," + (.45 + dmHash(i, 4, 991) * .55).toFixed(2) + ")"; g.beginPath(); g.arc(sx0, sy0, sr, 0, 7); g.fill(); }
-      var mg = g.createRadialGradient(262, 16, 0, 262, 16, 22); mg.addColorStop(0, "rgba(230,235,255,.35)"); mg.addColorStop(1, "rgba(230,235,255,0)"); g.fillStyle = mg; g.fillRect(230, 0, 64, 44);
-      g.fillStyle = "#f4f1df"; g.beginPath(); g.arc(262, 16, 4.2, 0, 7); g.fill(); g.fillStyle = "rgba(160,160,150,.35)"; g.beginPath(); g.arc(261, 15, 1, 0, 7); g.arc(263.6, 17.4, .7, 0, 7); g.fill();
-    } else {
     var him = g.createLinearGradient(0, 0, 0, 90); him.addColorStop(0, "#7fbde6"); him.addColorStop(.6, "#c6e3f3"); him.addColorStop(1, "#eef3e0"); g.fillStyle = him; g.fillRect(0, 0, 320, 200);
     var so = g.createRadialGradient(272, 22, 2, 272, 22, 60); so.addColorStop(0, "rgba(255,248,210,.95)"); so.addColorStop(.25, "rgba(255,240,190,.45)"); so.addColorStop(1, "rgba(255,240,190,0)"); g.fillStyle = so; g.fillRect(180, 0, 140, 90);
-    }
     /* Ferne Berge: gebrochene Grate (jede Strecke mehrfach geteilt und verschoben), jede Flanke nach ihrer
        Neigung belichtet (Sonne rechts oben), Schnee nur oben und in Rinnen, Fels als Stoff. */
     function grat(pts, rau, seed) {
@@ -8391,34 +8374,6 @@
     g.fillStyle = dmMuster(g, K.feldstein, .04 / s); g.beginPath(); g.ellipse(140, 132, 2.4, 1, 0, 0, 7); g.fill(); g.fillRect(137.6, 128, 4.8, 4); g.fillStyle = "#2a4a6a"; g.beginPath(); g.ellipse(140, 128, 2.2, .8, 0, 0, 7); g.fill();
     g.fillStyle = "#6b4521"; g.fillRect(137.8, 123.4, .5, 5); g.fillRect(141.7, 123.4, .5, 5); g.fillStyle = dmMuster(g, K.ziegel, .05 / s); g.beginPath(); g.moveTo(137, 124); g.lineTo(140, 121.4); g.lineTo(143, 124); g.fill();
   }
-  /* FASSUNG 711 — Laternen an den Wegen (tagsüber aus, nachts brennen sie). */
-  var DM_LATERNEN = [[126, 108], [148, 99], [196, 88], [170, 124], [182, 146], [94, 126], [62, 114], [240, 94], [214, 148], [226, 172], [258, 178], [150, 160], [36, 116], [270, 106]];
-  function dmLaternen(g) {
-    DM_LATERNEN.forEach(function (p) {
-      var x = p[0], y = p[1];
-      g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.ellipse(x - 1.2, y + .3, 1.6, .5, 0, 0, 7); g.fill();
-      g.strokeStyle = "#2a2622"; g.lineWidth = .55; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - 6.4); g.lineTo(x + 1.2, y - 6.4); g.stroke();
-      g.fillStyle = DM.nachtJetzt ? "#ffe6a0" : "#c9c2a8"; g.fillRect(x + .7, y - 6.3, 1.1, 1.5);
-      g.fillStyle = "#2a2622"; g.fillRect(x + .55, y - 6.7, 1.4, .45);
-    });
-  }
-  /* Die Nacht ins Bild gemalt: alles nachtblau (unten heller, damit man alles erkennt), dann Licht hinzu –
-     warme Fenster in jedem heilen Haus und Lichtkegel unter den Laternen. */
-  function dmNacht(g, dorf, lage) {
-    g.save();
-    g.globalCompositeOperation = "multiply";
-    var n = g.createLinearGradient(0, 0, 0, 200); n.addColorStop(0, "rgb(170,178,215)"); n.addColorStop(.22, "rgb(62,74,128)"); n.addColorStop(.5, "rgb(92,104,156)"); n.addColorStop(1, "rgb(128,138,184)");
-    g.fillStyle = n; g.fillRect(0, 0, 320, 200);
-    g.globalCompositeOperation = "lighter";
-    var licht = function (x, y, r, a) { var lg = g.createRadialGradient(x, y, 0, x, y, r); lg.addColorStop(0, "rgba(255,200,110," + a + ")"); lg.addColorStop(.4, "rgba(255,160,60," + (a * .45).toFixed(3) + ")"); lg.addColorStop(1, "rgba(255,140,40,0)"); g.fillStyle = lg; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); };
-    DM_LATERNEN.forEach(function (p) { licht(p[0] + 1.2, p[1] - 5.6, 3.2, .9); licht(p[0], p[1] + .5, 7, .28); });
-    Object.keys(lage).forEach(function (k) {
-      var d = (dorf || {})[k]; if (!d || !(d.stufe > 0) || !(d.lp > 0)) return;
-      var q = lage[k], u = dmUmriss(k, d.stufe), cx = q[0] + (u[0] + u[2]) / 2, cy = q[1] + u[1] * .3;
-      licht(cx - 2, cy, 5, .55); licht(cx + 3, cy + 2, 4, .45); licht(cx, q[1] + 1, 9, .18);
-    });
-    g.restore();
-  }
   function dmWolken(g) {
     [[40, 16, 1], [150, 10, .8], [236, 22, .9]].forEach(function (w) {
       for (var i = 0; i < 7; i++) { var wx = w[0] + (i - 3) * 4 * w[2], wy = w[1] - Math.sin(i / 6 * Math.PI) * 3 * w[2], wr = (3 + Math.sin(i / 6 * Math.PI) * 2.5) * w[2];
@@ -8426,21 +8381,18 @@
     });
   }
   /* Malt das ganze Dorf in eine Leinwand. lage = DORF_LAGE, dorf = ich.dorf. Gibt Punkte für Rauch und Mühlenflügel zurück. */
-  function dorfMalen(leinwand, dorf, lage, breitePx, nacht) {
+  function dorfMalen(leinwand, dorf, lage, breitePx) {
     if (!DM.kacheln) DM.kacheln = dmKachelnMachen();
     var K = DM.kacheln, W = Math.round(breitePx), H = Math.round(breitePx * 200 / 320), s = W / 320;
     leinwand.width = W; leinwand.height = H;
     var g = leinwand.getContext("2d"); g.setTransform(s, 0, 0, s, 0, 0); g.imageSmoothingEnabled = true;
-    DM.nachtJetzt = !!nacht;
-    dmLandschaft(g, K, s); if (!nacht) dmWolken(g);
+    dmLandschaft(g, K, s); dmWolken(g);
     var punkte = {};
     Object.keys(lage).sort(function (a, b) { return lage[a][1] - lage[b][1]; }).forEach(function (k) {
       var q = lage[k], d = (dorf || {})[k], st = d && d.stufe > 0 ? d.stufe : 0;
       if (st) punkte[k] = dmGebaeude(g, K, s, k, q[0], q[1], st, !(d.lp > 0));
       else dmBauplatz(g, K, s, q[0], q[1]);
     });
-    dmLaternen(g);
-    if (nacht) { dmNacht(g, dorf, lage); return punkte; }
     /* Warmes Licht von rechts oben, leichte Vignette. */
     var li = g.createRadialGradient(290, 10, 10, 290, 10, 340); li.addColorStop(0, "rgba(255,236,190,.16)"); li.addColorStop(.5, "rgba(255,236,190,0)"); li.addColorStop(1, "rgba(30,20,40,.22)"); g.fillStyle = li; g.fillRect(0, 0, 320, 200);
     return punkte;
@@ -8495,7 +8447,7 @@
     if (!fertig) {
       var neu = document.createElement("canvas");
       var t0 = performance.now();
-      var punkte = dorfMalen(neu, S.ich.dorf || {}, DORF_LAGE, breite, /N$/.test(lw.getAttribute("data-sig") || ""));
+      var punkte = dorfMalen(neu, S.ich.dorf || {}, DORF_LAGE, breite);
       DM.zeit = Math.round(performance.now() - t0);
       fertig = DM.bilder[sig] = { bild: neu, punkte: punkte };
       var alle = Object.keys(DM.bilder); if (alle.length > 3) delete DM.bilder[alle[0]];
@@ -8545,8 +8497,7 @@
        Ein Tipp auf die Landschaft (nicht auf ein Haus) schließt das offene Haus wieder (Funk 148). */
     /* FASSUNG 708 — über dem Fenster das echte Wetter, im Bild die Nacht (Funk 150). */
     var wetter = dorfWetter(), nah = dorfNah();
-    var malSig = sig + (wetter.tag ? "" : "N");
-    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas><div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
+    return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + sig + '" aria-hidden="true"></canvas><div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
       + dorfNachtHtml(ich, wetter) + haeuser + dorfLeuteHtml(ich) + "</div></div>" + dorfWetterHtml(wetter) + dorfWetterSchild(wetter)
       /* FASSUNG 709 — der Kompass: Karte mit Zeichen, näher ran oder ganzes Dorf. */
       + '<button type="button" class="sp-dl-kompass' + (S.dorfKarte ? " sp-an" : "") + '" data-s="dorfkarte" aria-label="Kompass: Karte, näher ran">' + kompassSvg() + "</button>"
@@ -8606,8 +8557,7 @@
   function dorfNachtHtml(ich, w) {
     if (w.tag) return "";
     var d = ich.dorf || {}, h = "", i;
-    /* FASSUNG 711 — Himmel, Sterne und Mond sind jetzt ins Bild gemalt; hier bleibt nur das Flackern der Fenster. */
-    var bewoelkt = true;
+    var bewoelkt = w.art !== "klar";
     for (i = 0; i < (bewoelkt ? 0 : 34); i++) { var sx = (hashZahl("st" + i) >>> 0) % 1000 / 10, sy = (hashZahl("sy" + i) >>> 0) % 140 / 10;
       h += '<i class="sp-dn-stern" style="left:' + sx.toFixed(1) + "%;top:" + sy.toFixed(1) + "%;animation-delay:-" + (i % 7 * .6).toFixed(1) + 's"></i>'; }
     if (!bewoelkt) h += '<i class="sp-dn-mond"></i>';
@@ -8814,7 +8764,6 @@
     return '<div class="sp-dl-karte" role="dialog" aria-label="Karte des Dorfes"><div class="sp-dl-karte-land"><canvas class="sp-dl-karte-bild" data-sig="' + sig + '" aria-hidden="true"></canvas>'
       + (nah ? '<i class="sp-dl-karte-blick"></i>' : "") + pins + "</div>"
       + '<div class="sp-dl-karte-leiste"><button type="button" data-s="dorfzoom" data-n="' + (nah ? "0" : "1") + '">' + (nah ? "Ganzes Dorf" : "Näher ran") + "</button>"
-      + '<button type="button" data-s="dorfzeichen" class="' + (dorfZeichen() ? "sp-an" : "") + '">Zeichen ' + (dorfZeichen() ? "an" : "aus") + "</button>"
       + '<button type="button" data-s="dorfkarte" aria-label="Karte schließen">✕</button></div></div>';
   }
   /* Im Kompass zeigt ein Rahmen, welchen Teil des Dorfes man gerade sieht. */
@@ -8826,31 +8775,6 @@
     b.style.width = Math.min(100, f.clientWidth / W * 100).toFixed(2) + "%"; b.style.height = Math.min(100, f.clientHeight / H * 100).toFixed(2) + "%";
   }
   /* Näher ran oder ganzes Dorf – weich, nur per transform; fx/fy = wohin (Anteil des Dorfes). */
-  function werkAbholen(g) {
-    wirtschaft("spiel_werk_abholen", { p_gebaeude: g }, function (r) {
-      ton("geschenk", 0.45);
-      hinweis("🧺 +" + r.menge + " " + wareName(r.ware) + " abgeholt." + (r.ware === "trank_mana" ? " Trinken: Flasche in der Leiste." : ""));
-    });
-  }
-  function dorfFertigSammeln(g) {
-    var ich = S.ich || {};
-    if (!g || S.dorfWahl === g) return false;
-    var w = (ich.werk || {})[g];
-    if (w && Date.parse(w.fertig) <= Date.now()) { werkAbholen(g); return true; }
-    if (g === "huehnerstall" || g === "kuhstall") {
-      var st = stallBereit(ich, g);
-      if (st && st.bereit) {
-        if (g === "huehnerstall") eierAlle();
-        else wirtschaft("spiel_melken", {}, function (r) { ton("eimerfuellen", 0.45); hinweis("🥛 +" + r.menge + " Milch gemolken (" + vorrat(r, "milch") + " im Lager) – für Torten in der Bäckerei."); });
-        return true;
-      }
-    }
-    return false;
-  }
-  function dorfZeichen() {
-    if (S.dorfZeichen == null) { try { S.dorfZeichen = localStorage.getItem("dma_dorf_zeichen") === "1"; } catch (e) { S.dorfZeichen = false; } }
-    return !!S.dorfZeichen;
-  }
   function dorfDoppelPruefen(ev) {
     var d = S.dorfDruck, jetzt = Date.now();
     S.dorfDruck = null;
@@ -8927,9 +8851,6 @@
           ? '<button type="button" data-s="bauen" data-w="reparatur"' + (vorrat(ich, "erz") || vorrat(ich, "holz") >= 2 ? "" : " disabled") + ">Reparieren <small>1 Erz oder 2 Holz</small></button>" : "") + "</div>";
     })() : "";
     var t = werkZeilenHtml(ich);
-    /* FASSUNG 711 — XANDER (Funk 158): „dann muss man das Dorf auch irgendwie schließen können oder bzw man muss wieder runter
-       navigieren können". Unten im Dorf steht immer eine Zeile: zurück zum Bild oder das Dorf schließen. */
-    var fuss = '<div class="sp-dorf-fuss"><button type="button" data-s="dorfnachoben">↑ Zum Dorfbild</button><button type="button" data-s="blickzu">✕ Dorf schließen</button></div>';
     return szene + wunderBandHtml(ich) + volkHtml(ich) + ernte + berufeHtml(ich)
       + (t.length ? '<div class="sp-troph-liste">' + t.join("") + "</div>" : "")
       + lagerHtml(ich, true)
@@ -8941,7 +8862,7 @@
       + '<button type="button" data-s="dorfteil" data-t="forschung" class="' + (S.dorfTeil === "forschung" ? "sp-an" : "") + '">Forschung ' + (S.dorfTeil === "forschung" ? "▴" : "▾") + "</button>"
       + '<button type="button" data-s="dorfteil" data-t="wunder" class="' + (S.dorfTeil === "wunder" ? "sp-an" : "") + ' title="Sehenswürdigkeiten">Wahrzeichen ' + (S.dorfTeil === "wunder" ? "▴" : "▾") + "</button></div>"
       + (S.dorfTeil === "bau" ? '<div class="sp-troph-liste">' + dorfBauListe(ich) + "</div>" : S.dorfTeil === "markt" ? marktHtml(ich) + handelHtml(ich)
-        : S.dorfTeil === "forschung" ? forschungHtml(ich) : S.dorfTeil === "wunder" ? wunderHtml(ich) : "") + fuss;
+        : S.dorfTeil === "forschung" ? forschungHtml(ich) : S.dorfTeil === "wunder" ? wunderHtml(ich) : "");
   }
   function wirtschaft(name, args, fertig) {
     rpc(name, args).then(function (r) {

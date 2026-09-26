@@ -1,19 +1,14 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 708: DAS DORF MIT DEM ECHTEN WETTER (Funk 150)
+   SONDE — FASSUNG 711: DORF-BEDIENUNG UND NACHT (Funk 158)
    ---------------------------------------------------------------------
-   XANDER (Funk 150): „dass es das realistische Wetter widerspiegelt was
-   wir täglich von der wetterzentrale übermittelt bekommen auch wenn es
-   mal schneit dass es dann halt irgendwie schneit oder Gewitter ist dass
-   man da wirklich Gewitter Sounds hat und das dann wirklich realistisch
-   Blitzen sieht", „Tag und Nacht", „realistische Vögel", „das Treiben
-   auch hört in dem Moment wenn man das Dorf aufruft nicht vorher", „wie
-   die Sachen im Wetter die Ernte beeinflussen".
-   Geprüft auf einem Android-Telefon (360 px, echte Finger): Regen, Schnee,
-   Nebel, Gewitter mit Blitz und Donner zusammen, Nacht mit Lichtern,
-   Sternen und Mond, Vögel mit Zwitschern, Geräusche nur bei offenem
-   Dorf, Wetterschild mit Wirkung, Meldung an den Server, Ernte-Meldung,
-   Leistung (4× gedrosselt).
+   XANDER (Funk 158): „Das Dorf soll in der kleinen Sicht ohne die Symbole
+   sein man kann die Symbole … optional dazu schalten", „wenn man oben ist
+   kommt man z.B nicht ganz runter … das bricht da irgendwie ab", „muss man
+   das Dorf auch irgendwie schließen können", „per Klick einfach automatisch
+   einsammelt dort wo fertig steht", „dass man die Nacht besser erkennt mit
+   den Laternen … realistischer Himmel der wie Nacht aussieht".
+   Geprüft auf einem Android-Telefon (360 px, echte Finger).
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -177,133 +172,85 @@ const sage = (gut, was, zusatz) => {
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
+  await pg.evaluate(() => { try { localStorage.removeItem("dma_dorf_nah"); } catch (e) {} const S = window.DMA_SPIEL.pruef.zustand(); S.dorfNah = null; S.dorfKarte = false; });
+  await pg.evaluate(() => { try { localStorage.removeItem("dma_dorf_zeichen"); } catch (e) {} const S = window.DMA_SPIEL.pruef.zustand(); S.dorfZeichen = null;
+    const ich = window.__ich; ich.werk = { baeckerei: { fertig: new Date(Date.now() - 60000).toISOString(), menge: 4, ware: "brot" } };
+    ich.dorf.kuhstall = { stufe: 1, lp: 20, stand: new Date(Date.now() - 3 * 1200000).toISOString() };
+    S.ich = JSON.parse(JSON.stringify(ich));
+    window.__extra = Object.assign({}, window.__extra, {
+      spiel_werk_abholen: (a) => { const i = JSON.parse(JSON.stringify(window.__ich)); i.werk = {}; window.__ich.werk = {}; return Object.assign(i, { ok: true, menge: 4, ware: "brot" }); },
+      spiel_melken: () => { window.__ich.dorf.kuhstall.stand = new Date().toISOString(); return Object.assign(JSON.parse(JSON.stringify(window.__ich)), { ok: true, menge: 3 }); } }); });
+  const bild = async (name) => { if (!process.env.BILD) return; await pg.evaluate(() => document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "start" })); await tick(350); await (await pg.$(".sp-dl-rahmen")).screenshot({ path: process.env.BILD + "-" + name + ".png" }); };
 
-  const W = (code, tag) => pg.evaluate(([code, tag]) => { const S = window.DMA_SPIEL.pruef.zustand(); S.wetterTest = { code, tag, temp: 12, ort: "Döbeln" }; window.DMA_SPIEL.pruef.schnellZeichnen(true); }, [code, tag]);
-  const toene = (ab) => pg.evaluate((ab) => window.DMA_TONLOG.filter((t) => t.wann >= ab).map((t) => t.name), ab);
-  const jetzt = () => pg.evaluate(() => Math.round(performance.now()));
-  const bild = async (name) => { if (!process.env.BILD) return; await pg.evaluate(() => { const f = document.querySelector(".sp-dl-rahmen"); f.scrollIntoView({ block: "start" }); }); await tick(300); await (await pg.$(".sp-dl-rahmen")).screenshot({ path: process.env.BILD + "-" + name + ".png" }); };
-
-  console.log("\nVORHER: KEIN DORF OFFEN, KEIN DORFGERÄUSCH\n");
-  await W(95, true);
-  let t0 = await jetzt();
-  await tick(3000);
-  let r = await toene(t0);
-  sage(!r.some((n) => /gewitter|zwitschern|hammerschlag|enten|hundbellen|pferd|eule/.test(n)), "Gewitter draußen, aber das Dorf ist zu: nichts zu hören", JSON.stringify(r));
-
-  console.log("\nREGEN\n");
-  await W(63, true);
+  console.log("\nKLEINE SICHT OHNE ZEICHEN – ZUSCHALTBAR\n");
   await tippe('.sp-schnell [data-s="makro"]'); await tick(1200);
-  r = await pg.evaluate(() => { const w = document.querySelector(".sp-dl-rahmen .sp-dw"); if (!w) return null; const tr = w.querySelectorAll(".sp-dw-regen i");
-    return { klasse: w.className, tropfen: tr.length, laeuft: [...tr].slice(0, 5).every((e) => e.getAnimations().some((a) => a.playState === "running")), schild: (document.querySelector(".sp-dw-schild") || {}).textContent || "" }; });
-  sage(r && /sp-dw-regen/.test(r.klasse) && r.tropfen >= 40 && r.laeuft, "Regen (WMO 63): über dem Dorf fallen Regenstriche", JSON.stringify(r && { tropfen: r.tropfen, laeuft: r.laeuft }));
-  sage(r && /Regen/.test(r.schild) && /12°/.test(r.schild) && /Döbeln/.test(r.schild) && /Felder \+1 Getreide/.test(r.schild), "das Schild sagt, was draußen ist und was es bewirkt", r && r.schild);
-  r = await pg.evaluate(async () => { const w = document.querySelector(".sp-dl-rahmen .sp-dw"); w.__merk = 1; for (let i = 0; i < 4; i++) { window.DMA_SPIEL.pruef.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 60)); }
-    const w2 = document.querySelector(".sp-dl-rahmen .sp-dw"); return { gleich: w2 === w && w2.__merk === 1 }; });
-  sage(r.gleich, "4× neu zeichnen: die Regenebene bleibt dieselbe (kein Neustart der Tropfen)", JSON.stringify(r));
-  r = await pg.evaluate(() => { const s = document.querySelector(".sp-dw-schild").getBoundingClientRect(); const e = document.elementFromPoint(s.left + s.width / 2, s.top + s.height / 2); return { trifft: e ? e.className : "" }; });
-  sage(!/sp-dw/.test(r.trifft), "Schild und Regen fangen keinen Finger ab (man kann darunter wischen und tippen)", JSON.stringify(r));
-  await bild("regen");
+  let r = await pg.evaluate(() => [...document.querySelectorAll(".sp-dl-haus-gemalt small")].filter((e) => e.getBoundingClientRect().width > 0).length);
+  sage(r === 0, "ganzes Dorf: keine Zeichen im Bild", r + " sichtbar");
+  await tippe(".sp-dl-kompass"); await tick(300);
+  await tippe('.sp-dl-karte [data-s="dorfzeichen"]'); await tick(300);
+  r = await pg.evaluate(() => ({ n: [...document.querySelectorAll(".sp-dl-haus-gemalt small .sp-dl-pin")].filter((e) => e.getBoundingClientRect().width > 0).length, gemerkt: localStorage.getItem("dma_dorf_zeichen") }));
+  sage(r.n >= 6 && r.gemerkt === "1", "im Kompass „Zeichen“ antippen: die Zeichen erscheinen, gemerkt", JSON.stringify(r));
+  await tippe('.sp-dl-karte [data-s="dorfzeichen"]'); await tick(200);
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfKarte = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(200);
 
-  console.log("\nGEWITTER: BLITZ UND DONNER ZUSAMMEN\n");
-  await W(95, true);
-  t0 = await jetzt();
-  await pg.evaluate(() => window.DMA_SPIEL.pruef.dorfBlitz());
-  await tick(60);
-  r = await pg.evaluate(() => { const b = document.querySelector(".sp-dw-blitz path"); return { blitz: Boolean(b), teile: b ? (b.getAttribute("d").match(/M/g) || []).length : 0, licht: Boolean(document.querySelector(".sp-dw-blitzlicht")),
-    grau: getComputedStyle(document.querySelector(".sp-dw-gewitter .sp-dw-grau")).backgroundImage.slice(0, 40), donnerNach: window.DMA_SPIEL.pruef.DW.letzterBlitz.donnerNach }; });
-  await bild("gewitter");
-  sage(r.blitz && r.teile >= 3 && r.licht, "ein Blitz mit Ästen, der Himmel leuchtet auf", JSON.stringify(r));
-  await tick(900);
-  const g = await pg.evaluate((ab) => window.DMA_TONLOG.filter((t) => t.wann >= ab && t.name === "gewitter").map((t) => t.wann - ab), t0);
-  sage(g.length >= 1 && g[0] <= 800, "der Donner kommt mit dem Blitz (nah sofort, weiter weg bis 0,7 s später)", JSON.stringify(g) + " ms");
-  sage(await pg.evaluate(() => !document.querySelector(".sp-dw-blitz")), "der Blitz ist nach einer Sekunde wieder weg");
-  r = await pg.evaluate(async () => { const DW = window.DMA_SPIEL.pruef.DW; DW.blitz = Date.now() + 500; const vor = DW.letzterBlitz; await new Promise((o) => setTimeout(o, 1400)); return { neu: DW.letzterBlitz !== vor, uhr: Boolean(DW.uhr) }; });
-  sage(r.neu && r.uhr, "bei offenem Dorf blitzt es von selbst (Abstand 5–15 s)", JSON.stringify(r));
-
-  console.log("\nSCHNEE, NEBEL\n");
-  await W(75, true); await tick(400);
-  r = await pg.evaluate(() => ({ flocken: document.querySelectorAll(".sp-dw-schnee i").length, schaukeln: [...document.querySelectorAll(".sp-dw-schnee b")].slice(0, 4).every((e) => e.getAnimations().length > 0), schild: document.querySelector(".sp-dw-schild").textContent }));
-  sage(r.flocken >= 40 && r.schaukeln, "Schnee (WMO 75): Flocken fallen und schaukeln", JSON.stringify({ flocken: r.flocken, schaukeln: r.schaukeln }));
-  sage(/Schnee/.test(r.schild) && /Frost: −1 Getreide/.test(r.schild), "Schild: Schnee, Frost nimmt 1 Getreide", r.schild);
-  await bild("schnee");
-  await W(45, true); await tick(300);
-  r = await pg.evaluate(() => document.querySelectorAll(".sp-dw-nebel i").length);
-  sage(r === 3, "Nebel (WMO 45): drei Schwaden ziehen durchs Bild", r + " Schwaden");
-
-  console.log("\nNACHT\n");
-  await W(0, false); await tick(400);
-  r = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(), d = S.ich.dorf; const heil = Object.keys(d).filter((k) => d[k].stufe > 0 && d[k].lp > 0).length;
-    return { nacht: Boolean(document.querySelector(".sp-dorfland .sp-dn")), lichter: document.querySelectorAll(".sp-dn-licht").length, heil, sterne: document.querySelectorAll(".sp-dn-stern").length, mond: Boolean(document.querySelector(".sp-dn-mond")), schild: document.querySelector(".sp-dw-schild").textContent }; });
-  /* Seit 711 sind Nachthimmel, Sterne und Mond ins Bild gemalt (Funk 158); die Ebene darüber flackert nur noch in den Fenstern. */
-  r.gemalt = await pg.evaluate(() => /N@/.test(document.querySelector("canvas.sp-dl-mal").dataset.gemalt || ""));
-  sage(r.nacht && r.lichter === r.heil && r.gemalt, "klare Nacht: das Bild wird als Nacht gemalt, in jedem heilen Haus brennt Licht (die kaputte Schmiede bleibt dunkel)", JSON.stringify(r));
-  sage(/Klare Nacht/.test(r.schild), "Schild: „Klare Nacht“", r.schild);
-  await bild("nacht");
-  await W(3, false); await tick(300);
-  r = await pg.evaluate(() => ({ sterne: document.querySelectorAll(".sp-dn-stern").length, mond: Boolean(document.querySelector(".sp-dn-mond")), lichter: document.querySelectorAll(".sp-dn-licht").length }));
-  sage(r.sterne === 0 && !r.mond && r.lichter > 0, "bewölkte Nacht: keine Sterne, kein Mond, die Lichter brennen", JSON.stringify(r));
-  r = await pg.evaluate(() => { const l = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]').getBoundingClientRect(), f = document.querySelector(".sp-dl-fenster");
-    const e = document.elementFromPoint(l.left + l.width / 2, l.top + l.height * .6); return { trifft: e ? (e.closest(".sp-dl-haus-gemalt") || {}).dataset : null }; });
-  sage(r.trifft && r.trifft.g === "baeckerei", "auch nachts lässt sich jedes Haus antippen (die Nacht fängt nichts ab)", JSON.stringify(r));
-
-  console.log("\nVÖGEL\n");
-  await W(1, true); await tick(300);
-  t0 = await jetzt();
-  await pg.evaluate(() => window.DMA_SPIEL.pruef.dorfVoegel());
-  await tick(200);
-  r = await pg.evaluate(() => { const s = document.querySelector(".sp-dw-schwarm"); if (!s) return null; const v = s.querySelectorAll(".sp-dw-vogel");
-    return { voegel: v.length, zieht: s.getAnimations().some((a) => a.playState === "running"), schlagen: [...v].every((e) => e.querySelector("svg").getAnimations().some((a) => a.playState === "running")),
-      takte: new Set([...v].map((e) => e.querySelector("b").style.animationDuration)).size }; });
-  sage(r && r.voegel >= 3 && r.voegel <= 7 && r.zieht && r.schlagen, "ein Schwarm (3–7 Vögel) zieht übers Dorf und schlägt mit den Flügeln", JSON.stringify(r));
-  sage(r && r.takte >= 2, "jeder Vogel schlägt in seinem eigenen Takt", r && r.takte + " verschiedene Takte");
-  await tick(1500);
-  r = await toene(t0);
-  sage(r.includes("zwitschern"), "das Zwitschern kommt, wenn der Schwarm ins Bild fliegt", JSON.stringify(r));
-  r = await pg.evaluate(async () => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.ich = Object.assign({}, S.ich, { dorf: Object.assign({}, S.ich.dorf, { schmiede: { stufe: 1, lp: 20 } }) });
-    const l = []; for (let i = 0; i < 30; i++) { P.dorfTreiben(P.dorfWetter()); l.push(P.DW.letzterLaut); } return [...new Set(l)]; });
-  sage(r.includes("hammerschlag") && r.includes("enten"), "das Treiben: Hammer aus der Schmiede, Enten am Teich …", JSON.stringify(r));
-
-  console.log("\nZU: SOFORT STILL\n");
-  await W(95, true); await tick(300);
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  t0 = await jetzt();
-  await tick(4000);
-  r = { toene: await toene(t0), uhr: await pg.evaluate(() => window.DMA_SPIEL.pruef.DW.uhr) };
-  sage(!r.uhr && !r.toene.some((n) => /gewitter|zwitschern|hammerschlag|enten|hundbellen|pferd|eule/.test(n)), "Dorf zu: kein Blitz, kein Donner, kein Treiben mehr", JSON.stringify(r));
-
-  console.log("\nDAS WETTER WIRKT AUF DIE ERNTE\n");
-  r = await pg.evaluate(async () => {
-    window.__rufe.length = 0;
-    window.DMA_WETTER = window.DMA_WETTER || {}; window.DMA_WETTER.jetzt = { code: 63, tag: true, temp: 12, ort: "Döbeln", zeit: Date.now() };
-    window.dispatchEvent(new CustomEvent("dma-wetter")); await new Promise((o) => setTimeout(o, 200));
-    window.dispatchEvent(new CustomEvent("dma-wetter")); await new Promise((o) => setTimeout(o, 200));
-    return window.__rufe.filter((x) => x.name === "spiel_wetter_melden").map((x) => x.args); });
-  sage(r.length === 1 && r[0].p_code === 63 && r[0].p_tag === true, "die Messung geht einmal an den Server (nicht bei jeder Wiederholung)", JSON.stringify(r));
-  r = await pg.evaluate(async () => {
-    const S = window.DMA_SPIEL.pruef.zustand(), ich = window.__ich;
-    window.__extra = Object.assign({}, window.__extra, { spiel_ernten: () => Object.assign({}, JSON.parse(JSON.stringify(ich)), { ok: true, menge: 3, besaet: false, wetter: "regen", wetter_plus: 1 }) });
-    S.ich = Object.assign({}, S.ich, { acker: {} }); window.__hinweise.length = 0;
-    const k = [...document.querySelectorAll("#lcPlaetze .lc-platz")].find((q) => !q.dataset.lcId && q.querySelector(".lc-kreis"));
-    window.DMA_SPIEL.pruef.ernten(k, Number(k.dataset.lcPlatz));
-    await new Promise((o) => setTimeout(o, 1200));
-    return window.__hinweise.filter((h) => /Getreide/.test(h)).slice(-1)[0] || ""; });
-  sage(/\+3 Getreide/.test(r) && /Der Regen hilft: \+1/.test(r), "Ernte bei Regen: die Meldung sagt, dass der Regen +1 gebracht hat", r);
-
-  console.log("\nLEISTUNG (Gewitter, 4× gedrosselt)\n");
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(600);
-  await W(99, true); await tick(500);
+  console.log("\nWISCHEN AUF DEM BILD SCROLLT DAS MENÜ\n");
   const cdp = await ctx.newCDPSession(pg);
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-  const l = await pg.evaluate(async () => {
-    window.DMA_SPIEL.pruef.dorfBlitz(); window.DMA_SPIEL.pruef.dorfVoegel();
-    const bilder = []; let letzt = performance.now(); const ende = letzt + 3000;
-    await new Promise((ok) => { const f = (t) => { bilder.push(t - letzt); letzt = t; if (t < ende) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
-    return { bilder: bilder.length, lang: bilder.filter((x) => x > 50).length }; });
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
-  sage(l.bilder >= 120 && l.lang <= 5, "Gewitter mit 64 Regenstrichen, Blitz und Vögeln: flüssig (≥ 40 Bilder/s, höchstens 5 lange Bilder in 3 s)", JSON.stringify(l));
+  const wisch = async (dy) => { const m = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster").getBoundingClientRect(); return { x: f.left + f.width * .5, y: f.top + f.height * .5 }; });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: m.x, y: m.y }] });
+    for (let i = 1; i <= 10; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: m.x, y: m.y + dy * i / 10 }] }); await tick(16); }
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await tick(700); };
+  await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); m.scrollTop = 0; }); await tick(200);
+  const vor = await pg.evaluate(() => document.querySelector(".sp-schnellmenue").scrollTop);
+  await wisch(-120);
+  const nach = await pg.evaluate(() => document.querySelector(".sp-schnellmenue").scrollTop);
+  sage(nach > vor + 40, "Finger auf dem Dorfbild nach oben wischen: das Menü scrollt weiter (vorher blieb es hängen)", vor + " → " + nach);
+  r = await pg.evaluate(() => { window.DMA_SPIEL.pruef.dorfZoom(true, .5, .5); const f = document.querySelector(".sp-dl-fenster"); return getComputedStyle(f).overscrollBehaviorY; });
+  sage(r === "auto", "näher dran: am Rand des Dorfes geht das Wischen im Menü weiter", r);
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.dorfZoom(false)); await tick(400);
 
+  console.log("\nWO „FERTIG“ STEHT: ANTIPPEN SAMMELT EIN\n");
+  await pg.evaluate(() => { window.__rufe.length = 0; window.__hinweise.length = 0; const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "center", behavior: "instant" }); });
+  await tick(500);
+  r = await pg.evaluate(() => Boolean(document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"] .sp-ds-fertig')));
+  sage(r, "an der Bäckerei steht „fertig“", String(r));
+  await tippe('.sp-dl-haus-gemalt[data-g="baeckerei"]'); await tick(600);
+  r = await pg.evaluate(() => ({ ruf: window.__rufe.filter((x) => x.name === "spiel_werk_abholen").map((x) => x.args.p_gebaeude), station: window.DMA_SPIEL.pruef.zustand().dorfWahl, meld: window.__hinweise.slice(-1)[0] || "" }));
+  sage(r.ruf.join() === "baeckerei" && !r.station && /abgeholt/.test(r.meld), "ein Tipp auf die Bäckerei holt das Brot ab – ohne erst die Station zu öffnen", JSON.stringify(r));
+  await tippe('.sp-dl-haus-gemalt[data-g="baeckerei"]'); await tick(500);
+  r = await pg.evaluate(() => window.DMA_SPIEL.pruef.zustand().dorfWahl);
+  sage(r === "baeckerei", "nichts mehr fertig: der nächste Tipp öffnet die Bäckerei wie gewohnt", r);
+  await pg.evaluate(() => { window.__rufe.length = 0; const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300);
+  await tippe('.sp-dl-haus-gemalt[data-g="kuhstall"]'); await tick(500);
+  r = await pg.evaluate(() => window.__rufe.filter((x) => x.name === "spiel_melken").length);
+  sage(r === 1, "Kuhstall mit Milch: ein Tipp melkt", r + " Ruf");
+
+  console.log("\nSCHLIESSEN UND ZURÜCK\n");
+  await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); m.scrollTop = 0; }); await tick(300);
+  r = await pg.evaluate(() => { const f = document.querySelector(".sp-dorf-fuss"), m = document.querySelector(".sp-schnellmenue"); if (!f) return null; const a = f.getBoundingClientRect(), b = m.getBoundingClientRect(); return { sichtbar: a.bottom <= b.bottom + 1 && a.top >= b.top, text: f.textContent }; });
+  sage(r && r.sichtbar && /Zum Dorfbild/.test(r.text) && /Dorf schließen/.test(r.text), "unten im Dorf steht immer: „↑ Zum Dorfbild“ und „✕ Dorf schließen“", JSON.stringify(r));
+  await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); m.scrollTop = m.scrollHeight; }); await tick(400);
+  await tippe('.sp-dorf-fuss [data-s="dorfnachoben"]'); await tick(900);
+  r = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-rahmen").getBoundingClientRect(), m = document.querySelector(".sp-schnellmenue").getBoundingClientRect(); return { oben: Math.round(f.top - m.top) }; });
+  sage(Math.abs(r.oben) < 60, "„↑ Zum Dorfbild“ bringt das Bild wieder nach oben", JSON.stringify(r));
+  await tippe('.sp-dorf-fuss [data-s="blickzu"]'); await tick(400);
+  r = await pg.evaluate(() => ({ menue: window.DMA_SPIEL.pruef.zustand().schnellMenue, dorf: Boolean(document.querySelector(".sp-dl-rahmen")) }));
+  sage(!r.menue && !r.dorf, "„✕ Dorf schließen“ schließt das Dorf", JSON.stringify(r));
+
+  console.log("\nNACHT: ECHTER HIMMEL, LATERNEN\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.wetterTest = { code: 0, tag: false, temp: 9, ort: "Döbeln" }; });
+  await tippe('.sp-schnell [data-s="makro"]'); await tick(1500);
+  r = await pg.evaluate(() => { const lw = document.querySelector("canvas.sp-dl-mal"), g = lw.getContext("2d"), W = lw.width, H = lw.height;
+    const px = (fx, fy) => { const d = g.getImageData(Math.round(fx * W), Math.round(fy * H), 1, 1).data; return [d[0], d[1], d[2]]; };
+    const hell = (p) => p[0] + p[1] + p[2];
+    const himmel = px(.03, .03), wiese = px(.1, .8), later = px((148 + 1.2) / 320, (99 - 5.6) / 200);
+    return { sig: lw.dataset.gemalt, himmel, himmelHell: hell(himmel), wieseHell: hell(wiese), laterne: later, overlay: getComputedStyle(document.querySelector(".sp-dn")).backgroundImage }; });
+  sage(/N@/.test(r.sig) && r.himmelHell < 45, "der Himmel ist nachtschwarz (nicht hellblau übertüncht)", JSON.stringify({ himmel: r.himmel, sig: r.sig }));
+  sage(r.wieseHell > r.himmelHell * 3, "unten bleibt alles gut zu erkennen (Wiese deutlich heller als der Himmel)", JSON.stringify({ wiese: r.wieseHell, himmel: r.himmelHell }));
+  sage(r.laterne[0] > 180 && r.laterne[0] > r.laterne[2] + 40, "die Laternen an den Wegen brennen warm", JSON.stringify(r.laterne));
+  sage(r.overlay === "none", "keine blaue Schicht mehr über dem ganzen Bild", r.overlay);
+  await bild("nacht");
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
-  console.log("\nFassung 708 (Dorf mit echtem Wetter): " + (fehler ? fehler + " rot." : "alles grün."));
+  console.log("\nFassung 711 (Dorf-Bedienung): " + (fehler ? fehler + " rot." : "alles grün."));
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

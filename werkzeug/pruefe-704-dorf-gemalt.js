@@ -174,6 +174,8 @@ const sage = (gut, was, zusatz) => {
     try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
     /* Seit 709 ist das ganze Dorf die Grundansicht (Funk 152); diese Sonde prüft die Ansicht „näher ran". */
     try { localStorage.setItem("dma_dorf_nah", "1"); } catch (e) {} S.dorfNah = null;
+    /* Seit 711 malt das Dorf nachts ein Nachtbild – diese Sonde prüft das Tagbild, unabhängig von der Uhrzeit. */
+    S.wetterTest = { code: 1, tag: true };
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });

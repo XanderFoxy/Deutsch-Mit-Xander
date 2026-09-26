@@ -2277,23 +2277,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 /* FASSUNG 710 — Leiste unten ordnen: neun Kacheln brechen um (drei je Zeile) statt seitlich zu scrollen – nichts ragt aus dem Menü. */
 .sp-taschen-ed.sp-leiste-ed { flex-wrap: wrap; overflow: visible; }
 .sp-schnellmenue .sp-taschen-ed.sp-leiste-ed .sp-tasche, .sp-taschen-ed.sp-leiste-ed .sp-tasche { flex: 1 0 28%; min-width: 0; }
-
-/* FASSUNG 711 — XANDER (Funk 158): „wenn man oben ist kommt man z.B nicht ganz runter oder wenn man unten ist kommt man nicht
-   ganz hoch dass bricht da irgendwie ab". Das Dorfbild hielt jedes Wischen fest (overscroll-behavior: contain) – wer auf dem
-   Bild wischte, scrollte das Menü nicht mehr, und das Bild ist fast so hoch wie das Menü. Jetzt: im ganzen Dorf gehört senkrechtes
-   Wischen immer dem Menü; näher dran scrollt erst das Dorf und am Rand geht es im Menü weiter. */
-.sp-dl-ganz > .sp-dl-fenster { overscroll-behavior: auto; touch-action: pan-y; }
-.sp-dl-nah > .sp-dl-fenster { overscroll-behavior-x: contain; overscroll-behavior-y: auto; touch-action: pan-x pan-y; }
-/* Funk 158: „in der kleinen Sicht ohne die Symbole … optional dazu schalten" (Kompass → „Zeichen an"). */
-.sp-dl-ganz:not(.sp-dl-zeichen) .sp-dl-haus-gemalt small { display: none; }
-/* Nachts liegt das Dunkel jetzt im Bild selbst (echter Nachthimmel, Laternen) – die Ebene darüber flackert nur noch in den Fenstern. */
-.sp-dn { background: none; }
-.sp-dn-licht { opacity: .55; }
-/* Unten im Dorf immer: zurück zum Bild oder schließen. */
-.sp-dorf-fuss { position: sticky; bottom: 0; z-index: 5; display: flex; gap: 6px; margin: 8px -2px 0; padding: 6px 2px calc(4px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(20, 24, 34, .55) 40%); }
-.sp-schnellmenue .sp-dorf-fuss button, .sp-dorf-fuss button { flex: 1; min-height: 34px; margin: 0; border-radius: 10px; font-size: 13px; }
-/* Nachts sind auch Mühlenflügel, Rauch, Leute, Fuhrwerk und Wahrzeichen-Besucher im Dunkeln (nur die Lichter leuchten). */
-.sp-dl-nacht .sp-dl-ueber, .sp-dl-nacht .sp-dl-mensch, .sp-dl-nacht .sp-dl-fuhrwerk { filter: brightness(.5) saturate(.7); }
-/* Die feste Zeile unten darf nichts verdecken: was ins Bild geholt wird, bleibt über ihr stehen. */
-.sp-schnellmenue.sp-sm-blick { scroll-padding-bottom: 56px; }

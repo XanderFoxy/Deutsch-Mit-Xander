@@ -177,7 +177,8 @@ const sage = (gut, was, zusatz) => {
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
-  await pg.evaluate(() => { try { localStorage.removeItem("dma_dorf_nah"); } catch (e) {} const S = window.DMA_SPIEL.pruef.zustand(); S.dorfNah = null; S.dorfKarte = false; });
+  /* Seit 711 sind die Zeichen im ganzen Dorf zuschaltbar (Funk 158) – diese Sonde prüft sie eingeschaltet, bei Tag. */
+  await pg.evaluate(() => { try { localStorage.removeItem("dma_dorf_nah"); localStorage.setItem("dma_dorf_zeichen", "1"); } catch (e) {} const S = window.DMA_SPIEL.pruef.zustand(); S.dorfNah = null; S.dorfZeichen = null; S.dorfKarte = false; S.wetterTest = { code: 1, tag: true }; });
   const bild = async (name) => { if (!process.env.BILD) return; await pg.evaluate(() => document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "start" })); await tick(350); await (await pg.$(".sp-dl-rahmen")).screenshot({ path: process.env.BILD + "-" + name + ".png" }); };
   const lage = () => pg.evaluate(() => { const r = document.querySelector(".sp-dl-rahmen"), f = r.querySelector(".sp-dl-fenster"), l = f.querySelector(".sp-dorfland");
     return { klasse: r.className, fw: f.clientWidth, fh: f.clientHeight, lw: l.clientWidth, sw: f.scrollWidth, sl: Math.round(f.scrollLeft), st: Math.round(f.scrollTop), gemalt: (f.querySelector("canvas.sp-dl-mal") || {}).dataset.gemalt || "" }; });

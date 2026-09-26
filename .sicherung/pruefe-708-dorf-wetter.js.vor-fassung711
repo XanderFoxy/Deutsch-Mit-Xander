@@ -234,9 +234,7 @@ const sage = (gut, was, zusatz) => {
   await W(0, false); await tick(400);
   r = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(), d = S.ich.dorf; const heil = Object.keys(d).filter((k) => d[k].stufe > 0 && d[k].lp > 0).length;
     return { nacht: Boolean(document.querySelector(".sp-dorfland .sp-dn")), lichter: document.querySelectorAll(".sp-dn-licht").length, heil, sterne: document.querySelectorAll(".sp-dn-stern").length, mond: Boolean(document.querySelector(".sp-dn-mond")), schild: document.querySelector(".sp-dw-schild").textContent }; });
-  /* Seit 711 sind Nachthimmel, Sterne und Mond ins Bild gemalt (Funk 158); die Ebene darüber flackert nur noch in den Fenstern. */
-  r.gemalt = await pg.evaluate(() => /N@/.test(document.querySelector("canvas.sp-dl-mal").dataset.gemalt || ""));
-  sage(r.nacht && r.lichter === r.heil && r.gemalt, "klare Nacht: das Bild wird als Nacht gemalt, in jedem heilen Haus brennt Licht (die kaputte Schmiede bleibt dunkel)", JSON.stringify(r));
+  sage(r.nacht && r.lichter === r.heil && r.sterne >= 20 && r.mond, "klare Nacht: dunkel, in jedem heilen Haus brennt Licht (die kaputte Schmiede bleibt dunkel), Sterne und Mond", JSON.stringify(r));
   sage(/Klare Nacht/.test(r.schild), "Schild: „Klare Nacht“", r.schild);
   await bild("nacht");
   await W(3, false); await tick(300);
