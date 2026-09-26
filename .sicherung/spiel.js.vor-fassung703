@@ -3430,8 +3430,6 @@
       if (!a) { alt.appendChild(n); n = naechstes; continue; }
       var gleich = a.nodeType === n.nodeType && (a.nodeType !== 1 || a.tagName === n.tagName);
       if (!gleich) { alt.replaceChild(n, a); a = n.nextSibling; n = naechstes; continue; }
-      /* FASSUNG 703 — Teile mit gleicher Unterschrift (data-sig) sind unverändert: nicht Knoten für Knoten vergleichen. */
-      if (a.nodeType === 1 && n.hasAttribute("data-sig") && a.getAttribute("data-sig") === n.getAttribute("data-sig")) { a = a.nextSibling; n = naechstes; continue; }
       if (a.nodeType === 1) {
         var attA = a.attributes, attN = n.attributes, i;
         for (i = attA.length - 1; i >= 0; i--) { var nm = attA[i].name; if (!n.hasAttribute(nm) && nm !== "style") a.removeAttribute(nm); }
@@ -4086,8 +4084,6 @@
     } else if (s === "dorfteil") {
       S.dorfTeil = S.dorfTeil === k.dataset.t ? "" : k.dataset.t;
       if (S.dorfTeil === "markt") handelLaden(false);
-      /* FASSUNG 703 — vom Wahrzeichen-Band aus: gleich zur aufgeklappten Tafel. */
-      if (S.dorfTeil && k.classList.contains("sp-wunderband")) setTimeout(function () { try { var z = schnellEl.querySelector(".sp-dorf-auf"); if (z) z.scrollIntoView({ block: "start" }); } catch (e) {} }, 60);
     } else if (s === "ausbilden") {
       /* FASSUNG 702 — Dorfbewohner ausbilden oder entlassen. */
       var bn = Number(k.dataset.n) || 0, bb = k.dataset.b, BB = BERUFE[bb];
@@ -4096,23 +4092,6 @@
         ton(bn > 0 ? "jubel" : "swoosh", 0.35);
         hinweis(bn > 0 ? "🎓 Ein Dorfbewohner ist jetzt " + BB.name + " (" + r.anzahl + " " + (r.anzahl === 1 ? BB.name : BB.viele) + ", " + r.preis + " P) – " + BB.tut + "."
                        : "🎓 Ein " + BB.name + " arbeitet wieder als freier Dorfbewohner (" + r.anzahl + " übrig).");
-      });
-      return;
-    } else if (s === "erforschen") {
-      /* FASSUNG 703 */
-      var fk = k.dataset.f, FF = FORSCHUNG[fk];
-      if (!FF) return;
-      wirtschaft("spiel_erforschen", { p_was: fk }, function () {
-        ton("zauberpuff", 0.4);
-        hinweis("🔬 Erforscht: " + FF.name + " – " + FF.tut + ".");
-      });
-      return;
-    } else if (s === "wunderbauen") {
-      var wk = k.dataset.w, WW = WUNDER[wk];
-      if (!WW) return;
-      wirtschaft("spiel_wunder_bauen", { p_was: wk }, function () {
-        ton("jubel", 0.55);
-        hinweis("🏛️ " + WW.name + " steht in deinem Dorf! Ab jetzt kommen " + WW.besucher + " Besucher je Ernte, dein Volk ist " + WW.freude + " % froher.");
       });
       return;
     } else if (s === "automatik") {
@@ -4160,9 +4139,7 @@
         /* FASSUNG 702 — Bauern, Bäcker und Wissenschaftler liefern mit. */
         if (r.getreide) teile.push(r.getreide + " Getreide"); if (r.brot) teile.push(r.brot + " Brot"); if (r.forschung) teile.push(r.forschung + " Forschung");
         var zusatz = (r.weggezogen ? " Dein Volk hat zweimal gehungert – ein " + ((BERUFE[r.weggezogen] || {}).name || "Bewohner") + " ist weggezogen." : r.hunger ? " Achtung: dein Volk hat gehungert. Beim nächsten Mal zieht jemand weg." : "")
-          + (r.automatik && r.automatik.gemacht && r.automatik.gemacht.length ? " Fuhrwerk: " + r.automatik.gemacht.join(" · ") + "." : "")
-          /* FASSUNG 703 — Besucher der Sehenswürdigkeiten. */
-          + (r.besucher ? " " + r.besucher + " Besucher: " + r.eintritt + " P Eintritt" + (r.besucher_kauf ? ", sie kauften " + r.besucher_kauf + " Stück Essen (" + 5 * r.besucher_kauf + " P)" : ", aber nichts zu essen übrig") + "." : "");
+          + (r.automatik && r.automatik.gemacht && r.automatik.gemacht.length ? " Fuhrwerk: " + r.automatik.gemacht.join(" · ") + "." : "");
         /* FASSUNG 683 — das Volk isst, wird bezahlt und freut sich über gutes Deutsch. */
         hinweis("🧺 Ernte: " + (teile.join(", ") || "nichts – alles kaputt? Erst reparieren.") + "." + (r.goldader ? " ⛏️ Goldader!" : "")
           + (r.zufrieden != null ? " Dein Volk ist " + r.zufrieden + " % zufrieden (satt " + r.satt + "/" + r.bedarf + ", Lohn " + r.bezahlt + " P, Deutsch-Quote " + r.quote + " %)." : "") + zusatz);
@@ -6884,7 +6861,7 @@
           + '<button type="button" data-s="abholen" data-g="' + k + '"' + (rest > 0 ? ' class="sp-werk-wartet"' : "") + ">Abholen</button>";
       } else if (k === "muehle") {
         var n = rezeptMenge(ich, st, { getreide: 1 });
-        z += "<small>Getreide → Mehl · " + werkMin(erforscht(ich, "wassermuehle") ? 6 : 8, st, fl) + " min · höchstens " + (5 * st) + "</small></span>"
+        z += "<small>Getreide → Mehl · " + werkMin(8, st, fl) + " min · höchstens " + (5 * st) + "</small></span>"
           + '<button type="button" data-s="liefern" data-g="muehle" data-w="mehl" data-n="' + n + '"' + (n ? "" : " disabled") + ">Mahlen <small>" + n + " Getreide</small></button>";
       } else if (k === "baeckerei") {
         var nb = rezeptMenge(ich, st, { mehl: 1 }), nk = rezeptMenge(ich, st, { mehl: 2 }), nt = rezeptMenge(ich, st, { mehl: 2, ei: 2, milch: 1 });
@@ -6952,8 +6929,7 @@
     var bedarf = Math.ceil(arbeiter / 4) + ritter + Math.ceil(berufeSumme(ich) / 2), essen = ["fisch", "brot", "bratwurst", "kuchen", "torte"].reduce(function (n, x) { return n + vorrat(ich, x); }, 0);
     var lohn = arbeiter + 3 * ritter;
     var satt = bedarf ? Math.min(1, essen / bedarf) : 1, bezahlt = lohn ? Math.min(1, (ich.punkte || 0) / lohn) : 1;
-    /* FASSUNG 703 — Duden: Deutsch zählt 10 mehr; Sehenswürdigkeiten freuen das Volk. */
-    var zuf = Math.min(100, Math.round(40 * satt + 20 * bezahlt + 40 * Math.min(100, quote + (erforscht(ich, "duden") ? 10 : 0)) / 100) + wunderFreude(ich));
+    var zuf = Math.round(40 * satt + 20 * bezahlt + 40 * quote / 100);
     var gesicht = zuf >= 75 ? "#3aa655" : zuf >= 50 ? "#e0a020" : "#d8261f";
     return '<div class="sp-volk"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="' + gesicht + '"/><circle cx="7" cy="8" r="1.2" fill="#fff"/><circle cx="13" cy="8" r="1.2" fill="#fff"/>'
       + '<path d="' + (zuf >= 75 ? "M6 12 C8 15 12 15 14 12" : zuf >= 50 ? "M6.5 13 H13.5" : "M6 14.5 C8 11.5 12 11.5 14 14.5") + '" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>'
@@ -7104,142 +7080,6 @@
       }
       schnellZeichnen(true);
     }).catch(function () { S.taktLaeuft = false; });
-  }
-  /* ---------------------------------------------------------------
-     FASSUNG 703 — FORSCHUNG UND SEHENSWÜRDIGKEITEN
-     XANDER (Funk 139): „schlauere Wissenschaftler … geheime Freischaltung"
-     und „Sehenswürdigkeiten … Kölner Dom oder den Berliner Fernsehturm …
-     Besucher anziehen". Walkie 281: beides gewählt.
-     Forschung: die Wissenschaftler sammeln bei jeder Ernte Forschung (je
-     besser das Deutsch, desto mehr). Damit erforscht man Neues mit echter
-     Wirkung (spiel_erforschen). Zwei Forschungen sind geheim: Name und
-     Wirkung zeigen sich erst, wenn Deutsch-Quote und Zahl der
-     Wissenschaftler reichen.
-     Sehenswürdigkeiten (spiel_wunder_bauen): je eine, ab einem Level, für
-     Punkte und Waren. Sie freuen das Volk und ziehen Besucher an: jeder
-     zahlt bei der Ernte 3 P Eintritt und kauft, was das Volk an Brot,
-     Bratwurst und Kuchen übrig lässt (5 P je Stück).
-     --------------------------------------------------------------- */
-  var FORSCHUNG = {
-    dreifelder:   { name: "Dreifelderwirtschaft", kosten: 20, wiss: 1, quote: 0, tut: "Bauern ernten 50 % mehr Getreide" },
-    sauerteig:    { name: "Sauerteig", kosten: 30, wiss: 1, quote: 0, haus: "baeckerei", tut: "Bäcker backen bei der Ernte doppelt so viel Brot" },
-    wassermuehle: { name: "Wasserrad an der Mühle", kosten: 40, wiss: 2, quote: 0, haus: "muehle", stufe: 2, tut: "die Mühle mahlt 25 % schneller" },
-    buchdruck:    { name: "Buchdruck", kosten: 60, wiss: 2, quote: 0, haus: "bibliothek", tut: "50 % mehr Forschung" },
-    duden:        { name: "Der Duden", kosten: 80, wiss: 3, quote: 85, geheim: true, tut: "dein gutes Deutsch zählt für die Zufriedenheit 10 Punkte mehr" },
-    dampf:        { name: "Dampfmaschine", kosten: 120, wiss: 5, quote: 90, haus: "labor", geheim: true, tut: "das Fuhrwerk fährt doppelte Ladung (10 je Stufe)" }
-  };
-  var WUNDER = {
-    holstentor:     { name: "Holstentor", ort: "Lübeck", ab: 4, preis: 250, waren: { holz: 10, erz: 5 }, besucher: 2, freude: 2 },
-    brandenburger:  { name: "Brandenburger Tor", ort: "Berlin", ab: 8, preis: 500, waren: { erz: 10, quarz: 6 }, besucher: 4, freude: 2 },
-    koelner_dom:    { name: "Kölner Dom", ort: "Köln", ab: 12, preis: 900, waren: { erz: 20, quarz: 10, gold: 2 }, besucher: 7, freude: 5 },
-    neuschwanstein: { name: "Schloss Neuschwanstein", ort: "Bayern", ab: 16, preis: 1400, waren: { quarz: 25, gold: 5, holz: 10 }, besucher: 10, freude: 3 },
-    fernsehturm:    { name: "Berliner Fernsehturm", ort: "Berlin", ab: 20, preis: 2000, waren: { erz: 30, silizium: 4, chip: 2 }, besucher: 14, freude: 3 }
-  };
-  function erforscht(ich, x) { return ((((ich || {}).volk || {}).erforscht) || []).indexOf(x) >= 0; }
-  function hatWunder(ich, x) { return !!((((ich || {}).volk || {}).wunder) || {})[x]; }
-  function besucherZahl(ich) { return Object.keys(WUNDER).reduce(function (n, k) { return n + (hatWunder(ich, k) ? WUNDER[k].besucher : 0); }, 0); }
-  function wunderFreude(ich) { return Object.keys(WUNDER).reduce(function (n, k) { return n + (hatWunder(ich, k) ? WUNDER[k].freude : 0); }, 0); }
-  var FORSCHUNG_SVG = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 2.5 H12 M8.8 2.5 V8 L4 16 C3.4 17.2 4 18 5.2 18 H14.8 C16 18 16.6 17.2 16 16 L11.2 8 V2.5" fill="#e8f4ff" stroke="#35557a" stroke-width="1.1" stroke-linejoin="round"/>'
-    + '<path d="M5.6 14 H14.4 L15.6 16.4 C15.9 17 15.6 17.4 15 17.4 H5 C4.4 17.4 4.1 17 4.4 16.4 Z" fill="#6fc0e8"/><circle cx="9" cy="12" r=".9" fill="#bfe6ff"/><circle cx="11.4" cy="10.6" r=".6" fill="#bfe6ff"/></svg>';
-  var GEHEIM_SVG = '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="9" width="12" height="9" rx="1.6" fill="#6b5a8a" stroke="#3a2f52" stroke-width="1"/><path d="M6.6 9 V6.6 C6.6 2.6 13.4 2.6 13.4 6.6 V9" fill="none" stroke="#3a2f52" stroke-width="1.6"/><circle cx="10" cy="13" r="1.4" fill="#ffe27a"/><path d="M10 13.6 V15.6" stroke="#ffe27a" stroke-width="1"/></svg>';
-  function forschungHtml(ich) {
-    var v = ich.volk || {}, f = Number(v.forschung) || 0, wiss = beruf(ich, "wissenschaftler"), q = v.quote == null ? 70 : Number(v.quote);
-    var zeilen = Object.keys(FORSCHUNG).map(function (k) {
-      var F = FORSCHUNG[k], hat = erforscht(ich, k), klug = wiss >= F.wiss && q >= F.quote, verborgen = F.geheim && !hat && !klug;
-      var fehlt = hat ? "" : wiss < F.wiss ? F.wiss + " Wissenschaftler nötig (du hast " + wiss + ")" : q < F.quote ? "Deutsch-Quote " + F.quote + " % nötig (du hast " + q + " %)"
-        : F.haus && dorfSt(ich, F.haus) < (F.stufe || 1) ? "braucht " + (DORF[F.haus] ? DORF[F.haus].name : F.haus) + (F.stufe > 1 ? " Stufe " + F.stufe : "") : f < F.kosten ? "noch " + (F.kosten - f) + " Forschung" : "";
-      if (verborgen) return '<div class="sp-beruf sp-forschung sp-geheim"><i>' + GEHEIM_SVG + "</i><span><b>Geheime Forschung</b><small>Deine Wissenschaftler sind noch nicht klug genug: "
-        + (q < F.quote ? "Deutsch-Quote " + F.quote + " % (du hast " + q + " %)" : "") + (q < F.quote && wiss < F.wiss ? " und " : "") + (wiss < F.wiss ? F.wiss + " Wissenschaftler (du hast " + wiss + ")" : "") + "</small></span></div>";
-      return '<div class="sp-beruf sp-forschung' + (hat ? " sp-an" : "") + (F.geheim ? " sp-geheim-offen" : "") + '"><i>' + (F.geheim ? GEHEIM_SVG : FORSCHUNG_SVG) + "</i><span><b>" + F.name + (hat ? " · erforscht" : "") + "</b><small>" + F.tut
-        + (hat ? "" : " · " + F.kosten + " Forschung" + (fehlt ? " · " + fehlt : "")) + "</small></span>"
-        + (hat ? "" : '<span class="sp-beruf-knoepfe"><button type="button" data-s="erforschen" data-f="' + k + '"' + (fehlt ? " disabled" : "") + ">Erforschen</button></span>") + "</div>";
-    }).join("");
-    return '<div class="sp-sm-gruppe sp-forschung-kopf"><span>Forschung · ' + f + " Punkte gesammelt</span></div>"
-      + (wiss ? "" : '<p class="sp-sm-klein">Bilde Wissenschaftler aus (Schule, Bibliothek oder Labor) – sie forschen bei jeder Ernte, umso mehr, je besser dein Deutsch ist.</p>')
-      + zeilen;
-  }
-  function wunderHtml(ich) {
-    var lv = ich.level || 1, punkte = ich.punkte || 0;
-    var zeilen = Object.keys(WUNDER).map(function (k) {
-      var W = WUNDER[k], steht = hatWunder(ich, k);
-      var ware = Object.keys(W.waren).map(function (x) { return W.waren[x] + " " + wareName(x); }).join(", ");
-      var fehlt = steht ? "" : lv < W.ab ? "ab Level " + W.ab : punkte < W.preis ? "zu wenig Punkte"
-        : Object.keys(W.waren).filter(function (x) { return vorrat(ich, x) < W.waren[x]; }).map(function (x) { return "zu wenig " + wareName(x); })[0] || "";
-      return '<div class="sp-beruf sp-wunder' + (steht ? " sp-an" : "") + '"><i><svg viewBox="0 0 64 90" aria-hidden="true">' + wunderSvg(k) + "</svg></i><span><b>" + W.name + (steht ? " · steht" : "") + "</b>"
-        + "<small>" + W.ort + " · " + W.besucher + " Besucher je Ernte, Volk +" + W.freude + " % froh" + (steht ? "" : " · " + W.preis + " P, " + ware + (fehlt ? " · " + fehlt : "")) + "</small></span>"
-        + (steht ? "" : '<span class="sp-beruf-knoepfe"><button type="button" data-s="wunderbauen" data-w="' + k + '"' + (fehlt ? " disabled" : "") + ">Bauen</button></span>") + "</div>";
-    }).join("");
-    var b = besucherZahl(ich);
-    return '<div class="sp-sm-gruppe"><span>Sehenswürdigkeiten' + (b ? " · " + b + " Besucher je Ernte" : "") + "</span></div>"
-      + '<p class="sp-sm-klein">Besucher zahlen 3 P Eintritt und kaufen, was dein Volk an Brot, Bratwurst und Kuchen übrig lässt (5 P je Stück).</p>' + zeilen;
-  }
-  /* Die Wahrzeichen, jedes in einem Feld 64 × 90 (Boden bei y = 84), Licht von rechts oben. */
-  function wunderSvg(k) {
-    if (k === "holstentor") return '<ellipse cx="32" cy="85" rx="30" ry="2.4" fill="#000" opacity=".18"/>'
-      + '<path d="M22 84 V36 L32 24 L42 36 V84 Z" fill="#a4523a"/><path d="M32 24 L42 36 V84 H32 Z" fill="#b8654a"/>'
-      + '<path d="M20 36 L32 22 L44 36 Z" fill="#3f5a52"/><path d="M32 22 L44 36 H32 Z" fill="#557a6e"/>'
-      + '<rect x="6" y="40" width="17" height="44" rx="2" fill="#94472f"/><rect x="41" y="40" width="17" height="44" rx="2" fill="#a9573b"/><rect x="50" y="40" width="8" height="44" fill="#bd6c4e" opacity=".6"/>'
-      + '<path d="M4.5 41 L14.5 12 L24.5 41 Z" fill="#34463f"/><path d="M14.5 12 L24.5 41 H14.5 Z" fill="#4b675d"/><path d="M39.5 41 L49.5 12 L59.5 41 Z" fill="#3a4f47"/><path d="M49.5 12 L59.5 41 H49.5 Z" fill="#557a6e"/>'
-      + '<path d="M6 50 H23 M6 60 H23 M6 70 H23 M41 50 H58 M41 60 H58 M41 70 H58 M22 46 H42 M22 58 H42" stroke="#e9d6b8" stroke-width=".8" opacity=".75"/>'
-      + '<path d="M9 55 V52.5 A1.5 1.5 0 0 1 12 52.5 V55 Z M17 55 V52.5 A1.5 1.5 0 0 1 20 52.5 V55 Z M44 55 V52.5 A1.5 1.5 0 0 1 47 52.5 V55 Z M52 55 V52.5 A1.5 1.5 0 0 1 55 52.5 V55 Z M9 65 V62.5 A1.5 1.5 0 0 1 12 62.5 V65 Z M52 65 V62.5 A1.5 1.5 0 0 1 55 62.5 V65 Z M28 44 V41.5 A1.5 1.5 0 0 1 31 41.5 V44 Z M33 44 V41.5 A1.5 1.5 0 0 1 36 41.5 V44 Z" fill="#2a1d18"/>'
-      + '<path d="M26.5 84 V69 A5.5 5.5 0 0 1 37.5 69 V84 Z" fill="#2a1d18"/><path d="M26.5 69 A5.5 5.5 0 0 1 37.5 69" fill="none" stroke="#e9d6b8" stroke-width="1"/>'
-      + '<path d="M14.5 12 V8 M49.5 12 V8" stroke="#c9a23a" stroke-width=".9"/><circle cx="14.5" cy="7.5" r=".9" fill="#e8c24a"/><circle cx="49.5" cy="7.5" r=".9" fill="#e8c24a"/>';
-    if (k === "brandenburger") return '<ellipse cx="32" cy="85" rx="31" ry="2.4" fill="#000" opacity=".18"/>'
-      + '<rect x="1" y="79" width="62" height="5" fill="#cdbb8e"/><rect x="1" y="79" width="62" height="1.2" fill="#e9dcb4"/>'
-      + [5, 14, 23, 38, 47, 56].map(function (x) { return '<rect x="' + x + '" y="46" width="3.4" height="33" fill="#d8c79c"/><rect x="' + (x + 2.2) + '" y="46" width="1.2" height="33" fill="#f1e6c6"/><rect x="' + (x - .6) + '" y="44.6" width="4.6" height="1.6" fill="#e9dcb4"/>'; }).join("")
-      + '<rect x="1" y="37" width="62" height="8" fill="#d9c89c"/><path d="M1 39.5 H63 M1 42.5 H63" stroke="#b8a578" stroke-width=".6"/><rect x="1" y="37" width="62" height="1.1" fill="#efe3c0"/>'
-      + '<rect x="11" y="28" width="42" height="9" fill="#cfbd8f"/><rect x="16" y="30" width="32" height="5" fill="#bba877" opacity=".8"/><rect x="11" y="28" width="42" height="1" fill="#efe3c0"/>'
-      + '<g fill="#4f7d6c"><path d="M20 28 C20 24 22 22 24 22 L25 19 L26.4 22 C28 22 28.6 24 28.6 28 Z"/><path d="M26 28 C26 24 28 22 30 22 L31 19 L32.4 22 C34 22 34.6 24 34.6 28 Z"/><path d="M32 28 C32 24 34 22 36 22 L37 19 L38.4 22 C40 22 40.6 24 40.6 28 Z"/>'
-      + '<path d="M36 28 C36 25 37 23 39 23 L40 20.4 L41.2 23 C42.6 23 43 25 43 28 Z"/><path d="M31 22 V13 M29 15 H33" stroke="#4f7d6c" stroke-width="1"/><circle cx="31" cy="12" r="1.8"/><path d="M29.6 17 C30 15.6 32 15.6 32.4 17 L32 22 H30 Z"/></g>';
-    if (k === "koelner_dom") return '<ellipse cx="32" cy="85" rx="31" ry="2.4" fill="#000" opacity=".2"/>'
-      + '<path d="M19 84 V46 L32 36 L45 46 V84 Z" fill="#5f5a55"/><path d="M32 36 L45 46 V84 H32 Z" fill="#6f6964"/>'
-      + '<path d="M5 84 V26 H21 V84 Z" fill="#5a5550"/><path d="M43 84 V26 H59 V84 Z" fill="#6b655f"/><path d="M53 26 H59 V84 H53 Z" fill="#7d776f"/>'
-      + '<path d="M5 26 L13 1 L21 26 Z" fill="#524d49"/><path d="M13 1 L21 26 H13 Z" fill="#625c56"/><path d="M43 26 L51 1 L59 26 Z" fill="#5a5550"/><path d="M51 1 L59 26 H51 Z" fill="#716b64"/>'
-      + '<path d="M7 20 L9 19 M9 13 L11 12 M17 20 L19 19 M15 13 L17 12 M45 20 L47 19 M47 13 L49 12 M55 20 L57 19 M53 13 L55 12" stroke="#8a847b" stroke-width=".8"/>'
-      + '<path d="M9 26 V84 M13 26 V84 M17 26 V84 M47 26 V84 M51 26 V84 M55 26 V84" stroke="#443f3b" stroke-width=".6" opacity=".7"/>'
-      + '<path d="M7.5 44 V37 L9 34.5 L10.5 37 V44 Z M15.5 44 V37 L17 34.5 L18.5 37 V44 Z M45.5 44 V37 L47 34.5 L48.5 37 V44 Z M53.5 44 V37 L55 34.5 L56.5 37 V44 Z M7.5 60 V53 L9 50.5 L10.5 53 V60 Z M53.5 60 V53 L55 50.5 L56.5 53 V60 Z" fill="#2b2826"/>'
-      + '<path d="M26 64 V52 L32 44 L38 52 V64 Z" fill="#3d4a66"/><path d="M32 44 V64 M26 56 H38" stroke="#8a847b" stroke-width=".6"/><circle cx="32" cy="50" r="2.2" fill="none" stroke="#c9b27a" stroke-width=".6"/>'
-      + '<path d="M27 84 V73 L32 66 L37 73 V84 Z" fill="#2b2826"/><path d="M13 1 V-1 M51 1 V-1" stroke="#c9a23a" stroke-width=".8"/>';
-    if (k === "neuschwanstein") return '<ellipse cx="32" cy="85" rx="31" ry="2.4" fill="#000" opacity=".15"/>'
-      + '<path d="M0 84 C4 76 8 72 16 70 C24 68 40 68 48 70 C56 72 60 76 64 84 Z" fill="#7a8a6a"/><path d="M34 69 C44 69 52 72 58 77 L64 84 H40 Z" fill="#8d9e7c"/>'
-      + '<circle cx="4" cy="80" r="4" fill="#3f6a34"/><circle cx="59" cy="80" r="4.5" fill="#46753a"/><circle cx="10" cy="82" r="3" fill="#4f7d40"/>'
-      + '<rect x="15" y="40" width="30" height="30" fill="#e6e1d6"/><rect x="33" y="40" width="12" height="30" fill="#f6f3ec"/>'
-      + '<path d="M13 41 L24 22 L35 41 Z" fill="#56708f"/><path d="M24 22 L35 41 H24 Z" fill="#6f8aa8"/><path d="M31 41 L39 28 L47 41 Z" fill="#5d7896"/>'
-      + '<rect x="44" y="18" width="7" height="52" fill="#efebe2"/><rect x="48" y="18" width="3" height="52" fill="#fbf9f4"/><path d="M42.8 19 L47.5 2 L52.2 19 Z" fill="#56708f"/><path d="M47.5 2 L52.2 19 H47.5 Z" fill="#7390ad"/>'
-      + '<rect x="7" y="44" width="6" height="26" fill="#e3ded2"/><path d="M5.8 45 L10 30 L14.2 45 Z" fill="#56708f"/><rect x="53" y="46" width="5.5" height="24" fill="#f3efe7"/><path d="M52 47 L55.75 33 L59.5 47 Z" fill="#6f8aa8"/>'
-      + '<path d="M18 50 V47.5 A1.2 1.2 0 0 1 20.4 47.5 V50 Z M23 50 V47.5 A1.2 1.2 0 0 1 25.4 47.5 V50 Z M28 50 V47.5 A1.2 1.2 0 0 1 30.4 47.5 V50 Z M35 50 V47.5 A1.2 1.2 0 0 1 37.4 47.5 V50 Z M40 50 V47.5 A1.2 1.2 0 0 1 42.4 47.5 V50 Z'
-      + ' M18 59 V56.5 A1.2 1.2 0 0 1 20.4 56.5 V59 Z M23 59 V56.5 A1.2 1.2 0 0 1 25.4 56.5 V59 Z M28 59 V56.5 A1.2 1.2 0 0 1 30.4 56.5 V59 Z M35 59 V56.5 A1.2 1.2 0 0 1 37.4 56.5 V59 Z M40 59 V56.5 A1.2 1.2 0 0 1 42.4 56.5 V59 Z M46 30 V27.5 A1.1 1.1 0 0 1 48.2 27.5 V30 Z M46 40 V37.5 A1.1 1.1 0 0 1 48.2 37.5 V40 Z" fill="#4a5a70"/>'
-      + '<path d="M47.5 2 V-1 M10 30 V28 M55.75 33 V31" stroke="#c9a23a" stroke-width=".7"/>';
-    return '<ellipse cx="32" cy="85" rx="24" ry="2.2" fill="#000" opacity=".18"/>'
-      + '<path d="M12 84 L20 78 H44 L52 84 Z" fill="#b9bfc6"/><path d="M20 78 L26 74 L32 78 L38 74 L44 78 Z" fill="#d7dce2"/>'
-      + '<path d="M29 78 L30.4 28 H33.6 L35 78 Z" fill="#c9ced4"/><path d="M32 28 H33.6 L35 78 H32 Z" fill="#e4e8ec"/>'
-      + '<circle cx="32" cy="22" r="7.6" fill="#9aa4ae"/><path d="M32 14.4 A7.6 7.6 0 0 1 32 29.6 Z" fill="#c3cbd2"/><circle cx="34.6" cy="19.4" r="2" fill="#fff" opacity=".6"/>'
-      + '<path d="M24.6 22.6 H39.4" stroke="#39434d" stroke-width="1.6"/><path d="M25 22.6 H39" stroke="#8fd0ff" stroke-width=".5" stroke-dasharray="1 .8"/>'
-      + '<path d="M31 14.6 H33 V8 H31 Z" fill="#d7dce2"/><path d="M31.6 8 H32.4 V-1 H31.6 Z" fill="#fff"/><path d="M31.6 6 H32.4 V4 H31.6 Z M31.6 2 H32.4 V0 H31.6 Z" fill="#d8261f"/>';
-  }
-  /* Das Band unter dem Dorf: gebaute Wahrzeichen in Farbe, der Rest als Schatten mit Level; Besucher spazieren hindurch. */
-  var wunderBandMerk = { sig: "", html: "" };
-  function wunderBandHtml(ich) {
-    if ((ich.level || 1) < 4 && !besucherZahl(ich)) return "";
-    /* Das Band ändert sich nur, wenn ein Wahrzeichen dazukommt – dann erst neu bauen (spart bei jedem Takt Arbeit). */
-    var sig = Object.keys(WUNDER).map(function (k) { return hatWunder(ich, k) ? 1 : 0; }).join("");
-    if (wunderBandMerk.sig === sig) return wunderBandMerk.html;
-    var felder = Object.keys(WUNDER).map(function (k, i) {
-      var W = WUNDER[k], steht = hatWunder(ich, k), x = i * 64;
-      return '<g transform="translate(' + x + ' 0)"' + (steht ? "" : ' class="sp-wb-leer"') + ">" + wunderSvg(k) + "</g>"
-        + '<text x="' + (x + 32) + '" y="96" text-anchor="middle" class="sp-wb-name">' + (steht ? W.name.replace(/^Schloss |^Berliner /, "") : "ab Level " + W.ab) + "</text>";
-    }).join("");
-    var b = besucherZahl(ich), leute = "";
-    for (var i = 0; i < Math.min(5, Math.ceil(b / 3)); i++) {
-      leute += '<span class="sp-wb-gast" style="animation-delay:-' + (i * 4.3).toFixed(1) + 's;animation-duration:' + (19 + (i % 3) * 3) + 's"><svg viewBox="0 0 10 16" aria-hidden="true">'
-        + '<circle cx="5" cy="3" r="2.2" fill="#f1c9a0"/><path d="M2 15 L2.6 7.2 C2.8 5.8 7.2 5.8 7.4 7.2 L8 15 Z" fill="' + ["#d8261f", "#2d6ad8", "#3aa655", "#e0a020", "#8a4ad8"][i] + '"/>'
-        + (i % 2 ? '<path d="M7.6 8 L9.4 6.6 M9.4 6.6 H10 V5.4 H8.6 Z" stroke="#222" stroke-width=".5" fill="#333"/>' : '<path d="M3 1.4 C3.6 -.2 6.4 -.2 7 1.4 Z" fill="#6b4521"/>') + "</svg></span>";
-    }
-    wunderBandMerk.sig = sig;
-    wunderBandMerk.html = '<button type="button" class="sp-wunderband" data-s="dorfteil" data-t="wunder" data-sig="' + sig + '" aria-label="Sehenswürdigkeiten">'
-      + '<svg viewBox="0 -2 320 101" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path d="M0 84 H320 V99 H0 Z" fill="#8cbf55"/><path d="M0 84 H320" stroke="#6ea742" stroke-width="1"/>'
-      + '<path d="M0 88 H320" stroke="#d9c49a" stroke-width="3" opacity=".8"/>' + felder + "</svg>" + leute + "</button>";
-    return wunderBandMerk.html;
   }
   /* Nachbardörfer im Raum: plündern (so wie in Clash of Clans und Forge
      of Empires): das Gebäude bleibt stehen, ist nur beschädigt; du nimmst
@@ -7785,18 +7625,14 @@
           ? '<button type="button" data-s="bauen" data-w="reparatur"' + (vorrat(ich, "erz") || vorrat(ich, "holz") >= 2 ? "" : " disabled") + ">Reparieren <small>1 Erz oder 2 Holz</small></button>" : "") + "</div>";
     })() : "";
     var t = werkZeilenHtml(ich);
-    return szene + wunderBandHtml(ich) + volkHtml(ich) + ernte + berufeHtml(ich)
+    return szene + volkHtml(ich) + ernte + berufeHtml(ich)
       + (t.length ? '<div class="sp-troph-liste">' + t.join("") + "</div>" : "")
       + lagerHtml(ich, true)
       + nachbarnHtml()
       + '<div class="sp-sm-liste sp-dorf-auf">'
       + '<button type="button" data-s="dorfteil" data-t="bau" class="' + (S.dorfTeil === "bau" ? "sp-an" : "") + '">Bauen &amp; ausbauen ' + (S.dorfTeil === "bau" ? "▴" : "▾") + "</button>"
-      + '<button type="button" data-s="dorfteil" data-t="markt" class="' + (S.dorfTeil === "markt" ? "sp-an" : "") + '">Markt &amp; Handel ' + (S.dorfTeil === "markt" ? "▴" : "▾") + "</button>"
-      /* FASSUNG 703 */
-      + '<button type="button" data-s="dorfteil" data-t="forschung" class="' + (S.dorfTeil === "forschung" ? "sp-an" : "") + '">Forschung ' + (S.dorfTeil === "forschung" ? "▴" : "▾") + "</button>"
-      + '<button type="button" data-s="dorfteil" data-t="wunder" class="' + (S.dorfTeil === "wunder" ? "sp-an" : "") + ' title="Sehenswürdigkeiten">Wahrzeichen ' + (S.dorfTeil === "wunder" ? "▴" : "▾") + "</button></div>"
-      + (S.dorfTeil === "bau" ? '<div class="sp-troph-liste">' + dorfBauListe(ich) + "</div>" : S.dorfTeil === "markt" ? marktHtml(ich) + handelHtml(ich)
-        : S.dorfTeil === "forschung" ? forschungHtml(ich) : S.dorfTeil === "wunder" ? wunderHtml(ich) : "");
+      + '<button type="button" data-s="dorfteil" data-t="markt" class="' + (S.dorfTeil === "markt" ? "sp-an" : "") + '">Markt &amp; Handel ' + (S.dorfTeil === "markt" ? "▴" : "▾") + "</button></div>"
+      + (S.dorfTeil === "bau" ? '<div class="sp-troph-liste">' + dorfBauListe(ich) + "</div>" : S.dorfTeil === "markt" ? marktHtml(ich) + handelHtml(ich) : "");
   }
   function wirtschaft(name, args, fertig) {
     rpc(name, args).then(function (r) {

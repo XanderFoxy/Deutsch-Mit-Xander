@@ -231,17 +231,13 @@ const sage = (gut, was, zusatz) => {
   sage(r.filter === 0, "kein SVG-Filter im Bild (der liefe bei jedem Rauchwölkchen mit)");
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
   const leistung = await pg.evaluate(() => new Promise((ok) => {
-    /* FASSUNG 703 — ein einzelnes Neuzeichnen schwankte bei gleichem Code zwischen 71 und 143 ms (4× gedrosselt);
-       gemessen wird jetzt der Median aus 9 Durchgängen. */
-    const S = window.DMA_SPIEL.pruef.zustand(); const z = [];
-    for (let i = 0; i < 9; i++) { const t0 = performance.now(); S.ich = Object.assign({}, S.ich, { punkte: (S.ich.punkte || 0) + 1 }); window.DMA_SPIEL.pruef.schnellZeichnen(true); z.push(performance.now() - t0); }
-    z.sort((x, y) => x - y); const zeichnen = z[4];
+    const S = window.DMA_SPIEL.pruef.zustand(); const t0 = performance.now(); S.ich = Object.assign({}, S.ich, { punkte: (S.ich.punkte || 0) + 1 }); window.DMA_SPIEL.pruef.schnellZeichnen(true); const zeichnen = performance.now() - t0;
     const bilder = []; let letzt = performance.now(); const ende = letzt + 3000;
     const f = (t) => { bilder.push(t - letzt); letzt = t; if (t < ende) requestAnimationFrame(f); else ok({ zeichnen: Math.round(zeichnen), bilder: bilder.length, lang: bilder.filter((x) => x > 50).length, max: Math.round(Math.max(...bilder)) }); };
     requestAnimationFrame(f); }));
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
   /* Gegenprobe mit dem flachen Dorf von 699 (gleiche Sonde, 2 Läufe): Neuzeichnen 67–102 ms, 3 Bilder über 50 ms. */
-  sage(leistung.zeichnen < 120 && leistung.lang <= 5, "4× gedrosselte CPU: Neuzeichnen (Median aus 9) unter 120 ms, höchstens 5 Bilder über 50 ms in 3 s (flaches Dorf: 3)", JSON.stringify(leistung));
+  sage(leistung.zeichnen < 120 && leistung.lang <= 5, "4× gedrosselte CPU: Neuzeichnen unter 120 ms, höchstens 5 Bilder über 50 ms in 3 s (flaches Dorf: 3)", JSON.stringify(leistung));
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
   console.log("\nFassung 700 (Dorf): " + (fehler ? fehler + " rot." : "alles grün."));
   await br.close(); srv.close();

@@ -49,24 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 702: Dorf – Berufe, Ausbildung, Automatik Mühle → Bäckerei, Hunger, Fuhrwerk im Bild",
+  stand: "Fassung 703: Forschung mit geheimen Entdeckungen und Sehenswürdigkeiten mit Besuchern – als Nächstes: Dorf richtig gemalt (Funk 145/146)",
 
   inArbeit: [
-    { seit: "2026-09-26T16:24",
-      text: "Funk 145: Dorf im Anno-Stil, wirklich realistisch (gemalte Bilder statt Vektor)" },
-    { seit: "2026-09-26T16:24",
-      text: "703: Forschung mit geheimen Entdeckungen, Sehenswürdigkeiten mit Besuchern" },
+    { seit: "2026-09-26T16:48",
+      text: "Funk 145/146: Dorf realistisch gemalt (eigene Grafik, nicht ElevenLabs) – ZUERST" },
+    { seit: "2026-09-26T16:48",
+      text: "Funk 148: Haus-Fenster im Dorf schließen per Tipp daneben, Schrift besser lesbar (Galaxy)" },
+    { seit: "2026-09-26T16:48",
+      text: "Funk 146: Schatz einsammeln ohne Deutsch-Fenster, Eier, Werkzeug beim Langdruck, 8 Angeln gleichzeitig, Taschen frei anordnen" },
+    { seit: "2026-09-26T16:48",
+      text: "Funk 147: Wetter mit den ursprünglichen Bildern, nachts ein Mond" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T16:24",
-      text: "Berufe-Tafel: Bauer, Müller, Bäcker, Schmied, Wissenschaftler ausbilden/entlassen" },
-    { seit: "2026-09-26T16:24",
-      text: "Automatik: Fuhrwerk bringt Getreide zur Mühle und Mehl zur Bäckerei" },
-    { seit: "2026-09-26T16:24",
-      text: "Hunger ernster: zweimal hungrig → jemand zieht weg" },
-    { seit: "2026-09-26T16:24",
-      text: "Leute und Fuhrwerk im Dorfbild, flüssig auch auf langsamen Handys" },
+    { seit: "2026-09-26T16:48",
+      text: "Forschung: 6 Entdeckungen mit echter Wirkung, 2 davon geheim (erst bei guter Deutsch-Quote sichtbar)" },
+    { seit: "2026-09-26T16:48",
+      text: "Sehenswürdigkeiten: Holstentor, Brandenburger Tor, Kölner Dom, Neuschwanstein, Fernsehturm – Besucher zahlen Eintritt und kaufen Essen" },
+    { seit: "2026-09-26T16:48",
+      text: "Wahrzeichen-Band unter dem Dorf mit spazierenden Besuchern" },
   ],
 };

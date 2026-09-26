@@ -2090,24 +2090,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
   100% { transform: translate(0, 0) scaleX(1); }
 }
 @media (prefers-reduced-motion: reduce) { .sp-dl-mensch { animation: none; } }
-
-/* =================================================================
-   FASSUNG 703 — Forschung, Sehenswürdigkeiten, Wahrzeichen-Band
-   ================================================================= */
-.sp-forschung.sp-an, .sp-wunder.sp-an { background: rgba(58, 166, 85, .14); box-shadow: inset 0 0 0 1px rgba(58, 166, 85, .45); }
-.sp-geheim { background: rgba(107, 90, 138, .22); box-shadow: inset 0 0 0 1px rgba(160, 130, 220, .35); }
-.sp-geheim-offen:not(.sp-an) { box-shadow: inset 0 0 0 1px rgba(255, 226, 122, .6); }
-.sp-wunder > i { flex-basis: 30px; width: 30px; height: 42px; }
-.sp-schnellmenue .sp-wunderband, .sp-wunderband { position: relative; display: block; width: 100%; aspect-ratio: 320 / 101; margin: -4px 0 8px; padding: 0; border: 0; border-radius: 0 0 12px 12px;
-  overflow: hidden; background: linear-gradient(#cfe8f6, #eef6e4); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); cursor: pointer; min-height: 0; -webkit-tap-highlight-color: transparent; }
-.sp-wunderband > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.sp-wunderband { contain: layout paint style; }
-.sp-wb-leer { opacity: .2; }
-.sp-wb-name { font: 700 6.4px system-ui, sans-serif; fill: #24401c; }
-.sp-wb-gast { position: absolute; left: 0; bottom: 5%; width: 3%; aspect-ratio: 10 / 16; pointer-events: none; will-change: transform; animation: spWbGehen 20s linear infinite; }
-.sp-wb-gast svg { width: 100%; height: 100%; display: block; }
-.sp-wb-gast:nth-of-type(even) { animation-direction: reverse; }
-@keyframes spWbGehen { from { transform: translateX(-120%); } to { transform: translateX(3400%); } }
-@media (prefers-reduced-motion: reduce) { .sp-wb-gast { animation: none; } }
-/* Vier Klappen auf 360 px: zwei je Zeile, Text etwas kleiner („Sehenswürdigkeiten" passte nicht, die Klappe heißt „Wahrzeichen"). */
-.sp-schnellmenue .sp-dorf-auf button, .sp-dorf-auf button { min-width: 0; padding-left: 4px; padding-right: 4px; font-size: 12px; letter-spacing: -.1px; white-space: nowrap; }
