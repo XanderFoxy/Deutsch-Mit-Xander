@@ -8462,14 +8462,6 @@
         weatherIcon.dataset.tag = tag ? "1" : "0";
         weatherIcon.title = weatherOut.title + (tag ? " · Tag" : " · Nacht") + " · Tippen: Ort wählen";
       }
-      /* FASSUNG 708 — XANDER (Funk 150): „dass es das realistische Wetter widerspiegelt was wir täglich von der
-         wetterzentrale übermittelt bekommen". Das Dorf im Spiel liest dieselbe Messung. */
-      try {
-        const tagJetzt = data.current.is_day != null ? Number(data.current.is_day) === 1 : !wetterNachtJetzt();
-        window.DMA_WETTER = window.DMA_WETTER || {};
-        window.DMA_WETTER.jetzt = { code: Number(code), tag: tagJetzt, temp: Math.round(data.current.temperature_2m), ort: ort.name, zeit: Date.now() };
-        window.dispatchEvent(new CustomEvent("dma-wetter"));
-      } catch (e) {}
       niederschlagZeichnen(lage || null, WETTER_STAERKE[code] || "regen");
     } catch (e) {
       weatherOut.textContent = "—";
@@ -8519,7 +8511,7 @@
     wetterKnopf.addEventListener("click", wetterOrtMenue);
     wetterKnopf.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); wetterOrtMenue(); } });
   }
-  window.DMA_WETTER = Object.assign(window.DMA_WETTER || {}, { symbol: wetterSymbol, ort: ortFuerLernraum, menue: wetterOrtMenue });
+  window.DMA_WETTER = { symbol: wetterSymbol, ort: ortFuerLernraum, menue: wetterOrtMenue };
   updateWeather();
   setInterval(updateWeather, 15 * 60 * 1000);
   /* UND WENN MAN ZURUECKKOMMT.

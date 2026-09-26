@@ -3639,8 +3639,6 @@
     }
     /* FASSUNG 704 — das gemalte Dorf auf die Leinwand bringen (nur wenn es sich geändert hat). */
     try { dorfMalPflegen(); } catch (e) {}
-    /* FASSUNG 708 — Wetter, Vögel und Geräusche nur, solange das Dorf offen ist. */
-    try { dorfWetterMelden(); dorfLebenPflegen(); } catch (e) {}
     /* Nur zurücksetzen, wenn es wirklich abweicht – jedes Setzen hält ein
        laufendes Nachgleiten an. */
     Object.keys(rollPos).forEach(function (key) {
@@ -6713,9 +6711,7 @@
         if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
         ernteZahl(knopf, "+" + r.menge);
         ton("geschenk", 0.3);
-        /* FASSUNG 708 — Funk 150: das echte Wetter wirkt auf die Ernte (der Server rechnet es). */
-        var wt = r.wetter_plus > 0 ? (r.wetter === "gewitter" ? " Das Gewitter bringt Regen: +1." : " Der Regen hilft: +1.") : r.wetter_plus < 0 ? " Frost: −1." : "";
-        hinweis("🌾 +" + r.menge + " Getreide (" + vorrat(r, "getreide") + " im Lager)." + wt + (r.besaet ? " Gesätes Feld – volle Ernte!" : " Tipp: säen bringt 5 statt 2."));
+        hinweis("🌾 +" + r.menge + " Getreide (" + vorrat(r, "getreide") + " im Lager)." + (r.besaet ? " Gesätes Feld – volle Ernte!" : " Tipp: säen bringt 5 statt 2."));
         ackerPflegen(); schnellZeichnen(); panelAuffrischen();
       }, Math.max(0, 450 - (Date.now() - start)));
     }).catch(function (e) { weiter(); hinweis("Ernten ging nicht: " + (e && e.message ? e.message : e)); });
@@ -8398,223 +8394,10 @@
     }).join("");
     /* Doppelt so groß wie das Fenster: man sieht die Häuser richtig und schiebt sich mit dem Finger durchs Dorf (wie bei Anno).
        Ein Tipp auf die Landschaft (nicht auf ein Haus) schließt das offene Haus wieder (Funk 148). */
-    /* FASSUNG 708 — über dem Fenster das echte Wetter, im Bild die Nacht (Funk 150). */
-    var wetter = dorfWetter();
-    return '<div class="sp-dl-rahmen"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + sig + '" aria-hidden="true"></canvas><div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
-      + dorfNachtHtml(ich, wetter) + haeuser + dorfLeuteHtml(ich) + "</div></div>" + dorfWetterHtml(wetter) + dorfWetterSchild(wetter) + "</div>"
+    return '<div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + sig + '" aria-hidden="true"></canvas><div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
+      + haeuser + dorfLeuteHtml(ich) + "</div></div>"
       + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">Wische, um dich umzusehen · tippe auf ein Gebäude</span>') + (wahl ? dorfStationHtml(ich, wahl) : "");
   }
-  /* ---------------------------------------------------------------
-     FASSUNG 708 — DAS DORF LEBT MIT DEM ECHTEN WETTER
-     XANDER (Funk 150): „dass es das realistische Wetter widerspiegelt was wir täglich von der wetterzentrale
-     übermittelt bekommen auch wenn es mal schneit dass es dann halt irgendwie schneit oder Gewitter ist dass man
-     da wirklich Gewitter Sounds hat und das dann wirklich realistisch Blitzen sieht", „dass man auch Tag und Nacht
-     zieht", „realistische Vögel die am Himmel ziehen", „das Treiben auch hört in dem Moment wenn man das Dorf
-     aufruft nicht vorher" und „wie die Sachen im Wetter die Ernte beeinflussen".
-     Das Wetter kommt aus derselben Messung wie oben im Kopf (open-meteo, gewählter Ort). Regen, Schnee, Nebel und
-     Blitze liegen als eigene Ebene über dem Fenster und bewegen sich nur per transform; die Nacht liegt über dem
-     Bild und die Fenster der Häuser leuchten. Geräusche laufen nur, solange das Dorf offen ist.
-     --------------------------------------------------------------- */
-  var DW = { uhr: 0, blitz: 0, voegel: 0, laut: 0, atmo: null, gemeldet: "", gemeldetZeit: 0 };
-  var DW_NAME = { klar: "Klar", wolken: "Bewölkt", nebel: "Nebel", niesel: "Nieselregen", regen: "Regen", schnee: "Schnee", gewitter: "Gewitter" };
-  function dorfWetter() {
-    var j = S.wetterTest || (window.DMA_WETTER && window.DMA_WETTER.jetzt) || null;
-    var code = j ? Number(j.code) : 1, std = new Date().getHours();
-    var tag = j && j.tag != null ? !!j.tag : std >= 7 && std < 20;
-    var in_ = function (l) { return l.indexOf(code) >= 0; };
-    var art = in_([95, 96, 99]) ? "gewitter" : in_([61, 63, 65, 66, 67, 80, 81, 82]) ? "regen" : in_([51, 53, 55, 56, 57]) ? "niesel"
-      : in_([71, 73, 75, 77, 85, 86]) ? "schnee" : in_([45, 48]) ? "nebel" : code === 2 || code === 3 ? "wolken" : "klar";
-    var stark = { 61: .45, 63: .7, 65: 1, 66: .5, 67: 1, 80: .5, 81: .8, 82: 1, 71: .45, 73: .7, 75: 1, 77: .4, 85: .6, 86: 1, 95: .8, 96: 1, 99: 1 }[code] || .5;
-    return { art: art, tag: tag, code: code, stark: stark, temp: j && j.temp != null ? j.temp : null, ort: (j && j.ort) || "", echt: !!j };
-  }
-  /* Was das Wetter auf den Feldern bewirkt – genau wie der Server (spiel_ernten) es rechnet. */
-  function dorfWetterWirkung(w) {
-    if (w.art === "regen" || w.art === "niesel" || w.art === "gewitter") return "Felder +1 Getreide";
-    if (w.art === "schnee") return "Frost: −1 Getreide";
-    return "";
-  }
-  function dorfWetterSig(w) { return w.art + (w.tag ? "t" : "n") + Math.round(w.stark * 10); }
-  /* Ebene über dem Fenster: Himmel, Niederschlag, Nebel, Platz für Blitze und Vögel. */
-  function dorfWetterHtml(w) {
-    var h = "", i, n, z = Math.random;
-    if (w.art === "regen" || w.art === "niesel" || w.art === "gewitter") {
-      n = w.art === "niesel" ? 22 : w.art === "gewitter" ? 64 : Math.round(26 + 34 * w.stark);
-      h += '<div class="sp-dw-regen' + (w.art === "niesel" ? " sp-dw-niesel" : "") + '">';
-      for (i = 0; i < n; i++) h += '<i style="left:' + (z() * 100).toFixed(1) + "%;animation-duration:" + (w.art === "niesel" ? .9 + z() * .5 : .42 + z() * .22).toFixed(2) + "s;animation-delay:-" + (z() * 1.2).toFixed(2) + "s;opacity:" + (.35 + z() * .5).toFixed(2) + '"></i>';
-      h += "</div>";
-    }
-    if (w.art === "schnee") {
-      n = Math.round(24 + 30 * w.stark);
-      h += '<div class="sp-dw-schnee">';
-      for (i = 0; i < n; i++) h += '<i style="left:' + (z() * 100).toFixed(1) + "%;animation-duration:" + (5 + z() * 5).toFixed(1) + "s;animation-delay:-" + (z() * 10).toFixed(1) + 's"><b style="animation-duration:' + (1.6 + z() * 1.6).toFixed(1) + "s;width:" + (2 + z() * 2.6).toFixed(1) + "px;height:" + (2 + z() * 2.6).toFixed(1) + 'px"></b></i>';
-      h += "</div>";
-    }
-    if (w.art === "nebel") h += '<div class="sp-dw-nebel"><i></i><i></i><i></i></div>';
-    return '<div class="sp-dw sp-dw-' + w.art + (w.tag ? " sp-dw-tag" : " sp-dw-nacht") + '" data-sig="' + dorfWetterSig(w) + '" aria-hidden="true"><div class="sp-dw-grau"></div>' + h
-      + '<div class="sp-dw-blitze"></div><div class="sp-dw-voegel"></div></div>';
-  }
-  /* Nachtebene im Bild selbst (scrollt mit): dunkelblau, Sterne, Mond, und hinter jedem heilen Haus brennt Licht. */
-  function dorfNachtHtml(ich, w) {
-    if (w.tag) return "";
-    var d = ich.dorf || {}, h = "", i;
-    var bewoelkt = w.art !== "klar";
-    for (i = 0; i < (bewoelkt ? 0 : 34); i++) { var sx = (hashZahl("st" + i) >>> 0) % 1000 / 10, sy = (hashZahl("sy" + i) >>> 0) % 140 / 10;
-      h += '<i class="sp-dn-stern" style="left:' + sx.toFixed(1) + "%;top:" + sy.toFixed(1) + "%;animation-delay:-" + (i % 7 * .6).toFixed(1) + 's"></i>'; }
-    if (!bewoelkt) h += '<i class="sp-dn-mond"></i>';
-    Object.keys(DORF_LAGE).forEach(function (k) {
-      var g = d[k]; if (!g || !(g.stufe > 0) || !(g.lp > 0)) return;
-      var q = DORF_LAGE[k], u = dmUmriss(k, g.stufe);
-      h += '<i class="sp-dn-licht" style="left:' + ((q[0] + (u[0] + u[2]) / 2) / 3.2).toFixed(2) + "%;top:" + ((q[1] + u[1] * .28) / 2).toFixed(2) + "%;animation-delay:-" + ((hashZahl(k) >>> 0) % 40 / 10).toFixed(1) + 's"></i>';
-    });
-    return '<div class="sp-dn" data-sig="' + dorfMalSig(ich) + dorfWetterSig(w) + '" aria-hidden="true">' + h + "</div>";
-  }
-  function dorfWetterSchild(w) {
-    if (!w.echt && !S.wetterTest) return "";
-    var sym = "";
-    try { sym = window.DMA_WETTER && window.DMA_WETTER.symbol ? window.DMA_WETTER.symbol(w.code, w.tag) : ""; } catch (e) {}
-    var wi = dorfWetterWirkung(w);
-    return '<span class="sp-dw-schild">' + sym + " " + (w.art === "klar" && !w.tag ? "Klare Nacht" : DW_NAME[w.art]) + (w.temp != null ? " · " + w.temp + "°" : "") + (w.ort ? " · " + esc(w.ort) : "")
-      + (wi ? " · <b>" + wi + "</b>" : "") + "</span>";
-  }
-  function dorfOffen() { return !!(S.schnellMenue && S.blick === "dorfblick" && schnellEl && schnellEl.querySelector(".sp-dl-rahmen")); }
-  /* Ein Blitz wie bei den Sprechbildern: eine Fläche, die am Kern breit ist und zur Spitze ausläuft, mit Ästen. */
-  function dwBlitzFlaeche(x0, y0, x1, y1, dick, aeste, tiefe) {
-    var n = 10, dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L, pk = [], i;
-    for (i = 0; i <= n; i++) { var t = i / n, zit = i === 0 || i === n ? 0 : (Math.random() * 2 - 1) * L * .07; pk.push([x0 + dx * t + nx * zit, y0 + dy * t + ny * zit, t]); }
-    var breite = function (t) { return dick * (1 - t) + .3 * t; }, links = [], rechts = [];
-    pk.forEach(function (p, j) {
-      var a = pk[Math.min(j + 1, n)], b = pk[Math.max(j - 1, 0)], tx = a[0] - b[0], ty = a[1] - b[1], tl = Math.hypot(tx, ty) || 1, wd = breite(p[2]) / 2;
-      tx /= tl; ty /= tl;
-      links.push((p[0] - ty * wd).toFixed(1) + " " + (p[1] + tx * wd).toFixed(1));
-      rechts.unshift((p[0] + ty * wd).toFixed(1) + " " + (p[1] - tx * wd).toFixed(1));
-    });
-    var d = "M" + links.join(" L") + " L" + rechts.join(" L") + " Z";
-    if (tiefe < 2) for (var k = 0; k < aeste; k++) {
-      var p = pk[2 + Math.floor(Math.random() * (n - 4))], wi = Math.atan2(dy, dx) + (Math.random() < .5 ? -1 : 1) * (.4 + Math.random() * .5), l = L * (.18 + Math.random() * .2);
-      d += " " + dwBlitzFlaeche(p[0], p[1], p[0] + Math.cos(wi) * l, p[1] + Math.sin(wi) * l, breite(p[2]) * .55, tiefe ? 1 : 2, tiefe + 1);
-    }
-    return d;
-  }
-  function dorfBlitz() {
-    var ort = schnellEl && schnellEl.querySelector(".sp-dw-blitze");
-    if (!ort) return;
-    var W = ort.clientWidth || 320, H = ort.clientHeight || 220, x = W * (.12 + Math.random() * .76), nah = Math.random();
-    var svg = '<svg viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H + '"><path d="' + dwBlitzFlaeche(x, -4, x + (Math.random() - .5) * W * .3, H * (.45 + Math.random() * .3), 2.4 + nah * 2.2, 2 + Math.floor(Math.random() * 3), 0) + '" fill="#f6f2ff"/></svg>';
-    var b = document.createElement("div"); b.className = "sp-dw-blitz"; b.innerHTML = svg;
-    var l = document.createElement("div"); l.className = "sp-dw-blitzlicht"; l.style.opacity = "0";
-    ort.appendChild(l); ort.appendChild(b);
-    setTimeout(function () { b.remove(); l.remove(); }, 900);
-    /* Ton und Bild zusammen: der Donner kracht mit dem Blitz (nah) oder kurz danach (weiter weg), nie ohne ihn. */
-    var spaeter = Math.round((1 - nah) * 700);
-    setTimeout(function () { if (dorfOffen()) ton("gewitter", .25 + nah * .35); }, spaeter);
-    DW.letzterBlitz = { wann: Math.round(performance.now()), donnerNach: spaeter };
-  }
-  function vogelSvg() {
-    return '<svg viewBox="0 0 24 12" aria-hidden="true"><path d="M1 5.5 C5 1.5 9 2 12 6.2 C15 2 19 1.5 23 5.5 C19 4 15.5 5 12 8.6 C8.5 5 5 4 1 5.5 Z" fill="#2b2a33"/><path d="M11 6.6 L12 9.8 L13 6.6 Z" fill="#2b2a33"/></svg>';
-  }
-  function dorfVoegel() {
-    var ort = schnellEl && schnellEl.querySelector(".sp-dw-voegel");
-    if (!ort) return;
-    var W = ort.clientWidth || 320, H = ort.clientHeight || 220, links = Math.random() < .5, n = 3 + Math.floor(Math.random() * 5), dauer = 11 + Math.random() * 8;
-    var s = document.createElement("div");
-    s.className = "sp-dw-schwarm" + (links ? "" : " sp-dw-rueck");
-    s.style.top = Math.round(H * (.06 + Math.random() * .28)) + "px";
-    s.style.setProperty("--weg", Math.round(W + 160) + "px");
-    s.style.animationDuration = dauer.toFixed(1) + "s";
-    var h = "";
-    for (var i = 0; i < n; i++) {
-      var gr = 9 + Math.random() * 6;
-      /* Jeder Vogel schlägt in seinem eigenen Takt und gleitet ab und zu. */
-      h += '<i class="sp-dw-vogel" style="left:' + Math.round(i * 14 + Math.random() * 10) + "px;top:" + Math.round((i % 2 ? 1 : -1) * i * 4 + Math.random() * 6) + "px;width:" + gr.toFixed(1) + "px;animation-delay:-" + (Math.random() * 3).toFixed(1) + 's">'
-        + '<b style="animation-duration:' + (.26 + Math.random() * .16).toFixed(2) + 's">' + vogelSvg() + "</b></i>";
-    }
-    s.innerHTML = h;
-    ort.appendChild(s);
-    setTimeout(function () { s.remove(); }, dauer * 1000 + 200);
-    /* Ton und Bild zusammen: das Zwitschern kommt, wenn der Schwarm ins Bild fliegt. */
-    setTimeout(function () { if (dorfOffen()) ton("zwitschern", .16); }, 1400);
-    DW.letzteVoegel = Math.round(performance.now());
-  }
-  /* Wind und Regen als Rauschen (Web Audio), nur solange das Dorf offen ist. */
-  function dorfAtmo(w) {
-    var k = KLANG.ctx;
-    if (!k || k.state !== "running" || !KLANG.master || !toeneAn() || lautStufe() === 0) { dorfAtmoAus(); return; }
-    var ziel = w.art === "gewitter" ? .16 : w.art === "regen" ? .06 + .08 * w.stark : w.art === "niesel" ? .045 : w.art === "schnee" ? .05 : .018;
-    var hell = w.art === "regen" || w.art === "gewitter" ? 5200 : w.art === "niesel" ? 3800 : 420;
-    if (!DW.atmo) {
-      try {
-        var len = k.sampleRate * 2, buf = k.createBuffer(1, len, k.sampleRate), dat = buf.getChannelData(0), last = 0;
-        for (var i = 0; i < len; i++) { var wn = Math.random() * 2 - 1; last = (last + .02 * wn) / 1.02; dat[i] = wn * .55 + last * 3.2; }
-        var q = k.createBufferSource(); q.buffer = buf; q.loop = true;
-        var hp = k.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 160;
-        var lp = k.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = hell;
-        var g = k.createGain(); g.gain.value = 0;
-        q.connect(hp); hp.connect(lp); lp.connect(g); g.connect(KLANG.master); q.start(0);
-        DW.atmo = { q: q, lp: lp, g: g };
-      } catch (e) { DW.atmo = null; return; }
-    }
-    var t = k.currentTime;
-    DW.atmo.lp.frequency.setTargetAtTime(hell, t, .4);
-    /* Wind kommt in Böen, Regen gleichmäßig. */
-    var boe = w.art === "regen" || w.art === "niesel" || w.art === "gewitter" ? 1 : .6 + .4 * Math.sin(Date.now() / 2300) * Math.sin(Date.now() / 5100);
-    DW.atmo.g.gain.setTargetAtTime(ziel * boe, t, .5);
-    DW.atmoZiel = ziel;
-  }
-  function dorfAtmoAus() {
-    if (!DW.atmo) return;
-    var a = DW.atmo; DW.atmo = null; DW.atmoZiel = 0;
-    try { a.g.gain.setTargetAtTime(0, KLANG.ctx.currentTime, .15); setTimeout(function () { try { a.q.stop(); a.g.disconnect(); } catch (e) {} }, 700); } catch (e) {}
-  }
-  /* Das Treiben im Dorf: ab und zu ein Hammer aus der Schmiede, Enten am Teich, ein Hund, das Pferd; nachts die Eule. */
-  function dorfTreiben(w) {
-    var d = (S.ich && S.ich.dorf) || {}, heil = function (k) { return d[k] && d[k].stufe > 0 && d[k].lp > 0; }, wahl = [];
-    if (!w.tag) wahl.push(["tier-eule-ruf", .13]);
-    else {
-      if (heil("schmiede")) wahl.push(["hammerschlag", .1]);
-      if (heil("kuhstall") || heil("huehnerstall")) wahl.push(["hundbellen", .07]);
-      if (w.art !== "schnee") wahl.push(["enten", .09]);
-      if (S.ich && S.ich.volk && S.ich.volk.automatik) wahl.push(["pferd", .1]);
-    }
-    if (!wahl.length) return;
-    var x = wahl[Math.floor(Math.random() * wahl.length)];
-    ton(x[0], x[1]);
-    DW.letzterLaut = x[0];
-  }
-  function dorfLebenTakt() {
-    if (!dorfOffen()) { clearInterval(DW.uhr); DW.uhr = 0; dorfAtmoAus(); return; }
-    var w = dorfWetter(), jetzt = Date.now();
-    dorfAtmo(w);
-    if (w.art === "gewitter") { if (!DW.blitz) DW.blitz = jetzt + 1500 + Math.random() * 3000; if (jetzt >= DW.blitz) { DW.blitz = jetzt + (5000 + Math.random() * 9000) / (.6 + w.stark * .6); dorfBlitz(); } }
-    else DW.blitz = 0;
-    var vogelWetter = w.tag && (w.art === "klar" || w.art === "wolken" || w.art === "nebel" || w.art === "niesel");
-    if (vogelWetter) { if (!DW.voegel) DW.voegel = jetzt + 1200 + Math.random() * 2500; if (jetzt >= DW.voegel) { DW.voegel = jetzt + 9000 + Math.random() * 14000; dorfVoegel(); } }
-    else DW.voegel = 0;
-    if (!DW.laut) DW.laut = jetzt + 3000 + Math.random() * 4000;
-    if (jetzt >= DW.laut) { DW.laut = jetzt + (w.tag ? 6000 : 14000) + Math.random() * (w.tag ? 9000 : 16000); if (w.art !== "gewitter" && (w.art !== "regen" || Math.random() < .3)) dorfTreiben(w); }
-  }
-  function dorfLebenPflegen() {
-    if (!dorfOffen()) { if (DW.uhr) { clearInterval(DW.uhr); DW.uhr = 0; } dorfAtmoAus(); return; }
-    if (!DW.uhr) {
-      ["gewitter", "zwitschern", "hammerschlag", "hundbellen", "enten", "pferd", "tier-eule-ruf"].forEach(function (n) { try { klangLaden(n); } catch (e) {} });
-      DW.uhr = setInterval(dorfLebenTakt, 400);
-      dorfLebenTakt();
-    }
-  }
-  /* Die Messung auch dem Server sagen (höchstens alle 10 Minuten oder wenn sich das Wetter ändert) – er rechnet damit die Ernte. */
-  function dorfWetterMelden() {
-    var j = window.DMA_WETTER && window.DMA_WETTER.jetzt;
-    if (!j || !S.ich || !S.ich.mitspielen || S.gast || !S.klient) return;
-    var sig = j.code + (j.tag ? "t" : "n");
-    if (sig === DW.gemeldet && Date.now() - DW.gemeldetZeit < 600000) return;
-    DW.gemeldet = sig; DW.gemeldetZeit = Date.now();
-    rpc("spiel_wetter_melden", { p_code: j.code, p_tag: !!j.tag }).catch(function () { DW.gemeldet = ""; });
-  }
-  try {
-    window.addEventListener("dma-wetter", function () {
-      dorfWetterMelden();
-      if (dorfOffen()) schnellZeichnen(true);
-    });
-  } catch (e) {}
   function dorfBildHtml(ich) {
     /* FASSUNG 704 — gemalt, wenn der Browser malen kann; sonst wie bisher als Vektorbild. */
     if (dorfGemalt()) return dorfBildGemaltHtml(ich);
@@ -10952,7 +10735,6 @@
     pruef: {
       /* FASSUNG 704 */
       dorfMalen: dorfMalen, DORF_LAGE: DORF_LAGE, dmZeit: function () { return DM.zeit; }, dmNeu: function () { DM.geht = null; DM.bilder = {}; },
-      dorfWetter: dorfWetter, dorfBlitz: dorfBlitz, dorfVoegel: dorfVoegel, dorfTreiben: dorfTreiben, DW: DW, dorfWetterMelden: dorfWetterMelden,
       puppeSchiesst: puppeSchiesst,
       zustand: function () { return S; },
       setzen: function (o) { Object.keys(o || {}).forEach(function (k) { S[k] = o[k]; }); zeichnen(); },
