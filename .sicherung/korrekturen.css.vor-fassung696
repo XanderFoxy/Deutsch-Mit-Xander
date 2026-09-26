@@ -34842,19 +34842,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
   color: #fff;
 }
 .lc-stelle-weg.lc-stelle-weg-sicher .lc-stelle-weg-frage { display: inline; }
-
-/* =================================================================
-   FASSUNG 696 — NEUE AUFTRITTE
-   XANDER: „K.I.T.T. mit dem roten Scanner … eine rote Dodge Viper …
-   Liane … Transformers … Lass dir da Zeit".
-   ================================================================= */
-/* Das rote Lauflicht vorn an K.I.T.T.: hin und her, wie in der Serie. */
-.lc-reisewagen .lc-rw-scanner { transform-box: view-box; animation: lcKittScan .9s ease-in-out infinite alternate; }
-@keyframes lcKittScan { from { transform: translateX(0); } to { transform: translateX(24px); } }
-/* Der Transformer: eine Zeichnung, deren Teile einzeln wandern. */
-.lc-auftritt-trafo { position: absolute; z-index: 1; pointer-events: none; }
-.lc-auftritt-trafo svg { width: 100%; height: 100%; overflow: visible; display: block; }
-/* Die Liane hängt an ihrem oberen Ende und dreht sich um diesen Punkt. */
-.lc-auftritt-seil { position: absolute; z-index: 1; width: 16px; margin-left: -8px; transform-origin: 50% 0; pointer-events: none; }
-.lc-auftritt-seil svg { width: 100%; height: 100%; overflow: visible; display: block; }
-@media (prefers-reduced-motion: reduce) { .lc-reisewagen .lc-rw-scanner { animation: none; } }

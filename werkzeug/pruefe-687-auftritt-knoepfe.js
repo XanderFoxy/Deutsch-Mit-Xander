@@ -104,7 +104,8 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   await tick(300);
   const aw = await pg.evaluate(() => [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-wort")].map((w) => w.textContent).join(","));
   if (B) await pg.screenshot({ path: B + "-auftritt-menue.png" });
-  sage(aw === "Ohne,Roter Sportwagen,Hot Rod,Monstertruck,Rakete,Zauberwolke", "Auswahl: Ohne, Roter Sportwagen, Hot Rod, Monstertruck, Rakete, Zauberwolke", aw);
+  sage(/* FASSUNG 696: dazu KITT, Viper, Liane, Transformer; der Monstertruck heißt jetzt Colt-Seavers-Truck. */
+    aw === "Ohne,Roter Sportwagen,Hot Rod,Colt-Seavers-Truck,KITT (Knight Rider),Rote Dodge Viper,An der Liane,Transformer,Rakete,Zauberwolke", "Auswahl: Ohne, Sportwagen, Hot Rod, Colt-Truck, KITT, Viper, Liane, Transformer, Rakete, Zauberwolke", aw);
   await pg.evaluate(() => { const b = [...document.querySelectorAll("#lcPlatzMenue .lc-platzmenue-knopf")].find((x) => /Sportwagen/.test(x.textContent)); b.click(); });
   await tick(1300);
   const vor = await pg.evaluate(() => { let m = ""; try { m = localStorage.getItem("dma_auftritt"); } catch (e) {} const w = document.querySelector(".lc-auftritt .lc-reisewagen-sportwagen");

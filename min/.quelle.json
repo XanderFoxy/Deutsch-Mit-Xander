@@ -1,6 +1,5 @@
 {
  "app-styles.css": "3220d1a8447dd065082f55010374487bdd10f97f",
- "app.js": "0b5daa7d66b2e22f890d10cc60e6d7483adb2bab",
  "aussprache-kreisel.css": "637f90838c608cc989e941e32d13232688f0800b",
  "aussprache-kreisel.js": "b84915102ee9baf8de2a7465296a51302bbe6683",
  "aussprache-pruefung.js": "bc7015f869c26a905ee940e07b4248b97f3a160c",
@@ -37,9 +36,7 @@
  "data-wortkategorien.js": "198133cbeabb3a8a58aa8e991936c7749d483e1d",
  "filmspieler.js": "a83f87e66b61fa426658fda9ed490be2d5a95f17",
  "klassenzimmer.js": "71e58a392589c250a3651eaf6f47964ec9c2d523",
- "korrekturen.css": "bdd6b72818486700add8dc70e8eeeaa65badb14a",
  "livechat.css": "00c0b7b0908e61bafab519e1d9d7b5dd9c2852ab",
- "livechat.js": "e3332060023d07266a2b56bad19d963c638bd166",
  "quiz.js": "7884e008f38ef069fe65c18b2ddbaeb1ef9ba444",
  "rueckfrage.js": "c3a14f5a0bc3bff4a2917e20d49c30a87c4dba3a",
  "satzbau.js": "6a17d2e3d36b61372c95a00cc9dd7cec361d30f9",
@@ -51,5 +48,8 @@
  "werkstatt.js": "6b16574f10d08259b581e0e9f4d0c0e0cbdbf42d",
  "spiel.css": "4c541a9d6627325ad5e86efee8822d2269c08af4",
  "spiel.js": "76d721a17ca28084c486943a2c773b79931f9bd8",
- "data-geraeusche.js": "0b684f47d0bb8c5a7ee70d09c6b9bce7da785e44"
+ "data-geraeusche.js": "0b684f47d0bb8c5a7ee70d09c6b9bce7da785e44",
+ "livechat.js": "03c190822ad75cda07e6a955c7a9aaacb614d6b6",
+ "korrekturen.css": "360d294c3d5ce8774bde5e05146e9d0cdb616790",
+ "app.js": "6e35c67f655553e4730ca0b62e86bfd0a13fe36a"
 }
