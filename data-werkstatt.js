@@ -49,28 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 708: Funk 150 Teil 1 – das Dorf mit dem echten Wetter (Regen, Schnee, Nebel, Gewitter mit Blitz und Donner), Tag und Nacht, Vögel, Geräusche nur im offenen Dorf, Wetter wirkt auf die Ernte",
+  stand: "Fassung 709: Funk 152 zuerst – das Dorf wieder klein wie vorher (ganzes Dorf), mit Kartenzeichen wie bei Google Maps und einem Kompass zum Hineinzoomen",
 
   inArbeit: [
-    { seit: "2026-09-26T18:41",
-      text: "709: Kompass mit Kartensymbolen, Zoom ins Detail" },
-    { seit: "2026-09-26T18:41",
-      text: "710: feinere Texturen, weichere Häuser, saftige Wiese, Berge, Schnee auf Dächern, Figuren und Pferdewagen realistischer" },
+    { seit: "2026-09-26T19:24",
+      text: "710: feinere Texturen, weichere Häuser, saftige Wiese, Schnee auf Dächern, realistischere Figuren" },
+    { seit: "2026-09-26T19:24",
+      text: "Funk 152: Taschen-Kachel, Doppeltipp Schaufel = Werkzeugmenü, Waffenrad mit Querleiste, Langdruck zwei Kreise, Tier-Fähigkeit" },
+    { seit: "2026-09-26T19:24",
+      text: "Funk 153: Controller-Abzeichen, Nicht-Spieler stumm, Makroknopf als Magic-Button, Galaxie-Farbe, Postfach" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T18:41",
-      text: "Echtes Wetter aus der Wetterzentrale über dem Dorf" },
-    { seit: "2026-09-26T18:41",
-      text: "Gewitter: verästelter Blitz, Donner mit dem Blitz" },
-    { seit: "2026-09-26T18:41",
-      text: "Nacht: Lichter in den Häusern, Sterne, Mond" },
-    { seit: "2026-09-26T18:41",
-      text: "Vogelschwärme mit Flügelschlag und Zwitschern" },
-    { seit: "2026-09-26T18:41",
-      text: "Regen-/Windrauschen und Dorftreiben nur bei offenem Dorf" },
-    { seit: "2026-09-26T18:41",
-      text: "Regen +1 Getreide, Frost −1 (Server)" },
+    { seit: "2026-09-26T19:24",
+      text: "Ganzes Dorf in voller Breite, 16:10, nichts zu wischen" },
+    { seit: "2026-09-26T19:24",
+      text: "Kartenzeichen an jedem Gebäude (Brezel, Windmühle, Amboss …)" },
+    { seit: "2026-09-26T19:24",
+      text: "Kompass: Karte mit Zeichen und Namen, Tipp fliegt hin und öffnet" },
+    { seit: "2026-09-26T19:24",
+      text: "Roter Ausschnitt-Rahmen in der Karte, Doppeltipp zoomt" },
+    { seit: "2026-09-26T19:24",
+      text: "Kein neues Malen beim Zoomen" },
   ],
 };

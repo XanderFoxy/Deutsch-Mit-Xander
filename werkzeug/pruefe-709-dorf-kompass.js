@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 704: DAS DORF GEMALT (Funk 145/146/148)
+   SONDE — FASSUNG 709: DAS DORF KLEIN WIE VORHER, MIT KOMPASS (Funk 150/152)
    ---------------------------------------------------------------------
-   XANDER (Funk 146): „nicht glatt wie Vektor Grafiken sondern richtig
-   schön … wie bei einer Bitmap … weiche strukturierte natürliche Texturen
-   bei den Häuserwänden oder bei den Dächern". Funk 148: „dass man auf
-   einem Klick in das leere dieses kleine Panel wieder schließt".
-   Geprüft auf einem Android-Telefon (360 px, echte Finger): das Dorf ist
-   ein gemaltes Rasterbild (viele Farben, keine Vektorhäuser mehr), doppelt
-   so groß wie das Fenster und mit dem Finger verschiebbar, Tipp aufs
-   gemalte Haus öffnet es, Tipp in die Landschaft schließt es, beim
-   Neuzeichnen wird NICHT neu gemalt, beim Ausbau schon, Rauch und
-   Mühlenflügel bewegen sich, Leistung, Rückfall auf Vektor.
+   XANDER (Funk 152): „die Karte des Dorfes ist immer noch nicht so klein
+   wie sie vorher war … kleiner und kompakter so wie es vorher war".
+   Funk 150: „wenn wir das größer haben wollen dann gibt es so einen
+   kleinen Kompass … die entsprechenden Symbole … wie auf solchen Google
+   Maps Karten dass man sieht okay das eine ist eine Bäckerei das andere
+   ist eine Mühle".
+   Geprüft auf einem Android-Telefon (360 px, echte Finger): am Anfang das
+   ganze Dorf in voller Breite (16:10, nichts zu wischen), an jedem Haus
+   sein Kartenzeichen; der Kompass öffnet die Karte mit Zeichen und Namen;
+   ein Tipp auf die Bäckerei holt einen dorthin (doppelt so groß) und
+   öffnet sie; der Rahmen in der Karte zeigt den Ausschnitt; „Ganzes
+   Dorf" zurück; Doppeltipp in die Landschaft zoomt; kein neues Malen.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -172,91 +174,81 @@ const sage = (gut, was, zusatz) => {
     window.__extra = Object.assign({}, window.__extra || {}, { spiel_markt_preise: () => ({ ok: true, preise: {} }), spiel_angebote_liste: () => ({ ok: true, angebote: [] }) });
     const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false; S.dorfTeil = ""; S.dorfWahl = "";
     try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
-    /* Seit 709 ist das ganze Dorf die Grundansicht (Funk 152); diese Sonde prüft die Ansicht „näher ran". */
-    try { localStorage.setItem("dma_dorf_nah", "1"); } catch (e) {} S.dorfNah = null;
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
+  await pg.evaluate(() => { try { localStorage.removeItem("dma_dorf_nah"); } catch (e) {} const S = window.DMA_SPIEL.pruef.zustand(); S.dorfNah = null; S.dorfKarte = false; });
+  const bild = async (name) => { if (!process.env.BILD) return; await pg.evaluate(() => document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "start" })); await tick(350); await (await pg.$(".sp-dl-rahmen")).screenshot({ path: process.env.BILD + "-" + name + ".png" }); };
+  const lage = () => pg.evaluate(() => { const r = document.querySelector(".sp-dl-rahmen"), f = r.querySelector(".sp-dl-fenster"), l = f.querySelector(".sp-dorfland");
+    return { klasse: r.className, fw: f.clientWidth, fh: f.clientHeight, lw: l.clientWidth, sw: f.scrollWidth, sl: Math.round(f.scrollLeft), st: Math.round(f.scrollTop), gemalt: (f.querySelector("canvas.sp-dl-mal") || {}).dataset.gemalt || "" }; });
 
-  console.log("\nGEMALT STATT VEKTOR\n");
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(900);
-  let r = await pg.evaluate(() => { const lw = document.querySelector(".sp-dl-fenster canvas.sp-dl-mal"); if (!lw) return null;
-    const g = lw.getContext("2d"), d = g.getImageData(0, 0, lw.width, lw.height).data, farben = new Set();
-    for (let i = 0; i < d.length; i += 4 * 97) farben.add((d[i] >> 3) + "," + (d[i + 1] >> 3) + "," + (d[i + 2] >> 3));
-    return { breite: lw.width, hoehe: lw.height, css: Math.round(lw.clientWidth), gemalt: lw.dataset.gemalt || "", farben: farben.size, vektorHaeuser: document.querySelectorAll(".sp-dorfland .sp-dl-haus > svg").length, zeit: window.DMA_SPIEL.pruef.dmZeit ? window.DMA_SPIEL.pruef.dmZeit() : null }; });
-  sage(r && r.gemalt && r.farben > 800, "das Dorf ist ein gemaltes Rasterbild (viele Farbtöne, nicht flach)", JSON.stringify(r));
-  sage(r && r.vektorHaeuser === 0, "keine Vektor-Häuser mehr im Bild");
-  sage(r && r.breite >= 2 * r.css * .95, "scharf: das Bild hat mindestens doppelt so viele Pixel wie es breit ist", r && r.breite + " px auf " + r.css + " CSS-px");
-  r = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"), l = f.querySelector(".sp-dorfland"); return { fenster: f.clientWidth, bild: l.clientWidth, links: Math.round(f.scrollLeft), oben: Math.round(f.scrollTop) }; });
-  sage(r.bild >= r.fenster * 1.9, "das Dorf ist doppelt so groß wie sein Fenster (Häuser gut zu erkennen)", JSON.stringify(r));
-  sage(r.links > 0 && r.oben > 0, "am Anfang schaut man auf die Dorfmitte", JSON.stringify(r));
-  const bak = await pg.evaluate(() => { const b = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]').getBoundingClientRect(); return { w: Math.round(b.width), h: Math.round(b.height) }; });
-  sage(bak.w >= 40, "ein Haus ist auf dem Telefon mindestens 40 px breit (vorher etwa 25)", JSON.stringify(bak));
+  console.log("\nAM ANFANG: DAS GANZE DORF, KLEIN WIE VORHER\n");
+  await tippe('.sp-schnell [data-s="makro"]'); await tick(1200);
+  let r = await lage();
+  sage(/sp-dl-ganz/.test(r.klasse) && Math.abs(r.lw - r.fw) <= 1 && r.sw <= r.fw + 1, "das ganze Dorf passt ins Fenster (nichts zu wischen)", JSON.stringify(r));
+  sage(Math.abs(r.fh / r.fw - .625) < .02, "Format 16:10 wie vor 704 (volle Breite, nicht höher)", (r.fh / r.fw).toFixed(3));
+  const gemalt0 = r.gemalt;
+  r = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(), d = S.ich.dorf; const gebaut = Object.keys(d).filter((k) => d[k].stufe > 0).length;
+    const pins = [...document.querySelectorAll(".sp-dl-haus-gemalt:not(.sp-dl-bauplatz) small .sp-dl-pin")]; const namen = [...document.querySelectorAll(".sp-dl-haus-gemalt small span")].filter((e) => e.getBoundingClientRect().width > 0).length;
+    return { gebaut, pins: pins.length, groesse: pins.length ? Math.round(pins[0].getBoundingClientRect().width) : 0, sichtbareNamen: namen }; });
+  sage(r.pins === r.gebaut && r.groesse >= 12 && r.sichtbareNamen === 0, "an jedem Haus sein Kartenzeichen, keine Namensschilder (Karte von weitem)", JSON.stringify(r));
+  await bild("ganz");
 
-  console.log("\nWISCHEN, TIPPEN, SCHLIESSEN (Funk 148)\n");
-  const cdp = await ctx.newCDPSession(pg);
-  const vor = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); window.__fenster = f; const b = f.getBoundingClientRect(); return { x: b.left + b.width * .7, y: b.top + b.height * .5, l: f.scrollLeft }; });
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: vor.x, y: vor.y }] });
-  for (let i = 1; i <= 8; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: vor.x - 12 * i, y: vor.y }] }); await tick(16); }
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await tick(900);
-  const nach = await pg.evaluate(() => Math.round(document.querySelector(".sp-dl-fenster").scrollLeft));
-  await tick(1600);
-  r = await pg.evaluate(() => ({ l: Math.round(document.querySelector(".sp-dl-fenster").scrollLeft), gleich: document.querySelector(".sp-dl-fenster") === window.__fenster }));
-  sage(nach > vor.l + 30, "mit dem Finger nach links wischen schiebt das Dorf", Math.round(vor.l) + " → " + nach);
-  sage(r.l === nach && r.gleich, "nach 1,6 s steht es noch da (kein Zurückspringen)", nach + " → " + r.l);
-  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"), b = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]'); f.scrollLeft = b.offsetLeft - 40; f.scrollTop = Math.max(0, b.offsetTop - 30); });
-  await tick(300);
-  const hb = await pg.evaluate(() => { const b = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]').getBoundingClientRect(); return { x: b.left + b.width * .45, y: b.top + b.height * .6 }; });
-  await pg.touchscreen.tap(hb.x, hb.y); await tick(700);
-  r = await pg.evaluate(() => ({ wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl, station: Boolean(document.querySelector(".sp-dl-station")), ring: getComputedStyle(document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]'), "::after").opacity }));
-  sage(r.wahl === "baeckerei" && r.station && r.ring === "1", "Tipp aufs gemalte Haus öffnet die Bäckerei, goldener Ring am Boden", JSON.stringify(r));
-  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); f.scrollIntoView({ block: "nearest" }); }); await tick(300);
-  const leer = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster").getBoundingClientRect(); const hs = [...document.querySelectorAll(".sp-dl-haus-gemalt")].map((e) => e.getBoundingClientRect());
-    for (let y = f.top + 8; y < f.bottom - 8; y += 9) for (let x = f.left + 8; x < f.right - 8; x += 9) { if (!hs.some((b) => x >= b.left - 4 && x <= b.right + 4 && y >= b.top - 4 && y <= b.bottom + 14)) { const e = document.elementFromPoint(x, y); if (e && e.matches("canvas.sp-dl-mal")) return { x, y }; } } return null; });
-  if (leer) { await pg.touchscreen.tap(leer.x, leer.y); await tick(600); }
-  r = await pg.evaluate(() => ({ wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl, station: Boolean(document.querySelector(".sp-dl-station")) }));
-  sage(leer && r.wahl === "" && !r.station, "Tipp in die leere Landschaft schließt das Haus wieder", JSON.stringify(r) + " " + JSON.stringify(leer));
+  console.log("\nDER KOMPASS: KARTE MIT ZEICHEN UND NAMEN\n");
+  r = await pg.evaluate(() => { const k = document.querySelector(".sp-dl-kompass").getBoundingClientRect(); const e = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2); return { w: Math.round(k.width), oben: Boolean(e && e.closest(".sp-dl-kompass")) }; });
+  sage(r.w >= 32 && r.oben, "der Kompass liegt unten rechts im Bild, 34 px, nichts liegt darüber", JSON.stringify(r));
+  await tippe(".sp-dl-kompass"); await tick(500);
+  r = await pg.evaluate(() => { const k = document.querySelector(".sp-dl-karte"); if (!k) return null; const b = k.querySelector("canvas.sp-dl-karte-bild"); let bunt = 0;
+    try { const d = b.getContext("2d").getImageData(0, 0, b.width, b.height).data; for (let i = 0; i < d.length; i += 4 * 211) if (d[i + 3] > 0) bunt++; } catch (e) {}
+    const pins = [...k.querySelectorAll(".sp-dl-kpin")]; return { pins: pins.length, namen: pins.map((p) => p.textContent), klein: Math.min(...pins.map((p) => Math.min(p.getBoundingClientRect().width, p.getBoundingClientRect().height))), bild: bunt }; });
+  sage(r && r.pins === 12 && r.namen.includes("Bäckerei") && r.namen.includes("Mühle"), "die Karte zeigt alle 12 Gebäude mit Zeichen und Namen (Bäckerei, Mühle …)", r && r.namen.join(", "));
+  sage(r && r.bild > 50, "in der Karte ist das gemalte Dorf in klein zu sehen", r && r.bild + " Stichproben");
+  sage(r && r.klein >= 26, "jedes Zeichen ist groß genug für den Finger", r && r.klein + " px");
+  await bild("karte");
 
-  console.log("\nNUR NEU MALEN, WENN SICH DAS DORF ÄNDERT\n");
-  r = await pg.evaluate(async () => { const lw = document.querySelector("canvas.sp-dl-mal"); lw.__merk = 1; const g0 = lw.dataset.gemalt; const S = window.DMA_SPIEL.pruef.zustand();
-    for (let i = 0; i < 5; i++) { S.ich = Object.assign({}, S.ich, { punkte: S.ich.punkte + 1 }); window.DMA_SPIEL.pruef.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 50)); }
-    const lw2 = document.querySelector("canvas.sp-dl-mal"); return { gleich: lw2 === lw && lw2.__merk === 1, sig: lw2.dataset.gemalt === g0 }; });
-  sage(r.gleich && r.sig, "5× neu zeichnen (Punkte ändern sich): dieselbe Leinwand, nicht neu gemalt", JSON.stringify(r));
-  r = await pg.evaluate(async () => { const lw = document.querySelector("canvas.sp-dl-mal"); const g0 = lw.dataset.gemalt; const S = window.DMA_SPIEL.pruef.zustand();
-    S.ich = Object.assign({}, S.ich, { dorf: Object.assign({}, S.ich.dorf, { schule: { stufe: 2, lp: 40 } }) }); window.DMA_SPIEL.pruef.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 100));
-    const lw2 = document.querySelector("canvas.sp-dl-mal"); return { vorher: g0, nachher: lw2.dataset.gemalt }; });
-  sage(r.nachher && r.nachher !== r.vorher && /sch2/.test(r.nachher), "Schule ausgebaut: das Bild wird neu gemalt (Stufe 2 mit Gaube)", r.vorher + " → " + r.nachher);
-  r = await pg.evaluate(() => { const u = document.querySelector(".sp-dl-ueber"); return { qualm: u.querySelectorAll(".sp-dl-qualm").length, fluegel: u.querySelectorAll(".sp-dl-fluegel").length,
-    dreht: [...u.querySelectorAll(".sp-dl-fluegel svg")].some((e) => e.getAnimations().some((a) => a.playState === "running")) }; });
-  sage(r.qualm >= 6 && r.fluegel === 1 && r.dreht, "Rauch aus den Schornsteinen, die Mühlenflügel drehen sich (die kaputte Schmiede raucht nicht)", JSON.stringify(r));
-  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); f.scrollLeft = f.scrollWidth * 150 / 320 - f.clientWidth / 2; f.scrollTop = f.scrollHeight * 105 / 200 - f.clientHeight / 2; f.scrollIntoView({ block: "start" }); }); await tick(500);
-  await (await pg.$(".sp-dl-fenster")).screenshot({ path: (process.env.BILD || "/tmp/d704.png") });
-  await pg.evaluate(() => { const lw = document.querySelector("canvas.sp-dl-mal"); const c = document.createElement("canvas"); c.id = "__voll"; c.width = lw.width; c.height = lw.height; c.getContext("2d").drawImage(lw, 0, 0);
-    c.style.cssText = "position:fixed;left:0;top:0;width:" + Math.round(lw.width / 2) + "px;z-index:99999"; document.body.appendChild(c); });
-  await (await pg.$("#__voll")).screenshot({ path: (process.env.BILD || "/tmp/d704.png").replace(/\.png$/, "-voll.png") });
-  await pg.evaluate(() => document.getElementById("__voll").remove());
+  console.log("\nTIPP AUF DIE BÄCKEREI: DORTHIN, NÄHER RAN\n");
+  await tippe('.sp-dl-kpin[data-g="baeckerei"]'); await tick(700);
+  r = await lage();
+  const b = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster").getBoundingClientRect(), h = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]').getBoundingClientRect();
+    return { drin: h.left >= f.left - 2 && h.right <= f.right + 2 && h.top >= f.top - 2 && h.bottom <= f.bottom + 2, breit: Math.round(h.width), wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl, karte: Boolean(document.querySelector(".sp-dl-karte")),
+      name: [...document.querySelectorAll('.sp-dl-haus-gemalt[data-g="baeckerei"] small span')].map((e) => e.getBoundingClientRect().width > 0)[0], gemerkt: localStorage.getItem("dma_dorf_nah") }; });
+  sage(/sp-dl-nah/.test(r.klasse) && r.lw >= r.fw * 1.9, "näher ran: das Dorf ist doppelt so groß", JSON.stringify(r));
+  sage(b.drin && b.breit >= 40, "die Bäckerei ist mitten im Bild und gut zu erkennen", JSON.stringify(b));
+  sage(b.wahl === "baeckerei" && !b.karte && b.name, "sie ist gleich geöffnet, die Karte zu, jetzt mit Namensschild", JSON.stringify(b));
+  sage(r.gemalt === gemalt0, "beim Zoomen wird nicht neu gemalt (dasselbe Bild, nur größer)", r.gemalt);
+  sage(b.gemerkt === "1", "die Zoomstufe wird auf dem Gerät gemerkt", b.gemerkt);
+  await bild("nah");
 
-  console.log("\nLEISTUNG\n");
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-  const malen = await pg.evaluate(() => { const c = document.createElement("canvas"); const t0 = performance.now(); window.DMA_SPIEL.pruef.dorfMalen(c, window.DMA_SPIEL.pruef.zustand().ich.dorf, window.DMA_SPIEL.pruef.DORF_LAGE, 1232); return Math.round(performance.now() - t0); });
-  const leistung = await pg.evaluate(async () => {
-    const S = window.DMA_SPIEL.pruef.zustand(); const z = [];
-    for (let i = 0; i < 9; i++) { await new Promise((o) => setTimeout(o, 60)); const t0 = performance.now(); S.ich = Object.assign({}, S.ich, { punkte: (S.ich.punkte || 0) + 1 }); window.DMA_SPIEL.pruef.schnellZeichnen(true); z.push(performance.now() - t0); }
-    z.sort((a, b) => a - b);
-    const bilder = []; let letzt = performance.now(); const ende = letzt + 3000;
-    await new Promise((ok) => { const f = (t) => { bilder.push(t - letzt); letzt = t; if (t < ende) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
-    return { zeichnen: Math.round(z[4]), bilder: bilder.length, lang: bilder.filter((x) => x > 50).length }; });
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
-  sage(malen < 1500, "einmal malen (1232 px, 4× gedrosselt, wie ein mittleres Telefon) unter 1,5 s – danach aus dem Speicher", malen + " ms");
-  sage(leistung.zeichnen < 120 && leistung.lang <= 5, "danach: Neuzeichnen (Median) unter 120 ms, höchstens 5 lange Bilder in 3 s", JSON.stringify(leistung));
+  console.log("\nIM KOMPASS SIEHT MAN, WO MAN IST\n");
+  await tippe(".sp-dl-kompass"); await tick(400);
+  const r1 = await pg.evaluate(() => { const b = document.querySelector(".sp-dl-karte-blick"); return b ? { l: parseFloat(b.style.left), w: parseFloat(b.style.width) } : null; });
+  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); f.scrollLeft = f.scrollWidth - f.clientWidth; }); await tick(300);
+  const r2 = await pg.evaluate(() => { const b = document.querySelector(".sp-dl-karte-blick"); return b ? { l: parseFloat(b.style.left), w: parseFloat(b.style.width) } : null; });
+  sage(r1 && r1.w > 40 && r1.w < 60, "der rote Rahmen zeigt den Ausschnitt (etwa die Hälfte)", JSON.stringify(r1));
+  sage(r2 && r2.l > r1.l + 10, "wischt man nach rechts, wandert der Rahmen mit", JSON.stringify({ r1, r2 }));
+  await pg.evaluate(() => { window.__zoomAnim = 0; const alt = Element.prototype.animate; Element.prototype.animate = function (k, o) { if (this.classList && this.classList.contains("sp-dorfland")) window.__zoomAnim++; return alt.call(this, k, o); }; });
+  await tippe('.sp-dl-karte [data-s="dorfzoom"]'); await tick(150);
+  const anim = await pg.evaluate(() => window.__zoomAnim);
+  await tick(600);
+  r = await lage();
+  sage(/sp-dl-ganz/.test(r.klasse) && Math.abs(r.lw - r.fw) <= 1 && anim >= 1, "„Ganzes Dorf“: wieder alles im Blick, weich gezoomt", JSON.stringify({ klasse: r.klasse, anim }));
 
-  console.log("\nRÜCKFALL OHNE MALEN\n");
-  r = await pg.evaluate(() => { try { localStorage.setItem("dma_dorf_vektor", "1"); } catch (e) {} window.DMA_SPIEL.pruef.dmNeu(); window.DMA_SPIEL.pruef.schnellZeichnen(true);
-    const n = document.querySelectorAll(".sp-dorfland .sp-dl-haus > svg").length, lw = document.querySelector("canvas.sp-dl-mal"); try { localStorage.removeItem("dma_dorf_vektor"); } catch (e) {} window.DMA_SPIEL.pruef.dmNeu(); window.DMA_SPIEL.pruef.schnellZeichnen(true); return { vektor: n, leinwand: Boolean(lw) }; });
-  sage(r.vektor > 5 && !r.leinwand, "mit dem Schalter dma_dorf_vektor kommt das alte Vektorbild (Rückfall)", JSON.stringify(r));
+  console.log("\nDOPPELTIPP IN DIE LANDSCHAFT\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true); document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "center", behavior: "instant" }); }); await tick(1500);
+  const p = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster").getBoundingClientRect(); const hs = [...document.querySelectorAll(".sp-dl-haus-gemalt, .sp-dl-kompass, .sp-dw-schild")].map((e) => e.getBoundingClientRect());
+    /* Chrome rastet einen Fingertipp auf einen nahen Knopf ein – deshalb 22 px Abstand zu jedem Haus. */
+    for (let y = f.top + f.height * .3; y < f.bottom - 20; y += 5) for (let x = f.left + f.width * .5; x < f.right - 44; x += 5) { if (!hs.some((b) => x >= b.left - 22 && x <= b.right + 22 && y >= b.top - 22 && y <= b.bottom + 22)) { const e = document.elementFromPoint(x, y); if (e && e.matches("canvas.sp-dl-mal")) return { x, y, fx: (x - f.left) / f.width, fy: (y - f.top) / f.height }; } } return null; });
+  if (p) { await pg.touchscreen.tap(p.x, p.y); await tick(120); await pg.touchscreen.tap(p.x, p.y); await tick(700); }
+  r = await lage();
+  const zmitte = p && { fx: (r.sl + r.fw / 2) / r.lw, fy: (r.st + r.fh / 2) / (r.lw * .625) };
+  sage(p && /sp-dl-nah/.test(r.klasse) && Math.abs(zmitte.fx - p.fx) < .15, "zweimal schnell in die freie Landschaft: näher ran, genau dort", JSON.stringify({ p, zmitte }));
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.dorfZoom(false)); await tick(500);
+
+  console.log("\nTELEFON: NICHTS RAGT HERAUS\n");
+  r = await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); return { quer: m.scrollWidth - m.clientWidth, raus: [...document.querySelectorAll(".sp-dl-rahmen *")].filter((e) => { const b = e.getBoundingClientRect(); return b.width && b.right > innerWidth + 1; }).length }; });
+  sage(r.quer <= 1 && r.raus === 0, "360 px: nichts ragt heraus", JSON.stringify(r));
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
-  console.log("\nFassung 704 (Dorf gemalt): " + (fehler ? fehler + " rot." : "alles grün."));
+  console.log("\nFassung 709 (Dorf klein, Kompass): " + (fehler ? fehler + " rot." : "alles grün."));
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

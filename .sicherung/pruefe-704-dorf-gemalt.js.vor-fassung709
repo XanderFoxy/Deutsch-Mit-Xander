@@ -172,8 +172,6 @@ const sage = (gut, was, zusatz) => {
     window.__extra = Object.assign({}, window.__extra || {}, { spiel_markt_preise: () => ({ ok: true, preise: {} }), spiel_angebote_liste: () => ({ ok: true, angebote: [] }) });
     const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false; S.dorfTeil = ""; S.dorfWahl = "";
     try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
-    /* Seit 709 ist das ganze Dorf die Grundansicht (Funk 152); diese Sonde prüft die Ansicht „näher ran". */
-    try { localStorage.setItem("dma_dorf_nah", "1"); } catch (e) {} S.dorfNah = null;
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
