@@ -31,12 +31,12 @@
     laser:        { name: "Laser",           schaden: 7,  preis: 0,   flug: 260, ton: "laserrot",        treffer: "lasertreffer" },
     armbrust:     { name: "Armbrust",        schaden: 12, preis: 40,  flug: 460, ton: "schuss",          treffer: "pfeiltreffer" },
     tomahawk:     { name: "Tomahawk",        schaden: 15, preis: 60,  flug: 720, ton: "swoosh",          treffer: "axttreffer" },
-    zielfernrohr: { name: "Zielfernrohr",    schaden: 22, preis: 100, flug: 950, ton: "zielfernrohr",    treffer: "knack" },
+    zielfernrohr: { name: "Zielfernrohr",    schaden: 35, preis: 100, flug: 950, ton: "zielfernrohr",    treffer: "knack" },
     bazooka:      { name: "Bazooka",         schaden: 28, preis: 150, flug: 820, ton: "granatenpfeifen", treffer: "explosion2" },
     /* FUNK 110 — „andere Waffen die lustig sind z.B in hühnerwerfer oder
        ein Eierwerfer … und die Sounds müssen dafür da sein". */
-    eierwerfer:   { name: "Eierwerfer",      schaden: 8,  preis: 20,  flug: 600, ton: "swoosh",          treffer: "eiknack" },
-    huehnerwerfer:{ name: "Hühnerwerfer",    schaden: 13, preis: 55,  flug: 760, ton: "huhnwurf",        treffer: "huhntreffer" },
+    eierwerfer:   { name: "Eierwerfer",      schaden: 5,  preis: 20,  flug: 600, ton: "swoosh",          treffer: "eiknack" },
+    huehnerwerfer:{ name: "Hühnerwerfer",    schaden: 10, preis: 55,  flug: 760, ton: "huhnwurf",        treffer: "huhntreffer" },
     /* FASSUNG 637 — XANDER (Funk 113): „Bierkrug Und Bretzeln Die Man Nach
        Dem Anderen Schießen Kann Und Typisch Deutsche Sachen Bratwurst Und
        Sauerkraut Einmal Zum Essen Und Einmal Zum Werfen Mit Entsprechenden
@@ -44,37 +44,34 @@
        und dann ist seine Sicht ein bisschen beeinträchtigt".
        Bratwurst und Sauerkraut sind Vorräte (vorrat: true): jeder Wurf
        verbraucht eins, man kann sie auch essen. */
-    brezel:       { name: "Brezel",          schaden: 8,  preis: 20,  flug: 640, ton: "swoosh",          treffer: "brezelknack" },
-    bierkrug:     { name: "Bierkrug",        schaden: 13, preis: 45,  flug: 720, ton: "swoosh",          treffer: "krugklirr" },
-    spaetzle:     { name: "Spätzle-Kanone",  schaden: 17, preis: 90,  flug: 480, ton: "spaetzlesalve",   treffer: "platsch" },
+    brezel:       { name: "Brezel",          schaden: 5,  preis: 20,  flug: 640, ton: "swoosh",          treffer: "brezelknack" },
+    bierkrug:     { name: "Bierkrug",        schaden: 11, preis: 45,  flug: 720, ton: "swoosh",          treffer: "krugklirr" },
+    spaetzle:     { name: "Spätzle-Kanone",  schaden: 14, preis: 90,  flug: 480, ton: "spaetzlesalve",   treffer: "platsch" },
     bratwurst:    { name: "Bratwurst",       schaden: 9,  preis: 0,   flug: 660, ton: "swoosh",          treffer: "wurstklatsch", vorrat: true },
     sauerkraut:   { name: "Sauerkraut",      schaden: 4,  preis: 0,   flug: 680, ton: "swoosh",          treffer: "krautmatsch",  vorrat: true },
     /* FASSUNG 642 — XANDER: „Döner Katapult oder irgendwie ne
        Dönerschleuder … realistisch" und „Laser Salven, Maschinengewehr …
        Turrican-mäßig". */
-    doener:       { name: "Döner-Katapult",  schaden: 16, preis: 70,  flug: 860, ton: "katapult4",       treffer: "doenerklatsch" },
-    mg:           { name: "Maschinengewehr", schaden: 18, preis: 110, flug: 300, ton: "mgsalve",         treffer: "knack" },
+    doener:       { name: "Döner-Katapult",  schaden: 13, preis: 70,  flug: 860, ton: "katapult4",       treffer: "doenerklatsch" },
+    mg:           { name: "Maschinengewehr", schaden: 12, preis: 110, flug: 300, ton: "mgsalve",         treffer: "knack" },
     /* FASSUNG 664 — XANDER: „Updates ab einem bestimmten Level irgendwelche
        Sachen, die dann freigeschaltet werden können, die wir sonst nicht
        haben". Drei Meisterwaffen, typisch deutsch, erst ab einem Level. */
-    weisswurst:   { name: "Weißwurst-Bumerang", schaden: 18, preis: 85,  flug: 820, ton: "bumerang2", treffer: "wurstklatsch", ab: 6 },
-    nudelholz:    { name: "Nudelholz",          schaden: 22, preis: 110, flug: 700, ton: "swoosh",    treffer: "holzklopf",    ab: 8 },
-    kuckucksuhr:  { name: "Kuckucksuhr-Bombe",  schaden: 30, preis: 160, flug: 900, ton: "ticken",    treffer: "explosion2",   ab: 10 },
-    lasersalve:   { name: "Laser-Salve",     schaden: 15, preis: 80,  flug: 240, ton: "lasersalve",      treffer: "lasertreffer" },
+    weisswurst:   { name: "Weißwurst-Bumerang", schaden: 14, preis: 85,  flug: 820, ton: "bumerang2", treffer: "wurstklatsch", ab: 6 },
+    nudelholz:    { name: "Nudelholz",          schaden: 18, preis: 110, flug: 700, ton: "swoosh",    treffer: "holzklopf",    ab: 8 },
+    kuckucksuhr:  { name: "Kuckucksuhr-Bombe",  schaden: 24, preis: 160, flug: 900, ton: "ticken",    treffer: "explosion2",   ab: 10 },
+    lasersalve:   { name: "Laser-Salve",     schaden: 10, preis: 80,  flug: 240, ton: "lasersalve",      treffer: "lasertreffer" },
     /* FASSUNG 668 — XANDER: „mehr Laser Arten, die man anlegen kann … wie
        kann man zwischen diesen Salven und multiple Feuern unterscheiden?
        Dann könnte es mehr Arten geben. Kugelblitz". Die Energie-Waffen:
        SALVE = mehrere Schüsse NACHEINANDER (Laser-Salve, MG, Spätzle);
        MEHRFACHFEUER = mehrere Strahlen GLEICHZEITIG (Doppellaser, Fächerlaser);
        DAUERSTRAHL = ein Strahl, der anhält (Plasmastrahl); dazu der Kugelblitz. */
-    doppellaser:  { name: "Doppellaser",     schaden: 16, preis: 70,  flug: 260, ton: "laserblau",   treffer: "lasertreffer", ab: 4,  art: "Mehrfachfeuer: zwei Strahlen gleichzeitig" },
-    streulaser:   { name: "Fächerlaser",     schaden: 21, preis: 120, flug: 280, ton: "lasersalve",  treffer: "lasertreffer", ab: 6,  art: "Mehrfachfeuer: fünf Strahlen im Fächer" },
-    plasmastrahl: { name: "Plasmastrahl",    schaden: 26, preis: 150, flug: 700, ton: "dunkelbrumm", treffer: "lasertreffer", ab: 8,  art: "Dauerstrahl, der anschwillt" },
-    kugelblitz:   { name: "Kugelblitz",      schaden: 32, preis: 190, flug: 1100, ton: "dunkelbrumm", treffer: "gewitter",    ab: 11, art: "knisternde Kugel, beim Einschlag Blitzschlag" }
+    doppellaser:  { name: "Doppellaser",     schaden: 15, preis: 70,  flug: 260, ton: "laserblau",   treffer: "lasertreffer", ab: 4,  art: "Mehrfachfeuer: zwei Strahlen gleichzeitig" },
+    streulaser:   { name: "Fächerlaser",     schaden: 17, preis: 120, flug: 280, ton: "lasersalve",  treffer: "lasertreffer", ab: 6,  art: "Mehrfachfeuer: fünf Strahlen im Fächer" },
+    plasmastrahl: { name: "Plasmastrahl",    schaden: 20, preis: 150, flug: 700, ton: "dunkelbrumm", treffer: "lasertreffer", ab: 8,  art: "Dauerstrahl, der anschwillt" },
+    kugelblitz:   { name: "Kugelblitz",      schaden: 26, preis: 190, flug: 1100, ton: "dunkelbrumm", treffer: "gewitter",    ab: 11, art: "knisternde Kugel, beim Einschlag Blitzschlag" }
   };
-  /* FASSUNG 697 — XANDER: „jedes Upgrade … soll eine echte Wirkung haben". Schaden nach Preis
-     und Level geordnet (spiel_waffe_schaden): das Zielfernrohr (35) schlug die Bazooka und die
-     Level-10/11-Waffen, Eierwerfer und Brezel (5) waren schwächer als die Gratis-Kartoffel. */
   var WAFFEN_REIHE = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "brezel", "armbrust", "huehnerwerfer", "bierkrug", "tomahawk", "spaetzle", "doener", "lasersalve", "mg", "zielfernrohr", "bazooka", "weisswurst", "nudelholz", "kuckucksuhr", "doppellaser", "streulaser", "plasmastrahl", "kugelblitz"];
   var VORRAT_WAFFEN = ["bratwurst", "sauerkraut"];
   function vorrat(ich, ding) { return Math.max(0, Number(((ich || {}).vorraete || {})[ding]) || 0); }
@@ -169,7 +166,7 @@
     ["zaehigkeit", "Zähigkeit",   "+10 Höchst-Lebenspunkte je Stufe"],
     ["panzerhaut", "Panzerhaut",  "+3 % Rüstung je Stufe (Rüstung höchstens 45 %)"],
     ["treffsicher","Treffsicher", "+5 % Schaden je Stufe"],
-    ["heilkunst",  "Heilkunst",   "+10 % je Stufe auf Pflaster und Heiltrank – auch wenn du andere heilst"],
+    ["heilkunst",  "Heilkunst",   "+10 % Heilung je Stufe – auch wenn du andere heilst"],
     ["tierfreund", "Tierfreund",  "dein Monster wehrt je Stufe 10 % stärker ab"],
     ["ingenieur",  "Ingenieur",   "dein Geschütz schießt je Stufe 10 % stärker zurück"]
   ];
@@ -795,48 +792,25 @@
   }
   /* Die eigene Gegenwehr, lokal gerechnet wie spiel_treffer (für die Übung). */
   function eigeneGegenwehr(roh) {
-    /* FASSUNG 697 — dieselben Tiere und Zahlen wie spiel_treffer. Vorher kannte die Übung nur
-       Fellmonster, Stachelmonster, Chihuahua, Drache und Eule; Schäferhund, Einhorn, Dackel,
-       Wolpertinger, Feuerfuchs, Phönix, Storch, Greif, Lindwurm, Regenbogendrache wehrten
-       sich in der Übung schwächer als im echten Kampf. */
     var ich = S.ich || {}, tf = 1 + 0.1 * Number(((ich.skills || {}).tierfreund) || 0), ing = 1 + 0.1 * Number(((ich.skills || {}).ingenieur) || 0);
     var st = Math.max(1, Math.min(5, ich.geschuetz_stufe || 1)), gg = 0, gt = 0, gf = 0, heil = 0;
-    var R = Math.round, anteil = function (min, max, f) { return Math.max(min, Math.min(max, R(roh * f))); };
-    if ((ich.geschuetz_ladungen || 0) > 0) gg = Math.max(2, Math.min(st >= 5 ? 26 : st >= 4 ? 22 : 18, R(roh * (0.3 + 0.2 * Math.min(3, st)) * ing)));
+    if ((ich.geschuetz_ladungen || 0) > 0) gg = Math.max(2, Math.min(st >= 5 ? 26 : st >= 4 ? 22 : 18, Math.round(roh * (0.3 + 0.2 * Math.min(3, st)) * ing)));
     if (ich.haustier && ich.haustier_leben > 0) {
-      var hst = ich.haustier_stufe || 1, plus = hst >= 2 ? 2 : 0, hs = 1 + 0.15 * (Math.max(1, Math.min(3, hst)) - 1);
-      var b = ({
-        drache: function () { return anteil(3, 16, 0.5); },
-        stachelmonster: function () { return anteil(1, 8, 0.2); },
-        chihuahua: function () { return anteil(2, 9, 0.25) + plus; },
-        schaeferhund: function () { return anteil(3, 14, 0.35) + plus; },
-        babyfuchs: function () { return anteil(1, 7, 0.2); },
-        einhorn: function () { return anteil(3, 14, 0.35); },
-        dackel: function () { return anteil(2, 9, 0.25) + plus; },
-        wolpertinger: function () { return anteil(3, 16, 0.5) + plus; },
-        feuerfuchs: function () { return anteil(3, 15, 0.45) + plus; }
-      }[ich.haustier] || function () { return anteil(2, 10, 0.3); })();
-      gt = R(b * hs * tf);
-      if (ich.haustier === "fellmonster" && hst >= 2) heil = 3;
-      if (ich.haustier === "einhorn" && hst >= 2) heil += 2;
+      var hs = 1 + 0.15 * (Math.max(1, Math.min(3, ich.haustier_stufe || 1)) - 1);
+      var b = ich.haustier === "stachelmonster" ? Math.max(1, Math.min(8, Math.round(roh * 0.2)))
+        : ich.haustier === "chihuahua" ? Math.max(2, Math.min(9, Math.round(roh * 0.25))) + ((ich.haustier_stufe || 1) >= 2 ? 2 : 0)
+        : Math.max(2, Math.min(10, Math.round(roh * 0.3)));
+      gt = Math.round(b * hs * tf);
+      if (ich.haustier === "fellmonster" && (ich.haustier_stufe || 1) >= 2) heil = 3;
     }
     if (ich.flugtier && ich.flugtier_leben > 0) {
-      var fst = ich.flugtier_stufe || 1, fs = 1 + 0.15 * (Math.max(1, Math.min(3, fst)) - 1);
-      var fb = ({
-        drache: function () { return anteil(3, 16, 0.5) + (fst >= 2 ? 2 : 0); },
-        phoenix: function () { return anteil(3, 15, 0.45); },
-        storch: function () { return anteil(2, 12, 0.35); },
-        lindwurm: function () { return anteil(4, 19, 0.6); },
-        greif: function () { return anteil(3, 16, 0.5); },
-        regenbogendrache: function () { return anteil(4, 18, 0.55); }
-      }[ich.flugtier] || function () { return anteil(2, 8, 0.25); })();
-      gf = R(fb * fs * tf);
-      if (ich.flugtier === "phoenix" && fst >= 2) heil += 2;
-      if (ich.flugtier === "regenbogendrache" && fst >= 2) heil += 3;
+      var fs = 1 + 0.15 * (Math.max(1, Math.min(3, ich.flugtier_stufe || 1)) - 1);
+      var fb = ich.flugtier === "drache" ? Math.max(3, Math.min(16, Math.round(roh * 0.5))) + ((ich.flugtier_stufe || 1) >= 2 ? 2 : 0)
+        : Math.max(2, Math.min(8, Math.round(roh * 0.25)));
+      gf = Math.round(fb * fs * tf);
     }
-    /* Höchstens vier Fünftel des angerichteten Schadens (auch bei 1 Schaden nicht mehr als 1). */
-    var gesamt = Math.min(gg + gt + gf, Math.max(1, R(roh * 0.8)));
-    if (!(gg + gt + gf) || !(roh > 0)) gesamt = 0;
+    var gesamt = Math.min(gg + gt + gf, Math.max(2, Math.round(roh * 0.8)));
+    if (!(gg + gt + gf)) gesamt = 0;
     return { gegenwehr: gesamt, gegen_geschuetz: gg, gegen_tier: gt, tier: gt ? ich.haustier : "", gegen_flug: gf, flugtier: gf ? ich.flugtier : "", tier_heil: heil };
   }
   function puppeSchussPlanen() {
@@ -5545,11 +5519,9 @@
       + (n > 0 ? n + "/" + mx + " Schuss · " : "") + "schießt zurück, wenn du getroffen wirst (" + [50, 70, 90, 90, 90][st - 1] + " %, bis "
       + (st >= 5 ? 26 : st >= 4 ? 22 : 18) + " je Schuss)" + (st < 5 ? " · Stufe " + (st + 1) + ": " + (12 + 4 * st) + " Schuss" : "") + "</small></span>"
       + '<span class="sp-knopfgruppe">'
-      /* FASSUNG 697: ein ausgebauter, leer geschossener Turm wird nachgeladen (20), nicht neu gekauft;
-         ausbauen geht nur mit Turm (der Server lehnt es sonst ab). */
-      + (n > 0 || st > 1 ? (n < mx ? '<button type="button" data-tu="kaufen" data-d="geschuetz_nachladen"' + (ich.punkte >= 20 ? "" : " disabled") + ">Nachladen · 20</button>" : "")
+      + (n > 0 ? (n < mx ? '<button type="button" data-tu="kaufen" data-d="geschuetz_nachladen"' + (ich.punkte >= 20 ? "" : " disabled") + ">Nachladen · 20</button>" : "")
                : '<button type="button" data-tu="kaufen" data-d="geschuetz"' + (ich.punkte >= 60 ? "" : " disabled") + ">Kaufen · 60</button>")
-      + (st < 5 && (n > 0 || st > 1) ? '<button type="button" data-tu="kaufen" data-d="geschuetz_stufe"' + (ich.punkte >= preisStufe ? "" : " disabled") + ">Stufe " + (st + 1) + " · " + preisStufe + "</button>" : "")
+      + (st < 5 ? '<button type="button" data-tu="kaufen" data-d="geschuetz_stufe"' + (ich.punkte >= preisStufe ? "" : " disabled") + ">Stufe " + (st + 1) + " · " + preisStufe + "</button>" : "")
       /* FASSUNG 662 — XANDER: „extra Turm auf einem freien Platz". */
       + (n > 0 ? (turmDraussen(ich) ? '<button type="button" data-tu="turmzurueck">Zurück ans Bild</button>'
                                     : '<button type="button" data-tu="turmsetzen">Auf freien Platz</button>') : "")
@@ -6532,8 +6504,6 @@
     brauerei:  { name: "Brauerei", tut: "braut", liste: [["trank_mana", { getreide: 3, holz: 1 }, 15]] }
   };
   /* Namen für Dinge, die keine Handelsware sind (sie stehen nicht im Lager). */
-  /* FASSUNG 697: eine höhere Gebäudestufe arbeitet schneller (Stufe 2: 85 %, Stufe 3: 70 %). */
-  function werkMin(basis, st) { return Math.ceil(basis * (1 - 0.15 * (Math.min(3, st || 1) - 1))); }
   function wareName(x) { return WAREN[x] || ({ trank_mana: "Manatränke" })[x] || x; }
   function rezeptMenge(ich, st, roh) {
     var n = 5 * st;
@@ -6558,17 +6528,17 @@
           + '<button type="button" data-s="abholen" data-g="' + k + '"' + (rest > 0 ? ' class="sp-werk-wartet"' : "") + ">Abholen</button>";
       } else if (k === "muehle") {
         var n = rezeptMenge(ich, st, { getreide: 1 });
-        z += "<small>Getreide → Mehl · " + werkMin(8, st) + " min · höchstens " + (5 * st) + "</small></span>"
+        z += "<small>Getreide → Mehl · 8 min · höchstens " + (5 * st) + "</small></span>"
           + '<button type="button" data-s="liefern" data-g="muehle" data-w="mehl" data-n="' + n + '"' + (n ? "" : " disabled") + ">Mahlen <small>" + n + " Getreide</small></button>";
       } else if (k === "baeckerei") {
         var nb = rezeptMenge(ich, st, { mehl: 1 }), nk = rezeptMenge(ich, st, { mehl: 2 }), nt = rezeptMenge(ich, st, { mehl: 2, ei: 2, milch: 1 });
-        z += "<small>Mehl → Brot (1) oder Kuchen (2) · " + werkMin(10, st) + " min · Torte: 2 Mehl, 2 Eier, 1 Milch · " + werkMin(14, st) + " min</small></span>"
+        z += "<small>Mehl → Brot (1) oder Kuchen (2) · 10 min · Torte: 2 Mehl, 2 Eier, 1 Milch · 14 min</small></span>"
           + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="brot" data-n="' + nb + '"' + (nb ? "" : " disabled") + ">Brot <small>" + nb + " Mehl</small></button>"
           + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="kuchen" data-n="' + nk + '"' + (nk ? "" : " disabled") + ">Kuchen <small>" + (2 * nk) + " Mehl</small></button>"
           + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="torte" data-n="' + nt + '"' + (nt ? "" : " disabled") + ">Torte <small>" + nt + " Stück</small></button>";
       } else {
         var r = R.liste[0], nr = rezeptMenge(ich, st, r[1]);
-        z += "<small>" + Object.keys(r[1]).map(function (x) { return r[1][x] + " " + wareName(x); }).join(" + ") + " → 1 " + wareName(r[0]).replace(/tränke$/, "trank").replace(/^Chips$/, "Chip") + " · " + werkMin(r[2], st) + " min</small></span>"
+        z += "<small>" + Object.keys(r[1]).map(function (x) { return r[1][x] + " " + wareName(x); }).join(" + ") + " → 1 " + wareName(r[0]).replace(/tränke$/, "trank") + " · " + r[2] + " min</small></span>"
           + '<button type="button" data-s="liefern" data-g="' + k + '" data-w="' + r[0] + '" data-n="' + nr + '"' + (nr ? "" : " disabled") + ">" + (k === "brauerei" ? "Brauen" : wareName(r[0])) + " <small>" + nr + " Stück</small></button>";
       }
       t.push(z + "</div>");
@@ -9172,7 +9142,7 @@
       extraOeffnen: extraOeffnen, extraSchliessen: extraSchliessen, td: function () { return TD; }, st: function () { return ST; }, stratEmpfangen: stratEmpfangen,
       flugzeit: function (w) { return (WAFFEN[w] || {}).flug || 0; }, takt: function () { return { sparsam: takt.sparsam, lebend: teilchenLebend }; }, tierSignatur: tierSignatur,
       schnellZeichnen: schnellZeichnen, geschenkePruefen: geschenkePruefen, superkraft: superkraft,
-      turmZeile: turmZeile, platzGewechselt: platzGewechselt, werkZeilenHtml: werkZeilenHtml, waffenSchaden: function (w) { return (WAFFEN[w] || {}).schaden; }, skills: function () { return SKILLS; },
+      turmZeile: turmZeile, platzGewechselt: platzGewechselt,
       eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,
       krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, zauberStart: zauberStart, fuettern: fuettern, tierZustandPflegen: tierZustandPflegen, faehigZeigen: faehigZeigen, FAEHIG: FAEHIG, tierLaut: tierLaut, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,

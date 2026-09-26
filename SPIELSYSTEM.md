@@ -47,7 +47,7 @@ Diese Vorgabe bündelt alles, was Xander zum Spielsystem gesagt hat (Funk 84, 89
 | Armbrust | 40 | 12 |
 | Tomahawk | 60 | 15 |
 | Bazooka | 150 | 28 |
-| Zielfernrohr | 100 | 35, langsam, Ziel kann ausweichen |
+| Zielfernrohr | 100 | 22 (bis 696: 35), langsam, Ziel kann ausweichen |
 
   > Farbe wählbar: Funk 89 · Tomahawk: Funk 89 · Bazooka: Funk 84 · Zielfernrohr: Funk 84
 
@@ -820,3 +820,32 @@ XANDER: „ein Mückenschwarm losschicken … typische deutsche Krankheiten … 
 - Die Liste unter „Mein Auftritt": Ohne, Roter Sportwagen, Hot Rod, Colt-Seavers-Truck, KITT, Rote Dodge Viper, An der Liane, Transformer, Rakete, Zauberwolke. livechat.js nimmt die neuen Namen im Gruß an.
 - Gefunden beim Prüfen: die Bühne heißt `lc-auftritt-<art>` — das Seil darf deshalb nicht `lc-auftritt-liane` heißen (sonst rutschte die ganze Bühne 8 px); und die Anfahrkurve darf nur am ersten Stück hängen, nicht an der ganzen Animation (sonst rollte der Transformer beim Verwandeln weiter).
 - Sonde: `werkzeug/pruefe-696-auftritte.js` (5 Arten × rein/raus: Bühne entsteht, Bild unterwegs → am Ende genau auf dem Platz bzw. fort, Ton läuft, danach aufgeräumt). 687 an die neue Liste angepasst.
+
+### Fassung 697 (Xander, 26.09.: „jedes Upload/Upgrade/Gebäude/Waffe soll eine echte Wirkung haben" — Prüfung der Spiellogik)
+Server: `spiel_697_audit` (im Rollback geprüft). Browser: `werkzeug/pruefe-697-spiellogik.js`.
+- **Waffenschaden nach Preis und Level** (Server `spiel_waffe_schaden` und `WAFFEN` gleich). GEFUNDEN: das Zielfernrohr (100 P) machte 35 und schlug damit Bazooka (150 P, 28) und die Level-10/11-Waffen; Eierwerfer und Brezel (20 P) machten 5, weniger als die Gratis-Kartoffel (6); MG (110 P) 12 und Laser-Salve (80 P) 10 lagen unter der Armbrust-Klasse.
+
+  | Waffe | Preis | vorher | jetzt |
+  |---|---|---|---|
+  | Eierwerfer / Brezel | 20 | 5 | 8 |
+  | Hühnerwerfer | 55 | 10 | 13 |
+  | Bierkrug | 45 | 11 | 13 |
+  | Döner-Katapult | 70 | 13 | 16 |
+  | Laser-Salve | 80 | 10 | 15 |
+  | Spätzle-Kanone | 90 | 14 | 17 |
+  | Zielfernrohr | 100 | 35 | 22 |
+  | Maschinengewehr | 110 | 12 | 18 |
+  | Doppellaser (Lv 4) | 70 | 15 | 16 |
+  | Weißwurst-Bumerang (Lv 6) | 85 | 14 | 18 |
+  | Fächerlaser (Lv 6) | 120 | 17 | 21 |
+  | Nudelholz (Lv 8) | 110 | 18 | 22 |
+  | Plasmastrahl (Lv 8) | 150 | 20 | 26 |
+  | Kuckucksuhr-Bombe (Lv 10) | 160 | 24 | 30 |
+  | Kugelblitz (Lv 11) | 190 | 26 | 32 |
+
+  Unverändert: Kartoffel/Zwille 6, Laser 7, Bogen 8, Bratwurst 9, Sauerkraut 4, Armbrust 12, Tomahawk 15, Bazooka 28. Obergrenzen bleiben: 60 Schaden je Ziel und Minute, Fairness nach Level.
+- **Gegenwehr** höchstens vier Fünftel des angerichteten Schadens — jetzt auch bei 1 Schaden (vorher kamen mindestens 2 zurück, mehr als man anrichtete).
+- **Turm**: „Stufe" kaufen ging ohne Turm (70 P), danach „Nachladen" (20 P) = voller Turm für 90 statt 130. Jetzt: ausbauen erst mit Turm. Ein ausgebauter, leer geschossener Turm zeigt „Nachladen · 20" statt „Kaufen · 60". Stufe 4/5 bleiben sinnvoll: mehr Schuss (24/28) und höhere Grenze je Schuss (22/26).
+- **Verarbeitende Gebäude** (Mühle, Bäckerei, Schmiede, Labor, Brauerei): eine höhere Stufe gab nur „mehr auf einmal" (5 je Stufe). Jetzt arbeitet sie auch schneller: Stufe 2 85 %, Stufe 3 70 % der Zeit (Mühle 8 → 7 → 6 min, Labor 15 → 13 → 11 min); die Zeilen im Dorf zeigen die echte Zeit.
+- **Heilkunst** wirkt (wie der Server rechnet) auf Pflaster und Heiltrank, auch beim Heilen anderer — der Text sagt das jetzt so, statt „+10 % Heilung" allgemein.
+- **Übungspuppe**: die eigene Gegenwehr in der Übung kannte nur 5 Tiere; Schäferhund, Babyfuchs, Einhorn, Dackel, Wolpertinger, Feuerfuchs, Phönix, Storch, Lindwurm, Greif, Regenbogendrache wehrten sich dort schwächer (als „Fellmonster"/„Eule") als im echten Kampf. Jetzt dieselben Zahlen und Heilungen wie `spiel_treffer`.
