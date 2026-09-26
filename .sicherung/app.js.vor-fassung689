@@ -22963,12 +22963,6 @@
     const eigen = (lcLiedStellenEigen() || {})[datei] || [];
     const raus = [];
     const kenne = {};
-    /* FUNK 135 — was man geloescht hat, bleibt weg; auch eine mit der
-       Seite gelieferte Stelle (die laesst sich nicht aus der Datei
-       reissen, nur ausblenden). */
-    ((lcLiedStellenWeg() || {})[datei] || []).forEach((n) => {
-      kenne[String(n).trim().toLowerCase()] = true;
-    });
     [].concat(eigen, fest).forEach((st) => {
       if (!st || !st.name) return;
       const k = String(st.name).trim().toLowerCase();
@@ -22990,87 +22984,7 @@
     /* „und fuer jeden anderen auch so genauso abrufbar" — deshalb ins
        Profil und nicht nur ins Geraet. */
     try { Backend.updateExtraProfileField("liedStellen", alles); } catch (x) {}
-    /* Wer einen geloeschten Namen neu vergibt, will ihn wieder sehen. */
-    lcLiedStelleWegMerken(datei, name, false);
     return liste;
-  }
-
-  /* =====================================================================
-     FUNK 135 — LIEDTEILE LOESCHEN
-     ---------------------------------------------------------------------
-     XANDER: „außerdem lassen sich erstellte liedteile nicht löschen."
-     Stimmt: es gab nur Merken, kein Vergessen. Jetzt traegt jeder
-     Liedteil ein kleines Loeschzeichen (im Ausschnittwaehler und im
-     Panel „Meine Abschnitte"). Ein Tipp macht es rot und fragt
-     „Löschen?", der zweite loescht — ein einzelner Fehltipp auf dem
-     Telefon soll keinen Refrain kosten.
-     Eigene Stellen fliegen aus Profil und Geraet. Mit der Seite
-     gelieferte (data-liedstellen.js) koennen nicht aus der Datei
-     verschwinden; sie kommen auf eine Ausblendliste, die genauso im
-     Profil liegt.
-     ===================================================================== */
-  function lcLiedStellenWeg() {
-    try {
-      const p = Backend.currentProfile && Backend.currentProfile();
-      const e = p && p.extra && p.extra.liedStellenWeg;
-      if (e && typeof e === "object") return e;
-    } catch (x) {}
-    try { return JSON.parse(localStorage.getItem("dma_liedstellen_weg") || "{}"); }
-    catch (x) { return {}; }
-  }
-  function lcLiedStelleWegMerken(datei, name, weg) {
-    const k = String(name || "").trim().toLowerCase();
-    if (!datei || !k) return;
-    const alles = lcLiedStellenWeg() || {};
-    const liste = (alles[datei] || []).filter((n) => String(n).trim().toLowerCase() !== k);
-    const vorher = (alles[datei] || []).length;
-    if (weg) liste.push(String(name).trim());
-    if (!weg && liste.length === vorher) return;       /* nichts zu tun */
-    if (liste.length) alles[datei] = liste; else delete alles[datei];
-    try { localStorage.setItem("dma_liedstellen_weg", JSON.stringify(alles)); } catch (x) {}
-    try { Backend.updateExtraProfileField("liedStellenWeg", alles); } catch (x) {}
-  }
-  function lcLiedStelleVergessen(datei, name) {
-    const k = String(name || "").trim().toLowerCase();
-    if (!datei || !k) return false;
-    const alles = lcLiedStellenEigen() || {};
-    const liste = (alles[datei] || []).filter(
-      (st) => String(st.name).trim().toLowerCase() !== k);
-    if (liste.length) alles[datei] = liste; else delete alles[datei];
-    try { localStorage.setItem("dma_liedstellen", JSON.stringify(alles)); } catch (x) {}
-    try { Backend.updateExtraProfileField("liedStellen", alles); } catch (x) {}
-    const fest = ((window.DMA_LIEDSTELLEN || {})[datei] || [])
-      .some((st) => st && String(st.name).trim().toLowerCase() === k);
-    if (fest) lcLiedStelleWegMerken(datei, name, true);
-    return true;
-  }
-  /* Das Loeschzeichen: ein Mülleimer als Zeichnung (kein Emoji), zwei
-     Tipps. „nachher" baut das Menue neu, damit der Knopf verschwindet. */
-  function lcStelleWegKnopf(datei, name, nachher) {
-    const w = document.createElement("button");
-    w.type = "button";
-    w.className = "lc-stelle-weg";
-    w.title = "\u201e" + name + "\u201c l\u00f6schen";
-    w.setAttribute("aria-label", "Liedteil \u201e" + name + "\u201c l\u00f6schen");
-    w.innerHTML = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 3.5h5M4 6h12'
-      + 'M5.6 6l.8 10.2c.1.8.7 1.3 1.5 1.3h4.2c.8 0 1.4-.5 1.5-1.3L14.4 6M8.6 9v5.6M11.4 9v5.6"'
-      + ' fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"'
-      + ' stroke-linejoin="round"/></svg><span class="lc-stelle-weg-frage">L\u00f6schen?</span>';
-    let uhr = 0;
-    w.addEventListener("click", (e) => {
-      e.preventDefault(); e.stopPropagation();
-      if (!w.classList.contains("lc-stelle-weg-sicher")) {
-        w.classList.add("lc-stelle-weg-sicher");
-        clearTimeout(uhr);
-        uhr = setTimeout(() => w.classList.remove("lc-stelle-weg-sicher"), 3200);
-        return;
-      }
-      clearTimeout(uhr);
-      lcLiedStelleVergessen(datei, name);
-      showToast("\u201e" + name + "\u201c gel\u00f6scht.");
-      if (typeof nachher === "function") nachher();
-    });
-    return w;
   }
 
   /* =====================================================================
@@ -23499,15 +23413,7 @@
         vorhoerenStopp();
         alles(true);
       });
-      /* FUNK 135 — daneben das Loeschzeichen. */
-      const halter = document.createElement("span");
-      halter.className = "lc-stelle-halter";
-      halter.appendChild(b);
-      halter.appendChild(lcStelleWegKnopf(datei, st.name, () => {
-        vorhoerenStopp();
-        lcAusschnittWahl(fuerWen, nr, titel);
-      }));
-      knopfReihe.appendChild(halter);
+      knopfReihe.appendChild(b);
       return b;
     });
     if (knoepfe.length) koerper.appendChild(knopfReihe);
@@ -24074,15 +23980,9 @@
         p3.textContent = l.titel;
         kasten.appendChild(p3);
         l.stellen.forEach((st) => {
-          const b = knopf("\u2702\ufe0f", st.name,
+          knopf("\u2702\ufe0f", st.name,
             lcZeitText(st.ab) + (st.bis ? "\u2013" + lcZeitText(st.bis) : " \u2013 Ende"),
             () => auflegen(l.datei, l.titel, st.ab, st.bis, st.name));
-          /* FUNK 135 — loeschen koennen. */
-          const halter = document.createElement("div");
-          halter.className = "lc-stelle-halter lc-stelle-halter-zeile";
-          kasten.insertBefore(halter, b);
-          halter.appendChild(b);
-          halter.appendChild(lcStelleWegKnopf(l.datei, st.name, () => lcLiedPanel(einer)));
         });
       });
     }
@@ -28826,30 +28726,9 @@
     catch (e) { redet = false; }
     lcMusikSpieler.volume = redet ? LC_MUSIK_LAUT * 0.25 : LC_MUSIK_LAUT;
   }
-  /* FUNK 135 — XANDER: „wenn man einen liedausschnitt hört ist nach
-     dem Ende des liedausschnittes es so dass das Lied noch mal
-     komplett von vorne anfängt in voller Länge."
-     GEFUNDEN: jedes Starten ruft zuerst lcMusikStoppen, und das
-     unterbricht ein noch wartendes play() — der Browser meldet das als
-     AbortError. Genau diese Absage landete in lcMusikNachholen, als
-     haette der Browser den Ton VERWEIGERT: ein Horcher wartete auf den
-     naechsten Tipp irgendwo auf der Seite. Nach dem Ausschnitt stand
-     der Spieler (hier auf 0 zurueckgesetzt, Quelle noch drin), und der
-     naechste Tipp spielte das Lied von vorn — ohne Ende-Uhr, also in
-     voller Laenge.
-     Jetzt: gestoppt heisst gestoppt. lcMusikSoll sagt, ob ueberhaupt
-     noch Musik gewuenscht ist; der Horcher fragt das, bevor er
-     irgendetwas startet, und Stoppen raeumt ihn ab. */
-  let lcMusikSoll = false;
-  let lcMusikSelbst = { datei: "", wann: 0 };
-  let lcMusikHorchAb = null;
   function lcMusikStoppen() {
     if (lcMusikTakt) { clearInterval(lcMusikTakt); lcMusikTakt = 0; }
-    clearTimeout(lcMusikRefrainAus);
-    lcMusikSoll = false;
-    if (lcMusikHorchAb) { try { lcMusikHorchAb(); } catch (e) {} }
     if (lcMusikSpieler) {
-      lcMusikSpieler.ontimeupdate = null;
       try { lcMusikSpieler.pause(); lcMusikSpieler.currentTime = 0; } catch (e) {}
     }
     lcMusikTitel = "";
@@ -28920,17 +28799,7 @@
           && lcMusikSpieler.src.indexOf(encodeURIComponent(datei)) !== -1) {
         return true;
       }
-      /* FUNK 135 — und wenn die eigene Zeile erst ankommt, NACHDEM ein
-         kurzer Ausschnitt schon zu Ende ist? Dann steht der Spieler
-         still, und ohne diese Zeile fing derselbe Ausschnitt ein
-         zweites Mal an. Was ich selbst gerade gestartet habe, startet
-         das Echo aus dem Raum nicht noch einmal. */
-      if (!selbst && gleicherSchnitt && lcMusikSelbst.datei === datei
-          && Date.now() - lcMusikSelbst.wann < 20000) {
-        return true;
-      }
     } catch (e) {}
-    if (selbst) lcMusikSelbst = { datei: datei, wann: Date.now() };
     lcMusikAb = Number(ab) || 0;
     lcMusikBis = Number(bis) || 0;
     lcMusikStoppen();
@@ -28984,30 +28853,11 @@
       const endeSek = Number(bis) || 0;
       if (sek > 0 || endeSek > 0) {
         const lauf = endeSek > sek ? (endeSek - sek) : 30;
-        const schluss = sek + lauf;
         clearTimeout(lcMusikRefrainAus);
-        /* FUNK 135 — das Ende haengt an der SPIELSTELLE, nicht nur an
-           der Uhr: laedt das Lied auf dem Telefon zwei Sekunden, lief
-           die Uhr sonst schon und schnitt den Ausschnitt zu frueh ab.
-           Die Uhr bleibt als Notnagel (mit Luft), falls timeupdate
-           ausbleibt. */
-        const sp = lcMusikSpieler;
-        sp.ontimeupdate = () => {
-          if (sp.currentTime >= schluss - 0.05 && sp.currentTime > sek) lcMusikStoppen();
-        };
-        lcMusikRefrainAus = setTimeout(() => lcMusikStoppen(), (lauf + 4) * 1000);
-      } else {
-        lcMusikSpieler.ontimeupdate = null;
+        lcMusikRefrainAus = setTimeout(() => lcMusikStoppen(), lauf * 1000);
       }
-      lcMusikSoll = true;
       const v = lcMusikSpieler.play();
-      /* Nur eine echte Sperre (NotAllowedError) wartet auf den
-         naechsten Tipp. Ein AbortError heisst bloss „ein neueres
-         Starten oder Stoppen kam dazwischen" — da ist nichts
-         nachzuholen (siehe lcMusikStoppen). */
-      if (v && v.catch) v.catch((err) => {
-        if (err && err.name === "NotAllowedError") lcMusikNachholen(titel, sek);
-      });
+      if (v && v.catch) v.catch(() => lcMusikNachholen(titel));
       lcMusikTakt = setInterval(lcMusikLautstaerke, 900);
       lcMusikSpieler.onended = () => lcMusikStoppen();
       lcMusikTitel = titel || datei;
@@ -30649,29 +30499,17 @@
      danach laesst jeder Browser sie zu. Der Horcher haengt sich
      genau einmal an und raeumt sich selbst wieder ab. */
   let lcMusikHorcht = false;
-  function lcMusikNachholen(titel, ab) {
+  function lcMusikNachholen(titel) {
     if (lcMusikHorcht || !lcMusikSpieler) return;
     lcMusikHorcht = true;
-    const ab0 = Number(ab) || 0;
-    const abnehmen = () => {
+    const los = () => {
       document.removeEventListener("pointerdown", los, true);
       document.removeEventListener("keydown", los, true);
       lcMusikHorcht = false;
-      lcMusikHorchAb = null;
-    };
-    function los() {
-      abnehmen();
-      /* FUNK 135 — nur, wenn die Musik noch gewuenscht ist. Ist der
-         Ausschnitt inzwischen vorbei (oder hat jemand gestoppt), bleibt
-         es still — statt das ganze Lied von vorn zu spielen. */
-      if (!lcMusikSoll || !lcMusikSpieler || !lcMusikSpieler.src) return;
-      try {
-        if (ab0 > 0 && (lcMusikSpieler.currentTime || 0) < ab0 - 0.4) lcMusikSpieler.currentTime = ab0;
-      } catch (e) {}
+      if (!lcMusikSpieler || !lcMusikSpieler.src) return;
       const v2 = lcMusikSpieler.play();
       if (v2 && v2.catch) v2.catch(() => {});
-    }
-    lcMusikHorchAb = abnehmen;
+    };
     document.addEventListener("pointerdown", los, true);
     document.addEventListener("keydown", los, true);
     try {

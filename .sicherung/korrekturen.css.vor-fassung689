@@ -34697,91 +34697,32 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-leiste { align-items: center; gap: clamp(8px, 3vw, 16px); padding: 4px 4px 2px; }
 .lc-leiste .lc-rundknopf.lc-lk {
   width: clamp(40px, 11.5vw, 46px); height: clamp(40px, 11.5vw, 46px); padding: 0;
-  /* FASSUNG 689 — XANDER: „Passe mal die Buttons … den entsprechenden Profil-Designs an … die sind bei mir weiß,
-     auf dem Galaxy-Design passt das gar nicht". Alle Farben kommen jetzt aus dem Design (themes.css). */
-  color: var(--cream-50);
-  background: var(--plum-800);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--plum-700) 88%, #fff 12%), var(--plum-800));
-  border: 1px solid color-mix(in srgb, var(--cream-200) 38%, transparent);
-  box-shadow: 0 1px 0 color-mix(in srgb, #fff 18%, transparent) inset, 0 3px 10px rgba(0, 0, 0, .22);
-  transition: transform .16s cubic-bezier(.3, 1.6, .5, 1), box-shadow .16s ease, background .2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.55); color: #3a3448;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .92), rgba(240, 236, 228, .86));
+  box-shadow: 0 1px 1px rgba(255, 255, 255, .9) inset, 0 2px 8px rgba(40, 30, 20, .16), 0 0 0 1px rgba(60, 50, 40, .08);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  transition: transform .14s ease, box-shadow .14s ease;
 }
-.lc-leiste .lc-rundknopf.lc-lk svg { width: 54%; height: 54%; display: block; transition: transform .2s ease; }
-.lc-leiste .lc-rundknopf.lc-lk:hover { transform: translateY(-2px); box-shadow: 0 1px 0 color-mix(in srgb, #fff 22%, transparent) inset, 0 6px 16px rgba(0, 0, 0, .28); }
-.lc-leiste .lc-rundknopf.lc-lk:hover svg { transform: scale(1.08); }
-.lc-leiste .lc-rundknopf.lc-lk:active { transform: scale(.92); }
-.lc-leiste .lc-rundknopf.lc-lk.lc-aus { color: color-mix(in srgb, var(--cream-50) 70%, transparent);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--coral-400) 22%, var(--plum-700)), color-mix(in srgb, var(--coral-400) 12%, var(--plum-800)));
-  border-color: color-mix(in srgb, var(--coral-400) 55%, transparent); }
-/* Der Magic Button: größer, im Farbverlauf des Designs, mit langsam wanderndem Glanz und sanftem Atmen. */
+.lc-leiste .lc-rundknopf.lc-lk svg { width: 54%; height: 54%; display: block; }
+.lc-leiste .lc-rundknopf.lc-lk:active { transform: scale(.94); }
+.lc-leiste .lc-rundknopf.lc-lk.lc-aus { color: #6b6378; background: linear-gradient(180deg, rgba(255, 244, 242, .95), rgba(250, 228, 224, .9)); border-color: rgba(232, 95, 111, .45); }
+/* Der Magic Button: größer, mit weichem Farbverlauf und Glanz. */
 .lc-leiste .lc-rundknopf.lc-lk.lc-magic {
-  width: clamp(48px, 14vw, 56px); height: clamp(48px, 14vw, 56px); color: var(--plum-950);
-  border-color: color-mix(in srgb, #fff 45%, transparent);
-  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .5), rgba(255, 255, 255, 0) 45%),
-              linear-gradient(135deg, var(--coral-400), var(--amber-400) 50%, var(--teal-400));
-  background-size: 100% 100%, 220% 220%;
-  box-shadow: 0 1px 1px rgba(255, 255, 255, .6) inset, 0 4px 16px color-mix(in srgb, var(--amber-400) 45%, transparent);
-  animation: lcMagicGlanz 7s ease-in-out infinite alternate, lcMagicAtmen 3.2s ease-in-out infinite;
+  width: clamp(48px, 14vw, 56px); height: clamp(48px, 14vw, 56px); color: #fff; border-color: rgba(255, 255, 255, .6);
+  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .45), rgba(255, 255, 255, 0) 45%), linear-gradient(135deg, #7b5cff, #3f7cf0 55%, #2ec5b6);
+  box-shadow: 0 1px 1px rgba(255, 255, 255, .7) inset, 0 4px 14px rgba(70, 90, 220, .35);
 }
-.lc-leiste .lc-rundknopf.lc-lk.lc-magic svg { width: 50%; height: 50%; filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .45)); }
-@keyframes lcMagicGlanz { from { background-position: 0 0, 0% 50%; } to { background-position: 0 0, 100% 50%; } }
-@keyframes lcMagicAtmen { 0%, 100% { box-shadow: 0 1px 1px rgba(255, 255, 255, .6) inset, 0 4px 14px color-mix(in srgb, var(--amber-400) 35%, transparent); }
-  50% { box-shadow: 0 1px 1px rgba(255, 255, 255, .6) inset, 0 4px 22px color-mix(in srgb, var(--amber-400) 65%, transparent); } }
-/* Platz verlassen: dieselbe Glasform; unten sitzend unsichtbar. */
-.lc-leiste .lc-rundknopf.lc-lk.lc-buehnenknopf { font-size: inherit; background: linear-gradient(180deg, color-mix(in srgb, var(--plum-700) 88%, #fff 12%), var(--plum-800)); border-color: color-mix(in srgb, var(--cream-200) 38%, transparent); }
+.lc-leiste .lc-rundknopf.lc-lk.lc-magic svg { width: 50%; height: 50%; }
+/* Platz verlassen: dieselbe Glasform, kein Bernstein-Pfeil mehr; unten sitzend unsichtbar. */
+.lc-leiste .lc-rundknopf.lc-lk.lc-buehnenknopf { font-size: inherit; background: linear-gradient(180deg, rgba(255, 255, 255, .92), rgba(240, 236, 228, .86)); border-color: rgba(255, 255, 255, .55); }
 .lc-leiste .lc-rundknopf.lc-lk.lc-buehnenknopf::before { content: none; }
 .lc-leiste .lc-rundknopf.lc-lk.lc-buehnenknopf.ist-unten { display: none; }
-/* Hinaus: die Tür in der Warnfarbe des Designs. */
-.lc-leiste .lc-rundknopf.lc-lk.lc-weg { color: var(--coral-400); background: linear-gradient(180deg, color-mix(in srgb, var(--plum-700) 88%, #fff 12%), var(--plum-800)); border-color: color-mix(in srgb, var(--coral-400) 40%, transparent); }
-.lc-leiste .lc-rundknopf.lc-lk.lc-weg:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--coral-400) 22%, var(--plum-700)), var(--plum-800)); }
-@media (prefers-reduced-motion: reduce) { .lc-leiste .lc-rundknopf.lc-lk.lc-magic { animation: none; } }
+/* Hinaus: eine ruhige Tür, rot nur als Zeichen. */
+.lc-leiste .lc-rundknopf.lc-lk.lc-weg { color: #d8453a; background: linear-gradient(180deg, rgba(255, 255, 255, .92), rgba(240, 236, 228, .86)); border-color: rgba(255, 255, 255, .55); }
 /* Das Buch wohnt jetzt im Magic Button („Lesetext") – die Eingabezeile hat mehr Platz. */
 #lcForm #lcLeseKnopf { display: none; }
 .lc-magicmenue .lc-lk-zeichen svg { width: 26px; height: 26px; color: #f3eefc; }
-
-/* FASSUNG 689 — FUNK 135: Liedteile loeschen.
-   „außerdem lassen sich erstellte liedteile nicht löschen."
-   Neben jedem Liedteil ein kleiner Mülleimer. Erster Tipp: er wird rot
-   und fragt „Löschen?" — zweiter Tipp loescht. */
-.lc-stellen-reihe .lc-stelle-halter {
-  display: inline-flex;
-  align-items: stretch;
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: 100%;
-  gap: 3px;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lc-leiste .lc-rundknopf.lc-lk:not(.lc-magic) { color: #efeaf6; background: linear-gradient(180deg, rgba(70, 62, 86, .9), rgba(44, 38, 56, .9)); border-color: rgba(255, 255, 255, .14); }
+  :root:not([data-theme="light"]) .lc-leiste .lc-rundknopf.lc-lk.lc-weg { color: #ff7a6e; }
 }
-.lc-stellen-reihe .lc-stelle-halter .lc-lied-stelle.lc-stelle-farbig { flex: 1 1 auto; }
-.lc-stelle-halter-zeile {
-  display: flex;
-  align-items: stretch;
-  gap: 4px;
-}
-.lc-stelle-halter-zeile > .lc-lied-stelle { flex: 1 1 auto; min-width: 0; }
-.lc-stelle-weg {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-width: 34px;
-  padding: 0 7px;
-  margin: 0;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--cream-200, #eee) 30%, transparent);
-  background: color-mix(in srgb, var(--plum-800, #2a2140) 80%, transparent);
-  color: var(--cream-50, #fff);
-  opacity: .78;
-  cursor: pointer;
-  transition: background .18s ease, opacity .18s ease, color .18s ease;
-}
-.lc-stelle-weg svg { width: 17px; height: 17px; display: block; }
-.lc-stelle-weg:hover, .lc-stelle-weg:focus-visible { opacity: 1; }
-.lc-stelle-weg .lc-stelle-weg-frage { display: none; font-size: .74rem; font-weight: 800; white-space: nowrap; }
-.lc-stelle-weg.lc-stelle-weg-sicher {
-  opacity: 1;
-  background: #d23b3b;
-  border-color: #ff9d9d;
-  color: #fff;
-}
-.lc-stelle-weg.lc-stelle-weg-sicher .lc-stelle-weg-frage { display: inline; }
