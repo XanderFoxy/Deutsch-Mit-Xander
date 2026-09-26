@@ -34924,9 +34924,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 svg.lc-mini-echt .lc-delfin-leib { filter: none; }
 /* Der Glanz der Sonnenbrille wandert in der Animation darueber — stehend waere er ein grauer Balken. */
 svg.lc-mini-echt .lc-sobri-blitz, svg.lc-mini-echt .lc-eimer-strahl { display: none; }
-
-/* FASSUNG 714 — Optimus Prime. Die Kachel zeigt nur den Roboter; beim Vorfahren drehen sich
-   die Räder des Trucks (nur solange er fährt: drei Umdrehungen ≈ die Anfahrt). */
-.op-nur-robot .op-truck { display: none; }
-.lc-auftritt-trafo .op-rad { animation: lcRwRad .5s linear 3; }
-.lc-auftritt-raus .lc-auftritt-trafo .op-rad { animation-delay: 4.6s; }
