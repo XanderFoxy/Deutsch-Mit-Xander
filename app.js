@@ -4287,10 +4287,27 @@
      wie spät es dort gerade ist und ob die Sonne scheint — und die Uhrzeit
      ist im Italienischen ein eigenes Kapitel. Zeitzone und Ort hängen
      deshalb am Lernraum, nicht fest an Deutschland. */
+  /* FASSUNG 698 — XANDER (Funk 141): „vielleicht kannst du mal individuell das Wetter auch für
+     Döbeln einstellbar machen … falls die Leute sich wundern, dass es gerade regnet … bei mir
+     regnet es gerade gar nicht". Bisher war es immer Berlin-Mitte (52,52 N / 13,41 O). Jetzt
+     wählbar: Berlin, Döbeln oder der eigene Standort (einmal gefragt, dann gemerkt — auf dem
+     Gerät UND im Profil). Die Zeitzone bleibt Berlin; es ändert sich nur, WO gemessen wird. */
+  const WETTER_ORTE = {
+    berlin: { breite: 52.52, laenge: 13.405, name: "Berlin" },
+    doebeln: { breite: 51.1219, laenge: 13.121, name: "Döbeln" }
+  };
+  function wetterOrtWahl() {
+    let w = null;
+    try { w = (Backend.currentProfile() || {}).extraProfileData?.wetterOrt || null; } catch (e) {}
+    if (!w) { try { w = JSON.parse(localStorage.getItem("dma_wetter_ort") || "null"); } catch (e) {} }
+    if (typeof w === "string") w = WETTER_ORTE[w] ? Object.assign({ id: w }, WETTER_ORTE[w]) : null;
+    if (w && typeof w === "object" && isFinite(w.breite) && isFinite(w.laenge)) return w;
+    return Object.assign({ id: "berlin" }, WETTER_ORTE.berlin);
+  }
   function ortFuerLernraum() {
-    return imItalienischraum()
-      ? { zone: "Europe/Rome", sprache: "it-IT", breite: 41.9028, laenge: 12.4964, name: "Roma" }
-      : { zone: "Europe/Berlin", sprache: "de-DE", breite: 52.52, laenge: 13.405, name: "Berlin" };
+    if (imItalienischraum()) return { zone: "Europe/Rome", sprache: "it-IT", breite: 41.9028, laenge: 12.4964, name: "Roma" };
+    const w = wetterOrtWahl();
+    return { zone: "Europe/Berlin", sprache: "de-DE", breite: Number(w.breite), laenge: Number(w.laenge), name: w.name || "Berlin", id: w.id || "" };
   }
   const clockOut = document.getElementById("clockOut");
   const hourHand = document.getElementById("clockHour");
@@ -7436,7 +7453,48 @@
 
   const weatherOut = document.getElementById("weatherOut");
   const weatherIcon = document.getElementById("weatherIcon");
-  // Niedliche, klar unterscheidbare Symbole je Wetterlage (WMO-Code -> Emoji)
+  /* FASSUNG 698 — XANDER (Funk 141): „schau auch mal, dass das Wetter-Symbol richtig lädt …
+     so eine komische Kachel, wo die Wolken abgeschnitten dargestellt werden … bist du sicher,
+     dass in der Nacht auch die Symbole mit dem Mond abgerufen werden … schau bitte erst nach den
+     Originalen, und wenn das gar nicht geht, dann machen wir eigene Grafiken, aber dann auf das
+     Wetter von diesem Dienst berufen".
+     NACHGESEHEN: open-meteo liefert KEINE Bilder, nur den amtlichen WMO-Zahlencode — und auf
+     Wunsch „is_day" (1 = Tag, 0 = Nacht). Den haben wir nicht abgefragt; die Symbole waren
+     Emojis, und die gibt es nur mit Sonne (☀️ ⛅ 🌤️) — nachts stand also eine Sonne da, und
+     jedes Telefon malt Emojis anders (Samsung u. a. als Kachel). Jetzt: eigene Zeichnungen,
+     gewählt nach Code UND is_day — tagsüber Sonne in den Wolken, nachts der Mond dahinter. */
+  let wetterSymbolNr = 0;
+  function wetterSymbol(code, tag) {
+    const n = ++wetterSymbolNr, c = Number(code);
+    const himmel = (x, y, r) => tag
+      ? `<g><g stroke="#ffb31a" stroke-width="1.6" stroke-linecap="round">${[0, 45, 90, 135, 180, 225, 270, 315].map((w) => { const a = w * Math.PI / 180;
+          return `<path d="M${(x + Math.cos(a) * (r + 2)).toFixed(1)} ${(y + Math.sin(a) * (r + 2)).toFixed(1)} L${(x + Math.cos(a) * (r + 4.6)).toFixed(1)} ${(y + Math.sin(a) * (r + 4.6)).toFixed(1)}"/>`; }).join("")}</g>`
+        + `<circle cx="${x}" cy="${y}" r="${r}" fill="#ffc93c" stroke="#f0a100" stroke-width=".8"/></g>`
+      : `<g><mask id="wsm${n}"><rect x="0" y="0" width="32" height="32" fill="#fff"/><circle cx="${x + r * 0.62}" cy="${y - r * 0.42}" r="${r * 0.92}" fill="#000"/></mask>`
+        + `<circle cx="${x}" cy="${y}" r="${r}" fill="#f6ecc0" stroke="#d8c98a" stroke-width=".7" mask="url(#wsm${n})"/>`
+        + `<circle cx="${x - r * 0.35}" cy="${y + r * 0.25}" r="${r * 0.14}" fill="#e2d59d"/></g>`;
+    const wolke = (dunkel, dx, dy, sk) => `<path transform="translate(${dx || 0} ${dy || 0}) scale(${sk || 1})" d="M8.6 26 H23.6 A5.4 5.4 0 0 0 24.1 15.3 A7.6 7.6 0 0 0 9.8 13.6 A6.2 6.2 0 0 0 8.6 26 Z"`
+      + ` fill="${dunkel ? (tag ? "#9aa6b4" : "#5d6b80") : (tag ? "#ffffff" : "#aab6c8")}" stroke="${tag ? "#8e9aa8" : "#3e4a5e"}" stroke-width=".9" stroke-linejoin="round"/>`;
+    const tropfen = (k) => Array.from({ length: k }, (_, i) => `<path d="M${11 + i * 4.2} 27.6 l-1.3 3" stroke="#3b8fe0" stroke-width="1.7" stroke-linecap="round"/>`).join("");
+    const flocken = (k) => Array.from({ length: k }, (_, i) => { const x = 11 + i * 4.6, y = 29.2;
+      return `<g stroke="${tag ? "#7fb3e6" : "#e8f2ff"}" stroke-width="1" stroke-linecap="round"><path d="M${x - 1.6} ${y} H${x + 1.6} M${x} ${y - 1.6} V${y + 1.6} M${x - 1.1} ${y - 1.1} L${x + 1.1} ${y + 1.1} M${x + 1.1} ${y - 1.1} L${x - 1.1} ${y + 1.1}"/></g>`; }).join("");
+    const blitz = `<path d="M17.5 24 L13.6 29.4 H16.6 L14.4 32 L20.4 26.6 H17.2 L19.4 24 Z" fill="#ffd21a" stroke="#c99a00" stroke-width=".6" stroke-linejoin="round"/>`;
+    const nebel = `<g stroke="${tag ? "#9aa6b4" : "#8c98ab"}" stroke-width="1.8" stroke-linecap="round"><path d="M6 17 H26"/><path d="M4 21.5 H22"/><path d="M9 26 H28"/></g>`;
+    let inhalt;
+    if (c === 0) inhalt = himmel(16, 16, tag ? 6.4 : 8.2);
+    else if (c === 1) inhalt = himmel(12.5, 12, tag ? 5.2 : 6.6) + wolke(false, 7, 7.4, 0.72);
+    else if (c === 2) inhalt = himmel(11.5, 11, tag ? 5.2 : 6.6) + wolke(false, 3.5, 3.2, 0.86);
+    else if (c === 3) inhalt = wolke(true, -2.4, -5.4, 0.9) + wolke(false, 1.4, 0.2, 0.92);
+    else if (c === 45 || c === 48) inhalt = wolke(true, 0, -6.6, 0.9) + nebel;
+    else if (c >= 51 && c <= 57) inhalt = himmel(11, 9.5, tag ? 4.4 : 5.6) + wolke(false, 2, -2.2, 0.9) + tropfen(2);
+    else if (c >= 61 && c <= 67) inhalt = wolke(true, 1.2, -3.8, 0.94) + tropfen(c >= 65 ? 4 : 3);
+    else if ((c >= 71 && c <= 77) || c === 85 || c === 86) inhalt = wolke(false, 1.2, -3.8, 0.94) + flocken(c === 75 || c === 86 ? 4 : 3);
+    else if (c >= 80 && c <= 82) inhalt = himmel(10.5, 9, tag ? 4.6 : 5.8) + wolke(true, 2.4, -2.6, 0.9) + tropfen(c === 82 ? 4 : 3);
+    else if (c >= 95) inhalt = wolke(true, 1.2, -4.6, 0.94) + blitz + (c > 95 ? tropfen(2) : "");
+    else inhalt = wolke(false, 1, -2, 0.9);
+    return `<svg class="w-symbol" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true" focusable="false">${inhalt}</svg>`;
+  }
+  // Niedliche, klar unterscheidbare Symbole je Wetterlage (WMO-Code -> Emoji) — seit 698 nur noch Rückfall
   const WEATHER_ICONS = {
     0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
     45: "🌫️", 48: "🌫️",
@@ -8377,7 +8435,7 @@
          nur, dass jetzt keine alte Antwort mehr genommen WERDEN
          DARF. */
       const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ort.breite}&longitude=${ort.laenge}`
-        + `&current=temperature_2m,weather_code&timezone=${encodeURIComponent(ort.zone)}`
+        + `&current=temperature_2m,weather_code,is_day&timezone=${encodeURIComponent(ort.zone)}`
         + `&_=${Date.now()}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Wetter nicht verfügbar");
       const data = await res.json();
@@ -8410,8 +8468,12 @@
         + (gemessen ? " · gemessen " + gemessen : "")
         + " · Quelle: open-meteo.com";
       if (weatherIcon) {
-        weatherIcon.textContent = WEATHER_ICONS[code] || "🌡️";
-        weatherIcon.title = weatherOut.title;
+        /* Tag oder Nacht sagt der Dienst selbst (is_day); fehlt es, entscheidet unser Himmel. */
+        const tag = data.current.is_day != null ? Number(data.current.is_day) === 1 : !wetterNachtJetzt();
+        weatherIcon.innerHTML = wetterSymbol(code, tag);
+        weatherIcon.dataset.code = String(code);
+        weatherIcon.dataset.tag = tag ? "1" : "0";
+        weatherIcon.title = weatherOut.title + (tag ? " · Tag" : " · Nacht") + " · Tippen: Ort wählen";
       }
       niederschlagZeichnen(lage || null, WETTER_STAERKE[code] || "regen");
     } catch (e) {
@@ -8419,6 +8481,50 @@
       niederschlagZeichnen(null);
     }
   }
+  /* FASSUNG 698: ein Tipp aufs Wetter öffnet die Ortswahl. */
+  function wetterOrtSetzen(w) {
+    try { localStorage.setItem("dma_wetter_ort", JSON.stringify(w)); } catch (e) {}
+    try { if (Backend.currentUser && Backend.currentUser()) Backend.updateExtraProfileField("wetterOrt", w); } catch (e) {}
+    try { updateClock(); } catch (e) {}
+    updateWeather();
+  }
+  function wetterOrtMenue() {
+    const alt = document.getElementById("wetterOrtMenue");
+    if (alt) { alt.remove(); return; }
+    const jetzt = wetterOrtWahl();
+    const m = document.createElement("div");
+    m.id = "wetterOrtMenue";
+    m.className = "wetter-ort-menue";
+    m.setAttribute("role", "menu");
+    const knopf = (id, text) => `<button type="button" role="menuitemradio" data-ort="${id}" aria-checked="${jetzt.id === id}">${text}</button>`;
+    m.innerHTML = `<b>Wetter für</b>${knopf("berlin", "Berlin")}${knopf("doebeln", "Döbeln")}${knopf("hier", jetzt.id === "hier" ? "Mein Standort · " + escapeHtml(jetzt.name || "") : "Mein Standort")}`
+      + `<small>Quelle: open-meteo.com (Deutscher Wetterdienst u. a.)</small>`;
+    document.body.appendChild(m);
+    const r = (weatherIcon || document.body).getBoundingClientRect();
+    m.style.left = Math.max(8, Math.min(window.innerWidth - m.offsetWidth - 8, r.left + r.width / 2 - m.offsetWidth / 2)) + "px";
+    m.style.top = (r.bottom + window.scrollY + 8) + "px";
+    m.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-ort]");
+      if (!b) return;
+      const id = b.dataset.ort;
+      m.remove();
+      if (id !== "hier") { wetterOrtSetzen(Object.assign({ id }, WETTER_ORTE[id])); return; }
+      if (!navigator.geolocation) { showToast("Dein Gerät gibt keinen Standort heraus."); return; }
+      navigator.geolocation.getCurrentPosition((p) => {
+        /* Auf zwei Stellen gerundet (etwa 1 km): genau genug fürs Wetter, nicht genauer als nötig. */
+        wetterOrtSetzen({ id: "hier", breite: Math.round(p.coords.latitude * 100) / 100, laenge: Math.round(p.coords.longitude * 100) / 100, name: "dein Standort" });
+      }, () => showToast("Standort nicht freigegeben — Wetter bleibt bei " + jetzt.name + "."), { maximumAge: 3600000, timeout: 10000 });
+    });
+    setTimeout(() => document.addEventListener("click", function zu(e) { if (!m.contains(e.target)) { m.remove(); document.removeEventListener("click", zu, true); } }, true), 0);
+  }
+  if (weatherIcon) {
+    const wetterKnopf = weatherIcon.closest(".weather-readout") || weatherIcon;
+    wetterKnopf.setAttribute("role", "button");
+    wetterKnopf.setAttribute("tabindex", "0");
+    wetterKnopf.addEventListener("click", wetterOrtMenue);
+    wetterKnopf.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); wetterOrtMenue(); } });
+  }
+  window.DMA_WETTER = { symbol: wetterSymbol, ort: ortFuerLernraum, menue: wetterOrtMenue };
   updateWeather();
   setInterval(updateWeather, 15 * 60 * 1000);
   /* UND WENN MAN ZURUECKKOMMT.
@@ -26645,7 +26751,12 @@
          lc-sprech-schliesst; die CSS-Regel dazu spielt statt des
          Aufgehens das Zugehen ab. Fuer alle anderen Sprechbilder
          aendert sich nichts. */
-      const sprichtJetzt = Boolean(p.spricht) && !p.leer;
+      /* FASSUNG 698 — XANDER (Funk 139): „Beim Schiffe versenken sieht man immer noch die
+         Sprechbild-Animationen, und sie sind auch verschoben". Während des Spiels sind die
+         Plätze das Brett — dort gehört kein Sprechbild hin (es wanderte mit dem Sprecher auf
+         irgendein Feld). Wer spricht, hört man; gezeigt wird es erst nach dem Spiel wieder. */
+      const schiffeBrett = Boolean(document.getElementById("livechatKarte")?.classList.contains("lc-schiffe-an"));
+      const sprichtJetzt = Boolean(p.spricht) && !p.leer && !schiffeBrett;
       const sprachVorher = knopf.classList.contains("lc-platz-spricht");
       const istBluete = !p.leer && /^bluete2?$/.test(p.sprechbild || "ring");
       /* FUNK 75 — „Bluete" ist wieder die alte (0,9 s zu), „Bluete 2"
@@ -26677,7 +26788,7 @@
       /* Die Sprechbilder aus Teilchen brauchen echte Elemente — sie
          entstehen, solange jemand spricht, und verschwinden danach
          wieder. Siehe lcSprechFeld weiter oben. */
-      if (!p.leer && p.spricht) lcSprechFeld(knopf, p.sprechbild || "ring");
+      if (!p.leer && p.spricht && !schiffeBrett) lcSprechFeld(knopf, p.sprechbild || "ring");
       else if (istBluete && knopf.classList.contains("lc-sprech-schliesst")) {
         /* SCHON-PASS 6: „Blatt für Blatt wieder in den Kreis" — das Feld
            bleibt stehen, bis die Bluete zu ist (Zeitgeber unten). */
@@ -29861,6 +29972,28 @@
     });
     return true;
   }
+  /* FASSUNG 698 — XANDER (Funk 139): „wenn ich mich wieder ausziehe … beim nächsten Login bin
+     ich plötzlich wieder angezogen … diesen Glitch musst du auch beheben".
+     NACHGESTELLT: die Kleidung entsteht beim Betreten aus den Chatzeilen des Raums — der Reihe
+     nach, wie sie ANKOMMEN. Kommen sie verkehrt herum an (Zwischenspeicher des Geräts, Server,
+     zweites Gerät), gewinnt das ältere „/anziehen" über das neuere „/ausziehen": Krone wieder auf.
+     Jetzt zählt die ZEIT: jede Anzieh-Zeile wird gemerkt, und für die Person wird der Stand aus
+     allen ihren Zeilen in zeitlicher Folge neu gebildet — egal in welcher Reihenfolge sie kamen. */
+  const lcKleidZeilen = {};
+  function lcKleidZeile(n) {
+    const wen = String((n && (n.wen || n.an)) || "").trim(), stueck = String((n && n.stueck) || "");
+    const suche = wen.toLowerCase();
+    const schlicht = suche && suche !== "*" && !/^(alle|allen|jeden|jeder|jede)$/.test(suche) && !/^\d+$/.test(suche) && suche.indexOf(",") < 0;
+    if (!n || !n.id || !schlicht) return lcAnziehen(wen, stueck);
+    lcKleidZeilen[n.id] = { zeit: Number(n.zeit || n.angekommen || 0), wen: wen, suche: suche, stueck: stueck, id: String(n.id) };
+    const folge = Object.keys(lcKleidZeilen).map((k) => lcKleidZeilen[k]).filter((z) => z.suche === suche)
+      .sort((x, y) => (x.zeit - y.zeit) || (x.id < y.id ? -1 : 1));
+    /* Von vorn: erst alles ab, dann jede Zeile in der richtigen Reihenfolge. */
+    lcAnziehen(wen, "aus");
+    let erg = false;
+    folge.forEach((z) => { erg = lcAnziehen(z.wen, z.stueck) || erg; });
+    return erg;
+  }
   function lcKleiderMerken(nm, was, ab, nurWas) {
     if (ab) { delete lcKleiderliste[nm]; return; }
     const liste = lcKleiderliste[nm] || {};
@@ -32636,6 +32769,17 @@
     const rest = Math.max(0, Math.ceil((stand.endeUm - Date.now()) / 1000));
     return Math.floor(rest / 60) + ":" + String(rest % 60).padStart(2, "0");
   }
+  function lcSlfLage(karte, feld) {
+    if (!karte || !feld) return;
+    const k = karte.getBoundingClientRect(), leiste = document.getElementById("lcLeiste"), form = document.getElementById("lcForm");
+    const l = leiste && karte.contains(leiste) ? leiste.getBoundingClientRect() : null;
+    const f = form && karte.contains(form) && form.offsetParent ? form.getBoundingClientRect() : null;
+    const oben = Math.max(0, Math.round((l ? l.bottom : k.top) - k.top + 4));
+    const unten = f ? Math.round(f.top - k.top - 6) : Math.round(k.height - 8);
+    feld.style.top = oben + "px";
+    feld.style.maxHeight = Math.max(140, unten - oben) + "px";
+  }
+  window.addEventListener("resize", () => lcSlfLage(document.getElementById("livechatKarte"), document.getElementById("lcSlfLive")));
   window.DMA_SLF_LIVE = function (stand) {
     const karte = document.getElementById("livechatKarte");
     let feld = document.getElementById("lcSlfLive");
@@ -32648,12 +32792,16 @@
     if (!feld) {
       feld = document.createElement("section");
       feld.id = "lcSlfLive";
-      feld.className = "lc-slf-live";
-      const leiste = document.getElementById("lcLeiste");
-      if (leiste && leiste.parentElement === karte) leiste.insertAdjacentElement("afterend", feld);
-      else karte.appendChild(feld);
+      /* FASSUNG 698 — XANDER (Funk 139): „Stadt Land Fluss verschiebt immer noch den Chat, das
+         soll ein Overlay sein und nichts im Design beeinflussen". Das Blatt stand im Fluss der
+         Seite unter der Knopfleiste und schob alles darunter nach unten. Jetzt schwebt es über
+         dem Chat (absolut in der Karte): oben an der Knopfleiste, unten bis vor die Eingabe —
+         nichts anderes bewegt sich. */
+      feld.className = "lc-slf-live lc-slf-schwebt";
+      karte.appendChild(feld);
       lcSlfSchluessel = "";
     }
+    lcSlfLage(karte, feld);
     let ich = "";
     try { ich = (LiveChat.lage() || {}).ichId || ""; } catch (e) {}
     const leiter = stand.leiter && stand.leiter === ich;
@@ -39424,6 +39572,11 @@
        acht neuen noch gar nicht da. */
     lcSechzehnSetzen(true);
     karte.classList.add("lc-schiffe-an");
+    /* Fassung 698: was gerade als Sprechbild läuft, sofort weg — das Brett ist leer. */
+    karte.querySelectorAll(".lc-platz.lc-platz-spricht, .lc-platz.lc-sprech-schliesst").forEach((pl) => {
+      clearTimeout(pl._lcBlueteZu); pl.classList.remove("lc-platz-spricht", "lc-sprech-schliesst");
+      try { lcSprechFeldWeg(pl); } catch (e) {}
+    });
 
     const dranIch = stand.phase === "schiessen" && stand.dran === stand.ichBin;
     /* RUNDE 92 — DREI ABSCHNITTE, wie er sie beschrieben hat:
@@ -54558,7 +54711,19 @@
     b.style.borderColor = st.borderTopColor || "rgba(0,0,0,.2)";
     const img = kreis.querySelector("img.lc-avatar");
     if (img && img.src && img.style.display !== "none") { const i = document.createElement("img"); i.src = img.src; i.alt = ""; b.appendChild(i); }
-    else { const t = document.createElement("b"); t.textContent = ((kreis.querySelector(".lc-initial") || {}).textContent || "·").trim(); b.appendChild(t); }
+    else {
+      /* FASSUNG 698: die Farbe des Anfangsbuchstabens sitzt am .lc-initial, nicht am Kreis —
+         vorher fuhr ein cremefarbener Kreis statt des grünen/roten „B"/„A" mit. */
+      const ini = kreis.querySelector(".lc-initial"), t = document.createElement("b");
+      t.textContent = ((ini || {}).textContent || "·").trim();
+      if (ini) {
+        const si = getComputedStyle(ini);
+        if (si.backgroundImage && si.backgroundImage !== "none") b.style.backgroundImage = si.backgroundImage;
+        if (si.backgroundColor && !/rgba\(0, 0, 0, 0\)|transparent/.test(si.backgroundColor)) b.style.backgroundColor = si.backgroundColor;
+        t.style.color = si.color; t.style.fontFamily = si.fontFamily; t.style.fontSize = si.fontSize; t.style.fontWeight = si.fontWeight;
+      }
+      b.appendChild(t);
+    }
     return b;
   }
   /* FASSUNG 696 — XANDER: „Transformers … Lass dir da Zeit". Das Auto fährt vor, hält,
@@ -54674,6 +54839,24 @@
     const rs = { left: rk.left + sx, top: rk.top + sy, width: rk.width, height: rk.height, bottom: rk.bottom + sy };
     const bild = lcAuftrittBild(kreis, rs);
     buehne.appendChild(bild);
+    /* FASSUNG 698 — XANDER (Funk 140): „Bei der Intro-Animation verschluckt es mein Profilbild
+       teilweise, so dass mein Gesicht manchmal nicht mehr ganz zu sehen ist." GEFUNDEN: die
+       Bühne liegt über der ganzen Seite — ein Wagen, eine Liane, ein Transformer fuhr also
+       ÜBER die Gesichter der Nachbarn hinweg (Bildschirmfotos: der Sportwagen verdeckt beim
+       Abfahren das Nachbarbild zur Hälfte). Jetzt liegt auf der Bühne über jedem anderen
+       besetzten Platz eine Kopie seines Bildes: die Fahrzeuge fahren HINTER den Gesichtern
+       durch. Plätze mit laufender Kamera bleiben frei (ein Standbild würde das Video verdecken). */
+    if (art !== "zauber") {
+      document.querySelectorAll("#lcPlaetze .lc-platz.lc-platz-belegt").forEach((pl) => {
+        const vid = pl.querySelector("video");
+        if (pl === platz || (vid && vid.srcObject && vid.offsetParent && getComputedStyle(vid).visibility !== "hidden")) return;
+        const k = pl.querySelector(".lc-kreis"), r = k && k.getBoundingClientRect();
+        if (!r || !r.width) return;
+        const kopie = lcAuftrittBild(k, { left: r.left + sx, top: r.top + sy, width: r.width, height: r.height });
+        kopie.classList.add("lc-auftritt-nachbar");
+        buehne.appendChild(kopie);
+      });
+    }
     let versteck = null;
     /* Das echte Bild ist unsichtbar, solange das mitfahrende unterwegs ist (auch beim Gehen, falls der Platz noch kurz steht). */
     {
@@ -62665,8 +62848,7 @@
       return;
     }
     if (art === "anziehen") {
-      lcAnziehen((nachricht && (nachricht.wen || nachricht.an)) || "",
-                 (nachricht && nachricht.stueck) || "");
+      lcKleidZeile(nachricht || {});
       return;
     }
     /* /noten MIT einem Lied: der Refrain klingt, und die Noten steigen
@@ -65195,7 +65377,7 @@
              Wirkung beim Nachlesen still nachgeholt, der Reihe nach
              (die letzte Zeile gewinnt). Kein Ton, keine Animation. */
           livechatEffektGespielt.add(n.id);
-          lcAnziehen(n.wen || n.an || "", n.stueck || "");
+          lcKleidZeile(n);
           setTimeout(lcKleiderAuffrischen, 0);
         }
       }

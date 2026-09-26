@@ -491,8 +491,6 @@ window.Rueckfrage = (function () {
     var d = diktat;
     diktat = null;
     if (!d) return;
-    /* FASSUNG 698: hat der Livestream sein Mikrofon ausgeliehen, bekommt er es jetzt zurück. */
-    if (d.geliehen) { try { window.LiveChat.mikrofonZurueck(); } catch (e) {} }
     var feld = diktatFeld(d.klasse);
     diktatKnopfZeigen(d.klasse, false,
       hinweis !== undefined ? hinweis : (feld && feld.value.trim() ? "\u2713 Steht im Feld \u2013 jetzt \u201eSenden\u201c." : ""));
@@ -507,11 +505,7 @@ window.Rueckfrage = (function () {
     mik.interimResults = true;
     diktat = { mik: mik, klasse: klasse, anfang: feld.value.replace(/\s*$/, ""),
                an: false, gehoert: false, fehler: "", seit: Date.now() };
-    /* FASSUNG 698 — XANDER (Funk 139): „bei dem Walkie-Talkie funktioniert die Spracheingabe
-       nicht, wenn ich im Livestream-Modus bin". Der Livestream gibt sein Mikrofon fürs Diktat
-       her und bekommt es danach zurück (livechat.js: mikrofonLeihen/-Zurueck). */
-    try { if (window.LiveChat && LiveChat.mikrofonLeihen && LiveChat.mikrofonLeihen()) diktat.geliehen = true; } catch (e) {}
-    diktatKnopfZeigen(klasse, true, diktat.geliehen ? "Livestream-Mikro kurz pausiert \u2026 Mikrofon wird eingeschaltet \u2026" : "Mikrofon wird eingeschaltet \u2026");
+    diktatKnopfZeigen(klasse, true, "Mikrofon wird eingeschaltet \u2026");
     /* RUNDE 100 — XANDER (Walkie-Talkie, Frage Diktat): „🎤 startet gar
        nicht". Hier nicht nachzustellen — der Startaufruf ist derselbe wie
        in der Fassung, die bei ihm lief (523). Gefunden habe ich aber zwei

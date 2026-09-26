@@ -794,22 +794,6 @@
     panelAuffrischen();
   }
   /* Die eigene Gegenwehr, lokal gerechnet wie spiel_treffer (für die Übung). */
-  /* FASSUNG 698 — Mauer gegen Waffe (so rechnet spiel_mauer_faktor). */
-  var MAUER_NAME = { holz: "Holzmauer", ziegel: "Ziegelmauer", stein: "Steinmauer", stahl: "Stahlmauer", titan: "Titanmauer", diamant: "Diamantmauer" };
-  var MAUER_RAT = {
-    holz: "Beil (Tomahawk), Laser und Sprengstoff machen sie schnell kaputt.",
-    ziegel: "Sprengstoff (Bazooka, Kuckucksuhr) knackt Ziegel am besten.",
-    stein: "Sprengstoff (Bazooka, Kuckucksuhr) knackt Stein am besten.",
-    stahl: "Energiewaffen schneiden Stahl, Sprengstoff geht auch.",
-    titan: "Titan knackt eine Energiewaffe — mit ★★★ aus dem Labor noch besser.",
-    diamant: "Durch Diamant kommt nur eine Energiewaffe ★★★ (Chips aus dem Labor)."
-  };
-  function mauerHinweis(art, waffe, f) {
-    var jetzt = Date.now();
-    if (S.mauerHinweisBis && jetzt < S.mauerHinweisBis) return;
-    S.mauerHinweisBis = jetzt + 20000;
-    hinweis("🧱 " + (MAUER_NAME[art] || "Die Mauer") + " hält – " + ((WAFFEN[waffe] || {}).name || "diese Waffe") + " schafft nur " + Math.round(f * 100) + " %. " + (MAUER_RAT[art] || ""));
-  }
   function eigeneGegenwehr(roh) {
     /* FASSUNG 697 — dieselben Tiere und Zahlen wie spiel_treffer. Vorher kannte die Übung nur
        Fellmonster, Stachelmonster, Chihuahua, Drache und Eule; Schäferhund, Einhorn, Dackel,
@@ -1233,10 +1217,6 @@
         trefferZeigen(p.id, n);
         gegenwehrZeigen(p.id, ichChat, n);
         if (erg.stumpf) hinweis("🔧 " + ((WAFFEN[waffe] || {}).name || "Die Waffe") + " ist stumpf – halber Schaden. Reparieren: Schraubenschlüssel in der Leiste.");
-        /* FASSUNG 698 — XANDER (Funk 141): „braucht man für verschiedene Mauern nicht auch
-           bestimmte Waffen". Der Server sagt, wie stark die Mauer den Treffer nimmt; prallt die
-           Waffe ab, steht hier, womit es besser geht. */
-        if (erg.mauer_faktor != null && Number(erg.mauer_faktor) < 0.5) mauerHinweis(erg.mauer_art, waffe, Number(erg.mauer_faktor));
         if (S.ich && HALTBAR.indexOf(waffe) >= 0 && !erg.stumpf) { var wh = Object.assign({}, S.ich.waffen_halt || {}); wh[waffe] = Math.max(0, (wh[waffe] == null ? haltMax(S.ich, waffe) : wh[waffe]) - 1); S.ich.waffen_halt = wh; }
         /* FASSUNG 681 — XANDER: „wenn ich gegen jemanden kämpfe und ich gewinne,
            dass da auch ne Punktzahl kommt … Erfahrungspunkte … man nimmt dem
@@ -5288,8 +5268,7 @@
         + "<p><b>Tagesgeschenk.</b> Einmal am Tag holt es sich von selbst ab: Punkte, Bratwurst, jeden dritten Tag ein Pflaster. Sieben Tage am Stück geben am meisten. Wer auf der Seite übt, bekommt dafür ebenfalls Spielpunkte (5 Seitenpunkte = 1 Punkt, bis 40 am Tag).</p>"
         + "<p><b>Schutz.</b> Schild und Mauer (beide ziehen mit), Geschütz-Turm und Monster schlagen zurück – anteilig, nie mehr als 4/5 dessen, was der Angreifer anrichtet. Mana-Tränke kosten 30 Mana. Minen und Falltüren legst du auf einen Platz.</p>"
         + "<p><b>Üben.</b> „Sparring“ in der Leiste stellt eine Strohpuppe auf einen freien Platz – nur bei dir, niemand wird gestört. „Er schießt zurück“ macht ein Übungsduell daraus. Zählt nicht.</p>"
-        + "<p><b>Abnutzung und Turm.</b> Gekaufte Waffen halten 60 Treffer, danach sind sie stumpf (halber Schaden). Sobald eine Waffe nur noch 15 Treffer oder weniger hält, erscheint in der Leiste ein Schraubenschlüssel: ein Tipp repariert alle für 15 Punkte – mitten im Kampf (vorher ist er nicht da, weil es nichts zu reparieren gibt; im Reiter Waffen steht „Alle reparieren“ immer). Das Geschütz ist ein Turm: einmal kaufen, nachladen für 20, aufwerten bis Stufe 5. Die Mauer gehört dir, bis sie zerstört ist: wechselst du den Platz, zieht sie mit und steht nach 8 Sekunden wieder.</p>"
-        + "<p><b>Mauer gegen Waffe.</b> Jede Mauer hält gegen jede Waffenart anders: Wurfsachen zerbröseln Holz, prallen aber an Stein ab; Sprengstoff (Bazooka, Kuckucksuhr) knackt Ziegel und Stein; Energiewaffen schneiden Stahl und Titan; durch Diamant kommt richtig nur eine Energiewaffe ★★★ – die braucht Chips aus dem Labor. ★★ gibt überall +15 %.</p>"
+        + "<p><b>Abnutzung und Turm.</b> Gekaufte Waffen halten 60 Treffer, danach sind sie stumpf (halber Schaden). Der Schraubenschlüssel in der Leiste repariert alle für 15 Punkte – mitten im Kampf. Das Geschütz ist ein Turm: einmal kaufen, nachladen für 20, aufwerten bis Stufe 5. Die Mauer gehört dir, bis sie zerstört ist: wechselst du den Platz, zieht sie mit und steht nach 8 Sekunden wieder.</p>"
         + "<p><b>Tiere.</b> Eins am Boden (Fellmonster, Stachelmonster, Chihuahua), eins in der Luft (Babydrache, Eule). Sie wehren Angriffe ab und kosten dabei Kraft. Bei 0 Kraft sind sie schwach, bleiben aber – füttern mit Bratwurst (+12) oder Sauerkraut (+8). Aufwerten bis Stufe 3; ab Stufe 2 hat jedes Tier eine zweite Fähigkeit (Fellmonster kuschelt, Chihuahua lässt nicht los, Babydrache glüht nach, Eule warnt, Stachelmonster fängt mehr ab).</p>"
         + "<p><b>Deutsche Wurfsachen.</b> Brezel, Bierkrug und Spätzle-Kanone (eine Salve aus fünf Spätzle) kauft man einmal. Bratwurst und Sauerkraut sind Vorräte: werfen oder essen (Bratwurst +15 LP, Sauerkraut +10 LP und +10 Mana). Sauerkraut rutscht beim Getroffenen übers Bild und nimmt ihm kurz die Sicht – zweimal tippen wischt es weg, der Scheibenwischer macht es von selbst. Das Herz isst zuerst, wenn nur wenig fehlt.</p>"
         + "<p><b>Graben und Werkstatt.</b> Menü → Mehr → Graben gibt dir die Schaufel: tippe auf einen Platz und grab. Du findest Münzen, Erz, Bratwurst, Sauerkraut oder selten eine Truhe – oder nur Erde. Derselbe Platz geht erst nach 10 Minuten wieder, höchstens 30 Löcher in der Stunde. Aus Erz machst du in der Werkstatt (Reiter Schutz) Pflaster, scharfe Waffen oder Turm-Munition.</p>"
@@ -8533,13 +8512,7 @@
   function tierAuftritt(platz, bild, art, rein, D) {
     if (!platz || !bild) return;
     tierWacheStarten();
-    /* FASSUNG 698 — XANDER (Funk 140): „Bei der Intro Animation verschluckt es mein Profilbild
-       teilweise, so dass mein Gesicht manchmal nicht mehr ganz zu sehen ist." GEFUNDEN: nur bei
-       Sportwagen, Hot Rod und Monstertruck rückten die Tiere nach hinten; bei Rakete (und den
-       neuen KITT, Viper, Liane, Transformer) hingen sie GENAU auf dem mitfahrenden Bild — also
-       auf dem Gesicht. Jetzt sitzen sie bei jedem Fahrzeug hinten, an der Liane und beim
-       Transformer dahinter, an der Rakete unten dran — nie vor dem Gesicht. */
-    var wagen = /sportwagen|hotrod|monstertruck|kitt|viper|liane|transformer/.test(art);
+    var wagen = /sportwagen|hotrod|monstertruck/.test(art);
     if (art === "zauber") {
       var doppel = tierDoppel(platz);
       if (!doppel.length) return;
@@ -8553,7 +8526,7 @@
     /* Wagen oder Rakete: am mitfahrenden Bild hängen. Im Wagen sitzen
        sie auf dem Rücksitz — ein Stück HINTER dem Bild, in Fahrtrichtung
        gesehen (rein: nach rechts, also links dahinter). */
-    var hinten = wagen ? (rein ? -0.62 : 0.62) : 0, unten = art === "rakete" ? 0.72 : 0;
+    var hinten = wagen ? (rein ? -0.62 : 0.62) : 0;
     var fertigAb = rein ? 0.8 : 0.3;
     var lauf = tierReiseLauf(platz, function (t) {
       var b = bild.getBoundingClientRect();
@@ -8561,7 +8534,7 @@
       /* Einsteigen/Aussteigen: vor dem Einsteigen und nach dem
          Aussteigen sitzen sie am Platz (den übernimmt doppelLanden). */
       if (!rein && t < D * fertigAb) { var k = platz.querySelector(".lc-kreis").getBoundingClientRect(); return { left: k.left, top: k.top, width: k.width, height: k.height }; }
-      return { left: b.left + b.width * hinten, top: b.top + b.height * unten, width: b.width, height: b.height };
+      return { left: b.left + b.width * hinten, top: b.top, width: b.width, height: b.height };
     }, { klasse: "sp-tier-haelt", verstecken: false });
     if (!lauf) return;
     setTimeout(function () { lauf.stopp(false, !rein); }, rein ? Math.round(D * fertigAb) : D + 40);

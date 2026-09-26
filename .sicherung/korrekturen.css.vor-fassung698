@@ -34858,35 +34858,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .lc-auftritt-seil { position: absolute; z-index: 1; width: 16px; margin-left: -8px; transform-origin: 50% 0; pointer-events: none; }
 .lc-auftritt-seil svg { width: 100%; height: 100%; overflow: visible; display: block; }
 @media (prefers-reduced-motion: reduce) { .lc-reisewagen .lc-rw-scanner { animation: none; } }
-
-/* =================================================================
-   FASSUNG 698 — DAS WETTER-SYMBOL IST EINE ZEICHNUNG, KEIN EMOJI
-   XANDER (Funk 141): „tagsüber mit der Sonne in den Wolken und Nacht
-   dann mit dem Mond". Gleich groß wie das alte Emoji; ein Tipp öffnet
-   die Ortswahl (Berlin, Döbeln, mein Standort).
-   ================================================================= */
-.weather-bar .weather-icon { display: inline-flex; align-items: center; line-height: 0; }
-.weather-bar .weather-icon .w-symbol { width: 1.55rem; height: 1.55rem; display: block; overflow: visible; }
-.weather-bar .weather-readout[role="button"] { cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: 10px; }
-.weather-bar .weather-readout[role="button"]:focus-visible { outline: 2px solid var(--coral-400, #e8743b); outline-offset: 2px; }
-.wetter-ort-menue { position: absolute; z-index: 9600; display: flex; flex-direction: column; gap: 4px; min-width: 176px; max-width: calc(100vw - 16px);
-  padding: 8px; border-radius: 14px; background: var(--card-bg, #fffaf3); color: var(--text, #2a2320); box-shadow: 0 8px 24px rgba(0, 0, 0, .22); font: 600 .9rem/1.25 system-ui, sans-serif; box-sizing: border-box; }
-.wetter-ort-menue b { font-size: .75rem; opacity: .7; padding: 0 6px 2px; text-transform: uppercase; letter-spacing: .04em; }
-.wetter-ort-menue button { text-align: left; border: 0; border-radius: 10px; padding: 8px 10px; background: transparent; color: inherit; font: inherit; cursor: pointer; overflow-wrap: anywhere; }
-.wetter-ort-menue button[aria-checked="true"] { background: rgba(232, 116, 59, .14); color: var(--coral-500, #c9582a); }
-.wetter-ort-menue button[aria-checked="true"]::after { content: " ✓"; }
-.wetter-ort-menue small { font-weight: 500; font-size: .7rem; opacity: .6; padding: 2px 6px 0; }
-/* FASSUNG 698 — XANDER (Funk 139): beim Schiffe versenken keine Sprechbilder auf dem Brett. */
-#livechatKarte.lc-schiffe-an .lc-platz .lc-sprechfeld { display: none !important; }
-#livechatKarte.lc-schiffe-an .lc-platz.lc-platz-spricht .lc-kreis { animation: none !important; box-shadow: none !important; filter: none !important; }
-#livechatKarte.lc-schiffe-an .lc-platz.lc-platz-spricht .lc-kreis::before,
-#livechatKarte.lc-schiffe-an .lc-platz.lc-platz-spricht .lc-kreis::after { content: none !important; animation: none !important; }
-/* FASSUNG 698 — Stadt · Land · Fluss schwebt über dem Chat und schiebt nichts (Funk 139). */
-#livechatKarte .lc-slf-live.lc-slf-schwebt { position: absolute; left: 8px; right: 8px; margin: 0; z-index: 40; overflow-y: auto; overscroll-behavior: contain;
-  box-shadow: 0 10px 28px rgba(60, 40, 10, .28); box-sizing: border-box; }
-/* FASSUNG 698 — XANDER (Funk 140): „verschluckt es mein Profilbild teilweise". Die Fahrzeuge
-   fahren HINTER den Gesichtern der Nachbarn durch (Kopien auf der Bühne), das eigene Bild bleibt
-   ganz vorn, und die Zauberwolke steigt HINTER dem Bild auf statt davor. */
-.lc-auftritt .lc-auftritt-bild { z-index: 4; }
-.lc-auftritt .lc-auftritt-bild.lc-auftritt-nachbar { z-index: 2; box-shadow: none; }
-.lc-auftritt .lc-auftritt-wolke { z-index: 1; }

@@ -5975,41 +5975,6 @@ window.LiveChat = (function () {
     return Promise.resolve(true);
   }
 
-  /* FASSUNG 698 — XANDER (Funk 139): „bei dem Walkie-Talkie funktioniert die Spracheingabe
-     nicht, wenn ich im Livestream-Modus bin … ich will nicht immer aus dem Livestream
-     rausgehen". GEMESSEN (automatische Meldungen Funk 81 und 99, Samsung Internet/Android):
-     „aborted" — solange der Livestream das Mikrofon hält, bekommt die Spracherkennung es
-     nicht. Jetzt leiht der Livestream es für die Dauer des Diktats aus: die eigene Tonspur
-     wird abgegeben (die anderen sehen „stumm"), danach holt er sie ohne Abriss zurück —
-     und stellt den alten Stand (an oder stumm) wieder her. */
-  var mikGeliehen = null;
-  function mikrofonLeihen() {
-    if (mikGeliehen || zustand.lage !== "drin" || !zustand.eigenerStrom) return false;
-    var spuren = zustand.eigenerStrom.getAudioTracks();
-    if (!spuren.length) return false;
-    mikGeliehen = { tonAn: zustand.tonAn };
-    spuren.forEach(function (t) { try { t.stop(); zustand.eigenerStrom.removeTrack(t); } catch (e) {} });
-    try { spurTauschen("ton", null); } catch (e) {}
-    zustand.tonAn = false;
-    senden({ art: "stumm", tonAn: false, bildAn: zustand.bildAn, bild: zustand.ichBild });
-    melden();
-    return true;
-  }
-  function mikrofonZurueck() {
-    var g = mikGeliehen;
-    mikGeliehen = null;
-    if (!g || zustand.lage !== "drin") return Promise.resolve(false);
-    return mikrofonDazuholen().then(function (ok) {
-      if (ok && !g.tonAn) {
-        zustand.tonAn = false;
-        zustand.eigenerStrom.getAudioTracks().forEach(function (t) { t.enabled = false; });
-        senden({ art: "stumm", tonAn: false, bildAn: zustand.bildAn, bild: zustand.ichBild });
-        melden();
-      }
-      return ok;
-    });
-  }
-
   /* Wer beim Betreten kein Mikrofon erlaubt hat, kann es hier
      nachholen — derselbe Weg wie bei der Kamera, ohne Abriss. */
   function mikrofonDazuholen() {
@@ -16209,9 +16174,6 @@ window.LiveChat = (function () {
       return typeof v === "number" ? v : -1;
     },
     tonNeuAufbauen: function () { tonWacheStarten(); return tonNeuAufbauen(); },
-    mikrofonLeihen: function () { return mikrofonLeihen(); },
-    mikrofonZurueck: function () { return mikrofonZurueck(); },
-    mikrofonGeliehen: function () { return Boolean(mikGeliehen); },
     /* Die Lieder — app.js braucht sie fuer die Kachel und fuer den
        Waehler, gelesen werden sie hier. */
     /* Wer ist gerade dran? Die Oberflaeche schreibt es an die Tafel. */

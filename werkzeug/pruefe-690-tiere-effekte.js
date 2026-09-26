@@ -286,6 +286,37 @@ const sage = (gut, was, zusatz) => {
     }, 1400);
   }));
   sage(einzug.doppel === 2 && einzug.imWagen && einzug.weg, "Einzug im Sportwagen: die Tiere sitzen auf dem Rücksitz und steigen nach mir aus", JSON.stringify(einzug));
+  /* FASSUNG 698 — XANDER (Funk 140): „Bei der Intro Animation verschluckt es mein Profilbild
+     teilweise, so dass mein Gesicht manchmal nicht mehr ganz zu sehen ist." Gemessen wird, was
+     man SIEHT: zu drei Zeitpunkten wird alles angehalten, das Gesicht (mittlere 60 % des
+     mitfahrenden Bildes) einmal mit und einmal ohne Tiere fotografiert; gezählt werden die
+     Bildpunkte, die sich unterscheiden. */
+  const { PNG } = require("/tmp/claude-0/node_modules/pngjs");
+  const bildpunkteAnders = (a, b) => { const A = PNG.sync.read(a), B = PNG.sync.read(b); let n = 0, anders = 0;
+    for (let k = 0; k < A.data.length; k += 4) { n++; if (Math.abs(A.data[k] - B.data[k]) + Math.abs(A.data[k + 1] - B.data[k + 1]) + Math.abs(A.data[k + 2] - B.data[k + 2]) > 40) anders++; }
+    return Math.round(100 * anders / n); };
+  for (const art of ["rakete", "kitt", "viper", "liane", "transformer", "monstertruck"]) {
+    const D = art === "transformer" ? 6400 : 3600, werte = [];
+    await pg.evaluate((art) => { document.documentElement.style.scrollBehavior = "auto";
+      document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]').scrollIntoView({ block: "center" });
+      window.__auftrittStart = performance.now(); window.DMA_AUFTRITT("ich", art, "rein"); }, art);
+    for (const f of [0.2, 0.4, 0.6]) {
+      await pg.waitForFunction((z) => performance.now() - window.__auftrittStart >= z, Math.round(f * D));
+      const r = await pg.evaluate(() => { document.getAnimations().forEach((a) => a.pause()); window.__tierStopp = true;
+        const b = document.querySelector(".lc-auftritt .lc-auftritt-bild"); if (!b) return null; const q = b.getBoundingClientRect();
+        return { x: q.left + q.width * 0.2, y: q.top + q.height * 0.2, w: q.width * 0.6, h: q.height * 0.6 }; });
+      if (r && r.x >= 0 && r.y >= 0 && r.x + r.w <= 360 && r.w > 8) {
+        const mit = await pg.screenshot({ clip: { x: r.x, y: r.y, width: r.w, height: r.h } });
+        await pg.evaluate(() => document.querySelectorAll(".sp-tier-begleiter").forEach((e) => { e.style.visibility = "hidden"; }));
+        const ohne = await pg.screenshot({ clip: { x: r.x, y: r.y, width: r.w, height: r.h } });
+        await pg.evaluate(() => document.querySelectorAll(".sp-tier-begleiter").forEach((e) => { e.style.visibility = ""; }));
+        werte.push(bildpunkteAnders(mit, ohne));
+      }
+      await pg.evaluate(() => { document.getAnimations().forEach((a) => a.play()); });
+    }
+    await pg.waitForTimeout(D + 300);
+    sage(werte.length >= 2 && Math.max(...werte) <= 8, "Einzug „" + art + "“: kein Tier vor dem Gesicht (höchstens 8 % der Bildpunkte)", JSON.stringify(werte));
+  }
   const magie = await pg.evaluate(() => new Promise((ok) => {
     window.DMA_AUFTRITT("ich", "zauber", "rein");
     setTimeout(() => { const d = [...document.querySelectorAll(".sp-tier-begleiter")]; const erg = { doppel: d.length, zauber: d.every((e) => e.classList.contains("sp-tier-zauber")), frueh: d.map((e) => Number(getComputedStyle(e).opacity).toFixed(2)) };
