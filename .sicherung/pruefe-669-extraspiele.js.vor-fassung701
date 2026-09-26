@@ -194,8 +194,7 @@ const sage = (gut, was, zusatz) => {
   await tippe(".sp-extra-frage button");
   await tick(2600);
   const st1 = await pg.evaluate(() => { const T = window.DMA_SPIEL.pruef.st(); return { er: T.er.lp, ich: T.ich.lp, sterne: T.ich.sterne, zug: T.zug, dran: T.ichDran, log: T.log.slice(0, 3) }; });
-  /* Fassung 701: kein gemeinsamer Zugzähler mehr – jeder zählt seine eigenen Züge. */
-  sage(st1.er === 48 && st1.sterne === 1 && st1.dran, "Angriff mit richtiger Antwort: 12 Schaden, 1 Stern; der Computer hat gezogen, du bist wieder dran", JSON.stringify(st1));
+  sage(st1.er === 48 && st1.sterne === 1 && st1.zug === 2 && st1.dran, "Angriff mit richtiger Antwort: 12 Schaden, 1 Stern; der Computer hat gezogen, du bist wieder dran", JSON.stringify(st1));
   await pg.screenshot({ path: "/tmp/claude-0/p-669-strat.png" });
   await pg.evaluate(() => window.DMA_SPIEL.pruef.extraSchliessen());
 
@@ -206,17 +205,16 @@ const sage = (gut, was, zusatz) => {
   await tick(300);
   const zwei = await pg.evaluate(() => { const T = window.DMA_SPIEL.pruef.st(); return { ja: window.__raus.filter((p) => p.ereignis === "strat" && p.typ === "ja" && p.partie === "stX").length, gegner: T.gegner, dran: T.ichDran }; });
   sage(zwei.ja === 1 && zwei.gegner === "bea" && zwei.dran === false, "angenommen: Bea bekommt „ja“, Bea (die Einladende) fängt an", JSON.stringify(zwei));
-  await pg.evaluate(() => window.DMA_SPIEL.pruef.stratEmpfangen({ ereignis: "strat", typ: "zug", an: "ich", von: "bea", partie: "stX", nr: 1, aktion: "angriff", erfolg: true, schaden: 12 }));
-  /* Fassung 701: der Angreifer schickt den Schaden mit (er kennt die Fairness nach Level). */
-  await pg.evaluate(() => window.DMA_SPIEL.pruef.stratEmpfangen({ ereignis: "strat", typ: "zug", an: "ich", von: "bea", partie: "stX", nr: 1, aktion: "angriff", erfolg: true, schaden: 12 }));
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.stratEmpfangen({ ereignis: "strat", typ: "zug", an: "ich", von: "bea", partie: "stX", nr: 1, aktion: "angriff", erfolg: true }));
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.stratEmpfangen({ ereignis: "strat", typ: "zug", an: "ich", von: "bea", partie: "stX", nr: 1, aktion: "angriff", erfolg: true }));
   const nachZug = await pg.evaluate(() => { const T = window.DMA_SPIEL.pruef.st(); return { ich: T.ich.lp, dran: T.ichDran, zug: T.zug }; });
-  sage(nachZug.ich === 48 && nachZug.dran, "Beas Zug kommt an (doppelt gesendet zählt einmal): 12 Schaden, jetzt bist du dran", JSON.stringify(nachZug));
+  sage(nachZug.ich === 48 && nachZug.dran && nachZug.zug === 1, "Beas Zug kommt an (doppelt gesendet zählt einmal): 12 Schaden, jetzt bist du dran", JSON.stringify(nachZug));
   await tippe('.sp-st-aktionen [data-ak="schild"]');
   await tick(500);
   await tippe(".sp-extra-frage button");
   await tick(900);
   const meinZug = await pg.evaluate(() => { const z = window.__raus.filter((p) => p.ereignis === "strat" && p.typ === "zug").pop(); return z ? { an: z.an, nr: z.nr, aktion: z.aktion, erfolg: z.erfolg } : null; });
-  sage(meinZug && meinZug.an === "bea" && meinZug.nr === 1 && meinZug.aktion === "schild" && meinZug.erfolg, "mein Zug (Schild, richtig beantwortet) geht an Bea", JSON.stringify(meinZug));
+  sage(meinZug && meinZug.an === "bea" && meinZug.nr === 2 && meinZug.aktion === "schild" && meinZug.erfolg, "mein Zug (Schild, richtig beantwortet) geht an Bea", JSON.stringify(meinZug));
   await pg.evaluate(() => window.DMA_SPIEL.pruef.extraSchliessen());
   const aufgabe = await pg.evaluate(() => window.__raus.filter((p) => p.ereignis === "strat" && p.typ === "ende").length);
   sage(aufgabe === 1, "wer das Spiel schließt, gibt auf – Bea erfährt es", String(aufgabe));

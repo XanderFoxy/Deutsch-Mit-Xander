@@ -49,28 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 700: Dorf-Menü ruhig (Funk 144) und Dorf organisch gezeichnet (Funk 143) – als Nächstes Strategie gegen Mitspieler",
+  stand: "Fassung 701: Rundenkampf gegen echte Mitspieler als Arena (Züge oder Echtzeit, fair nach Level) – als Nächstes das Dorf (Berufe, Forschung, Automatik)",
 
   inArbeit: [
-    { seit: "2026-09-26T09:58",
-      text: "Strategie gegen Mitspieler sichtbar (Street-Fighter-Züge, Fairness)" },
-    { seit: "2026-09-26T09:58",
+    { seit: "2026-09-26T15:57",
       text: "Dorf: Berufe + Ausbildung, Wissenschaft/geheime Forschung, Sehenswürdigkeiten + Besucher, Automatik Getreide→Mühle→Bäckerei, Hunger ernster" },
-    { seit: "2026-09-26T09:58",
+    { seit: "2026-09-26T15:57",
       text: "Premium: Stripe braucht deine Freigabe (claude.ai → Connectors), GoFundMe-Link" },
-    { seit: "2026-09-26T09:58",
+    { seit: "2026-09-26T15:57",
       text: "Rest Funk 139: Superwaffen je Level, Zauber-Wirkungen, Lenkrakete, deutsche Sachen, TD-Wellen, Tiere bei Beamen/Lok, Rüstung/Helm sichtbar, Waffen in der Hand, Android-Knöpfe, Aufgaben-Pool, Profil-Effekte, Kostüme, Quests" },
-    { seit: "2026-09-26T09:58",
+    { seit: "2026-09-26T15:57",
+      text: "Bitte den Rundenkampf einmal mit jemandem echt testen (zwei Geräte)" },
+    { seit: "2026-09-26T15:57",
       text: "ElevenLabs-Schlüssel bitte erneuern (stand im Chat)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T09:58",
-      text: "144: Dorf-Menü springt nicht mehr, Gebäude flackert nicht mehr (Menü wird angeglichen statt jede Sekunde neu geschrieben)" },
-    { seit: "2026-09-26T09:58",
-      text: "143: Dorf wie von Hand – Putz, Ziegel, Feldsteine, Holz, Efeu, Moos, Licht und Schatten, Bäume, Gras, Kies, Ufer, Berge" },
-    { seit: "2026-09-26T09:58",
+    { seit: "2026-09-26T15:57",
+      text: "Rundenkampf zu zweit: schnelle Antworten zählen, jeder auf der Bühne einladbar, verlorene Züge kommen nach, Arena mit beiden Profilbildern, K.O., Konter, Fairness" },
+    { seit: "2026-09-26T15:57",
+      text: "Dorf-Menü ruhig (144) und Dorf organisch (143)" },
+    { seit: "2026-09-26T15:57",
       text: "699 Kämpferklassen (Beta)" },
   ],
 };
