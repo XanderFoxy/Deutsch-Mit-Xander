@@ -49,22 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 689: Knöpfe im Profildesign, Liedausschnitt endet, Liedteile löschen",
+  stand: "Fassung 690: Tiere spielen bei den Profileffekten mit (Funk 137)",
 
   inArbeit: [
-    { seit: "2026-09-26T00:37",
-      text: "Funk 137: Tiere reagieren auf alle Profileffekte (in Arbeit)" },
-    { seit: "2026-09-26T00:37",
+    { seit: "2026-09-26T01:54",
       text: "Altlasten rot: dummy, namensvorschlaege, runde69, runde88-pac, runde87-strichlinien, runde92-betrieb, runde92-grundebene" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T00:37",
-      text: "Rundknöpfe unter den Plätzen in den Farben des Profildesigns (Galaxie usw.)" },
-    { seit: "2026-09-26T00:37",
-      text: "Liedausschnitt spielt danach nicht mehr das ganze Lied von vorn" },
-    { seit: "2026-09-26T00:37",
-      text: "Liedteile löschbar (Mülleimer, zwei Tipps) im Wähler und in „Meine Abschnitte“" },
+    { seit: "2026-09-26T01:54",
+      text: "Tier-Reaktionen auf alle Profileffekte (Spucke zurück, Schlecken, Hecheln/mmmh, Euro-Augen, Nass+Schütteln, Glas, Wow, Klaps-Gag, Tanzen …)" },
+    { seit: "2026-09-26T01:54",
+      text: "Tiere kommen mit: Reisen, Angel/Kran/Lasso, Beamen (vertauscht), Fahrstuhl, Einzug auf dem Rücksitz, Magie" },
+    { seit: "2026-09-26T01:54",
+      text: "Weggeschossen: Tiere suchen; Fahrzeug drüber: jagen hinterher; Boot: Wasser abschütteln" },
+    { seit: "2026-09-26T01:54",
+      text: "Fellmonster-Biss: Zähne bleiben nicht mehr allein stehen" },
   ],
 };
