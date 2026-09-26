@@ -31871,47 +31871,21 @@
      sie sich nicht mit denen am Platz beissen. „Musik" heisst auch eine
      Spruehdosen-Kachel — deshalb gilt dieses Bild nur zusammen mit dem
      Kopfhoerer-Zeichen davor. */
-  const LC_CSS_VERLAUF = {
-    "lc-lok-kessel": "lokLack", "lc-lok-rauchkammer": "lokLack", "lc-lok-haus": "lokLack", "lc-lok-zylinder": "lokLack",
-    "lc-lok-o-kessel": "lokLack", "lc-wg-tender": "lokLack", "lc-wg-o-kasten": "lokLack",
-    "lc-lok-dom": "lokGold", "lc-lok-pfeife": "lokGold", "lc-lok-griff": "lokGold", "lc-lok-stuetze": "lokGold",
-    "lc-lok-o-dom": "lokGold", "lc-lok-o-pfeife": "lokGold", "lc-wg-messing": "lokGold",
-    "lc-katze-glied": "lcKatzFell"
-  };
-  const lcMiniEcht = (svg, vb, nach) => {
+  const lcMiniEcht = (svg, vb) => {
     /* Jede id bekommt ein „K" (Kachel): dieselbe Zeichnung darf am Platz
        und im Menue gleichzeitig stehen, ohne dass sich die Verlaeufe
-       gegenseitig ueberschreiben. (FASSUNG 716: das Dorf nimmt ein
-       eigenes Kuerzel, siehe DMA_ZEICHNUNG.) */
-    nach = nach || "K";
-    const umbenannt = {};
+       gegenseitig ueberschreiben. */
     (svg.match(/\bid="[^"]+"/g) || []).forEach((a) => {
       const i = a.slice(4, -1);
-      umbenannt[i] = true;
-      svg = svg.split('id="' + i + '"').join('id="' + i + nach + '"')
-        .split("#" + i + ")").join("#" + i + nach + ")")
-        .split('"#' + i + '"').join('"#' + i + nach + '"');
-    });
-    /* FASSUNG 716 — Manche Verlaeufe haengen nicht am Element, sondern im
-       STYLESHEET (korrekturen.css: „.lc-lok-kessel { fill: url(#lokLack) }").
-       Die zeigen nach dem Umbenennen ins Leere: der Kessel der Lok war auf
-       der Kachel und im Dorf nur noch ein Umriss. Diese Teile bekommen den
-       umbenannten Verlauf deshalb direkt an das Element (ein style am
-       Element gilt vor dem Stylesheet). */
-    svg = svg.replace(/<(\w+) class="([\w-]+)/g, (m, tag, k1) => {
-      const v = LC_CSS_VERLAUF[k1];
-      return v && umbenannt[v] ? "<" + tag + ' style="fill:url(#' + v + nach + ')" class="' + k1 : m;
+      svg = svg.split('id="' + i + '"').join('id="' + i + 'K"')
+        .split("#" + i + ")").join("#" + i + "K)")
+        .split('"#' + i + '"').join('"#' + i + 'K"');
     });
     svg = svg.replace(/<svg class="/, '<svg class="lc-mini-echt ');
     return vb ? svg.replace(/viewBox="[^"]*"/, 'viewBox="' + vb + '"') : svg;
   };
   LC_MINI_BILD["\ud83c\udfa7 Musik"] = lcMiniEcht(lcApmSvg(), "-3 -6 168 112");
   LC_MINI_BILD["Dampflok"] = lcMiniEcht(lcLokSeiteSvg(), "0 -4 120 62");
-  /* FASSUNG 716 — XANDER (Funk 158): „dann können wir ja die Eisenbahn
-     nehmen die wir schon haben mit realistischen schönen Rauch". Das Dorf
-     (spiel.js) bekommt dieselbe Lok wie der Einzug am Platz, mit eigenem
-     Kuerzel fuer die Verlaeufe (ein Dorf-Kopf „H", der Zug im Bild „D"). */
-  window.DMA_ZEICHNUNG = { lok: (nach) => lcMiniEcht(lcLokSeiteSvg(), null, nach || "D").replace('class="lc-mini-echt ', 'class="') };
   LC_MINI_BILD["Delfin"] = lcMiniEcht(lcDelfinFormSvg(), "-2 -4 144 76");
   LC_MINI_BILD["Frosch"] = lcMiniEcht(lcFroschBildSvg(), "2 6 98 70");
   /* Die weiteren Zeichnungen: Name der Kachel → Bild (und, wo die

@@ -142,16 +142,7 @@ const zeilen = [];
          genau das, was er bestellt hat. Dass der Dreck wirklich
          liegenbleibt UND sich wegputzen laesst, misst
          werkzeug/pruefe-runde98-putzen.js. */
-      ".lc-dreckschicht",
-      /* FASSUNG 716 — UND DIE GLEISSPUREN IM GESICHT.
-         FUNK 84, XANDER: „wenn die Schranke dann hoch geht und derjenige
-         sitzt immer noch da, wird der überfahren. Er hat dann auch die
-         Gleisspuren im Gesicht, auch wenn er danach den Platz wechselt, und
-         dann muss er das Pflaster nehmen."
-         Die Sonde hat genau diese Spur nach „/lok" als Rueckstand gemeldet
-         („66 Bausteine mehr", auch schon in Fassung 711) — also das, was
-         er bestellt hat (siehe lcGleisBleibt in app.js). */
-      ".lc-gleisschicht"];
+      ".lc-dreckschicht"];
     let erlaubt = 0;
     bleibtErlaubt.forEach((wahl) => {
       reihe2.querySelectorAll(wahl).forEach((el) => {

@@ -2324,20 +2324,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 }
 .sp-dl-nacht .sp-dl-lader { filter: brightness(.5) saturate(.7); }
 @media (prefers-reduced-motion: reduce) { .sp-dl-fuhrwerk .sp-fw-rad, .sp-dl-fuhrwerk .sp-fw-bein, .sp-dl-lader { animation: none; } }
-/* FASSUNG 716 — Die Eisenbahn im Dorf und die Angler am See (Funk 158). Der Zug liegt als Zeichnung über dem gemalten
-   Bild (Welt-Einheiten 320 × 200 wie das Bild); bewegt wird er vom Skript (bahnLauf), deshalb laufen die eingebauten
-   Rad-Animationen der Lok hier nicht – sonst drehten sich die Räder auch im Stehen. */
-.sp-dl-bahn { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: hidden; }
-.sp-dl-bahn svg.lc-lok-form, .sp-dl-bahn svg.lc-lok-form * { animation: none !important; }
-.sp-dl-bahn svg.lc-lok-form { overflow: visible; }
-.sp-dl-nacht .sp-dl-bahn { filter: brightness(.55) saturate(.8); }
-.sp-bahn-kopf svg * { animation: none !important; }
-.sp-bahn-knoepfe button { display: flex; align-items: center; gap: 8px; text-align: left; flex-wrap: wrap; }
-.sp-bahn-knoepfe button > svg { flex: 0 0 22px; width: 22px; height: 22px; }
-.sp-bahn-knoepfe button > b { flex: 1 1 auto; min-width: 0; }
-.sp-bahn-knoepfe button > small { flex: 1 0 100%; padding-left: 30px; }
-/* Das Schild des Bahnhofs steht über dem Gebäude, nicht auf dem Gleis. */
-.sp-dl-haus-gemalt.sp-dl-bahnhof small { top: auto; bottom: 100%; }
-/* Die Ware steigt am Bahnhof oder am See auf und vergeht (1,8 s). */
-.sp-bz-ware > g { animation: spBzWare 1.8s ease-out forwards; }
-@keyframes spBzWare { 0% { transform: translateY(4px) scale(.6); opacity: 0; } 15% { transform: translateY(0) scale(1); opacity: 1; } 70% { opacity: 1; } 100% { transform: translateY(-12px) scale(1); opacity: 0; } }

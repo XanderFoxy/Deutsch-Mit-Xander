@@ -4177,11 +4177,6 @@
       S.dorfKarte = false; ton("swoosh", 0.25);
       dorfZoom(k.dataset.n === "1");
       return;
-    } else if (s === "dorfsee") {
-      /* FASSUNG 716 — ein Tipp auf den See: die Angler werfen aus. */
-      seeAngeln(k); return;
-    } else if (s === "bahn") {
-      bahnHandeln(k); return;
     } else if (s === "dorfwahl") {
       /* FASSUNG 711 — XANDER (Funk 158): „wenn man die Sachen einsammelt dass man die per Klick einfach automatisch einsammelt
          dort wo fertig steht … ohne dass man da extra noch diesen Knopf braucht". Steht an einem Haus „fertig" (oder liegen
@@ -4189,7 +4184,6 @@
       if (dorfFertigSammeln(k.dataset.g)) { S.dorfTippWeg = true; return; }
       /* FASSUNG 686 — Tipp auf ein Gebäude im Dorfbild: seine Station öffnet sich im Bild. */
       S.dorfWahl = k.dataset.g && S.dorfWahl !== k.dataset.g ? k.dataset.g : ""; S.dorfTippWeg = true;
-      if (S.dorfWahl === "bahnhof") bahnLaden();
       ton(S.dorfWahl ? "holzklopf" : "swoosh", 0.25);
       schnellZeichnen(true);
       /* Die Knöpfe der Station sollen gleich zu sehen sein, ohne selbst zu scrollen. */
@@ -8496,8 +8490,6 @@
       if (st) punkte[k] = dmGebaeude(g, K, s, k, q[0], q[1], st, !(d.lp > 0));
       else dmBauplatz(g, K, s, q[0], q[1]);
     });
-    /* FASSUNG 716 — die Bahnstrecke vorn am Bildrand (vor allem anderen). */
-    dmBahn(g, K, s);
     dmLaternen(g);
     dmPinsel(leinwand, s);
     if (nacht) { dmNacht(g, dorf, lage); return punkte; }
@@ -8617,7 +8609,7 @@
   }
   /* Das Dorfbild in gemalter Form: eine Leinwand, darüber Tippflächen, Namen, Zeichen, Leute. */
   function dorfBildGemaltHtml(ich) {
-    var d = ich.dorf || {}, lv = ich.level || 1, wahl = S.dorfWahl && (DORF[S.dorfWahl] || S.dorfWahl === "bahnhof") ? S.dorfWahl : "", sig = dorfMalSig(ich);
+    var d = ich.dorf || {}, lv = ich.level || 1, wahl = S.dorfWahl && DORF[S.dorfWahl] ? S.dorfWahl : "", sig = dorfMalSig(ich);
     var haeuser = Object.keys(DORF_LAGE).sort(function (a, b) { return DORF_LAGE[a][1] - DORF_LAGE[b][1]; }).map(function (k) {
       if (!DORF[k]) return "";
       var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = DORF_LAGE[k], u = dmUmriss(k, st);
@@ -8638,11 +8630,11 @@
     /* FASSUNG 715 — Schnee auf den Dächern und der Wiese, wenn es draußen schneit (eigenes Bild: „S" in der Kennung). */
     var malSig = sig + (wetter.art === "schnee" ? "S" : "") + (wetter.tag ? "" : "N");
     return '<div class="sp-dl-rahmen ' + (nah ? "sp-dl-nah" : "sp-dl-ganz") + (dorfZeichen() ? " sp-dl-zeichen" : "") + (wetter.tag ? "" : " sp-dl-nacht") + '"><div class="sp-dl-fenster"><div class="sp-dorfland sp-dl-gemalt"><canvas class="sp-dl-mal" data-sig="' + malSig + '" aria-hidden="true"></canvas><div class="sp-dl-ueber" data-sig="' + sig + '"></div>'
-      + dorfNachtHtml(ich, wetter) + haeuser + dorfBahnKnoepfe() + dorfLeuteHtml(ich) + dorfBahnHtml(wetter) + "</div></div>" + dorfWetterHtml(wetter) + dorfWetterSchild(wetter)
+      + dorfNachtHtml(ich, wetter) + haeuser + dorfLeuteHtml(ich) + "</div></div>" + dorfWetterHtml(wetter) + dorfWetterSchild(wetter)
       /* FASSUNG 709 — der Kompass: Karte mit Zeichen, näher ran oder ganzes Dorf. */
       + '<button type="button" class="sp-dl-kompass' + (S.dorfKarte ? " sp-an" : "") + '" data-s="dorfkarte" aria-label="Kompass: Karte, näher ran">' + kompassSvg() + "</button>"
       + (S.dorfKarte ? dorfKarteHtml(ich, nah, sig) : "") + "</div>"
-      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · der Kompass holt dich näher ran") + "</span>") + (wahl ? (wahl === "bahnhof" ? bahnhofHtml(ich) : dorfStationHtml(ich, wahl)) : "");
+      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · der Kompass holt dich näher ran") + "</span>") + (wahl ? dorfStationHtml(ich, wahl) : "");
   }
   /* ---------------------------------------------------------------
      FASSUNG 708 — DAS DORF LEBT MIT DEM ECHTEN WETTER
@@ -8718,495 +8710,6 @@
       + (wi ? " · <b>" + wi + "</b>" : "") + "</span>";
   }
   function dorfOffen() { return !!(S.schnellMenue && S.blick === "dorfblick" && schnellEl && schnellEl.querySelector(".sp-dl-rahmen")); }
-  /* ---------------------------------------------------------------
-     FASSUNG 716 — DIE EISENBAHN IM DORF UND ANGELN AM SEE
-     XANDER (Funk 158): „im Übrigen kann auch in meiner Stadt eine Eisenbahn fahren und die könnte z.B Export ermöglichen
-     oder Import das da waren behandelt werden und dass wir die beliefern müssen und und rausschicken müssen und dann können
-     wir ja die Eisenbahn nehmen die wir schon haben mit realistischen schönen Rauch" und „dass man irgendwo angeln kann im
-     Dorf einfach auf den See klickt und die Angler dann Angeln".
-     Die Strecke läuft vorn am unteren Bildrand durchs Dorf: dort steht der Zug vor allem anderen, nichts muss ihn verdecken.
-     Sie geht auf einer Steinbrücke über den Fluss und unten am See entlang; der Bahnhof steht rechts neben den Feldern.
-     Gemalt (Rasterbild) sind Schotter, Schwellen, Schienen, Brücke, Bahnsteig, Bahnhofsgebäude und Signal. Darüber fährt
-     der Zug: die Lok vom Platz (DMA_ZEICHNUNG aus app.js), Tender und drei Güterwagen. Er fährt nach der Uhr (alle 60 s,
-     für alle gleich), bremst am Bahnhof, hält, pfeift und fährt wieder an. Die Räder drehen sich genau so schnell, wie der
-     Zug rollt; der Rauch kommt Stoß für Stoß aus dem Schlot (beim Anfahren im Takt des „lokstampf"-Tons), steigt auf,
-     wird breiter, verweht nach hinten und vergeht.
-     Am Bahnhof: je Zug (alle 20 Minuten, vom Server: spiel_bahn_zug) ein Export-Auftrag (Waren aus dem Lager verladen →
-     Punkte) und ein Import-Angebot (Waren aus der Stadt kaufen). Am See stehen zwei Angler; ein Tipp auf den See: beide
-     werfen aus, die Posen landen im Wasser, und einer holt ein, was gebissen hat (spiel_angeln, Platz 99).
-     --------------------------------------------------------------- */
-  var BAHN_SEG = [[[-120, 196], [-40, 195], [40, 192.4], [100, 192.6]], [[100, 192.6], [140, 192.73], [180, 196.4], [212, 196.6]],
-                  [[212, 196.6], [244, 196.8], [300, 196.6], [370, 195.5]]];
-  /* Fahrplan in Sekunden je Umlauf: einrollen, bremsen, halten, anfahren, ausrollen. */
-  var BAHN_TAKT = 60, BAHN_V = 20, BAHN_BREMS = 4, BAHN_ANFAHR = 3, BAHN_HALT = 14;
-  /* Die Wagen hinter der Lok: Art und Länge (Welt-Einheiten). */
-  var BAHN_WAGEN = [["lok", 18], ["tender", 10], ["gwagen", 14], ["rungen", 14], ["kessel", 12]], BAHN_LUECKE = 1.2;
-  /* Die sieben Dampfstöße von „lokstampf" (Abstand 460 → 200 ms, siehe app.js Runde 72). */
-  var BAHN_STAMPF = [0, .46, .868, 1.224, 1.528, 1.78, 1.98];
-  var BAHN = { X: null, Y: null, n: 0, raf: 0, letzt: -1, puffs: [], naechst: 0, weg: null, stampf: 0, angel: [null, null] };
-  function bahnWeg() {
-    if (BAHN.X) return BAHN;
-    var pts = [], i, j;
-    BAHN_SEG.forEach(function (c, k) {
-      for (i = k ? 1 : 0; i <= 240; i++) {
-        var t = i / 240, u = 1 - t, a = u * u * u, b = 3 * u * u * t, cc = 3 * u * t * t, d = t * t * t;
-        pts.push([a * c[0][0] + b * c[1][0] + cc * c[2][0] + d * c[3][0], a * c[0][1] + b * c[1][1] + cc * c[2][1] + d * c[3][1]]);
-      }
-    });
-    /* In gleiche Schritte von einer Einheit teilen: dann ist ein Index zugleich eine Strecke. */
-    var X = [pts[0][0]], Y = [pts[0][1]], rest = 0;
-    for (j = 1; j < pts.length; j++) {
-      var dx = pts[j][0] - pts[j - 1][0], dy = pts[j][1] - pts[j - 1][1], L = Math.hypot(dx, dy), d0 = 1 - rest;
-      while (d0 <= L) { X.push(pts[j - 1][0] + dx * d0 / L); Y.push(pts[j - 1][1] + dy * d0 / L); d0 += 1; }
-      rest = L - (d0 - 1);
-    }
-    BAHN.X = X; BAHN.Y = Y; BAHN.n = X.length - 1;
-    return BAHN;
-  }
-  /* Punkt auf der Strecke (s = Einheiten ab dem linken Anfang), mit Richtung und Normale (zeigt nach vorn/unten). */
-  function bahnAn(s) {
-    var B = bahnWeg(), i = Math.max(0, Math.min(B.n - 1, Math.floor(s))), f = s - i;
-    var tx = B.X[i + 1] - B.X[i], ty = B.Y[i + 1] - B.Y[i], l = Math.hypot(tx, ty) || 1;
-    return { x: B.X[i] + tx * f, y: B.Y[i] + ty * f, tx: tx / l, ty: ty / l, nx: -ty / l, ny: tx / l };
-  }
-  function bahnBeiX(x) { var B = bahnWeg(); for (var i = 0; i < B.n; i++) if (B.X[i + 1] >= x) return i + (x - B.X[i]) / Math.max(1e-6, B.X[i + 1] - B.X[i]); return B.n; }
-  /* Der Fahrplan: wo die Lokspitze zur Zeit t (Sekunden im Umlauf) steht und wie schnell sie fährt. */
-  function bahnPlan() {
-    if (BAHN.plan) return BAHN.plan;
-    var zugLaenge = BAHN_WAGEN.reduce(function (n, w) { return n + w[1] + BAHN_LUECKE; }, 0);
-    var sIn = bahnBeiX(334), sHalt = bahnBeiX(64), sAus = bahnBeiX(-6) - zugLaenge - 2;
-    var bremsWeg = BAHN_V * BAHN_V / (2 * BAHN_BREMS), bremsZeit = BAHN_V / BAHN_BREMS, anfZeit = BAHN_V / BAHN_ANFAHR, anfWeg = BAHN_V * anfZeit / 2;
-    var t1 = (sIn - sHalt - bremsWeg) / BAHN_V, tAn = t1 + bremsZeit, tAb = tAn + BAHN_HALT;
-    var tEnde = tAb + anfZeit + Math.max(0, sHalt - anfWeg - sAus) / BAHN_V;
-    BAHN.plan = { sIn: sIn, sHalt: sHalt, t1: t1, tAn: tAn, tAb: tAb, anfZeit: anfZeit, anfWeg: anfWeg, tEnde: tEnde, laenge: zugLaenge };
-    return BAHN.plan;
-  }
-  function bahnStand(t) {
-    var P = bahnPlan(), tau;
-    if (t < 0 || t > P.tEnde) return null;
-    if (t < P.t1) return { s: P.sIn - BAHN_V * t, v: BAHN_V, art: "faehrt" };
-    if (t < P.tAn) { tau = t - P.t1; return { s: P.sIn - BAHN_V * P.t1 - (BAHN_V * tau - BAHN_BREMS * tau * tau / 2), v: BAHN_V - BAHN_BREMS * tau, art: "bremst" }; }
-    if (t < P.tAb) return { s: P.sHalt, v: 0, art: "steht" };
-    tau = t - P.tAb;
-    if (tau < P.anfZeit) return { s: P.sHalt - BAHN_ANFAHR * tau * tau / 2, v: BAHN_ANFAHR * tau, art: "anfahren" };
-    return { s: P.sHalt - P.anfWeg - BAHN_V * (tau - P.anfZeit), v: BAHN_V, art: "faehrt" };
-  }
-
-  /* --- Gemalt: Strecke, Brücke, Bahnsteig, Bahnhof, Signal ---------------------------------------- */
-  function dmBahn(g, K, s) {
-    g.save();
-    try { dmBahnMalen(g, K, s); } finally { g.restore(); }
-  }
-  function dmBahnMalen(g, K, s) {
-    var B = bahnWeg(), von = Math.max(0, Math.floor(bahnBeiX(-8))), bis = Math.min(B.n, Math.ceil(bahnBeiX(328)));
-    /* Ein Band entlang der Strecke zwischen den Abständen a und b (negativ = hinten). */
-    function band(a, b, s0, s1) {
-      g.beginPath();
-      var k, p;
-      for (k = s0; k <= s1; k++) { p = bahnAn(k); g[k === s0 ? "moveTo" : "lineTo"](p.x + p.nx * a, p.y + p.ny * a); }
-      for (k = s1; k >= s0; k--) { p = bahnAn(k); g.lineTo(p.x + p.nx * b, p.y + p.ny * b); }
-      g.closePath();
-    }
-    function linie(a, s0, s1) { g.beginPath(); for (var k = s0; k <= s1; k++) { var p = bahnAn(k); g[k === s0 ? "moveTo" : "lineTo"](p.x + p.nx * a, p.y + p.ny * a); } }
-    /* Brücke über den Fluss: Steinbogen, Brüstungen, Schatten aufs Wasser dahinter. */
-    var b0 = Math.floor(bahnBeiX(166)), b1 = Math.ceil(bahnBeiX(200));
-    band(-3.6, -6.2, b0, b1); g.fillStyle = "rgba(10,22,40,.32)"; g.fill();
-    /* Vorn läuft das Wasser unter der Brücke weiter; dort liegt nur ein schmaler Schatten der Brückenkante. */
-    band(3.7, 5, b0, b1); g.fillStyle = "rgba(10,22,40,.22)"; g.fill();
-    band(-3.7, 3.7, b0, b1); g.fillStyle = dmMuster(g, K.feldstein, .045 / s); g.fill(); g.fillStyle = "rgba(60,50,40,.18)"; g.fill();
-    /* Schotterbett: erst ein weicher dunkler Rand (Erde), dann der Schotter selbst. */
-    band(-4, 4, von, bis); g.fillStyle = "rgba(40,32,22,.28)"; g.fill();
-    band(-3.1, 3.1, von, bis); g.fillStyle = dmMuster(g, K.feldstein, .028 / s); g.fill(); g.fillStyle = "rgba(92,84,74,.42)"; g.fill();
-    for (var q = von; q < bis; q += .6) {
-      var sp = bahnAn(q), off = (dmHash(q * 10 | 0, 3, 716) - .5) * 5.8;
-      g.fillStyle = dmHash(q * 10 | 0, 4, 716) > .5 ? "rgba(210,202,188,.45)" : "rgba(40,36,32,.4)";
-      g.fillRect(sp.x + sp.nx * off, sp.y + sp.ny * off, .35, .28);
-    }
-    if (DM.schneeJetzt) { band(-3.1, 3.1, von, bis); g.fillStyle = "rgba(240,244,250,.55)"; g.fill(); }
-    /* Brüstungen der Brücke (über dem Schotter, damit man sie sieht). */
-    band(-3.8, -3.1, b0, b1); g.fillStyle = "#b9b1a2"; g.fill(); band(3.1, 3.8, b0, b1); g.fillStyle = "#a79e8e"; g.fill();
-    /* Schwellen (Holz), dann die Schienen: dunkler Steg, heller Kopf. */
-    for (var sw = von; sw <= bis; sw += 1.7) {
-      var p1 = bahnAn(sw);
-      g.save(); g.translate(p1.x, p1.y); g.rotate(Math.atan2(p1.ty, p1.tx));
-      g.fillStyle = "#4a3a2c"; g.fillRect(-.38, -2.3, .76, 4.6);
-      g.fillStyle = DM.schneeJetzt ? "rgba(240,244,250,.7)" : "rgba(160,130,95,.45)"; g.fillRect(-.38, -2.3, .76, .5);
-      g.restore();
-    }
-    [-1.15, 1.15].forEach(function (a) {
-      linie(a, von, bis); g.strokeStyle = "#3d3b38"; g.lineWidth = .5; g.stroke();
-      linie(a - .14, von, bis); g.strokeStyle = "rgba(214,218,224,.85)"; g.lineWidth = .18; g.stroke();
-    });
-    /* Bahnsteig hinter dem Gleis (Pflaster, weiße Kante, Stirnseite zum Gleis). */
-    var h0 = Math.floor(bahnBeiX(62)), h1 = Math.ceil(bahnBeiX(126));
-    band(-3.5, -8.4, h0, h1); g.fillStyle = dmMuster(g, K.feldstein, .03 / s); g.fill(); g.fillStyle = "rgba(170,160,140,.28)"; g.fill();
-    if (DM.schneeJetzt) { g.fillStyle = "rgba(242,246,252,.7)"; g.fill(); }
-    band(-3.5, -4.1, h0, h1); g.fillStyle = "rgba(236,232,220,.9)"; g.fill();
-    band(-2.9, -3.5, h0, h1); g.fillStyle = "rgba(60,52,44,.55)"; g.fill();
-    /* Das Bahnhofsgebäude: Backstein, Schieferdach, drei Fenster, Tür in der Mitte. */
-    var hp = bahnAn(bahnBeiX(90));
-    dmHaus(g, K, s, hp.x, hp.y - 8.4, { w: 21, d: 7, h: 8.2, rh: 4.6, wand: "backstein", dach: "schiefer", fenster: 4, tuerX: .5, schornX: .78, licht: DM.nachtJetzt });
-    /* Stationsschild auf zwei Pfosten (weiß, schwarze Schrift – wie an deutschen Bahnhöfen). */
-    var sp2 = bahnAn(bahnBeiX(70)), sx = sp2.x, sy = sp2.y - 6.2;
-    g.fillStyle = "#3a3a3a"; g.fillRect(sx - 3.6, sy - 3.6, .35, 3.6); g.fillRect(sx + 3.25, sy - 3.6, .35, 3.6);
-    g.fillStyle = "#f4f2ea"; g.fillRect(sx - 4.2, sy - 5.6, 8.4, 2.3); g.strokeStyle = "#222"; g.lineWidth = .22; g.strokeRect(sx - 4.2, sy - 5.6, 8.4, 2.3);
-    g.fillStyle = "#1c1c1c"; g.font = "bold 1.55px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("Bahnhof", sx, sy - 4.42);
-    /* Güter auf dem Bahnsteig: Kisten und Säcke, die auf den Zug warten. */
-    var gp = bahnAn(bahnBeiX(112));
-    [[0, 0, 2.6, 2], [2.8, .2, 2.2, 1.8], [1.2, -1.9, 2.2, 1.8]].forEach(function (k2) {
-      var kx = gp.x + k2[0] - 1, ky = gp.y - 6 + k2[1] - k2[3];
-      g.fillStyle = dmMuster(g, K.bretter, .04 / s); g.fillRect(kx, ky, k2[2], k2[3]); g.fillStyle = "rgba(60,35,15,.25)"; g.fillRect(kx, ky, k2[2], k2[3]);
-      g.strokeStyle = "rgba(50,30,12,.8)"; g.lineWidth = .16; g.strokeRect(kx, ky, k2[2], k2[3]);
-    });
-    g.fillStyle = "#e9e0c8"; g.beginPath(); g.ellipse(gp.x + 5.6, gp.y - 6.9, 1.1, .8, 0, 0, 7); g.fill(); g.strokeStyle = "rgba(120,100,70,.7)"; g.lineWidth = .15; g.stroke();
-    /* Formsignal hinter dem Gleis: Mast, roter Flügel mit weißem Streifen, Laterne. */
-    var sg = bahnAn(bahnBeiX(146)), mx = sg.x + sg.nx * -4.4, my = sg.y + sg.ny * -4.4;
-    g.fillStyle = "#56595e"; g.fillRect(mx - .22, my - 12, .44, 12);
-    g.fillStyle = "#c8232c"; g.fillRect(mx - 3.8, my - 11.6, 3.8, .9); g.fillStyle = "#fff"; g.fillRect(mx - 1.6, my - 11.6, .5, .9);
-    g.fillStyle = "#222"; g.beginPath(); g.arc(mx + .35, my - 9.6, .45, 0, 7); g.fill();
-    g.fillStyle = DM.nachtJetzt ? "rgba(255,70,60,.95)" : "rgba(200,40,40,.8)"; g.beginPath(); g.arc(mx + .35, my - 9.6, .25, 0, 7); g.fill();
-    g.fillStyle = "rgba(0,0,0,.2)"; g.beginPath(); g.ellipse(mx + .6, my, 1.2, .35, 0, 0, 7); g.fill();
-  }
-
-  /* --- Der Zug als Zeichnung (Welt-Einheiten; Schiene bei y = 0, +x zeigt nach hinten) ------------ */
-  function bahnRad(x, r) {
-    var sp = "", i;
-    for (i = 0; i < 6; i++) { var w = i * Math.PI / 3; sp += "M0 0 L" + (Math.cos(w) * r * .8).toFixed(2) + " " + (Math.sin(w) * r * .8).toFixed(2) + " "; }
-    return '<g transform="translate(' + x + " " + (-r).toFixed(2) + ')"><g class="sp-bz-rad" data-r="' + r + '"><circle r="' + r + '" fill="#2b2b2b" stroke="#161616" stroke-width=".18"/>'
-      + '<path d="' + sp + '" stroke="#8b9097" stroke-width=".16"/><circle r="' + (r * .28).toFixed(2) + '" fill="#6b7078"/></g></g>';
-  }
-  function bahnPuffer(L) {
-    return '<rect x="' + (-L / 2 - .7) + '" y="-2.5" width=".7" height=".7" rx=".2" fill="#3a3a3a"/><rect x="' + (L / 2) + '" y="-2.5" width=".7" height=".7" rx=".2" fill="#3a3a3a"/>'
-      + '<rect x="' + (-L / 2) + '" y="-2" width="' + L + '" height=".5" fill="#1f1f1f"/>';
-  }
-  function bahnWagenSvg(art, L) {
-    var h = L / 2, x;
-    if (art === "lok") {
-      var lok = window.DMA_ZEICHNUNG && window.DMA_ZEICHNUNG.lok ? window.DMA_ZEICHNUNG.lok("D") : "";
-      return lok.replace('<svg class="lc-lok-form"', '<svg class="lc-lok-form sp-bz-lok" x="-9" y="-8.55" width="18" height="9" style="width:18px;height:9px"');
-    }
-    if (art === "tender") {
-      return bahnPuffer(L) + '<path d="M' + (-h) + ' -6.2 H' + h + ' V-1.9 H' + (-h) + ' Z" fill="url(#spBzLack)" stroke="#07090b" stroke-width=".2"/>'
-        + '<path d="M' + (-h + .4) + ' -5.3 H' + (h - .4) + '" stroke="#c9a23a" stroke-width=".22"/>'
-        + '<path d="M' + (-h + .3) + ' -6.2 C' + (-h + 1.5) + ' -7.9 ' + (-1) + ' -7.4 0 -8 C1.4 -7.5 ' + (h - 1.6) + ' -8 ' + (h - .3) + ' -6.2 Z" fill="#1a1a1c"/>'
-        + '<circle cx="-1.6" cy="-7.2" r=".35" fill="#3a3a40"/><circle cx="1.2" cy="-7.5" r=".3" fill="#44444a"/>' + bahnRad(-2.8, .95) + bahnRad(2.8, .95);
-    }
-    if (art === "gwagen") {
-      var bretter = "";
-      for (x = -h + 1; x < h; x += 1) bretter += "M" + x + " -7.2 V-2.1 ";
-      return bahnPuffer(L) + '<path d="M' + (-h) + ' -7.3 H' + h + ' V-2 H' + (-h) + ' Z" fill="#7a3b2a" stroke="#3a1a10" stroke-width=".2"/>'
-        + '<path d="' + bretter + '" stroke="rgba(40,15,8,.45)" stroke-width=".12"/>'
-        + '<path d="M-2.4 -6.9 H2.4 V-2.3 H-2.4 Z" fill="#6a3022" stroke="#3a1a10" stroke-width=".16"/><path d="M-2.4 -6.9 L2.4 -2.3 M2.4 -6.9 L-2.4 -2.3" stroke="rgba(30,10,5,.5)" stroke-width=".14"/>'
-        + '<path d="M' + (-h - .2) + ' -7.3 Q0 -8.6 ' + (h + .2) + ' -7.3 Z" fill="url(#spBzDach)"/>'
-        + '<rect x="' + (-h + .6) + '" y="-4.2" width="2.2" height=".9" fill="#fff" opacity=".75"/><text x="' + (-h + 1.7) + '" y="-3.5" font-size=".75" text-anchor="middle" fill="#222" font-family="sans-serif">DR</text>'
-        + bahnRad(-h + 2.2, .9) + bahnRad(h - 2.2, .9);
-    }
-    if (art === "rungen") {
-      var holz = "", i;
-      for (i = 0; i < 3; i++) {
-        var y = -3 - i * 1.25, x0 = -h + .5 + (i === 1 ? .6 : 0), x1 = h - .5 - (i === 2 ? .8 : 0);
-        holz += '<rect x="' + x0 + '" y="' + (y - .6) + '" width="' + (x1 - x0) + '" height="1.2" rx=".6" fill="#8a5a32" stroke="#4a2e14" stroke-width=".14"/>'
-          + '<ellipse cx="' + x1 + '" cy="' + y + '" rx=".45" ry=".6" fill="#e3c08a" stroke="#6b4521" stroke-width=".12"/>';
-      }
-      return bahnPuffer(L) + '<rect x="' + (-h) + '" y="-2.6" width="' + L + '" height=".8" fill="#3b3f45"/>' + holz
-        + '<path d="M' + (-h + .3) + ' -2.6 V-7 M' + (h - .3) + ' -2.6 V-7 M0 -2.6 V-6.6" stroke="#2c2f33" stroke-width=".3"/>'
-        + bahnRad(-h + 2.2, .9) + bahnRad(h - 2.2, .9);
-    }
-    /* Kesselwagen */
-    return bahnPuffer(L) + '<rect x="' + (-h) + '" y="-2.6" width="' + L + '" height=".7" fill="#2c2f33"/>'
-      + '<rect x="' + (-h + .2) + '" y="-6.6" width="' + (L - .4) + '" height="4" rx="2" fill="url(#spBzKessel)" stroke="#555a60" stroke-width=".16"/>'
-      + '<rect x="-1" y="-7.4" width="2" height=".9" rx=".3" fill="#9aa0a8" stroke="#555a60" stroke-width=".14"/>'
-      + '<path d="M' + (-h + 1.2) + ' -6.6 V-2.6 M' + (h - 1.2) + ' -6.6 V-2.6" stroke="rgba(60,64,70,.5)" stroke-width=".2"/>'
-      + bahnRad(-h + 2, .9) + bahnRad(h - 2, .9);
-  }
-  /* Ein Angler am Ufer (Füße bei 0|0, schaut nach rechts). Rute, Schnur und Pose bewegt bahnLauf(). */
-  function seeAnglerSvg(i) {
-    var jacke = i ? "#6a5a3a" : "#5f6f3a", hut = i ? "#8a6a3a" : "#4f5f33";
-    return '<g class="sp-see-mann">'
-      + '<ellipse cx=".2" cy=".15" rx="2" ry=".45" fill="rgba(0,0,0,.22)"/>'
-      + '<rect x="-2.9" y="-1.5" width="1.5" height="1.5" rx=".3" fill="#8a9097" stroke="#4a4f55" stroke-width=".14"/>'
-      + '<path d="M-.8 -3.2 L-.9 0 H-.1 L0 -2.4 L.3 0 H1.1 L.9 -3.2 Z" fill="#34404d"/>'
-      + '<path d="M-1.1 -6.2 C-1.1 -6.9 1.1 -6.9 1.1 -6.2 L1.2 -3 H-1.2 Z" fill="' + jacke + '" stroke="rgba(0,0,0,.35)" stroke-width=".12"/>'
-      + '<path d="M.6 -5.6 L1.5 -4.6" stroke="' + jacke + '" stroke-width=".7" stroke-linecap="round"/>'
-      + '<circle cx="0" cy="-7.35" r=".95" fill="#f1c9a0" stroke="#b98b62" stroke-width=".12"/>'
-      + '<path d="M-1.3 -7.7 H1.3 L.9 -8.2 C.7 -8.9 -.7 -8.9 -.9 -8.2 Z" fill="' + hut + '"/>'
-      + "</g>"
-      + '<path class="sp-see-rute" d="M1.5 -4.6 L9 -10" stroke="#5a3a1a" stroke-width=".22" stroke-linecap="round" fill="none"/>'
-      + '<path class="sp-see-schnur" d="M9 -10 L10.5 1.2" stroke="rgba(235,235,235,.8)" stroke-width=".08" fill="none"/>'
-      + '<ellipse class="sp-see-ring" cx="10.5" cy="1.3" rx="0" ry="0" fill="none" stroke="rgba(255,255,255,.75)" stroke-width=".16"/>'
-      + '<g class="sp-see-pose" transform="translate(10.5 1.2)"><circle r=".42" fill="#fff"/><path d="M-.42 0 A.42 .42 0 0 1 .42 0 Z" fill="#d42a2a"/></g>'
-      + '<g class="sp-see-fang" transform="translate(9 -7)" style="display:none"></g>';
-  }
-  var SEE_FANG = {
-    fisch: '<path d="M-.5 0 C-1.2 1 -1.2 2.6 0 3.4 C1.2 2.6 1.2 1 .5 0 Z" fill="#8fb8d8" stroke="#3a6080" stroke-width=".12"/><path d="M0 3.3 L-.8 4.3 H.8 Z" fill="#8fb8d8" stroke="#3a6080" stroke-width=".1"/><circle cx=".25" cy=".7" r=".15" fill="#1a2a3a"/>',
-    stiefel: '<path d="M-.6 0 H.5 V2.6 L1.6 3 V3.8 H-.6 Z" fill="#5a3a22" stroke="#2a180a" stroke-width=".12"/>',
-    muenze: '<circle cy="1" r=".8" fill="#f2c230" stroke="#9a7410" stroke-width=".14"/>'
-  };
-  function dorfBahnHtml(w) {
-    var zug = BAHN_WAGEN.map(function (x) { return '<g class="sp-bz-f" data-l="' + x[1] + '">' + bahnWagenSvg(x[0], x[1]) + "</g>"; }).join("");
-    return '<svg class="sp-dl-bahn" data-sig="bahn716" viewBox="0 0 320 200" preserveAspectRatio="none" aria-hidden="true"><defs>'
-      + '<radialGradient id="spBzDampf" cx=".45" cy=".4"><stop offset="0" stop-color="#ffffff" stop-opacity="1"/><stop offset=".45" stop-color="#f1f1f3" stop-opacity=".85"/><stop offset=".75" stop-color="#d9dadf" stop-opacity=".45"/><stop offset="1" stop-color="#c8c9cf" stop-opacity="0"/></radialGradient>'
-      + '<radialGradient id="spBzRuss" cx=".45" cy=".4"><stop offset="0" stop-color="#4c4c52" stop-opacity="1"/><stop offset=".5" stop-color="#6c6c74" stop-opacity=".7"/><stop offset="1" stop-color="#8d8d96" stop-opacity="0"/></radialGradient>'
-      + '<linearGradient id="spBzLack" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#454f5a"/><stop offset=".3" stop-color="#1c2228"/><stop offset="1" stop-color="#05070a"/></linearGradient>'
-      + '<linearGradient id="spBzDach" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b7bcc2"/><stop offset="1" stop-color="#6d7278"/></linearGradient>'
-      + '<linearGradient id="spBzKessel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9edf1"/><stop offset=".35" stop-color="#b9c0c8"/><stop offset="1" stop-color="#6d747c"/></linearGradient>'
-      + "</defs>"
-      + '<g class="sp-see-angler" data-i="0" transform="translate(193.6 186.6)">' + seeAnglerSvg(0) + "</g>"
-      + '<g class="sp-see-angler" data-i="1" transform="translate(230.8 186.4) scale(-1 1)">' + seeAnglerSvg(1) + "</g>"
-      + '<g class="sp-bz-zug" style="display:none">' + zug + "</g>"
-      + '<g class="sp-bz-rauch"></g></svg>';
-  }
-  /* Die Tippflächen: Bahnhof (öffnet die Station) und See (angeln). */
-  function dorfBahnKnoepfe() {
-    var wahl = S.dorfWahl;
-    function knopf(k, s0, x0, y0, x1, y1, name) {
-      return '<button type="button" class="sp-dl-haus sp-dl-haus-gemalt sp-dl-' + k + (wahl === k ? " sp-an" : "") + '" data-s="' + s0 + '" data-g="' + k + '" style="left:' + (x0 / 3.2).toFixed(2) + "%;top:" + (y0 / 2).toFixed(2)
-        + "%;width:" + ((x1 - x0) / 3.2).toFixed(2) + "%;height:" + ((y1 - y0) / 2).toFixed(2) + '%" title="' + name + '"><small>' + dorfPin(k) + "<span>" + name + "</span></small></button>";
-    }
-    return knopf("bahnhof", "dorfwahl", 66, 168, 124, 190, "Bahnhof") + knopf("see", "dorfsee", 194, 180, 231, 195, "See");
-  }
-
-  /* --- Bewegung: ein Bild je Anzeige-Takt, nur solange das Dorf offen ist ------------------------- */
-  function bahnStarten() {
-    if (BAHN.raf || !dorfOffen()) return;
-    ["lokpfeife", "lokstampf", "lokschiene", "lokglocke", "platsch", "angelkurbel"].forEach(function (n) { try { klangLaden(n); } catch (e) {} });
-    BAHN.letzt = -1; BAHN.puffs = []; BAHN.naechst = 0; BAHN.weg = null;
-    var vorher = 0;
-    var schritt = function (jetztMs) {
-      if (!dorfOffen()) { BAHN.raf = 0; return; }
-      BAHN.raf = requestAnimationFrame(schritt);
-      if (document.hidden || jetztMs - vorher < 30) return;
-      vorher = jetztMs;
-      try { bahnLauf(); } catch (e) { cancelAnimationFrame(BAHN.raf); BAHN.raf = 0; }
-    };
-    BAHN.raf = requestAnimationFrame(schritt);
-  }
-  function bahnPuff(x, y, art, t) {
-    BAHN.puffs.push({ x: x, y: y, t: t, art: art, dx: (Math.random() - .5) * .8 });
-    if (BAHN.puffs.length > 34) BAHN.puffs.shift();
-  }
-  function bahnLauf() {
-    var svg = schnellEl && schnellEl.querySelector("svg.sp-dl-bahn");
-    if (!svg) return;
-    var P = bahnPlan(), jetzt = Date.now() / 1000, t = jetzt % BAHN_TAKT, alt = BAHN.letzt;
-    /* Uhrzeit-Übergänge: die Töne kommen genau dann, wenn es im Bild passiert. */
-    var vorbei = function (z) { return alt >= 0 && ((alt < z && t >= z) || (alt > t && (z > alt || z <= t))); };
-    if (vorbei(.6)) ton("lokschiene", .3);
-    if (vorbei(P.tAn - .25)) ton("lokglocke", .4);
-    if (vorbei(P.tAb - .35)) ton("lokpfeife", .45);
-    if (vorbei(P.tAb)) { ton("lokstampf", .5); BAHN.stampf = 0; }
-    if (vorbei(P.tAb + 1.3)) ton("lokschiene", .35);
-    BAHN.letzt = t;
-    var st = bahnStand(t), zug = svg.querySelector(".sp-bz-zug");
-    svg.classList.toggle("sp-bz-da", !!st);
-    if (st) {
-      zug.style.display = "";
-      var teile = zug.querySelectorAll(".sp-bz-f"), s0 = st.s;
-      for (var i = 0; i < teile.length; i++) {
-        var L = Number(teile[i].getAttribute("data-l")), sm = s0 + L / 2, a = bahnAn(sm - L * .35), b = bahnAn(sm + L * .35), m = bahnAn(sm);
-        var winkel = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
-        teile[i].setAttribute("transform", "translate(" + (m.x + m.nx * 1).toFixed(2) + " " + (m.y + m.ny * 1).toFixed(2) + ") rotate(" + winkel.toFixed(2) + ")");
-        s0 += L + BAHN_LUECKE;
-      }
-      /* Räder: rollen ohne zu rutschen – der Drehwinkel ist die Strecke geteilt durch den Radius. */
-      zug.querySelectorAll(".sp-bz-rad").forEach(function (r) { r.setAttribute("transform", "rotate(" + (st.s / Number(r.getAttribute("data-r")) * 57.3 % 360).toFixed(1) + ")"); });
-      var lok = zug.querySelector(".sp-bz-lok");
-      if (lok) {
-        [[".lc-lok-rad-1", 6], [".lc-lok-rad-2", 11], [".lc-lok-rad-3", 11]].forEach(function (x) { var e = lok.querySelector(x[0]); if (e) e.style.transform = "rotate(" + (st.s / (x[1] * .15) * 57.3 % 360).toFixed(1) + "deg)"; });
-        /* Die Kuppelstange wandert mit dem Kurbelzapfen im Kreis (Radius 6,05 in Lok-Einheiten). */
-        var th = st.s / 1.65, ku = lok.querySelector(".lc-lok-kuppel");
-        if (ku) ku.style.transform = "translate(" + (-6.05 * Math.sin(th)).toFixed(2) + "px," + (6.05 * (Math.cos(th) - 1)).toFixed(2) + "px)";
-      }
-      /* Rauch aus dem Schlot: Lok-Mitte bei s + 9, Schlot 3,3 davor und 7,5 über der Schiene. */
-      var lm = bahnAn(st.s + 9), lw = Math.atan2(lm.ty, lm.tx), c = Math.cos(lw), si = Math.sin(lw);
-      var sx = lm.x + lm.nx + (-3.3 * c - (-7.5) * si), sy = lm.y + lm.ny + (-3.3 * si + (-7.5) * c);
-      if (st.art === "anfahren" && BAHN.stampf < BAHN_STAMPF.length) {
-        var tau = t - P.tAb;
-        while (BAHN.stampf < BAHN_STAMPF.length && tau >= BAHN_STAMPF[BAHN.stampf]) {
-          bahnPuff(sx, sy, BAHN.stampf < 3 ? "russ" : Math.random() < .35 ? "russ" : "dampf", jetzt);
-          /* Beim Anfahren zischt Dampf aus den Zylindern (Zylinderhähne), flach über dem Gleis. */
-          bahnPuff(lm.x + lm.nx - 4 * c, lm.y + lm.ny - 1.6, "zylinder", jetzt);
-          BAHN.stampf++;
-        }
-        BAHN.weg = st.s;
-      } else if (st.art === "faehrt" || st.art === "anfahren") {
-        if (BAHN.weg == null || Math.abs(BAHN.weg - st.s) >= 5) { BAHN.weg = st.s; bahnPuff(sx, sy, Math.random() < .3 ? "russ" : "dampf", jetzt); }
-      } else if (jetzt >= BAHN.naechst) {
-        /* Bremsen und Stehen: nur ein dünner Faden aus dem Schlot. */
-        BAHN.naechst = jetzt + (st.art === "steht" ? .8 : .55); BAHN.weg = null;
-        bahnPuff(sx, sy, "leise", jetzt);
-      }
-    } else if (zug.style.display !== "none") zug.style.display = "none";
-    /* Rauchwolken: steigen gebremst auf, wachsen, verwehen nach hinten (Wind nach rechts) und vergehen. */
-    var ebene = svg.querySelector(".sp-bz-rauch"), kreise = ebene.children;
-    /* Jede Wolke besteht aus drei Ballen, die verschieden schnell wachsen – so quillt sie wie echter Dampf,
-       statt als runde Scheibe aufzusteigen. */
-    var BALLEN = [[0, 0, 1, 1], [-.42, .18, .74, .8], [.45, .24, .7, .75]];
-    while (kreise.length < 34 * 3) { var k = document.createElementNS("http://www.w3.org/2000/svg", "circle"); k.setAttribute("r", "0"); ebene.appendChild(k); }
-    BAHN.puffs = BAHN.puffs.filter(function (p) { return jetzt - p.t < (p.art === "zylinder" ? 1.1 : p.art === "leise" ? 2.2 : 3.2); });
-    while (BAHN.puffs.length > 34) BAHN.puffs.shift();
-    for (var j = 0; j < 34; j++) {
-      var p = BAHN.puffs[j];
-      for (var bi = 0; bi < 3; bi++) {
-        var e2 = kreise[j * 3 + bi];
-        if (!p) { if (e2.getAttribute("r") !== "0") e2.setAttribute("r", "0"); continue; }
-        var a2 = jetzt - p.t, leben = p.art === "zylinder" ? 1.1 : p.art === "leise" ? 2.2 : 3.2, rest = 1 - a2 / leben, Bb = BALLEN[bi];
-        var x2 = p.art === "zylinder" ? p.x - 3.2 * a2 + p.dx : p.x + (1.4 + p.dx) * a2, y2 = p.art === "zylinder" ? p.y - .6 * a2 : p.y - (7.2 * a2 - 1.2 * a2 * a2);
-        var r2 = p.art === "zylinder" ? .6 + 2.2 * Math.sqrt(a2) : p.art === "leise" ? .45 + 1.7 * Math.sqrt(a2) : .8 + 3.1 * Math.sqrt(a2);
-        /* Die Nebenballen treiben mit dem Alter etwas auseinander. */
-        var ausein = 1 + a2 * .5;
-        e2.setAttribute("cx", (x2 + Bb[0] * r2 * ausein).toFixed(2)); e2.setAttribute("cy", (y2 + Bb[1] * r2 * ausein).toFixed(2)); e2.setAttribute("r", (r2 * Bb[2]).toFixed(2));
-        e2.setAttribute("fill", p.art === "russ" && bi === 0 ? "url(#spBzRuss)" : "url(#spBzDampf)");
-        e2.setAttribute("opacity", (Math.pow(Math.max(0, rest), 1.3) * Bb[3] * (p.art === "leise" ? .6 : p.art === "zylinder" ? .9 : 1)).toFixed(3));
-      }
-    }
-    seeLauf(svg, jetzt);
-  }
-
-  /* --- Angeln am See ------------------------------------------------------------------------------ */
-  /* Rute: Drehpunkt an den Händen (1,5|−4,6), Länge 9,2. Winkel in Grad (negativ = nach oben). */
-  function seeRute(g, w, poseX, poseY, fang) {
-    var r = w * Math.PI / 180, tx = 1.5 + 9.2 * Math.cos(r), ty = -4.6 + 9.2 * Math.sin(r);
-    g.querySelector(".sp-see-rute").setAttribute("d", "M1.5 -4.6 Q" + (1.5 + 4.6 * Math.cos(r)).toFixed(2) + " " + (-4.6 + 4.6 * Math.sin(r) - .5).toFixed(2) + " " + tx.toFixed(2) + " " + ty.toFixed(2));
-    var schnur = g.querySelector(".sp-see-schnur"), pose = g.querySelector(".sp-see-pose"), f = g.querySelector(".sp-see-fang");
-    if (poseX == null) { schnur.setAttribute("d", "M" + tx.toFixed(2) + " " + ty.toFixed(2) + " l0 .01"); pose.style.display = "none"; }
-    else {
-      schnur.setAttribute("d", "M" + tx.toFixed(2) + " " + ty.toFixed(2) + " Q" + ((tx + poseX) / 2).toFixed(2) + " " + ((ty + poseY) / 2 + 1).toFixed(2) + " " + poseX.toFixed(2) + " " + poseY.toFixed(2));
-      pose.style.display = ""; pose.setAttribute("transform", "translate(" + poseX.toFixed(2) + " " + poseY.toFixed(2) + ")");
-    }
-    if (fang) { f.style.display = ""; if (f.getAttribute("data-f") !== fang) { f.setAttribute("data-f", fang); f.innerHTML = SEE_FANG[fang] || ""; } f.setAttribute("transform", "translate(" + (poseX - .1).toFixed(2) + " " + (poseY - .3).toFixed(2) + ")"); }
-    else if (f.style.display !== "none") f.style.display = "none";
-  }
-  function seeRing(g, x, y, a) {
-    var ring = g.querySelector(".sp-see-ring");
-    if (a == null || a > 1.2) { ring.setAttribute("rx", "0"); ring.setAttribute("ry", "0"); return; }
-    ring.setAttribute("cx", x.toFixed(2)); ring.setAttribute("cy", (y + .1).toFixed(2)); ring.setAttribute("rx", (.4 + a * 2.2).toFixed(2)); ring.setAttribute("ry", (.14 + a * .75).toFixed(2));
-    ring.setAttribute("opacity", Math.max(0, 1 - a / 1.2).toFixed(2));
-  }
-  function seeLauf(svg, jetzt) {
-    var angler = svg.querySelectorAll(".sp-see-angler");
-    for (var i = 0; i < angler.length; i++) {
-      var g = angler[i], A = BAHN.angel[i], px = 10.5, py = 1.2;
-      /* Ruhe: die Pose schaukelt auf den Wellen, die Rute wippt leicht. */
-      if (!A) { var wog = Math.sin(jetzt * 1.7 + i * 2); seeRute(g, -36 + Math.sin(jetzt * .9 + i) * 1.6, px, py + wog * .12, null); seeRing(g, 0, 0, null); continue; }
-      var a = jetzt - A.start;
-      if (a < 0) { seeRute(g, -36, px, py, null); continue; }
-      if (a < .2) { seeRute(g, -36 - 44 * a / .2, null, null, null); seeRing(g, 0, 0, null); continue; }
-      if (a < .45) {
-        /* Nach vorn schwingen; die Pose fliegt im Bogen hinaus und klatscht bei 0,45 s aufs Wasser. */
-        var q = (a - .2) / .25, w = -80 + 62 * q, rr = w * Math.PI / 180, tx = 1.5 + 9.2 * Math.cos(rr), ty = -4.6 + 9.2 * Math.sin(rr);
-        seeRute(g, w, tx + (px - tx) * q, ty + (py - ty) * q - Math.sin(q * Math.PI) * 3, null); continue;
-      }
-      if (!A.zieht) {
-        /* Warten: bei 1,2 s beißt etwas (die Pose taucht kurz), Ring auf dem Wasser. */
-        var biss = a > 1.2 && a < 1.5 ? .55 : 0;
-        seeRute(g, -18 + (a > 1.2 ? -3 : 0), px, py + biss + Math.sin(jetzt * 6) * .08, null);
-        seeRing(g, px, py, a < 1.65 ? a - .45 : a - 1.2);
-        continue;
-      }
-      /* Einholen: Rute hoch, der Fang hängt an der Schnur und schaukelt; nach 1,1 s ist er im Eimer. */
-      var z = jetzt - A.zieht;
-      if (z > 1.1) { BAHN.angel[i] = null; continue; }
-      var hoch = Math.min(1, z / .3), w2 = -18 - 50 * hoch, r3 = w2 * Math.PI / 180, tx2 = 1.5 + 9.2 * Math.cos(r3), ty2 = -4.6 + 9.2 * Math.sin(r3);
-      var hx = tx2 + Math.sin(z * 7) * .5 * hoch + (px - tx2) * (1 - hoch), hy = ty2 + 3.2 * hoch + (py - ty2) * (1 - hoch);
-      seeRute(g, w2, hx, hy, A.fang && A.fang !== "nichts" ? A.fang : null);
-      seeRing(g, px, py, z < .5 ? z : null);
-    }
-  }
-  function seeAngeln(knopf) {
-    if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
-    if (S.ich.kaputt) { hinweis(gesperrtGrund()); return; }
-    S.angelAn = S.angelAn || {};
-    var warte = (S.angelAn[99] || 0) - Date.now();
-    if (warte > 0) { hinweis("🎣 Die Angler warten noch auf einen Biss – noch " + Math.ceil(warte / 1000) + " s."); return; }
-    S.angelAn[99] = Date.now() + 12000;
-    bahnStarten();
-    /* Beide werfen aus (der zweite eine Viertelsekunde später); wer den Fang bekommt, wechselt sich ab. */
-    var jetzt = Date.now() / 1000, wer = S.seeWer = S.seeWer ? 0 : 1, antwort = null, fertig = false;
-    BAHN.angel = [{ start: jetzt }, { start: jetzt + .25 }];
-    ton("swoosh", 0.35);
-    setTimeout(function () { ton("platsch", 0.35); }, 450);
-    function einholen() {
-      if (fertig || !antwort || Date.now() / 1000 - jetzt < 1.7) return;
-      fertig = true;
-      var r = antwort, t = Date.now() / 1000;
-      if (!r.ok) {
-        BAHN.angel.forEach(function (A) { if (A) { A.zieht = t; A.fang = "nichts"; } });
-        if (r.sek) S.angelAn[99] = Date.now() + r.sek * 1000; else delete S.angelAn[99];
-        hinweis("🎣 " + (r.grund || "geht nicht") + (r.sek ? " – noch " + r.sek + " s" : ""));
-        return;
-      }
-      if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-      ton("angelkurbel", 0.4);
-      BAHN.angel.forEach(function (A, i) { if (A) { A.zieht = t + (i === wer ? 0 : .15); A.fang = i === wer ? r.fang : "nichts"; } });
-      if (r.fang === "fisch") setTimeout(function () { bahnWareZeigen("fisch", "+" + r.menge, 214, 176); }, 500);
-      hinweis(r.fang === "fisch" ? "🐟 Am See gefangen: +" + r.menge + " Fisch (" + vorrat(r, "fisch") + " im Lager) – essen (+10 LP), dein Volk satt machen oder mit der Bahn verschicken."
-        : r.fang === "stiefel" ? "🥾 Ein alter Stiefel aus dem See. Zurück damit!" : r.fang === "muenze" ? "🪙 Eine Münze am Haken: +" + r.menge + " Punkte!" : "🎣 Nichts gebissen – gleich nochmal.");
-      schnellZeichnen(); panelAuffrischen();
-    }
-    setTimeout(einholen, 1700);
-    rpc("spiel_angeln", { p_platz: 99 }).then(function (r) { antwort = r || { ok: false }; einholen(); })
-      .catch(function () { antwort = { ok: false, grund: "Das ging gerade nicht." }; einholen(); });
-  }
-
-  /* Eine Ware steigt im Bild auf (am Bahnhof oder am See). Sie liegt in der Zug-Ebene: die wird beim Neuzeichnen des
-     Menüs nicht angefasst (data-sig), ein Zeichen an einem Knopf dagegen verschwände sofort wieder. */
-  function bahnWareZeigen(ware, text, x, y) {
-    var svg = schnellEl && schnellEl.querySelector("svg.sp-dl-bahn");
-    if (!svg) return;
-    var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    g.setAttribute("class", "sp-bz-ware");
-    g.innerHTML = '<g style="transform-origin:' + x + "px " + y + 'px">' + wareSvg(ware).replace("<svg ", '<svg x="' + (x - 9) + '" y="' + (y - 4) + '" width="8" height="8" ')
-      + '<text x="' + (x + .5) + '" y="' + (y + 2.2) + '" font-size="5.2" font-weight="700" fill="#fff" stroke="rgba(40,30,10,.85)" stroke-width=".9" paint-order="stroke" font-family="sans-serif">' + esc(text) + "</text></g>";
-    svg.appendChild(g);
-    setTimeout(function () { g.remove(); }, 1900);
-  }
-
-  /* --- Der Bahnhof: Fahrplan, Export und Import --------------------------------------------------- */
-  function bahnLaden(zwingend) {
-    var z = S.bahn;
-    if (!zwingend && z && Date.parse(z.bis) > Date.now() && Date.now() - (S.bahnZeit || 0) < 60000) return;
-    if (S.bahnLaedt || Date.now() - (S.bahnVersuch || 0) < 4000) return;
-    S.bahnLaedt = true; S.bahnVersuch = Date.now();
-    rpc("spiel_bahn_info", {}).then(function (r) { S.bahnLaedt = false; if (r && r.slot != null) { S.bahn = r; S.bahnZeit = Date.now(); if (dorfOffen()) schnellZeichnen(true); } })
-      .catch(function () { S.bahnLaedt = false; });
-  }
-  function bahnhofHtml(ich) {
-    var z = S.bahn, kopf = (window.DMA_ZEICHNUNG && window.DMA_ZEICHNUNG.lok) ? window.DMA_ZEICHNUNG.lok("H") : "";
-    var inhalt;
-    if (!z || Date.parse(z.bis) <= Date.now()) { bahnLaden(true); inhalt = '<p class="sp-sm-klein">Der Fahrplan wird geholt …</p>'; }
-    else {
-      var e = z.export || {}, im = z.import || {}, hat = vorrat(ich, e.ware), punkte = ich.punkte || 0;
-      var exAus = e.erledigt || hat < e.menge, imAus = im.erledigt || punkte < im.kosten;
-      inhalt = '<p class="sp-sm-klein">Jeder Güterzug bringt einen Auftrag zum Verladen und ein Angebot aus der Stadt. Der nächste Fahrplan kommt in ' + uhrText(Date.parse(z.bis) - Date.now()) + ".</p>"
-        + '<div class="sp-sm-liste sp-dl-st-knoepfe sp-bahn-knoepfe">'
-        + '<button type="button" data-s="bahn" data-a="export"' + (exAus ? " disabled" : "") + ">" + wareSvg(e.ware) + "<b>Export: " + e.menge + " " + wareName(e.ware) + " verladen</b><small>"
-        + (e.erledigt ? "verladen ✓ – der nächste Zug kommt bald" : "+" + e.erloes + " P · du hast " + hat) + "</small></button>"
-        + '<button type="button" data-s="bahn" data-a="import"' + (imAus ? " disabled" : "") + ">" + wareSvg(im.ware) + "<b>Import: " + im.menge + " " + wareName(im.ware) + " kaufen</b><small>"
-        + (im.erledigt ? "ausgeladen ✓ – der nächste Zug kommt bald" : "−" + im.kosten + " P · du hast " + punkte + " P") + "</small></button></div>";
-    }
-    return '<div class="sp-dl-station sp-bahnhof" role="dialog" aria-label="Bahnhof"><div class="sp-dl-st-kopf"><i class="sp-bahn-kopf">' + kopf + "</i><span><b>Bahnhof</b>"
-      + "<small>Güterzug · Export und Import</small></span>"
-      + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Station schließen">✕</button></div>' + inhalt + "</div>";
-  }
-  function bahnHandeln(k) {
-    var art = k.dataset.a;
-    if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
-    if (S.bahnLaeuft) return;
-    S.bahnLaeuft = true;
-    rpc("spiel_bahn", { p_art: art }).then(function (r) {
-      S.bahnLaeuft = false;
-      if (r && r.zug) { S.bahn = r.zug; S.bahnZeit = Date.now(); }
-      if (!r || !r.ok) { hinweis("🚂 " + ((r && r.grund) || "Das ging nicht.")); schnellZeichnen(true); return; }
-      if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-      /* Bild und Ton zusammen: die Ware steigt über dem Bahnhof auf, die Kasse klingelt (Export) bzw. die Kisten poltern (Import). */
-      bahnWareZeigen(r.ware, (art === "export" ? "−" : "+") + r.menge, 96, 170);
-      ton(art === "export" ? "kasse" : "holzklopf", 0.4);
-      hinweis(art === "export" ? "🚂 " + r.menge + " " + wareName(r.ware) + " verladen – der Zug bringt sie in die Stadt: +" + r.erloes + " Punkte."
-        : "🚂 " + r.menge + " " + wareName(r.ware) + " aus der Stadt ausgeladen (−" + r.kosten + " P) – jetzt " + vorrat(r, r.ware) + " im Lager.");
-      schnellZeichnen(true); panelAuffrischen();
-    }).catch(function () { S.bahnLaeuft = false; hinweis("🚂 Das ging gerade nicht."); });
-  }
   /* Ein Blitz wie bei den Sprechbildern: eine Fläche, die am Kern breit ist und zur Spitze ausläuft, mit Ästen. */
   function dwBlitzFlaeche(x0, y0, x1, y1, dick, aeste, tiefe) {
     var n = 10, dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L, pk = [], i;
@@ -9329,7 +8832,6 @@
       DW.uhr = setInterval(dorfLebenTakt, 400);
       dorfLebenTakt();
     }
-    bahnStarten();
   }
   /* Die Messung auch dem Server sagen (höchstens alle 10 Minuten oder wenn sich das Wetter ändert) – er rechnet damit die Ernte. */
   function dorfWetterMelden() {
@@ -9357,9 +8859,6 @@
      öffnet die Karte mit Zeichen und Namen; ein Tipp auf ein Zeichen holt einen dorthin (doppelt so groß).
      --------------------------------------------------------------- */
   var DORF_ZEICHEN = {
-    /* FASSUNG 716 — Bahnhof (Lok) und See (Fisch). */
-    bahnhof: ["#3a4a5c", '<path d="M3 16.5h15.5v-5.5h-4v-4h-3v4H8.5V8.2H10V6.5H5.5v1.7H7v3H3z" fill="#fff"/><circle cx="6.5" cy="18.3" r="1.9" fill="#fff"/><circle cx="15" cy="18.3" r="1.9" fill="#fff"/><path d="M18.5 16.5l2.5 2" stroke="#fff" stroke-width="1.4"/>'],
-    see: ["#2f7fb5", '<path d="M3.5 12c2.6-3.6 8.4-3.6 11 0-2.6 3.6-8.4 3.6-11 0zM14.5 12l4-3v6z" fill="#fff"/><circle cx="7" cy="11.4" r=".9" fill="#2f7fb5"/><path d="M3 19c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 4.5 0 3 1 4.5 0" stroke="#fff" stroke-width="1.3" fill="none"/>'],
     baeckerei: ["#d9822b", '<path d="M12 19.5c-4.6 0-8-2.9-8-6.6C4 9.8 6 7.5 8.6 7.5s4.2 2 3.4 4.6c-.6 2-3.6 2.4-3.6.2M12 19.5c4.6 0 8-2.9 8-6.6 0-3.1-2-5.4-4.6-5.4s-4.2 2-3.4 4.6c.6 2 3.6 2.4 3.6.2" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>'],
     muehle: ["#4f7cac", '<path d="M10.2 21.5l.9-9.5h1.8l.9 9.5z" fill="#fff"/><path d="M12 11.2L5.2 4.4M12 11.2l6.8-6.8M12 11.2l-6.8 6.8M12 11.2l6.8 6.8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>'],
     schule: ["#2f6fd6", '<path d="M2 9.5l10-5 10 5-10 5z" fill="#fff"/><path d="M6 11.6v4.6c3.3 2.3 8.7 2.3 12 0v-4.6M20.5 10.2v5.6" fill="none" stroke="#fff" stroke-width="1.8"/>'],
@@ -11817,8 +11316,6 @@
       leisteReihe: leisteReihe, dorfZoom: dorfZoom, dorfNah: dorfNah, DORF_ZEICHEN: DORF_ZEICHEN,
       dorfWetter: dorfWetter, dorfBlitz: dorfBlitz, dorfVoegel: dorfVoegel, dorfTreiben: dorfTreiben, DW: DW, dorfWetterMelden: dorfWetterMelden,
       puppeSchiesst: puppeSchiesst,
-      /* FASSUNG 716 */
-      bahn: { plan: bahnPlan, stand: bahnStand, an: bahnAn, beiX: bahnBeiX, B: BAHN, takt: BAHN_TAKT },
       zustand: function () { return S; },
       setzen: function (o) { Object.keys(o || {}).forEach(function (k) { S[k] = o[k]; }); zeichnen(); },
       zeichnen: zeichnen, geschossZeigen: geschossZeigen, zahlZeigen: zahlZeigen, trefferZeigen: trefferZeigen,
