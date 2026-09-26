@@ -4084,25 +4084,6 @@
     } else if (s === "dorfteil") {
       S.dorfTeil = S.dorfTeil === k.dataset.t ? "" : k.dataset.t;
       if (S.dorfTeil === "markt") handelLaden(false);
-    } else if (s === "ausbilden") {
-      /* FASSUNG 702 — Dorfbewohner ausbilden oder entlassen. */
-      var bn = Number(k.dataset.n) || 0, bb = k.dataset.b, BB = BERUFE[bb];
-      if (!BB) return;
-      wirtschaft("spiel_ausbilden", { p_beruf: bb, p_menge: bn }, function (r) {
-        ton(bn > 0 ? "jubel" : "swoosh", 0.35);
-        hinweis(bn > 0 ? "🎓 Ein Dorfbewohner ist jetzt " + BB.name + " (" + r.anzahl + " " + (r.anzahl === 1 ? BB.name : BB.viele) + ", " + r.preis + " P) – " + BB.tut + "."
-                       : "🎓 Ein " + BB.name + " arbeitet wieder als freier Dorfbewohner (" + r.anzahl + " übrig).");
-      });
-      return;
-    } else if (s === "automatik") {
-      var aan = k.dataset.an === "1";
-      wirtschaft("spiel_dorf_automatik", { p_an: aan }, function (r) {
-        ton(aan ? "pferd" : "swoosh", 0.3);
-        var g = (r.takt && r.takt.gemacht) || [];
-        hinweis(aan ? "Automatik an: " + (g.length ? g.join(" · ") + "." : "das Fuhrwerk wartet auf Getreide oder Mehl.") : "Automatik aus – Mühle und Bäckerei arbeiten nur noch, wenn du tippst.");
-        S.taktZuletzt = Date.now();
-      });
-      return;
     } else if (s === "ritter") {
       var rn = Number(k.dataset.n) || 0;
       wirtschaft("spiel_ritter", { p_menge: rn }, function (r) {
@@ -4136,13 +4117,9 @@
         ton("geschenk", 0.5);
         var teile = []; if (r.bratwurst) teile.push(r.bratwurst + " Bratwurst"); if (r.erz) teile.push(r.erz + " Erz"); if (r.xp) teile.push(r.xp + " Erfahrung"); if (r.mana) teile.push(r.mana + " Mana"); if (r.punkte_plus) teile.push(r.punkte_plus + " Punkte");
         if (r.quarz) teile.push(r.quarz + " Quarz"); if (r.gold) teile.push(r.gold + " Gold"); if (r.oel) teile.push(r.oel + " Öl");
-        /* FASSUNG 702 — Bauern, Bäcker und Wissenschaftler liefern mit. */
-        if (r.getreide) teile.push(r.getreide + " Getreide"); if (r.brot) teile.push(r.brot + " Brot"); if (r.forschung) teile.push(r.forschung + " Forschung");
-        var zusatz = (r.weggezogen ? " Dein Volk hat zweimal gehungert – ein " + ((BERUFE[r.weggezogen] || {}).name || "Bewohner") + " ist weggezogen." : r.hunger ? " Achtung: dein Volk hat gehungert. Beim nächsten Mal zieht jemand weg." : "")
-          + (r.automatik && r.automatik.gemacht && r.automatik.gemacht.length ? " Fuhrwerk: " + r.automatik.gemacht.join(" · ") + "." : "");
         /* FASSUNG 683 — das Volk isst, wird bezahlt und freut sich über gutes Deutsch. */
         hinweis("🧺 Ernte: " + (teile.join(", ") || "nichts – alles kaputt? Erst reparieren.") + "." + (r.goldader ? " ⛏️ Goldader!" : "")
-          + (r.zufrieden != null ? " Dein Volk ist " + r.zufrieden + " % zufrieden (satt " + r.satt + "/" + r.bedarf + ", Lohn " + r.bezahlt + " P, Deutsch-Quote " + r.quote + " %)." : "") + zusatz);
+          + (r.zufrieden != null ? " Dein Volk ist " + r.zufrieden + " % zufrieden (satt " + r.satt + "/" + r.bedarf + ", Lohn " + r.bezahlt + " P, Deutsch-Quote " + r.quote + " %)." : ""));
         schnellZeichnen(true);
       }).catch(function () { hinweis("🧺 Das ging gerade nicht."); });
     } else if (s === "trophaeen") {
@@ -6392,7 +6369,6 @@
     var zeilen = dorfBauListe(ich);
     return '<p class="sp-sm-klein">Alle 4 Stunden erntest du, was dein Dorf herstellt. Erdbeben und Plünderer beschädigen es – der Wassergraben (Laden) schützt vor Beben, Ritter vor Plünderern.</p>'
       + volkHtml(ich)
-      + berufeHtml(ich)
       + werkHtml(ich)
       + '<div class="sp-troph-liste">' + zeilen + "</div>"
       + '<div class="sp-sm-liste">'
@@ -6831,11 +6807,7 @@
   };
   /* Namen für Dinge, die keine Handelsware sind (sie stehen nicht im Lager). */
   /* FASSUNG 697: eine höhere Gebäudestufe arbeitet schneller (Stufe 2: 85 %, Stufe 3: 70 %). */
-  function werkMin(basis, st, leute) {
-    var m = Math.ceil(basis * (1 - 0.15 * (Math.min(3, st || 1) - 1)));
-    /* FASSUNG 702 — je Müller/Bäcker/Schmied/Wissenschaftler 10 % schneller (höchstens 30 %), wie spiel_beliefern. */
-    return leute ? Math.max(1, Math.ceil(m * (1 - 0.1 * Math.min(3, leute)))) : m;
-  }
+  function werkMin(basis, st) { return Math.ceil(basis * (1 - 0.15 * (Math.min(3, st || 1) - 1))); }
   function wareName(x) { return WAREN[x] || ({ trank_mana: "Manatränke" })[x] || x; }
   function rezeptMenge(ich, st, roh) {
     var n = 5 * st;
@@ -6853,25 +6825,24 @@
     Object.keys(REZEPTE).forEach(function (k) {
       var st = d[k] ? d[k].stufe : 0, R = REZEPTE[k];
       if (!st || (nur && nur !== k)) return;
-      var a = w[k], fl = BERUF_VON_HAUS[k] ? beruf(ich, BERUF_VON_HAUS[k]) : 0;
-      var z = '<div class="sp-troph sp-werk"><i>' + dorfSvg(k, st) + "</i><span><b>" + R.name + " arbeitet" + (a && a.auto ? " · Automatik" : "") + "</b>";
+      var a = w[k], z = '<div class="sp-troph sp-werk"><i>' + dorfSvg(k, st) + "</i><span><b>" + R.name + " arbeitet</b>";
       if (a) {
         var fertig = Date.parse(a.fertig), rest = fertig - Date.now();
         z += "<small>" + a.menge + " " + wareName(a.ware) + (rest > 0 ? " · fertig um " + uhrzeit(fertig) : " · fertig!") + "</small></span>"
           + '<button type="button" data-s="abholen" data-g="' + k + '"' + (rest > 0 ? ' class="sp-werk-wartet"' : "") + ">Abholen</button>";
       } else if (k === "muehle") {
         var n = rezeptMenge(ich, st, { getreide: 1 });
-        z += "<small>Getreide → Mehl · " + werkMin(8, st, fl) + " min · höchstens " + (5 * st) + "</small></span>"
+        z += "<small>Getreide → Mehl · " + werkMin(8, st) + " min · höchstens " + (5 * st) + "</small></span>"
           + '<button type="button" data-s="liefern" data-g="muehle" data-w="mehl" data-n="' + n + '"' + (n ? "" : " disabled") + ">Mahlen <small>" + n + " Getreide</small></button>";
       } else if (k === "baeckerei") {
         var nb = rezeptMenge(ich, st, { mehl: 1 }), nk = rezeptMenge(ich, st, { mehl: 2 }), nt = rezeptMenge(ich, st, { mehl: 2, ei: 2, milch: 1 });
-        z += "<small>Mehl → Brot (1) oder Kuchen (2) · " + werkMin(10, st, fl) + " min · Torte: 2 Mehl, 2 Eier, 1 Milch · " + werkMin(14, st, fl) + " min</small></span>"
+        z += "<small>Mehl → Brot (1) oder Kuchen (2) · " + werkMin(10, st) + " min · Torte: 2 Mehl, 2 Eier, 1 Milch · " + werkMin(14, st) + " min</small></span>"
           + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="brot" data-n="' + nb + '"' + (nb ? "" : " disabled") + ">Brot <small>" + nb + " Mehl</small></button>"
           + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="kuchen" data-n="' + nk + '"' + (nk ? "" : " disabled") + ">Kuchen <small>" + (2 * nk) + " Mehl</small></button>"
           + '<button type="button" data-s="liefern" data-g="baeckerei" data-w="torte" data-n="' + nt + '"' + (nt ? "" : " disabled") + ">Torte <small>" + nt + " Stück</small></button>";
       } else {
         var r = R.liste[0], nr = rezeptMenge(ich, st, r[1]);
-        z += "<small>" + Object.keys(r[1]).map(function (x) { return r[1][x] + " " + wareName(x); }).join(" + ") + " → 1 " + wareName(r[0]).replace(/tränke$/, "trank").replace(/^Chips$/, "Chip") + " · " + werkMin(r[2], st, fl) + " min</small></span>"
+        z += "<small>" + Object.keys(r[1]).map(function (x) { return r[1][x] + " " + wareName(x); }).join(" + ") + " → 1 " + wareName(r[0]).replace(/tränke$/, "trank").replace(/^Chips$/, "Chip") + " · " + werkMin(r[2], st) + " min</small></span>"
           + '<button type="button" data-s="liefern" data-g="' + k + '" data-w="' + r[0] + '" data-n="' + nr + '"' + (nr ? "" : " disabled") + ">" + (k === "brauerei" ? "Brauen" : wareName(r[0])) + " <small>" + nr + " Stück</small></button>";
       }
       t.push(z + "</div>");
@@ -6925,8 +6896,7 @@
   function volkHtml(ich) {
     var v = ich.volk || {}, arbeiter = Number(v.arbeiter) || 0, ritter = Number(v.ritter) || 0, quote = v.quote == null ? 70 : Number(v.quote);
     if (!arbeiter && !ritter) return "";
-    /* FASSUNG 702 — Fachleute essen mit: je zwei eine Portion mehr (wie spiel_dorf_abholen). */
-    var bedarf = Math.ceil(arbeiter / 4) + ritter + Math.ceil(berufeSumme(ich) / 2), essen = ["fisch", "brot", "bratwurst", "kuchen", "torte"].reduce(function (n, x) { return n + vorrat(ich, x); }, 0);
+    var bedarf = Math.ceil(arbeiter / 4) + ritter, essen = ["fisch", "brot", "bratwurst", "kuchen", "torte"].reduce(function (n, x) { return n + vorrat(ich, x); }, 0);
     var lohn = arbeiter + 3 * ritter;
     var satt = bedarf ? Math.min(1, essen / bedarf) : 1, bezahlt = lohn ? Math.min(1, (ich.punkte || 0) / lohn) : 1;
     var zuf = Math.round(40 * satt + 20 * bezahlt + 40 * quote / 100);
@@ -6937,149 +6907,6 @@
       + " · je Ernte " + bedarf + " Portionen (du hast " + essen + ") und " + lohn + " P Lohn</small></span>"
       + '<span class="sp-volk-knoepfe"><button type="button" data-s="ritter" data-n="1"' + ((ich.level || 1) >= 4 && ritter < 5 && (ich.punkte || 0) >= 40 ? "" : " disabled") + ">Ritter + <small>40 P</small></button>"
       + (ritter ? '<button type="button" data-s="ritter" data-n="-1">Ritter −</button>' : "") + "</span></div>";
-  }
-  /* ---------------------------------------------------------------
-     FASSUNG 702 — BERUFE, AUSBILDUNG, AUTOMATIK, HUNGER
-     XANDER (Funk 139): „wie bilden wir Wissenschaftler aus … wie kriegen
-     wir überhaupt die Dorfbewohner dazu Bäcker zu werden" und „ab einer
-     gewissen Stufe der Bäckerei so die Sachen automatisieren dass da
-     automatisch jemand so das Getreide abholt in die Mühle bringt dass da
-     automatisch jemand das gemahlene Getreide also das Mehl zur Bäckerei
-     bringen". Walkie 281: alles gewählt, auch „Hunger/Abhängigkeit ernster
-     machen".
-     Jedes Gebäude bringt je Stufe zwei Dorfbewohner. Freie Bewohner bildet
-     man für Punkte aus (spiel_ausbilden). Fachleute essen mit (je zwei eine
-     Portion mehr); wer zweimal hintereinander hungert, dem zieht jemand weg.
-     Die Automatik (spiel_dorf_automatik, spiel_dorf_takt) braucht Mühle und
-     Bäckerei ab Stufe 2 und je einen Müller und Bäcker – dann fährt ein
-     Fuhrwerk Getreide zur Mühle und Mehl zur Bäckerei, ohne dass man tippt.
-     Gerechnet wird alles auf dem Server; hier wird nur gezeigt und getippt.
-     --------------------------------------------------------------- */
-  var BERUFE = {
-    bauer:           { name: "Bauer", viele: "Bauern", preis: 5, haus: ["muehle"], tut: "ernten je Ernte 2 Getreide" },
-    mueller:         { name: "Müller", viele: "Müller", preis: 15, haus: ["muehle"], tut: "Mühle 10 % schneller je Müller (bis 30 %)" },
-    baecker:         { name: "Bäcker", viele: "Bäcker", preis: 15, haus: ["baeckerei"], tut: "backen je Ernte 1 Brot, Bäckerei schneller" },
-    schmied:         { name: "Schmied", viele: "Schmiede", preis: 15, haus: ["schmiede"], tut: "Schmiede 10 % schneller je Schmied" },
-    wissenschaftler: { name: "Wissenschaftler", viele: "Wissenschaftler", preis: 30, haus: ["schule", "bibliothek", "labor"], tut: "forschen – je besser dein Deutsch, desto mehr" }
-  };
-  var BERUF_VON_HAUS = { muehle: "mueller", baeckerei: "baecker", schmiede: "schmied", labor: "wissenschaftler" };
-  function dorfSt(ich, k) { var g = ((ich && ich.dorf) || {})[k]; return g && g.stufe > 0 ? Number(g.stufe) : 0; }
-  function beruf(ich, b) { return Number((((ich && ich.volk) || {}).berufe || {})[b]) || 0; }
-  function berufeSumme(ich) { var b = (((ich && ich.volk) || {}).berufe) || {}; return Object.keys(b).reduce(function (n, k) { return n + (Number(b[k]) || 0); }, 0); }
-  function dorfBewohner(ich) { var d = (ich && ich.dorf) || {}; return 2 * Object.keys(d).reduce(function (n, k) { return n + (Number(d[k] && d[k].stufe) || 0); }, 0); }
-  /* Wie spiel_beruf_max: je Stufe des Gebäudes zwei (Bauern: vier plus zwei je Mühlenstufe). */
-  function berufMax(ich, b) {
-    if (b === "bauer") return 4 + 2 * dorfSt(ich, "muehle");
-    return 2 * BERUFE[b].haus.reduce(function (n, k) { return n + dorfSt(ich, k); }, 0);
-  }
-  function automatikMoeglich(ich) { return dorfSt(ich, "muehle") >= 2 && dorfSt(ich, "baeckerei") >= 2; }
-  function automatikFehlt(ich) {
-    if (!automatikMoeglich(ich)) return "Mühle und Bäckerei ab Stufe 2";
-    var f = [];
-    if (beruf(ich, "mueller") < 1) f.push("einen Müller");
-    if (beruf(ich, "baecker") < 1) f.push("einen Bäcker");
-    return f.length ? f.join(" und ") : "";
-  }
-  /* Kleine Figur je Beruf: Kopf, Mütze/Hut, Schürze in Berufsfarbe. */
-  function berufSvg(b) {
-    var F = { bauer: ["#6b8e3a", "#d9b25a"], mueller: ["#f3efe4", "#cfc6b0"], baecker: ["#ffffff", "#e9e2d0"], schmied: ["#5a4a3a", "#2f2a26"], wissenschaftler: ["#e8eef6", "#4a6fa5"] }[b] || ["#999", "#666"];
-    var hut = b === "bauer" ? '<path d="M5 6.2 H15 L13 4.6 C12 3 8 3 7 4.6 Z" fill="#d9b25a" stroke="#8a6a2a" stroke-width=".5"/>'
-      : b === "baecker" ? '<path d="M7 5.6 C5.6 5.6 5.6 2.8 7.4 3 C7.6 1.6 9.4 1.2 10 2.4 C10.8 1.2 12.6 1.6 12.6 3 C14.4 2.8 14.4 5.6 13 5.6 Z" fill="#fff" stroke="#bdb49c" stroke-width=".5"/>'
-      : b === "mueller" ? '<path d="M6.6 5.8 C6.6 3.4 13.4 3.4 13.4 5.8 Z" fill="#e7e1d2" stroke="#a89f88" stroke-width=".5"/>'
-      : b === "schmied" ? '<path d="M6.8 5.4 C7 3.8 13 3.8 13.2 5.4 Z" fill="#3a302a"/>'
-      : '<circle cx="8.6" cy="7.4" r="1.2" fill="none" stroke="#333" stroke-width=".45"/><circle cx="11.4" cy="7.4" r="1.2" fill="none" stroke="#333" stroke-width=".45"/><path d="M9.8 7.4 H10.2" stroke="#333" stroke-width=".45"/>';
-    return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.6 19 C4.6 13 6.8 11.4 10 11.4 C13.2 11.4 15.4 13 15.4 19 Z" fill="' + F[0] + '" stroke="rgba(0,0,0,.35)" stroke-width=".5"/>'
-      + '<path d="M7.6 12.2 H12.4 L12 19 H8 Z" fill="' + F[1] + '" opacity=".85"/>'
-      + '<circle cx="10" cy="7.6" r="3.3" fill="#f1c9a0" stroke="#b98b62" stroke-width=".5"/>' + hut
-      + (b === "schmied" ? '<path d="M15.6 12 L18 9.6" stroke="#6b4521" stroke-width="1"/><rect x="16.6" y="8" width="3" height="1.8" rx=".3" transform="rotate(-45 18 9)" fill="#6f7680"/>' : "")
-      + (b === "bauer" ? '<path d="M15.6 18.6 L16.8 8.6" stroke="#8a6a3a" stroke-width=".8"/><path d="M16.8 8.6 C14.6 7.8 12.8 8.4 12 9.6" stroke="#b8c0c8" stroke-width=".9" fill="none"/>' : "")
-      + "</svg>";
-  }
-  function berufeHtml(ich) {
-    var alle = dorfBewohner(ich);
-    if (!alle) return "";
-    var v = ich.volk || {}, summe = berufeSumme(ich), frei = Math.max(0, alle - summe), punkte = ich.punkte || 0;
-    var zeilen = Object.keys(BERUFE).map(function (b) {
-      var B = BERUFE[b], n = beruf(ich, b), mx = berufMax(ich, b), fehlt = !mx;
-      var plusAus = fehlt || n >= mx || frei < 1 || punkte < B.preis;
-      var warum = fehlt ? "braucht " + B.haus.map(function (k) { return DORF[k] ? DORF[k].name : k; }).join(" oder ") : n >= mx ? "voll – Gebäude ausbauen" : frei < 1 ? "niemand frei" : "";
-      return '<div class="sp-beruf' + (fehlt && !n ? " sp-beruf-zu" : "") + '"><i>' + berufSvg(b) + "</i><span><b>" + n + " " + (n === 1 ? B.name : B.viele) + "</b>"
-        + "<small>" + B.tut + " · höchstens " + mx + (warum ? " · " + warum : "") + "</small></span>"
-        + '<span class="sp-beruf-knoepfe"><button type="button" data-s="ausbilden" data-b="' + b + '" data-n="1"' + (plusAus ? " disabled" : "") + ">Ausbilden <small>" + B.preis + " P</small></button>"
-        + (n ? '<button type="button" data-s="ausbilden" data-b="' + b + '" data-n="-1" aria-label="' + B.name + ' entlassen">−</button>' : "") + "</span></div>";
-    }).join("");
-    var an = !!v.automatik, fehlt = automatikFehlt(ich);
-    var auto = '<div class="sp-beruf sp-automatik' + (an ? " sp-an" : "") + '"><i>' + fuhrwerkSvg() + "</i><span><b>Automatik " + (an ? (fehlt ? "wartet" : "läuft") : "aus") + "</b>"
-      + "<small>" + (fehlt ? "braucht " + fehlt : "ein Fuhrwerk bringt Getreide zur Mühle (2 bleiben als Saat) und Mehl zur Bäckerei – Brot kommt von selbst ins Lager") + "</small></span>"
-      + '<span class="sp-beruf-knoepfe"><button type="button" data-s="automatik" data-an="' + (an ? "0" : "1") + '"' + (!an && fehlt ? " disabled" : "") + ">" + (an ? "Ausschalten" : "Einschalten") + "</button></span></div>";
-    var hunger = Number(v.hunger) || 0;
-    return '<div class="sp-sm-gruppe sp-berufe"><span>Berufe · ' + frei + " von " + alle + " Dorfbewohnern frei</span></div>"
-      + (hunger ? '<p class="sp-hunger" role="status">Dein Volk hat bei der letzten Ernte gehungert. Wird es noch einmal nicht satt, zieht jemand weg – back Brot, fang Fisch oder kauf Essen auf dem Markt.</p>' : "")
-      + zeilen + auto
-      + (Number(v.forschung) ? '<p class="sp-sm-klein">Forschung gesammelt: <b>' + Number(v.forschung) + "</b> – deine Wissenschaftler arbeiten.</p>" : "");
-  }
-  /* Pferd mit Wagen und zwei Säcken – im Menü und im Dorfbild. */
-  function fuhrwerkSvg(ohneRahmen) {
-    /* Links der Wagen mit zwei Mehlsäcken, rechts das Pferd, das nach rechts zieht. */
-    var g = '<rect x="1" y="8.6" width="8" height="3.4" rx=".4" fill="#b98545" stroke="#5a3a1a" stroke-width=".4"/>'
-      + '<path d="M1.6 9.8 H8.4 M1.6 11 H8.4" stroke="#8a5f2c" stroke-width=".3"/>'
-      + '<ellipse cx="3.4" cy="8" rx="1.6" ry="1.3" fill="#efe6cf" stroke="#a89878" stroke-width=".35"/><ellipse cx="6.6" cy="7.9" rx="1.6" ry="1.4" fill="#e9dcbc" stroke="#a89878" stroke-width=".35"/>'
-      + '<circle cx="5" cy="13.4" r="2.2" fill="none" stroke="#4a2f16" stroke-width=".7"/><path d="M5 11.2 V15.6 M2.8 13.4 H7.2" stroke="#4a2f16" stroke-width=".35" class="sp-fw-rad"/>'
-      + '<path d="M9 10.4 L11.2 10.8" stroke="#3a2a16" stroke-width=".5"/>'
-      + '<path d="M11.4 12.4 L11.8 15.6 M12.8 12.6 L12.6 15.6 M16 12.6 L16.4 15.6 M17.2 12.4 L17 15.6" stroke="#4a2f16" stroke-width=".7" class="sp-fw-bein"/>'
-      + '<path d="M10.8 12.2 C10.4 10.4 11.4 9.4 13 9.4 H15.8 L16.8 6.6 C17.2 5.6 18.6 5.6 19 6.6 L18.6 7.8 C18.2 8.4 17.8 9 17.6 9.8 C18 10.8 17.8 12.6 16.8 12.8 H12 C11.4 12.8 11 12.6 10.8 12.2 Z" fill="#8a5a2b" stroke="#4a2f16" stroke-width=".4"/>'
-      + '<path d="M17.2 6 L17.6 4.8 L18.2 6" fill="#6b4521"/><path d="M16.2 6.8 C15.6 7.8 15.4 8.8 15.8 9.4" stroke="#3a2412" stroke-width=".6" fill="none"/><circle cx="18" cy="6.8" r=".3" fill="#1a1a1a"/>'
-      + '<path d="M10.8 10.8 C9.8 11.4 9.6 12.6 10 13.4" stroke="#3a2412" stroke-width=".5" fill="none"/>';
-    return ohneRahmen ? g : '<svg viewBox="0 0 20 18" aria-hidden="true">' + g + "</svg>";
-  }
-  /* Die Leute im Dorfbild: wer einen Beruf hat, steht an seinem Haus und
-     arbeitet; bei laufender Automatik fährt das Fuhrwerk den Mühlweg hin
-     und her. Jede Figur ist ein eigenes kleines Element, das nur per
-     transform bewegt wird – das rechnet die Grafikkarte, das Dorfbild
-     darunter wird nicht jedes Bild neu gemalt (als SVG-Animation waren es
-     auf einem langsamen Telefon 100 statt 145 Bilder in 3 s). Kein
-     Date.now() im Text – sonst würde neu geschrieben und die Fahrt spränge. */
-  var DORF_LEUTE = {
-    bauer:           [[28, 184], [46, 180]],
-    mueller:         [[80, 72]],
-    baecker:         [[140, 122]],
-    schmied:         [[236, 140]],
-    wissenschaftler: [[258, 186], [226, 90]]
-  };
-  function dorfLeuteHtml(ich) {
-    var h = "";
-    Object.keys(DORF_LEUTE).forEach(function (b) {
-      var n = Math.min(DORF_LEUTE[b].length, beruf(ich, b));
-      for (var i = 0; i < n; i++) {
-        var p = DORF_LEUTE[b][i];
-        h += '<span class="sp-dl-mensch sp-dl-m-' + b + '" style="left:' + (p[0] / 3.2).toFixed(2) + "%;top:" + (p[1] / 2).toFixed(2) + "%;animation-delay:-" + (i * 0.7 + b.length * 0.3).toFixed(1) + 's" aria-hidden="true">'
-          + berufSvg(b) + "</span>";
-      }
-    });
-    var w = ich.werk || {}, faehrt = !!(ich.volk || {}).automatik && !automatikFehlt(ich) && ((w.muehle && w.muehle.auto) || (w.baeckerei && w.baeckerei.auto));
-    /* Start an der Mühle (56|80); der Punkt unten in der Mitte des Wagens (10|15) fährt den Mühlweg. */
-    if (faehrt) h += '<span class="sp-dl-fuhrwerk" style="left:' + ((56 - 10) / 3.2).toFixed(3) + "%;top:" + ((80 - 15) / 2).toFixed(3) + '%" aria-hidden="true">' + fuhrwerkSvg() + "</span>";
-    return h;
-  }
-  /* Der Takt der Automatik: beim Öffnen des Dorfs sofort, danach alle 30 s
-     (offen) bzw. 90 s (zu). Der Server macht je Aufruf einen Schritt. */
-  function dorfTakt(sofort) {
-    var ich = S.ich, v = (ich && ich.volk) || {};
-    if (!ich || !v.automatik || S.taktLaeuft) return;
-    var offen = S.blick === "dorfblick" && S.schnellMenue;
-    if (!sofort && Date.now() - (S.taktZuletzt || 0) < (offen ? 30000 : 90000)) return;
-    S.taktLaeuft = true; S.taktZuletzt = Date.now();
-    rpc("spiel_dorf_takt", {}).then(function (r) {
-      S.taktLaeuft = false;
-      if (!r || r.ok === false) return;
-      if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-      var a = r.automatik || {};
-      if (a.gemacht && a.gemacht.length && S.blick === "dorfblick" && S.schnellMenue) {
-        ton("pferd", 0.25);
-        hinweis("Fuhrwerk: " + a.gemacht.join(" · ") + ".");
-      }
-      schnellZeichnen(true);
-    }).catch(function () { S.taktLaeuft = false; });
   }
   /* Nachbardörfer im Raum: plündern (so wie in Clash of Clans und Forge
      of Empires): das Gebäude bleibt stehen, ist nur beschädigt; du nimmst
@@ -7127,7 +6954,7 @@
     if (r === "dorfblick" || r === "handelblick") {
       var auf = !(S.schnellMenue && S.blick === r);
       S.blick = auf ? r : null; S.schnellMenue = auf; S.dorfWahl = "";
-      if (auf) { handelLaden(false); abrufen(true); if (r === "dorfblick") dorfTakt(true); }
+      if (auf) { handelLaden(false); abrufen(true); }
     } else {
       S.blick = null;
       S.schnellMenue = !(S.schnellMenue && S.schnellReiter === r);
@@ -7380,10 +7207,6 @@
       + '<path d="M110 118 C130 112 150 104 160 100 C180 94 200 92 214 90 M160 100 C166 118 176 128 186 160 M110 118 C100 130 84 142 70 152 M110 118 C92 118 60 116 32 120 M214 90 C236 96 256 104 272 112 M186 160 C212 150 222 144 232 138 M186 160 C200 170 240 176 272 184 M126 168 C150 164 164 162 186 162 M160 100 C150 88 120 80 52 76 M214 90 C240 80 270 70 292 64"'
         + ' fill="none" stroke="#e3cc9f" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1.4 2.2"/>'
       + '<path d="M110 118 C130 112 150 104 160 100 C180 94 200 92 214 90 M160 100 C166 118 176 128 186 160 M110 118 C100 130 84 142 70 152 M110 118 C92 118 60 116 32 120 M214 90 C236 96 256 104 272 112 M186 160 C212 150 222 144 232 138 M186 160 C200 170 240 176 272 184 M126 168 C150 164 164 162 186 162 M160 100 C150 88 120 80 52 76 M214 90 C240 80 270 70 292 64" fill="none" stroke="url(#spDlKies)" stroke-width="3.6" stroke-linecap="round" opacity=".55"/>'
-      /* FASSUNG 702 — der Mühlweg: direkt von der Mühle zur Bäckerei, für das Fuhrwerk. */
-      + '<path d="M56 80 C68 92 88 108 108 118" fill="none" stroke="#c7a978" stroke-width="3.4" stroke-linecap="round" opacity=".85"/>'
-      + '<path d="M56 80 C68 92 88 108 108 118" fill="none" stroke="url(#spDlKies)" stroke-width="2.8" stroke-linecap="round" opacity=".5"/>'
-      + '<path d="M56 80 C68 92 88 108 108 118" fill="none" stroke="#a88a58" stroke-width=".5" stroke-dasharray="3 2" transform="translate(0 -1)" opacity=".7"/>'
       /* Steinbrücke über den Fluss. */
       + '<path d="M150 101 C154 95 162 95 166 101 L168 104 H148 Z" fill="#b9b2a4" stroke="#6f6758" stroke-width=".7"/><path d="M152 104 C154 100 162 100 164 104" fill="#3b86c2"/>'
       + '<path d="M149 101 H167" stroke="#8a826f" stroke-width="1"/>'
@@ -7608,7 +7431,7 @@
         + "<small>" + DORF[k].name + (st > 1 ? " " + st : "") + "</small>" + zeichen + "</button>";
     }).join("");
     /* Die Station hängt unten am Bild (ragt hinein), das Bild selbst bleibt stehen – so springt kein Haus. */
-    return '<div class="sp-dorfland">' + dorfDefsSvg() + dorfLandSvg() + haeuser + dorfLeuteHtml(ich)
+    return '<div class="sp-dorfland">' + dorfDefsSvg() + dorfLandSvg() + haeuser
       + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp">Tippe auf ein Gebäude</span>') + "</div>" + (wahl ? dorfStationHtml(ich, wahl) : "");
   }
   /* FASSUNG 683 — XANDER: „dass ich schnell Zugriff auf das Dorf habe und
@@ -7625,7 +7448,7 @@
           ? '<button type="button" data-s="bauen" data-w="reparatur"' + (vorrat(ich, "erz") || vorrat(ich, "holz") >= 2 ? "" : " disabled") + ">Reparieren <small>1 Erz oder 2 Holz</small></button>" : "") + "</div>";
     })() : "";
     var t = werkZeilenHtml(ich);
-    return szene + volkHtml(ich) + ernte + berufeHtml(ich)
+    return szene + volkHtml(ich) + ernte
       + (t.length ? '<div class="sp-troph-liste">' + t.join("") + "</div>" : "")
       + lagerHtml(ich, true)
       + nachbarnHtml()
@@ -9362,7 +9185,6 @@
     erinnerungPruefen();
     tiereSpielen();
     tierZustandPflegen();
-    dorfTakt(false);
     /* FASSUNG 679 — wechselt, wer mitspielt, wird die Spiel-Sitzordnung neu angewendet. */
     var sitzZeichen = spielSichtbar() + "|" + Object.keys(S.stand).filter(function (k) { return S.stand[k] && S.stand[k].mitspielen; }).sort().join(",");
     if (sitzZeichen !== S.sitzZeichen) { S.sitzZeichen = sitzZeichen; try { if (LC() && LC().spielSitzeNeu) LC().spielSitzeNeu(); } catch (e) {} }
