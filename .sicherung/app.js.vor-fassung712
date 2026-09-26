@@ -31859,26 +31859,6 @@
     + '<rect x="11" y="9" width="10" height="13" rx="1.5" fill="#d2232a" stroke="#2d2418" stroke-width="2"/><path d="M11 13 H21 M11 18 H21" stroke="#f2c230" stroke-width="1.6"/>'
     + '<path d="M11 10 L16 3 L21 10 Z" fill="#f2c230" stroke="#2d2418" stroke-width="2" stroke-linejoin="round"/>'
     + '<circle cx="6" cy="6" r="1.6" fill="#ff4d6d"/><circle cx="26" cy="5" r="1.6" fill="#4dd2ff"/><circle cx="27" cy="12" r="1.3" fill="#7cff6b"/><circle cx="5" cy="13" r="1.3" fill="#ffd23c"/></svg>';
-  /* FASSUNG 712 — DIE ECHTEN ZEICHNUNGEN AUF DIE KACHEL.
-     XANDER (Funk 158): „da steht nur Hörer … du kannst auch Musik
-     hinschreiben und man könnte dann aber die Hörer genauso machen wie
-     wir das Symbol haben für die Apple airpods Max … runter skalieren
-     … die Lokomotive … den Delfin … den Frosch … klein runter skaliert
-     … dass es auf die Kachel passt".
-     Die Kachel nimmt jetzt DIESELBE Zeichnung wie die Animation (siehe
-     lcLokSeiteSvg und die anderen), nur mit einem engeren Ausschnitt.
-     Die Verlaufs-Namen der AirPods bekommen ein eigenes Kuerzel, damit
-     sie sich nicht mit denen am Platz beissen. „Musik" heisst auch eine
-     Spruehdosen-Kachel — deshalb gilt dieses Bild nur zusammen mit dem
-     Kopfhoerer-Zeichen davor. */
-  const lcMiniEcht = (svg, vb) => svg
-    .replace(/<svg class="/, '<svg class="lc-mini-echt ')
-    .replace(/viewBox="[^"]*"/, 'viewBox="' + vb + '"');
-  LC_MINI_BILD["\ud83c\udfa7 Musik"] = lcMiniEcht(
-    lcApmSvg().replace(/(id="|#)apm/g, "$1apmK"), "-3 -6 168 112");
-  LC_MINI_BILD["Dampflok"] = lcMiniEcht(lcLokSeiteSvg(), "0 -4 120 62");
-  LC_MINI_BILD["Delfin"] = lcMiniEcht(lcDelfinFormSvg(), "-2 -4 144 76");
-  LC_MINI_BILD["Frosch"] = lcMiniEcht(lcFroschBildSvg(), "2 6 98 70");
   function lcMiniBilderSetzen(kasten) {
     if (!kasten || !kasten.querySelectorAll) return;
     kasten.querySelectorAll(".lc-platzmenue-knopf").forEach((b) => {
@@ -31887,14 +31867,11 @@
       if (!z || !w || z.dataset.mini) return;
       const wort = String(w.textContent || "").trim();
       /* „Feuer 2", „Eis 2" … tragen das Bild ihres Vorbilds. */
-      const bild = LC_MINI_BILD[String(z.textContent || "").trim() + " " + wort]
-        || LC_MINI_BILD[wort] || LC_MINI_BILD[wort.replace(/ 2$/, "")];
+      const bild = LC_MINI_BILD[wort] || LC_MINI_BILD[wort.replace(/ 2$/, "")];
       if (!bild) return;
       z.dataset.mini = "1";
       z.dataset.emoji = z.textContent;
       z.innerHTML = bild;
-      /* Die Hinterbeine des Froschs rechnet lcFroschBein aus — sitzend. */
-      z.querySelectorAll(".lc-frosch-hbein").forEach((g) => lcFroschBein(g, 0));
     });
     kasten.querySelectorAll(".lc-anreise-knopf").forEach((b) => {
       if (b.dataset.mini) return;
@@ -31902,7 +31879,6 @@
       if (!bild) return;
       b.dataset.mini = "1";
       b.innerHTML = bild;
-      b.querySelectorAll(".lc-frosch-hbein").forEach((g) => lcFroschBein(g, 0));
     });
   }
   /* Die Menüs hängen direkt am body. Ein Wächter NUR auf dessen
@@ -32050,8 +32026,7 @@
        oder mit Audio-Ausschnitt."
        Die Kachel traegt deshalb „*hoerer": sie schickt nicht sofort,
        sondern fragt (siehe lcHoererMenue). */
-    /* FASSUNG 712 — XANDER (Funk 158): „du kannst auch Musik hinschreiben". */
-    ["\ud83c\udfa7", "Musik", "*hoerer"],
+    ["\ud83c\udfa7", "H\u00f6rer", "*hoerer"],
     /* GEWUENSCHT: „Die Luke kannst du Fenster nennen." Und drei
        Fassungen dahinter: Fenster, Rollo, Jalousie. */
     ["\ud83e\ude9f", "Fenster", "fenster", false,
@@ -46847,7 +46822,30 @@
       del.innerHTML =
         '<i class="lc-delfin-wasser"></i>'
         + '<span class="lc-delfin-koerper">'
-        + lcDelfinFormSvg()
+        + '<svg class="lc-delfin-form" viewBox="0 0 140 76" aria-hidden="true">'
+        /* Der Leib: vorne die runde Stirn, dann die Schnauze, hinten
+           schlank zum Schwanz. */
+        + '<path class="lc-delfin-leib" d="M6 44'
+        + ' C10 26 30 14 56 14 C78 14 96 20 112 32'
+        + ' C120 38 128 42 136 44 C128 50 118 54 108 56'
+        + ' C92 60 70 62 52 58 C30 53 12 50 6 44 Z"/>'
+        /* Die Schnauze. */
+        + '<path class="lc-delfin-schnauze" d="M6 44 C2 42 0 40 0 38'
+        + ' C4 36 10 36 14 38 Z"/>'
+        /* Die Rueckenfinne. */
+        + '<path class="lc-delfin-finne" d="M62 15 C66 4 78 0 86 2'
+        + ' C80 8 74 14 70 18 Z"/>'
+        /* Die Brustflosse. */
+        + '<path class="lc-delfin-brust" d="M42 50 C36 58 30 64 22 66'
+        + ' C26 58 32 52 38 48 Z"/>'
+        /* Die Schwanzflosse, hochkant wie bei einem Wal. */
+        + '<path class="lc-delfin-schwanz" d="M126 44 C134 34 140 30 140 30'
+        + ' C140 40 138 46 136 48 C138 52 140 58 140 66'
+        + ' C140 66 132 56 126 46 Z"/>'
+        /* Das Auge und das Blasloch. */
+        + '<circle class="lc-delfin-auge" cx="24" cy="38" r="2.6"/>'
+        + '<path class="lc-delfin-loch" d="M44 18 q4 -3 8 0" fill="none"/>'
+        + "</svg>"
         + '<span class="lc-delfin-reiter"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
@@ -47343,13 +47341,122 @@
          Hintergrund nicht. */
       /* Ein Rad: Reifen, Nabe, acht Speichen, Gegengewicht.
          r ist der Radius in den 120x60 Einheiten des Bildes. */
+      const lokRad = (nr, cx, cy, r) => {
+        let sp = "";
+        for (let i = 0; i < 8; i++) {
+          const w = (i * Math.PI) / 4;
+          sp += '<path class="lc-lok-speiche" d="M' + cx.toFixed(1) + " " + cy.toFixed(1)
+            + " L" + (cx + Math.cos(w) * (r - 1.6)).toFixed(1) + " "
+            + (cy + Math.sin(w) * (r - 1.6)).toFixed(1) + '"/>';
+        }
+        return '<g class="lc-lok-rad lc-lok-rad-' + nr + '"'
+          + ' style="transform-origin:' + cx + 'px ' + cy + 'px">'
+          + '<circle class="lc-lok-reifen" cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>'
+          + sp
+          /* Das Gegengewicht sitzt dem Kurbelzapfen gegenueber — es
+             gleicht ihn aus, deshalb heisst es so. */
+          + '<path class="lc-lok-gewicht" d="M' + cx + " " + cy
+          + " m-" + (r * 0.72).toFixed(1) + ",0 a" + (r * 0.72).toFixed(1) + ","
+          + (r * 0.72).toFixed(1) + " 0 0,1 " + (r * 1.44).toFixed(1) + ',0 Z"/>'
+          + '<circle class="lc-lok-nabe" cx="' + cx + '" cy="' + cy + '" r="' + (r * 0.24).toFixed(1) + '"/>'
+          /* Der Kurbelzapfen: an ihm haengt die Kuppelstange. */
+          + '<circle class="lc-lok-zapfen" cx="' + cx + '" cy="' + (cy + r * 0.55).toFixed(1)
+          + '" r="1.5"/>'
+          + "</g>";
+      };
       /* RUNDE 88 — ZWEI ZEICHNUNGEN IN EINER HUELLE. Die Seitenansicht
          und die Draufsicht liegen uebereinander; welche man sieht,
          entscheidet die Fahrt. Nur so laesst sich eine Kurve zeigen,
          ohne die Lok auf der Stelle zu spiegeln. */
       lok.innerHTML =
         '<span class="lc-lok-seite">'
-        + lcLokSeiteSvg()
+        + '<svg class="lc-lok-form" viewBox="0 0 120 60" aria-hidden="true">'
+        /* Pufferbohle mit zwei Puffern — vorn, wo es stoesst. */
+        + '<rect class="lc-lok-bohle" x="3" y="35" width="7" height="17" rx="1.5"/>'
+        + '<circle class="lc-lok-puffer" cx="4.5" cy="38.5" r="2.4"/>'
+        + '<circle class="lc-lok-puffer" cx="4.5" cy="48.5" r="2.4"/>'
+        /* Rahmen und Laufblech. */
+        + '<path class="lc-lok-fahrwerk" d="M8 42 L115 42 L115 49 L8 49 Z"/>'
+        /* Kessel mit drei Baendern. */
+        /* RUNDE 71 — XANDER: „Mir fehlen da ein bisschen diese
+           goldenen Teile oben auf dem Lok Koerper … die Farbe kann
+           man auch ein bisschen verbessern … mehr tiefer … ins
+           Schwarze … mit Licht und Schatten."
+           Der Kessel war blaugrau (#2f4a63). Jetzt ist er fast
+           schwarz, und darauf liegen zwei eigene Flaechen: oben ein
+           heller Streifen (das Licht auf dem runden Kessel), unten
+           ein dunkler (der Schatten darunter). Die MESSING-Teile —
+           Baender, Dome, Pfeife, Handlaeufe — sitzen ausdruecklich
+           OBEN auf dem Koerper, so wie er es beschreibt. */
+        /* RUNDE 73 — XANDER: „Die Lok kann noch mehr Tiefe haben im
+           Design … ein bisschen mehr, ich weiss nicht ob es Schatten
+           ist oder der Lack — das kann bisschen ins Schwarze gehen,
+           aber so dass man das noch gut erkennen kann."
+           Eine FLAECHE mit einer Farbe hat keine Tiefe, ganz gleich
+           wie dunkel sie ist. Deshalb bekommt der Kessel hier einen
+           echten Verlauf ueber seine Hoehe: oben der Lichtstreifen
+           des Lacks, in der Mitte das Grundschwarz, unten der
+           Schattenbauch. Das ist dasselbe Mittel wie beim
+           Helikopter — und es ist der Unterschied zwischen „schwarz"
+           und „schwarz lackiert". */
+        + '<defs>'
+        + '<linearGradient id="lokLack" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#454f5a"/>'
+        + '<stop offset="0.18" stop-color="#242b33"/>'
+        + '<stop offset="0.5" stop-color="#12161a"/>'
+        + '<stop offset="0.82" stop-color="#090c0f"/>'
+        + '<stop offset="1" stop-color="#030507"/></linearGradient>'
+        /* Und das Messing bekommt seinen eigenen Verlauf: Gold ist
+           oben hell und unten warm-dunkel, sonst wirkt es wie
+           gelbe Farbe. */
+        + '<linearGradient id="lokGold" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#ffe9a6"/>'
+        + '<stop offset="0.35" stop-color="#e7bb4e"/>'
+        + '<stop offset="0.72" stop-color="#b8892a"/>'
+        + '<stop offset="1" stop-color="#7d5d15"/></linearGradient>'
+        + "</defs>"
+        + '<path class="lc-lok-kessel" d="M26 18 L88 18 L88 42 L26 42 Z"/>'
+        + '<path class="lc-lok-glanz" d="M26 19.6 L88 19.6 L88 24.4 L26 24.4 Z"/>'
+        + '<path class="lc-lok-schatten" d="M26 36.4 L88 36.4 L88 42 L26 42 Z"/>'
+        + '<path class="lc-lok-band" d="M44 18 V42 M60 18 V42 M76 18 V42"/>'
+        /* Die Handlaeufe aus Messing, laengs ueber dem Kessel. */
+        + '<path class="lc-lok-handlauf" d="M29 21.2 H86 M29 27 H86"/>'
+        + '<circle class="lc-lok-stuetze" cx="44" cy="21.2" r="1.2"/>'
+        + '<circle class="lc-lok-stuetze" cx="60" cy="21.2" r="1.2"/>'
+        + '<circle class="lc-lok-stuetze" cx="76" cy="21.2" r="1.2"/>'
+        /* Rauchkammer: rund, mit Tuerkreuz und Griff. */
+        + '<circle class="lc-lok-rauchkammer" cx="26" cy="30" r="12"/>'
+        + '<circle class="lc-lok-tuer" cx="24" cy="30" r="8.4"/>'
+        + '<path class="lc-lok-kreuz" d="M16 30 H32 M24 22 V38"/>'
+        + '<circle class="lc-lok-griff" cx="24" cy="30" r="1.9"/>'
+        /* Schlot mit Krempe. */
+        + '<path class="lc-lok-schlot" d="M34 19 L34 11 L30 11 L30 6 L46 6 L46 11 L42 11 L42 19 Z"/>'
+        /* Dampfdom und Sanddom. */
+        + '<path class="lc-lok-dom" d="M50 18 Q50 8 58 8 Q66 8 66 18 Z"/>'
+        + '<path class="lc-lok-domglanz" d="M52.4 15 Q52.4 10 55.6 9.6 Q54 12 54.2 15 Z"/>'
+        + '<path class="lc-lok-dom" d="M72 18 Q72 12 77 12 Q82 12 82 18 Z"/>'
+        + '<path class="lc-lok-domglanz" d="M73.8 16 Q73.8 12.8 75.8 12.5 Q74.8 14 74.9 16 Z"/>'
+        /* Der Messingring, auf dem der Dampfdom sitzt. */
+        + '<rect class="lc-lok-domfuss" x="48.6" y="16.4" width="18.8" height="2.4" rx="1.2"/>'
+        + '<rect class="lc-lok-domfuss" x="70.8" y="16.4" width="12.4" height="2.4" rx="1.2"/>'
+        + '<rect class="lc-lok-pfeife" x="85" y="11" width="3.2" height="8" rx="1.6"/>'
+        /* Laterne mit Linse. */
+        + '<rect class="lc-lok-lampe" x="17" y="8" width="12" height="10" rx="1.6"/>'
+        + '<circle class="lc-lok-linse" cx="23" cy="13" r="3.2"/>'
+        /* Zylinder, aus dem die Kolbenstange kommt. */
+        + '<rect class="lc-lok-zylinder" x="32" y="33" width="17" height="11" rx="2.4"/>'
+        /* Fuehrerhaus mit gewoelbtem Dach. */
+        + '<path class="lc-lok-haus" d="M90 12 L112 12 L112 42 L90 42 Z"/>'
+        + '<path class="lc-lok-dach" d="M86 9 Q101 4 116 9 L116 13 Q101 8 86 13 Z"/>'
+        /* Raeder: vorn ein Laufrad, dahinter zwei Treibraeder. */
+        + lokRad(1, 22, 47, 6)
+        + lokRad(2, 58, 45, 11)
+        + lokRad(3, 86, 45, 11)
+        /* Die Kuppelstange verbindet die beiden Treibraeder. Sie
+           DREHT sich nicht — sie wandert im Kreis, genau wie bei
+           einer echten Lok. */
+        + '<rect class="lc-lok-kuppel" x="56" y="49.3" width="30" height="3.4" rx="1.7"/>'
+        + "</svg>"
         + '<i class="lc-lok-rauch"></i><i class="lc-lok-rauch lc-lok-rauch-2"></i>'
         + '<i class="lc-lok-rauch lc-lok-rauch-3"></i>'
         + '<span class="lc-lok-fenster"' + (quelle
@@ -47833,8 +47940,80 @@
       /* Der Arm und die vier Finger der NAHEN Vorderpfote — je einmal
          dunkel und breit (der Umriss) und einmal hell und schmal
          darueber. Zwei Pfade statt zehn. */
+      const froArmN = "M33 50 Q27.5 54.5 26 61 Q25.4 64 25.8 65.8";
+      const froFingerN = "M25.8 65.8 Q19.6 64.4 13.5 65.4"
+        + " M25.8 65.8 Q19.6 67.6 13.9 69"
+        + " M25.8 65.8 Q21 70 17.4 71.4"
+        + " M26.6 65 Q24.4 69.4 22.2 71.8";
+      /* Die FERNE Vorderpfote steht weiter hinten und ist dunkler —
+         daran sieht man ueberhaupt erst, dass es zwei sind. */
+      const froArmF = "M37 49 Q32 53.5 30.6 59.6 Q30.2 62 30.6 64";
+      const froFingerF = "M30.6 64 Q25.4 62.8 20.6 63.8"
+        + " M30.6 64 Q25.8 65.8 21.2 67.2"
+        + " M30.6 64 Q26.8 68 23.6 69.2";
       fro.innerHTML = '<span class="lc-frosch-dreh">'
-        + lcFroschBildSvg()
+        + '<svg class="lc-frosch-bild" viewBox="0 0 100 74">'
+        /* SEITENANSICHT, und das ist der Grund: von vorn verdeckt das
+           Profilbild auf dem Ruecken den ganzen Frosch (nachgesehen am
+           ersten Versuch — vom Frosch waren nur die Beine zu sehen).
+           Von der Seite sitzt der Kopf vorn, der Reiter hinten, und
+           beide sind gleichzeitig da. Ausserdem sieht man so erst,
+           was einen Froschsprung ausmacht: das lange Hinterbein. */
+        /* Ganz hinten die FERNE Seite: erst das ferne Hinterbein,
+           dann die ferne Vorderpfote — beide dunkler, damit sie nach
+           hinten wegtreten. */
+        /* RUNDE 101 — XANDER (Funk 90): „die Beine, die hinten abspringen,
+           die müssen einen Knick in den Knien haben, der in die Richtung
+           geht, wo man abspringt, und nicht die Knie nach hinten …
+           schau mal da wirklich in die echte Physik."
+           GEFUNDEN: das Hinterbein war EIN Klumpen, dessen Woelbung bei
+           x 84–88 lag — HINTER dem Koerper; der Frosch schaut aber nach
+           links. Ein sitzender Frosch faltet das Bein als Z: der
+           Oberschenkel geht von der Huefte nach VORN unten, das Knie
+           steht vorn unter dem Bauch, der Unterschenkel laeuft zurueck
+           zur Ferse, der lange Fuss liegt flach nach vorn. Beim
+           Abstoss klappt alles nach hinten durch. Deshalb sind die
+           Hinterbeine jetzt drei Glieder mit echten Gelenken; die
+           Winkel rechnet lcFroschBein() aus der Sprungphase. */
+        + '<g class="lc-frosch-hbein lc-frosch-hbein-fern" data-huefte="66 45"></g>'
+        + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froArmF
+        + '" stroke="#35702f" stroke-width="7.2" fill="none" stroke-linecap="round"/>'
+        + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froFingerF
+        + '" stroke="#35702f" stroke-width="4.2" fill="none" stroke-linecap="round"/>'
+        + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froArmF
+        + '" stroke="#4d9349" stroke-width="5" fill="none" stroke-linecap="round"/>'
+        + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froFingerF
+        + '" stroke="#4d9349" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
+        /* Der Koerper. */
+        + '<ellipse cx="52" cy="44" rx="28" ry="16" fill="#67b862"'
+        + ' stroke="#3c7a3a" stroke-width="1.8"/>'
+        /* Der Kopf sitzt vorn und geht in den Koerper ueber. */
+        + '<path d="M26 44 Q12 44 11 36 Q11 28 22 27 Q34 26 38 34 Q40 40 38 46 Z"'
+        + ' fill="#67b862" stroke="#3c7a3a" stroke-width="1.8"/>'
+        /* Das Auge sitzt OBEN auf dem Kopf — das Froschigste am Frosch. */
+        + '<circle cx="24" cy="24" r="8.4" fill="#6cbf66" stroke="#3c7a3a" stroke-width="1.6"/>'
+        + '<circle cx="24" cy="23" r="4.8" fill="#f7f3e3"/>'
+        + '<circle cx="25" cy="23.4" r="2.6" fill="#16181d"/>'
+        /* Das breite Maul. */
+        + '<path d="M12 38 Q22 44 34 42" stroke="#3c7a3a" stroke-width="2"'
+        + ' fill="none" stroke-linecap="round"/>'
+        /* Das Nasenloch — winzig, aber es zeigt, wo vorne ist. */
+        + '<circle cx="14.6" cy="32.4" r="1.1" fill="#3c7a3a"/>'
+        /* Der helle Bauch. */
+        + '<path d="M30 52 Q52 62 74 52 Q52 58 30 52 Z" fill="#cfe8b6" opacity=".9"/>'
+        /* Das NAHE Hinterbein liegt VOR dem Koerper — von der Seite
+           sieht man den Oberschenkel auf der Flanke. */
+        + '<g class="lc-frosch-hbein" data-huefte="70 47"></g>'
+        /* Die NAHE Vorderpfote — ganz vorn, weil sie vor dem Bauch steht. */
+        + '<path class="lc-frosch-vorn" d="' + froArmN
+        + '" stroke="#3c7a3a" stroke-width="8.6" fill="none" stroke-linecap="round"/>'
+        + '<path class="lc-frosch-vorn" d="' + froFingerN
+        + '" stroke="#3c7a3a" stroke-width="5" fill="none" stroke-linecap="round"/>'
+        + '<path class="lc-frosch-vorn" d="' + froArmN
+        + '" stroke="#67b862" stroke-width="6.2" fill="none" stroke-linecap="round"/>'
+        + '<path class="lc-frosch-vorn" d="' + froFingerN
+        + '" stroke="#7cc775" stroke-width="3" fill="none" stroke-linecap="round"/>'
+        + "</svg>"
         + '<span class="lc-frosch-last"' + (quelle
             ? ' style="background-image:url(' + quelle.replace(/[()"\']/g, "") + ')"' : "")
           + ">" + (quelle ? "" : (ab.name || "?").charAt(0).toUpperCase()) + "</span>"
@@ -51318,276 +51497,6 @@
      der Oberschenkel schwingt vom Bauch nach hinten. */
   const LC_FROSCH_SITZ = { ober: 149, unter: 20, fuss: 165 };
   const LC_FROSCH_STRECK = { ober: 18, unter: 22, fuss: 12 };
-  /* FASSUNG 712 — XANDER (Funk 158): „die Lokomotive … den Delfin … den
-     Frosch … klein runter skaliert … dass es auf die Kachel passt". Die
-     Zeichnungen stehen deshalb jetzt in eigenen Funktionen: die Reise
-     und die Kachel im Effekt-Menue zeigen DASSELBE Bild. */
-  function lcDelfinFormSvg() {
-    return '<svg class="lc-delfin-form" viewBox="0 0 140 76" aria-hidden="true">'
-      /* Der Leib: vorne die runde Stirn, dann die Schnauze, hinten
-         schlank zum Schwanz. */
-      + '<path class="lc-delfin-leib" d="M6 44'
-      + ' C10 26 30 14 56 14 C78 14 96 20 112 32'
-      + ' C120 38 128 42 136 44 C128 50 118 54 108 56'
-      + ' C92 60 70 62 52 58 C30 53 12 50 6 44 Z"/>'
-      /* Die Schnauze. */
-      + '<path class="lc-delfin-schnauze" d="M6 44 C2 42 0 40 0 38'
-      + ' C4 36 10 36 14 38 Z"/>'
-      /* Die Rueckenfinne. */
-      + '<path class="lc-delfin-finne" d="M62 15 C66 4 78 0 86 2'
-      + ' C80 8 74 14 70 18 Z"/>'
-      /* Die Brustflosse. */
-      + '<path class="lc-delfin-brust" d="M42 50 C36 58 30 64 22 66'
-      + ' C26 58 32 52 38 48 Z"/>'
-      /* Die Schwanzflosse, hochkant wie bei einem Wal. */
-      + '<path class="lc-delfin-schwanz" d="M126 44 C134 34 140 30 140 30'
-      + ' C140 40 138 46 136 48 C138 52 140 58 140 66'
-      + ' C140 66 132 56 126 46 Z"/>'
-      /* Das Auge und das Blasloch. */
-      + '<circle class="lc-delfin-auge" cx="24" cy="38" r="2.6"/>'
-      + '<path class="lc-delfin-loch" d="M44 18 q4 -3 8 0" fill="none"/>'
-      + "</svg>";
-  }
-  function lcLokSeiteSvg() {
-    const lokRad = (nr, cx, cy, r) => {
-      let sp = "";
-      for (let i = 0; i < 8; i++) {
-        const w = (i * Math.PI) / 4;
-        sp += '<path class="lc-lok-speiche" d="M' + cx.toFixed(1) + " " + cy.toFixed(1)
-          + " L" + (cx + Math.cos(w) * (r - 1.6)).toFixed(1) + " "
-          + (cy + Math.sin(w) * (r - 1.6)).toFixed(1) + '"/>';
-      }
-      return '<g class="lc-lok-rad lc-lok-rad-' + nr + '"'
-        + ' style="transform-origin:' + cx + 'px ' + cy + 'px">'
-        + '<circle class="lc-lok-reifen" cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>'
-        + sp
-        /* Das Gegengewicht sitzt dem Kurbelzapfen gegenueber — es
-           gleicht ihn aus, deshalb heisst es so. */
-        + '<path class="lc-lok-gewicht" d="M' + cx + " " + cy
-        + " m-" + (r * 0.72).toFixed(1) + ",0 a" + (r * 0.72).toFixed(1) + ","
-        + (r * 0.72).toFixed(1) + " 0 0,1 " + (r * 1.44).toFixed(1) + ',0 Z"/>'
-        + '<circle class="lc-lok-nabe" cx="' + cx + '" cy="' + cy + '" r="' + (r * 0.24).toFixed(1) + '"/>'
-        /* Der Kurbelzapfen: an ihm haengt die Kuppelstange. */
-        + '<circle class="lc-lok-zapfen" cx="' + cx + '" cy="' + (cy + r * 0.55).toFixed(1)
-        + '" r="1.5"/>'
-        + "</g>";
-    };
-      return '<svg class="lc-lok-form" viewBox="0 0 120 60" aria-hidden="true">'
-      /* Pufferbohle mit zwei Puffern — vorn, wo es stoesst. */
-      + '<rect class="lc-lok-bohle" x="3" y="35" width="7" height="17" rx="1.5"/>'
-      + '<circle class="lc-lok-puffer" cx="4.5" cy="38.5" r="2.4"/>'
-      + '<circle class="lc-lok-puffer" cx="4.5" cy="48.5" r="2.4"/>'
-      /* Rahmen und Laufblech. */
-      + '<path class="lc-lok-fahrwerk" d="M8 42 L115 42 L115 49 L8 49 Z"/>'
-      /* Kessel mit drei Baendern. */
-      /* RUNDE 71 — XANDER: „Mir fehlen da ein bisschen diese
-         goldenen Teile oben auf dem Lok Koerper … die Farbe kann
-         man auch ein bisschen verbessern … mehr tiefer … ins
-         Schwarze … mit Licht und Schatten."
-         Der Kessel war blaugrau (#2f4a63). Jetzt ist er fast
-         schwarz, und darauf liegen zwei eigene Flaechen: oben ein
-         heller Streifen (das Licht auf dem runden Kessel), unten
-         ein dunkler (der Schatten darunter). Die MESSING-Teile —
-         Baender, Dome, Pfeife, Handlaeufe — sitzen ausdruecklich
-         OBEN auf dem Koerper, so wie er es beschreibt. */
-      /* RUNDE 73 — XANDER: „Die Lok kann noch mehr Tiefe haben im
-         Design … ein bisschen mehr, ich weiss nicht ob es Schatten
-         ist oder der Lack — das kann bisschen ins Schwarze gehen,
-         aber so dass man das noch gut erkennen kann."
-         Eine FLAECHE mit einer Farbe hat keine Tiefe, ganz gleich
-         wie dunkel sie ist. Deshalb bekommt der Kessel hier einen
-         echten Verlauf ueber seine Hoehe: oben der Lichtstreifen
-         des Lacks, in der Mitte das Grundschwarz, unten der
-         Schattenbauch. Das ist dasselbe Mittel wie beim
-         Helikopter — und es ist der Unterschied zwischen „schwarz"
-         und „schwarz lackiert". */
-      + '<defs>'
-      + '<linearGradient id="lokLack" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0" stop-color="#454f5a"/>'
-      + '<stop offset="0.18" stop-color="#242b33"/>'
-      + '<stop offset="0.5" stop-color="#12161a"/>'
-      + '<stop offset="0.82" stop-color="#090c0f"/>'
-      + '<stop offset="1" stop-color="#030507"/></linearGradient>'
-      /* Und das Messing bekommt seinen eigenen Verlauf: Gold ist
-         oben hell und unten warm-dunkel, sonst wirkt es wie
-         gelbe Farbe. */
-      + '<linearGradient id="lokGold" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0" stop-color="#ffe9a6"/>'
-      + '<stop offset="0.35" stop-color="#e7bb4e"/>'
-      + '<stop offset="0.72" stop-color="#b8892a"/>'
-      + '<stop offset="1" stop-color="#7d5d15"/></linearGradient>'
-      + "</defs>"
-      + '<path class="lc-lok-kessel" d="M26 18 L88 18 L88 42 L26 42 Z"/>'
-      + '<path class="lc-lok-glanz" d="M26 19.6 L88 19.6 L88 24.4 L26 24.4 Z"/>'
-      + '<path class="lc-lok-schatten" d="M26 36.4 L88 36.4 L88 42 L26 42 Z"/>'
-      + '<path class="lc-lok-band" d="M44 18 V42 M60 18 V42 M76 18 V42"/>'
-      /* Die Handlaeufe aus Messing, laengs ueber dem Kessel. */
-      + '<path class="lc-lok-handlauf" d="M29 21.2 H86 M29 27 H86"/>'
-      + '<circle class="lc-lok-stuetze" cx="44" cy="21.2" r="1.2"/>'
-      + '<circle class="lc-lok-stuetze" cx="60" cy="21.2" r="1.2"/>'
-      + '<circle class="lc-lok-stuetze" cx="76" cy="21.2" r="1.2"/>'
-      /* Rauchkammer: rund, mit Tuerkreuz und Griff. */
-      + '<circle class="lc-lok-rauchkammer" cx="26" cy="30" r="12"/>'
-      + '<circle class="lc-lok-tuer" cx="24" cy="30" r="8.4"/>'
-      + '<path class="lc-lok-kreuz" d="M16 30 H32 M24 22 V38"/>'
-      + '<circle class="lc-lok-griff" cx="24" cy="30" r="1.9"/>'
-      /* Schlot mit Krempe. */
-      + '<path class="lc-lok-schlot" d="M34 19 L34 11 L30 11 L30 6 L46 6 L46 11 L42 11 L42 19 Z"/>'
-      /* Dampfdom und Sanddom. */
-      + '<path class="lc-lok-dom" d="M50 18 Q50 8 58 8 Q66 8 66 18 Z"/>'
-      + '<path class="lc-lok-domglanz" d="M52.4 15 Q52.4 10 55.6 9.6 Q54 12 54.2 15 Z"/>'
-      + '<path class="lc-lok-dom" d="M72 18 Q72 12 77 12 Q82 12 82 18 Z"/>'
-      + '<path class="lc-lok-domglanz" d="M73.8 16 Q73.8 12.8 75.8 12.5 Q74.8 14 74.9 16 Z"/>'
-      /* Der Messingring, auf dem der Dampfdom sitzt. */
-      + '<rect class="lc-lok-domfuss" x="48.6" y="16.4" width="18.8" height="2.4" rx="1.2"/>'
-      + '<rect class="lc-lok-domfuss" x="70.8" y="16.4" width="12.4" height="2.4" rx="1.2"/>'
-      + '<rect class="lc-lok-pfeife" x="85" y="11" width="3.2" height="8" rx="1.6"/>'
-      /* Laterne mit Linse. */
-      + '<rect class="lc-lok-lampe" x="17" y="8" width="12" height="10" rx="1.6"/>'
-      + '<circle class="lc-lok-linse" cx="23" cy="13" r="3.2"/>'
-      /* Zylinder, aus dem die Kolbenstange kommt. */
-      + '<rect class="lc-lok-zylinder" x="32" y="33" width="17" height="11" rx="2.4"/>'
-      /* Fuehrerhaus mit gewoelbtem Dach. */
-      + '<path class="lc-lok-haus" d="M90 12 L112 12 L112 42 L90 42 Z"/>'
-      + '<path class="lc-lok-dach" d="M86 9 Q101 4 116 9 L116 13 Q101 8 86 13 Z"/>'
-      /* Raeder: vorn ein Laufrad, dahinter zwei Treibraeder. */
-      + lokRad(1, 22, 47, 6)
-      + lokRad(2, 58, 45, 11)
-      + lokRad(3, 86, 45, 11)
-      /* Die Kuppelstange verbindet die beiden Treibraeder. Sie
-         DREHT sich nicht — sie wandert im Kreis, genau wie bei
-         einer echten Lok. */
-      + '<rect class="lc-lok-kuppel" x="56" y="49.3" width="30" height="3.4" rx="1.7"/>'
-      + "</svg>";
-  }
-  function lcFroschBildSvg() {
-    const froArmN = "M33 50 Q27.5 54.5 26 61 Q25.4 64 25.8 65.8";
-    const froFingerN = "M25.8 65.8 Q19.6 64.4 13.5 65.4"
-      + " M25.8 65.8 Q19.6 67.6 13.9 69"
-      + " M25.8 65.8 Q21 70 17.4 71.4"
-      + " M26.6 65 Q24.4 69.4 22.2 71.8";
-    /* Die FERNE Vorderpfote steht weiter hinten und ist dunkler —
-       daran sieht man ueberhaupt erst, dass es zwei sind. */
-    const froArmF = "M37 49 Q32 53.5 30.6 59.6 Q30.2 62 30.6 64";
-    const froFingerF = "M30.6 64 Q25.4 62.8 20.6 63.8"
-      + " M30.6 64 Q25.8 65.8 21.2 67.2"
-      + " M30.6 64 Q26.8 68 23.6 69.2";
-      return '<svg class="lc-frosch-bild" viewBox="0 0 100 74">'
-      /* SEITENANSICHT, und das ist der Grund: von vorn verdeckt das
-         Profilbild auf dem Ruecken den ganzen Frosch (nachgesehen am
-         ersten Versuch — vom Frosch waren nur die Beine zu sehen).
-         Von der Seite sitzt der Kopf vorn, der Reiter hinten, und
-         beide sind gleichzeitig da. Ausserdem sieht man so erst,
-         was einen Froschsprung ausmacht: das lange Hinterbein. */
-      /* Ganz hinten die FERNE Seite: erst das ferne Hinterbein,
-         dann die ferne Vorderpfote — beide dunkler, damit sie nach
-         hinten wegtreten. */
-      /* RUNDE 101 — XANDER (Funk 90): „die Beine, die hinten abspringen,
-         die müssen einen Knick in den Knien haben, der in die Richtung
-         geht, wo man abspringt, und nicht die Knie nach hinten …
-         schau mal da wirklich in die echte Physik."
-         GEFUNDEN: das Hinterbein war EIN Klumpen, dessen Woelbung bei
-         x 84–88 lag — HINTER dem Koerper; der Frosch schaut aber nach
-         links. Ein sitzender Frosch faltet das Bein als Z: der
-         Oberschenkel geht von der Huefte nach VORN unten, das Knie
-         steht vorn unter dem Bauch, der Unterschenkel laeuft zurueck
-         zur Ferse, der lange Fuss liegt flach nach vorn. Beim
-         Abstoss klappt alles nach hinten durch. Deshalb sind die
-         Hinterbeine jetzt drei Glieder mit echten Gelenken; die
-         Winkel rechnet lcFroschBein() aus der Sprungphase. */
-      + '<g class="lc-frosch-hbein lc-frosch-hbein-fern" data-huefte="66 45"></g>'
-      + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froArmF
-      + '" stroke="#35702f" stroke-width="7.2" fill="none" stroke-linecap="round"/>'
-      + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froFingerF
-      + '" stroke="#35702f" stroke-width="4.2" fill="none" stroke-linecap="round"/>'
-      + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froArmF
-      + '" stroke="#4d9349" stroke-width="5" fill="none" stroke-linecap="round"/>'
-      + '<path class="lc-frosch-vorn lc-frosch-vorn-fern" d="' + froFingerF
-      + '" stroke="#4d9349" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
-      /* Der Koerper. */
-      + '<ellipse cx="52" cy="44" rx="28" ry="16" fill="#67b862"'
-      + ' stroke="#3c7a3a" stroke-width="1.8"/>'
-      /* Der Kopf sitzt vorn und geht in den Koerper ueber. */
-      + '<path d="M26 44 Q12 44 11 36 Q11 28 22 27 Q34 26 38 34 Q40 40 38 46 Z"'
-      + ' fill="#67b862" stroke="#3c7a3a" stroke-width="1.8"/>'
-      /* Das Auge sitzt OBEN auf dem Kopf — das Froschigste am Frosch. */
-      + '<circle cx="24" cy="24" r="8.4" fill="#6cbf66" stroke="#3c7a3a" stroke-width="1.6"/>'
-      + '<circle cx="24" cy="23" r="4.8" fill="#f7f3e3"/>'
-      + '<circle cx="25" cy="23.4" r="2.6" fill="#16181d"/>'
-      /* Das breite Maul. */
-      + '<path d="M12 38 Q22 44 34 42" stroke="#3c7a3a" stroke-width="2"'
-      + ' fill="none" stroke-linecap="round"/>'
-      /* Das Nasenloch — winzig, aber es zeigt, wo vorne ist. */
-      + '<circle cx="14.6" cy="32.4" r="1.1" fill="#3c7a3a"/>'
-      /* Der helle Bauch. */
-      + '<path d="M30 52 Q52 62 74 52 Q52 58 30 52 Z" fill="#cfe8b6" opacity=".9"/>'
-      /* Das NAHE Hinterbein liegt VOR dem Koerper — von der Seite
-         sieht man den Oberschenkel auf der Flanke. */
-      + '<g class="lc-frosch-hbein" data-huefte="70 47"></g>'
-      /* Die NAHE Vorderpfote — ganz vorn, weil sie vor dem Bauch steht. */
-      + '<path class="lc-frosch-vorn" d="' + froArmN
-      + '" stroke="#3c7a3a" stroke-width="8.6" fill="none" stroke-linecap="round"/>'
-      + '<path class="lc-frosch-vorn" d="' + froFingerN
-      + '" stroke="#3c7a3a" stroke-width="5" fill="none" stroke-linecap="round"/>'
-      + '<path class="lc-frosch-vorn" d="' + froArmN
-      + '" stroke="#67b862" stroke-width="6.2" fill="none" stroke-linecap="round"/>'
-      + '<path class="lc-frosch-vorn" d="' + froFingerN
-      + '" stroke="#7cc775" stroke-width="3" fill="none" stroke-linecap="round"/>'
-      + "</svg>";
-  }
-  /* Die AirPods Max — dieselbe Zeichnung fuer den Platz und fuer die Kachel. */
-  function lcApmSvg() {
-    return '<svg class="lc-kopfhoerer-bild" viewBox="0 0 160 160">'
-      + '<defs>'
-      /* Das eloxierte Himmelblau der Aussenplatte, von oben hell
-         nach unten dunkel — so faellt Licht auf Aluminium. */
-      + '<linearGradient id="apmL" x1="0" y1="0" x2="0.3" y2="1">'
-      + '<stop offset="0" stop-color="#cfe0ef"/><stop offset=".45" stop-color="#9dbdd8"/>'
-      + '<stop offset="1" stop-color="#6d90b0"/></linearGradient>'
-      /* Der Buegel ist METALL, nicht lackiert: ein Verlauf quer
-         ueber den Draht mit einem hellen Grat in der Mitte. */
-      + '<linearGradient id="apmStahl" x1="0" y1="0" x2="1" y2="0.25">'
-      + '<stop offset="0" stop-color="#8b9aa8"/><stop offset=".34" stop-color="#eef3f8"/>'
-      + '<stop offset=".62" stop-color="#b9c6d2"/><stop offset="1" stop-color="#7c8b99"/>'
-      + "</linearGradient>"
-      /* Die Bruecke: das kraeftige Blau, das Xander meint. */
-      + '<linearGradient id="apmBlau" x1="0" y1="0" x2="0" y2="1">'
-      + '<stop offset="0" stop-color="#7fb4e8"/><stop offset=".55" stop-color="#4b8ccd"/>'
-      + '<stop offset="1" stop-color="#2f6ba6"/></linearGradient>'
-      + "</defs>"
-      /* DIE BEIDEN BUEGEL — Kreisboegen auf dem Profilbild. */
-      + '<path d="M 105.14 10.93 A 73.5 73.5 0 0 1 150.65 59.74"'
-      + ' fill="none" stroke="url(#apmStahl)" stroke-width="3.4"'
-      + ' stroke-linecap="round"/>'
-      + '<path d="M 54.86 10.93 A 73.5 73.5 0 0 0 9.35 59.74"'
-      + ' fill="none" stroke="url(#apmStahl)" stroke-width="3.4"'
-      + ' stroke-linecap="round"/>'
-      /* DIE BRUECKE: ein Pflaster, das sich an den Kreis anlegt. */
-      + '<path d="M 54.74 6.63 A 77.6 77.6 0 0 1 105.26 6.63'
-      + ' L 102.59 14.38 A 69.4 69.4 0 0 0 57.41 14.38 Z"'
-      + ' fill="url(#apmBlau)" stroke="#2a5f95" stroke-width="1"'
-      + ' stroke-linejoin="round"/>'
-      /* Die Naht auf dem Pflaster — ohne sie ist es ein blauer Klotz. */
-      + '<path d="M 61.6 8.84 A 73.5 73.5 0 0 1 98.4 8.84"'
-      + ' fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".9"'
-      + ' stroke-dasharray="2 2.6" stroke-linecap="round"/>'
-      /* DIE ZWEI TROPFEN an den Enden der Bruecke — aus ihnen
-         kommt der Buegel heraus. */
-      + '<ellipse cx="103.93" cy="10.5" rx="5.4" ry="4.2"'
-      + ' transform="rotate(19 103.93 10.5)"'
-      + ' fill="url(#apmBlau)" stroke="#2a5f95" stroke-width=".9"/>'
-      + '<ellipse cx="56.07" cy="10.5" rx="5.4" ry="4.2"'
-      + ' transform="rotate(-19 56.07 10.5)"'
-      + ' fill="url(#apmBlau)" stroke="#2a5f95" stroke-width=".9"/>'
-      + lcApmMuschel(11.75, 77.74, false)
-      + lcApmMuschel(148.25, 77.74, true)
-      /* Die Digital Crown sitzt OBEN AUF der rechten Muschel. */
-      + '<rect x="152.85" y="64.74" width="9" height="4.2" rx="2.1" fill="#c3d2e0"/>'
-      + '<path d="M154.65 65.54 V68.34 M156.65 65.54 V68.34'
-      + ' M158.65 65.54 V68.34" stroke="#8098ad" stroke-width="0.7"/>'
-      + "</svg>";
-  }
-
   function lcFroschBein(g, e) {
     const h = String(g.dataset.huefte || "70 47").split(" ").map(Number);
     const fern = g.classList.contains("lc-frosch-hbein-fern");
@@ -56734,7 +56643,55 @@
              dort faengt der silberne Buegel an.
            · Die Muscheln haengen an den Buegelenden bei 74 Grad. */
       schicht.innerHTML =
-        lcApmSvg();
+        '<svg class="lc-kopfhoerer-bild" viewBox="0 0 160 160">'
+        + '<defs>'
+        /* Das eloxierte Himmelblau der Aussenplatte, von oben hell
+           nach unten dunkel — so faellt Licht auf Aluminium. */
+        + '<linearGradient id="apmL" x1="0" y1="0" x2="0.3" y2="1">'
+        + '<stop offset="0" stop-color="#cfe0ef"/><stop offset=".45" stop-color="#9dbdd8"/>'
+        + '<stop offset="1" stop-color="#6d90b0"/></linearGradient>'
+        /* Der Buegel ist METALL, nicht lackiert: ein Verlauf quer
+           ueber den Draht mit einem hellen Grat in der Mitte. */
+        + '<linearGradient id="apmStahl" x1="0" y1="0" x2="1" y2="0.25">'
+        + '<stop offset="0" stop-color="#8b9aa8"/><stop offset=".34" stop-color="#eef3f8"/>'
+        + '<stop offset=".62" stop-color="#b9c6d2"/><stop offset="1" stop-color="#7c8b99"/>'
+        + "</linearGradient>"
+        /* Die Bruecke: das kraeftige Blau, das Xander meint. */
+        + '<linearGradient id="apmBlau" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="#7fb4e8"/><stop offset=".55" stop-color="#4b8ccd"/>'
+        + '<stop offset="1" stop-color="#2f6ba6"/></linearGradient>'
+        + "</defs>"
+        /* DIE BEIDEN BUEGEL — Kreisboegen auf dem Profilbild. */
+        + '<path d="M 105.14 10.93 A 73.5 73.5 0 0 1 150.65 59.74"'
+        + ' fill="none" stroke="url(#apmStahl)" stroke-width="3.4"'
+        + ' stroke-linecap="round"/>'
+        + '<path d="M 54.86 10.93 A 73.5 73.5 0 0 0 9.35 59.74"'
+        + ' fill="none" stroke="url(#apmStahl)" stroke-width="3.4"'
+        + ' stroke-linecap="round"/>'
+        /* DIE BRUECKE: ein Pflaster, das sich an den Kreis anlegt. */
+        + '<path d="M 54.74 6.63 A 77.6 77.6 0 0 1 105.26 6.63'
+        + ' L 102.59 14.38 A 69.4 69.4 0 0 0 57.41 14.38 Z"'
+        + ' fill="url(#apmBlau)" stroke="#2a5f95" stroke-width="1"'
+        + ' stroke-linejoin="round"/>'
+        /* Die Naht auf dem Pflaster — ohne sie ist es ein blauer Klotz. */
+        + '<path d="M 61.6 8.84 A 73.5 73.5 0 0 1 98.4 8.84"'
+        + ' fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".9"'
+        + ' stroke-dasharray="2 2.6" stroke-linecap="round"/>'
+        /* DIE ZWEI TROPFEN an den Enden der Bruecke — aus ihnen
+           kommt der Buegel heraus. */
+        + '<ellipse cx="103.93" cy="10.5" rx="5.4" ry="4.2"'
+        + ' transform="rotate(19 103.93 10.5)"'
+        + ' fill="url(#apmBlau)" stroke="#2a5f95" stroke-width=".9"/>'
+        + '<ellipse cx="56.07" cy="10.5" rx="5.4" ry="4.2"'
+        + ' transform="rotate(-19 56.07 10.5)"'
+        + ' fill="url(#apmBlau)" stroke="#2a5f95" stroke-width=".9"/>'
+        + lcApmMuschel(11.75, 77.74, false)
+        + lcApmMuschel(148.25, 77.74, true)
+        /* Die Digital Crown sitzt OBEN AUF der rechten Muschel. */
+        + '<rect x="152.85" y="64.74" width="9" height="4.2" rx="2.1" fill="#c3d2e0"/>'
+        + '<path d="M154.65 65.54 V68.34 M156.65 65.54 V68.34'
+        + ' M158.65 65.54 V68.34" stroke="#8098ad" stroke-width="0.7"/>'
+        + "</svg>";
       /* Noten, die aus den Muscheln steigen — sonst sind es nur zwei
          schwarze Klumpen am Kopf. */
       if (mitNoten) ["\u266a", "\u266b", "\u266c"].forEach((z, i) => {
@@ -63483,8 +63440,6 @@
      und nichts weiter. Sie verändern nichts, sie öffnen nur, was ein
      Mensch mit einem Tipp auch öffnen würde. */
   window.DMA_PRUEF = Object.assign(window.DMA_PRUEF || {}, {
-    /* FASSUNG 712 — die Zeichnungen, die Animation und Kachel teilen. */
-    zeichnungen: { lok: lcLokSeiteSvg, delfin: lcDelfinFormSvg, frosch: lcFroschBildSvg, apm: lcApmSvg },
     /* GEFRAGT: „Hast du schon das bei der Online-Anzeige gemacht, dass
        wenn jemand sein Land angegeben hat, dort seine Flagge zu sehen
        ist — und auch, ob er gerade im Klassenzimmer ist?"

@@ -34907,18 +34907,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
    Der runde Ausschnitt nahm bisher die Mitte des Fotos; bei einem Hochformat-Porträt sitzt das Gesicht aber im oberen Drittel –
    im Kreis sah man Hals und Brust. Jetzt liegt der Ausschnitt oben (bei quadratischen Bildern ändert sich nichts). */
 .lc-avatar, .lc-auftritt-bild img { object-position: 50% 22%; }
-
-/* FASSUNG 712 — Die echten Zeichnungen auf der Kachel (Funk 158).
-   Die SVGs tragen ihre Klasse aus der Animation weiter (sonst fehlen die
-   Farben); deren Lage-, Groessen- und Bewegungsregeln gelten hier nicht. */
-.lc-platzmenue-zeichen svg.lc-mini-echt {
-  position: static; inset: auto; transform: none; opacity: 1;
-  width: 2.1em; height: 1.5em; margin: -.25em auto; overflow: visible;
-  animation: none; filter: none;
-}
-.lc-anreise-knopf svg.lc-mini-echt {
-  position: static; inset: auto; transform: none; opacity: 1;
-  width: 34px; height: 26px; margin: 0 auto; overflow: visible; animation: none; filter: none;
-}
-.lc-platzmenue-zeichen svg.lc-mini-echt *, .lc-anreise-knopf svg.lc-mini-echt * { animation: none !important; }
-svg.lc-mini-echt .lc-delfin-leib { filter: none; }

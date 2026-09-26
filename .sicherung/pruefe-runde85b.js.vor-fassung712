@@ -415,7 +415,7 @@ const sage = (gut, text, dazu) => {
     if (k) k.click();
     return !!k;
   }, teil);
-  await tippen("Musik"); /* FASSUNG 712: die Kachel heisst jetzt „Musik". */
+  await tippen("H\u00f6rer");
   await pg.waitForTimeout(250);
   const frage1 = await pg.evaluate(() => ({
     kopf: (document.querySelector("#lcPlatzMenue .lc-platzmenue-kopf") || {}).textContent,
