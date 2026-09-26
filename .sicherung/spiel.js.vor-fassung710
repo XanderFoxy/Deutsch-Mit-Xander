@@ -1837,42 +1837,6 @@
       schnellZeichnen(true); panelAuffrischen();
     }).catch(function (e) { hinweis("Ging nicht: " + (e && e.message ? e.message : e)); });
   }
-  /* ---------------------------------------------------------------
-     FASSUNG 710 — DIE LEISTE UNTEN SELBST ORDNEN (Funk 157)
-     --------------------------------------------------------------- */
-  var LEISTE_NAMEN = { taschen: "Taschen", heilen: "Heilen", trank: "Tränke", super: "Superkraft", faehig: "Tier-Fähigkeit", kampf: "Klassenkraft", zauber: "Zauber", makro: "Makroknopf", repar: "Reparieren" };
-  var LEISTE_GRUND = ["taschen", "heilen", "trank", "super", "faehig", "kampf", "zauber", "makro", "repar"];
-  function leisteReihe() {
-    var r = null;
-    try { r = JSON.parse(localStorage.getItem("dma_spiel_leiste") || "null"); } catch (e) {}
-    var gut = Array.isArray(r) ? r.filter(function (k, i) { return LEISTE_NAMEN[k] && r.indexOf(k) === i; }) : [];
-    LEISTE_GRUND.forEach(function (k) { if (gut.indexOf(k) < 0) gut.push(k); });
-    return gut;
-  }
-  function leisteBild(k) {
-    var b = {
-      taschen: '<path d="M5 8 H15 L16 17 H4 Z" fill="#b07a45"/><path d="M7.5 8 V6.5 a2.5 2.5 0 0 1 5 0 V8" fill="none" stroke="#6b4521" stroke-width="1.5"/>',
-      heilen: '<path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#e2403a"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>',
-      trank: '<path d="M8 2.5 H12 V6 C15 7.2 16.4 9.6 16.4 12.2 A6.4 6.4 0 0 1 3.6 12.2 C3.6 9.6 5 7.2 8 6 Z" fill="#dfe8ff" stroke="#8aa0d8" stroke-width="1"/><path d="M4.4 12 C6.4 11 8.4 13 10.4 12 C12.4 11 14 12.4 15.6 12 A5.6 5.6 0 0 1 4.4 12 Z" fill="#5a7bff"/>',
-      super: '<path d="M10 1.5 C11 5 15.5 7 15.5 12 A5.5 5.5 0 0 1 4.5 12 C4.5 9 6.5 7.5 7 5 C8 7 8.5 8 9.5 8.5 C9.5 6 9 4 10 1.5 Z" fill="#f29d0b"/><path d="M10 9 C10.5 11 13 12 13 14 A3 3 0 0 1 7 14 C7 12.5 8.5 11.5 10 9 Z" fill="#ffd84a"/>',
-      faehig: '<ellipse cx="10" cy="13" rx="4" ry="3.2" fill="#8a5a2e"/><circle cx="5" cy="8.5" r="1.8" fill="#8a5a2e"/><circle cx="8.3" cy="5.8" r="1.8" fill="#8a5a2e"/><circle cx="11.7" cy="5.8" r="1.8" fill="#8a5a2e"/><circle cx="15" cy="8.5" r="1.8" fill="#8a5a2e"/>',
-      kampf: '<path d="M4 16 L14 6 M14 6 L16 3.5 L16.5 4 L14.6 6.6 M3 13 L7 17 M4.2 15.8 L2.5 17.5" stroke="#5b636c" stroke-width="2" stroke-linecap="round" fill="none"/>',
-      zauber: '<path d="M3 17 L12 8" stroke="#c9a46a" stroke-width="2.4" stroke-linecap="round"/><path d="M14 2 L15 5 L18 6 L15 7 L14 10 L13 7 L10 6 L13 5 Z" fill="#ffd84a"/>',
-      repar: '<path d="M13.5 2.5 a4 4 0 0 0 -4.8 5.3 L2.8 13.7 a1.8 1.8 0 0 0 2.5 2.5 L11.2 10.3 a4 4 0 0 0 5.3 -4.8 L14 8 L12 6 Z" fill="#cfd6de" stroke="#5b636c" stroke-width="1"/>'
-    }[k];
-    if (k === "makro") return makroSvg(S.makro);
-    return '<svg viewBox="0 0 20 20" aria-hidden="true">' + (b || "") + "</svg>";
-  }
-  function leisteOrdnenHtml() {
-    var r = leisteReihe(), w = r.indexOf(S.leisteWahl) >= 0 ? S.leisteWahl : r[0], i = r.indexOf(w);
-    return '<p class="sp-sm-klein"><b>Leiste unten ordnen</b> – antippen, dann nach links oder rechts. Unten steht es sofort genauso.</p>'
-      + '<div class="sp-taschen-ed sp-leiste-ed">' + r.map(function (k, n) {
-        return '<button type="button" class="sp-tasche' + (k === w ? " sp-an" : "") + '" data-s="leistewahl" data-k="' + k + '">' + leisteBild(k) + "<small>" + (n + 1) + ". " + LEISTE_NAMEN[k] + "</small></button>";
-      }).join("") + "</div>"
-      + '<div class="sp-sm-liste sp-taschen-knoepfe"><button type="button" data-s="leisteschieb" data-r="-1"' + (i > 0 ? "" : " disabled") + ">◀ nach links</button>"
-      + '<button type="button" data-s="leisteschieb" data-r="1"' + (i < r.length - 1 ? "" : " disabled") + ">nach rechts ▶</button></div>"
-      + '<p class="sp-sm-klein">Was gerade nicht gebraucht wird (Tränke ohne Trank, Reparieren ohne Schaden), ist unten nicht zu sehen – sein Platz bleibt gemerkt.</p>';
-  }
   function faehigKnopf() {
     var f = faehigStand();
     if (!f.art || !FAEHIG[f.art]) return "";
@@ -3556,15 +3520,11 @@
       + '<path d="M7 9.2 V13.2 M5 11.2 H9" stroke="#2f3749" stroke-width="1.7" stroke-linecap="round"/>'
       + '<circle cx="16.4" cy="9.9" r="1.15" fill="#e2403a"/><circle cx="18.6" cy="12.1" r="1.15" fill="#3bbf4a"/><circle cx="14.2" cy="12.1" r="1.15" fill="#f2c230"/><circle cx="16.4" cy="14.2" r="1.15" fill="#3a8dde"/></svg></button>');
     if (ich.mitspielen) {
-      /* FASSUNG 710 — XANDER (Funk 157): „die Anweisung der Plätze wie ich das in meine persönlichen Reihenfolge haben möchte
-         soll dort bearbeitet werden können und unten soll sie genauso auftauchen". Jedes Feld der Leiste wird erst gebaut
-         und dann in der gemerkten Reihenfolge (Menü → Mehr → „Leiste unten ordnen") aufgereiht. */
-      var feld = {};
       /* Ein kleiner Tacho auf der angelegten Waffe zeigt: nochmal tippen
          öffnet das Waffenrad (XANDER: „ich habe immer noch nicht das
          Tacho Menü"). */
       var tacho = '<i class="sp-s-tacho"><svg viewBox="0 0 12 8"><path d="M1.5 7 A4.5 4.5 0 0 1 10.5 7" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M6 7 L8.4 3.6" stroke="#f2c230" stroke-width="1.4" stroke-linecap="round"/></svg></i>';
-      feld.taschen = (s.map(function (w, n) {
+      teile.push(s.map(function (w, n) {
         var h = waffenKnopf(w, " sp-s-slot").replace('data-s="waffe"', 'data-s="waffe" data-n="' + n + '"');
         return S.waffe === w ? h.replace(/<\/button>$/, tacho + "</button>") : h;
       }).join(""));
@@ -3572,18 +3532,18 @@
          außerdem möchte ich das innerhalb des Menüs steuern". + und − stehen jetzt groß im Menü (Waffen), nicht mehr hier. */
       var voll = !ich.kaputt && ich.lp >= ich.lp_max;
       var zuEssen = vorrat(ich, "bratwurst") + vorrat(ich, "sauerkraut");
-      feld.heilen = ('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke && !zuEssen) ? " disabled" : "")
+      teile.push('<button type="button" class="sp-s-heil" data-s="heilen"' + (voll || (!ich.pflaster && !ich.traenke && !zuEssen) ? " disabled" : "")
         + ' title="Heilen – nimmt, was gerade passt, und verschwendet nichts">'
         + '<svg viewBox="0 0 20 20"><path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#e2403a"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>');
       /* FASSUNG 686 — XANDER: „unten in der Hauptschnellleiste meine Manatränke, die ich habe, dass ich sofort
          darauf zugreifen kann". Die Flasche zeigt, wie viele Tränke da sind; ein Tipp öffnet sie alle. */
       var trankZahl = trankVorrat(ich);
-      if (trankZahl) feld.trank = ('<button type="button" class="sp-s-trank' + (S.trankAuf ? " sp-an" : "") + '" data-s="trankauf" title="Tränke und Mana-Essen">'
+      if (trankZahl) teile.push('<button type="button" class="sp-s-trank' + (S.trankAuf ? " sp-an" : "") + '" data-s="trankauf" title="Tränke und Mana-Essen">'
         + '<svg viewBox="0 0 20 20"><path d="M8 2.5 H12 V6 C15 7.2 16.4 9.6 16.4 12.2 A6.4 6.4 0 0 1 3.6 12.2 C3.6 9.6 5 7.2 8 6 Z" fill="#dfe8ff" opacity=".35" stroke="#fff" stroke-width="1"/>'
         + '<path d="M4.4 12 C6.4 11 8.4 13 10.4 12 C12.4 11 14 12.4 15.6 12 A5.6 5.6 0 0 1 4.4 12 Z" fill="#5a7bff"/><rect x="7.4" y="1.4" width="5.2" height="2" rx=".8" fill="#b07a45"/>'
         + '<circle cx="7.4" cy="14" r=".9" fill="#fff" opacity=".7"/></svg><small>' + trankZahl + "</small></button>");
       var ladung = Math.max(0, Math.min(100, ich.ladung || 0)), daemonRest = wirkt(ich, "daemon");
-      feld.super = ('<button type="button" class="sp-s-super' + (daemonRest ? " sp-an" : ladung >= 100 ? " sp-voll" : "") + '" style="--ladung:' + ladung + '%" data-s="superkraft"'
+      teile.push('<button type="button" class="sp-s-super' + (daemonRest ? " sp-an" : ladung >= 100 ? " sp-voll" : "") + '" style="--ladung:' + ladung + '%" data-s="superkraft"'
         + (ladung >= 100 && !daemonRest ? "" : " disabled")
         + ' title="' + (daemonRest ? "Dämonisch – noch " + daemonRest + " s" : ladung >= 100 ? "Superkraft: 90 s dämonisch" : "Superkraft lädt: " + ladung + " %") + '">'
         + '<svg viewBox="0 0 20 20"><path d="M10 1.5 C11 5 15.5 7 15.5 12 A5.5 5.5 0 0 1 4.5 12 C4.5 9 6.5 7.5 7 5 C8 7 8.5 8 9.5 8.5 C9.5 6 9 4 10 1.5 Z" fill="' + (daemonRest ? "#b0172f" : "#f29d0b") + '"/>'
@@ -3591,10 +3551,10 @@
         + "<small>" + (daemonRest ? daemonRest + "s" : ladung + "%") + "</small></button>");
       /* FASSUNG 695 — die ausgerüstete Tier-Fähigkeit. */
       var fk = faehigKnopf();
-      if (fk) feld.faehig = fk;
+      if (fk) teile.push(fk);
       /* FASSUNG 699 — die Kraft der Kämpferklasse. */
       var kk = kampfKnopf();
-      if (kk) feld.kampf = kk;
+      if (kk) teile.push(kk);
       /* FASSUNG 650 — der Zauberstab: öffnet das Zauberrad; ein bereiter
          Zauber leuchtet hier mit seinem Bild. */
       var zOffen = ZAUBER_REIHE.some(function (a) { return (ich.level || 1) >= ZAUBER[a].level; });
@@ -3603,7 +3563,7 @@
          zeigt er ihn und ein Tipp nimmt ihn zurück) oder das Zauberrad offen ist.
          Das Rad selbst: langer Druck aufs eigene Bild oder der Makroknopf
          „Zauber". */
-      if (S.zauber || S.zrad) feld.zauber = ('<button type="button" class="sp-s-zauber' + (S.zauber ? " sp-an" : "") + (S.zrad ? " sp-offen" : "") + (zOffen ? "" : " sp-zu") + '" data-s="zauberrad" title="'
+      if (S.zauber || S.zrad) teile.push('<button type="button" class="sp-s-zauber' + (S.zauber ? " sp-an" : "") + (S.zrad ? " sp-offen" : "") + (zOffen ? "" : " sp-zu") + '" data-s="zauberrad" title="'
         + (S.zauber ? ZAUBER[S.zauber].name + " bereit – tippe auf ein Gesicht" : zOffen ? "Zauber" : "Zauber ab Level 3") + '">'
         + (S.zauber ? zauberSvg(S.zauber) : '<svg viewBox="0 0 20 20"><path d="M3 17 L12 8" stroke="#c9a46a" stroke-width="2.4" stroke-linecap="round"/>'
           + '<path d="M14 2 L15 5 L18 6 L15 7 L14 10 L13 7 L10 6 L13 5 Z" fill="#ffe27a"/><circle cx="17" cy="11" r="1" fill="#bfe3ff"/><circle cx="9" cy="3.5" r=".9" fill="#bfe3ff"/></svg>')
@@ -3611,11 +3571,10 @@
       /* FASSUNG 683 — XANDER: „Mein Dorf hätte ich gern zusätzlich … in dem Shortcut Menü unten bei den Waffen …
          dass der letzte wie ein Makroknopf ist, dass ich dort entweder das Dorf hin machen kann … oder dass ich
          selber bestimmen kann, was dort unten für Symbole zu sehen sind." Belegen: Menü → Mehr → „Letzter Knopf". */
-      feld.makro = ('<button type="button" class="sp-s-makro' + (S.schnellMenue && S.blick ? " sp-an" : "")
+      teile.push('<button type="button" class="sp-s-makro' + (S.schnellMenue && S.blick ? " sp-an" : "")
         + '" data-s="makro" title="' + MAKROS[S.makro] + ' (belegen: Menü → Mehr → Letzter Knopf)">' + makroSvg(S.makro) + "</button>");
-      if (reparaturNoetig(ich)) feld.repar = ('<button type="button" class="sp-s-repar" data-s="reparieren" title="Alle Waffen reparieren (15 Punkte)">'
+      if (reparaturNoetig(ich)) teile.push('<button type="button" class="sp-s-repar" data-s="reparieren" title="Alle Waffen reparieren (15 Punkte)">'
         + '<svg viewBox="0 0 20 20"><path d="M13.5 2.5 a4 4 0 0 0 -4.8 5.3 L2.8 13.7 a1.8 1.8 0 0 0 2.5 2.5 L11.2 10.3 a4 4 0 0 0 5.3 -4.8 L14 8 L12 6 Z" fill="#cfd6de" stroke="#5b636c" stroke-width="1"/></svg></button>');
-      leisteReihe().forEach(function (k) { if (feld[k]) teile.push(feld[k]); });
     }
     if (!toeneAn()) teile.push('<button type="button" class="sp-s-stumm" data-s="toenean" title="Töne sind aus – tippen schaltet sie ein">'
       + '<svg viewBox="0 0 20 20"><path d="M3 8 H6 L10 4.5 V15.5 L6 12 H3 Z" fill="#fff"/><path d="M13 7.5 L17.5 12.5 M17.5 7.5 L13 12.5" stroke="#ff8a80" stroke-width="2" stroke-linecap="round"/></svg></button>');
@@ -3991,7 +3950,6 @@
           /* FASSUNG 683 — der letzte Knopf der Leiste ist frei belegbar. */
           + '<div class="sp-sm-laut sp-sm-zeigen sp-sm-makro"><span>Letzter Knopf</span>' + Object.keys(MAKROS).map(function (m) {
               return '<button type="button" data-s="makrowahl" data-m="' + m + '" class="' + (S.makro === m ? "sp-an" : "") + '">' + MAKROS[m] + "</button>"; }).join("") + "</div>"; })()
-        + leisteOrdnenHtml()
         + '<p class="sp-sm-klein">Aufs eigene Bild: <b>2× tippen</b> wechselt die Waffe, <b>lang drücken</b>: Zauber oder Waffen (im Rad mit ⇄ wechseln).</p>'
         + '<div class="sp-sm-liste">'
         + '<button type="button" data-s="sparring" class="' + (S.sparring ? "sp-an" : "") + '">Sparringspartner ' + (S.sparring ? "weg" : "aufstellen") + "</button>"
@@ -4314,16 +4272,6 @@
         trinken("mana");
       }).catch(function () { hinweis("🪙 Das ging gerade nicht."); });
       return;
-    } else if (s === "leistewahl") {
-      S.leisteWahl = k.dataset.k; ton("holzklopf", 0.2);
-    } else if (s === "leisteschieb") {
-      /* FASSUNG 710 — das gewählte Feld der Leiste nach links oder rechts; unten sofort genauso. */
-      var lr = leisteReihe(), lw = lr.indexOf(S.leisteWahl) >= 0 ? S.leisteWahl : lr[0], lv = lr.indexOf(lw), ln = lv + (Number(k.dataset.r) || 0);
-      if (ln >= 0 && ln < lr.length) {
-        lr[lv] = lr[ln]; lr[ln] = lw; S.leisteWahl = lw;
-        try { localStorage.setItem("dma_spiel_leiste", JSON.stringify(lr)); } catch (e) {}
-        ton("swoosh", 0.2);
-      }
     } else if (s === "slotschieb") {
       /* FASSUNG 707 — die gewählte Tasche nach links oder rechts tauschen; die Auswahl wandert mit. */
       var sl = slots().slice(), von = Math.min(S.schnellSlot || 0, sl.length - 1), nach = von + (Number(k.dataset.r) || 0);
@@ -11151,7 +11099,7 @@
     pruef: {
       /* FASSUNG 704 */
       dorfMalen: dorfMalen, DORF_LAGE: DORF_LAGE, dmZeit: function () { return DM.zeit; }, dmNeu: function () { DM.geht = null; DM.bilder = {}; },
-      leisteReihe: leisteReihe, dorfZoom: dorfZoom, dorfNah: dorfNah, DORF_ZEICHEN: DORF_ZEICHEN,
+      dorfZoom: dorfZoom, dorfNah: dorfNah, DORF_ZEICHEN: DORF_ZEICHEN,
       dorfWetter: dorfWetter, dorfBlitz: dorfBlitz, dorfVoegel: dorfVoegel, dorfTreiben: dorfTreiben, DW: DW, dorfWetterMelden: dorfWetterMelden,
       puppeSchiesst: puppeSchiesst,
       zustand: function () { return S; },

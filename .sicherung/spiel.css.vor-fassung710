@@ -1893,10 +1893,7 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-faehig-liste .sp-tier-bild-mini { width: 22px; height: 22px; flex: 0 0 22px; }
 /* Der Knopf in der Leiste: das Tier, darüber ein Schatten, solange es ruht. */
 .sp-s-faehig { position: relative; }
-/* FASSUNG 710 — XANDER (Funk 157): „zwischen meiner Superkraftanzeige … und meinem Dorf ist ein leeres Feld das keine Funktion hat".
-   Es war die ausgerüstete Tier-Fähigkeit (bei ihm der Regenbogendrache): die Bildhülle hatte height: 100 % in einem Knopf ohne feste
-   Höhe – also 0 px, das Tier unsichtbar. Jetzt feste Größe wie die anderen Bilder der Leiste. */
-.sp-s-faehig .sp-tier-bild-mini { width: 22px; height: 22px; display: block; margin: 0 auto; border-radius: 6px; }
+.sp-s-faehig .sp-tier-bild-mini { width: 100%; height: 100%; display: block; }
 .sp-s-faehig.sp-ruht::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: conic-gradient(rgba(10, 12, 20, .62) var(--rest, 0%), transparent 0); }
 .sp-s-faehig.sp-an { box-shadow: 0 0 0 2px #f2c230, 0 0 10px #f2c230; }
@@ -2273,7 +2270,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-dl-karte-leiste { flex: none; display: flex; gap: 6px; margin-top: 4px; }
 .sp-schnellmenue .sp-dl-karte-leiste button, .sp-dl-karte-leiste button { flex: 1; min-height: 26px; height: 26px; margin: 0; padding: 2px 8px; border-radius: 8px; border: 1px solid #3a2410; background: #5a3a1e; color: #fff8e6; font: 600 12px/1.2 system-ui, sans-serif; }
 .sp-schnellmenue .sp-dl-karte-leiste button[data-s="dorfkarte"], .sp-dl-karte-leiste button[data-s="dorfkarte"] { flex: 0 0 34px; padding: 0; }
-
-/* FASSUNG 710 — Leiste unten ordnen: neun Kacheln brechen um (drei je Zeile) statt seitlich zu scrollen – nichts ragt aus dem Menü. */
-.sp-taschen-ed.sp-leiste-ed { flex-wrap: wrap; overflow: visible; }
-.sp-schnellmenue .sp-taschen-ed.sp-leiste-ed .sp-tasche, .sp-taschen-ed.sp-leiste-ed .sp-tasche { flex: 1 0 28%; min-width: 0; }

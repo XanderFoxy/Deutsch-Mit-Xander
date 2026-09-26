@@ -49,28 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 709: Funk 152 zuerst – das Dorf wieder klein wie vorher (ganzes Dorf), mit Kartenzeichen wie bei Google Maps und einem Kompass zum Hineinzoomen",
+  stand: "Fassung 710: Funk 157 und 156 – das leere Feld in der Leiste war dein unsichtbarer Regenbogendrache; Leiste im Menü ordnen; Auftritt: Ton und Bild zusammen, Gesicht im Kreis",
 
   inArbeit: [
-    { seit: "2026-09-26T19:24",
-      text: "710: feinere Texturen, weichere Häuser, saftige Wiese, Schnee auf Dächern, realistischere Figuren" },
-    { seit: "2026-09-26T19:24",
-      text: "Funk 152: Taschen-Kachel, Doppeltipp Schaufel = Werkzeugmenü, Waffenrad mit Querleiste, Langdruck zwei Kreise, Tier-Fähigkeit" },
-    { seit: "2026-09-26T19:24",
+    { seit: "2026-09-26T19:54",
+      text: "Funk 155: Meldungen mit Sprung-Knopf (Forschung, Einsammeln, Angriff, Unzufriedenheit, Touristen, Angebote, Verkauf)" },
+    { seit: "2026-09-26T19:54",
+      text: "Dorf: feinere Texturen, weichere Häuser, Schnee auf Dächern, Figuren" },
+    { seit: "2026-09-26T19:54",
+      text: "Funk 152: Doppeltipp Schaufel = Werkzeugmenü, Waffenrad mit Querleiste, Langdruck zwei Kreise" },
+    { seit: "2026-09-26T19:54",
       text: "Funk 153: Controller-Abzeichen, Nicht-Spieler stumm, Makroknopf als Magic-Button, Galaxie-Farbe, Postfach" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T19:24",
-      text: "Ganzes Dorf in voller Breite, 16:10, nichts zu wischen" },
-    { seit: "2026-09-26T19:24",
-      text: "Kartenzeichen an jedem Gebäude (Brezel, Windmühle, Amboss …)" },
-    { seit: "2026-09-26T19:24",
-      text: "Kompass: Karte mit Zeichen und Namen, Tipp fliegt hin und öffnet" },
-    { seit: "2026-09-26T19:24",
-      text: "Roter Ausschnitt-Rahmen in der Karte, Doppeltipp zoomt" },
-    { seit: "2026-09-26T19:24",
-      text: "Kein neues Malen beim Zoomen" },
+    { seit: "2026-09-26T19:54",
+      text: "Leeres Feld = Tier-Fähigkeit mit 0 px Höhe – jetzt sichtbar" },
+    { seit: "2026-09-26T19:54",
+      text: "Menü → Mehr → Leiste unten ordnen (◀ ▶), unten genauso" },
+    { seit: "2026-09-26T19:54",
+      text: "Auftritt wartet aufs Foto, Töne zählen ab dem echten Start" },
+    { seit: "2026-09-26T19:54",
+      text: "Runder Ausschnitt oben: Gesicht statt Hals" },
+    { seit: "2026-09-26T19:54",
+      text: "Walkie 283: Antwort zu den Klassen" },
   ],
 };

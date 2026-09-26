@@ -34902,8 +34902,3 @@ body.rf-leiste-auf .rf-reiter { display: none; }
 .weather-bar .weather-icon .w-nacht .w-mond { font-size: .82em; line-height: 1; }
 .weather-bar .weather-icon .w-nacht .w-wolke { font-size: .7em; line-height: 1; margin-left: -.5em; transform: translateY(.14em); }
 .weather-bar .weather-icon .w-nacht .w-wolke.w-gross { font-size: .8em; margin-left: -.55em; }
-
-/* FASSUNG 710 — XANDER (Funk 156): „das Profilbild ist immer noch nach unten gerutscht man erkennt mein Gesicht gar nicht".
-   Der runde Ausschnitt nahm bisher die Mitte des Fotos; bei einem Hochformat-Porträt sitzt das Gesicht aber im oberen Drittel –
-   im Kreis sah man Hals und Brust. Jetzt liegt der Ausschnitt oben (bei quadratischen Bildern ändert sich nichts). */
-.lc-avatar, .lc-auftritt-bild img { object-position: 50% 22%; }

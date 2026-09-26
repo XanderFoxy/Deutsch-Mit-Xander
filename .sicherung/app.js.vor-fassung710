@@ -30943,12 +30943,7 @@
       lcGeraeuschAblage[name] = a;
     } catch (e) {}
   }
-  /* FASSUNG 710 — während ein Auftritt aufgebaut wird, sammeln sich seine Töne hier und starten erst mit der Animation. */
-  let lcTonPuffer = null, lcTonPufferSeit = 0;
   function lcTonSpaeter(name, nachMs, laut, hoechstens) {
-    /* Nie hängen bleiben: ein Puffer, der älter als 1 s ist, gilt nicht mehr (etwa nach einem Fehler beim Aufbau). */
-    if (lcTonPuffer && Date.now() - lcTonPufferSeit < 1000) { lcTonPuffer.push([name, nachMs, laut, hoechstens]); return; }
-    lcTonPuffer = null;
     const wann = Math.max(0, Number(nachMs) || 0);
     if (wann > 0) lcGeraeuschVorwaermen(name);
     setTimeout(() => {
@@ -54828,12 +54823,6 @@
       return false;
     }
     const rein = richtung !== "raus", D = art === "transformer" ? 6400 : art === "liane" ? 3600 : A.wagen ? 3600 : 2600;
-    /* FASSUNG 710 — XANDER (Funk 156): „Die Profil Intro Animation … hängt vom Sound oft hinterher". Die Töne liefen ab dem
-       Aufruf, die Animation erst ab ihrem ersten gezeichneten Bild – und das kam spät, wenn das Foto noch entpackt werden
-       musste oder die Seite beim Betreten viel zu tun hatte. Jetzt: erst das Foto fertig, dann laufen Bild und Ton gemeinsam
-       los, und jeder Ton zählt ab dem echten Start der Animation. */
-    const tonPuffer = [];
-    lcTonPuffer = tonPuffer; lcTonPufferSeit = Date.now();
     const buehne = document.createElement("div");
     buehne.className = "lc-auftritt lc-auftritt-" + art + (rein ? " lc-auftritt-rein" : " lc-auftritt-raus");
     buehne.setAttribute("aria-hidden", "true");
@@ -54979,32 +54968,9 @@
        auf dem Rücksitz … bei der Magie kommen sie nach mir raus." Das
        Spiel kennt die Tiere; es bekommt das mitfahrende Bild. */
     try { if (window.DMA_SPIEL && window.DMA_SPIEL.tierAuftritt) window.DMA_SPIEL.tierAuftritt(platz, bild, art, rein, D); } catch (x) {}
-    lcTonPuffer = null;
-    const alle = () => { try { return buehne.getAnimations ? buehne.getAnimations({ subtree: true }) : []; } catch (x) { return []; } };
-    let gestartet = false;
-    const los = () => {
-      if (gestartet) return;
-      gestartet = true;
-      alle().forEach((a) => { try { a.play(); } catch (x) {} });
-      const erste = alle()[0];
-      const toene = () => {
-        const jetzt = document.timeline ? document.timeline.currentTime : performance.now();
-        const weg = erste && erste.startTime != null ? Math.max(0, jetzt - erste.startTime) : 0;
-        tonPuffer.forEach((t) => lcTonSpaeter(t[0], Math.max(0, (Number(t[1]) || 0) - weg), t[2], t[3]));
-        lcAuftrittStart = { wann: performance.now(), weg: Math.round(weg) };
-        setTimeout(fertig, Math.max(0, D + 80 - weg));
-      };
-      if (erste && erste.ready) erste.ready.then(toene, toene); else toene();
-    };
-    const foto = bild.querySelector("img");
-    if (foto && foto.decode) {
-      alle().forEach((a) => { try { a.pause(); } catch (x) {} });
-      foto.decode().then(los, los);
-      setTimeout(los, 400);
-    } else los();
+    setTimeout(fertig, D + 80);
     return true;
   }
-  let lcAuftrittStart = null;
   window.DMA_AUFTRITT = lcAuftritt;
   window.DMA_AUFTRITTE = LC_AUFTRITTE;
   function lcAuftrittMenue(platz) {
