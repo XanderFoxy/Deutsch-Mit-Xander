@@ -49,32 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 715: Dorf natürlicher gemalt, Neuschwanstein nach dem Original, Schnee, Fuhrwerk mit Leuten; Optimus Prime (714)",
+  stand: "Fassung 716: Eisenbahn im Dorf mit Export und Import, Rauch und Tönen im Takt; Angeln am See",
 
   inArbeit: [
-    { seit: "2026-09-26T22:53",
-      text: "Eisenbahn im Dorf für Export und Import" },
-    { seit: "2026-09-26T22:53",
-      text: "Angeln am See im Dorf" },
-    { seit: "2026-09-26T22:53",
+    { seit: "2026-09-26T23:39",
       text: "Funk 155: Meldungen mit Sprung-Knopf" },
-    { seit: "2026-09-26T22:53",
+    { seit: "2026-09-26T23:39",
       text: "Funk 152 und 153" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-26T22:53",
-      text: "Optimus Prime setzt dein Bild mit den Händen ab und geht als Roboter davon" },
-    { seit: "2026-09-26T22:53",
-      text: "Häuser, Wege und Ufer ohne Lineal-Kanten" },
-    { seit: "2026-09-26T22:53",
-      text: "Berge mit Rinnen und Geröll, gemalte Wiese" },
-    { seit: "2026-09-26T22:53",
-      text: "Neuschwanstein nach dem Original" },
-    { seit: "2026-09-26T22:53",
-      text: "Schnee auf Dächern und Wiese bei Schneewetter" },
-    { seit: "2026-09-26T22:53",
-      text: "Fuhrwerk: Räder rollen, Leute beladen" },
+    { seit: "2026-09-26T23:39",
+      text: "Güterzug fährt jede Minute durchs Dorf und hält am Bahnhof" },
+    { seit: "2026-09-26T23:39",
+      text: "Rauch Stoß für Stoß, Räder rollen passend, Glocke, Pfiff, Stampfen" },
+    { seit: "2026-09-26T23:39",
+      text: "Bahnhof antippen: Export und Import je Zug" },
+    { seit: "2026-09-26T23:39",
+      text: "See antippen: die Angler werfen aus und holen den Fang ein" },
+    { seit: "2026-09-26T23:39",
+      text: "Kachel Dampflok wieder schwarz lackiert" },
   ],
 };

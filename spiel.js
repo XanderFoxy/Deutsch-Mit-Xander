@@ -8960,7 +8960,7 @@
   function dorfBahnKnoepfe() {
     var wahl = S.dorfWahl;
     function knopf(k, s0, x0, y0, x1, y1, name) {
-      return '<button type="button" class="sp-dl-haus sp-dl-haus-gemalt sp-dl-' + k + (wahl === k ? " sp-an" : "") + '" data-s="' + s0 + '" data-g="' + k + '" style="left:' + (x0 / 3.2).toFixed(2) + "%;top:" + (y0 / 2).toFixed(2)
+      return '<button type="button" class="sp-dl-ort sp-dl-' + k + (wahl === k ? " sp-an" : "") + '" data-s="' + s0 + '" data-g="' + k + '" style="left:' + (x0 / 3.2).toFixed(2) + "%;top:" + (y0 / 2).toFixed(2)
         + "%;width:" + ((x1 - x0) / 3.2).toFixed(2) + "%;height:" + ((y1 - y0) / 2).toFixed(2) + '%" title="' + name + '"><small>' + dorfPin(k) + "<span>" + name + "</span></small></button>";
     }
     return knopf("bahnhof", "dorfwahl", 66, 168, 124, 190, "Bahnhof") + knopf("see", "dorfsee", 194, 180, 231, 195, "See");
@@ -8975,7 +8975,8 @@
     var schritt = function (jetztMs) {
       if (!dorfOffen()) { BAHN.raf = 0; return; }
       BAHN.raf = requestAnimationFrame(schritt);
-      if (document.hidden || jetztMs - vorher < 30) return;
+      /* Höchstens 25 Bilder je Sekunde – das Dorf hat daneben noch Regen, Blitze und Vögel zu zeigen. */
+      if (document.hidden || jetztMs - vorher < 40) return;
       vorher = jetztMs;
       try { bahnLauf(); } catch (e) { cancelAnimationFrame(BAHN.raf); BAHN.raf = 0; }
     };
@@ -8997,26 +8998,39 @@
     if (vorbei(P.tAb)) { ton("lokstampf", .5); BAHN.stampf = 0; }
     if (vorbei(P.tAb + 1.3)) ton("lokschiene", .35);
     BAHN.letzt = t;
-    var st = bahnStand(t), zug = svg.querySelector(".sp-bz-zug");
-    svg.classList.toggle("sp-bz-da", !!st);
+    var st = bahnStand(t);
+    /* Ist nichts unterwegs (kein Zug, kein Rauch, niemand angelt), genügen fünf Bilder je Sekunde für das Wippen der
+       Posen – sonst würde die ganze Ebene 25-mal je Sekunde neu gemalt, ohne dass sich etwas Sichtbares tut. */
+    var ruhig = !st && !BAHN.puffs.length && !BAHN.angel[0] && !BAHN.angel[1];
+    if (ruhig && BAHN.warRuhig && jetzt - (BAHN.ruhZeit || 0) < .2) return;
+    BAHN.ruhZeit = jetzt;
+    /* Die Teile einmal je Ebene heraussuchen, nicht in jedem Bild. */
+    var Z = svg.__bz;
+    if (!Z) {
+      Z = svg.__bz = { zug: svg.querySelector(".sp-bz-zug"), ebene: svg.querySelector(".sp-bz-rauch"), angler: svg.querySelectorAll(".sp-see-angler") };
+      Z.teile = [].map.call(Z.zug.querySelectorAll(".sp-bz-f"), function (e) { return { e: e, L: Number(e.getAttribute("data-l")) }; });
+      Z.raeder = [].map.call(Z.zug.querySelectorAll(".sp-bz-rad"), function (e) { return { e: e, r: Number(e.getAttribute("data-r")) }; });
+      var lk = Z.zug.querySelector(".sp-bz-lok");
+      Z.lokRaeder = lk ? [[".lc-lok-rad-1", 6], [".lc-lok-rad-2", 11], [".lc-lok-rad-3", 11]].map(function (x) { return { e: lk.querySelector(x[0]), r: x[1] * .15 }; }).filter(function (x) { return x.e; }) : [];
+      Z.kuppel = lk && lk.querySelector(".lc-lok-kuppel");
+    }
+    BAHN.warRuhig = ruhig;
+    var zug = Z.zug;
     if (st) {
-      zug.style.display = "";
-      var teile = zug.querySelectorAll(".sp-bz-f"), s0 = st.s;
-      for (var i = 0; i < teile.length; i++) {
-        var L = Number(teile[i].getAttribute("data-l")), sm = s0 + L / 2, a = bahnAn(sm - L * .35), b = bahnAn(sm + L * .35), m = bahnAn(sm);
+      if (zug.style.display) zug.style.display = "";
+      var s0 = st.s;
+      for (var i = 0; i < Z.teile.length; i++) {
+        var L = Z.teile[i].L, sm = s0 + L / 2, a = bahnAn(sm - L * .35), b = bahnAn(sm + L * .35), m = bahnAn(sm);
         var winkel = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
-        teile[i].setAttribute("transform", "translate(" + (m.x + m.nx * 1).toFixed(2) + " " + (m.y + m.ny * 1).toFixed(2) + ") rotate(" + winkel.toFixed(2) + ")");
+        Z.teile[i].e.setAttribute("transform", "translate(" + (m.x + m.nx * 1).toFixed(2) + " " + (m.y + m.ny * 1).toFixed(2) + ") rotate(" + winkel.toFixed(2) + ")");
         s0 += L + BAHN_LUECKE;
       }
       /* Räder: rollen ohne zu rutschen – der Drehwinkel ist die Strecke geteilt durch den Radius. */
-      zug.querySelectorAll(".sp-bz-rad").forEach(function (r) { r.setAttribute("transform", "rotate(" + (st.s / Number(r.getAttribute("data-r")) * 57.3 % 360).toFixed(1) + ")"); });
-      var lok = zug.querySelector(".sp-bz-lok");
-      if (lok) {
-        [[".lc-lok-rad-1", 6], [".lc-lok-rad-2", 11], [".lc-lok-rad-3", 11]].forEach(function (x) { var e = lok.querySelector(x[0]); if (e) e.style.transform = "rotate(" + (st.s / (x[1] * .15) * 57.3 % 360).toFixed(1) + "deg)"; });
-        /* Die Kuppelstange wandert mit dem Kurbelzapfen im Kreis (Radius 6,05 in Lok-Einheiten). */
-        var th = st.s / 1.65, ku = lok.querySelector(".lc-lok-kuppel");
-        if (ku) ku.style.transform = "translate(" + (-6.05 * Math.sin(th)).toFixed(2) + "px," + (6.05 * (Math.cos(th) - 1)).toFixed(2) + "px)";
-      }
+      Z.raeder.forEach(function (r) { r.e.setAttribute("transform", "rotate(" + (st.s / r.r * 57.3 % 360).toFixed(1) + ")"); });
+      Z.lokRaeder.forEach(function (r) { r.e.style.transform = "rotate(" + (st.s / r.r * 57.3 % 360).toFixed(1) + "deg)"; });
+      /* Die Kuppelstange wandert mit dem Kurbelzapfen im Kreis (Radius 6,05 in Lok-Einheiten). */
+      var th = st.s / 1.65;
+      if (Z.kuppel) Z.kuppel.style.transform = "translate(" + (-6.05 * Math.sin(th)).toFixed(2) + "px," + (6.05 * (Math.cos(th) - 1)).toFixed(2) + "px)";
       /* Rauch aus dem Schlot: Lok-Mitte bei s + 9, Schlot 3,3 davor und 7,5 über der Schiene. */
       var lm = bahnAn(st.s + 9), lw = Math.atan2(lm.ty, lm.tx), c = Math.cos(lw), si = Math.sin(lw);
       var sx = lm.x + lm.nx + (-3.3 * c - (-7.5) * si), sy = lm.y + lm.ny + (-3.3 * si + (-7.5) * c);
@@ -9038,14 +9052,16 @@
       }
     } else if (zug.style.display !== "none") zug.style.display = "none";
     /* Rauchwolken: steigen gebremst auf, wachsen, verwehen nach hinten (Wind nach rechts) und vergehen. */
-    var ebene = svg.querySelector(".sp-bz-rauch"), kreise = ebene.children;
+    var ebene = Z.ebene, kreise = ebene.children;
     /* Jede Wolke besteht aus drei Ballen, die verschieden schnell wachsen – so quillt sie wie echter Dampf,
        statt als runde Scheibe aufzusteigen. */
     var BALLEN = [[0, 0, 1, 1], [-.42, .18, .74, .8], [.45, .24, .7, .75]];
     while (kreise.length < 34 * 3) { var k = document.createElementNS("http://www.w3.org/2000/svg", "circle"); k.setAttribute("r", "0"); ebene.appendChild(k); }
     BAHN.puffs = BAHN.puffs.filter(function (p) { return jetzt - p.t < (p.art === "zylinder" ? 1.1 : p.art === "leise" ? 2.2 : 3.2); });
     while (BAHN.puffs.length > 34) BAHN.puffs.shift();
-    for (var j = 0; j < 34; j++) {
+    /* Kein Rauch mehr und schon alles gelöscht: die 102 Ballen nicht jedes Bild wieder anfassen. */
+    var leer = !BAHN.puffs.length;
+    for (var j = 0; j < (leer && BAHN.rauchLeer ? 0 : 34); j++) {
       var p = BAHN.puffs[j];
       for (var bi = 0; bi < 3; bi++) {
         var e2 = kreise[j * 3 + bi];
@@ -9060,6 +9076,7 @@
         e2.setAttribute("opacity", (Math.pow(Math.max(0, rest), 1.3) * Bb[3] * (p.art === "leise" ? .6 : p.art === "zylinder" ? .9 : 1)).toFixed(3));
       }
     }
+    BAHN.rauchLeer = leer;
     seeLauf(svg, jetzt);
   }
 
@@ -9084,7 +9101,7 @@
     ring.setAttribute("opacity", Math.max(0, 1 - a / 1.2).toFixed(2));
   }
   function seeLauf(svg, jetzt) {
-    var angler = svg.querySelectorAll(".sp-see-angler");
+    var angler = svg.__bz ? svg.__bz.angler : svg.querySelectorAll(".sp-see-angler");
     for (var i = 0; i < angler.length; i++) {
       var g = angler[i], A = BAHN.angel[i], px = 10.5, py = 1.2;
       /* Ruhe: die Pose schaukelt auf den Wellen, die Rute wippt leicht. */

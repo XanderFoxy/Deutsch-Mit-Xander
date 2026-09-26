@@ -233,6 +233,17 @@ const sage = (gut, was, zusatz) => {
   await setzeT(P.tEnde + 3); await tick(400); a = await bahn();
   sage(!a.da, "zwischen zwei Zügen ist die Strecke leer", JSON.stringify(a));
 
+  console.log("\nLEISTUNG (Zug in Fahrt mit Rauch, 4× gedrosselt)\n");
+  await setzeT(P.tAb + 1); await tick(1500);
+  const cdp = await ctx.newCDPSession(pg);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+  const l = await pg.evaluate(async () => {
+    const bilder = []; let letzt = performance.now(); const ende = letzt + 3000;
+    await new Promise((ok) => { const f = (t) => { bilder.push(t - letzt); letzt = t; if (t < ende) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
+    return { bilder: bilder.length, lang: bilder.filter((x) => x > 50).length }; });
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+  sage(l.bilder >= 120 && l.lang <= 5, "der fahrende Zug mit Rauch läuft flüssig (≥ 40 Bilder/s, höchstens 5 lange Bilder in 3 s)", JSON.stringify(l));
+
   console.log("\nTÖNE IM TAKT DES BILDES\n");
   await setzeT(P.tAn - .9); await tick(150); let t0 = await jetztMs(); await tick(1200);
   let tl = await toene(t0);
