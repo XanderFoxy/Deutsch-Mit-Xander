@@ -2682,12 +2682,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
    Nur ✕ bleibt antippbar. (Gefunden durch Sonde 650: das Geschenk-Band lag 8 s über Beas Platz.) */
 .sp-sprung.sp-sprung-info { pointer-events: none; opacity: .94; }
 .sp-sprung.sp-sprung-info .sp-sprung-zu { pointer-events: auto; }
-
-/* FASSUNG 747 — Niveau und Fragen-Art vor Rundenkampf und Fehlerteufel-Abwehr (Funk 178). */
-/* Das Fenster ist dunkel: dieselben Farben wie „Züge / Echtzeit“ – Gewähltes blau, der Rest dunkelgrau. */
-.sp-vorwahl { margin: 2px 0 8px; padding: 6px 8px; border-radius: 10px; background: rgba(255, 255, 255, .06); }
-.sp-vorwahl .sp-chips { margin: 3px 0; gap: 4px; }
-.sp-vorwahl .sp-chips .sp-klein { color: #c9d2e3; min-width: 50px; }
-.sp-vorwahl .sp-chips button { padding: 4px 9px; font-size: 12px; border: 0; background: #2b3242; color: #fff; }
-.sp-vorwahl .sp-chips button.sp-an { background: #3a8dde; color: #fff; box-shadow: 0 0 0 2px #bfe0ff inset; }
-.sp-vorwahl p.sp-klein { margin: 4px 0 0; font-size: 11.5px; line-height: 1.35; color: #c9d2e3; }

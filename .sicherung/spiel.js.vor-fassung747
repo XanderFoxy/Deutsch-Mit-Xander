@@ -13138,7 +13138,7 @@
     var inhalt = extraRahmen("Fehlerteufel-Abwehr", "sp-extra-td");
     var breit = Math.min(340, window.innerWidth - 24), feld = Math.floor(breit / 9);
     var rekord = 0; try { rekord = Number(localStorage.getItem("dma_td_rekord")) || 0; } catch (e) {}
-    inhalt.innerHTML = deutschVorwahlHtml() + '<div class="sp-td-stand"></div><canvas class="sp-td-feld" width="' + feld * 9 + '" height="' + feld * 11 + '"></canvas>'
+    inhalt.innerHTML = '<div class="sp-td-stand"></div><canvas class="sp-td-feld" width="' + feld * 9 + '" height="' + feld * 11 + '"></canvas>'
       + '<div class="sp-td-knoepfe">' + Object.keys(TD_TUERME).map(function (k) { var t = TD_TUERME[k];
         return '<button type="button" data-td="' + k + '"><i style="background:' + t.farbe + '"></i>' + t.name + " <small>" + t.preis + " BP</small></button>"; }).join("")
       + '<button type="button" data-td="frage" class="sp-td-frage">Deutsch-Frage <small>+3 BP</small></button><button type="button" data-td="welle" class="sp-td-welle">Welle starten</button></div>'
@@ -13147,7 +13147,6 @@
            cv: inhalt.querySelector("canvas"), stand: inhalt.querySelector(".sp-td-stand"), knoepfe: inhalt.querySelector(".sp-td-knoepfe") };
     TD.ctx = TD.cv.getContext("2d");
     TD.weg = {}; TD_WEG.forEach(function (p) { TD.weg[p[0] + "," + p[1]] = true; });
-    var tdVw = inhalt.querySelector(".sp-vorwahl"); if (tdVw) tdVw.addEventListener("click", function (ev) { deutschVorwahlKlick(ev, tdVw); });
     TD.knoepfe.addEventListener("click", function (ev) {
       var b = ev.target.closest("button"); if (!b || b.disabled) return;
       var w = b.dataset.td;
@@ -13243,12 +13242,7 @@
   function extraLohn(art, seit, ergebnis) {
     if (!seit) return;
     rpc("spiel_extra_lohn", { p_art: art, p_seit: new Date(seit).toISOString(), p_ergebnis: ergebnis || 0 }).then(function (r) {
-      if (r && r.ok) {
-        ton("kasse", 0.4);
-        hinweis((r.lohn > 0 ? "🪙 Lohn für das Spiel: +" + r.lohn + " Punkte (" + r.richtig + " richtige Antworten" + (r.mut > 0 ? ", davon +" + r.mut + " fürs höhere Niveau" : "") + ") – zählt auch im Ranking." : "🪙 Der Punkte-Lohn ist für heute voll.")
-          + (r.ausdauer > 0 ? " 💪 Ausdauer: +" + r.ausdauer + " Erfahrung (" + r.minuten + " Min., " + r.richtig + " richtige)." : ""));
-        abrufen(true);
-      }
+      if (r && r.ok) { ton("kasse", 0.4); hinweis("🪙 Lohn für das Spiel: +" + r.lohn + " Punkte (" + r.richtig + " richtige Antworten" + (r.mut > 0 ? ", davon +" + r.mut + " fürs höhere Niveau" : "") + ") – zählt auch im Ranking."); abrufen(true); }
       else if (r && r.grund) hinweis("🪙 " + r.grund + ".");
     }).catch(function () {});
   }
@@ -13317,7 +13311,7 @@
     angriff: { name: "Angriff", was: "12 Schaden", sterne: 0 },
     schild:  { name: "Schild",  was: "+10 Schild · höchstens 30", sterne: 0 },
     heilen:  { name: "Heilen",  was: "+12 LP", sterne: 0 },
-    konter:  { name: "Konter",  was: "nächster Angriff prallt zurück – mit vollem Leben die Hälfte, mit wenig Leben weniger · 1 Stern", sterne: 1 },
+    konter:  { name: "Konter",  was: "nächster Angriff prallt zur Hälfte zurück · 1 Stern", sterne: 1 },
     donner:  { name: "Donnerwort", was: "22 Schaden · 2 Sterne", sterne: 2 },
     /* „super Power mit dazu erspielen" */
     /* FASSUNG 726 — Funk 175: „außerdem macht es keinen Sinn weil mein Schild noch an ist und noch ein Viertel Leiste hat und
@@ -13377,45 +13371,17 @@
     }
     var n = extraEl.querySelector(".sp-sa-ortname"); if (n) n.textContent = (ST_ORTE.find(function (o) { return o[0] === ort; }) || ["", ""])[1] + (ST.ortGemeinsam ? " · für beide" : "");
   }
-  /* FASSUNG 747 — XANDER (Funk 178): „du solltest das auf Niveau basiert anstellen dass jeder sein Niveau vorher wählen
-     kann auch in der Echtheit Runde dass wir wirklich realistisch auf unserem Niveau kämpfen und das trotzdem fair bleibt
-     weil jeder dieselben Chancen hat ja und trotzdem aber wenn man höheres Niveau kämpft und man gewinnt kriegt man
-     trotzdem glaube ich auch mehr Punkte" und „dass wir festlegen können ob … wir mit unseren Schwächen und Stärken
-     spielen wollen … generell im ganzen Spiel egal ob das jetzt der Strategie ist … oder das ganz normale Kampfspiel".
-     Vor dem Rundenkampf (Züge und Echtzeit) und vor der Fehlerteufel-Abwehr stehen jetzt Niveau und Fragen-Art zur Wahl –
-     dieselbe Einstellung wie im Deutsch-Menü. Schaden ist auf jedem Niveau gleich (fair); höheres Niveau bringt mehr
-     Punkte (Server: spiel_antwort und der „Mut“-Anteil in spiel_extra_lohn); Schwächen bringen +50 %. */
-  function deutschVorwahlHtml() {
-    return '<div class="sp-vorwahl"><div class="sp-chips"><span class="sp-klein">Niveau:</span>' + NIVEAUS.map(function (n) {
-        return '<button type="button" data-vw-niveau="' + n + '" class="' + (S.niveau === n ? "sp-an" : "") + '">' + n + "</button>"; }).join("") + "</div>"
-      + '<div class="sp-chips"><span class="sp-klein">Fragen:</span>' + FRAGEN_ARTEN.map(function (f) {
-        var n = f[0] === "gemischt" ? 0 : fragenArten(f[0]).length;
-        return '<button type="button" data-vw-art="' + f[0] + '" class="' + (fragenArt() === f[0] ? "sp-an" : "") + '">' + f[1] + (f[0] !== "gemischt" ? " (" + n + ")" : "") + "</button>"; }).join("") + "</div>"
-      + '<p class="sp-klein">Höheres Niveau = mehr Punkte, gleicher Schaden. Schwächen üben bringt +50 %. Was stark oder schwach ist, stellst du im Deutsch-Menü unter „Meine Stärken &amp; Schwächen“ ein.</p></div>';
-  }
-  function deutschVorwahlKlick(ev, box) {
-    var n = ev.target.closest("[data-vw-niveau]"), a = ev.target.closest("[data-vw-art]");
-    if (n) { S.niveau = n.dataset.vwNiveau; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} }
-    else if (a) { S.fragenArt = a.dataset.vwArt; try { localStorage.setItem("dma_spiel_fragenart", S.fragenArt); } catch (e) {} }
-    else return false;
-    box.querySelectorAll("[data-vw-niveau]").forEach(function (x) { x.classList.toggle("sp-an", x.dataset.vwNiveau === S.niveau); });
-    box.querySelectorAll("[data-vw-art]").forEach(function (x) { x.classList.toggle("sp-an", x.dataset.vwArt === fragenArt()); });
-    ton("holzklopf", 0.15);
-    return true;
-  }
   function stratWahl() {
     var inhalt = extraRahmen("Rundenkampf", "sp-extra-strat");
     var leute = []; try { leute = plaetze().filter(function (p) { return p && !p.leer && !p.ich && !istPuppe(p.id) && !/^sparring:/.test(p.id); }); } catch (e) {}
     inhalt.innerHTML = '<p class="sp-text">Du wählst eine Aktion – sie wirkt nur, wenn du die Deutsch-Frage richtig beantwortest. Jede richtige Antwort bringt einen Stern (höchstens 3), drei richtige hintereinander eine Stufe Rüstung. Treffer gehen erst durchs Schild, dann ans Leben. Eine falsche Antwort kostet auf jedem Niveau gleich viel – wer ein höheres Niveau wählt, bekommt mehr Punkte. Fair nach Level: wer niedriger ist, trifft härter.</p>'
       + '<div class="sp-st-modus"><button type="button" data-modus="zug" class="sp-an">Züge (wie Schach)</button><button type="button" data-modus="echtzeit">Echtzeit (beide zugleich)</button></div>'
-      + deutschVorwahlHtml()
       + '<div class="sp-st-orte"><span class="sp-klein">Schauplatz:</span>' + ST_ORTE.map(function (o) { return '<button type="button" data-ort="' + o[0] + '" class="' + (stratOrtWahl() === o[0] ? "sp-an" : "") + '">' + o[1] + "</button>"; }).join("")
       + '<label class="sp-st-gemeinsam"><input type="checkbox" data-ortgemeinsam="1"' + (stratOrtGemeinsam() ? " checked" : "") + '> für beide gleich (sonst sieht jeder seinen eigenen)</label></div>'
       + '<div class="sp-sm-liste"><button type="button" data-st="computer">Gegen Professor Grammatikus (Computer)</button>'
       + leute.map(function (p) { return '<button type="button" data-st="' + esc(p.id) + '" data-name="' + esc(p.name || "") + '">Gegen ' + esc(p.name || "?") + " (einladen)</button>"; }).join("") + "</div>";
     var modus = "zug";
     inhalt.addEventListener("click", function (ev) {
-      if (deutschVorwahlKlick(ev, inhalt)) return;
       var o = ev.target.closest("[data-ort]");
       if (o) { try { localStorage.setItem("dma_strat_ort", o.dataset.ort); } catch (e) {} inhalt.querySelectorAll("[data-ort]").forEach(function (x) { x.classList.toggle("sp-an", x === o); }); ton("holzklopf", 0.15); return; }
       var g = ev.target.closest("[data-ortgemeinsam]");
@@ -13619,16 +13585,9 @@
   }
   /* Ein Treffer auf eine Seite: Konter, dann Rüstung, dann Schild, dann LP.
      „durch" (Superkraft) geht am Schild vorbei. Gibt zurück, was zurückprallt. */
-  /* FASSUNG 747 — XANDER (Funk 178): „wenn man einen Konter hat der ist immer glaube ich der hat immer eine bestimmte
-     Stärke die immer gleich ist aber eigentlich ist es doch logischer wenn jemand ein Lebenskraft verliert … er ist ja
-     eigentlich von seiner Gesundheit schwächer … deswegen müsste der Konto prozentual mit sinkender Lebensenergie auch
-     schwächer werden dann hätte man auch eine Chance das Spiel mal zu gewinnen". Der Konter wirft jetzt so viel zurück,
-     wie man noch Kraft hat: volles Leben die Hälfte, halbes Leben ein Viertel, fast leer fast nichts. Es zählt das Leben
-     im Moment des Treffers. */
-  function stratKonterAnteil(lp) { return 0.5 * Math.max(0, Math.min(ST_LP, lp || 0)) / ST_LP; }
   function stratTreffer(seite, schaden, durch) {
     var w = seite === "ich" ? ST.ich : ST.er, zurueck = 0;
-    if (w.konter) { w.konter = false; zurueck = Math.round(schaden * stratKonterAnteil(w.lp)); schaden -= zurueck; }
+    if (w.konter) { w.konter = false; zurueck = Math.round(schaden / 2); schaden -= zurueck; }
     if (w.ruestung > 0) schaden = Math.max(1, schaden - 2 * w.ruestung);
     var ab;
     if (durch) { ab = Math.min(w.schild, Math.ceil(schaden / 2)); w.schild = 0; }
@@ -13637,9 +13596,7 @@
     stratEinschlag(seite, schaden - ab, ab, zurueck);
     /* Gegen den Computer rechnet dieses Gerät beide Seiten; gegen Menschen zieht
        sich der Angreifer den Rückprall selbst ab (er bekommt ihn mit der Quittung). */
-    /* FASSUNG 747 — wurde das Fenster in den 0,4 s geschlossen, gibt es die Partie nicht mehr (Sonde 747: „Cannot read
-       properties of undefined (reading 'lp')"). */
-    if (zurueck && ST.gegner === "computer") { var andere = seite === "ich" ? ST.er : ST.ich, partie = ST; setTimeout(function () { if (ST !== partie || !ST.ich) return; var ab2 = stratSchildZuerst(andere, zurueck); stratEinschlag(seite === "ich" ? "er" : "ich", zurueck - ab2, ab2, 0); stratEndePruefen(); stratZeigen(); }, 420); }
+    if (zurueck && ST.gegner === "computer") { var andere = seite === "ich" ? ST.er : ST.ich; setTimeout(function () { var ab2 = stratSchildZuerst(andere, zurueck); stratEinschlag(seite === "ich" ? "er" : "ich", zurueck - ab2, ab2, 0); stratEndePruefen(); stratZeigen(); }, 420); }
     return zurueck;
   }
   /* Auch der Rückprall eines Konters trifft erst das Schild, dann das Leben. Gibt zurück, was das Schild abfing. */
@@ -13794,7 +13751,7 @@
       var sb = el.querySelector(".sp-sa-schildbalken"); if (sb) sb.style.width = Math.round(Math.min(ST_SCHILD_MAX, w.schild) / ST_SCHILD_MAX * 100) + "%";
       var sterne = Math.min(ST_STERNE_MAX, w.sterne || 0);
       el.querySelector("small").textContent = w.lp + " LP" + (w.schild ? " · Schild " + Math.ceil(w.schild / 10) + "/3" : "") + " · " + "★".repeat(sterne) + "☆".repeat(ST_STERNE_MAX - sterne)
-        + (w.ruestung ? " · Rüstung " + w.ruestung : "") + (w.konter ? " · Konter " + Math.round(stratKonterAnteil(w.lp) * 100) + " %" : "");
+        + (w.ruestung ? " · Rüstung " + w.ruestung : "") + (w.konter ? " · Konter" : "");
     };
     balken(".sp-sa-links", ST.ich); balken(".sp-sa-rechts", ST.er);
     [[".sp-sa-links", ST.siege.ich], [".sp-sa-rechts", ST.siege.er]].forEach(function (q) { var u = extraEl.querySelector(q[0] + " .sp-sa-siege"); if (u) u.innerHTML = [0, 1].map(function (i) { return '<i class="' + (i < q[1] ? "sp-an" : "") + '"></i>'; }).join(""); });

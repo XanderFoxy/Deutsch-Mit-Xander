@@ -130,7 +130,9 @@ async function fenster(br, port, wer) {
   await zug(A, "angriff", null, 2000);
   a = await zustand(A); b = await zustand(B);
   /* FASSUNG 722 — Bea hat jetzt 3 richtige hintereinander (Schild, Angriff, Konter): Rüstung 1 nimmt 2 weg → 4 − 2 = 2. */
-  sage(b.ich === 44 && a.er === 44 && a.ich === 40 && b.er === 40, "Konter: Bea steckt die Hälfte ein (4, mit Rüstung 1 nur 2), Alex bekommt 4 zurück – auf beiden Geräten gleich", JSON.stringify({ bea: [b.ich, a.er], alex: [a.ich, b.er] }));
+  /* FASSUNG 747 (Funk 178): der Konter wirft so viel zurück, wie Bea noch Kraft hat – bei 46/60 Leben 0,5 × 46/60 = 38 %:
+     von 8 Schaden prallen 3 zurück, 5 − 2 (Rüstung) = 3 treffen Bea. */
+  sage(b.ich === 43 && a.er === 43 && a.ich === 41 && b.er === 41, "Konter nach Leben (747): Bea hat 46/60 → 38 % prallen zurück: Alex bekommt 3, Bea steckt 3 ein (Rüstung 1) – auf beiden Geräten gleich", JSON.stringify({ bea: [b.ich, a.er], alex: [a.ich, b.er] }));
   const ruest = [await B.evaluate(() => window.DMA_SPIEL.pruef.st().ich.ruestung), await A.evaluate(() => window.DMA_SPIEL.pruef.st().er.ruestung)];
   sage(ruest[0] === 1 && ruest[1] === 1, "722: drei richtige hintereinander → Rüstung 1 (auf beiden Geräten)", JSON.stringify(ruest));
 
@@ -150,10 +152,10 @@ async function fenster(br, port, wer) {
   const schildDanach = await B.evaluate(() => window.DMA_SPIEL.pruef.st().ich.schild);
   /* Ab Fassung 726 (Funk 175: „das Schild ist doch da und das Leben zu schützen"): 26 × 0,69 = 18, Rüstung 1 → 16;
      das Schild fängt die Hälfte (8) und zerbricht: 44 − 8 = 36, Schild 0. */
-  sage(b.ich === 36 && a.er === 36 && schildDanach === 0, "Superkraft (18, Rüstung −2 = 16) zerschlägt das Schild: es fängt 8 ab und ist weg – Bea 36 auf beiden Geräten", JSON.stringify({ a: a.er, b: b.ich, schild: schildDanach }));
+  sage(b.ich === 35 && a.er === 35 && schildDanach === 0, "Superkraft (18, Rüstung −2 = 16) zerschlägt das Schild: es fängt 8 ab und ist weg – Bea 35 auf beiden Geräten (747: ein LP weniger als früher, weil der Konter schwächer war)", JSON.stringify({ a: a.er, b: b.ich, schild: schildDanach }));
   const farbe = await A.evaluate(() => { const i = document.querySelector(".sp-sa-rechts i"); return { gelb: i.classList.contains("sp-sa-gelb"), rot: i.classList.contains("sp-sa-knapp"), bg: getComputedStyle(i).backgroundImage.slice(0, 60) }; });
   const gruen = await A.evaluate(() => { const i = document.querySelector(".sp-sa-links i"); return { gelb: i.classList.contains("sp-sa-gelb"), bg: getComputedStyle(i).backgroundImage }; });
-  sage(!farbe.gelb && !farbe.rot && !gruen.gelb && /141, 240, 122/.test(gruen.bg), "Lebensbalken grün über der Hälfte (Bea 36/60, Alex 40/60)", JSON.stringify({ farbe, gruen: gruen.bg.slice(0, 60) }));
+  sage(!farbe.gelb && !farbe.rot && !gruen.gelb && /141, 240, 122/.test(gruen.bg), "Lebensbalken grün über der Hälfte (Bea 35/60, Alex 41/60)", JSON.stringify({ farbe, gruen: gruen.bg.slice(0, 60) }));
   const du = await A.evaluate(() => ({ links: document.querySelector(".sp-sa-links b").textContent, rechts: document.querySelector(".sp-sa-rechts b").textContent }));
   sage(/^Du · Alex/.test(du.links) && !/^Du/.test(du.rechts), "der eigene Balken sagt „Du“", JSON.stringify(du));
   const sterneA = await A.evaluate(() => window.DMA_SPIEL.pruef.st().ich.sterne);

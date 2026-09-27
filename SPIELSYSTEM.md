@@ -1283,3 +1283,14 @@ Sonde: pruefe-postfach-knopf grün. app.js, korrekturen.css und index.html stehe
 - XANDER (wörtlich, Funk 178): „stell es erstmal auf das alte Design zurück und dann diskutieren wir erstmal Schritt für Schritt auch die Buttons wie sie waren stellt das alles wieder her wie es war … du musst mir Fragen dazu stellen“.
 - **Zurückgenommen**: das Knopf-Raster oben im Postfach, die neue Titelzeile und das eigene „Schreiben“-Fenster aus 740. Die Knöpfe sind wieder die alten, an den alten Stellen.
 - **Weiter**: Nichts am Postfach wird geändert, bevor Xander die Fragen im Walkie beantwortet hat.
+
+### Fassung 747 (Funk 178: Rundenkampf – Konter nach Leben, Ausdauer-Erfahrung, Niveau vorher wählen)
+Server: Migration `spiel_747_ausdauer_ep` (spiel_extra_lohn). Geprüft mit Rollback als Xander: 12 richtige in 20 Minuten → +16 Ausdauer-EP, auch wenn der Tages-Lohn (60 Punkte) schon voll ist; derselbe Kampf ein zweites Mal → „schon den Lohn“. Sonden: neu 747, 701 (angepasst), 734 grün; Bilder der Auswahl und der Fehlerteufel-Abwehr auf 360 px geprüft.
+- XANDER (wörtlich, Funk 178): „deswegen müsste der Konto prozentual mit sinkender Lebensenergie auch schwächer werden dann hätte man auch eine Chance das Spiel mal zu gewinnen weil sonst dauert das so ewig lang“.
+- **Konter**: prallt jetzt so stark zurück, wie man noch Leben hat – voll 50 %, halb 25 %, fast leer fast nichts. Neben dem Leben steht „Konter 25 %“.
+- XANDER: „wenn jemand … in dem Kampf der kein Ende findet wenigstens viel Erfahrung mitnehmen die Erfahrungspunkte wenn der Kampf länger dauert“.
+- **Ausdauer-Erfahrung** (Rundenkampf und Fehlerteufel-Abwehr): ab 5 richtigen Antworten je richtige über 8 eine EP und je Minute über 5 eine EP (die Minuten höchstens so viele wie richtige Antworten), höchstens 25. Nur Erfahrung, keine Punkte – darum auch über der Tagesgrenze.
+- XANDER: „dass jeder sein Niveau vorher wählen kann auch in der Echtheit Runde … wenn man höheres Niveau kämpft und man gewinnt kriegt man trotzdem … mehr Punkte“.
+- **Vor dem Kampf** (Züge und Echtzeit) und vor der Fehlerteufel-Abwehr: Niveau A1–C2 und Fragen-Art (Schwächen üben / Stärken / Gemischt) – dieselbe Einstellung wie im Deutsch-Menü. Schaden ist auf jedem Niveau gleich (fair); höheres Niveau bringt mehr Punkte (das rechnete der Server schon), Schwächen +50 %.
+- **Mitbehoben**: Wer den Rundenkampf in den 0,4 s nach einem Konter-Rückprall schloss, bekam einen Skriptfehler („reading 'lp'“) – der verspätete Rückprall prüft jetzt, ob die Partie noch da ist.
+- **Noch offen aus Funk 178**: „bei den Fragen … da ist doch viel Quatsch dabei“ – die Aufgabenbank wird als Nächstes durchgesehen.
