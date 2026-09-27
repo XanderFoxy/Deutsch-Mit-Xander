@@ -49,22 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 741 — Taschen erkennbar, Doppeltipp mit der Schaufel öffnet die Werkzeugwahl (Funk 152)",
+  stand: "Fassung 742 — Tagesgeschenk sichtbar, auch wenn man eingeloggt bleibt (Walkie 273)",
 
   inArbeit: [
-    { seit: "2026-09-27T05:39",
+    { seit: "2026-09-27T05:53",
+      text: "Bonuspunkte für schnelle Antworten (Funk 139)" },
+    { seit: "2026-09-27T05:53",
       text: "Modulares Dorf, Verteidigung/Kaserne, Verträge – wartet auf Antworten zu den 15 Fragen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T05:39",
+    { seit: "2026-09-27T05:53",
+      text: "Tagesgeschenk als Meldung oben, im Menü „heute abgeholt · nächstes in …“" },
+    { seit: "2026-09-27T05:53",
       text: "Taschen zeigen das Gerät, Namensschild beim Tippen, roter Schlüssel bei stumpf" },
-    { seit: "2026-09-27T05:39",
+    { seit: "2026-09-27T05:53",
       text: "Schaufel: Doppeltipp gräbt nicht, Werkzeugwahl geht auf" },
-    { seit: "2026-09-27T05:39",
+    { seit: "2026-09-27T05:53",
       text: "Postfach: Titel, Nachrichten zuerst, Schreiben eingeklappt, Navigation 5×2" },
-    { seit: "2026-09-27T05:39",
-      text: "Magic Button: Farbwirbel, eigene Felder (+, ✕, austauschen)" },
   ],
 };

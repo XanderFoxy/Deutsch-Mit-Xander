@@ -233,6 +233,10 @@ const sage = (gut, was, zusatz) => {
   const schild = await pg.evaluate(() => { const e = document.getElementById("spNamenSchild"); if (!e) return null; const r = e.getBoundingClientRect();
     const b = document.querySelector('.sp-schnell .sp-s-slot[data-n="1"]').getBoundingClientRect(); return { text: e.textContent, ueber: r.bottom <= b.top + 1, drin: r.left >= 0 && r.right <= innerWidth }; });
   sage(schild && schild.text.length > 2 && schild.ueber && schild.drin, "Tipp auf eine Tasche: Namensschild darüber, ganz im Bild", JSON.stringify(schild));
+  /* FASSUNG 742 — XANDER (Walkie 273): „Wie sieht man das und wo findet man das wenn man die ganze Zeit z.B eingeloggt bleibt." */
+  const gesch = await pg.evaluate(() => { const g = JSON.parse(localStorage.getItem("dma_dorf_gemeldet") || "{}"); window.DMA_SPIEL.menue();
+    const z = (document.body.innerHTML.match(/🎁 (Heute abgeholt|Tagesgeschenk kommt)[^<]*/) || [""])[0]; window.DMA_SPIEL.schliessen && window.DMA_SPIEL.schliessen(); return { band: Object.keys(g).some((k) => /^g:\d{4}-\d\d-\d\d$/.test(k)), zeile: z }; });
+  sage(gesch.band && /Tag \d\/7 · nächstes in/.test(gesch.zeile), "Tagesgeschenk: als Meldung oben gemeldet, im Menü „heute abgeholt · nächstes in …“", JSON.stringify(gesch));
 
   console.log("\nZAUBER ÜBER DEN MAKROKNOPF, MANA KAUFEN\n");
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.makro = "zauber"; S.ich.level = 12; window.DMA_SPIEL.pruef.schnellZeichnen(true); });

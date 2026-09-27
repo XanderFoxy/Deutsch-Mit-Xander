@@ -625,10 +625,8 @@
       if (!r || !r.ok || !r.id) return;
       S.ich = r; S.stand[r.id] = oeffentlich(r);
       ton("geschenk", 0.5);
-      var gText = "Tagesgeschenk (Tag " + r.serie + " von 7): +" + r.punkte_plus + " Punkte, +" + r.bratwurst_plus + " Bratwurst"
-        + (r.pflaster_plus ? ", +1 Pflaster" : "") + ", +20 Erfahrung";
-      hinweis("🎁 " + gText);
-      geschenkMelden(gText);
+      hinweis("🎁 Tagesgeschenk (Tag " + r.serie + " von 7): +" + r.punkte_plus + " Punkte, +" + r.bratwurst_plus + " Bratwurst"
+        + (r.pflaster_plus ? ", +1 Pflaster" : "") + ", +20 Erfahrung");
     });
     kette.then(function () {
       if (!seite) return null;
@@ -645,29 +643,6 @@
       }
       zeichnen(); panelAuffrischen();
     }).catch(function () { S.geschenkLaeuft = false; });
-  }
-  /* FASSUNG 742 — XANDER (Walkie 273): „Wie sieht man das und wo findet man das wenn man die ganze Zeit z.B eingeloggt
-     bleibt." Das Geschenk holt sich nach Mitternacht (Berliner Zeit) beim nächsten stillen Nachsehen von selbst ab – auch
-     wer die ganze Nacht im Klassenzimmer bleibt. Damit man es nicht verpasst, steht es jetzt zusätzlich als Meldung oben
-     im Band (bleibt, bis man sie wegtippt oder sie nach 8 s weiterläuft), und im Spiel-Menü steht, ob es heute schon
-     abgeholt ist und wann das nächste kommt. */
-  function geschenkMelden(text) {
-    /* Der Tag zählt wie auf dem Server nach Berliner Zeit (sonst ginge zwischen 0 und 2 Uhr die Meldung verloren). */
-    var key = "g:" + new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" });
-    if (sprungGemeldet()[key]) return;
-    sprungMerken(key);
-    SPRUNG.liste.unshift({ key: key, art: "fertig", bild: GESCHENK_SVG, ohneSprung: true, text: text });
-    if (!SPRUNG.el || !SPRUNG.el.isConnected) sprungZeigen();
-  }
-  var GESCHENK_SVG = '<svg viewBox="0 0 20 20"><rect x="3" y="8" width="14" height="9" rx="1.2" fill="#d8413a"/><rect x="2.2" y="5.6" width="15.6" height="3.4" rx="1" fill="#e85a4f"/>'
-    + '<rect x="8.9" y="5.6" width="2.2" height="11.4" fill="#f2c230"/><path d="M10 5.6 C7 1.6 3.6 3.4 6.2 5.6 Z M10 5.6 C13 1.6 16.4 3.4 13.8 5.6 Z" fill="#f2c230"/></svg>';
-  function geschenkZeile(ich) {
-    if (ich.geschenk_offen) return "<span>🎁 Tagesgeschenk kommt gleich</span>";
-    if (!(ich.tag_serie > 0)) return "";
-    var jetzt = new Date(), berlin = new Date(jetzt.toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
-    var bisMitternacht = (24 * 60 - berlin.getHours() * 60 - berlin.getMinutes()), h = Math.floor(bisMitternacht / 60), m = bisMitternacht % 60;
-    return "<span title=\"Holt sich nach Mitternacht von selbst ab – auch wenn du eingeloggt bleibst.\">🎁 Heute abgeholt · Tag " + ich.tag_serie + "/7 · nächstes in "
-      + (h ? h + " h " : "") + m + " min</span>";
   }
   /* XANDER: „Superkraft … dämonisch aufgeladen". Die goldene Ladung
      oben am Bild füllt sich mit Deutsch (+8), Treffern (+2) und
@@ -6032,7 +6007,7 @@
       + (ich.helm_stufe > 0 ? "<span>⛑️ Helm " + ich.helm_stufe + ": " + (ich.helm_halt || 0) + "/40</span>" : "")
       + (ich.brust_stufe > 0 ? "<span>Brustpanzer " + ich.brust_stufe + ": " + (ich.brust_halt || 0) + "/40</span>" : "")
       + (vorrat.bratwurst > 0 ? "<span>🌭 " + vorrat.bratwurst + " Bratwurst</span>" : "")
-      + geschenkZeile(ich)
+      + (ich.tag_serie > 0 ? "<span>🎁 Serie " + ich.tag_serie + "/7</span>" : "")
       /* FUNK 110 — Abnutzung sichtbar: wie lange hält es noch? */
       + (ich.haustier ? "<span>" + esc((TIERE[ich.haustier] || TIERE.fellmonster).name) + " " + (ich.haustier_leben || 0) + "/" + (ich.haustier_max || 30) + (ich.haustier_leben > 0 ? "" : " schwach") + "</span>" : "")
       + (ich.flugtier ? "<span>" + esc((TIERE[ich.flugtier] || TIERE.drache).name) + " " + (ich.flugtier_leben || 0) + "/" + (ich.flugtier_max || 25) + (ich.flugtier_leben > 0 ? "" : " schwach") + "</span>" : "")
@@ -7667,8 +7642,8 @@
     el.innerHTML = (z ? '<i class="sp-sprung-bild sp-sprung-pin" style="background:' + z[0] + '" aria-hidden="true"><svg viewBox="0 0 24 24">' + z[1] + "</svg></i>"
       : '<i class="sp-sprung-bild" aria-hidden="true">' + (m.bild || wareSvg(m.ware || "getreide")) + "</i>")
       + "<span>" + esc(m.text) + (mehr ? " <small>+" + mehr + " weitere</small>" : "") + "</span>"
-      + (m.ohneSprung ? "" : '<button type="button" class="sp-sprung-hin">Ansehen</button>') + '<button type="button" class="sp-sprung-zu" aria-label="Meldung schließen">✕</button>';
-    if (!m.ohneSprung) el.querySelector(".sp-sprung-hin").addEventListener("click", function () { sprungOeffnen(m); });
+      + '<button type="button" class="sp-sprung-hin">Ansehen</button><button type="button" class="sp-sprung-zu" aria-label="Meldung schließen">✕</button>';
+    el.querySelector(".sp-sprung-hin").addEventListener("click", function () { sprungOeffnen(m); });
     el.querySelector(".sp-sprung-zu").addEventListener("click", function () { SPRUNG.liste = []; sprungZeigen(); });
     document.body.appendChild(el);
     SPRUNG.el = el;

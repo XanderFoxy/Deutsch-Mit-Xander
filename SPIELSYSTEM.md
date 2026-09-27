@@ -1248,3 +1248,9 @@ Sonden: 643 (umgestellt: ein Tipp gräbt nach 300 ms, Doppeltipp gräbt nicht un
 - **Taschen**: zeigen jetzt das Gerät selbst (Gewehr, Laser, Bogen, Zwille, Kanone) statt des Geschosses – das Maschinengewehr war vorher nur ein goldener Strich. Wurfsachen (Kartoffel, Brezel, Spätzle …) bleiben das Ding selbst. Jeder Tipp auf eine Tasche zeigt 1,8 s ein Namensschild darüber. Eine stumpfe Waffe (halber Schaden) trägt unten rechts einen roten Schraubenschlüssel; ihr Schild ist rot und der Hinweis sagt, wie man repariert.
 - **Schaufel**: ein Tipp gräbt nach 300 ms; kommt in der Zeit ein zweiter Tipp auf denselben Platz, wird nicht gegraben, sondern die Werkzeugwahl geht auf. Sense, Saat, Axt und Angel arbeiten weiter sofort (schnelles Ernten).
 - **Tier-Fähigkeit** („stellt sich das gar nicht ein bzw stellt sich das wieder zurück“): in der Sonde nicht nachzustellen – die gewählte Fähigkeit trägt im Menü den Stern, steht als Knopf in der Leiste und bleibt nach dem Neuladen des Stands; der Server speichert sie (spiel_faehigkeit_setzen). Wenn es bei dir noch zurückspringt: bitte melden, bei welchem Tier.
+
+### Fassung 742 (Walkie 273: das Tagesgeschenk für alle, die eingeloggt bleiben)
+Sonden: 692 (neu: Meldung gemerkt, Menü-Zeile „heute abgeholt · nächstes in …“), 716 grün.
+- XANDER (wörtlich, Walkie 273): „Wie sieht man das und wo findet man das wenn man die ganze Zeit z.B eingeloggt bleibt.“
+- **So war es**: Das Geschenk holte sich schon nach Mitternacht (Berliner Zeit) beim nächsten stillen Nachsehen selbst ab – aber nur als kurzer Hinweis, den man leicht verpasst.
+- **Jetzt**: Es kommt zusätzlich als Meldung oben im Band (mit Geschenk-Bild, ohne „Ansehen“, ✕ zum Wegtippen), einmal am Tag. Im Spiel-Menü steht statt „Serie 3/7“: „🎁 Heute abgeholt · Tag 3/7 · nächstes in 5 h 20 min“ bzw. „Tagesgeschenk kommt gleich“.
