@@ -35001,30 +35001,3 @@ svg.lc-mini-echt .lc-sobri-blitz, svg.lc-mini-echt .lc-eimer-strahl { display: n
   background: #d8261f; color: #fff; font: 800 11px/1 system-ui, sans-serif; box-shadow: 0 1px 3px rgba(0, 0, 0, .4); cursor: pointer; }
 .lc-magic-plus { border-style: dashed !important; opacity: .9; }
 @media (prefers-reduced-motion: reduce) { .lc-magic-bearbeiten .lc-magic-feld { animation: none; } }
-
-/* FASSUNG 748 — Postfach (Walkie 295/297/298): Überschrift, „Neue Nachricht schreiben" ganz oben (eingeklappt),
-   darunter der Posteingang. Unter dem Text eine Knopfreihe; Punkte als Knopf neben „Senden"; Sticker als kleines
-   Raster ohne Scrollen (nur die Vorschau ist kleiner, gesendet wird in der alten Größe). */
-.inbox-titel { margin: 0 0 8px; font: 800 1.25rem/1.2 var(--font-display, system-ui); }
-#inboxArea .inbox-schreiben { padding: 12px; }
-.inbox-schreiben > summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 10px 14px; margin: -2px; border-radius: 12px; background: var(--amber-400, #f2b84b); color: #241505; font: 800 1rem/1.3 var(--font-display, system-ui); }
-.inbox-schreiben > summary::-webkit-details-marker { display: none; }
-.inbox-schreiben > summary::after { content: "▾"; opacity: .75; transition: transform .2s; }
-.inbox-schreiben[open] > summary { margin-bottom: 12px; }
-.inbox-schreiben[open] > summary::after { transform: rotate(180deg); }
-.inbox-werkzeuge { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 8px; }
-.inbox-wz { position: relative; display: inline-flex; align-items: center; gap: 4px; padding: 6px 11px; border-radius: 999px; cursor: pointer;
-  border: 1px solid rgba(0, 0, 0, .12); background: var(--card-bg, #fff); color: inherit; font: 600 .8rem/1.2 system-ui, sans-serif; }
-.inbox-wz[aria-expanded="true"], .inbox-wz-an { background: var(--amber-400, #f2b84b); border-color: transparent; color: #241505; }
-.inbox-wz input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-.inbox-klappe { margin: 0 0 10px; }
-.inbox-sticker-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(30px, 1fr)); gap: 3px; }
-.inbox-sticker-raster > button { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 0; padding: 2px !important; margin: 0; }
-.inbox-sticker-raster > button svg, .inbox-sticker-raster > button img { width: 22px; height: 22px; object-fit: contain; }
-.inbox-senden-reihe { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-/* Die Liste aus 740: weniger Innenrand, die drei Reiter in einer Zeile, flachere Zeilen. */
-#inboxArea .inbox-liste { padding: 14px 12px; }
-#inboxArea .inbox-liste > .order-toggle { display: flex; flex-wrap: nowrap; gap: 6px; margin-bottom: 10px !important; }
-#inboxArea .inbox-liste > .order-toggle > .order-pill { flex: 1 1 auto; min-width: 0; padding: 7px 8px; font-size: .76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#inboxArea .inbox-row-compact { padding: 8px 12px !important; gap: 2px !important; min-height: 0 !important; }

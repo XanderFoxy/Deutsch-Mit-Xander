@@ -1294,3 +1294,11 @@ Server: Migration `spiel_747_ausdauer_ep` (spiel_extra_lohn). Geprüft mit Rollb
 - **Vor dem Kampf** (Züge und Echtzeit) und vor der Fehlerteufel-Abwehr: Niveau A1–C2 und Fragen-Art (Schwächen üben / Stärken / Gemischt) – dieselbe Einstellung wie im Deutsch-Menü. Schaden ist auf jedem Niveau gleich (fair); höheres Niveau bringt mehr Punkte (das rechnete der Server schon), Schwächen +50 %.
 - **Mitbehoben**: Wer den Rundenkampf in den 0,4 s nach einem Konter-Rückprall schloss, bekam einen Skriptfehler („reading 'lp'“) – der verspätete Rückprall prüft jetzt, ob die Partie noch da ist.
 - **Noch offen aus Funk 178**: „bei den Fragen … da ist doch viel Quatsch dabei“ – die Aufgabenbank wird als Nächstes durchgesehen.
+
+### Fassung 748 (Walkie 295/297/298: Postfach Schritt 1 – „Neue Nachricht“ oben)
+Sonden: neu 748, postfach-knopf grün; Bilder auf 360 px (zu und aufgeklappt) geprüft.
+- XANDER (wörtlich, Walkie 295): „an sich war das System ziemlich cool allerdings hattest du diesen einen Link wo man das Nachrichten Schreiben aufsetzen konnte inklusive der Belohnungspunkte und der emoji sind Sticker das war ja da unten unter den ganzen Nachrichten … wenn dieser Link einfach oben drüber wäre dann wäre das glaube ich viel aufgeräumt und viel logischer“.
+- **Aufbau**: „✉️ Postfach“ → darunter ein deutlicher Knopf „✏️ Neue Nachricht schreiben“ (klappt auf; offen, wenn ein Entwurf wartet oder man auf „Antworten“ tippt) → Posteingang/Postausgang/Wichtig. Die Profil-Reiter oben bleiben wie früher.
+- **Im Schreiben**: An wen (wie immer: bestimmte Personen oder Rundmail, Suchfeld, Liste), Text, darunter die Knopfreihe **📷 Bild · 📎 Datei · 🙂 Sticker · 🦊 Fuchs** (Walkie 298) – jeder klappt nur seine Auswahl auf. Neben „Senden“ der Knopf **🎁 Punkte** (Walkie 297, nur Betreiber): klappt den Punkte-Kasten auf; sind Punkte eingestellt, steht es am Knopf („🎁 +50 Punkte“).
+- **Sticker** (Walkie 295: „kann man die nicht einfach kleiner darstellen … scrollen verhindern auch auf kleinem Display … an der Größe wie etwas gesendet wird sollst du nichts ändern“): Vorschau 22 px im Raster, alle 32 Sticker in vier Reihen auf 360 px, kein Scrollen. Gesendet wird wie bisher.
+- Noch offen: Walkie 296 (Empfänger-Auswahl) ist unbeantwortet – sie bleibt wie früher.

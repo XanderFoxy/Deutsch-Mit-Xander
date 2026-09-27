@@ -93673,7 +93673,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     const row = document.getElementById("inboxStickerRow");
     if (!row) return;
     row.innerHTML = Object.entries(DMA_STICKERS).map(([key, svg]) =>
-      `<button type="button" class="hobby-chip sticker-pick-btn" data-sticker="${key}" title="[sticker:${key}] in den Text einfügen">${svg}</button>`
+      `<button type="button" class="hobby-chip sticker-pick-btn" data-sticker="${key}" style="padding:4px 8px;" title="[sticker:${key}] in den Text einfügen">${svg}</button>`
     ).join("");
     // Zusätzlich: verdiente Fuchs-Sammelfiguren als kleinere Sticker anbietbar — nur die, die man
     // sich bereits erspielt hat, nicht die gesperrten.
@@ -93682,7 +93682,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       const profile = Backend.currentProfile();
       const unlocked = profile ? COLLECTIBLE_FIGURES.filter((fig) => isFigureUnlocked(fig, profile)) : [];
       foxRow.innerHTML = unlocked.map((fig) =>
-        `<button type="button" class="hobby-chip fox-sticker-pick-btn" data-fox="${fig.id}" title="${fig.name} in den Text einfügen"><img src="${fig.img}" alt="${fig.name}" /></button>`
+        `<button type="button" class="hobby-chip fox-sticker-pick-btn" data-fox="${fig.id}" style="padding:2px 4px;" title="${fig.name} in den Text einfügen"><img src="${fig.img}" alt="${fig.name}" style="width:22px; height:22px; object-fit:contain; vertical-align:middle;" /></button>`
       ).join("");
       foxRow.querySelectorAll("[data-fox]").forEach((btn) => {
         btn.addEventListener("click", () => insertMessageToken(`[fox:${btn.dataset.fox}]`));
@@ -93766,7 +93766,6 @@ An einem Morgen lief ein kleiner Fuchs los…
      ------------------------------------------------------------ */
   let inboxZwischen = null;
   let inboxAuffrischenLaeuft = false;
-  let inboxSchreibenOffen = false;
   function inboxMarke(messages, friends) {
     return [messages.inbox.length, messages.outbox.length, friends.length,
       messages.inbox.map((m) => m.id + (m.read ? "1" : "0")).join(","),
@@ -93821,20 +93820,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     }
     const isAdmin = Backend.canModerate ? Backend.canModerate() : false;
     const list = inboxViewTab === "in" ? messages.inbox : inboxViewTab === "out" ? messages.outbox : [...messages.inbox, ...messages.outbox].filter((m) => getImportantMsgIds().includes(m.id));
-    /* FASSUNG 748 — XANDER (Walkie 295): „an sich war das System ziemlich cool allerdings hattest du diesen einen Link wo
-       man das Nachrichten Schreiben aufsetzen konnte inklusive der Belohnungspunkte und der emoji sind Sticker das war ja
-       da unten unter den ganzen Nachrichten … wenn dieser Link einfach oben drüber wäre dann wäre das glaube ich viel
-       aufgeräumt und viel logischer dass man auch direkt weiß wie schreibt man eine Nachricht und an wen". Wieder das
-       System aus 740, aber „Neue Nachricht schreiben" steht ganz oben, gleich unter der Überschrift.
-       Walkie 297: „Knopf 🎁 Punkte neben Senden – Kasten klappt nur bei Bedarf auf". Walkie 298: „Eine Knopfreihe unter
-       dem Text: 📷 Bild · 📎 Datei · Sticker · Fuchs – jeder klappt seine Auswahl auf". Walkie 295: „kann man die nicht
-       einfach kleiner darstellen … ich will nach Möglichkeit scrollen verhindern auch auf kleinem Display … an der Größe
-       wie etwas gesendet wird sollst du nichts ändern" – die Sticker-Vorschau ist kleiner und steht als Raster ohne
-       Scrollen; gesendet werden sie so groß wie immer. */
     area.innerHTML = `
-      <h2 class="inbox-titel">✉️ Postfach</h2>
-      <details class="question-card inbox-schreiben" id="inboxSchreiben"${inboxSchreibenOffen ? " open" : ""}>
-        <summary class="inbox-schreiben-kopf">✏️ Neue Nachricht schreiben</summary>
+      <div class="question-card">
+        <h3>✉️ Neue Nachricht schreiben</h3>
         <div class="form-field">
           <label class="empty-note" style="display:block; margin-bottom:8px;">An wen?</label>
           <div class="order-toggle" id="inboxRecipientMode" style="margin-bottom:10px;">
@@ -93850,21 +93838,8 @@ An einem Morgen lief ein kleiner Fuchs los…
           </div>
           <p class="empty-note" id="inboxBroadcastNote" style="display:none; margin-top:6px;">📢 Diese Nachricht geht an <strong>alle</strong> Nutzer der Seite — keine einzelne Auswahl nötig.</p>
         </div>
-        <div class="form-field">
-          <textarea id="inboxMessageInput" class="guestbook-form-textarea" maxlength="500" placeholder="Deine Nachricht…"></textarea>
-        </div>
-        <div class="inbox-werkzeuge">
-          <label class="inbox-wz" title="Bild anhängen (optional)">📷 Bild<input type="file" id="inboxImageInput" accept="image/*" /></label>
-          <label class="inbox-wz" title="MP3 oder PDF anhängen (optional)">📎 Datei<input type="file" id="inboxFileInput" accept=".mp3,.pdf,audio/mpeg,application/pdf" /></label>
-          <button type="button" class="inbox-wz" data-inbox-klappe="sticker" aria-expanded="false">🙂 Sticker</button>
-          <button type="button" class="inbox-wz" data-inbox-klappe="fuchs" aria-expanded="false">🦊 Fuchs</button>
-        </div>
-        <div id="inboxImagePreviewBox"></div>
-        <div id="inboxFilePreviewBox"></div>
-        <div class="inbox-klappe" data-klappe="sticker" hidden><div id="inboxStickerRow" class="inbox-sticker-raster"></div></div>
-        <div class="inbox-klappe" data-klappe="fuchs" hidden><div id="inboxFoxStickerRow" class="inbox-sticker-raster"></div></div>
         ${Backend.canModerate() ? `
-        <div class="form-field question-card inbox-klappe" data-klappe="punkte" hidden style="border:2px solid var(--amber-400); padding:12px;">
+        <div class="form-field question-card" style="border:2px solid var(--amber-400); padding:12px;">
           <label class="empty-note" style="display:flex; justify-content:space-between; align-items:center;">
             <span>🎁 Punkte mitschicken (optional) — auch Korrekturen als negativer Wert</span>
             <strong id="pointsGiftValueLabel" style="color:var(--amber-500,#c98a1f);">0 Punkte</strong>
@@ -93877,13 +93852,26 @@ An einem Morgen lief ein kleiner Fuchs los…
           </select>
           <p class="empty-note" style="font-size:0.74rem; margin-top:4px;">In 10er-Schritten von −500 bis 500 — z. B. als Entschädigung, Belohnung, oder um versehentlich vergebene Punkte wieder zu korrigieren. Die Person bekommt automatisch eine erklärende Nachricht dazu. Vor dem Versenden erscheint zur Sicherheit noch eine Bestätigung.</p>
         </div>` : ""}
-        <div class="inbox-senden-reihe">
-          <button type="button" class="btn btn-coffee" id="inboxSendBtn">Senden</button>
-          ${Backend.canModerate() ? `<button type="button" class="inbox-wz" data-inbox-klappe="punkte" aria-expanded="false" id="inboxPunkteKnopf">🎁 Punkte</button>` : ""}
+        <div class="form-field">
+          <textarea id="inboxMessageInput" class="guestbook-form-textarea" maxlength="500" placeholder="Deine Nachricht…"></textarea>
         </div>
+        <div class="form-field">
+          <label class="empty-note" style="cursor:pointer;">📷 Bild anhängen (optional) <input type="file" id="inboxImageInput" accept="image/*" style="display:block; margin-top:4px;" /></label>
+          <div id="inboxImagePreviewBox"></div>
+        </div>
+        <div class="form-field">
+          <label class="empty-note" style="cursor:pointer;">📎 Datei anhängen — MP3 oder PDF (optional) <input type="file" id="inboxFileInput" accept=".mp3,.pdf,audio/mpeg,application/pdf" style="display:block; margin-top:4px;" /></label>
+          <div id="inboxFilePreviewBox"></div>
+        </div>
+        <div class="form-field">
+          <label class="empty-note">Eigene Sticker antippen, um sie an der Cursor-Position in den Text einzufügen (optional):</label>
+          <div id="inboxStickerRow" style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;"></div>
+          <div id="inboxFoxStickerRow" style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;"></div>
+        </div>
+        <button type="button" class="btn btn-coffee" id="inboxSendBtn">Senden</button>
         <div class="form-error" id="inboxSendError"></div>
-      </details>
-      <div class="question-card inbox-liste" style="margin-top:14px;">
+      </div>
+      <div class="question-card" style="margin-top:14px;">
         <div class="order-toggle" style="margin-bottom:12px;">
           <button type="button" class="order-pill" id="inboxTabIn" aria-selected="${inboxViewTab === "in"}">📥 Posteingang${messages.inbox.length ? ` (${messages.inbox.length})` : ""}</button>
           <button type="button" class="order-pill" id="inboxTabOut" aria-selected="${inboxViewTab === "out"}">📤 Postausgang${messages.outbox.length ? ` (${messages.outbox.length})` : ""}</button>
@@ -93969,17 +93957,6 @@ An einem Morgen lief ein kleiner Fuchs los…
     `;
     document.getElementById("inboxMehr")?.addEventListener("click", () => { inboxGezeigt += INBOX_SEITE; renderInbox(false, true); });
     renderStickerRow();
-    { const d = document.getElementById("inboxSchreiben"); if (d) d.addEventListener("toggle", () => { inboxSchreibenOffen = d.open; }); }
-    /* Jeder Knopf der Reihe klappt nur seine eigene Auswahl auf (ein zweiter Tipp klappt sie wieder zu). */
-    area.querySelectorAll("[data-inbox-klappe]").forEach((k) => {
-      k.addEventListener("click", () => {
-        const box = area.querySelector(`.inbox-klappe[data-klappe="${k.dataset.inboxKlappe}"]`);
-        if (!box) return;
-        const auf = box.hidden;
-        area.querySelectorAll(".inbox-klappe").forEach((b) => { b.hidden = b !== box || !auf; });
-        area.querySelectorAll("[data-inbox-klappe]").forEach((b) => { b.setAttribute("aria-expanded", String(b === k && auf)); });
-      });
-    });
     let selectedRecipients = new Set();
     let recipientMode = "select"; // "select" | "broadcast"
     // Entwurf wiederherstellen, falls beim letzten Mal etwas Angefangenes da war — im Profil
@@ -93988,7 +93965,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (draft) {
       if (Array.isArray(draft.to)) selectedRecipients = new Set(draft.to);
       else if (draft.to) selectedRecipients = new Set([draft.to]); // alte Entwürfe (nur eine Person) weiterhin lesbar
-      if (draft.body) { document.getElementById("inboxMessageInput").value = draft.body; inboxSchreibenOffen = true; const d = document.getElementById("inboxSchreiben"); if (d) d.open = true; }
+      if (draft.body) document.getElementById("inboxMessageInput").value = draft.body;
     }
     const refreshRecipientChecks = () => {
       area.querySelectorAll("[data-recipient-id]").forEach((cb) => {
@@ -94080,9 +94057,6 @@ An einem Morgen lief ein kleiner Fuchs los…
     if (pointsSlider) {
       pointsSlider.addEventListener("input", () => {
         document.getElementById("pointsGiftValueLabel").textContent = `${pointsSlider.value} Punkte`;
-        /* 748: auch bei zugeklapptem Kasten sieht man am Knopf, dass Punkte mitgehen. */
-        const pk = document.getElementById("inboxPunkteKnopf"), v = Number(pointsSlider.value);
-        if (pk) { pk.textContent = v ? `🎁 ${v > 0 ? "+" : ""}${v} Punkte` : "🎁 Punkte"; pk.classList.toggle("inbox-wz-an", v !== 0); }
       });
     }
     document.getElementById("pointsReasonSelect")?.addEventListener("change", (e) => {
@@ -94133,7 +94107,6 @@ An einem Morgen lief ein kleiner Fuchs los…
         const targetId = btn.dataset.replyTo;
         const checkbox = area.querySelector(`[data-recipient-id="${targetId}"]`);
         if (checkbox) { selectedRecipients = new Set([targetId]); refreshRecipientChecks(); }
-        { const d = document.getElementById("inboxSchreiben"); if (d) d.open = true; inboxSchreibenOffen = true; }
         document.getElementById("inboxMessageInput").focus();
         document.getElementById("inboxMessageInput").scrollIntoView({ behavior: "smooth", block: "center" });
       });
