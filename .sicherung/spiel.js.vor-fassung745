@@ -71,18 +71,12 @@
     doppellaser:  { name: "Doppellaser",     schaden: 16, preis: 70,  flug: 260, ton: "laserblau",   treffer: "lasertreffer", ab: 4,  art: "Mehrfachfeuer: zwei Strahlen gleichzeitig" },
     streulaser:   { name: "Fächerlaser",     schaden: 21, preis: 120, flug: 280, ton: "lasersalve",  treffer: "lasertreffer", ab: 6,  art: "Mehrfachfeuer: fünf Strahlen im Fächer" },
     plasmastrahl: { name: "Plasmastrahl",    schaden: 26, preis: 150, flug: 700, ton: "dunkelbrumm", treffer: "lasertreffer", ab: 8,  art: "Dauerstrahl, der anschwillt" },
-    kugelblitz:   { name: "Kugelblitz",      schaden: 32, preis: 190, flug: 1100, ton: "dunkelbrumm", treffer: "gewitter",    ab: 11, art: "knisternde Kugel, beim Einschlag Blitzschlag" },
-    /* FASSUNG 745 — XANDER (Funk 139): „dass du schon mal ein Paket vorbereitet was ich dann in dem Moment wenn halloween ist
-       freischaltet … gruselige Waffen". Kaufen nur, solange der Betreiber Halloween freigeschaltet hat; gekaufte bleiben. */
-    kuerbis:      { name: "Kürbisbombe",     schaden: 14, preis: 60,  flug: 720, ton: "swoosh", treffer: "platsch",   saison: "halloween", art: "ein Kürbis mit Gesicht, zerplatzt beim Einschlag" },
-    geist:        { name: "Glibbergeist",    schaden: 11, preis: 45,  flug: 820, ton: "swoosh", treffer: "eiglibber", saison: "halloween", art: "ein kleines Gespenst, das grün zerglibbert" }
+    kugelblitz:   { name: "Kugelblitz",      schaden: 32, preis: 190, flug: 1100, ton: "dunkelbrumm", treffer: "gewitter",    ab: 11, art: "knisternde Kugel, beim Einschlag Blitzschlag" }
   };
-  /* Welche Feste gerade freigeschaltet sind, sagt der Server (spiel_ich.saison). */
-  function saisonAn(art) { return ((S && S.ich && S.ich.saison) || []).indexOf(art) >= 0; }
   /* FASSUNG 697 — XANDER: „jedes Upgrade … soll eine echte Wirkung haben". Schaden nach Preis
      und Level geordnet (spiel_waffe_schaden): das Zielfernrohr (35) schlug die Bazooka und die
      Level-10/11-Waffen, Eierwerfer und Brezel (5) waren schwächer als die Gratis-Kartoffel. */
-  var WAFFEN_REIHE = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "brezel", "armbrust", "huehnerwerfer", "bierkrug", "tomahawk", "spaetzle", "doener", "lasersalve", "mg", "zielfernrohr", "bazooka", "weisswurst", "nudelholz", "kuckucksuhr", "doppellaser", "streulaser", "plasmastrahl", "kugelblitz", "kuerbis", "geist"];
+  var WAFFEN_REIHE = ["kartoffel", "zwille", "bogen", "laser", "eierwerfer", "brezel", "armbrust", "huehnerwerfer", "bierkrug", "tomahawk", "spaetzle", "doener", "lasersalve", "mg", "zielfernrohr", "bazooka", "weisswurst", "nudelholz", "kuckucksuhr", "doppellaser", "streulaser", "plasmastrahl", "kugelblitz"];
   var VORRAT_WAFFEN = ["bratwurst", "sauerkraut"];
   function vorrat(ich, ding) { return Math.max(0, Number(((ich || {}).vorraete || {})[ding]) || 0); }
   var LADEN = [
@@ -183,7 +177,7 @@
   function komma(x) { return String(Math.round(x * 100) / 100).replace(".", ","); }
   /* FASSUNG 640 — gekaufte Waffen nutzen sich ab (60 Treffer). */
   var HALTBAR = ["armbrust", "tomahawk", "zielfernrohr", "bazooka", "eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "mg", "lasersalve",
-    "weisswurst", "nudelholz", "kuckucksuhr", "doppellaser", "streulaser", "plasmastrahl", "kugelblitz", "kuerbis", "geist"];
+    "weisswurst", "nudelholz", "kuckucksuhr", "doppellaser", "streulaser", "plasmastrahl", "kugelblitz"];
   /* FASSUNG 680 — XANDER: „wie lange die Lebensdauer der Waffen hält, dass
      man die stabiler bauen kann, dass man die anders fertigen kann oder
      dass die Zusatzfunktionen bekommen". Verstärkt hält eine Waffe 100
@@ -199,7 +193,7 @@
   var ARTEN_KNOEPFE = [["", "Alles"], ["artikel", "Artikel"], ["richtig-falsch", "Stimmt's?", true], ["faelle", "Fälle"],
     ["praepositionen", "Präpositionen"], ["das-dass", "das/dass"], ["ss-eszett", "ss/ß"], ["betonung", "Betonung"], ["aussprache", "Aussprache"],
     /* FASSUNG 663 — Deutschland-Wissen: 51 geprüfte Fragen (Landeskunde). */
-    ["deutschland", "Deutschland"], ["halloween", "Halloween", "saison"]];
+    ["deutschland", "Deutschland"]];
   /* „Stimmt's?" erst, wenn jeder falsche Satz einzeln geprüft ist. Geprüft (648): 804 falsche und
      1386 richtige Sätze aktiv, 193 gesperrt (Grammatik, Erklärung, doppelte Wörter, Unsinn). */
   var ARTEN_FREI = { "richtig-falsch": true };
@@ -215,8 +209,6 @@
        Gartenzwerg kann nicht schießen, und der Behördengang endet erst,
        wenn man eine Deutschaufgabe löst („Formular ausfüllen"). */
     brezelflut:    { name: "Brezelflut",    level: 2,  mana: 20, dauer: 10, ton: "brezelknack",   farbe: "#c0772a", was: "6 Schaden, vollgestopft: 10 s nur alle 6 s ein Schuss" },
-    /* FASSUNG 745 — XANDER (Funk 139): „Spinnen auf jemand schicken mit Zauber". Nur, solange Halloween freigeschaltet ist. */
-    spinnen:       { name: "Spinnenplage",  level: 3,  mana: 25, dauer: 10, ton: "spinnen",       farbe: "#6b3fa0", saison: "halloween", was: "8 Schaden, krabbeln über jede Mauer (nur zu Halloween)" },
     nebel:         { name: "Nebel",         level: 3,  mana: 25, dauer: 15, ton: "swoosh",        farbe: "#7d8a99", was: "hüllt ein: 15 s schießt es ins Graue, nur 60 % Schaden" },
     kaffeeklatsch: { name: "Kaffeeklatsch", level: 4,  mana: 30, dauer: 0,  ton: "kaffeeklatsch", farbe: "#8a5a2b", freund: true, was: "Kaffee und Kuchen: du und wen du einlädst, je +20 LP (auch auf dich selbst)" },
     muecken:       { name: "Mückenschwarm", level: 4,  mana: 30, dauer: 8,  ton: "muecken",       farbe: "#5b6b3a", was: "10 Schaden, fliegt über jede Mauer" },
@@ -226,9 +218,7 @@
     gartenzwerg:   { name: "Gartenzwerg",   level: 9,  mana: 60, dauer: 12, ton: "gartenzwerg",   farbe: "#c0392b", was: "verwandelt 12 s in einen Gartenzwerg – Zwerge schießen und zaubern nicht" },
     behoerdengang: { name: "Behördengang",  level: 12, mana: 70, dauer: 60, ton: "stempel",       farbe: "#3a5a8a", was: "Formular! Kein Schuss, bis eine Deutschaufgabe richtig gelöst ist (höchstens 60 s)" }
   };
-  var ZAUBER_REIHE_ALLE = ["brezelflut", "spinnen", "nebel", "kaffeeklatsch", "muecken", "erdbeben", "hexenschuss", "orkan", "gartenzwerg", "behoerdengang"];
-  /* FASSUNG 745 — Fest-Zauber erscheinen nur, solange das Fest freigeschaltet ist. */
-  function zReihe() { return ZAUBER_REIHE_ALLE.filter(function (a) { return !ZAUBER[a].saison || saisonAn(ZAUBER[a].saison); }); }
+  var ZAUBER_REIHE = ["brezelflut", "nebel", "kaffeeklatsch", "muecken", "erdbeben", "hexenschuss", "orkan", "gartenzwerg", "behoerdengang"];
   /* Zauberer-Ränge (Server: spiel_zauber_rang): je Rang −5 % Mana, +10 %
      Wirkung und Dauer. */
   var ZAUBER_RAENGE = [["Zauberlehrling", 0], ["Zaubergeselle", 10], ["Magier", 30], ["Zaubermeister", 75], ["Erzmagier", 150]];
@@ -1367,13 +1357,6 @@
      DIE GESCHOSSE — gezeichnet, keine Emoji
      --------------------------------------------------------------- */
   function geschossSvg(waffe, farbe) {
-    /* FASSUNG 745 — Halloween */
-    if (waffe === "kuerbis") return '<svg viewBox="-10 -10 20 20"><ellipse cx="0" cy="1.5" rx="8.6" ry="7.2" fill="#e8741c"/><path d="M-4.2 -5 C-6 -1 -6 4 -4.2 8 M4.2 -5 C6 -1 6 4 4.2 8 M0 -5.6 V8.6" stroke="#b9530f" stroke-width=".9" fill="none"/>'
-      + '<path d="M-.8 -5.4 C-1 -7.4 .2 -8.8 1.8 -9" stroke="#4f7a26" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
-      + '<path d="M-5 -.8 L-2.4 -.8 L-3.7 -3 Z M2.4 -.8 L5 -.8 L3.7 -3 Z" fill="#ffd35a"/><path d="M-5 2.6 L-3.4 4.4 L-1.7 2.9 L0 4.6 L1.7 2.9 L3.4 4.4 L5 2.6 C3 6 -3 6 -5 2.6 Z" fill="#ffd35a"/></svg>';
-    if (waffe === "geist") return '<svg viewBox="-10 -10 20 20"><path d="M-7 8 L-7 -1 C-7 -6 -3.6 -9 0 -9 C3.6 -9 7 -6 7 -1 L7 8 L4.6 5.6 L2.3 8 L0 5.6 L-2.3 8 L-4.6 5.6 Z" fill="#effaf2" stroke="#9fd6ae" stroke-width=".7"/>'
-      + '<ellipse cx="-2.6" cy="-2.2" rx="1.3" ry="1.8" fill="#1f2a24"/><ellipse cx="2.6" cy="-2.2" rx="1.3" ry="1.8" fill="#1f2a24"/><ellipse cx="0" cy="2.4" rx="1.6" ry="1.2" fill="#1f2a24"/>'
-      + '<path d="M-7 3 C-9 4 -9 6 -8 7" stroke="#8fe39f" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>';
     /* FASSUNG 668 — Energie-Waffen */
     if (waffe === "doppellaser") return '<svg viewBox="-20 -6 40 12"><path d="M-18 -2.6 H18 M-18 2.6 H18" stroke="' + (farbe || "#39c6ff") + '" stroke-width="2.4" stroke-linecap="round"/><path d="M-18 -2.6 H18 M-18 2.6 H18" stroke="#fff" stroke-width=".8" stroke-linecap="round" opacity=".85"/></svg>';
     if (waffe === "streulaser") return '<svg viewBox="-20 -12 40 24"><g stroke-linecap="round" stroke-width="1.8"><path d="M-18 0 L18 -9" stroke="#ff4fd8"/><path d="M-18 0 L18 -4.5" stroke="#9b6bff"/><path d="M-18 0 L18 0" stroke="#39c6ff"/><path d="M-18 0 L18 4.5" stroke="#3be38a"/><path d="M-18 0 L18 9" stroke="#ffd23a"/></g><circle cx="-18" cy="0" r="2.2" fill="#fff"/></svg>';
@@ -1805,9 +1788,6 @@
     if (art === "kaffeeklatsch") return '<svg viewBox="0 0 24 24"><path d="M9 3 C8 5 10 6 9 8 M13 3 C12 5 14 6 13 8" fill="none" stroke="#dfe6ee" stroke-width="1.2" stroke-linecap="round"/>'
       + '<path d="M4 10 H17 V15 C17 18.5 14 20.5 10.5 20.5 C7 20.5 4 18.5 4 15 Z" fill="#fdfbf7" stroke="#8a5a2b" stroke-width="1"/><path d="M17 11.5 C20.5 11.5 20.5 16.5 17 16.5" fill="none" stroke="#8a5a2b" stroke-width="1.4"/>'
       + '<path d="M5 11 H16" stroke="#6b3e1c" stroke-width="1.6"/><path d="M2 21.5 H20" stroke="#c9b48a" stroke-width="1.4" stroke-linecap="round"/></svg>';
-    if (art === "spinnen") return '<svg viewBox="0 0 24 24"><path d="M12 1 V8" stroke="#bfc6cf" stroke-width=".6"/><g stroke="#2a2233" stroke-width="1.1" fill="none" stroke-linecap="round">'
-      + '<path d="M9.6 11 C6 9 4.5 10 3 12 M9.4 13 C6 12.6 4.2 14 3.4 16.4 M9.8 14.6 C7.4 16 6.6 18 6.6 20.6 M14.4 11 C18 9 19.5 10 21 12 M14.6 13 C18 12.6 19.8 14 20.6 16.4 M14.2 14.6 C16.6 16 17.4 18 17.4 20.6"/></g>'
-      + '<ellipse cx="12" cy="13.6" rx="3" ry="3.8" fill="#2a2233"/><circle cx="12" cy="9.2" r="2.2" fill="#3a2f45"/><circle cx="11.2" cy="8.8" r=".55" fill="#ff5a3c"/><circle cx="12.8" cy="8.8" r=".55" fill="#ff5a3c"/></svg>';
     if (art === "muecken") return '<svg viewBox="0 0 24 24"><g fill="#3a3f2a"><ellipse cx="8" cy="12" rx="3.2" ry="1.3" transform="rotate(-20 8 12)"/><ellipse cx="16.5" cy="7" rx="2.6" ry="1.1" transform="rotate(15 16.5 7)"/><ellipse cx="15" cy="17" rx="2.4" ry="1" transform="rotate(-35 15 17)"/></g>'
       + '<g fill="#d8e8f4" opacity=".85"><ellipse cx="7.4" cy="9.8" rx="2" ry="1"/><ellipse cx="9.4" cy="10" rx="2" ry="1"/><ellipse cx="16" cy="5.2" rx="1.6" ry=".8"/><ellipse cx="14.4" cy="15.2" rx="1.5" ry=".8"/></g>'
       + '<path d="M5 12.8 L2.6 13.8 M18.8 7.6 L21 8.4 M12.8 18 L11 19.6" stroke="#3a3f2a" stroke-width=".7"/></svg>';
@@ -1835,7 +1815,7 @@
     if ((ich.mana || 0) < z.mana) return z.name + " braucht " + z.mana + " Mana – du hast " + (ich.mana || 0) + ". Deutschaufgaben füllen Mana.";
     return "";
   }
-  var UEBUNG_SCHADEN = { brezelflut: 6, spinnen: 8, muecken: 10, erdbeben: 10, hexenschuss: 4, orkan: 15 };
+  var UEBUNG_SCHADEN = { brezelflut: 6, muecken: 10, erdbeben: 10, hexenschuss: 4, orkan: 15 };
   function uebungZaubern(chatId) {
     var art = S.zauber, z = ZAUBER[art];
     if (!z) return;
@@ -2295,7 +2275,7 @@
           bei Schaden ruckt der Raum. Danach die Wirkung des Zaubers –
           der Ton des Zaubers beginnt genau beim Einschlag.
      --------------------------------------------------------------- */
-  var ZAUBER_LICHT = { spinnen: "#b37dff", brezelflut: "#ffb347", nebel: "#e3ebf3", kaffeeklatsch: "#ffcf8a", muecken: "#cde86a", erdbeben: "#ff8a3d",
+  var ZAUBER_LICHT = { brezelflut: "#ffb347", nebel: "#e3ebf3", kaffeeklatsch: "#ffcf8a", muecken: "#cde86a", erdbeben: "#ff8a3d",
                        hexenschuss: "#c77dff", orkan: "#8fd3ff", gartenzwerg: "#ff6b6b", behoerdengang: "#7fb2ff" };
   function zauberLicht(art) { return ZAUBER_LICHT[art] || "#c9b8ff"; }
   function zauberFlugzeit() { return Math.max(380, Math.min(750, Math.round((S.rpcMs || 350) * 1.05))); }
@@ -2529,22 +2509,6 @@
         (function (br) { setTimeout(function () { br.remove(); }, 2300); })(br);
       }
       zahlNach(1100);
-    } else if (art === "spinnen") {
-      /* FASSUNG 745 — Spinnen seilen sich von oben ab und krabbeln übers Bild (das Gesicht bleibt frei). */
-      if (m) for (var sp = 0; sp < 9; sp++) {
-        var sn = document.createElement("div"), seite = sp % 2 ? 1 : -1;
-        sn.className = "sp-spinne-z";
-        sn.innerHTML = zauberSvg("spinnen");
-        /* Am Rand des Bildes (ab 0,9 r) herunter und nach außen weg – das Gesicht bleibt frei. */
-        sn.style.left = (m.x + seite * m.r * (0.92 + Math.random() * 0.25)) + "px";
-        sn.style.top = (m.y - m.r * 2.2) + "px";
-        sn.style.setProperty("--fall", Math.round(m.r * (1.5 + Math.random() * 1.3)) + "px");
-        sn.style.setProperty("--kr", Math.round(seite * m.r * (0.3 + Math.random() * 0.4)) + "px");
-        sn.style.animationDelay = (sp * 0.12).toFixed(2) + "s";
-        document.body.appendChild(sn);
-        (function (sn) { setTimeout(function () { sn.remove(); }, 3600); })(sn);
-      }
-      zahlNach(1300);
     } else if (art === "muecken") {
       /* Der Summton ist 1 s lang, der Schwarm 3,4 s – er summt dreimal. */
       setTimeout(function () { ton("muecken", 0.35); }, 1100); setTimeout(function () { ton("muecken", 0.3); }, 2200);
@@ -2627,7 +2591,6 @@
         : art === "orkan" ? "🌪️ Orkan! " + (n.schaden || 0) + " Schaden, der Schild ist weg – " + sek + " s taumelst du."
         : art === "brezelflut" ? "🥨 Brezelflut! Vollgestopft – " + sek + " s nur alle 6 Sekunden ein Schuss."
         : art === "muecken" ? "🦟 Mückenschwarm! " + (n.schaden || 0) + " Schaden – die fliegen über jede Mauer."
-        : art === "spinnen" ? "🕷️ Spinnenplage! " + (n.schaden || 0) + " Schaden – die krabbeln über jede Mauer."
         : art === "hexenschuss" ? "🧹 Hexenschuss! Au, mein Rücken – " + sek + " s kommst du nicht vom Stuhl."
         : art === "gartenzwerg" ? "🍄 Du bist ein Gartenzwerg! " + sek + " s kein Schuss und kein Zauber."
         : art === "behoerdengang" ? "📋 Behördengang! Erst ein Formular ausfüllen: löse eine Deutschaufgabe, dann darfst du wieder schießen."
@@ -3756,7 +3719,7 @@
       if (kk) feld.kampf = kk;
       /* FASSUNG 650 — der Zauberstab: öffnet das Zauberrad; ein bereiter
          Zauber leuchtet hier mit seinem Bild. */
-      var zOffen = zReihe().some(function (a) { return (ich.level || 1) >= ZAUBER[a].level; });
+      var zOffen = ZAUBER_REIHE.some(function (a) { return (ich.level || 1) >= ZAUBER[a].level; });
       /* FASSUNG 692 — XANDER: „den Zauberstab unten kannst du eigentlich
          wegmachen". Er steht nur noch da, solange ein Zauber bereitliegt (dann
          zeigt er ihn und ein Tipp nimmt ihn zurück) oder das Zauberrad offen ist.
@@ -3916,7 +3879,7 @@
      (position: fixed), so schneidet kein Rahmen es ab. */
   var RAD_KLASSEN = [
     ["Standard", "#3c6e9e", ["kartoffel", "zwille", "bogen", "laser"]],
-    ["Lustig",   "#c0772a", ["eierwerfer", "brezel", "sauerkraut", "bratwurst", "huehnerwerfer", "bierkrug", "doener", "spaetzle", "kuerbis", "geist"]],
+    ["Lustig",   "#c0772a", ["eierwerfer", "brezel", "sauerkraut", "bratwurst", "huehnerwerfer", "bierkrug", "doener", "spaetzle"]],
     ["Arcade",   "#7a3fa0", ["lasersalve", "mg"]],
     ["Stark",    "#a33a3a", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]],
     ["Meister",  "#b8860b", ["weisswurst", "nudelholz", "kuckucksuhr"]],
@@ -3955,7 +3918,7 @@
     return '<div class="sp-rad sp-rad-voll" style="width:' + B + "px;height:" + B + 'px">'
       + '<svg class="sp-rad-sektoren" viewBox="0 0 ' + B + " " + B + '"><circle cx="' + M + '" cy="' + M + '" r="' + (R + 24) + '" class="sp-rad-scheibe"/>' + bogen
       + '<text class="sp-rad-an" x="' + M + '" y="' + (M + 28) + '">angelegt</text><text class="sp-rad-an-name" x="' + M + '" y="' + (M + 39) + '">' + esc(an) + "</text></svg>"
-      + ((S.ich || {}).mitspielen && zReihe().some(function (a) { return ((S.ich || {}).level || 1) >= ZAUBER[a].level; }) ? radTauschHtml(M, "Zauber") : "")
+      + ((S.ich || {}).mitspielen && ZAUBER_REIHE.some(function (a) { return ((S.ich || {}).level || 1) >= ZAUBER[a].level; }) ? radTauschHtml(M, "Zauber") : "")
       + knoepfe + '<button type="button" class="sp-rad-mitte" data-s="radab" style="left:' + (M - 20) + "px;top:" + (M - 20) + 'px" title="Waffe ablegen"><svg viewBox="0 0 20 20"><path d="M5 11 V7 a1.5 1.5 0 0 1 3 0 V10 M8 9 V5.5 a1.5 1.5 0 0 1 3 0 V9.5 M11 9 V6.5 a1.5 1.5 0 0 1 3 0 V11 C14 15 12 17 9.5 17 C7 17 5.5 15.5 5 13 Z" fill="#fff"/></svg></button></div>';
   }
   /* FASSUNG 719 — DER KLEINE DOPPELRING (Funk 152 und 165)
@@ -3987,7 +3950,7 @@
      Kuckucksuhr-Bombe haben einen eigenen Bereich „Minen & Bomben". */
   var RING_BEREICHE = [
     ["standard", "Standard", "#3c6e9e", ["kartoffel", "zwille", "bogen", "laser"]],
-    ["lustig",   "Lustig",   "#c0772a", ["eierwerfer", "brezel", "sauerkraut", "bratwurst", "huehnerwerfer", "bierkrug", "doener", "spaetzle", "kuerbis", "geist"]],
+    ["lustig",   "Lustig",   "#c0772a", ["eierwerfer", "brezel", "sauerkraut", "bratwurst", "huehnerwerfer", "bierkrug", "doener", "spaetzle"]],
     ["arcade",   "Arcade",   "#7a3fa0", ["lasersalve", "mg"]],
     ["stark",    "Stark",    "#a33a3a", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]],
     ["meister",  "Meister",  "#b8860b", ["weisswurst", "nudelholz"]],
@@ -4045,8 +4008,7 @@
         + (an ? '<i class="sp-haken"><svg viewBox="0 0 10 10"><path d="M2 5.2 L4.2 7.4 L8 2.8" fill="none" stroke="#1d2330" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>' : "") + "</button>";
       if (offen) {
         /* Die Querleiste schneidet den Ring waagerecht auf der Höhe dieses Feldes. */
-        /* FASSUNG 745 — Fest-Waffen nur zeigen, solange das Fest an ist (oder wenn man sie hat). */
-        var alle = b[3].filter(function (x) { return RING_FALLE[x] || (WAFFEN[x] && (ringHat(ich, x) || ((!WAFFEN[x].ab || (ich.level || 1) >= WAFFEN[x].ab) && (!WAFFEN[x].saison || saisonAn(WAFFEN[x].saison))))); });
+        var alle = b[3].filter(function (x) { return RING_FALLE[x] || (WAFFEN[x] && (!WAFFEN[x].ab || (ich.level || 1) >= WAFFEN[x].ab || ringHat(ich, x))); });
         var breite = alle.length * 40 + 10;
         leiste = '<div class="sp-ring-leiste" style="top:' + (q[1] - 27).toFixed(0) + "px;left:" + (M - breite / 2).toFixed(0) + "px;width:" + breite + "px;--klasse:" + b[2] + '">'
           + '<button type="button" class="sp-ring-leiste-name" data-s="ringleistezu" title="Leiste zuklappen">' + esc(b[1]) + " ✕</button>"
@@ -4059,8 +4021,8 @@
       }
     });
     /* Innen die Zauber (gesperrte grau mit „Lv"), dazwischen das Mana als Bogen. */
-    zReihe().forEach(function (a, i) {
-      var z = ZAUBER[a], w = -Math.PI / 2 + i * 2 * Math.PI / zReihe().length, q = p(w, RI);
+    ZAUBER_REIHE.forEach(function (a, i) {
+      var z = ZAUBER[a], w = -Math.PI / 2 + i * 2 * Math.PI / ZAUBER_REIHE.length, q = p(w, RI);
       var zu = (ich.level || 1) < z.level, arm = !zu && (ich.mana || 0) < z.mana;
       innen += '<button type="button" class="sp-rad-waffe sp-rad-zauber sp-ring-zauber' + (S.zauber === a ? " sp-an" : "") + (zu ? " sp-zu" : arm ? " sp-stumpf" : "") + '" data-s="zauberwahl" data-z="' + a
         + '" style="left:' + (q[0] - 13).toFixed(0) + "px;top:" + (q[1] - 13).toFixed(0) + "px;--klasse:" + z.farbe + '" title="' + esc(z.name + " · " + z.mana + " Mana · ab Level " + z.level) + '">'
@@ -4131,7 +4093,7 @@
     return k;
   }
   function langWahlHtml() {
-    var ich = S.ich || {}, zOffen = zReihe().some(function (a) { return (ich.level || 1) >= ZAUBER[a].level; }), w = S.waffe || slots()[0];
+    var ich = S.ich || {}, zOffen = ZAUBER_REIHE.some(function (a) { return (ich.level || 1) >= ZAUBER[a].level; }), w = S.waffe || slots()[0];
     return '<div class="sp-rad sp-rad-voll sp-langwahl" style="width:236px;height:236px">'
       + '<svg class="sp-rad-sektoren" viewBox="0 0 236 236"><circle cx="118" cy="118" r="114" class="sp-rad-scheibe"/></svg>'
       + '<button type="button" class="sp-lw-zauber" data-s="langzauber"' + (zOffen ? "" : " disabled") + ">" + zauberSvg(S.zauber || "nebel") + "<b>Zauber</b><small>"
@@ -4154,9 +4116,9 @@
     return '<div class="sp-werkzeugwahl sp-trankwahl" role="menu"><span class="sp-ww-titel">Tränke &amp; Mana · ' + (ich.mana || 0) + " Mana</span>" + t.join("") + "</div>";
   }
   function zauberRadHtml() {
-    var ich = S.ich || {}, n = zReihe().length;
+    var ich = S.ich || {}, n = ZAUBER_REIHE.length;
     var R = Math.max(100, Math.ceil(n * 46 / (2 * Math.PI))), B = 2 * R + 52, M = B / 2, html = "";
-    zReihe().forEach(function (a, i) {
+    ZAUBER_REIHE.forEach(function (a, i) {
       var z = ZAUBER[a], w = -Math.PI / 2 + (i + 0.5) * 2 * Math.PI / n;
       var x = M + Math.cos(w) * R, y = M + Math.sin(w) * R, zu = (ich.level || 1) < z.level, arm = !zu && (ich.mana || 0) < z.mana;
       html += '<button type="button" class="sp-rad-waffe sp-rad-zauber' + (S.zauber === a ? " sp-an" : "") + (zu ? " sp-zu" : arm ? " sp-stumpf" : "") + '" data-s="zauberwahl" data-z="' + a
@@ -4211,7 +4173,7 @@
         + '<button type="button" data-s="slotschieb" data-r="1"' + (nr < s.length - 1 ? "" : " disabled") + '>nach rechts ▶</button>'
         + '<button type="button" data-s="slotplus"' + (s.length < SLOT_MAX && eigeneWaffen().length > s.length ? "" : " disabled") + '>+ Tasche</button>'
         + '<button type="button" data-s="slotminus"' + (s.length > 1 ? "" : " disabled") + '>− Tasche</button></div>';
-      var gruppen = [["Standard", ["kartoffel", "zwille", "bogen", "laser"]], ["Lustig", ["eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "bratwurst", "sauerkraut", "kuerbis", "geist"]],
+      var gruppen = [["Standard", ["kartoffel", "zwille", "bogen", "laser"]], ["Lustig", ["eierwerfer", "huehnerwerfer", "brezel", "bierkrug", "spaetzle", "doener", "bratwurst", "sauerkraut"]],
                      ["Arcade", ["lasersalve", "mg"]], ["Stark", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]], ["Meister", ["weisswurst", "nudelholz", "kuckucksuhr"]],
                      ["Energie", ["doppellaser", "streulaser", "plasmastrahl", "kugelblitz"]]];
       gruppen.forEach(function (g) {
@@ -4257,7 +4219,7 @@
       inhaltM = '<p class="sp-sm-klein">Richtig antworten bringt <b>Punkte</b>, <b>Mana</b> und <b>Erfahrung</b> (Level). ⚡ Schnell (bis 6 s) gibt es die Hälfte extra.'
         + (missionLaeuft(ich) ? " Mission läuft: " + esc(missionKurz(ich.mission)) + "." : "") + "</p>"
         + '<div class="sp-sm-liste"><button type="button" class="sp-sm-los" data-s="deutschlos" data-k="">Aufgabe lösen</button></div>'
-        + '<div class="sp-sm-gruppe sp-sm-arten"><span>Oder gezielt</span>' + ARTEN_KNOEPFE.filter(function (x) { return x[0] && (x[2] === "saison" ? saisonAn(x[0]) : !x[2] || ARTEN_FREI[x[0]]); })
+        + '<div class="sp-sm-gruppe sp-sm-arten"><span>Oder gezielt</span>' + ARTEN_KNOEPFE.filter(function (x) { return x[0] && (!x[2] || ARTEN_FREI[x[0]]); })
           .map(function (x) { return '<button type="button" data-s="deutschlos" data-k="' + x[0] + '">' + x[1] + "</button>"; }).join("") + "</div>";
     } else if (r === "tiere") {
       var besitz = Object.keys(ich.tiere || {});
@@ -4397,7 +4359,7 @@
         S.waffe = rw; S.zauber = ""; S.legen = ""; document.body.classList.remove("sp-legen");
         if (S.rad != null && S.rad >= 0 && slots()[S.rad] !== rw && eigeneWaffen().indexOf(rw) >= 0) slotSetzen(S.rad, rw);
         /* Hat der Bereich nur diese eine Waffe, gibt es nichts zu tauschen: anlegen und zu. */
-        var rbDef = ringBereichVon(rw), rMehr = rbDef ? rbDef[3].filter(function (x) { return ringHat(rich, x) || (WAFFEN[x] && !(WAFFEN[x].ab > (rich.level || 1)) && (!WAFFEN[x].saison || saisonAn(WAFFEN[x].saison))); }).length : 1;
+        var rbDef = ringBereichVon(rw), rMehr = rbDef ? rbDef[3].filter(function (x) { return ringHat(rich, x) || (WAFFEN[x] && !(WAFFEN[x].ab > (rich.level || 1))); }).length : 1;
         if (s === "ringwahl" || rMehr < 2) ringSchliessen(); else S.ringBereich = S.ringBereich === rb ? "" : rb;
         S.radOffenSeit = Date.now();
         ton("swoosh", 0.3);
@@ -4532,17 +4494,6 @@
       S.dorfZeichen = k.dataset.z === "1"; S.dorfNamen = k.dataset.n === "1"; S.dorfAnzeigeAuf = false;
       try { localStorage.setItem("dma_dorf_zeichen", S.dorfZeichen ? "1" : "0"); localStorage.setItem("dma_dorf_namen", S.dorfNamen ? "1" : "0"); } catch (e) {}
       ton("holzklopf", 0.2); schnellZeichnen(true); return;
-    } else if (s === "saisonschalter") {
-      var sAn = k.dataset.an === "1";
-      rpc("spiel_saison_setzen", { p_art: k.dataset.a, p_an: sAn }).then(function (r) {
-        if (!r || !r.ok) { hinweis("🎃 " + ((r && r.grund) || "Das ging nicht.")); return; }
-        S.ich = Object.assign({}, S.ich, { saison: sAn ? ((S.ich && S.ich.saison) || []).concat([r.art]) : ((S.ich && S.ich.saison) || []).filter(function (x) { return x !== r.art; }) });
-        ton(sAn ? "halloween" : "swoosh", 0.35);
-        hinweis(sAn ? "🎃 Halloween-Paket ist an – für alle: Kürbisbombe und Glibbergeist im Laden, Zauber Spinnenplage, " + (r.aufgaben || 0) + " Halloween-Aufgaben."
-          : "🎃 Halloween-Paket ist aus. Gekaufte Halloween-Waffen bleiben, neue gibt es nicht mehr.");
-        schnellZeichnen(true); panelAuffrischen(); abrufen(true);
-      }).catch(function () { hinweis("🎃 Das ging gerade nicht."); });
-      return;
     } else if (s === "jahrvorschau") {
       var jv = JAHR_VORSCHAU.findIndex(function (v) { return v[0] === (S.jahrVorschau || ""); });
       S.jahrVorschau = JAHR_VORSCHAU[(jv + 1) % JAHR_VORSCHAU.length][0];
@@ -6228,7 +6179,7 @@
         return '<button type="button" data-tu="kategorie" data-k="' + k + '" class="' + ((S.kategorie || "") === k ? "sp-an" : "") + '">' + name + "</button>";
       };
       var weitere = ARTEN_WEITERE.map(function (x) { return '<option value="' + x[0] + '"' + (S.kategorie === x[0] ? " selected" : "") + ">" + x[1] + "</option>"; }).join("");
-      var arten = '<div class="sp-chips sp-arten">' + ARTEN_KNOEPFE.filter(function (x) { return x[2] === "saison" ? saisonAn(x[0]) : !x[2] || ARTEN_FREI[x[0]]; })
+      var arten = '<div class="sp-chips sp-arten">' + ARTEN_KNOEPFE.filter(function (x) { return !x[2] || ARTEN_FREI[x[0]]; })
           .map(function (x) { return knopfArt(x[0], x[1]); }).join("")
         + '<select class="sp-arten-mehr" data-tu="kategoriewahl" aria-label="weitere Arten"><option value="">Weitere …</option>' + weitere + "</select></div>";
       /* XANDER: „sind die Punkte irgendwie getimet … jetzt krieg ich
@@ -6312,7 +6263,7 @@
         + fusionHtml(ich);
     }
     if (reiter === "waffen") {
-      var liste = WAFFEN_REIHE.filter(function (k) { return !WAFFEN[k].saison || saisonAn(WAFFEN[k].saison) || (ich.waffen || []).indexOf(k) >= 0; }).map(function (k) {
+      var liste = WAFFEN_REIHE.map(function (k) {
         var w = WAFFEN[k], hat = (ich.waffen || []).indexOf(k) >= 0;
         var h = hat ? haltVon(ich, k) : -1;
         var st = hat ? waffenStufe(ich, k) : 0;
@@ -6328,7 +6279,6 @@
           + (hat ? '<span class="sp-knopfgruppe">' + (S.waffe === k ? '<button type="button" data-tu="ablegen">Ablegen</button>' : '<button type="button" data-tu="anlegen" data-w="' + k + '">Anlegen</button>') + verst
                    + (STARTWAFFEN.indexOf(k) < 0 ? verkaufKnopf(k, Math.max(5, Math.round(w.preis * 0.5 * (h < 0 ? 60 : Math.min(60, h)) / 60))) : "") + "</span>"
                  : w.ab && (ich.level || 1) < w.ab ? '<button type="button" disabled>ab Level ' + w.ab + "</button>"
-                 : w.saison && !saisonAn(w.saison) ? '<button type="button" disabled>nur zu Halloween</button>'
                  : '<button type="button" data-tu="kaufen" data-d="' + k + '">🔒 ' + w.preis + " Punkte</button>")
           + "</div>";
       }).join("");
@@ -7730,7 +7680,7 @@
     var m = SPRUNG.liste.shift();
     if (!m) return;
     var mehr = SPRUNG.liste.length, el = document.createElement("div");
-    el.className = "sp-sprung" + (m.art === "angriff" ? " sp-sprung-angriff" : m.art === "warnung" ? " sp-sprung-warnung" : "") + (m.ohneSprung ? " sp-sprung-info" : "");
+    el.className = "sp-sprung" + (m.art === "angriff" ? " sp-sprung-angriff" : m.art === "warnung" ? " sp-sprung-warnung" : "");
     el.setAttribute("role", "alert");
     var z = m.art === "angriff" ? DORF_ZEICHEN[m.ziel] || ["#a33a3a", ""] : null;
     el.innerHTML = (z ? '<i class="sp-sprung-bild sp-sprung-pin" style="background:' + z[0] + '" aria-hidden="true"><svg viewBox="0 0 24 24">' + z[1] + "</svg></i>"
@@ -7742,7 +7692,7 @@
     document.body.appendChild(el);
     SPRUNG.el = el;
     ton(m.art === "angriff" ? "hammerschlag" : "pling", m.art === "angriff" ? 0.4 : 0.22);
-    SPRUNG.uhr = setTimeout(sprungZeigen, m.art === "angriff" ? 12000 : m.ohneSprung ? 5000 : 8000);
+    SPRUNG.uhr = setTimeout(sprungZeigen, m.art === "angriff" ? 12000 : 8000);
   }
   function sprungOeffnen(m) {
     SPRUNG.liste = []; sprungZeigen();
@@ -10903,7 +10853,7 @@
     return '<div class="sp-dl-beschriftung"><span>Beschriftung im Bild:</span>'
       + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "0" : "1") + '" data-n="' + (n ? "1" : "0") + '" class="' + (z ? "sp-an" : "") + '" aria-pressed="' + z + '">Symbole ' + (z ? "an" : "aus") + "</button>"
       + '<button type="button" data-s="dorfanzeige" data-z="' + (z ? "1" : "0") + '" data-n="' + (n ? "0" : "1") + '" class="' + (n ? "sp-an" : "") + '" aria-pressed="' + n + '">Namen ' + (n ? "an" : "aus") + "</button>"
-      + jahrVorschauKnopf() + saisonKnopf() + "</div>";
+      + jahrVorschauKnopf() + "</div>";
   }
   /* FASSUNG 733 — Funk 169: „ich möchte das schon mal in der Vorschau sehen wie sowas aussieht wenn die Stadt dann
      geschmückt ist". Nur der Betreiber sieht den Knopf; er blättert durch Jahreszeiten und Feste. */
@@ -10913,15 +10863,6 @@
     if (!darf && !S.jahrVorschauTest) return "";
     var i = Math.max(0, JAHR_VORSCHAU.findIndex(function (v) { return v[0] === (S.jahrVorschau || ""); }));
     return '<button type="button" data-s="jahrvorschau" class="' + (S.jahrVorschau ? "sp-an" : "") + '" aria-pressed="' + !!S.jahrVorschau + '">Saison: ' + JAHR_VORSCHAU[i][1] + "</button>";
-  }
-  /* FASSUNG 745 — XANDER (Funk 139): „ein Paket vorbereitet was ich dann in dem Moment wenn halloween ist freischaltet".
-     Nur der Betreiber sieht den Schalter; er gilt für alle (Server: spiel_saison_setzen). */
-  function saisonKnopf() {
-    var be = BE(), darf = false;
-    try { darf = Boolean(be && be.isOwner && be.isOwner()); } catch (e) {}
-    if (!darf && !S.jahrVorschauTest) return "";
-    var an = saisonAn("halloween");
-    return '<button type="button" data-s="saisonschalter" data-a="halloween" data-an="' + (an ? "0" : "1") + '" class="' + (an ? "sp-an" : "") + '" aria-pressed="' + an + '">Halloween-Paket: ' + (an ? "an" : "aus") + "</button>";
   }
   function dorfAnzeigeHtml() {
     var z = dorfZeichen(), n = dorfNamen(), wahl = [];

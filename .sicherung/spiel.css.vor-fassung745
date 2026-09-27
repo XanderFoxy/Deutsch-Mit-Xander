@@ -2667,18 +2667,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-erg-zeile .sp-erg-extras { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
 .sp-erg-zeile .sp-erg-extras > span { white-space: nowrap; }
 .sp-erg-zeile button { flex: 0 0 auto; }
-/* FASSUNG 745 — Spinnenplage: Spinnen seilen sich ab (Faden bleibt oben hängen) und krabbeln seitlich weg. */
-.sp-spinne-z { position: fixed; z-index: 9991; width: 22px; height: 22px; margin: -11px 0 0 -11px; pointer-events: none; opacity: 0;
-  animation: spSpinneSeil 3.2s cubic-bezier(.3, .6, .4, 1) both; }
-.sp-spinne-z::before { content: ""; position: absolute; left: 50%; bottom: 60%; width: 1px; height: var(--fall); margin-left: -.5px;
-  background: linear-gradient(to top, rgba(210, 216, 224, .85), rgba(210, 216, 224, 0)); transform-origin: bottom; animation: spSpinneFaden 3.2s linear both; }
-.sp-spinne-z svg { width: 100%; height: 100%; display: block; animation: spSpinneBeine .16s linear infinite alternate; }
-@keyframes spSpinneSeil { 0% { opacity: 0; transform: translateY(0); } 8% { opacity: 1; } 45% { transform: translateY(var(--fall)); }
-  82% { opacity: 1; transform: translate(var(--kr), var(--fall)); } 100% { opacity: 0; transform: translate(calc(var(--kr) * 1.4), var(--fall)); } }
-@keyframes spSpinneFaden { 0%, 45% { opacity: 1; } 60%, 100% { opacity: 0; } }
-@keyframes spSpinneBeine { from { transform: scaleX(1); } to { transform: scaleX(.9) translateY(.5px); } }
-@media (prefers-reduced-motion: reduce) { .sp-spinne-z, .sp-spinne-z svg, .sp-spinne-z::before { animation-duration: .01s; } }
-/* FASSUNG 745 — ein reines Info-Band (Tagesgeschenk) fängt keine Tipps ab: wer darunter auf einen Platz tippt, trifft den Platz.
-   Nur ✕ bleibt antippbar. (Gefunden durch Sonde 650: das Geschenk-Band lag 8 s über Beas Platz.) */
-.sp-sprung.sp-sprung-info { pointer-events: none; opacity: .94; }
-.sp-sprung.sp-sprung-info .sp-sprung-zu { pointer-events: auto; }
