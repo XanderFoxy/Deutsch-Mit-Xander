@@ -367,6 +367,33 @@ const sage = (gut, was, zusatz) => {
   r = await pg.evaluate(() => ({ a: window.__truppArgs, h: window.__hinweise.slice(-1)[0] || "", zeile: ((document.querySelector('.sp-dl-station [data-trupp="jagd"]') || {}).textContent || "").replace(/\s+/g, " ") }));
   sage(r.a && r.a.p_ort === "jagd" && /Jäger ziehen auf die Jagd/.test(r.h) && /jagen · noch 9 von 9 Fleisch/.test(r.zeile), "die Jäger ziehen los; die Zeile zeigt Menge und Rückkehr", JSON.stringify(r));
   if (process.env.BILD) { await pg.evaluate(() => document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "start" })); await tick(400); await pg.screenshot({ path: process.env.BILD + "-trupps.png" }); }
+
+  console.log("\nMELDUNGEN MIT SPRUNG INS DORF (Fassung 728, Funk 155/173)\n");
+  /* „oben eine Meldung … wenn irgendwas fertig ist dass man das Antippen kann und direkt in dieses Dorf Mini springt auch wenn man angegriffen wird" */
+  await pg.evaluate(() => { try { localStorage.removeItem("dma_dorf_gemeldet"); } catch (e) {} const P = window.DMA_SPIEL.pruef, S = P.zustand(); P.sprung().gemeldet = null; P.sprung().liste = [];
+    S.schnellMenue = false; S.blick = null; S.dorfWahl = ""; P.schnellZeichnen(true);
+    const ich = window.__ich, jetzt = Date.now();
+    ich.werk = { trupp_wald: { ware: "holz", menge: 9, voll: 9, start: new Date(jetzt - 400000).toISOString(), fertig: new Date(jetzt - 5000).toISOString(), trupp: "wald" } };
+    ich.dorf = Object.assign({}, ich.dorf, { muehle: Object.assign({}, (ich.dorf || {}).muehle || { stufe: 1, lp: 20 }, { gepl: new Date(jetzt - 60000).toISOString(), von: "Bea" }) });
+    S.ich = JSON.parse(JSON.stringify(ich)); P.dorfMeldungenPruefen(); });
+  await tick(400);
+  r = await pg.evaluate(() => { const e = document.querySelector(".sp-sprung"); if (!e) return null; const q = e.getBoundingClientRect(); return { t: e.textContent, angriff: e.classList.contains("sp-sprung-angriff"), oben: q.top < 60, breit: q.width <= window.innerWidth - 20 }; });
+  sage(r && r.angriff && /Bea hat deine Mühle geplündert/.test(r.t) && /\+1 weitere/.test(r.t) && r.oben && r.breit, "oben erscheint zuerst der Angriff (Mühle geplündert), dazu „+1 weitere“", JSON.stringify(r));
+  await tippe(".sp-sprung .sp-sprung-hin"); await tick(900);
+  r = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return { offen: !!document.querySelector(".sp-dl-rahmen"), wahl: S.dorfWahl, station: ((document.querySelector(".sp-dl-station b") || {}).textContent || ""), band: !!document.querySelector(".sp-sprung") }; });
+  sage(r.offen && r.wahl === "muehle" && /Mühle/.test(r.station) && !r.band, "„Ansehen“ springt ins Dorf, die Mühle ist offen", JSON.stringify(r));
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.schnellMenue = false; S.blick = null; S.dorfWahl = ""; P.schnellZeichnen(true); P.dorfMeldungenPruefen(); });
+  await tick(300);
+  sage(await pg.evaluate(() => !document.querySelector(".sp-sprung")), "dieselbe Sache wird nicht noch einmal gemeldet", "");
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(), ich = window.__ich; ich.werk.trupp_see = { ware: "fisch", menge: 5, voll: 7, start: new Date(Date.now() - 400000).toISOString(), fertig: new Date(Date.now() - 1000).toISOString(), trupp: "see" };
+    S.ich = JSON.parse(JSON.stringify(ich)); P.dorfMeldungenPruefen(); });
+  await tick(300);
+  r = await pg.evaluate(() => (document.querySelector(".sp-sprung") || {}).textContent || "");
+  sage(/Fischer sind zurück: 5 Fisch/.test(r), "neu Fertiges meldet sich wieder (die Fischer sind zurück)", r);
+  await tippe(".sp-sprung .sp-sprung-zu"); await tick(300);
+  sage(await pg.evaluate(() => !document.querySelector(".sp-sprung")), "✕ schließt die Meldung", "");
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.blick = "dorfblick"; S.schnellMenue = true; P.schnellZeichnen(true); });
+  await tick(500);
   const vis = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-rahmen").getBoundingClientRect(), w = document.querySelector(".sp-dw-schild"), b = document.querySelector(".sp-dl-bahnhof");
     if (!w || !b) return { fehlt: !w ? "wetter" : "bahnhof" }; const a = w.getBoundingClientRect(), c = b.getBoundingClientRect();
     return { rechts: a.right > f.right - 12, zeile: a.height < 20, ueberBahnhof: a.right > c.left && a.left < c.right && a.bottom > c.top && a.top < c.bottom }; });

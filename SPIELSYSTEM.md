@@ -1155,3 +1155,10 @@ Sonden: 711 (neu: jedes Fensterlicht liegt auf seinem Haus – im ganzen Dorf un
 - **Ursache 2 – Fenster neben den Häusern**: die Maske für den Zug malt Bahnhof, Mühle, Bergwerk und die Türme ein zweites Mal (in anderem Maßstab). Dabei merkten sich deren Fenster ein zweites Mal als Licht – an falscher Stelle (links neben dem Bahnhof, auf Wiese und Dächern). Die Lichter werden jetzt vor der Maske genommen.
 - **Keine Türlampen mehr**: Licht gibt es nur hinter Fenstern (je nach Uhrzeit, nachts wenige) und an den Straßenlaternen.
 - **Verdeckte Laternen**: eine Laterne, die hinter einem Haus steht, wirft keinen Schein mehr über das Haus.
+
+### Fassung 729 (Funk 155/173: Meldungen oben mit Sprung ins Dorf)
+Sonden: 716 (neu: Angriff zuerst, „+1 weitere“, „Ansehen“ öffnet das Dorf an der richtigen Station, keine Wiederholung, neu Fertiges meldet sich, ✕ schließt), 711, 686, 683, 700, 697 grün.
+- XANDER (wörtlich, Funk 173): „es soll auch immer wieder oben eine Meldung kommen wenn irgendwas fertig ist dass man das Antippen kann und direkt in dieses Dorf Mini springt auch wenn man angegriffen wird“.
+- **Band oben** (`.sp-sprung`): fertige Werkstätten („4 Brot fertig in der Bäckerei“), heimgekehrte Trupps („Die Fischer sind zurück: 5 Fisch“), reife Äcker, volle Ställe (Milch, Eier) und Plünderungen („Bea hat deine Mühle geplündert“, rot, zuerst). Mehrere Meldungen: „+n weitere“, sie kommen nacheinander.
+- **„Ansehen“** öffnet das Dorfbild und gleich die betroffene Station (Mühle, Bäckerei, Wald …). ✕ schließt alle.
+- **Nur einmal**: jede Sache wird genau einmal gemeldet (gemerkt auf dem Gerät, auch nach dem Neuladen). Ist das Dorf gerade offen, kommt kein Band – man sieht es im Bild.

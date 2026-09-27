@@ -7410,6 +7410,91 @@
     if (!a) return "";
     return " · " + (Number(a.menge) > 0 ? "noch " + a.menge + " " + wareName(a.ware) + " für die " + TRUPPS[ort].name + ", zurück in " + uhrText(Date.parse(a.fertig) - Date.now()) : "für diese Runde ist alles geholt");
   }
+  /* ---------------------------------------------------------------
+     FASSUNG 728 — MELDUNGEN MIT SPRUNG INS DORF
+     XANDER (Funk 173): „es soll auch immer wieder oben eine Meldung kommen wenn irgendwas fertig ist dass man das Antippen
+     kann und direkt in dieses Dorf Mini springt auch wenn man angegriffen wird". Und Funk 155 (Entdeckung, Einsammeln,
+     Mine voll, Angriff …). Oben im Bild erscheint ein Band: fertige Werkstätten, heimgekehrte Trupps, reife Äcker, volle
+     Ställe und Plünderungen. Ein Tipp auf „Ansehen" öffnet das Dorf genau dort. Jede Sache wird nur einmal gemeldet
+     (auch nach dem Neuladen); ist das Dorf gerade offen, sieht man es dort schon und es kommt kein Band.
+     --------------------------------------------------------------- */
+  var SPRUNG = { gemeldet: null, liste: [], el: null, uhr: 0 };
+  function sprungGemeldet() {
+    if (!SPRUNG.gemeldet) { try { SPRUNG.gemeldet = JSON.parse(localStorage.getItem("dma_dorf_gemeldet") || "{}") || {}; } catch (e) { SPRUNG.gemeldet = {}; } }
+    return SPRUNG.gemeldet;
+  }
+  function sprungMerken(k) {
+    var g = sprungGemeldet(), ks;
+    g[k] = Date.now(); ks = Object.keys(g);
+    if (ks.length > 80) ks.sort(function (a, b) { return g[a] - g[b]; }).slice(0, ks.length - 80).forEach(function (x) { delete g[x]; });
+    try { localStorage.setItem("dma_dorf_gemeldet", JSON.stringify(g)); } catch (e) {}
+  }
+  function dorfMeldungenPruefen() {
+    var ich = S.ich;
+    if (!ich || !spielSichtbar() || !drin()) return;
+    var g = sprungGemeldet(), jetzt = Date.now(), neu = [], d = ich.dorf || {};
+    Object.keys(ich.werk || {}).forEach(function (k) {
+      var w = ich.werk[k];
+      if (!w || !w.fertig || Date.parse(w.fertig) > jetzt) return;
+      var key = "w:" + k + ":" + w.fertig, tr = /^trupp_/.test(k) ? TRUPPS[k.slice(6)] : null;
+      if (g[key]) return;
+      neu.push({ key: key, art: "fertig", ware: w.ware, ziel: tr ? (k === "trupp_berg" ? "bergwerk" : k === "trupp_see" ? "" : "wald") : k,
+        text: tr ? "Die " + tr.name + " sind zurück: " + w.menge + " " + wareName(w.ware) : w.menge + " " + wareName(w.ware) + " fertig" + (DORF[k] ? " in der " + DORF[k].name : "") });
+    });
+    DORF_FELDER.forEach(function (f) {
+      var ab = ((ich.acker || {})[String(f.nr)] || {}).ab, key = "f:" + f.nr + ":" + ab;
+      if (!ab || !ackerStand(f.nr).reif || g[key]) return;
+      neu.push({ key: key, art: "fertig", ware: "getreide", ziel: "", text: "Das Getreide auf dem Acker ist reif" });
+    });
+    ["huehnerstall", "kuhstall"].forEach(function (k) {
+      var st = stallBereit(ich, k), key = "s:" + k + ":" + ((d[k] || {}).stand || "");
+      if (!st || st.bereit < st.max || g[key]) return;
+      neu.push({ key: key, art: "fertig", ware: k === "kuhstall" ? "milch" : "ei", ziel: k, text: k === "kuhstall" ? "Der Kuhstall ist voll: " + st.bereit + " Milch" : "Der Hühnerstall ist voll: " + st.bereit + " Eier" });
+    });
+    Object.keys(d).forEach(function (k) {
+      var b = d[k], key;
+      if (!b || !b.gepl || jetzt - Date.parse(b.gepl) > 3600000) return;
+      key = "p:" + k + ":" + b.gepl;
+      if (g[key]) return;
+      neu.push({ key: key, art: "angriff", ziel: k, text: (b.von || "Jemand") + " hat deine " + ((DORF[k] || {}).name || "Gebäude") + " geplündert" });
+    });
+    if (!neu.length) return;
+    neu.forEach(function (m) { sprungMerken(m.key); });
+    if (dorfOffen()) return;
+    /* Angriffe zuerst, dann das Übrige. */
+    SPRUNG.liste = SPRUNG.liste.concat(neu).sort(function (a, b) { return (a.art === "angriff" ? 0 : 1) - (b.art === "angriff" ? 0 : 1); });
+    if (!SPRUNG.el || !SPRUNG.el.isConnected) sprungZeigen();
+  }
+  function sprungZeigen() {
+    clearTimeout(SPRUNG.uhr);
+    if (SPRUNG.el) { SPRUNG.el.remove(); SPRUNG.el = null; }
+    var m = SPRUNG.liste.shift();
+    if (!m) return;
+    var mehr = SPRUNG.liste.length, el = document.createElement("div");
+    el.className = "sp-sprung" + (m.art === "angriff" ? " sp-sprung-angriff" : "");
+    el.setAttribute("role", "alert");
+    var z = m.art === "angriff" ? DORF_ZEICHEN[m.ziel] || ["#a33a3a", ""] : null;
+    el.innerHTML = (z ? '<i class="sp-sprung-bild sp-sprung-pin" style="background:' + z[0] + '" aria-hidden="true"><svg viewBox="0 0 24 24">' + z[1] + "</svg></i>"
+      : '<i class="sp-sprung-bild" aria-hidden="true">' + wareSvg(m.ware || "getreide") + "</i>")
+      + "<span>" + esc(m.text) + (mehr ? " <small>+" + mehr + " weitere</small>" : "") + "</span>"
+      + '<button type="button" class="sp-sprung-hin">Ansehen</button><button type="button" class="sp-sprung-zu" aria-label="Meldung schließen">✕</button>';
+    el.querySelector(".sp-sprung-hin").addEventListener("click", function () { sprungOeffnen(m); });
+    el.querySelector(".sp-sprung-zu").addEventListener("click", function () { SPRUNG.liste = []; sprungZeigen(); });
+    document.body.appendChild(el);
+    SPRUNG.el = el;
+    ton(m.art === "angriff" ? "hammerschlag" : "pling", m.art === "angriff" ? 0.4 : 0.22);
+    SPRUNG.uhr = setTimeout(sprungZeigen, m.art === "angriff" ? 12000 : 8000);
+  }
+  function sprungOeffnen(m) {
+    SPRUNG.liste = []; sprungZeigen();
+    S.rad = null; S.zrad = false; S.langWahl = false; S.trankAuf = false;
+    S.blick = "dorfblick"; S.schnellMenue = true;
+    S.dorfWahl = m.ziel && (DORF[m.ziel] || m.ziel === "wald") ? m.ziel : "";
+    handelLaden(false); abrufen(true); dorfTakt(true);
+    ton("swoosh", 0.25);
+    schnellZeichnen(true);
+    setTimeout(function () { try { var r = schnellEl.querySelector(".sp-dl-rahmen"); if (r) r.scrollIntoView({ block: "nearest" }); } catch (e) {} }, 80);
+  }
   function truppFertig(ich, orte) {
     for (var i = 0; i < orte.length; i++) { var t = truppStand(ich, orte[i]); if (t && t.fertig) return orte[i]; }
     return "";
@@ -12228,6 +12313,7 @@
     fundKnopfPflegen();
     ackerPflegen();
     erinnerungPruefen();
+    dorfMeldungenPruefen();
     tiereSpielen();
     tierZustandPflegen();
     dorfTakt(false);
@@ -12944,6 +13030,7 @@
       eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,
       krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, zauberStart: zauberStart, fuettern: fuettern, tierZustandPflegen: tierZustandPflegen, faehigZeigen: faehigZeigen, FAEHIG: FAEHIG, tierLaut: tierLaut, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
+      dorfMeldungenPruefen: dorfMeldungenPruefen, sprung: function () { return SPRUNG; },
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, chatWaffeZeigen: chatWaffeZeigen, tierReagiert: tierReagiert, tiereSpielen: tiereSpielen, handelLaden: handelLaden, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,
       abrufen: abrufen, eierPflegen: eierPflegen, makroAusloesen: makroAusloesen, dorfBlickHtml: dorfBlickHtml, stallBereit: stallBereit, baumStand: baumStand, pluendern: pluendern, holzen: holzen, angeln: angeln,
