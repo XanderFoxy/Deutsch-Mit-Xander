@@ -49,24 +49,20 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 731 — eine Waffe im Chat halten: am Bildrand, zielt aufs Ziel, trifft die getippte Stelle; Tomahawk-Fehler behoben",
+  stand: "Fassung 732 — Kartoffel macht 3 Schaden (Walkie 274)",
 
   inArbeit: [
-    { seit: "2026-09-27T03:41",
+    { seit: "2026-09-27T03:44",
       text: "Dorf-Gesamtkonzept wird auf Stand 731 gebracht – Funk 177" },
-    { seit: "2026-09-27T03:41",
-      text: "Chat-Effekt-Waffen (Hammer usw.) halten, Trefferstelle für Chat-Effekte – Funk 176, Phase 2" },
+    { seit: "2026-09-27T03:44",
+      text: "Chat-Effekt-Waffen (Hammer usw.) halten – Funk 176, Phase 2" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T03:41",
-      text: "Spaßwaffen-Schalter weg – kein Tomahawk mehr aus dem Nichts" },
-    { seit: "2026-09-27T03:41",
-      text: "Waffe halten bis zum Weglegen, am Rand des Bildes, Gesicht frei" },
-    { seit: "2026-09-27T03:41",
-      text: "Zielt genau zum anderen, Schuss aus der Mündung an die getippte Stelle" },
-    { seit: "2026-09-27T03:41",
-      text: "Fassung 730: Städte als Kette, aus dem Profil in die Stadt" },
+    { seit: "2026-09-27T03:44",
+      text: "Kartoffel: 3 statt 6 Schaden" },
+    { seit: "2026-09-27T03:44",
+      text: "Fassung 731: Waffe im Chat halten, zielen, treffen" },
   ],
 };

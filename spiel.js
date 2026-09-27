@@ -25,7 +25,8 @@
        Jede Waffe hat jetzt auch ihren Treffer („treffer"). Er klingt in
        einschlag() — also auf JEDEM Gerät, das den Schuss sieht. */
     /* XANDER (25.09.): „die Standard Arten soll immer Kartoffeln sein". */
-    kartoffel:    { name: "Kartoffel",       schaden: 6,  preis: 0,   flug: 560, ton: "swoosh",          treffer: "bonk" },
+    /* FASSUNG 732 — Walkie 274 („Soll ich auf 3 senken?“ – „okay“): die Kartoffel macht nur noch 3 Schaden. */
+    kartoffel:    { name: "Kartoffel",       schaden: 3,  preis: 0,   flug: 560, ton: "swoosh",          treffer: "bonk" },
     zwille:       { name: "Zwille",          schaden: 6,  preis: 0,   flug: 520, ton: "zwille",          treffer: "bonk" },
     bogen:        { name: "Pfeil und Bogen", schaden: 8,  preis: 0,   flug: 620, ton: "pfeilschuss",     treffer: "pfeiltreffer" },
     laser:        { name: "Laser",           schaden: 7,  preis: 0,   flug: 260, ton: "laserrot",        treffer: "lasertreffer" },

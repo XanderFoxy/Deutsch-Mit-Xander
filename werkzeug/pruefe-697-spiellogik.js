@@ -14,7 +14,7 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
 let fehler = 0;
 const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  ok   " : "  FEHL ") + was + (zusatz ? "   " + zusatz : "")); };
 /* So rechnet der Server seit 697 (spiel_waffe_schaden) — Preis in Klammern. */
-const SERVER = { kartoffel: 6, zwille: 6, bogen: 8, laser: 7, armbrust: 12, tomahawk: 15, bazooka: 28, zielfernrohr: 22, eierwerfer: 8, huehnerwerfer: 13,
+const SERVER = { kartoffel: 3, zwille: 6, bogen: 8, laser: 7, armbrust: 12, tomahawk: 15, bazooka: 28, zielfernrohr: 22, eierwerfer: 8, huehnerwerfer: 13,
   brezel: 8, bierkrug: 13, spaetzle: 17, bratwurst: 9, sauerkraut: 4, doener: 16, mg: 18, lasersalve: 15, weisswurst: 18, nudelholz: 22,
   kuckucksuhr: 30, doppellaser: 16, streulaser: 21, plasmastrahl: 26, kugelblitz: 32 };
 (async () => {

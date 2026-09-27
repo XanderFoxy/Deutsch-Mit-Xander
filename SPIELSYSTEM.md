@@ -1179,3 +1179,6 @@ Sonden: neu 731-waffe-halten (alter Schalter gelöscht, ohne Waffe kein Schuss, 
 - **Schießen**: Tipp auf eine Person – die Waffe dreht sich genau dorthin (schräg, waagerecht, oben, unten; nach links gespiegelt), Rückstoß und Mündungsblitz, der Schuss fliegt aus der Mündung an die getippte Stelle. Alle im Raum sehen es; bei anderen erscheint das Gerät kurz am Rand des Schützen. Kein Schaden, keine Punkte. Chat-Mauer: prallt ab. Höchstens 8 Schüsse je Person in 30 s.
 - **Weglegen**: Tipp aufs eigene Bild oder „Waffe weglegen“ im Platzmenü.
 - **Noch offen (Phase 2 der Design-Prüfung)**: Chat-Effekt-Waffen (Hammer, Zwille, Laser …) ebenfalls halten – mit zusammengefassten Chatzeilen, damit der Verlauf nicht zugemüllt wird; Trefferstelle auch für Chat-Effekte; alle Effekt-Schichten ziehen beim Platzwechsel ohne Neustart der Animation mit.
+
+### Fassung 732 (Walkie 274: Kartoffel 3 Schaden)
+- Walkie 274 (Frage: „Soll ich auf 3 senken?“ – Antwort: „okay“): die Kartoffel, die Standardwaffe, macht 3 statt 6 Schaden (Server `spiel_waffe_schaden` und Spiel). Sonden 697 (Server-Tabelle), 633, 641, 662, 666, 678, 681 grün.
