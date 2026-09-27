@@ -258,7 +258,7 @@ const sage = (gut, was, zusatz) => {
     const T = window.DMA_SPIEL, P = T.pruef, S = P.zustand(), vorher = S.waffe, w = (ms) => new Promise((r) => setTimeout(r, ms)), ich = { ich: true, id: "ich", name: "Alex" };
     const e1 = T.tippAufPlatz(null, ich); await w(120);
     const e2 = T.tippAufPlatz(null, ich); const nach2 = S.waffe; await w(120);
-    const e3 = T.tippAufPlatz(null, ich); await w(50);
+    const e3 = T.tippAufPlatz(null, ich); await w(500);
     return { vorher, nach2, nach3: S.waffe, ziel: Boolean(S.faehigZiel), e: [e1, e2, e3].join(","), h: window.__hinweise.slice(-1)[0] || "" };
   });
   sage(d3.nach2 !== d3.vorher && d3.nach3 === d3.vorher && d3.ziel && /Regenbogenfeuer bereit/.test(d3.h), "2× wechselt sofort die Waffe, der 3. Tipp nimmt das zurück und ruft die Tierkraft (Regenbogenfeuer bereit)", JSON.stringify(d3));
@@ -270,6 +270,33 @@ const sage = (gut, was, zusatz) => {
     return { vorher, nach: S.waffe, ziel: Boolean(S.faehigZiel) };
   });
   sage(d2.nach !== d2.vorher && !d2.ziel, "nur 2×: die Waffe bleibt gewechselt, keine Tierkraft", JSON.stringify(d2));
+
+  console.log("\n4× = GESUNDHEIT, 5× = MANATRANK (Walkie 287: „Beides: Ring und Mehrfachtipp“)\n");
+  const mehr = (n) => pg.evaluate(async (n) => {
+    const T = window.DMA_SPIEL, S = T.pruef.zustand(), w = (ms) => new Promise((r) => setTimeout(r, ms)), ich = { ich: true, id: "ich", name: "Alex" };
+    await w(500); window.__rufe.length = 0; S.faehigZiel = false; const vorher = S.waffe;
+    for (let i = 0; i < n; i++) { T.tippAufPlatz(null, ich); await w(110); }
+    await w(600);
+    return { rufe: window.__rufe.map((r) => r.name + (r.args.p_trank ? ":" + r.args.p_trank : "") + (r.args.p_art ? ":" + r.args.p_art : "")).join(","), ziel: Boolean(S.faehigZiel), waffeGleich: S.waffe === vorher, trankAuf: Boolean(S.trankAuf) };
+  }, n);
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich = Object.assign({}, S.ich, { lp: 60, lp_max: 100, pflaster: 3, trank_mana: 2 }); window.__ich.lp = 60; window.__ich.trank_mana = 2;
+    window.__extra = window.__extra || {}; window.__extra.spiel_trinken = () => Object.assign({}, window.__ich, { ok: true, mana: 90, trank_mana: 1 }); });
+  const m4 = await mehr(4);
+  sage(/spiel_heilen/.test(m4.rufe) && !m4.ziel && m4.waffeGleich, "4× aufs eigene Bild: Gesundheit (heilt), keine Tierkraft, die Waffe bleibt", JSON.stringify(m4));
+  const m5 = await mehr(5);
+  sage(/spiel_trinken:mana/.test(m5.rufe) && !/spiel_heilen/.test(m5.rufe) && !m5.ziel && m5.waffeGleich, "5× aufs eigene Bild: der Manatrank wird getrunken – nichts anderes", JSON.stringify(m5));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich = Object.assign({}, S.ich, { trank_mana: 0 }); window.__ich.trank_mana = 0; });
+  const m5b = await mehr(5);
+  sage(!/spiel_trinken/.test(m5b.rufe) && m5b.trankAuf, "5× ohne Manatrank: die Auswahl der Tränke geht auf (dort „Manatrank kaufen“)", JSON.stringify(m5b));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.trankAuf = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await pg.evaluate(() => { window.DMA_SPIEL.langAufEigen(null); }); await tick(400);
+  const ob = await pg.evaluate(() => { const t = document.querySelector(".sp-ring .sp-ring-mana-knoepfe"); if (!t) return { da: false };
+    const r = t.getBoundingClientRect(), q = document.querySelector(".sp-ring").getBoundingClientRect();
+    const tippbar = [...t.querySelectorAll("button")].every((b) => { const k = b.getBoundingClientRect(); const o = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2); return o && (o === b || b.contains(o)); });
+    return { da: true, knoepfe: [...t.querySelectorAll("button")].map((b) => b.dataset.s).join(","), imBild: r.top >= 0 && r.left >= 0 && r.right <= innerWidth, mittig: Math.abs((r.left + r.right) / 2 - (q.left + q.right) / 2) < 6, tippbar }; });
+  if (B) await pg.screenshot({ path: B + "-ring2.png" });
+  sage(ob.da && /^heilen/.test(ob.knoepfe) && /trankauf/.test(ob.knoepfe) && ob.imBild && ob.mittig && ob.tippbar, "im Ring oben: Gesundheit (Herz) und die Tränke, mittig, ganz im Bild, tippbar", JSON.stringify(ob));
+  await pg.evaluate(() => { window.DMA_SPIEL.pruef.zustand().langWahl = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
 
   sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.join(" | "));
   console.log("\nFassung 719 auf dem Telefon: " + (fehler ? fehler + " rot." : "alles grün."));

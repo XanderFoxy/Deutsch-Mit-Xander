@@ -1031,19 +1031,26 @@
   /* FASSUNG 719 — XANDER (Funk 163): „dann möchte ich dass man bei dreimal teppen den tierpower aufruft je nachdem welche
      gerade frei ist". Der zweite Tipp wechselt weiter SOFORT die Waffe; kommt gleich ein dritter, wird der Wechsel
      zurückgenommen und die Tier-Fähigkeit ausgelöst. (4× Gesundheit und 5× Manatrank: Frage im Walkie, Nr. 287.) */
+  /* Walkie 287 — gewählt „Trotzdem 3×/4×/5× tippen" und „Beides: Ring und Mehrfachtipp": „bei vier mal tippen soll ich
+     meine Gesundheit aktivieren bei 5 mal tippen soll ich dann einen malertrank aussuchen können bzw den voreingestellten
+     aktivieren können" (Funk 163). Nach dem 3. und 4. Tipp wartet es 0,38 s, ob noch einer kommt; der 5. wirkt sofort. */
   function eigenTipp() {
     var jetzt = Date.now(), nah = jetzt - (S.eigenZeit || 0) < 380;
     S.eigenZahl = nah ? (S.eigenZahl || 1) + 1 : 1;
     S.eigenZeit = jetzt;
+    clearTimeout(S.eigenWarte);
     if (S.eigenZahl === 1) return false;
-    if (S.eigenZahl === 3) {
-      if (S.eigenVorher != null) S.waffe = S.eigenVorher;
-      S.eigenVorher = null;
-      zeichnen(); schnellZeichnen(true);
-      faehigLos();
+    if (S.eigenZahl >= 3) {
+      if (S.eigenZahl === 3) {
+        if (S.eigenVorher != null) S.waffe = S.eigenVorher;
+        S.eigenVorher = null;
+        zeichnen(); schnellZeichnen(true);
+      }
+      var zahl = S.eigenZahl;
+      if (zahl >= 5) eigenMehrfach(5);
+      else S.eigenWarte = setTimeout(function () { if (S.eigenZahl === zahl) eigenMehrfach(zahl); }, 380);
       return true;
     }
-    if (S.eigenZahl > 3) return true;
     var sl = slots(), neu = sl[(Math.max(-1, sl.indexOf(S.waffe)) + 1) % sl.length];
     S.eigenVorher = S.waffe;
     S.waffe = neu; S.rad = null;
@@ -1051,6 +1058,17 @@
     zahlZeigen(meineChatId(), null, WAFFEN[neu].name);
     zeichnen(); schnellZeichnen(true);
     return true;
+  }
+  function eigenMehrfach(n) {
+    S.eigenZahl = 0; S.eigenZeit = 0;
+    if (n === 3) { faehigLos(); return; }
+    if (n === 4) { ton("bling", 0.2); schnellHeilen(); return; }
+    /* 5×: der Manatrank, wenn einer da ist – sonst die Auswahl aller Tränke (dort auch „Manatrank kaufen"). */
+    var ich = S.ich || {};
+    if (ich.trank_mana > 0 && !wirkt(ich, "mana")) { trinken("mana"); return; }
+    ringSchliessen(); S.trankAuf = true; S.radOffenSeit = Date.now();
+    hinweis("🧪 Kein Manatrank da – hier kannst du einen kaufen oder etwas anderes nehmen.");
+    schnellZeichnen(true);
   }
   function langAufLeer(platz) {
     if (!spielSichtbar()) return false;
@@ -3943,7 +3961,15 @@
         + zauberSvg(a) + "<small" + (zu ? "" : ' class="sp-zr-kosten"') + ">" + (zu ? "Lv" + z.level : z.mana) + "</small></button>";
     });
     var mana = Math.min(1, (ich.mana || 0) / (ich.mana_max || 100));
-    var manaKnopf = manaKnoepfeHtml(ich, M);
+    /* FASSUNG 719 — Walkie 287 („Beides: Ring und Mehrfachtipp"): Gesundheit und Tränke stehen auch im Ring –
+       oben in der Lücke: Herz (heilt mit dem, was gerade passt), Heiltrank-Flasche (alle Tränke), Torte, Manatrank. */
+    var satt = !ich.kaputt && (ich.lp || 0) >= (ich.lp_max || 100);
+    var oben = ['<button type="button" class="sp-ring-heil" data-s="heilen" title="Gesundheit – nimmt, was gerade passt"' + (satt ? " disabled" : "") + '>'
+      + '<svg viewBox="0 0 20 20"><path d="M10 17 C4 12.5 2 10 2 7 C2 4.6 3.9 3 6 3 C7.8 3 9.2 4.1 10 5.5 C10.8 4.1 12.2 3 14 3 C16.1 3 18 4.6 18 7 C18 10 16 12.5 10 17 Z" fill="#e2403a"/><path d="M10 7 V12 M7.5 9.5 H12.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>']
+      .concat(trankVorrat(ich) ? ['<button type="button" class="sp-ring-traenke" data-s="trankauf" title="Alle Tränke"><span class="sp-trank sp-trank-heil"></span><small>' + trankVorrat(ich) + "</small></button>"] : [])
+      .concat(manaKnoepfeListe(ich));
+    var obenBreite = oben.length * 34;
+    var manaKnopf = '<span class="sp-zr-mana-knoepfe sp-ring-mana-knoepfe" style="left:' + (M - obenBreite / 2) + "px;top:-30px;width:" + obenBreite + 'px">' + oben.join("") + "</span>";
     svg += '<circle class="sp-ring-mana-spur" cx="' + M + '" cy="' + M + '" r="' + RM + '"/>'
       + (mana > 0 ? '<path class="sp-ring-mana" d="' + bogen(RM, -Math.PI / 2, -Math.PI / 2 + Math.max(0.05, mana * 2 * Math.PI - 0.001)) + '"/>' : "");
     /* Über den Zauberstab geöffnet, heißt der Ring auch „Zauberrad" (sp-zauberrad) – derselbe Ring. */
@@ -3957,7 +3983,7 @@
       /* FASSUNG 678 blieb: „Zahl = Preis" – die Zahl am Zauber ist sein Mana-Preis, kein Vorrat. */
       + '<span class="sp-ring-mana-zahl sp-zr-mana" style="left:' + (M - 30) + "px;top:" + (M + 16) + 'px">Mana ' + (ich.mana || 0) + '<br><i class="sp-zr-erkl">Zahl = Preis</i></span>'
       /* FASSUNG 686 blieb: „Mana mit drin, dass ich Torten Shortcut habe" – Torte, Kuchen und Manatrank oben am Ring. */
-      + (/sp-zr-mana-knoepfe/.test(manaKnopf) ? manaKnopf.replace("top:" + (M + 38) + "px", "top:-30px").replace("sp-zr-mana-knoepfe", "sp-zr-mana-knoepfe sp-ring-mana-knoepfe") : "")
+      + manaKnopf
       + leiste + "</div>";
   }
   function ringSchliessen() { S.rad = null; S.zrad = false; S.langWahl = false; S.ringBereich = ""; }
@@ -3984,15 +4010,19 @@
     return n;
   }
   function manaKnoepfeHtml(ich, M) {
+    var k = manaKnoepfeListe(ich);
+    if (!k.length) return '<span class="sp-zr-leer" style="left:' + (M - 60) + "px;top:" + (M + 40) + 'px">Torte backen = Mana</span>';
+    var breite = k.length * 34;
+    return '<span class="sp-zr-mana-knoepfe" style="left:' + (M - breite / 2) + "px;top:" + (M + 38) + "px;width:" + breite + 'px">' + k.join("") + "</span>";
+  }
+  function manaKnoepfeListe(ich) {
     var k = [];
     if (vorrat(ich, "torte")) k.push('<button type="button" data-s="iss" data-d="torte" title="Torte essen: +40 LP, +15 Mana">' + wareSvg("torte") + "<small>" + vorrat(ich, "torte") + "</small></button>");
     if (ich.trank_mana) k.push('<button type="button" data-s="trinken" data-t="mana" title="Manatrank: +50 Mana"' + (wirkt(ich, "mana") ? " disabled" : "") + '><span class="sp-trank sp-trank-mana"></span><small>' + ich.trank_mana + "</small></button>");
     if (vorrat(ich, "kuchen")) k.push('<button type="button" data-s="iss" data-d="kuchen" title="Kuchen essen: +30 LP, +10 Mana">' + wareSvg("kuchen") + "<small>" + vorrat(ich, "kuchen") + "</small></button>");
     /* FASSUNG 692 — Manatrank gleich hier kaufen (25 P). */
     if ((ich.mana || 0) < (ich.mana_max || 100)) k.push('<button type="button" data-s="manakauf" title="Manatrank kaufen: 25 P, +50 Mana"' + ((ich.punkte || 0) >= 25 ? "" : " disabled") + '><span class="sp-trank sp-trank-mana"></span><small>+</small></button>');
-    if (!k.length) return '<span class="sp-zr-leer" style="left:' + (M - 60) + "px;top:" + (M + 40) + 'px">Torte backen = Mana</span>';
-    var breite = k.length * 34;
-    return '<span class="sp-zr-mana-knoepfe" style="left:' + (M - breite / 2) + "px;top:" + (M + 38) + "px;width:" + breite + 'px">' + k.join("") + "</span>";
+    return k;
   }
   function langWahlHtml() {
     var ich = S.ich || {}, zOffen = ZAUBER_REIHE.some(function (a) { return (ich.level || 1) >= ZAUBER[a].level; }), w = S.waffe || slots()[0];
