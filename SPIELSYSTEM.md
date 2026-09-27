@@ -1512,3 +1512,22 @@ Sonden: neu 767 (alles grün; mit der Sicherung sind genau die neuen Punkte rot)
 - **Die Mühle lässt 30 % liegen** (mindestens 4 Getreide). So bleibt Getreide für Saat, Markt und Handel.
 - **Die Bäckerei backt reihum Brot, Kuchen und Torte.** Die Torte braucht 2 Mehl, 2 Eier und 1 Milch. Fehlt etwas, backt sie das Nächste.
 - Die Meldung beginnt jetzt mit „Dorf:“, z. B. „Dorf: 10 Bauern bringen 197 Getreide“.
+
+### Fassung 768 (Funk 189–191: Fehler zuerst)
+Sonden: neu 768 (alles grün; mit der Sicherung sind genau die neuen Punkte rot); 648, 651, 666, 669, 678, 686, 703, 711, 716, 764, 766 grün. Angepasst, weil sich das Verhalten gewollt ändert: 673, 682, 707 (Fund-Knopf) und 764 (Wahrzeichen-Plätze).
+- **Aussprache-Übung ohne Wort** (XANDER, Funk 190: „man kriegt kein Wort präsentiert … die ersten beiden Fällen sind ausgegraut … dass die Verbindung zu der sauberen Stimme nicht aufgebaut werden kann").
+  - Ursache: Ob Azure bereitsteht, weiß die Seite erst, wenn der „Stand“ einmal geladen ist. Das geschah nur im Aussprachekurs. Wer direkt ins Spiel ging, hatte nie Azure. Dann gab es weder Vorsprechen noch Laut-Bewertung, und die Knöpfe blieben grau.
+  - Jetzt lädt die Brücke den Stand zuerst.
+  - Beim Herausschneiden aus der Sammeldatei entstand außerdem je Wort ein neuer AudioContext. Telefone erlauben davon nur wenige. Jetzt entsteht keiner mehr.
+  - Fehlt das Vorsprechen, geht „Nachsprechen“ trotzdem, solange die Laut-Bewertung erreichbar ist. „Melde dich an“ erscheint nur noch, wenn man wirklich nicht angemeldet ist.
+- **Nicht mehr schließen können**: Das Fenster springt zur Aufgabe hoch, und die Kopfzeile mit ▾ und ✕ verschwand dabei oben. Die Kopfzeile bleibt jetzt stehen.
+- **Schatz nur auf der Bühne** (Funk 189: „ich sammle ihn nur auf der Bühne ein und nicht über einen anderen Button“; Funk 190: „das Dorf schließt sich auch immer noch“).
+  - Der Knopf im Deutsch-Fenster heißt jetzt „Zur Bühne“: Er legt das Fenster ab und zeigt, wo das Säckchen liegt. Einsammeln muss man selbst.
+  - Der Knopf unten in der Leiste ist weg.
+  - Ein offenes Dorf bleibt dabei offen.
+- **Wahrzeichen im Grünen** (Funk 191: „der soll lieber irgendwo im Grünen stehen … die Zeichen verdecken das alles“; Funk 192: „dass der Fernsehturm egal wo er steht diese Eingabe an den Orten nicht behindern kann“).
+  - Gemessen: Der Fernsehturm lag über dem Bahnhof, Platz 4 über dem Wald, der Dom unter dem Kompass.
+  - Die fünf Plätze liegen jetzt auf freier Wiese: unten links, unten rechts, am linken Rand, bei der Schule und am Fluss. Keiner berührt Bahnhof, Wald, See oder Feld.
+  - Nur die gemalte Form fängt den Tipp, das leere Kästchen drumherum lässt ihn durch.
+- **Der „Schein“**: Hinter jedem Wahrzeichen lag die helle Knopffarbe des Menüs als Kasten. Die ist weg. Nachts wird das Wahrzeichen dunkler wie die Häuser.
+- **Kompass kleiner** (Funk 191): 26 statt 31 px. Die Tippfläche bleibt über einen unsichtbaren Rand bei 32 px.

@@ -3957,8 +3957,8 @@
     /* FASSUNG 679 — das abgelegte Spielfenster liegt griffbereit in der Leiste. */
     if (S.panelAbgelegt) teile.splice(1, 0, '<button type="button" class="sp-s-fenster sp-an" data-s="fensterauf" title="Spielfenster wieder öffnen">'
       + '<svg viewBox="0 0 20 20"><rect x="3" y="9" width="14" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 6 L10 2.8 L13.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>');
-    /* FASSUNG 768 — XANDER (Funk 189): „den kriege ich nur mit meinen Fingertip an und ich brauche dafür keine extra
-       Informationen in den werkzeugmenü unten". Der Fundstück-Knopf in der Leiste ist weg. */
+    /* FASSUNG 673 — liegt ein Fundstück auf dem Feld, steht es auch hier. */
+    if (fundKnopfHtml()) teile.push('<button type="button" class="sp-s-fund" data-s="fund" title="Zeigen, wo das Fundstück liegt">' + fundSvg() + "</button>");
     var burger = '<button type="button" class="sp-s-burger sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Spielmenü: Waffen, Heilen, Tiere, Mehr">'
       + '<svg viewBox="0 0 20 20"><path d="M4 6 H16 M4 10 H16 M4 14 H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
     var html = burger + kampfKopf + '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (ringOffen() && ich.mitspielen ? ringHtml() : "")
@@ -6708,7 +6708,7 @@
     if (tu === "zu") { S.panelAbgelegt = null; schliessen(); schnellZeichnen(true); return; }
     if (tu === "fensterab") { fensterAblegen(); return; }
     if (tu === "haupt") { schliessen(); S.schnellMenue = true; schnellZeichnen(true); return; }
-    if (tu === "fund") { fundAmPlatzZeigen(); return; }
+    if (tu === "fund") { fundAusLeiste(); return; }
     if (tu === "neuwahl") { S.deutschWahl = !S.deutschWahl; panelAuffrischen();
       if (S.deutschWahl) { var wz = panel.querySelector(".sp-deutsch-wahl"); if (wz) try { wz.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }
       return; }
@@ -6957,19 +6957,12 @@
       return Promise.resolve(holen).catch(function () { return null; }).then(function (o) {
         /* Nur Wörter, die die saubere Stimme vorsprechen kann. */
         if ((!o || !o.puffer) && (versuch || 0) < 4) return sprechWortHolen((versuch || 0) + 1);
-        /* FASSUNG 768 — XANDER (Funk 190): „die ersten beiden Fällen sind ausgegraut … es steht irgendwie als
-           Information dass die Verbindung … zu der sauberen Stimme nicht aufgebaut werden kann". Fehlt das Vorsprechen,
-           darf man trotzdem nachsprechen, sobald die Laut-Bewertung geht; „melde dich an" steht nur, wenn es stimmt. */
-        var AP = window.AusspracheP, stand = AP && AP.zentralStandJetzt ? AP.zentralStandJetzt() : null;
         S.sprech = { wort: r.wort, silben: r.silben, original: o && o.puffer ? o : null,
-                     hinweis: o && o.puffer ? "" : sprechBewertbar() ? "Vorsprechen geht gerade nicht – sprich das Wort trotzdem, bewertet wird Laut für Laut."
-                       : stand && stand.nichtAngemeldet ? "Zum Vorsprechen und Bewerten bitte anmelden."
-                       : "Die Aussprache-Stimme antwortet gerade nicht – tippe gleich noch einmal auf „Neues Wort“." };
+                     hinweis: o && o.puffer ? "" : "Die saubere Stimme ist gerade nicht erreichbar – melde dich an oder versuch es später." };
         panelAuffrischen();
       });
     }).catch(function (e) { S.sprech = { fehler: String(e && e.message || e) }; panelAuffrischen(); });
   }
-  function sprechBewertbar() { var AP = window.AusspracheP; return Boolean(AP && AP.stufe1Da && AP.stufe1Da() && AP.alsWav); }
   function sprechHoeren() {
     var sp = S.sprech || {};
     if (!sp.original || !sp.original.puffer) return;
@@ -6983,7 +6976,7 @@
   }
   function sprechAufnehmen() {
     var sp = S.sprech || {}, AP = window.AusspracheP;
-    if (!sp.wort || sp.laeuft || (!sp.original && !sprechBewertbar())) return;
+    if (!sp.wort || sp.laeuft || !sp.original) return;
     if (!AP || !AP.mikrofonDa || !AP.mikrofonDa()) { sp.hinweis = "Kein Mikrofon auf diesem Gerät."; panelAuffrischen(); return; }
     sp.laeuft = true; sp.hinweis = "Sprich jetzt …"; sp.ergebnis = null; panelAuffrischen();
     var griff = null, fertig = false;
@@ -6993,10 +6986,6 @@
         if (!auf || !auf.blob) throw new Error((auf && auf.fehler) || "keine Aufnahme");
         sp.hinweis = "Ich höre zu …"; panelAuffrischen();
         return AP.tonLesen(auf.blob).then(function (eigen) {
-          var frei = function () {
-            if (!sp.original) throw new Error("ohne Vorsprechen kein Vergleich – tippe auf „Neues Wort“");
-            return AP.freieBewertungAusPuffern(eigen, sp.original.puffer);
-          };
           /* FASSUNG 766 — XANDER (Funk 188): „dass wir das wie im Aussprache Training auf der Seite auch in diesem Spiel
              nutzen können und dann müssen Sie die korrekte Aussprache machen und kriegen dann auch die Punkte dafür".
              Wie im Aussprachekurs: zuerst die Laut-Bewertung von Azure (Laut für Laut); nur wenn sie nicht geht, der
@@ -7008,10 +6997,10 @@
                 (az.woerter || []).forEach(function (w) { (w.laute || []).forEach(function (l) { if (l.note !== null && (!schlecht || l.note < schlecht.note)) schlecht = l; }); });
                 return { prozent: Math.round(az.prozent), azure: true, tipp: schlecht && schlecht.note < 60 && AP.lautKlartext ? AP.lautKlartext(schlecht) : "" };
               }
-              return frei();
-            }).catch(frei);
+              return AP.freieBewertungAusPuffern(eigen, sp.original.puffer);
+            }).catch(function () { return AP.freieBewertungAusPuffern(eigen, sp.original.puffer); });
           }
-          return frei();
+          return AP.freieBewertungAusPuffern(eigen, sp.original.puffer);
         });
       }).then(function (erg) {
         var prozent = erg && typeof erg.prozent === "number" ? erg.prozent : 0;
@@ -7036,7 +7025,7 @@
     var e = sp.ergebnis;
     return '<div class="sp-sprech"><div class="sp-sprech-wort">' + esc(sp.wort) + '</div><div class="sp-sprech-silben">' + esc(sp.silben || "") + "</div>"
       + '<div class="sp-knoepfe"><button type="button" data-tu="sprechhoeren"' + (sp.original ? "" : " disabled") + ">Anhören</button>"
-      + '<button type="button" data-tu="sprechen" class="sp-sprech-mik' + (sp.laeuft ? " sp-an" : "") + '"' + (sp.laeuft || e || (!sp.original && !sprechBewertbar()) ? " disabled" : "") + ">" + (sp.laeuft ? "Ich höre …" : "Nachsprechen") + "</button>"
+      + '<button type="button" data-tu="sprechen" class="sp-sprech-mik' + (sp.laeuft ? " sp-an" : "") + '"' + (sp.laeuft || e || !sp.original ? " disabled" : "") + ">" + (sp.laeuft ? "Ich höre …" : "Nachsprechen") + "</button>"
       + '<button type="button" data-tu="sprechneu">Neues Wort</button></div>'
       + '<div class="sp-erg-platz' + (e ? (e.gewonnen > 0 ? " sp-erg-gut" : " sp-erg-schlecht") : "") + '">'
       + (e ? '<div class="sp-erg-zeile"><b>' + e.prozent + (e.azure ? " / 100 · Laut für Laut</b>" : " % ähnlich</b>") + (e.gewonnen > 0 ? ' <span class="sp-gold">+' + e.gewonnen + " Punkte</span>" : "")
@@ -8554,14 +8543,10 @@
       + '<path d="M24.6 22.6 H39.4" stroke="#39434d" stroke-width="1.6"/><path d="M25 22.6 H39" stroke="#8fd0ff" stroke-width=".5" stroke-dasharray="1 .8"/>'
       + '<path d="M31 14.6 H33 V8 H31 Z" fill="#d7dce2"/><path d="M31.6 8 H32.4 V-1 H31.6 Z" fill="#fff"/><path d="M31.6 6 H32.4 V4 H31.6 Z M31.6 2 H32.4 V0 H31.6 Z" fill="#d8261f"/>';
   }
-  /* FASSUNG 768 — XANDER (Funk 191): „der soll lieber irgendwo im Grünen stehen die Plätze sind nur oben am Horizont und
-     die Zeichen verdecken das alles … die Plätze von dem Wahrzeichen müssen im Grünen irgendwo sein irgendwo unten wo man
-     sie sehen kann und wo sie den Spielfluss nicht blockieren". Oben verdeckten sie Bahnhof, Wald und Kompass. Die fünf
-     Plätze liegen jetzt auf freier Wiese: unten links und rechts, am linken Rand, bei der Schule und am Fluss. */
   /* FASSUNG 764 — XANDER (Funk 184): „warum kann ich meinen Fernsehturm nicht in meinem Dorf sehen kann man den dann nicht
      mit reinstellen kann ich mir mittlerweile bestimmen wo ich das hinstelle". Fünf Plätze hinter der Bahnlinie, vor den
      Bergen – wie eine Skyline (Mitte unten, im 320 × 200-Raster des Dorfbilds). Wer nichts wählt, bekommt den nächsten freien. */
-  var WUNDER_PLAETZE = [[84, 197], [300, 197], [16, 160], [240, 119], [180, 138]];
+  var WUNDER_PLAETZE = [[20, 58], [124, 58], [172, 58], [232, 58], [298, 58]];
   function wunderPlaetze(ich) {
     var v = (ich || {}).volk || {}, fest = v.wunder_platz || {}, belegt = {}, aus = {};
     Object.keys(WUNDER).forEach(function (k) { var p = fest[k]; if (hatWunder(ich, k) && p != null && p >= 0 && p < WUNDER_PLAETZE.length && !belegt[p]) { belegt[p] = k; aus[k] = Number(p); } });
@@ -13545,7 +13530,7 @@
   }
   function fundKnopfHtml() {
     return S.fundPlatz && fundPlatzEl() && fundPlatzEl().querySelector(".sp-fundsack")
-      ? '<button type="button" class="sp-fund-knopf" data-tu="fund" title="Fenster ablegen – das Fundstück auf der Bühne selbst antippen">' + fundSvg() + "<span>Zur Bühne</span></button>" : "";
+      ? '<button type="button" class="sp-fund-knopf" data-tu="fund" title="Fundstück einsammeln">' + fundSvg() + "<span>Einsammeln!</span></button>" : "";
   }
   function fundKnopfPflegen() {
     if (!panel || panel.hidden) return;
@@ -13560,10 +13545,7 @@
      Moment dieses Dialogfenster ablegt". Der Knopf legt das Fenster ab
      und zeigt, WO das Fundstück liegt – aufheben muss man es selbst. */
   function fundAmPlatzZeigen() {
-    /* FASSUNG 768 — XANDER (Funk 189/190): „dann soll das Anklicken auf diesen nicht den schatzbeutel einsammeln sondern
-       ich soll dann die Sicht frei zur Bühne haben … ich sammle ihn nur auf der Bühne ein" und „das Dorf schließt sich
-       auch immer noch". Der Knopf legt nur das Fenster ab; ein offenes Dorf bleibt offen. */
-    fensterAblegen(); if (!dorfOffen()) S.schnellMenue = false; S.rad = null; S.zrad = false;
+    fensterAblegen(); S.schnellMenue = false; S.rad = null; S.zrad = false;
     var q = fundPlatzEl(), f = q && q.querySelector(".sp-fundsack");
     schnellZeichnen(true);
     if (!f) return;

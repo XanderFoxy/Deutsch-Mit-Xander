@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 707: FUNK 146 – FLÜSSIG SAMMELN, ERNTEN, ANGELN, TASCHEN
+   SONDE — FASSUNG 768: FUNK 189–191 (FEHLER)
    ---------------------------------------------------------------------
-   XANDER (Funk 146): „möchte den Schatz einfach nur einsammeln … verrutscht
-   manchmal ein Ei … wenn man ganz schnell auf den Feldern so nacheinander
-   alle abgrast … soll das ganz flüssig ab ernten … die Angel soll man in
-   jeden einzelnen Teilbereich der Teiche hängen … ich möchte das frei
-   entscheiden was ich links haben möchte was ich rechts haben möchte".
-   Server-Attrappe mit den neuen Regeln (Sense alle 0,25 s, Angel je Teich
-   12 s, Fundstück sofort mit Inhalt). Echte Fingertipps auf 360 px.
+   XANDER: „man kriegt kein Wort präsentiert … die ersten beiden Fällen
+   sind ausgegraut … dass die Verbindung zu der sauberen Stimme nicht
+   aufgebaut werden kann" · „dann soll das Anklicken auf diesen nicht den
+   schatzbeutel einsammeln sondern ich soll dann die Sicht frei zur Bühne
+   haben" · „ich brauche dafür keine extra Informationen in den
+   werkzeugmenü unten" · „das Dorf schließt sich auch immer noch" ·
+   „die Plätze von dem Wahrzeichen müssen im Grünen irgendwo sein
+   irgendwo unten" · „das Kompass Zeichen ein kleines bisschen kleiner".
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -42,7 +43,7 @@ const sage = (gut, was, zusatz) => {
   const pg = await ctx.newPage();
   const konsolenFehler = [];
   pg.on("pageerror", (e) => konsolenFehler.push(String(e.message || e)));
-  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); /* ab 754: Kampf-Symbol aus = die ganze Leiste offen (das Kampf-Symbol prüft Sonde 754) */ localStorage.setItem("dma_spiel_kampfsymbol", "0"); } catch (e) {} });
+  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF && window.DMA_SPIEL, { timeout: 25000 });
 
@@ -159,141 +160,141 @@ const sage = (gut, was, zusatz) => {
 
   const zuletzt = () => pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
 
-  const leerePlaetze = () => pg.evaluate(() => [...document.querySelectorAll("#lcPlaetze .lc-platz")].filter((q) => !q.dataset.lcId && q.querySelector(".lc-kreis")).map((q) => Number(q.dataset.lcPlatz)));
-  const platzMitte = (nr) => mitte('#lcPlaetze .lc-platz[data-lc-platz="' + nr + '"] .lc-kreis');
-  const zeigePlatz = (nr) => pg.evaluate((nr) => document.querySelector('#lcPlaetze .lc-platz[data-lc-platz="' + nr + '"]').scrollIntoView({ block: "nearest" }), nr);
-  const tippePlatz = async (nr, warte) => { await zeigePlatz(nr); await tick(120); const m = await platzMitte(nr); await pg.touchscreen.tap(m.x, m.y); await tick(warte == null ? 250 : warte); };
-  const rufe = (n) => pg.evaluate((n) => window.__rufe.filter((r) => r.name === n).map((r) => r.args), n);
   await pg.evaluate(() => {
-    const ich = window.__ich;
-    ich.acker = {}; ich.werk = {}; ich.vorraete = Object.assign({}, ich.vorraete, { getreide: 0, fisch: 0, ei: 0 });
-    ich.dorf = { huehnerstall: { stufe: 1, lp: 20, stand: new Date(Date.now() - 3 * 900000 - 5000).toISOString() } };
-    ich.waffen = ["kartoffel", "zwille", "bogen", "laser", "brezel"];
-    let letzte = 0; const angel = {};
-    const plus = (w, n) => { ich.vorraete = Object.assign({}, ich.vorraete, { [w]: (ich.vorraete[w] || 0) + n }); };
-    window.__verzoegerung = 180;
+    const ich = window.__ich, jetzt = Date.now();
+    ich.level = 13; ich.punkte = 1500; ich.mana = 60;
+    ich.dorf = { muehle: { stufe: 2, lp: 40 }, baeckerei: { stufe: 2, lp: 40 }, schule: { stufe: 1, lp: 20 }, bibliothek: { stufe: 1, lp: 20 }, labor: { stufe: 1, lp: 20 } };
+    ich.werk = {};
+    ich.dorf_ab = new Date(jetzt - 5 * 3600000).toISOString();
+    ich.volk = { arbeiter: 16, ritter: 0, quote: 80, berufe: { bauer: 2, wissenschaftler: 3 }, forschung: 100 };
+    ich.vorraete = Object.assign({}, ich.vorraete, { erz: 30, quarz: 20, gold: 3, holz: 12, brot: 10, fisch: 5, bratwurst: 5 });
+    const FK = { dreifelder: 20, sauerteig: 30, wassermuehle: 40, buchdruck: 60, duden: 80, dampf: 120 };
+    const WD = { holstentor: [4, 250, { holz: 10, erz: 5 }], brandenburger: [8, 500, { erz: 10, quarz: 6 }], koelner_dom: [12, 900, { erz: 20, quarz: 10, gold: 2 }],
+                 neuschwanstein: [16, 1400, { quarz: 25, gold: 5, holz: 10 }], fernsehturm: [20, 2000, { erz: 30, silizium: 4, chip: 2 }] };
     window.__extra = Object.assign({}, window.__extra || {}, {
-      spiel_ernten: (a) => {
-        if (Date.now() - letzte < 250) return { ok: false, grund: "langsam – die Sense muss erst ausholen" };
-        const f = ich.acker[a.p_platz] || {}; const reif = (f.ab ? Date.parse(f.ab) : 0) + 240000;
-        if (reif > Date.now()) return { ok: false, grund: "das Korn wächst noch", sek: 200 };
-        letzte = Date.now(); plus("getreide", 2);
-        ich.acker = Object.assign({}, ich.acker, { [a.p_platz]: { ab: new Date().toISOString(), saat: false } });
-        return Object.assign({}, JSON.parse(JSON.stringify(ich)), { ok: true, menge: 2, besaet: false });
-      },
-      spiel_angeln: (a) => {
-        if (angel[a.p_platz] && Date.now() - angel[a.p_platz] < 12000) return { ok: false, grund: "in diesem Teich ist die Angel noch im Wasser", sek: 10 };
-        angel[a.p_platz] = Date.now(); plus("fisch", 1);
-        return Object.assign({}, JSON.parse(JSON.stringify(ich)), { ok: true, fang: "fisch", menge: 1 });
-      },
-      spiel_ei_sammeln: () => { plus("ei", 1); ich.dorf.huehnerstall.stand = new Date(Date.parse(ich.dorf.huehnerstall.stand) + 900000).toISOString();
-        return Object.assign({}, JSON.parse(JSON.stringify(ich)), { ok: true, menge: 1 }); },
-      spiel_fund_heben: () => { ich.punkte += 3; ich.vorraete.erz = (ich.vorraete.erz || 0) + 1; return Object.assign({}, JSON.parse(JSON.stringify(ich)), { ok: true, fund: "erz", sofort: 3 }); }
+      spiel_markt_preise: () => ({ ok: true, preise: {} }),
+      spiel_angebote_liste: () => ({ ok: true, angebote: [] }),
+      spiel_erforschen: (a) => { if ((ich.volk.forschung || 0) < FK[a.p_was]) return { ok: false, grund: "zu wenig Forschung" };
+        ich.volk = Object.assign({}, ich.volk, { forschung: ich.volk.forschung - FK[a.p_was], erforscht: (ich.volk.erforscht || []).concat([a.p_was]) });
+        return Object.assign({ ok: true, erforscht: a.p_was }, JSON.parse(JSON.stringify(ich))); },
+      spiel_wunder_bauen: (a) => { const d = WD[a.p_was]; if (ich.level < d[0]) return { ok: false, grund: "ab Level " + d[0] };
+        ich.punkte -= d[1]; Object.keys(d[2]).forEach((x) => { ich.vorraete[x] -= d[2][x]; });
+        ich.volk = Object.assign({}, ich.volk, { wunder: Object.assign({}, ich.volk.wunder, { [a.p_was]: new Date().toISOString() }) });
+        return Object.assign({ ok: true, wunder: a.p_was }, JSON.parse(JSON.stringify(ich))); }
     });
-    /* Jede Server-Antwort braucht 180 ms – wie im echten Netz. */
-    const P = window.DMA_SPIEL.pruef, S = P.zustand(), alt = S.klient.rpc;
-    S.klient = { rpc: (n, a) => new Promise((ok) => setTimeout(() => ok(alt(n, a)), window.__verzoegerung)) };
-    S.ich = JSON.parse(JSON.stringify(ich));
-    try { localStorage.removeItem("dma_spiel_werkzeug"); localStorage.removeItem("dma_spiel_slots"); localStorage.setItem("dma_spiel_slotzahl", "3"); } catch (e) {}
-    S.slots = null; S.slotZahl = 0;
+    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false; S.dorfTeil = "";
+    try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
     window.__hinweise.length = 0;
-    P.schnellZeichnen(true);
+    window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
-  await tick(1600);
 
-  console.log("\nEIER: JEDES FÜR SICH, NICHTS SPRINGT\n");
-  let r = await pg.evaluate(() => [...document.querySelectorAll("#lcPlaetze .sp-ei-feld:not(.sp-ei-weg)")].map((e) => Number(e.closest(".lc-platz").dataset.lcPlatz)));
-  sage(r.length === 3, "3 Eier liegen auf freien Plätzen", JSON.stringify(r));
-  const eiA = r[0], eiB = r[1], eiC = r[2];
-  await pg.evaluate(() => { window.__rufe.length = 0; });
-  await tippePlatz(eiA, 30); await tippePlatz(eiB, 30);
-  const waehrend = await pg.evaluate(() => [...document.querySelectorAll("#lcPlaetze .sp-ei-feld:not(.sp-ei-weg)")].map((e) => Number(e.closest(".lc-platz").dataset.lcPlatz)));
-  await tick(1600);
-  const nach = await pg.evaluate(() => [...document.querySelectorAll("#lcPlaetze .sp-ei-feld:not(.sp-ei-weg)")].map((e) => Number(e.closest(".lc-platz").dataset.lcPlatz)));
-  const eiRufe = await rufe("spiel_ei_sammeln");
-  sage(eiRufe.length === 2 && eiRufe[0].p_platz === eiA && eiRufe[1].p_platz === eiB, "zwei Eier schnell hintereinander: beide eingesammelt (vorher schluckte die Sperre das zweite)", JSON.stringify(eiRufe));
-  sage(waehrend.length === 1 && waehrend[0] === eiC && nach.length === 1 && nach[0] === eiC, "währenddessen und danach springt kein Ei: das dritte bleibt auf seinem Platz", JSON.stringify({ waehrend, nach, eiC }));
+  console.log("\nAUSSPRACHE: DER STAND WIRD ERST GELADEN, DANN SPRICHT AZURE VOR\n");
+  let r = await pg.evaluate(async () => {
+    /* Wie auf dem Telefon im Spiel: der Aussprachekurs war nie offen, der Stand ist leer. */
+    const AP = window.AusspracheP;
+    let stand = null; const ruf = [];
+    const puffer = { length: 100, sampleRate: 16000, duration: .5, getChannelData: () => new Float32Array(100), numberOfChannels: 1 };
+    AP.zentralMoeglich = () => true;
+    AP.zentralStandJetzt = () => stand;
+    AP.zentralStand = () => { ruf.push("stand"); stand = { zentralDa: true }; return Promise.resolve(stand); };
+    AP.zentralDa = () => Boolean(stand && stand.zentralDa);
+    AP.zentralVorlesen = (o) => { ruf.push("vorlesen:" + o.text); return Promise.resolve(stand && stand.zentralDa ? puffer : null); };
+    AP.huellkurve = () => [];
+    window.TonListe = undefined;
+    const o = await window.DMA_AUSSPR_BRUECKE.original("Brötchen");
+    return { ruf, puffer: !!(o && o.puffer), art: o && o.art };
+  });
+  sage(r.ruf[0] === "stand" && r.ruf[1] === "vorlesen:Brötchen" && r.puffer && r.art === "azure", "die Brücke lädt zuerst den Stand, dann liest Azure das Wort vor (vorher: Stand leer → nie Azure)", JSON.stringify(r));
 
-  console.log("\nSCHATZ: EINFACH EINSAMMELN\n");
+  await pg.evaluate(() => {
+    const AP = window.AusspracheP;
+    window.__extra = Object.assign({}, window.__extra || {}, {
+      spiel_aussprache_wort: () => ({ ok: true, wort: "Brötchen", silben: "BRÖT-chen", niveau: "A1" }),
+      spiel_aussprache_fertig: (a, ich) => { window.__fertigArgs = a; return Object.assign({}, ich, { ok: true, gewonnen: 3 }); }
+    });
+    const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true);
+    window.DMA_SPIEL.menue("deutsch");
+  });
+  await tick(400);
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.deutschWahl = true; window.DMA_SPIEL.menue("deutsch"); });
+  await tick(300);
+  await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="kategorie"][data-k="aussprache"]'); if (b) b.click(); });
+  await tick(900);
+  r = await pg.evaluate(() => { const k = document.querySelector("#spPanel .sp-sprech"), h = k && k.querySelector('[data-tu="sprechhoeren"]'), n = k && k.querySelector('[data-tu="sprechen"]');
+    return { wort: k ? (k.querySelector(".sp-sprech-wort") || {}).textContent : "", hoeren: h ? !h.disabled : false, nach: n ? !n.disabled : false, text: k ? k.textContent : "",
+      neu: !!document.querySelector('#spPanel [data-tu="neuwahl"]'), zu: !!document.querySelector('#spPanel [data-tu="zu"]') }; });
+  sage(r.wort === "Brötchen" && r.hoeren && r.nach && !/nicht erreichbar/.test(r.text), "Deutsch → Aussprache: Wort da, „Anhören“ und „Nachsprechen“ frei (nicht mehr ausgegraut)", JSON.stringify(r));
+  sage(r.neu && r.zu, "„Neue Aufgabe ▾“ und ✕ sind da – man kommt aus der Aussprache wieder heraus", JSON.stringify({ neu: r.neu, zu: r.zu }));
+  r = await pg.evaluate(() => { const z = document.querySelector('#spPanel [data-tu="zu"]'), b = z.getBoundingClientRect(), p = document.querySelector("#spPanel").getBoundingClientRect();
+    const e = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return { sichtbar: b.top >= p.top - 1 && b.bottom <= p.bottom, trifft: e === z, scroll: Math.round(document.querySelector("#spPanel").scrollTop) }; });
+  sage(r.sichtbar && r.trifft && r.scroll > 0, "nach dem Sprung zur Aufgabe bleibt die Kopfzeile mit ✕ oben sichtbar und antippbar", JSON.stringify(r));
+  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-aussprache.png" });
+
+  /* Ohne Vorsprechen, aber mit Laut-Bewertung: trotzdem nachsprechen dürfen. */
+  await pg.evaluate(() => { const AP = window.AusspracheP; AP.zentralVorlesen = () => Promise.resolve(null); AP.stufe1Da = () => true; AP.alsWav = () => new Blob(["wav"]); });
+  await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="sprechneu"]'); if (b) b.click(); });
+  await tick(1500);
+  r = await pg.evaluate(() => { const k = document.querySelector("#spPanel .sp-sprech"), n = k && k.querySelector('[data-tu="sprechen"]'); return { nach: n ? !n.disabled : false, text: k ? k.textContent : "" }; });
+  sage(r.nach && /bewertet wird Laut für Laut/.test(r.text), "ohne Vorsprechen, aber mit Laut-Bewertung: „Nachsprechen“ bleibt frei, mit ehrlichem Hinweis", r.text.slice(0, 140));
+  await pg.evaluate(() => { const AP = window.AusspracheP; AP.stufe1Da = () => false; });
+  await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="sprechneu"]'); if (b) b.click(); });
+  await tick(1500);
+  r = await pg.evaluate(() => { const k = document.querySelector("#spPanel .sp-sprech"), n = k && k.querySelector('[data-tu="sprechen"]'); return { nach: n ? !n.disabled : false, text: k ? k.textContent : "" }; });
+  sage(!r.nach && /antwortet gerade nicht/.test(r.text) && !/melde dich an/.test(r.text), "geht gar nichts: kein falsches „melde dich an“, sondern „antwortet gerade nicht – Neues Wort“", r.text.slice(0, 140));
+
+  console.log("\nSCHATZ: NUR AUF DER BÜHNE EINSAMMELN, DORF BLEIBT OFFEN\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.kategorie = null; S.sprech = null; document.querySelector("#spPanel").hidden = true; S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await tippe('.sp-schnell [data-s="makro"]'); await tick(900);
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.fundNaechst = 0; S.ich = Object.assign({}, S.ich, { mitspielen: true }); window.__rufe.length = 0; });
   await tick(1600);
   const sack = await pg.evaluate(() => { const f = document.querySelector("#lcPlaetze .sp-fundsack"); return f ? Number(f.closest(".lc-platz").dataset.lcPlatz) : 0; });
-  sage(sack > 0, "ein Fundstück liegt auf einem Platz", "Platz " + sack);
-  const leisteKnopf = await pg.evaluate(() => Boolean(document.querySelector('.sp-schnell [data-s="fund"]')));
-  if (sack) { await tippePlatz(sack, 700); }
-  r = await pg.evaluate(() => ({ rufe: window.__rufe.filter((x) => x.name === "spiel_fund_heben").length, deutsch: window.__rufe.some((x) => x.name === "spiel_aufgabe"),
-    panel: (() => { const p = document.querySelector(".sp-panel"); return p ? !p.hidden : false; })(), meld: window.__hinweise.slice(-1)[0] || "", sack: Boolean(document.querySelector("#lcPlaetze .sp-fundsack")) }));
-  sage(r.rufe === 1 && !r.sack && /eingesammelt: \+3 Punkte und 1 Erz/.test(r.meld), "Tipp aufs Säckchen: eingesammelt, Inhalt sofort (+3 Punkte und 1 Erz)", r.meld);
-  sage(!r.deutsch && !r.panel, "kein Deutsch-Fenster geht auf, keine Aufgabe wird geholt", JSON.stringify({ deutsch: r.deutsch, panel: r.panel }));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.fundNaechst = 0; window.__rufe.length = 0; });
-  await tick(1600);
-  await pg.evaluate(() => window.DMA_SPIEL.pruef.schnellZeichnen(true)); await tick(300);
-  /* FASSUNG 768 — XANDER (Funk 189): „den kriege ich nur mit meinen Fingertip an und ich brauche dafür keine extra
-     Informationen in den werkzeugmenü unten". Der Leisten-Knopf ist weg; eingesammelt wird auf der Bühne. */
-  const knopf = await pg.evaluate(() => Boolean(document.querySelector('.sp-schnell [data-s="fund"]')));
-  const sack2 = await pg.evaluate(() => { const f = document.querySelector("#lcPlaetze .sp-fundsack"); return f ? Number(f.closest(".lc-platz").dataset.lcPlatz) : 0; });
-  if (sack2) await tippePlatz(sack2, 700);
-  r = await pg.evaluate(() => ({ rufe: window.__rufe.filter((x) => x.name === "spiel_fund_heben").length, sack: Boolean(document.querySelector("#lcPlaetze .sp-fundsack")), meld: window.__hinweise.slice(-1)[0] || "" }));
-  sage(!knopf && sack2 && r.rufe === 1 && !r.sack, "kein Fund-Knopf mehr in der Leiste (Fassung 768) – eingesammelt wird mit dem Finger auf der Bühne", JSON.stringify(Object.assign({ knopf }, r)));
+  r = await pg.evaluate(() => ({ leiste: !!document.querySelector('.sp-schnell [data-s="fund"]'), dorf: !!document.querySelector(".sp-schnellmenue .sp-dl-rahmen") }));
+  sage(sack > 0 && !r.leiste && r.dorf, "Fundstück liegt auf Platz " + sack + ": unten in der Leiste steht kein Extra-Knopf mehr, das Dorf ist offen", JSON.stringify(r));
+  await pg.evaluate(() => window.DMA_SPIEL.menue("deutsch")); await tick(500);
+  const knopf = await pg.evaluate(() => { const b = document.querySelector("#spPanel .sp-fund-knopf"); return b ? b.textContent.trim() : ""; });
+  await pg.evaluate(() => { const b = document.querySelector("#spPanel .sp-fund-knopf"); if (b) b.click(); }); await tick(700);
+  r = await pg.evaluate(() => ({ heben: window.__rufe.filter((x) => x.name === "spiel_fund_heben").length, sack: !!document.querySelector("#lcPlaetze .sp-fundsack"),
+    panel: !document.querySelector("#spPanel").hidden, dorf: !!document.querySelector(".sp-schnellmenue .sp-dl-rahmen"), hin: window.__hinweise.slice(-1)[0] || "" }));
+  sage(/Zur Bühne/.test(knopf) && r.heben === 0 && r.sack && !r.panel && r.dorf, "Knopf „Zur Bühne“ im Deutsch-Fenster: sammelt NICHT ein, legt das Fenster ab, das Dorf bleibt offen", JSON.stringify(Object.assign({ knopf }, r)));
+  /* Jetzt selbst auf der Bühne antippen. */
+  const p = await pg.evaluate(() => { const f = document.querySelector("#lcPlaetze .sp-fundsack"); if (!f) return null; f.scrollIntoView({ block: "nearest" }); const b = f.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
+  if (p) await pg.touchscreen.tap(p.x, p.y);
+  await tick(700);
+  r = await pg.evaluate(() => ({ heben: window.__rufe.filter((x) => x.name === "spiel_fund_heben").length, dorf: !!document.querySelector(".sp-schnellmenue .sp-dl-rahmen") }));
+  sage(r.heben === 1 && r.dorf, "mit dem Finger auf der Bühne: eingesammelt – und das Dorf bleibt offen", JSON.stringify(r));
 
-  console.log("\nLANGER DRUCK: DAS GEWÄHLTE WERKZEUG, KEIN AN-AUS\n");
-  r = await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.graben = false; S.werkzeug = "sense";
-    const f = window.DMA_SPIEL.langAufLeer || P.langAufLeer; if (!f) return { fehlt: true }; f(1); f(1); return { an: S.graben, wz: S.werkzeug }; });
-  sage(r.an === true && r.wz === "sense", "zweimal derselbe lange Druck (Zeitgeber + Kontextmenü): Sense bleibt in der Hand, statt an und gleich wieder aus", JSON.stringify(r));
+  console.log("\nWAHRZEICHEN IM GRÜNEN, KOMPASS KLEINER\n");
+  await pg.evaluate(() => {
+    const W = { holstentor: "x", brandenburger: "x", koelner_dom: "x", neuschwanstein: "x", fernsehturm: "x" };
+    window.__ich.volk = Object.assign({}, window.__ich.volk, { wunder: W, wunder_platz: {} });
+    const S = window.DMA_SPIEL.pruef.zustand(); S.ich.volk = JSON.parse(JSON.stringify(window.__ich.volk)); S.dorfTeil = ""; window.DMA_SPIEL.pruef.schnellZeichnen(true);
+    document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "start" });
+  });
+  await tick(700);
+  r = await pg.evaluate(() => {
+    const land = document.querySelector(".sp-dorfland").getBoundingClientRect();
+    const box = (e) => { const b = e.getBoundingClientRect(); return [(b.left - land.left) / land.width * 320, (b.top - land.top) / land.height * 200, (b.right - land.left) / land.width * 320, (b.bottom - land.top) / land.height * 200]; };
+    const w = [...document.querySelectorAll(".sp-dorfland .sp-dl-wunder")].map((e) => ({ w: e.dataset.w, b: box(e).map(Math.round) }));
+    const orte = [...document.querySelectorAll(".sp-dorfland .sp-dl-ort")].map((e) => ({ g: e.dataset.g, b: box(e) }));
+    const ueber = (a, b) => a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
+    const stoss = []; w.forEach((x) => orte.forEach((o) => { if (ueber(x.b, o.b)) stoss.push(x.w + "×" + o.g); }));
+    const k = document.querySelector(".sp-dl-kompass").getBoundingClientRect();
+    return { w, stoss, horizont: w.filter((x) => x.b[3] < 100).map((x) => x.w), kompass: Math.round(k.width), pe: getComputedStyle(document.querySelector(".sp-dl-wunder")).pointerEvents };
+  });
+  sage(r.w.length === 5 && !r.horizont.length && !r.stoss.length, "alle fünf Wahrzeichen stehen auf der Wiese (keins am Horizont), keins liegt über Bahnhof, Wald, See oder Feld", JSON.stringify({ stoss: r.stoss, horizont: r.horizont, w: r.w.map((x) => x.w + "@" + x.b.join(",")) }));
+  sage(r.pe === "none", "das leere Kästchen um ein Wahrzeichen fängt keinen Tipp (nur die gemalte Form)", r.pe);
+  const hg = await pg.evaluate(() => { const e = document.querySelector(".sp-dl-wunder"), c = getComputedStyle(e); return { bg: c.backgroundColor, sh: c.boxShadow }; });
+  sage(/rgba\(0, 0, 0, 0\)|transparent/.test(hg.bg) && hg.sh === "none", "kein heller Kasten („Schein“) mehr hinter den Wahrzeichen", JSON.stringify(hg));
+  sage(r.kompass <= 27, "Kompass kleiner (" + r.kompass + " px statt 31)", String(r.kompass));
+  const tipp = await pg.evaluate(() => { const e = document.querySelector('.sp-dl-wunder[data-w="fernsehturm"] svg'), b = e.getBoundingClientRect();
+    /* Mitte des Turmschafts: gemalt → der Tipp gehört dem Wahrzeichen; Ecke oben links: leer → nicht. */
+    const t = document.elementFromPoint(b.left + b.width / 2, b.top + b.height * .6), leer = document.elementFromPoint(b.left + 2, b.top + 2);
+    return { schaft: !!(t && t.closest(".sp-dl-wunder")), ecke: !!(leer && leer.closest(".sp-dl-wunder")) }; });
+  sage(tipp.schaft && !tipp.ecke, "Tipp auf den Turm öffnet das Wahrzeichen, die leere Ecke daneben geht durch", JSON.stringify(tipp));
+  if (process.env.BILD) await (await pg.$(".sp-dl-fenster")).screenshot({ path: process.env.BILD + "-dorf.png" });
 
-  console.log("\nSCHNELL ERNTEN: JEDER TIPP ZÄHLT\n");
-  const frei = (await leerePlaetze()).filter((n) => n !== eiC).slice(0, 4);
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.graben = true; S.werkzeug = "sense"; window.__rufe.length = 0; window.__hinweise.length = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tick(900);
-  const t0 = Date.now();
-  for (const nr of frei) { await tippePlatz(nr, 30); await tick(470); }
-  await tick(2500);
-  const ernteRufe = await rufe("spiel_ernten");
-  r = await pg.evaluate(() => ({ getreide: window.DMA_SPIEL.pruef.zustand().ich.vorraete.getreide, langsam: window.__hinweise.some((h) => /langsam/.test(h)) }));
-  sage(ernteRufe.length === frei.length && frei.every((n, i) => ernteRufe[i].p_platz === n), frei.length + " Felder schnell hintereinander angetippt: alle werden gemäht, der Reihe nach", JSON.stringify(ernteRufe.map((x) => x.p_platz)) + " von " + JSON.stringify(frei));
-  sage(r.getreide === 2 * frei.length && !r.langsam, "+" + 2 * frei.length + " Getreide, kein „langsam“", JSON.stringify(r));
-
-  console.log("\nANGELN: IN JEDEM TEICH EINE ANGEL\n");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.werkzeug = "angel"; window.__rufe.length = 0; window.__hinweise.length = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tick(900);
-  const teiche = frei.slice(0, 3);
-  for (const nr of teiche) await tippePlatz(nr, 60);
-  const ruten = await pg.evaluate(() => document.querySelectorAll("#lcPlaetze .sp-angeln").length);
-  await tick(2600);
-  let angelRufe = await rufe("spiel_angeln");
-  sage(angelRufe.length === 3 && teiche.every((n, i) => angelRufe[i].p_platz === n) && ruten >= 3, "drei Teiche schnell hintereinander: drei Angeln gleichzeitig im Wasser", JSON.stringify({ rufe: angelRufe.map((x) => x.p_platz), ruten }));
-  r = await pg.evaluate(() => window.DMA_SPIEL.pruef.zustand().ich.vorraete.fisch);
-  sage(r === 3, "drei Fische gefangen", r + " Fische");
-  await tippePlatz(teiche[0], 400);
-  angelRufe = await rufe("spiel_angeln");
-  const angelMeld = await pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
-  sage(angelRufe.length === 3 && /In diesem Teich ist die Angel noch im Wasser.*anderen Teiche sind frei/.test(angelMeld), "derselbe Teich gleich nochmal: freundlicher Hinweis, die anderen Teiche sind frei", angelMeld);
-
-  console.log("\nTASCHEN: IM MENÜ FREI ORDNEN\n");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.graben = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  r = await pg.evaluate(() => ({ plusInLeiste: Boolean(document.querySelector(".sp-schnell .sp-s-taschen")), slots: document.querySelectorAll(".sp-schnell .sp-s-slot").length }));
-  sage(!r.plusInLeiste && r.slots === 3, "in der Leiste keine winzigen + / − mehr; 3 Taschen", JSON.stringify(r));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = true; S.schnellReiter = "waffen"; S.blick = null; S.schnellSlot = 0; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tick(400);
-  const vorher = await pg.evaluate(() => [...document.querySelectorAll(".sp-taschen-ed .sp-tasche small")].map((e) => e.textContent));
-  const groesse = await pg.evaluate(() => { const b = document.querySelector(".sp-taschen-ed .sp-tasche").getBoundingClientRect(); return { w: Math.round(b.width), h: Math.round(b.height) }; });
-  sage(vorher.length === 3 && groesse.w >= 60 && groesse.h >= 50, "im Menü die 3 Taschen groß mit Waffe und Namen", JSON.stringify({ vorher, groesse }));
-  await tippe('.sp-taschen-ed [data-s="slot"][data-n="0"]');
-  await tippe('.sp-taschen-knoepfe [data-s="slotschieb"][data-r="1"]');
-  await tick(300);
-  r = await pg.evaluate(() => ({ menue: [...document.querySelectorAll(".sp-taschen-ed .sp-tasche small")].map((e) => e.textContent.replace(/^\d\. /, "")), leiste: [...document.querySelectorAll(".sp-schnell .sp-s-slot")].map((e) => e.dataset.w),
-    gemerkt: JSON.parse(localStorage.getItem("dma_spiel_slots") || "[]"), gewaehlt: window.DMA_SPIEL.pruef.zustand().schnellSlot }));
-  const erste = vorher[0].replace(/^\d\. /, ""), zweite = vorher[1].replace(/^\d\. /, "");
-  sage(r.menue[0] === zweite && r.menue[1] === erste && r.gewaehlt === 1, "Tasche 1 „nach rechts ▶“: sie tauscht mit Tasche 2, die Auswahl wandert mit", JSON.stringify(r.menue));
-  sage(r.gemerkt[0] === r.leiste[0] && r.gemerkt[1] === r.leiste[1], "die Leiste unten zeigt dieselbe Reihenfolge, auf dem Gerät gemerkt", JSON.stringify({ leiste: r.leiste, gemerkt: r.gemerkt }));
-  await tippe('.sp-taschen-knoepfe [data-s="slotplus"]'); await tick(300);
-  r = await pg.evaluate(() => ({ menue: document.querySelectorAll(".sp-taschen-ed .sp-tasche").length, leiste: document.querySelectorAll(".sp-schnell .sp-s-slot").length }));
-  sage(r.menue === 4 && r.leiste === 4, "„+ Tasche“ im Menü: eine vierte Tasche, auch unten", JSON.stringify(r));
-  r = await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"), mr = m.getBoundingClientRect();
-    return { quer: m.scrollWidth - m.clientWidth, raus: [...m.querySelectorAll(".sp-taschen-knoepfe button")].filter((e) => e.scrollWidth > e.clientWidth + 1 || e.getBoundingClientRect().right > mr.right + 1).length }; });
-  sage(r.quer <= 1 && r.raus === 0, "360 px: nichts ragt heraus", JSON.stringify(r));
-  sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
-  console.log("\nFassung 707 (Funk 146): " + (fehler ? fehler + " rot." : "alles grün."));
+  sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
   await br.close(); srv.close();
+  console.log("\nFassung 768 (Funk 189–191): " + (fehler ? fehler + " rot." : "alles grün."));
   process.exit(fehler ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(1); });
+})().catch((e) => { console.error(e); process.exit(2); });

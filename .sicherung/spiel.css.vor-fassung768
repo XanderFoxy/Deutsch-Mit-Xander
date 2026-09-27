@@ -96,11 +96,6 @@ body.sp-kampf #lcPlaetze .lc-platz:not(.lc-platz-ich):not(.lc-platz-frei) .lc-kr
 .sp-panel { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); overscroll-behavior: contain; }
 .sp-panel[hidden] { display: none; }
 .sp-kopf { display: flex; align-items: center; justify-content: space-between; font-size: 16px; margin-bottom: 6px; }
-/* FASSUNG 768 — XANDER (Funk 190): „man kann diese Aufgabe nicht mal mehr schließen bzw eine neue Aufgabe aufmachen weil
-   das Menü dazu … fehlt". Das Fenster springt zur Aufgabe hoch, und die Kopfzeile mit ▾ und ✕ lag dann oberhalb des
-   Randes. Jetzt bleibt sie oben stehen, und die Aufgabe rutscht beim Hochspringen nicht darunter. */
-.sp-panel > .sp-kopf { position: sticky; top: -10px; z-index: 3; margin: -10px -12px 6px; padding: 8px 12px 6px; background: #fbfaf7; border-radius: 16px 16px 0 0; }
-.sp-panel .sp-inhalt { scroll-margin-top: 50px; }
 .sp-zu { border: 0; background: #eceae4; border-radius: 50%; width: 30px; height: 30px; font-size: 15px; cursor: pointer; }
 .sp-status { background: #fff; border-radius: 12px; padding: 8px 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
 .sp-status-balken { display: inline-block; width: 120px; height: 8px; border-radius: 4px; background: #ddd; vertical-align: middle; overflow: hidden; }
@@ -2747,12 +2742,9 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 
 /* FASSUNG 753 — Funk 183: oben links Kompass und deutsche Uhrzeit, Mitte Ortsschild, rechts Wetter. Unten bleibt frei für die Felder;
    die Karte (nah dran) rückt in die rechte untere Ecke, wo vorher der Kompass war. Die Anzeige-Wahl sitzt unter dem Kompass. */
-/* FASSUNG 768 — XANDER (Funk 191): „außerdem soll das Kompass Zeichen ein kleines bisschen kleiner sein weil sie verdeckt
-   die Schrift bei der Mühle". 26 px statt 31 px; die Tippfläche bleibt über einen unsichtbaren Rand 32 px groß. */
-.sp-dl-kompass { left: 5px; top: 5px; right: auto; bottom: auto; width: 26px; height: 26px; }
-.sp-schnellmenue .sp-dl-kompass, .sp-schnellmenue .sp-dl-kompass.sp-an, .sp-schnellmenue .sp-dl-kompass:hover, .sp-schnellmenue .sp-dl-kompass:active { left: 5px; top: 5px; right: auto; bottom: auto; width: 26px; height: 26px; }
-.sp-dl-kompass::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; }
-.sp-dl-uhr { position: absolute; left: 35px; top: 6px; z-index: 7; pointer-events: none; padding: 1px 5px; border-radius: 9px; background: rgba(20, 24, 34, .55); color: #fff;
+.sp-dl-kompass { left: 5px; top: 5px; right: auto; bottom: auto; width: 31px; height: 31px; }
+.sp-schnellmenue .sp-dl-kompass, .sp-schnellmenue .sp-dl-kompass.sp-an, .sp-schnellmenue .sp-dl-kompass:hover, .sp-schnellmenue .sp-dl-kompass:active { left: 5px; top: 5px; right: auto; bottom: auto; width: 31px; height: 31px; }
+.sp-dl-uhr { position: absolute; left: 39px; top: 6px; z-index: 7; pointer-events: none; padding: 1px 5px; border-radius: 9px; background: rgba(20, 24, 34, .55); color: #fff;
   font: 700 10px/1.5 system-ui, sans-serif; font-variant-numeric: tabular-nums; }
 .sp-dl-uhr b { font-weight: 700; }
 .sp-dl-minikarte { right: 6px; }
@@ -2841,15 +2833,6 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 /* FASSUNG 764 — Wahrzeichen im Dorfbild (hinter der Bahn) und Platzwahl */
 .sp-dl-wunder { position: absolute; padding: 0; margin: 0; border: 0; background: none; min-width: 0; min-height: 0; cursor: pointer; z-index: 1; filter: drop-shadow(-1px 1px 1px rgba(0, 0, 0, .25)); }
 .sp-dl-wunder svg { display: block; width: 100%; height: 100%; overflow: visible; }
-/* FASSUNG 768 — XANDER (Funk 191/192): „es blockiert außerdem meinen Platz beim Einsammeln beim Fällen der Bäume und beim
-   Jagen" und „dass der Fernsehturm egal wo er steht diese Eingabe an den Orten nicht behindern kann". Nur die gemalte Form
-   fängt den Tipp, das leere Kästchen drumherum lässt ihn durch. Nachts (Funk 191: „ganz komischen Schein nach außen der
-   ist viel zu intensiv") wird das Wahrzeichen dunkler wie die Häuser, statt weiß aus der Nacht zu leuchten. */
-.sp-dl-wunder { pointer-events: none; }
-.sp-dl-wunder svg * { pointer-events: visiblePainted; }
-.sp-dl-nacht .sp-dl-wunder { filter: brightness(.5) saturate(.7) drop-shadow(-1px 1px 1px rgba(0, 0, 0, .25)); }
-/* Der eigentliche „Schein": die allgemeine Knopffarbe des Menüs lag als helles Kästchen hinter jedem Wahrzeichen. */
-.sp-schnellmenue .sp-dl-wunder, .sp-schnellmenue .sp-dl-wunder:hover, .sp-schnellmenue .sp-dl-wunder:active, .sp-schnellmenue .sp-dl-wunder:focus { background: none; border: 0; box-shadow: none; outline: none; padding: 0; min-width: 0; min-height: 0; border-radius: 0; }
 .sp-wunder-platz { flex: 1 1 100%; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
 .sp-wunder-platz small { margin-right: 2px; }
 .sp-schnellmenue .sp-wunder-platz button, .sp-wunder-platz button { flex: 0 0 34px; width: 34px; min-width: 0; min-height: 34px; height: 34px; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid #5a6478; background: #2b3242; color: #fff; font: 700 13px system-ui, sans-serif; }

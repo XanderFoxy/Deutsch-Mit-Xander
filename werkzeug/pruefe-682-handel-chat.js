@@ -172,7 +172,8 @@ const sage = (gut, was, zusatz) => {
   await tick(1600);
   const leiste = await pg.evaluate(() => { const b = document.querySelector('.sp-schnell [data-s="fund"]'), r = document.querySelector(".sp-schnell .sp-s-reihe");
     return { da: Boolean(b), svgBreit: b ? Math.round(b.querySelector("svg").getBoundingClientRect().width) : 0, reiheHoch: r ? Math.round(r.getBoundingClientRect().height) : 0, knopfHoch: b ? Math.round(b.getBoundingClientRect().height) : 0 }; });
-  sage(leiste.da && leiste.svgBreit <= 26 && leiste.reiheHoch <= 50, "Fundstück in der Leiste: kleines Säckchen, die Leiste bleibt klein (kein riesiger Stern)", JSON.stringify(leiste));
+  /* FASSUNG 768 — Funk 189: kein Fund-Knopf mehr in der Leiste; sie bleibt klein. */
+  sage(!leiste.da && leiste.reiheHoch <= 50, "Fundstück liegt da: kein Extra-Knopf in der Leiste (Fassung 768), die Leiste bleibt klein", JSON.stringify(leiste));
   await pg.evaluate(() => { const f = document.querySelector("#lcPlaetze .sp-fundsack"); f.closest(".lc-platz").scrollIntoView({ block: "nearest" }); });
   await tick(400);
   await tippe("#lcPlaetze .sp-fundsack");

@@ -229,8 +229,8 @@ const sage = (gut, was, zusatz) => {
   const lage = () => pg.evaluate(() => { const land = document.querySelector(".sp-dorfland").getBoundingClientRect();
     return [...document.querySelectorAll(".sp-dorfland .sp-dl-wunder")].map((e) => { const b = e.getBoundingClientRect(); return { w: e.dataset.w, x: Math.round((b.left + b.width / 2 - land.left) / land.width * 320), boden: Math.round((b.bottom - land.top) / land.height * 200) }; }); });
   r = await lage();
-  sage(r.length === 2 && r[0].w === "koelner_dom" && r[1].w === "fernsehturm" && r.every((x) => x.boden >= 55 && x.boden <= 60), "Kölner Dom und Fernsehturm stehen im Dorfbild hinter der Bahn (Boden bei y ≈ 58)", JSON.stringify(r));
-  sage(Math.abs(r[0].x - 20) <= 4 && Math.abs(r[1].x - 124) <= 4, "ohne Wahl: die ersten freien Plätze von links (1 und 2)", JSON.stringify(r));
+  sage(r.length === 2 && r[0].w === "koelner_dom" && r[1].w === "fernsehturm" && r.every((x) => x.boden >= 194 && x.boden <= 200), "Kölner Dom und Fernsehturm stehen im Dorfbild unten auf der Wiese (Fassung 768: Boden bei y ≈ 197)", JSON.stringify(r));
+  sage(Math.abs(r[0].x - 84) <= 4 && Math.abs(r[1].x - 300) <= 4, "ohne Wahl: die ersten freien Plätze von links (1 und 2)", JSON.stringify(r));
   const unter = await pg.evaluate(() => { const e = document.querySelector('.sp-dl-wunder[data-w="fernsehturm"]'), b = e.getBoundingClientRect(), n = document.querySelector(".sp-dl-ueber");
     const vor = e.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING; return { vorUeber: !!vor, h: Math.round(b.height) }; });
   sage(unter.vorUeber, "die Wahrzeichen liegen unter der Nacht- und Wetterebene (wie die gemalten Häuser)", JSON.stringify(unter));
@@ -246,10 +246,10 @@ const sage = (gut, was, zusatz) => {
   r = await pg.evaluate(() => ({ ruf: window.__rufe.filter((x) => x.name === "spiel_wunder_platz").map((x) => x.args), hin: window.__hinweise.slice(-1)[0] }));
   sage(r.ruf.length === 1 && r.ruf[0].p_was === "fernsehturm" && r.ruf[0].p_platz === 4 && /Platz 5/.test(r.hin), "Platz 5 gewählt: spiel_wunder_platz(fernsehturm, 4), Meldung", JSON.stringify(r));
   r = await lage();
-  sage(Math.abs(r.find((x) => x.w === "fernsehturm").x - 298) <= 4 && Math.abs(r.find((x) => x.w === "koelner_dom").x - 20) <= 4, "der Fernsehturm steht jetzt ganz rechts, der Dom bleibt", JSON.stringify(r));
+  sage(Math.abs(r.find((x) => x.w === "fernsehturm").x - 180) <= 4 && Math.abs(r.find((x) => x.w === "koelner_dom").x - 84) <= 4, "der Fernsehturm steht jetzt auf Platz 5 (am Fluss), der Dom bleibt", JSON.stringify(r));
   await tippe('.sp-wunder-platz [data-w="koelner_dom"][data-p="4"]'); await tick(500);
   r = await lage();
-  sage(Math.abs(r.find((x) => x.w === "koelner_dom").x - 298) <= 4 && Math.abs(r.find((x) => x.w === "fernsehturm").x - 298) > 20 && /Fernsehturm hat Platz gemacht/.test(await pg.evaluate(() => window.__hinweise.slice(-1)[0])), "Dom auf denselben Platz: der Fernsehturm macht Platz (nächster freier)", JSON.stringify(r));
+  sage(Math.abs(r.find((x) => x.w === "koelner_dom").x - 180) <= 4 && Math.abs(r.find((x) => x.w === "fernsehturm").x - 180) > 20 && /Fernsehturm hat Platz gemacht/.test(await pg.evaluate(() => window.__hinweise.slice(-1)[0])), "Dom auf denselben Platz: der Fernsehturm macht Platz (nächster freier)", JSON.stringify(r));
 
   sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
   await br.close(); srv.close();

@@ -203,7 +203,9 @@ const sage = (gut, was, zusatz) => {
     panel: !document.getElementById("spPanel").hidden, aufgabe: window.__rufe.some((r) => r.name === "spiel_aufgabe") }));
   /* Seit 707 — XANDER (Funk 146) über den Knopf: „das nutzlose Zeiger-Symbol … soll etwas tun". Er sammelt jetzt ein;
      das Deutsch-Fenster bleibt dabei offen, wie es war, und es wird keine Aufgabe geholt. */
-  sage(geholt.ruf && !geholt.sack && geholt.panel && !geholt.aufgabe, "der Knopf sammelt das Fundstück ein – das Fenster bleibt offen, keine Aufgabe", JSON.stringify(geholt));
+  /* FASSUNG 768 — XANDER (Funk 189): „dann soll das Anklicken auf diesen nicht den schatzbeutel einsammeln sondern ich soll
+     dann die Sicht frei zur Bühne haben". Der Knopf legt das Fenster ab; eingesammelt wird nur auf der Bühne. */
+  sage(!geholt.ruf && geholt.sack && !geholt.panel && !geholt.aufgabe, "der Knopf „Zur Bühne“ legt das Fenster ab – eingesammelt wird nicht, keine Aufgabe", JSON.stringify(geholt));
 
   console.log("\nTIPP NEBEN DAS FENSTER, HAUPTMENÜ\n");
   await pg.evaluate(() => window.DMA_SPIEL.menue("deutsch"));
@@ -221,7 +223,7 @@ const sage = (gut, was, zusatz) => {
   /* Fundstück auch in der Schnellleiste. */
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.fundNaechst = 0; S.fundBis = 0; });
   await tick(1600);
-  sage(await pg.evaluate(() => Boolean(document.querySelector('[data-s="fund"]'))), "liegt ein Fundstück da, steht es auch in der Schnellleiste");
+  sage(await pg.evaluate(() => !document.querySelector('.sp-schnell [data-s="fund"]') && Boolean(document.querySelector("#lcPlaetze .sp-fundsack"))), "liegt ein Fundstück da, steht KEIN Extra-Knopf in der Schnellleiste (Fassung 768, Funk 189)");
 
   if (process.env.BILD) { await pg.evaluate(() => window.DMA_SPIEL.menue("deutsch")); await tick(400); await pg.screenshot({ path: process.env.BILD }); }
   sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.slice(0, 3).join(" | "));

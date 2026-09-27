@@ -13625,14 +13625,8 @@
         const von = Math.floor(s.startMs / 1000 * puffer.sampleRate);
         const bis = Math.min(puffer.length, Math.floor((s.startMs + s.dauerMs) / 1000 * puffer.sampleRate));
         const kanal = puffer.getChannelData(0).slice(von, bis);
-        /* FASSUNG 768 — kein neuer AudioContext je Wort: Telefone erlauben nur wenige, danach
-           scheiterte das Herausschneiden still, und das Spiel meldete „keine saubere Stimme“. */
-        let schnitt = null;
-        try { schnitt = new AudioBuffer({ length: Math.max(1, bis - von), sampleRate: puffer.sampleRate, numberOfChannels: 1 }); } catch (e) {}
-        if (!schnitt) {
-          aussprSpriteLaden.k = aussprSpriteLaden.k || new (window.AudioContext || window.webkitAudioContext)();
-          schnitt = aussprSpriteLaden.k.createBuffer(1, Math.max(1, bis - von), puffer.sampleRate);
-        }
+        const k = new (window.AudioContext || window.webkitAudioContext)();
+        const schnitt = k.createBuffer(1, Math.max(1, bis - von), puffer.sampleRate);
         schnitt.copyToChannel ? schnitt.copyToChannel(kanal, 0) : schnitt.getChannelData(0).set(kanal);
         return { puffer: schnitt, art: "sprite", huelle: AusspracheP.huellkurve(schnitt, 150) };
       }).catch(() => null);
@@ -13651,19 +13645,7 @@
       const ziel = String(wort || "").trim().toLowerCase();
       let eintrag = null;
       try { eintrag = buildDictionaryEntries().find((e) => aussprSprechtext(e).toLowerCase() === ziel) || null; } catch (e) {}
-      /* FASSUNG 768 — XANDER (Funk 190): „man kriegt kein Wort präsentiert … es steht irgendwie als Information dass
-         die Verbindung … zu der sauberen Stimme nicht aufgebaut werden kann". Ursache: zentralDa() weiß erst etwas,
-         wenn der Stand einmal geladen ist – das geschah nur im Aussprachekurs. Im Spiel war er leer, also kein Azure.
-         Jetzt wird der Stand hier zuerst geladen. */
-      const AP = window.AusspracheP;
-      const stand = AP && AP.zentralMoeglich && AP.zentralMoeglich() && !AP.zentralStandJetzt() ? AP.zentralStand() : Promise.resolve();
-      return Promise.resolve(stand).catch(() => null).then(() => aussprSpriteLadenOderAzure(eintrag || { word: wort }));
-    },
-    /* Für die Laut-Bewertung im Spiel: auch sie braucht den geladenen Stand. */
-    bereit: function () {
-      const AP = window.AusspracheP;
-      if (!AP || !AP.zentralMoeglich || !AP.zentralMoeglich() || AP.zentralStandJetzt()) return Promise.resolve();
-      return Promise.resolve(AP.zentralStand()).catch(() => null);
+      return aussprSpriteLadenOderAzure(eintrag || { word: wort });
     }
   };
 
