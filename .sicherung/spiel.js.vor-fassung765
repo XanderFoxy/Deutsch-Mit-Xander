@@ -4744,8 +4744,6 @@
       seeAngeln(k); return;
     } else if (s === "bahn") {
       bahnHandeln(k); return;
-    } else if (s === "bahnreise") {
-      bahnReisen(k); return;
     } else if (s === "dorfwahl") {
       /* FASSUNG 711 — XANDER (Funk 158): „wenn man die Sachen einsammelt dass man die per Klick einfach automatisch einsammelt
          dort wo fertig steht … ohne dass man da extra noch diesen Knopf braucht". Steht an einem Haus „fertig" (oder liegen
@@ -7808,10 +7806,6 @@
   var WAREN = { getreide: "Getreide", mehl: "Mehl", brot: "Brot", kuchen: "Kuchen" };
   var MARKT = { getreide: 1, mehl: 3, brot: 6, kuchen: 14 };
   function wareSvg(w) {
-    /* FASSUNG 765 — Touristen: zwei Reisende mit Koffer und Hut. */
-    if (w === "touristen") return '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="7" cy="5" r="2.2" fill="#f1c9a0"/><path d="M4.4 4.4 C4.8 2 9.2 2 9.6 4.4 Z" fill="#c9342a"/>'
-      + '<path d="M4 17 L4.6 9.4 C4.8 8 9.2 8 9.4 9.4 L10 17 Z" fill="#2d6ad8"/><circle cx="13.6" cy="6" r="2" fill="#e8b98c"/><path d="M11.2 17 L11.7 10.2 C11.9 9 15.3 9 15.5 10.2 L16 17 Z" fill="#3aa655"/>'
-      + '<rect x="14.6" y="12.6" width="4" height="4.6" rx=".8" fill="#a0632d" stroke="#5a3616" stroke-width=".6"/><path d="M15.8 12.6 V11.8 H17.4 V12.6" fill="none" stroke="#5a3616" stroke-width=".6"/></svg>';
     if (typeof WARE_BILDER !== "undefined" && WARE_BILDER[w]) return '<svg viewBox="0 0 20 20" aria-hidden="true">' + WARE_BILDER[w] + "</svg>";
     if (w === "duenger") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 6 H15 L14 18 H6 Z" fill="#6d8f3a" stroke="#3f5a1c" stroke-width="1"/><path d="M10 9 C7.5 11 8 14 10 15 C12 14 12.5 11 10 9 Z" fill="#dff0b0"/></svg>';
     if (w === "mehl") return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7 C3 11 3.5 18 10 18 C16.5 18 17 11 15 7 Z" fill="#f4f1ea" stroke="#8a7a5a" stroke-width="1"/><path d="M5.5 7 C7 5 13 5 14.5 7" fill="#e2dccd" stroke="#8a7a5a" stroke-width=".9"/><path d="M8 11.5 H12 M10 9.5 V13.5" stroke="#c9a23a" stroke-width="1.1"/></svg>';
@@ -11081,7 +11075,7 @@
     if (!zwingend && z && Date.parse(z.bis) > Date.now() && Date.now() - (S.bahnZeit || 0) < 60000) return;
     if (S.bahnLaedt || Date.now() - (S.bahnVersuch || 0) < 4000) return;
     S.bahnLaedt = true; S.bahnVersuch = Date.now();
-    rpc("spiel_bahn_info", {}).then(function (r) { S.bahnLaedt = false; if (r && r.slot != null) { S.bahn = r; S.bahnZeit = Date.now(); bahnGaesteMelden(r); if (dorfOffen()) schnellZeichnen(true); } })
+    rpc("spiel_bahn_info", {}).then(function (r) { S.bahnLaedt = false; if (r && r.slot != null) { S.bahn = r; S.bahnZeit = Date.now(); if (dorfOffen()) schnellZeichnen(true); } })
       .catch(function () { S.bahnLaedt = false; });
   }
   function bahnhofHtml(ich) {
@@ -11091,74 +11085,16 @@
     else {
       var e = z.export || {}, im = z.import || {}, hat = vorrat(ich, e.ware), punkte = ich.punkte || 0;
       var exAus = e.erledigt || hat < e.menge, imAus = im.erledigt || punkte < im.kosten;
-      inhalt = '<p class="sp-sm-klein">Jeder Zug bringt einen Auftrag zum Verladen, ein Angebot aus der Stadt und Touristen. Der nächste Fahrplan kommt in ' + uhrText(Date.parse(z.bis) - Date.now()) + ".</p>"
+      inhalt = '<p class="sp-sm-klein">Jeder Güterzug bringt einen Auftrag zum Verladen und ein Angebot aus der Stadt. Der nächste Fahrplan kommt in ' + uhrText(Date.parse(z.bis) - Date.now()) + ".</p>"
         + '<div class="sp-sm-liste sp-dl-st-knoepfe sp-bahn-knoepfe">'
         + '<button type="button" data-s="bahn" data-a="export"' + (exAus ? " disabled" : "") + ">" + wareSvg(e.ware) + "<b>Export: " + e.menge + " " + wareName(e.ware) + " verladen</b><small>"
         + (e.erledigt ? "verladen ✓ – der nächste Zug kommt bald" : "+" + e.erloes + " P · du hast " + hat) + "</small></button>"
         + '<button type="button" data-s="bahn" data-a="import"' + (imAus ? " disabled" : "") + ">" + wareSvg(im.ware) + "<b>Import: " + im.menge + " " + wareName(im.ware) + " kaufen</b><small>"
-        + (im.erledigt ? "ausgeladen ✓ – der nächste Zug kommt bald" : "−" + im.kosten + " P · du hast " + punkte + " P") + "</small></button>"
-        /* FASSUNG 765 — XANDER (Funk 184): „praktisch können wir mit dem Zug auch Tourismus in die Stadt bringen oder aus der
-           Stadt um eine andere Stadt zu sehen … weil dadurch kann man doch Geld verdienen". Touristen steigen aus (Kurtaxe,
-           sie kaufen Essen); eigene Bewohner machen einen Ausflug ins Nachbardorf (Forschung – das Nachbardorf verdient). */
-        + bahnTouristenHtml(ich, z) + "</div>" + bahnReiseHtml(ich, z) + bahnGaesteHtml(z);
+        + (im.erledigt ? "ausgeladen ✓ – der nächste Zug kommt bald" : "−" + im.kosten + " P · du hast " + punkte + " P") + "</small></button></div>";
     }
     return '<div class="sp-dl-station sp-bahnhof" role="dialog" aria-label="Bahnhof"><div class="sp-dl-st-kopf"><i class="sp-bahn-kopf">' + kopf + "</i><span><b>Bahnhof</b>"
-      + "<small>Export, Import und Touristen</small></span>"
+      + "<small>Güterzug · Export und Import</small></span>"
       + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Station schließen">✕</button></div>' + inhalt + "</div>";
-  }
-  function bahnEssen(ich) { return ["brot", "bratwurst", "kuchen", "fisch"].reduce(function (n, w) { return n + vorrat(ich, w); }, 0); }
-  function bahnTouristenHtml(ich, z) {
-    var t = z.touristen;
-    if (!t) return "";
-    var kauf = Math.min(t.anzahl, bahnEssen(ich)), plus = t.kurtaxe + 5 * kauf;
-    return '<button type="button" class="sp-bahn-touristen" data-s="bahn" data-a="touristen"' + (t.erledigt ? " disabled" : "") + ">" + wareSvg("touristen") + "<b>Touristen: " + t.anzahl + " steigen aus</b><small>"
-      + (t.erledigt ? "sind unterwegs ✓ – der nächste Zug kommt bald" : "+" + plus + " P (" + t.kurtaxe + " Kurtaxe" + (kauf ? " + " + kauf + " × Essen" : ", kein Essen im Lager") + ")") + "</small></button>";
-  }
-  function bahnReiseHtml(ich, z) {
-    var r = z.reise;
-    if (!r) return "";
-    var ziele = plaetze().filter(function (p) { return !p.leer && !p.ich && p.id && !istPuppe(p.id); }).map(function (p) {
-      var sid = spielIdVon(p.id), st = sid && S.stand[sid];
-      return st && st.dorf && Object.keys(st.dorf).length ? { sid: sid, name: p.name || "?", dorf: st.dorf_name || "" } : null;
-    }).filter(Boolean);
-    var knoepfe = ziele.map(function (d) {
-      return '<button type="button" data-s="bahnreise" data-z="' + esc(d.sid) + '"' + (r.erledigt || (ich.punkte || 0) < r.kosten ? " disabled" : "") + ">"
-        + esc(d.dorf || d.name) + (d.dorf ? "<small>" + esc(d.name) + "</small>" : "") + "</button>";
-    }).join("");
-    return '<div class="sp-bahn-reise"><span class="sp-klein"><b>Ausflug</b> · ' + r.leute + " Bewohner fahren in ein Nachbardorf: −" + r.kosten + " P, +" + r.forschung + " Forschung (Reisen bildet). "
-      + "Das Dorf dort verdient 9 P Eintritt." + (r.erledigt ? " Mit diesem Zug sind sie schon unterwegs ✓" : "") + "</span>"
-      + (knoepfe ? '<div class="sp-bahn-reise-ziele">' + knoepfe + "</div>" : '<span class="sp-klein">Gerade ist kein Nachbardorf im Raum.</span>') + "</div>";
-  }
-  function bahnGaesteHtml(z) {
-    var g = z.gaeste || [];
-    if (!g.length) return "";
-    return '<p class="sp-sm-klein sp-bahn-gaeste">Zu Besuch waren: ' + g.map(function (x) { return esc(x.von || "?") + " (" + x.leute + ", " + uhrzeit(Date.parse(x.zeit)) + ")"; }).join(" · ") + "</p>";
-  }
-  /* Neue Gäste melden (einmal): wer mit dem Zug zu Besuch kam, hat dir Eintritt gezahlt. */
-  function bahnGaesteMelden(z) {
-    var g = (z && z.gaeste) || [], max = 0;
-    try { max = Number(localStorage.getItem("dma_bahn_gast_max")) || 0; } catch (e) {}
-    var hoch = g.reduce(function (n, x) { return Math.max(n, Number(x.id) || 0); }, 0);
-    if (hoch <= max) return;
-    try { localStorage.setItem("dma_bahn_gast_max", String(hoch)); } catch (e) {}
-    if (!max) return;
-    var neu = g.filter(function (x) { return Number(x.id) > max; });
-    if (neu.length) hinweis("🚂 " + (neu[0].von || "Jemand") + (neu.length > 1 ? " und " + (neu.length - 1) + " weitere" : "") + " kam mit dem Zug zu Besuch: +" + (9 * neu.length) + " P Eintritt.");
-  }
-  function bahnReisen(k) {
-    if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
-    if (S.bahnLaeuft) return;
-    S.bahnLaeuft = true;
-    rpc("spiel_bahn_reise", { p_ziel: k.dataset.z }).then(function (r) {
-      S.bahnLaeuft = false;
-      if (r && r.zug) { S.bahn = r.zug; S.bahnZeit = Date.now(); }
-      if (!r || !r.ok) { hinweis("🚂 " + ((r && r.grund) || "Das ging nicht.")); schnellZeichnen(true); return; }
-      if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-      bahnWareZeigen("touristen", "−" + r.leute, 104, bahnAn(bahnBeiX(98)).y - 22);
-      ton("gong", 0.35);
-      hinweis("🚂 " + r.leute + " Bewohner fahren nach " + (r.dorf_name || r.ziel_name || "drüben") + " (−" + r.kosten + " P) und bringen " + r.forschung + " Forschung mit.");
-      schnellZeichnen(true); panelAuffrischen();
-    }).catch(function () { S.bahnLaeuft = false; hinweis("🚂 Das ging gerade nicht."); });
   }
   function bahnHandeln(k) {
     var art = k.dataset.a;
@@ -11171,12 +11107,6 @@
       if (!r || !r.ok) { hinweis("🚂 " + ((r && r.grund) || "Das ging nicht.")); schnellZeichnen(true); return; }
       if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
       /* Bild und Ton zusammen: die Ware steigt über dem Bahnhof auf, die Kasse klingelt (Export) bzw. die Kisten poltern (Import). */
-      if (art === "touristen") {
-        bahnWareZeigen("touristen", "+" + r.anzahl, 104, bahnAn(bahnBeiX(98)).y - 22);
-        ton("kasse", 0.4);
-        hinweis("🚂 " + r.anzahl + " Touristen steigen aus: " + r.kurtaxe + " P Kurtaxe" + (r.gekauft ? ", sie kaufen " + r.gekauft + " × Essen" : "") + " – +" + r.erloes + " Punkte.");
-        schnellZeichnen(true); panelAuffrischen(); return;
-      }
       bahnWareZeigen(r.ware, (art === "export" ? "−" : "+") + r.menge, 104, bahnAn(bahnBeiX(98)).y - 22);
       ton(art === "export" ? "kasse" : "holzklopf", 0.4);
       hinweis(art === "export" ? "🚂 " + r.menge + " " + wareName(r.ware) + " verladen – der Zug bringt sie in die Stadt: +" + r.erloes + " Punkte."

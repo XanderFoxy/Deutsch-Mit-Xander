@@ -1476,3 +1476,18 @@ Sonden: neu 764 (alles grün); 677, 682, 703, 704, 708, 709, 716, 755, 756 grün
   - Handel mit Mitspielern: Der Verkäufer bekommt genau Menge × seinen Preis.
   - Bahn-Export zahlt mehr als der Markt (3 Brot: 29 P statt 18 P).
   - Die Stadt selbst hat keine eigene Kasse. Reicher wird der Spieler, der damit baut.
+
+### Fassung 765 (Funk 184, dritter Teil: Tourismus mit dem Zug)
+Sonden: neu 765 (alles grün); 716 grün. Der Server ist am Server geprüft (Rückrollen).
+- XANDER (wörtlich, Funk 184): „praktisch können wir mit dem Zug auch Tourismus in die Stadt bringen oder aus der Stadt um eine andere Stadt zu sehen und wie können wir das in unserer Logik oder in unsere verdienst du mit einbauen weil dadurch kann man doch Geld verdienen überleg dir da mal bitte was“.
+- **Touristen steigen aus** (einmal je Zug, alle 20 min):
+  - Es kommen 2 Neugierige, dazu je 3 Wahrzeichen-Besucher einer, höchstens 10.
+  - Jeder zahlt 2 P Kurtaxe und kauft ein Stück Brot, Bratwurst, Kuchen oder Fisch für 5 P, solange das Lager reicht.
+  - Der Knopf zeigt vorher den Betrag, z. B. „+34 P (14 Kurtaxe + 4 × Essen)“. Beim Aussteigen erscheinen am Bahnhof die Reisenden, und die Kasse klingelt.
+  - Wer Wahrzeichen baut, verdient also auch am Bahnhof. Ohne Essen im Lager bleibt es bei der Kurtaxe.
+- **Ausflug** (einmal je Zug): 3 eigene Bewohner fahren in ein Nachbardorf im Raum.
+  - Die Fahrkarten kosten 12 P, dafür gibt es 6 Forschung („Reisen bildet“).
+  - Das besuchte Dorf bekommt 9 P Eintritt. Am Bahnhof steht „Zu Besuch waren: Bea (3, 19:39)“, und neue Gäste werden einmal gemeldet.
+  - Absichtlich kostet der Ausflug mehr (12 P), als das Ziel bekommt (9 P). So lohnt es sich nicht, Punkte über ein Zweitkonto hin- und herzuschieben.
+- Server: `spiel_bahn_zug` liefert jetzt auch `touristen`, `reise` und `gaeste`, `spiel_bahn('touristen')` ist neu, ebenso `spiel_bahn_reise(uuid)`.
+- **Stand „modularer Aufbau“ (Frage aus Funk 184)**: Die Wahrzeichen kann man seit 764 auf fünf Plätze stellen. Die Häuser selbst stehen noch fest. Frei verschieben ist der nächste größere Schritt und steht offen.

@@ -49,26 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "764",
+  stand: "765",
 
   inArbeit: [
-    { seit: "2026-09-27T19:36",
-      text: "Tourismus mit dem Zug (Funk 184)" },
-    { seit: "2026-09-27T19:36",
+    { seit: "2026-09-27T19:46",
       text: "Stadt frei gestalten: Häuser selbst verschieben (Funk 184, modularer Aufbau)" },
-    { seit: "2026-09-27T19:36",
+    { seit: "2026-09-27T19:46",
       text: "Arena und Teams im Rundenkampf (Walkie 290)" },
-    { seit: "2026-09-27T19:36",
+    { seit: "2026-09-27T19:46",
       text: "Skins und Tiere im Set (Walkie 290)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T19:36",
-      text: "Aktive Knöpfe überdecken keine Überschrift mehr" },
-    { seit: "2026-09-27T19:36",
-      text: "Verkaufen mit Menge (1, 5, 10, alle)" },
-    { seit: "2026-09-27T19:36",
-      text: "Wahrzeichen stehen im Dorfbild, Platz wählbar" },
+    { seit: "2026-09-27T19:46",
+      text: "Touristen kommen mit dem Zug (Kurtaxe und Essen)" },
+    { seit: "2026-09-27T19:46",
+      text: "Ausflug ins Nachbardorf mit dem Zug (Forschung, das Nachbardorf verdient)" },
   ],
 };
