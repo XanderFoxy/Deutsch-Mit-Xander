@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "766",
+  stand: "767",
 
   inArbeit: [
-    { seit: "2026-09-27T20:04",
-      text: "Wirtschaft (Funk 185/187): Getreide, Bäckerei-Automatik, Ernte erklären" },
-    { seit: "2026-09-27T20:04",
+    { seit: "2026-09-27T20:46",
       text: "Aussprache-Aufgabe im Chat mit persönlichem Wörterbuch (Funk 188)" },
-    { seit: "2026-09-27T20:04",
+    { seit: "2026-09-27T20:46",
       text: "Stadt frei gestalten: Häuser verschieben" },
-    { seit: "2026-09-27T20:04",
+    { seit: "2026-09-27T20:46",
       text: "Arena und Teams, Skins (Walkie 290)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T20:04",
-      text: "Dorf bleibt offen beim Einsammeln auf der Bühne" },
-    { seit: "2026-09-27T20:04",
-      text: "Aussprache im Spiel mit Laut-Bewertung wie im Kurs" },
+    { seit: "2026-09-27T20:46",
+      text: "Bauern bringen laufend Getreide (3 je Stunde)" },
+    { seit: "2026-09-27T20:46",
+      text: "Bäckerei-Automatik backt reihum Brot, Kuchen und Torte" },
   ],
 };

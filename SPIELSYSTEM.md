@@ -1499,3 +1499,16 @@ Sonden: neu 766 (alles grün; mit der Sicherung sind genau die neuen Punkte rot)
   - Geprüft: Vorgesprochen wird im Spiel seit Fassung 651 schon mit der Azure-Stimme. Deine eigenen 23.534 Aufnahmen liegen noch im Ordner `aussprache/`, werden aber nirgends mehr abgespielt. Einen Verweis darauf habe ich im Spiel nicht gefunden.
   - Neu ist die Bewertung. Bisher verglich das Spiel nur den Klang. Jetzt misst es, wie im Aussprachekurs, zuerst mit der Laut-Bewertung von Azure, Laut für Laut. Die Anzeige lautet „88 / 100 · Laut für Laut“, darunter steht der schwächste Laut als Tipp („Dein øː …“). Punkte gibt es ab 60 wie bisher.
   - Ohne Anmeldung oder wenn Azure nicht antwortet, bleibt es beim Klangvergleich.
+
+### Fassung 767 (Funk 185 und 187: Bauern bringen Getreide, Bäckerei backt reihum)
+Sonden: neu 767 (alles grün; mit der Sicherung sind genau die neuen Punkte rot); 677, 702, 703, 716 grün. Der Server ist am Server geprüft (Rückrollen).
+- XANDER (wörtlich, Funk 187): „Ist das Absicht dass ich nur so wenig Getreide habe bei so vielen Bauern“ und „im Automatikmodus wird nur Brot gebacken“.
+- **Ursache, an deinen echten Daten geprüft**: 10 Bauern, Zufriedenheit 96, Automatik an. Im Lager lagen 2 Getreide, 0 Mehl und 42 Brot. Die Bauern lieferten nur bei der Ernte alle 4 Stunden ein paar Körner, und die Automatik hat jedes Korn sofort zu Brot verarbeitet.
+- **Bauern arbeiten laufend**, auch ohne Automatik:
+  - Alle 20 Minuten bringt jeder Bauer 1 Getreide, mal Zufriedenheit (0,5 bis 1,5), mit Dreifelderwirtschaft mal 1,5.
+  - Aufgeholt werden höchstens 12 Takte (4 Stunden).
+  - Das ergibt rund 3 je Stunde und Bauer. Bei dir wären es in 3 Stunden etwa 197 Getreide.
+  - Die Ernte zählt die Bauern nicht mehr ein zweites Mal.
+- **Die Mühle lässt 30 % liegen** (mindestens 4 Getreide). So bleibt Getreide für Saat, Markt und Handel.
+- **Die Bäckerei backt reihum Brot, Kuchen und Torte.** Die Torte braucht 2 Mehl, 2 Eier und 1 Milch. Fehlt etwas, backt sie das Nächste.
+- Die Meldung beginnt jetzt mit „Dorf:“, z. B. „Dorf: 10 Bauern bringen 197 Getreide“.

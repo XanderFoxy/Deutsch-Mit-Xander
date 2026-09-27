@@ -8279,7 +8279,7 @@
      Gerechnet wird alles auf dem Server; hier wird nur gezeigt und getippt.
      --------------------------------------------------------------- */
   var BERUFE = {
-    bauer:           { name: "Bauer", viele: "Bauern", preis: 5, haus: ["muehle"], tut: "bringen laufend Getreide: 3 je Stunde" },
+    bauer:           { name: "Bauer", viele: "Bauern", preis: 5, haus: ["muehle"], tut: "ernten je Ernte 2 Getreide" },
     mueller:         { name: "Müller", viele: "Müller", preis: 15, haus: ["muehle"], tut: "Mühle 10 % schneller je Müller (bis 30 %)" },
     baecker:         { name: "Bäcker", viele: "Bäcker", preis: 15, haus: ["baeckerei"], tut: "backen je Ernte 1 Brot, Bäckerei schneller" },
     schmied:         { name: "Schmied", viele: "Schmiede", preis: 15, haus: ["schmiede"], tut: "Schmiede 10 % schneller je Schmied" },
@@ -8355,7 +8355,7 @@
     }).join("");
     var an = !!v.automatik, fehlt = automatikFehlt(ich);
     var auto = '<div class="sp-beruf sp-automatik' + (an ? " sp-an" : "") + '"><i>' + fuhrwerkSvg() + "</i><span><b>Automatik " + (an ? (fehlt ? "wartet" : "läuft") : "aus") + "</b>"
-      + "<small>" + (fehlt ? "braucht " + fehlt : "ein Fuhrwerk bringt Getreide zur Mühle (30 % bleiben im Lager) und Mehl zur Bäckerei – sie backt reihum Brot, Kuchen und Torte (mit Eiern und Milch)") + "</small></span>"
+      + "<small>" + (fehlt ? "braucht " + fehlt : "ein Fuhrwerk bringt Getreide zur Mühle (2 bleiben als Saat) und Mehl zur Bäckerei – Brot kommt von selbst ins Lager") + "</small></span>"
       + '<span class="sp-beruf-knoepfe"><button type="button" data-s="automatik" data-an="' + (an ? "0" : "1") + '"' + (!an && fehlt ? " disabled" : "") + ">" + (an ? "Ausschalten" : "Einschalten") + "</button></span></div>";
     var hunger = Number(v.hunger) || 0;
     return '<div class="sp-sm-gruppe sp-berufe"><span>Berufe · ' + frei + " von " + alle + " Dorfbewohnern frei</span></div>"
@@ -8414,9 +8414,7 @@
      (offen) bzw. 90 s (zu). Der Server macht je Aufruf einen Schritt. */
   function dorfTakt(sofort) {
     var ich = S.ich, v = (ich && ich.volk) || {};
-    /* FASSUNG 767 — XANDER (Funk 187): „Ist das Absicht dass ich nur so wenig Getreide habe bei so vielen Bauern". Die Bauern
-       arbeiten jetzt laufend (Server: je 20 Minuten) – der Takt läuft auch ohne Automatik, sobald es Bauern gibt. */
-    if (!ich || (!v.automatik && !beruf(ich, "bauer")) || S.taktLaeuft) return;
+    if (!ich || !v.automatik || S.taktLaeuft) return;
     var offen = S.blick === "dorfblick" && S.schnellMenue;
     if (!sofort && Date.now() - (S.taktZuletzt || 0) < (offen ? 30000 : 90000)) return;
     S.taktLaeuft = true; S.taktZuletzt = Date.now();
@@ -8427,7 +8425,7 @@
       var a = r.automatik || {};
       if (a.gemacht && a.gemacht.length && S.blick === "dorfblick" && S.schnellMenue) {
         ton("pferd", 0.25);
-        hinweis("Dorf: " + a.gemacht.join(" · ") + ".");
+        hinweis("Fuhrwerk: " + a.gemacht.join(" · ") + ".");
       }
       schnellZeichnen(true);
     }).catch(function () { S.taktLaeuft = false; });

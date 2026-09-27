@@ -1,17 +1,12 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 702: DORF – BERUFE, AUTOMATIK, HUNGER, FUHRWERK
+   SONDE — FASSUNG 767: BAUERN ARBEITEN LAUFEND, BÄCKEREI REIHUM (Funk 185/187)
    ---------------------------------------------------------------------
-   XANDER (Funk 139): „wie kriegen wir überhaupt die Dorfbewohner dazu
-   Bäcker zu werden" und „ab einer gewissen Stufe der Bäckerei so die
-   Sachen automatisieren dass da automatisch jemand so das Getreide
-   abholt in die Mühle bringt". Geprüft mit echten Fingertipps auf einem
-   Android-Telefon: Berufe-Tafel, Ausbilden/Entlassen, Automatik-Schalter
-   nur mit Müller und Bäcker, Takt beim Öffnen, Fuhrwerk fährt und bleibt
-   beim Neuzeichnen dasselbe Element, Erntemeldung mit Hunger/Wegzug,
-   nichts ragt aus dem Menü. Die Server-Regeln sind hier nachgebaut
-   (spiel_ausbilden, spiel_dorf_automatik, spiel_dorf_takt).
-   Aufbau (Sitzplätze, Server-Attrappe) wie pruefe-700.
+   XANDER: „Ist das Absicht dass ich nur so wenig Getreide habe bei so
+   vielen Bauern" und „im Automatikmodus wird nur Brot gebacken".
+   Der Server rechnet (am Server geprüft: 10 Bauern, 3 h → 197 Getreide;
+   Bäckerei Brot → Kuchen → Torte). Hier: der Takt läuft auch ohne
+   Automatik, sobald es Bauern gibt, und die Texte stimmen.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -164,151 +159,54 @@ const sage = (gut, was, zusatz) => {
 
   await pg.evaluate(() => {
     const ich = window.__ich, jetzt = Date.now();
-    ich.level = 10; ich.punkte = 500; ich.mana = 60;
-    ich.dorf = { muehle: { stufe: 2, lp: 40 }, baeckerei: { stufe: 2, lp: 40 }, schmiede: { stufe: 1, lp: 20 }, labor: { stufe: 1, lp: 20 }, schule: { stufe: 1, lp: 20 } };
+    ich.level = 13; ich.punkte = 1500; ich.mana = 60;
+    ich.dorf = { muehle: { stufe: 2, lp: 40 }, baeckerei: { stufe: 2, lp: 40 }, schule: { stufe: 1, lp: 20 }, bibliothek: { stufe: 1, lp: 20 }, labor: { stufe: 1, lp: 20 } };
     ich.werk = {};
     ich.dorf_ab = new Date(jetzt - 5 * 3600000).toISOString();
-    ich.volk = { arbeiter: 14, ritter: 0, quote: 90, berufe: { bauer: 2 }, hunger: 1, forschung: 5 };
-    ich.vorraete = Object.assign({}, ich.vorraete, { getreide: 12, mehl: 0, brot: 0, fisch: 1 });
-    /* Die Server-Regeln aus spiel_702 nachgebaut. */
-    const st = (k) => ((ich.dorf[k] || {}).stufe || 0);
-    const MAX = { bauer: () => 4 + 2 * st("muehle"), mueller: () => 2 * st("muehle"), baecker: () => 2 * st("baeckerei"), schmied: () => 2 * st("schmiede"),
-                  wissenschaftler: () => 2 * (st("schule") + st("bibliothek") + st("labor")) };
-    const summe = () => Object.values(ich.volk.berufe || {}).reduce((a, b) => a + b, 0);
-    const alle = () => 2 * Object.values(ich.dorf).reduce((a, g) => a + g.stufe, 0);
-    window.__taktAntwort = null;
+    ich.volk = { arbeiter: 16, ritter: 0, quote: 80, berufe: { bauer: 2, wissenschaftler: 3 }, forschung: 100 };
+    ich.vorraete = Object.assign({}, ich.vorraete, { erz: 30, quarz: 20, gold: 3, holz: 12, brot: 10, fisch: 5, bratwurst: 5 });
+    const FK = { dreifelder: 20, sauerteig: 30, wassermuehle: 40, buchdruck: 60, duden: 80, dampf: 120 };
+    const WD = { holstentor: [4, 250, { holz: 10, erz: 5 }], brandenburger: [8, 500, { erz: 10, quarz: 6 }], koelner_dom: [12, 900, { erz: 20, quarz: 10, gold: 2 }],
+                 neuschwanstein: [16, 1400, { quarz: 25, gold: 5, holz: 10 }], fernsehturm: [20, 2000, { erz: 30, silizium: 4, chip: 2 }] };
     window.__extra = Object.assign({}, window.__extra || {}, {
       spiel_markt_preise: () => ({ ok: true, preise: {} }),
       spiel_angebote_liste: () => ({ ok: true, angebote: [] }),
-      spiel_ausbilden: (a) => {
-        const n = (ich.volk.berufe || {})[a.p_beruf] || 0, neu = Math.max(0, n + a.p_menge);
-        let preis = 0;
-        if (neu > n) {
-          if (neu > MAX[a.p_beruf]()) return { ok: false, grund: "höchstens " + MAX[a.p_beruf]() };
-          if (alle() - summe() < neu - n) return { ok: false, grund: "keine freien Dorfbewohner" };
-          preis = (neu - n) * (a.p_beruf === "bauer" ? 5 : a.p_beruf === "wissenschaftler" ? 30 : 15);
-          ich.punkte -= preis;
-        }
-        ich.volk = Object.assign({}, ich.volk, { berufe: Object.assign({}, ich.volk.berufe, { [a.p_beruf]: neu }) });
-        return Object.assign({ ok: true, beruf: a.p_beruf, anzahl: neu, preis: preis }, JSON.parse(JSON.stringify(ich)));
-      },
-      spiel_dorf_automatik: (a) => {
-        if (a.p_an && (!(ich.volk.berufe.mueller > 0) || !(ich.volk.berufe.baecker > 0))) return { ok: false, grund: "bilde erst einen Müller und einen Bäcker aus" };
-        ich.volk = Object.assign({}, ich.volk, { automatik: a.p_an });
-        let takt = { an: false };
-        if (a.p_an) {
-          ich.vorraete.getreide -= 10;
-          ich.werk = Object.assign({}, ich.werk, { muehle: { ware: "mehl", menge: 10, fertig: new Date(Date.now() + 360000).toISOString(), auto: true } });
-          takt = { an: true, laeuft: true, gemacht: ["Fuhrmann bringt 10 Getreide zur Mühle"] };
-        }
-        return Object.assign({ ok: true, automatik: a.p_an, takt: takt }, JSON.parse(JSON.stringify(ich)));
-      },
-      spiel_dorf_takt: () => {
-        const r = window.__taktAntwort || { an: true, laeuft: true, gemacht: [] };
-        if (r.gemacht.length) {
-          ich.vorraete.mehl = 0; ich.werk = Object.assign({}, ich.werk, { baeckerei: { ware: "brot", menge: 10, fertig: new Date(Date.now() + 480000).toISOString(), auto: true } });
-        }
-        return Object.assign({ ok: true, automatik: r }, JSON.parse(JSON.stringify(ich)));
-      }
+      spiel_erforschen: (a) => { if ((ich.volk.forschung || 0) < FK[a.p_was]) return { ok: false, grund: "zu wenig Forschung" };
+        ich.volk = Object.assign({}, ich.volk, { forschung: ich.volk.forschung - FK[a.p_was], erforscht: (ich.volk.erforscht || []).concat([a.p_was]) });
+        return Object.assign({ ok: true, erforscht: a.p_was }, JSON.parse(JSON.stringify(ich))); },
+      spiel_wunder_bauen: (a) => { const d = WD[a.p_was]; if (ich.level < d[0]) return { ok: false, grund: "ab Level " + d[0] };
+        ich.punkte -= d[1]; Object.keys(d[2]).forEach((x) => { ich.vorraete[x] -= d[2][x]; });
+        ich.volk = Object.assign({}, ich.volk, { wunder: Object.assign({}, ich.volk.wunder, { [a.p_was]: new Date().toISOString() }) });
+        return Object.assign({ ok: true, wunder: a.p_was }, JSON.parse(JSON.stringify(ich))); }
     });
-    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false;
+    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false; S.dorfTeil = "";
     try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
-  const rufe = (n) => pg.evaluate((n) => window.__rufe.filter((r) => r.name === n), n);
-  const knopf = (b, n) => '.sp-beruf [data-s="ausbilden"][data-b="' + b + '"][data-n="' + n + '"]';
-
-  console.log("\nBERUFE-TAFEL IM DORF\n");
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(700);
-  let r = await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); const k = m && m.querySelector(".sp-berufe");
-    return { kopf: k ? k.textContent : "", zeilen: m ? m.querySelectorAll(".sp-beruf").length : 0, hunger: Boolean(m && m.querySelector(".sp-hunger")),
-      forschung: m ? /Forschung gesammelt: 5/.test(m.textContent) : false, bauern: m ? (m.querySelector('.sp-beruf [data-b="bauer"]') || {}).closest && m.querySelector('.sp-beruf [data-b="bauer"]').closest(".sp-beruf").textContent : "",
-      autoAus: Boolean(m && m.querySelector('.sp-automatik [data-s="automatik"][disabled]')) }; });
-  sage(/12 von 14 Dorfbewohnern frei/.test(r.kopf), "die Tafel zählt freie Dorfbewohner (14 aus 7 Gebäudestufen, 2 sind Bauern)", r.kopf);
-  sage(r.zeilen === 10, "neun Berufe (ab 756 auch Fischer, Holzfäller, Jäger, Bergleute) und die Automatik als Zeilen", r.zeilen + " Zeilen");
-  sage(/2 Bauern/.test(r.bauern) && /höchstens 8/.test(r.bauern), "Bauern: 2, höchstens 4 + 2 je Mühlenstufe = 8", r.bauern.replace(/\s+/g, " ").slice(0, 90));
-  sage(r.hunger, "Hunger-Warnung steht da, wenn das Volk bei der letzten Ernte gehungert hat");
-  sage(r.forschung, "gesammelte Forschung wird gezeigt");
-  sage(r.autoAus, "Automatik-Schalter ist gesperrt, solange Müller und Bäcker fehlen");
-
-  console.log("\nAUSBILDEN UND ENTLASSEN (Fingertipp)\n");
-  await tippe(knopf("mueller", 1)); await tick(500);
-  let a = await rufe("spiel_ausbilden");
-  sage(a.length === 1 && a[0].args.p_beruf === "mueller" && a[0].args.p_menge === 1, "Tipp auf „Ausbilden“ beim Müller ruft spiel_ausbilden(mueller, 1)", JSON.stringify(a.map((x) => x.args)));
-  r = await pg.evaluate(() => ({ zeile: document.querySelector('.sp-beruf [data-b="mueller"]').closest(".sp-beruf").textContent, kopf: document.querySelector(".sp-berufe").textContent, punkte: window.DMA_SPIEL.pruef.zustand().ich.punkte,
-    ton: window.DMA_TONLOG.map((t) => t.name).join(","), hin: window.__hinweise.slice(-1)[0] || "" }));
-  sage(/1 Müller/.test(r.zeile) && /11 von 14/.test(r.kopf) && r.punkte === 485, "danach: 1 Müller, 11 frei, 15 P abgezogen", r.punkte + " P");
-  sage(/Müller/.test(r.hin) && /jubel/.test(r.ton), "Meldung nennt den Beruf, Jubel-Ton", r.hin.slice(0, 80));
-  await tippe(knopf("baecker", 1)); await tick(500);
-  r = await pg.evaluate(() => Boolean(document.querySelector('.sp-automatik [data-s="automatik"][data-an="1"]:not([disabled])')));
-  sage(r, "mit Müller und Bäcker wird der Automatik-Schalter frei");
-  await tippe(knopf("bauer", -1)); await tick(500);
-  a = await rufe("spiel_ausbilden");
-  r = await pg.evaluate(() => document.querySelector('.sp-beruf [data-b="bauer"]').closest(".sp-beruf").textContent);
-  sage(a[a.length - 1].args.p_menge === -1 && /1 Bauer(?!n)/.test(r), "„−“ entlässt einen Bauern (p_menge −1, 1 Bauer übrig)", r.replace(/\s+/g, " ").slice(0, 40));
-  r = await pg.evaluate(() => Boolean(document.querySelector('.sp-beruf [data-b="schmied"][data-n="1"]:not([disabled])')) && Boolean(document.querySelector('.sp-beruf [data-b="wissenschaftler"][data-n="1"]:not([disabled])')));
-  sage(r, "Schmied und Wissenschaftler sind ausbildbar (Schmiede, Schule/Labor stehen)");
-
-  console.log("\nAUTOMATIK: SCHALTER, FUHRWERK, TAKT\n");
-  await pg.evaluate(() => { window.DMA_TONLOG.length = 0; });
-  await tippe('.sp-automatik [data-s="automatik"]'); await tick(600);
-  a = await rufe("spiel_dorf_automatik");
-  r = await pg.evaluate(() => ({ hin: window.__hinweise.slice(-1)[0] || "", fw: document.querySelectorAll(".sp-dorfland .sp-dl-fuhrwerk").length, motion: [...document.querySelectorAll(".sp-dorfland .sp-dl-fuhrwerk")].reduce((n, e) => n + e.getAnimations().filter((x) => x.animationName === "spDlFuhre" && x.playState === "running").length, 0),
-    leute: document.querySelectorAll(".sp-dorfland .sp-dl-mensch").length, text: document.querySelector(".sp-automatik").textContent, ton: window.DMA_TONLOG.map((t) => t.name).join(","),
-    werk: (document.querySelector(".sp-schnellmenue").textContent.match(/Mühle arbeitet · Automatik/) || [""])[0] }));
-  sage(a.length === 1 && a[0].args.p_an === true, "Tipp auf „Einschalten“ ruft spiel_dorf_automatik(true)");
-  sage(/Automatik an: Fuhrmann bringt 10 Getreide zur Mühle/.test(r.hin) && /pferd/.test(r.ton), "Meldung sagt, was das Fuhrwerk tut; dazu Pferdegeräusch", r.hin + " · " + r.ton);
-  sage(r.fw === 1 && r.motion === 1, "im Dorfbild fährt ein Fuhrwerk (Fahrt-Animation auf dem Mühlweg läuft)", r.fw + "/" + r.motion);
-  sage(r.leute === 3, "Leute im Bild: 1 Bauer, 1 Müller, 1 Bäcker", r.leute + " Figuren");
-  sage(/läuft/.test(r.text) && r.werk, "Zeile „Automatik läuft“, Mühle als „Automatik“ markiert", r.werk);
-  /* Das Fuhrwerk bewegt sich und bleibt beim Neuzeichnen dasselbe Element. */
-  const lage = () => pg.evaluate(() => { const g = document.querySelector(".sp-dorfland .sp-dl-fuhrwerk"); const b = g.getBoundingClientRect(); window.__fw = window.__fw || g; return { x: Math.round(b.left), y: Math.round(b.top), gleich: g === window.__fw }; });
-  const l1 = await lage(); await tick(2600); const l2 = await lage();
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.ich = Object.assign({}, S.ich, { punkte: S.ich.punkte + 1 }); window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tick(300); const l3 = await lage();
-  sage(Math.abs(l2.x - l1.x) + Math.abs(l2.y - l1.y) >= 6 && l2.x > l1.x && l2.y > l1.y, "das Fuhrwerk fährt von der Mühle Richtung Bäckerei (nach rechts unten)", JSON.stringify([l1, l2]));
-  sage(l3.gleich && Math.abs(l3.x - l2.x) < 20, "beim Neuzeichnen bleibt es dasselbe Element und springt nicht an den Anfang", JSON.stringify(l3));
-  /* Wieder öffnen: der Takt läuft sofort. */
-  await pg.evaluate(() => { window.__taktAntwort = { an: true, laeuft: true, gemacht: ["Fuhrmann holt 10 Mehl aus der Mühle", "Fuhrmann bringt 10 Mehl zur Bäckerei"] }; window.DMA_TONLOG.length = 0; });
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(500);
+  console.log("\nBAUERN OHNE AUTOMATIK\n");
+  await pg.evaluate(() => {
+    const berufe = { bauer: 2, mueller: 1, baecker: 1 };
+    window.__ich.volk = Object.assign({}, window.__ich.volk, { automatik: false, berufe: berufe });
+    const S = window.DMA_SPIEL.pruef.zustand(); S.ich.volk = JSON.parse(JSON.stringify(window.__ich.volk)); S.taktZuletzt = 0; S.taktLaeuft = false;
+    window.__extra = Object.assign({}, window.__extra || {}, { spiel_dorf_takt: (a, ich) => Object.assign({}, JSON.parse(JSON.stringify(ich)), { ok: true, automatik: { an: false, gemacht: ["2 Bauern bringen 6 Getreide vom Feld"] } }) });
+    window.__rufe.length = 0; window.__hinweise.length = 0;
+  });
   await tippe('.sp-schnell [data-s="makro"]'); await tick(900);
-  a = await rufe("spiel_dorf_takt");
-  r = await pg.evaluate(() => ({ hin: window.__hinweise.slice(-1)[0] || "", ton: window.DMA_TONLOG.map((t) => t.name).join(","), offen: window.DMA_SPIEL.pruef.zustand().blick }));
-  sage(a.length >= 1 && r.offen === "dorfblick", "beim Öffnen des Dorfs läuft der Automatik-Takt (spiel_dorf_takt)", a.length + "×");
-  sage(/Dorf: Fuhrmann holt 10 Mehl/ /* Fassung 767: „Dorf:“ – die Bauern melden sich hier auch */.test(r.hin) && /pferd/.test(r.ton), "was der Takt geschafft hat, steht in der Meldung – mit Pferdegeräusch", r.hin.slice(0, 90));
-  const vorher = a.length; await tick(2500); a = await rufe("spiel_dorf_takt");
-  sage(a.length === vorher, "kein Dauerfeuer: der Takt fragt höchstens alle 30 s", vorher + " → " + a.length);
+  let r = await pg.evaluate(() => ({ takt: window.__rufe.filter((x) => x.name === "spiel_dorf_takt").length, hin: window.__hinweise.join(" | ") }));
+  sage(r.takt >= 1 && /Dorf: 2 Bauern bringen 6 Getreide vom Feld/.test(r.hin), "Dorf öffnen ohne Automatik, aber mit Bauern: der Takt läuft, „Dorf: 2 Bauern bringen 6 Getreide vom Feld“", JSON.stringify(r));
+  r = await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-schnellmenue .sp-beruf")].find((x) => /Bauer/.test(x.textContent)); const a = document.querySelector(".sp-schnellmenue .sp-automatik");
+    return { bauer: b ? b.textContent : "", auto: a ? a.textContent : "" }; });
+  sage(/bringen laufend Getreide: 3 je Stunde/.test(r.bauer), "Berufe: „Bauern bringen laufend Getreide: 3 je Stunde“", r.bauer.slice(0, 90));
+  sage(/30 % bleiben im Lager/.test(r.auto) && /reihum Brot, Kuchen und Torte/.test(r.auto), "Automatik: „30 % bleiben im Lager … reihum Brot, Kuchen und Torte“", r.auto.slice(0, 160));
+  await pg.evaluate(() => { window.__ich.volk = Object.assign({}, window.__ich.volk, { berufe: {} }); const S = window.DMA_SPIEL.pruef.zustand(); S.ich.volk = JSON.parse(JSON.stringify(window.__ich.volk)); S.taktZuletzt = 0; window.__rufe.length = 0; });
+  await tippe('.sp-schnell [data-s="blickzu"]'); await tick(300);
+  await tippe('.sp-schnell [data-s="makro"]'); await tick(900);
+  r = await pg.evaluate(() => window.__rufe.filter((x) => x.name === "spiel_dorf_takt").length);
+  sage(r === 0, "ohne Bauern und ohne Automatik: kein Takt (keine unnötigen Anfragen)", String(r));
 
-  console.log("\nERNTE: GETREIDE, BROT, FORSCHUNG, HUNGER\n");
-  await pg.evaluate(() => { const ich = window.__ich; window.__ernte = Object.assign({ ok: true, bratwurst: 4, erz: 1, xp: 0, getreide: 4, brot: 1, forschung: 3, hunger: 2, weggezogen: "bauer",
-    zufrieden: 60, satt: 3, bedarf: 6, bezahlt: 14, quote: 90, automatik: { an: true, laeuft: true, gemacht: ["Fuhrmann bringt 10 Getreide zur Mühle"] } }, JSON.parse(JSON.stringify(ich))); });
-  await tippe('.sp-schnellmenue [data-s="ernte"]'); await tick(600);
-  r = await zuletzt();
-  sage(/4 Getreide/.test(r) && /1 Brot/.test(r) && /3 Forschung/.test(r), "Erntemeldung nennt Getreide, Brot und Forschung", r.slice(0, 120));
-  sage(/ein Bauer ist weggezogen/.test(r) && /Fuhrwerk: Fuhrmann bringt 10 Getreide/.test(r), "… und dass ein Bauer wegen Hunger weggezogen ist, und was das Fuhrwerk tat");
-
-  console.log("\nANDROID: NICHTS RAGT HERAUS\n");
-  r = await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); const mr = m.getBoundingClientRect();
-    const raus = [...m.querySelectorAll(".sp-beruf button, .sp-beruf span")].filter((e) => { const b = e.getBoundingClientRect(); return b.width && (b.right > mr.right + 1 || b.left < mr.left - 1 || e.scrollWidth > e.clientWidth + 1); }).map((e) => e.textContent.slice(0, 20));
-    return { raus, quer: m.scrollWidth - m.clientWidth }; });
-  sage(r.raus.length === 0 && r.quer <= 1, "360 px breit: kein Knopf und keine Zeile ragt heraus, kein Querscrollen", JSON.stringify(r));
-  await pg.evaluate(() => { const e = document.querySelector(".sp-dorfland"); e.scrollIntoView({ block: "start" }); }); await tick(300);
-  await (await pg.$(".sp-dorfland")).screenshot({ path: process.env.BILD || "/tmp/dorf-702.png" });
-  await pg.evaluate(() => { const e = document.querySelector(".sp-berufe"); e.scrollIntoView({ block: "start" }); }); await tick(300);
-  await pg.screenshot({ path: (process.env.BILD || "/tmp/dorf-702.png").replace(/\.png$/, "-tafel.png") });
-
-  const cdp = await ctx.newCDPSession(pg);
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-  const leistung = await pg.evaluate(() => new Promise((ok) => {
-    const S = window.DMA_SPIEL.pruef.zustand(); const t0 = performance.now(); S.ich = Object.assign({}, S.ich, { punkte: (S.ich.punkte || 0) + 1 }); window.DMA_SPIEL.pruef.schnellZeichnen(true); const zeichnen = performance.now() - t0;
-    const bilder = []; let letzt = performance.now(); const ende = letzt + 3000;
-    const f = (t) => { bilder.push(t - letzt); letzt = t; if (t < ende) requestAnimationFrame(f); else ok({ zeichnen: Math.round(zeichnen), bilder: bilder.length, lang: bilder.filter((x) => x > 50).length }); };
-    requestAnimationFrame(f); }));
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
-  sage(leistung.zeichnen < 120 && leistung.lang <= 5, "4× gedrosselte CPU mit Leuten und Fuhrwerk: Neuzeichnen unter 120 ms, höchstens 5 lange Bilder", JSON.stringify(leistung));
-  sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
-  console.log("\nFassung 702 (Dorf-Berufe): " + (fehler ? fehler + " rot." : "alles grün."));
+  sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
   await br.close(); srv.close();
+  console.log("\nFassung 767 (Bauern, Bäckerei): " + (fehler ? fehler + " rot." : "alles grün."));
   process.exit(fehler ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(1); });
+})().catch((e) => { console.error(e); process.exit(2); });
