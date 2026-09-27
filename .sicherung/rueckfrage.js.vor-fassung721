@@ -501,11 +501,7 @@ window.Rueckfrage = (function () {
     var Erkenner = window.SpeechRecognition || window.webkitSpeechRecognition;
     var feld = diktatFeld(klasse);
     if (!Erkenner || !feld) return;
-    /* FASSUNG 721 — Funk 166 (automatisch, Samsung Internet, nach Fassung 718): wieder „aborted". Läuft noch eine ältere
-       Erkennung (z. B. ein schneller zweiter Tipp), bricht der Browser die neue ab – die alte wird jetzt vorher beendet. */
-    try { if (window.__dmaDiktatMik) window.__dmaDiktatMik.abort(); } catch (e) {}
     var mik = new Erkenner();
-    window.__dmaDiktatMik = mik;
     mik.lang = "de-DE";
     mik.continuous = true;
     mik.interimResults = true;
@@ -571,19 +567,14 @@ window.Rueckfrage = (function () {
     mik.onerror = function (ev) {
       if (!diktat || diktat.mik !== mik) return;
       var w = (ev && ev.error) || "unbekannt";
-      /* FASSUNG 721 — Funk 166: der zweite Versuch galt bis 718 nur, wenn das Livestream-Mikrofon ausgeliehen war und die
-         Erkennung noch nicht lief. Jetzt bei JEDEM „aborted", solange noch kein Wort angekommen ist – einmal, nach 700 ms. */
-      if (w === "aborted" && !diktat.gehoert && !diktat.nochmal) {
+      if (w === "aborted" && diktat.geliehen && !diktat.an && !diktat.nochmal) {
         diktat.nochmal = true; diktat.wartet = true;
         setTimeout(function () { if (diktat && diktat.mik === mik) { diktat.wartet = false; try { mik.start(); } catch (e) { diktatEnde("Die Spracherkennung lie\u00df sich nicht starten."); } } }, 700);
         return;
       }
       diktat.fehler = w;
       /* „no-speech" ist kein Defekt — er hat nur (noch) nichts gesagt. */
-      /* Mit Zustand, damit man den Fall erkennt: geliehen = Livestream-Mikro abgegeben, an = Erkennung lief schon,
-         nochmal = zweiter Versuch, ms = Zeit seit dem Tipp. */
-      if (w !== "no-speech") diktatFehlerMelden(w, ((ev && ev.message) ? ev.message + "; " : "") + "geliehen=" + (diktat.geliehen ? 1 : 0) + ", an=" + (diktat.an ? 1 : 0)
-        + ", nochmal=" + (diktat.nochmal ? 1 : 0) + ", ms=" + (Date.now() - diktat.seit));
+      if (w !== "no-speech") diktatFehlerMelden(w, (ev && ev.message) || "");
       var grund = {
         "not-allowed": "Das Mikrofon ist nicht erlaubt \u2013 bitte im Browser freigeben.",
         "service-not-allowed": "Die Spracherkennung ist in diesem Browser gesperrt.",
