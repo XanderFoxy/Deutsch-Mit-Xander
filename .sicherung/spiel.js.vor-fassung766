@@ -5063,12 +5063,7 @@
     if (ev.target && ev.target.closest && ev.target.closest(".sp-namedialog")) return;
     /* Der Klick beim Loslassen nach dem langen Druck schließt das eben geöffnete Rad nicht gleich wieder. */
     if (Date.now() - (S.radOffenSeit || 0) < 700) return;
-    /* FASSUNG 766 — XANDER (Funk 186): „Wenn man auf der Bühne etwas einsammelt wie Eier oder diesen Schatz … dann soll das
-       nicht das Dorfmenü beeinflussen … das schließt sich nur wenn ich auf den Makroknopf vom Dorf klicke". Ist das Dorf
-       offen, schließt ein Tipp daneben nur Räder und Wahlen, das Dorf bleibt. */
-    var dorfBleibt = dorfOffen();
-    if (!dorfBleibt) S.schnellMenue = false;
-    S.rad = null; S.zrad = false; S.wwahl = false; S.langWahl = false; S.trankAuf = false; S.ringBereich = ""; schnellZeichnen();
+    S.schnellMenue = false; S.rad = null; S.zrad = false; S.wwahl = false; S.langWahl = false; S.trankAuf = false; S.ringBereich = ""; schnellZeichnen();
   }, true);
   function tierWechseln(art) {
     rpc("spiel_tier_wechseln", { p_art: art }).then(function (r) {
@@ -6985,29 +6980,13 @@
       griff.stoppen().then(function (auf) {
         if (!auf || !auf.blob) throw new Error((auf && auf.fehler) || "keine Aufnahme");
         sp.hinweis = "Ich höre zu …"; panelAuffrischen();
-        return AP.tonLesen(auf.blob).then(function (eigen) {
-          /* FASSUNG 766 — XANDER (Funk 188): „dass wir das wie im Aussprache Training auf der Seite auch in diesem Spiel
-             nutzen können und dann müssen Sie die korrekte Aussprache machen und kriegen dann auch die Punkte dafür".
-             Wie im Aussprachekurs: zuerst die Laut-Bewertung von Azure (Laut für Laut); nur wenn sie nicht geht, der
-             Klangvergleich wie bisher. */
-          if (AP.stufe1Da && AP.stufe1Da() && AP.alsWav) {
-            return AP.stufe1Bewerten({ wav: AP.alsWav(eigen), text: sp.wort, sprache: "de-DE" }).then(function (az) {
-              if (az && !az.fehler && typeof az.prozent === "number") {
-                var schlecht = null;
-                (az.woerter || []).forEach(function (w) { (w.laute || []).forEach(function (l) { if (l.note !== null && (!schlecht || l.note < schlecht.note)) schlecht = l; }); });
-                return { prozent: Math.round(az.prozent), azure: true, tipp: schlecht && schlecht.note < 60 && AP.lautKlartext ? AP.lautKlartext(schlecht) : "" };
-              }
-              return AP.freieBewertungAusPuffern(eigen, sp.original.puffer);
-            }).catch(function () { return AP.freieBewertungAusPuffern(eigen, sp.original.puffer); });
-          }
-          return AP.freieBewertungAusPuffern(eigen, sp.original.puffer);
-        });
+        return AP.tonLesen(auf.blob).then(function (eigen) { return AP.freieBewertungAusPuffern(eigen, sp.original.puffer); });
       }).then(function (erg) {
         var prozent = erg && typeof erg.prozent === "number" ? erg.prozent : 0;
         return rpc("spiel_aussprache_fertig", { p_wort: sp.wort, p_prozent: prozent }).then(function (r) {
           sp.laeuft = false;
           if (r && r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-          sp.ergebnis = { prozent: prozent, gewonnen: (r && r.gewonnen) || 0, grenze: r && r.grenze, azure: Boolean(erg && erg.azure), tipp: (erg && erg.tipp) || "" };
+          sp.ergebnis = { prozent: prozent, gewonnen: (r && r.gewonnen) || 0, grenze: r && r.grenze };
           sp.hinweis = "";
           ton(sp.ergebnis.gewonnen > 0 ? "bling" : "gummi", 0.45);
           panelAuffrischen(); zeichnen(); schnellZeichnen();
@@ -7028,9 +7007,9 @@
       + '<button type="button" data-tu="sprechen" class="sp-sprech-mik' + (sp.laeuft ? " sp-an" : "") + '"' + (sp.laeuft || e || !sp.original ? " disabled" : "") + ">" + (sp.laeuft ? "Ich höre …" : "Nachsprechen") + "</button>"
       + '<button type="button" data-tu="sprechneu">Neues Wort</button></div>'
       + '<div class="sp-erg-platz' + (e ? (e.gewonnen > 0 ? " sp-erg-gut" : " sp-erg-schlecht") : "") + '">'
-      + (e ? '<div class="sp-erg-zeile"><b>' + e.prozent + (e.azure ? " / 100 · Laut für Laut</b>" : " % ähnlich</b>") + (e.gewonnen > 0 ? ' <span class="sp-gold">+' + e.gewonnen + " Punkte</span>" : "")
+      + (e ? '<div class="sp-erg-zeile"><b>' + e.prozent + " % ähnlich</b>" + (e.gewonnen > 0 ? ' <span class="sp-gold">+' + e.gewonnen + " Punkte</span>" : "")
           + '<button type="button" data-tu="sprechneu">Weiter</button></div><div class="sp-erg-erkl">'
-          + (e.tipp ? esc(e.tipp) + " " : "") + (e.gewonnen > 0 ? "Gut gesprochen!" : e.grenze ? "Für diese Stunde sind die Aussprache-Punkte aufgebraucht." : "Ab 60 % gibt es Punkte – hör noch einmal hin und versuch das nächste Wort.") + "</div>"
+          + (e.gewonnen > 0 ? "Gut gesprochen!" : e.grenze ? "Für diese Stunde sind die Aussprache-Punkte aufgebraucht." : "Ab 60 % gibt es Punkte – hör noch einmal hin und versuch das nächste Wort.") + "</div>"
         : '<div class="sp-erg-leer">' + esc(sp.hinweis || "Erst hören, dann nachsprechen.") + "</div>")
       + "</div></div>";
   }

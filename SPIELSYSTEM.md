@@ -1491,3 +1491,11 @@ Sonden: neu 765 (alles grün); 716 grün. Der Server ist am Server geprüft (Rü
   - Absichtlich kostet der Ausflug mehr (12 P), als das Ziel bekommt (9 P). So lohnt es sich nicht, Punkte über ein Zweitkonto hin- und herzuschieben.
 - Server: `spiel_bahn_zug` liefert jetzt auch `touristen`, `reise` und `gaeste`, `spiel_bahn('touristen')` ist neu, ebenso `spiel_bahn_reise(uuid)`.
 - **Stand „modularer Aufbau“ (Frage aus Funk 184)**: Die Wahrzeichen kann man seit 764 auf fünf Plätze stellen. Die Häuser selbst stehen noch fest. Frei verschieben ist der nächste größere Schritt und steht offen.
+
+### Fassung 766 (Funk 186 und 188: Dorf bleibt offen, Aussprache mit Laut-Bewertung)
+Sonden: neu 766 (alles grün; mit der Sicherung sind genau die neuen Punkte rot); 641, 648, 649, 651, 673, 686, 711, 716 grün.
+- **Dorf bleibt offen** (XANDER, Funk 186: „Wenn man auf der Bühne etwas einsammelt wie Eier oder diesen Schatz … dann soll das nicht das Dorfmenü beeinflussen … das schließt sich nur wenn ich auf den Makroknopf vom Dorf klicke“). Bisher schloss jeder Tipp außerhalb des Menüs alles. Ist das Dorf offen, schließt ein Tipp daneben jetzt nur Räder und Wahlen. Das Ei wird eingesammelt, und das Dorf bleibt stehen. Zu geht es mit ✕ in der Leiste (dort steht bei offenem Dorf der Makroknopf). Andere Menüs schließt ein Tipp daneben wie bisher.
+- **Aussprache im Spiel wie im Kurs** (XANDER, Funk 188: „dass wir das wie im Aussprache Training auf der Seite auch in diesem Spiel nutzen können und dann müssen Sie die korrekte Aussprache machen und kriegen dann auch die Punkte dafür“).
+  - Geprüft: Vorgesprochen wird im Spiel seit Fassung 651 schon mit der Azure-Stimme. Deine eigenen 23.534 Aufnahmen liegen noch im Ordner `aussprache/`, werden aber nirgends mehr abgespielt. Einen Verweis darauf habe ich im Spiel nicht gefunden.
+  - Neu ist die Bewertung. Bisher verglich das Spiel nur den Klang. Jetzt misst es, wie im Aussprachekurs, zuerst mit der Laut-Bewertung von Azure, Laut für Laut. Die Anzeige lautet „88 / 100 · Laut für Laut“, darunter steht der schwächste Laut als Tipp („Dein øː …“). Punkte gibt es ab 60 wie bisher.
+  - Ohne Anmeldung oder wenn Azure nicht antwortet, bleibt es beim Klangvergleich.
