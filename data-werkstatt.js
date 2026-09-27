@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 757 — Gründer und Klassen-Waffen",
+  stand: "Fassung 758 — mehrere Figuren",
 
   inArbeit: [
-    { seit: "2026-09-27T17:06",
-      text: "758: mehrere Charaktere (bis zu fünf, einer je Klasse, umschaltbar)" },
-    { seit: "2026-09-27T17:06",
+    { seit: "2026-09-27T17:22",
       text: "Einzug: Viper/KITT mit Kurve von vorn, Optimus Prime originalgetreu" },
-    { seit: "2026-09-27T17:06",
+    { seit: "2026-09-27T17:22",
       text: "Aufgabenbank durchsehen (Funk 178)" },
+    { seit: "2026-09-27T17:22",
+      text: "Skins, Ausrüstungs-Sets, Arena (Walkie 290)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T17:06",
-      text: "Grundklasse heißt jetzt „Gründer“ (Walkie 291)" },
-    { seit: "2026-09-27T17:06",
-      text: "Klassen-Waffen im Laden: „benötigt Magier-Klasse“ (Walkie 292)" },
-    { seit: "2026-09-27T17:06",
-      text: "Waffenbild bei drei Knöpfen nicht mehr zusammengedrückt" },
+    { seit: "2026-09-27T17:22",
+      text: "Mehr → Figuren: je Kämpferklasse eine eigene Figur, die bei Level 1 anfängt (Walkie 292)" },
+    { seit: "2026-09-27T17:22",
+      text: "Hauptfigur wechselt die Klasse frei, Dorf und Ranking bleiben gemeinsam" },
+    { seit: "2026-09-27T17:22",
+      text: "„Stufe“ im Klassen-Menü nicht mehr von einem Balken verdeckt" },
   ],
 };

@@ -1949,8 +1949,6 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 /* Leiste und Menü. */
 .sp-s-kampf svg { width: 100%; height: 100%; display: block; }
 .sp-kampf-zeile b em { font-style: normal; font-weight: 600; font-size: 11px; opacity: .8; margin-left: 4px; }
-/* FASSUNG 758 — „Stufe 3“, „Grundklasse“, „Level 23“ sind Text, kein Fortschrittsbalken (.sp-troph em war 4 px hoch und verdeckte sie). */
-.sp-troph.sp-kampf-zeile b em { display: inline; height: auto; background: none; overflow: visible; margin-top: 0; border-radius: 0; }
 .sp-kampf-balken { display: block; height: 4px; margin: 2px 0 3px; border-radius: 2px; background: linear-gradient(90deg, #f2c230 var(--anteil, 0%), rgba(255, 255, 255, .18) 0); }
 @media (prefers-reduced-motion: reduce) { .sp-kampf-wappen, .sp-kampf-blitz, .sp-kampf-schild, .sp-kampf-rauch, .sp-kampf-segen, .sp-kampf-kreuz, .sp-kampf-zahnrad, .sp-kampf-buch { animation-duration: .01s; } }
 .sp-kampf-ring { position: fixed; z-index: 9992; width: var(--gr); height: var(--gr); margin: calc(var(--gr) / -2) 0 0 calc(var(--gr) / -2); border-radius: 50%; box-sizing: border-box;
@@ -2780,13 +2778,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-kampf-zeile.sp-gruender { border-left: 3px solid #6b8e3a; }
 .sp-klassen-sperre { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 11px; }
 .sp-klassen-sperre svg { width: 16px; height: 16px; flex: none; }
-/* FASSUNG 758 — Figuren (Walkie 290/292): Liste, „Neu anfangen" mit Bestätigung, Einblenden der neuen Figur */
-.sp-figur-neuliste { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 4px 0 6px; }
-.sp-figur-neuliste button { display: flex; align-items: center; gap: 6px; min-width: 0; font: 700 12px system-ui, sans-serif; padding: 7px 8px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .07); color: #f4f6fb; text-align: left; }
-.sp-figur-neuliste button svg { width: 20px; height: 20px; flex: 0 0 20px; }
-.sp-figur-neuliste .sp-figur-ja { grid-column: 1 / -1; background: #ffe27a; border-color: #d8b43a; color: #10301c; }
-.sp-figur-warte { color: #8a5a00; }
-.sp-figur-neu { animation: sp-figur-rein .5s cubic-bezier(.2, .8, .3, 1.2) both; }
-.sp-figur-neu > i { animation: sp-figur-dreh .5s ease-out both; }
-@keyframes sp-figur-rein { from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes sp-figur-dreh { from { transform: rotateY(90deg) scale(.6); } to { transform: none; } }

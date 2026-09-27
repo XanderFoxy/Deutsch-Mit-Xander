@@ -2233,67 +2233,8 @@
     if (S.kampfBis == null && ich.klassen_bereit_s != null) S.kampfBis = Date.now() + ich.klassen_bereit_s * 1000;
     return Math.max(0, Math.ceil(((S.kampfBis || 0) - Date.now()) / 1000));
   }
-  /* FASSUNG 758 — Walkie 290/292. XANDER: „zu jeder Klasse noch mal einen neuen Spieler anfangen und den dann
-     individuell aufleveln … mit unserem Hauptaccount … können wir die Klasse wechseln". Die Hauptfigur wechselt die
-     Klasse frei; jede weitere Figur ist fest an ihre Klasse gebunden und fängt bei Level 1 an. Gemeinsam bleiben
-     Dorf, Vorräte, Deutsch-Klasse, Mauer und die Rangliste (dort zählt die beste Figur). */
-  function figurenSvg() {
-    /* zwei Figuren hintereinander: vorne die aktive, hinten eine blassere */
-    return '<svg viewBox="0 0 24 24"><circle cx="15.5" cy="7.6" r="3.3" fill="#9aa6b8"/><path d="M9.6 19.5 C10 14.6 12.4 12.2 15.5 12.2 C18.6 12.2 21 14.6 21.4 19.5 Z" fill="#9aa6b8"/>'
-      + '<circle cx="9" cy="8.6" r="3.7" fill="#6b8e3a" stroke="#1d2330" stroke-width=".9"/><path d="M2.4 21 C2.8 15.4 5.5 13 9 13 C12.5 13 15.2 15.4 15.6 21 Z" fill="#6b8e3a" stroke="#1d2330" stroke-width=".9"/></svg>';
-  }
-  function figurenHolen() {
-    rpc("spiel_figuren", {}).then(function (r) {
-      if (!r || r.ok === false) return;
-      S.figuren = r; if (S.schnellReiter === "figuren") schnellZeichnen(true);
-    }).catch(function () {});
-  }
-  function figurWechseln(w) {
-    var name = w.neu ? "spiel_figur_neu" : "spiel_figur_wechseln";
-    rpc(name, w.neu ? { p_klasse: w.neu } : { p_nr: w.nr }).then(function (r) {
-      S.figurFrage = "";
-      if (!r || r.ok === false) { hinweis("👤 " + ((r && r.grund) || "Das ging nicht.") + (r && r.bereit_s ? " (noch " + (r.bereit_s >= 60 ? Math.ceil(r.bereit_s / 60) + " min" : r.bereit_s + " s") + ")" : "")); schnellZeichnen(true); return; }
-      S.ich = r; S.stand[r.id] = oeffentlich(r); senden({ ereignis: "stand", stand: oeffentlich(r) });
-      S.waffe = ""; S.kampfBis = Date.now() + (r.klassen_bereit_s || 0) * 1000; S.kampfZiel = false;
-      S.figurFrisch = (r.figur && r.figur.nr) || 0;
-      setTimeout(function () { S.figurFrisch = 0; }, 800);
-      /* Klang und Einblenden der Figurzeile beginnen im selben Moment. */
-      ton(r.kampfklasse ? "klasse-" + r.kampfklasse : "swoosh", 0.45);
-      hinweis(r.figur_neu ? "👤 Neue " + figurName(r.figur) + ": Level 1, Startwaffen, 0 Punkte. Dein Dorf bleibt, wie es ist."
-        : "👤 Du spielst jetzt die " + figurName(r.figur) + " (Level " + (r.level || 1) + ").");
-      figurenHolen(); schnellZeichnen(true);
-    }).catch(function () { S.figurFrage = ""; hinweis("👤 Das ging gerade nicht."); });
-  }
-  function figurName(f) { return f && f.klasse && KAMPF[f.klasse] ? KAMPF[f.klasse].name + "-Figur" : "Hauptfigur"; }
-  function figurenHtml(ich, liste) {
-    var figs = (liste && liste.figuren) || [{ nr: 1, klasse: null, aktiv: true, kampfklasse: ich.kampfklasse, level: ich.level || 1, punkte: ich.punkte || 0 }];
-    var hat = {}; figs.forEach(function (f) { if (f.klasse) hat[f.klasse] = true; });
-    var warte = liste && liste.bereit_s > 0 ? '<p class="sp-sm-klein sp-figur-warte">Wechseln geht wieder in ' + Math.ceil(liste.bereit_s / 60) + " min.</p>" : "";
-    var zeilen = figs.map(function (f) {
-      var bild = kampfSvg(f.kampfklasse || "gruender");
-      return '<div class="sp-troph sp-klasse sp-kampf-zeile sp-figur' + (f.aktiv ? " sp-troph-hat" : "") + (S.figurFrisch === f.nr ? " sp-figur-neu" : "") + '" data-nr="' + f.nr + '"><i>' + bild + "</i><span><b>" + esc(figurName(f))
-        + " <em>Level " + (f.level || 1) + "</em></b><small>" + (f.klasse ? "bleibt " + esc(KAMPF[f.klasse].name) : f.kampfklasse && KAMPF[f.kampfklasse] ? "kämpft als " + esc(KAMPF[f.kampfklasse].name) + " · wechselt frei" : "Gründer · wechselt frei")
-        + " · " + (f.punkte || 0) + " P" + (f.waffen != null ? " · " + f.waffen + " Waffen" : "") + "</small></span>"
-        + (f.aktiv ? '<strong class="sp-klasse-ist">du</strong>' : '<button type="button" data-s="figurwahl" data-n="' + f.nr + '">Spielen</button>') + "</div>";
-    }).join("");
-    var frei = KAMPF_REIHE.filter(function (k) { return !hat[k]; });
-    var neu = frei.length ? '<p class="sp-sm-klein"><b>Neu anfangen</b> – eine Figur je Klasse, sie beginnt bei Level 1 mit den Startwaffen und 0 Punkten:</p><div class="sp-figur-neuliste">'
-      + frei.map(function (k) {
-        return S.figurFrage === k
-          ? '<button type="button" class="sp-figur-ja" data-s="figurneuja" data-k="' + k + '">' + kampfSvg(k) + "Ja, als " + esc(KAMPF[k].name) + " neu anfangen</button>"
-          : '<button type="button" data-s="figurneu" data-k="' + k + '">' + kampfSvg(k) + esc(KAMPF[k].name) + "</button>";
-      }).join("") + "</div>" : '<p class="sp-sm-klein">Du hast für jede Klasse eine Figur.</p>';
-    return '<p class="sp-sm-klein">Jede Figur hat ihr <b>eigenes</b> Level, Punkte, Waffen, Tiere und Tränke. <b>Gemeinsam</b> bleiben Dorf, Vorräte, Deutsch-Klasse, Mauer und dein Platz in der Rangliste – dort zählt deine beste Figur. Andere sehen nur deinen Namen.</p>'
-      + '<div class="sp-troph-liste">' + zeilen + "</div>" + warte + neu;
-  }
   function kampfHtml(ich) {
     var jetzt = ich.kampfklasse || "";
-    /* FASSUNG 758 — eine Klassen-Figur bleibt in ihrer Klasse (der Server lehnt den Wechsel auch ab). */
-    var fest = ich.figur && ich.figur.klasse && KAMPF[ich.figur.klasse];
-    if (fest) return '<p class="sp-sm-klein">Diese Figur ist <b>' + esc(fest.name) + "</b> und bleibt es. Andere Klassen spielst du mit der Hauptfigur oder einer eigenen Figur (Mehr → Figuren).</p>"
-      + '<div class="sp-troph-liste"><div class="sp-troph sp-klasse sp-kampf-zeile sp-troph-hat"><i>' + kampfSvg(ich.figur.klasse) + "</i><span><b>" + esc(fest.name) + " <em>Stufe " + kampfStufe(kampfXp(ich, ich.figur.klasse)) + "</em></b>"
-      + "<small>Kraft: <b>" + fest.kraft + "</b> – " + esc(fest.text) + "</small><small>Stärke: " + esc(fest.passiv) + '</small></span><strong class="sp-klasse-ist">du</strong></div></div>'
-      + '<div class="sp-sm-liste"><button type="button" data-s="figuren">Figuren</button></div>';
     var gruender = '<div class="sp-troph sp-klasse sp-kampf-zeile sp-gruender' + (jetzt ? "" : " sp-troph-hat") + '"><i>' + kampfSvg("gruender") + "</i><span><b>" + GRUENDER.name + " <em>Grundklasse</em></b>"
       + "<small>" + esc(GRUENDER.text) + "</small></span>"
       + (jetzt ? '<button type="button" data-s="kampfwahl" data-k="keine">Zurück</button>' : '<strong class="sp-klasse-ist">du</strong>') + "</div>";
@@ -4414,8 +4355,6 @@
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + klassenHtml(ich);
     } else if (r === "kampfklasse") {
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + kampfHtml(ich);
-    } else if (r === "figuren") {
-      inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + figurenHtml(ich, S.figuren);
     } else if (r === "dorf") {
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + dorfHtml(ich);
     } else if (r === "dorfblick") {
@@ -4491,9 +4430,6 @@
           + (ich.klasse && KLASSEN[ich.klasse] ? esc(KLASSEN[ich.klasse].name) : (ich.level || 1) >= 5 ? "wählen" : "ab Lv 5") + "</small></button>"
         + (kampfFrei() ? '<button type="button" data-s="kampfklasse"><span class="sp-sm-zbild">' + kampfSvg(ich.kampfklasse || "gruender") + "</span>Kämpferklasse <small>"
           + (KAMPF[ich.kampfklasse] ? esc(KAMPF[ich.kampfklasse].name) + " · Stufe " + (ich.kampf_stufe || 1) : GRUENDER.name) + "</small></button>" : "")
-        /* FASSUNG 758 — mehrere Figuren (Walkie 292). */
-        + (kampfFrei() ? '<button type="button" data-s="figuren"><span class="sp-sm-zbild">' + figurenSvg() + "</span>Figuren <small>"
-          + esc(figurName(ich.figur)) + ((ich.figur && ich.figur.zahl > 1) ? " · " + ich.figur.zahl + " Figuren" : "") + "</small></button>" : "")
         + '<button type="button" data-s="dorf"><span class="sp-sm-zbild">' + dorfSvg("baeckerei", 1) + "</span>Mein Dorf <small>"
           + Object.keys(ich.dorf || {}).length + " / " + Object.keys(DORF).length + "</small></button>"
         + '<button type="button" data-s="trophaeen"><span class="sp-sm-zbild">' + pokalSvg(true) + "</span>Trophäen <small>"
@@ -4608,15 +4544,6 @@
       S.schnellReiter = "klasse";
     } else if (s === "kampfklasse") {
       S.schnellReiter = "kampfklasse";
-    } else if (s === "figuren") {
-      S.schnellReiter = "figuren"; S.figurFrage = ""; S.figurFrisch = 0;
-      figurenHolen();
-    } else if (s === "figurneu") {
-      /* Neu anfangen will bestätigt sein: der erste Tipp fragt, der zweite legt an. */
-      S.figurFrage = k.dataset.k;
-    } else if (s === "figurwahl" || s === "figurneuja") {
-      figurWechseln(s === "figurneuja" ? { neu: k.dataset.k } : { nr: Number(k.dataset.n) });
-      return;
     } else if (s === "kampfwahl") {
       rpc("spiel_kampfklasse_waehlen", { p_klasse: k.dataset.k }).then(function (r) {
         if (!r || r.ok === false) { hinweis("⚔️ " + ((r && r.grund) || "Das ging nicht.") + (r && r.bereit_s ? " (noch " + Math.ceil(r.bereit_s / 60) + " min)" : "")); return; }
@@ -14343,7 +14270,7 @@
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, chatWaffeZeigen: chatWaffeZeigen, tierReagiert: tierReagiert, tiereSpielen: tiereSpielen, handelLaden: handelLaden, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,
       abrufen: abrufen, eierPflegen: eierPflegen, makroAusloesen: makroAusloesen, dorfBlickHtml: dorfBlickHtml, stallBereit: stallBereit, baumStand: baumStand, pluendern: pluendern, holzen: holzen, angeln: angeln,
-      trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, klassenHtml: klassenHtml, KAMPF: KAMPF, kampfHtml: kampfHtml, figurenHtml: figurenHtml, figurName: figurName, kampfStufe: kampfStufe, kampfZeigen: kampfZeigen, kampfKnopf: kampfKnopf, kampfFrei: kampfFrei, kampfSvg: kampfSvg, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
+      trophaeenHolen: trophaeenHolen, dorfHtml: dorfHtml, klassenHtml: klassenHtml, KAMPF: KAMPF, kampfHtml: kampfHtml, kampfStufe: kampfStufe, kampfZeigen: kampfZeigen, kampfKnopf: kampfKnopf, kampfFrei: kampfFrei, kampfSvg: kampfSvg, vorposten: vorposten, mauerSvg: mauerSvg, trophaeFeier: trophaeFeier, fundPflegen: fundPflegen, fundHeben: fundHeben,
       zauberZeigen: zauberZeigen, zaubern: zaubern, daemonAusbruch: daemonAusbruch, uebungZaubern: uebungZaubern, geschuetzSvg: geschuetzSvg, kugelnFliegen: kugelnFliegen, radHtml: radHtml, zauberRadHtml: zauberRadHtml, ZAUBER: ZAUBER,
       menueInhalt: function (tab) { var alt = reiter; reiter = tab; var h = inhalt(); reiter = alt; return h; },
       zone: function (dx, dy) {

@@ -1365,3 +1365,24 @@ Sonden: neu 757 (alles grün).
 - XANDER (Walkie 292): Klassen-Waffen, die man im Laden sieht, mit dem Hinweis „benötigt Magier-Klasse“. **Neu**, je Klasse eine Waffe, alle gezeichnet: Arkanstab (Magier, 20 Schaden, 110 P), Wurfdolch (Dieb, 16, 80 P), Streithammer (Titan, 23, 130 P), Kräuterschleuder (Heiler, 14, 70 P), Nietenkanone (Ingenieur, 19, 110 P), Duden-Wurf (Deutsch-Gelehrter, 18, 100 P – der gelbe Duden). In der falschen Klasse steht statt des Preises ein grauer Knopf mit dem Klassenzeichen: „benötigt Titan-Klasse“. Wer die Klasse wechselt, behält die Waffe, kann sie aber erst wieder anlegen und abfeuern, wenn er zurückwechselt (auch der Server lehnt den Treffer ab).
 - **Nebenbei behoben**: Bei gekauften Waffen mit drei Knöpfen (Anlegen, Verstärken, Verkaufen) wurde auf 360 px das Waffenbild auf 0 px zusammengedrückt. Es bleibt jetzt 38 px breit.
 - **Noch nicht drin (kommt als 758)**: mehrere Charaktere (bis zu fünf, einer je Klasse, umschaltbar).
+
+### Fassung 758 (Walkie 290/292: mehrere Figuren)
+Server: Migrationen `spiel_758_figuren` und `spiel_758_figuren_rechte`. Neue Tabelle `spiel_charaktere` mit RLS; lesen darf man nur die eigenen Zeilen, schreiben geht nur über die Funktionen. Neue Funktionen: spiel_figuren, spiel_figur_neu, spiel_figur_wechseln. Geändert: spiel_ich (meldet die aktive Figur), spiel_kampfklasse_waehlen (eine Klassen-Figur bleibt in ihrer Klasse), spiel_rangliste (es zählt die beste Figur). Die Hilfsfunktionen, die eine fremde Kennung annehmen, darf der Browser nicht aufrufen (geprüft: `authenticated` und `anon` haben kein Ausführungsrecht).
+Servertest in einer zurückgerollten Transaktion mit Xanders Konto:
+- Neue Magier-Figur: Level 1, 0 Punkte, 100 LP, 3 Pflaster, die vier Startwaffen. Dorf, Vorräte und Ranking-Punkte sind unverändert.
+- Sofort zurück wechseln: „Figurwechsel geht alle 2 Minuten“. Die Magier-Figur zum Titan machen: abgelehnt. 10 Sekunden nach einem Treffer: „Mitten im Kampf“.
+- Zurück zur Hauptfigur: Erfahrung, Punkte, Waffen und Klassen-Erfahrung genau wie vorher. Die Magier-Figur behält ihre 7 Punkte.
+- Eine zweite Magier-Figur anlegen: abgelehnt.
+Sonden: neu 758 (alles grün); 633, 634, 650, 683, 692, 699, 719, 734, 754, 755, 757 grün. Figurenliste auf 360 px angesehen.
+- XANDER (Walkie 292, Notiz): „zu jeder Klasse noch mal einen neuen Spieler anfangen und den dann individuell aufleveln … wir können immer mit unserem Hauptaccount … die Klasse wechseln … für jede Klasse ein Account“. Walkie 290: „Andere sehen es nicht“.
+- **So ist es jetzt**:
+  - Unter Mehr → „Figuren“ steht die Hauptfigur (dein bisheriger Stand, wechselt die Kämpferklasse frei wie bisher). Dazu kommt höchstens eine Figur je Kämpferklasse, also bis zu sieben.
+  - Eine neue Figur ist fest an ihre Klasse gebunden und beginnt bei Level 1, mit 0 Punkten, den Startwaffen und ohne Tiere.
+  - Neu anfangen will bestätigt sein: Der erste Tipp fragt „Ja, als Magier neu anfangen“, erst der zweite legt die Figur an.
+- **Eigen je Figur**: Level und Erfahrung, Punkte, Leben, Mana, Waffen samt Abnutzung und Sternen, Rüstung, Tiere, Tränke, Pflaster, Mission, Tier-Fähigkeit, Kämpferklasse samt Klassen-Stufen.
+- **Gemeinsam**:
+  - Dorf, Vorräte, Felder, Werkstatt, Volk, Deutsch-Klasse, Mauer, Graben, Geschütz, Tagesgeschenk, Schutzzeit und Flüche. So entkommt man einem Fluch nicht durch Wechseln.
+  - Die Ranking-Punkte der Webseite („verdient“): du lernst ja als Person.
+  - In der Rangliste im Spiel zählt die beste Figur. Andere sehen nur deinen Namen.
+- **Wechseln**: alle 2 Minuten, nicht in der ersten Minute nach einem Treffer. Beim Wechsel wird die Waffe eingesteckt, der Klassenklang spielt, und die neue Figur fliegt in der Liste ein (0,5 s, Klang und Bewegung beginnen zusammen). Die anderen im Raum bekommen sofort den neuen Stand (Level, Leben).
+- **Nebenbei behoben**: „Stufe 3“ im Kämpferklassen-Menü (seit 699) und „Grundklasse“ (seit 757) wurden von einem 4 px hohen Balken halb verdeckt. Das Zeichen war als Fortschrittsbalken gestylt. Jetzt ist es wieder normaler Text.
