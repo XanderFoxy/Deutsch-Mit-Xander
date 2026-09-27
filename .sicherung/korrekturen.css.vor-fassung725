@@ -34939,19 +34939,3 @@ svg.lc-mini-echt .lc-sobri-blitz, svg.lc-mini-echt .lc-eimer-strahl { display: n
 .op-nur-robot .op-truck { display: none; }
 .lc-auftritt-trafo .op-rad { animation: lcRwRad .5s linear 3; }
 .lc-auftritt-raus .lc-auftritt-trafo .op-rad { animation-delay: 4.6s; }
-
-/* FASSUNG 725 — Funk 168: die Bildermappe der Tafel (Gerät, Bilderwelten, Aussprache) */
-.lc-tafel-bildmappe { position: absolute; inset: 4% 4%; z-index: 41; display: flex; flex-direction: column; gap: 8px; padding: 10px;
-  border-radius: 14px; background: rgba(22, 28, 38, .97); box-shadow: 0 12px 40px rgba(0, 0, 0, .5); color: #eef4fb; overflow: hidden; }
-.lc-tafel-bm-kopf { display: flex; align-items: center; gap: 6px; }
-.lc-tafel-bm-kopf b { flex: 1; font-size: .95rem; }
-.lc-tafel-bm-kopf button { min-height: 0; padding: 4px 10px; border-radius: 10px; border: 0; background: rgba(255, 255, 255, .12); color: #fff; font-size: .85rem; cursor: pointer; }
-.lc-tafel-bm-liste { flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; align-content: start; -webkit-overflow-scrolling: touch; }
-.lc-tafel-bm-ordner, .lc-tafel-bm-bild { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 6px; border: 0; border-radius: 12px;
-  background: rgba(255, 255, 255, .08); color: #fff; font-size: 1.5rem; cursor: pointer; text-align: center; min-height: 0; }
-.lc-tafel-bm-ordner span, .lc-tafel-bm-bild span { font-size: .8rem; font-weight: 700; line-height: 1.2; }
-.lc-tafel-bm-ordner small { font-size: .68rem; opacity: .7; }
-.lc-tafel-bm-bild i { font-style: normal; }
-.lc-tafel-bm-laut { background: #fbf6ec; color: #3a3229; }
-.lc-tafel-bm-laut svg { width: 100%; height: auto; display: block; pointer-events: none; }
-.lc-tafel-bm-warte { grid-column: 1 / -1; margin: 0; opacity: .8; font-size: .9rem; }

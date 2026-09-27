@@ -8594,7 +8594,3 @@ body.hat-klassenzimmer { padding-bottom: 172px; }
   .kz-titel { font-size: 0.7rem; }
   .kz-knopf { min-width: 32px; min-height: 32px; font-size: 0.88rem; }
 }
-
-/* FASSUNG 725 — Funk 168: im Baukasten nichts markieren, die Figur zieht sich wie in einer App. */
-.bk-svg, .bk-svg * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-.bk-zielring { fill: rgba(255, 214, 90, .25); stroke: #f2b632; stroke-width: 1.5; stroke-dasharray: 3 2; pointer-events: none; }

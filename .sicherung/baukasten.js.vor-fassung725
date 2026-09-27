@@ -974,28 +974,22 @@ const Baukasten = (function () {
   }
 
   /* Ziehen und Ablegen: die Figur lässt sich mit dem Finger auf einen
-     anderen Platz schieben.
-     FASSUNG 725 — XANDER (Funk 168): „im Baukasten für unsere Bilderwelt …
-     dass man die Person von einem Punkt zum anderen ziehen kann ohne dass
-     man zufällig aus Versehen mal etwas markiert und dann die Person nicht
-     versetzen kann das soll immer funktionieren das ist so per Drag & Drop
-     wie in einer App geht". Bisher: Maus- und Touch-Ereignisse getrennt, die
-     Figur selbst war das einzige Ziel (klein), ein langer Druck markierte
-     Text, und bei jedem Neuzeichnen kamen neue Lauscher am Fenster dazu.
-     Jetzt: Pointer-Ereignisse mit „Capture" (der Finger bleibt an der Figur,
-     auch wenn er sie verlässt), man darf in einem großzügigen Kreis um die
-     Figur zugreifen, nichts im Bild lässt sich markieren, und während des
-     Ziehens zeigt ein Ring den Platz, auf dem sie landen wird. */
+     anderen Platz schieben. Auf dem Telefon zählt dabei die Berührung,
+     nicht die Maus — deshalb beides. */
   function bkZiehen(wurzel) {
     const svg = wurzel.querySelector(".bk-svg");
     const figur = wurzel.querySelector("[data-bk-figur]");
     if (!svg || !figur) return;
-    let zieht = null, ring = null, gezogen = false;
+    let zieht = false;
 
     const punkt = (e) => {
       const r = svg.getBoundingClientRect();
+      const t = e.touches ? e.touches[0] : e;
       const vb = svg.viewBox.baseVal;
-      return { x: (e.clientX - r.left) / r.width * vb.width, y: (e.clientY - r.top) / r.height * vb.height };
+      return {
+        x: (t.clientX - r.left) / r.width * vb.width,
+        y: (t.clientY - r.top) / r.height * vb.height,
+      };
     };
     const naechster = (p) => {
       let best = null, weit = 1e9;
@@ -1005,52 +999,27 @@ const Baukasten = (function () {
       });
       return best;
     };
-    const figurOrt = () => { const m = /translate\(\s*([-\d.]+)[ ,]+([-\d.]+)/.exec(figur.getAttribute("transform") || ""); return m ? { x: +m[1], y: +m[2] } : null; };
-    svg.addEventListener("pointerdown", (e) => {
-      if (e.button != null && e.button > 0) return;
-      const p = punkt(e), f = figurOrt(), vb = svg.viewBox.baseVal;
-      /* Zugreifen: direkt auf der Figur oder im Umkreis von 9 % der Bildbreite. */
-      const nah = e.target.closest && e.target.closest("[data-bk-figur]");
-      if (!nah && !(f && Math.hypot(p.x - f.x, p.y - (f.y - vb.width * .03)) < vb.width * .09)) return;
+    const los = (e) => { zieht = true; figur.classList.add("bk-zieht"); e.preventDefault(); };
+    const zieh = (e) => {
+      if (!zieht) return;
+      const p = punkt(e);
+      figur.setAttribute("transform", "translate(" + p2(p.x) + "," + p2(p.y) + ")");
       e.preventDefault();
-      zieht = { id: e.pointerId, dx: f ? f.x - p.x : 0, dy: f ? f.y - p.y : 0 };
-      gezogen = false;
-      try { svg.setPointerCapture(e.pointerId); } catch (x) {}
-      figur.classList.add("bk-zieht");
-      ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      ring.setAttribute("class", "bk-zielring"); ring.setAttribute("r", String(vb.width * .035));
-      ring.style.display = "none";
-      svg.appendChild(ring);
-    });
-    svg.addEventListener("pointermove", (e) => {
-      if (!zieht || e.pointerId !== zieht.id) return;
-      e.preventDefault();
-      const p = punkt(e), x = p.x + zieht.dx, y = p.y + zieht.dy;
-      gezogen = true;
-      figur.setAttribute("transform", "translate(" + p2(x) + "," + p2(y) + ")");
-      const z = naechster({ x: x, y: y });
-      if (z && ring) { ring.setAttribute("cx", p2(z.x)); ring.setAttribute("cy", p2(z.y)); ring.style.display = ""; }
-    });
+    };
     const ab = (e) => {
-      if (!zieht || e.pointerId !== zieht.id) return;
-      const p = punkt(e), ziel = gezogen ? naechster({ x: p.x + zieht.dx, y: p.y + zieht.dy }) : null;
-      zieht = null;
+      if (!zieht) return;
+      zieht = false;
       figur.classList.remove("bk-zieht");
-      if (ring) { ring.remove(); ring = null; }
-      try { svg.releasePointerCapture(e.pointerId); } catch (x) {}
-      if (!gezogen) return;
-      /* Der Klick, der nach dem Loslassen folgt, soll keinen anderen Platz mehr wählen. */
-      svg.addEventListener("click", (k) => { k.stopPropagation(); k.preventDefault(); }, { capture: true, once: true });
-      setTimeout(() => { gezogen = false; }, 0);
+      const ziel = naechster(punkt(e.changedTouches ? { touches: e.changedTouches } : e));
       if (ziel) bkPlatzNehmen(ziel);
       nachladen().then(zeichnen);
     };
-    svg.addEventListener("pointerup", ab);
-    svg.addEventListener("pointercancel", ab);
-    /* Kein Markieren, kein Kontextmenü beim langen Druck (auch bevor das Stylesheet da ist). */
-    svg.style.userSelect = "none"; svg.style.webkitUserSelect = "none"; svg.style.webkitTouchCallout = "none"; svg.style.touchAction = "none";
-    svg.addEventListener("selectstart", (e) => e.preventDefault());
-    svg.addEventListener("contextmenu", (e) => e.preventDefault());
+    figur.addEventListener("mousedown", los);
+    figur.addEventListener("touchstart", los, { passive: false });
+    window.addEventListener("mousemove", zieh);
+    window.addEventListener("touchmove", zieh, { passive: false });
+    window.addEventListener("mouseup", ab);
+    window.addEventListener("touchend", ab);
   }
 
   async function render(el) {

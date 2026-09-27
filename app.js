@@ -38478,7 +38478,7 @@
       + '<button type="button" class="lc-tafel-knopf lc-tafel-an" data-tafel="stift" title="Zeichnen">✏️</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="zeiger" title="Zeigen — die Markierung blinkt">🔦</button>'
       + '<span class="lc-tafel-farben" id="lcTafelFarben"></span>'
-      + '<button type="button" class="lc-tafel-knopf" data-tafel="bild" title="Ein Bild hineinladen">🖼️</button>'
+      + '<button type="button" class="lc-tafel-knopf" data-tafel="bild" title="Bild auf die Tafel: vom Gerät, aus den Bilderwelten oder der Aussprache">🖼️</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="rein" title="Heranholen">➕</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="raus" title="Wieder kleiner">➖</button>'
       + '<button type="button" class="lc-tafel-knopf" data-tafel="fein" title="Strich und Zeiger feiner oder dicker">●</button>'
@@ -38565,13 +38565,117 @@
     });
   }
 
+  /* FASSUNG 725 — XANDER (Funk 168): „hast du dich schon darum gekümmert dass wir diese Inhalte von den Bilderwelten
+     auch auf unserem Whiteboard nutzen können und ja auch die anderen Sachen die … wir so als Tutorial für die richtige
+     Aussprache haben diese Tricks wie man das NG produziert dass diese Bilder … die bei uns als Beispiel schon hinterlegt
+     sind dass man die auf diese Tafel legen kann damit die Leute diese Übung mit mir machen können ja dafür muss es
+     irgendwie extra Ordner geben". Der Bild-Knopf der Tafel öffnet eine Mappe mit drei Ordnern: vom Gerät, die
+     Bilderwelten (nach Thema, jede Szene mit allen Teilen) und die Aussprache-Bilder (NG, K, ICH/ACH, Ü, Ö, lang/kurz,
+     Dehnungs-h, Konsonanten am Stück). Ein Tipp legt das Bild auf die Tafel – für alle im Raum, wie ein eigenes Foto. */
+  const LC_TAFEL_LAUTE = [["ng", "NG – die Zunge macht hinten zu"], ["k", "K – zum Vergleich"], ["ich", "ICH-Laut"], ["ach", "ACH-Laut"],
+    ["ue", "Ü holst du dir aus dem I"], ["oe", "Ö holst du dir aus dem E"], ["laenge", "Langer und kurzer Vokal"], ["dehnh", "Das Dehnungs-h"], ["buendel", "Konsonanten am Stück"]];
+  function lcTafelMappeAuf(ordner) {
+    const tafel = document.getElementById("lcTafel");
+    if (!tafel) return;
+    let m = tafel.querySelector(".lc-tafel-bildmappe");
+    if (!m) {
+      m = document.createElement("div");
+      m.className = "lc-tafel-bildmappe";
+      tafel.appendChild(m);
+      m.addEventListener("click", (e) => {
+        const k = e.target.closest("[data-mappe]");
+        if (!k) return;
+        e.preventDefault(); e.stopPropagation();
+        const a = k.dataset.mappe;
+        if (a === "zu") { m.remove(); return; }
+        if (a === "geraet") { m.remove(); const d = document.getElementById("lcTafelDatei"); if (d) d.click(); return; }
+        if (a === "ordner") { lcTafelMappeAuf(k.dataset.o || ""); return; }
+        if (a === "szene") { lcTafelSzeneLegen(k.dataset.id, m); return; }
+        if (a === "laut") { lcTafelLautLegen(k.dataset.k, m); return; }
+      });
+    }
+    const esc = (t) => escapeHtml(String(t || ""));
+    let h = '<div class="lc-tafel-bm-kopf"><b>' + (ordner === "welten" ? "🏞️ Bilderwelten" : /^welten:/.test(ordner) ? "🏞️ " + esc(ordner.slice(7)) : ordner === "laute" ? "👄 Aussprache" : "🖼️ Bild auf die Tafel")
+      + "</b>" + (ordner ? '<button type="button" data-mappe="ordner" data-o="' + (/^welten:/.test(ordner) ? "welten" : "") + '">‹ zurück</button>' : "")
+      + '<button type="button" data-mappe="zu" aria-label="Schließen">✕</button></div><div class="lc-tafel-bm-liste">';
+    if (!ordner) {
+      h += '<button type="button" class="lc-tafel-bm-ordner" data-mappe="geraet">📷<span>Vom Gerät</span><small>Foto oder Bild</small></button>'
+        + '<button type="button" class="lc-tafel-bm-ordner" data-mappe="ordner" data-o="welten">🏞️<span>Bilderwelten</span><small>alle Szenen nach Thema</small></button>'
+        + '<button type="button" class="lc-tafel-bm-ordner" data-mappe="ordner" data-o="laute">👄<span>Aussprache</span><small>NG, CH, Ü, Ö …</small></button>';
+    } else if (ordner === "welten") {
+      h += '<p class="lc-tafel-bm-warte">Einen Moment …</p>';
+      szenenLaden().then(() => {
+        if (!m.isConnected) return;
+        const themen = {};
+        szenenListe().forEach((sz) => { const t = sz.thema || "Sonstiges"; themen[t] = (themen[t] || 0) + 1; });
+        m.querySelector(".lc-tafel-bm-liste").innerHTML = Object.keys(themen).sort((a, b) => a.localeCompare(b, "de")).map((t) =>
+          '<button type="button" class="lc-tafel-bm-ordner" data-mappe="ordner" data-o="welten:' + esc(t) + '">📁<span>' + esc(t) + "</span><small>" + themen[t] + " Bilder</small></button>").join("");
+      });
+    } else if (/^welten:/.test(ordner)) {
+      const thema = ordner.slice(7);
+      h += szenenListe().filter((sz) => (sz.thema || "Sonstiges") === thema).map((sz) =>
+        '<button type="button" class="lc-tafel-bm-bild" data-mappe="szene" data-id="' + esc(sz.id) + '"><i>' + esc(sz.emoji || "🖼️") + "</i><span>" + esc(sz.titel) + "</span></button>").join("");
+    } else if (ordner === "laute") {
+      h += '<p class="lc-tafel-bm-warte">Einen Moment …</p>';
+      ausspracheKursLaden().then(() => {
+        if (!m.isConnected) return;
+        const G = (window.DMA_AUSSPRACHE || {}).GRAFIK || {};
+        m.querySelector(".lc-tafel-bm-liste").innerHTML = LC_TAFEL_LAUTE.filter((l) => G[l[0]]).map((l) =>
+          '<button type="button" class="lc-tafel-bm-bild lc-tafel-bm-laut" data-mappe="laut" data-k="' + l[0] + '">' + G[l[0]] + "<span>" + esc(l[1]) + "</span></button>").join("")
+          || '<p class="lc-tafel-bm-warte">Die Aussprache-Bilder ließen sich gerade nicht laden.</p>';
+      });
+    }
+    m.innerHTML = h + "</div>";
+  }
+  /* Ein SVG als Bild für die Tafel: gerastert (JPEG, höchstens 1200 px breit), damit es wie ein Foto durch die Leitung geht. */
+  function lcTafelSvgZuBild(svg, breite, hoehe) {
+    return new Promise((fertig, fehler) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const W = Math.min(1200, Math.max(600, Math.round(breite * 3))), H = Math.round(W * hoehe / breite);
+          const c = document.createElement("canvas"); c.width = W; c.height = H;
+          const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, W, H); g.drawImage(img, 0, 0, W, H);
+          let q = 0.86, d = c.toDataURL("image/jpeg", q);
+          while (d.length > 260000 && q > 0.45) { q -= 0.12; d = c.toDataURL("image/jpeg", q); }
+          fertig(d);
+        } catch (e) { fehler(e); }
+      };
+      img.onerror = () => fehler(new Error("Das Bild ließ sich nicht zeichnen."));
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    });
+  }
+  function lcTafelBildAusMappe(daten, m, name) {
+    lcTafelBildSetzen(daten);
+    lcTafelSenden({ t: "bild", q: daten });
+    if (m) m.remove();
+    try { showToast("🖼️ " + name + " liegt auf der Tafel."); } catch (e) {}
+  }
+  function lcTafelSzeneLegen(id, m) {
+    szeneLaden(id).then((sz) => {
+      if (!sz || !sz.kulisse) throw new Error("Die Bilderwelt ließ sich nicht laden.");
+      const B = sz.breite || 320, H = sz.hoehe || 250;
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + B + " " + H + '" width="' + B + '" height="' + H + '">' + sz.kulisse
+        + (sz.teile || []).map((t) => '<g transform="translate(' + t.x + "," + t.y + ')">' + (t.kunst || "") + "</g>").join("") + "</svg>";
+      return lcTafelSvgZuBild(svg, B, H).then((d) => lcTafelBildAusMappe(d, m, sz.titel || "Die Bilderwelt"));
+    }).catch((err) => { try { showToast("🚧 " + (err && err.message ? err.message : "Das ging nicht.")); } catch (e) {} });
+  }
+  function lcTafelLautLegen(k, m) {
+    const roh = ((window.DMA_AUSSPRACHE || {}).GRAFIK || {})[k];
+    if (!roh) return;
+    const vb = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(roh), B = vb ? +vb[1] : 400, H = vb ? +vb[2] : 274;
+    /* Die Schrift kommt sonst aus dem Stylesheet der Seite – im Bild muss sie mit hinein. */
+    const stil = "<style>text{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}.aus-lab{font-size:9px;fill:#6b5f4e;font-weight:600}.aus-unter{font-size:10.5px;fill:#4a4036;font-weight:700}"
+      + ".aus-gross{font-size:26px;fill:#3a3229;font-weight:800;letter-spacing:.06em}.aus-rot{fill:#c33c3c}.aus-blau{fill:#2f7fae}.aus-gruen{fill:#3f8a5c}</style>";
+    const svg = roh.replace(/<svg\b/, '<svg xmlns="http://www.w3.org/2000/svg" width="' + B + '" height="' + H + '"').replace(/(<svg[^>]*>)/, "$1" + stil);
+    const name = (LC_TAFEL_LAUTE.find((l) => l[0] === k) || [k, k])[1];
+    lcTafelSvgZuBild(svg, B, H).then((d) => lcTafelBildAusMappe(d, m, name))
+      .catch((err) => { try { showToast("🚧 " + (err && err.message ? err.message : "Das ging nicht.")); } catch (e) {} });
+  }
+
   function lcTafelKnopf(was) {
     if (was === "stift" || was === "zeiger") return lcTafelWerkzeugSetzen(was);
-    if (was === "bild") {
-      const d = document.getElementById("lcTafelDatei");
-      if (d) d.click();
-      return;
-    }
+    if (was === "bild") { lcTafelMappeAuf(""); return; }
     if (was === "rein" || was === "raus") {
       /* „dass ich den Leuten das reinzoomen kann" — der Blick gilt
          fuer alle, sonst zeigt man auf etwas, das der andere gar
