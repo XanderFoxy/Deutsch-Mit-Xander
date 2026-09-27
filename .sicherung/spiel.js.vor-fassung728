@@ -8990,21 +8990,7 @@
     });
   }
   /* Die Nacht: alles nachtblau (unten etwas heller), dann die Lichtkegel – dort das Tagbild, warm gefärbt. */
-  /* FASSUNG 728 — XANDER (Funk 177): „auf jedem Haus hast du in der Mitte irgendwo so ein lichtsymbol wo gar keine Lampe ist
-     man sieht nur Schein und das soll weg". Der Schein einer Laterne, die HINTER einem Haus steht, wurde zuletzt (also über
-     das Haus) gemalt – man sah den Schein mitten auf der Fassade, die Laterne selbst aber nicht. Eine verdeckte Laterne
-     wirft jetzt keinen Schein mehr (weder am Kopf noch am Boden). */
-  function dmLaterneVerdeckt(o, dorf, lage) {
-    var kx = o.x, ky = o.y - DM_LATERNE_HOCH;
-    return Object.keys(lage).some(function (k) {
-      var d = (dorf || {})[k], st = d && d.stufe > 0 ? d.stufe : 0, q = lage[k];
-      if (!st || q[1] <= o.y) return false;
-      var u = dmUmriss(k, st);
-      return kx > q[0] + u[0] - 1 && kx < q[0] + u[2] + 1 && ky > q[1] + u[1] - 1 && ky < q[1] + u[3];
-    });
-  }
   function dmNacht(g, dorf, lage, tagBild, orte, s) {
-    orte = orte.filter(function (o) { return !dmLaterneVerdeckt(o, dorf, lage); });
     g.save();
     g.globalCompositeOperation = "multiply";
     var n = g.createLinearGradient(0, 0, 0, 200); n.addColorStop(0, "rgb(170,178,215)"); n.addColorStop(.22, "rgb(58,70,124)"); n.addColorStop(.5, "rgb(88,100,152)"); n.addColorStop(1, "rgb(120,130,178)");
@@ -9069,9 +9055,14 @@
       var b = box(f.pt);
       h += '<i class="sp-dl-fl" data-i="' + f.haus + i + '" data-h="' + f.haus + '" style="left:' + (b.x0 / 3.2).toFixed(3) + "%;top:" + (b.y0 / 2).toFixed(3) + "%;width:" + (b.w / 3.2).toFixed(3) + "%;height:" + (b.h / 2).toFixed(3) + "%;clip-path:polygon(" + b.poly + ')"></i>';
     });
-    /* FASSUNG 728 — XANDER (Funk 177): „warum sollte denn der Eingang beleuchtet sein oder das Haus frontal beleuchtet sein
-       wenn die Leute nachts schlafen". Keine Hauslampen über den Türen mehr – Licht gibt es nur hinter Fenstern (je nach
-       Uhrzeit) und an den Straßenlaternen. */
+    /* Hauslampe über der Tür: am Abend bei knapp der Hälfte, in der Nacht bei wenigen (Bewegungsmelder aus). */
+    var tuerAnteil = std >= 22 || std < 5 ? .2 : .45;
+    licht.tueren.forEach(function (t, i) {
+      if (t.aus || (t.haus !== "bahnhof" && dmHash(i, 5, 723) > tuerAnteil)) return;
+      var b = box(t.pt);
+      /* FASSUNG 726 — eine sichtbare Wandleuchte (Halter und Glas), nicht nur ein Lichtpunkt. */
+      h += '<i class="sp-dl-tl" style="left:' + ((b.x0 + b.w / 2) / 3.2).toFixed(3) + "%;top:" + ((b.y0 - 1.1) / 2).toFixed(3) + '%"><b></b></i>';
+    });
     return h;
   }
   /* Wie viele Fenster gerade Licht haben sollten – nach der Uhrzeit. */
@@ -9241,14 +9232,7 @@
       var ds = lw.getAttribute("data-sig") || "";
       var punkte = dorfMalen(neu, S.ich.dorf || {}, DORF_LAGE, breite, /N$/.test(ds), /SN?$/.test(ds));
       DM.zeit = Math.round(performance.now() - t0);
-      /* FASSUNG 728 — XANDER (Funk 177): „Beim Bahnhof … zwei Reihen Fenster individuell jeweils eine komplett links neben dem
-         Haus eine komplett rechts neben dem Haus … in der Mitte vom Bahnhof … so ein übergroßes Fenster" und „es gibt immer
-         noch diese Lichtflecken auf jedem Haus … diese Lichtflecken kommen von nirgendwo her". Die Ursache: die Zug-Maske malt
-         Bahnhof, Mühle, Bergwerk und die Türme ein zweites Mal (anderer Maßstab) – und dabei merkten sich deren Fenster
-         ein zweites Mal als Licht, an falscher Stelle. Die Lichter werden jetzt VOR der Maske genommen, die Maske merkt nichts. */
-      var licht = /N$/.test(ds) ? DM.licht : null;
-      DM.licht = null;
-      fertig = DM.bilder[sig] = { bild: neu, punkte: punkte, maske: dmBahnMaske(S.ich.dorf || {}, DORF_LAGE), licht: licht, s: breite / 320 };
+      fertig = DM.bilder[sig] = { bild: neu, punkte: punkte, maske: dmBahnMaske(S.ich.dorf || {}, DORF_LAGE), licht: /N$/.test(ds) ? DM.licht : null, s: breite / 320 };
       var alle = Object.keys(DM.bilder); if (alle.length > 3) delete DM.bilder[alle[0]];
     }
     lw.width = fertig.bild.width; lw.height = fertig.bild.height;
@@ -9419,11 +9403,11 @@
     for (i = 0; i < (bewoelkt ? 0 : 34); i++) { var sx = (hashZahl("st" + i) >>> 0) % 1000 / 10, sy = (hashZahl("sy" + i) >>> 0) % 140 / 10;
       h += '<i class="sp-dn-stern" style="left:' + sx.toFixed(1) + "%;top:" + sy.toFixed(1) + "%;animation-delay:-" + (i % 7 * .6).toFixed(1) + 's"></i>'; }
     if (!bewoelkt) h += '<i class="sp-dn-mond"></i>';
-    /* FASSUNG 728 — XANDER (Funk 177): „auf jedem Haus hast du in der Mitte irgendwo so ein lichtsymbol wo gar keine Lampe
-       ist man sieht nur Schein und das soll weg … ich habe das jetzt schon drei oder vier Mal adressiert". Das war dieser
-       flackernde Schein, den Fassung 711 mitten auf jedes Haus legte (damals noch statt echter Fenster). Seit 724 leuchten
-       die Fenster selbst – der Schein ist weg. */
-    void d;
+    Object.keys(DORF_LAGE).forEach(function (k) {
+      var g = d[k]; if (!g || !(g.stufe > 0) || !(g.lp > 0)) return;
+      var q = DORF_LAGE[k], u = dmUmriss(k, g.stufe);
+      h += '<i class="sp-dn-licht" style="left:' + ((q[0] + (u[0] + u[2]) / 2) / 3.2).toFixed(2) + "%;top:" + ((q[1] + u[1] * .28) / 2).toFixed(2) + "%;animation-delay:-" + ((hashZahl(k) >>> 0) % 40 / 10).toFixed(1) + 's"></i>';
+    });
     return '<div class="sp-dn" data-sig="' + dorfMalSig(ich) + dorfWetterSig(w) + '" aria-hidden="true">' + h + "</div>";
   }
   function dorfWetterSchild(w) {

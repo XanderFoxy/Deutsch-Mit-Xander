@@ -295,11 +295,34 @@ const sage = (gut, was, zusatz) => {
   sage(r.laterne[0] > 180 && r.laterne[0] > r.laterne[2] + 40, "die Laternen brennen warm", JSON.stringify(r.laterne));
   sage(r.overlay === "none", "keine blaue Schicht mehr über dem ganzen Bild", r.overlay);
   await bild("nacht");
+  /* FASSUNG 728 — Funk 177: „Beim Bahnhof … zwei Reihen Fenster … eine komplett links neben dem Haus eine komplett rechts neben
+     dem Haus … in der Mitte … ein übergroßes Fenster" und „diese Lichtflecken … auf jedem Haus". Alle Fensterlichter liegen
+     auf ihrem Haus, keine Türlampen-Flecken mehr. */
+  const lichtPruefen = () => pg.evaluate(() => {
+    const kasten = (k) => { const b = document.querySelector(k === "bahnhof" ? ".sp-dl-bahnhof" : '.sp-dl-haus[data-g="' + k + '"]'); return b && b.getBoundingClientRect(); };
+    const daneben = [];
+    document.querySelectorAll(".sp-dl-ueber .sp-dl-fl").forEach((e) => { const q = e.getBoundingClientRect(), b = kasten(e.dataset.h), x = q.left + q.width / 2, y = q.top + q.height / 2;
+      if (!b || x < b.left - 3 || x > b.right + 3 || y < b.top - 3 || y > b.bottom + 3) daneben.push(e.dataset.h + "@" + Math.round(x) + "," + Math.round(y)); });
+    return { daneben, bahnhof: document.querySelectorAll('.sp-dl-ueber .sp-dl-fl[data-h="bahnhof"]').length, tueren: document.querySelectorAll(".sp-dl-tl").length }; });
+  r = await lichtPruefen();
+  sage(r.daneben.length === 0 && r.bahnhof <= 6 && r.tueren === 0, "jedes Fensterlicht liegt auf seinem Haus, am Bahnhof keine Fenster daneben, keine Türlampen-Flecken", JSON.stringify(r));
+  if (process.env.BILD) {
+    await pg.evaluate(() => { window.DMA_SPIEL.pruef.dorfZoom(true, .25, .2); });
+    await tick(900);
+    await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); f.scrollLeft = f.scrollWidth * .12; f.scrollTop = 0; });
+    await tick(600);
+    await (await pg.$(".sp-dl-rahmen")).screenshot({ path: process.env.BILD + "-bahnhof-nah.png" });
+    await pg.evaluate(() => { window.DMA_SPIEL.pruef.dorfZoom(false); }); await tick(700);
+  }
+  await pg.evaluate(() => { window.DMA_SPIEL.pruef.dorfZoom(true, .25, .2); }); await tick(1200);
+  r = await lichtPruefen();
+  sage(r.daneben.length === 0 && r.bahnhof <= 6, "auch nah dran: kein Licht neben den Häusern", JSON.stringify(r));
+  await pg.evaluate(() => { window.DMA_SPIEL.pruef.dorfZoom(false); }); await tick(900);
 
   console.log("\nFASSUNG 724: LICHTER IN DER NACHT, WETTER DER EIGENEN STADT (Funk 172/168)\n");
   /* „nachts ja normalerweise die Menschen schlafen es muss nicht jedes Fensterlicht an sein" */
   r = await pg.evaluate(() => { const alle = [...document.querySelectorAll(".sp-dl-ueber .sp-dl-fl")], haus = alle.filter((e) => e.dataset.h !== "bahnhof");
-    return { alle: alle.length, bahnhof: alle.length - haus.length, an: haus.filter((e) => e.classList.contains("sp-an")).length, haus: haus.length, tueren: document.querySelectorAll(".sp-dl-ueber .sp-dl-tl").length,
+    return { alle: alle.length, bahnhof: alle.length - haus.length, an: haus.filter((e) => e.classList.contains("sp-an")).length, haus: haus.length,
       hell: getComputedStyle(document.querySelector(".sp-dl-ueber")).filter }; });
   sage(r.haus >= 20 && r.bahnhof >= 2 && r.an < r.haus && r.hell === "none", "Fenster sind eigene Lichter (Häuser und Bahnhof), nicht alle brennen", JSON.stringify(r));
   const takt = await pg.evaluate(async () => { const P = window.DMA_SPIEL.pruef; const vor = [...document.querySelectorAll(".sp-dl-fl")].map((e) => e.classList.contains("sp-an") ? 1 : 0).join("");

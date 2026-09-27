@@ -49,32 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 727 — Trupps: Fischer, Holzfäller, Jäger, Bergleute als ein System; Fortschritt im Bild; Wetter oben rechts",
+  stand: "Fassung 728 — Lichtflecken auf den Häusern und falsche Bahnhofsfenster behoben (Ursache gefunden)",
 
   inArbeit: [
-    { seit: "2026-09-27T03:08",
+    { seit: "2026-09-27T03:20",
+      text: "Dorf-Gesamtkonzept: alles, was du je zum Dorf gesagt hast, mit Vorschlag für das modulare System – Funk 177" },
+    { seit: "2026-09-27T03:20",
       text: "Meldungen „fertig/angegriffen“ mit Sprung ins Dorf – Funk 155/173" },
-    { seit: "2026-09-27T03:08",
+    { seit: "2026-09-27T03:20",
       text: "Städte als Kette durchblättern, aus dem Profil in die Stadt – Funk 176" },
-    { seit: "2026-09-27T03:08",
+    { seit: "2026-09-27T03:20",
       text: "Chat-Waffen richtig halten und gerichtet feuern, Tomahawk-Fehler – Funk 176" },
-    { seit: "2026-09-27T03:08",
-      text: "Wall, Kaserne, Stadt gestalten (Flüsse, Berge) – Funk 169/172/176" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T03:08",
-      text: "Kein endloses Angeln mehr: Bühne und See holen aus der Menge der Fischer" },
-    { seit: "2026-09-27T03:08",
-      text: "Trupps losschicken: Fischer, Holzfäller, Jäger (Fleisch), Bergleute – 5 Minuten, feste Menge" },
-    { seit: "2026-09-27T03:08",
-      text: "Mithelfen macht die Fahrt schneller, nie mehr als die Menge" },
-    { seit: "2026-09-27T03:08",
-      text: "Waldrand im Dorfbild antippbar; See und Wald zeigen den Stand" },
-    { seit: "2026-09-27T03:08",
-      text: "Fortschritt im Bild: was entsteht, mit Uhr und Balken (Häuser, Äcker, Trupps)" },
-    { seit: "2026-09-27T03:08",
-      text: "Wetter oben rechts in einer Zeile, nicht mehr über dem Bahnhof" },
+    { seit: "2026-09-27T03:20",
+      text: "Kein Schein mehr mitten auf jedem Haus (der alte Fensterersatz aus 711)" },
+    { seit: "2026-09-27T03:20",
+      text: "Keine doppelten Fenster mehr neben Bahnhof, Mühle, Schule, Rathaus" },
+    { seit: "2026-09-27T03:20",
+      text: "Keine Türlampen – Licht nur hinter Fenstern und an Laternen" },
+    { seit: "2026-09-27T03:20",
+      text: "Laternen hinter einem Haus scheinen nicht mehr über das Haus" },
   ],
 };

@@ -233,15 +233,16 @@ const sage = (gut, was, zusatz) => {
   console.log("\nNACHT\n");
   await W(0, false); await tick(400);
   r = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(), d = S.ich.dorf; const heil = Object.keys(d).filter((k) => d[k].stufe > 0 && d[k].lp > 0).length;
-    return { nacht: Boolean(document.querySelector(".sp-dorfland .sp-dn")), lichter: document.querySelectorAll(".sp-dn-licht").length, heil, sterne: document.querySelectorAll(".sp-dn-stern").length, mond: Boolean(document.querySelector(".sp-dn-mond")), schild: document.querySelector(".sp-dw-schild").textContent }; });
+    return { nacht: Boolean(document.querySelector(".sp-dorfland .sp-dn")), lichter: document.querySelectorAll(".sp-dn-licht").length, fenster: [...new Set([...document.querySelectorAll(".sp-dl-ueber .sp-dl-fl")].map((e) => e.dataset.h))], heil, sterne: document.querySelectorAll(".sp-dn-stern").length, mond: Boolean(document.querySelector(".sp-dn-mond")), schild: document.querySelector(".sp-dw-schild").textContent }; });
   /* Seit 711 sind Nachthimmel, Sterne und Mond ins Bild gemalt (Funk 158); die Ebene darüber flackert nur noch in den Fenstern. */
   r.gemalt = await pg.evaluate(() => /N@/.test(document.querySelector("canvas.sp-dl-mal").dataset.gemalt || ""));
-  sage(r.nacht && r.lichter === r.heil && r.gemalt, "klare Nacht: das Bild wird als Nacht gemalt, in jedem heilen Haus brennt Licht (die kaputte Schmiede bleibt dunkel)", JSON.stringify(r));
+  /* FASSUNG 728 — Funk 177: kein Schein mehr mitten auf dem Haus (.sp-dn-licht); Licht gibt es nur in den Fenstern. */
+  sage(r.nacht && r.lichter === 0 && r.fenster.length >= r.heil - 1 && r.fenster.indexOf("schmiede") < 0 && r.gemalt, "klare Nacht: als Nacht gemalt, Licht nur in den Fenstern der heilen Häuser (kaputte Schmiede dunkel), kein Schein mitten auf dem Haus", JSON.stringify(r));
   sage(/Klare Nacht/.test(r.schild), "Schild: „Klare Nacht“", r.schild);
   await bild("nacht");
   await W(3, false); await tick(300);
-  r = await pg.evaluate(() => ({ sterne: document.querySelectorAll(".sp-dn-stern").length, mond: Boolean(document.querySelector(".sp-dn-mond")), lichter: document.querySelectorAll(".sp-dn-licht").length }));
-  sage(r.sterne === 0 && !r.mond && r.lichter > 0, "bewölkte Nacht: keine Sterne, kein Mond, die Lichter brennen", JSON.stringify(r));
+  r = await pg.evaluate(() => ({ sterne: document.querySelectorAll(".sp-dn-stern").length, mond: Boolean(document.querySelector(".sp-dn-mond")), lichter: document.querySelectorAll(".sp-dl-ueber .sp-dl-fl").length }));
+  sage(r.sterne === 0 && !r.mond && r.lichter > 0, "bewölkte Nacht: keine Sterne, kein Mond, die Fensterlichter bleiben", JSON.stringify(r));
   r = await pg.evaluate(() => { const l = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]').getBoundingClientRect(), f = document.querySelector(".sp-dl-fenster");
     const e = document.elementFromPoint(l.left + l.width / 2, l.top + l.height * .6); return { trifft: e ? (e.closest(".sp-dl-haus-gemalt") || {}).dataset : null }; });
   sage(r.trifft && r.trifft.g === "baeckerei", "auch nachts lässt sich jedes Haus antippen (die Nacht fängt nichts ab)", JSON.stringify(r));
