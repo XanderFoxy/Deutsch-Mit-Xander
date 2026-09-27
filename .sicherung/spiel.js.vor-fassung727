@@ -1703,7 +1703,7 @@
       if (!r || !r.ok) { hinweis((ding === "bratwurst" ? "🌭 " : ding === "sauerkraut" ? "🥬 " : "🍞 ") + ((r && r.grund) || "geht nicht")); return; }
       S.ich = r; S.stand[r.id] = oeffentlich(r);
       ton("mampf", 0.5);
-      zahlZeigen(meineChatId(), r.geheilt, ({ bratwurst: "Bratwurst", sauerkraut: "Sauerkraut", brot: "Brot", kuchen: "Kuchen", fisch: "Fisch", fleisch: "Fleisch", torte: "Torte" })[ding] || ding);
+      zahlZeigen(meineChatId(), r.geheilt, ({ bratwurst: "Bratwurst", sauerkraut: "Sauerkraut", brot: "Brot", kuchen: "Kuchen", fisch: "Fisch", torte: "Torte" })[ding] || ding);
       senden({ ereignis: "essen", sorte: ding, plus: r.geheilt, stand: oeffentlich(r) });
       panelAuffrischen(); zeichnen(); schnellZeichnen();
     }).catch(function (e) { hinweis("Essen ging nicht: " + (e && e.message ? e.message : e)); });
@@ -4422,9 +4422,7 @@
     } else if (s === "dorffeld") {
       dorfFeldTipp(k, Number(k.dataset.n)); return;
     } else if (s === "dorfsee") {
-      /* FASSUNG 716 — ein Tipp auf den See: die Angler werfen aus. FASSUNG 727: ist die Fahrt der Fischer vorbei, bringt
-         der Tipp den Fang heim (wie „fertig" an den Häusern). */
-      if (truppFertig(S.ich || {}, ["see"])) { werkAbholen("trupp_see"); return; }
+      /* FASSUNG 716 — ein Tipp auf den See: die Angler werfen aus. */
       seeAngeln(k); return;
     } else if (s === "bahn") {
       bahnHandeln(k); return;
@@ -4664,17 +4662,6 @@
     } else if (s === "abholen") {
       werkAbholen(k.dataset.g);
       return;
-    } else if (s === "trupp") {
-      truppSchicken(k.dataset.g); return;
-    } else if (s === "trupphelfen") {
-      truppHelfen(null, k.dataset.g); return;
-    } else if (s === "dorfwald") {
-      /* FASSUNG 727 — Tipp auf den Waldrand: ist ein Trupp zurück, wird eingesammelt; sonst öffnet sich der Wald
-         (Holzfäller und Jäger) wie eine Station. */
-      var wf = truppFertig(S.ich || {}, ["wald", "jagd"]);
-      if (wf && S.dorfWahl !== "wald") { werkAbholen("trupp_" + wf); S.dorfTippWeg = true; return; }
-      S.dorfWahl = S.dorfWahl === "wald" ? "" : "wald"; S.dorfTippWeg = true;
-      ton(S.dorfWahl ? "holzklopf" : "swoosh", 0.25); schnellZeichnen(true); return;
     } else if (s === "markt") {
       wirtschaft("spiel_markt", { p_ware: k.dataset.w, p_menge: 0 }, function (r) {
         ton("kasse", 0.45);
@@ -7173,10 +7160,10 @@
     rpc("spiel_holzen", { p_platz: nr }).then(function (r) {
       weiter();
       setTimeout(function () {
-        if (!r || !r.ok) { hinweis("🌳 " + ((r && r.grund) || "geht nicht") + (r && r.sek ? (/Ruhe/.test(r.grund || "") ? " – weiter in " : " – groß in ") + uhrText(r.sek * 1000) : "")); return; }
+        if (!r || !r.ok) { hinweis("🌳 " + ((r && r.grund) || "geht nicht") + (r && r.sek ? " – groß in " + uhrText(r.sek * 1000) : "")); return; }
         if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
         wareZahl(knopf, "holz", "+" + r.menge);
-        hinweis(truppGeholt(r) + "🪵 +" + r.menge + " Holz (" + vorrat(r, "holz") + " im Lager)" + truppRest(r, "wald") + "." + (r.nest ? " Ein Vogelnest: +1 Ei!" : ""));
+        hinweis("🪵 +" + r.menge + " Holz (" + vorrat(r, "holz") + " im Lager)." + (r.nest ? " Ein Vogelnest: +1 Ei!" : "") + " Holz braucht man zum Reparieren und in der Schmiede.");
         ackerPflegen(); schnellZeichnen(); panelAuffrischen();
       }, Math.max(0, 600 - (Date.now() - start)));
     }).catch(function (e) { weiter(); hinweis("Holzen ging nicht: " + (e && e.message ? e.message : e)); });
@@ -7216,14 +7203,13 @@
       if (fertig || !antwort || Date.now() - start < 1700) return;
       fertig = true;
       var r = antwort;
-      if (!r.ok) { bild.fang(""); if (r.sek) S.angelAn[nr] = Date.now() + r.sek * 1000; else delete S.angelAn[nr]; if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-        hinweis("🎣 " + (r.grund || "geht nicht") + (r.sek ? " – noch " + uhrText(r.sek * 1000) : "") + (r.leer ? ". Alle Angeln – Bühne und See – fischen aus demselben See." : "")); return; }
+      if (!r.ok) { bild.fang(""); if (r.sek) S.angelAn[nr] = Date.now() + r.sek * 1000; else delete S.angelAn[nr]; hinweis("🎣 " + (r.grund || "geht nicht") + (r.sek ? " – noch " + r.sek + " s" : "")); return; }
       if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
       ton("angelkurbel", 0.4);
       bild.fang(r.fang);
       if (r.fang === "fisch") setTimeout(function () { wareZahl(knopf, "fisch", "+" + r.menge); }, 500);
-      hinweis(truppGeholt(r) + (r.fang === "fisch" ? "🐟 +" + r.menge + " Fisch (" + vorrat(r, "fisch") + " im Lager)" + truppRest(r, "see") + "."
-        : r.fang === "stiefel" ? "🥾 Ein alter Stiefel. Wirf ihn zurück!" : r.fang === "muenze" ? "🪙 Eine Münze am Haken: +" + r.menge + " Punkte!" : "🎣 Nichts gebissen – gleich nochmal."));
+      hinweis(r.fang === "fisch" ? "🐟 +" + r.menge + " Fisch (" + vorrat(r, "fisch") + " im Lager) – essen (+10 LP) oder dein Volk satt machen."
+        : r.fang === "stiefel" ? "🥾 Ein alter Stiefel. Wirf ihn zurück!" : r.fang === "muenze" ? "🪙 Eine Münze am Haken: +" + r.menge + " Punkte!" : "🎣 Nichts gebissen – gleich nochmal.");
       schnellZeichnen(); panelAuffrischen();
     }
     setTimeout(einholen, 1700);
@@ -7339,112 +7325,15 @@
     if (ks) t.push('<div class="sp-troph sp-werk"><i>' + dorfSvg("kuhstall", ks.stufe) + "</i><span><b>Kuhstall</b><small>"
       + (ks.bereit ? ks.bereit + " Milch bereit" : "Milch in " + uhrText(ks.naechst)) + " · höchstens " + ks.max + "</small></span>"
       + '<button type="button" data-s="melken"' + (ks.bereit ? "" : " disabled") + ">Melken <small>" + ks.bereit + "</small></button></div>");
-    /* FASSUNG 727 — die Trupps stehen in derselben Liste wie die Werkstätten und Ställe (Funk 176: „dann muss das ja auch
-       kongruent mit dem anderen System im Menü sein"): Menü und Dorfbild lesen denselben Stand. */
-    truppOrte(nur).forEach(function (o) { t.push(truppZeileHtml(ich, o)); });
     return t;
-  }
-  /* FASSUNG 727 — XANDER (Funk 176): „schickst du die Fischer für eine Zeit an den See dass sie dort in Ruhe Angeln und die
-     haben einen Standard Betrag den innerhalb von fünf Minuten … ich könnte ja helfen das und dann beschleunigt dass die
-     Geschwindigkeit wenn ich selber aktiv werde aber das muss alles in ein System laufen und darf nicht mehr als das sein"
-     und „kann ich die Leute selber in den Wald schicken um Holz zu sagen oder solche Sachen ins Bergwerk … die Leute auf die
-     Jagd schickt … haben wir überhaupt einen Wald".
-     Vier Trupps, EIN System (Server: werk.trupp_<ort>): eine Fahrt dauert fünf Minuten und bringt eine feste Menge (freie
-     Dorfbewohner gehen mit, je zwei eine Einheit mehr). Wer selbst angelt (Bühne oder See), Holz hackt (Bühne) oder im
-     Bild mithilft, nimmt aus DIESER Menge und macht die Fahrt schneller – höchstens bis zur halben Zeit, nie mehr als die
-     Menge. Ist alles geholt, hat der Ort Ruhe bis zum Ende der Fahrt; endloses Angeln gibt es nicht mehr. */
-  var TRUPPS = {
-    see:  { name: "Fischer", ort: "am See", ziel: "an den See", ware: "fisch", menge: 6, tun: "angeln", helfen: "" },
-    wald: { name: "Holzfäller", ort: "im Wald", ziel: "in den Wald", ware: "holz", menge: 8, tun: "fällen Bäume", helfen: "Mithacken" },
-    jagd: { name: "Jäger", ort: "im Wald", ziel: "auf die Jagd", ware: "fleisch", menge: 3, tun: "jagen", helfen: "Mitjagen" },
-    berg: { name: "Bergleute", ort: "im Bergwerk", ziel: "ins Bergwerk", ware: "erz", menge: 4, tun: "hauen Erz", helfen: "Mithauen" }
-  };
-  function truppOrte(nur) {
-    if (!nur) return Object.keys(TRUPPS);
-    return nur === "bergwerk" ? ["berg"] : nur === "wald" ? ["wald", "jagd"] : nur === "see" ? ["see"] : [];
-  }
-  function truppStand(ich, ort) {
-    var a = ((ich || {}).werk || {})["trupp_" + ort];
-    if (!a) return null;
-    var start = Date.parse(a.start), fertig = Date.parse(a.fertig), jetzt = Date.now(), rest = fertig - jetzt, menge = Number(a.menge) || 0;
-    return { rest: Math.max(0, rest), fertig: rest <= 0, menge: menge, voll: Number(a.voll) || menge, leer: menge <= 0 && rest > 0, ware: a.ware,
-      anteil: Math.max(0, Math.min(1, (jetzt - start) / Math.max(1, fertig - start))) };
-  }
-  function truppMenge(ich, ort) {
-    var b = (ich && ich.volk && ich.volk.berufe) || {}, fach = Object.keys(b).reduce(function (n, k) { return n + (Number(b[k]) || 0); }, 0);
-    var frei = Math.max(0, dorfBewohner(ich) - fach);
-    return TRUPPS[ort].menge + Math.min(3, Math.floor(frei / 2)) + (ort === "berg" ? Math.max(0, dorfSt(ich, "bergwerk") - 1) : 0);
-  }
-  function truppZeileHtml(ich, ort) {
-    var T = TRUPPS[ort], t = truppStand(ich, ort);
-    var z = '<div class="sp-troph sp-werk sp-trupp" data-trupp="' + ort + '"><i>' + wareSvg(T.ware) + "</i><span><b>" + T.name + " " + T.ort + "</b>";
-    if (!t) {
-      var zu = ort === "berg" && !dorfSt(ich, "bergwerk");
-      return z + "<small>" + (zu ? "Erst ein Bergwerk bauen" : "5 Minuten · bringen " + truppMenge(ich, ort) + " " + wareName(T.ware)
-        + (ort === "see" ? " · wer selbst angelt, holt aus dieser Menge" : "")) + "</small></span>"
-        + '<button type="button" data-s="trupp" data-g="' + ort + '"' + (zu ? " disabled" : "") + ">Losschicken</button></div>";
-    }
-    if (t.fertig) return z + "<small>zurück mit " + t.menge + " " + wareName(T.ware) + "</small></span>"
-      + '<button type="button" data-s="abholen" data-g="trupp_' + ort + '">Abholen</button></div>';
-    return z + "<small>" + (t.leer ? "alles geholt – Ruhe noch " + uhrText(t.rest) : T.tun + " · noch " + t.menge + " von " + t.voll + " " + wareName(T.ware) + " · zurück in " + uhrText(t.rest))
-      + (ort === "see" && !t.leer ? " · tippe auf den See oder angle auf der Bühne" : "") + "</small>"
-      + '<em class="sp-trupp-balken"><u style="width:' + Math.round(t.anteil * 100) + '%"></u></em></span>'
-      + (T.helfen ? '<button type="button" data-s="trupphelfen" data-g="' + ort + '"' + (t.leer ? " disabled" : "") + ">" + T.helfen + "</button>" : "") + "</div>";
-  }
-  /* Das Zeichen im Bild (über See, Wald, Bergwerk): Uhr mit Fortschrittsbalken, „fertig" zum Einsammeln oder „Ruhe". */
-  function truppZeichen(ich, orte) {
-    var fertig = null, laeuft = null;
-    orte.forEach(function (o) { var t = truppStand(ich, o); if (!t) return; if (t.fertig) fertig = fertig || [o, t]; else laeuft = laeuft || [o, t]; });
-    if (fertig) return '<em class="sp-ds-fertig">' + fertig[1].menge + " " + wareName(fertig[1].ware) + " fertig</em>";
-    if (laeuft) return '<em class="sp-ds-laeuft sp-ds-fort">' + (laeuft[1].leer ? "Ruhe " : wareName(laeuft[1].ware) + " ") + uhrText(laeuft[1].rest)
-      + '<i style="width:' + Math.round(laeuft[1].anteil * 100) + '%"></i></em>';
-    return "";
-  }
-  /* Kurztexte für die Hinweise: was die letzte Fahrt heimgebracht hat und was in dieser Runde noch da ist. */
-  function truppGeholt(r) {
-    var n = Number(r && r.gesammelt) || 0, a = (r && r.trupp) || {};
-    return n > 0 ? "🧺 Die letzte Fahrt brachte " + n + " " + wareName(a.ware || "fisch") + ". " : "";
-  }
-  function truppRest(r, ort) {
-    var a = r && r.trupp;
-    if (!a) return "";
-    return " · " + (Number(a.menge) > 0 ? "noch " + a.menge + " " + wareName(a.ware) + " für die " + TRUPPS[ort].name + ", zurück in " + uhrText(Date.parse(a.fertig) - Date.now()) : "für diese Runde ist alles geholt");
-  }
-  function truppFertig(ich, orte) {
-    for (var i = 0; i < orte.length; i++) { var t = truppStand(ich, orte[i]); if (t && t.fertig) return orte[i]; }
-    return "";
-  }
-  function truppSchicken(ort) {
-    wirtschaft("spiel_trupp", { p_ort: ort }, function (r) {
-      var T = TRUPPS[ort], a = r.trupp || {};
-      ton("swoosh", 0.35);
-      hinweis((r.gesammelt ? "🧺 +" + r.gesammelt + " " + wareName(T.ware) + " von der letzten Fahrt. " : "") + "🚶 Die " + T.name + " ziehen " + T.ziel
-        + ": in 5 Minuten bringen sie " + (a.menge || T.menge) + " " + wareName(T.ware) + "." + (T.helfen ? " Hilfst du mit, geht es schneller." : " Angelst du selbst, geht es schneller."));
-    });
-  }
-  function truppHelfen(knopf, ort) {
-    if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
-    if (S.truppHilftBis && S.truppHilftBis > Date.now()) return;
-    S.truppHilftBis = Date.now() + 300;
-    ton(ort === "wald" ? "holzklopf" : ort === "berg" ? "hammerschlag" : "pling", 0.25);
-    if (knopf) { var f = document.createElement("i"); f.className = "sp-dl-finger"; knopf.appendChild(f); setTimeout(function () { f.remove(); }, 650); }
-    rpc("spiel_trupp_helfen", { p_ort: ort }).then(function (r) {
-      if (!r || !r.ok) { if (r && r.grund && r.grund !== "langsam") hinweis("🚶 " + r.grund + (r.sek ? " (" + uhrText(r.sek * 1000) + ")" : "") + "."); return; }
-      if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
-      var T = TRUPPS[ort];
-      if (r.menge && knopf) wareZahl(knopf, T.ware, "+" + r.menge);
-      if (r.neu) hinweis("🚶 Die " + T.name + " ziehen los – du hilfst gleich mit.");
-      else if (!S.truppHinweisZeit || Date.now() - S.truppHinweisZeit > 4000) { S.truppHinweisZeit = Date.now(); hinweis("💪 Du hilfst den " + T.name + ": zurück in " + uhrText(r.sek * 1000) + " · noch " + r.rest + " " + wareName(T.ware) + " – jeder Tipp 15 s schneller."); }
-      schnellZeichnen(); panelAuffrischen();
-    }).catch(function () {});
   }
   function marktHtml(ich) {
     var markt = Object.keys(WAREN).filter(function (x) { return vorrat(ich, x) > 0; }).map(function (x) {
       var n = Math.min(50, vorrat(ich, x)), pr = marktPreis(x);
       return '<button type="button" data-s="markt" data-w="' + x + '">' + WAREN[x] + " verkaufen <small>" + n + " × " + komma2(pr) + " = +" + Math.max(1, Math.round(n * pr)) + "</small></button>";
     }).join("");
-    var essenK = ["brot", "kuchen", "fisch", "fleisch", "torte"].filter(function (x) { return vorrat(ich, x) > 0; }).map(function (x) {
-      return '<button type="button" data-s="iss" data-d="' + x + '">' + WAREN[x] + " essen <small>" + ({ brot: "+12 LP", kuchen: "+30 LP, +10 Mana", fisch: "+10 LP", fleisch: "+14 LP", torte: "+40 LP, +15 Mana" })[x] + "</small></button>";
+    var essenK = ["brot", "kuchen", "fisch", "torte"].filter(function (x) { return vorrat(ich, x) > 0; }).map(function (x) {
+      return '<button type="button" data-s="iss" data-d="' + x + '">' + WAREN[x] + " essen <small>" + ({ brot: "+12 LP", kuchen: "+30 LP, +10 Mana", fisch: "+10 LP", torte: "+40 LP, +15 Mana" })[x] + "</small></button>";
     }).join("");
     return markt || essenK ? '<div class="sp-sm-gruppe sp-markt"><span>Markt</span>' + markt + essenK + "</div>" : "";
   }
@@ -8284,13 +8173,6 @@
       + (st >= 3 ? '<path d="M24 14 v-4" stroke="#6b4521" stroke-width=".5"/><path d="M24 10 l3.4 1 l-3.4 1.2 Z" fill="#f2c230"/>' : "");
     else return dorfSvg(k, st);
     return '<svg class="sp-dh sp-dh-' + k + '" viewBox="0 -8 48 54" aria-hidden="true">' + h + "</svg>";
-  }
-  /* FASSUNG 727 — der Wald als Station: Holzfäller und Jäger mit Stand, Losschicken, Mithelfen und Abholen. */
-  function waldStationHtml(ich) {
-    return '<div class="sp-dl-station" role="dialog" aria-label="Wald"><div class="sp-dl-st-kopf"><i>' + wareSvg("holz") + "</i><span><b>Wald</b><small>Holzfäller und Jäger</small></span>"
-      + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Wald schließen">✕</button></div>'
-      + '<p class="sp-sm-klein">Eine Fahrt dauert 5 Minuten und bringt eine feste Menge. Mithelfen macht sie schneller, aber nie mehr als die Menge. Holz hackst du auch auf der Bühne – es kommt aus derselben Menge.</p>'
-      + '<div class="sp-dl-st-werk">' + werkZeilenHtml(ich, "wald").join("") + "</div></div>";
   }
   function dorfStationHtml(ich, k) {
     var D = DORF[k], g = (ich.dorf || {})[k], st = g ? g.stufe : 0, lp = g ? g.lp : 0, mx = 20 * Math.max(1, st), lv = ich.level || 1;
@@ -9264,16 +9146,14 @@
   }
   /* Das Dorfbild in gemalter Form: eine Leinwand, darüber Tippflächen, Namen, Zeichen, Leute. */
   function dorfBildGemaltHtml(ich) {
-    var d = ich.dorf || {}, lv = ich.level || 1, wahl = S.dorfWahl && (DORF[S.dorfWahl] || S.dorfWahl === "bahnhof" || S.dorfWahl === "wald") ? S.dorfWahl : "", sig = dorfMalSig(ich);
+    var d = ich.dorf || {}, lv = ich.level || 1, wahl = S.dorfWahl && (DORF[S.dorfWahl] || S.dorfWahl === "bahnhof") ? S.dorfWahl : "", sig = dorfMalSig(ich);
     var haeuser = Object.keys(DORF_LAGE).sort(function (a, b) { return DORF_LAGE[a][1] - DORF_LAGE[b][1]; }).map(function (k) {
       if (!DORF[k]) return "";
       var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = DORF_LAGE[k], u = dmUmriss(k, st);
       var w = (ich.werk || {})[k], kaputt = st && !(g.lp > 0), rest = w ? Date.parse(w.fertig) - Date.now() : 0;
       var stall = st && (k === "huehnerstall" || k === "kuhstall") ? stallBereit(ich, k) : null;
-      /* FASSUNG 727 — XANDER (Funk 176): „es soll Anzeigen geben für Fortschritte im Bau oder für Fortschritte der Ernte und
-         was geerntet wird". Am Haus steht, WAS gerade entsteht (Brot 2:10 · 4 Brot fertig); am Bergwerk die Bergleute. */
-      var zeichen = kaputt ? '<em class="sp-ds-kaputt">kaputt</em>' : w ? '<em class="' + (rest > 0 ? "sp-ds-laeuft" : "sp-ds-fertig") + '">' + (rest > 0 ? wareName(w.ware) + " " + uhrText(rest) : w.menge + " " + wareName(w.ware) + " fertig") + "</em>"
-        : stall && stall.bereit ? '<em class="sp-ds-fertig">' + stall.bereit + (k === "kuhstall" ? " Milch" : " Eier") + "</em>" : k === "bergwerk" && st ? truppZeichen(ich, ["berg"]) : "";
+      var zeichen = kaputt ? '<em class="sp-ds-kaputt">kaputt</em>' : w ? '<em class="' + (rest > 0 ? "sp-ds-laeuft" : "sp-ds-fertig") + '">' + (rest > 0 ? uhrText(rest) : "fertig") + "</em>"
+        : stall && stall.bereit ? '<em class="sp-ds-fertig">' + stall.bereit + (k === "kuhstall" ? " Milch" : " Eier") + "</em>" : "";
       var zu = !st && DORF[k].ab && lv < DORF[k].ab;
       return '<button type="button" class="sp-dl-haus sp-dl-haus-gemalt' + (st ? "" : " sp-dl-bauplatz") + (kaputt ? " sp-ds-aus" : "") + (zu ? " sp-dl-zu" : "") + (wahl === k ? " sp-an" : "")
         + '" data-s="dorfwahl" data-g="' + k + '" style="left:' + ((q[0] + u[0]) / 3.2).toFixed(2) + "%;top:" + ((q[1] + u[1]) / 2).toFixed(2) + "%;width:" + ((u[2] - u[0]) / 3.2).toFixed(2) + "%;height:" + ((u[3] - u[1]) / 2).toFixed(2) + '%"'
@@ -9298,7 +9178,7 @@
       + '<button type="button" class="sp-dl-kompass sp-dl-lupe' + (nah ? " sp-an" : "") + '" data-s="dorfzoom" data-n="' + (nah ? "0" : "1") + '" aria-label="' + (nah ? "Lupe: ganzes Dorf" : "Lupe: näher ran") + '">' + kompassSvg()
       + '<i class="sp-dl-lupe-zeichen">' + (nah ? "−" : "+") + "</i></button>"
       + (nah ? dorfMiniKarteHtml(ich, sig) : "") + dorfOrtsschildHtml(ich) + "</div>"
-      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl ? (wahl === "bahnhof" ? bahnhofHtml(ich) : wahl === "wald" ? waldStationHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
+      + (wahl || S.dorfTippWeg ? "" : '<span class="sp-dl-tipp sp-dl-tipp-gemalt">' + (nah ? "Wische, um dich umzusehen · tippe auf ein Gebäude" : "Tippe auf ein Gebäude · die Lupe holt dich näher ran") + "</span>") + (wahl ? (wahl === "bahnhof" ? bahnhofHtml(ich) : dorfStationHtml(ich, wahl)) : "") + dorfBeschriftungHtml();
   }
   /* ---------------------------------------------------------------
      FASSUNG 708 — DAS DORF LEBT MIT DEM ECHTEN WETTER
@@ -9420,10 +9300,8 @@
        (der Name steht auf dem Ortsschild); woher das Wetter kommt, steht im Hinweis beim Antippen/Überfahren. */
     var benannt = !!String((S.ich && S.ich.dorf_name) || "").trim();
     var quelle = w.ort ? "Wetter aus " + (w.eigenerOrt || w.ort) : "";
-    /* FASSUNG 727 — oben rechts ist nur Platz für Zeichen und Grad; die Art (Regen, Klare Nacht …) steht im Hinweis. */
-    var artName = w.art === "klar" && !w.tag ? "Klare Nacht" : DW_NAME[w.art];
-    return '<span class="sp-dw-schild" title="' + esc(artName + (quelle ? " · " + quelle : "") + (wi ? " · " + wi : "")) + '">' + sym + (w.temp != null ? " " + w.temp + "°" : "") + '<span class="sp-dw-art"> ' + artName + "</span>"
-      + (w.ort && !benannt ? '<span class="sp-dw-art"> · ' + esc(w.ort) + "</span>" : "") + (wi ? "<small>" + wi + "</small>" : "") + "</span>";
+    return '<span class="sp-dw-schild" title="' + esc(quelle + (wi ? " · " + wi : "")) + '">' + sym + (w.temp != null ? " " + w.temp + "°" : "") + " " + (w.art === "klar" && !w.tag ? "Klare Nacht" : DW_NAME[w.art])
+      + (w.ort && !benannt ? " · " + esc(w.ort) : "") + (wi ? "<small>" + wi + "</small>" : "") + "</span>";
   }
   function dorfOffen() { return !!(S.schnellMenue && S.blick === "dorfblick" && schnellEl && schnellEl.querySelector(".sp-dl-rahmen")); }
   /* ---------------------------------------------------------------
@@ -9697,14 +9575,12 @@
   /* Die Tippflächen: Bahnhof (öffnet die Station) und See (angeln). */
   function dorfBahnKnoepfe() {
     var wahl = S.dorfWahl;
-    function knopf(k, s0, x0, y0, x1, y1, name, zeichen) {
+    function knopf(k, s0, x0, y0, x1, y1, name) {
       return '<button type="button" class="sp-dl-ort sp-dl-' + k + (wahl === k ? " sp-an" : "") + '" data-s="' + s0 + '" data-g="' + k + '" style="left:' + (x0 / 3.2).toFixed(2) + "%;top:" + (y0 / 2).toFixed(2)
-        + "%;width:" + ((x1 - x0) / 3.2).toFixed(2) + "%;height:" + ((y1 - y0) / 2).toFixed(2) + '%" title="' + name + '"><small>' + dorfPin(k) + "<span>" + name + "</span></small>" + (zeichen || "") + "</button>";
+        + "%;width:" + ((x1 - x0) / 3.2).toFixed(2) + "%;height:" + ((y1 - y0) / 2).toFixed(2) + '%" title="' + name + '"><small>' + dorfPin(k) + "<span>" + name + "</span></small></button>";
     }
-    var hy = bahnAn(bahnBeiX(98)).y, ich = S.ich || {};
-    /* FASSUNG 727 — der Waldrand rechts vom Rathaus ist antippbar (Holzfäller und Jäger); See und Wald zeigen den Stand ihrer Trupps. */
-    return knopf("bahnhof", "dorfwahl", 74, hy - 24, 122, hy - 2, "Bahnhof") + knopf("wald", "dorfwald", 188, 50, 246, 66, "Wald", truppZeichen(ich, ["wald", "jagd"]))
-      + knopf("see", "dorfsee", 199, 182, 262, 200, "See", truppZeichen(ich, ["see"])) + dorfFeldKnoepfe();
+    var hy = bahnAn(bahnBeiX(98)).y;
+    return knopf("bahnhof", "dorfwahl", 74, hy - 24, 122, hy - 2, "Bahnhof") + knopf("see", "dorfsee", 199, 182, 262, 200, "See") + dorfFeldKnoepfe();
   }
   /* FASSUNG 723 — XANDER (Funk 169): „auf dem Feld kann man übrigens noch nicht ernten da muss man auch draufklicken
      können". Die zwei Äcker im Bild sind die Felder 91 und 92 (der Server kennt sie). Reif: ein Tipp erntet mit der
@@ -9720,9 +9596,7 @@
       return '<button type="button" class="sp-dl-ort sp-dl-feld' + (st.reif ? " sp-reif" : "") + '" data-s="dorffeld" data-g="feld" data-n="' + f.nr + '" style="left:' + (x0 / 3.2).toFixed(2) + "%;top:" + (y0 / 2).toFixed(2)
         + "%;width:" + ((x1 - x0) / 3.2).toFixed(2) + "%;height:" + ((y1 - y0) / 2).toFixed(2) + '%" title="' + (st.reif ? "Acker – reif, antippen zum Ernten" : "Acker – wächst, antippen hilft (reif in " + uhrText(st.rest) + ")") + '">'
         + (st.reif ? "" : '<i class="sp-dl-stoppeln" style="clip-path:polygon(' + poly + ");opacity:" + (1 - st.anteil * .85).toFixed(2) + '"></i>')
-        + "<small>" + dorfPin("feld") + "<span>Acker</span></small>"
-        /* FASSUNG 727 — Funk 176: der Acker zeigt, wie weit das Getreide ist. */
-        + (st.reif ? '<em class="sp-ds-fertig">Getreide reif</em>' : '<em class="sp-ds-laeuft sp-ds-fort">Getreide ' + uhrText(st.rest) + '<i style="width:' + Math.round(st.anteil * 100) + '%"></i></em>') + "</button>";
+        + "<small>" + dorfPin("feld") + "<span>Acker</span></small></button>";
     }).join("");
   }
 
@@ -9927,8 +9801,8 @@
     if (S.seeSitzung && S.seeSitzung.rest > 0) { hinweis("🎣 Die Angler sitzen schon am See – noch " + S.seeSitzung.rest + " Würfe."); return; }
     var warte = (S.angelAn[99] || 0) - Date.now();
     if (warte > 0) { hinweis("🎣 Die Angler warten noch auf einen Biss – noch " + Math.ceil(warte / 1000) + " s."); return; }
-    /* FASSUNG 727 — die Minute am See übernehmen jetzt die Fischer (Trupp); ein Tipp ist DEIN Wurf und hilft ihnen. */
-    S.seeSitzung = { rest: 1, fisch: 0 };
+    S.seeSitzung = { rest: 5, fisch: 0 };
+    hinweis("🎣 Die Angler setzen sich an den See – eine Minute lang werfen sie immer wieder aus.");
     seeWurf(knopf);
   }
   function seeWurf(knopf) {
@@ -9953,10 +9827,9 @@
         BAHN.angel.forEach(function (A) { if (A) { A.zieht = t; A.fang = "nichts"; } });
         if (r.sek) S.angelAn[99] = Date.now() + r.sek * 1000; else delete S.angelAn[99];
         /* In der Sitzung: nicht aufgeben, sondern warten, bis die Angel wieder frei ist. */
-        if (S.seeSitzung && r.sek && !r.leer) { S.seeSitzung.rest++; setTimeout(function () { seeWurf(knopf); }, r.sek * 1000 + 300); return; }
+        if (S.seeSitzung && r.sek) { S.seeSitzung.rest++; setTimeout(function () { seeWurf(knopf); }, r.sek * 1000 + 300); return; }
         S.seeSitzung = null;
-        if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); schnellZeichnen(); }
-        hinweis("🎣 " + (r.grund || "geht nicht") + (r.sek ? " – noch " + uhrText(r.sek * 1000) : "") + (r.leer ? ". Die Fischer bringen ihren Fang, sobald die Runde um ist." : ""));
+        hinweis("🎣 " + (r.grund || "geht nicht") + (r.sek ? " – noch " + r.sek + " s" : ""));
         return;
       }
       if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
@@ -9964,11 +9837,11 @@
       var sz2 = S.seeSitzung; if (sz2 && r.fang === "fisch") sz2.fisch += r.menge;
       BAHN.angel.forEach(function (A, i) { if (A) { A.zieht = t + (i === wer ? 0 : .15); A.fang = i === wer ? r.fang : "nichts"; } });
       if (r.fang === "fisch") setTimeout(function () { bahnWareZeigen("fisch", "+" + r.menge, 214, 176); }, 500);
-      hinweis(truppGeholt(r) + (r.fang === "fisch" ? "🐟 Am See gefangen: +" + r.menge + " Fisch (" + vorrat(r, "fisch") + " im Lager)" + truppRest(r, "see") + "."
-        : r.fang === "stiefel" ? "🥾 Ein alter Stiefel aus dem See. Zurück damit!" : r.fang === "muenze" ? "🪙 Eine Münze am Haken: +" + r.menge + " Punkte!" : "🎣 Nichts gebissen – gleich nochmal."));
+      hinweis(r.fang === "fisch" ? "🐟 Am See gefangen: +" + r.menge + " Fisch (" + vorrat(r, "fisch") + " im Lager) – essen (+10 LP), auf dem Markt verkaufen, dein Volk satt machen oder mit der Bahn verschicken."
+        : r.fang === "stiefel" ? "🥾 Ein alter Stiefel aus dem See. Zurück damit!" : r.fang === "muenze" ? "🪙 Eine Münze am Haken: +" + r.menge + " Punkte!" : "🎣 Nichts gebissen – sie werfen gleich wieder aus.");
       schnellZeichnen(); panelAuffrischen();
       if (sz2 && sz2.rest > 0) setTimeout(function () { seeWurf(knopf); }, 12400);
-      else if (sz2) S.seeSitzung = null;
+      else if (sz2) { S.seeSitzung = null; setTimeout(function () { hinweis("🎣 Die Angler packen ein" + (sz2.fisch ? ": " + sz2.fisch + " Fisch in dieser Runde." : " – heute biss nichts.")); }, 2600); }
     }
     setTimeout(einholen, 1700);
     rpc("spiel_angeln", { p_platz: 99 }).then(function (r) { antwort = r || { ok: false }; einholen(); })
@@ -10159,21 +10032,6 @@
     else DW.voegel = 0;
     if (!DW.laut) DW.laut = jetzt + 3000 + Math.random() * 4000;
     if (jetzt >= DW.laut) { DW.laut = jetzt + (w.tag ? 6000 : 14000) + Math.random() * (w.tag ? 9000 : 16000); if (w.art !== "gewitter" && (w.art !== "regen" || Math.random() < .3)) dorfTreiben(w); }
-    seeTruppTakt(jetzt);
-  }
-  /* FASSUNG 727 — XANDER (Funk 176): „ich kann auf der Bühne endlos Fische angeln aber die am See machen gar nichts".
-     Solange die Fischer unterwegs sind, werfen die zwei Angler am See sichtbar aus und holen ab und zu einen Fisch ein.
-     Das ist nur das Bild: was sie fangen, zählt der Server als Menge der Fahrt und bringt es am Ende heim. */
-  function seeTruppTakt(jetzt) {
-    var t = truppStand(S.ich || {}, "see");
-    if (!t || t.fertig || t.leer || (S.seeSitzung && S.seeSitzung.rest >= 0) || BAHN.angel[0] || BAHN.angel[1]) return;
-    if (!DW.seeWurf) DW.seeWurf = jetzt + 2500;
-    if (jetzt < DW.seeWurf) return;
-    DW.seeWurf = jetzt + 9000 + Math.random() * 7000;
-    var i = Math.random() < .5 ? 0 : 1, a = Date.now() / 1000;
-    BAHN.angel[i] = { start: a };
-    setTimeout(function () { if (BAHN.angel[i] && BAHN.angel[i].start === a) { BAHN.angel[i].zieht = Date.now() / 1000; BAHN.angel[i].fang = Math.random() < .55 ? "fisch" : "nichts"; } }, 1750);
-    bahnStarten();
   }
   function dorfLebenPflegen() {
     if (!dorfOffen()) { if (DW.uhr) { clearInterval(DW.uhr); DW.uhr = 0; } dorfAtmoAus(); return; }
@@ -10267,8 +10125,7 @@
   function werkAbholen(g) {
     wirtschaft("spiel_werk_abholen", { p_gebaeude: g }, function (r) {
       ton("geschenk", 0.45);
-      var tr = /^trupp_/.test(g) ? TRUPPS[g.slice(6)] : null;
-      hinweis(tr ? "🧺 Die " + tr.name + " sind zurück: +" + r.menge + " " + wareName(r.ware) + " im Lager." : "🧺 +" + r.menge + " " + wareName(r.ware) + " abgeholt." + (r.ware === "trank_mana" ? " Trinken: Flasche in der Leiste." : ""));
+      hinweis("🧺 +" + r.menge + " " + wareName(r.ware) + " abgeholt." + (r.ware === "trank_mana" ? " Trinken: Flasche in der Leiste." : ""));
     });
   }
   function dorfFertigSammeln(g) {
@@ -10276,7 +10133,6 @@
     if (!g || S.dorfWahl === g) return false;
     var w = (ich.werk || {})[g];
     if (w && Date.parse(w.fertig) <= Date.now()) { werkAbholen(g); return true; }
-    if (g === "bergwerk" && truppFertig(ich, ["berg"])) { werkAbholen("trupp_berg"); return true; }
     if (g === "huehnerstall" || g === "kuhstall") {
       var st = stallBereit(ich, g);
       if (st && st.bereit) {
@@ -10422,10 +10278,8 @@
       var g = d[k], st = g && g.stufe > 0 ? g.stufe : 0, q = DORF_LAGE[k];
       var w = (ich.werk || {})[k], kaputt = st && !(g.lp > 0), rest = w ? Date.parse(w.fertig) - Date.now() : 0;
       var stall = st && (k === "huehnerstall" || k === "kuhstall") ? stallBereit(ich, k) : null;
-      /* FASSUNG 727 — XANDER (Funk 176): „es soll Anzeigen geben für Fortschritte im Bau oder für Fortschritte der Ernte und
-         was geerntet wird". Am Haus steht, WAS gerade entsteht (Brot 2:10 · 4 Brot fertig); am Bergwerk die Bergleute. */
-      var zeichen = kaputt ? '<em class="sp-ds-kaputt">kaputt</em>' : w ? '<em class="' + (rest > 0 ? "sp-ds-laeuft" : "sp-ds-fertig") + '">' + (rest > 0 ? wareName(w.ware) + " " + uhrText(rest) : w.menge + " " + wareName(w.ware) + " fertig") + "</em>"
-        : stall && stall.bereit ? '<em class="sp-ds-fertig">' + stall.bereit + (k === "kuhstall" ? " Milch" : " Eier") + "</em>" : k === "bergwerk" && st ? truppZeichen(ich, ["berg"]) : "";
+      var zeichen = kaputt ? '<em class="sp-ds-kaputt">kaputt</em>' : w ? '<em class="' + (rest > 0 ? "sp-ds-laeuft" : "sp-ds-fertig") + '">' + (rest > 0 ? uhrText(rest) : "fertig") + "</em>"
+        : stall && stall.bereit ? '<em class="sp-ds-fertig">' + stall.bereit + (k === "kuhstall" ? " Milch" : " Eier") + "</em>" : "";
       var zu = !st && DORF[k].ab && lv < DORF[k].ab;
       return '<button type="button" class="sp-dl-haus' + (st ? "" : " sp-dl-bauplatz") + (kaputt ? " sp-ds-aus" : "") + (zu ? " sp-dl-zu" : "") + (wahl === k ? " sp-an" : "")
         + '" data-s="dorfwahl" data-g="' + k + '" style="left:' + (q[0] / 3.2).toFixed(2) + "%;top:" + (q[1] / 2).toFixed(2) + '%" title="' + DORF[k].name + (st ? " · Stufe " + st : " · Bauplatz") + '">'
@@ -10506,10 +10360,8 @@
      Getreide 1 → Mehl 3 → Brot 6 · Kuchen 14 (2 Mehl) · Torte 30 (2 Mehl + 2 Eier + 1 Milch = 12)
      Quarz 2 ×2 + Holz 2 → Silizium 15 · Silizium 15 + Gold 25 → Chip 60. */
   [["torte", "Torte", 30], ["ei", "Eier", 2], ["milch", "Milch", 2], ["fisch", "Fisch", 4], ["holz", "Holz", 2], ["quarz", "Quarz", 2],
-   ["gold", "Gold", 25], ["oel", "Öl", 12], ["silizium", "Silizium", 15], ["chip", "Chips", 60], ["erz", "Erz", 5], ["fleisch", "Fleisch", 6]].forEach(function (x) { WAREN[x[0]] = x[1]; MARKT[x[0]] = x[2]; });
+   ["gold", "Gold", 25], ["oel", "Öl", 12], ["silizium", "Silizium", 15], ["chip", "Chips", 60], ["erz", "Erz", 5]].forEach(function (x) { WAREN[x[0]] = x[1]; MARKT[x[0]] = x[2]; });
   var WARE_BILDER = {
-    /* FASSUNG 727 — Fleisch von der Jagd: eine Keule mit Knochen. */
-    fleisch: '<path d="M4 12.5 C3 8 7 4 11.5 4.5 C15.5 5 17 9 14.5 12 C13 13.8 10.5 13.8 9 13.2 L6.6 15.6" fill="#b5523a" stroke="#6a2a1a" stroke-width="1"/><path d="M6.2 6.6 C7.6 5.6 9.6 5.4 11 6" fill="none" stroke="#e39a80" stroke-width="1" stroke-linecap="round"/><path d="M6.6 15.6 L4.6 17.6" stroke="#f3ead8" stroke-width="2.2" stroke-linecap="round"/><circle cx="3.9" cy="17.1" r="1.2" fill="#f3ead8" stroke="#a89878" stroke-width=".5"/><circle cx="5.1" cy="18.3" r="1.2" fill="#f3ead8" stroke="#a89878" stroke-width=".5"/>',
     ei: '<ellipse cx="10" cy="11" rx="5" ry="6.5" fill="#fff4dc" stroke="#b09060" stroke-width="1"/><ellipse cx="8.2" cy="8.4" rx="1.3" ry="2" fill="#fff" opacity=".8"/>',
     milch: '<path d="M7.5 3 H12.5 V6 L14.5 9 V17.5 H5.5 V9 L7.5 6 Z" fill="#fdfdfd" stroke="#6a7a8a" stroke-width="1"/><rect x="7" y="2" width="6" height="1.8" rx=".6" fill="#3a8dde"/><rect x="5.5" y="11" width="9" height="3.5" fill="#3a8dde"/>',
     fisch: '<path d="M2.5 10 C5 5.5 11 5.5 14 10 C11 14.5 5 14.5 2.5 10 Z" fill="#5a9fd4" stroke="#2a5a80" stroke-width="1"/><path d="M14 10 L18 6.5 V13.5 Z" fill="#5a9fd4" stroke="#2a5a80" stroke-width="1"/><circle cx="6" cy="9.3" r=".9" fill="#1a2a3a"/>',

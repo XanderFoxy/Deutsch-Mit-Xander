@@ -323,54 +323,12 @@ const sage = (gut, was, zusatz) => {
   await tick(1500);
   await tippe(".sp-dl-see"); await tick(300);
   r = await pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
-  /* FASSUNG 727 — Funk 176: „schickst du die Fischer für eine Zeit an den See … ich könnte ja helfen das und dann
-     beschleunigt dass die Geschwindigkeit … aber das muss alles in ein System laufen". Ein Tipp ist EIN eigener Wurf;
-     von selbst wirft niemand mehr beim Server aus – das tut der Trupp (werk.trupp_see). */
-  sage(/warten noch auf einen Biss/.test(r), "gleich nochmal: die Angel ist noch im Wasser (12 s je Teich)", r);
+  /* FASSUNG 723 — Funk 169: „sie sitzen dann erstmal eine Weile dauern Angeln". */
+  sage(/sitzen schon am See – noch 4 Würfe/.test(r), "gleich nochmal: die Angler sitzen schon am See (noch 4 Würfe)", r);
   const vorher = await pg.evaluate(() => window.__rufe.filter((x) => x.name === "spiel_angeln").length);
   await tick(12400);
   const nachher = await pg.evaluate(() => window.__rufe.filter((x) => x.name === "spiel_angeln").length);
-  sage(nachher === vorher, "kein Dauerangeln von selbst beim Server (das macht der Trupp)", vorher + " → " + nachher);
-
-  console.log("\nTRUPPS (Fassung 727)\n");
-  await pg.evaluate(() => {
-    const ich = window.__ich, P = window.DMA_SPIEL.pruef, S = P.zustand(), jetzt = Date.now();
-    ich.werk = Object.assign({}, ich.werk, { trupp_see: { ware: "fisch", menge: 4, voll: 7, start: new Date(jetzt - 60000).toISOString(), fertig: new Date(jetzt + 180000).toISOString(), trupp: "see" } });
-    S.ich = JSON.parse(JSON.stringify(ich));
-    window.__extra = Object.assign({}, window.__extra, {
-      spiel_werk_abholen: (a) => { window.__abholArgs = a; const i = JSON.parse(JSON.stringify(ich)); i.werk = {}; ich.werk = {}; return Object.assign(i, { ok: true, menge: 5, ware: "fisch" }); },
-      spiel_trupp: (a) => { window.__truppArgs = a; const jetzt2 = Date.now(); ich.werk = Object.assign({}, ich.werk, { ["trupp_" + a.p_ort]: { ware: a.p_ort === "jagd" ? "fleisch" : "holz", menge: 9, voll: 9, start: new Date(jetzt2).toISOString(), fertig: new Date(jetzt2 + 300000).toISOString(), trupp: a.p_ort } });
-        return Object.assign(JSON.parse(JSON.stringify(ich)), { ok: true, neu: true, gesammelt: 0, trupp: ich.werk["trupp_" + a.p_ort] }); },
-      spiel_trupp_helfen: (a) => { window.__helfArgs = a; return Object.assign(JSON.parse(JSON.stringify(ich)), { ok: true, menge: 1, ware: "holz", sek: 270, rest: 8 }); }
-    });
-    P.schnellZeichnen(true);
-  });
-  await tick(300);
-  r = await pg.evaluate(() => { const e = document.querySelector(".sp-dl-see em"); return e ? { t: e.textContent, balken: !!e.querySelector("i") && parseFloat(e.querySelector("i").style.width) > 0 } : null; });
-  sage(r && /Fisch 3:/.test(r.t) && r.balken, "der See zeigt, was die Fischer holen, mit Uhr und Fortschrittsbalken", JSON.stringify(r));
-  const angelVorher = await pg.evaluate(() => window.__rufe.filter((x) => x.name === "spiel_angeln").length);
-  let bewegt = false;
-  for (let i = 0; i < 40 && !bewegt; i++) { await tick(250); bewegt = await pg.evaluate(() => [...document.querySelectorAll(".sp-see-angler .sp-see-fang")].some((f) => f.style.display !== "none" && f.innerHTML) || window.DMA_TONLOG.length < 0); if (!bewegt) bewegt = await pg.evaluate(() => { const B = window.DMA_SPIEL.pruef.bahn && window.DMA_SPIEL.pruef.bahn.B; return !!(B && (B.angel[0] || B.angel[1])); }); }
-  const angelNachher = await pg.evaluate(() => window.__rufe.filter((x) => x.name === "spiel_angeln").length);
-  sage(bewegt && angelNachher === angelVorher, "solange die Fischer unterwegs sind, werfen die Angler sichtbar aus – ohne Serverruf", bewegt + " · " + angelVorher + " → " + angelNachher);
-  await pg.evaluate(() => { const ich = window.__ich, S = window.DMA_SPIEL.pruef.zustand(); ich.werk.trupp_see.fertig = new Date(Date.now() - 1000).toISOString(); ich.werk.trupp_see.menge = 5; S.ich = JSON.parse(JSON.stringify(ich)); window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tick(300);
-  r = await pg.evaluate(() => (document.querySelector(".sp-dl-see em") || {}).textContent || "");
-  sage(/5 Fisch fertig/.test(r), "zurück: am See steht „5 Fisch fertig“", r);
-  await tippe(".sp-dl-see"); await tick(500);
-  r = await pg.evaluate(() => ({ a: window.__abholArgs, h: window.__hinweise.slice(-1)[0] || "" }));
-  sage(r.a && r.a.p_gebaeude === "trupp_see" && /Fischer sind zurück: \+5 Fisch/.test(r.h), "ein Tipp auf den See bringt den Fang heim (dasselbe wie „Abholen“ im Menü)", JSON.stringify(r));
-  await tippe(".sp-dl-wald"); await tick(500);
-  r = await pg.evaluate(() => { const st = document.querySelector(".sp-dl-station"); return st ? [...st.querySelectorAll(".sp-trupp")].map((z) => z.dataset.trupp + ":" + z.textContent.replace(/\s+/g, " ").trim()) : null; });
-  sage(r && r.length === 2 && /^wald:Holzfäller im Wald/.test(r[0]) && /^jagd:Jäger im Wald/.test(r[1]) && r.every((x) => /Losschicken/.test(x)), "Tipp auf den Waldrand: Holzfäller und Jäger zum Losschicken", JSON.stringify(r));
-  await tippe('.sp-dl-station [data-s="trupp"][data-g="jagd"]'); await tick(600);
-  r = await pg.evaluate(() => ({ a: window.__truppArgs, h: window.__hinweise.slice(-1)[0] || "", zeile: ((document.querySelector('.sp-dl-station [data-trupp="jagd"]') || {}).textContent || "").replace(/\s+/g, " ") }));
-  sage(r.a && r.a.p_ort === "jagd" && /Jäger ziehen auf die Jagd/.test(r.h) && /jagen · noch 9 von 9 Fleisch/.test(r.zeile), "die Jäger ziehen los; die Zeile zeigt Menge und Rückkehr", JSON.stringify(r));
-  if (process.env.BILD) { await pg.evaluate(() => document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "start" })); await tick(400); await pg.screenshot({ path: process.env.BILD + "-trupps.png" }); }
-  const vis = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-rahmen").getBoundingClientRect(), w = document.querySelector(".sp-dw-schild"), b = document.querySelector(".sp-dl-bahnhof");
-    if (!w || !b) return { fehlt: !w ? "wetter" : "bahnhof" }; const a = w.getBoundingClientRect(), c = b.getBoundingClientRect();
-    return { rechts: a.right > f.right - 12, zeile: a.height < 20, ueberBahnhof: a.right > c.left && a.left < c.right && a.bottom > c.top && a.top < c.bottom }; });
-  sage(vis.fehlt === "wetter" || (vis.rechts && vis.zeile && !vis.ueberBahnhof), "das Wetter steht oben rechts in einer Zeile, nicht über dem Bahnhof", JSON.stringify(vis));
+  sage(nachher === vorher + 1, "nach 12 s werfen sie von selbst wieder aus", vorher + " → " + nachher);
 
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
   console.log("\nFassung 716 (Eisenbahn und See): " + (fehler ? fehler + " rot." : "alles grün."));

@@ -274,8 +274,6 @@ const sage = (gut, was, zusatz) => {
   console.log("\nDAS WETTER WIRKT AUF DIE ERNTE\n");
   r = await pg.evaluate(async () => {
     window.__rufe.length = 0;
-    /* FASSUNG 727 — seit 724 hat das Testwetter Vorrang vor der Messung; für diese Prüfung muss es weg. */
-    window.DMA_SPIEL.pruef.zustand().wetterTest = null; window.DMA_SPIEL.pruef.DW.gemeldet = "";
     window.DMA_WETTER = window.DMA_WETTER || {}; window.DMA_WETTER.jetzt = { code: 63, tag: true, temp: 12, ort: "Döbeln", zeit: Date.now() };
     window.dispatchEvent(new CustomEvent("dma-wetter")); await new Promise((o) => setTimeout(o, 200));
     window.dispatchEvent(new CustomEvent("dma-wetter")); await new Promise((o) => setTimeout(o, 200));

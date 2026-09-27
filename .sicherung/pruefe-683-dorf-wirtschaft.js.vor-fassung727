@@ -204,7 +204,7 @@ const sage = (gut, was, zusatz) => {
       quer: m ? m.scrollWidth - m.clientWidth : -1, rechts: m ? Math.round(m.getBoundingClientRect().right) : 0 }; });
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-dorf.png" });
   sage(blick.blick && !blick.reiter && /Mein Dorf/.test(blick.kopf), "Tipp: nur das Dorf – keine Reiter, oben „Mein Dorf“ mit Punkten", JSON.stringify(blick));
-  sage(blick.haeuser === 6 && /* ab 727 mit der Ware (Funk 176: „was geerntet wird") */ /^(\S+ )?\d+:\d\d$/.test(blick.laeuft) && blick.kaputt && /Eier/.test(blick.eier), "die Dorf-Szene zeigt jedes Gebäude und was dort gerade passiert (Uhr, fertig, kaputt)", JSON.stringify(blick));
+  sage(blick.haeuser === 6 && /^\d+:\d\d$/.test(blick.laeuft) && blick.kaputt && /Eier/.test(blick.eier), "die Dorf-Szene zeigt jedes Gebäude und was dort gerade passiert (Uhr, fertig, kaputt)", JSON.stringify(blick));
   sage(blick.quer <= 1 && blick.rechts <= 360, "die Dorf-Ansicht passt in die Breite", JSON.stringify(blick));
   const volk = await pg.evaluate(() => { const v = document.querySelector(".sp-schnellmenue .sp-volk"); return v ? v.textContent : ""; });
   sage(/\d+ % zufrieden/.test(volk) && /12 Arbeiter/.test(volk) && /1 Ritter/.test(volk) && /Deutsch-Quote 90 %/.test(volk), "Volk: Zufriedenheit, Arbeiter, Ritter, Deutsch-Quote", volk);

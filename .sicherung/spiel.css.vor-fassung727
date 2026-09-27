@@ -2538,19 +2538,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
   radial-gradient(circle, rgba(255, 255, 255, .85) 0 1px, transparent 1.5px) 0 0 / 27px 23px, linear-gradient(180deg, #0b1330 0%, #1d2b5a 60%, #243a2e 71%, #17261d 100%); }
 .sp-sa-buehne.sp-sa-ort-dorf { background-color: #5a8a3a; }
 .sp-namedialog-kenn { display: block; margin: 2px 0 6px; font-size: 12px; opacity: .8; }
-
-/* FASSUNG 727 — Funk 176: Wetter oben rechts in einer Zeile (links oben lag es auf dem Bahnhof); Zeichen mit Fortschritt an
-   See, Wald und Acker; Trupps im Menü mit Balken. */
-.sp-schnell .sp-dl-rahmen .sp-dw-schild, .sp-dw-schild { left: auto; right: 5px; top: 5px; max-width: calc(50% - 84px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.5; }
-.sp-dw-schild small { display: none; }
-.sp-dl-ort em { position: absolute; top: -2px; left: 50%; transform: translateX(-50%); padding: 0 4px; border-radius: 7px; font: 800 8.5px/13px system-ui, sans-serif; font-style: normal;
-  white-space: nowrap; z-index: 1; pointer-events: none; overflow: hidden; }
-.sp-dl-ganz .sp-dl-ort em { font-size: 7px; line-height: 10px; padding: 0 3px; }
-.sp-dl-ort.sp-dl-feld em { top: 30%; }
-.sp-ds-fort i { position: absolute; left: 0; bottom: 0; height: 2px; background: #8fe07a; border-radius: 0 2px 2px 0; }
-.sp-dl-ort.sp-dl-wald small { top: auto; bottom: 100%; }
-.sp-trupp-balken { display: block; height: 4px; margin-top: 3px; border-radius: 2px; background: rgba(0, 0, 0, .15); overflow: hidden; }
-.sp-trupp-balken u { display: block; height: 100%; background: #4f9a4a; text-decoration: none; transition: width .6s linear; }
-.sp-dw-schild .sp-dw-art { display: none; }
-.sp-dl-ort.sp-dl-feld[data-n="92"] em { left: auto; right: 0; transform: none; }
-.sp-schnell .sp-dl-rahmen .sp-dw-schild, .sp-dw-schild { max-width: none; overflow: visible; text-overflow: clip; }
