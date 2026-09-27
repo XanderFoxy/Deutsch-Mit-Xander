@@ -1254,3 +1254,10 @@ Sonden: 692 (neu: Meldung gemerkt, Menü-Zeile „heute abgeholt · nächstes in
 - XANDER (wörtlich, Walkie 273): „Wie sieht man das und wo findet man das wenn man die ganze Zeit z.B eingeloggt bleibt.“
 - **So war es**: Das Geschenk holte sich schon nach Mitternacht (Berliner Zeit) beim nächsten stillen Nachsehen selbst ab – aber nur als kurzer Hinweis, den man leicht verpasst.
 - **Jetzt**: Es kommt zusätzlich als Meldung oben im Band (mit Geschenk-Bild, ohne „Ansehen“, ✕ zum Wegtippen), einmal am Tag. Im Spiel-Menü steht statt „Serie 3/7“: „🎁 Heute abgeholt · Tag 3/7 · nächstes in 5 h 20 min“ bzw. „Tagesgeschenk kommt gleich“.
+
+### Fassung 743 (Funk 139: Bonuspunkte für schnelle Antworten)
+Server: Migration `spiel_743_schnell_bonus` (spiel_antwort). Geprüft mit Rollback als Xander: A1-Aufgabe nach 3 s → 5 Punkte (+2 schnell), nach 9 s → 4 (+1), nach 20 s → 3 (+0). Sonden: 648, 645, 634, spielsystem grün; Bildschirmfoto der Auswertung auf 360 px.
+- XANDER (wörtlich, Funk 139): „dann könntest du Bonuspunkte mit einbauen wenn man die Sachen sehr schnell beantwortet“.
+- **Regel** (auf dem Server, nicht fälschbar): Die Zeit läuft ab dem Stellen der Aufgabe. Bis 6 s gibt es +50 %, bis 12 s +25 % der Punkte, mindestens 1. Bei „Stimmt der Satz?“ gibt es keinen Schnell-Bonus, weil man bei zwei Antworten blind schnell raten könnte. Die bestehende Sperre (frühestens nach 2 s antworten) bleibt.
+- **Anzeige**: In der Auswertung steht „⚡ +2 schnell“ (mit Sekunden beim Drüberfahren); im Deutsch-Menü steht „⚡ Schnell (bis 6 s) gibt es die Hälfte extra.“
+- **Mitbehoben**: Die Extras (Mut-Bonus, Mana, EP, Mission) schoben bei vielen Boni den „Weiter“-Knopf aus dem Bild. Jetzt stehen sie in einer Zeile, die sich notfalls mit „…“ kürzt; „Weiter“ bleibt immer sichtbar.

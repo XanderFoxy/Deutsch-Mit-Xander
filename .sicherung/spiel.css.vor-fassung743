@@ -2661,9 +2661,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-namenschild.sp-rot { background: #a42621; }
 .sp-namenschild.sp-an { animation: spNameBlitz 1.8s ease both; }
 @keyframes spNameBlitz { 0% { opacity: 0; transform: translate(-50%, calc(-100% + 4px)); } 10%, 80% { opacity: 1; transform: translate(-50%, -100%); } 100% { opacity: 0; transform: translate(-50%, -100%); } }
-/* FASSUNG 743 — Schnell-Bonus in der Auswertung. */
-.sp-schnell-bonus { color: #1f7fbf; font-weight: 700; white-space: nowrap; }
-.sp-erg-zeile > b { white-space: nowrap; }
-.sp-erg-zeile .sp-erg-extras { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
-.sp-erg-zeile .sp-erg-extras > span { white-space: nowrap; }
-.sp-erg-zeile button { flex: 0 0 auto; }

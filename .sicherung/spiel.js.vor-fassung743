@@ -4213,7 +4213,7 @@
     } else if (r === "trophaeen") {
       inhaltM = '<div class="sp-sm-liste"><button type="button" data-s="reiter" data-r="mehr">← Zurück</button></div>' + trophaeenHtml();
     } else if (r === "deutsch") {
-      inhaltM = '<p class="sp-sm-klein">Richtig antworten bringt <b>Punkte</b>, <b>Mana</b> und <b>Erfahrung</b> (Level). ⚡ Schnell (bis 6 s) gibt es die Hälfte extra.'
+      inhaltM = '<p class="sp-sm-klein">Richtig antworten bringt <b>Punkte</b>, <b>Mana</b> und <b>Erfahrung</b> (Level).'
         + (missionLaeuft(ich) ? " Mission läuft: " + esc(missionKurz(ich.mission)) + "." : "") + "</p>"
         + '<div class="sp-sm-liste"><button type="button" class="sp-sm-los" data-s="deutschlos" data-k="">Aufgabe lösen</button></div>'
         + '<div class="sp-sm-gruppe sp-sm-arten"><span>Oder gezielt</span>' + ARTEN_KNOEPFE.filter(function (x) { return x[0] && (!x[2] || ARTEN_FREI[x[0]]); })
@@ -6130,20 +6130,10 @@
              da ist: nichts springt, nichts muss gescrollt werden. */
           + '<div class="sp-erg-platz' + (a.ergebnis ? (a.ergebnis.richtig ? " sp-erg-gut" : " sp-erg-schlecht") : "") + '">'
           + (a.ergebnis ? '<div class="sp-erg-zeile"><b>' + (a.ergebnis.richtig ? "Richtig! +" + (a.ergebnis.gewonnen + (a.ergebnis.bonus || 0)) : "Leider falsch") + "</b>"
-              /* FASSUNG 743 — die Extras stehen in EINER Zeile, die sich notfalls kürzt (voller Text beim Drüberfahren):
-                 vorher schob ein langer Bonus den „Weiter"-Knopf aus dem Bild. */
-              + (function () {
-                var e = a.ergebnis, t = [];
-                /* FASSUNG 743 — XANDER (Funk 139): „Bonuspunkte mit einbauen wenn man die Sachen sehr schnell beantwortet". */
-                if (e.richtig && e.schnell) t.push(['sp-schnell-bonus', "⚡ +" + e.schnell + " schnell", "Schnell geantwortet (" + e.dauer + " s): bis 6 s +50 %, bis 12 s +25 %"]);
-                if (e.richtig && e.mut) t.push(["sp-mut", "+" + e.mut + " Mut", "Extra-Punkte, weil dir dieser Bereich schwerfällt (" + (e.mut_art === "schwach" ? "Schwäche" : "fast geschafft") + ")"]);
-                if (e.richtig && e.mana_plus) t.push(["sp-blau", "+" + e.mana_plus + " Mana", ""]);
-                if (e.richtig && e.xp_plus) t.push(["sp-gold", "+" + e.xp_plus + " EP", ""]);
-                if (e.bonus) t.push(["sp-gold", "Mission +" + e.bonus, ""]);
-                if (!t.length) return "";
-                return ' <span class="sp-erg-extras" title="' + esc(t.map(function (x) { return x[1] + (x[2] ? " – " + x[2] : ""); }).join(" · ")) + '">'
-                  + t.map(function (x) { return '<span class="' + x[0] + '"' + (x[2] ? ' title="' + esc(x[2]) + '"' : "") + ">" + esc(x[1]) + "</span>"; }).join(" ") + "</span>";
-              })()
+              + (a.ergebnis.richtig && a.ergebnis.mut ? ' <span class="sp-mut" title="Extra-Punkte, weil dir dieser Bereich schwerfällt">davon +' + a.ergebnis.mut + " Mut-Bonus (" + (a.ergebnis.mut_art === "schwach" ? "Schwäche" : "fast geschafft") + ")</span>" : "")
+              + (a.ergebnis.richtig && a.ergebnis.mana_plus ? ' <span class="sp-blau">+' + a.ergebnis.mana_plus + " Mana</span>" : "")
+              + (a.ergebnis.richtig && a.ergebnis.xp_plus ? ' <span class="sp-gold">+' + a.ergebnis.xp_plus + " EP</span>" : "")
+              + (a.ergebnis.bonus ? ' <span class="sp-gold">Mission +' + a.ergebnis.bonus + "</span>" : "")
               + '<button type="button" data-tu="aufgabe">Weiter</button></div>'
               + '<div class="sp-erg-erkl">' + esc(a.ergebnis.erklaerung || "") + "</div>"
             : a.hinweis ? '<div class="sp-klein sp-rot">' + esc(a.hinweis) + "</div>" : deutschKnoepfe())

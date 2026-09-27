@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 742 — Tagesgeschenk sichtbar, auch wenn man eingeloggt bleibt (Walkie 273)",
+  stand: "Fassung 743 — Bonuspunkte für schnelle Antworten (Funk 139)",
 
   inArbeit: [
-    { seit: "2026-09-27T05:53",
-      text: "Bonuspunkte für schnelle Antworten (Funk 139)" },
-    { seit: "2026-09-27T05:53",
+    { seit: "2026-09-27T06:01",
       text: "Modulares Dorf, Verteidigung/Kaserne, Verträge – wartet auf Antworten zu den 15 Fragen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T05:53",
+    { seit: "2026-09-27T06:01",
+      text: "Schnell-Bonus: bis 6 s +50 %, bis 12 s +25 %" },
+    { seit: "2026-09-27T06:01",
       text: "Tagesgeschenk als Meldung oben, im Menü „heute abgeholt · nächstes in …“" },
-    { seit: "2026-09-27T05:53",
+    { seit: "2026-09-27T06:01",
       text: "Taschen zeigen das Gerät, Namensschild beim Tippen, roter Schlüssel bei stumpf" },
-    { seit: "2026-09-27T05:53",
+    { seit: "2026-09-27T06:01",
       text: "Schaufel: Doppeltipp gräbt nicht, Werkzeugwahl geht auf" },
-    { seit: "2026-09-27T05:53",
-      text: "Postfach: Titel, Nachrichten zuerst, Schreiben eingeklappt, Navigation 5×2" },
   ],
 };
