@@ -1623,3 +1623,16 @@ Server geprüft mit Rückrollen: C2 bei 93 % → 12 Punkte, A1 bei 70 % → 3. D
   - Im Aussprachetrainer gibt es den Bereich „Mein Aussprache-Wörterbuch (n)“ mit Anhören und Löschen.
   - Ehrlich: Das Entrauschen ist ein Rauschtor, keine Spektral-Entrauschung. Gegen gleichmäßiges Rauschen in den Pausen hilft es, Rauschen unter dem Wort selbst bleibt.
   - Noch offen aus Funk 188/190: die Lehrer-Freigabe über Sprachnachrichten im Chat, die eigene Stimme als Vorsprecher-Ersatz im Trainer und die Liste im Profil.
+
+### Fassung 773 (Funk 199: Aussprache läuft von selbst weiter, Spiel still beim Sprechen, andere Übung wählen)
+Sonden: neu 773 (alles grün); 766, 768, 769, 771, 772 grün.
+Funk 199 kam um 23:19, noch vor Fassung 772. Kreisel statt Strichbalken, automatisches Vorlesen und die Punkte (C2 Grundwert 8, dazu ein Zuschlag nach Prozent statt nach Zeit, wie XANDER vorschlägt: „je nach Prozent … dann kriegt man extra Punkte denn die Zeit bleibt ja dieselbe“) sind seit 772 da.
+- **Weiter** (XANDER: „ich will das automatisch vorlesen und das sofort automatische nachsprechen und dann geht die Aufgabe weiter“).
+  - Nach der Bewertung läuft ein dünner Balken, dann kommt von selbst das nächste Wort. Ab 80 % nach 2,2 s, darunter nach 4 s, damit man den Tipp lesen kann.
+  - Es wird wieder vorgesprochen und zugehört, ohne einen Tipp.
+  - Steht das Wörterbuch-Angebot da (ab 95 %), wartet die Karte. Nach dem Übernehmen geht es weiter.
+- **Spiel still** (XANDER: „die Töne des Spiels werden immer noch nicht stumm geschalten wenn ich mit dir spreche innerhalb des Livestreams“).
+  - livechat.js meldet jetzt, wenn man selbst am offenen Mikrofon spricht. Solange bleibt der ganze Spielklang auf 0 und kommt danach weich zurück.
+  - Ebenso still ist das Spiel, solange die Aussprache-Übung zuhört (sonst landen Wind, Vögel und Hammer in der Bewertung) und bei Sprachnachrichten (seit 769).
+- **Andere Übung** (XANDER: „man kann keine anderen Aufgaben mehr auswählen wenn man in die Aussprache Übung reingegangen ist“).
+  - In der Aussprache-Karte steht „Andere Übung“. Der Knopf klappt die Wahl mit allen Aufgabenarten auf, und die Übung springt so lange nicht weiter.

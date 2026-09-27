@@ -49,16 +49,16 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 772: Spiel-Aussprache mit Kreisel, Automatik und Punkten nach Niveau; persönliches Aussprache-Wörterbuch (ab 95 %, sauber geschnitten)",
+  stand: "Fassung 773: Aussprache im Spiel läuft von selbst weiter, Spiel still beim eigenen Sprechen, Andere Übung wählbar",
 
   inArbeit: [
-    { seit: "2026-09-27T23:33",
+    { seit: "2026-09-27T23:38",
       text: "Lehrer-Freigabe im Chat fürs Aussprache-Wörterbuch; Sequenzen für gezeichnete Wege (Funk 196); Diktat startet nicht im Samsung-Browser (Funk 197); Walkies 282/283/285/296/299–302" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T23:33",
-      text: "772: C2 gibt jetzt bis 12 statt 3 Punkte; runder Kreisel in der Spielkarte; Wort wird automatisch vorgesprochen und bewertet; ab 95 % ins eigene Aussprache-Wörterbuch, Meine Stimme anhören, Liste im Trainer" },
+    { seit: "2026-09-27T23:38",
+      text: "773: nach der Bewertung kommt von selbst das nächste Wort; Spielklang verstummt, solange man spricht oder die Übung zuhört; Knopf Andere Übung" },
   ],
 };

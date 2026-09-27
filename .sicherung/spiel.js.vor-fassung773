@@ -373,27 +373,17 @@
   function lautFaktor() { return LAUT_STUFEN[lautStufe()][1]; }
   function lautSetzen(n) {
     try { localStorage.setItem("dma_spiel_laut", String(n)); } catch (e) {}
-    if (KLANG.master && !KLANG.stillAufnahme && !KLANG.stillSprechen && !KLANG.stillUebung) try { KLANG.master.gain.value = 0.62 * lautFaktor(); } catch (e) {}
+    if (KLANG.master && !KLANG.stillAufnahme) try { KLANG.master.gain.value = 0.62 * lautFaktor(); } catch (e) {}
   }
   /* FASSUNG 769 — XANDER (Funk 192): „wenn ich im Dorf bin und ich schicke dir eine Sprachnachricht dass er vorübergehend
      die Sounds von doof ausgeschaltet werden wenn ich eine Sprachnachricht schicke". Solange livechat.js aufnimmt, blendet
      das Spiel seinen ganzen Klang in 0,15 s aus (Dorf, Vögel, Zug, Werkzeuge) und danach wieder ein. */
-  /* FASSUNG 773 — XANDER (Funk 199): „die Töne des Spiels werden immer noch nicht stumm geschalten wenn ich mit dir
-     spreche innerhalb des Livestreams". Still ist das Spiel jetzt, solange (a) eine Sprachnachricht aufgenommen wird,
-     (b) man selbst am offenen Mikrofon spricht (livechat.js meldet es) oder (c) die Aussprache-Übung zuhört. */
-  function stilleSetzen() {
-    var still = Boolean(KLANG.stillAufnahme || KLANG.stillSprechen || KLANG.stillUebung);
+  window.addEventListener("dma-sprachaufnahme", function (ev) {
+    var an = Boolean(ev && ev.detail && ev.detail.an);
+    KLANG.stillAufnahme = an;
     var k = KLANG.ctx;
     if (!k || !KLANG.master) return;
-    try { KLANG.master.gain.cancelScheduledValues(k.currentTime); KLANG.master.gain.setTargetAtTime(still ? 0 : 0.62 * lautFaktor(), k.currentTime, still ? 0.04 : 0.25); } catch (e) {}
-  }
-  window.addEventListener("dma-sprachaufnahme", function (ev) {
-    KLANG.stillAufnahme = Boolean(ev && ev.detail && ev.detail.an);
-    stilleSetzen();
-  });
-  window.addEventListener("dma-selbst-spricht", function (ev) {
-    KLANG.stillSprechen = Boolean(ev && ev.detail && ev.detail.an);
-    stilleSetzen();
+    try { KLANG.master.gain.cancelScheduledValues(k.currentTime); KLANG.master.gain.setTargetAtTime(an ? 0 : 0.62 * lautFaktor(), k.currentTime, 0.05); } catch (e) {}
   });
   function toeneAn() { try { var b = B(); return b.toeneAn ? b.toeneAn() !== false : true; } catch (e) { return true; } }
   function klangSpielen(name, laut, tempo) {
@@ -6734,7 +6724,7 @@
     if (tu === "fensterab") { fensterAblegen(); return; }
     if (tu === "haupt") { schliessen(); S.schnellMenue = true; schnellZeichnen(true); return; }
     if (tu === "fund") { fundAmPlatzZeigen(); return; }
-    if (tu === "neuwahl") { S.deutschWahl = !S.deutschWahl; clearTimeout(S.sprechWeiterUhr); if (S.sprech) S.sprech.weiterMs = 0; panelAuffrischen();
+    if (tu === "neuwahl") { S.deutschWahl = !S.deutschWahl; panelAuffrischen();
       if (S.deutschWahl) { var wz = panel.querySelector(".sp-deutsch-wahl"); if (wz) try { wz.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }
       return; }
     if (tu === "lernprofilauf") { S.lernAuf = !S.lernAuf; ton("holzklopf", 0.15); if (S.lernAuf) lernstandHolen(); panelAuffrischen(); return; }
@@ -6808,7 +6798,7 @@
     if (tu === "sprechhoeren") return sprechHoeren();
     if (tu === "sprechen") return sprechAufnehmen();
     if (tu === "sprechneu") return sprechWortHolen(0);
-    if (tu === "sprechauto") { try { localStorage.setItem("dma_spiel_sprech_auto", sprechAutoAn() ? "0" : "1"); } catch (e) {} if (!sprechAutoAn()) { clearTimeout(S.sprechWeiterUhr); if (S.sprech) S.sprech.weiterMs = 0; } panelAuffrischen(); if (sprechAutoAn() && S.sprech) { S.sprech.autoFuer = ""; sprechAutoLauf(); } return; }
+    if (tu === "sprechauto") { try { localStorage.setItem("dma_spiel_sprech_auto", sprechAutoAn() ? "0" : "1"); } catch (e) {} panelAuffrischen(); if (sprechAutoAn() && S.sprech) { S.sprech.autoFuer = ""; sprechAutoLauf(); } return; }
     if (tu === "sprechniveau") { S.niveau = k.dataset.n; try { localStorage.setItem("dma_spiel_niveau", S.niveau); } catch (e) {} return sprechWortHolen(0); }
   }
 
@@ -6974,9 +6964,8 @@
      saubere Stimme (Sammeldatei, sonst Azure) über DMA_AUSSPR_BRUECKE –
      nie mehr die eigenen Aufnahmen.
      --------------------------------------------------------------- */
-  try { window.addEventListener("dma-eigen-geaendert", function () { panelAuffrischen(); if (S.sprech && S.sprech.ergebnis) setTimeout(function () { sprechWeiterPlanen(S.sprech); panelAuffrischen(); }, 1200); }); } catch (e) {}
+  try { window.addEventListener("dma-eigen-geaendert", function () { panelAuffrischen(); }); } catch (e) {}
   function sprechWortHolen(versuch) {
-    clearTimeout(S.sprechWeiterUhr);
     var EAl = window.DMA_EIGENE_AUSSPRACHE;
     if (EAl && EAl.liste === null) EAl.listeLaden().then(function () { panelAuffrischen(); });
     S.sprech = { laedt: true };
@@ -7017,22 +7006,6 @@
       sprechAufnehmen();
     }, Math.round((dauer || 0) * 1000) + 350);
   }
-  /* FASSUNG 773 — XANDER (Funk 199): „ich will das automatisch vorlesen und das sofort automatische nachsprechen und
-     dann geht die Aufgabe weiter". Wie im Trainer der Seite: nach der Bewertung läuft ein kurzer Balken, dann kommt das
-     nächste Wort (gut: 2,2 s, sonst 4 s – Zeit, den Tipp zu lesen). Steht das Wörterbuch-Angebot (ab 95 %) da, wartet
-     die Karte, bis man entschieden hat. */
-  function sprechWeiterPlanen(sp) {
-    clearTimeout(S.sprechWeiterUhr);
-    var e = sp && sp.ergebnis;
-    if (!e || !sprechAutoAn()) return;
-    var EA = window.DMA_EIGENE_AUSSPRACHE;
-    if (EA && EA.bietetAn(sp.wort, e.azure ? e.prozent : 0)) { sp.weiterMs = 0; return; }
-    sp.weiterMs = e.prozent >= 80 ? 2200 : 4000;
-    S.sprechWeiterUhr = setTimeout(function () {
-      if (S.sprech !== sp || !panelOffen() || S.kategorie !== "aussprache") return;
-      sprechWortHolen(0);
-    }, sp.weiterMs);
-  }
   function sprechBewertbar() { var AP = window.AusspracheP; return Boolean(AP && AP.stufe1Da && AP.stufe1Da() && AP.alsWav); }
   function sprechHoeren() {
     var sp = S.sprech || {};
@@ -7052,12 +7025,9 @@
     if (!sp.wort || sp.laeuft || (!sp.original && !sprechBewertbar())) return;
     if (!AP || !AP.mikrofonDa || !AP.mikrofonDa()) { sp.hinweis = "Kein Mikrofon auf diesem Gerät."; panelAuffrischen(); return; }
     sp.laeuft = true; sp.hinweis = "Sprich jetzt …"; sp.ergebnis = null; panelAuffrischen();
-    /* FASSUNG 773: während das Mikrofon zuhört, schweigt das Spiel (sonst landen Wind, Vögel und Hammer in der Bewertung). */
-    KLANG.stillUebung = true; stilleSetzen();
     var griff = null, fertig = false;
     var auswerten = function () {
       if (fertig || !griff) return; fertig = true;
-      KLANG.stillUebung = false; stilleSetzen();
       griff.stoppen().then(function (auf) {
         if (!auf || !auf.blob) throw new Error((auf && auf.fehler) || "keine Aufnahme");
         sp.hinweis = "Ich höre zu …"; panelAuffrischen();
@@ -7095,16 +7065,15 @@
           /* FASSUNG 772: die Aufnahme fürs persönliche Aussprache-Wörterbuch bereithalten (Angebot ab 95 %, nur mit Laut-Bewertung). */
           var EA = window.DMA_EIGENE_AUSSPRACHE;
           if (EA && sp.eigen) EA.merken(sp.wort, sp.eigen, sp.ergebnis.azure ? prozent : 0, "spiel");
-          sprechWeiterPlanen(sp);
           sp.hinweis = "";
           ton(sp.ergebnis.gewonnen > 0 ? "bling" : "gummi", 0.45);
           panelAuffrischen(); zeichnen(); schnellZeichnen();
         });
-      }).catch(function (e) { sp.laeuft = false; KLANG.stillUebung = false; stilleSetzen(); sp.hinweis = "Das ging nicht: " + (e && e.message ? e.message : e); panelAuffrischen(); });
+      }).catch(function (e) { sp.laeuft = false; sp.hinweis = "Das ging nicht: " + (e && e.message ? e.message : e); panelAuffrischen(); });
     };
     AP.aufnahmeStarten({ beiStille: auswerten, stilleMs: 800, mindestdauerMs: 500, hoechstdauer: 5000, beiZeitablauf: auswerten })
       .then(function (g) { griff = g; setTimeout(auswerten, 4000); })
-      .catch(function () { sp.laeuft = false; KLANG.stillUebung = false; stilleSetzen(); sp.hinweis = "Das Mikrofon ist nicht freigegeben."; panelAuffrischen(); });
+      .catch(function () { sp.laeuft = false; sp.hinweis = "Das Mikrofon ist nicht freigegeben."; panelAuffrischen(); });
   }
   /* FASSUNG 771 — XANDER (Funk 195): „Die Aussprache Übungen im Spiel hat kein Niveau und keine prozentuale Anzeige
      wie wir sie global auf der Webseite auch haben". Oben in der Karte stehen jetzt die Niveaus (ein Tipp holt ein Wort
@@ -7149,10 +7118,7 @@
       + (eigeneDa ? '<button type="button" class="sp-sprech-meine" data-eigen="hoeren" data-wort="' + esc(sp.wort) + '">Meine Stimme (aus meinem Wörterbuch)</button>' : "")
       + '<div class="sp-knoepfe"><button type="button" data-tu="sprechhoeren"' + (sp.original ? "" : " disabled") + ">Anhören</button>"
       + '<button type="button" data-tu="sprechen" class="sp-sprech-mik' + (sp.laeuft ? " sp-an" : "") + '"' + (sp.laeuft || e || (!sp.original && !sprechBewertbar()) ? " disabled" : "") + ">" + (sp.laeuft ? "Ich höre …" : "Nachsprechen") + "</button>"
-      + '<button type="button" data-tu="sprechneu">Neues Wort</button>'
-      /* FASSUNG 773 — Funk 199: „außerdem fehlen dann aus diesem Menü heraus wieder die anderen Aufgaben". */
-      + '<button type="button" data-tu="neuwahl" class="sp-sprech-andere">Andere Übung</button></div>'
-      + (e && sp.weiterMs ? '<div class="sp-sprech-weiter" style="--weiter:' + sp.weiterMs + 'ms"><i></i></div>' : "")
+      + '<button type="button" data-tu="sprechneu">Neues Wort</button></div>'
       + '<div class="sp-erg-platz' + (e ? (e.gewonnen > 0 ? " sp-erg-gut" : " sp-erg-schlecht") : "") + '">'
       + (e ? (function () { var pz = sprechProzentHtml(e); return '<div class="sp-sprech-erg">' + pz.ring + '<div class="sp-sprech-erg-rechts"><div class="sp-erg-zeile"><b class="sp-sprech-note">' + e.prozent + (e.azure ? " / 100" : " % ähnlich") + "</b>" + (e.gewonnen > 0 ? ' <span class="sp-gold">+' + e.gewonnen + " Punkte</span>" : "")
           + '<button type="button" data-tu="sprechneu">Weiter</button></div>' + pz.laute; })()

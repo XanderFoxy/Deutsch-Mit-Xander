@@ -15026,10 +15026,6 @@ window.LiveChat = (function () {
           zustand.spricht = neu;
           senden({ art: "redet", spricht: neu });
           melden();
-          /* FASSUNG 773 — XANDER (Funk 199): „die Töne des Spiels werden immer noch nicht stumm geschalten wenn ich mit
-             dir spreche innerhalb des Livestreams". Das Spiel hört hier mit und schaltet seinen Klang still, solange man
-             selbst spricht. */
-          try { window.dispatchEvent(new CustomEvent("dma-selbst-spricht", { detail: { an: neu } })); } catch (e) {}
         }
       }, 120);
     } catch (e) { lautstaerkeStoppen(); }
@@ -15039,7 +15035,7 @@ window.LiveChat = (function () {
     hoerKnoten = null;
     if (hoerRaum) { try { hoerRaum.close(); } catch (e) {} hoerRaum = null; }
     stillSeit = 0;
-    if (zustand.spricht) { zustand.spricht = false; senden({ art: "redet", spricht: false }); try { window.dispatchEvent(new CustomEvent("dma-selbst-spricht", { detail: { an: false } })); } catch (e) {} }
+    if (zustand.spricht) { zustand.spricht = false; senden({ art: "redet", spricht: false }); }
   }
 
   /* Den Raum wechseln — und dabei alles mitnehmen, was zu einem gehört. */
