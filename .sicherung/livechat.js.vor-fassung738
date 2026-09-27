@@ -3221,13 +3221,8 @@ window.LiveChat = (function () {
      ========================================================= */
   var telefonat = null;        /* { a: id, b: id, aName, bName } */
 
-  /* FASSUNG 738 — XANDER (Funk 153): „es steht ihnen eine Option zur Verfügung wo sie die normalen stadtteilnehmer
-     stumm schalten können dass sie sich auf das Spiel konzentrieren". Das Spiel setzt hier einen Filter: wen darf ich
-     hören? (nur auf diesem Gerät; die anderen hören weiter alle). */
-  var hoerFilter = null;
   function telefonatGeht(id) {
     /* Darf ich die Stimme von „id" hoeren? */
-    if (hoerFilter) { try { if (!hoerFilter(id)) return false; } catch (e) {} }
     if (!telefonat) return true;
     var ich = zustand.ichId;
     var drin = (ich === telefonat.a || ich === telefonat.b);
@@ -15651,7 +15646,6 @@ window.LiveChat = (function () {
     chatLeeren: chatLeeren,
     befehlsliste: befehlsliste,
     befehlsVorschlaege: befehlsVorschlaege,
-    hoerFilterSetzen: function (f) { hoerFilter = typeof f === "function" ? f : null; telefonatAnwenden(); },
     /* FASSUNG 736 — ein Effekt auf eine Person, ausgelöst vom Spiel (gehaltene Chat-Waffe), mit Trefferstelle.
        Derselbe Weg wie getippt („/hammer Bea") – keine zweite Sorte Effekt. */
     effektAuf: function (befehl, name, treff) {

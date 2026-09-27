@@ -49,26 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 737 — Meldungen für Entdeckung, Unzufriedenheit, Touristen, Angebote, Verkauf (Funk 155)",
+  stand: "Fassung 738 — Controller am Bild der Mitspieler, Nur Mitspieler hören (Funk 153)",
 
   inArbeit: [
-    { seit: "2026-09-27T04:52",
-      text: "Modulares Dorf, Verteidigung/Kaserne, Verträge – wartet auf Antworten zu den 15 Fragen im Dorf-Gesamtkonzept" },
-    { seit: "2026-09-27T04:52",
-      text: "Walkie 282/283/285 unbeantwortet (Anno-Bilder, Klassenwechsel, Leben aus)" },
-    { seit: "2026-09-27T04:52",
-      text: "Funk 152/153 Reste: Taschen-Kachel, Waffenrad mit Querleiste, Controller-Abzeichen, Postfach" },
+    { seit: "2026-09-27T04:58",
+      text: "Funk 153: Magic-Knopf mit Siri-Animation und eigenem Einstell-Menü, Galaxie-Farbe, Postfach aufräumen" },
+    { seit: "2026-09-27T04:58",
+      text: "Funk 152 Reste: Taschen-Kachel verständlich, Doppeltipp mit Schaufel = Werkzeugmenü" },
+    { seit: "2026-09-27T04:58",
+      text: "Modulares Dorf, Verteidigung/Kaserne, Verträge – wartet auf Antworten zu den 15 Fragen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T04:52",
+    { seit: "2026-09-27T04:58",
+      text: "Controller am Bild, Nur Mitspieler hören" },
+    { seit: "2026-09-27T04:58",
       text: "Meldungen: Entdeckung, Unzufriedenheit, Touristen, Angebote, Verkauf" },
-    { seit: "2026-09-27T04:52",
+    { seit: "2026-09-27T04:58",
       text: "Chat-Effekte halten, Treffer an der getippten Stelle, ×N-Zeilen" },
-    { seit: "2026-09-27T04:52",
+    { seit: "2026-09-27T04:58",
       text: "Rundenkampf: drei Runden, Kämpferfiguren" },
-    { seit: "2026-09-27T04:52",
-      text: "Jahreszeiten im Dorf mit Saison-Vorschau" },
   ],
 };

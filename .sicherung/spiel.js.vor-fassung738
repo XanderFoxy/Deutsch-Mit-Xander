@@ -4200,9 +4200,7 @@
           /* FASSUNG 682 — Chat-Mauer und Spaßwaffen */
           + '<div class="sp-sm-laut sp-sm-zeigen"><span>Im Chat</span>'
           + '<button type="button" data-s="zeigen" data-k="schutz" class="' + (z.schutz ? "sp-an" : "") + '" title="unfreundliche Chat-Effekte prallen an einer Mauer ab">Chat-Mauer</button>'
-          + '<button type="button" data-s="haltwahl" class="' + (S.halten ? "sp-an" : "") + '" title="ohne Mitspielen: eine eigene Waffe in die Hand nehmen">' + (S.halten ? "Waffe: " + esc(haltName()) : "Waffe halten") + "</button>"
-          /* FASSUNG 738 — Funk 153: die anderen stumm schalten, um sich aufs Spiel zu konzentrieren. */
-          + '<button type="button" data-s="nurspieler" class="' + (S.nurSpieler ? "sp-an" : "") + '" aria-pressed="' + S.nurSpieler + '" title="Beim Mitspielen nur die Mitspieler hören – die anderen sind nur für dich stumm">Nur Mitspieler hören</button></div>'
+          + '<button type="button" data-s="haltwahl" class="' + (S.halten ? "sp-an" : "") + '" title="ohne Mitspielen: eine eigene Waffe in die Hand nehmen">' + (S.halten ? "Waffe: " + esc(haltName()) : "Waffe halten") + "</button></div>"
           /* FASSUNG 683 — der letzte Knopf der Leiste ist frei belegbar. */
           + '<div class="sp-sm-laut sp-sm-zeigen sp-sm-makro"><span>Letzter Knopf</span>' + Object.keys(MAKROS).map(function (m) {
               return '<button type="button" data-s="makrowahl" data-m="' + m + '" class="' + (S.makro === m ? "sp-an" : "") + '">' + MAKROS[m] + "</button>"; }).join("") + "</div>"; })()
@@ -4321,12 +4319,6 @@
         : k.dataset.k === "level"
         ? (zNeu.level ? "⭐ Dein Level sehen jetzt alle – auch wer nicht mitspielt." : "Dein Level sieht jetzt nur, wer mitspielt.")
         : (zNeu.tiere ? "🐾 Deine Tiere sind jetzt immer dabei – friedlich, für alle." : "Deine Tiere zeigen sich nur noch im Spiel."));
-    } else if (s === "nurspieler") {
-      S.nurSpieler = !S.nurSpieler;
-      try { localStorage.setItem("dma_spiel_nur_spieler", S.nurSpieler ? "1" : "0"); } catch (e) {}
-      hoerFilterPflegen(true); zeichnen(); schnellZeichnen(true);
-      hinweis(S.nurSpieler ? "🎮 Du hörst beim Mitspielen nur noch die Mitspieler – die anderen sind für dich stumm (sie hören dich weiter)." : "🔊 Du hörst wieder alle im Raum.");
-      return;
     } else if (s === "haltwahl") {
       haltenMenue();
     } else if (s === "klasse") {
@@ -4942,33 +4934,9 @@
     platzKinderWaechter = new MutationObserver(function () { zeichnen(); platzWaechter.takeRecords(); platzKinderWaechter.takeRecords(); });
     platzKinderWaechter.observe(reihe, { childList: true });
   }
-  /* FASSUNG 738 — XANDER (Funk 153): „Die Leute die im Chat sichtbar sind falls Sie in dem Spielmodus drin sind sollen
-     denselben kleinen Controller … dargestellt haben an ihrem Profilbild … dass die anderen stadtteilnehmer sehen sie
-     sind gerade in dem Spiel". Ein kleiner grüner Controller oben links am Bild – für alle sichtbar, auch für die, die
-     nicht mitspielen. */
-  var SPIELT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#2fae62" stroke="#fff" stroke-width="1.6"/>'
-    + '<path d="M7.6 8.4 H16.4 C18.5 8.4 19.8 10.6 20.1 13.4 C20.4 16 19 17.3 17.5 16.6 L15.3 14.7 H8.7 L6.5 16.6 C5 17.3 3.6 16 3.9 13.4 C4.2 10.6 5.5 8.4 7.6 8.4 Z" fill="#fff"/>'
-    + '<path d="M8.2 10.6 V13.4 M6.8 12 H9.6" stroke="#1f6b3c" stroke-width="1.3" stroke-linecap="round"/><circle cx="15.8" cy="11.2" r=".85" fill="#e2403a"/><circle cx="17.3" cy="12.7" r=".85" fill="#3a8dde"/></svg>';
-  var LEISE_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#5a6070" stroke="#fff" stroke-width="1.6"/>'
-    + '<path d="M5.5 10 H8.5 L12.5 6.5 V17.5 L8.5 14 H5.5 Z" fill="#fff"/><path d="M15 9.5 L19.5 14.5 M19.5 9.5 L15 14.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>';
-  function spieltChat(chatId) {
-    if (!chatId || istPuppe(chatId) || /^sparring:/.test(chatId)) return false;
-    var s = chatId === meineChatId() ? S.ich : S.stand[spielIdVon(chatId)];
-    return Boolean(s && s.mitspielen);
-  }
-  try { S.nurSpieler = localStorage.getItem("dma_spiel_nur_spieler") === "1"; } catch (e) { S.nurSpieler = false; }
-  /* Nur Mitspieler hören: gilt, solange ich selbst mitspiele. Der Filter fragt bei jedem Ton neu. */
-  function hoerFilterPflegen(zwingend) {
-    var an = Boolean(S.nurSpieler && spielSichtbar());
-    var key = an ? plaetze().filter(function (p) { return !p.leer && !p.ich && spieltChat(p.id); }).map(function (p) { return p.id; }).join(",") : "";
-    if (!zwingend && S.hoerKey === (an ? "an:" + key : "aus")) return;
-    S.hoerKey = an ? "an:" + key : "aus";
-    try { var l = LC(); if (l && l.hoerFilterSetzen) l.hoerFilterSetzen(an ? function (id) { return id === meineChatId() || spieltChat(id); } : null); } catch (e) {}
-  }
   function zeichnen() {
     var reihe = document.getElementById("lcPlaetze");
     if (!reihe) return;
-    hoerFilterPflegen(false);
     if (!spielSichtbar()) document.body.classList.remove("sp-ich-nebel");
     platzWaechterSetzen(reihe);
     missionPruefen();
@@ -4991,13 +4959,6 @@
       var sid = chatId ? spielIdVon(chatId) : "";
       var s = sid ? S.stand[sid] : null;
       var kreis = el.querySelector(".lc-kreis");
-      if (kreis) {
-        var spielt = Boolean(chatId && spieltChat(chatId));
-        schmuck(el, "sp-spielt", spielt, kreis, SPIELT_SVG);
-        var sp = el.querySelector(".sp-spielt"); if (sp) sp.title = (s && s.name ? s.name + " spielt" : "spielt") + " gerade mit";
-        var leise = Boolean(chatId && S.nurSpieler && spielSichtbar() && chatId !== meineChatId() && !spielt && !istPuppe(chatId) && !/^sparring:/.test(chatId));
-        schmuck(el, "sp-leise", leise, kreis, LEISE_SVG);
-      }
       /* FUNK 100 — im Übungsduell zeigt der eigene Balken die
          Übungs-Lebenspunkte (die echten bleiben unberührt). */
       var uebungIch = Boolean(S.uebung && chatId && chatId === meineChatId());
@@ -13722,7 +13683,7 @@
       eigeneGegenwehr: eigeneGegenwehr, tierWechseln: tierWechseln, slots: slots, schnellMenueHtml: schnellMenueHtml,
       krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, zauberStart: zauberStart, fuettern: fuettern, tierZustandPflegen: tierZustandPflegen, faehigZeigen: faehigZeigen, FAEHIG: FAEHIG, tierLaut: tierLaut, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
-      dorfMeldungenPruefen: dorfMeldungenPruefen, sprung: function () { return SPRUNG; }, spieltChat: spieltChat, hoerFilterPflegen: hoerFilterPflegen, handel: function () { return HANDEL; }, sprungOeffnen: sprungOeffnen,
+      dorfMeldungenPruefen: dorfMeldungenPruefen, sprung: function () { return SPRUNG; }, handel: function () { return HANDEL; }, sprungOeffnen: sprungOeffnen,
       haltPflegen: haltPflegen, haltenSetzen: haltenSetzen, halten: function () { return S.halten; },
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, chatWaffeZeigen: chatWaffeZeigen, tierReagiert: tierReagiert, tiereSpielen: tiereSpielen, handelLaden: handelLaden, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,

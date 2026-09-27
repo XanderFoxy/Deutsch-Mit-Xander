@@ -2641,10 +2641,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-sprung-warnung { background: #8a5a0c; }
 .sp-sprung-ziel { animation: spSprungZiel 1.6s ease-out; border-radius: 12px; }
 @keyframes spSprungZiel { 0%, 30% { box-shadow: 0 0 0 3px #f2c230, 0 0 14px rgba(242, 194, 48, .8); } 100% { box-shadow: 0 0 0 0 rgba(242, 194, 48, 0); } }
-/* FASSUNG 738 — Funk 153: grüner Controller am Bild aller Mitspieler; graues „stumm für dich" bei den anderen. */
-.sp-spielt, .sp-leise { position: absolute; z-index: 6; pointer-events: none; }
-.sp-spielt svg, .sp-leise svg { position: absolute; width: 30%; height: 30%; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, .35)); }
-.sp-spielt svg { left: -6%; top: -6%; }
-.sp-leise svg { right: -6%; top: -6%; }
-/* Die Zeile „Letzter Knopf" hatte sieben Knöpfe in einer Reihe – die Wörter liefen ineinander. Jetzt höchstens drei je Reihe. */
-.sp-schnell .sp-sm-makro button, .sp-schnell .sp-sm-zeigen button { flex: 1 1 30%; overflow-wrap: anywhere; }
