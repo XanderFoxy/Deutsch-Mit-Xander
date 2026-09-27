@@ -33926,15 +33926,6 @@
        greift man zuerst. Bei einem fremden gibt es nichts zu wechseln,
        dort steht die Lupe an erster Stelle. */
     if (eigen) knopf("\ud83d\uddbc\ufe0f", "Anderes Bild", () => livechatBildWaehler());
-    /* FASSUNG 731 — XANDER (Funk 176): „wenn man eine Waffe … wählt dass man die dort so halten kann so lange bis man sie
-       wieder abwählt". Auf dem eigenen Bild: eine eigene Waffe in die Hand nehmen (oder weglegen). */
-    try {
-      const sp = window.DMA_SPIEL;
-      if (eigen && sp && sp.haltenMoeglich && sp.haltenMoeglich()) {
-        if (sp.haelt()) knopf(sp.haltZeichen(), "Waffe weglegen", () => { try { sp.haltenAblegen(); } catch (e) {} });
-        knopf(sp.haltZeichen(), sp.haelt() ? "Andere Waffe" : "Waffe halten", () => { try { sp.haltenMenue(); } catch (e) {} });
-      }
-    } catch (e) {}
     knopf("\ud83d\udd0d", "Gro\u00df zeigen", () => {
       try { LiveChat.grossZeigen(platz.dataset.lcId || ""); } catch (e) {}
     });

@@ -231,8 +231,8 @@ const sage = (gut, was, zusatz) => {
   sage(h5.wz === "duenger" && h5.leiste, "„Düngen“ nimmt den Düngersack als Werkzeug", JSON.stringify(h5));
   await pg.evaluate(() => { const Q = window.DMA_SPIEL.pruef; Q.grabenUmschalten(false); const S = Q.zustand(); S.schnellMenue = false; Q.schnellZeichnen(true); });
 
-  console.log("\nWAFFE IM CHAT HALTEN (ohne Mitspielen) – ab Fassung 731 statt „Spaßwaffen“\n");
-  await pg.evaluate(() => { const Q = window.DMA_SPIEL.pruef, S = Q.zustand(); S.ich.mitspielen = false; S.stand[S.ich.id] = Object.assign({}, S.stand[S.ich.id], { mitspielen: false }); S.ich.waffen = S.ich.waffen.concat(["bazooka"]); Q.haltenSetzen("bazooka"); window.__raus.length = 0; });
+  console.log("\nSPASSWAFFEN IM CHAT (ohne Mitspielen)\n");
+  await pg.evaluate(() => { const Q = window.DMA_SPIEL.pruef, S = Q.zustand(); S.ich.mitspielen = false; S.stand[S.ich.id] = Object.assign({}, S.stand[S.ich.id], { mitspielen: false }); S.chatWaffe = true; S.waffe = "bazooka"; S.ich.waffen = S.ich.waffen.concat(["bazooka"]); window.__raus.length = 0; });
   await tick(900);
   const vorher = await pg.evaluate(() => window.LiveChat.lage().plaetze.find((p) => p.id === "ich").nummer);
   await pg.evaluate(() => document.querySelector('#lcPlaetze .lc-platz[data-lc-id="cem"]').scrollIntoView({ block: "nearest" }));
@@ -240,15 +240,15 @@ const sage = (gut, was, zusatz) => {
   const cem = await seite("cem");
   await pg.touchscreen.tap(cem.x, cem.y);
   await tick(250);
-  const c1 = await pg.evaluate(() => { const g = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"] .sp-halt .sp-halt-geraet'); return { gross: g ? Math.round(Math.max(g.getBoundingClientRect().width, g.getBoundingClientRect().height)) : 0, raus: window.__raus.filter((m) => m.ereignis === "chatwaffe").map((m) => m.waffe + ">" + m.zielChat) }; });
+  const c1 = await pg.evaluate(() => { const g = document.querySelector(".sp-chatwaffe"); return { gross: g ? Math.round(g.getBoundingClientRect().width) : 0, raus: window.__raus.filter((m) => m.ereignis === "chatwaffe").map((m) => m.waffe + ">" + m.zielChat) }; });
   await tick(1500);
   const c2 = await pg.evaluate(() => ({ weg: Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="cem"] .lc-kreis.sp-chat-weg')), platz: window.LiveChat.lage().plaetze.find((p) => p.id === "ich").nummer }));
-  sage(c1.raus.join() === "bazooka>cem" && c1.gross >= 20, "Tipp auf Cem: die gehaltene Bazooka am Rand des eigenen Bildes feuert, der Schuss geht an alle", JSON.stringify(c1));
+  sage(c1.raus.join() === "bazooka>cem" && c1.gross >= 80, "Tipp auf Cem: die Bazooka erscheint groß am eigenen Bild, der Schuss geht an alle", JSON.stringify(c1));
   sage(c2.weg && c2.platz === vorher, "Cem verschwindet kurz – kein Platztausch", JSON.stringify(c2));
   await tick(1600);
   const angek = await pg.evaluate(() => { window.DMA_SPIEL.empfangen({ ereignis: "chatwaffe", von: "cem", zielChat: "bea", waffe: "zwille" }); return true; });
   await tick(400);
-  sage(await pg.evaluate(() => Boolean(document.querySelector('#lcPlaetze .lc-platz[data-lc-id="cem"] .sp-halt-kurz'))), "auch wer nicht mitspielt, sieht den fremden Schuss: Cem hält kurz die Zwille (Nachricht „chatwaffe“)");
+  sage(await pg.evaluate(() => Boolean(document.querySelector(".sp-chatwaffe"))), "auch wer nicht mitspielt, sieht einen fremden Spaßschuss (Nachricht „chatwaffe“)");
   await tick(2000);
 
   console.log("\nCHAT-MAUER UND TIERE IM CHAT\n");

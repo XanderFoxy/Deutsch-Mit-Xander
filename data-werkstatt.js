@@ -49,24 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 730 — Städte als Kette: ‹ › durch die Dörfer im Raum, aus dem Profil in die Stadt, plündern",
+  stand: "Fassung 731 — eine Waffe im Chat halten: am Bildrand, zielt aufs Ziel, trifft die getippte Stelle; Tomahawk-Fehler behoben",
 
   inArbeit: [
-    { seit: "2026-09-27T03:32",
-      text: "Dorf-Gesamtkonzept – Funk 177" },
-    { seit: "2026-09-27T03:32",
-      text: "Waffen im Chat halten und gerichtet feuern (Design-Prüfung fertig, Umsetzung läuft) – Funk 176" },
+    { seit: "2026-09-27T03:41",
+      text: "Dorf-Gesamtkonzept wird auf Stand 731 gebracht – Funk 177" },
+    { seit: "2026-09-27T03:41",
+      text: "Chat-Effekt-Waffen (Hammer usw.) halten, Trefferstelle für Chat-Effekte – Funk 176, Phase 2" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T03:32",
-      text: "‹ › blättert durch die Dörfer aller im Raum" },
-    { seit: "2026-09-27T03:32",
-      text: "Fremdes Dorf gemalt, Tipp aufs Haus: Stufe und Plündern" },
-    { seit: "2026-09-27T03:32",
-      text: "Profil → „Stadt ansehen“, Nachbarliste → „Stadt ansehen“" },
-    { seit: "2026-09-27T03:32",
-      text: "Fassung 729: Meldungen oben mit Sprung ins Dorf" },
+    { seit: "2026-09-27T03:41",
+      text: "Spaßwaffen-Schalter weg – kein Tomahawk mehr aus dem Nichts" },
+    { seit: "2026-09-27T03:41",
+      text: "Waffe halten bis zum Weglegen, am Rand des Bildes, Gesicht frei" },
+    { seit: "2026-09-27T03:41",
+      text: "Zielt genau zum anderen, Schuss aus der Mündung an die getippte Stelle" },
+    { seit: "2026-09-27T03:41",
+      text: "Fassung 730: Städte als Kette, aus dem Profil in die Stadt" },
   ],
 };

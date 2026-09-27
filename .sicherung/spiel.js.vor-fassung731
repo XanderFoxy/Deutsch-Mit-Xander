@@ -1109,12 +1109,7 @@
   /* Aufgerufen vom Tipp auf einen Platz (app.js). true = erledigt. */
   function tippAufPlatz(knopf, p, ev) {
     /* FASSUNG 682 — Spaßwaffen im Chat: wer nicht mitspielt, schießt – kein Platztausch. */
-    /* FASSUNG 731 — mit gehaltener Waffe (ohne Mitspielen): Tipp auf eine Person schießt dorthin, wo getippt wurde; Tipp aufs
-       eigene Bild legt die Waffe ab. */
-    if (S.halten && S.bereit && !spielSichtbar() && p && !p.leer && p.id && !istPuppe(p.id)) {
-      if (p.ich) { haltenAblegen(); return true; }
-      haltSchuss(knopf, p, ev); return true;
-    }
+    if (S.chatWaffe && S.bereit && !spielSichtbar() && p && !p.leer && !p.ich && p.id && !istPuppe(p.id)) { chatWaffeSchiessen(p.id); return true; }
     /* FASSUNG 661 — ein Fundstück auf dem Platz: aufheben statt hinsetzen. */
     if (knopf && knopf.querySelector && knopf.querySelector(".sp-fundsack") && spielSichtbar()) { fundHeben(knopf); return true; }
     /* FASSUNG 683 — XANDER: „dass die Hühner, wenn sie auf dem Feld Eier legen, dass man die Eier einsammeln kann". */
@@ -1402,7 +1397,7 @@
     return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 };
   }
   /* Zeigt das Geschoss; gibt die Flugzeit zurück. */
-  function geschossZeigen(vonChat, zielChat, waffe, dx, dy, farbe, schnell, start) {
+  function geschossZeigen(vonChat, zielChat, waffe, dx, dy, farbe, schnell) {
     var w = WAFFEN[waffe] || WAFFEN.bogen;
     /* FUNK 106 — Blitztrank: halbe Flugzeit. */
     if (schnell === undefined) schnell = vonChat === meineChatId() && wirkt(S.ich, "tempo") > 0;
@@ -1413,8 +1408,6 @@
     var dmn = "";
     try { dmn = (vonChat === meineChatId() ? wirkt(S.ich, "daemon") > 0 : Boolean((S.stand[spielIdVon(vonChat)] || {}).daemon)) ? " sp-g-daemon" : ""; } catch (e) {}
     if (!a) a = { x: z.x, y: Math.max(0, z.y - 260), r: 0 };
-    /* FASSUNG 731 — mit gehaltener Waffe startet der Schuss an der Mündung, nicht in der Mitte des eigenen Gesichts. */
-    if (start && isFinite(start.x) && isFinite(start.y)) a = { x: start.x, y: start.y, r: 0 };
     var zx = z.x + (Number(dx) || 0) * z.r, zy = z.y + (Number(dy) || 0) * z.r;
     var winkel = Math.atan2(zy - a.y, zx - a.x) * 180 / Math.PI;
     ton(w.ton, 0.5);
@@ -4199,7 +4192,7 @@
           /* FASSUNG 682 — Chat-Mauer und Spaßwaffen */
           + '<div class="sp-sm-laut sp-sm-zeigen"><span>Im Chat</span>'
           + '<button type="button" data-s="zeigen" data-k="schutz" class="' + (z.schutz ? "sp-an" : "") + '" title="unfreundliche Chat-Effekte prallen an einer Mauer ab">Chat-Mauer</button>'
-          + '<button type="button" data-s="haltwahl" class="' + (S.halten ? "sp-an" : "") + '" title="ohne Mitspielen: eine eigene Waffe in die Hand nehmen">' + (S.halten ? "Waffe: " + esc((WAFFEN[S.halten.waffe] || {}).name || "") : "Waffe halten") + "</button></div>"
+          + '<button type="button" data-s="chatwaffe" class="' + (S.chatWaffe ? "sp-an" : "") + '" title="ohne Mitspielen: Tipp aufs Bild schießt zum Spaß mit deiner Waffe">Spaßwaffen</button></div>'
           /* FASSUNG 683 — der letzte Knopf der Leiste ist frei belegbar. */
           + '<div class="sp-sm-laut sp-sm-zeigen sp-sm-makro"><span>Letzter Knopf</span>' + Object.keys(MAKROS).map(function (m) {
               return '<button type="button" data-s="makrowahl" data-m="' + m + '" class="' + (S.makro === m ? "sp-an" : "") + '">' + MAKROS[m] + "</button>"; }).join("") + "</div>"; })()
@@ -4318,8 +4311,10 @@
         : k.dataset.k === "level"
         ? (zNeu.level ? "⭐ Dein Level sehen jetzt alle – auch wer nicht mitspielt." : "Dein Level sieht jetzt nur, wer mitspielt.")
         : (zNeu.tiere ? "🐾 Deine Tiere sind jetzt immer dabei – friedlich, für alle." : "Deine Tiere zeigen sich nur noch im Spiel."));
-    } else if (s === "haltwahl") {
-      haltenMenue();
+    } else if (s === "chatwaffe") {
+      S.chatWaffe = !S.chatWaffe;
+      try { localStorage.setItem("dma_spiel_chatwaffe", S.chatWaffe ? "1" : "0"); } catch (e) {}
+      hinweis(S.chatWaffe ? "🎯 Spaßwaffen an: ohne Mitspielen schießt ein Tipp aufs Bild mit deiner angelegten Waffe – nur zum Spaß, ohne Punkte, kein Platztausch." : "Spaßwaffen aus – ein Tipp aufs Bild tauscht wieder den Platz.");
     } else if (s === "klasse") {
       S.schnellReiter = "klasse";
     } else if (s === "kampfklasse") {
@@ -5764,7 +5759,6 @@
      NACH DEM PLATZWECHSEL: die Mauer bleibt zurück (Funk 84)
      --------------------------------------------------------------- */
   function platzGewechselt() {
-    try { haltPflegen(); requestAnimationFrame(haltPflegen); } catch (e) {}
     /* FUNK 111 — wer ankommt, prüft, ob dort eine Falle liegt. Kurz
        warten: der neue Platz muss erst in der Liste stehen. */
     setTimeout(fallePruefen, 350);
@@ -10792,170 +10786,50 @@
   /* Was durch die Mauer darf: alles Liebe, Heilende, Putzende und Harmlose
      (Klassen aus lcAmPlatz in app.js). Alles andere prallt ab. */
   var CHAT_FREUNDLICH = /applaus|ballon|blume|kuss|streichel|zherz|herz|pflaster|putzen|wisch|wasch|muenz|zgeld|zzucker|kopfhoerer|lc-hut|gong|bongo|birne|zaubertrick|schneekugel|gesicht|lc-zei|sobri|umarm|geschenk|wohlig|konfetti|krone/;
-  /* ---------------------------------------------------------------
-     FASSUNG 731 — EINE WAFFE IM CHAT HALTEN
-     XANDER (Funk 176): „ich habe festgestellt dass ich im Chat eine Waffe habe die ich gar nicht angewählt habe z.B
-     Tomahawk aus dem Spiel … was ich meinte war das wenn man eine Waffe … wählt dass man die dort so halten kann so lange
-     bis man sie wieder abwählt … ich könnte mir zwar vorstellen dass ich die Waffen die ich im Spiel habe mit meinem
-     waffenring irgendwie aufrufen kann und die Leute im Chat auch damit ärgern kann aber dann dann muss das so sein dass
-     ich realistisch die Waffen halte und nicht einfach nur deine Mama so über meinen Kopf klebt … wenn ich eine Plasma
-     können ohne habe dann muss das so aussehen als wenn die so waagerecht aus meinem Bild rauskommt in die Richtung wo
-     der andere Sitze entweder schräg nach oben Schreck nach unten oder nach gerade nach rechts gerade nach links".
-     Design-Prüfung: der alte Schalter „Spaßwaffen" nahm still die Spielwaffe (daher der Tomahawk) und legte das Geschoss
-     groß über das eigene Gesicht. Jetzt wählt man ausdrücklich eine eigene Waffe („Waffe halten"); sie hängt als Gerät
-     am RAND des eigenen Bildes (das Gesicht bleibt frei), zeigt auf das Ziel – schräg, waagerecht, nach oben oder unten,
-     nach links gespiegelt –, feuert mit Rückstoß und Mündungsblitz, und das Geschoss fliegt aus der Mündung genau an die
-     getippte Stelle. Ein Tipp aufs eigene Bild legt sie ab. Nur ohne Mitspielen; kein Schaden, keine Punkte. Höchstens
-     8 Schüsse je Person in 30 s.
-     --------------------------------------------------------------- */
-  try { localStorage.removeItem("dma_spiel_chatwaffe"); } catch (e) {}
-  S.chatWaffe = false;
-  try { var haltMerk = localStorage.getItem("dma_chat_halten"); if (haltMerk && WAFFEN[haltMerk]) S.halten = { waffe: haltMerk, dreh: -50 }; } catch (e) {}
-  var HALT_FAMILIE = { zwille: "zwille", bogen: "bogen", armbrust: "bogen", laser: "gewehr", mg: "gewehr", zielfernrohr: "gewehr", lasersalve: "gewehr",
-    doppellaser: "gewehr", streulaser: "gewehr", plasmastrahl: "plasma", bazooka: "rohr", eierwerfer: "rohr", huehnerwerfer: "rohr", kuckucksuhr: "rohr", kugelblitz: "kugel" };
-  /* Das Gerät in der Hand: Griff links (x = 0), Mündung rechts (x = 40, y = 0). */
-  function waffeGeraetSvg(w) {
-    var f = HALT_FAMILIE[w] || "wurf", hand = '<ellipse cx="4.5" cy="1.5" rx="4" ry="3.4" fill="#e7b690" stroke="#8a5a3a" stroke-width=".8"/><path d="M2 -.5 H7 M2 1.5 H7.5 M2.2 3.4 H6.8" stroke="#b07a55" stroke-width=".6"/>';
-    var body = "";
-    if (f === "zwille") body = '<path d="M4 1 L18 1 M18 1 L30 -7 M18 1 L30 9" stroke="#7a4a22" stroke-width="3" stroke-linecap="round" fill="none"/><path d="M30 -7 Q38 1 30 9" stroke="#c23b3b" stroke-width="1.2" fill="none"/><circle cx="36" cy="1" r="2.4" fill="#8f8f8f"/>';
-    else if (f === "bogen") body = w === "armbrust"
-      ? '<rect x="4" y="-1.5" width="30" height="4" rx="1.5" fill="#6b4521"/><path d="M30 -10 Q36 1 30 12" stroke="#4a3a2a" stroke-width="2.4" fill="none"/><path d="M30 -10 L22 1 L30 12" stroke="#ddd" stroke-width=".7" fill="none"/><path d="M22 1 H40" stroke="#555" stroke-width="1.2"/><path d="M38 -1 L41 1 L38 3 Z" fill="#555"/>'
-      : '<path d="M14 -11 Q30 1 14 13" stroke="#7a4a22" stroke-width="2.4" fill="none"/><path d="M14 -11 L8 1 L14 13" stroke="#eee" stroke-width=".7" fill="none"/><path d="M8 1 H40" stroke="#6b4521" stroke-width="1.1"/><path d="M37 -1.5 L41 1 L37 3.5 Z" fill="#666"/>';
-    else if (f === "gewehr") body = '<rect x="4" y="-2" width="24" height="7" rx="2" fill="#3a3f48"/><rect x="26" y="-.6" width="14" height="3" rx="1" fill="#2a2e35"/><rect x="10" y="4" width="4" height="7" rx="1" fill="#2a2e35"/>'
-      + (w === "zielfernrohr" ? '<rect x="12" y="-6.5" width="12" height="4" rx="2" fill="#1f2328"/><circle cx="24" cy="-4.5" r="1.6" fill="#7ad0ff"/>' : '<rect x="14" y="-1" width="8" height="2" rx="1" fill="' + (w === "mg" ? "#777" : "#ff4a4a") + '"/>');
-    else if (f === "plasma") body = '<rect x="4" y="-4" width="22" height="10" rx="3" fill="#2d2a4a"/><rect x="24" y="-2" width="16" height="6" rx="2" fill="#3b3670"/><circle cx="14" cy="1" r="3.2" fill="#8fe8ff"/><path d="M26 -2 V4 M30 -2 V4 M34 -2 V4" stroke="#8fe8ff" stroke-width="1"/><rect x="10" y="6" width="4" height="6" rx="1" fill="#2d2a4a"/>';
-    else if (f === "rohr") body = '<rect x="2" y="-4.5" width="38" height="10" rx="4" fill="#556b3a"/><rect x="36" y="-5.5" width="4" height="12" rx="1.5" fill="#3a4a28"/><rect x="12" y="5" width="4" height="6" rx="1" fill="#3a4a28"/>';
-    else if (f === "kugel") body = '<circle cx="30" cy="1" r="8" fill="#b9f2ff" opacity=".85"/><path d="M26 -3 L31 1 L27 3 L33 7" stroke="#fff" stroke-width="1.2" fill="none"/>';
-    else body = '<svg x="18" y="-10" width="22" height="22" viewBox="-12 -12 24 24">' + geschossSvg(w).replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "") + "</svg>";
-    return '<svg viewBox="0 -14 42 28" aria-hidden="true">' + body + hand + "</svg>";
-  }
-  function haltenSetzen(w) {
-    if (!WAFFEN[w]) return;
-    S.halten = { waffe: w, dreh: -50 };
-    try { localStorage.setItem("dma_chat_halten", w); } catch (e) {}
-    ton("holzklopf", 0.3);
-    haltenWahlZu();
-    haltPflegen();
-    hinweis("Du hältst " + WAFFEN[w].name + ". Tippe auf eine Person, um sie zu treffen – dort, wo du tippst. Tipp auf dein eigenes Bild legt die Waffe weg.");
-  }
-  function haltenAblegen() {
-    if (!S.halten) return;
-    S.halten = null;
-    try { localStorage.removeItem("dma_chat_halten"); } catch (e) {}
-    ton("swoosh", 0.25);
-    haltenWahlZu();
-    haltPflegen();
-    hinweis("Waffe weggelegt – ein Tipp aufs Bild tauscht wieder den Platz.");
-  }
-  function haltenWahlZu() { var m = document.querySelector(".sp-halt-wahl"); if (m) m.remove(); }
-  function haltenMenue() {
-    haltenWahlZu();
-    if (!S.bereit || !S.ich) { hinweis("Das Spiel lädt noch – gleich noch einmal."); return; }
-    if (spielSichtbar()) { hinweis("Beim Mitspielen nimmst du deine Waffe im Ring (langer Druck aufs eigene Bild)."); return; }
-    var liste = (S.ich.waffen || []).filter(function (w) { return WAFFEN[w]; });
-    if (liste.indexOf("kartoffel") < 0) liste.unshift("kartoffel");
-    var m = document.createElement("div");
-    m.className = "sp-halt-wahl"; m.setAttribute("role", "dialog"); m.setAttribute("aria-label", "Waffe halten");
-    m.innerHTML = '<div class="sp-halt-wahl-kopf"><b>Waffe halten</b><button type="button" data-h="zu" aria-label="Schließen">✕</button></div>'
-      + '<div class="sp-halt-wahl-liste">' + liste.map(function (w) {
-        return '<button type="button" data-h="w" data-w="' + w + '" class="' + (S.halten && S.halten.waffe === w ? "sp-an" : "") + '"><i>' + waffeGeraetSvg(w) + "</i><span>" + esc(WAFFEN[w].name) + "</span></button>";
-      }).join("") + "</div>"
-      + (S.halten ? '<button type="button" class="sp-halt-weg" data-h="ab">Waffe weglegen</button>' : "")
-      + '<p class="sp-sm-klein">Nur zum Spaß: kein Schaden, keine Punkte. Wer die Chat-Mauer an hat, bei dem prallt es ab.</p>';
-    m.addEventListener("click", function (ev) {
-      var b = ev.target.closest("button"); if (!b) return;
-      if (b.dataset.h === "zu") haltenWahlZu(); else if (b.dataset.h === "ab") haltenAblegen(); else if (b.dataset.h === "w") haltenSetzen(b.dataset.w);
-    });
-    document.body.appendChild(m);
-  }
-  /* Die gehaltene Waffe hängt am eigenen Platz (am Rand des Bildes) und zieht bei jedem Platzwechsel sofort mit. */
-  function haltPflegen() {
-    var da = [].slice.call(document.querySelectorAll(".sp-halt:not(.sp-halt-kurz)"));
-    var el = S.halten && S.bereit && !spielSichtbar() && drin() ? platzElVon(meineChatId()) : null;
-    /* Der eigene Platz liegt beim Halten vorn – sonst verschwände die Waffe unter dem Bild des Nachbarn. */
-    [].forEach.call(document.querySelectorAll(".sp-haelt-platz"), function (x) { if (x !== el) x.classList.remove("sp-haelt-platz"); });
-    if (!el) { da.forEach(function (x) { x.remove(); }); return; }
-    el.classList.add("sp-haelt-platz");
-    var h = da.filter(function (x) { return x.parentNode === el; })[0];
-    da.forEach(function (x) { if (x !== h) x.remove(); });
-    if (!h || h.dataset.w !== S.halten.waffe) {
-      if (h) h.remove();
-      h = document.createElement("div");
-      h.className = "sp-halt"; h.dataset.w = S.halten.waffe;
-      h.innerHTML = '<div class="sp-halt-arm"><div class="sp-halt-geraet">' + waffeGeraetSvg(S.halten.waffe) + '</div><i class="sp-halt-blitz"></i></div>';
-      el.appendChild(h);
-    }
-    haltAusrichten(h, el, S.halten.dreh);
-  }
-  function haltAusrichten(h, el, dreh) {
-    var kreis = el.querySelector(".lc-kreis") || el, a = el.getBoundingClientRect(), k = kreis.getBoundingClientRect();
-    h.style.setProperty("--cx", (k.left - a.left + k.width / 2).toFixed(1) + "px");
-    h.style.setProperty("--cy", (k.top - a.top + k.height / 2).toFixed(1) + "px");
-    h.style.setProperty("--r", (k.width / 2).toFixed(1) + "px");
-    h.style.setProperty("--dreh", dreh.toFixed(1) + "deg");
-    h.classList.toggle("sp-halt-links", Math.abs(dreh) > 90);
-  }
-  /* Wo die Mündung gerade ist (Bildschirm-Punkt): Mitte + 1,67 r in Blickrichtung. */
-  function haltMuendung(chatId, dreh) {
-    var a = mittelpunkt(chatId);
-    if (!a) return null;
-    var rad = dreh * Math.PI / 180, l = a.r * 1.67;
-    return { x: a.x + Math.cos(rad) * l, y: a.y + Math.sin(rad) * l };
-  }
-  function haltSchuss(knopf, p, ev) {
-    if (S.stillstand) { hinweis("🕊️ Waffenstillstand – die Tafel ist offen."); return; }
-    var jetzt = Date.now();
-    if (jetzt - (S.chatWaffeZeit || 0) < 1400) return;
-    S.haltZiele = S.haltZiele || {};
-    var liste = (S.haltZiele[p.id] || []).filter(function (t) { return jetzt - t < 30000; });
-    if (liste.length >= 8) { hinweis("Genug geärgert – " + (p.name || "diese Person") + " hat jetzt kurz Ruhe."); return; }
-    liste.push(jetzt); S.haltZiele[p.id] = liste; S.chatWaffeZeit = jetzt;
-    var kreis = knopf.querySelector(".lc-kreis") || knopf, r = kreis.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    var x = ev && typeof ev.clientX === "number" && ev.clientX ? ev.clientX : cx, y = ev && typeof ev.clientY === "number" && ev.clientY ? ev.clientY : cy;
-    var dx = Math.round(Math.max(-1, Math.min(1, (x - cx) / (r.width / 2))) * 100) / 100, dy = Math.round(Math.max(-1, Math.min(1, (y - cy) / (r.height / 2))) * 100) / 100;
-    var n = { ereignis: "chatwaffe", von: meineChatId(), zielChat: p.id, waffe: S.halten.waffe, dx: dx, dy: dy, farbe: S.laserfarbe };
-    senden(n);
-    chatWaffeZeigen(n);
-  }
   function chatWaffeZeigen(n) {
     var a = mittelpunkt(n.von), z = mittelpunkt(n.zielChat), w = WAFFEN[n.waffe] ? n.waffe : "kartoffel";
     if (!z) return;
-    var dx = Math.max(-1, Math.min(1, Number(n.dx) || 0)), dy = Math.max(-1, Math.min(1, Number(n.dy) || 0));
-    var zx = z.x + dx * z.r, zy = z.y + dy * z.r;
-    var dreh = a ? Math.atan2(zy - a.y, zx - a.x) * 180 / Math.PI : -50;
-    var zielEl = platzElVon(n.zielChat), vonEl = platzElVon(n.von);
+    var zielEl = platzElVon(n.zielChat);
     S.chatTonFrei = true;
     try {
-      /* Das Gerät am Rand des Schützen dreht sich zum Ziel – beim eigenen die gehaltene Waffe, bei anderen kurz eingeblendet. */
-      var h = null;
-      if (n.von === meineChatId() && S.halten) { S.halten.dreh = dreh; haltPflegen(); h = vonEl && vonEl.querySelector(".sp-halt:not(.sp-halt-kurz)"); }
-      if (!h && vonEl) {
-        h = document.createElement("div");
-        h.className = "sp-halt sp-halt-kurz"; h.dataset.w = w;
-        h.innerHTML = '<div class="sp-halt-arm"><div class="sp-halt-geraet">' + waffeGeraetSvg(w) + '</div><i class="sp-halt-blitz"></i></div>';
-        vonEl.appendChild(h); haltAusrichten(h, vonEl, dreh);
-        setTimeout(function () { h.remove(); }, 1900);
+      /* Die Waffe groß am Schützen – sie zielt, dann geht der Schuss los. */
+      if (a) {
+        var g = document.createElement("div");
+        g.className = "sp-chatwaffe";
+        g.style.left = a.x + "px"; g.style.top = a.y + "px";
+        g.style.setProperty("--gr", Math.round(a.r * 2.6) + "px");
+        g.style.setProperty("--dreh", Math.round(Math.atan2(z.y - a.y, z.x - a.x) * 180 / Math.PI) + "deg");
+        g.innerHTML = geschossSvg(w, n.farbe || S.laserfarbe);
+        document.body.appendChild(g);
+        setTimeout(function () { g.classList.add("sp-chatwaffe-weg"); }, 1300);
+        setTimeout(function () { g.remove(); }, 1700);
       }
-      var muendung = haltMuendung(n.von, dreh);
-      /* Erst zielen (0,18 s), dann Rückstoß, Mündungsblitz und Ton im selben Augenblick. */
-      setTimeout(function () {
-        if (h) { h.classList.remove("sp-halt-rueck"); void h.offsetWidth; h.classList.add("sp-halt-rueck"); }
-        if (chatSchutzAn(n.zielChat)) {
-          setTimeout(function () { mauerAbwehr(zielEl); }, 60);
-          geschossZeigen(n.von, n.zielChat, w, 0, -1.4, n.farbe, false, muendung);
-          return;
-        }
-        var flug = geschossZeigen(n.von, n.zielChat, w, dx, dy, n.farbe, false, muendung) || 600;
+      if (chatSchutzAn(n.zielChat)) {
+        setTimeout(function () { mauerAbwehr(zielEl); }, 420);
+        setTimeout(function () { geschossZeigen(n.von, n.zielChat, w, 0, -1.4, n.farbe, false); }, 380);
+        return;
+      }
+      var flug = 0;
+      setTimeout(function () { flug = geschossZeigen(n.von, n.zielChat, w, 0, 0, n.farbe, false) || 600;
         setTimeout(function () {
           /* „verschwinden kurz und sind direkt wieder am Platz" */
           if (zielEl) { var k = zielEl.querySelector(".lc-kreis"); if (k) { k.classList.remove("sp-chat-weg"); void k.offsetWidth; k.classList.add("sp-chat-weg"); setTimeout(function () { k.classList.remove("sp-chat-weg"); }, 1500); } }
           tierReagiert(zielEl, "wurf");
           try { schmerzStimme(n.zielChat, { schaden: w === "bazooka" ? 20 : 6, ziel_stand: { lp: 100, lp_max: 100 } }); } catch (e) {}
         }, flug);
-      }, 180);
+      }, 380);
     } finally { setTimeout(function () { S.chatTonFrei = false; }, 3000); }
   }
-  try { window.addEventListener("resize", function () { if (S.halten) haltPflegen(); }); } catch (e) {}
+  function chatWaffeSchiessen(zielChat) {
+    var jetzt = Date.now();
+    if (jetzt - (S.chatWaffeZeit || 0) < 1400) return;
+    S.chatWaffeZeit = jetzt;
+    var ich = S.ich || {}, sl = slots(), w = S.waffe || sl[0] || "kartoffel";
+    if ((ich.waffen || []).indexOf(w) < 0 && !(WAFFEN[w] && WAFFEN[w].vorrat && vorrat(ich, w) > 0)) w = "kartoffel";
+    var n = { ereignis: "chatwaffe", von: meineChatId(), zielChat: zielChat, waffe: w, farbe: S.laserfarbe };
+    senden(n);
+    chatWaffeZeigen(n);
+  }
   /* XANDER: „die Mauer, dass man sich im Chat schützen kann … damit man
      nicht mehr so leicht genervt wird … es beeinflusst keine Punkte".
      Wer Mehr → „Chat-Mauer" anschaltet, dem prallen unfreundliche
@@ -12516,7 +12390,6 @@
     ackerPflegen();
     erinnerungPruefen();
     dorfMeldungenPruefen();
-    haltPflegen();
     tiereSpielen();
     tierZustandPflegen();
     dorfTakt(false);
@@ -13208,9 +13081,6 @@
     /* FASSUNG 730 — fürs Platzmenü: hat die Person ein Dorf, gibt es „Stadt ansehen". */
     dorfVon: function (chatId) { var sid = spielIdVon(chatId), st = sid && S.stand[sid]; return Boolean(S.bereit && st && st.dorf && Object.keys(st.dorf).length); },
     dorfBesuchen: dorfBesuchen, dorfZeichen: function () { return dorfSvg("rathaus", 2); },
-    /* FASSUNG 731 — eigenes Platzmenü: „Waffe halten". */
-    haltenMenue: haltenMenue, haltenAblegen: haltenAblegen, haelt: function () { return S.halten ? S.halten.waffe : ""; },
-    haltenMoeglich: function () { return Boolean(S.bereit && S.ich && !spielSichtbar()); }, haltZeichen: function (w) { return waffeGeraetSvg(w || (S.halten && S.halten.waffe) || "zwille"); },
     empfangen: empfangen, dreckAbwehren: dreckAbwehren, platzGewechselt: platzGewechselt,
     lehrerNote: lehrerNote, kampfmodus: kampfmodus, anmeldungDa: anmeldungDa,
     waffeAblegen: function () { if (S.waffe) { S.waffe = ""; zeichnen(); } },
@@ -13240,7 +13110,6 @@
       krautZeigen: krautZeigen, krautSvg: krautSvg, essen: essen, geschossSvg: geschossSvg, tierAngriff: tierAngriff, zauberStart: zauberStart, fuettern: fuettern, tierZustandPflegen: tierZustandPflegen, faehigZeigen: faehigZeigen, FAEHIG: FAEHIG, tierLaut: tierLaut, tierSvg: tierSvg, fusionHtml: fusionHtml, fusionieren: fusionieren, fusionFeier: fusionFeier,
       klang: function () { return KLANG; }, tonTesten: tonTesten, hinweis: hinweis, ton: ton,
       dorfMeldungenPruefen: dorfMeldungenPruefen, sprung: function () { return SPRUNG; },
-      haltPflegen: haltPflegen, haltenSetzen: haltenSetzen, halten: function () { return S.halten; },
       ruestungZeilen: ruestungZeilen, graben: graben, grabenUmschalten: grabenUmschalten, schmerzStimme: schmerzStimme, chatWaffeZeigen: chatWaffeZeigen, tierReagiert: tierReagiert, tiereSpielen: tiereSpielen, handelLaden: handelLaden, erinnerungPruefen: erinnerungPruefen, schmerz: function () { return SCHMERZ; }, ernten: ernten, saeen: saeen, werkzeugSetzen: werkzeugSetzen, ackerPflegen: ackerPflegen, ackerStand: ackerStand, werkHtml: werkHtml, missionHtml: missionHtml, missionHolen: missionHolen, werkstattZeilen: werkstattZeilen, schmieden: schmieden, missionPruefen: missionPruefen,
       flammen: flammen, daemonBrand: daemonBrand,
       abrufen: abrufen, eierPflegen: eierPflegen, makroAusloesen: makroAusloesen, dorfBlickHtml: dorfBlickHtml, stallBereit: stallBereit, baumStand: baumStand, pluendern: pluendern, holzen: holzen, angeln: angeln,
