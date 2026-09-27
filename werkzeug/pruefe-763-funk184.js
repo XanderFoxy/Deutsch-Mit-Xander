@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 760: AUFGABE MELDEN (Walkie 290, „viel Quatsch dabei")
+   SONDE — FASSUNG 763: FUNK 184 (FEHLER)
    ---------------------------------------------------------------------
-   XANDER: „bei den Fragen das kann man noch mal überarbeiten da ist doch
-   viel Quatsch dabei der gar nicht funktioniert". Nach der Auflösung
-   steht „Stimmt was nicht? Melden"; drei Gründe; der Server sperrt beim
-   Betreiber sofort, sonst ab zwei Meldungen (dort geprüft). Hier: Knopf,
-   Gründe, Ruf, Dank, und dass die Aufgabe beim Melden nicht wegspringt.
+   XANDER: „Ich habe aus Versehen eine Frage gemeldet" → Rückgängig.
+   „dann soll die Schaufel schon griffbereit sein in dem Moment wo man
+   auf den Button klickt" → Mission „Schaufel nehmen" gibt die Schaufel.
+   „das muss dort in diesen Stationen nicht drin stehen das reicht wenn
+   das global in in dem Menü steht" → Mithelfen-Wahl nur in der Liste.
+   (Die Punkte für „Stimmt der Satz?" rechnet der Server; dort geprüft.)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -187,42 +188,64 @@ const sage = (gut, was, zusatz) => {
   const toene = (ab) => pg.evaluate((ab) => window.DMA_TONLOG.filter((t) => t.wann >= ab).map((t) => [t.name, t.wann - ab]), ab);
   const jetztMs = () => pg.evaluate(() => Math.round(performance.now()));
 
-  console.log("\nMELDEN NACH DER AUFLÖSUNG\n");
+  console.log("\nMELDEN – UND AUS VERSEHEN ZURÜCKNEHMEN\n");
   await pg.evaluate(() => { window.__rufe.length = 0; window.__hinweise.length = 0;
     window.__extra = Object.assign({}, window.__extra || {}, {
-      spiel_aufgabe: () => ({ ok: true, id: 4711, frage: "Ein juristischer ___ kann sehr teuer werden.", optionen: ["Prozess", "Prozeß", "Vertrag"], niveau: "B1" }),
-      spiel_antwort: (a, ich) => Object.assign({}, ich, { ok: true, richtig: false, loesung: "Prozess", gewonnen: 0, level_vorher: ich.level, level: ich.level, erklaerung: "Prozess mit ss." }),
-      spiel_aufgabe_melden: () => ({ ok: true, gesperrt: true, meldungen: 1 }) });
+      spiel_aufgabe: () => ({ ok: true, id: 45984, frage: "Stimmt der Satz? <strong>Diesen Genuss ließ er sich, allen Widrigkeiten zum Trotz, nicht nehmen.</strong>", optionen: ["richtig", "falsch"], niveau: "C2" }),
+      spiel_antwort: (a, ich) => Object.assign({}, ich, { ok: true, richtig: true, loesung: "richtig", gewonnen: 12, level_vorher: ich.level, level: ich.level }),
+      spiel_aufgabe_melden: () => ({ ok: true, gesperrt: true, meldungen: 1 }),
+      spiel_aufgabe_melden_zurueck: () => ({ ok: true, wieder: true, meldungen: 0 }) });
     window.DMA_SPIEL.aufgabe(); });
   await tick(700);
-  let R = await pg.evaluate(() => ({ frage: (document.querySelector("#spPanel .sp-frage-satz") || {}).textContent || "", melden: !!document.querySelector("#spPanel .sp-melden-knopf") }));
-  sage(/juristischer/.test(R.frage) && !R.melden, "vor der Antwort: kein Meldeknopf (man kennt die Lösung noch nicht)", JSON.stringify(R));
-  const vorher = await pg.evaluate(() => Math.round(document.querySelector("#spPanel .sp-aufgabe").getBoundingClientRect().height));
-  await tippe('#spPanel [data-tu="antwort"][data-o="Vertrag"]'); await tick(500);
-  const nachher = await pg.evaluate(() => Math.round(document.querySelector("#spPanel .sp-aufgabe").getBoundingClientRect().height));
-  sage(vorher === nachher, "beim Auflösen springt nichts (Aufgabe vorher " + vorher + " px, nachher " + nachher + " px)", "");
-  R = await pg.evaluate(() => { const b = document.querySelector("#spPanel .sp-melden-knopf"); if (!b) return null; const r = b.getBoundingClientRect(); return { text: b.textContent, h: Math.round(r.height), sicht: r.bottom <= innerHeight && r.top >= 0 }; });
-  sage(R && /Melden/.test(R.text) && R.h >= 30 && R.sicht, "nach der Auflösung: „Stimmt was nicht? Melden“ (sichtbar, " + (R && R.h) + " px hoch zum Tippen)", JSON.stringify(R));
+  await tippe('#spPanel [data-tu="antwort"][data-o="richtig"]'); await tick(500);
   await tippe("#spPanel .sp-melden-knopf"); await tick(300);
-  R = await pg.evaluate(() => [...document.querySelectorAll('#spPanel [data-tu="meldegrund"]')].map((b) => b.dataset.g + ":" + b.textContent));
-  sage(R.length === 3 && /Zwei passen/.test(R.join()), "drei Gründe zur Wahl", R.join(" | "));
-  const G = await pg.evaluate(() => { const z = document.querySelector("#spPanel .sp-melden"), r = z.getBoundingClientRect(), p = document.querySelector("#spPanel .sp-aufgabe").getBoundingClientRect();
-    return { h: Math.round(r.height), innen: r.bottom <= p.bottom + 1, sicht: [...z.querySelectorAll("button")].every((b) => { const q = b.getBoundingClientRect(); return q.height >= 30 && q.right <= r.right + 1; }) }; });
-  sage(G.innen && G.sicht && G.h <= 40, "alle drei Gründe passen nebeneinander, nichts abgeschnitten (" + G.h + " px hoch)", JSON.stringify(G));
+  await tippe('#spPanel [data-tu="meldegrund"][data-g="loesung"]'); await tick(400);
+  let R = await pg.evaluate(() => { const d = document.querySelector("#spPanel .sp-melden-dank"), b = d && d.querySelector('[data-tu="meldezurueck"]'), r = b && b.getBoundingClientRect(), z = d && d.getBoundingClientRect();
+    return d ? { text: d.textContent, knopf: !!b, h: r ? Math.round(r.height) : 0, drin: r ? r.right <= z.right + 1 && r.bottom <= innerHeight : false } : null; });
+  sage(R && /Danke/.test(R.text) && R.knopf && R.h >= 30 && R.drin, "nach dem Melden: „Danke! …“ mit „Rückgängig“ daneben (" + (R && R.h) + " px hoch)", JSON.stringify(R));
   if (process.env.BILD) await (await pg.$("#spPanel .sp-aufgabe")).screenshot({ path: process.env.BILD });
-  await tick(3600);
-  R = await pg.evaluate(() => ({ id: window.DMA_SPIEL.pruef.zustand().aufgabe && window.DMA_SPIEL.pruef.zustand().aufgabe.id, holen: window.__rufe.filter((r) => r.name === "spiel_aufgabe").length }));
-  sage(R.id === 4711 && R.holen === 1, "beim Melden springt die Aufgabe nicht von selbst weiter (3,5 s gewartet)", JSON.stringify(R));
-  await tippe('#spPanel [data-tu="meldegrund"][data-g="zwei"]'); await tick(400);
-  R = await pg.evaluate(() => ({ ruf: window.__rufe.filter((r) => r.name === "spiel_aufgabe_melden").map((r) => r.args.p_id + ":" + r.args.p_grund), dank: (document.querySelector("#spPanel .sp-melden-dank") || {}).textContent || "" }));
-  sage(R.ruf.join() === "4711:zwei" && /aus dem Spiel/i.test(R.dank), "Tipp auf „Zwei passen“: spiel_aufgabe_melden(4711, zwei), „Danke! Aus dem Spiel.“", JSON.stringify(R));
-  /* Fassung 763: 6 s Zeit für „Rückgängig“, dann die nächste Aufgabe. */
-  await tick(6200);
-  R = await pg.evaluate(() => window.__rufe.filter((r) => r.name === "spiel_aufgabe").length);
-  sage(R === 2, "danach (nach 6 s, Zeit für „Rückgängig“) kommt von selbst die nächste Aufgabe", String(R));
+  await tick(2500);
+  await tippe('#spPanel [data-tu="meldezurueck"]'); await tick(400);
+  R = await pg.evaluate(() => ({ ruf: window.__rufe.filter((r) => r.name === "spiel_aufgabe_melden_zurueck").map((r) => r.args.p_id), hinweis: window.__hinweise.join(" | "),
+    melden: !!document.querySelector("#spPanel .sp-melden-knopf[data-tu=melden]"), dank: !!document.querySelector("#spPanel .sp-melden-dank") }));
+  sage(R.ruf.join() === "45984" && /wieder im Spiel/.test(R.hinweis) && R.melden && !R.dank, "„Rückgängig“ (nach 2,5 s): spiel_aufgabe_melden_zurueck(45984), „wieder im Spiel“, der Meldeknopf ist zurück", JSON.stringify(R));
+  await tick(4500);
+  R = await pg.evaluate(() => ({ holen: window.__rufe.filter((r) => r.name === "spiel_aufgabe").length, id: window.DMA_SPIEL.pruef.zustand().aufgabe.id }));
+  sage(R.holen === 1 && R.id === 45984, "nach dem Zurücknehmen springt die Aufgabe nicht weg", JSON.stringify(R));
+  await tippe("#spPanel .sp-melden-knopf"); await tick(300);
+  await tippe('#spPanel [data-tu="meldegrund"][data-g="satz"]'); await tick(400);
+  await tick(6500);
+  R = await pg.evaluate(() => ({ holen: window.__rufe.filter((r) => r.name === "spiel_aufgabe").length, zurueck: window.__rufe.filter((r) => r.name === "spiel_aufgabe_melden_zurueck").length }));
+  sage(R.holen === 2 && R.zurueck === 1, "wer nicht zurücknimmt: nach 6 s kommt die nächste Aufgabe", JSON.stringify(R));
+
+  console.log("\nSCHATZ-MISSION: DIE SCHAUFEL IST GLEICH IN DER HAND\n");
+  for (const vorher of [{ graben: false, w: "sense" }, { graben: true, w: "axt" }]) {
+    await pg.evaluate((v) => { const S = window.DMA_SPIEL.pruef.zustand();
+      S.ich.mission = { art: "schatz", platz: 3, raum: "", lohn: 25, bis: new Date(Date.now() + 600000).toISOString() };
+      S.aufgabe = null; S.werkzeug = v.w; S.graben = v.graben; document.body.classList.toggle("sp-graben", v.graben);
+      window.DMA_SPIEL.menue("deutsch"); }, vorher);
+    await tick(400);
+    const k = await pg.evaluate(() => { const b = document.querySelector('#spPanel [data-tu="graben"]'); return b ? b.textContent : null; });
+    await tippe('#spPanel [data-tu="graben"]'); await tick(300);
+    R = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return { graben: !!S.graben, w: S.werkzeug, hinweis: window.__hinweise.slice(-1)[0] || "" }; });
+    sage(k === "Schaufel nehmen" && R.graben && R.w === "schaufel" && /Schaufel in der Hand/.test(R.hinweis),
+      "vorher " + (vorher.graben ? "Axt in der Hand" : "Sense gemerkt, nichts in der Hand") + ": „Schaufel nehmen“ → Schaufel in der Hand", JSON.stringify([k, R]));
+  }
+  await pg.evaluate(() => window.DMA_SPIEL.menue("deutsch")); await tick(300);
+  const k2 = await pg.evaluate(() => (document.querySelector('#spPanel [data-tu="graben"]') || {}).textContent);
+  await tippe('#spPanel [data-tu="graben"]'); await tick(300);
+  R = await pg.evaluate(() => !!window.DMA_SPIEL.pruef.zustand().graben);
+  sage(k2 === "Schaufel weglegen" && !R, "mit der Schaufel in der Hand heißt der Knopf „Schaufel weglegen“ und legt sie weg", String(k2));
+
+  console.log("\nMITHELFEN-WAHL NUR IN DER GANZEN LISTE\n");
+  R = await pg.evaluate(() => { const Q = window.DMA_SPIEL.pruef, ich = Q.zustand().ich;
+    return { alle: Q.werkZeilenHtml(ich).join("").indexOf("sp-trupp-art") >= 0, wald: Q.werkZeilenHtml(ich, "wald").join("").indexOf("sp-trupp-art") >= 0,
+             berg: Q.werkZeilenHtml(ich, "bergwerk").join("").indexOf("sp-trupp-art") >= 0, see: Q.werkZeilenHtml(ich, "see").join("").indexOf("sp-trupp-art") >= 0,
+             trupps: (Q.werkZeilenHtml(ich, "wald").join("").match(/data-trupp=/g) || []).length }; });
+  sage(R.alle && !R.wald && !R.berg && !R.see && R.trupps === 2, "„Mithelfen: auf den Plätzen / nur Knopf“ steht im Dorf-Menü, nicht mehr im Wald, Bergwerk oder am See (die Trupps dort bleiben)", JSON.stringify(R));
 
   sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
   await br.close(); srv.close();
-  console.log("\nFassung 760 (Aufgabe melden): " + (fehler ? fehler + " rot." : "alles grün."));
+  console.log("\nFassung 763 (Funk 184): " + (fehler ? fehler + " rot." : "alles grün."));
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

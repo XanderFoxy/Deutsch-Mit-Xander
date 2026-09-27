@@ -6711,7 +6711,6 @@
     if (tu === "antwort") return antworten(k.dataset.o);
     if (tu === "melden") { if (S.aufgabe) { S.aufgabe.melden = "wahl"; panelAuffrischen(); } return; }
     if (tu === "meldegrund") return aufgabeMelden(k.dataset.g);
-    if (tu === "meldezurueck") return meldungZurueck();
     if (tu === "anlegen" && klassenSperre(S.ich, k.dataset.w)) { hinweis("🔒 " + WAFFEN[k.dataset.w].name + ": " + klassenSperre(S.ich, k.dataset.w) + "."); return; }
     if (tu === "anlegen") { S.waffe = k.dataset.w; hinweis("🎯 " + WAFFEN[S.waffe].name + " angelegt – tippe auf ein Gesicht."); schliessen(); zeichnen(); return; }
     if (tu === "ablegen") { S.waffe = ""; zeichnen(); panelAuffrischen(); return; }
@@ -6739,10 +6738,7 @@
     }
     if (tu === "duell") { duellFordern(k.dataset.id, k.dataset.name); return; }
     if (tu === "mission") return missionHolen();
-    /* FASSUNG 763 — XANDER (Funk 184): „dann soll die Schaufel schon griffbereit sein in dem Moment wo man auf den Button
-       klickt … man muss immer erst durch einen Double Tab und das Menü um die Schaufel auszuwählen". Bisher blieb das
-       zuletzt benutzte Werkzeug (z. B. die Sense) in der Hand. */
-    if (tu === "graben") { schliessen(); if (S.graben && S.werkzeug === "schaufel") grabenUmschalten(false); else werkzeugSetzen("schaufel"); return; }
+    if (tu === "graben") { schliessen(); grabenUmschalten(); return; }
     if (tu === "schmieden") return schmieden(k.dataset.w);
     if (tu === "veredeln") {
       rpc("spiel_veredeln", { p_ding: k.dataset.d }).then(function (r) {
@@ -6774,9 +6770,7 @@
   var MELDEGRUENDE = [["loesung", "Lösung falsch"], ["zwei", "Zwei passen"], ["satz", "Satz unklar"]];
   function meldenHtml(a) {
     if (!a || !a.ergebnis || !a.id) return '<div class="sp-melden"></div>';
-    /* FASSUNG 763 — XANDER (Funk 184): „Ich habe aus Versehen eine Frage gemeldet". Jetzt: 6 s lang „Rückgängig". */
-    if (a.gemeldet) return '<div class="sp-melden sp-melden-dank"><span>' + esc(a.gemeldet) + "</span>"
-      + (a.meldeZurueck ? '<button type="button" class="sp-melden-knopf" data-tu="meldezurueck">Rückgängig</button>' : "") + "</div>";
+    if (a.gemeldet) return '<div class="sp-melden sp-melden-dank">' + esc(a.gemeldet) + "</div>";
     if (a.melden === "wahl") return '<div class="sp-melden sp-melden-wahl">'
       + MELDEGRUENDE.map(function (g) { return '<button type="button" data-tu="meldegrund" data-g="' + g[0] + '">' + g[1] + "</button>"; }).join("") + "</div>";
     return '<div class="sp-melden"><button type="button" class="sp-melden-knopf" data-tu="melden">Stimmt was nicht? Melden</button></div>';
@@ -6786,22 +6780,10 @@
     if (!a || !a.id) return;
     rpc("spiel_aufgabe_melden", { p_id: a.id, p_grund: grund }).then(function (r) {
       if (!r || r.ok === false) { hinweis("Melden ging nicht: " + ((r && r.grund) || "")); return; }
-      a.melden = ""; a.gemeldet = r.gesperrt ? "Danke! Aus dem Spiel." : "Danke! Wird geprüft.";
-      a.meldeZurueck = true;
+      a.melden = ""; a.gemeldet = r.gesperrt ? "Danke! Die Aufgabe ist jetzt aus dem Spiel." : "Danke! Wird geprüft – ab zwei Meldungen fliegt sie raus.";
       ton("bling", 0.3); panelAuffrischen();
-      a.meldeUhr = setTimeout(function () { a.meldeZurueck = false; if (S.aufgabe === a && panel && !panel.hidden && reiter === "deutsch") aufgabeHolen(false); }, 6000);
+      setTimeout(function () { if (S.aufgabe === a && panel && !panel.hidden && reiter === "deutsch") aufgabeHolen(false); }, 1800);
     }).catch(function () { hinweis("Melden ging gerade nicht."); });
-  }
-  function meldungZurueck() {
-    var a = S.aufgabe;
-    if (!a || !a.id || !a.meldeZurueck) return;
-    clearTimeout(a.meldeUhr); a.meldeZurueck = false;
-    rpc("spiel_aufgabe_melden_zurueck", { p_id: a.id }).then(function (r) {
-      if (!r || r.ok === false) { hinweis("Zurücknehmen ging nicht: " + ((r && r.grund) || "")); return; }
-      a.gemeldet = ""; a.melden = "";
-      hinweis(r.wieder ? "↩️ Meldung zurückgenommen – die Aufgabe ist wieder im Spiel." : "↩️ Meldung zurückgenommen.");
-      ton("swoosh", 0.25); panelAuffrischen();
-    }).catch(function () { hinweis("Zurücknehmen ging gerade nicht."); });
   }
   function aufgabeHolen(mission) {
     rpc("spiel_aufgabe", { p_niveau: S.niveau, p_mission: Boolean(mission), p_kategorie: fragenKategorie() }).then(function (a) {
@@ -7032,7 +7014,7 @@
     if (!missionLaeuft(ich)) return '<div class="sp-knoepfe"><button type="button" data-tu="mission">🗺️ Mission holen</button></div>';
     var m = ich.mission, knopf = "";
     if (m.art === "neben") knopf = nebenZiel(m.ziel) ? ' <button type="button" data-tu="missionsaufgabe">Jetzt lösen</button>' : " Du sitzt noch nicht daneben.";
-    if (m.art === "schatz") knopf = ' <button type="button" data-tu="graben">' + (S.graben && S.werkzeug === "schaufel" ? "Schaufel weglegen" : "Schaufel nehmen") + "</button>";
+    if (m.art === "schatz") knopf = ' <button type="button" data-tu="graben">' + (S.graben ? "Schaufel weglegen" : "Schaufel nehmen") + "</button>";
     return '<div class="sp-hinweis sp-mission sp-mission-' + m.art + '">🗺️ ' + missionText(m) + ' <span class="sp-klein">Noch ' + missionRest(m) + " min.</span>" + knopf + "</div>";
   }
   /* Eine Mission, die der Server erfüllt hat (Schatz, Serie, Heiler,
@@ -7876,9 +7858,7 @@
     truppOrte(nur).forEach(function (o) { t.push(truppZeileHtml(ich, o)); });
     /* FASSUNG 750 — XANDER (Walkie 293): „das könnte man in den Einstellungen ja auch festlegen ob man nur durch den
        Button mit jagen möchte oder ob man grafisch mit jagen möchte". */
-    /* FASSUNG 763 — XANDER (Funk 184): „das muss dort in diesen Stationen nicht drin stehen das reicht wenn das global in
-       in dem Menü steht". Nur noch in der ganzen Dorf-Liste, nicht im Fenster einer Station. */
-    if (!nur && truppOrte(nur).some(function (o) { return TRUPP_WERKZEUG[o]; })) {
+    if (truppOrte(nur).some(function (o) { return TRUPP_WERKZEUG[o]; })) {
       t.push('<div class="sp-trupp-art"><span>Mithelfen:</span><button type="button" data-s="truppgrafisch" class="' + (truppGrafisch() ? "sp-an" : "") + '">auf den Plätzen</button>'
         + '<button type="button" data-s="truppgrafisch" class="' + (truppGrafisch() ? "" : "sp-an") + '">nur Knopf</button></div>');
     }
@@ -14460,8 +14440,6 @@
     uebungStarten: uebungStarten,
     uebungEnde: uebungEnde,
     pruef: {
-      /* FASSUNG 763 */
-      werkZeilenHtml: werkZeilenHtml,
       /* FASSUNG 704 */
       dorfMalen: dorfMalen, DORF_LAGE: DORF_LAGE,
       /* FASSUNG 733 */

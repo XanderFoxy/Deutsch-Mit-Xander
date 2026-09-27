@@ -372,8 +372,10 @@ const sage = (gut, was, zusatz) => {
   /* „bei dem unteren Knopf hört man aber keinen Sound … irgendwie scheint es nicht verlinkt zu sein" und „soll das auf den
      positionsfeldern eher geschehen dass man das optisch auch ein bisschen sieht" */
   await pg.evaluate(() => { window.__ich.mitspielen = true; const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mitspielen = true; try { localStorage.removeItem("dma_trupp_grafisch"); } catch (e) {} window.__helfArgs = null; window.DMA_TONLOG && (window.DMA_TONLOG.length = 0); });
-  r = await pg.evaluate(() => [...document.querySelectorAll('.sp-dl-station [data-s="truppgrafisch"]')].map((b) => b.textContent + (b.classList.contains("sp-an") ? "*" : "")));
-  sage(r.length === 2 && r[0] === "auf den Plätzen*", "Schalter „Mithelfen: auf den Plätzen / nur Knopf“ (Voreinstellung: auf den Plätzen)", JSON.stringify(r));
+  /* Fassung 763 (Funk 184): „das muss dort in diesen Stationen nicht drin stehen das reicht wenn das global in in dem Menü steht". */
+  r = await pg.evaluate(() => { const d = document.createElement("div"); d.innerHTML = window.DMA_SPIEL.pruef.werkZeilenHtml(window.DMA_SPIEL.pruef.zustand().ich).join("");
+    return { station: document.querySelectorAll('.sp-dl-station [data-s="truppgrafisch"]').length, menue: [...d.querySelectorAll('[data-s="truppgrafisch"]')].map((b) => b.textContent + (b.classList.contains("sp-an") ? "*" : "")) }; });
+  sage(r.station === 0 && r.menue.length === 2 && r.menue[0] === "auf den Plätzen*", "Schalter „Mithelfen: auf den Plätzen / nur Knopf“ nur im Dorf-Menü, nicht in der Station (Voreinstellung: auf den Plätzen)", JSON.stringify(r));
   await tippe('.sp-dl-station [data-s="trupphelfen"][data-g="jagd"]'); await tick(700);
   r = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return { h: window.__helfArgs, graben: S.graben, wz: S.werkzeug, felder: document.querySelectorAll("#lcPlaetze .sp-acker-jagd").length, ton: (window.DMA_TONLOG || []).map((x) => x.name || x).join(",") }; });
   sage(r.h && r.h.p_ort === "jagd", "„Mitjagen“ ruft wirklich den Server (hilft den Jägern)", JSON.stringify(r.h));

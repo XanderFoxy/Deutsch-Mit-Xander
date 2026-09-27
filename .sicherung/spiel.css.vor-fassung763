@@ -2802,9 +2802,7 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-melden { margin-top: 2px; min-height: 34px; display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; align-items: center; gap: 5px; font: 500 11px system-ui, sans-serif; color: #6b7280; }
 .sp-melden .sp-melden-knopf { background: none; border: 0; padding: 8px 4px 8px 0; min-height: 32px !important; font: 600 11px system-ui, sans-serif; color: #8a5a00; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .sp-melden-wahl button { flex: 0 0 auto; white-space: nowrap; font: 600 11px system-ui, sans-serif; padding: 7px 10px; min-height: 32px !important; border-radius: 12px; border: 1px solid #d8b43a; background: #fff8dc; color: #5a4300; }
-.sp-melden-dank { color: #2e7d32; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-/* FASSUNG 763 — Rückgängig neben dem Dank */
-.sp-melden-dank .sp-melden-knopf { flex: 0 0 auto; }
+.sp-melden-dank { color: #2e7d32; font-weight: 600; }
 /* FASSUNG 761 — Rundenkampf: Kampfart und Ausrüstungs-Set (Walkie 290) */
 .sp-st-art button { display: flex; flex-direction: column; align-items: center; gap: 1px; }
 .sp-st-art button small { font: 500 10.5px system-ui, sans-serif; opacity: .8; }

@@ -1455,3 +1455,13 @@ Sonden: neu 762 (alles grün, 360×640 und 360×740); 669, 675, 747, 761 grün.
 - **Ursache der 4 roten Punkte in 669**: Seit Fassung 747 stand die Fragen-Vorwahl (168 px hoch) über dem Tower-Defense-Feld. Auf einem 360×740-Telefon lagen „Deutsch-Frage“ und „Welle starten“ dadurch 27 px unter dem Rand (oben bei 767 px). Der Fingertipp der Sonde ging ins Leere. Das war kein Fehler der Sonde: Auch ein Mensch musste mitten in einer Welle scrollen und sah dabei das Feld nicht.
 - **Vorwahl einklappbar**: In der Tower Defense ist die Vorwahl jetzt eine Zeile („Niveau A1 · Schwächen üben · ändern“, 32 px hoch). Ein Tipp klappt Niveau und Fragenart auf, ein zweiter klappt sie wieder zu. Die Zeile zeigt die Wahl sofort. Im Rundenkampf-Menü bleibt die Vorwahl offen wie bisher.
 - **Feld nach Höhe**: Das Feld richtet sich jetzt auch nach der Bildschirmhöhe (Reserve 300 px für Kopf, Vorwahl, Stand und Knöpfe; ein Kästchen ist mindestens 26 px groß). Bei 640 px Höhe liegt „Welle starten“ bei 594 px, bei 740 px Höhe bleibt das Feld so groß wie vorher.
+
+### Fassung 763 (Funk 184, erster Teil: Fehler)
+Sonden: neu 763 (alles grün); 643, 716, 760 grün (716 und 760 an die neue Lage angepasst).
+- **Versehentliche Meldung**: Aufgabe 45984 („Diesen Genuss ließ er sich, allen Widrigkeiten zum Trotz, nicht nehmen.“ – richtig) ist wieder im Spiel. Die Aufgabe stimmt, die Lösung „richtig“ auch.
+- **Rückgängig**: Nach dem Melden steht 6 s lang „Danke! … Rückgängig“ (32 px hoch). Erst danach kommt die nächste Aufgabe.
+  - Der Server (`spiel_aufgabe_melden_zurueck`) löscht nur die eigene Meldung.
+  - Eine durch Meldungen gesperrte Aufgabe ist wieder im Spiel, wenn danach keine Betreiber-Meldung mehr da ist und es weniger als zwei Meldungen sind.
+- **„Stimmt der Satz?“ zählt voll**: Bisher gab es halbe Punkte (Fassung 648) und keinen Schnell-Bonus (743), weil man bei zwei Antworten leicht rät. XANDER: „bei C2 … Standard 8 und wenn man schnell 15 wenn man weniger schnell 12 das gibt es dort nicht“. Jetzt wie jede Aufgabe: C2 8 Punkte, bis 6 s 12, bis 12 s 10. Mit der Übung eigener Schwächen und Klassen-Boni kommt mehr dazu. Am Server geprüft (12 bei 4 s, 10 bei 9 s).
+- **Schaufel griffbereit**: „Schaufel nehmen“ in der Schatz-Mission gibt jetzt immer die Schaufel in die Hand. Bisher blieb das zuletzt benutzte Werkzeug (z. B. die Sense) drin, und man musste doppelt tippen und im Menü wechseln. Mit der Schaufel in der Hand heißt der Knopf „Schaufel weglegen“.
+- **Mithelfen-Wahl nur global**: „Mithelfen: auf den Plätzen / nur Knopf“ steht nur noch im Dorf-Menü, nicht mehr im Fenster von Wald, Bergwerk oder See.

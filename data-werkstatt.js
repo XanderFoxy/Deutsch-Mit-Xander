@@ -49,18 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "762",
+  stand: "763",
 
   inArbeit: [
-    { seit: "2026-09-27T18:34",
-      text: "Arena und Teams im Rundenkampf (zwei gegen einen, Walkie 290)" },
-    { seit: "2026-09-27T18:34",
+    { seit: "2026-09-27T19:13",
+      text: "Dorf (Funk 184): Knöpfe überdecken Überschriften, Verkaufen mit Menge, Handel und Export prüfen, Fernsehturm im Dorf" },
+    { seit: "2026-09-27T19:13",
+      text: "Tourismus mit dem Zug (Funk 184)" },
+    { seit: "2026-09-27T19:13",
+      text: "Arena und Teams im Rundenkampf (Walkie 290)" },
+    { seit: "2026-09-27T19:13",
       text: "Skins und Tiere im Set (Walkie 290)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T18:34",
-      text: "Tower Defense passt aufs Telefon: Vorwahl einklappbar, Feld nach Höhe (Sonde 669 wieder grün)" },
+    { seit: "2026-09-27T19:13",
+      text: "Versehentliche Meldung zurückgenommen, Rückgängig-Knopf beim Melden" },
+    { seit: "2026-09-27T19:13",
+      text: "„Stimmt der Satz?“ zählt voll (C2: 8, schnell 12)" },
+    { seit: "2026-09-27T19:13",
+      text: "Schatz-Mission: Schaufel gleich in der Hand" },
+    { seit: "2026-09-27T19:13",
+      text: "Mithelfen-Wahl nur im Dorf-Menü" },
   ],
 };
