@@ -211,7 +211,7 @@ const sage = (gut, was, zusatz) => {
       quer: m ? m.scrollWidth - m.clientWidth : -1 }; });
   if (B) await pg.screenshot({ path: B + "-dorf.png" });
   sage(d1.blick && !d1.reiter && d1.land, "Makroknopf „Mein Dorf“: eigenes Fenster mit dem Dorfbild, ohne Reiter", JSON.stringify(d1));
-  sage(d1.haeuser === 12 && d1.gebaut === 6 && d1.bauplatz === 6, "im Bild: alle 12 Gebäude an ihrem Ort – 6 gebaut, 6 als Bauplatz", JSON.stringify(d1));
+  sage(d1.haeuser === 13 && d1.gebaut === 6 && d1.bauplatz === 7, "im Bild: alle 13 Gebäude an ihrem Ort (ab 756 mit Kaserne) – 6 gebaut, 7 als Bauplatz", JSON.stringify(d1));
   sage(d1.fachwerk >= 6 && d1.quer <= 1, "die Bäckerei ist ein Fachwerkhaus mit Einzelheiten; nichts ragt seitlich heraus", JSON.stringify(d1));
   /* ☰ danach: das Hauptmenü mit allen Reitern, nicht das Dorf. */
   await tippe('.sp-schnell [data-s="klappe"]'); await tick(300);

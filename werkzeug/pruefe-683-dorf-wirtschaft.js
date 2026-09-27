@@ -210,7 +210,8 @@ const sage = (gut, was, zusatz) => {
   sage(/\d+ % zufrieden/.test(volk) && /12 Arbeiter/.test(volk) && /1 Ritter/.test(volk) && /Deutsch-Quote 90 %/.test(volk), "Volk: Zufriedenheit, Arbeiter, Ritter, Deutsch-Quote", volk);
 
   console.log("\nRITTER, MELKEN, WERKSTÄTTEN\n");
-  await pg.evaluate(() => { window.__rufe.length = 0; });
+  /* Ab Fassung 756 (Walkie 293) bildet die Kaserne die Ritter aus – ohne sie ist „Ritter +“ gesperrt (das prüft Sonde 756). */
+  await pg.evaluate(() => { window.__rufe.length = 0; const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.ich.dorf = Object.assign({}, S.ich.dorf, { kaserne: { stufe: 1, lp: 20 } }); P.schnellZeichnen(true); });
   await tippe('.sp-schnellmenue [data-s="ritter"][data-n="1"]');
   await tick(400);
   const rit = await pg.evaluate(() => ({ ruf: window.__rufe.filter((r) => r.name === "spiel_ritter").map((r) => r.args.p_menge), meld: window.__hinweise.slice(-1)[0] || "", ton: window.DMA_TONLOG.some((t) => t.name === "marschtrommel") }));

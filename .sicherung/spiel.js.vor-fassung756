@@ -4686,7 +4686,7 @@
       var rn = Number(k.dataset.n) || 0;
       wirtschaft("spiel_ritter", { p_menge: rn }, function (r) {
         ton(rn > 0 ? "marschtrommel" : "swoosh", 0.4);
-        hinweis(rn > 0 ? "🛡️ Ein Ritter ist in der Kaserne ausgebildet und zieht für dich ins Feld (" + r.ritter + " von " + (r.max || r.ritter) + " Ritter). Er isst mit und will 3 P Lohn je Ernte – dafür plünderst du mehr und wirst weniger geplündert."
+        hinweis(rn > 0 ? "🛡️ Ein Ritter zieht für dich ins Feld (" + r.ritter + " Ritter). Er isst mit und will 3 P Lohn je Ernte – dafür plünderst du mehr und wirst weniger geplündert."
                        : "🛡️ Ein Ritter geht nach Hause (" + r.ritter + " Ritter).");
       });
       return;
@@ -7027,9 +7027,7 @@
     kuhstall:     { name: "Kuhstall",    preis: 80,  gibt: "Milch zum Melken", ab: 3 },
     krankenhaus:  { name: "Krankenhaus", preis: 140, gibt: "du heilst schneller (+35 % je Stufe)", ab: 5 },
     bergwerk:     { name: "Bergwerk",    preis: 180, gibt: "Erz, Quarz, Gold, manchmal Öl", ab: 7 },
-    labor:        { name: "Labor",       preis: 250, gibt: "Forschung: Chips für ★★★-Laser", ab: 10 },
-    /* FASSUNG 756 — Walkie 293: „Ja, und Soldaten brauchen eine Kaserne zum Trainieren". */
-    kaserne:      { name: "Kaserne",     preis: 140, gibt: "bildet Ritter aus: 2 je Stufe (bis 6)", ab: 4 }
+    labor:        { name: "Labor",       preis: 250, gibt: "Forschung: Chips für ★★★-Laser", ab: 10 }
   };
   /* Steht das Gebäude (gebaut und nicht kaputt)? */
   function dorfSteht(ich, k) { var g = ((ich || {}).dorf || {})[k]; return Boolean(g && g.stufe > 0 && g.lp > 0); }
@@ -7081,9 +7079,6 @@
       + '<path d="M7.4 21.5 V13.6 M16.6 21.5 V13.6" stroke="#8a5a2b" stroke-width="1.4"/><path d="M6.8 13.4 H17.2" stroke="#6b4521" stroke-width="1.7"/>'
       + '<path d="M10 19 H14.5 L14 21 H10.5 Z" fill="#5b636c"/><circle cx="11" cy="21.3" r=".6" fill="#222"/><circle cx="13.6" cy="21.3" r=".6" fill="#222"/>'
       + '<circle cx="11.5" cy="18.6" r=".8" fill="#f2c230"/><circle cx="13" cy="18.5" r=".7" fill="#dfe6ee"/></svg>';
-    if (art === "kaserne") return '<svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10.5" fill="#b8b0a0" stroke="#2d2418" stroke-width="1"/><path d="M3 11.5 L12 6.5 L21 11.5 Z" fill="#5a626e" stroke="#2d2418" stroke-width="1" stroke-linejoin="round"/>'
-      + '<rect x="10" y="15.5" width="4" height="6" fill="#4a5a3a"/><rect x="5.5" y="13" width="3" height="2.4" fill="#e8dcc2"/><rect x="15.5" y="13" width="3" height="2.4" fill="#e8dcc2"/>'
-      + '<path d="M20.5 11 V2.5" stroke="#5a4a3a" stroke-width="1"/><rect x="20.5" y="2.5" width="3" height="1.1" fill="#1a1a1a"/><rect x="20.5" y="3.6" width="3" height="1.1" fill="#d8261f"/><rect x="20.5" y="4.7" width="3" height="1.1" fill="#f2c230"/></svg>';
     if (art === "labor") return '<svg viewBox="0 0 24 24"><rect x="3.5" y="9" width="17" height="12.5" fill="#dfe8f2" stroke="#2d2418" stroke-width="1"/>'
       + '<path d="M3 9 H21" stroke="' + dach + '" stroke-width="1.6"/><rect x="5.5" y="11.5" width="13" height="3" fill="#8fd3ff" stroke="#2d2418" stroke-width=".6"/>'
       + '<path d="M10.5 17 H13.5 V21.5 H10.5 Z" fill="#3a4152"/><path d="M17.5 9 V3.8 M16 3.8 H19" stroke="#2d2418" stroke-width=".9"/><circle cx="17.5" cy="3.3" r=".9" fill="#e2403a"/>'
@@ -7750,20 +7745,14 @@
   function truppMenge(ich, ort) {
     var b = (ich && ich.volk && ich.volk.berufe) || {}, fach = Object.keys(b).reduce(function (n, k) { return n + (Number(b[k]) || 0); }, 0);
     var frei = Math.max(0, dorfBewohner(ich) - fach);
-    /* FASSUNG 756 — wie spiel_trupp_s: Ausgebildete bringen mehr (Holz, Fisch +2; Fleisch, Erz +1 je Kopf). */
-    return TRUPPS[ort].menge + Math.min(3, Math.floor(frei / 2)) + truppFachPlus(ich, ort) + (ort === "berg" ? Math.max(0, dorfSt(ich, "bergwerk") - 1) : 0);
-  }
-  function truppFachPlus(ich, ort) { return beruf(ich, TRUPP_BERUF[ort]) * (ort === "see" || ort === "wald" ? 2 : 1); }
-  function truppFachText(ich, ort) {
-    var n = beruf(ich, TRUPP_BERUF[ort]), B = BERUFE[TRUPP_BERUF[ort]];
-    return n ? " · davon " + n + " ausgebildete " + (n === 1 ? B.name : B.viele) + " (+" + truppFachPlus(ich, ort) + ")" : " · ausgebildete " + B.viele + " bringen mehr";
+    return TRUPPS[ort].menge + Math.min(3, Math.floor(frei / 2)) + (ort === "berg" ? Math.max(0, dorfSt(ich, "bergwerk") - 1) : 0);
   }
   function truppZeileHtml(ich, ort) {
     var T = TRUPPS[ort], t = truppStand(ich, ort);
     var z = '<div class="sp-troph sp-werk sp-trupp" data-trupp="' + ort + '"><i>' + wareSvg(T.ware) + "</i><span><b>" + T.name + " " + T.ort + "</b>";
     if (!t) {
       var zu = ort === "berg" && !dorfSt(ich, "bergwerk");
-      return z + "<small>" + (zu ? "Erst ein Bergwerk bauen" : "5 Minuten · bringen " + truppMenge(ich, ort) + " " + wareName(T.ware) + truppFachText(ich, ort)
+      return z + "<small>" + (zu ? "Erst ein Bergwerk bauen" : "5 Minuten · bringen " + truppMenge(ich, ort) + " " + wareName(T.ware)
         + (ort === "see" ? " · wer selbst angelt, holt aus dieser Menge" : "")) + "</small></span>"
         + '<button type="button" data-s="trupp" data-g="' + ort + '"' + (zu ? " disabled" : "") + ">Losschicken</button></div>";
     }
@@ -8031,7 +8020,6 @@
     var q = Math.min(100, quote + (erforscht(ich, "duden") ? 10 : 0));
     return { zuf: Math.min(100, Math.round(40 * satt + 20 * bezahlt + 40 * q / 100) + wunderFreude(ich)), satt: satt, bezahlt: bezahlt, quote: q, leute: arbeiter + ritter };
   }
-  function ritterMax(ich) { return Math.min(6, 2 * dorfSt(ich, "kaserne")); }
   function volkHtml(ich) {
     var v = ich.volk || {}, arbeiter = Number(v.arbeiter) || 0, ritter = Number(v.ritter) || 0, quote = v.quote == null ? 70 : Number(v.quote);
     if (!arbeiter && !ritter) return "";
@@ -8046,10 +8034,7 @@
       + '<path d="' + (zuf >= 75 ? "M6 12 C8 15 12 15 14 12" : zuf >= 50 ? "M6.5 13 H13.5" : "M6 14.5 C8 11.5 12 11.5 14 14.5") + '" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>'
       + "<span><b>" + zuf + " % zufrieden</b> · Ertrag ×" + komma2(0.5 + zuf / 100) + "<small>" + arbeiter + " Arbeiter · " + ritter + " Ritter · Deutsch-Quote " + quote + " %"
       + " · je Ernte " + bedarf + " Portionen (du hast " + essen + ") und " + lohn + " P Lohn</small></span>"
-      /* FASSUNG 756 — Walkie 293: Ritter werden in der Kaserne ausgebildet, 2 je Stufe (bis 6). */
-      + '<span class="sp-volk-knoepfe"><button type="button" data-s="ritter" data-n="1"' + ((ich.level || 1) >= 4 && ritter < ritterMax(ich) && (ich.punkte || 0) >= 40 ? "" : " disabled")
-      + ' title="' + (!dorfSt(ich, "kaserne") ? "Ritter brauchen eine Kaserne zum Trainieren" : ritter >= ritterMax(ich) ? "Die Kaserne fasst " + ritterMax(ich) + " – bau sie aus" : "Ritter in der Kaserne ausbilden") + '">'
-      + (dorfSt(ich, "kaserne") ? "Ritter + <small>40 P</small>" : "Ritter <small>braucht Kaserne</small>") + "</button>"
+      + '<span class="sp-volk-knoepfe"><button type="button" data-s="ritter" data-n="1"' + ((ich.level || 1) >= 4 && ritter < 5 && (ich.punkte || 0) >= 40 ? "" : " disabled") + ">Ritter + <small>40 P</small></button>"
       + (ritter ? '<button type="button" data-s="ritter" data-n="-1">Ritter −</button>' : "") + "</span></div>";
   }
   /* ---------------------------------------------------------------
@@ -8074,17 +8059,8 @@
     mueller:         { name: "Müller", viele: "Müller", preis: 15, haus: ["muehle"], tut: "Mühle 10 % schneller je Müller (bis 30 %)" },
     baecker:         { name: "Bäcker", viele: "Bäcker", preis: 15, haus: ["baeckerei"], tut: "backen je Ernte 1 Brot, Bäckerei schneller" },
     schmied:         { name: "Schmied", viele: "Schmiede", preis: 15, haus: ["schmiede"], tut: "Schmiede 10 % schneller je Schmied" },
-    wissenschaftler: { name: "Wissenschaftler", viele: "Wissenschaftler", preis: 30, haus: ["schule", "bibliothek", "labor"], tut: "forschen – je besser dein Deutsch, desto mehr" },
-    /* FASSUNG 756 — XANDER (Walkie 293): „Ja – Ausbildung, ausgebildete bringen mehr als freie Bewohner". Die vier Trupps
-       haben jetzt eigene Berufe. Ein Ausgebildeter bringt je Fahrt 2 Holz bzw. 2 Fische oder 1 Fleisch bzw. 1 Erz mehr –
-       ein freier Bewohner nur eine halbe Einheit (je zwei eine). Fischer, Holzfäller und Jäger: höchstens 4; Bergleute:
-       2 je Bergwerk-Stufe. */
-    fischer:     { name: "Fischer", viele: "Fischer", preis: 15, haus: [], fest: 4, trupp: "see", tut: "+2 Fische je Fahrt" },
-    holzfaeller: { name: "Holzfäller", viele: "Holzfäller", preis: 15, haus: [], fest: 4, trupp: "wald", tut: "+2 Holz je Fahrt" },
-    jaeger:      { name: "Jäger", viele: "Jäger", preis: 15, haus: [], fest: 4, trupp: "jagd", tut: "+1 Fleisch je Jagd" },
-    bergmann:    { name: "Bergmann", viele: "Bergleute", preis: 15, haus: ["bergwerk"], trupp: "berg", tut: "+1 Erz je Fahrt" }
+    wissenschaftler: { name: "Wissenschaftler", viele: "Wissenschaftler", preis: 30, haus: ["schule", "bibliothek", "labor"], tut: "forschen – je besser dein Deutsch, desto mehr" }
   };
-  var TRUPP_BERUF = { see: "fischer", wald: "holzfaeller", jagd: "jaeger", berg: "bergmann" };
   var BERUF_VON_HAUS = { muehle: "mueller", baeckerei: "baecker", schmiede: "schmied", labor: "wissenschaftler" };
   function dorfSt(ich, k) { var g = ((ich && ich.dorf) || {})[k]; return g && g.stufe > 0 ? Number(g.stufe) : 0; }
   function beruf(ich, b) { return Number((((ich && ich.volk) || {}).berufe || {})[b]) || 0; }
@@ -8093,7 +8069,6 @@
   /* Wie spiel_beruf_max: je Stufe des Gebäudes zwei (Bauern: vier plus zwei je Mühlenstufe). */
   function berufMax(ich, b) {
     if (b === "bauer") return 4 + 2 * dorfSt(ich, "muehle");
-    if (BERUFE[b].fest) return BERUFE[b].fest;
     return 2 * BERUFE[b].haus.reduce(function (n, k) { return n + dorfSt(ich, k); }, 0);
   }
   function automatikMoeglich(ich) { return dorfSt(ich, "muehle") >= 2 && dorfSt(ich, "baeckerei") >= 2; }
@@ -8106,22 +8081,15 @@
   }
   /* Kleine Figur je Beruf: Kopf, Mütze/Hut, Schürze in Berufsfarbe. */
   function berufSvg(b) {
-    var F = { bauer: ["#6b8e3a", "#d9b25a"], mueller: ["#f3efe4", "#cfc6b0"], baecker: ["#ffffff", "#e9e2d0"], schmied: ["#5a4a3a", "#2f2a26"], wissenschaftler: ["#e8eef6", "#4a6fa5"],
-      fischer: ["#2f6f8f", "#f2c230"], holzfaeller: ["#b0302a", "#3a2a1e"], jaeger: ["#4a6a2e", "#7a5a2e"], bergmann: ["#4a4a52", "#2f2f36"] }[b] || ["#999", "#666"];
+    var F = { bauer: ["#6b8e3a", "#d9b25a"], mueller: ["#f3efe4", "#cfc6b0"], baecker: ["#ffffff", "#e9e2d0"], schmied: ["#5a4a3a", "#2f2a26"], wissenschaftler: ["#e8eef6", "#4a6fa5"] }[b] || ["#999", "#666"];
     var hut = b === "bauer" ? '<path d="M5 6.2 H15 L13 4.6 C12 3 8 3 7 4.6 Z" fill="#d9b25a" stroke="#8a6a2a" stroke-width=".5"/>'
       : b === "baecker" ? '<path d="M7 5.6 C5.6 5.6 5.6 2.8 7.4 3 C7.6 1.6 9.4 1.2 10 2.4 C10.8 1.2 12.6 1.6 12.6 3 C14.4 2.8 14.4 5.6 13 5.6 Z" fill="#fff" stroke="#bdb49c" stroke-width=".5"/>'
       : b === "mueller" ? '<path d="M6.6 5.8 C6.6 3.4 13.4 3.4 13.4 5.8 Z" fill="#e7e1d2" stroke="#a89f88" stroke-width=".5"/>'
       : b === "schmied" ? '<path d="M6.8 5.4 C7 3.8 13 3.8 13.2 5.4 Z" fill="#3a302a"/>'
-      : b === "fischer" ? '<path d="M5.6 6 C6 3 14 3 14.4 6 L16 7 H4 Z" fill="#f2c230" stroke="#a88420" stroke-width=".5"/>'
-      : b === "holzfaeller" ? '<path d="M6.6 5.6 C6.6 3.2 13.4 3.2 13.4 5.6 Z" fill="#b0302a"/><path d="M13.4 5.6 H15" stroke="#b0302a" stroke-width="1"/>'
-      : b === "jaeger" ? '<path d="M5 6 H15 L13.4 4.2 C12.6 2.8 7.4 2.8 6.6 4.2 Z" fill="#4a6a2e" stroke="#2e4a1a" stroke-width=".5"/><path d="M13 4 L15.4 1.6" stroke="#c9302c" stroke-width=".7"/>'
-      : b === "bergmann" ? '<path d="M6.4 5.8 C6.4 3 13.6 3 13.6 5.8 Z" fill="#f2c230" stroke="#8a6a1a" stroke-width=".5"/><circle cx="10" cy="4.3" r=".9" fill="#fff6c8"/>'
       : '<circle cx="8.6" cy="7.4" r="1.2" fill="none" stroke="#333" stroke-width=".45"/><circle cx="11.4" cy="7.4" r="1.2" fill="none" stroke="#333" stroke-width=".45"/><path d="M9.8 7.4 H10.2" stroke="#333" stroke-width=".45"/>';
     return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.6 19 C4.6 13 6.8 11.4 10 11.4 C13.2 11.4 15.4 13 15.4 19 Z" fill="' + F[0] + '" stroke="rgba(0,0,0,.35)" stroke-width=".5"/>'
       + '<path d="M7.6 12.2 H12.4 L12 19 H8 Z" fill="' + F[1] + '" opacity=".85"/>'
       + '<circle cx="10" cy="7.6" r="3.3" fill="#f1c9a0" stroke="#b98b62" stroke-width=".5"/>' + hut
-      + (b === "holzfaeller" ? '<path d="M15.6 18.6 L17.6 9.2" stroke="#8a6a3a" stroke-width=".8"/><path d="M17.2 9 L19.4 9.8 L18.6 11.8 L16.8 10.8 Z" fill="#9aa4ad" stroke="#4f5860" stroke-width=".3"/>' : "")
-      + (b === "bergmann" ? '<path d="M15.6 18.6 L17 9.6" stroke="#8a6a3a" stroke-width=".8"/><path d="M14.6 9.6 C16 8.4 18 8.4 19.4 9.8" stroke="#6f7680" stroke-width=".9" fill="none"/>' : "")
       + (b === "schmied" ? '<path d="M15.6 12 L18 9.6" stroke="#6b4521" stroke-width="1"/><rect x="16.6" y="8" width="3" height="1.8" rx=".3" transform="rotate(-45 18 9)" fill="#6f7680"/>' : "")
       + (b === "bauer" ? '<path d="M15.6 18.6 L16.8 8.6" stroke="#8a6a3a" stroke-width=".8"/><path d="M16.8 8.6 C14.6 7.8 12.8 8.4 12 9.6" stroke="#b8c0c8" stroke-width=".9" fill="none"/>' : "")
       + "</svg>";
@@ -8632,9 +8600,7 @@
   var DORF_LAGE = {
     muehle: [50, 74], bergwerk: [292, 62], rathaus: [160, 96], schule: [214, 86], baeckerei: [110, 114],
     kuhstall: [30, 118], krankenhaus: [282, 108], schmiede: [222, 138], huehnerstall: [70, 150],
-    brauerei: [126, 166], bibliothek: [186, 164], labor: [272, 182],
-    /* FASSUNG 756 — die Kaserne zwischen Schmiede und Krankenhaus, ein Weg führt zu ihr. */
-    kaserne: [262, 136]
+    brauerei: [126, 166], bibliothek: [186, 164], labor: [272, 182]
   };
   var dorfLandCache = "";
   function dorfZufall(n) { var x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
@@ -8770,9 +8736,9 @@
         + ' fill="none" stroke="#e3cc9f" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1.4 2.2"/>'
       + '<path d="M110 118 C130 112 150 104 160 100 C180 94 200 92 214 90 M160 100 C166 118 176 128 186 160 M110 118 C100 130 84 142 70 152 M110 118 C92 118 60 116 32 120 M214 90 C236 96 256 104 272 112 M186 160 C212 150 222 144 232 138 M186 160 C200 170 240 176 272 184 M126 168 C150 164 164 162 186 162 M160 100 C150 88 120 80 52 76 M214 90 C240 80 270 70 292 64" fill="none" stroke="url(#spDlKies)" stroke-width="3.6" stroke-linecap="round" opacity=".55"/>'
       /* FASSUNG 702 — der Mühlweg: direkt von der Mühle zur Bäckerei, für das Fuhrwerk. */
-      + '<path d="M56 80 C68 92 88 108 108 118 M260 136 C262 126 266 118 271 112" fill="none" stroke="#c7a978" stroke-width="3.4" stroke-linecap="round" opacity=".85"/>'
-      + '<path d="M56 80 C68 92 88 108 108 118 M260 136 C262 126 266 118 271 112" fill="none" stroke="url(#spDlKies)" stroke-width="2.8" stroke-linecap="round" opacity=".5"/>'
-      + '<path d="M56 80 C68 92 88 108 108 118 M260 136 C262 126 266 118 271 112" fill="none" stroke="#a88a58" stroke-width=".5" stroke-dasharray="3 2" transform="translate(0 -1)" opacity=".7"/>'
+      + '<path d="M56 80 C68 92 88 108 108 118" fill="none" stroke="#c7a978" stroke-width="3.4" stroke-linecap="round" opacity=".85"/>'
+      + '<path d="M56 80 C68 92 88 108 108 118" fill="none" stroke="url(#spDlKies)" stroke-width="2.8" stroke-linecap="round" opacity=".5"/>'
+      + '<path d="M56 80 C68 92 88 108 108 118" fill="none" stroke="#a88a58" stroke-width=".5" stroke-dasharray="3 2" transform="translate(0 -1)" opacity=".7"/>'
       /* Steinbrücke über den Fluss. */
       + '<path d="M150 101 C154 95 162 95 166 101 L168 104 H148 Z" fill="#b9b2a4" stroke="#6f6758" stroke-width=".7"/><path d="M152 104 C154 100 162 100 164 104" fill="#3b86c2"/>'
       + '<path d="M149 101 H167" stroke="#8a826f" stroke-width="1"/>'
@@ -8977,13 +8943,6 @@
       + (gesperrt ? "ab Level " + D.ab : (st ? "Ausbauen auf Stufe " + (st + 1) : "Bauen")) + (gesperrt ? "" : " <small>" + preis + " P</small>") + "</button>";
     if (st && lp < mx) knoepfe += '<button type="button" data-s="bauen" data-w="reparatur"' + (vorrat(ich, "erz") || vorrat(ich, "holz") >= 2 ? "" : " disabled") + ">Reparieren <small>1 Erz oder 2 Holz</small></button>";
     var werk = st ? werkZeilenHtml(ich, k).join("") : "";
-    /* FASSUNG 756 — in der Kaserne werden die Ritter ausgebildet: der Knopf steht gleich hier. */
-    if (k === "kaserne" && st) {
-      var rit = Number((ich.volk || {}).ritter) || 0, rmx = ritterMax(ich);
-      werk += '<div class="sp-troph sp-werk"><i>' + berufSvg("schmied").replace(/#5a4a3a/g, "#6f7680") + "</i><span><b>" + rit + " von " + rmx + " Rittern</b>"
-        + "<small>je Ritter +5 % Beute beim Plündern und +6 % Abwehr · 3 P Lohn und 1 Portion je Ernte</small></span>"
-        + '<button type="button" data-s="ritter" data-n="1"' + (rit >= rmx || lv < 4 || (ich.punkte || 0) < 40 ? " disabled" : "") + ">Ritter ausbilden <small>40 P</small></button></div>";
-    }
     var geplant = g && g.gepl && Date.now() - Date.parse(g.gepl) < 4 * 3600000;
     return '<div class="sp-dl-station" role="dialog" aria-label="' + esc(D.name) + '"><div class="sp-dl-st-kopf"><i>' + dorfHausGross(k, st || 1) + "</i><span><b>" + D.name + "</b>"
       + "<small>" + (st ? "Stufe " + st + " · " + (lp <= 0 ? "kaputt – liefert nichts" : "hält " + lp + "/" + mx) : "noch nicht gebaut") + "</small>"
@@ -9348,8 +9307,7 @@
         krankenhaus:  { w: 28, d: 14, h: 14, rh: 8, wand: "putz", dach: "schiefer", schornstein: false, rahmen: "#ffffff", laden: "#5a7a9a" },
         kuhstall:     { w: 26, d: 15, h: 9, rh: 10, wand: "bretter", dach: dachT, schornstein: false, tuerB: 6, fenster: 2, sockel: false, seitFenster: false },
         huehnerstall: { w: 14, d: 10, h: 6, rh: 6, wand: "bretter", dach: dachT, schornstein: false, fenster: 1, tuerB: 2.4, sockel: false, seitFenster: false },
-        labor:        { w: 22, d: 14, h: 12, rh: 5, wand: "putz", dach: "schiefer", schornstein: false, rahmen: "#dfe6ee", fenster: 3 },
-        kaserne:      { w: 24, d: 14, h: 11, rh: 7, wand: "feldstein", dach: "schiefer", schornstein: false, fenster: 3, rahmen: "#d8d0bc", laden: "#4a5a3a", tuerB: 4.4 }
+        labor:        { w: 22, d: 14, h: 12, rh: 5, wand: "putz", dach: "schiefer", schornstein: false, rahmen: "#dfe6ee", fenster: 3 }
       }[k] || { w: 22, d: 12, h: 10, rh: 8 };
       if (st >= 2) P.gaube = true;
       /* Stufe 3: ein Anbau links. */
@@ -9366,16 +9324,6 @@
         dmEbene(g, [tx - 2, ty + 2], [1, 0], [0, -1], function () { g.fillStyle = dmMuster(g, K.holz, .05 / s); g.fillRect(0, 0, 4, 6); g.fillStyle = "#f2c230"; g.beginPath(); g.arc(2, 3, 1, 0, 7); g.fill(); });
         g.fillStyle = dmMuster(g, K.schiefer, .06 / s); g.beginPath(); g.moveTo(tx - 2.8, ty - 3.8); g.lineTo(tx, ty - 9); g.lineTo(tx + 2.8, ty - 3.8); g.closePath(); g.fill();
         g.fillStyle = "#2f4a3a"; g.fillRect(L - 5, y - 5, 4, 3); g.fillStyle = "#6b4521"; g.fillRect(L - 4, y - 2, .5, 2); g.fillRect(L - 1.5, y - 2, .5, 2);
-      } else if (k === "kaserne") {
-        /* FASSUNG 756 — Kaserne: Fahnenmast mit Schwarz-Rot-Gold, davor eine Strohpuppe und eine Zielscheibe zum Üben. */
-        g.strokeStyle = "#5a4a3a"; g.lineWidth = .7; g.beginPath(); g.moveTo(R + 2.4, y); g.lineTo(R + 2.4, y - P.h - P.rh - 6); g.stroke();
-        var fy = y - P.h - P.rh - 6, fb = ["#1a1a1a", "#d8261f", "#f2c230"];
-        for (var fz = 0; fz < 3; fz++) { g.fillStyle = fb[fz]; g.beginPath(); g.moveTo(R + 2.8, fy + fz * 1.3); g.quadraticCurveTo(R + 5, fy + fz * 1.3 - .5, R + 7.4, fy + fz * 1.3 + .2); g.lineTo(R + 7.4, fy + fz * 1.3 + 1.5); g.quadraticCurveTo(R + 5, fy + fz * 1.3 + .8, R + 2.8, fy + fz * 1.3 + 1.3); g.closePath(); g.fill(); }
-        g.fillStyle = "#c9a44a"; g.beginPath(); g.arc(R + 2.4, fy - .4, .5, 0, 7); g.fill();
-        g.strokeStyle = "#6b4521"; g.lineWidth = .6; g.beginPath(); g.moveTo(L - 3, y + 2); g.lineTo(L - 3, y - 5.4); g.moveTo(L - 5, y - 3.6); g.lineTo(L - 1, y - 3.6); g.stroke();
-        g.fillStyle = "#d9b25a"; g.beginPath(); g.ellipse(L - 3, y - 3, 1.3, 2, 0, 0, 7); g.fill(); g.beginPath(); g.arc(L - 3, y - 5.8, 1, 0, 7); g.fill();
-        g.fillStyle = "#f3efe4"; g.beginPath(); g.arc(L - 8, y - 1.6, 2.2, 0, 7); g.fill(); g.fillStyle = "#d8261f"; g.beginPath(); g.arc(L - 8, y - 1.6, 1.4, 0, 7); g.fill();
-        g.fillStyle = "#f3efe4"; g.beginPath(); g.arc(L - 8, y - 1.6, .7, 0, 7); g.fill(); g.strokeStyle = "#6b4521"; g.lineWidth = .4; g.beginPath(); g.moveTo(L - 9.2, y + 1.6); g.lineTo(L - 8, y - 1); g.lineTo(L - 6.8, y + 1.6); g.stroke();
       } else if (k === "schmiede") {
         var gl = g.createRadialGradient(L + P.w * .3, y - 2, .5, L + P.w * .3, y - 2, 5); gl.addColorStop(0, "rgba(255,190,80,.95)"); gl.addColorStop(.5, "rgba(255,110,20,.6)"); gl.addColorStop(1, "rgba(255,110,20,0)");
         g.fillStyle = gl; g.beginPath(); g.arc(L + P.w * .3, y - 2, 5, 0, 7); g.fill();
@@ -9628,7 +9576,7 @@
       });
     }
     /* Wege: erst ein dunkler Rand, dann die Erde, dann Fahrspuren. */
-    var wege = "M110 118 C130 112 150 104 160 100 C180 94 200 92 214 90 M160 100 C166 118 176 128 186 160 M110 118 C100 130 84 142 70 152 M110 118 C92 118 60 116 32 120 M214 90 C236 96 256 104 272 112 M186 160 C212 150 222 144 232 138 M186 160 C200 170 240 176 272 184 M126 168 C150 164 164 162 186 162 M160 100 C150 88 120 80 52 76 M214 90 C240 80 270 70 292 64 M56 80 C68 92 88 108 108 118 M260 136 C262 126 266 118 271 112";
+    var wege = "M110 118 C130 112 150 104 160 100 C180 94 200 92 214 90 M160 100 C166 118 176 128 186 160 M110 118 C100 130 84 142 70 152 M110 118 C92 118 60 116 32 120 M214 90 C236 96 256 104 272 112 M186 160 C212 150 222 144 232 138 M186 160 C200 170 240 176 272 184 M126 168 C150 164 164 162 186 162 M160 100 C150 88 120 80 52 76 M214 90 C240 80 270 70 292 64 M56 80 C68 92 88 108 108 118";
     if (typeof Path2D !== "undefined") {
       var wp = new Path2D(wege);
       g.save(); g.lineCap = "round"; g.strokeStyle = "rgba(60,70,20,.35)"; g.lineWidth = 6; g.stroke(wp);
@@ -10010,7 +9958,7 @@
   /* Wo man auf ein gemaltes Haus tippen kann (Welt-Einheiten, um den Fußpunkt). */
   var DM_MASS = {
     baeckerei: [24, 13, 11, 9], schule: [30, 13, 11, 9, 9], schmiede: [22, 13, 10, 8], brauerei: [24, 14, 12, 9], bibliothek: [26, 14, 13, 9],
-    rathaus: [30, 15, 16, 11, 12], krankenhaus: [28, 14, 14, 8], kuhstall: [26, 15, 9, 10], huehnerstall: [14, 10, 6, 6], labor: [22, 14, 12, 5, 8], kaserne: [24, 14, 11, 7]
+    rathaus: [30, 15, 16, 11, 12], krankenhaus: [28, 14, 14, 8], kuhstall: [26, 15, 9, 10], huehnerstall: [14, 10, 6, 6], labor: [22, 14, 12, 5, 8]
   };
   function dmUmriss(k, st) {
     var f = [.82, .92, 1.02][Math.max(0, Math.min(2, (st || 1) - 1))], M = DM_MASS[k];
@@ -11099,7 +11047,6 @@
     kuhstall: ["#8a5a2e", '<path d="M9 2.8h6v2.6l2.2 3.4v12.4H6.8V8.8L9 5.4z" fill="#fff"/><path d="M6.8 12.5h10.4" stroke="#8a5a2e" stroke-width="1.6"/>'],
     huehnerstall: ["#e0a32a", '<path d="M12 3c4 0 7 6.8 7 10.8a7 7 0 0 1-14 0C5 9.8 8 3 12 3z" fill="#fff"/>'],
     bergwerk: ["#6d5b4b", '<path d="M3.5 8.2c5.6-4.4 11.4-4.4 17 0" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M12 5.8L7 21" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>'],
-    kaserne: ["#4a5a3a", '<path d="M4.5 4.5L15 15M19.5 4.5L9 15" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M13 17l4 4M11 17l-4 4" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>'],
     labor: ["#129c8c", '<path d="M9 3h6v1.8h-1v5.3l5.6 8.6c1 1.8.1 3.3-1.8 3.3H6.2c-1.9 0-2.8-1.5-1.8-3.3L10 10.1V4.8H9z" fill="#fff"/><path d="M7.6 15.5h8.8" stroke="#129c8c" stroke-width="1.4"/>']
   };
   function dorfPin(k) {
@@ -14202,7 +14149,7 @@
       dorfJahr: dorfJahr, osterSonntag: osterSonntag, JAHR_VORSCHAU: JAHR_VORSCHAU,
       jahrVorschau: function (v, knopf) { S.jahrVorschau = v || ""; if (knopf != null) S.jahrVorschauTest = !!knopf; },
       jahrLichter: function () { return (DM.jahrLichter || []).length; }, dmZeit: function () { return DM.zeit; }, dmNeu: function () { DM.geht = null; DM.bilder = {}; },
-      leisteReihe: leisteReihe, berufeHtml: berufeHtml, truppZeileHtml: truppZeileHtml, volkHtml: volkHtml, dorfStationHtml: dorfStationHtml, racheGegen: racheGegen, nachbarnHtml: nachbarnHtml, fremdStationHtml: fremdStationHtml, dorfZoom: dorfZoom, dorfNah: dorfNah, DORF_ZEICHEN: DORF_ZEICHEN,
+      leisteReihe: leisteReihe, racheGegen: racheGegen, nachbarnHtml: nachbarnHtml, fremdStationHtml: fremdStationHtml, dorfZoom: dorfZoom, dorfNah: dorfNah, DORF_ZEICHEN: DORF_ZEICHEN,
       /* FASSUNG 724 */
       dorfLichterTakt: dorfLichterTakt, stadtWetterNeu: function () { SW.name = ""; SW.jetzt = null; SW.zeit = 0; SW.laeuft = false; },
       dorfWetter: dorfWetter, dorfBlitz: dorfBlitz, dorfVoegel: dorfVoegel, dorfTreiben: dorfTreiben, DW: DW, dorfWetterMelden: dorfWetterMelden,

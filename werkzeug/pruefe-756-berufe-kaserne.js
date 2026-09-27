@@ -1,17 +1,13 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 704: DAS DORF GEMALT (Funk 145/146/148)
+   SONDE — FASSUNG 756: BERUFE MIT AUSBILDUNG UND DIE KASERNE (Walkie 293)
    ---------------------------------------------------------------------
-   XANDER (Funk 146): „nicht glatt wie Vektor Grafiken sondern richtig
-   schön … wie bei einer Bitmap … weiche strukturierte natürliche Texturen
-   bei den Häuserwänden oder bei den Dächern". Funk 148: „dass man auf
-   einem Klick in das leere dieses kleine Panel wieder schließt".
-   Geprüft auf einem Android-Telefon (360 px, echte Finger): das Dorf ist
-   ein gemaltes Rasterbild (viele Farben, keine Vektorhäuser mehr), doppelt
-   so groß wie das Fenster und mit dem Finger verschiebbar, Tipp aufs
-   gemalte Haus öffnet es, Tipp in die Landschaft schließt es, beim
-   Neuzeichnen wird NICHT neu gemalt, beim Ausbau schon, Rauch und
-   Mühlenflügel bewegen sich, Leistung, Rückfall auf Vektor.
+   XANDER wählte: „Ja – Ausbildung, ausgebildete bringen mehr als freie
+   Bewohner" und „Ja, und Soldaten brauchen eine Kaserne zum Trainieren".
+   Die Rechnung liegt auf dem Server (dort in einer zurückgerollten
+   Transaktion geprüft); hier wird geprüft, was man sieht und antippt:
+   die Kaserne im Dorfbild, ihre Station mit Ritter-Ausbildung, die neuen
+   Berufe und die größere Trupp-Menge.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -170,96 +166,95 @@ const sage = (gut, was, zusatz) => {
     ich.werk = {}; ich.volk = { arbeiter: 20, ritter: 0, quote: 80, berufe: { bauer: 2, mueller: 1 } };
     ich.dorf_ab = new Date(jetzt - 3600000).toISOString();
     window.__extra = Object.assign({}, window.__extra || {}, { spiel_markt_preise: () => ({ ok: true, preise: {} }), spiel_angebote_liste: () => ({ ok: true, angebote: [] }) });
+    ich.vorraete = Object.assign({}, ich.vorraete, { brot: 5, fisch: 1 });
     const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false; S.dorfTeil = ""; S.dorfWahl = "";
     try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
-    /* Seit 709 ist das ganze Dorf die Grundansicht (Funk 152); diese Sonde prüft die Ansicht „näher ran". */
-    try { localStorage.setItem("dma_dorf_nah", "1"); } catch (e) {} S.dorfNah = null;
-    /* Seit 711 malt das Dorf nachts ein Nachtbild – diese Sonde prüft das Tagbild, unabhängig von der Uhrzeit. */
-    S.wetterTest = { code: 1, tag: true };
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
+  /* Die Uhr der Seite verstellen: der Zug fährt nach Date.now(). */
+  await pg.evaluate(() => { const echt = Date.now.bind(Date); window.__echt = echt; window.__versatz = 0; Date.now = () => echt() + window.__versatz;
+    const S = window.DMA_SPIEL.pruef.zustand(); S.wetterTest = { code: 1, tag: true, temp: 18, ort: "Test" }; });
+  const setzeT = (z) => pg.evaluate((z) => { const echt = window.__echt(); window.__versatz = (z - (echt / 1000) % 60) * 1000; }, z);
+  const P = await pg.evaluate(() => window.DMA_SPIEL.pruef.bahn.plan());
+  const bahn = (sel) => pg.evaluate(() => {
+    const svg = document.querySelector("svg.sp-dl-bahn"); if (!svg) return null;
+    const zug = svg.querySelector(".sp-bz-zug"), lok = zug.querySelector(".sp-bz-f"), tr = lok.getAttribute("transform") || "";
+    const m = tr.match(/translate\(([-\d.]+) ([-\d.]+)\)/);
+    const rad = zug.querySelectorAll(".sp-bz-rad")[2], lr = zug.querySelector(".lc-lok-rad-2");
+    const rauch = [...svg.querySelectorAll(".sp-bz-rauch circle")].filter((c) => Number(c.getAttribute("r")) > 0 && Number(c.getAttribute("opacity")) > .02).length;
+    return { da: zug.style.display !== "none", x: m ? Number(m[1]) : null, y: m ? Number(m[2]) : null, rad: rad ? rad.getAttribute("transform") : "", lokRad: lr ? lr.style.transform : "", rauch: rauch, teile: zug.querySelectorAll(".sp-bz-f").length };
+  });
+  const toene = (ab) => pg.evaluate((ab) => window.DMA_TONLOG.filter((t) => t.wann >= ab).map((t) => [t.name, t.wann - ab]), ab);
+  const jetztMs = () => pg.evaluate(() => Math.round(performance.now()));
 
-  console.log("\nGEMALT STATT VEKTOR\n");
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(900);
-  let r = await pg.evaluate(() => { const lw = document.querySelector(".sp-dl-fenster canvas.sp-dl-mal"); if (!lw) return null;
-    const g = lw.getContext("2d"), d = g.getImageData(0, 0, lw.width, lw.height).data, farben = new Set();
-    for (let i = 0; i < d.length; i += 4 * 97) farben.add((d[i] >> 3) + "," + (d[i + 1] >> 3) + "," + (d[i + 2] >> 3));
-    return { breite: lw.width, hoehe: lw.height, css: Math.round(lw.clientWidth), gemalt: lw.dataset.gemalt || "", farben: farben.size, vektorHaeuser: document.querySelectorAll(".sp-dorfland .sp-dl-haus > svg").length, zeit: window.DMA_SPIEL.pruef.dmZeit ? window.DMA_SPIEL.pruef.dmZeit() : null }; });
-  sage(r && r.gemalt && r.farben > 800, "das Dorf ist ein gemaltes Rasterbild (viele Farbtöne, nicht flach)", JSON.stringify(r));
-  sage(r && r.vektorHaeuser === 0, "keine Vektor-Häuser mehr im Bild");
-  sage(r && r.breite >= 2 * r.css * .95, "scharf: das Bild hat mindestens doppelt so viele Pixel wie es breit ist", r && r.breite + " px auf " + r.css + " CSS-px");
-  r = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"), l = f.querySelector(".sp-dorfland"); return { fenster: f.clientWidth, bild: l.clientWidth, links: Math.round(f.scrollLeft), oben: Math.round(f.scrollTop) }; });
-  sage(r.bild >= r.fenster * 1.9, "das Dorf ist doppelt so groß wie sein Fenster (Häuser gut zu erkennen)", JSON.stringify(r));
-  sage(r.links > 0 && r.oben > 0, "am Anfang schaut man auf die Dorfmitte", JSON.stringify(r));
-  const bak = await pg.evaluate(() => { const b = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]').getBoundingClientRect(); return { w: Math.round(b.width), h: Math.round(b.height) }; });
-  sage(bak.w >= 40, "ein Haus ist auf dem Telefon mindestens 40 px breit (vorher etwa 25)", JSON.stringify(bak));
+  console.log("\nOHNE KASERNE\n");
+  let R = await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.ich.level = 12; S.ich.punkte = 900; S.ich.volk = { arbeiter: 20, ritter: 0, quote: 80, berufe: {} };
+    S.ich.dorf = Object.assign({}, S.ich.dorf || {}, { bergwerk: { stufe: 1, lp: 20 } }); delete S.ich.dorf.kaserne;
+    const d = document.createElement("div"); d.innerHTML = P.volkHtml(S.ich); const b = d.querySelector('[data-s="ritter"][data-n="1"]');
+    return { da: !!b, zu: b && b.disabled, text: b ? b.textContent : "", titel: b ? b.title : "" }; });
+  sage(R.da && R.zu && /braucht Kaserne/.test(R.text), "ohne Kaserne: „Ritter · braucht Kaserne“, nicht antippbar", JSON.stringify(R));
 
-  console.log("\nWISCHEN, TIPPEN, SCHLIESSEN (Funk 148)\n");
-  const cdp = await ctx.newCDPSession(pg);
-  const vor = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); window.__fenster = f; const b = f.getBoundingClientRect(); return { x: b.left + b.width * .7, y: b.top + b.height * .5, l: f.scrollLeft }; });
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: vor.x, y: vor.y }] });
-  for (let i = 1; i <= 8; i++) { await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: vor.x - 12 * i, y: vor.y }] }); await tick(16); }
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await tick(900);
-  const nach = await pg.evaluate(() => Math.round(document.querySelector(".sp-dl-fenster").scrollLeft));
-  await tick(1600);
-  r = await pg.evaluate(() => ({ l: Math.round(document.querySelector(".sp-dl-fenster").scrollLeft), gleich: document.querySelector(".sp-dl-fenster") === window.__fenster }));
-  sage(nach > vor.l + 30, "mit dem Finger nach links wischen schiebt das Dorf", Math.round(vor.l) + " → " + nach);
-  sage(r.l === nach && r.gleich, "nach 1,6 s steht es noch da (kein Zurückspringen)", nach + " → " + r.l);
-  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"), b = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]'); f.scrollLeft = b.offsetLeft - 40; f.scrollTop = Math.max(0, b.offsetTop - 30); });
+  console.log("\nDIE KASERNE IM DORF\n");
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); const d = {}; Object.keys(P.DORF_LAGE).forEach((k) => { d[k] = { stufe: 3, lp: 60 }; });
+    S.ich.dorf = d; S.ich.volk = { arbeiter: 20, ritter: 1, quote: 80, berufe: {} }; S.dorfTeil = ""; S.dorfWahl = ""; S.blick = "dorfblick"; S.schnellMenue = true; P.schnellZeichnen(true); });
+  await tick(1800);
+  R = await pg.evaluate(() => {
+    const k = document.querySelector(".sp-dl-haus[data-g=\"kaserne\"]"); if (!k) return null;
+    const b = k.getBoundingClientRect(), alle = [...document.querySelectorAll(".sp-dl-ort")].filter((x) => x !== k && !x.classList.contains("sp-dl-feld"));
+    const ueber = alle.filter((x) => { const q = x.getBoundingClientRect(); const ix = Math.min(b.right, q.right) - Math.max(b.left, q.left), iy = Math.min(b.bottom, q.bottom) - Math.max(b.top, q.top); return ix > 4 && iy > 4; }).map((x) => x.dataset.g);
+    const c = document.querySelector("canvas.sp-dl-mal"), cb = c.getBoundingClientRect(), sx = c.width / cb.width;
+    const px = c.getContext("2d").getImageData(Math.round((b.left - cb.left) * sx), Math.round((b.top - cb.top) * sx), Math.max(1, Math.round(b.width * sx)), Math.max(1, Math.round(b.height * sx))).data;
+    let rot = 0, schwarz = 0, gold = 0, grau = 0;
+    for (let i = 0; i < px.length; i += 4) { const r = px[i], g = px[i + 1], bl = px[i + 2];
+      if (r > 180 && g < 70 && bl < 70) rot++; if (r < 45 && g < 45 && bl < 45) schwarz++; if (r > 200 && g > 160 && bl < 90) gold++; if (Math.abs(r - g) < 14 && Math.abs(g - bl) < 18 && r > 90 && r < 200) grau++; }
+    const e = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+    return { ueber, rot, schwarz, gold, grau, n: px.length / 4, oben: !!(e && e.closest(".sp-dl-haus[data-g=kaserne]")) };
+  });
+  sage(R && R.oben, "die Kaserne ist im Bild antippbar (nichts liegt darüber)", JSON.stringify(R && { oben: R.oben }));
+  sage(R && R.ueber.length === 0, "ihre Tippfläche überdeckt kein anderes Gebäude", JSON.stringify(R && R.ueber));
+  sage(R && R.grau > R.n * .15 && R.rot > 0 && R.schwarz > 0 && R.gold > 0, "gemalt: Feldstein und Schiefer, dazu Schwarz-Rot-Gold an der Fahne", JSON.stringify(R && { grau: R.grau, rot: R.rot, schwarz: R.schwarz, gold: R.gold, n: R.n }));
+  if (process.env.BILD) await (await pg.$(".sp-dl-rahmen")).screenshot({ path: process.env.BILD });
+  await pg.evaluate(() => { const k = document.querySelector(".sp-dl-haus[data-g=\"kaserne\"]"); k.scrollIntoView({ block: "center" }); });
   await tick(300);
-  const hb = await pg.evaluate(() => { const b = document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]').getBoundingClientRect(); return { x: b.left + b.width * .45, y: b.top + b.height * .6 }; });
-  await pg.touchscreen.tap(hb.x, hb.y); await tick(700);
-  r = await pg.evaluate(() => ({ wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl, station: Boolean(document.querySelector(".sp-dl-station")), ring: getComputedStyle(document.querySelector('.sp-dl-haus-gemalt[data-g="baeckerei"]'), "::after").opacity }));
-  sage(r.wahl === "baeckerei" && r.station && r.ring === "1", "Tipp aufs gemalte Haus öffnet die Bäckerei, goldener Ring am Boden", JSON.stringify(r));
-  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); f.scrollIntoView({ block: "nearest" }); }); await tick(300);
-  const leer = await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster").getBoundingClientRect(); const hs = [...document.querySelectorAll(".sp-dl-rahmen button")].map((e) => e.getBoundingClientRect()).filter((b) => b.width);
-    /* Ab 753 sitzen Kompass und Uhr oben links: Chrome rastet einen Fingertipp auf einen nahen Knopf ein – deshalb 22 px Abstand zu jedem Knopf (wie Sonde 709). */
-    for (let y = f.top + 8; y < f.bottom - 8; y += 9) for (let x = f.left + 8; x < f.right - 8; x += 9) { if (!hs.some((b) => x >= b.left - 22 && x <= b.right + 22 && y >= b.top - 22 && y <= b.bottom + 22)) { const e = document.elementFromPoint(x, y); if (e && e.matches("canvas.sp-dl-mal")) return { x, y }; } } return null; });
-  if (leer) { await pg.touchscreen.tap(leer.x, leer.y); await tick(600); }
-  r = await pg.evaluate(() => ({ wahl: window.DMA_SPIEL.pruef.zustand().dorfWahl, station: Boolean(document.querySelector(".sp-dl-station")) }));
-  sage(leer && r.wahl === "" && !r.station, "Tipp in die leere Landschaft schließt das Haus wieder", JSON.stringify(r) + " " + JSON.stringify(leer));
+  let m = await mitte(".sp-dl-haus[data-g=\"kaserne\"]");
+  await pg.touchscreen.tap(m.x, m.y); await tick(700);
+  R = await pg.evaluate(() => { const st = document.querySelector(".sp-dl-station"); if (!st) return null; const b = st.querySelector('[data-s="ritter"][data-n="1"]');
+    return { titel: (st.querySelector("b") || {}).textContent, gibt: st.textContent, knopf: b ? b.textContent : "", zu: b ? b.disabled : null }; });
+  sage(R && R.titel === "Kaserne" && /Ritter aus/.test(R.gibt) && /1 von 6 Rittern/.test(R.gibt), "Tipp auf die Kaserne: Station „Kaserne“, 1 von 6 Rittern (Stufe 3)", JSON.stringify(R && { titel: R.titel }));
+  sage(R && /Ritter ausbilden/.test(R.knopf) && R.zu === false, "dort gleich der Knopf „Ritter ausbilden · 40 P“", JSON.stringify(R && { knopf: R.knopf, zu: R.zu }));
+  await pg.evaluate(() => { window.__rufe.length = 0; window.__extra = Object.assign({}, window.__extra || {}, { spiel_ritter: (a, ich) => Object.assign({}, ich, { ok: true, ritter: 2, max: 6, preis: 40 }) }); window.__hinweise.length = 0; });
+  await pg.evaluate(() => { const b = document.querySelector('.sp-dl-station [data-s="ritter"][data-n="1"]'); b.scrollIntoView({ block: "center" }); });
+  await tick(200);
+  m = await mitte('.sp-dl-station [data-s="ritter"][data-n="1"]');
+  await pg.touchscreen.tap(m.x, m.y); await tick(500);
+  R = await pg.evaluate(() => ({ ruf: window.__rufe.filter((r) => r.name === "spiel_ritter").map((r) => r.args.p_menge), meld: window.__hinweise.find((h) => /Kaserne/.test(h)) || "", ton: window.DMA_TONLOG.some((t) => t.name === "marschtrommel") }));
+  sage(R.ruf.join() === "1" && /2 von 6 Ritter/.test(R.meld) && R.ton, "Tipp: Server-Ruf spiel_ritter(+1), Trommel, „… in der Kaserne ausgebildet (2 von 6 Ritter)“", JSON.stringify(R));
 
-  console.log("\nNUR NEU MALEN, WENN SICH DAS DORF ÄNDERT\n");
-  r = await pg.evaluate(async () => { const lw = document.querySelector("canvas.sp-dl-mal"); lw.__merk = 1; const g0 = lw.dataset.gemalt; const S = window.DMA_SPIEL.pruef.zustand();
-    for (let i = 0; i < 5; i++) { S.ich = Object.assign({}, S.ich, { punkte: S.ich.punkte + 1 }); window.DMA_SPIEL.pruef.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 50)); }
-    const lw2 = document.querySelector("canvas.sp-dl-mal"); return { gleich: lw2 === lw && lw2.__merk === 1, sig: lw2.dataset.gemalt === g0 }; });
-  sage(r.gleich && r.sig, "5× neu zeichnen (Punkte ändern sich): dieselbe Leinwand, nicht neu gemalt", JSON.stringify(r));
-  r = await pg.evaluate(async () => { const lw = document.querySelector("canvas.sp-dl-mal"); const g0 = lw.dataset.gemalt; const S = window.DMA_SPIEL.pruef.zustand();
-    S.ich = Object.assign({}, S.ich, { dorf: Object.assign({}, S.ich.dorf, { schule: { stufe: 2, lp: 40 } }) }); window.DMA_SPIEL.pruef.schnellZeichnen(true); await new Promise((o) => setTimeout(o, 100));
-    const lw2 = document.querySelector("canvas.sp-dl-mal"); return { vorher: g0, nachher: lw2.dataset.gemalt }; });
-  sage(r.nachher && r.nachher !== r.vorher && /sch2/.test(r.nachher), "Schule ausgebaut: das Bild wird neu gemalt (Stufe 2 mit Gaube)", r.vorher + " → " + r.nachher);
-  r = await pg.evaluate(() => { const u = document.querySelector(".sp-dl-ueber"); return { qualm: u.querySelectorAll(".sp-dl-qualm").length, fluegel: u.querySelectorAll(".sp-dl-fluegel").length,
-    dreht: [...u.querySelectorAll(".sp-dl-fluegel svg")].some((e) => e.getAnimations().some((a) => a.playState === "running")) }; });
-  sage(r.qualm >= 6 && r.fluegel === 1 && r.dreht, "Rauch aus den Schornsteinen, die Mühlenflügel drehen sich (die kaputte Schmiede raucht nicht)", JSON.stringify(r));
-  await pg.evaluate(() => { const f = document.querySelector(".sp-dl-fenster"); f.scrollLeft = f.scrollWidth * 150 / 320 - f.clientWidth / 2; f.scrollTop = f.scrollHeight * 105 / 200 - f.clientHeight / 2; f.scrollIntoView({ block: "start" }); }); await tick(500);
-  await (await pg.$(".sp-dl-fenster")).screenshot({ path: (process.env.BILD || "/tmp/d704.png") });
-  await pg.evaluate(() => { const lw = document.querySelector("canvas.sp-dl-mal"); const c = document.createElement("canvas"); c.id = "__voll"; c.width = lw.width; c.height = lw.height; c.getContext("2d").drawImage(lw, 0, 0);
-    c.style.cssText = "position:fixed;left:0;top:0;width:" + Math.round(lw.width / 2) + "px;z-index:99999"; document.body.appendChild(c); });
-  await (await pg.$("#__voll")).screenshot({ path: (process.env.BILD || "/tmp/d704.png").replace(/\.png$/, "-voll.png") });
-  await pg.evaluate(() => document.getElementById("__voll").remove());
+  console.log("\nNEUE BERUFE\n");
+  R = await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.ich.volk = { arbeiter: 20, ritter: 1, quote: 80, berufe: {} };
+    const dd = {}; Object.keys(P.DORF_LAGE).forEach((k) => { dd[k] = { stufe: 3, lp: 60 }; }); S.ich.dorf = dd; S.ich.punkte = 900;
+    const d = document.createElement("div"); d.innerHTML = P.berufeHtml(S.ich);
+    return [...d.querySelectorAll('[data-s="ausbilden"][data-n="1"]')].map((b) => b.dataset.b + (b.disabled ? "-zu" : "")); });
+  sage(["fischer", "holzfaeller", "jaeger", "bergmann"].every((b) => R.indexOf(b) >= 0), "Fischer, Holzfäller, Jäger und Bergleute kann man ausbilden", R.join(","));
+  R = await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); const d = document.createElement("div");
+    const ohne = (() => { d.innerHTML = P.truppZeileHtml(S.ich, "wald"); return d.textContent; })();
+    S.ich.volk = { arbeiter: 20, ritter: 1, quote: 80, berufe: { holzfaeller: 2, bergmann: 1 } };
+    const mit = (() => { d.innerHTML = P.truppZeileHtml(S.ich, "wald"); return d.textContent; })();
+    const berg = (() => { d.innerHTML = P.truppZeileHtml(S.ich, "berg"); return d.textContent; })();
+    return { ohne, mit, berg }; });
+  const zahl = (t) => Number((t.match(/bringen (\d+)/) || [])[1]);
+  sage(zahl(R.mit) === zahl(R.ohne) + 4 && /2 ausgebildete Holzfäller \(\+4\)/.test(R.mit), "2 ausgebildete Holzfäller: +4 Holz je Fahrt (wie der Server)", R.ohne + " → " + R.mit);
+  sage(/1 ausgebildete Bergmann \(\+1\)/.test(R.berg), "1 Bergmann: +1 Erz je Fahrt", R.berg);
+  await pg.evaluate(() => { window.__rufe.length = 0; window.__extra.spiel_ausbilden = (a, ich) => Object.assign({}, ich, { ok: true, beruf: a.p_beruf, anzahl: 1, preis: 15 }); });
+  R = await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.ich.volk = { arbeiter: 20, ritter: 1, quote: 80, berufe: {} }; S.blick = "dorfblick"; S.dorfWahl = ""; S.schnellMenue = true; P.schnellZeichnen(true);
+    const b = document.querySelector('.sp-schnellmenue [data-s="ausbilden"][data-b="jaeger"][data-n="1"]'); if (!b) return "kein Knopf im Menü"; if (b.disabled) return "Knopf gesperrt"; b.click(); return "ok"; });
+  await tick(400);
+  const aus = await pg.evaluate(() => ({ ruf: window.__rufe.filter((r) => r.name === "spiel_ausbilden").map((r) => r.args.p_beruf + ":" + r.args.p_menge), meld: window.__hinweise.slice(-1)[0] || "" }));
+  sage(R === "ok" && aus.ruf.join() === "jaeger:1" && /Jäger/.test(aus.meld), "in der Dorf-Ansicht: „Ausbilden“ beim Jäger ruft spiel_ausbilden(jaeger, 1)", JSON.stringify({ R, aus }));
 
-  console.log("\nLEISTUNG\n");
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-  const malen = await pg.evaluate(() => { const c = document.createElement("canvas"); const t0 = performance.now(); window.DMA_SPIEL.pruef.dorfMalen(c, window.DMA_SPIEL.pruef.zustand().ich.dorf, window.DMA_SPIEL.pruef.DORF_LAGE, 1232); return Math.round(performance.now() - t0); });
-  const leistung = await pg.evaluate(async () => {
-    const S = window.DMA_SPIEL.pruef.zustand(); const z = [];
-    for (let i = 0; i < 9; i++) { await new Promise((o) => setTimeout(o, 60)); const t0 = performance.now(); S.ich = Object.assign({}, S.ich, { punkte: (S.ich.punkte || 0) + 1 }); window.DMA_SPIEL.pruef.schnellZeichnen(true); z.push(performance.now() - t0); }
-    z.sort((a, b) => a - b);
-    const bilder = []; let letzt = performance.now(); const ende = letzt + 3000;
-    await new Promise((ok) => { const f = (t) => { bilder.push(t - letzt); letzt = t; if (t < ende) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
-    return { zeichnen: Math.round(z[4]), bilder: bilder.length, lang: bilder.filter((x) => x > 50).length }; });
-  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
-  sage(malen < 1500, "einmal malen (1232 px, 4× gedrosselt, wie ein mittleres Telefon) unter 1,5 s – danach aus dem Speicher", malen + " ms");
-  sage(leistung.zeichnen < 120 && leistung.lang <= 5, "danach: Neuzeichnen (Median) unter 120 ms, höchstens 5 lange Bilder in 3 s", JSON.stringify(leistung));
-
-  console.log("\nRÜCKFALL OHNE MALEN\n");
-  r = await pg.evaluate(() => { try { localStorage.setItem("dma_dorf_vektor", "1"); } catch (e) {} window.DMA_SPIEL.pruef.dmNeu(); window.DMA_SPIEL.pruef.schnellZeichnen(true);
-    const n = document.querySelectorAll(".sp-dorfland .sp-dl-haus > svg").length, lw = document.querySelector("canvas.sp-dl-mal"); try { localStorage.removeItem("dma_dorf_vektor"); } catch (e) {} window.DMA_SPIEL.pruef.dmNeu(); window.DMA_SPIEL.pruef.schnellZeichnen(true); return { vektor: n, leinwand: Boolean(lw) }; });
-  sage(r.vektor > 5 && !r.leinwand, "mit dem Schalter dma_dorf_vektor kommt das alte Vektorbild (Rückfall)", JSON.stringify(r));
-  sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
-  console.log("\nFassung 704 (Dorf gemalt): " + (fehler ? fehler + " rot." : "alles grün."));
+  sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
   await br.close(); srv.close();
+  console.log("\nFassung 756 (Berufe und Kaserne): " + (fehler ? fehler + " rot." : "alles grün."));
   process.exit(fehler ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(1); });
+})().catch((e) => { console.error(e); process.exit(2); });

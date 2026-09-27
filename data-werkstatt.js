@@ -49,28 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 755 — Plündern mit Folgen: Scheitern, Rache, Ticker (Walkie 294)",
+  stand: "Fassung 756 — Berufe mit Ausbildung und Kaserne (Walkie 293)",
 
   inArbeit: [
-    { seit: "2026-09-27T10:35",
-      text: "Berufe mit Ausbildung, Kaserne (Walkie 293)" },
-    { seit: "2026-09-27T10:35",
+    { seit: "2026-09-27T10:55",
       text: "Klassenname und mehrere Charaktere (Walkie 291/292)" },
-    { seit: "2026-09-27T10:35",
+    { seit: "2026-09-27T10:55",
       text: "Einzug: Viper/KITT mit Kurve, Optimus Prime originalgetreu (Walkie 293)" },
-    { seit: "2026-09-27T10:35",
+    { seit: "2026-09-27T10:55",
       text: "Aufgabenbank durchsehen (Funk 178)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T10:35",
-      text: "Plündern kann scheitern: Ritter wehren ab, Mana und Punkte weg" },
-    { seit: "2026-09-27T10:35",
-      text: "Rache: 24 Stunden einmal ohne Mana" },
-    { seit: "2026-09-27T10:35",
-      text: "Jede Plünderung im Laufband und bei allen im Raum" },
-    { seit: "2026-09-27T10:35",
-      text: "Kampf-Symbol mit Hinweispunkt" },
+    { seit: "2026-09-27T10:55",
+      text: "Fischer, Holzfäller, Jäger, Bergleute als Berufe mit Ausbildung" },
+    { seit: "2026-09-27T10:55",
+      text: "Ausgebildete bringen mehr je Fahrt" },
+    { seit: "2026-09-27T10:55",
+      text: "Kaserne im Dorf: Ritter nur noch dort, 2 je Stufe" },
+    { seit: "2026-09-27T10:55",
+      text: "Sonde 704 wieder grün" },
   ],
 };

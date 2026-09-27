@@ -226,7 +226,7 @@ const sage = (gut, was, zusatz) => {
       forschung: m ? /Forschung gesammelt: 5/.test(m.textContent) : false, bauern: m ? (m.querySelector('.sp-beruf [data-b="bauer"]') || {}).closest && m.querySelector('.sp-beruf [data-b="bauer"]').closest(".sp-beruf").textContent : "",
       autoAus: Boolean(m && m.querySelector('.sp-automatik [data-s="automatik"][disabled]')) }; });
   sage(/12 von 14 Dorfbewohnern frei/.test(r.kopf), "die Tafel zählt freie Dorfbewohner (14 aus 7 Gebäudestufen, 2 sind Bauern)", r.kopf);
-  sage(r.zeilen === 6, "fünf Berufe und die Automatik als Zeilen", r.zeilen + " Zeilen");
+  sage(r.zeilen === 10, "neun Berufe (ab 756 auch Fischer, Holzfäller, Jäger, Bergleute) und die Automatik als Zeilen", r.zeilen + " Zeilen");
   sage(/2 Bauern/.test(r.bauern) && /höchstens 8/.test(r.bauern), "Bauern: 2, höchstens 4 + 2 je Mühlenstufe = 8", r.bauern.replace(/\s+/g, " ").slice(0, 90));
   sage(r.hunger, "Hunger-Warnung steht da, wenn das Volk bei der letzten Ernte gehungert hat");
   sage(r.forschung, "gesammelte Forschung wird gezeigt");

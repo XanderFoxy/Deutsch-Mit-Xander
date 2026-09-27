@@ -209,7 +209,7 @@ const sage = (gut, was, zusatz) => {
     try { const d = b.getContext("2d").getImageData(0, 0, b.width, b.height).data; for (let i = 0; i < d.length; i += 4 * 211) if (d[i + 3] > 0) bunt++; } catch (e) {}
     const p = [...k.querySelectorAll(".sp-dl-mpunkt")]; return { punkte: p.length, titel: p.map((x) => x.title), klein: Math.min(...p.map((x) => x.getBoundingClientRect().width)), bild: bunt, fenster: Boolean(document.querySelector(".sp-dl-karte")) }; });
   sage(/sp-dl-nah/.test(r.klasse) && r.lw >= r.fw * 1.9, "ein Tipp auf die Lupe: näher ran, das Dorf ist doppelt so groß", JSON.stringify(r));
-  sage(mk && mk.punkte === 12 && mk.titel.includes("Bäckerei") && mk.bild > 50 && !mk.fenster, "unten in der Ecke die kleine Karte: das gemalte Dorf, 12 Punkte, kein eigenes Kartenfenster mehr", JSON.stringify(mk));
+  sage(mk && mk.punkte === 13 && mk.titel.includes("Bäckerei") && mk.bild > 50 && !mk.fenster, "unten in der Ecke die kleine Karte: das gemalte Dorf, 13 Punkte (ab 756 mit Kaserne), kein eigenes Kartenfenster mehr", JSON.stringify(mk));
   sage(mk && mk.klein >= 14, "jeder Punkt ist mit dem Finger zu treffen", mk && mk.klein + " px");
   await bild("karte");
 
