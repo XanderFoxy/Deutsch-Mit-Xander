@@ -1346,14 +1346,6 @@ body.sp-graben.sp-wz-sense #lcPlaetze .lc-kreis, body.sp-graben.sp-wz-saat #lcPl
   font: 500 11.5px/1.2 system-ui, sans-serif; color: #dfe6f0; white-space: nowrap; }
 .sp-ware svg { width: 18px; height: 18px; }
 .sp-ware b { color: #ffe27a; }
-/* FASSUNG 769 — der Vorrat an jeder Station (Funk 192). */
-.sp-dl-vorrat { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 5px; margin: 2px 0 8px; font: 500 11.5px/1.2 system-ui, sans-serif; color: #dfe6f0; }
-.sp-dl-vorrat > span:first-child { font: 700 10.5px/1 system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #b9c3d2; margin-right: 2px; }
-.sp-dl-vorrat .sp-ware svg { width: 16px; height: 16px; }
-.sp-dl-station .sp-dl-vorrat { color: #3b2a14; }
-.sp-dl-station .sp-dl-vorrat > span:first-child { color: #7a6448; }
-.sp-dl-station .sp-dl-vorrat .sp-ware { background: rgba(90, 60, 25, .1); color: #3b2a14; }
-.sp-dl-station .sp-dl-vorrat .sp-ware b { color: #8a4a0a; }
 .sp-werk { flex-wrap: wrap; }
 .sp-werk > span { min-width: 120px; }
 .sp-werk button { flex: 0 0 auto; }
@@ -2585,14 +2577,6 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-sprung .sp-sprung-zu { flex: 0 0 auto; min-height: 0; margin: 0; padding: 4px 6px; border: 0; background: none; color: #fff; font: 700 15px/1 system-ui, sans-serif; opacity: .8; cursor: pointer; }
 @keyframes spSprungRein { from { opacity: 0; transform: translate(-50%, -12px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @media (prefers-reduced-motion: reduce) { .sp-sprung { animation: none; } }
-/* FASSUNG 769 — XANDER (Funk 191): „wenn man auf den Plätzen … mitgraben will mit Angel will mit jagen will oder mit
-   abbauen will oder mit düngen will oder mit sehen will dann reagiert das viel zu träge". Gemessen: der Tipp kam gar nicht
-   an. Die Meldung oben („Fundstück eingesammelt …", „+3 weitere") lag 8 Sekunden und länger über der oberen Platzreihe und
-   schluckte jeden Tipp. Jetzt geht ein Tipp durch sie hindurch auf den Platz; nur „Ansehen“ und ✕ bleiben Knöpfe. Mit einem
-   Werkzeug in der Hand wird sie halb durchsichtig, damit man die Plätze darunter sieht. */
-.sp-sprung { pointer-events: none; }
-.sp-sprung button { pointer-events: auto; }
-body.sp-wz-an .sp-sprung { opacity: .55; }
 
 /* FASSUNG 730 — Städte als Kette (Funk 176) */
 .sp-dl-kette { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; }

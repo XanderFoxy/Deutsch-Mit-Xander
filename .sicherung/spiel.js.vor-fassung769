@@ -373,18 +373,8 @@
   function lautFaktor() { return LAUT_STUFEN[lautStufe()][1]; }
   function lautSetzen(n) {
     try { localStorage.setItem("dma_spiel_laut", String(n)); } catch (e) {}
-    if (KLANG.master && !KLANG.stillAufnahme) try { KLANG.master.gain.value = 0.62 * lautFaktor(); } catch (e) {}
+    if (KLANG.master) try { KLANG.master.gain.value = 0.62 * lautFaktor(); } catch (e) {}
   }
-  /* FASSUNG 769 — XANDER (Funk 192): „wenn ich im Dorf bin und ich schicke dir eine Sprachnachricht dass er vorübergehend
-     die Sounds von doof ausgeschaltet werden wenn ich eine Sprachnachricht schicke". Solange livechat.js aufnimmt, blendet
-     das Spiel seinen ganzen Klang in 0,15 s aus (Dorf, Vögel, Zug, Werkzeuge) und danach wieder ein. */
-  window.addEventListener("dma-sprachaufnahme", function (ev) {
-    var an = Boolean(ev && ev.detail && ev.detail.an);
-    KLANG.stillAufnahme = an;
-    var k = KLANG.ctx;
-    if (!k || !KLANG.master) return;
-    try { KLANG.master.gain.cancelScheduledValues(k.currentTime); KLANG.master.gain.setTargetAtTime(an ? 0 : 0.62 * lautFaktor(), k.currentTime, 0.05); } catch (e) {}
-  });
   function toeneAn() { try { var b = B(); return b.toeneAn ? b.toeneAn() !== false : true; } catch (e) { return true; } }
   function klangSpielen(name, laut, tempo) {
     var k = KLANG.ctx, p = KLANG.puffer[name];
@@ -3832,11 +3822,7 @@
         schnellEl.className = "sp-schnell";
         schnellEl.addEventListener("click", schnellKlick);
         /* FASSUNG 682 — die Auswahlen im Handel bleiben stehen, auch wenn die Leiste neu gezeichnet wird. */
-        schnellEl.addEventListener("change", function (ev) { var h = ev.target && ev.target.dataset && ev.target.dataset.h; if (h) HANDEL.wahl[h] = ev.target.value;
-          /* FASSUNG 769 — eine andere Ware: Mengen und Marktpreis passen sich an. */
-          if (h === "aware") { HANDEL.wahl.amenge = ""; HANDEL.wahl.apreis = ""; schnellZeichnen(true);
-            /* Das Angleichen des Menüs behält die alte Auswahl einer Liste – deshalb die Werte aus dem Zustand setzen. */
-            [].forEach.call(schnellEl.querySelectorAll("select[data-h]"), function (sel) { var w = HANDEL.wahl[sel.dataset.h]; if (w != null && w !== "") sel.value = String(w); }); } });
+        schnellEl.addEventListener("change", function (ev) { var h = ev.target && ev.target.dataset && ev.target.dataset.h; if (h) HANDEL.wahl[h] = ev.target.value; });
         /* FASSUNG 645 — solange ein Finger auf der Leiste liegt, wird sie
            nicht neu gezeichnet: sonst verschwindet der Knopf unter dem
            Finger (der Sekundenzähler zeichnet laufend neu) und der Tipp
@@ -4667,9 +4653,9 @@
       });
       return;
     } else if (s === "anbieten") {
-      wirtschaft("spiel_angebot", { p_ware: HANDEL.wahl.aware, p_menge: Number(HANDEL.wahl.amenge) || 1, p_preis: Number(HANDEL.wahl.apreis) || 1 }, function (r) {
+      wirtschaft("spiel_angebot", { p_ware: HANDEL.wahl.ware, p_menge: Number(HANDEL.wahl.menge) || 1, p_preis: Number(HANDEL.wahl.preis) || 1 }, function (r) {
         ton("kasse", 0.35);
-        hinweis("🏷️ Angebot steht: " + r.menge + " " + wareName(r.ware) + " je " + r.preis + " P.");
+        hinweis("🏷️ Angebot steht: " + r.menge + " " + (WAREN[r.ware] || r.ware) + " je " + r.preis + " P.");
         handelLaden(true);
       });
       return;
@@ -7530,7 +7516,6 @@
     var reihe = document.getElementById("lcPlaetze");
     if (!reihe) return;
     var an = S.graben && S.werkzeug !== "schaufel" && spielSichtbar() && S.bereit;
-    document.body.classList.toggle("sp-wz-an", Boolean(S.graben && spielSichtbar()));
     document.body.classList.toggle("sp-wz-sense", Boolean(S.graben && S.werkzeug === "sense"));
     document.body.classList.toggle("sp-wz-saat", Boolean(S.graben && S.werkzeug === "saat"));
     document.body.classList.toggle("sp-wz-axt", Boolean(S.graben && S.werkzeug === "axt"));
@@ -7886,7 +7871,7 @@
     /* FASSUNG 702 — je Müller/Bäcker/Schmied/Wissenschaftler 10 % schneller (höchstens 30 %), wie spiel_beliefern. */
     return leute ? Math.max(1, Math.ceil(m * (1 - 0.1 * Math.min(3, leute)))) : m;
   }
-  function wareName(x) { return WAREN[x] || (typeof VORRAT_NAMEN !== "undefined" && VORRAT_NAMEN[x]) || ({ trank_mana: "Manatränke", duenger: "Dünger" })[x] || x; }
+  function wareName(x) { return WAREN[x] || ({ trank_mana: "Manatränke" })[x] || x; }
   function rezeptMenge(ich, st, roh) {
     var n = 5 * st;
     Object.keys(roh).forEach(function (k) { n = Math.min(n, Math.floor(vorrat(ich, k) / roh[k])); });
@@ -8130,7 +8115,7 @@
       var neuA = isNaN(maxA) || !localStorage.getItem("dma_dorf_angebot_max") ? [] : fremd.filter(function (a) { return Number(a.id) > maxA; });
       if (hoch > (maxA || 0)) { try { localStorage.setItem("dma_dorf_angebot_max", String(hoch)); } catch (e) {} }
       if (neuA.length) {
-        var a0 = neuA[0], billig = a0.preis < marktPreis(a0.ware);
+        var a0 = neuA[0], billig = a0.preis < (MARKT[a0.ware] || 0);
         neu.push({ key: "a:" + hoch, art: "fertig", ware: a0.ware, ziel: "", teil: "markt",
           text: neuA.length > 1 ? neuA.length + " neue Angebote im Handel" : a0.von + " bietet " + a0.menge + " " + wareName(a0.ware) + " je " + a0.preis + " P an" + (billig ? " – billiger als beim Händler" : "") });
       }
@@ -8305,7 +8290,7 @@
      Gerechnet wird alles auf dem Server; hier wird nur gezeigt und getippt.
      --------------------------------------------------------------- */
   var BERUFE = {
-    bauer:           { name: "Bauer", viele: "Bauern", preis: 5, haus: ["muehle"], tut: "je Bauer 1 Sack Getreide alle 20 Minuten" },
+    bauer:           { name: "Bauer", viele: "Bauern", preis: 5, haus: ["muehle"], tut: "bringen laufend Getreide: 3 je Stunde" },
     mueller:         { name: "Müller", viele: "Müller", preis: 15, haus: ["muehle"], tut: "Mühle 10 % schneller je Müller (bis 30 %)" },
     baecker:         { name: "Bäcker", viele: "Bäcker", preis: 15, haus: ["baeckerei"], tut: "backen je Ernte 1 Brot, Bäckerei schneller" },
     schmied:         { name: "Schmied", viele: "Schmiede", preis: 15, haus: ["schmiede"], tut: "Schmiede 10 % schneller je Schmied" },
@@ -8366,17 +8351,6 @@
     return berufSvg(b).replace("</svg>", '<ellipse cx="13.6" cy="10.6" rx="3" ry="2.1" transform="rotate(-18 13.6 10.6)" fill="#efe6cf" stroke="#a89878" stroke-width=".5"/>'
       + '<path d="M12 9.6 C12.8 10.4 14.2 10.6 15.4 10.2" stroke="#a89878" stroke-width=".4" fill="none"/></svg>');
   }
-  /* FASSUNG 769 — XANDER (Funk 193/194): „Was meinst du damit dass die Bauern dreimal Getreide pro Stunde bringen …
-     ist das eine Mengenangabe oder ist das nicht sehr wenig … 12 x 5 Minuten würde ja 12 mal Getreide bedeuten und nicht
-     dreimal". „3 je Stunde" war die Menge EINES Bauern bei mittlerer Laune – missverständlich. Jetzt steht die echte Summe
-     des eigenen Dorfs da, mit derselben Rechnung wie der Server (spiel_dorf_takt_s): je Bauer 1 Sack alle 20 Minuten, mal
-     Zufriedenheit (0,5 + Laune/100), mit Dreifelderwirtschaft mal 1,5 – zusätzlich zu dem, was man selbst mäht. */
-  function bauernTut(ich, n) {
-    var v = ich.volk || {}, laune = 0.5 + (v.zufrieden != null ? Number(v.zufrieden) : 70) / 100, drei = erforscht(ich, "dreifelder") ? 1.5 : 1;
-    var stunde = Math.round(n * 3 * laune * drei);
-    return "bringen zusammen ≈ " + stunde + " Sack Getreide pro Stunde, ohne Klicken (je Bauer 1 Sack alle 20 Min., mal Laune "
-      + laune.toFixed(2).replace(".", ",") + (drei > 1 ? ", Dreifelder ×1,5" : "") + ") – dazu, was du selbst mähst";
-  }
   function berufeHtml(ich) {
     var alle = dorfBewohner(ich);
     if (!alle) return "";
@@ -8386,7 +8360,7 @@
       var plusAus = fehlt || n >= mx || frei < 1 || punkte < B.preis;
       var warum = fehlt ? "braucht " + B.haus.map(function (k) { return DORF[k] ? DORF[k].name : k; }).join(" oder ") : n >= mx ? "voll – Gebäude ausbauen" : frei < 1 ? "niemand frei" : "";
       return '<div class="sp-beruf' + (fehlt && !n ? " sp-beruf-zu" : "") + '"><i>' + berufSvg(b) + "</i><span><b>" + n + " " + (n === 1 ? B.name : B.viele) + "</b>"
-        + "<small>" + (b === "bauer" && n ? bauernTut(ich, n) : B.tut) + " · höchstens " + mx + (warum ? " · " + warum : "") + "</small></span>"
+        + "<small>" + B.tut + " · höchstens " + mx + (warum ? " · " + warum : "") + "</small></span>"
         + '<span class="sp-beruf-knoepfe"><button type="button" data-s="ausbilden" data-b="' + b + '" data-n="1"' + (plusAus ? " disabled" : "") + ">Ausbilden <small>" + B.preis + " P</small></button>"
         + (n ? '<button type="button" data-s="ausbilden" data-b="' + b + '" data-n="-1" aria-label="' + B.name + ' entlassen">−</button>' : "") + "</span></div>";
     }).join("");
@@ -9239,27 +9213,10 @@
     else return dorfSvg(k, st);
     return '<svg class="sp-dh sp-dh-' + k + '" viewBox="0 -8 48 54" aria-hidden="true">' + h + "</svg>";
   }
-  /* FASSUNG 769 — XANDER (Funk 192): „dass in meinen einzelnen Station Bäckerei oder was auch immer irgendwas produziert
-     dass du drin steht wie viel wir davon vorrätig haben … wie viel Mehl da ist wie viel Kuchen wie viel Brote" und „wenn
-     ich die Leute im Wald schicke … wie viel Holz wir eigentlich haben wie viel Fleisch … bei der Erzmine … wie viel Erz".
-     Jede Station zeigt oben, was von ihren Waren im Lager liegt (auch 0 – dann sieht man, was fehlt). */
-  var VORRAT_NAMEN = { getreide: "Getreide", mehl: "Mehl", brot: "Brot", kuchen: "Kuchen", torte: "Torten", ei: "Eier", milch: "Milch", holz: "Holz",
-    fleisch: "Fleisch", fisch: "Fisch", erz: "Erz", quarz: "Quarz", gold: "Gold", oel: "Öl", silizium: "Silizium", chip: "Chips" };
-  var STATION_VORRAT = { muehle: ["getreide", "mehl"], baeckerei: ["mehl", "ei", "milch", "brot", "kuchen", "torte"], schmiede: ["erz", "quarz", "holz", "silizium"],
-    labor: ["silizium", "gold", "chip"], brauerei: ["getreide", "holz"], kuhstall: ["milch"], huehnerstall: ["ei"], bergwerk: ["erz", "quarz", "gold", "oel", "silizium"],
-    wald: ["holz", "fleisch"], rathaus: ["getreide", "mehl", "brot", "holz", "erz", "fisch"] };
-  function stationVorratHtml(ich, k) {
-    var l = STATION_VORRAT[k];
-    if (!l) return "";
-    return '<div class="sp-dl-vorrat"><span>Im Lager</span>' + l.map(function (x) {
-      return '<span class="sp-ware" data-w="' + x + '">' + wareSvg(x) + "<b>" + vorrat(ich, x) + "</b> " + VORRAT_NAMEN[x] + "</span>";
-    }).join("") + "</div>";
-  }
   /* FASSUNG 727 — der Wald als Station: Holzfäller und Jäger mit Stand, Losschicken, Mithelfen und Abholen. */
   function waldStationHtml(ich) {
     return '<div class="sp-dl-station" role="dialog" aria-label="Wald"><div class="sp-dl-st-kopf"><i>' + wareSvg("holz") + "</i><span><b>Wald</b><small>Holzfäller und Jäger</small></span>"
       + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Wald schließen">✕</button></div>'
-      + stationVorratHtml(ich, "wald")
       + '<p class="sp-sm-klein">Eine Fahrt dauert 5 Minuten und bringt eine feste Menge. Mithelfen macht sie schneller, aber nie mehr als die Menge. Holz hackst du auch auf der Bühne – es kommt aus derselben Menge.</p>'
       + '<div class="sp-dl-st-werk">' + werkZeilenHtml(ich, "wald").join("") + "</div></div>";
   }
@@ -9284,7 +9241,6 @@
       + (st ? '<em><u style="width:' + Math.round(100 * lp / Math.max(1, mx)) + '%"></u></em>' : "") + "</span>"
       + '<button type="button" class="sp-dl-st-zu" data-s="dorfwahl" data-g="" aria-label="Station schließen">✕</button></div>'
       + '<p class="sp-sm-klein">' + D.gibt + (geplant ? " · geplündert von " + esc(g.von || "?") + " (4 h Schutz)" : "") + "</p>"
-      + (st ? stationVorratHtml(ich, k) : "")
       + (werk ? '<div class="sp-dl-st-werk">' + werk + "</div>" : "")
       + (knoepfe ? '<div class="sp-sm-liste sp-dl-st-knoepfe">' + knoepfe + "</div>" : '<p class="sp-sm-klein">Höchste Stufe erreicht.</p>') + "</div>";
   }
@@ -11817,32 +11773,14 @@
       ? '<div class="sp-handel-form">' + auswahl("ware", waren) + auswahl("menge", [["1", "1"], ["5", "5"], ["10", "10"], ["20", "20"]])
         + auswahl("an", leute.map(function (x) { return [x.sid, "an " + x.name]; })) + '<button type="button" data-s="schenken">Schenken</button></div>'
       : '<p class="sp-sm-klein">Schenken geht, sobald jemand Mitspielendes im Raum sitzt.</p>';
-    /* FASSUNG 769 — XANDER (Funk 192): „beim Handel kann ich nur zweimal Brot zum Kauf anbieten ich kann da nicht noch
-       mehr verkaufen ich kann da immer nur einen bestimmtes Kontingent einstellen … ich möchte mehr verkaufen können" und
-       „da steht … das ist günstiger ist als beim Händler wer legt das fest woher weiß ich wie viel es beim Händler kostet".
-       Anbieten lässt sich jetzt alles, was der Server handelt und was im Lager liegt; die Menge geht bis „alle" (Server:
-       bis 500 je Angebot, 10 Angebote gleichzeitig). Unter der Wahl steht der heutige Marktpreis dieser Ware – das ist
-       der „Händler": so viel zahlt der Markt heute, mit Nachfrage, Tageslaune und Beliebtheit gerechnet. */
-    var ANGEBOT_WAREN = ["getreide", "mehl", "brot", "kuchen", "torte", "ei", "milch", "fisch", "holz", "erz", "quarz", "gold", "oel", "silizium", "chip", "duenger"];
-    var anWaren = ANGEBOT_WAREN.filter(function (w) { return vorrat(ich, w) > 0; });
-    if (!anWaren.length) anWaren = ["brot"];
-    if (!HANDEL.wahl.aware || anWaren.indexOf(HANDEL.wahl.aware) < 0) HANDEL.wahl.aware = anWaren.filter(function (w) { return vorrat(ich, w) > 0; })[0] || anWaren[0];
-    var aDa = vorrat(ich, HANDEL.wahl.aware), aMarkt = marktPreis(HANDEL.wahl.aware);
-    var mengen = [1, 5, 10, 20, 50, 100, 200].filter(function (n) { return n < aDa; }).map(function (n) { return [String(n), String(n)]; });
-    if (aDa > 0) mengen.push([String(Math.min(500, aDa)), "alle " + Math.min(500, aDa)]);
-    if (!mengen.length) mengen = [["1", "1"]];
-    if (!mengen.some(function (m) { return m[0] === String(HANDEL.wahl.amenge); })) HANDEL.wahl.amenge = mengen[0][0];
-    var preise = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 99];
-    if (!HANDEL.wahl.apreis) HANDEL.wahl.apreis = String(preise.filter(function (n) { return n < aMarkt; }).pop() || 1);
-    var anbieten = '<div class="sp-handel-form">' + auswahl("aware", anWaren.map(function (w) { return [w, wareName(w) + " (" + vorrat(ich, w) + ")"]; })) + auswahl("amenge", mengen)
-      + auswahl("apreis", preise.map(function (n) { return [String(n), "je " + n + " P" + (n < aMarkt ? " · billiger" : n === aMarkt ? " · wie Markt" : "")]; }))
-      + '<button type="button" data-s="anbieten"' + (aDa > 0 ? "" : " disabled") + '>Anbieten</button></div>'
-      + '<p class="sp-sm-klein sp-handel-markt">' + wareName(HANDEL.wahl.aware) + ': der Händler (Markt) zahlt heute <b>' + aMarkt + " P</b> je Stück. Wer darunter anbietet, ist „billiger als beim Händler“ – und die anderen bekommen eine Meldung.</p>";
+    var anbieten = '<div class="sp-handel-form">' + auswahl("ware", waren) + auswahl("menge", [["1", "1"], ["5", "5"], ["10", "10"], ["20", "20"]])
+      + auswahl("preis", [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20].map(function (n) { return [String(n), "je " + n + " P"]; }))
+      + '<button type="button" data-s="anbieten">Anbieten</button></div>';
     var liste = HANDEL.angebote == null ? '<p class="sp-sm-klein">Angebote werden geladen …</p>'
       : !HANDEL.angebote.length ? '<p class="sp-sm-klein">Noch keine Angebote – sei die oder der Erste.</p>'
       : HANDEL.angebote.map(function (a) {
-          var markt = marktPreis(a.ware), billig = a.preis < markt ? ' <span class="sp-gold">billiger als beim Händler (' + markt + " P)</span>" : "";
-          return '<div class="sp-handel-angebot">' + wareSvg(a.ware) + "<span><b>" + a.menge + " " + wareName(a.ware) + "</b> je " + a.preis + " P · " + esc(a.von) + billig + "</span>"
+          var markt = marktPreis(a.ware), billig = a.preis < MARKT[a.ware] ? ' <span class="sp-gold">billiger als beim Händler</span>' : "";
+          return '<div class="sp-handel-angebot">' + wareSvg(a.ware) + "<span><b>" + a.menge + " " + (WAREN[a.ware] || a.ware) + "</b> je " + a.preis + " P · " + esc(a.von) + billig + "</span>"
             + (a.eigen ? '<button type="button" data-s="angebotweg" data-id="' + a.id + '">Zurückziehen</button>'
                        : '<button type="button" data-s="angebotkauf" data-id="' + a.id + '" data-n="' + a.menge + '"' + ((ich.punkte || 0) >= a.preis * a.menge ? "" : " disabled") + ">Kaufen · " + a.preis * a.menge + "</button>")
             + "</div>";
@@ -14677,8 +14615,6 @@
     uebungStarten: uebungStarten,
     uebungEnde: uebungEnde,
     pruef: {
-      /* FASSUNG 769 */
-      klang: function () { return KLANG; }, sprungTest: function (m) { SPRUNG.liste.push(m); sprungZeigen(); }, handelHtml: handelHtml, HANDEL: HANDEL, stationVorratHtml: stationVorratHtml,
       /* FASSUNG 763 */
       werkZeilenHtml: werkZeilenHtml,
       /* FASSUNG 704 */

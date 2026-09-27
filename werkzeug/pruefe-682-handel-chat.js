@@ -222,7 +222,8 @@ const sage = (gut, was, zusatz) => {
   await tippe('.sp-schnellmenue [data-s="anbieten"]');
   await tick(600);
   const h3 = await pg.evaluate(() => ({ ruf: (window.__rufe.find((r) => r.name === "spiel_angebot") || {}).args, eigen: Boolean(document.querySelector('.sp-schnellmenue [data-s="angebotweg"][data-id="7"]')) }));
-  sage(h3.ruf && h3.ruf.p_preis === 2 && h3.eigen, "Eigenes Angebot (je 2 P) steht in der Liste, mit „Zurückziehen“", JSON.stringify(h3));
+  /* Seit 769: der Preis wird knapp unter dem Tagespreis vorgeschlagen (Getreide 0,74 P → das Mindeste, 1 P). */
+  sage(h3.ruf && h3.ruf.p_ware === "getreide" && h3.ruf.p_preis === 1 && h3.eigen, "Eigenes Angebot (Getreide, Vorschlag 1 P) steht in der Liste, mit „Zurückziehen“", JSON.stringify(h3));
   await pg.evaluate(() => { window.__angebote = [{ id: 9, ware: "duenger", menge: 3, preis: 2, von: "Bea", eigen: false }]; window.DMA_SPIEL.pruef.handelLaden(true); });
   await tick(500);
   const h4 = await pg.evaluate(() => ({ knopf: (document.querySelector('.sp-schnellmenue [data-s="angebotkauf"][data-id="9"]') || {}).textContent || "", zeile: ((document.querySelector('.sp-schnellmenue [data-s="angebotkauf"][data-id="9"]') || {}).parentElement || {}).textContent || "" }));

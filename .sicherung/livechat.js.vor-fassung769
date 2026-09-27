@@ -6665,10 +6665,6 @@ window.LiveChat = (function () {
       };
       sprachRekorder.start();
       sprachStart = Date.now();
-      /* FASSUNG 769 — XANDER (Funk 192): „wenn ich im Dorf bin und ich schicke dir eine Sprachnachricht dass er
-         vorübergehend die Sounds von doof ausgeschaltet werden". Das Spiel hört auf dieses Zeichen und wird still,
-         damit Wind, Vögel und Hammer nicht mit in der Aufnahme landen. */
-      try { window.dispatchEvent(new CustomEvent("dma-sprachaufnahme", { detail: { an: true } })); } catch (e) {}
       /* RUNDE 99 — gefluestert: Live-Mikrofon aus, und ein leises
          Pssst sagt dem Absender, dass er gerade NUR zu einem spricht. */
       if (privatNochDa()) {
@@ -6692,7 +6688,6 @@ window.LiveChat = (function () {
      aufnimmt und vorne nichts fehlt. */
   function sprachAufraeumen() {
     clearTimeout(sprachEndeTakt);
-    try { window.dispatchEvent(new CustomEvent("dma-sprachaufnahme", { detail: { an: false } })); } catch (e) {}
     sprachRekorder = null;
     /* Nach dem Fluestern geht das Live-Mikrofon wieder so an, wie es
        vorher war — auch wenn die Aufnahme abgebrochen wurde. */

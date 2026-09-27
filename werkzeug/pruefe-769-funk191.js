@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 767: BAUERN ARBEITEN LAUFEND, BÄCKEREI REIHUM (Funk 185/187)
+   SONDE — FASSUNG 769: FUNK 191–194 (TRÄGE PLÄTZE, TON, VORRAT, HANDEL)
    ---------------------------------------------------------------------
-   XANDER: „Ist das Absicht dass ich nur so wenig Getreide habe bei so
-   vielen Bauern" und „im Automatikmodus wird nur Brot gebacken".
-   Der Server rechnet (am Server geprüft: 10 Bauern, 3 h → 197 Getreide;
-   Bäckerei Brot → Kuchen → Torte). Hier: der Takt läuft auch ohne
-   Automatik, sobald es Bauern gibt, und die Texte stimmen.
+   XANDER: „wenn man auf den Plätzen … mitgraben will … dann reagiert das
+   viel zu träge" · „dass vorübergehend die Sounds von doof ausgeschaltet
+   werden wenn ich eine Sprachnachricht schicke" · „wie viel wir davon
+   vorrätig haben" · „ich möchte mehr verkaufen können" · „woher weiß ich
+   wie viel es beim Händler kostet" · „Was meinst du damit dass die
+   Bauern dreimal Getreide pro Stunde bringen".
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -184,29 +185,107 @@ const sage = (gut, was, zusatz) => {
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
-  console.log("\nBAUERN OHNE AUTOMATIK\n");
+
+  console.log("\nDIE MELDUNG OBEN SCHLUCKT KEINEN TIPP MEHR\n");
   await pg.evaluate(() => {
-    const berufe = { bauer: 2, mueller: 1, baecker: 1 };
-    window.__ich.volk = Object.assign({}, window.__ich.volk, { automatik: false, berufe: berufe });
-    const S = window.DMA_SPIEL.pruef.zustand(); S.ich.volk = JSON.parse(JSON.stringify(window.__ich.volk)); S.taktZuletzt = 0; S.taktLaeuft = false;
-    window.__extra = Object.assign({}, window.__extra || {}, { spiel_dorf_takt: (a, ich) => Object.assign({}, JSON.parse(JSON.stringify(ich)), { ok: true, automatik: { an: false, gemacht: ["2 Bauern bringen 6 Getreide vom Feld"] } }) });
-    window.__rufe.length = 0; window.__hinweise.length = 0;
+    window.__extra = Object.assign({}, window.__extra || {}, { spiel_ernten: (a, ich) => Object.assign({}, JSON.parse(JSON.stringify(ich)), { ok: true, menge: 5 }) });
+    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = Object.assign({}, S.ich, { mitspielen: true, acker: {} }); S.graben = true; S.werkzeug = "sense";
+    window.DMA_SPIEL.pruef.schnellZeichnen(true);
+    /* Einen freien Platz ganz nach oben holen – dorthin, wo die Meldung liegt. */
+    const q = [...document.querySelectorAll("#lcPlaetze .lc-platz")].find((x) => !x.dataset.lcId && x.querySelector(".lc-kreis"));
+    q.querySelector(".lc-kreis").scrollIntoView({ block: "start" });
+  });
+  await tick(400);
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.sprungTest({ key: "t1", art: "fertig", ware: "getreide", text: "Fundstück eingesammelt: +3 Punkte und 1 Erz.", teil: "markt" }));
+  await tick(500);
+  const unter = await pg.evaluate(() => {
+    const b = document.querySelector(".sp-sprung").getBoundingClientRect();
+    for (const q of document.querySelectorAll("#lcPlaetze .lc-platz")) {
+      const k = q.querySelector(".lc-kreis"); if (!k || q.dataset.lcId) continue;
+      const r = k.getBoundingClientRect(), x = r.left + r.width / 2, y = Math.max(r.top + 4, Math.min(r.bottom - 4, b.top + b.height / 2));
+      if (x > b.left + 4 && x < b.right - 4 && y > b.top && y < b.bottom) return { x, y, nr: q.dataset.lcPlatz, b: [Math.round(b.top), Math.round(b.bottom)] };
+    }
+    return null; });
+  let r = { unter };
+  if (unter) {
+    await pg.evaluate(() => { window.__rufe.length = 0; });
+    await pg.touchscreen.tap(unter.x, unter.y); await tick(600);
+    r = await pg.evaluate((u) => ({ u, ernten: window.__rufe.filter((x) => x.name === "spiel_ernten").length, oben: (() => { const e = document.elementFromPoint(u.x, u.y); return e && e.closest(".lc-platz") ? "platz" : e ? e.className : ""; })() }), unter);
+  }
+  sage(unter && r.ernten === 1 && r.oben === "platz", "Tipp auf einen Platz UNTER der Meldung: kommt an, die Sense mäht (vorher: verschluckt)", JSON.stringify(r));
+  r = await pg.evaluate(() => { const h = document.querySelector(".sp-sprung .sp-sprung-hin"), b = h.getBoundingClientRect(); const e = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+    return { hin: e === h, op: getComputedStyle(document.querySelector(".sp-sprung")).opacity }; });
+  sage(r.hin && Number(r.op) < 0.7, "„Ansehen“ bleibt ein Knopf; mit Werkzeug in der Hand ist die Meldung halb durchsichtig", JSON.stringify(r));
+  await pg.evaluate(() => { const z = document.querySelector(".sp-sprung .sp-sprung-zu"); if (z) z.click(); const S = window.DMA_SPIEL.pruef.zustand(); S.graben = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+
+  console.log("\nSPRACHNACHRICHT: DAS SPIEL WIRD STILL\n");
+  r = await pg.evaluate(async () => {
+    const K = window.DMA_SPIEL.pruef.klang();
+    if (!K.ctx) { const AC = window.AudioContext || window.webkitAudioContext; K.ctx = new AC(); }
+    if (!K.master) { K.master = K.ctx.createGain(); K.master.gain.value = 0.46; K.master.connect(K.ctx.destination); }
+    try { await K.ctx.resume(); } catch (e) {}
+    window.dispatchEvent(new CustomEvent("dma-sprachaufnahme", { detail: { an: true } }));
+    await new Promise((f) => setTimeout(f, 700));
+    const still = { flag: K.stillAufnahme, gain: Math.round(K.master.gain.value * 1000) / 1000 };
+    window.dispatchEvent(new CustomEvent("dma-sprachaufnahme", { detail: { an: false } }));
+    await new Promise((f) => setTimeout(f, 700));
+    return { still, danach: { flag: K.stillAufnahme, gain: Math.round(K.master.gain.value * 1000) / 1000 } };
+  });
+  sage(r.still.flag && r.still.gain < 0.02 && !r.danach.flag && r.danach.gain > 0.2, "Aufnahme läuft: Spielklang auf 0 – danach wieder da", JSON.stringify(r));
+  const lc = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
+  sage((lc.match(/dma-sprachaufnahme/g) || []).length === 2, "livechat.js meldet Beginn und Ende der Aufnahme (dma-sprachaufnahme)", String((lc.match(/dma-sprachaufnahme/g) || []).length));
+
+  console.log("\nVORRAT AN DEN STATIONEN\n");
+  await pg.evaluate(() => {
+    const S = window.DMA_SPIEL.pruef.zustand();
+    S.ich.vorraete = Object.assign({}, S.ich.vorraete, { mehl: 3, brot: 42, kuchen: 0, torte: 2, ei: 21, milch: 34, holz: 7, fleisch: 4, erz: 9 });
+    S.ich.dorf = Object.assign({}, S.ich.dorf, { baeckerei: { stufe: 2, lp: 40 }, bergwerk: { stufe: 1, lp: 20 } });
+    window.__ich.vorraete = S.ich.vorraete; window.__ich.dorf = S.ich.dorf;
   });
   await tippe('.sp-schnell [data-s="makro"]'); await tick(900);
-  let r = await pg.evaluate(() => ({ takt: window.__rufe.filter((x) => x.name === "spiel_dorf_takt").length, hin: window.__hinweise.join(" | ") }));
-  sage(r.takt >= 1 && /Dorf: 2 Bauern bringen 6 Getreide vom Feld/.test(r.hin), "Dorf öffnen ohne Automatik, aber mit Bauern: der Takt läuft, „Dorf: 2 Bauern bringen 6 Getreide vom Feld“", JSON.stringify(r));
-  r = await pg.evaluate(() => { const b = [...document.querySelectorAll(".sp-schnellmenue .sp-beruf")].find((x) => /Bauer/.test(x.textContent)); const a = document.querySelector(".sp-schnellmenue .sp-automatik");
-    return { bauer: b ? b.textContent : "", auto: a ? a.textContent : "" }; });
-  sage(/bringen zusammen ≈ 7 Sack Getreide pro Stunde, ohne Klicken/.test(r.bauer) && /Laune 1,20/.test(r.bauer), "Berufe (seit 769): „2 Bauern bringen zusammen ≈ 7 Sack Getreide pro Stunde, ohne Klicken … Laune 1,20“", r.bauer.slice(0, 160));
-  sage(/30 % bleiben im Lager/.test(r.auto) && /reihum Brot, Kuchen und Torte/.test(r.auto), "Automatik: „30 % bleiben im Lager … reihum Brot, Kuchen und Torte“", r.auto.slice(0, 160));
-  await pg.evaluate(() => { window.__ich.volk = Object.assign({}, window.__ich.volk, { berufe: {} }); const S = window.DMA_SPIEL.pruef.zustand(); S.ich.volk = JSON.parse(JSON.stringify(window.__ich.volk)); S.taktZuletzt = 0; window.__rufe.length = 0; });
-  await tippe('.sp-schnell [data-s="blickzu"]'); await tick(300);
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(900);
-  r = await pg.evaluate(() => window.__rufe.filter((x) => x.name === "spiel_dorf_takt").length);
-  sage(r === 0, "ohne Bauern und ohne Automatik: kein Takt (keine unnötigen Anfragen)", String(r));
+  const station = async (g) => { await pg.evaluate((g) => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = g; window.DMA_SPIEL.pruef.schnellZeichnen(true); }, g); await tick(300);
+    return pg.evaluate(() => { const v = document.querySelector(".sp-dl-station .sp-dl-vorrat"); return v ? v.textContent.replace(/\s+/g, " ").trim() : ""; }); };
+  let t = await station("baeckerei");
+  sage(/3 Mehl/.test(t) && /21 Eier/.test(t) && /34 Milch/.test(t) && /42 Brot/.test(t) && /0 Kuchen/.test(t) && /2 Torten/.test(t), "Bäckerei: „Im Lager 3 Mehl · 21 Eier · 34 Milch · 42 Brot · 0 Kuchen · 2 Torten“", t);
+  const farbe = await pg.evaluate(() => { const b = document.querySelector(".sp-dl-station .sp-dl-vorrat .sp-ware b"); return getComputedStyle(b).color; });
+  sage(farbe === "rgb(138, 74, 10)", "die Zahlen sind auf dem hellen Stationsgrund dunkel und lesbar", farbe);
+  t = await station("wald");
+  sage(/7 Holz/.test(t) && /4 Fleisch/.test(t), "Wald (Holzfäller und Jäger): „7 Holz · 4 Fleisch“", t);
+  t = await station("bergwerk");
+  sage(/9 Erz/.test(t), "Bergwerk: „9 Erz …“", t);
+  if (process.env.BILD) { await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.dorfWahl = "baeckerei"; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300);
+    await pg.evaluate(() => document.querySelector(".sp-dl-station").scrollIntoView({ block: "center" })); await tick(200); await pg.screenshot({ path: process.env.BILD + "-station.png" }); }
+
+  console.log("\nHANDEL: MEHR MENGE, MARKTPREIS DANEBEN\n");
+  await pg.evaluate(() => {
+    const P = window.DMA_SPIEL.pruef, S = P.zustand();
+    P.HANDEL.preise = { brot: { preis: 6, nachfrage: 1, laune: 1, beliebt: 1 }, holz: { preis: 4, nachfrage: 1, laune: 1, beliebt: 1 }, getreide: { preis: 1, nachfrage: 1, laune: 1, beliebt: 1 } };
+    P.HANDEL.angebote = []; P.HANDEL.verkauft = []; P.HANDEL.wahl.aware = "brot";
+    window.__extra = Object.assign({}, window.__extra || {}, {
+      spiel_angebot: (a, ich) => { window.__angebot = a; return Object.assign({}, JSON.parse(JSON.stringify(ich)), { ok: true, ware: a.p_ware, menge: a.p_menge, preis: a.p_preis }); },
+      spiel_angebote_liste: () => ({ ok: true, angebote: [], verkauft: [] }), spiel_markt_preise: () => ({ ok: true, preise: P.HANDEL.preise }) });
+    S.dorfWahl = ""; S.dorfTeil = "markt"; P.schnellZeichnen(true);
+  });
+  await tick(400);
+  r = await pg.evaluate(() => { const f = [...document.querySelectorAll(".sp-handel-form")].find((x) => x.querySelector('[data-h="aware"]'));
+    return { waren: [...f.querySelector('[data-h="aware"]').options].map((o) => o.textContent), mengen: [...f.querySelector('[data-h="amenge"]').options].map((o) => o.textContent),
+      markt: (document.querySelector(".sp-handel-markt") || {}).textContent || "" }; });
+  sage(r.waren.some((x) => /Holz \(7\)/.test(x)) && r.waren.some((x) => /Torten? \(2\)/.test(x)) && r.mengen.indexOf("alle 42") >= 0 && r.mengen.indexOf("20") >= 0,
+    "anbieten lässt sich alles im Lager (auch Holz, Torten), Menge bis „alle 42“", JSON.stringify({ w: r.waren, m: r.mengen }));
+  sage(/Brot: der Händler \(Markt\) zahlt heute 6 P/.test(r.markt), "darunter steht, was der Händler heute zahlt: „Brot: … zahlt heute 6 P je Stück“", r.markt);
+  await pg.evaluate(() => { const s = [...document.querySelectorAll('[data-h="amenge"]')][0]; s.value = "42"; s.dispatchEvent(new Event("change", { bubbles: true })); });
+  await pg.evaluate(() => document.querySelector('[data-s="anbieten"]').scrollIntoView({ block: "center" })); await tick(300);
+  await tippe('[data-s="anbieten"]'); await tick(500);
+  r = await pg.evaluate(() => window.__angebot);
+  sage(r && r.p_ware === "brot" && r.p_menge === 42 && r.p_preis === 5, "„alle 42“ Brot anbieten: spiel_angebot(brot, 42, 5 P) – vorgeschlagen knapp unter dem Markt", JSON.stringify(r));
+  await pg.evaluate(() => { const s = document.querySelector('[data-h="aware"]'); s.value = "holz"; s.dispatchEvent(new Event("change", { bubbles: true })); }); await tick(400);
+  r = await pg.evaluate(() => ({ m: [...document.querySelector('[data-h="amenge"]').options].map((o) => o.textContent), t: (document.querySelector(".sp-handel-markt") || {}).textContent || "",
+    preis: document.querySelector('[data-h="apreis"]').value }));
+  sage(r.m.indexOf("alle 7") >= 0 && /Holz: .* 4 P/.test(r.t) && r.preis === "3", "andere Ware gewählt: Mengen, Marktpreis und Preisvorschlag passen sich an (Holz: alle 7, Markt 4 P, Vorschlag 3 P)", JSON.stringify(r));
+  if (process.env.BILD) { await pg.evaluate(() => document.querySelector(".sp-handel-markt").scrollIntoView({ block: "center" })); await tick(200); await pg.screenshot({ path: process.env.BILD + "-handel.png" }); }
 
   sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
   await br.close(); srv.close();
-  console.log("\nFassung 767 (Bauern, Bäckerei): " + (fehler ? fehler + " rot." : "alles grün."));
+  console.log("\nFassung 769 (Funk 191–194): " + (fehler ? fehler + " rot." : "alles grün."));
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

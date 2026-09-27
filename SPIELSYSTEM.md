@@ -1531,3 +1531,26 @@ Sonden: neu 768 (alles grün; mit der Sicherung sind genau die neuen Punkte rot)
   - Nur die gemalte Form fängt den Tipp, das leere Kästchen drumherum lässt ihn durch.
 - **Der „Schein“**: Hinter jedem Wahrzeichen lag die helle Knopffarbe des Menüs als Kasten. Die ist weg. Nachts wird das Wahrzeichen dunkler wie die Häuser.
 - **Kompass kleiner** (Funk 191): 26 statt 31 px. Die Tippfläche bleibt über einen unsichtbaren Rand bei 32 px.
+
+### Fassung 769 (Funk 191–194: träge Plätze, Ton bei Sprachnachricht, Vorrat, Handel, Bauern-Rechnung)
+Sonden: neu 769 (alles grün). Mit der Sicherung bricht sie ab, weil dort die Prüfhaken fehlen. 673, 677, 702, 703, 707, 711, 716, 764–768 grün, 682 angepasst (Preisvorschlag). Der Server ist geprüft (Rückrollen: 120 Brot auf einmal angeboten).
+- **Träge Plätze** (XANDER, Funk 191: „wenn man auf den Plätzen … mitgraben will mit Angel will mit jagen will oder mit abbauen will oder mit düngen will oder mit sehen will dann reagiert das viel zu träge“).
+  - Gemessen, mit auf ein Viertel gebremstem Prozessor (wie ein Handy): Nach dem ersten Mähen kamen die nächsten Tipps gar nicht an.
+  - Die Meldung oben („Fundstück eingesammelt …“, „+3 weitere“) lag 8 Sekunden und länger über der oberen Platzreihe und schluckte jeden Tipp.
+  - Jetzt geht ein Tipp durch die Meldung auf den Platz, nur „Ansehen“ und ✕ bleiben Knöpfe. Mit einem Werkzeug in der Hand ist die Meldung halb durchsichtig.
+  - Danach: Tipp → Ton 17–130 ms, jeder Tipp kommt an.
+- **Still bei Sprachnachricht** (Funk 192: „dass vorübergehend die Sounds von doof ausgeschaltet werden wenn ich eine Sprachnachricht schicke“). livechat.js meldet Beginn und Ende der Aufnahme. Das Spiel blendet seinen ganzen Klang aus (Wind, Vögel, Hammer, Zug, Werkzeuge) und danach wieder ein. So landet nichts davon in der Aufnahme.
+- **Vorrat an jeder Station** (Funk 192: „wie viel Mehl da ist wie viel Kuchen wie viel Brote … wie viel Holz … wie viel Fleisch … wie viel Erz“).
+  - Bäckerei: Mehl, Eier, Milch, Brot, Kuchen, Torten.
+  - Mühle: Getreide, Mehl. Wald: Holz, Fleisch. Bergwerk: Erz, Quarz, Gold, Öl, Silizium.
+  - Schmiede, Labor, Brauerei, Ställe und Rathaus ebenso.
+- **Handel** (Funk 192: „ich kann da nicht noch mehr verkaufen … ich möchte mehr verkaufen können“ und „wer legt das fest woher weiß ich wie viel es beim Händler kostet“).
+  - Die Grenze lag in der Auswahl: nur 1/5/10/20 und nur vier Waren. Der Server nahm höchstens 50 und 5 Angebote.
+  - Jetzt lässt sich alles anbieten, was im Lager liegt, bis „alle“. Der Server nimmt bis 500 je Angebot und 10 Angebote gleichzeitig.
+  - Unter der Wahl steht, was der Händler (Markt) heute zahlt. Der Preis wird knapp darunter vorgeschlagen.
+  - „Billiger als beim Händler“ vergleicht jetzt mit diesem Tagespreis statt mit einer festen Tabelle.
+- **Bauern-Rechnung** (Funk 193/194: „Was meinst du damit dass die Bauern dreimal Getreide pro Stunde bringen … 12 x 5 Minuten würde ja 12 mal Getreide bedeuten“).
+  - „3 je Stunde“ war die Menge EINES Bauern bei mittlerer Laune. Jetzt steht die Summe des eigenen Dorfs da, mit derselben Rechnung wie der Server: je Bauer 1 Sack alle 20 Minuten, mal Laune (0,5 + Zufriedenheit/100), mit Dreifelderwirtschaft ×1,5.
+  - Bei Xander (10 Bauern, Zufriedenheit 96) sind das ≈ 44 Sack pro Stunde, mit Dreifelder ≈ 66, ohne Klicken.
+  - Dazu kommt, was man selbst mäht: Ein Feld ist in 4 Minuten reif und bringt 5 Sack.
+  - 1 Sack Getreide ergibt 1 Sack Mehl, 1 Sack Mehl ergibt 1 Brot (Markt heute etwa 6 P). Ein Bauer bringt also rund 4 Brote pro Stunde für einmal 5 P Ausbildung.
