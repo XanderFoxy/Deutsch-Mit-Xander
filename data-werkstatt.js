@@ -49,30 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 749 — Controller nur für den Chat, Makroknopf (Tafel, neue Felder, Siri-Wirbel), Lesezeile ohne Goldrahmen (Funk 180)",
+  stand: "Fassung 750 — Mitjagen/Mithauen auf den Plätzen (Wild, Fels), Knopf mit Ton, Dorf-Menü ohne überlappende Zeile (Walkie 293)",
 
   inArbeit: [
-    { seit: "2026-09-27T08:31",
-      text: "Walkie 293: zweiter Mitjagen-Knopf, überlappende Zeile, Berufe mit Ausbildung, Kaserne" },
-    { seit: "2026-09-27T08:31",
+    { seit: "2026-09-27T08:55",
+      text: "Berufe Bergleute/Holzfäller/Jäger mit Ausbildung, Kaserne (Walkie 293)" },
+    { seit: "2026-09-27T08:55",
       text: "Plündern: Scheitern, Rache, Ticker (Walkie 294)" },
-    { seit: "2026-09-27T08:31",
+    { seit: "2026-09-27T08:55",
       text: "Klassenname und mehrere Charaktere (Walkie 291/292)" },
-    { seit: "2026-09-27T08:31",
+    { seit: "2026-09-27T08:55",
       text: "Aufgabenbank durchsehen – „viel Quatsch dabei“ (Funk 178)" },
-    { seit: "2026-09-27T08:31",
+    { seit: "2026-09-27T08:55",
       text: "Einzug: Viper/KITT von vorn, Optimus Prime originalgetreu" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T08:31",
-      text: "Controller-Abzeichen nur noch für die, die nicht mitspielen" },
-    { seit: "2026-09-27T08:31",
-      text: "Makroknopf: „Tafel“ öffnet wieder das Whiteboard" },
-    { seit: "2026-09-27T08:31",
-      text: "Makroknopf: neue Felder Deutsch-Aufgabe und Spielmenü, kräftiger Siri-Wirbel" },
-    { seit: "2026-09-27T08:31",
-      text: "Lesetext: Zeile markieren ohne Goldrahmen, Chat bleibt stehen" },
+    { seit: "2026-09-27T08:55",
+      text: "Mitjagen: Schuss-Ton, „−15 s“ am Knopf" },
+    { seit: "2026-09-27T08:55",
+      text: "Wild und Fels auf den Plätzen: jagen mit der eigenen Waffe, Erz hauen" },
+    { seit: "2026-09-27T08:55",
+      text: "Schalter „Mithelfen: auf den Plätzen / nur Knopf“" },
+    { seit: "2026-09-27T08:55",
+      text: "Dorf-Menü: keine halb abgeschnittene Zeile mehr über den Knöpfen" },
   ],
 };

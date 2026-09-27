@@ -2691,35 +2691,3 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-vorwahl .sp-chips button { padding: 4px 9px; font-size: 12px; border: 0; background: #2b3242; color: #fff; }
 .sp-vorwahl .sp-chips button.sp-an { background: #3a8dde; color: #fff; box-shadow: 0 0 0 2px #bfe0ff inset; }
 .sp-vorwahl p.sp-klein { margin: 4px 0 0; font-size: 11.5px; line-height: 1.35; color: #c9d2e3; }
-/* FASSUNG 750 — Walkie 293: Wild und Fels auf den Plätzen, Jagen mit der eigenen Waffe, Hauen mit Funken. */
-.sp-acker-jagd { box-shadow: inset 0 0 0 2px rgba(160, 97, 44, .65); }
-.sp-acker-fels { box-shadow: inset 0 0 0 2px rgba(217, 130, 43, .65); }
-body.sp-graben.sp-wz-jagd #lcPlaetze .lc-kreis { outline-color: rgba(198, 47, 42, .75); }
-body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 43, .8); }
-.sp-acker-jagd.sp-acker-reif .sp-wild-reh { animation: spRehAesen 2.6s ease-in-out infinite; transform-origin: 50% 70%; }
-@keyframes spRehAesen { 0%, 60%, 100% { transform: translateY(0); } 70%, 90% { transform: translateY(2px) rotate(2deg); } }
-.sp-acker-fels.sp-acker-reif .sp-fels-erz { animation: spErzGlanz 2.2s ease-in-out infinite; }
-@keyframes spErzGlanz { 0%, 100% { opacity: .85; } 50% { opacity: 1; filter: brightness(1.35); } }
-.sp-funke { background: #ffb347 !important; box-shadow: 0 0 4px #ffcf6a; width: 4px; height: 4px; border-radius: 50%; }
-.sp-jagen { position: absolute; left: 50%; z-index: 11; width: 60px; height: 44px; transform: translate(-50%, 0); pointer-events: none; }
-.sp-jagen-ziel { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px; opacity: 0;
-  animation: spZielRein .28s ease-out forwards, spWeg .25s ease-in .85s forwards; }
-.sp-jagen-ziel svg { width: 100%; height: 100%; filter: drop-shadow(0 0 2px rgba(255, 255, 255, .9)); }
-@keyframes spZielRein { from { opacity: 0; transform: scale(1.8) rotate(-40deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
-.sp-jagen-geschoss { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; opacity: 0;
-  animation: spJagdSchuss .26s ease-in .26s forwards; }
-.sp-jagen-geschoss svg { width: 100%; height: 100%; }
-@keyframes spJagdSchuss { 0% { opacity: 1; transform: translate(-60px, 40px) scale(.7); } 100% { opacity: 1; transform: translate(0, 0) scale(1); } }
-.sp-jagen-blitz { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; opacity: 0;
-  background: radial-gradient(circle, #fff 0 20%, #ffd35a 35%, rgba(255, 140, 40, 0) 70%); animation: spJagdBlitz .3s ease-out .5s forwards; }
-@keyframes spJagdBlitz { 0% { opacity: 1; transform: scale(.4); } 100% { opacity: 0; transform: scale(1.6); } }
-.sp-trupp-art { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 4px 0 2px; font-size: 12px; }
-.sp-trupp-art button { padding: 4px 10px; border-radius: 999px; font-size: 12px; }
-@media (prefers-reduced-motion: reduce) { .sp-wild-reh, .sp-fels-erz, .sp-jagen-ziel, .sp-jagen-geschoss, .sp-jagen-blitz { animation-duration: .01s !important; } }
-/* FASSUNG 750 — XANDER (Walkie 293): „dann gibt's im Menü irgendwo noch unten so Buttons die eine Zeile überlappen … bei den
-   Wahrzeichen … guck mal bitte nach solchen Inkonsistenzen und behebe das unbedingt". Die Liste (Werkstätten, Ställe, Trupps)
-   war im Dorf-Menü ein eigener Scrollkasten (46 % der Höhe): die letzte Zeile wurde halb abgeschnitten, und gleich darunter
-   standen „Bauen / Markt / Forschung / Wahrzeichen" – es sah aus, als lägen die Knöpfe über der Zeile. Im Menü, das ohnehin
-   scrollt, zeigt die Liste jetzt alles in voller Höhe. */
-.sp-schnellmenue .sp-troph-liste { max-height: none; overflow: visible; }
-.sp-schnellmenue .sp-dorf-auf { margin-top: 8px; }

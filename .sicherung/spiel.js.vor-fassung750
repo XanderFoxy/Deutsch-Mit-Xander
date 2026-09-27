@@ -4807,21 +4807,7 @@
     } else if (s === "trupp") {
       truppSchicken(k.dataset.g); return;
     } else if (s === "trupphelfen") {
-      /* FASSUNG 750 — XANDER (Walkie 293): „bei dem unteren Knopf hört man aber keinen Sound das scheint es nicht zu gehen
-         … irgendwie scheint es nicht verlinkt zu sein". Der Knopf wird jetzt mitgegeben (Finger, „−15 s“ am Knopf), jede
-         Hilfe hat ihren Ton – und das passende Werkzeug liegt sofort in der Hand, damit man auf den Plätzen weitermachen
-         kann („soll das auf den positionsfeldern eher geschehen dass man das optisch auch ein bisschen sieht"). */
-      truppHelfen(k, k.dataset.g);
-      if (truppGrafisch()) {
-        var wzT = TRUPP_WERKZEUG[k.dataset.g];
-        /* Das Dorf-Fenster geht zu, damit Bäume, Wild und Fels auf den Plätzen auch zu sehen sind. */
-        if (wzT && !(S.graben && S.werkzeug === wzT)) { S.blick = null; S.schnellMenue = false; S.dorfWahl = ""; werkzeugSetzen(wzT); schnellZeichnen(true); }
-      }
-      return;
-    } else if (s === "truppgrafisch") {
-      try { localStorage.setItem("dma_trupp_grafisch", truppGrafisch() ? "0" : "1"); } catch (e) {}
-      ton("holzklopf", 0.2); hinweis(truppGrafisch() ? "🌲 Mithelfen legt jetzt das Werkzeug in die Hand – Bäume, Wild und Fels erscheinen auf den Plätzen." : "🔘 Mithelfen nur noch über den Knopf.");
-      schnellZeichnen(true); panelAuffrischen(); return;
+      truppHelfen(null, k.dataset.g); return;
     } else if (s === "dorfwald") {
       /* FASSUNG 727 — Tipp auf den Waldrand: ist ein Trupp zurück, wird eingesammelt; sonst öffnet sich der Wald
          (Holzfäller und Jäger) wie eine Station. */
@@ -7069,12 +7055,7 @@
     duenger:  { name: "Dünger", tut: "wachsendes Feld 2 min früher reif" },
     /* FASSUNG 683 — XANDER: „Vielleicht können wir auch angeln gehen … Wälder abholzen, dass man Bäume fällen kann". */
     axt:      { name: "Axt", tut: "Bäume fällen: 2 Holz" },
-    angel:    { name: "Angel", tut: "angeln: Fisch" },
-    /* FASSUNG 750 — XANDER (Walkie 293): „beim Jagen z.B könnten wir mit unseren eigenen Waffen die wir eh schon besitzen
-       … die Tiere jagen und die einfach erschießen … und beim Erz abbauen … dann müsste dort was zum Erz abbauen auch dabei
-       sein". Wild und Fels auf den Plätzen; jeder Treffer hilft dem Trupp. */
-    jagd:     { name: "Jagen", tut: "Wild mit deiner Waffe: Jäger schneller" },
-    hacke:    { name: "Spitzhacke", tut: "Erz hauen: 1 Erz, Bergleute schneller" }
+    angel:    { name: "Angel", tut: "angeln: Fisch" }
   };
   var ACKER_MS = 240000;
   try { var wzMerk = localStorage.getItem("dma_spiel_werkzeug"); if (WERKZEUGE[wzMerk]) S.werkzeug = wzMerk; } catch (e) {}
@@ -7114,49 +7095,13 @@
       + '<circle cx="13" cy="29" r="3" fill="#cfd8df" stroke="#3f4850" stroke-width="1"/><path d="M13 29 L15.5 27" stroke="#3f4850" stroke-width="1"/>'
       + '<path d="M34 4 C36 14 35 24 33 32" stroke="#dfe6ee" stroke-width=".7" fill="none"/><circle cx="33" cy="33" r="1.8" fill="#e2403a" stroke="#fff" stroke-width=".7"/></svg>';
   }
-  function werkzeugSvg(w) { return w === "sense" ? senseSvg() : w === "saat" ? saatSvg() : w === "duenger" ? duengerSvg() : w === "axt" ? axtSvg() : w === "angel" ? angelSvg() : w === "jagd" ? zielSvg() : w === "hacke" ? hackeSvg() : grabSvg(); }
-  /* FASSUNG 750 — Zielkreuz (Jagen) und Spitzhacke (Bergwerk). */
-  function zielSvg() {
-    return '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="12" fill="none" stroke="#c62f2a" stroke-width="2.4"/><circle cx="20" cy="20" r="4" fill="none" stroke="#c62f2a" stroke-width="1.6"/>'
-      + '<path d="M20 3 V12 M20 28 V37 M3 20 H12 M28 20 H37" stroke="#2d2418" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="20" r="1.3" fill="#c62f2a"/></svg>';
-  }
-  function hackeSvg() {
-    return '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M13 36 L25 9" stroke="#8a5a2b" stroke-width="3.2" stroke-linecap="round"/>'
-      + '<path d="M9 11 C15 5 27 3 35 8 C29 8 24 9.5 21 12 C17 11 13 11 9 11 Z" fill="#8e9aa6" stroke="#3f4850" stroke-width="1.1" stroke-linejoin="round"/>'
-      + '<path d="M11 10.4 C16 7 24 5.6 31 7" stroke="#f4f7fa" stroke-width="1" fill="none" stroke-linecap="round"/></svg>';
-  }
-  /* Wild im Gras: ein Reh, das äst (steht es zur Jagd bereit) oder nur Spuren (gerade geflüchtet). */
-  function wildSvg(st) {
-    var h = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="66" width="100" height="34" fill="#6ba445"/><path d="M0 74 H100" stroke="#4f8a30" stroke-width="2"/>'
-      + '<path d="M6 66 C8 58 10 58 11 66 M90 66 C92 57 95 57 95 66 M72 67 C73 61 75 61 76 67" stroke="#3f7a26" stroke-width="2.2" fill="none"/>';
-    if (st.reif) {
-      h += '<g class="sp-wild-reh"><path d="M34 52 C34 44 44 41 56 42 C63 42 66 45 66 50 C66 55 60 57 50 57 C42 57 34 57 34 52 Z" fill="#a0612c"/>'
-        + '<path d="M38 55 L36 70 M44 56 L45 71 M58 56 L57 70 M63 54 L66 69" stroke="#7a4520" stroke-width="3" stroke-linecap="round"/>'
-        + '<path d="M63 46 C66 40 69 36 72 34 L77 36 C76 40 73 44 68 48 Z" fill="#a0612c"/><ellipse cx="76" cy="36" rx="5" ry="3.4" fill="#a0612c"/>'
-        + '<circle cx="77" cy="35" r=".9" fill="#1a0f06"/><path d="M73 32 L71 26 M71 29 L68 27 M75 32 L76 25 M76 28 L79 26" stroke="#5a3a1a" stroke-width="1.3" stroke-linecap="round"/>'
-        + '<ellipse cx="35" cy="49" rx="3" ry="2.4" fill="#f4ead8"/><path d="M42 47 C48 45 54 45 58 46" stroke="#c98a4c" stroke-width="1.2" fill="none"/></g>';
-    } else {
-      h += '<path d="M30 82 l3 -4 l3 4 M46 86 l3 -4 l3 4 M62 80 l3 -4 l3 4" stroke="#3d2a14" stroke-width="1.8" fill="none" stroke-linecap="round"/>';
-    }
-    return h + "</svg>";
-  }
-  /* Fels mit Erzadern. */
-  function felsSvg(st) {
-    var h = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="70" width="100" height="30" fill="#6e6258"/>'
-      + '<path d="M8 72 L22 40 L40 30 L60 34 L78 26 L92 48 L96 72 Z" fill="#8a8078" stroke="#4a423c" stroke-width="1.6" stroke-linejoin="round"/>'
-      + '<path d="M22 40 L34 52 L40 30 M60 34 L56 54 L78 26 M34 52 L56 54 L70 66" stroke="#5e554e" stroke-width="1.4" fill="none"/>';
-    if (st.reif) h += '<g class="sp-fels-erz"><path d="M28 58 l6 -3 l4 4 l-5 3 Z M62 44 l7 -2 l2 5 l-6 2 Z M46 64 l5 -4 l5 3 l-4 4 Z" fill="#d9822b" stroke="#7a3a10" stroke-width=".8"/>'
-      + '<circle cx="31" cy="57" r="1" fill="#ffe0a0"/><circle cx="66" cy="44" r="1" fill="#ffe0a0"/></g>';
-    return h + "</svg>";
-  }
+  function werkzeugSvg(w) { return w === "sense" ? senseSvg() : w === "saat" ? saatSvg() : w === "duenger" ? duengerSvg() : w === "axt" ? axtSvg() : w === "angel" ? angelSvg() : grabSvg(); }
   function werkzeugHinweis() {
     var w = S.werkzeug;
     if (w === "sense") return "🌾 Sense in der Hand: tippe auf einen freien Platz – reifes Getreide wird gemäht. 2× auf einen Platz: Werkzeug wechseln.";
     if (w === "saat") return "🌱 Saatbeutel in der Hand: tippe auf ein gemähtes Feld – 1 Getreide wird zu 5. 2× auf einen Platz: Werkzeug wechseln.";
     if (w === "axt") return "🪓 Axt in der Hand: tippe auf einen Baum – 2 Holz, nach 6 Minuten ist er nachgewachsen. 2× auf einen Platz: Werkzeug wechseln.";
     if (w === "angel") return "🎣 Angel in der Hand: tippe auf einen Teich und warte, bis etwas anbeißt (alle 8 s). 2× auf einen Platz: Werkzeug wechseln.";
-    if (w === "jagd") return "🎯 Auf der Jagd: tippe auf ein Reh – du schießt mit deiner Waffe, die Jäger kommen 15 s früher zurück. 2× auf einen Platz: Werkzeug wechseln.";
-    if (w === "hacke") return "⛏️ Spitzhacke in der Hand: tippe auf einen Fels – 1 Erz sofort, die Bergleute kommen 15 s früher zurück. 2× auf einen Platz: Werkzeug wechseln.";
     return "⛏️ Schaufel in der Hand: tippe auf einen Platz zum Graben. 2× auf einen Platz: Werkzeug wechseln. Weglegen: Werkzeug in der Leiste.";
   }
   function werkzeugSetzen(w) {
@@ -7170,8 +7115,7 @@
   function werkzeugWahlHtml() {
     return '<div class="sp-werkzeugwahl" role="menu"><span class="sp-ww-titel">Werkzeug</span>' + Object.keys(WERKZEUGE).map(function (w) {
       var extra = w === "schaufel" ? vorrat(S.ich, "erz") + " Erz" : w === "duenger" ? vorrat(S.ich, "duenger") + " Dünger"
-        : w === "axt" ? vorrat(S.ich, "holz") + " Holz" : w === "angel" ? vorrat(S.ich, "fisch") + " Fisch"
-        : w === "jagd" ? vorrat(S.ich, "fleisch") + " Fleisch" : w === "hacke" ? vorrat(S.ich, "erz") + " Erz" : vorrat(S.ich, "getreide") + " Getreide";
+        : w === "axt" ? vorrat(S.ich, "holz") + " Holz" : w === "angel" ? vorrat(S.ich, "fisch") + " Fisch" : vorrat(S.ich, "getreide") + " Getreide";
       return '<button type="button" data-s="werkzeugsetzen" data-w="' + w + '" class="' + (S.graben && S.werkzeug === w ? "sp-an" : "") + '">'
         + werkzeugSvg(w) + "<b>" + WERKZEUGE[w].name + "</b><small>" + WERKZEUGE[w].tut + " · " + extra + "</small></button>";
     }).join("") + (S.graben ? '<button type="button" data-s="graben" class="sp-ww-weg">Weglegen</button>' : "") + "</div>";
@@ -7183,8 +7127,7 @@
        umgraben kann, dass man Getreide ernten kann … man muss nicht erst den
        anderen bitten, dass er darunter geht". Kein Sperren mehr. */
     if (S.werkzeug === "sense") ernten(knopf, nr); else if (S.werkzeug === "duenger") duengen(knopf, nr);
-    else if (S.werkzeug === "axt") holzen(knopf, nr); else if (S.werkzeug === "angel") angeln(knopf, nr);
-    else if (S.werkzeug === "jagd") platzHelfen(knopf, nr, "jagd"); else if (S.werkzeug === "hacke") platzHelfen(knopf, nr, "berg"); else saeen(knopf, nr);
+    else if (S.werkzeug === "axt") holzen(knopf, nr); else if (S.werkzeug === "angel") angeln(knopf, nr); else saeen(knopf, nr);
   }
   function ackerStand(nr) {
     var f = ((S.ich && S.ich.acker) || {})[String(nr)] || {}, ab = f.ab ? Date.parse(f.ab) : 0;
@@ -7236,8 +7179,6 @@
     document.body.classList.toggle("sp-wz-saat", Boolean(S.graben && S.werkzeug === "saat"));
     document.body.classList.toggle("sp-wz-axt", Boolean(S.graben && S.werkzeug === "axt"));
     document.body.classList.toggle("sp-wz-angel", Boolean(S.graben && S.werkzeug === "angel"));
-    document.body.classList.toggle("sp-wz-jagd", Boolean(S.graben && S.werkzeug === "jagd"));
-    document.body.classList.toggle("sp-wz-hacke", Boolean(S.graben && S.werkzeug === "hacke"));
     var wz = S.werkzeug;
     var plaetze = [].slice.call(reihe.querySelectorAll(".lc-platz")), plan = [];
     plaetze.forEach(function (q) {
@@ -7251,7 +7192,7 @@
       var alt = p.q.querySelector(".sp-acker");
       if (p.weg) { if (alt) alt.remove(); return; }
       /* FASSUNG 683 — mit der Axt stehen Bäume auf den Plätzen, mit der Angel liegt dort ein Teich. */
-      var st = wz === "axt" ? baumStand(p.nr) : wz === "angel" ? { reif: true, anteil: 1, rest: 0 } : wz === "jagd" || wz === "hacke" ? platzHilfeStand(p.nr, wz) : ackerStand(p.nr);
+      var st = wz === "axt" ? baumStand(p.nr) : wz === "angel" ? { reif: true, anteil: 1, rest: 0 } : ackerStand(p.nr);
       var schl = wz + (st.reif ? "reif" : "w" + Math.floor(st.anteil * 8)) + (st.saat ? "s" : "") + (p.besetzt ? "b" : "");
       if (!alt) {
         alt = document.createElement("span");
@@ -7267,10 +7208,10 @@
         alt.dataset.s = schl;
         /* Sitzt dort jemand, liegt das Feld nur unten am Bild – die Gesichtsmitte bleibt frei. */
         alt.className = "sp-acker sp-acker-" + (st.reif ? "reif" : "waechst") + (st.saat ? " sp-acker-saat" : "") + (p.besetzt ? " sp-acker-besetzt" : "")
-          + (wz === "axt" ? " sp-acker-wald" : wz === "angel" ? " sp-acker-teich" : wz === "jagd" ? " sp-acker-jagd" : wz === "hacke" ? " sp-acker-fels" : "");
-        alt.firstChild.innerHTML = wz === "axt" ? baumSvg(st) : wz === "angel" ? teichSvg() : wz === "jagd" ? wildSvg(st) : wz === "hacke" ? felsSvg(st) : ackerSvg(st);
+          + (wz === "axt" ? " sp-acker-wald" : wz === "angel" ? " sp-acker-teich" : "");
+        alt.firstChild.innerHTML = wz === "axt" ? baumSvg(st) : wz === "angel" ? teichSvg() : ackerSvg(st);
       }
-      var uhr = wz === "angel" ? "" : wz === "jagd" || wz === "hacke" ? (st.reif ? (wz === "hacke" ? "+1" : "−15 s") : "") : st.reif ? "+" + (st.saat ? 5 : 2) : uhrText(st.rest);
+      var uhr = wz === "angel" ? "" : st.reif ? "+" + (st.saat ? 5 : 2) : uhrText(st.rest);
       if (alt.lastChild.textContent !== uhr) alt.lastChild.textContent = uhr;
     });
   }
@@ -7409,46 +7350,6 @@
     w.innerHTML = '<span class="sp-holzen-axt">' + axtSvg() + "</span>" + spaene;
     knopf.appendChild(w);
     setTimeout(function () { w.remove(); }, 1100);
-  }
-  /* FASSUNG 750 — Hilfe auf den Plätzen: ein getroffenes Reh flüchtet, ein abgebauter Fels braucht kurz Ruhe
-     (je Platz 20 s, nur auf diesem Gerät – der Server zählt ohnehin jeden Hieb gegen die Trupp-Uhr). */
-  var PLATZ_RUHE_MS = 20000;
-  function platzHilfeStand(nr, wz) {
-    var t = (S.platzHilfe || {})[wz + nr] || 0, rest = t + PLATZ_RUHE_MS - Date.now();
-    return { reif: rest <= 0, rest: Math.max(0, rest), anteil: rest > 0 ? 1 - rest / PLATZ_RUHE_MS : 1 };
-  }
-  function jagdZeigen(knopf) {
-    var kreis = knopf.querySelector(".lc-kreis") || knopf;
-    var w = document.createElement("span");
-    w.className = "sp-jagen";
-    w.style.top = Math.round((kreis.offsetTop || 0) + (kreis.offsetHeight || 40) * 0.42) + "px";
-    var waffe = S.waffe || (S.halten && S.halten.waffe) || "kartoffel";
-    var geschoss = ""; try { geschoss = geschossSvg(waffe); } catch (e) { geschoss = ""; }
-    w.innerHTML = '<span class="sp-jagen-ziel">' + zielSvg() + '</span><span class="sp-jagen-geschoss">' + geschoss + '</span><i class="sp-jagen-blitz"></i>';
-    knopf.appendChild(w);
-    setTimeout(function () { w.remove(); }, 1200);
-  }
-  function hackeZeigen(knopf) {
-    var kreis = knopf.querySelector(".lc-kreis") || knopf;
-    var w = document.createElement("span");
-    w.className = "sp-holzen sp-hauen";
-    w.style.top = Math.round((kreis.offsetTop || 0) + (kreis.offsetHeight || 40) * 0.45) + "px";
-    var funken = "";
-    for (var i = 0; i < 8; i++) funken += '<i class="sp-span sp-funke" style="--sx:' + Math.round((Math.random() - 0.4) * 56) + "px;--sy:" + Math.round(-12 - Math.random() * 26) + "px;--sr:" + Math.round(Math.random() * 360) + 'deg"></i>';
-    w.innerHTML = '<span class="sp-holzen-axt">' + hackeSvg() + "</span>" + funken;
-    knopf.appendChild(w);
-    setTimeout(function () { w.remove(); }, 1100);
-  }
-  function platzHelfen(knopf, nr, ort) {
-    if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
-    if (S.ich.kaputt) { hinweis(gesperrtGrund()); return; }
-    var wz = ort === "jagd" ? "jagd" : "hacke", st = platzHilfeStand(nr, wz);
-    if (!st.reif) { hinweis(ort === "jagd" ? "🦌 Das Reh ist geflüchtet – gleich kommt ein neues (" + uhrText(st.rest) + ")." : "⛏️ Hier ist das Erz abgebaut – such dir einen anderen Fels (" + uhrText(st.rest) + ")."); return; }
-    if (ort === "jagd") { jagdZeigen(knopf); setTimeout(function () { ton("schuss", 0.45); }, 260); }
-    else { hackeZeigen(knopf); setTimeout(function () { ton("hammerschlag", 0.5); }, 180); }
-    S.platzHilfe = S.platzHilfe || {}; S.platzHilfe[wz + nr] = Date.now();
-    setTimeout(ackerPflegen, 650);
-    truppHelfen(knopf, ort, true);
   }
   function holzen(knopf, nr) {
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
@@ -7632,12 +7533,6 @@
     /* FASSUNG 727 — die Trupps stehen in derselben Liste wie die Werkstätten und Ställe (Funk 176: „dann muss das ja auch
        kongruent mit dem anderen System im Menü sein"): Menü und Dorfbild lesen denselben Stand. */
     truppOrte(nur).forEach(function (o) { t.push(truppZeileHtml(ich, o)); });
-    /* FASSUNG 750 — XANDER (Walkie 293): „das könnte man in den Einstellungen ja auch festlegen ob man nur durch den
-       Button mit jagen möchte oder ob man grafisch mit jagen möchte". */
-    if (truppOrte(nur).some(function (o) { return TRUPP_WERKZEUG[o]; })) {
-      t.push('<div class="sp-trupp-art"><span>Mithelfen:</span><button type="button" data-s="truppgrafisch" class="' + (truppGrafisch() ? "sp-an" : "") + '">auf den Plätzen</button>'
-        + '<button type="button" data-s="truppgrafisch" class="' + (truppGrafisch() ? "" : "sp-an") + '">nur Knopf</button></div>');
-    }
     return t;
   }
   /* FASSUNG 727 — XANDER (Funk 176): „schickst du die Fischer für eine Zeit an den See dass sie dort in Ruhe Angeln und die
@@ -7650,10 +7545,10 @@
      Bild mithilft, nimmt aus DIESER Menge und macht die Fahrt schneller – höchstens bis zur halben Zeit, nie mehr als die
      Menge. Ist alles geholt, hat der Ort Ruhe bis zum Ende der Fahrt; endloses Angeln gibt es nicht mehr. */
   var TRUPPS = {
-    see:  { name: "Fischer", dativ: "Fischern", ort: "am See", ziel: "an den See", ware: "fisch", menge: 6, tun: "angeln", helfen: "" },
-    wald: { name: "Holzfäller", dativ: "Holzfällern", ort: "im Wald", ziel: "in den Wald", ware: "holz", menge: 8, tun: "fällen Bäume", helfen: "Mithacken" },
-    jagd: { name: "Jäger", dativ: "Jägern", ort: "im Wald", ziel: "auf die Jagd", ware: "fleisch", menge: 3, tun: "jagen", helfen: "Mitjagen" },
-    berg: { name: "Bergleute", dativ: "Bergleuten", ort: "im Bergwerk", ziel: "ins Bergwerk", ware: "erz", menge: 4, tun: "hauen Erz", helfen: "Mithauen" }
+    see:  { name: "Fischer", ort: "am See", ziel: "an den See", ware: "fisch", menge: 6, tun: "angeln", helfen: "" },
+    wald: { name: "Holzfäller", ort: "im Wald", ziel: "in den Wald", ware: "holz", menge: 8, tun: "fällen Bäume", helfen: "Mithacken" },
+    jagd: { name: "Jäger", ort: "im Wald", ziel: "auf die Jagd", ware: "fleisch", menge: 3, tun: "jagen", helfen: "Mitjagen" },
+    berg: { name: "Bergleute", ort: "im Bergwerk", ziel: "ins Bergwerk", ware: "erz", menge: 4, tun: "hauen Erz", helfen: "Mithauen" }
   };
   function truppOrte(nur) {
     if (!nur) return Object.keys(TRUPPS);
@@ -7881,22 +7776,19 @@
         + ": in 5 Minuten bringen sie " + (a.menge || T.menge) + " " + wareName(T.ware) + "." + (T.helfen ? " Hilfst du mit, geht es schneller." : " Angelst du selbst, geht es schneller."));
     });
   }
-  var TRUPP_WERKZEUG = { wald: "axt", jagd: "jagd", berg: "hacke" };
-  function truppGrafisch() { try { return localStorage.getItem("dma_trupp_grafisch") !== "0"; } catch (e) { return true; } }
-  function truppHelfen(knopf, ort, stumm) {
+  function truppHelfen(knopf, ort) {
     if (!S.ich || !S.ich.mitspielen) { hinweis("🎮 Schalte erst „Mitspielen“ an (Leiste über dem Chat)."); return; }
     if (S.truppHilftBis && S.truppHilftBis > Date.now()) return;
     S.truppHilftBis = Date.now() + 300;
-    if (!stumm) ton(ort === "wald" ? "axttreffer" : ort === "berg" ? "hammerschlag" : ort === "jagd" ? "schuss" : "pling", 0.35);
+    ton(ort === "wald" ? "holzklopf" : ort === "berg" ? "hammerschlag" : "pling", 0.25);
     if (knopf) { var f = document.createElement("i"); f.className = "sp-dl-finger"; knopf.appendChild(f); setTimeout(function () { f.remove(); }, 650); }
     rpc("spiel_trupp_helfen", { p_ort: ort }).then(function (r) {
       if (!r || !r.ok) { if (r && r.grund && r.grund !== "langsam") hinweis("🚶 " + r.grund + (r.sek ? " (" + uhrText(r.sek * 1000) + ")" : "") + "."); return; }
       if (r.id) { S.ich = r; S.stand[r.id] = oeffentlich(r); }
       var T = TRUPPS[ort];
       if (r.menge && knopf) wareZahl(knopf, T.ware, "+" + r.menge);
-      else if (knopf) wareZahl(knopf, T.ware, "−15 s");
       if (r.neu) hinweis("🚶 Die " + T.name + " ziehen los – du hilfst gleich mit.");
-      else if (!S.truppHinweisZeit || Date.now() - S.truppHinweisZeit > 4000) { S.truppHinweisZeit = Date.now(); hinweis("💪 Du hilfst den " + (T.dativ || T.name) + ": zurück in " + uhrText(r.sek * 1000) + " · noch " + r.rest + " " + wareName(T.ware) + " – jeder Tipp 15 s schneller."); }
+      else if (!S.truppHinweisZeit || Date.now() - S.truppHinweisZeit > 4000) { S.truppHinweisZeit = Date.now(); hinweis("💪 Du hilfst den " + T.name + ": zurück in " + uhrText(r.sek * 1000) + " · noch " + r.rest + " " + wareName(T.ware) + " – jeder Tipp 15 s schneller."); }
       schnellZeichnen(); panelAuffrischen();
     }).catch(function () {});
   }
@@ -11164,7 +11056,7 @@
       + '<button type="button" data-s="dorfteil" data-t="markt" class="' + (S.dorfTeil === "markt" ? "sp-an" : "") + '">Markt &amp; Handel ' + (S.dorfTeil === "markt" ? "▴" : "▾") + "</button>"
       /* FASSUNG 703 */
       + '<button type="button" data-s="dorfteil" data-t="forschung" class="' + (S.dorfTeil === "forschung" ? "sp-an" : "") + '">Forschung ' + (S.dorfTeil === "forschung" ? "▴" : "▾") + "</button>"
-      + '<button type="button" data-s="dorfteil" data-t="wunder" class="' + (S.dorfTeil === "wunder" ? "sp-an" : "") + '" title="Sehenswürdigkeiten">Wahrzeichen ' + (S.dorfTeil === "wunder" ? "▴" : "▾") + "</button></div>"
+      + '<button type="button" data-s="dorfteil" data-t="wunder" class="' + (S.dorfTeil === "wunder" ? "sp-an" : "") + ' title="Sehenswürdigkeiten">Wahrzeichen ' + (S.dorfTeil === "wunder" ? "▴" : "▾") + "</button></div>"
       + (S.dorfTeil === "bau" ? '<div class="sp-troph-liste">' + dorfBauListe(ich) + "</div>" : S.dorfTeil === "markt" ? marktHtml(ich) + handelHtml(ich)
         : S.dorfTeil === "forschung" ? forschungHtml(ich) : S.dorfTeil === "wunder" ? wunderHtml(ich) : "") + fuss;
   }

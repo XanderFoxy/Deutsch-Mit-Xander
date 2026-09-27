@@ -368,6 +368,34 @@ const sage = (gut, was, zusatz) => {
   sage(r.a && r.a.p_ort === "jagd" && /Jäger ziehen auf die Jagd/.test(r.h) && /jagen · noch 9 von 9 Fleisch/.test(r.zeile), "die Jäger ziehen los; die Zeile zeigt Menge und Rückkehr", JSON.stringify(r));
   if (process.env.BILD) { await pg.evaluate(() => document.querySelector(".sp-dl-rahmen").scrollIntoView({ block: "start" })); await tick(400); await pg.screenshot({ path: process.env.BILD + "-trupps.png" }); }
 
+  console.log("\nMITHELFEN AUF DEN PLÄTZEN (Fassung 750, Walkie 293)\n");
+  /* „bei dem unteren Knopf hört man aber keinen Sound … irgendwie scheint es nicht verlinkt zu sein" und „soll das auf den
+     positionsfeldern eher geschehen dass man das optisch auch ein bisschen sieht" */
+  await pg.evaluate(() => { window.__ich.mitspielen = true; const S = window.DMA_SPIEL.pruef.zustand(); S.ich.mitspielen = true; try { localStorage.removeItem("dma_trupp_grafisch"); } catch (e) {} window.__helfArgs = null; window.DMA_TONLOG && (window.DMA_TONLOG.length = 0); });
+  r = await pg.evaluate(() => [...document.querySelectorAll('.sp-dl-station [data-s="truppgrafisch"]')].map((b) => b.textContent + (b.classList.contains("sp-an") ? "*" : "")));
+  sage(r.length === 2 && r[0] === "auf den Plätzen*", "Schalter „Mithelfen: auf den Plätzen / nur Knopf“ (Voreinstellung: auf den Plätzen)", JSON.stringify(r));
+  await tippe('.sp-dl-station [data-s="trupphelfen"][data-g="jagd"]'); await tick(700);
+  r = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return { h: window.__helfArgs, graben: S.graben, wz: S.werkzeug, felder: document.querySelectorAll("#lcPlaetze .sp-acker-jagd").length, ton: (window.DMA_TONLOG || []).map((x) => x.name || x).join(",") }; });
+  sage(r.h && r.h.p_ort === "jagd", "„Mitjagen“ ruft wirklich den Server (hilft den Jägern)", JSON.stringify(r.h));
+  sage(/schuss/.test(r.ton), "„Mitjagen“ hat einen Ton (Schuss)", r.ton);
+  sage(r.graben && r.wz === "jagd" && r.felder >= 4, "und legt das Jagen in die Hand: Wild steht auf den Plätzen", JSON.stringify(r));
+  r = await pg.evaluate(() => !document.querySelector(".sp-dl-station"));
+  sage(r, "das Dorf-Fenster geht dabei zu – die Plätze sind frei zu sehen", String(r));
+  await pg.evaluate(() => { window.__helfArgs = null; });
+  /* Alle Plätze sind hier besetzt – das Wild steht dann unten am Bild, die Gesichtsmitte bleibt frei. */
+  await pg.evaluate(() => { window.scrollTo(0, 0); document.getElementById("lcPlaetze").scrollIntoView({ block: "center" }); });
+  await tick(600);
+  await tippe('#lcPlaetze .lc-platz:last-child .lc-kreis'); await tick(900);
+  r = await pg.evaluate(() => ({ h: window.__helfArgs, flucht: !!document.querySelector("#lcPlaetze .sp-acker-jagd.sp-acker-waechst"), hinweis: window.__hinweise.slice(-1)[0] || "" }));
+  sage(r.h && r.h.p_ort === "jagd" && r.flucht, "Tipp aufs Reh: Schuss mit der eigenen Waffe, hilft den Jägern, das Reh flüchtet", JSON.stringify(r));
+  sage(/hilfst den Jägern/.test(r.hinweis), "richtiger Dativ: „Du hilfst den Jägern“", r.hinweis);
+  if (process.env.BILD) { await pg.evaluate(() => document.getElementById("lcPlaetze").scrollIntoView({ block: "center" })); await tick(300); await (await pg.$("#lcPlaetze")).screenshot({ path: process.env.BILD + "-wild.png" }); }
+  await pg.evaluate(() => { const b = document.createElement("button"); b.type = "button"; b.dataset.s = "truppgrafisch"; const sc = document.querySelector(".sp-schnell"); sc.appendChild(b); b.click(); });
+  await tick(300);
+  r = await pg.evaluate(() => localStorage.getItem("dma_trupp_grafisch"));
+  sage(r === "0", "„nur Knopf“ wird gemerkt", String(r));
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.graben = false; try { localStorage.removeItem("dma_trupp_grafisch"); } catch (e) {} P.schnellZeichnen(true); });
+
   console.log("\nMELDUNGEN MIT SPRUNG INS DORF (Fassung 728, Funk 155/173)\n");
   /* „oben eine Meldung … wenn irgendwas fertig ist dass man das Antippen kann und direkt in dieses Dorf Mini springt auch wenn man angegriffen wird" */
   await pg.evaluate(() => { try { localStorage.removeItem("dma_dorf_gemeldet"); } catch (e) {} const P = window.DMA_SPIEL.pruef, S = P.zustand(); P.sprung().gemeldet = null; P.sprung().liste = [];
