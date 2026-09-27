@@ -93785,13 +93785,6 @@ An einem Morgen lief ein kleiner Fuchs los…
     inboxAuffrischenLaeuft = true;
     inboxDatenLaden().catch(() => {}).then(() => { inboxAuffrischenLaeuft = false; });
   }
-  /* FASSUNG 740 — XANDER (Funk 153): „außerhalb des Systems vom Livestream in Postfach möchte ich mehr Ordnung haben …
-     die emojis kleiner … kompakter nicht so dass es die ganze Leiste aufreißt und das Design nach unten so verzögert
-     dass die Leute wenn sie es Postfach aufmachen gar nicht sehen dass sie im Postfach sind … die müssen Orientierung
-     haben und nicht erstmal durch diese ganzen extra Sachen die man oben einstellen kann". Das Postfach beginnt jetzt
-     mit „✉️ Postfach" und dem Posteingang; „Neue Nachricht schreiben" ist eingeklappt (offen, wenn ein Entwurf wartet
-     oder man antwortet), die Sticker stecken in einer eigenen kleinen Klappe und stehen in EINER Zeile. */
-  let inboxSchreibenOffen = false;
   async function renderInbox(isEntering, nurAusZwischenspeicher) {
     const area = document.getElementById("inboxArea");
     if (!Backend.currentUser()) { area.innerHTML = '<p class="empty-note">Bitte zuerst anmelden.</p>'; return; }
@@ -93828,10 +93821,60 @@ An einem Morgen lief ein kleiner Fuchs los…
     const isAdmin = Backend.canModerate ? Backend.canModerate() : false;
     const list = inboxViewTab === "in" ? messages.inbox : inboxViewTab === "out" ? messages.outbox : [...messages.inbox, ...messages.outbox].filter((m) => getImportantMsgIds().includes(m.id));
     area.innerHTML = `
-      <h2 class="inbox-titel">✉️ Postfach</h2>      <div class="question-card inbox-liste">
+      <div class="question-card">
+        <h3>✉️ Neue Nachricht schreiben</h3>
+        <div class="form-field">
+          <label class="empty-note" style="display:block; margin-bottom:8px;">An wen?</label>
+          <div class="order-toggle" id="inboxRecipientMode" style="margin-bottom:10px;">
+            <button type="button" class="order-pill" data-recipient-mode="select" aria-selected="true">👤 Bestimmte Personen</button>
+            ${isAdmin ? `<button type="button" class="order-pill" data-recipient-mode="broadcast" aria-selected="false">📢 Rundmail an alle</button>` : ""}
+          </div>
+          <div id="inboxRecipientListWrap">
+            <input type="text" class="vocab-search" id="inboxRecipientSearch" placeholder="Freund suchen…" style="margin-bottom:8px;" />
+            <div id="inboxRecipientList" style="max-height:220px; overflow-y:auto; border:1px solid rgba(0,0,0,0.08); border-radius:var(--radius-sm); padding:4px;">
+              ${Backend.canModerate() ? `<label class="checkbox-list-row"><input type="checkbox" data-recipient-id="${Backend.currentUser()?.id}" /> <span>🔧 Ich selbst (für Punkte-Korrekturen am eigenen Konto)</span></label>` : ""}
+              ${friends.map((f) => `<label class="checkbox-list-row"><input type="checkbox" data-recipient-id="${f.id}" /> <span>${f.name}</span></label>`).join("") || '<p class="empty-note" style="padding:8px;">Noch keine Freunde — oben nach Namen suchen.</p>'}
+            </div>
+          </div>
+          <p class="empty-note" id="inboxBroadcastNote" style="display:none; margin-top:6px;">📢 Diese Nachricht geht an <strong>alle</strong> Nutzer der Seite — keine einzelne Auswahl nötig.</p>
+        </div>
+        ${Backend.canModerate() ? `
+        <div class="form-field question-card" style="border:2px solid var(--amber-400); padding:12px;">
+          <label class="empty-note" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>🎁 Punkte mitschicken (optional) — auch Korrekturen als negativer Wert</span>
+            <strong id="pointsGiftValueLabel" style="color:var(--amber-500,#c98a1f);">0 Punkte</strong>
+          </label>
+          <input type="range" id="pointsGiftSlider" min="-500" max="500" step="10" value="0" style="width:100%; margin-top:6px;" />
+          <label class="empty-note" style="display:block; margin-top:8px;">Grund (füllt die Nachricht automatisch aus, danach noch anpassbar):</label>
+          <select id="pointsReasonSelect" style="width:100%; margin-top:4px; padding:8px; border-radius:8px; border:1px solid var(--border-color,#ddd);">
+            <option value="">— eigenen Text schreiben —</option>
+            ${POINTS_REASON_TEMPLATES.map((r) => `<option value="${r.text.replace(/"/g, "&quot;")}">${r.label}</option>`).join("")}
+          </select>
+          <p class="empty-note" style="font-size:0.74rem; margin-top:4px;">In 10er-Schritten von −500 bis 500 — z. B. als Entschädigung, Belohnung, oder um versehentlich vergebene Punkte wieder zu korrigieren. Die Person bekommt automatisch eine erklärende Nachricht dazu. Vor dem Versenden erscheint zur Sicherheit noch eine Bestätigung.</p>
+        </div>` : ""}
+        <div class="form-field">
+          <textarea id="inboxMessageInput" class="guestbook-form-textarea" maxlength="500" placeholder="Deine Nachricht…"></textarea>
+        </div>
+        <div class="form-field">
+          <label class="empty-note" style="cursor:pointer;">📷 Bild anhängen (optional) <input type="file" id="inboxImageInput" accept="image/*" style="display:block; margin-top:4px;" /></label>
+          <div id="inboxImagePreviewBox"></div>
+        </div>
+        <div class="form-field">
+          <label class="empty-note" style="cursor:pointer;">📎 Datei anhängen — MP3 oder PDF (optional) <input type="file" id="inboxFileInput" accept=".mp3,.pdf,audio/mpeg,application/pdf" style="display:block; margin-top:4px;" /></label>
+          <div id="inboxFilePreviewBox"></div>
+        </div>
+        <div class="form-field">
+          <label class="empty-note">Eigene Sticker antippen, um sie an der Cursor-Position in den Text einzufügen (optional):</label>
+          <div id="inboxStickerRow" style="display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;"></div>
+          <div id="inboxFoxStickerRow" style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;"></div>
+        </div>
+        <button type="button" class="btn btn-coffee" id="inboxSendBtn">Senden</button>
+        <div class="form-error" id="inboxSendError"></div>
+      </div>
+      <div class="question-card" style="margin-top:14px;">
         <div class="order-toggle" style="margin-bottom:12px;">
-          <button type="button" class="order-pill" id="inboxTabIn" aria-selected="${inboxViewTab === "in"}">📥 Eingang${messages.inbox.length ? ` (${messages.inbox.length})` : ""}</button>
-          <button type="button" class="order-pill" id="inboxTabOut" aria-selected="${inboxViewTab === "out"}">📤 Ausgang${messages.outbox.length ? ` (${messages.outbox.length})` : ""}</button>
+          <button type="button" class="order-pill" id="inboxTabIn" aria-selected="${inboxViewTab === "in"}">📥 Posteingang${messages.inbox.length ? ` (${messages.inbox.length})` : ""}</button>
+          <button type="button" class="order-pill" id="inboxTabOut" aria-selected="${inboxViewTab === "out"}">📤 Postausgang${messages.outbox.length ? ` (${messages.outbox.length})` : ""}</button>
           <button type="button" class="order-pill" id="inboxTabImportant" aria-selected="${inboxViewTab === "important"}">⭐ Wichtig${getImportantMsgIds().length ? ` (${getImportantMsgIds().length})` : ""}</button>
         </div>
         ${list.length ? `<button type="button" class="btn btn-ghost" id="inboxDownloadAllBtn" style="margin-bottom:10px;">⬇️ Diese Ansicht als Text herunterladen</button>` : ""}
@@ -93911,56 +93954,6 @@ An einem Morgen lief ein kleiner Fuchs los…
         }).join("") : `<p class="empty-note">${inboxViewTab === "important" ? "Noch keine Nachrichten als wichtig markiert." : inboxViewTab === "in" ? "Noch keine Nachrichten — hier erscheinen auch automatische Zusammenfassungen, nachdem du eine Übungsrunde gespielt hast." : "Du hast noch nichts verschickt."}</p>`}
         ${list.length > inboxGezeigt ? `<button type="button" class="btn btn-ghost" id="inboxMehr" style="display:block; width:100%; margin-top:10px;">Weitere ${Math.min(INBOX_SEITE, list.length - inboxGezeigt)} anzeigen (${list.length - inboxGezeigt} übrig)</button>` : ""}
       </div>
-      <details class="question-card inbox-schreiben" id="inboxSchreiben"${inboxSchreibenOffen ? " open" : ""}>
-        <summary class="inbox-schreiben-kopf">✏️ Neue Nachricht schreiben</summary>
-        <div class="form-field">
-          <label class="empty-note" style="display:block; margin-bottom:8px;">An wen?</label>
-          <div class="order-toggle" id="inboxRecipientMode" style="margin-bottom:10px;">
-            <button type="button" class="order-pill" data-recipient-mode="select" aria-selected="true">👤 Bestimmte Personen</button>
-            ${isAdmin ? `<button type="button" class="order-pill" data-recipient-mode="broadcast" aria-selected="false">📢 Rundmail an alle</button>` : ""}
-          </div>
-          <div id="inboxRecipientListWrap">
-            <input type="text" class="vocab-search" id="inboxRecipientSearch" placeholder="Freund suchen…" style="margin-bottom:8px;" />
-            <div id="inboxRecipientList" style="max-height:220px; overflow-y:auto; border:1px solid rgba(0,0,0,0.08); border-radius:var(--radius-sm); padding:4px;">
-              ${Backend.canModerate() ? `<label class="checkbox-list-row"><input type="checkbox" data-recipient-id="${Backend.currentUser()?.id}" /> <span>🔧 Ich selbst (für Punkte-Korrekturen am eigenen Konto)</span></label>` : ""}
-              ${friends.map((f) => `<label class="checkbox-list-row"><input type="checkbox" data-recipient-id="${f.id}" /> <span>${f.name}</span></label>`).join("") || '<p class="empty-note" style="padding:8px;">Noch keine Freunde — oben nach Namen suchen.</p>'}
-            </div>
-          </div>
-          <p class="empty-note" id="inboxBroadcastNote" style="display:none; margin-top:6px;">📢 Diese Nachricht geht an <strong>alle</strong> Nutzer der Seite — keine einzelne Auswahl nötig.</p>
-        </div>
-        ${Backend.canModerate() ? `
-        <div class="form-field question-card" style="border:2px solid var(--amber-400); padding:12px;">
-          <label class="empty-note" style="display:flex; justify-content:space-between; align-items:center;">
-            <span>🎁 Punkte mitschicken (optional) — auch Korrekturen als negativer Wert</span>
-            <strong id="pointsGiftValueLabel" style="color:var(--amber-500,#c98a1f);">0 Punkte</strong>
-          </label>
-          <input type="range" id="pointsGiftSlider" min="-500" max="500" step="10" value="0" style="width:100%; margin-top:6px;" />
-          <label class="empty-note" style="display:block; margin-top:8px;">Grund (füllt die Nachricht automatisch aus, danach noch anpassbar):</label>
-          <select id="pointsReasonSelect" style="width:100%; margin-top:4px; padding:8px; border-radius:8px; border:1px solid var(--border-color,#ddd);">
-            <option value="">— eigenen Text schreiben —</option>
-            ${POINTS_REASON_TEMPLATES.map((r) => `<option value="${r.text.replace(/"/g, "&quot;")}">${r.label}</option>`).join("")}
-          </select>
-          <p class="empty-note" style="font-size:0.74rem; margin-top:4px;">In 10er-Schritten von −500 bis 500 — z. B. als Entschädigung, Belohnung, oder um versehentlich vergebene Punkte wieder zu korrigieren. Die Person bekommt automatisch eine erklärende Nachricht dazu. Vor dem Versenden erscheint zur Sicherheit noch eine Bestätigung.</p>
-        </div>` : ""}
-        <div class="form-field">
-          <textarea id="inboxMessageInput" class="guestbook-form-textarea" maxlength="500" placeholder="Deine Nachricht…"></textarea>
-        </div>
-        <div class="form-field">
-          <label class="empty-note" style="cursor:pointer;">📷 Bild anhängen (optional) <input type="file" id="inboxImageInput" accept="image/*" style="display:block; margin-top:4px;" /></label>
-          <div id="inboxImagePreviewBox"></div>
-        </div>
-        <div class="form-field">
-          <label class="empty-note" style="cursor:pointer;">📎 Datei anhängen — MP3 oder PDF (optional) <input type="file" id="inboxFileInput" accept=".mp3,.pdf,audio/mpeg,application/pdf" style="display:block; margin-top:4px;" /></label>
-          <div id="inboxFilePreviewBox"></div>
-        </div>
-        <details class="form-field inbox-sticker">
-          <summary class="empty-note">🙂 Sticker einfügen (optional)</summary>
-          <div id="inboxStickerRow" class="inbox-sticker-reihe"></div>
-          <div id="inboxFoxStickerRow" class="inbox-sticker-reihe"></div>
-        </details>
-        <button type="button" class="btn btn-coffee" id="inboxSendBtn">Senden</button>
-        <div class="form-error" id="inboxSendError"></div>
-      </details>
     `;
     document.getElementById("inboxMehr")?.addEventListener("click", () => { inboxGezeigt += INBOX_SEITE; renderInbox(false, true); });
     renderStickerRow();
@@ -93973,9 +93966,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       if (Array.isArray(draft.to)) selectedRecipients = new Set(draft.to);
       else if (draft.to) selectedRecipients = new Set([draft.to]); // alte Entwürfe (nur eine Person) weiterhin lesbar
       if (draft.body) document.getElementById("inboxMessageInput").value = draft.body;
-      if (draft.body) { inboxSchreibenOffen = true; const d = document.getElementById("inboxSchreiben"); if (d) d.open = true; }
     }
-    { const d = document.getElementById("inboxSchreiben"); if (d) d.addEventListener("toggle", () => { inboxSchreibenOffen = d.open; }); }
     const refreshRecipientChecks = () => {
       area.querySelectorAll("[data-recipient-id]").forEach((cb) => {
         cb.checked = selectedRecipients.has(cb.dataset.recipientId);
@@ -94116,7 +94107,6 @@ An einem Morgen lief ein kleiner Fuchs los…
         const targetId = btn.dataset.replyTo;
         const checkbox = area.querySelector(`[data-recipient-id="${targetId}"]`);
         if (checkbox) { selectedRecipients = new Set([targetId]); refreshRecipientChecks(); }
-        { const d = document.getElementById("inboxSchreiben"); if (d) d.open = true; inboxSchreibenOffen = true; }
         document.getElementById("inboxMessageInput").focus();
         document.getElementById("inboxMessageInput").scrollIntoView({ behavior: "smooth", block: "center" });
       });

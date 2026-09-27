@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 739 — Magic Button: Siri-Farbwirbel, eigene Felder wie AssistiveTouch (Funk 153)",
+  stand: "Fassung 740 — Postfach aufgeräumt, Profil-Navigation kompakt (Funk 153)",
 
   inArbeit: [
-    { seit: "2026-09-27T05:02",
-      text: "Funk 153: Postfach aufräumen (kompakte Emojis, Orientierung)" },
-    { seit: "2026-09-27T05:02",
+    { seit: "2026-09-27T05:09",
       text: "Funk 152 Reste: Taschen-Kachel verständlich, Doppeltipp mit Schaufel = Werkzeugmenü" },
-    { seit: "2026-09-27T05:02",
+    { seit: "2026-09-27T05:09",
       text: "Modulares Dorf, Verteidigung/Kaserne, Verträge – wartet auf Antworten zu den 15 Fragen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T05:02",
+    { seit: "2026-09-27T05:09",
+      text: "Postfach: Titel, Nachrichten zuerst, Schreiben eingeklappt, Navigation 5×2" },
+    { seit: "2026-09-27T05:09",
       text: "Magic Button: Farbwirbel, eigene Felder (+, ✕, austauschen)" },
-    { seit: "2026-09-27T05:02",
+    { seit: "2026-09-27T05:09",
       text: "Controller am Bild, Nur Mitspieler hören" },
-    { seit: "2026-09-27T05:02",
+    { seit: "2026-09-27T05:09",
       text: "Meldungen: Entdeckung, Unzufriedenheit, Touristen, Angebote, Verkauf" },
-    { seit: "2026-09-27T05:02",
-      text: "Chat-Effekte halten, Treffer an der getippten Stelle, ×N-Zeilen" },
   ],
 };
