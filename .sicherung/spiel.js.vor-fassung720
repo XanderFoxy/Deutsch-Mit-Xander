@@ -8366,12 +8366,6 @@
     /* Dachfläche vorn: von der Traufe hinauf zum First (der liegt hinten auf halber Tiefe). */
     var eY = y - h + ov * .35, lang = Math.hypot(dx / 2, rh - dy / 2);
     dmEbene(g, [L - ov, eY], [1, 0], [(dx / 2 + ov * .15) / lang, (dy / 2 - rh - ov * .35) / lang], function () {
-      /* FASSUNG 720 — XANDER (Funk 165): „ich möchte auch nicht dass die häuserkanten so eckig sind an den Dächern … das
-         kann auch ein bisschen abgerundet mal rundlich sein". Die Dachfläche hat runde Ecken an der Traufe, die Traufe
-         hängt in der Mitte einen Hauch durch (wie echte Ziegeldächer), und alles Folgende bleibt in dieser Form. */
-      var DW = w + ov * 2, rr = Math.min(1.1, DW * .06), durch = Math.min(.35, DW * .012);
-      g.save(); g.beginPath(); g.moveTo(0, lang); g.lineTo(0, rr); g.quadraticCurveTo(0, 0, rr, durch * .3);
-      g.quadraticCurveTo(DW / 2, durch * 2, DW - rr, durch * .3); g.quadraticCurveTo(DW, 0, DW, rr); g.lineTo(DW, lang); g.closePath(); g.clip();
       g.fillStyle = dmMuster(g, K[o.dach] || K.ziegel, .075 / s); g.fillRect(0, 0, w + ov * 2, lang);
       var sh = g.createLinearGradient(0, 0, 0, lang); sh.addColorStop(0, "rgba(0,0,0,.28)"); sh.addColorStop(.25, "rgba(0,0,0,0)"); sh.addColorStop(.85, "rgba(255,235,200,.08)"); sh.addColorStop(1, "rgba(255,235,200,.22)");
       g.fillStyle = sh; g.fillRect(0, 0, w + ov * 2, lang);
@@ -8383,16 +8377,13 @@
         g.lineTo(w + ov * 2, lang); g.closePath(); g.fill();
         g.fillStyle = "rgba(150,170,200,.25)"; g.fillRect(0, lang * .12, w + ov * 2, .45);
       }
-      if (o.gaube) { var gx = (w + ov * 2) * .3, gb = Math.min(6, w * .2); g.fillStyle = dmMuster(g, K[o.wand] || K.putz, .07 / s); g.fillRect(gx, lang * .25, gb, lang * .35); dmFenster(g, gx + gb * .25, lang * .3, gb * .5, lang * .22, { rahmen: o.rahmen }); g.fillStyle = dmMuster(g, K[o.dach] || K.ziegel, .075 / s); g.beginPath(); g.moveTo(gx - .6, lang * .58); g.quadraticCurveTo(gx + gb / 2, lang * .78, gx + gb + .6, lang * .58); g.closePath(); g.fill(); }
-      g.restore();
+      if (o.gaube) { var gx = (w + ov * 2) * .3, gb = Math.min(6, w * .2); g.fillStyle = dmMuster(g, K[o.wand] || K.putz, .07 / s); g.fillRect(gx, lang * .25, gb, lang * .35); dmFenster(g, gx + gb * .25, lang * .3, gb * .5, lang * .22, { rahmen: o.rahmen }); g.fillStyle = dmMuster(g, K[o.dach] || K.ziegel, .075 / s); g.beginPath(); g.moveTo(gx - .6, lang * .58); g.lineTo(gx + gb / 2, lang * .72); g.lineTo(gx + gb + .6, lang * .58); g.closePath(); g.fill(); }
     });
     /* Firstlinie und Ortgang rechts. */
     var fx0 = L - ov + dx / 2 + ov * .15, fy0 = y - h + dy / 2 - rh, fx1 = R + ov * .15 + dx / 2;
-    g.lineCap = "round"; g.strokeStyle = "rgba(60,30,20,.9)"; g.lineWidth = .9; g.beginPath(); g.moveTo(fx0, fy0); g.lineTo(fx1, fy0); g.stroke(); g.lineCap = "butt";
+    g.strokeStyle = "rgba(60,30,20,.9)"; g.lineWidth = .9; g.beginPath(); g.moveTo(fx0, fy0); g.lineTo(fx1, fy0); g.stroke();
     g.strokeStyle = "rgba(255,220,180,.35)"; g.lineWidth = .35; g.beginPath(); g.moveTo(fx0, fy0 - .4); g.lineTo(fx1, fy0 - .4); g.stroke();
-    g.save(); g.lineJoin = "round"; g.lineCap = "round";
     g.strokeStyle = o.ortgang || "#5a3a22"; g.lineWidth = .9; g.beginPath(); g.moveTo(R + ov, eY); g.lineTo(fx1, fy0); g.lineTo(R + dx + ov * .6, y + dy - h + ov * .35); g.stroke();
-    g.restore();
     if (o.schornstein !== false) {
       var sx = L + w * (o.schornX || .72), sy = eY + (fy0 - eY) * .55;
       dmEbene(g, [sx, sy + 1], [1, 0], [0, -1], function () { g.fillStyle = dmMuster(g, K.backstein, .05 / s); g.fillRect(0, 0, 2.2, 6.5); g.fillStyle = "rgba(0,0,0,.2)"; g.fillRect(0, 0, 2.2, 6.5); g.fillStyle = "#3a3330"; g.fillRect(-.3, 6.2, 2.8, .8); });
@@ -8552,8 +8543,6 @@
     g.restore();
   }
   /* ------------ Die Landschaft ------------ */
-  /* FASSUNG 720 — Umriss des Sees (Welt-Einheiten): unregelmäßig, läuft unten aus dem Bild. */
-  var DM_SEE = "M203 204 L202.2 196 C201.6 191.5 204 188.4 208.6 186.4 C213 184.6 218 184.3 223 183.6 C229 182.8 235 183.2 240.5 184.2 C246 185.2 251.4 186 255.2 188.6 C258.6 191 260.2 194 259.6 197.6 C259.3 200 259.8 202 260.4 204 Z";
   function dmLandschaft(g, K, s) {
     var i;
     if (DM.nachtJetzt) {
@@ -8678,71 +8667,16 @@
     [[[4, 176], [44, 164], [60, 188], [14, 198]], [[292, 132], [318, 128], [320, 150], [298, 154]]].forEach(function (a) {
       dmWeich(g, a, .25, 1.4); g.fillStyle = dmMuster(g, K.acker, .08 / s); dmPfad(g, a); g.fill(); g.strokeStyle = "rgba(90,70,20,.55)"; g.lineWidth = .6; g.stroke();
       if (DM.schneeJetzt) { g.fillStyle = "rgba(244,247,252,.74)"; dmPfad(g, a); g.fill(); } });
-    /* FASSUNG 720 — XANDER (Funk 165): „der See ist viel zu klein der Fluss hat noch keine schöne Struktur das sieht alles
-       wenn ich die Vorschaubilder sehe das sieht alles nicht schön aus das kann ein bisschen mehr zufälliger sein diese
-       Strukturen das Wasser in der Natur ist ja auch nicht perfekt das hat jetzt zufällige Strukturen". Das Wasser ist nicht
-       mehr nur die wiederholte Kachel: darunter ein Grundton, der zur Mitte tiefer wird, darüber großflächig ungleichmäßige
-       helle und dunkle Stellen, einzelne Kräuselungen (jede anders lang, anders hell, leicht gebogen), am Ufer flaches,
-       grünlich-braunes Wasser mit einem hellen Saum und oben der Widerschein des Himmels. */
-    function wasser(pfad, box, seed, fluss) {
-      var x0 = box[0], y0 = box[1], x1 = box[2], y1 = box[3], cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, j;
-      g.save(); g.clip(pfad);
-      var tg = g.createLinearGradient(0, y0, 0, y1); tg.addColorStop(0, DM.nachtJetzt ? "#1d3550" : "#3f86b4"); tg.addColorStop(1, DM.nachtJetzt ? "#10233a" : "#23628f");
-      g.fillStyle = tg; g.fillRect(x0, y0, x1 - x0, y1 - y0);
-      g.globalAlpha = .32; g.fillStyle = dmMuster(g, K.wasser, .09 / s); g.fillRect(x0, y0, x1 - x0, y1 - y0); g.globalAlpha = 1;
-      if (!DM.wasserFlecken) {
-        var wf = dmKachel(48), wfg = wf.getContext("2d"), wb = wfg.createImageData(48, 48), wr = dmRauschen(48, 3, 3, 723);
-        for (j = 0; j < wr.length; j++) { var t = (wr[j] - .5) * 2.6; if (t < 0) { wb.data[j * 4] = 8; wb.data[j * 4 + 1] = 40; wb.data[j * 4 + 2] = 70; wb.data[j * 4 + 3] = Math.min(255, -t * 150); } else { wb.data[j * 4] = 170; wb.data[j * 4 + 1] = 215; wb.data[j * 4 + 2] = 235; wb.data[j * 4 + 3] = Math.min(255, t * 95); } }
-        wfg.putImageData(wb, 0, 0); DM.wasserFlecken = wf;
-      }
-      /* Ein einziges, über die ganze Fläche gezogenes Rauschen: keine Kachel, keine Kanten. */
-      g.drawImage(DM.wasserFlecken, x0 - 6 + dmHash(seed, 1, 7) * 6, y0 - 4, (x1 - x0) + 12, (y1 - y0) + 8);
-      /* Tiefe: zur Mitte (beim See) bzw. zur Fließrinne (beim Fluss) dunkler. */
-      if (!fluss) { var tf = g.createRadialGradient(cx, cy + 3, 1, cx, cy + 3, (x1 - x0) * .5); tf.addColorStop(0, "rgba(6,30,56,.38)"); tf.addColorStop(1, "rgba(6,30,56,0)"); g.save(); g.translate(cx, cy + 3); g.scale(1, .45); g.translate(-cx, -cy - 3); g.fillStyle = tf; g.fillRect(x0, y0 - 40, x1 - x0, y1 - y0 + 80); g.restore(); }
-      /* Flaches Wasser am Ufer: grünlich-braun, nach innen auslaufend. */
-      g.strokeStyle = "rgba(120,140,96,.45)"; g.lineWidth = 3.2; g.stroke(pfad);
-      g.strokeStyle = "rgba(150,170,120,.35)"; g.lineWidth = 1.4; g.stroke(pfad);
-      /* Einzelne Kräuselungen: jede anders. Beim Fluss länger und in Fließrichtung (nach unten) leicht schräg. */
-      var n = Math.round((x1 - x0) * (y1 - y0) / (fluss ? 26 : 16));
-      for (j = 0; j < n; j++) {
-        var rx = x0 + dmHash(j, 1, seed) * (x1 - x0), ry = y0 + dmHash(j, 2, seed) * (y1 - y0), rl = (fluss ? 1.6 : 1) + dmHash(j, 3, seed) * (fluss ? 4 : 3.2);
-        var ra = .12 + dmHash(j, 4, seed) * (DM.nachtJetzt ? .2 : .42), schraeg = fluss ? (dmHash(j, 5, seed) - .5) * 1.4 : (dmHash(j, 5, seed) - .5) * .4;
-        g.strokeStyle = "rgba(230,245,255," + ra.toFixed(3) + ")"; g.lineWidth = .18 + dmHash(j, 6, seed) * .22; g.lineCap = "round";
-        g.beginPath(); g.moveTo(rx, ry); g.quadraticCurveTo(rx + rl / 2, ry - .35 - dmHash(j, 7, seed) * .4, rx + rl, ry + schraeg); g.stroke();
-        if (dmHash(j, 8, seed) > .55) { g.strokeStyle = "rgba(8,36,64," + (ra * .7).toFixed(3) + ")"; g.beginPath(); g.moveTo(rx + .3, ry + .45); g.quadraticCurveTo(rx + rl / 2, ry + .1, rx + rl - .2, ry + .45 + schraeg); g.stroke(); }
-      }
-      /* Widerschein des Himmels, oben am stärksten; nachts der Mond als unruhiger Lichtstreif. */
-      var hs = g.createLinearGradient(0, y0, 0, y0 + (y1 - y0) * .6); hs.addColorStop(0, DM.nachtJetzt ? "rgba(120,140,190,.16)" : "rgba(235,248,255,.28)"); hs.addColorStop(1, "rgba(235,248,255,0)");
-      g.fillStyle = hs; g.fillRect(x0, y0, x1 - x0, y1 - y0);
-      g.restore();
-      /* Ufersaum: heller Sand/Kies mit dunklerer Kante, ungleichmäßig. */
-      g.save(); g.lineJoin = "round"; g.strokeStyle = "rgba(96,80,46,.5)"; g.lineWidth = 2.2; g.stroke(pfad); g.strokeStyle = "rgba(206,188,140,.85)"; g.lineWidth = 1.05; g.stroke(pfad); g.restore();
-    }
     /* Fluss mit Ufer. */
     var fluss = "M150 62 C146 76 132 80 136 96 C140 112 164 116 160 132 C156 146 136 150 142 166 C146 178 168 184 176 200 H196 C188 184 166 176 162 166 C158 152 178 146 180 132 C182 114 158 108 154 96 C150 82 162 76 158 62 Z";
     if (typeof Path2D !== "undefined") {
       var fp = new Path2D(fluss);
-      wasser(fp, [130, 60, 200, 202], 731, true);
-      /* FASSUNG 720 — der See, gut viermal so groß wie der Teich: eine unregelmäßige Bucht am unteren Rand (sie läuft aus
-         dem Bild hinaus), mit Schilf in Büscheln und Seerosenblättern. */
-      var see = new Path2D(DM_SEE);
-      wasser(see, [200, 181, 262, 204], 741, false);
-      g.save(); g.clip(see);
-      [[214, 196], [219, 198.6], [247, 197.5], [238, 200.4]].forEach(function (b, n) {
-        var br = 1 + dmHash(n, 1, 745) * .5; g.fillStyle = "rgba(58,110,46,.95)"; g.beginPath(); g.ellipse(b[0], b[1], br, br * .45, 0, .35, 6.0); g.lineTo(b[0], b[1]); g.closePath(); g.fill();
-        g.fillStyle = "rgba(150,200,110,.5)"; g.beginPath(); g.ellipse(b[0] - .2, b[1] - .15, br * .55, br * .22, 0, 0, 7); g.fill();
-        if (n === 1) { g.fillStyle = "#fff4f8"; g.beginPath(); g.arc(b[0] + .3, b[1] - .3, .45, 0, 7); g.fill(); g.fillStyle = "#f3c6d6"; g.beginPath(); g.arc(b[0] + .3, b[1] - .45, .22, 0, 7); g.fill(); }
-      });
-      g.restore();
-      /* Schilf: dichte Büschel an einigen Uferstellen, verschieden hoch, einige mit Kolben. */
-      [[204.5, 188], [206.5, 186.8], [256.5, 189], [228, 184], [259, 199]].forEach(function (b, n) {
-        for (var h = 0; h < 9; h++) {
-          var hx = b[0] + (dmHash(h, n, 747) - .5) * 3, hl = 2.2 + dmHash(h, n, 748) * 3, kr = (dmHash(h, n, 749) - .5) * 1.4;
-          g.strokeStyle = h % 3 ? "#5f7f2c" : "#7d9a3a"; g.lineWidth = .22; g.lineCap = "round";
-          g.beginPath(); g.moveTo(hx, b[1]); g.quadraticCurveTo(hx + kr * .3, b[1] - hl * .6, hx + kr, b[1] - hl); g.stroke();
-          if (dmHash(h, n, 750) > .72) { g.strokeStyle = "#5a3a1e"; g.lineWidth = .5; g.beginPath(); g.moveTo(hx + kr * .8, b[1] - hl + .9); g.lineTo(hx + kr, b[1] - hl + .1); g.stroke(); }
-        }
-      });
+      g.save(); g.strokeStyle = "rgba(120,100,60,.55)"; g.lineWidth = 3.4; g.stroke(fp); g.strokeStyle = "rgba(210,190,140,.9)"; g.lineWidth = 1.6; g.stroke(fp);
+      g.fillStyle = dmMuster(g, K.wasser, .09 / s); g.fill(fp);
+      var ws = g.createLinearGradient(140, 60, 190, 200); ws.addColorStop(0, "rgba(255,255,255,.12)"); ws.addColorStop(1, "rgba(0,20,60,.2)"); g.fillStyle = ws; g.fill(fp); g.restore();
+      /* Teich */
+      g.save(); g.beginPath(); g.ellipse(212, 188, 17, 6, 0, 0, 7); g.strokeStyle = "rgba(210,190,140,.9)"; g.lineWidth = 1.4; g.stroke(); g.fillStyle = dmMuster(g, K.wasser, .09 / s); g.fill(); g.fillStyle = "rgba(255,255,255,.1)"; g.fill(); g.restore();
+      for (i = 0; i < 8; i++) { g.strokeStyle = "#5a7a2a"; g.lineWidth = .4; var sx2 = 197 + i * 1.3; g.beginPath(); g.moveTo(sx2, 190); g.lineTo(sx2 + (dmHash(i, 1, 181) - .5), 184 - dmHash(i, 2, 181) * 3); g.stroke(); }
     }
     /* Wege: erst ein dunkler Rand, dann die Erde, dann Fahrspuren. */
     var wege = "M110 118 C130 112 150 104 160 100 C180 94 200 92 214 90 M160 100 C166 118 176 128 186 160 M110 118 C100 130 84 142 70 152 M110 118 C92 118 60 116 32 120 M214 90 C236 96 256 104 272 112 M186 160 C212 150 222 144 232 138 M186 160 C200 170 240 176 272 184 M126 168 C150 164 164 162 186 162 M160 100 C150 88 120 80 52 76 M214 90 C240 80 270 70 292 64 M56 80 C68 92 88 108 108 118";
@@ -8757,103 +8691,37 @@
     g.save(); g.fillStyle = dmMuster(g, K.feldstein, .05 / s); g.beginPath(); g.moveTo(147, 104); g.lineTo(150, 98); g.quadraticCurveTo(158, 93, 166, 98); g.lineTo(169, 104); g.closePath(); g.fill();
     g.fillStyle = "rgba(0,0,0,.25)"; g.fill(); g.fillStyle = "#1f4a6a"; g.beginPath(); g.moveTo(151, 104); g.quadraticCurveTo(158, 97, 165, 104); g.fill(); g.strokeStyle = "#8a826f"; g.lineWidth = .8; g.beginPath(); g.moveTo(149, 98.4); g.quadraticCurveTo(158, 93.6, 167, 98.4); g.stroke(); g.restore();
     /* Einzelne Bäume, Büsche, Heu, Brunnen, Zaun. */
-    [[14, 96, 1], [22, 140, 0], [98, 150, 0], [240, 120, 1], [300, 96, 0], [258, 150, 0], [120, 188, 1], [290, 160, 0], [8, 160, 0], [306, 176, 1], [90, 62, 0], [196, 70, 1]].forEach(function (b, n) { dmBaum(g, b[0], b[1], 4 + (n % 3), n + 600, !!b[2]); });
+    [[14, 96, 1], [22, 140, 0], [98, 150, 0], [240, 120, 1], [300, 96, 0], [258, 150, 0], [120, 188, 1], [236, 196, 0], [8, 160, 0], [306, 176, 1], [90, 62, 0], [196, 70, 1]].forEach(function (b, n) { dmBaum(g, b[0], b[1], 4 + (n % 3), n + 600, !!b[2]); });
     [[40, 100], [128, 138], [206, 118], [250, 170], [66, 128], [300, 190], [174, 190]].forEach(function (b, n) { dmBusch(g, b[0], b[1], 2.2 + (n % 2), n + 700); });
     [[62, 172], [70, 176]].forEach(function (h) { var hg = g.createRadialGradient(h[0] + .6, h[1] - 1.2, .2, h[0], h[1] - .6, 2.4); hg.addColorStop(0, "#f2d67a"); hg.addColorStop(1, "#b08a2a"); g.fillStyle = hg; g.beginPath(); g.arc(h[0], h[1], 2.2, Math.PI, 0); g.fill(); });
     g.fillStyle = dmMuster(g, K.feldstein, .04 / s); g.beginPath(); g.ellipse(140, 132, 2.4, 1, 0, 0, 7); g.fill(); g.fillRect(137.6, 128, 4.8, 4); g.fillStyle = "#2a4a6a"; g.beginPath(); g.ellipse(140, 128, 2.2, .8, 0, 0, 7); g.fill();
     g.fillStyle = "#6b4521"; g.fillRect(137.8, 123.4, .5, 5); g.fillRect(141.7, 123.4, .5, 5); g.fillStyle = dmMuster(g, K.ziegel, .05 / s); g.beginPath(); g.moveTo(137, 124); g.lineTo(140, 121.4); g.lineTo(143, 124); g.fill();
   }
-  /* FASSUNG 720 — DIE LATERNEN UND DAS LICHT IN DER NACHT (Funk 159/163/165)
-     XANDER (Funk 163): „die Laternen müssen realistischer werden die sind ein normales ein bisschen höher die können nicht
-     so flach sein … du sollst nicht beim Haus überall ein Licht haben du sollst es dort wo es realistisch ist und der
-     Lichtkegel soll das ganze Haus bestrahlen bzw die Laternen die normalerweise höher sind sollen ihren Kegel um das Haus
-     legen so dass man wie in der echten Welt das realistische erkennen kann dass man dort eine lichtsport hat und das Haus
-     deutlich sieht in der Nacht aber nicht mit so einem diffusen Licht arbeiten sondern realistisch dass man dort diesen
-     Lichtkegel hat". (Funk 165): „die Laternen soll nicht immer direkt im Gesicht des Hauses sein man soll die schöne
-     Struktur des Hauses noch erkennen deswegen reicht es doch zu wenn du eine große realistische Laterne hast die den
-     Kegel ums Haus und ein bisschen ausstrahlt". (Funk 159): „die Nacht kann etwas deutlicher sein man sieht die Häuser
-     kaum noch weil sie ein bisschen verwaschen wirken".
-     So gebaut: statt 14 kleiner Funzeln (6 Einheiten, halb so hoch wie ein Haus) und Lichtflecken mitten auf jedem Haus
-     steht neben jedem Haus EINE hohe Laterne (13 Einheiten: Sockel, Mast, Laternenhaus mit Glas, Dach). Nachts wirft sie
-     einen Lichtkegel: in ihm liegt das Bild so, wie es am Tag gemalt ist – nur warm gefärbt –, also mit allen Balken,
-     Fenstern und Ziegeln. Außerhalb bleibt es Nacht. Der Kegel selbst ist als feiner Schein in der Luft zu sehen. */
-  var DM_WEGLATERNEN = [[137, 111], [178, 128], [120, 150]];
-  function dmLaternenOrte(dorf, lage) {
-    var orte = [];
-    Object.keys(lage || {}).forEach(function (k) {
-      var d = (dorf || {})[k]; if (!d || !(d.stufe > 0)) return;
-      var q = lage[k], u = dmUmriss(k, d.stufe), links = 0, rechts = 0;
-      /* Auf die Seite, auf der mehr Platz ist (nicht in das Nachbarhaus). */
-      Object.keys(lage).forEach(function (j) {
-        if (j === k) return; var o = lage[j], dy = Math.abs(o[1] - q[1]); if (dy > 22) return;
-        var dx = o[0] - q[0]; if (dx > 0 && dx < 60) rechts += 60 - dx; if (dx < 0 && dx > -60) links += 60 + dx;
-      });
-      var seite = rechts > links ? -1 : 1;
-      orte.push({ x: q[0] + (seite > 0 ? u[2] + 3 : u[0] - 3), y: q[1] + 3.5, seite: -seite, haus: k, breite: u[2] - u[0], hoehe: -u[1], an: d.lp > 0 });
-    });
-    DM_WEGLATERNEN.forEach(function (p) { orte.push({ x: p[0], y: p[1], seite: 0, haus: "", breite: 16, hoehe: 6, an: true }); });
-    return orte;
-  }
-  var DM_LATERNE_HOCH = 13;
-  function dmLaternen(g, orte) {
-    orte.forEach(function (o) {
-      var x = o.x, y = o.y, h = DM_LATERNE_HOCH, kopf = y - h;
-      g.fillStyle = "rgba(0,0,0,.28)"; g.beginPath(); g.ellipse(x - 2.4, y + .5, 3.4, .8, -.1, 0, 7); g.fill();
-      /* Sockel und schlanker, nach oben dünner werdender Mast aus Gusseisen mit Glanzkante. */
-      g.fillStyle = "#26231f"; g.beginPath(); g.moveTo(x - 1.1, y + .3); g.lineTo(x + 1.1, y + .3); g.lineTo(x + .7, y - 1.6); g.lineTo(x - .7, y - 1.6); g.closePath(); g.fill();
-      g.beginPath(); g.moveTo(x - .45, y - 1.6); g.lineTo(x + .45, y - 1.6); g.lineTo(x + .28, kopf + 1.2); g.lineTo(x - .28, kopf + 1.2); g.closePath(); g.fill();
-      g.strokeStyle = "rgba(200,190,170,.35)"; g.lineWidth = .14; g.beginPath(); g.moveTo(x + .22, y - 1.8); g.lineTo(x + .14, kopf + 1.4); g.stroke();
-      g.fillStyle = "#26231f"; g.fillRect(x - .7, y - 5.2, 1.4, .35); g.fillRect(x - .9, kopf + .9, 1.8, .45);
-      /* Das Laternenhaus: unten schmaler, oben breiter, vier Glasscheiben, spitzes Dach mit Knauf. */
-      var an = DM.nachtJetzt && o.an;
-      g.fillStyle = an ? "#ffdf96" : "#b9c3c6";
-      g.beginPath(); g.moveTo(x - .9, kopf + .9); g.lineTo(x + .9, kopf + .9); g.lineTo(x + 1.35, kopf - 2.2); g.lineTo(x - 1.35, kopf - 2.2); g.closePath(); g.fill();
-      if (!an) { g.fillStyle = "rgba(255,255,255,.35)"; g.beginPath(); g.moveTo(x - .9, kopf - 1.9); g.lineTo(x - .3, kopf - 1.9); g.lineTo(x - .5, kopf + .6); g.closePath(); g.fill(); }
-      g.strokeStyle = "#26231f"; g.lineWidth = .22; g.beginPath(); g.moveTo(x - .9, kopf + .9); g.lineTo(x - 1.35, kopf - 2.2); g.moveTo(x + .9, kopf + .9); g.lineTo(x + 1.35, kopf - 2.2); g.moveTo(x, kopf + .9); g.lineTo(x, kopf - 2.2); g.stroke();
-      g.fillStyle = "#26231f"; g.beginPath(); g.moveTo(x - 1.75, kopf - 2.1); g.quadraticCurveTo(x, kopf - 4.1, x + 1.75, kopf - 2.1); g.closePath(); g.fill();
-      g.beginPath(); g.arc(x, kopf - 3.6, .32, 0, 7); g.fill();
+  /* FASSUNG 711 — Laternen an den Wegen (tagsüber aus, nachts brennen sie). */
+  var DM_LATERNEN = [[126, 108], [148, 99], [196, 88], [170, 124], [182, 146], [94, 126], [62, 114], [240, 94], [214, 148], [226, 172], [258, 178], [150, 160], [36, 116], [270, 106]];
+  function dmLaternen(g) {
+    DM_LATERNEN.forEach(function (p) {
+      var x = p[0], y = p[1];
+      g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.ellipse(x - 1.2, y + .3, 1.6, .5, 0, 0, 7); g.fill();
+      g.strokeStyle = "#2a2622"; g.lineWidth = .55; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - 6.4); g.lineTo(x + 1.2, y - 6.4); g.stroke();
+      g.fillStyle = DM.nachtJetzt ? "#ffe6a0" : "#c9c2a8"; g.fillRect(x + .7, y - 6.3, 1.1, 1.5);
+      g.fillStyle = "#2a2622"; g.fillRect(x + .55, y - 6.7, 1.4, .45);
     });
   }
-  /* Die Nacht: alles nachtblau (unten etwas heller), dann die Lichtkegel – dort das Tagbild, warm gefärbt. */
-  function dmNacht(g, dorf, lage, tagBild, orte, s) {
+  /* Die Nacht ins Bild gemalt: alles nachtblau (unten heller, damit man alles erkennt), dann Licht hinzu –
+     warme Fenster in jedem heilen Haus und Lichtkegel unter den Laternen. */
+  function dmNacht(g, dorf, lage) {
     g.save();
     g.globalCompositeOperation = "multiply";
-    var n = g.createLinearGradient(0, 0, 0, 200); n.addColorStop(0, "rgb(170,178,215)"); n.addColorStop(.22, "rgb(58,70,124)"); n.addColorStop(.5, "rgb(88,100,152)"); n.addColorStop(1, "rgb(120,130,178)");
+    var n = g.createLinearGradient(0, 0, 0, 200); n.addColorStop(0, "rgb(170,178,215)"); n.addColorStop(.22, "rgb(62,74,128)"); n.addColorStop(.5, "rgb(92,104,156)"); n.addColorStop(1, "rgb(128,138,184)");
     g.fillStyle = n; g.fillRect(0, 0, 320, 200);
-    g.restore();
-    if (tagBild) {
-      /* Die Maske der Lichtkegel: je Laterne ein Lichtfleck am Boden (flach, perspektivisch) und ein Kegel, der sich zum
-         Haus neigt und dessen Front bis unters Dach ausleuchtet. */
-      var mk = dmKachel(tagBild.width, tagBild.height), m = mk.getContext("2d");
-      m.setTransform(s, 0, 0, s, 0, 0); m.globalCompositeOperation = "lighter";
-      orte.forEach(function (o) {
-        if (!o.an) return;
-        var kx = o.x, ky = o.y - DM_LATERNE_HOCH, r;
-        /* Lichtfleck am Boden */
-        m.save(); m.translate(o.x + o.seite * 3, o.y + 1); m.scale(1, .42);
-        r = m.createRadialGradient(0, 0, 0, 0, 0, 17); r.addColorStop(0, "rgba(0,0,0,.95)"); r.addColorStop(.62, "rgba(0,0,0,.72)"); r.addColorStop(.82, "rgba(0,0,0,.28)"); r.addColorStop(1, "rgba(0,0,0,0)");
-        m.fillStyle = r; m.beginPath(); m.arc(0, 0, 17, 0, 7); m.fill(); m.restore();
-        /* Kegel zum Haus: vom Laternenkopf schräg nach unten, bis über die Hausfront */
-        var hx = kx + o.seite * Math.min(16, o.breite * .55), hy = o.y - Math.min(o.hoehe * .45, 12), rr = Math.max(14, Math.min(24, o.breite * .75));
-        r = m.createRadialGradient(kx + o.seite * 1.5, ky + 2, 0, hx, hy, rr); r.addColorStop(0, "rgba(0,0,0,.9)"); r.addColorStop(.6, "rgba(0,0,0,.55)"); r.addColorStop(1, "rgba(0,0,0,0)");
-        m.fillStyle = r; m.beginPath(); m.arc(hx, hy, rr, 0, 7); m.fill();
-      });
-      /* Das Tagbild, warm gefärbt wie Gaslicht, nur so weit die Maske reicht. */
-      var lk = dmKachel(tagBild.width, tagBild.height), l = lk.getContext("2d");
-      l.drawImage(tagBild, 0, 0);
-      l.globalCompositeOperation = "multiply"; l.fillStyle = "rgb(255,212,158)"; l.fillRect(0, 0, lk.width, lk.height);
-      l.globalCompositeOperation = "destination-in"; l.drawImage(mk, 0, 0);
-      g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = .92; g.drawImage(lk, 0, 0); g.restore();
-    }
-    /* Die Laterne selbst leuchtet, und im Dunst ist der Kegel als feiner Schein zu sehen. */
-    g.save(); g.globalCompositeOperation = "lighter";
-    orte.forEach(function (o) {
-      if (!o.an) return;
-      var kx = o.x, ky = o.y - DM_LATERNE_HOCH - .6, lg;
-      lg = g.createLinearGradient(kx, ky, kx, o.y + 2); lg.addColorStop(0, "rgba(255,196,110,.24)"); lg.addColorStop(.7, "rgba(255,180,90,.08)"); lg.addColorStop(1, "rgba(255,170,80,0)");
-      g.fillStyle = lg; g.beginPath(); g.moveTo(kx - 1.3, ky + 1); g.lineTo(kx + 1.3, ky + 1); g.lineTo(kx + 9 + o.seite * 5, o.y + 2); g.lineTo(kx - 9 + o.seite * 5, o.y + 2); g.closePath(); g.fill();
-      lg = g.createRadialGradient(kx, ky, 0, kx, ky, 6); lg.addColorStop(0, "rgba(255,196,96,.8)"); lg.addColorStop(.25, "rgba(255,176,80,.42)"); lg.addColorStop(1, "rgba(255,160,60,0)");
-      g.fillStyle = lg; g.beginPath(); g.arc(kx, ky, 6, 0, 7); g.fill();
+    g.globalCompositeOperation = "lighter";
+    var licht = function (x, y, r, a) { var lg = g.createRadialGradient(x, y, 0, x, y, r); lg.addColorStop(0, "rgba(255,200,110," + a + ")"); lg.addColorStop(.4, "rgba(255,160,60," + (a * .45).toFixed(3) + ")"); lg.addColorStop(1, "rgba(255,140,40,0)"); g.fillStyle = lg; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); };
+    DM_LATERNEN.forEach(function (p) { licht(p[0] + 1.2, p[1] - 5.6, 3.2, .9); licht(p[0], p[1] + .5, 7, .28); });
+    Object.keys(lage).forEach(function (k) {
+      var d = (dorf || {})[k]; if (!d || !(d.stufe > 0) || !(d.lp > 0)) return;
+      var q = lage[k], u = dmUmriss(k, d.stufe), cx = q[0] + (u[0] + u[2]) / 2, cy = q[1] + u[1] * .3;
+      licht(cx - 2, cy, 5, .55); licht(cx + 3, cy + 2, 4, .45); licht(cx, q[1] + 1, 9, .18);
     });
     g.restore();
   }
@@ -8877,15 +8745,9 @@
       if (st) punkte[k] = dmGebaeude(g, K, s, k, q[0], q[1], st, !(d.lp > 0));
       else dmBauplatz(g, K, s, q[0], q[1]);
     });
-    var orte = dmLaternenOrte(dorf, lage);
-    dmLaternen(g, orte);
+    dmLaternen(g);
     dmPinsel(leinwand, s);
-    if (nacht) {
-      var tag = null;
-      try { tag = dmKachel(leinwand.width, leinwand.height); tag.getContext("2d").drawImage(leinwand, 0, 0); } catch (e) { tag = null; }
-      dmNacht(g, dorf, lage, tag, orte, s);
-      return punkte;
-    }
+    if (nacht) { dmNacht(g, dorf, lage); return punkte; }
     /* Warmes Licht von rechts oben, leichte Vignette. */
     var li = g.createRadialGradient(290, 10, 10, 290, 10, 340); li.addColorStop(0, "rgba(255,236,190,.16)"); li.addColorStop(.5, "rgba(255,236,190,0)"); li.addColorStop(1, "rgba(30,20,40,.22)"); g.fillStyle = li; g.fillRect(0, 0, 320, 200);
     return punkte;
@@ -8909,20 +8771,11 @@
         var gx = x / st, i0 = gx | 0, fx = gx - i0, fx2 = fx * fx * (3 - 2 * fx), k = j0 * gw + i0;
         var dx = (nx[k] * (1 - fx2) + nx[k + 1] * fx2) * (1 - fy2) + (nx[k + gw] * (1 - fx2) + nx[k + gw + 1] * fx2) * fy2;
         var dy = (ny[k] * (1 - fx2) + ny[k + 1] * fx2) * (1 - fy2) + (ny[k + gw] * (1 - fx2) + ny[k + gw + 1] * fx2) * fy2;
-        /* FASSUNG 720 — XANDER (Funk 163): „du sollst nicht mehr so harte unterbrochene Pixel Linien haben sondern weiche
-           schöne Übergänge auch bei den Rahmen Rahmungen dort habe ich jetzt Stufungen im Dach". Die Ursache: hier wurde
-           für jeden Bildpunkt der NÄCHSTE Nachbar genommen – schräge Kanten (Dach, Ortgang) bekamen dadurch Treppen und
-           Lücken. Jetzt wird zwischen den vier Nachbarn weich gemischt (bilinear). */
-        var fxs = x + dx, fys = y + dy;
-        if (fxs < 0) fxs = 0; else if (fxs > W - 1.001) fxs = W - 1.001;
-        if (fys < 0) fys = 0; else if (fys > H - 1.001) fys = H - 1.001;
-        var ix = fxs | 0, iy = fys | 0, ax = fxs - ix, ay = fys - iy;
-        var q00 = (iy * W + ix) * 4, q10 = q00 + 4, q01 = q00 + W * 4, q11 = q01 + 4, p = (y * W + x) * 4;
-        var w00 = (1 - ax) * (1 - ay), w10 = ax * (1 - ay), w01 = (1 - ax) * ay, w11 = ax * ay;
-        neu[p] = a[q00] * w00 + a[q10] * w10 + a[q01] * w01 + a[q11] * w11;
-        neu[p + 1] = a[q00 + 1] * w00 + a[q10 + 1] * w10 + a[q01 + 1] * w01 + a[q11 + 1] * w11;
-        neu[p + 2] = a[q00 + 2] * w00 + a[q10 + 2] * w10 + a[q01 + 2] * w01 + a[q11 + 2] * w11;
-        neu[p + 3] = a[q00 + 3] * w00 + a[q10 + 3] * w10 + a[q01 + 3] * w01 + a[q11 + 3] * w11;
+        var sx = Math.round(x + dx), sy = Math.round(y + dy);
+        if (sx < 0) sx = 0; else if (sx >= W) sx = W - 1;
+        if (sy < 0) sy = 0; else if (sy >= H) sy = H - 1;
+        var q = (sy * W + sx) * 4, p = (y * W + x) * 4;
+        neu[p] = a[q]; neu[p + 1] = a[q + 1]; neu[p + 2] = a[q + 2]; neu[p + 3] = a[q + 3];
       }
     }
     bild.data.set(neu);
@@ -9365,8 +9218,8 @@
       + '<linearGradient id="spBzKessel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9edf1"/><stop offset=".35" stop-color="#b9c0c8"/><stop offset="1" stop-color="#6d747c"/></linearGradient>'
       + "</defs>"
       /* Die Angler in Menschengröße: kleiner als die Lok (Funk 165: „die Leute können nicht größer sein als die Lokomotive"). */
-      + '<g class="sp-see-angler" data-i="0" transform="translate(200.5 189.8) scale(.68)">' + seeAnglerSvg(0) + "</g>"
-      + '<g class="sp-see-angler" data-i="1" transform="translate(262.6 194.6) scale(-.68 .68)">' + seeAnglerSvg(1) + "</g>"
+      + '<g class="sp-see-angler" data-i="0" transform="translate(193.6 186.6) scale(.68)">' + seeAnglerSvg(0) + "</g>"
+      + '<g class="sp-see-angler" data-i="1" transform="translate(230.8 186.4) scale(-.68 .68)">' + seeAnglerSvg(1) + "</g>"
       + '<g class="sp-bz-zug" style="display:none">' + zug + "</g>"
       + '<g class="sp-bz-rauch"></g></svg>';
   }
@@ -9378,7 +9231,7 @@
         + "%;width:" + ((x1 - x0) / 3.2).toFixed(2) + "%;height:" + ((y1 - y0) / 2).toFixed(2) + '%" title="' + name + '"><small>' + dorfPin(k) + "<span>" + name + "</span></small></button>";
     }
     var hy = bahnAn(bahnBeiX(98)).y;
-    return knopf("bahnhof", "dorfwahl", 74, hy - 24, 122, hy - 2, "Bahnhof") + knopf("see", "dorfsee", 199, 182, 262, 200, "See");
+    return knopf("bahnhof", "dorfwahl", 74, hy - 24, 122, hy - 2, "Bahnhof") + knopf("see", "dorfsee", 194, 180, 231, 195, "See");
   }
 
   /* Die Maske auf die Zug-Ebene legen (Bäume und hohe Gebäude verdecken den Zug). */
@@ -9684,17 +9537,12 @@
   function vogelSvg() {
     return '<svg viewBox="0 0 24 12" aria-hidden="true"><path d="M1 5.5 C5 1.5 9 2 12 6.2 C15 2 19 1.5 23 5.5 C19 4 15.5 5 12 8.6 C8.5 5 5 4 1 5.5 Z" fill="#2b2a33"/><path d="M11 6.6 L12 9.8 L13 6.6 Z" fill="#2b2a33"/></svg>';
   }
-  /* FASSUNG 720 — XANDER (Funk 165): „die Vögel sind auch noch nicht da die zufällig am Himmel so durch die Nacht segeln"
-     (und Funk 160: „Vögel … auch in der Nacht"). Nachts ziehen seltener ein bis drei Vögel vorbei: langsamer, sie segeln
-     mehr als sie schlagen, und sie sind vom Mond hell angestrahlt (sonst sähe man sie vor dem schwarzen Himmel nicht).
-     Zu hören ist nur ein leiser Flügelschlag, wenn sie ins Bild kommen – kein Zwitschern in der Nacht. */
-  function dorfVoegel(nacht) {
+  function dorfVoegel() {
     var ort = schnellEl && schnellEl.querySelector(".sp-dw-voegel");
     if (!ort) return;
-    var W = ort.clientWidth || 320, H = ort.clientHeight || 220, links = Math.random() < .5;
-    var n = nacht ? 1 + Math.floor(Math.random() * 3) : 3 + Math.floor(Math.random() * 5), dauer = nacht ? 18 + Math.random() * 9 : 11 + Math.random() * 8;
+    var W = ort.clientWidth || 320, H = ort.clientHeight || 220, links = Math.random() < .5, n = 3 + Math.floor(Math.random() * 5), dauer = 11 + Math.random() * 8;
     var s = document.createElement("div");
-    s.className = "sp-dw-schwarm" + (links ? "" : " sp-dw-rueck") + (nacht ? " sp-dw-nacht" : "");
+    s.className = "sp-dw-schwarm" + (links ? "" : " sp-dw-rueck");
     s.style.top = Math.round(H * (.06 + Math.random() * .28)) + "px";
     s.style.setProperty("--weg", Math.round(W + 160) + "px");
     s.style.animationDuration = dauer.toFixed(1) + "s";
@@ -9703,13 +9551,13 @@
       var gr = 9 + Math.random() * 6;
       /* Jeder Vogel schlägt in seinem eigenen Takt und gleitet ab und zu. */
       h += '<i class="sp-dw-vogel" style="left:' + Math.round(i * 14 + Math.random() * 10) + "px;top:" + Math.round((i % 2 ? 1 : -1) * i * 4 + Math.random() * 6) + "px;width:" + gr.toFixed(1) + "px;animation-delay:-" + (Math.random() * 3).toFixed(1) + 's">'
-        + '<b style="animation-duration:' + (nacht ? .5 + Math.random() * .3 : .26 + Math.random() * .16).toFixed(2) + 's">' + vogelSvg() + "</b></i>";
+        + '<b style="animation-duration:' + (.26 + Math.random() * .16).toFixed(2) + 's">' + vogelSvg() + "</b></i>";
     }
     s.innerHTML = h;
     ort.appendChild(s);
     setTimeout(function () { s.remove(); }, dauer * 1000 + 200);
     /* Ton und Bild zusammen: das Zwitschern kommt, wenn der Schwarm ins Bild fliegt. */
-    setTimeout(function () { if (dorfOffen()) ton(nacht ? "fluegelschlag" : "zwitschern", nacht ? .07 : .16); }, nacht ? 2200 : 1400);
+    setTimeout(function () { if (dorfOffen()) ton("zwitschern", .16); }, 1400);
     DW.letzteVoegel = Math.round(performance.now());
   }
   /* Wind und Regen als Rauschen (Web Audio), nur solange das Dorf offen ist. */
@@ -9763,8 +9611,8 @@
     dorfAtmo(w);
     if (w.art === "gewitter") { if (!DW.blitz) DW.blitz = jetzt + 1500 + Math.random() * 3000; if (jetzt >= DW.blitz) { DW.blitz = jetzt + (5000 + Math.random() * 9000) / (.6 + w.stark * .6); dorfBlitz(); } }
     else DW.blitz = 0;
-    var vogelWetter = w.art === "klar" || w.art === "wolken" || (w.tag && (w.art === "nebel" || w.art === "niesel"));
-    if (vogelWetter) { if (!DW.voegel) DW.voegel = jetzt + 1200 + Math.random() * 2500; if (jetzt >= DW.voegel) { DW.voegel = jetzt + (w.tag ? 9000 + Math.random() * 14000 : 14000 + Math.random() * 20000); dorfVoegel(!w.tag); } }
+    var vogelWetter = w.tag && (w.art === "klar" || w.art === "wolken" || w.art === "nebel" || w.art === "niesel");
+    if (vogelWetter) { if (!DW.voegel) DW.voegel = jetzt + 1200 + Math.random() * 2500; if (jetzt >= DW.voegel) { DW.voegel = jetzt + 9000 + Math.random() * 14000; dorfVoegel(); } }
     else DW.voegel = 0;
     if (!DW.laut) DW.laut = jetzt + 3000 + Math.random() * 4000;
     if (jetzt >= DW.laut) { DW.laut = jetzt + (w.tag ? 6000 : 14000) + Math.random() * (w.tag ? 9000 : 16000); if (w.art !== "gewitter" && (w.art !== "regen" || Math.random() < .3)) dorfTreiben(w); }

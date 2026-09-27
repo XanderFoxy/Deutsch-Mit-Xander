@@ -242,11 +242,11 @@ const sage = (gut, was, zusatz) => {
   r = await pg.evaluate(() => { const lw = document.querySelector("canvas.sp-dl-mal"), g = lw.getContext("2d"), W = lw.width, H = lw.height;
     const px = (fx, fy) => { const d = g.getImageData(Math.round(fx * W), Math.round(fy * H), 1, 1).data; return [d[0], d[1], d[2]]; };
     const hell = (p) => p[0] + p[1] + p[2];
-    const himmel = px(.03, .03), wiese = px(.1, .8), later = px(137 / 320, (111 - 13 - .6) / 200); /* ab Fassung 720: die hohe Laterne am Weg vor dem Rathaus (137|111), ihr Kopf 13 Einheiten hoch */
+    const himmel = px(.03, .03), wiese = px(.1, .8), later = px((148 + 1.2) / 320, (99 - 5.6) / 200);
     return { sig: lw.dataset.gemalt, himmel, himmelHell: hell(himmel), wieseHell: hell(wiese), laterne: later, overlay: getComputedStyle(document.querySelector(".sp-dn")).backgroundImage }; });
   sage(/N@/.test(r.sig) && r.himmelHell < 45, "der Himmel ist nachtschwarz (nicht hellblau übertüncht)", JSON.stringify({ himmel: r.himmel, sig: r.sig }));
   sage(r.wieseHell > r.himmelHell * 3, "unten bleibt alles gut zu erkennen (Wiese deutlich heller als der Himmel)", JSON.stringify({ wiese: r.wieseHell, himmel: r.himmelHell }));
-  sage(r.laterne[0] > 180 && r.laterne[0] > r.laterne[2] + 40, "die Laternen brennen warm", JSON.stringify(r.laterne));
+  sage(r.laterne[0] > 180 && r.laterne[0] > r.laterne[2] + 40, "die Laternen an den Wegen brennen warm", JSON.stringify(r.laterne));
   sage(r.overlay === "none", "keine blaue Schicht mehr über dem ganzen Bild", r.overlay);
   await bild("nacht");
   sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
