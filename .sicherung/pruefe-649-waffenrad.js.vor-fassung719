@@ -145,21 +145,17 @@ const sage = (gut, was, zusatz) => {
     const alleTippbar = knoepfe.every((k) => { const b = k.getBoundingClientRect(); const o = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return o && (o === k || k.contains(o)); });
     const ueberlapp = knoepfe.some((k, i) => knoepfe.some((j, n) => { if (n <= i) return false; const a = k.getBoundingClientRect(), b = j.getBoundingClientRect(); return Math.hypot(a.left - b.left, a.top - b.top) < 30; }));
     const text = knoepfe.map((k) => k.textContent).join("|");
-    /* Ab Fassung 719 (Funk 165) ist es der kleine Doppelring: außen ein Feld je Bereich, innen die Zauber;
-       er schwebt mittig über der Leiste (seit 652), die Zahlen sind Schaden, Vorrat, Preis („30P“) oder Level („Lv4“). */
-    return { da: true, n: r.querySelectorAll(".sp-ring-feld").length, ueber: rr.bottom <= sr.top + 2, mittig: rr.left >= 0 && rr.right <= innerWidth && rr.top >= 0, alleTippbar, ueberlapp,
-             nurZahlen: knoepfe.every((k) => /^[×\dLvP]+$/.test(k.textContent.trim())), text };
+    return { da: true, n: knoepfe.length, ueber: rr.bottom <= sr.top + 2, mittig: rr.left >= 0 && rr.right <= innerWidth && rr.left <= sr.left && rr.right >= sr.right, alleTippbar, ueberlapp,
+             nurZahlen: knoepfe.every((k) => /^[×\d]+$/.test(k.textContent.trim())), text };
   });
-  sage(rad.da && rad.n >= 4, "Tipp auf die angelegte Waffe öffnet den Ring – ein Feld je Waffen-Bereich", rad.n + " Bereiche");
+  sage(rad.da && rad.n >= 10, "Tipp auf die angelegte Waffe öffnet das Rad mit allen eigenen Waffen", rad.n + " Waffen");
   sage(rad.ueber && rad.mittig, "das Rad steht über seinem Waffenplatz, ganz im Bild (am Rand wird es eingerückt)", JSON.stringify({ ueber: rad.ueber, mittig: rad.mittig }));
   sage(rad.alleTippbar && !rad.ueberlapp, "jede Waffe ist unter dem Finger erreichbar, nichts überlappt");
   sage(rad.nurZahlen, "kein Text – nur Bild und Zahl", rad.text);
 
   console.log("\nWÄHLEN, ABLEGEN, SCHLIESSEN\n");
   const vorher = await pg.evaluate(() => window.DMA_SPIEL.pruef.slots()[0]);
-  /* Das MG liegt im Bereich „Arcade“: erst den Bereich, dann in der Querleiste das MG. */
-  await tippe('.sp-rad .sp-ring-feld[data-b="arcade"]'); await tick(200);
-  if (await pg.evaluate(() => Boolean(document.querySelector('.sp-ring-leiste [data-w="mg"]')))) await tippe('.sp-ring-leiste [data-w="mg"]');
+  await tippe('.sp-rad .sp-rad-waffe[data-w="mg"]');
   const wahl = await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); return { slot: P.slots()[0], waffe: S.waffe, rad: Boolean(document.querySelector(".sp-rad")) }; });
   sage(wahl.slot === "mg" && wahl.waffe === "mg" && !wahl.rad, "Tipp auf das MG: liegt auf Waffe 1, ist angelegt, Rad zu", vorher + " → " + JSON.stringify(wahl));
   await tippe('.sp-schnell .sp-s-slot[data-n="0"]');

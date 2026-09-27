@@ -1028,24 +1028,12 @@
      Jetzt wechselt der zweite Tipp SOFORT; lang drücken aufs eigene Bild
      öffnet im Spiel das Zauberrad (app.js fragt vorher hier nach). */
   var eigenLangFrei = false;
-  /* FASSUNG 719 — XANDER (Funk 163): „dann möchte ich dass man bei dreimal teppen den tierpower aufruft je nachdem welche
-     gerade frei ist". Der zweite Tipp wechselt weiter SOFORT die Waffe; kommt gleich ein dritter, wird der Wechsel
-     zurückgenommen und die Tier-Fähigkeit ausgelöst. (4× Gesundheit und 5× Manatrank: Frage im Walkie, Nr. 287.) */
   function eigenTipp() {
-    var jetzt = Date.now(), nah = jetzt - (S.eigenZeit || 0) < 380;
-    S.eigenZahl = nah ? (S.eigenZahl || 1) + 1 : 1;
-    S.eigenZeit = jetzt;
-    if (S.eigenZahl === 1) return false;
-    if (S.eigenZahl === 3) {
-      if (S.eigenVorher != null) S.waffe = S.eigenVorher;
-      S.eigenVorher = null;
-      zeichnen(); schnellZeichnen(true);
-      faehigLos();
-      return true;
-    }
-    if (S.eigenZahl > 3) return true;
+    var jetzt = Date.now();
+    var zweiter = jetzt - (S.eigenZeit || 0) < 380;
+    S.eigenZeit = zweiter ? 0 : jetzt;
+    if (!zweiter) return false;
     var sl = slots(), neu = sl[(Math.max(-1, sl.indexOf(S.waffe)) + 1) % sl.length];
-    S.eigenVorher = S.waffe;
     S.waffe = neu; S.rad = null;
     ton("swoosh", 0.3);
     zahlZeigen(meineChatId(), null, WAFFEN[neu].name);
@@ -1078,12 +1066,7 @@
     /* FASSUNG 686 — XANDER: „wenn ich lange auf mein Profilbild gedrückt halte … wo ich erst mal die zwei
        Optionen habe Zauber und Waffen und dann dort noch mal wechseln kann also zwei Räder in sich".
        Erst die Wahl (Zauber | Waffen), dann das Rad; oben im Rad wechselt ⇄ ins andere. */
-    /* FASSUNG 719 — Funk 165: „mit einem langen gehaltenen Tipp anschaltet dass man es mit einem langen gehaltenen Tipp
-       wieder ausschalten kann der Sound dafür ist okay aber diese Türen sind nicht gut". Keine Türen mehr: der lange
-       Druck öffnet gleich den Doppelring, ein zweiter langer Druck schließt ihn – mit demselben Klang. */
-    if (ringOffen()) ringSchliessen();
-    else { S.langWahl = true; S.zrad = false; S.rad = null; S.ringBereich = ""; S.schnellMenue = false; S.trankAuf = false; }
-    S.radOffenSeit = Date.now();
+    S.langWahl = true; S.zrad = false; S.rad = null; S.schnellMenue = false; S.trankAuf = false; S.radOffenSeit = Date.now();
     zauberradTon();
     schnellZeichnen(true);
     return true;
@@ -1858,28 +1841,13 @@
      FASSUNG 710 — DIE LEISTE UNTEN SELBST ORDNEN (Funk 157)
      --------------------------------------------------------------- */
   var LEISTE_NAMEN = { taschen: "Taschen", heilen: "Heilen", trank: "Tränke", super: "Superkraft", faehig: "Tier-Fähigkeit", kampf: "Klassenkraft", zauber: "Zauber", makro: "Makroknopf", repar: "Reparieren" };
-  /* FASSUNG 719 — XANDER (Funk 163): „Du hast vergessen für die restlichen Sachen im Menü eine Anordnung festlegen zu
-     können die Superkraft von meinem Tier z.B die kann ich nicht irgendwo platzieren die möchte ich an dritter Stelle haben
-     ja standardmäßig auch … danach kommen die Tränke und die Gesundheit oder erst die Gesundheit dann die Tränke und dann
-     weitere Sachen wenn ich möchte per Pluszeichen hinzufügen". Neue Grundordnung: Controller, Waffen, Tier-Fähigkeit (3.),
-     Gesundheit, Tränke, dann der Rest. Jedes Feld außer den Waffen lässt sich mit − herausnehmen und mit + wieder
-     hinzufügen. Wer schon selbst geordnet hatte, behält seine Ordnung – nur die Tier-Fähigkeit rückt einmal an Platz 3. */
-  var LEISTE_GRUND = ["taschen", "faehig", "heilen", "trank", "super", "kampf", "zauber", "makro", "repar"];
+  var LEISTE_GRUND = ["taschen", "heilen", "trank", "super", "faehig", "kampf", "zauber", "makro", "repar"];
   function leisteReihe() {
     var r = null;
-    try { r = JSON.parse(localStorage.getItem("dma_spiel_leiste2") || "null"); } catch (e) {}
-    if (!Array.isArray(r)) {
-      try { r = JSON.parse(localStorage.getItem("dma_spiel_leiste") || "null"); } catch (e) {}
-      if (Array.isArray(r)) { r = r.filter(function (k) { return k !== "faehig"; }); r.splice(Math.max(0, r.indexOf("taschen")) + 1, 0, "faehig"); }
-    }
+    try { r = JSON.parse(localStorage.getItem("dma_spiel_leiste") || "null"); } catch (e) {}
     var gut = Array.isArray(r) ? r.filter(function (k, i) { return LEISTE_NAMEN[k] && r.indexOf(k) === i; }) : [];
     LEISTE_GRUND.forEach(function (k) { if (gut.indexOf(k) < 0) gut.push(k); });
     return gut;
-  }
-  function leisteAus() {
-    var a = null;
-    try { a = JSON.parse(localStorage.getItem("dma_spiel_leiste_aus") || "null"); } catch (e) {}
-    return Array.isArray(a) ? a.filter(function (k) { return LEISTE_NAMEN[k] && k !== "taschen"; }) : [];
   }
   function leisteBild(k) {
     var b = {
@@ -1896,17 +1864,13 @@
     return '<svg viewBox="0 0 20 20" aria-hidden="true">' + (b || "") + "</svg>";
   }
   function leisteOrdnenHtml() {
-    var aus = leisteAus(), r = leisteReihe().filter(function (k) { return aus.indexOf(k) < 0; }), w = r.indexOf(S.leisteWahl) >= 0 ? S.leisteWahl : r[0], i = r.indexOf(w);
-    return '<p class="sp-sm-klein" id="spLeisteOrdnen"><b>Leiste unten ordnen</b> – antippen, dann nach links oder rechts. Unten steht es sofort genauso.</p>'
+    var r = leisteReihe(), w = r.indexOf(S.leisteWahl) >= 0 ? S.leisteWahl : r[0], i = r.indexOf(w);
+    return '<p class="sp-sm-klein"><b>Leiste unten ordnen</b> – antippen, dann nach links oder rechts. Unten steht es sofort genauso.</p>'
       + '<div class="sp-taschen-ed sp-leiste-ed">' + r.map(function (k, n) {
-        return '<button type="button" class="sp-tasche' + (k === w ? " sp-an" : "") + '" data-s="leistewahl" data-k="' + k + '">' + leisteBild(k) + "<small>" + (n + 2) + ". " + LEISTE_NAMEN[k] + "</small></button>";
+        return '<button type="button" class="sp-tasche' + (k === w ? " sp-an" : "") + '" data-s="leistewahl" data-k="' + k + '">' + leisteBild(k) + "<small>" + (n + 1) + ". " + LEISTE_NAMEN[k] + "</small></button>";
       }).join("") + "</div>"
       + '<div class="sp-sm-liste sp-taschen-knoepfe"><button type="button" data-s="leisteschieb" data-r="-1"' + (i > 0 ? "" : " disabled") + ">◀ nach links</button>"
-      + '<button type="button" data-s="leisteschieb" data-r="1"' + (i < r.length - 1 ? "" : " disabled") + ">nach rechts ▶</button>"
-      + (w !== "taschen" ? '<button type="button" data-s="leisteaus" data-k="' + w + '">− ' + LEISTE_NAMEN[w] + " herausnehmen</button>" : "") + "</div>"
-      + (aus.length ? '<div class="sp-sm-liste sp-leiste-plus"><span class="sp-sm-klein">Weitere:</span>' + aus.map(function (k) {
-          return '<button type="button" data-s="leisteplus" data-k="' + k + '" title="' + LEISTE_NAMEN[k] + ' wieder in die Leiste">' + leisteBild(k) + "<b>+</b> " + LEISTE_NAMEN[k] + "</button>";
-        }).join("") + "</div>" : "")
+      + '<button type="button" data-s="leisteschieb" data-r="1"' + (i < r.length - 1 ? "" : " disabled") + ">nach rechts ▶</button></div>"
       + '<p class="sp-sm-klein">Was gerade nicht gebraucht wird (Tränke ohne Trank, Reparieren ohne Schaden), ist unten nicht zu sehen – sein Platz bleibt gemerkt.</p>';
   }
   function faehigKnopf() {
@@ -3651,11 +3615,7 @@
         + '" data-s="makro" title="' + MAKROS[S.makro] + ' (belegen: Menü → Mehr → Letzter Knopf)">' + makroSvg(S.makro) + "</button>");
       if (reparaturNoetig(ich)) feld.repar = ('<button type="button" class="sp-s-repar" data-s="reparieren" title="Alle Waffen reparieren (15 Punkte)">'
         + '<svg viewBox="0 0 20 20"><path d="M13.5 2.5 a4 4 0 0 0 -4.8 5.3 L2.8 13.7 a1.8 1.8 0 0 0 2.5 2.5 L11.2 10.3 a4 4 0 0 0 5.3 -4.8 L14 8 L12 6 Z" fill="#cfd6de" stroke="#5b636c" stroke-width="1"/></svg></button>');
-      var leisteWeg = leisteAus();
-      leisteReihe().forEach(function (k) { if (feld[k] && leisteWeg.indexOf(k) < 0) teile.push(feld[k]); });
-      /* FASSUNG 719 — „weitere Sachen wenn ich möchte per Pluszeichen hinzufügen": ist etwas herausgenommen, steht am Ende ein kleines +. */
-      if (leisteWeg.length) teile.push('<button type="button" class="sp-s-plus" data-s="leisteplusmenue" title="Weitere Felder in die Leiste holen">'
-        + '<svg viewBox="0 0 20 20"><path d="M10 4 V16 M4 10 H16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>');
+      leisteReihe().forEach(function (k) { if (feld[k]) teile.push(feld[k]); });
     }
     if (!toeneAn()) teile.push('<button type="button" class="sp-s-stumm" data-s="toenean" title="Töne sind aus – tippen schaltet sie ein">'
       + '<svg viewBox="0 0 20 20"><path d="M3 8 H6 L10 4.5 V15.5 L6 12 H3 Z" fill="#fff"/><path d="M13 7.5 L17.5 12.5 M17.5 7.5 L13 12.5" stroke="#ff8a80" stroke-width="2" stroke-linecap="round"/></svg></button>');
@@ -3671,8 +3631,9 @@
     if (fundKnopfHtml()) teile.push('<button type="button" class="sp-s-fund" data-s="fund" title="Zeigen, wo das Fundstück liegt">' + fundSvg() + "</button>");
     var burger = '<button type="button" class="sp-s-burger sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Spielmenü: Waffen, Heilen, Tiere, Mehr">'
       + '<svg viewBox="0 0 20 20"><path d="M4 6 H16 M4 10 H16 M4 14 H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
-    var html = burger + '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (ringOffen() && ich.mitspielen ? ringHtml() : "")
-      + (S.wwahl && ich.mitspielen ? werkzeugWahlHtml() : "") + (S.trankAuf && ich.mitspielen ? trankWahlHtml() : "");
+    var html = burger + '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (S.rad != null && ich.mitspielen ? radHtml(S.rad) : "")
+      + (S.zrad && ich.mitspielen ? zauberRadHtml() : "") + (S.wwahl && ich.mitspielen ? werkzeugWahlHtml() : "")
+      + (S.langWahl && ich.mitspielen ? langWahlHtml() : "") + (S.trankAuf && ich.mitspielen ? trankWahlHtml() : "");
     if (sofort !== true && schnellGesperrt()) { clearTimeout(S.schnellNach); S.schnellNach = setTimeout(schnellZeichnen, 380); return; }
     S.schnellDruck = 0;
     /* FASSUNG 692 — XANDER: „Das Dorf spinnt manchmal rum … wenn man aus dem
@@ -3760,16 +3721,6 @@
         lx = Math.max(4, Math.min(window.innerWidth - gr - 4, lx)); ty = Math.max(4, ty);
         voll.style.left = lx + "px"; voll.style.top = ty + "px";
       } catch (e) {}
-      /* FASSUNG 719 — die Querleiste darf breiter sein als der Ring, aber nie aus dem Bild. */
-      var ql = voll.querySelector(".sp-ring-leiste");
-      if (ql) {
-        try {
-          ql.style.transform = "";
-          var qr = ql.getBoundingClientRect(), qdx = 0;
-          if (qr.left < 4) qdx = 4 - qr.left; else if (qr.right > window.innerWidth - 4) qdx = window.innerWidth - 4 - qr.right;
-          if (qdx) ql.style.transform = "translateX(" + Math.round(qdx) + "px)";
-        } catch (e) {}
-      }
     }
     /* Das Rad steht über seinem Waffenplatz (das Zauberrad über dem Zauberstab). */
     var rad = schnellEl.querySelector(".sp-rad:not(.sp-rad-voll)"), slot = rad && schnellEl.querySelector(S.zrad ? ".sp-s-zauber" : '.sp-s-slot[data-n="' + S.rad + '"]');
@@ -3835,132 +3786,6 @@
       + ((S.ich || {}).mitspielen && ZAUBER_REIHE.some(function (a) { return ((S.ich || {}).level || 1) >= ZAUBER[a].level; }) ? radTauschHtml(M, "Zauber") : "")
       + knoepfe + '<button type="button" class="sp-rad-mitte" data-s="radab" style="left:' + (M - 20) + "px;top:" + (M - 20) + 'px" title="Waffe ablegen"><svg viewBox="0 0 20 20"><path d="M5 11 V7 a1.5 1.5 0 0 1 3 0 V10 M8 9 V5.5 a1.5 1.5 0 0 1 3 0 V9.5 M11 9 V6.5 a1.5 1.5 0 0 1 3 0 V11 C14 15 12 17 9.5 17 C7 17 5.5 15.5 5 13 Z" fill="#fff"/></svg></button></div>';
   }
-  /* FASSUNG 719 — DER KLEINE DOPPELRING (Funk 152 und 165)
-     XANDER (Funk 165): „der Ring muss deutlich kleiner sein ich habe auch
-     gesagt dass die zwei Ringe Zauber und und Waffen in einem Modul sind
-     aber nicht so mit diesen äh dass man erste die Tür öffnen muss und
-     dahin zu kommen außerdem möchte ich dass man es mit einem langen
-     gehaltenen Tipp anschaltet dass man es mit einem langen gehaltenen
-     Tipp wieder ausschalten kann der Sound dafür ist okay aber diese
-     Türen sind nicht gut ich möchte dass es zwei Ringe ineinander sind
-     bzw dass man das logisch so aus auswählen kann also man legt sich
-     sowieso für jeden Bereich eine Waffe fest oder zwei keine Ahnung und
-     auch in dem kleinen Kreis kann man dann auf den Bereich einer Waffe
-     klicken und dann andere Waffen aus diesen Bereich auszuwählen die
-     dann in einem waagerechten Lehrer über dieser Position zu finden sind"
-     – und: „was für die Minen und Bomben überlegen wie die in diesem
-     Kreis zu finden sind die sind ja nicht unter den generellen Waffen".
-     XANDER (Funk 152): „an dieser Stelle waagerecht den Kreis
-     durchschneiden so ein Menü aufgeht wo die Sachen von links nach
-     rechts über das jeweilige Symbol was gerade ausgewählt wurde war sich
-     entfalten".
-     So gebaut: EIN Modul, 212 px statt bis zu 360 px. Außen ein Feld je
-     Bereich mit der Waffe, die man für diesen Bereich festgelegt hat;
-     innen die Zauber; dazwischen der Mana-Bogen; in der Mitte „ablegen".
-     Ein Tipp auf einen Bereich legt dessen Waffe an und schneidet eine
-     waagerechte Leiste durch den Ring, genau auf der Höhe dieses Feldes:
-     darin von links nach rechts alle Waffen des Bereichs (die man noch
-     nicht hat, blass mit Preis). Minen, Falltüren und die
-     Kuckucksuhr-Bombe haben einen eigenen Bereich „Minen & Bomben". */
-  var RING_BEREICHE = [
-    ["standard", "Standard", "#3c6e9e", ["kartoffel", "zwille", "bogen", "laser"]],
-    ["lustig",   "Lustig",   "#c0772a", ["eierwerfer", "brezel", "sauerkraut", "bratwurst", "huehnerwerfer", "bierkrug", "doener", "spaetzle"]],
-    ["arcade",   "Arcade",   "#7a3fa0", ["lasersalve", "mg"]],
-    ["stark",    "Stark",    "#a33a3a", ["armbrust", "tomahawk", "zielfernrohr", "bazooka"]],
-    ["meister",  "Meister",  "#b8860b", ["weisswurst", "nudelholz"]],
-    ["energie",  "Energie",  "#1f8fbf", ["doppellaser", "streulaser", "plasmastrahl", "kugelblitz"]],
-    ["fallen",   "Minen & Bomben", "#6f7a3a", ["mine", "falltuer", "kuckucksuhr"]]
-  ];
-  var RING_FALLE = { mine: { name: "Mine", preis: 30 }, falltuer: { name: "Falltür", preis: 25 } };
-  function ringFalleSvg(art) {
-    if (art === "mine") return '<svg viewBox="0 0 24 24"><path d="M12 3 V6 M12 18 V21 M3 12 H6 M18 12 H21 M5.6 5.6 L7.8 7.8 M16.2 16.2 L18.4 18.4 M5.6 18.4 L7.8 16.2 M16.2 7.8 L18.4 5.6" stroke="#aab3bd" stroke-width="2" stroke-linecap="round"/>'
-      + '<circle cx="12" cy="12" r="6.5" fill="#3c4148" stroke="#1e2226" stroke-width="1.2"/><circle cx="12" cy="12" r="2" fill="#e2403a"/><path d="M9 9.5 A4 4 0 0 1 12 8" stroke="#8a939c" stroke-width="1.1" fill="none" stroke-linecap="round"/></svg>';
-    return '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.6" fill="#8a5a2e" stroke="#4d3016" stroke-width="1.2"/><path d="M9 5 V19 M15 5 V19" stroke="#4d3016" stroke-width="1"/>'
-      + '<path d="M4.5 12 H19.5" stroke="#1d1208" stroke-width="1.6"/><circle cx="17.5" cy="9" r="1.1" fill="#d6c08a"/><circle cx="6.5" cy="15" r="1.1" fill="#d6c08a"/></svg>';
-  }
-  function ringDingSvg(d) { return RING_FALLE[d] ? ringFalleSvg(d) : geschossSvg(d, S.laserfarbe); }
-  function ringHat(ich, d) {
-    if (RING_FALLE[d]) return (ich.punkte || 0) >= RING_FALLE[d].preis;
-    return Boolean(WAFFEN[d] && ((ich.waffen || []).indexOf(d) >= 0 || (WAFFEN[d].vorrat && vorrat(ich, d) > 0)));
-  }
-  function ringWahlLesen() {
-    if (!S.ringWahl) { try { S.ringWahl = JSON.parse(localStorage.getItem("dma_spiel_ringwahl") || "null") || {}; } catch (e) { S.ringWahl = {}; } }
-    return S.ringWahl;
-  }
-  /* Die Waffe, die für einen Bereich festgelegt ist: die gewählte, sonst die angelegte, sonst die stärkste, die man hat. */
-  function ringBereichDing(ich, b) {
-    var wahl = ringWahlLesen()[b[0]], hat = b[3].filter(function (d) { return ringHat(ich, d); });
-    if (wahl && hat.indexOf(wahl) >= 0) return wahl;
-    if (hat.indexOf(S.waffe) >= 0) return S.waffe;
-    if (b[0] === "fallen") return hat.indexOf("kuckucksuhr") >= 0 ? "kuckucksuhr" : hat[0] || "";
-    return hat.sort(function (x, y) { return (WAFFEN[y].schaden || 0) - (WAFFEN[x].schaden || 0); })[0] || "";
-  }
-  function ringBereichVon(d) {
-    for (var i = 0; i < RING_BEREICHE.length; i++) if (RING_BEREICHE[i][3].indexOf(d) >= 0) return RING_BEREICHE[i];
-    return null;
-  }
-  function ringOffen() { return S.rad != null || S.zrad || S.langWahl; }
-  function ringHtml() {
-    var ich = S.ich || {}, B = 216, M = B / 2, RO = 87, RI = 50, RM = 68;
-    var bereiche = RING_BEREICHE.filter(function (b) { return b[3].some(function (d) { return ringHat(ich, d); }); });
-    var n = Math.max(1, bereiche.length), svg = "", aussen = "", innen = "", leiste = "";
-    var p = function (w, r) { return [M + Math.cos(w) * r, M + Math.sin(w) * r]; };
-    var bogen = function (r, a0, a1) { var q0 = p(a0, r), q1 = p(a1, r); return "M" + q0[0].toFixed(1) + " " + q0[1].toFixed(1) + " A" + r + " " + r + " 0 " + (a1 - a0 > Math.PI ? 1 : 0) + " 1 " + q1[0].toFixed(1) + " " + q1[1].toFixed(1); };
-    bereiche.forEach(function (b, i) {
-      /* Um einen halben Bereich gedreht: oben bleibt eine Lücke für Torte und Manatrank. */
-      var mitte = -Math.PI / 2 + (i + 0.5) * 2 * Math.PI / n, halb = Math.PI / n - 0.07;
-      /* Jeder Bereich hat seinen farbigen Bogen – so sieht man die Einteilung ohne Text. */
-      svg += '<path class="sp-ring-bereich" d="' + bogen(RO, mitte - halb, mitte + halb) + '" stroke="' + b[2] + '"/>';
-      var d = ringBereichDing(ich, b), q = p(mitte, RO), an = d && d === S.waffe, offen = S.ringBereich === b[0];
-      var mehr = b[3].filter(function (x) { return ringHat(ich, x); }).length;
-      var zahl = RING_FALLE[d] ? RING_FALLE[d].preis + "P" : WAFFEN[d] && WAFFEN[d].vorrat ? "×" + vorrat(ich, d) : WAFFEN[d] ? WAFFEN[d].schaden : "";
-      aussen += '<button type="button" class="sp-rad-waffe sp-ring-feld' + (an ? " sp-an sp-angelegt" : "") + (offen ? " sp-ring-auf" : "") + (haltVon(ich, d) === 0 ? " sp-stumpf" : "")
-        + '" data-s="ringbereich" data-b="' + b[0] + '" data-w="' + d + '" style="left:' + (q[0] - 18).toFixed(0) + "px;top:" + (q[1] - 18).toFixed(0) + "px;--klasse:" + b[2]
-        + '" title="' + esc(b[1] + ": " + (RING_FALLE[d] ? RING_FALLE[d].name : WAFFEN[d] ? WAFFEN[d].name : "")) + '">' + ringDingSvg(d) + "<small>" + zahl + "</small>"
-        + (mehr > 1 ? '<i class="sp-ring-mehr">' + mehr + "</i>" : "")
-        /* FASSUNG 655 blieb: die angelegte Waffe trägt Goldring und Haken. */
-        + (an ? '<i class="sp-haken"><svg viewBox="0 0 10 10"><path d="M2 5.2 L4.2 7.4 L8 2.8" fill="none" stroke="#1d2330" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></i>' : "") + "</button>";
-      if (offen) {
-        /* Die Querleiste schneidet den Ring waagerecht auf der Höhe dieses Feldes. */
-        var alle = b[3].filter(function (x) { return RING_FALLE[x] || (WAFFEN[x] && (!WAFFEN[x].ab || (ich.level || 1) >= WAFFEN[x].ab || ringHat(ich, x))); });
-        var breite = alle.length * 40 + 10;
-        leiste = '<div class="sp-ring-leiste" style="top:' + (q[1] - 27).toFixed(0) + "px;left:" + (M - breite / 2).toFixed(0) + "px;width:" + breite + "px;--klasse:" + b[2] + '">'
-          + '<button type="button" class="sp-ring-leiste-name" data-s="ringleistezu" title="Leiste zuklappen">' + esc(b[1]) + " ✕</button>"
-          + alle.map(function (x) {
-              var hat = ringHat(ich, x), preis = RING_FALLE[x] ? RING_FALLE[x].preis : (WAFFEN[x] || {}).preis || 0;
-              return '<button type="button" class="sp-ring-wahl' + (x === d ? " sp-an" : "") + (hat ? "" : " sp-ring-fehlt") + '" data-s="ringwahl" data-b="' + b[0] + '" data-w="' + x + '" title="'
-                + esc((RING_FALLE[x] ? RING_FALLE[x].name + " legen" : WAFFEN[x].name) + (hat ? "" : " – im Laden für " + preis + " P")) + '">' + ringDingSvg(x)
-                + "<small>" + (hat ? (RING_FALLE[x] ? preis + "P" : WAFFEN[x].vorrat ? "×" + vorrat(ich, x) : WAFFEN[x].schaden) : preis + "P") + "</small></button>";
-            }).join("") + "</div>";
-      }
-    });
-    /* Innen die Zauber (gesperrte grau mit „Lv"), dazwischen das Mana als Bogen. */
-    ZAUBER_REIHE.forEach(function (a, i) {
-      var z = ZAUBER[a], w = -Math.PI / 2 + i * 2 * Math.PI / ZAUBER_REIHE.length, q = p(w, RI);
-      var zu = (ich.level || 1) < z.level, arm = !zu && (ich.mana || 0) < z.mana;
-      innen += '<button type="button" class="sp-rad-waffe sp-rad-zauber sp-ring-zauber' + (S.zauber === a ? " sp-an" : "") + (zu ? " sp-zu" : arm ? " sp-stumpf" : "") + '" data-s="zauberwahl" data-z="' + a
-        + '" style="left:' + (q[0] - 13).toFixed(0) + "px;top:" + (q[1] - 13).toFixed(0) + "px;--klasse:" + z.farbe + '" title="' + esc(z.name + " · " + z.mana + " Mana · ab Level " + z.level) + '">'
-        + zauberSvg(a) + "<small" + (zu ? "" : ' class="sp-zr-kosten"') + ">" + (zu ? "Lv" + z.level : z.mana) + "</small></button>";
-    });
-    var mana = Math.min(1, (ich.mana || 0) / (ich.mana_max || 100));
-    var manaKnopf = manaKnoepfeHtml(ich, M);
-    svg += '<circle class="sp-ring-mana-spur" cx="' + M + '" cy="' + M + '" r="' + RM + '"/>'
-      + (mana > 0 ? '<path class="sp-ring-mana" d="' + bogen(RM, -Math.PI / 2, -Math.PI / 2 + Math.max(0.05, mana * 2 * Math.PI - 0.001)) + '"/>' : "");
-    /* Über den Zauberstab geöffnet, heißt der Ring auch „Zauberrad" (sp-zauberrad) – derselbe Ring. */
-    return '<div class="sp-rad sp-rad-voll sp-ring' + (S.zrad ? " sp-zauberrad" : "") + '" style="width:' + B + "px;height:" + B + 'px">'
-      + '<svg class="sp-rad-sektoren" viewBox="0 0 ' + B + " " + B + '"><circle cx="' + M + '" cy="' + M + '" r="' + (M - 2) + '" class="sp-rad-scheibe"/>' + svg
-      /* FASSUNG 654 blieb: über der Hand der Zauberer-Rang. */
-      + '<text class="sp-ring-rang" x="' + M + '" y="' + (M - 23) + '" fill="#c9b8ff">' + zauberRang(ich).name + "</text></svg>"
-      + aussen + innen
-      + '<button type="button" class="sp-rad-mitte sp-ring-mitte" data-s="ringab" style="left:' + (M - 15) + "px;top:" + (M - 15) + 'px" title="Waffe und Zauber ablegen">'
-      + '<svg viewBox="0 0 20 20"><path d="M5 11 V7 a1.5 1.5 0 0 1 3 0 V10 M8 9 V5.5 a1.5 1.5 0 0 1 3 0 V9.5 M11 9 V6.5 a1.5 1.5 0 0 1 3 0 V11 C14 15 12 17 9.5 17 C7 17 5.5 15.5 5 13 Z" fill="#fff"/></svg></button>'
-      /* FASSUNG 678 blieb: „Zahl = Preis" – die Zahl am Zauber ist sein Mana-Preis, kein Vorrat. */
-      + '<span class="sp-ring-mana-zahl sp-zr-mana" style="left:' + (M - 30) + "px;top:" + (M + 16) + 'px">Mana ' + (ich.mana || 0) + '<br><i class="sp-zr-erkl">Zahl = Preis</i></span>'
-      /* FASSUNG 686 blieb: „Mana mit drin, dass ich Torten Shortcut habe" – Torte, Kuchen und Manatrank oben am Ring. */
-      + (/sp-zr-mana-knoepfe/.test(manaKnopf) ? manaKnopf.replace("top:" + (M + 38) + "px", "top:-30px").replace("sp-zr-mana-knoepfe", "sp-zr-mana-knoepfe sp-ring-mana-knoepfe") : "")
-      + leiste + "</div>";
-  }
-  function ringSchliessen() { S.rad = null; S.zrad = false; S.langWahl = false; S.ringBereich = ""; }
   /* FASSUNG 654 — das Zauberrad als volles Rad wie das Waffenrad: neun
      Zauber im Uhrzeigersinn nach Level, jeder in seiner Farbe; gesperrte
      zeigen „Lv N", in der Mitte „weglegen", darüber der Zauberer-Rang. */
@@ -4167,7 +3992,7 @@
           + '<div class="sp-sm-laut sp-sm-zeigen sp-sm-makro"><span>Letzter Knopf</span>' + Object.keys(MAKROS).map(function (m) {
               return '<button type="button" data-s="makrowahl" data-m="' + m + '" class="' + (S.makro === m ? "sp-an" : "") + '">' + MAKROS[m] + "</button>"; }).join("") + "</div>"; })()
         + leisteOrdnenHtml()
-        + '<p class="sp-sm-klein">Aufs eigene Bild: <b>2× tippen</b> wechselt die Waffe, <b>lang drücken</b>: der Ring – außen die Waffen je Bereich, innen die Zauber; nochmal lang drücken schließt ihn.</p>'
+        + '<p class="sp-sm-klein">Aufs eigene Bild: <b>2× tippen</b> wechselt die Waffe, <b>lang drücken</b>: Zauber oder Waffen (im Rad mit ⇄ wechseln).</p>'
         + '<div class="sp-sm-liste">'
         + '<button type="button" data-s="sparring" class="' + (S.sparring ? "sp-an" : "") + '">Sparringspartner ' + (S.sparring ? "weg" : "aufstellen") + "</button>"
         + (S.sparring ? '<button type="button" data-s="gegenfeuer" class="' + (S.duell && S.duell.uebung ? "sp-an" : "") + '">' + (S.duell && S.duell.uebung ? "Er schießt zurück – aus" : "Er schießt zurück – an") + "</button>" : "")
@@ -4233,35 +4058,6 @@
       ton("swoosh", 0.3);
     } else if (s === "radab") {
       S.waffe = ""; S.rad = null;
-    } else if (s === "ringleistezu") {
-      S.ringBereich = ""; S.radOffenSeit = Date.now();
-    } else if (s === "ringab") {
-      S.waffe = ""; S.zauber = ""; ringSchliessen(); ton("swoosh", 0.2);
-    } else if (s === "ringbereich" || s === "ringwahl") {
-      /* FASSUNG 719 — Tipp auf einen Bereich: dessen Waffe anlegen und die Querleiste mit den anderen Waffen des
-         Bereichs auf- oder zuklappen. Tipp in der Querleiste: diese Waffe für den Bereich festlegen und anlegen. */
-      var rb = k.dataset.b, rw = k.dataset.w, rich = S.ich || {};
-      if (s === "ringwahl" && !ringHat(rich, rw)) {
-        hinweis(RING_FALLE[rw] ? "💣 " + RING_FALLE[rw].name + " legen kostet " + RING_FALLE[rw].preis + " Punkte – du hast " + (rich.punkte || 0) + "."
-          : "🛒 " + WAFFEN[rw].name + " gibt es im Laden für " + (WAFFEN[rw].preis || 0) + " Punkte" + (WAFFEN[rw].ab ? " (ab Level " + WAFFEN[rw].ab + ")" : "") + ".");
-        schnellZeichnen(true); return;
-      }
-      if (s === "ringwahl") { ringWahlLesen()[rb] = rw; try { localStorage.setItem("dma_spiel_ringwahl", JSON.stringify(S.ringWahl)); } catch (e) {} }
-      if (RING_FALLE[rw]) {
-        S.legen = rw; S.waffe = ""; document.body.classList.add("sp-legen"); ringSchliessen();
-        ton("holzklopf", 0.25);
-        hinweis((rw === "mine" ? "💣 Mine" : "🕳️ Falltür") + ": tippe jetzt auf den Platz, auf den sie soll (" + RING_FALLE[rw].preis + " Punkte).");
-      } else if (rw) {
-        if (S.graben) grabenUmschalten(false);
-        S.waffe = rw; S.zauber = ""; S.legen = ""; document.body.classList.remove("sp-legen");
-        if (S.rad != null && S.rad >= 0 && slots()[S.rad] !== rw && eigeneWaffen().indexOf(rw) >= 0) slotSetzen(S.rad, rw);
-        /* Hat der Bereich nur diese eine Waffe, gibt es nichts zu tauschen: anlegen und zu. */
-        var rbDef = ringBereichVon(rw), rMehr = rbDef ? rbDef[3].filter(function (x) { return ringHat(rich, x) || (WAFFEN[x] && !(WAFFEN[x].ab > (rich.level || 1))); }).length : 1;
-        if (s === "ringwahl" || rMehr < 2) ringSchliessen(); else S.ringBereich = S.ringBereich === rb ? "" : rb;
-        S.radOffenSeit = Date.now();
-        ton("swoosh", 0.3);
-        hinweis("🎯 " + WAFFEN[rw].name + " angelegt – tippe auf ein Gesicht.");
-      }
     } else if (s === "laut") {
       var ln = Number(k.dataset.n) || 0;
       lautSetzen(ln);
@@ -4500,13 +4296,13 @@
       var zg = zauberGesperrt(k.dataset.z);
       if (zg) { hinweis("✨ " + zg); }
       else {
-        S.zauber = k.dataset.z; ringSchliessen(); S.schnellMenue = false; S.kampfZiel = false; S.faehigZiel = false;
+        S.zauber = k.dataset.z; S.zrad = false; S.schnellMenue = false; S.kampfZiel = false; S.faehigZiel = false;
         if (S.graben) grabenUmschalten(false);
         ton("zauberpuff", 0.3);
         hinweis("✨ " + ZAUBER[S.zauber].name + " bereit (" + ZAUBER[S.zauber].mana + " Mana) – tippe auf ein Gesicht.");
       }
     } else if (s === "zauberab") {
-      S.zauber = ""; ringSchliessen();
+      S.zauber = ""; S.zrad = false;
     } else if (s === "klappe") {
       /* ☰ bei offener Dorf-Ansicht: gleich ins Hauptmenü wechseln. */
       if (S.blick) { S.blick = null; S.schnellMenue = true; } else S.schnellMenue = !S.schnellMenue;
@@ -4537,24 +4333,12 @@
       return;
     } else if (s === "leistewahl") {
       S.leisteWahl = k.dataset.k; ton("holzklopf", 0.2);
-    } else if (s === "leisteaus" || s === "leisteplus") {
-      var la = leisteAus().filter(function (x) { return x !== k.dataset.k; });
-      if (s === "leisteaus") la.push(k.dataset.k);
-      try { localStorage.setItem("dma_spiel_leiste_aus", JSON.stringify(la)); } catch (e) {}
-      if (s === "leisteplus") S.leisteWahl = k.dataset.k;
-      ton(s === "leisteplus" ? "bling" : "swoosh", 0.2);
-      hinweis(s === "leisteplus" ? "➕ " + LEISTE_NAMEN[k.dataset.k] + " steht wieder in der Leiste." : "➖ " + LEISTE_NAMEN[k.dataset.k] + " ist aus der Leiste genommen – mit + holst du es zurück.");
-    } else if (s === "leisteplusmenue") {
-      S.schnellMenue = true; S.blick = null; S.schnellReiter = "mehr"; ringSchliessen(); S.radOffenSeit = Date.now();
-      schnellZeichnen(true);
-      setTimeout(function () { try { var o = document.getElementById("spLeisteOrdnen"); if (o) o.scrollIntoView({ block: "center" }); } catch (e) {} }, 60);
-      return;
     } else if (s === "leisteschieb") {
       /* FASSUNG 710 — das gewählte Feld der Leiste nach links oder rechts; unten sofort genauso. */
       var lr = leisteReihe(), lw = lr.indexOf(S.leisteWahl) >= 0 ? S.leisteWahl : lr[0], lv = lr.indexOf(lw), ln = lv + (Number(k.dataset.r) || 0);
       if (ln >= 0 && ln < lr.length) {
         lr[lv] = lr[ln]; lr[ln] = lw; S.leisteWahl = lw;
-        try { localStorage.setItem("dma_spiel_leiste2", JSON.stringify(lr)); } catch (e) {}
+        try { localStorage.setItem("dma_spiel_leiste", JSON.stringify(lr)); } catch (e) {}
         ton("swoosh", 0.2);
       }
     } else if (s === "slotschieb") {
@@ -4652,7 +4436,7 @@
     if (schnellEl.contains(ev.target)) return;
     /* Der Klick beim Loslassen nach dem langen Druck schließt das eben geöffnete Rad nicht gleich wieder. */
     if (Date.now() - (S.radOffenSeit || 0) < 700) return;
-    S.schnellMenue = false; S.rad = null; S.zrad = false; S.wwahl = false; S.langWahl = false; S.trankAuf = false; S.ringBereich = ""; schnellZeichnen();
+    S.schnellMenue = false; S.rad = null; S.zrad = false; S.wwahl = false; S.langWahl = false; S.trankAuf = false; schnellZeichnen();
   }, true);
   function tierWechseln(art) {
     rpc("spiel_tier_wechseln", { p_art: art }).then(function (r) {

@@ -269,24 +269,33 @@ const sage = (gut, was, zusatz) => {
   const tr1 = await pg.evaluate(() => ({ ruf: (window.__rufe.find((r) => r.name === "spiel_trinken") || {}).args, zu: !document.querySelector(".sp-trankwahl") }));
   sage(tr1.ruf && tr1.ruf.p_trank === "mana" && tr1.zu, "Manatrank antippen: getrunken (Server-Ruf), die Auswahl schließt", JSON.stringify(tr1));
 
-  console.log("\nLANGER DRUCK: DER DOPPELRING (ab Fassung 719)\n");
-  /* Bis 718 kam erst die Wahl „Zauber | Waffen“. XANDER (Funk 165): „diese Türen sind nicht gut ich möchte dass es
-     zwei Ringe ineinander sind" – der lange Druck öffnet jetzt gleich den Ring, ein zweiter schließt ihn. */
+  console.log("\nLANGER DRUCK: ZAUBER ODER WAFFEN\n");
   await pg.evaluate(() => { window.DMA_SPIEL.langAufEigen(null); });
   await tick(350);
-  const lw = await pg.evaluate(() => { const w = document.querySelector(".sp-ring"); const r = w && w.getBoundingClientRect();
-    return { da: Boolean(w), tuer: Boolean(document.querySelector(".sp-langwahl")), zauber: w ? w.querySelectorAll(".sp-ring-zauber").length : 0, waffen: w ? w.querySelectorAll(".sp-ring-feld").length : 0,
-      torte: Boolean(w && w.querySelector('[data-s="iss"][data-d="torte"]')), trank: Boolean(w && w.querySelector('[data-s="trinken"][data-t="mana"]')), bogen: Boolean(w && w.querySelector(".sp-ring-mana")),
-      imBild: r ? r.left >= 0 && r.right <= innerWidth && r.top >= 0 : false }; });
+  const lw = await pg.evaluate(() => { const w = document.querySelector(".sp-langwahl"); const r = w && w.getBoundingClientRect();
+    return { da: Boolean(w), zauber: Boolean(w && w.querySelector('[data-s="langzauber"]')), waffen: Boolean(w && w.querySelector('[data-s="langwaffen"]')),
+      imBild: r ? r.left >= 0 && r.right <= innerWidth && r.top >= 0 : false, radOffen: Boolean(document.querySelector(".sp-zauberrad")) }; });
   if (B) await pg.screenshot({ path: B + "-lang.png" });
-  sage(lw.da && !lw.tuer && lw.zauber === 9 && lw.waffen >= 3 && lw.imBild, "langer Druck aufs eigene Bild: gleich der Ring – Waffen außen, Zauber innen, keine Tür davor", JSON.stringify(lw));
-  sage(lw.torte && lw.trank && lw.bogen, "im Ring: Mana-Bogen, Torte und Manatrank zum sofortigen Auffüllen", JSON.stringify(lw));
-  await pg.waitForTimeout(1000);
-  await pg.evaluate(() => { window.DMA_SPIEL.langAufEigen(null); });
-  await tick(350);
-  const zu2 = await pg.evaluate(() => Boolean(document.querySelector(".sp-ring")));
-  sage(!zu2, "ein zweiter langer Druck schließt den Ring", String(zu2));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.zrad = false; S.rad = null; S.langWahl = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  sage(lw.da && lw.zauber && lw.waffen && lw.imBild && !lw.radOffen, "langer Druck aufs eigene Bild: erst die Wahl „Zauber | Waffen“", JSON.stringify(lw));
+  await pg.waitForTimeout(700);
+  await tippe('.sp-langwahl [data-s="langzauber"]'); await tick(350);
+  const zr = await pg.evaluate(() => { const z = document.querySelector(".sp-zauberrad"); const r = z && z.getBoundingClientRect();
+    return { da: Boolean(z), tausch: z ? (z.querySelector('[data-s="radtausch"]') || {}).textContent : "", torte: Boolean(z && z.querySelector('[data-s="iss"][data-d="torte"]')),
+      trank: Boolean(z && z.querySelector('[data-s="trinken"][data-t="mana"]')), bogen: Boolean(z && z.querySelector(".sp-zr-manabogen")), imBild: r ? r.left >= 0 && r.right <= innerWidth && r.top >= 0 : false }; });
+  if (B) await pg.screenshot({ path: B + "-zauberrad.png" });
+  sage(zr.da && /Waffen/.test(zr.tausch) && zr.imBild, "„Zauber“: das Zauberrad, oben „⇄ Waffen“", JSON.stringify(zr));
+  sage(zr.torte && zr.trank && zr.bogen, "im Zauberrad: Mana-Bogen, Torte und Manatrank zum sofortigen Auffüllen", JSON.stringify(zr));
+  await pg.waitForTimeout(700);
+  await tippe('.sp-zauberrad [data-s="radtausch"]'); await tick(350);
+  const wr = await pg.evaluate(() => { const w = document.querySelector(".sp-rad-voll:not(.sp-zauberrad):not(.sp-langwahl)");
+    return { da: Boolean(w), waffen: w ? w.querySelectorAll('[data-s="radwahl"]').length : 0, tausch: w ? (w.querySelector('[data-s="radtausch"]') || {}).textContent : "", zauber: Boolean(document.querySelector(".sp-zauberrad")) }; });
+  if (B) await pg.screenshot({ path: B + "-waffenrad.png" });
+  sage(wr.da && wr.waffen >= 5 && /Zauber/.test(wr.tausch) && !wr.zauber, "⇄ Waffen: ins Waffenrad, dort „⇄ Zauber“ zurück", JSON.stringify(wr));
+  await pg.waitForTimeout(700);
+  await tippe('.sp-rad-voll [data-s="radtausch"]'); await tick(350);
+  const zr2 = await pg.evaluate(() => Boolean(document.querySelector(".sp-zauberrad")));
+  sage(zr2, "und wieder zurück ins Zauberrad", String(zr2));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.zrad = false; S.rad = null; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
 
   console.log("\nRÜSTUNG UNTER LEVEL UND MANA\n");
   const ring = await pg.evaluate(() => { const h = window.DMA_SPIEL.pruef.ringSvg ? window.DMA_SPIEL.pruef.ringSvg(0.8, 0, "#3aa655", 0.6, { ladung: 40, helm: 2, brust: 3, level: 12 }) : "";

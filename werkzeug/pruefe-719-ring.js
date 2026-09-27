@@ -1,17 +1,16 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 710: DIE LEISTE UNTEN (Funk 157, Funk 152)
+   SONDE — FASSUNG 719: DER KLEINE DOPPELRING
    ---------------------------------------------------------------------
-   XANDER (Funk 157): „Zwischen meiner superkraftanzeige … und in meinem
-   Dorf ist ein leeres Feld das keine Funktion hat … die Anweisung der
-   Plätze wie ich das in meine persönlichen Reihenfolge haben möchte soll
-   dort bearbeitet werden können und unten soll sie genauso auftauchen".
-   Funk 152: die Tier-Spezialfähigkeit „stellt sich gar nicht ein … man
-   weiß gar nicht ob man das jetzt ausgewählt hat".
-   Geprüft (Android, 360 px, echte Finger): mit Xanders Stand (Regenbogen-
-   drache ausgerüstet) ist das Feld kein leeres mehr – das Tier ist zu
-   sehen, ein Tipp macht die Fähigkeit bereit; im Menü „Mehr" lässt sich
-   die Leiste ordnen, unten steht sie genauso, auf dem Gerät gemerkt.
+   XANDER (Funk 165): „der Ring muss deutlich kleiner sein … dass die
+   zwei Ringe Zauber und und Waffen in einem Modul sind aber nicht so mit
+   diesen äh dass man erste die Tür öffnen muss … mit einem langen
+   gehaltenen Tipp anschaltet dass man es mit einem langen gehaltenen
+   Tipp wieder ausschalten kann … man legt sich sowieso für jeden Bereich
+   eine Waffe fest … auf den Bereich einer Waffe klicken und dann andere
+   Waffen aus diesen Bereich auszuwählen die dann in einem waagerechten
+   Lehrer über dieser Position zu finden sind" und „was für die Minen und
+   Bomben überlegen wie die in diesem Kreis zu finden sind".
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -143,8 +142,6 @@ const sage = (gut, was, zusatz) => {
     window.DMA_SPIEL_BRUECKE = window.DMA_SPIEL_BRUECKE || {};
     const altToast = window.DMA_SPIEL_BRUECKE.toast;
     window.DMA_SPIEL_BRUECKE.toast = (t) => { window.__hinweise.push(t); try { if (altToast) altToast(t); } catch (e) {} };
-    const altTon = window.DMA_SPIEL_BRUECKE.ton;
-    window.DMA_SPIEL_BRUECKE.ton = (n, l) => { window.DMA_TONLOG.push({ name: n, wann: Math.round(performance.now()), weg: "ersatz" }); try { if (altTon) altTon(n, l); } catch (e) {} };
     /* Ab Fassung 645 meldet sich das Spiel in einer eigenen Zeile. */
     window.__spielMeldungen = window.__hinweise;
   });
@@ -154,87 +151,128 @@ const sage = (gut, was, zusatz) => {
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
   const tippe = async (sel) => { await pg.evaluate((s) => { const e = document.querySelector(s); if (e) e.scrollIntoView({ block: "nearest" }); }, sel); const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
-  const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
-
-
-  const meld = () => pg.evaluate(() => window.__hinweise.filter((h) => !/Tagesgeschenk|Übungen auf der Seite/.test(h)).slice(-1)[0] || "");
-
-
-  const zuletzt = () => pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
-
-  await pg.evaluate(() => {
-    const ich = window.__ich, jetzt = Date.now();
-    ich.level = 12; ich.punkte = 900;
-    ich.dorf = { muehle: { stufe: 2, lp: 40 }, baeckerei: { stufe: 2, lp: 40 }, schule: { stufe: 1, lp: 20 }, rathaus: { stufe: 3, lp: 60 }, schmiede: { stufe: 1, lp: 0 },
-                 kuhstall: { stufe: 1, lp: 20 }, brauerei: { stufe: 2, lp: 40 } };
-    ich.werk = {}; ich.volk = { arbeiter: 20, ritter: 0, quote: 80, berufe: { bauer: 2, mueller: 1 } };
-    ich.dorf_ab = new Date(jetzt - 3600000).toISOString();
-    window.__extra = Object.assign({}, window.__extra || {}, { spiel_markt_preise: () => ({ ok: true, preise: {} }), spiel_angebote_liste: () => ({ ok: true, angebote: [] }) });
-    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false; S.dorfTeil = ""; S.dorfWahl = "";
-    try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
-    window.__hinweise.length = 0;
-    window.DMA_SPIEL.pruef.schnellZeichnen(true);
-  });
-
-  await pg.evaluate(() => { try { localStorage.removeItem("dma_spiel_leiste"); localStorage.removeItem("dma_spiel_leiste2"); localStorage.removeItem("dma_spiel_leiste_aus"); } catch (e) {} const S = window.DMA_SPIEL.pruef.zustand();
-    S.ich = Object.assign({}, S.ich, { mana: 60, tiere: Object.assign({}, S.ich.tiere, { regenbogendrache: { kraft: 16, stufe: 3 }, wolpertinger: { kraft: 40, stufe: 1 } }), haustier: "wolpertinger", flugtier: "regenbogendrache" });
-    S.faehig = { art: "regenbogendrache", bereitBis: 0 }; S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tick(600);
-  const reihe = () => pg.evaluate(() => [...document.querySelectorAll(".sp-schnell .sp-s-reihe > button")].map((e) => e.dataset.s));
-
-  console.log("\nDAS LEERE FELD\n");
-  let r = await pg.evaluate(() => { const b = document.querySelector(".sp-s-faehig"); if (!b) return null; const s = b.querySelector("svg").getBoundingClientRect(), k = b.getBoundingClientRect();
-    return { svgW: Math.round(s.width), svgH: Math.round(s.height), drin: s.top >= k.top - 1 && s.bottom <= k.bottom + 1, title: b.title }; });
-  sage(r && r.svgW >= 18 && r.svgH >= 18 && r.drin, "Regenbogendrache ausgerüstet: das Tier ist im Feld zu sehen (vorher 0 px hoch = leeres Feld)", JSON.stringify(r));
-  await tippe(".sp-s-faehig"); await tick(300);
-  r = await pg.evaluate(() => ({ ziel: window.DMA_SPIEL.pruef.zustand().faehigZiel, an: document.querySelector(".sp-s-faehig").classList.contains("sp-an"), meld: window.__hinweise.slice(-1)[0] || "" }));
-  sage(r.ziel && r.an && /Regenbogenfeuer bereit/.test(r.meld), "ein Tipp: „Regenbogenfeuer bereit – tippe auf ein Gesicht“, das Feld leuchtet", JSON.stringify(r));
-  await tippe(".sp-s-faehig"); await tick(200);
-
-  console.log("\nLEISTE IM MENÜ ORDNEN\n");
-  const vorher = await reihe();
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = true; S.schnellReiter = "mehr"; S.blick = null; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tick(400);
-  r = await pg.evaluate(() => [...document.querySelectorAll(".sp-leiste-ed .sp-tasche small")].map((e) => e.textContent));
-  sage(r.length === 9 && /Superkraft/.test(r.join()) && /Tier-Fähigkeit/.test(r.join()), "im Menü „Mehr“: alle Felder der Leiste als große Kacheln mit Bild und Namen", JSON.stringify(r));
-  /* Ab Fassung 719 (Funk 163: „die möchte ich an dritter Stelle haben ja standardmäßig auch") steht die
-     Tier-Fähigkeit schon ab Werk an Platz 3 (Controller, Waffen, Tier). Geprüft wird das Schieben jetzt mit der Superkraft. */
-  r = await pg.evaluate(() => window.DMA_SPIEL.pruef.leisteReihe());
-  sage(r[0] === "taschen" && r[1] === "faehig" && r[2] === "heilen" && r[3] === "trank", "ab Werk: Waffen, Tier-Fähigkeit (Platz 3 nach dem Controller), Gesundheit, Tränke", JSON.stringify(r));
-  await tippe('.sp-leiste-ed [data-k="super"]');
-  await tippe('.sp-schnellmenue [data-s="leisteschieb"][data-r="-1"]');
-  await tippe('.sp-schnellmenue [data-s="leisteschieb"][data-r="-1"]');
-  await tick(200);
-  r = await pg.evaluate(() => ({ menue: [...document.querySelectorAll(".sp-leiste-ed .sp-tasche")].map((e) => e.dataset.k), gemerkt: JSON.parse(localStorage.getItem("dma_spiel_leiste2") || "[]") }));
-  sage(r.menue.indexOf("super") === 2 && r.menue.indexOf("super") < r.menue.indexOf("trank") && r.menue.indexOf("faehig") === 1, "Superkraft zweimal nach links: jetzt vor Gesundheit und Tränken", JSON.stringify(r.menue));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300);
-  const nach = await reihe();
-  const ohne = (l) => l.filter((x) => x !== "waffe" && x !== "mitspielen");
-  sage(JSON.stringify(ohne(nach)) === JSON.stringify(r.menue.map((k) => ({ taschen: null, heilen: "heilen", trank: "trankauf", super: "superkraft", faehig: "faehigkeit", kampf: "kampfkraft", zauber: "zauberrad", makro: "makro", repar: "reparieren" })[k]).filter((x) => x && nach.includes(x))), "unten steht die Leiste genauso", JSON.stringify({ vorher: ohne(vorher), nach: ohne(nach) }));
-  sage(r.gemerkt.join() === r.menue.join(), "die Reihenfolge ist auf dem Gerät gemerkt", JSON.stringify(r.gemerkt));
-
-  console.log("\nMIT − HERAUSNEHMEN, MIT + WIEDER HINZUFÜGEN (Funk 163)\n");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = true; S.schnellReiter = "mehr"; S.blick = null; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  const B = process.env.BILD;
+  await pg.evaluate(() => { const ich = window.__ich; ich.level = 10; ich.punkte = 200; ich.mana = 60;
+    ich.waffen = ich.waffen.concat(["armbrust", "bazooka", "kuckucksuhr", "doppellaser"]); window.DMA_SPIEL.pruef.schnellZeichnen(true); });
   await tick(300);
-  await tippe('.sp-leiste-ed [data-k="super"]');
-  await tippe('.sp-schnellmenue [data-s="leisteaus"]'); await tick(200);
-  let pm = await pg.evaluate(() => ({ menue: [...document.querySelectorAll(".sp-leiste-ed .sp-tasche")].map((e) => e.dataset.k), plus: [...document.querySelectorAll('.sp-leiste-plus [data-s="leisteplus"]')].map((e) => e.dataset.k) }));
-  sage(pm.menue.indexOf("super") < 0 && pm.plus.join() === "super", "„− Superkraft herausnehmen“: sie steht unter „Weitere“ mit +", JSON.stringify(pm));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300);
-  pm = await pg.evaluate(() => ({ unten: [...document.querySelectorAll(".sp-schnell .sp-s-reihe > button")].map((e) => e.dataset.s), quer: (() => { const r = document.querySelector(".sp-schnell .sp-s-reihe"); return r.scrollWidth - r.clientWidth; })() }));
-  sage(pm.unten.indexOf("superkraft") < 0 && pm.unten[pm.unten.length - 1] === "leisteplusmenue" && pm.quer <= 1, "unten fehlt die Superkraft, am Ende steht ein kleines + (alles passt auf 360 px)", JSON.stringify(pm));
-  await tippe('.sp-schnell [data-s="leisteplusmenue"]'); await tick(400);
-  pm = await pg.evaluate(() => ({ menue: Boolean(document.querySelector(".sp-schnellmenue")), plus: Boolean(document.querySelector('.sp-leiste-plus [data-k="super"]')) }));
-  sage(pm.menue && pm.plus, "das + öffnet das Menü direkt bei „Leiste unten ordnen“ mit den weiteren Feldern", JSON.stringify(pm));
-  await tippe('.sp-leiste-plus [data-k="super"]'); await tick(200);
-  pm = await pg.evaluate(() => ({ menue: [...document.querySelectorAll(".sp-leiste-ed .sp-tasche")].map((e) => e.dataset.k), aus: localStorage.getItem("dma_spiel_leiste_aus") }));
-  sage(pm.menue.indexOf("super") === 2 && pm.aus === "[]", "+ Superkraft: sie ist wieder da, an ihrem alten Platz", JSON.stringify(pm));
-  await pg.reload({ waitUntil: "domcontentloaded" });
-  await pg.waitForFunction(() => window.DMA_SPIEL && window.DMA_SPIEL.pruef, { timeout: 25000 });
-  r = await pg.evaluate(() => window.DMA_SPIEL.pruef.leisteReihe());
-  sage(r.indexOf("super") === 2 && r.indexOf("faehig") === 1, "nach dem Neuladen gilt sie weiter", JSON.stringify(r));
-  sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
-  console.log("\nFassung 710 (Leiste): " + (fehler ? fehler + " rot." : "alles grün."));
+
+  console.log("\nLANGER DRUCK ÖFFNET DEN RING – OHNE TÜREN\n");
+  await pg.evaluate(() => { window.DMA_SPIEL.langAufEigen(null); });
+  await tick(400);
+  const r1 = await pg.evaluate(() => {
+    const r = document.querySelector(".sp-schnell .sp-ring"); if (!r) return { da: false };
+    const q = r.getBoundingClientRect(), M = { x: q.left + q.width / 2, y: q.top + q.height / 2 };
+    const ab = (e) => { const b = e.getBoundingClientRect(); return Math.hypot(b.left + b.width / 2 - M.x, b.top + b.height / 2 - M.y); };
+    const aussen = [...r.querySelectorAll(".sp-ring-feld")], innen = [...r.querySelectorAll(".sp-ring-zauber")];
+    const tippbar = [...aussen, ...innen].every((b) => { const k = b.getBoundingClientRect(); const o = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2); return o && (o === b || b.contains(o)); });
+    const alle = [...aussen, ...innen]; let ueber = 0;
+    for (let i = 0; i < alle.length; i++) for (let j = i + 1; j < alle.length; j++) { const a = alle[i].getBoundingClientRect(), b = alle[j].getBoundingClientRect();
+      /* Die Knöpfe sind rund: es zählt der Abstand der Mittelpunkte, nicht das umgebende Viereck. */
+      if (Math.hypot((a.left + a.width / 2) - (b.left + b.width / 2), (a.top + a.height / 2) - (b.top + b.height / 2)) < (a.width + b.width) / 2 - 1) { ueber++; (window.__ueber = window.__ueber || []).push((alle[i].dataset.b || alle[i].dataset.z) + "/" + (alle[j].dataset.b || alle[j].dataset.z)); } }
+    return { da: true, breite: Math.round(q.width), imBild: q.left >= 0 && q.right <= innerWidth && q.top >= 0, tueren: Boolean(document.querySelector(".sp-langwahl,[data-s=langzauber],[data-s=langwaffen]")),
+      bereiche: aussen.map((b) => b.dataset.b).join(","), aussenAb: Math.round(Math.min(...aussen.map(ab))), innenAb: Math.round(Math.max(...innen.map(ab))), zauber: innen.length,
+      mana: Boolean(r.querySelector(".sp-ring-mana")), torte: Boolean(r.querySelector('[data-s="iss"],[data-s="trinken"],[data-s="manakauf"]')), tippbar, ueber, paare: (window.__ueber || []).join(" ") };
+  });
+  if (B) await pg.screenshot({ path: B + "-ring.png" });
+  sage(r1.da && !r1.tueren, "langer Druck aufs eigene Bild: gleich der Ring, keine Tür „Zauber | Waffen“ davor", JSON.stringify(r1));
+  sage(r1.breite <= 220 && r1.imBild, "der Ring ist klein (höchstens 220 px statt bis zu 360 px) und ganz im Bild", JSON.stringify({ breite: r1.breite, imBild: r1.imBild }));
+  sage(r1.innenAb < r1.aussenAb && r1.zauber >= 9 && /standard/.test(r1.bereiche) && /lustig/.test(r1.bereiche) && /stark/.test(r1.bereiche), "zwei Ringe ineinander: außen die Waffen-Bereiche, innen die Zauber", JSON.stringify(r1));
+  sage(/fallen/.test(r1.bereiche), "Minen & Bomben haben einen eigenen Bereich im Ring", r1.bereiche);
+  sage(r1.mana && r1.torte, "Mana-Bogen zwischen den Ringen, Torte/Manatrank bleiben griffbereit", JSON.stringify(r1));
+  sage(r1.tippbar && r1.ueber === 0, "jedes Feld ist frei tippbar, nichts liegt übereinander", JSON.stringify({ tippbar: r1.tippbar, ueber: r1.ueber, paare: r1.paare }));
+
+  console.log("\nBEREICH ANTIPPEN: ANLEGEN UND DIE QUERLEISTE\n");
+  await pg.waitForTimeout(700);
+  const feld = await pg.evaluate(() => { const b = document.querySelector('.sp-ring-feld[data-b="lustig"]'); return b ? b.dataset.w : ""; });
+  await tippe('.sp-ring-feld[data-b="lustig"]'); await tick(350);
+  const q1 = await pg.evaluate(() => {
+    const S = window.DMA_SPIEL.pruef.zustand(), l = document.querySelector(".sp-ring-leiste"), f = document.querySelector('.sp-ring-feld[data-b="lustig"]');
+    if (!l || !f) return { waffe: S.waffe, leiste: false };
+    const lr = l.getBoundingClientRect(), fr = f.getBoundingClientRect();
+    const k = [...l.querySelectorAll(".sp-ring-wahl")], xs = k.map((b) => b.getBoundingClientRect().left);
+    return { waffe: S.waffe, leiste: true, waagerecht: lr.width > lr.height * 2, hoehe: Math.abs((lr.top + lr.height / 2) - (fr.top + fr.height / 2)) < 4,
+      reihe: xs.every((x, i) => !i || x > xs[i - 1]), imBild: lr.left >= 0 && lr.right <= innerWidth, zahl: k.length, fehlt: l.querySelectorAll(".sp-ring-fehlt").length,
+      name: (l.querySelector(".sp-ring-leiste-name") || {}).textContent, ringNoch: Boolean(document.querySelector(".sp-ring")) };
+  });
+  if (B) await pg.screenshot({ path: B + "-leiste.png" });
+  sage(q1.waffe === feld && q1.ringNoch, "Tipp auf „Lustig“: dessen Waffe ist angelegt, der Ring bleibt offen", JSON.stringify(q1));
+  sage(q1.leiste && q1.waagerecht && q1.hoehe && q1.reihe && q1.imBild, "eine waagerechte Leiste schneidet den Ring genau auf der Höhe des Feldes, von links nach rechts, ganz im Bild", JSON.stringify(q1));
+  sage(q1.zahl >= 6 && q1.fehlt >= 1 && /^Lustig/.test(q1.name), "in der Leiste alle Waffen des Bereichs, die noch fehlenden blass mit Preis", JSON.stringify(q1));
+  await pg.waitForTimeout(700);
+  await tippe('.sp-ring-leiste .sp-ring-wahl[data-w="bierkrug"]'); await tick(350);
+  const q2 = await pg.evaluate(() => ({ waffe: window.DMA_SPIEL.pruef.zustand().waffe, ring: Boolean(document.querySelector(".sp-ring")), gemerkt: localStorage.getItem("dma_spiel_ringwahl") || "" }));
+  sage(q2.waffe === "bierkrug" && !q2.ring && /"lustig":"bierkrug"/.test(q2.gemerkt), "Bierkrug in der Leiste: angelegt, für „Lustig“ festgelegt (gemerkt), Ring zu", JSON.stringify(q2));
+  await pg.evaluate(() => { window.DMA_SPIEL.langAufEigen(null); }); await tick(400);
+  const q3 = await pg.evaluate(() => (document.querySelector('.sp-ring-feld[data-b="lustig"]') || {}).dataset || {});
+  sage(q3.w === "bierkrug", "beim nächsten Öffnen steht im Bereich „Lustig“ der Bierkrug", JSON.stringify(q3));
+  await pg.waitForTimeout(700);
+  await tippe('.sp-ring-feld[data-b="lustig"]'); await tick(300);
+  await tippe('.sp-ring-leiste .sp-ring-wahl.sp-ring-fehlt'); await tick(300);
+  const q4 = await pg.evaluate(() => ({ h: window.__hinweise.slice(-1)[0] || "", ring: Boolean(document.querySelector(".sp-ring")), waffe: window.DMA_SPIEL.pruef.zustand().waffe }));
+  sage(/Laden für \d+ Punkte/.test(q4.h) && q4.ring && q4.waffe === "bierkrug", "eine fehlende Waffe antippen: Hinweis auf den Laden mit Preis, nichts ändert sich", JSON.stringify(q4));
+
+  console.log("\nMINEN & BOMBEN\n");
+  await tippe(".sp-ring-leiste .sp-ring-leiste-name"); await tick(300);
+  const zu1 = await pg.evaluate(() => ({ leiste: Boolean(document.querySelector(".sp-ring-leiste")), ring: Boolean(document.querySelector(".sp-ring")) }));
+  sage(!zu1.leiste && zu1.ring, "„Lustig ✕“ über der Leiste klappt nur die Leiste zu, der Ring bleibt", JSON.stringify(zu1));
+  await tippe('.sp-ring-feld[data-b="fallen"]'); await tick(350);
+  const m1 = await pg.evaluate(() => { const l = document.querySelector(".sp-ring-leiste"); return { waffe: window.DMA_SPIEL.pruef.zustand().waffe, leiste: l ? [...l.querySelectorAll(".sp-ring-wahl")].map((b) => b.dataset.w).join(",") : "" }; });
+  sage(m1.waffe === "kuckucksuhr" && m1.leiste === "mine,falltuer,kuckucksuhr", "Bereich „Minen & Bomben“: Kuckucksuhr-Bombe angelegt, in der Leiste Mine, Falltür, Bombe", JSON.stringify(m1));
+  await pg.waitForTimeout(700);
+  await tippe('.sp-ring-leiste .sp-ring-wahl[data-w="mine"]'); await tick(350);
+  const m2 = await pg.evaluate(() => ({ legen: window.DMA_SPIEL.pruef.zustand().legen, klasse: document.body.classList.contains("sp-legen"), ring: Boolean(document.querySelector(".sp-ring")), h: window.__hinweise.slice(-1)[0] || "" }));
+  sage(m2.legen === "mine" && m2.klasse && !m2.ring && /Platz/.test(m2.h), "Mine antippen: Legen beginnt (auf einen Platz tippen), Ring zu", JSON.stringify(m2));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.legen = ""; document.body.classList.remove("sp-legen"); });
+
+  console.log("\nZAUBER INNEN, ABLEGEN, LANGER DRUCK SCHLIESST\n");
+  await pg.evaluate(() => { window.DMA_SPIEL.langAufEigen(null); }); await tick(400);
+  await pg.waitForTimeout(700);
+  await tippe('.sp-ring .sp-ring-zauber[data-z="nebel"]'); await tick(350);
+  const z1 = await pg.evaluate(() => ({ z: window.DMA_SPIEL.pruef.zustand().zauber, ring: Boolean(document.querySelector(".sp-ring")) }));
+  sage(z1.z === "nebel" && !z1.ring, "innen „Nebel“ antippen: Zauber bereit, Ring zu", JSON.stringify(z1));
+  await pg.evaluate(() => { window.DMA_SPIEL.langAufEigen(null); }); await tick(400);
+  const l1 = Boolean(await pg.evaluate(() => document.querySelector(".sp-ring")));
+  await pg.evaluate(() => { window.__lt = (window.DMA_TONLOG || []).length; });
+  await pg.waitForTimeout(1000);
+  await pg.evaluate(() => { window.DMA_SPIEL.langAufEigen(null); }); await tick(400);
+  const l2 = await pg.evaluate(() => ({ ring: Boolean(document.querySelector(".sp-ring")), toene: (window.DMA_TONLOG || []).slice(window.__lt).map((t) => t.name || t[0] || t).join(",") }));
+  sage(l1 && !l2.ring, "ein zweiter langer Druck schließt den Ring wieder", JSON.stringify({ l1, l2 }));
+  await pg.evaluate(() => { window.DMA_SPIEL.langAufEigen(null); }); await tick(400);
+  await pg.waitForTimeout(700);
+  await tippe(".sp-ring .sp-ring-mitte"); await tick(300);
+  const a1 = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return { w: S.waffe, z: S.zauber, ring: Boolean(document.querySelector(".sp-ring")) }; });
+  sage(!a1.w && !a1.z && !a1.ring, "die Hand in der Mitte legt Waffe und Zauber ab", JSON.stringify(a1));
+
+  console.log("\nAUCH DER TIPP AUF DIE WAFFE IN DER LEISTE ÖFFNET DEN KLEINEN RING\n");
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.waffe = window.DMA_SPIEL.pruef.slots()[0]; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300);
+  await tippe('.sp-s-slot[data-n="0"]'); await tick(400);
+  const s1 = await pg.evaluate(() => { const r = document.querySelector(".sp-rad"); return { ring: Boolean(r && r.classList.contains("sp-ring")), breite: r ? Math.round(r.getBoundingClientRect().width) : 0 }; });
+  sage(s1.ring && s1.breite <= 220, "Tipp auf die angelegte Waffe in der Leiste: derselbe kleine Ring", JSON.stringify(s1));
+
+  console.log("\n3× AUFS EIGENE BILD = TIERKRAFT (Funk 163)\n");
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.rad = null; S.zrad = false; S.langWahl = false;
+    S.ich = Object.assign({}, S.ich, { mana: 60, tiere: Object.assign({}, S.ich.tiere, { regenbogendrache: { kraft: 16, stufe: 3 } }), flugtier: "regenbogendrache" });
+    S.faehig = { art: "regenbogendrache", bereitBis: 0 }; S.faehigZiel = false; S.waffe = P.slots()[0]; S.eigenZeit = 0; P.schnellZeichnen(true); });
+  await tick(300);
+  const d3 = await pg.evaluate(async () => {
+    const T = window.DMA_SPIEL, P = T.pruef, S = P.zustand(), vorher = S.waffe, w = (ms) => new Promise((r) => setTimeout(r, ms)), ich = { ich: true, id: "ich", name: "Alex" };
+    const e1 = T.tippAufPlatz(null, ich); await w(120);
+    const e2 = T.tippAufPlatz(null, ich); const nach2 = S.waffe; await w(120);
+    const e3 = T.tippAufPlatz(null, ich); await w(50);
+    return { vorher, nach2, nach3: S.waffe, ziel: Boolean(S.faehigZiel), e: [e1, e2, e3].join(","), h: window.__hinweise.slice(-1)[0] || "" };
+  });
+  sage(d3.nach2 !== d3.vorher && d3.nach3 === d3.vorher && d3.ziel && /Regenbogenfeuer bereit/.test(d3.h), "2× wechselt sofort die Waffe, der 3. Tipp nimmt das zurück und ruft die Tierkraft (Regenbogenfeuer bereit)", JSON.stringify(d3));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.faehigZiel = false; });
+  const d2 = await pg.evaluate(async () => {
+    const T = window.DMA_SPIEL, P = T.pruef, S = P.zustand(), w = (ms) => new Promise((r) => setTimeout(r, ms)), ich = { ich: true, id: "ich", name: "Alex" };
+    await w(500); const vorher = S.waffe;
+    T.tippAufPlatz(null, ich); await w(120); T.tippAufPlatz(null, ich); await w(600);
+    return { vorher, nach: S.waffe, ziel: Boolean(S.faehigZiel) };
+  });
+  sage(d2.nach !== d2.vorher && !d2.ziel, "nur 2×: die Waffe bleibt gewechselt, keine Tierkraft", JSON.stringify(d2));
+
+  sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.join(" | "));
+  console.log("\nFassung 719 auf dem Telefon: " + (fehler ? fehler + " rot." : "alles grün."));
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

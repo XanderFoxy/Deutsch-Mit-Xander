@@ -194,9 +194,11 @@ const sage = (gut, was, zusatz) => {
   console.log("\nDAS RAD SAGT, WAS ANGELEGT IST\n");
   await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = P.slots()[0]; S.rad = 0; P.schnellZeichnen(true); });
   await tick(300);
+  /* Ab Fassung 719 ist es der kleine Doppelring: in der Mitte die Hand (ablegen) und der Mana-Stand; welche Waffe
+     angelegt ist, zeigt ihr Feld mit Goldring und Haken (und ihr Name im Hinweis beim Anlegen). */
   const rad = await pg.evaluate(() => { const r = document.querySelector(".sp-rad-voll"); const a = r.querySelector(".sp-angelegt");
-    return { an: (r.querySelector(".sp-rad-an") || {}).textContent, name: (r.querySelector(".sp-rad-an-name") || {}).textContent, haken: Boolean(a && a.querySelector(".sp-haken")), wer: a ? a.dataset.w : "" }; });
-  sage(rad.an === "angelegt" && rad.name && rad.haken, "in der Mitte „angelegt: …“, die angelegte Waffe hat Goldring und Haken", JSON.stringify(rad));
+    return { haken: Boolean(a && a.querySelector(".sp-haken")), wer: a ? a.dataset.w : "", soll: window.DMA_SPIEL.pruef.zustand().waffe, gold: a ? getComputedStyle(a).boxShadow : "" }; });
+  sage(rad.haken && rad.wer === rad.soll && /242, 194, 48/.test(rad.gold), "die angelegte Waffe hat im Ring Goldring und Haken", JSON.stringify(rad));
   if (process.env.BILD) await pg.screenshot({ path: process.env.BILD });
 
   await br.close(); srv.close();

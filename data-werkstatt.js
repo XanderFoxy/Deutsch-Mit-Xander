@@ -49,30 +49,28 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 718: Ton und Mikrofon im Klassenzimmer, Relais erneuert, Profilbild wieder mittig",
+  stand: "Fassung 719 — kleiner Doppelring, Minen & Bomben, Leiste mit + und −",
 
   inArbeit: [
-    { seit: "2026-09-27T00:00",
-      text: "Liste aller Spielvorschläge mit Einschätzung (Funk 162/163/165)" },
-    { seit: "2026-09-27T00:00",
-      text: "Dorf: Laternen mit Lichtkegel, Stadtname, See, Vögel (Funk 159/160/163/165)" },
-    { seit: "2026-09-27T00:00",
-      text: "Leiste und Waffenring (Funk 163/165)" },
-    { seit: "2026-09-27T00:00",
-      text: "Funk 155: Meldungen mit Sprung-Knopf" },
+    { seit: "2026-09-27T00:28",
+      text: "4× Gesundheit / 5× Manatrank (Frage im Walkie 287)" },
+    { seit: "2026-09-27T00:28",
+      text: "Dorf: Laternen mit Lichtkegel, Vögel, größerer See, Wasser/Wiese/Berge, runde Dächer" },
+    { seit: "2026-09-27T00:28",
+      text: "Spielmeldungen mit Sprung-Knopf (Funk 155)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T00:00",
-      text: "Nach dem Walkie-Diktat kommt das Mikrofon zuverlässig zurück" },
-    { seit: "2026-09-27T00:00",
-      text: "Relais-Zugangsdaten laufen nicht mehr ab" },
-    { seit: "2026-09-27T00:00",
-      text: "Pausierte Stimmen werden wieder angespielt" },
-    { seit: "2026-09-27T00:00",
-      text: "Profilbild mittig, beim Auftritt kein Sprung mehr" },
-    { seit: "2026-09-27T00:00",
-      text: "Helikopter: Bild nur unten beschnitten" },
+    { seit: "2026-09-27T00:28",
+      text: "Kleiner Ring (216 px): außen je Bereich eine Waffe, innen die Zauber, langer Druck an und aus" },
+    { seit: "2026-09-27T00:28",
+      text: "Querleiste: Bereich antippen zeigt alle Waffen des Bereichs" },
+    { seit: "2026-09-27T00:28",
+      text: "Eigener Bereich Minen & Bomben" },
+    { seit: "2026-09-27T00:28",
+      text: "Leiste: Tier-Fähigkeit an Platz 3, Felder mit − heraus und mit + zurück" },
+    { seit: "2026-09-27T00:28",
+      text: "3× aufs eigene Bild = Tierkraft" },
   ],
 };

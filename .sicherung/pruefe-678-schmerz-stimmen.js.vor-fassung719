@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 664: MEISTERWAFFEN AB EINEM LEVEL
+   SONDE — FASSUNG 678: SCHMERZSTIMMEN, ERINNERUNGEN, ZAUBERRAD-TON
    ---------------------------------------------------------------------
-   XANDER: „Updates ab einem bestimmten Level irgendwelche Sachen, die
-   dann freigeschaltet werden können, die wir sonst nicht haben".
-   Weißwurst-Bumerang (Lv 6), Nudelholz (Lv 8), Kuckucksuhr-Bombe (Lv 10).
+   XANDER: „die Spieler, wenn sie beschossen werden gar kein
+   Schmerzgeräusche … zwischen Frau und Mann … kurz vom Ende … Stöhnen
+   … ich brauche Hilfe … aber nicht jetzt alle 5 Sekunden … die Tiere
+   … Drachen Grummeln … der Sound von magische Menü … kommt auch
+   zweimal".
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -75,6 +77,7 @@ const sage = (gut, was, zusatz) => {
     const klient = { rpc: (name, args) => {
       window.__rufe.push({ name: name, args: args || {} });
       let data = { ok: true };
+      if (window.__extra && window.__extra[name]) return Promise.resolve({ data: window.__extra[name](args || {}, ich), error: null });
       if (name === "spiel_ich") data = ich;
       else if (name === "spiel_stand") data = [ich, bea];
       else if (name === "spiel_meine_fallen") data = window.__fallen;
@@ -82,6 +85,7 @@ const sage = (gut, was, zusatz) => {
       else if (name === "spiel_falle_pruefen") data = window.__falleAntwort;
       else if (name === "spiel_heilen") data = Object.assign({}, ich, { ok: true, geheilt: 25, fremd: Boolean(args.p_ziel), geheilter: Object.assign({}, bea, { lp: 75 }) });
       else if (name === "spiel_trophaeen") data = window.__troph || { ok: true, liste: [], neu: [], lohn: 0 };
+      else if (name === "spiel_verkaufen") { ich.waffen = ich.waffen.filter((w) => w !== args.p_ding); ich.punkte += 27; data = Object.assign({ ok: true, verkauft: args.p_ding, erloes: 27 }, ich); }
       else if (name === "spiel_fund_heben") data = window.__fundAntwort || { ok: true, fund: "erz" };
       else if (name === "spiel_bauen") { if (args.p_was === "reparatur") { ich.dorf.schmiede.lp = 20; ich.vorraete.erz -= 1; data = Object.assign({ ok: true, gebaut: "reparatur" }, ich); }
         else { const st = ((ich.dorf || {})[args.p_was] || {}).stufe || 0; ich.dorf = Object.assign({}, ich.dorf, { [args.p_was]: { stufe: st + 1, lp: 20 * (st + 1) } }); data = Object.assign({ ok: true, gebaut: args.p_was, stufe: st + 1 }, ich); } }
@@ -117,6 +121,7 @@ const sage = (gut, was, zusatz) => {
         data = { ok: true, zauber: args.p_zauber, schaden: R[1], abgewehrt: 0, mauer_riss: R[2], dauer: R[3], kaputt: false, lohn: 1,
                  ziel: Object.assign({}, bea, { lp: bea.lp - R[1] }), ich_voll: Object.assign({}, ich) };
       }
+      else if (name === "spiel_fusion") { window.__fusionArgs = args; const fr = { feuerfuchs: ["fuchs", "phoenix"] }[args.p_rezept]; const t = Object.assign({}, ich.tiere); fr.forEach((a) => delete t[a]); t[args.p_rezept] = { kraft: 38, stufe: 1 }; ich.tiere = t; ich.haustier = args.p_rezept; ich.haustier_leben = 38; ich.haustier_max = 38; ich.haustier_stufe = 1; ich.punkte -= 200; data = Object.assign({ ok: true, fusion: args.p_rezept }, ich); }
       else if (name === "spiel_treffer") data = { ok: true, zone: "koerper", schaden: 8, abgewehrt: 0, kaputt: false,
         ziel: Object.assign({}, bea, { lp: 42 }), ich: Object.assign({}, ich, { lp: 94 }), gegenwehr: 6,
         gegen_geschuetz: 4, gegen_tier: 2, tier: "fellmonster", lohn: 1, waffe: args.p_waffe };
@@ -140,50 +145,93 @@ const sage = (gut, was, zusatz) => {
 
   const tick = (ms) => pg.waitForTimeout(ms);
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
-  const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
+  const tippe = async (sel) => { await pg.evaluate((s) => { const e = document.querySelector(s); if (e) e.scrollIntoView({ block: "nearest" }); }, sel); const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
   const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
 
 
+  const P = "window.DMA_SPIEL.pruef";
+  const toene = () => pg.evaluate(() => window.DMA_TONLOG.map((t) => t.name));
+  const leeren = () => pg.evaluate(() => { window.DMA_TONLOG.length = 0; window.__hinweise.length = 0; const S = window.DMA_SPIEL.pruef.schmerz(); S.zuletzt = {}; S.serie = {}; S.schwach = {}; });
+  /* Die Tonmaschine meldet jeden Ton in DMA_TONLOG – auch den, der noch lädt (Ersatzweg). */
+  await pg.evaluate(() => { document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]').dataset.lcGeschlecht = "w";
+    document.querySelector('#lcPlaetze .lc-platz[data-lc-id="cem"]').dataset.lcGeschlecht = "m"; });
 
+  console.log("\nSCHMERZ NACH GESCHLECHT UND STÄRKE\n");
+  await leeren();
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.schmerzStimme("bea", { schaden: 22, zone: "koerper", ziel_stand: { lp: 60, lp_max: 100 } }));
+  let t = await toene();
+  sage(t.length === 1 && /^(schmerzschrei|schmerztutweh)frau$/.test(t[0]), "Bea (Frau), schwerer Treffer: Schrei oder „Aua, das tut weh!“ mit Frauenstimme", t.join(","));
+  await leeren();
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.schmerzStimme("cem", { schaden: 25, zone: "kopf", ziel_stand: { lp: 70, lp_max: 100 } }));
+  t = await toene();
+  sage(t.length === 1 && /mann$/.test(t[0]), "Cem (Mann): Männerstimme", t.join(","));
+  await leeren();
+  await pg.evaluate(() => { const Q = window.DMA_SPIEL.pruef; for (let i = 0; i < 40; i++) { Q.schmerz().zuletzt = {}; Q.schmerzStimme("cem", { schaden: 4, ziel_stand: { lp: 90, lp_max: 100 } }); Q.schmerz().serie = {}; } });
+  t = await toene();
+  sage(t.length >= 15 && t.length <= 38 && t.every((n) => /^schmerz(au|autsch|ah)mann$/.test(n)), "leichte Treffer: kurzes Au/Autsch/Ah – nicht jedes Mal (" + t.length + " von 40)", [...new Set(t)].join(","));
+  await leeren();
+  await pg.evaluate(() => { const Q = window.DMA_SPIEL.pruef; for (let i = 0; i < 10; i++) Q.schmerzStimme("cem", { schaden: 5, ziel_stand: { lp: 90, lp_max: 100 } }); });
+  t = await toene();
+  sage(t.length === 1, "zehn Treffer in derselben Sekunde: höchstens EINE Stimme (nervt nicht)", t.length + " Stimmen");
+  await leeren();
+  await pg.evaluate(() => { const Q = window.DMA_SPIEL.pruef; for (let i = 0; i < 8; i++) { Q.schmerz().zuletzt = {}; Q.schmerzStimme("bea", { schaden: 3, leicht: true, ziel_stand: { lp: 90, lp_max: 100 } }); } });
+  t = await toene();
+  sage(t.some((n) => /^(schmerzhoerauf|hauab)frau$/.test(n)), "viele Treffer hintereinander: „Hör auf!“ oder „Hau ab!“", t.join(","));
+  await leeren();
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.schmerzStimme("bea", { schaden: 8, ziel_stand: { lp: 12, lp_max: 100 } }));
+  t = await toene();
+  sage(t.length === 1 && /^(schmerzstoehnen|schmerzhilfe)frau$/.test(t[0]), "kurz vor dem Ende: Stöhnen oder „Hilfe! Ich brauche Hilfe!“", t.join(","));
+  await leeren();
+  await pg.evaluate(() => window.DMA_SPIEL.pruef.schmerzStimme("cem", { schaden: 30, kaputt: true, ziel_stand: { lp: 0, lp_max: 100 } }));
+  t = await toene();
+  sage(t[0] === "schmerzkaputtmann", "kaputt: „Ahhh… das war's“", t.join(","));
+  /* Ein echter Treffer über den Datenkanal: die Stimme kommt mit dem Treffer. */
+  await leeren();
+  await pg.evaluate(() => window.DMA_SPIEL.empfangen({ ereignis: "treffer", von: "ich", zielChat: "bea", schaden: 18, zone: "kopf", ziel_stand: { lp: 50, lp_max: 100 } }));
+  await tick(200);
+  t = await toene();
+  sage(t.some((n) => /frau$/.test(n) && /^schmerz/.test(n)), "ein Treffer aus dem Spiel (Datenkanal) löst die Stimme aus", t.join(","));
+  const dateien = ["schmerzaumann", "schmerzaufrau", "schmerzhilfefrau", "schmerzstoehnenmann", "schmerzhungermann", "schmerzmedizinfrau", "tierwinseln", "drachengrummeln", "zauberrad"];
+  const da = await pg.evaluate((d) => d.filter((n) => String(window.DMA_GERAEUSCHE || "").split("|").indexOf(n) >= 0), dateien);
+  sage(da.length === dateien.length, "die Stimmen liegen als Dateien bereit und stehen in der Tonliste", da.length + " / " + dateien.length);
 
+  console.log("\nERINNERUNGEN – SELTEN\n");
+  await leeren();
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(), Z = window.DMA_SPIEL.pruef.schmerz(); S.ich.lp = 20; S.ich.pflaster = 2; Z.start = 0; Z.erinnertJe = 0; Z.erinnert = {};
+    document.querySelector('#lcPlaetze .lc-platz[data-lc-id="ich"]').dataset.lcGeschlecht = "m";
+    for (let i = 0; i < 5; i++) window.DMA_SPIEL.pruef.erinnerungPruefen(); });
+  t = await toene();
+  let m = await pg.evaluate(() => window.__hinweise.join(" | "));
+  sage(t.length === 1 && t[0] === "schmerzmedizinmann" && /Pflaster/.test(m), "wenig LP: EINMAL „Ich brauche Medizin…“ und der Hinweis aufs Pflaster – nicht fünfmal", t.join(",") + " | " + m);
+  await leeren();
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(), Z = window.DMA_SPIEL.pruef.schmerz(); S.ich.lp = 100; S.ich.mana = 50; S.ich.flugtier = "drache"; S.ich.flugtier_leben = 3; S.ich.flugtier_max = 25; S.ich.haustier = "fellmonster"; S.ich.haustier_leben = 30; Z.erinnertJe = 0;
+    window.DMA_SPIEL.pruef.erinnerungPruefen(); });
+  t = await toene(); m = await pg.evaluate(() => window.__hinweise.join(" | "));
+  sage(t[0] === "drachengrummeln" && /füttern/.test(m), "der Drache mit wenig Kraft grummelt – Hinweis: füttern", t.join(",") + " | " + m);
+  await leeren();
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(), Z = window.DMA_SPIEL.pruef.schmerz(); S.ich.flugtier_leben = 25; S.ich.haustier_leben = 2; Z.erinnertJe = 0; Z.erinnert.tier = 0; window.DMA_SPIEL.pruef.erinnerungPruefen(); });
+  t = await toene();
+  sage(t[0] === "tierwinseln", "das Fellmonster winselt wie ein Hund", t.join(","));
+  await leeren();
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(), Z = window.DMA_SPIEL.pruef.schmerz(); S.ich.haustier_leben = 30; Z.erinnertJe = Date.now() - 30000; S.ich.lp = 10; Z.erinnert = {}; window.DMA_SPIEL.pruef.erinnerungPruefen(); });
+  t = await toene();
+  sage(t.length === 0, "innerhalb von 90 s nach einer Erinnerung kommt keine zweite", t.join(","));
 
-  console.log("\nIM LADEN\n");
-  await pg.evaluate(() => { window.__ich.level = 7; window.DMA_SPIEL.menue("waffen"); });
-  await tick(300);
-  const la = await pg.evaluate(() => { const z = (d) => { const b = document.querySelector('#spPanel [data-d="' + d + '"]'); if (b) return (b.disabled ? "zu:" : "auf:") + b.textContent.trim();
-    const zeile = [...document.querySelectorAll("#spPanel .sp-zeile")].find((r) => r.textContent.indexOf(d === "nudelholz" ? "Nudelholz" : "Kuckucksuhr") >= 0); return zeile ? "zu:" + zeile.querySelector("button").textContent : "fehlt"; };
-    return { wurst: z("weisswurst"), holz: z("nudelholz"), uhr: z("kuckucksuhr") }; });
-  sage(/auf:.*85 Punkte/.test(la.wurst) && /ab Level 8/.test(la.holz) && /ab Level 10/.test(la.uhr), "Level 7: Weißwurst-Bumerang kaufbar, Nudelholz ab Lv 8, Kuckucksuhr ab Lv 10", JSON.stringify(la));
-  await pg.evaluate(() => { const p = document.getElementById("spPanel"); if (p) p.hidden = true; });
-
-  console.log("\nIM WAFFENRAD\n");
-  await pg.evaluate(() => { window.__ich.waffen = window.__ich.waffen.concat(["weisswurst", "nudelholz", "kuckucksuhr"]); const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.ich = window.__ich; S.waffe = P.slots()[0]; S.rad = 0; P.schnellZeichnen(true); });
-  await tick(300);
-  /* Ab Fassung 719 (Funk 165): im kleinen Ring ein Feld je Bereich; die Kuckucksuhr-Bombe liegt bei „Minen & Bomben“. */
-  const rad = await pg.evaluate(() => { const f = (b) => document.querySelector('.sp-rad-voll .sp-ring-feld[data-b="' + b + '"]');
-    return { namen: [...document.querySelectorAll(".sp-rad-voll .sp-ring-feld")].map((t) => t.dataset.b).join(","), meister: f("meister") ? getComputedStyle(f("meister")).getPropertyValue("--klasse").trim() : "", bombe: f("fallen") ? f("fallen").dataset.w : "" }; });
-  sage(/meister/.test(rad.namen) && rad.meister === "#b8860b" && rad.bombe === "kuckucksuhr", "eigener Bereich „Meister“ im Ring (goldfarben), die Kuckucksuhr-Bombe bei „Minen & Bomben“", JSON.stringify(rad));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.rad = null; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-
-  console.log("\nFLUG UND EINSCHLAG\n");
-  const flug = await pg.evaluate(() => {
-    const aus = {};
-    ["weisswurst", "nudelholz", "kuckucksuhr"].forEach((w) => {
-      const dauer = window.DMA_SPIEL.pruef.geschossZeigen("ich", "bea", w, 0, 0);
-      const g = document.querySelector(".sp-geschoss.sp-g-" + w);
-      aus[w] = { svg: !!(g && g.querySelector("svg path, svg rect")), dauer };
-    });
-    return aus;
-  });
-  sage(flug.weisswurst.svg && flug.nudelholz.svg && flug.kuckucksuhr.svg, "jede Meisterwaffe fliegt mit eigener Zeichnung", JSON.stringify(flug));
-  await tick(1000);
-  const kk = await pg.evaluate(() => ({ kuckuck: document.querySelectorAll(".sp-kuckuck").length, gross: document.querySelectorAll(".sp-einschlag-gross").length }));
-  sage(kk.kuckuck >= 1, "die Kuckucksuhr ruft beim Einschlag „Kuckuck!“", JSON.stringify(kk));
-  await pg.screenshot({ path: "/tmp/claude-0/p-664.png" });
+  console.log("\nZAUBERRAD: EIN EIGENER TON, NUR EINMAL\n");
+  await leeren();
+  await pg.evaluate(() => { const Q = window.DMA_SPIEL.pruef, S = Q.zustand(); S.zrad = false; S.zradTonZeit = 0; window.DMA_SPIEL.langAufEigen(document.querySelector('#lcPlaetze .lc-platz-ich')); });
+  await pg.evaluate(() => { const b = document.querySelector('.sp-schnell [data-s="zauberrad"]'); const S = window.DMA_SPIEL.pruef.zustand(); S.zrad = false; if (b) b.click(); });
+  await tick(200);
+  t = await toene();
+  sage(t.filter((n) => n === "zauberrad").length === 1 && !t.includes("zauberpuff"), "Rad öffnen (lang drücken, gleich danach Knopf): genau ein ruhiger Zauberklang", t.join(","));
+  const rad = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.zrad = true; window.DMA_SPIEL.pruef.schnellZeichnen(true);
+    const b = document.querySelector('.sp-zauberrad [data-z="formular"] small'); return { preis: b ? b.textContent : "", klasse: b ? b.className : "", mana: (document.querySelector(".sp-zauberrad .sp-zr-mana") || {}).textContent || "", erkl: (document.querySelector(".sp-zauberrad .sp-zr-erkl") || {}).textContent || "" }; });
+  /* Ab Fassung 686 steht beides in einer Zeile („Mana 50 · Zahl = Preis“), darunter Torte und Manatrank. */
+  sage(/Mana/.test(rad.mana) && /Preis/.test(rad.mana + rad.erkl), "im Zauberrad steht: das eigene Mana und „Zahl = Mana-Preis“", JSON.stringify(rad));
 
   sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.slice(0, 3).join(" | "));
-  console.log("\n" + (fehler ? "Fassung 664: " + fehler + " rot." : "Fassung 664 auf dem Telefon: alles grün.") + "\n");
+  console.log("\n" + (fehler ? "Fassung 678: " + fehler + " rot." : "Fassung 678 auf dem Telefon: alles grün.") + "\n");
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

@@ -1,10 +1,17 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 664: MEISTERWAFFEN AB EINEM LEVEL
+   SONDE — FASSUNG 710: DIE LEISTE UNTEN (Funk 157, Funk 152)
    ---------------------------------------------------------------------
-   XANDER: „Updates ab einem bestimmten Level irgendwelche Sachen, die
-   dann freigeschaltet werden können, die wir sonst nicht haben".
-   Weißwurst-Bumerang (Lv 6), Nudelholz (Lv 8), Kuckucksuhr-Bombe (Lv 10).
+   XANDER (Funk 157): „Zwischen meiner superkraftanzeige … und in meinem
+   Dorf ist ein leeres Feld das keine Funktion hat … die Anweisung der
+   Plätze wie ich das in meine persönlichen Reihenfolge haben möchte soll
+   dort bearbeitet werden können und unten soll sie genauso auftauchen".
+   Funk 152: die Tier-Spezialfähigkeit „stellt sich gar nicht ein … man
+   weiß gar nicht ob man das jetzt ausgewählt hat".
+   Geprüft (Android, 360 px, echte Finger): mit Xanders Stand (Regenbogen-
+   drache ausgerüstet) ist das Feld kein leeres mehr – das Tier ist zu
+   sehen, ein Tipp macht die Fähigkeit bereit; im Menü „Mehr" lässt sich
+   die Leiste ordnen, unten steht sie genauso, auf dem Gerät gemerkt.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -75,6 +82,7 @@ const sage = (gut, was, zusatz) => {
     const klient = { rpc: (name, args) => {
       window.__rufe.push({ name: name, args: args || {} });
       let data = { ok: true };
+      if (window.__extra && window.__extra[name]) return Promise.resolve({ data: window.__extra[name](args || {}, ich), error: null });
       if (name === "spiel_ich") data = ich;
       else if (name === "spiel_stand") data = [ich, bea];
       else if (name === "spiel_meine_fallen") data = window.__fallen;
@@ -82,6 +90,7 @@ const sage = (gut, was, zusatz) => {
       else if (name === "spiel_falle_pruefen") data = window.__falleAntwort;
       else if (name === "spiel_heilen") data = Object.assign({}, ich, { ok: true, geheilt: 25, fremd: Boolean(args.p_ziel), geheilter: Object.assign({}, bea, { lp: 75 }) });
       else if (name === "spiel_trophaeen") data = window.__troph || { ok: true, liste: [], neu: [], lohn: 0 };
+      else if (name === "spiel_verkaufen") { ich.waffen = ich.waffen.filter((w) => w !== args.p_ding); ich.punkte += 27; data = Object.assign({ ok: true, verkauft: args.p_ding, erloes: 27 }, ich); }
       else if (name === "spiel_fund_heben") data = window.__fundAntwort || { ok: true, fund: "erz" };
       else if (name === "spiel_bauen") { if (args.p_was === "reparatur") { ich.dorf.schmiede.lp = 20; ich.vorraete.erz -= 1; data = Object.assign({ ok: true, gebaut: "reparatur" }, ich); }
         else { const st = ((ich.dorf || {})[args.p_was] || {}).stufe || 0; ich.dorf = Object.assign({}, ich.dorf, { [args.p_was]: { stufe: st + 1, lp: 20 * (st + 1) } }); data = Object.assign({ ok: true, gebaut: args.p_was, stufe: st + 1 }, ich); } }
@@ -117,6 +126,7 @@ const sage = (gut, was, zusatz) => {
         data = { ok: true, zauber: args.p_zauber, schaden: R[1], abgewehrt: 0, mauer_riss: R[2], dauer: R[3], kaputt: false, lohn: 1,
                  ziel: Object.assign({}, bea, { lp: bea.lp - R[1] }), ich_voll: Object.assign({}, ich) };
       }
+      else if (name === "spiel_fusion") { window.__fusionArgs = args; const fr = { feuerfuchs: ["fuchs", "phoenix"] }[args.p_rezept]; const t = Object.assign({}, ich.tiere); fr.forEach((a) => delete t[a]); t[args.p_rezept] = { kraft: 38, stufe: 1 }; ich.tiere = t; ich.haustier = args.p_rezept; ich.haustier_leben = 38; ich.haustier_max = 38; ich.haustier_stufe = 1; ich.punkte -= 200; data = Object.assign({ ok: true, fusion: args.p_rezept }, ich); }
       else if (name === "spiel_treffer") data = { ok: true, zone: "koerper", schaden: 8, abgewehrt: 0, kaputt: false,
         ziel: Object.assign({}, bea, { lp: 42 }), ich: Object.assign({}, ich, { lp: 94 }), gegenwehr: 6,
         gegen_geschuetz: 4, gegen_tier: 2, tier: "fellmonster", lohn: 1, waffe: args.p_waffe };
@@ -133,6 +143,8 @@ const sage = (gut, was, zusatz) => {
     window.DMA_SPIEL_BRUECKE = window.DMA_SPIEL_BRUECKE || {};
     const altToast = window.DMA_SPIEL_BRUECKE.toast;
     window.DMA_SPIEL_BRUECKE.toast = (t) => { window.__hinweise.push(t); try { if (altToast) altToast(t); } catch (e) {} };
+    const altTon = window.DMA_SPIEL_BRUECKE.ton;
+    window.DMA_SPIEL_BRUECKE.ton = (n, l) => { window.DMA_TONLOG.push({ name: n, wann: Math.round(performance.now()), weg: "ersatz" }); try { if (altTon) altTon(n, l); } catch (e) {} };
     /* Ab Fassung 645 meldet sich das Spiel in einer eigenen Zeile. */
     window.__spielMeldungen = window.__hinweise;
   });
@@ -140,50 +152,68 @@ const sage = (gut, was, zusatz) => {
 
   const tick = (ms) => pg.waitForTimeout(ms);
   const mitte = (sel) => pg.evaluate((sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, sel);
-  const tippe = async (sel) => { const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
+  const tippe = async (sel) => { await pg.evaluate((s) => { const e = document.querySelector(s); if (e) e.scrollIntoView({ block: "nearest" }); }, sel); const m = await mitte(sel); if (!m) return false; await pg.touchscreen.tap(m.x, m.y); await tick(250); return true; };
 
   const seite = (chat) => pg.evaluate((c) => { const k = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + c + '"] .lc-kreis'); if (!k) return null; const r = k.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, chat);
 
 
+  const meld = () => pg.evaluate(() => window.__hinweise.filter((h) => !/Tagesgeschenk|Übungen auf der Seite/.test(h)).slice(-1)[0] || "");
 
 
+  const zuletzt = () => pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
 
-  console.log("\nIM LADEN\n");
-  await pg.evaluate(() => { window.__ich.level = 7; window.DMA_SPIEL.menue("waffen"); });
-  await tick(300);
-  const la = await pg.evaluate(() => { const z = (d) => { const b = document.querySelector('#spPanel [data-d="' + d + '"]'); if (b) return (b.disabled ? "zu:" : "auf:") + b.textContent.trim();
-    const zeile = [...document.querySelectorAll("#spPanel .sp-zeile")].find((r) => r.textContent.indexOf(d === "nudelholz" ? "Nudelholz" : "Kuckucksuhr") >= 0); return zeile ? "zu:" + zeile.querySelector("button").textContent : "fehlt"; };
-    return { wurst: z("weisswurst"), holz: z("nudelholz"), uhr: z("kuckucksuhr") }; });
-  sage(/auf:.*85 Punkte/.test(la.wurst) && /ab Level 8/.test(la.holz) && /ab Level 10/.test(la.uhr), "Level 7: Weißwurst-Bumerang kaufbar, Nudelholz ab Lv 8, Kuckucksuhr ab Lv 10", JSON.stringify(la));
-  await pg.evaluate(() => { const p = document.getElementById("spPanel"); if (p) p.hidden = true; });
-
-  console.log("\nIM WAFFENRAD\n");
-  await pg.evaluate(() => { window.__ich.waffen = window.__ich.waffen.concat(["weisswurst", "nudelholz", "kuckucksuhr"]); const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.ich = window.__ich; S.waffe = P.slots()[0]; S.rad = 0; P.schnellZeichnen(true); });
-  await tick(300);
-  /* Ab Fassung 719 (Funk 165): im kleinen Ring ein Feld je Bereich; die Kuckucksuhr-Bombe liegt bei „Minen & Bomben“. */
-  const rad = await pg.evaluate(() => { const f = (b) => document.querySelector('.sp-rad-voll .sp-ring-feld[data-b="' + b + '"]');
-    return { namen: [...document.querySelectorAll(".sp-rad-voll .sp-ring-feld")].map((t) => t.dataset.b).join(","), meister: f("meister") ? getComputedStyle(f("meister")).getPropertyValue("--klasse").trim() : "", bombe: f("fallen") ? f("fallen").dataset.w : "" }; });
-  sage(/meister/.test(rad.namen) && rad.meister === "#b8860b" && rad.bombe === "kuckucksuhr", "eigener Bereich „Meister“ im Ring (goldfarben), die Kuckucksuhr-Bombe bei „Minen & Bomben“", JSON.stringify(rad));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.rad = null; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-
-  console.log("\nFLUG UND EINSCHLAG\n");
-  const flug = await pg.evaluate(() => {
-    const aus = {};
-    ["weisswurst", "nudelholz", "kuckucksuhr"].forEach((w) => {
-      const dauer = window.DMA_SPIEL.pruef.geschossZeigen("ich", "bea", w, 0, 0);
-      const g = document.querySelector(".sp-geschoss.sp-g-" + w);
-      aus[w] = { svg: !!(g && g.querySelector("svg path, svg rect")), dauer };
-    });
-    return aus;
+  await pg.evaluate(() => {
+    const ich = window.__ich, jetzt = Date.now();
+    ich.level = 12; ich.punkte = 900;
+    ich.dorf = { muehle: { stufe: 2, lp: 40 }, baeckerei: { stufe: 2, lp: 40 }, schule: { stufe: 1, lp: 20 }, rathaus: { stufe: 3, lp: 60 }, schmiede: { stufe: 1, lp: 0 },
+                 kuhstall: { stufe: 1, lp: 20 }, brauerei: { stufe: 2, lp: 40 } };
+    ich.werk = {}; ich.volk = { arbeiter: 20, ritter: 0, quote: 80, berufe: { bauer: 2, mueller: 1 } };
+    ich.dorf_ab = new Date(jetzt - 3600000).toISOString();
+    window.__extra = Object.assign({}, window.__extra || {}, { spiel_markt_preise: () => ({ ok: true, preise: {} }), spiel_angebote_liste: () => ({ ok: true, angebote: [] }) });
+    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false; S.dorfTeil = ""; S.dorfWahl = "";
+    try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
+    window.__hinweise.length = 0;
+    window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
-  sage(flug.weisswurst.svg && flug.nudelholz.svg && flug.kuckucksuhr.svg, "jede Meisterwaffe fliegt mit eigener Zeichnung", JSON.stringify(flug));
-  await tick(1000);
-  const kk = await pg.evaluate(() => ({ kuckuck: document.querySelectorAll(".sp-kuckuck").length, gross: document.querySelectorAll(".sp-einschlag-gross").length }));
-  sage(kk.kuckuck >= 1, "die Kuckucksuhr ruft beim Einschlag „Kuckuck!“", JSON.stringify(kk));
-  await pg.screenshot({ path: "/tmp/claude-0/p-664.png" });
 
-  sage(konsolenFehler.length === 0, "keine Fehler in der Konsole", konsolenFehler.slice(0, 3).join(" | "));
-  console.log("\n" + (fehler ? "Fassung 664: " + fehler + " rot." : "Fassung 664 auf dem Telefon: alles grün.") + "\n");
+  await pg.evaluate(() => { try { localStorage.removeItem("dma_spiel_leiste"); } catch (e) {} const S = window.DMA_SPIEL.pruef.zustand();
+    S.ich = Object.assign({}, S.ich, { mana: 60, tiere: Object.assign({}, S.ich.tiere, { regenbogendrache: { kraft: 16, stufe: 3 }, wolpertinger: { kraft: 40, stufe: 1 } }), haustier: "wolpertinger", flugtier: "regenbogendrache" });
+    S.faehig = { art: "regenbogendrache", bereitBis: 0 }; S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await tick(600);
+  const reihe = () => pg.evaluate(() => [...document.querySelectorAll(".sp-schnell .sp-s-reihe > button")].map((e) => e.dataset.s));
+
+  console.log("\nDAS LEERE FELD\n");
+  let r = await pg.evaluate(() => { const b = document.querySelector(".sp-s-faehig"); if (!b) return null; const s = b.querySelector("svg").getBoundingClientRect(), k = b.getBoundingClientRect();
+    return { svgW: Math.round(s.width), svgH: Math.round(s.height), drin: s.top >= k.top - 1 && s.bottom <= k.bottom + 1, title: b.title }; });
+  sage(r && r.svgW >= 18 && r.svgH >= 18 && r.drin, "Regenbogendrache ausgerüstet: das Tier ist im Feld zu sehen (vorher 0 px hoch = leeres Feld)", JSON.stringify(r));
+  await tippe(".sp-s-faehig"); await tick(300);
+  r = await pg.evaluate(() => ({ ziel: window.DMA_SPIEL.pruef.zustand().faehigZiel, an: document.querySelector(".sp-s-faehig").classList.contains("sp-an"), meld: window.__hinweise.slice(-1)[0] || "" }));
+  sage(r.ziel && r.an && /Regenbogenfeuer bereit/.test(r.meld), "ein Tipp: „Regenbogenfeuer bereit – tippe auf ein Gesicht“, das Feld leuchtet", JSON.stringify(r));
+  await tippe(".sp-s-faehig"); await tick(200);
+
+  console.log("\nLEISTE IM MENÜ ORDNEN\n");
+  const vorher = await reihe();
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = true; S.schnellReiter = "mehr"; S.blick = null; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  await tick(400);
+  r = await pg.evaluate(() => [...document.querySelectorAll(".sp-leiste-ed .sp-tasche small")].map((e) => e.textContent));
+  sage(r.length === 9 && /Superkraft/.test(r.join()) && /Tier-Fähigkeit/.test(r.join()), "im Menü „Mehr“: alle Felder der Leiste als große Kacheln mit Bild und Namen", JSON.stringify(r));
+  await tippe('.sp-leiste-ed [data-k="faehig"]');
+  await tippe('.sp-schnellmenue [data-s="leisteschieb"][data-r="-1"]');
+  await tippe('.sp-schnellmenue [data-s="leisteschieb"][data-r="-1"]');
+  await tick(200);
+  r = await pg.evaluate(() => ({ menue: [...document.querySelectorAll(".sp-leiste-ed .sp-tasche")].map((e) => e.dataset.k), gemerkt: JSON.parse(localStorage.getItem("dma_spiel_leiste") || "[]") }));
+  sage(r.menue.indexOf("faehig") === 2 && r.menue.indexOf("faehig") < r.menue.indexOf("trank") && r.menue.indexOf("faehig") < r.menue.indexOf("super"), "Tier-Fähigkeit zweimal nach links: jetzt vor Tränken und Superkraft", JSON.stringify(r.menue));
+  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(300);
+  const nach = await reihe();
+  const ohne = (l) => l.filter((x) => x !== "waffe" && x !== "mitspielen");
+  sage(JSON.stringify(ohne(nach)) === JSON.stringify(r.menue.map((k) => ({ taschen: null, heilen: "heilen", trank: "trankauf", super: "superkraft", faehig: "faehigkeit", kampf: "kampfkraft", zauber: "zauberrad", makro: "makro", repar: "reparieren" })[k]).filter((x) => x && nach.includes(x))), "unten steht die Leiste genauso", JSON.stringify({ vorher: ohne(vorher), nach: ohne(nach) }));
+  sage(r.gemerkt.join() === r.menue.join(), "die Reihenfolge ist auf dem Gerät gemerkt", JSON.stringify(r.gemerkt));
+  await pg.reload({ waitUntil: "domcontentloaded" });
+  await pg.waitForFunction(() => window.DMA_SPIEL && window.DMA_SPIEL.pruef, { timeout: 25000 });
+  r = await pg.evaluate(() => window.DMA_SPIEL.pruef.leisteReihe());
+  sage(r.indexOf("faehig") < r.indexOf("trank"), "nach dem Neuladen gilt sie weiter", JSON.stringify(r));
+  sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | "));
+  console.log("\nFassung 710 (Leiste): " + (fehler ? fehler + " rot." : "alles grün."));
   await br.close(); srv.close();
   process.exit(fehler ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(2); });
+})().catch((e) => { console.error(e); process.exit(1); });

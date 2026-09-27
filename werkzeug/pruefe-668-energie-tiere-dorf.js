@@ -201,8 +201,9 @@ const sage = (gut, was, zusatz) => {
   console.log("\nWAFFENRAD: EIGENER SEKTOR „ENERGIE“\n");
   await pg.evaluate(() => { window.__ich.waffen = window.__ich.waffen.concat(["doppellaser", "streulaser", "plasmastrahl", "kugelblitz"]); const Q = window.DMA_SPIEL.pruef, S = Q.zustand(); S.ich = window.__ich; S.waffe = Q.slots()[0]; S.rad = 0; Q.schnellZeichnen(true); });
   await tick(300);
-  const rad = await pg.evaluate(() => [...document.querySelectorAll(".sp-rad-voll .sp-rad-sektoren text.sp-rad-klasse")].map((t) => t.textContent).join(","));
-  sage(/Energie/.test(rad), "im Waffenrad gibt es den Sektor „Energie“", rad);
+  /* Ab Fassung 719: der kleine Ring hat ein Feld je Bereich. */
+  const rad = await pg.evaluate(() => [...document.querySelectorAll(".sp-rad-voll .sp-ring-feld")].map((t) => t.dataset.b).join(","));
+  sage(/energie/.test(rad), "im Waffenring gibt es den Bereich „Energie“", rad);
   await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.rad = null; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
 
   console.log("\nTIERE, FUSIONEN, MAUER, DORF\n");
