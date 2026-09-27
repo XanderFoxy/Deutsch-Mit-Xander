@@ -284,7 +284,7 @@
     "laserrot", "lasertreffer", "bonk", "krugklirr", "brezelknack", "wurstklatsch", "krautmatsch", "spaetzlesalve", "katapult4", "doenerklatsch",
     "mgsalve", "lasersalve", "monsterbiss", "drachenfeuer", "chihuahuaknurr", "bisszerren", "stachelstich", "fluegelschlag", "geschuetzfeuer",
     "zauberpuff", "zauberrad", "schmerzaumann", "schmerzaufrau", "schmerzautschmann", "schmerzautschfrau", "trankschluck", "gong", "geschenk", "kasse", "wischer", "explosion2", "eiknack", "huhnwurf", "huhntreffer", "axttreffer", "swoosh", "platsch",
-    "hundbellen", "fuchskeckern", "babyfuchs", "einhorn", "phoenix", "feenzauber", "monsterbiss2", "drachenpuste", "erdbeben", "orkan", "brezelknack", "muecken", "kaffeeklatsch", "hexenschuss", "gartenzwerg", "stempel", "spitzhacke", "kuhmuh", "kampfauf", "kampfzu"];
+    "hundbellen", "fuchskeckern", "babyfuchs", "einhorn", "phoenix", "feenzauber", "monsterbiss2", "drachenpuste", "erdbeben", "orkan", "brezelknack", "muecken", "kaffeeklatsch", "hexenschuss", "gartenzwerg", "stempel", "spitzhacke", "kuhmuh"];
   function klangKontext() {
     if (KLANG.ctx) return KLANG.ctx;
     var AC = window.AudioContext || window.webkitAudioContext;
@@ -1961,45 +1961,6 @@
     try { a = JSON.parse(localStorage.getItem("dma_spiel_leiste_aus") || "null"); } catch (e) {}
     return Array.isArray(a) ? a.filter(function (k) { return LEISTE_NAMEN[k] && k !== "taschen"; }) : [];
   }
-  /* ---------------------------------------------------------------
-     FASSUNG 754 — DAS KAMPF-SYMBOL IN DER LEISTE
-     XANDER (Funk 181): „das will im Prinzip eigentlich nur ein kampfsymbol und ein Dorf Symbol haben ja dass wir wenn wir
-     auf das kampfsymbol Klicken sich diese Elemente erweitern in der Leiste … diese fünf Taschen die für den Kampf relevant
-     sind … wenn man auf das Camp Symbol klickt dann ist sofort auch die primäre Wasser aktiv weil man dadurch in den Kampf
-     geht … und das Dorf ist trotzdem noch als letztes Symbol da … oder das kampfsymbol rutscht … nach oben rechts neben das
-     bürgermenü so dass es praktisch die Überschrift darstellt für die unteren Elemente und immer dann wenn man es noch mal
-     klickt rutscht es wieder nach unten und schließt diese Taschen".
-     Außerhalb des Kampfes: Controller, Kampf-Symbol (gekreuzte Schwerter), Dorf. Ein Tipp aufs Kampf-Symbol: Schwert-Klang,
-     die Taschen (Primär, Sekundär, Tier, Heilen, Tränke …) klappen auf, die Primärwaffe ist angelegt, und das Symbol rutscht
-     hoch neben das Menü (☰) als Überschrift. Ein Tipp dort: es rutscht zurück, die Waffe wird eingesteckt, die Taschen
-     schließen. Wer schon kämpft (Waffe, Zauber oder Rad offen), sieht die Taschen ohnehin. Abschaltbar unter „Leiste
-     unten ordnen“ (dann ist alles wie früher immer offen). */
-  var KAMPF_TASCHEN = ["taschen", "faehig", "heilen", "trank", "super", "kampf", "repar"];
-  function kampfSymbolAn() { try { return localStorage.getItem("dma_spiel_kampfsymbol") !== "0"; } catch (e) { return true; } }
-  function kampfLeisteOffen() { return !kampfSymbolAn() || !!S.kampfLeiste || !!S.waffe || !!S.zauber || ringOffen(); }
-  function kampfSymbolSvg() {
-    return '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 3.5 L12.5 12.5 M16.5 3.5 L7.5 12.5" stroke="#dfe6ec" stroke-width="2" stroke-linecap="round"/>'
-      + '<path d="M3.5 3.5 L3.2 2.2 L4.6 2.6 Z M16.5 3.5 L16.8 2.2 L15.4 2.6 Z" fill="#fff"/>'
-      + '<path d="M10.6 14.4 L14.4 10.6 M9.4 10.6 L5.6 14.4" stroke="#c9a46a" stroke-width="2.2" stroke-linecap="round"/>'
-      + '<path d="M13.2 13.2 L16.6 16.6 M6.8 13.2 L3.4 16.6" stroke="#7a4a22" stroke-width="2.4" stroke-linecap="round"/>'
-      + '<circle cx="16.9" cy="16.9" r="1.3" fill="#c9a46a"/><circle cx="3.1" cy="16.9" r="1.3" fill="#c9a46a"/></svg>';
-  }
-  function kampfUmschalten(auf) {
-    S.kampfWechsel = Date.now();
-    if (auf) {
-      S.kampfLeiste = true;
-      var erste = slots()[0];
-      if (S.graben) grabenUmschalten(false);
-      if (erste) { S.waffe = erste; S.rad = null; }
-      ton("kampfauf", 0.5);
-      hinweis(erste ? "⚔️ Kampf: " + WAFFEN[erste].name + " in der Hand – tippe auf ein Gesicht." : "⚔️ Kampf – lege im Menü eine Waffe in die erste Tasche.");
-    } else {
-      S.kampfLeiste = false; S.waffe = ""; S.zauber = ""; S.trankAuf = false; ringSchliessen();
-      ton("kampfzu", 0.5);
-      hinweis("🕊️ Waffe eingesteckt.");
-    }
-    zeichnen(); panelAuffrischen();
-  }
   function leisteBild(k) {
     var b = {
       taschen: '<path d="M5 8 H15 L16 17 H4 Z" fill="#b07a45"/><path d="M7.5 8 V6.5 a2.5 2.5 0 0 1 5 0 V8" fill="none" stroke="#6b4521" stroke-width="1.5"/>',
@@ -2026,9 +1987,7 @@
       + (aus.length ? '<div class="sp-sm-liste sp-leiste-plus"><span class="sp-sm-klein">Weitere:</span>' + aus.map(function (k) {
           return '<button type="button" data-s="leisteplus" data-k="' + k + '" title="' + LEISTE_NAMEN[k] + ' wieder in die Leiste">' + leisteBild(k) + "<b>+</b> " + LEISTE_NAMEN[k] + "</button>";
         }).join("") + "</div>" : "")
-      + '<p class="sp-sm-klein">Was gerade nicht gebraucht wird (Tränke ohne Trank, Reparieren ohne Schaden), ist unten nicht zu sehen – sein Platz bleibt gemerkt.</p>'
-      + '<div class="sp-sm-liste sp-kampfsymbol-wahl"><button type="button" data-s="kampfsymbolan" class="' + (kampfSymbolAn() ? "sp-an" : "") + '">' + kampfSymbolSvg()
-      + " Kampf-Symbol: " + (kampfSymbolAn() ? "an – die Kampf-Taschen klappen erst beim Tipp darauf auf" : "aus – die Kampf-Taschen sind immer offen") + "</button></div>";
+      + '<p class="sp-sm-klein">Was gerade nicht gebraucht wird (Tränke ohne Trank, Reparieren ohne Schaden), ist unten nicht zu sehen – sein Platz bleibt gemerkt.</p>';
   }
   function faehigKnopf() {
     var f = faehigStand();
@@ -3743,7 +3702,7 @@
       if (form.offsetParent !== eltern) { var er = eltern.getBoundingClientRect(), fr = form.getBoundingClientRect(); unten = er.bottom - fr.top + 4; }
       schnellEl.style.bottom = Math.max(0, Math.round(unten)) + "px";
     } catch (e) {}
-    var ich = S.ich, teile = [], s = slots(), kampfKopf = "";
+    var ich = S.ich, teile = [], s = slots();
     /* FASSUNG 655 — XANDER: „Der Gaming Controller bedeutet doch schon
        spielen … Wenn der Gaming Controller angeschaltet ist, dann leuchtet
        er schon grün … über dem Controller im Burger Menü, was dann alles
@@ -3815,18 +3774,8 @@
         + '" data-s="makro" title="' + MAKROS[S.makro] + ' (belegen: Menü → Mehr → Letzter Knopf)">' + makroSvg(S.makro) + "</button>");
       if (reparaturNoetig(ich)) feld.repar = ('<button type="button" class="sp-s-repar" data-s="reparieren" title="Alle Waffen reparieren (15 Punkte)">'
         + '<svg viewBox="0 0 20 20"><path d="M13.5 2.5 a4 4 0 0 0 -4.8 5.3 L2.8 13.7 a1.8 1.8 0 0 0 2.5 2.5 L11.2 10.3 a4 4 0 0 0 5.3 -4.8 L14 8 L12 6 Z" fill="#cfd6de" stroke="#5b636c" stroke-width="1"/></svg></button>');
-      var leisteWeg = leisteAus(), kampfAuf = kampfLeisteOffen(), frisch = Date.now() - (S.kampfWechsel || 0) < 700;
-      /* FASSUNG 754 — zu: statt der Kampf-Taschen steht an der Stelle der ersten Tasche das Kampf-Symbol. */
-      var symbolDa = false;
-      leisteReihe().forEach(function (k) {
-        if (!feld[k] || leisteWeg.indexOf(k) >= 0) return;
-        if (!kampfAuf && KAMPF_TASCHEN.indexOf(k) >= 0) {
-          if (!symbolDa) { symbolDa = true; teile.push('<button type="button" class="sp-s-kampfsymbol' + (frisch ? " sp-kampf-runter" : "") + '" data-s="kampfsymbol" title="Kampf – Taschen öffnen, Primärwaffe anlegen">' + kampfSymbolSvg() + "</button>"); }
-          return;
-        }
-        teile.push(feld[k]);
-      });
-      if (kampfAuf && kampfSymbolAn()) kampfKopf = '<button type="button" class="sp-s-kampfkopf' + (frisch ? " sp-kampf-hoch" : "") + '" data-s="kampfsymbol" title="Kampf beenden – Waffe einstecken, Taschen schließen">' + kampfSymbolSvg() + "</button>";
+      var leisteWeg = leisteAus();
+      leisteReihe().forEach(function (k) { if (feld[k] && leisteWeg.indexOf(k) < 0) teile.push(feld[k]); });
       /* FASSUNG 719 — „weitere Sachen wenn ich möchte per Pluszeichen hinzufügen": ist etwas herausgenommen, steht am Ende ein kleines +. */
       if (leisteWeg.length) teile.push('<button type="button" class="sp-s-plus" data-s="leisteplusmenue" title="Weitere Felder in die Leiste holen">'
         + '<svg viewBox="0 0 20 20"><path d="M10 4 V16 M4 10 H16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>');
@@ -3849,7 +3798,7 @@
     if (fundKnopfHtml()) teile.push('<button type="button" class="sp-s-fund" data-s="fund" title="Zeigen, wo das Fundstück liegt">' + fundSvg() + "</button>");
     var burger = '<button type="button" class="sp-s-burger sp-s-menue' + (S.schnellMenue ? " sp-an" : "") + '" data-s="klappe" title="Spielmenü: Waffen, Heilen, Tiere, Mehr">'
       + '<svg viewBox="0 0 20 20"><path d="M4 6 H16 M4 10 H16 M4 14 H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
-    var html = burger + kampfKopf + '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (ringOffen() && ich.mitspielen ? ringHtml() : "")
+    var html = burger + '<div class="sp-s-reihe">' + teile.join("") + "</div>" + (S.schnellMenue ? schnellMenueHtml() : "") + (ringOffen() && ich.mitspielen ? ringHtml() : "")
       + (S.wwahl && ich.mitspielen ? werkzeugWahlHtml() : "") + (S.trankAuf && ich.mitspielen ? trankWahlHtml() : "");
     if (sofort !== true && schnellGesperrt()) { clearTimeout(S.schnellNach); S.schnellNach = setTimeout(schnellZeichnen, 380); return; }
     S.schnellDruck = 0;
@@ -4765,11 +4714,6 @@
         trinken("mana");
       }).catch(function () { hinweis("🪙 Das ging gerade nicht."); });
       return;
-    } else if (s === "kampfsymbol") {
-      kampfUmschalten(!kampfLeisteOffen());
-    } else if (s === "kampfsymbolan") {
-      try { localStorage.setItem("dma_spiel_kampfsymbol", kampfSymbolAn() ? "0" : "1"); } catch (e) {}
-      S.kampfLeiste = false; ton("holzklopf", 0.2);
     } else if (s === "leistewahl") {
       S.leisteWahl = k.dataset.k; ton("holzklopf", 0.2);
     } else if (s === "leisteaus" || s === "leisteplus") {

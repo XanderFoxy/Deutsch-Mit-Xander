@@ -2742,20 +2742,3 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-schnell .sp-schnellmenue .sp-dl-rahmen .sp-dl-ortsschild, .sp-dl-ortsschild { max-width: calc(100% - 166px); }
 .sp-dl-ortsschild b { max-width: 100%; box-sizing: border-box; }
 .sp-dl-ortsschild-leer b { padding: 1px 6px; }
-
-/* FASSUNG 754 — Funk 181: das Kampf-Symbol. Zu: steht in der Leiste an der Stelle der ersten Tasche. Auf: rutscht hoch neben
-   das Menü (☰) als Überschrift der Kampf-Taschen. Die Bewegung dauert so lang wie der Schwert-Klang (auf 0,4 s, zu 0,25 s). */
-.sp-schnell .sp-s-kampfsymbol, .sp-schnell .sp-s-kampfkopf { display: flex; align-items: center; justify-content: center; padding: 0; min-width: 36px; width: 36px;
-  border-radius: 9px; background: linear-gradient(180deg, #5a2a22, #3a1a16); box-shadow: 0 0 0 1.5px #c9a46a inset; color: #fff; }
-.sp-schnell .sp-s-kampfsymbol { height: 34px; }
-.sp-schnell .sp-s-kampfsymbol svg, .sp-schnell .sp-s-kampfkopf svg { width: 24px; height: 24px; display: block; }
-.sp-schnell .sp-s-kampfkopf { position: absolute; left: 44px; bottom: calc(100% + 4px); height: 30px; pointer-events: auto;
-  background: linear-gradient(180deg, #8a2f22, #5a1a14); box-shadow: 0 0 0 2px #e8b923, 0 2px 8px rgba(0, 0, 0, .35); }
-.sp-schnell .sp-s-kampfkopf svg { width: 21px; height: 21px; }
-.sp-schnell .sp-s-kampfkopf.sp-kampf-hoch { animation: spKampfHoch .4s cubic-bezier(.2, .9, .3, 1.15) both; }
-.sp-schnell .sp-s-kampfsymbol.sp-kampf-runter { animation: spKampfRunter .25s ease-out both; }
-@keyframes spKampfHoch { from { transform: translate(-8px, 38px) scale(1.1); } 70% { transform: translate(0, -3px) scale(1.04); } to { transform: none; } }
-@keyframes spKampfRunter { from { transform: translate(8px, -38px) scale(.92); } to { transform: none; } }
-.sp-kampfsymbol-wahl button { display: inline-flex; align-items: center; gap: 6px; text-align: left; }
-.sp-kampfsymbol-wahl svg { width: 20px; height: 20px; flex: none; border-radius: 5px; background: #5a2a22; padding: 1px; }
-@media (prefers-reduced-motion: reduce) { .sp-schnell .sp-s-kampfkopf.sp-kampf-hoch, .sp-schnell .sp-s-kampfsymbol.sp-kampf-runter { animation: none; } }

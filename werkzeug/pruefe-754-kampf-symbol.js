@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE — FASSUNG 692: DORF-MENÜ BLEIBT STEHEN, TASCHEN MODULAR, MANA
+   SONDE — FASSUNG 754: DAS KAMPF-SYMBOL IN DER LEISTE (Funk 181)
    ---------------------------------------------------------------------
-   XANDER: „Das Dorf spinnt manchmal rum … wenn man aus dem Mehr-Menü
-   dahin scrollen will, dann springt es meistens zurück … Man kriegt ein
-   Haus, dann wählt sich das sofort wieder ab" · „den Zauberstab unten
-   kannst du eigentlich wegmachen … wie viele Taschen sichtbar sind und
-   mit einem + hinzufügen … wieder wegnehmen" · „Es gibt keine Art,
-   generelles Mana zu kaufen … herstellen in der Brauerei".
+   XANDER (Funk 181): „das will im Prinzip eigentlich nur ein kampfsymbol
+   und ein Dorf Symbol haben ja dass wir wenn wir auf das kampfsymbol
+   Klicken sich diese Elemente erweitern in der Leiste … dann ist sofort
+   auch die primäre Wasser aktiv … das kampfsymbol rutscht … nach oben
+   rechts neben das bürgermenü so dass es praktisch die Überschrift
+   darstellt … und immer dann wenn man es noch mal klickt rutscht es
+   wieder nach unten und schließt diese Taschen".
+   Geprüft auf einem Android-Telefon (360 px, echte Fingertipps).
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -41,7 +43,7 @@ const sage = (gut, was, zusatz) => {
   const pg = await ctx.newPage();
   const konsolenFehler = [];
   pg.on("pageerror", (e) => konsolenFehler.push(String(e.message || e)));
-  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); /* ab 754: Kampf-Symbol aus = die ganze Leiste offen (das Kampf-Symbol prüft Sonde 754) */ localStorage.setItem("dma_spiel_kampfsymbol", "0"); } catch (e) {} });
+  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
   await pg.goto("http://127.0.0.1:" + srv.address().port + "/index.html", { waitUntil: "domcontentloaded" });
   await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.DMA_PRUEF && window.DMA_SPIEL, { timeout: 25000 });
 
@@ -139,6 +141,8 @@ const sage = (gut, was, zusatz) => {
     window.DMA_SPIEL_BRUECKE = window.DMA_SPIEL_BRUECKE || {};
     const altToast = window.DMA_SPIEL_BRUECKE.toast;
     window.DMA_SPIEL_BRUECKE.toast = (t) => { window.__hinweise.push(t); try { if (altToast) altToast(t); } catch (e) {} };
+    const altTon = window.DMA_SPIEL_BRUECKE.ton;
+    window.DMA_SPIEL_BRUECKE.ton = (n, l) => { window.DMA_TONLOG.push({ name: n, wann: Math.round(performance.now()), weg: "ersatz" }); try { if (altTon) altTon(n, l); } catch (e) {} };
     /* Ab Fassung 645 meldet sich das Spiel in einer eigenen Zeile. */
     window.__spielMeldungen = window.__hinweise;
   });
@@ -155,132 +159,117 @@ const sage = (gut, was, zusatz) => {
 
 
   const zuletzt = () => pg.evaluate(() => window.__hinweise.slice(-1)[0] || "");
+
   await pg.evaluate(() => {
     const ich = window.__ich, jetzt = Date.now();
-    ich.level = 10; ich.punkte = 500; ich.mana = 60;
-    ich.dorf = { baeckerei: { stufe: 1, lp: 20 }, huehnerstall: { stufe: 1, lp: 20, stand: new Date(jetzt - 2 * 900000 - 5000).toISOString() },
-                 kuhstall: { stufe: 1, lp: 20, stand: new Date(jetzt - 1300000).toISOString() }, krankenhaus: { stufe: 1, lp: 0 },
-                 schmiede: { stufe: 1, lp: 20 }, labor: { stufe: 1, lp: 20 } };
-    ich.werk = { baeckerei: { ware: "brot", menge: 3, fertig: new Date(jetzt + 300000).toISOString() } };
-    ich.dorf_ab = new Date(jetzt - 5 * 3600000).toISOString();
-    ich.volk = { arbeiter: 12, ritter: 1, quote: 90 };
-    ich.vorraete = Object.assign({}, ich.vorraete, { mehl: 6, ei: 2, milch: 1, fisch: 2, quarz: 4, holz: 3, silizium: 1, gold: 1, chip: 2 });
-    ich.waffen_stufe = { lasersalve: 2 };
-    const bea = window.DMA_SPIEL.pruef.zustand().stand["11111111-1111-4111-8111-111111111111"];
-    bea.dorf = { baeckerei: { stufe: 1, lp: 20 }, schule: { stufe: 1, lp: 20 }, muehle: { stufe: 1, lp: 20, gepl: new Date(jetzt - 60000).toISOString() } };
-    bea.ritter = 2;
-    window.__extra = Object.assign({}, window.__extra || {}, {
-      spiel_markt_preise: () => ({ ok: true, preise: {} }),
-      spiel_angebote_liste: () => ({ ok: true, angebote: [] }),
-      spiel_pluendern: (a) => { ich.mana -= 10; ich.vorraete = Object.assign({}, ich.vorraete, { brot: (ich.vorraete.brot || 0) + 2 }); return Object.assign({}, ich, { ok: true, gebaeude: a.p_gebaeude, an: "Bea", beute: { brot: 2 }, mana: 0, punkte_beute: 0, anteil: 25, schaden: 10 }); },
-      spiel_ritter: (a) => { ich.volk = Object.assign({}, ich.volk, { ritter: ich.volk.ritter + a.p_menge }); ich.punkte -= 40; return Object.assign({}, ich, { ok: true, ritter: ich.volk.ritter, preis: 40 }); },
-      spiel_melken: () => { ich.vorraete = Object.assign({}, ich.vorraete, { milch: ich.vorraete.milch + 1 }); ich.dorf.kuhstall.stand = new Date().toISOString(); return Object.assign({}, ich, { ok: true, menge: 1 }); },
-      spiel_ei_sammeln: () => { ich.vorraete = Object.assign({}, ich.vorraete, { ei: ich.vorraete.ei + 1 }); ich.dorf.huehnerstall.stand = new Date(Date.parse(ich.dorf.huehnerstall.stand) + 900000).toISOString(); return Object.assign({}, ich, { ok: true, menge: 1, rest: 0 }); },
-      spiel_holzen: (a) => { ich.vorraete = Object.assign({}, ich.vorraete, { holz: ich.vorraete.holz + 2 }); ich.acker = Object.assign({}, ich.acker, { ["w" + a.p_platz]: { ab: new Date().toISOString() } }); return Object.assign({}, ich, { ok: true, menge: 2, nest: false }); },
-      spiel_angeln: () => { ich.vorraete = Object.assign({}, ich.vorraete, { fisch: ich.vorraete.fisch + 1 }); return Object.assign({}, ich, { ok: true, fang: "fisch", menge: 1 }); }
-    });
-    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = Object.assign({}, ich); S.schnellMenue = false; S.graben = false;
+    ich.level = 12; ich.punkte = 900;
+    ich.dorf = { muehle: { stufe: 2, lp: 40 }, baeckerei: { stufe: 2, lp: 40 }, schule: { stufe: 1, lp: 20 }, rathaus: { stufe: 3, lp: 60 }, schmiede: { stufe: 1, lp: 0 },
+                 kuhstall: { stufe: 1, lp: 20 }, brauerei: { stufe: 2, lp: 40 } };
+    ich.werk = {}; ich.volk = { arbeiter: 20, ritter: 0, quote: 80, berufe: { bauer: 2, mueller: 1 } };
+    ich.dorf_ab = new Date(jetzt - 3600000).toISOString();
+    window.__extra = Object.assign({}, window.__extra || {}, { spiel_markt_preise: () => ({ ok: true, preise: {} }), spiel_angebote_liste: () => ({ ok: true, angebote: [] }) });
+    ich.vorraete = Object.assign({}, ich.vorraete, { brot: 5, fisch: 1 });
+    const S = window.DMA_SPIEL.pruef.zustand(); S.ich = JSON.parse(JSON.stringify(ich)); S.schnellMenue = false; S.graben = false; S.dorfTeil = ""; S.dorfWahl = "";
     try { localStorage.removeItem("dma_spiel_makro"); } catch (e) {}
     window.__hinweise.length = 0;
     window.DMA_SPIEL.pruef.schnellZeichnen(true);
   });
+  /* Die Uhr der Seite verstellen: der Zug fährt nach Date.now(). */
+  await pg.evaluate(() => { const echt = Date.now.bind(Date); window.__echt = echt; window.__versatz = 0; Date.now = () => echt() + window.__versatz;
+    const S = window.DMA_SPIEL.pruef.zustand(); S.wetterTest = { code: 1, tag: true, temp: 18, ort: "Test" }; });
+  const setzeT = (z) => pg.evaluate((z) => { const echt = window.__echt(); window.__versatz = (z - (echt / 1000) % 60) * 1000; }, z);
+  const P = await pg.evaluate(() => window.DMA_SPIEL.pruef.bahn.plan());
+  const bahn = (sel) => pg.evaluate(() => {
+    const svg = document.querySelector("svg.sp-dl-bahn"); if (!svg) return null;
+    const zug = svg.querySelector(".sp-bz-zug"), lok = zug.querySelector(".sp-bz-f"), tr = lok.getAttribute("transform") || "";
+    const m = tr.match(/translate\(([-\d.]+) ([-\d.]+)\)/);
+    const rad = zug.querySelectorAll(".sp-bz-rad")[2], lr = zug.querySelector(".lc-lok-rad-2");
+    const rauch = [...svg.querySelectorAll(".sp-bz-rauch circle")].filter((c) => Number(c.getAttribute("r")) > 0 && Number(c.getAttribute("opacity")) > .02).length;
+    return { da: zug.style.display !== "none", x: m ? Number(m[1]) : null, y: m ? Number(m[2]) : null, rad: rad ? rad.getAttribute("transform") : "", lokRad: lr ? lr.style.transform : "", rauch: rauch, teile: zug.querySelectorAll(".sp-bz-f").length };
+  });
+  const toene = (ab) => pg.evaluate((ab) => window.DMA_TONLOG.filter((t) => t.wann >= ab).map((t) => [t.name, t.wann - ab]), ab);
+  const jetztMs = () => pg.evaluate(() => Math.round(performance.now()));
+
+  const leiste = () => pg.evaluate(() => {
+    const r = document.querySelector(".sp-schnell .sp-s-reihe");
+    const k = [...(r ? r.children : [])].map((b) => (b.className.match(/sp-s-[a-z]+/) || [""])[0]);
+    const box = (s) => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, w: b.width }; };
+    const S = window.DMA_SPIEL.pruef.zustand();
+    return { k, waffe: S.waffe, kopf: box(".sp-s-kampfkopf"), burger: box(".sp-s-burger"), symbol: box(".sp-s-kampfsymbol"),
+      hoch: !!document.querySelector(".sp-s-kampfkopf.sp-kampf-hoch"), runter: !!document.querySelector(".sp-s-kampfsymbol.sp-kampf-runter"), slots: window.DMA_SPIEL.pruef.st ? 0 : 0 };
+  });
+  await pg.evaluate(() => { try { localStorage.removeItem("dma_spiel_kampfsymbol"); } catch (e) {} const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = ""; S.kampfLeiste = false; S.schnellMenue = false; S.graben = false; P.schnellZeichnen(true); });
   await tick(400);
 
+  console.log("\nAUSSERHALB DES KAMPFES\n");
+  let L = await leiste();
+  sage(L.k.indexOf("sp-s-kampfsymbol") >= 0 && L.k.indexOf("sp-s-makro") >= 0, "in der Leiste: Kampf-Symbol und Dorf", L.k.join(" "));
+  sage(!L.k.some((x) => /sp-s-(waffe|heil|trank|super|faehig|repar)$/.test(x)), "die Kampf-Taschen sind zu (keine Waffen, Heilen, Tränke, Superkraft)", L.k.join(" "));
+  sage(L.k.indexOf("sp-s-kampfsymbol") < L.k.indexOf("sp-s-makro"), "das Dorf steht hinter dem Kampf-Symbol");
+  sage(!L.kopf, "oben neben ☰ steht noch nichts");
+  const sym = await pg.evaluate(() => { const b = document.querySelector(".sp-s-kampfsymbol"); const r = b.getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return { svg: !!b.querySelector("svg"), oben: !!(e && e.closest(".sp-s-kampfsymbol")), emoji: /\p{Extended_Pictographic}/u.test(b.textContent) }; });
+  sage(sym.svg && !sym.emoji, "das Symbol ist gezeichnet (gekreuzte Schwerter), kein Emoji");
+  sage(sym.oben, "nichts liegt über dem Kampf-Symbol");
+  if (process.env.BILD) await (await pg.$(".sp-schnell")).screenshot({ path: process.env.BILD.replace(".png", "-zu.png") });
 
-  const Z = () => pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); const m = document.querySelector(".sp-schnellmenue");
-    return { wahl: S.dorfWahl || "", station: Boolean(document.querySelector(".sp-dl-station")), top: m ? Math.round(m.scrollTop) : -1 }; });
-  console.log("\nDORF: DIE STATION BLEIBT IM BLICK\n");
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(500);
-  await tippe('.sp-dorfland .sp-dl-haus[data-g="baeckerei"]');
-  const a0 = await Z(); await tick(2600); const a1 = await Z();
-  sage(a0.wahl === "baeckerei" && a0.station && a1.wahl === "baeckerei" && a1.station && a1.top === a0.top && a0.top > 0,
-    "Haus antippen: die Station geht auf und bleibt im Blick (kein Zurückspringen beim Neuzeichnen)", JSON.stringify([a0, a1]));
-  await pg.evaluate(() => { document.querySelector(".sp-schnellmenue").scrollTop = 180; });
-  await tick(2600);
-  const a2 = await Z();
-  sage(a2.top === 180, "selbst gescrollt: die Position bleibt nach mehreren Sekunden stehen", JSON.stringify(a2));
-  await pg.evaluate(() => { const m = document.querySelector(".sp-schnellmenue"); m.scrollTop = 0; });
-  await tippe('.sp-dorfland .sp-dl-haus[data-g="brauerei"]'); await tick(300);
-  const brau = await pg.evaluate(() => { const st = document.querySelector(".sp-dl-station"); return st ? st.textContent : ""; });
-  sage(/Brauen|Manatr/.test(brau) || /bauen/i.test(brau), "Brauerei-Station: Manatrank brauen (oder erst bauen)", brau.slice(0, 160));
-  await tippe('.sp-schnellmenue [data-s="blickzu"]'); await tick(300);
+  console.log("\nKAMPF-SYMBOL ANTIPPEN\n");
+  await pg.evaluate(() => { window.DMA_TONLOG.length = 0; });
+  let m = await mitte(".sp-s-kampfsymbol");
+  const t0 = await jetztMs();
+  await pg.touchscreen.tap(m.x, m.y); await tick(120);
+  L = await leiste();
+  const erste = await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); return (S.slots && S.slots[0]) || ""; });
+  sage(L.waffe && (!erste || L.waffe === erste), "die Primärwaffe ist sofort angelegt", L.waffe + " (erste Tasche " + (erste || "?") + ")");
+  sage(L.k.filter((x) => x === "sp-s-waffe").length >= 2 && L.k.indexOf("sp-s-heil") >= 0 && L.k.indexOf("sp-s-trank") >= 0, "die Kampf-Taschen sind offen: Primär, Sekundär, Heilen, Tränke", L.k.join(" "));
+  sage(L.k[L.k.length - 1] === "sp-s-makro" || L.k.slice(-2).indexOf("sp-s-makro") >= 0, "das Dorf ist trotzdem noch hinten da", L.k.join(" "));
+  sage(L.k.indexOf("sp-s-kampfsymbol") < 0, "das Symbol ist aus der Reihe verschwunden …");
+  sage(L.kopf && L.burger && Math.abs(L.kopf.t - L.burger.t) < 3 && L.kopf.l >= L.burger.r && L.kopf.l - L.burger.r < 12, "… und steht als Überschrift rechts neben ☰", JSON.stringify({ kopf: L.kopf, burger: L.burger }));
+  sage(L.hoch, "es rutscht hoch (Bewegung)");
+  const T1 = await toene(t0);
+  const auf = T1.find((x) => x[0] === "kampfauf");
+  sage(auf && auf[1] < 150, "Schwert-Klang beim Hochrutschen, sofort", JSON.stringify(T1));
+  const dauer = await pg.evaluate(() => { const e = document.querySelector(".sp-s-kampfkopf"); return e ? getComputedStyle(e).animationDuration : ""; });
+  sage(dauer === "0.4s", "die Bewegung dauert so lang wie der Klang (0,4 s)", dauer);
+  const frei = await pg.evaluate(() => { const b = document.querySelector(".sp-s-kampfkopf"); const r = b.getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!(e && e.closest(".sp-s-kampfkopf")); });
+  await tick(500);
+  const frei2 = await pg.evaluate(() => { const b = document.querySelector(".sp-s-kampfkopf"); const r = b.getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); const u = document.querySelector(".sp-s-burger").getBoundingClientRect(); return { oben: !!(e && e.closest(".sp-s-kampfkopf")), ueber: !(r.left >= u.right || r.right <= u.left || r.top >= u.bottom || r.bottom <= u.top), rechts: r.right <= window.innerWidth }; });
+  sage((frei || frei2.oben) && !frei2.ueber && frei2.rechts, "die Überschrift ist frei antippbar und überdeckt ☰ nicht", JSON.stringify(frei2));
+  if (process.env.BILD) await (await pg.$(".sp-schnell")).screenshot({ path: process.env.BILD.replace(".png", "-auf.png") });
 
-  console.log("\nTASCHEN UNTEN: MODULAR\n");
-  /* Seit 707 — XANDER (Funk 146): die winzigen + / − sind aus der Leiste raus; Taschen dazu, weg und ordnen geht im
-     Waffen-Menü (große Knöpfe). Unten stehen nur noch die Taschen selbst. */
-  const zaehl = () => pg.evaluate(() => ({ taschen: document.querySelectorAll(".sp-schnell .sp-s-slot").length, stab: Boolean(document.querySelector(".sp-schnell .sp-s-zauber")),
-    plusUnten: Boolean(document.querySelector('.sp-schnell .sp-s-reihe [data-s="slotplus"]')) }));
-  const t0 = await zaehl();
-  sage(t0.taschen === 2 && !t0.stab && !t0.plusUnten, "Leiste: 2 Taschen, kein Zauberstab, keine winzigen + / −", JSON.stringify(t0));
-  const waffenMenue = () => pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = true; S.schnellReiter = "waffen"; S.blick = null; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await waffenMenue(); await tick(300);
-  await tippe('.sp-taschen-knoepfe [data-s="slotplus"]'); await tick(250);
-  await tippe('.sp-taschen-knoepfe [data-s="slotplus"]'); await tick(250);
-  const t1 = await zaehl();
-  const waffen1 = await pg.evaluate(() => [...document.querySelectorAll(".sp-schnell .sp-s-slot")].map((b) => b.dataset.w));
-  sage(t1.taschen === 4 && new Set(waffen1).size === 4, "im Menü zweimal „+ Tasche“: vier Taschen, jede mit einer anderen Waffe", JSON.stringify(waffen1));
-  await tippe('.sp-taschen-knoepfe [data-s="slotminus"]'); await tick(250);
-  const t2 = await zaehl();
-  const gemerkt = await pg.evaluate(() => localStorage.getItem("dma_spiel_slotzahl"));
-  sage(t2.taschen === 3 && gemerkt === "3", "„− Tasche“ nimmt eine wieder weg; die Zahl bleibt gemerkt", JSON.stringify({ t2, gemerkt }));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.schnellMenue = false; window.DMA_SPIEL.pruef.schnellZeichnen(true); }); await tick(200);
-  const quer = await pg.evaluate(() => { const r = document.querySelector(".sp-schnell .sp-s-reihe"); return r.getBoundingClientRect().right <= innerWidth + 1; });
-  sage(quer, "die Leiste ragt nicht aus dem Bild");
-  /* FASSUNG 741 — XANDER (Funk 152): „man erkennt nicht was der Inhalt dieser Kachel ist oder dieser Tasche ist". */
-  const bildMg = await pg.evaluate(() => { const b = document.querySelector('.sp-schnell .sp-s-slot[data-w="mg"]'); return b ? { geraet: /viewBox="3 -14 40 28"/.test(b.innerHTML) } : null; });
-  sage(!bildMg || bildMg.geraet, "Tasche zeigt das Gerät (Maschinengewehr), nicht das Geschoss", JSON.stringify(bildMg));
-  await tippe('.sp-schnell .sp-s-slot[data-n="1"]'); await tick(120);
-  const schild = await pg.evaluate(() => { const e = document.getElementById("spNamenSchild"); if (!e) return null; const r = e.getBoundingClientRect();
-    const b = document.querySelector('.sp-schnell .sp-s-slot[data-n="1"]').getBoundingClientRect(); return { text: e.textContent, ueber: r.bottom <= b.top + 1, drin: r.left >= 0 && r.right <= innerWidth }; });
-  sage(schild && schild.text.length > 2 && schild.ueber && schild.drin, "Tipp auf eine Tasche: Namensschild darüber, ganz im Bild", JSON.stringify(schild));
-  /* FASSUNG 742 — XANDER (Walkie 273): „Wie sieht man das und wo findet man das wenn man die ganze Zeit z.B eingeloggt bleibt." */
-  const gesch = await pg.evaluate(() => { const g = JSON.parse(localStorage.getItem("dma_dorf_gemeldet") || "{}"); window.DMA_SPIEL.menue();
-    const z = (document.body.innerHTML.match(/🎁 (Heute abgeholt|Tagesgeschenk kommt)[^<]*/) || [""])[0]; window.DMA_SPIEL.schliessen && window.DMA_SPIEL.schliessen(); return { band: Object.keys(g).some((k) => /^g:\d{4}-\d\d-\d\d$/.test(k)), zeile: z }; });
-  sage(gesch.band && /Tag \d\/7 · nächstes in/.test(gesch.zeile), "Tagesgeschenk: als Meldung oben gemeldet, im Menü „heute abgeholt · nächstes in …“", JSON.stringify(gesch));
+  console.log("\nNOCHMAL ANTIPPEN\n");
+  m = await mitte(".sp-s-kampfkopf");
+  const t1 = await jetztMs();
+  await pg.touchscreen.tap(m.x, m.y); await tick(120);
+  L = await leiste();
+  sage(!L.waffe, "die Waffe ist eingesteckt", L.waffe);
+  sage(L.k.indexOf("sp-s-kampfsymbol") >= 0 && !L.kopf && !L.k.some((x) => /sp-s-(waffe|heil|trank)$/.test(x)), "das Symbol rutscht zurück, die Taschen sind zu", L.k.join(" "));
+  sage(L.runter, "es rutscht nach unten (Bewegung)");
+  const T2 = await toene(t1);
+  sage(T2.some((x) => x[0] === "kampfzu" && x[1] < 150), "Klang beim Einstecken, sofort", JSON.stringify(T2));
 
-  console.log("\nZAUBER ÜBER DEN MAKROKNOPF, MANA KAUFEN\n");
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.makro = "zauber"; S.ich.level = 12; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
-  await tippe('.sp-schnell [data-s="makro"]'); await tick(300);
-  const z1 = await pg.evaluate(() => ({ rad: Boolean(document.querySelector(".sp-schnell .sp-rad-voll, .sp-schnell .sp-zauberrad, .sp-schnell .sp-zrad")) || window.DMA_SPIEL.pruef.zustand().zrad, kauf: Boolean(document.querySelector('.sp-schnell [data-s="manakauf"]')) }));
-  sage(z1.rad && z1.kauf, "Makroknopf „Zauber“ öffnet das Zauberrad, darin „Manatrank kaufen“", JSON.stringify(z1));
-  await pg.evaluate(() => { window.__rufe.length = 0; window.__extra = window.__extra || {}; window.__extra.spiel_kaufen = (a, ich) => { ich.trank_mana = (ich.trank_mana || 0) + 1; ich.punkte -= 25; return Object.assign({}, ich, { ok: true }); };
-    window.__extra.spiel_trinken = (a, ich) => { ich.trank_mana -= 1; ich.mana = Math.min(100, (ich.mana || 0) + 50); return Object.assign({}, ich, { ok: true, trank: a.p_trank }); }; });
-  await pg.evaluate(() => document.querySelector('.sp-schnell [data-s="manakauf"]').click());
-  await tick(600);
-  const z2 = await pg.evaluate(() => window.__rufe.map((r) => r.name + ":" + (r.args.p_ding || r.args.p_trank || "")));
-  sage(z2.includes("spiel_kaufen:trank_mana") && z2.some((x) => /spiel_trinken:mana/.test(x)), "Manatrank kaufen: kauft und trinkt sofort", JSON.stringify(z2));
-  await pg.evaluate(() => { const S = window.DMA_SPIEL.pruef.zustand(); S.zrad = false; S.schnellMenue = true; S.schnellReiter = "heilen"; window.DMA_SPIEL.pruef.schnellZeichnen(true); });
+  console.log("\nWER SCHON KÄMPFT, SIEHT DIE TASCHEN\n");
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.kampfLeiste = false; S.waffe = "zwille"; P.schnellZeichnen(true); });
   await tick(200);
-  sage(await pg.evaluate(() => Boolean(document.querySelector('.sp-schnellmenue [data-s="manakauf"]'))), "auch im Reiter Heilen: „Manatrank kaufen“");
-  if (process.env.BILD) await pg.screenshot({ path: process.env.BILD + "-leiste.png" });
+  L = await leiste();
+  sage(L.k.indexOf("sp-s-waffe") >= 0 && L.kopf, "mit angelegter Waffe (z. B. übers Rad) ist die Leiste offen", L.k.join(" "));
 
-  console.log("\nEFFEKTE ZIEHEN BEIM PLATZWECHSEL MIT\n");
-  const umzug = await pg.evaluate(() => new Promise((ok) => {
-    window.DMA_PRUEFUNG.wirkung("sahne", "Bea", "Alex", {});
-    setTimeout(() => {
-      const vorher = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]');
-      const schicht = vorher && vorher.querySelector(':scope > [data-lc-fuer="bea"]');
-      const nrVorher = vorher ? vorher.dataset.lcPlatz : "";
-      /* Bea steht auf und setzt sich weiter nach hinten: jetzt ist Cem vor ihr. */
-      const leute = {
-        uebungspuppe: { id: "uebungspuppe", name: "Puppe", seit: 5000, gesehen: 9e15, buehne: true, bild: "" },
-        cem: { id: "cem", name: "Cem", seit: 6000, gesehen: 9e15, buehne: true, bild: "" },
-        bea: { id: "bea", name: "Bea", seit: 7000, gesehen: 9e15, buehne: true, bild: "" }
-      };
-      window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000, zuruecksetzen: true, leute: leute });
-      window.DMA_PRUEF.neuZeichnen();
-      setTimeout(() => {
-        const nachher = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="bea"]');
-        ok({ schicht: Boolean(schicht), nrVorher, nrNachher: nachher ? nachher.dataset.lcPlatz : "",
-             mitgezogen: Boolean(schicht && nachher && schicht.parentNode === nachher),
-             amAltenPlatz: Boolean(schicht && vorher && schicht.parentNode === vorher && vorher.dataset.lcId !== "bea") });
-      }, 300);
-    }, 300);
-  }));
-  sage(umzug.schicht && umzug.nrVorher !== umzug.nrNachher && umzug.mitgezogen && !umzug.amAltenPlatz,
-    "Sahne auf Bea, Bea wechselt den Platz: der Effekt zieht mit ihr um", JSON.stringify(umzug));
-  sage(konsolenFehler.length === 0, "keine Seitenfehler", konsolenFehler.join(" | ").slice(0, 300));
+  console.log("\nABSCHALTBAR\n");
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.waffe = ""; S.schnellMenue = true; S.blick = null; S.schnellReiter = "mehr"; P.schnellZeichnen(true); });
+  await tick(300);
+  const hat = await pg.evaluate(() => !!document.querySelector('[data-s="kampfsymbolan"]'));
+  sage(hat, "unter „Leiste unten ordnen“ gibt es den Schalter Kampf-Symbol");
+  await pg.evaluate(() => { const b = document.querySelector('[data-s="kampfsymbolan"]'); if (b) { b.scrollIntoView({ block: "center" }); } });
+  await tick(200);
+  m = await mitte('[data-s="kampfsymbolan"]');
+  if (m) { await pg.touchscreen.tap(m.x, m.y); await tick(250); }
+  await pg.evaluate(() => { const P = window.DMA_SPIEL.pruef, S = P.zustand(); S.schnellMenue = false; P.schnellZeichnen(true); });
+  await tick(200);
+  L = await leiste();
+  sage(L.k.indexOf("sp-s-kampfsymbol") < 0 && L.k.indexOf("sp-s-waffe") >= 0 && !L.kopf, "aus: alle Taschen immer offen wie früher, kein Symbol", L.k.join(" "));
+  await pg.evaluate(() => { try { localStorage.removeItem("dma_spiel_kampfsymbol"); } catch (e) {} });
+
+  sage(!konsolenFehler.length, "keine Seitenfehler", konsolenFehler.slice(0, 2).join(" | "));
   await br.close(); srv.close();
-  console.log(fehler ? "\n  " + fehler + " FEHLER" : "\n  alles gut");
+  console.log("\nFassung 754 (Kampf-Symbol): " + (fehler ? fehler + " rot." : "alles grün."));
   process.exit(fehler ? 1 : 0);
-})();
+})().catch((e) => { console.error(e); process.exit(2); });
