@@ -49,28 +49,32 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 745 — Halloween-Paket vorbereitet (Funk 139), Xander schaltet es frei",
+  stand: "Fassung 746 — Postfach wieder im alten Design (Funk 178)",
 
   inArbeit: [
-    { seit: "2026-09-27T06:48",
-      text: "Voller Sondenlauf 630–739 (läuft)" },
-    { seit: "2026-09-27T06:48",
+    { seit: "2026-09-27T07:28",
+      text: "Postfach Schritt für Schritt – Fragen stehen im Walkie" },
+    { seit: "2026-09-27T07:28",
+      text: "Dorf: Werkzeug-Knöpfe mit Bäumen/Tieren/Erz auf den Plätzen (Funk 178)" },
+    { seit: "2026-09-27T07:28",
+      text: "Strategie: Konter nach Leben, Ausdauer-EP, Niveau wählen (Funk 178)" },
+    { seit: "2026-09-27T07:28",
+      text: "Mehrere Charaktere (Walkie 290)" },
+    { seit: "2026-09-27T07:28",
       text: "Weihnachts-Paket (Schalter im Server schon da)" },
-    { seit: "2026-09-27T06:48",
-      text: "Zwei Charaktere / neu anfangen (Walkie 290)" },
-    { seit: "2026-09-27T06:48",
+    { seit: "2026-09-27T07:28",
       text: "Modulares Dorf, Verteidigung/Kaserne, Verträge – wartet auf Antworten zu den 15 Fragen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-09-27T06:48",
+    { seit: "2026-09-27T07:28",
+      text: "Postfach: altes Design und alte Knöpfe zurück" },
+    { seit: "2026-09-27T07:28",
       text: "Halloween-Paket: Kürbisbombe, Glibbergeist, Spinnenplage, 20 Aufgaben, Betreiber-Schalter" },
-    { seit: "2026-09-27T06:48",
-      text: "Info-Band lässt Tipps durch (Tagesgeschenk lag über den Plätzen)" },
-    { seit: "2026-09-27T06:48",
+    { seit: "2026-09-27T07:28",
       text: "Klasse und Kämpferklasse ablegen" },
-    { seit: "2026-09-27T06:48",
+    { seit: "2026-09-27T07:28",
       text: "Schnell-Bonus: bis 6 s +50 %, bis 12 s +25 %" },
   ],
 };

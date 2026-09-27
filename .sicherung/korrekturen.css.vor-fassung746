@@ -35001,3 +35001,39 @@ svg.lc-mini-echt .lc-sobri-blitz, svg.lc-mini-echt .lc-eimer-strahl { display: n
   background: #d8261f; color: #fff; font: 800 11px/1 system-ui, sans-serif; box-shadow: 0 1px 3px rgba(0, 0, 0, .4); cursor: pointer; }
 .lc-magic-plus { border-style: dashed !important; opacity: .9; }
 @media (prefers-reduced-motion: reduce) { .lc-magic-bearbeiten .lc-magic-feld { animation: none; } }
+
+/* FASSUNG 740 — XANDER (Funk 153): „die emojis kleiner … gesammelt … kompakter nicht so dass es die ganze Leiste
+   aufreißt". Die zehn Reiter unter „Profil" standen in fünf Reihen (202 px) – jetzt ein Raster aus kleinen Kacheln:
+   Zeichen oben, kurzes Wort darunter, fünf je Reihe. */
+#profileSubnav.subnav-raster { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-bottom: 14px; }
+#profileSubnav.subnav-raster .subnav-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  min-width: 0; min-height: 0; padding: 6px 2px 5px; border-radius: 14px; font-size: 10.5px; line-height: 1.1; }
+#profileSubnav .subnav-ikon { font-size: 18px; line-height: 1.1; }
+#profileSubnav .subnav-wort { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#profileSubnav .notify-badge { top: -3px; right: 2px; }
+@media (min-width: 720px) {
+  #profileSubnav.subnav-raster { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+}
+/* Das Postfach: Überschrift und Posteingang zuerst, Schreiben eingeklappt. */
+.inbox-titel { margin: 0 0 8px; font: 800 1.25rem/1.2 var(--font-display, system-ui); }
+.inbox-schreiben { margin-top: 14px; }
+.inbox-schreiben > summary { cursor: pointer; list-style: none; font: 800 1rem/1.3 var(--font-display, system-ui); display: flex; align-items: center; justify-content: space-between; }
+.inbox-schreiben > summary::-webkit-details-marker { display: none; }
+.inbox-schreiben > summary::after { content: "▾"; opacity: .7; transition: transform .2s; }
+.inbox-schreiben[open] > summary { margin-bottom: 10px; }
+.inbox-schreiben[open] > summary::after { transform: rotate(180deg); }
+.inbox-sticker > summary { cursor: pointer; }
+.inbox-sticker-reihe { display: flex; gap: 6px; margin-top: 6px; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 4px; }
+.inbox-sticker-reihe > * { flex: 0 0 auto; }
+/* FASSUNG 740 — „kompakter nicht so dass es die ganze Leiste aufreißt": die Liste bekommt weniger Innenrand,
+   die drei Reiter passen in eine Zeile, die kompakten Zeilen werden flacher. */
+#inboxArea .inbox-liste { padding: 14px 12px; }
+#inboxArea .inbox-liste > .order-toggle { display: flex; flex-wrap: nowrap; gap: 6px; margin-bottom: 10px !important; }
+#inboxArea .inbox-liste > .order-toggle > .order-pill { flex: 1 1 auto; min-width: 0; padding: 7px 8px; font-size: .76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#inboxArea .inbox-row-compact { padding: 8px 12px !important; gap: 2px !important; min-height: 0 !important; }
+#inboxArea .inbox-row-compact > div { align-items: baseline; gap: 8px; }
+#inboxArea .inbox-row-compact > div > *, #inboxArea .inbox-row-compact > p { margin: 0 !important; padding: 0 !important; line-height: 1.3 !important; }
+#inboxArea #inboxDownloadAllBtn { padding: 6px 12px; font-size: .78rem; }
+#inboxArea .inbox-schreiben { padding: 14px 12px; }
+#inboxArea [data-msg-collapse] { align-items: baseline; gap: 8px; }
+#inboxArea [data-msg-row] .btn-ghost { padding: 4px 10px !important; }

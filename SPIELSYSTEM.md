@@ -1277,3 +1277,9 @@ Sonden: 637, 648, 649, 650, 654, 686, 692, 719, spielsystem grün; Laden, Zauber
 - **Im Paket**: Kürbisbombe (Kürbis mit Gesicht, platscht) und Glibbergeist (kleines Gespenst, zerglibbert) im Laden und in „Lustig“; der Zauber „Spinnenplage“ (Spinnen seilen sich am Rand des Bildes ab und krabbeln nach außen weg – das Gesicht bleibt frei; Ton „spinnen“); 20 Halloween-Aufgaben (auch als eigene Aufgabenart „Halloween“). Wer eine Halloween-Waffe gekauft hat, behält sie nach dem Fest; neu kaufen geht dann nicht mehr.
 - **Mitbehoben (aus 742)**: Das Tagesgeschenk-Band lag beim Betreten 8 s über den oberen Plätzen und schluckte Tipps (Sonde 650: Erdbeben und Orkan kamen nicht an). Reine Info-Bänder lassen Tipps jetzt durch (nur ✕ ist antippbar) und gehen nach 5 s.
 - Für Weihnachten ist der Schalter schon im Server angelegt (`weihnachten`), das Paket selbst folgt.
+
+### Fassung 746 (Funk 178: Postfach wieder im alten Design)
+Sonde: pruefe-postfach-knopf grün. app.js, korrekturen.css und index.html stehen für das Postfach wieder genau auf dem Stand vor Fassung 740 (Commit c8666d8); Sicherungen in `.sicherung/*.vor-fassung746`.
+- XANDER (wörtlich, Funk 178): „stell es erstmal auf das alte Design zurück und dann diskutieren wir erstmal Schritt für Schritt auch die Buttons wie sie waren stellt das alles wieder her wie es war … du musst mir Fragen dazu stellen“.
+- **Zurückgenommen**: das Knopf-Raster oben im Postfach, die neue Titelzeile und das eigene „Schreiben“-Fenster aus 740. Die Knöpfe sind wieder die alten, an den alten Stellen.
+- **Weiter**: Nichts am Postfach wird geändert, bevor Xander die Fragen im Walkie beantwortet hat.
