@@ -2632,3 +2632,8 @@ body.sp-graben.sp-wz-angel #lcPlaetze .lc-kreis { outline-color: rgba(47, 127, 1
 .sp-sa-ansage small { margin-top: 6px; font: 900 20px/1 system-ui, sans-serif; color: #ffd23c; text-shadow: 0 2px 0 #8a1a0a; }
 @keyframes spSaAnsage { 0% { opacity: 0; transform: scale(2.2); } 18% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(.9); } }
 @media (prefers-reduced-motion: reduce) { .sp-sa-ansage { animation-duration: 1.5s; } }
+/* FASSUNG 736 — Chat-Effekte halten (Funk 176, Phase 2). */
+.sp-halt-wahl-titel { margin: 8px 2px 4px; font: 800 12px/1.2 system-ui, sans-serif; color: #5a4a30; }
+.sp-halt-wahl { max-height: min(78vh, 560px); overflow-y: auto; }
+/* Zwille, Spuckrohr und Pusterohr zeichnet der Chat-Effekt selbst am Schützen – dann das gehaltene Gerät kurz ausblenden. */
+.lc-platz:has(> .lc-zwille-halt, > .lc-spucke-halt, > .lc-puste-halt) > .sp-halt { opacity: 0; transition: opacity .1s; }

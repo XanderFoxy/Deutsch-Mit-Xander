@@ -36938,19 +36938,9 @@
     /* Der erste Pumpenhub ist sofort da. */
     aufblasen: 0
   };
-  /* FASSUNG 736 — XANDER (Funk 176): „an der getippten Stelle treffen". Die Trefferstelle aus der Zeile
-     („treff": dx,dy je −1 … 1) verschiebt den ganzen Effekt am Bild dorthin, wo getippt wurde – auf jedem Gerät
-     gleich. Gesetzt in lcWirkung, gemerkt beim Aufruf (der Aufbau läuft zeitversetzt). */
-  let lcTreff = null;
-  function lcTreffLesen(t) {
-    const m = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/.exec(String(t || ""));
-    if (!m) return null;
-    return { x: Math.max(-1, Math.min(1, Number(m[1]))), y: Math.max(-1, Math.min(1, Number(m[2]))) };
-  }
   function lcAmPlatz(wen, klasse, bauen, dauer, ton) {
     const ziele = lcZielPlaetze(wen);
     if (!ziele.length) return false;
-    const treff = ziele.length === 1 ? lcTreff : null;
     ziele.forEach((platz, i) => setTimeout(() => {
       if (!platz.isConnected) return;
       /* FASSUNG 682 — XANDER: „die Mauer, dass man sich im Chat schützen
@@ -37043,11 +37033,6 @@
 
          Was INNEN bleiben muss, bringt seine eigene runde Blende
          mit (lcZpBlende) — der Wasserstand zum Beispiel. */
-      if (treff) {
-        /* Höchstens ein gutes Drittel des Bildes aus der Mitte: an den Rand getippt heißt „am Rand getroffen". */
-        schicht.style.translate = (treff.x * 34).toFixed(1) + "% " + (treff.y * 34).toFixed(1) + "%";
-        schicht.dataset.lcTreff = treff.x + "," + treff.y;
-      }
       platz.appendChild(schicht);
       setTimeout(() => {
         /* Umgezogen? Dann die Bildklassen am NEUEN Bild abnehmen. */
@@ -63304,8 +63289,6 @@
       lcWurfVon = (nachricht && nachricht.eigen)
         ? (() => { try { return (LiveChat.lage() || {}).ichName || ""; } catch (e) { return ""; } })()
         : ((nachricht && nachricht.name) || "");
-      lcTreff = lcTreffLesen(nachricht && nachricht.treff);
-      setTimeout(() => { lcTreff = null; }, 0);
       if (art === "tritt" && lcTritt(wenZ)) return;
       if (art === "zherz" && lcHerzenAufPlatz(wenZ)) return;
       if (art === "eimer" && lcWassereimer(wenZ)) return;
@@ -65751,11 +65734,6 @@
       if (eff) {
         z.dataset.wirkung = eff;
         z.classList.add("lc-zeile-wirkt");
-        /* FASSUNG 736 — gleiche Treffer hintereinander werden zu EINER Zeile gebündelt (siehe lcZeilenBuendeln). */
-        if (n.wen && n.wen !== "*" && eff !== "fluester") {
-          z.dataset.lcBund = (n.name || "") + "|" + eff + "|" + n.wen;
-          z.dataset.lcZeit = String(Number(n.zeit) || Date.parse(n.zeit) || 0);
-        }
         /* Bei einer Fluesterzeile ist das Antippen zum Antworten da,
            nicht zum Wiederholen der Animation — so war es gewuenscht.
            Die Animation laeuft weiterhin einmal, wenn die Zeile
@@ -65814,37 +65792,7 @@
        bleibt dabei ungestört: sobald er sich vom unteren Rand
        entfernt, lässt der Griff los und kommt erst wieder, wenn er
        von selbst zurückkehrt. */
-    lcZeilenBuendeln(v);
     lcAmEndeHalten(v);
-  }
-  /* FASSUNG 736 — XANDER (Funk 176, Design-Prüfung Phase 2): wer mit einer gehaltenen Chat-Waffe achtmal auf
-     dieselbe Person tippt, soll den Verlauf nicht mit acht gleichen Zeilen zumüllen. Gleiche Treffer (gleicher
-     Absender, gleiche Wirkung, gleiches Ziel) direkt hintereinander und höchstens 90 s auseinander werden zu
-     einer Zeile mit „×8" zusammengefasst. Die Animation läuft trotzdem bei jedem Treffer; ein Tipp auf die
-     Zeile spielt sie noch einmal. */
-  function lcZeilenBuendeln(v) {
-    if (!v) return;
-    const zeilen = [...v.querySelectorAll(".lc-zeile")];
-    let kopf = null, zahl = 1, letzte = 0;
-    const schliessen = () => {
-      if (!kopf) return;
-      let b = kopf.querySelector(".lc-buendel");
-      if (zahl > 1) {
-        /* In den Zeilentext hinein – sonst rutscht das Zeichen in eine eigene Reihe. */
-        if (!b) { b = document.createElement("b"); b.className = "lc-buendel"; (kopf.querySelector(".lc-zeilentext") || kopf).appendChild(b); }
-        b.textContent = "\u00d7" + zahl;
-      } else if (b) b.remove();
-    };
-    zeilen.forEach((z) => {
-      const key = z.dataset.lcBund || "", t = Number(z.dataset.lcZeit || 0);
-      if (key && kopf && kopf.dataset.lcBund === key && t && letzte && t - letzte <= 90000) {
-        z.classList.add("lc-zeile-gebuendelt"); zahl++; letzte = t; return;
-      }
-      z.classList.remove("lc-zeile-gebuendelt");
-      schliessen();
-      kopf = key ? z : null; zahl = 1; letzte = t;
-    });
-    schliessen();
   }
 
   /* WARUM MAN NICHT MEHR HOCHSCROLLEN KONNTE.

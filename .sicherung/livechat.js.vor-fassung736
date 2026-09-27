@@ -12044,10 +12044,7 @@ window.LiveChat = (function () {
        XANDER (Funk 67): „Er fährt immer gleich schnell.“ GEFUNDEN im
        Prüflauf (pruefe-zusatzfelder): das Feld fehlte hier — bei allen
        ANDEREN kam der Hot Rod deshalb immer mit Kraft 1 an. */
-    "kraft",
-    /* FASSUNG 736 — XANDER (Funk 176): „an der getippten Stelle treffen". Wo auf dem Bild getroffen wird
-       („dx,dy", je −1 … 1 vom Bildmittelpunkt) – damit JEDES Gerät den Einschlag an derselben Stelle zeigt. */
-    "treff"
+    "kraft"
   ];
   /* Listen werden begrenzt — eine Zeile aus einer fremden Fassung
      darf den Chat nicht sprengen. */
@@ -12066,11 +12063,7 @@ window.LiveChat = (function () {
     return ziel;
   }
 
-  /* FASSUNG 736 — die Trefferstelle eines Effekts, den das Spiel (gehaltene Waffe) auslöst. Sie gilt nur für
-     genau EIN Ziel; bei „alle" oder mehreren Namen bleibt es beim gewohnten Treffer. */
-  var befehlTreff = "";
   function anAlle(art, text, zusatz) {
-    if (befehlTreff && zusatz && zusatz.wirkung && zusatz.wen && zusatz.wen !== "*" && String(zusatz.wen).indexOf(",") < 0) zusatz.treff = befehlTreff;
     var n = eigeneZeile(art, text);
     /* ALLE Zusatzfelder auf einmal — die Liste steht oben bei
        ZUSATZ_FELDER. Vorher stand hier fuer jedes Feld eine eigene
@@ -15646,13 +15639,6 @@ window.LiveChat = (function () {
     chatLeeren: chatLeeren,
     befehlsliste: befehlsliste,
     befehlsVorschlaege: befehlsVorschlaege,
-    /* FASSUNG 736 — ein Effekt auf eine Person, ausgelöst vom Spiel (gehaltene Chat-Waffe), mit Trefferstelle.
-       Derselbe Weg wie getippt („/hammer Bea") – keine zweite Sorte Effekt. */
-    effektAuf: function (befehl, name, treff) {
-      var t = String(treff || "");
-      befehlTreff = /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(t) ? t : "";
-      try { return befehlAusfuehren("/" + befehl + " " + name); } finally { befehlTreff = ""; }
-    },
     /* Fuer die Tipphilfe: welche Bilder gibt es zur Auswahl? */
     asciiNamen: function () { return Object.keys(ASCII).sort(); },
     emojibildNamen: function () { return Object.keys(EMOJIBILD).sort(); },

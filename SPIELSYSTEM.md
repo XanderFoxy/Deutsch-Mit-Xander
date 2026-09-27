@@ -1202,3 +1202,12 @@ Sonden: 731, 692, 690 grün.
 - Das gehaltene Gerät der Chat-Effekte (Spuckrohr, Zwille, Pusterohr) hing am alten Platz fest, wenn der Schütze umzog – es trägt jetzt, wem es gehört und wie lange es bleibt, und zieht mit.
 - Nach jedem Umzug (Schütze oder Ziel) zielt das Gerät neu auf sein Ziel.
 - Effekte, die beim Umzug in den neuen Platz gehängt werden, fingen ihre Animation von vorn an (der Hammer holte zweimal aus). Die laufenden Animationszeiten werden jetzt mitgenommen – der Effekt läuft nahtlos weiter.
+
+### Fassung 736 (Funk 176, Phase 2 – Teil 2: Chat-Effekte halten, Trefferstelle, gebündelte Zeilen)
+Sonden: neu 736-chatwaffen-phase2 (13 Chat-Effekte im Halte-Menü mit eigener Zeichnung; Hammer halten, Tipp rechts unten auf Bea → echter „/hammer" an alle mit Trefferstelle 0,51/0,41, Hammer schlägt dort ein; vier Schläge = eine Zeile „×4", ein anderer Effekt dazwischen trennt; Wassereimer läuft beim Platztausch nahtlos weiter; Zwille des Chat-Effekts gehört dem Schützen, zielt nach dem Umzug neu, keine doppelte Zwille; Tipp aufs eigene Bild legt ab), zusatzfelder, 731, 690, platzmenue, runde77, runde82, runde98 grün.
+- XANDER (wörtlich, Funk 176): „dass ich realistisch die Waffen halte … in die Richtung wo der andere Sitze … du musst das mit der deinen Design Agenten kritisch überprüfen“ – Phase 2 der Design-Prüfung.
+- **Halten**: „Waffe halten“ (langer Druck aufs eigene Bild) zeigt oben die **Chat-Effekte**: Hammer, Zwille, Spuckrohr, Pusterohr, Schneebälle, Saugnapf-Bogen, Paintball, Eier, Sahnedose, Wassereimer, Bumerang, Konfetti-Granate, Boxhandschuh – darunter die eigenen Spielwaffen. Chat-Effekte gehen auch ohne Spielkonto.
+- **Tippen**: das Gerät dreht sich zur Stelle, holt aus, und der echte Chat-Effekt geht an alle – so, als hätte man „/hammer Bea“ geschrieben.
+- **Trefferstelle** (neues Feld „treff“): der Effekt erscheint auf jedem Gerät dort, wo getippt wurde (bis ein gutes Drittel des Bildes aus der Mitte). Gilt für jeden Effekt auf genau eine Person.
+- **Verlauf**: gleiche Treffer (gleicher Absender, gleicher Effekt, gleiches Ziel) direkt hintereinander und höchstens 90 s auseinander stehen als EINE Zeile mit „×4“. Jede Animation läuft trotzdem; ein Tipp auf die Zeile spielt sie noch einmal.
+- Zwille, Spuckrohr und Pusterohr zeichnet der Chat-Effekt selbst am Schützen – das gehaltene Gerät blendet sich dann kurz aus (keine zwei Zwillen).

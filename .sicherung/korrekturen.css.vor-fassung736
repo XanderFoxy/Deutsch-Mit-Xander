@@ -34955,6 +34955,3 @@ svg.lc-mini-echt .lc-sobri-blitz, svg.lc-mini-echt .lc-eimer-strahl { display: n
 .lc-tafel-bm-laut { background: #fbf6ec; color: #3a3229; }
 .lc-tafel-bm-laut svg { width: 100%; height: auto; display: block; pointer-events: none; }
 .lc-tafel-bm-warte { grid-column: 1 / -1; margin: 0; opacity: .8; font-size: .9rem; }
-/* FASSUNG 736 — Funk 176 (Phase 2): gleiche Treffer hintereinander als EINE Zeile mit „×N". */
-.lc-zeile-gebuendelt { display: none !important; }
-.lc-buendel { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 9px; background: rgba(200, 49, 43, .9); color: #fff; font: 800 11px/17px system-ui, sans-serif; vertical-align: 1px; }
